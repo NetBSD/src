@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.17 2006/05/22 21:01:15 rpaulo Exp $ */
+/*	$NetBSD: if_atu.c,v 1.17.8.1 2006/10/22 06:06:52 yamt Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.17 2006/05/22 21:01:15 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.17.8.1 2006/10/22 06:06:52 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -122,6 +122,9 @@ struct atu_type atu_devs[] = {
 	  RadioIntersil,	ATU_NO_QUIRK },
 	{ USB_VENDOR_LEXAR,	USB_PRODUCT_LEXAR_2662WAR,
 	  RadioRFMD,		ATU_NO_QUIRK },
+	/* Belkin F5D6050 */
+	{ USB_VENDOR_SMC3,	USB_PRODUCT_SMC3_2662WUSB,
+	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_LINKSYS2,	USB_PRODUCT_LINKSYS2_WUSB11,
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_LINKSYS3,	USB_PRODUCT_LINKSYS3_WUSB11V28,
@@ -143,6 +146,8 @@ struct atu_type atu_devs[] = {
 	  RadioIntersil,	ATU_NO_QUIRK },
 	{ USB_VENDOR_OQO,	USB_PRODUCT_OQO_WIFI01,
 	  RadioRFMD2958_SMC,	ATU_QUIRK_NO_REMAP | ATU_QUIRK_FW_DELAY },
+	{ USB_VENDOR_SMC3,	USB_PRODUCT_SMC3_2662WV1,
+	  RadioIntersil,	ATU_NO_QUIRK },
 };
 
 struct atu_radfirm {
@@ -1436,7 +1441,7 @@ atu_activate(device_ptr_t self, enum devact act)
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
 int
-atu_newbuf(struct atu_softc *sc, struct atu_chain *c, struct mbuf *m)
+atu_newbuf(struct atu_softc *sc __unused, struct atu_chain *c, struct mbuf *m)
 {
 	struct mbuf		*m_new = NULL;
 
@@ -1527,7 +1532,7 @@ atu_tx_list_init(struct atu_softc *sc)
 }
 
 void
-atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
+atu_xfer_list_free(struct atu_softc *sc __unused, struct atu_chain *ch,
     int listlen)
 {
 	int			i;
@@ -1662,7 +1667,8 @@ done:
  * the list buffers.
  */
 void
-atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+atu_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct atu_chain	*c = (struct atu_chain *)priv;
 	struct atu_softc	*sc = c->atu_sc;
@@ -1720,7 +1726,7 @@ atu_calculate_padding(int size)
 }
 
 int
-atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
+atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni __unused,
     struct atu_chain *c, struct mbuf *m)
 {
 	int			len;
@@ -1986,9 +1992,10 @@ atu_init(struct ifnet *ifp)
 	/* XXX the following HAS to be replaced */
 	s = splnet();
 	err = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-	if (err)
+	if (err) {
 		DPRINTFN(1, ("%s: atu_init: error calling "
 		    "ieee80211_net_state", USBDEVNAME(sc->atu_dev)));
+	}
 	splx(s);
 
 	return 0;
@@ -2161,7 +2168,7 @@ atu_watchdog(struct ifnet *ifp)
  * RX and TX lists.
  */
 void
-atu_stop(struct ifnet *ifp, int disable)
+atu_stop(struct ifnet *ifp, int disable __unused)
 {
 	struct atu_softc	*sc = ifp->if_softc;
 	struct ieee80211com	*ic = &sc->sc_ic;

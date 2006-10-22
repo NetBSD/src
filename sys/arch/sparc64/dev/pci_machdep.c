@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.51 2006/02/11 17:57:31 cdi Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.51.16.1 2006/10/22 06:05:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.51 2006/02/11 17:57:31 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.51.16.1 2006/10/22 06:05:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,7 +73,7 @@ int sparc_pci_debug = 0x0;
 
 /* this is a base to be copied */
 struct sparc_pci_chipset _sparc_pci_chipset = {
-	NULL,
+	.cookie = NULL,
 };
 
 static int pci_find_ino(struct pci_attach_args *, pci_intr_handle_t *);
@@ -280,9 +280,9 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 	 * Make sure the cache line size is at least as big as the
 	 * ecache line and the streaming cache (64 byte).
 	 */
-	cacheline = max(cacheinfo.ec_linesize, 64);
+	cacheline = max(ecache_min_line_size, 64);
 	KASSERT((cacheline/64)*64 == cacheline &&
-	    (cacheline/cacheinfo.ec_linesize)*cacheinfo.ec_linesize == cacheline &&
+	    (cacheline/ecache_min_line_size)*ecache_min_line_size == cacheline &&
 	    (cacheline/4)*4 == cacheline);
 
 	/* Turn on parity for the bus. */

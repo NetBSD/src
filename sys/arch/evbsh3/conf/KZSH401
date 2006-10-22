@@ -1,4 +1,4 @@
-#	$NetBSD: KZSH401,v 1.24 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: KZSH401,v 1.24.22.1 2006/10/22 06:04:39 yamt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -63,6 +63,7 @@ config		netbsd	root on ? type ?
 #
 mainbus0 at root
 shb*	at mainbus?
+rtc0 at shb?
 options 	SCIFCN_SPEED=19200
 scif0 at shb?
 pseudo-device	pty			# pseudo-terminals

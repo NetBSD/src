@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.16.4.1 2006/09/18 10:04:16 yamt Exp $	*/
+/*	$NetBSD: ubt.c,v 1.16.4.2 2006/10/22 06:06:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.16.4.1 2006/09/18 10:04:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.16.4.2 2006/10/22 06:06:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -593,12 +593,12 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 	int err;
 
 	err = usbd_set_interface(sc->sc_iface1, sc->sc_config);
-	if (err) {
+	if (err != USBD_NORMAL_COMPLETION) {
 		aprint_error(
 		    "%s: Could not set config %d on ISOC interface. %s (%d)\n",
 		    USBDEVNAME(sc->sc_dev), sc->sc_config, usbd_errstr(err), err);
 
-		return err;
+		return err == USBD_IN_USE ? EBUSY : EIO;
 	}
 
 	/*
@@ -704,6 +704,10 @@ ubt_sysctl_config(SYSCTLFN_ARGS)
 
 	if (t < 0 || t >= sc->sc_alt_config)
 		return EINVAL;
+
+	/* This may not change when the unit is enabled */
+	if (sc->sc_unit.hci_flags & BTF_RUNNING)
+		return EBUSY;
 
 	sc->sc_config = t;
 	return ubt_set_isoc_config(sc);
@@ -1117,7 +1121,7 @@ ubt_xmit_acl_start(struct hci_unit *unit)
 }
 
 static void
-ubt_xmit_acl_complete(usbd_xfer_handle xfer,
+ubt_xmit_acl_complete(usbd_xfer_handle xfer __unused,
 		usbd_private_handle h, usbd_status status)
 {
 	struct hci_unit *unit = h;
@@ -1250,7 +1254,7 @@ ubt_xmit_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 }
 
 static void
-ubt_xmit_sco_complete(usbd_xfer_handle xfer,
+ubt_xmit_sco_complete(usbd_xfer_handle xfer __unused,
 		usbd_private_handle h, usbd_status status)
 {
 	struct ubt_isoc_xfer *isoc = h;

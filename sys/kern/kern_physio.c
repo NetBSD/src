@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.73.10.1 2006/09/18 10:41:44 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.73.10.2 2006/10/22 06:07:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.73.10.1 2006/09/18 10:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.73.10.2 2006/10/22 06:07:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ putphysbuf(struct buf *bp)
 }
 
 static void
-physio_done(struct work *wk, void *dummy)
+physio_done(struct work *wk, void *dummy __unused)
 {
 	struct buf *bp = (void *)wk;
 	size_t todo = bp->b_bufsize;
@@ -155,7 +155,7 @@ physio_done(struct work *wk, void *dummy)
 	KASSERT(dummy == NULL);
 
 	vunmapbuf(bp, todo);
-	uvm_vsunlock(bp->b_proc, bp->b_data, todo);
+	uvm_vsunlock(bp->b_proc->p_vmspace, bp->b_data, todo);
 
 	simple_lock(&mbp->b_interlock);
 	if (__predict_false(done != todo)) {
@@ -401,7 +401,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			 * saves it in b_saveaddr.  However, vunmapbuf()
 			 * restores it.
 			 */
-			error = uvm_vslock(p, bp->b_data, todo,
+			error = uvm_vslock(p->p_vmspace, bp->b_data, todo,
 			    (flags & B_READ) ?  VM_PROT_WRITE : VM_PROT_READ);
 			if (error) {
 				goto done;

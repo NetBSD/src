@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.19 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.19.22.1 2006/10/22 06:05:21 yamt Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.19 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.19.22.1 2006/10/22 06:05:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,14 +308,13 @@ coda_unmounting(struct mount *whoIam)
 void
 coda_checkunmounting(struct mount *mp)
 {
-	struct vnode *vp, *nvp;
+	struct vnode *vp;
 	struct cnode *cp;
 	int count = 0, bad = 0;
 loop:
-	for (vp = mp->mnt_vnodelist.lh_first; vp; vp = nvp) {
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		if (vp->v_mount != mp)
 			goto loop;
-		nvp = vp->v_mntvnodes.le_next;
 		cp = VTOC(vp);
 		count++;
 		if (!(cp->c_flags & C_UNMOUNTING)) {
@@ -517,7 +516,7 @@ int handleDownCall(int opcode, union outputArgs *out)
 /* coda_grab_vnode: lives in either cfs_mach.c or cfs_nbsd.c */
 
 int
-coda_vmflush(struct cnode *cp)
+coda_vmflush(struct cnode *cp __unused)
 {
     return 0;
 }

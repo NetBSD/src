@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.65 2006/09/03 05:01:32 christos Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.65.4.1 2006/10/22 06:06:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.65 2006/09/03 05:01:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.65.4.1 2006/10/22 06:06:18 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -312,7 +312,7 @@ struct pci_product {
 #endif /* PCIVERBOSE */
 
 const char *
-pci_findvendor(pcireg_t id_reg)
+pci_findvendor(pcireg_t id_reg __unused)
 {
 #ifdef PCIVERBOSE
 	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
@@ -326,7 +326,7 @@ pci_findvendor(pcireg_t id_reg)
 }
 
 const char *
-pci_findproduct(pcireg_t id_reg)
+pci_findproduct(pcireg_t id_reg __unused)
 {
 #ifdef PCIVERBOSE
 	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
@@ -438,7 +438,7 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 static void
 pci_conf_print_common(
 #ifdef _KERNEL
-    pci_chipset_tag_t pc, pcitag_t tag,
+    pci_chipset_tag_t pc __unused, pcitag_t tag __unused,
 #endif
     const pcireg_t *regs)
 {
@@ -779,7 +779,7 @@ pci_conf_print_type0(
 static void
 pci_conf_print_caplist(
 #ifdef _KERNEL
-    pci_chipset_tag_t pc, pcitag_t tag,
+    pci_chipset_tag_t pc __unused, pcitag_t tag __unused,
 #endif
     const pcireg_t *regs, int capoff)
 {

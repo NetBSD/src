@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.830 2006/09/07 21:17:32 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.830.2.1 2006/10/22 06:06:18 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.831 2006/09/07 21:16:55 riz Exp
+ *	NetBSD: pcidevs,v 1.840 2006/10/21 14:10:33 bouyer Exp
  */
 
 /*
@@ -2244,6 +2244,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Tekram Technology (2nd PCI Vendor ID)",
 	},
 	{
+	    PCI_VENDOR_DATUM,
+	    "Datum Inc. Bancomm-Timing Division",
+	},
+	{
 	    PCI_VENDOR_HINT,
 	    "HiNT",
 	},
@@ -2368,7 +2372,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 582;
+const int pci_nvendors = 583;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -3474,6 +3478,30 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_GMAC,
 	    "GMAC Ethernet",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_AGP,
+	    "Intrepid 2 AGP",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_PCI1,
+	    "Intrepid 2 PCI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_PCI2,
+	    "Intrepid 2 PCI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_ATA,
+	    "Intrepid 2 ATA",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_FW,
+	    "Intrepid 2 FireWire",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_GMAC,
+	    "Intrepid 2 GMAC",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
@@ -5312,6 +5340,10 @@ static const struct pci_product pci_products[] = {
 	    "Cx5530 I/O Companion (Video Controller)",
 	},
 	{
+	    PCI_VENDOR_DATUM, PCI_PRODUCT_DATUM_BC635PCI_U,
+	    "BC635PCI-U TC & FREQ. Processor",
+	},
+	{
 	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102,
 	    "DM9102 10/100 Ethernet",
 	},
@@ -6556,8 +6588,24 @@ static const struct pci_product pci_products[] = {
 	    "PRO/10GbE LR Server Adapter",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_M_AMT,
+	    "i82801H (M_AMT) LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_AMT,
+	    "i82801H (AMT) LAN Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_LAN,
 	    "i82801H LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_LAN,
+	    "i82801H (IFE) LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_M_LAN,
+	    "i82801H (M) LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_6,
@@ -6652,16 +6700,48 @@ static const struct pci_product pci_products[] = {
 	    "PRO/100 VE Network Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_7,
+	    "PRO/100 VE Network Controller with 82562G PHY",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_CPR_DPT,
+	    "i80003 dual 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_FIB_DPT,
+	    "i80003 dual 1000baseX Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_SDS_DPT,
+	    "i80003 dual Gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER,
+	    "i82546GB quad-port Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L,
 	    "i82573L Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER,
-	    "PRO/1000MT QP (82546GB)",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_QUAD_COPPER,
+	    "i82571EB quad-1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER_KSP3,
+	    "i82546GB quad-port Gigabit Ethernet (KSP3)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI,
-	    "PRO/1000PT (82572EI)",
+	    "i82572EI 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_CPR_SPT,
+	    "i80003 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT,
+	    "i80003 Gigabit Ethernet (SERDES)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
@@ -8796,6 +8876,10 @@ static const struct pci_product pci_products[] = {
 	    "Dual 1284 Printer port",
 	},
 	{
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9820,
+	    "Single UART",
+	},
+	{
 	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835,
 	    "Dual UART and 1284 Printer port",
 	},
@@ -9164,6 +9248,10 @@ static const struct pci_product pci_products[] = {
 	    "GeForce 6200TC",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6200LE,
+	    "GeForce 6200LE",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_MX460,
 	    "GeForce4 MX 460",
 	},
@@ -9440,12 +9528,36 @@ static const struct pci_product pci_products[] = {
 	    "GeForce FX 5700 LE",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_ISA,
+	    "nForce MCP55 PCI-ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SMB,
 	    "nForce MCP55 SMBus Controller",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM,
+	    "nForce MCP55 Memory Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM2,
+	    "nForce MCP55 Memory Controller",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_IDE,
 	    "nForce MCP55 ATA133 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_OHCI,
+	    "nForce MCP55 OHCI USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_EHCI,
+	    "nForce MCP55 EHCI USB Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_PPB,
+	    "nForce MCP55 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_HDA,
@@ -9458,6 +9570,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN2,
 	    "nForce MCP55 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_PCIE,
+	    "nForce MCP55 PCI-Express 16x Port",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA,
@@ -11084,8 +11200,12 @@ static const struct pci_product pci_products[] = {
 	    "PCI6515A Cardbus Controller (Smart Card mode)",
 	},
 	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100,
-	    "ACX100 802.11b",
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100A,
+	    "ACX100A 802.11b",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100B,
+	    "ACX100B 802.11b",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX111,
@@ -12300,4 +12420,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2482;
+const int pci_nproducts = 2511;

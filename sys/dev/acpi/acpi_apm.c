@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.4 2006/08/06 15:47:51 christos Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.4.10.1 2006/10/22 06:05:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.4 2006/08/06 15:47:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.4.10.1 2006/10/22 06:05:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,14 +114,15 @@ CFATTACH_DECL(acpiapm, sizeof(struct apm_softc),
 
 static int
 /*ARGSUSED*/
-acpiapm_match(struct device *parent, struct cfdata *match, void *aux)
+acpiapm_match(struct device *parent __unused,
+	struct cfdata *match __unused, void *aux __unused)
 {
 	return apm_match();
 }
 
 static void
 /*ARGSUSED*/
-acpiapm_attach(struct device *parent, struct device *self, void *aux)
+acpiapm_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct apm_softc *sc = (struct apm_softc *)self;
 
@@ -223,14 +224,14 @@ SYSCTL_SETUP(sysctl_acpiapm_setup, "sysctl machdep.acpiapm subtree setup")
 
 static void
 /*ARGSUSED*/
-acpiapm_disconnect(void *opaque)
+acpiapm_disconnect(void *opaque __unused)
 {
 	return;
 }
 
 static void
 /*ARGSUSED*/
-acpiapm_enable(void *opaque, int onoff)
+acpiapm_enable(void *opaque __unused, int onoff __unused)
 {
 	return;
 }
@@ -267,23 +268,30 @@ acpiapm_set_powstate(void *opaque, u_int devid, u_int powstat)
 
 static int
 /*ARGSUSED*/
-acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
+acpiapm_get_powstat(void *opaque __unused, u_int batteryid __unused,
+	struct apm_power_info *pinfo)
 {
 #define APM_BATT_FLAG_WATERMARK_MASK (APM_BATT_FLAG_CRITICAL |		      \
 				      APM_BATT_FLAG_LOW |		      \
 				      APM_BATT_FLAG_HIGH)
 	int i, curcap, lowcap, warncap, cap, descap, lastcap, discharge;
+	int cap_valid, lastcap_valid, discharge_valid;
 	envsys_tre_data_t etds;
 	envsys_basic_info_t ebis;
 
-	curcap = lowcap = warncap = cap = descap = lastcap = discharge = -1;
+	/* Denote most variables as unitialized. */
+	curcap = lowcap = warncap = descap = -1;
+
+	/* Prepare to aggregate these two variables over all batteries. */
+	cap = lastcap = discharge = 0;
+	cap_valid = lastcap_valid = discharge_valid = 0;
 
 	(void)memset(pinfo, 0, sizeof(*pinfo));
 	pinfo->ac_state = APM_AC_UNKNOWN;
 	pinfo->minutes_valid = 0;
 	pinfo->minutes_left = 0xffff; /* unknown */
 	pinfo->batteryid = 0;
-	pinfo->nbattery = 1;
+	pinfo->nbattery = 0;	/* to be incremented as batteries are found */
 	pinfo->battery_flags = 0;
 	pinfo->battery_state = APM_BATT_UNKNOWN; /* ignored */
 	pinfo->battery_life = APM_BATT_LIFE_UNKNOWN;
@@ -320,18 +328,25 @@ acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
 			warncap = data / 1000;
 		else if (strstr(desc, " low cap"))
 			lowcap = data / 1000;
-		else if (strstr(desc, " last full cap"))
-			lastcap = data / 1000;
+		else if (strstr(desc, " last full cap")) {
+			lastcap += data / 1000;
+			lastcap_valid = 1;
+		}
 		else if (strstr(desc, " design cap"))
 			descap = data / 1000;
 		else if (strstr(desc, " charge") &&
-		    strstr(desc, " charge rate") == NULL)
-			cap = data / 1000;
-		else if (strstr(desc, " discharge rate"))
-			discharge = data / 1000;
+		    strstr(desc, " charge rate") == NULL) {
+			cap += data / 1000;
+			cap_valid = 1;
+			pinfo->nbattery++;
+		}
+		else if (strstr(desc, " discharge rate")) {
+			discharge += data / 1000;
+			discharge_valid = 1;
+		}
 	}
 
-	if (cap != -1)  {
+	if (cap_valid > 0)  {
 		if (warncap != -1 && cap < warncap)
 			pinfo->battery_flags |= APM_BATT_FLAG_CRITICAL;
 		else if (lowcap != -1) {
@@ -340,7 +355,7 @@ acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
 			else
 				pinfo->battery_flags |= APM_BATT_FLAG_HIGH;
 		}
-		if (lastcap != -1 && lastcap != 0)
+		if (lastcap_valid > 0 && lastcap != 0)
 			pinfo->battery_life = 100 * cap / lastcap;
 		else if (descap != -1 && descap != 0)
 			pinfo->battery_life = 100 * cap / descap;
@@ -368,7 +383,7 @@ acpiapm_get_powstat(void *opaque, u_int batteryid, struct apm_power_info *pinfo)
 
 static int
 /*ARGSUSED*/
-acpiapm_get_event(void *opaque, u_int *event_type, u_int *event_info)
+acpiapm_get_event(void *opaque __unused, u_int *event_type, u_int *event_info)
 {
 	if (capability_changed) {
 		capability_changed = 0;
@@ -388,21 +403,22 @@ acpiapm_get_event(void *opaque, u_int *event_type, u_int *event_info)
 
 static void
 /*ARGSUSED*/
-acpiapm_cpu_busy(void *opaque)
+acpiapm_cpu_busy(void *opaque __unused)
 {
 	return;
 }
 
 static void
 /*ARGSUSED*/
-acpiapm_cpu_idle(void *opaque)
+acpiapm_cpu_idle(void *opaque __unused)
 {
 	return;
 }
 
 static void
 /*ARGSUSED*/
-acpiapm_get_capabilities(void *opaque, u_int *numbatts, u_int *capflags)
+acpiapm_get_capabilities(void *opaque __unused, u_int *numbatts,
+	u_int *capflags)
 {
 	*numbatts = 1;
 	*capflags = capabilities;

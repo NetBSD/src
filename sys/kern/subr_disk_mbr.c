@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.18 2006/06/11 23:25:23 christos Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.18.8.1 2006/10/22 06:07:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.18 2006/06/11 23:25:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.18.8.1 2006/10/22 06:07:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,9 @@ read_sector(mbr_args_t *a, uint sector, int count)
 {
 	struct buf *bp = a->bp;
 	int error;
+
+	if (a->lp->d_secpercyl == 0)
+		return EINVAL;
 
 	bp->b_blkno = sector;
 	bp->b_bcount = count * a->lp->d_secsize;
@@ -486,7 +489,7 @@ validate_label(mbr_args_t *a, uint label_sector)
  */
 int
 setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
-    struct cpu_disklabel *osdep)
+    struct cpu_disklabel *osdep __unused)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -569,7 +572,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 }
 
 static int
-write_netbsd_label(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
+write_netbsd_label(mbr_args_t *a, mbr_partition_t *dp, int slot __unused,
+    uint ext_base)
 {
 	int ptn_base = ext_base + le32toh(dp->mbrp_start);
 

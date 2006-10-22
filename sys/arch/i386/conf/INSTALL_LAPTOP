@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.102 2006/08/26 20:26:45 christos Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.102.4.1 2006/10/22 06:04:43 yamt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -68,7 +68,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -474,6 +473,7 @@ brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs

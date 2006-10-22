@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.85 2006/09/03 07:14:47 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.85.4.1 2006/10/22 06:06:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.85 2006/09/03 07:14:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.85.4.1 2006/10/22 06:06:52 yamt Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 
@@ -338,7 +338,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 }
 
 int
-ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
+ugenopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 {
 	struct ugen_softc *sc;
 	int unit = UGENUNIT(dev);
@@ -487,7 +487,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
+ugenclose(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 {
 	int endpt = UGENENDPOINT(dev);
 	struct ugen_softc *sc;
@@ -788,7 +788,8 @@ ugenread(dev_t dev, struct uio *uio, int flag)
 }
 
 Static int
-ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
+ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
+	int flag __unused)
 {
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][OUT];
 	u_int32_t n;
@@ -1936,7 +1937,7 @@ filt_ugenrdetach(struct knote *kn)
 }
 
 static int
-filt_ugenread_intr(struct knote *kn, long hint)
+filt_ugenread_intr(struct knote *kn, long hint __unused)
 {
 	struct ugen_endpoint *sce = kn->kn_hook;
 
@@ -1945,7 +1946,7 @@ filt_ugenread_intr(struct knote *kn, long hint)
 }
 
 static int
-filt_ugenread_isoc(struct knote *kn, long hint)
+filt_ugenread_isoc(struct knote *kn, long hint __unused)
 {
 	struct ugen_endpoint *sce = kn->kn_hook;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.c,v 1.6 2006/09/05 11:09:36 uwe Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.6.4.1 2006/10/22 06:04:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,35 +34,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.6 2006/09/05 11:09:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.6.4.1 2006/10/22 06:04:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <dev/clock_subr.h>
 #include <sh3/clock.h>
-
-#ifdef DEBUG
-#define STATIC
-#else
-#define STATIC static
-#endif
-
-STATIC void dreamcast_rtc_init(void *);
-
-STATIC struct rtc_ops dreamcast_rtc_ops = {
-	.init	= dreamcast_rtc_init,
-};
 
 
 void
 machine_clock_init(void)
 {
 
-	sh_clock_init(SH_CLOCK_NORTC, &dreamcast_rtc_ops); 	
-}
-
-STATIC void
-dreamcast_rtc_init(void *cookie)
-{
+	sh_clock_init(SH_CLOCK_NORTC);
 }

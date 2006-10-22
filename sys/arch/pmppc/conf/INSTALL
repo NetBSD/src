@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.25 2006/08/26 20:26:56 christos Exp $
+#	$NetBSD: INSTALL,v 1.25.4.1 2006/10/22 06:04:54 yamt Exp $
 #
 #	INSTALL
 #
@@ -35,7 +35,6 @@ options 	SYSVSHM		# System V shared memory
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -54,6 +53,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	COMPAT_12	# NetBSD 1.2,
 #options 	COMPAT_13	# NetBSD 1.3,
 #options 	COMPAT_14	# NetBSD 1.4,
+#options 	COMPAT_15	# NetBSD 1.5,
 #options 	COMPAT_16	# NetBSD 1.6,
 #options 	COMPAT_20	# NetBSD 2.0,
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.

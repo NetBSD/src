@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.63 2006/09/03 21:05:01 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.63.4.1 2006/10/22 06:04:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.63 2006/09/03 21:05:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.63.4.1 2006/10/22 06:04:44 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -113,7 +113,7 @@ static int check_pa_acc(paddr_t, vm_prot_t);
 
 /*ARGSUSED*/
 int
-mmopen(dev_t dev, int flag, int mode, struct lwp *l)
+mmopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 {
 
 	switch (minor(dev)) {
@@ -126,6 +126,8 @@ mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 			fp->tf_eflags |= PSL_IOPL;
 		}
 		break;
+#else
+	(void) flag;
 #endif
 
 	default:
@@ -136,7 +138,7 @@ mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 /*ARGSUSED*/
 int
-mmrw(dev_t dev, struct uio *uio, int flags)
+mmrw(dev_t dev, struct uio *uio, int flags __unused)
 {
 	register vaddr_t o, v;
 	register int c;
@@ -256,7 +258,7 @@ mmmmap(dev_t dev, off_t off, int prot)
  */
 
 static int
-check_pa_acc(paddr_t pa, vm_prot_t prot)
+check_pa_acc(paddr_t pa, vm_prot_t prot __unused)
 {
 	extern phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 	extern int mem_cluster_cnt;

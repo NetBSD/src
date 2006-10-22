@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.30 2006/09/14 16:05:18 martin Exp $	*/
+/*	$NetBSD: ffb.c,v 1.30.2.1 2006/10/22 06:05:11 yamt Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.30 2006/09/14 16:05:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.30.2.1 2006/10/22 06:05:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,7 +72,8 @@ struct wsscreen_descr ffb_stdscreen = {
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
 	0,
 	0, 0,
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
+	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS,
+	NULL	/* modecookie */
 };
 
 const struct wsscreen_descr *ffb_scrlist[] = {

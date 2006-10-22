@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.16 2006/08/27 23:59:40 christos Exp $ */
+/* $NetBSD: auixp.c,v 1.16.4.1 2006/10/22 06:06:15 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.16 2006/08/27 23:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.16.4.1 2006/10/22 06:06:15 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.16 2006/08/27 23:59:40 christos Exp $");
 #include <dev/pci/auixpvar.h>
 
 
-//#define DEBUG_AUIXP
+/* #define DEBUG_AUIXP */
 
 
 /* why isn't this base address register not in the headerfile? */
@@ -382,9 +382,9 @@ auixp_commit_settings(void *hdl)
 
 /* set audio properties in desired setting */
 static int
-auixp_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
-		 audio_params_t *rec, stream_filter_list_t *pfil,
-		 stream_filter_list_t *rfil)
+auixp_set_params(void *hdl, int setmode, int usemode __unused,
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	struct auixp_codec *co;
 	struct auixp_softc *sc;
@@ -444,7 +444,8 @@ auixp_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
 
 /* called to translate a requested blocksize to a hw-possible one */
 static int
-auixp_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
+auixp_round_blocksize(void *hdl __unused, int bs, int mode __unused,
+    const audio_params_t *param __unused)
 {
 	uint32_t new_bs;
 
@@ -465,7 +466,7 @@ auixp_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
  * kernel virtual address we return here as a reference to the mapping.
  */
 static void *
-auixp_malloc(void *hdl, int direction, size_t size,
+auixp_malloc(void *hdl, int direction __unused, size_t size,
 	     struct malloc_type *type, int flags)
 {
 	struct auixp_codec *co;
@@ -526,7 +527,7 @@ auixp_free(void *hdl, void *addr, struct malloc_type *type)
 
 
 static int
-auixp_getdev(void *hdl, struct audio_device *ret)
+auixp_getdev(void *hdl __unused, struct audio_device *ret)
 {
 
 	*ret = auixp_device;
@@ -567,7 +568,8 @@ auixp_query_devinfo(void *hdl, mixer_devinfo_t *di)
 
 
 static size_t
-auixp_round_buffersize(void *hdl, int direction, size_t bufsize)
+auixp_round_buffersize(void *hdl __unused, int direction __unused,
+    size_t bufsize)
 {
 
 	/* XXX force maximum? i.e. 256 kb? */
@@ -576,7 +578,7 @@ auixp_round_buffersize(void *hdl, int direction, size_t bufsize)
 
 
 static int
-auixp_get_props(void *hdl)
+auixp_get_props(void *hdl __unused)
 {
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
@@ -707,9 +709,9 @@ auixp_dma_update(struct auixp_softc *sc, struct auixp_dma *dma)
 
 	/* be very paranoid */
 	if (!dma)
-		panic("auixp: update: dma = NULL");
+		panic("%s: update: dma = NULL", sc->sc_dev.dv_xname);
 	if (!dma->intr)
-		panic("auixp: update: dma->intr = NULL");
+		panic("%s: update: dma->intr = NULL", sc->sc_dev.dv_xname);
 
 	/* request more input from upper layer */
 	(*dma->intr)(dma->intrarg);
@@ -751,7 +753,7 @@ auixp_update_busbusy(struct auixp_softc *sc)
 /* XXX allmost literaly a copy of trigger-input; could be factorised XXX */
 static int
 auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
-		void (*intr)(void *), void *intrarg, const audio_params_t *param)
+    void (*intr)(void *), void *intrarg, const audio_params_t *param __unused)
 {
 	struct auixp_codec *co;
 	struct auixp_softc *sc;
@@ -826,7 +828,7 @@ auixp_halt_output(void *hdl)
 /* XXX allmost literaly a copy of trigger-output; could be factorised XXX */
 static int
 auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
-		void (*intr)(void *), void *intrarg, const audio_params_t *param)
+    void (*intr)(void *), void *intrarg, const audio_params_t *param __unused)
 {
 	struct auixp_codec *co;
 	struct auixp_softc *sc;
@@ -1072,7 +1074,8 @@ auixp_mappage(void *hdl, void *mem, off_t off, int prot)
 
 /* Is it my hardware? */
 static int
-auixp_match(struct device *dev, struct cfdata *match, void *aux)
+auixp_match(struct device *dev __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -1093,7 +1096,7 @@ auixp_match(struct device *dev, struct cfdata *match, void *aux)
 
 /* it is... now hook up and set up the resources we need */
 static void
-auixp_attach(struct device *parent, struct device *self, void *aux)
+auixp_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct auixp_softc *sc;
 	struct pci_attach_args *pa;
@@ -1157,21 +1160,6 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	if (!sc->sc_output_dma || !sc->sc_input_dma)
 		return;
 
-	/* fill in the missing details about the dma channels. */
-
-	/* for output */
-	sc->sc_output_dma->linkptr        = ATI_REG_OUT_DMA_LINKPTR;
-	sc->sc_output_dma->dma_enable_bit = ATI_REG_CMD_OUT_DMA_EN |
-					    ATI_REG_CMD_SEND_EN;
-	/* have spdif? then this too! XXX not seeing LED yet! XXX */
-	if (sc->has_spdif)
-		sc->sc_output_dma->dma_enable_bit |= ATI_REG_CMD_SPDF_OUT_EN;
-
-	/* and for input */
-	sc->sc_input_dma->linkptr         = ATI_REG_IN_DMA_LINKPTR;
-	sc->sc_input_dma->dma_enable_bit  = ATI_REG_CMD_IN_DMA_EN  |
-					    ATI_REG_CMD_RECEIVE_EN;
-
 #if 0
 	/* could preliminary program DMA chain */
 	auixp_program_dma_chain(sc, sc->sc_output_dma);
@@ -1228,7 +1216,8 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->powerhook = powerhook_establish(auixp_powerhook, sc);
+	sc->powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    auixp_powerhook, sc);
 	if (sc->powerhook == NULL)
 		aprint_error("%s: WARNING: unable to establish powerhook\n",
 		    sc->sc_dev.dv_xname);
@@ -1312,6 +1301,26 @@ auixp_post_config(struct device *self)
 		if (codec->present)
 			audio_attach_mi(&auixp_hw_if, codec, &sc->sc_dev);
 	}
+
+	if (sc->has_spdif) {
+		aprint_normal("%s: codec spdif support detected but disabled "
+		    "for now\n", sc->sc_dev.dv_xname);
+		sc->has_spdif = 0;
+	}
+
+	/* fill in the missing details about the dma channels. */
+	/* for output */
+	sc->sc_output_dma->linkptr        = ATI_REG_OUT_DMA_LINKPTR;
+	sc->sc_output_dma->dma_enable_bit = ATI_REG_CMD_OUT_DMA_EN |
+					    ATI_REG_CMD_SEND_EN;
+	/* have spdif? then this too! XXX not seeing LED yet! XXX */
+	if (sc->has_spdif)
+		sc->sc_output_dma->dma_enable_bit |= ATI_REG_CMD_SPDF_OUT_EN;
+
+	/* and for input */
+	sc->sc_input_dma->linkptr         = ATI_REG_IN_DMA_LINKPTR;
+	sc->sc_input_dma->dma_enable_bit  = ATI_REG_CMD_IN_DMA_EN  |
+					    ATI_REG_CMD_RECEIVE_EN;
 
 	/* done! now enable all interrupts we can service */
 	auixp_enable_interrupts(sc);
@@ -1494,7 +1503,7 @@ auixp_write_codec(void *aux, uint8_t reg, uint16_t data)
 
 
 static int
-auixp_reset_codec(void *aux)
+auixp_reset_codec(void *aux __unused)
 {
 
 	/* nothing to be done? */
@@ -1796,8 +1805,10 @@ auixp_powerhook(int why, void *hdl)
 		break;
 	case PWR_RESUME:
 		auixp_resume(sc);
-/* XXX fix me XXX */
-//		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+#if notyet
+		/* XXX fix me XXX */
+		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+#endif
 		break;
 	}
 }

@@ -45,9 +45,6 @@
 #ifndef _IF_VGEREG_H_
 #define _IF_VGEREG_H_
 
-#define VIA_VENDORID		0x1106
-#define VIA_DEVICEID_61XX	0x3119
-
 #define VGE_PAR0		0x00	/* physical address register */
 #define VGE_PAR1		0x02
 #define VGE_PAR2		0x04
@@ -72,7 +69,7 @@
 #define VGE_CAM6		0x16
 #define VGE_CAM7		0x17
 #define VGE_TXDESC_HIADDR	0x18	/* Hi part of 64bit txdesc base addr */
-#define VGE_DATABUF_HIADDR	0x1D	/* Hi part of 64bit data buffer addr */
+#define VGE_DATABUF_HIADDR	0x1C	/* Hi part of 64bit data buffer addr */
 #define VGE_INTCTL0		0x20	/* interrupt control register */
 #define VGE_RXSUPPTHR		0x20
 #define VGE_TXSUPPTHR		0x20
@@ -587,9 +584,9 @@
 #define VGE_TX_MAXLEN	(1 << 14)		/* maximum TX packet size */
 
 struct vge_tx_frag {
-	uint32_t		vge_addrlo;
-	uint16_t		vge_addrhi;
-	uint16_t		vge_buflen;
+	volatile uint32_t	vge_addrlo;
+	volatile uint16_t	vge_addrhi;
+	volatile uint16_t	vge_buflen;
 };
 
 /*
@@ -604,8 +601,8 @@ struct vge_tx_frag {
 #define VGE_TXDESC_Q		0x8000
 
 struct vge_tx_desc {
-	uint32_t		vge_sts;
-	uint32_t		vge_ctl;
+	volatile uint32_t	vge_sts;
+	volatile uint32_t	vge_ctl;
 	struct vge_tx_frag	vge_frag[VGE_TX_FRAGS];
 };
 

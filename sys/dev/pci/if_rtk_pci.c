@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.25 2006/09/01 20:28:14 uwe Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.25.4.1 2006/10/22 06:06:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.25 2006/09/01 20:28:14 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.25.4.1 2006/10/22 06:06:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,8 @@ rtk_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-rtk_pci_match(struct device *parent, struct cfdata *match, void *aux)
+rtk_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -158,7 +159,7 @@ rtk_pci_match(struct device *parent, struct cfdata *match, void *aux)
  * setup and ethernet/BPF attach.
  */
 static void
-rtk_pci_attach(struct device *parent, struct device *self, void *aux)
+rtk_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct rtk_pci_softc *psc = (struct rtk_pci_softc *)self;
 	struct rtk_softc *sc = &psc->sc_rtk;
@@ -248,7 +249,8 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_flags |= RTK_ENABLED;
 
-	psc->sc_powerhook = powerhook_establish(rtk_pci_powerhook, psc);
+	psc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    rtk_pci_powerhook, psc);
 	if (psc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish pci power hook\n",
 			sc->sc_dev.dv_xname);

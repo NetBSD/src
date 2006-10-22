@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.15 2006/06/18 21:32:24 christos Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.15.6.1 2006/10/22 06:05:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -456,10 +456,10 @@
  */
 
 struct rtk_desc {
-	u_int32_t		rtk_cmdstat;
-	u_int32_t		rtk_vlanctl;
-	u_int32_t		rtk_bufaddr_lo;
-	u_int32_t		rtk_bufaddr_hi;
+	volatile uint32_t	rtk_cmdstat;
+	volatile uint32_t	rtk_vlanctl;
+	volatile uint32_t	rtk_bufaddr_lo;
+	volatile uint32_t	rtk_bufaddr_hi;
 };
 
 #define RTK_TDESC_CMD_FRAGLEN	0x0000FFFF
@@ -536,22 +536,22 @@ struct rtk_desc {
  * Statistics counter structure (8139C+ and 8169 only)
  */
 struct rtk_stats {
-	u_int32_t		rtk_tx_pkts_lo;
-	u_int32_t		rtk_tx_pkts_hi;
-	u_int32_t		rtk_tx_errs_lo;
-	u_int32_t		rtk_tx_errs_hi;
-	u_int32_t		rtk_tx_errs;
-	u_int16_t		rtk_missed_pkts;
-	u_int16_t		rtk_rx_framealign_errs;
-	u_int32_t		rtk_tx_onecoll;
-	u_int32_t		rtk_tx_multicolls;
-	u_int32_t		rtk_rx_ucasts_hi;
-	u_int32_t		rtk_rx_ucasts_lo;
-	u_int32_t		rtk_rx_bcasts_lo;
-	u_int32_t		rtk_rx_bcasts_hi;
-	u_int32_t		rtk_rx_mcasts;
-	u_int16_t		rtk_tx_aborts;
-	u_int16_t		rtk_rx_underruns;
+	uint32_t		rtk_tx_pkts_lo;
+	uint32_t		rtk_tx_pkts_hi;
+	uint32_t		rtk_tx_errs_lo;
+	uint32_t		rtk_tx_errs_hi;
+	uint32_t		rtk_tx_errs;
+	uint16_t		rtk_missed_pkts;
+	uint16_t		rtk_rx_framealign_errs;
+	uint32_t		rtk_tx_onecoll;
+	uint32_t		rtk_tx_multicolls;
+	uint32_t		rtk_rx_ucasts_hi;
+	uint32_t		rtk_rx_ucasts_lo;
+	uint32_t		rtk_rx_bcasts_lo;
+	uint32_t		rtk_rx_bcasts_hi;
+	uint32_t		rtk_rx_mcasts;
+	uint16_t		rtk_tx_aborts;
+	uint16_t		rtk_rx_underruns;
 };
 
 #define RTK_RX_DESC_CNT		64
@@ -560,12 +560,10 @@ struct rtk_stats {
 #define RTK_RX_LIST_SZ		(RTK_RX_DESC_CNT * sizeof(struct rtk_desc))
 #define RTK_RING_ALIGN		256
 #define RTK_IFQ_MAXLEN		512
-#define RTK_OWN(x)		(le32toh((x)->rtk_cmdstat) & RTK_RDESC_STAT_OWN)
-#define RTK_RXBYTES(x)		(le32toh((x)->rtk_cmdstat) & sc->rtk_rxlenmask)
 #define RTK_PKTSZ(x)		((x)/* >> 3*/)
 
-#define RTK_ADDR_LO(y)	((u_int64_t) (y) & 0xFFFFFFFF)
-#define RTK_ADDR_HI(y)	((u_int64_t) (y) >> 32)
+#define RTK_ADDR_LO(y)		((uint64_t)(y) & 0xFFFFFFFF)
+#define RTK_ADDR_HI(y)		((uint64_t)(y) >> 32)
 
 #define RTK_JUMBO_FRAMELEN	9018
 #define RTK_JUMBO_MTU		(RTK_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.65 2006/09/07 02:40:33 dogcow Exp $ */
+/*	$NetBSD: if_gre.c,v 1.65.4.1 2006/10/22 06:07:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.65 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.65.4.1 2006/10/22 06:07:24 yamt Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -227,7 +227,7 @@ gre_clone_destroy(struct ifnet *ifp)
 }
 
 static void
-gre_receive(struct socket *so, caddr_t arg, int waitflag)
+gre_receive(struct socket *so __unused, caddr_t arg, int waitflag __unused)
 {
 	struct gre_softc *sc = (struct gre_softc *)arg;
 
@@ -264,7 +264,7 @@ gre_sodestroy(struct socket **sop)
 }
 
 static struct mbuf *
-gre_getsockmbuf(struct socket *so)
+gre_getsockmbuf(struct socket *so __unused)
 {
 	struct mbuf *m;
 
@@ -311,7 +311,7 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
 	}
 
 	if (sc->g_srcport == 0) {
-		if (gre_getsockname(so, m, l) != 0) {
+		if ((rc = gre_getsockname(so, m, l)) != 0) {
 			GRE_DPRINTF(sc, "%s: gre_getsockname failed\n",
 			    __func__);
 			goto out;
@@ -322,9 +322,7 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
 	sin->sin_addr = sc->g_dst;
 	sin->sin_port = sc->g_dstport;
 
-	rc = soconnect(so, m, l);
-
-	if (rc != 0) {
+	if ((rc = soconnect(so, m, l)) != 0) {
 		GRE_DPRINTF(sc, "%s: soconnect failed\n", __func__);
 		goto out;
 	}
@@ -388,7 +386,7 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 			break;
 		}
 		/* XXX optimize */ 
-		if (memcmp(&sp, &sc->sc_soparm, sizeof(sp)) != 0) {
+		if (so == NULL || memcmp(&sp, &sc->sc_soparm, sizeof(sp)) != 0){
 			GRE_DPRINTF(sc, "%s: parameters changed\n", __func__);
 
 			if (sp.sp_fp != NULL) {
@@ -469,7 +467,7 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 		gre_upcall_remove(so);
 		FILE_UNUSE(sp.sp_fp, NULL);
 		sp.sp_fp = NULL;
-	} else
+	} else if (so != NULL)
 		gre_sodestroy(&so);
 out:
 	GRE_DPRINTF(sc, "%s: stopping\n", __func__);
@@ -596,7 +594,7 @@ gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen, u_char proto,
  */
 static int
 gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-	   struct rtentry *rt)
+	   struct rtentry *rt __unused)
 {
 	int error = 0, hlen;
 	struct gre_softc *sc = ifp->if_softc;
@@ -1241,7 +1239,7 @@ void	greattach(int);
 
 /* ARGSUSED */
 void
-greattach(int count)
+greattach(int count __unused)
 {
 #ifdef INET
 	LIST_INIT(&gre_softc_list);

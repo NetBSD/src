@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.4 2006/09/11 21:59:09 plunky Exp $	*/
+/*	$NetBSD: btsco.c,v 1.4.2.1 2006/10/22 06:05:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.4 2006/09/11 21:59:09 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.4.2.1 2006/10/22 06:05:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -138,9 +138,6 @@ static int  btsco_detach(struct device *, int);
 CFATTACH_DECL(btsco, sizeof(struct btsco_softc),
     btsco_match, btsco_attach, btsco_detach, NULL);
 
-/* btdev identity matching */
-static int btsco_identify(struct btdev *, prop_dictionary_t);
-
 /* audio(9) glue */
 static int btsco_open(void *, int);
 static void btsco_close(void *);
@@ -179,8 +176,8 @@ static const struct audio_hw_if btsco_if = {
 	NULL,			/* speaker_ctl */
 	btsco_getdev,		/* getdev */
 	btsco_setfd,		/* setfd */
-	btsco_set_port,	/* set_port */
-	btsco_get_port,	/* get_port */
+	btsco_set_port,		/* set_port */
+	btsco_get_port,		/* get_port */
 	btsco_query_devinfo,	/* query_devinfo */
 	btsco_allocm,		/* allocm */
 	btsco_freem,		/* freem */
@@ -197,6 +194,19 @@ static const struct audio_device btsco_device = {
 	"Bluetooth Audio",
 	"",
 	"btsco"
+};
+
+/* Voice_Setting == 0x0060: 8000Hz, mono, 16-bit, slinear_le */
+static const struct audio_format btsco_format = {
+	NULL,				/* driver_data */
+	(AUMODE_PLAY | AUMODE_RECORD),	/* mode */
+	AUDIO_ENCODING_SLINEAR_LE,	/* encoding */
+	16,				/* validbits */
+	16,				/* precision */
+	1,				/* channels */
+	AUFMT_MONAURAL,			/* channel_mask */
+	1,				/* frequency_type */
+	{ 8000 }			/* frequency */
 };
 
 /* bluetooth(9) glue for SCO */
@@ -244,17 +254,24 @@ static void btsco_intr(void *);
  */
 
 static int
-btsco_match(struct device *self, struct cfdata *cfdata, void *aux)
+btsco_match(struct device *self __unused, struct cfdata *cfdata __unused,
+    void *aux)
 {
 	prop_dictionary_t dict = aux;
 	prop_object_t obj;
 
-	obj = prop_dictionary_get(dict, BTDEVtype);
-	return prop_string_equals_cstring(obj, "btsco");
+	obj = prop_dictionary_get(dict, BTDEVservice);
+	if (prop_string_equals_cstring(obj, "HSET"))
+		return 1;
+
+	if (prop_string_equals_cstring(obj, "HF"))
+		return 1;
+
+	return 0;
 }
 
 static void
-btsco_attach(struct device *parent, struct device *self, void *aux)
+btsco_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct btsco_softc *sc = (struct btsco_softc *)self;
 	prop_dictionary_t dict = aux;
@@ -267,8 +284,6 @@ btsco_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_vgm = 200;
 	sc->sc_state = BTSCO_CLOSED;
 
-	sc->sc_btdev.sc_identify = btsco_identify;
-
 	/*
 	 * copy in our configuration info
 	 */
@@ -278,8 +293,8 @@ btsco_attach(struct device *parent, struct device *self, void *aux)
 	obj = prop_dictionary_get(dict, BTDEVraddr);
 	bdaddr_copy(&sc->sc_raddr, prop_data_data_nocopy(obj));
 
-	obj = prop_dictionary_get(dict, BTSCOlisten);
-	if (prop_bool_true(obj)) {
+	obj = prop_dictionary_get(dict, BTDEVservice);
+	if (prop_string_equals_cstring(obj, "HF")) {
 		sc->sc_flags |= BTSCO_LISTEN;
 		aprint_verbose(" listen mode");
 	}
@@ -327,22 +342,20 @@ btsco_detach(struct device *self, int flags)
 
 	DPRINTF("sc=%p\n", sc);
 
+	s = splsoftnet();
 	if (sc->sc_sco != NULL) {
 		DPRINTF("sc_sco=%p\n", sc->sc_sco);
-		s = splsoftnet();
 		sco_disconnect(sc->sc_sco, 0);
 		sco_detach(&sc->sc_sco);
 		sc->sc_sco = NULL;
-		splx(s);
 	}
 
 	if (sc->sc_sco_l != NULL) {
 		DPRINTF("sc_sco_l=%p\n", sc->sc_sco_l);
-		s = splsoftnet();
 		sco_detach(&sc->sc_sco_l);
 		sc->sc_sco_l = NULL;
-		splx(s);
 	}
+	splx(s);
 
 	if (sc->sc_audio != NULL) {
 		DPRINTF("sc_audio=%p\n", sc->sc_audio);
@@ -371,30 +384,6 @@ btsco_detach(struct device *self, int flags)
 	return 0;
 }
 
-/*
- * btdev identity matching
- */
-static int
-btsco_identify(struct btdev *dev, prop_dictionary_t dict)
-{
-	struct btsco_softc *sc = (struct btsco_softc *)dev;
-	prop_object_t obj;
-
-	obj = prop_dictionary_get(dict, BTDEVtype);
-	if (!prop_string_equals_cstring(obj, "btsco"))
-		return 0;
-
-	obj = prop_dictionary_get(dict, BTDEVladdr);
-	if (!prop_data_equals_data(obj, &sc->sc_laddr, sizeof(bdaddr_t)))
-		return 0;
-
-	obj = prop_dictionary_get(dict, BTDEVraddr);
-	if (!prop_data_equals_data(obj, &sc->sc_raddr, sizeof(bdaddr_t)))
-		return 0;
-
-	return 1;
-}
-
 /*****************************************************************************
  *
  *	bluetooth(9) methods for SCO
@@ -404,7 +393,7 @@ btsco_identify(struct btdev *dev, prop_dictionary_t dict)
  */
 
 static void
-btsco_sco_connecting(void *arg)
+btsco_sco_connecting(void *arg __unused)
 {
 /*	struct btsco_softc *sc = arg;	*/
 
@@ -479,7 +468,8 @@ btsco_sco_disconnected(void *arg, int err)
 }
 
 static void *
-btsco_sco_newconn(void *arg, struct sockaddr_bt *laddr, struct sockaddr_bt *raddr)
+btsco_sco_newconn(void *arg, struct sockaddr_bt *laddr __unused,
+    struct sockaddr_bt *raddr)
 {
 	struct btsco_softc *sc = arg;
 
@@ -557,7 +547,7 @@ btsco_sco_input(void *arg, struct mbuf *m)
  */
 
 static int
-btsco_open(void *hdl, int flags)
+btsco_open(void *hdl, int flags __unused)
 {
 	struct sockaddr_bt sa;
 	struct btsco_softc *sc = hdl;
@@ -659,18 +649,16 @@ btsco_close(void *hdl)
 
 	DPRINTF("%s\n", device_xname((struct device *)sc));
 
+	s = splsoftnet();
 	if (sc->sc_sco != NULL) {
-		s = splsoftnet();
 		sco_disconnect(sc->sc_sco, 0);
 		sco_detach(&sc->sc_sco);
-		splx(s);
 	}
 
 	if (sc->sc_sco_l != NULL) {
-		s = splsoftnet();
 		sco_detach(&sc->sc_sco_l);
-		splx(s);
 	}
+	splx(s);
 
 	if (sc->sc_rx_mbuf != NULL) {
 		m_freem(sc->sc_rx_mbuf);
@@ -690,7 +678,7 @@ btsco_close(void *hdl)
 }
 
 static int
-btsco_query_encoding(void *hdl, struct audio_encoding *ae)
+btsco_query_encoding(void *hdl __unused, struct audio_encoding *ae)
 {
 /*	struct btsco_softc *sc = hdl;	*/
 	int err = 0;
@@ -711,62 +699,46 @@ btsco_query_encoding(void *hdl, struct audio_encoding *ae)
 }
 
 static int
-btsco_set_params(void *hdl, int setmode, int usemode,
+btsco_set_params(void *hdl __unused, int setmode, int usemode __unused,
 		audio_params_t *play, audio_params_t *rec,
 		stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 /*	struct btsco_softc *sc = hdl;	*/
-	audio_params_t hw;
-	int err = 0;
+	const struct audio_format *f;
+	int rv;
 
 	DPRINTF("setmode 0x%x usemode 0x%x\n", setmode, usemode);
 	DPRINTF("rate %d, precision %d, channels %d encoding %d\n",
 		play->sample_rate, play->precision, play->channels, play->encoding);
 
-	if ((play->precision != 16 && play->precision != 8)
-	    || play->sample_rate < 7500
-	    || play->sample_rate > 8500
-	    || play->channels != 1)
-		return EINVAL;
+	/*
+	 * If we had a list of formats, we could check the HCI_Voice_Setting
+	 * and select the appropriate one to use. Currently only one is
+	 * supported: 0x0060 == 8000Hz, mono, 16-bit, slinear_le
+	 */
+	f = &btsco_format;
 
-	play->sample_rate = 8000;
-	hw = *play;
-
-	switch (play->encoding) {
-	case AUDIO_ENCODING_ULAW:
-		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-		pfil->append(pfil, mulaw_to_linear16, &hw);
-		break;
-
-	case AUDIO_ENCODING_ALAW:
-		hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-		pfil->append(pfil, alaw_to_linear16, &hw);
-		break;
-
-	case AUDIO_ENCODING_SLINEAR_LE:
-		break;
-
-	case AUDIO_ENCODING_SLINEAR_BE:
-		if (play->precision == 16) {
-			hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			pfil->append(pfil, swap_bytes, &hw);
-		}
-		break;
-
-	case AUDIO_ENCODING_ULINEAR_LE:
-	case AUDIO_ENCODING_ULINEAR_BE:
-	default:
-		err = EINVAL;
+	if (setmode & AUMODE_PLAY) {
+		rv = auconv_set_converter(f, 1, AUMODE_PLAY, play, TRUE, pfil);
+		if (rv < 0)
+			return EINVAL;
 	}
 
-	return err;
+	if (setmode & AUMODE_RECORD) {
+		rv = auconv_set_converter(f, 1, AUMODE_RECORD, rec, TRUE, rfil);
+		if (rv < 0)
+			return EINVAL;
+	}
+
+	return 0;
 }
 
 /*
  * If we have an MTU value to use, round the blocksize to that.
  */
 static int
-btsco_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
+btsco_round_blocksize(void *hdl, int bs, int mode __unused,
+    const audio_params_t *param __unused)
 {
 	struct btsco_softc *sc = hdl;
 
@@ -832,7 +804,7 @@ btsco_start_input(void *hdl, void *block, int blksize,
 		device_xname((struct device *)sc), blksize);
 
 	if (sc->sc_sco == NULL)
-		return EINVAL;
+		return ENOTCONN;
 
 	sc->sc_rx_want = blksize;
 	sc->sc_rx_block = block;
@@ -899,7 +871,7 @@ btsco_halt_input(void *hdl)
 }
 
 static int
-btsco_getdev(void *hdl, struct audio_device *ret)
+btsco_getdev(void *hdl __unused, struct audio_device *ret)
 {
 
 	*ret = btsco_device;
@@ -907,10 +879,8 @@ btsco_getdev(void *hdl, struct audio_device *ret)
 }
 
 static int
-btsco_setfd(void *hdl, int fd)
+btsco_setfd(void *hdl __unused, int fd __unused)
 {
-/*	struct btsco_softc *sc = hdl;	*/
-
 	DPRINTF("set %s duplex\n", fd ? "full" : "half");
 
 	return 0;
@@ -985,7 +955,7 @@ btsco_get_port(void *hdl, mixer_ctrl_t *mc)
 }
 
 static int
-btsco_query_devinfo(void *hdl, mixer_devinfo_t *di)
+btsco_query_devinfo(void *hdl __unused, mixer_devinfo_t *di)
 {
 /*	struct btsco_softc *sc = hdl;	*/
 	int err = 0;
@@ -1084,7 +1054,7 @@ btsco_freem(void *hdl, void *addr, struct malloc_type *type)
 }
 
 static int
-btsco_get_props(void *hdl)
+btsco_get_props(void *hdl __unused)
 {
 
 	return AUDIO_PROP_FULLDUPLEX;
@@ -1095,7 +1065,8 @@ btsco_get_props(void *hdl)
  * to the device and mixer.
  */
 static int
-btsco_dev_ioctl(void *hdl, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+btsco_dev_ioctl(void *hdl, u_long cmd, caddr_t addr, int flag __unused,
+    struct lwp *l __unused)
 {
 	struct btsco_softc *sc = hdl;
 	struct btsco_info *bi = (struct btsco_info *)addr;
@@ -1186,7 +1157,8 @@ btsco_intr(void *arg)
  * that we dont release it before its free.
  */
 static void
-btsco_extfree(struct mbuf *m, caddr_t addr, size_t size, void *arg)
+btsco_extfree(struct mbuf *m, caddr_t addr __unused, size_t size __unused,
+    void *arg)
 {
 	struct btsco_softc *sc = arg;
 

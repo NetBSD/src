@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.37 2006/09/03 21:29:37 christos Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.37.4.1 2006/10/22 06:07:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.37 2006/09/03 21:29:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.37.4.1 2006/10/22 06:07:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,10 +315,8 @@ bad:
  */
  /*ARGSUSED*/
 int
-union_start(mp, flags, l)
-	struct mount *mp;
-	int flags;
-	struct lwp *l;
+union_start(struct mount *mp __unused, int flags __unused,
+    struct lwp *l __unused)
 {
 
 	return (0);
@@ -328,10 +326,7 @@ union_start(mp, flags, l)
  * Free reference to union layer
  */
 int
-union_unmount(mp, mntflags, l)
-	struct mount *mp;
-	int mntflags;
-	struct lwp *l;
+union_unmount(struct mount *mp, int mntflags, struct lwp *l __unused)
 {
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	int freeing;
@@ -355,9 +350,8 @@ union_unmount(mp, mntflags, l)
 		int n;
 
 		/* count #vnodes held on mount list */
-		for (n = 0, vp = mp->mnt_vnodelist.lh_first;
-				vp != NULLVP;
-				vp = vp->v_mntvnodes.le_next)
+		n = 0;
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes)
 			n++;
 
 		/* if this is unchanged then stop */
@@ -439,12 +433,8 @@ union_root(mp, vpp)
 
 /*ARGSUSED*/
 int
-union_quotactl(mp, cmd, uid, arg, l)
-	struct mount *mp;
-	int cmd;
-	uid_t uid;
-	void *arg;
-	struct lwp *l;
+union_quotactl(struct mount *mp __unused, int cmd __unused, uid_t uid __unused,
+    void *arg __unused, struct lwp *l __unused)
 {
 
 	return (EOPNOTSUPP);
@@ -512,11 +502,8 @@ done:
 
 /*ARGSUSED*/
 int
-union_sync(mp, waitfor, cred, l)
-	struct mount *mp;
-	int waitfor;
-	kauth_cred_t cred;
-	struct lwp *l;
+union_sync(struct mount *mp __unused, int waitfor __unused,
+    kauth_cred_t cred __unused, struct lwp *l __unused)
 {
 
 	/*
@@ -527,10 +514,8 @@ union_sync(mp, waitfor, cred, l)
 
 /*ARGSUSED*/
 int
-union_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+union_vget(struct mount *mp __unused, ino_t ino __unused,
+    struct vnode **vpp __unused)
 {
 
 	return (EOPNOTSUPP);

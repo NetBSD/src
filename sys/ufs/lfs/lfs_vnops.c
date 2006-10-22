@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.189 2006/09/15 18:50:49 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.189.2.1 2006/10/22 06:07:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.189 2006/09/15 18:50:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.189.2.1 2006/10/22 06:07:51 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -396,9 +396,14 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 		lfs_check(dvp, LFS_UNUSED_LBN, 0);
 		simple_lock(&fs->lfs_interlock);
 	}
-	while (fs->lfs_writer)
-		ltsleep(&fs->lfs_dirops, (PRIBIO + 1), "lfs_sdirop", 0,
-			&fs->lfs_interlock);
+	while (fs->lfs_writer) {
+		error = ltsleep(&fs->lfs_dirops, (PRIBIO + 1) | PCATCH,
+				"lfs_sdirop", 0, &fs->lfs_interlock);
+		if (error == EINTR) {
+			simple_unlock(&fs->lfs_interlock);
+			goto unreserve;
+		}
+	}
 	simple_lock(&lfs_subsys_lock);
 	if (lfs_dirvcount > LFS_MAX_DIROP && fs->lfs_dirops == 0) {
 		wakeup(&lfs_writer_daemon);
@@ -944,12 +949,12 @@ lfs_setattr(void *v)
  * or explicitly from LFCNWRAPGO.  Called with the interlock held.
  */
 static int
-lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
+lfs_wrapgo(struct lfs *fs, struct inode *ip __unused, int waitfor)
 {
-	if ((ip->i_lfs_iflags & LFSI_WRAPBLOCK) == 0)
+	if (lockstatus(&fs->lfs_stoplock) != LK_EXCLUSIVE)
 		return EBUSY;
 
-	ip->i_lfs_iflags &= ~LFSI_WRAPBLOCK;
+	lockmgr(&fs->lfs_stoplock, LK_RELEASE, &fs->lfs_interlock);
 
 	KASSERT(fs->lfs_nowrap > 0);
 	if (fs->lfs_nowrap <= 0) {
@@ -984,19 +989,15 @@ lfs_close(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-#if 0
-        /* XXX fix this */
 	struct lfs *fs = ip->i_lfs;
 
-	if ((ip->i_lfs_iflags & (LFSI_WRAPBLOCK | LFSI_WRAPWAIT)) ==
-	    LFSI_WRAPBLOCK) {
+	if ((ip->i_number == ROOTINO || ip->i_number == LFS_IFILE_INUM) &&
+	    lockstatus(&fs->lfs_stoplock) == LK_EXCLUSIVE) {
 		simple_lock(&fs->lfs_interlock);
-		printf("lfs_close with flags 0x%x\n", (unsigned)ap->a_fflag);
 		log(LOG_NOTICE, "lfs_close: releasing log wrap control\n");
 		lfs_wrapgo(fs, ip, 0);
 		simple_unlock(&fs->lfs_interlock);
 	}
-#endif
 
 	if (vp == ip->i_lfs->lfs_ivnode &&
 	    vp->v_mount->mnt_iflag & IMNT_UNMOUNT)
@@ -1560,11 +1561,11 @@ lfs_fcntl(void *v)
 		 * a snapshot of the filesystem, without necessarily
 		 * requiring that all fs activity stops.
 		 */
-		if (VTOI(ap->a_vp)->i_lfs_iflags & LFSI_WRAPBLOCK)
+		if (lockstatus(&fs->lfs_stoplock))
 			return EALREADY;
 
 		simple_lock(&fs->lfs_interlock);
-		VTOI(ap->a_vp)->i_lfs_iflags |= LFSI_WRAPBLOCK;
+		lockmgr(&fs->lfs_stoplock, LK_EXCLUSIVE, &fs->lfs_interlock);
 		if (fs->lfs_nowrap == 0)
 			log(LOG_NOTICE, "%s: disabled log wrap\n", fs->lfs_fsmnt);
 		++fs->lfs_nowrap;
@@ -1596,7 +1597,7 @@ lfs_fcntl(void *v)
 		return error;
 
 	    case LFCNWRAPPASS:
-		if (!(VTOI(ap->a_vp)->i_lfs_iflags & LFSI_WRAPBLOCK))
+		if (lockstatus(&fs->lfs_stoplock) != LK_EXCLUSIVE)
 			return EALREADY;
 		if ((VTOI(ap->a_vp)->i_lfs_iflags & LFSI_WRAPWAIT))
 			return EALREADY;
@@ -1906,10 +1907,8 @@ lfs_putpages(void *v)
 	if (vp->v_uobj.uo_npages == 0) {
 		s = splbio();
 		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
-		    (vp->v_flag & VONWORKLST)) {
-			vp->v_flag &= ~VONWORKLST;
-			LIST_REMOVE(vp, v_synclist);
-		}
+		    (vp->v_flag & VONWORKLST))
+			vn_syncer_remove_from_worklist(vp);
 		splx(s);
 		simple_unlock(&vp->v_interlock);
 		

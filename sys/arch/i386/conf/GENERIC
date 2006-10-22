@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.781 2006/09/10 15:45:56 plunky Exp $
+# $NetBSD: GENERIC,v 1.781.2.1 2006/10/22 06:04:43 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.781 $"
+#ident 		"GENERIC-$Revision: 1.781.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -47,7 +47,7 @@ options 	ENHANCED_SPEEDSTEP
 options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
-options         POWERNOW_K8
+options 	POWERNOW_K8
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -265,6 +265,7 @@ options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	WSKBD_EVENT_AUTOREPEAT		# auto repeat in event mode
+#options 	WSKBD_USONLY			# strip off non-US keymaps
 # don't attach pckbd as the console if no PS/2 keyboard is found
 options 	PCKBD_CNATTACH_MAY_FAIL
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
@@ -314,6 +315,9 @@ cpu* at mainbus?
 
 
 # Basic Bus Support
+
+#IPMI support
+#ipmi0		at mainbus?
 
 # Advanced Configuration and Power Interface
 
@@ -755,7 +759,7 @@ wdc*	at isapnp?
 wdc*	at pcmcia? function ?
 
 # CardBus IDE controllers
-#njata*  at cardbus? function ? flags 0		# Workbit NinjaATA-32
+#njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
@@ -963,8 +967,10 @@ glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
@@ -1403,3 +1409,5 @@ pseudo-device	wsfont
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
+
+options PAX_MPROTECT=0			# PaX mprotect(2) restrictions

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2006/05/15 00:55:57 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.10.1 2006/10/22 06:05:20 yamt Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2006/05/15 00:55:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.10.1 2006/10/22 06:05:20 yamt Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -89,17 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2006/05/15 00:55:57 yamt Exp $");
 #include <machine/pcb.h>
 #include <machine/bootinfo.h>
 
-#include "ioapic.h"
-#include "lapic.h"
-
-#if NIOAPIC > 0
-#include <machine/i82093var.h>
-#endif
-
-#if NLAPIC > 0
-#include <machine/i82489var.h>
-#endif
-
 static int match_harddisk(struct device *, struct btinfo_bootdisk *);
 static void matchbiosdisks(void);
 static void findroot(void);
@@ -136,9 +125,12 @@ cpu_configure(void)
 
 	startrtclock();
 
-#if NBIOS32 > 0
-	bios32_init();
+#if NBIOS32 > 0 && defined(DOM0OPS)
+#ifdef XEN3
+	if (xen_start_info.flags & SIF_INITDOMAIN)
 #endif
+		bios32_init();
+#endif /* NBIOS32 > 0 && DOM0OPS */
 #ifdef PCIBIOS
 	pcibios_init();
 #endif
@@ -156,10 +148,6 @@ cpu_configure(void)
 	intr_printconfig();
 #endif
 
-#if NIOAPIC > 0
-	lapic_set_lvt();
-	ioapic_enable();
-#endif
 	/* resync cr0 after FPU configuration */
 	lwp0.l_addr->u_pcb.pcb_cr0 = rcr0();
 #ifdef MULTIPROCESSOR
@@ -168,9 +156,6 @@ cpu_configure(void)
 #endif
 
 	spl0();
-#if NLAPIC > 0
-	lapic_tpr = 0;
-#endif
 }
 
 void

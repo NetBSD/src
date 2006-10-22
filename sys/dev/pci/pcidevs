@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.831 2006/09/07 21:16:55 riz Exp $
+$NetBSD: pcidevs,v 1.831.2.1 2006/10/22 06:06:18 yamt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -601,6 +601,7 @@ vendor LINKSYS2		0x17fe	Linksys
 vendor RALINK		0x1814	Ralink Technologies
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
+vendor DATUM		0x12e2	Datum Inc. Bancomm-Timing Division
 vendor HINT		0x3388	HiNT
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
@@ -962,6 +963,12 @@ product APPLE U3_PPB4		0x0048	U3 PCI-PCI bridge
 product APPLE U3_PPB5		0x0049	U3 PCI-PCI bridge
 product APPLE U3_AGP		0x004b	U3 AGP Interface
 product APPLE K2_GMAC		0x004c	GMAC Ethernet
+product APPLE INTREPID2_AGP	0x0066	Intrepid 2 AGP
+product APPLE INTREPID2_PCI1	0x0067	Intrepid 2 PCI
+product APPLE INTREPID2_PCI2	0x0068	Intrepid 2 PCI
+product APPLE INTREPID2_ATA	0x0069	Intrepid 2 ATA
+product APPLE INTREPID2_FW	0x006a	Intrepid 2 FireWire
+product APPLE INTREPID2_GMAC	0x006b	Intrepid 2 GMAC
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
@@ -1511,6 +1518,9 @@ product CYRIX CX5530_IDE	0x0102	Cx5530 I/O Companion (IDE Controller)
 product CYRIX CX5530_AUDIO	0x0103	Cx5530 I/O Companion (XpressAUDIO)
 product CYRIX CX5530_VIDEO	0x0104	Cx5530 I/O Companion (Video Controller)
 
+/* Datum Inc. Bancomm-Timing Division products */
+product DATUM BC635PCI_U	0x4013	BC635PCI-U TC & FREQ. Processor
+
 /* Davicom Semiconductor products */
 product DAVICOM DM9102	0x9102	DM9102 10/100 Ethernet
 
@@ -1913,7 +1923,11 @@ product INTEL PRO_100_VE_4	0x103d	PRO/100 VE (MOB) Network Controller
 product INTEL PRO_100_VM_5	0x103e	PRO/100 VM (MOB) Network Controller
 product INTEL PRO_WL_2100	0x1043	PRO/Wireless LAN 2100 3B Mini-PCI Adapter
 product INTEL 82597EX		0x1048	PRO/10GbE LR Server Adapter
+product INTEL 82801H_M_AMT	0x1049	i82801H (M_AMT) LAN Controller
+product INTEL 82801H_AMT	0x104a	i82801H (AMT) LAN Controller
 product INTEL 82801H_LAN	0x104b	i82801H LAN Controller
+product INTEL 82801H_IFE_LAN	0x104c	i82801H (IFE) LAN Controller
+product INTEL 82801H_M_LAN	0x104d	i82801H (M) LAN Controller
 product INTEL PRO_100_VM_6	0x1050	PRO/100 VM Network Controller with 82562ET/EZ PHY
 product INTEL 82801EB_LAN	0x1051	82801EB/ER 10/100 Ethernet
 product INTEL PRO_100_M		0x1059	PRO/100 M Network Controller
@@ -1937,9 +1951,17 @@ product INTEL 82546GB_PCIE	0x108a	PRO/1000MT (82546GB)
 product INTEL 82573E		0x108b	i82573E Gigabit Ethernet
 product INTEL 82573E_IAMT	0x108c	i82573E Gigabit Ethernet
 product INTEL PRO_100_VE_6	0x1092	PRO/100 VE Network Controller
+product INTEL PRO_100_VE_7	0x1094	PRO/100 VE Network Controller with 82562G PHY
+product INTEL 80K3LAN_CPR_DPT 0x1096	i80003 dual 1000baseT Ethernet
+product INTEL 80K3LAN_FIB_DPT 0x1097	i80003 dual 1000baseX Ethernet
+product INTEL 80K3LAN_SDS_DPT 0x1098	i80003 dual Gigabit Ethernet (SERDES)
+product INTEL 82546GB_QUAD_COPPER 0x1099 i82546GB quad-port Gigabit Ethernet
 product INTEL 82573L		0x109a	i82573L Gigabit Ethernet
-product INTEL 82546GB_QUAD_COPPER 0x1099  PRO/1000MT QP (82546GB)
-product INTEL 82572EI		0x10b9	PRO/1000PT (82572EI)
+product INTEL 82571EB_QUAD_COPPER 0x10a4 i82571EB quad-1000baseT Ethernet
+product INTEL 82546GB_QUAD_COPPER_KSP3 0x10b5 i82546GB quad-port Gigabit Ethernet (KSP3)
+product INTEL 82572EI		0x10b9	i82572EI 1000baseT Ethernet
+product INTEL 80K3LAN_CPR_SPT 0x10ba	i80003 1000baseT Ethernet
+product INTEL 80K3LAN_SDS_SPT 0x10bb	i80003 Gigabit Ethernet (SERDES)
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
@@ -2561,6 +2583,7 @@ product NETGEAR MA301		0x4100	MA301 PCI IEEE 802.11b
 /* Netmos products */
 product NETMOS NM9805	0x9805	1284 Printer port
 product NETMOS NM9815	0x9815	Dual 1284 Printer port
+product NETMOS NM9820	0x9820	Single UART
 product NETMOS NM9835	0x9835	Dual UART and 1284 Printer port
 product NETMOS NM9845	0x9845	Quad UART and 1284 Printer port
 
@@ -2665,6 +2688,7 @@ product NVIDIA	GEFORCE2DDR	0x0151	GeForce2 GTS (DDR)
 product NVIDIA	GEFORCE2BR	0x0152	GeForce2 GTS
 product NVIDIA	QUADRO2		0x0153	Quadro2
 product NVIDIA	GEFORCE6200	0x0161	GeForce 6200TC
+product NVIDIA	GEFORCE6200LE	0x0163	GeForce 6200LE
 product NVIDIA	GEFORCE4_MX460	0x0170	GeForce4 MX 460
 product NVIDIA	GEFORCE4_MX440	0x0171	GeForce4 MX 440
 product NVIDIA	GEFORCE4_MX420	0x0172	GeForce4 MX 420
@@ -2734,11 +2758,18 @@ product NVIDIA	GF_FX5900XT	0x0332	GeForce FX 5900XT
 product NVIDIA	GF_FX5950U	0x0333	GeForce FX 5950 Ultra
 product NVIDIA	QUADRO_FX_3000	0x0338	Quadro FX 3000
 product NVIDIA	GF_FX5700_LE	0x0343	GeForce FX 5700 LE
+product NVIDIA	MCP55_ISA	0x0362	nForce MCP55 PCI-ISA Bridge
 product NVIDIA	MCP55_SMB	0x0368	nForce MCP55 SMBus Controller
+product NVIDIA	MCP55_MEM	0x0369	nForce MCP55 Memory Controller
+product NVIDIA	MCP55_MEM2	0x036a	nForce MCP55 Memory Controller
 product NVIDIA	MCP55_IDE	0x036e	nForce MCP55 ATA133 IDE Controller
+product NVIDIA	MCP55_OHCI	0x036c	nForce MCP55 OHCI USB Controller
+product NVIDIA	MCP55_EHCI	0x036d	nForce MCP55 EHCI USB Controller
+product NVIDIA	MCP55_PPB	0x0370	nForce MCP55 PCI-PCI Bridge
 product NVIDIA	MCP55_HDA	0x0371	nForce MCP55 High Definition Audio Controller
 product NVIDIA	MCP55_LAN1	0x0372	nForce MCP55 Gigabit Ethernet Controller
 product NVIDIA	MCP55_LAN2	0x0373	nForce MCP55 Gigabit Ethernet Controller
+product NVIDIA	MCP55_PCIE	0x0377	nForce MCP55 PCI-Express 16x Port
 product NVIDIA  MCP55_SATA      0x037e  nForce MCP55 Seria ATA Controller
 product NVIDIA  MCP55_SATA2     0x037f  nForce MCP55 Serial ATA Controller
 product NVIDIA	MCP61_ISA	0x03e0  nForce MCP61 PCI-ISA Bridge
@@ -3252,7 +3283,8 @@ product TI	PCI72111FW	0x8032	PCI7x21/7x11 IEEE 1394 Host Controller
 product TI	PCI72111FM	0x8033	PCI7x21/7x11 Integrated FlashMedia Controller
 product TI	PCI6515A	0x8036	PCI6515A Cardbus Controller 
 product TI	PCI6515ASM	0x8038	PCI6515A Cardbus Controller (Smart Card mode)
-product TI	ACX100		0x8400	ACX100 802.11b
+product TI	ACX100A		0x8400	ACX100A 802.11b
+product TI	ACX100B		0x8401	ACX100B 802.11b
 product TI	ACX111		0x9066	ACX111 802.11b/g
 product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1031		0xac13	PCI1031 PCI-PCMCIA Bridge

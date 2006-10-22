@@ -1,0 +1,10 @@
+#	$NetBSD: GUMSTIX_INSTALL,v 1.1.2.2 2006/10/22 06:04:36 yamt Exp $
+#
+#	GUMSTIX_INSTALL -- GUMSTIX kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/GUMSTIX"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE

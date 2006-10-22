@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.6 2005/12/11 12:25:06 christos Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.6.22.1 2006/10/22 06:07:39 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.6 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.6.22.1 2006/10/22 06:07:39 yamt Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -334,11 +334,11 @@ bad:
  */
 static int
 ipcomp_output(
-	struct mbuf *m,
-	struct ipsecrequest *isr,
-	struct mbuf **mp,
-	int skip,
-	int protoff
+    struct mbuf *m,
+    struct ipsecrequest *isr,
+    struct mbuf **mp __unused,
+    int skip,
+    int protoff
 )
 {
 	struct secasvar *sav;
@@ -602,7 +602,8 @@ bad:
 static struct xformsw ipcomp_xformsw = {
 	XF_IPCOMP,		XFT_COMP,		"IPcomp",
 	ipcomp_init,		ipcomp_zeroize,		ipcomp_input,
-	ipcomp_output
+	ipcomp_output,
+	NULL,
 };
 
 INITFN void

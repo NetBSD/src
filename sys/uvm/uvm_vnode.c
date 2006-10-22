@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.73 2006/09/15 15:51:13 yamt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.73.2.1 2006/10/22 06:07:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.73 2006/09/15 15:51:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.73.2.1 2006/10/22 06:07:54 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -120,7 +120,7 @@ struct uvm_pagerops uvm_vnodeops = {
  */
 
 struct uvm_object *
-uvn_attach(void *arg, vm_prot_t accessprot)
+uvn_attach(void *arg, vm_prot_t accessprot __unused)
 {
 	struct vnode *vp = arg;
 	struct uvm_object *uobj = &vp->v_uobj;
@@ -466,12 +466,12 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	 */
 
 	oldsize = vp->v_size;
-	vp->v_size = newsize;
 	if (oldsize > pgend && oldsize != VSIZENOTSET) {
 		(void) uvn_put(uobj, pgend, 0, PGO_FREE | PGO_SYNCIO);
-	} else {
-		simple_unlock(&uobj->vmobjlock);
+		simple_lock(&uobj->vmobjlock);
 	}
+	vp->v_size = newsize;
+	simple_unlock(&uobj->vmobjlock);
 }
 
 /*
@@ -500,4 +500,29 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 		off += bytelen;
 		len -= bytelen;
 	}
+}
+
+boolean_t
+uvn_text_p(struct uvm_object *uobj)
+{
+	struct vnode *vp = (struct vnode *)uobj;
+
+	return (vp->v_flag & VEXECMAP) != 0;
+}
+
+boolean_t
+uvn_clean_p(struct uvm_object *uobj)
+{
+	struct vnode *vp = (struct vnode *)uobj;
+
+	return (vp->v_flag & VONWORKLST) == 0;
+}
+
+boolean_t
+uvn_needs_writefault_p(struct uvm_object *uobj)
+{
+	struct vnode *vp = (struct vnode *)uobj;
+
+	return uvn_clean_p(uobj) ||
+	    (vp->v_flag & (VWRITEMAP|VWRITEMAPDIRTY)) == VWRITEMAP;
 }

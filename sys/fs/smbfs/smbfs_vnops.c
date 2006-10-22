@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.53 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.53.6.1 2006/10/22 06:07:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.53 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.53.6.1 2006/10/22 06:07:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -882,8 +882,7 @@ smbfs_readdir(v)
 
 /* ARGSUSED */
 int
-smbfs_fsync(v)
-     void *v;
+smbfs_fsync(void *v __unused)
 {
 	/*return (smb_flush(ap->a_vp, ap->a_cred, ap->a_waitfor, ap->a_l, 1));*/
     return (0);

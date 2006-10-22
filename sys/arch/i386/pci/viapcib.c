@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.3 2006/06/26 18:21:38 drochner Exp $ */
+/* $NetBSD: viapcib.c,v 1.3.8.1 2006/10/22 06:04:48 yamt Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.3 2006/06/26 18:21:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.3.8.1 2006/10/22 06:04:48 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -138,7 +138,8 @@ CFATTACH_DECL(viapcib, sizeof(struct viapcib_softc), viapcib_match,
     viapcib_attach, NULL, NULL);
 
 static int
-viapcib_match(struct device *parent, struct cfdata *match, void *opaque)
+viapcib_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *opaque)
 {
 	struct pci_attach_args *pa;
 
@@ -285,7 +286,7 @@ viapcib_busy(struct viapcib_softc *sc)
 }
 
 static int
-viapcib_acquire_bus(void *opaque, int flags)
+viapcib_acquire_bus(void *opaque, int flags __unused)
 {
 	struct viapcib_softc *sc;
 
@@ -299,7 +300,7 @@ viapcib_acquire_bus(void *opaque, int flags)
 }
 
 static void
-viapcib_release_bus(void *opaque, int flags)
+viapcib_release_bus(void *opaque, int flags __unused)
 {
 	struct viapcib_softc *sc;
 
@@ -314,7 +315,7 @@ viapcib_release_bus(void *opaque, int flags)
 
 static int
 viapcib_exec(void *opaque, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
-    size_t cmdlen, void *vbuf, size_t buflen, int flags)
+    size_t cmdlen, void *vbuf, size_t buflen, int flags __unused)
 {
 	struct viapcib_softc *sc;
 	uint8_t cmd;

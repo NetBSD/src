@@ -1,5 +1,5 @@
-/*	$NetBSD: altq_rmclass_debug.h,v 1.6 2005/12/11 12:16:03 christos Exp $	*/
-/*	$KAME: altq_rmclass_debug.h,v 1.2 2000/02/22 14:00:35 itojun Exp $	*/
+/*	$NetBSD: altq_rmclass_debug.h,v 1.6.22.1 2006/10/22 06:04:30 yamt Exp $	*/
+/*	$KAME: altq_rmclass_debug.h,v 1.3 2002/11/29 04:36:24 kjc Exp $	*/
 
 /*
  * Copyright (c) Sun Microsystems, Inc. 1998 All rights reserved.

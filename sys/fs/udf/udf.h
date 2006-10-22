@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.6 2006/08/22 16:52:41 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.6.6.1 2006/10/22 06:07:09 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -64,6 +64,13 @@ extern int udf_verbose;
 #define UDF_DEBUG_READ		0x200
 #define UDF_DEBUG_CALL		0x400
 #define UDF_DEBUG_NOTIMPL	UDF_DEBUG_CALL
+
+
+#ifdef DEBUG
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_udf_setup);
+#endif /* SYSCTL_SETUP_PROTO */
+#endif
 
 
 #ifdef DEBUG
@@ -230,6 +237,7 @@ struct udf_node {
 	struct long_ad		 loc;			/* FID/hash loc.     */
 	struct long_ad		 next_loc;		/* strat 4096 loc    */
 	int			 needs_indirect;	/* has missing indr. */
+	uint64_t		 last_diroffset;	/* speeding up lookup*/
 
 	/* TODO support for allocation extents? */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.3 2006/09/13 02:35:26 dyoung Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.3.4.1 2006/10/22 06:07:47 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.3 2006/09/13 02:35:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.3.4.1 2006/10/22 06:07:47 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -136,12 +136,15 @@ secmodel_bsd44_securelevel_start(void)
  * Responsibility: Securelevel
  */
 int
-secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred __unused,
+    kauth_action_t action, void *cookie __unused, void *arg0, void *arg1,
+    void *arg2, void *arg3)
 {
 	int result;
+	enum kauth_system_req req;
 
 	result = KAUTH_RESULT_DENY;
+	req = (enum kauth_system_req)arg0;
 
 	switch (action) {
 	case KAUTH_SYSTEM_RAWIO: {
@@ -149,7 +152,7 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 
 		rw = (u_int)(u_long)arg1;
 
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_SYSTEM_RAWIO_MEMORY: {
 			switch (rw) {
 			case KAUTH_REQ_SYSTEM_RAWIO_READ:
@@ -174,8 +177,25 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 			struct vnode *vp = arg2;
 			dev_t dev = (dev_t)(u_long)arg3;
 
-			if (vp == NULL || dev == NODEV)
+			if (vp == NULL || dev == NODEV) {
+				switch (rw) {
+				case KAUTH_REQ_SYSTEM_RAWIO_READ:
+					result = KAUTH_RESULT_ALLOW;
+					break;
+
+				case KAUTH_REQ_SYSTEM_RAWIO_RW:
+				case KAUTH_REQ_SYSTEM_RAWIO_WRITE:
+					if (securelevel < 1)
+						result = KAUTH_RESULT_ALLOW;
+					break;
+
+				default:
+					result = KAUTH_RESULT_DEFER;
+					break;
+				}
+
 				break;
+			}
 
 			switch (vp->v_type) {
 			case VCHR: {
@@ -220,9 +240,6 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 			case VBLK: {
 				const struct bdevsw *bdev;
 
-				if (vfs_mountedon(vp))
-					break;
-
 				bdev = bdevsw_lookup(dev);
 				if (bdev == NULL)
 					break;
@@ -252,10 +269,11 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 	
 	case KAUTH_SYSTEM_TIME:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_SYSTEM_TIME_BACKWARDS:
 			if (securelevel < 2)
 				result = KAUTH_RESULT_ALLOW;
+			break;
 
 		case KAUTH_REQ_SYSTEM_TIME_RTCOFFSET:
 			if (securelevel < 1)
@@ -274,7 +292,7 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_SYSTEM_SYSCTL:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_SYSTEM_SYSCTL_ADD:
 		case KAUTH_REQ_SYSTEM_SYSCTL_DELETE:
 		case KAUTH_REQ_SYSTEM_SYSCTL_DESC:
@@ -294,7 +312,7 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_SYSTEM_DEBUG:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_SYSTEM_DEBUG_IPKDB:
 			if (securelevel < 1)
 				result = KAUTH_RESULT_ALLOW;
@@ -322,8 +340,9 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
  * Responsibility: Securelevel
  */
 int
-secmodel_bsd44_securelevel_process_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+secmodel_bsd44_securelevel_process_cb(kauth_cred_t cred __unused,
+    kauth_action_t action, void *cookie __unused, void *arg0 __unused,
+    void *arg1 __unused, void *arg2 __unused, void *arg3 __unused)
 {
 	int result;
 
@@ -351,16 +370,19 @@ secmodel_bsd44_securelevel_process_cb(kauth_cred_t cred, kauth_action_t action,
  * Responsibility: Securelevel
  */
 int
-secmodel_bsd44_securelevel_network_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+secmodel_bsd44_securelevel_network_cb(kauth_cred_t cred __unused,
+    kauth_action_t action, void *cookie __unused, void *arg0 __unused,
+    void *arg1 __unused, void *arg2 __unused, void *arg3 __unused)
 {
 	int result;
+	enum kauth_network_req req;
 
 	result = KAUTH_RESULT_DENY;
+	req = (enum kauth_network_req)arg0;
 
 	switch (action) {
 	case KAUTH_NETWORK_FIREWALL:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_NETWORK_FIREWALL_FW:
 		case KAUTH_REQ_NETWORK_FIREWALL_NAT:
 			if (securelevel < 2)
@@ -394,16 +416,19 @@ secmodel_bsd44_securelevel_network_cb(kauth_cred_t cred, kauth_action_t action,
  * Responsibility: Securelevel
  */
 int
-secmodel_bsd44_securelevel_machdep_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+secmodel_bsd44_securelevel_machdep_cb(kauth_cred_t cred __unused,
+    kauth_action_t action, void *cookie __unused, void *arg0 __unused,
+    void *arg1 __unused, void *arg2 __unused, void *arg3 __unused)
 {
         int result;
+	enum kauth_machdep_req req;
 
         result = KAUTH_RESULT_DENY;
+	req = (enum kauth_machdep_req)arg0;
 
         switch (action) {
 	case KAUTH_MACHDEP_X86:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_MACHDEP_X86_IOPL:
 		case KAUTH_REQ_MACHDEP_X86_IOPERM:
 			if (securelevel < 2)

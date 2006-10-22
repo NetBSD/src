@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.66 2006/08/30 17:05:30 christos Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.66.4.1 2006/10/22 06:07:35 yamt Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.66 2006/08/30 17:05:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.66.4.1 2006/10/22 06:07:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -247,7 +247,7 @@ struct domain inet6domain = {
 	in6_domifattach, in6_domifdetach,
 	{ &ip6intrq, NULL },
 	{ NULL },
-	MOWNER_INIT
+	MOWNER_INIT("","")
 };
 
 /*

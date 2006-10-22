@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.119 2006/08/31 19:24:37 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.119.4.1 2006/10/22 06:05:43 yamt Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.119 2006/08/31 19:24:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.119.4.1 2006/10/22 06:05:43 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -872,7 +872,8 @@ atw_attach(struct atw_softc *sc)
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	sc->sc_powerhook = powerhook_establish(atw_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    atw_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
@@ -2166,7 +2167,7 @@ atw_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
 
 static int
 atw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
-	const u_int8_t mac[IEEE80211_ADDR_LEN])
+	const u_int8_t mac[IEEE80211_ADDR_LEN] __unused)
 {
 	struct atw_softc *sc = ic->ic_ifp->if_softc;
 
@@ -2181,7 +2182,7 @@ atw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
 }
 
 static void
-atw_key_update_begin(struct ieee80211com *ic)
+atw_key_update_begin(struct ieee80211com *ic __unused)
 {
 #ifdef ATW_DEBUG
 	struct ifnet *ifp = ic->ic_ifp;
@@ -2879,13 +2880,15 @@ atw_intr(void *arg)
 			/* Sweep up transmit descriptors. */
 			atw_txintr(sc);
 
-			if (txstatus & ATW_INTR_TLT)
+			if (txstatus & ATW_INTR_TLT) {
 				DPRINTF(sc, ("%s: tx lifetime exceeded\n",
 				    sc->sc_dev.dv_xname));
+			}
 
-			if (txstatus & ATW_INTR_TRT)
+			if (txstatus & ATW_INTR_TRT) {
 				DPRINTF(sc, ("%s: tx retry limit exceeded\n",
 				    sc->sc_dev.dv_xname));
+			}
 
 			/* If Tx under-run, increase our transmit threshold
 			 * if another is available.

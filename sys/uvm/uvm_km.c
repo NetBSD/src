@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.89 2006/07/05 14:26:42 drochner Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.89.6.1 2006/10/22 06:07:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.89 2006/07/05 14:26:42 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.89.6.1 2006/10/22 06:07:52 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -245,7 +245,8 @@ uvm_km_vacache_init(struct vm_map *map, const char *name, size_t size)
 #else /* !defined(PMAP_MAP_POOLPAGE) */
 
 void
-uvm_km_vacache_init(struct vm_map *map, const char *name, size_t size)
+uvm_km_vacache_init(struct vm_map *map __unused, const char *name __unused,
+		    size_t size __unused)
 {
 
 	/* nothing */
@@ -254,7 +255,7 @@ uvm_km_vacache_init(struct vm_map *map, const char *name, size_t size)
 #endif /* !defined(PMAP_MAP_POOLPAGE) */
 
 void
-uvm_km_va_drain(struct vm_map *map, uvm_flag_t flags)
+uvm_km_va_drain(struct vm_map *map, uvm_flag_t flags __unused)
 {
 	struct vm_map_kernel *vmk = vm_map_to_kernel(map);
 	const boolean_t intrsafe = (map->flags & VM_MAP_INTRSAFE) != 0;

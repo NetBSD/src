@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.43 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.43.22.1 2006/10/22 06:06:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.43 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.43.22.1 2006/10/22 06:06:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,8 @@ ep_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-ep_pci_match(struct device *parent, struct cfdata *match, void *aux)
+ep_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -180,7 +181,7 @@ ep_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ep_pci_attach(struct device *parent, struct device *self, void *aux)
+ep_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;

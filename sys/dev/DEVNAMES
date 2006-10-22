@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.217 2006/09/17 15:01:34 plunky Exp $
+#	$NetBSD: DEVNAMES,v 1.217.2.1 2006/10/22 06:05:28 yamt Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -141,6 +141,7 @@ aupci			evbmips
 aupcmcia		evbmips
 aurateconv		MI		Attribute
 aurtc			evbmips
+auspi			evbmips
 autri			MI
 auvia			MI
 auxio			sparc64
@@ -552,11 +553,15 @@ hippi			MI		Attribute
 hme			MI
 hp			vax
 hpc			sgimips
+hpcfb			hpcarm
 hpcfb			hpcmips
 hpcfb			hpcsh
+hpcfbif			hpcarm		Attribute
 hpcfbif			hpcmips		Attribute
 hpcfbif			hpcsh		Attribute
+hpckbd			hpcarm
 hpckbd			hpcsh
+hpckbdif		hpcarm		Attribute
 hpckbdif		hpcsh		Attribute
 hpibbus			hp300
 hpibdev			hp300		Attribute
@@ -621,6 +626,8 @@ iopsp			MI
 ipaqbus			hpcarm
 ipaqlcd			hpcarm
 ipaqpcic		hpcarm
+ipmi			i386
+ipmi			xen
 ippp			MI
 ipw			MI
 irdasir			MI		Attribute
@@ -665,6 +672,11 @@ iy			MI
 j6x0lcd			hpcsh
 j6x0pwr			hpcsh
 j6x0tp			hpcsh
+j720kbd			hpcarm
+j720lcd			hpcarm
+j720pwr			hpcarm
+j720ssp			hpcarm
+j720tp			hpcarm
 joy			arc
 joy			bebox
 joy			cats
@@ -1142,6 +1154,8 @@ sd			MI
 se			MI
 sea			MI
 sebuf			sun3
+sec			MI
+sed			hpcarm
 seeq8005		MI		Attribute
 ser			amiga
 ser			amigappc
@@ -1189,6 +1203,7 @@ sparcvme		sparc
 spc			MI
 spckbd			shark		Attribute
 spd			playstation2
+spi			MI
 spic			MI
 spif			sparc
 spif			sparc64
@@ -1238,11 +1253,9 @@ tlp			MI
 tlphy			MI
 tlsb			alpha
 tlsbmem			alpha
+tmp121temp		MI
 tms320av110		MI		Attribute
 tod			sun2
-todclock		cats
-todclock		netwinder
-todservice		cats		Attribute
 token			MI		Attribute
 topcat			hp300
 tpcalib			hpcarm		Attribute

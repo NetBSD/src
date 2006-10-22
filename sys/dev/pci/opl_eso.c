@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_eso.c,v 1.11 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: opl_eso.c,v 1.11.22.1 2006/10/22 06:06:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_eso.c,v 1.11 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_eso.c,v 1.11.22.1 2006/10/22 06:06:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: opl_eso.c,v 1.11 2005/12/11 12:22:50 christos Exp $"
 #include <dev/pci/esovar.h>
 
 static int
-opl_eso_match(struct device *parent, struct cfdata *match, void *aux)
+opl_eso_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 
@@ -74,7 +75,7 @@ opl_eso_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-opl_eso_attach(struct device *parent, struct device *self, void *aux)
+opl_eso_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct eso_softc *esc = (struct eso_softc *)parent;
 	struct opl_softc *sc = (struct opl_softc *)self;

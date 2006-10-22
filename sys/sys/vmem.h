@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.2 2006/08/20 09:45:59 yamt Exp $	*/
+/*	$NetBSD: vmem.h,v 1.2.6.1 2006/10/22 06:07:47 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -31,6 +31,12 @@
 
 #include <sys/types.h>
 
+#if !defined(_KERNEL)
+typedef int boolean_t;
+#define	TRUE	1
+#define	FALSE	0
+#endif /* !defined(_KERNEL) */
+
 typedef struct vmem vmem_t;
 
 typedef unsigned int vm_flag_t;
@@ -46,6 +52,9 @@ vmem_t *vmem_create(const char *, vmem_addr_t, vmem_size_t, vmem_size_t,
 void vmem_destroy(vmem_t *);
 vmem_addr_t vmem_alloc(vmem_t *, vmem_size_t, vm_flag_t);
 void vmem_free(vmem_t *, vmem_addr_t, vmem_size_t);
+vmem_addr_t vmem_xalloc(vmem_t *, vmem_size_t, vmem_size_t, vmem_size_t,
+    vmem_size_t, vmem_addr_t, vmem_addr_t, vm_flag_t);
+void vmem_xfree(vmem_t *, vmem_addr_t, vmem_size_t);
 vmem_addr_t vmem_add(vmem_t *, vmem_addr_t, vmem_size_t, vm_flag_t);
 vmem_size_t vmem_roundup_size(vmem_t *, vmem_size_t);
 boolean_t vmem_reap(vmem_t *);

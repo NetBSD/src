@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.65 2006/07/21 16:48:53 ad Exp $	*/
+/*	$NetBSD: ucom.c,v 1.65.6.1 2006/10/22 06:06:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.65 2006/07/21 16:48:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.65.6.1 2006/10/22 06:06:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ ucom_shutdown(struct ucom_softc *sc)
 }
 
 int
-ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
+ucomopen(dev_t dev, int flag, int mode __unused, struct lwp *l)
 {
 	int unit = UCOMUNIT(dev);
 	usbd_status err;
@@ -326,10 +326,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	DPRINTF(("ucomopen: unit=%d, tp=%p\n", unit, tp));
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -498,7 +495,7 @@ bad:
 }
 
 int
-ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
+ucomclose(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -658,8 +655,8 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -872,7 +869,7 @@ XXX what if the hardware is not open
  * (un)block input via hw flowcontrol
  */
 Static void
-ucom_hwiflow(struct ucom_softc *sc)
+ucom_hwiflow(struct ucom_softc *sc __unused)
 {
 	DPRINTF(("ucom_hwiflow:\n"));
 #if 0
@@ -961,7 +958,7 @@ out:
 }
 
 void
-ucomstop(struct tty *tp, int flag)
+ucomstop(struct tty *tp __unused, int flag __unused)
 {
 	DPRINTF(("ucomstop: flag=%d\n", flag));
 #if 0
@@ -1143,7 +1140,7 @@ ucomprint(void *aux, const char *pnp)
 
 int
 ucomsubmatch(struct device *parent, struct cfdata *cf,
-	     const int *ldesc, void *aux)
+	     const int *ldesc __unused, void *aux)
 {
 	struct ucom_attach_args *uca = aux;
 

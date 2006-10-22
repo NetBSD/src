@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.88 2006/09/08 20:58:58 elad Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.88.2.1 2006/10/22 06:07:25 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.88 2006/09/08 20:58:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.88.2.1 2006/10/22 06:07:25 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -261,7 +261,7 @@ route_output(struct mbuf *m, ...)
 	 * is the only operation the non-superuser is allowed.
 	 */
 	if (kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_ROUTE,
-	    rtm, NULL, NULL, NULL) != 0)
+	    0, rtm, NULL, NULL) != 0)
 		senderr(EACCES);
 
 	switch (rtm->rtm_type) {

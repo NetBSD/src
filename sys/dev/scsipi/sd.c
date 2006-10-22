@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.250 2006/09/14 17:54:34 reinoud Exp $	*/
+/*	$NetBSD: sd.c,v 1.250.2.1 2006/10/22 06:06:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.250 2006/09/14 17:54:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.250.2.1 2006/10/22 06:06:47 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -194,7 +194,8 @@ struct sd_mode_sense_data {
  * A device suitable for this driver
  */
 static int
-sdmatch(struct device *parent, struct cfdata *match, void *aux)
+sdmatch(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
@@ -210,7 +211,7 @@ sdmatch(struct device *parent, struct cfdata *match, void *aux)
  * Attach routine common to atapi & scsi.
  */
 static void
-sdattach(struct device *parent, struct device *self, void *aux)
+sdattach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct sd_softc *sd = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
@@ -324,7 +325,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-sdactivate(struct device *self, enum devact act)
+sdactivate(struct device *self __unused, enum devact act)
 {
 	int rv = 0;
 
@@ -343,7 +344,7 @@ sdactivate(struct device *self, enum devact act)
 }
 
 static int
-sddetach(struct device *self, int flags)
+sddetach(struct device *self, int flags __unused)
 {
 	struct sd_softc *sd = device_private(self);
 	int s, bmaj, cmaj, i, mn;
@@ -395,7 +396,7 @@ sddetach(struct device *self, int flags)
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 static int
-sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
+sdopen(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
 {
 	struct sd_softc *sd;
 	struct scsipi_periph *periph;
@@ -584,7 +585,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
  * device.  Convenient now but usually a pain.
  */
 static int
-sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
+sdclose(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
@@ -981,14 +982,14 @@ sdminphys(struct buf *bp)
 }
 
 static int
-sdread(dev_t dev, struct uio *uio, int ioflag)
+sdread(dev_t dev, struct uio *uio, int ioflag __unused)
 {
 
 	return (physio(sdstrategy, NULL, dev, B_READ, sdminphys, uio));
 }
 
 static int
-sdwrite(dev_t dev, struct uio *uio, int ioflag)
+sdwrite(dev_t dev, struct uio *uio, int ioflag __unused)
 {
 
 	return (physio(sdstrategy, NULL, dev, B_WRITE, sdminphys, uio));
@@ -1651,7 +1652,7 @@ sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 		u_int8_t resvd;
 	} scsipi_sense;
 	u_int64_t sectors;
-	int error;
+	int error, blksize;
 
 	/*
 	 * scsipi_size (ie "read capacity") and mode sense page 6
@@ -1660,7 +1661,7 @@ sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	 * XXX probably differs for removable media
 	 */
 	dp->blksize = 512;
-	if ((sectors = scsipi_size(sd->sc_periph, flags)) == 0)
+	if ((sectors = scsipi_size(sd->sc_periph, &blksize, 512, flags)) == 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	error = scsipi_mode_sense(sd->sc_periph, SMS_DBD, 6,
@@ -1672,7 +1673,7 @@ sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 
 	dp->blksize = _2btol(scsipi_sense.lbs);
 	if (dp->blksize == 0)
-		dp->blksize = 512;
+		dp->blksize = blksize;
 
 	/*
 	 * Create a pseudo-geometry.
@@ -1700,13 +1701,14 @@ static int
 sd_get_capacity(struct sd_softc *sd, struct disk_parms *dp, int flags)
 {
 	u_int64_t sectors;
-	int error;
+	int error, blksize;
 #if 0
 	int i;
 	u_int8_t *p;
 #endif
 
-	dp->disksize = sectors = scsipi_size(sd->sc_periph, flags);
+	dp->disksize = sectors = scsipi_size(sd->sc_periph, &blksize, 512,
+	    flags);
 	if (sectors == 0) {
 		struct scsipi_read_format_capacities cmd;
 		struct {
@@ -1761,7 +1763,7 @@ printf("rfc result:"); for (i = sizeof(struct scsipi_capacity_list_header) + dat
 		memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 		error = sd_mode_sense(sd, 0, &scsipi_sense,
 		    sizeof(scsipi_sense.blk_desc), 0, flags | XS_CTL_SILENT, &big);
-		dp->blksize = 512;
+		dp->blksize = blksize;
 		if (!error) {
 			if (big) {
 				bdesc = (void *)(&scsipi_sense.header.big + 1);
@@ -1780,7 +1782,7 @@ printf("page 0 ok\n");
 			if (bsize >= 8) {
 				dp->blksize = _3btol(bdesc->blklen);
 				if (dp->blksize == 0)
-					dp->blksize = 512;
+					dp->blksize = blksize;
 			}
 		}
 	}

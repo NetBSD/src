@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.28 2005/12/11 12:23:23 christos Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.28.22.1 2006/10/22 06:06:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.28 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.28.22.1 2006/10/22 06:06:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,10 +105,8 @@ static const size_t an_pcmcia_nproducts =
     sizeof(an_pcmcia_products) / sizeof(an_pcmcia_products[0]);
 
 static int
-an_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+an_pcmcia_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -129,9 +127,8 @@ an_pcmcia_validate_config(cfe)
 }
 
 static void
-an_pcmcia_attach(parent, self, aux)
-	struct device  *parent, *self;
-	void           *aux;
+an_pcmcia_attach(struct device  *parent __unused, struct device *self,
+    void *aux)
 {
 	struct an_pcmcia_softc *psc = (void *)self;
 	struct an_softc *sc = &psc->sc_an;
@@ -167,7 +164,7 @@ an_pcmcia_attach(parent, self, aux)
 		goto fail2;
 	}
 
-	psc->sc_powerhook = powerhook_establish(an_power, sc);
+	psc->sc_powerhook = powerhook_establish(self->dv_xname, an_power, sc);
 
 	an_pcmcia_disable(sc);
 	sc->sc_enabled = 0;
@@ -183,9 +180,7 @@ fail:
 
 
 static int
-an_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+an_pcmcia_detach(struct device *self, int flags __unused)
 {
 	struct an_pcmcia_softc *psc = (void *)self;
 	int error;

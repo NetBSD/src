@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.44 2006/07/21 16:48:49 ad Exp $	*/
+/*	$NetBSD: cy.c,v 1.44.6.1 2006/10/22 06:05:44 yamt Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.44 2006/07/21 16:48:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.44.6.1 2006/10/22 06:05:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -265,7 +265,7 @@ cy_getport(dev_t dev)
  * open routine. returns zero if successful, else error code
  */
 int
-cyopen(dev_t dev, int flag, int mode, struct lwp *l)
+cyopen(dev_t dev, int flag, int mode __unused, struct lwp *l)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
@@ -293,6 +293,9 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_oproc = cystart;
 	tp->t_param = cyparam;
 	tp->t_dev = dev;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
 
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		ttychars(tp);
@@ -365,10 +368,6 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	} else if (ISSET(tp->t_state, TS_XCLUDE) &&
-	     kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag) != 0) {
-		return EBUSY;
 	} else {
 		s = spltty();
 	}
@@ -396,7 +395,7 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
  * close routine. returns zero if successful, else error code
  */
 int
-cyclose(dev_t dev, int flag, int mode, struct lwp *l)
+cyclose(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
@@ -554,8 +553,8 @@ cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error != 0)
 			return EPERM;
 
@@ -613,7 +612,7 @@ out:
  * stop output
  */
 void
-cystop(struct tty *tp, int flag)
+cystop(struct tty *tp, int flag __unused)
 {
 	struct cy_port *cy;
 	int s;
@@ -877,7 +876,7 @@ cy_modem_control(struct cy_softc *sc, struct cy_port *cy, int bits, int howto)
  * This routine is common for multiple cards
  */
 void
-cy_poll(void *arg)
+cy_poll(void *arg __unused)
 {
 	int card, port;
 	struct cy_softc *sc;

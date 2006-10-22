@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.59 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.59.22.1 2006/10/22 06:07:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -102,6 +102,7 @@ typedef enum {
 	PFSmounts,	/* mounted filesystems (if -o linux) */
 	PFScwd,		/* the process's current working directory */
 	PFSchroot,	/* the process's current root directory */
+	PFSdevices,	/* major/device name mappings (if -o linux) */
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODE_TYPES
 #endif
@@ -197,6 +198,8 @@ int procfs_domap(struct lwp *, struct proc *, struct pfsnode *,
 int procfs_docmdline(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 int procfs_domeminfo(struct lwp *, struct proc *, struct pfsnode *,
+    struct uio *);
+int procfs_dodevices(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 int procfs_docpuinfo(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);

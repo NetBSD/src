@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.38 2006/08/12 16:19:13 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.38.4.1 2006/10/22 06:05:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.38 2006/08/12 16:19:13 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.38.4.1 2006/10/22 06:05:16 yamt Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.38 2006/08/12 16:19:13 fvdl Exp $");
 
 #include "pci.h"
 #include "ioapic.h"
+#include "lapic.h"
 
 /* XXX room for PCI-to-PCI bus */
 #define BUS_BUFFER (16)
@@ -148,7 +149,7 @@ mpacpi_print(void *aux, const char *pnp)
 
 static int
 mpacpi_submatch(struct device *parent, struct cfdata *cf,
-	const int *ldesc, void *aux)
+	const int *ldesc __unused, void *aux)
 {
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
 	if (strcmp(caa->caa_name, cf->cf_name))
@@ -170,6 +171,7 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 	MADT_LOCAL_APIC_NMI *lapic_nmi;
 	MADT_INTERRUPT_OVERRIDE *isa_ovr;
 	struct pic *pic;
+	extern struct acpi_softc *acpi_softc;	/* XXX */
 
 	switch (hdrp->Type) {
 	case APIC_NMI:
@@ -219,7 +221,12 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		break;
 	case APIC_XRUPT_OVERRIDE:
 		isa_ovr = (MADT_INTERRUPT_OVERRIDE *)hdrp;
-		if (isa_ovr->Source > 15 || isa_ovr->Source == 2)
+		if (mp_verbose)
+			printf("mpacpi: ISA interrupt override  %d -> %d\n",
+			    isa_ovr->Source, isa_ovr->Interrupt);
+		if (isa_ovr->Source > 15 || isa_ovr->Source == 2 ||
+		    (isa_ovr->Source == 0 && isa_ovr->Interrupt == 2 &&
+			(acpi_softc->sc_quirks & ACPI_QUIRK_IRQ0)))
 			break;
 		pic = intr_findpic(isa_ovr->Interrupt);
 		if (pic == NULL)
@@ -285,7 +292,7 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
  * This is a callback function for acpi_madt_walk().
  */
 static ACPI_STATUS
-mpacpi_count(APIC_HEADER *hdrp, void *aux)
+mpacpi_count(APIC_HEADER *hdrp, void *aux __unused)
 {
 	MADT_ADDRESS_OVERRIDE *lop;
 
@@ -371,7 +378,7 @@ mpacpi_scan_apics(struct device *self, int *ncpu, int *napic)
 	mpacpi_ncpu = mpacpi_nintsrc = mpacpi_nioapic = 0;
 	acpi_madt_walk(mpacpi_count, self);
 
-#if NIOAPIC > 0
+#if NLAPIC > 0
 	lapic_boot_init(mpacpi_lapic_base);
 #endif
 
@@ -538,7 +545,8 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
  * PCI root and subordinate busses.
  */
 static ACPI_STATUS
-mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p, void **status)
+mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
+    void **status __unused)
 {
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
@@ -767,7 +775,7 @@ mpacpi_pcircount(struct mpacpi_pcibus *mpr)
  * Set up the interrupt config lists, in the same format as the mpbios does.
  */
 static void
-mpacpi_config_irouting(struct acpi_softc *acpi)
+mpacpi_config_irouting(struct acpi_softc *acpi __unused)
 {
 #if NPCI > 0
 	struct mpacpi_pcibus *mpr;
@@ -1005,7 +1013,7 @@ mpacpi_find_interrupts(void *self)
 #if NPCI > 0
 
 int
-mpacpi_pci_attach_hook(struct device *parent, struct device *self,
+mpacpi_pci_attach_hook(struct device *parent, struct device *self __unused,
 		       struct pcibus_attach_args *pba)
 {
 	struct mp_bus *mpb;
@@ -1099,7 +1107,20 @@ mpacpi_findintr_linkdev(struct mp_intr_map *mip)
 		return ENOENT;
 	if (irq != line)
 		panic("mpacpi_findintr_linkdev: irq mismatch");
-		
+
+	/*
+	 * Convert ACPICA values to MPS values
+	 */
+	if (pol == ACPI_ACTIVE_LOW)
+		pol = MPS_INTPO_ACTLO;
+	else 
+		pol = MPS_INTPO_ACTHI;
+ 
+	if (trig == ACPI_EDGE_SENSITIVE)
+		trig = MPS_INTTR_EDGE;
+	else
+		trig = MPS_INTTR_LEVEL;
+ 
 	mip->flags = pol | (trig << 2);
 	mip->global_int = irq;
 	pic = intr_findpic(irq);

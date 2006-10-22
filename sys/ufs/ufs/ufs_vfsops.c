@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.28 2006/07/23 22:06:15 ad Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.28.6.1 2006/10/22 06:07:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.28 2006/07/23 22:06:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.28.6.1 2006/10/22 06:07:51 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -75,7 +75,7 @@ POOL_INIT(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
  */
 /* ARGSUSED */
 int
-ufs_start(struct mount *mp, int flags, struct lwp *l)
+ufs_start(struct mount *mp __unused, int flags __unused, struct lwp *l __unused)
 {
 
 	return (0);
@@ -104,6 +104,11 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg, struct lwp *l)
 {
 
 #ifndef QUOTA
+	(void) mp;
+	(void) cmds;
+	(void) uid;
+	(void) arg;
+	(void) l;
 	return (EOPNOTSUPP);
 #else
 	int cmd, type, error;

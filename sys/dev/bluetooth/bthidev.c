@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.4 2006/09/12 18:18:01 plunky Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.4.2.1 2006/10/22 06:05:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.4 2006/09/12 18:18:01 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.4.2.1 2006/10/22 06:05:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -116,9 +116,6 @@ static int  bthidev_print(void *, const char *);
 CFATTACH_DECL(bthidev, sizeof(struct bthidev_softc),
     bthidev_match, bthidev_attach, bthidev_detach, NULL);
 
-/* btdev identity matcher */
-static int bthidev_identify(struct btdev *, prop_dictionary_t);
-
 /* bluetooth(9) protocol methods for L2CAP */
 static void  bthidev_connecting(void *);
 static void  bthidev_ctl_connected(void *);
@@ -154,17 +151,21 @@ static const struct btproto bthidev_int_proto = {
  */
 
 static int
-bthidev_match(struct device *self, struct cfdata *cfdata, void *aux)
+bthidev_match(struct device *self __unused, struct cfdata *cfdata __unused,
+    void *aux)
 {
 	prop_dictionary_t dict = aux;
 	prop_object_t obj;
 
-	obj = prop_dictionary_get(dict, BTDEVtype);
-	return prop_string_equals_cstring(obj, "bthidev");
+	obj = prop_dictionary_get(dict, BTDEVservice);
+	if (prop_string_equals_cstring(obj, "HID"))
+		return 1;
+
+	return 0;
 }
 
 static void
-bthidev_attach(struct device *parent, struct device *self, void *aux)
+bthidev_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct bthidev_softc *sc = (struct bthidev_softc *)self;
 	prop_dictionary_t dict = aux;
@@ -187,8 +188,6 @@ bthidev_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_flags = BTHID_CONNECTING;
 	sc->sc_ctlpsm = L2CAP_PSM_HID_CNTL;
 	sc->sc_intpsm = L2CAP_PSM_HID_INTR;
-
-	sc->sc_btdev.sc_identify = bthidev_identify;
 
 	/*
 	 * extract config from proplist
@@ -358,38 +357,6 @@ bthidev_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
-/*
- * btdev identity matcher
- */
-static int
-bthidev_identify(struct btdev *dev, prop_dictionary_t dict)
-{
-	struct bthidev_softc *sc = (struct bthidev_softc *)dev;
-	prop_object_t obj;
-
-	obj = prop_dictionary_get(dict, BTDEVtype);
-	if (!prop_string_equals_cstring(obj, "bthidev"))
-		return 0;
-
-	obj = prop_dictionary_get(dict, BTDEVladdr);
-	if (!prop_data_equals_data(obj, &sc->sc_laddr, sizeof(bdaddr_t)))
-		return 0;
-
-	obj = prop_dictionary_get(dict, BTDEVraddr);
-	if (!prop_data_equals_data(obj, &sc->sc_raddr, sizeof(bdaddr_t)))
-		return 0;
-
-	obj = prop_dictionary_get(dict, BTHIDEVcontrolpsm);
-	if (!prop_number_equals_integer(obj, sc->sc_ctlpsm))
-		return 0;
-
-	obj = prop_dictionary_get(dict, BTHIDEVinterruptpsm);
-	if (!prop_number_equals_integer(obj, sc->sc_intpsm))
-		return 0;
-
-	return 1;
-}
-
 /*****************************************************************************
  *
  *	bluetooth(4) HID attach/detach routines
@@ -551,7 +518,7 @@ bthidev_connect(struct bthidev_softc *sc)
  */
 
 static void
-bthidev_connecting(void *arg)
+bthidev_connecting(void *arg __unused)
 {
 
 	/* dont care */
@@ -629,7 +596,7 @@ bthidev_int_connected(void *arg)
  * schedule another try otherwise just give up. They will contact us.
  */
 static void
-bthidev_ctl_disconnected(void *arg, int err)
+bthidev_ctl_disconnected(void *arg, int err __unused)
 {
 	struct bthidev_softc *sc = arg;
 
@@ -662,7 +629,7 @@ bthidev_ctl_disconnected(void *arg, int err)
 }
 
 static void
-bthidev_int_disconnected(void *arg, int err)
+bthidev_int_disconnected(void *arg, int err __unused)
 {
 	struct bthidev_softc *sc = arg;
 
@@ -700,7 +667,8 @@ bthidev_int_disconnected(void *arg, int err)
  * be called when the connection is open, so nothing else to do here
  */
 static void *
-bthidev_ctl_newconn(void *arg, struct sockaddr_bt *laddr, struct sockaddr_bt *raddr)
+bthidev_ctl_newconn(void *arg, struct sockaddr_bt *laddr __unused,
+    struct sockaddr_bt *raddr)
 {
 	struct bthidev_softc *sc = arg;
 
@@ -716,7 +684,8 @@ bthidev_ctl_newconn(void *arg, struct sockaddr_bt *laddr, struct sockaddr_bt *ra
 }
 
 static void *
-bthidev_int_newconn(void *arg, struct sockaddr_bt *laddr, struct sockaddr_bt *raddr)
+bthidev_int_newconn(void *arg, struct sockaddr_bt *laddr __unused,
+    struct sockaddr_bt *raddr)
 {
 	struct bthidev_softc *sc = arg;
 
@@ -732,7 +701,7 @@ bthidev_int_newconn(void *arg, struct sockaddr_bt *laddr, struct sockaddr_bt *ra
 }
 
 static void
-bthidev_complete(void *arg, int count)
+bthidev_complete(void *arg __unused, int count __unused)
 {
 
 	/* dont care */
@@ -828,7 +797,8 @@ release:
  */
 
 static void
-bthidev_null(struct bthidev *dev, uint8_t *report, int len)
+bthidev_null(struct bthidev *dev __unused, uint8_t *report __unused,
+    int len __unused)
 {
 
 	/*

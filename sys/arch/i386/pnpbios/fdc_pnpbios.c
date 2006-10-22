@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pnpbios.c,v 1.9 2005/12/11 12:17:47 christos Exp $	*/
+/*	$NetBSD: fdc_pnpbios.c,v 1.9.22.1 2006/10/22 06:04:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.9 2005/12/11 12:17:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.9.22.1 2006/10/22 06:04:48 yamt Exp $");
 
 #include "rnd.h"
 
@@ -79,8 +79,8 @@ CFATTACH_DECL(fdc_pnpbios, sizeof(struct fdc_pnpbios_softc),
     fdc_pnpbios_match, fdc_pnpbios_attach, NULL, NULL);
 
 int
-fdc_pnpbios_match(struct device *parent,
-    struct cfdata *match,
+fdc_pnpbios_match(struct device *parent __unused,
+    struct cfdata *match __unused,
     void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
@@ -92,7 +92,7 @@ fdc_pnpbios_match(struct device *parent,
 }
 
 void
-fdc_pnpbios_attach(struct device *parent,
+fdc_pnpbios_attach(struct device *parent __unused,
     struct device *self,
     void *aux)
 {

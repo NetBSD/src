@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.62 2006/09/15 18:50:49 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.62.2.1 2006/10/22 06:07:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.62 2006/09/15 18:50:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.62.2.1 2006/10/22 06:07:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,7 @@ lfs_malloc(struct lfs *fs, size_t size, int type)
 }
 
 void
-lfs_free(struct lfs *fs, void *p, int type)
+lfs_free(struct lfs *fs, void *p, int type __unused)
 {
 	int s;
 	unsigned int h;
@@ -495,8 +495,9 @@ lfs_segunlock(struct lfs *fs)
 		 * sleep.
 		 */
 		simple_lock(&fs->lfs_interlock);
-		if (--fs->lfs_iocount == 0)
+		if (--fs->lfs_iocount == 0) {
 			LFS_DEBUG_COUNTLOCKED("lfs_segunlock");
+		}
 		if (fs->lfs_iocount <= 1)
 			wakeup(&fs->lfs_iocount);
 		simple_unlock(&fs->lfs_interlock);

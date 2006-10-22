@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_eso.c,v 1.11 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: mpu_eso.c,v 1.11.22.1 2006/10/22 06:06:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_eso.c,v 1.11 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_eso.c,v 1.11.22.1 2006/10/22 06:06:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_eso.c,v 1.11 2005/12/11 12:22:50 christos Exp $"
 #include <dev/pci/esovar.h>
 
 static int
-mpu_eso_match(struct device *parent, struct cfdata *match, void *aux)
+mpu_eso_match(struct device *parent, struct cfdata *match __unused, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct eso_softc *esc = (struct eso_softc *)parent;
@@ -76,7 +76,7 @@ mpu_eso_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-mpu_eso_attach(struct device *parent, struct device *self, void *aux)
+mpu_eso_attach(struct device *parent, struct device *self, void *aux __unused)
 {
 	struct eso_softc *esc = (struct eso_softc *)parent;
 	struct mpu_softc *sc = (struct mpu_softc *)self;

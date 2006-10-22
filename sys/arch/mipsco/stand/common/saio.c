@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.c,v 1.8 2006/01/25 18:28:27 christos Exp $	*/
+/*	$NetBSD: saio.c,v 1.8.20.1 2006/10/22 06:04:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,6 +112,7 @@ saiostrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	int s;
 	long offset;
 	struct sa_iob *iob;
+	char *adr;
 
 	offset = bn * DEV_BSIZE;
 	*cnt = 0;
@@ -132,14 +133,15 @@ saiostrategy(devdata, rw, bn, reqcnt, addr, cnt)
 		return (EIO);
 #endif
 
+	adr = (char *)addr;
 	while (*cnt < reqcnt) {
 		s = prom_read(sc->sc_fd, iob->i_buf, 512);
 		if (s < 0) {
 			return (EIO);
 		}
-		memcpy(addr, iob->i_buf, s);
+		memcpy(adr, iob->i_buf, s);
 		*cnt += s;
-		(char *)addr += s;
+		adr += s;
 	}
 	return (0);
 }

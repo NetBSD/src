@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.56 2006/09/07 02:40:32 dogcow Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.56.4.1 2006/10/22 06:05:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.56 2006/09/07 02:40:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.56.4.1 2006/10/22 06:05:45 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -706,7 +706,8 @@ bad_init:
  */
 
 int 
-esh_fpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
+esh_fpopen(dev_t dev, int oflags __unused, int devtype __unused,
+    struct lwp *l __unused)
 {
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
@@ -923,7 +924,8 @@ bad_fp_dmamem_alloc:
 
 
 int 
-esh_fpclose(dev_t dev, int fflag, int devtype, struct lwp *l)
+esh_fpclose(dev_t dev, int fflag __unused, int devtype __unused,
+    struct lwp *l __unused)
 {
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
@@ -994,10 +996,7 @@ esh_fpclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 }
 
 int
-esh_fpread(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+esh_fpread(dev_t dev, struct uio *uio, int ioflag __unused)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -1043,13 +1042,13 @@ esh_fpread(dev, uio, ioflag)
 	/* Lock down the pages */
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		error = uvm_vslock(p, iovp->iov_base, iovp->iov_len,
+		error = uvm_vslock(p->p_vmspace, iovp->iov_base, iovp->iov_len,
 		    VM_PROT_WRITE);
 		if (error) {
 			/* Unlock what we've locked so far. */
 			for (--i; i >= 0; i--) {
 				iovp = &uio->uio_iov[i];
-				uvm_vsunlock(p, iovp->iov_base,
+				uvm_vsunlock(p->p_vmspace, iovp->iov_base,
 				    iovp->iov_len);
 			}
 			goto fpread_done;
@@ -1139,7 +1138,7 @@ esh_fpread(dev, uio, ioflag)
 	uio->uio_resid -= di->ed_read_len;
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		uvm_vsunlock(p, iovp->iov_base, iovp->iov_len);
+		uvm_vsunlock(p->p_vmspace, iovp->iov_base, iovp->iov_len);
 	}
 
 	PRELE(l);	/* Release process info */
@@ -1155,10 +1154,7 @@ fpread_done:
 
 
 int
-esh_fpwrite(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+esh_fpwrite(dev_t dev, struct uio *uio, int ioflag __unused)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -1204,13 +1200,13 @@ esh_fpwrite(dev, uio, ioflag)
 	/* Lock down the pages */
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		error = uvm_vslock(p, iovp->iov_base, iovp->iov_len,
+		error = uvm_vslock(p->p_vmspace, iovp->iov_base, iovp->iov_len,
 		    VM_PROT_READ);
 		if (error) {
 			/* Unlock what we've locked so far. */
 			for (--i; i >= 0; i--) {
 				iovp = &uio->uio_iov[i];
-				uvm_vsunlock(p, iovp->iov_base,
+				uvm_vsunlock(p->p_vmspace, iovp->iov_base,
 				    iovp->iov_len);
 			}
 			goto fpwrite_done;
@@ -1296,7 +1292,7 @@ esh_fpwrite(dev, uio, ioflag)
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		uvm_vsunlock(p, iovp->iov_base, iovp->iov_len);
+		uvm_vsunlock(p->p_vmspace, iovp->iov_base, iovp->iov_len);
 	}
 
 	PRELE(l);	/* Release process info */

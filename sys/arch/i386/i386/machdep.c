@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.577 2006/07/31 20:59:07 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.577.6.1 2006/10/22 06:04:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577 2006/07/31 20:59:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.6.1 2006/10/22 06:04:43 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -321,7 +321,7 @@ void	native_loader(int, int, struct bootinfo_source *, paddr_t, int, int);
  *        can be obtained using the RELOC macro.
  */
 void
-native_loader(int bl_boothowto, int bl_bootdev,
+native_loader(int bl_boothowto, int bl_bootdev __unused,
     struct bootinfo_source *bl_bootinfo, paddr_t bl_esym,
     int bl_biosextmem, int bl_biosbasemem)
 {
@@ -841,7 +841,7 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
-cpu_reboot(int howto, char *bootstr)
+cpu_reboot(int howto, char *bootstr __unused)
 {
 
 	if (cold) {
@@ -889,7 +889,7 @@ haltsys:
 		 * and users have reported disk corruption.
 		 */
 		delay(500000);
-		apm_set_powstate(NULL,  APM_DEV_DISK(0xff), APM_SYS_OFF);
+		apm_set_powstate(NULL, APM_DEV_DISK(APM_DEV_ALLUNITS), APM_SYS_OFF);
 		delay(500000);
 		apm_set_powstate(NULL, APM_DEV_ALLDEVS, APM_SYS_OFF);
 		printf("WARNING: APM powerdown failed!\n");
@@ -1036,8 +1036,10 @@ cpu_dumpconf()
 	if (dumpdev == NODEV)
 		goto bad;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		goto bad;
+	}
 	if (bdev->d_psize == NULL)
 		goto bad;
 	nblks = (*bdev->d_psize)(dumpdev);
@@ -1406,7 +1408,8 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 
 	/* XXX XXX XXX */
 	if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
-		panic("init386: too many memory segments");
+		panic("init386: too many memory segments "
+		    "(increase VM_PHYSSEG_MAX)");
 
 	seg_start = round_page(seg_start);
 	seg_end = trunc_page(seg_end);
@@ -2128,6 +2131,9 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #ifdef COMPAT_NOMID
 	if ((error = exec_nomid(l, epp)) == 0)
 		return error;
+#else
+	(void) l;
+	(void) epp;
 #endif /* ! COMPAT_NOMID */
 
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.277 2006/09/08 20:58:57 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.277.2.1 2006/10/22 06:07:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.277 2006/09/08 20:58:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.277.2.1 2006/10/22 06:07:09 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -271,6 +271,7 @@ main(void)
 
 	/* Initialize process and pgrp structures. */
 	procinit();
+	lwpinit();
 
 	/* Initialize signal-related data structures. */
 	signal_init();
@@ -304,6 +305,9 @@ main(void)
 	ntp_init();
 #endif /* __HAVE_TIMECOUNTER */
 
+	/* Initialize kauth. */
+	kauth_init();
+
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
 
@@ -331,9 +335,6 @@ main(void)
 	/* Initialize posix semaphores */
 	ksem_init();
 #endif
-
-	/* Initialize kauth. */
-	kauth_init();
 
 	/* Initialize default security model. */
 	secmodel_start();

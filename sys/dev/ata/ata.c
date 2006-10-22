@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.76 2006/09/07 12:34:42 itohy Exp $      */
+/*	$NetBSD: ata.c,v 1.76.4.1 2006/10/22 06:05:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.76 2006/09/07 12:34:42 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.76.4.1 2006/10/22 06:05:32 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.76 2006/09/07 12:34:42 itohy Exp $");
 #ifdef ATADEBUG
 int atadebug_mask = 0;
 #define ATADEBUG_PRINT(args, level) \
-        if (atadebug_mask & (level)) \
+	if (atadebug_mask & (level)) \
 		printf args
 #else
 #define ATADEBUG_PRINT(args, level)
@@ -287,12 +287,12 @@ atabusconfig(struct atabus_softc *atabus_sc)
 		}
 		simple_unlock(&atabus_interlock);
 	}
-        simple_lock(&atabus_interlock);
-        TAILQ_REMOVE(&atabus_initq_head, atabus_initq, atabus_initq);
-        simple_unlock(&atabus_interlock);
+	simple_lock(&atabus_interlock);
+	TAILQ_REMOVE(&atabus_initq_head, atabus_initq, atabus_initq);
+	simple_unlock(&atabus_interlock);
 
-        free(atabus_initq, M_DEVBUF);
-        wakeup(&atabus_initq_head);
+	free(atabus_initq, M_DEVBUF);
+	wakeup(&atabus_initq_head);
 
 	ata_delref(chp);
 
@@ -389,7 +389,7 @@ atabus_create_thread(void *arg)
  *	Autoconfiguration match routine.
  */
 static int
-atabus_match(struct device *parent, struct cfdata *cf, void *aux)
+atabus_match(struct device *parent __unused, struct cfdata *cf, void *aux)
 {
 	struct ata_channel *chp = aux;
 
@@ -398,7 +398,7 @@ atabus_match(struct device *parent, struct cfdata *cf, void *aux)
 
 	if (cf->cf_loc[ATACF_CHANNEL] != chp->ch_channel &&
 	    cf->cf_loc[ATACF_CHANNEL] != ATACF_CHANNEL_DEFAULT)
-	    	return (0);
+		return (0);
 
 	return (1);
 }
@@ -409,7 +409,7 @@ atabus_match(struct device *parent, struct cfdata *cf, void *aux)
  *	Autoconfiguration attach routine.
  */
 static void
-atabus_attach(struct device *parent, struct device *self, void *aux)
+atabus_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct atabus_softc *sc = (void *) self;
 	struct ata_channel *chp = aux;
@@ -420,8 +420,8 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 	aprint_naive("\n");
 
-        if (ata_addref(chp))
-                return;
+	if (ata_addref(chp))
+		return;
 
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
 	initq->atabus_sc = sc;
@@ -429,7 +429,8 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	config_pending_incr();
 	kthread_create(atabus_create_thread, sc);
 
-	sc->sc_powerhook = powerhook_establish(atabus_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    atabus_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
@@ -516,7 +517,7 @@ atabus_detach(struct device *self, int flags)
 
 	/* power hook */
 	if (sc->sc_powerhook)
-	      powerhook_disestablish(sc->sc_powerhook);
+		powerhook_disestablish(sc->sc_powerhook);
 
 	/*
 	 * Detach atapibus and its children.
@@ -572,11 +573,8 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	struct ata_command ata_c;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
-
-#if BYTE_ORDER == LITTLE_ENDIAN
 	int i;
 	u_int16_t *p;
-#endif
 
 	ATADEBUG_PRINT(("ata_get_parms\n"), DEBUG_FUNCS);
 
@@ -618,31 +616,42 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 			return CMD_ERR;
 		/* Read in parameter block. */
 		memcpy(prms, tb, sizeof(struct ataparams));
-#if BYTE_ORDER == LITTLE_ENDIAN
+
 		/*
 		 * Shuffle string byte order.
-		 * ATAPI Mitsumi and NEC drives don't need this.
+		 * ATAPI NEC, Mitsumi and Pioneer drives and
+		 * old ATA TDK CompactFlash cards
+		 * have different byte order.
 		 */
-		if ((prms->atap_config & WDC_CFG_ATAPI_MASK) ==
-		    WDC_CFG_ATAPI &&
-		    ((prms->atap_model[0] == 'N' &&
-			prms->atap_model[1] == 'E') ||
-		     (prms->atap_model[0] == 'F' &&
-			 prms->atap_model[1] == 'X')))
-			return 0;
+#if BYTE_ORDER == BIG_ENDIAN
+# define M(n)	prms->atap_model[(n) ^ 1]
+#else
+# define M(n)	prms->atap_model[n]
+#endif
+		if (
+#if BYTE_ORDER == BIG_ENDIAN
+		    !
+#endif
+		    ((drvp->drive_flags & DRIVE_ATAPI) ?
+		     ((M(0) == 'N' && M(1) == 'E') ||
+		      (M(0) == 'F' && M(1) == 'X') ||
+		      (M(0) == 'P' && M(1) == 'i')) :
+		     ((M(0) == 'T' && M(1) == 'D' && M(2) == 'K'))))
+			return CMD_OK;
+#undef M
 		for (i = 0; i < sizeof(prms->atap_model); i += 2) {
-			p = (u_short *)(prms->atap_model + i);
-			*p = ntohs(*p);
+			p = (u_int16_t *)(prms->atap_model + i);
+			*p = bswap16(*p);
 		}
 		for (i = 0; i < sizeof(prms->atap_serial); i += 2) {
-			p = (u_short *)(prms->atap_serial + i);
-			*p = ntohs(*p);
+			p = (u_int16_t *)(prms->atap_serial + i);
+			*p = bswap16(*p);
 		}
 		for (i = 0; i < sizeof(prms->atap_revision); i += 2) {
-			p = (u_short *)(prms->atap_revision + i);
-			*p = ntohs(*p);
+			p = (u_int16_t *)(prms->atap_revision + i);
+			*p = bswap16(*p);
 		}
-#endif
+
 		return CMD_OK;
 	}
 }
@@ -673,6 +682,7 @@ ata_set_mode(struct ata_drive_datas *drvp, u_int8_t mode, u_int8_t flags)
 	return CMD_OK;
 }
 
+#if NATA_DMA
 void
 ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 {
@@ -695,6 +705,7 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 		drvp->n_xfers = 1; /* restart counting from this error */
 	}
 }
+#endif	/* NATA_DMA */
 
 /*
  * freeze the queue and wait for the controller to be idle. Caller has to
@@ -1015,8 +1026,10 @@ ata_print_modes(struct ata_channel *chp)
 			drvp->drv_softc->dv_xname,
 			atac->atac_dev.dv_xname,
 			chp->ch_channel, drvp->drive, drvp->PIO_mode);
+#if NATA_DMA
 		if (drvp->drive_flags & DRIVE_DMA)
 			aprint_normal(", DMA mode %d", drvp->DMA_mode);
+#if NATA_UDMA
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			aprint_normal(", Ultra-DMA mode %d", drvp->UDMA_mode);
 			if (drvp->UDMA_mode == 2)
@@ -1028,17 +1041,25 @@ ata_print_modes(struct ata_channel *chp)
 			else if (drvp->UDMA_mode == 6)
 				aprint_normal(" (Ultra/133)");
 		}
-		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
+#endif	/* NATA_UDMA */
+#endif	/* NATA_DMA */
+#if NATA_DMA || NATA_PIOBM
+		if (0
+#if NATA_DMA
+		    || (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
+#endif
 #if NATA_PIOBM
 		    /* PIOBM capable controllers use DMA for PIO commands */
 		    || (atac->atac_cap & ATAC_CAP_PIOBM)
 #endif
 		    )
 			aprint_normal(" (using DMA)");
+#endif	/* NATA_DMA || NATA_PIOBM */
 		aprint_normal("\n");
 	}
 }
 
+#if NATA_DMA
 /*
  * downgrade the transfer mode of a drive after an error. return 1 if
  * downgrade was possible, 0 otherwise.
@@ -1063,6 +1084,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	    (cf_flags & ATA_CONFIG_UDMA_SET))
 		return 0;
 
+#if NATA_UDMA
 	/*
 	 * If we were using Ultra-DMA mode, downgrade to the next lower mode.
 	 */
@@ -1071,6 +1093,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 		printf("%s: transfer error, downgrading to Ultra-DMA mode %d\n",
 		    drv_dev->dv_xname, drvp->UDMA_mode);
 	}
+#endif
 
 	/*
 	 * If we were using ultra-DMA, don't downgrade to multiword DMA.
@@ -1089,6 +1112,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	ata_reset_channel(chp, flags | AT_RST_NOCMD);
 	return 1;
 }
+#endif	/* NATA_DMA */
 
 /*
  * Probe drive's capabilities, for use by the controller later
@@ -1211,16 +1235,19 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		for (i = 7; i >= 0; i--) {
 			if ((params.atap_dmamode_supp & (1 << i)) == 0)
 				continue;
+#if NATA_DMA
 			if ((atac->atac_cap & ATAC_CAP_DMA) &&
 			    atac->atac_set_modes != NULL)
 				if (ata_set_mode(drvp, 0x20 | i, AT_WAIT)
 				    != CMD_OK)
 					continue;
+#endif
 			if (!printed) {
 				aprint_normal("%s DMA mode %d", sep, i);
 				sep = ",";
 				printed = 1;
 			}
+#if NATA_DMA
 			if (atac->atac_cap & ATAC_CAP_DMA) {
 				if (atac->atac_set_modes != NULL &&
 				    atac->atac_dma_cap < i)
@@ -1231,6 +1258,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 				drvp->drive_flags |= DRIVE_DMA;
 				splx(s);
 			}
+#endif
 			break;
 		}
 		if (params.atap_extensions & WDC_EXT_UDMA_MODES) {
@@ -1239,11 +1267,13 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 				if ((params.atap_udmamode_supp & (1 << i))
 				    == 0)
 					continue;
+#if NATA_UDMA
 				if (atac->atac_set_modes != NULL &&
 				    (atac->atac_cap & ATAC_CAP_UDMA))
 					if (ata_set_mode(drvp, 0x40 | i,
 					    AT_WAIT) != CMD_OK)
 						continue;
+#endif
 				if (!printed) {
 					aprint_normal("%s Ultra-DMA mode %d",
 					    sep, i);
@@ -1258,6 +1288,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 					sep = ",";
 					printed = 1;
 				}
+#if NATA_UDMA
 				if (atac->atac_cap & ATAC_CAP_UDMA) {
 					if (atac->atac_set_modes != NULL &&
 					    atac->atac_udma_cap < i)
@@ -1268,6 +1299,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 					drvp->drive_flags |= DRIVE_UDMA;
 					splx(s);
 				}
+#endif
 				break;
 			}
 		}
@@ -1287,9 +1319,12 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 
 	/* Try to guess ATA version here, if it didn't get reported */
 	if (drvp->ata_vers == 0) {
+#if NATA_UDMA
 		if (drvp->drive_flags & DRIVE_UDMA)
 			drvp->ata_vers = 4; /* should be at last ATA-4 */
-		else if (drvp->PIO_cap > 2)
+		else
+#endif
+		if (drvp->PIO_cap > 2)
 			drvp->ata_vers = 2; /* should be at last ATA-2 */
 	}
 	cf_flags = device_cfdata(drv_dev)->cf_flags;
@@ -1300,6 +1335,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		drvp->drive_flags |= DRIVE_MODE;
 		splx(s);
 	}
+#if NATA_DMA
 	if ((atac->atac_cap & ATAC_CAP_DMA) == 0) {
 		/* don't care about DMA modes */
 		return;
@@ -1316,6 +1352,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		}
 		splx(s);
 	}
+#if NATA_UDMA
 	if ((atac->atac_cap & ATAC_CAP_UDMA) == 0) {
 		/* don't care about UDMA modes */
 		return;
@@ -1332,67 +1369,72 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		}
 		splx(s);
 	}
+#endif	/* NATA_UDMA */
+#endif	/* NATA_DMA */
 }
 
 /* management of the /dev/atabus* devices */
 int
-atabusopen(dev_t dev, int flag, int fmt, struct lwp *l)
+atabusopen(dev_t dev, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
-        struct atabus_softc *sc;
-        int error, unit = minor(dev);
+	struct atabus_softc *sc;
+	int error, unit = minor(dev);
 
-        if (unit >= atabus_cd.cd_ndevs ||
-            (sc = atabus_cd.cd_devs[unit]) == NULL)
-                return (ENXIO);
+	if (unit >= atabus_cd.cd_ndevs ||
+	    (sc = atabus_cd.cd_devs[unit]) == NULL)
+		return (ENXIO);
 
-        if (sc->sc_flags & ATABUSCF_OPEN)
-                return (EBUSY);
+	if (sc->sc_flags & ATABUSCF_OPEN)
+		return (EBUSY);
 
-        if ((error = ata_addref(sc->sc_chan)) != 0)
-                return (error);
+	if ((error = ata_addref(sc->sc_chan)) != 0)
+		return (error);
 
-        sc->sc_flags |= ATABUSCF_OPEN;
+	sc->sc_flags |= ATABUSCF_OPEN;
 
-        return (0);
+	return (0);
 }
 
 
 int
-atabusclose(dev_t dev, int flag, int fmt, struct lwp *l)
+atabusclose(dev_t dev, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
-        struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
+	struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
 
-        ata_delref(sc->sc_chan);
+	ata_delref(sc->sc_chan);
 
-        sc->sc_flags &= ~ATABUSCF_OPEN;
+	sc->sc_flags &= ~ATABUSCF_OPEN;
 
-        return (0);
+	return (0);
 }
 
 int
-atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+    struct lwp *l __unused)
 {
-        struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
+	struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
 	struct ata_channel *chp = sc->sc_chan;
 	int min_drive, max_drive, drive;
-        int error;
+	int error;
 	int s;
 
-        /*
-         * Enforce write permission for ioctls that change the
-         * state of the bus.  Host adapter specific ioctls must
-         * be checked by the adapter driver.
-         */
-        switch (cmd) {
-        case ATABUSIOSCAN:
-        case ATABUSIODETACH:
-        case ATABUSIORESET:
-                if ((flag & FWRITE) == 0)
-                        return (EBADF);
-        }
+	/*
+	 * Enforce write permission for ioctls that change the
+	 * state of the bus.  Host adapter specific ioctls must
+	 * be checked by the adapter driver.
+	 */
+	switch (cmd) {
+	case ATABUSIOSCAN:
+	case ATABUSIODETACH:
+	case ATABUSIORESET:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+	}
 
-        switch (cmd) {
-        case ATABUSIORESET:
+	switch (cmd) {
+	case ATABUSIORESET:
 		s = splbio();
 		ata_reset_channel(sc->sc_chan, AT_WAIT | AT_POLL);
 		splx(s);

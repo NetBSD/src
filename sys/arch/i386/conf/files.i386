@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.292 2006/09/04 02:16:03 perry Exp $
+#	$NetBSD: files.i386,v 1.292.4.1 2006/10/22 06:04:43 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -143,7 +143,7 @@ define vesabiosbus {}
 
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, eisabus, mcabus, pcibus, bios32, acpibus,
-	cpubus, apmbus, pnpbiosbus, vesabiosbus
+	cpubus, apmbus, pnpbiosbus, vesabiosbus, ipmibus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -353,7 +353,7 @@ file	arch/i386/i386/kvm86.c			kvm86
 file	arch/i386/i386/kvm86call.S		kvm86
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/i386/i386/compat_13_machdep.c	compat_13 | compat_aout
+file	arch/i386/i386/compat_13_machdep.c	compat_13
 file	arch/i386/i386/compat_16_machdep.c	compat_16 | compat_ibcs2
 
 # SVR4 binary compatibility (COMPAT_SVR4)

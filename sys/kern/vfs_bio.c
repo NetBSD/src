@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.163 2006/09/10 06:35:42 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.163.2.1 2006/10/22 06:07:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.163 2006/09/10 06:35:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.163.2.1 2006/10/22 06:07:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ struct vm_map *buf_map;
  * Buffer memory pool allocator.
  */
 static void *
-bufpool_page_alloc(struct pool *pp, int flags)
+bufpool_page_alloc(struct pool *pp __unused, int flags)
 {
 
 	return (void *)uvm_km_alloc(buf_map,
@@ -220,7 +220,7 @@ bufpool_page_alloc(struct pool *pp, int flags)
 }
 
 static void
-bufpool_page_free(struct pool *pp, void *v)
+bufpool_page_free(struct pool *pp __unused, void *v)
 {
 
 	uvm_km_free(buf_map, (vaddr_t)v, MAXBSIZE, UVM_KMF_WIRED);
@@ -403,7 +403,10 @@ bufinit(void)
 		struct pool *pp = &bmempools[i];
 		u_int size = 1 << (i + MEMPOOL_INDEX_OFFSET);
 		char *name = malloc(8, M_TEMP, M_WAITOK);
-		snprintf(name, 8, "buf%dk", 1 << i);
+		if (__predict_true(size >= 1024))
+			(void)snprintf(name, 8, "buf%dk", size / 1024);
+		else
+			(void)snprintf(name, 8, "buf%db", size);
 		pa = (size <= PAGE_SIZE && use_std)
 			? &pool_allocator_nointr
 			: &bufmempool_allocator;
@@ -563,8 +566,8 @@ buf_mrelease(caddr_t addr, size_t size)
  * bread()/breadn() helper.
  */
 static inline struct buf *
-bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
-    int async)
+bio_doread(struct vnode *vp, daddr_t blkno, int size,
+    kauth_cred_t cred __unused, int async)
 {
 	struct buf *bp;
 	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */

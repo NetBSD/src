@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.32 2005/12/11 12:17:04 christos Exp $
+#	$NetBSD: files.cats,v 1.32.22.1 2006/10/22 06:04:35 yamt Exp $
 #
 # CATS-specific configuration info
 #
@@ -15,8 +15,6 @@ defflag	XSERVER
 # ABLE booting ELF kernels
 defflag ABLEELF
 
-define todservice {}
-
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
@@ -29,13 +27,6 @@ include "arch/arm/conf/files.footbridge"
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-
-#
-# time of day clock
-#
-device	todclock
-attach	todclock at todservice
-file	arch/arm/footbridge/todclock.c			todclock	needs-count
 
 # ISA DMA glue
 file	arch/arm/footbridge/isa/isadma_machdep.c	isadma
@@ -73,7 +64,7 @@ device	sysbeep
 attach	sysbeep at pcppi with sysbeep_isa
 file	arch/arm/footbridge/isa/sysbeep_isa.c		sysbeep_isa
 
-device ds1687rtc: todservice
+device ds1687rtc
 attach ds1687rtc at isa
 file	arch/arm/footbridge/isa/dsrtc.c			ds1687rtc
 

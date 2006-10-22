@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.11 2006/05/14 21:31:52 elad Exp $ */
+/* $NetBSD: genfs_node.h,v 1.11.10.1 2006/10/22 06:07:22 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -35,6 +35,7 @@
 
 struct vm_page;
 struct kauth_cred;
+struct uio;
 
 struct genfs_ops {
 	void	(*gop_size)(struct vnode *, off_t, off_t *, int);
@@ -82,5 +83,10 @@ void	genfs_size(struct vnode *, off_t, off_t *, int);
 void	genfs_node_init(struct vnode *, const struct genfs_ops *);
 int	genfs_gop_write(struct vnode *, struct vm_page **, int, int);
 int	genfs_compat_gop_write(struct vnode *, struct vm_page **, int, int);
+void	genfs_directio(struct vnode *, struct uio *, int);
+
+void	genfs_node_wrlock(struct vnode *);
+void	genfs_node_rdlock(struct vnode *);
+void	genfs_node_unlock(struct vnode *);
 
 #endif	/* _MISCFS_GENFS_GENFS_NODE_H_ */

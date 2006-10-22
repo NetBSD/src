@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40 2006/08/14 14:11:21 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.4.1 2006/10/22 06:07:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40 2006/08/14 14:11:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.4.1 2006/10/22 06:07:10 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -57,6 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40 2006/08/14 14:11:21 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 
+POOL_INIT(lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
+    &pool_allocator_nointr);
+POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
+    &pool_allocator_nointr);
+
+static specificdata_domain_t lwp_specificdata_domain;
+
 struct lwplist alllwp;
 
 #define LWP_DEBUG
@@ -67,9 +74,18 @@ int lwp_debug = 0;
 #else
 #define DPRINTF(x)
 #endif
+
+void
+lwpinit(void)
+{
+
+	lwp_specificdata_domain = specificdata_domain_create();
+	KASSERT(lwp_specificdata_domain != NULL);
+}
+
 /* ARGSUSED */
 int
-sys__lwp_create(struct lwp *l, void *v, register_t *retval)
+sys__lwp_create(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys__lwp_create_args /* {
 		syscallarg(const ucontext_t *) ucp;
@@ -133,7 +149,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 
 
 int
-sys__lwp_exit(struct lwp *l, void *v, register_t *retval)
+sys__lwp_exit(struct lwp *l, void *v __unused, register_t *retval __unused)
 {
 
 	lwp_exit(l);
@@ -143,7 +159,7 @@ sys__lwp_exit(struct lwp *l, void *v, register_t *retval)
 
 
 int
-sys__lwp_self(struct lwp *l, void *v, register_t *retval)
+sys__lwp_self(struct lwp *l, void *v __unused, register_t *retval)
 {
 
 	*retval = l->l_lid;
@@ -153,7 +169,7 @@ sys__lwp_self(struct lwp *l, void *v, register_t *retval)
 
 
 int
-sys__lwp_getprivate(struct lwp *l, void *v, register_t *retval)
+sys__lwp_getprivate(struct lwp *l, void *v __unused, register_t *retval)
 {
 
 	*retval = (uintptr_t) l->l_private;
@@ -163,7 +179,7 @@ sys__lwp_getprivate(struct lwp *l, void *v, register_t *retval)
 
 
 int
-sys__lwp_setprivate(struct lwp *l, void *v, register_t *retval)
+sys__lwp_setprivate(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys__lwp_setprivate_args /* {
 		syscallarg(void *) ptr;
@@ -176,7 +192,7 @@ sys__lwp_setprivate(struct lwp *l, void *v, register_t *retval)
 
 
 int
-sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
+sys__lwp_suspend(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys__lwp_suspend_args /* {
 		syscallarg(lwpid_t) target;
@@ -262,7 +278,7 @@ lwp_suspend(struct lwp *l, struct lwp *t)
 
 
 int
-sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
+sys__lwp_continue(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys__lwp_continue_args /* {
 		syscallarg(lwpid_t) target;
@@ -311,7 +327,7 @@ lwp_continue(struct lwp *l)
 }
 
 int
-sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
+sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys__lwp_wakeup_args /* {
 		syscallarg(lwpid_t) target;
@@ -359,7 +375,7 @@ exit:
 }
 
 int
-sys__lwp_wait(struct lwp *l, void *v, register_t *retval)
+sys__lwp_wait(struct lwp *l, void *v, register_t *retval __unused)
 {
 	struct sys__lwp_wait_args /* {
 		syscallarg(lwpid_t) wait_for;
@@ -481,6 +497,8 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	l2->l_forw = l2->l_back = NULL;
 	l2->l_proc = p2;
 
+	lwp_initspecific(l2);
+
 	memset(&l2->l_startzero, 0,
 	       (unsigned) ((caddr_t)&l2->l_endzero -
 			   (caddr_t)&l2->l_startzero));
@@ -559,6 +577,8 @@ lwp_exit(struct lwp *l)
 	 * the entire process (if that's not already going on). We do
 	 * so with an exit status of zero, because it's a "controlled"
 	 * exit, and because that's what Solaris does.
+	 *
+	 * Note: the last LWP's specificdata will be deleted here.
 	 */
 	if (((p->p_nlwps - p->p_nzlwps) == 1) && ((p->p_flag & P_WEXIT) == 0)) {
 		DPRINTF(("lwp_exit: %d.%d calling exit1()\n",
@@ -566,6 +586,9 @@ lwp_exit(struct lwp *l)
 		exit1(l, 0);
 		/* NOTREACHED */
 	}
+
+	/* Delete the specificdata while it's still safe to sleep. */
+	specificdata_fini(lwp_specificdata_domain, &l->l_specdataref);
 
 	s = proclist_lock_write();
 	LIST_REMOVE(l, l_list);
@@ -741,4 +764,81 @@ lwp_update_creds(struct lwp *l)
 	simple_unlock(&p->p_lock);
 	if (oc != NULL)
 		kauth_cred_free(oc);
+}
+
+/*
+ * lwp_specific_key_create --
+ *	Create a key for subsystem lwp-specific data.
+ */
+int
+lwp_specific_key_create(specificdata_key_t *keyp, specificdata_dtor_t dtor)
+{
+
+	return (specificdata_key_create(lwp_specificdata_domain, keyp, dtor));
+}
+
+/*
+ * lwp_specific_key_delete --
+ *	Delete a key for subsystem lwp-specific data.
+ */
+void
+lwp_specific_key_delete(specificdata_key_t key)
+{
+
+	specificdata_key_delete(lwp_specificdata_domain, key);
+}
+
+/*
+ * lwp_initspecific --
+ *	Initialize an LWP's specificdata container.
+ */
+void
+lwp_initspecific(struct lwp *l)
+{
+	int error;
+
+	error = specificdata_init(lwp_specificdata_domain, &l->l_specdataref);
+	KASSERT(error == 0);
+}
+
+/*
+ * lwp_finispecific --
+ *	Finalize an LWP's specificdata container.
+ */
+void
+lwp_finispecific(struct lwp *l)
+{
+
+	specificdata_fini(lwp_specificdata_domain, &l->l_specdataref);
+}
+
+/*
+ * lwp_getspecific --
+ *	Return lwp-specific data corresponding to the specified key.
+ *
+ *	Note: LWP specific data is NOT INTERLOCKED.  An LWP should access
+ *	only its OWN SPECIFIC DATA.  If it is necessary to access another
+ *	LWP's specifc data, care must be taken to ensure that doing so
+ *	would not cause internal data structure inconsistency (i.e. caller
+ *	can guarantee that the target LWP is not inside an lwp_getspecific()
+ *	or lwp_setspecific() call).
+ */
+void *
+lwp_getspecific(specificdata_key_t key)
+{
+
+	return (specificdata_getspecific_unlocked(lwp_specificdata_domain,
+						  &curlwp->l_specdataref, key));
+}
+
+/*
+ * lwp_setspecific --
+ *	Set lwp-specific data corresponding to the specified key.
+ */
+void
+lwp_setspecific(specificdata_key_t key, void *data)
+{
+
+	specificdata_setspecific(lwp_specificdata_domain,
+				 &curlwp->l_specdataref, key, data);
 }

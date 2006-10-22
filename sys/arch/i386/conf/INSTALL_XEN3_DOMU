@@ -1,9 +1,10 @@
-# $NetBSD: INSTALL_XEN3_DOMU,v 1.2 2006/08/26 20:26:45 christos Exp $
+# $NetBSD: INSTALL_XEN3_DOMU,v 1.2.6.1 2006/10/22 06:04:43 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
 options 	XEN
 options 	XEN3
+options  	XEN_COMPAT_030001  #compatible with Xen3 before 3.0.2
 options 	MAXPHYS=32768
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
@@ -45,7 +46,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -128,9 +128,9 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-cpu* at mainbus?
-
 hypervisor*	at mainbus?		# Xen hypervisor
+
+vcpu* 		at hypervisor?		# Xen virtaul CPUs
 
 npx0		at hypervisor?		# x86 math coprocessor
 

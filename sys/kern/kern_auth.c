@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.22 2006/09/15 14:28:04 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.22.2.1 2006/10/22 06:07:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.22 2006/09/15 14:28:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.22.2.1 2006/10/22 06:07:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,6 +103,7 @@ static kauth_scope_t kauth_builtin_scope_system;
 static kauth_scope_t kauth_builtin_scope_process;
 static kauth_scope_t kauth_builtin_scope_network;
 static kauth_scope_t kauth_builtin_scope_machdep;
+static kauth_scope_t kauth_builtin_scope_device;
 
 static boolean_t listeners_have_been_loaded = FALSE;
 
@@ -353,7 +354,8 @@ kauth_cred_group(kauth_cred_t cred, u_int idx)
 
 /* XXX elad: gmuid is unused for now. */
 int
-kauth_cred_setgroups(kauth_cred_t cred, gid_t *grbuf, size_t len, uid_t gmuid)
+kauth_cred_setgroups(kauth_cred_t cred, gid_t *grbuf, size_t len,
+    uid_t gmuid __unused)
 {
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt == 1);
@@ -617,6 +619,10 @@ kauth_init(void)
 	/* Register machdep scope. */
 	kauth_builtin_scope_machdep = kauth_register_scope(KAUTH_SCOPE_MACHDEP,
 	    NULL, NULL);
+
+	/* Register device scope. */
+	kauth_builtin_scope_device = kauth_register_scope(KAUTH_SCOPE_DEVICE,
+	    NULL, NULL);
 }
 
 /*
@@ -643,7 +649,7 @@ kauth_deregister_scope(kauth_scope_t scope)
  */
 kauth_listener_t
 kauth_listen_scope(const char *id, kauth_scope_callback_t callback,
-		   void *cookie)
+    void *cookie __unused)
 {
 	kauth_scope_t scope;
 	kauth_listener_t listener;
@@ -711,15 +717,14 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 	simple_lock_only_held(NULL, "kauth_authorize_action");
 #endif
 
-	/* Sanitize input */
-	if (scope == NULL || cred == NULL)
-		return (EFAULT);
-	if (!action)
-		return (EINVAL);
+	KASSERT(cred != NULL);
+	KASSERT(action != 0);
 
 	/* Short-circuit requests coming from the kernel. */
 	if (cred == NOCRED || cred == FSCRED)
 		return (0);
+
+	KASSERT(scope != NULL);
 
 	if (!listeners_have_been_loaded) {
 		KASSERT(SIMPLEQ_EMPTY(&scope->listenq));
@@ -779,16 +784,24 @@ kauth_authorize_process(kauth_cred_t cred, kauth_action_t action,
  */
 int
 kauth_authorize_network(kauth_cred_t cred, kauth_action_t action,
-    void *arg0, void *arg1, void *arg2, void *arg3)
+    enum kauth_network_req req, void *arg1, void *arg2, void *arg3)
 {
 	return (kauth_authorize_action(kauth_builtin_scope_network, cred,
-	    action, arg0, arg1, arg2, arg3));
+	    action, (void *)req, arg1, arg2, arg3));
 }
 
 int
 kauth_authorize_machdep(kauth_cred_t cred, kauth_action_t action,
-    void *arg0, void *arg1, void *arg2, void *arg3)
+    enum kauth_machdep_req req, void *arg1, void *arg2, void *arg3)
 {
 	return (kauth_authorize_action(kauth_builtin_scope_machdep, cred,
-	    action, arg0, arg1, arg2, arg3));
+	    action, (void *)req, arg1, arg2, arg3));
+}
+
+int
+kauth_authorize_device_tty(kauth_cred_t cred, kauth_action_t action,
+    struct tty *tty)
+{
+	return (kauth_authorize_action(kauth_builtin_scope_device, cred,
+	    action, tty, NULL, NULL, NULL));
 }

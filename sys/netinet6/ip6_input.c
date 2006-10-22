@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.88 2006/05/25 21:32:47 bouyer Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.88.8.1 2006/10/22 06:07:35 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.88 2006/05/25 21:32:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.88.8.1 2006/10/22 06:07:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -189,8 +189,7 @@ ip6_init()
 }
 
 static void
-ip6_init2(dummy)
-	void *dummy;
+ip6_init2(void *dummy __unused)
 {
 
 	/* nd6_timer_init */

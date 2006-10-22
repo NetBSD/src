@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.18 2006/05/18 18:45:48 mrg Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.18.10.1 2006/10/22 06:05:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.18 2006/05/18 18:45:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.18.10.1 2006/10/22 06:05:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -99,17 +99,18 @@ dev_type_ioctl(kttcpioctl);
 
 const struct cdevsw kttcp_cdevsw = {
 	nullopen, nullclose, noread, nowrite, kttcpioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 void
-kttcpattach(int count)
+kttcpattach(int count __unused)
 {
 	/* Do nothing. */
 }
 
 int
-kttcpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+kttcpioctl(dev_t dev __unused, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	int error;
 
@@ -382,7 +383,7 @@ nopages:
 
 static int
 kttcp_soreceive(struct socket *so, unsigned long long slen,
-		unsigned long long *done, struct lwp *l, int *flagsp)
+    unsigned long long *done, struct lwp *l __unused, int *flagsp)
 {
 	struct mbuf *m, **mp;
 	int flags, len, error, s, offset, moff, type;

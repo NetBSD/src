@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.29 2006/09/03 18:30:35 xtraeme Exp $	*/
+/*	$NetBSD: piixide.c,v 1.29.4.1 2006/10/22 06:06:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.29 2006/09/03 18:30:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.29.4.1 2006/10/22 06:06:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,8 @@ CFATTACH_DECL(piixide, sizeof(struct pciide_softc),
     piixide_match, piixide_attach, NULL, NULL);
 
 static int
-piixide_match(struct device *parent, struct cfdata *match, void *aux)
+piixide_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -252,7 +253,7 @@ piixide_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-piixide_attach(struct device *parent, struct device *self, void *aux)
+piixide_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -261,7 +262,8 @@ piixide_attach(struct device *parent, struct device *self, void *aux)
 	    pciide_lookup_product(pa->pa_id, pciide_intel_products));
 
 	/* Setup our powerhook */
-	sc->sc_powerhook = powerhook_establish(piixide_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, piixide_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish PCI power hook\n",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);

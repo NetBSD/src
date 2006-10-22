@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbconvrt.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbconvrt.c,v 1.1.22.1 2006/10/22 06:07:00 yamt Exp $");
 
 #define __TBCONVRT_C__
 
@@ -161,7 +161,7 @@ AcpiTbConvertFadt2 (
 
 UINT32
 AcpiTbGetTableCount (
-    RSDP_DESCRIPTOR         *RSDP,
+    RSDP_DESCRIPTOR         *RSDP __unused,
     ACPI_TABLE_HEADER       *RSDT)
 {
     UINT32                  PointerSize;
@@ -660,7 +660,7 @@ AcpiTbConvertTableFadt (
 
 ACPI_STATUS
 AcpiTbBuildCommonFacs (
-    ACPI_TABLE_DESC         *TableInfo)
+    ACPI_TABLE_DESC         *TableInfo __unused)
 {
 
     ACPI_FUNCTION_TRACE ("TbBuildCommonFacs");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.3 2006/05/27 17:56:39 he Exp $	*/
+/*	$NetBSD: ciss.c,v 1.3.12.1 2006/10/22 06:05:44 yamt Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.3 2006/05/27 17:56:39 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.3.12.1 2006/10/22 06:05:44 yamt Exp $");
 
 /* #define CISS_DEBUG */
 
@@ -448,9 +448,10 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 			    htole32((u_int64_t)sgd->ds_addr >> 32);
 			cmd->sgl[i].len = htole32(sgd->ds_len);
 			cmd->sgl[i].flags = htole32(0);
-			if (i)
+			if (i) {
 				CISS_DPRINTF(CISS_D_DMA,
 				    (",0x%lx/%lu", sgd->ds_addr, sgd->ds_len));
+			}
 		}
 
 		CISS_DPRINTF(CISS_D_DMA, ("> "));
@@ -994,8 +995,8 @@ ciss_kthread(void *v)
 #endif
 
 static int
-ciss_scsi_ioctl(struct scsipi_channel *chan, u_long cmd,
-    caddr_t addr, int flag, struct proc *p)
+ciss_scsi_ioctl(struct scsipi_channel *chan __unused, u_long cmd __unused,
+    caddr_t addr __unused, int flag __unused, struct proc *p __unused)
 {
 #if NBIO > 0
 	return ciss_ioctl(chan->chan_adapter->adapt_dev, cmd, addr);

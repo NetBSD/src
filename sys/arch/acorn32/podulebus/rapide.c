@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.24 2006/01/16 20:30:18 bouyer Exp $	*/
+/*	$NetBSD: rapide.c,v 1.24.20.1 2006/10/22 06:04:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.24 2006/01/16 20:30:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.24.20.1 2006/10/22 06:04:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ rapide_attach(parent, self, aux)
 		if (bus_space_map(iot, iobase + rapide_info[channel].registers,
 		    DRIVE_REGISTERS_SPACE, 0, &wdr->cmd_baseioh))
 			continue;
-		for (i = 0; i < DRIVE_REGISTERS_SPACE; i++) {
+		for (i = 0; i < WDC_NREG; i++) {
 			if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 				i, i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
 				bus_space_unmap(iot, wdr->cmd_baseioh,

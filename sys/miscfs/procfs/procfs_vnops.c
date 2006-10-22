@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.133 2006/06/13 13:57:33 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.133.8.1 2006/10/22 06:07:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.133 2006/06/13 13:57:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.133.8.1 2006/10/22 06:07:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,6 +163,7 @@ static const struct proc_target proc_root_targets[] = {
 	{ DT_REG, N("cpuinfo"),     PFScpuinfo,        procfs_validfile_linux },
 	{ DT_REG, N("uptime"),      PFSuptime,         procfs_validfile_linux },
 	{ DT_REG, N("mounts"),	    PFSmounts,	       procfs_validfile_linux },
+	{ DT_REG, N("devices"),     PFSdevices,        procfs_validfile_linux },
 #undef N
 };
 static const int nproc_root_targets =
@@ -629,6 +630,7 @@ procfs_getattr(v)
 		vap->va_gid = kauth_cred_getegid(procp->p_cred);
 		break;
 	case PFSmeminfo:
+	case PFSdevices:
 	case PFScpuinfo:
 	case PFSuptime:
 	case PFSmounts:
@@ -733,6 +735,7 @@ procfs_getattr(v)
 	case PFSnotepg:
 	case PFScmdline:
 	case PFSmeminfo:
+	case PFSdevices:
 	case PFScpuinfo:
 	case PFSuptime:
 	case PFSmounts:
@@ -783,8 +786,7 @@ procfs_getattr(v)
 
 /*ARGSUSED*/
 int
-procfs_setattr(v)
-	void *v;
+procfs_setattr(void *v __unused)
 {
 	/*
 	 * just fake out attribute setting
@@ -1049,9 +1051,7 @@ procfs_lookup(v)
 }
 
 int
-procfs_validfile(l, mp)
-	struct lwp *l;
-	struct mount *mp;
+procfs_validfile(struct lwp *l, struct mount *mp __unused)
 {
 	return (l->l_proc->p_textvp != NULL);
 }

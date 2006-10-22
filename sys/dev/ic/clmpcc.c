@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.29 2006/07/21 16:48:48 ad Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.29.6.1 2006/10/22 06:05:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.29 2006/07/21 16:48:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.29.6.1 2006/10/22 06:05:44 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -523,10 +523,7 @@ clmpccopen(dev, flag, mode, l)
 
 	tp = ch->ch_tty;
 
-	if ( ISSET(tp->t_state, TS_ISOPEN) &&
-	     ISSET(tp->t_state, TS_XCLUDE) &&
-	     kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	     &l->l_acflag) != 0 )
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return EBUSY;
 
 	/*
@@ -753,8 +750,8 @@ clmpccioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if ( error )
 			break;
 		ch->ch_openflags = *((int *)data) &

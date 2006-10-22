@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_blue.c,v 1.17 2006/07/21 16:48:45 ad Exp $	*/
-/*	$KAME: altq_blue.c,v 1.8 2002/01/07 11:25:40 kjc Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.17.6.1 2006/10/22 06:04:30 yamt Exp $	*/
+/*	$KAME: altq_blue.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
- * Copyright (C) 1997-2000
+ * Copyright (C) 1997-2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,17 +61,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.17 2006/07/21 16:48:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.17.6.1 2006/10/22 06:04:30 yamt Exp $");
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#ifdef _KERNEL_OPT
 #include "opt_altq.h"
-#if (__FreeBSD__ != 2)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
 #endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
+
 #ifdef ALTQ_BLUE	/* blue is enabled by ALTQ_BLUE option in opt_altq.h */
 
 #include <sys/param.h>
@@ -98,28 +94,29 @@ __KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.17 2006/07/21 16:48:45 ad Exp $");
 #include <altq/altq_conf.h>
 #include <altq/altq_blue.h>
 
+#ifdef ALTQ3_COMPAT
 /*
  * Blue is proposed and implemented by Wu-chang Feng <wuchang@eecs.umich.edu>.
  * more information on Blue is available from
- * http://www.thefengs.com/wuchang/work/blue/
+ * http://www.eecs.umich.edu/~wuchang/blue/
  */
 
 /* fixed-point uses 12-bit decimal places */
 #define	FP_SHIFT	12	/* fixed-point shift */
 
-#define	BLUE_LIMIT	200	/* default max queue length */
+#define	BLUE_LIMIT	200	/* default max queue lenght */
+#define	BLUE_STATS		/* collect statistics */
 
 /* blue_list keeps all blue_state_t's allocated. */
 static blue_queue_t *blue_list = NULL;
 
 /* internal function prototypes */
-static int blue_enqueue __P((struct ifaltq *, struct mbuf *,
-			     struct altq_pktattr *));
-static struct mbuf *blue_dequeue __P((struct ifaltq *, int));
-static int drop_early __P((blue_t *));
-static int mark_ecn __P((struct mbuf *, struct altq_pktattr *, int));
-static int blue_detach __P((blue_queue_t *));
-static int blue_request __P((struct ifaltq *, int, void *));
+static int blue_enqueue(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
+static struct mbuf *blue_dequeue(struct ifaltq *, int);
+static int drop_early(blue_t *);
+static int mark_ecn(struct mbuf *, struct altq_pktattr *, int);
+static int blue_detach(blue_queue_t *);
+static int blue_request(struct ifaltq *, int, void *);
 
 /*
  * blue device interface
@@ -127,20 +124,16 @@ static int blue_request __P((struct ifaltq *, int, void *));
 altqdev_decl(blue);
 
 int
-blueopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+blueopen(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
 }
 
 int
-blueclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+blueclose(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	blue_queue_t *rqp;
 	int err, error = 0;
@@ -156,12 +149,8 @@ blueclose(dev, flag, fmt, l)
 }
 
 int
-blueioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	ioctlcmd_t cmd;
-	caddr_t addr;
-	int flag;
-	struct lwp *l;
+blueioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+    struct lwp *l)
 {
 	blue_queue_t *rqp;
 	struct blue_interface *ifacep;
@@ -177,8 +166,9 @@ blueioctl(dev, cmd, addr, flag, l)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		if ((error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_BLUE, NULL,
+		    NULL, NULL)) != 0)
 			return (error);
 #endif
 		break;
@@ -295,7 +285,7 @@ blueioctl(dev, cmd, addr, flag, l)
 			q_stats->drop_unforced = rp->blue_stats.drop_unforced;
 			q_stats->marked_packets = rp->blue_stats.marked_packets;
 
-		} while (0);
+		} while (/*CONSTCOND*/ 0);
 		break;
 
 	case BLUE_CONFIG:
@@ -324,7 +314,7 @@ blueioctl(dev, cmd, addr, flag, l)
 				  rqp->rq_blue->blue_pkttime,
 				  rqp->rq_blue->blue_max_pmark,
 				  rqp->rq_blue->blue_hold_time);
-		} while (0);
+		} while (/*CONSTCOND*/ 0);
 		break;
 
 	default:
@@ -334,8 +324,8 @@ blueioctl(dev, cmd, addr, flag, l)
 	return error;
 }
 
-static int blue_detach(rqp)
-	blue_queue_t *rqp;
+static int
+blue_detach(blue_queue_t *rqp)
 {
 	blue_queue_t *tmp;
 	int error = 0;
@@ -369,12 +359,8 @@ static int blue_detach(rqp)
  */
 
 int
-blue_init(rp, flags, pkttime, blue_max_pmark, blue_hold_time)
-	blue_t 	*rp;
-	int	flags;
-	int	pkttime;
-	int	blue_max_pmark;
-	int	blue_hold_time;
+blue_init(blue_t *rp, int flags, int pkttime, int blue_max_pmark,
+    int blue_hold_time)
 {
 	int npkts_per_sec;
 
@@ -404,10 +390,7 @@ blue_init(rp, flags, pkttime, blue_max_pmark, blue_hold_time)
  *		 ENOBUFS when drop occurs.
  */
 static int
-blue_enqueue(ifq, m, pktattr)
-	struct ifaltq *ifq;
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
+blue_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 {
 	blue_queue_t *rqp = (blue_queue_t *)ifq->altq_disc;
 	int error = 0;
@@ -424,11 +407,8 @@ blue_enqueue(ifq, m, pktattr)
 #define	DTYPE_EARLY	2	/* an "unforced" (early) drop */
 
 int
-blue_addq(rp, q, m, pktattr)
-	blue_t *rp;
-	class_queue_t *q;
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
+blue_addq(blue_t *rp, class_queue_t *q, struct mbuf *m,
+    struct altq_pktattr *pktattr)
 {
 	int droptype;
 
@@ -522,10 +502,9 @@ blue_addq(rp, q, m, pktattr)
  *
  */
 static int
-drop_early(rp)
-	blue_t *rp;
+drop_early(blue_t *rp)
 {
-	if ((random() % rp->blue_max_pmark) < rp->blue_pmark) {
+	if ((arc4random() % rp->blue_max_pmark) < rp->blue_pmark) {
 		/* drop or mark */
 		return (1);
 	}
@@ -538,10 +517,7 @@ drop_early(rp)
  *    returns 1 if successfully marked, 0 otherwise.
  */
 static int
-mark_ecn(m, pktattr, flags)
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
-	int flags;
+mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 {
 	struct mbuf *m0;
 
@@ -631,9 +607,7 @@ mark_ecn(m, pktattr, flags)
  */
 
 static struct mbuf *
-blue_dequeue(ifq, op)
-	struct ifaltq *ifq;
-	int op;
+blue_dequeue(struct ifaltq * ifq, int op)
 {
 	blue_queue_t *rqp = (blue_queue_t *)ifq->altq_disc;
 	struct mbuf *m = NULL;
@@ -647,9 +621,8 @@ blue_dequeue(ifq, op)
 	return m;
 }
 
-struct mbuf *blue_getq(rp, q)
-	blue_t *rp;
-	class_queue_t *q;
+struct mbuf *
+blue_getq(blue_t *rp, class_queue_t *q)
 {
 	struct mbuf *m;
 
@@ -670,10 +643,7 @@ struct mbuf *blue_getq(rp, q)
 }
 
 static int
-blue_request(ifq, req, arg)
-	struct ifaltq *ifq;
-	int req;
-	void *arg;
+blue_request(struct ifaltq *ifq, int req, void *arg __unused)
 {
 	blue_queue_t *rqp = (blue_queue_t *)ifq->altq_disc;
 
@@ -697,4 +667,5 @@ ALTQ_MODULE(altq_blue, ALTQT_BLUE, &blue_sw);
 
 #endif /* KLD_MODULE */
 
+#endif /* ALTQ3_COMPAT */
 #endif /* ALTQ_BLUE */

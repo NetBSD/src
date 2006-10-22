@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.14 2006/09/13 10:07:42 elad Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.14.2.1 2006/10/22 06:07:05 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -626,7 +626,7 @@ int mode;
 #if (BSD >= 199306) && defined(_KERNEL)
 #if (__NetBSD_Version__ >= 399002000)
 	if ((mode & FWRITE) && kauth_authorize_network(curlwp->l_cred,
-	    KAUTH_NETWORK_FIREWALL, (void *)KAUTH_REQ_NETWORK_FIREWALL_NAT,
+	    KAUTH_NETWORK_FIREWALL, KAUTH_REQ_NETWORK_FIREWALL_NAT,
 	    NULL, NULL, NULL))
 #else
 	if ((securelevel >= 2) && (mode & FWRITE))
@@ -2410,13 +2410,14 @@ done:
 /* for both IPv4 and IPv6.                                                  */
 /* ------------------------------------------------------------------------ */
 /*ARGSUSED*/
-static int nat_finalise(fin, nat, ni, tcp, natsave, direction)
-fr_info_t *fin;
-nat_t *nat;
-natinfo_t *ni;
-tcphdr_t *tcp;
-nat_t **natsave;
-int direction;
+static int nat_finalise(
+    fr_info_t *fin,
+    nat_t *nat,
+    natinfo_t *ni,
+    tcphdr_t *tcp __unused,
+    nat_t **natsave,
+    int direction
+)
 {
 	frentry_t *fr;
 	ipnat_t *np;

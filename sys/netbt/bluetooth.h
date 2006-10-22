@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.2 2006/06/19 22:38:55 gdamore Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.2.16.1 2006/10/22 06:07:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -34,6 +34,7 @@
 #define _NETBT_BLUETOOTH_H_
 
 #include <sys/socket.h>
+#include <sys/types.h>
 
 /*
  * Bluetooth Address Family Protocol Numbers

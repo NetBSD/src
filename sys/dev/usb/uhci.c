@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.199 2006/09/03 21:08:43 christos Exp $	*/
+/*	$NetBSD: uhci.c,v 1.199.4.1 2006/10/22 06:06:52 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.199 2006/09/03 21:08:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.199.4.1 2006/10/22 06:06:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,7 +547,8 @@ uhci_init(uhci_softc_t *sc)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(uhci_power, sc);
+	sc->sc_powerhook = powerhook_establish(USBDEVNAME(sc->sc_bus.bdev),
+	    uhci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(uhci_shutdown, sc);
 #endif
 
@@ -1044,12 +1045,12 @@ uhci_poll_hub(void *addr)
 }
 
 void
-uhci_root_intr_done(usbd_xfer_handle xfer)
+uhci_root_intr_done(usbd_xfer_handle xfer __unused)
 {
 }
 
 void
-uhci_root_ctrl_done(usbd_xfer_handle xfer)
+uhci_root_ctrl_done(usbd_xfer_handle xfer __unused)
 {
 }
 
@@ -1256,8 +1257,10 @@ uhci_intr1(uhci_softc_t *sc)
 		return (0);
 
 	if (sc->sc_suspend != PWR_RESUME) {
+#ifdef DIAGNOSTIC
 		printf("%s: interrupt while not operating ignored\n",
 		       USBDEVNAME(sc->sc_bus.bdev));
+#endif
 		UWRITE2(sc, UHCI_STS, status); /* acknowledge the ints */
 		return (0);
 	}
@@ -1345,7 +1348,7 @@ uhci_softintr(void *v)
 
 /* Check for an interrupt. */
 void
-uhci_check_intr(uhci_softc_t *sc, uhci_intr_info_t *ii)
+uhci_check_intr(uhci_softc_t *sc __unused, uhci_intr_info_t *ii)
 {
 	uhci_soft_td_t *std, *lstd;
 	u_int32_t status;
@@ -1803,6 +1806,7 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 	for (i = ntd; i >= 0; i--) {
 		p = uhci_alloc_std(sc);
 		if (p == NULL) {
+			KASSERT(lastp != NULL);
 			uhci_free_std_chain(sc, lastp, NULL);
 			return (USBD_NOMEM);
 		}
@@ -1839,7 +1843,7 @@ uhci_device_clear_toggle(usbd_pipe_handle pipe)
 }
 
 void
-uhci_noop(usbd_pipe_handle pipe)
+uhci_noop(usbd_pipe_handle pipe __unused)
 {
 }
 
@@ -2206,7 +2210,7 @@ uhci_device_ctrl_abort(usbd_xfer_handle xfer)
 
 /* Close a device control pipe. */
 void
-uhci_device_ctrl_close(usbd_pipe_handle pipe)
+uhci_device_ctrl_close(usbd_pipe_handle pipe __unused)
 {
 }
 
@@ -3513,14 +3517,14 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 
 /* Abort a root control request. */
 void
-uhci_root_ctrl_abort(usbd_xfer_handle xfer)
+uhci_root_ctrl_abort(usbd_xfer_handle xfer __unused)
 {
 	/* Nothing to do, all transfers are synchronous. */
 }
 
 /* Close the root pipe. */
 void
-uhci_root_ctrl_close(usbd_pipe_handle pipe)
+uhci_root_ctrl_close(usbd_pipe_handle pipe __unused)
 {
 	DPRINTF(("uhci_root_ctrl_close\n"));
 }

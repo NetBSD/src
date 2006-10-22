@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.58 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.58.4.1 2006/10/22 06:07:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.58 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.58.4.1 2006/10/22 06:07:24 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -138,13 +138,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.58 2006/09/07 02:40:33 dogcow Exp $");
 static void	lostart(struct ifnet *);
 #endif
 
-struct loop_softc {
-	LIST_ENTRY(loop_softc) sc_list;
-	struct ifnet sc_if;
-};
-
-static LIST_HEAD(, loop_softc) loop_softc_list;
-
 static int	loop_clone_create(struct if_clone *, int);
 static int	loop_clone_destroy(struct ifnet *);
 
@@ -152,9 +145,8 @@ static struct if_clone loop_cloner =
     IF_CLONE_INITIALIZER("lo", loop_clone_create, loop_clone_destroy);
 
 void
-loopattach(int n)
+loopattach(int n __unused)
 {
-	LIST_INIT(&loop_softc_list);
 
 	(void)loop_clone_create(&loop_cloner, 0);	/* lo0 always exists */
 	if_clone_attach(&loop_cloner);
@@ -163,41 +155,39 @@ loopattach(int n)
 static int
 loop_clone_create(struct if_clone *ifc, int unit)
 {
-	struct loop_softc *sc;
+	struct ifnet *ifp;
 
-	sc = malloc(sizeof(struct loop_softc), M_DEVBUF, M_WAITOK | M_ZERO);
+	ifp = malloc(sizeof(*ifp), M_DEVBUF, M_WAITOK | M_ZERO);
 
-	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "%s%d",
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
 	    ifc->ifc_name, unit);
 
-	sc->sc_if.if_softc = sc;
-	sc->sc_if.if_mtu = LOMTU;
-	sc->sc_if.if_flags = IFF_LOOPBACK | IFF_MULTICAST;
-	sc->sc_if.if_ioctl = loioctl;
-	sc->sc_if.if_output = looutput;
+	ifp->if_mtu = LOMTU;
+	ifp->if_flags = IFF_LOOPBACK | IFF_MULTICAST | IFF_RUNNING;
+	ifp->if_ioctl = loioctl;
+	ifp->if_output = looutput;
 #ifdef ALTQ
-	sc->sc_if.if_start = lostart;
+	ifp->if_start = lostart;
 #endif
-	sc->sc_if.if_type = IFT_LOOP;
-	sc->sc_if.if_hdrlen = 0;
-	sc->sc_if.if_addrlen = 0;
-	sc->sc_if.if_dlt = DLT_NULL;
-	IFQ_SET_READY(&sc->sc_if.if_snd);
+	ifp->if_type = IFT_LOOP;
+	ifp->if_hdrlen = 0;
+	ifp->if_addrlen = 0;
+	ifp->if_dlt = DLT_NULL;
+	IFQ_SET_READY(&ifp->if_snd);
 	if (unit == 0)
-		lo0ifp = &sc->sc_if;
-	if_attach(&sc->sc_if);
-	if_alloc_sadl(&sc->sc_if);
+		lo0ifp = ifp;
+	if_attach(ifp);
+	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
+	bpfattach(ifp, DLT_NULL, sizeof(u_int));
 #endif
 #ifdef MBUFTRACE
-	sc->sc_if.if_mowner = malloc(sizeof(struct mowner), M_DEVBUF,
+	ifp->if_mowner = malloc(sizeof(struct mowner), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
-	strlcpy(sc->sc_if.if_mowner->mo_name, sc->sc_if.if_xname,
-	    sizeof(sc->sc_if.if_mowner->mo_name));
-	MOWNER_ATTACH(sc->sc_if.if_mowner);
+	strlcpy(ifp->if_mowner->mo_name, ifp->if_xname,
+	    sizeof(ifp->if_mowner->mo_name));
+	MOWNER_ATTACH(ifp->if_mowner);
 #endif
-	LIST_INSERT_HEAD(&loop_softc_list, sc, sc_list);
 
 	return (0);
 }
@@ -205,7 +195,6 @@ loop_clone_create(struct if_clone *ifc, int unit)
 static int
 loop_clone_destroy(struct ifnet *ifp)
 {
-	struct loop_softc *sc = ifp->if_softc;
 
 	if (ifp == lo0ifp)
 		return (EPERM);
@@ -220,8 +209,7 @@ loop_clone_destroy(struct ifnet *ifp)
 #endif
 	if_detach(ifp);
 
-	LIST_REMOVE(sc, sc_list);
-	free(sc, M_DEVBUF);
+	free(ifp, M_DEVBUF);
 
 	return (0);
 }
@@ -409,7 +397,8 @@ lostart(struct ifnet *ifp)
 
 /* ARGSUSED */
 void
-lortrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
+lortrequest(int cmd __unused, struct rtentry *rt,
+    struct rt_addrinfo *info __unused)
 {
 
 	if (rt)

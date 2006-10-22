@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.13 2006/09/05 17:03:04 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.13.6.1 2006/10/22 06:07:09 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.13 2006/09/05 17:03:04 reinoud Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.13.6.1 2006/10/22 06:07:09 yamt Exp $");
 #endif /* not lint */
 
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: udf_vfsops.c,v 1.13 2006/09/05 17:03:04 reinoud Exp $");
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/conf.h>
+#include <sys/sysctl.h>
 #include <sys/kauth.h>
 
 #include <fs/udf/ecma167-udf.h>
@@ -211,14 +212,18 @@ free_udf_mountinfo(struct mount *mp)
 	struct udf_mount *ump;
 	int i;
 
+	if (!mp)
+		return;
+
 	ump = VFSTOUDF(mp);
 	if (ump) {
 		/* dispose of our descriptor pool */
-		if (ump->desc_pool)
+		if (ump->desc_pool) {
 			pool_destroy(ump->desc_pool);
+			free(ump->desc_pool, M_UDFMNT);
+		}
 
 		/* clear our data */
-		mp->mnt_data = NULL;
 		for (i = 0; i < UDF_ANCHORS; i++)
 			MPFREE(ump->anchors[i], M_UDFVOLD);
 		MPFREE(ump->primary_vol,      M_UDFVOLD);
@@ -264,7 +269,7 @@ udf_mount(struct mount *mp, const char *path,
 		return EOPNOTSUPP;
 	}
 
-	/* OK, so we are asked to mount the device/file! */
+	/* OK, so we are asked to mount the device */
 	error = copyin(data, &args, sizeof(struct udf_args));
 	if (error)
 		return error;
@@ -377,7 +382,7 @@ udf_unmount_sanity_check(struct mount *mp)
 	struct vnode *vp;
 
 	printf("On unmount, i found the following nodes:\n");
-	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		vprint("", vp);
 		if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) {
 			printf("  is locked\n");
@@ -453,12 +458,12 @@ udf_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	ump->devvp->v_specmountpoint = NULL;
 	vput(ump->devvp);
 
-	/* free ump struct */
-	mp->mnt_data = NULL;
-	mp->mnt_flag &= ~MNT_LOCAL;
-
 	/* free up umt structure */
 	free_udf_mountinfo(mp);
+
+	/* free ump struct reference */
+	mp->mnt_data = NULL;
+	mp->mnt_flag &= ~MNT_LOCAL;
 
 	DPRINTF(VOLUMES, ("Fin unmount\n"));
 	return error;
@@ -582,7 +587,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 /* --------------------------------------------------------------------- */
 
 int
-udf_start(struct mount *mp, int flags, struct lwp *l)
+udf_start(struct mount *mp __unused, int flags __unused, struct lwp *l __unused)
 {
 	/* do we have to do something here? */
 	return 0;
@@ -621,7 +626,8 @@ udf_root(struct mount *mp, struct vnode **vpp)
 /* --------------------------------------------------------------------- */
 
 int
-udf_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg, struct lwp *l)
+udf_quotactl(struct mount *mp __unused, int cmds __unused, uid_t uid __unused,
+    void *arg __unused, struct lwp *l __unused)
 {
 	DPRINTF(NOTIMPL, ("udf_quotactl called\n"));
 	return EOPNOTSUPP;
@@ -630,7 +636,7 @@ udf_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg, struct lwp *l)
 /* --------------------------------------------------------------------- */
 
 int
-udf_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+udf_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
 {
 	struct udf_mount *ump = VFSTOUDF(mp);
 	struct logvol_int_desc *lvid;
@@ -683,7 +689,8 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 /* --------------------------------------------------------------------- */
 
 int
-udf_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *p)
+udf_sync(struct mount *mp __unused, int waitfor __unused,
+    kauth_cred_t cred __unused, struct lwp *p __unused)
 {
 	DPRINTF(CALL, ("udf_sync called\n"));
 	/* nothing to be done as upto now read-only */
@@ -698,7 +705,8 @@ udf_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *p)
  * (optional) TODO lookup why some sources state NFSv3
  */
 int
-udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+udf_vget(struct mount *mp __unused, ino_t ino __unused,
+    struct vnode **vpp __unused)
 {
 	DPRINTF(NOTIMPL, ("udf_vget called\n"));
 	return EOPNOTSUPP;
@@ -710,7 +718,8 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
  * Lookup vnode for file handle specified
  */
 int
-udf_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+udf_fhtovp(struct mount *mp __unused, struct fid *fhp __unused,
+    struct vnode **vpp __unused)
 {
 	DPRINTF(NOTIMPL, ("udf_fhtovp called\n"));
 	return EOPNOTSUPP;
@@ -725,7 +734,8 @@ udf_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
  * have been recycled.
  */
 int
-udf_vptofh(struct vnode *vp, struct fid *fid, size_t *fh_size)
+udf_vptofh(struct vnode *vp __unused, struct fid *fid __unused,
+    size_t *fh_size __unused)
 {
 	DPRINTF(NOTIMPL, ("udf_vptofh called\n"));
 	return EOPNOTSUPP;
@@ -739,8 +749,50 @@ udf_vptofh(struct vnode *vp, struct fid *fid, size_t *fh_size)
  * integrity descriptor space
  */
 int
-udf_snapshot(struct mount *mp, struct vnode *vp, struct timespec *tm)
+udf_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
+    struct timespec *tm __unused)
 {
 	DPRINTF(NOTIMPL, ("udf_snapshot called\n"));
 	return EOPNOTSUPP;
 }
+
+/* --------------------------------------------------------------------- */
+
+/*
+ * If running a DEBUG kernel, provide an easy way to set the debug flags when
+ * running into a problem.
+ */
+
+#ifdef DEBUG
+#define UDF_VERBOSE_SYSCTLOPT 1
+
+SYSCTL_SETUP(sysctl_vfs_udf_setup, "sysctl vfs.udf subtree setup")
+{
+	/*
+	 * XXX the "24" below could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "24" is the order as taken from sys/mount.h
+	 */
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "udf",
+		       SYSCTL_DESCR("OSTA Universal File System"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 24, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "verbose",
+		       SYSCTL_DESCR("Bitmask for filesystem debugging"),
+		       NULL, 0, &udf_verbose, 0,
+		       CTL_VFS, 24, UDF_VERBOSE_SYSCTLOPT, CTL_EOL);
+}
+
+#endif /* DEBUG */
+

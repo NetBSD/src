@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.50 2006/08/30 00:40:56 christos Exp $	*/
+/*	$NetBSD: dpt.c,v 1.50.4.1 2006/10/22 06:05:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.50 2006/08/30 00:40:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.50.4.1 2006/10/22 06:05:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -613,7 +613,7 @@ dpt_readcfg(struct dpt_softc *sc)
  * we tell root that it's safe to power off).
  */
 static void
-dpt_shutdown(void *cookie)
+dpt_shutdown(void *cookie __unused)
 {
 	extern struct cfdriver dpt_cd;
 	struct dpt_softc *sc;
@@ -1114,7 +1114,7 @@ dpt_hba_inquire(struct dpt_softc *sc, struct eata_inquiry_data **ei)
 }
 
 int
-dptopen(dev_t dev, int flag, int mode, struct lwp *l)
+dptopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 {
 
 	if (device_lookup(&dpt_cd, minor(dev)) == NULL)
@@ -1124,7 +1124,7 @@ dptopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
 {
 	struct dpt_softc *sc;
 	int rv;
@@ -1371,16 +1371,18 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct lwp *l)
 
 	if (ucp->ucp_stataddr != NULL) {
 		rv = copyout(&sp, ucp->ucp_stataddr, sizeof(sp));
-		if (rv != 0)
+		if (rv != 0) {
 			DPRINTF(("%s: sp copyout() failed\n",
 			    sc->sc_dv.dv_xname));
+		}
 	}
 	if (rv == 0 && ucp->ucp_senseaddr != NULL) {
 		i = min(uslen, sizeof(ccb->ccb_sense));
 		rv = copyout(&ccb->ccb_sense, ucp->ucp_senseaddr, i);
-		if (rv != 0)
+		if (rv != 0) {
 			DPRINTF(("%s: sense copyout() failed\n",
 			    sc->sc_dv.dv_xname));
+		}
 	}
 
 	ucp->ucp_hstatus = (u_int8_t)ccb->ccb_hba_status;

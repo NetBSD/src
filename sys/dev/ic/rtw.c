@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.76 2006/09/03 05:10:24 christos Exp $ */
+/* $NetBSD: rtw.c,v 1.76.4.1 2006/10/22 06:05:45 yamt Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.76 2006/09/03 05:10:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.76.4.1 2006/10/22 06:05:45 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -591,7 +591,7 @@ rtw_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
 
 static int
 rtw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
-	const u_int8_t mac[IEEE80211_ADDR_LEN])
+    const u_int8_t mac[IEEE80211_ADDR_LEN] __unused)
 {
 	struct rtw_softc *sc = ic->ic_ifp->if_softc;
 
@@ -606,7 +606,7 @@ rtw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
 }
 
 static void
-rtw_key_update_begin(struct ieee80211com *ic)
+rtw_key_update_begin(struct ieee80211com *ic __unused)
 {
 #ifdef RTW_DEBUG
 	struct ifnet *ifp = ic->ic_ifp;
@@ -824,8 +824,8 @@ rtw_srom_free(struct rtw_srom *sr)
 }
 
 static void
-rtw_srom_defaults(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
-    enum rtw_rfchipid *rfchipid, uint32_t *rcr)
+rtw_srom_defaults(struct rtw_srom *sr __unused, uint32_t *flags,
+    uint8_t *cs_threshold, enum rtw_rfchipid *rfchipid, uint32_t *rcr)
 {
 	*flags |= (RTW_F_DIGPHY|RTW_F_ANTDIV);
 	*cs_threshold = RTW_SR_ENERGYDETTHR_DEFAULT;
@@ -1030,7 +1030,7 @@ rtw_srom_read(struct rtw_regs *regs, uint32_t flags, struct rtw_srom *sr,
 
 static void
 rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
-    const char *dvname)
+    const char *dvname __unused)
 {
 	uint8_t cfg4;
 	const char *method;
@@ -1362,7 +1362,7 @@ rtw_rxsoft_init_all(bus_dma_tag_t dmat, struct rtw_rxsoft *desc,
 
 static inline void
 rtw_rxdesc_init(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *rs,
-    int idx, int kick)
+    int idx, int kick __unused)
 {
 	int is_last = (idx == rdb->rdb_ndesc - 1);
 	uint32_t ctl, octl, obuf;
@@ -1437,7 +1437,7 @@ rtw_io_enable(struct rtw_regs *regs, uint8_t flags, int enable)
 }
 
 static void
-rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
+rtw_intr_rx(struct rtw_softc *sc, uint16_t isr __unused)
 {
 #define	IS_BEACON(__fc0)						\
     ((__fc0 & (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==\
@@ -1652,7 +1652,7 @@ next:
 }
 
 static void
-rtw_txsoft_release(bus_dma_tag_t dmat, struct ieee80211com *ic,
+rtw_txsoft_release(bus_dma_tag_t dmat, struct ieee80211com *ic __unused,
     struct rtw_txsoft *ts)
 {
 	struct mbuf *m;
@@ -1853,7 +1853,7 @@ rtw_intr_beacon(struct rtw_softc *sc, uint16_t isr)
 }
 
 static void
-rtw_intr_atim(struct rtw_softc *sc)
+rtw_intr_atim(struct rtw_softc *sc __unused)
 {
 	/* TBD */
 	return;
@@ -2269,7 +2269,7 @@ rtw_pwrstate_string(enum rtw_pwrstate power)
  */
 static void
 rtw_maxim_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
-    int before_rf, int digphy)
+    int before_rf, int digphy __unused)
 {
 	uint32_t anaparm;
 
@@ -2309,7 +2309,7 @@ rtw_maxim_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
  */
 static void
 rtw_rfmd_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
-    int before_rf, int digphy)
+    int before_rf, int digphy __unused)
 {
 	uint32_t anaparm;
 
@@ -3843,15 +3843,15 @@ rtw_establish_hooks(struct rtw_hooks *hooks, const char *dvname,
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	hooks->rh_power = powerhook_establish(rtw_power, arg);
+	hooks->rh_power = powerhook_establish(dvname, rtw_power, arg);
 	if (hooks->rh_power == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    dvname);
 }
 
 static inline void
-rtw_disestablish_hooks(struct rtw_hooks *hooks, const char *dvname,
-    void *arg)
+rtw_disestablish_hooks(struct rtw_hooks *hooks, const char *dvname __unused,
+    void *arg __unused)
 {
 	if (hooks->rh_shutdown != NULL)
 		shutdownhook_disestablish(hooks->rh_shutdown);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.99 2006/06/17 23:34:27 christos Exp $	*/
+/*	$NetBSD: pci.c,v 1.99.6.1 2006/10/22 06:06:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.99 2006/06/17 23:34:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.99.6.1 2006/10/22 06:06:18 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -94,7 +94,7 @@ int pci_enumerate_bus(struct pci_softc *, const int *,
  */
 
 static int
-pcirescan(struct device *sc, const char *ifattr, const int *locators)
+pcirescan(struct device *sc, const char *ifattr __unused, const int *locators)
 {
 
 	KASSERT(ifattr && !strcmp(ifattr, "pci"));
@@ -105,7 +105,7 @@ pcirescan(struct device *sc, const char *ifattr, const int *locators)
 }
 
 static int
-pcimatch(struct device *parent, struct cfdata *cf, void *aux)
+pcimatch(struct device *parent __unused, struct cfdata *cf, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -123,6 +123,86 @@ pcimatch(struct device *parent, struct cfdata *cf, void *aux)
 	 */
 
 	return (1);
+}
+
+static void
+pci_power_devices(struct pci_softc *sc, int why)
+{
+	pci_chipset_tag_t pc;
+	int device, function, nfunctions;
+	pcitag_t tag;
+	pcireg_t bhlcr, id;
+	pcireg_t state;
+#ifdef __PCI_BUS_DEVORDER
+	char devs[32];
+	int i;
+#endif
+
+	pc = sc->sc_pc;
+	switch (why) {
+	case PWR_STANDBY:
+		state = PCI_PMCSR_STATE_D1;
+		break;
+	case PWR_SUSPEND:
+		state = PCI_PMCSR_STATE_D3;
+		break;
+	case PWR_RESUME:
+		state = PCI_PMCSR_STATE_D0;
+		break;
+	default:
+		/* we should never be called here */
+#ifdef DIAGNOSTIC
+		panic("pci_power_devices called with invalid reason %d\n",
+		    why);
+		/* NOTREACHED */
+#endif
+		return;
+	}
+
+#ifdef __PCI_BUS_DEVORDER
+	pci_bus_devorder(sc->sc_pc, sc->sc_bus, devs);
+	for (i = 0; (device = devs[i]) < 32 && device >= 0; i++)
+#else
+	for (device = 0; device < sc->sc_maxndevs; device++)
+#endif
+	{
+		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
+		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
+			continue;
+		id = pci_conf_read(pc, tag, PCI_ID_REG);
+		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID ||
+		    PCI_VENDOR(id) == 0x0000)
+			continue;
+		nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
+
+		for (function = 0; function < nfunctions; function++) {
+			tag = pci_make_tag(pc, sc->sc_bus, device, function);
+			if (sc->PCI_SC_DEVICESC(device, function) != NULL)
+				continue;
+			(void)pci_set_powerstate(pc, tag, state);
+		}
+	}
+
+	return;
+}
+
+static void
+pci_powerhook(int why, void *aux)
+{
+	struct pci_softc *sc;
+
+	sc = (struct pci_softc *)aux;
+
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+	case PWR_RESUME:
+		pci_power_devices(sc, why);
+		break;
+	}
+
+	return;
 }
 
 static void
@@ -191,6 +271,13 @@ do {									\
 	sc->sc_intrswiz = pba->pba_intrswiz;
 	sc->sc_intrtag = pba->pba_intrtag;
 	sc->sc_flags = pba->pba_flags;
+
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    pci_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		aprint_error("%s: can't establish powerhook\n",
+		    sc->sc_dev.dv_xname);
+
 	pcirescan(&sc->sc_dev, "pci", wildcard);
 }
 
@@ -579,7 +666,7 @@ pci_vpd_write(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
 }
 
 int
-pci_dma64_available(struct pci_attach_args *pa)
+pci_dma64_available(struct pci_attach_args *pa __unused)
 {
 #ifdef _PCI_HAVE_DMA64
 	if (BUS_DMA_TAG_VALID(pa->pa_dmat64) &&
@@ -728,7 +815,8 @@ pci_activate(pci_chipset_tag_t pc, pcitag_t tag, void *sc,
 }
 
 int
-pci_activate_null(pci_chipset_tag_t pc, pcitag_t tag, void *sc, pcireg_t state)
+pci_activate_null(pci_chipset_tag_t pc __unused, pcitag_t tag __unused,
+    void *sc __unused, pcireg_t state __unused)
 {
 	return 0;
 }

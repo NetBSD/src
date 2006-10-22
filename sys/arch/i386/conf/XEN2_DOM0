@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.7 2006/09/10 02:28:33 riz Exp $
+# $NetBSD: XEN2_DOM0,v 1.7.2.1 2006/10/22 06:04:43 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -11,10 +11,10 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 maxusers	32		# estimated number of users
 
 #
-options  	XEN
+options 	XEN
 options 	DOM0OPS
-#making MCLBYTES == PAGE_SIZE avoids a copy when a mbuf cluster is sent
-# do a domU, at the expense of a highter memory usage by the network stack.
+# making MCLBYTES = PAGE_SIZE avoids a copy when a mbuf cluster is sent
+# to a domU, at the expense of a higher memory usage by the network stack.
 #options 	MCLSHIFT=12
 
 options 	I686_CPU
@@ -190,6 +190,9 @@ mainbus0 at root
 
 cpu* at mainbus?
 
+# IPMI support
+#ipmi0		at mainbus?
+
 hypervisor*	at mainbus?		# Xen hypervisor
 
 npx0		at hypervisor?		# x86 math coprocessor
@@ -313,6 +316,7 @@ glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
@@ -634,6 +638,32 @@ mpu*	at yds?
 # MIDI support
 midi*	at midibus?
 
+# Bluetooth Controller and Device support
+
+# Bluetooth PCMCIA Controllers
+# bt3c* at pcmcia? function ?             # 3Com 3CRWB6096-A
+
+# Bluetooth USB Controllers
+ubt* at uhub? port ? configuration ? interface ?
+
+# Bluetooth Device Hub
+#bthub* at bt3c?
+bthub* at ubt?
+
+# Bluetooth HID support
+bthidev* at bthub?
+
+# Bluetooth Mouse
+btms* at bthidev? reportid ?
+wsmouse* at btms? mux 0
+
+# Bluetooth Keyboard
+btkbd* at bthidev? reportid ?
+wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Audio support
+btsco* at bthub?
+
 # Cryptographic Devices
 
 # PCI cryptographic devices
@@ -705,5 +735,5 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-#xen pseudo-devices
+# xen pseudo-devices
 pseudo-device	xenevt

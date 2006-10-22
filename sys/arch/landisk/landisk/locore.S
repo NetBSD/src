@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.8.1 2006/10/22 06:04:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,55 +33,50 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "assym.h"
-
 #include <sh3/asm.h>
-#include <sh3/locore.h>
-#include <sh3/exception.h>
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.1.8.1 2006/10/22 06:04:49 yamt Exp $")
+
+#include <sh3/psl.h>
 #include <sh3/mmu_sh4.h>
 
+
 /*
- * void start(int howto, void *bootinfo);
+ * LINTSTUB: Func: void start(int howto, void *bootinfo)
+ *				__attribute__((__noreturn__))
  *	Kernel entry point.
- */	
+ */
 NENTRY(start)
 ALTENTRY(kernel_text)
-	/* Set bootstrap stack pointer */
-	mov.l	_L.bootstrap_stack, r15
-
-	/* Mask all interrupt */
-	__INTR_MASK(r0, r1)
-
-	/* MMU off */
-	mov.l	_L.MMUCR, r0
-	xor	r1, r1
-	mov.l	r1, @r0
-	
-	/* Make sure to change register bank 0 */
-	mov	#0x20, r1
+	/* Init SR */
 	stc	sr, r0
-	swap.b	r1, r1
-	swap.w	r1, r1
-	not	r1, r1
+	mov.l	.L_SR_clear, r1
+	mov.l	.L_SR_set, r2
 	and	r1, r0
-	ldc	r0, sr	/* SR.RB = 0 */
+	or	r2, r0
+	ldc	r0, sr
+
+	/* Disable MMU */
+	mov.l	.L_MMUCR, r0
+	mov	#0, r1
+	mov.l	r1, @r0
 
 	/* Go! */
-	mov.l	_L.landisk_startup, r0
+	mov.l	.L_landisk_startup, r0
+	mov.l	.L_bootstrap_stack, sp
 	jmp	@r0
 	 nop
 
 	/* NOTREACHED */	
 	.align	2
-_L.landisk_startup:	.long	_C_LABEL(landisk_startup)
-_L.bootstrap_stack:	.long	_C_LABEL(start)
-_L.MMUCR:		.long	SH4_MMUCR
 
-	.data
-	.align	2
-	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
-_C_LABEL(intrcnt):
-_C_LABEL(eintrcnt):
-_C_LABEL(intrnames):
-_C_LABEL(eintrnames):
+/* Select register bank 0 */
+.L_SR_clear:		.long	~PSL_RB
+
+/* Mask all interrupts */
+.L_SR_set:		.long	PSL_IMASK
+
+.L_MMUCR:		.long	SH4_MMUCR
+.L_landisk_startup:	.long	_C_LABEL(landisk_startup)
+.L_bootstrap_stack:	.long	_C_LABEL(start)
+
+	SET_ENTRY_SIZE(start)

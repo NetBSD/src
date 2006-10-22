@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.31 2006/03/10 17:21:20 jmcneill Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.31.12.1 2006/10/22 06:06:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.31 2006/03/10 17:21:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.31.12.1 2006/10/22 06:06:19 yamt Exp $");
 
 #include "ehci.h"
 
@@ -78,7 +78,8 @@ struct uhci_pci_softc {
 };
 
 static int
-uhci_pci_match(struct device *parent, struct cfdata *match, void *aux)
+uhci_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -91,7 +92,7 @@ uhci_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-uhci_pci_attach(struct device *parent, struct device *self, void *aux)
+uhci_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct uhci_pci_softc *sc = (struct uhci_pci_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -180,7 +181,8 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	usb_pci_add(&sc->sc_pci, pa, &sc->sc.sc_bus);
 #endif
 
-	sc->sc_powerhook = powerhook_establish(uhci_pci_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(USBDEVNAME(sc->sc.sc_bus.bdev),
+	    uhci_pci_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: couldn't establish powerhook\n",
 		    devname);

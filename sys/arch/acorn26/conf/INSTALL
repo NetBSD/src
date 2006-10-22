@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.18 2006/08/26 20:26:43 christos Exp $
+# $NetBSD: INSTALL,v 1.18.4.1 2006/10/22 06:04:30 yamt Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -23,7 +23,7 @@ options 	CPU_ARM3
 ## such that gdb(1) can be used on a kernel coredump.
 #makeoptions	DEBUG="-g"
 
-makeoptions	COPTS="-Os -fno-inline -fomit-frame-pointer -mno-apcs-frame"
+makeoptions	COPTS="-Os -fno-inline"
 
 # File systems
 file-system	FFS		# Fast file system
@@ -103,9 +103,6 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 # Disable kernel security.
 #options 	INSECURE
 
-# Reduce kernel size a little
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
-
 # NFS boot options
 #options 	NFS_BOOT_DHCP		# superset of BOOTP
 #options 	NFS_BOOT_BOOTPARAM
@@ -161,6 +158,9 @@ atabus* 	at dtide? channel ?	# ATA bus
 
 hcide*		at podulebus0 slot ?	# HCCS IDE interface
 atabus* 	at hcide? channel ?	# ATA bus
+
+sec*		at podulebus0 slot ?	# Acorn SCSI interface
+scsibus*	at sec?
 
 hcsc*		at podulebus0 slot ?	# HCCS 8-bit SCSI interface
 scsibus*	at hcsc?

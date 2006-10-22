@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.16 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.16.6.1 2006/10/22 06:07:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.16 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.16.6.1 2006/10/22 06:07:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -931,7 +931,7 @@ ptyfs_kqfilter(void *v)
 
 static int
 ptyfs_update(struct vnode *vp, const struct timespec *acc,
-    const struct timespec *mod, int flags)
+    const struct timespec *mod, int flags __unused)
 {
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 

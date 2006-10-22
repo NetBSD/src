@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.18 2006/03/11 02:35:06 jmcneill Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.18.12.1 2006/10/22 06:06:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.18 2006/03/11 02:35:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.18.12.1 2006/10/22 06:06:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ agp_intel_vgamatch(struct pci_attach_args *pa)
 }
 
 int
-agp_intel_attach(struct device *parent, struct device *self, void *aux)
+agp_intel_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct agp_softc *sc = (struct agp_softc *)self;
 	struct pci_attach_args *pa= aux;
@@ -258,7 +258,8 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 			AGP_INTEL_ERRSTS, 0x70);
 	}
 
-	isc->sc_powerhook = powerhook_establish(agp_intel_powerhook, sc);
+	isc->sc_powerhook = powerhook_establish(sc->as_dev.dv_xname,
+	    agp_intel_powerhook, sc);
 	if (isc->sc_powerhook == NULL)
 		aprint_error("%s: couldn't establish powerhook\n",
 		    sc->as_dev.dv_xname);

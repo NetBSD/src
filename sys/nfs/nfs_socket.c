@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.138 2006/09/02 13:30:08 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.138.4.1 2006/10/22 06:07:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.138 2006/09/02 13:30:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.138.4.1 2006/10/22 06:07:43 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.138 2006/09/02 13:30:08 yamt Exp $"
 
 MALLOC_DEFINE(M_NFSREQ, "NFS req", "NFS request header");
 #ifdef MBUFTRACE
-struct mowner nfs_mowner = { "nfs" };
+struct mowner nfs_mowner = MOWNER_INIT("nfs","");
 #endif
 
 /*
@@ -1621,8 +1621,7 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
  * sure to set the r_retry field to 0 (implies nm_retry == 0).
  */
 void
-nfs_timer(arg)
-	void *arg;	/* never used */
+nfs_timer(void *arg __unused)
 {
 	struct nfsreq *rep;
 	struct mbuf *m;
@@ -1758,9 +1757,7 @@ nfs_timer(arg)
 
 /*ARGSUSED*/
 void
-nfs_exit(p, v)
-	struct proc *p;
-	void *v;
+nfs_exit(struct proc *p, void *v __unused)
 {
 	struct nfsreq *rp;
 	int s = splsoftnet();

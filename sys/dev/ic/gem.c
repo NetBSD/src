@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.47 2006/08/05 21:26:49 sanjayl Exp $ */
+/*	$NetBSD: gem.c,v 1.47.6.1 2006/10/22 06:05:44 yamt Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.47 2006/08/05 21:26:49 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.47.6.1 2006/10/22 06:05:44 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -436,7 +436,8 @@ gem_attach(sc, enaddr)
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	sc->sc_powerhook = powerhook_establish(gem_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    gem_power, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

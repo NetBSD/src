@@ -1,16 +1,17 @@
-/*	$NetBSD: altq_localq.c,v 1.6 2005/12/11 12:16:03 christos Exp $	*/
-/*	$KAME: altq_localq.c,v 1.4 2001/08/16 11:28:25 kjc Exp $	*/
+/*	$NetBSD: altq_localq.c,v 1.6.22.1 2006/10/22 06:04:30 yamt Exp $	*/
+/*	$KAME: altq_localq.c,v 1.7 2003/07/10 12:07:48 kjc Exp $	*/
 /*
  * a skeleton file for implementing a new queueing discipline.
  * this file is in the public domain.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.6 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.6.22.1 2006/10/22 06:04:30 yamt Exp $");
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#ifdef _KERNEL_OPT
 #include "opt_altq.h"
-#endif /* __FreeBSD__ || __NetBSD__ */
+#endif
+
 #ifdef ALTQ_LOCALQ  /* localq is enabled by ALTQ_LOCALQ option in opt_altq.h */
 
 #include <sys/param.h>
@@ -24,26 +25,23 @@ __KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.6 2005/12/11 12:16:03 christos Exp
 #include <altq/altq.h>
 #include <altq/altq_conf.h>
 
+#ifdef ALTQ3_COMPAT
 /*
  * localq device interface
  */
 altqdev_decl(localq);
 
 int
-localqopen(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+localqopen(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
 }
 
 int
-localqclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+localqclose(dev_t dev __unused, int flag __unused, int fmt __unused,
+    struct lwp *l __unused)
 {
 	int error = 0;
 
@@ -51,12 +49,8 @@ localqclose(dev, flag, fmt, l)
 }
 
 int
-localqioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	ioctlcmd_t cmd;
-	caddr_t addr;
-	int flag;
-	struct lwp *l;
+localqioctl(dev_t dev __unused, ioctlcmd_t cmd __unused, caddr_t addr __unused,
+    int flag __unused, struct lwp *l __unused)
 {
 	int error = 0;
 
@@ -72,4 +66,5 @@ ALTQ_MODULE(altq_localq, ALTQT_LOCALQ, &localq_sw);
 
 #endif /* KLD_MODULE */
 
+#endif /* ALTQ3_COMPAT */
 #endif /* ALTQ_LOCALQ */

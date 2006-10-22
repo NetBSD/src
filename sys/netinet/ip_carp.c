@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.5 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.5.8.1 2006/10/22 06:07:28 yamt Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -513,7 +513,7 @@ carp_proto_input(struct mbuf *m, ...)
 
 #ifdef INET6
 int
-carp6_proto_input(struct mbuf **mp, int *offp, int proto)
+carp6_proto_input(struct mbuf **mp, int *offp, int proto __unused)
 {
 	struct mbuf *m = *mp;
 	struct carp_softc *sc = NULL;
@@ -729,7 +729,7 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 
 /* ARGSUSED */
 void
-carpattach(int n)
+carpattach(int n __unused)
 {
 	if_clone_attach(&carp_cloner);
 }
@@ -854,7 +854,8 @@ carp_ifdetach(struct ifnet *ifp)
 }
 
 int
-carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
+carp_prepare_ad(struct mbuf *m __unused, struct carp_softc *sc,
+    struct carp_header *ch)
 {
 	if (sc->sc_init_counter) {
 		/* this could also be seconds since unix epoch */
@@ -1841,12 +1842,10 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	struct carpreq carpr;
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
-	struct ifaliasreq *ifra;
 	struct ifnet *cdev = NULL;
 	int error = 0;
 
 	ifa = (struct ifaddr *)addr;
-	ifra = (struct ifaliasreq *)addr;
 	ifr = (struct ifreq *)addr;
 
 	switch (cmd) {
@@ -1864,28 +1863,6 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		case AF_INET6:
 			sc->sc_if.if_flags|= IFF_UP;
 			error = carp_set_addr6(sc, satosin6(ifa->ifa_addr));
-			break;
-#endif /* INET6 */
-		default:
-			error = EAFNOSUPPORT;
-			break;
-		}
-		break;
-
-	case SIOCAIFADDR:
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			sc->sc_if.if_flags |= IFF_UP;
-			bcopy(ifa->ifa_addr, ifa->ifa_dstaddr,
-			    sizeof(struct sockaddr));
-			error = carp_set_addr(sc, satosin(&ifra->ifra_addr));
-			break;
-#endif /* INET */
-#ifdef INET6
-		case AF_INET6:
-			sc->sc_if.if_flags |= IFF_UP;
-			error = carp_set_addr6(sc, satosin6(&ifra->ifra_addr));
 			break;
 #endif /* INET6 */
 		default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.22 2006/09/16 00:50:52 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.22.2.1 2006/10/22 06:07:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.22 2006/09/16 00:50:52 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.22.2.1 2006/10/22 06:07:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,11 +96,11 @@ void
 todr_attach(todr_chip_handle_t todr)
 {
 
-        if (todr_handle) {
-                printf("todr_attach: TOD already configured\n");
+	if (todr_handle) {
+		printf("todr_attach: TOD already configured\n");
 		return;
 	}
-        todr_handle = todr;
+	todr_handle = todr;
 }
 
 static int timeset = 0;
@@ -148,9 +148,8 @@ inittodr(time_t base)
 	    (todr_gettime(todr_handle, &tv) != 0) ||
 	    (tv.tv_sec < (25 * SECYR))) {
 
-		if (todr_handle != NULL) {
+		if (todr_handle != NULL)
 			printf("WARNING: preposterous TOD clock time\n");
-		}
 		else
 			printf("WARNING: no TOD clock present\n");
 		badrtc = 1;
@@ -172,8 +171,7 @@ inittodr(time_t base)
 				printf("WARNING: clock lost %d days\n",
 				    deltat / SECDAY);
 				badrtc = 1;
-			}
-			else {
+			} else {
 				printf("WARNING: clock gained %d days\n",
 				    deltat / SECDAY);
 			}
@@ -266,7 +264,7 @@ todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
 	}
 	printf("%s: rv = %d\n", prefix, rv);
 	printf("%s: rtc_offset = %d\n", prefix, rtc_offset);
-	printf("%s: %u/%u/%u %02u:%02u:%02u, (wday %d) (epoch %u.%06u)\n",
+	printf("%s: %4u/%02u/%02u %02u:%02u:%02u, (wday %d) (epoch %u.%06u)\n",
 	    prefix,
 	    dt->dt_year, dt->dt_mon, dt->dt_day,
 	    dt->dt_hour, dt->dt_min, dt->dt_sec,
@@ -293,11 +291,11 @@ todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 		if (rv == 0)
 			tvp->tv_sec += rtc_offset * 60;
 #endif
-		todr_debug("TOD-GET-SECS", rv, NULL, tvp);
+		todr_debug("TODR-GET-SECS", rv, NULL, tvp);
 		return rv;
 	} else if (tch->todr_gettime_ymdhms) {
 		rv = tch->todr_gettime_ymdhms(tch, &dt);
-		todr_debug("TOD-GET-YMDHMS", rv, &dt, NULL);
+		todr_debug("TODR-GET-YMDHMS", rv, &dt, NULL);
 		if (rv)
 			return rv;
 

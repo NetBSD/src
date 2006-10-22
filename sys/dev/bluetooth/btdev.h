@@ -1,4 +1,4 @@
-/*	$NetBSD: btdev.h,v 1.4 2006/09/11 18:30:27 plunky Exp $	*/
+/*	$NetBSD: btdev.h,v 1.4.2.1 2006/10/22 06:05:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -47,7 +47,6 @@
 #ifdef _KERNEL
 struct btdev {
 	struct device		sc_dev;
-	int			(*sc_identify)(struct btdev *, prop_dictionary_t);
 	LIST_ENTRY(btdev)	sc_next;
 };
 #endif /* _KERNEL */

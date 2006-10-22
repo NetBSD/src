@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.109 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: in.c,v 1.109.6.1 2006/10/22 06:07:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.109 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.109.6.1 2006/10/22 06:07:28 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -580,7 +580,7 @@ in_purgeaddr(struct ifaddr *ifa, struct ifnet *ifp)
 }
 
 void
-in_purgeif(struct ifnet *ifp)
+in_purgeif(struct ifnet *ifp)		/* MUST be called at splsoftnet() */
 {
 	struct ifaddr *ifa, *nifa;
 
@@ -591,7 +591,7 @@ in_purgeif(struct ifnet *ifp)
 		in_purgeaddr(ifa, ifp);
 	}
 
-	igmp_purgeif(ifp);
+	igmp_purgeif(ifp);		/* manipulates pools */
 #ifdef MROUTING
 	ip_mrouter_detach(ifp);
 #endif
@@ -668,7 +668,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 		if (iflr->flags & IFLR_PREFIX)
 			return EINVAL;
 
-		/* copy args to in_aliasreq, perform ioctl(SIOCAIFADDR_IN). */
+		/* copy args to in_aliasreq, perform ioctl(SIOCAIFADDR). */
 		bzero(&ifra, sizeof(ifra));
 		bcopy(iflr->iflr_name, ifra.ifra_name,
 			sizeof(ifra.ifra_name));
@@ -757,7 +757,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 		} else {
 			struct in_aliasreq ifra;
 
-			/* fill in_aliasreq and do ioctl(SIOCDIFADDR_IN) */
+			/* fill in_aliasreq and do ioctl(SIOCDIFADDR) */
 			bzero(&ifra, sizeof(ifra));
 			bcopy(iflr->iflr_name, ifra.ifra_name,
 				sizeof(ifra.ifra_name));
@@ -784,7 +784,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
  * Delete any existing route for an interface.
  */
 void
-in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
+in_ifscrub(struct ifnet *ifp __unused, struct in_ifaddr *ia)
 {
 
 	in_scrubprefix(ia);

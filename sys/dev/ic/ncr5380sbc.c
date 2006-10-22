@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.59 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.59.4.1 2006/10/22 06:05:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.59 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.59.4.1 2006/10/22 06:05:45 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -2615,9 +2615,7 @@ ncr5380_attach(sc)
 }
 
 int
-ncr5380_detach(sc, flags)
-	struct ncr5380_softc *sc;
-	int flags;
+ncr5380_detach(struct ncr5380_softc *sc __unused, int flags __unused)
 {
 
 	return (EOPNOTSUPP);

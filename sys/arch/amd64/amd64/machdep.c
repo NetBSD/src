@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2006/08/19 16:27:57 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.4.1 2006/10/22 06:04:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2006/08/19 16:27:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.4.1 2006/10/22 06:04:31 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -575,10 +575,6 @@ cpu_reboot(int howto, char *bootstr)
 haltsys:
 	doshutdownhooks();
 
-#ifdef MULTIPROCESSOR
-	x86_broadcast_ipi(X86_IPI_HALT);
-#endif
-
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #if NACPI > 0
 		delay(500000);
@@ -587,6 +583,9 @@ haltsys:
 #endif
 	}
 
+#ifdef MULTIPROCESSOR
+	x86_broadcast_ipi(X86_IPI_HALT);
+#endif
 
 	if (howto & RB_HALT) {
 		printf("\n");
@@ -711,8 +710,10 @@ cpu_dumpconf(void)
 	if (dumpdev == NODEV)
 		goto bad;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		goto bad;
+	}
 	if (bdev->d_psize == NULL)
 		goto bad;
 	nblks = (*bdev->d_psize)(dumpdev);
@@ -1144,7 +1145,8 @@ init_x86_64(paddr_t first_avail)
 
 			/* XXX XXX XXX */
 			if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
-				panic("init386: too many memory segments");
+				panic("init386: too many memory segments "
+				    "(increase VM_PHYSSEG_MAX)");
 
 			seg_start = round_page(seg_start);
 			seg_end = trunc_page(seg_end);

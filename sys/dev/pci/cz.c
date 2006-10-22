@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.38 2006/07/21 16:48:51 ad Exp $	*/
+/*	$NetBSD: cz.c,v 1.38.6.1 2006/10/22 06:06:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.38 2006/07/21 16:48:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.38.6.1 2006/10/22 06:06:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,8 +261,8 @@ do {									\
  *	Determine if the given PCI device is a Cyclades-Z board.
  */
 static int
-cz_match(struct device *parent,
-    struct cfdata *match,
+cz_match(struct device *parent __unused,
+    struct cfdata *match __unused,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -283,7 +283,7 @@ cz_match(struct device *parent,
  *	A Cyclades-Z board was found; attach it.
  */
 static void
-cz_attach(struct device *parent,
+cz_attach(struct device *parent __unused,
     struct device *self,
     void *aux)
 {
@@ -944,7 +944,7 @@ cztty_shutdown(struct cztty_softc *sc)
  *	Open a Cyclades-Z serial port.
  */
 static int
-czttyopen(dev_t dev, int flags, int mode, struct lwp *l)
+czttyopen(dev_t dev, int flags, int mode __unused, struct lwp *l)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct cz_softc *cz;
@@ -960,10 +960,7 @@ czttyopen(dev_t dev, int flags, int mode, struct lwp *l)
 	cz = CZTTY_CZ(sc);
 	tp = sc->sc_tty;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -1065,7 +1062,7 @@ czttyopen(dev_t dev, int flags, int mode, struct lwp *l)
  *	Close a Cyclades-Z serial port.
  */
 static int
-czttyclose(dev_t dev, int flags, int mode, struct lwp *l)
+czttyclose(dev_t dev, int flags, int mode __unused, struct lwp *l __unused)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct tty *tp = sc->sc_tty;
@@ -1169,8 +1166,8 @@ czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -1500,7 +1497,7 @@ czttystart(struct tty *tp)
  *	Stop output, e.g., for ^S or output flush.
  */
 static void
-czttystop(struct tty *tp, int flag)
+czttystop(struct tty *tp __unused, int flag __unused)
 {
 
 	/*

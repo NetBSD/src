@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
+/*	$NetBSD: scif.c,v 1.47.6.1 2006/10/22 06:04:59 yamt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.47.6.1 2006/10/22 06:04:59 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -763,10 +763,7 @@ scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -942,8 +939,8 @@ scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

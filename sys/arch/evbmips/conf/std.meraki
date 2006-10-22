@@ -1,0 +1,15 @@
+# $NetBSD: std.meraki,v 1.1.2.2 2006/10/22 06:04:39 yamt Exp $
+
+machine evbmips mips
+include		"conf/std"	# MI standard options
+
+options MIPS3_ENABLE_CLOCK_INTR
+
+options	EXEC_ELF32	# exec ELF32 binaries
+options	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	DEFTEXTADDR="0x80041000"
+makeoptions	BOARDTYPE="atheros"
+
+include 	"arch/evbmips/conf/files.atheros"
+include 	"arch/mips/conf/files.atheros"

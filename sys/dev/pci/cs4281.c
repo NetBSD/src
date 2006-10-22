@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.30 2006/08/29 23:54:10 christos Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.30.4.1 2006/10/22 06:06:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.30 2006/08/29 23:54:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.30.4.1 2006/10/22 06:06:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,8 @@ static struct audio_device cs4281_device = {
 
 
 static int
-cs4281_match(struct device *parent, struct cfdata *match, void *aux)
+cs4281_match(struct device *parent __unused, struct cfdata *match __unused,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -180,7 +181,7 @@ cs4281_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-cs4281_attach(struct device *parent, struct device *self, void *aux)
+cs4281_attach(struct device *parent __unused, struct device *self, void *aux)
 {
 	struct cs428x_softc *sc;
 	struct pci_attach_args *pa;
@@ -289,7 +290,8 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(cs4281_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    cs4281_power, sc);
 }
 
 static int
@@ -376,7 +378,7 @@ cs4281_intr(void *p)
 }
 
 static int
-cs4281_query_encoding(void *addr, struct audio_encoding *fp)
+cs4281_query_encoding(void *addr __unused, struct audio_encoding *fp)
 {
 
 	switch (fp->index) {
@@ -435,9 +437,9 @@ cs4281_query_encoding(void *addr, struct audio_encoding *fp)
 }
 
 static int
-cs4281_set_params(void *addr, int setmode, int usemode,
-		  audio_params_t *play, audio_params_t *rec,
-		  stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+cs4281_set_params(void *addr, int setmode, int usemode __unused,
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
 	struct cs428x_softc *sc;
@@ -528,7 +530,7 @@ cs4281_halt_input(void *addr)
 }
 
 static int
-cs4281_getdev(void *addr, struct audio_device *retp)
+cs4281_getdev(void *addr __unused, struct audio_device *retp)
 {
 
 	*retp = cs4281_device;
