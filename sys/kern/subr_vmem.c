@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.13 2006/10/22 09:42:30 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.14 2006/10/22 10:19:25 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -31,13 +31,10 @@
  * -	Magazines and Vmem: Extending the Slab Allocator
  *	to Many CPUs and Arbitrary Resources
  *	http://www.usenix.org/event/usenix01/bonwick.html
- *
- * TODO:
- * -	implement vmem_xalloc/vmem_xfree
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.13 2006/10/22 09:42:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.14 2006/10/22 10:19:25 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
