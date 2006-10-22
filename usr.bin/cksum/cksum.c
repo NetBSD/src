@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.38 2006/09/22 22:35:57 elad Exp $	*/
+/*	$NetBSD: cksum.c,v 1.39 2006/10/22 16:14:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.38 2006/09/22 22:35:57 elad Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.39 2006/10/22 16:14:07 christos Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -146,7 +146,7 @@ struct hash {
 	{ "sha512", "SHA512",
 	  SHA512_String, SHA512_TimeTrial, SHA512_TestSuite,
 	  SHA512_Filter, (_filefunc) SHA512_File },
-	{ NULL }
+	{ .progname = NULL, },
 };
 
 int	hash_digest_file(char *, struct hash *, int);
