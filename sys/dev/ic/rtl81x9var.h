@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.24 2006/10/20 16:31:09 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.25 2006/10/22 01:47:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -170,10 +170,12 @@ struct rtk_softc {
 	((sc)->rtk_ldata.rtk_tx_desc_cnt)
 #define	RTK_TX_LIST_SZ(sc)	\
 	(RTK_TX_DESC_CNT(sc) * sizeof(struct rtk_desc))
-#define	RTK_TX_DESC_INC(sc, x)	\
-	((x) = ((x) + 1) % RTK_TX_DESC_CNT(sc))
-#define	RTK_RX_DESC_INC(sc, x)	\
-	((x) = ((x) + 1) % RTK_RX_DESC_CNT)
+#define	RTK_NEXT_TX_DESC(sc, x)	\
+	(((x) + 1) % RTK_TX_DESC_CNT(sc))
+#define	RTK_NEXT_RX_DESC(sc, x)	\
+	(((x) + 1) % RTK_RX_DESC_CNT)
+#define	RTK_NEXT_TXQ(sc, x)	\
+	(((x) + 1) % RTK_TX_QLEN)
 
 #define	RTK_TXDESCSYNC(sc, idx, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat,					\
