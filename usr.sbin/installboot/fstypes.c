@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.c,v 1.9 2006/06/20 05:37:24 jdc Exp $	*/
+/*	$NetBSD: fstypes.c,v 1.10 2006/10/22 21:06:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: fstypes.c,v 1.9 2006/06/20 05:37:24 jdc Exp $");
+__RCSID("$NetBSD: fstypes.c,v 1.10 2006/10/22 21:06:19 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -55,11 +55,11 @@ __RCSID("$NetBSD: fstypes.c,v 1.9 2006/06/20 05:37:24 jdc Exp $");
 
 struct ib_fs fstypes[] = {
 #ifndef NO_STAGE2
-	{ "ffs",	ffs_match,	ffs_findstage2	},
-	{ "raid",	raid_match,	ffs_findstage2	},
-	{ "raw",	raw_match,	raw_findstage2	},
+	{ .name = "ffs",  .match = ffs_match,	.findstage2 = ffs_findstage2	},
+	{ .name = "raid", .match = raid_match,	.findstage2 = ffs_findstage2	},
+	{ .name = "raw",  .match = raw_match,	.findstage2 = raw_findstage2	},
 #endif
-	{ 0, 0, 0 }
+	{ .name = NULL, }
 };
 
 #ifndef NO_STAGE2
