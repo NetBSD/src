@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.29 2006/05/11 00:22:53 mrg Exp $	*/
+/*	$NetBSD: cmds.c,v 1.30 2006/10/22 16:46:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.29 2006/05/11 00:22:53 mrg Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.30 2006/10/22 16:46:49 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -850,9 +850,10 @@ suspend(char c)
  */
 
 char *
-expand(char name[])
+expand(char aname[])
 {
 	static char xname[BUFSIZ];
+	char * volatile name = aname;
 	char cmdbuf[BUFSIZ];
 	int mypid, l;
 	char *cp;
