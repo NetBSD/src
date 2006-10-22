@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.7 2005/11/28 03:26:06 christos Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.8 2006/10/22 21:09:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.7 2005/11/28 03:26:06 christos Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.8 2006/10/22 21:09:47 christos Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/cdefs.h>
+#include <stdio.h>
 
 #include "lpc.h"
 #include "extern.h"
@@ -76,7 +76,7 @@ struct cmd cmdtab[] = {
 	{ "topq",	topqhelp,	topq,		1 },
 	{ "up",		uphelp,		up,		1 },
 	{ "?",		helphelp,	help,		0 },
-	{ 0 },
+	{ .c_name = NULL },
 };
 
 int	NCMDS = sizeof (cmdtab) / sizeof (cmdtab[0]);
