@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.27 2006/08/05 22:54:28 bjh21 Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.28 2006/10/22 15:31:26 peter Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.27 2006/08/05 22:54:28 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.28 2006/10/22 15:31:26 peter Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -234,7 +234,7 @@ cpu_setmcontext(l, mcp, flags)
 	unsigned int flags;
 {
 	struct trapframe *tf = process_frame(l);
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 
 	if ((flags & _UC_CPU) != 0) {
 		/* Restore General Register context. */
