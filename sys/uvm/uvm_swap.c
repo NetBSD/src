@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.109 2006/10/21 05:54:34 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.110 2006/10/22 09:44:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.109 2006/10/21 05:54:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.110 2006/10/22 09:44:21 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -49,10 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.109 2006/10/21 05:54:34 mrg Exp $");
 #include <sys/disklabel.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
-#include <sys/extent.h>
+#include <sys/vmem.h>
+#include <sys/kmem.h>
 #include <sys/blist.h>
 #include <sys/mount.h>
 #include <sys/pool.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.109 2006/10/21 05:54:34 mrg Exp $");
  *    while we are in the middle of a system call (e.g. SWAP_STATS).
  *  - uvm.swap_data_lock (simple_lock): this lock protects all swap data
  *    structures including the priority list, the swapdev structures,
- *    and the swapmap extent.
+ *    and the swapmap arena.
  *
  * each swap device has the following info:
  *  - swap device in use (could be disabled, preventing future use)
@@ -208,9 +208,7 @@ POOL_INIT(vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd", NULL);
 /*
  * local variables
  */
-static struct extent *swapmap;		/* controls the mapping of /dev/drum */
-
-MALLOC_DEFINE(M_VMSWAP, "VM swap", "VM swap structures");
+static vmem_t *swapmap;	/* controls the mapping of /dev/drum */
 
 /* list of all active swap devices [by priority] */
 LIST_HEAD(swap_priority, swappri);
@@ -272,8 +270,8 @@ uvm_swap_init(void)
 	 * that block 0 is reserved (used to indicate an allocation
 	 * failure, or no allocation).
 	 */
-	swapmap = extent_create("swapmap", 1, INT_MAX,
-				M_VMSWAP, 0, 0, EX_NOWAIT);
+	swapmap = vmem_create("swapmap", 1, INT_MAX - 1, 1, NULL, NULL, NULL, 0,
+	    VM_NOSLEEP);
 	if (swapmap == 0)
 		panic("uvm_swap_init: extent_create failed");
 
@@ -329,7 +327,7 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
 			LIST_INSERT_HEAD(&swap_priority, spp, spi_swappri);
 	} else {
 	  	/* we don't need a new priority structure, free it */
-		FREE(newspp, M_VMSWAP);
+		kmem_free(newspp, sizeof(*newspp));
 	}
 
 	/*
@@ -391,7 +389,7 @@ swaplist_trim(void)
 		    (void *)&spp->spi_swapdev)
 			continue;
 		LIST_REMOVE(spp, spi_swappri);
-		free(spp, M_VMSWAP);
+		kmem_free(spp, sizeof(*spp));
 	}
 }
 
@@ -453,7 +451,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	 */
 	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
 
-	userpath = malloc(SWAP_PATH_MAX, M_TEMP, M_WAITOK);
+	userpath = kmem_alloc(SWAP_PATH_MAX, KM_SLEEP);
 	/*
 	 * we handle the non-priv NSWAP and STATS request first.
 	 *
@@ -489,12 +487,12 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		else
 #endif
 			len = sizeof(struct swapent) * misc;
-		sep = (struct swapent *)malloc(len, M_TEMP, M_WAITOK);
+		sep = kmem_alloc(len, KM_SLEEP);
 
 		uvm_swap_stats_locked(SCARG(uap, cmd), sep, misc, retval);
 		error = copyout(sep, SCARG(uap, arg), len);
 
-		free(sep, M_TEMP);
+		kmem_free(sep, len);
 		UVMHIST_LOG(pdhist, "<- done SWAP_STATS", 0, 0, 0, 0);
 		goto out;
 	}
@@ -579,7 +577,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		 * any empty priority structures.
 		 */
 		priority = SCARG(uap, misc);
-		spp = malloc(sizeof *spp, M_VMSWAP, M_WAITOK);
+		spp = kmem_alloc(sizeof(*spp), KM_SLEEP);
 		simple_lock(&uvm.swap_data_lock);
 		if ((sdp = swaplist_find(vp, 1)) == NULL) {
 			error = ENOENT;
@@ -589,7 +587,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		}
 		simple_unlock(&uvm.swap_data_lock);
 		if (error)
-			free(spp, M_VMSWAP);
+			kmem_free(spp, sizeof(*spp));
 		break;
 
 	case SWAP_ON:
@@ -602,9 +600,8 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		 */
 
 		priority = SCARG(uap, misc);
-		sdp = malloc(sizeof *sdp, M_VMSWAP, M_WAITOK);
-		spp = malloc(sizeof *spp, M_VMSWAP, M_WAITOK);
-		memset(sdp, 0, sizeof(*sdp));
+		sdp = kmem_zalloc(sizeof(*sdp), KM_SLEEP);
+		spp = kmem_alloc(sizeof(*spp), KM_SLEEP);
 		sdp->swd_flags = SWF_FAKE;
 		sdp->swd_vp = vp;
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
@@ -614,15 +611,15 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 			error = EBUSY;
 			simple_unlock(&uvm.swap_data_lock);
 			bufq_free(sdp->swd_tab);
-			free(sdp, M_VMSWAP);
-			free(spp, M_VMSWAP);
+			kmem_free(sdp, sizeof(*sdp));
+			kmem_free(spp, sizeof(*spp));
 			break;
 		}
 		swaplist_insert(sdp, spp, priority);
 		simple_unlock(&uvm.swap_data_lock);
 
 		sdp->swd_pathlen = len;
-		sdp->swd_path = malloc(sdp->swd_pathlen, M_VMSWAP, M_WAITOK);
+		sdp->swd_path = kmem_alloc(len, KM_SLEEP);
 		if (copystr(userpath, sdp->swd_path, sdp->swd_pathlen, 0) != 0)
 			panic("swapctl: copystr");
 
@@ -639,8 +636,8 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 			swaplist_trim();
 			simple_unlock(&uvm.swap_data_lock);
 			bufq_free(sdp->swd_tab);
-			free(sdp->swd_path, M_VMSWAP);
-			free(sdp, M_VMSWAP);
+			kmem_free(sdp->swd_path, sdp->swd_pathlen);
+			kmem_free(sdp, sizeof(*sdp));
 			break;
 		}
 		break;
@@ -679,7 +676,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	vput(vp);
 
 out:
-	free(userpath, M_TEMP);
+	kmem_free(userpath, SWAP_PATH_MAX);
 	lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
 
 	UVMHIST_LOG(pdhist, "<- done!  error=%d", error, 0, 0, 0);
@@ -942,8 +939,8 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	/*
 	 * now add the new swapdev to the drum and enable.
 	 */
-	if (extent_alloc(swapmap, npages, EX_NOALIGN, EX_NOBOUNDARY,
-	    EX_WAITOK, &result))
+	result = vmem_alloc(swapmap, npages, VM_BESTFIT | VM_SLEEP);
+	if (result == 0)
 		panic("swapdrum_add");
 
 	sdp->swd_drumoffset = (int)result;
@@ -1037,11 +1034,10 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	/*
 	 * free all resources!
 	 */
-	extent_free(swapmap, sdp->swd_drumoffset, sdp->swd_drumsize,
-		    EX_WAITOK);
+	vmem_free(swapmap, sdp->swd_drumoffset, sdp->swd_drumsize);
 	blist_destroy(sdp->swd_blist);
 	bufq_free(sdp->swd_tab);
-	free(sdp, M_VMSWAP);
+	kmem_free(sdp, sizeof(*sdp));
 	return (0);
 }
 
