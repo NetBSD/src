@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.76 2006/08/26 20:26:43 christos Exp $
+# 	$NetBSD: GENERIC,v 1.77 2006/10/22 14:15:51 bjh21 Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.76 $"
+#ident		"GENERIC-$Revision: 1.77 $"
 
 # estimated number of users
 maxusers	32
@@ -270,8 +270,8 @@ audio*		at vidcaudio0
 # Podule bus device
 podulebus0	at root
 
-asc*	at podulebus?			# Acorn SCSI card
-scsibus* at asc?
+sec*	at podulebus?			# Acorn SCSI card
+scsibus* at sec?
 
 cosc*	at podulebus?			# MCS Connect32 SCSI II card
 scsibus* at cosc?
@@ -311,7 +311,7 @@ simide*	at podulebus?			# Simtec IDE card
 amps*	at podulebus?			# Atomwide Multi-Port Serial card
 com*	at amps?
 
-ie*	at podulebus?			# Ether1 podules
+ei*	at podulebus?			# Ether1 podules
 ea*	at podulebus?			# Ether3 podules
 eb0	at podulebus?			# EtherB network slot cards
 ne*	at podulebus?			# NE2000 clone cards
