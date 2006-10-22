@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.9 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: boot1.c,v 1.10 2006/10/22 21:57:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.9 2005/12/11 12:17:48 christos Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.10 2006/10/22 21:57:55 christos Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -60,6 +60,12 @@ extern void putstr(const char *);
 
 extern struct disklabel ptn_disklabel;
 
+static int
+ob(void)
+{
+	return open("boot", 0);
+}
+
 const char *
 boot1(uint32_t biosdev, uint32_t *sector)
 {
@@ -74,44 +80,46 @@ boot1(uint32_t biosdev, uint32_t *sector)
 	if (set_geometry(&d, NULL))
 		return "set_geometry\r\n";
 
-	do {
-		/*
-		 * We default to the filesystem at the start of the
-		 * MBR partition
-		 */
-		fd = open("boot", 0);
-		if (fd != -1)
-			break;
-		/*
-		 * Maybe the filesystem is enclosed in a raid set.
-		 * add in size of raidframe header and try again.
-		 * (Maybe this should only be done if the filesystem
-		 * magic number is absent.)
-		 */
+	/*
+	 * We default to the filesystem at the start of the
+	 * MBR partition
+	 */
+	fd = ob();
+	if (fd != -1)
+		goto out;
+	/*
+	 * Maybe the filesystem is enclosed in a raid set.
+	 * add in size of raidframe header and try again.
+	 * (Maybe this should only be done if the filesystem
+	 * magic number is absent.)
+	 */
+	bios_sector += RF_PROTECTED_SECTORS;
+	fd = ob();
+	if (fd != -1)
+		goto out;
+	/*
+	 * Nothing at the start of the MBR partition, fallback on
+	 * partition 'a' from the disklabel in this MBR partition.
+	 */
+	if (ptn_disklabel.d_magic != DISKMAGIC)
+		goto out;
+	if (ptn_disklabel.d_magic2 != DISKMAGIC)
+		goto out;
+	if (ptn_disklabel.d_partitions[0].p_fstype == FS_UNUSED)
+		goto out;
+	bios_sector = ptn_disklabel.d_partitions[0].p_offset;
+	*sector = bios_sector;
+	if (ptn_disklabel.d_partitions[0].p_fstype == FS_RAID)
 		bios_sector += RF_PROTECTED_SECTORS;
-		fd = open("boot", 0);
-		if (fd != -1)
-			break;
 
-		/*
-		 * Nothing at the start of the MBR partition, fallback on
-		 * partition 'a' from the disklabel in this MBR partition.
-		 */
-		if (ptn_disklabel.d_magic != DISKMAGIC)
-			break;
-		if (ptn_disklabel.d_magic2 != DISKMAGIC)
-			break;
-		if (ptn_disklabel.d_partitions[0].p_fstype == FS_UNUSED)
-			break;
-		bios_sector = ptn_disklabel.d_partitions[0].p_offset;
-		*sector = bios_sector;
-		if (ptn_disklabel.d_partitions[0].p_fstype == FS_RAID)
-			bios_sector += RF_PROTECTED_SECTORS;
-		fd = open("boot", 0);
-	} while (0);
+	fd = ob();
+	if (fd == -1)
+		goto out;
 
-	if (fd == -1 || fstat(fd, &sb) == -1)
+	if (fstat(fd, &sb) == -1) {
+out:
 		return "Can't open /boot.\r\n";
+	}
 
 #if 0
 	if (sb.st_size > SECONDARY_MAX_LOAD)
