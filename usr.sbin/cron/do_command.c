@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.23 2006/08/15 16:18:52 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.24 2006/10/22 21:00:21 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.23 2006/08/15 16:18:52 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.24 2006/10/22 21:00:21 christos Exp $");
 #endif
 #endif
 
@@ -82,14 +82,10 @@ static void
 child_process(entry *e, user *u)
 {
 	int		stdin_pipe[2], stdout_pipe[2];
-	char	*input_data;
-	char		*usernm, *mailto;
+	char	* volatile input_data;
+	char		*usernm, * volatile mailto;
 	int		children = 0;
-#ifdef __GNUC__
-	(void) &input_data;	/* Avoid vfork clobbering */
-	(void) &mailto;
-	(void) &children;
-#endif
+
 	Debug(DPROC, ("[%d] child_process('%s')\n", getpid(), e->cmd))
 
 	/* note we handle a job */
