@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.16 2006/10/03 08:03:33 vanhu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.17 2006/10/22 15:10:31 vanhu Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1933,7 +1933,7 @@ exchange_types
 			struct etypes *new;
 			new = racoon_malloc(sizeof(struct etypes));
 			if (new == NULL) {
-				yyerror("filed to allocate etypes");
+				yyerror("failed to allocate etypes");
 				return -1;
 			}
 			new->type = $2;
