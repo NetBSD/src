@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.950 2006/10/21 09:36:39 yamt Exp $
+#	$NetBSD: mi,v 1.951 2006/10/22 11:16:58 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2823,8 +2823,8 @@
 ./usr/libdata/debug/usr/sbin/lastlogin.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/link.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/lmcconfig.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/lpc.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/lockstat.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/lpc.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/lpd.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/lptest.debug	comp-lpr-debug		debug
 ./usr/libdata/debug/usr/sbin/mailwrapper.debug	comp-mailwrapper-debug	debug
@@ -5459,9 +5459,9 @@
 ./usr/share/man/cat3/prop_number_equals_integer.0 comp-c-catman		.cat
 ./usr/share/man/cat3/prop_number_equals_unsigned_integer.0 comp-c-catman .cat
 ./usr/share/man/cat3/prop_number_integer_value.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_number_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_number_unsigned.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_number_unsigned_integer_value.0 comp-c-catman	.cat
-./usr/share/man/cat3/prop_number_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object_equals.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object_iterator_next.0 comp-c-catman		.cat
@@ -9669,9 +9669,9 @@
 ./usr/share/man/man3/prop_number_equals_integer.3 comp-c-man		.man
 ./usr/share/man/man3/prop_number_equals_unsigned_integer.3 comp-c-man	.man
 ./usr/share/man/man3/prop_number_integer_value.3 comp-c-man		.man
+./usr/share/man/man3/prop_number_size.3		comp-c-man		.man
 ./usr/share/man/man3/prop_number_unsigned.3	comp-c-man		.man
 ./usr/share/man/man3/prop_number_unsigned_integer_value.3 comp-c-man	.man
-./usr/share/man/man3/prop_number_size.3		comp-c-man		.man
 ./usr/share/man/man3/prop_object.3		comp-c-man		.man
 ./usr/share/man/man3/prop_object_equals.3	comp-c-man		.man
 ./usr/share/man/man3/prop_object_iterator_next.3 comp-c-man		.man
@@ -10782,8 +10782,8 @@
 ./usr/share/man/man9/config_detach.9		comp-sys-man		.man
 ./usr/share/man/man9/config_finalize_register.9	comp-sys-man		.man
 ./usr/share/man/man9/config_found.9		comp-sys-man		.man
-./usr/share/man/man9/config_found_sm.9		comp-sys-man		.man
 ./usr/share/man/man9/config_found_ia.9		comp-sys-man		.man
+./usr/share/man/man9/config_found_sm.9		comp-sys-man		.man
 ./usr/share/man/man9/config_interrupts.9	comp-sys-man		.man
 ./usr/share/man/man9/config_match.9		comp-sys-man		.man
 ./usr/share/man/man9/config_pending_decr.9	comp-sys-man		.man
