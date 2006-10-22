@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.944 2006/10/22 12:16:27 elad Exp $
+# $NetBSD: mi,v 1.945 2006/10/22 14:33:57 bjh21 Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -537,7 +537,7 @@
 ./usr/share/man/cat4/acorn26/cpu.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn26/eca.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn26/eh.0		man-sys-catman		.cat
-./usr/share/man/cat4/acorn26/ei.0		man-sys-catman		.cat
+./usr/share/man/cat4/acorn26/ei.0		man-obsolete		obsolete
 ./usr/share/man/cat4/acorn26/podulebus.0	man-sys-catman		.cat
 ./usr/share/man/cat4/acorn26/unixbp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/asc.0		man-sys-catman		.cat
@@ -801,6 +801,7 @@
 ./usr/share/man/cat4/ef.0			man-sys-catman		.cat
 ./usr/share/man/cat4/eg.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ehci.0			man-sys-catman		.cat
+./usr/share/man/cat4/ei.0			man-sys-catman		.cat
 ./usr/share/man/cat4/eisa.0			man-sys-catman		.cat
 ./usr/share/man/cat4/el.0			man-sys-catman		.cat
 ./usr/share/man/cat4/elmc.0			man-sys-catman		.cat
@@ -2927,7 +2928,7 @@
 ./usr/share/man/man4/acorn26/cpu.4		man-sys-man		.man
 ./usr/share/man/man4/acorn26/eca.4		man-sys-man		.man
 ./usr/share/man/man4/acorn26/eh.4		man-sys-man		.man
-./usr/share/man/man4/acorn26/ei.4		man-sys-man		.man
+./usr/share/man/man4/acorn26/ei.4		man-obsolete		obsolete
 ./usr/share/man/man4/acorn26/podulebus.4	man-sys-man		.man
 ./usr/share/man/man4/acorn26/unixbp.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/asc.4		man-sys-man		.man
@@ -3191,6 +3192,7 @@
 ./usr/share/man/man4/ef.4			man-sys-man		.man
 ./usr/share/man/man4/eg.4			man-sys-man		.man
 ./usr/share/man/man4/ehci.4			man-sys-man		.man
+./usr/share/man/man4/ei.4			man-sys-man		.man
 ./usr/share/man/man4/eisa.4			man-sys-man		.man
 ./usr/share/man/man4/el.4			man-sys-man		.man
 ./usr/share/man/man4/elmc.4			man-sys-man		.man
