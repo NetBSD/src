@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.25 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: dump.c,v 1.26 2006/10/22 16:20:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.25 2006/07/13 12:00:26 martin Exp $");
+__RCSID("$NetBSD: dump.c,v 1.26 2006/10/22 16:20:39 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -183,9 +183,9 @@ getrecord(FILE *fp)
 		return (NULL);
 	}
 
+	if (kth->ktr_len < 0)
+		errx(EXIT_FAILURE, "bogus length 0x%x", kth->ktr_len);
 	len = kth->ktr_len;
-	if (len < 0)
-		errx(EXIT_FAILURE, "bogus length 0x%lx", (long)len);
 	if (len > 0) {
 		/* + 1 to ensure room for NUL terminate */
 		kte = xrealloc(kte, &siz, sizeof(struct ktr_entry) + len + 1);
