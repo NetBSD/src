@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.63 2006/10/15 08:38:21 dsl Exp $	*/
+/*	$NetBSD: compat.c,v 1.64 2006/10/22 16:23:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.63 2006/10/15 08:38:21 dsl Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.64 2006/10/22 16:23:20 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.63 2006/10/15 08:38:21 dsl Exp $");
+__RCSID("$NetBSD: compat.c,v 1.64 2006/10/22 16:23:20 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -207,33 +207,28 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     char    	  *cmdStart;	/* Start of expanded command */
     char 	  *cp, *bp;
     Boolean 	  silent,   	/* Don't print command */
-	    	  doIt,		/* Execute even if -n */
-		  errCheck; 	/* Check errors */
+	    	  doIt;		/* Execute even if -n */
+    volatile Boolean errCheck; 	/* Check errors */
     int 	  reason;   	/* Reason for child's death */
     int	    	  status;   	/* Description of child's death */
     int	    	  cpid;	    	/* Child actually found */
     ReturnStatus  retstat;    	/* Status of fork */
     LstNode 	  cmdNode;  	/* Node where current command is located */
-    const char  **av;	    	/* Argument vector for thing to exec */
-    char	**mav;		/* Copy of the argument vector for freeing */
+    const char  ** volatile av;	/* Argument vector for thing to exec */
+    char	** volatile mav;/* Copy of the argument vector for freeing */
     int	    	  argc;	    	/* Number of arguments in av or 0 if not
 				 * dynamically allocated */
     Boolean 	  local;    	/* TRUE if command should be executed
 				 * locally */
     Boolean 	  useShell;    	/* TRUE if command should be executed
 				 * using a shell */
-    char	  *cmd = (char *)cmdp;
+    char	  * volatile cmd = (char *)cmdp;
     GNode	  *gn = (GNode *)gnp;
 
     /*
      * Avoid clobbered variable warnings by forcing the compiler
      * to ``unregister'' variables
      */
-#if __GNUC__
-    (void) &av;
-    (void) &errCheck;
-    (void) &cmd;
-#endif
     silent = gn->type & OP_SILENT;
     errCheck = !(gn->type & OP_IGNORE);
     doIt = FALSE;
