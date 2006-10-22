@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2006/07/21 17:49:00 jmcneill Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2006/10/22 16:44:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 2006/07/21 17:49:00 jmcneill Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2006/10/22 16:44:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ const struct cmd cmdtab[] = {
 	{ "timeout",	ihelp,		settimeout },
 	{ "tout",	tohelp,		settimeoutopt },
 	{ "?",		hhelp,		help },
-	{ 0 }
+	{ .name = NULL }
 };
 
 int
