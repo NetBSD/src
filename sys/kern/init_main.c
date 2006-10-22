@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.277.2.1 2006/10/22 06:07:09 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.277.2.2 2006/10/22 06:19:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.277.2.1 2006/10/22 06:07:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.277.2.2 2006/10/22 06:19:20 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -191,6 +191,64 @@ volatile int start_init_exec;		/* semaphore for start_init() */
 static void check_console(struct lwp *l);
 static void start_init(void *);
 void main(void);
+
+static void
+test_splraiseipl(void)
+{
+	int s;
+	ipl_cookie_t cookie;
+
+#define	_T(ipl) \
+	s = spl##ipl(); splx(s);
+	_T(bio)
+	_T(net)
+	_T(tty)
+	_T(vm)
+	_T(statclock)
+	_T(clock)
+	_T(sched)
+#if defined(IPL_SERIAL)
+	_T(serial)
+#endif /* defined(IPL_SERIAL) */
+	_T(lock)
+	_T(high)
+#if defined(IPL_SOFTCLOCK)
+	_T(softclock)
+#endif /* defined(IPL_SOFTCLOCK) */
+#if defined(IPL_SOFTNET)
+	_T(softnet)
+#endif /* defined(IPL_SOFTNET) */
+#if defined(IPL_SOFTSERIAL)
+	_T(softserial)
+#endif /* defined(IPL_SOFTSERIAL) */
+#undef _T
+
+#define	_T(ipl) \
+	cookie = makeiplcookie(IPL_##ipl); s = splraiseipl(cookie); splx(s);
+	_T(NONE)
+	_T(BIO)
+	_T(NET)
+	_T(TTY)
+	_T(VM)
+	_T(STATCLOCK)
+	_T(CLOCK)
+	_T(SCHED)
+#if defined(IPL_SERIAL)
+	_T(SERIAL)
+#endif /* defined(IPL_SERIAL) */
+	_T(LOCK)
+	_T(HIGH)
+#if defined(IPL_SOFTCLOCK)
+	_T(SOFTCLOCK)
+#endif /* defined(IPL_SOFTCLOCK) */
+#if defined(IPL_SOFTNET)
+	_T(SOFTNET)
+#endif /* defined(IPL_SOFTNET) */
+#if defined(IPL_SOFTSERIAL)
+	_T(SOFTSERIAL)
+#endif /* defined(IPL_SOFTSERIAL) */
+#undef _T
+}
 
 /*
  * System startup; initialize the world, create process 0, mount root
@@ -511,6 +569,8 @@ main(void)
 
 	/* Initialize exec structures */
 	exec_init(1);
+
+	test_splraiseipl();
 
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!
