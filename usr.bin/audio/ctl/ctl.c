@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.35 2003/07/26 20:34:12 salo Exp $	*/
+/*	$NetBSD: ctl.c,v 1.36 2006/10/22 16:12:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ctl.c,v 1.35 2003/07/26 20:34:12 salo Exp $");
+__RCSID("$NetBSD: ctl.c,v 1.36 2006/10/22 16:12:20 christos Exp $");
 #endif
 
 
@@ -144,7 +144,7 @@ struct field {
 	{ "record.active",	&info.record.active,	UCHAR,	READONLY },
 	{ "record.buffer_size",	&info.record.buffer_size,UINT,	0 },
 	{ "record.errors",	&rerror,		INT,	READONLY },
-	{ 0 }
+	{ .name = NULL },
 };
 
 static struct {
@@ -154,7 +154,7 @@ static struct {
 	{ "full_duplex",	AUDIO_PROP_FULLDUPLEX },
 	{ "mmap",		AUDIO_PROP_MMAP },
 	{ "independent",	AUDIO_PROP_INDEPENDENT },
-	{ 0 }
+	{ .name = NULL },
 };
 
 struct field *
