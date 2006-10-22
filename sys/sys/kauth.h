@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.14 2006/10/20 23:10:33 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.15 2006/10/22 13:07:15 pooka Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -261,7 +261,8 @@ int kauth_cred_setgroups(kauth_cred_t, gid_t *, size_t, uid_t);
 int kauth_cred_getgroups(kauth_cred_t, gid_t *, size_t);
 
 int kauth_cred_uidmatch(kauth_cred_t, kauth_cred_t);
-void kauth_cred_uucvt(kauth_cred_t, const struct uucred *);
+void kauth_uucred_to_cred(kauth_cred_t, const struct uucred *);
+void kauth_cred_to_uucred(struct uucred *, const kauth_cred_t);
 int kauth_cred_uucmp(kauth_cred_t, const struct uucred *);
 void kauth_cred_toucred(kauth_cred_t, struct ucred *);
 void kauth_cred_topcred(kauth_cred_t, struct pcred *);

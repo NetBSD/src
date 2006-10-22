@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.97 2006/10/12 01:32:47 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.98 2006/10/22 13:07:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.97 2006/10/12 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.98 2006/10/22 13:07:15 pooka Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -329,7 +329,8 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval __unused)
 					m_freem(nuidp->nu_nam);
 			        }
 				nuidp->nu_flag = 0;
-				kauth_cred_uucvt(nuidp->nu_cr, &nsd->nsd_cr);
+				kauth_uucred_to_cred(nuidp->nu_cr,
+				    &nsd->nsd_cr);
 				nuidp->nu_timestamp = nsd->nsd_timestamp;
 				nuidp->nu_expire = time_second + nsd->nsd_ttl;
 				/*
