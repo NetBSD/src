@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.17 2006/06/25 18:03:49 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.18 2006/10/22 09:44:55 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -35,7 +35,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
-#include <sys/extent.h>
+#include <sys/vmem.h>
 #include <sys/kernel.h>
 #include <uvm/uvm.h>
 
@@ -72,7 +72,7 @@ vaddr_t xen_shm_end_address;
 vsize_t xen_shm_size = (XENSHM_NPAGES * PAGE_SIZE);
 
 /* vm space management */
-struct extent *xen_shm_ex;
+vmem_t *xen_shm_arena;
 
 /* callbacks are registered in a FIFO list. */
 
@@ -107,12 +107,12 @@ xen_shm_init()
 	if (xen_shm_base_address == 0) {
 		panic("xen_shm_init no VM space");
 	}
-	xen_shm_ex = extent_create("xen_shm",
+	xen_shm_arena = vmem_create("xen_shm",
 	    xen_shm_base_address_pg,
-	    (xen_shm_end_address >> PAGE_SHIFT) - 1,
-	    M_DEVBUF, NULL, 0, EX_NOCOALESCE | EX_NOWAIT);
-	if (xen_shm_ex == NULL) {
-		panic("xen_shm_init no extent");
+	    (xen_shm_end_address >> PAGE_SHIFT) - 1 - xen_shm_base_address_pg,
+	    1, NULL, NULL, NULL, 1, VM_NOSLEEP);
+	if (xen_shm_arena == NULL) {
+		panic("xen_shm_init no arena");
 	}
 }
 
@@ -160,8 +160,9 @@ xen_shm_map(paddr_t *ma, int nentries, int domid, vaddr_t *vap, int flags)
 		return ENOMEM;
 	}
 	/* allocate the needed virtual space */
-	if (extent_alloc(xen_shm_ex, nentries, 1, 0, EX_NOWAIT, &new_va_pg)
-	    != 0) {
+	new_va_pg = vmem_alloc(xen_shm_arena, nentries,
+	    VM_INSTANTFIT | VM_NOSLEEP);
+	if (new_va_pg == 0) {
 #ifdef DEBUG
 		static struct timeval lasttime;
 #endif
@@ -262,8 +263,7 @@ xen_shm_unmap(vaddr_t va, paddr_t *pa, int nentries, int domid)
 		panic("xen_shm_unmap");
 #endif /* !XEN3 */
 	s = splvm(); /* splvm is the lowest level blocking disk and net IRQ */
-	if (extent_free(xen_shm_ex, va, nentries, EX_NOWAIT) != 0)
-		panic("xen_shm_unmap: extent_free");
+	vmem_free(xen_shm_arena, va, nentries);
 	while (__predict_false((xshmc = SIMPLEQ_FIRST(&xen_shm_callbacks))
 	    != NULL)) {
 		SIMPLEQ_REMOVE_HEAD(&xen_shm_callbacks, xshmc_entries);
