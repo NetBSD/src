@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.44 2006/09/15 15:51:12 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.44.2.1 2006/10/22 08:07:53 yamt Exp $	*/
 
 /*
  *
@@ -71,6 +71,8 @@
  */
 #include <machine/vmparam.h>
 
+struct workqueue;
+
 /*
  * uvm structure (vm global state: collected in one structure for ease
  * of reference...)
@@ -93,10 +95,8 @@ struct uvm {
 	struct proc *pagedaemon_proc;	/* daemon's pid */
 	struct simplelock pagedaemon_lock;
 
-		/* aiodone daemon trigger */
-	int aiodoned;			/* daemon sleeps on this */
-	struct proc *aiodoned_proc;	/* daemon's pid */
-	struct simplelock aiodoned_lock;
+		/* aiodone daemon */
+	struct workqueue *aiodone_queue;
 
 		/* page hash */
 	struct pglist *page_hash;	/* page hash table (vp/off->page) */

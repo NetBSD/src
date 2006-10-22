@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.190.4.1 2006/10/22 06:07:51 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.190.4.2 2006/10/22 08:08:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.190.4.1 2006/10/22 06:07:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.190.4.2 2006/10/22 08:08:03 yamt Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2592,10 +2592,7 @@ lfs_generic_callback(struct buf *bp, void (*aiodone)(struct buf *))
 	/* reset b_iodone for when this is a single-buf i/o. */
 	bp->b_iodone = aiodone;
 
-	simple_lock(&uvm.aiodoned_lock);	/* locks uvm.aio_done */
-	TAILQ_INSERT_TAIL(&uvm.aio_done, bp, b_freelist);
-	wakeup(&uvm.aiodoned);
-	simple_unlock(&uvm.aiodoned_lock);
+	workqueue_enqueue(uvm.aiodone_queue, &bp->b_work);
 }
 
 static void
