@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.216 2006/10/09 08:32:11 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.217 2006/10/22 22:53:41 pooka Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -67,7 +67,7 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	form fl g2c gcc gnumalloc gssapi hdb intl ipsec \
 	kadm5clnt kadm5srv kafs krb5 kvm l \
 	m magic menu objc ossaudio pam pcap pci pmc posix pthread pthread_dbg \
-	radius resolv rmt roken rpcsvc rt sdp skey sl ss ssh ssl termcap \
+	puffs radius resolv rmt roken rpcsvc rt sdp skey sl ss ssh ssl termcap \
 	usbhid util wrap y z
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a

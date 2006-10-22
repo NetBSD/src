@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.48 2006/10/09 08:32:11 mrg Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.49 2006/10/22 22:53:41 pooka Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -37,6 +37,7 @@ LIBPCAP?=	/usr/lib/libpcap.a
 LIBPCI?=	/usr/lib/libpci.a
 LIBPLOT?=	/usr/lib/libplot.a
 LIBPOSIX?=	/usr/lib/libposix.a
+LIBPUFFS?=	/usr/lib/libpuffs.a
 LIBRESOLV?=	/usr/lib/libresolv.a
 LIBRPCSVC?=	/usr/lib/librpcsvc.a
 LIBSDP?=	/usr/lib/libsdp.a
