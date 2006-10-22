@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.136 2006/10/08 17:16:51 elad Exp $
+#	$NetBSD: bsd.sys.mk,v 1.137 2006/10/22 22:17:30 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -22,6 +22,7 @@ CFLAGS+=	-Wreturn-type -Wswitch -Wshadow
 .endif
 .if ${WARNS} > 2
 CFLAGS+=	-Wcast-qual -Wwrite-strings
+CFLAGS+=	-Wextra -Wno-unused-parameter
 CXXFLAGS+=	-Wabi
 CXXFLAGS+=	-Wold-style-cast
 CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
