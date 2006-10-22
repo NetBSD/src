@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.35 2006/05/13 20:46:15 christos Exp $	*/
+/*	$NetBSD: ndp.c,v 1.36 2006/10/22 21:24:44 christos Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -314,15 +314,26 @@ getsocket(void)
 }
 
 #ifdef notdef
-static struct	sockaddr_in6 so_mask = {sizeof(so_mask), AF_INET6 };
+static struct sockaddr_in6 so_mask = {
+	.sin6_len = sizeof(so_mask),
+	.sin6_family = AF_INET6
+};
 #endif
-static struct	sockaddr_in6 blank_sin = {sizeof(blank_sin), AF_INET6 }, sin_m;
-static struct	sockaddr_dl blank_sdl = {sizeof(blank_sdl), AF_LINK }, sdl_m;
-static int	expire_time, flags, found_entry;
-static struct	{
+static struct sockaddr_in6 blank_sin = {
+	.sin6_len = sizeof(blank_sin),
+	.sin6_family = AF_INET6
+};
+static struct sockaddr_in6 sin_m;
+static struct sockaddr_dl blank_sdl = {
+	.sdl_len = sizeof(blank_sdl),
+	.sdl_family = AF_LINK,
+};
+static struct sockaddr_dl sdl_m;
+static int expire_time, flags, found_entry;
+static struct {
 	struct	rt_msghdr m_rtm;
 	char	m_space[512];
-}	m_rtmsg;
+} m_rtmsg;
 
 /*
  * Set an individual neighbor cache entry
