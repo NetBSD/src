@@ -1,0 +1,83 @@
+.\"	$NetBSD: vmem_alloc.9,v 1.1 2006/10/22 11:14:52 yamt Exp $
+.\"
+.\" Copyright (c)2006 YAMAMOTO Takashi,
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" ------------------------------------------------------------
+.Dd October 22, 2006
+.Dt VMEM_ALLOC 9
+.Os
+.\" ------------------------------------------------------------
+.Sh NAME
+.Nm vmem_alloc
+.Nd Allocate resource from arena
+.\" ------------------------------------------------------------
+.Sh SYNOPSIS
+.In sys/vmem.h
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Ft vmem_addr_t
+.Fn vmem_alloc \
+"vmem_t *vm" "vmem_size_t size" "vm_flag_t flags"
+.\" ------------------------------------------------------------
+.Sh DESCRIPTION
+.Fn vmem_alloc
+allocates resource from the arena.
+.Pp
+.Bl -tag -width flags
+.It Fa vm
+The arena which we allocate from.
+.It Fa size
+Specify the size of allocation.
+.It Fa flags
+A bitwise OR of an allocation strategy and a sleep flag.
+.Pp
+The allocation strategy is one of:
+.Bl -tag -width VM_INSTANTFIT
+.It VM_BESTFIT
+Prefer space efficiency.
+.It VM_INSTANTFIT
+Prefer performance.
+.El
+.Pp
+The sleep flag should be one of:
+.Bl -tag -width VM_NOSLEEP
+.It VM_SLEEP
+Can sleep until enough resource is available.
+.It VM_NOSLEEP
+Don't sleep.
+Immediately return
+.Dv VMEM_ADDR_NULL
+if there is not enough resource available.
+.El
+.El
+.\" ------------------------------------------------------------
+.Sh RETURN VALUES
+.Fn vmem_alloc
+return an allocated vmem_addr_t.
+Otherwise, it returns
+.Dv VMEM_ADDR_NULL .
+.\" ------------------------------------------------------------
+.Sh SEE ALSO
+.Xr intro 9 ,
+.Xr vmem 9
