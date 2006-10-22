@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.35 2006/10/12 01:30:51 christos Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.36 2006/10/22 12:52:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.35 2006/10/12 01:30:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.36 2006/10/22 12:52:46 pooka Exp $");
 
 #include "sequencer.h"
 
@@ -1332,7 +1332,7 @@ static dev_type_close(midiclose);
 
 const struct cdevsw midi_cdevsw = {
 	midiopen, midiclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 /*
