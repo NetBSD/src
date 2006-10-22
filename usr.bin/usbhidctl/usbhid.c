@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.30 2006/05/10 21:53:48 mrg Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.31 2006/10/22 05:09:14 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhid.c,v 1.30 2006/05/10 21:53:48 mrg Exp $");
+__RCSID("$NetBSD: usbhid.c,v 1.31 2006/10/22 05:09:14 dsainty Exp $");
 #endif
 
 #include <sys/types.h>
@@ -67,6 +67,7 @@ unsigned int verbose;
 #define DELIM_USAGE '.'
 #define DELIM_PAGE ':'
 #define DELIM_SET '='
+#define DELIM_INSTANCE '#'
 
 static int reportid;
 
@@ -88,8 +89,16 @@ struct Susbvar {
 #define MATCH_SHOWVALUES	(1 << 8)
 	unsigned int mflags;
 
+	/*
+	 * An instance number can be used to identify an item by
+	 * position as well as by name.  This allows us to manipulate
+	 * devices that don't assign unique names to all usage items.
+	 */
+	int usageinstance;
+
 	/* Workspace for hidmatch() */
 	ssize_t matchindex;
+	int matchcount;
 
 	int (*opfunc)(struct hid_item *item, struct Susbvar *var,
 		      u_int32_t const *collist, size_t collen, u_char *buf);
@@ -198,7 +207,7 @@ hidtestrule(struct Susbvar *var, struct usagedata *cache)
 	if (pagesplit >= 0) {
 		/*
 		 * Page name was specified, determine whether it was
-		 * symbolic or numeric.  
+		 * symbolic or numeric.
 		 */
 		char const *strstart;
 		int numpage;
@@ -284,6 +293,17 @@ hidtestrule(struct Susbvar *var, struct usagedata *cache)
 }
 
 /*
+ * Clear state in HID variable records used by hidmatch().
+ */
+static void
+resethidvars(struct Susbvar *varlist, size_t vlsize)
+{
+	size_t vlind;
+	for (vlind = 0; vlind < vlsize; vlind++)
+		varlist[vlind].matchcount = 0;
+}
+
+/*
  * hidmatch() determines whether the item specified in 'item', and
  * nested within a hierarchy of collections specified in 'collist'
  * matches any of the rules in the list 'varlist'.  Returns the
@@ -293,6 +313,7 @@ static struct Susbvar*
 hidmatch(u_int32_t const *collist, size_t collen, struct hid_item *item,
 	 struct Susbvar *varlist, size_t vlsize)
 {
+	struct Susbvar *result;
 	size_t colind, vlactive, vlind;
 	int iscollection;
 
@@ -348,6 +369,7 @@ hidmatch(u_int32_t const *collist, size_t collen, struct hid_item *item,
 	 * test which variables named in the rule list are still
 	 * applicable - if any.
 	 */
+	result = NULL;
 	for (colind = 0; vlactive > 0 && colind <= collen; colind++) {
 		struct usagedata cache;
 
@@ -382,19 +404,29 @@ hidmatch(u_int32_t const *collist, size_t collen, struct hid_item *item,
 
 			matchres = hidtestrule(var, &cache);
 
-			if (matchres < 0) {
-				/* Bad match */
-				var->matchindex = -1;
-				vlactive--;
+			if (matchres == 0)
+				/* Partial match */
 				continue;
-			} else if (matchres > 0) {
+
+			if (matchres > 0) {
 				/* Complete match */
-				return var;
+				if (var->usageinstance < 0 ||
+				    var->matchcount == var->usageinstance)
+					result = var;
+				var->matchcount++;
 			}
+
+			/*
+			 * We either matched completely, or not at
+			 * all.  Either way, this variable is no
+			 * longer active.
+			 */
+			var->matchindex = -1;
+			vlactive--;
 		}
 	}
 
-	return NULL;
+	return result;
 }
 
 static void
@@ -619,6 +651,8 @@ devloop(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize)
 			     (unsigned long)readlen, (unsigned long)dlen);
 
 		collind = 0;
+		resethidvars(varlist, vlsize);
+
 		hdata = hid_start_parse(rd, 1 << hid_input, reportid);
 		if (hdata == NULL)
 			errx(1, "Failed to start parser");
@@ -679,6 +713,8 @@ devshow(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize,
 	}
 
 	collind = 0;
+	resethidvars(varlist, vlsize);
+
 	hdata = hid_start_parse(rd, kindset, reportid);
 	if (hdata == NULL)
 		errx(1, "Failed to start parser");
@@ -839,8 +875,9 @@ main(int argc, char **argv)
 	}
 
 	for (varnum = 0; varnum < (size_t)argc; varnum++) {
-		char const *name, *valuesep;
+		char const *name, *valuesep, *varinst;
 		struct Susbvar *svar;
+		size_t namelen;
 
 		svar = &variables[varnum];
 		name = argv[varnum];
@@ -848,13 +885,14 @@ main(int argc, char **argv)
 
 		svar->variable = name;
 		svar->mflags = 0;
+		svar->usageinstance = 0;
 
 		if (valuesep == NULL) {
 			/* Read variable */
 			if (wflag)
 				errx(1, "Must not specify -w to read variables");
 			svar->value = NULL;
-			svar->varlen = strlen(name);
+			namelen = strlen(name);
 
 			if (nflag) {
 				/* Display value of variable only */
@@ -880,10 +918,27 @@ main(int argc, char **argv)
 				 * don't bother documenting it.
 				 */
 				svar->mflags |= MATCH_SHOWVALUES;
-			svar->varlen = valuesep - name;
+			namelen = valuesep - name;
 			svar->value = valuesep + 1;
 			svar->opfunc = varop_modify;
 		}
+
+		varinst = memchr(name, DELIM_INSTANCE, namelen);
+
+		if (varinst != NULL && ++varinst != &name[namelen]) {
+			char *endptr;
+
+			svar->usageinstance = strtol(varinst, &endptr, 0);
+
+			if (&name[namelen] != (char const*)endptr)
+				errx(1, "%s%c%s", "Error parsing item "
+				     "instance number after '",
+				     DELIM_INSTANCE, "'");
+
+			namelen = varinst - 1 - name;
+		}
+
+		svar->varlen = namelen;
 	}
 
 	if (aflag || rflag) {
