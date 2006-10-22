@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.27 2005/02/26 22:12:33 dsl Exp $	*/
+/*	$NetBSD: netstat.c,v 1.28 2006/10/22 16:43:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.27 2005/02/26 22:12:33 dsl Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.28 2006/10/22 16:43:24 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -157,10 +157,10 @@ closenetstat(WINDOW *w)
 
 static struct nlist namelist[] = {
 #define	X_TCBTABLE	0
-	{ "_tcbtable" },
+	{ .n_name = "_tcbtable" },
 #define	X_UDBTABLE	1
-	{ "_udbtable" },
-	{ "" },
+	{ .n_name = "_udbtable" },
+	{ .n_name = NULL },
 };
 
 int

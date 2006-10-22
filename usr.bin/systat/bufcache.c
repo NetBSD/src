@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.19 2005/02/26 22:12:33 dsl Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.20 2006/10/22 16:43:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.19 2005/02/26 22:12:33 dsl Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.20 2006/10/22 16:43:24 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,8 +82,8 @@ struct ml_entry {
 
 static struct nlist namelist[] = {
 #define	X_BUFMEM	0
-	{ "_bufmem" },
-	{ "" },
+	{ .n_name = "_bufmem" },
+	{ .n_name = NULL },
 };
 
 static struct vcache vcache[VCACHE_SIZE];

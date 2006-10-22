@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.29 2005/12/24 21:14:50 matt Exp $	*/
+/*	$NetBSD: pigs.c,v 1.30 2006/10/22 16:43:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.29 2005/12/24 21:14:50 matt Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.30 2006/10/22 16:43:24 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -143,12 +143,12 @@ showpigs(void)
 static struct nlist namelist[] = {
 #define X_FIRST		0
 #define X_CCPU          0
-	{ "_ccpu" },
+	{ .n_name = "_ccpu" },
 #define X_FSCALE        1
-	{ "_fscale" },
+	{ .n_name = "_fscale" },
 #define X_PHYSMEM	2
-	{ "_physmem" },
-	{ "" }
+	{ .n_name = "_physmem" },
+	{ .n_name = NULL }
 };
 
 int

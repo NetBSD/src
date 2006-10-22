@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.21 2005/02/26 19:01:09 dsl Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.22 2006/10/22 16:43:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.21 2005/02/26 19:01:09 dsl Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.22 2006/10/22 16:43:24 christos Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -52,13 +52,13 @@ struct	command global_commands[] = {
 	{ "quit",	global_quit,		"exit systat"},
 	{ "start",	global_interval,	"restart updating display"},
 	{ "stop",	global_stop,		"stop updating display"},
-	{ 0 }
+	{ .c_name = NULL }
 };
 
 struct command	df_commands[] = {
 	{ "all",	df_all,         "show all filesystems"},
 	{ "some",	df_some,        "show only some filesystems"},
-	{ 0 }
+	{ .c_name = NULL }
 };
 	
 struct command	icmp_commands[] = {
@@ -66,7 +66,7 @@ struct command	icmp_commands[] = {
 	{ "run",	icmp_run,	"show running total stats"},
 	{ "time",	icmp_time,	"show stats for each sample time"},
 	{ "zero",	icmp_zero,	"re-zero running totals"},
-	{ 0 }
+	{ .c_name = NULL }
 };
 
 struct command	iostat_commands[] = {
@@ -79,7 +79,7 @@ struct command	iostat_commands[] = {
 	{ "display",	disks_add,	"add a disk to displayed disks"},
 	{ "ignore",	disks_remove,	"remove a disk from displayed disks"},
 	{ "drives",	disks_drives,	"list all disks/set disk list"},
-	{ 0 }
+	{ .c_name = NULL }
 };
 
 struct command	ip_commands[] = {
@@ -87,7 +87,7 @@ struct command	ip_commands[] = {
 	{ "run",	ip_run,		"show running total stats"},
 	{ "time",	ip_time,	"show stats for each sample time"},
 	{ "zero",	ip_zero,	"re-zero running totals"},
-	{ 0 }
+	{ .c_name = NULL }
 };
 
 #ifdef INET6
@@ -96,7 +96,7 @@ struct command	ip6_commands[] = {
 	{ "run",	ip6_run,	"show running total stats"},
 	{ "time",	ip6_time,	"show stats for each sample time"},
 	{ "zero",	ip6_zero,	"re-zero running totals"},
-	{ 0 }
+	{ .c_name = NULL }
 };
 #endif
 
@@ -106,7 +106,7 @@ struct command	ipsec_commands[] = {
 	{ "run",	ipsec_run,	"show running total stats"},
 	{ "time",	ipsec_time,	"show stats for each sample time"},
 	{ "zero",	ipsec_zero,	"re-zero running totals"},
-	{ NULL,		NULL,		NULL },
+	{ .c_name = NULL }
 };
 #endif
 
@@ -120,12 +120,12 @@ struct command netstat_commands[] = {
 	{ "show",	netstat_show,	"show current display/ignore settings"},
 	{ "tcp",	netstat_tcp,	 "show only tcp connections"},
 	{ "udp",	netstat_udp,	 "show only udp connections"},
-	{ 0 }
+	{ .c_name = NULL }
 };
 
 struct command ps_commands[] = {
 	{ "user",	ps_user,	"limit displayed processes to a user"},
-	{ 0 }
+	{ .c_name = NULL }
 };
 
 struct command	tcp_commands[] = {
@@ -133,7 +133,7 @@ struct command	tcp_commands[] = {
 	{ "run",	tcp_run,	"show running total stats"},
 	{ "time",	tcp_time,	"show stats for each sample time"},
 	{ "zero",	tcp_zero,	"re-zero running totals"},
-	{ NULL,		NULL,		NULL },
+	{ .c_name = NULL }
 };
 
 struct command	vmstat_commands[] = {
@@ -145,7 +145,7 @@ struct command	vmstat_commands[] = {
 	{ "display",	disks_add,	"add a disk to displayed disks"},
 	{ "ignore",	disks_remove,	"remove a disk from displayed disks"},
 	{ "drives",	disks_drives,	"list all disks/set disk list"},
-	{ 0 }
+	{ .c_name = NULL }
 };
 
 struct mode modes[] = {
@@ -199,6 +199,6 @@ struct mode modes[] = {
 	{ "vmstat",	showvmstat,	fetchvmstat,	labelvmstat,
 	  initvmstat,	openvmstat,	closevmstat,	vmstat_commands,
 	  0 },
-	{ 0 }
+	{ .c_name = NULL }
 };
 struct  mode *curmode = &modes[0];
