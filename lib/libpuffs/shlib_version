@@ -1,0 +1,4 @@
+#	$NetBSD: shlib_version,v 1.1 2006/10/22 22:52:21 pooka Exp $
+#
+major=0
+minor=0
