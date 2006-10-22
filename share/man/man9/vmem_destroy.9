@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem_destroy.9,v 1.1 2006/10/22 11:14:52 yamt Exp $
+.\"	$NetBSD: vmem_destroy.9,v 1.2 2006/10/22 11:23:32 yamt Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -44,7 +44,11 @@
 .Fn vmem_destroy
 destroys a vmem arena.
 .Pp
-the caller should ensure that the arena is not used anymore.
+.Bl -tag -width vm
+.It Fa vm
+The vmem arena being destroyed.
+The caller should ensure that no one will use it anymore.
+.El
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
 .Xr intro 9 ,
