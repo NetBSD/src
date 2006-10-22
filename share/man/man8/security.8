@@ -1,0 +1,157 @@
+.\" $NetBSD: security.8,v 1.1 2006/10/22 12:16:27 elad Exp $
+.\"
+.\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Elad Efrat.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd October 6, 2006
+.Dt SECURITY 8
+.Os
+.Sh NAME
+.Nm security
+.Nd
+.Nx security features
+.Sh DESCRIPTION
+.Nx
+supports a variety of security features.
+Below is a brief description of them with some quick usage examples
+that will help you get started.
+.Sh VERIEXEC
+.Em Veriexec
+is an in-kernel, real-time, file-system idenependent, file integrity
+subsystem.
+It can be used for a variety of purposes, including defense against trojanned
+binaries, indirect attacks via third-party remote file-systems, and
+config file corruption.
+It can operate on four modes, also referred to as strict levels:
+.Em learning mode ,
+.Em IDS mode ,
+.Em IPS mode ,
+and
+.Em lockdown mode .
+.Pp
+.Em Veriexec
+requires a list of monitored files, along with their digital fingerprint and
+(optionally) access modes.
+.Nx
+provides a tool,
+.Xr veriexecgen 1 ,
+for this purpose.
+Example usage:
+.Bd -literal -offset indent
+# veriexecgen
+.Ed
+.Pp
+.Em Veriexec
+needs to be enabled via a kernel option,
+.Dq VERIFIED_EXEC ,
+as well as one or more options for digital fingerprint algorithm support.
+See your kernel's config file for an example.
+.Pp
+.Em Veriexec
+also requires enabling in
+.Xr rc.conf 5 :
+.Bd -literal -offset indent
+veriexec=YES
+veriexec_strict=1 # IDS mode
+.Ed
+.Sh ANTI-EXPLOITATION
+.Nx
+incorporates some anti-exploitation features, mainly from the
+.Em PaX
+project.
+.Ss PaX MPROTECT
+.Em PaX MPROTECT
+are memory protection restrictions, meant to compliment non-executable
+mappings.
+Their purpose is to prevent situations where malicious code attempts to mark
+writable memory regions as executable, often by trashing arguments to an
+.Xr mprotect 2
+call.
+.Pp
+While it can be enabled globally,
+.Nx
+provides a tool,
+.Xr paxctl 1 ,
+to enable
+.Em PaX MPROTECT
+on a per-program basis.
+.Pp
+Example usage:
+.Bd -literal -offset indent
+# paxctl +M /usr/sbin/sshd
+.Ed
+.Pp
+Enabling
+.Em PaX MPROTECT
+globally:
+.Bd -literal -offset indent
+# sysctl -w security.pax.mprotect.global=1
+.Ed
+.Ss GCC Stack Smashing Protection (SSP)
+Since
+.Nx 4.0 ,
+.Xr gcc 1
+includes
+.Em SSP ,
+a set of compiler extensions to raise the bar on exploitation attempts via
+corruption of variables to affect program control flow or buffer overruns.
+.Pp
+The entire
+.Nx
+kernel and userland are built with these extensions, and it is recommended
+that you build additional software with them as well.
+To do so, you will need to provide one of the
+.Fl fstack-protector
+or
+.Fl fstack-protector-all
+flags to
+.Xr gcc 1 .
+.Sh INFORMATION FILTERING
+.Nx
+provides administrators with the ability to restrict information passed from
+the kernel to userland so that users can only view information they "own".
+.Pp
+The hooks that manage that are located in various parts of the system and
+effectively affect programs like
+.Xr ps 1 ,
+.Xr fstat 1 ,
+and
+.Xr netstat 1 .
+To enable:
+.Bd -literal -offset indent
+# sysctl -w security.curtain=1
+.Ed
+.Sh SEE ALSO
+.Xr paxctl 1 ,
+.Xr sysctl 3 ,
+.Xr options 4 ,
+.Xr sysctl 8 ,
+.Xr veriexecctl 8 ,
+.Xr veriexecgen 8
+.Sh AUTHORS
+.An Elad Efrat Aq elad@NetBSD.org
