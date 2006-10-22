@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.66 2006/09/24 08:23:36 manu Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.67 2006/10/22 23:02:08 pooka Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -262,6 +262,7 @@
 #	pci*	PCI bus access devices
 #	pf	PF packet filter
 #	pow*	power management device (x68k)
+#	puffs	Pass-to-Userspace Framework File System
 #	px*	PixelStamp Xserver access
 #	radio*	radio devices
 #	random	Random number generator
@@ -1607,6 +1608,10 @@ fw*)
 		mkdev fw${unit}.${j} c %fw_chr% $((${unit} * 256 + ${j})) 660 ${g_operator}
 		mkdev fwmem${unit}.${j} c %fw_chr% $((65536 + ${unit} * 256 + ${j})) 660 ${g_operator}
 	done
+	;;
+
+puffs)
+	mkdev puffs c %puffs_chr% 0x7ffff 600
 	;;
 
 midevend)
