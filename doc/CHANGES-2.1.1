@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.54 2006/10/17 18:26:38 bouyer Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.55 2006/10/22 16:37:51 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -492,4 +492,10 @@ sys/arch/acorn26/acorn26/except.c		1.17
 	but it's nice not to panic if they do.  Also this makes
 	regress/sys/arch/arm/abort-fixup pass.
 	[bjh21, ticket #10716]
+
+sys/arch/arm/iomd/iomdkbc.c			1.3
+
+	Interpret the argument to iomdkbc_set_poll() correctly.  Quite how we
+	got this far with it the wrong way around is beyond me.
+	[bjh21, ticket #10728]
 
