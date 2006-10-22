@@ -1,0 +1,92 @@
+.\"	$NetBSD: vmem_create.9,v 1.1 2006/10/22 11:14:52 yamt Exp $
+.\"
+.\" Copyright (c)2006 YAMAMOTO Takashi,
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" ------------------------------------------------------------
+.Dd October 22, 2006
+.Dt VMEM_CREATE 9
+.Os
+.\" ------------------------------------------------------------
+.Sh NAME
+.Nm vmem_create
+.Nd Create a vmem arena
+.\" ------------------------------------------------------------
+.Sh SYNOPSIS
+.In sys/vmem.h
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Ft vmem_t
+.Fn vmem_create \
+"const char *name" "vmem_addr_t base" "vmem_size_t size" "vmem_size_t quantum" \
+"vmem_addr_t (*allocfn)(vmem_t *, vmem_size_t, vmem_size_t *, vm_flag_t)" \
+"void (*freefn)(vmem_t *, vmem_addr_t, vmem_size_t)" \
+"vmem_t *source" "vmem_size_t qcache_max" "vm_flag_t flags"
+.\" ------------------------------------------------------------
+.Sh DESCRIPTION
+.Fn vmem_create
+creates a new vmem arena.
+.Pp
+.Bl -tag -width qcache_max
+.It Fa name
+The string to describe the vmem.
+.It Fa base
+The start address of initial span.
+It can be
+.Dv VMEM_ADDR_NULL
+if no initial span is required.
+.It Fa size
+The size of initial span.
+.It Fa quantum
+The smallest unit of allocation.
+.It Fa allocfn
+The callback function used to import spans from the backend arena.
+.It Fa freefn
+The callback function used to free spans to the backend arena.
+.It Fa source
+The backend arena.
+.It Fa qcache_max
+The largest size of allocations which can be served by quantum cache.
+It's merely a hint and can be ignored.
+.It Fa flags
+Either of:
+.Bl -tag -width VM_NOSLEEP
+.It VM_SLEEP
+Can sleep until enough resource is available.
+.It VM_NOSLEEP
+Don't sleep.
+Immediately return
+.Dv NULL
+if there is not enough resource available.
+.El
+.El
+.\" ------------------------------------------------------------
+.Sh RETURN VALUES
+.Fn vmem_create
+return a pointer to the newly allocated vmem_t.
+Otherwise, it returns
+.Dv NULL .
+.\" ------------------------------------------------------------
+.Sh SEE ALSO
+.Xr intro 9 ,
+.Xr vmem 9
