@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_codecs.c,v 1.1 2006/10/21 21:37:21 christos Exp $	*/
+/*	$NetBSD: mime_codecs.c,v 1.2 2006/10/22 08:29:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_codecs.c,v 1.1 2006/10/21 21:37:21 christos Exp $");
+__RCSID("$NetBSD: mime_codecs.c,v 1.2 2006/10/22 08:29:36 mrg Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -350,8 +350,6 @@ mime_fB64_decode(FILE *fi, FILE *fo, void *cookie)
 	size_t len;
 	char *buf;
 	size_t buflen;
-	int add_lf;
-	add_lf = (int)cookie;
 
 	buflen = 3 * (MIME_BASE64_LINE_MAX / 4);
 	buf = emalloc(buflen);
@@ -388,7 +386,7 @@ mime_fB64_decode(FILE *fi, FILE *fo, void *cookie)
 
 	free(buf);
 
-	if (add_lf)
+	if (cookie)
 		(void)fputc('\n', fo);
 }
 
@@ -443,7 +441,7 @@ mustquote(unsigned char *p, unsigned char *end, size_t l)
 	if (flag == XD)	/* line may consist of a single dot */
 		return (p + 1 < end && p[1] == '\n');
 
-	errx(EXIT_FAILURE, "mustquote: invalid logic: *p=0x%x (%d) flag=%d, l=%d\n",
+	errx(EXIT_FAILURE, "mustquote: invalid logic: *p=0x%x (%d) flag=%d, l=%zu\n",
 	    *p, *p, flag, l);
 	/* NOT REACHED */
 	return 0;	/* appease GCC */
