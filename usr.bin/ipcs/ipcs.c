@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.35 2006/04/28 20:35:15 christos Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.36 2006/10/22 16:17:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -679,6 +679,24 @@ done:
 	free(buf);
 }
 
+static struct nlist symbols[] = {
+	{ .n_name = "_sema" },
+#define X_SEMA		0
+	{ .n_name = "_seminfo" },
+#define X_SEMINFO	1
+	{ .n_name = "_semu" },
+#define X_SEMU		2
+	{ .n_name = "_msginfo" },
+#define X_MSGINFO	3
+	{ .n_name = "_msqids" },
+#define X_MSQIDS	4
+	{ .n_name = "_shminfo" },
+#define X_SHMINFO	5
+	{ .n_name = "_shmsegs" },
+#define X_SHMSEGS	6
+	{ .n_name = NULL }
+};
+
 static void
 ipcs_kvm(void)
 {
@@ -691,23 +709,6 @@ ipcs_kvm(void)
 	kvm_t *kd;
 	char errbuf[_POSIX2_LINE_MAX];
 	int i;
-	struct nlist symbols[] = {
-		{"_sema"},
-	#define X_SEMA		0
-		{"_seminfo"},
-	#define X_SEMINFO	1
-		{"_semu"},
-	#define X_SEMU		2
-		{"_msginfo"},
-	#define X_MSGINFO	3
-		{"_msqids"},
-	#define X_MSQIDS	4
-		{"_shminfo"},
-	#define X_SHMINFO	5
-		{"_shmsegs"},
-	#define X_SHMSEGS	6
-		{NULL}
-	};
 
 	if ((kd = kvm_openfiles(namelist, core, NULL, O_RDONLY,
 	    errbuf)) == NULL)
