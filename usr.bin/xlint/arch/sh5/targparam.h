@@ -1,4 +1,4 @@
-/*	$NetBSD: targparam.h,v 1.2 2003/05/29 18:12:16 christos Exp $	*/
+/*	$NetBSD: targparam.h,v 1.3 2006/10/22 11:20:44 scw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -46,13 +46,8 @@
  * or the value of sizeof is of type unsigned long.  Note this MUST be
  * kept in sync with the compiler!
  */     
-#ifndef _LP64
-#define	PTRDIFF_IS_LONG		0
-#define	SIZEOF_IS_ULONG		0
-#else
 #define	PTRDIFF_IS_LONG		1
 #define	SIZEOF_IS_ULONG		1
-#endif
 #define	INTPTR_IS_LONG		1
 
 #define	FLOAT_SIZE		(4 * CHAR_BIT)
