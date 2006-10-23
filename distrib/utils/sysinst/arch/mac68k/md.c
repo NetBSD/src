@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.49 2006/10/12 12:46:18 pavel Exp $ */
+/*	$NetBSD: md.c,v 1.50 2006/10/23 19:45:56 he Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,22 +64,28 @@ MAP_TYPE map_types[] = {
 	{MAP_EOL,      NULL}
 };
 
-MAP map = {0, 0, 0, 0, 0, 0, 0, 0, {0}};
+MAP map = {0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL};
 
 struct apple_part_map_entry new_map[] =
 {
 	{ APPLE_PART_MAP_ENTRY_MAGIC, 0xa5a5, 6, 1, NEW_MAP_SIZE & 0x7e,
-	  "Apple", "Apple_Partition_Map", 0, NEW_MAP_SIZE, 0x37 },
+	  "Apple", "Apple_Partition_Map", 0, NEW_MAP_SIZE, 0x37,
+	  0, 0, 0, 0, 0, 0, 0, {0}, {0}, {0}},
 	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 64, 32,
-	  "Macintosh", "Apple_Driver", 0, 0, 0x37 },
+	  "Macintosh", "Apple_Driver", 0, 0, 0x37,
+	  0, 0, 0, 0, 0, 0, 0, {0}, {0}, {0}},
 	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 96, 64,
-	  "Macintosh", "Apple_Driver43", 0, 0, 0x37 },
+	  "Macintosh", "Apple_Driver43", 0, 0, 0x37,
+	  0, 0, 0, 0, 0, 0, 0, {0}, {0}, {0}},
 	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 160, 64,
-	  "Macintosh", "Apple_Driver_ATA", 0, 0, 0x37 },
+	  "Macintosh", "Apple_Driver_ATA", 0, 0, 0x37,
+	  0, 0, 0, 0, 0, 0, 0, {0}, {0}, {0}},
 	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 224, 4096,
-	  "untitled", "Apple_HFS", 0, 0, 0x37 },
+	  "untitled", "Apple_HFS", 0, 0, 0x37,
+	  0, 0, 0, 0, 0, 0, 0, {0}, {0}, {0}},
 	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6,4320, 0,
-	  "untitled", "Apple_Free", 0, 0, 0x37 }
+	  "untitled", "Apple_Free", 0, 0, 0x37,
+	  0, 0, 0, 0, 0, 0, 0, {0}, {0}, {0}}
 };
 
 /*
@@ -786,7 +792,8 @@ md_pre_disklabel()
     int fd;
     char dev_name[100];
     struct disklabel lp;
-    Block0 new_block0 = {APPLE_DRVR_MAP_MAGIC, 512, 0};
+    Block0 new_block0 = {APPLE_DRVR_MAP_MAGIC, 512,
+	 		 0, 0, 0, 0, 0, 0, 0, 0, {0}};
 
     /*
      * Danger Will Robinson!  We're about to turn that nice MacOS disk
