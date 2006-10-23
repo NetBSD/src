@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14.22.2 2006/10/06 19:02:34 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.14.22.3 2006/10/23 14:57:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@ splraiseipl(ipl_cookie_t icookie)
 
 #define splsoftclock()		splraise1()
 #define splsoftnet()		splraise1()
+#define splsoftserial()		splraise1()
 #define splbio()		splraise3()
 #define splnet()		splraise3()
 
