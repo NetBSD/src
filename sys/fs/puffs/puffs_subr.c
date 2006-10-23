@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.1 2006/10/22 22:43:23 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.2 2006/10/23 23:32:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.1 2006/10/22 22:43:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.2 2006/10/23 23:32:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -63,14 +63,51 @@ puffs_getvnode(struct mount *mp, void *cookie, struct vnode **vpp)
 
 	pmp = MPTOPUFFSMP(mp);
 
-	pnode = pool_get(&puffs_pnpool, PR_WAITOK);
-	error = getnewvnode(VT_PUFFS, mp, puffs_vnodeop_p, &vp);
-	if (error) {
-		pool_put(&puffs_pnpool, pnode);
+	/*
+	 * XXX: there is a deadlock condition between vfs_busy() and
+	 * vnode locks.  For an unmounting file system the mountpoint
+	 * is frozen, but in unmount(FORCE) vflush() wants to access all
+	 * of the vnodes.  If we are here waiting for the mountpoint
+	 * lock while holding on to a vnode lock, well, we ain't
+	 * just pining for the fjords anymore.  If we release the
+	 * vnode lock, we will be in the situation "mount point
+	 * is dying" and panic() will ensue in insmntque.  So as a
+	 * temporary workaround, get a vnode without putting it on
+	 * the mount point list, check if mount point is still alive
+	 * and kicking and only then add the vnode to the list.
+	 */
+	error = getnewvnode(VT_PUFFS, NULL, puffs_vnodeop_p, &vp);
+	if (error)
 		return error;
-	}
 	vp->v_vnlock = NULL;
 
+	/*
+	 * Check what mount point isn't going away.  This will work
+	 * until we decide to remove biglock or make the kernel
+	 * preemptive.  But hopefully the real problem will be fixed
+	 * by then.
+	 *
+	 * XXX: yes, should call vfs_busy(), but thar be rabbits with
+	 * vicious streaks a mile wide ...
+	 */
+	if (mp->mnt_iflag & IMNT_UNMOUNT) {
+		DPRINTF(("puffs_getvnode: mp %p unmount, unable to create "
+		    "vnode for cookie %p\n", mp, cookie));
+		ungetnewvnode(vp);
+		return ENXIO;
+	}
+
+	/* So it's not dead yet.. good.. inform new vnode of its master */
+	simple_lock(&mntvnode_slock);
+	if (TAILQ_EMPTY(&mp->mnt_vnodelist))
+		TAILQ_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
+	else
+		TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
+	simple_unlock(&mntvnode_slock);
+	vp->v_mount = mp;
+
+	/* handle clerical tasks & footwork */
+	pnode = pool_get(&puffs_pnpool, PR_WAITOK);
 	pnode->pn_cookie = cookie;
 	pnode->pn_stat = 0;
 	LIST_INSERT_HEAD(&pmp->pmp_pnodelist, pnode, pn_entries);
