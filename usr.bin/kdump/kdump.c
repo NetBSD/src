@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.86 2006/09/23 22:01:04 manu Exp $	*/
+/*	$NetBSD: kdump.c,v 1.87 2006/10/23 04:13:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.86 2006/09/23 22:01:04 manu Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.87 2006/10/23 04:13:51 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -508,7 +508,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 		} else if (strcmp(sys_name, "ptrace") == 0 && argcount >= 1) {
 			putchar('(');
 			if (strcmp(emul->name, "linux") == 0) {
-				if (*ap >= 0 && *ap <
+				if ((long)*ap >= 0 && *ap <
 				    sizeof(linux_ptrace_ops) /
 				    sizeof(linux_ptrace_ops[0]))
 					(void)printf("%s",
@@ -516,7 +516,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 				else
 					output_long((long)*ap, 1);
 			} else {
-				if (*ap >= 0 && *ap <
+				if ((long)*ap >= 0 && *ap <
 				    sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
 					(void)printf("%s", ptrace_ops[*ap]);
 #ifdef PT_MACHDEP_STRINGS
