@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.27 2006/09/19 22:03:10 elad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.28 2006/10/23 12:11:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.27 2006/09/19 22:03:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.28 2006/10/23 12:11:47 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -796,7 +796,7 @@ int
 cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	__greg32_t *gr = mcp->__gregs;
+	const __greg32_t *gr = mcp->__gregs;
 	int error;
 
 	/* Restore register context, if any. */
