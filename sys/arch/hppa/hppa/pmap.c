@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 2006/09/03 13:40:08 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25 2006/10/23 14:15:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2006/09/03 13:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2006/10/23 14:15:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,12 +305,25 @@ vsize_t	hpt_mask;
 /* Prototypes. */
 void __pmap_pv_update(paddr_t, struct pv_entry *, u_int, u_int);
 static inline void pmap_pv_remove(struct pv_entry *);
+static inline void pmap_pv_add(vaddr_t, vaddr_t);
+static inline struct pv_entry *pmap_pv_alloc(void);
+static inline void pmap_pv_free(struct pv_entry *);
+static inline struct hpt_entry *pmap_hpt_hash(pa_space_t, vaddr_t);
+static inline int pmap_table_find_pa(paddr_t);
+static inline struct pv_entry *pmap_pv_find_pa(paddr_t);
+static inline struct pv_entry *pmap_pv_find_va(pa_space_t, vaddr_t);
+static int pmap_pv_check_alias(paddr_t);
+static inline void _pmap_pv_update(paddr_t, struct pv_entry *, u_int, u_int);
+static inline struct pv_entry *pmap_pv_enter(pmap_t, pa_space_t, vaddr_t,
+    paddr_t, u_int);
+static void pmap_pinit(pmap_t);
+static inline boolean_t pmap_clear_bit(paddr_t, u_int);
+static inline boolean_t pmap_test_bit(paddr_t, u_int);
 
 /*
  * Given a directly-mapped region, this makes pv_entries out of it and
  * adds them to the free list.
  */
-static inline void pmap_pv_add(vaddr_t, vaddr_t);
 static inline void
 pmap_pv_add(vaddr_t pv_start, vaddr_t pv_end)
 {
@@ -342,7 +355,6 @@ pmap_pv_add(vaddr_t pv_start, vaddr_t pv_end)
  * in physical mode and thus require that all pv_entries be directly
  * mapped, a quality unlikely for malloc()-returned memory.
  */
-static inline struct pv_entry *pmap_pv_alloc(void);
 static inline struct pv_entry *
 pmap_pv_alloc(void)
 {
@@ -406,7 +418,6 @@ pmap_pv_alloc(void)
 /*
  * Given a struct pv_entry allocated by pmap_pv_alloc, this frees it.
  */
-static inline void pmap_pv_free(struct pv_entry *);
 static inline void
 pmap_pv_free(struct pv_entry *pv)
 {
@@ -429,7 +440,6 @@ pmap_pv_free(struct pv_entry *pv)
  * This HPT is also used as a general VA->PA mapping store, with
  * struct pv_entry chains hanging off of the HPT entries.
  */
-static inline struct hpt_entry *pmap_hpt_hash(pa_space_t, vaddr_t);
 static inline struct hpt_entry *
 pmap_hpt_hash(pa_space_t sp, vaddr_t va)
 {
@@ -450,7 +460,6 @@ pmap_hpt_hash(pa_space_t sp, vaddr_t va)
 /*
  * Given a PA, returns the table offset for it.
  */
-static inline int pmap_table_find_pa(paddr_t);
 static inline int
 pmap_table_find_pa(paddr_t pa)
 {
@@ -463,7 +472,6 @@ pmap_table_find_pa(paddr_t pa)
 /*
  * Given a PA, returns the first mapping for it.
  */
-static inline struct pv_entry *pmap_pv_find_pa(paddr_t);
 static inline struct pv_entry *
 pmap_pv_find_pa(paddr_t pa)
 {
@@ -477,7 +485,6 @@ pmap_pv_find_pa(paddr_t pa)
 /*
  * Given a VA, this finds any mapping for it.
  */
-static inline struct pv_entry *pmap_pv_find_va(pa_space_t, vaddr_t);
 static inline struct pv_entry *
 pmap_pv_find_va(pa_space_t space, vaddr_t va)
 {
@@ -495,7 +502,6 @@ pmap_pv_find_va(pa_space_t space, vaddr_t va)
  * Given a page's PA, checks for non-equivalent aliasing, 
  * and stores and returns the result.
  */
-static int pmap_pv_check_alias(paddr_t);
 static int
 pmap_pv_check_alias(paddr_t pa)
 {
@@ -559,7 +565,6 @@ pmap_pv_check_alias(paddr_t pa)
  * the protection accordingly.  This is used when a mapping is
  * changing.
  */
-static inline void _pmap_pv_update(paddr_t, struct pv_entry *, u_int, u_int);
 static inline void
 _pmap_pv_update(paddr_t pa, struct pv_entry *pv, u_int tlbprot_clear,
     u_int tlbprot_set)
@@ -623,8 +628,6 @@ _pmap_pv_update(paddr_t pa, struct pv_entry *pv, u_int tlbprot_clear,
  * Given a pmap, a VA, a PA, and a TLB protection, this enters
  * a new mapping and returns the new struct pv_entry.
  */
-static inline struct pv_entry *pmap_pv_enter(pmap_t, pa_space_t, vaddr_t,
-    paddr_t, u_int);
 static inline struct pv_entry *
 pmap_pv_enter(pmap_t pmap, pa_space_t space, vaddr_t va, paddr_t pa,
     u_int tlbprot)
@@ -766,7 +769,7 @@ pmap_pv_remove(struct pv_entry *pv)
 
 /*
  * Bootstrap the system enough to run with virtual memory.
- * Map the kernel's code and data, and allocate the system page table.
+ * Map the kernel's code, data and bss, and allocate the system page table.
  * Called with mapping OFF.
  *
  * Parameters:
@@ -1186,7 +1189,6 @@ pmap_init(void)
  * Initialize a preallocated and zeroed pmap structure,
  * such as one in a vmspace structure.
  */
-static void pmap_pinit(pmap_t);
 static void
 pmap_pinit(pmap_t pmap)
 {
@@ -1706,7 +1708,6 @@ pmap_copy_page(paddr_t spa, paddr_t dpa)
  * Given a PA and a bit, this tests and clears that bit in 
  * the modref information for the PA.
  */
-static inline boolean_t pmap_clear_bit(paddr_t, u_int);
 static inline boolean_t
 pmap_clear_bit(paddr_t pa, u_int tlbprot_bit)
 {
@@ -1732,7 +1733,6 @@ pmap_clear_bit(paddr_t pa, u_int tlbprot_bit)
  * Given a PA and a bit, this tests that bit in the modref
  * information for the PA.
  */
-static inline boolean_t pmap_test_bit(paddr_t, u_int);
 static inline boolean_t
 pmap_test_bit(paddr_t pa, u_int tlbprot_bit)
 {
