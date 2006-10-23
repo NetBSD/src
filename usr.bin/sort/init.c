@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.16 2004/11/03 20:14:36 dsl Exp $	*/
+/*	$NetBSD: init.c,v 1.17 2006/10/23 20:36:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.16 2004/11/03 20:14:36 dsl Exp $");
+__RCSID("$NetBSD: init.c,v 1.17 2006/10/23 20:36:17 jdolecek Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -240,6 +240,7 @@ setfield(pos, cur_fld, gflag)
 
 	if (cur_fld->tcol.num && !(!(cur_fld->flags & BI)
 	    && cur_fld->flags & BT) && (cur_fld->tcol.num <= cur_fld->icol.num
+	    && cur_fld->tcol.indent != 0 /* == 0 -> end of field, i.e. okay */
 	    && cur_fld->tcol.indent < cur_fld->icol.indent))
 		errx(2, "fields out of order");
 	insertcol(cur_fld);
