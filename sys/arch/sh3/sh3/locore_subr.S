@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.29 2006/10/23 16:28:51 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.29 2006/10/23 16:28:51 uwe Exp $")
 
 
 /*
@@ -842,7 +842,7 @@ ENTRY(fusword)
 	mov.l	.L_fusword_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov.w	@r4,	r1		/* fetch the value */
-	exts.w	r1,	r0
+	extu.w	r1,	r0
 1:
 	mov.l	.L_fusword_curpcb, r1	/* clear fault handler */
 	mov.l	@r1,	r2
@@ -883,7 +883,7 @@ ENTRY(fuswintr)
 	mov	#1,	r1		/* set faultbail */
 	mov.l	r1,	@(PCB_FAULTBAIL,r2)
 	mov.w	@r4,	r1		/* fetch the value */
-	exts.w	r1,	r0
+	extu.w	r1,	r0
 1:
 	mov.l	.L_fuswintr_curpcb, r1	/* clear fault handler and faultbail */
 	mov.l	@r1,	r2
@@ -922,7 +922,7 @@ ENTRY(fubyte)
 	mov.l	.L_fubyte_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov.b	@r4,	r1		/* fetch the value */
-	exts.b	r1,	r0
+	extu.b	r1,	r0
 1:
 	mov.l	.L_fubyte_curpcb, r1		/* clear fault handler */
 	mov.l	@r1,	r2
