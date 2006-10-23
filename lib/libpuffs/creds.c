@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.2 2006/10/23 00:22:24 christos Exp $	*/
+/*	$NetBSD: creds.c,v 1.3 2006/10/23 01:23:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: creds.c,v 1.2 2006/10/23 00:22:24 christos Exp $");
+__RCSID("$NetBSD: creds.c,v 1.3 2006/10/23 01:23:42 christos Exp $");
 #endif /* !lint */
 
 /*
@@ -81,7 +81,7 @@ puffs_cred_getgroups(const struct puffs_cred *pcr, gid_t *rgids, short *ngids)
 
 	ncopy = MIN(*ngids, NGROUPS);
 	(void)memcpy(rgids, pcr->pcr_uuc.cr_groups, ncopy);
-	*ngids = ncopy;
+	*ngids = (short)ncopy;
 
 	return 0;
 }
