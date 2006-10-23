@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3.50.1 2006/10/23 14:43:15 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.50.2 2006/10/23 14:53:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -46,14 +46,14 @@
 #define IPL_VM		3	/* memory allocation */
 #define IPL_AUDIO	4	/* audio */
 #define IPL_CLOCK	5	/* clock */
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define IPL_HIGH	6	/*  */
+#define	IPL_STATCLOCK	6
+#define IPL_HIGH	7	/*  */
 #define	IPL_LOCK	IPL_HIGH
 #define	IPL_SCHED	IPL_HIGH
-#define IPL_SERIAL	7	/* serial */
-#define IPL_NONE	8
+#define IPL_SERIAL	8	/* serial */
+#define IPL_NONE	9
 
-#define IPL_LEVELS	9
+#define IPL_LEVELS	10
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
