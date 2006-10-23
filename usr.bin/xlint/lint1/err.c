@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.30 2006/10/23 00:10:29 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.31 2006/10/23 00:15:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.30 2006/10/23 00:10:29 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.31 2006/10/23 00:15:58 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -106,7 +106,7 @@ const	char *msgs[] = {
 	"declaration introduces new type in ANSI C: %s %s",	      /* 44 */
 	"base type is really '%s %s'",				      /* 45 */
 	"(%s) tag redeclared",					      /* 46 */
-	"zero sized %s",					      /* 47 */
+	"zero sized %s is a C9X feature",			      /* 47 */
 	"overflow in enumeration values: %s",			      /* 48 */
 	"struct or union member must be named",			      /* 49 */
 	"a function is declared as an argument: %s",		      /* 50 */
