@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_ecoff.c,v 1.14 2003/07/26 19:24:43 salo Exp $ */
+/* $NetBSD: nlist_ecoff.c,v 1.15 2006/10/23 15:27:41 he Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.14 2003/07/26 19:24:43 salo Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.15 2006/10/23 15:27:41 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -121,7 +121,7 @@ __fdnlist_ecoff(fd, list)
 	symhdroff = exechdrp->f.f_symptr;
 	symhdrsize = exechdrp->f.f_nsyms;
 
-	if (check(symhdroff, sizeof *symhdrp) ||
+	if ((symhdroff + sizeof *symhdrp) > mappedsize ||
 	    sizeof *symhdrp != symhdrsize)
 		BADUNMAP;
 	symhdrp = (struct ecoff_symhdr *)&mappedfile[symhdroff];
