@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13.22.4 2006/10/09 11:44:56 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.13.22.5 2006/10/23 14:42:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.22.4 2006/10/09 11:44:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.22.5 2006/10/23 14:42:28 yamt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -263,6 +263,8 @@ ipl_to_spl(int ipl)
 		return _SPL_AUDIO;
 	case IPL_CLOCK:
 		return _SPL_CLOCK;
+	case IPL_STATCLOCK:
+		return _SPL_STATCLOCK;
 	case IPL_HIGH:
 		return _SPL_HIGH;
 	case IPL_SERIAL:
