@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.1 2006/10/22 22:52:21 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.2 2006/10/23 00:22:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.1 2006/10/22 22:52:21 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.2 2006/10/23 00:22:24 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -106,7 +106,7 @@ puffs_nextdent(struct dirent **dent, const char *name, ino_t id, uint8_t dtype,
 	d->d_fileno = id;
 	d->d_type = dtype;
 	d->d_namlen = strlen(name);
-	(void)memcpy(&d->d_name, name, d->d_namlen);
+	(void)memcpy(&d->d_name, name, (size_t)d->d_namlen);
 	d->d_name[d->d_namlen] = '\0';
 	d->d_reclen = _DIRENT_SIZE(d);
 
@@ -124,28 +124,28 @@ void
 puffs_setvattr(struct vattr *vap, const struct vattr *sva)
 {
 
-#define SETIFVAL(a) if (sva->a != PUFFS_VNOVAL) vap->a = sva->a
+#define SETIFVAL(a, t) if (sva->a != (t)PUFFS_VNOVAL) vap->a = sva->a
 	if (sva->va_type != VNON)
 		vap->va_type = sva->va_type;
-	SETIFVAL(va_mode);
-	SETIFVAL(va_nlink);
-	SETIFVAL(va_uid);
-	SETIFVAL(va_gid);
-	SETIFVAL(va_fsid);
-	SETIFVAL(va_size);
-	SETIFVAL(va_blocksize);
-	SETIFVAL(va_atime.tv_sec);
-	SETIFVAL(va_ctime.tv_sec);
-	SETIFVAL(va_mtime.tv_sec);
-	SETIFVAL(va_birthtime.tv_sec);
-	SETIFVAL(va_atime.tv_nsec);
-	SETIFVAL(va_ctime.tv_nsec);
-	SETIFVAL(va_mtime.tv_nsec);
-	SETIFVAL(va_birthtime.tv_nsec);
-	SETIFVAL(va_gen);
-	SETIFVAL(va_flags);
-	SETIFVAL(va_rdev);
-	SETIFVAL(va_bytes);
+	SETIFVAL(va_mode, mode_t);
+	SETIFVAL(va_nlink, nlink_t);
+	SETIFVAL(va_uid, uid_t);
+	SETIFVAL(va_gid, gid_t);
+	SETIFVAL(va_fsid, long);
+	SETIFVAL(va_size, u_quad_t);
+	SETIFVAL(va_blocksize, long);
+	SETIFVAL(va_atime.tv_sec, time_t);
+	SETIFVAL(va_ctime.tv_sec, time_t);
+	SETIFVAL(va_mtime.tv_sec, time_t);
+	SETIFVAL(va_birthtime.tv_sec, time_t);
+	SETIFVAL(va_atime.tv_nsec, long);
+	SETIFVAL(va_ctime.tv_nsec, long);
+	SETIFVAL(va_mtime.tv_nsec, long);
+	SETIFVAL(va_birthtime.tv_nsec, long);
+	SETIFVAL(va_gen, u_long);
+	SETIFVAL(va_flags, u_long);
+	SETIFVAL(va_rdev, dev_t);
+	SETIFVAL(va_bytes, u_quad_t);
 #undef SETIFVAL
 	/* ignore va->va_vaflags */
 }
@@ -167,7 +167,7 @@ int
 puffs_vtype2dt(enum vtype vt)
 {
 
-	if (vt < 0 || vt > (sizeof(vdmap)/sizeof(vdmap[0])))
+	if (/* vt < 0 || */ vt > (sizeof(vdmap)/sizeof(vdmap[0])))
 		return DT_UNKNOWN;
 
 	return vdmap[vt];

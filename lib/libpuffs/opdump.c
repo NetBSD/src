@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.1 2006/10/22 22:52:21 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.2 2006/10/23 00:22:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.1 2006/10/22 22:52:21 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.2 2006/10/23 00:22:24 christos Exp $");
 #endif /* !lint */
 
 #include <puffs.h>
@@ -132,6 +132,7 @@ puffsdump_cn(struct puffs_cn *pcn)
 #endif
 
 void
+/*ARGSUSED*/
 puffsdump_creds(struct puffs_cred *pcr)
 {
 
