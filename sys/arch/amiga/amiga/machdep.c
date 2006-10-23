@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.197 2006/10/21 05:54:31 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.198 2006/10/23 15:08:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2006/10/21 05:54:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.198 2006/10/23 15:08:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,7 +620,7 @@ cpu_dumpconf()
 		m->ram_segs[1].size  = memlist->m_seg[i].ms_size;
 		break;
 	}
-	if ((bdev = bdevsw_lookup(dumpdev) == NULL) {
+	if ((bdev = bdevsw_lookup(dumpdev) == NULL)) {
 		dumpdev = NODEV;
 		return;
 	}
