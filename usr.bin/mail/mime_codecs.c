@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_codecs.c,v 1.2 2006/10/22 08:29:36 mrg Exp $	*/
+/*	$NetBSD: mime_codecs.c,v 1.3 2006/10/23 18:22:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_codecs.c,v 1.2 2006/10/22 08:29:36 mrg Exp $");
+__RCSID("$NetBSD: mime_codecs.c,v 1.3 2006/10/23 18:22:00 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -230,18 +230,19 @@ mime_b64tobin(char *bin, const char *b64, size_t cnt)
 		41,42,43,44, 45,46,47,48, 49,50,51,-1, -1,-1,-1,-1
 	};
 	unsigned char *p;
-	const char *end;
+	const unsigned char *q, *end;
 	
-#define uchar64(c)  (unsigned)((c) < 0 ? -1 : b64index[(int)(c)])
 #define EQU	(unsigned)-2
 #define BAD	(unsigned)-1
+#define uchar64(c)  (unsigned)((c) >= sizeof(b64index) ? BAD : b64index[(c)])
 
-	p = (unsigned char*)bin;
-	for (end = b64 + cnt; b64 < end; b64 += 4) {
-		unsigned a = uchar64(b64[0]);
-		unsigned b = uchar64(b64[1]);
-		unsigned c = uchar64(b64[2]);
-		unsigned d = uchar64(b64[3]);
+	p = (unsigned char *)bin;
+	q = (const unsigned char *)b64;
+	for (end = q + cnt; q < end; q += 4) {
+		unsigned a = uchar64(q[0]);
+		unsigned b = uchar64(q[1]);
+		unsigned c = uchar64(q[2]);
+		unsigned d = uchar64(q[3]);
 		
 		*p++ = ((a << 2) | ((b & 0x30) >> 4));
 		if (c == EQU)	{ /* got '=' */
@@ -259,7 +260,7 @@ mime_b64tobin(char *bin, const char *b64, size_t cnt)
 			return -1;
 	}
 	
-#undef char64
+#undef uchar64
 #undef EQU
 #undef BAD
 
