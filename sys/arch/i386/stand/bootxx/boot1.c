@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.10 2006/10/22 21:57:55 christos Exp $	*/
+/*	$NetBSD: boot1.c,v 1.11 2006/10/23 21:36:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.10 2006/10/22 21:57:55 christos Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.11 2006/10/23 21:36:47 christos Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -101,11 +101,9 @@ boot1(uint32_t biosdev, uint32_t *sector)
 	 * Nothing at the start of the MBR partition, fallback on
 	 * partition 'a' from the disklabel in this MBR partition.
 	 */
-	if (ptn_disklabel.d_magic != DISKMAGIC)
-		goto out;
-	if (ptn_disklabel.d_magic2 != DISKMAGIC)
-		goto out;
-	if (ptn_disklabel.d_partitions[0].p_fstype == FS_UNUSED)
+	if (ptn_disklabel.d_magic != DISKMAGIC ||
+	    ptn_disklabel.d_magic2 != DISKMAGIC ||
+	    ptn_disklabel.d_partitions[0].p_fstype == FS_UNUSED)
 		goto out;
 	bios_sector = ptn_disklabel.d_partitions[0].p_offset;
 	*sector = bios_sector;
@@ -118,19 +116,20 @@ boot1(uint32_t biosdev, uint32_t *sector)
 
 	if (fstat(fd, &sb) == -1) {
 out:
-		return "Can't open /boot.\r\n";
+		return "Can't open /boot\r\n";
 	}
 
+	biosdev = (uint32_t)sb.st_size;
 #if 0
-	if (sb.st_size > SECONDARY_MAX_LOAD)
-		return "/boot too large.\r\n";
+	if (biosdev > SECONDARY_MAX_LOAD)
+		return "/boot too large\r\n";
 #endif
 
-	if (read(fd, (void *)SECONDARY_LOAD_ADDRESS, sb.st_size) != sb.st_size)
-		return "/boot load failed.\r\n";
+	if (read(fd, (void *)SECONDARY_LOAD_ADDRESS, biosdev) != biosdev)
+		return "/boot load failed\r\n";
 
 	if (*(uint32_t *)(SECONDARY_LOAD_ADDRESS + 4) != X86_BOOT_MAGIC_2)
-		return "Invalid /boot file format.\r\n";
+		return "Invalid /boot file format\r\n";
 
 	/* We need to jump to the secondary bootstrap in realmode */
 	return 0;
