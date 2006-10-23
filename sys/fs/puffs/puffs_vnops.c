@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.1 2006/10/22 22:43:23 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.2 2006/10/23 12:21:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.1 2006/10/22 22:43:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.2 2006/10/23 12:21:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1102,12 +1102,13 @@ puffs_print(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct puffs_node *pn = vp->v_data;
 
 	PUFFS_VNREQ(print);
 
 	/* kernel portion */
-	printf("tag VT_PUFFS, vnode %p, userspace cookie: 0x%x\n",
-	    vp, (uintptr_t)vp->v_data);
+	printf("tag VT_PUFFS, vnode %p, puffs node: %p,\n"
+	    "    userspace cookie: %p\n", vp, pn, pn->pn_cookie);
 	lockmgr_printinfo(&vp->v_lock);
 
 	/* userspace portion */
