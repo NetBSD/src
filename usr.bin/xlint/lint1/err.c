@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.29 2005/01/02 10:40:49 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.30 2006/10/23 00:10:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.29 2005/01/02 10:40:49 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.30 2006/10/23 00:10:29 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -79,7 +79,7 @@ const	char *msgs[] = {
 	"null dimension",					      /* 17 */
 	"illegal use of 'void'",				      /* 18 */
 	"void type for %s",					      /* 19 */
-	"zero or negative array dimension",			      /* 20 */
+	"negative array dimension (%d)",			      /* 20 */
 	"redeclaration of formal parameter %s",			      /* 21 */
 	"incomplete or misplaced function definition",		      /* 22 */
 	"undefined label %s",					      /* 23 */
@@ -98,7 +98,7 @@ const	char *msgs[] = {
 	"illegal bit-field size",				      /* 36 */
 	"zero size bit-field",					      /* 37 */
 	"function illegal in structure or union",		      /* 38 */
-	"illegal zero sized structure member: %s",		      /* 39 */
+	"zero sized array in struct is a C99 extension: %s",	      /* 39 */
 	"unknown size: %s",					      /* 40 */
 	"illegal use of bit-field",				      /* 41 */
 	"forward reference to enum type",			      /* 42 */
@@ -381,6 +381,7 @@ const	char *msgs[] = {
 	"compound literals are a C9X/GCC extension",		      /* 319 */
 	"({ }) is a GCC extension",				      /* 320 */
 	"array initializer with designators is a C9X feature",	      /* 321 */
+	"zero sized array is a C99 extension",			      /* 322 */
 };
 
 /*
