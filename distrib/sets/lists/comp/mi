@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.953 2006/10/22 22:57:36 pooka Exp $
+#	$NetBSD: mi,v 1.954 2006/10/23 03:23:53 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3008,6 +3008,7 @@
 ./usr/libdata/lint/llib-lprop.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpthread.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpthread_dbg.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lpuffs.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lradius.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lresolv.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrmt.ln			comp-c-lintlib		lint
