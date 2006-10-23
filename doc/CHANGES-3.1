@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.172 2006/10/16 22:06:47 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.173 2006/10/23 18:01:22 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4835,4 +4835,11 @@ crypto/dist/ssh/sshd_config			1.25
 	for protocol version 1 in their sshd_config if they have a specific
 	need for it.
 	[adrianp, ticket #1555]
+
+sys/net/bpf_filter.c				1.32
+
+	Be more robust in setting and detecting error values in bpf_filter()
+	and the MINDEX macro.  src/regress/sys/net/bpf/out-of-bounds now passes
+	the regression test.                                              
+	[oster, ticket #1539]
 
