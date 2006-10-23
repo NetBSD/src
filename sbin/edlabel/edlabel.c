@@ -1,4 +1,4 @@
-/*	$NetBSD: edlabel.c,v 1.15 2005/06/28 18:14:45 he Exp $	*/
+/*	$NetBSD: edlabel.c,v 1.16 2006/10/23 03:56:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -73,7 +73,7 @@ struct field label_head[] = {
   { "       cylinders", dloff(d_ncylinders), 4 },
   { "sectors/cylinder", dloff(d_secpercyl), 4 },
   /* Don't care about the others until later... */
-  { 0 },
+  { .f_name = NULL },
 };
 #undef dloff
 
@@ -488,7 +488,7 @@ struct cmd {
 	{ label_modify, "modify", "prompt for changes to the label" },
 	{ label_write,  "write",  "write the new label to disk" },
 	{ label_quit,   "quit",   "terminate program" },
-	{ 0 },
+	{ .cmd_func = 0 },
 };
 
 void
