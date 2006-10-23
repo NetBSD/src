@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.141 2006/10/07 10:49:14 elad Exp $	*/
+/*	$NetBSD: ftp.c,v 1.142 2006/10/23 19:53:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.141 2006/10/07 10:49:14 elad Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.142 2006/10/23 19:53:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -382,6 +382,12 @@ command(const char *fmt, ...)
 	return (r);
 }
 
+static const char *m421[] = {
+	"remote server timed out. Connection closed",
+	"user interrupt. Connection closed",
+	"remote server has closed connection",
+};
+
 int
 getreply(int expecteof)
 {
@@ -442,18 +448,15 @@ getreply(int expecteof)
 				cpend = 0;
 				lostpeer(0);
 				if (verbose) {
+					size_t midx;
 					if (reply_timeoutflag)
-						fputs(
-    "421 Service not available, remote server timed out. Connection closed\n",
-						    ttyout);
+						midx = 0;
 					else if (reply_abrtflag)
-						fputs(
-    "421 Service not available, user interrupt. Connection closed.\n",
-						    ttyout);
+						midx = 1;
 					else
-						fputs(
-    "421 Service not available, remote server has closed connection.\n",
-						    ttyout);
+						midx = 2;
+   					(void)fprintf(ttyout,
+			    "421 Service not available, %s.\n", m421[midx]);
 					(void)fflush(ttyout);
 				}
 				code = 421;
