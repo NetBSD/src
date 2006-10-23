@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.3 2006/10/23 01:36:13 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.4 2006/10/23 03:11:53 dogcow Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.3 2006/10/23 01:36:13 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.4 2006/10/23 03:11:53 dogcow Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -167,7 +167,7 @@ int
 puffs_vtype2dt(enum vtype vt)
 {
 
-	if (vt >= VNON && vt < (sizeof(vdmap)/sizeof(vdmap[0])))
+	if (/* vt >= VNON && */ vt < (sizeof(vdmap)/sizeof(vdmap[0])))
 		return vdmap[vt];
 
 	return DT_UNKNOWN;
