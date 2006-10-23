@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.189 2006/10/21 08:09:58 mrg Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.190 2006/10/23 19:49:47 he Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.189 2006/10/21 08:09:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.190 2006/10/23 19:49:47 he Exp $");
 
 #include "opt_cputype.h"
 
@@ -1769,7 +1769,7 @@ cpu_setmcontext(l, mcp, flags)
 	unsigned int flags;
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 
 	/* Restore register context, if any. */
 	if (flags & _UC_CPU) {
