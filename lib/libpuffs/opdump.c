@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.3 2006/10/23 03:10:09 christos Exp $	*/
+/*	$NetBSD: opdump.c,v 1.4 2006/10/23 16:53:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.3 2006/10/23 03:10:09 christos Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.4 2006/10/23 16:53:17 pooka Exp $");
 #endif /* !lint */
 
 #include <puffs.h>
@@ -44,63 +44,81 @@ __RCSID("$NetBSD: opdump.c,v 1.3 2006/10/23 03:10:09 christos Exp $");
 #include <stdio.h>
 
 /* XXX! */
+const char *vfsop_revmap[] = {
+	"PUFFS_VFS_MOUNT",
+	"PUFFS_VFS_START",
+	"PUFFS_VFS_UNMOUNT",
+	"PUFFS_VFS_ROOT",
+	"PUFFS_VFS_STATVFS",
+	"PUFFS_VFS_SYNC",
+	"PUFFS_VFS_VGET",
+	"PUFFS_VFS_FHTOVP",
+	"PUFFS_VFS_VPTOFH",
+	"PUFFS_VFS_INIT",
+	"PUFFS_VFS_DONE",
+	"PUFFS_VFS_SNAPSHOT",
+	"PUFFS_VFS_EXTATTCTL"
+};
+/* XXX! */
 const char *vnop_revmap[] = {
-	"PUFFS_LOOKUP",
-	"PUFFS_CREATE",
-	"PUFFS_MKNOD",
-	"PUFFS_OPEN",
-	"PUFFS_CLOSE",
-	"PUFFS_ACCESS",
-	"PUFFS_GETATTR",
-	"PUFFS_SETATTR",
-	"PUFFS_READ",
-	"PUFFS_WRITE",
-	"PUFFS_IOCTL",
-	"PUFFS_FCNTL",
-	"PUFFS_POLL",
-	"PUFFS_KQFILTER",
-	"PUFFS_REVOKE",
-	"PUFFS_MMAP",
-	"PUFFS_FSYNC",
-	"PUFFS_SEEK",
-	"PUFFS_REMOVE",
-	"PUFFS_LINK",
-	"PUFFS_RENAME",
-	"PUFFS_MKDIR",
-	"PUFFS_RMDIR",
-	"PUFFS_SYMLINK",
-	"PUFFS_READDIR",
-	"PUFFS_READLINK",
-	"PUFFS_ABORTOP",
-	"PUFFS_INACTIVE",
-	"PUFFS_RECLAIM",
-	"PUFFS_LOCK",
-	"PUFFS_UNLOCK",
-	"PUFFS_BMAP",
-	"PUFFS_STRATEGY",
-	"PUFFS_PRINT",
-	"PUFFS_ISLOCKED",
-	"PUFFS_PATHCONF",
-	"PUFFS_ADVLOCK",
-	"PUFFS_LEASE",
-	"PUFFS_WHITEOUT",
-	"PUFFS_GETPAGES",
-	"PUFFS_PUTPAGES",
-	"PUFFS_BWRITE",
-	"PUFFS_GETEXTATTR",
-	"PUFFS_LISTEXTATTR",
-	"PUFFS_OPENEXTATTR",
-	"PUFFS_DELETEEXTATTR",
-	"PUFFS_SETEXTATTR",
+	"PUFFS_VN_LOOKUP",
+	"PUFFS_VN_CREATE",
+	"PUFFS_VN_MKNOD",
+	"PUFFS_VN_OPEN",
+	"PUFFS_VN_CLOSE",
+	"PUFFS_VN_ACCESS",
+	"PUFFS_VN_GETATTR",
+	"PUFFS_VN_SETATTR",
+	"PUFFS_VN_READ",
+	"PUFFS_VN_WRITE",
+	"PUFFS_VN_IOCTL",
+	"PUFFS_VN_FCNTL",
+	"PUFFS_VN_POLL",
+	"PUFFS_VN_KQFILTER",
+	"PUFFS_VN_REVOKE",
+	"PUFFS_VN_MMAP",
+	"PUFFS_VN_FSYNC",
+	"PUFFS_VN_SEEK",
+	"PUFFS_VN_REMOVE",
+	"PUFFS_VN_LINK",
+	"PUFFS_VN_RENAME",
+	"PUFFS_VN_MKDIR",
+	"PUFFS_VN_RMDIR",
+	"PUFFS_VN_SYMLINK",
+	"PUFFS_VN_READDIR",
+	"PUFFS_VN_READLINK",
+	"PUFFS_VN_ABORTOP",
+	"PUFFS_VN_INACTIVE",
+	"PUFFS_VN_RECLAIM",
+	"PUFFS_VN_LOCK",
+	"PUFFS_VN_UNLOCK",
+	"PUFFS_VN_BMAP",
+	"PUFFS_VN_STRATEGY",
+	"PUFFS_VN_PRINT",
+	"PUFFS_VN_ISLOCKED",
+	"PUFFS_VN_PATHCONF",
+	"PUFFS_VN_ADVLOCK",
+	"PUFFS_VN_LEASE",
+	"PUFFS_VN_WHITEOUT",
+	"PUFFS_VN_GETPAGES",
+	"PUFFS_VN_PUTPAGES",
+	"PUFFS_VN_BWRITE",
+	"PUFFS_VN_GETEXTATTR",
+	"PUFFS_VN_LISTEXTATTR",
+	"PUFFS_VN_OPENEXTATTR",
+	"PUFFS_VN_DELETEEXTATTR",
+	"PUFFS_VN_SETEXTATTR",
 };
 
 void
 puffsdump_req(struct puffs_req *preq)
 {
+	const char **map;
 
+	map = preq->preq_opclass == PUFFSOP_VFS ? vfsop_revmap : vnop_revmap;
 	printf("\treqid: %" PRIuFAST64 ", opclass %d, optype: %s, cookie: %p,\n"
 	    "\t\taux: %p, auxlen: %zu\n",
-	    preq->preq_id, preq->preq_opclass, vnop_revmap[preq->preq_optype],
+	    preq->preq_id, preq->preq_opclass, map[preq->preq_optype],
 	    preq->preq_cookie, preq->preq_aux, preq->preq_auxlen);
 }
 
