@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.18 2006/10/23 19:28:07 uwe Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.19 2006/10/23 21:13:00 uwe Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.18 2006/10/23 19:28:07 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19 2006/10/23 21:13:00 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.18 2006/10/23 19:28:07 uwe Exp $");
 static uint16_t	get_insn(const void *);
 
 static void	get_opcode(const uint16_t *, char *);
-static void	get_ascii(const unsigned char *, char *);
 
 static void	f_02(const uint16_t *, char *);
 static void	f_03(const uint16_t *, char *);
@@ -137,15 +136,11 @@ static	rasm_t	f[16][16] = {
 db_addr_t
 db_disasm(db_addr_t loc, boolean_t altfmt)
 {
-	char line[40], ascii[4];
 	const void *pc = (void *)loc;
+	char line[40];
 
 	get_opcode(pc, line);
-	if (altfmt) {
-		get_ascii(pc, ascii);
-		db_printf("%-32s ! %s\n", line, ascii);
-	} else
-		db_printf("%s\n", line);
+	db_printf("%s\n", line);
 
 	return (loc + 2);
 }
@@ -177,17 +172,6 @@ get_insn(const void *pc)
 	}
 
 	return insn;
-}
-
-
-static void
-get_ascii(const unsigned char *cp, char *str)
-{
-
-	*str++ = (0x20 <= *cp && *cp < 0x7f) ? *cp : '.';
-	cp++;
-	*str++ = (0x20 <= *cp && *cp < 0x7f) ? *cp : '.';
-	*str = '\0';
 }
 
 static void
