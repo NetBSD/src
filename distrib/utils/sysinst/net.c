@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.112 2006/09/29 10:37:49 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.113 2006/10/23 22:42:33 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -454,13 +454,11 @@ init_v6kernel(int autoconf)
 
 	mib[3] = IPV6CTL_FORWARDING;
 	v = 0;
-	if (sysctl(mib, 4, NULL, NULL, (void *)&v, sizeof(v)) < 0)
-		; /* warn("sysctl(net.inet6.ip6.fowarding"); */
+	(void)sysctl(mib, 4, NULL, NULL, (void *)&v, sizeof(v));
 
 	mib[3] = IPV6CTL_ACCEPT_RTADV;
 	v = autoconf ? 1 : 0;
-	if (sysctl(mib, 4, NULL, NULL, (void *)&v, sizeof(v)) < 0)
-		; /* warn("sysctl(net.inet6.ip6.accept_rtadv"); */
+	(void)sysctl(mib, 4, NULL, NULL, (void *)&v, sizeof(v));
 }
 
 static int
