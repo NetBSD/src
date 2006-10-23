@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.41 2006/10/04 21:27:27 christos Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.42 2006/10/23 22:41:51 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -364,20 +364,24 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 	static struct ptn_info pi = { -1, {
 #define PI_ROOT 0
 		{ PART_ROOT,	{ '/', '\0' },
-		  DEFROOTSIZE,	DEFROOTSIZE },
+		  DEFROOTSIZE,	DEFROOTSIZE , 0, 0},
 #define PI_SWAP 1
 		{ PART_SWAP,	{ 's', 'w', 'a', 'p', '\0' },
-	 	  DEFSWAPSIZE,	DEFSWAPSIZE },
+	 	  DEFSWAPSIZE,	DEFSWAPSIZE, 0, 0 },
 		{ PART_TMP_MFS,	
-		  { 't', 'm', 'p', ' ', '(', 'm', 'f', 's', ')', '\0' }, 64 },
+		  { 't', 'm', 'p', ' ', '(', 'm', 'f', 's', ')', '\0' },
+		    64, 0, 0, 0 },
 #define PI_USR 3
-		{ PART_USR,	{ '/', 'u', 's', 'r', '\0' },	DEFUSRSIZE },
-		{ PART_ANY,	{ '/', 'v', 'a', 'r', '\0' },	DEFVARSIZE },
-		{ PART_ANY,	{ '/', 'h', 'o', 'm', 'e', '\0' },	0 },
+		{ PART_USR,	{ '/', 'u', 's', 'r', '\0' },	DEFUSRSIZE,
+		  0, 0, 0 },
+		{ PART_ANY,	{ '/', 'v', 'a', 'r', '\0' },	DEFVARSIZE,
+		  0, 0, 0 },
+		{ PART_ANY,	{ '/', 'h', 'o', 'm', 'e', '\0' },	0,
+		  0, 0, 0 },
 	}, {
 		{ NULL, OPT_NOMENU, 0, set_ptn_size },
 		{ MSG_askunits, MENU_sizechoice, OPT_SUB, NULL },
-	}, };
+	}, 0, 0, NULL, { 0 } };
 
 	if (maxpart > MAXPARTITIONS)
 		maxpart = MAXPARTITIONS;	/* sanity */
