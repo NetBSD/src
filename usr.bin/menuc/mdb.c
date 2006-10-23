@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.42 2006/02/20 21:06:40 dsl Exp $	*/
+/*	$NetBSD: mdb.c,v 1.43 2006/10/23 19:29:48 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,7 +45,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdb.c,v 1.42 2006/02/20 21:06:40 dsl Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.43 2006/10/23 19:29:48 he Exp $");
 #endif
 
 
@@ -414,7 +414,8 @@ write_menu_file (char *initcode)
 		(void) fprintf (out_file, "},\n");
 
 	}
-	(void) fprintf (out_file, "{NULL}};\n\n");
+	(void) fprintf (out_file, "{NULL, 0, 0, 0, 0, 0, 0, 0, 0, "
+		"NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}};\n\n");
 
 	/* __menu_initerror: initscr failed. */
 	(void) fprintf (out_file, 
