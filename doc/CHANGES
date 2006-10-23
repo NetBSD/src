@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.736 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.737 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -135,3 +135,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	puffs: Integrate Pass-to-Userspace Framework File System, which
 		can be used to build userspace file system servers
 		[pooka 20061022]
+	hpcarm: Add timecounter support and convert to MI todr(9).
+		[peter 20061023]
