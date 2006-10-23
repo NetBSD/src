@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.1 2006/10/23 00:44:53 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.2 2006/10/23 16:20:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -303,8 +303,12 @@ int
 dtfs_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *pcr, int ioflag)
 {
+	struct puffs_node *pn = opc;
 	struct dtfs_file *df = DTFS_CTOF(opc);
 	quad_t xfer;
+
+	if (pn->pn_va.va_type != VREG)
+		return EISDIR;
 
 	xfer = MIN(*resid, df->df_datalen - offset);
 	if (xfer < 0)
@@ -325,6 +329,9 @@ dtfs_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 {
 	struct puffs_node *pn = opc;
 	struct dtfs_file *df = DTFS_CTOF(opc);
+
+	if (pn->pn_va.va_type != VREG)
+		return EISDIR;
 
 	if (ioflag & PUFFS_IO_APPEND)
 		offset = pn->pn_va.va_size;
