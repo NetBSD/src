@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.174 2006/10/23 18:27:13 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.175 2006/10/23 19:06:30 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4848,4 +4848,22 @@ sys/arch/xen/i386/locore.S			patch
 	Add VIRT_BASE, ELF_PADDR_OFFSET and VIRT_ENTRY strings to __xen_guest
 	ELF section, so that our kernels works with newer xen-3 hypervisors.
 	[bouyer, ticket #1560]
+
+sys/arch/acorn26/acorn26/vm_machdep.c		1.12
+
+	When forking a new LWP, if a new user stack pointer is provided, use
+	it.  Pass regress/lib/libc/clone.
+	[bjh21, ticket #1551]
+
+sys/arch/acorn26/acorn26/except.c		1.17
+
+	Removes a route by which a user can trivially panic NetBSD/acorn26.
+	Pass regress/sys/arch/arm/abort-fixup.
+	[bjh21, ticket #1552]
+
+sys/arch/acorn26/acorn26/cpuswitch.c		1.8
+
+	When processing RASes, only pay attention to, and change, the PC parts
+	of R15, leaving the PSR bits alone.  Pass regress/sys/kern/ras/ras1.
+	[bjh21, ticket #1553]
 
