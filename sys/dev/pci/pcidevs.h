@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.840 2006/10/21 17:18:49 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.841 2006/10/23 00:21:27 rjs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.840 2006/10/21 14:10:33 bouyer Exp
+ *	NetBSD: pcidevs,v 1.841 2006/10/23 00:20:06 rjs Exp
  */
 
 /*
@@ -2437,6 +2437,7 @@
 #define	PCI_PRODUCT_MOT_RAVEN	0x4801		/* Raven Host Bridge & Multi-Processor Interrupt Controller */
 #define	PCI_PRODUCT_MOT_FALCON	0x4802		/* Falcon ECC Memory Controller Chip Set */
 #define	PCI_PRODUCT_MOT_HAWK	0x4803		/* Hawk System Memory Controller & PCI Host Bridge */
+#define	PCI_PRODUCT_MOT_MPC5200B	0x5809		/* MPC5200B Host Bridge */
 
 /* Moxa Technologies products */
 #define	PCI_PRODUCT_MOXA_C104H	0x1040		/* C104H */
