@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.26.22.3 2006/09/24 06:12:59 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.26.22.4 2006/10/23 14:10:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -95,6 +95,7 @@ void	_clrsoftintr __P((int));
 #define splbio()	splraiseipl(makeiplcookie(IPL_BIO))
 #define splnet()	splraiseipl(makeiplcookie(IPL_NET))
 #define spltty()	splraiseipl(makeiplcookie(IPL_TTY))
+#define	splserial()	spltty()
 #define splvm()		splraiseipl(makeiplcookie(IPL_VM))
 #define splclock()	splraiseipl(makeiplcookie(IPL_CLOCK))
 #define splstatclock()	splraiseipl(makeiplcookie(IPL_STATCLOCK))
