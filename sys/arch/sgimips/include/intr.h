@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19.22.1 2006/10/09 11:30:25 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.22.2 2006/10/23 14:38:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -131,6 +131,7 @@ extern const int *ipl2spl_table;
 #define splsoft()	_splraise(MIPS_SOFT_INT_MASK_1)
 #define splsoftclock()	splsoft()
 #define splsoftnet()	splsoft()
+#define splsoftserial()	splsoft()
 
 #define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_1)
 
