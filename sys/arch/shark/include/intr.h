@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2003/06/16 20:01:04 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.50.1 2006/10/23 14:43:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -46,7 +46,10 @@
 #define IPL_VM		3	/* memory allocation */
 #define IPL_AUDIO	4	/* audio */
 #define IPL_CLOCK	5	/* clock */
+#define	IPL_STATCLOCK	IPL_CLOCK
 #define IPL_HIGH	6	/*  */
+#define	IPL_LOCK	IPL_HIGH
+#define	IPL_SCHED	IPL_HIGH
 #define IPL_SERIAL	7	/* serial */
 #define IPL_NONE	8
 
