@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.1 2006/10/22 22:43:23 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.2 2006/10/23 16:07:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -162,7 +162,7 @@ struct puffs_cred {
  * else treated as garbage
  */
 #define PUFFS_REQ_MAXSIZE	4*MAXPHYS
-#define PUFFS_REQSTRUCT_MAX	1024 /* XXX: approxkludge */
+#define PUFFS_REQSTRUCT_MAX	4096 /* XXX: approxkludge */
 
 #define PUFFS_TOMOVE(a,b) (MIN((a), b->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX))
 
