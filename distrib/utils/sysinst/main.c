@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.51 2006/02/26 10:25:52 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.52 2006/10/23 19:45:56 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -103,7 +103,7 @@ static const struct f_arg fflagopts[] = {
 	{"dist postfix", ".tgz", dist_postfix, sizeof dist_postfix},
 	{"diskname", "mydisk", bsddiskname, sizeof bsddiskname},
 
-	{NULL}
+	{NULL, NULL, NULL, 0}
 };
 
 static void

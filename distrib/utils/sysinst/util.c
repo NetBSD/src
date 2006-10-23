@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.145 2006/09/04 02:20:40 hubertf Exp $	*/
+/*	$NetBSD: util.c,v 1.146 2006/10/23 19:45:56 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -85,60 +85,60 @@ struct  tarstats {
 
 distinfo dist_list[] = {
 #ifdef SET_KERNEL_1_NAME
-	{SET_KERNEL_1_NAME,	SET_KERNEL_1,		MSG_set_kernel_1},
+	{SET_KERNEL_1_NAME,	SET_KERNEL_1,		MSG_set_kernel_1, NULL},
 #endif
 #ifdef SET_KERNEL_2_NAME
-	{SET_KERNEL_2_NAME,	SET_KERNEL_2,		MSG_set_kernel_2},
+	{SET_KERNEL_2_NAME,	SET_KERNEL_2,		MSG_set_kernel_2, NULL},
 #endif
 #ifdef SET_KERNEL_3_NAME
-	{SET_KERNEL_3_NAME,	SET_KERNEL_3,		MSG_set_kernel_3},
+	{SET_KERNEL_3_NAME,	SET_KERNEL_3,		MSG_set_kernel_3, NULL},
 #endif
 #ifdef SET_KERNEL_4_NAME
-	{SET_KERNEL_4_NAME,	SET_KERNEL_4,		MSG_set_kernel_4},
+	{SET_KERNEL_4_NAME,	SET_KERNEL_4,		MSG_set_kernel_4, NULL},
 #endif
 #ifdef SET_KERNEL_5_NAME
-	{SET_KERNEL_5_NAME,	SET_KERNEL_5,		MSG_set_kernel_5},
+	{SET_KERNEL_5_NAME,	SET_KERNEL_5,		MSG_set_kernel_5, NULL},
 #endif
 #ifdef SET_KERNEL_6_NAME
-	{SET_KERNEL_6_NAME,	SET_KERNEL_6,		MSG_set_kernel_6},
+	{SET_KERNEL_6_NAME,	SET_KERNEL_6,		MSG_set_kernel_6, NULL},
 #endif
 #ifdef SET_KERNEL_7_NAME
-	{SET_KERNEL_7_NAME,	SET_KERNEL_7,		MSG_set_kernel_7},
+	{SET_KERNEL_7_NAME,	SET_KERNEL_7,		MSG_set_kernel_7, NULL},
 #endif
 #ifdef SET_KERNEL_8_NAME
-	{SET_KERNEL_8_NAME,	SET_KERNEL_8,		MSG_set_kernel_8},
+	{SET_KERNEL_8_NAME,	SET_KERNEL_8,		MSG_set_kernel_8, NULL},
 #endif
 
-	{"base",		SET_BASE,		MSG_set_base},
-	{"etc",			SET_ETC,		MSG_set_system},
-	{"comp",		SET_COMPILER,		MSG_set_compiler},
-	{"games",		SET_GAMES,		MSG_set_games},
-	{"man",			SET_MAN_PAGES,		MSG_set_man_pages},
-	{"misc",		SET_MISC,		MSG_set_misc},
-	{"text",		SET_TEXT_TOOLS,		MSG_set_text_tools},
+	{"base",		SET_BASE,		MSG_set_base, NULL},
+	{"etc",			SET_ETC,		MSG_set_system, NULL},
+	{"comp",		SET_COMPILER,		MSG_set_compiler, NULL},
+	{"games",		SET_GAMES,		MSG_set_games, NULL},
+	{"man",			SET_MAN_PAGES,		MSG_set_man_pages, NULL},
+	{"misc",		SET_MISC,		MSG_set_misc, NULL},
+	{"text",		SET_TEXT_TOOLS,		MSG_set_text_tools, NULL},
 
-	{NULL,			SET_GROUP,		MSG_set_X11},
-	{"xbase",		SET_X11_BASE,		MSG_set_X11_base},
-	{"xcomp",		SET_X11_PROG,		MSG_set_X11_prog},
-	{"xetc",		SET_X11_ETC,		MSG_set_X11_etc},
-	{"xfont",		SET_X11_FONTS,		MSG_set_X11_fonts},
-	{"xserver",		SET_X11_SERVERS,	MSG_set_X11_servers},
-	{NULL,			SET_GROUP_END,		NULL},
+	{NULL,			SET_GROUP,		MSG_set_X11, NULL},
+	{"xbase",		SET_X11_BASE,		MSG_set_X11_base, NULL},
+	{"xcomp",		SET_X11_PROG,		MSG_set_X11_prog, NULL},
+	{"xetc",		SET_X11_ETC,		MSG_set_X11_etc, NULL},
+	{"xfont",		SET_X11_FONTS,		MSG_set_X11_fonts, NULL},
+	{"xserver",		SET_X11_SERVERS,	MSG_set_X11_servers, NULL},
+	{NULL,			SET_GROUP_END,		NULL, NULL},
 
 #ifdef SET_MD_1_NAME
-	{SET_MD_1_NAME,		SET_MD_1,		MSG_set_md_1},
+	{SET_MD_1_NAME,		SET_MD_1,		MSG_set_md_1, NULL},
 #endif
 #ifdef SET_MD_2_NAME
-	{SET_MD_2_NAME,		SET_MD_2,		MSG_set_md_2},
+	{SET_MD_2_NAME,		SET_MD_2,		MSG_set_md_2, NULL},
 #endif
 #ifdef SET_MD_3_NAME
-	{SET_MD_3_NAME,		SET_MD_3,		MSG_set_md_3},
+	{SET_MD_3_NAME,		SET_MD_3,		MSG_set_md_3, NULL},
 #endif
 #ifdef SET_MD_4_NAME
-	{SET_MD_4_NAME,		SET_MD_4,		MSG_set_md_4},
+	{SET_MD_4_NAME,		SET_MD_4,		MSG_set_md_4, NULL},
 #endif
 
-	{NULL,			SET_LAST,		NULL},
+	{NULL,			SET_LAST,		NULL, NULL},
 };
 
 /*
@@ -150,10 +150,10 @@ static int check_for(unsigned int mode, const char *pathname);
 void
 init_set_status(int minimal)
 {
-	const static uint8_t sets_valid[] = {MD_SETS_VALID};
-	const static uint8_t sets_selected_full[] = {MD_SETS_SELECTED};
-	const static uint8_t sets_selected_minimal[] = {MD_SETS_SELECTED_MINIMAL};
-	const static uint8_t *sets_selected;
+	static const uint8_t sets_valid[] = {MD_SETS_VALID};
+	static const uint8_t sets_selected_full[] = {MD_SETS_SELECTED};
+	static const uint8_t sets_selected_minimal[] = {MD_SETS_SELECTED_MINIMAL};
+	static const uint8_t *sets_selected;
 	unsigned int i, len;
 	const char *longest;
 
