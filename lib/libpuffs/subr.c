@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.5 2006/10/23 03:13:13 christos Exp $	*/
+/*	$NetBSD: subr.c,v 1.6 2006/10/23 03:18:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.5 2006/10/23 03:13:13 christos Exp $");
+__RCSID("$NetBSD: subr.c,v 1.6 2006/10/23 03:18:30 mrg Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -105,10 +105,10 @@ puffs_nextdent(struct dirent **dent, const char *name, ino_t id, uint8_t dtype,
 
 	d->d_fileno = id;
 	d->d_type = dtype;
-	d->d_namlen = strlen(name);
+	d->d_namlen = (uint16_t)strlen(name);
 	(void)memcpy(&d->d_name, name, (size_t)d->d_namlen);
 	d->d_name[d->d_namlen] = '\0';
-	d->d_reclen = _DIRENT_SIZE(d);
+	d->d_reclen = (uint16_t)_DIRENT_SIZE(d);
 
 	*reslen -= d->d_reclen;
 	*dent = _DIRENT_NEXT(d);
