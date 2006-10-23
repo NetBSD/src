@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.35 2006/07/13 17:49:29 christos Exp $ */
+/* $NetBSD: decl.c,v 1.36 2006/10/23 00:10:29 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.35 2006/07/13 17:49:29 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.36 2006/10/23 00:10:29 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1058,9 +1058,9 @@ decl1str(sym_t *dsym)
 	 * of the type the bit-field is packed in (its ok)
 	 */
 	if ((sz = length(dsym->s_type, dsym->s_name)) == 0) {
-		if (!Sflag && t == ARRAY && dsym->s_type->t_dim == 0) {
+		if (t == ARRAY && dsym->s_type->t_dim == 0) {
 			/* illegal zero sized structure member: %s */
-			warning(39, dsym->s_name);
+			c99ism(39, dsym->s_name);
 		}
 	}
 
@@ -1230,12 +1230,12 @@ addarray(sym_t *decl, int dim, int n)
 	tp->t_dim = n;
 
 	if (n < 0) {
-		/* zero or negative array dimension */
-		error(20);
+		/* negative array dimension */
+		error(20, n);
 		n = 0;
 	} else if (n == 0 && dim) {
-		/* zero or negative array dimension */
-		warning(20);
+		/* zero array dimension */
+		c99ism(322, dim);
 	} else if (n == 0 && !dim) {
 		/* is incomplete type */
 		setcompl(tp, 1);
