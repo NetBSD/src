@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.41 2004/07/23 13:26:11 wiz Exp $	*/
+/*	$NetBSD: sort.c,v 1.42 2006/10/23 19:11:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.41 2004/07/23 13:26:11 wiz Exp $");
+__RCSID("$NetBSD: sort.c,v 1.42 2006/10/23 19:11:46 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -293,7 +293,7 @@ main(argc, argv)
 		    sizeof(toutpath), "%sstdout", _PATH_DEV);
 		outfile = outpath = toutpath;
 		outfp = stdout;
-	} else if (!(ch = access(outpath, 0)) &&
+	} else if (!(ch = access(outpath, F_OK)) &&
 	    strncmp(_PATH_DEV, outpath, 5)) {
 		struct sigaction act;
 		static const int sigtable[] = {SIGHUP, SIGINT, SIGPIPE,
@@ -328,7 +328,7 @@ main(argc, argv)
 		fsort(-1, 0, 0, &filelist, argc-optind, outfp, fldtab);
 
 	if (outfile != outpath) {
-		if (access(outfile, 0))
+		if (access(outfile, F_OK))
 			err(2, "%s", outfile);
 		(void)unlink(outpath);
 		if (link(outfile, outpath))
