@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.86.6.1 2005/06/06 12:16:37 tron Exp $	*/
+/*	$NetBSD: pmap.c,v 1.86.6.2 2006/10/23 19:55:56 ghen Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86.6.1 2005/06/06 12:16:37 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86.6.2 2006/10/23 19:55:56 ghen Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1222,6 +1222,7 @@ get_a_table(void)
 	 * pool.  That is a job for the function that called us.
 	 */
 	if (tbl->at_parent) {
+		KASSERT(tbl->at_wcnt == 0);
 		pmap = tbl->at_parent;
 		free_a_table(tbl, FALSE);
 		pmap->pm_a_tmgr = NULL;
@@ -1245,6 +1246,7 @@ get_b_table(void)
 		panic("get_b_table: out of B tables.");
 	TAILQ_REMOVE(&b_pool, tbl, bt_link);
 	if (tbl->bt_parent) {
+		KASSERT(tbl->bt_wcnt == 0);
 		tbl->bt_parent->at_dtbl[tbl->bt_pidx].attr.raw = MMU_DT_INVALID;
 		tbl->bt_parent->at_ecnt--;
 		free_b_table(tbl, FALSE);
@@ -1267,6 +1269,7 @@ get_c_table(void)
 		panic("get_c_table: out of C tables.");
 	TAILQ_REMOVE(&c_pool, tbl, ct_link);
 	if (tbl->ct_parent) {
+		KASSERT(tbl->ct_wcnt == 0);
 		tbl->ct_parent->bt_dtbl[tbl->ct_pidx].attr.raw = MMU_DT_INVALID;
 		tbl->ct_parent->bt_ecnt--;
 		free_c_table(tbl, FALSE);
@@ -1307,7 +1310,8 @@ free_a_table(a_tmgr_t *a_tbl, boolean_t relink)
 	int i, removed_cnt;
 	mmu_long_dte_t	*dte;
 	mmu_short_dte_t *dtbl;
-	b_tmgr_t	*tmgr;
+	b_tmgr_t	*b_tbl;
+	uint8_t at_wired, bt_wired;
 
 	/*
 	 * Flush the ATC cache of all cached descriptors derived
@@ -1330,6 +1334,7 @@ free_a_table(a_tmgr_t *a_tbl, boolean_t relink)
 	 * stopping short of the kernel's entries.
 	 */
 	removed_cnt = 0;
+	at_wired = a_tbl->at_wcnt;
 	if (a_tbl->at_ecnt) {
 		dte = a_tbl->at_dtbl;
 		for (i=0; i < MMU_TIA(KERNBASE); i++) {
@@ -1357,16 +1362,22 @@ free_a_table(a_tmgr_t *a_tbl, boolean_t relink)
 				 *    details.)
 				 */
 				dtbl = mmu_ptov(dte[i].addr.raw);
-				tmgr = mmuB2tmgr(dtbl);
-				removed_cnt += free_b_table(tmgr, TRUE);
+				b_tbl = mmuB2tmgr(dtbl);
+				bt_wired = b_tbl->bt_wcnt;
+				removed_cnt += free_b_table(b_tbl, TRUE);
+				if (bt_wired)
+					a_tbl->at_wcnt--;
 				dte[i].attr.raw = MMU_DT_INVALID;
 			}
 		}
 		a_tbl->at_ecnt = 0;
 	}
+	KASSERT(a_tbl->at_wcnt == 0);
+
 	if (relink) {
 		a_tbl->at_parent = NULL;
-		TAILQ_REMOVE(&a_pool, a_tbl, at_link);
+		if (!at_wired)
+			TAILQ_REMOVE(&a_pool, a_tbl, at_link);
 		TAILQ_INSERT_HEAD(&a_pool, a_tbl, at_link);
 	}
 	return removed_cnt;
@@ -1384,25 +1395,32 @@ free_b_table(b_tmgr_t *b_tbl, boolean_t relink)
 	int i, removed_cnt;
 	mmu_short_dte_t *dte;
 	mmu_short_pte_t	*dtbl;
-	c_tmgr_t	*tmgr;
+	c_tmgr_t	*c_tbl;
+	uint8_t bt_wired, ct_wired;
 
 	removed_cnt = 0;
+	bt_wired = b_tbl->bt_wcnt;
 	if (b_tbl->bt_ecnt) {
 		dte = b_tbl->bt_dtbl;
 		for (i=0; i < MMU_B_TBL_SIZE; i++) {
 			if (MMU_VALID_DT(dte[i])) {
 				dtbl = mmu_ptov(MMU_DTE_PA(dte[i]));
-				tmgr = mmuC2tmgr(dtbl);
-				removed_cnt += free_c_table(tmgr, TRUE);
+				c_tbl = mmuC2tmgr(dtbl);
+				ct_wired = c_tbl->ct_wcnt;
+				removed_cnt += free_c_table(c_tbl, TRUE);
+				if (ct_wired)
+					b_tbl->bt_wcnt--;
 				dte[i].attr.raw = MMU_DT_INVALID;
 			}
 		}
 		b_tbl->bt_ecnt = 0;
 	}
+	KASSERT(b_tbl->bt_wcnt == 0);
 
 	if (relink) {
 		b_tbl->bt_parent = NULL;
-		TAILQ_REMOVE(&b_pool, b_tbl, bt_link);
+		if (!bt_wired)
+			TAILQ_REMOVE(&b_pool, b_tbl, bt_link);
 		TAILQ_INSERT_HEAD(&b_pool, b_tbl, bt_link);
 	}
 	return removed_cnt;
@@ -1420,22 +1438,30 @@ free_b_table(b_tmgr_t *b_tbl, boolean_t relink)
 int 
 free_c_table(c_tmgr_t *c_tbl, boolean_t relink)
 {
+	mmu_short_pte_t *c_pte;
 	int i, removed_cnt;
+	uint8_t ct_wired;
 
 	removed_cnt = 0;
+	ct_wired = c_tbl->ct_wcnt;
 	if (c_tbl->ct_ecnt) {
 		for (i=0; i < MMU_C_TBL_SIZE; i++) {
-			if (MMU_VALID_DT(c_tbl->ct_dtbl[i])) {
-				pmap_remove_pte(&c_tbl->ct_dtbl[i]);
+			c_pte = &c_tbl->ct_dtbl[i];
+			if (MMU_VALID_DT(*c_pte)) {
+				if (c_pte->attr.raw & MMU_SHORT_PTE_WIRED)
+					c_tbl->ct_wcnt--;
+				pmap_remove_pte(c_pte);
 				removed_cnt++;
 			}
 		}
 		c_tbl->ct_ecnt = 0;
 	}
+	KASSERT(c_tbl->ct_wcnt == 0);
 
 	if (relink) {
 		c_tbl->ct_parent = NULL;
-		TAILQ_REMOVE(&c_pool, c_tbl, ct_link);
+		if (!ct_wired)
+			TAILQ_REMOVE(&c_pool, c_tbl, ct_link);
 		TAILQ_INSERT_HEAD(&c_pool, c_tbl, ct_link);
 	}
 	return removed_cnt;
@@ -1821,23 +1847,34 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 *     change protection of a page
 		 *     change wiring status of a page
 		 *     remove the mapping of a page
-		 *
-		 * XXX - Semi critical: This code should unwire the PTE
-		 * and, possibly, associated parent tables if this is a
-		 * change wiring operation.  Currently it does not.
-		 *
-		 * This may be ok if pmap_unwire() is the only
-		 * interface used to UNWIRE a page.
 		 */
 
 		/* First check if this is a wiring operation. */
-		if (wired && (c_pte->attr.raw & MMU_SHORT_PTE_WIRED)) {
+		if (c_pte->attr.raw & MMU_SHORT_PTE_WIRED) {
 			/*
-			 * The PTE is already wired.  To prevent it from being
-			 * counted as a new wiring operation, reset the 'wired'
-			 * variable.
+			 * The existing mapping is wired, so adjust wired
+			 * entry count here. If new mapping is still wired,
+			 * wired entry count will be incremented again later.
 			 */
-			wired = FALSE;
+			c_tbl->ct_wcnt--;
+			if (!wired) {
+				/*
+				 * The mapping of this PTE is being changed
+				 * from wired to unwired.
+				 * Adjust wired entry counts in each table and
+				 * set llevel flag to put unwired tables back
+				 * into the active pool.
+				 */
+				if (c_tbl->ct_wcnt == 0) {
+					llevel = NEWC;
+					if (--b_tbl->bt_wcnt == 0) {
+						llevel = NEWB;
+						if (--a_tbl->at_wcnt == 0) {
+							llevel = NEWA;
+						}
+					}
+				}
+			}
 		}
 
 		/* Is the new address the same as the old? */
@@ -1944,7 +1981,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pv->pv_idx = nidx;
 	}
 
-	/* Move any allocated tables back into the active pool. */
+	/* Move any allocated or unwired tables back into the active pool. */
 	
 	switch (llevel) {
 		case NEWA:
@@ -2071,7 +2108,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	int idx, eidx;
 
 #ifdef	PMAP_DEBUG
-	if ((sva & PGOFSET) || (eva & PGOFSET))
+	if ((va & PGOFSET) || (len & PGOFSET))
 		panic("pmap_kremove: alignment");
 #endif
 
@@ -2901,15 +2938,13 @@ pmap_remove_kernel(vaddr_t sva, vaddr_t eva)
  **
  * Remove the mapping of a range of virtual addresses from the given pmap.
  *
- * If the range contains any wired entries, this function will probably create
- * disaster.
  */
 void 
-pmap_remove(pmap_t pmap, vaddr_t start, vaddr_t end)
+pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 
 	if (pmap == pmap_kernel()) {
-		pmap_remove_kernel(start, end);
+		pmap_remove_kernel(sva, eva);
 		return;
 	}
 
@@ -2927,7 +2962,7 @@ pmap_remove(pmap_t pmap, vaddr_t start, vaddr_t end)
 	 * currently loaded pmap, the MMU root pointer must be reloaded
 	 * with the default 'kernel' map.
 	 */ 
-	if (pmap_remove_a(pmap->pm_a_tmgr, start, end)) {
+	if (pmap_remove_a(pmap->pm_a_tmgr, sva, eva)) {
 		if (kernel_crp.rp_addr == pmap->pm_a_phys) {
 			kernel_crp.rp_addr = kernAphys;
 			loadcrp(&kernel_crp);
@@ -2963,7 +2998,7 @@ pmap_remove(pmap_t pmap, vaddr_t start, vaddr_t end)
  * It's ugly but will do for now.
  */
 boolean_t 
-pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t start, vaddr_t end)
+pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t sva, vaddr_t eva)
 {
 	boolean_t empty;
 	int idx;
@@ -2971,6 +3006,7 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t start, vaddr_t end)
 	b_tmgr_t *b_tbl;
 	mmu_long_dte_t  *a_dte;
 	mmu_short_dte_t *b_dte;
+	uint8_t at_wired, bt_wired;
 
 	/*
 	 * The following code works with what I call a 'granularity
@@ -3001,10 +3037,12 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t start, vaddr_t end)
 	 * 4.  The last step involves removing this range and is handled by
 	 * the code block 'if (nend < end)'.
 	 */
-	nstart = MMU_ROUND_UP_A(start);
-	nend = MMU_ROUND_A(end);
+	nstart = MMU_ROUND_UP_A(sva);
+	nend = MMU_ROUND_A(eva);
 
-	if (start < nstart) {
+	at_wired = a_tbl->at_wcnt;
+
+	if (sva < nstart) {
 		/*
 		 * This block is executed if the range starts between
 		 * a granularity boundary.
@@ -3012,7 +3050,7 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t start, vaddr_t end)
 		 * First find the DTE which is responsible for mapping
 		 * the start of the range.
 		 */
-		idx = MMU_TIA(start);
+		idx = MMU_TIA(sva);
 		a_dte = &a_tbl->at_dtbl[idx];
 
 		/*
@@ -3023,6 +3061,7 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t start, vaddr_t end)
 		if (MMU_VALID_DT(*a_dte)) {
 			b_dte = mmu_ptov(a_dte->addr.raw);
 			b_tbl = mmuB2tmgr(b_dte);
+			bt_wired = b_tbl->bt_wcnt;
 
 			/*
 			 * The sub range to be removed starts at the start
@@ -3032,10 +3071,17 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t start, vaddr_t end)
 			 * 2. The end of the full range, rounded down to the
 			 *    nearest granularity boundary.
 			 */
-			if (end < nstart)
-				empty = pmap_remove_b(b_tbl, start, end);
+			if (eva < nstart)
+				empty = pmap_remove_b(b_tbl, sva, eva);
 			else
-				empty = pmap_remove_b(b_tbl, start, nstart);
+				empty = pmap_remove_b(b_tbl, sva, nstart);
+
+			/*
+			 * If the child table no longer has wired entries,
+			 * decrement wired entry count.
+			 */
+			if (bt_wired && b_tbl->bt_wcnt == 0)
+				a_tbl->at_wcnt--;
 
 			/*
 			 * If the removal resulted in an empty B table,
@@ -3075,7 +3121,17 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t start, vaddr_t end)
 				 */
 				b_dte = mmu_ptov(a_dte->addr.raw);
 				b_tbl = mmuB2tmgr(b_dte);
+				bt_wired = b_tbl->bt_wcnt;
+
 				free_b_table(b_tbl, TRUE);
+
+				/*
+				 * All child entries has been removed.
+				 * If there were any wired entries in it,
+				 * decrement wired entry count.
+				 */
+				if (bt_wired)
+					a_tbl->at_wcnt--;
 
 				/*
 				 * Invalidate the DTE that points to the
@@ -3086,7 +3142,7 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t start, vaddr_t end)
 				a_tbl->at_ecnt--;
 			}
 	}
-	if (nend < end) {
+	if (nend < eva) {
 		/*
 		 * This block is executed if the range ends beyond a
 		 * granularity boundary.
@@ -3111,9 +3167,16 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t start, vaddr_t end)
 			 */
 			b_dte = mmu_ptov(a_dte->addr.raw);
 			b_tbl = mmuB2tmgr(b_dte);
+			bt_wired = b_tbl->bt_wcnt;
 
-			empty = pmap_remove_b(b_tbl, nend, end);
+			empty = pmap_remove_b(b_tbl, nend, eva);
 
+			/*
+			 * If the child table no longer has wired entries,
+			 * decrement wired entry count.
+			 */
+			if (bt_wired && b_tbl->bt_wcnt == 0)
+				a_tbl->at_wcnt--;
 			/*
 			 * If the removal resulted in an empty B table,
 			 * invalidate the DTE that points to it and decrement
@@ -3131,11 +3194,20 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t start, vaddr_t end)
 	 * back to the available pool and return TRUE.
 	 */
 	if (a_tbl->at_ecnt == 0) {
+		KASSERT(a_tbl->at_wcnt == 0);
 		a_tbl->at_parent = NULL;
-		TAILQ_REMOVE(&a_pool, a_tbl, at_link);
+		if (!at_wired)
+			TAILQ_REMOVE(&a_pool, a_tbl, at_link);
 		TAILQ_INSERT_HEAD(&a_pool, a_tbl, at_link);
 		empty = TRUE;
 	} else {
+		/*
+		 * If the table doesn't have wired entries any longer
+		 * but still has unwired entries, put it back into
+		 * the available queue.
+		 */
+		if (at_wired && a_tbl->at_wcnt == 0)
+			TAILQ_INSERT_TAIL(&a_pool, a_tbl, at_link);
 		empty = FALSE;
 	}
 
@@ -3150,7 +3222,7 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t start, vaddr_t end)
  * If the operation results in an empty B table, the function returns TRUE.
  */
 boolean_t 
-pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t start, vaddr_t end)
+pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t sva, vaddr_t eva)
 {
 	boolean_t empty;
 	int idx;
@@ -3158,21 +3230,33 @@ pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t start, vaddr_t end)
 	c_tmgr_t *c_tbl;
 	mmu_short_dte_t  *b_dte;
 	mmu_short_pte_t  *c_dte;
+	uint8_t bt_wired, ct_wired;
 	
+	nstart = MMU_ROUND_UP_B(sva);
+	nend = MMU_ROUND_B(eva);
 
-	nstart = MMU_ROUND_UP_B(start);
-	nend = MMU_ROUND_B(end);
+	bt_wired = b_tbl->bt_wcnt;
 
-	if (start < nstart) {
-		idx = MMU_TIB(start);
+	if (sva < nstart) {
+		idx = MMU_TIB(sva);
 		b_dte = &b_tbl->bt_dtbl[idx];
 		if (MMU_VALID_DT(*b_dte)) {
 			c_dte = mmu_ptov(MMU_DTE_PA(*b_dte));
 			c_tbl = mmuC2tmgr(c_dte);
-			if (end < nstart)
-				empty = pmap_remove_c(c_tbl, start, end);
+			ct_wired = c_tbl->ct_wcnt;
+
+			if (eva < nstart)
+				empty = pmap_remove_c(c_tbl, sva, eva);
 			else
-				empty = pmap_remove_c(c_tbl, start, nstart);
+				empty = pmap_remove_c(c_tbl, sva, nstart);
+
+			/*
+			 * If the child table no longer has wired entries,
+			 * decrement wired entry count.
+			 */
+			if (ct_wired && c_tbl->ct_wcnt == 0)
+				b_tbl->bt_wcnt--;
+
 			if (empty) {
 				b_dte->attr.raw = MMU_DT_INVALID;
 				b_tbl->bt_ecnt--;
@@ -3187,7 +3271,18 @@ pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t start, vaddr_t end)
 			if (MMU_VALID_DT(*b_dte)) {
 				c_dte = mmu_ptov(MMU_DTE_PA(*b_dte));
 				c_tbl = mmuC2tmgr(c_dte);
+				ct_wired = c_tbl->ct_wcnt;
+
 				free_c_table(c_tbl, TRUE);
+
+				/*
+				 * All child entries has been removed.
+				 * If there were any wired entries in it,
+				 * decrement wired entry count.
+				 */
+				if (ct_wired)
+					b_tbl->bt_wcnt--;
+
 				b_dte->attr.raw = MMU_DT_INVALID;
 				b_tbl->bt_ecnt--;
 			}
@@ -3195,13 +3290,22 @@ pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t start, vaddr_t end)
 			rstart += MMU_TIB_RANGE;
 		}
 	}
-	if (nend < end) {
+	if (nend < eva) {
 		idx = MMU_TIB(nend);
 		b_dte = &b_tbl->bt_dtbl[idx];
 		if (MMU_VALID_DT(*b_dte)) {
 			c_dte = mmu_ptov(MMU_DTE_PA(*b_dte));
 			c_tbl = mmuC2tmgr(c_dte);
-			empty = pmap_remove_c(c_tbl, nend, end);
+			ct_wired = c_tbl->ct_wcnt;
+			empty = pmap_remove_c(c_tbl, nend, eva);
+
+			/*
+			 * If the child table no longer has wired entries,
+			 * decrement wired entry count.
+			 */
+			if (ct_wired && c_tbl->ct_wcnt == 0)
+				b_tbl->bt_wcnt--;
+
 			if (empty) {
 				b_dte->attr.raw = MMU_DT_INVALID;
 				b_tbl->bt_ecnt--;
@@ -3210,11 +3314,21 @@ pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t start, vaddr_t end)
 	}
 
 	if (b_tbl->bt_ecnt == 0) {
+		KASSERT(b_tbl->bt_wcnt == 0);
 		b_tbl->bt_parent = NULL;
-		TAILQ_REMOVE(&b_pool, b_tbl, bt_link);
+		if (!bt_wired)
+			TAILQ_REMOVE(&b_pool, b_tbl, bt_link);
 		TAILQ_INSERT_HEAD(&b_pool, b_tbl, bt_link);
 		empty = TRUE;
 	} else {
+		/*
+		 * If the table doesn't have wired entries any longer
+		 * but still has unwired entries, put it back into
+		 * the available queue.
+		 */
+		if (bt_wired && b_tbl->bt_wcnt == 0)
+			TAILQ_INSERT_TAIL(&b_pool, b_tbl, bt_link);
+
 		empty = FALSE;
 	}
 
@@ -3226,27 +3340,41 @@ pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t start, vaddr_t end)
  * Remove a range of addresses from the given C table.
  */
 boolean_t 
-pmap_remove_c(c_tmgr_t *c_tbl, vaddr_t start, vaddr_t end)
+pmap_remove_c(c_tmgr_t *c_tbl, vaddr_t sva, vaddr_t eva)
 {
 	boolean_t empty;
 	int idx;
 	mmu_short_pte_t *c_pte;
+	uint8_t ct_wired;
 	
-	idx = MMU_TIC(start);
+	ct_wired = c_tbl->ct_wcnt;
+
+	idx = MMU_TIC(sva);
 	c_pte = &c_tbl->ct_dtbl[idx];
-	for (;start < end; start += MMU_PAGE_SIZE, c_pte++) {
+	for (;sva < eva; sva += MMU_PAGE_SIZE, c_pte++) {
 		if (MMU_VALID_DT(*c_pte)) {
+			if (c_pte->attr.raw & MMU_SHORT_PTE_WIRED)
+				c_tbl->ct_wcnt--;
 			pmap_remove_pte(c_pte);
 			c_tbl->ct_ecnt--;
 		}
 	}
 
 	if (c_tbl->ct_ecnt == 0) {
+		KASSERT(c_tbl->ct_wcnt == 0);
 		c_tbl->ct_parent = NULL;
-		TAILQ_REMOVE(&c_pool, c_tbl, ct_link);
+		if (!ct_wired)
+			TAILQ_REMOVE(&c_pool, c_tbl, ct_link);
 		TAILQ_INSERT_HEAD(&c_pool, c_tbl, ct_link);
 		empty = TRUE;
 	} else {
+		/*
+		 * If the table doesn't have wired entries any longer
+		 * but still has unwired entries, put it back into
+		 * the available queue.
+		 */
+		if (ct_wired && c_tbl->ct_wcnt == 0)
+			TAILQ_INSERT_TAIL(&c_pool, c_tbl, ct_link);
 		empty = FALSE;
 	}
 
