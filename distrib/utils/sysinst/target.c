@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.50 2006/09/29 09:29:12 martin Exp $	*/
+/*	$NetBSD: target.c,v 1.51 2006/10/23 19:44:57 he Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.50 2006/09/29 09:29:12 martin Exp $");
+__RCSID("$NetBSD: target.c,v 1.51 2006/10/23 19:44:57 he Exp $");
 #endif
 
 /*
@@ -438,7 +438,7 @@ void
 unwind_mounts(void)
 {
 	struct unwind_mount *m;
-	volatile static int unwind_in_progress = 0;
+	static volatile int unwind_in_progress = 0;
 
 	/* signal safety */
 	if (unwind_in_progress)

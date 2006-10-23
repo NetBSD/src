@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.50 2006/10/05 16:25:38 he Exp $	*/
+/*	$NetBSD: label.c,v 1.51 2006/10/23 19:44:57 he Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.50 2006/10/05 16:25:38 he Exp $");
+__RCSID("$NetBSD: label.c,v 1.51 2006/10/23 19:44:57 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -705,7 +705,7 @@ get_last_mounted(int fd, int partstart, partinfo *lp)
 {
 	static char sblk[SBLOCKSIZE];		/* is this enough? */
 	#define SB ((struct fs *)sblk)
-	const static int sblocks[] = SBLOCKSEARCH;
+	static const int sblocks[] = SBLOCKSEARCH;
 	const int *sbp;
 	char *cp;
 	const char *mnt = NULL;
