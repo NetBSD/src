@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.43 2006/10/23 19:39:54 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.44 2006/10/23 19:53:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.43 2006/10/23 19:39:54 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.44 2006/10/23 19:53:25 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -332,6 +332,17 @@ main(argc, argv)
 	if (outfile != outpath) {
 		if (access(outfile, F_OK))
 			err(2, "%s", outfile);
+
+		/*
+		 * Copy file permissions bits of the original file.
+		 * st is initialized above, when we create the
+		 * temporary spool file.
+		 */
+		if (lchmod(outfile, st.st_mode & ALLPERMS) != 0) {
+			err(2, "cannot chmod %s: output left in %s",
+			    outpath, outfile);
+		}
+
 		(void)unlink(outpath);
 		if (link(outfile, outpath))
 			err(2, "cannot link %s: output left in %s",
