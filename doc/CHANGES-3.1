@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.173 2006/10/23 18:01:22 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.174 2006/10/23 18:27:13 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4842,4 +4842,10 @@ sys/net/bpf_filter.c				1.32
 	and the MINDEX macro.  src/regress/sys/net/bpf/out-of-bounds now passes
 	the regression test.                                              
 	[oster, ticket #1539]
+
+sys/arch/xen/i386/locore.S			patch
+
+	Add VIRT_BASE, ELF_PADDR_OFFSET and VIRT_ENTRY strings to __xen_guest
+	ELF section, so that our kernels works with newer xen-3 hypervisors.
+	[bouyer, ticket #1560]
 
