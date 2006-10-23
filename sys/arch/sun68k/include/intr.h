@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8.6.3 2006/10/06 13:27:05 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.6.4 2006/10/23 14:13:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -160,6 +160,7 @@ _getsr(void)
 #define	spllowersoftclock() spl1()
 #define splsoftclock()  splraise1()
 #define splsoftnet()    splraise1()
+#define	splsoftserial()	splraise3()
 
 /* Highest block device (strategy) IPL. */
 #define splbio()        splraise2()
@@ -185,6 +186,7 @@ _getsr(void)
 
 /* Zilog Serial hardware interrupts (hard-wired at 6) */
 #define splzs()		spl6()
+#define	splserial()	spl6()
 
 /* Block out all interrupts (except NMI of course). */
 #define splhigh()       spl7()
