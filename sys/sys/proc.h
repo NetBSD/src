@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.230 2006/10/11 04:51:06 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.231 2006/10/23 21:39:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -468,7 +468,6 @@ int	inferior(struct proc *, struct proc *);
 int	leavepgrp(struct proc *);
 void	sessdelete(struct session *);
 void	yield(void);
-struct lwp *chooselwp(void);
 void	pgdelete(struct pgrp *);
 void	procinit(void);
 void	resetprocpriority(struct proc *);
