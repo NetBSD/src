@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10.2.1 2006/04/07 12:51:25 tron Exp $	*/
+/*	$NetBSD: locore.S,v 1.10.2.2 2006/10/23 18:22:09 ghen Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -194,12 +194,15 @@
 .section __xen_guest
 #ifdef XEN3
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=3.0,XEN_VER=xen-3.0"
+	.ascii  ",VIRT_BASE=0xc0100000" /* KERNTEXTOFF */
+	.ascii  ",ELF_PADDR_OFFSET=0xc0100000" /* KERNTEXTOFF */
+	.ascii  ",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
 #else
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
 #endif
 	.ascii	",LOADER=generic"
 #if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
-	.ascii	",BSD_SYMTAB"
+	.ascii	",BSD_SYMTAB=yes"
 #endif
 	.byte	0
 
