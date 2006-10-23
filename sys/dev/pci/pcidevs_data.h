@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.839 2006/10/21 17:18:49 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.840 2006/10/23 00:21:27 rjs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.840 2006/10/21 14:10:33 bouyer Exp
+ *	NetBSD: pcidevs,v 1.841 2006/10/23 00:20:06 rjs Exp
  */
 
 /*
@@ -8416,6 +8416,10 @@ static const struct pci_product pci_products[] = {
 	    "Hawk System Memory Controller & PCI Host Bridge",
 	},
 	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC5200B,
+	    "MPC5200B Host Bridge",
+	},
+	{
 	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C104H,
 	    "C104H",
 	},
@@ -12420,4 +12424,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2511;
+const int pci_nproducts = 2512;
