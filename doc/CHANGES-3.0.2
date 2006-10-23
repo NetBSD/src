@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.28 2006/10/23 18:00:56 ghen Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.29 2006/10/23 19:30:16 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -272,4 +272,10 @@ sys/net/bpf_filter.c				1.32
 	and the MINDEX macro.  src/regress/sys/net/bpf/out-of-bounds now passes
 	the regression test.                                              
 	[oster, ticket #1539]
+
+sys/arch/acorn26/acorn26/except.c		1.17
+
+	Remove a route by which a user can trivially panic NetBSD/acorn26.
+	Pass regress/sys/arch/arm/abort-fixup.
+	[bjh21, ticket #1552]
 
