@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.36 2006/10/23 00:10:29 christos Exp $ */
+/* $NetBSD: decl.c,v 1.37 2006/10/23 00:15:58 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.36 2006/10/23 00:10:29 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.37 2006/10/23 00:15:58 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1673,7 +1673,7 @@ compltag(type_t *tp, sym_t *fmem)
 		sp->memb = fmem;
 		if (sp->size == 0) {
 			/* zero sized %s */
-			(void)gnuism(47, ttab[t].tt_name);
+			(void)c99ism(47, ttab[t].tt_name);
 		} else {
 			n = 0;
 			for (mem = fmem; mem != NULL; mem = mem->s_nxt) {
