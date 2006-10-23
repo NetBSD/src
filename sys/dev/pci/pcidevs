@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.840 2006/10/21 14:10:33 bouyer Exp $
+$NetBSD: pcidevs,v 1.841 2006/10/23 00:20:06 rjs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2430,6 +2430,7 @@ product MOT MPC8245	0x0006	MPC8245 \"Kahlua II\" Host Bridge
 product MOT RAVEN	0x4801	Raven Host Bridge & Multi-Processor Interrupt Controller
 product MOT FALCON	0x4802	Falcon ECC Memory Controller Chip Set
 product MOT HAWK	0x4803	Hawk System Memory Controller & PCI Host Bridge
+product MOT MPC5200B	0x5809	MPC5200B Host Bridge
 
 /* Moxa Technologies products */
 product	MOXA C104H	0x1040	C104H
