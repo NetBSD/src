@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.27 2006/10/12 01:32:27 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.28 2006/10/23 18:19:14 elad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.27 2006/10/12 01:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.28 2006/10/23 18:19:14 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ procfs_do_pid_stat(struct lwp *curl __unused, struct lwp *l,
 	    p->p_pid,
 	    p->p_comm,
 	    "0IR3SZD"[(p->p_stat > 6) ? 0 : (int)p->p_stat],
-	    p->p_pptr->p_pid,
+	    (p->p_pptr != NULL) ? p->p_pptr->p_pid : 0,
 
 	    p->p_pgid,
 	    p->p_session->s_sid,
