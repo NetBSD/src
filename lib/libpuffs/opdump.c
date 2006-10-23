@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.2 2006/10/23 00:22:24 christos Exp $	*/
+/*	$NetBSD: opdump.c,v 1.3 2006/10/23 03:10:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.2 2006/10/23 00:22:24 christos Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.3 2006/10/23 03:10:09 christos Exp $");
 #endif /* !lint */
 
 #include <puffs.h>
@@ -98,8 +98,8 @@ void
 puffsdump_req(struct puffs_req *preq)
 {
 
-	printf("\treqid: %llu, opclass %d, optype: %s, cookie: %p,\n"
-	    "\t\taux: %p, auxlen: %d\n",
+	printf("\treqid: %" PRIuFAST64 ", opclass %d, optype: %s, cookie: %p,\n"
+	    "\t\taux: %p, auxlen: %zu\n",
 	    preq->preq_id, preq->preq_opclass, vnop_revmap[preq->preq_optype],
 	    preq->preq_cookie, preq->preq_aux, preq->preq_auxlen);
 }
