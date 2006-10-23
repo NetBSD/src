@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2006/10/16 18:14:36 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2006/10/23 06:49:17 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2006/10/16 18:14:36 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2006/10/23 06:49:17 kiyohara Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -197,7 +197,7 @@ bootstrap(u_int startkernel, u_int endkernel)
 		ppc4xx_tlb_reserve(maddr, maddr, TLB_PG_SIZE, TLB_EX);
 
 	/* Map PCKBC, PCKBC2, COM, LPT. */
-	ppc4xx_tlb_reserve(0x74000000, 0x74000000, TLB_PG_SIZE, TLB_I | TLB_G);
+	ppc4xx_tlb_reserve(BASE_ISA, BASE_ISA, TLB_PG_SIZE, TLB_I | TLB_G);
 
 #ifndef COM_IS_CONSOLE
 	ppc4xx_tlb_reserve(BASE_FB,  BASE_FB,  TLB_PG_SIZE, TLB_I | TLB_G);
