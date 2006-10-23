@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.1 2006/10/22 22:52:21 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.2 2006/10/23 00:22:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.1 2006/10/22 22:52:21 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.2 2006/10/23 00:22:24 christos Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -568,8 +568,6 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq)
 
 		case PUFFS_VN_PRINT:
 		{
-			struct puffs_vnreq_print *auxt = preq->preq_aux;
-			(void)auxt;
 			if (pu->pu_pvn.puffs_print == NULL) {
 				error = 0;
 				break;
