@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.11 2006/10/23 21:36:47 christos Exp $	*/
+/*	$NetBSD: boot1.c,v 1.12 2006/10/24 15:56:55 oster Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.11 2006/10/23 21:36:47 christos Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.12 2006/10/24 15:56:55 oster Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -86,7 +86,7 @@ boot1(uint32_t biosdev, uint32_t *sector)
 	 */
 	fd = ob();
 	if (fd != -1)
-		goto out;
+		goto done;
 	/*
 	 * Maybe the filesystem is enclosed in a raid set.
 	 * add in size of raidframe header and try again.
@@ -96,7 +96,7 @@ boot1(uint32_t biosdev, uint32_t *sector)
 	bios_sector += RF_PROTECTED_SECTORS;
 	fd = ob();
 	if (fd != -1)
-		goto out;
+		goto done;
 	/*
 	 * Nothing at the start of the MBR partition, fallback on
 	 * partition 'a' from the disklabel in this MBR partition.
@@ -104,7 +104,7 @@ boot1(uint32_t biosdev, uint32_t *sector)
 	if (ptn_disklabel.d_magic != DISKMAGIC ||
 	    ptn_disklabel.d_magic2 != DISKMAGIC ||
 	    ptn_disklabel.d_partitions[0].p_fstype == FS_UNUSED)
-		goto out;
+		goto done;
 	bios_sector = ptn_disklabel.d_partitions[0].p_offset;
 	*sector = bios_sector;
 	if (ptn_disklabel.d_partitions[0].p_fstype == FS_RAID)
@@ -114,6 +114,7 @@ boot1(uint32_t biosdev, uint32_t *sector)
 	if (fd == -1)
 		goto out;
 
+done:
 	if (fstat(fd, &sb) == -1) {
 out:
 		return "Can't open /boot\r\n";
