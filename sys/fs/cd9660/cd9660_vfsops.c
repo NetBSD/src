@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.36 2006/10/12 01:32:10 christos Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.37 2006/10/24 19:59:52 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.36 2006/10/12 01:32:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.37 2006/10/24 19:59:52 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -423,8 +423,6 @@ iso_mountfs(devvp, mp, l, argp)
 	isomp->im_dev = dev;
 	isomp->im_devvp = devvp;
 
-	devvp->v_specmountpoint = mp;
-
 	/* Check the Rock Ridge Extension support */
 	if (!(argp->flags & ISOFSMNT_NORRIP)) {
 		struct iso_directory_record *rootp;
@@ -492,6 +490,8 @@ iso_mountfs(devvp, mp, l, argp)
 		brelse(supbp);
 		supbp = NULL;
 	}
+
+	devvp->v_specmountpoint = mp;
 
 	return 0;
 out:
