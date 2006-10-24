@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.17 2006/03/29 17:23:56 thorpej Exp $ */
+/* $NetBSD: lpt.c,v 1.18 2006/10/24 19:16:50 drochner Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.17 2006/03/29 17:23:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.18 2006/10/24 19:16:50 drochner Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -111,7 +111,7 @@ dev_type_ioctl(lptioctl);
 
 const struct cdevsw lpt_cdevsw = {
         lptopen, lptclose, lptread, lptwrite, lptioctl,
-	nostop, notty, nopoll, nommap, nokqfilter
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 
