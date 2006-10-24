@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.92.2.2 2006/10/21 15:20:47 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.92.2.3 2006/10/24 21:44:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.2 2006/10/21 15:20:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.3 2006/10/24 21:44:31 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -1094,7 +1094,9 @@ selrecord(struct lwp *selector, struct selinfo *sip)
 	mypid = selector->l_proc->p_pid;
 	if (sip->sel_pid == mypid)
 		return;
-	if (sip->sel_pid && (p = p_find(sip->sel_pid, PFIND_UNLOCK_FAIL))) {
+
+	mutex_enter(&proclist_mutex);
+	if (sip->sel_pid && (p = p_find(sip->sel_pid, PFIND_LOCKED))) {
 		mutex_enter(&p->p_smutex);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
@@ -1102,15 +1104,16 @@ selrecord(struct lwp *selector, struct selinfo *sip)
 			    l->l_stat == LSSLEEP) {
 				sip->sel_collision = 1;
 				lwp_unlock(l);
-				mutex_exit(&p->p_smutex);
-				return;
+				break;
 			}
 			lwp_unlock(l);
 		}
 		mutex_exit(&p->p_smutex);
 	}
+	mutex_exit(&proclist_mutex);
 
-	sip->sel_pid = mypid;
+	if (!sip->sel_collision)
+		sip->sel_pid = mypid;
 }
 
 /*
@@ -1146,7 +1149,6 @@ selwakeup(sip)
 	}
 
 	mutex_enter(&p->p_smutex);
-	mutex_exit_linked(&proclist_mutex, &p->p_smutex);
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
 		if (l->l_wchan == (wchan_t)&selwait && l->l_stat == LSSLEEP) {
@@ -1159,4 +1161,5 @@ selwakeup(sip)
 		}
 	}
 	mutex_exit(&p->p_smutex);
+	mutex_exit(&proclist_mutex);
 }
