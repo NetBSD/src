@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.140 2006/10/01 20:38:35 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141 2006/10/24 02:47:40 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 2006/10/01 20:38:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141 2006/10/24 02:47:40 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -778,8 +778,8 @@ cninit_kd()
 	printf("no console keyboard\n");
 	return;
 
+kbd_found:;
 #if NAKBD + NUKBD > 0
-kbd_found:
 	/*
 	 * XXX This is a little gross, but we don't get to call
 	 * XXX wskbd_cnattach() twice.
