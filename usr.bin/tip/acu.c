@@ -1,4 +1,4 @@
-/*	$NetBSD: acu.c,v 1.12 2006/04/03 02:25:27 perry Exp $	*/
+/*	$NetBSD: acu.c,v 1.13 2006/10/24 08:29:47 gson Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: acu.c,v 1.12 2006/04/03 02:25:27 perry Exp $");
+__RCSID("$NetBSD: acu.c,v 1.13 2006/10/24 08:29:47 gson Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -65,7 +65,7 @@ static acu_t   *acutype(char *);
 const char *
 connect(void)
 {
-	char *cp = PN;
+	char * volatile cp = PN;
 	char *phnum, string[256];
 	FILE *fd;
 	int tried = 0;
