@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.113 2006/09/04 00:46:13 hubertf Exp $ */
+/*	$NetBSD: md.c,v 1.114 2006/10/24 15:32:36 gson Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -303,7 +303,7 @@ md_post_newfs(void)
 	 * bullet and include /sbin/installboot on the ramdisk
 	 */
 	static struct x86_boot_params boottype =
-		{sizeof boottype, 0, 5, 0, 9600, { '\0' }};
+		{sizeof boottype, 0, 5, 0, 9600, { '\0' }, "", 0};
 	static int conmib[] = {CTL_MACHDEP, CPU_CONSDEV};
 	struct termios t;
 	dev_t condev;
