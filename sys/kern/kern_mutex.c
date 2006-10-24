@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.3 2006/10/20 19:45:13 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.4 2006/10/24 21:02:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.3 2006/10/20 19:45:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.4 2006/10/24 21:02:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -349,14 +349,17 @@ mutex_vector_exit(kmutex_t *mtx)
 	 * were no waiters remaining.
 	 */
 	ts = turnstile_lookup(mtx);
-	MUTEX_DASSERT(mtx, (ts == NULL && !MUTEX_HAS_WAITERS(mtx)) ||
-	    (ts != NULL && MUTEX_HAS_WAITERS(mtx)));
-	MUTEX_RELEASE(mtx);
-	if (ts == NULL)
+
+	if (ts == NULL) {
+		MUTEX_DASSERT(mtx, !MUTEX_HAS_WAITERS(mtx));
+		MUTEX_RELEASE(mtx);
 		turnstile_exit(mtx);
-	else
-		turnstile_wakeup(ts, TS_WRITER_Q, TS_WAITERS(ts, TS_WRITER_Q),
-		    NULL);
+	} else {
+		MUTEX_DASSERT(mtx, MUTEX_HAS_WAITERS(mtx));
+		MUTEX_RELEASE(mtx);
+		turnstile_wakeup(ts, TS_WRITER_Q,
+		    TS_WAITERS(ts, TS_WRITER_Q), NULL);
+	}
 }
 
 /*
@@ -370,7 +373,7 @@ mutex_owned(kmutex_t *mtx)
 
 	if (MUTEX_ADAPTIVE_P(mtx))
 		return MUTEX_OWNER(mtx) == (uintptr_t)curlwp;
-#if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR)
+#if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	return MUTEX_SPIN_HELD(mtx);
 #else
 	return 1;
@@ -518,7 +521,7 @@ mutex_exit_linked(kmutex_t *from, kmutex_t *to)
 		to->mtx_oldspl = from->mtx_oldspl;
 		return;
 	}
-	mutex_vector_exit(mtx);
+	mutex_vector_exit(from);
 }
 #endif
 
