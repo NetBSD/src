@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.25 2005/12/11 12:20:19 christos Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.25.20.1 2006/10/24 21:10:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 extern const int native_to_linux_signo[];
 extern const int linux_to_native_signo[];
 __BEGIN_DECLS
-int linux_sigprocmask1 __P((struct proc *, int, const linux_old_sigset_t *,
+int linux_sigprocmask1 __P((struct lwp *, int, const linux_old_sigset_t *,
 						linux_old_sigset_t *));
 
 #if LINUX__NSIG_WORDS > 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.45 2006/08/29 23:56:02 christos Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.45.2.1 2006/10/24 21:10:22 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.45 2006/08/29 23:56:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.45.2.1 2006/10/24 21:10:22 ad Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -339,7 +339,7 @@ darwin_e_proc_exit(p)
 	caddr_t sg = stackgap_init(p, 0);
 
 	ded = p->p_emuldata;
-	l = proc_representative_lwp(p);
+	l = LIST_FIRST(&p->p_lwps);
 	/*
 	 * mach_init is setting the bootstrap port for other processes.
 	 * If mach_init dies, we want to restore the original bootstrap

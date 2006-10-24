@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.133.6.2 2006/10/21 14:37:18 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.133.6.3 2006/10/24 21:10:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.133.6.2 2006/10/21 14:37:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.133.6.3 2006/10/24 21:10:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1197,7 +1197,7 @@ procfs_readdir(v)
 			if (pt->pt_valid) {
 				/* XXXSMP locking */
 				mutex_enter(&p->p_smutex);
-				l = proc_representative_lwp(p, NULL);
+				l = proc_representative_lwp(p, NULL, 1);
 				lwp_unlock(l);
 				mutex_exit(&p->p_smutex);
 				if ((*pt->pt_valid)(l, vp->v_mount) == 0)

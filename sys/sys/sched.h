@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.28.8.2 2006/10/20 19:46:01 ad Exp $ */
+/* $NetBSD: sched.h,v 1.28.8.3 2006/10/24 21:10:21 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -197,39 +197,8 @@ int	sched_kpri(struct lwp *);
 void scheduler_fork_hook(struct proc *, struct proc *);
 void scheduler_wait_hook(struct proc *, struct proc *);
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-#include <sys/lock.h>
-
-extern struct simplelock sched_lock;
-
-#define	SCHED_ASSERT_LOCKED()	simple_lock_assert_locked(&sched_lock, "sched_lock")
-#define	SCHED_ASSERT_UNLOCKED()	simple_lock_assert_unlocked(&sched_lock, "sched_lock")
-
-
-#define	SCHED_LOCK(s)							\
-do {									\
-	s = splsched();							\
-	simple_lock(&sched_lock);					\
-} while (/* CONSTCOND */ 0)
-
-#define	SCHED_UNLOCK(s)							\
-do {									\
-	simple_unlock(&sched_lock);					\
-	splx(s);							\
-} while (/* CONSTCOND */ 0)
-
-void	sched_lock_idle(void);
-void	sched_unlock_idle(void);
-
-#else /* ! MULTIPROCESSOR || LOCKDEBUG */
-
-#define	SCHED_ASSERT_LOCKED()		/* nothing */
-#define	SCHED_ASSERT_UNLOCKED()		/* nothing */
-
-#define	SCHED_LOCK(s)			s = splsched()
-#define	SCHED_UNLOCK(s)			splx(s)
-
-#endif /* MULTIPROCESSOR || LOCKDEBUG */
+void	sched_lock(void);
+void	sched_unlock(void);
 
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40.2.2 2006/10/21 15:20:46 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.2.3 2006/10/24 21:10:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.2 2006/10/21 15:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.3 2006/10/24 21:10:21 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -122,7 +122,7 @@ lwp_halt(struct lwp *curl, struct lwp *t, int state)
 		break;
 	}
 
-	lwp_swaplock(t, &lwp_mutex);
+	lwp_setlock_unlock(t, &lwp_mutex);
 
 	return (error);
 }
@@ -273,11 +273,13 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	 */
 	KASSERT(l1->l_cpu != NULL);
 	l2->l_cpu = l1->l_cpu;
+	l2->l_mutex = &sched_mutex;
 #else
 	/*
 	 * zero child's CPU pointer so we don't get trash.
 	 */
 	l2->l_cpu = NULL;
+	l2->l_mutex = &lwp_mutex;
 #endif /* ! MULTIPROCESSOR */
 
 	l2->l_flag = inmem ? L_INMEM : 0;
@@ -294,7 +296,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	lwp_update_creds(l2);
 	callout_init(&l2->l_tsleep_ch);
 	l2->l_ts = pool_cache_get(&turnstile_cache, PR_WAITOK);
-	l2->l_mutex = &lwp_mutex;
+	l2->l_omutex = NULL;
 
 	if (rnewlwpp != NULL)
 		*rnewlwpp = l2;
@@ -303,19 +305,32 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
 
-	CIRCLEQ_INIT(&l2->l_sigpend.sp_info);
-	sigemptyset(&l2->l_sigpend.sp_set);
-
 	mutex_enter(&p2->p_smutex);
+
+	if ((p2->p_flag & P_SA) == 0) {
+		l2->l_sigpend = &l2->l_sigstore.ss_pend;
+		l2->l_sigmask = &l2->l_sigstore.ss_mask;
+		l2->l_sigstk = &l2->l_sigstore.ss_stk;
+		l2->l_sigmask = l1->l_sigmask;
+		CIRCLEQ_INIT(&l2->l_sigpend->sp_info);
+		sigemptyset(&l2->l_sigpend->sp_set);
+	} else {
+		l2->l_sigpend = &p2->p_sigstore.ss_pend;
+		l2->l_sigmask = &p2->p_sigstore.ss_mask;
+		l2->l_sigstk = &p2->p_sigstore.ss_stk;
+	}
+
 	l2->l_lid = ++p2->p_nlwpid;
 	LIST_INSERT_HEAD(&p2->p_lwps, l2, l_sibling);
 	p2->p_nlwps++;
+
 	mutex_exit(&p2->p_smutex);
 
 	mutex_enter(&alllwp_mutex);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
 	mutex_exit(&alllwp_mutex);
 
+	/* XXXAD verify */
 	if (p2->p_emul->e_lwp_fork)
 		(*p2->p_emul->e_lwp_fork)(l1, l2);
 
@@ -381,8 +396,9 @@ lwp_exit(struct lwp *l)
 		l->l_proc = NULL;
 	}
 	l->l_stat = LSDEAD;
-	lwp_swaplock(l, &lwp_mutex);
-	sigclear(&l->l_sigpend, NULL);
+	lwp_setlock_unlock(l, &lwp_mutex);
+	if ((p->p_flag & P_SA) == 0)
+		sigclear(l->l_sigpend, NULL);
 	mutex_exit(&p->p_smutex);
 
 	/*
@@ -442,9 +458,8 @@ lwp_exit2(struct lwp *l)
 		KERNEL_UNLOCK();
 	} else {
 		KERNEL_UNLOCK();
-		lwp_lock(l);
 		l->l_stat = LSZOMB;
-		lwp_unlock(l);
+		mb_write();
 		wakeup(&l->l_proc->p_nlwps);
 	}
 }
@@ -473,7 +488,8 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
 		l = LIST_FIRST(&p->p_lwps);
 		if (nrlwps)
 			*nrlwps = (l->l_stat == LSONPROC || LSRUN);
-		lwp_lock(l);
+		if (locking)
+			lwp_lock(l);
 		return l;
 	}
 
@@ -624,59 +640,123 @@ lwp_update_creds(struct lwp *l)
 int
 lwp_locked(struct lwp *l, kmutex_t *mtx)
 {
-	kmutex_t *omutex = l->l_mutex;
+#ifdef MULTIPROCESSOR
+	kmutex_t *cur = l->l_mutex;
 
-	return mutex_owned(l->l_mutex) && (mtx == omutex || mtx == NULL);
+	return mutex_owned(cur) && (mtx == cur || mtx == NULL);
+#else
+	return mutex_owned(l->l_mutex);
+#endif
 }
 
 /*
- * Retry acquiring an LWP's mutex after it has changed.
+ * Lock an LWP.
  */
 void
-lwp_lock_retry(struct lwp *l, kmutex_t *omutex)
+lwp_lock(struct lwp *l)
 {
+#ifdef MULTIPROCESSOR
+	kmutex_t *old;
 
-	do {
-		mutex_exit(omutex);
-		mutex_enter(omutex = l->l_mutex);
-	} while (l->l_mutex != omutex);
+	for (;;) {
+		mutex_enter(old = l->l_mutex);
+
+		/*
+		 * mutex_enter() will have posted a read barrier.  Re-test
+		 * l->l_mutex.  If it has changed, we need to try again.
+		 */
+		if (__predict_true(l->l_mutex == old)) {
+			LOCK_ASSERT(l->l_omutex == NULL);
+			return;
+		}
+
+		mutex_exit(old);
+	}
+#else
+	mutex_enter(l->l_mutex);
+#endif
 }
 
 /*
- * Lend a new mutex to an LWP, and release the old mutex.
- *
- * Must be called with the LWP locked.  The new mutex must be held, and must
- * have been acquired before the LWP was locked.
+ * Unlock an LWP.  If the LWP has been relocked, release the new mutex
+ * first, then the old mutex.
  */
 void
-lwp_swaplock_linked(struct lwp *l, kmutex_t *new)
+lwp_unlock(struct lwp *l)
 {
-	kmutex_t *omutex;
+#ifdef MULTIPROCESSOR
+	kmutex_t *old;
 
+	LOCK_ASSERT(mutex_owned(l->l_mutex));
+
+	if (__predict_true((old = l->l_omutex) == NULL)) {
+		mutex_exit(l->l_mutex);
+		return;
+	}
+
+	l->l_omutex = NULL;
+	mutex_exit(l->l_mutex);
+	mutex_exit(old);
+#else
+	LOCK_ASSERT(mutex_owned(l->l_mutex));
+
+	mutex_exit(l->l_mutex);
+#endif
+}
+
+/*
+ * Lend a new mutex to an LWP.  Both the old and new mutexes must be held.
+ */
+void
+lwp_setlock(struct lwp *l, kmutex_t *new)
+{
 	LOCK_ASSERT(mutex_owned(l->l_mutex));
 	LOCK_ASSERT(mutex_owned(new));
+	LOCK_ASSERT(l->l_omutex == NULL);
 
-	omutex = l->l_mutex;
-	lwp_setlock(l, new);
-	mutex_exit_linked(omutex, new);
+#ifdef MULTIPROCESSOR
+	mb_write();
+	l->l_mutex = new;
+#endif
 }
 
 /*
- * Lend a new mutex to an LWP, and release the old mutex.
- *
- * Must be called with the LWP locked.  The new mutex (if held) must have
- * been acuired after the LWP was locked.
+ * Lend a new mutex to an LWP, and release the old mutex.  The old mutex
+ * must be held.
  */
 void
-lwp_swaplock(struct lwp *l, kmutex_t *new)
+lwp_setlock_unlock(struct lwp *l, kmutex_t *new)
 {
-	kmutex_t *omutex;
+	kmutex_t *old;
 
 	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	LOCK_ASSERT(l->l_omutex == NULL);
 
-	omutex = l->l_mutex;
-	lwp_setlock(l, new);
-	mutex_exit(omutex);
+	old = l->l_mutex;
+#ifdef MULTIPROCESSOR
+	mb_write();
+	l->l_mutex = new;
+#endif
+	mutex_exit(old);
+}
+
+/*
+ * Acquire a new mutex, and dontate it to an LWP.  The LWP must already be
+ * locked.
+ */
+void
+lwp_relock(struct lwp *l, kmutex_t *new)
+{
+
+	LOCK_ASSERT(mutex_owned(l->l_mutex));
+	LOCK_ASSERT(l->l_omutex == NULL);
+
+#ifdef MULTIPROCESSOR
+	mutex_enter(new);
+	l->l_omutex = l->l_mutex;
+	mb_write();
+	l->l_mutex = new;
+#endif
 }
 
 /*

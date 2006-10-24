@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.21 2005/12/11 12:19:56 christos Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.21.20.1 2006/10/24 21:10:22 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.21 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.21.20.1 2006/10/24 21:10:22 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -132,7 +132,7 @@ darwin_sys_sigaction(l, v, retval)
 void
 darwin_trapsignal(l, ksi)
 	struct lwp *l;
-	const struct ksiginfo *ksi;
+	struct ksiginfo *ksi;
 {
 	if (mach_trapsignal1(l, ksi) != 0)
 		trapsignal(l, ksi);
@@ -161,7 +161,7 @@ darwin_tracesig(p, signo)
 
 	code[0] = MACH_SOFT_SIGNAL;
 	code[1] = signo;
-	l = proc_representative_lwp(p);
+	l = proc_representative_lwp(p, NULL, 0);
 	error = mach_exception(l, MACH_EXC_SOFTWARE, code);
 
 	/* Inhibit normal signal delivery */

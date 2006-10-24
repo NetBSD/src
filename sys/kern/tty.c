@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.187.4.1 2006/10/20 21:33:55 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.187.4.2 2006/10/24 21:10:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.187.4.1 2006/10/20 21:33:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.187.4.2 2006/10/24 21:10:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1698,7 +1698,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 	 */
 	if (isbackground(p, tp)) {
 		if (sigismember(&p->p_sigctx.ps_sigignore, SIGTTIN) ||
-		    sigismember(&curlwp->l_sigmask, SIGTTIN) ||
+		    sigismember(curlwp->l_sigmask, SIGTTIN) ||
 		    p->p_flag & P_PPWAIT || p->p_pgrp->pg_jobc == 0) {
 			TTY_UNLOCK(tp);
 			splx(s);
@@ -1984,7 +1984,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	if (isbackground(p, tp) &&
 	    ISSET(tp->t_lflag, TOSTOP) && (p->p_flag & P_PPWAIT) == 0 &&
 	    !sigismember(&p->p_sigctx.ps_sigignore, SIGTTOU) &&
-	    !sigismember(&curlwp->l_sigmask, SIGTTOU)) {
+	    !sigismember(curlwp->l_sigmask, SIGTTOU)) {
 		if (p->p_pgrp->pg_jobc == 0) {
 			error = EIO;
 			goto out;
@@ -2396,7 +2396,9 @@ ttyinfo(struct tty *tp, int fromsig)
 	    l->l_wmesg ? l->l_wmesg : "iowait",
 		(LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
 
+	mutex_enter(&p->p_smutex);
 	calcru(pick, &utime, &stime, NULL, NULL);
+	mutex_exit(&p->p_smutex);
 
 	/* Round up and print user time. */
 	utime.tv_usec += 5000;

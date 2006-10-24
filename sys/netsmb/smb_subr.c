@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.27 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.27.4.1 2006/10/24 21:10:23 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.27 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.27.4.1 2006/10/24 21:10:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,13 +78,11 @@ smb_makescred(struct smb_cred *scred, struct lwp *l, kauth_cred_t cred)
 int
 smb_proc_intr(struct lwp *l)
 {
-	struct proc *p;
 
 	if (l == NULL)
 		return 0;
-	p = l->l_proc;
-	if (!sigemptyset(&p->p_sigctx.ps_siglist)
-	    && SMB_SIGMASK(p->p_sigctx.ps_siglist))
+	if (!sigemptyset(&l->l_sigpend->sp_set)
+	    && SMB_SIGMASK(l->l_sigpend->sp_set))
                 return EINTR;
 	return 0;
 }

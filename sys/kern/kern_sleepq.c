@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.1.2.3 2006/10/21 14:03:14 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.1.2.4 2006/10/24 21:10:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.3 2006/10/21 14:03:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.4 2006/10/24 21:10:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -59,14 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.3 2006/10/21 14:03:14 ad Exp $
 #include <sys/sleepq.h>
 
 int	sleepq_sigtoerror(struct lwp *, int);
+void	sleepq_exit(sleepq_t *, struct lwp *);
 void	updatepri(struct lwp *);
 void	sa_awaken(struct lwp *);
 
 sleepq_t	sleeptab[SLEEPTAB_HASH_SIZE];
 #ifdef MULTIPROCESSOR
 kmutex_t	sleeptab_mutexes[SLEEPTAB_HASH_SIZE];
-#else
-kmutex_t	sleeptab_mutex;
 #endif
 
 /*
@@ -80,17 +79,13 @@ sleeptab_init(void)
 	sleepq_t *sq;
 	int i;
 
-#ifndef MULTIPROCESSOR
-	mutex_init(&sleeptab_mutex, MUTEX_SPIN, IPL_SCHED);
-#endif
-
 	for (i = 0; i < SLEEPTAB_HASH_SIZE; i++) {
 		sq = &sleeptab[i];
 #ifdef MULTIPROCESSOR
 		mutex_init(&sleeptab_mutexes[i], MUTEX_SPIN, IPL_SCHED);
 		sleepq_init(&sleeptab[i], &sleeptab_mutexes[i]);
 #else
-		sleepq_init(&sleeptab[i], &sleeptab_mutex);
+		sleepq_init(&sleeptab[i], &sched_mutex);
 #endif
 	}
 }
@@ -119,13 +114,11 @@ sleepq_init(sleepq_t *sq, kmutex_t *mtx)
 int
 sleepq_remove(sleepq_t *sq, struct lwp *l)
 {
+	struct cpu_info *ci;
 
 	LOCK_ASSERT(lwp_locked(l, sq->sq_mutex));
+	LOCK_ASSERT(mutex_owned(&sched_mutex));
 	KASSERT(sq->sq_waiters > 0);
-
-	l->l_wchan = NULL;
-	l->l_slptime = 0;
-	l->l_flag &= ~L_SINTR;
 
 	sq->sq_waiters--;
 	TAILQ_REMOVE(&sq->sq_queue, l, l_sleepq);
@@ -137,6 +130,9 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
 		KASSERT(TAILQ_FIRST(&sq->sq_queue) != NULL);
 #endif
 
+	l->l_wchan = NULL;
+	l->l_flag &= ~L_SINTR;
+
 	/*
 	 * If not sleeping, the LWP must have been suspended.  Let whoever
 	 * holds it stopped set it running again.
@@ -146,34 +142,35 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
 		return 0;
 	}
 
-	if (l == curlwp) {
+	if (l->l_proc->p_sa)
+		sa_awaken(l);
+
+	lwp_setlock(l, &sched_mutex);
+
+	/*
+	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
+	 * about to call mi_switch(), in which case it will yield.
+	 */
+	if ((ci = l->l_cpu) != NULL && ci->ci_curlwp == l) {
 		l->l_stat = LSONPROC;
-		lwp_setlock(l, &l->l_cpu->ci_sched_mutex);
+		l->l_slptime = 0;
 		return 0;
 	}
 
+	/*
+	 * Set it running.  We'll try to get the last CPU that ran
+	 * this LWP to pick it up again.
+	 */
 	l->l_stat = LSRUN;
-
-	if (l->l_proc->p_sa)
-		sa_awaken(l);
 	if (l->l_slptime > 1)
 		updatepri(l);
-
-	/*
-	 * Try to set the LWP running, and swap in its new mutex.  Once
-	 * we've done the swap, we can't touch the LWP again.
-	 */
+	l->l_slptime = 0;
 	if ((l->l_flag & L_INMEM) != 0) {
-		/*
-		 * Try to get the last CPU that ran this LWP to pick it up.
-		 */
 		setrunqueue(l);
-		lwp_setlock(l, &sched_mutex);
 		cpu_need_resched(l->l_cpu);
 		return 0;
 	}
 
-	lwp_setlock(l, &lwp_mutex);
 	return 1;
 }
 
@@ -225,7 +222,40 @@ sleepq_enter(sleepq_t *sq, int pri, wchan_t wchan, const char *wmesg, int timo,
 	 * The LWP is now on the sleep queue.  Release its old mutex and
 	 * lend it ours for the duration of the sleep.
 	 */
-	lwp_swaplock(l, sq->sq_mutex);
+	lwp_setlock_unlock(l, sq->sq_mutex);
+}
+
+/*
+ * sleepq_exit:
+ *
+ *	Remove the current LWP from a sleep queue after the sleep has been
+ *	interrupted.
+ */
+void
+sleepq_exit(sleepq_t *sq, struct lwp *l)
+{
+
+	LOCK_ASSERT(lwp_locked(l, sq->sq_mutex));
+	KASSERT(sq->sq_waiters > 0);
+	KASSERT(l->l_stat == LSSLEEP);
+
+	l->l_wchan = NULL;
+	l->l_slptime = 0;
+	l->l_flag &= ~L_SINTR;
+
+	sq->sq_waiters--;
+	TAILQ_REMOVE(&sq->sq_queue, l, l_sleepq);
+
+#ifdef DIAGNOSTIC
+	if (sq->sq_waiters == 0)
+		KASSERT(TAILQ_FIRST(&sq->sq_queue) == NULL);
+	else
+		KASSERT(TAILQ_FIRST(&sq->sq_queue) != NULL);
+#endif
+
+	l->l_stat = LSONPROC;
+
+	lwp_setlock_unlock(l, &sched_mutex);
 }
 
 /*
@@ -264,41 +294,20 @@ sleepq_block(sleepq_t *sq, int timo)
 			lwp_lock(l);
 		}
 
-		if (error == 0 && (l->l_flag & (L_WEXIT | L_WCORE)) != 0)
+		if ((l->l_flag & (L_CANCELLED | L_WEXIT | L_WCORE)) != 0)
 			error = EINTR;
-
-		if (error != 0) {
-			/*
-			 * If the LWP is on a sleep queue and we remove it,
-			 * we will change its mutex and so we need to unlock
-			 * the sleep queue.  If it's off the sleep queue
-			 * already, the unlock the LWP directly.
-			 */
-			if (l->l_wchan != NULL) {
-				mutex_enter(&sched_mutex);
-				(void)sleepq_remove(sq, l);
-				mutex_exit(&sched_mutex);
-				mutex_exit(sq->sq_mutex);
-			} else
-				lwp_unlock(l);			
-
-			goto out;
-		}
 	}
 
-	if (l->l_stat == LSONPROC) {
-		/*
-		 * We may have decided not to switch away, and so removed
-		 * ourself from the sleep queue.
-		 */
-		lwp_unlock(l);
-	} else if ((flag & L_SA) != 0) {
-		sa_switch(l, sadata_upcall_alloc(0), SA_UPCALL_BLOCKED);
-		/* XXXAD verify sa_switch restores SPL. */
-	} else {
-		mi_switch(l, NULL);
-
-		l->l_cpu->ci_schedstate.spc_curpriority = l->l_usrpri;
+	if (error != 0 && l->l_stat == LSSLEEP)
+		sleepq_exit(sq, l);
+	else if (l->l_stat != LSONPROC) {
+		if ((flag & L_SA) != 0) {
+			sa_switch(l, sadata_upcall_alloc(0), SA_UPCALL_BLOCKED);
+			/* XXXAD verify sa_switch restores SPL. */
+		} else {
+			mi_switch(l, NULL);
+			l->l_cpu->ci_schedstate.spc_curpriority = l->l_usrpri;
+		}
 	}
 
 	KASSERT(l->l_wchan == NULL);
@@ -310,11 +319,11 @@ sleepq_block(sleepq_t *sq, int timo)
 		 */
 		expired = callout_expired(&l->l_tsleep_ch);
 		callout_stop(&l->l_tsleep_ch);
-		if (expired)
+		if (expired && error == 0)
 			return EWOULDBLOCK;
 	}
 
-	if ((flag & L_SINTR) != 0) {
+	if (error == 0 && (flag & L_SINTR) != 0) {
 		if ((l->l_flag & (L_CANCELLED | L_WEXIT | L_WCORE)) != 0)
 			error = EINTR;
 		else if ((l->l_flag & L_PENDSIG) != 0) {
@@ -326,7 +335,6 @@ sleepq_block(sleepq_t *sq, int timo)
 		}
 	}
 
- out:
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
 		ktrcsw(l, 0, 0);
@@ -361,9 +369,9 @@ sleepq_wakeone(sleepq_t *sq, wchan_t wchan)
 	}
 
 	if (bl != NULL) {
-		mutex_enter(&sched_mutex);
+		sched_lock();
 		swapin = sleepq_remove(sq, bl);
-		mutex_exit(&sched_mutex);
+		sched_unlock();
 	}
 
 	mutex_exit(sq->sq_mutex);
@@ -385,7 +393,7 @@ sleepq_wakeall(sleepq_t *sq, wchan_t wchan, u_int expected)
 
 	LOCK_ASSERT(mutex_owned(sq->sq_mutex));
 
-	mutex_enter(&sched_mutex);
+	sched_lock();
 	for (l = TAILQ_FIRST(&sq->sq_queue); l != NULL; l = next) {
 		next = TAILQ_NEXT(l, l_sleepq);
 		if (l->l_wchan != wchan)
@@ -394,7 +402,7 @@ sleepq_wakeall(sleepq_t *sq, wchan_t wchan, u_int expected)
 		if (--expected == 0)
 			break;
 	}
-	mutex_exit(&sched_mutex);
+	sched_unlock();
 
 	LOCK_ASSERT(mutex_owned(sq->sq_mutex));
 	mutex_exit(sq->sq_mutex);
@@ -424,11 +432,10 @@ sleepq_unsleep(struct lwp *l)
 	KASSERT(l->l_wchan != NULL);
 	KASSERT(l->l_mutex == sq->sq_mutex);
 
-	mutex_enter(&sched_mutex);
+	sched_lock();
 	swapin = sleepq_remove(sq, l);
-	mutex_exit(&sched_mutex);
+	sched_unlock();
 
-	LOCK_ASSERT(mutex_owned(sq->sq_mutex));
 	mutex_exit(sq->sq_mutex);
 
 	if (swapin)

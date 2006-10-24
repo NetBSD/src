@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.79 2006/08/17 17:11:27 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.79.2.1 2006/10/24 21:10:22 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.79 2006/08/17 17:11:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.79.2.1 2006/10/24 21:10:22 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -377,10 +377,10 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	int onstack;
+	int onstack, error;
 	struct svr4_sigframe *fp = getframe(l, sig, &onstack), frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
+	struct sigaltstack *sas = l->l_sigstk;
 	struct trapframe *tf = l->l_md.md_regs;
 
 	fp--;
@@ -408,7 +408,13 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	       frame.sf_signum, frame.sf_sip, frame.sf_ucp, frame.sf_handler);
 #endif
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	sendsig_reset(l, sig);
+
+	mutex_exit(&p->p_smutex);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -562,19 +568,19 @@ svr4_fasttrap(frame)
 
 	case SVR4_TRAP_GETHRVTIME:
 		/*
-		 * This is like gethrvtime(3). returning the LWP's (now:
-		 * proc's) virtual time expressed in nanoseconds. It is
-		 * supposedly guaranteed to be monotonically increasing, but
-		 * for now using the process's real time augmented with its
-		 * current runtime is the best we can do.
+		 * This is like gethrvtime(3). returning the LWP's virtual
+		 * time expressed in nanoseconds. It is supposedly
+		 * guaranteed to be monotonically increasing, but for now
+		 * using the LWP's real time augmented with its current
+		 * runtime is the best we can do.
 		 */
 		spc = &curcpu()->ci_schedstate;
 
 		microtime(&tv);
 
-		tm = (p->p_rtime.tv_sec + tv.tv_sec -
+		tm = (l->l_rtime.tv_sec + tv.tv_sec -
 		    spc->spc_runtime.tv_sec) * 1000000ull;
-		tm += p->p_rtime.tv_usec + tv.tv_usec;
+		tm += l->l_rtime.tv_usec + tv.tv_usec;
 		tm -= spc->spc_runtime.tv_usec;
 		tm *= 1000u;
 		/* XXX: dsl - I would have expected the msb in %edx */

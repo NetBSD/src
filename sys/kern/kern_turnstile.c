@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.36.2 2006/10/20 19:38:44 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.36.3 2006/10/24 21:10:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.2 2006/10/20 19:38:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.3 2006/10/24 21:10:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -240,6 +240,8 @@ turnstile_block(turnstile_t *ts, int q, int pri, wchan_t obj)
 		KASSERT(TAILQ_EMPTY(&ts->ts_sleepq[TS_READER_Q].sq_queue) &&
 			TAILQ_EMPTY(&ts->ts_sleepq[TS_WRITER_Q].sq_queue));
 		ts->ts_obj = obj;
+		ts->ts_sleepq[TS_READER_Q].sq_mutex = &tc->tc_mutex;
+		ts->ts_sleepq[TS_WRITER_Q].sq_mutex = &tc->tc_mutex;
 		LIST_INSERT_HEAD(&tc->tc_chain, ts, ts_chain);
 	} else {
 		/*
@@ -258,7 +260,6 @@ turnstile_block(turnstile_t *ts, int q, int pri, wchan_t obj)
 	}
 
 	sq = &ts->ts_sleepq[q];
-	sq->sq_mutex = &tc->tc_mutex;
 	sleepq_enter(sq, pri, obj, "tstile", 0, 0);
 	(void)sleepq_block(sq, 0);
 }
@@ -286,7 +287,7 @@ turnstile_wakeup(turnstile_t *ts, int rw, int count, struct lwp *nl)
 
 	LOCK_ASSERT(mutex_owned(&tc->tc_mutex) && sq->sq_mutex == &tc->tc_mutex);
 
-	mutex_enter(&sched_mutex);
+	sched_lock();
 	if (nl != NULL) {
 #if defined(DEBUG) || defined(LOCKDEBUG)
 		TAILQ_FOREACH(l, &sq->sq_queue, l_sleepq) {
@@ -304,7 +305,7 @@ turnstile_wakeup(turnstile_t *ts, int rw, int count, struct lwp *nl)
 			swapin |= turnstile_remove(ts, l, sq);
 		}
 	}
-	mutex_exit(&sched_mutex);
+	sched_unlock();
 	mutex_exit(&tc->tc_mutex);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.94.4.3 2006/10/21 15:20:46 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94.4.4 2006/10/24 21:10:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.3 2006/10/21 15:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.4 2006/10/24 21:10:21 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -344,7 +344,11 @@ proc0_init(void)
 #endif
 	strncpy(p->p_comm, "swapper", MAXCOMLEN);
 
+#ifdef MULTIPROCESSOR
 	l->l_mutex = &lwp_mutex;
+#else
+	l->l_mutex = &sched_mutex;
+#endif
 	l->l_flag = L_INMEM | L_SYSTEM;
 	l->l_stat = LSONPROC;
 	l->l_ts = &turnstile0;

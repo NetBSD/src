@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.41.4.2 2006/10/21 15:20:48 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.41.4.3 2006/10/24 21:10:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ struct	lwp {
 	struct lwp	*l_forw;	/* l: run queue */
 	struct lwp	*l_back;	/* l: run queue */
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
+	kmutex_t	*l_omutex;	/* l: mutex owned by lwp_lock() */
 	struct cpu_info * volatile l_cpu; /* l: CPU we're on if LSONPROC */
 	int		l_flag;		/* l: misc flag values */
 	int		l_stat;		/* l: overall LWP status */
@@ -103,18 +104,19 @@ struct	lwp {
 	int		l_dupfd;	/* ?: side return from cloning devs XXX */
 
 	int		l_sigrestore;	/* p: need to restore old sig mask */
-	struct sigaltstack l_sigstk;	/* p: sp & on stack state variable */
-	sigpend_t	l_sigpend;	/* p: signals to this LWP */
-	sigset_t	l_sigoldmask;	/* p: mask from before sigpause */
+	stack_t		*l_sigstk;	/* p: sp & on stack state variable */
+	sigpend_t	*l_sigpend;	/* p: signals to this LWP */
+	sigset_t	*l_sigmask;	/* p: signal mask */
 	sigset_t	*l_sigwait;	/* p: signals being waited for */
 	struct ksiginfo	*l_sigwaited;	/* p: delivered signals from set */
 	LIST_ENTRY(lwp)	l_sigwaiter;	/* p: chain on list of waiting LWPs */
+	sigset_t	l_sigoldmask;	/* p: mask from before sigpause */
+	sigstore_t	l_sigstore;	/* p: signal state for 1:1 threads */
 
 #define l_endzero l_sigmask
 
 #define l_startcopy l_sigmask
 
-	sigset_t	l_sigmask;	/* p: signal mask */
 
 	u_char		l_priority;	/* l: process priority */
 	u_char		l_usrpri;	/* l: user-priority */
@@ -227,48 +229,11 @@ void	cpu_switchto (struct lwp *, struct lwp *);
 #endif
 
 int	lwp_locked(struct lwp *, kmutex_t *);
-void	lwp_lock_retry(struct lwp *, kmutex_t *);
-void	lwp_swaplock(struct lwp *, kmutex_t *);
-void	lwp_swaplock_linked(struct lwp *, kmutex_t *);
-
-/*
- * Lend a new mutex to an LWP.
- */
-static inline void
-lwp_setlock(struct lwp *l, kmutex_t *new)
-{
-
-	mb_write();
-	l->l_mutex = new;
-}
-
-/*
- * Acquire an LWP's mutex.
- */
-static inline void
-lwp_lock(struct lwp *l)
-{
-	kmutex_t *omutex;
-
-	mutex_enter(omutex = l->l_mutex);
-
-	/*
-	 * mutex_enter() will have posted a read barrier.  Re-test
-	 * l->l_mutex.  If it has changed, we need to try again.
-	 */
-	if (l->l_mutex != omutex)
-		lwp_lock_retry(l, omutex);
-}
-
-/*
- * Unlock an LWP.
- */
-static inline void
-lwp_unlock(struct lwp *l)
-{
-
-	mutex_exit(l->l_mutex);
-}
+void	lwp_setlock(struct lwp *, kmutex_t *);
+void	lwp_setlock_unlock(struct lwp *, kmutex_t *);
+void	lwp_lock(struct lwp *l);
+void	lwp_relock(struct lwp *l, kmutex_t *);
+void	lwp_unlock(struct lwp *l);
 
 int newlwp(struct lwp *, struct proc *, vaddr_t, int /* XXX boolean_t */, int,
     void *, size_t, void (*)(void *), void *, struct lwp **);

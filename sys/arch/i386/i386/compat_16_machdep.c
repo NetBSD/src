@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.8 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.8.20.1 2006/10/24 21:10:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.8 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.8.20.1 2006/10/24 21:10:22 ad Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -143,13 +143,17 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	tf->tf_ss = context.sc_ss;
 
 	/* Restore signal stack. */
+	mutex_enter(&p->p_smutex);
+
 	if (context.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+
+	mutex_exit(&p->p_smutex);	/* XXXAD carry to sigprocmask */
 
 	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
 
 	return (EJUSTRETURN);
 }
@@ -176,7 +180,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	    GUCODEBIG_SEL : GUCODE_SEL;
 	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf = l->l_md.md_regs;
-	int onstack;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	u_long code = KSI_TRAPCODE(ksi);
 	struct sigframe_sigcontext *fp = getframe(l, sig, &onstack), frame;
@@ -236,7 +240,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sc.sc_err = tf->tf_err;
 
 	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
+	frame.sf_sc.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
@@ -251,7 +255,13 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
 #endif
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	sendsig_reset(l, sig);
+
+	mutex_exit(&p->p_smutex);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -264,7 +274,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 }
 #endif
 
@@ -288,6 +298,7 @@ compat_16_i386_vm86(struct lwp *l, char *args, register_t *retval)
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct compat_16_vm86_kern vm86s;
+	struct proc *p = l->l_proc;
 	int error;
 
 	error = copyin(args, &vm86s, sizeof(vm86s));
@@ -346,8 +357,12 @@ compat_16_i386_vm86(struct lwp *l, char *args, register_t *retval)
 #undef	DOVREG
 #undef	DOREG
 
+	mutex_enter(&p->p_smutex);
+
 	/* Going into vm86 mode jumps off the signal stack. */
-	l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+
+	mutex_exit(&p->p_smutex);
 
 	set_vflags(l, vm86s.regs.sc_eflags | PSL_VM);
 

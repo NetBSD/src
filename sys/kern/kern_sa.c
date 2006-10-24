@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.83.4.1 2006/10/21 15:20:46 ad Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.83.4.2 2006/10/24 21:10:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83.4.1 2006/10/21 15:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83.4.2 2006/10/24 21:10:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -553,11 +553,9 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 				simple_unlock(&sa->sa_lock);
 				return (addedconcurrency);
 			}
-			/* XXXAD SCHED_LOCK(s); */
-			mutex_enter(&sched_mutex);
-			lwp_swaplock_linked(l2, &sched_mutex);
+			lwp_relock(l2, &sched_mutex);
 			setrunqueue(l2);
-			/* XXXAD SCHED_UNLOCK(s); */
+			lwp_unlock(l2);
 			addedconcurrency++;
 		}
 		simple_lock(&sa->sa_lock);
@@ -633,8 +631,7 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 				    NULL, NULL, 0, NULL, NULL);
 				/* XXXAD SCHED_LOCK(s); */
 				sa->sa_concurrency++;
-				mutex_enter(&sched_mutex);
-				lwp_swaplock_linked(vp->savp_lwp, &sched_mutex);
+				lwp_relock(vp->savp_lwp, &sched_mutex);
 				setrunqueue(vp->savp_lwp);
 				KDASSERT((vp->savp_lwp->l_flag & L_SINTR) == 0);
 				(*retval)++;
@@ -1029,8 +1026,7 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 		l2->l_priority = l2->l_usrpri;
 		vp->savp_blocker = l;
 		vp->savp_lwp = l2;
-		mutex_enter(&sched_mutex);
-		lwp_swaplock_linked(l2, &sched_mutex);
+		lwp_relock(l2, &sched_mutex);
 		setrunqueue(l2);
 		PRELE(l2); /* Remove the artificial hold-count */
 
@@ -1647,8 +1643,7 @@ sa_setwoken(struct lwp *l)
 		if (vp_lwp->l_flag & L_SA_IDLE) {
 			vp_lwp->l_flag &= ~L_SA_IDLE;
 			vp_lwp->l_flag |= L_SA_UPCALL;
-			mutex_enter(&sched_mutex);
-			lwp_swaplock_linked(vp_lwp, &sched_mutex);
+			lwp_relock(vp_lwp, &sched_mutex);
 			setrunqueue(vp_lwp);
 			break;
 		}
@@ -1744,7 +1739,8 @@ sa_vp_repossess(struct lwp *l)
 			    l2->l_stat);
 #endif
 		}
-		lwp_swaplock(l2, &lwp_mutex);
+
+		lwp_setlock_unlock(l2, &lwp_mutex);
 	}
 	return l2;
 }

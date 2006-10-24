@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.2 2006/10/21 15:20:47 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.3 2006/10/24 21:10:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.2 2006/10/21 15:20:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.3 2006/10/24 21:10:21 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -568,11 +568,8 @@ yield(void)
 
 	lwp_lock(l);
 	if (l->l_stat == LSONPROC) {
+		KASSERT(lwp_locked(l, &sched_mutex));
 		l->l_priority = l->l_usrpri;
-		l->l_stat = LSRUN;
-		mutex_enter(&sched_mutex);
-		lwp_swaplock_linked(l, &sched_mutex);
-		setrunqueue(l);
 	}
 	l->l_nvcsw++;
 	mi_switch(l, NULL);
@@ -594,11 +591,8 @@ preempt(int more)
 
 	lwp_lock(l);
 	if (l->l_stat == LSONPROC) {
+		KASSERT(lwp_locked(l, &sched_mutex));
 		l->l_priority = l->l_usrpri;
-		l->l_stat = LSRUN;
-		mutex_enter(&sched_mutex);
-		lwp_swaplock_linked(l, &sched_mutex);
-		setrunqueue(l);
 	}
 	l->l_nivcsw++;
 	r = mi_switch(l, NULL);
@@ -681,9 +675,20 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * to run.
 	 */
 	oldspl = mutex_getspl(l->l_mutex);
-	if (l->l_mutex != &sched_mutex) {
+#ifdef MULTIPROCESSOR
+	if (l->l_mutex != &sched_mutex || l->l_omutex != NULL) {
 		lwp_unlock(l);
 		mutex_enter(&sched_mutex);
+	}
+#endif
+
+	/*
+	 * If on the CPU and we have gotten this far, then we must yield.
+	 */
+	KASSERT(l->l_stat != LSRUN);
+	if (l->l_stat == LSONPROC) {
+		l->l_stat = LSRUN;
+		setrunqueue(l);
 	}
 	uvmexp.swtch++;
 
@@ -728,9 +733,11 @@ mi_switch(struct lwp *l, struct lwp *newl)
 
 	/*
 	 * Reacquire the kernel_lock, and restore the old SPL.
+	 * XXX We should do spl0() before acquiring the kernel
+	 * lock but splx() may not raise the IPL.
 	 */
-	KERNEL_LOCK_ACQUIRE_COUNT(hold_count);
 	splx(oldspl);
+	KERNEL_LOCK_ACQUIRE_COUNT(hold_count);
 
 	return retval;
 }
@@ -791,6 +798,7 @@ void
 setrunnable(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
+	struct cpu_info *ci;
 
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
 	LOCK_ASSERT(lwp_locked(l, NULL));
@@ -802,7 +810,7 @@ setrunnable(struct lwp *l)
 		 * while we were stopped), check for a signal from the debugger.
 		 */
 		if ((p->p_flag & P_TRACED) != 0 && p->p_xstat != 0) {
-			sigaddset(&l->l_sigpend.sp_set, p->p_xstat);
+			sigaddset(&l->l_sigpend->sp_set, p->p_xstat);
 			signotify(l);
 		}
 		p->p_nrlwps++;
@@ -830,15 +838,27 @@ setrunnable(struct lwp *l)
 	if (l->l_proc->p_sa)
 		sa_awaken(l);
 
-	l->l_stat = LSRUN;
+	/*
+	 * Set in sched_mutex as it the LWP's current mutex.
+	 */
+	lwp_relock(l, &sched_mutex);
 
 	/*
-	 * Put the LWP onto the run queue, and set sched_mutex as it's
-	 * current mutex.
+	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
+	 * about to call mi_switch(), in which case it will yield.
 	 */
-	mutex_enter(&sched_mutex);
-	lwp_swaplock_linked(l, &sched_mutex);
+	if ((ci = l->l_cpu) != NULL && ci->ci_curlwp == l) {
+		l->l_stat = LSONPROC;
+		l->l_slptime = 0;
+		lwp_unlock(l);
+		return;
+	}
 
+	/*
+	 * Set the LWP runnable.  If it's swapped out, we need to wake the swapper
+	 * to bring it back in.  Otherwise, enter it into a run queue.
+	 */
+	l->l_stat = LSRUN;
 	if (l->l_slptime > 1)
 		updatepri(l);
 	l->l_slptime = 0;
@@ -849,10 +869,6 @@ setrunnable(struct lwp *l)
 		lwp_unlock(l);
 	} else {
 		lwp_unlock(l);
-
-		/*
-		 * The LWP is paged out; kick the swapper into action.
-		 */
 		wakeup(&proc0);
 	}
 }
@@ -967,7 +983,7 @@ suspendsched()
 		default:
 			break;
 		}
-		lwp_swaplock(l, &lwp_mutex);
+		lwp_setlock_unlock(l, &lwp_mutex);
 	}
 	mutex_exit(&alllwp_mutex);
 }
@@ -1025,6 +1041,20 @@ sched_kpri(struct lwp *l)
 		return (l->l_priority);
 
 	return (l->l_priority - obase) * nspan / ospan + nbase;
+}
+
+void
+sched_lock(void)
+{
+
+	mutex_enter(&sched_mutex);
+}
+
+void
+sched_unlock(void)
+{
+
+	mutex_exit(&sched_mutex);
 }
 
 /*
@@ -1118,8 +1148,7 @@ setrunqueue(struct lwp *l)
 	struct lwp *prev;
 	const int whichq = l->l_priority / PPQ;
 
-	LOCK_ASSERT(lwp_locked(l, NULL));
-	LOCK_ASSERT(mutex_owned(&sched_mutex));
+	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
 
 #ifdef RQDEBUG
 	checkrunqueue(whichq, NULL);

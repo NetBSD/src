@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.225.4.2 2006/10/21 15:20:48 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.225.4.3 2006/10/24 21:10:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -252,8 +252,7 @@ struct proc {
 	struct klist	p_klist;	/* Knotes attached to this process */
 
 	LIST_HEAD(, lwp) p_sigwaiters;	/* p: LWPs waiting for signals */
-
-	sigpend_t	p_sigpend;	/* p: list of pending signals */
+	sigstore_t	p_sigstore;	/* p: process-wide signal state */
 
 /*
  * End area that is zeroed on creation
@@ -292,6 +291,7 @@ struct proc {
 
 #define	p_session	p_pgrp->pg_session
 #define	p_pgid		p_pgrp->pg_id
+#define	p_sigpend	p_sigstore.ss_pend
 
 /*
  * Status values.
