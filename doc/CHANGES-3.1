@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.176 2006/10/23 19:56:19 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.177 2006/10/24 08:37:33 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4875,4 +4875,18 @@ sys/arch/sun3/sun3x/pmap.c			1.88,1.91
 
 	While here, make this compile with PMAP_DEBUG.
 	[tsutsui, ticket #1518]
+
+lib/libc/rpc/svc_vc.c				1.20
+
+	Only retry if we were able to clean up some descriptors, this prevents
+	RPC services like NIS and NFS from getting stuck in an infinite loop.
+	[tron, ticket #1558]
+
+usr.sbin/bind/include/config.h			1.5
+
+	If we're not using pthreads, claim also that we don't have sigwait.
+	This works around the problems observed on sparc and sparc64 (where
+	we've disabled use of pthreads) where the BIND applications end up
+	being killed with SIGTERM instead of exiting gracefully.
+	[he, ticket #1565]
 
