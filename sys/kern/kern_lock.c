@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.99.2.2 2006/10/20 20:02:34 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.99.2.3 2006/10/24 19:21:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,10 +76,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.2 2006/10/20 20:02:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.3 2006/10/24 19:21:40 ad Exp $");
 
 #include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
 #include "opt_ddb.h"
 
 #define	__MUTEX_PRIVATE
@@ -88,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.2 2006/10/20 20:02:34 ad Exp $"
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/systm.h>
+#include <sys/lockdebug.h>
+
 #include <machine/cpu.h>
 
 #include <dev/lockstat.h>
@@ -1491,6 +1492,7 @@ void
 _kernel_proc_lock(struct lwp *l)
 {
 
+	LOCKDEBUG_BARRIER(&kernel_mutex, 0);
 	_kernel_lock(0);
 }
 
