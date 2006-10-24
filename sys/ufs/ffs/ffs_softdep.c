@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.79 2006/10/14 07:26:29 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.80 2006/10/24 19:36:26 drochner Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.79 2006/10/14 07:26:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.80 2006/10/24 19:36:26 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -3321,6 +3321,8 @@ handle_workitem_remove(dirrem)
 	}
 	WORKLIST_INSERT(&inodedep->id_inowait, &dirrem->dm_list);
 	FREE_LOCK(&lk);
+	ip->i_flag |= IN_CHANGE;
+	ffs_update(vp, NULL, NULL, 0);
 	vput(vp);
 }
 
