@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.96 2005/02/09 16:15:16 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.96.4.1 2006/10/24 16:33:44 ghen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.96 2005/02/09 16:15:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.96.4.1 2006/10/24 16:33:44 ghen Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -640,13 +640,17 @@ out:
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
-void
+int
 ktruser(struct proc *p, const char *id, void *addr, size_t len, int ustr)
 {
 	struct ktrace_entry *kte;
 	struct ktr_header *kth;
 	struct ktr_user *ktp;
 	caddr_t user_dta;
+	int error;
+
+	if (len > KTR_USER_MAXLEN)
+		return ENOSPC;
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	kte = pool_get(&kte_pool, PR_WAITOK);
@@ -662,7 +666,7 @@ ktruser(struct proc *p, const char *id, void *addr, size_t len, int ustr)
 	ktp->ktr_id[KTR_USER_MAXIDLEN-1] = '\0';
 
 	user_dta = (caddr_t)(ktp + 1);
-	if (copyin(addr, (void *)user_dta, len) != 0)
+	if ((error = copyin(addr, (void *)user_dta, len)) != 0)
 		len = 0;
 
 	kth->ktr_len = sizeof(struct ktr_user) + len;
@@ -670,6 +674,7 @@ ktruser(struct proc *p, const char *id, void *addr, size_t len, int ustr)
 
 	ktraddentry(p, kte, KTA_WAITOK);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
+	return error;
 }
 
 void
@@ -1212,13 +1217,10 @@ sys_utrace(struct lwp *l, void *v, register_t *retval)
 
 	if (!KTRPOINT(p, KTR_USER))
 		return (0);
+	
+	return ktruser(p, SCARG(uap, label), SCARG(uap, addr),
+		SCARG(uap, len), 1);
 
-	if (SCARG(uap, len) > KTR_USER_MAXLEN)
-		return (EINVAL);
-
-	ktruser(p, SCARG(uap, label), SCARG(uap, addr), SCARG(uap, len), 1);
-
-	return (0);
 #else /* !KTRACE */
 	return ENOSYS;
 #endif /* KTRACE */
