@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.80 2006/10/12 01:31:50 christos Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.81 2006/10/24 20:54:10 drochner Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.80 2006/10/12 01:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.81 2006/10/24 20:54:10 drochner Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -147,7 +147,7 @@ pcmcia_card_attach(dev)
 	struct pcmcia_function *pf;
 	int error;
 	static const int wildcard[PCMCIACF_NLOCS] = {
-		PCMCIACF_FUNCTION_DEFAULT, PCMCIACF_IRQ_DEFAULT
+		PCMCIACF_FUNCTION_DEFAULT
 	};
 
 	/*
@@ -228,7 +228,6 @@ pcmcia_rescan(struct device *self, const char *ifattr __unused,
 			continue;
 
 		locs[PCMCIACF_FUNCTION] = pf->number;
-		locs[PCMCIACF_IRQ] = PCMCIACF_IRQ_DEFAULT;
 
 		paa.manufacturer = sc->card.manufacturer;
 		paa.product = sc->card.product;
