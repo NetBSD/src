@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.90.2.4.2.1 2006/08/25 11:34:02 ghen Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.90.2.4.2.2 2006/10/24 16:59:02 ghen Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.90.2.4.2.1 2006/08/25 11:34:02 ghen Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.90.2.4.2.2 2006/10/24 16:59:02 ghen Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -519,7 +519,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	} else
 		to = 0;
 	if (mp->msg_control) {
-		if (mp->msg_controllen < sizeof(struct cmsghdr)) {
+		if (mp->msg_controllen < CMSG_ALIGN(sizeof(struct cmsghdr))) {
 			error = EINVAL;
 			goto bad;
 		}
