@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.29 2006/10/23 19:30:16 ghen Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.30 2006/10/24 08:37:09 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -278,4 +278,18 @@ sys/arch/acorn26/acorn26/except.c		1.17
 	Remove a route by which a user can trivially panic NetBSD/acorn26.
 	Pass regress/sys/arch/arm/abort-fixup.
 	[bjh21, ticket #1552]
+
+lib/libc/rpc/svc_vc.c				1.20
+
+	Only retry if we were able to clean up some descriptors, this prevents
+	RPC services like NIS and NFS from getting stuck in an infinite loop.
+	[tron, ticket #1558]
+
+usr.sbin/bind/include/config.h			1.5
+
+	If we're not using pthreads, claim also that we don't have sigwait.
+	This works around the problems observed on sparc and sparc64 (where
+	we've disabled use of pthreads) where the BIND applications end up
+	being killed with SIGTERM instead of exiting gracefully.
+	[he, ticket #1565]
 
