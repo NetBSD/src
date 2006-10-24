@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.3 2005/12/11 12:17:51 christos Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.4 2006/10/24 20:39:14 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2002 Reinoud Zandijk.
@@ -32,6 +32,7 @@
  *
  */
 
+#include <arm/bootconfig.h>
 
 /* get some spare blocks ;) */
 #define DRAM_BLOCKS	32
@@ -96,22 +97,5 @@ struct bootconfig {
 #define BOOTCONFIG_VERSION   	    0x2
 
 extern struct bootconfig bootconfig;
-
-
-#ifdef _KERNEL
-#define BOOTOPT_TYPE_BOOLEAN		0
-#define BOOTOPT_TYPE_STRING		1
-#define BOOTOPT_TYPE_INT		2
-#define BOOTOPT_TYPE_BININT		3
-#define BOOTOPT_TYPE_HEXINT		4
-#define BOOTOPT_TYPE_MASK		7
-
-int get_bootconf_option(char *string, const char *option, int type,
-	void *result);
-
-extern char *boot_args;
-extern char *boot_file;
-#endif	/* _KERNEL */
-
 
 /* End of bootconfig.h */
