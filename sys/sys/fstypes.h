@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.14 2006/08/04 16:29:51 yamt Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.15 2006/10/24 21:53:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -87,7 +87,6 @@ typedef struct fhandle	fhandle_t;
 #define	__MNT_UNUSED2	0x00200000
 #define	__MNT_UNUSED3	0x00800000
 #define	__MNT_UNUSED4	0x01000000
-#define	__MNT_UNUSED5	0x02000000
 
 #define	MNT_RDONLY	0x00000001	/* read only filesystem */
 #define	MNT_SYNCHRONOUS	0x00000002	/* file system written synchronously */
@@ -98,6 +97,7 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
 #define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
 #define MNT_IGNORE	0x00100000	/* don't show entry in df */
+#define	MNT_NOSHARE	0x02000000	/* file-system can't be exported */
 #define MNT_NOATIME	0x04000000	/* Never update access times in fs */
 #define MNT_SYMPERM	0x20000000	/* recognize symlink permission */
 #define MNT_NODEVMTIME	0x40000000	/* Never update mod times for devs */
@@ -113,6 +113,7 @@ typedef struct fhandle	fhandle_t;
 	{ MNT_ASYNC,		0,	"asynchronous" }, \
 	{ MNT_NOCOREDUMP,	0,	"nocoredump" }, \
 	{ MNT_IGNORE,		0,	"hidden" }, \
+	{ MNT_NOSHARE,		0,	"noshare" }, \
 	{ MNT_NOATIME,		0,	"noatime" }, \
 	{ MNT_SYMPERM,		0,	"symperm" }, \
 	{ MNT_NODEVMTIME,	0,	"nodevmtime" }, \
@@ -163,6 +164,7 @@ typedef struct fhandle	fhandle_t;
      MNT_ASYNC | \
      MNT_NOCOREDUMP | \
      MNT_IGNORE | \
+     MNT_NOSHARE | \
      MNT_NOATIME | \
      MNT_SYMPERM | \
      MNT_NODEVMTIME | \
@@ -216,6 +218,7 @@ typedef struct fhandle	fhandle_t;
 
 #define __MNT_FLAG_BITS \
 	"\20" \
+	"\41MNT_NOSHARE" \
 	"\40MNT_SOFTDEP" \
 	"\37MNT_NODEVMTIME" \
 	"\36MNT_SYMPERM" \

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.273 2006/10/20 18:58:12 reinoud Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.274 2006/10/24 21:53:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.273 2006/10/20 18:58:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.274 2006/10/24 21:53:10 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -181,6 +181,16 @@ sys_mount(struct lwp *l, void *v, register_t *retval __unused)
 	 * lock this vnode again, so make the lock recursive.
 	 */
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_SETRECURSE);
+
+	/* 
+	 * Do not allow the filesystem to be exported if MNT_NOSHARE
+	 * is set.
+	 */
+	if ((SCARG(uap, flags) & MNT_EXPORTED) &&
+	    (vp->v_mount->mnt_flag & MNT_NOSHARE)) {
+		vput(vp);
+		return (EPERM);
+	}
 	if (SCARG(uap, flags) & (MNT_UPDATE | MNT_GETARGS)) {
 		if ((vp->v_flag & VROOT) == 0) {
 			vput(vp);
@@ -350,12 +360,13 @@ sys_mount(struct lwp *l, void *v, register_t *retval __unused)
 		mp->mnt_flag &=
 		  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 		    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP);
+		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
+		    MNT_NOSHARE);
 		mp->mnt_flag |= SCARG(uap, flags) &
 		   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 		    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-		    MNT_IGNORE);
+		    MNT_IGNORE | MNT_NOSHARE);
 	}
 	/*
 	 * Mount the filesystem.

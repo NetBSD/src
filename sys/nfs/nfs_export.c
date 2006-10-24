@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.18 2006/10/22 13:07:15 pooka Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.19 2006/10/24 21:53:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.18 2006/10/22 13:07:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.19 2006/10/24 21:53:11 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -705,6 +705,9 @@ export(struct netexport *nep, const struct export_args *argp)
 	int error;
 
 	if (argp->ex_flags & MNT_EXPORTED) {
+		if (mp->mnt_flag & MNT_NOSHARE)
+			return (EPERM);
+
 		if (argp->ex_flags & MNT_EXPUBLIC) {
 			if ((error = setpublicfs(mp, nep, argp)) != 0)
 				return error;
