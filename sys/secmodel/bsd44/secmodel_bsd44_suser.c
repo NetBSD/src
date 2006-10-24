@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.11 2006/10/20 23:10:34 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.12 2006/10/24 11:53:12 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -16,8 +16,6 @@
  *      This product includes software developed by Elad Efrat.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 5. Use of the code by Wasabi Systems Inc. is hereby prohibited without
- *    written approval from the author.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -43,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.11 2006/10/20 23:10:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.12 2006/10/24 11:53:12 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
