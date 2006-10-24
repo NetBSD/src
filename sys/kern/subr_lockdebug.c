@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.1.2.1 2006/10/20 19:34:29 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.1.2.2 2006/10/24 19:07:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.1 2006/10/20 19:34:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.2 2006/10/24 19:07:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -539,16 +539,16 @@ lockdebug_abort(int id, void *lock, lockops_t *ops, const char *func,
 	 * will be enough to hold the dump and abuse the return value from
 	 * snprintf.
 	 */
-	p = snprintf(buf, sizeof(buf), "Lock error: %s: %s\n",
+	p = snprintf(buf, sizeof(buf), "%s error: %s: %s\n",
 	    ops->lo_name, func, msg);
 
 	p += snprintf(buf + p, sizeof(buf) - p,
 	    "lock address : %#018lx\n"
 	    "current cpu  : %18d\n"
 	    "current lwp  : %#018lx\n",
-	    (long)lock, (int)cpu_number, (long)curlwp);
+	    (long)lock, (int)cpu_number(), (long)curlwp);
 
-	(void)(*ld->ld_lockops->lo_dump)(ld->ld_lock, buf + p, sizeof(buf) - p);
+	(void)(*ops->lo_dump)(lock, buf + p, sizeof(buf) - p);
 
 	printf("%s", buf);
 	panic("lock error");
