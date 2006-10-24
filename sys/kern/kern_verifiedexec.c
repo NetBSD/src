@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.66 2006/08/11 19:17:47 christos Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.67 2006/10/24 22:38:41 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.66 2006/08/11 19:17:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.67 2006/10/24 22:38:41 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -85,22 +85,34 @@ veriexec_add_fp_name(char *name)
 	if (name == NULL)
 		return;
 
+	/*
+	 * If we don't have space for any names, allocate enough for six
+	 * which should be sufficient. (it's also enough for all algorithms
+	 * we can support at the moment)
+	 */
 	if (veriexec_fp_names == NULL) {
 		veriexec_name_max = (VERIEXEC_TYPE_MAXLEN + 1) * 6;
-		veriexec_fp_names = malloc(veriexec_name_max, M_TEMP, M_WAITOK);
-		memset(veriexec_fp_names, 0, veriexec_name_max);
+		veriexec_fp_names = malloc(veriexec_name_max, M_TEMP,
+		    M_WAITOK|M_ZERO);
 	}
 
-	if ((strlen(veriexec_fp_names) + VERIEXEC_TYPE_MAXLEN + 1) >=
-	    veriexec_name_max) {
+	/*
+	 * If we're running out of space for storing supported algorithms,
+	 * extend the buffer with space for four names.
+	 */
+	if ((veriexec_name_max - strlen(veriexec_fp_names)) <=
+	     VERIEXEC_TYPE_MAXLEN + 1) {
+		/* Add space for four algorithm names. */
 		new_max = veriexec_name_max + 4 * (VERIEXEC_TYPE_MAXLEN + 1);
 		newp = realloc(veriexec_fp_names, new_max, M_TEMP, M_WAITOK);
 		veriexec_fp_names = newp;
 		veriexec_name_max = new_max;
 	}
 
+	if (*veriexec_fp_names != '\0')
+		strlcat(veriexec_fp_names, " ", veriexec_name_max);
+
 	strlcat(veriexec_fp_names, name, veriexec_name_max);
-	strlcat(veriexec_fp_names, " ", veriexec_name_max);
 }
 
 /*
@@ -118,10 +130,8 @@ int veriexec_add_fp_ops(struct veriexec_fp_ops *ops)
 
 	ops->type[sizeof(ops->type) - 1] = '\0';
 
-#ifdef DIAGNOSTIC
 	if (veriexec_find_ops(ops->type) != NULL)
 		return (EEXIST);
-#endif /* DIAGNOSTIC */
 
 	LIST_INSERT_HEAD(&veriexec_ops_list, ops, entries);
 	veriexec_add_fp_name(ops->type);
@@ -139,10 +149,8 @@ veriexec_init_fp_ops(void)
 
 	/* Register a fileassoc for Veriexec. */
 	veriexec_hook = fileassoc_register("veriexec", veriexec_clear);
-#ifdef DIAGNOSTIC
 	if (veriexec_hook == FILEASSOC_INVAL)
-		panic("Veriexec: Can't register meta-hook");
-#endif /* DIAGNOSTIC */
+		panic("Veriexec: Can't register fileassoc");
 
 	LIST_INIT(&veriexec_ops_list);
 	veriexec_fp_names = NULL;
@@ -194,7 +202,6 @@ veriexec_init_fp_ops(void)
 			MD5Init, MD5Update, MD5Final);
 	(void) veriexec_add_fp_ops(ops);
 #endif /* VERIFIED_EXEC_FP_MD5 */
-
 }
 
 struct veriexec_fp_ops *
@@ -202,12 +209,13 @@ veriexec_find_ops(u_char *name)
 {
 	struct veriexec_fp_ops *ops;
 
-	name[VERIEXEC_TYPE_MAXLEN] = '\0';
+	if ((name == NULL) || (strlen(name) == 0))
+		return (NULL);
+
+	name[VERIEXEC_TYPE_MAXLEN - 1] = '\0';
 
 	LIST_FOREACH(ops, &veriexec_ops_list, entries) {
-		if ((strlen(name) == strlen(ops->type)) &&
-		    (strncasecmp(name, ops->type, sizeof(ops->type) - 1)
-		     == 0))
+		if (strncasecmp(name, ops->type, sizeof(ops->type) - 1) == 0)
 			return (ops);
 	}
 
@@ -228,9 +236,6 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 	off_t offset, len;
 	size_t resid, npages;
 	int error, do_perpage, pagen;
-
-	if (vfe->ops == NULL)
-		panic("Veriexec: Operations vector is NULL");
 
 	error = VOP_GETATTR(vp, &va, l->l_cred, l);
 	if (error)
@@ -376,10 +381,7 @@ veriexec_hashadd(struct vnode *vp, struct veriexec_file_entry *vfe)
 		return (error);
 
 	vte = veriexec_tblfind(vp);
-#ifdef DIAGNOSTIC
-	if (vte == NULL)
-		panic("Fileassoc: Inconsistency with table data");
-#endif /* DIAGNOSTIC */
+	KASSERT(vte != NULL);
 
 	vte->vte_count++;
 
@@ -593,10 +595,7 @@ veriexec_removechk(struct vnode *vp, const char *pathbuf, struct lwp *l)
 	fileassoc_clear(vp, veriexec_hook);
 
 	vte = veriexec_tblfind(vp);
-#ifdef DIAGNOSTIC
-	if (vte == NULL)
-		panic("Fileassoc: Inconsistency during entry removel");
-#endif /* DIAGNOSTIC */
+	KASSERT(vte != NULL);
 
 	vte->vte_count--;
 
