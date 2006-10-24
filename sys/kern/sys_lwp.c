@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.1.2.1 2006/10/21 14:26:41 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.1.2.2 2006/10/24 21:10:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.1 2006/10/21 14:26:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.2 2006/10/24 21:10:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.1 2006/10/21 14:26:41 ad Exp $");
 #include <sys/savar.h>
 #include <sys/types.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -104,9 +105,8 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	lid = l2->l_lid;
 	if ((SCARG(uap, flags) & LWP_SUSPENDED) == 0) {
 		p->p_nrlwps++;
+		lwp_relock(l2, &sched_mutex);
 		l2->l_stat = LSRUN;
-		mutex_enter(&sched_mutex);
-		lwp_swaplock_linked(l2, &sched_mutex);
 		setrunqueue(l2);
 	} else
 		l2->l_stat = LSSUSPENDED;
@@ -308,6 +308,45 @@ sys__lwp_wait(struct lwp *l, void *v, register_t *retval)
 		if (error)
 			return (error);
 	}
+
+	return (0);
+}
+
+/* ARGSUSED */
+int
+sys__lwp_kill(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys__lwp_kill_args /* {
+		syscallarg(lwpid_t)	target;
+		syscallarg(int)		signo;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct lwp *t;
+	ksiginfo_t ksi;
+	int signo = SCARG(uap, signo);
+	int error;
+
+	if ((u_int)signo >= NSIG)
+		return (EINVAL);
+
+	KSI_INIT(&ksi);
+	ksi.ksi_signo = signo;
+	ksi.ksi_code = SI_USER;
+	ksi.ksi_pid = p->p_pid;
+	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
+	ksi.ksi_lid = SCARG(uap, target);
+
+	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&p->p_smutex);
+	if ((t = lwp_byid(p, ksi.ksi_lid)) == NULL)
+		error = ESRCH;
+	else {
+		lwp_unlock(t);
+		kpsignal2(p, &ksi);
+		error = 0;
+	}
+	mutex_exit(&p->p_smutex);
+	rw_exit(&proclist_lock);
 
 	return (0);
 }

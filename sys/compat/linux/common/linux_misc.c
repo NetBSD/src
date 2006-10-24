@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.161 2006/09/01 21:20:47 matt Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.161.2.1 2006/10/24 21:10:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.161 2006/09/01 21:20:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.161.2.1 2006/10/24 21:10:22 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -269,7 +269,7 @@ linux_sys_wait4(l, v, retval)
 	if ((error = sys_wait4(l, &w4a, retval)))
 		return error;
 
-	sigdelset(&p->p_sigctx.ps_siglist, SIGCHLD);
+	sigdelset(&l->l_sigpend->sp_set, SIGCHLD);
 
 	if (status != NULL) {
 		if ((error = copyin(status, &tstat, sizeof tstat)))
@@ -787,12 +787,13 @@ linux_sys_times(l, v, retval)
 		struct linux_tms ltms;
 		struct rusage ru;
 
-		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL);
+		mutex_enter(&p->p_smutex);
+		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
 		ltms.ltms_utime = CONVTCK(ru.ru_utime);
 		ltms.ltms_stime = CONVTCK(ru.ru_stime);
-
 		ltms.ltms_cutime = CONVTCK(p->p_stats->p_cru.ru_utime);
 		ltms.ltms_cstime = CONVTCK(p->p_stats->p_cru.ru_stime);
+		mutex_exit(&p->p_smutex);
 
 		if ((error = copyout(&ltms, SCARG(uap, tms), sizeof ltms)))
 			return error;

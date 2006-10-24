@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.158.2.2 2006/10/21 15:20:46 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.158.2.3 2006/10/24 21:10:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.2 2006/10/21 15:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.3 2006/10/24 21:10:21 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -412,15 +412,6 @@ exit1(struct lwp *l, int rv)
 	 */
 
 	/*
-	 * Save final rusage info, adding in child rusage info and self times.
-	 * In order to pick up the time for the current execution, we must
-	 * do this before unlinking the lwp from l_list.
-	 */
-	*p->p_ru = p->p_stats->p_ru;
-	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL, NULL);
-	ruadd(p->p_ru, &p->p_stats->p_cru);
-
-	/*
 	 * Notify interested parties of our demise.
 	 */
 	KNOTE(&p->p_klist, NOTE_EXIT);
@@ -497,18 +488,27 @@ exit1(struct lwp *l, int rv)
 	mutex_exit(&proclist_mutex);
 	LIST_REMOVE(l, l_sibling);
 
+	mutex_enter(&p->p_smutex);
+
 	lwp_lock(l);
-	KASSERT(l->l_stat == LSONPROC && curlwp == l);
+	KASSERT(curlwp == l);
 	l->l_flag |= L_DETACHED;	/* detached from proc too */
 	l->l_stat = LSDEAD;
 	lwp_unlock(l);
 
-	mutex_enter(&p->p_smutex);
+	/*
+	 * Save final rusage info, adding in child rusage info and self times.
+	 */
+	*p->p_ru = p->p_stats->p_ru;
+	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL, NULL);
+	ruadd(p->p_ru, &p->p_stats->p_cru);
+
 	KASSERT(p->p_nrlwps == 1);
 	KASSERT(p->p_nlwps == 1);
 	p->p_nrlwps--;
 	p->p_nlwps--;
 	p->p_stat = SZOMB;
+
 	mutex_exit(&p->p_smutex);
 
 	LIST_INSERT_HEAD(&zombproc, p, p_list);

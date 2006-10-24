@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.96.2.2 2006/10/21 15:20:47 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.96.2.3 2006/10/24 21:10:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.96.2.2 2006/10/21 15:20:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.96.2.3 2006/10/24 21:10:23 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -659,7 +659,7 @@ uvm_swapout(struct lwp *l)
 	l->l_swtime = 0;
 	if (l->l_stat == LSRUN) {
 		remrunqueue(l);
-		lwp_swaplock(l, &lwp_mutex);
+		lwp_setlock_unlock(l, &lwp_mutex);
 	} else
 		lwp_unlock(l);
 	p->p_stats->p_ru.ru_nswap++;	/* XXXAD */

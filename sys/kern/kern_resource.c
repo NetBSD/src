@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.103.4.2 2006/10/20 21:32:46 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.103.4.3 2006/10/24 21:10:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.2 2006/10/20 21:32:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.3 2006/10/24 21:10:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,6 +411,8 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 	struct timeval tv;
 	struct lwp *l;
 
+	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+
 	s = splstatclock();
 	st = p->p_sticks;
 	ut = p->p_uticks;
@@ -419,7 +421,6 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 
 	sec = 0;
 	usec = 0;
-	mutex_enter(&p->p_smutex);
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
 		sec += l->l_rtime.tv_sec;
@@ -443,7 +444,6 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 		}
 		lwp_unlock(l);
 	}
-	mutex_exit(&p->p_smutex);
 
 	tot = st + ut + it;
 	u = sec * 1000000ull + usec;
@@ -500,7 +500,9 @@ sys_getrusage(struct lwp *l, void *v, register_t *retval)
 
 	case RUSAGE_SELF:
 		rup = &p->p_stats->p_ru;
+		mutex_enter(&p->p_smutex);
 		calcru(p, &rup->ru_utime, &rup->ru_stime, NULL, NULL);
+		mutex_exit(&p->p_smutex);
 		break;
 
 	case RUSAGE_CHILDREN:

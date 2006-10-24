@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.577.4.1 2006/10/20 21:26:44 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.577.4.2 2006/10/24 21:10:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.1 2006/10/20 21:26:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.2 2006/10/24 21:10:22 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -692,10 +692,10 @@ getframe(struct lwp *l, int sig, int *onstack)
 	struct trapframe *tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
-	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	*onstack = (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
-		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
+		return (char *)l->l_sigstk->ss_sp + l->l_sigstk->ss_size;
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM)
 		return (void *)(tf->tf_esp + (tf->tf_ss << 4));
@@ -735,11 +735,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sel = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
 	    GUCODEBIG_SEL : GUCODE_SEL;
 	struct sigacts *ps = p->p_sigacts;
-	int onstack;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	struct sigframe_siginfo *fp = getframe(l, sig, &onstack), frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe *tf = l->l_md.md_regs;
+
+	LOCK_ASSERT(mutex_owned(&p->p_smutex));
 
 	fp--;
 
@@ -763,7 +765,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags = _UC_SIGMASK|_UC_VM;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = NULL;
-	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
+	frame.sf_uc.uc_flags |= (l->l_sigstk->ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
@@ -771,7 +773,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (tf->tf_eflags & PSL_VM)
 		(*p->p_emul->e_syscall_intern)(p);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	sendsig_reset(l, sig);
+
+	mutex_exit(&p->p_smutex);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -784,12 +792,15 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 }
 
 void
 sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+
+	LOCK_ASSERT(mutex_owned(&curproc->p_smutex));
+
 #ifdef COMPAT_16
 	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
 		sendsig_sigcontext(ksi, mask);
@@ -2373,9 +2384,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #endif
 	}
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 	return (0);
 }
 

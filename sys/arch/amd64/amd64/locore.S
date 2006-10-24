@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18.8.1 2006/10/20 19:42:24 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.18.8.2 2006/10/24 21:10:22 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -934,11 +934,6 @@ switch_resume:
 #endif
 	/* Record new lwp. */
 	movb	$LSONPROC,L_STAT(%r12)	# l->l_stat = SONPROC
-
-	/* Donate the current CPU's sched mutex to the LWP */
-	movq	CPUVAR(SELF),%rdi
-	addq	$CPU_INFO_SCHED_MUTEX,%rdi
-	movq	%rdi,L_MUTEX(%r12)
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	leaq	_C_LABEL(sched_mutex)(%rip), %rdi

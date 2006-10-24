@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43.4.1 2006/10/20 19:42:24 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.43.4.2 2006/10/24 21:10:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -1072,11 +1072,6 @@ switch_restored:
 	movl	$1,%ebx
 
 switch_return:
-	/* Donate the current CPU's sched mutex to the LWP */
-	movl	CPUVAR(SELF),%eax
-	addl	$CPU_INFO_SCHED_MUTEX,%eax
-	movl	%eax,L_MUTEX(%edi)
-
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	pushl	$_C_LABEL(sched_mutex)
 	call    _C_LABEL(mutex_exit)

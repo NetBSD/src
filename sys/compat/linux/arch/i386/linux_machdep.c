@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.114 2006/07/23 22:06:08 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.114.4.1 2006/10/24 21:10:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.114 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.114.4.1 2006/10/24 21:10:22 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -276,11 +276,11 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_rt_sigframe *fp, frame;
-	int onstack;
+	int onstack, error;
 	linux_siginfo_t *lsi;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
+	struct sigaltstack *sas = l->l_sigstk;
 
 	tf = l->l_md.md_regs;
 	/* Do we need to jump onto the signal stack? */
@@ -347,7 +347,11 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Save register context. */
 	linux_save_ucontext(l, tf, mask, sas, &frame.sf_uc);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	mutex_exit(&p->p_smutex);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -385,7 +389,7 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	int onstack;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
+	struct sigaltstack *sas = l->l_sigstk;
 
 	tf = l->l_md.md_regs;
 
@@ -500,7 +504,7 @@ linux_restore_sigcontext(l, scp, retval)
 	register_t *retval;
 {
 	struct proc *p = l->l_proc;
-	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
+	struct sigaltstack *sas = l->l_sigstk;
 	struct trapframe *tf;
 	sigset_t mask;
 	ssize_t ss_gap;
@@ -567,7 +571,7 @@ linux_restore_sigcontext(l, scp, retval)
 
 	/* Restore signal mask. */
 	linux_old_to_native_sigset(&mask, &scp->sc_mask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
 	DPRINTF(("sigreturn exit esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 	return EJUSTRETURN;
 }

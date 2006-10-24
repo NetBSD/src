@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.66.4.1 2006/10/21 15:20:48 ad Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.66.4.2 2006/10/24 21:10:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -83,6 +83,16 @@ struct sigctx {
 	sigset_t	ps_sigcatch;	/* Signals being caught by user. */
 };
 
+/*
+ * Storage for items that may be either per-LWP (1:1 threads) or
+ * per-process (SA threads).
+ */
+typedef struct sigstore {
+	stack_t		ss_stk;		/* p: sp & on stack state variable */
+	sigpend_t	ss_pend;	/* p: signals to this LWP */
+	sigset_t	ss_mask;	/* p: signal mask */
+} sigstore_t;
+
 /* additional signal action values, used only temporarily/internally */
 #define	SIG_CATCH	(void (*)(int))2
 
@@ -101,7 +111,7 @@ struct sigctx {
 		int _sg; \
 		mutex_enter(&p->p_smutex); \
 		while ((_sg = issignal(l)) > 0) \
-			sigget(&l->l_sigpend, NULL, _sg, NULL); \
+			sigget(l->l_sigpend, NULL, _sg, NULL); \
 		mutex_exit(&p->p_smutex); \
 	} while (/*CONSTCOND*/0)
 
@@ -175,6 +185,7 @@ void	sigactsunshare(struct proc *);
 void	sigactsfree(struct sigacts *);
 
 void	kpsendsig(struct lwp *, const struct ksiginfo *, const sigset_t *);
+void	sendsig_reset(struct lwp *, int);
 siginfo_t *siginfo_alloc(int);
 void	siginfo_free(void *);
 

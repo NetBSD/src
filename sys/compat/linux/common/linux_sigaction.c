@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.27 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.27.20.1 2006/10/24 21:10:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.27 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.27.20.1 2006/10/24 21:10:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,6 @@ linux_sys_sigaction(l, v, retval)
 		syscallarg(const struct linux_old_sigaction *) nsa;
 		syscallarg(struct linux_old_sigaction *) osa;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct linux_old_sigaction nlsa, olsa;
 	struct sigaction nbsa, obsa;
 	int error, sig;
@@ -103,7 +102,7 @@ linux_sys_sigaction(l, v, retval)
 		sigemptyset(&obsa.sa_mask);
 		obsa.sa_flags = 0;
 	} else {
-		error = sigaction1(p, linux_to_native_signo[sig],
+		error = sigaction1(l, linux_to_native_signo[sig],
 		    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0,
 		    NULL, 0);
 		if (error)

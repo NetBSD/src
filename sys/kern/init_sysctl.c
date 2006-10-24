@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.81.4.2 2006/10/21 15:20:46 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.81.4.3 2006/10/24 21:10:21 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.2 2006/10/21 15:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.3 2006/10/24 21:10:21 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2931,7 +2931,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_tracep = PTRTOUINT64(p->p_tracep);
 	ki->p_traceflag = p->p_traceflag;
 
-	/* XXXAD */
+	mutex_enter(&p->p_smutex);
+
 	memcpy(&ki->p_siglist, &p->p_sigpend.sp_set, sizeof(ki_sigset_t));
 	/* memcpy(&ki->p_sigmask, &p->p_sigctx.ps_sigmask, sizeof(ki_sigset_t)); XXXAD */
 	memcpy(&ki->p_sigignore, &p->p_sigctx.ps_sigignore,sizeof(ki_sigset_t));
@@ -2950,7 +2951,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	strncpy(ki->p_login, p->p_session->s_login,
 	    min(sizeof ki->p_login - 1, sizeof p->p_session->s_login));
 
-	mutex_enter(&p->p_smutex);
 	ki->p_nlwps = p->p_nlwps;
 	ki->p_realflag = p->p_flag;
 
@@ -2971,7 +2971,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_vm_ssize = vm->vm_ssize;
 
 		/* Pick a "representative" LWP */
-		mutex_enter(&p->p_smutex);
 		l = proc_representative_lwp(p, &tmp, 1);
 		ki->p_nrlwps = tmp;
 		ki->p_forw = PTRTOUINT64(l->l_forw);
@@ -2993,10 +2992,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 			strncpy(ki->p_wmesg, l->l_wmesg, sizeof(ki->p_wmesg));
 		ki->p_wchan = PTRTOUINT64(l->l_wchan);
 		lwp_unlock(l);
-		mutex_exit(&p->p_smutex);
 	}
-	mutex_exit(&p->p_smutex);
-
 	if (p->p_session->s_ttyvp)
 		ki->p_eflag |= EPROC_CTTY;
 	if (SESS_LEADER(p))
@@ -3036,12 +3032,10 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 
 		ki->p_uru_nvcsw = 0;
 		ki->p_uru_nivcsw = 0;
-		mutex_enter(&p->p_smutex);
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 			ki->p_uru_nvcsw += l->l_nvcsw;
 			ki->p_uru_nivcsw += l->l_nivcsw;
 		}
-		mutex_exit(&p->p_smutex);
 
 		timeradd(&p->p_stats->p_cru.ru_utime,
 			 &p->p_stats->p_cru.ru_stime, &ut);
@@ -3054,6 +3048,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	else
 #endif
 		ki->p_cpuid = KI_NOCPU;
+
+	mutex_exit(&p->p_smutex);
 }
 
 /*

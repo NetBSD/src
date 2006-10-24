@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.8 2006/09/01 21:20:46 matt Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.8.2.1 2006/10/24 21:10:22 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.8 2006/09/01 21:20:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.8.2.1 2006/10/24 21:10:22 ad Exp $");
 
 #include "opt_ptrace.h"
 
@@ -142,7 +142,7 @@ darwin_sys_ptrace(l, v, retval)
 		proc_stop(t, 0);
 
 		if ((error = sys_ptrace(l, v, retval)) != 0) {
-			proc_unstop(t);
+			proc_unstop(t, t->p_xstat != 0);
 			if (had_sigexc)
 				ded->ded_flags |= DARWIN_DED_SIGEXC;
 		}
@@ -175,7 +175,7 @@ darwin_sys_ptrace(l, v, retval)
 
 		t->p_xstat = signo;
 		if (signo != 0)
-			sigaddset(&p->p_sigctx.ps_siglist, signo);
+			sigaddset(&p->p_sigpend.sp_set, signo);
 
 		break;
 	}
