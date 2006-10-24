@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.2,v 1.1.2.30 2006/10/24 08:37:09 ghen Exp $
+#	$NetBSD: CHANGES-3.0.2,v 1.1.2.31 2006/10/24 17:05:20 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.1 release to the NetBSD 3.0.2
 release:
@@ -292,4 +292,23 @@ usr.sbin/bind/include/config.h			1.5
 	we've disabled use of pthreads) where the BIND applications end up
 	being killed with SIGTERM instead of exiting gracefully.
 	[he, ticket #1565]
+
+sys/compat/darwin/darwin_iohidsystem.c		1.35 via patch
+sys/compat/darwin/darwin_ktrace.c		1.6 via patch
+sys/compat/freebsd/freebsd_misc.c		1.26 via patch
+sys/kern/kern_ktrace.c				1.110 via patch
+sys/sys/ktrace.h				1.45 via patch
+
+	Make ktruser enforce the maximum buffer length, and return an error.
+	[adrianp, ticket #1564]
+
+sys/kern/uipc_syscalls.c			1.104
+
+	Fix local denial of service (kernel panic through sendmsg()).
+	[elad, ticket #1566]
+
+sys/miscfs/procfs/procfs_linux.c		1.28
+
+	Fix a kernel panic when trying to access /emul/linux/proc/0/stat.
+	[elad, ticket #1567]
 
