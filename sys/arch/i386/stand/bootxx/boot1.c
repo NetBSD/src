@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.12 2006/10/24 15:56:55 oster Exp $	*/
+/*	$NetBSD: boot1.c,v 1.13 2006/10/24 23:41:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.12 2006/10/24 15:56:55 oster Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.13 2006/10/24 23:41:01 christos Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -111,12 +111,10 @@ boot1(uint32_t biosdev, uint32_t *sector)
 		bios_sector += RF_PROTECTED_SECTORS;
 
 	fd = ob();
-	if (fd == -1)
-		goto out;
 
 done:
+	/* if we fail here, so will fstat, so keep going */
 	if (fstat(fd, &sb) == -1) {
-out:
 		return "Can't open /boot\r\n";
 	}
 
