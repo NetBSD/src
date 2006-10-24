@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_codecs.c,v 1.3 2006/10/23 18:22:00 christos Exp $	*/
+/*	$NetBSD: mime_codecs.c,v 1.4 2006/10/24 19:57:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_codecs.c,v 1.3 2006/10/23 18:22:00 christos Exp $");
+__RCSID("$NetBSD: mime_codecs.c,v 1.4 2006/10/24 19:57:05 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -345,7 +345,7 @@ mime_fB64_encode(FILE *fi, FILE *fo, void *cookie __unused)
 }
 
 static void
-mime_fB64_decode(FILE *fi, FILE *fo, void *cookie)
+mime_fB64_decode(FILE *fi, FILE *fo, void *add_lf)
 {
 	char *line;
 	size_t len;
@@ -387,7 +387,7 @@ mime_fB64_decode(FILE *fi, FILE *fo, void *cookie)
 
 	free(buf);
 
-	if (cookie)
+	if (add_lf)
 		(void)fputc('\n', fo);
 }
 
