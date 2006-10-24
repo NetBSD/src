@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.7 2005/01/12 05:27:35 christos Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.8 2006/10/24 22:49:19 mlelstv Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.7 2005/01/12 05:27:35 christos Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.8 2006/10/24 22:49:19 mlelstv Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -161,6 +161,10 @@ __gensalt_blowfish(char *salt, size_t saltlen, const char *option)
 
 	if (saltlen < BCRYPT_MAXSALTLEN) {
 		errno = ENOSPC;
+		return -1;
+	}
+	if (option == NULL) {
+		errno = EINVAL;
 		return -1;
 	}
 	nrounds = strtoul(option, &ep, 0);
