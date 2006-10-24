@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.15 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.16 2006/10/24 02:48:04 mrg Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.15 2006/10/12 19:59:08 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.16 2006/10/24 02:48:04 mrg Exp $");
 
 #ident "@(#)rm_class.c  1.48     97/12/05 SMI"
 
@@ -1470,12 +1470,12 @@ hzto(struct timeval *tv)
 void
 rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 {
-	int	delay, t, extradelay;
+	int	ndelay, t, extradelay;
 
 	cl->stats_.overactions++;
-	TV_DELTA(&cl->undertime_, &cl->overtime_, delay);
+	TV_DELTA(&cl->undertime_, &cl->overtime_, ndelay);
 #ifndef BORROW_OFFTIME
-	delay += cl->offtime_;
+	ndelay += cl->offtime_;
 #endif
 
 	if (!cl->sleeping_) {
@@ -1500,7 +1500,7 @@ rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 #endif
 		if (extradelay > 0) {
 			TV_ADD_DELTA(&cl->undertime_, extradelay, &cl->undertime_);
-			delay += extradelay;
+			ndelay += extradelay;
 		}
 
 		cl->sleeping_ = 1;
@@ -1513,7 +1513,7 @@ rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 		 * NOTE:  If there's no other traffic, we need the timer as
 		 * a 'backstop' to restart this class.
 		 */
-		if (delay > tick * 2) {
+		if (ndelay > tick * 2) {
 #ifdef __FreeBSD__
 			/* FreeBSD rounds up the tick */
 			t = hzto(&cl->undertime_);
