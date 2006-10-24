@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.2 2006/10/20 19:28:11 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.3 2006/10/24 19:07:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@
 #ifndef _AMD64_MUTEX_H_
 #define	_AMD64_MUTEX_H_
 
-#include <x86/include/mutex.h>
-
 #ifdef __MUTEX_PRIVATE
 #define	MUTEX_THREAD		0xfffffffffffffff0UL
 #endif	/* __MUTEX_PRIVATE */
+
+#include <x86/mutex.h>
 
 #endif	/* _AMD64_MUTEX_H_ */

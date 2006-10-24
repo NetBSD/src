@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.2.1 2006/09/10 23:42:41 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.2.2 2006/10/24 19:07:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -43,6 +43,6 @@
 #define	RW_THREAD		0xfffffffffffffff0UL
 #endif
 
-#include <x86/include/rwlock.h>
+#include <x86/rwlock.h>
 
 #endif	/* _AMD64_RWLOCK_IMPL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.1.2.1 2006/10/20 19:34:29 ad Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.1.2.2 2006/10/24 19:07:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -52,12 +52,13 @@ typedef	struct lockops {
 
 #define	LOCKDEBUG_ABORT(id, l, o, f, m)	lockdebug_abort(id, l, o, f, m)
 
+void	lockdebug_abort(int, void *, lockops_t *, const char *, const char *);
+
 #ifdef LOCKDEBUG
 
 void	lockdebug_init(void);
 u_int	lockdebug_alloc(void *, lockops_t *, int);
 void	lockdebug_free(void *, u_int);
-void	lockdebug_abort(int, void *, lockops_t *, const char *, const char *);
 void	lockdebug_locked(u_int, uintptr_t, int);
 void	lockdebug_unlocked(u_int, uintptr_t, int);
 void	lockdebug_barrier(void *, int);
@@ -70,11 +71,11 @@ void	lockdebug_barrier(void *, int);
 
 #else	/* LOCKDEBUG */
 
-#define	LOCKDEBUG_ALLOC(lock, ops, s)	/* nothing */
-#define	LOCKDEBUG_FREE(lock, id)	/* nothing */
-#define	LOCKDEBUG_LOCKED(id, where)	/* nothing */
-#define	LOCKDEBUG_UNLOCKED(id, where)	/* nothing */
-#define	LOCKDEBUG_BARRIER(lk, slp)	/* nothing */
+#define	LOCKDEBUG_ALLOC(lock, ops, s)		0
+#define	LOCKDEBUG_FREE(lock, id)		/* nothing */
+#define	LOCKDEBUG_LOCKED(id, where, s)		/* nothing */
+#define	LOCKDEBUG_UNLOCKED(id, where, s)	/* nothing */
+#define	LOCKDEBUG_BARRIER(lk, slp)		/* nothing */
 
 #endif	/* LOCKDEBUG */
 
