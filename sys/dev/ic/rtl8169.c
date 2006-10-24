@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.47 2006/10/22 01:47:53 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.48 2006/10/24 11:17:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1062,10 +1062,12 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	cmdstat = map->dm_segs[0].ds_len;
 	if (idx == (RTK_RX_DESC_CNT - 1))
 		cmdstat |= RTK_RDESC_CMD_EOR;
-	cmdstat |= RTK_RDESC_CMD_OWN;
-	d->rtk_cmdstat = htole32(cmdstat);
 	d->rtk_bufaddr_lo = htole32(RTK_ADDR_LO(map->dm_segs[0].ds_addr));
 	d->rtk_bufaddr_hi = htole32(RTK_ADDR_HI(map->dm_segs[0].ds_addr));
+	d->rtk_cmdstat = htole32(cmdstat);
+	RTK_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	cmdstat |= RTK_RDESC_CMD_OWN;
+	d->rtk_cmdstat = htole32(cmdstat);
 	RTK_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	sc->rtk_ldata.rtk_rx_mbuf[idx] = m;
