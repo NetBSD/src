@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.24 2006/09/11 03:37:12 matt Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.25 2006/10/24 21:03:13 bjh21 Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.24 2006/09/11 03:37:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.25 2006/10/24 21:03:13 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.24 2006/09/11 03:37:12 matt Exp 
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
+#include <arm/arm32/machdep.h>
 #include <arm/undefined.h>
 
 #include "opt_ipkdb.h"
@@ -107,7 +108,6 @@ extern u_int undefined_handler_address;
 /*
  *  Imported routines
  */
-extern void parse_mi_bootargs		__P((char *args));
 extern void data_abort_handler		__P((trapframe_t *frame));
 extern void prefetch_abort_handler	__P((trapframe_t *frame));
 extern void undefinedinstruction_bounce	__P((trapframe_t *frame));
