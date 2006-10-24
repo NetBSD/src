@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.71 2006/10/12 01:32:00 christos Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.72 2006/10/24 21:03:30 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ int __CONCAT(dname,_detach)(struct device *self __unused, int flags __unused)
 	sc = __CONCAT(dname,_cd).cd_devs[unit]
 
 #define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
-	(config_found_sm_loc(parent, (args)->port == 0 ? "usb" : "uhub", \
+	(config_found_sm_loc(parent, "usbdevif", \
 			     NULL, args, print, sub))
 
 #elif defined(__OpenBSD__)

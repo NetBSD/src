@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.77 2005/12/27 04:06:45 chs Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.78 2006/10/24 21:03:30 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -306,16 +306,16 @@ void		usb_schedsoftintr(struct usbd_bus *);
 #define	UHUBCF_RELEASE		5
 #endif
 
-#define	uhubcf_port		cf_loc[UHUBCF_PORT]
-#define	uhubcf_configuration	cf_loc[UHUBCF_CONFIGURATION]
-#define	uhubcf_interface	cf_loc[UHUBCF_INTERFACE]
-#define	uhubcf_vendor		cf_loc[UHUBCF_VENDOR]
-#define	uhubcf_product		cf_loc[UHUBCF_PRODUCT]
-#define	uhubcf_release		cf_loc[UHUBCF_RELEASE]
-#define	UHUB_UNK_PORT		UHUBCF_PORT_DEFAULT /* wildcarded 'port' */
-#define	UHUB_UNK_CONFIGURATION	UHUBCF_CONFIGURATION_DEFAULT /* wildcarded 'configuration' */
-#define	UHUB_UNK_INTERFACE	UHUBCF_INTERFACE_DEFAULT /* wildcarded 'interface' */
-#define	UHUB_UNK_VENDOR		UHUBCF_VENDOR_DEFAULT /* wildcarded 'vendor' */
-#define	UHUB_UNK_PRODUCT	UHUBCF_PRODUCT_DEFAULT /* wildcarded 'product' */
-#define	UHUB_UNK_RELEASE	UHUBCF_RELEASE_DEFAULT /* wildcarded 'release' */
+#define	uhubcf_port		cf_loc[USBDEVIFCF_PORT]
+#define	uhubcf_configuration	cf_loc[USBDEVIFCF_CONFIGURATION]
+#define	uhubcf_interface	cf_loc[USBDEVIFCF_INTERFACE]
+#define	uhubcf_vendor		cf_loc[USBDEVIFCF_VENDOR]
+#define	uhubcf_product		cf_loc[USBDEVIFCF_PRODUCT]
+#define	uhubcf_release		cf_loc[USBDEVIFCF_RELEASE]
+#define	UHUB_UNK_PORT		USBDEVIFCF_PORT_DEFAULT /* wildcarded 'port' */
+#define	UHUB_UNK_CONFIGURATION	USBDEVIFCF_CONFIGURATION_DEFAULT /* wildcarded 'configuration' */
+#define	UHUB_UNK_INTERFACE	USBDEVIFCF_INTERFACE_DEFAULT /* wildcarded 'interface' */
+#define	UHUB_UNK_VENDOR		USBDEVIFCF_VENDOR_DEFAULT /* wildcarded 'vendor' */
+#define	UHUB_UNK_PRODUCT	USBDEVIFCF_PRODUCT_DEFAULT /* wildcarded 'product' */
+#define	UHUB_UNK_RELEASE	USBDEVIFCF_RELEASE_DEFAULT /* wildcarded 'release' */
 
