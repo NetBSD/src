@@ -1,11 +1,11 @@
-#	$NetBSD: files.pcmcia,v 1.51 2006/09/10 15:45:56 plunky Exp $
+#	$NetBSD: files.pcmcia,v 1.52 2006/10/24 20:54:10 drochner Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
 
 defflag				PCMCIAVERBOSE
 
-device	pcmcia {[function = -1], [irq = -1]}
+device	pcmcia {[function = -1]}
 file	dev/pcmcia/pcmcia.c			pcmcia
 file	dev/pcmcia/pcmcia_cis.c			pcmcia
 file	dev/pcmcia/pcmcia_cis_quirks.c		pcmcia
