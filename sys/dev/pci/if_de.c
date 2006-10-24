@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.121 2006/09/07 02:40:32 dogcow Exp $	*/
+/*	$NetBSD: if_de.c,v 1.122 2006/10/24 19:18:33 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.121 2006/09/07 02:40:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.122 2006/10/24 19:18:33 drochner Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -1061,6 +1061,7 @@ static const tulip_boardsw_t tulip_21040_boardsw = {
     tulip_21040_media_probe,
     tulip_media_select,
     tulip_media_poll,
+    NULL,
 };
 
 static const tulip_boardsw_t tulip_21040_10baset_only_boardsw = {
@@ -1068,12 +1069,14 @@ static const tulip_boardsw_t tulip_21040_10baset_only_boardsw = {
     tulip_21040_10baset_only_media_probe,
     tulip_21040_10baset_only_media_select,
     NULL,
+    NULL,
 };
 
 static const tulip_boardsw_t tulip_21040_auibnc_only_boardsw = {
     TULIP_21040_GENERIC,
     tulip_21040_auibnc_only_media_probe,
     tulip_21040_auibnc_only_media_select,
+    NULL,
     NULL,
 };
 
@@ -1267,7 +1270,8 @@ static const tulip_boardsw_t tulip_21041_boardsw = {
     TULIP_21041_GENERIC,
     tulip_21041_media_probe,
     tulip_media_select,
-    tulip_21041_media_poll
+    tulip_21041_media_poll,
+    NULL,
 };
 
 static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
@@ -1283,7 +1287,7 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
     { 0x0281F400, 0,		/* 00-A0-7D */
       {
 	{ 0x12, 0x0010, 0x0000 },	/* 10T */
-	{ 0 },				/* 100TX */
+	{ 0, 0, 0 },			/* 100TX */
 	{ 0x12, 0x0010, 0x0010 },	/* 100T4 */
 	{ 0x12, 0x0008, 0x0008 },	/* FULL_DUPLEX */
       },
@@ -1295,7 +1299,7 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
       {
 	{ 0x12, 0x0080, 0x0000 },	/* 10T */
 	{ 0x12, 0x0080, 0x0080 },	/* 100TX */
-	{ 0 },				/* 100T4 */
+	{ 0, 0, 0 },			/* 100T4 */
 	{ 0x12, 0x0040, 0x0040 },	/* FULL_DUPLEX */
       },
 #if defined(TULIP_DEBUG)
@@ -1306,7 +1310,7 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
     { 0x0015F420, 0,	/* 00-A0-7D */
       {
 	{ 0x12, 0x0010, 0x0000 },	/* 10T */
-	{ 0 },				/* 100TX */
+	{ 0, 0, 0 },			/* 100TX */
 	{ 0x12, 0x0010, 0x0010 },	/* 100T4 */
 	{ 0x12, 0x0008, 0x0008 },	/* FULL_DUPLEX */
       },
@@ -1319,14 +1323,18 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
       {
 	{ 0x11, 0x8000, 0x0000 },	/* 10T */
 	{ 0x11, 0x8000, 0x8000 },	/* 100TX */
-	{ 0 },				/* 100T4 */
+	{ 0, 0, 0 },			/* 100T4 */
 	{ 0x11, 0x4000, 0x4000 },	/* FULL_DUPLEX */
       },
 #if defined(TULIP_DEBUG)
       "ICS 1890"
 #endif
     },
-    { 0 }
+    { 0, 0, {{ 0, 0, 0},}, 
+#if defined(TULIP_DEBUG)
+	NULL
+#endif
+    },
 };
 
 static tulip_media_t
@@ -2849,7 +2857,7 @@ static const struct {
     { tulip_identify_asante_nic,	{ 0x00, 0x00, 0x94 } },
     { tulip_identify_accton_nic,	{ 0x00, 0x00, 0xE8 } },
     { tulip_identify_compex_nic,        { 0x00, 0x80, 0x48 } },
-    { NULL }
+    { NULL, { 0, 0, 0} }
 };
 
 /*
