@@ -423,12 +423,15 @@ check_map:
 
     // for each entry
     for (i = 1; ; i++) {
+#if 0
 	if (limit < 0) {
 	    /* XXX what to use for end of list? */
 	    if (i > 5) {
 	    	break;
 	    }
-	} else if (i > limit) {
+	} else
+#endif
+	if (i > limit) {
 	    break;
 	}
 
@@ -452,10 +455,13 @@ check_map:
 	    printf("\treserved word is 0x%x, should be 0\n", mb->dpme_reserved_1);
 	}
 	// entry count matches
+#if 0
 	if (limit < 0) {
 	    printed = 1;
 	    printf("\tentry count is 0x%lx, real value unknown\n", mb->dpme_map_entries);
-	} else if (mb->dpme_map_entries != limit) {
+	} else
+#endif
+	if (mb->dpme_map_entries != limit) {
 	    printed = 1;
 	    printf("\tentry count is 0x%lx, should be %ld\n", mb->dpme_map_entries, limit);
 	}
