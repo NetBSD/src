@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 2006/09/24 00:43:44 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.57 2006/10/24 01:56:33 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56 2006/09/24 00:43:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 2006/10/24 01:56:33 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -972,10 +972,13 @@ __pmap_pte_lookup(pmap_t pmap, vaddr_t va)
 pt_entry_t *
 __pmap_kpte_lookup(vaddr_t va)
 {
+	pt_entry_t *ptp;
 
-	return (__pmap_kernel.pm_ptp
-	    [__PMAP_PTP_INDEX(va - VM_MIN_KERNEL_ADDRESS)] +
-	    __PMAP_PTP_OFSET(va));
+	ptp = __pmap_kernel.pm_ptp[__PMAP_PTP_INDEX(va-VM_MIN_KERNEL_ADDRESS)];
+	if (ptp == NULL)
+		return NULL;
+
+	return (ptp + __PMAP_PTP_OFSET(va));
 }
 
 /*
