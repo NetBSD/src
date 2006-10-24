@@ -13,4 +13,4 @@
 # -c means to not copy the files to the spool directory (may be
 # overriden by -C or -p).
 #
-exec @BINDIR@/uucp -t -R -c $*
+exec @BINDIR@/uucp -t -R -c "$@"

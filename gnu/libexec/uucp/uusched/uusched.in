@@ -10,4 +10,4 @@
 # This is pretty trivial, since all the functionality was moved into
 # uucico itself.
 #
-exec @SBINDIR@/uucico -r1 $*
+exec @SBINDIR@/uucico -r1 "$@"
