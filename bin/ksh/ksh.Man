@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.18 2004/07/07 19:20:09 mycroft Exp $
+.\" $NetBSD: ksh.Man,v 1.19 2006/10/24 18:30:25 cbiere Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -125,14 +125,14 @@ user-id (group-id) to its real user-id (group-id).
 If the basename of the name the shell is called with (\fIi.e.\fP, argv[0])
 starts with \fB\-\fP or if the \fB\-l\fP option is used, the shell is assumed
 to be a login shell and the shell reads and executes the contents of
-\fB/etc/profile\fP and \fB$HOME/.profile\fP if they exist and are readable.
+\fB/etc/profile\fP, \fB$HOME/.profile\fP and \fB$ENV\fP if they exist and are
+readable.
 .PP
 If the \fBENV\fP parameter is set when the shell starts (or, in the
 case of login shells, after any profiles are processed), its value
 is subjected to parameter, command, arithmetic and tilde substitution and
 the resulting file (if any) is read and executed.
-If \fBENV\fP parameter is not set (and not null) and pdksh was compiled
-with the \fBDEFAULT_ENV\fP macro defined, the file named in that macro
+If the \fBENV\fP parameter is not set (and not null) the file \fB$HOME/.kshrc\fP 
 is included (after the above mentioned substitutions have been performed).
 .PP
 The exit status of the shell is 127 if the command file specified
@@ -3537,6 +3537,8 @@ be deleted and a new prompt to be printed.
 .\"}}}
 .\"{{{  Files
 .SH FILES
+~/.kshrc
+.br
 ~/.profile
 .br
 /etc/profile
