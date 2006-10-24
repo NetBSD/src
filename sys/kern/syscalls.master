@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.159 2006/09/01 20:58:18 matt Exp $
+	$NetBSD: syscalls.master,v 1.159.2.1 2006/10/24 21:37:01 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -102,9 +102,9 @@
 #ifdef COMPAT_43
 24	STD		{ uid_t sys_getuid_with_euid(void); } getuid
 #else
-24	STD		{ uid_t sys_getuid(void); }
+24	STD MPSAFE	{ uid_t sys_getuid(void); }
 #endif
-25	STD		{ uid_t sys_geteuid(void); }
+25	STD MPSAFE	{ uid_t sys_geteuid(void); }
 26	STD		{ int sys_ptrace(int req, pid_t pid, caddr_t addr, \
 			    int data); }
 27	STD		{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
@@ -132,7 +132,7 @@
 			    struct stat43 *ub); } lstat43
 41	STD		{ int sys_dup(int fd); }
 42	STD		{ int sys_pipe(void); }
-43	STD		{ gid_t sys_getegid(void); }
+43	STD MPSAFE	{ gid_t sys_getegid(void); }
 44	STD		{ int sys_profil(caddr_t samples, size_t size, \
 			    u_long offset, u_int scale); }
 #if defined(KTRACE) || !defined(_KERNEL)
@@ -147,7 +147,7 @@
 #ifdef COMPAT_43
 47	STD		{ gid_t sys_getgid_with_egid(void); } getgid
 #else
-47	STD		{ gid_t sys_getgid(void); }
+47	STD MPSAFE	{ gid_t sys_getgid(void); }
 #endif
 48	COMPAT_13	{ int sys_sigprocmask(int how, \
 			    int mask); } sigprocmask13
@@ -343,10 +343,10 @@
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64)
-170	COMPAT_10	{ int sys_msgsys(int which, int a2, int a3, int a4, \
+170	COMPAT_10 MPSAFE { int sys_msgsys(int which, int a2, int a3, int a4, \
 			    int a5, int a6); } omsgsys
 #else
-170	EXCL		1.0 msgsys
+170	EXCL MPSAFE	1.0 msgsys
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64)
@@ -465,18 +465,18 @@
 223	EXCL		semconfig
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
-224	COMPAT_14	{ int sys_msgctl(int msqid, int cmd, \
+224	COMPAT_14 MPSAFE { int sys_msgctl(int msqid, int cmd, \
 			    struct msqid_ds14 *buf); }
-225	STD		{ int sys_msgget(key_t key, int msgflg); }
-226	STD		{ int sys_msgsnd(int msqid, const void *msgp, \
+225	STD MPSAFE	{ int sys_msgget(key_t key, int msgflg); }
+226	STD MPSAFE	{ int sys_msgsnd(int msqid, const void *msgp, \
 			    size_t msgsz, int msgflg); }
-227	STD		{ ssize_t sys_msgrcv(int msqid, void *msgp, \
+227	STD MPSAFE	{ ssize_t sys_msgrcv(int msqid, void *msgp, \
 			    size_t msgsz, long msgtyp, int msgflg); }
 #else
-224	EXCL		compat_14_msgctl
-225	EXCL		msgget
-226	EXCL		msgsnd
-227	EXCL		msgrcv
+224	EXCL MPSAFE	compat_14_msgctl
+225	EXCL MPSAFE	msgget
+226	EXCL MPSAFE	msgsnd
+227	EXCL MPSAFE	msgrcv
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
 228	STD		{ void *sys_shmat(int shmid, const void *shmaddr, \
@@ -622,10 +622,10 @@
 301	EXCL		____semctl13
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
-302	STD		{ int sys___msgctl13(int msqid, int cmd, \
+302	STD MPSAFE	{ int sys___msgctl13(int msqid, int cmd, \
 			    struct msqid_ds *buf); }
 #else
-302	EXCL		__msgctl13
+302	EXCL MPSAFE	__msgctl13
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
 303	STD		{ int sys___shmctl13(int shmid, int cmd, \
@@ -648,10 +648,10 @@
 313	STD		{ int sys__lwp_suspend(lwpid_t target); }
 314	STD		{ int sys__lwp_continue(lwpid_t target); }
 315	STD		{ int sys__lwp_wakeup(lwpid_t target); }
-316	STD		{ void *sys__lwp_getprivate(void); }
-317	STD		{ void sys__lwp_setprivate(void *ptr); }
-; Syscalls 318-329 reserved for remaining Solaris-compatible LWP calls.
-318	UNIMPL
+316	STD MPSAFE	{ void *sys__lwp_getprivate(void); }
+317	STD MPSAFE	{ void sys__lwp_setprivate(void *ptr); }
+318	STD		{ void sys__lwp_kill(lwpid_t target, int signo); }
+; Syscalls 319-329 reserved for remaining Solaris-compatible LWP calls.
 319	UNIMPL
 320	UNIMPL
 321	UNIMPL
