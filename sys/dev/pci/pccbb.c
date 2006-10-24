@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.135 2006/10/12 01:31:32 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.136 2006/10/24 14:16:39 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.135 2006/10/12 01:31:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.136 2006/10/24 14:16:39 itohy Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1537,7 +1537,7 @@ cb_reset(sc)
 	 * Some machines request longer duration.
 	 */
 	int reset_duration =
-	    (sc->sc_chipset == CB_RX5C47X ? 400 : 40);
+	    (sc->sc_chipset == CB_RX5C47X ? 400 : 50);
 	u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
 
 	/* Reset bit Assert (bit 6 at 0x3E) */
