@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.41 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.41.12.1 2006/10/24 16:33:33 ghen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -234,7 +234,7 @@ void ktrpsig(struct proc *, int, sig_t, const sigset_t *, const ksiginfo_t *);
 void ktrsyscall(struct proc *, register_t, register_t,
     const struct sysent *, register_t []);
 void ktrsysret(struct proc *, register_t, int, register_t *);
-void ktruser(struct proc *, const char *, void *, size_t, int);
+int ktruser(struct proc *, const char *, void *, size_t, int);
 void ktrmmsg(struct proc *, const void *, size_t);
 void ktrkmem(struct proc *, int, const void *, size_t);
 void ktrmool(struct proc *, const void *, size_t, const void *);
