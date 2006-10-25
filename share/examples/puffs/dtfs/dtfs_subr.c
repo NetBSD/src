@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.1 2006/10/23 00:44:53 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.2 2006/10/25 18:18:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -167,8 +167,8 @@ dtfs_dirgetbyname(struct dtfs_file *searchdir, const char *fname)
 /*
  * common nuke, kill dirent from parent node
  */
-static int
-nukenode(struct puffs_node *nukeme, struct puffs_node *pn_parent,
+void
+dtfs_nukenode(struct puffs_node *nukeme, struct puffs_node *pn_parent,
 	const char *fname)
 {
 	struct dtfs_dirent *dfd;
@@ -185,61 +185,36 @@ nukenode(struct puffs_node *nukeme, struct puffs_node *pn_parent,
 
 	dtfs_removedent(pn_parent, dfd);
 	free(dfd);
-
-	if (nukeme->pn_va.va_nlink == 0) {
-		/* we don't keep track of symlink length now */
-		if (nukeme->pn_va.va_type == VREG) {
-			assert(dtm->dtm_fsizes >= nukeme->pn_va.va_size);
-			dtm->dtm_fsizes -= nukeme->pn_va.va_size;
-		}
-		puffs_putpnode(nukeme);
-		return 1;
-	}
-
-	return 0;
 }
 
-int
-dtfs_nukefile(struct puffs_node *pn, struct puffs_node *pn_parent,
-	const char *fname)
+/* free lingering information */
+void
+dtfs_freenode(struct puffs_node *pn)
 {
-	struct dtfs_file *nuke_f;
-	enum vtype type;
+	struct dtfs_file *df = DTFS_PTOF(pn);
+	struct dtfs_mount *dtm;
 
-	if (pn->pn_va.va_type == VDIR)
-		return EISDIR;
+	assert(pn->pn_va.va_nlink == 0);
+	dtm = pn->pn_mnt->pu_privdata;
 
-	nuke_f = pn->pn_data;
-	type = pn->pn_type;
-	if (nukenode(pn, pn_parent, fname)) {
-		/* well, it's this or disgusting use of union properties ;{} */
-		switch (type) {
-		case VREG:
-			free(nuke_f->df_data);
-			break;
-		case VLNK:
-			free(nuke_f->df_linktarget);
-			break;
-		default:
-			assert(0);
-			break;
-		}
+	switch (pn->pn_type) {
+	case VREG:
+		assert(dtm->dtm_fsizes >= pn->pn_va.va_size);
+		dtm->dtm_fsizes -= pn->pn_va.va_size;
+		free(df->df_data);
+		break;
+	case VLNK:
+		free(df->df_linktarget);
+		break;
+	case VDIR:
+		break;
+	default:
+		assert(0);
+		break;
 	}
 
-	return 0;
-}
-
-int
-dtfs_nukedir(struct puffs_node *pn, struct puffs_node *pn_parent,
-	const char *dname)
-{
-	struct dtfs_file *nuke_d;
-
-	nuke_d = pn->pn_data;
-	if (!LIST_EMPTY(&nuke_d->df_dirents))
-		return ENOTEMPTY;
-
-	return nukenode(pn, pn_parent, dname);
+	free(df);
+	puffs_putpnode(pn);
 }
 
 void

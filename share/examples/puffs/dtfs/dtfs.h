@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.h,v 1.1 2006/10/23 00:44:53 pooka Exp $	*/
+/*	$NetBSD: dtfs.h,v 1.2 2006/10/25 18:18:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -86,10 +86,9 @@ struct dtfs_file *	dtfs_newfile(void);
 struct dtfs_dirent *	dtfs_dirgetnth(struct dtfs_file *, int);
 struct dtfs_dirent *	dtfs_dirgetbyname(struct dtfs_file *, const char *);
 
-int			dtfs_nukefile(struct puffs_node *, struct puffs_node *,
+void			dtfs_nukenode(struct puffs_node *, struct puffs_node *,
 				      const char *);
-int			dtfs_nukedir(struct puffs_node *, struct puffs_node *,
-				     const char *);
+void			dtfs_freenode(struct puffs_node *);
 void			dtfs_setsize(struct puffs_node *, off_t, int);
 
 void	dtfs_adddent(struct puffs_node *, struct dtfs_dirent *);
