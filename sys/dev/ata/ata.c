@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.81 2006/10/15 00:00:00 itohy Exp $	*/
+/*	$NetBSD: ata.c,v 1.82 2006/10/25 17:33:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.81 2006/10/15 00:00:00 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.82 2006/10/25 17:33:02 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -176,6 +176,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	struct atabus_initq *atabus_initq = NULL;
 
 	/* Probe for the drives. */
+	/* XXX for SATA devices we will power up all drives at once */
 	(*atac->atac_probe)(chp);
 
 	ATADEBUG_PRINT(("atabusattach: ch_drive_flags 0x%x 0x%x\n",
