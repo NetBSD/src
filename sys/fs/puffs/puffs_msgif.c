@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.1 2006/10/22 22:43:23 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.2 2006/10/25 12:04:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.1 2006/10/22 22:43:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.2 2006/10/25 12:04:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -577,6 +577,16 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	simple_unlock(&pi_lock);
 
 	/*
+	 * Free the waiting callers before proceeding any further.
+	 * The syncer might be jogging around in this file system
+	 * currently.  If we allow it to go to the userspace of no
+	 * return while trying to get the syncer lock, well ...
+	 * synclk: I feel happy, I feel fine.
+	 * lockmgr: You're not fooling anyone, you know.
+	 */
+	puffs_userdead(pmp);
+
+	/*
 	 * Detach from VFS.  First do necessary XXX-dance (from
 	 * sys_unmount() & other callers of dounmount()
 	 *
@@ -596,7 +606,6 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	}
 
 	/* Once we have the mount point, unmount() can't interfere */
-	puffs_userdead(pmp);
 	dounmount(mp, MNT_FORCE, l);
 
 	return 0;
