@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_coff.c,v 1.5 2003/07/26 19:24:43 salo Exp $ */
+/* $NetBSD: nlist_coff.c,v 1.6 2006/10/25 20:43:49 uwe Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_coff.c,v 1.5 2003/07/26 19:24:43 salo Exp $");
+__RCSID("$NetBSD: nlist_coff.c,v 1.6 2006/10/25 20:43:49 uwe Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -58,9 +58,8 @@ __RCSID("$NetBSD: nlist_coff.c,v 1.5 2003/07/26 19:24:43 salo Exp $");
 #endif
 
 #ifdef NLIST_COFF
-#define	check(off, size)	((off < 0) || (off + size > mappedsize))
-#define	BAD			do { rv = -1; goto out; } while (/*CONSTCOND*/0)
-#define	BADUNMAP		do { rv = -1; goto unmap; } while (/*CONSTCOND*/0)
+#define	BAD		do { rv = -1; goto out; } while (/*CONSTCOND*/0)
+#define	BADUNMAP	do { rv = -1; goto unmap; } while (/*CONSTCOND*/0)
 
 #define ES_LEN 18
 struct coff_extsym {
@@ -121,10 +120,10 @@ __fdnlist_coff(fd, list)
 
 	/*
 	 * Make sure we can access the executable's header
-	 * directly, and make sure the recognize the executable
+	 * directly, and make sure we recognize the executable
 	 * as an COFF binary.
 	 */
-	if (check(0, sizeof *filehdrp))
+	if (mappedsize < sizeof (struct coff_filehdr))
 		BADUNMAP;
 	filehdrp = (struct coff_filehdr *)&mappedfile[0];
 
@@ -137,7 +136,7 @@ __fdnlist_coff(fd, list)
 	symoff = filehdrp->f_symptr;
 	nesyms = filehdrp->f_nsyms;
 
-	if (check(symoff, ES_LEN * nesyms))
+	if (symoff + ES_LEN * nesyms > mappedsize)
 		BADUNMAP;
 	extstroff = symoff + ES_LEN * nesyms;
 
