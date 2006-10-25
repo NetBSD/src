@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.173 2006/10/22 19:21:26 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.174 2006/10/25 20:28:45 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.173 2006/10/22 19:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.174 2006/10/25 20:28:45 elad Exp $");
 
 #include "opt_inet.h"
 
@@ -1344,12 +1344,16 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 	ifcr = (struct ifcapreq *)data;
 	ifdr = (struct ifdatareq *)data;
 
+	ifp = ifunit(ifr->ifr_name);
+
 	switch (cmd) {
 	case SIOCIFCREATE:
 	case SIOCIFDESTROY:
 		if (l) {
-			error = kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+			error = kauth_authorize_network(l->l_cred,
+			    KAUTH_NETWORK_INTERFACE,
+			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
+			    (void *)cmd, NULL);
 			if (error)
 				return error;
 		}
@@ -1361,7 +1365,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 		return (if_clone_list((struct if_clonereq *)data));
 	}
 
-	ifp = ifunit(ifr->ifr_name);
 	if (ifp == 0)
 		return (ENXIO);
 
@@ -1387,8 +1390,10 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 	case SIOCS80211BSSID:
 	case SIOCS80211CHANNEL:
 		if (l) {
-			error = kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+			error = kauth_authorize_network(l->l_cred,
+			    KAUTH_NETWORK_INTERFACE,
+			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
+			    (void *)cmd, NULL);
 			if (error)
 				return error;
 		}
