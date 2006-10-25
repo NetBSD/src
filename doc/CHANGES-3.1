@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.180 2006/10/25 12:58:56 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.181 2006/10/25 19:13:11 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4908,4 +4908,9 @@ sys/miscfs/procfs/procfs_linux.c		1.28
 
 	Fix a kernel panic when trying to access /emul/linux/proc/0/stat.
 	[elad, ticket #1567]
+
+sys/kern/sys_process.c				1.111 via patch
+
+	Don't allow ptrace to copyout arbitrary sized data.
+	[christos, ticket #1556]
 
