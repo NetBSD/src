@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.22 2006/10/16 12:23:00 pooka Exp $
+ *	$Id: i4b_ipr.c,v 1.23 2006/10/25 23:44:42 elad Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.22 2006/10/16 12:23:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.23 2006/10/25 23:44:42 elad Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -643,8 +643,10 @@ iripioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #else
 			struct lwp *l = curlwp;		/* XXX */
 
-			if((error = kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+			if((error = kauth_authorize_network(l->l_cred,
+			    KAUTH_NETWORK_INTERFACE,
+			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
+			    (void *)cmd, NULL)) != 0)
 #endif
 				break;
 		        sl_compress_setup(sc->sc_compr, *(int *)data);
