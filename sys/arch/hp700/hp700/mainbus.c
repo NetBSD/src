@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.34 2006/10/23 21:58:52 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.35 2006/10/25 07:07:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.34 2006/10/23 21:58:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.35 2006/10/25 07:07:48 skrll Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1144,9 +1144,10 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
 			offset = 0;
 		}
 	}
-	/* for either operation sync it away */
-        __asm __volatile ("sync\n\tsyncdma\n\tsync\n\t"
-            "nop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop" ::: "memory");
+
+ 	/* for either operation sync the shit away */
+	__asm __volatile ("sync\n\tsyncdma\n\tsync\n\t"
+	    "nop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop" ::: "memory");
 }
 
 /*
