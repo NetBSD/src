@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.584 2006/10/22 13:29:13 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.585 2006/10/25 13:56:15 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.584 2006/10/22 13:29:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.585 2006/10/25 13:56:15 jmmv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1983,22 +1983,28 @@ init386(paddr_t first_avail)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
+		boolean_t loaded;
 		struct btinfo_symtab *symtab;
 
 #ifdef DDB
 		db_machine_init();
 #endif
 
-		symtab = lookup_bootinfo(BTINFO_SYMTAB);
-
-		if (symtab) {
-			symtab->ssym += KERNBASE;
-			symtab->esym += KERNBASE;
-			ksyms_init(symtab->nsym, (int *)symtab->ssym,
-			    (int *)symtab->esym);
+#if defined(MULTIBOOT)
+		loaded = multiboot_ksyms_init();
+#else
+		loaded = FALSE;
+#endif
+		if (!loaded) {
+		    symtab = lookup_bootinfo(BTINFO_SYMTAB);
+		    if (symtab) {
+			    symtab->ssym += KERNBASE;
+			    symtab->esym += KERNBASE;
+			    ksyms_init(symtab->nsym, (int *)symtab->ssym,
+				(int *)symtab->esym);
+		    } else
+			    ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
 		}
-		else
-			ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #endif
 #ifdef DDB
