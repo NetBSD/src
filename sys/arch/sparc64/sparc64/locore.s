@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.231 2006/10/18 01:41:38 rjs Exp $	*/
+/*	$NetBSD: locore.s,v 1.232 2006/10/25 11:56:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -381,6 +381,8 @@
 _C_LABEL(data_start):					! Start of data segment
 #define DATA_START	_C_LABEL(data_start)
 
+#if 1
+/* XXX this shouldn't be needed... but kernel usually hangs without it */
 /*
  * When a process exits and its u. area goes away, we set cpcb to point
  * to this `u.', leaving us with something to use for an interrupt stack,
@@ -392,6 +394,7 @@ _C_LABEL(data_start):					! Start of data segment
 	.globl	_C_LABEL(__idle_u)
 _C_LABEL(__idle_u):
 	.space	USPACE
+#endif
 
 #ifdef KGDB
 /*
@@ -4916,7 +4919,7 @@ dostart:
 	 clr	%g4				! Clear data segment pointer
 
 /*
- * Initialize a CPU.  Basically:
+ * Initialize the boot CPU.  Basically:
  *
  *	Locate the cpu_info structure for this CPU.
  *	Establish a locked mapping for interrupt stack.
@@ -4924,10 +4927,16 @@ dostart:
  *	Call the routine passed in in cpu_info->ci_spinup
  */
 
+#ifdef NO_VCACHE
+#define	TTE_DATABITS	TTE_L|TTE_CP|TTE_P|TTE_W
+#else
+#define	TTE_DATABITS	TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W
+#endif
+
 
 _C_LABEL(cpu_initialize):
 	/*
-	 * Step 5: is not more.
+	 * Step 5: is no more.
 	 */
 	
 	/*
@@ -4962,11 +4971,7 @@ _C_LABEL(cpu_initialize):
 	andn	%l1, %l4, %l1			! Mask the phys page number
 
 	or	%l2, %l1, %l1			! Now take care of the high bits
-#ifdef NO_VCACHE
-	or	%l1, TTE_L|TTE_CP|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=0|E=0|P=1|W=0|G=0
-#else
-	or	%l1, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
-#endif
+	or	%l1, TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=0|G=0
 
 	!!
 	!!  Now, map in the interrupt stack as context==0
@@ -5049,6 +5054,10 @@ _C_LABEL(cpu_initialize):
 	call	_C_LABEL(prom_set_trap_table)	! Now we should be running 100% from our handlers
 	 mov	%l1, %o0
 	wrpr	%l1, 0, %tba			! Make sure the PROM didn't foul up.
+
+	/*
+	 * Switch to the kernel mode and run away.
+	 */
 	wrpr	%g0, WSTATE_KERN, %wstate
 
 #ifdef DEBUG
@@ -5097,18 +5106,9 @@ _C_LABEL(cpu_initialize):
 
 #if defined(MULTIPROCESSOR)
 	/*
-	 * Register usage in this section:
+	 * cpu_mp_startup is called with:
 	 *
 	 *	%g2 = cpu_args
-	 *	%l0 = ktext (also KERNBASE)
-	 *	%l1 = ektext
-	 *	%l2 = ktextp/TTE Data for text w/o low bits
-	 *	%l3 = kdata (also DATA_START)
-	 *	%l4 = ekdata
-	 *	%l5 = kdatap/TTE Data for data w/o low bits
-	 *	%l6 = 4MB
-	 *	%l7 = 4MB-1
-	 *	%o0-%o5 = tmp
 	 */
 ENTRY(cpu_mp_startup)
 	wrpr    %g0, 0, %cleanwin
@@ -5208,8 +5208,7 @@ ENTRY(cpu_mp_startup)
 
 	/* set trap table */
 	set	_C_LABEL(trapbase), %l1
-	set	_C_LABEL(prom_set_trap_table), %l0
-	jmpl	%l0, %o7
+	call	_C_LABEL(prom_set_trap_table)
 	 mov	%l1, %o0
 	wrpr	%l1, 0, %tba			! Make sure the PROM didn't foul up.
 
@@ -7060,7 +7059,6 @@ cpu_loadproc:
 	stx	%l3, [%g2 + KTR_PARM2]
 12:
 #endif
-	 STPTR	%l4, [%l7 + %lo(CURLWP)]	! restore old lwp so we can save it
 
 	cmp	%l3, %l4			! new lwp == curlwp?
 #if !defined(MULTIPROCESSOR)
@@ -7108,7 +7106,6 @@ Lsw_load:
 12:
 #endif
 	/* set new cpcb */
-	STPTR	%l3, [%l7 + %lo(CURLWP)]	! curlwp = l;
 	STPTR	%l1, [%l6 + %lo(CPCB)]		! cpcb = newpcb;
 
 	ldx	[%l1 + PCB_SP], %i6
