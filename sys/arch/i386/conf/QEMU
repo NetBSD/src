@@ -1,4 +1,4 @@
-# $NetBSD: QEMU,v 1.2 2006/10/22 21:08:48 jmmv Exp $
+# $NetBSD: QEMU,v 1.3 2006/10/25 13:56:15 jmmv Exp $
 #
 # QEMU machine description file
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"QEMU-$Revision: 1.2 $"
+#ident 		"QEMU-$Revision: 1.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -33,7 +33,6 @@ options 	MTRR		# memory-type range register syscall support
 #options 	PERFCTRS	# performance-monitoring counters support
 
 options 	MULTIBOOT	# Multiboot support (see multiboot(8))
-#options 	MULTIBOOT_SYMTAB_SPACE=1048576
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
