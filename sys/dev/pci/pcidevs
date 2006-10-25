@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.841 2006/10/23 00:20:06 rjs Exp $
+$NetBSD: pcidevs,v 1.842 2006/10/25 19:22:31 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3436,6 +3436,7 @@ product VIATECH VT82C586A_IDE	0x0571	VT82C586A IDE Controller
 product VIATECH VT82C576	0x0576	VT82C576 3V
 product VIATECH VT82C580VP	0x0585	VT82C580 (Apollo VP) Host-PCI Bridge
 product VIATECH VT82C586_ISA	0x0586	VT82C586 PCI-ISA Bridge
+product VIATECH VT8237A_SATA	0x0591	VT8237A Integrated SATA Controller
 product VIATECH VT82C595	0x0595	VT82C595 (Apollo VP2) Host-PCI Bridge
 product VIATECH VT82C596A	0x0596	VT82C596A PCI-ISA Bridge
 product VIATECH VT82C597	0x0597	VT82C597 (Apollo VP3) Host-PCI Bridge
