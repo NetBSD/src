@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.65 2006/09/10 05:51:33 dbj Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.66 2006/10/25 18:56:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.65 2006/09/10 05:51:33 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.66 2006/10/25 18:56:38 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.65 2006/09/10 05:51:33 dbj Exp $");
 #include <sys/pool.h>
 #include <sys/lock.h>
 
+#define NAMECACHE_ENTER_REVERSE
 /*
  * Name caching works as follows:
  *
@@ -535,6 +536,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 
 	/*
 	 * Create reverse-cache entries (used in getcwd) for directories.
+	 * (and in linux procfs exe node)
 	 */
 	if (vp != NULL &&
 	    vp != dvp &&
