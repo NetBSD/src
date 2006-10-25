@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.2 2006/10/23 00:22:24 christos Exp $	*/
+/*	$NetBSD: puffs.c,v 1.3 2006/10/25 18:15:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.2 2006/10/23 00:22:24 christos Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.3 2006/10/25 18:15:50 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -538,6 +538,20 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq)
 			break;
 		}
 
+		case PUFFS_VN_INACTIVE:
+		{
+			struct puffs_vnreq_inactive *auxt = preq->preq_aux;
+			if (pu->pu_pvn.puffs_inactive == NULL) {
+				error = EOPNOTSUPP;
+				break;
+			}
+
+			error = pu->pu_pvn.puffs_inactive(pu,
+			    preq->preq_cookie, auxt->pvnr_pid,
+			    &auxt->pvnr_backendrefs);
+			break;
+		}
+
 		case PUFFS_VN_PATHCONF:
 		{
 			struct puffs_vnreq_pathconf *auxt = preq->preq_aux;
@@ -708,19 +722,6 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq)
 			}
 
 			error = pu->pu_pvn.puffs_abortop(pu,
-			    preq->preq_cookie, );
-			break;
-		}
-
-		case PUFFS_VN_INACTIVE:
-		{
-			struct puffs_vnreq_inactive *auxt = preq->preq_aux;
-			if (pu->pu_pvn.puffs_inactive == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pu->pu_pvn.puffs_inactive(pu,
 			    preq->preq_cookie, );
 			break;
 		}
