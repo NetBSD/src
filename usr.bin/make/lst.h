@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.12 2006/10/25 20:05:59 dsl Exp $	*/
+/*	$NetBSD: lst.h,v 1.13 2006/10/25 20:17:40 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -125,9 +125,9 @@ Boolean		Lst_IsEmpty(Lst);
  * Functions to modify a list
  */
 /* Insert an element before another */
-ReturnStatus	Lst_Insert(Lst, LstNode, ClientData);
+ReturnStatus	Lst_InsertBefore(Lst, LstNode, ClientData);
 /* Insert an element after another */
-ReturnStatus	Lst_Append(Lst, LstNode, ClientData);
+ReturnStatus	Lst_InsertAfter(Lst, LstNode, ClientData);
 /* Place an element at the front of a lst. */
 ReturnStatus	Lst_AtFront(Lst, ClientData);
 /* Place an element at the end of a lst. */
