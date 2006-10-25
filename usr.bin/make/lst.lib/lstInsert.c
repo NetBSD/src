@@ -1,4 +1,4 @@
-/*	$NetBSD: lstInsert.c,v 1.10 2004/05/07 00:04:41 ross Exp $	*/
+/*	$NetBSD: lstInsert.c,v 1.11 2006/10/25 20:17:40 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstInsert.c,v 1.10 2004/05/07 00:04:41 ross Exp $";
+static char rcsid[] = "$NetBSD: lstInsert.c,v 1.11 2006/10/25 20:17:40 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstInsert.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstInsert.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
+__RCSID("$NetBSD: lstInsert.c,v 1.11 2006/10/25 20:17:40 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: lstInsert.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
 
 /*-
  *-----------------------------------------------------------------------
- * Lst_Insert --
+ * Lst_InsertBefore --
  *	Insert a new node with the given piece of data before the given
  *	node in the given list.
  *
@@ -73,7 +73,7 @@ __RCSID("$NetBSD: lstInsert.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  *-----------------------------------------------------------------------
  */
 ReturnStatus
-Lst_Insert(Lst l, LstNode ln, ClientData d)
+Lst_InsertBefore(Lst l, LstNode ln, ClientData d)
 {
     ListNode	nLNode;	/* new lnode for d */
     ListNode	lNode = (ListNode)ln;
