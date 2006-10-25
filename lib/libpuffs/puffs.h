@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.1 2006/10/22 22:52:21 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.2 2006/10/25 18:15:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -129,6 +129,8 @@ struct puffs_vnops {
 	    void *, const struct puffs_cred *, char *, size_t *);
 	int (*puffs_reclaim)(struct puffs_usermount *,
 	    void *, pid_t);
+	int (*puffs_inactive)(struct puffs_usermount *,
+	    void *, pid_t, int *);
 	int (*puffs_print)(struct puffs_usermount *,
 	    void *);
 	int (*puffs_pathconf)(struct puffs_usermount *,
@@ -282,6 +284,8 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 	    void *, const struct puffs_cred *, char *, size_t *);	\
 	int fsname##_reclaim(struct puffs_usermount *,			\
 	    void *, pid_t);						\
+	int fsname##_inactive(struct puffs_usermount *,			\
+	    void *, pid_t, int *);					\
 	int fsname##_print(struct puffs_usermount *,			\
 	    void *);							\
 	int fsname##_pathconf(struct puffs_usermount *,			\
