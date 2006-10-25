@@ -1,4 +1,4 @@
-/*	$NetBSD: lstEnQueue.c,v 1.11 2005/02/16 15:11:53 christos Exp $	*/
+/*	$NetBSD: lstEnQueue.c,v 1.12 2006/10/25 20:17:40 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstEnQueue.c,v 1.11 2005/02/16 15:11:53 christos Exp $";
+static char rcsid[] = "$NetBSD: lstEnQueue.c,v 1.12 2006/10/25 20:17:40 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstEnQueue.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstEnQueue.c,v 1.11 2005/02/16 15:11:53 christos Exp $");
+__RCSID("$NetBSD: lstEnQueue.c,v 1.12 2006/10/25 20:17:40 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: lstEnQueue.c,v 1.11 2005/02/16 15:11:53 christos Exp $");
  *	Add the datum to the tail of the given list.
  *
  * Results:
- *	SUCCESS or FAILURE as returned by Lst_Append.
+ *	SUCCESS or FAILURE as returned by Lst_InsertAfter.
  *
  * Side Effects:
  *	the lastPtr field is altered all the time and the firstPtr field
@@ -73,6 +73,6 @@ Lst_EnQueue(Lst l, ClientData d)
 	return (FAILURE);
     }
 
-    return (Lst_Append(l, Lst_Last(l), d));
+    return (Lst_InsertAfter(l, Lst_Last(l), d));
 }
 
