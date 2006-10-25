@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.954 2006/10/23 03:23:53 pooka Exp $
+#	$NetBSD: mi,v 1.955 2006/10/25 23:51:48 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4118,6 +4118,7 @@
 ./usr/share/man/cat3/closedir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/closefrom.0		comp-c-catman		.cat
 ./usr/share/man/cat3/closelog.0			comp-c-catman		.cat
+./usr/share/man/cat3/closelog_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/clrtobot.0			comp-c-catman		.cat
 ./usr/share/man/cat3/clrtoeol.0			comp-c-catman		.cat
 ./usr/share/man/cat3/color_content.0		comp-c-catman		.cat
@@ -5279,6 +5280,7 @@
 ./usr/share/man/cat3/opendir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/opendisk.0			comp-c-catman		.cat
 ./usr/share/man/cat3/openlog.0			comp-c-catman		.cat
+./usr/share/man/cat3/openlog_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/openpam.0			comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_borrow_cred.0	comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_free_data.0	comp-c-catman		.cat,pam
@@ -5767,6 +5769,7 @@
 ./usr/share/man/cat3/setlinebuf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setlocale.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setlogmask.0		comp-c-catman		.cat
+./usr/share/man/cat3/setlogmask_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setmode.0			comp-c-catman		.cat
 ./usr/share/man/cat3/setnetconfig.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setnetent.0		comp-c-catman		.cat
@@ -5989,6 +5992,7 @@
 ./usr/share/man/cat3/sysctlnametomib.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sysexits.0			comp-c-catman		.cat
 ./usr/share/man/cat3/syslog.0			comp-c-catman		.cat
+./usr/share/man/cat3/syslog_r.0			comp-c-catman		.cat
 ./usr/share/man/cat3/system.0			comp-c-catman		.cat
 ./usr/share/man/cat3/t_freent.0			comp-c-catman		.cat
 ./usr/share/man/cat3/t_getent.0			comp-c-catman		.cat
@@ -6136,6 +6140,7 @@
 ./usr/share/man/cat3/vswprintf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vswscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vsyslog.0			comp-c-catman		.cat
+./usr/share/man/cat3/vsyslog_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vtimes.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/vwarn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vwarnx.0			comp-c-catman		.cat
@@ -8335,6 +8340,7 @@
 ./usr/share/man/man3/closedir.3			comp-c-man		.man
 ./usr/share/man/man3/closefrom.3		comp-c-man		.man
 ./usr/share/man/man3/closelog.3			comp-c-man		.man
+./usr/share/man/man3/closelog_r.3		comp-c-man		.man
 ./usr/share/man/man3/clrtobot.3			comp-c-man		.man
 ./usr/share/man/man3/clrtoeol.3			comp-c-man		.man
 ./usr/share/man/man3/color_content.3		comp-c-man		.man
@@ -9496,6 +9502,7 @@
 ./usr/share/man/man3/opendir.3			comp-c-man		.man
 ./usr/share/man/man3/opendisk.3			comp-c-man		.man
 ./usr/share/man/man3/openlog.3			comp-c-man		.man
+./usr/share/man/man3/openlog_r.3		comp-c-man		.man
 ./usr/share/man/man3/openpam.3			comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_borrow_cred.3	comp-c-man		.man,pam
 ./usr/share/man/man3/openpam_free_data.3	comp-c-man		.man,pam
@@ -9980,7 +9987,7 @@
 ./usr/share/man/man3/setkey.3			comp-c-man		.man
 ./usr/share/man/man3/setlinebuf.3		comp-c-man		.man
 ./usr/share/man/man3/setlocale.3		comp-c-man		.man
-./usr/share/man/man3/setlogmask.3		comp-c-man		.man
+./usr/share/man/man3/setlogmask_r.3		comp-c-man		.man
 ./usr/share/man/man3/setmode.3			comp-c-man		.man
 ./usr/share/man/man3/setnetconfig.3		comp-c-man		.man
 ./usr/share/man/man3/setnetent.3		comp-c-man		.man
@@ -10200,6 +10207,7 @@
 ./usr/share/man/man3/sysctlnametomib.3		comp-c-man		.man
 ./usr/share/man/man3/sysexits.3			comp-c-man		.man
 ./usr/share/man/man3/syslog.3			comp-c-man		.man
+./usr/share/man/man3/syslog_r.3			comp-c-man		.man
 ./usr/share/man/man3/system.3			comp-c-man		.man
 ./usr/share/man/man3/t_freent.3			comp-c-man		.man
 ./usr/share/man/man3/t_getent.3			comp-c-man		.man
@@ -10347,6 +10355,7 @@
 ./usr/share/man/man3/vswprintf.3		comp-c-man		.man
 ./usr/share/man/man3/vswscanf.3			comp-c-man		.man
 ./usr/share/man/man3/vsyslog.3			comp-c-man		.man
+./usr/share/man/man3/vsyslog_r.3		comp-c-man		.man
 ./usr/share/man/man3/vtimes.3			comp-obsolete		obsolete
 ./usr/share/man/man3/vwarn.3			comp-c-man		.man
 ./usr/share/man/man3/vwarnx.3			comp-c-man		.man
