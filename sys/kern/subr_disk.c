@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.81 2006/09/22 04:48:38 thorpej Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.82 2006/10/25 04:04:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.81 2006/09/22 04:48:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.82 2006/10/25 04:04:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -345,4 +345,34 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	return 0;
+}
+
+/*
+ * disk_ioctl --
+ *	Generic disk ioctl handling.
+ */
+int
+disk_ioctl(struct disk *diskp, u_long cmd, caddr_t data, int flag,
+	   struct lwp *l)
+{
+	int error;
+
+	switch (cmd) {
+	case DIOCGDISKINFO:
+	    {
+		struct plistref *pref = (struct plistref *) data;
+
+		if (diskp->dk_info == NULL)
+			error = ENOTSUP;
+		else
+			error = prop_dictionary_copyout_ioctl(pref, cmd,
+							diskp->dk_info);
+		break;
+	    }
+
+	default:
+		error = EPASSTHROUGH;
+	}
+
+	return (error);
 }

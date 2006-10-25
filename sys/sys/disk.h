@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.38 2006/09/22 04:48:38 thorpej Exp $	*/
+/*	$NetBSD: disk.h,v 1.39 2006/10/25 04:04:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ struct buf;
 struct disk;
 struct disklabel;
 struct cpu_disklabel;
+struct lwp;
 struct vnode;
 
 /*
@@ -503,6 +504,7 @@ void	pseudo_disk_detach(struct disk *);
 void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);
 struct disk *disk_find(const char *);
+int	disk_ioctl(struct disk *, u_long, caddr_t, int, struct lwp *);
 
 int	dkwedge_add(struct dkwedge_info *);
 int	dkwedge_del(struct dkwedge_info *);
