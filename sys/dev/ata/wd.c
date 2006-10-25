@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.331 2006/10/12 01:30:55 christos Exp $ */
+/*	$NetBSD: wd.c,v 1.332 2006/10/25 04:04:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.331 2006/10/12 01:30:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.332 2006/10/25 04:04:45 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -410,6 +410,7 @@ wdattach(struct device *parent __unused, struct device *self, void *aux)
 	 */
 	wd->sc_dk.dk_driver = &wddkdriver;
 	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
+	/* we fill in dk_info later */
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
 	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);
@@ -1162,6 +1163,10 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct lwp *l)
 	if ((wd->sc_flags & WDF_LOADED) == 0)
 		return EIO;
 
+	error = disk_ioctl(&wd->sc_dk, xfer, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return (error);
+
 	switch (xfer) {
 #ifdef HAS_BAD144_HANDLING
 	case DIOCSBAD:
@@ -1679,7 +1684,7 @@ bad144intern(struct wd_softc *wd)
 static void
 wd_params_to_properties(struct wd_softc *wd, struct ataparams *params __unused)
 {
-	prop_dictionary_t disk_info, geom;
+	prop_dictionary_t disk_info, odisk_info, geom;
 	prop_string_t string;
 	prop_number_t number;
 
@@ -1726,7 +1731,16 @@ wd_params_to_properties(struct wd_softc *wd, struct ataparams *params __unused)
 
 	prop_dictionary_set(device_properties(&wd->sc_dev),
 			    "disk-info", disk_info);
-	prop_object_release(disk_info);
+
+	/*
+	 * Don't release disk_info here; we keep a reference to it.
+	 * disk_detach() will release it when we go away.
+	 */
+
+	odisk_info = wd->sc_dk.dk_info;
+	wd->sc_dk.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
 }
 
 int

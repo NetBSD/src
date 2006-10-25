@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.12 2005/12/26 10:36:47 yamt Exp $	*/
+/*	$NetBSD: dkio.h,v 1.13 2006/10/25 04:04:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -33,6 +33,7 @@
 #define _SYS_DKIO_H_
 
 #include <sys/ioccom.h>
+#include <prop/proplib.h>
 
 /*
  * Disk-specific ioctls.
@@ -97,5 +98,8 @@
 		/* disk buffer queue strategy */
 #define	DIOCGSTRATEGY	_IOR('d', 125, struct disk_strategy)
 #define	DIOCSSTRATEGY	_IOW('d', 126, struct disk_strategy)
+
+		/* get disk-info dictionary */
+#define	DIOCGDISKINFO	_IOR('d', 127, struct plistref)
 
 #endif /* _SYS_DKIO_H_ */
