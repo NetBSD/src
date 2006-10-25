@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.57 2006/10/22 00:03:33 reinoud Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.58 2006/10/25 22:01:54 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.57 2006/10/22 00:03:33 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.58 2006/10/25 22:01:54 reinoud Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -445,8 +445,8 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		simple_lock(&vp->v_interlock);
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		np = VTOSMB(vp);
 		if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
 		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
