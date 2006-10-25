@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2006/10/08 17:52:29 peter Exp $
+#	$NetBSD: Makefile,v 1.40 2006/10/25 20:05:59 dsl Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -9,6 +9,8 @@ SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \
 	lstFind.c lstFindFrom.c lstFirst.c lstForEach.c lstForEachFrom.c \
 	lstInit.c lstInsert.c lstIsAtEnd.c lstIsEmpty.c lstLast.c \
 	lstMember.c lstNext.c lstOpen.c lstRemove.c lstReplace.c lstSucc.c
+SRCS += lstPrev.c
+
 .PATH:	${.CURDIR}/lst.lib
 WARNS=3
 .if make(install)

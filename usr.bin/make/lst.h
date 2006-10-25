@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.11 2005/08/09 21:36:42 christos Exp $	*/
+/*	$NetBSD: lst.h,v 1.12 2006/10/25 20:05:59 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -148,6 +148,8 @@ LstNode		Lst_First(Lst);
 LstNode		Lst_Last(Lst);
 /* Return successor to given element */
 LstNode		Lst_Succ(LstNode);
+/* Return predecessor to given element */
+LstNode		Lst_Prev(LstNode);
 /* Get datum from LstNode */
 ClientData	Lst_Datum(LstNode);
 
