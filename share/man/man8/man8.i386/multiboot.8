@@ -1,4 +1,4 @@
-.\"	$NetBSD: multiboot.8,v 1.1 2006/02/03 11:08:23 jmmv Exp $
+.\"	$NetBSD: multiboot.8,v 1.2 2006/10/25 14:02:11 jmmv Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Februrary 3, 2006
+.Dd October 25, 2006
 .Os
 .Dt MULTIBOOT 8 i386
 .Sh NAME
@@ -102,22 +102,11 @@ Example:
 .Sq root=wd0e .
 .El
 .Ss Booting with GRUB Legacy
-GRUB Legacy can load Multiboot-enabled
+GRUB Legacy is the most popular bootloader that supports Multiboot.
+You can boot a
 .Nx
-kernels properly, assuming that a patch which fixes an issue with the
-Multiboot header parsing is applied.
-This patch is not yet merged with the stock sources but is available in
-pkgsrc; hence, if you have
-.Sq grub-0.97nb4
-or a better version, the bug is fixed.
-However, if you are building GRUB Legacy outside pkgsrc, you need to manually
-apply the patch located at:
-.Pa ftp://ftp.NetBSD.org/pub/NetBSD/misc/jmmv/grub-fix-addresses.diff .
-.Pp
-With the patch applied, a
-.Nx
-kernel can be booted using the traditional GRUB Legacy syntax.
-For example:
+kernel (assuming it is compiled with Multiboot support) with a line
+similar to the following one:
 .Bd -literal
 kernel (fd0)/netbsd.gz -c console=pc root=wd0e
 .Ed
