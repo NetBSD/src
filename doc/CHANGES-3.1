@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.179 2006/10/25 07:53:58 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.180 2006/10/25 12:58:56 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4908,14 +4908,4 @@ sys/miscfs/procfs/procfs_linux.c		1.28
 
 	Fix a kernel panic when trying to access /emul/linux/proc/0/stat.
 	[elad, ticket #1567]
-
-lib/libc/sys/socket.2				1.32-1.33
-sys/kern/uipc_socket.c				1.120
-
-	Add EAFNOSUPPORT as a possible error if the address family is not
-	supported.  This adds further differentiation between which argument to
-	socket(2) caused the error.  No longer are invalid domain (address
-	family) errors classified as ENOPROTOSUPPORT errors.  This should make
-	socket(2) conform to current POSIX and X/Open standards.
-	[ginsbach, ticket #1568]
 
