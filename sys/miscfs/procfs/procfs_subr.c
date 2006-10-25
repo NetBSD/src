@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.69 2006/09/20 08:09:05 manu Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.70 2006/10/25 18:59:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.69 2006/09/20 08:09:05 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.70 2006/10/25 18:59:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,6 +171,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	case PFSself:	/* /proc/self    = lr-xr-xr-x */
 	case PFScwd:	/* /proc/N/cwd = lr-xr-xr-x */
 	case PFSchroot:	/* /proc/N/chroot = lr-xr-xr-x */
+	case PFSexe:	/* /proc/N/exe = lr-xr-xr-x */
 		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		vp->v_type = VLNK;
 		break;

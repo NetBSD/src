@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.60 2006/09/20 08:09:05 manu Exp $	*/
+/*	$NetBSD: procfs.h,v 1.61 2006/10/25 18:59:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -84,6 +84,7 @@ typedef enum {
 	PFSself,	/* like curproc, but this is the Linux name */
 	PFSproc,	/* a process-specific sub-directory */
 	PFSfile,	/* the executable file */
+	PFSexe,		/* symlink to the executable file */
 	PFSmem,		/* the process's memory image */
 	PFSregs,	/* the process's register set */
 	PFSfpregs,	/* the process's FP register set */
@@ -153,6 +154,7 @@ struct procfs_args {
     (((type) < PFSproc) ? ((type) + 2) : \
 	(((fd) == -1) ? ((((pid)+1) << 5) + ((int) (type))) : \
 	((((pid)+1) << 16) | ((fd) << 5) | ((int) (type)))))
+#define PROCFS_TYPE(type)	((type) & 0x1f)
 
 struct procfsmount {
 	void *pmnt_exechook;

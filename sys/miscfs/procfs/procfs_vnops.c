@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.135 2006/10/12 01:32:27 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.136 2006/10/25 18:59:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.135 2006/10/12 01:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.136 2006/10/25 18:59:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,22 +127,22 @@ static const struct proc_target {
 } proc_targets[] = {
 #define N(s) sizeof(s)-1, s
 	/*	  name		type		validp */
-	{ DT_DIR, N("."),	PFSproc,		NULL },
-	{ DT_DIR, N(".."),	PFSroot,		NULL },
+	{ DT_DIR, N("."),	PFSproc,	NULL },
+	{ DT_DIR, N(".."),	PFSroot,	NULL },
 	{ DT_DIR, N("fd"),	PFSfd,		NULL },
-	{ DT_REG, N("file"),	PFSfile,		procfs_validfile },
+	{ DT_REG, N("file"),	PFSfile,	procfs_validfile },
 	{ DT_REG, N("mem"),	PFSmem,		NULL },
-	{ DT_REG, N("regs"),	PFSregs,		procfs_validregs },
+	{ DT_REG, N("regs"),	PFSregs,	procfs_validregs },
 	{ DT_REG, N("fpregs"),	PFSfpregs,	procfs_validfpregs },
 	{ DT_REG, N("ctl"),	PFSctl,		NULL },
-	{ DT_REG, N("stat"),	PFSstat,		procfs_validfile_linux },
+	{ DT_REG, N("stat"),	PFSstat,	procfs_validfile_linux },
 	{ DT_REG, N("status"),	PFSstatus,	NULL },
-	{ DT_REG, N("note"),	PFSnote,		NULL },
+	{ DT_REG, N("note"),	PFSnote,	NULL },
 	{ DT_REG, N("notepg"),	PFSnotepg,	NULL },
 	{ DT_REG, N("map"),	PFSmap,		procfs_validmap },
-	{ DT_REG, N("maps"),	PFSmaps,		procfs_validmap },
+	{ DT_REG, N("maps"),	PFSmaps,	procfs_validmap },
 	{ DT_REG, N("cmdline"), PFScmdline,	NULL },
-	{ DT_REG, N("exe"),	PFSfile,		procfs_validfile_linux },
+	{ DT_REG, N("exe"),	PFSexe,		procfs_validfile_linux },
 	{ DT_LNK, N("cwd"),	PFScwd,		NULL },
 	{ DT_LNK, N("root"),	PFSchroot,	NULL },
 #ifdef __HAVE_PROCFS_MACHDEP
@@ -507,6 +507,10 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target,
 	case PFSchroot:
 		vp = target->p_cwdi->cwdi_rdir;
 		break;
+	case PFSexe:
+		rvp = rootvnode;
+		vp = target->p_textvp;
+		break;
 	default:
 		return (NULL);
 	}
@@ -752,7 +756,8 @@ procfs_getattr(v)
 		break;
 
 	case PFScwd:
-	case PFSchroot: {
+	case PFSchroot:
+	case PFSexe: {
 		char *path, *bp;
 
 		MALLOC(path, char *, MAXPATHLEN + 4, M_TEMP,
@@ -1053,7 +1058,7 @@ procfs_lookup(v)
 int
 procfs_validfile(struct lwp *l, struct mount *mp __unused)
 {
-	return (l->l_proc->p_textvp != NULL);
+	return l != NULL && l->l_proc != NULL && l->l_proc->p_textvp != NULL;
 }
 
 static int
@@ -1064,8 +1069,7 @@ procfs_validfile_linux(l, mp)
 	int flags;
 
 	flags = VFSTOPROC(mp)->pmnt_flags;
-	return ((flags & PROCFSMNT_LINUXCOMPAT) &&
-	    (l == NULL || l->l_proc == NULL || procfs_validfile(l, mp)));
+	return (flags & PROCFSMNT_LINUXCOMPAT) && procfs_validfile(l, mp);
 }
 
 struct procfs_root_readdir_ctx {
@@ -1411,7 +1415,9 @@ procfs_readlink(v)
 		len = snprintf(bf, sizeof(bf), "%ld", (long)curproc->p_pid);
 	else if (pfs->pfs_fileno == PROCFS_FILENO(0, PFSself, -1))
 		len = snprintf(bf, sizeof(bf), "%s", "curproc");
-	else if (pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFScwd, -1)) {
+	else if (pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFScwd, -1) ||
+	    pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFSchroot, -1) ||
+	    pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFSexe, -1)) {
 		pown = PFIND(pfs->pfs_pid);
 		if (pown == NULL)
 			return (ESRCH);
@@ -1421,25 +1427,10 @@ procfs_readlink(v)
 			return (ENOMEM);
 		bp = path + MAXPATHLEN;
 		*--bp = '\0';
-		(void)procfs_dir(PFScwd, curlwp, pown, &bp, path,
-		     MAXPATHLEN);
+		(void)procfs_dir(PROCFS_TYPE(pfs->pfs_fileno), curlwp, pown,
+		    &bp, path, MAXPATHLEN);
 		len = strlen(bp);
-	}
-	else if (pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFSchroot, -1)) {
-		pown = PFIND(pfs->pfs_pid);
-		if (pown == NULL)
-			return (ESRCH);
-		MALLOC(path, char *, MAXPATHLEN + 4, M_TEMP,
-		    M_WAITOK|M_CANFAIL);
-		if (path == NULL)
-			return (ENOMEM);
-		bp = path + MAXPATHLEN;
-		*--bp = '\0';
-		(void)procfs_dir(PFSchroot, curlwp, pown, &bp, path,
-		     MAXPATHLEN);
-		len = strlen(bp);
-	}
-	else {
+	} else {
 		struct file *fp;
 		struct vnode *vxp, *vp;
 
