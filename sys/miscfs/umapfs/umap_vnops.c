@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.41 2006/09/13 10:07:42 elad Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.42 2006/10/25 11:59:34 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.41 2006/09/13 10:07:42 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.42 2006/10/25 11:59:34 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,8 +193,7 @@ umap_bypass(v)
 		credp = *credpp;
 
 		if ((flags & LAYERFS_MBYPASSDEBUG) &&
-		    kauth_authorize_generic(credp, KAUTH_GENERIC_ISSUSER,
-		     NULL))
+		    kauth_cred_geteuid(credp) != 0)
 			printf("umap_bypass: user was %d, group %d\n",
 			    kauth_cred_geteuid(credp), kauth_cred_getegid(credp));
 
@@ -203,8 +202,7 @@ umap_bypass(v)
 		umap_mapids(vp0->v_mount, credp);
 
 		if ((flags & LAYERFS_MBYPASSDEBUG) &&
-		    kauth_authorize_generic(credp, KAUTH_GENERIC_ISSUSER,
-		     NULL))
+		    kauth_cred_geteuid(credp) != 0)
 			printf("umap_bypass: user now %d, group %d\n",
 			    kauth_cred_geteuid(credp), kauth_cred_getegid(credp));
 	}
@@ -224,8 +222,7 @@ umap_bypass(v)
 		compcredp = (*compnamepp)->cn_cred;
 
 		if ((flags & LAYERFS_MBYPASSDEBUG) &&
-		    kauth_authorize_generic(compcredp, KAUTH_GENERIC_ISSUSER,
-		     NULL))
+		    kauth_cred_geteuid(compcredp) != 0)
 			printf("umap_bypass: component credit user was %d, group %d\n",
 			    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 
@@ -234,8 +231,7 @@ umap_bypass(v)
 		umap_mapids(vp0->v_mount, compcredp);
 
 		if ((flags & LAYERFS_MBYPASSDEBUG) &&
-		    kauth_authorize_generic(compcredp, KAUTH_GENERIC_ISSUSER,
-		     NULL))
+		    kauth_cred_geteuid(compcredp) != 0)
 			printf("umap_bypass: component credit user now %d, group %d\n",
 			    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 	}
@@ -311,8 +307,7 @@ umap_bypass(v)
 			kauth_cred_free(credp);
 			*credpp = savecredp;
 			if ((flags & LAYERFS_MBYPASSDEBUG) && credpp &&
-			    kauth_authorize_generic(*credpp,
-			     KAUTH_GENERIC_ISSUSER,NULL))
+			    kauth_cred_geteuid(*credpp) != 0)
 			 	printf("umap_bypass: returning-user now %d\n\n",
 				    kauth_cred_geteuid(savecredp));
 		}
@@ -320,8 +315,7 @@ umap_bypass(v)
 
 	if (descp->vdesc_componentname_offset != VDESC_NO_OFFSET) {
 		if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp &&
-		    kauth_authorize_generic(compcredp, KAUTH_GENERIC_ISSUSER,
-		     NULL))
+		    kauth_cred_geteuid(compcredp) != 0)
 			printf("umap_bypass: returning-component-user was %d\n",
 			    kauth_cred_geteuid(compcredp));
 
@@ -329,8 +323,7 @@ umap_bypass(v)
 			kauth_cred_free(compcredp);
 			(*compnamepp)->cn_cred = savecompcredp;
 			if ((flags & LAYERFS_MBYPASSDEBUG) && savecompcredp &&
-			    kauth_authorize_generic(savecompcredp,
-			     KAUTH_GENERIC_ISSUSER, NULL))
+			    kauth_cred_geteuid(savecompcredp) != 0)
 			 	printf("umap_bypass: returning-component-user now %d\n",
 				    kauth_cred_geteuid(savecompcredp));
 		}
@@ -386,8 +379,7 @@ umap_lookup(v)
 		cnp->cn_cred = compcredp;
 
 		if ((flags & LAYERFS_MBYPASSDEBUG) &&
-		    kauth_authorize_generic(compcredp, KAUTH_GENERIC_ISSUSER,
-		     NULL))
+		    kauth_cred_geteuid(compcredp) != 0)
 			printf("umap_lookup: component credit user was %d, group %d\n",
 			    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 
@@ -396,8 +388,7 @@ umap_lookup(v)
 	}
 
 	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp &&
-	    kauth_authorize_generic(compcredp, KAUTH_GENERIC_ISSUSER,
-	     NULL))
+	    kauth_cred_geteuid(compcredp) != 0)
 		printf("umap_lookup: component credit user now %d, group %d\n",
 		    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 
@@ -434,8 +425,7 @@ umap_lookup(v)
 	 * Free duplicate cred structure and restore old one.
 	 */
 	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp &&
-	    kauth_authorize_generic(compcredp, KAUTH_GENERIC_ISSUSER,
-	     NULL))
+	    kauth_cred_geteuid(compcredp) != 0)
 		printf("umap_lookup: returning-component-user was %d\n",
 			    kauth_cred_geteuid(compcredp));
 
@@ -444,8 +434,7 @@ umap_lookup(v)
 			kauth_cred_free(compcredp);
 		cnp->cn_cred = savecompcredp;
 		if ((flags & LAYERFS_MBYPASSDEBUG) && savecompcredp &&
-		    kauth_authorize_generic(savecompcredp,
-		     KAUTH_GENERIC_ISSUSER, NULL))
+		    kauth_cred_geteuid(savecompcredp) != 0)
 		 	printf("umap_lookup: returning-component-user now %d\n",
 			    kauth_cred_geteuid(savecompcredp));
 	}
@@ -577,8 +566,7 @@ umap_rename(v)
 	compcredp = compnamep->cn_cred = kauth_cred_dup(savecompcredp);
 
 	if ((flags & LAYERFS_MBYPASSDEBUG) &&
-	    kauth_authorize_generic(compcredp, KAUTH_GENERIC_ISSUSER,
-	     NULL))
+	    kauth_cred_geteuid(compcredp) != 0)
 		printf("umap_rename: rename component credit user was %d, group %d\n",
 		    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 
@@ -587,8 +575,7 @@ umap_rename(v)
 	umap_mapids(vp->v_mount, compcredp);
 
 	if ((flags & LAYERFS_MBYPASSDEBUG) &&
-	    kauth_authorize_generic(compcredp, KAUTH_GENERIC_ISSUSER,
-	     NULL))
+	    kauth_cred_geteuid(compcredp) != 0)
 		printf("umap_rename: rename component credit user now %d, group %d\n",
 		    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 
