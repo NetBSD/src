@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.26 2006/10/24 10:23:05 elad Exp $
+.\" $NetBSD: kauth.9,v 1.27 2006/10/25 22:49:22 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 24, 2006
+.Dd October 26, 2006
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -425,9 +425,7 @@ is the
 .Ft struct rt_msghdr *
 for the request.
 .It Dv KAUTH_NETWORK_SOCKET
-Checks if a
-.Xr socket 2
-request is allowed.
+Checks if a socket related operation is allowed.
 .Pp
 .Ar req
 allows to indicate the type of the request to structure listeners and callers
@@ -436,6 +434,15 @@ Supported request types:
 .Bl -tag
 .It Dv KAUTH_REQ_NETWORK_SOCKET_RAWSOCK
 Checks if opening a raw socket is allowed.
+.It Dv KAUTH_REQ_NETWORK_SOCKET_OPEN
+Checks if opening a socket is allowed.
+.Ar arg1 , arg2 ,
+and
+.Ar arg3
+are all
+.Ft int *
+pointing to integers describing the domain, socket type, and protocol,
+respectively.
 .It Dv KAUTH_REQ_NETWORK_SOCKET_CANSEE
 Checks if looking at the socket passed is allowed.
 .Pp
