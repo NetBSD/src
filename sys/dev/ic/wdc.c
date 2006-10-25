@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.239 2006/10/25 17:33:02 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.240 2006/10/25 20:14:00 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.239 2006/10/25 17:33:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.240 2006/10/25 20:14:00 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.239 2006/10/25 17:33:02 bouyer Exp $");
 
 #include "atapibus.h"
 #include "wd.h"
+#include "sata.h"
 
 #define WDCDELAY  100 /* 100 microseconds */
 #define WDCNDELAY_RST (WDC_RESET_WAIT * 1000 / WDCDELAY)
@@ -203,6 +204,7 @@ wdc_allocate_regs(struct wdc_softc *wdc)
 			   sizeof(struct wdc_regs), M_DEVBUF, M_WAITOK);
 }
 
+#if NSATA > 0
 /*
  * probe drives on SATA controllers with standard SATA registers:
  * bring the PHYs online, read the drive signature and set drive flags
@@ -292,6 +294,7 @@ wdc_sataprobe(struct ata_channel *chp)
 		    sstatus);
 	}
 }
+#endif /* NSATA > 0 */
 
 
 /* Test to see controller with at last one attached drive is there.
