@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.238 2006/09/30 15:56:17 itohy Exp $ */
+/*	$NetBSD: wdc.c,v 1.239 2006/10/25 17:33:02 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.238 2006/09/30 15:56:17 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.239 2006/10/25 17:33:02 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -98,6 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.238 2006/09/30 15:56:17 itohy Exp $");
 
 #include <dev/ata/atavar.h>
 #include <dev/ata/atareg.h>
+#include <dev/ata/satareg.h>
+#include <dev/ata/satavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 
@@ -201,6 +203,97 @@ wdc_allocate_regs(struct wdc_softc *wdc)
 			   sizeof(struct wdc_regs), M_DEVBUF, M_WAITOK);
 }
 
+/*
+ * probe drives on SATA controllers with standard SATA registers:
+ * bring the PHYs online, read the drive signature and set drive flags
+ * appropriately.
+ */
+void
+wdc_sataprobe(struct ata_channel *chp)
+{
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
+	uint32_t scontrol, sstatus;
+	uint16_t scnt, sn, cl, ch;
+	int i, s;
+
+	/* XXX This should be done by other code. */
+	for (i = 0; i < chp->ch_ndrive; i++) {
+		chp->ch_drive[i].chnl_softc = chp;
+		chp->ch_drive[i].drive = i;
+	}
+
+	/* bring the PHYs online.
+	 * The work-around for errata #1 for the 31244 says that we must
+	 * write 0 to the port first to be sure of correctly initializing
+	 * the device. It doesn't hurt for other devices.
+	 */
+	bus_space_write_4(wdr->sata_iot, wdr->sata_control, 0, 0);
+	scontrol = SControl_IPM_NONE | SControl_SPD_ANY | SControl_DET_INIT;
+	bus_space_write_4 (wdr->sata_iot, wdr->sata_control, 0, scontrol);
+
+	tsleep(wdr, PRIBIO, "sataup", mstohz(50));
+	scontrol &= ~SControl_DET_INIT;
+	bus_space_write_4(wdr->sata_iot, wdr->sata_control, 0, scontrol);
+
+	tsleep(wdr, PRIBIO, "sataup", mstohz(50));
+	sstatus = bus_space_read_4(wdr->sata_iot, wdr->sata_status, 0);
+
+	switch (sstatus & SStatus_DET_mask) {
+	case SStatus_DET_NODEV:
+		/* No Device; be silent.  */
+		break;
+
+	case SStatus_DET_DEV_NE:
+		aprint_error("%s: port %d: device connected, but "
+		    "communication not established\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel);
+		break;
+
+	case SStatus_DET_OFFLINE:
+		aprint_error("%s: port %d: PHY offline\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel);
+		break;
+
+	case SStatus_DET_DEV:
+		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
+		    WDSD_IBM);
+		delay(10);	/* 400ns delay */
+		scnt = bus_space_read_2(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_seccnt], 0);
+		sn = bus_space_read_2(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_sector], 0);
+		cl = bus_space_read_2(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_cyl_lo], 0);
+		ch = bus_space_read_2(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_cyl_hi], 0);
+		ATADEBUG_PRINT(("%s: port %d: scnt=0x%x sn=0x%x "
+		    "cl=0x%x ch=0x%x\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
+		    scnt, sn, cl, ch), DEBUG_PROBE);
+		/*
+		 * scnt and sn are supposed to be 0x1 for ATAPI, but in some
+		 * cases we get wrong values here, so ignore it.
+		 */
+		s = splbio();
+		if (cl == 0x14 && ch == 0xeb)
+			chp->ch_drive[0].drive_flags |= DRIVE_ATAPI;
+		else
+			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
+		splx(s);
+
+		aprint_normal("%s: port %d: device present, speed: %s\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
+		    sata_speed(sstatus));
+		break;
+
+	default:
+		aprint_error("%s: port %d: unknown SStatus: 0x%08x\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
+		    sstatus);
+	}
+}
+
+
 /* Test to see controller with at last one attached drive is there.
  * Returns a bit for each possible drive found (0x01 for drive 0,
  * 0x02 for drive 1).
@@ -215,7 +308,7 @@ wdc_allocate_regs(struct wdc_softc *wdc)
  * - try an ATA command on the master.
  */
 
-static void
+void
 wdc_drvprobe(struct ata_channel *chp)
 {
 	struct ataparams params;
