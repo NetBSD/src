@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.50 2006/10/12 01:32:29 christos Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.51 2006/10/25 20:28:45 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.50 2006/10/12 01:32:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.51 2006/10/25 20:28:45 elad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -515,8 +515,10 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSETVLAN:
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		if ((error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL)) != 0)
 			break;
 		if ((error = copyin(ifr->ifr_data, &vlr, sizeof(vlr))) != 0)
 			break;

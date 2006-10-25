@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.109 2006/10/12 01:32:28 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.110 2006/10/25 20:28:45 elad Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.109 2006/10/12 01:32:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.110 2006/10/25 20:28:45 elad Exp $");
 
 #include "ppp.h"
 
@@ -510,13 +510,20 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag __unused,
     case PPPIOCSFLAGS:
     case PPPIOCSMRU:
     case PPPIOCSMAXCID:
-    case PPPIOCXFERUNIT:
     case PPPIOCSCOMPRESS:
     case PPPIOCSNPMODE:
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
-	    return (error);
-	/* FALLTHROUGH */
+	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+	    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, &sc->sc_if, (void *)cmd,
+	    NULL) != 0)
+		return (EPERM);
+	break;
+    case PPPIOCXFERUNIT:
+	/* XXX: Why is this privileged?! */
+	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+	    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, &sc->sc_if, (void *)cmd,
+	    NULL) != 0)
+		return (EPERM);
+	break;
     default:
 	break;
     }
@@ -797,8 +804,9 @@ pppsioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	break;
 
     case SIOCSIFMTU:
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_network(l->l_cred,
+	    KAUTH_NETWORK_INTERFACE, KAUTH_REQ_NETWORK_INTERFACE_SETPRIV,
+	    ifp, (void *)cmd, NULL) != 0))
 	    break;
 	sc->sc_if.if_mtu = ifr->ifr_mtu;
 	break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.69 2006/10/15 06:36:54 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.70 2006/10/25 20:28:45 elad Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.69 2006/10/15 06:36:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.70 2006/10/25 20:28:45 elad Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -891,9 +891,10 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case GREDSOCK:
 	case SIOCSLIFPHYADDR:
 	case SIOCDIFPHYADDR:
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
-			return (error);
+		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL) != 0)
+			return (EPERM);
 		break;
 	default:
 		error = 0;
