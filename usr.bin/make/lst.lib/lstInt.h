@@ -1,4 +1,4 @@
-/*	$NetBSD: lstInt.h,v 1.11 2005/02/16 15:11:53 christos Exp $	*/
+/*	$NetBSD: lstInt.h,v 1.12 2006/10/25 19:45:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -86,24 +86,24 @@ typedef struct	{
  * PAlloc (var, ptype) --
  *	Allocate a pointer-typedef structure 'ptype' into the variable 'var'
  */
-#define	PAlloc(var,ptype)	var = (ptype) emalloc(sizeof (*var))
+#define	PAlloc(var,ptype)	var = (ptype) emalloc(sizeof *(var))
 
 /*
  * LstValid (l) --
  *	Return TRUE if the list l is valid
  */
-#define LstValid(l)	(((Lst)l == NILLST) ? FALSE : TRUE)
+#define LstValid(l)	((Lst)(l) != NILLST)
 
 /*
  * LstNodeValid (ln, l) --
  *	Return TRUE if the LstNode ln is valid with respect to l
  */
-#define LstNodeValid(ln, l)	((((LstNode)ln) == NILLNODE) ? FALSE : TRUE)
+#define LstNodeValid(ln, l)	((LstNode)(ln) != NILLNODE)
 
 /*
  * LstIsEmpty (l) --
  *	TRUE if the list l is empty.
  */
-#define LstIsEmpty(l)	(((List)l)->firstPtr == NilListNode)
+#define LstIsEmpty(l)	(((List)(l))->firstPtr == NilListNode)
 
 #endif /* _LSTINT_H_ */
