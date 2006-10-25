@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.4 2006/10/12 01:31:33 christos Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.5 2006/10/25 17:34:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.4 2006/10/12 01:31:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.5 2006/10/25 17:34:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,6 @@ static void svwsata_attach(struct device *, struct device *, void *);
 static void svwsata_chip_map(struct pciide_softc *, struct pci_attach_args *) __unused;
 static void svwsata_mapreg_dma(struct pciide_softc *, struct pci_attach_args *);
 static void svwsata_mapchan(struct pciide_channel *);
-static void svwsata_drv_probe(struct ata_channel *chp);
 
 CFATTACH_DECL(svwsata, sizeof(struct pciide_softc),
     svwsata_match, svwsata_attach, NULL, NULL);
@@ -140,7 +139,7 @@ svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = sata_setup_channel;
 
 	/* We can use SControl and SStatus to probe for drives. */
-	sc->sc_wdcdev.sc_atac.atac_probe = svwsata_drv_probe;
+	sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -275,115 +274,40 @@ svwsata_mapchan(struct pciide_channel *cp)
 	wdr->data32iot = wdr->cmd_iot;
 	wdr->data32ioh = wdr->cmd_iohs[0];
 
+
+	wdr->sata_iot = sc->sc_ba5_st;
+	wdr->sata_baseioh = sc->sc_ba5_sh;
+	if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
+	    (wdc_cp->ch_channel << 8) + SVWSATA_SSTATUS, 1,
+	    &wdr->sata_status) != 0) {
+		aprint_error("%s: couldn't map channel %d "
+		    "sata_status regs\n",
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+		    wdc_cp->ch_channel);
+		goto bad;
+	}
+	if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
+	    (wdc_cp->ch_channel << 8) + SVWSATA_SERROR, 1,
+	    &wdr->sata_error) != 0) {
+		aprint_error("%s: couldn't map channel %d "
+		    "sata_error regs\n",
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+		    wdc_cp->ch_channel);
+		goto bad;
+	}
+	if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
+	    (wdc_cp->ch_channel << 8) + SVWSATA_SCONTROL, 1,
+	    &wdr->sata_control) != 0) {
+		aprint_error("%s: couldn't map channel %d "
+		    "sata_control regs\n",
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+		    wdc_cp->ch_channel);
+		goto bad;
+	}
+
 	wdcattach(wdc_cp);
 	return;
 
  bad:
 	cp->ata_channel.ch_flags |= ATACH_DISABLED;
-}
-
-static void
-svwsata_drv_probe(struct ata_channel *chp)
-{
-	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
-	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
-	int channel = chp->ch_channel;
-	uint32_t scontrol, sstatus;
-	uint8_t scnt, sn, cl, ch;
-	int i, s;
-
-	/* XXX This should be done by other code. */
-	for (i = 0; i < 2; i++) {
-		chp->ch_drive[i].chnl_softc = chp;
-		chp->ch_drive[i].drive = i;
-	}
-
-	/*
-	 * Request communication initialization sequence, any speed.
-	 * Performing this is the equivalent of an ATA Reset.
-	 */
-	scontrol = SControl_DET_INIT | SControl_SPD_ANY;
-
-	/*
-	 * XXX We don't yet support SATA power management; disable all
-	 * power management state transitions.
-	 */
-	scontrol |= SControl_IPM_NONE;
-
-	bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh,
-	    (channel << 8) + SVWSATA_SCONTROL, scontrol);
-	delay(50 * 1000);
-	scontrol &= ~SControl_DET_INIT;
-	bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh,
-	    (channel << 8) + SVWSATA_SCONTROL, scontrol);
-	delay(50 * 1000);
-
-	sstatus = bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh,
-	    (channel << 8) + SVWSATA_SSTATUS);
-#if 0
-	printf("%s: port %d: SStatus=0x%08x, SControl=0x%08x\n",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel, sstatus,
-	    bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh,
-	        (channel << 8) + SVWSATA_SSTATUS));
-#endif
-	switch (sstatus & SStatus_DET_mask) {
-	case SStatus_DET_NODEV:
-		/* No device; be silent. */
-		break;
-
-	case SStatus_DET_DEV_NE:
-		aprint_error("%s: port %d: device connected, but "
-		    "communication not established\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel);
-		break;
-
-	case SStatus_DET_OFFLINE:
-		aprint_error("%s: port %d: PHY offline\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel);
-		break;
-
-	case SStatus_DET_DEV:
-		/*
-		 * XXX ATAPI detection doesn't currently work.  Don't
-		 * XXX know why.  But, it's not like the standard method
-		 * XXX can detect an ATAPI device connected via a SATA/PATA
-		 * XXX bridge, so at least this is no worse.  --thorpej
-		 */
-		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
-		    WDSD_IBM | (0 << 4));
-		delay(10);	/* 400ns delay */
-		/* Save register contents. */
-		scnt = bus_space_read_1(wdr->cmd_iot,
-				        wdr->cmd_iohs[wd_seccnt], 0);
-		sn = bus_space_read_1(wdr->cmd_iot,
-				      wdr->cmd_iohs[wd_sector], 0);
-		cl = bus_space_read_1(wdr->cmd_iot,
-				      wdr->cmd_iohs[wd_cyl_lo], 0);
-		ch = bus_space_read_1(wdr->cmd_iot,
-				      wdr->cmd_iohs[wd_cyl_hi], 0);
-#if 0
-		printf("%s: port %d: scnt=0x%x sn=0x%x cl=0x%x ch=0x%x\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel,
-		    scnt, sn, cl, ch);
-#endif
-		/*
-		 * scnt and sn are supposed to be 0x1 for ATAPI, but in some
-		 * cases we get wrong values here, so ignore it.
-		 */
-		s = splbio();
-		if (cl == 0x14 && ch == 0xeb)
-			chp->ch_drive[0].drive_flags |= DRIVE_ATAPI;
-		else
-			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
-		splx(s);
-
-		aprint_normal("%s: port %d: device present, speed: %s\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel,
-		    sata_speed(sstatus));
-		break;
-
-	default:
-		aprint_error("%s: port %d: unknown SStatus: 0x%08x\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel, sstatus);
-	}
 }
