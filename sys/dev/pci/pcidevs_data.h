@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.840 2006/10/23 00:21:27 rjs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.841 2006/10/25 19:22:58 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.841 2006/10/23 00:20:06 rjs Exp
+ *	NetBSD: pcidevs,v 1.842 2006/10/25 19:22:31 bouyer Exp
  */
 
 /*
@@ -11696,6 +11696,10 @@ static const struct pci_product pci_products[] = {
 	    "VT82C586 PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_SATA,
+	    "VT8237A Integrated SATA Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595,
 	    "VT82C595 (Apollo VP2) Host-PCI Bridge",
 	},
@@ -12424,4 +12428,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2512;
+const int pci_nproducts = 2513;
