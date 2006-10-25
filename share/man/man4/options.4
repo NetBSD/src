@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.338 2006/10/14 07:30:54 wiz Exp $
+.\"	$NetBSD: options.4,v 1.339 2006/10/25 13:58:02 jmmv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd October 12, 2006
+.Dd October 25, 2006
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2484,13 +2484,6 @@ a Multiboot-compliant boot manager such as GRUB.
 See
 .Xr multiboot 8
 for more information.
-.It Cd options MULTIBOOT_SYMTAB_SPACE=nbytes
-Space (in bytes) reserved in memory to store the kernel's symbol table.
-If the symbol table is bigger than this space, it will not be loaded;
-if it is smaller, the unused memory will be claimed by the kernel and
-used normally.
-You shouldn't need to touch this variable.
-Defaults to 1048576 bytes (one megabyte).
 .El
 .Ss isa-specific Options
 Options specific to
