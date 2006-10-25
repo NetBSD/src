@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.7 2006/10/12 01:30:42 christos Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.8 2006/10/25 13:56:16 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.7 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.8 2006/10/25 13:56:16 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.7 2006/10/12 01:30:42 christos Exp $
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/optstr.h>
+#include <sys/ksyms.h>
 
 #include <machine/bootinfo.h>
 #include <machine/multiboot.h>
@@ -53,6 +54,19 @@ __KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.7 2006/10/12 01:30:42 christos Exp $
 #if !defined(MULTIBOOT)
 #  error "MULTIBOOT not defined; this cannot happen."
 #endif
+
+/* --------------------------------------------------------------------- */
+
+/*
+ * Symbol and string table for the loaded kernel.
+ */
+
+struct multiboot_symbols {
+	caddr_t		s_symstart;
+	size_t		s_symsize;
+	caddr_t		s_strstart;
+	size_t		s_strsize;
+};
 
 /* --------------------------------------------------------------------- */
 
@@ -85,23 +99,7 @@ static struct multiboot_info	Multiboot_Info;
 static boolean_t		Multiboot_Loader = FALSE;
 static char			Multiboot_Loader_Name[255];
 static uint8_t			Multiboot_Mmap[1024];
-
-/* --------------------------------------------------------------------- */
-
-/*
- * Simplified ELF image that contains the symbol table for the booted
- * kernel.  Stuck after the kernel image (in memory).
- *
- * Must be less than MULTIBOOT_SYMTAB_SPACE in bytes.  Otherwise, there
- * is no guarantee that it will not overwrite other stuff passed in by
- * the boot loader.
- */
-struct symbols_image {
-	Elf32_Ehdr	i_ehdr;
-	Elf32_Shdr	i_shdr[4];
-	char		i_strtab[32];
-	char		i_data; /* Actually longer. */
-};
+static struct multiboot_symbols	Multiboot_Symbols;
 
 /* --------------------------------------------------------------------- */
 
@@ -117,7 +115,6 @@ static void	setup_console(struct multiboot_info *);
 static void	setup_howto(struct multiboot_info *);
 static void	setup_memory(struct multiboot_info *);
 static void	setup_memmap(struct multiboot_info *);
-static void	setup_syms(struct multiboot_info *);
 
 /* --------------------------------------------------------------------- */
 
@@ -200,7 +197,6 @@ multiboot_post_reloc(void)
 	setup_biosgeom(mi);
 	setup_bootdisk(mi);
 	setup_memmap(mi);
-	setup_syms(mi);
 }
 
 /* --------------------------------------------------------------------- */
@@ -214,6 +210,7 @@ void
 multiboot_print_info(void)
 {
 	struct multiboot_info *mi = &Multiboot_Info;
+	struct multiboot_symbols *ms = &Multiboot_Symbols;
 
 	if (! Multiboot_Loader)
 		return;
@@ -231,9 +228,13 @@ multiboot_print_info(void)
 		printf("multiboot: %u KB lower memory, %u KB upper memory\n",
 		    mi->mi_mem_lower, mi->mi_mem_upper);
 
-	if (mi->mi_flags & MULTIBOOT_INFO_HAS_ELF_SYMS && esym == 0)
-		printf("multiboot: Symbol table too big; try increasing "
-		    "MULTIBOOT_SYMTAB_SPACE\n");
+	if (mi->mi_flags & MULTIBOOT_INFO_HAS_ELF_SYMS) {
+		KASSERT(esym != 0);
+		printf("multiboot: Symbol table at %p, length %d bytes\n",
+		    ms->s_symstart, ms->s_symsize);
+		printf("multiboot: String table at %p, length %d bytes\n",
+		    ms->s_strstart, ms->s_strsize);
+	}
 }
 
 /* --------------------------------------------------------------------- */
@@ -281,14 +282,19 @@ copy_syms(struct multiboot_info *mi)
 #define RELOC(type, x) ((type)((vaddr_t)(x) - KERNBASE))
 	int i;
 	Elf32_Shdr *symtabp, *strtabp;
-	struct symbols_image *si;
-	extern void start(void);
+	struct multiboot_symbols *ms;
+	size_t symsize, strsize;
+	paddr_t symaddr, straddr;
+	paddr_t symstart, strstart;
+
 
 	/*
 	 * Check if the Multiboot information header has symbols or not.
 	 */
 	if (!(mi->mi_flags & MULTIBOOT_INFO_HAS_ELF_SYMS))
 		return;
+
+	ms = RELOC(struct multiboot_symbols *, &Multiboot_Symbols);
 
 	/*
 	 * Locate a symbol table and its matching string table in the
@@ -318,99 +324,61 @@ copy_syms(struct multiboot_info *mi)
 	if (symtabp == NULL || strtabp == NULL)
 		return;
 
-	/*
-	 * Check if the symbol table will fit after the kernel image.
-	 * If not, ignore it; there is nothing else we can do (except
-	 * maybe copying only part of the table... but that could be
-	 * as useless as not copying it).
-	 */
-	if (sizeof(si) + symtabp->sh_size + strtabp->sh_size >
-	    MULTIBOOT_SYMTAB_SPACE)
-		return;
+	symaddr = symtabp->sh_addr;
+	straddr = strtabp->sh_addr;
+	symsize = symtabp->sh_size;
+	strsize = strtabp->sh_size;
 
 	/*
-	 * Prepare space after the kernel to create a simple ELF image
-	 * that holds the symbol table and the string table previously
-	 * found.
+	 * Copy the symbol and string tables just after the kernel's
+	 * end address, in this order.  Only the contents of these ELF
+	 * sections are copied; headers are discarded.  esym is later
+	 * updated to point to the lowest "free" address after the tables
+	 * so that they are mapped appropriately when enabling paging.
 	 *
-	 * This goes just after the BSS section to let the bootstraping
-	 * code relocate it (up to esym's value).
+	 * We need to be careful to not overwrite valid data doing the
+	 * copies, hence all the different cases below.  We can assume
+	 * that if the tables start before the kernel's end address,
+	 * they will not grow over this address.
 	 */
-	memset(RELOC(char *, &end), 0, MULTIBOOT_SYMTAB_SPACE);
-	si = RELOC(struct symbols_image *, &end);
+        if ((paddr_t)symtabp < (paddr_t)&end - KERNBASE &&
+	    (paddr_t)strtabp < (paddr_t)&end - KERNBASE) {
+		symstart = (paddr_t)((vaddr_t)&end - KERNBASE);
+		strstart = symstart + symsize;
+		memcpy((void *)symstart, (void *)symaddr, symsize);
+		memcpy((void *)strstart, (void *)straddr, strsize);
+        } else if ((paddr_t)symtabp > (paddr_t)&end - KERNBASE &&
+	           (paddr_t)strtabp < (paddr_t)&end - KERNBASE) {
+		symstart = (paddr_t)((vaddr_t)&end - KERNBASE);
+		strstart = symstart + symsize;
+		memcpy((void *)symstart, (void *)symaddr, symsize);
+		memcpy((void *)strstart, (void *)straddr, strsize);
+        } else if ((paddr_t)symtabp < (paddr_t)&end - KERNBASE &&
+	           (paddr_t)strtabp > (paddr_t)&end - KERNBASE) {
+		strstart = (paddr_t)((vaddr_t)&end - KERNBASE);
+		symstart = strstart + strsize;
+		memcpy((void *)strstart, (void *)straddr, strsize);
+		memcpy((void *)symstart, (void *)symaddr, symsize);
+	} else {
+		/* symtabp and strtabp are both over end */
+		if ((paddr_t)symtabp < (paddr_t)strtabp) {
+			symstart = (paddr_t)((vaddr_t)&end - KERNBASE);
+			strstart = symstart + symsize;
+			memcpy((void *)symstart, (void *)symaddr, symsize);
+			memcpy((void *)strstart, (void *)straddr, strsize);
+		} else {
+			strstart = (paddr_t)((vaddr_t)&end - KERNBASE);
+			symstart = strstart + strsize;
+			memcpy((void *)strstart, (void *)straddr, strsize);
+			memcpy((void *)symstart, (void *)symaddr, symsize);
+		}
+	}
+	*RELOC(int *, &esym) = (int)(strstart + strsize + KERNBASE);
 
-	/*
-	 * Create a minimal ELF header (as required by ksyms_init).
-	 */
-	memcpy(si->i_ehdr.e_ident, ELFMAG, SELFMAG);
-	si->i_ehdr.e_ident[EI_CLASS] = ELFCLASS32;
-	si->i_ehdr.e_ident[EI_DATA] = ELFDATA2LSB;
-	si->i_ehdr.e_ident[EI_VERSION] = EV_CURRENT;
-	si->i_ehdr.e_type = ET_EXEC;
-	si->i_ehdr.e_machine = EM_386;
-	si->i_ehdr.e_version = 1;
-	si->i_ehdr.e_entry = (Elf32_Addr)start;
-	si->i_ehdr.e_shoff = offsetof(struct symbols_image, i_shdr);
-	si->i_ehdr.e_ehsize = sizeof(si->i_ehdr);
-	si->i_ehdr.e_shentsize = sizeof(si->i_shdr[0]);
-	si->i_ehdr.e_shnum = 2;
-	si->i_ehdr.e_shstrndx = SHN_UNDEF;
-
-	/*
-	 * First section: default empty entry; cleared by the previous
-	 * memset.  Explicitly set fields that use symbolic values.
-	 */
-	si->i_shdr[0].sh_type = SHT_NULL;
-	si->i_shdr[0].sh_link = SHN_UNDEF;
-
-	/*
-	 * Second section: the symbol table.
-	 */
-	memcpy(&si->i_shdr[1], symtabp, sizeof(si->i_shdr[1]));
-	si->i_shdr[1].sh_name = 1;
-	si->i_shdr[1].sh_addr = (vaddr_t)(&end) +
-	    offsetof(struct symbols_image, i_shdr[1]);
-	si->i_shdr[1].sh_offset = offsetof(struct symbols_image, i_data);
-	si->i_shdr[1].sh_link = 2;
-
-	memcpy(RELOC(uint8_t *, (vaddr_t)(&end)) + si->i_shdr[1].sh_offset,
-	    (void *)symtabp->sh_addr, symtabp->sh_size);
-
-	/*
-	 * Third section: the strings table.
-	 */
-	memcpy(&si->i_shdr[2], strtabp, sizeof(si->i_shdr[2]));
-	si->i_shdr[1].sh_name = 9;
-	si->i_shdr[2].sh_addr = (vaddr_t)(&end) +
-	    offsetof(struct symbols_image, i_shdr[2]);
-	si->i_shdr[2].sh_offset = offsetof(struct symbols_image, i_data) +
-	    si->i_shdr[1].sh_size;
-	si->i_shdr[2].sh_link = SHN_UNDEF;
-
-	memcpy(RELOC(uint8_t *, (vaddr_t)(&end)) + si->i_shdr[2].sh_offset,
-	    (void *)strtabp->sh_addr, strtabp->sh_size);
-
-	/*
-	 * Fourth section: the section header strings table used by this
-	 * minimal ELF image.
-	 */
-	si->i_shdr[3].sh_name = 17;
-	si->i_shdr[3].sh_type = SHT_STRTAB;
-	si->i_shdr[3].sh_offset = offsetof(struct symbols_image, i_strtab);
-	si->i_shdr[3].sh_size = sizeof(si->i_strtab);
-	si->i_shdr[3].sh_addralign = 1;
-	si->i_shdr[3].sh_link = SHN_UNDEF;
-
-	strcpy(&si->i_strtab[1], ".symtab");
-	strcpy(&si->i_strtab[9], ".strtab");
-	strcpy(&si->i_strtab[17], ".shstrtab");
-
-	/*
-	 * Set up the 'esym' global variable to point to the end of the
-	 * minimal ELF image (end of symbols).
-	 */
-	*RELOC(int *, &esym) = ((vaddr_t)&end) + si->i_shdr[2].sh_offset +
-	    si->i_shdr[2].sh_size;
+	ms->s_symstart = (caddr_t)(symstart + KERNBASE);
+	ms->s_symsize  = symsize;
+	ms->s_strstart = (caddr_t)(strstart + KERNBASE);
+	ms->s_strsize  = strsize;
 #undef RELOC
 }
 
@@ -709,24 +677,21 @@ setup_memory(struct multiboot_info *mi)
 /* --------------------------------------------------------------------- */
 
 /*
- * Sets up the symtab bootinfo structure to describe where the symbols
- * are if copy_syms() found them.
+ * Sets up the initial kernel symbol table.  Returns true if this was
+ * passed in by Multiboot; false otherwise.
  */
-static void
-setup_syms(struct multiboot_info *mi __unused)
+boolean_t
+multiboot_ksyms_init(void)
 {
-	struct btinfo_symtab bi;
-	struct symbols_image *si;
+	struct multiboot_info *mi = &Multiboot_Info;
+	struct multiboot_symbols *ms = &Multiboot_Symbols;
 
-	if (esym == 0)
-		return;
+	if (mi->mi_flags & MULTIBOOT_INFO_HAS_ELF_SYMS) {
+		KASSERT(esym != 0);
 
-	si = (struct symbols_image *)(&end);
+		ksyms_init_explicit(ms->s_symstart, ms->s_symsize,
+		    ms->s_strstart, ms->s_strsize);
+	}
 
-	bi.ssym = (int)(&end) - KERNBASE;
-	bi.esym = (int)esym - KERNBASE;
-	bi.nsym = si->i_shdr[1].sh_size / sizeof(Elf32_Sym);
-
-	bootinfo_add((struct btinfo_common *)&bi, BTINFO_SYMTAB,
-	    sizeof(struct btinfo_symtab));
+	return mi->mi_flags & MULTIBOOT_INFO_HAS_ELF_SYMS;
 }

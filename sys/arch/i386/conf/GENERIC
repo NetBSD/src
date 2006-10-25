@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.789 2006/10/22 16:26:27 bouyer Exp $
+# $NetBSD: GENERIC,v 1.790 2006/10/25 13:56:15 jmmv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.789 $"
+#ident 		"GENERIC-$Revision: 1.790 $"
 
 maxusers	32		# estimated number of users
 
@@ -54,7 +54,6 @@ options 	MTRR		# memory-type range register syscall support
 #options 	PERFCTRS	# performance-monitoring counters support
 
 options 	MULTIBOOT	# Multiboot support (see multiboot(8))
-#options 	MULTIBOOT_SYMTAB_SPACE=1048576
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000

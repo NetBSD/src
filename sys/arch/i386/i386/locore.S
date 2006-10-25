@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43 2006/07/25 00:23:38 mrg Exp $	*/
+/*	$NetBSD: locore.S,v 1.44 2006/10/25 13:56:15 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -215,16 +215,10 @@ start:	movw	$0x1234,0x472			# warm boot
 	.align	4
 	.globl	Multiboot_Header
 _C_LABEL(Multiboot_Header):
-#define MULTIBOOT_HEADER_FLAGS	(MULTIBOOT_HEADER_WANT_MEMORY | \
-				 MULTIBOOT_HEADER_HAS_ADDR)
+#define MULTIBOOT_HEADER_FLAGS	(MULTIBOOT_HEADER_WANT_MEMORY)
 	.long	MULTIBOOT_HEADER_MAGIC
 	.long	MULTIBOOT_HEADER_FLAGS
 	.long	-(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
-	.long	RELOC(Multiboot_Header)
-	.long	RELOC(start)
-	.long	RELOC(_edata)
-	.long	RELOC(_end) + MULTIBOOT_SYMTAB_SPACE
-	.long	RELOC(start)
 
 1:
 	/* Check if we are being executed by a Multiboot-compliant boot
