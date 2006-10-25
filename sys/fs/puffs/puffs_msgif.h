@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.2 2006/10/23 16:07:18 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.3 2006/10/25 18:15:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -363,6 +363,11 @@ struct puffs_vnreq_readlink {
 
 struct puffs_vnreq_reclaim {
 	pid_t			pvnr_pid;		/* OUT	*/
+};
+
+struct puffs_vnreq_inactive {
+	pid_t			pvnr_pid;		/* OUT	*/
+	int			pvnr_backendrefs;	/* IN	*/
 };
 
 /* XXX: get rid of alltogether */
