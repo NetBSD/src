@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.2 2006/10/23 12:21:39 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.3 2006/10/25 18:15:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.2 2006/10/23 12:21:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.3 2006/10/25 18:15:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -267,7 +267,6 @@ puffs_lookup(void *v)
 	} else  {
 		if (wantpunlock) {
 			VOP_UNLOCK(dvp, 0);
-			/* we don't really need to set this? */
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 	}
@@ -492,6 +491,50 @@ puffs_revoke(void *v)
 	    &revoke_arg, sizeof(revoke_arg), VPTOPNC(ap->a_vp), NULL, NULL);
 
 	return genfs_revoke(v);
+}
+
+int
+puffs_inactive(void *v)
+{
+	struct vop_inactive_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		struct lwp *a_l;
+	} */ *ap = v;
+	struct puffs_node *pnode;
+	int rv, vnrefs;
+
+	PUFFS_VNREQ(inactive);
+
+	/*
+	 * XXX: think about this after we really start unlocking
+	 * when going to userspace
+	 */
+	pnode = ap->a_vp->v_data;
+	pnode->pn_stat |= PNODE_INACTIVE;
+
+	inactive_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
+
+	rv = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_INACTIVE,
+	    &inactive_arg, sizeof(inactive_arg), VPTOPNC(ap->a_vp),
+	    ap->a_vp, NULL);
+
+	/* can't trust userspace return value?  simulate safe answer */
+	if (rv)
+		vnrefs = 1;
+	else
+		vnrefs = inactive_arg.pvnr_backendrefs;
+
+	VOP_UNLOCK(ap->a_vp, 0);
+
+	/*
+	 * user server thinks it's gone?  then don't be afraid care,
+	 * node's life was already all it would ever be
+	 */
+	if (vnrefs == 0)
+		vrecycle(ap->a_vp, NULL, ap->a_l);
+
+	return 0;
 }
 
 int
@@ -1173,27 +1216,6 @@ puffs_advlock(void *v)
  * The rest don't get a free trip to userspace and back, they
  * have to stay within the kernel.
  */
-
-/*
- * We don't want to do anything in userspace about this now, we'll
- * simply nuke everything when we reclaim the vnode.
- */
-int
-puffs_inactive(void *v)
-{
-	struct vop_inactive_args /* {
-		const struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		struct lwp *a_l;
-	} */ *ap = v;
-	struct puffs_node *pnode;
-
-	pnode = ap->a_vp->v_data;
-	pnode->pn_stat |= PNODE_INACTIVE;
-	VOP_UNLOCK(ap->a_vp, 0);
-
-	return 0;
-}
 
 /*
  * moreXXX: yes, todo
