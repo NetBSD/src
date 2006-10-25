@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.166 2006/10/20 18:58:12 reinoud Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.167 2006/10/25 22:01:54 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.166 2006/10/20 18:58:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.167 2006/10/25 22:01:54 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -959,20 +959,25 @@ nfs_sync(mp, waitfor, cred, l)
 	kauth_cred_t cred;
 	struct lwp *l;
 {
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	int error, allerror = 0;
 
 	/*
 	 * Force stale buffer cache information to be flushed.
 	 */
 loop:
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	/*
+	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
+	 * and vclean() can be called indirectly
+	 */
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0))
