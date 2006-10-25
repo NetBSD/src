@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.28 2006/10/12 01:32:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.29 2006/10/25 13:46:36 jmmv Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -292,42 +292,44 @@ ksymsattach(int arg __unused)
 }
 
 /*
- * Add a symbol table named name.
- * This is intended for use when the kernel loader enters the table.
+ * Add a symbol table.
+ * This is intended for use when the symbol table and its corresponding
+ * string table are easily available.  If they are embedded in an ELF
+ * image, use addsymtab_elf() instead.
+ *
+ * name - Symbol's table name.
+ * symstart, symsize - Address and size of the symbol table.
+ * strstart, strsize - Address and size of the string table.
+ * tab - Symbol table to be updated with this information.
+ * newstart - Address to which the symbol table has to be copied during
+ *            shrinking.  If NULL, it is not moved.
  */
 static void
-addsymtab(const char *name, Elf_Ehdr *ehdr, struct symtab *tab)
+addsymtab(const char *name,
+    caddr_t symstart, size_t symsize,
+    caddr_t strstart, size_t strsize,
+    struct symtab *tab,
+    caddr_t newstart)
 {
-	caddr_t start = (caddr_t)ehdr;
 	caddr_t send;
-	Elf_Shdr *shdr;
 	Elf_Sym *sym, *nsym;
-	int i, j, n, g;
+	int i, n, g;
 	char *str;
 
-	/* Find the symbol table and the corresponding string table. */
-	shdr = (Elf_Shdr *)(start + ehdr->e_shoff);
-	for (i = 1; i < ehdr->e_shnum; i++) {
-		if (shdr[i].sh_type != SHT_SYMTAB)
-			continue;
-		if (shdr[i].sh_offset == 0)
-			continue;
-		tab->sd_symstart = (Elf_Sym *)(start + shdr[i].sh_offset);
-		tab->sd_symsize = shdr[i].sh_size;
-		j = shdr[i].sh_link;
-		if (shdr[j].sh_offset == 0)
-			continue; /* Can this happen? */
-		tab->sd_strstart = start + shdr[j].sh_offset;
-		tab->sd_strsize = shdr[j].sh_size;
-		break;
-	}
+	if (newstart == NULL)
+		newstart = symstart;
+	KASSERT(newstart <= symstart && symstart <= strstart);
+
+	tab->sd_symstart = (Elf_Sym *)symstart;
+	tab->sd_symsize = symsize;
+	tab->sd_strstart = strstart;
+	tab->sd_strsize = strsize;
 	tab->sd_name = name;
 	send = tab->sd_strstart + tab->sd_strsize;
 
 #ifdef KSYMS_DEBUG
-	printf("start %p sym %p symsz %d str %p strsz %d send %p\n",
-	    start, tab->sd_symstart, tab->sd_symsize,
-	    tab->sd_strstart, tab->sd_strsize, send);
+	printf("newstart %p sym %p symsz %d str %p strsz %d send %p\n",
+	    newstart, symstart, symsize, strstart, strsize, send);
 #endif
 
 	/*
@@ -335,7 +337,7 @@ addsymtab(const char *name, Elf_Ehdr *ehdr, struct symtab *tab)
 	 * and overwrite the elf header.
 	 */
 	sym = tab->sd_symstart;
-	nsym = (Elf_Sym *)start;
+	nsym = (Elf_Sym *)newstart;
 	str = tab->sd_strstart;
 	for (g = i = n = 0; i < tab->sd_symsize/sizeof(Elf_Sym); i++) {
 		if (i == 0) {
@@ -370,9 +372,12 @@ addsymtab(const char *name, Elf_Ehdr *ehdr, struct symtab *tab)
 		if (ELF_ST_BIND(nsym[n].st_info) == STB_GLOBAL)
 			g++;
 #if NKSYMS
-		j = strlen(nsym[n].st_name + tab->sd_strstart) + 1;
-		if (j > ksyms_maxlen)
-			ksyms_maxlen = j;
+		{
+			int j;
+			j = strlen(nsym[n].st_name + tab->sd_strstart) + 1;
+			if (j > ksyms_maxlen)
+				ksyms_maxlen = j;
+		}
 #endif
 		n++;
 
@@ -410,6 +415,41 @@ addsymtab(const char *name, Elf_Ehdr *ehdr, struct symtab *tab)
 		ptree_gen(str + n, tab);
 #endif
 #endif
+}
+
+/*
+ * Add a symbol table named name.
+ * This is intended for use when the kernel loader enters the table.
+ */
+static void
+addsymtab_elf(const char *name, Elf_Ehdr *ehdr, struct symtab *tab)
+{
+	int i, j;
+	caddr_t start = (caddr_t)ehdr;
+	Elf_Shdr *shdr;
+	caddr_t symstart = NULL, strstart = NULL;
+	size_t symsize = 0, strsize = 0;
+
+	/* Find the symbol table and the corresponding string table. */
+	shdr = (Elf_Shdr *)(start + ehdr->e_shoff);
+	for (i = 1; i < ehdr->e_shnum; i++) {
+		if (shdr[i].sh_type != SHT_SYMTAB)
+			continue;
+		if (shdr[i].sh_offset == 0)
+			continue;
+		symstart = start + shdr[i].sh_offset;
+		symsize = shdr[i].sh_size;
+		j = shdr[i].sh_link;
+		if (shdr[j].sh_offset == 0)
+			continue; /* Can this happen? */
+		strstart = start + shdr[j].sh_offset;
+		strsize = shdr[j].sh_size;
+		break;
+	}
+
+	KASSERT(symstart != NULL && strstart != NULL);
+
+	addsymtab(name, symstart, symsize, strstart, strsize, tab, start);
 }
 
 /*
@@ -460,7 +500,7 @@ ksyms_init(int symsize, void *start, void *end __unused)
 	ksyms_hdr_init(start);
 #endif
 
-	addsymtab("netbsd", ehdr, &kernel_symtab);
+	addsymtab_elf("netbsd", ehdr, &kernel_symtab);
 
 #if NKSYMS
 	ksyms_sizes_calc();
@@ -473,6 +513,30 @@ ksyms_init(int symsize, void *start, void *end __unused)
 	    kernel_symtab.sd_symstart, kernel_symtab.sd_strstart,
 	    (long)kernel_symtab.sd_symsize/sizeof(Elf_Sym));
 #endif
+}
+
+/*
+ * Setup the kernel symbol table stuff.
+ * Use this when the address of the symbol and string tables are known;
+ * otherwise use ksyms_init with an ELF image.
+ */
+void
+ksyms_init_explicit(caddr_t symstart, size_t symsize,
+    caddr_t strstart, size_t strsize)
+{
+
+	KASSERT(symstart != NULL);
+	KASSERT(strstart != NULL);
+	KASSERT(symstart <= strstart);
+
+	addsymtab("netbsd", symstart, symsize, strstart, strsize,
+	    &kernel_symtab, NULL);
+
+#if NKSYMS
+	ksyms_sizes_calc();
+#endif
+
+	ksymsinited = 1;
 }
 
 /*
