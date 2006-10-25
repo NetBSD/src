@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.34 2006/10/20 18:58:12 reinoud Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.35 2006/10/25 22:01:55 reinoud Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.34 2006/10/20 18:58:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.35 2006/10/25 22:01:55 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -158,7 +158,7 @@ ffs_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
 	struct inode *ip, *xp;
 	struct buf *bp, *ibp, *nbp;
 	struct vattr vat;
-	struct vnode *xvp, *devvp;
+	struct vnode *xvp, *nvp, *devvp;
 
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
@@ -363,7 +363,11 @@ ffs_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
 	    FSMAXSNAP + 1 /* superblock */ + 1 /* last block */ + 1 /* size */;
 	MNT_ILOCK(mp);
 loop:
-	TAILQ_FOREACH(xvp, &mp->mnt_vnodelist, v_mntvnodes) {
+	/*
+	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
+	 * and vclean() can be called indirectly
+	 */
+	for (xvp = TAILQ_FIRST(&mp->mnt_vnodelist); xvp; xvp = nvp) {
 		/*
 		 * Make sure this vnode wasn't reclaimed in getnewvnode().
 		 * Start over if it has (it won't be on the list anymore).
@@ -371,6 +375,7 @@ loop:
 		if (xvp->v_mount != mp)
 			goto loop;
 		VI_LOCK(xvp);
+		nvp = TAILQ_NEXT(xvp, v_mntvnodes);
 		MNT_IUNLOCK(mp);
 		if ((xvp->v_flag & VXLOCK) ||
 		    xvp->v_usecount == 0 || xvp->v_type == VNON ||
