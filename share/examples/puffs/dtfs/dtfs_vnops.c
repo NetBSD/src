@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.2 2006/10/23 16:20:39 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.3 2006/10/25 18:18:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -116,7 +116,7 @@ dtfs_create(struct puffs_usermount *pu, void *opc, void **newnode,
 	puffs_setvattr(&pn_new->pn_va, va);
 
 	*newnode = pn_new;
-	
+
 	return 0;
 }
 
@@ -125,8 +125,14 @@ dtfs_remove(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_parent = opc;
+	struct puffs_node *pn = targ;
 
-	return dtfs_nukefile(targ, pn_parent, pcn->pcn_name);
+	if (pn->pn_va.va_type == VDIR)
+		return EISDIR;
+
+	dtfs_nukenode(targ, pn_parent, pcn->pcn_name);
+
+	return 0;
 }
 
 int
@@ -135,8 +141,6 @@ dtfs_mkdir(struct puffs_usermount *pu, void *opc, void **newnode,
 {
 	struct puffs_node *pn_parent = opc;
 	struct puffs_node *pn_new;
-
-	assert(va->va_type == VDIR);
 
 	pn_new = dtfs_genfile(pn_parent, pcn->pcn_name, VDIR);
 	puffs_setvattr(&pn_new->pn_va, va);
@@ -151,8 +155,14 @@ dtfs_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_parent = opc;
+	struct dtfs_file *df = DTFS_CTOF(targ);
 
-	return dtfs_nukedir(targ, pn_parent, pcn->pcn_name);
+	if (!LIST_EMPTY(&df->df_dirents))
+		return ENOTEMPTY;
+
+	dtfs_nukenode(targ, pn_parent, pcn->pcn_name);
+
+	return 0;
 }
 
 int
@@ -209,7 +219,7 @@ dtfs_rename(struct puffs_usermount *pu, void *opc, void *src,
 	/* if there's a target file, nuke it for atomic replacement */
 	if (pn_tfile) {
 		assert(pn_tfile->pn_type != VDIR); /* XXX? */
-		dtfs_nukefile(pn_tfile, pn_sdir, pcn_targ->pcn_name);
+		dtfs_nukenode(pn_tfile, pn_sdir, pcn_targ->pcn_name);
 	}
 
 	/* out with the old */
@@ -339,6 +349,27 @@ dtfs_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	dtfs_setsize(pn, *resid + offset, 1);
 	memcpy(df->df_data + offset, buf, *resid);
 	*resid = 0;
+
+	return 0;
+}
+
+int
+dtfs_reclaim(struct puffs_usermount *pu, void *opc, pid_t pid)
+{
+	struct puffs_node *pn = opc;
+
+	if (pn->pn_va.va_nlink == 0)
+		dtfs_freenode(pn);
+
+	return 0;
+}
+
+int
+dtfs_inactive(struct puffs_usermount *pu, void *opc, pid_t pid, int *refcount)
+{
+	struct puffs_node *pn = opc;
+
+	*refcount = pn->pn_va.va_nlink;
 
 	return 0;
 }
