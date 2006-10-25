@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.121 2006/08/24 06:56:39 mrg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.122 2006/10/25 23:49:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -199,6 +199,7 @@
 #define clock_settime		_clock_settime
 #define closedir		_closedir
 #define closelog		_closelog
+#define closelog_r		_closelog_r
 #define confstr			_confstr
 #define ctermid			_ctermid
 #define ctime_r			_ctime_r
@@ -437,6 +438,7 @@
 #define offtime			_offtime
 #define opendir			_opendir
 #define openlog			_openlog
+#define openlog_r		_openlog_r
 #define pause			_pause
 #define pclose			_pclose
 #define pmap_getmaps		_pmap_getmaps
@@ -498,6 +500,7 @@
 #define sethostname		_sethostname
 #define setlogin		_setlogin
 #define setlogmask		_setlogmask
+#define setlogmask_r		_setlogmask_r
 #define setmode			_setmode
 #define setnetconfig		_setnetconfig
 #define setnetent		_setnetent
@@ -586,6 +589,7 @@
 #define sysctlgetmibinfo	_sysctlgetmibinfo
 #define sysctlnametomib		_sysctlnametomib
 #define syslog			_syslog
+#define syslog_r		_syslog_r
 #define taddr2uaddr		_taddr2uaddr
 #define tcdrain			_tcdrain
 #define tcflow			_tcflow
@@ -623,6 +627,7 @@
 #define vis			_vis
 #define vsnprintf		_vsnprintf
 #define vsyslog			_vsyslog
+#define vsyslog_r		_vsyslog_r
 #define wait			_wait
 #define wait3			_wait3
 #define waitpid			_waitpid
