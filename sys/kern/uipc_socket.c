@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.108.2.1 2005/10/22 03:54:33 riz Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.108.2.2 2006/10/25 07:53:19 ghen Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.108.2.1 2005/10/22 03:54:33 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.108.2.2 2006/10/25 07:53:19 ghen Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -461,7 +461,16 @@ socreate(int dom, struct socket **aso, int type, int proto, struct proc *p)
 		prp = pffindproto(dom, proto, type);
 	else
 		prp = pffindtype(dom, type);
-	if (prp == 0 || prp->pr_usrreq == 0)
+	if (prp == 0) {
+		/* no support for domain */
+		if (pffinddomain(dom) == 0)
+			return (EAFNOSUPPORT);
+		/* no support for socket type */
+		if (proto == 0 && type != 0)
+			return (EPROTOTYPE);
+		return (EPROTONOSUPPORT);
+	}
+	if (prp->pr_usrreq == 0)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
