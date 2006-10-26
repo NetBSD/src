@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.3 2006/10/25 18:15:50 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.4 2006/10/26 22:53:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.3 2006/10/25 18:15:50 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.4 2006/10/26 22:53:01 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -219,7 +219,7 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq)
 			/* lookup *must* be present */
 			error = pu->pu_pvn.puffs_lookup(pu, preq->preq_cookie,
 			    &auxt->pvnr_newnode, &auxt->pvnr_vtype,
-			    &auxt->pvnr_cn);
+			    &auxt->pvnr_rdev, &auxt->pvnr_cn);
 			break;
 		}
 
