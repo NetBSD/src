@@ -19,8 +19,9 @@
 /*
  * SECURE is 1 if you wish to disable a bunch of features in order to
  * be safe to run by unprivileged users.
+ * SECURE_COMPILE is set by the --with-secure configure option.
  */
-#define	SECURE		0
+#define	SECURE		SECURE_COMPILE
 
 /*
  * SHELL_ESCAPE is 1 if you wish to allow shell escapes.
@@ -106,10 +107,13 @@
  * LESSKEYFILE_SYS is the filename of the system-wide lesskey output file.
  * DEF_LESSKEYINFILE is the filename of the default lesskey input
  * (in the HOME directory).
+ * LESSHISTFILE is the filename of the history file
+ * (in the HOME directory).
  */
 #define	LESSKEYFILE		".less"
 #define	LESSKEYFILE_SYS		SYSDIR "/sysless"
 #define	DEF_LESSKEYINFILE	".lesskey"
+#define LESSHISTFILE		".lesshst"
 
 
 /* Settings always true on Unix.  */
@@ -153,7 +157,7 @@
 /*
  * Default shell metacharacters and meta-escape character.
  */
-#define	DEF_METACHARS	"; *?\t\n'\"()<>|&^`#\\"
+#define	DEF_METACHARS	"; *?\t\n'\"()<>[]|&^`#\\"
 #define	DEF_METAESCAPE	"\\"
 
 /*
@@ -191,6 +195,9 @@
 
 /* Define to 1 if you have the <errno.h> header file. */
 #define HAVE_ERRNO_H 1
+
+/* Define to 1 if you have the `fchmod' function. */
+#define HAVE_FCHMOD 1
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
@@ -257,6 +264,9 @@
 
 /* Define HAVE_SIGSET_T you have the sigset_t type. */
 #define HAVE_SIGSET_T 1
+
+/* Define to 1 if you have the `snprintf' function. */
+#define HAVE_SNPRINTF 1
 
 /* Define to 1 if you have the `stat' function. */
 #define HAVE_STAT 1
@@ -370,6 +380,9 @@
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
+
+/* Define SECURE_COMPILE=1 to build a secure version of less. */
+#define SECURE_COMPILE 0
 
 /* Define to 1 if the `S_IS*' macros in <sys/stat.h> do not work properly. */
 /* #undef STAT_MACROS_BROKEN */
