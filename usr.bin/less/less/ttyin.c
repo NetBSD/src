@@ -102,8 +102,10 @@ getchr()
 {
 	char c;
 	int result;
+#if 0
 	int hex_in = 0;
 	int hex_value = 0;
+#endif
 
 	do
 	{
