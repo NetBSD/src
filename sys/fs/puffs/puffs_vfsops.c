@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.2 2006/10/26 13:35:23 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.3 2006/10/26 22:52:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.2 2006/10/26 13:35:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.3 2006/10/26 22:52:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -278,7 +278,7 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 	 * So, didn't have the magic root vnode available.
 	 * No matter, grab another an stuff it with the cookie.
 	 */
-	if (puffs_getvnode(mp, pmp->pmp_rootcookie, &vp))
+	if (puffs_getvnode(mp, pmp->pmp_rootcookie, VDIR, 0, &vp))
 		panic("sloppy programming");
 
 	simple_lock(&pmp->pmp_lock);
@@ -296,7 +296,6 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 	} 
 
 	/* store cache */
-	vp->v_type = VDIR;
 	vp->v_flag = VROOT;
 	pmp->pmp_root = vp;
 	simple_unlock(&pmp->pmp_lock);
@@ -423,10 +422,9 @@ puffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ts)
 	return EOPNOTSUPP;
 }
 
-extern const struct vnodeopv_desc puffs_vnodeop_opv_desc;
-
 const struct vnodeopv_desc * const puffs_vnodeopv_descs[] = {
 	&puffs_vnodeop_opv_desc,
+	&puffs_specop_opv_desc,
 	NULL,
 };
 

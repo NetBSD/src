@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.3 2006/10/25 18:15:39 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.4 2006/10/26 22:52:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -224,6 +224,7 @@ struct puffs_vnreq_lookup {
 	struct puffs_cn		pvnr_cn;		/* OUT	*/
 	void			*pvnr_newnode;		/* IN	*/
 	enum vtype		pvnr_vtype;		/* IN	*/
+	dev_t			pvnr_rdev;		/* IN	*/
 };
 
 struct puffs_vnreq_create {
