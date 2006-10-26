@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.27 2006/10/25 22:49:22 elad Exp $
+.\" $NetBSD: kauth.9,v 1.28 2006/10/26 16:06:39 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -397,11 +397,15 @@ Modification of NAT rules.
 Checks if network interface-related operations are allowed.
 .Pp
 .Ar arg1
-is the
+is (optionally) the
 .Ft struct ifnet *
 associated with the interface.
 .Ar arg2
-is the interface-specific operation.
+is (optionally) an
+.Ft int
+describing the interface-specific operation.
+.Ar arg3
+is (optionally) a pointer to the interface-specific request structure.
 .Ar req
 indicates the sub-action, and can be one of the following:
 .Bl -tag
