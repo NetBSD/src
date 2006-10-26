@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.32 2006/10/25 23:49:31 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.33 2006/10/26 10:00:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.32 2006/10/25 23:49:31 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.33 2006/10/26 10:00:38 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -237,7 +237,8 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 		if (ch == '%' && fmt[1] == 'm') {
 			char ebuf[128];
 			++fmt;
-			if (strerror_r(saved_errno, ebuf, sizeof(ebuf)))
+			if (data != &sdata ||
+			    strerror_r(saved_errno, ebuf, sizeof(ebuf)))
 				prlen = snprintf(t, fmt_left, "Error %d", 
 				    saved_errno);
 			else
