@@ -1,4 +1,4 @@
-.\" $NetBSD: podulebus.4,v 1.1 2006/10/26 21:37:08 bjh21 Exp $
+.\" $NetBSD: podulebus.4,v 1.2 2006/10/26 22:39:50 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2006 Ben Harris
 .\" All rights reserved.
@@ -40,7 +40,8 @@
 The
 .Nm
 driver handles the expansion-card interface in Archimedes machines and
-their successors.  This includes conventional expansion cards, mini
+their successors.
+This includes conventional expansion cards, mini
 expansion cards (as introduced in the A3000), network expansion cards
 (as introduced in the A3020), DEBI expansion cards (as introduced in
 the Risc PC), and Mk II network cards (also introduced in the Risc PC).
@@ -171,20 +172,25 @@ Atomwide multi-port serial interface
 .Pq Nx Ns /acorn32 .
 .El
 .Sh SEE ALSO
-.Xr asc 4 ,
-.Xr cosc 4 ,
-.Xr csc 4 ,
+.Xr acorn26/eh 4 ,
+.\" .Xr acorn32/amps 4 ,
+.Xr acorn32/asc 4 ,
+.Xr acorn32/cosc 4 ,
+.\" .Xr acorn32/csa 4 ,
+.Xr acorn32/csc 4 ,
+.\" .Xr acorn32/icside 4 ,
+.Xr acorn32/ie 4 ,
+.Xr acorn32/ptsc 4 ,
+.\" .Xr acorn32/rapide 4 ,
+.\" .Xr acorn32/simide 4 ,
 .Xr dtide 4 ,
 .Xr ea 4 ,
 .Xr eb 4 ,
-.Xr eh 4 ,
 .Xr ei 4 ,
 .Xr hcide 4 ,
-.Xr hcsc 4 ,
-.Xr ie 4 ,
+.\" .Xr hcsc 4 ,
 .Xr ne 4 ,
 .Xr oak 4 ,
-.Xr ptsc 4 ,
 .Xr sec 4
 .Sh BUGS
 Too few drivers are shared between
