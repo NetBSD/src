@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.9 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.9.4.1 2006/10/26 09:39:38 ghen Exp $	*/
 /*	$OpenBSD: log.h,v 1.11 2004/06/21 22:02:58 djm Exp $	*/
 
 /*
@@ -51,6 +51,7 @@ LogLevel log_level_number(char *);
 
 void     fatal(const char *, ...) __dead __attribute__((format(printf, 1, 2)));
 void     error(const char *, ...) __attribute__((format(printf, 1, 2)));
+void     sigdie(const char *, ...) __attribute__((format(printf, 1, 2)));
 void     logit(const char *, ...) __attribute__((format(printf, 1, 2)));
 void     verbose(const char *, ...) __attribute__((format(printf, 1, 2)));
 void     debug(const char *, ...) __attribute__((format(printf, 1, 2)));
