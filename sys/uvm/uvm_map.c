@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.230 2006/10/12 01:32:52 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.231 2006/10/26 20:00:52 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.230 2006/10/12 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.231 2006/10/26 20:00:52 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4803,14 +4803,14 @@ uvm_page_printall(void (*pr)(const char *, ...))
 	unsigned i;
 	struct vm_page *pg;
 
-	(*pr)("%18s %4s %2s %18s %18s"
+	(*pr)("%18s %4s %4s %18s %18s"
 #ifdef UVM_PAGE_TRKOWN
 	    " OWNER"
 #endif
 	    "\n", "PAGE", "FLAG", "PQ", "UOBJECT", "UANON");
 	for (i = 0; i < vm_nphysseg; i++) {
 		for (pg = vm_physmem[i].pgs; pg <= vm_physmem[i].lastpg; pg++) {
-			(*pr)("%18p %04x %02x %18p %18p",
+			(*pr)("%18p %04x %04x %18p %18p",
 			    pg, pg->flags, pg->pqflags, pg->uobject,
 			    pg->uanon);
 #ifdef UVM_PAGE_TRKOWN
