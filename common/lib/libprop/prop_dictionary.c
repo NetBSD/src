@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.15 2006/10/18 19:15:46 martin Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.16 2006/10/26 05:02:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <prop/prop_array.h>
 #include <prop/prop_dictionary.h>
 #include <prop/prop_string.h>
 #include "prop_object_impl.h"
@@ -694,6 +695,41 @@ prop_dictionary_iterator(prop_dictionary_t pd)
 	_prop_dictionary_iterator_reset(pdi);
 
 	return (&pdi->pdi_base);
+}
+
+/*
+ * prop_dictionary_all_keys --
+ *	Return an array containing a snapshot of all of the keys
+ *	in the dictionary.
+ */
+prop_array_t
+prop_dictionary_all_keys(prop_dictionary_t pd)
+{
+	prop_array_t array;
+	unsigned int idx;
+	boolean_t rv = TRUE;
+
+	if (! prop_object_is_dictionary(pd))
+		return (NULL);
+
+	/* There is no pressing need to lock the dictionary for this. */
+	array = prop_array_create_with_capacity(pd->pd_count);
+
+	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
+
+	for (idx = 0; idx < pd->pd_count; idx++) {
+		rv = prop_array_add(array, pd->pd_array[idx].pde_key);
+		if (rv == FALSE)
+			break;
+	}
+
+	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
+
+	if (rv == FALSE) {
+		prop_object_release(array);
+		array = NULL;
+	}
+	return (array);
 }
 
 static struct _prop_dict_entry *

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2006/10/18 14:50:58 martin Exp $
+#	$NetBSD: Makefile,v 1.12 2006/10/26 05:02:12 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,30 @@ MLINKS+= prop_dictionary_copyin_ioctl.9 prop_dictionary_copyout_ioctl.9
 MAN+=	prop_dictionary_send_ioctl.3
 MLINKS+= prop_dictionary_send_ioctl.3 prop_dictionary_recv_ioctl.3
 MLINKS+= prop_dictionary_send_ioctl.3 prop_dictionary_sendrecv_ioctl.3
+
+MAN+=	prop_dictionary_util.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_get_bool.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_set_bool.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_get_int8.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_get_uint8.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_set_int8.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_set_uint8.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_get_int16.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_get_uint16.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_set_int16.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_set_uint16.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_get_int32.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_get_uint32.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_set_int32.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_set_uint32.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_get_int64.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_get_uint64.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_set_int64.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_set_uint64.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_get_cstring.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_set_cstring.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_get_cstring_nocopy.3
+MLINKS+= prop_dictionary_util.3 prop_dictionary_set_cstring_nocopy.3
 
 MLINKS+= prop_array.3 prop_array_add.3
 MLINKS+= prop_array.3 prop_array_capacity.3
