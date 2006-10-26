@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem_create.9,v 1.1 2006/10/22 11:14:52 yamt Exp $
+.\"	$NetBSD: vmem_create.9,v 1.2 2006/10/26 11:16:28 wiz Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ------------------------------------------------------------
 .Sh NAME
 .Nm vmem_create
-.Nd Create a vmem arena
+.Nd create a vmem arena
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .In sys/vmem.h
@@ -51,12 +51,12 @@ creates a new vmem arena.
 .It Fa name
 The string to describe the vmem.
 .It Fa base
-The start address of initial span.
+The start address of the initial span.
 It can be
 .Dv VMEM_ADDR_NULL
 if no initial span is required.
 .It Fa size
-The size of initial span.
+The size of the initial span.
 .It Fa quantum
 The smallest unit of allocation.
 .It Fa allocfn
@@ -67,17 +67,17 @@ The callback function used to free spans to the backend arena.
 The backend arena.
 .It Fa qcache_max
 The largest size of allocations which can be served by quantum cache.
-It's merely a hint and can be ignored.
+It is merely a hint and can be ignored.
 .It Fa flags
 Either of:
 .Bl -tag -width VM_NOSLEEP
-.It VM_SLEEP
-Can sleep until enough resource is available.
-.It VM_NOSLEEP
+.It Dv VM_SLEEP
+Can sleep until enough resources are available.
+.It VDv M_NOSLEEP
 Don't sleep.
 Immediately return
 .Dv NULL
-if there is not enough resource available.
+if there are not enough resources available.
 .El
 .El
 .\" ------------------------------------------------------------
