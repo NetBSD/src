@@ -1,4 +1,4 @@
-.\"	$NetBSD: grep.1,v 1.11 2004/11/11 01:39:25 wiz Exp $
+.\"	$NetBSD: grep.1,v 1.11.2.1 2006/10/26 12:05:30 ghen Exp $
 .\"
 .\" grep man page
 .if !\n(.g \{\
@@ -14,7 +14,7 @@
 .de Id
 .ds Dt \\$4
 ..
-.Id Id: grep.1,v 1.23 2002/01/22 13:20:04 bero Exp
+.Id Id: grep.1,v 1.24 2003/06/16 08:34:16 kasal Exp
 .TH GREP 1 \*(Dt "GNU Project"
 .SH NAME
 grep, egrep, fgrep \- print lines matching a pattern
@@ -245,8 +245,8 @@ Displays input actually coming from standard input as input coming from file
 This is especially useful for tools like zgrep, e.g.
 .B "gzip -cd foo.gz |grep --label=foo something"
 .TP
-.BR \-\^\-line-buffering
-Use line buffering, it can be a performance penality.
+.BR \-\^\-line-buffered
+Use line buffering, it can be a performance penalty.
 .TP
 .BI \-m " NUM" "\fR,\fP \-\^\-max-count=" NUM
 Stop reading a file after
