@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.27 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.28 2006/10/26 03:06:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -167,6 +167,24 @@ CODE facilitynames[] = {
 
 #ifndef _KERNEL
 
+/* Used by reentrant functions */
+
+struct syslog_data {
+	int	log_file;
+	int	connected;
+	int	opened;
+	int	log_stat;
+	const char 	*log_tag;
+	int 	log_fac;
+	int 	log_mask;
+};
+
+#define SYSLOG_DATA_INIT { \
+    .log_file = -1, \
+    .log_fac = LOG_USER, \
+    .log_mask = 0xff, \
+}
+
 /*
  * Don't use va_list in the vsyslog() prototype.   Va_list is typedef'd in two
  * places (<machine/varargs.h> and <machine/stdarg.h>), so if we include one
@@ -187,6 +205,12 @@ void	syslog(int, const char *, ...)
 #if defined(_NETBSD_SOURCE)
 void	vsyslog(int, const char *, _BSD_VA_LIST_)
     __attribute__((__format__(__printf__,2,0)));
+void	closelog_r(struct syslog_data *);
+void	openlog_r(const char *, int, int, struct syslog_data *);
+int	setlogmask_r(int, struct syslog_data *);
+void	syslog_r(int, struct syslog_data *, const char *, ...)
+    __attribute__((__format__(__printf__,3,4)));
+void	vsyslog_r(int, struct syslog_data *, const char *, _BSD_VA_LIST_);
 #endif
 __END_DECLS
 
