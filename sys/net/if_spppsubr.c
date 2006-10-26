@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.99 2006/10/13 16:53:36 dogcow Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.100 2006/10/26 15:11:22 elad Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.99 2006/10/13 16:53:36 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.100 2006/10/26 15:11:22 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1032,6 +1032,7 @@ sppp_dequeue(struct ifnet *ifp)
 int
 sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
+	struct lwp *l = curlwp;	/* XXX */
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct sppp *sp = (struct sppp *) ifp;
 	int s, error=0, going_up, going_down, newmode;
@@ -1108,22 +1109,32 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SPPPSETAUTHCFG:
-	case SPPPGETAUTHCFG:
 	case SPPPSETLCPCFG:
-	case SPPPGETLCPCFG:
 	case SPPPSETIDLETO:
 	case SPPPSETAUTHFAILURE:
-	case SPPPGETAUTHFAILURES:
 	case SPPPSETDNSOPTS:
 	case SPPPSETKEEPALIVE:
-	{
-		struct lwp *l = curlwp;		/* XXX */
-
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL);
+		if (error)
 			break;
-	}
-	/* FALLTHROUGH */
+		error = sppp_params(sp, cmd, data);
+		break;
+
+	case SPPPGETAUTHCFG:
+	case SPPPGETLCPCFG:
+	case SPPPGETAUTHFAILURES:
+		error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, ifp, (void *)cmd,
+		    NULL);
+		if (error)
+			break;
+		error = sppp_params(sp, cmd, data);
+		break;
+
 	case SPPPGETSTATUS:
 	case SPPPGETSTATUSNCP:
 	case SPPPGETIDLETO:
