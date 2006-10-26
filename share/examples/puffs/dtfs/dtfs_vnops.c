@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.3 2006/10/25 18:18:16 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.4 2006/10/26 22:53:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
 
 int
 dtfs_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
-	enum vtype *newtype, const struct puffs_cn *pcn)
+	enum vtype *newtype, dev_t *rdev, const struct puffs_cn *pcn)
 {
 	struct dtfs_file *df = DTFS_CTOF(opc);
 	struct dtfs_dirent *dfd;
@@ -60,6 +60,8 @@ dtfs_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
 	if (dfd) {
 		*newnode = dfd->dfd_node;
 		*newtype = dfd->dfd_node->pn_va.va_type;
+		if (*newtype == VBLK || *newtype == VCHR)
+			*rdev = DTFS_PTOF(dfd->dfd_node)->df_rdev;
 		return 0;
 	} else if ((pcn->pcn_nameiop & PUFFSLOOKUP_OPMASK) == PUFFSLOOKUP_CREATE
 	    || (pcn->pcn_nameiop & PUFFSLOOKUP_OPMASK) == PUFFSLOOKUP_RENAME){
@@ -76,9 +78,13 @@ int
 dtfs_getattr(struct puffs_usermount *pu, void *opc,
 	struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
 {
+	struct dtfs_file *df = DTFS_CTOF(opc);
 	struct puffs_node *pn = opc;
 
 	memcpy(va, &pn->pn_va, sizeof(struct vattr));
+	if (pn->pn_va.va_type == VBLK || pn->pn_va.va_type == VCHR)
+		va->va_rdev = df->df_rdev;
+
 	return 0;
 }
 
@@ -91,9 +97,22 @@ dtfs_setattr(struct puffs_usermount *pu, void *opc,
 
 	/* check if we need to modify our internal size */
 	/* (must be called before setattr! XXX) */
+
 	if (va->va_size != PUFFS_VNOVAL) {
-		dtfs_setsize(pn, va->va_size, 0);
-		pn->pn_va.va_bytes = va->va_size;
+		switch (pn->pn_type) {
+		case VREG:
+			dtfs_setsize(pn, va->va_size, 0);
+			pn->pn_va.va_bytes = va->va_size;
+			break;
+		case VBLK:
+		case VCHR:
+		case VFIFO:
+			break;
+		case VDIR:
+			return EISDIR;
+		default:
+			return EOPNOTSUPP;
+		}
 	}
 
 	puffs_setvattr(&pn->pn_va, va);
@@ -286,25 +305,25 @@ dtfs_readlink(struct puffs_usermount *pu, void *opc,
 	return 0;
 }
 
-#if 0
 int
-dtfs_mknod(struct puffs_usermount *pu, void *opc,
-	struct puffs_vnreq_mknod *arg)
+dtfs_mknod(struct puffs_usermount *pu, void *opc, void **newnode,
+	const struct puffs_cn *pcn, const struct vattr *va)
 {
 	struct puffs_node *pn_parent = opc;
 	struct puffs_node *pn_new;
+	struct dtfs_file *df;
 
-	assert(arg->pvnr_va.va_type == VBLK || arg->pvnr_va.va_type == VCHR);
+	assert(va->va_type == VBLK || va->va_type == VCHR);
 
-	pn_new = dtfs_genfile(pn_parent, arg->pvnr_cn.pcn_name,
-	    arg->pvnr_va.va_type);
-	puffs_setvattr(&pn_new->pn_va, &arg->pvnr_va);
+	pn_new = dtfs_genfile(pn_parent, pcn->pcn_name, va->va_type);
+	puffs_setvattr(&pn_new->pn_va, va);
 
-	arg->pvnr_newnode = pn_new;
+	df = DTFS_PTOF(pn_new);
+	df->df_rdev = va->va_rdev;
+	*newnode = pn_new;
 
 	return 0;
 }
-#endif
 
 /*
  * Read operations (three^Wtwo different ones)
