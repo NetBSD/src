@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.36 2006/10/26 11:05:29 wiz Exp $
+.\"	$NetBSD: mail.1,v 1.37 2006/10/26 15:26:37 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1012,7 +1012,7 @@ When mail runs in verbose mode, the actual delivery of messages is
 displayed on the user's terminal.
 .El
 .Ss Option String Values
-.Bl -tag -width Va -compact
+.Bl -tag -width Va
 .It Ev EDITOR
 Pathname of the text editor to use in the
 .Ic edit
@@ -1020,14 +1020,12 @@ command and
 .Ic \&~e
 escape.
 If not defined, then a default editor is used.
-.Pp
 .It Ev LISTER
 Pathname of the directory lister to use in the
 .Ic folders
 command.
 Default is
 .Pa /bin/ls .
-.Pp
 .It Ev PAGER
 Pathname of the program to use in the
 .Ic more
@@ -1037,7 +1035,6 @@ variable is set.
 The default paginator
 .Xr more 1
 is used if this option is not defined.
-.Pp
 .It Ev SHELL
 Pathname of the shell to use in the
 .Ic \&!
@@ -1045,14 +1042,12 @@ command and the
 .Ic \&~!
 escape.
 A default shell is used if this option is not defined.
-.Pp
 .It Ev VISUAL
 Pathname of the text editor to use in the
 .Ic visual
 command and
 .Ic \&~v
 escape.
-.Pp
 .It Va crt
 The valued option
 .Va crt
@@ -1065,7 +1060,6 @@ If
 is set without a value, then the height of the terminal screen
 stored in the system is used to compute the threshold (see
 .Xr stty 1 ) .
-.Pp
 .It Ar el-completion-keys
 A comma or space delimited list of keys to do
 .Xr editline 3
@@ -1076,7 +1070,6 @@ will bind completion to both the tab and CTRL-D keys.
 (Requires
 .Xr editline 3
 support.)
-.Pp
 .It Ar el-editor
 The line editing mode: must be
 .Dq emacs
@@ -1086,20 +1079,17 @@ If unset, editing is not enabled.
 (Requires
 .Xr editline 3
 support.)
-.Pp
 .It Ar el-history-size
 The number of lines of history to remember.
 If unset, history is not enable.
 (Requires
 .Xr editline 3
 support.)
-.Pp
 .It Ar escape
 If defined, the first character of this option gives the character to
 use in the place of
 .Sq ~
 to denote escapes.
-.Pp
 .It Ar folder
 The name of the directory to use for storing folders of
 messages.
@@ -1108,7 +1098,6 @@ If this name begins with a
 .Nm
 considers it to be an absolute pathname; otherwise, the
 folder directory is found relative to your home directory.
-.Pp
 .It Ar indentprefix
 String used by the
 .Dq ~m
@@ -1117,14 +1106,12 @@ the normal tab character
 .Pq Sq ^I .
 Be sure to quote the value if it contains
 spaces or tabs.
-.Pp
 .It Ar mime-body-TYPE-SUBTYPE
 MIME-hook for the body of a MIME block of
 .Qq Content-Type: TYPE/SUBTYPE .
 (See
 .Sy MIME Enhancements
 below.)
-.Pp
 .It Ar mime-charset
 Convert Content-type:
 .Sq text
@@ -1132,14 +1119,12 @@ messages to this character set or
 .Qq us-ascii
 if the value is empty.
 If unset, no character set conversion is done.
-.Pp
 .It Ar mime-decode-header
 If set, decode the headers along with the body when
 .Ar mime-decode-message
 is set.
 The header decode follows the same rulse as the body (see
 .Ar mime-decode-message ) .
-.Pp
 .It Ar mime-decode-insert
 When inserting
 a message into the mail buffer
@@ -1152,7 +1137,6 @@ the text inserted will be decoded according to the settings of the
 and
 .Ar mime-decode-header
 variables.
-.Pp
 .It Ar mime-decode-message
 This determines the MIME decoding behavior of the basic display
 commands
@@ -1180,7 +1164,6 @@ commands always have the opposite MIME decoding behavior as the
 and
 .Ic print
 commands.
-.Pp
 .It Ar mime-decode-quote
 When quoting
 a message into the mail buffer
@@ -1193,7 +1176,6 @@ the text inserted will be decoded according to the settings of the
 and
 .Ar mime-decode-header
 variables.
-.Pp
 .It Ar mime-encode-message
 If set, encode the body of the message as required.
 Typically, this is just an issue of whether "quoted-printable"
@@ -1206,21 +1188,18 @@ Allowed values are
 .Qq quoted-printable ,
 or
 .Qq base64 .
-.Pp
 .It Ar mime-head-TYPE-SUBTYPE
 MIME-hook for the header of a MIME block of
 .Qq Content-Type: TYPE/SUBTYPE .
 (See
 .Sy MIME Enhancements
 below.)
-.Pp
 .It Ar mime-hook-TYPE-SUBTYPE
 MIME-hook for MIME block of
 .Qq Content-Type: TYPE/SUBTYPE .
 (See
 .Sy MIME Enhancements
 below.)
-.Pp
 .It Ev MBOX
 The name of the
 .Ar mbox
@@ -1229,12 +1208,10 @@ It can be the name of a folder.
 The default is
 .Dq Li mbox
 in the user's home directory.
-.Pp
 .It Ar record
 If defined, gives the pathname of the file used to record all outgoing
 mail.
 If not defined, then outgoing mail is not so saved.
-.Pp
 .It Ar ReplyAsRecipient
 This is used when replying to email (see the
 .Ic reply
@@ -1259,7 +1236,6 @@ option.
 Note: the sendmail options can be edited with the
 .Ic \&~h
 escape.
-.Pp
 .It Ar toplines
 If defined, gives the number of lines of a message to be printed out
 with the
