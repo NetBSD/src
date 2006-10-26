@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.h,v 1.2 2006/10/25 18:18:16 pooka Exp $	*/
+/*	$NetBSD: dtfs.h,v 1.3 2006/10/26 22:53:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -59,12 +59,16 @@ struct dtfs_file {
 		struct {
 			char *target;
 		} link;
+		struct {
+			dev_t rdev;
+		} dev;
 	} u;
 #define df_data u.reg.data
 #define df_datalen u.reg.datalen
 #define df_dotdot u.dir.dotdot
 #define df_dirents u.dir.dirents
 #define df_linktarget u.link.target
+#define df_rdev u.dev.rdev
 };
 
 struct dtfs_dirent {
