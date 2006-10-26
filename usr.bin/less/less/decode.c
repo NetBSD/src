@@ -1,7 +1,7 @@
-/*	$NetBSD: decode.c,v 1.7 2006/05/14 02:51:03 christos Exp $	*/
+/*	$NetBSD: decode.c,v 1.8 2006/10/26 01:33:08 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2004  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -36,7 +36,7 @@
 #include "cmd.h"
 #include "lesskey.h"
 
-extern int erase_char, kill_char;
+extern int erase_char, erase2_char, kill_char;
 extern int secure;
 
 #define SK(k) \
@@ -761,7 +761,7 @@ editchar(c, flags)
 	 * but give it the edit-commands command table
 	 * This table is constructed to match the user's keyboard.
 	 */
-	if (c == erase_char)
+	if (c == erase_char || c == erase2_char)
 		return (EC_BACKSPACE);
 	if (c == kill_char)
 		return (EC_LINEKILL);
