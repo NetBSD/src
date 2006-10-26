@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_openbsd.h,v 1.3 2005/03/15 16:28:29 peter Exp $	*/
+/*	$NetBSD: compat_openbsd.h,v 1.4 2006/10/26 10:18:31 christos Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -32,35 +32,7 @@
 
 #include <sys/cdefs.h>
 
-/*
- * syslog.h
- */
-
 #include <stdarg.h>
-#include <syslog.h>
-
-#define	openlog_r(ident, logopt, fac, data)	/* nothing */
-
-struct syslog_data {
-#if !defined(__GNUC__)
-	/* empty structure is gcc extension */
-	char dummy;
-#endif
-};
-#define	SYSLOG_DATA_INIT	{}
-
-static __inline void syslog_r(int pri, struct syslog_data *data,
-    const char *fmt, ...) __unused;
-
-static __inline void
-syslog_r(int pri, struct syslog_data *data, const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vsyslog(pri, fmt, ap);
-	va_end(ap);
-}
 
 /*
  * sys/queue.h
