@@ -1,7 +1,7 @@
-/*	$NetBSD: filename.c,v 1.6 2003/04/14 02:56:46 mrg Exp $	*/
+/*	$NetBSD: filename.c,v 1.7 2006/10/26 01:33:08 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2005  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -203,7 +203,7 @@ shell_quote(s)
 	newstr = p = (char *) ecalloc(len, sizeof(char));
 	if (use_quotes)
 	{
-		sprintf(newstr, "%c%s%c", openquote, s, closequote);
+		SNPRINTF3(newstr, len, "%c%s%c", openquote, s, closequote);
 	} else
 	{
 		while (*s != '\0')
@@ -234,6 +234,7 @@ dirfile(dirname, filename)
 {
 	char *pathname;
 	char *qpathname;
+	int len;
 	int f;
 
 	if (dirname == NULL || *dirname == '\0')
@@ -241,11 +242,11 @@ dirfile(dirname, filename)
 	/*
 	 * Construct the full pathname.
 	 */
-	pathname = (char *) calloc(strlen(dirname) + strlen(filename) + 2, 
-					sizeof(char));
+	len= strlen(dirname) + strlen(filename) + 2;
+	pathname = (char *) calloc(len, sizeof(char));
 	if (pathname == NULL)
 		return (NULL);
-	sprintf(pathname, "%s%s%s", dirname, PATHNAME_SEP, filename);
+	SNPRINTF3(pathname, len, "%s%s%s", dirname, PATHNAME_SEP, filename);
 	/*
 	 * Make sure the file exists.
 	 */
@@ -433,18 +434,23 @@ fcomplete(s)
 	 */
 	{
 		char *slash;
+		int len;
 		for (slash = s+strlen(s)-1;  slash > s;  slash--)
 			if (*slash == *PATHNAME_SEP || *slash == '/')
 				break;
-		fpat = (char *) ecalloc(strlen(s)+4, sizeof(char));
+		len = strlen(s) + 4;
+		fpat = (char *) ecalloc(len, sizeof(char));
 		if (strchr(slash, '.') == NULL)
-			sprintf(fpat, "%s*.*", s);
+			SNPRINTF1(fpat, len, "%s*.*", s);
 		else
-			sprintf(fpat, "%s*", s);
+			SNPRINTF1(fpat, len, "%s*", s);
 	}
 #else
-	fpat = (char *) ecalloc(strlen(s)+2, sizeof(char));
-	sprintf(fpat, "%s*", s);
+	{
+	int len = strlen(s) + 2;
+	fpat = (char *) ecalloc(len, sizeof(char));
+	SNPRINTF1(fpat, len, "%s*", s);
+	}
 #endif
 	qs = lglob(fpat);
 	s = shell_unquote(qs);
@@ -578,9 +584,9 @@ shellcmd(cmd)
 			fd = popen(cmd, "r");
 		} else
 		{
-			scmd = (char *) ecalloc(strlen(shell) + strlen(esccmd) + 5,
-						sizeof(char));
-			sprintf(scmd, "%s %s %s", shell, shell_coption(), esccmd);
+			int len = strlen(shell) + strlen(esccmd) + 5;
+			scmd = (char *) ecalloc(len, sizeof(char));
+			SNPRINTF3(scmd, len, "%s %s %s", shell, shell_coption(), esccmd);
 			free(esccmd);
 			fd = popen(scmd, "r");
 			free(scmd);
@@ -688,7 +694,7 @@ lglob(filename)
 	do {
 		n = strlen(drive) + strlen(dir) + strlen(fnd.GLOB_NAME) + 1;
 		pathname = (char *) ecalloc(n, sizeof(char));
-		sprintf(pathname, "%s%s%s", drive, dir, fnd.GLOB_NAME);
+		SNPRINTF3(pathname, n, "%s%s%s", drive, dir, fnd.GLOB_NAME);
 		qpathname = shell_quote(pathname);
 		free(pathname);
 		if (qpathname != NULL)
@@ -733,6 +739,7 @@ lglob(filename)
 	char *lessecho;
 	char *cmd;
 	char *esc;
+	int len;
 
 	esc = get_meta_escape();
 	if (strlen(esc) == 0)
@@ -749,8 +756,9 @@ lglob(filename)
 	/*
 	 * Invoke lessecho, and read its output (a globbed list of filenames).
 	 */
-	cmd = (char *) ecalloc(strlen(lessecho) + strlen(ofilename) + (7*strlen(metachars())) + 24, sizeof(char));
-	sprintf(cmd, "%s -p0x%x -d0x%x -e%s ", lessecho, openquote, closequote, esc);
+	len = strlen(lessecho) + strlen(ofilename) + (7*strlen(metachars())) + 24;
+	cmd = (char *) ecalloc(len, sizeof(char));
+	SNPRINTF4(cmd, len, "%s -p0x%x -d0x%x -e%s ", lessecho, openquote, closequote, esc);
 	free(esc);
 	for (s = metachars();  *s != '\0';  s++)
 		sprintf(cmd + strlen(cmd), "-n0x%x ", *s);
@@ -803,6 +811,7 @@ open_altfile(filename, pf, pfd)
 #else
 	char *lessopen;
 	char *cmd;
+	int len;
 	FILE *fd;
 #if HAVE_FILENO
 	int returnfd = 0;
@@ -830,9 +839,9 @@ open_altfile(filename, pf, pfd)
 #endif
 	}
 
-	cmd = (char *) ecalloc(strlen(lessopen) + strlen(filename) + 2, 
-			sizeof(char));
-	sprintf(cmd, lessopen, filename);
+	len = strlen(lessopen) + strlen(filename) + 2;
+	cmd = (char *) ecalloc(len, sizeof(char));
+	SNPRINTF1(cmd, len, lessopen, filename);
 	fd = shellcmd(cmd);
 	free(cmd);
 	if (fd == NULL)
@@ -892,6 +901,7 @@ close_altfile(altfilename, filename, pipefd)
 	char *lessclose;
 	FILE *fd;
 	char *cmd;
+	int len;
 	
 	if (secure)
 		return;
@@ -908,9 +918,9 @@ close_altfile(altfilename, filename, pipefd)
 	}
 	if ((lessclose = lgetenv("LESSCLOSE")) == NULL)
 	     	return;
-	cmd = (char *) ecalloc(strlen(lessclose) + strlen(filename) + 
-			strlen(altfilename) + 2, sizeof(char));
-	sprintf(cmd, lessclose, filename, altfilename);
+	len = strlen(lessclose) + strlen(filename) + strlen(altfilename) + 2;
+	cmd = (char *) ecalloc(len, sizeof(char));
+	SNPRINTF2(cmd, len, lessclose, filename, altfilename);
 	fd = shellcmd(cmd);
 	free(cmd);
 	if (fd != NULL)

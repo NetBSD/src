@@ -1,7 +1,7 @@
-/*	$NetBSD: ch.c,v 1.7 2003/04/14 02:56:46 mrg Exp $	*/
+/*	$NetBSD: ch.c,v 1.8 2006/10/26 01:33:08 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2004  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.

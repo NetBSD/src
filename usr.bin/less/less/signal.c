@@ -1,7 +1,7 @@
-/*	$NetBSD: signal.c,v 1.5 2003/04/14 02:56:48 mrg Exp $	*/
+/*	$NetBSD: signal.c,v 1.6 2006/10/26 01:33:08 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2004  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -41,6 +41,7 @@ extern int lnloop;
 extern int linenums;
 extern int wscroll;
 extern int reading;
+extern int quit_on_intr;
 
 /*
  * Interrupt signal handler.
@@ -255,6 +256,8 @@ psignals()
 #endif
 	if (tsignals & S_INTERRUPT)
 	{
+		if (quit_on_intr)
+			quit(QUIT_OK);
 		bell();
 		/*
 		 * {{ You may wish to replace the bell() with 

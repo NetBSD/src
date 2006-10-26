@@ -1,7 +1,7 @@
-/*	$NetBSD: forwback.c,v 1.9 2003/04/14 02:56:47 mrg Exp $	*/
+/*	$NetBSD: forwback.c,v 1.10 2006/10/26 01:33:08 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2005  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -131,13 +131,6 @@ forw(n, pos, force, only_last, nblank)
 
 	if (!do_repaint)
 	{
-		/*
-		 * Forget any current line shift we might have
-		 * (from the last line of the previous screenful).
-		 */
-		extern int cshift;
-		cshift = 0;
-
 		if (top_scroll && n >= sc_height - 1 && pos != ch_length())
 		{
 			/*
@@ -151,7 +144,8 @@ forw(n, pos, force, only_last, nblank)
 			force = 1;
 			if (more_mode == 0)
 			{
-				if (top_scroll == OPT_ONPLUS || first_time)
+				if (top_scroll == OPT_ONPLUS ||
+				    (first_time && top_scroll != OPT_ON))
 					clear();
 				home();
 			}
@@ -251,7 +245,7 @@ forw(n, pos, force, only_last, nblank)
 		if (top_scroll == OPT_ON)
 			clear_eol();
 		put_line();
-		if (clear_bg && final_attr != AT_NORMAL)
+		if (clear_bg && apply_at_specials(final_attr) != AT_NORMAL)
 		{
 			/*
 			 * Writing the last character on the last line
