@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.182 2006/10/26 09:41:40 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.183 2006/10/26 10:54:06 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4927,4 +4927,15 @@ crypto/dist/ssh/version.h			patch
 	OpenSSH: fix CVE-2006-4924 and CVE-2006-5051
 	(patches backported from OpenSSH 4.4).
 	[adrianp, ticket #1569]
+
+sys/netinet/tcp_input.c				1.250
+
+	Don't accept TCP connections to broadcast addresses.
+	[rpaulo, ticket #1547]
+
+sys/net/if.c					1.172
+sys/net/if.c					1.173
+
+	Fix a memory disclosure in interface name buffer.
+	[christos, ticket #1563]
 
