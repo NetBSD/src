@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.72 2006/10/21 14:10:33 bouyer Exp $
+# $NetBSD: GENERIC,v 1.73 2006/10/26 11:48:39 elad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.72 $"
+#ident 		"GENERIC-$Revision: 1.73 $"
 
 maxusers	64
 
@@ -878,24 +878,24 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 pseudo-device	fss		4	# file system snapshot device
 
-#options	FILEASSOC		# fileassoc(9) - required for Veriexec 
+options		FILEASSOC		# fileassoc(9) - required for Veriexec 
 #options	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+pseudo-device	veriexec		1
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
+options VERIFIED_EXEC_FP_RMD160
+options VERIFIED_EXEC_FP_SHA256
+options VERIFIED_EXEC_FP_SHA384
+options VERIFIED_EXEC_FP_SHA512
+options VERIFIED_EXEC_FP_SHA1
+options VERIFIED_EXEC_FP_MD5
 
 # a pseudo device needed for SMBFS
 pseudo-device   nsmb		# experimental - SMB requester
