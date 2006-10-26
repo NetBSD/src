@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.89 2006/10/17 14:28:46 martin Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.90 2006/10/26 05:10:55 thorpej Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -306,7 +306,7 @@ __CLEANDEPEND: .USE
 cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 clean: __CLEANKERNEL
 depend: .depend
-dependall: depend all
+dependall: depend .WAIT all
 
 .if !target(.depend)
 MKDEP_AFLAGS?=	${AFLAGS}
