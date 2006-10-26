@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.2 2006/10/25 18:15:50 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.3 2006/10/26 22:53:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -64,7 +64,7 @@ struct puffs_node {
 	int		pn_flag;		/* struct vnode	flags	*/
 	void		*pn_data;		/* private data		*/
 	enum vtype	pn_type;
-	struct vattr	pn_va;
+	struct vattr	pn_va;			/* XXX: doesn't belong here*/
 
 	struct puffs_usermount *pn_mnt;
 
@@ -84,7 +84,8 @@ struct puffs_vfsops {
 
 struct puffs_vnops {
 	int (*puffs_lookup)(struct puffs_usermount *,
-	    void *, void **, enum vtype *, const struct puffs_cn *);
+	    void *, void **, enum vtype *, dev_t */* XXX: this needs to hide */,
+	    const struct puffs_cn *);
 	int (*puffs_create)(struct puffs_usermount *,
 	    void *, void **, const struct puffs_cn *, const struct vattr *);
 	int (*puffs_mknod)(struct puffs_usermount *,
@@ -234,7 +235,8 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 
 #define PUFFSVN_PROTOS(fsname)						\
 	int fsname##_lookup(struct puffs_usermount *,			\
-	    void *, void **, enum vtype *, const struct puffs_cn *);	\
+	    void *, void **, enum vtype *, dev_t *,			\
+	    const struct puffs_cn *);					\
 	int fsname##_create(struct puffs_usermount *,			\
 	    void *, void **, const struct puffs_cn *,			\
 	    const struct vattr *);					\
