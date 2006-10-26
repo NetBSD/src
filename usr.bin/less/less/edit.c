@@ -1,7 +1,7 @@
-/*	$NetBSD: edit.c,v 1.7 2006/05/01 22:57:16 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.8 2006/10/26 01:33:08 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2005  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -329,6 +329,14 @@ edit_ifile(ifile)
 		/*
 		 * Re-open the current file.
 		 */
+		if (was_curr_ifile == ifile)
+		{
+			/*
+			 * Whoops.  The "current" ifile is the one we just deleted.
+			 * Just give up.
+			 */
+			quit(QUIT_ERROR);
+		}
 		reedit_ifile(was_curr_ifile);
 		return (1);
 	} else if ((f = open(qopen_filename, OPEN_READ)) < 0)
@@ -505,7 +513,7 @@ edit_last()
 
 
 /*
- * Edit the next or previous file in the command line (ifile) list.
+ * Edit the n-th next or previous file in the command line (ifile) list.
  */
 	static int
 edit_istep(h, n, dir)
@@ -554,14 +562,14 @@ edit_inext(h, n)
 	IFILE h;
 	int n;
 {
-	return (edit_istep(h, n, 1));
+	return (edit_istep(h, n, +1));
 }
 
 	public int
 edit_next(n)
 	int n;
 {
-	return edit_istep(curr_ifile, n, 1);
+	return edit_istep(curr_ifile, n, +1);
 }
 
 	static int
