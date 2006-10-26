@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.1 2006/10/22 12:16:27 elad Exp $
+.\" $NetBSD: security.8,v 1.2 2006/10/26 12:47:30 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -47,7 +47,7 @@ subsystem.
 It can be used for a variety of purposes, including defense against trojanned
 binaries, indirect attacks via third-party remote file-systems, and
 config file corruption.
-It can operate on four modes, also referred to as strict levels:
+It can operate in four modes, also referred to as strict levels:
 .Em learning mode ,
 .Em IDS mode ,
 .Em IPS mode ,
@@ -59,7 +59,7 @@ requires a list of monitored files, along with their digital fingerprint and
 (optionally) access modes.
 .Nx
 provides a tool,
-.Xr veriexecgen 1 ,
+.Xr veriexecgen 8 ,
 for this purpose.
 Example usage:
 .Bd -literal -offset indent
@@ -68,7 +68,7 @@ Example usage:
 .Pp
 .Em Veriexec
 needs to be enabled via a kernel option,
-.Dq VERIFIED_EXEC ,
+.Dv VERIFIED_EXEC ,
 as well as one or more options for digital fingerprint algorithm support.
 See your kernel's config file for an example.
 .Pp
@@ -134,7 +134,8 @@ flags to
 .Sh INFORMATION FILTERING
 .Nx
 provides administrators with the ability to restrict information passed from
-the kernel to userland so that users can only view information they "own".
+the kernel to userland so that users can only view information they
+.Dq own .
 .Pp
 The hooks that manage that are located in various parts of the system and
 effectively affect programs like
