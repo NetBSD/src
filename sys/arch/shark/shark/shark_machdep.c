@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.25 2006/10/24 21:03:13 bjh21 Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.26 2006/10/26 22:49:36 bjh21 Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.25 2006/10/24 21:03:13 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.26 2006/10/26 22:49:36 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -148,7 +148,6 @@ CFATTACH_DECL(ofbus_root, sizeof(struct device),
  */
 /* Move to header file? */
 extern void cpu_reboot		__P((int, char *));
-extern vaddr_t initarm		__P((ofw_handle_t));
 extern void ofrootfound		__P((void));
 
 /* Local routines */
@@ -181,7 +180,7 @@ cpu_reboot(howto, bootstr)
 }
 
 /*
- * vaddr_t initarm(ofw_handle_t handle)
+ * u_int initarm(void *handle)
  *
  * Initial entry point on startup for a GENERIC OFW
  * system.  Called with MMU on, running in the OFW
@@ -200,10 +199,10 @@ cpu_reboot(howto, bootstr)
 struct fiqhandler shark_fiqhandler;
 struct fiqregs shark_fiqregs;
 
-vaddr_t
-initarm(ofw_handle)
-	ofw_handle_t ofw_handle;
+u_int
+initarm(void *arg)
 {
+	ofw_handle_t ofw_handle = arg;
 	paddr_t  pclean;
 	paddr_t  isa_io_physaddr, isa_mem_physaddr;
 	vaddr_t  isa_io_virtaddr, isa_mem_virtaddr;
