@@ -1,4 +1,4 @@
-# $NetBSD: charset.pivot.GB.src,v 1.3 2006/09/09 15:43:05 tnozaki Exp $
+# $NetBSD: charset.pivot.GB.src,v 1.4 2006/10/26 15:06:18 tnozaki Exp $
 
 GB2312			UCS			1
 GB2312:GBK		UCS			1
@@ -6,9 +6,11 @@ GB2312:GB18030		UCS			1
 GBK			UCS			1
 GBK:GB18030		UCS			1
 GBKUCS			UCS			1
+ISO-IR-165		UCS			1
 UCS			GB2312			1
 UCS			GB2312:GBK		1
 UCS			GB2312:GB18030		1
 UCS			GBK			1
 UCS			GBK:GB18030		1
 UCS			GBKUCS			1
+UCS			ISO-IR-165		1

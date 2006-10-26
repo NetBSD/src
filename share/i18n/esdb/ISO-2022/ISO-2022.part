@@ -1,6 +1,7 @@
-# $NetBSD: ISO-2022.part,v 1.4 2005/03/27 22:30:06 tnozaki Exp $
+# $NetBSD: ISO-2022.part,v 1.5 2006/10/26 15:06:18 tnozaki Exp $
 
 CN
+CN-EXT
 JP
 JP-2
 KR

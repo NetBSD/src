@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.663 2006/10/22 22:57:36 pooka Exp $
+# $NetBSD: mi,v 1.664 2006/10/26 15:06:17 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1686,12 +1686,14 @@
 ./usr/share/i18n/csmapper/GB/GB2312UDA2%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/GBKEXT%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/GBKUDA%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/GB/ISO-IR-165EXT%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GB2312.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GB2312EXT.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GB2312UDA1.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GB2312UDA2.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GBKEXT.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS%GBKUDA.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/GB/UCS%ISO-IR-165EXT.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GB/UCS@BMP%GB18030.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/GEORGIAN					base-sysutil-share
 ./usr/share/i18n/csmapper/GEORGIAN/GEORGIAN-ACADEMY%UCS.mps		base-sysutil-share	nls
@@ -1948,6 +1950,7 @@
 ./usr/share/i18n/esdb/GEORGIAN/GEORGIAN-PS-OldCapital.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/GEORGIAN/GEORGIAN-PS.esdb			base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022			base-sysutil-share
+./usr/share/i18n/esdb/ISO-2022/ISO-2022-CN-EXT.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-CN.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP-2.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP.esdb	base-sysutil-share	nls
