@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.3,v 1.20 2006/10/25 23:49:31 christos Exp $
+.\"	$NetBSD: syslog.3,v 1.21 2006/10/26 13:08:17 wiz Exp $
 .\"	$OpenBSD: syslog.3,v 1.25 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -110,6 +110,7 @@ message.
 see
 .Xr strerror 3 . )
 A trailing newline is added if none is present.
+The
 .Fn syslog_r
 function is a reentrant version of the
 .Fn syslog
@@ -134,11 +135,11 @@ contains the file descriptor of the file where the message is logged
 indicates if connect has been done
 .It Dv opened
 indicates if
-.Xr openlog_r 3
+.Fn openlog_r
 has been called
 .It Dv log_stat
 status bits, set by
-.Xr openlog_r 3
+.Fn openlog_r
 .It Dv log_tag
 string to tag the entry with
 .It Dv log_fac
@@ -192,7 +193,7 @@ The
 .Fn vsyslog_r
 is used the same way as
 .Fn vsyslog
-except that it takes an additional pointer on a
+except that it takes an additional pointer to a
 .Fa syslog_data
 structure.
 It is a reentrant version of the
@@ -300,7 +301,7 @@ The
 function is the reentrant version of the
 .Fn openlog
 function.
-It takes an additional pointer on a
+It takes an additional pointer to a
 .Fa syslog_data
 structure.
 This function must be used in conjunction with the other
@@ -316,7 +317,7 @@ The
 does the same thing as
 .Xr closelog 3
 but in a reentrant way and takes an additional
-pointer on a
+pointer to a
 .Fa syslog_data
 structure.
 .Pp
@@ -345,7 +346,7 @@ The
 .Fn setlogmask_r
 function is the reentrant version of
 .Fn setlogmask .
-It takes an additional pointer on a
+It takes an additional pointer to a
 .Fa syslog_data
 structure.
 .Sh RETURN VALUES
@@ -354,9 +355,9 @@ The routines
 .Fn closelog_r ,
 .Fn openlog ,
 .Fn openlog_r ,
-.Fn syslog, 
-.Fn syslog_r, 
-.Fn vsyslog,
+.Fn syslog ,
+.Fn syslog_r ,
+.Fn vsyslog ,
 and
 .Fn vsyslog_r
 return no value.
@@ -383,7 +384,7 @@ For the reentrant functions:
 .Bd -literal -offset indent
 struct syslog_data sdata = SYSLOG_DATA_INIT;
 
-syslog_r(LOG_INFO|LOG_LOCAL2, &sdata, "foobar error: %m");
+syslog_r(LOG_INFO|LOG_LOCAL2, \*[Am]sdata, "foobar error: %m");
 .Ed
 .Sh SEE ALSO
 .Xr logger 1 ,
