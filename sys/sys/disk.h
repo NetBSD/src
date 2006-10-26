@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.39 2006/10/25 04:04:46 thorpej Exp $	*/
+/*	$NetBSD: disk.h,v 1.40 2006/10/26 05:23:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -260,30 +260,6 @@ __link_set_add_data(dkwedge_methods, name ## _ddm)
  *	</dict>
  * NOTE: Not all geometry information is relevant for every kind of disk.
  */
-
-struct disk_geom {
-	int64_t		dg_secperunit;	/* # of data sectors per unit */
-	uint32_t	dg_secsize;	/* # of bytes per sector */
-	uint32_t	dg_nsectors;	/* # of data sectors per track */
-	uint32_t	dg_ntracks;	/* # of tracks per cylinder */
-	uint32_t	dg_ncylinders;	/* # of data cylinders per unit */
-	uint32_t	dg_secpercyl;	/* # of data sectors per cylinder */
-	uint32_t	dg_pcylinders;	/* # of physical cylinders per unit */
-
-	/*
-	 * Spares (bad sector replacements) below are not counted in
-	 * dg_nsectors or dg_secpercyl.  Spare sectors are assumed to
-	 * be physical sectors which occupy space at the end of each
-	 * track and/or cylinder.
-	 */
-	uint32_t	dg_sparespertrack;
-	uint32_t	dg_sparespercyl;
-	/*
-	 * Alternative cylinders include maintenance, replacement,
-	 * configuration description areas, etc.
-	 */
-	uint32_t	dg_acylinders;
-};
 
 /*
  * Disk partition dictionary.
