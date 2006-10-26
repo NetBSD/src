@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.2 2006/10/23 23:32:57 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.3 2006/10/26 13:42:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.2 2006/10/23 23:32:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.3 2006/10/26 13:42:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -133,23 +133,18 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	/* userspace probably has this as a NULL op */
 	if (cookie == NULL) {
 		error = EOPNOTSUPP;
-		goto out;
+		return error;
 	}
 
 	error = puffs_getvnode(dvp->v_mount, cookie, &vp);
 	if (error)
-		goto out;
+		return error;
 
 	vp->v_type = type;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
 
- out:
-	if (error || (cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
-	vput(dvp);
-
-	return error;
+	return 0;
 }
 
 void
