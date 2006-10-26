@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.95.12.1 2006/10/25 19:14:00 tron Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.95.12.2 2006/10/26 10:23:23 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.95.12.1 2006/10/25 19:14:00 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.95.12.2 2006/10/26 10:23:23 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ sys_ptrace(l, v, retval)
 	struct iovec iov;
 	struct ptrace_io_desc piod;
 	struct ptrace_lwpinfo pl;
-	int s, error, write, tmp, size;
+	int s, error, write, tmp;
 	char *path;
 
 	/* "A foolish consistency..." XXX */
