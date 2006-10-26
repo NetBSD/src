@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.1 2006/10/22 22:43:23 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.2 2006/10/26 13:35:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.1 2006/10/22 22:43:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.2 2006/10/26 13:35:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -152,6 +152,7 @@ puffs_start2(struct puffs_mount *pmp, struct puffs_vfsreq_start *sreq)
 	 * if someone has issued a VFS_ROOT() already, fill in the
 	 * vnode cookie.
 	 */
+	pn = NULL;
 	if (pmp->pmp_root) {
 		pn = VPTOPP(pmp->pmp_root);
 		pn->pn_cookie = sreq->psr_cookie;
@@ -164,7 +165,7 @@ puffs_start2(struct puffs_mount *pmp, struct puffs_vfsreq_start *sreq)
 
 	simple_unlock(&pmp->pmp_lock);
 
-	DPRINTF(("puffs_start2: root vp %p, root pnode %p, cookie %p\n",
+	DPRINTF(("puffs_start2: root vp %p, cur root pnode %p, cookie %p\n",
 	    pmp->pmp_root, pn, sreq->psr_cookie));
 
 	return 0;
@@ -225,7 +226,7 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	 * if userspace cooperated or we really need to die,
 	 * screw what userland thinks and just die.
 	 */
-	DPRINTF(("puffs_umount: error %d force %d\n", error, force));
+	DPRINTF(("puffs_unmount: error %d force %d\n", error, force));
 	if (error == 0 || force) {
 		pmp->pmp_status = PUFFSTAT_DYING;
 		puffs_nukebypmp(pmp);
@@ -234,7 +235,7 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	}
 
  out:
-	DPRINTF(("puffs_umount: return %d\n", error));
+	DPRINTF(("puffs_unmount: return %d\n", error));
 	return error;
 }
 
