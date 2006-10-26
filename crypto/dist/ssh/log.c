@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.8 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.8.4.1 2006/10/26 09:39:38 ghen Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: log.c,v 1.29 2003/09/23 20:17:11 markus Exp $");
-__RCSID("$NetBSD: log.c,v 1.8 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.8.4.1 2006/10/26 09:39:38 ghen Exp $");
 
 #include "log.h"
 #include "xmalloc.h"
@@ -122,6 +122,17 @@ error(const char *fmt,...)
 	va_start(args, fmt);
 	do_log(SYSLOG_LEVEL_ERROR, fmt, args);
 	va_end(args);
+}
+
+void
+sigdie(const char *fmt,...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
+	va_end(args);
+	_exit(1);
 }
 
 /* Log this message (information that usually should go to the log). */

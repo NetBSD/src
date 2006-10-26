@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.39 2005/02/22 02:29:32 elric Exp $	*/
+/*	$NetBSD: session.c,v 1.39.4.1 2006/10/26 09:39:38 ghen Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +35,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: session.c,v 1.180 2004/07/28 09:40:29 markus Exp $");
-__RCSID("$NetBSD: session.c,v 1.39 2005/02/22 02:29:32 elric Exp $");
+__RCSID("$NetBSD: session.c,v 1.39.4.1 2006/10/26 09:39:38 ghen Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -2157,7 +2157,7 @@ do_cleanup(Authctxt *authctxt)
 		return;
 	called = 1;
 
-	if (authctxt == NULL)
+	if (authctxt == NULL || !authctxt->authenticated)
 		return;
 #ifdef KRB4
 	if (options.kerberos_ticket_cleanup)

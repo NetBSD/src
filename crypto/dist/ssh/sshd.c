@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.37 2005/02/22 02:29:32 elric Exp $	*/
+/*	$NetBSD: sshd.c,v 1.37.4.1 2006/10/26 09:39:39 ghen Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -44,7 +44,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshd.c,v 1.301 2004/08/11 11:50:09 dtucker Exp $");
-__RCSID("$NetBSD: sshd.c,v 1.37 2005/02/22 02:29:32 elric Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.37.4.1 2006/10/26 09:39:39 ghen Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -315,7 +315,7 @@ grace_alarm_handler(int sig)
 		kill(pmonitor->m_pid, SIGALRM);
 
 	/* Log error and exit. */
-	fatal("Timeout before authentication for %s", get_remote_ipaddr());
+	sigdie("Timeout before authentication for %s", get_remote_ipaddr());
 }
 
 /*
@@ -1635,6 +1635,8 @@ main(int ac, char **av)
 	}
 
  authenticated:
+	authctxt->authenticated = 1;
+
 	/*
 	 * In privilege separation, we fork another child and prepare
 	 * file descriptor passing.
