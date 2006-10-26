@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.3 2006/10/25 18:15:39 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.4 2006/10/26 13:42:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.3 2006/10/25 18:15:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.4 2006/10/26 13:42:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -299,10 +299,16 @@ puffs_create(void *v)
 	    &create_arg, sizeof(create_arg), VPTOPNC(ap->a_dvp),
 	    ap->a_dvp, NULL);
 	if (error)
-		return error;
+		goto out;
 
-	return puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
+	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
 	    create_arg.pvnr_newnode, ap->a_cnp, ap->a_vap->va_type);
+
+ out:
+	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
+		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
+	vput(ap->a_dvp);
+	return error;
 }
 
 int
@@ -325,10 +331,16 @@ puffs_mknod(void *v)
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_dvp->v_mount), PUFFS_VN_MKNOD,
 	    &mknod_arg, sizeof(mknod_arg), VPTOPNC(ap->a_dvp), ap->a_dvp, NULL);
 	if (error)
-		return error;
+		goto out;
 
-	return puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
+	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
 	    mknod_arg.pvnr_newnode, ap->a_cnp, ap->a_vap->va_type);
+
+ out:
+	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
+		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
+	vput(ap->a_dvp);
+	return error;
 }
 
 int
@@ -765,10 +777,16 @@ puffs_mkdir(void *v)
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_dvp->v_mount), PUFFS_VN_MKDIR,
 	    &mkdir_arg, sizeof(mkdir_arg), VPTOPNC(ap->a_dvp), ap->a_dvp, NULL);
 	if (error)
-		return error;
+		goto out;
 
-	return puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
+	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
 	    mkdir_arg.pvnr_newnode, ap->a_cnp, VDIR);
+
+ out:
+	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
+		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
+	vput(ap->a_dvp);
+	return error;
 }
 
 int
@@ -848,10 +866,16 @@ puffs_symlink(void *v)
 	    PUFFS_VN_SYMLINK, &symlink_arg, sizeof(symlink_arg),
 	    VPTOPNC(ap->a_dvp), ap->a_dvp, NULL);
 	if (error)
-		return error;
+		goto out;
 
-	return puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
+	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
 	    symlink_arg.pvnr_newnode, ap->a_cnp, VLNK);
+
+ out:
+	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
+		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
+	vput(ap->a_dvp);
+	return error;
 }
 
 int
