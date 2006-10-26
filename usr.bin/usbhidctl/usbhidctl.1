@@ -1,4 +1,4 @@
-.\" $NetBSD: usbhidctl.1,v 1.19 2006/10/22 06:16:37 dsainty Exp $
+.\" $NetBSD: usbhidctl.1,v 1.20 2006/10/26 11:12:00 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,8 +44,7 @@
 .Nm
 .Fl f Ar device
 .Op Fl t Ar table
-.Op Fl l
-.Op Fl v
+.Op Fl lv
 .Fl a
 .Nm
 .Fl f Ar device
@@ -55,16 +54,14 @@
 .Nm
 .Fl f Ar device
 .Op Fl t Ar table
-.Op Fl l
-.Op Fl n
-.Op Fl v
-.Op Ar item ...
+.Op Fl lnv
+.Ar item Op ...
 .Nm
 .Fl f Ar device
 .Op Fl t Ar table
 .Op Fl z
 .Fl w
-.Op Ar item=value ...
+.Ar item=value Op ...
 .Sh DESCRIPTION
 .Nm
 can be used to output or modify the state of a USB HID (Human Interface
@@ -82,7 +79,9 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Show all items and their current values.
-This option fails if the device does not support the GET_REPORT command.
+This option fails if the device does not support the
+.Dv GET_REPORT
+command.
 .It Fl f Ar device
 Specify a path name for the device to operate on.
 If
@@ -113,7 +112,8 @@ option.
 Reset all feature and output flags to zero before attempting to change them.
 May be required for changing item values (via
 .Fl w )
-on devices that don't implement GET_REPORT.
+on devices that don't implement
+.Dv GET_REPORT .
 .El
 .Sh FILES
 .Pa /usr/share/misc/usb_hid_usages
