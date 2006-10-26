@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.35 2006/10/21 21:37:20 christos Exp $
+.\"	$NetBSD: mail.1,v 1.36 2006/10/26 11:05:29 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mail.1	8.8 (Berkeley) 4/28/95
 .\"
-.Dd September 20, 2006
+.Dd October 21, 2006
 .Dt MAIL 1
 .Os
 .Sh NAME
@@ -91,7 +91,7 @@ Read in the contents of your
 .Ar mbox
 (or the specified file)
 for processing; when you
-.Ic quit  ,
+.Ic quit ,
 .Nm
 writes undeleted messages back to this file.
 .It Fl I
@@ -315,7 +315,7 @@ and aborts the command.
 Print out the preceding message.
 If given a numeric
 argument
-.Ar n  ,
+.Ar n ,
 goes to the
 .Ar n Ns 'th
 previous message and prints it.
@@ -343,7 +343,7 @@ but also prints out ignored header fields.
 .It Ic Page
 .Pq Ic \&Pa
 A synonym for
-.Ic More  .
+.Ic More .
 .It Ic Print
 .Pq Ic P
 Like
@@ -370,7 +370,8 @@ command.
 .Pq Ic V
 Like
 .Ic Print
-but has the opposite MIME decoding behavior.  (See the
+but has the opposite MIME decoding behavior.
+(See the
 .Ar mime-decode-message
 variable.)
 .It Ic alias
@@ -415,7 +416,7 @@ is used on for deletion when you quit.
 .Pq Ic d
 Takes a list of messages as argument and marks them all as deleted.
 Deleted messages will not be saved in
-.Ar mbox  ,
+.Ar mbox ,
 nor will they be available for most other commands.
 .It Ic dp
 (also
@@ -439,11 +440,11 @@ Effects an immediate return to the Shell without
 modifying the user's system mailbox, his
 .Ar mbox
 file, or his edit file in
-.Fl f  .
+.Fl f .
 .It Ic file
 .Pq Ic fi
 The same as
-.Ic folder  .
+.Ic folder .
 .It Ic folders
 List the names of the folders in your folder directory.
 .It Ic folder
@@ -490,7 +491,7 @@ also
 .Pc
 Takes a message list and marks each message therein to be saved in
 the user's system mailbox instead of in
-.Ar mbox  .
+.Ar mbox .
 Does not override the
 .Ic delete
 command.
@@ -545,11 +546,11 @@ With an argument list, types the next matching message.
 .It Ic page
 .Pq Ic pa
 A synonym for
-.Ic more  .
+.Ic more .
 .It Ic preserve
 .Pq Ic pre
 A synonym for
-.Ic hold  .
+.Ic hold .
 .It Ic print
 .Pq Ic p
 Takes a message list and types out each message on the user's terminal.
@@ -581,7 +582,7 @@ recipients of the specified message.
 The default message must not be deleted.
 .It Ic respond
 A synonym for
-.Ic reply  .
+.Ic reply .
 .It Ic retain
 Add the list of header fields named to the
 .Ar retained list .
@@ -623,12 +624,12 @@ what
 is to
 .Ic print
 and
-.Ic type  .
+.Ic type .
 Header fields thus marked are filtered out when
 saving a message by
 .Ic save
 or when automatically saving to
-.Ar mbox  .
+.Ar mbox .
 .\" .pl +1
 .It Ic saveretain
 .Ic Saveretain
@@ -639,22 +640,22 @@ what
 is to
 .Ic print
 and
-.Ic type  .
+.Ic type .
 Header fields thus marked are the only ones saved
 with a message when saving by
 .Ic save
 or when automatically saving to
-.Ar mbox  .
+.Ar mbox .
 .Ic Saveretain
 overrides
-.Ic saveignore  .
+.Ic saveignore .
 .It Ic shell
 .Pq Ic sh
 Invokes an interactive version of the shell.
 .It Ic show
 .Pq Ic sho
 Takes a list of variables and prints out their values in the form
-.Ar option=value  .
+.Ar option=value .
 If the list is empty, all variable values are shown.
 .It Ic size
 Takes a message list and prints out the size in characters of each
@@ -671,7 +672,7 @@ and defaults to five.
 .It Ic type
 .Pq Ic t
 A synonym for
-.Ic print  .
+.Ic print .
 .It Ic unalias
 Takes a list of names defined by
 .Ic alias
@@ -690,12 +691,13 @@ having been read.
 .It Ic unset
 Takes a list of option names and discards their remembered values;
 the inverse of
-.Ic set  .
+.Ic set .
 .It Ic view
 .Pq Ic vie
 Like
 .Ic print
-but has the opposite MIME decoding behavior.  (See the
+but has the opposite MIME decoding behavior.
+(See the
 .Ar mime-decode-message
 variable.)
 .It Ic visual
@@ -704,7 +706,7 @@ Takes a message list and invokes the display editor on each message.
 .It Ic write
 .Pq Ic w
 Similar to
-.Ic save  ,
+.Ic save ,
 except that
 .Em only
 the message body
@@ -715,7 +717,7 @@ program text over the message system.
 .It Ic xit
 .Pq Ic x
 A synonym for
-.Ic exit  .
+.Ic exit .
 .It Ic z
 .Nm
 presents message headers in windowfuls as described under the
@@ -727,7 +729,7 @@ attention forward to the next window with the
 .Ic \&z
 command.
 Also, you can move to the previous window by using
-.Ic \&z\&\-  .
+.Ic \&z\&\- .
 .El
 .Ss Tilde/Escapes
 Here is a summary of the tilde escapes, which are used when composing
@@ -741,14 +743,16 @@ by the option
 .Bl -tag -width Ds
 .It Ic \&~! Ns Ar command
 Execute the indicated shell command, then return to the message.
-.It Ic \&~@  Op Ar filelist
+.It Ic \&~@ Op Ar filelist
 Add the files in the white-space delimited
 .Ar filelist
-to the attachment list.  If
+to the attachment list.
+If
 .Ar filelist
 is omitted, edit the attachment list, possibly appending to it: For
 each file in the list the user is prompted to change its attachment
-data.  Changing the filename to empty will delete it from the list.
+data.
+Changing the filename to empty will delete it from the list.
 Upon reaching the end of the attachment list, the user is prompted for
 additional files to attach until an empty filename is given.
 Filenames containing white-space can only be added in this
@@ -798,7 +802,7 @@ Inserts the value of the named option into the text of the message.
 .It Ic \&~m Ns Ar messages
 Read the named messages into the message being sent, indented by a
 tab or by the value of
-.Ar indentprefix  .
+.Ar indentprefix .
 If no messages are specified, read the current message.
 Message headers currently being ignored (by the
 .Ic ignore
@@ -1016,14 +1020,14 @@ command and
 .Ic \&~e
 escape.
 If not defined, then a default editor is used.
-.sp
+.Pp
 .It Ev LISTER
 Pathname of the directory lister to use in the
 .Ic folders
 command.
 Default is
 .Pa /bin/ls .
-.sp
+.Pp
 .It Ev PAGER
 Pathname of the program to use in the
 .Ic more
@@ -1033,7 +1037,7 @@ variable is set.
 The default paginator
 .Xr more 1
 is used if this option is not defined.
-.sp
+.Pp
 .It Ev SHELL
 Pathname of the shell to use in the
 .Ic \&!
@@ -1041,14 +1045,14 @@ command and the
 .Ic \&~!
 escape.
 A default shell is used if this option is not defined.
-.sp
+.Pp
 .It Ev VISUAL
 Pathname of the text editor to use in the
 .Ic visual
 command and
 .Ic \&~v
 escape.
-.sp
+.Pp
 .It Va crt
 The valued option
 .Va crt
@@ -1061,7 +1065,7 @@ If
 is set without a value, then the height of the terminal screen
 stored in the system is used to compute the threshold (see
 .Xr stty 1 ) .
-.sp
+.Pp
 .It Ar el-completion-keys
 A comma or space delimited list of keys to do
 .Xr editline 3
@@ -1072,7 +1076,7 @@ will bind completion to both the tab and CTRL-D keys.
 (Requires
 .Xr editline 3
 support.)
-.sp
+.Pp
 .It Ar el-editor
 The line editing mode: must be
 .Dq emacs
@@ -1082,20 +1086,20 @@ If unset, editing is not enabled.
 (Requires
 .Xr editline 3
 support.)
-.sp
+.Pp
 .It Ar el-history-size
 The number of lines of history to remember.
 If unset, history is not enable.
 (Requires
 .Xr editline 3
 support.)
-.sp
+.Pp
 .It Ar escape
 If defined, the first character of this option gives the character to
 use in the place of
 .Sq ~
 to denote escapes.
-.sp
+.Pp
 .It Ar folder
 The name of the directory to use for storing folders of
 messages.
@@ -1104,7 +1108,7 @@ If this name begins with a
 .Nm
 considers it to be an absolute pathname; otherwise, the
 folder directory is found relative to your home directory.
-.sp
+.Pp
 .It Ar indentprefix
 String used by the
 .Dq ~m
@@ -1113,57 +1117,61 @@ the normal tab character
 .Pq Sq ^I .
 Be sure to quote the value if it contains
 spaces or tabs.
-.sp
+.Pp
 .It Ar mime-body-TYPE-SUBTYPE
 MIME-hook for the body of a MIME block of
-.Qq Content-Type: TYPE/SUBTYPE  .
+.Qq Content-Type: TYPE/SUBTYPE .
 (See
 .Sy MIME Enhancements
 below.)
-.sp
+.Pp
 .It Ar mime-charset
 Convert Content-type:
 .Sq text
 messages to this character set or
 .Qq us-ascii
-if the value is empty.  If unset, no character set conversion is done.
-.sp
+if the value is empty.
+If unset, no character set conversion is done.
+.Pp
 .It Ar mime-decode-header
 If set, decode the headers along with the body when
 .Ar mime-decode-message
-is set.  The header decode follows the same rulse as the body (see
-.Ar mime-decode-message  ) .
-.sp
+is set.
+The header decode follows the same rulse as the body (see
+.Ar mime-decode-message ) .
+.Pp
 .It Ar mime-decode-insert
 When inserting
 a message into the mail buffer
 .Po Ic \&~f
 or
 .Ic \&~F
-.Pc  ,
+.Pc ,
 the text inserted will be decoded according to the settings of the
 .Ar mime-decode-message
 and
 .Ar mime-decode-header
 variables.
-.sp
+.Pp
 .It Ar mime-decode-message
 This determines the MIME decoding behavior of the basic display
 commands
-.Ic More  ,
-.Ic more  ,
-.Ic Page  ,
-.Ic page  ,
-.Ic Print  ,
-.Ic print  ,
-.Ic Type  ,
+.Ic More ,
+.Ic more ,
+.Ic Page ,
+.Ic page ,
+.Ic Print ,
+.Ic print ,
+.Ic Type ,
 and
-.Ic type  .
-If unset, these commands do not do MIME decoding.  If set but empty,
-the commands do MIME decoding.  Otherwise, it lists which of these
-commands do MIME decoding.  The list is comma or blank delimited and
-case insensitive, so the capitalized and lowercase versions of a
-command have the same MIME decoding behavior.  Recall that the
+.Ic type .
+If unset, these commands do not do MIME decoding.
+If set but empty, the commands do MIME decoding.
+Otherwise, it lists which of these commands do MIME decoding.
+The list is comma or blank delimited and case insensitive, so the
+capitalized and lowercase versions of a command have the same MIME
+decoding behavior.
+Recall that the
 .Ic View
 and
 .Ic view
@@ -1172,46 +1180,47 @@ commands always have the opposite MIME decoding behavior as the
 and
 .Ic print
 commands.
-.sp
+.Pp
 .It Ar mime-decode-quote
 When quoting
 a message into the mail buffer
 .Po Ic \&~m
 or
 .Ic \&~M
-.Pc  ,
+.Pc ,
 the text inserted will be decoded according to the settings of the
 .Ar mime-decode-message
 and
 .Ar mime-decode-header
 variables.
-.sp
+.Pp
 .It Ar mime-encode-message
-If set, encode the body of the message as required.  Typically, this
-is just an issue of whether "quoted-printable" encoding is used or
-not.  If it has a value, then use it to determine the encoding type.
+If set, encode the body of the message as required.
+Typically, this is just an issue of whether "quoted-printable"
+encoding is used or not.
+If it has a value, then use it to determine the encoding type.
 Allowed values are
-.Qq 7bit  ,
-.Qq 8bit  ,
-.Qq binary  ,
-.Qq quoted-printable  ,
+.Qq 7bit ,
+.Qq 8bit ,
+.Qq binary ,
+.Qq quoted-printable ,
 or
-.Qq base64  .
-.sp
+.Qq base64 .
+.Pp
 .It Ar mime-head-TYPE-SUBTYPE
 MIME-hook for the header of a MIME block of
-.Qq Content-Type: TYPE/SUBTYPE  .
+.Qq Content-Type: TYPE/SUBTYPE .
 (See
 .Sy MIME Enhancements
 below.)
-.sp
+.Pp
 .It Ar mime-hook-TYPE-SUBTYPE
 MIME-hook for MIME block of
-.Qq Content-Type: TYPE/SUBTYPE  .
+.Qq Content-Type: TYPE/SUBTYPE .
 (See
 .Sy MIME Enhancements
 below.)
-.sp
+.Pp
 .It Ev MBOX
 The name of the
 .Ar mbox
@@ -1220,12 +1229,12 @@ It can be the name of a folder.
 The default is
 .Dq Li mbox
 in the user's home directory.
-.sp
+.Pp
 .It Ar record
 If defined, gives the pathname of the file used to record all outgoing
 mail.
 If not defined, then outgoing mail is not so saved.
-.sp
+.Pp
 .It Ar ReplyAsRecipient
 This is used when replying to email (see the
 .Ic reply
@@ -1250,7 +1259,7 @@ option.
 Note: the sendmail options can be edited with the
 .Ic \&~h
 escape.
-.sp
+.Pp
 .It Ar toplines
 If defined, gives the number of lines of a message to be printed out
 with the
@@ -1266,9 +1275,9 @@ When MIME support is enabled (by setting
 splits a message into a series of its smallest MIME parts and
 processes those parts as if they were messages themselves, passing the
 header and body through a pipeline of the form:
-.sp
+.Pp
 .Dl mail -> MIME-decoder -> MIME-hook -> pager -> screen
-.sp
+.Pp
 The
 .Em MIME-decoder
 decodes
@@ -1285,12 +1294,13 @@ The
 .Em pager
 is the program that pages the message
 (see
-.Va PAGER  ) .
+.Va PAGER ) .
 Any of these intermediate pipe stages may be missing and/or different
-for the head and body of each MIME part.  Certain
+for the head and body of each MIME part.
+Certain
 .Qq Content-Types:
 may disable the entire pipeline (e.g.,
-.Qq application/octet  ) .
+.Qq application/octet ) .
 .Pp
 The
 .Em MIME-hook
@@ -1300,16 +1310,18 @@ mime-hook-TYPE-SUBTYPE - applies to the entire MIME part
 mime-head-TYPE-SUBTYPE - applies to the header of the MIME part
 mime-body-TYPE-SUBTYPE - applies to the body of the MIME part
 .Ed
-.sp
+.Pp
 where TYPE and SUBTYPE are the Content-Type type and subtype
-(respectively) of the MIME part to which the hook applies.  If the
-"-SUBTYPE" is missing, any subtype is matched.  The value of these
-variables has the format:
+(respectively) of the MIME part to which the hook applies.
+If the
+.Dq -SUBTYPE
+is missing, any subtype is matched.
+The value of these variables has the format:
 .Bd -filled -offset indent
 .Op Ar flags
 .Ar command
 .Ed
-.sp
+.Pp
 where the
 .Ar command
 is expected to read from stdin and writes to stdout, and the possible
@@ -1321,26 +1333,27 @@ Execute
 in a sub-shell rather than doing an
 .Xr exec 3
 (see
-.Va Shell  ) .
+.Va Shell ) .
 This is necessary for shell scripts.
 .It +
 Use this hook when selecting the part to display in a
 .Qq multipart/alternative
-block.  Multipart blocks contain
+block.
+Multipart blocks contain
 .Qq alternative
 versions with the same information, in increasing order of preference
-(and decoding complexity).  The last one the mail agent understands is
-the one to be displayed.  This is typically used for sending a message
-in both
+(and decoding complexity).
+The last one the mail agent understands is the one to be displayed.
+This is typically used for sending a message in both
 .Qq plain text
 and
-.Qq html  ,
+.Qq html ,
 but more complex subtypes are also possible.
 .It -
 Do not decode before executing
-.Ar command  .
+.Ar command .
 .El
-.sp
+.Pp
 If your
 .Ar command
 begins with one of these flags, precede it with a space to signal the
@@ -1353,31 +1366,31 @@ if that program has bugs, so be careful what you run.
 View all "Content-Type: image/jpeg" parts with
 .Xr xv 1
 (assuming it is installed):
-.sp
+.Pp
 .Dl set mime-body-image-jpeg="/usr/pkg/bin/xv -"
-.sp
+.Pp
 Decode all "Content-Type: images/*" blocks with
 .Xr uudeview 1
 (assuming it is installed), placing the results in
-.Pa /tmp  :
-.sp
+.Pa /tmp :
+.Pp
 .Dl set mime-hook-image="-/usr/pkg/bin/uudeview -p /tmp -i -a +o -q -"
-.sp
+.Pp
 Read all "Content-Type: text/html" parts using
 .Xr lynx 1
 (assuming it is installed) and add this support to
 multipart/alternative blocks:
-.sp
+.Pp
 .Dl set mime-body-text-html="+/usr/pkg/bin/lynx -force_html -dump -stdin"
-.sp
+.Pp
 Generally, the incoming mail will have a better
 .Qq plain/text
 alternative.
 .Sh ENVIRONMENT
 .Nm
 uses the
-.Ev HOME  ,
-.Ev TMPDIR  ,
+.Ev HOME ,
+.Ev TMPDIR ,
 and
 .Ev USER
 environment variables.
@@ -1426,7 +1439,7 @@ Most are not useful to the general user.
 Usually,
 .Nm
 is just a link to
-.Nm Mail  ,
+.Nm Mail ,
 which can be confusing.
 .Pp
 The name of the
@@ -1438,6 +1451,6 @@ but is retained for compatibility.
 There must be sufficient space on $TMPDIR for various temporary files.
 .Pp
 If an unrecoverable character set conversion error occurs (during
-display), the message is truncated and a warning is printed.  This
-seems to be rare, but probably the remainder of the message should be
-printed without conversion.
+display), the message is truncated and a warning is printed.
+This seems to be rare, but probably the remainder of the message
+should be printed without conversion.
