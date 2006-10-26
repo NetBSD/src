@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.18 2005/02/13 18:14:04 christos Exp $	*/
+/*	$NetBSD: auth.h,v 1.18.4.1 2006/10/26 09:39:38 ghen Exp $	*/
 /*	$OpenBSD: auth.h,v 1.50 2004/05/23 23:59:53 dtucker Exp $	*/
 
 /*
@@ -49,6 +49,7 @@ typedef struct KbdintDevice KbdintDevice;
 
 struct Authctxt {
 	int		 success;
+	int		 authenticated;	/* authenticated and alarms cancelled */
 	int		 postponed;	/* authentication needs another step */
 	int		 valid;		/* user exists and is allowed to login */
 	int		 attempt;
