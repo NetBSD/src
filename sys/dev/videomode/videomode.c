@@ -1,4 +1,4 @@
-/*	$NetBSD: videomode.c,v 1.3 2006/05/09 17:51:03 gdamore Exp $	*/
+/*	$NetBSD: videomode.c,v 1.4 2006/10/26 23:21:23 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -6,6 +6,10 @@
  * generated from:
  *	NetBSD: modelines,v 1.1 2006/03/04 02:34:27 gdamore Exp 
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: videomode.c,v 1.4 2006/10/26 23:21:23 bjh21 Exp $");
+
 #include <dev/videomode/videomode.h>
 
 /*
