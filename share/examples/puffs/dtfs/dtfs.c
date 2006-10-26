@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.2 2006/10/25 18:18:16 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.3 2006/10/26 22:53:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -89,6 +89,7 @@ main(int argc, char *argv[])
 	pvn.puffs_readlink = dtfs_readlink;
 	pvn.puffs_reclaim = dtfs_reclaim;
 	pvn.puffs_inactive = dtfs_inactive;
+	pvn.puffs_mknod = dtfs_mknod;
 
 	if ((pu = puffs_mount(&pvfs, &pvn, argv[1], 0, FSNAME, flags, 0))
 	    == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.2 2006/10/25 18:18:16 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.3 2006/10/26 22:53:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -75,6 +75,12 @@ dtfs_baseattrs(struct vattr *vap, enum vtype type, int32_t fsid, ino_t id)
 	vap->va_atime = vap->va_mtime = vap->va_ctime = vap->va_birthtime = ts;
 }
 
+/*
+ * Well, as you can probably see, this interface has the slight problem
+ * of assuming file creation will always be succesful, or at least not
+ * giving a reason for the failure.  Be sure to do better when you
+ * implement your own fs.
+ */
 struct puffs_node *
 dtfs_genfile(struct puffs_node *dir, const char *name, enum vtype type)
 {
@@ -84,7 +90,8 @@ dtfs_genfile(struct puffs_node *dir, const char *name, enum vtype type)
 	struct puffs_node *newpn;
 
 	/* support only regular files and directories */
-	if (!(type == VREG || type == VDIR || type == VLNK))
+	if (!(type == VREG || type == VDIR || type == VLNK || type == VBLK
+	    || type == VCHR))
 		return NULL;
 
 	assert(dir->pn_type == VDIR);
@@ -206,6 +213,8 @@ dtfs_freenode(struct puffs_node *pn)
 	case VLNK:
 		free(df->df_linktarget);
 		break;
+	case VCHR:
+	case VBLK:
 	case VDIR:
 		break;
 	default:
@@ -223,8 +232,6 @@ dtfs_setsize(struct puffs_node *pn, off_t newsize, int extend)
 	struct dtfs_file *df = DTFS_PTOF(pn);
 	struct dtfs_mount *dtm;
 	int more; /* too tired to think about signed/unsigned promotions */
-
-	assert(pn->pn_type == VREG);
 
 	more = newsize > pn->pn_va.va_size;
 	if (extend && !more)
