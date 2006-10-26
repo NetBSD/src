@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2006/09/09 15:43:04 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.6 2006/10/26 15:06:18 tnozaki Exp $
 
 .PATH: ${.CURDIR}/GB
 
@@ -12,13 +12,15 @@ MAPS_GB=		GB18030%UCS@BMP.mps \
 			GB2312UDA2%UCS.mps \
 			GBKEXT%UCS.mps \
 			GBKUDA%UCS.mps \
+			ISO-IR-165EXT%UCS.mps \
 			UCS@BMP%GB18030.mps \
 			UCS%GB2312.mps \
 			UCS%GB2312EXT.mps \
 			UCS%GB2312UDA1.mps \
 			UCS%GB2312UDA2.mps \
 			UCS%GBKEXT.mps \
-			UCS%GBKUDA.mps
+			UCS%GBKUDA.mps \
+			UCS%ISO-IR-165EXT.mps
 
 mapper.dir.GB: ${.CURDIR}/GB/mapper.dir.GB.src
 	${_MKTARGET_CREATE}
