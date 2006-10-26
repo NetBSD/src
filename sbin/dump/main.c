@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.62 2006/06/24 05:28:54 perseant Exp $	*/
+/*	$NetBSD: main.c,v 1.63 2006/10/26 20:02:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.62 2006/06/24 05:28:54 perseant Exp $");
+__RCSID("$NetBSD: main.c,v 1.63 2006/10/26 20:02:30 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,6 +272,7 @@ main(int argc, char *argv[])
 	 */
 	getfstab();		/* /etc/fstab snarfed */
 	disk = NULL;
+	disk_dev = NULL;
 	mountpoint = NULL;
 	dirc = 0;
 	for (i = 0; i < argc; i++) {
@@ -441,9 +442,11 @@ main(int argc, char *argv[])
 		msg("Cannot open %s\n", disk);
 		exit(X_STARTUP);
 	}
+	disk_dev = disk;
 #else /* ! DUMP_LFS */
 	if (snap_backup != NULL || snap_internal) {
-		diskfd = snap_open(mntinfo->f_mntonname, snap_backup, &tnow);
+		diskfd = snap_open(mntinfo->f_mntonname, snap_backup,
+		    &tnow, &disk_dev);
 		if (diskfd < 0) {
 			msg("Cannot open snapshot of %s\n",
 				mntinfo->f_mntonname);
@@ -455,6 +458,7 @@ main(int argc, char *argv[])
 			msg("Cannot open %s\n", disk);
 			exit(X_STARTUP);
 		}
+		disk_dev = disk;
 	}
 	sync();
 #endif /* ! DUMP_LFS */
