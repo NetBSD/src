@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.28 2006/10/26 16:06:39 elad Exp $
+.\" $NetBSD: kauth.9,v 1.29 2006/10/26 16:11:17 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -418,6 +418,14 @@ Check if setting parameters on the device is allowed.
 .It Dv KAUTH_REQ_NETWORK_INTERFACE_SETPRIV
 Check if setting privileged parameters on the device is allowed.
 .El
+.Pp
+Note that unless the
+.Ft struct ifnet *
+for the interface was passed in
+.Ar arg1 ,
+there's no way to tell what structure
+.Ar arg3
+is.
 .It Dv KAUTH_NETWORK_FORWSRCRT
 Checks whether status of forwarding of source-routed packets can be modified
 or not.
