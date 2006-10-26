@@ -1,4 +1,4 @@
-# $NetBSD: ISO-IR-165EXT%UCS.src,v 1.1 2006/10/26 15:06:18 tnozaki Exp $
+# $NetBSD: ISO-IR-165EXT%UCS.src,v 1.2 2006/10/26 15:24:00 tnozaki Exp $
 
 TYPE		ROWCOL
 NAME		"ISO-IR-165EXT/UCS"
@@ -156,7 +156,7 @@ BEGIN_MAP
 #0x2A7B = 0x007B
 #0x2A7C = 0x007C
 #0x2A7D = 0x007D
-#0x2A7E = 0x203E
+0x2A7E = 0x203E
  
 # halfwidth pinyin
 #0x2B21 - 0x2B40 = 0xFFFD
