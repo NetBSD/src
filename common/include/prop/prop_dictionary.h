@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.h,v 1.5 2006/09/22 04:20:23 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.h,v 1.6 2006/10/26 05:02:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ void		prop_dictionary_make_immutable(prop_dictionary_t);
 boolean_t	prop_dictionary_mutable(prop_dictionary_t);
 
 prop_object_iterator_t prop_dictionary_iterator(prop_dictionary_t);
+prop_array_t	prop_dictionary_all_keys(prop_dictionary_t);
 
 prop_object_t	prop_dictionary_get(prop_dictionary_t, const char *);
 boolean_t	prop_dictionary_set(prop_dictionary_t, const char *,
@@ -108,6 +109,64 @@ int		prop_dictionary_copyout_ioctl(struct plistref *,
 					      prop_dictionary_t);
 #endif
 #endif /* __NetBSD__ */
+
+/*
+ * Utility routines to make it more convenient to work with values
+ * stored in dictionaries.
+ */
+boolean_t	prop_dictionary_get_bool(prop_dictionary_t, const char *,
+					 boolean_t *);
+boolean_t	prop_dictionary_set_bool(prop_dictionary_t, const char *,
+					 boolean_t);
+
+boolean_t	prop_dictionary_get_int8(prop_dictionary_t, const char *,
+					 int8_t *);
+boolean_t	prop_dictionary_get_uint8(prop_dictionary_t, const char *,
+					  uint8_t *);
+boolean_t	prop_dictionary_set_int8(prop_dictionary_t, const char *,
+					 int8_t);
+boolean_t	prop_dictionary_set_uint8(prop_dictionary_t, const char *,
+					  uint8_t);
+
+boolean_t	prop_dictionary_get_int16(prop_dictionary_t, const char *,
+					  int16_t *);
+boolean_t	prop_dictionary_get_uint16(prop_dictionary_t, const char *,
+					   uint16_t *);
+boolean_t	prop_dictionary_set_int16(prop_dictionary_t, const char *,
+					  int16_t);
+boolean_t	prop_dictionary_set_uint16(prop_dictionary_t, const char *,
+					   uint16_t);
+
+boolean_t	prop_dictionary_get_int32(prop_dictionary_t, const char *,
+					  int32_t *);
+boolean_t	prop_dictionary_get_uint32(prop_dictionary_t, const char *,
+					   uint32_t *);
+boolean_t	prop_dictionary_set_int32(prop_dictionary_t, const char *,
+					  int32_t);
+boolean_t	prop_dictionary_set_uint32(prop_dictionary_t, const char *,
+					   uint32_t);
+
+boolean_t	prop_dictionary_get_int64(prop_dictionary_t, const char *,
+					  int64_t *);
+boolean_t	prop_dictionary_get_uint64(prop_dictionary_t, const char *,
+					   uint64_t *);
+boolean_t	prop_dictionary_set_int64(prop_dictionary_t, const char *,
+					  int64_t);
+boolean_t	prop_dictionary_set_uint64(prop_dictionary_t, const char *,
+					   uint64_t);
+
+boolean_t	prop_dictionary_get_cstring(prop_dictionary_t, const char *,
+					     char **);
+boolean_t	prop_dictionary_set_cstring(prop_dictionary_t, const char *,
+					    const char *);
+
+boolean_t	prop_dictionary_get_cstring_nocopy(prop_dictionary_t,
+						   const char *,
+						   const char **);
+boolean_t	prop_dictionary_set_cstring_nocopy(prop_dictionary_t,
+						   const char *,
+						   const char *);
+
 __END_DECLS
 
 #endif /* _PROPLIB_PROP_DICTIONARY_H_ */
