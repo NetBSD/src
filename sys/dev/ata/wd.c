@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.332 2006/10/25 04:04:45 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.333 2006/10/26 05:04:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.332 2006/10/25 04:04:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.333 2006/10/26 05:04:18 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1685,46 +1685,39 @@ static void
 wd_params_to_properties(struct wd_softc *wd, struct ataparams *params __unused)
 {
 	prop_dictionary_t disk_info, odisk_info, geom;
-	prop_string_t string;
-	prop_number_t number;
+	const char *cp;
 
 	disk_info = prop_dictionary_create();
 
 	if (strcmp(wd->sc_params.atap_model, "ST506") == 0)
-		string = prop_string_create_cstring_nocopy("ST506");
+		cp = "ST506";
 	else {
 		/* XXX Should have a case for ATA here, too. */
-		string = prop_string_create_cstring_nocopy("ESDI");
+		cp = "ESDI";
 	}
-	prop_dictionary_set(disk_info, "type", string);
-	prop_object_release(string);
+	prop_dictionary_set_cstring_nocopy(disk_info, "type", cp);
 
 	geom = prop_dictionary_create();
 
-	number = prop_number_create_integer(wd->sc_capacity);
-	prop_dictionary_set(geom, "sectors-per-unit", number);
-	prop_object_release(number);
+	prop_dictionary_set_uint64(geom, "sectors-per-unit", wd->sc_capacity);
 
-	number = prop_number_create_integer(DEV_BSIZE /* XXX 512? */);
-	prop_dictionary_set(geom, "sector-size", number);
-	prop_object_release(number);
+	prop_dictionary_set_uint32(geom, "sector-size",
+				   DEV_BSIZE /* XXX 512? */);
 
-	number = prop_number_create_integer(wd->sc_params.atap_sectors);
-	prop_dictionary_set(geom, "sectors-per-track", number);
-	prop_object_release(number);
+	prop_dictionary_set_uint16(geom, "sectors-per-track",
+				   wd->sc_params.atap_sectors);
 
-	number = prop_number_create_integer(wd->sc_params.atap_heads);
-	prop_dictionary_set(geom, "tracks-per-cylinder", number);
-	prop_object_release(number);
+	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+				   wd->sc_params.atap_heads);
 
-	number = prop_number_create_integer(
-	    (wd->sc_flags & WDF_LBA) ?
-	        wd->sc_capacity / (wd->sc_params.atap_heads *
-				   wd->sc_params.atap_sectors)
-				     :
-		wd->sc_params.atap_cylinders);
-	prop_dictionary_set(geom, "cylinders-per-unit", number);
-	prop_object_release(number);
+	if (wd->sc_flags & WDF_LBA)
+		prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+					   wd->sc_capacity /
+					       (wd->sc_params.atap_heads *
+					        wd->sc_params.atap_sectors));
+	else
+		prop_dictionary_set_uint16(geom, "cylinders-per-unit",
+					   wd->sc_params.atap_cylinders);
 
 	prop_dictionary_set(disk_info, "geometry", geom);
 	prop_object_release(geom);
