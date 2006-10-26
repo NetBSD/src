@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.7 2006/10/12 04:29:37 thorpej Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.8 2006/10/26 05:08:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.7 2006/10/12 04:29:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.8 2006/10/26 05:08:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,6 @@ drvctl_command(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
 {
 	prop_dictionary_t command_dict, results_dict;
 	prop_string_t command_string;
-	prop_number_t error_number;
 	const struct drvctl_command_desc *dcd;
 	int error;
 
@@ -278,9 +277,7 @@ drvctl_command(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
 
 	error = (*dcd->dcd_func)(l, command_dict, results_dict);
 
-	error_number = prop_number_create_integer(error);
-	prop_dictionary_set(results_dict, "drvctl-error", error_number);
-	prop_object_release(error_number);
+	prop_dictionary_set_int32(results_dict, "drvctl-error", error);
 
 	error = prop_dictionary_copyout_ioctl(pref, ioctl_cmd, results_dict);
  out:
