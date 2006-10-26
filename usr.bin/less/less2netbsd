@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: less2netbsd,v 1.6 2003/04/14 02:56:45 mrg Exp $
+#	$NetBSD: less2netbsd,v 1.7 2006/10/26 01:30:33 mrg Exp $
 #
 # Copyright (c) 1996, 2003 Matthew R. Green
 # All rights reserved.
@@ -63,7 +63,7 @@ mkdir -p src/usr.bin/less/less src/usr.bin/less/lesskey src/usr.bin/less/lessech
 cd $r
 echo less:
 src="main.c screen.c brac.c ch.c charset.c cmdbuf.c command.c decode.c edit.c filename.c forwback.c help.c ifile.c input.c jump.c line.c linenum.c lsystem.c mark.c optfunc.c option.c opttbl.c os.c output.c position.c prompt.c search.c signal.c tags.c ttyin.c version.c"
-src="$src cmd.h defines.h funcs.h less.h lesskey.h lglob.h option.h pckeys.h position.h regexp.h"
+src="$src charset.h cmd.h defines.h funcs.h less.h lesskey.h lglob.h option.h pckeys.h position.h regexp.h"
 src="$src INSTALL LICENSE NEWS README less.nro"
 
 pax -rvw $src $d/src/usr.bin/less/less
