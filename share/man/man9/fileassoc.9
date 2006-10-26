@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.9 2006/09/06 13:37:49 blymn Exp $
+.\" $NetBSD: fileassoc.9,v 1.10 2006/10/26 17:33:11 drochner Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -90,14 +90,14 @@ These routines allow a developer to allocate a
 .Nm
 slot to be used for private data.
 .Bl -tag -width "123456"
-.It Ft int Fn fileassoc_register "const char *name"  "fileassoc_cleanup_cb cleanup_cb"
+.It Ft fileassoc_t Fn fileassoc_register "const char *name"  "fileassoc_cleanup_cb cleanup_cb"
 Registers a new fileassoc as
 .Ar name ,
-and returns an
-.Ft int
-to be used as a metahhook-id in subsequent calls to the
+and returns a
+.Ft fileassoc_t
+to be used as identifier in subsequent calls to the
 .Nm
-subsystem to identify the fileassoc, or \-1 on failure.
+subsystem, or \-1 on failure.
 .Pp
 If
 .Ar cleanup_cb
@@ -211,12 +211,13 @@ parameter.
 .Ss File-specific Routines
 .Bl -tag -width "123456"
 .It Ft int Fn fileassoc_file_delete "struct vnode *vp"
-Delete the fileassoc entry for
+Delete the fileassoc entries for
 .Ar vp .
 .Pp
-If specified, the fileassoc's
-.Dq cleanup routine
-will be called with a pointer to the private data-structure and indication of
+If specified, the
+.Dq cleanup routines
+of all fileassoc types added will be called with a pointer to the corresponding
+private data structure and indication of
 .Dv FILEASSOC_CLEANUP_FILE .
 .El
 .Ss Fileassoc-specific Routines
