@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.43 2006/06/24 05:28:54 perseant Exp $	*/
+/*	$NetBSD: dump.h,v 1.44 2006/10/26 20:02:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -98,6 +98,7 @@ char	*dumpinomap;	/* map of files to be dumped */
  *	All calculations done in 0.1" units!
  */
 char	*disk;		/* name of the disk file */
+char	*disk_dev;	/* name of the raw device we are dumping */
 const char *tape;	/* name of the tape file */
 const char *dumpdates;	/* name of the file containing dump date information*/
 const char *temp;	/* name of the file for doing rewrite of dumpdates */
