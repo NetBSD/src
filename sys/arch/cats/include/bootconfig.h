@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.5 2006/10/24 20:39:13 bjh21 Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.6 2006/10/26 23:31:47 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -61,6 +61,7 @@ typedef struct _BootConfig {
 extern BootConfig bootconfig;
 #define MAX_BOOT_STRING 255
 
+extern char *boot_file;
 #endif	/* _KERNEL */
 
 /* End of bootconfig.h */
