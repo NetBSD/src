@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.3 2006/10/26 13:42:21 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.4 2006/10/26 22:52:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.3 2006/10/26 13:42:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.4 2006/10/26 22:52:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.3 2006/10/26 13:42:21 pooka Exp $")
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
 
+#include <miscfs/specfs/specdev.h>
+
 POOL_INIT(puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0, "puffspnpl",
     &pool_allocator_nointr);
 
@@ -54,10 +56,11 @@ POOL_INIT(puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0, "puffspnpl",
  * Grab a vnode, intialize all the puffs-dependant stuff.
  */
 int
-puffs_getvnode(struct mount *mp, void *cookie, struct vnode **vpp)
+puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
+	dev_t rdev, struct vnode **vpp)
 {
 	struct puffs_mount *pmp;
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	struct puffs_node *pnode;
 	int error;
 
@@ -80,6 +83,7 @@ puffs_getvnode(struct mount *mp, void *cookie, struct vnode **vpp)
 	if (error)
 		return error;
 	vp->v_vnlock = NULL;
+	vp->v_type = type;
 
 	/*
 	 * Check what mount point isn't going away.  This will work
@@ -106,12 +110,50 @@ puffs_getvnode(struct mount *mp, void *cookie, struct vnode **vpp)
 	simple_unlock(&mntvnode_slock);
 	vp->v_mount = mp;
 
-	/* handle clerical tasks & footwork */
+	/*
+	 * clerical tasks & footwork
+	 */
+
+	/* dances based on vnode type. almost ufs_vinit(), but not quite */
+	switch (type) {
+	case VCHR:
+	case VBLK:
+		/*
+		 * replace vnode operation vector with the specops vector.
+		 * our user server has very little control over the node
+		 * if it decides its a character or block special file
+		 */
+		vp->v_op = puffs_specop_p;
+
+		/* do the standard checkalias-dance */
+		if ((nvp = checkalias(vp, rdev, mp)) != NULL) {
+			/*
+			 * found, release & unallocate aliased
+			 * old (well, actually, new) node
+			 */
+			VOP_UNLOCK(vp, 0);
+			vp->v_op = spec_vnodeop_p;
+			vp->v_flag &= ~VLOCKSWORK;
+			vrele(vp);
+			vgone(vp); /* cya */
+
+			/* init "new" vnode */
+			vp = nvp;
+			vp->v_vnlock = NULL;
+			vp->v_mount = mp;
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		}
+		break;
+	default:
+		break;
+	}
+
 	pnode = pool_get(&puffs_pnpool, PR_WAITOK);
 	pnode->pn_cookie = cookie;
 	pnode->pn_stat = 0;
 	LIST_INSERT_HEAD(&pmp->pmp_pnodelist, pnode, pn_entries);
 	vp->v_data = pnode;
+	vp->v_type = type;
 	pnode->pn_vp = vp;
 
 	*vpp = vp;
@@ -125,7 +167,7 @@ puffs_getvnode(struct mount *mp, void *cookie, struct vnode **vpp)
 /* new node creating for creative vop ops (create, symlink, mkdir, mknod) */
 int
 puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
-	void *cookie, struct componentname *cnp, enum vtype type)
+	void *cookie, struct componentname *cnp, enum vtype type, dev_t rdev)
 {
 	struct vnode *vp;
 	int error;
@@ -136,7 +178,7 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 		return error;
 	}
 
-	error = puffs_getvnode(dvp->v_mount, cookie, &vp);
+	error = puffs_getvnode(dvp->v_mount, cookie, type, rdev, &vp);
 	if (error)
 		return error;
 

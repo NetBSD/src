@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.1 2006/10/22 22:43:23 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.2 2006/10/26 22:52:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -43,6 +43,12 @@
 #include <sys/lock.h>
 
 #include <fs/puffs/puffs_msgif.h>
+
+extern int (**puffs_vnodeop_p)(void *);
+extern int (**puffs_specop_p)(void *);
+
+extern const struct vnodeopv_desc puffs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc puffs_specop_opv_desc;
 
 /*
  * While a request is going to userspace, park the caller within the
@@ -142,9 +148,10 @@ int	puffs_vntouser_req(struct puffs_mount *, int, void *, size_t,
 int	puffs_vntouser_adjbuf(struct puffs_mount *, int, void **, size_t *,
 		              size_t, void *, struct vnode *, struct vnode *);
 
-int	puffs_getvnode(struct mount *, void *, struct vnode **);
+int	puffs_getvnode(struct mount *, void *, enum vtype, dev_t,
+		       struct vnode **);
 int	puffs_newnode(struct mount *, struct vnode *, struct vnode **,
-		      void *, struct componentname *, enum vtype);
+		      void *, struct componentname *, enum vtype, dev_t);
 void	puffs_putvnode(struct vnode *);
 struct vnode *puffs_pnode2vnode(struct puffs_mount *, void *);
 void	puffs_makecn(struct puffs_cn *, const struct componentname *);

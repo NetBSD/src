@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.4 2006/10/26 13:42:21 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.5 2006/10/26 22:52:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.4 2006/10/26 13:42:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.5 2006/10/26 22:52:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.4 2006/10/26 13:42:21 pooka Exp $"
 #include <fs/puffs/puffs_sys.h>
 
 #include <miscfs/genfs/genfs.h>
+
+#include <miscfs/specfs/specdev.h>
 
 int	puffs_lookup(void *);
 int	puffs_create(void *);
@@ -94,6 +96,15 @@ int puffs_lock(void *);
 int puffs_unlock(void *);
 int puffs_islocked(void *);
 #endif
+
+/*
+ * no special specops for now.  hmm, probably don't want to handle
+ * these synchronously, since they don't actually demand any
+ * response.  so maybe we need another touser-type thing...
+ */
+#define puffsspec_read spec_read
+#define puffsspec_write spec_write
+#define puffsspec_close spec_close
 
 int (**puffs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
@@ -145,6 +156,65 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
 };
 const struct vnodeopv_desc puffs_vnodeop_opv_desc =
 	{ &puffs_vnodeop_p, puffs_vnodeop_entries };
+
+
+int (**puffs_specop_p)(void *);
+const struct vnodeopv_entry_desc puffs_specop_entries[] = {
+	{ &vop_default_desc, vn_default_error },
+	{ &vop_lookup_desc, spec_lookup },		/* lookup, ENOTDIR */
+	{ &vop_create_desc, spec_create },		/* create, badop */
+	{ &vop_mknod_desc, spec_mknod },		/* mknod, badop */
+	{ &vop_open_desc, spec_open },			/* open, spec_open */
+	{ &vop_close_desc, puffsspec_close },		/* close */
+	{ &vop_access_desc, puffs_access },		/* access */
+	{ &vop_getattr_desc, puffs_getattr },		/* getattr */
+	{ &vop_setattr_desc, puffs_setattr },		/* setattr */
+	{ &vop_read_desc, puffsspec_read },		/* read */
+	{ &vop_write_desc, puffsspec_write },		/* write */
+	{ &vop_lease_desc, spec_lease_check },		/* genfs_nullop */
+	{ &vop_ioctl_desc, spec_ioctl },		/* spec_ioctl */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* dummy */
+	{ &vop_poll_desc, spec_poll },			/* spec_poll */
+	{ &vop_kqfilter_desc, spec_kqfilter },		/* spec_kqfilter */
+	{ &vop_revoke_desc, spec_revoke },		/* genfs_revoke */
+	{ &vop_mmap_desc, spec_mmap },			/* genfs_mmap (dummy) */
+	{ &vop_fsync_desc, puffs_fsync },		/* fsync */
+	{ &vop_seek_desc, spec_seek },			/* genfs_nullop */
+	{ &vop_remove_desc, spec_remove },		/* genfs_badop */
+	{ &vop_link_desc, spec_link },			/* genfs_badop */
+	{ &vop_rename_desc, spec_rename },		/* genfs_badop */
+	{ &vop_mkdir_desc, spec_mkdir },		/* genfs_badop */
+	{ &vop_rmdir_desc, spec_rmdir },		/* genfs_badop */
+	{ &vop_symlink_desc, spec_symlink },		/* genfs_badop */
+	{ &vop_readdir_desc, spec_readdir },		/* genfs_badop */
+	{ &vop_readlink_desc, spec_readlink },		/* genfs_badop */
+	{ &vop_abortop_desc, spec_abortop },		/* genfs_badop */
+	{ &vop_inactive_desc, puffs_inactive },		/* unlock */
+	{ &vop_reclaim_desc, puffs_reclaim },		/* genfs_nullop */
+	{ &vop_lock_desc, puffs_lock },			/* lock */
+	{ &vop_unlock_desc, puffs_unlock },		/* unlock */
+	{ &vop_bmap_desc, spec_bmap },			/* dummy */
+	{ &vop_strategy_desc, spec_strategy },		/* dev strategy */
+	{ &vop_print_desc, puffs_print },		/* print */
+	{ &vop_islocked_desc, puffs_islocked },		/* islocked */
+	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
+	{ &vop_advlock_desc, spec_advlock },		/* lf_advlock */
+	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, spec_getpages },		/* genfs_getpages */
+	{ &vop_putpages_desc, spec_putpages },		/* genfs_putpages */
+#if 0
+	{ &vop_openextattr_desc, _openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, _closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, _getextattr },		/* getextattr */
+	{ &vop_setextattr_desc, _setextattr },		/* setextattr */
+	{ &vop_listextattr_desc, _listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, _deleteextattr },	/* deleteextattr */
+#endif
+	{ NULL, NULL }
+};
+const struct vnodeopv_desc puffs_specop_opv_desc =
+	{ &puffs_specop_p, puffs_specop_entries };
+
 
 #define LOCKEDVP(a) (VOP_ISLOCKED(a) ? (a) : NULL)
 
@@ -246,14 +316,14 @@ puffs_lookup(void *v)
 	vp = puffs_pnode2vnode(pmp, lookup_arg.pvnr_newnode);
 	if (!vp) {
 		error = puffs_getvnode(dvp->v_mount,
-		    lookup_arg.pvnr_newnode, &vp);
+		    lookup_arg.pvnr_newnode, lookup_arg.pvnr_vtype,
+		    lookup_arg.pvnr_rdev, &vp);
 		if (error) {
 			if (cnp->cn_flags & ISDOTDOT)
 				if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) != 0)
 					cnp->cn_flags |= PDIRUNLOCK;
 			return error;
 		}
-		vp->v_type = lookup_arg.pvnr_vtype;
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
@@ -302,7 +372,7 @@ puffs_create(void *v)
 		goto out;
 
 	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
-	    create_arg.pvnr_newnode, ap->a_cnp, ap->a_vap->va_type);
+	    create_arg.pvnr_newnode, ap->a_cnp, ap->a_vap->va_type, 0);
 
  out:
 	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
@@ -334,7 +404,8 @@ puffs_mknod(void *v)
 		goto out;
 
 	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
-	    mknod_arg.pvnr_newnode, ap->a_cnp, ap->a_vap->va_type);
+	    mknod_arg.pvnr_newnode, ap->a_cnp, ap->a_vap->va_type,
+	    ap->a_vap->va_rdev);
 
  out:
 	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
@@ -780,7 +851,7 @@ puffs_mkdir(void *v)
 		goto out;
 
 	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
-	    mkdir_arg.pvnr_newnode, ap->a_cnp, VDIR);
+	    mkdir_arg.pvnr_newnode, ap->a_cnp, VDIR, 0);
 
  out:
 	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
@@ -869,7 +940,7 @@ puffs_symlink(void *v)
 		goto out;
 
 	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
-	    symlink_arg.pvnr_newnode, ap->a_cnp, VLNK);
+	    symlink_arg.pvnr_newnode, ap->a_cnp, VLNK, 0);
 
  out:
 	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
