@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem_alloc.9,v 1.1 2006/10/22 11:14:52 yamt Exp $
+.\"	$NetBSD: vmem_alloc.9,v 1.2 2006/10/26 11:16:28 wiz Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -42,39 +42,39 @@
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn vmem_alloc
-allocates resource from the arena.
+allocates a resource from the arena.
 .Pp
 .Bl -tag -width flags
 .It Fa vm
 The arena which we allocate from.
 .It Fa size
-Specify the size of allocation.
+Specify the size of the allocation.
 .It Fa flags
 A bitwise OR of an allocation strategy and a sleep flag.
 .Pp
 The allocation strategy is one of:
 .Bl -tag -width VM_INSTANTFIT
-.It VM_BESTFIT
+.It Dv VM_BESTFIT
 Prefer space efficiency.
-.It VM_INSTANTFIT
+.It Dv VM_INSTANTFIT
 Prefer performance.
 .El
 .Pp
 The sleep flag should be one of:
 .Bl -tag -width VM_NOSLEEP
-.It VM_SLEEP
-Can sleep until enough resource is available.
-.It VM_NOSLEEP
+.It Dv VM_SLEEP
+Can sleep until enough resources are available.
+.It Dv VM_NOSLEEP
 Don't sleep.
 Immediately return
 .Dv VMEM_ADDR_NULL
-if there is not enough resource available.
+if there are not enough resources available.
 .El
 .El
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
 .Fn vmem_alloc
-return an allocated vmem_addr_t.
+returns an allocated vmem_addr_t.
 Otherwise, it returns
 .Dv VMEM_ADDR_NULL .
 .\" ------------------------------------------------------------
