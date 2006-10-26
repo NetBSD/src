@@ -1,7 +1,7 @@
-/*	$NetBSD: tags.c,v 1.7 2006/09/23 12:51:18 elad Exp $	*/
+/*	$NetBSD: tags.c,v 1.8 2006/10/26 01:33:08 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2002  Mark Nudelman
+ * Copyright (C) 1984-2004  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -530,8 +530,8 @@ findgtag(tag, type)
 		qtag = shell_quote(tag);
 		if (qtag == NULL)
 			qtag = tag;
-		command = (char *)ecalloc(strlen(cmd) + strlen(flag) +
-		    strlen(qtag) + 5, sizeof(char));
+		command = (char *) ecalloc(strlen(cmd) + strlen(flag) +
+				strlen(qtag) + 5, sizeof(char));
 		sprintf(command, "%s -x%s %s", cmd, flag, qtag);
 		if (qtag != tag)
 			free(qtag);
@@ -554,8 +554,9 @@ findgtag(tag, type)
 #endif
 				return TAG_INTR;
 			}
-			if ((len = strlen(buf)) && buf[len - 1] == '\n')
-				buf[len - 1] = 0;
+			len = strlen(buf);
+			if (len > 0 && buf[len-1] == '\n')
+				buf[len-1] = '\0';
 			else
 			{
 				int c;
@@ -701,14 +702,6 @@ gtagsearch()
  * The tag, file, and line will each be NUL-terminated pointers
  * into buf.
  */
-
-#ifndef isspace
-#define isspace(c)	((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r' || (c) == '\f')
-#endif
-#ifndef isdigit
-#define isdigit(c)	((c) >= '0' && (c <= '9'))
-#endif
-
 	static int
 getentry(buf, tag, file, line)
 	char *buf;	/* standard or extended ctags -x format data */
@@ -718,12 +711,12 @@ getentry(buf, tag, file, line)
 {
 	char *p = buf;
 
-	for (*tag = p;  *p && !isspace((unsigned char)*p);  p++) /* tag name */
+	for (*tag = p;  *p && !IS_SPACE(*p);  p++)	/* tag name */
 		;
 	if (*p == 0)
 		return (-1);
 	*p++ = 0;
-	for ( ;  *p && isspace((unsigned char)*p);  p++)    /* (skip blanks) */
+	for ( ;  *p && IS_SPACE(*p);  p++)		/* (skip blanks) */
 		;
 	if (*p == 0)
 		return (-1);
@@ -731,27 +724,27 @@ getentry(buf, tag, file, line)
 	 * If the second part begin with other than digit,
 	 * it is assumed tag type. Skip it.
 	 */
-	if (!isdigit((unsigned char)*p))
+	if (!IS_DIGIT(*p))
 	{
-		for ( ; *p && !isspace((unsigned char)*p); p++)	/* (skip tag type) */
+		for ( ;  *p && !IS_SPACE(*p);  p++)	/* (skip tag type) */
 			;
-		for (;  *p && isspace((unsigned char)*p);  p++)	/* (skip blanks) */
+		for (;  *p && IS_SPACE(*p);  p++)	/* (skip blanks) */
 			;
 	}
-	if (!isdigit((unsigned char)*p))
+	if (!IS_DIGIT(*p))
 		return (-1);
 	*line = p;					/* line number */
-	for (*line = p;  *p && !isspace((unsigned char)*p);  p++)
+	for (*line = p;  *p && !IS_SPACE(*p);  p++)
 		;
 	if (*p == 0)
 		return (-1);
 	*p++ = 0;
-	for ( ; *p && isspace((unsigned char)*p);  p++)	/* (skip blanks) */
+	for ( ; *p && IS_SPACE(*p);  p++)		/* (skip blanks) */
 		;
 	if (*p == 0)
 		return (-1);
 	*file = p;					/* file name */
-	for (*file = p;  *p && !isspace((unsigned char)*p);  p++)
+	for (*file = p;  *p && !IS_SPACE(*p);  p++)
 		;
 	if (*p == 0)
 		return (-1);
