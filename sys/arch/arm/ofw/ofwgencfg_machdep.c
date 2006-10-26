@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.9 2006/10/24 21:03:13 bjh21 Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.10 2006/10/26 22:49:36 bjh21 Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.9 2006/10/24 21:03:13 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.10 2006/10/26 22:49:36 bjh21 Exp $");
 
 #include "opt_ddb.h"
 
@@ -134,7 +134,7 @@ cpu_reboot(howto, bootstr)
 
 
 /*
- * vaddr_t initarm(ofw_handle_t handle)
+ * u_int initarm(ofw_handle_t handle)
  *
  * Initial entry point on startup for a GENERIC OFW
  * system.  Called with MMU on, running in the OFW
@@ -149,10 +149,11 @@ cpu_reboot(howto, bootstr)
  * Return the new stackptr (va) for the SVC frame.
  *
  */
-vaddr_t
-initarm(ofw_handle)
-	ofw_handle_t ofw_handle;
+u_int
+initarm(void *cookie)
 {
+	ofw_handle_t ofw_handle = cookie;
+
 	set_cpufuncs();
 
 	/* XXX - set this somewhere else? -JJK */
