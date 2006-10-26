@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.181 2006/10/25 19:13:11 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.182 2006/10/26 09:41:40 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -4913,4 +4913,18 @@ sys/kern/sys_process.c				1.111 via patch
 
 	Don't allow ptrace to copyout arbitrary sized data.
 	[christos, ticket #1556]
+
+crypto/dist/ssh/auth.h				patch
+crypto/dist/ssh/deattack.c			patch
+crypto/dist/ssh/deattack.h			patch
+crypto/dist/ssh/log.c				patch
+crypto/dist/ssh/log.h				patch
+crypto/dist/ssh/packet.c			patch
+crypto/dist/ssh/session.c			patch
+crypto/dist/ssh/sshd.c				patch
+crypto/dist/ssh/version.h			patch
+
+	OpenSSH: fix CVE-2006-4924 and CVE-2006-5051
+	(patches backported from OpenSSH 4.4).
+	[adrianp, ticket #1569]
 
