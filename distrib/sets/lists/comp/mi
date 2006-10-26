@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.956 2006/10/26 05:02:12 thorpej Exp $
+#	$NetBSD: mi,v 1.957 2006/10/26 18:51:21 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5408,7 +5408,9 @@
 ./usr/share/man/cat3/prop_array_iterator.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_make_immutable.0 comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_mutable.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_recv_ioctl.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_remove.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_send_ioctl.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_bool.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_bool_copy.0		comp-c-catman		.cat
@@ -5500,6 +5502,7 @@
 ./usr/share/man/cat3/prop_object_release.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object_retain.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object_type.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_send_ioctl.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_string.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_string_append.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_string_append_cstring.0 comp-c-catman		.cat
@@ -7070,7 +7073,10 @@
 ./usr/share/man/cat9/printf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/printf_nolog.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/proc_trampoline.0		comp-sys-catman		.cat
+./usr/share/man/cat9/prop_array_copyin_ioctl.0	comp-sys-catman		.cat
+./usr/share/man/cat9/prop_array_copyout_ioctl.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/prop_copy.0		comp-obsolete		obsolete
+./usr/share/man/cat9/prop_copyin_ioctl.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/prop_delete.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/prop_dictionary_copyin_ioctl.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/prop_dictionary_copyout_ioctl.0 comp-sys-catman	.cat
@@ -9651,7 +9657,9 @@
 ./usr/share/man/man3/prop_array_iterator.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_make_immutable.3 comp-c-man		.man
 ./usr/share/man/man3/prop_array_mutable.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_recv_ioctl.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_remove.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_send_ioctl.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_set.3		comp-c-man		.man
 ./usr/share/man/man3/prop_bool.3		comp-c-man		.man
 ./usr/share/man/man3/prop_bool_copy.3		comp-c-man		.man
@@ -9742,6 +9750,7 @@
 ./usr/share/man/man3/prop_object_release.3	comp-c-man		.man
 ./usr/share/man/man3/prop_object_retain.3	comp-c-man		.man
 ./usr/share/man/man3/prop_object_type.3		comp-c-man		.man
+./usr/share/man/man3/prop_send_ioctl.3		comp-c-man		.cat
 ./usr/share/man/man3/prop_string.3		comp-c-man		.man
 ./usr/share/man/man3/prop_string_append.3	comp-c-man		.man
 ./usr/share/man/man3/prop_string_append_cstring.3 comp-c-man		.man
@@ -11306,7 +11315,10 @@
 ./usr/share/man/man9/printf.9			comp-sys-man		.man
 ./usr/share/man/man9/printf_nolog.9		comp-sys-man		.man
 ./usr/share/man/man9/proc_trampoline.9		comp-sys-man		.man
+./usr/share/man/man9/prop_array_copyin_ioctl.9	comp-sys-man		.man
+./usr/share/man/man9/prop_array_copyout_ioctl.9	comp-sys-man		.man
 ./usr/share/man/man9/prop_copy.9		comp-obsolete		obsolete
+./usr/share/man/man9/prop_copyin_ioctl.9	comp-sys-man		.man
 ./usr/share/man/man9/prop_delete.9		comp-obsolete		obsolete
 ./usr/share/man/man9/prop_dictionary_copyin_ioctl.9 comp-sys-man	.man
 ./usr/share/man/man9/prop_dictionary_copyout_ioctl.9 comp-sys-man	.man

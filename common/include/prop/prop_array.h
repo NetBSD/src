@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.h,v 1.3 2006/08/21 04:13:28 thorpej Exp $	*/
+/*	$NetBSD: prop_array.h,v 1.4 2006/10/26 18:51:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -71,6 +71,21 @@ prop_array_t	prop_array_internalize(const char *);
 
 boolean_t	prop_array_externalize_to_file(prop_array_t, const char *);
 prop_array_t	prop_array_internalize_from_file(const char *);
+
+#if defined(__NetBSD__)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+int		prop_array_send_ioctl(prop_array_t, int, unsigned long);
+int		prop_array_recv_ioctl(int, unsigned long, prop_array_t *);
+#elif defined(_KERNEL)
+struct plistref;
+
+int		prop_array_copyin_ioctl(const struct plistref *, const u_long,
+					prop_array_t *);
+int		prop_array_copyout_ioctl(struct plistref *, const u_long,
+					 prop_array_t);
+#endif
+#endif /* __NetBSD__ */
+
 __END_DECLS
 
 #endif /* _PROPLIB_PROP_ARRAY_H_ */
