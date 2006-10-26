@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: modelines2c.awk,v 1.3 2006/05/09 17:51:03 gdamore Exp $
+#	$NetBSD: modelines2c.awk,v 1.4 2006/10/26 23:19:50 bjh21 Exp $
 #
 # Copyright (c) 2006 Itronix Inc.
 # All rights reserved.
@@ -46,7 +46,10 @@ NR == 1 {
 	printf(" *\n");
 	printf(" * generated from:\n");
 	printf(" *\t%s\n", VERSION);
-	printf(" */\n");
+	printf(" */\n\n");
+
+	printf("#include <sys/cdefs.h>\n");
+	printf("__KERNEL_RCSID(0, \"$NetBSD" "$\");\n\n");
 
 	printf("#include <dev/videomode/videomode.h>\n\n");
 
