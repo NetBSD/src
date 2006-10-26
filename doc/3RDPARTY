@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.474 2006/10/22 21:34:42 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.475 2006/10/26 01:35:43 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -423,8 +423,8 @@ http://www.kame.net/dev/cvsweb.cgi/kame/COVERAGE has functionality comparison
 among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	less
-Version:	less381
-Current Vers:	less395
+Version:	less394
+Current Vers:	less394
 Maintainer:	Mark Nudleman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
