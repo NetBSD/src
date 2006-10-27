@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.33 2006/02/16 23:26:19 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.34 2006/10/27 19:59:58 christos Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -15,11 +15,11 @@ SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c \
 	getc.c getchar.c gettemp.c getw.c getwc.c getwchar.c makebuf.c \
 	mkdtemp.c mkstemp.c perror.c printf.c putc.c putchar.c puts.c \
 	putw.c putwc.c putwchar.c refill.c remove.c rewind.c rget.c \
-	scanf.c setbuf.c setbuffer.c setvbuf.c snprintf.c sscanf.c \
-	stdio.c swprintf.c swscanf.c tmpfile.c ungetc.c ungetwc.c \
+	scanf.c setbuf.c setbuffer.c setvbuf.c snprintf.c snprintf_ss.c \
+	sscanf.c stdio.c swprintf.c swscanf.c tmpfile.c ungetc.c ungetwc.c \
 	vasprintf.c vfprintf.c vfscanf.c vfwprintf.c vfwscanf.c vprintf.c \
-	vscanf.c vsnprintf.c vsscanf.c vswprintf.c vswscanf.c vwprintf.c \
-	vwscanf.c wbuf.c wprintf.c wscanf.c wsetup.c
+	vscanf.c vsnprintf.c vsnprintf_ss.c vsscanf.c vswprintf.c vswscanf.c \
+	vwprintf.c vwscanf.c wbuf.c wprintf.c wscanf.c wsetup.c
 
 .if !defined(AUDIT)
 SRCS+=	gets.c sprintf.c vsprintf.c tempnam.c tmpnam.c mktemp.c
