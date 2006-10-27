@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.4 2006/10/27 12:26:25 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.5 2006/10/27 14:03:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -272,6 +272,8 @@ dtfs_adddent(struct puffs_node *pn_dir, struct dtfs_dirent *dent)
 	dent->dfd_parent = pn_dir;
 	if (dent->dfd_node->pn_type == VDIR)
 		file->df_dotdot = pn_dir;
+
+	dtfs_updatetimes(pn_dir, 0, 1, 1);
 }
 
 /* remove & lower link count */
@@ -285,4 +287,23 @@ dtfs_removedent(struct puffs_node *pn_dir, struct dtfs_dirent *dent)
 	pn_dir->pn_va.va_nlink--;
 	pn_file->pn_va.va_nlink--;
 	assert(pn_dir->pn_va.va_nlink >= 2);
+
+	dtfs_updatetimes(pn_dir, 0, 1, 1);
+}
+
+void
+dtfs_updatetimes(struct puffs_node *pn, int doatime, int doctime, int domtime)
+{
+	struct timeval tv;
+	struct timespec ts;
+
+	gettimeofday(&tv, NULL);
+	TIMEVAL_TO_TIMESPEC(&tv, &ts);
+
+	if (doatime)
+		pn->pn_va.va_atime = ts;
+	if (doctime)
+		pn->pn_va.va_ctime = ts;
+	if (domtime)
+		pn->pn_va.va_mtime = ts;
 }
