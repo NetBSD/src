@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.23 2006/04/08 23:24:44 christos Exp $	*/
+/*	$NetBSD: crypt.c,v 1.24 2006/10/27 19:39:11 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.23 2006/04/08 23:24:44 christos Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.24 2006/10/27 19:39:11 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -288,9 +288,10 @@ typedef union {
 #endif /* LARGEDATA */
 
 STATIC	init_des __P((void));
-STATIC	init_perm __P((C_block [64/CHUNKBITS][1<<CHUNKBITS], unsigned char [64], int, int));
+STATIC	init_perm __P((C_block [64/CHUNKBITS][1<<CHUNKBITS],
+		       const unsigned char [64], int, int));
 #ifndef LARGEDATA
-STATIC	permute __P((unsigned char *, C_block *, C_block *, int));
+STATIC	permute __P((const unsigned char *, C_block *, C_block *, int));
 #endif
 #ifdef DEBUG
 STATIC	prtab __P((char *, unsigned char *, int));
@@ -300,7 +301,7 @@ STATIC	prtab __P((char *, unsigned char *, int));
 #ifndef LARGEDATA
 STATIC
 permute(cp, out, p, chars_in)
-	unsigned char *cp;
+	const unsigned char *cp;
 	C_block *out;
 	C_block *p;
 	int chars_in;
@@ -600,7 +601,7 @@ des_setkey(key)
 	const char *key;
 {
 	DCL_BLOCK(K, K0, K1);
-	C_block *ptabp;
+	C_block *help, *ptabp;
 	int i;
 	static int des_ready = 0;
 
@@ -609,15 +610,15 @@ des_setkey(key)
 		des_ready = 1;
 	}
 
-	PERM6464(K,K0,K1,(unsigned char *)key,(C_block *)PC1ROT);
-	key = (char *)&KS[0];
-	STORE(K&~0x03030303L, K0&~0x03030303L, K1, *(C_block *)key);
+	PERM6464(K,K0,K1,(const unsigned char *)key,(C_block *)PC1ROT);
+	help = &KS[0];
+	STORE(K&~0x03030303L, K0&~0x03030303L, K1, *help);
 	for (i = 1; i < 16; i++) {
-		key += sizeof(C_block);
-		STORE(K,K0,K1,*(C_block *)key);
+		help++;
+		STORE(K,K0,K1,*help);
 		ptabp = (C_block *)PC2ROT[Rotates[i]-1];
-		PERM6464(K,K0,K1,(unsigned char *)key,ptabp);
-		STORE(K&~0x03030303L, K0&~0x03030303L, K1, *(C_block *)key);
+		PERM6464(K,K0,K1,(const unsigned char *)help,ptabp);
+		STORE(K&~0x03030303L, K0&~0x03030303L, K1, *help);
 	}
 	return (0);
 }
@@ -661,7 +662,7 @@ des_cipher(in, out, salt, num_iter)
 	B.b[4] = in[4]; B.b[5] = in[5]; B.b[6] = in[6]; B.b[7] = in[7];
 	LOAD(L,L0,L1,B);
 #else
-	LOAD(L,L0,L1,*(C_block *)in);
+	LOAD(L,L0,L1,*(const C_block *)in);
 #endif
 	LOADREG(R,R0,R1,L,L0,L1);
 	L0 &= 0x55555555L;
@@ -899,7 +900,7 @@ init_des()
 STATIC
 init_perm(perm, p, chars_in, chars_out)
 	C_block perm[64/CHUNKBITS][1<<CHUNKBITS];
-	unsigned char p[64];
+	const unsigned char p[64];
 	int chars_in, chars_out;
 {
 	int i, j, k, l;

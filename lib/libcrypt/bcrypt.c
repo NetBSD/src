@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.8 2006/10/24 22:49:19 mlelstv Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.9 2006/10/27 19:39:11 drochner Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.8 2006/10/24 22:49:19 mlelstv Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.9 2006/10/27 19:39:11 drochner Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,12 +79,12 @@ char *__bcrypt(const char *, const char *);	/* XXX */
 static char    encrypted[_PASSWORD_LEN];
 static char    error[] = ":";
 
-const static u_int8_t Base64Code[] =
+static const u_int8_t Base64Code[] =
 "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 char *bcrypt_gensalt(u_int8_t);
 
-const static u_int8_t index_64[128] =
+static const u_int8_t index_64[128] =
 {
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
