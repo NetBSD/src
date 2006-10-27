@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.67 2006/10/24 22:38:41 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.68 2006/10/27 21:20:48 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.67 2006/10/24 22:38:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.68 2006/10/27 21:20:48 christos Exp $");
 
 #include "opt_veriexec.h"
 
@@ -50,11 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.67 2006/10/24 22:38:41 elad 
 # include <sys/systm.h>
 # include <sys/imgact.h>
 # include <crypto/sha1.h>
+# include <crypto/sha2/sha2.h>
+# include <crypto/ripemd160/rmd160.h>
 #else
 # include <sys/sha1.h>
+# include <sys/sha2.h>
+# include <sys/rmd160.h>
 #endif
-#include <crypto/sha2/sha2.h>
-#include <crypto/ripemd160/rmd160.h>
 #include <sys/md5.h>
 #include <uvm/uvm_extern.h>
 #include <sys/fileassoc.h>
