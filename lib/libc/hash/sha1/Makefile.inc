@@ -1,9 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.1 2005/09/24 19:04:52 elad Exp $
+# $NetBSD: Makefile.inc,v 1.2 2006/10/27 18:29:21 drochner Exp $
 
 # hash functions
 .PATH: ${.CURDIR}/hash/sha1
 
-SRCS+=	sha1.c sha1hl.c hmac_sha1.c
+SRCS+=	sha1.c sha1hl.c
 
 MAN+=	sha1.3
 
