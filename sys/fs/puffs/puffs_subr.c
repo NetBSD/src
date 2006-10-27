@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.5 2006/10/27 12:25:16 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.6 2006/10/27 19:54:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.5 2006/10/27 12:25:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.6 2006/10/27 19:54:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -128,10 +128,9 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 		/* do the standard checkalias-dance */
 		if ((nvp = checkalias(vp, rdev, mp)) != NULL) {
 			/*
-			 * found, release & unallocate aliased
+			 * found: release & unallocate aliased
 			 * old (well, actually, new) node
 			 */
-			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
 			vp->v_flag &= ~VLOCKSWORK;
 			vrele(vp);
@@ -141,7 +140,6 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 			vp = nvp;
 			vp->v_vnlock = NULL;
 			vp->v_mount = mp;
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		}
 		break;
 	case VFIFO:
