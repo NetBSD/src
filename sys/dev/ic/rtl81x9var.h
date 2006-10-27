@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.25 2006/10/22 01:47:53 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.26 2006/10/27 09:57:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -222,20 +222,11 @@ struct rtk_softc {
 #define RTK_TIMEOUT		1000
 
 /*
- * PCI low memory base and low I/O base register, and
- * other PCI registers.
+ * PCI low memory base and low I/O base registers
  */
 
 #define RTK_PCI_LOIO		0x10
 #define RTK_PCI_LOMEM		0x14
-
-#define RTK_PSTATE_MASK		0x0003
-#define RTK_PSTATE_D0		0x0000
-#define RTK_PSTATE_D1		0x0002
-#define RTK_PSTATE_D2		0x0002
-#define RTK_PSTATE_D3		0x0003
-#define RTK_PME_EN		0x0010
-#define RTK_PME_STATUS		0x8000
 
 #ifdef _KERNEL
 uint16_t rtk_read_eeprom(struct rtk_softc *, int, int);
