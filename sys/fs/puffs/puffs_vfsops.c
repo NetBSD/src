@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.3 2006/10/26 22:52:47 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.4 2006/10/27 12:25:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.3 2006/10/26 22:52:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.4 2006/10/27 12:25:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -425,6 +425,7 @@ puffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ts)
 const struct vnodeopv_desc * const puffs_vnodeopv_descs[] = {
 	&puffs_vnodeop_opv_desc,
 	&puffs_specop_opv_desc,
+	&puffs_fifoop_opv_desc,
 	NULL,
 };
 
