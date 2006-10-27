@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.174 2006/10/25 20:28:45 elad Exp $	*/
+/*	$NetBSD: if.c,v 1.175 2006/10/27 15:33:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.174 2006/10/25 20:28:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.175 2006/10/27 15:33:11 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -886,7 +886,9 @@ if_clone_list(struct if_clonereq *ifcr)
 
 	for (ifc = LIST_FIRST(&if_cloners); ifc != NULL && count != 0;
 	     ifc = LIST_NEXT(ifc, ifc_list), count--, dst += IFNAMSIZ) {
-		(void)strlcpy(outbuf, ifc->ifc_name, sizeof(outbuf));
+		(void)strncpy(outbuf, ifc->ifc_name, sizeof(outbuf));
+		if (outbuf[sizeof(outbuf) - 1] != '\0')
+			return ENAMETOOLONG;
 		error = copyout(outbuf, dst, sizeof(outbuf));
 		if (error)
 			break;
@@ -1615,8 +1617,10 @@ ifconf(u_long cmd __unused, caddr_t data)
 		sign = 1;
 	}
 	IFNET_FOREACH(ifp) {
-		(void)strlcpy(ifr.ifr_name, ifp->if_xname,
+		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
+		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0')
+			return ENAMETOOLONG;
 		if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == 0) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (ifrp != NULL && space >= sz) {
