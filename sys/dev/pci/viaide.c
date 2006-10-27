@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.34 2006/10/12 01:31:33 christos Exp $	*/
+/*	$NetBSD: viaide.c,v 1.35 2006/10/27 08:22:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.34 2006/10/12 01:31:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.35 2006/10/27 08:22:31 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,17 @@ __KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.34 2006/10/12 01:31:33 christos Exp $")
 
 static int	via_pcib_match(struct pci_attach_args *);
 static void	via_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static int	via_sata_chip_map_common(struct pciide_softc *,
+		    struct pci_attach_args *);
 static void	via_sata_chip_map(struct pciide_softc *,
+		    struct pci_attach_args *, int);
+static void	via_sata_chip_map_0(struct pciide_softc *,
+		    struct pci_attach_args *);
+static void	via_sata_chip_map_6(struct pciide_softc *,
+		    struct pci_attach_args *);
+static void	via_sata_chip_map_7(struct pciide_softc *,
+		    struct pci_attach_args *);
+static void	via_sata_chip_map_new(struct pciide_softc *,
 		    struct pci_attach_args *);
 static void	via_setup_channel(struct ata_channel *);
 
@@ -103,7 +113,7 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	{ PCI_PRODUCT_NVIDIA_NFORCE2_400_SATA,
 	  0,
 	  "NVIDIA nForce2 Ultra 400 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE3_ATA133,
 	  0,
@@ -118,12 +128,12 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	{ PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA,
 	  0,
 	  "NVIDIA nForce3 250 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA2,
 	  0,
 	  "NVIDIA nForce3 250 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE4_ATA133,
 	  0,
@@ -133,12 +143,12 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	{ PCI_PRODUCT_NVIDIA_NFORCE4_SATA1,
 	  0,
 	  "NVIDIA nForce4 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE4_SATA2,
 	  0,
 	  "NVIDIA nForce4 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE430_ATA133,
 	  0,
@@ -148,12 +158,12 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	{ PCI_PRODUCT_NVIDIA_NFORCE430_SATA1,
 	  0,
 	  "NVIDIA nForce430 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE430_SATA2,
 	  0,
 	  "NVIDIA nForce430 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP04_IDE,
 	  0,
@@ -163,12 +173,12 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	{ PCI_PRODUCT_NVIDIA_MCP04_SATA,
 	  0,
 	  "NVIDIA MCP04 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP04_SATA2,
 	  0,
 	  "NVIDIA MCP04 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP55_IDE,
 	  0,
@@ -178,12 +188,12 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	{ PCI_PRODUCT_NVIDIA_MCP55_SATA,
 	  0,
 	  "NVIDIA MCP55 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP55_SATA2,
 	  0,
 	  "NVIDIA MCP55 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP61_IDE,
 	  0,
@@ -198,37 +208,37 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	{ PCI_PRODUCT_NVIDIA_MCP61_SATA,
 	  0,
 	  "NVIDIA MCP61 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP61_SATA2,
 	  0,
 	  "NVIDIA MCP61 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP61_SATA3,
 	  0,
 	  "NVIDIA MCP61 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP65_SATA,
 	  0,
 	  "NVIDIA MCP65 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP65_SATA2,
 	  0,
 	  "NVIDIA MCP65 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP65_SATA3,
 	  0,
 	  "NVIDIA MCP65 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP65_SATA4,
 	  0,
 	  "NVIDIA MCP65 Serial ATA Controller",
-	  via_sata_chip_map
+	  via_sata_chip_map_6
 	},
 	{ 0,
 	  0,
@@ -251,17 +261,22 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT6421_RAID,
 	  0,
 	  "VIA Technologies VT6421 Serial RAID Controller",
-	  via_sata_chip_map,
+	  via_sata_chip_map_new,
 	},
 	{ PCI_PRODUCT_VIATECH_VT8237_SATA,
 	  0,
 	  "VIA Technologies VT8237 SATA Controller",
-	  via_sata_chip_map,
+	  via_sata_chip_map_7,
+	},
+	{ PCI_PRODUCT_VIATECH_VT8237A_SATA,
+	  0,
+	  "VIA Technologies VT8237A SATA Controller",
+	  via_sata_chip_map_0,
 	},
 	{ PCI_PRODUCT_VIATECH_VT8237R_SATA,
 	  0,
 	  "VIA Technologies VT8237R SATA Controller",
-	  via_sata_chip_map,
+	  via_sata_chip_map_0,
 	},
 	{ 0,
 	  0,
@@ -632,23 +647,13 @@ pio:		/* setup PIO mode */
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA(sc))), DEBUG_PROBE);
 }
 
-static void
-via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+static int
+via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
-	struct pciide_channel *cp;
-	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
-	int channel;
-	bus_size_t cmdsize, ctlsize;
+	bus_size_t satasize;
 
 	if (pciide_chipen(sc, pa) == 0)
-		return;
-
-	if (interface == 0) {
-		ATADEBUG_PRINT(("via_sata_chip_map interface == 0\n"),
-		    DEBUG_PROBE);
-		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
-		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
-	}
+		return 0;
 
 	aprint_normal("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
@@ -669,13 +674,212 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = sata_setup_channel;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
+	if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x14,
+	    PCI_MAPREG_TYPE_IO, 0, &sc->sc_ba5_st, &sc->sc_ba5_sh,
+	    NULL, &satasize) != 0) {
+		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x14,
+		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
+		    0, &sc->sc_ba5_st, &sc->sc_ba5_sh,
+		    NULL, &satasize) != 0) {
+			aprint_error("%s: couldn't map sata regs\n",
+			sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+			return 0;
+		}
+	}
+	return 1;
+}
+
+static void
+via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa,
+    int satareg_shift)
+{
+	struct pciide_channel *cp;
+	struct ata_channel *wdc_cp;
+	struct wdc_regs *wdr;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	int channel;
+	bus_size_t cmdsize, ctlsize;
+
+	if (via_sata_chip_map_common(sc, pa) == 0)
+		return;
+
+	if (interface == 0) {
+		ATADEBUG_PRINT(("via_sata_chip_map interface == 0\n"),
+		    DEBUG_PROBE);
+		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
+		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
+	}
 
 	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
 	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
+		wdc_cp = &cp->ata_channel;
+		wdr = CHAN_TO_WDC_REGS(wdc_cp);
+		wdr->sata_iot = sc->sc_ba5_st;
+		wdr->sata_baseioh = sc->sc_ba5_sh;
+		if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
+		    (wdc_cp->ch_channel << satareg_shift) + 0x0, 1,
+		    &wdr->sata_status) != 0) {
+			aprint_error("%s: couldn't map channel %d "
+			    "sata_status regs\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+			    wdc_cp->ch_channel);
+			continue;
+		}
+		if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
+		    (wdc_cp->ch_channel << satareg_shift) + 0x4, 1,
+		    &wdr->sata_error) != 0) {
+			aprint_error("%s: couldn't map channel %d "
+			    "sata_error regs\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+			    wdc_cp->ch_channel);
+			continue;
+		}
+		if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
+		    (wdc_cp->ch_channel << satareg_shift) + 0x8, 1,
+		    &wdr->sata_control) != 0) {
+			aprint_error("%s: couldn't map channel %d "
+			    "sata_control regs\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+			    wdc_cp->ch_channel);
+			continue;
+		}
+		sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
+	}
+}
+
+static void
+via_sata_chip_map_0(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	via_sata_chip_map(sc, pa, 0);
+}
+
+static void
+via_sata_chip_map_6(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	via_sata_chip_map(sc, pa, 6);
+}
+
+static void
+via_sata_chip_map_7(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	via_sata_chip_map(sc, pa, 7);
+}
+
+static void
+via_sata_chip_map_new(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	struct pciide_channel *cp;
+	struct ata_channel *wdc_cp;
+	struct wdc_regs *wdr;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	int channel;
+	bus_size_t cmdsize;
+	pci_intr_handle_t intrhandle;
+	const char *intrstr;
+	int i;
+
+	if (via_sata_chip_map_common(sc, pa) == 0)
+		return;
+
+	if (interface == 0) {
+		ATADEBUG_PRINT(("via_sata_chip_map interface == 0\n"),
+		    DEBUG_PROBE);
+		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
+		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
+	}
+
+	if (pci_intr_map(pa, &intrhandle) != 0) {
+		aprint_error("%s: couldn't map native-PCI interrupt\n",
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+		return;
+	}
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
+	    intrhandle, IPL_BIO, pciide_pci_intr, sc);
+	if (sc->sc_pci_ih == NULL) {
+		aprint_error(
+		    "%s: couldn't establish native-PCI interrupt",
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+		if (intrstr != NULL)
+		    aprint_error(" at %s", intrstr);
+		aprint_error("\n");
+		return;
+	}
+	aprint_normal("%s: using %s for native-PCI interrupt\n",
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+	    intrstr ? intrstr : "unknown interrupt");
+
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+		cp->ata_channel.ch_ndrive = 1;
+		wdc_cp = &cp->ata_channel;
+		wdr = CHAN_TO_WDC_REGS(wdc_cp);
+
+		wdr->sata_iot = sc->sc_ba5_st;
+		wdr->sata_baseioh = sc->sc_ba5_sh;
+		if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
+		    (wdc_cp->ch_channel << 6) + 0x0, 1,
+		    &wdr->sata_status) != 0) {
+			aprint_error("%s: couldn't map channel %d "
+			    "sata_status regs\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+			    wdc_cp->ch_channel);
+			continue;
+		}
+		if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
+		    (wdc_cp->ch_channel << 6) + 0x4, 1,
+		    &wdr->sata_error) != 0) {
+			aprint_error("%s: couldn't map channel %d "
+			    "sata_error regs\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+			    wdc_cp->ch_channel);
+			continue;
+		}
+		if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
+		    (wdc_cp->ch_channel << 6) + 0x8, 1,
+		    &wdr->sata_control) != 0) {
+			aprint_error("%s: couldn't map channel %d "
+			    "sata_control regs\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+			    wdc_cp->ch_channel);
+			continue;
+		}
+		sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
+
+		if (pci_mapreg_map(pa, (0x10 + (4 * (channel))),
+		    PCI_MAPREG_TYPE_IO, 0, &wdr->cmd_iot, &wdr->cmd_baseioh,
+		    NULL, &cmdsize) != 0) {
+			aprint_error("%s: couldn't map %s channel regs\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+			    cp->name);
+		}
+		wdr->ctl_iot = wdr->cmd_iot;
+		for (i = 0; i < WDC_NREG; i++) {
+			if (bus_space_subregion(wdr->cmd_iot,
+			    wdr->cmd_baseioh, i, i == 0 ? 4 : 1,
+			    &wdr->cmd_iohs[i]) != 0) {
+				aprint_error("%s: couldn't subregion %s "
+				    "channel cmd regs\n",
+				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+				    cp->name);
+				return;
+			}
+		}
+		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
+		    WDC_NREG + 2, 1,  &wdr->ctl_ioh) != 0) {
+			aprint_error("%s: couldn't map channel %d ctl regs\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, channel);
+			return;
+		}
+		wdc_init_shadow_regs(wdc_cp);
+		wdcattach(wdc_cp);
 	}
 }
