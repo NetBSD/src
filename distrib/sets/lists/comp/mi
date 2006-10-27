@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.957 2006/10/26 18:51:21 thorpej Exp $
+#	$NetBSD: mi,v 1.958 2006/10/27 01:25:58 uwe Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -10040,6 +10040,7 @@
 ./usr/share/man/man3/setkey.3			comp-c-man		.man
 ./usr/share/man/man3/setlinebuf.3		comp-c-man		.man
 ./usr/share/man/man3/setlocale.3		comp-c-man		.man
+./usr/share/man/man3/setlogmask.3		comp-c-man		.man
 ./usr/share/man/man3/setlogmask_r.3		comp-c-man		.man
 ./usr/share/man/man3/setmode.3			comp-c-man		.man
 ./usr/share/man/man3/setnetconfig.3		comp-c-man		.man
