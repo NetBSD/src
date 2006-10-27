@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.254 2006/10/12 01:31:57 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.255 2006/10/27 21:58:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.254 2006/10/12 01:31:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.255 2006/10/27 21:58:59 christos Exp $");
 
 #include "rnd.h"
 
@@ -1715,8 +1715,8 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
 			/* overwrite only with a sane value */
 			if (track_start + track_size >= 100)
 				*size = track_start + track_size;
-		};
-	};
+		}
+	}
 
 	/* sanity check for size */
 	if (*size < 100)
@@ -2600,7 +2600,7 @@ mmc_profile2class(uint16_t mmc_profile)
 	case 0x42 : /* BD-R Ramdom Recording (RRM) */
 	case 0x43 : /* BD-RE */
 		return MMC_CLASS_BD;
-	};
+	}
 	return MMC_CLASS_UNKN;
 }
 
@@ -2621,7 +2621,7 @@ mmc_process_feature(struct mmc_discinfo *mmc_discinfo,
 		flags = mmc_discinfo->mmc_cur;
 	} else {
 		flags = mmc_discinfo->mmc_cap;
-	};
+	}
 
 	switch (feature) {
 	case 0x0010 :	/* random readable feature */
@@ -2642,7 +2642,7 @@ mmc_process_feature(struct mmc_discinfo *mmc_discinfo,
 		flags |= MMC_CAP_SEQUENTIAL;
 		if (cur) {
 			mmc_discinfo->link_block_penalty = rpos[4];
-		};
+		}
 		if (rpos[2] & 1)
 			flags |= MMC_CAP_ZEROLINKBLK;
 		break;
@@ -2690,13 +2690,13 @@ mmc_process_feature(struct mmc_discinfo *mmc_discinfo,
 	default :
 		/* ignore */
 		break;
-	};
+	}
 
 	if (cur == 1) {
 		mmc_discinfo->mmc_cur = flags;
 	} else {
 		mmc_discinfo->mmc_cap = flags;
-	};
+	}
 }
 
 static int
@@ -2706,10 +2706,12 @@ mmc_getdiscinfo_cdrom(struct scsipi_periph *periph,
 	struct scsipi_read_toc      gtoc_cmd;
 	struct scsipi_toc_header   *toc_hdr;
 	struct scsipi_toc_msinfo   *toc_msinfo;
-	uint32_t buffer_len = 1024, req_size;
-	uint8_t  buffer[buffer_len];
+	const uint32_t buffer_size = 1024;
+	uint32_t req_size;
+	uint8_t  *buffer;
 	int error, flags;
 
+	buffer = malloc(buffer_size, M_TEMP, M_WAITOK);
 	/*
 	 * Fabricate mmc_discinfo for CD-ROM. Some values are really `dont
 	 * care' but others might be of interest to programs.
@@ -2735,7 +2737,7 @@ mmc_getdiscinfo_cdrom(struct scsipi_periph *periph,
 		(void *)buffer,    req_size,
 		CDRETRIES, 30000, NULL, flags);
 	if (error)
-		return error;
+		goto out;
 	toc_hdr    = (struct scsipi_toc_header *)  buffer;
 	toc_msinfo = (struct scsipi_toc_msinfo *) (buffer + 4);
 	mmc_discinfo->num_sessions = toc_hdr->last - toc_hdr->first + 1;
@@ -2753,7 +2755,7 @@ mmc_getdiscinfo_cdrom(struct scsipi_periph *periph,
 		(void *)buffer,    req_size,
 		CDRETRIES, 30000, NULL, flags);
 	if (error)
-		return error;
+		goto out;
 	toc_hdr    = (struct scsipi_toc_header *) buffer;
 	mmc_discinfo->last_track_last_session = toc_hdr->last;
 	mmc_discinfo->num_tracks = toc_hdr->last - toc_hdr->first + 1;
@@ -2761,7 +2763,9 @@ mmc_getdiscinfo_cdrom(struct scsipi_periph *periph,
 	/* TODO how to handle disc_barcode and disc_id */
 	/* done */
 
-	return 0;
+out:
+	free(buffer, M_TEMP);
+	return error;
 }
 
 static int
@@ -2821,13 +2825,16 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 	struct scsipi_get_conf_feature   *gcf;
 	struct scsipi_read_discinfo       di_cmd;
 	struct scsipi_read_discinfo_data  di;
-	uint32_t buffer_len = 1024, feat_tbl_len, pos;
+	const uint32_t buffer_size = 1024;
+	uint32_t feat_tbl_len, pos;
 	u_long   last_lba;
-	uint8_t  buffer[buffer_len], *fpos;
+	uint8_t  *buffer, *fpos;
 	int feature, last_feature, features_len, feature_cur, feature_len;
 	int lsb, msb, error, flags;
 
-	feat_tbl_len = buffer_len;
+	feat_tbl_len = buffer_size;
+
+	buffer = malloc(buffer_size, M_TEMP, M_WAITOK);
 
 	/* initialise structure */
 	memset(mmc_discinfo, 0, sizeof(struct mmc_discinfo));
@@ -2851,7 +2858,7 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 		(void *) gc,     GET_CONF_NO_FEATURES_LEN,
 		CDRETRIES, 30000, NULL, flags);
 	if (error)
-		return error;
+		goto out;
 
 	mmc_discinfo->mmc_profile = _2btol(gc->mmc_profile);
 	mmc_discinfo->mmc_class = mmc_profile2class(mmc_discinfo->mmc_profile);
@@ -2860,7 +2867,7 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 	mmc_discinfo->sector_size = 2048;
 	error = read_cd_capacity(periph, &mmc_discinfo->sector_size, &last_lba);
 	if (error)
-		return error;
+		goto out;
 
 	mmc_discinfo->last_possible_lba = (uint32_t) last_lba - 1;
 
@@ -2881,7 +2888,7 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 		if (error) {
 			/* ieeek... break out of loop... i dunno what to do */
 			break;
-		};
+		}
 
 		features_len = _4btol(gc->data_len);
 
@@ -2903,7 +2910,7 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 
 			pos  += 4 + feature_len;
 			fpos += 4 + feature_len;
-		};
+		}
 		/* unlikely to ever grow past our 1kb buffer */
 	} while (features_len >= 0xffff);
 
@@ -2931,8 +2938,9 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 		if (mmc_discinfo->mmc_profile == 0x10) /* DVD-ROM */
 			return mmc_getdiscinfo_dvdrom(periph, mmc_discinfo);
 		/* CD/DVD drive is violating specs */
-		return EIO;
-	};
+		error = EIO;
+		goto out;
+	}
 
 	/* call went OK */
 	mmc_discinfo->disc_state         =  di.disc_state & 3;
@@ -2961,22 +2969,24 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 	if (di.disc_state2 & 128) {
 		mmc_discinfo->disc_id = _4btol(di.discid);
 		mmc_discinfo->disc_flags |= MMC_DFLAGS_DISCIDVALID;
-	};
+	}
 	if (di.disc_state2 &  64) {
 		mmc_discinfo->disc_barcode = _8btol(di.disc_bar_code);
 		mmc_discinfo->disc_flags |= MMC_DFLAGS_BARCODEVALID;
-	};
+	}
 	if (di.disc_state2 &  32)
 		mmc_discinfo->disc_flags |= MMC_DFLAGS_UNRESTRICTED;
 
 	if (di.disc_state2 &  16) {
 		mmc_discinfo->application_code = di.application_code;
 		mmc_discinfo->disc_flags |= MMC_DFLAGS_APPCODEVALID;
-	};
+	}
 
 	/* done */
 
-	return 0;
+out:
+	free(buffer, M_TEMP);
+	return error;
 }
 
 static int
@@ -2989,12 +2999,14 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 	uint32_t track_start, track_end, track_size;
 	uint32_t last_recorded, next_writable;
 	uint32_t lba, next_track_start, lead_out;
-	uint32_t buffer_size = 2*1024;	/* worst case TOC estimate */
-	uint8_t buffer[buffer_size];
+	const uint32_t buffer_size = 4 * 1024;	/* worst case TOC estimate */
+	uint8_t *buffer;
 	uint8_t track_sessionnr, last_tracknr, sessionnr, adr, tno, point;
 	uint8_t tmin, tsec, tframe, pmin, psec, pframe;
 	int size, req_size;
 	int error, flags;
+
+	buffer = malloc(buffer_size, M_TEMP, M_WAITOK);
 
 	/*
 	 * Emulate read trackinfo for CD-ROM using the raw-TOC.
@@ -3022,12 +3034,15 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 		(void *)buffer,    req_size,
 		CDRETRIES, 30000, NULL, flags);
 	if (error)
-		return error;
+		goto out;
 	toc_hdr = (struct scsipi_toc_header *) buffer;
 	if (_2btol(toc_hdr->length) > buffer_size - 2) {
-		printf("incease buffersize in mmc_readtrackinfo\n");
-		return EIO;
-	};
+#ifdef DIAGNOSTIC
+		printf("increase buffersize in mmc_readtrackinfo_cdrom\n");
+#endif
+		error = ENOBUFS;
+		goto out;
+	}
 
 	/* read in complete raw toc */
 	req_size = _2btol(toc_hdr->length);
@@ -3038,7 +3053,7 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 		(void *)buffer,    req_size,
 		CDRETRIES, 30000, NULL, flags);
 	if (error)
-		return error;
+		goto out;
 
 	toc_hdr = (struct scsipi_toc_header *) buffer;
 	rawtoc  = (struct scsipi_toc_rawtoc *) (buffer + 4);
@@ -3074,51 +3089,51 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 			if (point == trackinfo->tracknr) {
 				track_start = lba;
 				track_sessionnr = sessionnr;
-			};
+			}
 			if (point == trackinfo->tracknr + 1) {
 				/* estimate size */
 				track_size = lba - track_start;
 				next_track_start = lba;
-			};
+			}
 			if (point == 0xa2) {
 				lead_out = lba;
-			};
+			}
 			if (point <= 0x63) {
 				/* CD's ok, DVD are glued */
 				last_tracknr = point;
-			};
+			}
 			if (sessionnr == track_sessionnr) {
 				last_recorded = lead_out;
-			};
-		};
+			}
+		}
 		if (tno == 0 && sessionnr && adr == 5) {
 			lba = hmsf2lba(0, tmin, tsec, tframe);
 			if (sessionnr == track_sessionnr) {
 				next_writable = lba;
-			};
-		};
+			}
+		}
 
 		rawtoc++;
 		size -= sizeof(struct scsipi_toc_rawtoc);
-	};
+	}
 
 	/* process found values; some voodoo */
 	/* if no tracksize tracknr is the last of the disc */
 	if ((track_size == 0) && last_recorded) {
 		track_size = last_recorded - track_start;
-	};
+	}
 	/* if last_recorded < tracksize, tracksize is overestimated */
 	if (last_recorded) {
 		if (last_recorded - track_start <= track_size) {
 			track_size = last_recorded - track_start;
 			flags |= MMC_TRACKINFO_LRA_VALID;
-		};
-	};
+		}
+	}
 	/* check if its a the last track of the sector */
 	if (next_writable) {
 		if (next_track_start > next_writable)
 			flags |= MMC_TRACKINFO_NWA_VALID;
-	};
+	}
 
 	/* no flag set -> no values */
 	if ((flags & MMC_TRACKINFO_LRA_VALID) == 0)
@@ -3140,7 +3155,10 @@ mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
 	trackinfo->track_size    = track_size;
 	trackinfo->last_recorded = last_recorded;
 
-	return 0;
+out:
+	free(buffer, M_TEMP);
+	return error;
+
 }
 
 static int
@@ -3152,12 +3170,14 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 	struct scsipi_toc_formatted      *toc;
 	uint32_t tracknr, track_start, track_size;
 	uint32_t lba, lead_out;
-	uint32_t buffer_size = 2*1024;	/* worst case TOC estimate */
-	uint8_t buffer[buffer_size];
+	const uint32_t buffer_size = 4 * 1024;	/* worst case TOC estimate */
+	uint8_t *buffer;
 	uint8_t last_tracknr;
 	int size, req_size;
 	int error, flags;
 
+	
+	buffer = malloc(buffer_size, M_TEMP, M_WAITOK);
 	/*
 	 * Emulate read trackinfo for DVD-ROM. We can't use the raw-TOC as the
 	 * CD-ROM emulation uses since the specification tells us that no such
@@ -3185,12 +3205,15 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 		(void *)buffer,    req_size,
 		CDRETRIES, 30000, NULL, flags);
 	if (error)
-		return error;
+		goto out;
 	toc_hdr = (struct scsipi_toc_header *) buffer;
 	if (_2btol(toc_hdr->length) > buffer_size - 2) {
-		printf("incease buffersize in mmc_readtrackinfo\n");
-		return EIO;
-	};
+#ifdef DIAGNOSTIC
+		printf("incease buffersize in mmc_readtrackinfo_dvdrom\n");
+#endif
+		error = ENOBUFS;
+		goto out;
+	}
 
 	/* read in complete formatted toc */
 	req_size = _2btol(toc_hdr->length);
@@ -3201,7 +3224,7 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 		(void *)buffer,    req_size,
 		CDRETRIES, 30000, NULL, flags);
 	if (error)
-		return error;
+		goto out;
 
 	toc_hdr = (struct scsipi_toc_header *)     buffer;
 	toc     = (struct scsipi_toc_formatted *) (buffer + 4);
@@ -3223,20 +3246,20 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 		tracknr = toc->tracknr;
 		if (trackinfo->tracknr == tracknr) {
 			track_start = lba;
-		};
+		}
 		if (trackinfo->tracknr == tracknr+1) {
 			track_size  = lba - track_start;
 			track_size -= 16;	/* link block ? */
-		};
+		}
 		if (tracknr == 0xAA) {
 			lead_out = lba;
-		};
+		}
 		toc++;
 		size -= sizeof(struct scsipi_toc_formatted);
-	};
+	}
 	if (trackinfo->tracknr == last_tracknr) {
 		track_size = lead_out - track_start;
-	};
+	}
 
 	/* fill in */
 	/* trackinfo->tracknr preserved */
@@ -3252,7 +3275,9 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 	trackinfo->track_size    = track_size;
 	trackinfo->last_recorded = 0;
 
-	return 0;
+out:
+	free(buffer, M_TEMP);
+	return error;
 }
 
 static int
@@ -3303,7 +3328,7 @@ mmc_gettrackinfo(struct scsipi_periph *periph,
 			return mmc_gettrackinfo_dvdrom(periph, trackinfo);
 		/* CD/DVD drive is violating specs */
 		return EIO;
-	};
+	}
 
 	/* (re)initialise structure */
 	memset(trackinfo, 0, sizeof(struct mmc_trackinfo));
