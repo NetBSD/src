@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.50 2006/10/15 08:38:21 dsl Exp $	*/
+/*	$NetBSD: dir.c,v 1.51 2006/10/27 21:00:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.50 2006/10/15 08:38:21 dsl Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.51 2006/10/27 21:00:18 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.50 2006/10/15 08:38:21 dsl Exp $");
+__RCSID("$NetBSD: dir.c,v 1.51 2006/10/27 21:00:18 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -303,7 +303,7 @@ Dir_InitCur(const char *cdname)
 		 * We've been here before, cleanup.
 		 */
 		cur->refCount -= 1;
-		Dir_Destroy((ClientData) cur);
+		Dir_Destroy(cur);
 	    }
 	    cur = p;
 	}
@@ -329,7 +329,7 @@ Dir_InitDot(void)
 	LstNode ln;
 
 	/* Remove old entry from openDirectories, but do not destroy. */
-	ln = Lst_Member(openDirectories, (ClientData)dot);
+	ln = Lst_Member(openDirectories, dot);
 	(void)Lst_Remove(openDirectories, ln);
     }
 
@@ -366,12 +366,12 @@ Dir_End(void)
 #ifdef CLEANUP
     if (cur) {
 	cur->refCount -= 1;
-	Dir_Destroy((ClientData) cur);
+	Dir_Destroy(cur);
     }
     dot->refCount -= 1;
     dotLast->refCount -= 1;
-    Dir_Destroy((ClientData) dotLast);
-    Dir_Destroy((ClientData) dot);
+    Dir_Destroy(dotLast);
+    Dir_Destroy(dot);
     Dir_ClearPath(dirSearchPath);
     Lst_Destroy(dirSearchPath, NOFREE);
     Dir_ClearPath(openDirectories);
@@ -841,7 +841,7 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
 	}
     }
     if (DEBUG(DIR)) {
-	Lst_ForEach(expansions, DirPrintWord, (ClientData) 0);
+	Lst_ForEach(expansions, DirPrintWord, NULL);
 	fprintf(debug_file, "\n");
     }
 }
@@ -1497,22 +1497,22 @@ Dir_AddDir(Lst path, const char *name)
     struct dirent *dp;	      /* entry in directory */
 
     if (strcmp(name, ".DOTLAST") == 0) {
-	ln = Lst_Find(path, (ClientData)UNCONST(name), DirFindName);
+	ln = Lst_Find(path, UNCONST(name), DirFindName);
 	if (ln != NILLNODE)
 	    return (Path *)Lst_Datum(ln);
 	else {
 	    dotLast->refCount += 1;
-	    (void)Lst_AtFront(path, (ClientData)dotLast);
+	    (void)Lst_AtFront(path, dotLast);
 	}
     }
 
     if (path)
-	ln = Lst_Find(openDirectories, (ClientData)UNCONST(name), DirFindName);
+	ln = Lst_Find(openDirectories, UNCONST(name), DirFindName);
     if (ln != NILLNODE) {
 	p = (Path *)Lst_Datum(ln);
-	if (path && Lst_Member(path, (ClientData)p) == NILLNODE) {
+	if (path && Lst_Member(path, p) == NILLNODE) {
 	    p->refCount += 1;
-	    (void)Lst_AtEnd(path, (ClientData)p);
+	    (void)Lst_AtEnd(path, p);
 	}
     } else {
 	if (DEBUG(DIR)) {
@@ -1540,9 +1540,9 @@ Dir_AddDir(Lst path, const char *name)
 		(void)Hash_CreateEntry(&p->files, dp->d_name, NULL);
 	    }
 	    (void)closedir(d);
-	    (void)Lst_AtEnd(openDirectories, (ClientData)p);
+	    (void)Lst_AtEnd(openDirectories, p);
 	    if (path != NULL)
-		(void)Lst_AtEnd(path, (ClientData)p);
+		(void)Lst_AtEnd(path, p);
 	}
 	if (DEBUG(DIR)) {
 	    fprintf(debug_file, "done\n");
@@ -1570,7 +1570,7 @@ Dir_CopyDir(ClientData p)
 {
     ((Path *)p)->refCount += 1;
 
-    return ((ClientData)p);
+    return (p);
 }
 
 /*-
@@ -1645,7 +1645,7 @@ Dir_Destroy(ClientData pp)
     if (p->refCount == 0) {
 	LstNode	ln;
 
-	ln = Lst_Member(openDirectories, (ClientData)p);
+	ln = Lst_Member(openDirectories, p);
 	(void)Lst_Remove(openDirectories, ln);
 
 	Hash_DeleteTable(&p->files);
@@ -1677,7 +1677,7 @@ Dir_ClearPath(Lst path)
     Path    *p;
     while (!Lst_IsEmpty(path)) {
 	p = (Path *)Lst_DeQueue(path);
-	Dir_Destroy((ClientData) p);
+	Dir_Destroy(p);
     }
 }
 
@@ -1708,9 +1708,9 @@ Dir_Concat(Lst path1, Lst path2)
 
     for (ln = Lst_First(path2); ln != NILLNODE; ln = Lst_Succ(ln)) {
 	p = (Path *)Lst_Datum(ln);
-	if (Lst_Member(path1, (ClientData)p) == NILLNODE) {
+	if (Lst_Member(path1, p) == NILLNODE) {
 	    p->refCount += 1;
-	    (void)Lst_AtEnd(path1, (ClientData)p);
+	    (void)Lst_AtEnd(path1, p);
 	}
     }
 }
@@ -1747,5 +1747,5 @@ DirPrintDir(ClientData p, ClientData dummy)
 void
 Dir_PrintPath(Lst path)
 {
-    Lst_ForEach(path, DirPrintDir, (ClientData)0);
+    Lst_ForEach(path, DirPrintDir, NULL);
 }

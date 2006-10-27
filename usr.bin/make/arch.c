@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.52 2006/10/15 08:38:21 dsl Exp $	*/
+/*	$NetBSD: arch.c,v 1.53 2006/10/27 21:00:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.52 2006/10/15 08:38:21 dsl Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.53 2006/10/27 21:00:18 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.52 2006/10/15 08:38:21 dsl Exp $");
+__RCSID("$NetBSD: arch.c,v 1.53 2006/10/27 21:00:18 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -380,7 +380,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		    return(FAILURE);
 		} else {
 		    gn->type |= OP_ARCHV;
-		    (void)Lst_AtEnd(nodeLst, (ClientData)gn);
+		    (void)Lst_AtEnd(nodeLst, gn);
 		}
 	    } else if (Arch_ParseArchive(&sacrifice, nodeLst, ctxt)!=SUCCESS) {
 		/*
@@ -422,7 +422,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		     * end of the provided list.
 		     */
 		    gn->type |= OP_ARCHV;
-		    (void)Lst_AtEnd(nodeLst, (ClientData)gn);
+		    (void)Lst_AtEnd(nodeLst, gn);
 		}
 	    }
 	    Lst_Destroy(members, NOFREE);
@@ -444,7 +444,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		 * provided list.
 		 */
 		gn->type |= OP_ARCHV;
-		(void)Lst_AtEnd(nodeLst, (ClientData)gn);
+		(void)Lst_AtEnd(nodeLst, gn);
 	    }
 	}
 	if (doSubst) {
@@ -547,7 +547,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 	member = cp + 1;
     }
 
-    ln = Lst_Find(archives, (ClientData) archive, ArchFindArchive);
+    ln = Lst_Find(archives, archive, ArchFindArchive);
     if (ln != NILLNODE) {
 	ar = (Arch *)Lst_Datum(ln);
 
@@ -694,7 +694,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 
     fclose(arch);
 
-    (void)Lst_AtEnd(archives, (ClientData) ar);
+    (void)Lst_AtEnd(archives, ar);
 
     /*
      * Now that the archive has been read and cached, we can look into

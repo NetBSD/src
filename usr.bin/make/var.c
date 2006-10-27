@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.114 2006/10/15 08:38:22 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.115 2006/10/27 21:00:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.114 2006/10/15 08:38:22 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.115 2006/10/27 21:00:19 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.114 2006/10/15 08:38:22 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.115 2006/10/27 21:00:19 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2154,7 +2154,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		loop.errnum = errnum;
 		loop.ctxt = ctxt;
 		newStr = VarModify(ctxt, &parsestate, nstr, VarLoopExpand,
-				   (ClientData)&loop);
+				   &loop);
 		free(loop.tvar);
 		free(loop.str);
 		break;
@@ -2485,7 +2485,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 
 			newStr = VarModify(ctxt, &parsestate, nstr,
 					   VarSubstitute,
-					   (ClientData)&pattern);
+					   &pattern);
 		    } else if (tstr[2] == endc || tstr[2] == ':') {
 			/*
 			 * Check for two-character options:
@@ -2588,10 +2588,10 @@ ApplyModifiers(char *nstr, const char *tstr,
 		}
 		if (*tstr == 'M' || *tstr == 'm') {
 		    newStr = VarModify(ctxt, &parsestate, nstr, VarMatch,
-				       (ClientData)pattern);
+				       pattern);
 		} else {
 		    newStr = VarModify(ctxt, &parsestate, nstr, VarNoMatch,
-				       (ClientData)pattern);
+				       pattern);
 		}
 		if (copy) {
 		    free(pattern);
@@ -2654,7 +2654,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		termc = *cp;
 		newStr = VarModify(ctxt, &tmpparsestate, nstr,
 				   VarSubstitute,
-				   (ClientData)&pattern);
+				   &pattern);
 
 		/*
 		 * Free the two strings.
@@ -2771,7 +2771,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 					  sizeof(regmatch_t));
 		newStr = VarModify(ctxt, &tmpparsestate, nstr,
 				   VarRESubstitute,
-				   (ClientData) &pattern);
+				   &pattern);
 		regfree(&pattern.re);
 		free(pattern.replace);
 		free(pattern.matches);
@@ -2790,7 +2790,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 'T':
 	    if (tstr[1] == endc || tstr[1] == ':') {
 		newStr = VarModify(ctxt, &parsestate, nstr, VarTail,
-				   (ClientData)0);
+				   NULL);
 		cp = tstr + 1;
 		termc = *cp;
 		break;
@@ -2799,7 +2799,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 'H':
 	    if (tstr[1] == endc || tstr[1] == ':') {
 		newStr = VarModify(ctxt, &parsestate, nstr, VarHead,
-				   (ClientData)0);
+				   NULL);
 		cp = tstr + 1;
 		termc = *cp;
 		break;
@@ -2808,7 +2808,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 'E':
 	    if (tstr[1] == endc || tstr[1] == ':') {
 		newStr = VarModify(ctxt, &parsestate, nstr, VarSuffix,
-				   (ClientData)0);
+				   NULL);
 		cp = tstr + 1;
 		termc = *cp;
 		break;
@@ -2817,7 +2817,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	case 'R':
 	    if (tstr[1] == endc || tstr[1] == ':') {
 		newStr = VarModify(ctxt, &parsestate, nstr, VarRoot,
-				   (ClientData)0);
+				   NULL);
 		cp = tstr + 1;
 		termc = *cp;
 		break;
@@ -2921,7 +2921,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		delim = '\0';
 		newStr = VarModify(ctxt, &parsestate, nstr,
 				   VarSYSVMatch,
-				   (ClientData)&pattern);
+				   &pattern);
 		free(UNCONST(pattern.lhs));
 		free(UNCONST(pattern.rhs));
 	    } else
@@ -3170,10 +3170,10 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 
 			if (str[1] == 'D') {
 			    val = VarModify(ctxt, &parsestate, val, VarHead,
-					    (ClientData)0);
+					    NULL);
 			} else {
 			    val = VarModify(ctxt, &parsestate, val, VarTail,
-					    (ClientData)0);
+					    NULL);
 			}
 			/*
 			 * Resulting string is dynamically allocated, so
@@ -3546,7 +3546,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 char *
 Var_GetTail(char *file)
 {
-    return(VarModify(file, VarTail, (ClientData)0));
+    return(VarModify(file, VarTail, NULL));
 }
 
 /*-
@@ -3570,7 +3570,7 @@ Var_GetTail(char *file)
 char *
 Var_GetHead(char *file)
 {
-    return(VarModify(file, VarHead, (ClientData)0));
+    return(VarModify(file, VarHead, NULL));
 }
 #endif
 

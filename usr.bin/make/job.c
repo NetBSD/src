@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.123 2006/10/15 08:38:21 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.124 2006/10/27 21:00:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.123 2006/10/15 08:38:21 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.124 2006/10/27 21:00:19 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.123 2006/10/15 08:38:21 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.124 2006/10/27 21:00:19 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -666,7 +666,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 	job->node->type |= OP_SAVE_CMDS;
 	if ((job->flags & JOB_IGNDOTS) == 0) {
 	    job->tailCmds = Lst_Succ(Lst_Member(job->node->commands,
-						(ClientData)cmd));
+						cmd));
 	    return 1;
 	}
 	return 0;
@@ -701,7 +701,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 		 * We're not actually executing anything...
 		 * but this one needs to be - use compat mode just for it.
 		 */
-		CompatRunCommand(cmdp, (ClientData)job->node);
+		CompatRunCommand(cmdp, job->node);
 		return 0;
 	    }
 	    break;
@@ -876,7 +876,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 static int
 JobSaveCommand(ClientData cmd, ClientData gn)
 {
-    cmd = (ClientData)Var_Subst(NULL, (char *)cmd, (GNode *)gn, FALSE);
+    cmd = Var_Subst(NULL, (char *)cmd, (GNode *)gn, FALSE);
     (void)Lst_AtEnd(postCommands->commands, cmd);
     return(0);
 }
@@ -1041,7 +1041,7 @@ JobFinish(Job *job, int status)
 	if (job->tailCmds != NILLNODE) {
 	    Lst_ForEachFrom(job->node->commands, job->tailCmds,
 			     JobSaveCommand,
-			    (ClientData)job->node);
+			    job->node);
 	}
 	job->node->made = MADE;
 	if (!(job->flags & JOB_SPECIAL))
@@ -1547,7 +1547,7 @@ JobStart(GNode *gn, int flags)
 	 * We can do all the commands at once. hooray for sanity
 	 */
 	numCommands = 0;
-	Lst_ForEach(gn->commands, JobPrintCommand, (ClientData)job);
+	Lst_ForEach(gn->commands, JobPrintCommand, job);
 
 	/*
 	 * If we didn't print out any commands to the shell script,
@@ -1572,7 +1572,7 @@ JobStart(GNode *gn, int flags)
 	 * doesn't do any harm in this case and may do some good.
 	 */
 	if (cmdsOK) {
-	    Lst_ForEach(gn->commands, JobPrintCommand, (ClientData)job);
+	    Lst_ForEach(gn->commands, JobPrintCommand, job);
 	}
 	/*
 	 * Don't execute the shell, thank you.
@@ -1616,7 +1616,7 @@ JobStart(GNode *gn, int flags)
 	    if (job->tailCmds != NILLNODE) {
 		Lst_ForEachFrom(job->node->commands, job->tailCmds,
 				JobSaveCommand,
-			       (ClientData)job->node);
+			       job->node);
 	    }
 	    job->node->made = MADE;
 	    Make_Update(job->node);

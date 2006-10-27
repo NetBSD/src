@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.34 2006/10/15 08:38:21 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.35 2006/10/27 21:00:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.34 2006/10/15 08:38:21 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.35 2006/10/27 21:00:18 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.34 2006/10/15 08:38:21 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.35 2006/10/27 21:00:18 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -382,7 +382,7 @@ CondDoMake(int argLen, char *arg)
     Boolean result;
 
     arg[argLen] = '\0';
-    if (Lst_Find(create, (ClientData)arg, CondStrMatch) == NILLNODE) {
+    if (Lst_Find(create, arg, CondStrMatch) == NILLNODE) {
 	result = FALSE;
     } else {
 	result = TRUE;

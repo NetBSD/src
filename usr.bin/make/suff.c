@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.58 2006/10/25 20:17:40 dsl Exp $	*/
+/*	$NetBSD: suff.c,v 1.59 2006/10/27 21:00:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.58 2006/10/25 20:17:40 dsl Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.59 2006/10/27 21:00:19 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.58 2006/10/25 20:17:40 dsl Exp $");
+__RCSID("$NetBSD: suff.c,v 1.59 2006/10/27 21:00:19 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -465,10 +465,10 @@ SuffFree(ClientData sp)
 static void
 SuffRemove(Lst l, Suff *s)
 {
-    SuffUnRef((ClientData) l, (ClientData) s);
+    SuffUnRef(l, s);
     if (s->refCount == 0) {
-	SuffUnRef((ClientData) sufflist, (ClientData) s);
-	SuffFree((ClientData) s);
+	SuffUnRef(sufflist, s);
+	SuffFree(s);
     }
 }
 
@@ -513,16 +513,16 @@ SuffInsert(Lst l, Suff *s)
 	if (DEBUG(SUFF)) {
 	    fprintf(debug_file, "at end of list\n");
 	}
-	(void)Lst_AtEnd(l, (ClientData)s);
+	(void)Lst_AtEnd(l, s);
 	s->refCount++;
-	(void)Lst_AtEnd(s->ref, (ClientData) l);
+	(void)Lst_AtEnd(s->ref, l);
     } else if (s2->sNum != s->sNum) {
 	if (DEBUG(SUFF)) {
 	    fprintf(debug_file, "before %s(%d)\n", s2->name, s2->sNum);
 	}
-	(void)Lst_InsertBefore(l, ln, (ClientData)s);
+	(void)Lst_InsertBefore(l, ln, s);
 	s->refCount++;
-	(void)Lst_AtEnd(s->ref, (ClientData) l);
+	(void)Lst_AtEnd(s->ref, l);
     } else if (DEBUG(SUFF)) {
 	fprintf(debug_file, "already there\n");
     }
@@ -597,9 +597,9 @@ SuffParseTransform(char *str, Suff **srcPtr, Suff **targPtr)
      */
     for (;;) {
 	if (srcLn == NILLNODE) {
-	    srcLn = Lst_Find(sufflist, (ClientData)str, SuffSuffIsPrefix);
+	    srcLn = Lst_Find(sufflist, str, SuffSuffIsPrefix);
 	} else {
-	    srcLn = Lst_FindFrom(sufflist, Lst_Succ(srcLn), (ClientData)str,
+	    srcLn = Lst_FindFrom(sufflist, Lst_Succ(srcLn), str,
 				  SuffSuffIsPrefix);
 	}
 	if (srcLn == NILLNODE) {
@@ -628,7 +628,7 @@ SuffParseTransform(char *str, Suff **srcPtr, Suff **targPtr)
 	    single = src;
 	    singleLn = srcLn;
 	} else {
-	    targLn = Lst_Find(sufflist, (ClientData)str2, SuffSuffHasNameP);
+	    targLn = Lst_Find(sufflist, str2, SuffSuffHasNameP);
 	    if (targLn != NILLNODE) {
 		*srcPtr = src;
 		*targPtr = (Suff *)Lst_Datum(targLn);
@@ -688,14 +688,14 @@ Suff_AddTransform(char *line)
                   *t;		/* target suffix */
     LstNode 	  ln;	    	/* Node for existing transformation */
 
-    ln = Lst_Find(transforms, (ClientData)line, SuffGNHasNameP);
+    ln = Lst_Find(transforms, line, SuffGNHasNameP);
     if (ln == NILLNODE) {
 	/*
 	 * Make a new graph node for the transformation. It will be filled in
 	 * by the Parse module.
 	 */
 	gn = Targ_NewGN(line);
-	(void)Lst_AtEnd(transforms, (ClientData)gn);
+	(void)Lst_AtEnd(transforms, gn);
     } else {
 	/*
 	 * New specification for transformation rule. Just nuke the old list
@@ -837,7 +837,7 @@ SuffRebuildGraph(ClientData transformp, ClientData sp)
      */
     cp = SuffStrIsPrefix(s->name, transform->name);
     if (cp != NULL) {
-	ln = Lst_Find(sufflist, (ClientData)cp, SuffSuffHasNameP);
+	ln = Lst_Find(sufflist, cp, SuffSuffHasNameP);
 	if (ln != NILLNODE) {
 	    /*
 	     * Found target. Link in and return, since it can't be anything
@@ -861,7 +861,7 @@ SuffRebuildGraph(ClientData transformp, ClientData sp)
 	 * Null-terminate the source suffix in order to find it.
 	 */
 	cp[1] = '\0';
-	ln = Lst_Find(sufflist, (ClientData)transform->name, SuffSuffHasNameP);
+	ln = Lst_Find(sufflist, transform->name, SuffSuffHasNameP);
 	/*
 	 * Replace the start of the target suffix
 	 */
@@ -964,7 +964,7 @@ Suff_AddSuffix(char *str, GNode **gn)
     LstNode 	  ln;
     GNodeSuff	  gs;
 
-    ln = Lst_Find(sufflist, (ClientData)str, SuffSuffHasNameP);
+    ln = Lst_Find(sufflist, str, SuffSuffHasNameP);
     if (ln == NILLNODE) {
 	s = emalloc(sizeof(Suff));
 
@@ -978,7 +978,7 @@ Suff_AddSuffix(char *str, GNode **gn)
 	s->flags =  	0;
 	s->refCount =	1;
 
-	(void)Lst_AtEnd(sufflist, (ClientData)s);
+	(void)Lst_AtEnd(sufflist, s);
 	/*
 	 * We also look at our existing targets list to see if adding
 	 * this suffix will make one of our current targets mutate into
@@ -988,12 +988,12 @@ Suff_AddSuffix(char *str, GNode **gn)
 	gs.gn = gn;
 	gs.s  = s;
 	gs.r  = FALSE;
-	Lst_ForEach(Targ_List(), SuffScanTargets, (ClientData) &gs);
+	Lst_ForEach(Targ_List(), SuffScanTargets, &gs);
 	/*
 	 * Look for any existing transformations from or to this suffix.
 	 * XXX: Only do this after a Suff_ClearSuffixes?
 	 */
-	Lst_ForEach(transforms, SuffRebuildGraph, (ClientData) s);
+	Lst_ForEach(transforms, SuffRebuildGraph, s);
     }
 }
 
@@ -1016,7 +1016,7 @@ Suff_GetPath(char *sname)
     LstNode   	  ln;
     Suff    	  *s;
 
-    ln = Lst_Find(sufflist, (ClientData)sname, SuffSuffHasNameP);
+    ln = Lst_Find(sufflist, sname, SuffSuffHasNameP);
     if (ln == NILLNODE) {
 	return (NILLST);
     } else {
@@ -1114,7 +1114,7 @@ Suff_AddInclude(char *sname)
     LstNode	  ln;
     Suff	  *s;
 
-    ln = Lst_Find(sufflist, (ClientData)sname, SuffSuffHasNameP);
+    ln = Lst_Find(sufflist, sname, SuffSuffHasNameP);
     if (ln != NILLNODE) {
 	s = (Suff *)Lst_Datum(ln);
 	s->flags |= SUFF_INCLUDE;
@@ -1146,7 +1146,7 @@ Suff_AddLib(char *sname)
     LstNode	  ln;
     Suff	  *s;
 
-    ln = Lst_Find(sufflist, (ClientData)sname, SuffSuffHasNameP);
+    ln = Lst_Find(sufflist, sname, SuffSuffHasNameP);
     if (ln != NILLNODE) {
 	s = (Suff *)Lst_Datum(ln);
 	s->flags |= SUFF_LIBRARY;
@@ -1198,12 +1198,12 @@ SuffAddSrc(ClientData sp, ClientData lsp)
 	s->refCount++;
 	s2->children =	0;
 	targ->children += 1;
-	(void)Lst_AtEnd(ls->l, (ClientData)s2);
+	(void)Lst_AtEnd(ls->l, s2);
 #ifdef DEBUG_SRC
 	s2->cp = Lst_Init(FALSE);
-	Lst_AtEnd(targ->cp, (ClientData) s2);
+	Lst_AtEnd(targ->cp, s2);
 	fprintf(debug_file, "1 add %x %x to %x:", targ, s2, ls->l);
-	Lst_ForEach(ls->l, PrintAddr, (ClientData) 0);
+	Lst_ForEach(ls->l, PrintAddr, NULL);
 	fprintf(debug_file, "\n");
 #endif
     }
@@ -1216,12 +1216,12 @@ SuffAddSrc(ClientData sp, ClientData lsp)
     s->refCount++;
     s2->children =  0;
     targ->children += 1;
-    (void)Lst_AtEnd(ls->l, (ClientData)s2);
+    (void)Lst_AtEnd(ls->l, s2);
 #ifdef DEBUG_SRC
     s2->cp = Lst_Init(FALSE);
-    Lst_AtEnd(targ->cp, (ClientData) s2);
+    Lst_AtEnd(targ->cp, s2);
     fprintf(debug_file, "2 add %x %x to %x:", targ, s2, ls->l);
-    Lst_ForEach(ls->l, PrintAddr, (ClientData) 0);
+    Lst_ForEach(ls->l, PrintAddr, NULL);
     fprintf(debug_file, "\n");
 #endif
 
@@ -1252,7 +1252,7 @@ SuffAddLevel(Lst l, Src *targ)
     ls.s = targ;
     ls.l = l;
 
-    Lst_ForEach(targ->suff->children, SuffAddSrc, (ClientData)&ls);
+    Lst_ForEach(targ->suff->children, SuffAddSrc, &ls);
 }
 
 /*-
@@ -1279,7 +1279,7 @@ SuffRemoveSrc(Lst l)
     }
 #ifdef DEBUG_SRC
     fprintf(debug_file, "cleaning %lx: ", (unsigned long) l);
-    Lst_ForEach(l, PrintAddr, (ClientData) 0);
+    Lst_ForEach(l, PrintAddr, NULL);
     fprintf(debug_file, "\n");
 #endif
 
@@ -1292,7 +1292,7 @@ SuffRemoveSrc(Lst l)
 		free(s->pref);
 	    else {
 #ifdef DEBUG_SRC
-		LstNode ln = Lst_Member(s->parent->cp, (ClientData)s);
+		LstNode ln = Lst_Member(s->parent->cp, s);
 		if (ln != NILLNODE)
 		    Lst_Remove(s->parent->cp, ln);
 #endif
@@ -1311,7 +1311,7 @@ SuffRemoveSrc(Lst l)
 #ifdef DEBUG_SRC
 	else {
 	    fprintf(debug_file, "keep: [l=%x] p=%x %d: ", l, s, s->children);
-	    Lst_ForEach(s->cp, PrintAddr, (ClientData) 0);
+	    Lst_ForEach(s->cp, PrintAddr, NULL);
 	    fprintf(debug_file, "\n");
 	}
 #endif
@@ -1379,7 +1379,7 @@ SuffFindThem(Lst srcs, Lst slst)
 	}
 
 	SuffAddLevel(srcs, s);
-	Lst_AtEnd(slst, (ClientData) s);
+	Lst_AtEnd(slst, s);
     }
 
     if (DEBUG(SUFF) && rs) {
@@ -1452,7 +1452,7 @@ SuffFindCmds(Src *targ, Lst slst)
 	 * The node matches the prefix ok, see if it has a known
 	 * suffix.
 	 */
-	ln = Lst_Find(sufflist, (ClientData)&cp[prefLen],
+	ln = Lst_Find(sufflist, &cp[prefLen],
 		       SuffSuffHasNameP);
 	if (ln == NILLNODE)
 	    continue;
@@ -1464,7 +1464,7 @@ SuffFindCmds(Src *targ, Lst slst)
 	 */
 	suff = (Suff *)Lst_Datum(ln);
 
-	if (Lst_Member(suff->parents, (ClientData)targ->suff) != NILLNODE)
+	if (Lst_Member(suff->parents, targ->suff) != NILLNODE)
 	    break;
     }
 
@@ -1486,9 +1486,9 @@ SuffFindCmds(Src *targ, Lst slst)
 #ifdef DEBUG_SRC
     ret->cp = Lst_Init(FALSE);
     fprintf(debug_file, "3 add %x %x\n", targ, ret);
-    Lst_AtEnd(targ->cp, (ClientData) ret);
+    Lst_AtEnd(targ->cp, ret);
 #endif
-    Lst_AtEnd(slst, (ClientData) ret);
+    Lst_AtEnd(slst, ret);
     if (DEBUG(SUFF)) {
 	fprintf(debug_file, "\tusing existing source %s\n", s->name);
     }
@@ -1571,7 +1571,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		     */
 		    *cp++ = '\0';
 		    gn = Targ_FindNode(start, TARG_CREATE);
-		    (void)Lst_AtEnd(members, (ClientData)gn);
+		    (void)Lst_AtEnd(members, gn);
 		    while (*cp == ' ' || *cp == '\t') {
 			cp++;
 		    }
@@ -1609,7 +1609,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		 * Stuff left over -- add it to the list too
 		 */
 		gn = Targ_FindNode(start, TARG_CREATE);
-		(void)Lst_AtEnd(members, (ClientData)gn);
+		(void)Lst_AtEnd(members, gn);
 	    }
 	    /*
 	     * Point cp back at the beginning again so the variable value
@@ -1628,8 +1628,8 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		fprintf(debug_file, "%s...", gn->name);
 	    }
 	    /* Add gn to the parents child list before the original child */
-	    (void)Lst_InsertBefore(pgn->children, cln, (ClientData)gn);
-	    (void)Lst_AtEnd(gn->parents, (ClientData)pgn);
+	    (void)Lst_InsertBefore(pgn->children, cln, gn);
+	    (void)Lst_AtEnd(gn->parents, pgn);
 	    pgn->unmade++;
 	    /* Expand wildcards on new node */
 	    SuffExpandWildcards(Lst_Prev(cln), pgn);
@@ -1683,8 +1683,8 @@ SuffExpandWildcards(LstNode cln, GNode *pgn)
 	gn = Targ_FindNode(cp, TARG_CREATE);
 
 	/* Add gn to the parents child list before the original child */
-	(void)Lst_InsertBefore(pgn->children, cln, (ClientData)gn);
-	(void)Lst_AtEnd(gn->parents, (ClientData)pgn);
+	(void)Lst_InsertBefore(pgn->children, cln, gn);
+	(void)Lst_AtEnd(gn->parents, pgn);
 	pgn->unmade++;
     }
 
@@ -1736,7 +1736,7 @@ Suff_FindPath(GNode* gn)
 	LstNode ln;
 	sd.len = strlen(gn->name);
 	sd.ename = gn->name + sd.len;
-	ln = Lst_Find(sufflist, (ClientData)&sd, SuffSuffIsSuffixP);
+	ln = Lst_Find(sufflist, &sd, SuffSuffIsSuffixP);
 
 	if (DEBUG(SUFF)) {
 	    fprintf(debug_file, "Wildcard expanding \"%s\"...", gn->name);
@@ -1793,15 +1793,15 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
     /*
      * Form the proper links between the target and source.
      */
-    (void)Lst_AtEnd(tGn->children, (ClientData)sGn);
-    (void)Lst_AtEnd(sGn->parents, (ClientData)tGn);
+    (void)Lst_AtEnd(tGn->children, sGn);
+    (void)Lst_AtEnd(sGn->parents, tGn);
     tGn->unmade += 1;
 
     /*
      * Locate the transformation rule itself
      */
     tname = str_concat(s->name, t->name, 0);
-    ln = Lst_Find(transforms, (ClientData)tname, SuffGNHasNameP);
+    ln = Lst_Find(transforms, tname, SuffGNHasNameP);
     free(tname);
 
     if (ln == NILLNODE) {
@@ -1841,7 +1841,7 @@ SuffApplyTransform(GNode *tGn, GNode *sGn, Suff *t, Suff *s)
      * Keep track of another parent to which this beast is transformed so
      * the .IMPSRC variable can be set correctly for the parent.
      */
-    (void)Lst_AtEnd(sGn->iParents, (ClientData)tGn);
+    (void)Lst_AtEnd(sGn->iParents, tGn);
 
     return(TRUE);
 }
@@ -1903,8 +1903,8 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
     /*
      * Create the link between the two nodes right off
      */
-    (void)Lst_AtEnd(gn->children, (ClientData)mem);
-    (void)Lst_AtEnd(mem->parents, (ClientData)gn);
+    (void)Lst_AtEnd(gn->children, mem);
+    (void)Lst_AtEnd(mem->parents, gn);
     gn->unmade += 1;
 
     /*
@@ -2092,7 +2092,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	    /*
 	     * Record the target so we can nuke it
 	     */
-	    (void)Lst_AtEnd(targs, (ClientData)targ);
+	    (void)Lst_AtEnd(targs, targ);
 
 	    /*
 	     * Search from this suffix's successor...
@@ -2137,7 +2137,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	if (DEBUG(SUFF))
 	    fprintf(debug_file, "adding suffix rules\n");
 
-	(void)Lst_AtEnd(targs, (ClientData)targ);
+	(void)Lst_AtEnd(targs, targ);
     }
 
     /*
@@ -2266,8 +2266,8 @@ sfnd_abort:
 	     * up to, but not including, the parent node.
 	     */
 	    while (bottom && bottom->parent != NULL) {
-		if (Lst_Member(slst, (ClientData) bottom) == NILLNODE) {
-		    Lst_AtEnd(slst, (ClientData) bottom);
+		if (Lst_Member(slst, bottom) == NILLNODE) {
+		    Lst_AtEnd(slst, bottom);
 		}
 		bottom = bottom->parent;
 	    }
@@ -2342,8 +2342,8 @@ sfnd_abort:
      */
 sfnd_return:
     if (bottom)
-	if (Lst_Member(slst, (ClientData) bottom) == NILLNODE)
-	    Lst_AtEnd(slst, (ClientData) bottom);
+	if (Lst_Member(slst, bottom) == NILLNODE)
+	    Lst_AtEnd(slst, bottom);
 
     while (SuffRemoveSrc(srcs) || SuffRemoveSrc(targs))
 	continue;
@@ -2427,7 +2427,7 @@ SuffFindDeps(GNode *gn, Lst slst)
 	LstNode	ln;
 	Suff	*s;
 
-	ln = Lst_Find(sufflist, (ClientData)UNCONST(LIBSUFF),
+	ln = Lst_Find(sufflist, UNCONST(LIBSUFF),
 	    SuffSuffHasNameP);
 	if (gn->suffix)
 	    gn->suffix->refCount--;
@@ -2476,7 +2476,7 @@ Suff_SetNull(char *name)
     Suff    *s;
     LstNode ln;
 
-    ln = Lst_Find(sufflist, (ClientData)name, SuffSuffHasNameP);
+    ln = Lst_Find(sufflist, name, SuffSuffHasNameP);
     if (ln != NILLNODE) {
 	s = (Suff *)Lst_Datum(ln);
 	if (suffNull != NULL) {
@@ -2603,10 +2603,10 @@ SuffPrintSuff(ClientData sp, ClientData dummy)
     }
     fputc('\n', debug_file);
     fprintf(debug_file, "#\tTo: ");
-    Lst_ForEach(s->parents, SuffPrintName, (ClientData)0);
+    Lst_ForEach(s->parents, SuffPrintName, NULL);
     fputc('\n', debug_file);
     fprintf(debug_file, "#\tFrom: ");
-    Lst_ForEach(s->children, SuffPrintName, (ClientData)0);
+    Lst_ForEach(s->children, SuffPrintName, NULL);
     fputc('\n', debug_file);
     fprintf(debug_file, "#\tSearch Path: ");
     Dir_PrintPath(s->searchPath);
@@ -2622,7 +2622,7 @@ SuffPrintTrans(ClientData tp, ClientData dummy)
     fprintf(debug_file, "%-16s: ", t->name);
     Targ_PrintType(t->type);
     fputc('\n', debug_file);
-    Lst_ForEach(t->commands, Targ_PrintCmd, (ClientData)0);
+    Lst_ForEach(t->commands, Targ_PrintCmd, NULL);
     fputc('\n', debug_file);
     return(dummy ? 0 : 0);
 }
@@ -2631,8 +2631,8 @@ void
 Suff_PrintAll(void)
 {
     fprintf(debug_file, "#*** Suffixes:\n");
-    Lst_ForEach(sufflist, SuffPrintSuff, (ClientData)0);
+    Lst_ForEach(sufflist, SuffPrintSuff, NULL);
 
     fprintf(debug_file, "#*** Transformations:\n");
-    Lst_ForEach(transforms, SuffPrintTrans, (ClientData)0);
+    Lst_ForEach(transforms, SuffPrintTrans, NULL);
 }
