@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.87 2006/10/08 04:21:53 thorpej Exp $
+#	$NetBSD: Makefile,v 1.88 2006/10/27 21:20:49 christos Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -22,9 +22,9 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	namei.h null.h \
 	param.h pipe.h pmc.h poll.h pool.h power.h proc.h \
 	protosw.h ptrace.h queue.h \
-	ras.h reboot.h radioio.h resource.h resourcevar.h rnd.h \
-	sa.h scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h shm.h \
-	siginfo.h signal.h signalvar.h sigtypes.h socket.h \
+	ras.h reboot.h radioio.h resource.h resourcevar.h rmd160.h rnd.h \
+	sa.h scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h sha2.h \
+	shm.h siginfo.h signal.h signalvar.h sigtypes.h socket.h \
 	socketvar.h sockio.h specificdata.h stat.h statvfs.h \
 	syscall.h syscallargs.h sysctl.h systrace.h stdint.h swap.h \
 	syslimits.h syslog.h \
@@ -42,7 +42,9 @@ INCSYMLINKS=\
 	sys/stdint.h /usr/include/stdint.h \
 	sys/syslog.h /usr/include/syslog.h \
 	sys/termios.h /usr/include/termios.h \
+	sys/rmd160.h /usr/include/crypto/rmd160.h \
 	sys/sha1.h /usr/include/sha1.h \
+	sys/sha2.h /usr/include/crypto/sha2.h \
 	sys/md4.h /usr/include/md4.h \
 	sys/md5.h /usr/include/md5.h
 
