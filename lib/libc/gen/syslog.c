@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.34 2006/10/27 20:00:55 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.35 2006/10/27 21:36:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.34 2006/10/27 20:00:55 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.35 2006/10/27 21:36:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -167,7 +167,7 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 	size_t tbuf_left, fmt_left;
 	int signal_safe = pri & LOG_SIGNAL_SAFE;
 
-	pri &= LOG_SIGNAL_SAFE;
+	pri &= ~LOG_SIGNAL_SAFE;
 
 #define	INTERNALLOG	LOG_ERR|LOG_CONS|LOG_PERROR|LOG_PID
 	/* Check for invalid bits. */
