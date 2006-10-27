@@ -1,4 +1,4 @@
-/*	$NetBSD: lstAppend.c,v 1.11 2006/10/25 20:17:40 dsl Exp $	*/
+/*	$NetBSD: lstAppend.c,v 1.12 2006/10/27 21:37:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstAppend.c,v 1.11 2006/10/25 20:17:40 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstAppend.c,v 1.12 2006/10/27 21:37:25 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstAppend.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstAppend.c,v 1.11 2006/10/25 20:17:40 dsl Exp $");
+__RCSID("$NetBSD: lstAppend.c,v 1.12 2006/10/27 21:37:25 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -89,8 +89,8 @@ Lst_InsertAfter(Lst l, LstNode ln, ClientData d)
     }
     ok:
 
-    list = (List)l;
-    lNode = (ListNode)ln;
+    list = l;
+    lNode = ln;
 
     PAlloc (nLNode, ListNode);
     nLNode->datum = d;

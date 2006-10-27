@@ -1,4 +1,4 @@
-/*	$NetBSD: lstNext.c,v 1.10 2004/05/07 00:04:41 ross Exp $	*/
+/*	$NetBSD: lstNext.c,v 1.11 2006/10/27 21:37:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstNext.c,v 1.10 2004/05/07 00:04:41 ross Exp $";
+static char rcsid[] = "$NetBSD: lstNext.c,v 1.11 2006/10/27 21:37:25 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstNext.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstNext.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
+__RCSID("$NetBSD: lstNext.c,v 1.11 2006/10/27 21:37:25 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -76,7 +76,7 @@ LstNode
 Lst_Next(Lst l)
 {
     ListNode	tln;
-    List 	list = (List)l;
+    List 	list = l;
 
     if ((LstValid (l) == FALSE) ||
 	(list->isOpen == FALSE)) {
@@ -115,6 +115,6 @@ Lst_Next(Lst l)
 	}
     }
 
-    return ((LstNode)tln);
+    return (tln);
 }
 

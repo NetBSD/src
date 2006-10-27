@@ -1,4 +1,4 @@
-/*	$NetBSD: lstRemove.c,v 1.12 2005/08/08 16:42:54 christos Exp $	*/
+/*	$NetBSD: lstRemove.c,v 1.13 2006/10/27 21:37:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstRemove.c,v 1.12 2005/08/08 16:42:54 christos Exp $";
+static char rcsid[] = "$NetBSD: lstRemove.c,v 1.13 2006/10/27 21:37:25 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstRemove.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstRemove.c,v 1.12 2005/08/08 16:42:54 christos Exp $");
+__RCSID("$NetBSD: lstRemove.c,v 1.13 2006/10/27 21:37:25 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -70,8 +70,8 @@ __RCSID("$NetBSD: lstRemove.c,v 1.12 2005/08/08 16:42:54 christos Exp $");
 ReturnStatus
 Lst_Remove(Lst l, LstNode ln)
 {
-    List 	list = (List) l;
-    ListNode	lNode = (ListNode) ln;
+    List 	list = l;
+    ListNode	lNode = ln;
 
     if (!LstValid (l) ||
 	!LstNodeValid (ln, l)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lstDestroy.c,v 1.14 2005/08/09 21:36:42 christos Exp $	*/
+/*	$NetBSD: lstDestroy.c,v 1.15 2006/10/27 21:37:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstDestroy.c,v 1.14 2005/08/09 21:36:42 christos Exp $";
+static char rcsid[] = "$NetBSD: lstDestroy.c,v 1.15 2006/10/27 21:37:25 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstDestroy.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstDestroy.c,v 1.14 2005/08/09 21:36:42 christos Exp $");
+__RCSID("$NetBSD: lstDestroy.c,v 1.15 2006/10/27 21:37:25 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -72,7 +72,7 @@ Lst_Destroy(Lst l, FreeProc *freeProc)
 {
     ListNode	ln;
     ListNode	tln = NilListNode;
-    List 	list = (List)l;
+    List 	list = l;
 
     if (l == NILLST || ! l) {
 	/*

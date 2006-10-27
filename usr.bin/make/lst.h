@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.13 2006/10/25 20:17:40 dsl Exp $	*/
+/*	$NetBSD: lst.h,v 1.14 2006/10/27 21:37:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -89,8 +89,8 @@
  * basic typedef. This is what the Lst_ functions handle
  */
 
-typedef	struct	Lst	*Lst;
-typedef	struct	LstNode	*LstNode;
+typedef	struct List	*Lst;
+typedef	struct ListNode	*LstNode;
 
 typedef ClientData	DuplicateProc(ClientData);
 typedef void		FreeProc(ClientData);
