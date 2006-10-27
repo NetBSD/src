@@ -1,5 +1,0 @@
-#	$NetBSD: files.ripemd160,v 1.4 2005/12/11 12:20:53 christos Exp $
-
-define	ripemd160
-
-file	crypto/ripemd160/rmd160.c	ripemd160
