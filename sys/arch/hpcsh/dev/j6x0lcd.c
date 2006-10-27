@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0lcd.c,v 1.10 2005/12/18 19:09:26 uwe Exp $ */
+/*	$NetBSD: j6x0lcd.c,v 1.11 2006/10/27 00:08:32 uwe Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Valeriy E. Ushakov
@@ -28,15 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.10 2005/12/18 19:09:26 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.11 2006/10/27 00:08:32 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#ifdef GPROF
-#include <sys/gmon.h>
-#endif
 
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
