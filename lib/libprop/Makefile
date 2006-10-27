@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2006/10/26 18:51:21 thorpej Exp $
+#	$NetBSD: Makefile,v 1.14 2006/10/27 01:29:37 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -87,6 +87,7 @@ MLINKS+= prop_data.3 prop_data_equals.3
 MLINKS+= prop_data.3 prop_data_equals_data.3
 MLINKS+= prop_data.3 prop_data_size.3
 
+MLINKS+= prop_dictionary.3 prop_dictionary_all_keys.3
 MLINKS+= prop_dictionary.3 prop_dictionary_capacity.3
 MLINKS+= prop_dictionary.3 prop_dictionary_copy.3
 MLINKS+= prop_dictionary.3 prop_dictionary_copy_mutable.3
