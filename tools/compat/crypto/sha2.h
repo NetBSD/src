@@ -1,5 +1,5 @@
-/* $NetBSD: sha2.h,v 1.1 2005/08/26 15:57:17 elad Exp $ */
+/* $NetBSD: sha2.h,v 1.2 2006/10/27 22:32:45 mrg Exp $ */
 
 /* We unconditionally use the NetBSD SHA2 in libnbcompat. */
 #include "nbtool_config.h"
-#include "../../../sys/crypto/sha2/sha2.h"
+#include "../../../sys/sys/sha2.h"
