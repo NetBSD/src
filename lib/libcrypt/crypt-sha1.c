@@ -1,3 +1,5 @@
+/* $NetBSD: crypt-sha1.c,v 1.3 2006/10/27 18:22:56 drochner Exp $ */
+
 /*
  * Copyright (c) 2004, Juniper Networks, Inc.
  * All rights reserved.
@@ -29,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$Id: crypt-sha1.c,v 1.2 2005/01/11 22:40:22 christos Exp $");
+__RCSID("$NetBSD: crypt-sha1.c,v 1.3 2006/10/27 18:22:56 drochner Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -54,10 +56,6 @@ __RCSID("$Id: crypt-sha1.c,v 1.2 2005/01/11 22:40:22 christos Exp $");
 #ifndef CRYPT_SHA1_SALT_LENGTH
 # define CRYPT_SHA1_SALT_LENGTH 64
 #endif
-
-extern void hmac_sha1(unsigned char *text, size_t text_len,
-		      unsigned char *key, size_t key_len,
-		      unsigned char *digest);
 
 /*
  * This may be called from crypt_sha1 or gensalt.
@@ -120,7 +118,7 @@ __crypt_sha1_iterations (unsigned int hint)
 char *
 __crypt_sha1 (const char *pw, const char *salt)
 {
-    static char *magic = SHA1_MAGIC;
+    static const char *magic = SHA1_MAGIC;
     static unsigned char hmac_buf[SHA1_SIZE];
     static char passwd[(2 * sizeof(SHA1_MAGIC)) +
 		       CRYPT_SHA1_SALT_LENGTH + SHA1_SIZE];
@@ -132,7 +130,7 @@ __crypt_sha1 (const char *pw, const char *salt)
     int dl;
     unsigned int iterations;
     unsigned int i;
-	
+
     /*
      * Salt format is
      * $<tag>$<iterations>$salt[$]
@@ -170,9 +168,9 @@ __crypt_sha1 (const char *pw, const char *salt)
      * Then hmac using <pw> as key, and repeat...
      */
     ep = __UNCONST(pw);			/* keep gcc happy */
-    hmac_sha1(passwd, dl, ep, pl, hmac_buf);
+    __hmac_sha1(passwd, dl, ep, pl, hmac_buf);
     for (i = 1; i < iterations; i++) {
-	hmac_sha1(hmac_buf, SHA1_SIZE, ep, pl, hmac_buf);
+	__hmac_sha1(hmac_buf, SHA1_SIZE, ep, pl, hmac_buf);
     }
     /* Now output... */
     pl = snprintf(passwd, sizeof(passwd), "%s%u$%.*s$",
