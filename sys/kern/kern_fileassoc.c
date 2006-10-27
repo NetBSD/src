@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.10 2006/09/08 13:57:38 blymn Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.11 2006/10/27 22:17:09 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.10 2006/09/08 13:57:38 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.11 2006/10/27 22:17:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -197,8 +197,12 @@ fileassoc_file_lookup(struct vnode *vp, fhandle_t *hint)
 		    ((FHANDLE_FILEID(e->handle)->fid_len ==
 		     FHANDLE_FILEID(th)->fid_len)) &&
 		    (memcmp(FHANDLE_FILEID(e->handle), FHANDLE_FILEID(th),
-			   (FHANDLE_FILEID(th))->fid_len) == 0))
+			   (FHANDLE_FILEID(th))->fid_len) == 0)) {
+			if (hint == NULL)
+				vfs_composefh_free(th);
+
 			return (e);
+		}
 	}
 
 	if (hint == NULL)
