@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.64 2006/10/22 16:23:20 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.65 2006/10/27 21:00:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.64 2006/10/22 16:23:20 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.65 2006/10/27 21:00:18 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.64 2006/10/22 16:23:20 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.65 2006/10/27 21:00:18 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -233,7 +233,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     errCheck = !(gn->type & OP_IGNORE);
     doIt = FALSE;
     
-    cmdNode = Lst_Member(gn->commands, (ClientData)cmd);
+    cmdNode = Lst_Member(gn->commands, cmd);
     cmdStart = Var_Subst(NULL, cmd, gn, FALSE);
 
     /*
@@ -250,10 +250,10 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     } else {
 	cmd = cmdStart;
     }
-    Lst_Replace(cmdNode, (ClientData)cmdStart);
+    Lst_Replace(cmdNode, cmdStart);
 
     if ((gn->type & OP_SAVE_CMDS) && (gn != ENDNode)) {
-	(void)Lst_AtEnd(ENDNode->commands, (ClientData)cmdStart);
+	(void)Lst_AtEnd(ENDNode->commands, cmdStart);
 	return(0);
     } else if (strcmp(cmdStart, "...") == 0) {
 	gn->type |= OP_SAVE_CMDS;
@@ -369,7 +369,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	free(mav);
     if (bp)
 	free(bp);
-    Lst_Replace(cmdNode, (ClientData) NULL);
+    Lst_Replace(cmdNode, NULL);
 
     /*
      * The child is off and running. Now all we can do is wait...
@@ -479,7 +479,7 @@ Compat_Make(ClientData gnp, ClientData pgnp)
 	gn->made = BEINGMADE;
 	if ((gn->type & OP_MADE) == 0)
 	    Suff_FindDeps(gn);
-	Lst_ForEach(gn->children, Compat_Make, (ClientData)gn);
+	Lst_ForEach(gn->children, Compat_Make, gn);
 	if ((gn->flags & REMAKE) == 0) {
 	    gn->made = ABORTED;
 	    pgn->flags &= ~REMAKE;
@@ -545,7 +545,7 @@ Compat_Make(ClientData gnp, ClientData pgnp)
 	     */
 	    if (!touchFlag || (gn->type & OP_MAKE)) {
 		curTarg = gn;
-		Lst_ForEach(gn->commands, CompatRunCommand, (ClientData)gn);
+		Lst_ForEach(gn->commands, CompatRunCommand, gn);
 		curTarg = NILGNODE;
 	    } else {
 		Job_Touch(gn, gn->type & OP_SILENT);
