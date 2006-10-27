@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.41 2006/10/25 23:27:29 elad Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.42 2006/10/27 00:11:44 elad Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.41 2006/10/25 23:27:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.42 2006/10/27 00:11:44 elad Exp $");
 #endif
 
 /*
@@ -1375,7 +1375,7 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd __unused,
 		/* NB: only root can read WEP keys */
 		if (kauth_authorize_network(curlwp->l_cred,
 		    KAUTH_NETWORK_INTERFACE,
-		    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, ifp, ireq->i_type,
+		    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, ifp, NULL,
 		    NULL) == 0) {
 			bcopy(ic->ic_nw_keys[kid].wk_key, tmpkey, len);
 		} else {
