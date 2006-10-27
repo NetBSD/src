@@ -1,4 +1,4 @@
-/*	$NetBSD: adc.c,v 1.6 2005/12/11 12:18:58 christos Exp $ */
+/*	$NetBSD: adc.c,v 1.7 2006/10/27 00:08:32 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,16 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.6 2005/12/11 12:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.7 2006/10/27 00:08:32 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#ifdef GPROF
-#include <sys/gmon.h>
-#endif
 
 #include <sh3/adcreg.h>
 #include <sh3/dev/adcvar.h>
