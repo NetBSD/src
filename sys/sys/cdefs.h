@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.61 2006/08/31 19:24:38 dyoung Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.62 2006/10/27 22:10:56 uwe Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -194,7 +194,7 @@
 #if __GNUC_PREREQ__(3, 1)
 #define	__used		__attribute__((__used__))
 #else
-#define	__used		/* delete */
+#define	__used		__unused
 #endif
 
 #if __GNUC_PREREQ__(2, 7)
