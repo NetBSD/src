@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.133 2006/10/15 08:38:21 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.134 2006/10/27 21:00:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.133 2006/10/15 08:38:21 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.134 2006/10/27 21:00:19 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.133 2006/10/15 08:38:21 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.134 2006/10/27 21:00:19 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -413,7 +413,7 @@ rearg:
 		case 'V':
 			if (argvalue == NULL) goto noarg;
 			printVars = TRUE;
-			(void)Lst_AtEnd(variables, (ClientData)argvalue);
+			(void)Lst_AtEnd(variables, argvalue);
 			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
@@ -441,7 +441,7 @@ rearg:
 			break;
 		case 'f':
 			if (argvalue == NULL) goto noarg;
-			(void)Lst_AtEnd(makefiles, (ClientData)argvalue);
+			(void)Lst_AtEnd(makefiles, argvalue);
 			break;
 		case 'i':
 			ignoreErrors = TRUE;
@@ -526,7 +526,7 @@ rearg:
 				Punt("illegal (null) argument.");
 			if (*argv[1] == '-' && !dashDash)
 				goto rearg;
-			(void)Lst_AtEnd(create, (ClientData)estrdup(argv[1]));
+			(void)Lst_AtEnd(create, estrdup(argv[1]));
 		}
 
 	return;
@@ -949,7 +949,7 @@ main(int argc, char **argv)
 		if (Lst_IsEmpty(sysMkPath))
 			Fatal("%s: no system rules (%s).", progname,
 			    _PATH_DEFSYSMK);
-		ln = Lst_Find(sysMkPath, (ClientData)NULL, ReadMakefile);
+		ln = Lst_Find(sysMkPath, NULL, ReadMakefile);
 		if (ln == NILLNODE)
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_Datum(ln));
@@ -958,7 +958,7 @@ main(int argc, char **argv)
 	if (!Lst_IsEmpty(makefiles)) {
 		LstNode ln;
 
-		ln = Lst_Find(makefiles, (ClientData)NULL, ReadAllMakefiles);
+		ln = Lst_Find(makefiles, NULL, ReadAllMakefiles);
 		if (ln != NILLNODE)
 			Fatal("%s: cannot open %s.", progname, 
 			    (char *)Lst_Datum(ln));
