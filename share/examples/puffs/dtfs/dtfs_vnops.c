@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.5 2006/10/27 12:26:25 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.6 2006/10/27 14:03:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -196,6 +196,8 @@ dtfs_readdir(struct puffs_usermount *pi, void *opc,
 	if (pn->pn_type != VDIR)
 		return ENOTDIR;
 
+	dtfs_updatetimes(pn, 1, 0, 0);
+
  again:
 	if (*readoff == DENT_DOT || *readoff == DENT_DOTDOT) {
 		puffs_gendotdent(&dent, pn->pn_va.va_fileid, *readoff, reslen);
@@ -250,6 +252,8 @@ dtfs_rename(struct puffs_usermount *pu, void *opc, void *src,
 	free(dfd_src->dfd_name);
 	dfd_src->dfd_name = estrdup(pcn_targ->pcn_name);
 
+	dtfs_updatetimes(src, 0, 1, 0);
+
 	return 0;
 }
 
@@ -264,6 +268,8 @@ dtfs_link(struct puffs_usermount *pu, void *opc, void *targ,
 	dfd->dfd_node = targ;
 	dfd->dfd_name = estrdup(pcn->pcn_name);
 	dtfs_adddent(pn_dir, dfd);
+
+	dtfs_updatetimes(targ, 0, 1, 0);
 
 	return 0;
 }
@@ -348,6 +354,8 @@ dtfs_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	memcpy(buf, df->df_data + offset, xfer);
 	*resid -= xfer;
 
+	dtfs_updatetimes(pn, 1, 0, 0);
+
 	return 0;
 }
 
@@ -370,6 +378,8 @@ dtfs_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	dtfs_setsize(pn, *resid + offset, 1);
 	memcpy(df->df_data + offset, buf, *resid);
 	*resid = 0;
+
+	dtfs_updatetimes(pn, 0, 1, 1);
 
 	return 0;
 }

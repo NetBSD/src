@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.h,v 1.3 2006/10/26 22:53:25 pooka Exp $	*/
+/*	$NetBSD: dtfs.h,v 1.4 2006/10/27 14:03:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -99,6 +99,7 @@ void	dtfs_adddent(struct puffs_node *, struct dtfs_dirent *);
 void	dtfs_removedent(struct puffs_node *, struct dtfs_dirent *);
 
 void	dtfs_baseattrs(struct vattr *, enum vtype, int32_t, ino_t);
+void	dtfs_updatetimes(struct puffs_node *, int, int, int);
 
 
 #define DTFS_CTOF(a) ((struct dtfs_file *)(((struct puffs_node *)a)->pn_data))
