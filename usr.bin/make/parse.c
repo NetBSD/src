@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.118 2006/10/15 21:17:27 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.119 2006/10/27 21:00:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.118 2006/10/15 21:17:27 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.119 2006/10/27 21:00:19 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.118 2006/10/15 21:17:27 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.119 2006/10/27 21:00:19 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -511,9 +511,9 @@ ParseLinkSrc(ClientData pgnp, ClientData cgnp)
 
     if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (pgn->cohorts))
 	pgn = (GNode *)Lst_Datum(Lst_Last(pgn->cohorts));
-    (void)Lst_AtEnd(pgn->children, (ClientData)cgn);
+    (void)Lst_AtEnd(pgn->children, cgn);
     if (specType == Not)
-	    (void)Lst_AtEnd(cgn->parents, (ClientData)pgn);
+	    (void)Lst_AtEnd(cgn->parents, pgn);
     pgn->unmade += 1;
     if (DEBUG(PARSE)) {
 	fprintf(debug_file, "# ParseLinkSrc: added child %s - %s\n", pgn->name, cgn->name);
@@ -586,7 +586,7 @@ ParseDoOp(ClientData gnp, ClientData opp)
 	 * traversals will no longer see this node anyway. -mycroft)
 	 */
 	cohort->type = op | OP_INVISIBLE;
-	(void)Lst_AtEnd(gn->cohorts, (ClientData)cohort);
+	(void)Lst_AtEnd(gn->cohorts, cohort);
 	cohort->centurion = gn;
 	gn->unmade_cohorts += 1;
     } else {
@@ -635,9 +635,9 @@ ParseAddDep(ClientData pp, ClientData sp)
      * but checking is tedious, and the debugging output can show the
      * problem
      */
-    (void)Lst_AtEnd(p->successors, (ClientData)s);
-    (void)Lst_AtEnd(s->preds, (ClientData)p);
-    (void)Lst_AtEnd(s->recpreds, (ClientData)p);
+    (void)Lst_AtEnd(p->successors, s);
+    (void)Lst_AtEnd(s->preds, p);
+    (void)Lst_AtEnd(s->recpreds, p);
     if (DEBUG(PARSE)) {
 	fprintf(debug_file, "# ParseAddDep: added .WAIT dependency %s - %s\n",
 		p->name, s->name);
@@ -719,15 +719,15 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
     if (ss->op) {
 	gn->type |= ss->op;
     } else {
-	ParseLinkSrc((ClientData)tn, (ClientData)gn);
+	ParseLinkSrc(tn, gn);
     }
     if (DEBUG(PARSE))
 	fprintf(debug_file, "ParseDoSpecialSrc: set %p(%s):%d (was %d)\n",
 		gn, gn->name, waiting, gn->order);
     gn->order = waiting;
-    (void)Lst_AtEnd(ss->curSrcs, (ClientData)gn);
+    (void)Lst_AtEnd(ss->curSrcs, gn);
     if (waiting)
-	Lst_ForEach(ss->curSrcs, ParseAddDep, (ClientData)gn);
+	Lst_ForEach(ss->curSrcs, ParseAddDep, gn);
     return 0;
 }
 
@@ -765,7 +765,7 @@ ParseDoSrc(int tOp, char *src, Lst curSrcs, Boolean resolve)
 	if (keywd != -1) {
 	    int op = parseKeywords[keywd].op;
 	    if (op != 0) {
-		Lst_ForEach(targets, ParseDoOp, (ClientData)&op);
+		Lst_ForEach(targets, ParseDoOp, &op);
 		return;
 	    }
 	    if (parseKeywords[keywd].spec == Wait) {
@@ -785,7 +785,7 @@ ParseDoSrc(int tOp, char *src, Lst curSrcs, Boolean resolve)
 	 * invoked if the user didn't specify a target on the command
 	 * line. This is to allow #ifmake's to succeed, or something...
 	 */
-	(void)Lst_AtEnd(create, (ClientData)estrdup(src));
+	(void)Lst_AtEnd(create, estrdup(src));
 	/*
 	 * Add the name to the .TARGETS variable as well, so the user can
 	 * employ that, if desired.
@@ -800,8 +800,8 @@ ParseDoSrc(int tOp, char *src, Lst curSrcs, Boolean resolve)
 	 */
 	gn = Targ_FindNode(src, TARG_CREATE);
 	if (predecessor != NILGNODE) {
-	    (void)Lst_AtEnd(predecessor->successors, (ClientData)gn);
-	    (void)Lst_AtEnd(gn->preds, (ClientData)predecessor);
+	    (void)Lst_AtEnd(predecessor->successors, gn);
+	    (void)Lst_AtEnd(gn->preds, predecessor);
 	    if (DEBUG(PARSE)) {
 		fprintf(debug_file, "# ParseDoSrc: added Order dependency %s - %s\n",
 			predecessor->name, gn->name);
@@ -847,7 +847,7 @@ ParseDoSrc(int tOp, char *src, Lst curSrcs, Boolean resolve)
 	     * If src cannot be fully resolved, we'll be called again
 	     * with resolve==FALSE.
 	     */
-	    Lst_ForEach(targets, ParseDoSpecialSrc, (ClientData)&ss);
+	    Lst_ForEach(targets, ParseDoSpecialSrc, &ss);
 	    return;
 	}
 
@@ -856,7 +856,7 @@ ParseDoSrc(int tOp, char *src, Lst curSrcs, Boolean resolve)
 	if (tOp) {
 	    gn->type |= tOp;
 	} else {
-	    Lst_ForEach(targets, ParseLinkSrc, (ClientData)gn);
+	    Lst_ForEach(targets, ParseLinkSrc, gn);
 	}
 	break;
     }
@@ -867,7 +867,7 @@ ParseDoSrc(int tOp, char *src, Lst curSrcs, Boolean resolve)
     gn->order = waiting;
 
     /* Keep a list of the 'src' on this dependence line for .WAIT below */
-    (void)Lst_AtEnd(curSrcs, (ClientData)gn);
+    (void)Lst_AtEnd(curSrcs, gn);
 
     /*
      * If we have passed a .WAIT, then make this 'src' depend on all the
@@ -875,7 +875,7 @@ ParseDoSrc(int tOp, char *src, Lst curSrcs, Boolean resolve)
      * .WAIT directive.
      */
     if (waiting)
-	Lst_ForEach(curSrcs, ParseAddDep, (ClientData)gn);
+	Lst_ForEach(curSrcs, ParseAddDep, gn);
 }
 
 /*-
@@ -1130,7 +1130,7 @@ ParseDoDependency(char *line)
 			if (paths == NULL) {
 			    paths = Lst_Init(FALSE);
 			}
-			(void)Lst_AtEnd(paths, (ClientData)dirSearchPath);
+			(void)Lst_AtEnd(paths, dirSearchPath);
 			break;
 		    case Main:
 			if (!Lst_IsEmpty(create)) {
@@ -1142,12 +1142,12 @@ ParseDoDependency(char *line)
 		    case Interrupt:
 			gn = Targ_FindNode(line, TARG_CREATE);
 			gn->type |= OP_NOTMAIN|OP_SPECIAL;
-			(void)Lst_AtEnd(targets, (ClientData)gn);
+			(void)Lst_AtEnd(targets, gn);
 			break;
 		    case Default:
 			gn = Targ_NewGN(".DEFAULT");
 			gn->type |= (OP_NOTMAIN|OP_TRANSFORM);
-			(void)Lst_AtEnd(targets, (ClientData)gn);
+			(void)Lst_AtEnd(targets, gn);
 			DEFAULT = gn;
 			break;
 		    case NotParallel:
@@ -1181,7 +1181,7 @@ ParseDoDependency(char *line)
 		    if (paths == (Lst)NULL) {
 			paths = Lst_Init(FALSE);
 		    }
-		    (void)Lst_AtEnd(paths, (ClientData)path);
+		    (void)Lst_AtEnd(paths, path);
 		}
 	    }
 	}
@@ -1208,7 +1208,7 @@ ParseDoDependency(char *line)
 		 * No wildcards, but we want to avoid code duplication,
 		 * so create a list with the word on it.
 		 */
-		(void)Lst_AtEnd(curTargs, (ClientData)line);
+		(void)Lst_AtEnd(curTargs, line);
 	    }
 
 	    while(!Lst_IsEmpty(curTargs)) {
@@ -1220,7 +1220,7 @@ ParseDoDependency(char *line)
 		    gn = Suff_AddTransform(targName);
 		}
 
-		(void)Lst_AtEnd(targets, (ClientData)gn);
+		(void)Lst_AtEnd(targets, gn);
 	    }
 	} else if (specType == ExPath && *line != '.' && *line != '\0') {
 	    Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", line);
@@ -1301,7 +1301,7 @@ ParseDoDependency(char *line)
 
     cp++;			/* Advance beyond operator */
 
-    Lst_ForEach(targets, ParseDoOp, (ClientData)&op);
+    Lst_ForEach(targets, ParseDoOp, &op);
 
     /*
      * Get to the first source
@@ -1335,7 +1335,7 @@ ParseDoDependency(char *line)
 		beSilent = TRUE;
 		break;
 	    case ExPath:
-		Lst_ForEach(paths, ParseClearPath, (ClientData)NULL);
+		Lst_ForEach(paths, ParseClearPath, NULL);
 		Dir_SetPATH();
 		break;
 #ifdef POSIX
@@ -1409,7 +1409,7 @@ ParseDoDependency(char *line)
 		    Suff_AddSuffix(line, &mainNode);
 		    break;
 		case ExPath:
-		    Lst_ForEach(paths, ParseAddDir, (ClientData)line);
+		    Lst_ForEach(paths, ParseAddDir, line);
 		    break;
 		case Includes:
 		    Suff_AddInclude(line);
@@ -1500,7 +1500,7 @@ ParseDoDependency(char *line)
 	 * the first dependency line that is actually a real target
 	 * (i.e. isn't a .USE or .EXEC rule) to be made.
 	 */
-	Lst_ForEach(targets, ParseFindMain, (ClientData)0);
+	Lst_ForEach(targets, ParseFindMain, NULL);
     }
 
 out:
@@ -2050,7 +2050,7 @@ ParseDoInclude(char *line)
 
     memcpy(oldFile, &curFile, sizeof(IFile));
 
-    (void)Lst_AtFront(includes, (ClientData)oldFile);
+    (void)Lst_AtFront(includes, oldFile);
 
     /*
      * Once the previous state has been saved, we can get down to reading
@@ -2133,7 +2133,7 @@ Parse_FromString(char *str, int lineno)
     oldFile = emalloc(sizeof(IFile));
     memcpy(oldFile, &curFile, sizeof(IFile));
 
-    (void)Lst_AtFront(includes, (ClientData)oldFile);
+    (void)Lst_AtFront(includes, oldFile);
 
     curFile.F = NULL;
     curFile.P = emalloc(sizeof(PTR));
@@ -2279,7 +2279,7 @@ ParseTraditionalInclude(char *line)
 	oldFile = emalloc(sizeof(IFile));
 	memcpy(oldFile, &curFile, sizeof(IFile));
 
-	(void)Lst_AtFront(includes, (ClientData)oldFile);
+	(void)Lst_AtFront(includes, oldFile);
 
 	/*
 	 * Once the previous state has been saved, we can get down to
@@ -2745,7 +2745,7 @@ static void
 ParseFinishLine(void)
 {
     if (inLine) {
-	Lst_ForEach(targets, Suff_EndTransform, (ClientData)NULL);
+	Lst_ForEach(targets, Suff_EndTransform, NULL);
 	Lst_Destroy(targets, ParseHasCommands);
 	targets = NULL;
 	inLine = FALSE;
@@ -2851,7 +2851,7 @@ Parse_File(const char *name, FILE *stream)
 		     */
 		    Lst_ForEach(targets, ParseAddCmd, cp);
 #ifdef CLEANUP
-		    Lst_AtEnd(targCmds, (ClientData) line);
+		    Lst_AtEnd(targCmds, line);
 #endif
 		    line = 0;
 		}
@@ -3023,11 +3023,11 @@ Parse_MainName(void)
 	Punt("no target to make.");
     	/*NOTREACHED*/
     } else if (mainNode->type & OP_DOUBLEDEP) {
-	(void)Lst_AtEnd(mainList, (ClientData)mainNode);
+	(void)Lst_AtEnd(mainList, mainNode);
 	Lst_Concat(mainList, mainNode->cohorts, LST_CONCNEW);
     }
     else
-	(void)Lst_AtEnd(mainList, (ClientData)mainNode);
+	(void)Lst_AtEnd(mainList, mainNode);
     Var_Append(".TARGETS", mainNode->name, VAR_GLOBAL);
     return (mainList);
 }
