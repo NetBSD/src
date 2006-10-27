@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf1632.c,v 1.6 2006/03/19 01:24:09 christos Exp $	*/
+/*	$NetBSD: citrus_utf1632.c,v 1.7 2006/10/27 14:13:55 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf1632.c,v 1.6 2006/03/19 01:24:09 christos Exp $");
+__RCSID("$NetBSD: citrus_utf1632.c,v 1.7 2006/10/27 14:13:55 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -221,6 +221,8 @@ refetch:
 		default:
 			goto ilseq;
 		}
+		if (wc >= 0xD800 && wc <= 0xDFFF)
+			goto ilseq;
 	}
 
 
@@ -299,6 +301,8 @@ surrogate:
 		}
 	} else {
 		/* UTF32 */
+		if (wc >= 0xD800 && wc <= 0xDFFF)
+			goto err;
 		if (n < 4) {
 			ret = E2BIG;
 			goto err;
