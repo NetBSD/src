@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.17 2006/10/12 21:19:13 uwe Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.18 2006/10/27 00:08:32 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.17 2006/10/12 21:19:13 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.18 2006/10/27 00:08:32 uwe Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -41,9 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.17 2006/10/12 21:19:13 uwe Exp $"
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
-#ifdef GPROF
-#include <sys/gmon.h>
-#endif
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
