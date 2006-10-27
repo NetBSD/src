@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.15 2006/10/23 13:36:33 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.16 2006/10/27 15:05:16 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.15 2006/10/23 13:36:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.16 2006/10/27 15:05:16 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -777,7 +777,7 @@ vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 	KASSERT(size > 0);
 	KASSERT(strat == VM_BESTFIT || strat == VM_INSTANTFIT);
 	if ((flags & VM_SLEEP) != 0) {
-		ASSERT_SLEEPABLE(NULL, "vmem_alloc");
+		ASSERT_SLEEPABLE(NULL, __func__);
 	}
 
 #if defined(QCACHE)
@@ -812,7 +812,7 @@ vmem_xalloc(vmem_t *vm, vmem_size_t size0, vmem_size_t align, vmem_size_t phase,
 	KASSERT(size > 0);
 	KASSERT(strat == VM_BESTFIT || strat == VM_INSTANTFIT);
 	if ((flags & VM_SLEEP) != 0) {
-		ASSERT_SLEEPABLE(NULL, "vmem_alloc");
+		ASSERT_SLEEPABLE(NULL, __func__);
 	}
 	KASSERT((align & vm->vm_quantum_mask) == 0);
 	KASSERT((align & (align - 1)) == 0);
