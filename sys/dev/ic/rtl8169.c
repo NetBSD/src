@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.48 2006/10/24 11:17:49 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.49 2006/10/27 13:26:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1757,6 +1757,7 @@ static int
 re_init(struct ifnet *ifp)
 {
 	struct rtk_softc	*sc = ifp->if_softc;
+	uint8_t			*enaddr;
 	uint32_t		rxcfg = 0;
 	uint32_t		reg;
 	int error;
@@ -1815,11 +1816,12 @@ re_init(struct ifnet *ifp)
 	 * register write enable" mode to modify the ID registers.
 	 */
 	CSR_WRITE_1(sc, RTK_EECMD, RTK_EEMODE_WRITECFG);
-	memcpy(&reg, LLADDR(ifp->if_sadl), 4);
-	CSR_WRITE_STREAM_4(sc, RTK_IDR0, reg);
-	reg = 0;
-	memcpy(&reg, LLADDR(ifp->if_sadl) + 4, 4);
-	CSR_WRITE_STREAM_4(sc, RTK_IDR4, reg);
+	enaddr = LLADDR(ifp->if_sadl);
+	reg = enaddr[0] | (enaddr[1] << 8) |
+	    (enaddr[2] << 16) | (enaddr[3] << 24);
+	CSR_WRITE_4(sc, RTK_IDR0, reg);
+	reg = enaddr[4] | (enaddr[5] << 8);
+	CSR_WRITE_4(sc, RTK_IDR4, reg);
 	CSR_WRITE_1(sc, RTK_EECMD, RTK_EEMODE_OFF);
 
 	/*
