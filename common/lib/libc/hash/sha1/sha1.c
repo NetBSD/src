@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.1 2005/12/20 20:29:40 christos Exp $	*/
+/*	$NetBSD: sha1.c,v 1.2 2006/10/27 21:25:21 christos Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -17,20 +17,28 @@
 
 #define SHA1HANDSOFF		/* Copies data before messing with it. */
 
-#if defined(_KERNEL) || defined(_STANDALONE)
-#include <lib/libkern/libkern.h>
-#include <sys/sha1.h>
-#else
 #include <sys/cdefs.h>
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+__KERNEL_RCSID(0, "$NetBSD: sha1.c,v 1.2 2006/10/27 21:25:21 christos Exp $");
+
+#include <lib/libkern/libkern.h>
+
+#else
+
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha1.c,v 1.1 2005/12/20 20:29:40 christos Exp $");
+__RCSID("$NetBSD: sha1.c,v 1.2 2006/10/27 21:25:21 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
+
 #include "namespace.h"
-#include <sys/types.h>
 #include <assert.h>
-#include <sha1.h>
 #include <string.h>
+
 #endif
+
+#include <sys/types.h>
+#include <sys/sha1.h>
+
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
