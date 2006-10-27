@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.270 2006/10/25 17:38:27 bouyer Exp $
+#	$NetBSD: files.pci,v 1.271 2006/10/27 08:22:31 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -304,7 +304,7 @@ file	dev/pci/slide.c		slide
 #file	dev/pci/swide.c		swide
 
 # VIA/AMD/Nvidia IDE controllers
-device	viaide: ata, ata_dma, ata_udma, pciide_common, wdc_common
+device	viaide: ata, ata_dma, ata_udma, pciide_common, wdc_common, sata
 attach	viaide at pci
 file	dev/pci/viaide.c	viaide
 
