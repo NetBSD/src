@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.33 2006/10/26 10:00:38 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.34 2006/10/27 20:00:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.33 2006/10/26 10:00:38 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.34 2006/10/27 20:00:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,6 +77,8 @@ static void	openlog_unlocked_r(const char *, int, int,
     struct syslog_data *);
 static void	disconnectlog_r(struct syslog_data *);
 static void	connectlog_r(struct syslog_data *);
+
+#define LOG_SIGNAL_SAFE	(int)0x80000000
  
 
 #ifdef _REENTRANT
@@ -135,6 +137,22 @@ syslog_r(int pri, struct syslog_data *data, const char *fmt, ...)
 }
 
 void
+syslog_ss(int pri, struct syslog_data *data, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vsyslog_r(pri | LOG_SIGNAL_SAFE, data, fmt, ap);
+	va_end(ap);
+}
+
+void
+vsyslog_ss(int pri, struct syslog_data *data, const char *fmt, va_list ap)
+{
+	vsyslog_r(pri | LOG_SIGNAL_SAFE, data, fmt, ap);
+}
+
+void
 vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 {
 	size_t cnt, prlen;
@@ -147,17 +165,15 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 	char *stdp = NULL;	/* pacify gcc */
 	char tbuf[TBUF_LEN], fmt_cpy[FMT_LEN];
 	size_t tbuf_left, fmt_left;
+	int signal_safe = pri & LOG_SIGNAL_SAFE;
+
+	pri &= LOG_SIGNAL_SAFE;
 
 #define	INTERNALLOG	LOG_ERR|LOG_CONS|LOG_PERROR|LOG_PID
 	/* Check for invalid bits. */
 	if (pri & ~(LOG_PRIMASK|LOG_FACMASK)) {
-		if (data == &sdata) {
-			syslog(INTERNALLOG,
-			    "syslog: unknown facility/priority: %x", pri);
-		} else {
-			syslog_r(INTERNALLOG, data,
-			    "syslog_r: unknown facility/priority: %x", pri);
-		}
+		syslog_r(INTERNALLOG | signal_safe, data,
+		    "syslog_r: unknown facility/priority: %x", pri);
 		pri &= LOG_PRIMASK|LOG_FACMASK;
 	}
 
@@ -181,7 +197,7 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 	 * ability to construct to his own locale files, it may be
 	 * arbitrarily long.
 	 */
-	 if (data == &sdata)
+	 if (!signal_safe)
 		(void)time(&now);
 
 	p = tbuf;  
@@ -195,10 +211,10 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 		tbuf_left -= prlen;				\
 	} while (/*CONSTCOND*/0)
 
-	prlen = snprintf(p, tbuf_left, "<%d>", pri);
+	prlen = snprintf_ss(p, tbuf_left, "<%d>", pri);
 	DEC();
 
-	if (data == &sdata) {
+	if (!signal_safe) {
 		/* strftime() implies tzset(), localtime_r() doesn't. */
 		tzset();
 		prlen = strftime(p, tbuf_left, "%h %e %T ",
@@ -211,11 +227,11 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 	if (data->log_tag == NULL)
 		data->log_tag = getprogname();
 	if (data->log_tag != NULL) {
-		prlen = snprintf(p, tbuf_left, "%s", data->log_tag);
+		prlen = snprintf_ss(p, tbuf_left, "%s", data->log_tag);
 		DEC();
 	}
 	if (data->log_stat & LOG_PID) {
-		prlen = snprintf(p, tbuf_left, "[%d]", getpid());
+		prlen = snprintf_ss(p, tbuf_left, "[%d]", getpid());
 		DEC();
 	}
 	if (data->log_tag != NULL) {
@@ -237,12 +253,12 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 		if (ch == '%' && fmt[1] == 'm') {
 			char ebuf[128];
 			++fmt;
-			if (data != &sdata ||
+			if (signal_safe ||
 			    strerror_r(saved_errno, ebuf, sizeof(ebuf)))
-				prlen = snprintf(t, fmt_left, "Error %d", 
+				prlen = snprintf_ss(t, fmt_left, "Error %d", 
 				    saved_errno);
 			else
-				prlen = snprintf(t, fmt_left, "%s", ebuf);
+				prlen = snprintf_ss(t, fmt_left, "%s", ebuf);
 			if (prlen >= fmt_left)
 				prlen = fmt_left - 1;
 			t += prlen;
@@ -261,7 +277,10 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 	}
 	*t = '\0';
 
-	prlen = vsnprintf(p, tbuf_left, fmt_cpy, ap);
+	if (signal_safe)
+		prlen = vsnprintf_ss(p, tbuf_left, fmt_cpy, ap);
+	else
+		prlen = vsnprintf(p, tbuf_left, fmt_cpy, ap);
 	DEC();
 	cnt = p - tbuf;
 
