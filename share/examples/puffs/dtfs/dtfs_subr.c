@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.3 2006/10/26 22:53:25 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.4 2006/10/27 12:26:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -88,11 +88,6 @@ dtfs_genfile(struct puffs_node *dir, const char *name, enum vtype type)
 	struct dtfs_dirent *dfd;
 	struct dtfs_mount *dtm;
 	struct puffs_node *newpn;
-
-	/* support only regular files and directories */
-	if (!(type == VREG || type == VDIR || type == VLNK || type == VBLK
-	    || type == VCHR))
-		return NULL;
 
 	assert(dir->pn_type == VDIR);
 	assert(dir->pn_mnt != NULL);
@@ -216,6 +211,8 @@ dtfs_freenode(struct puffs_node *pn)
 	case VCHR:
 	case VBLK:
 	case VDIR:
+	case VSOCK:
+	case VFIFO:
 		break;
 	default:
 		assert(0);
