@@ -1,7 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.5 2005/12/27 08:43:05 yamt Exp $
+# $NetBSD: Makefile.inc,v 1.6 2006/10/27 21:23:15 christos Exp $
 
 COMMON_DIR:=${.PARSEDIR}
-COMMON_CODEDIRS=gen gmon hash/sha1 inet md net quad stdlib string
+COMMON_CODEDIRS=gen gmon inet md net quad stdlib string
+COMMON_CODEDIRS+=hash/sha1 hash/sha2 hash/rmd160
 
 .if defined(LIBKERN_ARCH) && !empty(LIBKERN_ARCH) && \
     exists(${KERNDIR}/arch/${LIBKERN_ARCH})
