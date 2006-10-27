@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.17 2006/05/11 23:16:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2006/10/27 18:22:56 drochner Exp $
 
 USE_SHLIBDIR=	yes
 
 LIB=	crypt
 
 SRCS=	crypt.c md5crypt.c bcrypt.c crypt-sha1.c util.c pw_gensalt.c
+SRCS+=	hmac_sha1.c
 
 CPPFLAGS+=	-I${.CURDIR}
 
