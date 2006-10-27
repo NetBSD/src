@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.29 2006/10/12 01:30:55 christos Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.30 2006/10/27 18:47:07 dogcow Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.29 2006/10/12 01:30:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.30 2006/10/27 18:47:07 dogcow Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -306,7 +306,7 @@ rtk_cardbus_setup(csc)
 	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		command = cardbus_conf_read(cc, cf, csc->sc_tag,
 		    pmreg + PCI_PMCSR);
-		if (command & RTK_PSTATE_MASK) {
+		if (command & PCI_PMCSR_STATE_MASK) {
 			pcireg_t		iobase, membase, irq;
 
 			/* Save important PCI config data. */
@@ -320,8 +320,8 @@ rtk_cardbus_setup(csc)
 			/* Reset the power state. */
 			printf("%s: chip is in D%d power mode "
 			    "-- setting to D0\n", sc->sc_dev.dv_xname,
-			    command & RTK_PSTATE_MASK);
-			command &= ~RTK_PSTATE_MASK;
+			    command & PCI_PMCSR_STATE_MASK);
+			command &= ~PCI_PMCSR_STATE_MASK;
 			cardbus_conf_write(cc, cf, csc->sc_tag,
 			    pmreg + PCI_PMCSR, command);
 
