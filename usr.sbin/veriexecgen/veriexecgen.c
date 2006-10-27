@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.6 2006/09/23 19:08:48 elad Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.7 2006/10/27 22:14:17 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ static char *
 flags2str(int flags)
 {
 	if (flags != 0)
-		return "FILE";
+		return "FILE, INDIRECT";
 	else
 		return "";
 }
