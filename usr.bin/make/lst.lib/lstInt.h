@@ -1,4 +1,4 @@
-/*	$NetBSD: lstInt.h,v 1.12 2006/10/25 19:45:22 dsl Exp $	*/
+/*	$NetBSD: lstInt.h,v 1.13 2006/10/27 21:37:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -64,7 +64,7 @@ typedef enum {
     Head, Middle, Tail, Unknown
 } Where;
 
-typedef struct	{
+typedef struct	List {
 	ListNode  	firstPtr; /* first node in list */
 	ListNode  	lastPtr;  /* last node in list */
 	Boolean	  	isCirc;	  /* true if the list should be considered
@@ -98,7 +98,7 @@ typedef struct	{
  * LstNodeValid (ln, l) --
  *	Return TRUE if the LstNode ln is valid with respect to l
  */
-#define LstNodeValid(ln, l)	((LstNode)(ln) != NILLNODE)
+#define LstNodeValid(ln, l)	((ln) != NILLNODE)
 
 /*
  * LstIsEmpty (l) --
