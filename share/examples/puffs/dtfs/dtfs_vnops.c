@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.4 2006/10/26 22:53:25 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.5 2006/10/27 12:26:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -128,7 +128,7 @@ dtfs_create(struct puffs_usermount *pu, void *opc, void **newnode,
 	struct puffs_node *pn_parent = opc;
 	struct puffs_node *pn_new;
 
-	if (va->va_type != VREG)
+	if (!(va->va_type == VREG || va->va_type == VSOCK))
 		return ENODEV;
 
 	pn_new = dtfs_genfile(pn_parent, pcn->pcn_name, va->va_type);
@@ -313,7 +313,9 @@ dtfs_mknod(struct puffs_usermount *pu, void *opc, void **newnode,
 	struct puffs_node *pn_new;
 	struct dtfs_file *df;
 
-	assert(va->va_type == VBLK || va->va_type == VCHR);
+	if (!(va->va_type == VBLK || va->va_type == VCHR
+	    || va->va_type == VFIFO))
+		return EINVAL;
 
 	pn_new = dtfs_genfile(pn_parent, pcn->pcn_name, va->va_type);
 	puffs_setvattr(&pn_new->pn_va, va);
