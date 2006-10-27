@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.40 2006/10/12 01:32:38 christos Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.41 2006/10/27 22:50:28 mrg Exp $	*/
 /*	$KAME: ah_core.c,v 1.57 2003/07/25 09:33:36 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.40 2006/10/12 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.41 2006/10/27 22:50:28 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -80,8 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.40 2006/10/12 01:32:38 christos Exp $"
 #define MD5_RESULTLEN	16
 #include <sys/sha1.h>
 #define SHA1_RESULTLEN	20
-#include <crypto/sha2/sha2.h>
-#include <crypto/ripemd160/rmd160.h>
+#include <sys/sha2.h>
+#include <sys/rmd160.h>
 #define RIPEMD160_RESULTLEN	20
 
 #include <net/net_osdep.h>
