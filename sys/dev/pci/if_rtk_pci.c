@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.27 2006/10/12 01:31:30 christos Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.28 2006/10/27 09:57:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.27 2006/10/12 01:31:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.28 2006/10/27 09:57:26 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,8 +186,8 @@ rtk_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 	 */
 
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		command = pci_conf_read(pc, pa->pa_tag, pmreg + 4);
-		if (command & RTK_PSTATE_MASK) {
+		command = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
+		if (command & PCI_PMCSR_STATE_MASK) {
 			pcireg_t iobase, membase, irq;
 
 			/* Save important PCI config data. */
@@ -198,9 +198,10 @@ rtk_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 			/* Reset the power state. */
 			printf("%s: chip is in D%d power mode "
 			    "-- setting to D0\n", sc->sc_dev.dv_xname,
-			    command & RTK_PSTATE_MASK);
-			command &= 0xFFFFFFFC;
-			pci_conf_write(pc, pa->pa_tag, pmreg + 4, command);
+			    command & PCI_PMCSR_STATE_MASK);
+			command &= ~PCI_PMCSR_STATE_MASK;
+			pci_conf_write(pc, pa->pa_tag,
+			    pmreg + PCI_PMCSR, command);
 
 			/* Restore PCI config data. */
 			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOIO, iobase);
