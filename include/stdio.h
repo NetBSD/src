@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.64 2006/05/10 21:09:45 mrg Exp $	*/
+/*	$NetBSD: stdio.h,v 1.65 2006/10/27 20:03:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -106,7 +106,7 @@ typedef	struct __sFILE {
 	unsigned char *_p;	/* current position in (some) buffer */
 	int	_r;		/* read space left for getc() */
 	int	_w;		/* write space left for putc() */
-	short	_flags;		/* flags, below; this FILE is free if 0 */
+	unsigned short _flags;	/* flags, below; this FILE is free if 0 */
 	short	_file;		/* fileno, if Unix descriptor, else -1 */
 	struct	__sbuf _bf;	/* the buffer (at least 1 byte, if !NULL) */
 	int	_lbfsize;	/* 0 or -_bf._size, for inline putc */
@@ -157,6 +157,7 @@ __END_DECLS
 #define	__SOFF	0x1000		/* set iff _offset is in fact correct */
 #define	__SMOD	0x2000		/* true => fgetln modified _p text */
 #define	__SALC	0x4000		/* allocate string space dynamically */
+#define	__SAFE	0x8000		/* don't call signal-unsafe functions */
 
 /*
  * The following three definitions are for ANSI C, which took them
@@ -329,6 +330,13 @@ int	 vsnprintf(char * __restrict, size_t, const char * __restrict,
 	    _BSD_VA_LIST_)
 	    __attribute__((__format__(__printf__, 3, 0)));
 __END_DECLS
+#endif
+#ifdef _NETBSD_SOURCE
+int	 snprintf_ss(char * __restrict, size_t, const char * __restrict, ...)
+	    __attribute__((__format__(__printf__, 3, 4)));
+int	 vsnprintf_ss(char * __restrict, size_t, const char * __restrict,
+	    _BSD_VA_LIST_)
+	    __attribute__((__format__(__printf__, 3, 0)));
 #endif
 
 /*
