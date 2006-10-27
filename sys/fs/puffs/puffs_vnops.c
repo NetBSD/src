@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.5 2006/10/26 22:52:47 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.6 2006/10/27 12:25:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.5 2006/10/26 22:52:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.6 2006/10/27 12:25:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.5 2006/10/26 22:52:47 pooka Exp $"
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
 
+#include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
-
 #include <miscfs/specfs/specdev.h>
 
 int	puffs_lookup(void *);
@@ -105,6 +105,10 @@ int puffs_islocked(void *);
 #define puffsspec_read spec_read
 #define puffsspec_write spec_write
 #define puffsspec_close spec_close
+/* no special fifo-ooops either */
+#define puffsfifo_read fifo_read
+#define puffsfifo_write fifo_write
+#define puffsfifo_close fifo_close
 
 int (**puffs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
@@ -162,9 +166,9 @@ int (**puffs_specop_p)(void *);
 const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup, ENOTDIR */
-	{ &vop_create_desc, spec_create },		/* create, badop */
-	{ &vop_mknod_desc, spec_mknod },		/* mknod, badop */
-	{ &vop_open_desc, spec_open },			/* open, spec_open */
+	{ &vop_create_desc, spec_create },		/* genfs_badop */
+	{ &vop_mknod_desc, spec_mknod },		/* genfs_badop */
+	{ &vop_open_desc, spec_open },			/* spec_open */
 	{ &vop_close_desc, puffsspec_close },		/* close */
 	{ &vop_access_desc, puffs_access },		/* access */
 	{ &vop_getattr_desc, puffs_getattr },		/* getattr */
@@ -189,8 +193,8 @@ const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 	{ &vop_readdir_desc, spec_readdir },		/* genfs_badop */
 	{ &vop_readlink_desc, spec_readlink },		/* genfs_badop */
 	{ &vop_abortop_desc, spec_abortop },		/* genfs_badop */
-	{ &vop_inactive_desc, puffs_inactive },		/* unlock */
-	{ &vop_reclaim_desc, puffs_reclaim },		/* genfs_nullop */
+	{ &vop_inactive_desc, puffs_inactive },		/* inactive */
+	{ &vop_reclaim_desc, puffs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, puffs_lock },			/* lock */
 	{ &vop_unlock_desc, puffs_unlock },		/* unlock */
 	{ &vop_bmap_desc, spec_bmap },			/* dummy */
@@ -214,6 +218,63 @@ const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 };
 const struct vnodeopv_desc puffs_specop_opv_desc =
 	{ &puffs_specop_p, puffs_specop_entries };
+
+int (**puffs_fifoop_p)(void *);
+const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
+	{ &vop_default_desc, vn_default_error },
+	{ &vop_lookup_desc, fifo_lookup },		/* lookup, ENOTDIR */
+	{ &vop_create_desc, fifo_create },		/* genfs_badop */
+	{ &vop_mknod_desc, fifo_mknod },		/* genfs_badop */
+	{ &vop_open_desc, fifo_open },			/* open */
+	{ &vop_close_desc, puffsfifo_close },		/* close */
+	{ &vop_access_desc, puffs_access },		/* access */
+	{ &vop_getattr_desc, puffs_getattr },		/* getattr */
+	{ &vop_setattr_desc, puffs_setattr },		/* setattr */
+	{ &vop_read_desc, puffsfifo_read },		/* read */
+	{ &vop_write_desc, puffsfifo_write },		/* write */
+	{ &vop_lease_desc, fifo_lease_check },		/* genfs_nullop */
+	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* dummy */
+	{ &vop_poll_desc, fifo_poll },			/* poll */
+	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
+	{ &vop_revoke_desc, fifo_revoke },		/* genfs_revoke */
+	{ &vop_mmap_desc, fifo_mmap },			/* genfs_badop */
+	{ &vop_fsync_desc, puffs_fsync },		/* fsync */
+	{ &vop_seek_desc, fifo_seek },			/* genfs_badop */
+	{ &vop_remove_desc, fifo_remove },		/* genfs_badop */
+	{ &vop_link_desc, fifo_link },			/* genfs_badop */
+	{ &vop_rename_desc, fifo_rename },		/* genfs_badop */
+	{ &vop_mkdir_desc, fifo_mkdir },		/* genfs_badop */
+	{ &vop_rmdir_desc, fifo_rmdir },		/* genfs_badop */
+	{ &vop_symlink_desc, fifo_symlink },		/* genfs_badop */
+	{ &vop_readdir_desc, fifo_readdir },		/* genfs_badop */
+	{ &vop_readlink_desc, fifo_readlink },		/* genfs_badop */
+	{ &vop_abortop_desc, fifo_abortop },		/* genfs_badop */
+	{ &vop_inactive_desc, puffs_inactive },		/* inactive */
+	{ &vop_reclaim_desc, puffs_reclaim },		/* reclaim */
+	{ &vop_lock_desc, puffs_lock },			/* lock */
+	{ &vop_unlock_desc, puffs_unlock },		/* unlock */
+	{ &vop_bmap_desc, fifo_bmap },			/* dummy */
+	{ &vop_strategy_desc, fifo_strategy },		/* genfs_badop */
+	{ &vop_print_desc, puffs_print },		/* print */
+	{ &vop_islocked_desc, puffs_islocked },		/* islocked */
+	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
+	{ &vop_advlock_desc, fifo_advlock },		/* genfs_einval */
+	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, fifo_putpages }, 		/* genfs_null_putpages*/
+#if 0
+	{ &vop_openextattr_desc, _openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, _closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, _getextattr },		/* getextattr */
+	{ &vop_setextattr_desc, _setextattr },		/* setextattr */
+	{ &vop_listextattr_desc, _listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, _deleteextattr },	/* deleteextattr */
+#endif
+	{ NULL, NULL }
+};
+const struct vnodeopv_desc puffs_fifoop_opv_desc =
+	{ &puffs_fifoop_p, puffs_fifoop_entries };
+
 
 
 #define LOCKEDVP(a) (VOP_ISLOCKED(a) ? (a) : NULL)
@@ -1247,6 +1308,8 @@ puffs_print(void *v)
 	/* kernel portion */
 	printf("tag VT_PUFFS, vnode %p, puffs node: %p,\n"
 	    "    userspace cookie: %p\n", vp, pn, pn->pn_cookie);
+	if (vp->v_type == VFIFO)
+		fifo_printinfo(vp);
 	lockmgr_printinfo(&vp->v_lock);
 
 	/* userspace portion */
