@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.26 2006/10/27 09:57:26 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.27 2006/10/27 13:26:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -208,9 +208,6 @@ struct rtk_softc {
 	bus_space_write_2(sc->rtk_btag, sc->rtk_bhandle, reg, val)
 #define CSR_WRITE_1(sc, reg, val)	\
 	bus_space_write_1(sc->rtk_btag, sc->rtk_bhandle, reg, val)
-#define CSR_WRITE_STREAM_4(sc, reg, val)	\
-	bus_space_write_stream_4(sc->rtk_btag, sc->rtk_bhandle, reg, val)
-
 
 #define CSR_READ_4(sc, reg)		\
 	bus_space_read_4(sc->rtk_btag, sc->rtk_bhandle, reg)
