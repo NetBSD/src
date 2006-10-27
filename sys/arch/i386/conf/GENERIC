@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.791 2006/10/26 11:48:38 elad Exp $
+# $NetBSD: GENERIC,v 1.792 2006/10/27 17:37:44 perry Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.791 $"
+#ident 		"GENERIC-$Revision: 1.792 $"
 
 maxusers	32		# estimated number of users
 
@@ -269,7 +269,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	PCKBD_CNATTACH_MAY_FAIL
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" # for pckbd driver
-#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver 
+#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
@@ -1121,7 +1121,7 @@ radio*	at udsbr?
 # USB Generic driver
 ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
-options	UGEN_BULK_RA_WB
+options UGEN_BULK_RA_WB
 
 
 # IrDA and Consumer Ir devices
@@ -1391,8 +1391,8 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-options		FILEASSOC		# fileassoc(9) - required for Veriexec 
-#options	FILEASSOC_NHOOKS=4	# Default number of storage slots
+options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+#options 	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
 pseudo-device	veriexec
