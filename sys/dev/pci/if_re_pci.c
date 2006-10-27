@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.14 2006/10/12 01:31:30 christos Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.15 2006/10/27 09:57:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -231,7 +231,7 @@ re_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 	 */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		command = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
-		if (command & RTK_PSTATE_MASK) {
+		if (command & PCI_PMCSR_STATE_MASK) {
 			u_int32_t		iobase, membase, irq;
 
 			/* Save important PCI config data. */
@@ -242,9 +242,9 @@ re_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 			/* Reset the power state. */
 			aprint_normal("%s: chip is is in D%d power mode "
 		    	    "-- setting to D0\n", sc->sc_dev.dv_xname,
-		    	    command & RTK_PSTATE_MASK);
+		    	    command & PCI_PMCSR_STATE_MASK);
 
-			command &= ~RTK_PSTATE_MASK;
+			command &= ~PCI_PMCSR_STATE_MASK;
 			pci_conf_write(pc, pa->pa_tag,
 			    pmreg + PCI_PMCSR, command);
 
