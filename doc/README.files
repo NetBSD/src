@@ -1,6 +1,8 @@
-#	$NetBSD: README.files,v 1.2.6.3 2005/12/28 15:38:57 riz Exp $
+#	$NetBSD: README.files,v 1.2.6.3.2.1 2006/10/28 14:36:22 ghen Exp $
 
 What's in this directory:
+
+CHANGES-3.1.1	Changes between the 3.1 and 3.1.1 releases.
 
 CHANGES-3.1	Changes between the 3.0 and 3.1 releases.
 
