@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.4,v 1.12 2006/08/28 20:55:16 hubertf Exp $
+.\" $NetBSD: veriexec.4,v 1.13 2006/10/28 15:34:18 elad Exp $
 .\"
 .\" Copyright 2005 Elad Efrat <elad@bsd.org.il>
 .\" Copyright 2005 Brett Lymn <blymn@netbsd.org>
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 28, 2006
+.Dd October 28, 2006
 .Dt VERIEXEC 4
 .Sh NAME
 .Nm veriexec
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .Cd pseudo-device veriexec
 .Sh DESCRIPTION
-.Dq Veriexec
+.Em Veriexec
 verifies the integrity of specified executables and files before they are
 run or read.
 This makes it much more difficult to insert a trojan horse into the system
@@ -43,9 +43,10 @@ be running, for example, packet sniffers, DDoS clients and so on.
 .Pp
 The
 .Nm
-pseudo-device is used to interface the kernel's Veriexec data-structures.
-It is used to size the kernel data structures and load the Veriexec
-fingerprints into kernel memory.
+pseudo-device is used to preform optimal table sizing, fingerprint loading,
+and querying of entries, as part of the
+.Em Veriexec
+subsystem.
 .Ss Veriexec file operations
 All the following operations are invoked using the
 .Xr ioctl 2
@@ -58,14 +59,25 @@ parameters.
 The following section lists the requests that can be made via
 .Xr ioctl 2 .
 .Ss Veriexec file request descriptions
-.Bl -tag -width VERIEXEC_TABLESIZE
+.Bl -tag
 .It Dv VERIEXEC_TABLESIZE Fa struct veriexec_sizing_params
-Sizes the in kernel hash tables to accommodate the fingerprint entries.
+Sizes the in kernel tables to accommodate the fingerprint entries.
 This request must be made prior to loading the fingerprints into the
 kernel.
-The argument structure contains the device to which the hash table relates
-and the number of fingerprint entries that will be loaded into the
-kernel for the device.
+.Pp
+The argument structure is, as defined in
+.Pa /usr/include/sys/verified_exec.h :
+.Bd -literal
+struct veriexec_sizing_params {
+	size_t hash_size;
+	u_char file[MAXPATHLEN];
+.Ed
+.Pp
+Where
+.Ar hash_size
+is the estimated number of entries in the table for the mount, and
+.Ar file
+is the mount point.
 .It Dv VERIEXEC_LOAD Fa struct veriexec_params
 Inserts a fingerprint into the in-kernel tables.
 These tables must have been previously sized using the
@@ -83,35 +95,47 @@ struct veriexec_params  {
 };
 .Ed
 .Pp
-Where type is a bitfield that can be binary-OR'd with one or more of:
-.Bl -tag -width VERIEXEC_INDIRECT
+Where
+.Ar type
+is a bitfield that can be binary-OR'd with one or more of:
+.Bl -tag
 .It Dv VERIEXEC_DIRECT
-Allow execution of the file if fingerprint matches.
+Allow direct execution of the file if fingerprint matches.
 .It Dv VERIEXEC_INDIRECT
-Allow execution of the file as a script interpreter only, direct command
-line invocation is disallowed.
+Allow execution of the file as a script interpreter, or allow mapping
+the file to executable memory regions.
 .It Dv VERIEXEC_FILE
-The file is a plain file, not an executable.
+Allow opening the file for read/write/mmap/etc. purposes.
 .It Dv VERIEXEC_UNTRUSTED
 The file is located on untrusted storage.
 .El
 .Pp
-Followed by fp_type, which is the fingerprint type.
+.Ar fp_type
+is the fingerprint type.
 This is a case-insensitive character string that must match one of
 the fingerprint types supported by the running kernel.
-Next the path to the file to which the fingerprint applies.
-The field size is the number of bytes contained in the
-fingerprint, this is used by the kernel to provide a simple sanity check
-on the fingerprint passed.
-Lastly, the fingerprint is a pointer to an
-array of characters that comprise the fingerprint for the file.
+.Pp
+.Ar file
+is the path of the file the entry is for.
+.Pp
+.Ar fingerprint
+is a pointer to the fingerprint for the file.
+.Pp
+.Ar size
+is not used and is kept for ABI compatibility only.
 .It Dv VERIEXEC_DELETE Fa struct veriexec_delete_params
-Removes either an entry or an entire table from Veriexec.
-To remove a single entry, both device id and inode number must be provided.
-If only a device id is provided and inode is zero, the entire table for
-the specified device will be removed.
+Removes either an entry or an entire table from
+.Em Veriexec .
+.Pp
+The argument structure contains a single member,
+.Ar file ,
+with the path to the entry to be removed.
+If the path is a mount-point (directory), the entries for the entire
+mount-point will be removed.
 .It Dv VERIEXEC_QUERY Fa struct veriexec_query_params
-Queries a Veriexec table entry and returns the fingerprint and the
+Queries a
+.Em Veriexec
+table entry and returns the fingerprint and the
 algorithm used to calculate it, evaluation status, and entry type.
 .El
 .Pp
@@ -120,23 +144,24 @@ Note that the requests
 .Dv VERIEXEC_LOAD ,
 and
 .Dv VERIEXEC_DELETE
-are not permitted once the veriexec strict level has been raised past 0
-by setting
-.Dv kern.veriexec.strict
-using
-.Xr sysctl 8 .
+are not permitted once the strict level has been raised past 0.
 .Sh SEE ALSO
 .Xr sysctl 3 ,
 .Xr sysctl 8 ,
-.Xr veriexecctl 8
+.Xr veriexecctl 8 ,
+.Xr veriexecgen 8 ,
+.Xr veriexec 9
 .Sh NOTES
-The size field in the
+It is possible for a malicious user to trigger access to random
+memory by passing a junk pointer for the
+.Ar fingerprint
+member in a
 .Dv VERIEXEC_LOAD
-structure is only used to validate that the size of the fingerprint being
-passed is the expected size for that fingerprint hash type; it is not used
-for any other purpose.
-A malicious person could deliberately mismatch the size of the fingerprint
-array and, possibly, cause a kernel page fault panic when the kernel
-reads the input fingerprint array memory.
-Due to this, it is recommended only the root user be allowed to access
-this device.
+command.
+.Pp
+.Nm
+is part of the default configuration on the following architectures: amd64,
+i386, prep, sparc64.
+.Sh AUTHORS
+.An Brett Lymn Aq blymn@NetBSD.org
+.An Elad Efrat Aq elad@NetBSD.org
