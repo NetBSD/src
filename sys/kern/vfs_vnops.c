@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.126 2006/10/27 20:16:10 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.127 2006/10/28 11:43:45 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.126 2006/10/27 20:16:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.127 2006/10/28 11:43:45 elad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -106,12 +106,13 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 #if NVERIEXEC > 0
 	struct veriexec_file_entry *vfe = NULL;
 	const char *pathbuf;
+	char *tmppathbuf;
 #endif /* NVERIEXEC > 0 */
 
 #if NVERIEXEC > 0
 	if (ndp->ni_segflg == UIO_USERSPACE) {	
-		pathbuf = PNBUF_GET();
-		error = copyinstr(ndp->ni_dirp, __UNCONST(pathbuf), MAXPATHLEN,
+		tmppathbuf = PNBUF_GET();
+		error = copyinstr(ndp->ni_dirp, tmppathbuf, MAXPATHLEN,
 		    NULL);
 		if (error) {
 			if (veriexec_verbose >= 1)
@@ -119,8 +120,11 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 				    error);
 			goto bad2;
 		}
-	} else
+		pathbuf = tmppathbuf;
+	} else {
+		tmppathbuf = NULL;
 		pathbuf = ndp->ni_dirp;
+	}
 #endif /* NVERIEXEC > 0 */
 
 restart:
@@ -286,13 +290,14 @@ restart:
 	if (fmode & FWRITE)
 		vp->v_writecount++;
 
-	return (0);
 bad:
-	vput(vp);
+	if (error)
+		vput(vp);
+
 bad2:
 #if NVERIEXEC > 0
-	if (ndp->ni_segflg == UIO_USERSPACE)
-		PNBUF_PUT(__UNCONST(pathbuf));
+	if (tmppathbuf != NULL)
+		PNBUF_PUT(tmppathbuf);
 #endif /* NVERIEXEC > 0 */
 
 	return (error);
