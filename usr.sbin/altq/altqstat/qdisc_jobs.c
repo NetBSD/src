@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_jobs.c,v 1.2 2006/10/12 19:59:13 peter Exp $	*/
+/*	$NetBSD: qdisc_jobs.c,v 1.3 2006/10/28 11:43:02 peter Exp $	*/
 /*	$KAME: qdisc_jobs.c,v 1.2 2002/10/27 03:19:36 kjc Exp $	*/
 /*
  * Copyright (c) 2001-2002, by the Rector and Board of Visitors of the 
@@ -96,7 +96,7 @@ jobs_stat_loop(int fd, const char *ifname, int count, int interval)
 	for (i=0; i<JOBS_MAXPRI; i++)
 		last[i].class_handle = JOBS_NULLCLASS_HANDLE;
 
-	while (count == 0 || cnt-- > 0) {
+	for (;;) {
 		get_stats.stats = new;
 		get_stats.maxpri = JOBS_MAXPRI;
 		if (ioctl(fd, JOBS_GETSTATS, &get_stats) < 0)
@@ -168,6 +168,9 @@ jobs_stat_loop(int fd, const char *ifname, int count, int interval)
 		new = tmp;
 
 		last_time = cur_time;
+
+		if (count != 0 && --cnt == 0)
+			break;
 
 		/* wait for alarm signal */
 		if (sigprocmask(SIG_BLOCK, NULL, &omask) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_priq.c,v 1.5 2006/10/12 19:59:13 peter Exp $	*/
+/*	$NetBSD: qdisc_priq.c,v 1.6 2006/10/28 11:43:02 peter Exp $	*/
 /*	$KAME: qdisc_priq.c,v 1.6 2003/07/10 12:09:38 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -68,7 +68,7 @@ priq_stat_loop(int fd, const char *ifname, int count, int interval)
 	for (i=0; i<PRIQ_MAXPRI; i++)
 		last[i].class_handle = PRIQ_NULLCLASS_HANDLE;
 
-	while (count == 0 || cnt-- > 0) {
+	for (;;) {
 		get_stats.stats = new;
 		get_stats.maxpri = PRIQ_MAXPRI;
 		if (ioctl(fd, PRIQ_GETSTATS, &get_stats) < 0)
@@ -88,16 +88,17 @@ priq_stat_loop(int fd, const char *ifname, int count, int interval)
 
 			if (sp->class_handle != lp->class_handle) {
 				quip_chandle2name(ifname, sp->class_handle,
-						  clnames[i], sizeof(clnames[0]));
-				continue;
+				    clnames[i], sizeof(clnames[0]));
 			}
 
 			printf("[%s] handle:%#x pri:%d\n",
 			       clnames[i], sp->class_handle, i);
-			printf("  measured: %sbps qlen:%2d period:%u\n",
-			       rate2str(calc_rate(sp->xmitcnt.bytes,
-						  lp->xmitcnt.bytes, sec)),
-			       sp->qlength, sp->period);
+			if (lp->class_handle != PRIQ_NULLCLASS_HANDLE) {
+				printf("  measured: %sbps qlen:%2d period:%u\n",
+				    rate2str(calc_rate(sp->xmitcnt.bytes,
+					lp->xmitcnt.bytes, sec)),
+				    sp->qlength, sp->period);
+			}
 			printf("     packets:%llu (%llu bytes) drops:%llu\n",
 			       (ull)sp->xmitcnt.packets,
 			       (ull)sp->xmitcnt.bytes,
@@ -114,6 +115,9 @@ priq_stat_loop(int fd, const char *ifname, int count, int interval)
 		new = tmp;
 
 		last_time = cur_time;
+
+		if (count != 0 && --cnt == 0)
+			break;
 
 		/* wait for alarm signal */
 		if (sigprocmask(SIG_BLOCK, NULL, &omask) == 0)

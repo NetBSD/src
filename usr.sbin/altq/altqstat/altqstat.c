@@ -1,4 +1,4 @@
-/*	$NetBSD: altqstat.c,v 1.6 2006/10/12 19:59:13 peter Exp $	*/
+/*	$NetBSD: altqstat.c,v 1.7 2006/10/28 11:43:02 peter Exp $	*/
 /*	$KAME: altqstat.c,v 1.8 2002/10/27 03:19:35 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -105,6 +105,8 @@ main (int argc, char **argv)
 			break;
 		case 'c':
 			count = atoi(optarg);
+			if (count < 1)
+				errx(1, "Please supply a count value bigger than 0.");
 			break;
 		case 'e':
 			quip_echo = 1;

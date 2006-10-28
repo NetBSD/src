@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_blue.c,v 1.3 2001/08/16 07:48:10 itojun Exp $	*/
+/*	$NetBSD: qdisc_blue.c,v 1.4 2006/10/28 11:43:02 peter Exp $	*/
 /*	$KAME: qdisc_blue.c,v 1.3 2001/08/15 12:51:58 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -61,8 +61,7 @@ blue_stat_loop(int fd, const char *ifname, int count, int interval)
 	last_time.tv_sec -= interval;
 	last_bytes = 0;
 
-	while (count == 0 || cnt-- > 0) {
-	
+	for (;;) {
 		if (ioctl(fd, BLUE_GETSTATS, &blue_stats) < 0)
 			err(1, "ioctl BLUE_GETSTATS");
 
@@ -86,6 +85,10 @@ blue_stat_loop(int fd, const char *ifname, int count, int interval)
 
 		last_bytes = blue_stats.xmit_bytes;
 		last_time = cur_time;
+
+		if (count != 0 && --cnt == 0)
+			break;
+
 		sleep(interval);
 	}
 }

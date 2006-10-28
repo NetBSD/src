@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_red.c,v 1.4 2006/10/12 19:59:13 peter Exp $	*/
+/*	$NetBSD: qdisc_red.c,v 1.5 2006/10/28 11:43:02 peter Exp $	*/
 /*	$KAME: qdisc_red.c,v 1.5 2002/11/08 06:36:18 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -64,8 +64,7 @@ red_stat_loop(int fd, const char *ifname, int count, int interval)
 	last_time.tv_sec -= interval;
 	last_bytes = 0;
 
-	while (count == 0 || cnt-- > 0) {
-	
+	for (;;) {	
 		if (ioctl(fd, RED_GETSTATS, &red_stats) < 0)
 			err(1, "ioctl RED_GETSTATS");
 
@@ -99,6 +98,9 @@ red_stat_loop(int fd, const char *ifname, int count, int interval)
 
 		last_bytes = red_stats.xmit_cnt.bytes;
 		last_time = cur_time;
+
+		if (count != 0 && --cnt == 0)
+			break;
 
 		/* wait for alarm signal */
 		if (sigprocmask(SIG_BLOCK, NULL, &omask) == 0)
