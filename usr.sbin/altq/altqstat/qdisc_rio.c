@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_rio.c,v 1.5 2006/10/12 19:59:13 peter Exp $	*/
+/*	$NetBSD: qdisc_rio.c,v 1.6 2006/10/28 11:43:02 peter Exp $	*/
 /*	$KAME: qdisc_rio.c,v 1.7 2004/01/22 09:31:24 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -66,8 +66,7 @@ rio_stat_loop(int fd, const char *ifname, int count, int interval)
 	gettimeofday(&last_time, NULL);
 	last_time.tv_sec -= interval;
 
-	while (count == 0 || cnt-- > 0) {
-	
+	for (;;) {	
 		if (ioctl(fd, RIO_GETSTATS, &rio_stats) < 0)
 			err(1, "ioctl RIO_GETSTATS");
 
@@ -129,6 +128,9 @@ rio_stat_loop(int fd, const char *ifname, int count, int interval)
 		last_bytes[1] = rio_stats.q_stats[1].xmit_cnt.bytes;
 		last_bytes[2] = rio_stats.q_stats[2].xmit_cnt.bytes;
 		last_time = cur_time;
+
+		if (count != 0 && --cnt == 0)
+			break;
 
 		/* wait for alarm signal */
 		if (sigprocmask(SIG_BLOCK, NULL, &omask) == 0)
