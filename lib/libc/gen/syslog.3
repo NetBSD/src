@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.3,v 1.22 2006/10/27 20:00:55 christos Exp $
+.\"	$NetBSD: syslog.3,v 1.23 2006/10/28 22:50:16 wiz Exp $
 .\"	$OpenBSD: syslog.3,v 1.25 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -154,20 +154,20 @@ mask of priorities to be logged
 .Pp
 The
 .Fn syslog_ss
-is the async-signal-safe version of 
+is the async-signal-safe version of
 .Fn syslog_r
 and is also multithread-safe.
 It has the following limitations:
-.Bl -tag -width XXX
-.It Dv 1.
+.Bl -enum -offset indent
+.It
 The format string cannot contain multi-byte character sequences.
-.It Dv 2.
+.It
 Floating point formats are not supported and print
 .Dq UNK .
-.It Dv 3.
+.It
 The time of the event is not sent to
 .Xr syslogd 8 .
-.It Dv 4.
+.It
 The error string in the %m format is not printed symbolically but as
 .Dq Error %d .
 .El
@@ -228,7 +228,7 @@ It is a multithread-safe version of the
 function described above.
 The
 .Fn vsyslog_ss
-is the async-signal-safe version of 
+is the async-signal-safe version of
 .Fn vsyslog_r ,
 is also multithread-safe, and has the same limitations as
 .Fn syslog_ss .
