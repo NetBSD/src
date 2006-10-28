@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.111 2006/10/15 15:20:09 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.112 2006/10/28 17:58:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.111 2006/10/15 15:20:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.112 2006/10/28 17:58:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		if ((path = SCARG(uap, addr)) != NULL) {
 			char *dst;
 			int len = SCARG(uap, data);
-			if (len >= MAXPATHLEN)
+			if (len < 0 || len >= MAXPATHLEN)
 				return EINVAL;
 			dst = malloc(len + 1, M_TEMP, M_WAITOK);
 			if ((error = copyin(path, dst, len)) != 0) {
