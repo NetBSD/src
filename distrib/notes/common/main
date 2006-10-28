@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.35 2006/10/28 11:43:56 ghen Exp $
+.\"	$NetBSD: main,v 1.278.2.36 2006/10/28 12:07:57 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -613,24 +613,33 @@ Many, many more additions, improvements and bug fixes.
 .bullet)
 .
 .Ss2 alpha specific
+.
 .(bullet
 Support booting from FFSv2 filesystems.
 .bullet)
+.
 .Ss2 amd64 specific
+.
 .(bullet
 Make sure that the system reboots after a panic instead of halting.
 .bullet)
+.
 .Ss2 mac68k specific
+.
 .(bullet
 sysinst now newfs'es and mounts the target filesystem(s).
 .bullet)
+.
 .Ss2 sparc specific
+.
 .(bullet
 Disabled threading in
 .Xr named 8
 on sparc and sparc64 to avoid a crash.
 .bullet)
+.
 .Ss2 xen specific
+.
 .(bullet
 Added Xen-3 domU support.
 .It
