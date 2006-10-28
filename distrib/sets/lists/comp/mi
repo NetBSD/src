@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.960 2006/10/27 20:05:27 christos Exp $
+#	$NetBSD: mi,v 1.961 2006/10/28 04:25:54 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1705,6 +1705,7 @@
 ./usr/include/setjmp.h				comp-c-include
 ./usr/include/sgtty.h				comp-c-include
 ./usr/include/sha1.h				comp-c-include
+./usr/include/sha1.h				comp-c-include
 ./usr/include/signal.h				comp-c-include
 ./usr/include/skey.h				comp-c-include		skey
 ./usr/include/smbfs				comp-obsolete		obsolete
@@ -1834,6 +1835,7 @@
 ./usr/include/sys/reboot.h			comp-c-include
 ./usr/include/sys/resource.h			comp-c-include
 ./usr/include/sys/resourcevar.h			comp-c-include
+./usr/include/sys/rmd160.h			comp-c-include
 ./usr/include/sys/rnd.h				comp-c-include
 ./usr/include/sys/sa.h				comp-c-include
 ./usr/include/sys/scanio.h			comp-c-include
@@ -1843,6 +1845,7 @@
 ./usr/include/sys/selinfo.h			comp-c-include
 ./usr/include/sys/sem.h				comp-c-include
 ./usr/include/sys/sha1.h			comp-c-include
+./usr/include/sys/sha2.h			comp-c-include
 ./usr/include/sys/shm.h				comp-c-include
 ./usr/include/sys/siginfo.h			comp-c-include
 ./usr/include/sys/signal.h			comp-c-include
