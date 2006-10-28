@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.34 2006/10/09 16:38:39 ghen Exp $
+.\"	$NetBSD: main,v 1.278.2.35 2006/10/28 11:43:56 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -520,6 +520,18 @@ Enabled SSL support in BIND.
 A second
 .Xr dhclient 8
 instance now exists gracefully instead of leaving the system in a broken state.
+.It
+Removed the date from the
+.Xr dhclient 8
+generated
+.Xr resolv.conf 5
+file, since changes to this file are tracked by /etc/security.
+.It
+Changed the default
+.Xr sshd_config 8
+to enable SSH version 2 only.
+.It
+Don't accept TCP connections to broadcast addresses.
 .bullet)
 .
 .Ss2 File system
@@ -556,20 +568,27 @@ and
 .Xr pppoe 4
 (SA2006-019).
 .It
-X11: fixed an integer overflow in FreeType.
+X11: fixed an integer overflow in FreeType (SA2006-020).
 .It
 Fixed a potential DoS attack with
-.Xr sendmail 8 .
+.Xr sendmail 8 
+(SA2006-017).
 .It
-Fixed a DoS vulnerability in BIND.
+Fixed a DoS vulnerability in BIND (SA2006-022).
 .It
 Fixed a RSA signature forgery in
-.Xr openssl 1 .
+.Xr openssl 1 
+(SA2006-023).
 .It
-X11: fixed a vulnerability in Adobe Type 1 font handling.
+X11: fixed a vulnerability in Adobe Type 1 font handling (SA2006-021).
 .It
 Fixed a number of DoS vulnerabilities in
-.Xr openssl 1 .
+.Xr openssl 1 
+(SA in preparation, CVE entries: 2006-2937, 2940, 3738 and 4343).
+.It
+Fixed a number of DoS vulnerabilities in
+.Xr sshd 8 
+(SA in preparation, CVE entries: 2006-4924 and 5051).
 .bullet)
 .
 .Ss2 Miscellaneous
@@ -588,6 +607,8 @@ to /rescue.
 Fixed some special case expansions in
 .Xr sh 1 .
 .It
+Fixed cross-building from GCC 4.x hosts.
+.It
 Many, many more additions, improvements and bug fixes.
 .bullet)
 .
@@ -595,7 +616,14 @@ Many, many more additions, improvements and bug fixes.
 .(bullet
 Support booting from FFSv2 filesystems.
 .bullet)
-.
+.Ss2 amd64 specific
+.(bullet
+Make sure that the system reboots after a panic instead of halting.
+.bullet)
+.Ss2 mac68k specific
+.(bullet
+sysinst now newfs'es and mounts the target filesystem(s).
+.bullet)
 .Ss2 sparc specific
 .(bullet
 Disabled threading in
