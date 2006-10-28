@@ -1,4 +1,4 @@
-/*	$NetBSD: md-sha256.c,v 1.2 2006/09/28 21:22:14 christos Exp $	*/
+/*	$NetBSD: md-sha256.c,v 1.3 2006/10/28 23:07:23 agc Exp $	*/
 /* $OpenBSD: md-sha256.c,v 1.5 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Damien Miller <djm@openbsd.org>
@@ -18,13 +18,13 @@
 
 /* EVP wrapper for SHA256 */
 #include "includes.h"
-__RCSID("$NetBSD: md-sha256.c,v 1.2 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: md-sha256.c,v 1.3 2006/10/28 23:07:23 agc Exp $");
 
 #include <sys/types.h>
 
 #include <openssl/evp.h>
 
-#include <crypto/sha2.h>
+#include <sys/sha2.h>
 #include <string.h>
 
 const EVP_MD *evp_ssh_sha256(void);
