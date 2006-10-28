@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.122 2006/10/25 23:49:31 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.123 2006/10/28 23:20:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -531,6 +531,7 @@
 #define sl_init			_sl_init
 #define sleep			_sleep
 #define snprintf		_snprintf
+#define snprintf_ss		_snprintf_ss
 #define sradixsort		_sradixsort
 #define srand48			_srand48
 #define srandom			_srandom
@@ -626,6 +627,7 @@
 #define valloc			_valloc
 #define vis			_vis
 #define vsnprintf		_vsnprintf
+#define vsnprintf_ss		_vsnprintf_ss
 #define vsyslog			_vsyslog
 #define vsyslog_r		_vsyslog_r
 #define wait			_wait
