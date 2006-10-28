@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.113 2006/10/28 18:00:53 tsutsui Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.114 2006/10/28 18:26:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.113 2006/10/28 18:00:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.114 2006/10/28 18:26:15 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3283,13 +3283,11 @@ bge_cksum_pad(struct mbuf *pkt)
 		 * (thus perhaps avoiding the bcm5700 dma-min bug).
 		 */
 		for (last = pkt; last->m_next != NULL; last = last->m_next) {
-	      	       (void) 0; /* do nothing*/
+	      	       continue; /* do nothing */
 		}
 
 		/* `last' now points to last in chain. */
-		if (M_TRAILINGSPACE(last) >= padlen) {
-			(void) 0; /* we can pad here, in-place. */
-		} else {
+		if (M_TRAILINGSPACE(last) < padlen) {
 			/* Allocate new empty mbuf, pad it. Compact later. */
 			struct mbuf *n;
 			MGET(n, M_DONTWAIT, MT_DATA);
@@ -3299,10 +3297,9 @@ bge_cksum_pad(struct mbuf *pkt)
 		}
 	}
 
-#ifdef DEBUG
-	  /*KASSERT(M_WRITABLE(last), ("to-pad mbuf not writeable\n"));*/
-	  KASSERT(M_TRAILINGSPACE(last) >= padlen /*, ("insufficient space to pad\n")*/ );
-#endif
+	KDASSERT(!M_READONLY(last));
+	KDASSERT(M_TRAILINGSPACE(last) >= padlen);
+
 	/* Now zero the pad area, to avoid the bge cksum-assist bug */
 	memset(mtod(last, caddr_t) + last->m_len, 0, padlen);
 	last->m_len += padlen;
