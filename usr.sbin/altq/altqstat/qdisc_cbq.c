@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_cbq.c,v 1.6 2006/10/12 19:59:13 peter Exp $	*/
+/*	$NetBSD: qdisc_cbq.c,v 1.7 2006/10/28 11:43:02 peter Exp $	*/
 /*	$KAME: qdisc_cbq.c,v 1.7 2003/09/17 14:27:37 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -67,7 +67,7 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 	struct timeval		cur_time, last_time;
 	int			i;
 	double			flow_bps, sec;
-	int cnt = count;
+	int			cnt = count;
 	sigset_t		omask;
 
 	strlcpy(get_stats.iface.cbq_ifacename, ifname,
@@ -78,7 +78,7 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 	for (i = 0; i < NCLASSES; i++)
 	    clhandles[i] = NULL_CLASS_HANDLE;
 
-	while (count == 0 || cnt-- > 0) {
+	for (;;) {
 		get_stats.nclasses = NCLASSES;
 		get_stats.stats = new;
 		if (ioctl(fd, CBQ_GETSTATS, &get_stats) < 0)
@@ -93,9 +93,8 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 
 			if (sp->handle != clhandles[i]) {
 				quip_chandle2name(ifname, sp->handle,
-						  clnames[i], sizeof(clnames[0]));
+				    clnames[i], sizeof(clnames[0]));
 				clhandles[i] = sp->handle;
-				continue;
 			}
 
 			printf("Class %d on Interface %s: %s\n",
@@ -109,10 +108,14 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 			printf(" offtime: %d [us] wrr_allot: %d bytes\n",
 			       sp->offtime, sp->wrr_allot);
 			printf("\tnsPerByte: %d", sp->ns_per_byte);
-			printf("\t(%sbps),", rate2str(flow_bps));
-			printf("\tMeasured: %s [bps]\n",
-			       rate2str(calc_rate(sp->xmit_cnt.bytes,
-						  lp->xmit_cnt.bytes, sec)));
+			printf("\t(%sbps)", rate2str(flow_bps));
+			if (lp->handle != NULL_CLASS_HANDLE) {
+				printf(",\tMeasured: %s [bps]\n",
+				       rate2str(calc_rate(sp->xmit_cnt.bytes,
+						lp->xmit_cnt.bytes, sec)));
+			} else {
+				printf("\n");
+			}
 			printf("\tpkts: %llu,\tbytes: %llu\n",
 			       (ull)sp->xmit_cnt.packets,
 			       (ull)sp->xmit_cnt.bytes);
@@ -142,6 +145,9 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 		new = tmp;
 
 		last_time = cur_time;
+
+		if (count != 0 && --cnt == 0)
+			break;
 
 		/* wait for alarm signal */
 		if (sigprocmask(SIG_BLOCK, NULL, &omask) == 0)
