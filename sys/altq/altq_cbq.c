@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.21 2006/10/20 21:55:56 elad Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.22 2006/10/28 11:35:17 peter Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.21 2006/10/20 21:55:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.22 2006/10/28 11:35:17 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -314,7 +314,7 @@ cbq_add_queue(struct pf_altq *a)
 	cbq_state_t	*cbqp;
 	struct rm_class	*cl;
 	struct cbq_opts	*opts;
-	int		i;
+	int		i, error;
 
 	if ((cbqp = a->altq_disc) == NULL)
 		return (EINVAL);
@@ -389,10 +389,12 @@ cbq_add_queue(struct pf_altq *a)
 	 * interface.
 	 */
 	if ((opts->flags & CBQCLF_CLASSMASK) == CBQCLF_ROOTCLASS) {
-		rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp, opts->ns_per_byte,
-		    cbqrestart, a->qlimit, RM_MAXQUEUED,
+		error = rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp,
+		    opts->ns_per_byte, cbqrestart, a->qlimit, RM_MAXQUEUED,
 		    opts->maxidle, opts->minidle, opts->offtime,
 		    opts->flags);
+		if (error != 0)
+			return (error);
 		cl = cbqp->ifnp.root_;
 	} else {
 		cl = rmc_newclass(a->priority,
@@ -704,7 +706,7 @@ cbq_class_create(cbq_state_t *cbqp, struct cbq_add_class *acp,
 	struct rm_class	*cl;
 	cbq_class_spec_t *spec = &acp->cbq_class;
 	u_int32_t	chandle;
-	int		i;
+	int		i, error;
 
 	/*
 	 * allocate class handle
@@ -721,10 +723,12 @@ cbq_class_create(cbq_state_t *cbqp, struct cbq_add_class *acp,
 	 * interface.
 	 */
 	if ((spec->flags & CBQCLF_CLASSMASK) == CBQCLF_ROOTCLASS) {
-		rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp, spec->nano_sec_per_byte,
-			 cbqrestart, spec->maxq, RM_MAXQUEUED,
-			 spec->maxidle, spec->minidle, spec->offtime,
-			 spec->flags);
+		error = rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp,
+		    spec->nano_sec_per_byte, cbqrestart, spec->maxq,
+		    RM_MAXQUEUED, spec->maxidle, spec->minidle, spec->offtime,
+		    spec->flags);
+		if (error)
+			return (error);
 		cl = cbqp->ifnp.root_;
 	} else {
 		cl = rmc_newclass(spec->priority,
