@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.h,v 1.7 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_rmclass.h,v 1.8 2006/10/28 11:35:17 peter Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.10 2003/08/20 23:30:23 itojun Exp $	*/
 
 /*
@@ -248,7 +248,7 @@ extern rm_class_t *rmc_newclass(int, struct rm_ifdat *, u_int,
 extern void	rmc_delete_class(struct rm_ifdat *, struct rm_class *);
 extern int 	rmc_modclass(struct rm_class *, u_int, int,
 			     u_int, int, u_int, int);
-extern void	rmc_init(struct ifaltq *, struct rm_ifdat *, u_int,
+extern int	rmc_init(struct ifaltq *, struct rm_ifdat *, u_int,
 			 void (*)(struct ifaltq *),
 			 int, int, u_int, int, u_int, int);
 extern int	rmc_queue_packet(struct rm_class *, mbuf_t *);

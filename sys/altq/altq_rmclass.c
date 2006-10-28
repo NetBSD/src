@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.16 2006/10/24 02:48:04 mrg Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.17 2006/10/28 11:35:17 peter Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.16 2006/10/24 02:48:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.17 2006/10/28 11:35:17 peter Exp $");
 
 #ident "@(#)rm_class.c  1.48     97/12/05 SMI"
 
@@ -642,7 +642,7 @@ rmc_delete_class(struct rm_ifdat *ifd, struct rm_class *cl)
 
 
 /*
- * void
+ * int
  * rmc_init(...) - Initialize the resource management data structures
  *	associated with the output portion of interface 'ifp'.  'ifd' is
  *	where the structures will be built (for backwards compatibility, the
@@ -654,23 +654,29 @@ rmc_delete_class(struct rm_ifdat *ifd, struct rm_class *cl)
  *	is the maximum number of packets that the resource management
  *	code will allow to be queued 'downstream' (this is typically 1).
  *
- *	Returns:	NONE
+ *	Returns:	0 on success
  */
 
-void
+int
 rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
     void (*restart)(struct ifaltq *), int maxq, int maxqueued, u_int maxidle,
     int minidle, u_int offtime, int flags)
 {
-	int		i, mtu;
+	int i, mtu;
 
 	/*
 	 * Initialize the CBQ tracing/debug facility.
 	 */
 	CBQTRACEINIT();
 
-	(void)memset((char *)ifd, 0, sizeof (*ifd));
 	mtu = ifq->altq_ifp->if_mtu;
+	if (mtu < 1) {
+		printf("altq: %s: invalid MTU (interface not initialized?)\n",
+		    ifq->altq_ifp->if_xname);
+		return (EINVAL);
+	}
+
+	(void)memset((char *)ifd, 0, sizeof (*ifd));
 	ifd->ifq_ = ifq;
 	ifd->restart = restart;
 	ifd->maxqueued_ = maxqueued;
@@ -718,9 +724,11 @@ rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
 				       maxidle, minidle, offtime,
 				       0, 0)) == NULL) {
 		printf("rmc_init: root class not allocated\n");
-		return ;
+		return (ENOMEM);
 	}
 	ifd->root_->depth_ = 0;
+
+	return (0);
 }
 
 /*
