@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.44 2006/10/12 01:30:51 christos Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.45 2006/10/28 15:13:11 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.44 2006/10/12 01:30:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.45 2006/10/28 15:13:11 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.44 2006/10/12 01:30:51 christos Exp $\n$NetBSD: verified_exec.c,v 1.44 2006/10/12 01:30:51 christos Exp $");
+__RCSID("$Id: verified_exec.c,v 1.45 2006/10/28 15:13:11 elad Exp $\n$NetBSD: verified_exec.c,v 1.45 2006/10/28 15:13:11 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -318,26 +318,7 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 		goto out;
 	}
 
-	/*
-	 * Just a bit of a sanity check - require the size of
-	 * the fp to be passed in, check this against the expected
-	 * size.  Of course userland could lie deliberately, this
-	 * really only protects against the obvious fumble of
-	 * changing the fp type but not updating the fingerprint
-	 * string.
-	 */
-	if (e->ops->hash_len != params->size) {
-		log(LOG_ERR, "Veriexec: Inconsistent fingerprint size for "
-		    "type `%s' for file `%s': Size was %u, should be %zu.\n",
-		    params->fp_type, params->file, params->size,
-		    e->ops->hash_len);
-
-		free(e, M_TEMP);
-		error = EINVAL;
-		goto out;
-	}
-
-	e->fp = malloc(e->ops->hash_len, M_TEMP, M_WAITOK);
+	e->fp = malloc(e->ops->hash_len, M_TEMP, M_WAITOK|M_ZERO);
 	memcpy(e->fp, params->fingerprint, e->ops->hash_len);
 
 	veriexec_report("New entry.", params->file, NULL, REPORT_DEBUG);
