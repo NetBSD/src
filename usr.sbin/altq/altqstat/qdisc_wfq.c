@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_wfq.c,v 1.4 2006/10/12 19:59:13 peter Exp $	*/
+/*	$NetBSD: qdisc_wfq.c,v 1.5 2006/10/28 11:43:02 peter Exp $	*/
 /*	$KAME: qdisc_wfq.c,v 1.5 2002/11/08 06:36:18 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -97,8 +97,7 @@ wfq_stat_loop(int fd, const char *ifname, int count, int interval)
 	gettimeofday(&last_time, NULL);
 	last_time.tv_sec -= interval;
 
-	while (count == 0 || cnt-- > 0) {
-
+	for (;;) {
 		for (j = 0; j < ntop; j++)
 			top[j] = NULL;
 
@@ -164,6 +163,9 @@ wfq_stat_loop(int fd, const char *ifname, int count, int interval)
 #endif
 
 		last_time = cur_time;
+
+		if (count != 0 && --cnt == 0)
+			break;
 
 		/* wait for alarm signal */
 		if (sigprocmask(SIG_BLOCK, NULL, &omask) == 0)
