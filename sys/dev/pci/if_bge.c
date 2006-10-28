@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.112 2006/10/12 01:31:29 christos Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.113 2006/10/28 18:00:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.112 2006/10/12 01:31:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.113 2006/10/28 18:00:53 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3274,7 +3274,7 @@ bge_cksum_pad(struct mbuf *pkt)
 
 	/* if there's only the packet-header and we can pad there, use it. */
 	if (pkt->m_pkthdr.len == pkt->m_len &&
-	    !M_READONLY(pkt) && M_TRAILINGSPACE(pkt) >= padlen) {
+	    M_TRAILINGSPACE(pkt) >= padlen) {
 		last = pkt;
 	} else {
 		/*
@@ -3287,7 +3287,7 @@ bge_cksum_pad(struct mbuf *pkt)
 		}
 
 		/* `last' now points to last in chain. */
-		if (!M_READONLY(last) && M_TRAILINGSPACE(last) >= padlen) {
+		if (M_TRAILINGSPACE(last) >= padlen) {
 			(void) 0; /* we can pad here, in-place. */
 		} else {
 			/* Allocate new empty mbuf, pad it. Compact later. */
@@ -3340,8 +3340,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 		 */
 
 		/* Internal frag. If fits in prev, copy it there. */
-		if (prev && !M_READONLY(prev) &&
-		      M_TRAILINGSPACE(prev) >= m->m_len) {
+		if (prev && M_TRAILINGSPACE(prev) >= m->m_len) {
 		  	bcopy(m->m_data,
 			      prev->m_data+prev->m_len,
 			      mlen);
@@ -3352,7 +3351,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			m = prev;
 			continue;
 		}
-		else if (m->m_next != NULL && !M_READONLY(m) &&
+		else if (m->m_next != NULL &&
 			     M_TRAILINGSPACE(m) >= shortfall &&
 			     m->m_next->m_len >= (8 + shortfall)) {
 		    /* m is writable and have enough data in next, pull up. */
