@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.49 2006/10/27 13:26:34 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.50 2006/10/28 03:42:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -414,6 +414,7 @@ re_diag(struct rtk_softc *sc)
 	struct ifnet		*ifp = &sc->ethercom.ec_if;
 	struct mbuf		*m0;
 	struct ether_header	*eh;
+	struct rtk_rxsoft	*rxs;
 	struct rtk_desc		*cur_rx;
 	bus_dmamap_t		dmamap;
 	uint16_t		status;
@@ -485,14 +486,14 @@ re_diag(struct rtk_softc *sc)
 	 * entry in the RX DMA ring. Grab it from there.
 	 */
 
-	dmamap = sc->rtk_ldata.rtk_rx_dmamap[0];
+	rxs = &sc->rtk_ldata.rtk_rxsoft[0];
+	dmamap = rxs->rxs_dmamap;
 	bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
-	bus_dmamap_unload(sc->sc_dmat,
-	    sc->rtk_ldata.rtk_rx_dmamap[0]);
+	bus_dmamap_unload(sc->sc_dmat, dmamap);
 
-	m0 = sc->rtk_ldata.rtk_rx_mbuf[0];
-	sc->rtk_ldata.rtk_rx_mbuf[0] = NULL;
+	m0 = rxs->rxs_mbuf;
+	rxs->rxs_mbuf = NULL;
 	eh = mtod(m0, struct ether_header *);
 
 	RTK_RXDESCSYNC(sc, 0, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -721,7 +722,7 @@ re_attach(struct rtk_softc *sc)
 	/* Create DMA maps for RX buffers */
 	for (i = 0; i < RTK_RX_DESC_CNT; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-		    0, 0, &sc->rtk_ldata.rtk_rx_dmamap[i]);
+		    0, 0, &sc->rtk_ldata.rtk_rxsoft[i].rxs_dmamap);
 		if (error) {
 			aprint_error("%s: can't create DMA map for RX\n",
 			    sc->sc_dev.dv_xname);
@@ -815,9 +816,9 @@ re_attach(struct rtk_softc *sc)
  fail_8:
 	/* Destroy DMA maps for RX buffers. */
 	for (i = 0; i < RTK_RX_DESC_CNT; i++)
-		if (sc->rtk_ldata.rtk_rx_dmamap[i] != NULL)
+		if (sc->rtk_ldata.rtk_rxsoft[i].rxs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
-			    sc->rtk_ldata.rtk_rx_dmamap[i]);
+			    sc->rtk_ldata.rtk_rxsoft[i].rxs_dmamap);
 
 	/* Free DMA'able memory for the RX ring. */
 	bus_dmamap_unload(sc->sc_dmat, sc->rtk_ldata.rtk_rx_list_map);
@@ -907,9 +908,9 @@ re_detach(struct rtk_softc *sc)
 
 	/* Destroy DMA maps for RX buffers. */
 	for (i = 0; i < RTK_RX_DESC_CNT; i++)
-		if (sc->rtk_ldata.rtk_rx_dmamap[i] != NULL)
+		if (sc->rtk_ldata.rtk_rxsoft[i].rxs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
-			    sc->rtk_ldata.rtk_rx_dmamap[i]);
+			    sc->rtk_ldata.rtk_rxsoft[i].rxs_dmamap);
 
 	/* Free DMA'able memory for the RX ring. */
 	bus_dmamap_unload(sc->sc_dmat, sc->rtk_ldata.rtk_rx_list_map);
@@ -1014,6 +1015,7 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	struct mbuf		*n = NULL;
 	bus_dmamap_t		map;
 	struct rtk_desc		*d;
+	struct rtk_rxsoft	*rxs;
 	uint32_t		cmdstat;
 	int			error;
 
@@ -1039,7 +1041,8 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	m->m_len = m->m_pkthdr.len = MCLBYTES - RTK_ETHER_ALIGN;
 	m->m_data += RTK_ETHER_ALIGN;
 
-	map = sc->rtk_ldata.rtk_rx_dmamap[idx];
+	rxs = &sc->rtk_ldata.rtk_rxsoft[idx];
+	map = rxs->rxs_dmamap;
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 
@@ -1059,6 +1062,8 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 		goto out;
 	}
 
+	rxs->rxs_mbuf = m;
+
 	cmdstat = map->dm_segs[0].ds_len;
 	if (idx == (RTK_RX_DESC_CNT - 1))
 		cmdstat |= RTK_RDESC_CMD_EOR;
@@ -1069,8 +1074,6 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	cmdstat |= RTK_RDESC_CMD_OWN;
 	d->rtk_cmdstat = htole32(cmdstat);
 	RTK_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-
-	sc->rtk_ldata.rtk_rx_mbuf[idx] = m;
 
 	return 0;
  out:
@@ -1107,8 +1110,6 @@ re_rx_list_init(struct rtk_softc *sc)
 	int			i;
 
 	memset((char *)sc->rtk_ldata.rtk_rx_list, 0, RTK_RX_LIST_SZ);
-	memset((char *)&sc->rtk_ldata.rtk_rx_mbuf, 0,
-	    (RTK_RX_DESC_CNT * sizeof(struct mbuf *)));
 
 	for (i = 0; i < RTK_RX_DESC_CNT; i++) {
 		if (re_newbuf(sc, i, NULL) == ENOBUFS)
@@ -1133,6 +1134,7 @@ re_rxeof(struct rtk_softc *sc)
 	struct ifnet		*ifp;
 	int			i, total_len;
 	struct rtk_desc		*cur_rx;
+	struct rtk_rxsoft	*rxs;
 	uint32_t		rxstat, rxvlan;
 
 	ifp = &sc->ethercom.ec_if;
@@ -1147,17 +1149,16 @@ re_rxeof(struct rtk_softc *sc)
 			break;
 		}
 		total_len = rxstat & sc->rtk_rxlenmask;
-		m = sc->rtk_ldata.rtk_rx_mbuf[i];
 		rxvlan = le32toh(cur_rx->rtk_vlanctl);
+		rxs = &sc->rtk_ldata.rtk_rxsoft[i];
+		m = rxs->rxs_mbuf;
 
 		/* Invalidate the RX mbuf and unload its map */
 
 		bus_dmamap_sync(sc->sc_dmat,
-		    sc->rtk_ldata.rtk_rx_dmamap[i],
-		    0, sc->rtk_ldata.rtk_rx_dmamap[i]->dm_mapsize,
+		    rxs->rxs_dmamap, 0, rxs->rxs_dmamap->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmat,
-		    sc->rtk_ldata.rtk_rx_dmamap[i]);
+		bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
 
 		if ((rxstat & RTK_RDESC_STAT_EOF) == 0) {
 			m->m_len = MCLBYTES - RTK_ETHER_ALIGN;
@@ -2074,11 +2075,11 @@ re_stop(struct ifnet *ifp, int disable)
 
 	/* Free the RX list buffers. */
 	for (i = 0; i < RTK_RX_DESC_CNT; i++) {
-		if (sc->rtk_ldata.rtk_rx_mbuf[i] != NULL) {
+		if (sc->rtk_ldata.rtk_rxsoft[i].rxs_mbuf != NULL) {
 			bus_dmamap_unload(sc->sc_dmat,
-			    sc->rtk_ldata.rtk_rx_dmamap[i]);
-			m_freem(sc->rtk_ldata.rtk_rx_mbuf[i]);
-			sc->rtk_ldata.rtk_rx_mbuf[i] = NULL;
+			    sc->rtk_ldata.rtk_rxsoft[i].rxs_dmamap);
+			m_freem(sc->rtk_ldata.rtk_rxsoft[i].rxs_mbuf);
+			sc->rtk_ldata.rtk_rxsoft[i].rxs_mbuf = NULL;
 		}
 	}
 
