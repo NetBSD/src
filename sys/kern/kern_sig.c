@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.231 2006/10/22 20:48:45 mrg Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.232 2006/10/28 08:09:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.231 2006/10/22 20:48:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.232 2006/10/28 08:09:31 mrg Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -191,6 +191,7 @@ ksiginfo_queue(struct proc *p, const ksiginfo_t *ksi, ksiginfo_t **newkp)
 		kp = *newkp;
 		*newkp = NULL;
 	} else {
+		SCHED_ASSERT_UNLOCKED();
 		kp = pool_get(&ksiginfo_pool, PR_NOWAIT);
 		if (kp == NULL) {
 #ifdef DIAGNOSTIC
@@ -1064,8 +1065,10 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		 * If the process is being traced and the signal is being
 		 * caught, make sure to save any ksiginfo.
 		 */
-		if (sigismember(&p->p_sigctx.ps_sigcatch, signum))
+		if (sigismember(&p->p_sigctx.ps_sigcatch, signum)) {
+			SCHED_ASSERT_UNLOCKED();
 			ksiginfo_queue(p, ksi, NULL);
+		}
 	} else {
 		/*
 		 * If the signal was the result of a trap, reset it
@@ -1148,21 +1151,25 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 	 */
 	if (action == SIG_HOLD &&
 	    ((prop & SA_CONT) == 0 || p->p_stat != SSTOP)) {
+		SCHED_ASSERT_UNLOCKED();
 		ksiginfo_queue(p, ksi, NULL);
 		return;
 	}
 
 	/*
-	 * Allocate a ksiginfo_t incase we need to insert it with
-	 * the scheduler lock held.
+	 * Allocate a ksiginfo_t incase we need to insert it with the
+	 * scheduler lock held, but only if this ksiginfo_t isn't empty.
 	 */
-	newkp = pool_get(&ksiginfo_pool, PR_NOWAIT);
-	if (newkp == NULL) {
+	if (dolock && !KSI_EMPTY_P(ksi)) {
+		newkp = pool_get(&ksiginfo_pool, PR_NOWAIT);
+		if (newkp == NULL) {
 #ifdef DIAGNOSTIC
-		printf("kpsignal2: couldn't allocated from ksiginfo_pool\n");
+			printf("kpsignal2: couldn't allocated from ksiginfo_pool\n");
 #endif
-		return;
-	}
+			return;
+		}
+	} else
+		newkp = NULL;
 
 	/* XXXSMP: works, but icky */
 	if (dolock)
