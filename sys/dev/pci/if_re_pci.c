@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.15 2006/10/27 09:57:26 tsutsui Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.16 2006/10/28 23:18:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -104,6 +104,8 @@ static const struct rtk_type re_devs[] = {
 		"RealTek 8139C+ 10/100BaseTX" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168, RTK_HWREV_8168,
 		"RealTek 8168B/8111B Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168, RTK_HWREV_8168_2,
+		"RealTek 8168B/8111B Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8169,
 		"RealTek 8169 Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8169S,
@@ -133,6 +135,7 @@ static const struct rtk_hwrev re_hwrevs[] = {
 	{ RTK_HWREV_8139D, RTK_8139, "8139D/8100B/8100C" },
 	{ RTK_HWREV_8139CPLUS, RTK_8139CPLUS, "C+"},
 	{ RTK_HWREV_8168, RTK_8169, "8168B/8111B"},
+	{ RTK_HWREV_8168_2, RTK_8169, "8168B/8111B"},
 	{ RTK_HWREV_8169, RTK_8169, "8169"},
 	{ RTK_HWREV_8169S, RTK_8169, "8169S"},
 	{ RTK_HWREV_8169SB, RTK_8169, "8169SB"},
