@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.28.2.4 2006/06/16 18:54:53 ghen Exp $
+.\"	$NetBSD: main,v 1.278.2.28.2.5 2006/10/28 12:08:20 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -430,6 +430,111 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
+.Ss Changes Between The NetBSD 3.0.1 and 3.0.2 updates
+.Pp    
+The 
+.Nx
+3.0.2
+update    
+is the second security/critical update of the
+.Nx
+3.0
+release branch. This represents a selected subset of fixes deemed 
+critical in nature for stability or security reasons.
+.Pp
+These fixes will also appear in future releases (NetBSD 3.1 etc),
+together with other less-critical fixes and feature enhancements.
+.Pp
+Specific updates are as follows:
+.
+.Ss2 Kernel
+.
+.(bullet
+Avoid a panic in page fault handling that could occer under low-memory conditions.
+.bullet)
+.
+.Ss2 Networking
+.
+.(bullet
+Changed the default
+.Xr sshd_config 8
+to enable SSH version 2 only.
+.It
+Don't accept TCP connections to broadcast addresses.
+.bullet)
+.
+.Ss2 File system
+.
+.(bullet
+Fixed race condition in NFS renaming that could cause the renamed file to be
+deleted.
+.bullet)
+.
+.Ss2 Libraries
+.
+.(bullet
+When a user is created, initialize the string of secondary groups to avoid it
+containing garbage when none is added.
+.bullet)
+.
+.Ss2 Security
+.
+.(bullet
+Fixed a buffer overflow in the in-kernel PPP code share by ISDN PPP interfaces
+.Xr ippp 4
+and
+.Xr pppoe 4
+(SA2006-019).
+.It
+X11: fixed an integer overflow in FreeType (SA2006-020).
+.It
+Fixed a potential DoS attack with
+.Xr sendmail 8
+(SA2006-017).
+.It
+Fixed a DoS vulnerability in BIND (SA2006-022).
+.It
+Fixed a RSA signature forgery in
+.Xr openssl 1
+(SA2006-023).
+.It
+X11: fixed a vulnerability in Adobe Type 1 font handling (SA2006-021).
+.It
+Fixed a number of DoS vulnerabilities in
+.Xr openssl 1
+(SA in preparation, CVE entries: 2006-2937, 2940, 3738 and 4343).
+.It
+Fixed a number of DoS vulnerabilities in
+.Xr sshd 8
+(SA in preparation, CVE entries: 2006-4924 and 5051).
+.bullet)
+.
+.Ss2 Miscellaneous
+.
+.(bullet
+Fixed cross-building from GCC 4.x hosts.
+.bullet)
+.
+.Ss2 amd64 specific
+.
+.(bullet
+Make sure that the system reboots after a panic instead of halting.
+.bullet)
+.
+.Ss2 sparc specific
+.
+.(bullet
+Disabled threading in
+.Xr named 8
+on sparc and sparc64 to avoid a crash.
+.bullet)
+.
+.Ss2 mac68k specific
+.
+.(bullet
+sysinst now newfs'es and mounts the target filesystem(s).
+.bullet)
+.
 .Ss Changes Between The NetBSD 3.0 release and 3.0.1 update
 .Pp    
 The 
@@ -692,462 +797,6 @@ doing IP routing.
 Avoid panics under high system load.
 .bullet)
 .
-
-
-
-
-.Ss Changes Between The NetBSD 2.0 and 3.0 Releases
-.Pp
-The
-.Nx 3.0
-release
-provides numerous significant functional enhancements, including
-support for many new devices, integration of hundreds of bug fixes,
-new and updated kernel subsystems, and many user-land enhancements.
-The result of these improvements is a stable operating system fit for
-production use that rivals most commercially available systems.
-.Pp
-It is impossible to completely summarize a year of development that
-went into the
-.Nx \*V
-release.
-Some highlights include:
-.
-.Ss2 Supported platforms and machines
-.
-.(bullet
-A port to new platform: iyonix. The iyonix port supports the Iyonix PC,
-which is a desktop computer from Castle Technology, based on a 600MHz
-XScale 80321 processor.
-.It
-The xen port now supports Xen 2.0, both in privileged and unprivileged mode.
-.It
-The evbarm port has support for the TS-7200 single board computer,
-which is also known as
-.Dq the NetBSD Controlled Toaster .
-.It
-The sgimips port now supports IP12 (Personal Iris 4D/30, 4D/35,
-and Indigo R3K) machines.
-.It
-The PowerPC 601 support has been added, and the prep port now supports
-IBM RS/6000 60P 7020-011.
-.bullet)
-.
-.Ss2 Supported devices
-.
-.(bullet
-Added
-.Xr iteide 4 :
-driver for ITE 8212 IDE controller.
-.It
-Added
-.Xr ixpide 4 :
-driver for ATI IXP series chipset IDE controller.
-.It
-Added
-.Xr pdcsata 4 :
-driver for Promise SATA150 (aka PDC203xx) controllers.
-.It
-Added
-.Xr ipw 4 :
-driver for Intel PRO/Wireless 2100.
-.It
-Added
-.Xr iwi 4 :
-driver for Intel PRO/Wireless 2200AG/2915ABG.
-.It
-Added
-.Xr rtw 4 :
-driver for Realtek RTL8180L IEEE 802.11b wireless network.
-.It
-Added
-.Xr vge 4 :
-driver for VIA VT612X Gigabit Ethernet controller.
-.It
-Added
-.Xr xge 4 :
-driver for Neterion Xframe-I 10 gigabit Ethernet.
-.It
-Added
-.Xr cdce 4 :
-driver for CDC USB Ethernet.
-.It
-Added
-.Xr atu 4 :
-driver for Atmel AT76C50x based 802.11b wireless network interfaces.
-.It
-Added
-.Xr uep 4 :
-driver for eGalax USB touchpanel controller.
-.It
-Added
-.Xr ugensa 4 :
-driver for USB generic serial adapter, which currently supports
-CDMA Wireless PC Card.
-.It
-Added
-.Xr auixp 4 :
-driver for ATI IXP series chipset audio controller.
-.It
-Added
-.Xr auacer 4 :
-driver for ALi M5455 audio controller.
-.It
-Added
-.Xr azalia 4 :
-driver for High Definition Audio controller.
-.It
-Added
-.Xr spif 4 :
-driver for Sun SUNW,spif multi-port Sbus card.
-.It
-.Xr viaide 4
-now supports nForce2 Ultra 400, nForce3 250 IDE and SATA, and
-nForce4 IDE and SATA controllers.
-.Xr viaide 4
-also supports VIA VT6421 SATA RAID controller though drives on the
-controller need to be configured into RAID/JOBS sets via its BIOS.
-.It
-.Xr siside 4
-now supports SiS 180 and 741 SATA controllers.
-.It
-.Xr artsata 4 ,
-which is the Intel i31244 Serial ATA disk controller driver,
-now supports DPA mode.
-.It
-.Xr satalink 4
-now supports Silicon Image 3512 SATA.
-.It
-.Xr piixide 4
-now supports Intel 82801FB/FR (ICH6/6R) IDE and SATA, 82801FBM SATA,
-82801G (ICH7) IDE and SATA, and i6300ESB IDE and SATA controllers.
-Also added basic support for RAID0 and RAID1 for the Adaptec HostRAID format
-as found on the Intel 6300ESB on-board RAID.
-.It
-.Xr stge 4
-now works on big-endian machines including sparc64 with hardware checksums.
-.It
-.Xr aac 4
-now supports Adaptec SATA RAID 2810SA.
-.It
-.Xr mpt 4
-now supports LSI Logic FC919x SCSI controllers.
-.It
-.Xr spc 4
-now has support for Fujitsu MB87030-based PCMCIA SCSI controller.
-.It
-.Xr bge 4
-now supports Broadcom BCM5788, BCM5705K, BCM5721, and BCM5751M Gigabit Ethernet
-controllers, and has 802.3x flow control support.
-.It
-.Xr gem 4
-and
-.Xr hme 4
-now have hardware checksums support.
-.It
-.Xr re 4
-and
-.Xr wm 4
-now supports TCPv4 hardware transmit segment offload.
-.It
-.Xr wm 4
-now supports more Intel Gigabit Ethernet chips and 64bit PCI DMA transfer,
-.It
-.Xr re 4
-now supports Corega CG-LAPCIGT Gigabit Ethernet, and
-RTL8169 based CardBus Ethernet interfaces, including NetGear GA-511.
-.It
-.Xr ex 4
-now supports 3Com 3c920B-EMB-WNM Integrated Fast Ethernet.
-.It
-.Xr sk 4
-now supports Belkin Gigabit Desktop Network card.
-.It
-.Xr bce 4
-now supports Broadcom BCM4401-B0 Ethernet.
-.It
-.Xr tl 4
-now supports Compaq Netelligent 10 T/2 PCI UTP/Coax Controller.
-.It
-.Xr wi 4
-now supports SMC2531W-B EliteConnect Wireless Adapter.
-.It
-.Xr fxp 4
-now supports Intel 82801FB (ICH6) 10/100 Ethernet.
-.It
-.Xr tlp 4
-now supports LinkSys PCMPC200 Cardbus Ethernet and
-ASIX AX88140A/AX88141 chipsets.
-.It
-Many improvements for
-.Xr atw 4 
-ADMtek ADM8211 802.11 wireless network driver.
-.It
-.Xr auich 4
-now supports nForce2 Ultra 400, nForce3 250 MCP-T AC-97,
-nForce4, Intel ICH7, and Intel 6300ESB audio controllers.
-.It
-.Xr auvia 4
-now supports suspend and resume.
-.It
-.Xr puc 4
-now supports VS-Com PCI-210H 2S/1P card, VScom PCI-200 2S card, and
-ADDI-DATA APCI-7800 8-port serial adapter.
-.It
-.Xr uftdi 4
-now supports Sealevel Systems' uftdi-based USB-Serial adapter.
-.It
-.Xr uvscom 4
-now supports SUNTAC U-Cable type A4 USB serial adapter.
-.It
-.Xr pms 4
-now supports synaptics touchpad.
-.It
-.Xr lm 4
-now supports iTE IT8705f and Winbond 83627THF environment monitor controllers.
-.It
-Many bug fixes and improvements for
-.Xr ehci 4
-USB 2.0 controllers.
-.It
-Many fixes for
-.Xr uaudio 4
-devices.
-.It
-.Xr uax 4
-ASIX AX88172 USB Ethernet driver has been replaced by
-.Xr axe 4
-driver derived from
-.Fx .
-.It
-.Xr vnd 4
-pseudo-device now support compressed image.
-.bullet)
-.
-.Ss2 Kernel
-.
-.(bullet
-The i386 port now supports the Enhanced SpeedStep Technology.
-.It
-Added
-.Xr statvfs 2
-family of system calls.
-.It
-Added
-.Xr ptm 4 ,
-pty/98 pty multiplexor device.
-.It
-Added
-.Xr swwdog 4 ,
-a software watchdog timer facility.
-.It
-Autoconfiguration framework is rewritten for device driver LKMs.
-.It
-.Xr compat_darwin 8
-emulation now supports MacOS X.3 binaries.
-.It
-sparc64 and shark ports have switched to
-.Xr wscons 9 ,
-the machine-independent console framework.
-Additionally sparc64 port switched to a XFree86 based X server and now
-supports the cg6, mach64 and ffb/afb framebuffers with acceleration.
-.It
-Added new
-.Xr pselect 2
-and
-.Xr pollts 2
-synchronous I/O multiplexing system calls.
-.It
-Added another experimental buffer queue strategy, BUFQ_PRIOCSCAN,
-Per-priority cyclical scan. Note the existing strategy NEW_BUFQ_STRATEGY
-is renamed to BUFQ_READPRIO, since that gives priority to issuing
-read requests over write requests.
-.It
-The way to allocate a kernel structure, map entry, was improved so that
-it doesn't need preliminary knowledge of system load, i.e. users no longer
-have to define
-.Dq options MAX_KMAPENT
-in their kernel configurations even on busy servers.
-.bullet)
-.
-.Ss2 Networking
-.
-.(bullet
-TCP now supports TCP Selective Acknowledgement Options (RFC 2018) for
-enhanced performance especially on long distance connections and
-TCP MD5 signatures (RFC 2385) for enhanced protection against attacks.
-.It
-TCP can take advantage of hardware-assisted TCP/IPv4 segmentation on
-.Xr re 4 ,
-.Xr wm 4
-and
-.Xr xge 4
-interfaces.
-.It
-The OpenBSD Packet Filter has been integrated as alternative packet
-filter solution.
-.It
-IP Filter has been upgraded to version 4.1.8.
-.It
-The KAME IPsec stack now supports ESP over NAT connections (RFC 3948).
-.It
-IPv4 Protocol Independent Multicast (PIM) routing support has been added.
-.It
-ipsec-tools 0.6.3 provide IKE support for ESP over NAT connections (RFC 3947),
-user authentication via XAuth and automatic network configurations of VPN
-clients via Mode Config.
-.It
-Added RFC 3378 EtherIP support, which makes it possible to add
-.Xr gif 4
-interface to bridges.
-.It
-Added
-.Xr tap 4 ,
-the virtual Ethernet device.
-.It
-.Xr ppp 4
-has been updated to 2.4.3.
-.It
-.Xr gre 4
-now supports tunneling of the IPv6 Protocol.
-.bullet)
-.
-.Ss2 File system
-.
-.(bullet
-UFS_DIRHASH support has been added from
-.Fx ,
-which increase lookup performance
-by maintaining in-core hash tables for large directories on UFS.
-.It
-.Xr fss 4 ,
-file system snapshot support has been added.
-.It
-Added ptyfs, pseudo-terminal file system.
-.It
-CD9660 file system now supports UTF-8 filename on Joliet extension.
-.It
-Ext2fs now supports large files (larger than 2G bytes).
-.Xr fsck_ext2fs 8
-also handles them and supports conversion from old file systems.
-.It
-The stability of the LFS file system has been improved.
-.bullet)
-.
-.Ss2 Libraries
-.
-.(bullet
-Added PAM (Pluggable Authentication Modules framework).
-.It
-Support wide strings in C++.
-.It
-Re-entrant library functions like getpwent_r() have been added.
-.It
-Some libc string functions for i386 have been replaced with optimized version.
-.It
-Added DCE 1.1 RPC compatible UUID (Universally Unique Identifier) routines
-to libc.
-.It
-Added
-.Xr memmem 3
-to libc, which is API compatible with the functions in FreeBSD and Linux.
-.bullet)
-.
-.Ss2 Security
-.
-.(bullet
-The Veriexec framework is now using hash tables to store per-file data,
-resulting in much faster operation. It supports four different enforcement
-levels and full control over verbosity. Signature files are easier
-to generate and are more flexible than in the previous version.
-.It
-Added SHA2 to libc to provide more secure hashing algorithms and made
-cksum(1) and mtree(8) support them.
-.bullet)
-.
-.Ss2 System administration and user tools
-.
-.(bullet
-Various improvements for the
-.Dq sysinst
-installation program, including Spanish language translation.
-.It
-Numerous improvements for
-.Xr syslogd 8 ,
-mostly from
-.Fx .
-.It
-.Xr fsck 8
-now has a progress meter option.
-.It 
-.Xr dump 8
-now supports file system snapshots.
-.It
-Added
-.Xr sockstat 1 ,
-which lists open sockets.
-.It
-Added
-.Xr seq 1 ,
-a utility which prints a sequence of numbers, derived from Plan 9.
-.bullet)
-.
-.Ss2 Miscellaneous
-.
-.(bullet
-.Xr audio 9
-interface is improved. Added capability of audio software filter pipeline,
-which makes it easy for hardware drivers to add encoding support or
-sample rates support.
-.It
-Updates of most third party packages that are shipped in the base
-system to the following latest stable releases:
-.(bullet -compact -offset indent
-am-utils 6.1-rc2
-.It
-BIND 9.3.0
-.It
-binutils 2.15-20041204
-.It
-cvs 1.11.20
-.It
-file 4.13
-.It
-gcc 3.3.3
-.It
-groff 1.19.1
-.It
-OpenSSH 3.9
-.It
-OpenSSL 0.9.7d
-.It
-Postfix 2.1.5
-.It
-sendmail 8.13.3
-.It
-tcpdump 3.8.3
-.It
-texinfo 4.7
-.It
-tzdata2005o
-.It
-XFree86 4.5.0
-.bullet)
-.It
-Many new packages in the
-.Em pkgsrc
-system, including the latest open source desktop KDE3, OpenOffice,
-perl, Apache and many more.
-At the time of writing, there are over 5400 third party packages
-available in pkgsrc.
-.bullet)
-.
-.Pp
-Kernel interfaces have continued to be refined, and more subsystems
-and device drivers are shared among the different ports.
-You can look for this trend to continue.
-.
-.Ss2 \*M specific
 .so whatis -----------------------------------------------
 .\} \" \n[FOR_RELEASE]
 .
