@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.27 2006/10/27 13:26:34 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.28 2006/10/28 03:42:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -94,6 +94,11 @@ struct rtk_mii_frame {
  * 256-byte boundary. The rings can hold a maximum of 64 descriptors.
  */
 
+struct rtk_rxsoft {
+	struct mbuf		*rxs_mbuf;
+	bus_dmamap_t		rxs_dmamap;
+};
+
 struct rtk_list_data {
 	struct rtk_txq {
 		struct mbuf *txq_mbuf;
@@ -110,8 +115,7 @@ struct rtk_list_data {
 	int			rtk_tx_desc_cnt; /* # of descriptors */
 	int			rtk_tx_listnseg;
 
-	struct mbuf		*rtk_rx_mbuf[RTK_RX_DESC_CNT];
-	bus_dmamap_t		rtk_rx_dmamap[RTK_RX_DESC_CNT];
+	struct rtk_rxsoft	rtk_rxsoft[RTK_RX_DESC_CNT];
 	bus_dmamap_t		rtk_rx_list_map;
 	struct rtk_desc		*rtk_rx_list;
 	bus_dma_segment_t 	rtk_rx_listseg;
