@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.255 2006/10/27 21:58:59 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.256 2006/10/28 01:24:29 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.255 2006/10/27 21:58:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.256 2006/10/28 01:24:29 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -1030,6 +1030,29 @@ cd_interpret_sense(struct scsipi_xfer *xs)
 		    5 * hz, scsipi_periph_timed_thaw, periph);
 		retval = ERESTART;
 	}
+
+	/*
+	 * If we got a "Unit not ready" (SKEY_NOT_READY) and "Long write in
+	 * progress" (Sense code 0x04, 0x08), then wait for the specified
+	 * time
+	 */
+	 
+	if ((SSD_SENSE_KEY(sense->flags) == SKEY_NOT_READY) &&
+	    (sense->asc == 0x04) && (sense->ascq == 0x08)) {
+		/*
+		 * long write in process; we could listen to the delay; but it
+		 * looks like the skey data is not always returned.
+		 */
+		/* cd_delay = _2btol(sense->sks.sks_bytes); */
+
+		/* wait for a second and get going again */
+		if (!callout_pending(&periph->periph_callout))
+			scsipi_periph_freeze(periph, 1);
+		callout_reset(&periph->periph_callout,
+		    1 * hz, scsipi_periph_timed_thaw, periph);
+		retval = ERESTART;
+	}
+
 	return (retval);
 }
 
