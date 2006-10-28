@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.114 2006/10/28 18:26:15 tsutsui Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.115 2006/10/28 18:45:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.114 2006/10/28 18:26:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.115 2006/10/28 18:45:57 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2539,7 +2539,7 @@ bge_attach(device_t parent __unused, device_t self, void *aux)
 	ifp->if_watchdog = bge_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(BGE_TX_RING_CNT - 1, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
-	DPRINTFN(5, ("bcopy\n"));
+	DPRINTFN(5, ("strcpy if_xname\n"));
 	strcpy(ifp->if_xname, sc->bge_dev.dv_xname);
 
 	if ((sc->bge_quirks & BGE_QUIRK_CSUM_BROKEN) == 0)
@@ -3338,9 +3338,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 
 		/* Internal frag. If fits in prev, copy it there. */
 		if (prev && M_TRAILINGSPACE(prev) >= m->m_len) {
-		  	bcopy(m->m_data,
-			      prev->m_data+prev->m_len,
-			      mlen);
+		  	memcpy(prev->m_data + prev->m_len, m->m_data, mlen);
 			prev->m_len += mlen;
 			m->m_len = 0;
 			/* XXX stitch chain */
@@ -3353,9 +3351,8 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			     m->m_next->m_len >= (8 + shortfall)) {
 		    /* m is writable and have enough data in next, pull up. */
 
-		  	bcopy(m->m_next->m_data,
-			      m->m_data+m->m_len,
-			      shortfall);
+		  	memcpy(m->m_data + m->m_len, m->m_next->m_data,
+			    shortfall);
 			m->m_len += shortfall;
 			m->m_next->m_len -= shortfall;
 			m->m_next->m_data += shortfall;
@@ -3397,13 +3394,15 @@ bge_compact_dma_runt(struct mbuf *pkt)
 					  ("runt %d +prev %d too big\n", m->m_len, shortfall)*/);
 
 				/* first copy the data we're stealing from prev */
-				bcopy(prev->m_data + newprevlen, n->m_data, shortfall);
+				memcpy(n->m_data, prev->m_data + newprevlen,
+				    shortfall);
 
 				/* update prev->m_len accordingly */
 				prev->m_len -= shortfall;
 
 				/* copy data from runt m */
-				bcopy(m->m_data, n->m_data + shortfall, m->m_len);
+				memcpy(n->m_data + shortfall, m->m_data,
+				    m->m_len);
 
 				/* n holds what we stole from prev, plus m */
 				n->m_len = shortfall + m->m_len;
