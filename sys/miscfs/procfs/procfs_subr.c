@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.70 2006/10/25 18:59:52 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.71 2006/10/29 22:35:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.70 2006/10/25 18:59:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.71 2006/10/29 22:35:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,6 +246,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	case PFSstatus:	/* /proc/N/status = -r--r--r-- */
 	case PFSstat:	/* /proc/N/stat = -r--r--r-- */
 	case PFScmdline:	/* /proc/N/cmdline = -r--r--r-- */
+	case PFSemul:	/* /proc/N/emul = -r--r--r-- */
 	case PFSmeminfo:	/* /proc/meminfo = -r--r--r-- */
 	case PFSdevices:	/* /proc/devices = -r--r--r-- */
 	case PFScpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
@@ -374,6 +375,9 @@ procfs_rw(v)
 
 	case PFSmounts:
 		return (procfs_domounts(curl, p, pfs, uio));
+
+	case PFSemul:
+		return procfs_doemul(curl, p, pfs, uio);
 
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
@@ -594,4 +598,12 @@ procfs_getfp(pfs, pown, fp)
 
 	*pown = p;
 	return 0;
+}
+
+int
+procfs_doemul(struct lwp *curl __unused, struct proc *p,
+    struct pfsnode *pfs __unused, struct uio *uio)
+{
+	const char *ename = p->p_emul->e_name;
+	return uiomove_frombuf(__UNCONST(ename), strlen(ename), uio);
 }

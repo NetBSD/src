@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.136 2006/10/25 18:59:52 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.137 2006/10/29 22:35:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.136 2006/10/25 18:59:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.137 2006/10/29 22:35:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ static const struct proc_target {
 	{ DT_REG, N("exe"),	PFSexe,		procfs_validfile_linux },
 	{ DT_LNK, N("cwd"),	PFScwd,		NULL },
 	{ DT_LNK, N("root"),	PFSchroot,	NULL },
+	{ DT_LNK, N("emul"),	PFSemul,	NULL },
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_DEFNS
 #endif
@@ -629,6 +630,7 @@ procfs_getattr(v)
 	case PFSmap:
 	case PFSmaps:
 	case PFScmdline:
+	case PFSemul:
 		vap->va_nlink = 1;
 		vap->va_uid = kauth_cred_geteuid(procp->p_cred);
 		vap->va_gid = kauth_cred_getegid(procp->p_cred);
@@ -775,6 +777,10 @@ procfs_getattr(v)
 		free(path, M_TEMP);
 		break;
 	}
+
+	case PFSemul:
+		vap->va_bytes = vap->va_size = strlen(procp->p_emul->e_name);
+		break;
 
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
