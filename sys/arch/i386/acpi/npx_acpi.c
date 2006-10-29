@@ -1,4 +1,4 @@
-/* $NetBSD: npx_acpi.c,v 1.12 2006/10/12 01:30:42 christos Exp $ */
+/* $NetBSD: npx_acpi.c,v 1.13 2006/10/29 09:24:47 dogcow Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.12 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.13 2006/10/29 09:24:47 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,8 @@ npx_acpi_attach(struct device *parent __unused, struct device *self, void *aux)
 		    IPL_NONE, (int (*)(void *))npxintr, NULL);
 		break;
 	case NPX_EXCEPTION:
+		/*FALLTHROUGH*/
+	case NPX_CPUID:
 		aprint_verbose("%s: using exception 16\n", sc->sc_dev.dv_xname);
 		break;
 	case NPX_BROKEN:
