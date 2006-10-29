@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_pnpbios.c,v 1.8 2006/10/29 18:00:10 christos Exp $	*/
+/*	$NetBSD: npx_pnpbios.c,v 1.9 2006/10/29 19:05:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_pnpbios.c,v 1.8 2006/10/29 18:00:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_pnpbios.c,v 1.9 2006/10/29 19:05:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,8 +110,8 @@ npx_pnpbios_attach(struct device *parent __unused, struct device *self,
 		/*FALLTHROUGH*/
 	case NPX_CPUID:
 		aprint_verbose("%s:%s using exception 16\n",
-		    sc->sc_type == NPX_CPUID ? " reported by CPUID;" : "",
-		    sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname,
+		    sc->sc_type == NPX_CPUID ? " reported by CPUID;" : "");
 		sc->sc_type = NPX_EXCEPTION;
 		break;
 	case NPX_BROKEN:
