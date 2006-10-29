@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.7 2006/10/25 22:56:14 elad Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.8 2006/10/29 11:38:56 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.7 2006/10/25 22:56:14 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.8 2006/10/29 11:38:56 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -362,7 +362,9 @@ agr_setconfig(struct ifnet *ifp, const struct agrreq *ar)
 	int error = 0;
 	char ifname[IFNAMSIZ];
 
-	error = copyin(ar->ar_buf, ifname, MIN(ar->ar_buflen, sizeof(ifname)));
+	memset(ifname, 0, sizeof(ifname));
+	error = copyin(ar->ar_buf, ifname,
+	    MIN(ar->ar_buflen, sizeof(ifname) - 1));
 	if (error) {
 		return error;
 	}
