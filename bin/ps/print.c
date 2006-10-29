@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.95 2006/10/02 17:54:35 apb Exp $	*/
+/*	$NetBSD: print.c,v 1.96 2006/10/29 22:32:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.95 2006/10/02 17:54:35 apb Exp $");
+__RCSID("$NetBSD: print.c,v 1.96 2006/10/29 22:32:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -453,6 +453,17 @@ ucomm(void *arg, VARENT *ve, int mode)
 	k = arg;
 	v = ve->var;
 	strprintorsetwidth(v, k->p_comm, mode);
+}
+
+void
+emul(void *arg, VARENT *ve, int mode)
+{
+	struct kinfo_proc2 *k;
+	VAR *v;
+
+	k = arg;
+	v = ve->var;
+	strprintorsetwidth(v, k->p_ename, mode);
 }
 
 void
