@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.89 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.90 2006/10/29 05:56:35 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.89 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.90 2006/10/29 05:56:35 itohy Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -622,6 +622,7 @@ ex_init(ifp)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
+	u_int16_t val;
 	int error = 0;
 
 	if ((error = ex_enable(sc)) != 0)
@@ -630,11 +631,22 @@ ex_init(ifp)
 	ex_waitcmd(sc);
 	ex_stop(ifp, 0);
 
+	GO_WINDOW(2);
+
+	/* Turn on PHY power. */
+	if (sc->ex_conf & (EX_CONF_PHY_POWER | EX_CONF_INV_LED_POLARITY)) {
+		val = bus_space_read_2(iot, ioh, ELINK_W2_RESET_OPTIONS);
+		if (sc->ex_conf & EX_CONF_PHY_POWER)
+			val |= ELINK_RESET_OPT_PHYPOWER; /* turn on PHY power */
+		if (sc->ex_conf & EX_CONF_INV_LED_POLARITY)
+			val |= ELINK_RESET_OPT_LEDPOLAR; /* invert LED polarity */
+		bus_space_write_2(iot, ioh, ELINK_W2_RESET_OPTIONS, val);
+	}
+
 	/*
 	 * Set the station address and clear the station mask. The latter
 	 * is needed for 90x cards, 0 is the default for 90xB cards.
 	 */
-	GO_WINDOW(2);
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		bus_space_write_1(iot, ioh, ELINK_W2_ADDR_0 + i,
 		    LLADDR(ifp->if_sadl)[i]);
@@ -681,22 +693,6 @@ ex_init(ifp)
 	bus_space_write_4(iot, ioh, ELINK_UPLISTPTR, sc->sc_upddma);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, RX_ENABLE);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, ELINK_UPUNSTALL);
-
-	if (sc->ex_conf & (EX_CONF_PHY_POWER | EX_CONF_INV_LED_POLARITY)) {
-		u_int16_t cbcard_config;
-
-		GO_WINDOW(2);
-		cbcard_config = bus_space_read_2(sc->sc_iot, sc->sc_ioh, 0x0c);
-		if (sc->ex_conf & EX_CONF_PHY_POWER) {
-			cbcard_config |= 0x4000; /* turn on PHY power */
-		}
-		if (sc->ex_conf & EX_CONF_INV_LED_POLARITY) {
-			cbcard_config |= 0x0010; /* invert LED polarity */
-		}
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh, 0x0c, cbcard_config);
-
-		GO_WINDOW(3);
-	}
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
