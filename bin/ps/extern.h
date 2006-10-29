@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.29 2006/10/02 17:54:35 apb Exp $	*/
+/*	$NetBSD: extern.h,v 1.30 2006/10/29 22:32:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -70,6 +70,7 @@ void	 parsefmt(const char *);
 void	 parsefmt_insert(const char *, VARENT **);
 void	 parsesort(const char *);
 VARENT * varlist_find(VARLIST *, const char *);
+void	 emul(void *, VARENT *, int);
 void	 pcpu(void *, VARENT *, int);
 void	 pmem(void *, VARENT *, int);
 void	 pnice(void *, VARENT *, int);
