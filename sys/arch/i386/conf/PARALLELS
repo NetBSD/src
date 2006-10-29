@@ -1,9 +1,9 @@
-# $NetBSD: PARALLELS,v 1.1 2006/09/27 18:45:46 rpaulo Exp $
+# $NetBSD: PARALLELS,v 1.2 2006/10/29 09:34:35 minskim Exp $
 #
 # PARALLELS machine description file
 #
 # This machine description file is used to generate a trimmed kernel for the
-# Parllels Virtual Machine with USB, audio and floppy disabled.
+# Parallels Virtual Machine with USB, audio and floppy disabled.
 #
 # Based on build 1848.
 #
