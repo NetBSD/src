@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.12 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: sram.c,v 1.13 2006/10/29 16:05:15 he Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.12 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.13 2006/10/29 16:05:15 he Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -134,7 +134,7 @@ sramioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int error = 0;
 	struct sram_io *sram_io;
-	char *sramtop = IODEVbase->io_sram;
+	char *sramtop = __UNVOLATILE(IODEVbase->io_sram);
 	struct sram_softc *su = &sram_softc;
 
 #ifdef DEBUG
