@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.61 2006/10/25 18:59:52 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.62 2006/10/29 22:35:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -103,6 +103,7 @@ typedef enum {
 	PFSmounts,	/* mounted filesystems (if -o linux) */
 	PFScwd,		/* the process's current working directory */
 	PFSchroot,	/* the process's current root directory */
+	PFSemul,	/* the process's emulation */
 	PFSdevices,	/* major/device name mappings (if -o linux) */
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODE_TYPES
@@ -210,6 +211,8 @@ int procfs_dofd(struct lwp *, struct proc *, struct pfsnode *,
 int procfs_douptime(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 int procfs_domounts(struct lwp *, struct proc *, struct pfsnode *,
+    struct uio *);
+int procfs_doemul(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 
 void procfs_revoke_vnodes(struct proc *, void *);
