@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.160 2006/10/12 01:32:51 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.161 2006/10/29 22:34:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -439,6 +439,7 @@ struct kinfo_proc {
 #define	KI_MAXCOMLEN	24	/* extra for 8 byte alignment */
 #define	KI_WMESGLEN	8
 #define	KI_MAXLOGNAME	24	/* extra for 8 byte alignment */
+#define KI_MAXEMULLEN	16
 
 #define KI_NOCPU	(~(uint64_t)0)
 
@@ -561,6 +562,7 @@ struct kinfo_proc2 {
 	uint64_t p_realstat;		/* LONG: non-LWP process status */
 	uint32_t p_svuid;		/* UID_T: saved user id */
 	uint32_t p_svgid;		/* GID_T: saved group id */
+	char p_ename[KI_MAXEMULLEN];	/* emulation name */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.89 2006/10/03 16:07:12 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.90 2006/10/29 22:34:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.89 2006/10/03 16:07:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.90 2006/10/29 22:34:07 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2989,6 +2989,9 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 
 	strncpy(ki->p_login, p->p_session->s_login,
 	    min(sizeof ki->p_login - 1, sizeof p->p_session->s_login));
+
+	strncpy(ki->p_ename, p->p_emul->e_name, sizeof(ki->p_ename));
+	ki->p_ename[sizeof(ki->p_ename) - 1] = '\0';
 
 	ki->p_nlwps = p->p_nlwps;
 	ki->p_nrlwps = p->p_nrlwps;
