@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.15.2.2 2004/08/30 08:53:05 tron Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.15.2.2.2.1 2006/10/29 13:01:15 tron Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.15.2.2 2004/08/30 08:53:05 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.15.2.2.2.1 2006/10/29 13:01:15 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ procfs_do_pid_stat(struct proc *curp, struct lwp *l, struct pfsnode *pfs,
 	    p->p_pid,
 	    p->p_comm,
 	    "0IR3SZD"[(p->p_stat > 6) ? 0 : (int)p->p_stat],
-	    p->p_pptr->p_pid,
+	    (p->p_pptr != NULL) ? p->p_pptr->p_pid : 0,
 
 	    p->p_pgid,
 	    p->p_session->s_sid,
