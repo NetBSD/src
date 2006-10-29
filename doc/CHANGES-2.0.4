@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.53 2006/10/22 16:37:28 bouyer Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.54 2006/10/29 13:05:08 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -427,4 +427,15 @@ sys/arch/arm/iomd/iomdkbc.c			1.3
 	Interpret the argument to iomdkbc_set_poll() correctly.  Quite how we
 	got this far with it the wrong way around is beyond me.
 	[bjh21, ticket #10728]
+
+sys/miscfs/procfs/procfs_linux.c		1.28
+
+	PR kern/34888: kernel panic while trying to access
+	"/emul/linux/proc/0/stat".
+	[adrianp, ticket #10739]
+
+sys/kern/uipc_syscalls.c			1.104
+
+	PR kern/34873: sendmsg() can cause kernel panic.
+	[adrianp, ticket #10740]
 
