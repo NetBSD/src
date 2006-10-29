@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2006/10/27 22:25:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.47 2006/10/29 06:56:01 dogcow Exp $
 
 HOSTLIB=	nbcompat
 
@@ -24,8 +24,8 @@ CPPFLAGS+=	-no-cpp-precomp
 # -D_FILE_OFFSET_BITS=64 produces a much more amenable `struct stat', and
 # other file ops, on many systems, without changing function names.
 
-CPPFLAGS+=	-I. -I./include -I${.CURDIR} -DHAVE_NBTOOL_CONFIG_H=1 \
-		-D_FILE_OFFSET_BITS=64
+CPPFLAGS+=	-I. -I./include -I${.CURDIR} -I${.CURDIR}/sys \
+		-DHAVE_NBTOOL_CONFIG_H=1 -D_FILE_OFFSET_BITS=64
 
 .PATH:		${.CURDIR}/../../lib/libc/gen \
 		${.CURDIR}/../../lib/libc/hash \
