@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.88 2006/10/27 21:20:49 christos Exp $
+#	$NetBSD: Makefile,v 1.89 2006/10/29 01:46:01 oster Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -42,9 +42,9 @@ INCSYMLINKS=\
 	sys/stdint.h /usr/include/stdint.h \
 	sys/syslog.h /usr/include/syslog.h \
 	sys/termios.h /usr/include/termios.h \
-	sys/rmd160.h /usr/include/crypto/rmd160.h \
+	../sys/rmd160.h /usr/include/crypto/rmd160.h \
 	sys/sha1.h /usr/include/sha1.h \
-	sys/sha2.h /usr/include/crypto/sha2.h \
+	../sys/sha2.h /usr/include/crypto/sha2.h \
 	sys/md4.h /usr/include/md4.h \
 	sys/md5.h /usr/include/md5.h
 
