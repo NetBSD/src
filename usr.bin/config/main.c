@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2006/10/04 20:34:48 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2006/10/29 23:00:44 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1294,6 +1294,7 @@ logconfig_start(void)
 	}
 	unlink(line);
 
+	(void)fprintf(cfg, "#include <sys/cdefs.h>\n\n");
 	(void)fprintf(cfg, "#include \"opt_config.h\"\n");
 	(void)fprintf(cfg, "\n");
 	(void)fprintf(cfg, "/*\n");
@@ -1318,10 +1319,7 @@ logconfig_start(void)
 	(void)fprintf(cfg, "#ifdef CONFIG_FILE\n");
 	(void)fprintf(cfg, "#if defined(%s) || defined(%s)\n\n",
 	    LOGCONFIG_LARGE, LOGCONFIG_SMALL);
-	(void)fprintf(cfg,
-	    "static const char config[]\n#ifdef __vax__\n"
-	    "\t__attribute__((__unused__))\n#else\n"
-	    "\t__attribute__((__used__))\n#endif\n\t=\n\n");
+	(void)fprintf(cfg, "static const char config[] __used =\n\n");
 
 	(void)fprintf(cfg, "#ifdef %s\n\n", LOGCONFIG_LARGE);
 	(void)fprintf(cfg, "\"_CFG_### START CONFIG FILE \\\"%s\\\"\\n\"\n\n",
