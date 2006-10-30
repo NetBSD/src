@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.8 2006/10/25 18:11:22 elad Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.9 2006/10/30 00:58:21 christos Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -1896,7 +1896,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			break;
 		if ((error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_INTERFACE,
-		    KAUTH_REQ_NETWORK_INTERFACE_PRIVSET, ifp, (void *)cmd,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL)) != 0)
 			break;
 		if ((error = copyin(ifr->ifr_data, &carpr, sizeof carpr)))
@@ -1974,7 +1974,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 
 		if ((l == NULL) || (error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_INTERFACE,
-		    KAUTH_REQ_NETWORK_INTERFACE_PRIVSET, ifp, (void *)cmd,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL)) != 0)
 			bcopy(sc->sc_key, carpr.carpr_key,
 			    sizeof(carpr.carpr_key));
