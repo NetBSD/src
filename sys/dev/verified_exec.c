@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.46 2006/10/30 00:30:20 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.47 2006/10/30 12:37:08 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.46 2006/10/30 00:30:20 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.47 2006/10/30 12:37:08 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.46 2006/10/30 00:30:20 elad Exp $\n$NetBSD: verified_exec.c,v 1.46 2006/10/30 00:30:20 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.47 2006/10/30 12:37:08 elad Exp $\n$NetBSD: verified_exec.c,v 1.47 2006/10/30 12:37:08 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -282,31 +282,8 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 		goto out;
 	}
 
-	hh = veriexec_lookup(nid.ni_vp);
-	if (hh != NULL) {
-		boolean_t fp_mismatch;
-
-		if (memcmp(hh->fp, params->fingerprint, hh->ops->hash_len))
-			fp_mismatch = TRUE;
-		else
-			fp_mismatch = FALSE;
-
-		if ((veriexec_verbose >= 1) || fp_mismatch)
-			log(LOG_NOTICE, "Veriexec: Duplicate entry for `%s' "
-			    "ignored. (%s fingerprint)\n", params->file, 
-			    fp_mismatch ? "different" : "same");
-
-		error = 0;
-		goto out;
-	}
-
 	e = malloc(sizeof(*e), M_TEMP, M_WAITOK);
-	e->type = params->type;
-	e->status = FINGERPRINT_NOTEVAL;
-	e->page_fp = NULL;
-	e->page_fp_status = PAGE_FP_NONE;
-	e->npages = 0;
-	e->last_page_size = 0;
+
 	if ((e->ops = veriexec_find_ops(params->fp_type)) == NULL) {
 		free(e, M_TEMP);
 		log(LOG_ERR, "Veriexec: Invalid or unknown fingerprint type "
@@ -316,11 +293,50 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 	}
 
 	e->fp = malloc(e->ops->hash_len, M_TEMP, M_WAITOK|M_ZERO);
-	memcpy(e->fp, params->fingerprint, e->ops->hash_len);
+	error = copyin(params->fingerprint, e->fp, e->ops->hash_len);
+	if (error) {
+		free(e->fp, M_TEMP);
+		free(e, M_TEMP);
+		goto out;
+	}
 
-	veriexec_report("New entry.", params->file, NULL, REPORT_DEBUG);
+	hh = veriexec_lookup(nid.ni_vp);
+	if (hh != NULL) {
+		boolean_t fp_mismatch;
+
+		if (strcmp(e->ops->type, params->fp_type) ||
+		    memcmp(hh->fp, e->fp, hh->ops->hash_len))
+			fp_mismatch = TRUE;
+		else
+			fp_mismatch = FALSE;
+
+		if ((veriexec_verbose >= 1) || fp_mismatch)
+			log(LOG_NOTICE, "Veriexec: Duplicate entry for `%s' "
+			    "ignored. (%s fingerprint)\n", params->file, 
+			    fp_mismatch ? "different" : "same");
+
+		free(e->fp, M_TEMP);
+		free(e, M_TEMP);
+
+		error = 0;
+		goto out;
+	}
+
+	e->type = params->type;
+	e->status = FINGERPRINT_NOTEVAL;
+	e->page_fp = NULL;
+	e->page_fp_status = PAGE_FP_NONE;
+	e->npages = 0;
+	e->last_page_size = 0;
 
 	error = veriexec_hashadd(nid.ni_vp, e);
+	if (error) {
+		free(e->fp, M_TEMP);
+		free(e, M_TEMP);
+		goto out;
+	}
+
+	veriexec_report("New entry.", params->file, NULL, REPORT_DEBUG);
 
  out:
 	vrele(nid.ni_vp);
