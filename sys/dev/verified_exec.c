@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.45 2006/10/28 15:13:11 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.46 2006/10/30 00:30:20 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.45 2006/10/28 15:13:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.46 2006/10/30 00:30:20 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.45 2006/10/28 15:13:11 elad Exp $\n$NetBSD: verified_exec.c,v 1.45 2006/10/28 15:13:11 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.46 2006/10/30 00:30:20 elad Exp $\n$NetBSD: verified_exec.c,v 1.46 2006/10/30 00:30:20 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -284,23 +284,20 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 
 	hh = veriexec_lookup(nid.ni_vp);
 	if (hh != NULL) {
-		/*
-		 * Duplicate entry means something is wrong in
-		 * the signature file. Just give collision info
-		 * and return.
-		 */
-		log(LOG_NOTICE, "Veriexec: Duplicate entry for `%s': "
-		    "old[type=0x%02x, algorithm=%s], "
-		    "new[type=0x%02x, algorithm=%s] (%s fingerprint)\n",
-		    params->file, hh->type, hh->ops->type,
-		    params->type, params->fp_type,
-		    (((hh->ops->hash_len != params->size) ||
-		     (memcmp(hh->fp, params->fingerprint,
-		      min(hh->ops->hash_len, params->size))
-		      != 0)) ? "different" : "same"));
+		boolean_t fp_mismatch;
 
-			error = 0;
-			goto out;
+		if (memcmp(hh->fp, params->fingerprint, hh->ops->hash_len))
+			fp_mismatch = TRUE;
+		else
+			fp_mismatch = FALSE;
+
+		if ((veriexec_verbose >= 1) || fp_mismatch)
+			log(LOG_NOTICE, "Veriexec: Duplicate entry for `%s' "
+			    "ignored. (%s fingerprint)\n", params->file, 
+			    fp_mismatch ? "different" : "same");
+
+		error = 0;
+		goto out;
 	}
 
 	e = malloc(sizeof(*e), M_TEMP, M_WAITOK);
