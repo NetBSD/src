@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.19 2006/10/24 21:53:11 mjf Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.20 2006/10/30 16:06:05 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.19 2006/10/24 21:53:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.20 2006/10/30 16:06:05 jmmv Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -454,7 +454,7 @@ nfs_update_exports_30(struct mount *mp __unused, const char *path, void *data,
  * vfs_fhtovp operations are NULL or not.
  *
  * If successful, returns 0 and sets *mnpp to the address of the new
- * mount_netexport_pair item; otherwise returns and appropriate error code
+ * mount_netexport_pair item; otherwise returns an appropriate error code
  * and *mnpp remains unmodified.
  */
 static int
