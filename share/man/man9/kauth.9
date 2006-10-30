@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.29 2006/10/26 16:11:17 elad Exp $
+.\" $NetBSD: kauth.9,v 1.30 2006/10/30 16:53:48 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 26, 2006
+.Dd October 30, 2006
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -452,8 +452,8 @@ Checks if opening a socket is allowed.
 and
 .Ar arg3
 are all
-.Ft int *
-pointing to integers describing the domain, socket type, and protocol,
+.Ft int
+parameters describing the domain, socket type, and protocol,
 respectively.
 .It Dv KAUTH_REQ_NETWORK_SOCKET_CANSEE
 Checks if looking at the socket passed is allowed.
@@ -532,6 +532,13 @@ Open the terminal device pointed to by
 .It Dv KAUTH_DEVICE_TTY_PRIVSET
 Set privileged settings on the terminal device pointed to by
 .Ar tty .
+.It Dv KAUTH_DEVICE_PASSTHRU
+Pass a user command directly to a hardware device.
+.Pp
+.Em NOTE:
+Depending on the device, this can result in direct memory and/or disk access.
+.Pp
+.Ar arg
 .El
 .Ss Credentials Accessors and Mutators
 .Nm
