@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/09/18 03:54:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2006/10/30 20:22:54 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ BINMODE=2555
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
 
-CPPFLAGS+=-I${NETBSDSRCDIR}/sbin/swapctl
+CPPFLAGS+=-I${NETBSDSRCDIR}/sbin/swapctl -DDEBUG -DLOCKDEBUG
 
 .PATH: ${NETBSDSRCDIR}/sbin/swapctl
 
