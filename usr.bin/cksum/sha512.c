@@ -1,11 +1,11 @@
-/* $NetBSD: sha512.c,v 1.2 2005/08/25 09:51:23 tron Exp $ */
+/* $NetBSD: sha512.c,v 1.3 2006/10/30 20:22:54 christos Exp $ */
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
-#include <crypto/sha2.h>	/* this hash type */
-#include <md5.h>		/* the hash we're replacing */
+#include <sha2.h>	/* this hash type */
+#include <md5.h>	/* the hash we're replacing */
 
 #define HASHTYPE	"SHA512"
 #define HASHLEN		128

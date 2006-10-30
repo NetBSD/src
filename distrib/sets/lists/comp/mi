@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.961 2006/10/28 04:25:54 christos Exp $
+#	$NetBSD: mi,v 1.962 2006/10/30 20:22:53 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -140,8 +140,8 @@
 ./usr/include/cdk/viewer.h			comp-obsolete		obsolete
 ./usr/include/cpio.h				comp-c-include
 ./usr/include/crypto/cryptodev.h		comp-c-include
-./usr/include/crypto/rmd160.h			comp-c-include
-./usr/include/crypto/sha2.h			comp-c-include
+./usr/include/crypto/rmd160.h			comp-obsolete		obsolete
+./usr/include/crypto/sha2.h			comp-obsolete		obsolete
 ./usr/include/ctype.h				comp-c-include
 ./usr/include/curses.h				comp-c-include
 ./usr/include/db.h				comp-c-include
@@ -1705,7 +1705,7 @@
 ./usr/include/setjmp.h				comp-c-include
 ./usr/include/sgtty.h				comp-c-include
 ./usr/include/sha1.h				comp-c-include
-./usr/include/sha1.h				comp-c-include
+./usr/include/sha2.h				comp-c-include
 ./usr/include/signal.h				comp-c-include
 ./usr/include/skey.h				comp-c-include		skey
 ./usr/include/smbfs				comp-obsolete		obsolete
