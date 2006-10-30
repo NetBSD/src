@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.17 2006/10/30 23:49:04 cbiere Exp $
+.\"	$NetBSD: unix.4,v 1.18 2006/10/30 23:53:54 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)unix.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd October 11, 2006
+.Dd October 30, 2006
 .Dt UNIX 4
 .Os
 .Sh NAME
@@ -180,10 +180,12 @@ option may be enabled on a
 .Dv SOCK_DGRAM
 or a
 .Dv SOCK_STREAM
-socket.  This option provides a mechanism for the receiver to
+socket.
+This option provides a mechanism for the receiver to
 receive the credentials of the process as a
 .Xr recvmsg 2
-control message.  The msg_control field in the msghdr structure points
+control message.
+The msg_control field in the msghdr structure points
 to a buffer that contains a cmsghdr structure followed by a variable
 length sockcred structure, defined in
 .Aq Pa sys/socket.h
@@ -227,11 +229,11 @@ if (ret != 0)
 \&...
 
 .Ed
-.Pp
 .Sh COMPATIBILITY
 The
 .Ar sun_len
-field exists only in system derived from 4.4BSD.  On systems which don't have the
+field exists only in system derived from 4.4BSD.
+On systems which don't have the
 .Fn SUN_LEN
 macro, the following definition is recommended:
 .Bd -literal -offset indent
