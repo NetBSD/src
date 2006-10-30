@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.7 2006/10/27 22:14:17 elad Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.8 2006/10/30 20:22:54 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -55,8 +55,8 @@
 
 #include <md5.h>
 #include <sha1.h>
-#include <crypto/sha2.h>
-#include <crypto/rmd160.h>
+#include <sha2.h>
+#include <rmd160.h>
 
 #define IS_EXEC(mode) ((mode) & (S_IXUSR | S_IXGRP | S_IXOTH))
 
