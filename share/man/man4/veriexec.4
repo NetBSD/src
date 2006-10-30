@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.4,v 1.13 2006/10/28 15:34:18 elad Exp $
+.\" $NetBSD: veriexec.4,v 1.14 2006/10/30 12:40:08 elad Exp $
 .\"
 .\" Copyright 2005 Elad Efrat <elad@bsd.org.il>
 .\" Copyright 2005 Brett Lymn <blymn@netbsd.org>
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 28, 2006
+.Dd October 30, 2006
 .Dt VERIEXEC 4
 .Sh NAME
 .Nm veriexec
@@ -152,13 +152,6 @@ are not permitted once the strict level has been raised past 0.
 .Xr veriexecgen 8 ,
 .Xr veriexec 9
 .Sh NOTES
-It is possible for a malicious user to trigger access to random
-memory by passing a junk pointer for the
-.Ar fingerprint
-member in a
-.Dv VERIEXEC_LOAD
-command.
-.Pp
 .Nm
 is part of the default configuration on the following architectures: amd64,
 i386, prep, sparc64.
