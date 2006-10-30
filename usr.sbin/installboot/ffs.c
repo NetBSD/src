@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.23 2006/10/23 19:44:32 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.24 2006/10/30 07:03:34 he Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.23 2006/10/23 19:44:32 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.24 2006/10/30 07:03:34 he Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -152,8 +152,10 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 	    sbbuf))
 		return (0);
 	fs = (struct fs *)sbbuf;
+#ifndef NO_FFS_SWAP
 	if (params->fstype->needswap)
 		ffs_sb_swap(fs, fs);
+#endif
 
 	if (fs->fs_inopb <= 0) {
 		warnx("Bad inopb %d in superblock in `%s'",
@@ -168,8 +170,10 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 		return (0);
 	inode = (struct ufs1_dinode *)inodebuf;
 	inode += ino_to_fsbo(fs, ino);
+#ifndef NO_FFS_SWAP
 	if (params->fstype->needswap)
 		ffs_dinode1_swap(inode, inode);
+#endif
 
 	/* Get the block count and initialize for our block walk. */
 	nblk = howmany(inode->di_size, fs->fs_bsize);
@@ -285,8 +289,10 @@ ffs_find_disk_blocks_ufs2(ib_params *params, ino_t ino,
 	    sbbuf))
 		return (0);
 	fs = (struct fs *)sbbuf;
+#ifndef NO_FFS_SWAP
 	if (params->fstype->needswap)
 		ffs_sb_swap(fs, fs);
+#endif
 
 	if (fs->fs_inopb <= 0) {
 		warnx("Bad inopb %d in superblock in `%s'",
@@ -301,8 +307,10 @@ ffs_find_disk_blocks_ufs2(ib_params *params, ino_t ino,
 		return (0);
 	inode = (struct ufs2_dinode *)inodebuf;
 	inode += ino_to_fsbo(fs, ino);
+#ifndef NO_FFS_SWAP
 	if (params->fstype->needswap)
 		ffs_dinode2_swap(inode, inode);
+#endif
 
 	/* Get the block count and initialize for our block walk. */
 	nblk = howmany(inode->di_size, fs->fs_bsize);
