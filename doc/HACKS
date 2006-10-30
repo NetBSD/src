@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.88 2006/10/29 23:02:25 uwe Exp $
+# $NetBSD: HACKS,v 1.89 2006/10/30 16:46:42 skrll Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -676,17 +676,6 @@ port	hppa
 	descr
 		gcc 3.3.3 generates bad code for dfa.c with -O2,
 		reduce optimization to -O1 to avoid the bug.
-	kcah
-
-	hack	hppa boot-from-disk memory corruption
-	cdate	Wed May 18 06:56:07 PDT 2005
-	who	chs
-	file	src/sys/dev/scsipi/scsipiconf.h : 1.98
-	descr
-		There is some bug with DMA on hppa that corrupts scsipi_xfer
-		structures, but it only shows up when booting from disk.
-		For now, we'll add some padding to scsipi_xfer so that
-		the corrupted memory is not otherwise used.
 	kcah
 
 port	mips
