@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.92 2006/09/30 21:00:13 jld Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.93 2006/10/30 12:19:23 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.92 2006/09/30 21:00:13 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.93 2006/10/30 12:19:23 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -225,7 +225,6 @@ spec_open(v)
 					    KAUTH_SYSTEM_RAWIO,
 					    KAUTH_REQ_SYSTEM_RAWIO_DISK,
 					    (void *)rw, vp, (void *)(u_long)dev);
-					if (error) printf("nope.\n");
 				}
 			}
 
