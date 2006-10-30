@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.120 2006/08/14 22:14:13 bjh21 Exp $
+.\"	$NetBSD: contents,v 1.121 2006/10/30 18:36:44 hubertf Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1197,7 +1197,7 @@ The extra libraries and include files needed to compile X source code.
 .showsize
 .
 .It Sy xfont
-Fonts needed by X.
+Fonts needed by the X server.
 .if \n[acorn26] .setsize 31 39
 .if \n[acorn32] .setsize 31 39
 .if \n[algor] .setsize 31 39
