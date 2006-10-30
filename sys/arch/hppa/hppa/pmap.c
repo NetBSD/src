@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 2006/10/30 08:30:01 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 2006/10/30 08:39:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2006/10/30 08:30:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2006/10/30 08:39:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -794,7 +794,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	vaddr_t kernel_data;
 	paddr_t phys_start, phys_end;
 
-        PMAP_PRINTF(PDB_INIT, (": phys addresses %p - %p\n",
+	PMAP_PRINTF(PDB_INIT, (": phys addresses %p - %p\n",
 	    (void *)*vstart, (void *)*vend));
 
 	uvm_setpagesize();
@@ -860,7 +860,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 		hptp->hpt_tlbprot = 0;
 		hptp->hpt_entry   = NULL;
 	}
-        PMAP_PRINTF(PDB_INIT, (": hpt_table 0x%lx @ %p\n", size + 1,
+	PMAP_PRINTF(PDB_INIT, (": hpt_table 0x%lx @ %p\n", size + 1,
 	    (caddr_t)addr));
 	/*
 	 * load cr25 with the address of the HPT table
@@ -1067,7 +1067,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	phys_start = resvmem;
 	phys_end = atop(hppa_trunc_page(&kernel_text));
 
-        PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
+	PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
 	if (phys_end > phys_start) {
 		uvm_page_physload(phys_start, phys_end,
@@ -1079,7 +1079,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	phys_start = atop(&__rodata_end);
 	phys_end = atop(&__data_start);
 
-        PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
+	PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
 	if (phys_end > phys_start) {
 		uvm_page_physload(phys_start, phys_end,
@@ -1091,7 +1091,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	phys_start = atop(virtual_steal);
 	phys_end = totalphysmem;
 
-        PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
+	PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
 	if (phys_end > phys_start) {
 		uvm_page_physload(phys_start, phys_end,
