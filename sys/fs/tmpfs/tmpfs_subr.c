@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.25 2006/10/30 15:09:47 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.26 2006/10/30 15:11:01 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.25 2006/10/30 15:09:47 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.26 2006/10/30 15:11:01 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1231,6 +1231,7 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 	if ((node->tn_status & (TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED |
 	    TMPFS_NODE_CHANGED)) == 0)
 		return;
+
 	getnanotime(&now);
 	if (node->tn_status & TMPFS_NODE_ACCESSED) {
 		if (acc == NULL)
@@ -1240,7 +1241,6 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 	if (node->tn_status & TMPFS_NODE_MODIFIED) {
 		if (mod == NULL)
 			mod = &now;
-//printf("vp %p, setting mtime to %ld\n", vp, mod->tv_sec);
 		node->tn_mtime = *mod;
 	}
 	if (node->tn_status & TMPFS_NODE_CHANGED)
