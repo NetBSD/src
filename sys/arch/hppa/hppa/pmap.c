@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 2006/10/23 14:15:09 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 2006/10/30 08:30:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2006/10/23 14:15:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2006/10/30 08:30:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,6 @@ struct simplelock pmap_freelock;	/* and lock */
 struct simplelock pmap_lock;	/* XXX this is all broken */
 struct simplelock sid_pid_lock;	/* pids */
 
-u_int	pages_per_vm_page;
 u_int	pid_counter;
 
 #ifdef PMAPDEBUG
@@ -799,8 +798,6 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	    (void *)*vstart, (void *)*vend));
 
 	uvm_setpagesize();
-
-	pages_per_vm_page = 1;	/* XXX This should die */
 
 	kern_prot[VM_PROT_NONE | VM_PROT_NONE  | VM_PROT_NONE]    =TLB_AR_NA;
 	kern_prot[VM_PROT_READ | VM_PROT_NONE  | VM_PROT_NONE]    =TLB_AR_KR;
