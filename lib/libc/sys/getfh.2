@@ -1,4 +1,4 @@
-.\"	$NetBSD: getfh.2,v 1.20 2006/07/31 16:34:42 martin Exp $
+.\"	$NetBSD: getfh.2,v 1.21 2006/10/30 18:53:42 mjf Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)getfh.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd July 17, 2006
+.Dd October 30, 2006
 .Dt GETFH 2
 .Os
 .Sh NAME
@@ -110,6 +110,10 @@ The size needed has been written to the variable pointed to by
 The kernel failed to allocate temporary memory to create a filehandle of the
 requested size.
 .El
+.Sh SEE ALSO
+.Xr fhstat 2 ,
+.Xr fhstatvfs 2 ,
+.Xr fhstatvfs1 2
 .Sh HISTORY
 The
 .Fn getfh
