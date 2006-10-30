@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.68 2006/10/27 21:20:48 christos Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.69 2006/10/30 11:29:12 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.68 2006/10/27 21:20:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.69 2006/10/30 11:29:12 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -452,7 +452,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
  out:
 	/* No entry in the veriexec tables. */
 	if (vfe == NULL) {
-		veriexec_report("veriexec_verify: No entry.", name,
+		veriexec_report("No entry.", name,
 		    l, REPORT_VERBOSE);
 
 		/*
@@ -470,20 +470,20 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
         switch (vfe->status) {
 	case FINGERPRINT_NOTEVAL:
 		/* Should not happen. */
-		veriexec_report("veriexec_verify: Not-evaluated status "
+		veriexec_report("Not-evaluated status "
 		    "post evaluation; inconsistency detected.", name,
 		    NULL, REPORT_ALWAYS|REPORT_PANIC);
 
 	case FINGERPRINT_VALID:
 		/* Valid fingerprint. */
-		veriexec_report("veriexec_verify: Match.", name, NULL,
+		veriexec_report("Match.", name, NULL,
 		    REPORT_VERBOSE);
 
 		break;
 
 	case FINGERPRINT_NOMATCH:
 		/* Fingerprint mismatch. */
-		veriexec_report("veriexec_verify: Mismatch.", name,
+		veriexec_report("Mismatch.", name,
 		    NULL, REPORT_ALWAYS|REPORT_ALARM);
 
 		/* IDS mode: Deny access on fingerprint mismatch. */
@@ -494,7 +494,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 
 	default:
 		/* Should never happen. */
-		veriexec_report("veriexec_verify: Invalid status "
+		veriexec_report("Invalid status "
 		    "post evaluation.", name, NULL, REPORT_ALWAYS|REPORT_PANIC);
         }
 
