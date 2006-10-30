@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.1 2005/12/30 13:37:57 jmmv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.2 2006/10/30 00:41:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,12 +37,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.1 2005/12/30 13:37:57 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.2 2006/10/30 00:41:26 elad Exp $");
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kcore.h>
+#include <sys/errno.h>
 
 #include <machine/bootinfo.h>
+#include <machine/vmparam.h>
+
+#include <uvm/uvm_extern.h>
+
+int check_pa_acc(paddr_t, vm_prot_t __unused);
 
 /* --------------------------------------------------------------------- */
 
@@ -78,4 +86,30 @@ lookup_bootinfo(int type)
 	}
 
 	return found ? bic : NULL;
+}
+
+/*
+ * check_pa_acc: check if given pa is accessible.
+ */
+int
+check_pa_acc(paddr_t pa, vm_prot_t prot __unused)
+{
+	extern phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
+	extern int mem_cluster_cnt;
+	int i;
+
+	if (securelevel <= 0) {
+		return 0;
+	}
+
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		const phys_ram_seg_t *seg = &mem_clusters[i];
+		paddr_t lstart = seg->start;
+
+		if (lstart <= pa && pa - lstart <= seg->size) {
+			return 0;
+		}
+	}
+
+	return EPERM;
 }

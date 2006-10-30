@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.65 2006/10/12 04:31:03 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.66 2006/10/30 00:41:26 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.65 2006/10/12 04:31:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.66 2006/10/30 00:41:26 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -109,7 +109,7 @@ const struct cdevsw mem_cdevsw = {
 	nostop, notty, nopoll, mmmmap, nokqfilter, D_OTHER,
 };
 
-static int check_pa_acc(paddr_t, vm_prot_t);
+int check_pa_acc(paddr_t, vm_prot_t);
 
 /*ARGSUSED*/
 int
@@ -247,35 +247,4 @@ mmmmap(dev_t dev, off_t off, int prot)
 	}
 
 	return x86_btop(off);
-}
-
-/* ---------------------------------------- */
-
-#include <sys/kcore.h>
-
-/*
- * check_pa_acc: check if given pa is accessible.
- */
-
-static int
-check_pa_acc(paddr_t pa, vm_prot_t prot __unused)
-{
-	extern phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-	extern int mem_cluster_cnt;
-	int i;
-
-	if (securelevel <= 0) {
-		return 0;
-	}
-
-	for (i = 0; i < mem_cluster_cnt; i++) {
-		const phys_ram_seg_t *seg = &mem_clusters[i];
-		paddr_t start = seg->start;
-
-		if (start <= pa && pa - start <= seg->size) {
-			return 0;
-		}
-	}
-
-	return EPERM;
 }
