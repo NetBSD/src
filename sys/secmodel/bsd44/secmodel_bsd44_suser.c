@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.13 2006/10/25 22:49:23 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.14 2006/10/30 16:53:48 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.13 2006/10/25 22:49:23 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.14 2006/10/30 16:53:48 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -348,7 +348,7 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_NETWORK_SOCKET:
 		switch (req) {
 		case KAUTH_REQ_NETWORK_SOCKET_OPEN:
-			if (*((int *)arg2) == SOCK_RAW) {
+			if ((u_long)arg2 == SOCK_RAW) {
 				if (isroot)
 					result = KAUTH_RESULT_ALLOW;
 			} else
