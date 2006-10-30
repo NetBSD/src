@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.53 2006/10/28 15:02:02 christos Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.54 2006/10/30 05:10:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.53 2006/10/28 15:02:02 christos Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.54 2006/10/30 05:10:40 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -338,8 +338,9 @@ __vfprintf_unlocked(fp, fmt0, ap)
 	for (;;) {
 		cp = fmt;
 		if (fp->_flags & __SAFE) {
-			for (; *fmt &&*fmt != '%'; fmt++)
+			for (; *fmt && *fmt != '%'; fmt++)
 				continue;
+			n = *fmt == '%';
 		} else {
 			while ((n = mbrtowc(&wc, fmt, MB_CUR_MAX, &ps)) > 0) {
 				fmt += n;
