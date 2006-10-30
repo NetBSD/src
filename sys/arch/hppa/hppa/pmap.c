@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 2006/10/30 08:39:04 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 2006/10/30 08:41:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2006/10/30 08:39:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2006/10/30 08:41:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -879,11 +879,17 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	memset(pv_head_tbl, 0, sizeof(*pv_head_tbl) * totalphysmem);
 	addr = (vaddr_t) (pv_head_tbl + totalphysmem);
 
+	PMAP_PRINTF(PDB_INIT, (": pv_head array 0x%lx @ %p\n",
+	    sizeof(*pv_head_tbl) * totalphysmem, pv_head_tbl));
+
 	/* Allocate the page aliased bitmap. */
 	addr = ALIGN(addr);
 	page_aliased_bitmap = (u_int *) addr;
 	addr = (vaddr_t) (&_PAGE_ALIASED_WORD(totalphysmem) + 1);
 	memset(page_aliased_bitmap, 0, addr - (vaddr_t) page_aliased_bitmap);
+
+	PMAP_PRINTF(PDB_INIT, (": page_aliased_bitmap 0x%lx @ %p\n",
+	    addr - (vaddr_t) page_aliased_bitmap, page_aliased_bitmap));
 
 	/*
 	 * Allocate the largest struct pv_entry region.   The
@@ -977,6 +983,9 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	kernel_data = (vaddr_t) &__data_start;
 	addr = (vaddr_t) &kernel_text;
 
+	PMAP_PRINTF(PDB_INIT, (": mapping text and rodata @ %p - %p\n",
+	    (void *)addr, (void *)&__rodata_end));
+
 	btlb_j = 0;
 	while (addr < (vaddr_t) &__rodata_end) {
 
@@ -1017,6 +1026,10 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * The only thing this wastes is kernel virtual space,
 	 * which is plentiful.
 	 */
+
+	PMAP_PRINTF(PDB_INIT, (": mapping data, bss, etc @ %p - %p\n",
+	    (void *)addr, (void *)*vstart));
+
 	while (addr < *vstart) {
 
 		/* Make the next BTLB entry. */
