@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.26 2006/07/13 17:50:37 garbled Exp $	*/
+/*	$NetBSD: extintr.c,v 1.27 2006/10/30 17:54:29 garbled Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.26 2006/07/13 17:50:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.27 2006/10/30 17:54:29 garbled Exp $");
 
 #include "opt_openpic.h"
 #include "pci.h"
@@ -347,7 +347,7 @@ intr_establish(int irq, int type, int level, int (*ih_fun)(void *), void *ih_arg
 {
 	struct intrhand **p, *q, *ih;
 	struct intrsource *is;
-	static struct intrhand fakehand = {fakeintr};
+	static struct intrhand fakehand;
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
@@ -400,7 +400,12 @@ intr_establish(int irq, int type, int level, int (*ih_fun)(void *), void *ih_arg
 	 * this with interrupts enabled and don't want the real routine called
 	 * until masking is set up.
 	 */
+	fakehand.ih_fun = fakeintr;
+	fakehand.ih_arg = NULL;
+	fakehand.ih_count = 0;
+	fakehand.ih_next = NULL;
 	fakehand.ih_level = level;
+	fakehand.ih_irq = irq;
 	*p = &fakehand;
 
 	intr_calculatemasks();
