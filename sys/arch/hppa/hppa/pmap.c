@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 2006/10/30 08:41:27 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 2006/10/30 16:04:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2006/10/30 08:41:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2006/10/30 16:04:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -778,7 +778,7 @@ pmap_pv_remove(struct pv_entry *pv)
 void
 pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 {
-	vaddr_t addr;
+	vaddr_t addr, va;
 	vsize_t size;
 	vaddr_t pv_region;
 	struct hpt_entry *hptp;
@@ -788,11 +788,11 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	int btlb_entry_vm_prot[BTLB_SET_SIZE];
 	int btlb_i, btlb_j;
 	vsize_t btlb_entry_min, btlb_entry_max, btlb_entry_got;
-	extern int kernel_text;
-	extern int __data_start;
-	extern int __rodata_end;
-	vaddr_t kernel_data;
+	paddr_t ksro, kero, ksrw, kerw;
 	paddr_t phys_start, phys_end;
+
+	/* Provided by the linker script */
+	extern int kernel_text, __data_start, __rodata_end;
 
 	PMAP_PRINTF(PDB_INIT, (": phys addresses %p - %p\n",
 	    (void *)*vstart, (void *)*vend));
@@ -831,6 +831,9 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	kernel_pmap->pmap_refcnt = 1;
 	kernel_pmap->pmap_space = HPPA_SID_KERNEL;
 	kernel_pmap->pmap_pid = HPPA_PID_KERNEL;
+
+	ksro = (paddr_t) &kernel_text;
+	kero = ksrw = (paddr_t) &__data_start;
 
 	/*
 	 * Allocate various tables and structures.
@@ -980,8 +983,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * BTLB entry for the kernel text may also cover some of
 	 * the data segment, meaning it will have to allow writing.
 	 */
-	kernel_data = (vaddr_t) &__data_start;
-	addr = (vaddr_t) &kernel_text;
+	addr = ksro;
 
 	PMAP_PRINTF(PDB_INIT, (": mapping text and rodata @ %p - %p\n",
 	    (void *)addr, (void *)&__rodata_end));
@@ -994,7 +996,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 		btlb_entry_start[btlb_j] = addr;
 		btlb_entry_size[btlb_j] = btlb_entry_min;
 		btlb_entry_vm_prot[btlb_j] = VM_PROT_READ | VM_PROT_EXECUTE;
-		if (addr + btlb_entry_min > kernel_data)
+		if (addr + btlb_entry_min > kero)
 			btlb_entry_vm_prot[btlb_j] |= VM_PROT_WRITE;
 
 		/* Coalesce BTLB entries whenever possible. */
@@ -1069,6 +1071,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 */
 	*vstart = btlb_entry_start[btlb_j - 1] + btlb_entry_size[btlb_j - 1];
 	virtual_start = *vstart;
+	kerw = *vstart;
 
 	/*
 	 * Finally, load physical pages into UVM.  There are
@@ -1111,6 +1114,12 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 			phys_start, phys_end, VM_FREELIST_DEFAULT);
 		physmem += phys_end - phys_start;
 	}
+
+	for (va = ksro; va < kero; va += PAGE_SIZE)
+		pmap_kenter_pa(va, va, UVM_PROT_RX);
+	for (va = ksrw; va < kerw; va += PAGE_SIZE)
+		pmap_kenter_pa(va, va, UVM_PROT_RW);
+
 }
 
 /*
