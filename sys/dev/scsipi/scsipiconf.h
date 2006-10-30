@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.105 2006/10/20 07:11:50 scw Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.106 2006/10/30 16:15:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -533,11 +533,6 @@ struct scsipi_xfer {
 
 	struct	scsipi_generic cmdstore
 	    __attribute__ ((aligned (4)));/* stash the command in here */
-
-#ifdef __hppa__
-	/* XXX temp hack until we fix the memory corruption bug */
-	u_int8_t pad[32];
-#endif
 };
 
 /*
