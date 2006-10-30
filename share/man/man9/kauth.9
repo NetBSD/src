@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.30 2006/10/30 16:53:48 elad Exp $
+.\" $NetBSD: kauth.9,v 1.31 2006/10/30 21:36:36 wiz Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -535,10 +535,8 @@ Set privileged settings on the terminal device pointed to by
 .It Dv KAUTH_DEVICE_PASSTHRU
 Pass a user command directly to a hardware device.
 .Pp
-.Em NOTE:
+.Em NOTE :
 Depending on the device, this can result in direct memory and/or disk access.
-.Pp
-.Ar arg
 .El
 .Ss Credentials Accessors and Mutators
 .Nm
