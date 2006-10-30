@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: t_times,v 1.4 2006/10/30 15:08:09 jmmv Exp $
+# $NetBSD: t_times,v 1.5 2006/10/30 15:22:54 jmmv Exp $
 #
 # Copyright (c) 2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -102,6 +102,7 @@ test_run() {
 	eval $(stat -s e | sed -e 's|st_|dst_|g') || die
 	eval $(stat -s e/b) || die
 	[ ${st_atime} -eq ${ost_atime} ] || die
+	[ ${st_ctime} -gt ${ost_ctime} ] || die
 	[ ${st_mtime} -eq ${ost_mtime} ] || die
 	[ ${dst_mtime} -gt ${dost_mtime} ] || die
 
