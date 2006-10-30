@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 2006/09/19 22:15:06 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43 2006/10/30 17:52:12 garbled Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2006/09/19 22:15:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2006/10/30 17:52:12 garbled Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -212,11 +212,15 @@ STATIC void pmap_pool_ufree(struct pool *, void *);
 STATIC void pmap_pool_mfree(struct pool *, void *);
 
 static struct pool_allocator pmap_pool_mallocator = {
-	pmap_pool_malloc, pmap_pool_mfree, 0,
+	.pa_alloc = pmap_pool_malloc,
+	.pa_free = pmap_pool_mfree,
+	.pa_pagesz = 0,
 };
 
 static struct pool_allocator pmap_pool_uallocator = {
-	pmap_pool_ualloc, pmap_pool_ufree, 0,
+	.pa_alloc = pmap_pool_ualloc,
+	.pa_free = pmap_pool_ufree,
+	.pa_pagesz = 0,
 };
 
 #if defined(DEBUG) || defined(PMAPCHECK) || defined(DDB)
