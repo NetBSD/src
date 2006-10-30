@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.317 2006/10/22 21:08:27 hauke Exp $
+.\"	$NetBSD: main,v 1.318 2006/10/30 18:36:44 hubertf Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -701,7 +701,7 @@ set, which is traditionally unpacked into
 all sets may be unpacked into
 .Pa /usr/src
 with the command:
-.Dl # Ic "( cd / ; tar -zxpf - ) \*< set_name.tgz"
+.Dl # Ic "cd / ; tar -zxpf set_name.tgz"
 .Pp
 In each of the source distribution set directories, there are
 files which contain the checksums of the files in the directory:
