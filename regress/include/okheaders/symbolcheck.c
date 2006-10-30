@@ -293,7 +293,7 @@
 #endif
 #include <regexp.h>
 #include <resolv.h>
-#include <crypto/rmd160.h>
+#include <rmd160.h>
 /* without this rmt.h re-defines ioctl which is also defined in soundcard.h */
 #define __RMTLIB_PRIVATE
 #include <rmt.h>
@@ -304,6 +304,7 @@
 #include <setjmp.h>
 #include <sgtty.h>
 #include <sha1.h>
+#include <sha2.h>
 #include <signal.h>
 #if HAVE_SKEY_H
 #include <skey.h>
