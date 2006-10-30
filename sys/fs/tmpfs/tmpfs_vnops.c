@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.26 2006/10/30 15:09:47 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.27 2006/10/30 15:23:20 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.26 2006/10/30 15:09:47 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.27 2006/10/30 15:23:20 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -928,6 +928,7 @@ tmpfs_rename(void *v)
 		memcpy(newname, tcnp->cn_nameptr, tcnp->cn_namelen);
 		de->td_name = newname;
 
+		fnode->tn_status |= TMPFS_NODE_CHANGED;
 		tdnode->tn_status |= TMPFS_NODE_MODIFIED;
 	}
 
