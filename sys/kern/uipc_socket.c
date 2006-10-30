@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.127 2006/10/25 22:49:23 elad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.128 2006/10/30 16:53:48 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.127 2006/10/25 22:49:23 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.128 2006/10/30 16:53:48 elad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -475,7 +475,8 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 	int		error, s;
 
 	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
-	    KAUTH_REQ_NETWORK_SOCKET_OPEN, &dom, &type, &proto) != 0)
+	    KAUTH_REQ_NETWORK_SOCKET_OPEN, (void *)(u_long)dom,
+	    (void *)(u_long)type, (void *)(u_long)proto) != 0)
 		return (EPERM);
 
 	if (proto)
