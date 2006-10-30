@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.16 2006/10/13 21:03:22 wiz Exp $
+.\"	$NetBSD: unix.4,v 1.17 2006/10/30 23:49:04 cbiere Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -102,13 +102,6 @@ The
 kernel ignores any user-set value in the
 .Va sun_len
 member of the structure.
-Usage example:
-.Bd -literal -offset indent
-memset(\*[Am]sunx, 0, sizeof(sunx));
-sunx.sun_family = AF_LOCAL;
-strlcpy(sunx.sun_path, THE_PATH, sizeof(sunx.sun_path));
-rv = bind(s, (struct sockaddr *)\*[Am]sunx, SUN_LEN(\*[Am]sunx));
-.Ed
 .Pp
 The
 .Tn UNIX Ns -domain
@@ -215,6 +208,36 @@ The cmsghdr fields have the following values:
 cmsg_len = sizeof(struct cmsghdr) + SOCKCREDSIZE(ngroups)
 cmsg_level = SOL_SOCKET
 cmsg_type = SCM_CREDS
+.Ed
+.Sh EXAMPLES
+The following code fragment shows how to bind a socket to pathname:
+.Bd -literal -offset indent
+const char *pathname = "/path/to/socket";
+struct sockaddr_un addr;
+int ret;
+
+memset(\*[Am]addr, 0, sizeof(addr));
+addr.sun_family = AF_LOCAL;
+if (strlen(pathname) \*[Ge] sizeof(addr.sun_path))
+	goto too_long;
+strncpy(addr.sun_path, pathname, sizeof(addr.sun_path));
+ret = bind(s, (const struct sockaddr *)\*[Am]addr, SUN_LEN(\*[Am]addr));
+if (ret != 0)
+	goto bind_failed;
+\&...
+
+.Ed
+.Pp
+.Sh COMPATIBILITY
+The
+.Ar sun_len
+field exists only in system derived from 4.4BSD.  On systems which don't have the
+.Fn SUN_LEN
+macro, the following definition is recommended:
+.Bd -literal -offset indent
+#ifndef SUN_LEN
+#define SUN_LEN(su)	sizeof(struct(sockaddr_un))
+#endif
 .Ed
 .Sh SEE ALSO
 .Xr socket 2 ,
