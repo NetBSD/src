@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113 2006/10/26 11:48:39 elad Exp $
+# $NetBSD: GENERIC,v 1.114 2006/10/30 12:34:22 perry Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.114 $"
 
 maxusers	32		# estimated number of users
 
@@ -134,6 +134,8 @@ file-system	PTYFS		# /dev/pts/N support
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+# Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
+# It is not recommended for general use.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -450,7 +452,7 @@ artsata* at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* at pci? dev ? function ?	# Cypress IDE controllers
 hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
-iteide*	at pci? dev ? function ?	# IT Express IDE controllers
+iteide* at pci? dev ? function ?	# IT Express IDE controllers
 ixpide* at pci? dev ? function ?	# ATI IXP IDE controllers
 optiide* at pci? dev ? function ?	# Opti IDE controllers
 piixide* at pci? dev ? function ?	# Intel IDE controllers
@@ -918,7 +920,7 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-options		FILEASSOC		# fileassoc(9) - required for Veriexec
+options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 #options	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
