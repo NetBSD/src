@@ -1,5 +1,5 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
-/*	$NetBSD: config.h.in,v 1.10 2005/10/17 17:59:59 pooka Exp $	*/
+/*	$NetBSD: config.h.in,v 1.11 2006/10/31 21:16:23 pooka Exp $	*/
 
 /* Autoheader needs me */
 #undef PACKAGE
@@ -179,6 +179,9 @@
 
 /* Define to 1 if you have the <wchar.h> header file. */
 #undef HAVE_WCHAR_H
+
+/* Define to 1 if you have the <wctype.h> header file. */
+#undef HAVE_WCTYPE_H
 
 /* Define to 1 if you have the `wcwidth' function. */
 #undef HAVE_WCWIDTH

@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.3 2005/10/17 18:00:00 pooka Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.4 2006/10/31 21:16:23 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -52,9 +52,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: ascmagic.c,v 1.43 2005/06/25 15:52:14 christos Exp")
+FILE_RCSID("@(#)Id: ascmagic.c,v 1.46 2006/10/20 21:04:15 christos Exp")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.3 2005/10/17 18:00:00 pooka Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.4 2006/10/31 21:16:23 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -108,9 +108,9 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 	while (nbytes > 1 && buf[nbytes - 1] == '\0')
 		nbytes--;
 
-	if ((nbuf = malloc((nbytes + 1) * sizeof(nbuf[0]))) == NULL)
+	if ((nbuf = calloc(1, (nbytes + 1) * sizeof(nbuf[0]))) == NULL)
 		goto done;
-	if ((ubuf = malloc((nbytes + 1) * sizeof(ubuf[0]))) == NULL)
+	if ((ubuf = calloc(1, (nbytes + 1) * sizeof(ubuf[0]))) == NULL)
 		goto done;
 
 	/*
@@ -158,6 +158,11 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 			rv = 0;
 			goto done;  /* doesn't look like text at all */
 		}
+	}
+
+	if (nbytes <= 1) {
+		rv = 0;
+		goto done;
 	}
 
 	/*

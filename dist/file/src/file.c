@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.15 2005/10/17 19:07:43 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.16 2006/10/31 21:16:23 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -74,9 +74,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: file.c,v 1.98 2005/10/17 15:31:10 christos Exp")
+FILE_RCSID("@(#)Id: file.c,v 1.102 2006/06/02 00:07:58 ian Exp")
 #else
-__RCSID("$NetBSD: file.c,v 1.15 2005/10/17 19:07:43 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.16 2006/10/31 21:16:23 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -87,7 +87,7 @@ __RCSID("$NetBSD: file.c,v 1.15 2005/10/17 19:07:43 christos Exp $");
 #define SYMLINKFLAG ""
 #endif
 
-# define USAGE  "Usage: %s [-bcik" SYMLINKFLAG "nNsvz] [-f namefile] [-F separator] [-m magicfiles] file...\n       %s -C -m magicfiles\n"
+# define USAGE  "Usage: %s [-bcik" SYMLINKFLAG "nNrsvz] [-f namefile] [-F separator] [-m magicfiles] file...\n       %s -C -m magicfiles\n"
 
 #ifndef MAXPATHLEN
 #define	MAXPATHLEN	512
@@ -132,10 +132,11 @@ main(int argc, char *argv[])
 	int flags = 0;
 	char *home, *usermagic;
 	struct stat sb;
+	static const char hmagic[] = "/.magic";
 #define OPTSTRING	"bcCdf:F:hikLm:nNprsvz"
 #ifdef HAVE_GETOPT_LONG
 	int longindex;
-	private struct option long_options[] =
+	static const struct option long_options[] =
 	{
 		{"version", 0, 0, 'v'},
 		{"help", 0, 0, 0},
@@ -184,9 +185,10 @@ main(int argc, char *argv[])
 		magicfile = usermagic;
 	else
 		if ((home = getenv("HOME")) != NULL) {
-			if ((usermagic = malloc(strlen(home) + 8)) != NULL) {
+			if ((usermagic = malloc(strlen(home)
+			    + sizeof(hmagic))) != NULL) {
 				(void)strcpy(usermagic, home);
-				(void)strcat(usermagic, "/.magic");
+				(void)strcat(usermagic, hmagic);
 				if (stat(usermagic, &sb)<0) 
 					free(usermagic);
 				else
@@ -391,6 +393,9 @@ unwrap(char *fn)
 	(void)fclose(f);
 }
 
+/*
+ * Called for each input file on the command line (or in a list of files)
+ */
 private void
 process(const char *inname, int wid)
 {

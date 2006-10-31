@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.3 2005/10/17 18:00:00 pooka Exp $	*/
+/*	$NetBSD: print.c,v 1.4 2006/10/31 21:16:23 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -44,9 +44,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: print.c,v 1.48 2005/10/12 19:29:42 christos Exp")
+FILE_RCSID("@(#)Id: print.c,v 1.54 2006/10/31 19:37:17 christos Exp")
 #else
-__RCSID("$NetBSD: print.c,v 1.3 2005/10/17 18:00:00 pooka Exp $");
+__RCSID("$NetBSD: print.c,v 1.4 2006/10/31 21:16:23 pooka Exp $");
 #endif
 #endif  /* lint */
 
@@ -56,7 +56,6 @@ __RCSID("$NetBSD: print.c,v 1.3 2005/10/17 18:00:00 pooka Exp $");
 protected void
 file_mdump(struct magic *m)
 {
-	private const char *typ[] = { FILE_FORMAT_NAME };
 	private const char optyp[] = { FILE_OPS };
 
 	(void) fputc('[', stderr);
@@ -66,8 +65,8 @@ file_mdump(struct magic *m)
 	if (m->flag & INDIR) {
 		(void) fprintf(stderr, "(%s,",
 			       /* Note: type is unsigned */
-			       (m->in_type < SZOF(typ)) ? 
-					typ[m->in_type] : "*bad*");
+			       (m->in_type < file_nnames) ? 
+					file_names[m->in_type] : "*bad*");
 		if (m->in_op & FILE_OPINVERSE)
 			(void) fputc('~', stderr);
 		(void) fprintf(stderr, "%c%d),",
@@ -77,7 +76,7 @@ file_mdump(struct magic *m)
 	}
 	(void) fprintf(stderr, " %s%s", (m->flag & UNSIGNED) ? "u" : "",
 		       /* Note: type is unsigned */
-		       (m->type < SZOF(typ)) ? typ[m->type] : "*bad*");
+		       (m->type < file_nnames) ? file_names[m->type] : "*bad*");
 	if (m->mask_op & FILE_OPINVERSE)
 		(void) fputc('~', stderr);
 	if (m->mask) {
@@ -85,8 +84,8 @@ file_mdump(struct magic *m)
 			fputc(optyp[m->mask_op&0x7F], stderr);
 		else
 			fputc('?', stderr);
-		if(FILE_STRING != m->type || FILE_PSTRING != m->type)
-			(void) fprintf(stderr, "%.8x", m->mask);
+		if (FILE_STRING != m->type || FILE_PSTRING != m->type)
+			(void) fprintf(stderr, "%.8llx", m->mask);
 		else {
 			if (m->mask & STRING_IGNORE_LOWERCASE) 
 				(void) fputc(CHAR_IGNORE_LOWERCASE, stderr);
@@ -107,26 +106,49 @@ file_mdump(struct magic *m)
 		case FILE_LONG:
 		case FILE_LESHORT:
 		case FILE_LELONG:
+		case FILE_MELONG:
 		case FILE_BESHORT:
 		case FILE_BELONG:
 			(void) fprintf(stderr, "%d", m->value.l);
 			break;
-		case FILE_STRING:
+		case FILE_BEQUAD:
+		case FILE_LEQUAD:
+		case FILE_QUAD:
+			(void) fprintf(stderr, "%lld", m->value.q);
+			break;
 		case FILE_PSTRING:
+		case FILE_STRING:
 		case FILE_REGEX:
-			file_showstr(stderr, m->value.s, ~0U);
+		case FILE_BESTRING16:
+		case FILE_LESTRING16:
+		case FILE_SEARCH:
+			file_showstr(stderr, m->value.s, (size_t)m->vallen);
 			break;
 		case FILE_DATE:
 		case FILE_LEDATE:
 		case FILE_BEDATE:
+		case FILE_MEDATE:
 			(void)fprintf(stderr, "%s,",
 			    file_fmttime(m->value.l, 1));
 			break;
 		case FILE_LDATE:
 		case FILE_LELDATE:
 		case FILE_BELDATE:
+		case FILE_MELDATE:
 			(void)fprintf(stderr, "%s,",
 			    file_fmttime(m->value.l, 0));
+			break;
+		case FILE_QDATE:
+		case FILE_LEQDATE:
+		case FILE_BEQDATE:
+			(void)fprintf(stderr, "%s,",
+			    file_fmttime((uint32_t)m->value.q, 1));
+			break;
+		case FILE_QLDATE:
+		case FILE_LEQLDATE:
+		case FILE_BEQLDATE:
+			(void)fprintf(stderr, "%s,",
+			    file_fmttime((uint32_t)m->value.q, 0));
 			break;
 		default:
 			(void) fputs("*bad*", stderr);
