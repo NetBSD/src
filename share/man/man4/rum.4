@@ -1,5 +1,5 @@
 .\" $OpenBSD: rum.4,v 1.17 2006/10/22 08:29:01 damien Exp $
-.\" $NetBSD: rum.4,v 1.1 2006/10/31 22:21:18 joerg Exp $
+.\" $NetBSD: rum.4,v 1.2 2006/10/31 22:49:01 wiz Exp $
 .\"
 .\" Copyright (c) 2005, 2006
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -88,7 +88,7 @@ The
 driver can be configured at runtime with
 .Xr ifconfig 8
 or on boot with
-.Xr hostname.if 5
+.Xr ifconfig.if 5
 using the following parameters:
 .Bl -tag -width Ds
 .It Cm bssid Ar bssid
@@ -241,20 +241,20 @@ The following adapters should work:
 .El
 .Sh EXAMPLES
 The following
-.Xr hostname.if 5
+.Xr ifconfig.if 5
 example configures rum0 to join whatever network is available on boot,
 using WEP key
 .Dq 0x1deadbeef1 ,
-channel 11, obtaining an IP address using DHCP:
+channel 11:
 .Bd -literal -offset indent
-dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+inet 192.168.1.1 netmask 255.255.255.0 nwkey 0x1deadbeef1 chan 11
 .Ed
 .Pp
 The following
-.Xr hostname.if 5
+.Xr ifconfig.if 5
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
-inet 192.168.1.1 255.255.255.0 NONE media autoselect \e
+inet 192.168.1.1 netmask 255.255.255.0 media autoselect \e
 	mediaopt hostap nwid my_net chan 11
 .Ed
 .Pp
@@ -292,10 +292,9 @@ This should not happen.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
-.Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr usb 4 ,
-.Xr hostname.if 5 ,
+.Xr ifconfig.if 5 ,
 .Xr hostapd 8 ,
 .Xr ifconfig 8
 .Pp
