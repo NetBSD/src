@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.5 2005/10/17 18:34:47 christos Exp $	*/
+/*	$NetBSD: funcs.c,v 1.6 2006/10/31 21:16:23 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -32,12 +32,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#if defined(HAVE_WCHAR_H)
+#include <wchar.h>
+#endif
+#if defined(HAVE_WCTYPE_H)
+#include <wctype.h>
+#endif
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: funcs.c,v 1.15 2005/07/12 20:05:38 christos Exp")
+FILE_RCSID("@(#)Id: funcs.c,v 1.22 2006/10/31 19:37:17 christos Exp")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.5 2005/10/17 18:34:47 christos Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.6 2006/10/31 21:16:23 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -134,7 +140,10 @@ file_buffer(struct magic_set *ms, int fd, const void *buf, size_t nb)
 		if ((m = file_ascmagic(ms, buf, nb)) == 0) {
 		    /* abandon hope, all ye who remain here */
 		    if (file_printf(ms, ms->flags & MAGIC_MIME ?
-			"application/octet-stream" : "data") == -1)
+			(nb ? "application/octet-stream" :
+			    "application/empty") :
+			(nb ? "data" :
+			    "empty")) == -1)
 			    return -1;
 		    m = 1;
 		}
@@ -158,6 +167,14 @@ file_reset(struct magic_set *ms)
 	return 0;
 }
 
+#define OCTALIFY(n, o)	\
+	/*LINTED*/ \
+	(void)(*(n)++ = '\\', \
+	*(n)++ = (((uint32_t)*(o) >> 6) & 3) + '0', \
+	*(n)++ = (((uint32_t)*(o) >> 3) & 7) + '0', \
+	*(n)++ = (((uint32_t)*(o) >> 0) & 7) + '0', \
+	(o)++)
+
 protected const char *
 file_getbuffer(struct magic_set *ms)
 {
@@ -180,14 +197,50 @@ file_getbuffer(struct magic_set *ms)
 		ms->o.pbuf = nbuf;
 	}
 
+#if defined(HAVE_WCHAR_H) && defined(HAVE_MBRTOWC) && defined(HAVE_WCWIDTH)
+	{
+		mbstate_t state;
+		wchar_t nextchar;
+		int mb_conv = 1;
+		size_t bytesconsumed;
+		char *eop;
+		(void)memset(&state, 0, sizeof(mbstate_t));
+
+		np = ms->o.pbuf;
+		op = ms->o.buf;
+		eop = op + strlen(ms->o.buf);
+
+		while (op < eop) {
+			bytesconsumed = mbrtowc(&nextchar, op,
+			    (size_t)(eop - op), &state);
+			if (bytesconsumed == (size_t)(-1) ||
+			    bytesconsumed == (size_t)(-2)) {
+				mb_conv = 0;
+				break;
+			}
+
+			if (iswprint(nextchar)) {
+				(void)memcpy(np, op, bytesconsumed);
+				op += bytesconsumed;
+				np += bytesconsumed;
+			} else {
+				while (bytesconsumed-- > 0)
+					OCTALIFY(np, op);
+			}
+		}
+		*np = '\0';
+
+		/* Parsing succeeded as a multi-byte sequence */
+		if (mb_conv != 0)
+			return ms->o.pbuf;
+	}
+#endif
+
 	for (np = ms->o.pbuf, op = ms->o.buf; *op; op++) {
 		if (isprint((unsigned char)*op)) {
 			*np++ = *op;	
 		} else {
-			*np++ = '\\';
-			*np++ = (((uint32_t)*op >> 6) & 3) + '0';
-			*np++ = (((uint32_t)*op >> 3) & 7) + '0';
-			*np++ = (((uint32_t)*op >> 0) & 7) + '0';
+			OCTALIFY(np, op);
 		}
 	}
 	*np = '\0';
@@ -195,8 +248,8 @@ file_getbuffer(struct magic_set *ms)
 }
 
 /*
- * Yes these suffer from buffer overflows, but if your OS does not have
- * these functions, then maybe you should consider replacing your OS?
+ * Yes these wrappers suffer from buffer overflows, but if your OS does not have
+ * the real functions, maybe you should consider replacing your OS?
  */
 #ifndef HAVE_VSNPRINTF
 int
@@ -212,12 +265,10 @@ int
 snprintf(char *buf, size_t len, const char *fmt, ...)
 {
 	int rv;
-
 	va_list ap;
 	va_start(ap, fmt);
 	rv = vsprintf(buf, fmt, ap);
 	va_end(ap);
-
 	return rv;
 }
 #endif
