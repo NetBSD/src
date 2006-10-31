@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.32 2006/10/12 01:31:30 christos Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.33 2006/10/31 14:04:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -64,10 +64,8 @@
  *	  Ethernet chip (XXX only if we use an ILACC-compatible SWSTYLE).
  */
 
-#include "opt_pcn.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.32 2006/10/12 01:31:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.33 2006/10/31 14:04:29 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -570,6 +568,7 @@ pcn_attach(struct device *parent __unused, struct device *self, void *aux)
 	int i, rseg, error;
 	uint32_t chipid, reg;
 	uint8_t enaddr[ETHER_ADDR_LEN];
+	prop_object_t obj;
 
 	callout_init(&sc->sc_tick_ch);
 
@@ -617,28 +616,27 @@ pcn_attach(struct device *parent __unused, struct device *self, void *aux)
 	 */
 	pcn_reset(sc);
 
-#if !defined(PCN_NO_PROM)
-
 	/*
-	 * Read the Ethernet address from the EEPROM.
+	 * On some systems with the chip is an on-board device, the
+	 * EEPROM is not used.  Handle this by reading the MAC address
+	 * from the CSRs (assuming that boot firmware has written
+	 * it there).
 	 */
-	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		enaddr[i] = bus_space_read_1(sc->sc_st, sc->sc_sh,
-		    PCN32_APROM + i);
-#else
-	/*
-	 * The PROM is not used; instead we assume that the MAC address
-	 * has been programmed into the device's physical address
-	 * registers by the boot firmware
-	 */
-
-        for (i=0; i < 3; i++) {
-		uint32_t val;
-		val = pcn_csr_read(sc, LE_CSR12 + i);
-		enaddr[2*i] = val & 0x0ff;
-		enaddr[2*i+1] = (val >> 8) & 0x0ff;
+	obj = prop_dictionary_get(device_properties(&sc->sc_dev),
+				  "am79c970-no-eeprom");
+	if (prop_bool_true(obj)) {
+	        for (i = 0; i < 3; i++) {
+			uint32_t val;
+			val = pcn_csr_read(sc, LE_CSR12 + i);
+			enaddr[2*i] = val & 0x0ff;
+			enaddr[2*i+1] = (val >> 8) & 0x0ff;
+		}
+	} else {
+		for (i = 0; i < ETHER_ADDR_LEN; i++) {
+			enaddr[i] = bus_space_read_1(sc->sc_st, sc->sc_sh,
+			    PCN32_APROM + i);
+		}
 	}
-#endif
 
 	/*
 	 * Now that the device is mapped, attempt to figure out what

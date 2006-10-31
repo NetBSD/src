@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.27 2006/09/27 21:42:05 manu Exp $
+#	$NetBSD: GENERIC,v 1.28 2006/10/31 14:04:29 thorpej Exp $
 #
 #
 
@@ -230,7 +230,6 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
 # PCI network interfaces
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
-options 	PCN_NO_PROM		# PROM not used for ethernet addr
 
 # PCMCIA network interfaces
 # ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
