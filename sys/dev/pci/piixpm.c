@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.9 2006/10/12 01:31:33 christos Exp $ */
+/* $NetBSD: piixpm.c,v 1.10 2006/10/31 14:03:07 toshii Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -113,6 +113,8 @@ piixpm_match(struct device *parent __unused, struct cfdata *match __unused,
 	case PCI_VENDOR_ATI:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_ATI_SB200_SMB:
+		case PCI_PRODUCT_ATI_SB300_SMB:
+		case PCI_PRODUCT_ATI_SB400_SMB:
 			return 1;
 		}
 		break;
