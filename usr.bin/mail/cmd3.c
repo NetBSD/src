@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.31 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.32 2006/10/31 20:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.31 2006/10/21 21:37:20 christos Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.32 2006/10/31 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -359,6 +359,23 @@ unread(void *v)
 }
 
 /*
+ * Mark all given messages as read.
+ */
+int
+markread(void *v)
+{
+	int *msgvec = v;
+	int *ip;
+
+	for (ip = msgvec; *ip != 0; ip++) {
+		dot = &message[*ip - 1];
+		dot->m_flag &= ~(MNEW|MTOUCH);
+		dot->m_flag |= MREAD|MSTATUS;
+	}
+	return(0);
+}
+
+/*
  * Print the size of each message.
  */
 int
@@ -515,6 +532,7 @@ show(void *v)
 	}
 	return 0;
 }
+
 
 /*
  * Put add users to a group.
