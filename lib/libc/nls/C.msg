@@ -82,7 +82,7 @@ $ EMSGSIZE
 $ EPROTOTYPE
 41 Protocol wrong type for socket
 $ ENOPROTOOPT
-42 Protocol not available
+42 Protocol option not available
 $ EPROTONOSUPPORT
 43 Protocol not supported
 $ ESOCKTNOSUPPORT
