@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2006/05/09 14:07:13 rjs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2006/10/31 14:04:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,6 +54,8 @@
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+
+#include <dev/pci/pcivar.h>
 
 #include <machine/pte.h>
 #include <machine/intr.h>
@@ -125,6 +127,29 @@ findroot(void)
 			booted_device = dv;
 			booted_partition = part;
 			return;
+		}
+	}
+}
+
+#define	BUILTIN_ETHERNET_P(pa)						\
+	((pa)->pa_bus == 0 && (pa)->pa_device == 2 && (pa)->pa_function == 0)
+
+void
+device_register(device_t dev, void *aux)
+{
+	device_t pdev;
+
+	if ((pdev = device_parent(dev)) != NULL && device_is_a(pdev, "pci")) {
+		struct pci_attach_args *pa = aux;
+
+		if (BUILTIN_ETHERNET_P(pa)) {
+			if (! prop_dictionary_set_bool(device_properties(dev),
+						       "am79c970-no-eeprom",
+						       TRUE)) {
+				printf("WARNING: unable to set "
+				       "am79c970-no-eeprom property for %s\n",
+				       dev->dv_xname);
+			}
 		}
 	}
 }
