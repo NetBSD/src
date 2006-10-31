@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.374 2006/10/31 21:37:37 pooka Exp $
+# $NetBSD: shl.mi,v 1.375 2006/10/31 21:55:58 pooka Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.148				base-sys-shlib
 ./lib/libcrypt.so.0.2				base-sys-shlib
@@ -69,7 +69,7 @@
 ./usr/lib/libkstream.so.2.0			base-obsolete		obsolete
 ./usr/lib/libkvm.so.5.2				base-sys-shlib
 ./usr/lib/libm.so.0.5				base-sys-shlib
-./usr/lib/libmagic.so.0.2			base-sys-shlib
+./usr/lib/libmagic.so.1.0			base-sys-shlib
 ./usr/lib/libmenu.so.5.0			base-sys-shlib
 ./usr/lib/libobjc.so.2.0			base-sys-shlib		gcc=3
 ./usr/lib/libobjc.so.2.1			base-sys-shlib		gcc=4
