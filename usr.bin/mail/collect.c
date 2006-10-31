@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.35 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.36 2006/10/31 20:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.35 2006/10/21 21:37:20 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.36 2006/10/31 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,8 +45,12 @@ __RCSID("$NetBSD: collect.c,v 1.35 2006/10/21 21:37:20 christos Exp $");
  * ~ escapes.
  */
 
+#include <assert.h>
+#include <util.h>
+
 #include "rcv.h"
 #include "extern.h"
+#include "format.h"
 #ifdef MIME_SUPPORT
 #include "mime.h"
 #endif
@@ -227,8 +231,7 @@ cont:
 			break;
 #ifdef MIME_SUPPORT
 		case '@':
-			hp->h_attach = mime_attach_files(hp->h_attach,
-			    &linebuf[2], ATTACH_FILE_CONTENT);
+			hp->h_attach = mime_attach_files(hp->h_attach, &linebuf[2]);
 			break;
 #endif
 		case 'C':
@@ -664,11 +667,15 @@ forward(char ms[], FILE *fp, char *fn, int f)
 	(void)printf("Interpolating:");
 	for (; *msgvec != 0; msgvec++) {
 		struct message *mp = message + *msgvec - 1;
+		char *fmtstr;
 
 		touch(mp);
 		(void)printf(" %d", *msgvec);
-#ifdef MIME_SUPPORT
 		(void)fflush(stdout);	/* flush stdout and the above */
+
+		if (tabst && (fmtstr = value(ENAME_INDENT_PREAMBLE)) != NULL)
+			fmsgprintf(collf, fmtstr, mp);
+#ifdef MIME_SUPPORT
 		mip = NULL;
 		if (value(ENAME_MIME_DECODE_MSG)) {
 			if ((tabst == NULL && value(ENAME_MIME_DECODE_INSERT)) ||
@@ -684,6 +691,9 @@ forward(char ms[], FILE *fp, char *fn, int f)
 			warn("%s", fn);
 			return(-1);
 		}
+		if (tabst && (fmtstr = value(ENAME_INDENT_POSTSCRIPT)) != NULL)
+			fmsgprintf(collf, fmtstr, mp);
+			
 	}
 	(void)printf("\n");
 	return(0);

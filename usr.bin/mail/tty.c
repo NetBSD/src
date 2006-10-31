@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.25 2006/10/21 21:37:21 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.26 2006/10/31 20:07:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.25 2006/10/21 21:37:21 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.26 2006/10/31 20:07:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,7 @@ grabh(struct header *hp, int gflags)
 	int volatile extproc;
 # endif /* TIOCEXT */
 #endif /* TIOCSTI */
+	int retval;
 
 	savetstp = signal(SIGTSTP, SIG_DFL);
 	savettou = signal(SIGTTOU, SIG_DFL);
@@ -118,7 +119,7 @@ grabh(struct header *hp, int gflags)
 	}
 # endif	/* TIOCEXT */
 	saveint = signal(SIGINT, ttyint); /* must precede setjmp to be saved */
-	if (setjmp(intjmp)) {
+	if ((retval = setjmp(intjmp)) != 0) {
 		(void)fputc('\n', stdout);
 		goto out;
 	}
@@ -217,7 +218,7 @@ out:
 # endif	/* TIOCEXT */
 #endif
 	(void)signal(SIGINT, saveint);
-	return 0;
+	return retval;
 }
 
 /*

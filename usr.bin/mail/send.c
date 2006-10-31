@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.26 2006/10/21 21:37:21 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.27 2006/10/31 20:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.26 2006/10/21 21:37:21 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.27 2006/10/31 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,40 @@ __RCSID("$NetBSD: send.c,v 1.26 2006/10/21 21:37:21 christos Exp $");
 #include "mime.h"
 #endif
 
+#ifdef SMOPTS_CMD
+#include <db.h>
+
+static int
+namecmp(struct name *np1, struct name *np2)
+{
+	for (/*EMPTY*/; np1 && np2; np1 = np1->n_flink, np2 = np2->n_flink) {
+		if (strcmp(np1->n_name, np2->n_name) != 0)
+			return 1;
+	}
+	return np1 || np2;
+}
+
+static struct name *
+get_smopts(struct name *to)
+{
+	struct smopts_s *sp;
+	struct name *smargs, *np;
+	smargs = NULL;
+	for (np = to; np; np = np->n_flink) {
+		if ((sp = findsmopts(np->n_name, 0)) == NULL)
+			continue;
+		if (smargs == NULL)
+			smargs = sp->s_smopts;
+		else if (namecmp(smargs, sp->s_smopts) != 0)
+			return NULL;
+	}
+	if (smargs &&
+	    smargs->n_flink == NULL &&
+	    (smargs->n_name == NULL || smargs->n_name[0] == '\0'))
+		return NULL;
+	return smargs;
+}
+#endif /* SMOPTS_CMD */
 
 /*
  * Mail -- a mail program
@@ -392,6 +426,27 @@ mail1(struct header *hp, int printheaders)
 		(void)fprintf(stderr, ". . . message lost, sorry.\n");
 		return;
 	}
+#ifdef SMOPTS_CMD
+	if (hp->h_smopts == NULL) {
+		hp->h_smopts = get_smopts(to);
+		if (hp->h_smopts != NULL &&
+		    hp->h_smopts->n_name[0] != '\0' &&
+		    value(ENAME_SMOPTS_VERIFY) != NULL)
+			if (grabh(hp, GSMOPTS)) {
+				(void)printf("mail aborted!\n");
+				savedeadletter(mtf);
+				goto out;
+			}
+	}
+#if 0	/* XXX - for debugging - remove me!!!! */
+	printf("to: '%s'  flink: %p\n", to->n_name, to->n_flink);
+	void showname(struct name *);
+	printf("smopts:\n");
+	void showname(struct name *);
+	showname(hp->h_smopts);
+	exit(0);
+#endif
+#endif
 	namelist = unpack(cat(hp->h_smopts, to));
 	if (debug) {
 		const char **t;
@@ -402,8 +457,8 @@ mail1(struct header *hp, int printheaders)
 		(void)printf("\n");
 		goto out;
 	}
-	if ((cp = value("record")) != NULL)
-		(void)savemail(expand(cp), mtf, hp->h_to);
+	if ((cp = value(ENAME_RECORD)) != NULL)
+		(void)savemail(expand(cp), mtf);
 	/*
 	 * Fork, set up the temporary mail file as standard
 	 * input for "mail", and exec with the user list we generated
@@ -536,8 +591,7 @@ puthead(struct header *hp, FILE *fo, int w)
 
 	gotcha = 0;
 	if (hp->h_to != NULL && w & GTO)
-		if (!Bflag)
-			fmt("To:", hp->h_to, fo, w&GCOMMA), gotcha++;
+		fmt("To:", hp->h_to, fo, w&GCOMMA), gotcha++;
 	if (hp->h_subject != NULL && w & GSUBJECT)
 		(void)fprintf(fo, "Subject: %s\n", hp->h_subject), gotcha++;
 	if (hp->h_smopts != NULL && w & GSMOPTS)
@@ -591,7 +645,7 @@ fmt(const char *str, struct name *np, FILE *fo, int comma)
 
 /*ARGSUSED*/
 int
-savemail(const char name[], FILE *fi, struct name *to)
+savemail(const char name[], FILE *fi)
 {
 	FILE *fo;
 	char buf[BUFSIZ];
@@ -608,16 +662,6 @@ savemail(const char name[], FILE *fi, struct name *to)
 	}
 	(void)time(&now);
 	(void)fprintf(fo, "From %s %s", myname, ctime(&now));
-
-	if (Bflag) { /* Make sure we save a "To:" line if -B is set */
-		struct name *n;
-		(void)fputs("To: undisclosed-recipients:", fo);
-		for (n = to; n != NULL; n = n->n_flink)
-			if ((n->n_type & GDEL) == 0)
-				(void)fprintf(fo, " %s", n->n_name);
-		(void)putc('\n', fo);
-	}
-
 	while ((i = fread(buf, 1, sizeof buf, fi)) > 0)
 		(void)fwrite(buf, 1, (size_t)i, fo);
 	(void)putc('\n', fo);
