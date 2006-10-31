@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.h,v 1.1.1.4 2005/10/17 17:48:24 pooka Exp $	*/
+/*	$NetBSD: readelf.h,v 1.1.1.5 2006/10/31 20:34:52 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -52,6 +52,7 @@ typedef	uint32_t 	Elf64_Addr[2];
 typedef	uint32_t 	Elf64_Off[2];
 typedef uint32_t 	Elf64_Xword[2];
 #else
+#undef USE_ARRAY_FOR_64BIT_TYPES
 typedef	uint64_t 	Elf64_Addr;
 typedef	uint64_t 	Elf64_Off;
 typedef uint64_t 	Elf64_Xword;

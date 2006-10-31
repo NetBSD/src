@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: file2netbsd,v 1.1.1.4 2005/10/17 17:48:13 pooka Exp $
+#	$NetBSD: file2netbsd,v 1.1.1.5 2006/10/31 20:34:48 pooka Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@
 #
 
 # edit this
-file_vers='4.16'
+file_vers='4.18'
 
 #
 # (usually) NO NEED TO EDIT BELOW THIS LINE
