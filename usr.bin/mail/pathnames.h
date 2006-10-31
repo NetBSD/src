@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.6 2006/10/21 21:37:21 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.7 2006/10/31 20:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -29,8 +29,11 @@
  * SUCH DAMAGE.
  *
  *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: pathnames.h,v 1.6 2006/10/21 21:37:21 christos Exp $
+ *	$NetBSD: pathnames.h,v 1.7 2006/10/31 20:07:32 christos Exp $
  */
+
+#ifndef __PATHNAMES_H__
+#define __PATHNAMES_H__
 
 #include <paths.h>
 
@@ -42,3 +45,5 @@
 #ifdef MIME_SUPPORT
 #define _PATH_FILE	"/usr/bin/file"	/* Used to get mime type/subtype */
 #endif
+
+#endif /* __PATHNAMES_H__ */

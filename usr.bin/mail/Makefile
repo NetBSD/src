@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2006/10/21 21:51:47 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2006/10/31 20:07:32 christos Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
@@ -6,16 +6,23 @@
 USE_EDITLINE=yes
 MIME_SUPPORT=yes	# currently requires USE_EDITLINE
 CHARSET_SUPPORT=yes	# only used with MIME_SUPPORT
+SMOPTS_CMD=yes		# build the sendas command
 
 PROG=	mail
 SRCS=	version.c support.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c dotlock.c \
 	edit.c fio.c getname.c head.c v7.local.c lex.c list.c main.c names.c \
 	popen.c quit.c send.c strings.c temp.c tty.c vars.c
+SRCS+=	format.c
 LINKS=	${BINDIR}/mail ${BINDIR}/Mail ${BINDIR}/mail ${BINDIR}/mailx
 MLINKS=	mail.1 Mail.1 mail.1 mailx.1
 
 LDADD+=		-lutil
 DPADD+=		${LIBUTIL}
+
+.if ${SMOPTS_CMD:Uno} == "yes"
+SRCS+=	cmd4.c
+CPPFLAGS+=	-DSMOPTS_CMD
+.endif
 
 .if ${USE_EDITLINE:Uno} == "yes"
 SRCS+=	complete.c
