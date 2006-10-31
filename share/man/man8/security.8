@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.2 2006/10/26 12:47:30 wiz Exp $
+.\" $NetBSD: security.8,v 1.3 2006/10/31 01:59:12 elad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 6, 2006
+.Dd October 31, 2006
 .Dt SECURITY 8
 .Os
 .Sh NAME
@@ -67,10 +67,23 @@ Example usage:
 .Ed
 .Pp
 .Em Veriexec
-needs to be enabled via a kernel option,
-.Dv VERIFIED_EXEC ,
-as well as one or more options for digital fingerprint algorithm support.
+<<<<<<< security.8
+requires a pseudo-device to run:
+.Bd -literal -offset indent
+pseudo-device veriexec 1
+.Ed
+.Pp
+Additionally, one or more options for digital fingerprint algorithm support:
+.Bd -literal -offset indent
+options VERIFIED_EXEC_FP_SHA256
+options VERIFIED_EXEC_FP_SHA512
+.Ed
+.Pp
 See your kernel's config file for an example.
+.Pp
+On amd64, i386, prep, and sparc64 GENERIC kernels,
+.Em Veriexec
+is enabled by default.
 .Pp
 .Em Veriexec
 also requires enabling in
@@ -79,7 +92,7 @@ also requires enabling in
 veriexec=YES
 veriexec_strict=1 # IDS mode
 .Ed
-.Sh ANTI-EXPLOITATION
+.Sh EXPLOITATION MITIGATION
 .Nx
 incorporates some anti-exploitation features, mainly from the
 .Em PaX
