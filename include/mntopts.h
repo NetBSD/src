@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.9 2006/10/24 21:53:10 mjf Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.10 2006/10/31 08:12:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -56,7 +56,6 @@ struct mntopt {
 #define MOPT_SYMPERM		{ "symperm",	0, MNT_SYMPERM, 0 }
 #define MOPT_SOFTDEP		{ "softdep",	0, MNT_SOFTDEP, 0 }
 #define MOPT_IGNORE		{ "hidden",	0, MNT_IGNORE, 0 }
-#define MOPT_NOSHARE		{ "share",	1, MNT_NOSHARE, 0 }
 
 /* Control flags. */
 #define MOPT_FORCE		{ "force",	0, MNT_FORCE, 0 }
@@ -89,8 +88,7 @@ struct mntopt {
 	MOPT_RDONLY,							\
 	MOPT_UNION,							\
 	MOPT_IGNORE,							\
-	MOPT_SYMPERM,							\
-	MOPT_NOSHARE
+	MOPT_SYMPERM
 
 __BEGIN_DECLS
 typedef struct mntoptparse *mntoptparse_t;
