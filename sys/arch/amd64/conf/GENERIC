@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.115 2006/10/31 00:18:12 perry Exp $
+# $NetBSD: GENERIC,v 1.116 2006/10/31 00:20:29 perry Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.115 $"
+#ident 		"GENERIC-$Revision: 1.116 $"
 
 maxusers	32		# estimated number of users
 
@@ -254,7 +254,7 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #mpu*		at acpi?		# Roland MPU-401 MIDI UART
 #pckbc*  	at acpi?		# PC keyboard controller
 #attimer*	at acpi?		# AT Timer
-#pcppi* 	at acpi?                # AT-style speaker sound
+pcppi*  	at acpi?                # AT-style speaker sound
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 cpu* 		at mainbus?
