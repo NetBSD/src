@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.12 2006/10/31 21:16:23 pooka Exp $	*/
+/*	$NetBSD: file.h,v 1.13 2006/10/31 21:50:54 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -29,7 +29,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)Id: file.h,v 1.78 2006/10/31 19:37:17 christos Exp
+ * @(#)Id: file.h,v 1.80 2006/10/31 20:57:45 christos Exp
  */
 
 #ifndef __file_h__
@@ -80,7 +80,7 @@
 #define MAXstring 32		/* max leng of "string" types */
 
 #define MAGICNO		0xF11E041C
-#define VERSIONNO	2
+#define VERSIONNO	3
 #define FILE_MAGICSIZE	(32 * 4)
 
 #define	FILE_LOAD	0
@@ -230,10 +230,10 @@ struct magic {
 	uint32_t offset;	/* offset to magic number */
 	/* Word 5 */
 	int32_t in_offset;	/* offset from indirection */
-	/* Word 6,7 */
+	/* Word 6 */
+	uint32_t dummy4;
+	/* Word 7,8 */
 	uint64_t mask;	/* mask before comparison with value */
-	/* Word 8 */
-	uint32_t dummp4;
 	/* Words 9-16 */
 	union VALUETYPE {
 		uint8_t b;
