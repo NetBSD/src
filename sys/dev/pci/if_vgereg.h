@@ -583,10 +583,10 @@
 #define VGE_TX_FRAGS	7
 #define VGE_TX_MAXLEN	(1 << 14)		/* maximum TX packet size */
 
-struct vge_tx_frag {
-	volatile uint32_t	vge_addrlo;
-	volatile uint16_t	vge_addrhi;
-	volatile uint16_t	vge_buflen;
+struct vge_txfrag {
+	volatile uint32_t	tf_addrlo;
+	volatile uint16_t	tf_addrhi;
+	volatile uint16_t	tf_buflen;
 };
 
 /*
@@ -600,10 +600,10 @@ struct vge_tx_frag {
 
 #define VGE_TXDESC_Q		0x8000
 
-struct vge_tx_desc {
-	volatile uint32_t	vge_sts;
-	volatile uint32_t	vge_ctl;
-	struct vge_tx_frag	vge_frag[VGE_TX_FRAGS];
+struct vge_txdesc {
+	volatile uint32_t	td_sts;
+	volatile uint32_t	td_ctl;
+	struct vge_txfrag	td_frag[VGE_TX_FRAGS];
 };
 
 #define VGE_TDSTS_COLLCNT	0x0000000F	/* TX collision count */
@@ -642,12 +642,12 @@ struct vge_tx_desc {
 
 /* Receive DMA descriptors have a single fragment pointer. */
 
-struct vge_rx_desc {
-	volatile uint32_t	vge_sts;
-	volatile uint32_t	vge_ctl;
-	volatile uint32_t	vge_addrlo;
-	volatile uint16_t	vge_addrhi;
-	volatile uint16_t	vge_buflen;
+struct vge_rxdesc {
+	volatile uint32_t	rd_sts;
+	volatile uint32_t	rd_ctl;
+	volatile uint32_t	rd_addrlo;
+	volatile uint16_t	rd_addrhi;
+	volatile uint16_t	rd_buflen;
 };
 
 /*
