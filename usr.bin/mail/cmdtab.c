@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.14 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.15 2006/10/31 20:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.14 2006/10/21 21:37:20 christos Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.15 2006/10/31 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: cmdtab.c,v 1.14 2006/10/21 21:37:20 christos Exp $");
 
 const struct cmd cmdtab[] = {
 	{ "next",	next,		CMP(n)	NDMLIST,	0,		MMNDEL },
-	{ "alias",	group,		CMP(a)	M|RAWLIST,	0,		1000 },
+	{ "alias",	group,		CMP(A)	M|RAWLIST,	0,		1000 },
 #ifdef MIME_SUPPORT
 	{ "print",	print,		CMP(n)	MSGLIST,	0,		MMNDEL },
 	{ "Print",	Print,		CMP(n)	MSGLIST,	0,		MMNDEL },
@@ -89,7 +89,7 @@ const struct cmd cmdtab[] = {
 #endif
 	{ "page",	more,		CMP(n)	MSGLIST,	0,		MMNDEL },
 	{ "Page",	More,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "unalias",	unalias,	CMP(a)	M|RAWLIST,	1,		1000 },
+	{ "unalias",	unalias,	CMP(A)	M|RAWLIST,	1,		1000 },
 	{ "unread",	unread,		CMP(n)	MSGLIST,	0,		MMNDEL },
 	{ "!",		shell,		CMP(xF)	I|STRLIST,	0,		0 },
 	{ "|",		pipecmd,	CMP(xF)	I|STRLIST,	0,		0 },
@@ -97,6 +97,7 @@ const struct cmd cmdtab[] = {
 	{ "chdir",	schdir,		CMP(F)	M|RAWLIST,	0,		1 },
 	{ "cd",		schdir,		CMP(F)	M|RAWLIST,	0,		1 },
 	{ "save",	save,		CMP(F)	STRLIST,	0,		0 },
+	{ "Save",	Save,		CMP(F)	STRLIST,	0,		0 },
 	{ "source",	source,		CMP(F)	M|RAWLIST,	1,		1 },
 	{ "set",	set,		CMP(sF)	M|RAWLIST,	0,		1000 },
 	{ "shell",	dosh,		CMP(n)	I|NOLIST,	0,		0 },
@@ -140,5 +141,10 @@ const struct cmd cmdtab[] = {
 	{ "#",		null,		CMP(n)	M|NOLIST,	0,		0 },
 	{ "clobber",	clobber,	CMP(n)	M|RAWLIST,	0,		1 },
 	{ "inc",	inc,		CMP(n)	T|NOLIST,	0,		0 },
+#ifdef SMOPTS_CMD
+	{ "smopts",	smoptscmd,	CMP(m)	M|RAWLIST,	0,		1000 },
+	{ "unsmopts",	unsmopts,	CMP(M)	M|RAWLIST,	1,		1000 },
+#endif
+	{ "mkread",	markread,	CMP(n)	MSGLIST,	0,		MMNDEL },
 	{ 0,		0,		CMP0		0,	0,		0 }
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.28 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.29 2006/10/31 20:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.28 2006/10/21 21:37:20 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.29 2006/10/31 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
 #include <util.h>
 #include "extern.h"
+#include "format.h"
 
 #ifdef USE_EDITLINE
 #include "complete.h"
@@ -52,7 +53,7 @@ __RCSID("$NetBSD: lex.c,v 1.28 2006/10/21 21:37:20 christos Exp $");
  * Lexical processing of commands.
  */
 
-const char	*prompt = "& ";
+const char	*prompt = DEFAULT_PROMPT;
 
 /*
  * Set up editing on the given file name.
@@ -194,6 +195,31 @@ incfile(void)
 	return(msgCount - omsgCount);
 }
 
+/*
+ * Return a pointer to the comment character, respecting quoting as
+ * done in getrawlist().  The comment character is ignored inside
+ * quotes.
+ */
+static char *
+comment_char(char *line)
+{
+	char *p;
+	char quotec;
+	quotec = '\0';
+	for (p = line; *p; p++) {
+		if (quotec != '\0') {
+			if (*p == quotec)
+				quotec = '\0';
+		}
+		else if (*p == '"' || *p == '\'')
+			quotec = *p;
+		else if (*p == COMMENT_CHAR)
+			return p;
+	}
+	return NULL;
+}
+
+
 int	*msgvec;
 int	reset_on_stop;			/* do a reset() if stopped */
 
@@ -225,6 +251,9 @@ commands(void)
 		 * string space, and flush the output.
 		 */
 		if (!sourcing && value("interactive") != NULL) {
+			if ((prompt = value(ENAME_PROMPT)) == NULL)
+				prompt = DEFAULT_PROMPT;
+			prompt = smsgprintf(prompt, dot);
 			if ((value("autoinc") != NULL) && (incfile() > 0))
 				(void)printf("New mail has arrived.\n");
 			reset_on_stop = 1;
@@ -243,7 +272,6 @@ commands(void)
 #ifdef USE_EDITLINE
 			if (!sourcing) {
 				char *line;
-
 				if ((line = my_gets(&elm.command, prompt, NULL)) == NULL) {
 					if (n == 0)
 						n = -1;
@@ -267,8 +295,8 @@ commands(void)
 #endif /* USE_EDITLINE */
 
 			if (sourcing) {  /* allow comments in source files */
-				char *ptr = strchr(linebuf, '#');
-				if (ptr)
+				char *ptr;
+				if ((ptr = comment_char(linebuf)) != NULL)
 					*ptr = '\0';
 			}
 			if ((n = strlen(linebuf)) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd2.c,v 1.20 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.21 2006/10/31 20:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd2.c,v 1.20 2006/10/21 21:37:20 christos Exp $");
+__RCSID("$NetBSD: cmd2.c,v 1.21 2006/10/31 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,16 +146,13 @@ save(void *v)
  * so we can discard when the user quits.  Save all fields
  * overriding saveignore and saveretain.
  */
-#if 0
 int
-Save(v)
-	void *v;
+Save(void *v)
 {
 	char *str = v;
 
 	return save1(str, 1, "Save", NULL);
 }
-#endif
 
 /*
  * Copy a message to a file without affected its saved-ness

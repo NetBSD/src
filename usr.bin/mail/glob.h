@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.7 2006/09/18 19:46:21 christos Exp $	*/
+/*	$NetBSD: glob.h,v 1.8 2006/10/31 20:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -29,13 +29,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)glob.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: glob.h,v 1.7 2006/09/18 19:46:21 christos Exp $
+ *	$NetBSD: glob.h,v 1.8 2006/10/31 20:07:32 christos Exp $
  */
 
 /*
  * A bunch of global variable declarations lie herein.
  * def.h must be included first.
  */
+
+#ifndef __GLOB_H__
+#define __GLOB_H__
 
 #ifndef EXTERN
 #define EXTERN extern
@@ -44,7 +47,6 @@
 EXTERN int	msgCount;			/* Count of messages read in */
 EXTERN int	rcvmode;			/* True if receiving mail */
 EXTERN int	sawcom;				/* Set after first command */
-EXTERN int	Bflag;				/* -B do not output a To: line */
 EXTERN char	*Tflag;				/* -T temp file for netnews */
 EXTERN int	senderr;			/* An error while checking */
 EXTERN int	edit;				/* Indicates editing a file */
@@ -60,6 +62,7 @@ EXTERN FILE	*input;				/* Current command input file */
 EXTERN char	mailname[PATHSIZE];		/* Name of current file */
 EXTERN char	prevfile[PATHSIZE];		/* Name of previous file */
 EXTERN char	*homedir;			/* Path name of home directory */
+EXTERN char	*origdir;			/* Path name of directory we started in */
 EXTERN char	*myname;			/* My login name */
 EXTERN off_t	mailsize;			/* Size of system mailbox */
 EXTERN int	lexnumber;			/* Number of TNUMBER from scan() */
@@ -72,6 +75,9 @@ EXTERN struct	message	*dot;			/* Pointer to current message */
 EXTERN struct	message	*message;		/* The actual message structure */
 EXTERN struct	var	*variables[HSHSIZE];	/* Pointer to active var list */
 EXTERN struct	grouphead	*groups[HSHSIZE];/* Pointer to active groups */
+#ifdef SMOPTS_CMD
+EXTERN struct	smopts_s	*smoptstbl[HSHSIZE];
+#endif
 EXTERN struct	ignoretab	ignore[2];	/* ignored and retained fields
 						   0 is ignore, 1 is retain */
 EXTERN struct	ignoretab	saveignore[2];	/* ignored and retained fields
@@ -102,3 +108,5 @@ EXTERN struct strings {
 	char	*s_nextFree;		/* Next alloctable place here */
 	unsigned s_nleft;		/* Number of bytes left here */
 } stringdope[NSPACE];
+
+#endif /* __GLOB_H__ */

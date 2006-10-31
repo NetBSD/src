@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.h,v 1.2 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: complete.h,v 1.3 2006/10/31 20:07:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,8 +37,8 @@
  */
 
 
-#ifndef _COMPLETE_H_
-#define _COMPLETE_H_
+#ifndef __COMPLETE_H__
+#define __COMPLETE_H__
 
 #include <histedit.h>
 
@@ -66,4 +66,4 @@ void init_editline(void);
 #define ENAME_EL_EDITOR			"el-editor"
 #define ENAME_EL_HISTORY_SIZE		"el-history-size"
 
-#endif /* _COMPLETE_H_ */
+#endif /* __COMPLETE_H__ */

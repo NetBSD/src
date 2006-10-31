@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.25 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.26 2006/10/31 20:07:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,8 +29,11 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.25 2006/10/21 21:37:20 christos Exp $
+ *	$NetBSD: extern.h,v 1.26 2006/10/31 20:07:32 christos Exp $
  */
+
+#ifndef __EXTERN_H__
+#define __EXTERN_H__
 
 struct name;
 struct name *cat(struct name *, struct name *);
@@ -119,7 +122,6 @@ int	 editor(void *);
 void	 edstop(void);
 int	 elsecmd(void *);
 int	 endifcmd(void *);
-int	 evalcol(int);
 int	 execute(char [], int);
 int	 exwrite(const char [], FILE *, int);
 void	 fail(const char [], const char []);
@@ -218,11 +220,11 @@ int	 rexit(void *);
 int	 rm(char *);
 int	 run_command(const char *, sigset_t *, int, int, ...);
 int	 save(void *);
-// int	 Save(void *);
+int	 Save(void *);
 int	 save1(char [], int, const char *, struct ignoretab *);
 void	 savedeadletter(FILE *);
 int	 saveigfield(void *);
-int	 savemail(const char [], FILE *, struct name *);
+int	 savemail(const char [], FILE *);
 int	 saveretfield(void *);
 int	 scan(char **);
 void	 scaninit(void);
@@ -290,7 +292,19 @@ void	close_top_files(FILE *);
 void	flush_files(FILE *, int);
 #endif
 
+#ifdef SMOPTS_CMD
+int	smoptscmd(void *);
+int	unsmopts(void *);
+struct smopts_s *findsmopts(const char *, int);
+#endif
+
+int	get_Hflag(char **);
+int	show_headers(int) __attribute__((__noreturn__));
+int	markread(void *);
+
 extern const char *version;
 extern char *tmpdir;
 extern const struct cmd cmdtab[];
 extern int wait_status;
+
+#endif /* __EXTERN_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mime.h,v 1.1 2006/10/21 21:37:21 christos Exp $	*/
+/*	$NetBSD: mime.h,v 1.2 2006/10/31 20:07:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -74,9 +74,7 @@ const char  *mime_next_encoding_name(const void **);
 #define ENAME_MIME_CHARSET		"mime-charset"
 #define ENAME_MIME_CHARSET_VERBOSE	"mime-charset-verbose"
 
-#define ENAME_MIME_FILE_COMMAND		"mime-file-command"
-#define MIME_FILE_COMMAND		_PATH_FILE " --mime --brief"
-
+#define ENAME_MIME_ATTACH_LIST		"mime-attach-list"
 
 #endif /* __MIME_H__ */
 #endif /* MIME_SUPPORT */

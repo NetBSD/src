@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.37 2006/10/26 15:26:37 wiz Exp $
+.\"	$NetBSD: mail.1,v 1.38 2006/10/31 20:07:32 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 .Nd send and receive mail
 .Sh SYNOPSIS
 .Nm
-.Op Fl BEIinv
+.Op Fl EIinv
 .Op Fl a Ar file
 .Op Fl b Ar bcc-addr
 .Op Fl c Ar cc-addr
@@ -48,10 +48,12 @@
 .Op Ar sendmail-flags
 .Nm
 .Op Fl EIiNnv
+.Op Fl H Ns Op Ns : Ns Op dnoru
 .Fl f
 .Op Ar name
 .Nm
 .Op Fl EIiNnv
+.Op Fl H Ns Op : Ns Op dnoru
 .Op Fl u Ar user
 .Sh DESCRIPTION
 .Nm
@@ -68,13 +70,6 @@ to the message.
 .Ar file
 may be a white-space delimited list of filenames, so care must be
 taken to properly quote filenames that contain white-space.
-.It Fl B
-Suppress the
-.Dq To:
-line on outgoing mail.
-On most systems, this will
-result in the line
-.Dq To: undisclosed recipients:; .
 .It Fl b
 Send blind carbon copies to
 .Ar list .
@@ -94,6 +89,29 @@ for processing; when you
 .Ic quit ,
 .Nm
 writes undeleted messages back to this file.
+.It Fl H
+Print the header summaries and exit.  The optional flag modifier
+string must begin with a \&':' and be followed by one or more of the
+characters
+.Sq d ,
+.Sq n ,
+.Sq o ,
+.Sq r ,
+or
+.Sq u 
+to restrict the display to
+.Sq deleted ,
+.Sq new ,
+.Sq old ,
+.Sq read ,
+or
+.Sq unread
+messages, respectively.  E.g.,
+.Qo
+.Nm
+.Fl H Ns :n
+.Qc
+will display just new message headers.
 .It Fl I
 Forces mail to run in interactive mode even when
 input isn't a terminal.
@@ -144,7 +162,33 @@ For example to change your
 address to
 .Dv somebody@somewhere.net
 you can specify:
+.Pp
 .Dl mail recipient -f somebody@somewhere.net
+.Pp
+To prevent multiple copies of a message being sent to the same
+address, duplicate addresses (after alias expansion) are removed from
+the
+.Ar bcc-addr ,
+.Ar cc-addr ,
+and
+.Ar to-addr
+lists.
+In addition, addresses on the
+.Ar cc-addr
+and
+.Ar to-addr
+lists are removed if they occur on the
+.Ar bcc-addr
+list and addresses on the
+.Ar cc-addr
+list are removed if they occur on the
+.Ar to-addr
+list.
+If the
+.Ar to-addr
+list is empty after these deletions, most systems will insert the line
+.Dq To: undisclosed recipients:; .
+.Pp
 The section below
 .Sx Replying to or originating mail ,
 describes some features of
@@ -361,6 +405,15 @@ and
 .Pq Ic R
 Reply to originator.
 Does not reply to other recipients of the original message.
+.It Ic Save
+.Pq Ic S
+Same as
+.Ic save
+except that all header fields are saved ignoring the
+.Ic saveignore
+or
+.Ic saveretain
+lists.
 .It Ic Type
 .Pq Ic T
 Identical to the
@@ -532,6 +585,10 @@ This is the default action for messages if you do
 have the
 .Ic hold
 option set.
+.It Ic mkread
+.Pq Ic mk
+Takes a message list and marks each message as
+having been read.
 .It Ic more
 .Pq Ic \&mo
 Takes a message list and invokes the pager on that list.
@@ -660,6 +717,56 @@ If the list is empty, all variable values are shown.
 .It Ic size
 Takes a message list and prints out the size in characters of each
 message.
+.It Ic smopts
+Takes an
+.Sq address-spec
+followed by the sendmail flags that should be used when sending mail
+to an address that matches that
+.Sq address-spec .
+If no sendmail flags are specified, then list the sendmail flags in
+effect for the
+.Sq address-spec .
+If the
+.Sq address-spec
+is also omitted, then list all
+.Ic smopts
+settings.
+The
+.Sq address-spec
+may be an alias, address, domain (beginning with a '@'), or subdomain
+(begining with a '.').
+If mail is sent to multiple users, the sendmail flags are
+used only if the flags are the same for each recipients.
+If
+.Ar smopts-verify
+is set, then you will be asked to verify the sendmail flags (if there
+are any) before the mail is sent.
+Address matching is case insensitive and done from most specific to
+least.
+.Pp
+For example if
+you have:
+.Bd -literal -offset indent
+smopts mylist -F "List Maintainer"
+smopts @NetBSD.org -f anon@somewhere.net -F "Anon Ymous"
+smopts friend@NetBSD.org ""
+.Ed
+.Pp
+then mail sent to any of the addresses that the
+.Sq mylist
+alias expands to would have the sender's name set to
+.Qq List Maintainer .
+Mail sent to anyone at NetBSD.org other than
+.Sq friend@NetBSD.org
+would look like it was sent from
+.Sq anon@somewhere.net
+by
+.Qq Anon Ymous .
+Mail sent to
+.Sq friend@NetBSD.org
+would not have any sendmail flags set (unless they are set by the
+.Ic \&~h
+escape).
 .It Ic source
 The
 .Ic source
@@ -684,7 +791,7 @@ Takes a message list and marks each message as
 .Ic not
 being deleted.
 .It Ic unread
-.Pq Ic U
+.Pq Ic unr
 Takes a message list and marks each message as
 .Em not
 having been read.
@@ -1098,6 +1205,107 @@ If this name begins with a
 .Nm
 considers it to be an absolute pathname; otherwise, the
 folder directory is found relative to your home directory.
+.It Ar hdronly-format
+If set, use this format string for output when in headers only mode
+.Pq Fl H .
+Otherwise, use the
+.Ar header-format
+string.
+The format syntax is the same as for
+.Ar header-format .
+For example, the following
+.Bd -literal -offset 0
+set hdronly-format="%P%Q%3i \&%-21.20f \&%m/%d %R %3K \\"%q\\""
+.Ed
+.Pp
+might be used to get slightly a shorter header string that might make
+it through a pipe without getting folded.
+.It Ar header-format
+If set, use this format string when displaying headers in command
+mode.
+The format string supports the following conversions in addition to
+those of
+.Xr strftime 3 :
+.Pp
+.Bl -tag -width ".Ar \&%?key?" -compact
+.It Ar \&%?key?
+The header field with name
+.Sq key .
+Note: if key[0] is '-', ignore the '-' and extract the address
+portion of the field (i.e.,
+.Sq skin
+the field).
+.It Ar \&%J
+The number of header lines in the message.
+.It Ar \&%K
+The number of body lines in the message.
+.It Ar \&%L
+The total number of lines in the message.
+.It Ar \&%N
+The sender's full name (as in the "From:" or "Sender:" fields).
+.It Ar \&%O
+The message size.
+.It Ar \&%P
+The current 
+.Qq dot
+('>') messsage.
+.It Ar \&%Q
+The message status flag.
+.It Ar \&%Z
+The time zone name (if it exists).
+.It Ar \&%f
+The email address of sender.
+.It Ar \&%i
+The message number.
+.It Ar \&%n
+The sender's login name (taken from the address).
+.It Ar \&%q
+The subject.
+.It Ar \&%t
+The total number of messages.
+.It Ar \&%z
+The GMT offset (if found).
+.El
+.Pp
+If the format string begins with
+.Qq \&%??
+then the date will be extracted from the headline.
+Otherwise it will be extracted from the
+.Ar Date:
+header falling back to the headline if that extraction fails.
+For example, the default format is:
+.Bd -literal -offset 0
+set header-format \&"\&%??%P%Q%3i \&%-21.20f \&%a \&%b \&%e \&%R \&%3K/%-5O \&\\"%q\\""
+.Ed
+.Pp
+Note:
+.Ar \&%n
+and
+.Ar \&%t
+as used by
+.Xr strftime 3
+were redundant with \\t and \\n, respectively, so nothing is lost
+using them here.
+.It Ar indentpreamble
+If set, this format string will be inserted before quoting a message
+.Po Ic \&~m
+or
+.Ic \&~M
+.Pc .
+The format syntax is the same as for
+.Ar header-format .
+For example, the following:
+.Bd -literal -offset 0
+set indentpreamble=\&"On \&%b \&%e \&%T, \&%Y \&%z (%Z), \&%n (%.50N) wrote:\\n-- Subject: \&%.65q\\n"
+.Ed
+.Pp
+would insert something like
+.Bd -literal -offset 0
+On Oct 27 11:00:07, 2006 -0400 (EDT), anon (Anon Ymous) wrote:
+-- Subject: suggestions for mail(1)
+.Ed
+.Pp
+before the quoted message.
 .It Ar indentprefix
 String used by the
 .Dq ~m
@@ -1106,6 +1314,34 @@ the normal tab character
 .Pq Sq ^I .
 Be sure to quote the value if it contains
 spaces or tabs.
+.It Ar indentpostscript
+If set, this format string will be inserted after quoting a message
+.Po Ic \&~m
+or
+.Ic \&~M
+.Pc .
+The format syntax is the same as for
+.Ar header-format .
+For example, the following:
+.Bd -literal -offset 0
+set indentpostscript="-- End of excerpt from \&%.50N"
+.Ed
+.Pp
+would insert something like
+.Bd -literal -offset 0
+-- End of excerpt from Anon Ymous
+.Ed
+.Pp
+after the quoted message.
+.It Ar mime-attach-list
+If set, the command line flag
+.Fl a
+will accept a whitespace delimited list of files.
+Otherwise, its argument is interpreted as a single filename.
+Warning: If enabled, care must be taken to properly quote files that
+contain whitespace, both from the shell and from this second expansion
+done by
+.Xr mail 1 .
 .It Ar mime-body-TYPE-SUBTYPE
 MIME-hook for the body of a MIME block of
 .Qq Content-Type: TYPE/SUBTYPE .
@@ -1208,6 +1444,13 @@ It can be the name of a folder.
 The default is
 .Dq Li mbox
 in the user's home directory.
+.It Ar prompt
+If defined, it specifies the prompt to use when in command mode.
+Otherwise, the default
+.Qq &\ 
+is used.
+The format syntax is the same as for
+.Ar header-format .
 .It Ar record
 If defined, gives the pathname of the file used to record all outgoing
 mail.
@@ -1234,6 +1477,12 @@ with the
 .Fl f
 option.
 Note: the sendmail options can be edited with the
+.Ic \&~h
+escape.
+.It Ar smopts-verify
+Verify the sendmail options used on outgoing mail if they were obtained from a
+.Ar smopts
+match.  This has no effect if there are no sendmail flags or if the flags were set by the
 .Ic \&~h
 escape.
 .It Ar toplines
@@ -1357,7 +1606,9 @@ Read all "Content-Type: text/html" parts using
 (assuming it is installed) and add this support to
 multipart/alternative blocks:
 .Pp
-.Dl set mime-body-text-html="+/usr/pkg/bin/lynx -force_html -dump -stdin"
+.Bd -literal -offset indent
+set mime-body-text-html="+/usr/pkg/bin/lynx -force_html -dump -stdin"
+.Ed
 .Pp
 Generally, the incoming mail will have a better
 .Qq plain/text

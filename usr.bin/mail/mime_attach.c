@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.1 2006/10/21 21:37:21 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.2 2006/10/31 20:07:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.1 2006/10/21 21:37:21 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.2 2006/10/31 20:07:32 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -85,6 +85,8 @@ show_name(const char *prefix, struct name *np)
 		i++;
 	}
 }
+
+static void fput_mime_content(FILE *fp, struct Content *Cp);
 
 PUBLIC void
 show_attach(const char *prefix, struct attachment *ap)
@@ -459,6 +461,7 @@ get_mime_content(struct attachment *ap, int i)
 	return Cp;
 }
 
+#if 0	/* XXX - dead code! */
 /*
  * A hook to complete the content part of the attachment struct.  This
  * is used when a file is attached by the '-a' to complete the process
@@ -473,6 +476,7 @@ mime_attach_content(struct attachment *ap)
 	for (/* EMPTY */; ap; ap = ap->a_flink)
 		ap->a_Content = get_mime_content(ap, i++);
 }
+#endif
 
 
 /******************
@@ -654,15 +658,13 @@ check_filename(char *filename, char *canon_name)
 	 * 4) save cananonical name for filename, so cd won't screw things later.
 	 * 5) add the structure to the end of the chain.
 	 */
-
+	/* We need to expand '~' if we got here from '~@'.  The shell
+	 * does this otherwise.
+	 */
 	if (fname[0] == '~' && fname[1] == '/') {
-		char *home = getenv("HOME");
-		/*
-		 * XXX - we could use the global 'homedir' here if we
-		 * move tinit() before getopt() in main.c
-		 */
-		if (home && home[0] != '~')
-			(void)easprintf(&fname, "%s/%s", home, fname + 2);
+		if (homedir && homedir[0] != '~')
+			(void)easprintf(&fname, "%s/%s",
+			    homedir, fname + 2);
 	}
 	if (realpath(fname, canon_name) == NULL) {
 		warn("realpath: %s", filename);
@@ -683,7 +685,7 @@ check_filename(char *filename, char *canon_name)
 	if (!S_ISREG(sb.st_mode)) {
 		warnx("stat: %s is not a file", filename);
 		canon_name = NULL;
-	/*	goto do_close; */
+	     /*	goto do_close; */
 	}
  do_close:
 	(void)close(fd);
@@ -820,14 +822,14 @@ edit_attachments(struct attachment *attach)
 	char canon_name[MAXPATHLEN];
 	struct attachment *ap;
 	char *line;
-	int i;
+	int attach_num;
 
 	(void)printf("Attachments:\n");
 
-	i = 1;
+	attach_num = 1;
 	ap = attach;
 	while (ap) {
-		line = get_line(&elm.filec, "filename", ap->a_name, i);
+		line = get_line(&elm.filec, "filename", ap->a_name, attach_num);
 		if (*line == '\0') {	/* omit this attachment */
 			if (ap->a_blink)
 				ap->a_blink->a_flink = ap->a_flink;
@@ -841,10 +843,12 @@ edit_attachments(struct attachment *attach)
 				ap->a_name = savestr(canon_name);
 				ap->a_Content = get_mime_content(ap, 0);
 			}
-			sget_line(&elm.string, "description", &ap->a_Content.C_description, i);
-			sget_encoding(&ap->a_Content.C_encoding, ap->a_name, ap->a_Content.C_type, i);
+			sget_line(&elm.string, "description",
+			    &ap->a_Content.C_description, attach_num);
+			sget_encoding(&ap->a_Content.C_encoding, ap->a_name,
+			    ap->a_Content.C_type, attach_num);
 		}
-		i++;
+		attach_num++;
 		if (ap->a_flink == NULL)
 			break;
 
@@ -854,11 +858,11 @@ edit_attachments(struct attachment *attach)
 	do {
 		struct attachment *nap;
 
-		line = get_line(&elm.filec, "filename", "", i);
+		line = get_line(&elm.filec, "filename", "", attach_num);
 		if (*line == '\0')
 			break;
 
-		nap = attach_one_file(ap, line, i);
+		nap = attach_one_file(ap, line, attach_num);
 		if (nap == NULL)
 			continue;
 
@@ -867,9 +871,11 @@ edit_attachments(struct attachment *attach)
 		else
 			ap = attach = nap;
 
-		sget_line(&elm.string, "description", &ap->a_Content.C_description, i);
-		sget_encoding(&ap->a_Content.C_encoding, ap->a_name, ap->a_Content.C_type, i);
-		i++;
+		sget_line(&elm.string, "description",
+		    &ap->a_Content.C_description, attach_num);
+		sget_encoding(&ap->a_Content.C_encoding, ap->a_name,
+		    ap->a_Content.C_type, attach_num);
+		attach_num++;
 
 	} while (ap);
 
@@ -877,29 +883,32 @@ edit_attachments(struct attachment *attach)
 }
 
 /*
- * Hook used by the '-a' flag and '~@' escape to attach files.
+ * Hook used by the '~@' escape to attach files.
  */
 PUBLIC struct attachment*
-mime_attach_files(struct attachment *attach, char *linebuf, int with_content)
+mime_attach_files(struct attachment *attach, char *linebuf)
 {
 	struct attachment *ap;
 	char *argv[MAXARGC];
 	int argc;
 	int attach_num;
 
-	argc = getrawlist(linebuf, argv, sizeof(argv)/sizeof(*argv));
-
-	attach_num = attach ? 1 : 0;
+	argc = getrawlist(linebuf, argv, sizeofarray(argv));
+	attach_num = 1;
 	for (ap = attach; ap && ap->a_flink; ap = ap->a_flink)
 			attach_num++;
 
 	if (argc) {
 		int i;
 		for (i = 0; i < argc; i++) {
-			attach_num++;
-			ap = attach_one_file(ap, argv[i], with_content ? attach_num : 0);
-			if (attach == NULL)
-				attach = ap;
+			struct attachment *ap2;
+			ap2 = attach_one_file(ap, argv[i], attach_num);
+			if (ap2 != NULL) {
+				ap = ap2;
+				if (attach == NULL)
+					attach = ap;
+				attach_num++;
+			}
 		}
 	}
 	else {
@@ -907,6 +916,61 @@ mime_attach_files(struct attachment *attach, char *linebuf, int with_content)
 		(void)printf("--- end attachments ---\n");
 	}
 
+	return attach;
+}
+
+/*
+ * Hook called in main() to attach files registered by the '-a' flag.
+ */
+PUBLIC struct attachment *
+mime_attach_optargs(struct name *optargs)
+{
+	struct attachment *attach;
+	struct attachment *ap;
+	struct name *np;
+	char *expand_optargs;
+	int attach_num;
+
+	expand_optargs = value(ENAME_MIME_ATTACH_LIST);
+	attach_num = 1;
+	ap = NULL;
+	attach = NULL;
+	for (np = optargs; np; np = np->n_flink) {
+		char *argv[MAXARGC];
+		int argc;
+		int i;
+
+		if (expand_optargs != NULL)
+			argc = getrawlist(np->n_name, argv, sizeofarray(argv));
+		else {
+			if (np->n_name == '\0')
+				argc = 0;
+			else {
+				argc = 1;
+				argv[0] = np->n_name;
+			}
+			argv[argc] = NULL;/* be consistent with getrawlist() */
+		}
+		for (i = 0; i < argc; i++) {
+			struct attachment *ap2;
+			char *filename;
+			
+			if (argv[i][0] == '/')	/* an absolute path */
+				(void)easprintf(&filename, "%s", argv[i]);
+			else
+				(void)easprintf(&filename, "%s/%s",
+				    origdir, argv[i]);
+
+			ap2 = attach_one_file(ap, filename, attach_num);
+			free(filename);
+			if (ap2 != NULL) {
+				ap = ap2;
+				if (attach == NULL)
+					attach = ap;
+				attach_num++;
+			}
+		}
+	}
 	return attach;
 }
 

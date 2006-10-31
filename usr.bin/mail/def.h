@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.20 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: def.h,v 1.21 2006/10/31 20:07:32 christos Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.20 2006/10/21 21:37:20 christos Exp $
+ *	$NetBSD: def.h,v 1.21 2006/10/31 20:07:32 christos Exp $
  */
 
 /*
@@ -36,6 +36,9 @@
  *
  * Author: Kurt Shoens (UCB) March 25, 1978
  */
+
+#ifndef __DEF_H__
+#define __DEF_H__
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -62,6 +65,7 @@
 
 #define	APPEND				/* New mail goes to end of mailbox */
 
+#define COMMENT_CHAR	'#'		/* Comment character when sourcing */
 #define	ESCAPE		'~'		/* Default escape for sending */
 #define	NMLSIZE		1024		/* max names in a message list */
 #define	PATHSIZE	MAXPATHLEN	/* Size of pathnames throughout */
@@ -71,6 +75,16 @@
 #define	MAXARGC		1024		/* Maximum list of raw strings */
 #define	MAXEXP		25		/* Maximum expansion of aliases */
 
+/*
+ * User environment variable names.
+ * (See complete.h and mime.h for names specific to those modules.)
+ */
+#ifdef SMOPTS_CMD
+#define	ENAME_SMOPTS_VERIFY	"smopts-verify"
+#endif
+#define ENAME_RECORD		"record"
+
+#define sizeofarray(a)	(sizeof(a)/sizeof(*a))
 #define	equal(a, b)	(strcmp(a,b)==0)/* A nice function to string compare */
 
 #define readline mail_readline
@@ -290,6 +304,15 @@ struct grouphead {
 	struct	group *g_list;		/* Users in group. */
 };
 
+#ifdef SMOPTS_CMD
+struct smopts_s {
+	struct smopts_s *s_link;	/* Link to next smopts_s in list */
+	char *s_name;			/* Name of this smopts_s */
+	struct name *s_smopts;		/* sendmail options name list */
+};
+#endif /* SMOPTS_CMD */
+
+
 /*
  * Structure of the hash table of ignored header fields
  */
@@ -358,3 +381,5 @@ skip_white(char *cp)
 		cp++;
 	return cp;
 }
+
+#endif /* __DEF_H__ */

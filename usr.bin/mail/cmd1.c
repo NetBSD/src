@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.26 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.27 2006/10/31 20:07:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.26 2006/10/21 21:37:20 christos Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.27 2006/10/31 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
 #include "extern.h"
+#include "format.h"
 #ifdef MIME_SUPPORT
 #include "mime.h"
 #endif
@@ -172,6 +173,22 @@ from(void *v)
 void
 printhead(int mesg)
 {
+#if 1
+	const char *fmtstr;
+	char *msgline;
+
+	fmtstr = value(ENAME_HEADER_FORMAT);
+	/*
+	 * XXX - should we use the old code here if
+	 * value(ENAME_HEADER_FORMAT) is null?
+	 */
+	if (fmtstr == NULL)
+		fmtstr = DEFAULT_HEADER_FORMAT;
+	msgline = smsgprintf(fmtstr, &message[mesg - 1]);
+	if (screenwidth > 0)
+		msgline[screenwidth] = '\0';
+	(void)printf("%s\n", msgline);
+#else
 	struct message *mp;
 	char headline[LINESIZE], wcount[LINESIZE], *subjline, dispc, curind;
 	char pbuf[BUFSIZ];
@@ -212,6 +229,7 @@ printhead(int mesg)
 		(void)printf("%c%c%3d %-20.20s  %16.16s %s \"%.*s\"\n",
 			curind, dispc, mesg, name, hl.l_date, wcount,
 			subjlen, subjline);
+#endif
 }
 
 /*

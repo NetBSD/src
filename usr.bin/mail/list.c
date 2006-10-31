@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.16 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.17 2006/10/31 20:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.16 2006/10/21 21:37:20 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.17 2006/10/31 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
 #include "extern.h"
+#include "format.h"
 
 int	matchto(char *, int);
 
@@ -90,6 +91,7 @@ getmsglist(char *buf, int *vector, int flags)
 #define	CMUNREAD	04		/* Unread messages */
 #define	CMDELETED	010		/* Deleted messages */
 #define	CMREAD		020		/* Read messages */
+#define CMMASK		037		/* Mask the valid bits */
 
 /*
  * The following table describes the letters which can follow
@@ -111,6 +113,36 @@ struct coltab {
 };
 
 static	int	lastcolmod;
+
+
+static int
+ignore_message(int m_flag, int colmod)
+{
+	struct coltab *colp;
+	for (colp = &coltab[0]; colp->co_char; colp++)
+		if (colp->co_bit & colmod)
+			if ((m_flag & colp->co_mask)
+			    != colp->co_equal)
+				return 1;
+	return 0;
+}
+
+/*
+ * Turn the character after a colon modifier into a bit
+ * value.
+ */
+static int
+evalcol(int col)
+{
+	struct coltab *colp;
+
+	if (col == 0)
+		return(lastcolmod);
+	for (colp = &coltab[0]; colp->co_char; colp++)
+		if (colp->co_char == col)
+			return(colp->co_bit);
+	return(0);
+}
 
 int
 markall(char buf[], int f)
@@ -310,17 +342,9 @@ number:
 	 */
 
 	if (colmod != 0) {
-		for (i = 1; i <= msgCount; i++) {
-			struct coltab *colp;
-
-			mp = &message[i - 1];
-			for (colp = &coltab[0]; colp->co_char; colp++)
-				if (colp->co_bit & colmod)
-					if ((mp->m_flag & colp->co_mask)
-					    != colp->co_equal)
-						unmark(i);
-			
-		}
+		for (i = 1; i <= msgCount; i++)
+			if (ignore_message(message[i - 1].m_flag, colmod))
+				unmark(i);
 		for (mp = &message[0]; mp < &message[msgCount]; mp++)
 			if (mp->m_flag & MMARK)
 				break;
@@ -339,20 +363,79 @@ number:
 }
 
 /*
- * Turn the character after a colon modifier into a bit
- * value.
+ * Show all headers without paging.  (-H flag)
+ */
+__attribute__((__noreturn__))
+int
+show_headers(int flags)
+{
+	int mesg;
+	char *cp;
+
+	if ((cp = value(ENAME_HDRONLY_SCRNWIDTH)) != NULL) {
+		int width;
+		width = *cp ? atoi(cp) : 0;
+		if (width >= 0)
+			screenwidth = width;
+	}
+	if ((cp = value(ENAME_HDRONLY_FORMAT)) != NULL)
+		assign(ENAME_HEADER_FORMAT, cp);
+
+	flags &= CMMASK;
+	for (mesg = 1; mesg <= msgCount; mesg++)
+		if (!ignore_message(message[mesg - 1].m_flag, flags))
+			printhead(mesg);
+	exit(0);
+	/* NOTREACHED */
+}
+
+/*
+ * A hack so -H can have an optional modifier as -H[:flags].
+ *
+ * This depends a bit on the internals of getopt().  In particular,
+ * for flags expecting an argument, argv[optind-1] must contain the
+ * optarg and optarg must point to a substring of argv[optind-1] not a
+ * copy of it.
  */
 int
-evalcol(int col)
+get_Hflag(char **argv)
 {
-	struct coltab *colp;
+	int flags;
 
-	if (col == 0)
-		return(lastcolmod);
-	for (colp = &coltab[0]; colp->co_char; colp++)
-		if (colp->co_char == col)
-			return(colp->co_bit);
-	return(0);
+	flags = ~CMMASK;
+
+	if (optarg == NULL)  /* We had an error, just get the flags. */
+		return flags;
+
+	if (*optarg != ':' || optarg == argv[optind - 1]) {
+		optind--;
+		optreset = 1;
+		if (optarg != argv[optind]) {
+			static char temparg[LINE_MAX];
+			size_t optlen;
+			size_t arglen;
+			char *p;
+
+			optlen = strlen(optarg);
+			arglen = strlen(argv[optind]);
+			p = argv[optind] + arglen - optlen;
+			optlen = MIN(optlen, sizeof(temparg) - 1);
+			temparg[0] = '-';
+			(void)memmove(temparg + 1, p, optlen + 1);
+			argv[optind] = temparg;
+		}
+	}
+	else {
+		char *p;
+		for (p = optarg + 1; *p; p++) {
+			int bit;
+			if ((bit = evalcol(*p)) == 0)
+				errx(EXIT_FAILURE,
+				    "Unknown -H modifier '%c'", *p);
+			flags |= bit;
+		}
+	}
+	return flags;
 }
 
 /*

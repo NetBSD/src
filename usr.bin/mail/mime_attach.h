@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.h,v 1.1 2006/10/21 21:37:21 christos Exp $	*/
+/*	$NetBSD: mime_attach.h,v 1.2 2006/10/31 20:07:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -46,10 +46,8 @@
  * All routines declared here are exported via mime.h
  */
 
-void	mime_attach_content(struct attachment *);
-struct attachment *mime_attach_files(struct attachment *, char *, int);
-# define ATTACH_FILE_ONLY	0
-# define ATTACH_FILE_CONTENT	1
+struct attachment *mime_attach_optargs(struct name *);
+struct attachment *mime_attach_files(struct attachment *, char *);
 FILE	*mime_encode(FILE *, struct header *);
 void	mime_putheader(FILE *, struct header *);
 

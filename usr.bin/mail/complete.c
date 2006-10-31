@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.9 2006/10/21 21:37:20 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.10 2006/10/31 20:07:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -6,8 +6,6 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Luke Mewburn.
- *
- * Additions by Anon Ymous. (2006)
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.9 2006/10/21 21:37:20 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.10 2006/10/31 20:07:32 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -544,28 +542,21 @@ char complete_set(EditLine *el, char *word, int dolist)
 	words = sl_init();
 
 	/* allocate space for variables table */
-	for (h = 0, s = 1; h < HSHSIZE; h++)
+	s = 1;
+	for (h = 0; h < HSHSIZE; h++)
 		for (vp = variables[h]; vp != NULL; vp = vp->v_link)
 			s++;
-	ap = (char **) salloc(s * sizeof *ap);
+	ap = (char **)salloc(s * sizeof *ap);
 
-	/* save pointers */
+	/* save the pointers */
 	for (h = 0, p = ap; h < HSHSIZE; h++)
 		for (vp = variables[h]; vp != NULL; vp = vp->v_link)
 			*p++ = vp->v_name;
 	*p = NULL;
-
-	/* sort pointers */
 	sort(ap);
-
-	/* complete on list */
-	for (p = ap; *p != NULL; p++) {
-		if (len == 0 || strncmp(*p, word, len) == 0) {
-			char *tcp;
-			tcp = estrdup(*p);
-			mail_sl_add(words, tcp);
-		}
-	}
+	for (p = ap; *p != NULL; p++)
+		if (len == 0 || strncmp(*p, word, len) == 0)
+			mail_sl_add(words, estrdup(*p));
 
 	rv = complete_ambiguous(el, word, dolist, words);
 
@@ -573,9 +564,6 @@ char complete_set(EditLine *el, char *word, int dolist)
 
 	return(rv);
 }
-
-
-
 
 
 static unsigned char
@@ -593,39 +581,98 @@ complete_alias(EditLine *el, char *word, int dolist)
 	words = sl_init();
 
 	/* allocate space for alias table */
-	for (h = 0, s = 1; h < HSHSIZE; h++)
+	s = 1;
+	for (h = 0; h < HSHSIZE; h++)
 		for (gh = groups[h]; gh != NULL; gh = gh->g_link)
 			s++;
-	ap = (char **) salloc(s * sizeof *ap);
-
+	ap = (char **)salloc(s * sizeof *ap);
+	
 	/* save pointers */
-	for (h = 0, p = ap; h < HSHSIZE; h++)
+	p = ap;
+	for (h = 0; h < HSHSIZE; h++)
 		for (gh = groups[h]; gh != NULL; gh = gh->g_link)
 			*p++ = gh->g_name;
 	*p = NULL;
-
-	/* sort pointers */
 	sort(ap);
-
-	/* complete on list */
-	for (p = ap; *p != NULL; p++) {
-		if (len == 0 || strncmp(*p, word, len) == 0) {
-			char *tcp;
-			tcp = estrdup(*p);
-			mail_sl_add(words, tcp);
-		}
-	}
-
+	for (p = ap; *p != NULL; p++)
+		if (len == 0 || strncmp(*p, word, len) == 0)
+			mail_sl_add(words, estrdup(*p));
+	
 	rv = complete_ambiguous(el, word, dolist, words);
 	if (rv == CC_REFRESH)
 		if (el_insertstr(el, " ") == -1)
 			rv = CC_ERROR;
+	
+	sl_free(words, 1);
+	
+	return(rv);
+}
+
+
+#ifdef SMOPTS_CMD
+static unsigned
+char complete_smopts(EditLine *el, char *word, int dolist)
+{
+	struct grouphead *gh;
+	struct smopts_s *sp;
+	char **ap;
+	char **p;
+	int h;
+	int s1;
+	int s2;
+	size_t len;
+	StringList *words;
+	unsigned char rv;
+
+	len = strlen(word);
+	words = sl_init();
+
+	/* count the entries in the smoptstbl and groups (alias) tables */
+	s1 = 1;
+	s2 = 1;
+	for (h = 0; h < HSHSIZE; h++) {
+		for (sp = smoptstbl[h]; sp != NULL; sp = sp->s_link)
+			s1++;
+		for (gh = groups[h]; gh != NULL; gh = gh->g_link)
+			s2++;
+	}
+
+	/* allocate sufficient space for the pointers */
+	ap = (char **)salloc(MAX(s1, s2) * sizeof *ap);
+
+	/*
+	 * First do the smoptstbl pointers. (case _insensitive_)
+	 */
+	p = ap;
+	for (h = 0; h < HSHSIZE; h++)
+		for (sp = smoptstbl[h]; sp != NULL; sp = sp->s_link)
+			*p++ = sp->s_name;
+	*p = NULL;
+	sort(ap);
+	for (p = ap; *p != NULL; p++)
+		if (len == 0 || strncasecmp(*p, word, len) == 0)
+			mail_sl_add(words, estrdup(*p));
+
+	/*
+	 * Now do the groups (alias) pointers. (case sensitive)
+	 */
+	p = ap;
+	for (h = 0; h < HSHSIZE; h++)
+		for (gh = groups[h]; gh != NULL; gh = gh->g_link)
+			*p++ = gh->g_name;
+	*p = NULL;
+	sort(ap);
+	for (p = ap; *p != NULL; p++)
+		if (len == 0 || strncmp(*p, word, len) == 0)
+			mail_sl_add(words, estrdup(*p));
+
+	rv = complete_ambiguous(el, word, dolist, words);
 
 	sl_free(words, 1);
 
 	return(rv);
 }
-
+#endif /* SMOPTS_CMD */
 
 
 static char	*stringbase;	/* current scan point in line buffer */
@@ -956,7 +1003,11 @@ mail_complete(EditLine *el, int ch)
 		case 'f':			/* filename complete */
 		case 'F':
 			return (complete_filename(el, word, dolist));
-
+#ifdef SMOPTS_CMD
+		case 'm':
+		case 'M':
+			return (complete_smopts(el, word, dolist));
+#endif
 		case 'n':			/* no complete */
 		case 'N':			/* no complete */
 			return (CC_ERROR);
