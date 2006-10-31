@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.113 2006/10/12 01:31:59 christos Exp $ */
+/*	$NetBSD: ehci.c,v 1.114 2006/10/31 20:43:31 joerg Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.113 2006/10/12 01:31:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.114 2006/10/31 20:43:31 joerg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2599,7 +2599,8 @@ ehci_timeout(void *addr)
 
 	/* Execute the abort in a process context. */
 	usb_init_task(&exfer->abort_task, ehci_timeout_task, addr);
-	usb_add_task(exfer->xfer.pipe->device, &exfer->abort_task);
+	usb_add_task(exfer->xfer.pipe->device, &exfer->abort_task,
+	    USB_TASKQ_HC);
 }
 
 void

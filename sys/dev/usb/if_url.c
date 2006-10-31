@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.21 2006/10/12 01:31:59 christos Exp $	*/
+/*	$NetBSD: if_url.c,v 1.22 2006/10/31 20:43:31 joerg Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.21 2006/10/12 01:31:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.22 2006/10/31 20:43:31 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -928,7 +928,8 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 		printf("%s: url_send error=%s\n", USBDEVNAME(sc->sc_dev),
 		       usbd_errstr(err));
 		/* Stop the interface */
-		usb_add_task(sc->sc_udev, &sc->sc_stop_task);
+		usb_add_task(sc->sc_udev, &sc->sc_stop_task,
+		    USB_TASKQ_DRIVER);
 		return (EIO);
 	}
 
@@ -1306,7 +1307,7 @@ url_tick(void *xsc)
 		return;
 
 	/* Perform periodic stuff in process context */
-	usb_add_task(sc->sc_udev, &sc->sc_tick_task);
+	usb_add_task(sc->sc_udev, &sc->sc_tick_task, USB_TASKQ_DRIVER);
 }
 
 Static void

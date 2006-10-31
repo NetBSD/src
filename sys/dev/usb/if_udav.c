@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.12 2006/10/12 01:31:59 christos Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.13 2006/10/31 20:43:31 joerg Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.12 2006/10/12 01:31:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.13 2006/10/31 20:43:31 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1042,7 +1042,8 @@ udav_send(struct udav_softc *sc, struct mbuf *m, int idx)
 		printf("%s: udav_send error=%s\n", USBDEVNAME(sc->sc_dev),
 		       usbd_errstr(err));
 		/* Stop the interface */
-		usb_add_task(sc->sc_udev, &sc->sc_stop_task);
+		usb_add_task(sc->sc_udev, &sc->sc_stop_task,
+		    USB_TASKQ_DRIVER);
 		return (EIO);
 	}
 
@@ -1421,7 +1422,8 @@ udav_tick(void *xsc)
 		return;
 
 	/* Perform periodic stuff in process context */
-	usb_add_task(sc->sc_udev, &sc->sc_tick_task);
+	usb_add_task(sc->sc_udev, &sc->sc_tick_task,
+	    USB_TASKQ_DRIVER);
 }
 
 Static void

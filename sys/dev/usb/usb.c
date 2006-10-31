@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.89 2006/10/12 01:32:00 christos Exp $	*/
+/*	$NetBSD: usb.c,v 1.90 2006/10/31 20:43:31 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.89 2006/10/12 01:32:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.90 2006/10/31 20:43:31 joerg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -105,7 +105,14 @@ struct usb_softc {
 	char		sc_dying;
 };
 
-TAILQ_HEAD(, usb_task) usb_all_tasks;
+struct usb_taskq {
+	TAILQ_HEAD(, usb_task) tasks;
+	struct proc *task_thread_proc;
+	const char *name;
+	int taskcreated;	/* task thread exists. */
+};
+
+static struct usb_taskq usb_taskq[USB_NUM_TASKQS];
 
 dev_type_open(usbopen);
 dev_type_close(usbclose);
@@ -123,7 +130,6 @@ Static void	usb_discover(void *);
 Static void	usb_create_event_thread(void *);
 Static void	usb_event_thread(void *);
 Static void	usb_task_thread(void *);
-Static struct proc *usb_task_thread_proc = NULL;
 
 #define USB_MAX_EVENTS 100
 struct usb_event_q {
@@ -242,12 +248,15 @@ USB_ATTACH(usb)
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
+static const char *taskq_names[] = USB_TASKQ_NAMES;
+
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 void
 usb_create_event_thread(void *arg)
 {
 	struct usb_softc *sc = arg;
-	static int created = 0;
+	struct usb_taskq *taskq;
+	int i;
 
 	if (usb_kthread_create1(usb_event_thread, sc, &sc->sc_event_thread,
 			   "%s", sc->sc_dev.dv_xname)) {
@@ -255,12 +264,18 @@ usb_create_event_thread(void *arg)
 		       sc->sc_dev.dv_xname);
 		panic("usb_create_event_thread");
 	}
-	if (!created) {
-		created = 1;
-		TAILQ_INIT(&usb_all_tasks);
-		if (usb_kthread_create1(usb_task_thread, NULL,
-					&usb_task_thread_proc, "usbtask")) {
-			printf("unable to create task thread\n");
+	for (i = 0; i < USB_NUM_TASKQS; i++) {
+		taskq = &usb_taskq[i];
+
+		if (taskq->taskcreated)
+			continue;
+
+		TAILQ_INIT(&taskq->tasks);
+		taskq->taskcreated = 1;
+		taskq->name = taskq_names[i];
+		if (usb_kthread_create1(usb_task_thread, taskq,
+					&taskq->task_thread_proc, taskq->name)) {
+			printf("unable to create task thread: %s\n", taskq->name);
 			panic("usb_create_event_thread task");
 		}
 	}
@@ -272,31 +287,35 @@ usb_create_event_thread(void *arg)
  * context ASAP.
  */
 void
-usb_add_task(usbd_device_handle dev __unused, struct usb_task *task)
+usb_add_task(usbd_device_handle dev __unused, struct usb_task *task, int queue)
 {
+	struct usb_taskq *taskq;
 	int s;
 
+	taskq = &usb_taskq[queue];
 	s = splusb();
-	if (!task->onqueue) {
+	if (task->queue == -1) {
 		DPRINTFN(2,("usb_add_task: task=%p\n", task));
-		TAILQ_INSERT_TAIL(&usb_all_tasks, task, next);
-		task->onqueue = 1;
+		TAILQ_INSERT_TAIL(&taskq->tasks, task, next);
+		task->queue = queue;
 	} else {
 		DPRINTFN(3,("usb_add_task: task=%p on q\n", task));
 	}
-	wakeup(&usb_all_tasks);
+	wakeup(&taskq->tasks);
 	splx(s);
 }
 
 void
 usb_rem_task(usbd_device_handle dev __unused, struct usb_task *task)
 {
+	struct usb_taskq *taskq;
 	int s;
 
+	taskq = &usb_taskq[task->queue];
 	s = splusb();
-	if (task->onqueue) {
-		TAILQ_REMOVE(&usb_all_tasks, task, next);
-		task->onqueue = 0;
+	if (task->queue != -1) {
+		TAILQ_REMOVE(&taskq->tasks, task, next);
+		task->queue = -1;
 	}
 	splx(s);
 }
@@ -347,24 +366,26 @@ usb_event_thread(void *arg)
 }
 
 void
-usb_task_thread(void *arg __unused)
+usb_task_thread(void *arg)
 {
 	struct usb_task *task;
+	struct usb_taskq *taskq;
 	int s;
 
-	DPRINTF(("usb_task_thread: start\n"));
+	taskq = arg;
+	DPRINTF(("usb_task_thread: start taskq %s\n", taskq->name));
 
 	s = splusb();
 	for (;;) {
-		task = TAILQ_FIRST(&usb_all_tasks);
+		task = TAILQ_FIRST(&taskq->tasks);
 		if (task == NULL) {
-			tsleep(&usb_all_tasks, PWAIT, "usbtsk", 0);
-			task = TAILQ_FIRST(&usb_all_tasks);
+			tsleep(&taskq->tasks, PWAIT, "usbtsk", 0);
+			task = TAILQ_FIRST(&taskq->tasks);
 		}
 		DPRINTFN(2,("usb_task_thread: woke up task=%p\n", task));
 		if (task != NULL) {
-			TAILQ_REMOVE(&usb_all_tasks, task, next);
-			task->onqueue = 0;
+			TAILQ_REMOVE(&taskq->tasks, task, next);
+			task->queue = -1;
 			splx(s);
 			task->fun(task->arg);
 			s = splusb();

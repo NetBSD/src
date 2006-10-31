@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.15 2006/10/12 01:31:59 christos Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.16 2006/10/31 20:43:31 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.15 2006/10/12 01:31:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.16 2006/10/31 20:43:31 joerg Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -958,7 +958,7 @@ axe_tick(void *xsc)
 		return;
 
 	/* Perform periodic stuff in process context */
-	usb_add_task(sc->axe_udev, &sc->axe_tick_task);
+	usb_add_task(sc->axe_udev, &sc->axe_tick_task, USB_TASKQ_DRIVER);
 
 }
 

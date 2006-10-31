@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.21 2006/10/12 01:31:59 christos Exp $ */
+/*	$NetBSD: if_atu.c,v 1.22 2006/10/31 20:43:31 joerg Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.21 2006/10/12 01:31:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.22 2006/10/31 20:43:31 joerg Exp $");
 
 #include "bpfilter.h"
 
@@ -1139,7 +1139,7 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		/* tell the event thread that we want a scan */
 		sc->sc_cmd = ATU_C_SCAN;
-		usb_add_task(sc->atu_udev, &sc->sc_task);
+		usb_add_task(sc->atu_udev, &sc->sc_task, USB_TASKQ_DRIVER);
 
 		/* handle this ourselves */
 		ic->ic_state = nstate;
@@ -1149,7 +1149,8 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_RUN:
 		if (ostate == IEEE80211_S_SCAN) {
 			sc->sc_cmd = ATU_C_JOIN;
-			usb_add_task(sc->atu_udev, &sc->sc_task);
+			usb_add_task(sc->atu_udev, &sc->sc_task,
+			    USB_TASKQ_DRIVER);
 		}
 		break;
 	default:
