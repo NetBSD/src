@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.38 2006/10/31 20:07:32 christos Exp $
+.\"	$NetBSD: mail.1,v 1.39 2006/10/31 22:10:41 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mail.1	8.8 (Berkeley) 4/28/95
 .\"
-.Dd October 21, 2006
+.Dd October 31, 2006
 .Dt MAIL 1
 .Os
 .Sh NAME
@@ -90,15 +90,17 @@ for processing; when you
 .Nm
 writes undeleted messages back to this file.
 .It Fl H
-Print the header summaries and exit.  The optional flag modifier
-string must begin with a \&':' and be followed by one or more of the
+Print the header summaries and exit.
+The optional flag modifier string must begin with a
+.Sq \&:
+and be followed by one or more of the
 characters
 .Sq d ,
 .Sq n ,
 .Sq o ,
 .Sq r ,
 or
-.Sq u 
+.Sq u
 to restrict the display to
 .Sq deleted ,
 .Sq new ,
@@ -106,7 +108,8 @@ to restrict the display to
 .Sq read ,
 or
 .Sq unread
-messages, respectively.  E.g.,
+messages, respectively.
+E.g.,
 .Qo
 .Nm
 .Fl H Ns :n
@@ -339,7 +342,8 @@ enables the
 feature.
 (These options are summarized below.)
 .Sh SUMMARY
-(Adapted from the `Mail Reference Manual')
+(Adapted from the
+.Dq Mail Reference Manual )
 .Pp
 Each command is typed on a line by itself, and may take arguments
 following the command word.
@@ -361,7 +365,7 @@ If given a numeric
 argument
 .Ar n ,
 goes to the
-.Ar n Ns 'th
+.Ar n Ap th
 previous message and prints it.
 .It Ic \&?
 Prints a brief summary of commands.
@@ -733,8 +737,11 @@ is also omitted, then list all
 settings.
 The
 .Sq address-spec
-may be an alias, address, domain (beginning with a '@'), or subdomain
-(begining with a '.').
+may be an alias, address, domain (beginning with a
+.Sq @ ) ,
+or subdomain
+(begining with a
+.Sq \&. ) .
 If mail is sent to multiple users, the sendmail flags are
 used only if the flags are the same for each recipients.
 If
@@ -1231,7 +1238,11 @@ those of
 .It Ar \&%?key?
 The header field with name
 .Sq key .
-Note: if key[0] is '-', ignore the '-' and extract the address
+Note: if key[0] is
+.Sq \&- ,
+ignore the
+.Sq \&-
+and extract the address
 portion of the field (i.e.,
 .Sq skin
 the field).
@@ -1246,9 +1257,10 @@ The sender's full name (as in the "From:" or "Sender:" fields).
 .It Ar \&%O
 The message size.
 .It Ar \&%P
-The current 
+The current
 .Qq dot
-('>') messsage.
+.Pq Sq \*[Gt]
+messsage.
 .It Ar \&%Q
 The message status flag.
 .It Ar \&%Z
@@ -1341,7 +1353,7 @@ Otherwise, its argument is interpreted as a single filename.
 Warning: If enabled, care must be taken to properly quote files that
 contain whitespace, both from the shell and from this second expansion
 done by
-.Xr mail 1 .
+.Nm .
 .It Ar mime-body-TYPE-SUBTYPE
 MIME-hook for the body of a MIME block of
 .Qq Content-Type: TYPE/SUBTYPE .
@@ -1447,7 +1459,7 @@ in the user's home directory.
 .It Ar prompt
 If defined, it specifies the prompt to use when in command mode.
 Otherwise, the default
-.Qq &\ 
+.Qq &\
 is used.
 The format syntax is the same as for
 .Ar header-format .
@@ -1482,7 +1494,9 @@ escape.
 .It Ar smopts-verify
 Verify the sendmail options used on outgoing mail if they were obtained from a
 .Ar smopts
-match.  This has no effect if there are no sendmail flags or if the flags were set by the
+match.
+This has no effect if there are no sendmail flags or if the flags
+were set by the
 .Ic \&~h
 escape.
 .It Ar toplines
@@ -1496,12 +1510,12 @@ A MIME message is (recursively) divided into a series of MIME parts
 that can be thought of as sub-messages, each with a header and body.
 When MIME support is enabled (by setting
 .Ar mime-decode-message ) ,
-.Xr mail 1
+.Nm
 splits a message into a series of its smallest MIME parts and
 processes those parts as if they were messages themselves, passing the
 header and body through a pipeline of the form:
 .Pp
-.Dl mail -> MIME-decoder -> MIME-hook -> pager -> screen
+.Dl mail -\*[Gt] MIME-decoder -\*[Gt] MIME-hook -\*[Gt] pager -\*[Gt] screen
 .Pp
 The
 .Em MIME-decoder
@@ -1587,7 +1601,7 @@ end of the flags.
 WARNING: automatically running a program is a potential security risk
 if that program has bugs, so be careful what you run.
 .Pp
-.Em Examples:
+.Em Examples :
 View all "Content-Type: image/jpeg" parts with
 .Xr xv 1
 (assuming it is installed):
