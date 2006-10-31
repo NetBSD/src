@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.665 2006/10/26 17:12:34 kleink Exp $
+# $NetBSD: mi,v 1.666 2006/10/31 22:21:17 joerg Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -111,6 +111,9 @@
 ./libdata/firmware/ral/ral-rt2561		base-sys-root
 ./libdata/firmware/ral/ral-rt2561s		base-sys-root
 ./libdata/firmware/ral/ral-rt2661		base-sys-root
+./libdata/firmware/rum				base-sys-root
+./libdata/firmware/rum/rum-license		base-sys-root
+./libdata/firmware/rum/rum-rt2573		base-sys-root
 ./libexec					base-sys-root
 ./mnt						base-sys-root
 ./rescue					base-sys-root
