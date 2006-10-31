@@ -1,4 +1,4 @@
-.\"	$NetBSD: magic.5,v 1.12 2005/10/17 18:00:00 pooka Exp $
+.\"	$NetBSD: magic.5,v 1.13 2006/10/31 21:16:23 pooka Exp $
 .\"
 .TH MAGIC 5 "Public Domain"
 .\" install as magic.4 on USG, magic.5 on V7 or Berkeley systems.
@@ -8,7 +8,7 @@ magic \- file command's magic number file
 This manual page documents the format of the magic file as
 used by the
 .BR file (1)
-command, version 4.16.
+command, version 4.18.
 The
 .BR file
 command identifies the type of a file using,
@@ -40,6 +40,8 @@ A one-byte value.
 A two-byte value (on most systems) in this machine's native byte order.
 .IP long
 A four-byte value (on most systems) in this machine's native byte order.
+.IP quad
+An eight-byte value (on most systems) in this machine's native byte order.
 .IP string
 A string of bytes.
 The string type specification can be optionally followed
@@ -56,27 +58,70 @@ Finally the ``c'' flag, specifies case insensitive matching: lowercase
 characters in the magic match both lower and upper case characters in the
 targer, whereas upper case characters in the magic, only much uppercase
 characters in the target.
+.IP pstring
+A pascal style string where the first byte is interpreted as the an
+unsigned length. The string is not NUL terminated.
 .IP date
 A four-byte value interpreted as a UNIX date.
+.IP qdate
+A eight-byte value interpreted as a UNIX date.
 .IP ldate
 A four-byte value interpreted as a UNIX-style date, but interpreted as
+local time rather than UTC.
+.IP qldate
+An eight-byte value interpreted as a UNIX-style date, but interpreted as
 local time rather than UTC.
 .IP beshort
 A two-byte value (on most systems) in big-endian byte order.
 .IP belong
 A four-byte value (on most systems) in big-endian byte order.
+.IP bequad
+An eight-byte value (on most systems) in big-endian byte order.
 .IP bedate
 A four-byte value (on most systems) in big-endian byte order,
 interpreted as a Unix date.
+.IP beqdate
+An eight-byte value (on most systems) in big-endian byte order,
+interpreted as a Unix date.
+.IP beldate
+A four-byte value (on most systems) in big-endian byte order,
+interpreted as a UNIX-style date, but interpreted as local time rather
+than UTC.
+.IP beqldate
+An eight-byte value (on most systems) in big-endian byte order,
+interpreted as a UNIX-style date, but interpreted as local time rather
+than UTC.
+.IP bestring16
+A two-byte unicode (UCS16) string in big-endian byte order.
 .IP leshort
 A two-byte value (on most systems) in little-endian byte order.
 .IP lelong
 A four-byte value (on most systems) in little-endian byte order.
+.IP lequad
+An eight-byte value (on most systems) in little-endian byte order.
 .IP ledate
 A four-byte value (on most systems) in little-endian byte order,
 interpreted as a UNIX date.
+.IP leqdate
+An eight-byte value (on most systems) in little-endian byte order,
+interpreted as a UNIX date.
 .IP leldate
 A four-byte value (on most systems) in little-endian byte order,
+interpreted as a UNIX-style date, but interpreted as local time rather
+than UTC.
+.IP leqldate
+An eight-byte value (on most systems) in little-endian byte order,
+interpreted as a UNIX-style date, but interpreted as local time rather
+than UTC.
+.IP lestring16
+A two-byte unicode (UCS16) string in little-endian byte order.
+.IP melong
+A four-byte value (on most systems) in middle-endian (PDP-11) byte order.
+.IP medate
+A four-byte value (on most systems) in middle-endian (PDP-11) byte order,
+interpreted as a UNIX date.
+.IP meldate
+A four-byte value (on most systems) in middle-endian (PDP-11) byte order,
 interpreted as a UNIX-style date, but interpreted as local time rather
 than UTC.
 .IP regex
@@ -139,6 +184,8 @@ that are set in the specified value,
 .BR ^ ,
 to specify that the value from the file must have clear any of the bits
 that are set in the specified value, or
+.BR ~ ,
+the value specified after is negated before tested.
 .BR x ,
 to specify that any value will match.
 If the character is omitted, it is assumed to be
@@ -230,11 +277,14 @@ The value of
 .I x
 is used as an offset in the file. A byte, short or long is read at that offset
 depending on the
-.B [bslBSL]
+.B [bslBSLm]
 type specifier.
 The capitalized types interpret the number as a big endian
 value, whereas the small letter versions interpret the number as a little
-endian value.
+endian value;
+the
+.B m
+type interprets the number as a middle endian (PDP-11) value.
 To that number the value of
 .I y
 is added and the result is used as an offset in the file.
@@ -274,7 +324,7 @@ the value read from the file before it is used as an offset:
 .PP
 Sometimes you do not know the exact offset as this depends on the length or
 position (when indirection was used before) of preceding fields. You can
-specify an offset relative to the end of the last uplevel field using
+specify an offset relative to the end of the last up-level field using
 .BI &
 as a prefix to the offset:
 .sp
@@ -306,7 +356,7 @@ Or the other way around:
     >0x18             leshort >0x3f
     >>(0x3c.l)        string  LE\e0\e0  LE executable (MS-Windows)
     # at offset 0x80 (-4, since relative offsets start at the end
-    # of the uplevel match) inside the LE header, we find the absolute
+    # of the up-level match) inside the LE header, we find the absolute
     # offset to the code area, where we look for a specific signature
     >>>(&0x7c.l+0x26) string  UPX     \eb, UPX compressed
 .fi
@@ -323,7 +373,7 @@ Or even both!
 .fi
 .PP
 Finally, if you have to deal with offset/length pairs in your file, even the
-second value in a parenthesed expression can be taken from the file itself,
+second value in a parenthesized expression can be taken from the file itself,
 using another set of parentheses. Note that this additional indirect offset
 is always relative to the start of the main indirect offset.
 .sp
@@ -342,20 +392,22 @@ The formats
 .IR long ,
 .IR belong ,
 .IR lelong ,
+.IR melong ,
 .IR short ,
 .IR beshort ,
 .IR leshort ,
 .IR date ,
 .IR bedate ,
+.IR medate ,
+.IR ledate ,
+.IR beldate ,
+.IR leldate ,
 and
-.I ledate
+.I meldate
 are system-dependent; perhaps they should be specified as a number
 of bytes (2B, 4B, etc),
 since the files being recognized typically come from
 a system on which the lengths are invariant.
-.PP
-There is (currently) no support for specified-endian data to be used in
-indirect offsets.
 .SH SEE ALSO
 .BR file (1)
 \- the command that reads this file.
@@ -372,4 +424,4 @@ indirect offsets.
 .\" the changes I posted to the S5R2 version.
 .\"
 .\" Modified for Ian Darwin's version of the file command.
-.\" @(#)Id: magic.man,v 1.28 2005/03/17 17:34:15 christos Exp
+.\" @(#)Id: magic.man,v 1.33 2006/10/31 19:37:16 christos Exp
