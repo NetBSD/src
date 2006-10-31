@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.c,v 1.7 2006/10/02 21:19:43 manu Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.8 2006/10/31 00:17:21 cbiere Exp $	*/
 
 /* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
@@ -45,7 +45,8 @@
 #include <netinet6/ipsec.h>
 #endif
 
-#if defined(IP_RECVDSTADDR) && !defined(IPV6_RECVDSTADDR)
+#if defined(INET6) && !defined(INET6_ADVAPI) && \
+	defined(IP_RECVDSTADDR) && !defined(IPV6_RECVDSTADDR)
 #define IPV6_RECVDSTADDR IP_RECVDSTADDR
 #endif
 
