@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralvar.h,v 1.5 2006/07/05 18:46:42 perry Exp $ */
+/*	$NetBSD: if_uralvar.h,v 1.6 2006/10/31 21:53:41 joerg Exp $ */
 /*	$OpenBSD: if_ralvar.h,v 1.2 2005/05/13 18:42:50 damien Exp $  */
 
 /*-
@@ -70,14 +70,6 @@ struct ural_rx_data {
 	struct mbuf		*m;
 };
 
-struct ural_amrr {
-	int	txcnt;
-	int	retrycnt;
-	int	success;
-	int	success_threshold;
-	int	recovery;
-};
-
 struct ural_softc {
 	USBBASEDEVICE		sc_dev;
 	struct ethercom		sc_ec;
@@ -103,7 +95,8 @@ struct ural_softc {
 	enum ieee80211_state	sc_state;
 	struct usb_task		sc_task;
 
-	struct ural_amrr	amrr;
+	struct ieee80211_amrr	amrr;
+	struct ieee80211_amrr_node	amn;
 
 	struct ural_rx_data	rx_data[RAL_RX_LIST_COUNT];
 	struct ural_tx_data	tx_data[RAL_TX_LIST_COUNT];
