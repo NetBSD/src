@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmouse.4,v 1.15 2006/02/06 16:17:30 jmmv Exp $
+.\" $NetBSD: wsmouse.4,v 1.16 2006/10/31 19:10:14 plunky Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -44,6 +44,8 @@
 (Microsoft InPort mouse, i386 only)
 .Cd "wsmouse0   at ams? mux 0"
 (Apple ADB mouse)
+.Cd "wsmouse*	at btms? mux 0"
+(Bluetooth mouse)
 .Sh DESCRIPTION
 The
 .Nm
@@ -116,6 +118,7 @@ above for more details.
 .Pa /usr/include/dev/wscons/wsconsio.h .
 .El
 .Sh SEE ALSO
+.Xr btms 4 ,
 .Xr lms 4 ,
 .Xr mms 4 ,
 .Xr pms 4 ,
