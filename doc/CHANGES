@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.738 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.739 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -138,3 +138,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	hpcarm: Add timecounter support and convert to MI todr(9).
 		[peter 20061023]
 	less: Updated to version 394.  [mrg 20061025]
+	file(1): update to 4.18.  [pooka 20061031]
