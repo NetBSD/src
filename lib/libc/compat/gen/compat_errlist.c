@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_errlist.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_errlist.c,v 1.2 2006/10/31 00:38:07 cbiere Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: compat_errlist.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: compat_errlist.c,v 1.2 2006/10/31 00:38:07 cbiere Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -99,7 +99,7 @@ const char *const sys_errlist[] = {
 	"Destination address required",		/* 39 - EDESTADDRREQ */
 	"Message too long",			/* 40 - EMSGSIZE */
 	"Protocol wrong type for socket",	/* 41 - EPROTOTYPE */
-	"Protocol not available",		/* 42 - ENOPROTOOPT */
+	"Protocol option not available",	/* 42 - ENOPROTOOPT */
 	"Protocol not supported",		/* 43 - EPROTONOSUPPORT */
 	"Socket type not supported",		/* 44 - ESOCKTNOSUPPORT */
 	"Operation not supported",		/* 45 - EOPNOTSUPP */
