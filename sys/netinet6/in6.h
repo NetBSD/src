@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.56 2006/06/07 22:34:03 kardel Exp $	*/
+/*	$NetBSD: in6.h,v 1.57 2006/10/31 00:29:30 cbiere Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -388,14 +388,17 @@ struct route_in6 {
  * Options for use with [gs]etsockopt at the IPV6 level.
  * First word of comment is data type; bool is stored in int.
  */
-#define IPV6_OPTIONS		1  /* buf/ip6_opts; set/get IP6 options */
 /* no hdrincl */
-#define IPV6_SOCKOPT_RESERVED1	3  /* reserved for future use */
-#define IPV6_UNICAST_HOPS	4  /* int; IP6 hops */
+#if 0
+/* These are deprecated non-standard options which are no longer supported. */
+#define IPV6_OPTIONS		1  /* buf/ip6_opts; set/get IP6 options */
 #define IPV6_RECVOPTS		5  /* bool; receive all IP6 opts w/dgram */
 #define IPV6_RECVRETOPTS	6  /* bool; receive IP6 opts for response */
 #define IPV6_RECVDSTADDR	7  /* bool; receive IP6 dst addr w/dgram */
 #define IPV6_RETOPTS		8  /* ip6_opts; set/get IP6 options */
+#endif
+#define IPV6_SOCKOPT_RESERVED1	3  /* reserved for future use */
+#define IPV6_UNICAST_HOPS	4  /* int; IP6 hops */
 #define IPV6_MULTICAST_IF	9  /* u_int; set/get IP6 multicast i/f  */
 #define IPV6_MULTICAST_HOPS	10 /* int; set/get IP6 multicast hops */
 #define IPV6_MULTICAST_LOOP	11 /* u_int; set/get IP6 multicast loopback */
