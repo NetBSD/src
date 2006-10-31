@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.841 2006/10/25 19:22:58 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.842 2006/10/31 23:32:20 manu Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.842 2006/10/25 19:22:31 bouyer Exp
+ *	NetBSD: pcidevs,v 1.843 2006/10/31 23:04:49 manu Exp
  */
 
 /*
@@ -9876,6 +9876,10 @@ static const struct pci_product pci_products[] = {
 	    "FNW-3800-TX 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9030,
+	    "9030 Modem 4 port",
+	},
+	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9054,
 	    "9054 I/O Accelerator",
 	},
@@ -12428,4 +12432,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2513;
+const int pci_nproducts = 2514;
