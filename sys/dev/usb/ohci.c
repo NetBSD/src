@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.177 2006/10/12 01:31:59 christos Exp $	*/
+/*	$NetBSD: ohci.c,v 1.178 2006/10/31 20:43:31 joerg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.177 2006/10/12 01:31:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.178 2006/10/31 20:43:31 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1906,7 +1906,8 @@ ohci_timeout(void *addr)
 
 	/* Execute the abort in a process context. */
 	usb_init_task(&oxfer->abort_task, ohci_timeout_task, addr);
-	usb_add_task(oxfer->xfer.pipe->device, &oxfer->abort_task);
+	usb_add_task(oxfer->xfer.pipe->device, &oxfer->abort_task,
+	    USB_TASKQ_HC);
 }
 
 void

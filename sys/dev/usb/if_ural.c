@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.15 2006/10/26 17:29:03 joerg Exp $ */
+/*	$NetBSD: if_ural.c,v 1.16 2006/10/31 20:43:31 joerg Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.15 2006/10/26 17:29:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.16 2006/10/31 20:43:31 joerg Exp $");
 
 #include "bpfilter.h"
 
@@ -1270,8 +1270,10 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    ural_txeof);
 
 	error = usbd_transfer(data->xfer);
-	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS)
+	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS) {
+		m_freem(m0);
 		return error;
+	}
 
 	sc->tx_queued++;
 
