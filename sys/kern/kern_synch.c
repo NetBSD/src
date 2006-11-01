@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.169 2006/11/01 09:32:52 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.170 2006/11/01 09:46:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.169 2006/11/01 09:32:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.170 2006/11/01 09:46:14 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -535,9 +535,11 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 	 * stopped, p->p_wchan will be 0 upon return from CURSIG.
 	 */
 	if (catch) {
+		SCHED_UNLOCK(s);
 		l->l_flag |= L_SINTR;
 		if (((sig = CURSIG(l)) != 0) ||
 		    ((p->p_flag & P_WEXIT) && p->p_nlwps > 1)) {
+			SCHED_LOCK(s);
 			if (l->l_wchan != NULL)
 				unsleep(l);
 			l->l_stat = LSONPROC;
@@ -546,9 +548,9 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 		}
 		if (l->l_wchan == NULL) {
 			catch = 0;
-			SCHED_UNLOCK(s);
 			goto resume;
 		}
+		SCHED_LOCK(s);
 	} else
 		sig = 0;
 	l->l_stat = LSSLEEP;
