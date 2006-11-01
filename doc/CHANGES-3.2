@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.1 2006/10/28 14:15:55 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.2 2006/11/01 18:22:01 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -9,4 +9,9 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to 3.1_STABLE
+
+include/stddef.h				1.11-1.15
+
+	Fix C++ offsetof for GCC 3.4+.
+	[joerg, ticket #10676]
 
