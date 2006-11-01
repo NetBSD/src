@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.168 2006/10/12 01:32:17 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.169 2006/11/01 09:32:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.168 2006/10/12 01:32:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.169 2006/11/01 09:32:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -959,31 +959,6 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	p->p_rtime.tv_sec = s;
 
 	/*
-	 * Check if the process exceeds its CPU resource allocation.
-	 * If over max, kill it.  In any case, if it has run for more
-	 * than 10 minutes, reduce priority to give others a chance.
-	 */
-	rlim = &p->p_rlimit[RLIMIT_CPU];
-	if (s >= rlim->rlim_cur) {
-		/*
-		 * XXXSMP: we're inside the scheduler lock perimeter;
-		 * use sched_psignal.
-		 */
-		if (s >= rlim->rlim_max)
-			sched_psignal(p, SIGKILL);
-		else {
-			sched_psignal(p, SIGXCPU);
-			if (rlim->rlim_cur < rlim->rlim_max)
-				rlim->rlim_cur += 5;
-		}
-	}
-	if (autonicetime && s > autonicetime &&
-	    kauth_cred_geteuid(p->p_cred) && p->p_nice == NZERO) {
-		p->p_nice = autoniceval + NZERO;
-		resetpriority(l);
-	}
-
-	/*
 	 * Process is about to yield the CPU; clear the appropriate
 	 * scheduling flags.
 	 */
@@ -1038,6 +1013,29 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	KDASSERT(l->l_cpu != NULL);
 	KDASSERT(l->l_cpu == curcpu());
 	microtime(&l->l_cpu->ci_schedstate.spc_runtime);
+
+	/*
+	 * Check if the process exceeds its CPU resource allocation.
+	 * If over max, kill it.  In any case, if it has run for more
+	 * than 10 minutes, reduce priority to give others a chance.
+	 */
+	rlim = &p->p_rlimit[RLIMIT_CPU];
+	if (s >= rlim->rlim_cur) {
+		if (s >= rlim->rlim_max) {
+			psignal(p, SIGKILL);
+		} else {
+			psignal(p, SIGXCPU);
+			if (rlim->rlim_cur < rlim->rlim_max)
+				rlim->rlim_cur += 5;
+		}
+	}
+	if (autonicetime && s > autonicetime &&
+	    kauth_cred_geteuid(p->p_cred) && p->p_nice == NZERO) {
+		SCHED_LOCK(s);
+		p->p_nice = autoniceval + NZERO;
+		resetpriority(l);
+		SCHED_UNLOCK(s);
+	}
 
 	/*
 	 * Reacquire the kernel_lock now.  We do this after we've
