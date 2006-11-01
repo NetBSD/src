@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.5 2006/10/25 20:55:11 cbiere Exp $ */
+/* $NetBSD: kern_pax.c,v 1.6 2006/11/01 09:36:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -35,12 +35,11 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/exec_elf.h>
-#include <uvm/uvm_extern.h>
 #include <sys/pax.h>
 #include <sys/sysctl.h>
 
-int pax_mprotect_enabled = 1;
-int pax_mprotect_global = PAX_MPROTECT;
+static int pax_mprotect_enabled = 1;
+static int pax_mprotect_global = PAX_MPROTECT;
 
 SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 {
