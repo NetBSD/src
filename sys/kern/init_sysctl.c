@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.90 2006/10/29 22:34:07 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.91 2006/11/01 22:27:43 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.90 2006/10/29 22:34:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.91 2006/11/01 22:27:43 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -181,6 +181,7 @@ static int sysctl_kern_maxptys(SYSCTLFN_PROTO);
 #endif /* NPTY > 0 */
 static int sysctl_kern_sbmax(SYSCTLFN_PROTO);
 static int sysctl_kern_urnd(SYSCTLFN_PROTO);
+static int sysctl_kern_arnd(SYSCTLFN_PROTO);
 static int sysctl_kern_lwp(SYSCTLFN_PROTO);
 static int sysctl_kern_forkfsleep(SYSCTLFN_PROTO);
 static int sysctl_kern_root_partition(SYSCTLFN_PROTO);
@@ -682,6 +683,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Random integer value"),
 		       sysctl_kern_urnd, 0, NULL, 0,
 		       CTL_KERN, KERN_URND, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "arandom",
+		       SYSCTL_DESCR("n bytes of random data"),
+		       sysctl_kern_arnd, 0, NULL, 0,
+		       CTL_KERN, KERN_ARND, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "labelsector",
@@ -1853,6 +1860,35 @@ sysctl_kern_urnd(SYSCTLFN_ARGS)
 }
 
 /*
+ * sysctl helper routine for kern.arandom node.  picks a random number
+ * for you.
+ */
+static int
+sysctl_kern_arnd(SYSCTLFN_ARGS)
+{
+#if NRND > 0
+	int error;
+	void *v;
+	struct sysctlnode node = *rnode;
+
+	if (*oldlenp == 0)
+		return 0;
+	if (*oldlenp > 8192)
+		return E2BIG;
+
+	v = malloc(*oldlenp, M_TEMP, M_WAITOK);
+
+	arc4randbytes(v, *oldlenp);
+	node.sysctl_data = v;
+	node.sysctl_size = *oldlenp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	free(v, M_TEMP);
+	return error;
+#else
+	return (EOPNOTSUPP);
+#endif
+}
+/*
  * sysctl helper routine to do kern.lwp.* work.
  */
 static int
@@ -2989,9 +3025,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 
 	strncpy(ki->p_login, p->p_session->s_login,
 	    min(sizeof ki->p_login - 1, sizeof p->p_session->s_login));
-
-	strncpy(ki->p_ename, p->p_emul->e_name, sizeof(ki->p_ename));
-	ki->p_ename[sizeof(ki->p_ename) - 1] = '\0';
 
 	ki->p_nlwps = p->p_nlwps;
 	ki->p_nrlwps = p->p_nrlwps;
