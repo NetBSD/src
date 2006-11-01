@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.232 2006/10/28 08:09:31 mrg Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.233 2006/11/01 09:33:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.232 2006/10/28 08:09:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.233 2006/11/01 09:33:45 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -992,17 +992,15 @@ child_psignal(struct proc *p, int dolock)
  *     regardless of the signal action (eg, blocked or ignored).
  *
  * Other ignored signals are discarded immediately.
- *
- * XXXSMP: Invoked as psignal() or sched_psignal().
  */
 void
-psignal1(struct proc *p, int signum, int dolock)
+psignal(struct proc *p, int signum)
 {
 	ksiginfo_t ksi;
 
 	KSI_INIT_EMPTY(&ksi);
 	ksi.ksi_signo = signum;
-	kpsignal2(p, &ksi, dolock);
+	kpsignal2(p, &ksi, 1);
 }
 
 void
