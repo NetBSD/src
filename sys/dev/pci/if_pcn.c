@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.33 2006/10/31 14:04:29 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.34 2006/11/01 06:42:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.33 2006/10/31 14:04:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.34 2006/11/01 06:42:12 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.33 2006/10/31 14:04:29 thorpej Exp $");
  * transmit logic can deal with this, we just are hoping to sneak by.
  */
 #define	PCN_NTXSEGS		16
+#define	PCN_NTXSEGS_VMWARE	8	/* bug in VMware's emulation */
 
 #define	PCN_TXQUEUELEN		128
 #define	PCN_TXQUEUELEN_MASK	(PCN_TXQUEUELEN - 1)
@@ -506,6 +507,27 @@ pcn_bcr_write(struct pcn_softc *sc, int reg, uint32_t val)
 	bus_space_write_4(sc->sc_st, sc->sc_sh, PCN32_BDP, val);
 }
 
+static boolean_t
+pcn_is_vmware(const char *enaddr)
+{
+
+	/*
+	 * VMware uses the OUI 00:0c:29 for auto-generated MAC
+	 * addresses.
+	 */
+	if (enaddr[0] == 0x00 && enaddr[1] == 0x0c && enaddr[2] == 0x29)
+		return (TRUE);
+	
+	/*
+	 * VMware uses the OUI 00:50:56 for manually-set MAC
+	 * addresses.
+	 */
+	if (enaddr[0] == 0x00 && enaddr[1] == 0x50 && enaddr[3] == 0x56)
+		return (TRUE);
+
+	return (FALSE);
+}
+
 static const struct pcn_variant *
 pcn_lookup_variant(uint16_t chipid)
 {
@@ -565,10 +587,11 @@ pcn_attach(struct device *parent __unused, struct device *self, void *aux)
 	bus_space_handle_t ioh, memh;
 	bus_dma_segment_t seg;
 	int ioh_valid, memh_valid;
-	int i, rseg, error;
+	int ntxsegs, i, rseg, error;
 	uint32_t chipid, reg;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	prop_object_t obj;
+	boolean_t is_vmware;
 
 	callout_init(&sc->sc_tick_ch);
 
@@ -638,6 +661,9 @@ pcn_attach(struct device *parent __unused, struct device *self, void *aux)
 		}
 	}
 
+	/* Check to see if this is a VMware emulated network interface. */
+	is_vmware = pcn_is_vmware(enaddr);
+
 	/*
 	 * Now that the device is mapped, attempt to figure out what
 	 * kind of chip we have.  Note that IDL has all 32 bits of
@@ -649,6 +675,20 @@ pcn_attach(struct device *parent __unused, struct device *self, void *aux)
 	printf("%s: %s rev %d, Ethernet address %s\n",
 	    sc->sc_dev.dv_xname, sc->sc_variant->pcv_desc, CHIPID_VER(chipid),
 	    ether_sprintf(enaddr));
+
+	/*
+	 * VMware has a bug in its network interface emulation; we must
+	 * limit the number of Tx segments.
+	 */
+	if (is_vmware) {
+		ntxsegs = PCN_NTXSEGS_VMWARE;
+		prop_dictionary_set_bool(device_properties(&sc->sc_dev),
+					 "am79c970-vmware-tx-bug", TRUE);
+		aprint_verbose("%s: VMware Tx segment count bug detected\n",
+			       sc->sc_dev.dv_xname);
+	} else {
+		ntxsegs = PCN_NTXSEGS;
+	}
 
 	/*
 	 * Map and establish our interrupt.
@@ -708,7 +748,7 @@ pcn_attach(struct device *parent __unused, struct device *self, void *aux)
 	/* Create the transmit buffer DMA maps. */
 	for (i = 0; i < PCN_TXQUEUELEN; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		     PCN_NTXSEGS, MCLBYTES, 0, 0,
+		     ntxsegs, MCLBYTES, 0, 0,
 		     &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			printf("%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
