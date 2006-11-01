@@ -29,6 +29,8 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "gkermit.h"
 
 /* Externals */
@@ -53,7 +55,6 @@ _MYPROTOTYPE( VOID fatal, (char *) );
 _MYPROTOTYPE( VOID usage, (void) );
 
 #ifndef NOGETENV
-_MYPROTOTYPE( char * getenv, (char *) );
 #define GARGC 32
 #define GBUFSIZ 256
 static char gbuf[GBUFSIZ], *gargs[GARGC], *gptr = NULL;
