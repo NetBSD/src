@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2006/10/25 20:05:59 dsl Exp $
+#	$NetBSD: Makefile,v 1.41 2006/11/01 23:48:20 sjg Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -32,7 +32,10 @@ CPPFLAGS+= ${CPPFLAGS_${.TARGET}} -DMAKE_NATIVE
 main.o:	${OBJS:Nmain.o} ${MAKEFILE}
 COPTS.var.c+= -Wno-cast-qual
 
-.ifndef HOSTPROG
+.ifdef TOOLDIR
+# this is a native netbsd build, 
+# use libutil rather than the local emalloc etc.
+CPPFLAGS+= -DHAVE_EMALLOC
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
 .endif
