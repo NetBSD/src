@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.477 2006/10/31 21:59:18 pooka Exp $
+#	$NetBSD: 3RDPARTY,v 1.478 2006/11/01 13:40:40 apb Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -314,6 +314,17 @@ Notes:
 GNU gettext is used for userland tools like msgfmt(1) only.  For libintl,
 we use BSD-licensed implementation from Citrus project (see entry for
 "Citrus XPG4DL").  We hope to replace userland tools with BSD-licensed one.
+
+Package:	gkermit
+Version:	1.00
+Current Vers:	1.00
+Maintainer:	Kermit Project - Columbia University <kermit@columbia.edu>
+Archive Site:	ftp://kermit.columbia.edu/kermit/archives/
+Home Page:	http://www.columbia.edu/kermit/
+Mailing List:
+Responsible:	apb
+License:	GPLv2
+Notes:
 
 Package:	grep
 Version:	2.5.1
