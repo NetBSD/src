@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.213 2006/11/01 09:36:52 xtraeme Exp $	*/
+/*	$NetBSD: audio.c,v 1.214 2006/11/01 10:13:37 cbiere Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.213 2006/11/01 09:36:52 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.214 2006/11/01 10:13:37 cbiere Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3145,8 +3145,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	boolean_t cleared, modechange, pausechange;
 	u_char balance;
 
-	oldpblksize = oldrblksize = 0;
-
 	hw = sc->hw_if;
 	if (hw == NULL)		/* HW has not attached */
 		return ENXIO;
@@ -3211,6 +3209,10 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		return error;
 	if (np > 0 && (error = audio_check_params(&pp)))
 		return error;
+
+	oldpblksize = sc->sc_pr.blksize;
+	oldrblksize = sc->sc_rr.blksize;
+
 	setmode = 0;
 	if (nr > 0) {
 		if (!cleared) {
@@ -3311,8 +3313,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		sc->sc_rparams = rp;
 	}
 
-	oldpblksize = sc->sc_pr.blksize;
-	oldrblksize = sc->sc_rr.blksize;
 	/* Play params can affect the record params, so recalculate blksize. */
 	if (nr > 0 || np > 0) {
 		audio_calc_blksize(sc, AUMODE_RECORD);
