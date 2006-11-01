@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.2 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.3 2006/11/01 16:42:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.2 2006/10/31 20:07:32 christos Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.3 2006/11/01 16:42:27 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -702,13 +702,17 @@ mime_sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	if (mip == NULL)
 		return sendmessage(mp, obuf, doign ? ignore : 0, prefix, NULL);
 
-	(void)fflush(obuf);  /* Be safe and flush!  XXX - necessary? */
-
 	/*
 	 * Set these early so pipe_end() and mime_decode_close() work!
+	 * XXX - Do this before anything that can block, like
+	 *       fflush()!  Shouldn't we move these settings to
+	 *       mime_decode_open() to avoid a race condition?
+	 *       Especially, mip->mi_pipe_end?
 	 */
 	mip->mi_fo = obuf;
 	mip->mi_pipe_end = last_registered_file(0);
+
+	(void)fflush(obuf);  /* Be safe and flush!  XXX - necessary? */
 
 	/*
 	 * Handle the prefix as a pipe stage so it doesn't get seen by
