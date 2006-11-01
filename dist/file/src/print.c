@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.4 2006/10/31 21:16:23 pooka Exp $	*/
+/*	$NetBSD: print.c,v 1.5 2006/11/01 00:33:40 dogcow Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -46,7 +46,7 @@
 #if 0
 FILE_RCSID("@(#)Id: print.c,v 1.54 2006/10/31 19:37:17 christos Exp")
 #else
-__RCSID("$NetBSD: print.c,v 1.4 2006/10/31 21:16:23 pooka Exp $");
+__RCSID("$NetBSD: print.c,v 1.5 2006/11/01 00:33:40 dogcow Exp $");
 #endif
 #endif  /* lint */
 
@@ -85,7 +85,7 @@ file_mdump(struct magic *m)
 		else
 			fputc('?', stderr);
 		if (FILE_STRING != m->type || FILE_PSTRING != m->type)
-			(void) fprintf(stderr, "%.8llx", m->mask);
+			(void) fprintf(stderr, "%.8" PRIx64, m->mask);
 		else {
 			if (m->mask & STRING_IGNORE_LOWERCASE) 
 				(void) fputc(CHAR_IGNORE_LOWERCASE, stderr);
@@ -114,7 +114,7 @@ file_mdump(struct magic *m)
 		case FILE_BEQUAD:
 		case FILE_LEQUAD:
 		case FILE_QUAD:
-			(void) fprintf(stderr, "%lld", m->value.q);
+			(void) fprintf(stderr, "%" PRId64, m->value.q);
 			break;
 		case FILE_PSTRING:
 		case FILE_STRING:
