@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.104 2006/10/21 14:10:33 bouyer Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.105 2006/11/01 19:33:41 tls Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -19,12 +19,12 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 
-makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
+makeoptions	COPTS="-Os -march=i486 -mtune=i486"	# i486 is densest code
 
 maxusers	32		# estimated number of users
 
 # CPU support.  At least one is REQUIRED.
-options 	I386_CPU
+#options 	I386_CPU
 options 	I486_CPU
 options 	I586_CPU
 options 	I686_CPU
