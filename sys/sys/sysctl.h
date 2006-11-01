@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.161 2006/10/29 22:34:07 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.162 2006/11/01 22:27:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -251,9 +251,6 @@ struct ctlname {
 #define	KERN_TKSTAT		59	/* tty in/out counters */
 #define	KERN_MONOTONIC_CLOCK	60	/* int: POSIX monotonic clock */
 #define	KERN_URND		61	/* int: random integer from urandom */
-#ifndef _KERNEL
-#define	KERN_ARND		KERN_URND	/* compat w/ openbsd */
-#endif
 #define	KERN_LABELSECTOR	62	/* int: disklabel sector */
 #define	KERN_LABELOFFSET	63	/* int: offset of label within sector */
 #define	KERN_LWP		64	/* struct: lwp entries */
@@ -273,7 +270,8 @@ struct ctlname {
 #define	KERN_VERIEXEC		78	/* node: verified exec */
 #define	KERN_CP_ID		79	/* struct: cpu id numbers */
 #define	KERN_HARDCLOCK_TICKS	80	/* int: number of hardclock ticks */
-#define	KERN_MAXID		81	/* number of valid kern ids */
+#define	KERN_ARND		81	/* void *buf, size_t siz random */
+#define	KERN_MAXID		82	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -358,6 +356,7 @@ struct ctlname {
 	{ "veriexec", CTLTYPE_NODE }, \
 	{ "cp_id", CTLTYPE_STRUCT }, \
 	{ "hardclock_ticks", CTLTYPE_INT }, \
+	{ "arandom", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -439,7 +438,6 @@ struct kinfo_proc {
 #define	KI_MAXCOMLEN	24	/* extra for 8 byte alignment */
 #define	KI_WMESGLEN	8
 #define	KI_MAXLOGNAME	24	/* extra for 8 byte alignment */
-#define KI_MAXEMULLEN	16
 
 #define KI_NOCPU	(~(uint64_t)0)
 
@@ -562,7 +560,6 @@ struct kinfo_proc2 {
 	uint64_t p_realstat;		/* LONG: non-LWP process status */
 	uint32_t p_svuid;		/* UID_T: saved user id */
 	uint32_t p_svgid;		/* GID_T: saved group id */
-	char p_ename[KI_MAXEMULLEN];	/* emulation name */
 };
 
 /*
