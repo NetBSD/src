@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.1 2006/10/31 22:21:17 joerg Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.2 2006/11/01 08:39:25 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -22,6 +22,9 @@
  * Ralink Technology RT2501USB/RT2601USB chipset driver
  * http://www.ralinktech.com/
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.2 2006/11/01 08:39:25 xtraeme Exp $");
 
 #include "bpfilter.h"
 
