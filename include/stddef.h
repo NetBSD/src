@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.10.6.3 2006/11/01 18:08:11 tron Exp $	*/
+/*	$NetBSD: stddef.h,v 1.10.6.4 2006/11/01 18:14:15 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,6 +34,8 @@
 #ifndef _STDDEF_H_
 #define _STDDEF_H_
 
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <machine/ansi.h>
 
 typedef	_BSD_PTRDIFF_T_	ptrdiff_t;
@@ -55,7 +57,7 @@ typedef	_BSD_WCHAR_T_	wchar_t;
 #elif !defined(__cplusplus)
 #define	offsetof(type, member)	((size_t)(unsigned long)(&((type *)0)->member))
 #else
-#ifndef __offsetof__
+#if !__GNUC_PREREQ__(3, 4)
 #define __offsetof__(a) a
 #endif
 #define	offsetof(type, member) __offsetof__((reinterpret_cast<size_t> \
