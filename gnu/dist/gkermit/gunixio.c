@@ -58,6 +58,8 @@
 */
 
 #include <stdio.h>			/* Standard input/output */
+#include <string.h>
+#include <stdlib.h>
 
 #ifdef POSIX
 #include <termios.h>			/* Terminal modes */
