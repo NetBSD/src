@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2005/05/11 13:10:21 chs Exp $
+#	$NetBSD: Makefile,v 1.5 2006/11/01 17:10:36 skrll Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -27,11 +27,6 @@ FILES+=		${F}
 FILESDIR_${F}=	/usr/share/locale/${F:.gmo=}/LC_MESSAGES
 FILESNAME_${F}=	grep.mo
 .endfor
-.endif
-
-# XXX
-.if ${MACHINE_ARCH} == "hppa"
-COPTS.dfa.c=	-O1
 .endif
 
 .include <bsd.info.mk>

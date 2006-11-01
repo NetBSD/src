@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.89 2006/10/30 16:46:42 skrll Exp $
+# $NetBSD: HACKS,v 1.90 2006/11/01 17:10:36 skrll Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -665,17 +665,6 @@ port	macppc
 		.* named[368]: rbt.c:1584: INSIST(child != (void *)0) >failed
 		.* named[368]: exiting (due to assertion failure)
 		This is reportedly fixed in gcc-3.4
-	kcah
-
-port	hppa
-
-	hack	hppa-gcc-3.3.3/grep/dfa.c
-	cdate	Sun Aug  8 08:34:32 PDT 2004
-	who	chs
-	file	gnu/usr.bin/grep/grep/Makefile : 1.4
-	descr
-		gcc 3.3.3 generates bad code for dfa.c with -O2,
-		reduce optimization to -O1 to avoid the bug.
 	kcah
 
 port	mips
