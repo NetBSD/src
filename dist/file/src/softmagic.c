@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.6 2006/10/31 21:16:23 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.7 2006/11/01 00:33:40 dogcow Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -44,7 +44,7 @@
 #if 0
 FILE_RCSID("@(#)Id: softmagic.c,v 1.83 2006/10/31 19:37:17 christos Exp")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.6 2006/10/31 21:16:23 pooka Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.7 2006/11/01 00:33:40 dogcow Exp $");
 #endif
 #endif	/* lint */
 
@@ -288,7 +288,7 @@ private int32_t
 mprint(struct magic_set *ms, union VALUETYPE *p, struct magic *m)
 {
 	uint64_t v;
-	int32_t t = 0;
+	int64_t t = 0;
  	char buf[512];
 
 
@@ -1411,21 +1411,21 @@ magiccheck(struct magic_set *ms, union VALUETYPE *p, struct magic *m)
 	switch (m->reln) {
 	case 'x':
 		if ((ms->flags & MAGIC_DEBUG) != 0)
-			(void) fprintf(stderr, "%llu == *any* = 1\n", v);
+			(void) fprintf(stderr, "%" PRIu64 " == *any* = 1\n", v);
 		matched = 1;
 		break;
 
 	case '!':
 		matched = v != l;
 		if ((ms->flags & MAGIC_DEBUG) != 0)
-			(void) fprintf(stderr, "%llu != %llu = %d\n",
+			(void) fprintf(stderr, "%" PRIu64 " != %" PRIu64 " = %d\n",
 				       v, l, matched);
 		break;
 
 	case '=':
 		matched = v == l;
 		if ((ms->flags & MAGIC_DEBUG) != 0)
-			(void) fprintf(stderr, "%llu == %llu = %d\n",
+			(void) fprintf(stderr, "%" PRIu64 " == %" PRIu64 " = %d\n",
 				       v, l, matched);
 		break;
 
@@ -1433,13 +1433,13 @@ magiccheck(struct magic_set *ms, union VALUETYPE *p, struct magic *m)
 		if (m->flag & UNSIGNED) {
 			matched = v > l;
 			if ((ms->flags & MAGIC_DEBUG) != 0)
-				(void) fprintf(stderr, "%llu > %llu = %d\n",
+				(void) fprintf(stderr, "%" PRIu64 " > %" PRIu64 " = %d\n",
 					       v, l, matched);
 		}
 		else {
 			matched = (int32_t) v > (int32_t) l;
 			if ((ms->flags & MAGIC_DEBUG) != 0)
-				(void) fprintf(stderr, "%lld > %lld = %d\n",
+				(void) fprintf(stderr, "%" PRId64 " > %" PRId64 " = %d\n",
 					       v, l, matched);
 		}
 		break;
@@ -1448,13 +1448,13 @@ magiccheck(struct magic_set *ms, union VALUETYPE *p, struct magic *m)
 		if (m->flag & UNSIGNED) {
 			matched = v < l;
 			if ((ms->flags & MAGIC_DEBUG) != 0)
-				(void) fprintf(stderr, "%llu < %llu = %d\n",
+				(void) fprintf(stderr, "%" PRIu64 " < %" PRIu64 " = %d\n",
 					       v, l, matched);
 		}
 		else {
 			matched = (int32_t) v < (int32_t) l;
 			if ((ms->flags & MAGIC_DEBUG) != 0)
-				(void) fprintf(stderr, "%lld < %lld = %d\n",
+				(void) fprintf(stderr, "%" PRId64 " < %" PRId64 " = %d\n",
 					       v, l, matched);
 		}
 		break;
@@ -1462,14 +1462,14 @@ magiccheck(struct magic_set *ms, union VALUETYPE *p, struct magic *m)
 	case '&':
 		matched = (v & l) == l;
 		if ((ms->flags & MAGIC_DEBUG) != 0)
-			(void) fprintf(stderr, "((%llx & %llx) == %llx) = %d\n",
+			(void) fprintf(stderr, "((%" PRIx64 " & %" PRIx64 ") == %" PRIx64 ") = %d\n",
 				       v, l, l, matched);
 		break;
 
 	case '^':
 		matched = (v & l) != l;
 		if ((ms->flags & MAGIC_DEBUG) != 0)
-			(void) fprintf(stderr, "((%llx & %llx) != %llx) = %d\n",
+			(void) fprintf(stderr, "((%" PRIx64 " & %" PRIx64 ") != %" PRIx64 ") = %d\n",
 				       v, l, l, matched);
 		break;
 
