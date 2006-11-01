@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.35 2006/10/12 10:14:43 yamt Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.36 2006/11/01 10:18:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.35 2006/10/12 10:14:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.36 2006/11/01 10:18:27 yamt Exp $");
 
 #include "opt_pax.h"
 
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.35 2006/10/12 10:14:43 yamt Exp $");
  */
 
 int
-sys_obreak(struct lwp *l, void *v, register_t *retval __unused)
+sys_obreak(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_obreak_args /* {
 		syscallarg(char *) nsize;
@@ -163,8 +163,7 @@ uvm_grow(struct proc *p, vaddr_t sp)
 
 /* ARGSUSED */
 int
-sys_ovadvise(struct lwp *l __unused, void *v __unused,
-    register_t *retval __unused)
+sys_ovadvise(struct lwp *l, void *v, register_t *retval)
 {
 #if 0
 	struct sys_ovadvise_args /* {

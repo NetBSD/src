@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.8 2006/10/26 05:08:01 thorpej Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.9 2006/11/01 10:17:58 yamt Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.8 2006/10/26 05:08:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.9 2006/11/01 10:17:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,7 @@ rescanbus(const char *busname, const char *ifattr,
 }
 
 int
-drvctlioctl(dev_t dev __unused, u_long cmd, caddr_t data, int flag,
-	    struct lwp *p)
+drvctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *p)
 {
 	int res;
 	char *ifattr;
@@ -177,7 +176,7 @@ drvctlioctl(dev_t dev __unused, u_long cmd, caddr_t data, int flag,
 }
 
 void
-drvctlattach(int arg __unused)
+drvctlattach(int arg)
 {
 }
 
@@ -186,7 +185,7 @@ drvctlattach(int arg __unused)
  *****************************************************************************/
 
 static int
-drvctl_command_get_properties(struct lwp *l __unused,
+drvctl_command_get_properties(struct lwp *l,
 			      prop_dictionary_t command_dict,
 			      prop_dictionary_t results_dict)
 {

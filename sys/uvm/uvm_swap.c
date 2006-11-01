@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.111 2006/10/27 15:06:04 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.112 2006/11/01 10:18:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.111 2006/10/27 15:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.112 2006/11/01 10:18:27 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1141,7 +1141,7 @@ swstrategy(struct buf *bp)
  */
 /*ARGSUSED*/
 static int
-swread(dev_t dev, struct uio *uio, int ioflag __unused)
+swread(dev_t dev, struct uio *uio, int ioflag)
 {
 	UVMHIST_FUNC("swread"); UVMHIST_CALLED(pdhist);
 
@@ -1154,7 +1154,7 @@ swread(dev_t dev, struct uio *uio, int ioflag __unused)
  */
 /*ARGSUSED*/
 static int
-swwrite(dev_t dev, struct uio *uio, int ioflag __unused)
+swwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	UVMHIST_FUNC("swwrite"); UVMHIST_CALLED(pdhist);
 

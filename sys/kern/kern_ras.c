@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.14 2006/10/12 01:32:17 christos Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.15 2006/11/01 10:17:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.14 2006/10/12 01:32:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.15 2006/11/01 10:17:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -262,7 +262,7 @@ ras_purge(struct proc *p, caddr_t addr, size_t len)
 
 /*ARGSUSED*/
 int
-sys_rasctl(struct lwp *l, void *v, register_t *retval __unused)
+sys_rasctl(struct lwp *l, void *v, register_t *retval)
 {
 
 #if defined(__HAVE_RAS)

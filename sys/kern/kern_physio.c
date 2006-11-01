@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.75 2006/10/12 01:32:16 christos Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.76 2006/11/01 10:17:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.75 2006/10/12 01:32:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.76 2006/11/01 10:17:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ putphysbuf(struct buf *bp)
 }
 
 static void
-physio_done(struct work *wk, void *dummy __unused)
+physio_done(struct work *wk, void *dummy)
 {
 	struct buf *bp = (void *)wk;
 	size_t todo = bp->b_bufsize;
