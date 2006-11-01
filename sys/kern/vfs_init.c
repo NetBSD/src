@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.31 2006/10/12 01:32:19 christos Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.32 2006/11/01 10:17:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.31 2006/10/12 01:32:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.32 2006/11/01 10:17:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -134,7 +134,7 @@ typedef int (*PFI)(void *);
  */
 /*ARGSUSED*/
 int
-vn_default_error(void *v __unused)
+vn_default_error(void *v)
 {
 
 	return (EOPNOTSUPP);

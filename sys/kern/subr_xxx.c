@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xxx.c,v 1.16 2006/10/12 01:32:18 christos Exp $	*/
+/*	$NetBSD: subr_xxx.c,v 1.17 2006/11/01 10:17:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xxx.c,v 1.16 2006/10/12 01:32:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xxx.c,v 1.17 2006/11/01 10:17:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ eopnotsupp(void)
  */
 /*ARGSUSED*/
 int
-nullop(void *v __unused)
+nullop(void *v)
 {
 
 	return (0);

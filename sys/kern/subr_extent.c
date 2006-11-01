@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.60 2006/10/12 01:32:18 christos Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.61 2006/11/01 10:17:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.60 2006/10/12 01:32:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.61 2006/11/01 10:17:58 yamt Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -385,7 +385,7 @@ extent_destroy(struct extent *ex)
  */
 static void
 extent_insert_and_optimize(struct extent *ex, u_long start, u_long size,
-    int flags __unused, struct extent_region *after, struct extent_region *rp)
+    int flags, struct extent_region *after, struct extent_region *rp)
 {
 	struct extent_region *nextr;
 	int appended = 0;
