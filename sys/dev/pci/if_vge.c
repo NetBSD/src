@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.23 2006/11/01 17:13:37 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.24 2006/11/01 18:11:18 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.23 2006/11/01 17:13:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.24 2006/11/01 18:11:18 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1502,17 +1502,19 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	struct m_tag *mtag;
 	size_t sz;
 
+	KASSERT(sc->sc_tx_free > 0);
+
 	txd = &sc->sc_txdescs[idx];
 
+#ifdef DIAGNOSTIC
 	/* If this descriptor is still owned by the chip, bail. */
-	if (sc->sc_tx_free <= 2) {
-		VGE_TXDESCSYNC(sc, idx, 
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		if (le32toh(txd->td_sts) & VGE_TDSTS_OWN) {
-			VGE_TXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
-			return ENOBUFS;
-		}
+	VGE_TXDESCSYNC(sc, idx, 
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	if (le32toh(txd->td_sts) & VGE_TDSTS_OWN) {
+		VGE_TXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
+		return ENOBUFS;
 	}
+#endif
 
 	txs = &sc->sc_txsoft[idx];
 	map = txs->txs_dmamap;
