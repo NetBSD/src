@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.666 2006/10/31 22:21:17 joerg Exp $
+# $NetBSD: mi,v 1.667 2006/11/01 13:19:43 apb Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -472,6 +472,7 @@
 ./usr/bin/getextattr				base-util-bin
 ./usr/bin/getopt				base-util-bin
 ./usr/bin/grep					base-util-bin
+./usr/bin/gkermit				base-util-bin
 ./usr/bin/groups				base-util-bin
 ./usr/bin/gunzip				base-util-bin
 ./usr/bin/gzcat					base-util-bin
