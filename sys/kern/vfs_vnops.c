@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.127 2006/10/28 11:43:45 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.128 2006/11/01 22:45:14 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.127 2006/10/28 11:43:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.128 2006/11/01 22:45:14 elad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.127 2006/10/28 11:43:45 elad Exp $")
 #include <sys/tty.h>
 #include <sys/poll.h>
 #include <sys/kauth.h>
+#include <sys/syslog.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -116,8 +117,8 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 		    NULL);
 		if (error) {
 			if (veriexec_verbose >= 1)
-				printf("Veriexec: Can't copy path. (err=%d\n",
-				    error);
+				log(LOG_NOTICE, "Veriexec: Can't copy path."
+				    " (error=%d)\n", error);
 			goto bad2;
 		}
 		pathbuf = tmppathbuf;
@@ -142,9 +143,8 @@ restart:
 			if (veriexec_strict >= VERIEXEC_LOCKDOWN) {
 				VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
 
-				printf("Veriexec: vn_open: Preventing "
-				       "new file creation in %s.\n",
-				       pathbuf);
+				log(LOG_ALERT, "Veriexec: Preventing "
+				    "new file creation in %s.\n", pathbuf);
 
 				vp = ndp->ni_dvp;
 				error = EPERM;
