@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.66 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.67 2006/11/01 09:33:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -154,11 +154,9 @@ int	issignal(struct lwp *);
 void	pgsignal(struct pgrp *, int, int);
 void	kpgsignal(struct pgrp *, struct ksiginfo *, void *, int);
 void	postsig(int);
-void	psignal1(struct proc *, int, int);
+void	psignal(struct proc *, int);
 void	kpsignal1(struct proc *, struct ksiginfo *, void *, int);
 #define	kpsignal(p, ksi, data)		kpsignal1((p), (ksi), (data), 1)
-#define	psignal(p, sig)			psignal1((p), (sig), 1)
-#define	sched_psignal(p, sig)		psignal1((p), (sig), 0)
 void	child_psignal(struct proc *, int);
 void	siginit(struct proc *);
 void	trapsignal(struct lwp *, const struct ksiginfo *);
