@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.47 2006/10/24 10:05:45 hannken Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.48 2006/11/01 10:17:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.47 2006/10/24 10:05:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.48 2006/11/01 10:17:58 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -87,7 +87,7 @@ lwpinit(void)
 
 /* ARGSUSED */
 int
-sys__lwp_create(struct lwp *l, void *v, register_t *retval __unused)
+sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_create_args /* {
 		syscallarg(const ucontext_t *) ucp;
@@ -151,7 +151,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval __unused)
 
 
 int
-sys__lwp_exit(struct lwp *l, void *v __unused, register_t *retval __unused)
+sys__lwp_exit(struct lwp *l, void *v, register_t *retval)
 {
 
 	lwp_exit(l);
@@ -161,7 +161,7 @@ sys__lwp_exit(struct lwp *l, void *v __unused, register_t *retval __unused)
 
 
 int
-sys__lwp_self(struct lwp *l, void *v __unused, register_t *retval)
+sys__lwp_self(struct lwp *l, void *v, register_t *retval)
 {
 
 	*retval = l->l_lid;
@@ -171,7 +171,7 @@ sys__lwp_self(struct lwp *l, void *v __unused, register_t *retval)
 
 
 int
-sys__lwp_getprivate(struct lwp *l, void *v __unused, register_t *retval)
+sys__lwp_getprivate(struct lwp *l, void *v, register_t *retval)
 {
 
 	*retval = (uintptr_t) l->l_private;
@@ -181,7 +181,7 @@ sys__lwp_getprivate(struct lwp *l, void *v __unused, register_t *retval)
 
 
 int
-sys__lwp_setprivate(struct lwp *l, void *v, register_t *retval __unused)
+sys__lwp_setprivate(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_setprivate_args /* {
 		syscallarg(void *) ptr;
@@ -194,7 +194,7 @@ sys__lwp_setprivate(struct lwp *l, void *v, register_t *retval __unused)
 
 
 int
-sys__lwp_suspend(struct lwp *l, void *v, register_t *retval __unused)
+sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_suspend_args /* {
 		syscallarg(lwpid_t) target;
@@ -280,7 +280,7 @@ lwp_suspend(struct lwp *l, struct lwp *t)
 
 
 int
-sys__lwp_continue(struct lwp *l, void *v, register_t *retval __unused)
+sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_continue_args /* {
 		syscallarg(lwpid_t) target;
@@ -329,7 +329,7 @@ lwp_continue(struct lwp *l)
 }
 
 int
-sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval __unused)
+sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_wakeup_args /* {
 		syscallarg(lwpid_t) target;
@@ -377,7 +377,7 @@ exit:
 }
 
 int
-sys__lwp_wait(struct lwp *l, void *v, register_t *retval __unused)
+sys__lwp_wait(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_wait_args /* {
 		syscallarg(lwpid_t) wait_for;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.149 2006/10/17 18:21:29 dogcow Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.150 2006/11/01 10:17:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.149 2006/10/17 18:21:29 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.150 2006/11/01 10:17:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -458,7 +458,7 @@ hook_establish(hook_list_t *list, void (*fn)(void *), void *arg)
 }
 
 static void
-hook_disestablish(hook_list_t *list __unused, void *vhook)
+hook_disestablish(hook_list_t *list, void *vhook)
 {
 #ifdef DIAGNOSTIC
 	struct hook_desc *hd;
@@ -1396,8 +1396,8 @@ trace_enter(struct lwp *l, register_t code,
  * system call number range for emulation the process runs under.
  */
 void
-trace_exit(struct lwp *l, register_t code, void *args __unused,
-    register_t rval[], int error)
+trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
+    int error)
 {
 	struct proc *p = l->l_proc;
 

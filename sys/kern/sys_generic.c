@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.95 2006/10/17 18:21:29 dogcow Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.96 2006/11/01 10:17:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.95 2006/10/17 18:21:29 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.96 2006/11/01 10:17:59 yamt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -534,7 +534,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
  */
 /* ARGSUSED */
 int
-sys_ioctl(struct lwp *l, void *v, register_t *retval __unused)
+sys_ioctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_ioctl_args /* {
 		syscallarg(int)		fd;
@@ -1069,7 +1069,7 @@ pollscan(struct lwp *l, struct pollfd *fds, int nfd, register_t *retval)
 
 /*ARGSUSED*/
 int
-seltrue(dev_t dev __unused, int events, struct lwp *l __unused)
+seltrue(dev_t dev, int events, struct lwp *l)
 {
 
 	return (events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
