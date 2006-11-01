@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN3_DOMU,v 1.6 2006/10/17 19:57:24 bouyer Exp $
+# $NetBSD: INSTALL_XEN3_DOMU,v 1.7 2006/11/01 19:33:41 tls Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -9,7 +9,7 @@ options 	MAXPHYS=32768
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
+makeoptions	COPTS="-Os -march=pentiumpro -mtune=i486"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS

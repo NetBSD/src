@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.291 2006/10/21 14:10:33 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.292 2006/11/01 19:33:41 tls Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -13,7 +13,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
+makeoptions	COPTS="-Os -march=i486 -mtune=i486"	# i486 is densest code
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -24,13 +24,13 @@ options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 maxusers	2		# estimated number of users
 
 # CPU support.  At least one is REQUIRED.
-options 	I386_CPU
+#options 	I386_CPU
 options 	I486_CPU
 options 	I586_CPU
 options 	I686_CPU
 
 # CPU-related options.
-options 	MATH_EMULATE	# floating point emulation
+#options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
