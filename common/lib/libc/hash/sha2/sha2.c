@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.1 2006/10/27 21:23:16 christos Exp $ */
+/* $NetBSD: sha2.c,v 1.2 2006/11/01 11:29:08 he Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -39,14 +39,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.1 2006/10/27 21:23:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.2 2006/11/01 11:29:08 he Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.1 2006/10/27 21:23:16 christos Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.2 2006/11/01 11:29:08 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: sha2.c,v 1.1 2006/10/27 21:23:16 christos Exp $");
 #endif
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/sha2.h>
 
 /*
