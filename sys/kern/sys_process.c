@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.112 2006/10/28 17:58:22 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.113 2006/11/01 09:46:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.112 2006/10/28 17:58:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.113 2006/11/01 09:46:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -847,7 +847,7 @@ process_checkioperm(struct lwp *l, struct proc *t)
 void
 process_stoptrace(struct lwp *l)
 {
-	int s = 0, dolock = (l->l_flag & L_SINTR) == 0;
+	int s;
 	struct proc *p = l->l_proc, *pp = p->p_pptr;
 
 	if (pp->p_pid == 1) {
@@ -856,17 +856,15 @@ process_stoptrace(struct lwp *l)
 	}
 
 	p->p_xstat = SIGTRAP;
-	child_psignal(pp, dolock);
+	child_psignal(pp);
 
-	if (dolock)
-		SCHED_LOCK(s);
+	SCHED_LOCK(s);
 
 	proc_stop(p, 1);
 
 	mi_switch(l, NULL);
 	SCHED_ASSERT_UNLOCKED();
 
-	if (dolock)
-		splx(s);
+	splx(s);
 }
 #endif /* KTRACE || PTRACE */
