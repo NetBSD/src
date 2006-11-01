@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.21 2006/10/31 14:13:30 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.22 2006/11/01 16:26:27 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.21 2006/10/31 14:13:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.22 2006/11/01 16:26:27 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -354,6 +354,8 @@ vge_m_defrag(struct mbuf *mold, int flags)
 	if (m0 == NULL)
 		return NULL;
 	m0->m_pkthdr.len = mold->m_pkthdr.len;
+	m0->m_pkthdr.csum_flags = mold->m_pkthdr.csum_flags;
+	m0->m_pkthdr.csum_data  = mold->m_pkthdr.csum_data;
 	mn = m0;
 
 	do {
