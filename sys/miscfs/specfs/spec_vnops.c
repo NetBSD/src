@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.93 2006/10/30 12:19:23 elad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.94 2006/11/01 09:37:28 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.93 2006/10/30 12:19:23 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.94 2006/11/01 09:37:28 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -179,10 +179,10 @@ spec_open(v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct lwp *l = ap->a_l;
-	struct vnode *bvp, *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
-	dev_t blkdev, dev = (dev_t)vp->v_rdev;
+	dev_t dev = (dev_t)vp->v_rdev;
 	int error;
 	struct partinfo pi;
 	int (*d_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
@@ -209,7 +209,6 @@ spec_open(v)
 
 			rw = M2K(ap->a_mode);
 			error = 0;
-			bvp = NULL;
 
 			/* XXX we're holding a vnode lock here */
 			if (iskmemdev(dev)) {
@@ -218,25 +217,32 @@ spec_open(v)
 				    KAUTH_REQ_SYSTEM_RAWIO_MEMORY,
 				    (void *)rw, NULL, NULL);
 			} else {
-				blkdev = devsw_chr2blk(dev);
-				if (blkdev != (dev_t)NODEV) {
-					vfinddev(blkdev, VBLK, &bvp);
-					error = kauth_authorize_system(ap->a_cred,
-					    KAUTH_SYSTEM_RAWIO,
-					    KAUTH_REQ_SYSTEM_RAWIO_DISK,
-					    (void *)rw, vp, (void *)(u_long)dev);
-				}
+				error = kauth_authorize_system(ap->a_cred,
+				    KAUTH_SYSTEM_RAWIO,
+				    KAUTH_REQ_SYSTEM_RAWIO_DISK,
+				    (void *)rw, vp, (void *)(u_long)dev);
 			}
 
 			if (error)
 				return (error);
 
 #if NVERIEXEC > 0
-			if (veriexec_strict >= VERIEXEC_IPS && iskmemdev(dev))
+			if (veriexec_strict >= VERIEXEC_IPS &&
+			    iskmemdev(dev) && (ap->a_mode & FWRITE)) {
 				return (error);
-			error = veriexec_rawchk(bvp);
-			if (error)
-				return (error);
+			} else {
+				struct vnode *bvp;
+				dev_t blkdev;
+
+				blkdev = devsw_chr2blk(dev);
+				if (blkdev != NODEV) {
+					bvp = NULL;
+					vfinddev(blkdev, VBLK, &bvp);
+					error = veriexec_rawchk(bvp);
+					if (error)
+						return (error);
+				}
+			}
 #endif /* NVERIEXEC > 0 */
 		}
 
