@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.3 2006/10/29 16:45:18 jmmv Exp $
+#	$NetBSD: Makefile.bootcd,v 1.4 2006/11/01 16:47:17 hubertf Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -80,7 +80,7 @@ copy-releasedir:
 
 image:
 	${TOOL_MAKEFS} -t cd9660 \
-		-o 'bootimage=i386;bootxx,no-emul-boot' \
+		-o 'rockridge,bootimage=i386;bootxx,no-emul-boot' \
 		${CDBASE}.iso cdrom
 
 release:
