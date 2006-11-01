@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.22 2006/11/01 16:26:27 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.23 2006/11/01 17:13:37 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.22 2006/11/01 16:26:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.23 2006/11/01 17:13:37 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1088,7 +1088,6 @@ vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 		aprint_error("%s: tried to map busy RX descriptor\n",
 		    sc->sc_dev.dv_xname);
 		VGE_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
-		panic("vge_newbuf");
 		goto out;
 	}
 
