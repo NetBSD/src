@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.742 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.743 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -142,3 +142,17 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	puc(4): Add support for Perle PCI-RAS 4 port multimodem [manu 20061101]
 	rum(4): Added driver for Ralink 2501/2601 USB 802.11a/b/g
 		devices from OpenBSD. [joerg 20061101]
+	i386: Change GENERIC, GENERIC.MP, GENERIC.MPACPI, GENERIC_LAPTOP,
+		INSTALL, INSTALL.MP, INSTALL_LAPTOP, and DISKLESS kernels
+		so that they are smaller and faster by removing support
+		for actual i386 CPUs (which lack write protection in
+		supervisor mode, which requires a costly workaround) and
+		math coprocessor emulation.  Coprocessor emulation is
+		retained in the LAPTOP kernels, but not in the others.
+		Where it is known that a configuration cannot be run
+		with particular CPUs (i486 in *MP kernels) remove that
+		support as well.  Compile all kernels with appropriate
+		architecture and tuning flags (reduces size, makes things
+		faster).  Those requiring support for machines with i386
+		CPU or lacking coprocessor can use the *SMALL or *TINY
+		kernels. [tls 20061101]
