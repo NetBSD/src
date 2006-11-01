@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.74 2006/10/25 20:28:45 elad Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.75 2006/11/01 12:10:06 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.74 2006/10/25 20:28:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.75 2006/11/01 12:10:06 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -555,7 +555,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				if (n && error) {
 					strncpy(error, 
 					    mtod(n, caddr_t) + noff, len);
-					error[len-1] = '\0';
+					error[len] = '\0';
 				}
 			}
 			if (error) {
