@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.116 2006/10/12 01:32:14 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.117 2006/11/01 10:17:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.116 2006/10/12 01:32:14 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.117 2006/11/01 10:17:58 yamt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -337,8 +337,8 @@ elf_load_psection(struct exec_vmcmd_set *vcset, struct vnode *vp,
  */
 int
 elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
-    struct exec_vmcmd_set *vcset, u_long *entryoff,
-    struct elf_args *ap __unused, Elf_Addr *last)
+    struct exec_vmcmd_set *vcset, u_long *entryoff, struct elf_args *ap,
+    Elf_Addr *last)
 {
 	int error, i;
 	struct nameidata nd;
@@ -811,8 +811,8 @@ out:
 }
 
 int
-netbsd_elf_probe(struct lwp *l, struct exec_package *epp,
-    void *eh, char *itp __unused, vaddr_t *pos __unused)
+netbsd_elf_probe(struct lwp *l, struct exec_package *epp, void *eh, char *itp,
+    vaddr_t *pos)
 {
 	int error;
 

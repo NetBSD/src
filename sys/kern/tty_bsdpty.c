@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.10 2006/10/12 01:32:19 christos Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.11 2006/11/01 10:17:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.10 2006/10/12 01:32:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.11 2006/11/01 10:17:59 yamt Exp $");
 
 #include "opt_ptm.h"
 
@@ -92,7 +92,7 @@ struct ptm_pty ptm_bsdpty = {
 
 static int
 /*ARGSUSED*/
-pty_makename(struct ptm_pty *ptm __unused, struct lwp *l __unused, char *bf,
+pty_makename(struct ptm_pty *ptm, struct lwp *l, char *bf,
     size_t bufsiz, dev_t dev, char c)
 {
 	size_t nt;
@@ -143,7 +143,7 @@ pty_allocvp(struct ptm_pty *ptm, struct lwp *l, struct vnode **vp, dev_t dev,
 
 static void
 /*ARGSUSED*/
-pty_getvattr(struct ptm_pty *ptm __unused, struct lwp *l, struct vattr *vattr)
+pty_getvattr(struct ptm_pty *ptm, struct lwp *l, struct vattr *vattr)
 {
 	VATTR_NULL(vattr);
 	/* get real uid */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.101 2006/10/12 01:32:53 christos Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.102 2006/11/01 10:18:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.101 2006/10/12 01:32:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.102 2006/11/01 10:18:27 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.101 2006/10/12 01:32:53 christos Exp 
 
 /* ARGSUSED */
 int
-sys_sbrk(struct lwp *l __unused, void *v __unused, register_t *retval __unused)
+sys_sbrk(struct lwp *l, void *v, register_t *retval)
 {
 #if 0
 	struct sys_sbrk_args /* {
@@ -117,7 +117,7 @@ sys_sbrk(struct lwp *l __unused, void *v __unused, register_t *retval __unused)
 
 /* ARGSUSED */
 int
-sys_sstk(struct lwp *l __unused, void *v __unused, register_t *retval __unused)
+sys_sstk(struct lwp *l, void *v, register_t *retval)
 {
 #if 0
 	struct sys_sstk_args /* {
@@ -134,7 +134,7 @@ sys_sstk(struct lwp *l __unused, void *v __unused, register_t *retval __unused)
 
 /* ARGSUSED */
 int
-sys_mincore(struct lwp *l, void *v, register_t *retval __unused)
+sys_mincore(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mincore_args /* {
 		syscallarg(void *) addr;
@@ -537,7 +537,7 @@ sys_mmap(l, v, retval)
  */
 
 int
-sys___msync13(struct lwp *l, void *v, register_t *retval __unused)
+sys___msync13(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___msync13_args /* {
 		syscallarg(caddr_t) addr;
@@ -629,7 +629,7 @@ sys___msync13(struct lwp *l, void *v, register_t *retval __unused)
  */
 
 int
-sys_munmap(struct lwp *l, void *v, register_t *retval __unused)
+sys_munmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_munmap_args /* {
 		syscallarg(caddr_t) addr;
@@ -699,7 +699,7 @@ sys_munmap(struct lwp *l, void *v, register_t *retval __unused)
  */
 
 int
-sys_mprotect(struct lwp *l, void *v, register_t *retval __unused)
+sys_mprotect(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mprotect_args /* {
 		syscallarg(caddr_t) addr;
@@ -739,7 +739,7 @@ sys_mprotect(struct lwp *l, void *v, register_t *retval __unused)
  */
 
 int
-sys_minherit(struct lwp *l, void *v, register_t *retval __unused)
+sys_minherit(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_minherit_args /* {
 		syscallarg(caddr_t) addr;
@@ -778,7 +778,7 @@ sys_minherit(struct lwp *l, void *v, register_t *retval __unused)
 
 /* ARGSUSED */
 int
-sys_madvise(struct lwp *l, void *v, register_t *retval __unused)
+sys_madvise(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_madvise_args /* {
 		syscallarg(caddr_t) addr;
@@ -879,7 +879,7 @@ sys_madvise(struct lwp *l, void *v, register_t *retval __unused)
  */
 
 int
-sys_mlock(struct lwp *l, void *v, register_t *retval __unused)
+sys_mlock(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mlock_args /* {
 		syscallarg(const void *) addr;
@@ -929,7 +929,7 @@ sys_mlock(struct lwp *l, void *v, register_t *retval __unused)
  */
 
 int
-sys_munlock(struct lwp *l, void *v, register_t *retval __unused)
+sys_munlock(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_munlock_args /* {
 		syscallarg(const void *) addr;
@@ -972,7 +972,7 @@ sys_munlock(struct lwp *l, void *v, register_t *retval __unused)
  */
 
 int
-sys_mlockall(struct lwp *l, void *v, register_t *retval __unused)
+sys_mlockall(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mlockall_args /* {
 		syscallarg(int) flags;
@@ -996,7 +996,7 @@ sys_mlockall(struct lwp *l, void *v, register_t *retval __unused)
  */
 
 int
-sys_munlockall(struct lwp *l, void *v __unused, register_t *retval __unused)
+sys_munlockall(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
@@ -1222,7 +1222,8 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 }
 
 vaddr_t
-uvm_default_mapaddr(struct proc *p __unused, vaddr_t base __unused, vsize_t sz)
+uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
 {
+
 	return VM_DEFAULT_ADDRESS(base, sz);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.48 2006/10/12 01:32:18 christos Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.49 2006/11/01 10:17:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.48 2006/10/12 01:32:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.49 2006/11/01 10:17:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ struct	fileops socketops = {
 
 /* ARGSUSED */
 int
-soo_read(struct file *fp, off_t *offset __unused, struct uio *uio,
-    kauth_cred_t cred __unused, int flags __unused)
+soo_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
+    int flags)
 {
 	struct socket *so = (struct socket *) fp->f_data;
 	return ((*so->so_receive)(so, (struct mbuf **)0,
@@ -67,8 +67,8 @@ soo_read(struct file *fp, off_t *offset __unused, struct uio *uio,
 
 /* ARGSUSED */
 int
-soo_write(struct file *fp, off_t *offset __unused, struct uio *uio,
-    kauth_cred_t cred __unused, int flags __unused)
+soo_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
+    int flags)
 {
 	struct socket *so = (struct socket *) fp->f_data;
 	return (*so->so_send)(so, (struct mbuf *)0,
@@ -152,8 +152,7 @@ soo_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 }
 
 int
-soo_fcntl(struct file *fp __unused, u_int cmd, void *data __unused,
-    struct lwp *l __unused)
+soo_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
 {
 	if (cmd == F_SETFL)
 		return (0);
@@ -209,7 +208,7 @@ soo_stat(struct file *fp, struct stat *ub, struct lwp *l)
 
 /* ARGSUSED */
 int
-soo_close(struct file *fp, struct lwp *l __unused)
+soo_close(struct file *fp, struct lwp *l)
 {
 	int error = 0;
 

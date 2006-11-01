@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.24 2006/10/12 01:32:19 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.25 2006/11/01 10:17:59 yamt Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.24 2006/10/12 01:32:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.25 2006/11/01 10:17:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,7 +409,7 @@ m_tag_first(struct mbuf *m)
 
 /* Get next tag in chain. */
 struct m_tag *
-m_tag_next(struct mbuf *m __unused, struct m_tag *t)
+m_tag_next(struct mbuf *m, struct m_tag *t)
 {
 
 	return (SLIST_NEXT(t, m_tag_link));

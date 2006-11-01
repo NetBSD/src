@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_specificdata.c,v 1.6 2006/10/24 10:05:45 hannken Exp $	*/
+/*	$NetBSD: subr_specificdata.c,v 1.7 2006/11/01 10:17:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.6 2006/10/24 10:05:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.7 2006/11/01 10:17:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -131,7 +131,7 @@ specificdata_container_link(specificdata_domain_t sd,
 }
 
 static void
-specificdata_container_unlink(specificdata_domain_t sd __unused,
+specificdata_container_unlink(specificdata_domain_t sd,
 			      specificdata_container_t sc)
 {
 
@@ -164,7 +164,7 @@ specificdata_destroy_datum(specificdata_domain_t sd,
 }
 
 static void
-specificdata_noop_dtor(void *data __unused)
+specificdata_noop_dtor(void *data)
 {
 
 	/* nothing */
@@ -192,7 +192,7 @@ specificdata_domain_create(void)
  *	Destroy a specifidata domain.
  */
 void
-specificdata_domain_delete(specificdata_domain_t sd __unused)
+specificdata_domain_delete(specificdata_domain_t sd)
 {
 
 	panic("specificdata_domain_delete: not implemented");
@@ -283,8 +283,7 @@ specificdata_key_delete(specificdata_domain_t sd, specificdata_key_t key)
  *	specified domain.
  */
 int
-specificdata_init(specificdata_domain_t sd __unused,
-    specificdata_reference *ref)
+specificdata_init(specificdata_domain_t sd, specificdata_reference *ref)
 {
 
 	/*
@@ -334,8 +333,8 @@ specificdata_fini(specificdata_domain_t sd, specificdata_reference *ref)
  *	Note: This routine is guaranteed not to sleep.
  */
 void *
-specificdata_getspecific(specificdata_domain_t sd __unused,
-    specificdata_reference *ref, specificdata_key_t key)
+specificdata_getspecific(specificdata_domain_t sd, specificdata_reference *ref,
+			 specificdata_key_t key)
 {
 	specificdata_container_t sc;
 	void *data = NULL;
@@ -363,7 +362,7 @@ specificdata_getspecific(specificdata_domain_t sd __unused,
  *	Note #2: This routine is guaranteed not to sleep.
  */
 void *
-specificdata_getspecific_unlocked(specificdata_domain_t sd __unused,
+specificdata_getspecific_unlocked(specificdata_domain_t sd,
 				  specificdata_reference *ref,
 				  specificdata_key_t key)
 {

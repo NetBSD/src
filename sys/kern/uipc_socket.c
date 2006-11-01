@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.128 2006/10/30 16:53:48 elad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.129 2006/11/01 10:17:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.128 2006/10/30 16:53:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.129 2006/11/01 10:17:59 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -151,7 +151,7 @@ static size_t sodopendfree(void);
 static size_t sodopendfreel(void);
 
 static vsize_t
-sokvareserve(struct socket *so __unused, vsize_t len)
+sokvareserve(struct socket *so, vsize_t len)
 {
 	int s;
 	int error;
@@ -342,7 +342,7 @@ sodopendfreel()
 }
 
 void
-soloanfree(struct mbuf *m, caddr_t buf, size_t size, void *arg __unused)
+soloanfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 {
 	int s;
 
@@ -432,8 +432,7 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 }
 
 static int
-sokva_reclaim_callback(struct callback_entry *ce __unused, void *obj __unused,
-    void *arg __unused)
+sokva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
 {
 
 	KASSERT(ce == &sokva_reclaimerentry);
@@ -1672,7 +1671,7 @@ filt_sordetach(struct knote *kn)
 
 /*ARGSUSED*/
 static int
-filt_soread(struct knote *kn, long hint __unused)
+filt_soread(struct knote *kn, long hint)
 {
 	struct socket	*so;
 
@@ -1703,7 +1702,7 @@ filt_sowdetach(struct knote *kn)
 
 /*ARGSUSED*/
 static int
-filt_sowrite(struct knote *kn, long hint __unused)
+filt_sowrite(struct knote *kn, long hint)
 {
 	struct socket	*so;
 
@@ -1726,7 +1725,7 @@ filt_sowrite(struct knote *kn, long hint __unused)
 
 /*ARGSUSED*/
 static int
-filt_solisten(struct knote *kn, long hint __unused)
+filt_solisten(struct knote *kn, long hint)
 {
 	struct socket	*so;
 
@@ -1748,7 +1747,7 @@ static const struct filterops sowrite_filtops =
 	{ 1, NULL, filt_sowdetach, filt_sowrite };
 
 int
-soo_kqfilter(struct file *fp __unused, struct knote *kn)
+soo_kqfilter(struct file *fp, struct knote *kn)
 {
 	struct socket	*so;
 	struct sockbuf	*sb;

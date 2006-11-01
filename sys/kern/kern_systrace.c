@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.60 2006/10/12 01:32:17 christos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.61 2006/11/01 10:17:58 yamt Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.60 2006/10/12 01:32:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.61 2006/11/01 10:17:58 yamt Exp $");
 
 #include "opt_systrace.h"
 
@@ -229,8 +229,8 @@ const struct cdevsw systrace_cdevsw = {
 
 /* ARGSUSED */
 int
-systracef_read(struct file *fp, off_t *poff __unused, struct uio *uio,
-    kauth_cred_t cred __unused, int flags __unused)
+systracef_read(struct file *fp, off_t *poff, struct uio *uio, kauth_cred_t cred,
+    int flags)
 {
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
 	struct str_msgcontainer *cont;
@@ -276,9 +276,10 @@ systracef_read(struct file *fp, off_t *poff __unused, struct uio *uio,
 
 /* ARGSUSED */
 int
-systracef_write(struct file *fp __unused, off_t *poff __unused,
-    struct uio *uio __unused, kauth_cred_t cred __unused, int flags __unused)
+systracef_write(struct file *fp, off_t *poff, struct uio *uio,
+    kauth_cred_t cred, int flags)
 {
+
 	return (EIO);
 }
 
@@ -481,7 +482,7 @@ systracef_select(struct file *fp, int which, struct proc *p)
 
 /* ARGSUSED */
 int
-systracef_close(struct file *fp, struct lwp *l __unused)
+systracef_close(struct file *fp, struct lwp *l)
 {
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
 	struct str_process *strp;
@@ -563,7 +564,7 @@ systrace_init(void)
 #endif /* ! __NetBSD__ */
 
 int
-systraceopen(dev_t dev __unused, int flag, int mode __unused, struct lwp *l)
+systraceopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct fsystrace *fst;
 	struct file *fp;
@@ -1711,8 +1712,8 @@ systrace_newpolicy(struct fsystrace *fst, int maxents)
 }
 
 int
-systrace_msg_ask(struct fsystrace *fst __unused, struct str_process *strp,
-    int code, size_t argsize, register_t args[])
+systrace_msg_ask(struct fsystrace *fst, struct str_process *strp, int code,
+    size_t argsize, register_t args[])
 {
 	struct str_message msg;
 	struct str_msg_ask *msg_ask = &msg.msg_data.msg_ask;
@@ -1727,8 +1728,8 @@ systrace_msg_ask(struct fsystrace *fst __unused, struct str_process *strp,
 }
 
 int
-systrace_msg_result(struct fsystrace *fst __unused, struct str_process *strp,
-    int error, int code, size_t argsize, register_t args[], register_t rval[])
+systrace_msg_result(struct fsystrace *fst, struct str_process *strp, int error,
+    int code, size_t argsize, register_t args[], register_t rval[])
 {
 	struct str_message msg;
 	struct str_msg_ask *msg_ask = &msg.msg_data.msg_ask;
@@ -1747,7 +1748,7 @@ systrace_msg_result(struct fsystrace *fst __unused, struct str_process *strp,
 }
 
 int
-systrace_msg_emul(struct fsystrace *fst __unused, struct str_process *strp)
+systrace_msg_emul(struct fsystrace *fst, struct str_process *strp)
 {
 	struct str_message msg;
 	struct str_msg_emul *msg_emul = &msg.msg_data.msg_emul;
@@ -1759,7 +1760,7 @@ systrace_msg_emul(struct fsystrace *fst __unused, struct str_process *strp)
 }
 
 int
-systrace_msg_ugid(struct fsystrace *fst __unused, struct str_process *strp)
+systrace_msg_ugid(struct fsystrace *fst, struct str_process *strp)
 {
 	struct str_message msg;
 	struct str_msg_ugid *msg_ugid = &msg.msg_data.msg_ugid;
