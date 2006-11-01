@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.118 2006/10/15 21:33:34 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.119 2006/11/01 22:26:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.118 2006/10/15 21:33:34 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.119 2006/11/01 22:26:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2242,6 +2242,8 @@ kern_drivers(HANDLER_ARGS)
 	}
 
 	comma = "";
+	if (!nflag)
+		printf("%s%s", sname, eq);
 	for (i = 0, sz /= sizeof(*kd); i < sz; i++) {
 		(void)printf("%s[%d %d %s]", comma, kd[i].d_cmajor,
 		    kd[i].d_bmajor, kd[i].d_name);
