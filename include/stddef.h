@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.10 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: stddef.h,v 1.10.6.1 2006/11/01 18:06:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,6 +50,6 @@ typedef	_BSD_WCHAR_T_	wchar_t;
 
 #include <sys/null.h>
 
-#define	offsetof(type, member)	((size_t)(unsigned long)(&((type *)0)->member))
+#define	offsetof(type, member)	__builtin_offsetof(type,member)
 
 #endif /* _STDDEF_H_ */
