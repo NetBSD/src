@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.212 2006/11/01 06:39:19 cbiere Exp $	*/
+/*	$NetBSD: audio.c,v 1.213 2006/11/01 09:36:52 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.212 2006/11/01 06:39:19 cbiere Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.213 2006/11/01 09:36:52 xtraeme Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3144,6 +3144,8 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	boolean_t rbus, pbus;
 	boolean_t cleared, modechange, pausechange;
 	u_char balance;
+
+	oldpblksize = oldrblksize = 0;
 
 	hw = sc->hw_if;
 	if (hw == NULL)		/* HW has not attached */
