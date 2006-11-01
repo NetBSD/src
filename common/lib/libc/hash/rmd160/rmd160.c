@@ -1,4 +1,4 @@
-/* 	$NetBSD: rmd160.c,v 1.1 2006/10/27 21:23:16 christos Exp $ */
+/* 	$NetBSD: rmd160.c,v 1.2 2006/11/01 11:29:08 he Exp $ */
 /*	$KAME: rmd160.c,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.c,v 1.3 2001/09/26 21:40:13 markus Exp $	*/
 /*
@@ -33,14 +33,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.1 2006/10/27 21:23:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.2 2006/11/01 11:29:08 he Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rmd160.c,v 1.1 2006/10/27 21:23:16 christos Exp $");
+__RCSID("$NetBSD: rmd160.c,v 1.2 2006/11/01 11:29:08 he Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: rmd160.c,v 1.1 2006/10/27 21:23:16 christos Exp $");
 #endif
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/rmd160.h>
 
 
