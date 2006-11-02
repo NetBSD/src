@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.29 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.30 2006/11/02 17:34:21 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.29 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.30 2006/11/02 17:34:21 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 	if (nmlen == 2 && memcmp(name, "..", 2) == 0) {
 		if (dvp == NULL)
 			return EINVAL;
-		vp = VTOSMB(dvp)->n_parent->n_vnode;
+		vp = VTOSMB(VTOSMB(dvp)->n_parent)->n_vnode;
 		if ((error = vget(vp, LK_EXCLUSIVE | LK_RETRY)) == 0)
 			*vpp = vp;
 		return (error);
@@ -130,7 +130,7 @@ retry:
 loop:
 	nhpp = SMBFS_NOHASH(smp, hashval);
 	LIST_FOREACH(np, nhpp, n_hash) {
-		if (np->n_parent != dnp
+		if (np->n_parent != dvp
 		    || np->n_nmlen != nmlen
 		    || memcmp(name, np->n_name, nmlen) != 0)
 			continue;
@@ -171,7 +171,7 @@ loop:
 	KASSERT(vp->v_type != VREG || dvp != NULL);
 
 	if (dvp) {
-		np->n_parent = dnp;
+		np->n_parent = dvp;
 		if (/*vp->v_type == VDIR &&*/ (dvp->v_flag & VROOT) == 0) {
 			vref(dvp);
 			np->n_flag |= NREFPARENT;
@@ -186,7 +186,7 @@ loop:
 	 * malloc.
 	 */
 	LIST_FOREACH(np2, nhpp, n_hash) {
-		if (np2->n_parent != dnp
+		if (np2->n_parent != dvp
 		    || np2->n_nmlen != nmlen
 		    || memcmp(name, np2->n_name, nmlen) != 0)
 			continue;
@@ -246,7 +246,7 @@ smbfs_reclaim(v)
 	smbfs_hash_lock(smp);
 
 	dvp = (np->n_parent && (np->n_flag & NREFPARENT)) ?
-	    np->n_parent->n_vnode : NULL;
+	    np->n_parent : NULL;
 
 	LIST_REMOVE(np, n_hash);
 
@@ -260,8 +260,14 @@ smbfs_reclaim(v)
 	if (np->n_name)
 		smbfs_name_free(np->n_name);
 	pool_put(&smbfs_node_pool, np);
-	if (dvp)
+	if (dvp) {
 		vrele(dvp);
+		/*
+		 * Indicate that we released something; see comment
+		 * in smbfs_unmount().
+		 */
+		smp->sm_didrele = 1;
+	}
 	return 0;
 }
 
