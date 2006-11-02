@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.38 2006/11/02 19:41:34 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.39 2006/11/02 20:05:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.38 2006/11/02 19:41:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.39 2006/11/02 20:05:04 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -380,8 +380,8 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* XXX - Now safe to install interrupt handlers. */
-	intr_establish(intr[0][0], IST_LEVEL, IPL_TTY, zshard, NULL);
-	intr_establish(intr[1][0], IST_LEVEL, IPL_TTY, zshard, NULL);
+	intr_establish(intr[0][0], IST_LEVEL, IPL_TTY, zshard, zsc);
+	intr_establish(intr[1][0], IST_LEVEL, IPL_TTY, zshard, zsc);
 #ifdef ZS_TXDMA
 	intr_establish(intr[0][1], IST_LEVEL, IPL_TTY, zs_txdma_int, (void *)0);
 	intr_establish(intr[1][1], IST_LEVEL, IPL_TTY, zs_txdma_int, (void *)1);
@@ -444,27 +444,18 @@ zsmd_setclock(struct zs_chanstate *cs)
 #endif
 }
 
-/*
- * Our ZS chips all share a common, autovectored interrupt,
- * so we have to look at all of them on each interrupt.
- */
 int
 zshard(void *arg)
 {
 	struct zsc_softc *zsc;
-	int unit, rval;
+	int rval;
 
-	rval = 0;
-	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
-		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		rval |= zsc_intr_hard(zsc);
-		if ((zsc->zsc_cs[0]->cs_softreq) ||
-		    (zsc->zsc_cs[1]->cs_softreq))
-			softintr_schedule(zsc->zsc_si);
-	}
-	return (rval);
+	zsc = arg;
+	rval = zsc_intr_hard(zsc);
+	if ((zsc->zsc_cs[0]->cs_softreq) || (zsc->zsc_cs[1]->cs_softreq))
+		softintr_schedule(zsc->zsc_si);
+
+	return rval;
 }
 
 #ifdef ZS_TXDMA
