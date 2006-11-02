@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.80 2006/11/02 11:02:58 tsutsui Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.81 2006/11/02 17:32:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.80 2006/11/02 11:02:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.81 2006/11/02 17:32:11 tsutsui Exp $");
 
 #include "rnd.h"
 
@@ -1582,8 +1582,13 @@ vr_attach(struct device *parent __unused, struct device *self, void *aux)
 	 * Windows may put the chip in suspend mode when it
 	 * shuts down. Be sure to kick it in the head to wake it
 	 * up again.
+	 *
+	 * Don't touch this register on VT3043 since it causes
+	 * kernel MCHK trap on macppc.
+	 * (Note some VT86C100A chip returns a product ID of VT3043)
 	 */
-	VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0|VR_STICKHW_DS1));
+	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT3043)
+		VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0|VR_STICKHW_DS1));
 
 	/* Reset the adapter. */
 	vr_reset(sc);
