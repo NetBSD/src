@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.39 2006/11/02 20:05:04 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.40 2006/11/02 20:43:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.39 2006/11/02 20:05:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.40 2006/11/02 20:43:30 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -168,7 +168,6 @@ extern struct cfdriver zsc_cd;
 int zsc_attached;
 
 int zshard(void *);
-int zssoft(void *);
 #ifdef ZS_TXDMA
 static int zs_txdma_int(void *);
 #endif
