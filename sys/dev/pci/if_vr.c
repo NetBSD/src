@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.79 2006/11/02 10:44:30 tsutsui Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.80 2006/11/02 11:02:58 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.79 2006/11/02 10:44:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.80 2006/11/02 11:02:58 tsutsui Exp $");
 
 #include "rnd.h"
 
@@ -795,9 +795,27 @@ vr_rxeof(struct vr_softc *sc)
 void
 vr_rxeoc(struct vr_softc *sc)
 {
+	struct ifnet *ifp;
+	int i;
+
+	ifp = &sc->vr_ec.ec_if;
+
+	ifp->if_ierrors++;
+
+	VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_RX_ON);
+	for (i = 0; i < VR_TIMEOUT; i++) {
+		DELAY(10);
+		if ((CSR_READ_2(sc, VR_COMMAND) & VR_CMD_RX_ON) == 0)
+			break;
+	}
+	if (i == VR_TIMEOUT) {
+		/* XXX need reset? */
+		printf("%s: RX shutdown never complete\n",
+		    sc->vr_dev.dv_xname);
+	}
 
 	vr_rxeof(sc);
-	VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_RX_ON);
+
 	CSR_WRITE_4(sc, VR_RXADDR, VR_CDRXADDR(sc, sc->vr_rxptr));
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_RX_ON);
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_RX_GO);
@@ -900,9 +918,13 @@ vr_intr(void *arg)
 		if (status & VR_ISR_RX_OK)
 			vr_rxeof(sc);
 
+		if (status & VR_ISR_RX_DROPPED) {
+			printf("%s: rx packet lost\n", sc->vr_dev.dv_xname);
+			ifp->if_ierrors++;
+		}
+
 		if (status &
-		    (VR_ISR_RX_ERR | VR_ISR_RX_NOBUF | VR_ISR_RX_OFLOW |
-		     VR_ISR_RX_DROPPED))
+		    (VR_ISR_RX_ERR | VR_ISR_RX_NOBUF | VR_ISR_RX_OFLOW))
 			vr_rxeoc(sc);
 
 		if (status & VR_ISR_TX_OK) {
