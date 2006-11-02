@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.745 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.746 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -156,3 +156,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		faster).  Those requiring support for machines with i386
 		CPU or lacking coprocessor can use the *SMALL or *TINY
 		kernels. [tls 20061101]
+	useradd(8): Change the default shell for newly added users to
+		/bin/sh. [pavel 20061102]
