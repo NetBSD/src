@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.94 2006/11/01 09:37:28 elad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.95 2006/11/02 12:48:35 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.94 2006/11/01 09:37:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.95 2006/11/02 12:48:35 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -227,20 +227,22 @@ spec_open(v)
 				return (error);
 
 #if NVERIEXEC > 0
-			if (veriexec_strict >= VERIEXEC_IPS &&
-			    iskmemdev(dev) && (ap->a_mode & FWRITE)) {
-				return (error);
-			} else {
-				struct vnode *bvp;
-				dev_t blkdev;
+			if (ap->a_mode & FWRITE) {
+				if (iskmemdev(dev)) {
+					if (veriexec_strict >= VERIEXEC_IPS)
+						return (EPERM);
+				} else {
+					struct vnode *bvp;
+					dev_t blkdev;
 
-				blkdev = devsw_chr2blk(dev);
-				if (blkdev != NODEV) {
-					bvp = NULL;
-					vfinddev(blkdev, VBLK, &bvp);
-					error = veriexec_rawchk(bvp);
-					if (error)
-						return (error);
+					blkdev = devsw_chr2blk(dev);
+					if (blkdev != NODEV) {
+						bvp = NULL;
+						vfinddev(blkdev, VBLK, &bvp);
+						error = veriexec_rawchk(bvp);
+						if (error)
+							return (error);
+					}
 				}
 			}
 #endif /* NVERIEXEC > 0 */
