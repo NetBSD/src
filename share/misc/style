@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.37 2006/02/25 11:07:19 wiz Exp $ */
+/* $NetBSD: style,v 1.38 2006/11/02 22:44:41 christos Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.37 2006/02/25 11:07:19 wiz Exp $");
+__RCSID("$NetBSD: style,v 1.38 2006/11/02 22:44:41 christos Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -230,7 +230,7 @@ main(int argc, char *argv[])
 
 	/*
 	 * Space after keywords (while, for, return, switch).  No braces are
-	 * used for control statements with zero or only a single statement,
+	 * required for control statements with only a single statement,
 	 * unless it's a long statement.
 	 *
 	 * Forever loops are done with for's, not while's.
@@ -239,6 +239,19 @@ main(int argc, char *argv[])
 		continue;		/* Explicit no-op */
 	for (;;)
 		stmt;
+
+	/*
+	 * Braces are required for control statements with a single statement
+	 * that may expand to nothing.
+	 */
+#ifdef DEBUG_FOO
+#define DPRINTF(a)
+#else
+#define DPRINTF(a) printf a
+#endif
+	if (broken) {
+		DPRINTF(("broken is %d\n", broken));
+	}
 
 	/*
 	 * Parts of a for loop may be left empty.  Don't put declarations
