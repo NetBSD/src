@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.27 2006/10/30 15:23:20 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.28 2006/11/02 15:35:25 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.27 2006/10/30 15:23:20 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.28 2006/11/02 15:35:25 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1383,6 +1383,7 @@ tmpfs_getpages(void *v)
 	int flags = ((struct vop_getpages_args *)v)->a_flags;
 
 	int error;
+	int i;
 	struct tmpfs_node *node;
 	struct uvm_object *uobj;
 	int npages = *count;
@@ -1418,9 +1419,31 @@ tmpfs_getpages(void *v)
 
 	simple_unlock(&vp->v_interlock);
 
+	/*
+	 * Make sure that the array on which we will store the
+	 * gotten pages is clean.  Otherwise uao_get (pointed to by
+	 * the pgo_get below) gets confused and does not return the
+	 * appropriate pages.
+	 * 
+	 * XXX This shall be revisited when kern/32166 is addressed
+	 * because the loop to clean m[i] will most likely be redundant
+	 * as well as the PGO_ALLPAGES flag.
+	 */
+	if (m != NULL)
+		for (i = 0; i < npages; i++)
+			m[i] = NULL;
 	simple_lock(&uobj->vmobjlock);
 	error = (*uobj->pgops->pgo_get)(uobj, offset, m, &npages, centeridx,
-	    access_type, advice, flags);
+	    access_type, advice, flags | PGO_ALLPAGES);
+#if defined(DEBUG)
+	{
+		/* Make sure that all the pages we return are valid. */
+		int dbgi;
+		if (error == 0 && m != NULL)
+			for (dbgi = 0; dbgi < npages; dbgi++)
+				KASSERT(m[dbgi] != NULL);
+	}
+#endif
 
 	return error;
 }
