@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.37 2006/08/15 01:53:26 macallan Exp $	*/
+/*	$NetBSD: zs.c,v 1.38 2006/11/02 19:41:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.37 2006/08/15 01:53:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.38 2006/11/02 19:41:34 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -387,10 +387,8 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 	intr_establish(intr[1][1], IST_LEVEL, IPL_TTY, zs_txdma_int, (void *)1);
 #endif
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	zsc->zsc_si = softintr_establish(IPL_SOFTSERIAL,
 		(void (*)(void *)) zsc_intr_soft, zsc);
-#endif
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.
@@ -446,10 +444,6 @@ zsmd_setclock(struct zs_chanstate *cs)
 #endif
 }
 
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-static int zssoftpending;
-#endif
-
 /*
  * Our ZS chips all share a common, autovectored interrupt,
  * so we have to look at all of them on each interrupt.
@@ -467,52 +461,11 @@ zshard(void *arg)
 			continue;
 		rval |= zsc_intr_hard(zsc);
 		if ((zsc->zsc_cs[0]->cs_softreq) ||
-			(zsc->zsc_cs[1]->cs_softreq))
-		{
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+		    (zsc->zsc_cs[1]->cs_softreq))
 			softintr_schedule(zsc->zsc_si);
-#else
-			/* zsc_req_softint(zsc); */
-			/* We are at splzs here, so no need to lock. */
-			if (zssoftpending == 0) {
-				zssoftpending = 1;
-				setsoftserial();
-			}
-#endif
-		}
 	}
 	return (rval);
 }
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-/*
- * Similar scheme as for zshard (look at all of them)
- */
-int
-zssoft(void *arg)
-{
-	struct zsc_softc *zsc;
-	int unit;
-
-	/* This is not the only ISR on this IPL. */
-	if (zssoftpending == 0)
-		return (0);
-
-	/*
-	 * The soft intr. bit will be set by zshard only if
-	 * the variable zssoftpending is zero.
-	 */
-	zssoftpending = 0;
-
-	for (unit = 0; unit < zsc_cd.cd_ndevs; ++unit) {
-		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		(void) zsc_intr_soft(zsc);
-	}
-	return (1);
-}
-#endif
 
 #ifdef ZS_TXDMA
 int
@@ -530,16 +483,9 @@ zs_txdma_int(void *arg)
 	cs = zsc->zsc_cs[ch];
 	zstty_txdma_int(cs);
 
-	if (cs->cs_softreq) {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	if (cs->cs_softreq)
 		softintr_schedule(zsc->zsc_si);
-#else
-		if (zssoftpending == 0) {
-			zssoftpending = 1;
-			setsoftserial();
-		}
-#endif
-	}
+
 	return 1;
 }
 
