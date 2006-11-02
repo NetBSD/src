@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.11 2006/10/12 01:32:14 christos Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.12 2006/11/02 17:34:21 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.11 2006/10/12 01:32:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.12 2006/11/02 17:34:21 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ smb_fphelp(struct mbchain *mbp, struct smb_vc *vcp, struct smbnode *np,
 			return ENAMETOOLONG;
 		}
 		*npp++ = np;
-		np = np->n_parent;
+		np = VTOSMB(np->n_parent);
 	}
 	while (i--) {
 		np = *--npp;
