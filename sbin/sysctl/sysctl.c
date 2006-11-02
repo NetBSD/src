@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.119 2006/11/01 22:26:36 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.120 2006/11/02 14:54:21 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.119 2006/11/01 22:26:36 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.120 2006/11/02 14:54:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -395,13 +395,16 @@ findhandler(const char *s, int w)
 		j = regexec(&re, s, 1, match, 0);
 		if (j == 0) {
 			if (match[0].rm_so == 0 && match[0].rm_eo == l &&
-			    (w ? p[i].ps_w : p[i].ps_p) != NULL)
+			    (w ? p[i].ps_w : p[i].ps_p) != NULL) {
+				regfree(&re);
 				return (&p[i]);
+			}
 		}
 		else if (j != REG_NOMATCH) {
 			regerror(j, &re, eb, sizeof(eb));
 			errx(1, "regexec: %s: %s", p[i].ps_re, eb);
 		}
+		regfree(&re);
 	}
 
 	return (NULL);
