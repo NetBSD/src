@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.78 2006/10/20 10:31:06 scw Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.79 2006/11/02 10:44:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.78 2006/10/20 10:31:06 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.79 2006/11/02 10:44:30 tsutsui Exp $");
 
 #include "rnd.h"
 
@@ -281,11 +281,11 @@ do {									\
 	struct vr_descsoft *__ds = VR_DSRX((sc), (i));			\
 									\
 	__d->vr_next = htole32(VR_CDRXADDR((sc), VR_NEXTRX((i))));	\
-	__d->vr_status = htole32(VR_RXSTAT_FIRSTFRAG |			\
-	    VR_RXSTAT_LASTFRAG | VR_RXSTAT_OWN);			\
 	__d->vr_data = htole32(__ds->ds_dmamap->dm_segs[0].ds_addr);	\
 	__d->vr_ctl = htole32(VR_RXCTL_CHAIN | VR_RXCTL_RX_INTR |	\
 	    ((MCLBYTES - 1) & VR_RXCTL_BUFLEN));			\
+	__d->vr_status = htole32(VR_RXSTAT_FIRSTFRAG |			\
+	    VR_RXSTAT_LASTFRAG | VR_RXSTAT_OWN);			\
 	VR_CDRXSYNC((sc), (i), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (/* CONSTCOND */ 0)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vrreg.h,v 1.13 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: if_vrreg.h,v 1.14 2006/11/02 10:44:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -328,10 +328,10 @@
  */
 
 struct vr_desc {
-	u_int32_t		vr_status;
-	u_int32_t		vr_ctl;
-	u_int32_t		vr_ptr1;
-	u_int32_t		vr_ptr2;
+	volatile u_int32_t	vr_status;
+	volatile u_int32_t	vr_ctl;
+	volatile u_int32_t	vr_ptr1;
+	volatile u_int32_t	vr_ptr2;
 };
 
 #define	vr_data		vr_ptr1
