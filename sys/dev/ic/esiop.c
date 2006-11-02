@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.37 2006/11/02 14:55:04 garbled Exp $	*/
+/*	$NetBSD: esiop.c,v 1.38 2006/11/02 15:08:30 garbled Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.37 2006/11/02 14:55:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.38 2006/11/02 15:08:30 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,11 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.37 2006/11/02 14:55:04 garbled Exp $");
 #ifndef DEBUG
 #undef DEBUG
 #endif
-#undef SIOP_DEBUG
-#undef SIOP_DEBUG_DR
-#undef SIOP_DEBUG_INTR
-#undef SIOP_DEBUG_SCHED
-#undef DUMP_SCRIPT
+/*
+#define SIOP_DEBUG
+#define SIOP_DEBUG_DR
+#define SIOP_DEBUG_INTR
+#define SIOP_DEBUG_SCHED
+#define DUMP_SCRIPT
+*/
 
 #define SIOP_STATS
 
