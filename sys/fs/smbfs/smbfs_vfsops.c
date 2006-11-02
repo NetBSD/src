@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.58 2006/10/25 22:01:54 reinoud Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.59 2006/11/02 17:34:21 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.58 2006/10/25 22:01:54 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.59 2006/11/02 17:34:21 jmmv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -252,9 +252,17 @@ smbfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		smp->sm_root = NULL;
 	}
 
-	/* Flush all vnodes. */
-	if ((error = vflush(mp, NULLVP, flags)) != 0)
-		return error;
+	/* Flush all vnodes.
+	 * Keep trying to flush the vnode list for the mount while 
+	 * some are still busy and we are making progress towards
+	 * making them not busy. This is needed because smbfs vnodes
+	 * reference their parent directory but may appear after their
+	 * parent in the list; one pass over the vnode list is not
+	 * sufficient in this case. */
+	do {
+		smp->sm_didrele = 0;
+		error = vflush(mp, NULLVP, flags);
+	} while (error == EBUSY && smp->sm_didrele != 0);
 
 	smb_makescred(&scred, l, l->l_cred);
 	smb_share_lock(smp->sm_share, 0);

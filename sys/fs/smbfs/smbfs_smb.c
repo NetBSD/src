@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.32 2006/10/12 01:32:14 christos Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.33 2006/11/02 17:34:21 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.32 2006/10/12 01:32:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.33 2006/11/02 17:34:21 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1317,7 +1317,8 @@ smbfs_smb_lookup(struct smbnode *dnp, const char *name, int nmlen,
 		error = smbfs_smb_lookup(dnp, NULL, 0, fap, scred);
 		return error;
 	} else if (nmlen == 2 && name[0] == '.' && name[1] == '.') {
-		error = smbfs_smb_lookup(dnp->n_parent, NULL, 0, fap, scred);
+		error = smbfs_smb_lookup(VTOSMB(dnp->n_parent), NULL, 0,
+		    fap, scred);
 		printf("%s: knows NOTHING about '..'\n", __func__);
 		return error;
 	}
