@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.26 2006/06/17 17:06:52 jmcneill Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.26.6.1 2006/11/02 17:52:46 yamt Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -176,7 +176,7 @@ struct pccbb_softc {
 struct pccbb_intrhand_list {
 	int (*pil_func)(void *);
 	void *pil_arg;
-	int pil_level;
+	ipl_cookie_t pil_icookie;
 	LIST_ENTRY(pccbb_intrhand_list) pil_next;
 };
 
