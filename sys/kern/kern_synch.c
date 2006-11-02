@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.171 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.172 2006/11/02 16:26:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.171 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.172 2006/11/02 16:26:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -546,11 +546,12 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 			SCHED_UNLOCK(s);
 			goto resume;
 		}
+		SCHED_LOCK(s);
 		if (l->l_wchan == NULL) {
+			SCHED_UNLOCK(s);
 			catch = 0;
 			goto resume;
 		}
-		SCHED_LOCK(s);
 	} else
 		sig = 0;
 	l->l_stat = LSSLEEP;
