@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.81 2006/11/02 17:32:11 tsutsui Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.82 2006/11/03 08:41:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.81 2006/11/02 17:32:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.82 2006/11/03 08:41:05 tsutsui Exp $");
 
 #include "rnd.h"
 
@@ -832,7 +832,7 @@ vr_txeof(struct vr_softc *sc)
 	struct vr_desc *d;
 	struct vr_descsoft *ds;
 	u_int32_t txstat;
-	int i;
+	int i, j;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -848,6 +848,25 @@ vr_txeof(struct vr_softc *sc)
 		VR_CDTXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		txstat = le32toh(d->vr_status);
+
+		if (txstat & (VR_TXSTAT_ABRT | VR_TXSTAT_UDF)) {
+			VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_TX_ON);
+			for (j = 0; j < VR_TIMEOUT; j++) {
+				DELAY(10);
+				if ((CSR_READ_2(sc, VR_COMMAND) &
+				    VR_CMD_TX_ON) == 0)
+					break;
+			}
+			if (j == VR_TIMEOUT) {
+				/* XXX need reset? */
+				printf("%s: TX shutdown never complete\n",
+				    sc->vr_dev.dv_xname);
+			}
+			d->vr_status = htole32(VR_TXSTAT_OWN);
+			CSR_WRITE_4(sc, VR_TXADDR, VR_CDTXADDR(sc, i));
+			break;
+		}
+
 		if (txstat & VR_TXSTAT_OWN)
 			break;
 
@@ -927,17 +946,32 @@ vr_intr(void *arg)
 		    (VR_ISR_RX_ERR | VR_ISR_RX_NOBUF | VR_ISR_RX_OFLOW))
 			vr_rxeoc(sc);
 
+
+		if (status & (VR_ISR_BUSERR | VR_ISR_TX_UNDERRUN)) {
+			if (status & VR_ISR_BUSERR)
+				printf("%s: PCI bus error\n",
+				    sc->vr_dev.dv_xname);
+			if (status & VR_ISR_TX_UNDERRUN)
+				printf("%s: transmit underrun\n",
+				    sc->vr_dev.dv_xname);
+			/* vr_init() calls vr_start() */
+			dotx = 0;
+			(void)vr_init(ifp);
+
+		}
+
 		if (status & VR_ISR_TX_OK) {
 			dotx = 1;
 			vr_txeof(sc);
 		}
 
-		if (status & (VR_ISR_TX_UNDERRUN | VR_ISR_TX_ABRT)) {
-			if (status & VR_ISR_TX_UNDERRUN)
-				printf("%s: transmit underrun\n",
-				    sc->vr_dev.dv_xname);
-			if (status & VR_ISR_TX_ABRT)
+		if (status &
+		    (VR_ISR_TX_ABRT | VR_ISR_TX_ABRT2 | VR_ISR_TX_UDFI)) {
+			if (status & (VR_ISR_TX_ABRT | VR_ISR_TX_ABRT2))
 				printf("%s: transmit aborted\n",
+				    sc->vr_dev.dv_xname);
+			if (status & VR_ISR_TX_UDFI)
+				printf("%s: transmit underflow\n",
 				    sc->vr_dev.dv_xname);
 			ifp->if_oerrors++;
 			dotx = 1;
@@ -946,22 +980,6 @@ vr_intr(void *arg)
 				VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON);
 				VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_GO);
 			}
-			/*
-			 * Unfortunately many cards get stuck after
-			 * aborted transmits, so we reset them.
-			 */
-			if (status & VR_ISR_TX_ABRT) {
-				printf("%s: restarting\n", sc->vr_dev.dv_xname);
-				dotx = 0;
-				(void) vr_init(ifp);
-			}
-		}
-
-		if (status & VR_ISR_BUSERR) {
-			printf("%s: PCI bus error\n", sc->vr_dev.dv_xname);
-			/* vr_init() calls vr_start() */
-			dotx = 0;
-			(void) vr_init(ifp);
 		}
 	}
 
