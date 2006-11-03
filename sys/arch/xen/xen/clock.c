@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.31 2006/11/03 09:16:13 jld Exp $	*/
+/*	$NetBSD: clock.c,v 1.32 2006/11/03 12:09:46 jld Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2006/11/03 09:16:13 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32 2006/11/03 12:09:46 jld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,15 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2006/11/03 09:16:13 jld Exp $");
 
 static int xen_timer_handler(void *, struct intrframe *);
 
-/* These are peridically updated in shared_info, and then copied here. */
+/* These are periodically updated in shared_info, and then copied here. */
 static volatile uint64_t shadow_tsc_stamp;
 static volatile uint64_t shadow_system_time;
-#ifndef XEN3
-static volatile unsigned long shadow_time_version;
-#else
+static volatile unsigned long shadow_time_version; /* XXXSMP */
 static volatile uint32_t shadow_freq_mul;
 static volatile int8_t shadow_freq_shift;
-#endif
 static volatile struct timeval shadow_tv;
 
 static int timeset;
@@ -88,15 +85,16 @@ get_time_values_from_xen(void)
 	volatile struct vcpu_time_info *t =
 	    &HYPERVISOR_shared_info->vcpu_info[0].time;
 	uint32_t tversion;
+
 	do {
-		tversion = t->version;
+		shadow_time_version = t->version;
 		x86_lfence();
 		shadow_tsc_stamp = t->tsc_timestamp;
 		shadow_system_time = t->system_time;
 		shadow_freq_mul = t->tsc_to_system_mul;
 		shadow_freq_shift = t->tsc_shift;
 		x86_lfence();
-	} while ((t->version & 1) || (tversion != t->version));
+	} while ((t->version & 1) || (shadow_time_version != t->version));
 	do {
 		tversion = HYPERVISOR_shared_info->wc_version;
 		x86_lfence();
@@ -117,6 +115,26 @@ get_time_values_from_xen(void)
 		x86_lfence();
 	} while (shadow_time_version != HYPERVISOR_shared_info->time_version1);
 #endif
+}
+
+/*
+ * Are the values we have up to date?
+ */
+static inline int
+time_values_up_to_date(void)
+{
+	int rv;
+
+	x86_lfence();
+#ifndef XEN3
+	rv = shadow_time_version == HYPERVISOR_shared_info->time_version1;
+#else
+	rv = shadow_time_version == 
+	    HYPERVISOR_shared_info->vcpu_info[0].time.version;  /* XXXSMP */
+#endif
+	x86_lfence();
+
+	return rv;
 }
 
 #ifdef XEN3
@@ -153,17 +171,24 @@ get_tsc_offset_ns(void)
 	struct cpu_info *ci = curcpu();
 #endif
 
-	tsc_delta = cpu_counter() - shadow_tsc_stamp;
+	for (;;) {
+		tsc_delta = cpu_counter() - shadow_tsc_stamp;
 #ifndef XEN3
-	offset = tsc_delta * 1000000000ULL / cpu_frequency(ci);
+		offset = tsc_delta * 1000000000ULL / cpu_frequency(ci);
 #else
-	offset = scale_delta(tsc_delta, shadow_freq_mul, shadow_freq_shift);
+		offset = scale_delta(tsc_delta, shadow_freq_mul,
+		    shadow_freq_shift);
 #endif
 #ifdef XEN_CLOCK_DEBUG
-	if (offset > 10000000000ULL)
+		if (offset > 10000000000ULL)
 		printf("get_tsc_offset_ns: tsc_delta=%llu offset=%llu\n",
-		    tsc_delta, offset); 
+		    tsc_delta, offset);
 #endif
+		/* if the timestamp went stale before we used it, refresh */
+		if (time_values_up_to_date())
+			break;
+		get_time_values_from_xen();
+	}
 	return offset;
 }
 
