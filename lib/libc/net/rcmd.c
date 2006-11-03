@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.63 2005/12/02 11:33:26 yamt Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.64 2006/11/03 20:21:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.63 2005/12/02 11:33:26 yamt Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.64 2006/11/03 20:21:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -267,9 +267,8 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 			if (getnameinfo(r->ai_addr, r->ai_addrlen,
 			    hbuf, sizeof(hbuf), NULL, 0, niflags) != 0)
 				strlcpy(hbuf, "(invalid)", sizeof(hbuf));
-			warnx("rcmd: connect to address %s", hbuf);
 			errno = oerrno;
-			perror(0);
+			warn("rcmd: connect to address %s", hbuf);
 			r = r->ai_next;
 			hbuf[0] = '\0';
 			if (getnameinfo(r->ai_addr, r->ai_addrlen,
