@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_lastlog.c,v 1.11 2006/11/03 18:04:20 christos Exp $	*/
+/*	$NetBSD: pam_lastlog.c,v 1.12 2006/11/03 18:55:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -47,7 +47,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_lastlog/pam_lastlog.c,v 1.20 2004/01/26 19:28:37 des Exp $");
 #else
-__RCSID("$NetBSD: pam_lastlog.c,v 1.11 2006/11/03 18:04:20 christos Exp $");
+__RCSID("$NetBSD: pam_lastlog.c,v 1.12 2006/11/03 18:55:40 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -98,7 +98,7 @@ static void
 logit(int level, const char *fmt, ...)
 {
 	va_list ap;
-	struct syslog_data data;
+	struct syslog_data data = SYSLOG_DATA_INIT;
 
 	openlog_r("pam_lastlog", LOG_PID, LOG_AUTHPRIV, &data);
 	va_start(ap, fmt);
