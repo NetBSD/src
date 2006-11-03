@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.16 2006/10/28 23:18:35 christos Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.17 2006/11/03 17:51:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -332,24 +332,27 @@ re_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 	re_attach(sc);
 
 	/*
-	 * Perform hardware diagnostic.
-	 * XXX: this diagnostic only makes sense for attachemnts with 64-bit
-	 * busses: PCI, but not CardBus.
+	 * Perform hardware diagnostic on the original RTL8169.
+	 * Some 32-bit cards were incorrectly wired and would
+	 * malfunction if plugged into a 64-bit slot.
 	 */
-	error = re_diag(sc);
-	if (error) {
-		aprint_error(
-		    "%s: attach aborted due to hardware diag failure\n",
-		    sc->sc_dev.dv_xname);
+	if (hwrev == RTK_HWREV_8169) {
+		error = re_diag(sc);
+		if (error) {
+			aprint_error(
+			    "%s: attach aborted due to hardware diag failure\n",
+			    sc->sc_dev.dv_xname);
 
-		re_detach(sc);
+			re_detach(sc);
 
-		if (psc->sc_ih != NULL) {
-			pci_intr_disestablish(pc, psc->sc_ih);
-			psc->sc_ih = NULL;
+			if (psc->sc_ih != NULL) {
+				pci_intr_disestablish(pc, psc->sc_ih);
+				psc->sc_ih = NULL;
+			}
+
+			if (bsize)
+				bus_space_unmap(sc->rtk_btag, sc->rtk_bhandle,
+				    bsize);
 		}
-
-		if (bsize)
-			bus_space_unmap(sc->rtk_btag, sc->rtk_bhandle, bsize);
 	}
 }
