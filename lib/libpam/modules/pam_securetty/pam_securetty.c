@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_securetty.c,v 1.5 2006/03/06 23:08:20 jnemeth Exp $	*/
+/*	$NetBSD: pam_securetty.c,v 1.6 2006/11/03 18:04:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Mark R V Murray
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_securetty/pam_securetty.c,v 1.13 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_securetty.c,v 1.5 2006/03/06 23:08:20 jnemeth Exp $");
+__RCSID("$NetBSD: pam_securetty.c,v 1.6 2006/11/03 18:04:20 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -69,6 +69,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh __unused, int flags __unused,
 	const void *hostname;
 	int pam_err;
 	char pwbuf[1024];
+	struct syslog_data data;
 
 	pam_err = pam_get_user(pamh, &user, NULL);
 	if (pam_err != PAM_SUCCESS)
@@ -104,15 +105,17 @@ pam_sm_acct_mgmt(pam_handle_t *pamh __unused, int flags __unused,
 	if (pam_err != PAM_SUCCESS)
 		hostname = NULL;
 
+	openlog_r("pam_securetty", LOG_PID, LOG_AUTHPRIV, &data);
 	if (hostname)
-		syslog(LOG_NOTICE,
+		syslog_r(LOG_NOTICE, &data,
 		    "LOGIN %s REFUSED FROM %s ON TTY %s",
 		     pwd->pw_name, (const char *)hostname,
 		     (const char *)tty);
 	else
-		syslog(LOG_NOTICE,
+		syslog_r(LOG_NOTICE, &data,
 		    "LOGIN %s REFUSED ON TTY %s",
 		     pwd->pw_name, (const char *)tty);
+	closelog_r(&data);
 
 
 	PAM_VERBOSE_ERROR("Not on secure TTY");
