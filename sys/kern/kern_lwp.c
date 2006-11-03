@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.48 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.49 2006/11/03 19:46:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.48 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.49 2006/11/03 19:46:03 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -661,8 +661,8 @@ lwp_exit2(struct lwp *l)
 		l->l_stat = LSZOMB;
 		p = l->l_proc;
 		p->p_nzlwps++;
-		KERNEL_UNLOCK();
 		wakeup(&p->p_nlwps);
+		KERNEL_UNLOCK();
 	}
 }
 
