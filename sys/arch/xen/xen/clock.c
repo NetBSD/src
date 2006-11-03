@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.30 2006/09/11 06:57:30 jld Exp $	*/
+/*	$NetBSD: clock.c,v 1.31 2006/11/03 09:16:13 jld Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2006/09/11 06:57:30 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2006/11/03 09:16:13 jld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,15 +55,15 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2006/09/11 06:57:30 jld Exp $");
 static int xen_timer_handler(void *, struct intrframe *);
 
 /* These are peridically updated in shared_info, and then copied here. */
-volatile static uint64_t shadow_tsc_stamp;
-volatile static uint64_t shadow_system_time;
+static volatile uint64_t shadow_tsc_stamp;
+static volatile uint64_t shadow_system_time;
 #ifndef XEN3
-volatile static unsigned long shadow_time_version;
+static volatile unsigned long shadow_time_version;
 #else
-volatile static uint32_t shadow_freq_mul;
-volatile static int8_t shadow_freq_shift;
+static volatile uint32_t shadow_freq_mul;
+static volatile int8_t shadow_freq_shift;
 #endif
-volatile static struct timeval shadow_tv;
+static volatile struct timeval shadow_tv;
 
 static int timeset;
 
