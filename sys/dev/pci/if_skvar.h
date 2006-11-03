@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.5.2.2 2006/03/29 21:13:47 tron Exp $ */
+/* $NetBSD: if_skvar.h,v 1.5.2.3 2006/11/03 14:35:43 tron Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -93,11 +93,6 @@
 #include <sys/rnd.h>
 #endif
 
-struct sk_jslot {
-	caddr_t			sk_buf;
-	int			sk_inuse;
-};
-
 struct sk_jpool_entry {
 	int                             slot;
 	LIST_ENTRY(sk_jpool_entry)	jpool_entries;
@@ -128,6 +123,7 @@ struct sk_chain_data {
 	struct sk_chain		sk_rx_chain[SK_RX_RING_CNT];
 	struct sk_txmap_entry	*sk_tx_map[SK_TX_RING_CNT];
 	bus_dmamap_t		sk_rx_map[SK_RX_RING_CNT];
+	bus_dmamap_t		sk_rx_jumbo_map;
 	int			sk_tx_prod;
 	int			sk_tx_cons;
 	int			sk_tx_cnt;
@@ -135,7 +131,7 @@ struct sk_chain_data {
 	int			sk_rx_cons;
 	int			sk_rx_cnt;
 	/* Stick the jumbo mem management stuff here too. */
-	struct sk_jslot		sk_jslots[SK_JSLOTS];
+	caddr_t			sk_jslots[SK_JSLOTS];
 	void			*sk_jumbo_buf;
 
 };
