@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.17 2006/05/18 20:42:52 christos Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.18 2006/11/03 20:24:41 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.17 2006/05/18 20:42:52 christos Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.18 2006/11/03 20:24:41 christos Exp $");
 #endif
 #endif
 
@@ -471,10 +471,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 					    outlen, 0, (struct sockaddr*)addr,
 					    (size_t)fdlist[i].asize) !=
 					    outlen) {
-#ifdef RPC_DEBUG
-						perror("sendto");
-#endif
-						warnx("clnt_bcast: cannot send"
+						warn("clnt_bcast: cannot send"
 						      " broadcast packet");
 						stat = RPC_CANTSEND;
 						continue;
