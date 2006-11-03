@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.237 2006/11/03 12:18:41 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.238 2006/11/03 19:46:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.237 2006/11/03 12:18:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.238 2006/11/03 19:46:03 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -1516,6 +1516,8 @@ issignal(struct lwp *l)
 	if (l->l_flag & L_SA && l->l_savp->savp_lwp != l)
 		return 0;
 
+	KERNEL_PROC_LOCK(l);
+
 	if (p->p_stat == SSTOP) {
 		/*
 		 * The process is stopped/stopping. Stop ourselves now that
@@ -1536,6 +1538,7 @@ issignal(struct lwp *l)
 		signum = firstsig(&ss);
 		if (signum == 0) {		 	/* no signal to send */
 			p->p_sigctx.ps_sigcheck = 0;
+			KERNEL_PROC_UNLOCK(l);
 			return (0);
 		}
 							/* take the signal! */
@@ -1677,6 +1680,7 @@ issignal(struct lwp *l)
 						/* leave the signal for later */
 	sigaddset(&p->p_sigctx.ps_siglist, signum);
 	CHECKSIGS(p);
+	KERNEL_PROC_UNLOCK(l);
 	return (signum);
 }
 
