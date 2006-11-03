@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.123 2006/10/28 23:20:57 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.124 2006/11/03 20:16:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -591,6 +591,7 @@
 #define sysctlnametomib		_sysctlnametomib
 #define syslog			_syslog
 #define syslog_r		_syslog_r
+#define syslog_ss		_syslog_ss
 #define taddr2uaddr		_taddr2uaddr
 #define tcdrain			_tcdrain
 #define tcflow			_tcflow
@@ -630,6 +631,7 @@
 #define vsnprintf_ss		_vsnprintf_ss
 #define vsyslog			_vsyslog
 #define vsyslog_r		_vsyslog_r
+#define vsyslog_ss		_vsyslog_ss
 #define wait			_wait
 #define wait3			_wait3
 #define waitpid			_waitpid
