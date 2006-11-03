@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_radius.c,v 1.6 2006/11/03 18:04:20 christos Exp $	*/
+/*	$NetBSD: pam_radius.c,v 1.7 2006/11/03 18:55:40 christos Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_radius/pam_radius.c,v 1.22 2004/06/25 12:32:45 kan Exp $");
 #else
-__RCSID("$NetBSD: pam_radius.c,v 1.6 2006/11/03 18:04:20 christos Exp $");
+__RCSID("$NetBSD: pam_radius.c,v 1.7 2006/11/03 18:55:40 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -80,7 +80,7 @@ static void
 logit(int level, const char *fmt, ...)
 {
 	va_list ap;
-	struct syslog_data data;
+	struct syslog_data data = SYSLOG_DATA_INIT;
 
 	openlog_r("pam_radius", LOG_PID, LOG_AUTHPRIV, &data);
 	va_start(ap, fmt);
