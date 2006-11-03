@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.28 2006/10/28 03:42:55 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.29 2006/11/03 14:41:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -41,7 +41,7 @@
 #endif
 
 #ifdef __NO_STRICT_ALIGNMENT
-#define	RTK_ETHER_ALIGN	0
+#define RTK_ETHER_ALIGN	0
 #else
 #define RTK_ETHER_ALIGN	2
 #endif
@@ -170,24 +170,24 @@ struct rtk_softc {
 #endif
 };
 
-#define	RTK_TX_DESC_CNT(sc)	\
+#define RTK_TX_DESC_CNT(sc)	\
 	((sc)->rtk_ldata.rtk_tx_desc_cnt)
-#define	RTK_TX_LIST_SZ(sc)	\
+#define RTK_TX_LIST_SZ(sc)	\
 	(RTK_TX_DESC_CNT(sc) * sizeof(struct rtk_desc))
-#define	RTK_NEXT_TX_DESC(sc, x)	\
+#define RTK_NEXT_TX_DESC(sc, x)	\
 	(((x) + 1) % RTK_TX_DESC_CNT(sc))
-#define	RTK_NEXT_RX_DESC(sc, x)	\
+#define RTK_NEXT_RX_DESC(sc, x)	\
 	(((x) + 1) % RTK_RX_DESC_CNT)
-#define	RTK_NEXT_TXQ(sc, x)	\
+#define RTK_NEXT_TXQ(sc, x)	\
 	(((x) + 1) % RTK_TX_QLEN)
 
-#define	RTK_TXDESCSYNC(sc, idx, ops)					\
+#define RTK_TXDESCSYNC(sc, idx, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat,					\
 	    (sc)->rtk_ldata.rtk_tx_list_map,				\
 	    sizeof(struct rtk_desc) * (idx),				\
 	    sizeof(struct rtk_desc),					\
 	    (ops))
-#define	RTK_RXDESCSYNC(sc, idx, ops)					\
+#define RTK_RXDESCSYNC(sc, idx, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat,					\
 	    (sc)->rtk_ldata.rtk_rx_list_map,				\
 	    sizeof(struct rtk_desc) * (idx),				\
