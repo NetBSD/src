@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.2 2006/11/03 03:04:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.2 2006/11/03 03:04:53 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -84,49 +84,18 @@ zs_print(void *aux, const char *name)
 	return UNCONF;
 }
 
-/*
- * Our ZS chips all share a common, autovectored interrupt,
- * so we have to look at all of them on each interrupt.
- */
 int
 zshard(void *arg)
 {
 	struct zsc_softc *zsc;
-	int unit, rval, softreq;
+	int rval;
 
-	rval = 0;
-	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
-		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		rval |= zsc_intr_hard(zsc);
-		softreq =  zsc->zsc_cs[0]->cs_softreq;
-		softreq |= zsc->zsc_cs[1]->cs_softreq;
-		if (softreq)
-			softintr_schedule(zsc->zsc_si);
-	}
+	zsc = arg;
+	rval = zsc_intr_hard(zsc);
+	if (zsc->zsc_cs[0]->cs_softreq || zsc->zsc_cs[1]->cs_softreq)
+		softintr_schedule(zsc->zsc_si);
 
 	return rval;
-}
-
-/*
- * Similar scheme as for zshard (look at all of them)
- */
-void
-zssoft(void *arg)
-{
-	struct zsc_softc *zsc;
-	int s, unit;
-
-	/* Make sure we call the tty layer at spltty. */
-	s = spltty();
-	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
-		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		(void)zsc_intr_soft(zsc);
-	}
-	splx(s);
 }
 
 /*
