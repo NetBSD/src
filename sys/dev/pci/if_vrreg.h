@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vrreg.h,v 1.14 2006/11/02 10:44:30 tsutsui Exp $	*/
+/*	$NetBSD: if_vrreg.h,v 1.15 2006/11/03 08:41:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -155,6 +155,8 @@
 #define	VR_ISR_STATSOFLOW	0x0080	/* stats counter oflow */
 #define	VR_ISR_RX_EARLY		0x0100	/* rx early */
 #define	VR_ISR_LINKSTAT		0x0200	/* MII status change */
+#define	VR_ISR_TX_ETI		0x0200	/* TX early (3043/3071) */
+#define	VR_ISR_TX_UDFI		0x0200	/* TX FIFO underflow (3065) */
 #define	VR_ISR_RX_OFLOW		0x0400	/* rx FIFO overflow */
 #define	VR_ISR_RX_DROPPED	0x0800
 #define	VR_ISR_RX_NOBUF2	0x1000
@@ -371,6 +373,7 @@ struct vr_desc {
 #define	VR_TXSTAT_ABRT		0x00000100
 #define	VR_TXSTAT_LATECOLL	0x00000200
 #define	VR_TXSTAT_CARRLOST	0x00000400
+#define	VR_TXSTAT_UDF		0x00000800
 #define	VR_TXSTAT_BUSERR	0x00002000
 #define	VR_TXSTAT_JABTIMEO	0x00004000
 #define	VR_TXSTAT_ERRSUM	0x00008000
