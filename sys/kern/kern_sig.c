@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.236 2006/11/03 11:41:07 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.237 2006/11/03 12:18:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.236 2006/11/03 11:41:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.237 2006/11/03 12:18:41 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -127,6 +127,28 @@ static POOL_INIT(siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
     &pool_allocator_nointr);
 static POOL_INIT(ksiginfo_pool, sizeof(ksiginfo_t), 0, 0, 0, "ksiginfo", NULL);
 
+static ksiginfo_t *
+ksiginfo_alloc(int prflags)
+{
+	int s;
+	ksiginfo_t *ksi;
+
+	s = splsoftclock();
+	ksi = pool_get(&ksiginfo_pool, prflags);
+	splx(s);
+	return ksi;
+}
+
+static void
+ksiginfo_free(ksiginfo_t *ksi)
+{
+	int s;
+
+	s = splsoftclock();
+	pool_put(&ksiginfo_pool, ksi);
+	splx(s);
+}
+
 /*
  * Remove and return the first ksiginfo element that matches our requested
  * signal, or return NULL if one not found.
@@ -192,7 +214,7 @@ ksiginfo_queue(struct proc *p, const ksiginfo_t *ksi, ksiginfo_t **newkp)
 		*newkp = NULL;
 	} else {
 		SCHED_ASSERT_UNLOCKED();
-		kp = pool_get(&ksiginfo_pool, PR_NOWAIT);
+		kp = ksiginfo_alloc(PR_NOWAIT);
 		if (kp == NULL) {
 #ifdef DIAGNOSTIC
 			printf("Out of memory allocating siginfo for pid %d\n",
@@ -221,7 +243,7 @@ ksiginfo_exithook(struct proc *p, void *v)
 	while (!CIRCLEQ_EMPTY(&p->p_sigctx.ps_siginfo)) {
 		ksiginfo_t *ksi = CIRCLEQ_FIRST(&p->p_sigctx.ps_siginfo);
 		CIRCLEQ_REMOVE(&p->p_sigctx.ps_siginfo, ksi, ksi_list);
-		pool_put(&ksiginfo_pool, ksi);
+		ksiginfo_free(ksi);
 	}
 	simple_unlock(&p->p_sigctx.ps_silock);
 	splx(s);
@@ -1151,10 +1173,10 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi)
 	 * scheduler lock held, but only if this ksiginfo_t isn't empty.
 	 */
 	if (!KSI_EMPTY_P(ksi)) {
-		newkp = pool_get(&ksiginfo_pool, PR_NOWAIT);
+		newkp = ksiginfo_alloc(PR_NOWAIT);
 		if (newkp == NULL) {
 #ifdef DIAGNOSTIC
-			printf("kpsignal2: couldn't allocated from ksiginfo_pool\n");
+			printf("kpsignal2: couldn't allocated ksiginfo\n");
 #endif
 			return;
 		}
@@ -1390,7 +1412,7 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi)
 
  done_unlocked:
 	if (newkp)
-		pool_put(&ksiginfo_pool, newkp);
+		ksiginfo_free(newkp);
 }
 
 siginfo_t *
@@ -1922,7 +1944,7 @@ postsig(int signum)
 			kpsendsig(l, &ksi1, returnmask);
 		} else {
 			kpsendsig(l, ksi, returnmask);
-			pool_put(&ksiginfo_pool, ksi);
+			ksiginfo_free(ksi);
 		}
 		p->p_sigctx.ps_lwp = 0;
 		p->p_sigctx.ps_code = 0;
@@ -2422,7 +2444,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 		ksi = ksiginfo_dequeue(p, signum);
 		if (!ksi) {
 			/* No queued siginfo, manufacture one */
-			ksi = pool_get(&ksiginfo_pool, PR_WAITOK);
+			ksi = ksiginfo_alloc(PR_WAITOK);
 			KSI_INIT(ksi);
 			ksi->ksi_info._signo = signum;
 			ksi->ksi_info._code = SI_USER;
@@ -2460,7 +2482,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	 * on current process's stack, the current process might
 	 * be swapped out at the time the signal would get delivered.
 	 */
-	ksi = pool_get(&ksiginfo_pool, PR_WAITOK);
+	ksi = ksiginfo_alloc(PR_WAITOK);
 	p->p_sigctx.ps_sigwaited = ksi;
 	p->p_sigctx.ps_sigwait = waitset;
 
@@ -2536,7 +2558,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 
  fail:
 	FREE(waitset, M_TEMP);
-	pool_put(&ksiginfo_pool, ksi);
+	ksiginfo_free(ksi);
 	p->p_sigctx.ps_sigwait = NULL;
 
 	return (error);
