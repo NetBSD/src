@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.2 2006/11/03 03:04:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,7 +104,6 @@ void  zs_write_data(struct zs_chanstate *cs, uint8_t val);
 
 int zs_print(void *, const char *);
 int zshard(void *);
-void zssoft(void*);
 int zs_get_speed(struct zs_chanstate *);
 
 int  zs_getc(void *);
