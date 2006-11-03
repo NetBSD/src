@@ -1,9 +1,9 @@
-/*	$NetBSD: zdump.c,v 1.14 2003/10/29 20:43:27 kleink Exp $	*/
+/*	$NetBSD: zdump.c,v 1.15 2006/11/03 20:23:19 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
-__RCSID("$NetBSD: zdump.c,v 1.14 2003/10/29 20:43:27 kleink Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.15 2006/11/03 20:23:19 christos Exp $");
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -15,11 +15,12 @@ static char	elsieid[] = "@(#)zdump.c	7.31";
 ** You can use this code to help in verifying other implementations.
 */
 
-#include "stdio.h"	/* for stdout, stderr, perror */
+#include "stdio.h"	/* for stdout, stderr */
 #include "string.h"	/* for strcpy */
 #include "sys/types.h"	/* for time_t */
 #include "time.h"	/* for struct tm */
 #include "stdlib.h"	/* for exit, malloc, atoi */
+#include <err.h>
 
 #ifndef MAX_STRING_LENGTH
 #define MAX_STRING_LENGTH	1024
@@ -206,8 +207,8 @@ _("%s: usage is %s [ --version ] [ -v ] [ -c cutoff ] zonename ...\n"),
 			sizeof *fakeenv));
 		if (fakeenv == NULL ||
 			(fakeenv[0] = (char *) malloc(longest + 4)) == NULL) {
-					(void) perror(progname);
-					(void) exit(EXIT_FAILURE);
+			err(EXIT_FAILURE, "Can't allocated %zu bytes",
+			    longest + 4);
 		}
 		to = 0;
 		(void)strcpy(fakeenv[to++], "TZ=");	/* XXX strcpy is safe */
@@ -268,9 +269,7 @@ _("%s: usage is %s [ --version ] [ -v ] [ -c cutoff ] zonename ...\n"),
 		show(argv[i], t, TRUE);
 	}
 	if (fflush(stdout) || ferror(stdout)) {
-		(void) fprintf(stderr, "%s: ", argv[0]);
-		(void) perror(_("Error writing standard output"));
-		(void) exit(EXIT_FAILURE);
+		err(EXIT_FAILURE, "Error writing standard output");
 	}
 	exit(EXIT_SUCCESS);
 
