@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_lastlog.c,v 1.10 2006/03/18 10:53:17 jnemeth Exp $	*/
+/*	$NetBSD: pam_lastlog.c,v 1.11 2006/11/03 18:04:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -47,7 +47,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_lastlog/pam_lastlog.c,v 1.20 2004/01/26 19:28:37 des Exp $");
 #else
-__RCSID("$NetBSD: pam_lastlog.c,v 1.10 2006/03/18 10:53:17 jnemeth Exp $");
+__RCSID("$NetBSD: pam_lastlog.c,v 1.11 2006/11/03 18:04:20 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: pam_lastlog.c,v 1.10 2006/03/18 10:53:17 jnemeth Exp $");
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdarg.h>
 #ifdef LOGIN_CAP
 #include <login_cap.h>
 #endif
@@ -92,6 +93,20 @@ static void dolastlogx(pam_handle_t *, int, const struct passwd *, const char *,
 static void domsg(pam_handle_t *, time_t, const char *, size_t, const char *,
     size_t);
 #endif
+
+static void
+logit(int level, const char *fmt, ...)
+{
+	va_list ap;
+	struct syslog_data data;
+
+	openlog_r("pam_lastlog", LOG_PID, LOG_AUTHPRIV, &data);
+	va_start(ap, fmt);
+	vsyslog_r(level, &data, fmt, ap);
+	va_end(ap);
+	closelog_r(&data);
+}
+
 
 PAM_EXTERN int
 pam_sm_open_session(pam_handle_t *pamh, int flags,
@@ -212,7 +227,7 @@ pam_sm_close_session(pam_handle_t *pamh __unused, int flags __unused,
 		if (logoutx(tty, 0, DEAD_PROCESS))
 			logwtmpx(tty, "", "", 0, DEAD_PROCESS);
 		else
-			syslog(LOG_NOTICE, "%s(): no utmpx record for %s",
+			logit(LOG_NOTICE, "%s(): no utmpx record for %s",
 			    __func__, tty);
 #endif
 
@@ -220,8 +235,8 @@ pam_sm_close_session(pam_handle_t *pamh __unused, int flags __unused,
 		if (logout(tty))
 			logwtmp(tty, "", "");
 		else
-			syslog(LOG_NOTICE, "%s(): no utmp record for %s",
-		    __func__, tty);
+			logit(LOG_NOTICE, "%s(): no utmp record for %s",
+			    __func__, tty);
 #endif
 	}
         return PAM_SUCCESS;
@@ -276,10 +291,10 @@ doutmpx(const char *username, const char *hostname, const char *tty,
 		(void)strncpy(utmpx.ut_id, tty, sizeof(utmpx.ut_id));
 	}
 	if (pututxline(&utmpx) == NULL)
-		syslog(LOG_NOTICE, "Cannot update utmpx %m");
+		logit(LOG_NOTICE, "Cannot update utmpx %m");
 	endutxent();
 	if (updwtmpx(_PATH_WTMPX, &utmpx) != 0)
-		syslog(LOG_NOTICE, "Cannot update wtmpx %m");
+		logit(LOG_NOTICE, "Cannot update wtmpx %m");
 }
 
 static void
@@ -308,7 +323,7 @@ dolastlogx(pam_handle_t *pamh, int quiet, const struct passwd *pwd,
 		(void)memset(&ll.ll_ss, 0, sizeof(ll.ll_ss));
 
 	if (updlastlogx(_PATH_LASTLOGX, pwd->pw_uid, &ll) != 0)
-		syslog(LOG_NOTICE, "Cannot update lastlogx %m");
+		logit(LOG_NOTICE, "Cannot update lastlogx %m");
 	PAM_LOG("Login recorded in %s", _PATH_LASTLOGX);
 }
 #endif
@@ -337,7 +352,7 @@ dolastlog(pam_handle_t *pamh, int quiet, const struct passwd *pwd,
 	int fd;
 
 	if ((fd = open(_PATH_LASTLOG, O_RDWR, 0)) == -1) {
-		syslog(LOG_NOTICE, "Cannot open `%s' %m", _PATH_LASTLOG);
+		logit(LOG_NOTICE, "Cannot open `%s' %m", _PATH_LASTLOG);
 		return;
 	}
 	(void)lseek(fd, (off_t)(pwd->pw_uid * sizeof(ll)), SEEK_SET);
