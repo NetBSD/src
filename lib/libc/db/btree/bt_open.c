@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.19 2006/03/26 02:03:40 rtr Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.20 2006/11/03 20:18:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_open.c,v 1.19 2006/03/26 02:03:40 rtr Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.20 2006/11/03 20:18:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -219,7 +219,7 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 		F_SET(t, B_INMEM);
 	}
 
-	if (fcntl(t->bt_fd, F_SETFD, 1) == -1)
+	if (fcntl(t->bt_fd, F_SETFD, FD_CLOEXEC) == -1)
 		goto err;
 
 	if (fstat(t->bt_fd, &sb))
@@ -413,7 +413,7 @@ tmp()
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	if ((fd = mkstemp(path)) != -1) {
 		(void)unlink(path);
-		(void)fcntl(fd, F_SETFD, 1);
+		(void)fcntl(fd, F_SETFD, FD_CLOEXEC);
 	}
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	return(fd);

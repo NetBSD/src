@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.42 2004/10/29 06:32:09 lukem Exp $	 */
+/*	$NetBSD: yplib.c,v 1.43 2006/11/03 20:18:49 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.42 2004/10/29 06:32:09 lukem Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.43 2006/11/03 20:18:49 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -251,7 +251,7 @@ gotit:
 		ysd->dom_vers = -1;
 		goto again;
 	}
-	if (fcntl(ysd->dom_socket, F_SETFD, 1) == -1)
+	if (fcntl(ysd->dom_socket, F_SETFD, FD_CLOEXEC) == -1)
 		perror("fcntl: F_SETFD");
 
 	if (new) {
