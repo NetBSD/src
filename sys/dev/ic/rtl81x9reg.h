@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.19 2006/11/03 14:41:40 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.20 2006/11/03 17:01:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -253,6 +253,7 @@
 #define RTK_RXBUF_16		0x00000800
 #define RTK_RXBUF_32		0x00001000
 #define RTK_RXBUF_64		0x00001800
+#define RTK_RXBUF_LEN(x)	(1 << (((x) >> 11) + 13))
 
 #define RTK_RXFIFO_16BYTES	0x00000000
 #define RTK_RXFIFO_32BYTES	0x00002000
@@ -411,28 +412,7 @@
 #define RTK_GMEDIASTAT_TXFLOW	0x40	/* TX flow control on */
 #define RTK_GMEDIASTAT_TBI	0x80	/* TBI enabled */
 
-/*
- * The RealTek doesn't use a fragment-based descriptor mechanism.
- * Instead, there are only four register sets, each or which represents
- * one 'descriptor.' Basically, each TX descriptor is just a contiguous
- * packet buffer (32-bit aligned!) and we place the buffer addresses in
- * the registers so the chip knows where they are.
- *
- * We can sort of kludge together the same kind of buffer management
- * used in previous drivers, but we have to do buffer copies almost all
- * the time, so it doesn't really buy us much.
- *
- * For reception, there's just one large buffer where the chip stores
- * all received packets.
- */
 
-#ifdef dreamcast
-#define RTK_RX_BUF_SZ		RTK_RXBUF_16
-#else
-#define RTK_RX_BUF_SZ		RTK_RXBUF_64
-#endif
-#define RTK_RXBUFLEN		(1 << ((RTK_RX_BUF_SZ >> 11) + 13))
-#define RTK_TX_LIST_CNT		4
 #define RTK_TX_EARLYTHRESH	((256 / 32) << 16)
 #define RTK_RX_FIFOTHRESH	RTK_RXFIFO_256BYTES
 #define RTK_RX_MAXDMA		RTK_RXDMA_256BYTES
@@ -441,13 +421,6 @@
 #define RTK_RXCFG_CONFIG 	(RTK_RX_FIFOTHRESH|RTK_RX_MAXDMA|RTK_RX_BUF_SZ)
 #define RTK_TXCFG_CONFIG	(RTK_TXCFG_IFG|RTK_TX_MAXDMA)
 
-
-/*
- * The 8139C+ and 8160 gigE chips support descriptor-based TX
- * and RX. In fact, they even support TCP large send. Descriptors
- * must be allocated in contiguous blocks that are aligned on a
- * 256-byte boundary. The rings can hold a maximum of 64 descriptors.
- */
 
 /*
  * RX/TX descriptor definition. When large send mode is enabled, the
@@ -533,6 +506,9 @@ struct rtk_desc {
 #define RTK_UDPPKT(x)		(((x) & RTK_RDESC_STAT_PROTOID) == \
 				 RTK_PROTOID_UDPIP)
 
+#define RTK_ADDR_LO(y)		((uint64_t)(y) & 0xFFFFFFFF)
+#define RTK_ADDR_HI(y)		((uint64_t)(y) >> 32)
+
 /*
  * Statistics counter structure (8139C+ and 8169 only)
  */
@@ -555,16 +531,7 @@ struct rtk_stats {
 	uint16_t		rtk_rx_underruns;
 };
 
-#define RTK_RX_DESC_CNT		64
-#define RTK_TX_DESC_CNT_8139	64
-#define RTK_TX_DESC_CNT_8169	1024
-#define RTK_RX_LIST_SZ		(RTK_RX_DESC_CNT * sizeof(struct rtk_desc))
-#define RTK_RING_ALIGN		256
 #define RTK_IFQ_MAXLEN		512
-#define RTK_PKTSZ(x)		((x)/* >> 3*/)
-
-#define RTK_ADDR_LO(y)		((uint64_t)(y) & 0xFFFFFFFF)
-#define RTK_ADDR_HI(y)		((uint64_t)(y) >> 32)
 
 #define RTK_JUMBO_FRAMELEN	9018
 #define RTK_JUMBO_MTU		(RTK_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
