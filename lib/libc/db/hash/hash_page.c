@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.18 2006/03/26 02:00:37 rtr Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.19 2006/11/03 20:18:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_page.c	8.7 (Berkeley) 8/16/94";
 #else
-__RCSID("$NetBSD: hash_page.c,v 1.18 2006/03/26 02:00:37 rtr Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.19 2006/11/03 20:18:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -895,7 +895,7 @@ open_temp(hashp)
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	if ((hashp->fp = mkstemp(namestr)) != -1) {
 		(void)unlink(namestr);
-		(void)fcntl(hashp->fp, F_SETFD, 1);
+		(void)fcntl(hashp->fp, F_SETFD, FD_CLOEXEC);
 	}
 	(void)sigprocmask(SIG_SETMASK, &oset, (sigset_t *)NULL);
 	return (hashp->fp != -1 ? 0 : -1);
