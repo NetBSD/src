@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.13 2006/07/12 15:03:08 yamt Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.14 2006/11/03 03:03:32 jld Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.13 2006/07/12 15:03:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.14 2006/11/03 03:03:32 jld Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -176,6 +176,8 @@ struct xennet_xenbus_softc {
 	rndsource_element_t     sc_rnd_source;
 #endif
 };
+#define SC_NLIVEREQ(sc) ((sc)->sc_rx_ring.req_prod_pvt - \
+			    (sc)->sc_rx_ring.sring->rsp_prod)
 
 /* too big to be on stack */
 static multicall_entry_t rx_mcl[NET_RX_RING_SIZE+1];
@@ -658,7 +660,7 @@ xennet_rx_mbuf_free(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 	sc->sc_free_rxreql++;
 
 	req->rxreq_gntref = GRANT_INVALID_REF;
-	if (sc->sc_free_rxreql >= NET_RX_RING_SIZE / 2 &&
+	if (sc->sc_free_rxreql >= SC_NLIVEREQ(sc) &&
 	    __predict_true(sc->sc_backend_status == BEST_CONNECTED)) {
 		xennet_alloc_rx_buffer(sc);
 	}
