@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_sbdio.c,v 1.2 2006/03/28 17:38:24 thorpej Exp $	*/
+/*	$NetBSD: zs_sbdio.c,v 1.3 2006/11/03 03:04:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.2 2006/03/28 17:38:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.3 2006/11/03 03:04:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,8 +189,9 @@ zs_sbdio_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	zsc->zsc_si = softintr_establish(IPL_SOFTSERIAL, zssoft, zsc);
-	intr_establish(sa->sa_irq, zshard, self);
+	zsc->zsc_si = softintr_establish(IPL_SOFTSERIAL,
+	    (void (*)(void *))zsc_intr_soft, zsc);
+	intr_establish(sa->sa_irq, zshard, zsc);
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.
