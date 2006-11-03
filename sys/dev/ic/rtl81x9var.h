@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.29 2006/11/03 14:41:41 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.30 2006/11/03 17:01:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -60,6 +60,15 @@ struct rtk_hwrev {
 	const char		*rtk_desc;
 };
 
+#define RTK_8129		1
+#define RTK_8139		2
+#define RTK_8139CPLUS		3
+#define RTK_8169		4
+
+#define RTK_ISCPLUS(x)	((x)->rtk_type == RTK_8139CPLUS || \
+			 (x)->rtk_type == RTK_8169)
+
+
 struct rtk_mii_frame {
 	uint8_t			mii_stdelim;
 	uint8_t			mii_opcode;
@@ -77,22 +86,44 @@ struct rtk_mii_frame {
 #define RTK_MII_WRITEOP		0x01
 #define RTK_MII_TURNAROUND	0x02
 
-#define RTK_8129		1
-#define RTK_8139		2
-#define RTK_8139CPLUS		3
-#define RTK_8169		4
-
-#define RTK_ISCPLUS(x)	((x)->rtk_type == RTK_8139CPLUS || \
-			 (x)->rtk_type == RTK_8169)
-
-#define RTK_TX_QLEN		64
 
 /*
- * The 8139C+ and 8160 gigE chips support descriptor-based TX
+ * The RealTek doesn't use a fragment-based descriptor mechanism.
+ * Instead, there are only four register sets, each or which represents
+ * one 'descriptor.' Basically, each TX descriptor is just a contiguous
+ * packet buffer (32-bit aligned!) and we place the buffer addresses in
+ * the registers so the chip knows where they are. 
+ * 
+ * We can sort of kludge together the same kind of buffer management
+ * used in previous drivers, but we have to do buffer copies almost all
+ * the time, so it doesn't really buy us much.
+ * 
+ * For reception, there's just one large buffer where the chip stores
+ * all received packets.
+ */
+
+#ifdef dreamcast
+#define RTK_RX_BUF_SZ		RTK_RXBUF_16
+#else
+#define RTK_RX_BUF_SZ		RTK_RXBUF_64
+#endif
+#define RTK_RXBUFLEN		RTK_RXBUF_LEN(RTK_RX_BUF_SZ)
+#define RTK_TX_LIST_CNT		4
+
+/*
+ * The 8139C+ and 8169 gigE chips support descriptor-based TX
  * and RX. In fact, they even support TCP large send. Descriptors
  * must be allocated in contiguous blocks that are aligned on a
- * 256-byte boundary. The rings can hold a maximum of 64 descriptors.
+ * 256-byte boundary. The RX rings can hold a maximum of 64 descriptors.
+ * The TX rings can hold upto 64 descriptors on 8139C+, and
+ * 1024 descriptors on 8169 gigE chips.
  */
+#define RTK_RING_ALIGN		256
+
+#define RTK_RX_DESC_CNT		64
+#define RTK_TX_DESC_CNT_8139	64
+#define RTK_TX_DESC_CNT_8169	1024
+#define RTK_TX_QLEN		64
 
 struct rtk_rxsoft {
 	struct mbuf		*rxs_mbuf;
@@ -170,16 +201,14 @@ struct rtk_softc {
 #endif
 };
 
-#define RTK_TX_DESC_CNT(sc)	\
-	((sc)->rtk_ldata.rtk_tx_desc_cnt)
-#define RTK_TX_LIST_SZ(sc)	\
-	(RTK_TX_DESC_CNT(sc) * sizeof(struct rtk_desc))
-#define RTK_NEXT_TX_DESC(sc, x)	\
-	(((x) + 1) % RTK_TX_DESC_CNT(sc))
-#define RTK_NEXT_RX_DESC(sc, x)	\
-	(((x) + 1) % RTK_RX_DESC_CNT)
-#define RTK_NEXT_TXQ(sc, x)	\
-	(((x) + 1) % RTK_TX_QLEN)
+#define RTK_TX_DESC_CNT(sc)	((sc)->rtk_ldata.rtk_tx_desc_cnt)
+#define RTK_TX_LIST_SZ(sc)	(RTK_TX_DESC_CNT(sc) * sizeof(struct rtk_desc))
+#define RTK_NEXT_TX_DESC(sc, x)	(((x) + 1) % RTK_TX_DESC_CNT(sc))
+
+#define RTK_RX_LIST_SZ		(RTK_RX_DESC_CNT * sizeof(struct rtk_desc))
+#define RTK_NEXT_RX_DESC(sc, x)	(((x) + 1) % RTK_RX_DESC_CNT)
+
+#define RTK_NEXT_TXQ(sc, x)	(((x) + 1) % RTK_TX_QLEN)
 
 #define RTK_TXDESCSYNC(sc, idx, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat,					\
