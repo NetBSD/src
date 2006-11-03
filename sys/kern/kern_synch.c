@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.172 2006/11/02 16:26:25 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.173 2006/11/03 20:46:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.172 2006/11/02 16:26:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.173 2006/11/03 20:46:00 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -111,6 +111,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.172 2006/11/02 16:26:25 yamt Exp $"
 
 int	lbolt;			/* once a second sleep address */
 int	rrticks;		/* number of hardclock ticks per roundrobin() */
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#define	XXX_SCHED_LOCK		simple_lock(&sched_lock)
+#define	XXX_SCHED_UNLOCK	simple_unlock(&sched_lock)
+#else
+#define	XXX_SCHED_LOCK		/* nothing */
+#define	XXX_SCHED_UNLOCK	/* nothing */
+#endif
 
 /*
  * Sleep queues.
@@ -535,18 +543,18 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 	 * stopped, p->p_wchan will be 0 upon return from CURSIG.
 	 */
 	if (catch) {
-		SCHED_UNLOCK(s);
+		XXX_SCHED_UNLOCK;
 		l->l_flag |= L_SINTR;
 		if (((sig = CURSIG(l)) != 0) ||
 		    ((p->p_flag & P_WEXIT) && p->p_nlwps > 1)) {
-			SCHED_LOCK(s);
+			XXX_SCHED_LOCK;
 			if (l->l_wchan != NULL)
 				unsleep(l);
 			l->l_stat = LSONPROC;
 			SCHED_UNLOCK(s);
 			goto resume;
 		}
-		SCHED_LOCK(s);
+		XXX_SCHED_LOCK;
 		if (l->l_wchan == NULL) {
 			SCHED_UNLOCK(s);
 			catch = 0;
@@ -1018,6 +1026,13 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	microtime(&l->l_cpu->ci_schedstate.spc_runtime);
 
 	/*
+	 * Reacquire the kernel_lock now.  We do this after we've
+	 * released the scheduler lock to avoid deadlock, and before
+	 * we reacquire the interlock.
+	 */
+	KERNEL_LOCK_ACQUIRE_COUNT(hold_count);
+
+	/*
 	 * Check if the process exceeds its CPU resource allocation.
 	 * If over max, kill it.  In any case, if it has run for more
 	 * than 10 minutes, reduce priority to give others a chance.
@@ -1039,13 +1054,6 @@ mi_switch(struct lwp *l, struct lwp *newl)
 		resetpriority(l);
 		SCHED_UNLOCK(s);
 	}
-
-	/*
-	 * Reacquire the kernel_lock now.  We do this after we've
-	 * released the scheduler lock to avoid deadlock, and before
-	 * we reacquire the interlock.
-	 */
-	KERNEL_LOCK_ACQUIRE_COUNT(hold_count);
 
 	return retval;
 }
