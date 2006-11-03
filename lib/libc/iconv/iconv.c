@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.5 2005/04/25 13:42:04 tshiozak Exp $	*/
+/*	$NetBSD: iconv.c,v 1.6 2006/11/03 20:16:28 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.5 2005/04/25 13:42:04 tshiozak Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.6 2006/11/03 20:16:28 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -38,6 +38,12 @@ __RCSID("$NetBSD: iconv.c,v 1.5 2005/04/25 13:42:04 tshiozak Exp $");
 #include <sys/queue.h>
 
 #include <iconv.h>
+
+#ifdef __weak_alias
+__weak_alias(iconv, _iconv)
+__weak_alias(iconv_open, _iconv_open)
+__weak_alias(iconv_close, _iconv_close)
+#endif
 
 #ifdef CITRUS_ICONV
 #include <sys/types.h>
@@ -49,14 +55,9 @@ __RCSID("$NetBSD: iconv.c,v 1.5 2005/04/25 13:42:04 tshiozak Exp $");
 
 #define ISBADF(_h_)	(!(_h_) || (_h_) == (iconv_t)-1)
 
-#ifdef __weak_alias
-__weak_alias(iconv, _iconv)
-__weak_alias(iconv_open, _iconv_open)
-__weak_alias(iconv_close, _iconv_close)
-#endif
 
 iconv_t
-_iconv_open(const char *out, const char *in)
+iconv_open(const char *out, const char *in)
 {
 	int ret;
 	struct _citrus_iconv *handle;
@@ -71,7 +72,7 @@ _iconv_open(const char *out, const char *in)
 }
 
 int
-_iconv_close(iconv_t handle)
+iconv_close(iconv_t handle)
 {
 	if (ISBADF(handle)) {
 		errno = EBADF;
@@ -84,7 +85,7 @@ _iconv_close(iconv_t handle)
 }
 
 size_t
-_iconv(iconv_t handle, const char **in, size_t *szin, char **out, size_t *szout)
+iconv(iconv_t handle, const char **in, size_t *szin, char **out, size_t *szout)
 {
 	int err;
 	size_t ret;
@@ -153,21 +154,21 @@ __iconv_free_list(char **list, size_t sz)
 #else
 iconv_t
 /*ARGSUSED*/
-_iconv_open(const char *in, const char *out)
+iconv_open(const char *in, const char *out)
 {
 	errno = EINVAL;
 	return ((iconv_t)-1);
 }
 int
 /*ARGSUSED*/
-_iconv_close(iconv_t handle)
+iconv_close(iconv_t handle)
 {
 	errno = EBADF;
 	return (-1);
 }
 size_t
 /*ARGSUSED*/
-_iconv(iconv_t handle, const char **in, size_t *szin, char **out, size_t *szout)
+iconv(iconv_t handle, const char **in, size_t *szin, char **out, size_t *szout)
 {
 	errno = EBADF;
 	return ((size_t)-1);
