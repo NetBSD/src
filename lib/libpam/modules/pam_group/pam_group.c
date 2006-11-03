@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_group.c,v 1.9 2005/04/19 13:04:19 christos Exp $	*/
+/*	$NetBSD: pam_group.c,v 1.10 2006/11/03 18:03:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_group/pam_group.c,v 1.4 2003/12/11 13:55:15 des Exp $");
 #else
-__RCSID("$NetBSD: pam_group.c,v 1.9 2005/04/19 13:04:19 christos Exp $");
+__RCSID("$NetBSD: pam_group.c,v 1.10 2006/11/03 18:03:23 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: pam_group.c,v 1.9 2005/04/19 13:04:19 christos Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <login_cap.h>
 
