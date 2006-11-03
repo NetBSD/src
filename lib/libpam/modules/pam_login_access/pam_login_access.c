@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_login_access.c,v 1.2 2004/12/12 08:18:46 christos Exp $	*/
+/*	$NetBSD: pam_login_access.c,v 1.3 2006/11/03 18:03:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Mark R V Murray
@@ -40,14 +40,13 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_login_access/pam_login_access.c,v 1.11 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_login_access.c,v 1.2 2004/12/12 08:18:46 christos Exp $");
+__RCSID("$NetBSD: pam_login_access.c,v 1.3 2006/11/03 18:03:23 christos Exp $");
 #endif
 
 #define _BSD_SOURCE
 
 #include <sys/param.h>
 
-#include <syslog.h>
 #include <unistd.h>
 
 #define PAM_SM_ACCOUNT
