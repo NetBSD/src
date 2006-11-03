@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.843 2006/10/31 23:32:20 manu Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.844 2006/11/03 13:00:09 abs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.843 2006/10/31 23:04:49 manu Exp
+ *	NetBSD: pcidevs,v 1.844 2006/11/03 12:59:47 abs Exp
  */
 
 /*
@@ -1299,6 +1299,7 @@
 #define	PCI_PRODUCT_BROADCOM_BCM5750	0x1676		/* BCM5750 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5751	0x1677		/* BCM5751 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5752	0x1600		/* BCM5752 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5754	0x167a		/* BCM5754 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5750M	0x167c		/* BCM5750M 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5751M	0x167d		/* BCM5751M 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5780	0x166a		/* BCM5780 1000baseT Ethernet */
