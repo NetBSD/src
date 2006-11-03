@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.235 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.236 2006/11/03 11:41:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.235 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.236 2006/11/03 11:41:07 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -123,9 +123,9 @@ static struct pool_allocator sigactspool_allocator = {
 	.pa_free = sigacts_poolpage_free,
 };
 
-POOL_INIT(siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
+static POOL_INIT(siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
     &pool_allocator_nointr);
-POOL_INIT(ksiginfo_pool, sizeof(ksiginfo_t), 0, 0, 0, "ksiginfo", NULL);
+static POOL_INIT(ksiginfo_pool, sizeof(ksiginfo_t), 0, 0, 0, "ksiginfo", NULL);
 
 /*
  * Remove and return the first ksiginfo element that matches our requested
