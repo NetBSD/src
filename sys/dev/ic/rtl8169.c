@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.50 2006/10/28 03:42:55 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.51 2006/11/03 17:16:58 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -300,6 +300,10 @@ re_miibus_readreg(struct device *dev, int phy, int reg)
 		return 0;
 	}
 	rval = CSR_READ_2(sc, re8139_reg);
+	if (sc->rtk_type == RTK_8139CPLUS && re8139_reg == RTK_BMCR) {
+		/* 8139C+ has different bit layout. */
+		rval &= ~(BMCR_LOOP | BMCR_ISO);
+	}
 	splx(s);
 	return rval;
 }
@@ -327,6 +331,10 @@ re_miibus_writereg(struct device *dev, int phy, int reg, int data)
 	switch (reg) {
 	case MII_BMCR:
 		re8139_reg = RTK_BMCR;
+		if (sc->rtk_type == RTK_8139CPLUS) {
+			/* 8139C+ has different bit layout. */
+			data &= ~(BMCR_LOOP | BMCR_ISO);
+		}
 		break;
 	case MII_BMSR:
 		re8139_reg = RTK_BMSR;
