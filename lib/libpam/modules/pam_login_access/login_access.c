@@ -1,4 +1,4 @@
-/*	$NetBSD: login_access.c,v 1.3 2005/04/19 13:04:38 christos Exp $	*/
+/*	$NetBSD: login_access.c,v 1.4 2006/11/03 18:03:23 christos Exp $	*/
 
 /*
  * This module implements a simple but effective form of login access
@@ -19,7 +19,7 @@ static char sccsid[] = "%Z% %M% %I% %E% %U%";
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_login_access/login_access.c,v 1.12 2004/03/05 08:10:18 markm Exp $");
 #else
-__RCSID("$NetBSD: login_access.c,v 1.3 2005/04/19 13:04:38 christos Exp $");
+__RCSID("$NetBSD: login_access.c,v 1.4 2006/11/03 18:03:23 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -31,6 +31,7 @@ __RCSID("$NetBSD: login_access.c,v 1.3 2005/04/19 13:04:38 christos Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #include "pam_login_access.h"
 
@@ -54,6 +55,19 @@ static int	string_match(const char *, const char *);
 static int	user_match(const char *, const char *);
 
 /* login_access - match username/group and host/tty with access control file */
+
+static void
+logit(int level, const char *fmt, ...)
+{
+	va_list ap;
+	struct syslog_data data;
+
+	openlog_r("pam_login_access", LOG_PID, LOG_AUTHPRIV, &data);
+	va_start(ap, fmt);
+	vsyslog_r(level, &data, fmt, ap);
+	va_end(ap);
+	closelog_r(&data);
+}
 
 int
 login_access(const char *user, const char *from)
@@ -79,7 +93,7 @@ login_access(const char *user, const char *from)
 	while (!match && fgets(line, sizeof(line), fp)) {
 	    lineno++;
 	    if (line[end = strlen(line) - 1] != '\n') {
-		syslog(LOG_ERR, "%s: line %d: missing newline or line too long",
+		logit(LOG_ERR, "%s: line %d: missing newline or line too long",
 		       _PATH_LOGACCESS, lineno);
 		continue;
 	    }
@@ -94,12 +108,12 @@ login_access(const char *user, const char *from)
 		|| !(users = strtok((char *) 0, fs))
 		|| !(froms = strtok((char *) 0, fs))
 		|| strtok((char *) 0, fs)) {
-		syslog(LOG_ERR, "%s: line %d: bad field count", _PATH_LOGACCESS,
+		logit(LOG_ERR, "%s: line %d: bad field count", _PATH_LOGACCESS,
 		       lineno);
 		continue;
 	    }
 	    if (perm[0] != '+' && perm[0] != '-') {
-		syslog(LOG_ERR, "%s: line %d: bad first field", _PATH_LOGACCESS,
+		logit(LOG_ERR, "%s: line %d: bad first field", _PATH_LOGACCESS,
 		       lineno);
 		continue;
 	    }
@@ -108,7 +122,7 @@ login_access(const char *user, const char *from)
 	}
 	(void) fclose(fp);
     } else if (errno != ENOENT) {
-	syslog(LOG_ERR, "cannot open %s: %m", _PATH_LOGACCESS);
+	logit(LOG_ERR, "cannot open %s: %m", _PATH_LOGACCESS);
     }
     return (match == 0 || (line[0] == '+'));
 }
@@ -152,7 +166,7 @@ static int
 netgroup_match(const char *group __unused,
     const char *machine __unused, const char *user __unused)
 {
-    syslog(LOG_ERR, "NIS netgroup support not configured");
+    logit(LOG_ERR, "NIS netgroup support not configured");
     return 0;
 }
 
