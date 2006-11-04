@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.667 2006/11/01 13:19:43 apb Exp $
+# $NetBSD: mi,v 1.668 2006/11/04 03:46:19 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1582,7 +1582,10 @@
 ./usr/share/i18n/csmapper/CP/CP904%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP905%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP918%UCS.mps	base-sysutil-share	nls
-./usr/share/i18n/csmapper/CP/CP932EXT%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP932EXT%UCS.mps	base-obsolete		obsolete
+./usr/share/i18n/csmapper/CP/CP932UDA%UCS.mps		base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP932VDC@IBM%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP932VDC@NEC_IBM%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP936EXT%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP949EXT%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP950%UCS.mps	base-sysutil-share	nls
@@ -1649,7 +1652,10 @@
 ./usr/share/i18n/csmapper/CP/UCS%CP904.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP905.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP918.mps	base-sysutil-share	nls
-./usr/share/i18n/csmapper/CP/UCS%CP932EXT.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP932EXT.mps	base-obsolete		obsolete
+./usr/share/i18n/csmapper/CP/UCS%CP932UDA.mps		base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP932VDC@IBM.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP932VDC@NEC_IBM.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP936EXT.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP949EXT.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP950.mps	base-sysutil-share	nls
@@ -1896,6 +1902,10 @@
 ./usr/share/i18n/esdb/CP/CP424.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP437.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP500.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP50220.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP50221.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP50222.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP51932.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP737.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP775.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP850.esdb		base-sysutil-share	nls
@@ -1956,6 +1966,7 @@
 ./usr/share/i18n/esdb/ISO-2022			base-sysutil-share
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-CN-EXT.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-CN.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP-1.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP-2.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-KR.esdb	base-sysutil-share	nls

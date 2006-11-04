@@ -1,4 +1,8 @@
-# $NetBSD: charset.pivot.CP.src,v 1.1 2003/06/27 08:40:25 tshiozak Exp $
+# $NetBSD: charset.pivot.CP.src,v 1.2 2006/11/04 03:46:19 tnozaki Exp $
 
+CP50220				UCS				1
+CP51932				UCS				1
 CP932KANJI			UCS				1
+UCS				CP50220				1
+UCS				CP51932				1
 UCS				CP932KANJI			1
