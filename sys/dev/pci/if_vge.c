@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.25 2006/11/04 04:40:00 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.26 2006/11/04 05:07:16 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.25 2006/11/04 04:40:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.26 2006/11/04 05:07:16 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -354,8 +354,6 @@ vge_m_defrag(struct mbuf *mold, int flags)
 	if (m0 == NULL)
 		return NULL;
 	m0->m_pkthdr.len = mold->m_pkthdr.len;
-	m0->m_pkthdr.csum_flags = mold->m_pkthdr.csum_flags;
-	m0->m_pkthdr.csum_data  = mold->m_pkthdr.csum_data;
 	mn = m0;
 
 	do {
@@ -1498,7 +1496,7 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	struct vge_txfrag *f;
 	struct mbuf *m_new;
 	bus_dmamap_t map;
-	int seg, error, flags;
+	int m_csumflags, seg, error, flags;
 	struct m_tag *mtag;
 	size_t sz;
 
@@ -1515,6 +1513,12 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 		return ENOBUFS;
 	}
 #endif
+
+	/*
+	 * Preserve m_pkthdr.csum_flags here since m_head might be
+	 * updated by m_defrag()
+	 */
+	m_csumflags = m_head->m_pkthdr.csum_flags;
 
 	txs = &sc->sc_txsoft[idx];
 	map = txs->txs_dmamap;
@@ -1569,11 +1573,11 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	seg++;
 
 	flags = 0;
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_IPv4)
+	if (m_csumflags & M_CSUM_IPv4)
 		flags |= VGE_TDCTL_IPCSUM;
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_TCPv4)
+	if (m_csumflags & M_CSUM_TCPv4)
 		flags |= VGE_TDCTL_TCPCSUM;
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_UDPv4)
+	if (m_csumflags & M_CSUM_UDPv4)
 		flags |= VGE_TDCTL_UDPCSUM;
 	txd->td_sts = htole32(sz << 16);
 	txd->td_ctl = htole32(flags | (seg << 28) | VGE_TD_LS_NORM);
