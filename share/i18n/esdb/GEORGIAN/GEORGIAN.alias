@@ -1,4 +1,4 @@
-# $NetBSD: GEORGIAN.alias,v 1.1 2006/06/15 15:34:20 tnozaki Exp $
+# $NetBSD: GEORGIAN.alias,v 1.2 2006/11/04 06:17:35 tnozaki Exp $
 
-PS			georgian-std geo8-gov
+PS			geo8std georgian-std geo8-gov
 ACADEMY			georgian-ilia georgian-rs geo8-bpg
