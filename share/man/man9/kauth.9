@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.31 2006/10/30 21:36:36 wiz Exp $
+.\" $NetBSD: kauth.9,v 1.32 2006/11/04 10:47:37 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 30, 2006
+.Dd November 4, 2006
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -194,39 +194,6 @@ Check if an LKM request is allowed.
 is the command.
 .It Dv KAUTH_SYSTEM_MKNOD
 Check if creating devices is allowed.
-.It Dv KAUTH_SYSTEM_RAWIO
-This request groups raw access to system resources.
-.Pp
-.Ar req
-indicates what is the underlying resource being access, and can be one of the
-following:
-.Bl -tag
-.It Dv KAUTH_REQ_SYSTEM_RAWIO_DISK
-The underlying resource is a disk.
-.It Dv KAUTH_REQ_SYSTEM_RAWIO_MEMORY
-The underlying resource is the machine memory.
-.El
-.Pp
-.Ar arg1
-indicates the access requested, and can be one of the following:
-.Bl -tag
-.It Dv KAUTH_REQ_SYSTEM_RAWIO_READ
-Read access is requested.
-.It Dv KAUTH_REQ_SYSTEM_RAWIO_RW
-Both read and write access are requested.
-.It Dv KAUTH_REQ_SYSTEM_RAWIO_WRITE
-Write access is requested.
-.El
-.Pp
-If the request is for a disk device,
-.Ar arg2
-should contain a
-.Ft struct vnode *
-for the vnode in question, and
-.Ar arg3
-should contain the device number.
-.Pp
-The behavior if any of the above is not provided is policy-dependent.
 .It Dv KAUTH_SYSTEM_REBOOT
 Check if rebooting is allowed.
 .It Dv KAUTH_SYSTEM_SETIDCORE
@@ -513,7 +480,7 @@ Network devices specifically are handled by the
 .Em network
 scope.
 .Pp
-This scope has an authorization routine per device class on the system.
+This scope provides authorization wrappers for various device types.
 .Pp
 .Ft int Fn kauth_authorize_device_tty "kauth_cred_t cred" "kauth_action_t op" \
 "struct tty *tty"
@@ -524,7 +491,11 @@ on the system.
 The third argument,
 .Ar tty ,
 is the terminal device in question.
-The second argument is one of the following:
+It is passed to the listener as
+.Ar arg0 .
+The second argument,
+.Ar op ,
+is the action and can be one of the following:
 .Bl -tag
 .It Dv KAUTH_DEVICE_TTY_OPEN
 Open the terminal device pointed to by
@@ -532,11 +503,60 @@ Open the terminal device pointed to by
 .It Dv KAUTH_DEVICE_TTY_PRIVSET
 Set privileged settings on the terminal device pointed to by
 .Ar tty .
-.It Dv KAUTH_DEVICE_PASSTHRU
-Pass a user command directly to a hardware device.
+.El
 .Pp
-.Em NOTE :
-Depending on the device, this can result in direct memory and/or disk access.
+.Ft int Fn kauth_authorize_device_spec "kauth_cred_t cred" \
+"enum kauth_device_req req" "struct vnode *vp"
+.Pp
+Authorizes requests for
+.Em special files ,
+usually disk devices, but also direct memory access, on the system.
+.Pp
+It passes
+.Dq KAUTH_DEVICE_RAWIO_SPEC
+as the action to the listener, and accepts two arguments.
+.Ar req ,
+passed to the listener as
+.Ar arg0 ,
+is access requested, and can be one of
+.Dq KAUTH_REQ_DEVICE_RAWIO_SPEC_READ ,
+.Dq KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE ,
+or
+.Dq KAUTH_REQ_DEVICE_RAWIO_SPEC_RW ,
+representing read, write, or both read/write access respectively.
+.Ar vp
+is the vnode of the special file in question, and is passed to the listener as
+.Ar arg1 .
+.Pp
+Keep in mind that it is the responsibility of the security model developer to
+check whether the underlying device is a disk or the system memory, using
+.Fn iskmemdev :
+.Bd -literal -offset indent
+if ((vp-\*[Gt]v_type == VCHR) \*[Am]\*[Am]
+    iskmemdev(vp-\*[Gt]v_un.vu_specinfo-\*[Gt]si_rdev))
+	/* system memory access */
+.Ed
+.Pp
+.Ft int Fn kauth_authorize_device_passthru "kauth_cred_t cred" "dev_t dev" \
+"void *data"
+.Pp
+Authorizes hardware
+.Em passthru
+requests, or user commands passed directly to the hardware.
+These have the potential of resulting in direct disk and/or memory access.
+.Pp
+It passes
+.Dq KAUTH_DEVICE_RAWIO_PASSTHRU
+as the action to the listener, and accepts two arguments.
+.Ar dev ,
+passed as
+.Ar arg1
+to the listener, is the device for which the request is made, and
+.Ar data ,
+passed as
+.Ar arg2
+to the listener, is device-specific data that may be associated with the
+request.
 .El
 .Ss Credentials Accessors and Mutators
 .Nm
