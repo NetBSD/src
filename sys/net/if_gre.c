@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.71 2006/11/04 06:38:05 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.72 2006/11/04 06:41:48 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.71 2006/11/04 06:38:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.72 2006/11/04 06:41:48 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -1148,7 +1148,6 @@ static int
 gre_compute_route(struct gre_softc *sc)
 {
 	struct route *ro;
-	u_int32_t a, b, c;
 
 	ro = &sc->route;
 
