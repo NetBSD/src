@@ -1,4 +1,4 @@
-# $NetBSD: CP.alias,v 1.5 2006/10/19 14:47:58 tnozaki Exp $
+# $NetBSD: CP.alias,v 1.6 2006/11/04 03:46:19 tnozaki Exp $
 
 037	cp037 ibm037 ebcdic-cp-us ebcdic-cp-ca ebcdic-cp-wt ebcdic-cp-nl
 038	cp038 ibm038 ebcdic-int
@@ -18,6 +18,10 @@
 424	cp424 ibm424 ebcdic-cp-he
 437	cp437 ibm437 437
 500	cp500 ibm500 ebcdic-cp-be ebcdic-cp-ch
+50220	cp50220 mscp50220 windows-50220
+50221	cp50221 mscp50221 windows-50221
+50222	cp50222 mscp50222 windows-50222
+51932	cp51932 mscp51932 windows-51932
 737	cp737 mscp737
 775	cp775 mscp775
 850	cp850 ibm850 850
