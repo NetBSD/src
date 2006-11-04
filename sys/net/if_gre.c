@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.72 2006/11/04 06:41:48 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.73 2006/11/04 07:13:19 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.72 2006/11/04 06:41:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.73 2006/11/04 07:13:19 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -1152,7 +1152,7 @@ gre_compute_route(struct gre_softc *sc)
 	ro = &sc->route;
 
 	memset(ro, 0, sizeof(struct route));
-	((struct sockaddr_in *)&ro->ro_dst)->sin_addr = sc->g_dst;
+	satosin(&ro->ro_dst)->sin_addr = sc->g_dst;
 	ro->ro_dst.sa_family = AF_INET;
 	ro->ro_dst.sa_len = sizeof(ro->ro_dst);
 
@@ -1163,13 +1163,13 @@ gre_compute_route(struct gre_softc *sc)
 	 * there is a simpler way ...
 	 */
 	if ((sc->sc_if.if_flags & IFF_LINK1) == 0) {
-		((struct sockaddr_in *)&ro->ro_dst)->sin_addr.s_addr
+		satosin(&ro->ro_dst)->sin_addr.s_addr
 		    = sc->g_dst.s_addr ^ htonl(0x1);
 	}
 
 #ifdef DIAGNOSTIC
 	printf("%s: searching for a route to %s", sc->sc_if.if_xname,
-	    inet_ntoa(((struct sockaddr_in *)&ro->ro_dst)->sin_addr));
+	    inet_ntoa(satosin(&ro->ro_dst)->sin_addr));
 #endif
 
 	rtalloc(ro);
@@ -1193,11 +1193,11 @@ gre_compute_route(struct gre_softc *sc)
 	 * the route and search one to this interface ...
 	 */
 	if ((sc->sc_if.if_flags & IFF_LINK1) == 0)
-		((struct sockaddr_in *)&ro->ro_dst)->sin_addr = sc->g_dst;
+		satosin(&ro->ro_dst)->sin_addr = sc->g_dst;
 
 #ifdef DIAGNOSTIC
 	printf(", choosing %s with gateway %s\n", ro->ro_rt->rt_ifp->if_xname,
-	    inet_ntoa(((struct sockaddr_in *)(ro->ro_rt->rt_gateway))->sin_addr));
+	    inet_ntoa(satosin(ro->ro_rt->rt_gateway)->sin_addr));
 #endif
 
 	return 0;
