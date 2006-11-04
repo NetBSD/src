@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.90 2006/10/29 05:56:35 itohy Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.91 2006/11/04 05:18:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.90 2006/10/29 05:56:35 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.91 2006/11/04 05:18:26 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -988,7 +988,7 @@ ex_start(ifp)
 	struct ex_txdesc *txp;
 	struct mbuf *mb_head;
 	bus_dmamap_t dmamap;
-	int offset, totlen, segment, error;
+	int m_csumflags, offset, totlen, segment, error;
 	u_int32_t csum_flags;
 
 	if (sc->tx_head || sc->tx_free == NULL)
@@ -1007,6 +1007,12 @@ ex_start(ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, mb_head);
 		if (mb_head == NULL)
 			break;
+
+		/*
+		 * mb_head might be updated later,
+		 * so preserve csum_flags here.
+		 */
+		m_csumflags = mb_head->m_pkthdr.csum_flags;
 
 		/*
 		 * Get pointer to next available tx desc.
@@ -1101,12 +1107,12 @@ ex_start(ifp)
 		if (sc->ex_conf & EX_CONF_90XB) {
 			csum_flags = 0;
 
-			if (mb_head->m_pkthdr.csum_flags & M_CSUM_IPv4)
+			if (m_csumflags & M_CSUM_IPv4)
 				csum_flags |= htole32(EX_DPD_IPCKSUM);
 
-			if (mb_head->m_pkthdr.csum_flags & M_CSUM_TCPv4)
+			if (m_csumflags & M_CSUM_TCPv4)
 				csum_flags |= htole32(EX_DPD_TCPCKSUM);
-			else if (mb_head->m_pkthdr.csum_flags & M_CSUM_UDPv4)
+			else if (m_csumflags & M_CSUM_UDPv4)
 				csum_flags |= htole32(EX_DPD_UDPCKSUM);
 
 			dpd->dpd_fsh |= csum_flags;
