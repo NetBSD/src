@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.963 2006/11/04 12:58:06 yamt Exp $
+#	$NetBSD: mi,v 1.964 2006/11/04 13:00:00 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7371,6 +7371,8 @@
 ./usr/share/man/cat9/vmem_create.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vmem_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vmem_free.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vmem_xalloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vmem_xfree.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_bwrite.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_close.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_closefile.0		comp-sys-catman		.cat
@@ -11618,6 +11620,8 @@
 ./usr/share/man/man9/vmem_create.9		comp-sys-man		.man
 ./usr/share/man/man9/vmem_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/vmem_free.9		comp-sys-man		.man
+./usr/share/man/man9/vmem_xalloc.9		comp-sys-man		.man
+./usr/share/man/man9/vmem_xfree.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_bwrite.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_close.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_closefile.9		comp-sys-man		.man
