@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem_alloc.9,v 1.2 2006/06/25 13:24:45 wiz Exp $
+.\"	$NetBSD: kmem_alloc.9,v 1.3 2006/11/04 12:39:50 yamt Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -63,8 +63,9 @@ if there is not enough memory available.
 The contents of allocated memory are uninitialized.
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
+On success,
 .Fn kmem_alloc
-returns a pointer to allocated memory on success.
+returns a pointer to allocated memory.
 Otherwise, it returns
 .Dv NULL .
 .\" ------------------------------------------------------------
