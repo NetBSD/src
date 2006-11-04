@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.10 2006/11/04 09:30:00 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.11 2006/11/04 09:56:59 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.10 2006/11/04 09:30:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.11 2006/11/04 09:56:59 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -357,10 +357,7 @@ secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred __unused,
 
 		vp = arg1;
 
-		if (vp == NULL) {
-			result = KAUTH_RESULT_ALLOW;
-			break;
-		}
+		KASSERT(vp != NULL);
 
 		dev = vp->v_un.vu_specinfo->si_rdev;
 
