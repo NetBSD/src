@@ -1,4 +1,4 @@
-#	$NetBSD: vchain,v 1.4 2006/11/04 20:29:30 pooka Exp $
+#	$NetBSD: vchain,v 1.5 2006/11/04 20:33:17 pooka Exp $
 
 #	@(#)vchain	8.1 (Berkeley) 6/10/93
 #
@@ -10,7 +10,7 @@ define vchain
 	while ($vp)
 		printf "vp: 0x%x freelist_next: 0x%x usecount: %d flags: 0x%x\n", $vp, $vp->v_freelist.tqe_next, $vp->v_uobj.uo_refs, $vp->v_flag
 		set $num++
-		set $vp = $vp->v_mntvnodes.le_next
+		set $vp = $vp->v_mntvnodes.tqe_next
 	end
 	printf "Number of vnodes: %d\n", $num
 end
@@ -23,7 +23,7 @@ end
 # print the vnode chain for a given mount point
 define mp_vchain
 	set $mp = (struct mount *)$arg0
-	vchain $mp->mnt_vnodelist.lh_first
+	vchain $mp->mnt_vnodelist.tqh_first
 end
 
 # print vnode chains for all mount points
