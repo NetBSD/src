@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.118 2006/10/12 19:59:07 peter Exp $
+#	$NetBSD: BRANCHES,v 1.119 2006/11/04 14:16:52 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -385,7 +385,7 @@ Description:	finish implementing splraiseipl (and makeiplcookie).
 Status:		Active
 Start Date:	Mon Sep 18 2006
 End Date:	
-Base Tag:	yamt-splraiseipl-base
+Base Tag:	yamt-splraiseipl-base2
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
