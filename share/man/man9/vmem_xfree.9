@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem.9,v 1.4 2006/11/04 12:55:28 yamt Exp $
+.\"	$NetBSD: vmem_xfree.9,v 1.1 2006/11/04 12:55:28 yamt Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,53 +25,40 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd October 22, 2006
-.Dt VMEM 9
+.Dd November 4, 2006
+.Dt VMEM_XFREE 9
 .Os
 .\" ------------------------------------------------------------
 .Sh NAME
-.Nm vmem
-.Nd virtual memory allocator
+.Nm vmem_xfree
+.Nd free resource to arena
+.\" ------------------------------------------------------------
+.Sh SYNOPSIS
+.In sys/vmem.h
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Ft void
+.Fn vmem_xfree \
+"vmem_t *vm" "vmem_addr_t addr" "vmem_size_t size"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
-The
-.Nm
-is a general purpose resource allocator.
-Despite its name, it can be used for arbitrary resources
-other than virtual memory.
-.\" ------------------------------------------------------------
-.Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing the
-.Nm
-subsystem can be found.
-All pathnames are relative to
-.Pa /usr/src .
+.Fn vmem_xfree
+frees resource to the arena.
 .Pp
-The
-.Nm
-subsystem is implemented within the file
-.Pa sys/kern/subr_vmem.c .
+.Bl -tag -width addr
+.It Fa vm
+The arena which we free to.
+.It Fa addr
+The resource being freed.
+It must be the one returned by
+.Fn vmem_xalloc .
+.It Fa size
+The size of the resource being freed.
+It must be the same as the
+.Fa size
+argument used for
+.Fn vmem_xalloc .
+.El
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
 .Xr intro 9 ,
-.Xr vmem_alloc 9 ,
-.Xr vmem_create 9 ,
-.Xr vmem_destroy 9 ,
-.Xr vmem_free 9 ,
-.Xr vmem_xalloc 9 ,
-.Xr vmem_xfree 9
-.Rs
-.%A Jeff Bonwick
-.%A Jonathan Adams
-.%T "Magazines and Vmem: Extending the Slab Allocator to Many CPUs and Arbitrary Resources"
-.%J "2001 USENIX Annual Technical Conference"
-.%D 2001
-.Re
-.\" ------------------------------------------------------------
-.Sh AUTHORS
-This implementation of
-.Nm
-was written by
-.An YAMAMOTO Takashi .
+.Xr vmem 9

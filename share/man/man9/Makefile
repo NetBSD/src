@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.219 2006/10/22 11:14:52 yamt Exp $
+#       $NetBSD: Makefile,v 1.220 2006/11/04 12:55:28 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -45,6 +45,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
 	usbdi.9 uvm.9 \
 	vmem.9 vmem_alloc.9 vmem_create.9 vmem_destroy.9 vmem_free.9 \
+	vmem_xalloc.9 vmem_xfree.9 \
 	wdc.9 \
 	workqueue.9 workqueue_create.9 workqueue_destroy.9 workqueue_enqueue.9 \
 	wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
