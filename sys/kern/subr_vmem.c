@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.17 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.18 2006/11/04 13:25:52 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -31,10 +31,14 @@
  * -	Magazines and Vmem: Extending the Slab Allocator
  *	to Many CPUs and Arbitrary Resources
  *	http://www.usenix.org/event/usenix01/bonwick.html
+ *
+ * todo:
+ * -	decide how to import segments for vmem_xalloc.
+ * -	don't rely on malloc(9).
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.17 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.18 2006/11/04 13:25:52 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
