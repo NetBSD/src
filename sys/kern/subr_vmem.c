@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.18 2006/11/04 13:25:52 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.19 2006/11/04 13:26:22 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.18 2006/11/04 13:25:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.19 2006/11/04 13:26:22 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -165,6 +165,11 @@ struct vmem_btag {
 typedef struct vmem_btag bt_t;
 
 /* ---- misc */
+
+#define	VMEM_ALIGNUP(addr, align) \
+	(-(-(addr) & -(align)))
+#define	VMEM_CROSS_P(addr1, addr2, boundary) \
+	((((addr1) ^ (addr2)) & -(boundary)) != 0)
 
 #define	ORDER2SIZE(order)	((vmem_size_t)1 << (order))
 
@@ -644,17 +649,18 @@ vmem_fit(const bt_t *bt, vmem_size_t size, vmem_size_t align, vmem_size_t phase,
 	if (start >= end) {
 		return VMEM_ADDR_NULL;
 	}
-	start = -(-(start - phase) & -align) + phase;
+
+	start = VMEM_ALIGNUP(start - phase, align) + phase;
 	if (start < bt->bt_start) {
 		start += align;
 	}
-	if (((start ^ (start + size - 1)) & -nocross) != 0) {
+	if (VMEM_CROSS_P(start, start + size - 1, nocross)) {
 		KASSERT(align < nocross);
-		start = -(-(start - phase) & -nocross) + phase;
+		start = VMEM_ALIGNUP(start - phase, nocross) + phase;
 	}
 	if (start < end && end - start >= size) {
 		KASSERT((start & (align - 1)) == phase);
-		KASSERT(((start ^ (start + size - 1)) & -nocross) == 0);
+		KASSERT(!VMEM_CROSS_P(start, start + size - 1, nocross));
 		KASSERT(minaddr <= start);
 		KASSERT(maxaddr == 0 || start + size <= maxaddr);
 		KASSERT(bt->bt_start <= start);
@@ -826,7 +832,7 @@ vmem_xalloc(vmem_t *vm, vmem_size_t size0, vmem_size_t align, vmem_size_t phase,
 	KASSERT((align == 0 && phase == 0) || phase < align);
 	KASSERT(nocross == 0 || nocross >= size);
 	KASSERT(maxaddr == 0 || minaddr < maxaddr);
-	KASSERT(((phase ^ (phase + size - 1)) & -nocross) == 0);
+	KASSERT(!VMEM_CROSS_P(phase, phase + size - 1, nocross));
 
 	if (align == 0) {
 		align = vm->vm_quantum_mask + 1;
@@ -1163,7 +1169,8 @@ main()
 				if (align <= phase) {
 					phase = 0;
 				}
-				if (((phase ^ (phase + sz)) & -nocross) != 0) {
+				if (VMEM_CROSS_P(phase, phase + sz - 1,
+				    nocross)) {
 					nocross = 0;
 				}
 				minaddr = rand() % 50000;
