@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem_alloc.9,v 1.2 2006/10/26 11:16:28 wiz Exp $
+.\"	$NetBSD: vmem_alloc.9,v 1.3 2006/11/04 12:39:50 yamt Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -73,6 +73,7 @@ if there are not enough resources available.
 .El
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
+On success,
 .Fn vmem_alloc
 returns an allocated vmem_addr_t.
 Otherwise, it returns
