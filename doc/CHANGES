@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.747 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.748 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -146,6 +146,10 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	puc(4): Add support for Perle PCI-RAS 4 port multimodem [manu 20061101]
 	rum(4): Added driver for Ralink 2501/2601 USB 802.11a/b/g
 		devices from OpenBSD. [joerg 20061101]
+	gkermit(1): Add gkermit, which is a program for transferring
+		files using the Kermit protocol.  gkermit has no
+		interactive commands, no scripting, and no ability to
+		make connections.  [apb 20061101]
 	i386: Change GENERIC, GENERIC.MP, GENERIC.MPACPI, GENERIC_LAPTOP,
 		INSTALL, INSTALL.MP, INSTALL_LAPTOP, and DISKLESS kernels
 		so that they are smaller and faster by removing support
