@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.9 2006/10/12 01:32:50 christos Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.10 2006/11/04 09:30:00 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.9 2006/10/12 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.10 2006/11/04 09:30:00 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.9 2006/10/12 01:32:
 #include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <secmodel/bsd44/securelevel.h>
 
@@ -126,6 +128,8 @@ secmodel_bsd44_securelevel_start(void)
 	    secmodel_bsd44_securelevel_network_cb, NULL);
 	kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
 	    secmodel_bsd44_securelevel_machdep_cb, NULL);
+	kauth_listen_scope(KAUTH_SCOPE_DEVICE,
+	    secmodel_bsd44_securelevel_device_cb, NULL);
 }
 
 /*
@@ -147,127 +151,6 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred __unused,
 	req = (enum kauth_system_req)arg0;
 
 	switch (action) {
-	case KAUTH_SYSTEM_RAWIO: {
-		u_int rw;
-
-		rw = (u_int)(u_long)arg1;
-
-		switch (req) {
-		case KAUTH_REQ_SYSTEM_RAWIO_MEMORY: {
-			switch (rw) {
-			case KAUTH_REQ_SYSTEM_RAWIO_READ:
-				result = KAUTH_RESULT_ALLOW;
-				break;
-
-			case KAUTH_REQ_SYSTEM_RAWIO_WRITE:
-			case KAUTH_REQ_SYSTEM_RAWIO_RW:
-				if (securelevel < 1)
-					result = KAUTH_RESULT_ALLOW;
-				break;
-
-			default:
-				result = KAUTH_RESULT_DEFER;
-				break;
-			}
-
-			break;
-			}
-
-		case KAUTH_REQ_SYSTEM_RAWIO_DISK: {
-			struct vnode *vp = arg2;
-			dev_t dev = (dev_t)(u_long)arg3;
-
-			if (vp == NULL || dev == NODEV) {
-				switch (rw) {
-				case KAUTH_REQ_SYSTEM_RAWIO_READ:
-					result = KAUTH_RESULT_ALLOW;
-					break;
-
-				case KAUTH_REQ_SYSTEM_RAWIO_RW:
-				case KAUTH_REQ_SYSTEM_RAWIO_WRITE:
-					if (securelevel < 1)
-						result = KAUTH_RESULT_ALLOW;
-					break;
-
-				default:
-					result = KAUTH_RESULT_DEFER;
-					break;
-				}
-
-				break;
-			}
-
-			switch (vp->v_type) {
-			case VCHR: {
-				const struct cdevsw *cdev;
-				struct vnode *bvp;
-
-				switch (rw) {
-				case KAUTH_REQ_SYSTEM_RAWIO_READ:
-					result = KAUTH_RESULT_ALLOW;
-					break;
-
-				case KAUTH_REQ_SYSTEM_RAWIO_WRITE:
-				case KAUTH_REQ_SYSTEM_RAWIO_RW:
-					cdev = cdevsw_lookup(dev);
-					if (cdev == NULL)
-						break;
-
-					if (cdev->d_type == D_DISK &&
-					    securelevel > 1)
-						break;
-
-					bvp = NULL;
-					vfinddev(devsw_chr2blk(dev), VBLK, &bvp);
-					if (bvp != NULL) {
-						if (vfs_mountedon(bvp) &&
-						    securelevel > 0)
-							break;
-					}
-
-					result = KAUTH_RESULT_ALLOW;
-
-					break;
-
-				default:
-					result = KAUTH_RESULT_DEFER;
-					break;
-				}
-
-				break;
-				}
-
-			case VBLK: {
-				const struct bdevsw *bdev;
-
-				bdev = bdevsw_lookup(dev);
-				if (bdev == NULL)
-					break;
-
-				if (bdev->d_type == D_DISK &&
-				    rw != KAUTH_REQ_SYSTEM_RAWIO_READ &&
-				    securelevel > 1)
-					break;
-
-				result = KAUTH_RESULT_ALLOW;
-
-				break;
-				}
-
-			default:
-				result = KAUTH_RESULT_DEFER;
-				break;
-			}
-			break;
-			}
-
-		default:
-			result = KAUTH_RESULT_DEFER;
-			break;
-		}
-		break;
-		}
-	
 	case KAUTH_SYSTEM_TIME:
 		switch (req) {
 		case KAUTH_REQ_SYSTEM_TIME_BACKWARDS:
@@ -438,6 +321,126 @@ secmodel_bsd44_securelevel_machdep_cb(kauth_cred_t cred __unused,
 			result = KAUTH_RESULT_DEFER;
 			break;
 		}
+
+		break;
+
+	default:
+		result = KAUTH_RESULT_DEFER;
+		break;
+	}
+
+	return (result);
+}
+
+/*
+ * kauth(9) listener
+ *
+ * Security model: Traditional NetBSD
+ * Scope: Device 
+ * Responsibility: Securelevel
+ */
+int
+secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred __unused,
+    kauth_action_t action, void *cookie __unused, void *arg0,
+    void *arg1, void *arg2 __unused, void *arg3 __unused)
+{
+	int result;
+	enum kauth_device_req req;
+
+	result = KAUTH_RESULT_DENY;
+	req = (enum kauth_device_req)arg0;
+
+	switch (action) {
+	case KAUTH_DEVICE_RAWIO_SPEC: {
+		struct vnode *vp;
+		dev_t dev;
+
+		vp = arg1;
+
+		if (vp == NULL) {
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		dev = vp->v_un.vu_specinfo->si_rdev;
+
+		/* Handle /dev/mem and /dev/kmem. */
+		if ((vp->v_type == VCHR) && iskmemdev(dev)) {
+			switch (req) {
+			case KAUTH_REQ_DEVICE_RAWIO_SPEC_READ:
+				result = KAUTH_RESULT_ALLOW;
+				break;
+
+			case KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE:
+			case KAUTH_REQ_DEVICE_RAWIO_SPEC_RW:
+				if (securelevel < 1)
+					result = KAUTH_RESULT_ALLOW;
+				break;
+
+			default:
+				result = KAUTH_RESULT_DEFER;
+				break;
+			}
+
+			break;
+		}
+
+		switch (req) {
+		case KAUTH_REQ_DEVICE_RAWIO_SPEC_READ:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+
+		case KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE:
+		case KAUTH_REQ_DEVICE_RAWIO_SPEC_RW:
+			switch (vp->v_type) {
+			case VCHR: {
+				const struct cdevsw *cdev;
+
+				cdev = cdevsw_lookup(dev);
+				if ((cdev == NULL) ||
+				    (cdev->d_type != D_DISK)) {
+					result = KAUTH_RESULT_ALLOW;
+					break;
+				}
+
+				break;
+				}
+			case VBLK: {
+				const struct bdevsw *bdev;
+
+				bdev = bdevsw_lookup(dev);
+				if ((bdev == NULL) ||
+				    (bdev->d_type != D_DISK)) {
+					result = KAUTH_RESULT_ALLOW;
+					break;
+				}
+
+				break;
+				}
+			default:
+				result = KAUTH_RESULT_DEFER;
+				break;
+			}
+
+			if (vfs_mountedon(vp) && (securelevel > 0))
+				break;
+
+			if (securelevel < 2)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+
+		break;
+		}
+
+	case KAUTH_DEVICE_RAWIO_PASSTHRU:
+		if (securelevel < 1)
+			result = KAUTH_RESULT_ALLOW;
 
 		break;
 
