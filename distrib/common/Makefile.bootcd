@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.4 2006/11/01 16:47:17 hubertf Exp $
+#	$NetBSD: Makefile.bootcd,v 1.5 2006/11/04 12:06:28 hubertf Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -84,7 +84,7 @@ image:
 		${CDBASE}.iso cdrom
 
 release:
-	${RELEASE_INSTALL} ${CDBASE}.iso ${RELEASEDIR}/${MACHINE}/installation/cdrom
+	${RELEASE_INSTALL} ${CDBASE}.iso ${RELEASEDIR}/${MACHINE}/${CDROMS_RELEASEDIR}
 
 clean:
 	${RM} -fr cdrom
