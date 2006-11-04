@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.22.1 2006/11/04 14:26:20 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.22.2 2006/11/04 14:27:28 yamt Exp $	*/
 
 /* XXX: cherry: To Be fixed when we switch on interrupts. */
 
@@ -62,7 +62,7 @@ static __inline void spllower(int dummy) { }
 typedef int ipl_t;
 typedef struct {
 	ipl_t _ipl;
-};
+} ipl_cookie_t;
 
 static ipl_cookie_t
 makeiplcookie(ipl_t)
