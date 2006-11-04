@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem_free.9,v 1.2 2006/10/26 11:16:28 wiz Exp $
+.\"	$NetBSD: vmem_free.9,v 1.3 2006/11/04 13:07:58 yamt Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -42,7 +42,9 @@
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn vmem_free
-frees resource to the arena.
+frees resource allocated by
+.Fa vmem_alloc
+to the arena.
 .Pp
 .Bl -tag -width addr
 .It Fa vm
@@ -51,6 +53,9 @@ The arena which we free to.
 The resource being freed.
 It must be the one returned by
 .Fn vmem_alloc .
+Notably, it must not be the one from
+.Fn vmem_xalloc .
+Otherwise, the behaviour is undefined.
 .It Fa size
 The size of the resource being freed.
 It must be the same as the
