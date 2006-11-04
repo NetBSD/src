@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.70 2006/10/25 20:28:45 elad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.71 2006/11/04 06:38:05 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.70 2006/10/25 20:28:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.71 2006/11/04 06:38:05 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -785,7 +785,10 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	return (error);
 }
 
-/* Must be called at IPL_NET. */
+/* gre_kick must be synchronized with network interrupts in order
+ * to synchronize access to gre_softc members, so call it with
+ * interrupt priority level set to IPL_NET or greater.
+ */
 static int
 gre_kick(struct gre_softc *sc)
 {
@@ -1161,13 +1164,8 @@ gre_compute_route(struct gre_softc *sc)
 	 * there is a simpler way ...
 	 */
 	if ((sc->sc_if.if_flags & IFF_LINK1) == 0) {
-		a = ntohl(sc->g_dst.s_addr);
-		b = a & 0x01;
-		c = a & 0xfffffffe;
-		b = b ^ 0x01;
-		a = b | c;
 		((struct sockaddr_in *)&ro->ro_dst)->sin_addr.s_addr
-		    = htonl(a);
+		    = sc->g_dst.s_addr ^ htonl(0x1);
 	}
 
 #ifdef DIAGNOSTIC
