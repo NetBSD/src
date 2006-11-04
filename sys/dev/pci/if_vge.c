@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.24 2006/11/01 18:11:18 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.25 2006/11/04 04:40:00 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.24 2006/11/01 18:11:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.25 2006/11/04 04:40:00 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1526,7 +1526,7 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	     map->dm_nsegs == VGE_TX_FRAGS)) {
 		m_new = m_defrag(m_head, M_DONTWAIT);
 		if (m_new == NULL)
-			return (error);
+			return EFBIG;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, map,
 		    m_new, BUS_DMA_NOWAIT);
