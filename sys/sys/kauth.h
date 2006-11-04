@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.16 2006/10/25 22:49:23 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.17 2006/11/04 09:30:00 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -86,7 +86,6 @@ enum {
 	KAUTH_SYSTEM_FILEHANDLE,
 	KAUTH_SYSTEM_LKM,
 	KAUTH_SYSTEM_MKNOD,
-	KAUTH_SYSTEM_RAWIO,
 	KAUTH_SYSTEM_REBOOT,
 	KAUTH_SYSTEM_SETIDCORE,
 	KAUTH_SYSTEM_SWAPCTL,
@@ -101,11 +100,6 @@ enum kauth_system_req {
 	KAUTH_REQ_SYSTEM_CHROOT_CHROOT=1,
 	KAUTH_REQ_SYSTEM_CHROOT_FCHROOT,
 	KAUTH_REQ_SYSTEM_DEBUG_IPKDB,
-	KAUTH_REQ_SYSTEM_RAWIO_DISK,
-	KAUTH_REQ_SYSTEM_RAWIO_MEMORY,
-	KAUTH_REQ_SYSTEM_RAWIO_READ,
-	KAUTH_REQ_SYSTEM_RAWIO_RW,
-	KAUTH_REQ_SYSTEM_RAWIO_WRITE,
 	KAUTH_REQ_SYSTEM_SYSCTL_ADD,
 	KAUTH_REQ_SYSTEM_SYSCTL_DELETE,
 	KAUTH_REQ_SYSTEM_SYSCTL_DESC,
@@ -201,7 +195,18 @@ enum kauth_machdep_req {
  */
 enum {
 	KAUTH_DEVICE_TTY_OPEN=1,
-	KAUTH_DEVICE_TTY_PRIVSET
+	KAUTH_DEVICE_TTY_PRIVSET,
+	KAUTH_DEVICE_RAWIO_SPEC,
+	KAUTH_DEVICE_RAWIO_PASSTHRU
+};
+
+/*
+ * Device scope - sub-actions.
+ */
+enum kauth_device_req {
+	KAUTH_REQ_DEVICE_RAWIO_SPEC_READ,
+	KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE,
+	KAUTH_REQ_DEVICE_RAWIO_SPEC_RW,
 };
 
 #define NOCRED ((kauth_cred_t)-1)	/* no credential available */
@@ -229,6 +234,9 @@ int kauth_authorize_network(kauth_cred_t, kauth_action_t,
 int kauth_authorize_machdep(kauth_cred_t, kauth_action_t,
     enum kauth_machdep_req, void *, void *, void *);
 int kauth_authorize_device_tty(kauth_cred_t, kauth_action_t, struct tty *);
+int kauth_authorize_device_spec(kauth_cred_t, enum kauth_device_req,
+    struct vnode *);
+int kauth_authorize_device_passthru(kauth_cred_t, dev_t, void *);
 
 /* Kauth credentials management routines. */
 kauth_cred_t kauth_cred_alloc(void);

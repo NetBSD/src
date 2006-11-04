@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.95 2006/11/02 12:48:35 elad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.96 2006/11/04 09:30:00 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.95 2006/11/02 12:48:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.96 2006/11/04 09:30:00 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -154,7 +154,7 @@ spec_lookup(v)
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
-static int
+int
 iskmemdev(dev_t dev)
 {
 	/* mem_no is emitted by config(8) to generated devsw.c */
@@ -186,6 +186,7 @@ spec_open(v)
 	int error;
 	struct partinfo pi;
 	int (*d_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
+	enum kauth_device_req req;
 
 	/*
 	 * Don't allow open if fs is mounted -nodev.
@@ -193,9 +194,10 @@ spec_open(v)
 	if (vp->v_mount && (vp->v_mount->mnt_flag & MNT_NODEV))
 		return (ENXIO);
 
-#define M2K(m)	(((m) & FREAD) && ((m) & FWRITE) ? KAUTH_REQ_SYSTEM_RAWIO_RW : \
-		 (m) & FWRITE ? KAUTH_REQ_SYSTEM_RAWIO_WRITE : \
-		 KAUTH_REQ_SYSTEM_RAWIO_READ)
+#define M2K(m)	(((m) & FREAD) && ((m) & FWRITE) ? \
+		 KAUTH_REQ_DEVICE_RAWIO_SPEC_RW : \
+		 (m) & FWRITE ? KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE : \
+		 KAUTH_REQ_DEVICE_RAWIO_SPEC_READ)
 
 	switch (vp->v_type) {
 
@@ -204,49 +206,32 @@ spec_open(v)
 		if (cdev == NULL)
 			return (ENXIO);
 
-		if (ap->a_cred != FSCRED) {
-			u_long rw;
+		req = M2K(ap->a_mode);
 
-			rw = M2K(ap->a_mode);
-			error = 0;
-
-			/* XXX we're holding a vnode lock here */
-			if (iskmemdev(dev)) {
-				error = kauth_authorize_system(ap->a_cred,
-				    KAUTH_SYSTEM_RAWIO,
-				    KAUTH_REQ_SYSTEM_RAWIO_MEMORY,
-				    (void *)rw, NULL, NULL);
-			} else {
-				error = kauth_authorize_system(ap->a_cred,
-				    KAUTH_SYSTEM_RAWIO,
-				    KAUTH_REQ_SYSTEM_RAWIO_DISK,
-				    (void *)rw, vp, (void *)(u_long)dev);
-			}
-
-			if (error)
-				return (error);
+		error = kauth_authorize_device_spec(ap->a_cred, req, vp);
+		if (error)
+			return (error);
 
 #if NVERIEXEC > 0
-			if (ap->a_mode & FWRITE) {
-				if (iskmemdev(dev)) {
-					if (veriexec_strict >= VERIEXEC_IPS)
-						return (EPERM);
-				} else {
-					struct vnode *bvp;
-					dev_t blkdev;
+		if (ap->a_mode & FWRITE) {
+			if (iskmemdev(dev)) {
+				if (veriexec_strict >= VERIEXEC_IPS)
+					return (EPERM);
+			} else {
+				struct vnode *bvp;
+				dev_t blkdev;
 
-					blkdev = devsw_chr2blk(dev);
-					if (blkdev != NODEV) {
-						bvp = NULL;
-						vfinddev(blkdev, VBLK, &bvp);
-						error = veriexec_rawchk(bvp);
-						if (error)
-							return (error);
-					}
+				blkdev = devsw_chr2blk(dev);
+				if (blkdev != NODEV) {
+					bvp = NULL;
+					vfinddev(blkdev, VBLK, &bvp);
+					error = veriexec_rawchk(bvp);
+					if (error)
+						return (error);
 				}
 			}
-#endif /* NVERIEXEC > 0 */
 		}
+#endif /* NVERIEXEC > 0 */
 
 		if (cdev->d_type == D_TTY)
 			vp->v_flag |= VISTTY;
@@ -263,25 +248,11 @@ spec_open(v)
 		if (bdev == NULL)
 			return (ENXIO);
 
-		/*
-		 * When running in very secure mode, do not allow
-		 * opens for writing of any disk block devices.
-		 */
-		if (ap->a_cred != FSCRED) {
-			u_long rw;
+		req = M2K(ap->a_mode);
 
-			if ((error = vfs_mountedon(vp)) != 0)
-				return (error);
-
-			rw = M2K(ap->a_mode);
-
-			error = kauth_authorize_system(ap->a_cred,
-			    KAUTH_SYSTEM_RAWIO,
-			    KAUTH_REQ_SYSTEM_RAWIO_DISK,
-			    (void *)rw, vp, (void *)(u_long)dev);
-			if (error)
-				return (error);
-		}
+		error = kauth_authorize_device_spec(ap->a_cred, req, vp);
+		if (error)
+			return (error);
 
 #if NVERIEXEC > 0
 		error = veriexec_rawchk(vp);
