@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2006/02/16 20:17:14 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.10.16.1 2006/11/04 14:11:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -222,6 +222,25 @@ set_sint(pending)
 
 #define splsched()	splhigh()
 #define spllock()	splhigh()
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return splraise(imask[icookie._ipl]);
+}
 
 #endif /* !_LOCORE */
 
