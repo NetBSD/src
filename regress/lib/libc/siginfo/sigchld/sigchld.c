@@ -1,4 +1,4 @@
-/* $NetBSD: sigchld.c,v 1.6 2006/05/10 19:07:22 mrg Exp $ */
+/* $NetBSD: sigchld.c,v 1.7 2006/11/04 00:08:34 oster Exp $ */
 
 #include <sys/ucontext.h>
 #include <sys/wait.h>
@@ -115,11 +115,15 @@ runkill()
 int
 main(void)
 {
+	sigset_t set;
 	struct rlimit rlim;
 	(void)getrlimit(RLIMIT_CORE, &rlim);
 	rlim.rlim_cur = rlim.rlim_max;
 	(void)setrlimit(RLIMIT_CORE, &rlim);
 	sethandler(handler);
+	sigemptyset(&set);
+	sigaddset(&set, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &set, NULL);
 	runnormal();
 	rundump();
 	runkill();
