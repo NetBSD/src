@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2006/05/12 06:05:23 simonb Exp $	*/
+/*	$NetBSD: intr.h,v 1.10.10.1 2006/11/05 07:54:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,11 +43,15 @@
  * Interrupt levels
  */
 #define	IPL_ZERO	0	/* level 0 */
+#define	IPL_NONE	IPL_ZERO
 #define	IPL_HIGH	1	/* block all interrupts */
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
 #define	IPL_BIO		2	/* block I/O */
 #define	IPL_NET		3	/* network */
 #define	IPL_TTY		4	/* terminal */
 #define	IPL_CLOCK	5	/* clock */
+#define	IPL_STATCLOCK	IPL_CLOCK
 #define	IPL_VM		6	/* memory allocation */
 #define	IPL_SOFTCLOCK	7	/* softlock */
 #define	IPL_SOFTNET	8	/* softnet */
@@ -180,6 +184,25 @@ splx(unsigned int ncpl)
 #define	spllock()	splhigh()
 #define	spl0()		splx(imask[IPL_ZERO])
 #define	splnone()	spl0()
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){_ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return splraise(imask[icookie._ipl]);
+}
 
 /*
  * Software interrupt registration
