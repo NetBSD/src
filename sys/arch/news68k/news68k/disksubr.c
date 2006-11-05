@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.25 2006/09/11 12:06:39 he Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.26 2006/11/05 23:00:54 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25 2006/09/11 12:06:39 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.26 2006/11/05 23:00:54 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,9 +206,7 @@ bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
-	if (kauth_authorize_system(curlwp->l_cred, KAUTH_SYSTEM_RAWIO,
-	    KAUTH_REQ_SYSTEM_RAWIO_DISK,
-	    (void *)KAUTH_REQ_SYSTEM_RAWIO_RW, NULL, NULL) &&
+	if (kauth_authorize_device_passthru(kauth_cred_get(), NODEV, NULL) &&	
 	    bp->b_blkno + p->p_offset <= labelsector &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
