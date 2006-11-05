@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.28 2006/11/02 15:35:25 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.29 2006/11/05 16:59:18 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.28 2006/11/02 15:35:25 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.29 2006/11/05 16:59:18 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1179,7 +1179,7 @@ outok:
 				if (de == NULL) {
 					off = TMPFS_DIRCOOKIE_EOF;
 				} else {
-					off = TMPFS_DIRCOOKIE(de);
+					off = tmpfs_dircookie(de);
 				}
 			}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.26 2006/10/30 15:11:01 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.27 2006/11/05 16:59:18 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.26 2006/10/30 15:11:01 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.27 2006/11/05 16:59:18 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -695,7 +695,7 @@ tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 			if (de == NULL)
 				uio->uio_offset = TMPFS_DIRCOOKIE_EOF;
 			else
-				uio->uio_offset = TMPFS_DIRCOOKIE(de);
+				uio->uio_offset = tmpfs_dircookie(de);
 		}
 	}
 
@@ -720,7 +720,7 @@ tmpfs_dir_lookupbycookie(struct tmpfs_node *node, off_t cookie)
 	}
 
 	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
-		if (TMPFS_DIRCOOKIE(de) == cookie) {
+		if (tmpfs_dircookie(de) == cookie) {
 			break;
 		}
 	}
@@ -829,7 +829,7 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 		node->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 	} else {
 		node->tn_spec.tn_dir.tn_readdir_lastn = uio->uio_offset =
-		    TMPFS_DIRCOOKIE(de);
+		    tmpfs_dircookie(de);
 		node->tn_spec.tn_dir.tn_readdir_lastp = de;
 	}
 
