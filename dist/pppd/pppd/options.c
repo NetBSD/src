@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.5 2006/06/29 21:50:17 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.6 2006/11/05 09:16:20 martin Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: options.c,v 1.100 2006/06/18 11:26:00 paulus Exp"
 #else
-__RCSID("$NetBSD: options.c,v 1.5 2006/06/29 21:50:17 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.6 2006/11/05 09:16:20 martin Exp $");
 #endif
 #endif
 
@@ -55,9 +55,9 @@ __RCSID("$NetBSD: options.c,v 1.5 2006/06/29 21:50:17 christos Exp $");
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
+#include <syslog.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <syslog.h>
 #include <string.h>
 #include <pwd.h>
 #ifdef PLUGIN
@@ -1101,7 +1101,7 @@ option_error __V((char *fmt, ...))
     va_end(args);
     if (phase == PHASE_INITIALIZE)
 	fprintf(stderr, "%s: %s\n", progname, buf);
-    syslog(LOG_ERR, "%s", buf);
+    syslogit(LOG_ERR, "%s", buf);
 }
 
 #if 0

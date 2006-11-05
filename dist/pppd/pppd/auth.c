@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.6 2006/09/29 15:44:46 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.7 2006/11/05 09:16:20 martin Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -75,7 +75,7 @@
 #if 0
 #define RCSID	"Id: auth.c,v 1.112 2006/06/18 11:26:00 paulus Exp"
 #else
-__RCSID("$NetBSD: auth.c,v 1.6 2006/09/29 15:44:46 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.7 2006/11/05 09:16:20 martin Exp $");
 #endif
 #endif
 
@@ -1581,7 +1581,6 @@ plogin(user, passwd, msg)
     pam_error = pam_start ("ppp", user, &PAM_conversation, &pamh);
     if (pam_error != PAM_SUCCESS) {
         *msg = (char *) pam_strerror (pamh, pam_error);
-	reopen_log();
 	return UPAP_AUTHNAK;
     }
     /*
@@ -1608,7 +1607,6 @@ plogin(user, passwd, msg)
     /*
      * Clean up the mess
      */
-    reopen_log();	/* apparently the PAM stuff does closelog() */
     PAM_username = NULL;
     PAM_password = NULL;
     if (pam_error != PAM_SUCCESS)
@@ -1707,8 +1705,6 @@ plogout()
 	pam_end (pamh, pam_error);
 	pamh = NULL;
     }
-    /* Apparently the pam stuff does closelog(). */
-    reopen_log();
 #endif /* USE_PAM */
 
     tty = devnam;

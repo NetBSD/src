@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.5 2006/06/29 21:50:17 christos Exp $	*/
+/*	$NetBSD: pppd.h,v 1.6 2006/11/05 09:16:20 martin Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -488,7 +488,7 @@ int  device_script __P((char *cmd, int in, int out, int dont_wait));
 pid_t run_program __P((char *prog, char **args, int must_exist,
 		       void (*done)(void *), void *arg, int wait));
 				/* Run program prog with args in child */
-void reopen_log __P((void));	/* (re)open the connection to syslog */
+void syslogit __P((int, const char *, ...));
 void print_link_stats __P((void)); /* Print stats, if available */
 void reset_link_stats __P((int)); /* Reset (init) stats when link goes up */
 void update_link_stats __P((int)); /* Get stats at link termination */

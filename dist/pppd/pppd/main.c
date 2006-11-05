@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2006/06/29 21:53:33 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2006/11/05 09:16:20 martin Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -73,7 +73,7 @@
 #if 0
 #define RCSID	"Id: main.c,v 1.153 2006/06/04 03:52:50 paulus Exp"
 #else
-__RCSID("$NetBSD: main.c,v 1.7 2006/06/29 21:53:33 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2006/11/05 09:16:20 martin Exp $");
 #endif
 #endif
 
@@ -330,9 +330,6 @@ main(argc, argv)
 
     script_env = NULL;
 
-    /* Initialize syslog facilities */
-    reopen_log();
-
     if (gethostname(hostname, MAXNAMELEN) < 0 ) {
 	option_error("Couldn't get hostname: %m");
 	exit(1);
@@ -472,7 +469,7 @@ main(argc, argv)
 	else
 	    p = "(unknown)";
     }
-    syslog(LOG_NOTICE, "pppd %s started by %s, uid %d", VERSION, p, uid);
+    syslogit(LOG_NOTICE, "pppd %s started by %s, uid %d", VERSION, p, uid);
     script_setenv("PPPLOGNAME", p, 0);
 
     if (devnam[0])
@@ -800,14 +797,42 @@ detach()
     close(pipefd[0]);
 }
 
-/*
- * reopen_log - (re)open our connection to syslog.
- */
 void
-reopen_log()
+syslogit(int level, const char *fmt, ...)
 {
-    openlog("pppd", LOG_PID | LOG_NDELAY, LOG_PPP);
-    setlogmask(LOG_UPTO(LOG_INFO));
+    va_list ap;
+
+#ifdef SYSLOG_DATA_INIT
+    static struct syslog_data sd = SYSLOG_DATA_INIT;
+
+    if (sd.log_file == -1 || fcntl(sd.log_file, F_GETFL, 0) == -1) {
+	openlog_r("pppd", LOG_PID | LOG_NDELAY, LOG_PPP, &sd);
+	setlogmask_r(LOG_UPTO(LOG_INFO), &sd);
+    }
+
+    va_start(ap, fmt);
+    vsyslog_r(level, &sd, fmt, ap);
+    va_end(ap);
+#else
+    static int opened = -1;
+#ifdef USE_PAM
+    /* Some pam implementations do closelog(); we try to detect this */
+    if (opened == -1 || fcntl(opened, F_GETFL, 0) == -1) {
+	opened = open("/", O_RDONLY);
+	if (opened == -1)
+	    abort();
+	(void)close(opened);
+#else
+    if (opened == -1) {
+	opened = 1;
+#endif
+	openlog("pppd", LOG_PID | LOG_NDELAY, LOG_PPP);
+	setlogmask(LOG_UPTO(LOG_INFO));
+    }
+    va_start(ap, fmt);
+    vsyslog(level, fmt, ap);
+    va_end(ap);
+#endif
 }
 
 /*
@@ -1180,7 +1205,7 @@ die(status)
 	print_link_stats();
     cleanup();
     notify(exitnotify, status);
-    syslog(LOG_INFO, "Exit.");
+    syslogit(LOG_INFO, "Exit.");
     exit(status);
 }
 
@@ -1743,11 +1768,7 @@ run_program(prog, args, must_exist, done, arg, wait)
     /* run the program */
     execve(prog, args, script_env);
     if (must_exist || errno != ENOENT) {
-	/* have to reopen the log, there's nowhere else
-	   for the message to go. */
-	reopen_log();
-	syslog(LOG_ERR, "Can't execute %s: %m", prog);
-	closelog();
+	syslogit(LOG_ERR, "Can't execute %s: %m", prog);
     }
     _exit(-1);
 }
