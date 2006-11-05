@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.18 2006/10/12 01:31:17 christos Exp $ */
+/* $NetBSD: pcppi.c,v 1.19 2006/11/05 21:06:26 cube Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.18 2006/10/12 01:31:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.19 2006/11/05 21:06:26 cube Exp $");
 
 #include "attimer.h"
 
@@ -62,6 +62,7 @@ void	pcppi_isa_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(pcppi, sizeof(struct pcppi_softc),
     pcppi_match, pcppi_isa_attach, NULL, NULL);
 
+static int pcppisearch(device_t, cfdata_t, const int *, void *);
 static void pcppi_bell_stop(void*);
 
 #if NATTIMER > 0
@@ -184,7 +185,21 @@ pcppi_attach(struct pcppi_softc *sc)
 #endif
 
 	pa.pa_cookie = sc;
-	while (config_found((struct device *)sc, &pa, 0));
+	config_search_loc(pcppisearch, &sc->sc_dv, "pcppi", NULL, &pa);
+}
+
+static int
+pcppisearch(device_t parent, cfdata_t cf, const int *locs, void *aux)
+{
+
+	if (cf->cf_fstate == FSTATE_STAR)
+		aprint_error("%s: children must have an explicit unit\n",
+		    device_xname(parent));
+
+	if (config_match(parent, cf, aux))
+		config_attach_loc(parent, cf, locs, aux, NULL);
+
+	return 0;
 }
 
 #if NATTIMER > 0
