@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.20 2006/11/03 17:01:54 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.21 2006/11/05 15:49:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -185,6 +185,10 @@
 #define RTK_TXSTAT_OUTOFWIN	0x20000000
 #define RTK_TXSTAT_TXABRT	0x40000000
 #define RTK_TXSTAT_CARRLOSS	0x80000000
+
+#define RTK_TXSTAT_THRESH(x)	(((x) << 16) & RTK_TXSTAT_EARLY_THRESH) 
+#define RTK_TXTH_256		8	/* (x) * 32 bytes */
+#define RTK_TXTH_1536		48
 
 /*
  * Interrupt status register bits.

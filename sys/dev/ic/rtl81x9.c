@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.64 2006/10/12 01:31:01 christos Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.65 2006/11/05 15:49:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.64 2006/10/12 01:31:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.65 2006/11/05 15:49:41 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -696,9 +696,6 @@ rtk_attach(struct rtk_softc *sc)
 	 */
 	sc->sc_flags |= RTK_ATTACHED;
 
-	/* Init Early TX threshold. */
-	sc->sc_txthresh = TXTH_256;
-
 	/* Reset the adapter. */
 	rtk_reset(sc);
 
@@ -1200,7 +1197,7 @@ rtk_txeof(struct rtk_softc *sc)
 				printf("%s: transmit underrun;",
 				    sc->sc_dev.dv_xname);
 #endif
-				if (sc->sc_txthresh < TXTH_MAX) {
+				if (sc->sc_txthresh < RTK_TXTH_MAX) {
 					sc->sc_txthresh += 2;
 #ifdef DEBUG
 					printf(" new threshold: %d bytes",
@@ -1372,7 +1369,8 @@ rtk_start(struct ifnet *ifp)
 
 		CSR_WRITE_4(sc, txd->txd_txaddr,
 		    txd->txd_dmamap->dm_segs[0].ds_addr);
-		CSR_WRITE_4(sc, txd->txd_txstat, RTK_TX_THRESH(sc) | len);
+		CSR_WRITE_4(sc, txd->txd_txstat,
+		    RTK_TXSTAT_THRESH(sc->sc_txthresh) | len);
 
 		/*
 		 * Set a timeout in case the chip goes out to lunch.
@@ -1418,7 +1416,7 @@ rtk_init(struct ifnet *ifp)
 	rtk_list_tx_init(sc);
 
 	/* Init Early TX threshold. */
-	sc->sc_txthresh = TXTH_256;
+	sc->sc_txthresh = RTK_TXTH_256;
 	/*
 	 * Enable transmit and receive.
 	 */
