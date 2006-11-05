@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.91 2006/11/04 05:18:26 tsutsui Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.92 2006/11/05 07:59:21 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.91 2006/11/04 05:18:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.92 2006/11/05 07:59:21 itohy Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -111,6 +111,7 @@ static int ex_eeprom_busy(struct ex_softc *);
 static int ex_add_rxbuf(struct ex_softc *, struct ex_rxdesc *);
 static void ex_init_txdescs(struct ex_softc *);
 
+static void ex_setup_tx(struct ex_softc *);
 static void ex_shutdown(void *);
 static void ex_start(struct ifnet *);
 static void ex_txstat(struct ex_softc *);
@@ -612,6 +613,31 @@ ex_probemedia(sc)
 }
 
 /*
+ * Setup transmitter parameters.
+ */
+static void
+ex_setup_tx(sc)
+	struct ex_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+
+	/*
+	 * Disable reclaim threshold for 90xB, set free threshold to
+	 * 6 * 256 = 1536 for 90x.
+	 */
+	if (sc->ex_conf & EX_CONF_90XB)
+		bus_space_write_2(iot, ioh, ELINK_COMMAND,
+		    ELINK_TXRECLTHRESH | 255);
+	else
+		bus_space_write_1(iot, ioh, ELINK_TXFREETHRESH, 6);
+
+	/* Setup early transmission start threshold. */
+	bus_space_write_2(iot, ioh, ELINK_COMMAND,
+	    ELINK_TXSTARTTHRESH | sc->tx_start_thresh);
+}
+
+/*
  * Bring device up.
  */
 int
@@ -660,15 +686,8 @@ ex_init(ifp)
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_RESET);
 	ex_waitcmd(sc);
 
-	/*
-	 * Disable reclaim threshold for 90xB, set free threshold to
-	 * 6 * 256 = 1536 for 90x.
-	 */
-	if (sc->ex_conf & EX_CONF_90XB)
-		bus_space_write_2(iot, ioh, ELINK_COMMAND,
-		    ELINK_TXRECLTHRESH | 255);
-	else
-		bus_space_write_1(iot, ioh, ELINK_TXFREETHRESH, 6);
+	/* Load Tx parameters. */
+	ex_setup_tx(sc);
 
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
 	    SET_RX_EARLY_THRESH | ELINK_THRESH_DISABLE);
@@ -774,6 +793,10 @@ allmulti:
 }
 
 
+/*
+ * The Tx Complete interrupts occur only on errors,
+ * and this is the error handler.
+ */
 static void
 ex_txstat(sc)
 	struct ex_softc *sc;
@@ -781,44 +804,86 @@ ex_txstat(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int i;
+	int i, err = 0;
 
 	/*
 	 * We need to read+write TX_STATUS until we get a 0 status
 	 * in order to turn off the interrupt flag.
-	 * ELINK_TXSTATUS is in the upper byte of 2 with ELINK_TIMER
-	 * XXX: Big Endian? Can we assume that TXSTATUS will be the
-	 * upper byte?
+	 * ELINK_TXSTATUS is in the upper byte of 2 with ELINK_TIMER.
 	 */
-	while ((i = bus_space_read_2(iot, ioh, ELINK_TIMER)) & TXS_COMPLETE) {
+	for (;;) {
+		i = bus_space_read_2(iot, ioh, ELINK_TIMER);
+		if ((i & TXS_COMPLETE) == 0)
+			break;
 		bus_space_write_2(iot, ioh, ELINK_TIMER, 0x0);
+		err |= i;
+	}
+	err &= ~TXS_TIMER;
 
-		if (i & TXS_JABBER) {
-			++sc->sc_ethercom.ec_if.if_oerrors;
-			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-				printf("%s: jabber (%x)\n",
-				       sc->sc_dev.dv_xname, i);
-			ex_init(ifp);
-			/* TODO: be more subtle here */
-		} else if (i & TXS_UNDERRUN) {
-			++sc->sc_ethercom.ec_if.if_oerrors;
-			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-				printf("%s: fifo underrun (%x) @%d\n",
-				       sc->sc_dev.dv_xname, i,
-				       sc->tx_start_thresh);
-			if (sc->tx_succ_ok < 100)
-				    sc->tx_start_thresh = min(ETHER_MAX_LEN,
-					    sc->tx_start_thresh + 20);
+	if ((err & (TXS_UNDERRUN | TXS_JABBER | TXS_RECLAIM))
+	    || err == 0 /* should not happen, just in case */) {
+		/*
+		 * Make sure the transmission is stopped.
+		 */
+		bus_space_write_2(iot, ioh, ELINK_COMMAND, ELINK_DNSTALL);
+		for (i = 1000; i > 0; i--)
+			if ((bus_space_read_4(iot, ioh, ELINK_DMACTRL) &
+			    ELINK_DMAC_DNINPROG) == 0)
+				break;
+
+		/*
+		 * Reset the transmitter.
+		 */
+		bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_RESET);
+
+		/* Resetting takes a while and we will do more than wait. */
+
+		ifp->if_flags &= ~IFF_OACTIVE;
+		++sc->sc_ethercom.ec_if.if_oerrors;
+		printf("%s:%s%s%s", sc->sc_dev.dv_xname,
+		    (err & TXS_UNDERRUN) ? " transmit underrun" : "",
+		    (err & TXS_JABBER) ? " jabber" : "",
+		    (err & TXS_RECLAIM) ? " reclaim" : "");
+		if (err == 0)
+			printf(" unknown Tx error");
+		printf(" (%x)", err);
+		if (err & TXS_UNDERRUN) {
+			printf(" @%d", sc->tx_start_thresh);
+			if (sc->tx_succ_ok < 256 &&
+			    (i = min(ETHER_MAX_LEN, sc->tx_start_thresh + 20))
+			    > sc->tx_start_thresh) {
+				printf(", new threshold is %d", i);
+				sc->tx_start_thresh = i;
+			}
 			sc->tx_succ_ok = 0;
-			ex_init(ifp);
-			/* TODO: be more subtle here */
-		} else if (i & TXS_MAX_COLLISION) {
-			++sc->sc_ethercom.ec_if.if_oerrors;
+		}
+		printf("\n");
+		if (err & TXS_MAX_COLLISION)
 			++sc->sc_ethercom.ec_if.if_collisions;
-			bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
-			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
-		} else if (sc->tx_succ_ok < 100)
-			sc->tx_succ_ok++;
+
+		/* Wait for TX_RESET to finish. */
+		ex_waitcmd(sc);
+
+		/* Reload Tx parameters. */
+		ex_setup_tx(sc);
+
+		bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
+		if (sc->tx_head) {
+			ifp->if_flags |= IFF_OACTIVE;
+			bus_space_write_2(iot, ioh, ELINK_COMMAND,
+			    ELINK_DNUNSTALL);
+			bus_space_write_4(iot, ioh, ELINK_DNLISTPTR,
+			    DPD_DMADDR(sc, sc->tx_head));
+
+			/* retrigger watchdog */
+			ifp->if_timer = 5;
+		}
+	} else {
+		if (err & TXS_MAX_COLLISION)
+			++sc->sc_ethercom.ec_if.if_collisions;
+		sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
+		bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
+		bus_space_write_2(iot, ioh, ELINK_COMMAND, ELINK_DNUNSTALL);
 	}
 }
 
@@ -1263,6 +1328,9 @@ ex_intr(arg)
 
 			sc->tx_head = sc->tx_tail = NULL;
 			ifp->if_flags &= ~IFF_OACTIVE;
+
+			if (sc->tx_succ_ok < 256)
+				sc->tx_succ_ok++;
 		}
 
 		if (stat & UP_COMPLETE) {
