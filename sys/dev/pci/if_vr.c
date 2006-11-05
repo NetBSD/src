@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.82 2006/11/03 08:41:05 tsutsui Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.83 2006/11/05 13:05:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.82 2006/11/03 08:41:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.83 2006/11/05 13:05:18 tsutsui Exp $");
 
 #include "rnd.h"
 
@@ -219,10 +219,10 @@ struct vr_softc {
 	pci_chipset_tag_t	vr_pc;		/* PCI chipset info */
 	pcitag_t		vr_tag;		/* PCI tag */
 	struct ethercom		vr_ec;		/* Ethernet common info */
-	u_int8_t 		vr_enaddr[ETHER_ADDR_LEN];
+	uint8_t 		vr_enaddr[ETHER_ADDR_LEN];
 	struct mii_data		vr_mii;		/* MII/media info */
 
-	u_int8_t		vr_revid;	/* Rhine chip revision */
+	uint8_t			vr_revid;	/* Rhine chip revision */
 
 	struct callout		vr_tick_ch;	/* tick callout */
 
@@ -246,9 +246,9 @@ struct vr_softc {
 
 	int	vr_rxptr;		/* next ready RX descriptor */
 
-	u_int32_t	vr_save_iobase;
-	u_int32_t	vr_save_membase;
-	u_int32_t	vr_save_irq;
+	uint32_t	vr_save_iobase;
+	uint32_t	vr_save_membase;
+	uint32_t	vr_save_irq;
 
 #if NRND > 0
 	rndsource_element_t rnd_source;	/* random source */
@@ -362,8 +362,8 @@ int	vr_copy_small = 0;
 /*
  * MII bit-bang glue.
  */
-static u_int32_t vr_mii_bitbang_read(struct device *);
-static void	vr_mii_bitbang_write(struct device *, u_int32_t);
+static uint32_t vr_mii_bitbang_read(struct device *);
+static void	vr_mii_bitbang_write(struct device *, uint32_t);
 
 static const struct mii_bitbang_ops vr_mii_bitbang_ops = {
 	vr_mii_bitbang_read,
@@ -377,7 +377,7 @@ static const struct mii_bitbang_ops vr_mii_bitbang_ops = {
 	}
 };
 
-static u_int32_t
+static uint32_t
 vr_mii_bitbang_read(struct device *self)
 {
 	struct vr_softc *sc = (void *) self;
@@ -386,7 +386,7 @@ vr_mii_bitbang_read(struct device *self)
 }
 
 static void
-vr_mii_bitbang_write(struct device *self, u_int32_t val)
+vr_mii_bitbang_write(struct device *self, uint32_t val)
 {
 	struct vr_softc *sc = (void *) self;
 
@@ -449,11 +449,11 @@ vr_setmulti(struct vr_softc *sc)
 {
 	struct ifnet *ifp;
 	int h = 0;
-	u_int32_t hashes[2] = { 0, 0 };
+	uint32_t hashes[2] = { 0, 0 };
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	int mcnt = 0;
-	u_int8_t rxfilt;
+	uint8_t rxfilt;
 
 	ifp = &sc->vr_ec.ec_if;
 
@@ -588,7 +588,7 @@ vr_rxeof(struct vr_softc *sc)
 	struct vr_desc *d;
 	struct vr_descsoft *ds;
 	int i, total_len;
-	u_int32_t rxstat;
+	uint32_t rxstat;
 
 	ifp = &sc->vr_ec.ec_if;
 
@@ -831,7 +831,7 @@ vr_txeof(struct vr_softc *sc)
 	struct ifnet *ifp = &sc->vr_ec.ec_if;
 	struct vr_desc *d;
 	struct vr_descsoft *ds;
-	u_int32_t txstat;
+	uint32_t txstat;
 	int i, j;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -904,7 +904,7 @@ vr_intr(void *arg)
 {
 	struct vr_softc *sc;
 	struct ifnet *ifp;
-	u_int16_t status;
+	uint16_t status;
 	int handled = 0, dotx = 0;
 
 	sc = arg;
@@ -1493,9 +1493,9 @@ vr_attach(struct device *parent __unused, struct device *self, void *aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 	bus_dma_segment_t seg;
 	struct vr_type *vrt;
-	u_int32_t reg;
+	uint32_t reg;
 	struct ifnet *ifp;
-	u_char eaddr[ETHER_ADDR_LEN], mac;
+	uint8_t eaddr[ETHER_ADDR_LEN], mac;
 	int i, rseg, error;
 
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(sc->vr_pc, sc->vr_tag, (r), (v))
