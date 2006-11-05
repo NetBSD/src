@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.27 2006/11/05 16:59:18 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.28 2006/11/05 19:40:31 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.27 2006/11/05 16:59:18 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.28 2006/11/05 19:40:31 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -116,7 +116,7 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		if (nnode == NULL)
 			return ENOSPC;
 		nnode->tn_id = tmp->tm_nodes_last++;
-		nnode->tn_gen = 0;
+		nnode->tn_gen = arc4random();
 	} else {
 		nnode = LIST_FIRST(&tmp->tm_nodes_avail);
 		LIST_REMOVE(nnode, tn_entries);
