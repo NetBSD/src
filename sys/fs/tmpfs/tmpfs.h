@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.22 2006/11/05 16:59:18 jmmv Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.23 2006/11/05 19:36:07 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ TAILQ_HEAD(tmpfs_dir, tmpfs_dirent);
  * if they can happen at all in practice).
  *
  * XXX A nicer solution shall be attempted. */
+#if defined(_KERNEL)
 #define	TMPFS_DIRCOOKIE_DOT	0
 #define	TMPFS_DIRCOOKIE_DOTDOT	1
 #define	TMPFS_DIRCOOKIE_EOF	2
@@ -152,6 +153,7 @@ tmpfs_dircookie(struct tmpfs_dirent *de)
 
 	return cookie;
 }
+#endif /* defined(_KERNEL) */
 
 /* --------------------------------------------------------------------- */
 
