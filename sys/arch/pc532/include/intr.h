@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10.10.1 2006/11/05 07:54:37 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.10.10.2 2006/11/05 07:57:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -194,7 +194,7 @@ static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){_ipl = ipl};
+	return (ipl_cookie_t){._ipl = ipl};
 }
 
 static inline int
