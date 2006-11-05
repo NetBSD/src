@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.30 2006/11/03 17:01:54 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.31 2006/11/05 15:49:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -227,10 +227,8 @@ struct rtk_softc {
 #define RTK_ENABLED  0x00000002 /* chip is enabled	*/
 
 #define RTK_IS_ENABLED(sc)	((sc)->sc_flags & RTK_ENABLED)
-#define RTK_TX_THRESH(sc)	(((sc)->sc_txthresh << 16) & 0x003F0000)
 
-#define TXTH_256	8
-#define TXTH_MAX	48
+#define RTK_TXTH_MAX	RTK_TXTH_1536
 
 /*
  * register space access macros
