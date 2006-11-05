@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.32 2006/11/03 12:09:46 jld Exp $	*/
+/*	$NetBSD: clock.c,v 1.33 2006/11/05 10:11:55 jld Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32 2006/11/03 12:09:46 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2006/11/05 10:11:55 jld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,25 +171,35 @@ get_tsc_offset_ns(void)
 	struct cpu_info *ci = curcpu();
 #endif
 
-	for (;;) {
-		tsc_delta = cpu_counter() - shadow_tsc_stamp;
+	tsc_delta = cpu_counter() - shadow_tsc_stamp;
 #ifndef XEN3
-		offset = tsc_delta * 1000000000ULL / cpu_frequency(ci);
+	offset = tsc_delta * 1000000000ULL / cpu_frequency(ci);
 #else
-		offset = scale_delta(tsc_delta, shadow_freq_mul,
-		    shadow_freq_shift);
+	offset = scale_delta(tsc_delta, shadow_freq_mul,
+	    shadow_freq_shift);
 #endif
 #ifdef XEN_CLOCK_DEBUG
-		if (offset > 10000000000ULL)
+	if (offset > 10000000000ULL)
 		printf("get_tsc_offset_ns: tsc_delta=%llu offset=%llu\n",
 		    tsc_delta, offset);
 #endif
+	return offset;
+}
+
+static uint64_t
+get_system_time(void)
+{
+	uint64_t stime;
+
+	for (;;) {
+		stime = shadow_system_time + get_tsc_offset_ns();
+		
 		/* if the timestamp went stale before we used it, refresh */
 		if (time_values_up_to_date())
 			break;
 		get_time_values_from_xen();
 	}
-	return offset;
+	return stime;
 }
 
 void
@@ -505,8 +515,7 @@ xen_timer_handler(void *arg, struct intrframe *regs)
 	newcc = cpu_counter();
 
 	ticks_done = 0;
-	delta = (int64_t)(shadow_system_time + get_tsc_offset_ns()
-	    - processed_system_time);
+	delta = (int64_t)(get_system_time() - processed_system_time);
 	while (delta >= (int64_t)NS_PER_TICK) {
 		/* Have hardclock do its thing. */
 		oldtime = time;
