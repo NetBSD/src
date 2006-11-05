@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.748 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.749 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -166,3 +166,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		kernels. [tls 20061101]
 	useradd(8): Change the default shell for newly added users to
 		/bin/sh. [pavel 20061102]
+	tmpfs: NFS support is now complete.  At the very least, all the
+		relevant tmpfs regression tests pass successfully when
+		executed over a remote tmpfs mounted through NFS.
+		[jmmv 20061105]
+	tmpfs: Add a LKM for this file system. [jmmv 20061105]
