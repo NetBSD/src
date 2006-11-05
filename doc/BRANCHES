@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.123 2006/11/04 14:45:54 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.124 2006/11/05 07:10:58 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -410,16 +410,6 @@ Notes:
 
 		notyet:
 			others
-
-		hp300 GENERIC fails with the following.
-/exports/nbsd/src/sys/kern/init_main.c: In function 'test_splraiseipl':
-/exports/nbsd/src/sys/kern/init_main.c:222: error: called object '_splraise(8448
-)' is not a function
---- init_main.o ---
-*** [init_main.o] Error code 1
-1 error
-
-nbmake: stopped in /exports/abhome/build/hp300/GENERIC
 
 
 ########################################################################
