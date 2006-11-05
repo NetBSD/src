@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.31 2006/11/05 15:49:41 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.32 2006/11/05 16:52:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -40,12 +40,19 @@
 #include <sys/rnd.h>
 #endif
 
-#ifdef __NO_STRICT_ALIGNMENT
-#define RTK_ETHER_ALIGN	0
-#else
 #define RTK_ETHER_ALIGN	2
-#endif
 #define RTK_RXSTAT_LEN	4
+
+#ifdef __NO_STRICT_ALIGNMENT
+/*
+ * XXX According to PR kern/33763, some 8168 and variants can't DMA
+ * XXX RX packet data into unaligned buffer. This means such chips will
+ * XXX never work on !__NO_STRICT_ALIGNMENT hosts without copying buffer.
+ */
+#define RE_ETHER_ALIGN	0
+#else
+#define RE_ETHER_ALIGN	2
+#endif
 
 struct rtk_type {
 	uint16_t		rtk_vid;
@@ -103,6 +110,11 @@ struct rtk_mii_frame {
  */
 
 #ifdef dreamcast
+/*
+ * XXX dreamcast has only 32KB DMA'able memory on its PCI bridge.
+ * XXX Maybe this should be handled by prop_dictionary, or
+ * XXX some other new API which returns available DMA resources.
+ */
 #define RTK_RX_BUF_SZ		RTK_RXBUF_16
 #else
 #define RTK_RX_BUF_SZ		RTK_RXBUF_64
@@ -118,41 +130,42 @@ struct rtk_mii_frame {
  * The TX rings can hold upto 64 descriptors on 8139C+, and
  * 1024 descriptors on 8169 gigE chips.
  */
-#define RTK_RING_ALIGN		256
+#define RE_RING_ALIGN		256
 
-#define RTK_RX_DESC_CNT		64
-#define RTK_TX_DESC_CNT_8139	64
-#define RTK_TX_DESC_CNT_8169	1024
-#define RTK_TX_QLEN		64
+#define RE_RX_DESC_CNT		64
+#define RE_TX_DESC_CNT_8139	64
+#define RE_TX_DESC_CNT_8169	1024
+#define RE_TX_QLEN		64
 
-struct rtk_rxsoft {
+struct re_rxsoft {
 	struct mbuf		*rxs_mbuf;
 	bus_dmamap_t		rxs_dmamap;
 };
 
-struct rtk_list_data {
-	struct rtk_txq {
+struct re_list_data {
+	struct re_txq {
 		struct mbuf *txq_mbuf;
 		bus_dmamap_t txq_dmamap;
 		int txq_descidx;
-	} rtk_txq[RTK_TX_QLEN];
-	int			rtk_txq_considx;
-	int			rtk_txq_prodidx;
-	bus_dmamap_t		rtk_tx_list_map;
-	struct rtk_desc		*rtk_tx_list;
-	bus_dma_segment_t 	rtk_tx_listseg;
-	int			rtk_tx_free;	/* # of free descriptors */
-	int			rtk_tx_nextfree; /* next descriptor to use */
-	int			rtk_tx_desc_cnt; /* # of descriptors */
-	int			rtk_tx_listnseg;
+	} re_txq[RE_TX_QLEN];
+	int			re_txq_considx;
+	int			re_txq_prodidx;
+	bus_dmamap_t		re_tx_list_map;
+	struct re_desc		*re_tx_list;
+	bus_dma_segment_t 	re_tx_listseg;
+	int			re_tx_free;	/* # of free descriptors */
+	int			re_tx_nextfree; /* next descriptor to use */
+	int			re_tx_desc_cnt; /* # of descriptors */
+	int			re_tx_listnseg;
 
-	struct rtk_rxsoft	rtk_rxsoft[RTK_RX_DESC_CNT];
-	bus_dmamap_t		rtk_rx_list_map;
-	struct rtk_desc		*rtk_rx_list;
-	bus_dma_segment_t 	rtk_rx_listseg;
-	int			rtk_rx_prodidx;
-	int			rtk_rx_listnseg;
+	struct re_rxsoft	re_rxsoft[RE_RX_DESC_CNT];
+	bus_dmamap_t		re_rx_list_map;
+	struct re_desc		*re_rx_list;
+	bus_dma_segment_t 	re_rx_listseg;
+	int			re_rx_prodidx;
+	int			re_rx_listnseg;
 };
+
 struct rtk_tx_desc {
 	SIMPLEQ_ENTRY(rtk_tx_desc) txd_q;
 	struct mbuf		*txd_mbuf;
@@ -170,20 +183,22 @@ struct rtk_softc {
 	bus_space_tag_t		rtk_btag;	/* bus space tag */
 	int			rtk_type;
 	bus_dma_tag_t 		sc_dmat;
-	bus_dma_segment_t 	sc_dmaseg;
-	int			sc_dmanseg;
 
-	bus_dmamap_t 		recv_dmamap;
+	bus_dma_segment_t 	sc_dmaseg;	/* for rtk(4) */
+	int			sc_dmanseg;	/* for rtk(4) */
+
+	bus_dmamap_t 		recv_dmamap;	/* for rtk(4) */
 	caddr_t			rtk_rx_buf;
 
 	struct rtk_tx_desc	rtk_tx_descs[RTK_TX_LIST_CNT];
 	SIMPLEQ_HEAD(, rtk_tx_desc) rtk_tx_free;
 	SIMPLEQ_HEAD(, rtk_tx_desc) rtk_tx_dirty;
-	struct rtk_list_data	rtk_ldata;
-	struct mbuf		*rtk_head;
-	struct mbuf		*rtk_tail;
-	uint32_t		rtk_rxlenmask;
-	int			rtk_testmode;
+
+	struct re_list_data	re_ldata;
+	struct mbuf		*re_head;
+	struct mbuf		*re_tail;
+	uint32_t		re_rxlenmask;
+	int			re_testmode;
 
 	int			sc_flags;	/* misc flags */
 	int			sc_txthresh;	/* Early tx threshold */
@@ -201,26 +216,26 @@ struct rtk_softc {
 #endif
 };
 
-#define RTK_TX_DESC_CNT(sc)	((sc)->rtk_ldata.rtk_tx_desc_cnt)
-#define RTK_TX_LIST_SZ(sc)	(RTK_TX_DESC_CNT(sc) * sizeof(struct rtk_desc))
-#define RTK_NEXT_TX_DESC(sc, x)	(((x) + 1) % RTK_TX_DESC_CNT(sc))
+#define RE_TX_DESC_CNT(sc)	((sc)->re_ldata.re_tx_desc_cnt)
+#define RE_TX_LIST_SZ(sc)	(RE_TX_DESC_CNT(sc) * sizeof(struct re_desc))
+#define RE_NEXT_TX_DESC(sc, x)	(((x) + 1) % RE_TX_DESC_CNT(sc))
 
-#define RTK_RX_LIST_SZ		(RTK_RX_DESC_CNT * sizeof(struct rtk_desc))
-#define RTK_NEXT_RX_DESC(sc, x)	(((x) + 1) % RTK_RX_DESC_CNT)
+#define RE_RX_LIST_SZ		(RE_RX_DESC_CNT * sizeof(struct re_desc))
+#define RE_NEXT_RX_DESC(sc, x)	(((x) + 1) % RE_RX_DESC_CNT)
 
-#define RTK_NEXT_TXQ(sc, x)	(((x) + 1) % RTK_TX_QLEN)
+#define RE_NEXT_TXQ(sc, x)	(((x) + 1) % RE_TX_QLEN)
 
-#define RTK_TXDESCSYNC(sc, idx, ops)					\
+#define RE_TXDESCSYNC(sc, idx, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat,					\
-	    (sc)->rtk_ldata.rtk_tx_list_map,				\
-	    sizeof(struct rtk_desc) * (idx),				\
-	    sizeof(struct rtk_desc),					\
+	    (sc)->re_ldata.re_tx_list_map,				\
+	    sizeof(struct re_desc) * (idx),				\
+	    sizeof(struct re_desc),					\
 	    (ops))
-#define RTK_RXDESCSYNC(sc, idx, ops)					\
+#define RE_RXDESCSYNC(sc, idx, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat,					\
-	    (sc)->rtk_ldata.rtk_rx_list_map,				\
-	    sizeof(struct rtk_desc) * (idx),				\
-	    sizeof(struct rtk_desc),					\
+	    (sc)->re_ldata.re_rx_list_map,				\
+	    sizeof(struct re_desc) * (idx),				\
+	    sizeof(struct re_desc),					\
 	    (ops))
 
 #define RTK_ATTACHED 0x00000001 /* attach has succeeded */
