@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.5 2006/06/29 21:50:17 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.6 2006/11/05 09:16:20 martin Exp $	*/
 
 /*
  * tty.c - code for handling serial ports in pppd.
@@ -75,7 +75,7 @@
 #if 0
 #define RCSID	"Id: tty.c,v 1.25 2006/06/04 07:04:57 paulus Exp"
 #else
-__RCSID("$NetBSD: tty.c,v 1.5 2006/06/29 21:50:17 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.6 2006/11/05 09:16:20 martin Exp $");
 #endif
 #endif
 
@@ -87,7 +87,6 @@ __RCSID("$NetBSD: tty.c,v 1.5 2006/06/29 21:50:17 christos Exp $");
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <syslog.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <setjmp.h>
@@ -943,7 +942,6 @@ start_charshunt(ifd, ofd)
     }
     if (cpid == 0) {
 	/* child */
-	reopen_log();
 	if (!nodetach)
 	    log_to_fd = -1;
 	else if (log_to_fd >= 0)
