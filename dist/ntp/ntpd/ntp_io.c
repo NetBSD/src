@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.19 2006/07/29 14:56:57 kardel Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.20 2006/11/06 12:19:30 kardel Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -1025,7 +1025,7 @@ enable_multicast_if(struct interface *iface, struct sockaddr_storage *maddr)
 	case AF_INET:
 		if (setsockopt(iface->fd, IPPROTO_IP, IP_MULTICAST_IF,
 		   (char *)&(((struct sockaddr_in*)&iface->sin)->sin_addr.s_addr),
-		    sizeof(struct sockaddr_in*)) == -1) {
+		    sizeof(struct in_addr)) == -1) {
 			netsyslog(LOG_ERR,
 			"setsockopt IP_MULTICAST_IF failure: %m on socket %d, addr %s for multicast address %s",
 			iface->fd, stoa(&iface->sin), stoa(maddr));
