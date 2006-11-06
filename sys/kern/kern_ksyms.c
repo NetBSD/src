@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.30 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.31 2006/11/06 13:35:35 jmmv Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -519,15 +519,22 @@ ksyms_init(int symsize, void *start, void *end)
  * Setup the kernel symbol table stuff.
  * Use this when the address of the symbol and string tables are known;
  * otherwise use ksyms_init with an ELF image.
+ * We need to pass a minimal ELF header which will later be completed by
+ * ksyms_hdr_init and handed off to userland through /dev/ksyms.  We use
+ * a caddr_t rather than a pointer to avoid exposing the Elf_Ehdr type.
  */
 void
-ksyms_init_explicit(caddr_t symstart, size_t symsize,
+ksyms_init_explicit(caddr_t ehdr, caddr_t symstart, size_t symsize,
     caddr_t strstart, size_t strsize)
 {
 
 	KASSERT(symstart != NULL);
 	KASSERT(strstart != NULL);
 	KASSERT(symstart <= strstart);
+
+#if NKSYMS
+	ksyms_hdr_init(ehdr);
+#endif
 
 	addsymtab("netbsd", symstart, symsize, strstart, strsize,
 	    &kernel_symtab, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.8 2006/10/25 13:56:16 jmmv Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.9 2006/11/06 13:35:35 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.8 2006/10/25 13:56:16 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.9 2006/11/06 13:35:35 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -687,9 +687,21 @@ multiboot_ksyms_init(void)
 	struct multiboot_symbols *ms = &Multiboot_Symbols;
 
 	if (mi->mi_flags & MULTIBOOT_INFO_HAS_ELF_SYMS) {
+		Elf32_Ehdr ehdr;
+
 		KASSERT(esym != 0);
 
-		ksyms_init_explicit(ms->s_symstart, ms->s_symsize,
+		memcpy(ehdr.e_ident, ELFMAG, SELFMAG);
+		ehdr.e_ident[EI_CLASS] = ELFCLASS32;
+		ehdr.e_ident[EI_DATA] = ELFDATA2LSB;
+		ehdr.e_ident[EI_VERSION] = EV_CURRENT;
+		ehdr.e_type = ET_EXEC;
+		ehdr.e_machine = EM_386;
+		ehdr.e_version = 1;
+		ehdr.e_ehsize = sizeof(ehdr);
+
+		ksyms_init_explicit((caddr_t)&ehdr,
+		    ms->s_symstart, ms->s_symsize,
 		    ms->s_strstart, ms->s_strsize);
 	}
 
