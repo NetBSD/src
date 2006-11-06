@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.4 2006/11/03 14:37:41 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.5 2006/11/06 17:25:23 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -28,4 +28,9 @@ sys/dev/pci/if_skvar.h				1.10
 
 	Add jumbo frames support to the sk(4) driver.
 	[riz, ticket #1480]
+
+sys/arch/sparc64/sparc64/locore.s		1.217-1.218 via patch
+
+	Fix a couple of %y register save/restore errors.
+	[nakayama, ticket #1517]
 
