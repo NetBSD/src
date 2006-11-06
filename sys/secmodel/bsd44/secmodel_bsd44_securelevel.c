@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.11 2006/11/04 09:56:59 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.12 2006/11/06 02:02:18 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.11 2006/11/04 09:56:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.12 2006/11/06 02:02:18 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -354,12 +354,14 @@ secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred __unused,
 	case KAUTH_DEVICE_RAWIO_SPEC: {
 		struct vnode *vp;
 		dev_t dev;
+		int d_type;
 
 		vp = arg1;
 
 		KASSERT(vp != NULL);
 
 		dev = vp->v_un.vu_specinfo->si_rdev;
+		d_type = D_OTHER;
 
 		/* Handle /dev/mem and /dev/kmem. */
 		if ((vp->v_type == VCHR) && iskmemdev(dev)) {
@@ -394,11 +396,8 @@ secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred __unused,
 				const struct cdevsw *cdev;
 
 				cdev = cdevsw_lookup(dev);
-				if ((cdev == NULL) ||
-				    (cdev->d_type != D_DISK)) {
-					result = KAUTH_RESULT_ALLOW;
-					break;
-				}
+				if (cdev != NULL)
+					d_type = cdev->d_type;
 
 				break;
 				}
@@ -406,16 +405,18 @@ secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred __unused,
 				const struct bdevsw *bdev;
 
 				bdev = bdevsw_lookup(dev);
-				if ((bdev == NULL) ||
-				    (bdev->d_type != D_DISK)) {
-					result = KAUTH_RESULT_ALLOW;
-					break;
-				}
+				if (bdev != NULL)
+					d_type = bdev->d_type;
 
 				break;
 				}
 			default:
 				result = KAUTH_RESULT_DEFER;
+				break;
+			}
+
+			if (d_type != D_DISK) {
+				result = KAUTH_RESULT_ALLOW;
 				break;
 			}
 
