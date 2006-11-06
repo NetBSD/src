@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.1 2006/10/28 14:36:22 ghen Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.2 2006/11/06 17:27:06 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -9,4 +9,9 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to 3.1.0_PATCH
+
+sys/arch/sparc64/sparc64/locore.s		1.217-1.218 via patch
+
+	Fix a couple of %y register save/restore errors.
+	[nakayama, ticket #1517]
 
