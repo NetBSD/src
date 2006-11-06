@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.4 2006/11/06 11:44:54 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.5 2006/11/06 23:18:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -60,7 +60,7 @@ extern struct pool puffs_pnpool;
  * kernel.  This is the kernel counterpart of "struct puffs_req".
  */
 struct puffs_park {
-	struct puffs_req *park_preq;	/* the relevant preq		*/
+	struct puffs_req park_preq;	/* the relevant preq		*/
 
 	void		*park_kernbuf;	/* kernel buffer address	*/
 	size_t		park_buflen;	/* buffer length		*/
@@ -70,6 +70,12 @@ struct puffs_park {
 
 	TAILQ_ENTRY(puffs_park) park_entries;
 };
+#define park_id		park_preq.preq_id
+#define park_opclass	park_preq.preq_opclass
+#define park_optype	park_preq.preq_optype
+#define park_cookie	park_preq.preq_cookie
+#define park_rv		park_preq.preq_rv
+
 
 #define PUFFS_SIZEOPREQ_UIO_IN 1
 #define PUFFS_SIZEOPREQ_UIO_OUT 2
