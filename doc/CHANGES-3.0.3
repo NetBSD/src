@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.1 2006/10/28 13:57:41 ghen Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.2 2006/11/06 17:28:20 tron Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -10,4 +10,9 @@ sys/sys/param.h					patch
 doc/README.files				patch
 
 	Welcome to 3.0.2_PATCH
+
+sys/arch/sparc64/sparc64/locore.s		1.217-1.218 via patch
+
+	Fix a couple of %y register save/restore errors.
+	[nakayama, ticket #1517]
 
