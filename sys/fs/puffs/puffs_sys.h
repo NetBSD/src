@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.3 2006/10/27 12:25:16 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.4 2006/11/06 11:44:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -41,6 +41,7 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
+#include <sys/pool.h>
 
 #include <fs/puffs/puffs_msgif.h>
 
@@ -51,6 +52,8 @@ extern int (**puffs_fifoop_p)(void *);
 extern const struct vnodeopv_desc puffs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc puffs_specop_opv_desc;
 extern const struct vnodeopv_desc puffs_fifoop_opv_desc;
+
+extern struct pool puffs_pnpool;
 
 /*
  * While a request is going to userspace, park the caller within the
