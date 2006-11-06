@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.40 2006/10/09 11:03:43 peter Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.41 2006/11/06 19:51:12 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -166,8 +166,11 @@ struct wscons_syncops {
 /*
  * Autoconfiguration helper functions.
  */
-void	wsdisplay_cnattach(const struct wsscreen_descr *, void *, int,
-			   int, long);
+void	wsdisplay_cnattach(const struct wsscreen_descr *, void *, int, int,
+            long);
+void	wsdisplay_preattach(const struct wsscreen_descr *, void *, int, int,
+            long);
+
 int	wsdisplaydevprint(void *, const char *);
 int	wsemuldisplaydevprint(void *, const char *);
 

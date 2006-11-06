@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.104 2006/10/17 18:21:29 dogcow Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.105 2006/11/06 19:51:12 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.104 2006/10/17 18:21:29 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.105 2006/11/06 19:51:12 macallan Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -697,6 +697,32 @@ wsdisplay_cnattach(const struct wsscreen_descr *type, void *cookie,
 {
 	const struct wsemul_ops *wsemul;
 
+	KASSERT(wsdisplay_console_initted < 2);
+	KASSERT(type->nrows > 0);
+	KASSERT(type->ncols > 0);
+	KASSERT(crow < type->nrows);
+	KASSERT(ccol < type->ncols);
+
+	wsdisplay_console_conf.emulops = type->textops;
+	wsdisplay_console_conf.emulcookie = cookie;
+	wsdisplay_console_conf.scrdata = type;
+
+	wsemul = wsemul_pick(0); /* default */
+	wsdisplay_console_conf.wsemul = wsemul;
+	wsdisplay_console_conf.wsemulcookie = (*wsemul->cnattach)(type, cookie,
+								  ccol, crow,
+								  defattr);
+
+	cn_tab = &wsdisplay_cons;
+	wsdisplay_console_initted = 2;
+}
+
+void
+wsdisplay_preattach(const struct wsscreen_descr *type, void *cookie,
+	int ccol, int crow, long defattr)
+{
+	const struct wsemul_ops *wsemul;
+
 	KASSERT(!wsdisplay_console_initted);
 	KASSERT(type->nrows > 0);
 	KASSERT(type->ncols > 0);
@@ -1021,7 +1047,7 @@ int
 wsdisplay_param(struct device *dev, u_long cmd, struct wsdisplay_param *dp)
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
-	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
+	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, 
 					   sc->sc_focus->scr_dconf->emulcookie,
 					   cmd, (caddr_t)dp, 0, NULL));
 }
