@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.4 2006/10/12 19:45:32 dogcow Exp $ */
+/*	$NetBSD: apmbios.c,v 1.5 2006/11/07 10:31:31 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.4 2006/10/12 19:45:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.5 2006/11/07 10:31:31 mrg Exp $");
 
 #include "opt_apm.h"
 #include "opt_compat_mach.h"	/* Needed to get the right segment def */
@@ -353,7 +353,7 @@ apm_get_powstat(void *c __unused, u_int batteryid, struct apm_power_info *pi)
 {
 	struct bioscallregs regs;
 	int error;
-	u_int nbattery, caps;
+	u_int nbattery = 0, caps;
 
 	if (apm_minver >= 2) {
 		apm_get_capabilities(&regs, &nbattery, &caps);
