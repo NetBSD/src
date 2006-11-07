@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.4 2006/10/23 16:53:17 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.5 2006/11/07 22:10:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.4 2006/10/23 16:53:17 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.5 2006/11/07 22:10:53 pooka Exp $");
 #endif /* !lint */
 
 #include <puffs.h>
@@ -115,11 +115,14 @@ puffsdump_req(struct puffs_req *preq)
 {
 	const char **map;
 
-	map = preq->preq_opclass == PUFFSOP_VFS ? vfsop_revmap : vnop_revmap;
-	printf("\treqid: %" PRIuFAST64 ", opclass %d, optype: %s, cookie: %p,\n"
-	    "\t\taux: %p, auxlen: %zu\n",
-	    preq->preq_id, preq->preq_opclass, map[preq->preq_optype],
-	    preq->preq_cookie, preq->preq_aux, preq->preq_auxlen);
+	map = PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS
+	    ? vfsop_revmap : vnop_revmap;
+	printf("\treqid: %" PRIuFAST64 ", opclass %d%s, optype: %s, "
+	    "cookie: %p,\n\t\taux: %p, auxlen: %zu\n",
+	    preq->preq_id, PUFFSOP_OPCLASS(preq->preq_opclass),
+	    PUFFSOP_WANTREPLY(preq->preq_opclass) ? "" : " (FAF)",
+	    map[preq->preq_optype], preq->preq_cookie,
+	    preq->preq_aux, preq->preq_auxlen);
 }
 
 void
