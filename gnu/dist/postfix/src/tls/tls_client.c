@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_client.c,v 1.1.1.2 2006/07/19 01:17:39 rpaulo Exp $	*/
+/*	$NetBSD: tls_client.c,v 1.1.1.3 2006/11/07 02:59:01 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -567,7 +567,7 @@ static void verify_extract_peer(const char *nexthop, const char *hname,
 			break;
 		}
 	    }
-	    sk_GENERAL_NAME_free(gens);
+	    sk_GENERAL_NAME_pop_free(gens, GENERAL_NAME_free);
 	}
     }
     if (dNSName_found) {

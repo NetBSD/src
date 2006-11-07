@@ -12691,3 +12691,81 @@ Apologies for any names omitted.
 	Robustness: mail delivery agents now detect loops in queue
 	files. Files with too many backward jumps are saved to the
 	"corrupt" directory.  File: global/record.c.
+
+20060831
+
+	Bugfix (introduced with initial implementation): missing
+	"dict_errno = 0" caused mis-leading error messages after
+	non-error lookup failure.  Victor Duchovni.  File:
+	util/dict_cidr.c.
+
+	Robustness: the default TLS cipher lists were changed from
+	!foo:ALL into ALL:!foo. Victor Duchovni.  Files:
+	global/mail_params.h and documentation.
+
+20060902
+
+	Bugfix (introduced Postfix 2.3): the LMTP client stripped
+	"inet": from the next-hop destination, but still used the
+	complete next-hop from the delivery request. File:
+	smtp/smtp_connect.c.
+
+20060903
+
+	Cleanup: record loop detection.  File: global/record.c.
+
+20060929
+
+	Workaround: AIX 5.[1-3] getaddrinfo() creates socket address
+	structures with a non-zero port value. This breaks the
+	smtp_bind_address etc. features, and breaks inet_interfaces
+	settings with only one IP address.  Problem reported by
+	Hamish Marson.  Files: util/sock_addr.[hc], util/myaddrinfo.c.
+
+	Bugfix (introduced with the Postfix TLS patch): memory leak
+	in verify_extract_peer(). The OpenSSL documentation provides
+	no information on how subjectAltNames are managed.  Sam
+	Rushing, ironport.  File: tls/tls_client.c.
+
+	Bugfix (introduced with Postfix 2.2): smtp_generic_maps
+	turned on MIME conversion. File: smtp/smtp_proto.c.
+
+	Workaround: don't send SIZE information in the MAIL FROM
+	command when message content will be subject to 8bit ->
+	quoted-printable conversion.  File: smtp/smtp_proto.c.
+
+20061002
+
+	Compatibility: Sendmail now invokes the Milter connect
+	action with the verified hostname instead of the name
+	obtained with PTR lookup. File: smtpd/smtpd.c.
+
+20061004
+
+	Cleanup: force space between mailq queueid+status and file
+	size items. File: showq/showq.c.
+
+20061015
+
+	Cleanup: convert the Milter {mail_addr} and {rcpt_addr}
+	macro values to external form. File: smtpd/smtpd_milter.c.
+
+	Cleanup: the Milter {mail_addr} and {rcpt_addr} macros are
+	now available with non-SMTP mail. File: cleanup/cleanup_milter.c.
+
+	Cleanup: convert addresses in Milter recipient add/delete
+	requests to internal form.  File: cleanup/cleanup_milter.c.
+
+	Cleanup: with non-SMTP mail, convert addresses in simulated
+	MAIL FROM and RCPT TO events to external form.  File:
+	cleanup/cleanup_milter.c.
+
+20061017
+
+	Cleanup: removed spurious warning when the cleanup server
+	attempts to bounce mail with soft_bounce=yes. Problem
+	reported by Ralf Hildebrandt. File: cleanup/cleanup_bounce.c.
+
+	Bugfix: null pointer bug when receiving a non-protocol
+	response on a cached SMTP/LMTP connection.  Report by Brian
+	Kantor.  Fix by Victor Duchovni.  File: smtp/smtp_reuse.c.
