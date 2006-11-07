@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.5 2006/11/06 11:44:54 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.6 2006/11/07 22:10:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.5 2006/11/06 11:44:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.6 2006/11/07 22:10:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -104,7 +104,11 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	MALLOC(pmp, struct puffs_mount *, sizeof(struct puffs_mount),
 	    M_PUFFS, M_WAITOK | M_ZERO);
 
+	mp->mnt_fs_bshift = DEV_BSHIFT;
+	mp->mnt_dev_bshift = DEV_BSHIFT;
+	mp->mnt_flag &= ~MNT_LOCAL; /* we don't really know, so ... */
 	mp->mnt_data = pmp;
+
 	pmp->pmp_status = PUFFSTAT_MOUNTING;
 	pmp->pmp_nextreq = 0;
 	pmp->pmp_mp = mp;
@@ -278,7 +282,7 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 	 * So, didn't have the magic root vnode available.
 	 * No matter, grab another an stuff it with the cookie.
 	 */
-	if (puffs_getvnode(mp, pmp->pmp_rootcookie, VDIR, 0, &vp))
+	if (puffs_getvnode(mp, pmp->pmp_rootcookie, VDIR, 0, 0, &vp))
 		panic("sloppy programming");
 
 	simple_lock(&pmp->pmp_lock);
