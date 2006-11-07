@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.12 2006/08/01 00:12:42 rpaulo Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.13 2006/11/07 03:09:19 rpaulo Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -2650,15 +2650,15 @@ extern bool var_smtp_cname_overr;
   * TLS cipherlists
   */
 #define VAR_TLS_HIGH_CLIST	"tls_high_cipherlist"
-#define DEF_TLS_HIGH_CLIST	"!EXPORT:!LOW:!MEDIUM:ALL:+RC4:@STRENGTH"
+#define DEF_TLS_HIGH_CLIST	"ALL:!EXPORT:!LOW:!MEDIUM:+RC4:@STRENGTH"
 extern char *var_tls_high_clist;
 
 #define VAR_TLS_MEDIUM_CLIST	"tls_medium_cipherlist"
-#define DEF_TLS_MEDIUM_CLIST	"!EXPORT:!LOW:ALL:+RC4:@STRENGTH"
+#define DEF_TLS_MEDIUM_CLIST	"ALL:!EXPORT:!LOW:+RC4:@STRENGTH"
 extern char *var_tls_medium_clist;
 
 #define VAR_TLS_LOW_CLIST	"tls_low_cipherlist"
-#define DEF_TLS_LOW_CLIST	"!EXPORT:ALL:+RC4:@STRENGTH"
+#define DEF_TLS_LOW_CLIST	"ALL:!EXPORT:+RC4:@STRENGTH"
 extern char *var_tls_low_clist;
 
 #define VAR_TLS_EXPORT_CLIST	"tls_export_cipherlist"

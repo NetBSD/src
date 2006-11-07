@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.20 2006/08/27 00:47:09 rpaulo Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.21 2006/11/07 03:09:19 rpaulo Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -30,6 +30,7 @@
     || defined(BSDI2) || defined(BSDI3) || defined(BSDI4) \
     || defined(OPENBSD2) || defined(OPENBSD3) || defined(OPENBSD4) \
     || defined(NETBSD1) || defined(NETBSD2) || defined(NETBSD3) \
+    || defined(NETBSD4) \
     || defined(EKKOBSD1)
 #define SUPPORTED
 #include <sys/types.h>
@@ -514,6 +515,7 @@ extern int opterr;
 # define HAS_IPV6
 #endif
 #define BROKEN_AI_PASSIVE_NULL_HOST
+#define BROKEN_AI_NULL_SERVICE
 #endif
 
 #ifdef AIX4
