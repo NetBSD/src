@@ -417,14 +417,14 @@ SMTP(8)                                                                SMTP(8)
               number generator (PRNG).
 
        <b><a href="postconf.5.html#tls_high_cipherlist">tls_high_cipherlist</a></b>
-       <b>(!EXPORT:!LOW:!MEDIUM:ALL:+RC4:@STRENGTH)</b>
+       <b>(ALL:!EXPORT:!LOW:!MEDIUM:+RC4:@STRENGTH)</b>
               The OpenSSL cipherlist for "HIGH" grade ciphers.
 
-       <b><a href="postconf.5.html#tls_medium_cipherlist">tls_medium_cipherlist</a> (!EXPORT:!LOW:ALL:+RC4:@STRENGTH)</b>
+       <b><a href="postconf.5.html#tls_medium_cipherlist">tls_medium_cipherlist</a> (ALL:!EXPORT:!LOW:+RC4:@STRENGTH)</b>
               The OpenSSL cipherlist for "MEDIUM" or higher grade
               ciphers.
 
-       <b><a href="postconf.5.html#tls_low_cipherlist">tls_low_cipherlist</a> (!EXPORT:ALL:+RC4:@STRENGTH)</b>
+       <b><a href="postconf.5.html#tls_low_cipherlist">tls_low_cipherlist</a> (ALL:!EXPORT:+RC4:@STRENGTH)</b>
               The  OpenSSL  cipherlist  for "LOW" or higher grade
               ciphers.
 
