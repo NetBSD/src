@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.3 2006/11/06 23:18:18 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.4 2006/11/07 22:10:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.3 2006/11/06 23:18:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.4 2006/11/07 22:10:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -56,10 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.3 2006/11/06 23:18:18 pooka Exp $"
  * kernel-user-kernel waitqueues
  */
 
-static int touser(struct puffs_mount *, struct puffs_park *, unsigned int,
+static int touser(struct puffs_mount *, struct puffs_park *, uint64_t,
 		  struct vnode *, struct vnode *);
 
-unsigned int
+uint64_t
 puffs_getreqid(struct puffs_mount *pmp)
 {
 	unsigned int rv;
@@ -119,7 +119,7 @@ puffs_vntouser(struct puffs_mount *pmp, int optype,
  */
 int
 puffs_vntouser_req(struct puffs_mount *pmp, int optype,
-	void *kbuf, size_t buflen, void *cookie, unsigned int reqid,
+	void *kbuf, size_t buflen, void *cookie, uint64_t reqid,
 	struct vnode *vp1, struct vnode *vp2)
 {
 	struct puffs_park park;
@@ -168,6 +168,33 @@ puffs_vntouser_adjbuf(struct puffs_mount *pmp, int optype,
 }
 
 /*
+ * Notice: kbuf will be free'd later.  I must be allocated from the
+ * kernel heap and it's ownership is shifted to this function from
+ * now on, i.e. the caller is not allowed to use it anymore!
+ */
+void
+puffs_vntouser_faf(struct puffs_mount *pmp, int optype,
+	void *kbuf, size_t buflen, void *cookie)
+{
+	struct puffs_park *ppark;
+
+	/* XXX: is it allowable to sleep here? */
+	ppark = malloc(sizeof(struct puffs_park), M_PUFFS, M_NOWAIT | M_ZERO);
+	if (ppark == NULL)
+		return; /* 2bad */
+
+	ppark->park_opclass = PUFFSOP_VN | PUFFSOPFLAG_FAF;
+	ppark->park_optype = optype;
+	ppark->park_cookie = cookie;
+
+	ppark->park_kernbuf = kbuf;
+	ppark->park_buflen = buflen;
+	ppark->park_copylen = buflen;
+
+	(void)touser(pmp, ppark, 0, NULL, NULL);
+}
+
+/*
  * Wait for the userspace ping-pong game in calling process context.
  *
  * This unlocks vnodes if they are supplied.  vp1 is the vnode
@@ -178,7 +205,7 @@ puffs_vntouser_adjbuf(struct puffs_mount *pmp, int optype,
  * there's a slight ugly-factor also, but let's not worry about that.
  */
 static int
-touser(struct puffs_mount *pmp, struct puffs_park *park, unsigned int reqid,
+touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 	struct vnode *vp1, struct vnode *vp2)
 {
 
@@ -189,9 +216,9 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, unsigned int reqid,
 		return ENXIO;
 	}
 
-	park->park_id = reqid;
+	ppark->park_id = reqid;
 
-	TAILQ_INSERT_TAIL(&pmp->pmp_req_touser, park, park_entries);
+	TAILQ_INSERT_TAIL(&pmp->pmp_req_touser, ppark, park_entries);
 	pmp->pmp_req_touser_waiters++;
 
 	/*
@@ -213,14 +240,16 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, unsigned int reqid,
 	/*
 	 * XXX: does releasing the lock here cause trouble?  Can't hold
 	 * it, because otherwise the below would cause locking against
-	 * oneself-problems in the kqueue stuff
+	 * oneself-problems in the kqueue stuff.  yes, it is a
+	 * theoretical race, so it must be solved
 	 */
 	simple_unlock(&pmp->pmp_lock);
 
 	wakeup(&pmp->pmp_req_touser);
 	selnotify(pmp->pmp_sel, 0);
 
-	ltsleep(park, PUSER, "puffs1", 0, NULL);
+	if (PUFFSOP_WANTREPLY(ppark->park_opclass))
+		ltsleep(ppark, PUSER, "puffs1", 0, NULL);
 
 #if 0
 	/* relock */
@@ -230,7 +259,7 @@ touser(struct puffs_mount *pmp, struct puffs_park *park, unsigned int reqid,
 		KASSERT(vn_lock(vp2, LK_EXCLUSIVE | LK_RETRY) == 0);
 #endif
 
-	return park->park_rv;
+	return ppark->park_rv;
 }
 
 /*
@@ -751,9 +780,15 @@ puffsgetop(struct puffs_mount *pmp, struct puffs_req *preq, int nonblock)
 		 simple_unlock(&pmp->pmp_lock);
 		 return error;
 	}
-	simple_lock(&pmp->pmp_lock);
-	TAILQ_INSERT_TAIL(&pmp->pmp_req_replywait, park, park_entries);
-	simple_unlock(&pmp->pmp_lock);
+
+	if (PUFFSOP_WANTREPLY(park->park_opclass)) {
+		simple_lock(&pmp->pmp_lock);
+		TAILQ_INSERT_TAIL(&pmp->pmp_req_replywait, park, park_entries);
+		simple_unlock(&pmp->pmp_lock);
+	} else {
+		free(park->park_kernbuf, M_PUFFS);
+		free(park, M_PUFFS);
+	}
 
 	return 0;
 }

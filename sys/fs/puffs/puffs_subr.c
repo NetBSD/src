@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.6 2006/10/27 19:54:34 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.7 2006/11/07 22:10:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.6 2006/10/27 19:54:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.7 2006/11/07 22:10:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -47,17 +47,31 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.6 2006/10/27 19:54:34 pooka Exp $")
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
 
+#include <miscfs/genfs/genfs_node.h>
 #include <miscfs/specfs/specdev.h>
 
 POOL_INIT(puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0, "puffspnpl",
     &pool_allocator_nointr);
+
+
+static void puffs_gop_size(struct vnode *, off_t, off_t *, int);
+static void puffs_gop_markupdate(struct vnode *, int);
+
+static const struct genfs_ops puffs_genfsops = {
+	.gop_size = puffs_gop_size,
+	.gop_write = genfs_gop_write,
+	.gop_markupdate = puffs_gop_markupdate,
+#if 0
+	.gop_alloc, should ask userspace
+#endif
+};
 
 /*
  * Grab a vnode, intialize all the puffs-dependant stuff.
  */
 int
 puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
-	dev_t rdev, struct vnode **vpp)
+	voff_t vsize, dev_t rdev, struct vnode **vpp)
 {
 	struct puffs_mount *pmp;
 	struct vnode *vp, *nvp;
@@ -142,11 +156,16 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 			vp->v_mount = mp;
 		}
 		break;
+
 	case VFIFO:
 		vp->v_op = puffs_fifoop_p;
 		break;
-	case VDIR:
+
 	case VREG:
+		uvm_vnp_setsize(vp, vsize);
+		break;
+
+	case VDIR:
 	case VLNK:
 	case VSOCK:
 		break;
@@ -165,6 +184,7 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	vp->v_type = type;
 	pnode->pn_vp = vp;
 
+	genfs_node_init(vp, &puffs_genfsops);
 	*vpp = vp;
 
 	DPRINTF(("new vnode at %p, pnode %p, cookie %p\n", vp,
@@ -187,7 +207,7 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 		return error;
 	}
 
-	error = puffs_getvnode(dvp->v_mount, cookie, type, rdev, &vp);
+	error = puffs_getvnode(dvp->v_mount, cookie, type, 0, rdev, &vp);
 	if (error)
 		return error;
 
@@ -296,4 +316,60 @@ puffs_lwp2pid(struct lwp *l)
 {
 
 	return l ? l->l_proc->p_pid : 0;
+}
+
+
+static void
+puffs_gop_size(struct vnode *vp __unused, off_t size, off_t *eobp,
+	int flags __unused)
+{
+
+	*eobp = size;
+}
+
+static void
+puffs_gop_markupdate(struct vnode *vp, int flags)
+{
+	int uflags = 0;
+
+	if (flags & GOP_UPDATE_ACCESSED)
+		uflags |= PUFFS_UPDATEATIME;
+	if (flags & GOP_UPDATE_MODIFIED)
+		uflags |= PUFFS_UPDATEMTIME;
+
+	puffs_updatenode(vp, uflags);
+}
+
+void
+puffs_updatenode(struct vnode *vp, int flags)
+{
+	struct timespec ts;
+	struct puffs_vnreq_setattr *setattr_arg;
+
+	if (flags == 0)
+		return;
+
+	setattr_arg = malloc(sizeof(struct puffs_vnreq_setattr), M_PUFFS,
+	    M_NOWAIT | M_ZERO);
+	if (setattr_arg == NULL)
+		return; /* 2bad */
+
+	nanotime(&ts);
+
+	VATTR_NULL(&setattr_arg->pvnr_va);
+	if (flags & PUFFS_UPDATEATIME)
+		setattr_arg->pvnr_va.va_atime = ts;
+	if (flags & PUFFS_UPDATECTIME)
+		setattr_arg->pvnr_va.va_ctime = ts;
+	if (flags & PUFFS_UPDATEMTIME)
+		setattr_arg->pvnr_va.va_mtime = ts;
+	if (flags & PUFFS_UPDATESIZE)
+		setattr_arg->pvnr_va.va_size = vp->v_size;
+
+	setattr_arg->pvnr_pid = 0;
+	puffs_credcvt(&setattr_arg->pvnr_cred, NOCRED);
+
+	/* setattr_arg ownership shifted to callee */
+	puffs_vntouser_faf(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_SETATTR,
+	    setattr_arg, sizeof(struct puffs_vnreq_setattr), VPTOPNC(vp));
 }

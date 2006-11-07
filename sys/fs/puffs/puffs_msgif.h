@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.4 2006/10/26 22:52:47 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.5 2006/11/07 22:10:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -47,6 +47,11 @@
 
 #define PUFFSOP_VFS	1
 #define PUFFSOP_VN	2
+#define PUFFSOPFLAG_FAF	0x10	/* fire-and-forget */
+
+#define PUFFSOP_OPCMASK		0x03
+#define PUFFSOP_OPCLASS(a)	((a) & PUFFSOP_OPCMASK)
+#define PUFFSOP_WANTREPLY(a) (((a) & PUFFSOPFLAG_FAF) == 0)
 
 enum {
 	PUFFS_VFS_MOUNT,	PUFFS_VFS_START,	PUFFS_VFS_UNMOUNT,
@@ -224,6 +229,7 @@ struct puffs_vnreq_lookup {
 	struct puffs_cn		pvnr_cn;		/* OUT	*/
 	void			*pvnr_newnode;		/* IN	*/
 	enum vtype		pvnr_vtype;		/* IN	*/
+	voff_t			pvnr_size;		/* IN	*/
 	dev_t			pvnr_rdev;		/* IN	*/
 };
 
