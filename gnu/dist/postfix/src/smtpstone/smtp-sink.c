@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp-sink.c,v 1.1.1.8 2006/07/19 01:17:48 rpaulo Exp $	*/
+/*	$NetBSD: smtp-sink.c,v 1.1.1.9 2006/11/07 02:58:58 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -284,6 +284,7 @@ static void rcpt_response(SINK_STATE *state)
 
 static void data_response(SINK_STATE *state)
 {
+    /* Not: ST_ANY. */
     state->data_state = ST_CR_LF;
     smtp_printf(state->stream, "354 End data with <CR><LF>.<CR><LF>");
     smtp_flush(state->stream);

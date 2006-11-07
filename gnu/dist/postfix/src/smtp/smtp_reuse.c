@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reuse.c,v 1.1.1.2 2006/07/19 01:17:43 rpaulo Exp $	*/
+/*	$NetBSD: smtp_reuse.c,v 1.1.1.3 2006/11/07 02:58:41 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -177,6 +177,7 @@ static SMTP_SESSION *smtp_reuse_common(SMTP_STATE *state, int fd,
 	return (0);
     }
     state->session = session;
+    session->state = state;
 
     /*
      * XXX Temporary fix.

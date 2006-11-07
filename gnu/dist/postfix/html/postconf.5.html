@@ -11604,7 +11604,7 @@ strongly encouraged to not change this setting. </p>
 </DD>
 
 <DT><b><a name="tls_high_cipherlist">tls_high_cipherlist</a>
-(default: !EXPORT:!LOW:!MEDIUM:ALL:+RC4:@STRENGTH)</b></DT><DD>
+(default: ALL:!EXPORT:!LOW:!MEDIUM:+RC4:@STRENGTH)</b></DT><DD>
 
 <p> The OpenSSL cipherlist for "HIGH" grade ciphers. This defines
 the meaning of the "high" setting in <a href="postconf.5.html#smtpd_tls_mandatory_ciphers">smtpd_tls_mandatory_ciphers</a>,
@@ -11617,7 +11617,7 @@ strongly encouraged to not change this setting. </p>
 </DD>
 
 <DT><b><a name="tls_low_cipherlist">tls_low_cipherlist</a>
-(default: !EXPORT:ALL:+RC4:@STRENGTH)</b></DT><DD>
+(default: ALL:!EXPORT:+RC4:@STRENGTH)</b></DT><DD>
 
 <p> The OpenSSL cipherlist for "LOW" or higher grade ciphers. This defines
 the meaning of the "low" setting in <a href="postconf.5.html#smtpd_tls_mandatory_ciphers">smtpd_tls_mandatory_ciphers</a>,
@@ -11630,7 +11630,7 @@ strongly encouraged to not change this setting. </p>
 </DD>
 
 <DT><b><a name="tls_medium_cipherlist">tls_medium_cipherlist</a>
-(default: !EXPORT:!LOW:ALL:+RC4:@STRENGTH)</b></DT><DD>
+(default: ALL:!EXPORT:!LOW:+RC4:@STRENGTH)</b></DT><DD>
 
 <p> The OpenSSL cipherlist for "MEDIUM" or higher grade ciphers. This
 defines the meaning of the "medium" setting in <a href="postconf.5.html#smtpd_tls_mandatory_ciphers">smtpd_tls_mandatory_ciphers</a>,

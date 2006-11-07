@@ -1,4 +1,4 @@
-/*	$NetBSD: showq.c,v 1.1.1.9 2006/07/19 01:17:41 rpaulo Exp $	*/
+/*	$NetBSD: showq.c,v 1.1.1.10 2006/11/07 02:58:34 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -142,8 +142,8 @@ int     var_dup_filter_limit;
 char   *var_empty_addr;
 
 #define STRING_FORMAT	"%-10s %8s %-20s %s\n"
-#define SENDER_FORMAT	"%-11s%8ld %20.20s %s\n"
-#define DROP_FORMAT	"%-10s%c%8ld %20.20s (maildrop queue, sender UID %u)\n"
+#define SENDER_FORMAT	"%-11s %7ld %20.20s %s\n"
+#define DROP_FORMAT	"%-10s%c %7ld %20.20s (maildrop queue, sender UID %u)\n"
 
 static void showq_reasons(VSTREAM *, BOUNCE_LOG *, RCPT_BUF *, DSN_BUF *, 
 HTABLE *);
