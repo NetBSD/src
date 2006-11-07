@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.12 2006/11/06 02:02:18 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.13 2006/11/07 08:53:49 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.12 2006/11/06 02:02:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.13 2006/11/07 08:53:49 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -352,7 +352,7 @@ secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred __unused,
 
 	switch (action) {
 	case KAUTH_DEVICE_RAWIO_SPEC: {
-		struct vnode *vp;
+		struct vnode *vp, *bvp;
 		dev_t dev;
 		int d_type;
 
@@ -362,6 +362,7 @@ secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred __unused,
 
 		dev = vp->v_un.vu_specinfo->si_rdev;
 		d_type = D_OTHER;
+		bvp = NULL;
 
 		/* Handle /dev/mem and /dev/kmem. */
 		if ((vp->v_type == VCHR) && iskmemdev(dev)) {
@@ -396,8 +397,16 @@ secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred __unused,
 				const struct cdevsw *cdev;
 
 				cdev = cdevsw_lookup(dev);
-				if (cdev != NULL)
-					d_type = cdev->d_type;
+				if (cdev != NULL) {
+					dev_t blkdev;
+
+					blkdev = devsw_chr2blk(dev);
+					if (blkdev != NODEV) {
+						vfinddev(blkdev, VBLK, &bvp);
+						if (bvp != NULL)
+							d_type = cdev->d_type;
+					}
+				}
 
 				break;
 				}
@@ -407,6 +416,8 @@ secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred __unused,
 				bdev = bdevsw_lookup(dev);
 				if (bdev != NULL)
 					d_type = bdev->d_type;
+
+				bvp = vp;
 
 				break;
 				}
@@ -420,7 +431,7 @@ secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred __unused,
 				break;
 			}
 
-			if (vfs_mountedon(vp) && (securelevel > 0))
+			if (vfs_mountedon(bvp) && (securelevel > 0))
 				break;
 
 			if (securelevel < 2)
