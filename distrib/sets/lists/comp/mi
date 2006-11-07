@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.964 2006/11/04 13:00:00 yamt Exp $
+#	$NetBSD: mi,v 1.965 2006/11/07 17:48:21 dbj Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2388,6 +2388,7 @@
 ./usr/libdata/debug/usr/bin/getextattr.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/getopt.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/gettext.debug	comp-c-debug		debug
+./usr/libdata/debug/usr/bin/gkermit.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/gprof.debug		comp-debug-debug	bfd,debug
 ./usr/libdata/debug/usr/bin/grep.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/grn.debug		comp-groff-debug	debug
