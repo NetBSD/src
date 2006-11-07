@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.1.1.3 2006/08/27 00:39:34 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.1.1.4 2006/11/07 02:57:14 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -106,6 +106,7 @@
 #include <mail_params.h>
 #include <lex_822.h>
 #include <is_header.h>
+#include <quote_821_local.h>
 
 /* Application-specific. */
 
@@ -970,15 +971,19 @@ static const char *cleanup_del_header(void *context, ssize_t index,
 
 /* cleanup_add_rcpt - append recipient address */
 
-static const char *cleanup_add_rcpt(void *context, char *rcpt)
+static const char *cleanup_add_rcpt(void *context, char *ext_rcpt)
 {
     const char *myname = "cleanup_add_rcpt";
     CLEANUP_STATE *state = (CLEANUP_STATE *) context;
     off_t   new_rcpt_offset;
     off_t   reverse_ptr_offset;
+    int     addr_count;
+    TOK822 *tree;
+    TOK822 *tp;
+    VSTRING *int_rcpt_buf;
 
     if (msg_verbose)
-	msg_info("%s: \"%s\"", myname, rcpt);
+	msg_info("%s: \"%s\"", myname, ext_rcpt);
 
     /*
      * To simplify implementation, the cleanup server writes a dummy
@@ -1008,7 +1013,35 @@ static const char *cleanup_add_rcpt(void *context, char *rcpt)
 	msg_warn("%s: seek file %s: %m", myname, cleanup_path);
 	return (cleanup_milter_error(state, errno));
     }
-    cleanup_addr_bcc(state, rcpt);
+
+    /*
+     * Transform recipient from external form to internal form. This also
+     * removes the enclosing <>, if present.
+     * 
+     * XXX vstring_alloc() rejects zero-length requests.
+     */
+    int_rcpt_buf = vstring_alloc(strlen(ext_rcpt) + 1);
+    tree = tok822_parse(ext_rcpt);
+    for (addr_count = 0, tp = tree; tp != 0; tp = tp->next) {
+	if (tp->type == TOK822_ADDR) {
+	    if (addr_count == 0) {
+		tok822_internalize(int_rcpt_buf, tp->head, TOK822_STR_DEFL);
+		addr_count += 1;
+	    } else {
+		msg_warn("%s: Milter request to add multi-recipient: \"%s\"",
+			 state->queue_id, ext_rcpt);
+		break;
+	    }
+	}
+    }
+    tok822_free_tree(tree);
+    cleanup_addr_bcc(state, STR(int_rcpt_buf));
+    vstring_free(int_rcpt_buf);
+    if (addr_count == 0) {
+	msg_warn("%s: ignoring attempt from Milter to add null recipient",
+		 state->queue_id);
+	return (CLEANUP_OUT_OK(state) ? 0 : cleanup_milter_error(state, 0));
+    }
     if ((reverse_ptr_offset = vstream_ftell(state->dst)) < 0) {
 	msg_warn("%s: vstream_ftell file %s: %m", myname, cleanup_path);
 	return (cleanup_milter_error(state, errno));
@@ -1044,7 +1077,7 @@ static const char *cleanup_add_rcpt(void *context, char *rcpt)
 
 /* cleanup_del_rcpt - remove recipient and all its expansions */
 
-static const char *cleanup_del_rcpt(void *context, char *rcpt)
+static const char *cleanup_del_rcpt(void *context, char *ext_rcpt)
 {
     const char *myname = "cleanup_del_rcpt";
     CLEANUP_STATE *state = (CLEANUP_STATE *) context;
@@ -1059,9 +1092,13 @@ static const char *cleanup_del_rcpt(void *context, char *rcpt)
     int     rec_type;
     int     junk;
     int     count = 0;
+    TOK822 *tree;
+    TOK822 *tp;
+    VSTRING *int_rcpt_buf;
+    int     addr_count;
 
     if (msg_verbose)
-	msg_info("%s: \"%s\"", myname, rcpt);
+	msg_info("%s: \"%s\"", myname, ext_rcpt);
 
     /*
      * Virtual aliasing and other address rewriting happens after the mail
@@ -1093,8 +1130,31 @@ static const char *cleanup_del_rcpt(void *context, char *rcpt)
 	if (dsn_orcpt != 0) \
 	    myfree(dsn_orcpt); \
 	vstring_free(buf); \
+	vstring_free(int_rcpt_buf); \
 	return (ret); \
     } while (0)
+
+    /*
+     * Transform recipient from external form to internal form. This also
+     * removes the enclosing <>, if present.
+     * 
+     * XXX vstring_alloc() rejects zero-length requests.
+     */
+    int_rcpt_buf = vstring_alloc(strlen(ext_rcpt) + 1);
+    tree = tok822_parse(ext_rcpt);
+    for (addr_count = 0, tp = tree; tp != 0; tp = tp->next) {
+	if (tp->type == TOK822_ADDR) {
+	    if (addr_count == 0) {
+		tok822_internalize(int_rcpt_buf, tp->head, TOK822_STR_DEFL);
+		addr_count += 1;
+	    } else {
+		msg_warn("%s: Milter request to drop multi-recipient: \"%s\"",
+			 state->queue_id, ext_rcpt);
+		break;
+	    }
+	}
+    }
+    tok822_free_tree(tree);
 
     buf = vstring_alloc(100);
     for (;;) {
@@ -1156,7 +1216,7 @@ static const char *cleanup_del_rcpt(void *context, char *rcpt)
 	    orig_rcpt = mystrdup(start);
 	    break;
 	case REC_TYPE_RCPT:			/* rewritten RCPT TO address */
-	    if (strcmp(orig_rcpt ? orig_rcpt : start, rcpt) == 0) {
+	    if (strcmp(orig_rcpt ? orig_rcpt : start, STR(int_rcpt_buf)) == 0) {
 		if (vstream_fseek(state->dst, curr_offset, SEEK_SET) < 0) {
 		    msg_warn("%s: seek file %s: %m", myname, cleanup_path);
 		    CLEANUP_DEL_RCPT_RETURN(cleanup_milter_error(state, errno));
@@ -1185,7 +1245,7 @@ static const char *cleanup_del_rcpt(void *context, char *rcpt)
 
     if (msg_verbose)
 	msg_info("%s: deleted %d records for recipient \"%s\"",
-		 myname, count, rcpt);
+		 myname, count, ext_rcpt);
 
     CLEANUP_DEL_RCPT_RETURN(0);
 }
@@ -1262,18 +1322,14 @@ static const char *cleanup_milter_eval(const char *name, void *ptr)
     if (strcmp(name, S8_MAC_AUTH_AUTHOR) == 0)
 	return (nvtable_find(state->attr, MAIL_ATTR_SASL_SENDER));
 #endif
-#if 0
     if (strcmp(name, S8_MAC_MAIL_ADDR) == 0)
-	return (state->sender);
-#endif
+	return (state->milter_ext_from ? STR(state->milter_ext_from) : 0);
 
     /*
      * RCPT TO macros.
      */
-#if 0
     if (strcmp(name, S8_MAC_RCPT_ADDR) == 0)
-	return (state->recipient);
-#endif
+	return (state->milter_ext_rcpt ? STR(state->milter_ext_rcpt) : 0);
     return (0);
 }
 
@@ -1487,7 +1543,14 @@ void    cleanup_milter_emul_mail(CLEANUP_STATE *state,
 	}
     }
     if (CLEANUP_MILTER_OK(state)) {
-	argv[0] = addr;
+	if (state->milter_ext_from == 0)
+	    state->milter_ext_from = vstring_alloc(100);
+	/* Sendmail 8.13 does not externalize the null address. */
+	if (*addr)
+	    quote_821_local(state->milter_ext_from, addr);
+	else
+	    vstring_strcpy(state->milter_ext_from, addr);
+	argv[0] = STR(state->milter_ext_from);
 	argv[1] = 0;
 	if ((resp = milter_mail_event(milters, argv)) != 0) {
 	    cleanup_milter_apply(state, "MAIL", resp);
@@ -1517,7 +1580,14 @@ void    cleanup_milter_emul_rcpt(CLEANUP_STATE *state,
      * attribute, but CLEANUP_STAT_DEFER takes precedence. It terminates
      * queue record processing, and prevents bounces from being sent.
      */
-    argv[0] = addr;
+    if (state->milter_ext_rcpt == 0)
+	state->milter_ext_rcpt = vstring_alloc(100);
+    /* Sendmail 8.13 does not externalize the null address. */
+    if (*addr)
+	quote_821_local(state->milter_ext_rcpt, addr);
+    else
+	vstring_strcpy(state->milter_ext_rcpt, addr);
+    argv[0] = STR(state->milter_ext_rcpt);
     argv[1] = 0;
     if ((resp = milter_rcpt_event(milters, argv)) != 0
 	&& cleanup_milter_apply(state, "RCPT", resp) != 0) {

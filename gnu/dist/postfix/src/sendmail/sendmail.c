@@ -1,4 +1,4 @@
-/*	$NetBSD: sendmail.c,v 1.1.1.12 2006/07/19 01:17:41 rpaulo Exp $	*/
+/*	$NetBSD: sendmail.c,v 1.1.1.13 2006/11/07 02:58:34 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -97,7 +97,8 @@
 /*	with the MAIL_CONFIG environment variable to override the
 /*	location of configuration files.
 /* .IP "\fB-F \fIfull_name\fR
-/*	Set the sender full name. This is used only with messages that
+/*	Set the sender full name. This overrides the NAME environment
+/*	variable, and is used only with messages that
 /*	have no \fBFrom:\fR message header.
 /* .IP "\fB-f \fIsender\fR"
 /*	Set the envelope sender address. This is the address where
@@ -229,11 +230,15 @@
 /* .fi
 /* .IP \fBMAIL_CONFIG\fR
 /*	Directory with Postfix configuration files.
-/* .IP \fBMAIL_VERBOSE\fR
+/* .IP "\fBMAIL_VERBOSE\fR (value does not matter)"
 /*	Enable verbose logging for debugging purposes.
-/* .IP \fBMAIL_DEBUG\fR
+/* .IP "\fBMAIL_DEBUG\fR (value does not matter)"
 /*	Enable debugging with an external command, as specified with the
 /*	\fBdebugger_command\fR configuration parameter.
+/* .IP \fBNAME\fR
+/*	The sender full name. This is used only with messages that
+/*	have no \fBFrom:\fR message header. See also the \fB-F\fR
+/*	option above.
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
@@ -340,9 +345,6 @@
 /* .IP "\fBsyslog_name (postfix)\fR"
 /*	The mail system name that is prepended to the process name in syslog
 /*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
-/* .IP "\fBtrigger_timeout (10s)\fR"
-/*	The time limit for sending a trigger to a Postfix daemon (for
-/*	example, the \fBpickup\fR(8) or \fBqmgr\fR(8) daemon).
 /* FILES
 /*	/var/spool/postfix, mail queue
 /*	/etc/postfix, configuration files

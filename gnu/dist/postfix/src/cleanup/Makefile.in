@@ -60,7 +60,7 @@ cleanup_masquerade: cleanup_masquerade.o
 
 CLEANUP_MILTER_OBJS = cleanup_state.o cleanup_out.o cleanup_addr.o \
 	cleanup_out_recipient.o 
-cleanup_milter: cleanup_milter.o $(CLEANUP_MILTER_OBJS)
+cleanup_milter: cleanup_milter.o $(CLEANUP_MILTER_OBJS) $(LIBS)
 	mv cleanup_milter.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(CLEANUP_MILTER_OBJS) $(LIBS) $(SYSLIBS)
 	mv junk cleanup_milter.o
@@ -504,6 +504,8 @@ cleanup_milter.o: ../../include/msg.h
 cleanup_milter.o: ../../include/mymalloc.h
 cleanup_milter.o: ../../include/nvtable.h
 cleanup_milter.o: ../../include/off_cvt.h
+cleanup_milter.o: ../../include/quote_821_local.h
+cleanup_milter.o: ../../include/quote_flags.h
 cleanup_milter.o: ../../include/rec_attr_map.h
 cleanup_milter.o: ../../include/rec_type.h
 cleanup_milter.o: ../../include/record.h

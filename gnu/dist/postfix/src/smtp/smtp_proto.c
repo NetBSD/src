@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_proto.c,v 1.1.1.12 2006/08/01 00:04:16 rpaulo Exp $	*/
+/*	$NetBSD: smtp_proto.c,v 1.1.1.13 2006/11/07 02:58:41 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -231,6 +231,11 @@ char   *xfer_request[SMTP_STATE_LAST] = {
     "RSET probe",
     "QUIT command",
 };
+
+#define SMTP_MIME_DOWNGRADE(session, request) \
+    (var_disable_mime_oconv == 0 \
+     && (session->features & SMTP_FEATURE_8BITMIME) == 0 \
+     && strcmp(request->encoding, MAIL_ATTR_ENC_7BIT) != 0)
 
 static int smtp_start_tls(SMTP_STATE *);
 
@@ -1174,7 +1179,9 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	    QUOTE_ADDRESS(session->scratch, vstring_str(session->scratch2));
 	    vstring_sprintf(next_command, "MAIL FROM:<%s>",
 			    vstring_str(session->scratch));
-	    if (session->features & SMTP_FEATURE_SIZE)	/* RFC 1870 */
+	    /* XXX Don't announce SIZE if we're going to MIME downgrade. */
+	    if (session->features & SMTP_FEATURE_SIZE	/* RFC 1870 */
+		&& !SMTP_MIME_DOWNGRADE(session, request))
 		vstring_sprintf_append(next_command, " SIZE=%lu",
 				       request->data_size);
 	    if (session->features & SMTP_FEATURE_8BITMIME) {	/* RFC 1652 */
@@ -1621,13 +1628,13 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	 * transaction in progress.
 	 */
 	if (send_state == SMTP_STATE_DOT && nrcpt > 0) {
-	    downgrading =
-		(var_disable_mime_oconv == 0
-		 && (session->features & SMTP_FEATURE_8BITMIME) == 0
-		 && strcmp(request->encoding, MAIL_ATTR_ENC_7BIT) != 0);
+	    downgrading = SMTP_MIME_DOWNGRADE(session, request);
+	    /* XXX Don't downgrade just because generic_maps is turned on. */
 	    if (downgrading || smtp_generic_maps)
-		session->mime_state = mime_state_alloc(MIME_OPT_DOWNGRADE
-						  | MIME_OPT_REPORT_NESTING,
+		session->mime_state = mime_state_alloc(downgrading ?
+						       MIME_OPT_DOWNGRADE
+						 | MIME_OPT_REPORT_NESTING :
+						    MIME_OPT_REPORT_NESTING,
 						       smtp_generic_maps ?
 						       smtp_header_rewrite :
 						       smtp_header_out,

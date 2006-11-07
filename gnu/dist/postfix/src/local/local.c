@@ -1,4 +1,4 @@
-/*	$NetBSD: local.c,v 1.1.1.9 2006/07/19 01:17:30 rpaulo Exp $	*/
+/*	$NetBSD: local.c,v 1.1.1.10 2006/11/07 02:58:02 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -41,7 +41,7 @@
 /*	configuration parameter. Upon delivery, the local delivery agent
 /*	tries each pathname in the list until a file is found.
 /*
-/*	Delivery via ~/.\fB.forward\fR files is done with the privileges
+/*	Delivery via ~/.\fBforward\fR files is done with the privileges
 /*	of the recipient.
 /*	Thus, ~/.\fBforward\fR like files must be readable by the
 /*	recipient, and their parent directory needs to have "execute"

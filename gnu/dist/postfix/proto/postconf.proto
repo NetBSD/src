@@ -10301,7 +10301,7 @@ works in addition to the exclusions listed with smtp_tls_exclude_ciphers
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
-%PARAM tls_high_cipherlist !EXPORT:!LOW:!MEDIUM:ALL:+RC4:@STRENGTH
+%PARAM tls_high_cipherlist ALL:!EXPORT:!LOW:!MEDIUM:+RC4:@STRENGTH
 
 <p> The OpenSSL cipherlist for "HIGH" grade ciphers. This defines
 the meaning of the "high" setting in smtpd_tls_mandatory_ciphers,
@@ -10310,7 +10310,7 @@ strongly encouraged to not change this setting. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
-%PARAM tls_medium_cipherlist !EXPORT:!LOW:ALL:+RC4:@STRENGTH
+%PARAM tls_medium_cipherlist ALL:!EXPORT:!LOW:+RC4:@STRENGTH
 
 <p> The OpenSSL cipherlist for "MEDIUM" or higher grade ciphers. This
 defines the meaning of the "medium" setting in smtpd_tls_mandatory_ciphers,
@@ -10322,7 +10322,7 @@ setting. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
-%PARAM tls_low_cipherlist !EXPORT:ALL:+RC4:@STRENGTH
+%PARAM tls_low_cipherlist ALL:!EXPORT:+RC4:@STRENGTH
 
 <p> The OpenSSL cipherlist for "LOW" or higher grade ciphers. This defines
 the meaning of the "low" setting in smtpd_tls_mandatory_ciphers,

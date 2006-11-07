@@ -200,6 +200,7 @@ smtpd.o: smtpd_token.h
 smtpd_chat.o: ../../include/argv.h
 smtpd_chat.o: ../../include/attr.h
 smtpd_chat.o: ../../include/cleanup_user.h
+smtpd_chat.o: ../../include/int_filt.h
 smtpd_chat.o: ../../include/iostuff.h
 smtpd_chat.o: ../../include/line_wrap.h
 smtpd_chat.o: ../../include/mail_addr.h
@@ -303,6 +304,8 @@ smtpd_milter.o: ../../include/milter.h
 smtpd_milter.o: ../../include/myaddrinfo.h
 smtpd_milter.o: ../../include/name_code.h
 smtpd_milter.o: ../../include/name_mask.h
+smtpd_milter.o: ../../include/quote_821_local.h
+smtpd_milter.o: ../../include/quote_flags.h
 smtpd_milter.o: ../../include/sys_defs.h
 smtpd_milter.o: ../../include/tls.h
 smtpd_milter.o: ../../include/vbuf.h
