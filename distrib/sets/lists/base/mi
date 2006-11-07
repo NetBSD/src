@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.668 2006/11/04 03:46:19 tnozaki Exp $
+# $NetBSD: mi,v 1.669 2006/11/07 17:49:47 dbj Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -471,8 +471,8 @@
 ./usr/bin/getent				base-util-bin
 ./usr/bin/getextattr				base-util-bin
 ./usr/bin/getopt				base-util-bin
-./usr/bin/grep					base-util-bin
 ./usr/bin/gkermit				base-util-bin
+./usr/bin/grep					base-util-bin
 ./usr/bin/groups				base-util-bin
 ./usr/bin/gunzip				base-util-bin
 ./usr/bin/gzcat					base-util-bin
@@ -3636,9 +3636,8 @@
 ./usr/share/zoneinfo/Europe/Gibraltar		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Guernsey		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Helsinki		base-sys-share		share
-./usr/share/zoneinfo/Europe/Istanbul		base-sys-share		share
-./usr/share/zoneinfo/Europe/Istanbul		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Isle_of_Man		base-sys-share		share
+./usr/share/zoneinfo/Europe/Istanbul		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Jersey		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Kaliningrad		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Kiev		base-sys-share		share
