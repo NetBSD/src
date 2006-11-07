@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.3 2006/10/26 22:53:01 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.4 2006/11/07 22:10:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -84,7 +84,7 @@ struct puffs_vfsops {
 
 struct puffs_vnops {
 	int (*puffs_lookup)(struct puffs_usermount *,
-	    void *, void **, enum vtype *, dev_t */* XXX: this needs to hide */,
+	    void *, void **, enum vtype *, voff_t *, dev_t *,
 	    const struct puffs_cn *);
 	int (*puffs_create)(struct puffs_usermount *,
 	    void *, void **, const struct puffs_cn *, const struct vattr *);
@@ -235,7 +235,7 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 
 #define PUFFSVN_PROTOS(fsname)						\
 	int fsname##_lookup(struct puffs_usermount *,			\
-	    void *, void **, enum vtype *, dev_t *,			\
+	    void *, void **, enum vtype *, voff_t *, dev_t *,		\
 	    const struct puffs_cn *);					\
 	int fsname##_create(struct puffs_usermount *,			\
 	    void *, void **, const struct puffs_cn *,			\
