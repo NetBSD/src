@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.6 2006/10/27 14:03:52 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.7 2006/11/07 22:11:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,8 @@
 
 int
 dtfs_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
-	enum vtype *newtype, dev_t *rdev, const struct puffs_cn *pcn)
+	enum vtype *newtype, voff_t *newsize, dev_t *newrdev,
+	const struct puffs_cn *pcn)
 {
 	struct dtfs_file *df = DTFS_CTOF(opc);
 	struct dtfs_dirent *dfd;
@@ -60,8 +61,9 @@ dtfs_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
 	if (dfd) {
 		*newnode = dfd->dfd_node;
 		*newtype = dfd->dfd_node->pn_va.va_type;
+		*newsize = dfd->dfd_node->pn_va.va_size;
 		if (*newtype == VBLK || *newtype == VCHR)
-			*rdev = DTFS_PTOF(dfd->dfd_node)->df_rdev;
+			*newrdev = DTFS_PTOF(dfd->dfd_node)->df_rdev;
 		return 0;
 	} else if ((pcn->pcn_nameiop & PUFFSLOOKUP_OPMASK) == PUFFSLOOKUP_CREATE
 	    || (pcn->pcn_nameiop & PUFFSLOOKUP_OPMASK) == PUFFSLOOKUP_RENAME){
@@ -334,7 +336,7 @@ dtfs_mknod(struct puffs_usermount *pu, void *opc, void **newnode,
 }
 
 /*
- * Read operations (three^Wtwo different ones)
+ * Read operation, used both for VOP_READ and VOP_GETPAGES
  */
 int
 dtfs_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
@@ -360,7 +362,7 @@ dtfs_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 }
 
 /*
- * write operations on the wing
+ * write operation on the wing
  */
 int
 dtfs_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
