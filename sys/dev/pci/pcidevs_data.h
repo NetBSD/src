@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.843 2006/11/03 13:00:09 abs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.844 2006/11/07 09:34:37 martti Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.844 2006/11/03 12:59:47 abs Exp
+ *	NetBSD: pcidevs,v 1.845 2006/11/07 09:29:31 martti Exp
  */
 
 /*
@@ -3296,6 +3296,14 @@ static const struct pci_product pci_products[] = {
 	    "MegaRAID 3",
 	},
 	{
+	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID_SAS,
+	    "MegaRAID SAS",
+	},
+	{
+	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID_VERDE_ZCR,
+	    "MegaRAID Verde ZCR",
+	},
+	{
 	    PCI_VENDOR_ANALOG, PCI_PRODUCT_ANALOG_SAFENET,
 	    "SafeNet Crypto Accelerator ADSP-2141",
 	},
@@ -5486,6 +5494,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB3,
 	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_5_1,
+	    "PERC 5/e",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_5_2,
+	    "PERC 5/i",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_CERC_1_5,
@@ -12436,4 +12452,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2515;
+const int pci_nproducts = 2519;

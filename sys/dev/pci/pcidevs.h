@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.844 2006/11/03 13:00:09 abs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.845 2006/11/07 09:34:37 martti Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.844 2006/11/03 12:59:47 abs Exp
+ *	NetBSD: pcidevs,v 1.845 2006/11/07 09:29:31 martti Exp
  */
 
 /*
@@ -918,6 +918,8 @@
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
 #define	PCI_PRODUCT_AMI_MEGARAID2	0x9060		/* MegaRAID 2 */
 #define	PCI_PRODUCT_AMI_MEGARAID3	0x1960		/* MegaRAID 3 */
+#define	PCI_PRODUCT_AMI_MEGARAID_SAS	0x0411		/* MegaRAID SAS */
+#define	PCI_PRODUCT_AMI_MEGARAID_VERDE_ZCR	0x0413		/* MegaRAID Verde ZCR */
 
 /* Analog Devices products */
 #define	PCI_PRODUCT_ANALOG_SAFENET	0x2f44		/* SafeNet Crypto Accelerator ADSP-2141 */
@@ -1570,6 +1572,8 @@
 #define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB	0x0106		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB2	0x011b		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB3	0x0121		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_PERC_5_1	0x1f01		/* PERC 5/e */
+#define	PCI_PRODUCT_DELL_PERC_5_2	0x1f02		/* PERC 5/i */
 #define	PCI_PRODUCT_DELL_CERC_1_5	0x0291		/* CERC SATA RAID 1.5/6ch */
 
 /* Delta products */
