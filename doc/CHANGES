@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.749 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.750 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -171,3 +171,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		executed over a remote tmpfs mounted through NFS.
 		[jmmv 20061105]
 	tmpfs: Add a LKM for this file system. [jmmv 20061105]
+	postfix: Updated to 2.3.4 [rpaulo 20061107]
