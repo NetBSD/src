@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.4 2006/10/26 22:53:01 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.5 2006/11/07 22:10:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.4 2006/10/26 22:53:01 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.5 2006/11/07 22:10:53 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -139,9 +139,11 @@ puffs_oneop(struct puffs_usermount *pu, uint8_t *buf, size_t buflen)
 	/* deal with it */
 	rv = puffcall(pu, &preq);
 
-	/* stuff result back to the kernel */
-	if (ioctl(pu->pu_fd, PUFFSPUTOP, &preq) == -1)
-		return -1;
+	/* stuff result back to the kernel in case required */
+	if (PUFFSOP_WANTREPLY(preq.preq_opclass)) {
+		if (ioctl(pu->pu_fd, PUFFSPUTOP, &preq) == -1)
+			return -1;
+	}
 
 	return rv;
 }
@@ -173,7 +175,7 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq)
 	if (pu->pu_flags & PUFFSFLAG_OPDUMP)
 		puffsdump_req(preq);
 
-	if (preq->preq_opclass == PUFFSOP_VFS) {
+	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS) {
 		switch (preq->preq_optype) {
 		case PUFFS_VFS_UNMOUNT:
 		{
@@ -210,7 +212,7 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq)
 		}
 
 	/* XXX: audit return values */
-	} else if (preq->preq_opclass == PUFFSOP_VN) {
+	} else if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN) {
 		switch (preq->preq_optype) {
 		case PUFFS_VN_LOOKUP:
 		{
@@ -219,7 +221,8 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq)
 			/* lookup *must* be present */
 			error = pu->pu_pvn.puffs_lookup(pu, preq->preq_cookie,
 			    &auxt->pvnr_newnode, &auxt->pvnr_vtype,
-			    &auxt->pvnr_rdev, &auxt->pvnr_cn);
+			    &auxt->pvnr_size, &auxt->pvnr_rdev,
+			    &auxt->pvnr_cn);
 			break;
 		}
 
@@ -787,32 +790,6 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq)
 			}
 
 			error = pu->pu_pvn.puffs_whiteout(pu,
-			    preq->preq_cookie, );
-			break;
-		}
-
-		case PUFFS_VN_GETPAGES:
-		{
-			struct puffs_vnreq_getpages *auxt = preq->preq_aux;
-			if (pu->pu_pvn.puffs_getpages == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pu->pu_pvn.puffs_getpages(pu,
-			    preq->preq_cookie, );
-			break;
-		}
-
-		case PUFFS_VN_PUTPAGES:
-		{
-			struct puffs_vnreq_putpages *auxt = preq->preq_aux;
-			if (pu->pu_pvn.puffs_putpages == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pu->pu_pvn.puffs_putpages(pu,
 			    preq->preq_cookie, );
 			break;
 		}
