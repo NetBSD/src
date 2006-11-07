@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.844 2006/11/03 12:59:47 abs Exp $
+$NetBSD: pcidevs,v 1.845 2006/11/07 09:29:31 martti Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -908,9 +908,11 @@ product AMD PBC8111_ACPI	0x746b	AMD8111 ACPI Controller
 product AMD PBC8111_AC		0x746d	AMD8111 AC97 Audio
 
 /* American Megatrends products */
-product AMI MEGARAID	0x9010	MegaRAID
-product AMI MEGARAID2	0x9060	MegaRAID 2
-product AMI MEGARAID3	0x1960	MegaRAID 3
+product AMI MEGARAID		0x9010	MegaRAID
+product AMI MEGARAID2		0x9060	MegaRAID 2
+product AMI MEGARAID3		0x1960	MegaRAID 3
+product AMI MEGARAID_SAS	0x0411	MegaRAID SAS
+product AMI MEGARAID_VERDE_ZCR	0x0413	MegaRAID Verde ZCR
 
 /* Analog Devices products */
 product ANALOG SAFENET	0x2f44	SafeNet Crypto Accelerator ADSP-2141
@@ -1563,6 +1565,8 @@ product DELL PERC_3DI_SUB3	0x00d9	PERC 3/Di
 product DELL PERC_3DI_3_SUB	0x0106	PERC 3/Di
 product DELL PERC_3DI_3_SUB2	0x011b	PERC 3/Di
 product DELL PERC_3DI_3_SUB3	0x0121	PERC 3/Di
+product DELL PERC_5_1		0x1f01	PERC 5/e
+product DELL PERC_5_2		0x1f02	PERC 5/i
 product DELL CERC_1_5		0x0291	CERC SATA RAID 1.5/6ch
 
 /* Delta products */
