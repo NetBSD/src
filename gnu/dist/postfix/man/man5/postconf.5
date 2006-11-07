@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.9 2006/08/27 00:47:08 rpaulo Exp $
+.\"	$NetBSD: postconf.5,v 1.10 2006/11/07 03:09:18 rpaulo Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -7046,21 +7046,21 @@ level and is the default cipherlist for the SMTP server. You are
 strongly encouraged to not change this setting.
 .PP
 This feature is available in Postfix 2.3 and later.
-.SH tls_high_cipherlist (default: !EXPORT:!LOW:!MEDIUM:ALL:+RC4:@STRENGTH)
+.SH tls_high_cipherlist (default: ALL:!EXPORT:!LOW:!MEDIUM:+RC4:@STRENGTH)
 The OpenSSL cipherlist for "HIGH" grade ciphers. This defines
 the meaning of the "high" setting in smtpd_tls_mandatory_ciphers,
 smtp_tls_mandatory_ciphers and lmtp_tls_mandatory_ciphers. You are
 strongly encouraged to not change this setting.
 .PP
 This feature is available in Postfix 2.3 and later.
-.SH tls_low_cipherlist (default: !EXPORT:ALL:+RC4:@STRENGTH)
+.SH tls_low_cipherlist (default: ALL:!EXPORT:+RC4:@STRENGTH)
 The OpenSSL cipherlist for "LOW" or higher grade ciphers. This defines
 the meaning of the "low" setting in smtpd_tls_mandatory_ciphers,
 smtp_tls_mandatory_ciphers and lmtp_tls_mandatory_ciphers. You are
 strongly encouraged to not change this setting.
 .PP
 This feature is available in Postfix 2.3 and later.
-.SH tls_medium_cipherlist (default: !EXPORT:!LOW:ALL:+RC4:@STRENGTH)
+.SH tls_medium_cipherlist (default: ALL:!EXPORT:!LOW:+RC4:@STRENGTH)
 The OpenSSL cipherlist for "MEDIUM" or higher grade ciphers. This
 defines the meaning of the "medium" setting in smtpd_tls_mandatory_ciphers,
 smtp_tls_mandatory_ciphers and lmtp_tls_mandatory_ciphers. This is

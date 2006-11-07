@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.17 2006/08/27 00:47:09 rpaulo Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.18 2006/11/07 03:09:19 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -348,11 +348,11 @@
 /*	The number of pseudo-random bytes that an \fBsmtp\fR(8) or \fBsmtpd\fR(8)
 /*	process requests from the \fBtlsmgr\fR(8) server in order to seed its
 /*	internal pseudo random number generator (PRNG).
-/* .IP "\fBtls_high_cipherlist (!EXPORT:!LOW:!MEDIUM:ALL:+RC4:@STRENGTH)\fR"
+/* .IP "\fBtls_high_cipherlist (ALL:!EXPORT:!LOW:!MEDIUM:+RC4:@STRENGTH)\fR"
 /*	The OpenSSL cipherlist for "HIGH" grade ciphers.
-/* .IP "\fBtls_medium_cipherlist (!EXPORT:!LOW:ALL:+RC4:@STRENGTH)\fR"
+/* .IP "\fBtls_medium_cipherlist (ALL:!EXPORT:!LOW:+RC4:@STRENGTH)\fR"
 /*	The OpenSSL cipherlist for "MEDIUM" or higher grade ciphers.
-/* .IP "\fBtls_low_cipherlist (!EXPORT:ALL:+RC4:@STRENGTH)\fR"
+/* .IP "\fBtls_low_cipherlist (ALL:!EXPORT:+RC4:@STRENGTH)\fR"
 /*	The OpenSSL cipherlist for "LOW" or higher grade ciphers.
 /* .IP "\fBtls_export_cipherlist (ALL:+RC4:@STRENGTH)\fR"
 /*	The OpenSSL cipherlist for "EXPORT" or higher grade ciphers.
@@ -2252,7 +2252,7 @@ static int rcpt_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	    }
 	    vstring_strcpy(state->dsn_orcpt_buf, arg + 6);
 	    if (dsn_orcpt_addr
-		|| (coded_addr = split_at(STR(state->dsn_orcpt_buf), ';')) == 0
+	     || (coded_addr = split_at(STR(state->dsn_orcpt_buf), ';')) == 0
 		|| xtext_unquote(state->dsn_buf, coded_addr) == 0
 		|| *(dsn_orcpt_type = STR(state->dsn_orcpt_buf)) == 0) {
 		state->error_mask |= MAIL_ERROR_PROTOCOL;
@@ -3903,7 +3903,7 @@ static void smtpd_proto(SMTPD_STATE *state)
 	    if (smtpd_milters != 0 && SMTPD_STAND_ALONE(state) == 0) {
 		milter_macro_callback(smtpd_milters, smtpd_milter_eval,
 				      (void *) state);
-		if ((err = milter_conn_event(smtpd_milters, state->reverse_name,
+		if ((err = milter_conn_event(smtpd_milters, state->name,
 					     state->addr, XXX_NO_PORT,
 					     state->addr_family)) != 0)
 		    err = check_milter_reply(state, err);

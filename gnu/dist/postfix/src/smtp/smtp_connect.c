@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.16 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.17 2006/11/07 03:09:19 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -665,9 +665,9 @@ static void smtp_connect_remote(SMTP_STATE *state, const char *nexthop,
      * primary destination to be a list (it could be just separators).
      */
     sites = argv_alloc(1);
-    argv_add(sites, request->nexthop, (char *) 0);
+    argv_add(sites, nexthop, (char *) 0);
     if (sites->argc == 0)
-	msg_panic("null destination: \"%s\"", request->nexthop);
+	msg_panic("null destination: \"%s\"", nexthop);
     non_fallback_sites = sites->argc;
     if ((state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) == 0)
 	argv_split_append(sites, var_fallback_relay, ", \t\r\n");

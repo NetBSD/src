@@ -1,4 +1,4 @@
-.\"	$NetBSD: local.8,v 1.7 2006/07/19 01:35:39 rpaulo Exp $
+.\"	$NetBSD: local.8,v 1.8 2006/11/07 03:09:19 rpaulo Exp $
 .\"
 .TH LOCAL 8 
 .ad
@@ -51,7 +51,7 @@ of ~\fR/.\fBforward\fR like files through the \fBforward_path\fR
 configuration parameter. Upon delivery, the local delivery agent
 tries each pathname in the list until a file is found.
 
-Delivery via ~/.\fB.forward\fR files is done with the privileges
+Delivery via ~/.\fBforward\fR files is done with the privileges
 of the recipient.
 Thus, ~/.\fBforward\fR like files must be readable by the
 recipient, and their parent directory needs to have "execute"
