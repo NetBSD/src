@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.965 2006/11/07 17:48:21 dbj Exp $
+#	$NetBSD: mi,v 1.966 2006/11/07 17:49:47 dbj Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5342,7 +5342,6 @@
 ./usr/share/man/cat3/pam_get_item.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_get_user.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_getenv.0		comp-c-catman		.cat,pam
-./usr/share/man/cat3/pam_getenv.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_getenvlist.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_info.0			comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_open_session.0		comp-c-catman		.cat,pam
@@ -5460,7 +5459,6 @@
 ./usr/share/man/cat3/prop_dictionary_iterator.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_keysym_cstring_nocopy.0 comp-c-catman .cat
 ./usr/share/man/cat3/prop_dictionary_keysym_equals.0 comp-c-catman	.cat
-./usr/share/man/cat3/prop_dictionary_make_immutable.0 comp-c-catman	.cat
 ./usr/share/man/cat3/prop_dictionary_make_immutable.0 comp-c-catman	.cat
 ./usr/share/man/cat3/prop_dictionary_mutable.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_recv_ioctl.0 comp-c-catman		.cat
