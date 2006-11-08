@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.241 2006/10/21 14:10:33 bouyer Exp $
+# $NetBSD: GENERIC,v 1.242 2006/11/08 05:48:43 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.241 $"
+#ident 		"GENERIC-$Revision: 1.242 $"
 
 maxusers	32
 
@@ -269,11 +269,23 @@ pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
-# Other  PCI devices
+# Display devices
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 # OFB_ENABLE_CACHE speeds up the console on many machines, but should
 # not be enabled on some older machines, such as the rev. A-D iMacs.
-#options 	OFB_ENABLE_CACHE	# Speed up console
+#options 	OFB_ENABLE_CACHE	# Speed up console in ofb
+chipsfb*	at pci?	function ?	# C&T 65550
+machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
+radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
+voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
+
+# make sure the console display is always wsdisplay0
+wsdisplay0	at wsemuldisplaydev? console 1
+wsdisplay*	at wsemuldisplaydev?
+
+#macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
+
+# Other  PCI devices
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide* at pci? dev ? function ?	# Acard IDE controllers
 aceride* at pci? dev ? function ?	# Acer Lab IDE controllers
@@ -291,7 +303,6 @@ viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 wdc*	at pci? dev ? function ?	# Kauai ATA
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 obio*	at pci? dev ? function ?
-#macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
 
 acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
 amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
@@ -338,6 +349,10 @@ aed*	at adb?				# ADB Event Device
 akbd*	at adb?				# ADB keyboard
 ams*	at adb?				# ADB mouse
 abtn*	at adb?
+
+wskbd0	at akbd? console ?
+wsmouse* at ams?
+
 zsc*	at obio?
 zstty*	at zsc? channel ?
 mediabay* at obio?
@@ -377,10 +392,6 @@ tlp*	at cardbus? function ?	# DECchip 21143
 ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
 rtk*	at cardbus? function ?	# Realtek 8129/8139
 rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
-
-wsdisplay0 at ofb? console ?
-wskbd0	at akbd? console ?
-wsmouse* at ams?
 
 # Cryptographic Devices
 
