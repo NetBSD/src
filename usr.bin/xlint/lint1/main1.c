@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.16 2005/09/24 15:30:35 perry Exp $	*/
+/*	$NetBSD: main1.c,v 1.17 2006/11/08 18:31:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.16 2005/09/24 15:30:35 perry Exp $");
+__RCSID("$NetBSD: main1.c,v 1.17 2006/11/08 18:31:15 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -207,6 +207,9 @@ main(int argc, char *argv[])
 
 	/* Following warnings cannot be suppressed by LINTED */
 	nowarn = 0;
+#ifdef DEBUG
+	printf("%s, %d: nowarn = 0\n", curr_pos.p_file, curr_pos.p_line);
+#endif
 
 	chkglsyms();
 

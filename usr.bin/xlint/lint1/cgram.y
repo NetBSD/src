@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.38 2006/10/17 23:53:30 he Exp $ */
+/* $NetBSD: cgram.y,v 1.39 2006/11/08 18:31:15 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.38 2006/10/17 23:53:30 he Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.39 2006/11/08 18:31:15 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -69,40 +69,40 @@ static	void	idecl(sym_t *, int, sbuf_t *);
 static	void	ignuptorp(void);
 
 #ifdef DEBUG
-static inline void CLRWFLGS(void);
-static inline void CLRWFLGS(void)
+static inline void CLRWFLGS(const char *file, size_t line);
+static inline void CLRWFLGS(const char *file, size_t line)
 {
-	printf("%s, %d: clear flags %s %d\n", curr_pos.p_file,
-	    curr_pos.p_line, __FILE__, __LINE__);
+	printf("%s, %d: clear flags %s %zu\n", curr_pos.p_file,
+	    curr_pos.p_line, file, line);
 	clrwflgs();
 	onowarn = -1;
 }
 
-static inline void SAVE(void);
-static inline void SAVE(void)
+static inline void SAVE(const char *file, size_t line);
+static inline void SAVE(const char *file, size_t line)
 {
 	if (onowarn != -1)
 		abort();
-	printf("%s, %d: save flags %s %d = %d\n", curr_pos.p_file,
-	    curr_pos.p_line, __FILE__, __LINE__, nowarn);
+	printf("%s, %d: save flags %s %zu = %d\n", curr_pos.p_file,
+	    curr_pos.p_line, file, line, nowarn);
 	onowarn = nowarn;
 }
 
-static inline void RESTORE(void);
-static inline void RESTORE(void)
+static inline void RESTORE(const char *file, size_t line);
+static inline void RESTORE(const char *file, size_t line)
 {
 	if (onowarn != -1) {
 		nowarn = onowarn;
-		printf("%s, %d: restore flags %s %d = %d\n", curr_pos.p_file,
-		    curr_pos.p_line, __FILE__, __LINE__, nowarn);
+		printf("%s, %d: restore flags %s %zu = %d\n", curr_pos.p_file,
+		    curr_pos.p_line, file, line, nowarn);
 		onowarn = -1;
 	} else
-		CLRWFLGS();
+		CLRWFLGS(file, line);
 }
 #else
-#define CLRWFLGS() clrwflgs(), onowarn = -1
-#define SAVE()	onowarn = nowarn
-#define RESTORE() (void)(onowarn == -1 ? (clrwflgs(), 0) : (nowarn = onowarn))
+#define CLRWFLGS(f, l) clrwflgs(), onowarn = -1
+#define SAVE(f, l)	onowarn = nowarn
+#define RESTORE(f, l) (void)(onowarn == -1 ? (clrwflgs(), 0) : (nowarn = onowarn))
 #endif
 %}
 
@@ -283,11 +283,11 @@ ext_decl:
 	  asm_stmnt
 	| func_def {
 		glclup(0);
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 	  }
 	| data_def {
 		glclup(0);
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 	  }
 	;
 
@@ -353,6 +353,8 @@ func_def:
 		funcdef($1);
 		blklev++;
 		pushdecl(ARG);
+		if (nowarn)
+			$1->s_used = 1;
 	  } opt_arg_declaration_list {
 		popdecl();
 		blklev--;
@@ -1309,7 +1311,7 @@ opt_stmnt_list:
 stmnt_list:
 	  stmnt
 	| stmnt_list stmnt {
-		RESTORE();
+		RESTORE(__FILE__, __LINE__);
 	  }
 	| stmnt_list error T_SEMI
 	;
@@ -1353,27 +1355,27 @@ expr_stmnt_list:
 
 selection_stmnt:
 	  if_without_else {
-		SAVE();
+		SAVE(__FILE__, __LINE__);
 		if2();
 		if3(0);
 	  }
 	| if_without_else T_ELSE {
-		SAVE();
+		SAVE(__FILE__, __LINE__);
 		if2();
 	  } stmnt {
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 		if3(1);
 	  }
 	| if_without_else T_ELSE error {
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 		if3(0);
 	  }
 	| switch_expr stmnt {
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 		switch2();
 	  }
 	| switch_expr error {
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 		switch2();
 	  }
 	;
@@ -1386,30 +1388,30 @@ if_without_else:
 if_expr:
 	  T_IF T_LPARN expr T_RPARN {
 		if1($3);
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 	  }
 	;
 
 switch_expr:
 	  T_SWITCH T_LPARN expr T_RPARN {
 		switch1($3);
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 	  }
 	;
 
 do_stmnt:
 	  do stmnt {
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 	  }
 	;
 
 iteration_stmnt:
 	  while_expr stmnt {
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 		while2();
 	  }
 	| while_expr error {
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 		while2();
 	  }
 	| do_stmnt do_while_expr {
@@ -1417,15 +1419,15 @@ iteration_stmnt:
 		ftflg = 0;
 	  }
 	| do error {
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 		do2(NULL);
 	  }
 	| for_exprs stmnt {
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 		for2();
 	  }
 	| for_exprs error {
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 		for2();
 	  }
 	;
@@ -1433,7 +1435,7 @@ iteration_stmnt:
 while_expr:
 	  T_WHILE T_LPARN expr T_RPARN {
 		while1($3);
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 	  }
 	;
 
@@ -1452,7 +1454,7 @@ do_while_expr:
 for_exprs:
 	  T_FOR T_LPARN opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPARN {
 		for1($3, $5, $7);
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 	  }
 	;
 
@@ -1510,10 +1512,10 @@ read_until_rparn:
 
 declaration_list:
 	  declaration {
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 	  }
 	| declaration_list declaration {
-		CLRWFLGS();
+		CLRWFLGS(__FILE__, __LINE__);
 	  }
 	;
 
