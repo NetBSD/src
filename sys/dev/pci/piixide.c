@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.31 2006/10/12 01:31:33 christos Exp $	*/
+/*	$NetBSD: piixide.c,v 1.32 2006/11/08 11:09:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.31 2006/10/12 01:31:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.32 2006/11/08 11:09:52 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -827,7 +827,7 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 
 	cmdsts = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
-	cmdsts &= ~0x0400;
+	cmdsts &= ~PCI_COMMAND_INTERRUPT_DISABLE;
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG, cmdsts);
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
