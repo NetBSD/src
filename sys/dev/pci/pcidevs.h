@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.845 2006/11/07 09:34:37 martti Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.846 2006/11/08 11:36:21 martti Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.845 2006/11/07 09:29:31 martti Exp
+ *	NetBSD: pcidevs,v 1.847 2006/11/08 11:35:11 martti Exp
  */
 
 /*
@@ -918,8 +918,6 @@
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
 #define	PCI_PRODUCT_AMI_MEGARAID2	0x9060		/* MegaRAID 2 */
 #define	PCI_PRODUCT_AMI_MEGARAID3	0x1960		/* MegaRAID 3 */
-#define	PCI_PRODUCT_AMI_MEGARAID_SAS	0x0411		/* MegaRAID SAS */
-#define	PCI_PRODUCT_AMI_MEGARAID_VERDE_ZCR	0x0413		/* MegaRAID Verde ZCR */
 
 /* Analog Devices products */
 #define	PCI_PRODUCT_ANALOG_SAFENET	0x2f44		/* SafeNet Crypto Accelerator ADSP-2141 */
@@ -2556,6 +2554,8 @@
 #define	PCI_PRODUCT_SYMBIOS_MEGARAID_320X	0x0407		/* LSI Megaraid SCSI 320-X */
 #define	PCI_PRODUCT_SYMBIOS_MEGARAID_320E	0x0408		/* LSI Megaraid SCSI 320-E */
 #define	PCI_PRODUCT_SYMBIOS_MEGARAID_300X	0x0409		/* LSI Megaraid SATA (300-6X/300-8X) */
+#define	PCI_PRODUCT_SYMBIOS_MEGARAID_SAS	0x0411		/* MegaRAID SAS */
+#define	PCI_PRODUCT_SYMBIOS_MEGARAID_VERDE_ZCR	0x0413		/* MegaRAID Verde ZCR */
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC Ethernet */
