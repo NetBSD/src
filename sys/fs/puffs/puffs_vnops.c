@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.8 2006/11/07 22:10:18 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.9 2006/11/08 11:49:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.8 2006/11/07 22:10:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.9 2006/11/08 11:49:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1558,9 +1558,12 @@ puffs_strategy(void *v)
 		    (void **)&read_argp, &argsize, argsize,
 		    VPTOPNC(ap->a_vp), LOCKEDVP(ap->a_vp), NULL);
 
+		/* XXX */
 		if (error)
-			printf("virhe\n");
+			printf("virhe %d\n", error);
 
+		/* XXX */
+		bp->b_resid = read_argp->pvnr_resid;
 		(void)memcpy(bp->b_data, read_argp->pvnr_data, bp->b_bcount);
 		free(read_argp, M_PUFFS);
 	} else {
@@ -1577,6 +1580,8 @@ puffs_strategy(void *v)
 		    VPTOPNC(ap->a_vp), ap->a_vp, NULL);
 		if (error)
 			goto out;
+
+		bp->b_resid = write_argp->pvnr_resid;
 
 		/* XXX: if any of the following trigger, we're in trouble */
 
