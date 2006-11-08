@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.1 2003/10/07 17:08:07 skd Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.2 2006/11/08 21:16:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -39,8 +39,9 @@
  *	sp->	siginfo structure	[0]
  */
 NESTED_NOPROFILE(__sigtramp_siginfo_2,0,0,ra,0,0)
+	ldgp	gp,0(ra)
 	lda	a0,(128)(sp)		/* get pointer to ucontext */
 	CALLSYS_NOERROR(setcontext)	/* and call setcontext() with it */
-	mov	v0, a0			/* if that failed, get error code */
-	CALLSYS_NOERROR(exit)		/* and call exit() with it */
+	ldiq	a0,-1			/* if that failed, set an exit code */
+	CALLSYS_NOERROR(exit)		/* and call exit() */
 END(__sigtramp_siginfo_2)
