@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.79 2006/10/12 01:31:33 christos Exp $	*/
+/*	$NetBSD: twe.c,v 1.80 2006/11/08 00:17:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.79 2006/10/12 01:31:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.80 2006/11/08 00:17:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.79 2006/10/12 01:31:33 christos Exp $");
 #include <sys/disk.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1752,7 +1753,7 @@ twe_ccb_wait_handler(struct twe_ccb *ccb, int error __unused)
  */
 static int
 tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
-    struct lwp *l __unused)
+    struct lwp *l)
 {
 	struct twe_softc *twe;
 	struct twe_ccb *ccb;
@@ -1772,8 +1773,9 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
 	/* This is intended to be compatible with the FreeBSD interface. */
 	switch (cmd) {
 	case TWEIO_COMMAND:
-		if (securelevel >= 2)
-			return (EPERM);
+		error = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		if (error)
+			return (error);
 
 		/* XXX mutex */
 		if (tu->tu_size > 0) {

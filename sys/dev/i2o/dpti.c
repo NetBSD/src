@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.28 2006/10/12 01:30:58 christos Exp $	*/
+/*	$NetBSD: dpti.c,v 1.29 2006/11/08 00:17:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.28 2006/10/12 01:30:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.29 2006/11/08 00:17:09 elad Exp $");
 
 #include "opt_i2o.h"
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.28 2006/10/12 01:30:58 christos Exp $");
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -276,10 +277,9 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
 		break;
 
 	case DPT_I2OUSRCMD:
-		if (securelevel > 1) {
-			rv = EPERM;
+		rv = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		if (rv)
 			break;
-		}
 
 		if (sc->sc_nactive++ >= 2)
 			tsleep(&sc->sc_nactive, PRIBIO, "dptislp", 0);
