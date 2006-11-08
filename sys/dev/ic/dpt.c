@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.52 2006/10/12 01:31:00 christos Exp $	*/
+/*	$NetBSD: dpt.c,v 1.53 2006/11/08 00:17:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.52 2006/10/12 01:31:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.53 2006/11/08 00:17:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.52 2006/10/12 01:31:00 christos Exp $");
 #include <sys/buf.h>
 #include <sys/endian.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1154,8 +1155,9 @@ dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
 		break;
 
 	case DPT_EATAUSRCMD:
-		if (securelevel > 1)
-			return (EPERM);
+		rv = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		if (rv)
+			return (rv);
 
 		if (IOCPARM_LEN(cmd) < sizeof(struct eata_ucp)) {
 			DPRINTF(("%s: ucp %lu vs %lu bytes\n",

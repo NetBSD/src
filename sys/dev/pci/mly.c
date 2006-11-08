@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.30 2006/10/12 01:31:32 christos Exp $	*/
+/*	$NetBSD: mly.c,v 1.31 2006/11/08 00:17:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.30 2006/10/12 01:31:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.31 2006/11/08 00:17:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.30 2006/10/12 01:31:32 christos Exp $");
 #include <sys/ioctl.h>
 #include <sys/scsiio.h>
 #include <sys/kthread.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -2308,7 +2309,7 @@ mlyclose(dev_t dev, int flag __unused, int mode __unused,
  */
 int
 mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
-    struct lwp *l __unused)
+    struct lwp *l)
 {
 	struct mly_softc *mly;
 	int rv;
@@ -2317,10 +2318,11 @@ mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
 
 	switch (cmd) {
 	case MLYIO_COMMAND:
-		if (securelevel >= 2)
-			rv = EPERM;
-		else
-			rv = mly_user_command(mly, (void *)data);
+		rv = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		if (rv)
+			break;
+
+		rv = mly_user_command(mly, (void *)data);
 		break;
 	case MLYIO_HEALTH:
 		rv = mly_user_health(mly, (void *)data);

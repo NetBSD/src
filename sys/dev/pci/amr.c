@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.39 2006/10/12 01:31:28 christos Exp $	*/
+/*	$NetBSD: amr.c,v 1.40 2006/11/08 00:17:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.39 2006/10/12 01:31:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.40 2006/11/08 00:17:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.39 2006/10/12 01:31:28 christos Exp $");
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/kthread.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1356,7 +1357,7 @@ amrclose(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused
 
 static int
 amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
-    struct lwp *l __unused)
+    struct lwp *l)
 {
 	struct amr_softc *amr;
 	struct amr_user_ioctl *au;
@@ -1376,8 +1377,9 @@ amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
 		*(int *)data = AMR_IO_VERSION_NUMBER;
 		return 0;
 	case AMR_IO_COMMAND:
-		if (securelevel >= 2)
-			return (EPERM);
+		error = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		if (error)
+			return (error);
 
 		au = (struct amr_user_ioctl *)data;
 		au_cmd = au->au_cmd;

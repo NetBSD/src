@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.59 2006/10/12 01:30:58 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.60 2006/11/08 00:17:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.59 2006/10/12 01:30:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.60 2006/11/08 00:17:09 elad Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.59 2006/10/12 01:30:58 christos Exp $");
 #include <sys/endian.h>
 #include <sys/conf.h>
 #include <sys/kthread.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -2525,8 +2526,9 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
 
 	switch (cmd) {
 	case IOPIOCPT:
-		if (securelevel >= 2)
-			return (EPERM);
+		rv = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		if (rv)
+			return (rv);
 
 		return (iop_passthrough(sc, (struct ioppt *)data, l->l_proc));
 
