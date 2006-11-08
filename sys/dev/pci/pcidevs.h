@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.846 2006/11/08 11:36:21 martti Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.847 2006/11/08 21:03:35 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.847 2006/11/08 11:35:11 martti Exp
+ *	NetBSD: pcidevs,v 1.848 2006/11/08 21:02:02 rpaulo Exp
  */
 
 /*
@@ -906,6 +906,7 @@
 #define	PCI_PRODUCT_AMD_PCIX8131_APIC	0x7451		/* AMD8131 IO Apic */
 #define	PCI_PRODUCT_AMD_AGP8151_DEV	0x7454		/* AMD8151 AGP Device */
 #define	PCI_PRODUCT_AMD_AGP8151_PPB	0x7455		/* AMD8151 AGP Bridge */
+#define	PCI_PRODUCT_AMD_PCIX_APIC	0x7459		/* AMD PCI-X IOAPIC */
 #define	PCI_PRODUCT_AMD_PBC8111	0x7460		/* AMD8111 I/O Hub */
 #define	PCI_PRODUCT_AMD_PBC8111_USB	0x7464		/* AMD8111 USB Host Controller */
 #define	PCI_PRODUCT_AMD_PBC8111_LPC	0x7468		/* AMD8111 LPC Controller */

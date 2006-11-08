@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.845 2006/11/08 11:36:22 martti Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.846 2006/11/08 21:03:35 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.847 2006/11/08 11:35:11 martti Exp
+ *	NetBSD: pcidevs,v 1.848 2006/11/08 21:02:02 rpaulo Exp
  */
 
 /*
@@ -3254,6 +3254,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AGP8151_PPB,
 	    "AMD8151 AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCIX_APIC,
+	    "AMD PCI-X IOAPIC",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111,
@@ -12452,4 +12456,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2519;
+const int pci_nproducts = 2520;
