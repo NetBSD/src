@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.2 2006/08/02 04:18:48 jld Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.3 2006/11/08 21:16:40 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -51,9 +51,9 @@
  *	sp->	signal number				[0]
  */
 NENTRY(__sigtramp_siginfo_2)
-	leal	12+128(%esp),%eax	/* get pointer to ucontext */
+	leal	12+128(%esp),%eax	/* get address of ucontext */
 	movl	%eax,4(%esp)	/* put it in the argument slot */
 				/* fake return address already there */
 	SYSTRAP(setcontext)	/* do setcontext */
-	movl	%eax,4(%esp)	/* error code */
+	movl	$-1,4(%esp)	/* if we return here, something is wrong */
 	SYSTRAP(exit)		/* exit */
