@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.238 2006/11/03 19:46:03 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.239 2006/11/08 20:18:33 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.238 2006/11/03 19:46:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.239 2006/11/08 20:18:33 drochner Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -2382,10 +2382,13 @@ sys_setcontext(struct lwp *l, void *v, register_t *retval)
 	ucontext_t uc;
 	int error;
 
-	if (SCARG(uap, ucp) == NULL)	/* i.e. end of uc_link chain */
-		exit1(l, W_EXITCODE(0, 0));
-	else if ((error = copyin(SCARG(uap, ucp), &uc, sizeof (uc))) != 0 ||
-	    (error = setucontext(l, &uc)) != 0)
+	error = copyin(SCARG(uap, ucp), &uc, sizeof (uc));
+	if (error)
+		return (error);
+	if (!(uc.uc_flags & _UC_CPU))
+		return (EINVAL);
+	error = setucontext(l, &uc);
+	if (error)
 		return (error);
 
 	return (EJUSTRETURN);
