@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_aout.c,v 1.15 2003/08/07 16:42:54 agc Exp $ */
+/* $NetBSD: nlist_aout.c,v 1.16 2006/11/08 23:27:32 christos Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,7 +66,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.15 2003/08/07 16:42:54 agc Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.16 2006/11/08 23:27:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -149,7 +149,12 @@ __fdnlist_aout(fd, list)
 	}
 	if (lseek(fd, symoff, SEEK_SET) == -1)
 		return (-1);
-	if ((scoreboard = alloca((size_t)nent)) == NULL)
+#if defined(__SSP__) || defined(__SSP_ALL__)
+	scoreboard = malloc((size_t)nent);
+#else
+	scoreboard = alloca((size_t)nent);
+#endif
+	if (scoreboard == NULL)
 		return (-1);
 	(void)memset(scoreboard, 0, (size_t)nent);
 
@@ -179,6 +184,9 @@ __fdnlist_aout(fd, list)
 		}
 	}
 	munmap(strtab, strsize);
+#if defined(__SSP__) || defined(__SSP_ALL__)
+	free(scoreboard);
+#endif
 	return (nent);
 }
 #endif /* NLIST_AOUT */
