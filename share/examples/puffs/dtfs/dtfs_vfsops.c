@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.1 2006/10/23 00:44:53 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.2 2006/11/08 11:25:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/resource.h>
 
 #include <err.h>
 #include <puffs.h>
@@ -106,22 +107,36 @@ dtfs_unmount(struct puffs_usermount *pu, int flags, pid_t pid)
  * The rest are filled in by the kernel.
  */
 #define ROUND(a,b) (((a) + ((b)-1)) & ~((b)-1))
+#define NFILES 1024*1024
 int
 dtfs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp, pid_t pid)
 {
+	struct rlimit rlim;
 	struct dtfs_mount *dtm;
+	off_t btot, bfree;
 	int pgsize;
 
 	dtm = pu->pu_privdata;
 	pgsize = getpagesize();
 	memset(sbp, 0, sizeof(struct statvfs));
 
-	sbp->f_bsize = sbp->f_frsize = sbp->f_iosize = pgsize;
-	sbp->f_bfree = sbp->f_bavail = 0;
-	sbp->f_ffree = sbp->f_favail = 0;
+	/*
+	 * Use datasize rlimit as an _approximation_ for free size.
+	 * This, of course, is not accurate due to overhead and not
+	 * accounting for metadata.
+	 */
+	if (getrlimit(RLIMIT_DATA, &rlim) == 0)
+		btot = rlim.rlim_cur;
+	else
+		btot = 16*1024*1024;
+	bfree = btot - dtm->dtm_fsizes;
 
-	sbp->f_blocks = ROUND(dtm->dtm_fsizes, pgsize) / pgsize;
-	sbp->f_files = dtm->dtm_nfiles;
+	sbp->f_blocks = ROUND(btot, pgsize) / pgsize;
+	sbp->f_files = NFILES;
+
+	sbp->f_bsize = sbp->f_frsize = sbp->f_iosize = pgsize;
+	sbp->f_bfree = sbp->f_bavail = ROUND(bfree, pgsize) / pgsize;
+	sbp->f_ffree = sbp->f_favail = NFILES - dtm->dtm_nfiles;
 
 	sbp->f_bresvd = sbp->f_fresvd = 0;
 
