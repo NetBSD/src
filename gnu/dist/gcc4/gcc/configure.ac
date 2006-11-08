@@ -3123,6 +3123,12 @@ case "$target" in
 	  gcc_cv_libc_provides_ssp=yes
 	fi
       fi]) ;;
+  *-*-netbsd*)
+      if $gcc_cv_nm /lib/libc.so | grep -sq 'B __stack_chk_guard'; then
+	gcc_cv_libc_provides_ssp=yes
+      else
+	gcc_cv_libc_provides_ssp=no
+      fi ;;
   *) gcc_cv_libc_provides_ssp=no ;;
 esac
 if test x$gcc_cv_libc_provides_ssp = xyes; then
