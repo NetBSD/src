@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.26 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: execvp.c,v 1.27 2006/11/08 23:27:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.26 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.27 2006/11/08 23:27:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -127,12 +127,23 @@ retry:		(void)execve(bp, argv, environ);
 		case ENOEXEC:
 			for (cnt = 0; argv[cnt] != NULL; ++cnt)
 				continue;
-			if ((memp = alloca((cnt + 2) * sizeof(*memp))) == NULL)
+			ln = (cnt + 2) * sizeof(*memp);
+#if defined(__SSP__) || defined(__SSP_ALL__)
+			memp = malloc(ln);
+#else
+			memp = alloca(ln);
+#endif
+			if (memp == NULL)
 				goto done;
 			memp[0] = _PATH_BSHELL;
 			memp[1] = bp;
 			(void)memcpy(&memp[2], &argv[1], cnt * sizeof(*memp));
 			(void)execve(_PATH_BSHELL, __UNCONST(memp), environ);
+#if defined(__SSP__) || defined(__SSP_ALL__)
+			eacces = errno;
+			free(memp);
+			errno = eacces;
+#endif
 			goto done;
 		case ETXTBSY:
 			if (etxtbsy < 3)
