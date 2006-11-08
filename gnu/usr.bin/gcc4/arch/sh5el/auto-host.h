@@ -1284,7 +1284,7 @@
 
 /* Define if your target C library provides stack protector support */
 #ifndef USED_FOR_TARGET
-/* #undef TARGET_LIBC_PROVIDES_SSP */
+#define TARGET_LIBC_PROVIDES_SSP 1
 #endif
 
 
