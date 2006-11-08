@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.109 2006/10/22 22:52:21 pooka Exp $
+#	$NetBSD: Makefile,v 1.110 2006/11/08 20:52:39 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -7,7 +7,7 @@ SUBDIR=	csu libc .WAIT libarch libbsdmalloc libbluetooth libbz2 \
 	libcompat libcrypt \
 	libcurses libevent libform libintl libkvm libl libm \
 	libmenu libossaudio libpcap libpci libpmc libposix libprop libpthread \
-	libpthread_dbg libpuffs libresolv librmt librpcsvc libsdp librt \
+	libpthread_dbg libpuffs libresolv librmt librpcsvc librt libsbp libssp \
 	libterm libusbhid libutil libwrap liby libz
 
 .if (${MKSKEY} != "no")
