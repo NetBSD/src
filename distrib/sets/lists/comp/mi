@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.966 2006/11/07 17:49:47 dbj Exp $
+#	$NetBSD: mi,v 1.967 2006/11/08 20:52:02 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1710,6 +1710,10 @@
 ./usr/include/skey.h				comp-c-include		skey
 ./usr/include/smbfs				comp-obsolete		obsolete
 ./usr/include/soundcard.h			comp-c-include
+./usr/include/ssp/ssp.h				comp-c-include
+./usr/include/ssp/stdio.h			comp-c-include
+./usr/include/ssp/string.h			comp-c-include
+./usr/include/ssp/unistd.h			comp-c-include
 ./usr/include/stab.h				comp-c-include
 ./usr/include/stdarg.h				comp-c-include
 ./usr/include/stdbool.h				comp-c-include
