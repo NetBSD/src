@@ -1,4 +1,4 @@
-/*	$NetBSD: elf32.c,v 1.2 2006/09/07 01:23:59 ad Exp $	*/
+/*	$NetBSD: elf32.c,v 1.3 2006/11/08 23:12:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: elf32.c,v 1.2 2006/09/07 01:23:59 ad Exp $");
+__RCSID("$NetBSD: elf32.c,v 1.3 2006/11/08 23:12:57 ad Exp $");
 #endif
 
 #ifndef ELFSIZE
@@ -175,7 +175,20 @@ NAME(findsym)(findsym_t find, char *name, uintptr_t *start, uintptr_t *end)
 {
 	static int lastptr[FIND_MAX];
 	uintptr_t sa, ea;
-	int i, rv;
+	int i, rv, st, off;
+
+	switch (find) {
+	case LOCK_BYNAME:
+	case LOCK_BYADDR:
+		st = STT_OBJECT;
+		break;
+	case FUNC_BYNAME:
+	case FUNC_BYADDR:
+		st = STT_FUNC;
+		break;
+	default:
+		return -1;
+	}
 
 	rv = -1;
 
@@ -186,7 +199,8 @@ NAME(findsym)(findsym_t find, char *name, uintptr_t *start, uintptr_t *end)
 #endif
 		switch (find) {
 		case LOCK_BYNAME:
-			if (ELF_ST_TYPE(symp[i].st_info) != STT_OBJECT)
+		case FUNC_BYNAME:
+			if (ELF_ST_TYPE(symp[i].st_info) != st)
 				break;
 			if (strcmp(&strp[symp[i].st_name], name) != 0)
 				break;
@@ -195,31 +209,19 @@ NAME(findsym)(findsym_t find, char *name, uintptr_t *start, uintptr_t *end)
 			goto found;
 
 		case LOCK_BYADDR:
-			if (ELF_ST_TYPE(symp[i].st_info) != STT_OBJECT)
-				break;
-			if (*start != (uintptr_t)symp[i].st_value)
-				break;
-			strcpy(name, &strp[symp[i].st_name]);
-			goto found;
-
-		case FUNC_BYNAME:
-			if (ELF_ST_TYPE(symp[i].st_info) != STT_FUNC)
-				break;
-			if (strcmp(&strp[symp[i].st_name], name) != 0)
-				break;
-			*start = (uintptr_t)symp[i].st_value;
-			*end = *start + (uintptr_t)symp[i].st_size;
-			goto found;
-
 		case FUNC_BYADDR:
-			if (ELF_ST_TYPE(symp[i].st_info) != STT_FUNC)
+			if (ELF_ST_TYPE(symp[i].st_info) != st)
 				break;
 			sa = (uintptr_t)symp[i].st_value;
 			ea = sa + (uintptr_t)symp[i].st_size - 1;
 			if (*start < sa || *start > ea)
 				break;
-			sprintf(name, "%s+0x%x",
-			    &strp[symp[i].st_name], (int)(*start - sa));
+			off = (int)(*start - sa);
+			if (off == 0)
+				strcpy(name, &strp[symp[i].st_name]);
+			else
+				sprintf(name, "%s+0x%x",
+				    &strp[symp[i].st_name], off);
 			goto found;
 			
 		default:
