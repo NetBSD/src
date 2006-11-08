@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.845 2006/11/07 09:29:31 martti Exp $
+$NetBSD: pcidevs,v 1.846 2006/11/08 11:32:45 martti Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -911,8 +911,6 @@ product AMD PBC8111_AC		0x746d	AMD8111 AC97 Audio
 product AMI MEGARAID		0x9010	MegaRAID
 product AMI MEGARAID2		0x9060	MegaRAID 2
 product AMI MEGARAID3		0x1960	MegaRAID 3
-product AMI MEGARAID_SAS	0x0411	MegaRAID SAS
-product AMI MEGARAID_VERDE_ZCR	0x0413	MegaRAID Verde ZCR
 
 /* Analog Devices products */
 product ANALOG SAFENET	0x2f44	SafeNet Crypto Accelerator ADSP-2141
@@ -2549,6 +2547,8 @@ product SYMBIOS PERC_4SC	0x1960	PERC 4/SC
 product SYMBIOS MEGARAID_320X	0x0407	LSI Megaraid SCSI 320-X
 product SYMBIOS MEGARAID_320E	0x0408	LSI Megaraid SCSI 320-E
 product SYMBIOS MEGARAID_300X	0x0409	LSI Megaraid SATA (300-6X/300-8X) 
+product SYMBIOS MEGARAID_SAS	0x0411	MegaRAID SAS
+product SYMBIOS MEGARAID_VERDE_ZCR	0x0413	MegaRAID Verde ZCR
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
