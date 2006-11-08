@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.326 2006/10/31 22:21:17 joerg Exp $
+#	$NetBSD: NetBSD.dist,v 1.327 2006/11/08 22:43:34 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -296,6 +296,7 @@
 ./usr/include/rpcsvc
 ./usr/include/security
 ./usr/include/sys
+./usr/include/ssp
 ./usr/include/ufs
 ./usr/include/ufs/ext2fs
 ./usr/include/ufs/ffs
