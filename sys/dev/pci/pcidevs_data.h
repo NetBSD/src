@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.844 2006/11/07 09:34:37 martti Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.845 2006/11/08 11:36:22 martti Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.845 2006/11/07 09:29:31 martti Exp
+ *	NetBSD: pcidevs,v 1.847 2006/11/08 11:35:11 martti Exp
  */
 
 /*
@@ -3294,14 +3294,6 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID3,
 	    "MegaRAID 3",
-	},
-	{
-	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID_SAS,
-	    "MegaRAID SAS",
-	},
-	{
-	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID_VERDE_ZCR,
-	    "MegaRAID Verde ZCR",
 	},
 	{
 	    PCI_VENDOR_ANALOG, PCI_PRODUCT_ANALOG_SAFENET,
@@ -8786,6 +8778,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_300X,
 	    "LSI Megaraid SATA (300-6X/300-8X)",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_SAS,
+	    "MegaRAID SAS",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_VERDE_ZCR,
+	    "MegaRAID Verde ZCR",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
