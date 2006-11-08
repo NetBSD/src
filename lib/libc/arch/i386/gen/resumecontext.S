@@ -1,4 +1,4 @@
-/*	$NetBSD: resumecontext.S,v 1.4 2003/01/26 18:14:03 kleink Exp $	*/
+/*	$NetBSD: resumecontext.S,v 1.5 2006/11/08 20:28:03 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <machine/asm.h>
+#include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: resumecontext.S,v 1.4 2003/01/26 18:14:03 kleink Exp $")
+	RCSID("$NetBSD: resumecontext.S,v 1.5 2006/11/08 20:28:03 drochner Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -63,10 +64,27 @@ NENTRY(_resumecontext)	/* profiling prologue would clobber TOS */
 	PIC_EPILOGUE
 	movl	4(%esp),%ecx		/* uc_link */
 	PIC_PROLOGUE
-	pushl	%ecx
+	pushl	%ecx	/* argument for exit() or setcontext() */
+	testl	%ecx,%ecx		/* link end? */
+	jnz	9f	/* watch out for local label use in PIC_* */
+
+	/* normal exit */
+#ifdef PIC
+	call	PIC_PLT(_C_LABEL(exit))
+#else
+	call	_C_LABEL(exit)
+#endif
+	/* NOTREACHED */
+
+9:
 #ifdef PIC
 	call	PIC_PLT(_C_LABEL(setcontext))
 #else
 	call	_C_LABEL(setcontext)
 #endif
 	/* NOTREACHED */
+
+	/* something is wrong, pull the brake */
+	pushl	$-1
+	pushl	%eax	/* unused return address */
+	SYSTRAP(exit)
