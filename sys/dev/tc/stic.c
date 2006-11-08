@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.35 2006/11/08 00:17:10 elad Exp $	*/
+/*	$NetBSD: stic.c,v 1.36 2006/11/08 02:53:31 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.35 2006/11/08 00:17:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.36 2006/11/08 02:53:31 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1498,9 +1498,6 @@ sticmmap(dev_t dev, off_t offset, int prot)
 	struct stic_info *si;
 	struct stic_xmap *sxm;
 	paddr_t pa;
-
-	if (kauth_authorize_device_passthru(l->l_cred, dev, NULL) != 0)
-		return (-1L);
 
 	si = stic_info[minor(dev)];
 	sxm = NULL;
