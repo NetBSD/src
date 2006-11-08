@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.37 2006/10/23 00:15:58 christos Exp $ */
+/* $NetBSD: decl.c,v 1.38 2006/11/08 18:31:15 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.37 2006/10/23 00:15:58 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.38 2006/11/08 18:31:15 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2760,10 +2760,16 @@ chkusage(dinfo_t *di)
 	mknowarn = nowarn;
 	nowarn = 0;
 
+#ifdef DEBUG
+	printf("%s, %d: >temp nowarn = 0\n", curr_pos.p_file, curr_pos.p_line);
+#endif
 	for (sym = di->d_dlsyms; sym != NULL; sym = sym->s_dlnxt)
 		chkusg1(di->d_asm, sym);
-
 	nowarn = mknowarn;
+#ifdef DEBUG
+	printf("%s, %d: <temp nowarn = %d\n", curr_pos.p_file, curr_pos.p_line,
+	    nowarn);
+#endif
 }
 
 /*
