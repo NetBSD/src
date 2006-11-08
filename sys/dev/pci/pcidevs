@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.847 2006/11/08 11:35:11 martti Exp $
+$NetBSD: pcidevs,v 1.848 2006/11/08 21:02:02 rpaulo Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -899,6 +899,7 @@ product AMD PCIX8131_PPB	0x7450	AMD8131 PCI-X Tunnel
 product AMD PCIX8131_APIC	0x7451	AMD8131 IO Apic
 product AMD AGP8151_DEV	0x7454	AMD8151 AGP Device
 product AMD AGP8151_PPB	0x7455	AMD8151 AGP Bridge
+product	AMD PCIX_APIC	0x7459	AMD PCI-X IOAPIC
 product AMD PBC8111	0x7460	AMD8111 I/O Hub
 product AMD PBC8111_USB		0x7464	AMD8111 USB Host Controller
 product AMD PBC8111_LPC		0x7468	AMD8111 LPC Controller
