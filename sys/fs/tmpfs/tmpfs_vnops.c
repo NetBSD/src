@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.31 2006/11/09 15:06:03 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.32 2006/11/09 15:36:30 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.31 2006/11/09 15:06:03 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.32 2006/11/09 15:36:30 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -319,12 +319,21 @@ tmpfs_open(void *v)
 
 	node = VP_TO_TMPFS_NODE(vp);
 
+	/* The file is still active but all its names have been removed
+	 * (e.g. by a "rmdir $(pwd)").  It cannot be opened any more as
+	 * it is about to die. */
+	if (node->tn_links < 1) {
+		error = ENOENT;
+		goto out;
+	}
+
 	/* If the file is marked append-only, deny write requests. */
 	if (node->tn_flags & APPEND && (mode & (FWRITE | O_APPEND)) == FWRITE)
 		error = EPERM;
 	else
 		error = 0;
 
+out:
 	KASSERT(VOP_ISLOCKED(vp));
 
 	return error;
