@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.16 2006/09/01 19:52:48 perseant Exp $	 */
+/* $NetBSD: pass2.c,v 1.17 2006/11/09 19:36:36 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -73,9 +73,9 @@ pass2(void)
 	case USTATE:
 		pfatal("ROOT INODE UNALLOCATED");
 		if (reply("ALLOCATE") == 0)
-			err(8, "%s", "");
+			err(EEXIT, "%s", "");
 		if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
-			err(8, "CANNOT ALLOCATE ROOT INODE\n");
+			err(EEXIT, "CANNOT ALLOCATE ROOT INODE\n");
 		break;
 
 	case DCLEAR:
@@ -83,11 +83,11 @@ pass2(void)
 		if (reply("REALLOCATE")) {
 			freeino(ROOTINO);
 			if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
-				err(8, "CANNOT ALLOCATE ROOT INODE\n");
+				err(EEXIT, "CANNOT ALLOCATE ROOT INODE\n");
 			break;
 		}
 		if (reply("CONTINUE") == 0)
-			err(8, "%s", "");
+			err(EEXIT, "%s", "");
 		break;
 
 	case FSTATE:
@@ -96,11 +96,11 @@ pass2(void)
 		if (reply("REALLOCATE")) {
 			freeino(ROOTINO);
 			if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
-				err(8, "CANNOT ALLOCATE ROOT INODE\n");
+				err(EEXIT, "CANNOT ALLOCATE ROOT INODE\n");
 			break;
 		}
 		if (reply("FIX") == 0)
-			errx(8, "%s", "");
+			errx(EEXIT, "%s", "");
 		vp = vget(fs, ROOTINO);
 		dp = VTOD(vp);
 		dp->di_mode &= ~IFMT;
@@ -112,7 +112,7 @@ pass2(void)
 		break;
 
 	default:
-		errx(8, "BAD STATE %d FOR ROOT INODE\n", statemap[ROOTINO]);
+		errx(EEXIT, "BAD STATE %d FOR ROOT INODE\n", statemap[ROOTINO]);
 	}
 	statemap[WINO] = FSTATE;
 	typemap[WINO] = DT_WHT;
@@ -421,7 +421,7 @@ again:
 			break;
 
 		default:
-			errx(8, "BAD STATE %d FOR INODE I=%d",
+			errx(EEXIT, "BAD STATE %d FOR INODE I=%d",
 			    statemap[dirp->d_ino], dirp->d_ino);
 		}
 	}

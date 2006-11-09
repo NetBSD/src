@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.27 2006/10/16 03:21:34 christos Exp $	 */
+/* $NetBSD: pass1.c,v 1.28 2006/11/09 19:36:36 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,8 +44,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <signal.h>
+#include <util.h>
 
 #include "bufcache.h"
 #include "vnode.h"
@@ -108,13 +108,9 @@ pass1(void)
 	if (debug)
 		printf("creating sorted inode address table...\n");
 	/* Sort by daddr */
-	dins = (struct ino_daddr **) malloc(maxino * sizeof(*dins));
-	if (dins == NULL)
-		err(1, NULL);
+	dins = ecalloc(maxino, sizeof(*dins));
 	for (i = 0; i < maxino; i++) {
-		dins[i] = malloc(sizeof(**dins));
-		if (dins[i] == NULL)
-			err(1, NULL);
+		dins[i] = emalloc(sizeof(**dins));
 		dins[i]->ino = i;
 		if (i == fs->lfs_ifile)
 			dins[i]->daddr = fs->lfs_idaddr;
@@ -142,15 +138,8 @@ pass1(void)
 	/* from setup.c */
 	inplast = 0;
 	listmax = numdirs + 10;
-	inpsort = (struct inoinfo **) calloc((unsigned) listmax,
-	    sizeof(struct inoinfo *));
-	inphead = (struct inoinfo **) calloc((unsigned) numdirs,
-	    sizeof(struct inoinfo *));
-	if (inpsort == NULL || inphead == NULL) {
-		printf("cannot alloc %lu bytes for inphead\n",
-		    (unsigned long) numdirs * sizeof(struct inoinfo *));
-		exit(1);
-	}
+	inpsort = ecalloc(listmax, sizeof(struct inoinfo *));
+	inphead = ecalloc(numdirs, sizeof(struct inoinfo *));
 	if (debug)
 		printf("counting blocks...\n");
 
@@ -271,16 +260,10 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	n_files++;
 	lncntp[inumber] = dp->di_nlink;
 	if (dp->di_nlink <= 0) {
-		zlnp = (struct zlncnt *) malloc(sizeof *zlnp);
-		if (zlnp == NULL) {
-			pfatal("LINK COUNT TABLE OVERFLOW");
-			if (reply("CONTINUE") == 0)
-				err(8, "%s", "");
-		} else {
-			zlnp->zlncnt = inumber;
-			zlnp->next = zlnhead;
-			zlnhead = zlnp;
-		}
+		zlnp = emalloc(sizeof *zlnp);
+		zlnp->zlncnt = inumber;
+		zlnp->next = zlnhead;
+		zlnhead = zlnp;
 	}
 	if (mode == IFDIR) {
 		if (dp->di_size == 0)
@@ -301,16 +284,10 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		if (ifp->if_nextfree == LFS_ORPHAN_NEXTFREE) {
 			statemap[inumber] = (mode == IFDIR ? DCLEAR : FCLEAR);
 			/* Add this to our list of orphans */
-			zlnp = (struct zlncnt *) malloc(sizeof *zlnp);
-			if (zlnp == NULL) {
-				pfatal("LINK COUNT TABLE OVERFLOW");
-				if (reply("CONTINUE") == 0)
-					err(8, "%s", "");
-			} else {
-				zlnp->zlncnt = inumber;
-				zlnp->next = orphead;
-				orphead = zlnp;
-			}
+			zlnp = emalloc(sizeof *zlnp);
+			zlnp->zlncnt = inumber;
+			zlnp->next = orphead;
+			orphead = zlnp;
 		}
 		brelse(bp);
 	}
@@ -359,7 +336,7 @@ pass1check(struct inodesc *idesc)
 			if (preen)
 				printf(" (SKIPPING)\n");
 			else if (reply("CONTINUE") == 0)
-				err(8, "%s", "");
+				err(EEXIT, "%s", "");
 			return (STOP);
 		}
 	} else if (!testbmap(blkno)) {
@@ -388,16 +365,10 @@ pass1check(struct inodesc *idesc)
 				if (preen)
 					printf(" (SKIPPING)\n");
 				else if (reply("CONTINUE") == 0)
-					err(8, "%s", "");
+					err(EEXIT, "%s", "");
 				return (STOP);
 			}
-			new = (struct dups *) malloc(sizeof(struct dups));
-			if (new == NULL) {
-				pfatal("DUP TABLE OVERFLOW.");
-				if (reply("CONTINUE") == 0)
-					err(8, "%s", "");
-				return (STOP);
-			}
+			new = emalloc(sizeof(struct dups));
 			new->dup = blkno;
 			if (muldup == 0) {
 				duplist = muldup = new;

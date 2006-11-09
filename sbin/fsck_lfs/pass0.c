@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.28 2006/07/18 23:37:13 perseant Exp $	 */
+/* $NetBSD: pass0.c,v 1.29 2006/11/09 19:36:36 christos Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 
 #include "bufcache.h"
 #include "vnode.h"
@@ -118,11 +119,7 @@ pass0(void)
 	 * Check the inode free list for inuse inodes, and cycles.
 	 * Make sure that all free inodes are in fact on the list.
 	 */
-	visited = (char *) malloc(maxino * sizeof(*visited));
-	if (visited == NULL)
-		err(1, NULL);
-	memset(visited, 0, maxino * sizeof(*visited));
-
+	visited = ecalloc(maxino, sizeof(*visited));
 	plastino = 0;
 	lowfreeino = maxino;
 	LFS_CLEANERINFO(cip, fs, cbp);

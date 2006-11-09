@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.17 2006/10/16 03:21:34 christos Exp $	 */
+/* $NetBSD: pass6.c,v 1.18 2006/11/09 19:36:36 christos Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <util.h>
 
 #include "bufcache.h"
 #include "vnode.h"
@@ -325,7 +326,7 @@ pass6check(struct inodesc * idesc)
 			if (preen)
 				pwarn(" (SKIPPING)\n");
 			else if (reply("CONTINUE") == 0)
-				err(8, "%s", "");
+				err(EEXIT, "%s", "");
 			return (STOP);
 		}
 	}
@@ -345,11 +346,11 @@ account_indir(struct uvnode *vp, struct ufs1_dinode *dp, daddr_t ilbn, daddr_t d
 	else
 		lbn = ilbn + 1;
 	bread(fs->lfs_devvp, fsbtodb(fs, daddr), fs->lfs_bsize, NULL, &bp);
-	buf = (int32_t *)malloc(fs->lfs_bsize);
+	buf = emalloc(fs->lfs_bsize);
 	memcpy(buf, bp->b_data, fs->lfs_bsize);
 	brelse(bp);
 
-	obuf = (int32_t *)malloc(fs->lfs_bsize);
+	obuf = emalloc(fs->lfs_bsize);
 	if (vp) {
 		bread(vp, ilbn, fs->lfs_bsize, NULL, &bp);
 		memcpy(obuf, bp->b_data, fs->lfs_bsize);
@@ -591,8 +592,7 @@ pass6(void)
 	 * changes to any other inode.
 	 */
 
-	ibbuf = malloc(fs->lfs_ibsize);
-	assert(ibbuf != NULL);
+	ibbuf = emalloc(fs->lfs_ibsize);
 	nnewfiles = ndelfiles = nmvfiles = nnewblocks = 0;
 	daddr = fs->lfs_offset;
 	nextseg = fs->lfs_nextseg;
@@ -654,10 +654,9 @@ pass6(void)
 		}
 		idaddrp = ((ufs_daddr_t *)((char *)bp->b_data + fs->lfs_sumsize));
 		for (i = 0; i < howmany(sp->ss_ninos, INOPB(fs)); i++) {
-			ino_t inums[INOPB(fs) + 1];
+			ino_t *inums;
 			
-			for (j = 0; j < INOPB(fs) + 1; j++)
-				inums[j] = 0;
+			inums = ecalloc(INOPB(fs) + 1, sizeof(*inums));
 			ibdaddr = *--idaddrp;
 			fs->lfs_bfree -= btofsb(fs, fs->lfs_ibsize);
 			sbdirty();
@@ -683,6 +682,7 @@ pass6(void)
 					pwarn("BAD INODE AT 0x%" PRIx32 "\n",
 						ibdaddr);
 					brelse(bp);
+					free(inums);
 					goto out;
 				}
 
@@ -772,6 +772,7 @@ pass6(void)
 				vp->v_flag |= VDIROP;
 				inodirty(VTOI(vp));
 			}
+			free(inums);
 		}
 
 		bc = check_summary(fs, sp, daddr, debug, devvp, NULL);

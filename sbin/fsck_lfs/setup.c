@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.31 2006/10/16 03:21:34 christos Exp $ */
+/* $NetBSD: setup.c,v 1.32 2006/11/09 19:36:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <util.h>
 
 #include "bufcache.h"
 #include "vnode.h"
@@ -141,15 +142,10 @@ reset_maxino(ino_t len)
 		pwarn("maxino reset from %lld to %lld\n", (long long)maxino,
 			(long long)len);
 
-	din_table = (ufs_daddr_t *) realloc(din_table, len * sizeof(*din_table));
-	statemap = realloc(statemap, len * sizeof(char));
-	typemap = realloc(typemap, len * sizeof(char));
-	lncntp = (int16_t *) realloc(lncntp, len * sizeof(int16_t));
-
-	if (din_table == NULL || statemap == NULL || typemap == NULL ||
-	    lncntp == NULL) {
-		errexit("expanding tables failed: out of memory");
-	}
+	din_table = erealloc(din_table, len * sizeof(*din_table));
+	statemap = erealloc(statemap, len * sizeof(char));
+	typemap = erealloc(typemap, len * sizeof(char));
+	lncntp = erealloc(lncntp, len * sizeof(int16_t));
 
 	memset(din_table + maxino, 0, (len - maxino) * sizeof(*din_table));
 	memset(statemap + maxino, USTATE, (len - maxino) * sizeof(char));
@@ -435,20 +431,8 @@ setup(const char *dev)
 	/*
 	 * allocate and initialize the necessary maps
 	 */
-	din_table = (ufs_daddr_t *) malloc(maxino * sizeof(*din_table));
-	if (din_table == NULL) {
-		pwarn("cannot alloc %lu bytes for din_table\n",
-		    (unsigned long) maxino * sizeof(*din_table));
-		goto badsblabel;
-	}
-	memset(din_table, 0, maxino * sizeof(*din_table));
-	seg_table = (SEGUSE *) malloc(fs->lfs_nseg * sizeof(SEGUSE));
-	if (seg_table == NULL) {
-		pwarn("cannot alloc %lu bytes for seg_table\n",
-		    (unsigned long) fs->lfs_nseg * sizeof(SEGUSE));
-		goto badsblabel;
-	}
-	memset(seg_table, 0, fs->lfs_nseg * sizeof(SEGUSE));
+	din_table = ecalloc(maxino, sizeof(*din_table));
+	seg_table = ecalloc(fs->lfs_nseg, sizeof(SEGUSE));
 	/* Get segment flags */
 	for (i = 0; i < fs->lfs_nseg; i++) {
 		LFS_SEGENTRY(sup, fs, i, bp);
@@ -464,34 +448,14 @@ setup(const char *dev)
 
 #ifndef VERBOSE_BLOCKMAP
 	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));
-	blockmap = calloc((unsigned) bmapsize, sizeof(char));
+	blockmap = ecalloc(bmapsize, sizeof(char));
 #else
 	bmapsize = maxfsblock * sizeof(ino_t);
-	blockmap = (ino_t *) calloc(maxfsblock, sizeof(ino_t));
+	blockmap = ecalloc(maxfsblock, sizeof(ino_t));
 #endif
-	if (blockmap == NULL) {
-		pwarn("cannot alloc %u bytes for blockmap\n",
-		    (unsigned) bmapsize);
-		goto badsblabel;
-	}
-	statemap = calloc((unsigned) maxino, sizeof(char));
-	if (statemap == NULL) {
-		pwarn("cannot alloc %u bytes for statemap\n",
-		    (unsigned) maxino);
-		goto badsblabel;
-	}
-	typemap = calloc((unsigned) maxino, sizeof(char));
-	if (typemap == NULL) {
-		pwarn("cannot alloc %u bytes for typemap\n",
-		    (unsigned) maxino);
-		goto badsblabel;
-	}
-	lncntp = (int16_t *) calloc((unsigned) maxino, sizeof(int16_t));
-	if (lncntp == NULL) {
-		pwarn("cannot alloc %lu bytes for lncntp\n",
-		    (unsigned long) maxino * sizeof(int16_t));
-		goto badsblabel;
-	}
+	statemap = ecalloc(maxino, sizeof(char));
+	typemap = ecalloc(maxino, sizeof(char));
+	lncntp = ecalloc(maxino, sizeof(int16_t));
 
 	if (preen) {
 		n_files = fs->lfs_nfiles;
@@ -499,20 +463,12 @@ setup(const char *dev)
 		numdirs = maxino;
 		inplast = 0; 
 		listmax = numdirs + 10;
-		inpsort = (struct inoinfo **) calloc((unsigned) listmax,
-			sizeof(struct inoinfo *));
-		inphead = (struct inoinfo **) calloc((unsigned) numdirs, 
-			sizeof(struct inoinfo *));
-		if (inpsort == NULL || inphead == NULL) { 
-			pwarn("cannot alloc %lu bytes for inphead\n",
-				(unsigned long) numdirs * sizeof(struct inoinfo *));  
-			exit(1);
-		}
+		inpsort = ecalloc(listmax, sizeof(struct inoinfo *));
+		inphead = ecalloc(numdirs, sizeof(struct inoinfo *));
 	}
 
 	return (1);
 
-badsblabel:
 	ckfini(0);
 	return (0);
 }

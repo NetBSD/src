@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.30 2006/09/01 19:52:48 perseant Exp $	 */
+/* $NetBSD: main.c,v 1.31 2006/11/09 19:36:36 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -45,6 +45,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <err.h>
+#include <util.h>
 
 #include "fsck.h"
 #include "extern.h"
@@ -55,7 +56,17 @@ int returntosingle;
 static int argtoi(int, const char *, const char *, int);
 static int checkfilesys(const char *, char *, long, int);
 static void usage(void);
+static void efun(int, const char *, ...);
 extern void (*panic_func)(int, const char *, va_list);
+
+static void
+efun(int eval, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	verr(EEXIT, fmt, ap);
+	va_end(ap);
+}
 
 int
 main(int argc, char **argv)
@@ -68,6 +79,7 @@ main(int argc, char **argv)
 	exitonfail = 0;
 	idaddr = 0x0;
 	panic_func = vmsg;
+	esetfunc(efun);
 	while ((ch = getopt(argc, argv, optstring)) != -1) {
 		switch (ch) {
 		case 'b':

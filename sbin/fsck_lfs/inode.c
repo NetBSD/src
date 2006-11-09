@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.35 2006/09/01 19:52:48 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.36 2006/11/09 19:36:36 christos Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 
 #include "bufcache.h"
 #include "vnode.h"
@@ -364,10 +365,7 @@ cacheino(struct ufs1_dinode * dp, ino_t inumber)
 	blks = howmany(dp->di_size, fs->lfs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
-	inp = (struct inoinfo *)
-	    malloc(sizeof(*inp) + (blks - 1) * sizeof(ufs_daddr_t));
-	if (inp == NULL)
-		return;
+	inp = emalloc(sizeof(*inp) + (blks - 1) * sizeof(ufs_daddr_t));
 	inpp = &inphead[inumber % numdirs];
 	inp->i_nexthash = *inpp;
 	*inpp = inp;
@@ -383,10 +381,8 @@ cacheino(struct ufs1_dinode * dp, ino_t inumber)
 	inp->i_numblks = blks * sizeof(ufs_daddr_t);
 	memcpy(&inp->i_blks[0], &dp->di_db[0], (size_t) inp->i_numblks);
 	if (inplast == listmax) {
-		ninpsort = (struct inoinfo **) realloc((char *) inpsort,
-		    (unsigned) (listmax + 100) * sizeof(struct inoinfo *));
-		if (ninpsort == NULL)
-			err(8, "cannot increase directory list\n");
+		ninpsort = erealloc(inpsort,
+		    (listmax + 100) * sizeof(struct inoinfo *));
 		inpsort = ninpsort;
 		listmax += 100;
 	}
@@ -406,7 +402,7 @@ getinoinfo(ino_t inumber)
 			continue;
 		return (inp);
 	}
-	err(8, "cannot find inode %llu\n", (unsigned long long)inumber);
+	err(EEXIT, "cannot find inode %llu\n", (unsigned long long)inumber);
 	return ((struct inoinfo *) 0);
 }
 
@@ -580,7 +576,7 @@ blkerror(ino_t ino, const char *type, daddr_t blk)
 		return;
 
 	default:
-		err(8, "BAD STATE %d TO BLKERR\n", statemap[ino]);
+		err(EEXIT, "BAD STATE %d TO BLKERR\n", statemap[ino]);
 		/* NOTREACHED */
 	}
 }
