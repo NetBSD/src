@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/04/25 18:36:44 drochner Exp $
+#	$NetBSD: Makefile,v 1.4 2006/11/09 20:33:25 christos Exp $
 #	$OpenBSD: Makefile,v 1.6 2003/11/20 23:23:09 avsm Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
@@ -11,6 +11,8 @@ DPAPP+=	${LIBPCAP} ${LIBUTIL}
 PROG=	pflogd
 SRCS=	pflogd.c privsep.c privsep_fdpass.c
 MAN=	pflogd.8
+
+COPTS.privsep_fdpass.c = -Wno-stack-protector
 
 BINDIR=		/sbin
 .if (${MKDYNAMICROOT} == "no")
