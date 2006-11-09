@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2006/07/04 18:26:18 tron Exp $
+#	$NetBSD: Makefile,v 1.9 2006/11/09 20:07:15 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -50,6 +50,9 @@ COPTS.${f}=	-Wno-missing-noreturn
 
 COPTS+=		-fno-strict-aliasing -fexceptions
 OBJCOPTS+=	-fno-strict-aliasing -fexceptions
+
+OBJCOPTS.Object.m = -Wno-stack-protector
+COPTS.sendmsg.c = -Wno-stack-protector
 
 INCS=		${G_OBJC_H}
 INCSDIR=	/usr/include/objc
