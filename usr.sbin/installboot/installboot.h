@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.25 2004/08/15 22:00:12 dsl Exp $	*/
+/*	$NetBSD: installboot.h,v 1.25.2.1 2006/11/09 22:49:49 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ struct ib_fs {
 	uint32_t	 blocksize;
 	uint32_t	 needswap;
 	off_t		sblockloc;	/* location of superblock */
+	off_t		offset;		/* file system offset (e.g. RAID) */
 };
 
 typedef enum {
@@ -154,6 +155,7 @@ int		shared_bbinfo_setboot(ib_params *, struct bbinfo_params *,
 int		hardcode_stage2(ib_params *, uint32_t *, ib_block *);
 int		ffs_match(ib_params *);
 int		ffs_findstage2(ib_params *, uint32_t *, ib_block *);
+int		raid_match(ib_params *);
 int		raw_match(ib_params *);
 int		raw_findstage2(ib_params *, uint32_t *, ib_block *);
 
