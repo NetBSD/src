@@ -37,7 +37,7 @@
 #endif
 
 __RCSID("$Heimdal: kadm_conn.c,v 1.14 2002/10/21 13:21:24 joda Exp $"
-        "$NetBSD: kadm_conn.c,v 1.11 2003/05/15 21:36:33 lha Exp $");
+        "$NetBSD: kadm_conn.c,v 1.12 2006/11/09 19:50:03 christos Exp $");
 
 struct kadm_port {
     char *port;
@@ -177,7 +177,12 @@ wait_for_connection(krb5_context context,
 #ifdef HAVE_POLL
     struct pollfd *set;
 
+#if defined(__SSP__) || defined(__SSP_ALL__)
+    /* don't worry about free-ing we exit here */
+    set = malloc(num_socks * sizeof(*set));
+else
     set = alloca(num_socks * sizeof(*set));
+#endif
     for(i = 0; i < num_socks; i++) {
 	set[i].fd = socks[i];
 	set[i].events = POLLIN;
