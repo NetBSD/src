@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/06/23 17:27:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2006/11/09 04:08:50 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -25,6 +25,8 @@ LDFLAGS+=	-Wl,--version-script=${.OBJDIR}/libgcc.map
 
 SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} \
 		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
+
+COPTS.unwind-dw2.c = -Wno-stack-protector
 
 DPADD+=		libgcc.map
 CLEANFILES+=	libgcc.map
