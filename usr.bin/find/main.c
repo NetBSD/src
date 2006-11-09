@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2006/10/11 19:51:10 apb Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2006/11/09 20:50:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -39,7 +39,7 @@ static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
 __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: main.c,v 1.25 2006/10/11 19:51:10 apb Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2006/11/09 20:50:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,9 @@ main(int argc, char *argv[])
 	sigaction(SIGINFO, &sa, NULL);
 
 	/* array to hold dir list.  at most (argc - 1) elements. */
-	p = start = alloca(argc * sizeof (char *));
+	p = start = malloc(argc * sizeof (char *));
+	if (p == NULL)
+		err(1, NULL);
 
 	ftsoptions = FTS_NOSTAT | FTS_PHYSICAL;
 	while ((ch = getopt(argc, argv, "HLPXdf:hsx")) != -1)
