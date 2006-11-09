@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.186 2006/10/09 08:32:11 mrg Exp $
+#	$NetBSD: bsd.README,v 1.187 2006/11/09 17:06:54 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -309,6 +309,11 @@ USE_SKEY	If "no", disables building S/key authentication
 		support into various system utilities/libraries that
 		support it.  If ${MKSKEY} is "no", USE_SKEY will
 		also be forced to "no".
+
+USE_SSP		If "yes", it turns of the gcc stack protection code
+		where stack overflows are detected and the program
+		aborts. This imposes some performance penalty. Defaults
+		to "no".
 
 USE_YP		If "no", disables building YP (NIS) support into
 		various system utilities/libraries that support it.
@@ -1054,6 +1059,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBSS?=		${DESTDIR}/usr/lib/libss.a
 		LIBSSH?=	${DESTDIR}/usr/lib/libssh.a
 		LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
+		LIBSSP?=	${DESTDIR}/usr/lib/libssp.a
 		LIBSTDCXX?=	${DESTDIR}/usr/lib/libstdc++.a
 		LIBSUPCXX?=	${DESTDIR}/usr/lib/libsupc++.a
 		LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.137 2006/10/22 22:17:30 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.138 2006/11/09 17:06:54 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -37,6 +37,10 @@ CFLAGS+=	-std=gnu99
 CPPFLAGS+=	${AUDIT:D-D__AUDIT__}
 CFLAGS+=	${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
+
+.if defined(USE_SSP) && (${USE_SSP} != "no")
+COPTS+=		-fstack-protector -Wstack-protector --param ssp-buffer-size=1
+.endif
 
 .if defined(MKSOFTFLOAT) && (${MKSOFTFLOAT} != "no")
 COPTS+=		-msoft-float
