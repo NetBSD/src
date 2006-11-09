@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2005/10/02 17:52:22 chs Exp $
+#	$NetBSD: Makefile,v 1.24 2006/11/09 21:27:58 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,8 @@ CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} \
 
 LDADD=		-lintl
 DPADD=		${LIBINTL}
+
+COPTS.ldgram.c = -Wno-stack-protector
 
 BFDOBJ!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
 LDADD+=		-L${BFDOBJ} -lbfd
