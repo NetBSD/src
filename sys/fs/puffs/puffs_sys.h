@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.6 2006/11/07 22:10:18 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.7 2006/11/09 13:09:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -152,7 +152,7 @@ struct puffs_node {
 	LIST_ENTRY(puffs_node) pn_entries;
 };
 
-int	puffs_start2(struct puffs_mount *, struct puffs_vfsreq_start *);
+int	puffs_start2(struct puffs_mount *, struct puffs_startreq *);
 
 int	puffs_vfstouser(struct puffs_mount *, int, void *, size_t);
 int	puffs_vntouser(struct puffs_mount *, int, void *, size_t, void *,
