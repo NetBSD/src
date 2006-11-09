@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/06/23 17:27:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2006/11/09 04:07:11 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -15,6 +15,8 @@ LIB=		gcc_eh
 .cc: # disable .cc->NULL transform
 
 SRCS+=		${LIB2_EH}
+COPTS.unwind-dw2.c = -Wno-stack-protector
+
 
 .include <bsd.lib.mk>
 
