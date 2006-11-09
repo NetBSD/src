@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.9 2006/08/21 12:45:30 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.10 2006/11/09 16:58:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.9 2006/08/21 12:45:30 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.10 2006/11/09 16:58:38 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -394,6 +394,7 @@ fn_complete(EditLine *el,
 	const char *ctemp;
 	size_t len;
 	int what_to_do = '\t';
+	int retval = CC_NORM;
 
 	if (el->el_state.lastcmd == el->el_state.thiscmd)
 		what_to_do = '?';
@@ -416,7 +417,11 @@ fn_complete(EditLine *el,
 		ctemp--;
 
 	len = li->cursor - ctemp;
+#if defined(__SSP__) || defined(__SSP_ALL__)
+	temp = malloc(len + 1);
+#else
 	temp = alloca(len + 1);
+#endif
 	(void)strncpy(temp, ctemp, len);
 	temp[len] = '\0';
 
@@ -441,9 +446,10 @@ fn_complete(EditLine *el,
 		*over = 0;
 
 	if (matches) {
-		int i, retval = CC_REFRESH;
+		int i;
 		int matches_num, maxlen, match_len, match_display=1;
 
+		retval = CC_REFRESH;
 		/*
 		 * Only replace the completed string with common part of
 		 * possible matches if there is possible completion.
@@ -515,11 +521,13 @@ fn_complete(EditLine *el,
 		/* free elements of array and the array itself */
 		for (i = 0; matches[i]; i++)
 			free(matches[i]);
-		free(matches), matches = NULL;
-
-		return (retval);
+		free(matches);
+		matches = NULL;
 	}
-	return (CC_NORM);
+#if defined(__SSP__) || defined(__SSP_ALL__)
+	free(temp);
+#endif
+	return retval;
 }
 
 /*
