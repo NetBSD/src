@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.58 2006/10/12 08:46:18 tacha Exp $	*/
+/*	$NetBSD: function.c,v 1.59 2006/11/09 20:50:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.58 2006/10/12 08:46:18 tacha Exp $");
+__RCSID("$NetBSD: function.c,v 1.59 2006/11/09 20:50:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1509,14 +1509,19 @@ c_regex_common(char ***argvp, int isok, enum ntype type, int regcomp_flags)
 	char *lineregexp;
 	PLAN *new;
 	int rv;
+	size_t len;
 
 	(*argvp)++;
 
-	lineregexp = alloca(strlen(regexp) + 1 + 6);	/* max needed */
-	sprintf(lineregexp, "^%s(%s%s)$",
+	len = strlen(regexp) + 1 + 6;
+	lineregexp = malloc(len);	/* max needed */
+	if (lineregexp == NULL)
+		err(1, NULL);
+	snprintf(lineregexp, len, "^%s(%s%s)$",
 	    (regcomp_flags & REG_EXTENDED) ? "" : "\\", regexp,
 	    (regcomp_flags & REG_EXTENDED) ? "" : "\\");
 	rv = regcomp(&reg, lineregexp, REG_NOSUB|regcomp_flags);
+	free(lineregexp);
 	if (rv != 0) {
 		regerror(rv, &reg, errbuf, sizeof errbuf);
 		errx(1, "regexp %s: %s", regexp, errbuf);
