@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: t_rmdir,v 1.4 2006/11/09 13:51:49 jmmv Exp $
+# $NetBSD: t_rmdir,v 1.5 2006/11/09 15:38:12 jmmv Exp $
 #
 # Copyright (c) 2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -84,6 +84,14 @@ test_run() {
 	test_name "Root directory has two links after all removes"
 	eval $(stat -s ${Work_Dir})
 	[ ${st_nlink} = 2 ] || die
+
+	test_name "Removal of current directory"
+	mkdir a || die
+	# Catch a bug that would panic the system when accessing the
+	# current directory after being deleted: vop_open cannot assume
+	# that open files are still linked to a directory.
+	( cd a && rmdir ../a && ls >/dev/null 2>&1 ) && die
+	test -e a && die
 
 	mkdir dir || die
 	mkdir dir/a || die
