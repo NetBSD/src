@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.156 2006/10/17 18:21:29 dogcow Exp $	*/
+/*	$NetBSD: vnd.c,v 1.157 2006/11/09 15:27:40 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -119,9 +119,13 @@
  * Block/character interface to a vnode.  Allows one to treat a file
  * as a disk (e.g. build a filesystem in it, mount it, etc.).
  *
- * NOTE 1: This uses the VOP_BMAP/VOP_STRATEGY interface to the vnode
- * instead of a simple VOP_RDWR.  We do this to avoid distorting the
- * local buffer cache.
+ * NOTE 1: If the vnode supports the VOP_BMAP and VOP_STRATEGY operations,
+ * this uses them to avoid distorting the local buffer cache.  If those
+ * block-level operations are not available, this falls back to the regular
+ * read and write calls.  Using these may distort the cache in some cases
+ * but better have the driver working than preventing it to work on file
+ * systems where the block-level operations are not implemented for
+ * whatever reason.
  *
  * NOTE 2: There is a security issue involved with this driver.
  * Once mounted all access to the contents of the "mapped" file via
@@ -133,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.156 2006/10/17 18:21:29 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.157 2006/11/09 15:27:40 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -163,6 +167,7 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.156 2006/10/17 18:21:29 dogcow Exp $");
 
 #include <net/zlib.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <dev/vndvar.h>
@@ -216,7 +221,12 @@ static void	*vnd_alloc(void *, u_int, u_int);
 static void	vnd_free(void *, void *);
 #endif /* VND_COMPRESSION */
 
-static void vndthread(void *);
+static void	vndthread(void *);
+static boolean_t vnode_has_op(const struct vnode *, int);
+static void	handle_with_rdwr(struct vnd_softc *, const struct buf *,
+		    struct buf *);
+static void	handle_with_strategy(struct vnd_softc *, const struct buf *,
+		    struct buf *);
 
 static dev_type_open(vndopen);
 static dev_type_close(vndclose);
@@ -522,25 +532,35 @@ static void
 vndthread(void *arg)
 {
 	struct vnd_softc *vnd = arg;
-	struct mount *mp;
-	int s, bsize;
-	int sz, error;
-	struct disklabel *lp;
+	boolean_t usestrategy;
+	int s;
+
+	/* Determine whether we can use VOP_BMAP and VOP_STRATEGY to
+	 * directly access the backing vnode.  If we can, use these two
+	 * operations to avoid messing with the local buffer cache.
+	 * Otherwise fall back to regular VOP_READ/VOP_WRITE operations
+	 * which are guaranteed to work with any file system. */
+	usestrategy = vnode_has_op(vnd->sc_vp, VOFFSET(vop_bmap)) &&
+	    vnode_has_op(vnd->sc_vp, VOFFSET(vop_strategy));
+
+#ifdef DEBUG
+	if (vnddebug & VDB_INIT)
+		printf("vndthread: vp %p, %s\n", vnd->sc_vp,
+		    usestrategy ?
+		    "using bmap/strategy operations" :
+		    "using read/write operations");
+#endif
 
 	s = splbio();
 	vnd->sc_flags |= VNF_KTHREAD;
 	wakeup(&vnd->sc_kthread);
 
 	/*
-	 * Dequeue requests, break them into bsize pieces and submit using
-	 * VOP_BMAP/VOP_STRATEGY.
+	 * Dequeue requests and serve them depending on the available
+	 * vnode operations.
 	 */
 	while ((vnd->sc_flags & VNF_VUNCONF) == 0) {
 		struct vndxfer *vnx;
-		off_t offset;
-		int resid;
-		int skipped = 0;
-		off_t bn;
 		int flags;
 		struct buf *obp;
 		struct buf *bp;
@@ -556,10 +576,6 @@ vndthread(void *arg)
 		if (vnddebug & VDB_FOLLOW)
 			printf("vndthread(%p\n", obp);
 #endif
-		lp = vnd->sc_dkdev.dk_label;
-
-		/* convert to a byte offset within the file. */
-		bn = obp->b_rawblkno * lp->d_secsize;
 
 		if (vnd->sc_vp->v_mount == NULL) {
 			obp->b_error = ENXIO;
@@ -569,13 +585,17 @@ vndthread(void *arg)
 #ifdef VND_COMPRESSION
 		/* handle a compressed read */
 		if ((flags & B_READ) != 0 && (vnd->sc_flags & VNF_COMP)) {
+			off_t bn;
+			
+			/* Convert to a byte offset within the file. */
+			bn = obp->b_rawblkno *
+			    vnd->sc_dkdev.dk_label->d_secsize;
+
 			compstrategy(obp, bn);
 			goto done;
 		}
 #endif /* VND_COMPRESSION */
 		
-		bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
-
 		/*
 		 * Allocate a header for this transfer and link it to the
 		 * buffer
@@ -584,6 +604,16 @@ vndthread(void *arg)
 		vnx = VND_GETXFER(vnd);
 		splx(s);
 		vnx->vx_vnd = vnd;
+
+		s = splbio();
+		while (vnd->sc_active >= vnd->sc_maxactive) {
+			tsleep(&vnd->sc_tab, PRIBIO, "vndac", 0);
+		}
+		vnd->sc_active++;
+		splx(s);
+
+		/* Instrumentation. */
+		disk_busy(&vnd->sc_dkdev);
 
 		bp = &vnx->vx_buf;
 		BUF_INIT(bp);
@@ -595,97 +625,15 @@ vndthread(void *arg)
 		bp->b_bcount = bp->b_resid = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
 
-		s = splbio();
-		while (vnd->sc_active >= vnd->sc_maxactive) {
-			tsleep(&vnd->sc_tab, PRIBIO, "vndac", 0);
-		}
-		vnd->sc_active++;
-		splx(s);
+		/* Handle the request using the appropriate operations. */
+		if (usestrategy)
+			handle_with_strategy(vnd, obp, bp);
+		else
+			handle_with_rdwr(vnd, obp, bp);
 
-		if ((flags & B_READ) == 0) {
-			s = splbio();
-			V_INCR_NUMOUTPUT(bp->b_vp);
-			splx(s);
-
-			vn_start_write(vnd->sc_vp, &mp, V_WAIT);
-		}
-
-		/* Instrumentation. */
-		disk_busy(&vnd->sc_dkdev);
-
-		/*
-		 * Feed requests sequentially.
-		 * We do it this way to keep from flooding NFS servers if we
-		 * are connected to an NFS file.  This places the burden on
-		 * the client rather than the server.
-		 */
-		error = 0;
-		for (offset = 0, resid = bp->b_resid; resid;
-		    resid -= sz, offset += sz) {
-			struct buf *nbp;
-			struct vnode *vp;
-			daddr_t nbn;
-			int off, nra;
-
-			nra = 0;
-			vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY | LK_CANRECURSE);
-			error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
-			VOP_UNLOCK(vnd->sc_vp, 0);
-	
-			if (error == 0 && (long)nbn == -1)
-				error = EIO;
-
-			/*
-			 * If there was an error or a hole in the file...punt.
-			 * Note that we may have to wait for any operations
-			 * that we have already fired off before releasing
-			 * the buffer.
-			 *
-			 * XXX we could deal with holes here but it would be
-			 * a hassle (in the write case).
-			 */
-			if (error) {
-				skipped += resid;
-				break;
-			}
-
-#ifdef DEBUG
-			if (!dovndcluster)
-				nra = 0;
-#endif
-
-			off = bn % bsize;
-			sz = MIN(((off_t)1 + nra) * bsize - off, resid);
-#ifdef	DEBUG
-			if (vnddebug & VDB_IO)
-				printf("vndstrategy: vp %p/%p bn 0x%qx/0x%" PRIx64
-				       " sz 0x%x\n",
-				    vnd->sc_vp, vp, (long long)bn, nbn, sz);
-#endif
-
-			nbp = getiobuf();
-			nestiobuf_setup(bp, nbp, offset, sz);
-			nbp->b_blkno = nbn + btodb(off);
-
-#if 0 /* XXX #ifdef DEBUG */
-			if (vnddebug & VDB_IO)
-				printf("vndstart(%ld): bp %p vp %p blkno "
-				    "0x%" PRIx64 " flags %x addr %p cnt 0x%x\n",
-				    (long) (vnd-vnd_softc), &nbp->vb_buf,
-				    nbp->vb_buf.b_vp, nbp->vb_buf.b_blkno,
-				    nbp->vb_buf.b_flags, nbp->vb_buf.b_data,
-				    nbp->vb_buf.b_bcount);
-#endif
-			VOP_STRATEGY(vp, nbp);
-			bn += sz;
-		}
-		nestiobuf_done(bp, skipped, error);
-
-		if ((flags & B_READ) == 0)
-			vn_finished_write(mp, 0);
-		
 		s = splbio();
 		continue;
+
 done:
 		biodone(obp);
 		s = splbio();
@@ -695,6 +643,193 @@ done:
 	wakeup(&vnd->sc_kthread);
 	splx(s);
 	kthread_exit(0);
+}
+
+/*
+ * Checks if the given vnode supports the requested operation.
+ * The operation is specified the offset returned by VOFFSET.
+ *
+ * XXX The test below used to determine this is quite fragile
+ * because it relies on the file system to use genfs to specify
+ * unimplemented operations.  There might be another way to do
+ * it more cleanly.
+ */
+static boolean_t
+vnode_has_op(const struct vnode *vp, int opoffset)
+{
+	int (*defaultp)(void *);
+	int (*opp)(void *);
+
+	defaultp = vp->v_op[VOFFSET(vop_default)];
+	opp = vp->v_op[opoffset];
+
+	return opp != defaultp && opp != genfs_eopnotsupp &&
+	    opp != genfs_badop && opp != genfs_nullop;
+}
+
+/*
+ * Handes the read/write request given in 'bp' using the vnode's VOP_READ
+ * and VOP_WRITE operations.
+ *
+ * 'obp' is a pointer to the original request fed to the vnd device.
+ */
+static void
+handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
+{
+	boolean_t doread;
+	off_t offset;
+	struct vnode *vp;
+
+	doread = bp->b_flags & B_READ;
+	offset = obp->b_rawblkno * vnd->sc_dkdev.dk_label->d_secsize;
+	vp = vnd->sc_vp;
+
+#if defined(DEBUG)
+	if (vnddebug & VDB_IO)
+		printf("vnd (rdwr): vp %p, %s, rawblkno 0x%" PRIx64
+		    ", secsize %d, offset %" PRIu64
+		    ", bcount %d, resid %d\n",
+		    vp, doread ? "read" : "write", obp->b_rawblkno,
+		    vnd->sc_dkdev.dk_label->d_secsize, offset,
+		    bp->b_bcount, bp->b_resid);
+#endif
+
+	/* Issue the read or write operation. */
+	bp->b_error =
+	    vn_rdwr(doread ? UIO_READ : UIO_WRITE,
+	    vp, bp->b_data, bp->b_bcount, offset,
+	    UIO_SYSSPACE, 0, vnd->sc_cred, &bp->b_resid, NULL);
+	if (bp->b_error != 0)
+		bp->b_flags |= B_ERROR;
+	else
+		KASSERT(!(bp->b_flags & B_ERROR));
+
+	/* Flush the vnode if requested. */
+	if (obp->b_flags & B_VFLUSH) {
+		if (vn_lock(vp, LK_EXCLUSIVE | LK_RETRY) == 0) {
+			VOP_FSYNC(vp, vnd->sc_cred,
+			    FSYNC_WAIT | FSYNC_DATAONLY, 0, 0, NULL);
+			VOP_UNLOCK(vp, 0);
+		}
+	}
+
+	/* We need to increase the number of outputs on the vnode if
+	 * there was any write to it (either due to a real write or due
+	 * to a flush). */
+	if (!doread || obp->b_flags & B_VFLUSH)
+		vp->v_numoutput++;
+
+	biodone(bp);
+}
+
+/*
+ * Handes the read/write request given in 'bp' using the vnode's VOP_BMAP
+ * and VOP_STRATEGY operations.
+ *
+ * 'obp' is a pointer to the original request fed to the vnd device.
+ */
+static void
+handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
+    struct buf *bp)
+{
+	int bsize, error, flags, skipped;
+	size_t resid, sz;
+	off_t bn, offset;
+	struct mount *mp;
+
+	flags = obp->b_flags;
+
+	mp = NULL;
+	if (!(flags & B_READ)) {
+		int s;
+		
+		s = splbio();
+		V_INCR_NUMOUTPUT(bp->b_vp);
+		splx(s);
+
+		vn_start_write(vnd->sc_vp, &mp, V_WAIT);
+		KASSERT(mp != NULL);
+	}
+
+	/* convert to a byte offset within the file. */
+	bn = obp->b_rawblkno * vnd->sc_dkdev.dk_label->d_secsize;
+
+	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
+	skipped = 0;
+
+	/*
+	 * Break the request into bsize pieces and feed them
+	 * sequentially using VOP_BMAP/VOP_STRATEGY.
+	 * We do it this way to keep from flooding NFS servers if we
+	 * are connected to an NFS file.  This places the burden on
+	 * the client rather than the server.
+	 */
+	error = 0;
+	for (offset = 0, resid = bp->b_resid; resid;
+	    resid -= sz, offset += sz) {
+		struct buf *nbp;
+		struct vnode *vp;
+		daddr_t nbn;
+		int off, nra;
+
+		nra = 0;
+		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY | LK_CANRECURSE);
+		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
+		VOP_UNLOCK(vnd->sc_vp, 0);
+
+		if (error == 0 && (long)nbn == -1)
+			error = EIO;
+
+		/*
+		 * If there was an error or a hole in the file...punt.
+		 * Note that we may have to wait for any operations
+		 * that we have already fired off before releasing
+		 * the buffer.
+		 *
+		 * XXX we could deal with holes here but it would be
+		 * a hassle (in the write case).
+		 */
+		if (error) {
+			skipped += resid;
+			break;
+		}
+
+#ifdef DEBUG
+		if (!dovndcluster)
+			nra = 0;
+#endif
+
+		off = bn % bsize;
+		sz = MIN(((off_t)1 + nra) * bsize - off, resid);
+#ifdef	DEBUG
+		if (vnddebug & VDB_IO)
+			printf("vndstrategy: vp %p/%p bn 0x%qx/0x%" PRIx64
+			       " sz 0x%x\n",
+			    vnd->sc_vp, vp, (long long)bn, nbn, sz);
+#endif
+
+		nbp = getiobuf();
+		nestiobuf_setup(bp, nbp, offset, sz);
+		nbp->b_blkno = nbn + btodb(off);
+
+#if 0 /* XXX #ifdef DEBUG */
+		if (vnddebug & VDB_IO)
+			printf("vndstart(%ld): bp %p vp %p blkno "
+			    "0x%" PRIx64 " flags %x addr %p cnt 0x%x\n",
+			    (long) (vnd-vnd_softc), &nbp->vb_buf,
+			    nbp->vb_buf.b_vp, nbp->vb_buf.b_blkno,
+			    nbp->vb_buf.b_flags, nbp->vb_buf.b_data,
+			    nbp->vb_buf.b_bcount);
+#endif
+		VOP_STRATEGY(vp, nbp);
+		bn += sz;
+	}
+	nestiobuf_done(bp, skipped, error);
+
+	if (!(flags & B_READ)) {
+		KASSERT(mp != NULL);
+		vn_finished_write(mp, 0);
+	}
 }
 
 static void
