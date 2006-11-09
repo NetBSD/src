@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.25 2006/09/01 19:52:48 perseant Exp $ */
+/* $NetBSD: lfs.c,v 1.26 2006/11/09 19:36:36 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -91,6 +91,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "bufcache.h"
 #include "vnode.h"
@@ -345,10 +346,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	struct ubuf *bp;
 	int i, hash;
 
-	vp = (struct uvnode *) malloc(sizeof(*vp));
-	if (vp == NULL)
-		err(1, NULL);
-	memset(vp, 0, sizeof(*vp));
+	vp = ecalloc(1, sizeof(*vp));
 	vp->v_fd = fd;
 	vp->v_fs = fs;
 	vp->v_usecount = 0;
@@ -358,22 +356,12 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	LIST_INIT(&vp->v_cleanblkhd);
 	LIST_INIT(&vp->v_dirtyblkhd);
 
-	ip = (struct inode *) malloc(sizeof(*ip));
-	if (ip == NULL)
-		err(1, NULL);
-	memset(ip, 0, sizeof(*ip));
+	ip = ecalloc(1, sizeof(*ip));
 
-	ip->i_din.ffs1_din = (struct ufs1_dinode *)
-	    malloc(sizeof(struct ufs1_dinode));
-	if (ip->i_din.ffs1_din == NULL)
-		err(1, NULL);
-	memset(ip->i_din.ffs1_din, 0, sizeof (struct ufs1_dinode));
+	ip->i_din.ffs1_din = ecalloc(1, sizeof(*ip->i_din.ffs1_din));
 
 	/* Initialize the inode -- from lfs_vcreate. */
-	ip->inode_ext.lfs = malloc(sizeof(struct lfs_inode_ext));
-	if (ip->inode_ext.lfs == NULL)
-		err(1, NULL);
-	memset(ip->inode_ext.lfs, 0, sizeof(struct lfs_inode_ext));
+	ip->inode_ext.lfs = ecalloc(1, sizeof(*ip->inode_ext.lfs));
 	vp->v_data = ip;
 	/* ip->i_vnode = vp; */
 	ip->i_number = ino;
@@ -473,10 +461,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 
 	vfs_init();
 
-	devvp = (struct uvnode *) malloc(sizeof(*devvp));
-	if (devvp == NULL)
-		err(1, NULL);
-	memset(devvp, 0, sizeof(*devvp));
+	devvp = ecalloc(1, sizeof(*devvp));
 	devvp->v_fs = NULL;
 	devvp->v_fd = devfd;
 	devvp->v_strategy_op = raw_vop_strategy;
@@ -489,10 +474,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 	if (dummy_read) {
 		if (sblkno == 0)
 			sblkno = btodb(LFS_LABELPAD);
-		fs = (struct lfs *) malloc(sizeof(*fs));
-		if (fs == NULL)
-			err(1, NULL);
-		memset(fs, 0, sizeof(*fs));
+		fs = ecalloc(1, sizeof(*fs));
 		fs->lfs_devvp = devvp;
 	} else {
 		if (sblkno == 0) {
@@ -502,10 +484,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 			printf("No -b flag given, not attempting to verify checkpoint\n");
 		}
 		error = bread(devvp, sblkno, LFS_SBPAD, NOCRED, &bp);
-		fs = (struct lfs *) malloc(sizeof(*fs));
-		if (fs == NULL)
-			err(1, NULL);
-		memset(fs, 0, sizeof(*fs));
+		fs = ecalloc(1, sizeof(*fs));
 		fs->lfs_dlfs = *((struct dlfs *) bp->b_data);
 		fs->lfs_devvp = devvp;
 		bp->b_flags |= B_INVAL;
@@ -514,10 +493,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		if (tryalt) {
 			error = bread(devvp, fsbtodb(fs, fs->lfs_sboffs[1]),
 		    	LFS_SBPAD, NOCRED, &bp);
-			altfs = (struct lfs *) malloc(sizeof(*altfs));
-			if (altfs == NULL)
-				err(1, NULL);
-			memset(altfs, 0, sizeof(*altfs));
+			altfs = ecalloc(1, sizeof(*altfs));
 			altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
 			altfs->lfs_devvp = devvp;
 			bp->b_flags |= B_INVAL;
@@ -560,15 +536,9 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 	}
 
 	if (!dummy_read) {
-		fs->lfs_suflags = (u_int32_t **) malloc(2 * sizeof(u_int32_t *));
-		if (fs->lfs_suflags == NULL)
-			err(1, NULL);
-		fs->lfs_suflags[0] = (u_int32_t *) malloc(fs->lfs_nseg * sizeof(u_int32_t));
-		if (fs->lfs_suflags[0] == NULL)
-			err(1, NULL);
-		fs->lfs_suflags[1] = (u_int32_t *) malloc(fs->lfs_nseg * sizeof(u_int32_t));
-		if (fs->lfs_suflags[1] == NULL)
-			err(1, NULL);
+		fs->lfs_suflags = emalloc(2 * sizeof(u_int32_t *));
+		fs->lfs_suflags[0] = emalloc(fs->lfs_nseg * sizeof(u_int32_t));
+		fs->lfs_suflags[1] = emalloc(fs->lfs_nseg * sizeof(u_int32_t));
 	}
 
 	if (idaddr == 0)
@@ -802,9 +772,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, ufs_daddr_t pseg_addr, int debug,
 		if (((char *)fp) - (char *)sp > fs->lfs_sumsize)
 			return 0;
 	}
-	datap = (u_int32_t *) malloc(nblocks * sizeof(*datap));
-	if (datap == NULL)
-		err(1, NULL);
+	datap = emalloc(nblocks * sizeof(*datap));
 	datac = 0;
 
 	dp = (ufs_daddr_t *) sp;
@@ -1251,8 +1219,8 @@ lfs_fragextend(struct uvnode *vp, int osize, int nsize, daddr_t lbn,
 
 	if (bpp) {
 		obufsize = (*bpp)->b_bufsize;
-		(*bpp)->b_data = realloc((*bpp)->b_data, nsize);
-		bzero((char *)((*bpp)->b_data) + osize, (u_int)(nsize - osize));
+		(*bpp)->b_data = erealloc((*bpp)->b_data, nsize);
+		(void)memset((*bpp)->b_data + osize, 0, nsize - osize);
 	}
 
     out:
