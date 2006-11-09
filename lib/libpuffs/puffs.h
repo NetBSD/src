@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.4 2006/11/07 22:10:53 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.5 2006/11/09 13:11:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -73,8 +73,8 @@ struct puffs_node {
 
 /* callbacks for operations */
 struct puffs_vfsops {
-	int (*puffs_start)(struct puffs_usermount *,
-	    struct puffs_vfsreq_start *);
+	int (*puffs_mount)(struct puffs_usermount *, void **);
+	int (*puffs_start)(struct puffs_usermount *);
 	int (*puffs_unmount)(struct puffs_usermount *, int, pid_t);
 	int (*puffs_statvfs)(struct puffs_usermount *,
 	    struct statvfs *, pid_t);
@@ -138,10 +138,6 @@ struct puffs_vnops {
 	    void *, int, int *);
 	int (*puffs_advlock)(struct puffs_usermount *,
 	    void *, void *, int, struct flock *, int);
-	int (*puffs_getpages)(struct puffs_usermount *,
-	    void *, struct puffs_vnreq_getpages *);
-	int (*puffs_putpages)(struct puffs_usermount *,
-	    void *, struct puffs_vnreq_putpages *);
 	int (*puffs_getextattr)(struct puffs_usermount *,
 	    void *, struct puffs_vnreq_getextattr *);
 	int (*puffs_setextattr)(struct puffs_usermount *,
@@ -173,6 +169,7 @@ struct puffs_usermount {
 
 	struct puffs_node	*pu_rootnode;
 	const char *		pu_rootpath;
+	fsid_t			pu_fsidx;
 	LIST_HEAD(, puffs_node)	pu_pnodelst;
 
 	int	pu_wcnt;
@@ -189,6 +186,9 @@ int		puffs_oneop(struct puffs_usermount *, uint8_t *, size_t);
 int		puffs_getselectable(struct puffs_usermount *);
 int		puffs_setblockingmode(struct puffs_usermount *, int);
 void		puffs_dummyops(struct puffs_vnops *);
+
+#define PUFFSDEV_BLOCK 0
+#define PUFFSDEV_NONBLOCK 1
 
 struct puffs_node *	puffs_newpnode(struct puffs_usermount *, void *,
 				       enum vtype);
@@ -225,8 +225,8 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 
 
 #define PUFFSVFS_PROTOS(fsname)						\
-	int fsname##_start(struct puffs_usermount *,			\
-	    struct puffs_vfsreq_start *);				\
+	int fsname##_mount(struct puffs_usermount *, void **);		\
+	int fsname##_start(struct puffs_usermount *);			\
 	int fsname##_unmount(struct puffs_usermount *, int, pid_t);	\
 	int fsname##_statvfs(struct puffs_usermount *,			\
 	    struct statvfs *, pid_t);					\
@@ -294,10 +294,6 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 	    void *, int, int *);					\
 	int fsname##_advlock(struct puffs_usermount *,			\
 	    void *, void *, int, struct flock *, int);			\
-	int fsname##_getpages(struct puffs_usermount *,			\
-	    void *, struct puffs_vnreq_getpages *);			\
-	int fsname##_putpages(struct puffs_usermount *,			\
-	    void *, struct puffs_vnreq_putpages *);			\
 	int fsname##_getextattr(struct puffs_usermount *,		\
 	    void *, struct puffs_vnreq_getextattr *);			\
 	int fsname##_setextattr(struct puffs_usermount *,		\
