@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.5 2006/10/27 14:03:52 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.6 2006/11/09 13:11:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -98,11 +98,11 @@ dtfs_genfile(struct puffs_node *dir, const char *name, enum vtype type)
 	} else
 		dff = dtfs_newfile();
 
+	dtm = dir->pn_mnt->pu_privdata;
 	newpn = puffs_newpnode(dir->pn_mnt, dff, type);
 	if (newpn == NULL)
 		errx(1, "getnewpnode");
-	dtm = dir->pn_mnt->pu_privdata;
-	dtfs_baseattrs(&newpn->pn_va, type, dtm->dtm_fsidx.__fsid_val[0],
+	dtfs_baseattrs(&newpn->pn_va, type, dir->pn_mnt->pu_fsidx.__fsid_val[0],
 	    dtm->dtm_nextfileid++);
 
 	df_dir = dir->pn_data;
