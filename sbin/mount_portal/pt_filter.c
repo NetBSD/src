@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_filter.c,v 1.7 2006/04/21 15:00:49 skrll Exp $	*/
+/*	$NetBSD: pt_filter.c,v 1.8 2006/11/09 19:41:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_filter.c,v 1.7 2006/04/21 15:00:49 skrll Exp $");
+__RCSID("$NetBSD: pt_filter.c,v 1.8 2006/11/09 19:41:59 christos Exp $");
 #endif				/* not lint */
 
 #include <stdio.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: pt_filter.c,v 1.7 2006/04/21 15:00:49 skrll Exp $");
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <err.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/syslog.h>
@@ -67,7 +68,9 @@ fill_cmd(char **cmdv, char *path, char *buff, int n)
 {
 	int     i;
 	/* Make tempbuff at least as large as buff. */
-	char	tempbuff[n];
+	char	*tempbuff = malloc(n);;
+	if (tempbuff == NULL)
+		err(1, NULL);
 
 	strncpy(tempbuff, cmdv[0], n);
 	for (i = 1; cmdv[i]; i++) {
@@ -77,6 +80,7 @@ fill_cmd(char **cmdv, char *path, char *buff, int n)
 	strncat(tempbuff, " ", n - strlen(tempbuff));
 	/* Now do the snprintf into buff. */
 	snprintf(buff, n, tempbuff, path);
+	free(tempbuff);
 }
 
 
