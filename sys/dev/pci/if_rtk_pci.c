@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.28 2006/10/27 09:57:26 tsutsui Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.29 2006/11/09 14:59:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.28 2006/10/27 09:57:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.29 2006/11/09 14:59:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ rtk_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 		printf("\n");
 		panic("rtk_pci_attach: impossible");
 	}
-	printf(": %s\n", t->rtk_name);
+	printf(": %s (rev. 0x%02x)\n", t->rtk_name, PCI_REVISION(pa->pa_class));
 
 	/*
 	 * Handle power management nonsense.
