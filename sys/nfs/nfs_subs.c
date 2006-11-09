@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.176 2006/10/20 18:58:12 reinoud Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.177 2006/11/09 09:53:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.176 2006/10/20 18:58:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.177 2006/11/09 09:53:57 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -589,12 +589,7 @@ int nfs_webnamei __P((struct nameidata *, struct vnode *, struct proc *));
  * (just used to decide if a cluster is a good idea)
  */
 struct mbuf *
-nfsm_reqh(
-    struct nfsnode *np __unused,
-    u_long procid __unused,
-    int hsiz,
-    caddr_t *bposp
-)
+nfsm_reqh(struct nfsnode *np, u_long procid, int hsiz, caddr_t *bposp)
 {
 	struct mbuf *mb;
 	caddr_t bpos;
@@ -1300,7 +1295,7 @@ nfs_putdircache(np, ndp)
 }
 
 static void
-nfs_putdircache_unlocked(struct nfsnode *np __unused, struct nfsdircache *ndp)
+nfs_putdircache_unlocked(struct nfsnode *np, struct nfsdircache *ndp)
 {
 	int ref;
 
@@ -1385,7 +1380,7 @@ nfs_searchdircache(vp, off, do32, hashent)
 
 struct nfsdircache *
 nfs_enterdircache(struct vnode *vp, off_t off, off_t blkoff, int en,
-    daddr_t blkno __unused)
+    daddr_t blkno)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdirhashhead *ndhp;
@@ -1929,12 +1924,8 @@ nfs_delayedtruncate(vp)
  */
 
 int
-nfs_check_wccdata(
-    struct nfsnode *np __unused,
-    const struct timespec *ctime __unused,
-    struct timespec *mtime __unused,
-    boolean_t docheck __unused
-)
+nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
+    struct timespec *mtime, boolean_t docheck)
 {
 	int error = 0;
 
@@ -2529,17 +2520,9 @@ nfsm_srvfattr(nfsd, vap, fp)
  *	- if not lockflag unlock it with VOP_UNLOCK()
  */
 int
-nfsrv_fhtovp(
-    nfsrvfh_t *nsfh,
-    int lockflag,
-    struct vnode **vpp,
-    kauth_cred_t cred,
-    struct nfssvc_sock *slp __unused,
-    struct mbuf *nam,
-    int *rdonlyp,
-    int kerbflag,
-    int pubflag
-)
+nfsrv_fhtovp(nfsrvfh_t *nsfh, int lockflag, struct vnode **vpp,
+    kauth_cred_t cred, struct nfssvc_sock *slp, struct mbuf *nam, int *rdonlyp,
+    int kerbflag, int pubflag)
 {
 	struct mount *mp;
 	kauth_cred_t credanon;
