@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.c,v 1.7 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: fstypes.c,v 1.7.2.1 2006/11/09 22:49:49 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: fstypes.c,v 1.7 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: fstypes.c,v 1.7.2.1 2006/11/09 22:49:49 tron Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: fstypes.c,v 1.7 2004/06/20 22:20:17 jmc Exp $");
 
 struct ib_fs fstypes[] = {
 	{ "ffs",	ffs_match,	ffs_findstage2	},
+	{ "raid",	raid_match,	ffs_findstage2	},
 	{ "raw",	raw_match,	raw_findstage2	},
 	{ 0, 0, 0 }
 };
