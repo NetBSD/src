@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.5 2006/03/20 01:20:55 christos Exp $ */
+/* $NetBSD: vnode.c,v 1.6 2006/11/09 19:36:36 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,6 +56,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "bufcache.h"
 #include "vnode.h"
@@ -109,9 +110,7 @@ register_vget(void *fs, struct uvnode *func(void *, ino_t))
 {
 	struct vget_reg *vgr;
 
-	vgr = (struct vget_reg *)malloc(sizeof(*vgr));
-	if (vgr == NULL)
-		err(1, NULL);
+	vgr = emalloc(sizeof(*vgr));
 	vgr->vgr_fs = fs;
 	vgr->vgr_func = func;
 	LIST_INSERT_HEAD(&vgrlist, vgr, vgr_list);
