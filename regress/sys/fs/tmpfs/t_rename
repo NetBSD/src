@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: t_rename,v 1.3 2006/04/16 16:21:05 simonb Exp $
+# $NetBSD: t_rename,v 1.4 2006/11/09 13:51:49 jmmv Exp $
 #
 # Copyright (c) 2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -104,6 +104,43 @@ test_run() {
 	test -f a && die
 	test -f b || die
 	rm b
+
+	mkdir dir || die
+	touch dir/a
+	echo 'mv dir/a dir/b' | kqueue_monitor 2 dir dir/a || die
+	test_name "Renaming a file raises NOTE_RENAME on the old file"
+	kqueue_check dir/a NOTE_RENAME || die
+	test_name "Renaming a file raises NOTE_WRITE on the parent directory"
+	kqueue_check dir NOTE_WRITE || die
+	rm dir/b || die
+	rmdir dir || die
+
+	mkdir dir || die
+	touch dir/a
+	touch dir/b
+	echo 'mv dir/a dir/b' | kqueue_monitor 3 dir dir/a dir/b || die
+	test_name "Renaming a file raises NOTE_RENAME on the old file"
+	kqueue_check dir/a NOTE_RENAME || die
+	test_name "Renaming a file raises NOTE_WRITE on the parent directory"
+	kqueue_check dir NOTE_WRITE || die
+	test_name "Renaming a file raises NOTE_DELETE on the target file"
+	kqueue_check dir/b NOTE_DELETE || die
+	rm dir/b || die
+	rmdir dir || die
+
+	mkdir dir1 || die
+	mkdir dir2 || die
+	touch dir1/a
+	echo 'mv dir1/a dir2/a' | kqueue_monitor 3 dir1 dir1/a dir2 || die
+	test_name "Moving a file raises NOTE_RENAME on the old file"
+	kqueue_check dir1/a NOTE_RENAME || die
+	test_name "Moving a file raises NOTE_WRITE on the source directory"
+	kqueue_check dir1 NOTE_WRITE || die
+	test_name "Moving a file raises NOTE_WRITE on the target directory"
+	kqueue_check dir2 NOTE_WRITE || die
+	rm dir2/a || die
+	rmdir dir1 || die
+	rmdir dir2 || die
 
 	test_unmount
 }
