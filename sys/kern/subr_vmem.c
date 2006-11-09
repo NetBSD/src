@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.19 2006/11/04 13:26:22 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.20 2006/11/09 10:08:53 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.19 2006/11/04 13:26:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.20 2006/11/09 10:08:53 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -892,12 +892,15 @@ retry:
 		 * satisfy restrictions?
 		 */
 
-		return VMEM_ADDR_NULL;
+		goto fail;
 	}
 	if (vmem_import(vm, size, flags) == 0) {
 		goto retry;
 	}
 	/* XXX */
+fail:
+	bt_free(vm, btnew);
+	bt_free(vm, btnew2);
 	return VMEM_ADDR_NULL;
 
 gotit:
