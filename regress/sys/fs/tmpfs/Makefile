@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/04/16 16:21:05 simonb Exp $
+#	$NetBSD: Makefile,v 1.4 2006/11/09 15:25:37 jmmv Exp $
 
 tests=	t_mount
 tests+=	t_statvfs
@@ -24,6 +24,7 @@ tests+=	t_devices
 tests+=	t_pipes
 tests+=	t_sockets
 tests+=	t_readdir
+tests+=	t_vnd
 
 regress: ${tests}
 .for t in	${tests}
