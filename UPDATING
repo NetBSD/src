@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.151 2006/10/09 18:57:30 rpaulo Exp $
+$NetBSD: UPDATING,v 1.152 2006/11/09 18:20:59 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20061108:
+	The configure script used in the src/tools/gcc compiler has been
+	changed to indicate that our libc has ssp support built-in and
+	does not depend on -lssp and -lssp-nonshared. You'll need to
+	make clean in src/tools/gcc first to rebuild the compiler.
 
 20061009:
 	The sysctl variables net.inet{,6}.tcp{,6}.newreno are no longer
