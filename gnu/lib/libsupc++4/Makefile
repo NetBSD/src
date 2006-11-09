@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/10 22:53:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2006/11/09 20:07:15 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -19,6 +19,8 @@ SHLIB_MINOR=	0
 
 SRCS=		${LIBSUPCXXSRCS} xmalloc.c
 CXXFLAGS+=	${G_SECTION_FLAGS}
+
+COPTS.cp-demangle.c = -Wno-stack-protector
 
 .include <bsd.lib.mk>
 
