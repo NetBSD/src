@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2006/07/19 02:04:44 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.15 2006/11/09 21:40:20 christos Exp $
 
 MKPRIVATELIB=	yes
 
@@ -42,5 +42,8 @@ SRCS=	alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	vstream_popen.c vstring.c vstring_vstream.c watchdog.c writable.c \
 	write_buf.c write_wait.c sane_basename.c format_tv.c allspace.c \
 	allascii.c load_file.c
+
+COPTS.unix_recv_fd.c = -Wno-stack-protector
+COPTS.unix_send_fd.c = -Wno-stack-protector
 
 .include <bsd.lib.mk>
