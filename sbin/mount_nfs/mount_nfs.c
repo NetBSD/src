@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.52 2006/10/16 03:37:42 christos Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.53 2006/11/09 10:07:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.52 2006/10/16 03:37:42 christos Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.53 2006/11/09 10:07:00 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,13 +204,14 @@ mount_nfs(int argc, char *argv[])
 	    "23a:bcCdD:g:I:iKL:lm:o:PpqR:r:sTt:w:x:UX")) != -1)
 		switch (c) {
 		case '3':
+		case 'q':
 			if (force2)
-				errx(1, "-2 and -3 are mutually exclusive");
+				errx(1, "conflicting version options");
 			force3 = 1;
 			break;
 		case '2':
 			if (force3)
-				errx(1, "-2 and -3 are mutually exclusive");
+				errx(1, "conflicting version options");
 			force2 = 1;
 			nfsargsp->flags &= ~NFSMNT_NFSV3;
 			break;
@@ -231,11 +232,7 @@ mount_nfs(int argc, char *argv[])
 			nfsargsp->flags &= ~NFSMNT_NOCONN;
 			break;
 		case 'D':
-			num = strtol(optarg, &p, 10);
-			if (*p || num <= 0)
-				errx(1, "illegal -D value -- %s", optarg);
-			nfsargsp->deadthresh = num;
-			nfsargsp->flags |= NFSMNT_DEADTHRESH;
+			/* ignore */
 			break;
 		case 'd':
 			nfsargsp->flags |= NFSMNT_DUMBTIMR;
@@ -261,11 +258,7 @@ mount_nfs(int argc, char *argv[])
 			nfsargsp->flags |= NFSMNT_INT;
 			break;
 		case 'L':
-			num = strtol(optarg, &p, 10);
-			if (*p || num < 2)
-				errx(1, "illegal -L value -- %s", optarg);
-			nfsargsp->leaseterm = num;
-			nfsargsp->flags |= NFSMNT_LEASETERM;
+			/* ignore */
 			break;
 		case 'l':
 			nfsargsp->flags |= NFSMNT_RDIRPLUS;
@@ -282,7 +275,7 @@ mount_nfs(int argc, char *argv[])
 				nfsargsp->flags |= NFSMNT_DUMBTIMR;
 			if (altflags & ALTF_INTR)
 				nfsargsp->flags |= NFSMNT_INT;
-			if (altflags & ALTF_NFSV3) {
+			if (altflags & (ALTF_NFSV3|ALTF_NQNFS)) {
 				if (force2)
 					errx(1, "conflicting version options");
 				force3 = 1;
@@ -303,12 +296,6 @@ mount_nfs(int argc, char *argv[])
 			if (altflags & ALTF_SEQPACKET)
 				nfsargsp->sotype = SOCK_SEQPACKET;
 #endif
-			if (altflags & ALTF_NQNFS) {
-				if (force2)
-					errx(1, "nqnfs only available with v3");
-				force3 = 1;
-				nfsargsp->flags |= NFSMNT_NQNFS;
-			}
 			if (altflags & ALTF_SOFT)
 				nfsargsp->flags |= NFSMNT_SOFT;
 			if (altflags & ALTF_TCP) {
@@ -374,12 +361,6 @@ mount_nfs(int argc, char *argv[])
 			break;
 		case 'p':
 			nfsargsp->flags &= ~NFSMNT_RESVPORT;
-			break;
-		case 'q':
-			if (force2)
-				errx(1, "nqnfs only available with v3");
-			force3 = 1;
-			nfsargsp->flags |= NFSMNT_NQNFS;
 			break;
 		case 'R':
 			num = strtol(optarg, &p, 10);
@@ -486,7 +467,7 @@ retry:
 		return (0);
 	}
 		
-	if (nfsargsp->flags & (NFSMNT_NQNFS | NFSMNT_KERB)) {
+	if (nfsargsp->flags & NFSMNT_KERB) {
 		if ((opflags & ISBGRND) == 0) {
 			if ((i = fork()) != 0) {
 				if (i == -1)
