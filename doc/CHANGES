@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.753 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.754 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -176,3 +176,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	evbarm: Add support for Certance CP-3100 [scw 20061108]
 	tmpfs: Audit kqueue notifications and add several regression
 		tests for them.  [jmmv 20061109]
+	vnd: Make this work with files stored on file systems without
+		the bmap and strategy operations.  This includes tmpfs
+		and smbfs.  [jmmv 20061109]
