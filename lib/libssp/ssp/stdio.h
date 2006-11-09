@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.1 2006/11/08 19:52:11 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.2 2006/11/09 15:31:11 he Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -48,8 +48,9 @@ int __vsprintf_chk(char *__restrict, int, size_t, const char *__restrict,
     _BSD_VA_LIST_) __attribute__((__format__(__printf__, 4, 0)));
 int __snprintf_chk(char *__restrict, size_t, int, size_t,
     const char *__restrict, ...) __attribute__((__format__(__printf__, 5, 6)));
-int __vnsprintf_chk(char *__restrict, int, size_t, const char *__restrict,
-    _BSD_VA_LIST_) __attribute__((__format__(__printf__, 5, 0)));
+int __vsnprintf_chk(char *__restrict, size_t, int, size_t,
+     const char *__restrict, _BSD_VA_LIST_)
+     __attribute__((__format__(__printf__, 5, 0)));
 char *__gets_chk(char *, size_t);
 char *__fgets_chk(char *, int, size_t, FILE *);
 __END_DECLS
