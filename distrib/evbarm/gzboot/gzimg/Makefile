@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2004/12/24 10:56:23 joff Exp $
+#	$NetBSD: Makefile,v 1.18 2006/11/09 00:35:32 scw Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -17,6 +17,12 @@ TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 								\
 		ADI_BRH		ADI_BRH		ADI_BRH_wd0	\
 		0x00140000	netbsd-wd0			\
+								\
+		CP3100		IQ80321		CP3100_sd0	\
+		0xf0080000	netbsd-sd0			\
+								\
+		CP3100		IQ80321		CP3100_wd0	\
+		0xf0080000	netbsd-wd0			\
 								\
 		IQ80310		IQ80310		IQ80310_sd0	\
 		0x00080000	netbsd-sd0			\
