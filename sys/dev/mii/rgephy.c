@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.9 2006/10/12 01:31:25 christos Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.10 2006/11/09 14:43:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.9 2006/10/12 01:31:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.10 2006/11/09 14:43:10 tsutsui Exp $");
 
 
 /*
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.9 2006/10/12 01:31:25 christos Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/device.h>
 #include <sys/socket.h>
 
 
