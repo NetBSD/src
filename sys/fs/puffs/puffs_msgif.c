@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.4 2006/11/07 22:10:18 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.5 2006/11/09 13:09:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.4 2006/11/07 22:10:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.5 2006/11/09 13:09:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -659,7 +659,7 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		return puffssizeop(pmp, data);
 		break;
 
-	case PUFFSMOUNTOP:
+	case PUFFSSTARTOP:
 		return puffs_start2(pmp, data);
 
 	/* already done in sys_ioctl() */
