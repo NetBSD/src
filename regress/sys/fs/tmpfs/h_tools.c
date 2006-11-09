@@ -1,7 +1,7 @@
-/*	$NetBSD: h_tools.c,v 1.6 2006/11/09 13:51:49 jmmv Exp $	*/
+/*	$NetBSD: h_tools.c,v 1.7 2006/11/09 16:20:06 jmmv Exp $	*/
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
