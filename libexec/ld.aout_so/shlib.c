@@ -1,4 +1,4 @@
-/*	$NetBSD: shlib.c,v 1.20 2005/06/26 20:47:08 christos Exp $	*/
+/*	$NetBSD: shlib.c,v 1.21 2006/11/09 19:45:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -244,10 +244,14 @@ int	do_dot_a;
 	char		*lname, *path = NULL;
 	int		major = *majorp, minor = *minorp;
 
-	len = strlen(name);
-	lname = (char *)alloca(len + sizeof("lib"));
+	len = strlen(name) + sizeof("lib");
+#if defined(__SSP__) || defined(__SSP_ALL__)
+	lname = xmalloc(len);
+#else
+	lname = alloca(len);
+#endif
+	len--;
 	sprintf(lname, "lib%s", name);
-	len += 3;
 
 	ndewey = 0;
 
@@ -347,7 +351,9 @@ int	do_dot_a;
 			 */
 			return path;
 	}
-
+#if defined(__SSP__) || defined(__SSP_ALL__)
+	free(lname);
+#endif
 	return path;
 }
 
