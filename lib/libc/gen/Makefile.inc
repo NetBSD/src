@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.154 2006/10/27 20:00:55 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.155 2006/11/09 04:00:11 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -36,6 +36,9 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c \
 	_sysconf.c _verr.c _verrx.c _vwarn.c _vwarnx.c _warn.c _warnx.c
+
+# uses alloca
+COPTS.execvp.c = -Wno-stack-protector
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:
