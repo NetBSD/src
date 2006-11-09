@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.5 2006/11/07 22:10:18 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.6 2006/11/09 13:09:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -51,7 +51,7 @@
 
 #define PUFFSOP_OPCMASK		0x03
 #define PUFFSOP_OPCLASS(a)	((a) & PUFFSOP_OPCMASK)
-#define PUFFSOP_WANTREPLY(a) (((a) & PUFFSOPFLAG_FAF) == 0)
+#define PUFFSOP_WANTREPLY(a)	(((a) & PUFFSOPFLAG_FAF) == 0)
 
 enum {
 	PUFFS_VFS_MOUNT,	PUFFS_VFS_START,	PUFFS_VFS_UNMOUNT,
@@ -157,10 +157,10 @@ struct puffs_cred {
 #define PUFFCRED_CRED_FSCRED	2
 
 
-#define PUFFSGETOP	_IOWR('p', 1, struct puffs_req)
-#define PUFFSPUTOP	_IOWR('p', 2, struct puffs_req)
-#define PUFFSSIZEOP	_IOWR('p', 3, struct puffs_sizeop)
-#define PUFFSMOUNTOP	_IOWR('p', 4, struct puffs_vfsreq_start)
+#define PUFFSSTARTOP	_IOWR('p', 1, struct puffs_startreq)
+#define PUFFSGETOP	_IOWR('p', 2, struct puffs_req)
+#define PUFFSPUTOP	_IOWR('p', 3, struct puffs_req)
+#define PUFFSSIZEOP	_IOWR('p', 4, struct puffs_sizeop)
 
 /*
  * 4x MAXPHYS is the max size the system will attempt to copy,
@@ -197,9 +197,10 @@ struct puffs_cn {
 #define PUFFSLOOKUP_NOFOLLOW	0x08	/* don't follow symlinks */
 #define PUFFSLOOKUP_OPTIONS	0x0c
 
-struct puffs_vfsreq_start {
-	fsid_t	psr_fsidx;		/* fsid value */
-	void	*psr_cookie;		/* root node cookie */
+
+struct puffs_startreq {
+	void	*psr_cookie;		/* IN:  root node cookie */
+	fsid_t	psr_fsidx;		/* OUT: fsid value */
 };
 
 /*
