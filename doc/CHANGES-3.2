@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.5 2006/11/06 17:25:23 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.6 2006/11/09 22:55:38 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -33,4 +33,12 @@ sys/arch/sparc64/sparc64/locore.s		1.217-1.218 via patch
 
 	Fix a couple of %y register save/restore errors.
 	[nakayama, ticket #1517]
+
+usr.sbin/installboot/ffs.c			1.19-1.21
+usr.sbin/installboot/fstypes.c			1.9
+usr.sbin/installboot/installboot.8		1.54 via patch
+usr.sbin/installboot/installboot.h		1.31
+
+	Make installation of bootloaders on a RAID 1 volume easier.
+	[bad, ticket #1524]
 
