@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.2 2006/11/08 23:25:54 christos Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.3 2006/11/09 20:44:16 christos Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.2 2006/11/08 23:25:54 christos Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.3 2006/11/09 20:44:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -45,7 +45,7 @@ static void __guard_setup(void) __attribute__((__constructor__, __used__));
 static void __fail(const char *);
 void __stack_chk_fail(void);
 void __chk_fail(void);
-void __stack_chk_fail_local(void) __attribute__((__visibility__("hidden")));
+void __stack_chk_fail_local(void);
 
 /*LINTED used*/
 static void
