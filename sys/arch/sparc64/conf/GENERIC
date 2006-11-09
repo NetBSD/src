@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.73 2006/10/26 11:48:39 elad Exp $
+# $NetBSD: GENERIC,v 1.74 2006/11/09 15:08:04 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.73 $"
+#ident 		"GENERIC-$Revision: 1.74 $"
 
 maxusers	64
 
@@ -256,10 +256,12 @@ auxio*	at sbus? slot ? offset ?		# auxio registers
 bpp*	at sbus? slot ? offset ?		# parallel port
 lpt*	at ebus?				# parallel port
 
-## Mostek clock found on 4/300, sun4c, sun4m and sun4u systems.
-## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
+## Mostek clock found on sbus on Ultra-1,2 systems
+## and found on ebus on Ultra-5 and other systems.
 clock*	at sbus? slot ? offset ?
 clock*	at ebus?
+
+## DS1287 compatible clock found on ebus on Netra X1 and other systems.
 rtc*	at ebus?
 
 ## Timer chip found on 4/300, sun4c, sun4m and (some) sun4u systems.
