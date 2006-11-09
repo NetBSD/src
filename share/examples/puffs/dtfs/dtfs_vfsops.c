@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.2 2006/11/08 11:25:29 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.3 2006/11/09 13:11:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@
 #include "dtfs.h"
 
 int
-dtfs_start(struct puffs_usermount *pu, struct puffs_vfsreq_start *arg)
+dtfs_mount(struct puffs_usermount *pu, void **rootcookie)
 {
 	struct dtfs_mount *dtm;
 	struct dtfs_file *dff;
@@ -49,7 +49,6 @@ dtfs_start(struct puffs_usermount *pu, struct puffs_vfsreq_start *arg)
 	/* create mount-local thingie */
 	dtm = emalloc(sizeof(struct dtfs_mount));
 	dtm->dtm_nextfileid = 2;
-	dtm->dtm_fsidx = arg->psr_fsidx;
 	dtm->dtm_nfiles = 1;
 	dtm->dtm_fsizes = 0;
 	pu->pu_privdata = dtm;
@@ -63,15 +62,25 @@ dtfs_start(struct puffs_usermount *pu, struct puffs_vfsreq_start *arg)
 	pn = puffs_newpnode(pu, dff, VDIR);
 	if (!pn)
 		errx(1, "puffs_newpnode");
-
-	dtfs_baseattrs(&pn->pn_va, VDIR, dtm->dtm_fsidx.__fsid_val[0],
-	    dtm->dtm_nextfileid);
-	dtm->dtm_nextfileid++;
 	/* not adddented, so compensate */
 	pn->pn_va.va_nlink = 2;
 
 	pu->pu_rootnode = pn;
-	arg->psr_cookie = pn;
+	*rootcookie = pn;
+
+	return 0;
+}
+
+int
+dtfs_start(struct puffs_usermount *pu)
+{
+	struct dtfs_mount *dtm;
+
+	/* we don't have the fsidx in mount, so do attrs here */
+	dtm = pu->pu_privdata;
+	dtfs_baseattrs(&pu->pu_rootnode->pn_va, VDIR,pu->pu_fsidx.__fsid_val[0],
+	    dtm->dtm_nextfileid);
+	dtm->dtm_nextfileid++;
 
 	return 0;
 }
@@ -80,6 +89,7 @@ int
 dtfs_unmount(struct puffs_usermount *pu, int flags, pid_t pid)
 {
 
+	/* goodbye blue sky */
 	return 0;
 }
 
@@ -140,7 +150,7 @@ dtfs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp, pid_t pid)
 
 	sbp->f_bresvd = sbp->f_fresvd = 0;
 
-	sbp->f_fsidx = dtm->dtm_fsidx;
+	sbp->f_fsidx = pu->pu_fsidx;
 
 	return 0;
 }
