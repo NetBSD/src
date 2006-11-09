@@ -1,4 +1,4 @@
-/* $NetBSD: radlib.c,v 1.8 2005/11/25 23:20:00 christos Exp $ */
+/* $NetBSD: radlib.c,v 1.9 2006/11/09 17:02:52 christos Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libradius/radlib.c,v 1.12 2004/06/14 20:55:30 stefanf Exp $");
 #else
-__RCSID("$NetBSD: radlib.c,v 1.8 2005/11/25 23:20:00 christos Exp $");
+__RCSID("$NetBSD: radlib.c,v 1.9 2006/11/09 17:02:52 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1195,7 +1195,7 @@ rad_demangle_mppe_key(struct rad_handle *h, const void *mangled,
 {
 	char R[LEN_AUTH];    /* variable names as per rfc2548 */
 	const char *S;
-	u_char b[MD5_DIGEST_LENGTH], *demangled;
+	u_char b[MD5_DIGEST_LENGTH], *demangled = NULL;
 	const u_char *A, *C;
 	MD5_CTX Context;
 	size_t Slen, Clen, i, Ppos;
@@ -1218,7 +1218,7 @@ rad_demangle_mppe_key(struct rad_handle *h, const void *mangled,
 	Clen = mlen - SALT_LEN;
 	S = rad_server_secret(h);    /* We need the RADIUS secret */
 	Slen = strlen(S);
-	P = alloca(Clen);        /* We derive our plaintext */
+	P = malloc(Clen);        /* We derive our plaintext */
 
 	MD5Init(&Context);
 	MD5Update(&Context, (MD5Buf)S, (MD5Len)Slen);
@@ -1251,19 +1251,21 @@ rad_demangle_mppe_key(struct rad_handle *h, const void *mangled,
 	if (*len > mlen - 1) {
 		generr(h, "Mangled data seems to be garbage %zu %zu",
 		    *len, mlen-1);
-		return NULL;
+		goto out;
 	}
 
 	if (*len > MPPE_KEY_LEN * 2) {
 		generr(h, "Key to long (%zu) for me max. %d",
 		    *len, MPPE_KEY_LEN * 2);
-		return NULL;
+		goto out;
 	}
 	demangled = malloc(*len);
 	if (!demangled)
-		return NULL;
+		goto out;
 
 	(void)memcpy(demangled, P + 1, *len);
+out:
+	free(P);
 	return demangled;
 }
 
