@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: t_remove,v 1.4 2006/11/07 14:07:12 jmmv Exp $
+# $NetBSD: t_remove,v 1.5 2006/11/09 13:51:49 jmmv Exp $
 #
 # Copyright (c) 2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,6 +67,15 @@ test_run() {
 	chflags nouchg a || die
 	rm a || die
 	test -f a && die
+
+	mkdir dir || die
+	touch dir/a || die
+	echo 'rm dir/a' | kqueue_monitor 2 dir dir/a || die
+	test_name "Deleting a file raises NOTE_DELETE on it"
+	kqueue_check dir/a NOTE_DELETE || die
+	test_name "Deleting a file raises NOTE_WRITE on the parent directory"
+	kqueue_check dir NOTE_WRITE || die
+	rmdir dir || die
 
 	test_unmount
 }
