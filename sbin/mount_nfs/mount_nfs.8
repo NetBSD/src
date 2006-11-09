@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.30 2006/03/23 23:23:27 wiz Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.31 2006/11/09 10:07:00 yamt Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mount_nfs.8	8.3 (Berkeley) 3/29/95
 .\"
-.Dd March 24, 2006
+.Dd November 9, 2006
 .Dt MOUNT_NFS 8
 .Os
 .Sh NAME
@@ -106,20 +106,10 @@ Version 3 protocol.
 The default is to try version 3 first, and
 fall back to version 2 if the mount fails.
 .It Fl D
-Used with
+Ignored.
+It used to be
 .Tn NQNFS
-to set the
-.Dq "dead server threshold"
-to the specified number of round trip timeout intervals.
-After a
-.Dq "dead server threshold"
-of retransmit timeouts,
-cached data for the unresponsive server is assumed to still be valid.
-Values may be set in the range of 1 - 9, with 9 referring to an
-.Dq "infinite dead threshold"
-(i.e. never assume cached data still valid).
-This option is not generally recommended and is really an experimental
-feature.
+.Dq "dead server threshold" .
 .It Fl I
 Set the readdir read size to the specified value.
 The value should normally
@@ -127,11 +117,10 @@ be a multiple of
 .Dv DIRBLKSIZ
 that is \*[Le] the read size for the mount.
 .It Fl L
-Used with
+Ignored.
+It used to be
 .Tn NQNFS
-to set the lease term to the specified number of seconds.
-Only use this argument for mounts with a large round trip delay.
-Values are normally in the 10-30 second range.
+lease term.
 .It Fl P
 Use a reserved socket port number.
 This is the default, and available
@@ -224,8 +213,6 @@ when a
 termination signal is posted for the process.
 .It Fl l
 Used with
-.Tn NQNFS
-and
 .Tn NFS
 Version 3 to specify that the
 .Fn ReaddirPlus
@@ -251,29 +238,10 @@ Do not use a reserved port number for RPCs.
 This option is provided only to be able to mimic the old
 default behavior of not using a reserved port, and should rarely be useful.
 .It Fl q
-Use the leasing extensions to the
-.Tn NFS
-Version 3 protocol
-to maintain cache consistency.
-This protocol version 2 revision to Not Quite
-.Tn NFS
-.Pq Tn NQNFS
-is only supported by this updated release of
-.Tn NFS
-code.
-It is not backwards compatible with the version 1
-.Tn NQNFS
-protocol that was part of the first release of
-.Bx 4.4 Lite .
-To interoperate with a first release
-.Bx 4.4 Lite
-.Tn NFS
-system you will have to avoid this option until you have had
-an opportunity to upgrade the
-.Tn NFS
-code to release 2 of
-.Bx 4.4 Lite
-on all your systems.
+A synonym of
+.Fl 3 .
+It used to specify
+.Tn NQNFS .
 .It Fl r
 Set the read data size to the specified value in bytes.
 It should normally be a power of 2 greater than or equal to 1024.
