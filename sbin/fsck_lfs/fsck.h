@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.15 2005/06/27 02:48:28 christos Exp $	 */
+/* $NetBSD: fsck.h,v 1.16 2006/11/09 19:36:36 christos Exp $	 */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -89,6 +89,8 @@
 #define	DFOUND	04		/* directory found during descent */
 #define	DCLEAR	05		/* directory is to be cleared */
 #define	FCLEAR	06		/* file is to be cleared */
+
+#define EEXIT	8		/* Standard error exit */
 
 /*
  * buffer cache structure.

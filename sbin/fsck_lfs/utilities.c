@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.25 2006/07/18 23:37:13 perseant Exp $	 */
+/* $NetBSD: utilities.c,v 1.26 2006/11/09 19:36:36 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -305,7 +305,7 @@ dofix(struct inodesc * idesc, const char *msg)
 		return (0);
 
 	default:
-		err(8, "UNKNOWN INODESC FIX MODE %d\n", idesc->id_fix);
+		err(EEXIT, "UNKNOWN INODESC FIX MODE %d\n", idesc->id_fix);
 	}
 	/* NOTREACHED */
 }
