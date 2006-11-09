@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.333 2006/10/26 05:04:18 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.334 2006/11/09 19:43:05 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.333 2006/10/26 05:04:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.334 2006/11/09 19:43:05 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -244,6 +244,8 @@ static const struct wd_quirk {
 	 * (and it's hard to get a list of such controllers)
 	 */
 	{ "ST3160021A*",
+	  WD_QUIRK_FORCE_LBA48 },
+	{ "ST3160811A*",
 	  WD_QUIRK_FORCE_LBA48 },
 	{ "ST3160812A*",
 	  WD_QUIRK_FORCE_LBA48 },
