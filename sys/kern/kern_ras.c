@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_ras.c,v 1.12.20.1 2006/10/20 20:03:17 ad Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.12.20.2 2006/11/09 02:31:43 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.12.20.1 2006/10/20 20:03:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.12.20.2 2006/11/09 02:31:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -74,27 +74,30 @@ caddr_t
 ras_lookup(struct proc *p, caddr_t addr)
 {
 	struct ras *rp;
+	caddr_t startaddr;
+
+	startaddr = (caddr_t)-1;
 
 #ifdef DIAGNOSTIC
 	if (addr < (caddr_t)VM_MIN_ADDRESS ||
 	    addr > (caddr_t)VM_MAXUSER_ADDRESS)
-		return ((caddr_t)-1);
+		return (startaddr);
 #endif
 
 	mutex_enter(&p->p_rasmutex);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
 		if (addr > rp->ras_startaddr && addr < rp->ras_endaddr) {
 			rp->ras_hits++;
-			mutex_exit(&p->p_rasmutex);
+			startaddr = rp->ras_startaddr;
 #ifdef DIAGNOSTIC
 			DPRINTF(("RAS hit: p=%p %p\n", p, addr));
 #endif
-			return (rp->ras_startaddr);
+			break;
 		}
 	}
 	mutex_exit(&p->p_rasmutex);
 
-	return ((caddr_t)-1);
+	return (startaddr);
 }
 
 /*
@@ -127,8 +130,6 @@ again:
 
 	/*
 	 * allocate entries.
-	 *
-	 * XXXAD may change if we sleep. WTF?
 	 */
 
 	for ( ; nras > 0; nras--) {
@@ -247,12 +248,15 @@ ras_purge(struct proc *p, caddr_t addr, size_t len)
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
 		if (addr == rp->ras_startaddr && endaddr == rp->ras_endaddr) {
 			LIST_REMOVE(rp, ras_list);
-			pool_put(&ras_pool, rp);
-			error = 0;
 			break;
 		}
 	}
 	mutex_exit(&p->p_rasmutex);
+
+	if (rp != NULL) {
+		pool_put(&ras_pool, rp);
+		error = 0;
+	}
 
 	return (error);
 }

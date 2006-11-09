@@ -1,12 +1,12 @@
-/*	$NetBSD: sysv_msg.c,v 1.44.4.1 2006/09/11 18:47:17 ad Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.44.4.2 2006/11/09 02:31:43 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.44.4.1 2006/09/11 18:47:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.44.4.2 2006/11/09 02:31:43 ad Exp $");
 
 #define SYSVMSG
 
@@ -280,10 +280,12 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 
 	case IPC_SET:
 		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
-			return (error);
+			break;
 		if (msqbuf->msg_qbytes > msqptr->msg_qbytes &&
-		    kauth_cred_geteuid(cred) != 0)
-			return (EPERM);
+		    kauth_cred_geteuid(cred) != 0) {
+			error = EPERM;
+			break;
+		}
 		if (msqbuf->msg_qbytes > msginfo.msgmnb) {
 			MSG_PRINTF(("can't increase msg_qbytes beyond %d "
 			    "(truncating)\n", msginfo.msgmnb));
