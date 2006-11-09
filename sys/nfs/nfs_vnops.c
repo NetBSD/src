@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.244 2006/10/14 09:18:57 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.245 2006/11/09 09:53:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.244 2006/10/14 09:18:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.245 2006/11/09 09:53:57 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1332,8 +1332,7 @@ struct nfs_writerpc_context {
  * called at splvm.
  */
 static void
-nfs_writerpc_extfree(struct mbuf *m, caddr_t tbuf __unused,
-    size_t size __unused, void *arg)
+nfs_writerpc_extfree(struct mbuf *m, caddr_t tbuf, size_t size, void *arg)
 {
 	struct nfs_writerpc_context *ctx = arg;
 
@@ -3335,13 +3334,8 @@ nfs_fsync(v)
  * Flush all the data associated with a vnode.
  */
 int
-nfs_flush(
-    struct vnode *vp,
-    kauth_cred_t cred __unused,
-    int waitfor __unused,
-    struct lwp *l __unused,
-    int commit __unused
-)
+nfs_flush(struct vnode *vp, kauth_cred_t cred, int waitfor, struct lwp *l,
+    int commit)
 {
 	struct nfsnode *np = VTONFS(vp);
 	int error;

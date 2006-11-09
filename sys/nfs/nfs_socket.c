@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.140 2006/10/12 01:32:47 christos Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.141 2006/11/09 09:53:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.140 2006/10/12 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.141 2006/11/09 09:53:57 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1621,7 +1621,7 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
  * sure to set the r_retry field to 0 (implies nm_retry == 0).
  */
 void
-nfs_timer(void *arg __unused)
+nfs_timer(void *arg)
 {
 	struct nfsreq *rep;
 	struct mbuf *m;
@@ -1757,7 +1757,7 @@ nfs_timer(void *arg __unused)
 
 /*ARGSUSED*/
 void
-nfs_exit(struct proc *p, void *v __unused)
+nfs_exit(struct proc *p, void *v)
 {
 	struct nfsreq *rp;
 	int s = splsoftnet();
