@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.27 2006/11/08 23:27:32 christos Exp $	*/
+/*	$NetBSD: execvp.c,v 1.28 2006/11/09 02:51:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.27 2006/11/08 23:27:32 christos Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.28 2006/11/09 02:51:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,9 @@ __RCSID("$NetBSD: execvp.c,v 1.27 2006/11/08 23:27:32 christos Exp $");
 #include <limits.h>
 #include <unistd.h>
 #include <paths.h>
+#if defined(__SSP__) || defined(__SSP_ALL__)
+#include <sys/mman.h>
+#endif
 #include "reentrant.h"
 
 #ifdef __weak_alias
@@ -129,19 +132,20 @@ retry:		(void)execve(bp, argv, environ);
 				continue;
 			ln = (cnt + 2) * sizeof(*memp);
 #if defined(__SSP__) || defined(__SSP_ALL__)
-			memp = malloc(ln);
-#else
-			memp = alloca(ln);
-#endif
-			if (memp == NULL)
+			if ((memp = mmap(NULL, ln, PROT_READ|PROT_WRITE,
+			    MAP_ANON, -1, 0)) == MAP_FAILED)
 				goto done;
+#else
+			if ((memp = alloca(ln)) == NULL)
+				goto done;
+#endif
 			memp[0] = _PATH_BSHELL;
 			memp[1] = bp;
 			(void)memcpy(&memp[2], &argv[1], cnt * sizeof(*memp));
 			(void)execve(_PATH_BSHELL, __UNCONST(memp), environ);
 #if defined(__SSP__) || defined(__SSP_ALL__)
 			eacces = errno;
-			free(memp);
+			(void)munmap(memp, ln);
 			errno = eacces;
 #endif
 			goto done;
