@@ -18,6 +18,3 @@
 
   jmmv: I may agree with the removal of the visual lines, but not with the
   vop_*_args assignment.  Those are very ugly and add a lot of redundancy.
-
-- Check and fix KNOTE_* calls (e.g. missing NOTE_LINK on link(2), perhaps
-  others)

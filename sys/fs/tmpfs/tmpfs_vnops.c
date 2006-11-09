@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.30 2006/11/07 14:08:13 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.31 2006/11/09 15:06:03 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.30 2006/11/07 14:08:13 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.31 2006/11/09 15:06:03 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -630,6 +630,8 @@ tmpfs_write(void *v)
 	if (error != 0)
 		(void)tmpfs_reg_resize(vp, oldsize);
 
+	VN_KNOTE(vp, NOTE_WRITE);
+
 out:
 	KASSERT(VOP_ISLOCKED(vp));
 	KASSERT(IMPLIES(error == 0, uio->uio_resid == 0));
@@ -690,10 +692,6 @@ tmpfs_remove(void *v)
 	/* Remove the entry from the directory; as it is a file, we do not
 	 * have to change the number of hard links of the directory. */
 	tmpfs_dir_detach(dvp, de);
-
-	/* Notify interested parties about the modification of dvp.
-	 * The removal of vp is notified when it is reclaimed. */
-	VN_KNOTE(dvp, NOTE_WRITE);
 
 	/* Free the directory entry we just deleted.  Note that the node
 	 * referred by it will not be removed until the vnode is really
@@ -775,7 +773,6 @@ tmpfs_link(void *v)
 
 	/* Insert the new directory entry into the appropriate directory. */
 	tmpfs_dir_attach(dvp, de);
-	VN_KNOTE(dvp, NOTE_WRITE);
 
 	/* vp link count has changed, so update node times. */
 	node->tn_status |= TMPFS_NODE_CHANGED;
@@ -952,8 +949,10 @@ tmpfs_rename(void *v)
 	}
 
 	/* Notify listeners of tdvp about the change in the directory (either
-	 * because a new entry was added or because one was removed). */
+	 * because a new entry was added or because one was removed) and
+	 * listeners of fvp about the rename. */
 	VN_KNOTE(tdvp, NOTE_WRITE);
+	VN_KNOTE(fvp, NOTE_RENAME);
 
 	error = 0;
 
@@ -1046,8 +1045,7 @@ tmpfs_rmdir(void *v)
 	node->tn_spec.tn_dir.tn_parent->tn_status |= TMPFS_NODE_ACCESSED | \
 	    TMPFS_NODE_CHANGED | TMPFS_NODE_MODIFIED;
 
-	/* Notify modification of parent directory and release it. */
-	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
+	/* Release the parent. */
 	cache_purge(dvp); /* XXX Is this needed? */
 	vput(dvp);
 
@@ -1255,9 +1253,6 @@ tmpfs_reclaim(void *v)
 
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
-
-	if (node->tn_links == 0)
-		VN_KNOTE(vp, NOTE_DELETE);
 
 	cache_purge(vp);
 	tmpfs_free_vp(vp);

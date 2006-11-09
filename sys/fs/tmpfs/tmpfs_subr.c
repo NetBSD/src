@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.28 2006/11/05 19:40:31 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.29 2006/11/09 15:06:03 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.28 2006/11/05 19:40:31 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.29 2006/11/09 15:06:03 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -155,6 +155,10 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		nnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 		nnode->tn_links++;
 		nnode->tn_spec.tn_dir.tn_parent->tn_links++;
+		if (parent != NULL) {
+			KASSERT(parent->tn_vnode != NULL);
+			VN_KNOTE(parent->tn_vnode, NOTE_LINK);
+		}
 		break;
 
 	case VFIFO:
@@ -270,7 +274,8 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
  * The new directory entry is returned in *de.
  *
  * The link count of node is increased by one to reflect the new object
- * referencing it.
+ * referencing it.  This takes care of notifying kqueue listeners about
+ * this change.
  *
  * Returns zero on success or an appropriate error code on failure.
  */
@@ -294,6 +299,8 @@ tmpfs_alloc_dirent(struct tmpfs_mount *tmp, struct tmpfs_node *node,
 	nde->td_node = node;
 
 	node->tn_links++;
+	if (node->tn_links > 1 && node->tn_vnode != NULL)
+		VN_KNOTE(node->tn_vnode, NOTE_LINK);
 	*de = nde;
 
 	return 0;
@@ -309,6 +316,10 @@ tmpfs_alloc_dirent(struct tmpfs_mount *tmp, struct tmpfs_node *node,
  * object that referenced it.  This only happens if 'node_exists' is true;
  * otherwise the function will not access the node referred to by the
  * directory entry, as it may already have been released from the outside.
+ *
+ * Interested parties (kqueue) are notified of the link count change; note
+ * that this can include both the node pointed to by the directory entry
+ * as well as its parent.
  */
 void
 tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
@@ -321,6 +332,12 @@ tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
 
 		KASSERT(node->tn_links > 0);
 		node->tn_links--;
+		if (node->tn_vnode != NULL)
+			VN_KNOTE(node->tn_vnode, node->tn_links == 0 ?
+			    NOTE_DELETE : NOTE_LINK);
+		if (node->tn_type == VDIR)
+			VN_KNOTE(node->tn_spec.tn_dir.tn_parent->tn_vnode,
+			    NOTE_LINK);
 	}
 
 	tmpfs_str_pool_put(&tmp->tm_str_pool, de->td_name, de->td_namelen);
@@ -522,7 +539,6 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 	 * insert the new node into the directory, an operation that
 	 * cannot fail. */
 	tmpfs_dir_attach(dvp, de);
-	VN_KNOTE(dvp, NOTE_WRITE);
 
 out:
 	if (error != 0 || !(cnp->cn_flags & SAVESTART))
@@ -541,6 +557,9 @@ out:
  * Attaches the directory entry de to the directory represented by vp.
  * Note that this does not change the link count of the node pointed by
  * the directory entry, as this is done by tmpfs_alloc_dirent.
+ *
+ * As the "parent" directory changes, interested parties are notified of
+ * a write to it.
  */
 void
 tmpfs_dir_attach(struct vnode *vp, struct tmpfs_dirent *de)
@@ -554,6 +573,8 @@ tmpfs_dir_attach(struct vnode *vp, struct tmpfs_dirent *de)
 	dnode->tn_status |= TMPFS_NODE_ACCESSED | TMPFS_NODE_CHANGED | \
 	    TMPFS_NODE_MODIFIED;
 	uvm_vnp_setsize(vp, dnode->tn_size);
+
+	VN_KNOTE(vp, NOTE_WRITE);
 }
 
 /* --------------------------------------------------------------------- */
@@ -562,6 +583,9 @@ tmpfs_dir_attach(struct vnode *vp, struct tmpfs_dirent *de)
  * Detaches the directory entry de from the directory represented by vp.
  * Note that this does not change the link count of the node pointed by
  * the directory entry, as this is done by tmpfs_free_dirent.
+ *
+ * As the "parent" directory changes, interested parties are notified of
+ * a write to it.
  */
 void
 tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
@@ -582,6 +606,8 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 	dnode->tn_status |= TMPFS_NODE_ACCESSED | TMPFS_NODE_CHANGED | \
 	    TMPFS_NODE_MODIFIED;
 	uvm_vnp_setsize(vp, dnode->tn_size);
+
+	VN_KNOTE(vp, NOTE_WRITE);
 }
 
 /* --------------------------------------------------------------------- */
@@ -845,6 +871,10 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
  * the size newsize.  'vp' must point to a vnode that represents a regular
  * file.  'newsize' must be positive.
  *
+ * If the file is extended, the appropriate kevent is raised.  This does
+ * not rise a write event though because resizing is not the same as
+ * writing.
+ *
  * Returns zero on success or an appropriate error code on failure.
  */
 int
@@ -907,6 +937,9 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	}
 
 	error = 0;
+
+	if (newsize > oldsize)
+		VN_KNOTE(vp, NOTE_EXTEND);
 
 out:
 	return error;
@@ -1210,6 +1243,7 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 		node->tn_status |= TMPFS_NODE_MODIFIED;
 
 	tmpfs_update(vp, atime, mtime, 0);
+	VN_KNOTE(vp, NOTE_ATTRIB);
 
 	KASSERT(VOP_ISLOCKED(vp));
 
@@ -1296,10 +1330,8 @@ tmpfs_truncate(struct vnode *vp, off_t length)
 	}
 
 	error = tmpfs_reg_resize(vp, length);
-	if (error == 0) {
-		VN_KNOTE(vp, NOTE_ATTRIB | (extended ? NOTE_EXTEND : 0));
+	if (error == 0)
 		node->tn_status |= TMPFS_NODE_CHANGED | TMPFS_NODE_MODIFIED;
-	}
 
 out:
 	tmpfs_update(vp, NULL, NULL, 0);

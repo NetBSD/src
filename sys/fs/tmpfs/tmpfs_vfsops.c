@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.15 2006/10/12 01:32:14 christos Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.16 2006/11/09 15:06:03 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.15 2006/10/12 01:32:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.16 2006/11/09 15:06:03 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -237,6 +237,7 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l __unused)
 				struct tmpfs_dirent *nde;
 
 				nde = TAILQ_NEXT(de, td_entries);
+				KASSERT(de->td_node->tn_vnode == NULL);
 				tmpfs_free_dirent(tmp, de, FALSE);
 				de = nde;
 				node->tn_size -= sizeof(struct tmpfs_dirent);
