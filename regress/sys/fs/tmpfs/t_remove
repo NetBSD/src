@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: t_remove,v 1.5 2006/11/09 13:51:49 jmmv Exp $
+# $NetBSD: t_remove,v 1.6 2006/11/09 15:38:12 jmmv Exp $
 #
 # Copyright (c) 2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -51,14 +51,6 @@ test_run() {
 	test -f a || die
 	rm a || die
 	test -f a && die
-
-	test_name "Current directory can be removed"
-	mkdir a || die
-	# Catch a bug that would panic the system when accessing the
-	# current directory after being deleted: vop_open cannot assume
-	# that open files are still linked to a directory.
-	( cd a && rm -rf ../a && ls >/dev/null ) || die
-	test -e a && die
 
 	test_name "Files with uchg flags cannot be removed"
 	touch a || die
