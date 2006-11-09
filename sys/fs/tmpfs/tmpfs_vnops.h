@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_vnops.h,v 1.8 2006/11/09 15:06:03 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.h,v 1.9 2006/11/09 16:20:56 jmmv Exp $	*/
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
