@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/07/16 19:54:21 tron Exp $
+#	$NetBSD: Makefile,v 1.3 2006/11/09 20:07:15 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -34,6 +34,13 @@ CONF=		${DIST}/libstdc++-v3/config
 
 GLIBCPP_INCLUDE_DIR=	${DESTDIR}/usr/include/g++
 
+COPTS.cp-demangle.c = -Wno-stack-protector
+COPTS.fstream-inst.cc = -Wno-stack-protector
+COPTS.locale-inst.cc = -Wno-stack-protector
+COPTS.misc-inst.cc = -Wno-stack-protector
+COPTS.ostream-inst.cc = -Wno-stack-protector
+COPTS.valarray-inst.cc = -Wno-stack-protector
+COPTS.wlocale-inst.cc = -Wno-stack-protector
 COPTS.concept-inst.cc=	-D_GLIBCPP_CONCEPT_CHECKS -fimplicit-templates
 CPPFLAGS.strstream.cc=	-I$(GLIBCPP_INCLUDE_DIR)/backward -Wno-deprecated
 

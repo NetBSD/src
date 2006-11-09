@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2006/02/02 22:22:16 skrll Exp $
+#	$NetBSD: Makefile,v 1.10 2006/11/09 20:07:14 christos Exp $
 
 NOLINT=		# defined
 NOPROFILE=	# defined
@@ -10,6 +10,11 @@ NOLINKLIB=	# defined
 LIB=		iberty
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+
+COPTS.argv.c = -Wno-stack-protector
+COPTS.cp-demangle.c = -Wno-stack-protector
+COPTS.make-relative-prefix.c = -Wno-stack-protector
+COPTS.regex.c = -Wno-stack-protector
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/binutils
 
