@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.10 2006/10/06 12:02:27 manu Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.11 2006/11/09 20:22:18 christos Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -2497,15 +2497,18 @@ base64_decode(char *in, long inlen)
 {
 	BIO *bio=NULL, *b64=NULL;
 	vchar_t *res = NULL;
-	char out[inlen*2];
+	char *outb;
 	long outlen;
 
+	outb = malloc(inlen * 2);
+	if (outb == NULL)
+		goto out;
 	bio = BIO_new_mem_buf(in, inlen);
 	b64 = BIO_new(BIO_f_base64());
 	BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
 	bio = BIO_push(b64, bio);
 
-	outlen = BIO_read(bio, out, inlen * 2);
+	outlen = BIO_read(bio, outb, inlen * 2);
 	if (outlen <= 0) {
 		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
 		goto out;
@@ -2515,9 +2518,11 @@ base64_decode(char *in, long inlen)
 	if (!res)
 		goto out;
 
-	memcpy(res->v, out, outlen);
+	memcpy(res->v, outb, outlen);
 
 out:
+	if (outb)
+		free(outb);
 	if (bio)
 		BIO_free_all(bio);
 
