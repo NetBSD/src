@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1 2006/10/09 03:34:56 mrg Exp $	*/
+/*	$NetBSD: rtc.c,v 1.2 2006/11/09 15:08:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.1 2006/10/09 03:34:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.2 2006/11/09 15:08:04 tsutsui Exp $");
 
 /*
  * Clock driver for 'rtc' - mc146818 driver.
@@ -77,11 +77,11 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.1 2006/10/09 03:34:56 mrg Exp $");
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 
-static int	clockmatch_rtc(struct device *, struct cfdata *, void *);
-static void	clockattach_rtc(struct device *, struct device *, void *);
+static int	rtc_ebus_match(struct device *, struct cfdata *, void *);
+static void	rtc_ebus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(rtc_ebus, sizeof(struct mc146818_softc),
-    clockmatch_rtc, clockattach_rtc, NULL, NULL);
+    rtc_ebus_match, rtc_ebus_attach, NULL, NULL);
 
 u_int rtc_read_reg(struct mc146818_softc *, u_int);
 void rtc_write_reg(struct mc146818_softc *, u_int, u_int);
@@ -89,7 +89,7 @@ u_int rtc_getcent(struct mc146818_softc *);
 void rtc_setcent(struct mc146818_softc *, u_int);
 
 static int
-clockmatch_rtc(struct device *parent, struct cfdata *cf, void *aux)
+rtc_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -129,7 +129,7 @@ rtc_write_reg(struct mc146818_softc *sc, u_int reg, u_int val)
 
 /* ARGSUSED */
 static void
-clockattach_rtc(struct device *parent, struct device *self, void *aux)
+rtc_ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mc146818_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
