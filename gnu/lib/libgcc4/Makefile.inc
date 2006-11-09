@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2006/07/06 21:39:44 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2006/11/09 04:06:51 christos Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -105,19 +105,19 @@ ${G_LIB2ADD:M${GNUHOSTDIST}/*:T:S/.asm/.S/}: ${.CURDIR}/Makefile ${G_LIB2ADD}
 
 ${LIB2_EH:.c=.o}:
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} -fexceptions -o ${.TARGET} ${.IMPSRC}
+	${COMPILE.c} -fexceptions ${COPTS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC}
 
 ${LIB2_EH:.c=.so}:
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${CPICFLAGS} -fexceptions -o ${.TARGET} ${.IMPSRC}
+	${COMPILE.c} ${CPICFLAGS} -fexceptions ${COPTS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC}
 
 ${G_LIB2_DIVMOD_FUNCS:=.o}:
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} -fexceptions -fnon-call-exceptions -o ${.TARGET} ${.IMPSRC}
+	${COMPILE.c} -fexceptions -fnon-call-exceptions ${COPTS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC}
 
 ${G_LIB2_DIVMOD_FUNCS:=.so}:
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${CPICFLAGS} -fexceptions -fnon-call-exceptions -o ${.TARGET} ${.IMPSRC}
+	${COMPILE.c} ${CPICFLAGS} -fexceptions -fnon-call-exceptions ${COPTS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC}
 
 dp-bit.c: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
