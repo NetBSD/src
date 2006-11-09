@@ -701,6 +701,7 @@
 .ds doc-str-Lb-libpmc      Performance Counters Library (libpmc, \-lpmc)
 .ds doc-str-Lb-libposix    \*[Px] \*[doc-str-Lb]Compatibility Library (libposix, \-lposix)
 .ds doc-str-Lb-libpthread  \*[Px] \*[doc-str-Lb]Threads Library (libpthread, \-lpthread)
+.ds doc-str-Lb-libpuffs    PUFFS Convenience Library (libpuffs, \-lpuffs)
 .ds doc-str-Lb-libresolv   DNS Resolver Library (libresolv, \-lresolv)
 .ds doc-str-Lb-librt       \*[Px] \*[doc-str-Lb]Real-time Library (librt, \-lrt)
 .ds doc-str-Lb-libtermcap  Termcap Access Library (libtermcap, \-ltermcap)
