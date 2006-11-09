@@ -1,4 +1,4 @@
-/*	$NetBSD: netconfig.h,v 1.4 2005/05/15 20:54:47 dsl Exp $	*/
+/*	$NetBSD: netconfig.h,v 1.5 2006/11/09 10:04:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -64,10 +64,10 @@ typedef struct {
 /*
  * nc_semantics values
  */
-#define NC_TPI_CLTS	1
-#define NC_TPI_COTS	2
-#define NC_TPI_COTS_ORD	3
-#define NC_TPI_RAW	4
+#define NC_TPI_CLTS	1	/* Connectionless transport */
+#define NC_TPI_COTS	2	/* Connection oriented transport */
+#define NC_TPI_COTS_ORD	3	/* Connection oriented, ordered transport */
+#define NC_TPI_RAW	4	/* Raw connection */
 
 /*
  * nc_flag values
