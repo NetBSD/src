@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2002/09/16 16:22:20 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 2006/11/09 21:27:58 christos Exp $
 
 PROG=		ranlib
 
 .include <bsd.own.mk>
+
+COPTS.arparse.c = -Wno-stack-protector
 
 .include "${.CURDIR}/../common/Makefile.prog"
