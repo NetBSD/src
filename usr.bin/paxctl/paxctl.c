@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.5 2006/11/10 20:55:37 christos Exp $ */
+/* $NetBSD: paxctl.c,v 1.6 2006/11/10 21:35:10 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -35,15 +35,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: paxctl.c,v 1.5 2006/11/10 20:55:37 christos Exp $");
+#ifdef __RCSID
+__RCSID("$NetBSD: paxctl.c,v 1.6 2006/11/10 21:35:10 christos Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
-#if __LP64__
-#define ELFSIZE	64
-#else
-#define ELFSIZE 32
-#endif
 #include <elf.h>
 #include <stdio.h>
 #include <err.h>
@@ -58,6 +55,15 @@ static int pax_flags_sane(u_long);
 static int pax_haveflags(u_long);
 static void pax_printflags(u_long);
 
+#ifndef PF_PAXMPROTECT
+#define PF_PAXMPROTECT		0x08000000
+#define PF_PAXNOMPROTECT	0x04000000
+#endif
+#ifndef __arraycount
+#define __arraycount(a) (sizeof(a) / sizeof(a[0]))
+#endif
+
+
 static const struct paxflag {
 	char mark;
 	const char *name;
@@ -71,7 +77,12 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr, "Usage: %s [ <-|+>m | <-|+>M ] <file>\n",
-	    getprogname());
+#if HAVE_NBTOOL_CONFIG_H
+	    "paxctl"
+#else
+	    getprogname()
+#endif
+	);
 	exit(1);
 }
 
@@ -130,8 +141,25 @@ pax_printflags(u_long f)
 int
 main(int argc, char **argv)
 {
-	Elf_Ehdr eh;
-	Elf_Phdr ph;
+	union {
+	    Elf32_Ehdr h32;
+	    Elf64_Ehdr h64;
+	} e;
+	union {
+	    Elf32_Phdr h32;
+	    Elf64_Phdr h64;
+	} p;
+#define EH(field)	(size == 32 ? e.h32.field : e.h64.field)
+#define PH(field)	(size == 32 ? p.h32.field : p.h64.field)
+#define SPH(field, val)	do { \
+    if (size == 32) \
+	    p.h32.field = val; \
+    else \
+	    p.h64.field = val; \
+} while (/*CONSTCOND*/0)
+#define PHSIZE		(size == 32 ? sizeof(p.h32) : sizeof(p.h64))
+
+	int size;
 	char *opt = NULL;
 	int fd, i, add_flags = 0, del_flags = 0, list = 0, ok = 0, flagged = 0;
 
@@ -173,49 +201,61 @@ main(int argc, char **argv)
 			err(EXIT_FAILURE, "Can't open `%s'", opt);
 	}
 
-	if (read(fd, &eh, sizeof(eh)) != sizeof(eh))
+	if (read(fd, &e, sizeof(e)) != sizeof(e))
 		err(EXIT_FAILURE, "Can't read ELF header from `%s'", opt);
 
-	if (memcmp(eh.e_ident, ELFMAG, SELFMAG) != 0)
+	if (memcmp(e.h32.e_ident, ELFMAG, SELFMAG) != 0)
 		errx(EXIT_FAILURE,
 		    "Bad ELF magic from `%s' (maybe it's not an ELF?)", opt);
 
-	for (i = 0; i < eh.e_phnum; i++) {
-		if (pread(fd, &ph, sizeof(ph),
-			  eh.e_phoff + i * sizeof(ph)) != sizeof(ph))
+	switch (e.h32.e_ehsize) {
+	case sizeof(e.h32):
+		size = 32;
+		break;
+	case sizeof(e.h64):
+		size = 64;
+		break;
+	default:
+		errx(EXIT_FAILURE,
+		    "Bad ELF size %d from `%s' (maybe it's not an ELF?)",
+		    (int)e.h32.e_ehsize, opt);
+	}
+
+
+	for (i = 0; i < EH(e_phnum); i++) {
+		if (pread(fd, &p, PHSIZE, EH(e_phoff) + i * PHSIZE) != PHSIZE)
 			err(EXIT_FAILURE, "Can't read data from `%s'", opt);
 
-		if (ph.p_type != PT_NOTE)
+		if (PH(p_type) != PT_NOTE)
 			continue;
 
 		ok = 1;
 
 		if (list) {
-			if (!pax_haveflags((u_long)ph.p_flags))
+			if (!pax_haveflags((u_long)PH(p_flags)))
 				break;
 
-			if (!pax_flags_sane((u_long)ph.p_flags))
+			if (!pax_flags_sane((u_long)PH(p_flags)))
 				warnx("Current flags %lx don't make sense",
-				    (u_long)ph.p_flags);
+				    (u_long)PH(p_flags));
 
 			(void)printf("PaX flags:\n");
 
-			pax_printflags((u_long)ph.p_flags);
+			pax_printflags((u_long)PH(p_flags));
 
 			flagged = 1;
 
 			break;
 		}
 
-		ph.p_flags |= add_flags;
-		ph.p_flags &= ~del_flags;
+		SPH(p_flags, add_flags);
+		SPH(p_flags, ~del_flags);
 
-		if (!pax_flags_sane((u_long)ph.p_flags))
+		if (!pax_flags_sane((u_long)PH(p_flags)))
 			errx(EXIT_FAILURE, "New flags %lx don't make sense",
-			    (u_long)ph.p_flags);
+			    (u_long)PH(p_flags));
 
-		if (pwrite(fd, &ph, sizeof(ph),
-		    eh.e_phoff + i * sizeof(ph)) != sizeof(ph))
+		if (pwrite(fd, &p, PHSIZE, EH(e_phoff) + i * PHSIZE) != PHSIZE)
 			err(EXIT_FAILURE, "Can't modify flags on `%s'", opt);
 
 		break;
