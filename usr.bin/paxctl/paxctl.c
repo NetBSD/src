@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.6 2006/11/10 21:35:10 christos Exp $ */
+/* $NetBSD: paxctl.c,v 1.7 2006/11/10 21:39:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: paxctl.c,v 1.6 2006/11/10 21:35:10 christos Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.7 2006/11/10 21:39:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,9 +153,9 @@ main(int argc, char **argv)
 #define PH(field)	(size == 32 ? p.h32.field : p.h64.field)
 #define SPH(field, val)	do { \
     if (size == 32) \
-	    p.h32.field = val; \
+	    p.h32.field val; \
     else \
-	    p.h64.field = val; \
+	    p.h64.field val; \
 } while (/*CONSTCOND*/0)
 #define PHSIZE		(size == 32 ? sizeof(p.h32) : sizeof(p.h64))
 
@@ -223,7 +223,8 @@ main(int argc, char **argv)
 
 
 	for (i = 0; i < EH(e_phnum); i++) {
-		if (pread(fd, &p, PHSIZE, EH(e_phoff) + i * PHSIZE) != PHSIZE)
+		if (pread(fd, &p, PHSIZE,
+		    (off_t)EH(e_phoff) + i * PHSIZE) != PHSIZE)
 			err(EXIT_FAILURE, "Can't read data from `%s'", opt);
 
 		if (PH(p_type) != PT_NOTE)
@@ -248,14 +249,15 @@ main(int argc, char **argv)
 			break;
 		}
 
-		SPH(p_flags, add_flags);
-		SPH(p_flags, ~del_flags);
+		SPH(p_flags, |= add_flags);
+		SPH(p_flags, &= ~del_flags);
 
 		if (!pax_flags_sane((u_long)PH(p_flags)))
 			errx(EXIT_FAILURE, "New flags %lx don't make sense",
 			    (u_long)PH(p_flags));
 
-		if (pwrite(fd, &p, PHSIZE, EH(e_phoff) + i * PHSIZE) != PHSIZE)
+		if (pwrite(fd, &p, PHSIZE,
+		    (off_t)EH(e_phoff) + i * PHSIZE) != PHSIZE)
 			err(EXIT_FAILURE, "Can't modify flags on `%s'", opt);
 
 		break;
