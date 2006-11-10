@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.23 2006/10/07 15:20:44 elad Exp $	*/
+/*	$NetBSD: getconf.c,v 1.24 2006/11/10 15:36:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.23 2006/10/07 15:20:44 elad Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.24 2006/11/10 15:36:04 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -60,7 +60,7 @@ struct conf_variable
 static void print_longvar(const char *, long);
 static void print_strvar(const char *, const char *);
 static void printvar(const struct conf_variable *, const char *);
-static void usage(void);
+static void usage(void) __attribute__((__noreturn__));
 
 static const struct conf_variable conf_table[] =
 {
@@ -185,7 +185,8 @@ main(int argc, char **argv)
 	const char *varname, *pathname;
 	int found;
 
-	setlocale(LC_ALL, "");
+	setprogname(argv[0]);
+	(void)setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "a")) != -1) {
 		switch (ch) {
@@ -200,39 +201,34 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	varname = NULL;
-	if (!a_flag && argc == 0) {
-		usage();
-		/* NOTREACHED */
-	}
-	if (a_flag) {
+	if (!a_flag) {
+		if (argc == 0)
+			usage();
 		varname = argv[0];
 		argc--;
 		argv++;
-	}
-	if (argc != 0 && argc != 1) {
+	} else
+		varname = NULL;
+
+	if (argc > 1)
 		usage();
-		/* NOTREACHED */
-	}
 	pathname = argv[0];	/* may be NULL */
 
 	found = 0;
 	for (cp = conf_table; cp->name != NULL; cp++) {
 		if (a_flag || strcmp(varname, cp->name) == 0) {
+			/*LINTED weird expression*/
 			if ((cp->type == PATHCONF) == (pathname != NULL)) {
 				printvar(cp, pathname);
 				found = 1;
-			} else if (!a_flag) {
-				errx(1, "%s: invalid variable type", cp->name);
-				/* NOTREACHED */
-			}
+			} else if (!a_flag)
+				errx(EXIT_FAILURE,
+				    "%s: invalid variable type", cp->name);
 		}
 	}
 
-	if (!a_flag && !found) {
-		errx(1, "%s: unknown variable", varname);
-		/* NOTREACHED */
-	}
+	if (!a_flag && !found)
+		errx(EXIT_FAILURE, "%s: unknown variable", varname);
 
 	(void)fflush(stdout);
 	return ferror(stdout) ? EXIT_FAILURE : EXIT_SUCCESS;
@@ -244,7 +240,7 @@ print_longvar(const char *name, long value)
 	if (a_flag)
 		(void)printf("%s = %ld\n", name, value);
 	else
-		(void)printf("%ldn", value);
+		(void)printf("%ld\n", value);
 }
 
 static void
@@ -269,45 +265,45 @@ printvar(const struct conf_variable *cp, const char *pathname)
 		break;
 
 	case CONFSTR:
-		slen = confstr (cp->value, (char *) 0, (size_t) 0);
+		slen = confstr((int)cp->value, NULL, 0);
+		if (slen == (size_t)-1)
+out:			 err(EXIT_FAILURE, "confstr(%ld)", cp->value);
 
 		if ((sval = malloc(slen)) == NULL)
-			err(1, "malloc");
+			err(EXIT_FAILURE, "Can't allocate %zu bytes", slen);
 
-		confstr(cp->value, sval, slen);
+		if (confstr((int)cp->value, sval, slen) == (size_t)-1)
+			goto out;
 		print_strvar(cp->name, sval);
+		free(sval);
 		break;
 
 	case SYSCONF:
 		errno = 0;
-		if ((val = sysconf(cp->value)) == -1) {
-			if (errno != 0) {
-				err(1, "sysconf");
-				/* NOTREACHED */
-			}
-
+		if ((val = sysconf((int)cp->value)) == -1) {
+			if (errno != 0)
+				err(EXIT_FAILURE, "sysconf(%ld)", cp->value);
 			print_strvar(cp->name, "undefined");
-		} else {
+		} else
 			print_longvar(cp->name, val);
-		}
 		break;
 
 	case PATHCONF:
 		errno = 0;
-		if ((val = pathconf(pathname, cp->value)) == -1) {
+		if ((val = pathconf(pathname, (int)cp->value)) == -1) {
 			if (errno != 0) {
 				if (a_flag && errno == EINVAL) {
 					/* Just skip invalid variables */
 					return;
 				}
-				err(1, "%s", pathname);
+				err(EXIT_FAILURE, "pathconf(%s, %ld)",
+				    pathname, cp->value);
 				/* NOTREACHED */
 			}
 
 			print_strvar(cp->name, "undefined");
-		} else {
+		} else
 			print_longvar(cp->name, val);
-		}
 		break;
 	}
 }
@@ -316,9 +312,8 @@ printvar(const struct conf_variable *cp, const char *pathname)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: getconf system_var\n");
-	fprintf(stderr, "       getconf -a\n");
-	fprintf(stderr, "       getconf path_var pathname\n");
-	fprintf(stderr, "       getconf -a pathname\n");
+	const char *p = getprogname();
+	(void)fprintf(stderr, "Usage: %s system_var\n\t%s -a\n"
+	    "\t%s path_var pathname\n\t%s -a pathname\n", p, p, p, p);
 	exit(EXIT_FAILURE);
 }
