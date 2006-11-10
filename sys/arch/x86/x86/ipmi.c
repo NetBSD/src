@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.2 2006/10/12 01:30:44 christos Exp $ */
+/*	$NetBSD: ipmi.c,v 1.3 2006/11/10 18:15:12 christos Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.2 2006/10/12 01:30:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.3 2006/11/10 18:15:12 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1114,7 +1114,7 @@ int
 get_sdr_partial(struct ipmi_softc *sc, u_int16_t recordId, u_int16_t reserveId,
     u_int8_t offset, u_int8_t length, void *buffer, u_int16_t *nxtRecordId)
 {
-	u_int8_t	cmd[8 + length];
+	u_int8_t	cmd[256 + 8];
 	int		len;
 
 	((u_int16_t *) cmd)[0] = reserveId;
