@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.151 2006/10/12 01:32:38 christos Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.152 2006/11/10 12:59:59 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.151 2006/10/12 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.152 2006/11/10 12:59:59 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -999,11 +999,8 @@ udp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 }
 
 int
-udp_ctloutput(op, so, level, optname, mp)
-	int op;
-	struct socket *so;
-	int level, optname;
-	struct mbuf **mp;
+udp_ctloutput(int op, struct socket *so, int level, int optname,
+    struct mbuf **mp)
 {
 	int s;
 	int error = 0;
