@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2006/09/29 20:14:10 apb Exp $
+#	$NetBSD: Makefile,v 1.7 2006/11/10 17:36:08 christos Exp $
 
 MKPRIVATELIB=	yes
 
@@ -300,5 +300,7 @@ insn-attrtab.o: insn-config.h
 insn-extract.o: insn-config.h
 toplev.d toplev.o: options.h
 coverage.d: gcov-iov.h
+
+COPTS+=-Wno-stack-protector
 
 .PATH: ${DIST}/gcc ${DIST}/libiberty ${GCCARCH} ${G_out_file:H} ${DIST}/include

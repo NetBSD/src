@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/10 22:48:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2006/11/10 17:36:08 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -20,5 +20,7 @@ INFOFLAGS=      -I${DIST}/gcc/doc -I${DIST}/gcc/doc/include
 .PATH: ${DIST}/gcc ${DIST}/gcc/doc
 
 .include <bsd.info.mk>
+
+COPTS.builtins.c = -Wno-stack-protector
 
 gcc.info: gcc-vers.texi

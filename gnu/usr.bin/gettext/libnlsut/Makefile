@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/06/02 22:16:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2006/11/10 17:36:08 christos Exp $
 
 MKPRIVATELIB=	yes
 
@@ -61,5 +61,10 @@ xstrdup.c
 .PATH:	${DIST}/gettext/gettext-tools/lib
 
 CPPFLAGS+=-DEXEEXT=\"\"
+
+COPTS.csharpcomp.c = -Wno-stack-protector
+COPTS.csharpexec.c = -Wno-stack-protector
+COPTS.javacomp.c = -Wno-stack-protector
+COPTS.javaexec.c = -Wno-stack-protector
 
 .include <bsd.lib.mk>

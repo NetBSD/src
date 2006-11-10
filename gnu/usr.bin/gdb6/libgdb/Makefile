@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/09/27 18:37:41 drochner Exp $
+#	$NetBSD: Makefile,v 1.4 2006/11/10 17:36:08 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -33,6 +33,9 @@ CPPFLAGS.inf-ptrace.c=	-Wno-error
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
     ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${MACHINE_ARCH}
+
+#
+COPTS+=	-Wno-stack-protector
 
 # ignore yacc-generated files in ${DIST}/gdb
 m2-exp.c: .NOPATH

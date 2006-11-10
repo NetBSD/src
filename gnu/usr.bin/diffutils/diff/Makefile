@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/01/26 00:40:40 wiz Exp $
+#	$NetBSD: Makefile,v 1.2 2006/11/10 17:36:08 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -14,6 +14,8 @@ LDADD+=		${LIBDIFFUTILS}
 
 INFOFLAGS=	-I${IDIST}/doc
 TEXINFO=	diff.texi
+
+COPTS.ifdef.c = -Wno-stack-protector
 
 .include <bsd.info.mk>
 .include <bsd.prog.mk>

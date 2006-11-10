@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2006/06/02 22:16:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2006/11/10 17:36:08 christos Exp $
 
 MKPRIVATELIB=	yes
 
@@ -20,5 +20,7 @@ strdup.c
 
 .PATH:	${DIST}/gettext/gettext-tools/libgrep 
 CPPFLAGS+= -I${DIST}/gettext/gettext-tools/libgrep
+
+COPTS.regex.c = -Wno-stack-protector
 
 .include <bsd.lib.mk>
