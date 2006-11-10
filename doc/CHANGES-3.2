@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.6 2006/11/09 22:55:38 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.7 2006/11/10 09:20:49 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -41,4 +41,10 @@ usr.sbin/installboot/installboot.h		1.31
 
 	Make installation of bootloaders on a RAID 1 volume easier.
 	[bad, ticket #1524]
+
+share/man/man8/man8.sparc/boot.8		1.29-1.30 + patch
+sys/arch/sparc/stand/common/promdev.c		1.19
+
+	Add support for booting from RAID 1 to the sparc boot loader.
+	[jdc, ticket #1527]
 
