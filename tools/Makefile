@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.107 2006/10/08 15:21:00 apb Exp $
+#	$NetBSD: Makefile,v 1.108 2006/11/10 16:50:10 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ LINT_BITS= lint lint2
 .if !defined(NOSUBDIR)					# {
 
 SUBDIR=	host-mkdep .WAIT compat .WAIT \
-	binstall .WAIT mktemp .WAIT \
+	binstall .WAIT paxctl .WAIT mktemp .WAIT \
 		cap_mkdb crunchgen ctags genassym gencat hexdump \
 		${LINT_BITS} \
 		lorder m4 makewhatis mkdep mtree rpcgen sed tsort uudecode \
