@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.52 2006/11/05 16:52:10 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.53 2006/11/10 21:49:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1432,7 +1432,6 @@ re_poll(struct ifnet *ifp, enum poll_cmd cmd, int count)
 		 */
 
 		if (status & RTK_ISR_SYSTEM_ERR) {
-			re_reset(sc);
 			re_init(sc);
 		}
 	}
@@ -1489,7 +1488,6 @@ re_intr(void *arg)
 			re_txeof(sc);
 
 		if (status & RTK_ISR_SYSTEM_ERR) {
-			re_reset(sc);
 			re_init(ifp);
 		}
 
@@ -1778,6 +1776,8 @@ re_init(struct ifnet *ifp)
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
 	re_stop(ifp, 0);
+
+	re_reset(sc);
 
 	/*
 	 * Enable C+ RX and TX mode, as well as VLAN stripping and
