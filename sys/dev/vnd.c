@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.157 2006/11/09 15:27:40 jmmv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.158 2006/11/10 14:31:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.157 2006/11/09 15:27:40 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.158 2006/11/10 14:31:14 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -678,6 +678,7 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 {
 	boolean_t doread;
 	off_t offset;
+	size_t resid;
 	struct vnode *vp;
 
 	doread = bp->b_flags & B_READ;
@@ -698,7 +699,8 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	bp->b_error =
 	    vn_rdwr(doread ? UIO_READ : UIO_WRITE,
 	    vp, bp->b_data, bp->b_bcount, offset,
-	    UIO_SYSSPACE, 0, vnd->sc_cred, &bp->b_resid, NULL);
+	    UIO_SYSSPACE, 0, vnd->sc_cred, &resid, NULL);
+	bp->b_resid = resid;
 	if (bp->b_error != 0)
 		bp->b_flags |= B_ERROR;
 	else
@@ -804,7 +806,7 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 #ifdef	DEBUG
 		if (vnddebug & VDB_IO)
 			printf("vndstrategy: vp %p/%p bn 0x%qx/0x%" PRIx64
-			       " sz 0x%x\n",
+			       " sz 0x%zx\n",
 			    vnd->sc_vp, vp, (long long)bn, nbn, sz);
 #endif
 
