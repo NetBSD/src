@@ -1,4 +1,4 @@
-/*	$Id: test.c,v 1.2 2004/09/26 03:50:16 yamt Exp $	*/
+/*	$Id: test.c,v 1.3 2006/11/10 17:38:33 christos Exp $	*/
 
 /*-
  * Copyright (c)2004 Citrus Project,
@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
+#include <err.h>
 
 typedef size_t wcrtomb_t(char *, wchar_t, mbstate_t *);
 
@@ -74,10 +75,13 @@ main(int argc, char *argv[])
 void
 dotest1(const char *text, wcrtomb_t fn, wchar_t *wcs, mbstate_t *stp)
 {
-	char cs[MB_CUR_MAX];
+	char *cs;
 	int ret;
 	int i;
 
+	cs = malloc(MB_CUR_MAX);
+	if (cs == NULL)
+		err(1, NULL);
 	printf("testing %s\n", text);
 
 	for (i = 0; i < teststring_wclen + 1; i++) {
@@ -91,4 +95,5 @@ dotest1(const char *text, wcrtomb_t fn, wchar_t *wcs, mbstate_t *stp)
 		printf("\t[%d] %d ok\n", i, ret);
 #endif
 	}
+	free(cs);
 }
