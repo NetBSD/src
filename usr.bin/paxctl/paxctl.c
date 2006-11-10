@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.4 2006/11/10 16:31:58 christos Exp $ */
+/* $NetBSD: paxctl.c,v 1.5 2006/11/10 20:55:37 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -35,13 +35,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: paxctl.c,v 1.4 2006/11/10 16:31:58 christos Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.5 2006/11/10 20:55:37 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <machine/elf_machdep.h>
-#define	ELFSIZE	ARCH_ELFSIZE
-#include <sys/exec_elf.h>
+#if __LP64__
+#define ELFSIZE	64
+#else
+#define ELFSIZE 32
+#endif
 #include <elf.h>
 #include <stdio.h>
 #include <err.h>
