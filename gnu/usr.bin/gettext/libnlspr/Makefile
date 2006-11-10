@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2006/06/02 22:16:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2006/11/10 17:36:08 christos Exp $
 
 MKPRIVATELIB=	yes
 
@@ -73,6 +73,20 @@ CPPFLAGS+=-I${DIST}/gettext/gettext-tools/src
 CPPFLAGS+=-DLIBDIR=\"${DESTDIR}/usr/share\"
 CPPFLAGS+=-DGETTEXTJAR=\"${DESTDIR}/usr/share/gettext/gettext.jar\"
 CPPFLAGS+=-DGETTEXTDATADIR=\"${DESTDIR}/usr/share/gettext\"
+
+COPTS.format-java.c = -Wno-stack-protector
+COPTS.msgl-cat.c = -Wno-stack-protector
+COPTS.msgl-charset.c = -Wno-stack-protector
+COPTS.msgl-iconv.c = -Wno-stack-protector
+COPTS.plural.c = -Wno-stack-protector
+COPTS.po-charset.c = -Wno-stack-protector
+COPTS.po-gram-gen.c = -Wno-stack-protector
+COPTS.read-tcl.c = -Wno-stack-protector
+COPTS.write-csharp.c = -Wno-stack-protector
+COPTS.write-java.c = -Wno-stack-protector
+COPTS.write-mo.c = -Wno-stack-protector
+COPTS.write-po.c = -Wno-stack-protector
+COPTS.write-tcl.c = -Wno-stack-protector
 
 .include <bsd.lib.mk>
 
