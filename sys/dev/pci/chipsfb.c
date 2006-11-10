@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.5 2006/10/27 06:14:17 macallan Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.6 2006/11/10 20:27:44 macallan Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.5 2006/10/27 06:14:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.6 2006/11/10 20:27:44 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,11 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.5 2006/10/27 06:14:17 macallan Exp $")
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include <dev/i2c/i2cvar.h>
-#include <dev/i2c/i2c_bitbang.h>
-#include <dev/i2c/edidvar.h>
 
 #include "opt_wsemul.h"
-#include "opt_ofb.h"
 
 /*
 #define CHIPSFB_WAIT
