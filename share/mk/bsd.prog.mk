@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.217 2006/10/22 22:53:41 pooka Exp $
+#	$NetBSD: bsd.prog.mk,v 1.218 2006/11/10 17:13:15 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -9,6 +9,10 @@
 
 .if defined(PROG_CXX)
 PROG=	${PROG_CXX}
+.endif
+
+.if defined(PROG_PAX)
+PROG_PAX.${PROG}?= ${PROG_PAX}
 .endif
 
 ##### Basic targets
@@ -212,6 +216,9 @@ ${PROG}: .gdbinit ${LIBCRT0} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD
 	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} ${OBJS} ${LDADD}
 .endif	# defined(DESTDIR)
 .endif	# !commands(${PROG})
+.if defined(PROG_PAX.${PROG})
+	${PAXCTL} ${PROG_PAX.${PROG}} ${.TARGET}
+.endif
 
 ${PROG}.ro: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}

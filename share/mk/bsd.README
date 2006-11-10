@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.187 2006/11/09 17:06:54 christos Exp $
+#	$NetBSD: bsd.README,v 1.188 2006/11/10 17:13:15 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -986,6 +986,11 @@ PROG_CXX	If defined, the name of the program to build.  Also
 		causes <bsd.prog.mk> to link the program with the C++
 		compiler rather than the C compiler.  PROG_CXX overrides
 		the value of PROG if PROG is also set.
+
+PROG_PAX	If defined then paxctl(1) is ran on binary after link
+		time, with the value of the variable as args to it.
+
+PROG_PAX.${PROG} Custom override for PROG_PAX.
 
 PROGNAME	The name that the above program will be installed as, if
 		different from ${PROG}.
