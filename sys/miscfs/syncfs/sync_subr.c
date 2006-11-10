@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.25 2006/10/20 18:58:12 reinoud Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.26 2006/11/10 22:31:19 reinoud Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.25 2006/10/20 18:58:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.26 2006/11/10 22:31:19 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ vn_syncer_add_to_worklist(vp, delayx)
 }
 
 /*
- * Remove an item fromthe syncer work queue.
+ * Remove an item from the syncer work queue.
  */
 void
 vn_syncer_remove_from_worklist(vp)
