@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.10.2.3 2005/05/11 18:08:51 tron Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.10.2.4 2006/11/11 20:48:34 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.10.2.3 2005/05/11 18:08:51 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.10.2.4 2006/11/11 20:48:34 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -189,7 +189,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	struct sackblk *sack = NULL;
 	struct sackhole *cur = NULL;
 	struct sackhole *tmp = NULL;
-	u_int32_t *lp = (u_int32_t *) (cp + 2);
+	char *lp = cp + 2;
 	int i, j, num_sack_blks;
 	tcp_seq left, right, acked;
 
@@ -222,9 +222,9 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	 */
 	num_sack_blks = optlen / 8;
 	acked = (SEQ_GT(th->th_ack, tp->snd_una)) ? th->th_ack : tp->snd_una;
-	for (i = 0; i < num_sack_blks; i++, lp += 2) {
-		memcpy(&left, lp, sizeof(*lp));
-		memcpy(&right, lp + 1, sizeof(*lp));
+	for (i = 0; i < num_sack_blks; i++, lp += sizeof(uint32_t) * 2) {
+		memcpy(&left, lp, sizeof(uint32_t));
+		memcpy(&right, lp + sizeof(uint32_t), sizeof(uint32_t));
 		left = ntohl(left);
 		right = ntohl(right);
 
