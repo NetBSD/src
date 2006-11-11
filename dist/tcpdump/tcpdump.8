@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcpdump.8,v 1.12 2004/12/01 23:24:38 christos Exp $
+.\"	$NetBSD: tcpdump.8,v 1.13 2006/11/11 10:36:56 apb Exp $
 .\" @(#) Header: /tcpdump/master/tcpdump/tcpdump.1,v 1.148.2.6 2004/03/28 21:25:03 fenner Exp (LBL)
 .\"
 .\"
@@ -542,6 +542,7 @@ its link level header, in hex and ASCII.
 .TP
 .B \-y
 Set the data link type to use while capturing packets to \fIdatalinktype\fP.
+The available data link types may be found using the \-L option.
 .IP "\fI expression\fP"
 .RS
 selects which packets will be dumped.
