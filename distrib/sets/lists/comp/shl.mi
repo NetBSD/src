@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.53 2006/10/23 03:21:21 pooka Exp $
+# $NetBSD: shl.mi,v 1.54 2006/11/11 12:06:54 he Exp $
 ./usr/lib/crtbeginT.o				comp-c-lib
 ./usr/lib/libasn1_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libbluetooth_pic.a			comp-c-piclib
@@ -62,6 +62,7 @@
 ./usr/lib/libss_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libssh_pic.a				comp-c-piclib		crypto
 ./usr/lib/libssl_pic.a				comp-c-piclib		crypto
+./usr/lib/libssp_pic.a				comp-c-piclib
 ./usr/lib/libstdc++_pic.a			comp-cxx-piclib
 ./usr/lib/libtermcap_pic.a			comp-c-piclib
 ./usr/lib/libtermlib_pic.a			comp-c-piclib
