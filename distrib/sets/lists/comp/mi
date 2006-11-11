@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.969 2006/11/10 19:43:02 christos Exp $
+#	$NetBSD: mi,v 1.970 2006/11/11 05:30:50 nakayama Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -9768,7 +9768,7 @@
 ./usr/share/man/man3/prop_object_release.3	comp-c-man		.man
 ./usr/share/man/man3/prop_object_retain.3	comp-c-man		.man
 ./usr/share/man/man3/prop_object_type.3		comp-c-man		.man
-./usr/share/man/man3/prop_send_ioctl.3		comp-c-man		.cat
+./usr/share/man/man3/prop_send_ioctl.3		comp-c-man		.man
 ./usr/share/man/man3/prop_string.3		comp-c-man		.man
 ./usr/share/man/man3/prop_string_append.3	comp-c-man		.man
 ./usr/share/man/man3/prop_string_append_cstring.3 comp-c-man		.man
