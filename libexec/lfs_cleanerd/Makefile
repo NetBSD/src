@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2006/03/30 19:10:13 perseant Exp $
+#	$NetBSD: Makefile,v 1.11 2006/11/11 14:47:27 jmmv Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 .include <bsd.own.mk>
@@ -16,5 +16,7 @@ LDADD=  -lutil
 CPPFLAGS+=-I${FSCK_LFS} # -DUSE_CLIENT_SERVER 
 #CPPFLAGS+=-DREPAIR_ZERO_FINFO
 #CPPFLAGS+=-DTEST_PATTERN
+
+BINDIR=		/libexec
 
 .include <bsd.prog.mk>
