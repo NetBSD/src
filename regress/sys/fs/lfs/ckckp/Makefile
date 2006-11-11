@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2006/07/21 00:29:23 perseant Exp $
+#	$NetBSD: Makefile,v 1.7 2006/11/11 14:47:27 jmmv Exp $
 #
 # Note: this test must be run with LFSDEV defined, e.g. "LFSDEV=wd0g".
 # It will destroy the existing contents of $LFSDEV to perform the test.
@@ -38,7 +38,7 @@ test_ckckp: ckckp cleanalot_async run_ckckp
 	newfs_lfs ${LFSCDEV}
 	-mkdir ${TMPMP}
 	mount -o-n ${LFSBDEV} ${TMPMP}
-	/usr/libexec/lfs_cleanerd -b -n4 -t5 ${TMPMP}
+	/libexec/lfs_cleanerd -b -n4 -t5 ${TMPMP}
 	./run_ckckp ${TMPMP} ${LFSCDEV} ${GFILE} ${WFILE} ${PLEX} ${COUNT} ${FSIZE} || \
 		echo ${.CURDIR} FAILED | tee -a ${REGRESS_LOG}
 	umount ${TMPMP}

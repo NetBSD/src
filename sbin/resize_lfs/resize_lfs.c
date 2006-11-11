@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.4 2006/09/05 19:46:14 riz Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.5 2006/11/11 14:47:28 jmmv Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -157,7 +157,7 @@ main(int argc, char **argv)
 		if (fcntl(rootfd, LFCNINVAL, &i) == 0)
 			continue;
 
-		sprintf(cmd, "/usr/libexec/lfs_cleanerd -q -i %d %s", i, fsname);
+		sprintf(cmd, "/libexec/lfs_cleanerd -q -i %d %s", i, fsname);
 		if (system(cmd) != 0)
 			err(1, "invalidating segment %d", i);
 	}
