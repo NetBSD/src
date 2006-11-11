@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2006/11/11 06:42:49 christos Exp $
+# $NetBSD: Makefile.inc,v 1.4 2006/11/11 11:23:39 he Exp $
 
 WARNS=	4
 
@@ -11,9 +11,10 @@ DPADD+=${LIBSSP}
 
 # Bootstrap hack
 
-.ifmake all || dependall
+# XXX This conditional does not appear to do the right thing(!)
+# .ifmake all || dependall
 .BEGIN:
-	${AR} cr libssp-nonshared.a
-CLEANFILES+= libssp-nonshared.a
+	${AR} cr libssp_nonshared.a
+CLEANFILES+= libssp_nonshared.a
 LDFLAGS+=-L.
-.endif
+# .endif
