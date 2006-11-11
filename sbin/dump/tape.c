@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.44 2004/08/08 09:46:16 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.44.2.1 2006/11/11 21:30:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.44 2004/08/08 09:46:16 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.44.2.1 2006/11/11 21:30:27 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -819,7 +819,7 @@ doslave(int cmd, int slave_number)
 	 * Need our own seek pointer.
 	 */
 	(void) close(diskfd);
-	if ((diskfd = open(disk, O_RDONLY)) < 0)
+	if ((diskfd = open(disk_dev, O_RDONLY)) < 0)
 		quit("slave couldn't reopen disk: %s\n", strerror(errno));
 
 	/*
