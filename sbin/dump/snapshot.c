@@ -1,4 +1,4 @@
-/*	$NetBSD: snapshot.c,v 1.2.2.3 2005/04/21 19:05:37 tron Exp $	*/
+/*	$NetBSD: snapshot.c,v 1.2.2.3.2.1 2006/11/11 21:31:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "snapshot.h"
@@ -56,10 +57,11 @@
  * using the second argument as backing store and return an open file
  * descriptor for the snapshot.  If the second argument is NULL, use the first
  * as backing store.  If the third argument is not NULL, it gets the time the
- * snapshot was created.
+ * snapshot was created.  If the fourth argument is not NULL, it gets the
+ * snapshot device path.
  */
 int
-snap_open(char *mountpoint, char *backup, time_t *snap_date)
+snap_open(char *mountpoint, char *backup, time_t *snap_date, char **snap_dev)
 {
 	int i, fd, israw, fsinternal, dounlink, flags;
 	char path[MAXPATHLEN], fss_dev[14];
@@ -140,6 +142,14 @@ snap_open(char *mountpoint, char *backup, time_t *snap_date)
 			close(fd);
 			fd = -1;
 			continue;
+		}
+
+		if (snap_dev != NULL) {
+			*snap_dev = strdup(fss_dev);
+			if (*snap_dev == NULL) {
+				ioctl(fd, FSSIOCCLR);
+				goto fail;
+			}
 		}
 
 		flags |= FSS_UNCONFIG_ON_CLOSE;
