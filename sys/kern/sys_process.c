@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.95.2.2 2006/10/26 10:23:11 tron Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.95.2.2.2.1 2006/11/11 21:44:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.95.2.2 2006/10/26 10:23:11 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.95.2.2.2.1 2006/11/11 21:44:14 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,7 +355,7 @@ sys_ptrace(l, v, retval)
 		if ((path = SCARG(uap, addr)) != NULL) {
 			char *dst;
 			int len = SCARG(uap, data);
-			if (len >= MAXPATHLEN)
+			if (len < 0 || len >= MAXPATHLEN)
 				return EINVAL;
 			dst = malloc(len + 1, M_TEMP, M_WAITOK);
 			if ((error = copyin(path, dst, len)) != 0) {
