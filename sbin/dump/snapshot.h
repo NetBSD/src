@@ -1,4 +1,4 @@
-/*	$NetBSD: snapshot.h,v 1.2.2.3 2005/04/21 19:05:37 tron Exp $	*/
+/*	$NetBSD: snapshot.h,v 1.2.2.3.4.1 2006/11/11 21:31:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
  * using the second argument as backing store and return an open file
  * descriptor for the snapshot.  If the second argument is NULL, use the first
  * as backing store.  If the third argument is not NULL, it gets the time the
- * snapshot was created.
+ * snapshot was created.  If the fourth argument is not NULL, it gets the
+ * snapshot device path.
  */
-int snap_open(char *, char *, time_t *);
+int snap_open(char *, char *, time_t *, char **);
