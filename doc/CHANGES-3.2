@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.7 2006/11/10 09:20:49 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.8 2006/11/11 20:30:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -47,4 +47,48 @@ sys/arch/sparc/stand/common/promdev.c		1.19
 
 	Add support for booting from RAID 1 to the sparc boot loader.
 	[jdc, ticket #1527]
+
+etc/MAKEDEV.tmpl				1.66 (via patch)
+sys/compat/freebsd/freebsd_sysctl.c		1.5 (via patch)
+sys/conf/majors					1.30 (via patch)
+sys/dev/pci/twa.c				1.13 (via patch)
+sys/dev/pci/twaio.h				1.4 (via patch)
+sys/dev/pci/twareg.h				1.6 (via patch)
+
+	Tweak the twa(4) driver so that 3ware command line utility works with
+	it.
+	This includes:
+	- fixing various structure definitions so that the ioctl parameter
+	  match
+	- adding a hw.twa*.driver_version sysctl
+	- do not refuse multiple device openings, as the management tool will
+	  do it.  I'm not sure we are safe. FreeBSD allows multiple openings,
+	  and use the open flag only when an attempt to detach the device is
+	  done.
+	- While we are there, fix a bug in FreeBSD sysctl emulation: use copyin
+	  for moving data to the kernel
+
+	[manu, ticket #1528]
+
+sys/arch/i386/conf/INSTALL			1.273
+sys/arch/i386/conf/INSTALL.local		1.1
+sys/arch/i386/conf/INSTALL_LAPTOP		1.92
+sys/arch/i386/conf/INSTALL_SMALL		1.120
+sys/arch/i386/conf/INSTALL_TINY			1.97
+sys/arch/i386/conf/INSTALL_XEN2_DOMU		patch
+sys/arch/i386/conf/INSTALL_XEN3_DOMU		patch
+
+	Add (empty) INSTALL.local, parallel to GENERIC.local.
+	Change INSTALL kernels to include INSTALL.local instead of
+	GENERIC.local.
+
+	With this change, one can add IPSEC in GENERIC.local and still build a
+	release, rather than having install kernels not fit on floppies.
+
+	Remaining nit: the PS2 install kernel includes the regular version
+	config file, and hence GENERIC.local.
+
+	(Posted for review on tech-pkg, encouragement to commit by lukem@, no
+	objections.)
+	[bad, ticket #1579]
 
