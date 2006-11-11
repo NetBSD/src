@@ -1,4 +1,4 @@
-#	$NetBSD: CP3100,v 1.1 2006/11/08 23:49:02 scw Exp $
+#	$NetBSD: CP3100,v 1.2 2006/11/11 23:50:54 he Exp $
 #
 #	CP3100 -- Certance CP3100 Kernel
 #
@@ -149,6 +149,7 @@ options 	SYMTAB_SPACE=310000
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs
 config		netbsd-wd0	root on wd0a type ffs
+config		netbsd-sd0	root on sd0a type ffs
 
 # The main bus device
 mainbus0	at root
