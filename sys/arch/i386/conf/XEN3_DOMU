@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.7 2006/10/17 19:57:24 bouyer Exp $
+# $NetBSD: XEN3_DOMU,v 1.8 2006/11/11 18:47:10 jmmv Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -110,7 +110,7 @@ file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
