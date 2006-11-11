@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.2.4.1 2005/09/13 20:44:05 tron Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.2.4.2 2006/11/11 19:58:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.2.4.1 2005/09/13 20:44:05 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.2.4.2 2006/11/11 19:58:14 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,13 +95,21 @@ freebsd_sys_sysctl(l, v, retval)
 		syscallarg(void *) new;
 		syscallarg(size_t) newlen;
 	} */ *uap = v;
-	int error, *name;
+	int error;
+	int name[CTL_MAXNAME];
 	size_t newlen, *oldlenp;
 	u_int namelen;
 	void *new, *old;
 
-	name = SCARG(uap, name);
 	namelen = SCARG(uap, namelen);
+
+	if ((namelen > CTL_MAXNAME) || (namelen < 1))
+		return EINVAL;
+
+	if ((error = copyin(SCARG(uap, name), name,
+	    namelen * sizeof(*name))) != 0)
+		return error;
+
 	if (namelen > 0 && name[0] != 0)
 		return(sys___sysctl(l, v, retval));
 
