@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33 2006/11/05 10:11:55 jld Exp $	*/
+/*	$NetBSD: clock.c,v 1.34 2006/11/11 23:33:12 jld Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2006/11/05 10:11:55 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.34 2006/11/11 23:33:12 jld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,6 +400,28 @@ xen_microtime(struct timeval *tv)
 		printf("xen_microtime: CPU counter has decreased by %" PRId64
 		    " since last hardclock(9)\n", -cycles);
  	}
+#endif
+
+#ifndef XEN3
+	/*
+	 * Work around an intermittent Xen2 bug where, for a period of
+	 * 1<<32 ns, currently running domains don't get their timer
+	 * events as usual (and also aren't preempted in favor of
+	 * other runnable domains).  Setting the timer into the past
+	 * in this way causes it to fire immediately.
+	 */
+	if (cycles > cpu_frequency(ci) / 25 && time_values_up_to_date()) {
+		/*
+		 * 40ms; under Xen2 the timestamp updates and timer ticks
+		 * should arrive every 10ms.
+		 */
+#ifdef XEN_CLOCK_DEBUG
+		printf("xen_microtime: overlarge TSC offset %llu"
+		    " (pst=%llu sst=%llu); forcing timer...\n", cycles,
+		    processed_system_time, shadow_system_time);
+#endif
+		HYPERVISOR_set_timer_op(shadow_system_time);
+	}
 #endif
 	cycles += ci->ci_cc.cc_denom * cpu_frequency(ci) / 1000000000LL;
 	tv->tv_usec += cycles * ci->ci_cc.cc_ms_delta * hz / cpu_frequency(ci);
