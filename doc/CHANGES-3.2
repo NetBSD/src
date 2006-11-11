@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.9 2006/11/11 21:48:05 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.10 2006/11/11 22:18:01 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -127,4 +127,23 @@ sys/kern/sys_process.c				1.112
 
 	check for negative length in PT_COREDUMP (from Neil)
 	[christos, ticket #1574]
+
+sys/dev/pci/if_wm.c				1.108
+
+		don't reset interface on rx overrun because it makes
+		the situation worse, if the overrun is merely a symptom of
+		heavy load.  increament if_ierrors instead.  PR/29831.
+		[hauke, ticket #1578]
+
+sys/dev/pci/if_pcn.c				1.34
+
+	Detect if we're talking to a VMware virtual interface, and, if so,
+	limit the number of Tx segments to 8 to work around a VMware bug.
+	[thorpej, ticket #1577]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.14
+
+	Prevent xennet (Xen 3) from occasionally becoming unable to receive
+	packets for several minutes when under certain types of load
+	[jld, ticket #1581]
 
