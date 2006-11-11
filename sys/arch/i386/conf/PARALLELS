@@ -1,4 +1,4 @@
-# $NetBSD: PARALLELS,v 1.5 2006/11/08 21:18:13 rpaulo Exp $
+# $NetBSD: PARALLELS,v 1.6 2006/11/11 18:47:10 jmmv Exp $
 #
 # PARALLELS machine description file
 #
@@ -110,7 +110,7 @@ file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/ptm support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
