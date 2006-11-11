@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.756 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.757 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -182,3 +182,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		and smbfs.  [jmmv 20061109]
 	paxctl: Enable as a tool, and add make rules to run paxctl on
 		binaries to what PROG_PAX is set. [christos 20061110]
+	lfs_cleanerd: Move from /usr/libexec to /libexec so that the
+		root file system can be safely placed on a LFS volume.
+		[jmmv 20061110]
