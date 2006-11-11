@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.91 2006/10/30 17:56:30 garbled Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.92 2006/11/11 02:12:53 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -87,6 +87,11 @@ AFLAGS+=	${CPUFLAGS} -D_LOCORE -Wa,-fatal-warnings
 # XXX
 .if ${HAVE_GCC} > 3
 CFLAGS+=	-fno-strict-aliasing
+.endif
+
+.if ${USE_SSP:Uno} == "yes"
+CFLAGS+=-fstack-protector-all -Wstack-protector
+LDFLAGS+=-fstack-protector-all -Wstack-protector
 .endif
 
 # If we want the bpendtsleep: label in kern_synch.c, we need to use
@@ -437,6 +442,16 @@ EXTRA_CLEAN+= .gdbinit
 	echo "source ${__gdbinit}" >> .gdbinit
 .endfor
 .endif
+
+# The following files use alloca(3) or variable array allocations.
+# Their full name is noted as documentation.
+VARSTACK=dev/cgd.c kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
+    nfs/nfs_bio.c ufs/ufs/ufs_inode.c ufs/ufs/ufs_lookup.c uvm/uvm_bio.c \
+    uvm/uvm_pager.c
+
+.for __varstack in ${VARSTACK}
+COPTS.${__varstack:T} += -Wno-stack-protector
+.endfor
 
 AFLAGS+=	${AOPTS.${.IMPSRC:T}}
 CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
