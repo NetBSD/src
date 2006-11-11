@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.17 2005/12/11 12:24:47 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2006/11/11 21:35:45 christos Exp $
 
+USE_SSP=no
 .if !target(assym.h)
 S!=	cd ${.CURDIR}/../../..;pwd
 
