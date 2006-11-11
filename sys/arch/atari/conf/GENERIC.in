@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.64 2006/08/26 20:26:44 christos Exp $
+#	$NetBSD: GENERIC.in,v 1.65 2006/11/11 18:47:09 jmmv Exp $
 #
 # Generic atari
 #
@@ -102,7 +102,7 @@ file-system 	KERNFS		# Kernel parameter filesystem
 file-system 	MSDOSFS		# MSDOS filesystem
 file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 #file-system	PTYFS		# experimental - /dev/ptm support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 #ifndef INSTALL_KERNEL
