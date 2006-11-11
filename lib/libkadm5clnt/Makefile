@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2006/05/11 23:16:28 mrg Exp $
+# $NetBSD: Makefile,v 1.22 2006/11/11 14:00:56 dsl Exp $
 
 NOLINT=		# defined
 
@@ -23,7 +23,9 @@ TOOL_COMPILE_ET=	${COMPILEETOBJ}/compile_et
 kadm5_err.c kadm5_err.h: kadm5_err.et ${TOOL_COMPILE_ET}
 	${TOOL_COMPILE_ET} ${DIST}/heimdal/lib/kadm5/kadm5_err.et
 
-ERR_FILES = kadm5_err.c
+ERR_FILES=	kadm5_err.c
+DPSRCS+=	kadm5_err.h
+CLEANFILES+=	kadm5_err.h kadm5_err.c
 
 SRCS	 =		\
 	chpass_c.c	\
