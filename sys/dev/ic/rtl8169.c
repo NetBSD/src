@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.57 2006/11/11 12:41:56 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.58 2006/11/11 13:51:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1302,16 +1302,15 @@ static void
 re_txeof(struct rtk_softc *sc)
 {
 	struct ifnet		*ifp;
-	int			idx;
+	struct re_txq		*txq;
+	uint32_t		txstat;
+	int			idx, descidx;
 	boolean_t		done = FALSE;
 
 	ifp = &sc->ethercom.ec_if;
-	idx = sc->re_ldata.re_txq_considx;
 
-	for (;;) {
-		struct re_txq *txq = &sc->re_ldata.re_txq[idx];
-		int descidx;
-		uint32_t txstat;
+	for (idx = sc->re_ldata.re_txq_considx;; idx = RE_NEXT_TXQ(sc, idx)) {
+		txq = &sc->re_ldata.re_txq[idx];
 
 		if (txq->txq_mbuf == NULL) {
 			KASSERT(idx == sc->re_ldata.re_txq_prodidx);
@@ -1344,7 +1343,6 @@ re_txeof(struct rtk_softc *sc)
 		else
 			ifp->if_opackets++;
 
-		idx = RE_NEXT_TXQ(sc, idx);
 		done = TRUE;
 	}
 
