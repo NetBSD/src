@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.155 2006/11/09 04:00:11 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.156 2006/11/11 21:16:00 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -39,6 +39,9 @@ SRCS+=	_err.c _errx.c \
 
 # uses alloca
 COPTS.execvp.c = -Wno-stack-protector
+COPTS.execl.c = -Wno-stack-protector
+COPTS.execle.c = -Wno-stack-protector
+COPTS.execlp.c = -Wno-stack-protector
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:
