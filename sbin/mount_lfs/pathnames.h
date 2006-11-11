@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.3 2003/08/07 10:04:28 agc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.4 2006/11/11 14:47:27 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,4 +31,4 @@
  *	@(#)pathnames.h	8.1 (Berkeley) 6/8/93
  */
 
-#define _PATH_LFS_CLEANERD	"/usr/libexec/lfs_cleanerd"
+#define _PATH_LFS_CLEANERD	"/libexec/lfs_cleanerd"
