@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.56 2006/11/11 12:13:55 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.57 2006/11/11 12:41:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1477,13 +1477,11 @@ re_intr(void *arg)
 		if ((status & RTK_INTRS_CPLUS) == 0)
 			break;
 
-		if ((status & RTK_ISR_RX_OK) ||
-		    (status & RTK_ISR_RX_ERR))
+		if (status & (RTK_ISR_RX_OK | RTK_ISR_RX_ERR))
 			re_rxeof(sc);
 
-		if ((status & RTK_ISR_TIMEOUT_EXPIRED) ||
-		    (status & RTK_ISR_TX_ERR) ||
-		    (status & RTK_ISR_TX_DESC_UNAVAIL))
+		if (status & (RTK_ISR_TIMEOUT_EXPIRED | RTK_ISR_TX_ERR |
+		    RTK_ISR_TX_DESC_UNAVAIL))
 			re_txeof(sc);
 
 		if (status & RTK_ISR_SYSTEM_ERR) {
@@ -1496,9 +1494,8 @@ re_intr(void *arg)
 		}
 	}
 
-	if (ifp->if_flags & IFF_UP) /* kludge for interrupt during re_init() */
-		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-			(*ifp->if_start)(ifp);
+	if (handled && !IFQ_IS_EMPTY(&ifp->if_snd))
+		re_start(ifp);
 
 #ifdef DEVICE_POLLING
  done:
