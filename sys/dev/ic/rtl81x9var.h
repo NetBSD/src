@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.32 2006/11/05 16:52:10 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.33 2006/11/11 13:41:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -142,27 +142,30 @@ struct re_rxsoft {
 	bus_dmamap_t		rxs_dmamap;
 };
 
+struct re_txq {
+	struct mbuf *txq_mbuf;
+	bus_dmamap_t txq_dmamap;
+	int txq_descidx;
+};
+
 struct re_list_data {
-	struct re_txq {
-		struct mbuf *txq_mbuf;
-		bus_dmamap_t txq_dmamap;
-		int txq_descidx;
-	} re_txq[RE_TX_QLEN];
+	struct re_txq		re_txq[RE_TX_QLEN];
 	int			re_txq_considx;
 	int			re_txq_prodidx;
+
 	bus_dmamap_t		re_tx_list_map;
 	struct re_desc		*re_tx_list;
-	bus_dma_segment_t 	re_tx_listseg;
 	int			re_tx_free;	/* # of free descriptors */
 	int			re_tx_nextfree; /* next descriptor to use */
 	int			re_tx_desc_cnt; /* # of descriptors */
+	bus_dma_segment_t 	re_tx_listseg;
 	int			re_tx_listnseg;
 
 	struct re_rxsoft	re_rxsoft[RE_RX_DESC_CNT];
 	bus_dmamap_t		re_rx_list_map;
 	struct re_desc		*re_rx_list;
-	bus_dma_segment_t 	re_rx_listseg;
 	int			re_rx_prodidx;
+	bus_dma_segment_t 	re_rx_listseg;
 	int			re_rx_listnseg;
 };
 
