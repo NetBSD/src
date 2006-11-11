@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.35 2006/10/12 01:32:06 christos Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.36 2006/11/11 17:28:16 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.35 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.36 2006/11/11 17:28:16 bjh21 Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -405,17 +405,14 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 #undef d
 
 	    case KDENABIO:
-#if defined(__i386__)
-#if defined(COMPAT_10) || defined(COMPAT_11) || defined(COMPAT_FREEBSD)
+#if defined(__i386__) && (defined(COMPAT_11) || defined(COMPAT_FREEBSD))
 		if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
 		    KAUTH_REQ_MACHDEP_X86_IOPL, NULL, NULL, NULL) != 0)
 			return (EPERM);
 #endif
-#endif
 		/* FALLTHRU */
 	    case KDDISABIO:
-#if defined(__i386__)
-#if defined(COMPAT_10) || defined(COMPAT_11) || defined(COMPAT_FREEBSD)
+#if defined(__i386__) && (defined(COMPAT_11) || defined(COMPAT_FREEBSD))
 		{
 			/* XXX NJWLWP */
 		struct trapframe *fp = (struct trapframe *)curlwp->l_md.md_regs;
@@ -424,7 +421,6 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		else
 			fp->tf_eflags &= ~PSL_IOPL;
 		}
-#endif
 #endif
 		return (0);
 	    case KDSETRAD:
