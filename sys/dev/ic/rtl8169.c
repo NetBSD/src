@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.55 2006/11/11 12:04:08 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.56 2006/11/11 12:13:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1351,7 +1351,6 @@ re_txeof(struct rtk_softc *sc)
 	if (done) {
 		sc->re_ldata.re_txq_considx = idx;
 		ifp->if_flags &= ~IFF_OACTIVE;
-		ifp->if_timer = 0;
 	}
 
 	/*
@@ -1360,8 +1359,10 @@ re_txeof(struct rtk_softc *sc)
 	 * interrupt that will cause us to re-enter this routine.
 	 * This is done in case the transmitter has gone idle.
 	 */
-	if (sc->re_ldata.re_tx_free != RE_TX_DESC_CNT(sc))
+	if (sc->re_ldata.re_tx_free < RE_TX_DESC_CNT(sc))
 		CSR_WRITE_4(sc, RTK_TIMERCNT, 1);
+	else
+		ifp->if_timer = 0;
 }
 
 /*
