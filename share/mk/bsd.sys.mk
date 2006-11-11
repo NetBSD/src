@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.139 2006/11/10 17:22:19 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.140 2006/11/11 06:28:49 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -38,7 +38,7 @@ CPPFLAGS+=	${AUDIT:D-D__AUDIT__}
 CFLAGS+=	${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
-.if defined(USE_SSP) && (${USE_SSP} != "no")
+.if defined(USE_SSP) && (${USE_SSP} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 COPTS+=		-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 .endif
 
