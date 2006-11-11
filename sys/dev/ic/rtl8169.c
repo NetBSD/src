@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.53 2006/11/10 21:49:02 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.54 2006/11/11 11:31:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1840,6 +1840,19 @@ re_init(struct ifnet *ifp)
 	re_tx_list_init(sc);
 
 	/*
+	 * Load the addresses of the RX and TX lists into the chip.
+	 */
+	CSR_WRITE_4(sc, RTK_RXLIST_ADDR_HI,
+	    RE_ADDR_HI(sc->re_ldata.re_rx_list_map->dm_segs[0].ds_addr));
+	CSR_WRITE_4(sc, RTK_RXLIST_ADDR_LO,
+	    RE_ADDR_LO(sc->re_ldata.re_rx_list_map->dm_segs[0].ds_addr));
+
+	CSR_WRITE_4(sc, RTK_TXLIST_ADDR_HI,
+	    RE_ADDR_HI(sc->re_ldata.re_tx_list_map->dm_segs[0].ds_addr));
+	CSR_WRITE_4(sc, RTK_TXLIST_ADDR_LO,
+	    RE_ADDR_LO(sc->re_ldata.re_tx_list_map->dm_segs[0].ds_addr));
+
+	/*
 	 * Enable transmit and receive.
 	 */
 	CSR_WRITE_1(sc, RTK_COMMAND, RTK_CMD_TX_ENB | RTK_CMD_RX_ENB);
@@ -1856,6 +1869,9 @@ re_init(struct ifnet *ifp)
 			    RTK_TXCFG_CONFIG | RTK_LOOPTEST_ON_CPLUS);
 	} else
 		CSR_WRITE_4(sc, RTK_TXCFG, RTK_TXCFG_CONFIG);
+
+	CSR_WRITE_1(sc, RTK_EARLY_TX_THRESH, 16);
+
 	CSR_WRITE_4(sc, RTK_RXCFG, RTK_RXCFG_CONFIG);
 
 	/* Set the individual bit to receive frames for this host only. */
@@ -1905,21 +1921,6 @@ re_init(struct ifnet *ifp)
 	/* Enable receiver and transmitter. */
 	CSR_WRITE_1(sc, RTK_COMMAND, RTK_CMD_TX_ENB | RTK_CMD_RX_ENB);
 #endif
-	/*
-	 * Load the addresses of the RX and TX lists into the chip.
-	 */
-
-	CSR_WRITE_4(sc, RTK_RXLIST_ADDR_HI,
-	    RE_ADDR_HI(sc->re_ldata.re_rx_list_map->dm_segs[0].ds_addr));
-	CSR_WRITE_4(sc, RTK_RXLIST_ADDR_LO,
-	    RE_ADDR_LO(sc->re_ldata.re_rx_list_map->dm_segs[0].ds_addr));
-
-	CSR_WRITE_4(sc, RTK_TXLIST_ADDR_HI,
-	    RE_ADDR_HI(sc->re_ldata.re_tx_list_map->dm_segs[0].ds_addr));
-	CSR_WRITE_4(sc, RTK_TXLIST_ADDR_LO,
-	    RE_ADDR_LO(sc->re_ldata.re_tx_list_map->dm_segs[0].ds_addr));
-
-	CSR_WRITE_1(sc, RTK_EARLY_TX_THRESH, 16);
 
 	/*
 	 * Initialize the timer interrupt register so that
