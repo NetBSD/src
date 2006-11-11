@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.2 2006/11/06 17:28:20 tron Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.3 2006/11/11 21:48:57 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -15,4 +15,40 @@ sys/arch/sparc64/sparc64/locore.s		1.217-1.218 via patch
 
 	Fix a couple of %y register save/restore errors.
 	[nakayama, ticket #1517]
+
+sys/netinet/tcp_sack.c				1.20
+
+	Fix alignment problems causing regular panics in tpc_sack_option on
+	NetBSD/alpha and NetBSD/sparc. This fixes PR#34751.
+
+	Fix provided by Izumi Tsutsui and ok'd by Martin.
+	[reinoud, ticket #1561]
+
+sys/miscfs/specfs/spec_vnops.c			1.91 via patch
+
+	Protect spec_poll from racing against revocation and thus
+	dereferencing a NULL v_specinfo (race condition between polling
+	and revoking a character device).
+	[jld, ticket #1557]
+
+sys/arch/arm/iomd/iomdkbc.c			1.3
+
+	Interpret the argument to iomdkbc_set_poll() correctly.  Quite how we
+	got this far with it the wrong way around is beyond me.
+	[bjh21, ticket #1562]
+
+sbin/dump/dump.h				1.44 via patch
+sbin/dump/main.c				1.63 via patch
+sbin/dump/snapshot.c				1.3 via patch
+sbin/dump/snapshot.h				1.3 via patch
+sbin/dump/tape.c				1.47 via patch
+
+	When using a snapshot take the snapshot raw device on further open.
+	Fixes PR #34923  dump(8) only dumps a corefile with -X (snapshots)
+	[hannken, ticket #1573]
+
+sys/kern/sys_process.c				1.112
+
+	check for negative length in PT_COREDUMP (from Neil)
+	[christos, ticket #1574]
 
