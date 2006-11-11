@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.3 2006/11/11 21:49:47 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.4 2006/11/11 22:16:49 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -50,4 +50,10 @@ sys/kern/sys_process.c				1.112
 
 	check for negative length in PT_COREDUMP (from Neil)
 	[christos, ticket #1574]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.14
+
+	Prevent xennet (Xen 3) from occasionally becoming unable to receive
+	packets for several minutes when under certain types of load
+	[jld, ticket #1581]
 
