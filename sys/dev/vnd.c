@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.158 2006/11/10 14:31:14 martin Exp $	*/
+/*	$NetBSD: vnd.c,v 1.159 2006/11/11 13:42:14 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.158 2006/11/10 14:31:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.159 2006/11/11 13:42:14 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -706,20 +706,10 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	else
 		KASSERT(!(bp->b_flags & B_ERROR));
 
-	/* Flush the vnode if requested. */
-	if (obp->b_flags & B_VFLUSH) {
-		if (vn_lock(vp, LK_EXCLUSIVE | LK_RETRY) == 0) {
-			VOP_FSYNC(vp, vnd->sc_cred,
-			    FSYNC_WAIT | FSYNC_DATAONLY, 0, 0, NULL);
-			VOP_UNLOCK(vp, 0);
-		}
-	}
-
 	/* We need to increase the number of outputs on the vnode if
-	 * there was any write to it (either due to a real write or due
-	 * to a flush). */
-	if (!doread || obp->b_flags & B_VFLUSH)
-		vp->v_numoutput++;
+	 * there was any write to it. */
+	if (!doread)
+		V_INCR_NUMOUTPUT(vp);
 
 	biodone(bp);
 }
