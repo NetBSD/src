@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.54 2006/11/11 11:31:30 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.55 2006/11/11 12:04:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1347,8 +1347,6 @@ re_txeof(struct rtk_softc *sc)
 		idx = RE_NEXT_TXQ(sc, idx);
 		done = TRUE;
 	}
-
-	/* No changes made to the TX ring, so no flush needed */
 
 	if (done) {
 		sc->re_ldata.re_txq_considx = idx;
