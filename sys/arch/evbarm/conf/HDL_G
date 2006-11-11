@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.5 2006/08/26 20:26:44 christos Exp $
+# $NetBSD: HDL_G,v 1.6 2006/11/11 18:47:09 jmmv Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -43,7 +43,7 @@ file-system	NULLFS		# loopback file system
 file-system	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system	TMPFS		# experimental - Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system

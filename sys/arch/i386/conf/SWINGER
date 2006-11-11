@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.85 2006/11/01 19:33:41 tls Exp $
+#	$NetBSD: SWINGER,v 1.86 2006/11/11 18:47:10 jmmv Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.85 $"
+#ident 		"SWINGER-$Revision: 1.86 $"
 
 maxusers	64		# estimated number of users
 
@@ -113,7 +113,7 @@ file-system 	PROCFS		# /proc
 #file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas

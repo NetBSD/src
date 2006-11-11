@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN3_DOMU,v 1.7 2006/11/01 19:33:41 tls Exp $
+# $NetBSD: INSTALL_XEN3_DOMU,v 1.8 2006/11/11 18:47:10 jmmv Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -97,7 +97,7 @@ file-system 	KERNFS		# /kern
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 
 # Filesystem options
 #options 	QUOTA		# UFS quotas

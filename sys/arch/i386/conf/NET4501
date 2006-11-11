@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.51 2006/11/01 19:33:41 tls Exp $
+# $NetBSD: NET4501,v 1.52 2006/11/11 18:47:10 jmmv Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.51 $"
+#ident 		"NET4501-$Revision: 1.52 $"
 
 maxusers	32		# estimated number of users
 
@@ -130,7 +130,7 @@ file-system 	PROCFS		# /proc
 #file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas

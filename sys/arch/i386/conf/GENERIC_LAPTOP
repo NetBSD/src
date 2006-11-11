@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.212 2006/11/01 19:33:41 tls Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.213 2006/11/11 18:47:10 jmmv Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.212 $"
+#ident 		"GENERIC-$Revision: 1.213 $"
 
 maxusers	32		# estimated number of users
 
@@ -142,7 +142,7 @@ file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/ptm support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options

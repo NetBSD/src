@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.103 2006/09/27 21:42:05 manu Exp $
+# $NetBSD: GENERIC,v 1.104 2006/11/11 18:47:09 jmmv Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.103 $"
+#ident 		"GENERIC-$Revision: 1.104 $"
 
 maxusers	32
 
@@ -78,7 +78,7 @@ file-system 	PROCFS
 file-system 	UMAPFS
 file-system 	UNION
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 #options 	FFS_EI		# FFS Endian Independant support
