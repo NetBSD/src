@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN2_DOMU,v 1.1.2.4 2006/07/31 12:42:38 tron Exp $
+# $NetBSD: INSTALL_XEN2_DOMU,v 1.1.2.5 2006/11/11 20:25:19 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -142,6 +142,8 @@ xbd*		at hypervisor?		# Xen virtual block device
 #wd*		at hypervisor?		# Xen vbd (wd identity)
 #sd*		at hypervisor?		# Xen vbd (sd identity)
 #cd*		at hypervisor?		# Xen vbd (cd identity)
+
+include 	"arch/i386/conf/INSTALL.local"
 
 # Pseudo-Devices
 
