@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.112.2.1 2006/04/20 14:30:29 tron Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.112.2.2 2006/11/11 20:25:19 bouyer Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -474,7 +474,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 
 # Pull in optional local configuration
-include	"arch/i386/conf/GENERIC.local"
+include	"arch/i386/conf/INSTALL.local"
 
 
 # Pseudo-Devices
