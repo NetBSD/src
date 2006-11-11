@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.59 2006/10/27 21:00:19 dsl Exp $	*/
+/*	$NetBSD: suff.c,v 1.60 2006/11/11 21:21:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.59 2006/10/27 21:00:19 dsl Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.60 2006/11/11 21:21:17 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.59 2006/10/27 21:00:19 dsl Exp $");
+__RCSID("$NetBSD: suff.c,v 1.60 2006/11/11 21:21:17 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2589,13 +2589,13 @@ SuffPrintSuff(ClientData sp, ClientData dummy)
 	    flags &= ~flag;
 	    switch (flag) {
 		case SUFF_NULL:
-		    printf("NULL");
+		    fprintf(debug_file, "NULL");
 		    break;
 		case SUFF_INCLUDE:
-		    printf("INCLUDE");
+		    fprintf(debug_file, "INCLUDE");
 		    break;
 		case SUFF_LIBRARY:
-		    printf("LIBRARY");
+		    fprintf(debug_file, "LIBRARY");
 		    break;
 	    }
 	    fputc(flags ? '|' : ')', debug_file);
