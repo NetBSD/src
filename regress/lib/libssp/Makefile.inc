@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2006/11/09 17:08:04 christos Exp $
+# $NetBSD: Makefile.inc,v 1.3 2006/11/11 06:42:49 christos Exp $
 
 WARNS=	4
 
@@ -8,3 +8,12 @@ LDFLAGS+=-fstack-protector-all -Wstack-protector
 
 LDADD+=-lssp
 DPADD+=${LIBSSP}
+
+# Bootstrap hack
+
+.ifmake all || dependall
+.BEGIN:
+	${AR} cr libssp-nonshared.a
+CLEANFILES+= libssp-nonshared.a
+LDFLAGS+=-L.
+.endif
