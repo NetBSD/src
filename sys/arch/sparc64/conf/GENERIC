@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.76 2006/11/11 18:47:11 jmmv Exp $
+# $NetBSD: GENERIC,v 1.77 2006/11/11 19:00:17 jmmv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.76 $"
+#ident 		"GENERIC-$Revision: 1.77 $"
 
 maxusers	64
 
@@ -179,7 +179,7 @@ file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 file-system	PTYFS		# /dev/pts/N support
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 ## File system options.
