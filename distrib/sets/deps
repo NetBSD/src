@@ -185,8 +185,6 @@ base-util_locale-id base-locale-id
 base-util_locale-it base-locale-it
 base-util_locale-ja base-locale-ja
 base-util_locale-sv base-locale-sv
-base-uucp-bin base-sys-usr
-base-uucp-root base-sys-root
 base-vfs-lkm base-sys-usr
 base-x11-root base-sys-root
 comp-c-bin base-sys-usr
@@ -330,8 +328,6 @@ etc-sysutil-log base-util-root
 etc-sysutil-rc base-sys-root
 etc-timed-rc base-sys-root
 etc-util-etc base-sys-root
-etc-uucp-etc base-sys-root
-etc-uucp-log base-sys-root
 etc-x11-rc base-sys-root
 games-games-bin base-games-usr
 games-games-catman base-man-share
@@ -465,9 +461,6 @@ man-tn3270-man base-man-share
 man-util-catman base-man-share
 man-util-info base-texinfo-share
 man-util-man base-man-share
-man-uucp-catman base-man-share
-man-uucp-info base-texinfo-share
-man-uucp-man base-man-share
 misc-amd-examples base-amd-examples
 misc-amd-examples base-sys-examples
 misc-bind-htmldoc base-htmldoc-share
