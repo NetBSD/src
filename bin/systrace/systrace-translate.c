@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.17 2006/10/16 00:43:00 christos Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.18 2006/11/12 23:29:37 cbiere Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -424,6 +424,15 @@ print_fcntlcmd(char *buf, size_t buflen, struct intercept_translate *tl)
 		break;
 	case F_MAXFD:
 		name = "F_MAXFD";
+		break;
+	case F_GETLK:
+		name = "F_GETLK";
+		break;
+	case F_SETLK:
+		name = "F_SETLK";
+		break;
+	case F_SETLKW:
+		name = "F_SETLKW";
 		break;
 	default:
 		snprintf(buf, buflen, "<unknown>: %d", cmd);
