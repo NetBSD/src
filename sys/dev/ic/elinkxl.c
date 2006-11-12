@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.93 2006/11/12 02:49:46 tsutsui Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.94 2006/11/12 07:07:39 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.93 2006/11/12 02:49:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.94 2006/11/12 07:07:39 itohy Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -279,7 +279,7 @@ ex_config(sc)
 	 * map for them.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, PAGE_SIZE, 0, &sc->sc_dseg, 1,
+	    EX_NDPD * sizeof (struct ex_dpd), PAGE_SIZE, 0, &sc->sc_dseg, 1,
 	    &sc->sc_drseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error(
 		    "%s: can't allocate download descriptors, error = %d\n",
@@ -290,19 +290,19 @@ ex_config(sc)
 	attach_stage = 5;
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dseg, sc->sc_drseg,
-	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, (caddr_t *)&sc->sc_dpd,
+	    EX_NDPD * sizeof (struct ex_dpd), (caddr_t *)&sc->sc_dpd,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: can't map download descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
-	memset(sc->sc_dpd, 0, DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN);
+	memset(sc->sc_dpd, 0, EX_NDPD * sizeof (struct ex_dpd));
 
 	attach_stage = 6;
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
-	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, 1,
-	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, 0, BUS_DMA_NOWAIT,
+	    EX_NDPD * sizeof (struct ex_dpd), 1,
+	    EX_NDPD * sizeof (struct ex_dpd), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_dpd_dmamap)) != 0) {
 		aprint_error(
 		    "%s: can't create download desc. DMA map, error = %d\n",
@@ -313,15 +313,13 @@ ex_config(sc)
 	attach_stage = 7;
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dpd_dmamap,
-	    sc->sc_dpd, DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, NULL,
+	    sc->sc_dpd, EX_NDPD * sizeof (struct ex_dpd), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
 		aprint_error(
 		    "%s: can't load download desc. DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
-	    DPDMEMPAD_OFF, EX_IP4CSUMTX_PADLEN, BUS_DMASYNC_PREWRITE);
 
 	attach_stage = 8;
 
@@ -868,24 +866,25 @@ ex_txstat(sc)
 
 		/* Reload Tx parameters. */
 		ex_setup_tx(sc);
-
-		bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
-		if (sc->tx_head) {
-			ifp->if_flags |= IFF_OACTIVE;
-			bus_space_write_2(iot, ioh, ELINK_COMMAND,
-			    ELINK_DNUNSTALL);
-			bus_space_write_4(iot, ioh, ELINK_DNLISTPTR,
-			    DPD_DMADDR(sc, sc->tx_head));
-
-			/* retrigger watchdog */
-			ifp->if_timer = 5;
-		}
 	} else {
 		if (err & TXS_MAX_COLLISION)
 			++sc->sc_ethercom.ec_if.if_collisions;
 		sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
-		bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
-		bus_space_write_2(iot, ioh, ELINK_COMMAND, ELINK_DNUNSTALL);
+	}
+
+	bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
+
+	/* Retransmit current packet if any. */
+	if (sc->tx_head) {
+		ifp->if_flags |= IFF_OACTIVE;
+		bus_space_write_2(iot, ioh, ELINK_COMMAND,
+		    ELINK_DNUNSTALL);
+		bus_space_write_4(iot, ioh, ELINK_DNLISTPTR,
+		    DPD_DMADDR(sc, sc->tx_head));
+
+		/* Retrigger watchdog if stopped. */
+		if (ifp->if_timer == 0)
+			ifp->if_timer = 1;
 	}
 }
 
@@ -1055,7 +1054,7 @@ ex_start(ifp)
 	struct ex_txdesc *txp;
 	struct mbuf *mb_head;
 	bus_dmamap_t dmamap;
-	int m_csumflags, offset, seglen, totlen, segment, error;
+	int m_csumflags, offset, totlen, segment, error;
 	u_int32_t csum_flags;
 
 	if (sc->tx_head || sc->tx_free == NULL)
@@ -1155,28 +1154,11 @@ ex_start(ifp)
 		totlen = 0;
 		for (segment = 0; segment < dmamap->dm_nsegs; segment++, fr++) {
 			fr->fr_addr = htole32(dmamap->dm_segs[segment].ds_addr);
-			seglen = dmamap->dm_segs[segment].ds_len;
-			fr->fr_len = htole32(seglen);
-			totlen += seglen;
+			fr->fr_len = htole32(dmamap->dm_segs[segment].ds_len);
+			totlen += dmamap->dm_segs[segment].ds_len;
 		}
-		if (__predict_false(totlen <= EX_IP4CSUMTX_PADLEN &&
-		    (m_csumflags & M_CSUM_IPv4) != 0)) {
-			/*
-			 * Pad short packets to avoid ip4csum-tx bug.
-			 *
-			 * XXX Should we still consider if such short
-			 *     (36 bytes or less) packets might already
-			 *     occupy EX_NTFRAG (== 32) fragements here?
-			 */
-			KASSERT(segment < EX_NTFRAGS);
-			fr->fr_addr = htole32(DPDMEMPAD_DMADDR(sc));
-			seglen = EX_IP4CSUMTX_PADLEN + 1 - totlen;
-			fr->fr_len = htole32(EX_FR_LAST | seglen);
-			totlen += seglen;
-		} else {
-			fr--;
-			fr->fr_len |= htole32(EX_FR_LAST);
-		}
+		fr--;
+		fr->fr_len |= htole32(EX_FR_LAST);
 		txp->tx_mbhead = mb_head;
 
 		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
@@ -1304,13 +1286,24 @@ ex_intr(arg)
 			ex_init(ifp);
 			return 1;
 		}
-		if (stat & TX_COMPLETE) {
-			ex_txstat(sc);
-		}
 		if (stat & UPD_STATS) {
 			ex_getstats(sc);
 		}
-		if (stat & DN_COMPLETE) {
+		if (stat & TX_COMPLETE) {
+			ex_txstat(sc);
+#if 0
+			if (stat & DN_COMPLETE)
+				printf("%s: Ignoring Dn interrupt (%x)\n",
+				    sc->sc_dev.dv_xname, stat);
+#endif
+			/*
+			 * In some rare cases, both Tx Complete and
+			 * Dn Complete bits are set.  However, the packet
+			 * has been reloaded in ex_txstat() and should not
+			 * handle the Dn Complete event here.
+			 * Hence the "else" below.
+			 */
+		} else if (stat & DN_COMPLETE) {
 			struct ex_txdesc *txp, *ptxp = NULL;
 			bus_dmamap_t txmap;
 
