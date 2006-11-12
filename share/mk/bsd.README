@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.188 2006/11/10 17:13:15 christos Exp $
+#	$NetBSD: bsd.README,v 1.189 2006/11/12 02:44:51 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -273,9 +273,6 @@ MKUPDATE 	If not "no", 'make install' only installs targets that are
 		more recently modified in the source directories that their
 		installed counterparts.
 		Default: no
-
-MKUUCP		If "no", don't build or install uucp(1).
-		Default: yes
 
 MKX11		If not "no", 'make build' also descends into src/x11
 		to cross build X11R6 and automatically enables creation
