@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/10 22:48:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2006/11/12 01:24:45 christos Exp $
 
 MKPRIVATELIB=	yes
 
@@ -17,6 +17,7 @@ CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${MACHINE_ARCH} \
 #.endif
 
 .include <bsd.lib.mk>
+COPTS+=	-Wno-stack-protector
 
 ${OBJS}: ${G_LIBCPP_DEPS}
 
