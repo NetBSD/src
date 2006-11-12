@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/10 22:48:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2006/11/12 01:24:45 christos Exp $
 
 NOMAN=		# defined
 
@@ -13,6 +13,8 @@ CPPFLAGS+=	-I${BACKENDOBJ} \
 		-DDEFAULT_TARGET_VERSION=\"\"
 
 .include "../Makefile.frontend"
+
+COPTS+=	-Wno-stack-protector
 
 .PATH: ${DIST}/gcc
 
