@@ -185,8 +185,6 @@ base-util_locale-id	Indonesian language support for standard utilities
 base-util_locale-it	Italian language support for standard utilities
 base-util_locale-ja	Japanese language support for standard utilities
 base-util_locale-sv Swedish language support for standard utilities
-base-uucp-bin utilities for the UUCP UNIX-to-UNIX Communication Protocol
-base-uucp-root root file system support for the UUCP UNIX-to-UNIX Communication Protocol
 base-vfs-lkm loadable kernel modules for filesystems
 comp-c-bin compilers and tools for the C programming language
 comp-c-catman formatted manual pages
@@ -310,8 +308,6 @@ etc-sysutil-log empty log files for miscellaneous system utilities
 etc-sysutil-rc	startup scripts for miscellaneous system utilities
 etc-timed-rc startup script for the timed(8) network time daemon
 etc-util-etc configuration file for standard system utilities
-etc-uucp-etc configuration files for the UUCP UNIX-to-UNIX connection protocol
-etc-uucp-log empty log files for the UUCP UNIX-to-UNIX connection protocol
 etc-x11-rc startup scripts for the X11 X Window System
 games-games-bin command line games
 games-games-catman formatted manual pages for command-line games
@@ -441,9 +437,6 @@ man-tn3270-man manual pages source for utilities for connecting to IBM VM/CMS sy
 man-util-catman formatted manual pages for basic user utilities
 man-util-info the GNU texinfo software
 man-util-man manual pages source for basic user utilities
-man-uucp-catman formatted manual pages for the UUCP UNIX-to-UNIX Connection Protocol
-man-uucp-info texinfo documentation for the UUCP UNIX-to-UNIX Connection Protocol
-man-uucp-man manual pages source for the UUCP UNIX-to-UNIX Connection Protocol
 misc-amd-examples example configuration files for automatically mount file systems
 misc-bind-examples example configuration files for bind
 misc-bind-htmldoc HTML documentation for bind
