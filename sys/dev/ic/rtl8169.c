@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.60 2006/11/12 12:02:19 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.61 2006/11/12 15:12:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1044,8 +1044,8 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	 * alignment so that the frame payload is
 	 * longword aligned.
 	 */
-	m->m_len = m->m_pkthdr.len = MCLBYTES - RTK_ETHER_ALIGN;
-	m->m_data += RTK_ETHER_ALIGN;
+	m->m_len = m->m_pkthdr.len = MCLBYTES - RE_ETHER_ALIGN;
+	m->m_data += RE_ETHER_ALIGN;
 
 	rxs = &sc->re_ldata.re_rxsoft[idx];
 	map = rxs->rxs_dmamap;
