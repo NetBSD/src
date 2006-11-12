@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.20 2004/06/27 13:51:55 lukem Exp $
+#	$NetBSD: weekly,v 1.21 2006/11/12 01:22:57 christos Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -65,12 +65,6 @@ TMP=weekly.$$
 #		done
 #	fi
 #fi
-
-if checkyesno clean_uucp && [ -f /usr/libexec/uucp/clean.weekly ]; then
-	echo ""
-	echo "Cleaning up UUCP:"
-	su daemon -c /usr/libexec/uucp/clean.weekly
-fi
 
 if checkyesno rebuild_locatedb; then
 	echo ""
