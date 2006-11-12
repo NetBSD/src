@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.14 2006/03/31 17:39:33 thorpej Exp $	*/
+/*	$NetBSD: zsms.c,v 1.15 2006/11/12 19:00:43 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.14 2006/03/31 17:39:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.15 2006/11/12 19:00:43 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,8 +264,10 @@ zsms_input(void *vsc, int data)
 			sc->dy = -data;
 		else
 			sc->dy = data;
-		wsmouse_input(sc->sc_wsmousedev, sc->buttons,
-		    sc->dx, sc->dy, 0, WSMOUSE_INPUT_DELTA);
+		wsmouse_input(sc->sc_wsmousedev,
+				sc->buttons,
+		    		sc->dx, sc->dy, 0, 0,
+				WSMOUSE_INPUT_DELTA);
 	}
 
 	return;

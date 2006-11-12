@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ms.c,v 1.4 2005/12/11 12:18:52 christos Exp $	*/
+/*	$NetBSD: zs_ms.c,v 1.5 2006/11/12 19:00:43 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.4 2005/12/11 12:18:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.5 2006/11/12 19:00:43 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,7 @@ zsms_wsmouse_input(struct zsms_softc *sc)
 	x = (int)sc->packet[ZSMS_PACKET_X1] + (int)sc->packet[ZSMS_PACKET_X2];
 	y = (int)sc->packet[ZSMS_PACKET_Y1] + (int)sc->packet[ZSMS_PACKET_Y2];
 
-	wsmouse_input(sc->wsmousedev, btns, x, y, 0, WSMOUSE_INPUT_DELTA);
+	wsmouse_input(sc->wsmousedev, btns, x, y, 0, 0, WSMOUSE_INPUT_DELTA);
 }
 
 static int
