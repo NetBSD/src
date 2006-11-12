@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.20 2006/11/09 10:08:53 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.21 2006/11/12 22:28:17 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.20 2006/11/09 10:08:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.21 2006/11/12 22:28:17 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -233,9 +233,13 @@ bt_alloc(vmem_t *vm, vm_flag_t flags)
 	bt_t *bt;
 
 #if defined(_KERNEL)
+	int s;
+
 	/* XXX bootstrap */
+	s = splvm();
 	bt = pool_cache_get(&bt_poolcache,
 	    (flags & VM_SLEEP) != 0 ? PR_WAITOK : PR_NOWAIT);
+	splx(s);
 #else /* defined(_KERNEL) */
 	bt = malloc(sizeof *bt);
 #endif /* defined(_KERNEL) */
@@ -248,8 +252,12 @@ bt_free(vmem_t *vm, bt_t *bt)
 {
 
 #if defined(_KERNEL)
+	int s;
+
 	/* XXX bootstrap */
+	s = splvm();
 	pool_cache_put(&bt_poolcache, bt);
+	splx(s);
 #else /* defined(_KERNEL) */
 	free(bt);
 #endif /* defined(_KERNEL) */
