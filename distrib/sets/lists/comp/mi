@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.971 2006/11/11 12:06:34 he Exp $
+#	$NetBSD: mi,v 1.972 2006/11/12 01:24:51 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2608,15 +2608,15 @@
 ./usr/libdata/debug/usr/bin/usbhidctl.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/users.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/utoppya.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/uucp.debug		comp-uucp-debug		uucp,debug
+./usr/libdata/debug/usr/bin/uucp.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/uudecode.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/uuencode.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/uuidgen.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/uulog.debug		comp-uucp-debug		uucp,debug
-./usr/libdata/debug/usr/bin/uuname.debug	comp-uucp-debug		uucp,debug
-./usr/libdata/debug/usr/bin/uupick.debug	comp-uucp-debug		uucp,debug
-./usr/libdata/debug/usr/bin/uustat.debug	comp-uucp-debug		uucp,debug
-./usr/libdata/debug/usr/bin/uux.debug		comp-uucp-debug		uucp,debug
+./usr/libdata/debug/usr/bin/uulog.debug		comp-obsolete		obsolete
+./usr/libdata/debug/usr/bin/uuname.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/bin/uupick.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/bin/uustat.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/bin/uux.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/vacation.debug	comp-mail-debug		debug
 ./usr/libdata/debug/usr/bin/vi.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/vis.debug		comp-util-debug		debug
@@ -2739,7 +2739,7 @@
 ./usr/libdata/debug/usr/libexec/postfix/virtual.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/rexecd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/rlogind.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/libexec/rmail.debug	comp-uucp-debug		debug
+./usr/libdata/debug/usr/libexec/rmail.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/rpc.rquotad.debug	comp-nfsserver-debug	debug
 ./usr/libdata/debug/usr/libexec/rpc.rstatd.debug	comp-rpcserver-debug	debug
 ./usr/libdata/debug/usr/libexec/rpc.rusersd.debug	comp-rpcserver-debug	debug
@@ -2752,10 +2752,10 @@
 ./usr/libdata/debug/usr/libexec/telnetd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/tftpd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/utmp_update.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/libexec/uucp/uucico.debug	comp-uucp-debug		uucp,debug
-./usr/libdata/debug/usr/libexec/uucp/uuconv.debug	comp-uucp-debug		uucp,debug
-./usr/libdata/debug/usr/libexec/uucp/uuxqt.debug	comp-uucp-debug		uucp,debug
-./usr/libdata/debug/usr/libexec/uucpd.debug	comp-uucp-debug		debug
+./usr/libdata/debug/usr/libexec/uucp/uucico.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/libexec/uucp/uuconv.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/libexec/uucp/uuxqt.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/libexec/uucpd.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/vfontedpr.debug	comp-groff-debug	debug
 ./usr/libdata/debug/usr/sbin/ac.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/accton.debug	comp-sysutil-debug	debug
@@ -2962,7 +2962,7 @@
 ./usr/libdata/debug/usr/sbin/unlink.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/usbdevs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/user.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/uuchk.debug	comp-uucp-debug		uucp,debug
+./usr/libdata/debug/usr/sbin/uuchk.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/veriexecgen.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/vipw.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/vnconfig.debug	comp-sysutil-debug	debug
