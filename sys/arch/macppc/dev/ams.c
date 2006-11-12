@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.20 2006/10/15 21:23:19 macallan Exp $	*/
+/*	$NetBSD: ams.c,v 1.21 2006/11/12 19:00:43 plunky Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.20 2006/10/15 21:23:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.21 2006/11/12 19:00:43 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -544,7 +544,7 @@ ms_processevent(adb_event_t *event, struct ams_softc *sc)
 
 	if (sc->sc_wsmousedev)
 		wsmouse_input(sc->sc_wsmousedev, new_event.u.m.buttons,
-			      new_event.u.m.dx, -new_event.u.m.dy, 0,
+			      new_event.u.m.dx, -new_event.u.m.dy, 0, 0,
 			      WSMOUSE_INPUT_DELTA);
 #if NAED > 0
 	aed_input(&new_event);

@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.9 2006/09/30 15:14:21 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.10 2006/11/12 19:00:42 plunky Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.9 2006/09/30 15:14:21 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.10 2006/11/12 19:00:42 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -584,8 +584,9 @@ arckbd_mousemoved(struct device *self, int byte1, int byte2)
 		dx = byte1 < 0x40 ? byte1 : byte1 - 0x80;
 		dy = byte2 < 0x40 ? byte2 : byte2 - 0x80;
 		wsmouse_input(sc->sc_wsmousedev,
-			      sc->sc_mouse_buttons, dx, dy, 0,
-			      WSMOUSE_INPUT_DELTA);
+				sc->sc_mouse_buttons,
+				dx, dy, 0, 0,
+				WSMOUSE_INPUT_DELTA);
 	}
 }
 #endif
@@ -620,8 +621,10 @@ arckbd_keyupdown(struct device *self, int byte1, int byte2)
 		else
 			sc->sc_mouse_buttons &= ~(1 << (byte2 & 0x0f));
 		if (sc->sc_wsmousedev != NULL)
-			wsmouse_input(sc->sc_wsmousedev, sc->sc_mouse_buttons,
-				      0, 0, 0, WSMOUSE_INPUT_DELTA);
+			wsmouse_input(sc->sc_wsmousedev,
+					sc->sc_mouse_buttons,
+					0, 0, 0, 0,
+					WSMOUSE_INPUT_DELTA);
 #endif
 	} else {
 #if NARCWSKBD > 0

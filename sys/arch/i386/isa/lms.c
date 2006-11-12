@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.49 2006/10/12 01:30:43 christos Exp $	*/
+/*	$NetBSD: lms.c,v 1.50 2006/11/12 19:00:42 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.49 2006/10/12 01:30:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.50 2006/11/12 19:00:42 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,9 @@ lmsintr(void *arg)
 
 	if (dx || dy || changed)
 		wsmouse_input(sc->sc_wsmousedev,
-			      buttons, dx, dy, 0, WSMOUSE_INPUT_DELTA);
+				buttons,
+				dx, dy, 0, 0,
+				WSMOUSE_INPUT_DELTA);
 
 	return -1;
 }

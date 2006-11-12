@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.65 2006/10/12 01:32:00 christos Exp $	*/
+/*	$NetBSD: ums.c,v 1.66 2006/11/12 19:00:43 plunky Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.65 2006/10/12 01:32:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.66 2006/11/12 19:00:43 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,9 +333,10 @@ ums_intr(struct uhidev *addr, void *ibuf, u_int len __unused)
 		sc->sc_buttons = buttons;
 		if (sc->sc_wsmousedev != NULL) {
 			s = spltty();
-			wsmouse_input_xyzw(sc->sc_wsmousedev, buttons,
-					   dx, dy, dz, dw,
-					   WSMOUSE_INPUT_DELTA);
+			wsmouse_input(sc->sc_wsmousedev,
+					buttons,
+					dx, dy, dz, dw,
+					WSMOUSE_INPUT_DELTA);
 			splx(s);
 		}
 	}
