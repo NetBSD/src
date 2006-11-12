@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.758 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.759 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -188,3 +188,9 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	tmpfs: Drop experimental status and enable it by default in the
 		GENERIC kernels of amd64, i386, macppc and sparc64.
 		[jmmv 20061110]
+	ssp: New library modelled after the gcc libssp. Stack protector
+		code from OpenBSD. Enable stack protection both in
+		the kernel and userland code by using USE_SPP=yes in
+		/etc/mk.conf [christos 20061111]
+	uucp: Removed from base; package can be found in pkgsrc
+		[christos 20061111]
