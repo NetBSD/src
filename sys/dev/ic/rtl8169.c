@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.59 2006/11/12 03:09:37 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.60 2006/11/12 12:02:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1261,7 +1261,7 @@ re_rxeof(struct rtk_softc *sc)
 
 			/* Check IP header checksum */
 			if (rxstat & RE_RDESC_STAT_PROTOID)
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;;
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			if (rxstat & RE_RDESC_STAT_IPSUMBAD)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
 		}
