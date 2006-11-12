@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2006/11/12 01:41:46 christos Exp $
+# $NetBSD: Makefile.inc,v 1.6 2006/11/12 15:18:29 he Exp $
 
 WARNS=	4
 
@@ -14,6 +14,6 @@ DPADD+=${LIBSSP}
 .ifmake !clean && !obj && !cleandir
 .BEGIN:
 	${AR} cr libssp_nonshared.a
+.endif
 CLEANFILES+= libssp_nonshared.a
 LDFLAGS+=-L.
-.endif
