@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.950 2006/11/12 01:24:52 christos Exp $
+# $NetBSD: mi,v 1.951 2006/11/12 02:29:44 dogcow Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -4074,7 +4074,7 @@
 ./usr/share/man/man5/utmp.5			man-sys-man		.man
 ./usr/share/man/man5/utmpx.5			man-sys-man		.man
 ./usr/share/man/man5/uuencode.5			man-util-man		.man
-./usr/share/man/man5/uuencode.format.5		man-util-man		.man
+./usr/share/man/man5/uuencode.format.5		man-obsolete		obsolete
 ./usr/share/man/man5/vgrindefs.5		man-groff-man		.man
 ./usr/share/man/man5/virtual.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/weekly.conf.5		man-sys-man		.man
