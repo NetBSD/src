@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.58 2006/11/11 13:51:44 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.59 2006/11/12 03:09:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -152,8 +152,6 @@
 
 #include <dev/ic/rtl8169var.h>
 
-
-static int re_encap(struct rtk_softc *, struct mbuf *, int *);
 
 static int re_newbuf(struct rtk_softc *, int, struct mbuf *);
 static int re_rx_list_init(struct rtk_softc *);
@@ -682,8 +680,8 @@ re_attach(struct rtk_softc *sc)
 	for (i = 0; i < RE_TX_QLEN; i++) {
 		error = bus_dmamap_create(sc->sc_dmat,
 		    round_page(IP_MAXPACKET),
-		    RE_TX_DESC_CNT(sc) - 4, RE_TDESC_CMD_FRAGLEN, 0, 0,
-		    &sc->re_ldata.re_txq[i].txq_dmamap);
+		    RE_TX_DESC_CNT(sc) - RE_NTXDESC_RSVD, RE_TDESC_CMD_FRAGLEN,
+		    0, 0, &sc->re_ldata.re_txq[i].txq_dmamap);
 		if (error) {
 			aprint_error("%s: can't create DMA map for TX\n",
 			    sc->sc_dev.dv_xname);
@@ -1106,6 +1104,7 @@ re_tx_list_init(struct rtk_softc *sc)
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	sc->re_ldata.re_txq_prodidx = 0;
 	sc->re_ldata.re_txq_considx = 0;
+	sc->re_ldata.re_txq_free = RE_TX_QLEN;
 	sc->re_ldata.re_tx_free = RE_TX_DESC_CNT(sc);
 	sc->re_ldata.re_tx_nextfree = 0;
 
@@ -1305,17 +1304,14 @@ re_txeof(struct rtk_softc *sc)
 	struct re_txq		*txq;
 	uint32_t		txstat;
 	int			idx, descidx;
-	boolean_t		done = FALSE;
 
 	ifp = &sc->ethercom.ec_if;
 
-	for (idx = sc->re_ldata.re_txq_considx;; idx = RE_NEXT_TXQ(sc, idx)) {
+	for (idx = sc->re_ldata.re_txq_considx;
+	    sc->re_ldata.re_txq_free < RE_TX_QLEN;
+	    idx = RE_NEXT_TXQ(sc, idx), sc->re_ldata.re_txq_free++) {
 		txq = &sc->re_ldata.re_txq[idx];
-
-		if (txq->txq_mbuf == NULL) {
-			KASSERT(idx == sc->re_ldata.re_txq_prodidx);
-			break;
-		}
+		KASSERT(txq->txq_mbuf != NULL);
 
 		descidx = txq->txq_descidx;
 		RE_TXDESCSYNC(sc, descidx,
@@ -1342,14 +1338,12 @@ re_txeof(struct rtk_softc *sc)
 			ifp->if_oerrors++;
 		else
 			ifp->if_opackets++;
-
-		done = TRUE;
 	}
 
-	if (done) {
-		sc->re_ldata.re_txq_considx = idx;
+	sc->re_ldata.re_txq_considx = idx;
+
+	if (sc->re_ldata.re_txq_free > 0)
 		ifp->if_flags &= ~IFF_OACTIVE;
-	}
 
 	/*
 	 * If not all descriptors have been released reaped yet,
@@ -1357,7 +1351,7 @@ re_txeof(struct rtk_softc *sc)
 	 * interrupt that will cause us to re-enter this routine.
 	 * This is done in case the transmitter has gone idle.
 	 */
-	if (sc->re_ldata.re_tx_free < RE_TX_DESC_CNT(sc))
+	if (sc->re_ldata.re_txq_free < RE_TX_QLEN)
 		CSR_WRITE_4(sc, RTK_TIMERCNT, 1);
 	else
 		ifp->if_timer = 0;
@@ -1502,171 +1496,7 @@ re_intr(void *arg)
 	return handled;
 }
 
-static int
-re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
-{
-	bus_dmamap_t		map;
-	int			error, seg, uidx, startidx, curidx, lastidx;
-#ifdef RE_VLAN
-	struct m_tag		*mtag;
-#endif
-	struct re_desc		*d;
-	uint32_t		cmdstat, re_flags;
-	struct re_txq		*txq;
 
-	if (sc->re_ldata.re_tx_free <= 4) {
-		return EFBIG;
-	}
-
-	/*
-	 * Set up checksum offload. Note: checksum offload bits must
-	 * appear in all descriptors of a multi-descriptor transmit
-	 * attempt. (This is according to testing done with an 8169
-	 * chip. I'm not sure if this is a requirement or a bug.)
-	 */
-
-	if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
-		uint32_t segsz = m->m_pkthdr.segsz;
-
-		re_flags = RE_TDESC_CMD_LGSEND |
-		    (segsz << RE_TDESC_CMD_MSSVAL_SHIFT);
-	} else {
-
-		/*
-		 * set RE_TDESC_CMD_IPCSUM if any checksum offloading
-		 * is requested.  otherwise, RE_TDESC_CMD_TCPCSUM/
-		 * RE_TDESC_CMD_UDPCSUM doesn't make effects.
-		 */
-
-		re_flags = 0;
-		if ((m->m_pkthdr.csum_flags &
-		    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
-			re_flags |= RE_TDESC_CMD_IPCSUM;
-			if (m->m_pkthdr.csum_flags & M_CSUM_TCPv4) {
-				re_flags |= RE_TDESC_CMD_TCPCSUM;
-			} else if (m->m_pkthdr.csum_flags & M_CSUM_UDPv4) {
-				re_flags |= RE_TDESC_CMD_UDPCSUM;
-			}
-		}
-	}
-
-	txq = &sc->re_ldata.re_txq[*idx];
-	map = txq->txq_dmamap;
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
-	    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
-
-	if (error) {
-		/* XXX try to defrag if EFBIG? */
-
-		aprint_error("%s: can't map mbuf (error %d)\n",
-		    sc->sc_dev.dv_xname, error);
-
-		return error;
-	}
-
-	if (map->dm_nsegs > sc->re_ldata.re_tx_free - 4) {
-		error = EFBIG;
-		goto fail_unload;
-	}
-
-	/*
-	 * Make sure that the caches are synchronized before we
-	 * ask the chip to start DMA for the packet data.
-	 */
-	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-
-	/*
-	 * Map the segment array into descriptors. Note that we set the
-	 * start-of-frame and end-of-frame markers for either TX or RX, but
-	 * they really only have meaning in the TX case. (In the RX case,
-	 * it's the chip that tells us where packets begin and end.)
-	 * We also keep track of the end of the ring and set the
-	 * end-of-ring bits as needed, and we set the ownership bits
-	 * in all except the very first descriptor. (The caller will
-	 * set this descriptor later when it start transmission or
-	 * reception.)
-	 */
-	curidx = startidx = sc->re_ldata.re_tx_nextfree;
-	lastidx = -1;
-	for (seg = 0; seg < map->dm_nsegs;
-	    seg++, curidx = RE_NEXT_TX_DESC(sc, curidx)) {
-		d = &sc->re_ldata.re_tx_list[curidx];
-		RE_TXDESCSYNC(sc, curidx,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		cmdstat = le32toh(d->re_cmdstat);
-		RE_TXDESCSYNC(sc, curidx, BUS_DMASYNC_PREREAD);
-		if (cmdstat & RE_TDESC_STAT_OWN) {
-			aprint_error("%s: tried to map busy TX descriptor\n",
-			    sc->sc_dev.dv_xname);
-			for (; seg > 0; seg--) {
-				uidx = (curidx + RE_TX_DESC_CNT(sc) - seg) %
-				    RE_TX_DESC_CNT(sc);
-				sc->re_ldata.re_tx_list[uidx].re_cmdstat = 0;
-				RE_TXDESCSYNC(sc, uidx,
-				    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-			}
-			error = ENOBUFS;
-			goto fail_unload;
-		}
-
-		cmdstat = map->dm_segs[seg].ds_len;
-		if (seg == 0)
-			cmdstat |= RE_TDESC_CMD_SOF;
-		else
-			cmdstat |= RE_TDESC_CMD_OWN;
-		if (seg == map->dm_nsegs - 1) {
-			cmdstat |= RE_TDESC_CMD_EOF;
-			lastidx = curidx;
-		}
-		if (curidx == (RE_TX_DESC_CNT(sc) - 1))
-			cmdstat |= RE_TDESC_CMD_EOR;
-		d->re_cmdstat = htole32(cmdstat | re_flags);
-		d->re_bufaddr_lo =
-		    htole32(RE_ADDR_LO(map->dm_segs[seg].ds_addr));
-		d->re_bufaddr_hi =
-		    htole32(RE_ADDR_HI(map->dm_segs[seg].ds_addr));
-		RE_TXDESCSYNC(sc, curidx,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	}
-	KASSERT(lastidx != -1);
-
-	/*
-	 * Set up hardware VLAN tagging. Note: vlan tag info must
-	 * appear in the first descriptor of a multi-descriptor
-	 * transmission attempt.
-	 */
-
-#ifdef RE_VLAN
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m)) != NULL) {
-		sc->re_ldata.re_tx_list[startidx].re_vlanctl =
-		    htole32(htons(VLAN_TAG_VALUE(mtag)) |
-		    RE_TDESC_VLANCTL_TAG);
-	}
-#endif
-
-	/* Transfer ownership of packet to the chip. */
-
-	sc->re_ldata.re_tx_list[startidx].re_cmdstat |=
-	    htole32(RE_TDESC_CMD_OWN);
-	RE_TXDESCSYNC(sc, startidx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-
-	/* update info of TX queue and descriptors */
-	txq->txq_mbuf = m;
-	txq->txq_descidx = lastidx;
-
-	sc->re_ldata.re_tx_free -= map->dm_nsegs;
-	sc->re_ldata.re_tx_nextfree = curidx;
-
-	*idx = RE_NEXT_TXQ(sc, *idx);
-
-	return 0;
-
- fail_unload:
-	bus_dmamap_unload(sc->sc_dmat, map);
-
-	return error;
-}
 
 /*
  * Main transmit routine for C+ and gigE NICs.
@@ -1676,40 +1506,178 @@ static void
 re_start(struct ifnet *ifp)
 {
 	struct rtk_softc	*sc;
-	int			idx;
-	boolean_t		done = FALSE;
+	struct mbuf		*m;
+	bus_dmamap_t		map;
+	struct re_txq		*txq;
+	struct re_desc		*d;
+#ifdef RE_VLAN
+	struct m_tag		*mtag;
+#endif
+	uint32_t		cmdstat, re_flags;
+	int			ofree, idx, error, seg;
+	int			startdesc, curdesc, lastdesc;
 
 	sc = ifp->if_softc;
+	ofree = sc->re_ldata.re_txq_free;
 
-	idx = sc->re_ldata.re_txq_prodidx;
-	for (;;) {
-		struct mbuf *m;
-		int error;
+	for (idx = sc->re_ldata.re_txq_prodidx;; idx = RE_NEXT_TXQ(sc, idx)) {
 
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
-		if (sc->re_ldata.re_txq[idx].txq_mbuf != NULL) {
-			KASSERT(idx == sc->re_ldata.re_txq_considx);
+		if (sc->re_ldata.re_txq_free == 0 ||
+		    sc->re_ldata.re_tx_free <= RE_NTXDESC_RSVD) {
+			/* no more free slots left */
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
-		error = re_encap(sc, m, &idx);
-		if (error == EFBIG &&
-		    sc->re_ldata.re_tx_free == RE_TX_DESC_CNT(sc)) {
+		/*
+		 * Set up checksum offload. Note: checksum offload bits must
+		 * appear in all descriptors of a multi-descriptor transmit
+		 * attempt. (This is according to testing done with an 8169
+		 * chip. I'm not sure if this is a requirement or a bug.)
+		 */
+
+		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
+			uint32_t segsz = m->m_pkthdr.segsz;
+
+			re_flags = RE_TDESC_CMD_LGSEND |
+			    (segsz << RE_TDESC_CMD_MSSVAL_SHIFT);
+		} else {
+			/*
+			 * set RE_TDESC_CMD_IPCSUM if any checksum offloading
+			 * is requested.  otherwise, RE_TDESC_CMD_TCPCSUM/
+			 * RE_TDESC_CMD_UDPCSUM doesn't make effects.
+			 */
+			re_flags = 0;
+			if ((m->m_pkthdr.csum_flags &
+			    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4))
+			    != 0) {
+				re_flags |= RE_TDESC_CMD_IPCSUM;
+				if (m->m_pkthdr.csum_flags & M_CSUM_TCPv4) {
+					re_flags |= RE_TDESC_CMD_TCPCSUM;
+				} else if (m->m_pkthdr.csum_flags &
+				    M_CSUM_UDPv4) {
+					re_flags |= RE_TDESC_CMD_UDPCSUM;
+				}
+			}
+		}
+
+		txq = &sc->re_ldata.re_txq[idx];
+		map = txq->txq_dmamap;
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+		    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+
+		if (error) {
+			/* XXX try to defrag if EFBIG? */
+			aprint_error("%s: can't map mbuf (error %d)\n",
+			    sc->sc_dev.dv_xname, error);
+
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 			m_freem(m);
 			ifp->if_oerrors++;
 			continue;
 		}
-		if (error) {
+
+		if (map->dm_nsegs > sc->re_ldata.re_tx_free - RE_NTXDESC_RSVD) {
+			/*
+			 * Not enough free descriptors to transmit this packet.
+			 */
 			ifp->if_flags |= IFF_OACTIVE;
+			bus_dmamap_unload(sc->sc_dmat, map);
 			break;
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
+
+		/*
+		 * Make sure that the caches are synchronized before we
+		 * ask the chip to start DMA for the packet data.
+		 */
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+		/*
+		 * Map the segment array into descriptors.
+		 * Note that we set the start-of-frame and
+		 * end-of-frame markers for either TX or RX,
+		 * but they really only have meaning in the TX case.
+		 * (In the RX case, it's the chip that tells us
+		 *  where packets begin and end.)
+		 * We also keep track of the end of the ring
+		 * and set the end-of-ring bits as needed,
+		 * and we set the ownership bits in all except
+		 * the very first descriptor. (The caller will
+		 * set this descriptor later when it start
+		 * transmission or reception.)
+		 */
+		curdesc = startdesc = sc->re_ldata.re_tx_nextfree;
+		lastdesc = -1;
+		for (seg = 0; seg < map->dm_nsegs;
+		    seg++, curdesc = RE_NEXT_TX_DESC(sc, curdesc)) {
+			d = &sc->re_ldata.re_tx_list[curdesc];
+#ifdef DIAGNISTIC
+			RE_TXDESCSYNC(sc, curdesc,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+			cmdstat = le32toh(d->re_cmdstat);
+			RE_TXDESCSYNC(sc, curdesc, BUS_DMASYNC_PREREAD);
+			if (cmdstat & RE_TDESC_STAT_OWN) {
+				panic("%s: tried to map busy TX descriptor",
+				    sc->sc_dev.dv_xname);
+			}
+#endif
+
+			d->re_bufaddr_lo =
+			    htole32(RE_ADDR_LO(map->dm_segs[seg].ds_addr));
+			d->re_bufaddr_hi =
+			    htole32(RE_ADDR_HI(map->dm_segs[seg].ds_addr));
+			cmdstat = re_flags | map->dm_segs[seg].ds_len;
+			if (seg == 0)
+				cmdstat |= RE_TDESC_CMD_SOF;
+			else
+				cmdstat |= RE_TDESC_CMD_OWN;
+			if (curdesc == (RE_TX_DESC_CNT(sc) - 1))
+				cmdstat |= RE_TDESC_CMD_EOR;
+			if (seg == map->dm_nsegs - 1) {
+				cmdstat |= RE_TDESC_CMD_EOF;
+				lastdesc = curdesc;
+			}
+			d->re_cmdstat = htole32(cmdstat);
+			RE_TXDESCSYNC(sc, curdesc,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		}
+		KASSERT(lastdesc != -1);
+
+		/*
+		 * Set up hardware VLAN tagging. Note: vlan tag info must
+		 * appear in the first descriptor of a multi-descriptor
+		 * transmission attempt.
+		 */
+
+#ifdef RE_VLAN
+		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m)) != NULL) {
+			sc->re_ldata.re_tx_list[startdesc].re_vlanctl =
+			    htole32(htons(VLAN_TAG_VALUE(mtag)) |
+			    RE_TDESC_VLANCTL_TAG);
+		}
+#endif
+
+		/* Transfer ownership of packet to the chip. */
+
+		sc->re_ldata.re_tx_list[startdesc].re_cmdstat |=
+		    htole32(RE_TDESC_CMD_OWN);
+		RE_TXDESCSYNC(sc, startdesc,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		/* update info of TX queue and descriptors */
+		txq->txq_mbuf = m;
+		txq->txq_descidx = lastdesc;
+
+		sc->re_ldata.re_txq_free--;
+		sc->re_ldata.re_tx_free -= map->dm_nsegs;
+		sc->re_ldata.re_tx_nextfree = curdesc;
 
 #if NBPFILTER > 0
 		/*
@@ -1719,39 +1687,40 @@ re_start(struct ifnet *ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-
-		done = TRUE;
 	}
 
-	if (!done) {
-		return;
+	if (sc->re_ldata.re_txq_free < ofree) {
+		/*
+		 * TX packets are enqueued.
+		 */
+		sc->re_ldata.re_txq_prodidx = idx;
+
+		/*
+		 * Start the transmitter to poll.
+		 *
+		 * RealTek put the TX poll request register in a different
+		 * location on the 8169 gigE chip. I don't know why.
+		 */
+		if (sc->rtk_type == RTK_8169)
+			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
+		else
+			CSR_WRITE_1(sc, RTK_TXSTART, RTK_TXSTART_START);
+
+		/*
+		 * Use the countdown timer for interrupt moderation.
+		 * 'TX done' interrupts are disabled. Instead, we reset the
+		 * countdown timer, which will begin counting until it hits
+		 * the value in the TIMERINT register, and then trigger an
+		 * interrupt. Each time we write to the TIMERCNT register,
+		 * the timer count is reset to 0.
+		 */
+		CSR_WRITE_4(sc, RTK_TIMERCNT, 1);
+
+		/*
+		 * Set a timeout in case the chip goes out to lunch.
+		 */
+		ifp->if_timer = 5;
 	}
-	sc->re_ldata.re_txq_prodidx = idx;
-
-	/*
-	 * RealTek put the TX poll request register in a different
-	 * location on the 8169 gigE chip. I don't know why.
-	 */
-
-	if (sc->rtk_type == RTK_8169)
-		CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
-	else
-		CSR_WRITE_1(sc, RTK_TXSTART, RTK_TXSTART_START);
-
-	/*
-	 * Use the countdown timer for interrupt moderation.
-	 * 'TX done' interrupts are disabled. Instead, we reset the
-	 * countdown timer, which will begin counting until it hits
-	 * the value in the TIMERINT register, and then trigger an
-	 * interrupt. Each time we write to the TIMERCNT register,
-	 * the timer count is reset to 0.
-	 */
-	CSR_WRITE_4(sc, RTK_TIMERCNT, 1);
-
-	/*
-	 * Set a timeout in case the chip goes out to lunch.
-	 */
-	ifp->if_timer = 5;
 }
 
 static int
