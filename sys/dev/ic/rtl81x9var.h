@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.33 2006/11/11 13:41:06 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.34 2006/11/12 03:09:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -137,6 +137,8 @@ struct rtk_mii_frame {
 #define RE_TX_DESC_CNT_8169	1024
 #define RE_TX_QLEN		64
 
+#define RE_NTXDESC_RSVD		4
+
 struct re_rxsoft {
 	struct mbuf		*rxs_mbuf;
 	bus_dmamap_t		rxs_dmamap;
@@ -152,6 +154,7 @@ struct re_list_data {
 	struct re_txq		re_txq[RE_TX_QLEN];
 	int			re_txq_considx;
 	int			re_txq_prodidx;
+	int			re_txq_free;
 
 	bus_dmamap_t		re_tx_list_map;
 	struct re_desc		*re_tx_list;
