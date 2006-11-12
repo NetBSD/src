@@ -11,5 +11,5 @@ sshd:*:16:16::0:0:& pseudo-user:/var/chroot/sshd:/sbin/nologin
 _pflogd:*:18:18::0:0:& pseudo-user:/var/chroot/pflogd:/sbin/nologin
 _rwhod:*:19:19::0:0:& pseudo-user:/var/rwho:/sbin/nologin
 _proxy:*:21:21::0:0:Proxy Services:/nonexistent:/sbin/nologin
-uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/usr/libexec/uucp/uucico
+uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/nonexistent:/sbin/nologin
 nobody:*:32767:39::0:0:Unprivileged user:/nonexistent:/sbin/nologin

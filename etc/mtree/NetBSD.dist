@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.327 2006/11/08 22:43:34 christos Exp $
+#	$NetBSD: NetBSD.dist,v 1.328 2006/11/12 01:22:57 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -47,7 +47,6 @@
 ./etc/sliphome
 ./etc/ssh
 ./etc/systrace
-./etc/uucp
 ./lib
 ./libdata
 ./libdata/firmware
@@ -322,7 +321,6 @@
 ./usr/libdata/debug/usr/libexec/ching
 ./usr/libdata/debug/usr/libexec/lpr
 ./usr/libdata/debug/usr/libexec/postfix
-./usr/libdata/debug/usr/libexec/uucp
 ./usr/libdata/debug/usr/sbin
 ./usr/libdata/firmware
 ./usr/libdata/lint
@@ -330,7 +328,6 @@
 ./usr/libexec/ching
 ./usr/libexec/lpr
 ./usr/libexec/postfix
-./usr/libexec/uucp
 ./usr/lkm
 ./usr/mdec
 ./usr/pkg			ignore optional
@@ -384,8 +381,6 @@
 ./usr/share/doc/smm/11.timedop
 ./usr/share/doc/smm/12.timed
 ./usr/share/doc/smm/13.amd
-./usr/share/doc/smm/14.uucpimpl
-./usr/share/doc/smm/15.uucpnet
 ./usr/share/doc/smm/16.security
 ./usr/share/doc/smm/17.password
 ./usr/share/doc/smm/18.net
@@ -1114,8 +1109,6 @@
 ./var/spool/postfix
 ./var/spool/postfix/etc
 ./var/spool/sockets		mode=0777
-./var/spool/uucp		uname=uucp gname=daemon
-./var/spool/uucppublic		uname=uucp gname=daemon mode=01777
 ./var/tmp			mode=01777
 ./var/tmp/vi.recover		mode=01777
 ./var/yp

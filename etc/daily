@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.67 2006/08/30 18:06:09 christos Exp $
+#	$NetBSD: daily,v 1.68 2006/11/12 01:22:57 christos Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -144,13 +144,6 @@ if checkyesno run_calendar; then
 	rm -f $TMP
 fi
 
-if checkyesno check_uucp && \
-    [ -d /var/spool/uucp -a -f /usr/libexec/uucp/clean.daily ]; then
-	echo ""
-	echo "Cleaning up UUCP:"
-	su daemon -c /usr/libexec/uucp/clean.daily
-fi
-
 if checkyesno check_disks; then
 	if checkyesno show_remote_fs; then
 		df -hi -t nokernfs,procfs,null,fdesc > $TMP
@@ -197,17 +190,6 @@ if checkyesno check_mailq; then
 	if ! grep -q "queue is empty$" $TMP; then
 		echo ""
 		echo "mail:"
-		cat $TMP
-	fi
-fi
-
-rm -f $TMP
-
-if checkyesno check_uucp && [ -d /var/spool/uucp -a -x /usr/bin/uustat ]; then
-	(cd /tmp; su -m uucp -c "uustat -a") > $TMP
-	if [ -s $TMP ]; then
-		echo ""
-		echo "uucp:"
 		cat $TMP
 	fi
 fi
