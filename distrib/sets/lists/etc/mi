@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.182 2006/10/07 16:50:34 rpaulo Exp $
+# $NetBSD: mi,v 1.183 2006/11/12 01:24:52 christos Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -119,7 +119,7 @@
 ./etc/passwd.conf				etc-sys-etc
 ./etc/pf.conf					etc-pf-etc		pf
 ./etc/pf.os					etc-pf-etc		pf
-./etc/phones					etc-uucp-etc
+./etc/phones					etc-obsolete		obsolete
 ./etc/postfix/README				etc-postfix-etc		postfix
 ./etc/postfix/main.cf				etc-postfix-etc		postfix
 ./etc/postfix/master.cf				etc-postfix-etc		postfix
@@ -262,7 +262,7 @@
 ./etc/rc.subr					etc-sys-rc
 ./etc/rc.wscons					etc-obsolete		obsolete
 ./etc/release-info				etc-obsolete		obsolete
-./etc/remote					etc-uucp-etc
+./etc/remote					etc-sys-etc
 ./etc/rmt					etc-sysutil-etc
 ./etc/rpc					etc-net-etc
 ./etc/security					etc-sys-etc
