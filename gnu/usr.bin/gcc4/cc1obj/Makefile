@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/07/01 19:06:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2006/11/12 01:24:44 christos Exp $
 
 MYOBJS=		${G_OBJC_OBJS} ${G_C_AND_OBJC_OBJS} 
 PROG=		cc1obj
@@ -9,5 +9,7 @@ CPPFLAGS.prefix.c+=	-DPREFIX=\"/usr\"
 
 .include "../Makefile.backend"
 .include "../Makefile.libcpp"
+
+COPTS+=	-Wno-stack-protector
 
 .PATH: ${DIST}/gcc/objc ${DIST}/gcc ${G_out_file:H}
