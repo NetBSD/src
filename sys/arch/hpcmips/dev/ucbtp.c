@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.15 2005/12/11 12:17:33 christos Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.16 2006/11/12 19:00:42 plunky Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.15 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.16 2006/11/12 19:00:42 plunky Exp $");
 
 #include "opt_use_poll.h"
 
@@ -657,12 +657,12 @@ ucbtp_input(struct ucbtp_softc *sc)
 		if (sc->sc_polling < UCBTS_TAP_THRESHOLD) {
 			DPRINTFN(2, ("TAP!\n"));
 			/* button 0 DOWN */
-			wsmouse_input(sc->sc_wsmousedev, 1, 0, 0, 0, 0);
+			wsmouse_input(sc->sc_wsmousedev, 1, 0, 0, 0, 0, 0);
 			/* button 0 UP */
-			wsmouse_input(sc->sc_wsmousedev, 0, 0, 0, 0, 0);
+			wsmouse_input(sc->sc_wsmousedev, 0, 0, 0, 0, 0, 0);
 		} else {
 			wsmouse_input(sc->sc_wsmousedev, 0, 
-			    sc->sc_ox, sc->sc_oy, 0, 
+			    sc->sc_ox, sc->sc_oy, 0, 0, 
 			    WSMOUSE_INPUT_ABSOLUTE_X |
 			    WSMOUSE_INPUT_ABSOLUTE_Y);
 
@@ -692,7 +692,7 @@ ucbtp_input(struct ucbtp_softc *sc)
 
 	sc->sc_ox = x, sc->sc_oy = y;
 
-	wsmouse_input(sc->sc_wsmousedev, 1, x, y, 0, 
+	wsmouse_input(sc->sc_wsmousedev, 1, x, y, 0, 0,
 	    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
 	
 	return (0);

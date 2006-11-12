@@ -1,4 +1,4 @@
-/*	$NetBSD: j720tp.c,v 1.3 2006/10/07 14:09:07 peter Exp $	*/
+/*	$NetBSD: j720tp.c,v 1.4 2006/11/12 19:00:42 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Jornada 720 touch-panel driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.3 2006/10/07 14:09:07 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.4 2006/11/12 19:00:42 plunky Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_j720tp.h"
@@ -486,7 +486,7 @@ j720tp_wsmouse_input(struct j720tp_softc *sc, int rawx, int rawy)
 	int x, y;
 
 	tpcalib_trans(&sc->sc_tpcalib, rawx, rawy, &x, &y);
-	wsmouse_input(sc->sc_wsmousedev, 1, x, y, 0,
+	wsmouse_input(sc->sc_wsmousedev, 1, x, y, 0, 0,
 	    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
 }
 
@@ -506,7 +506,7 @@ j720tp_wsmouse_callout(void *arg)
 	}
 
 	if (bus_space_read_4(ssp->sc_iot, ssp->sc_gpioh, SAGPIO_PLR) & (1<<9)) {
-		wsmouse_input(sc->sc_wsmousedev, 0, 0, 0, 0, 0);
+		wsmouse_input(sc->sc_wsmousedev, 0, 0, 0, 0, 0, 0);
 		j720tp_enable_intr(sc);
 	} else {
 		if (j720tp_get_rawxy(sc, &rawx, &rawy))

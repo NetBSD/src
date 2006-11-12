@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.33 2006/10/15 21:01:03 martin Exp $	*/
+/*	$NetBSD: ms.c,v 1.34 2006/11/12 19:00:43 plunky Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.33 2006/10/15 21:01:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.34 2006/11/12 19:00:43 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,8 +327,9 @@ ms_input(ms, c)
 			(ms->ms_mb & 2) |
 			((ms->ms_mb & 1) << 2);
 		wsmouse_input(ms->ms_wsmousedev,
-			      mb, ms->ms_dx, ms->ms_dy, 0,
-			      WSMOUSE_INPUT_DELTA);
+				mb,
+				ms->ms_dx, ms->ms_dy, 0, 0,
+				WSMOUSE_INPUT_DELTA);
 		ms->ms_dx = 0;
 		ms->ms_dy = 0;
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: btms.c,v 1.3 2006/10/31 19:17:04 plunky Exp $	*/
+/*	$NetBSD: btms.c,v 1.4 2006/11/12 19:00:43 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.3 2006/10/31 19:17:04 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.4 2006/11/12 19:00:43 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -344,9 +344,10 @@ btms_input(struct bthidev *self, uint8_t *data, int len __unused)
 		sc->sc_buttons = buttons;
 
 		s = spltty();
-		wsmouse_input_xyzw(sc->sc_wsmouse, buttons,
-				   dx, dy, dz, dw,
-				   WSMOUSE_INPUT_DELTA);
+		wsmouse_input(sc->sc_wsmouse,
+				buttons,
+				dx, dy, dz, dw,
+				WSMOUSE_INPUT_DELTA);
 		splx(s);
 	}
 }
