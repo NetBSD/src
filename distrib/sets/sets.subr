@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.53 2006/07/23 11:41:24 lukem Exp $
+#	$NetBSD: sets.subr,v 1.54 2006/11/12 02:43:39 christos Exp $
 #
 
 #
@@ -218,7 +218,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.53 2006/07/23 11:41:24 lukem Exp $
+# 	# $NetBSD: sets.subr,v 1.54 2006/11/12 02:43:39 christos Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -267,7 +267,6 @@ fi
 #	sendmail		${MKSENDMAIL} != no
 #	share			${MKSHARE} != no
 #	skey			${MKSKEY} != no
-#	uucp			${MKUUCP} != no
 #	yp			${MKYP} != no
 #
 #	gcc=<n>			<n> = value of ${HAVE_GCC}
