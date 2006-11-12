@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mountcritlocal,v 1.8 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: mountcritlocal,v 1.9 2006/11/12 01:22:58 christos Exp $
 #
 
 # PROVIDE: mountcritlocal
@@ -23,7 +23,7 @@ mountcritlocal_start()
 	#	clean up left-over files.
 	#	this could include the cleanup of lock files and /var/run, etc.
 	#
-	rm -f /etc/nologin /var/spool/lock/LCK.* /var/spool/uucp/STST/*
+	rm -f /etc/nologin /var/spool/lock/LCK.*
 	(cd /var/run && rm -rf -- *)
 }
 
