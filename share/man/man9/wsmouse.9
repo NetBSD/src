@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsmouse.9,v 1.12 2005/12/20 19:53:15 rpaulo Exp $
+.\"     $NetBSD: wsmouse.9,v 1.13 2006/11/12 19:00:42 plunky Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,7 +47,7 @@
 .In dev/wscons/wsmousevar.h
 .Ft void
 .Fn wsmouse_input "struct device *msdev" "u_int btns" \
-"int x" "int y" "int z" "u_int flags"
+"int x" "int y" "int z" "int w" "u_int flags"
 .Ft int
 .Fn wsmousedevprint "void *aux" "const char *pnp"
 .Sh DESCRIPTION
@@ -105,7 +105,7 @@ It has the following members:
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn wsmouse_input "msdev" "btns" "x" "y" "z" "flags"
+.It Fn wsmouse_input "msdev" "btns" "x" "y" "z" "w" "flags"
 Callback from the mouse driver to the wsmouse interface driver.
 Arguments are as follows:
 .Bl -tag -width msdev -compact
@@ -142,13 +142,17 @@ Note that this aspect is opposite from the one used in the X server dix layer.
 Absolute or relative Z-axis value to specify the pointer coordinate.
 Usually this axis is used for the wheel.
 Downward (turning the wheel backward) is positive.
+.It Fa w
+Absolute or relative W-axis value to specify the pointer coordinate.
+Usually this axis would be used for the horizontal component of the wheel.
 .It Fa flags
 This argument specifies whether the pointer device and the measurement
 of the
 .Fa x ,
 .Fa y ,
+.Fa z ,
 and
-.Fa z
+.Fa w
 axes is in relative or absolute mode.
 Valid values for
 .Fa flags
@@ -167,6 +171,10 @@ axis.
 .It WSMOUSE_INPUT_ABSOLUTE_Z
 Absolute mode in
 .Fa z
+axis.
+.It WSMOUSE_INPUT_ABSOLUTE_W
+Absolute mode in
+.Fa w
 axis.
 .El
 .El

@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.4 2006/10/12 01:31:01 christos Exp $	*/
+/*	$NetBSD: spic.c,v 1.5 2006/11/12 19:00:43 plunky Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.4 2006/10/12 01:31:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.5 2006/11/12 19:00:43 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ spic_intr(void *v) {
 #endif
 		sc->sc_buttons = buttons;
 		if (sc->sc_wsmousedev != NULL) {
-			wsmouse_input(sc->sc_wsmousedev, buttons, 0, 0, dz,
+			wsmouse_input(sc->sc_wsmousedev, buttons, 0, 0, dz, 0,
 				      WSMOUSE_INPUT_DELTA);
 		}
 	}

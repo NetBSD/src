@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.14 2006/10/12 01:31:49 christos Exp $ */
+/* $NetBSD: pms.c,v 1.15 2006/11/12 19:00:43 plunky Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.14 2006/10/12 01:31:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.15 2006/11/12 19:00:43 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -640,7 +640,7 @@ pmsinput(void *vsc, int data)
 			    "buttons 0x%02x\n",	dx, dy, dz, sc->buttons));
 #endif
 			wsmouse_input(sc->sc_wsmousedev,
-			    sc->buttons, dx, dy, dz,
+			    sc->buttons, dx, dy, dz, 0,
 			    WSMOUSE_INPUT_DELTA);
 		}
 		memset(sc->packet, 0, 4);

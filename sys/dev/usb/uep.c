@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.6 2006/09/03 07:13:46 christos Exp $	*/
+/*	$NetBSD: uep.c,v 1.7 2006/11/12 19:00:43 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.6 2006/09/03 07:13:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.7 2006/11/12 19:00:43 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,7 +415,7 @@ uep_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		tpcalib_trans(&sc->sc_tpcalib, x, y, &x, &y);
 
 		s = spltty();
-		wsmouse_input(sc->sc_wsmousedev, p[0] & 0x01, x, y, 0,
+		wsmouse_input(sc->sc_wsmousedev, p[0] & 0x01, x, y, 0, 0,
 			WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
 		splx(s);
 	}

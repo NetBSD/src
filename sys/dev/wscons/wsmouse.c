@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.48 2006/10/12 01:32:06 christos Exp $ */
+/* $NetBSD: wsmouse.c,v 1.49 2006/11/12 19:00:43 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.48 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.49 2006/11/12 19:00:43 plunky Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -341,7 +341,7 @@ wsmouse_detach(struct device  *self, int flags __unused)
 }
 
 void
-wsmouse_input_xyzw(struct device *wsmousedev, u_int btns /* 0 is up */,
+wsmouse_input(struct device *wsmousedev, u_int btns /* 0 is up */,
 	int x, int y, int z, int w, u_int flags)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)wsmousedev;
