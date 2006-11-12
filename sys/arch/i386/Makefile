@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2006/02/26 03:08:02 dyoung Exp $
+#	$NetBSD: Makefile,v 1.28 2006/11/12 22:44:00 dyoung Exp $
 
 # Makefile for i386 tags file and boot blocks
 
@@ -6,12 +6,13 @@ TI386=	${SYSDIR}/arch/i386/tags
 SI386=	${SYSDIR}/arch/i386/i386/*.[ch] ${SYSDIR}/arch/i386/include/*.h \
 	${SYSDIR}/arch/i386/eisa/*.[ch] ${SYSDIR}/arch/i386/isa/*.[ch] \
 	${SYSDIR}/arch/i386/pci/*.[ch] \
-	${SYSDIR}/contrib/arch/i386/dev/*.[ch] \
-	${SYSDIR}/contrib/dev/ic/*.[ch]
+	${SYSDIR}/contrib/dev/ath/*.[ch] \
+	${SYSDIR}/contrib/dev/ath/netbsd/*.[ch] \
+	${SYSDIR}/contrib/dev/ath/public/*.[ch]
 SI386+=	${SYSDIR}/arch/x86/x86/*.[ch] ${SYSDIR}/arch/x86/include/*.h \
 	${SYSDIR}/arch/x86/isa/*.[ch] \
 	${SYSDIR}/arch/x86/pci/*.[ch]
-AI386=	${SYSDIR}/arch/i386/i386/*.[sS] ${SYSDIR}/arch/i386/isa/*.[sS]
+AI386=	${SYSDIR}/arch/i386/i386/*.[sS]
 
 # Directories in which to place tags links
 DI386=	i386 eisa isa include pci
@@ -19,7 +20,7 @@ DI386=	i386 eisa isa include pci
 .include "../../kern/Make.tags.inc"
 
 tags:
-	rm -f ${TI386}
+	-rm -f ${TI386}
 	-echo ${SI386} ${COMM} | xargs ctags -wadtf ${TI386}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AI386} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
