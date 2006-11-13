@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.3 2006/11/09 13:11:52 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.4 2006/11/13 20:11:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -62,8 +62,6 @@ dtfs_mount(struct puffs_usermount *pu, void **rootcookie)
 	pn = puffs_newpnode(pu, dff, VDIR);
 	if (!pn)
 		errx(1, "puffs_newpnode");
-	/* not adddented, so compensate */
-	pn->pn_va.va_nlink = 2;
 
 	pu->pu_rootnode = pn;
 	*rootcookie = pn;
@@ -80,6 +78,9 @@ dtfs_start(struct puffs_usermount *pu)
 	dtm = pu->pu_privdata;
 	dtfs_baseattrs(&pu->pu_rootnode->pn_va, VDIR,pu->pu_fsidx.__fsid_val[0],
 	    dtm->dtm_nextfileid);
+	/* not adddented, so compensate */
+	pu->pu_rootnode->pn_va.va_nlink = 2;
+
 	dtm->dtm_nextfileid++;
 
 	return 0;
