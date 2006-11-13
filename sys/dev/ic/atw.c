@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.122 2006/10/12 01:31:00 christos Exp $  */
+/*	$NetBSD: atw.c,v 1.123 2006/11/13 03:35:59 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.122 2006/10/12 01:31:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.123 2006/11/13 03:35:59 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -414,7 +414,7 @@ atw_read_srom(struct atw_softc *sc)
 		sd.sd_chip = C46;
 		break;
 	default:
-		printf("%s: unknown SROM type %d\n",
+		printf("%s: unknown SROM type %" __PRIuBITS "\n",
 		    sc->sc_dev.dv_xname,
 		    __SHIFTOUT(test0, ATW_TEST0_EPTYP_MASK));
 		return -1;
@@ -3301,8 +3301,8 @@ atw_txintr(struct atw_softc *sc)
 		    (txstat & TXSTAT_ERRMASK) != 0) {
 			bitmask_snprintf(txstat & TXSTAT_ERRMASK, TXSTAT_FMT,
 			    txstat_buf, sizeof(txstat_buf));
-			printf("%s: txstat %s %d\n", sc->sc_dev.dv_xname,
-			    txstat_buf,
+			printf("%s: txstat %s %" __PRIuBITS "\n",
+			    sc->sc_dev.dv_xname, txstat_buf,
 			    __SHIFTOUT(txstat, ATW_TXSTAT_ARC_MASK));
 		}
 

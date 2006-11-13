@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.79 2006/10/12 07:43:39 xtraeme Exp $ */
+/* $NetBSD: rtw.c,v 1.80 2006/11/13 03:35:59 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.79 2006/10/12 07:43:39 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.80 2006/11/13 03:35:59 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1540,7 +1540,8 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr __unused)
 
 		hwrate = __SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK);
 		if (hwrate >= sizeof(ratetbl) / sizeof(ratetbl[0])) {
-			printf("%s: unknown rate #%d\n", sc->sc_dev.dv_xname,
+			printf("%s: unknown rate #%" __PRIuBITS "\n",
+			    sc->sc_dev.dv_xname,
 			    __SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK));
 			ifp->if_ierrors++;
 			goto next;
