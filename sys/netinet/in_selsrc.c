@@ -1,4 +1,4 @@
-/*	$NetBSD: in_selsrc.c,v 1.1 2006/11/13 05:13:42 dyoung Exp $	*/
+/*	$NetBSD: in_selsrc.c,v 1.2 2006/11/13 05:48:00 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.1 2006/11/13 05:13:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.2 2006/11/13 05:48:00 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -574,11 +574,14 @@ void
 in_domifdetach(struct ifnet *ifp __unused, void *aux)
 {
 	struct in_ifsysctl *isc;
+	struct in_ifselsrc *iss;
 
 	if (aux == NULL)
 		return;
 	isc = (struct in_ifsysctl *)aux;
+	iss = isc->isc_selsrc;
 	sysctl_teardown(&isc->isc_log);
 	free(isc, M_IFADDR);
+	free(iss, M_IFADDR);
 }
 #endif /* INET */
