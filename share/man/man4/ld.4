@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.4,v 1.13 2004/05/11 22:42:47 wiz Exp $
+.\"	$NetBSD: ld.4,v 1.14 2006/11/13 16:29:05 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,6 +47,7 @@
 .Cd "ld* at icp? unit ?"
 .Cd "ld* at iop? tid ?"
 .Cd "ld* at mlx? unit ?"
+.Cd "ld* at twa? unit ?"
 .Cd "ld* at twe? unit ?"
 .Cd "ld* at ataraid? vendtype ? unit ?"
 .Sh DESCRIPTION
@@ -75,22 +76,14 @@ partition
 .Xr intro 4 ,
 .Xr iop 4 ,
 .Xr mlx 4 ,
+.Xr twa 4 ,
 .Xr twe 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
 .Nx 1.5.3 .
-.Sh AUTHORS
-The
-.Nm
-driver was written by
-.An Andrew Doran
-.Aq ad@NetBSD.org .
 .Sh BUGS
-This driver is in reality a kludge intended to reduce code size and
-maintenance overheads.
-.Pp
 The capacity and geometry of units as accessed through the
 .Nm
 driver may be different than when accessed through some other
