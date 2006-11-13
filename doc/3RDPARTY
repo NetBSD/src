@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.483 2006/11/13 15:52:47 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.484 2006/11/13 22:31:05 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -602,7 +602,7 @@ markus is very cooperative about it):
 - always bump major when importing to avoid api problems.
 
 Package:	OpenSSL
-Version:	0.9.8a
+Version:	0.9.8d
 Current Vers:	0.9.8d
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
