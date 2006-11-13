@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.23 2006/11/05 19:36:07 jmmv Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.24 2006/11/13 11:47:37 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -295,7 +295,7 @@ LIST_HEAD(tmpfs_node_list, tmpfs_node);
 struct tmpfs_mount {
 	/* Maximum number of memory pages available for use by the file
 	 * system, set during mount time.  This variable must never be
-	 * used directly as it may be bigger that the current amount of
+	 * used directly as it may be bigger than the current amount of
 	 * free memory; in the extreme case, it will hold the SIZE_MAX
 	 * value.  Instead, use the TMPFS_PAGES_MAX macro. */
 	size_t			tm_pages_max;
