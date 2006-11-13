@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.177 2006/10/16 02:52:43 christos Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.178 2006/11/13 05:13:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.177 2006/10/16 02:52:43 christos Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.178 2006/11/13 05:13:39 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ struct	ifaliasreq	addreq __attribute__((aligned(4)));
 char	name[30];
 u_short	flags;
 int	setaddr, doalias;
-u_long	metric, mtu;
+u_long	metric, mtu, preference;
 int	clearaddr, s;
 int	newaddr = -1;
 int	conflicting = 0;
@@ -137,6 +137,7 @@ int	check_up_state = -1;
 int	af;
 int	aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag, vflag, zflag;
 int	hflag;
+int	have_preference = 0;
 #ifdef INET6
 int	Lflag;
 #endif
@@ -155,6 +156,7 @@ void	setifcaps(const char *, int);
 void 	setifbroadaddr(const char *, int);
 void 	setifipdst(const char *, int);
 void 	setifmetric(const char *, int);
+void	setifpreference(const char *, int);
 void 	setifmtu(const char *, int);
 void 	setifnetmask(const char *, int);
 void	setifprefixlen(const char *, int);
@@ -166,6 +168,7 @@ void	setmediainst(const char *, int);
 void	clone_create(const char *, int);
 void	clone_destroy(const char *, int);
 int	main(int, char *[]);
+void	do_setifpreference(void);
 
 /*
  * Media stuff.  Whenever a media command is first performed, the
@@ -233,6 +236,7 @@ const struct cmd {
 	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
 	{ "ipdst",	NEXTARG,	0,		setifipdst },
 	{ "prefixlen",	NEXTARG,	0,		setifprefixlen},
+	{ "preference",	NEXTARG,	0,		setifpreference},
 #ifndef INET_ONLY
 	/* CARP */
 	{ "advbase",	NEXTARG,	0,		setcarp_advbase },
@@ -623,6 +627,8 @@ main(int argc, char *argv[])
 			check_up_state = 1;
 	}
 
+	if (have_preference)
+		do_setifpreference();
 	if (g_ifcr_updated) {
 		strlcpy(g_ifcr.ifcr_name, name,
 		    sizeof(g_ifcr.ifcr_name));
@@ -964,6 +970,32 @@ setifmetric(const char *val, int d)
 		errx(EXIT_FAILURE, "%s: invalid metric", val);
 	if (ioctl(s, SIOCSIFMETRIC, &ifr) == -1)
 		warn("SIOCSIFMETRIC");
+}
+
+void
+setifpreference(const char *val, int d)
+{
+	char *end = NULL;
+	if (setaddr <= 0) {
+		errx(EXIT_FAILURE,
+		    "set address preference: first specify an address");
+	}
+	preference = strtoul(val, &end, 10);
+	if (end == NULL || *end != '\0' || preference > UINT16_MAX)
+		errx(EXIT_FAILURE, "invalid preference %s", val);
+	have_preference = 1;
+}
+
+void
+do_setifpreference(void)
+{
+	struct if_addrprefreq ifap;
+	(void)strncpy(ifap.ifap_name, name, sizeof(ifap.ifap_name));
+	ifap.ifap_preference = (uint16_t)preference;
+	(void)memcpy(&ifap.ifap_addr, rqtosa(af_addreq),
+	    MIN(sizeof(ifap.ifap_addr), rqtosa(af_addreq)->sa_len));
+	if (ioctl(s, SIOCSIFADDRPREF, &ifap) == -1)
+		warn("SIOCSIFADDRPREF");
 }
 
 void
@@ -1555,6 +1587,7 @@ usage(void)
 		"\t[ arp | -arp ]\n"
 		"\t[ media type ] [ mediaopt opts ] [ -mediaopt opts ] "
 		"[ instance minst ]\n"
+		"\t[ preference n ]\n"
 		"\t[ vlan n vlanif i ]\n"
 		"\t[ agrport i ] [ -agrport i ]\n"
 		"\t[ anycast | -anycast ] [ deprecated | -deprecated ]\n"

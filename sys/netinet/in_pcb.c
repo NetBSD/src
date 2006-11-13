@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.107 2006/10/12 01:32:37 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.108 2006/11/13 05:13:41 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.107 2006/10/12 01:32:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.108 2006/11/13 05:13:41 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -982,5 +982,13 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 			}
 		}
 	}
+	if (ia->ia_ifa.ifa_getifa != NULL) {
+		ia = ifatoia((*ia->ia_ifa.ifa_getifa)(&ia->ia_ifa,
+		                                      sintosa(sin)));
+	}
+#ifdef GETIFA_DEBUG
+	else
+		printf("%s: missing ifa_getifa\n", __func__);
+#endif
 	return satosin(&ia->ia_addr);
 }

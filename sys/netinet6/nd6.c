@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.105 2006/10/12 01:32:39 christos Exp $	*/
+/*	$NetBSD: nd6.c,v 1.106 2006/11/13 05:13:42 dyoung Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.105 2006/10/12 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.106 2006/11/13 05:13:42 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1327,11 +1327,8 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info __unused)
 				 * that the rt_ifa points to the address instead
 				 * of the loopback address.
 				 */
-				if (ifa != rt->rt_ifa) {
-					IFAFREE(rt->rt_ifa);
-					IFAREF(ifa);
-					rt->rt_ifa = ifa;
-				}
+				if (ifa != rt->rt_ifa)
+					rt_replace_ifa(rt, ifa);
 			}
 		} else if (rt->rt_flags & RTF_ANNOUNCE) {
 			nd6_llinfo_settimer(ln, -1);
