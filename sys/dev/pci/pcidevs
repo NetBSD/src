@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.849 2006/11/13 20:11:10 bouyer Exp $
+$NetBSD: pcidevs,v 1.850 2006/11/13 22:02:58 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2593,7 +2593,7 @@ product NETMOS NM9815	0x9815	Dual 1284 Printer port
 product NETMOS NM9820	0x9820	Single UART
 product NETMOS NM9835	0x9835	Dual UART and 1284 Printer port
 product NETMOS NM9845	0x9845	Quad UART and 1284 Printer port
-product NETMOS NM9845	0x9855	9855 Quad UART and 1284 Printer port
+product NETMOS NM9855	0x9855	9855 Quad UART and 1284 Printer port
 
 /* Network Security Technologies */
 product NETSEC 7751		0x7751	7751
