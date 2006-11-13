@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.2 2006/11/13 21:06:16 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.3 2006/11/13 21:09:16 pooka Exp $
 .\"
 .\" Copyright (c) 2006 Antti Kantee.  All rights reserved.
 .\"
@@ -505,6 +505,11 @@ first appeared in
 .Sh AUTHORS
 .An Antti Kantee Aq pooka@iki.fi
 .Sh BUGS
+struct puffs_node is of questionable content.
+Especially the use of
+.Va pn_va
+should be avoided.
+.Pp
 .Nm
 is lacking support for
 .Fn joulutorttu
