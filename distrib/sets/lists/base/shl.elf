@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.123 2006/11/08 20:52:02 christos Exp $
+# $NetBSD: shl.elf,v 1.124 2006/11/13 15:16:28 tnozaki Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
@@ -45,12 +45,16 @@
 ./usr/lib/i18n/libJOHAB.so.4			base-i18n-shlib
 ./usr/lib/i18n/libMSKanji.so			base-i18n-shlib
 ./usr/lib/i18n/libMSKanji.so.4			base-i18n-shlib
+./usr/lib/i18n/libUES.so			base-i18n-shlib
+./usr/lib/i18n/libUES.so.4			base-i18n-shlib
 ./usr/lib/i18n/libUTF1632.so			base-i18n-shlib
 ./usr/lib/i18n/libUTF1632.so.4			base-i18n-shlib
 ./usr/lib/i18n/libUTF7.so			base-i18n-shlib
 ./usr/lib/i18n/libUTF7.so.4			base-i18n-shlib
 ./usr/lib/i18n/libUTF8.so			base-i18n-shlib
 ./usr/lib/i18n/libUTF8.so.4			base-i18n-shlib
+./usr/lib/i18n/libVIQR.so			base-i18n-shlib
+./usr/lib/i18n/libVIQR.so.4			base-i18n-shlib
 ./usr/lib/i18n/libiconv_none.so			base-i18n-shlib
 ./usr/lib/i18n/libiconv_none.so.4		base-i18n-shlib
 ./usr/lib/i18n/libiconv_std.so			base-i18n-shlib
