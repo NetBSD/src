@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.113 2006/10/15 07:00:44 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.114 2006/11/13 05:13:42 dyoung Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.113 2006/10/15 07:00:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.114 2006/11/13 05:13:42 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -180,11 +180,8 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	 * ip6_input, we assume that the rt_ifa points to the address instead
 	 * of the loopback address.
 	 */
-	if (cmd == RTM_ADD && nrt && ifa != nrt->rt_ifa) {
-		IFAFREE(nrt->rt_ifa);
-		IFAREF(ifa);
-		nrt->rt_ifa = ifa;
-	}
+	if (cmd == RTM_ADD && nrt && ifa != nrt->rt_ifa)
+		rt_replace_ifa(nrt, ifa);
 
 	/*
 	 * Report the addition/removal of the address to the routing socket.

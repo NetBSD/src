@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.119 2006/08/30 16:41:08 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.120 2006/11/13 05:13:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ struct proc;
 struct rtentry;
 struct socket;
 struct ether_header;
+struct ifaddr;
 struct ifnet;
 struct rt_addrinfo;
 
@@ -459,6 +460,10 @@ struct ifaddr {
 	u_int	ifa_flags;		/* mostly rt_flags for cloning */
 	int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */
+	struct ifaddr	*(*ifa_getifa)(struct ifaddr *,
+			               const struct sockaddr *);
+	uint32_t	*ifa_seqno;
+	int16_t	ifa_preference;	/* preference level for this address */
 };
 #define	IFA_ROUTE	RTF_UP /* 0x01 *//* route installed */
 
@@ -621,6 +626,15 @@ struct if_laddrreq {
 	unsigned int prefixlen;		/* in/out */
 	struct sockaddr_storage addr;	/* in/out */
 	struct sockaddr_storage dstaddr; /* out */
+};
+
+/*
+ * Structure for SIOC[SG]IFADDRPREF
+ */
+struct if_addrprefreq {
+	char			ifap_name[IFNAMSIZ];
+	int16_t			ifap_preference;	/* in/out */
+	struct sockaddr_storage	ifap_addr;		/* in/out */
 };
 
 #include <net/if_arp.h>
