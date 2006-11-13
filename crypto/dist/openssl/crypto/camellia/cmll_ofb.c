@@ -1,18 +1,6 @@
-
-  LICENSE ISSUES
-  ==============
-
-  The OpenSSL toolkit stays under a dual license, i.e. both the conditions of
-  the OpenSSL License and the original SSLeay license apply to the toolkit.
-  See below for the actual license texts. Actually both licenses are BSD-style
-  Open Source licenses. In case of any license issues related to OpenSSL
-  please contact openssl-core@openssl.org.
-
-  OpenSSL License
-  ---------------
-
+/* crypto/camellia/camellia_ofb.c -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -59,15 +47,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
  */
-
- Original SSLeay License
- -----------------------
-
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,3 +105,37 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef CAMELLIA_DEBUG
+# ifndef NDEBUG
+#  define NDEBUG
+# endif
+#endif
+#include <assert.h>
+#include <openssl/camellia.h>
+#include "cmll_locl.h"
+
+/* The input and output encrypted as though 128bit ofb mode is being
+ * used.  The extra state information to record how much of the
+ * 128bit block we have used is contained in *num;
+ */
+void Camellia_ofb128_encrypt(const unsigned char *in, unsigned char *out,
+	const unsigned long length, const CAMELLIA_KEY *key,
+	unsigned char *ivec, int *num) {
+
+	unsigned int n;
+	unsigned long l=length;
+
+	assert(in && out && key && ivec && num);
+
+	n = *num;
+
+	while (l--) {
+		if (n == 0) {
+			Camellia_encrypt(ivec, ivec, key);
+		}
+		*(out++) = *(in++) ^ ivec[n];
+		n = (n+1) % CAMELLIA_BLOCK_SIZE;
+	}
+
+	*num=n;
+}
