@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.175 2006/10/27 15:33:11 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.176 2006/11/13 05:13:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.175 2006/10/27 15:33:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.176 2006/11/13 05:13:40 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -1089,8 +1089,7 @@ ifaof_ifpforaddr(const struct sockaddr *addr, struct ifnet *ifp)
 	if (af >= AF_MAX)
 		return (NULL);
 
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
-	     ifa = TAILQ_NEXT(ifa, ifa_list)) {
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != af)
 			continue;
 		ifa_maybe = ifa;
@@ -1131,9 +1130,7 @@ link_rtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	    ((ifp = ifa->ifa_ifp) == 0) || ((dst = rt_key(rt)) == 0))
 		return;
 	if ((ifa = ifaof_ifpforaddr(dst, ifp)) != NULL) {
-		IFAFREE(rt->rt_ifa);
-		rt->rt_ifa = ifa;
-		IFAREF(ifa);
+		rt_replace_ifa(rt, ifa);
 		if (ifa->ifa_rtrequest && ifa->ifa_rtrequest != link_rtrequest)
 			ifa->ifa_rtrequest(cmd, rt, info);
 	}

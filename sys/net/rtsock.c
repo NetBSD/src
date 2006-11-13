@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.89 2006/09/19 21:42:29 elad Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.90 2006/11/13 05:13:41 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.89 2006/09/19 21:42:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.90 2006/11/13 05:13:41 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -377,13 +377,12 @@ route_output(struct mbuf *m, ...)
 			if (ifa) {
 				struct ifaddr *oifa = rt->rt_ifa;
 				if (oifa != ifa) {
-				    if (oifa && oifa->ifa_rtrequest)
-					oifa->ifa_rtrequest(RTM_DELETE, rt,
-					    &info);
-				    IFAFREE(rt->rt_ifa);
-				    rt->rt_ifa = ifa;
-				    IFAREF(rt->rt_ifa);
-				    rt->rt_ifp = ifp;
+					if (oifa && oifa->ifa_rtrequest) {
+						oifa->ifa_rtrequest(RTM_DELETE,
+						    rt, &info);
+					}
+					rt_replace_ifa(rt, ifa);
+					rt->rt_ifp = ifp;
 				}
 			}
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,

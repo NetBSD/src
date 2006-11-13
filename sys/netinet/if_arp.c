@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.114 2006/10/12 01:32:37 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.115 2006/11/13 05:13:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.114 2006/10/12 01:32:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.115 2006/11/13 05:13:41 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -587,11 +587,8 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info __unused)
 			 * with source address selection.
 			 */
 			ifa = &ia->ia_ifa;
-			if (ifa != rt->rt_ifa) {
-				IFAFREE(rt->rt_ifa);
-				IFAREF(ifa);
-				rt->rt_ifa = ifa;
-			}
+			if (ifa != rt->rt_ifa)
+				rt_replace_ifa(rt, ifa);
 		}
 		break;
 
