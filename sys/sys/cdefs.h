@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.63 2006/11/13 03:35:59 dyoung Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.64 2006/11/13 05:44:37 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -377,8 +377,7 @@
 #define	__PRIxBIT	PRIxMAX
 #define	__PRIxBITS	__PRIxBIT
 
-#define	__SHIFTOUT(__x, __mask)	\
-	(((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
+#define	__SHIFTOUT(__x, __mask)	(((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
 #define	__SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
 #define	__SHIFTOUT_MASK(__mask) __SHIFTOUT((__mask), (__mask))
 
