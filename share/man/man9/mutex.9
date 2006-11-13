@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.1 2006/11/13 16:22:11 ad Exp $
+.\"	$NetBSD: mutex.9,v 1.2 2006/11/13 18:28:15 ad Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -174,11 +174,11 @@ option, and is therefore suitable only for diagnostic checks that verify
 that a lock is held.
 .Fn mutex_owned
 must not be used to make locking decisions at run time.
+.El
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
-source tree where actual code implementing or using the name
-lookup cache can be found.
+source tree where code implementing mutexes can be found.
 All pathnames are relative to
 .Pa /usr/src .
 .Pp
