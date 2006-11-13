@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.672 2006/11/12 01:24:51 christos Exp $
+# $NetBSD: mi,v 1.673 2006/11/13 15:16:28 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1838,6 +1838,11 @@
 ./usr/share/i18n/csmapper/MISC/UCS%KOI8-U.mps	base-obsolete		obsolete
 ./usr/share/i18n/csmapper/MISC/UCS%NEXTSTEP.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%PTCP154.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/TCVN			base-sysutil-share
+./usr/share/i18n/csmapper/TCVN/TCVN5712-1%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/TCVN/VISCII%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/TCVN/UCS%TCVN5712-1.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/TCVN/UCS%VISCII.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/charset.pivot		base-sysutil-share	nls
 ./usr/share/i18n/csmapper/charset.pivot.pvdb	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/mapper.dir		base-sysutil-share	nls
@@ -2028,16 +2033,22 @@
 ./usr/share/i18n/esdb/MISC			base-sysutil-share
 ./usr/share/i18n/esdb/MISC/ATARIST.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/Big5.esdb		base-obsolete		obsolete
+./usr/share/i18n/esdb/MISC/C99.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/CTEXT.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/GB18030.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/GBK.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/HP-ROMAN8.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/MISC/JAVA.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/JOHAB.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/KOI8-R.esdb		base-obsolete		obsolete
 ./usr/share/i18n/esdb/MISC/KOI8-U.esdb		base-obsolete		obsolete
 ./usr/share/i18n/esdb/MISC/NEXTSTEP.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/PTCP154.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/Shift_JIS.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/TCVN			base-sysutil-share
+./usr/share/i18n/esdb/TCVN/TCVN5712-1.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/TCVN/VIQR.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/TCVN/VISCII.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/UTF			base-sysutil-share
 ./usr/share/i18n/esdb/UTF/UTF-16.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/UTF/UTF-16BE.esdb		base-sysutil-share	nls

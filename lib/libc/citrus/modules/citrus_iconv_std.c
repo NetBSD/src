@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.13 2006/03/19 01:15:06 christos Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.14 2006/11/13 15:16:31 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.13 2006/03/19 01:15:06 christos Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.14 2006/11/13 15:16:31 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -505,8 +505,11 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict cv,
 
 	/* normal case */
 	for (;;) {
-		if (*inbytes==0)
-			break;
+		if (*inbytes==0) {
+			ret = get_state_desc_gen(&sc->sc_src_encoding, &state);
+			if (state == _STDENC_SDGEN_INITIAL)
+				break;
+		}
 
 		/* save the encoding states for the error recovery */
 		save_encoding_state(&sc->sc_src_encoding);

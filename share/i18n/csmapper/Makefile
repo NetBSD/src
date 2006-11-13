@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2006/06/19 17:28:25 tnozaki Exp $
+# $NetBSD: Makefile,v 1.12 2006/11/13 15:16:30 tnozaki Exp $
 
 NOMAN=
 
@@ -10,7 +10,8 @@ BINDIR?= /usr/share/i18n/csmapper
 SRCS_mapper.dir+= mapper.dir.src
 SRCS_charset.pivot+= charset.pivot.src
 
-SUBDIR= APPLE AST BIG5 CNS CP EBCDIC GB GEORGIAN ISO646 ISO-8859 JIS KS KOI MISC
+SUBDIR= APPLE AST BIG5 CNS CP EBCDIC GB GEORGIAN ISO646 ISO-8859 \
+	JIS KS KOI MISC TCVN
 .for i in ${SUBDIR}
 .if exists(${.CURDIR}/$i/Makefile.inc)
 .include "${.CURDIR}/$i/Makefile.inc"
