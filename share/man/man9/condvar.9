@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.1 2006/11/13 16:22:11 ad Exp $
+.\"	$NetBSD: condvar.9,v 1.2 2006/11/13 18:28:15 ad Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -178,6 +178,7 @@ sense to LWPs waiting on a CV.)
 .It Fn cv_broadcast "cv"
 .Pp
 Awaken all LWPs waiting on the specified condition variable.
+.El
 .Sh EXAMPLES
 .Bd -literal
 Consuming a resource:
@@ -194,14 +195,13 @@ Consuming a resource:
 	 */
 	while (res->state == BUSY)
 		cv_wait(&res->condvar, &res->mutex);
-
 	res->state = BUSY;
 
 	/*
-	 * It's now available, so consume it.
+	 * It's now available to us.
 	 */
-	consume(res);
 	mutex_exit(&res->mutex);
+	consume(res);
 
 Releasing a resource for the next consumer to use:
 
@@ -213,8 +213,7 @@ Releasing a resource for the next consumer to use:
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
-source tree where actual code implementing or using the name
-lookup cache can be found.
+source tree where code implementing condition variables can be found.
 All pathnames are relative to
 .Pa /usr/src .
 .Pp
@@ -223,8 +222,7 @@ The core of the CV implementation is in
 .Pp
 The header file
 .Pa sys/sys/condvar.h
-describes the public interface, and interfaces that machine-dependent
-code must provide to support RW locks.
+describes the public interface.
 .Sh SEE ALSO
 .Xr condvar 9 ,
 .Xr errno 9 ,

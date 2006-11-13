@@ -1,4 +1,4 @@
-.\"	$NetBSD: rwlock.9,v 1.1 2006/11/13 16:22:11 ad Exp $
+.\"	$NetBSD: rwlock.9,v 1.2 2006/11/13 18:28:15 ad Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -181,15 +181,15 @@ Otherwise, return zero.
 .Pp
 These functions must never be used to make locking decisions at run time:
 they are provided only for diagnostic purposes.
+.El
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
-source tree where actual code implementing or using the name
-lookup cache can be found.
+source tree where code implementing RW locks can be found.
 All pathnames are relative to
 .Pa /usr/src .
 .Pp
-The core of the rwlock implementation is in 
+The core of the RW lock implementation is in 
 .Pa sys/kern/kern_rwlock.c .
 .Pp
 The header file
