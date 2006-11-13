@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.1 2006/11/09 01:30:15 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.2 2006/11/13 21:06:16 pooka Exp $
 .\"
 .\" Copyright (c) 2006 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 8, 2006
+.Dd November 13, 2006
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -344,7 +344,7 @@ The implementation should match the name in
 against the existing entries in the directory provided by the cookie.
 If found, the cookie for the located node should be returned in
 .Fa newnode .
-Additionally, the type and size (applicable for regular files only)
+Additionally, the type and size (latter applicable to regular files only)
 should be returned in
 .Fa newtype
 and
@@ -353,12 +353,16 @@ respectively.
 If the located entry is a block device or character device file,
 the dev_t for the entry should be returned in
 .Fa newrdev .
-In case the the operation in
-.Fa pcn
-is for a create or remove, -1 should be returned if the node is not
-found.
-Otherwise, 0 signals a found node and a positive value signals an
-errno.
+Otherwise, 0 signals a found node and a nonzero value signals an errno.
+As a special case,
+.Er ENOENT
+signals success for cases where the lookup operation is
+.Dv PUFFSLOOKUP_CREATE
+or
+.Dv PUFFSLOOKUP_RENAME .
+Failure in these cases can be signalled by returning another appropriate
+error code, for example
+.Er EACCESS .
 .Pp
 .Fn puffs_getattr
 fills out a struct vattr pointed to by
