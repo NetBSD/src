@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.44 2006/11/13 05:13:41 dyoung Exp $	*/
+/*	$NetBSD: route.h,v 1.45 2006/11/13 19:14:30 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -348,15 +348,15 @@ rt_get_ifa(struct rtentry *rt)
 	struct ifaddr *ifa;
 
 	if ((ifa = rt->rt_ifa) == NULL)
-		return NULL;
-	else if (ifa->ifa_getifa == NULL || ifa->ifa_seqno == NULL)
 		return ifa;
-	else if (*ifa->ifa_seqno == rt->rt_ifa_seqno)
+	else if (ifa->ifa_getifa == NULL)
 		return ifa;
+#if 0
+	else if (ifa->ifa_seqno != NULL && *ifa->ifa_seqno == rt->rt_ifa_seqno)
+		return ifa;
+#endif
 	else {
 		ifa = (*ifa->ifa_getifa)(ifa, rt_key(rt));
-		if (ifa->ifa_seqno != NULL)
-			rt->rt_ifa_seqno = *ifa->ifa_seqno;
 		rt_replace_ifa(rt, ifa);
 		return ifa;
 	}
