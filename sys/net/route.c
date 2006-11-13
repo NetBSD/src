@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.74 2006/11/13 05:13:40 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.75 2006/11/13 17:51:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.74 2006/11/13 05:13:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.75 2006/11/13 17:51:02 dyoung Exp $");
 
 
 #include <sys/param.h>
@@ -162,8 +162,12 @@ route_init(void)
 void
 rtalloc(struct route *ro)
 {
-	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
-		return;				 /* XXX */
+	if (ro->ro_rt != NULL) {
+		if (ro->ro_rt->rt_ifp != NULL &&
+		    (ro->ro_rt->rt_flags & RTF_UP) != 0)
+			return;
+		RTFREE(ro->ro_rt);
+	}
 	ro->ro_rt = rtalloc1(&ro->ro_dst, 1);
 }
 
