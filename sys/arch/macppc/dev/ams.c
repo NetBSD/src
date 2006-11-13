@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.21 2006/11/12 19:00:43 plunky Exp $	*/
+/*	$NetBSD: ams.c,v 1.22 2006/11/13 09:35:34 he Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.21 2006/11/12 19:00:43 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.22 2006/11/13 09:35:34 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -576,7 +576,7 @@ ams_mangle_2(struct ams_softc *sc, int buttons)
 				 * send a mouse button event
 				 */
 				wsmouse_input(sc->sc_wsmousedev,
-				    1, 0, 0, 0, WSMOUSE_INPUT_DELTA);
+				    1, 0, 0, 0, 0, WSMOUSE_INPUT_DELTA);
 			}
 			sc->sc_down = 0;
 		}
@@ -608,7 +608,7 @@ ams_mangle_4(struct ams_softc *sc, int buttons)
 				 * send a mouse button event
 				 */
 				wsmouse_input(sc->sc_wsmousedev,
-				    1, 0, 0, 0, WSMOUSE_INPUT_DELTA);
+				    1, 0, 0, 0, 0, WSMOUSE_INPUT_DELTA);
 			}
 			sc->sc_down = 0;
 		}
