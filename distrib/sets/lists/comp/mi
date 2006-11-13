@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.972 2006/11/12 01:24:51 christos Exp $
+#	$NetBSD: mi,v 1.973 2006/11/13 05:13:38 dyoung Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1367,6 +1367,7 @@
 ./usr/include/netinet/in_gif.h			comp-c-include
 ./usr/include/netinet/in_pcb.h			comp-c-include
 ./usr/include/netinet/in_pcb_hdr.h		comp-c-include
+./usr/include/netinet/in_selsrc.h		comp-c-include
 ./usr/include/netinet/in_systm.h		comp-c-include
 ./usr/include/netinet/in_var.h			comp-c-include
 ./usr/include/netinet/ip.h			comp-c-include
@@ -6832,6 +6833,7 @@
 ./usr/share/man/cat9/in4_cksum.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/in6_cksum.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/in_cksum.0			comp-sys-catman		.cat
+./usr/share/man/cat9/in_getifa.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/incore.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/inittodr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/intro.0			comp-sys-catman		.cat
@@ -11082,6 +11084,7 @@
 ./usr/share/man/man9/in4_cksum.9		comp-sys-man		.man
 ./usr/share/man/man9/in6_cksum.9		comp-sys-man		.man
 ./usr/share/man/man9/in_cksum.9			comp-sys-man		.man
+./usr/share/man/man9/in_getifa.9		comp-sys-man		.man
 ./usr/share/man/man9/incore.9			comp-sys-man		.man
 ./usr/share/man/man9/inittodr.9			comp-sys-man		.man
 ./usr/share/man/man9/intro.9			comp-sys-man		.man
