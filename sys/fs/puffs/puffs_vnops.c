@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.9 2006/11/08 11:49:36 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.10 2006/11/13 20:57:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.9 2006/11/08 11:49:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.10 2006/11/13 20:57:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -353,15 +353,13 @@ puffs_lookup(void *v)
 	 * to vpp in the beginning.
 	 */
 	if (error) {
-		if (error == -1) {
+		if (error == ENOENT) {
 			if ((cnp->cn_flags & ISLASTCN)
 			    && (cnp->cn_nameiop == CREATE
 			      || cnp->cn_nameiop == RENAME)) {
 				cnp->cn_flags |= SAVENAME;
 				error = EJUSTRETURN;
-			} else
-				/* userspace is on crack */
-				error = ENOENT;
+			}
 		}
 		*ap->a_vpp = NULL;
 		if (cnp->cn_flags & ISDOTDOT)
