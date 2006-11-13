@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2006/11/08 23:12:57 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2006/11/13 19:08:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.5 2006/11/08 23:12:57 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 2006/11/13 19:08:52 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -107,10 +107,13 @@ typedef struct name {
 
 const name_t locknames[] = {
 	{ "adaptive_mutex", LB_ADAPTIVE_MUTEX },
-	{ "adaptive_rwlock", LB_ADAPTIVE_RWLOCK },
 	{ "spin_mutex", LB_SPIN_MUTEX },
-	{ "spin_rwlock", LB_SPIN_RWLOCK },
+	{ "rwlock", LB_ADAPTIVE_RWLOCK },
 	{ "lockmgr", LB_LOCKMGR },
+#ifdef LB_KERNEL_LOCK
+	/* XXX newlock2 */
+	{ "kernel_lock", LB_KERNEL_LOCK },
+#endif
 	{ NULL, 0 }
 };
 
@@ -123,9 +126,8 @@ const name_t eventnames[] = {
 const name_t alltypes[] = {
 	{ "Adaptive mutex spin", LB_ADAPTIVE_MUTEX | LB_SPIN },
 	{ "Adaptive mutex sleep", LB_ADAPTIVE_MUTEX | LB_SLEEP },
-	{ "Adaptive RW lock spin", LB_ADAPTIVE_RWLOCK | LB_SPIN },
-	{ "Adaptive RW lock sleep", LB_ADAPTIVE_RWLOCK | LB_SLEEP },
 	{ "Spin mutex spin", LB_SPIN_MUTEX | LB_SPIN },
+	{ "RW lock sleep", LB_ADAPTIVE_RWLOCK | LB_SLEEP },
 	{ "lockmgr sleep", LB_LOCKMGR | LB_SLEEP },
 #ifdef LB_KERNEL_LOCK
 	/* XXX newlock2 */
@@ -470,7 +472,7 @@ findsym(findsym_t find, char *name, uintptr_t *start, uintptr_t *end)
 	}
 
 	if (rv == -1)
-		sprintf(name, "0x%016lx", (long)*start);
+		sprintf(name, "%016lx", (long)*start);
 }
 
 /*
@@ -682,7 +684,7 @@ display(int mask, const char *name)
 
 		findsym(LOCK_BYADDR, lname, &l->lock, NULL);
 
-		if (l->nbufs > 1)
+		if (lflag || l->nbufs > 1)
 			fprintf(outfp, "%6.2f %7d %9.2f %-22s <all>\n", metric,
 			    (int)(l->counts[event] * cscale),
 			    l->times[event] * tscale, lname);
