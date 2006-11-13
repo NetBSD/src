@@ -1,4 +1,4 @@
-/*	$NetBSD: strsep.c,v 1.14 2003/08/07 16:43:52 agc Exp $	*/
+/*	$NetBSD: strsep.c,v 1.1 2006/11/13 03:26:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,14 +34,19 @@
 #if 0
 static char sccsid[] = "@(#)strsep.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strsep.c,v 1.14 2003/08/07 16:43:52 agc Exp $");
+__RCSID("$NetBSD: strsep.c,v 1.1 2006/11/13 03:26:43 dyoung Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include "namespace.h"
 
 #include <assert.h>
 #include <string.h>
+#else
+#include <sys/param.h>
+#include <lib/libkern/libkern.h>
+#endif
 
 #ifdef __weak_alias
 __weak_alias(strsep,_strsep)
