@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.7 2006/11/07 22:11:17 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.8 2006/11/13 20:59:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -65,11 +65,6 @@ dtfs_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
 		if (*newtype == VBLK || *newtype == VCHR)
 			*newrdev = DTFS_PTOF(dfd->dfd_node)->df_rdev;
 		return 0;
-	} else if ((pcn->pcn_nameiop & PUFFSLOOKUP_OPMASK) == PUFFSLOOKUP_CREATE
-	    || (pcn->pcn_nameiop & PUFFSLOOKUP_OPMASK) == PUFFSLOOKUP_RENAME){
-		*newnode = NULL;
-		*newtype = 0;
-		return -1; /* no error, but no beef */
 	}
 
 	return ENOENT;
