@@ -279,7 +279,6 @@ void ERR_load_DSA_strings(void);
 #define DSA_R_MISSING_PARAMETERS			 101
 #define DSA_R_MODULUS_TOO_LARGE				 103
 
-
 #ifdef  __cplusplus
 }
 #endif
