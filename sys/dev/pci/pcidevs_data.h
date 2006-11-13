@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.847 2006/11/13 20:12:10 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.848 2006/11/13 22:03:21 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.849 2006/11/13 20:11:10 bouyer Exp
+ *	NetBSD: pcidevs,v 1.850 2006/11/13 22:02:58 xtraeme Exp
  */
 
 /*
@@ -8916,7 +8916,7 @@ static const struct pci_product pci_products[] = {
 	    "Quad UART and 1284 Printer port",
 	},
 	{
-	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845,
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9855,
 	    "9855 Quad UART and 1284 Printer port",
 	},
 	{
