@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.166 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.167 2006/11/14 15:50:00 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.166 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.167 2006/11/14 15:50:00 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1785,7 +1785,7 @@ putiobuf(struct buf *bp)
  * nestiobuf_iodone: b_iodone callback for nested buffers.
  */
 
-static void
+void
 nestiobuf_iodone(struct buf *bp)
 {
 	struct buf *mbp = bp->b_private;
