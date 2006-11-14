@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.9 2006/06/11 19:34:12 kardel Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.10 2006/11/14 02:41:40 dogcow Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -454,7 +454,7 @@ ntpdmain(
 	if ((SSLeay() ^ OPENSSL_VERSION_NUMBER) & ~0xff0L) {
 		msyslog(LOG_ERR,
 		    "ntpd: OpenSSL version mismatch. Built against %lx, you have %lx\n",
-		    OPENSSL_VERSION_NUMBER, SSLeay());
+		    (long) OPENSSL_VERSION_NUMBER, SSLeay());
 		exit(1);
 	}
 #endif
