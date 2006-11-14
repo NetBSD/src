@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.155 2006/11/10 13:02:32 yamt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.156 2006/11/14 12:05:55 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.155 2006/11/10 13:02:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.156 2006/11/14 12:05:55 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -139,11 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.155 2006/11/10 13:02:32 yamt Exp $"
  * UDP protocol implementation.
  * Per RFC 768, August, 1980.
  */
-#ifndef	COMPAT_42
 int	udpcksum = 1;
-#else
-int	udpcksum = 0;		/* XXX */
-#endif
 int	udp_do_loopback_cksum = 0;
 
 struct	inpcbtable udbtable;
