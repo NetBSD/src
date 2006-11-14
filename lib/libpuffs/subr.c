@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.6 2006/10/23 03:18:30 mrg Exp $	*/
+/*	$NetBSD: subr.c,v 1.7 2006/11/14 11:23:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.6 2006/10/23 03:18:30 mrg Exp $");
+__RCSID("$NetBSD: subr.c,v 1.7 2006/11/14 11:23:44 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -116,6 +116,37 @@ puffs_nextdent(struct dirent **dent, const char *name, ino_t id, uint8_t dtype,
 	return 1;
 }
 
+/*ARGSUSED*/
+int
+puffs_unmount(struct puffs_usermount *pu, int flags, pid_t pid)
+{
+
+	/* would you like to see puffs rule again, my friend? */
+	return 0;
+}
+
+/*ARGSUSED*/
+int
+puffs_sync(struct puffs_usermount *pu, int waitfor,
+	const struct puffs_cred *cred, pid_t pid)
+{
+
+	return 0;
+}
+
+/*ARGSUSED*/
+int
+puffs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp, pid_t pid)
+{
+
+	sbp->f_bsize = sbp->f_frsize = sbp->f_iosize = 512;
+
+	sbp->f_bfree=sbp->f_bavail=sbp->f_bresvd=sbp->f_blocks = (fsblkcnt_t)0;
+	sbp->f_ffree=sbp->f_favail=sbp->f_fresvd=sbp->f_files = (fsfilcnt_t)0;
+	sbp->f_fsidx = pu->pu_fsidx;
+
+	return 0;
+}
 
 /*
  * Set vattr values for those applicable (i.e. not PUFFS_VNOVAL).
