@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.4 2006/11/13 20:11:36 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.5 2006/11/14 11:27:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -86,14 +86,6 @@ dtfs_start(struct puffs_usermount *pu)
 	return 0;
 }
 
-int
-dtfs_unmount(struct puffs_usermount *pu, int flags, pid_t pid)
-{
-
-	/* goodbye blue sky */
-	return 0;
-}
-
 /*
  * statvfs() should fill in the following members of struct statvfs:
  * 
@@ -156,12 +148,3 @@ dtfs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp, pid_t pid)
 	return 0;
 }
 #undef ROUND 
-
-/* we're pretty much in sync all the time */
-int
-dtfs_sync(struct puffs_usermount *pu, int waitfor,
-	const struct puffs_cred *cred, pid_t pid)
-{
-
-	return 0;
-}
