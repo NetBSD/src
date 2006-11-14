@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.3 2006/11/11 21:48:57 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.4 2006/11/14 17:49:56 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -51,4 +51,9 @@ sys/kern/sys_process.c				1.112
 
 	check for negative length in PT_COREDUMP (from Neil)
 	[christos, ticket #1574]
+
+usr.sbin/postinstall/postinstall		1.30
+
+	/etc/postfix/post-install needs to be 555 not 444.
+	[lukem, ticket #1585]
 
