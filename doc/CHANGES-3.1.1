@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.4 2006/11/11 22:16:49 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.5 2006/11/14 17:50:35 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -56,4 +56,9 @@ sys/arch/xen/xen/if_xennet_xenbus.c		1.14
 	Prevent xennet (Xen 3) from occasionally becoming unable to receive
 	packets for several minutes when under certain types of load
 	[jld, ticket #1581]
+
+usr.sbin/postinstall/postinstall		1.30
+
+	/etc/postfix/post-install needs to be 555 not 444.
+	[lukem, ticket #1585]
 
