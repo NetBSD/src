@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.23 2006/09/29 22:47:21 cube Exp $	*/
+/*	$NetBSD: monitor.c,v 1.24 2006/11/14 21:52:09 adrianp Exp $	*/
 /* $OpenBSD: monitor.c,v 1.88 2006/08/12 20:46:46 miod Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.23 2006/09/29 22:47:21 cube Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.24 2006/11/14 21:52:09 adrianp Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -339,7 +339,7 @@ monitor_child_preauth(Authctxt *_authctxt, struct monitor *pmonitor)
 	/* The first few requests do not require asynchronous access */
 	while (!authenticated) {
 		auth_method = "unknown";
-		authenticated = monitor_read(pmonitor, mon_dispatch, &ent);
+		authenticated = (monitor_read(pmonitor, mon_dispatch, &ent) == 1);
 		if (authenticated) {
 			if (!(ent->flags & MON_AUTHDECIDE))
 				fatal("%s: unexpected authentication from %d",
@@ -1204,7 +1204,7 @@ mm_answer_keyverify(int sock, Buffer *m)
 
 	verified = key_verify(key, signature, signaturelen, data, datalen);
 	debug3("%s: key %p signature %s",
-	    __func__, key, verified ? "verified" : "unverified");
+	    __func__, key, (verified == 1) ? "verified" : "unverified");
 
 	key_free(key);
 	xfree(blob);
@@ -1219,7 +1219,7 @@ mm_answer_keyverify(int sock, Buffer *m)
 	buffer_put_int(m, verified);
 	mm_request_send(sock, MONITOR_ANS_KEYVERIFY, m);
 
-	return (verified);
+	return (verified == 1);
 }
 
 static void
