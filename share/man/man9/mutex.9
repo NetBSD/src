@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.2 2006/11/13 18:28:15 ad Exp $
+.\"	$NetBSD: mutex.9,v 1.3 2006/11/14 15:30:09 ad Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,9 +77,6 @@ When initializing an adaptive mutex, IPL_NONE must be specified as the
 .Ar ipl
 argument.
 Adaptive mutexes can not be acquired from an interrupt handler.
-.Pp
-In general, an LWP that owns an adaptive mutex must not sleep with the mutex
-held, unless acquiring another mutex or sleep lock.
 .Pp
 An LWP may either sleep or busy-wait when attempting to acquire
 an adaptive mutex that is already held.
