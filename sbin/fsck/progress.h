@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.h,v 1.1 2005/01/13 15:22:35 christos Exp $	*/
+/*	$NetBSD: progress.h,v 1.2 2006/11/14 21:01:46 apb Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -40,9 +40,10 @@
  * File system independent fsck progress bar routines.
  */
 
-void	progress_init(off_t);
+void	progress_init(void);
+void	progress_setrange(int, int);
+void	progress_sethighlim(int);
 void	progress_switch(int);
-void	progress_add(off_t);
 void	progress_ttywidth(int);
 void	progress_bar(const char *, const char *, off_t, off_t);
 void	progress_done(void);

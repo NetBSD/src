@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.42 2006/10/16 03:09:26 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.43 2006/11/14 21:01:46 apb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.42 2006/10/16 03:09:26 christos Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.43 2006/11/14 21:01:46 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,9 +197,7 @@ pass1(void)
 		inostathead[c].il_stat = info;
 	}
 #ifdef PROGRESS
-	if (preen)
-		progress_add(sblock->fs_ncg);
-	else
+	if (!preen)
 		progress_done();
 #endif /* PROGRESS */
 	freeinodebuf();
