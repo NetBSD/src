@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.11 2006/10/31 21:16:23 pooka Exp $	*/
+/*	$NetBSD: readelf.c,v 1.12 2006/11/14 14:12:24 martin Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -42,7 +42,7 @@
 #if 0
 FILE_RCSID("@(#)Id: readelf.c,v 1.59 2006/10/31 19:37:17 christos Exp")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.11 2006/10/31 21:16:23 pooka Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.12 2006/11/14 14:12:24 martin Exp $");
 #endif
 #endif
 
@@ -904,13 +904,8 @@ file_tryelf(struct magic_set *ms, int fd, const unsigned char *buf,
     size_t nbytes)
 {
 	union {
-#if defined(__s390x__) || defined(__powerpc64__)
 		int32_t l;
 		char c[sizeof (int32_t)];
-#else
-		long l;
-		char c[sizeof (long)];
-#endif
 	} u;
 	int class;
 	int swap;
