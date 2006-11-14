@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.23 2006/07/23 22:06:09 ad Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.24 2006/11/14 13:34:30 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.23 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.24 2006/11/14 13:34:30 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -145,8 +145,9 @@ netbsd32_ntp_adjtime(l, v, retval)
 	 * the assumption the superuser should know what it is doing.
 	 */
 	modes = ntv.modes;
-	if (modes != 0 && (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
+	if (modes != 0 && (error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_NTPADJTIME, NULL, NULL,
+	    NULL)))
 		return (error);
 
 	ntp_adjtime1(&ntv);
@@ -308,8 +309,9 @@ netbsd32_settimeofday(l, v, retval)
 	struct proc *p = l->l_proc;
 
 	/* Verify all parameters before changing time. */
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL,
+	    NULL)) != 0)
 		return error;
 
 	/*
@@ -345,8 +347,9 @@ netbsd32_adjtime(l, v, retval)
 	struct netbsd32_timeval atv;
 	int error;
 
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_ADJTIME, NULL, NULL,
+	    NULL)) != 0)
 		return (error);
 
 #ifdef __HAVE_TIMECOUNTER
@@ -470,8 +473,9 @@ netbsd32_clock_settime(l, v, retval)
 	struct timespec ats;
 	int error;
 
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL,
+	    NULL)) != 0)
 		return (error);
 
 	clock_id = SCARG(uap, clock_id);
