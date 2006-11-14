@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.4 2006/11/09 13:11:52 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.5 2006/11/14 11:27:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -70,8 +70,8 @@ main(int argc, char *argv[])
 
 	pvfs.puffs_mount = dtfs_mount;
 	pvfs.puffs_start = dtfs_start;
-	pvfs.puffs_unmount = dtfs_unmount;
-	pvfs.puffs_sync = dtfs_sync;
+	pvfs.puffs_unmount = puffs_unmount;
+	pvfs.puffs_sync = puffs_sync;
 	pvfs.puffs_statvfs = dtfs_statvfs;
 
 	pvn.puffs_lookup = dtfs_lookup;
