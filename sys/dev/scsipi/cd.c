@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.256 2006/10/28 01:24:29 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.257 2006/11/14 14:56:55 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.256 2006/10/28 01:24:29 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.257 2006/11/14 14:56:55 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -1191,6 +1191,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	struct scsipi_periph *periph = cd->sc_periph;
 	int part = CDPART(dev);
 	int error = 0;
+	int s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
 #endif
@@ -1230,6 +1231,8 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		case CDIOCLOADUNLOAD:
 		case DVD_AUTH:
 		case DVD_READ_STRUCT:
+		case DIOCGSTRATEGY:
+		case DIOCSSTRATEGY:
 			if (part == RAW_PART)
 				break;
 		/* FALLTHROUGH */
@@ -1553,6 +1556,45 @@ bad:
 	case MMCGETTRACKINFO:
 		/* READ TOCf2, READ_CD_CAPACITY and READ_TRACKINFO commands */
 		return mmc_gettrackinfo(periph, (struct mmc_trackinfo *) addr);
+	case DIOCGSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)addr;
+
+		s = splbio();
+		strlcpy(dks->dks_name, bufq_getstrategyname(cd->buf_queue),
+		    sizeof(dks->dks_name));
+		splx(s);
+		dks->dks_paramlen = 0;
+
+		return 0;
+	    }
+	case DIOCSSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)addr;
+		struct bufq_state *new;
+		struct bufq_state *old;
+
+		if ((flag & FWRITE) == 0) {
+			return EBADF;
+		}
+		if (dks->dks_param != NULL) {
+			return EINVAL;
+		}
+		dks->dks_name[sizeof(dks->dks_name) - 1] = 0; /* ensure term */
+		error = bufq_alloc(&new, dks->dks_name,
+		    BUFQ_EXACT|BUFQ_SORT_RAWBLOCK);
+		if (error) {
+			return error;
+		}
+		s = splbio();
+		old = cd->buf_queue;
+		bufq_move(new, old);
+		cd->buf_queue = new;
+		splx(s);
+		bufq_free(old);
+
+		return 0;
+	    }
 	default:
 		if (part != RAW_PART)
 			return (ENOTTY);
