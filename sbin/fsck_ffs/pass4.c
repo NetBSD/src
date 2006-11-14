@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.22 2005/08/19 02:07:19 christos Exp $	*/
+/*	$NetBSD: pass4.c,v 1.23 2006/11/14 21:01:46 apb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass4.c,v 1.22 2005/08/19 02:07:19 christos Exp $");
+__RCSID("$NetBSD: pass4.c,v 1.23 2006/11/14 21:01:46 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,9 +129,7 @@ pass4(void)
 		}
 	}
 #ifdef PROGRESS
-	if (preen)
-		progress_add(sblock->fs_ncg);
-	else
+	if (!preen)
 		progress_done();
 #endif /* PROGRESS */
 }

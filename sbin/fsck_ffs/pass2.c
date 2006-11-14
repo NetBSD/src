@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.43 2006/04/21 15:00:49 skrll Exp $	*/
+/*	$NetBSD: pass2.c,v 1.44 2006/11/14 21:01:46 apb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.43 2006/04/21 15:00:49 skrll Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.44 2006/11/14 21:01:46 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -307,9 +307,7 @@ pass2(void)
 	propagate(ROOTINO);
 
 #ifdef PROGRESS
-	if (preen)
-		progress_add(inplast);
-	else
+	if (!preen)
 		progress_done();
 #endif /* PROGRESS */
 }
