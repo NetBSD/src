@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.5 2006/11/09 13:11:01 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.6 2006/11/14 11:23:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -194,6 +194,12 @@ struct puffs_node *	puffs_newpnode(struct puffs_usermount *, void *,
 				       enum vtype);
 void		puffs_putpnode(struct puffs_node *);
 void		puffs_setvattr(struct vattr *, const struct vattr *);
+
+int puffs_unmount(struct puffs_usermount *, int, pid_t);
+int puffs_statvfs(struct puffs_usermount *, struct statvfs *, pid_t);
+int puffs_sync(struct puffs_usermount *, int waitfor,
+	       const struct puffs_cred *, pid_t);
+
 
 #define		DENT_DOT	0
 #define		DENT_DOTDOT	1
