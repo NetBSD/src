@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.21 2006/05/15 09:22:34 yamt Exp $      */
+/*      $NetBSD: xbdback.c,v 1.22 2006/11/14 22:14:56 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -544,6 +544,15 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			printf("xbdback VBD grow domain %d: can't open "
 			    "device 0x%x (error %d)\n", xbdi->domid,
 			    req->extent.device, error);
+			req->status = BLKIF_BE_STATUS_EXTENT_NOT_FOUND;
+			goto end;
+		}
+		error = vn_lock(vbd->vp, LK_EXCLUSIVE | LK_RETRY);
+		if (error) {
+			printf("xbdback VBD grow domain %d: can't lock "
+			    "device 0x%x (error %d)\n", xbdi->domid,
+			    req->extent.device, error);
+			vrele(vbd->vp);
 			req->status = BLKIF_BE_STATUS_EXTENT_NOT_FOUND;
 			goto end;
 		}
