@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.14 2006/11/09 14:09:37 cube Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.15 2006/11/14 13:34:29 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.14 2006/11/09 14:09:37 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.15 2006/11/14 13:34:29 elad Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -222,8 +222,8 @@ compat_30_netbsd32_fhstat(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
+	if ((error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_FILEHANDLE, 0, NULL, NULL, NULL)))
 		return (error);
 
 	if ((error = copyin(NETBSD32PTR64(SCARG(uap, fhp)), &fh,
@@ -265,8 +265,8 @@ compat_30_netbsd32_fhstatvfs1(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_FILEHANDLE, 0, NULL, NULL, NULL)) != 0)
 		return error;
 
 	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)), 
@@ -352,8 +352,8 @@ int compat_30_netbsd32_sys___fhstat30(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
+	    0, NULL, NULL, NULL)))
 		return error;
 
 	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)),
