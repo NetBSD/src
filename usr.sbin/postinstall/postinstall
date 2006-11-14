@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.29 2006/10/07 16:50:34 rpaulo Exp $
+# $NetBSD: postinstall,v 1.30 2006/11/14 00:04:01 lukem Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -782,10 +782,10 @@ do_postfix()
 	    ${DEST_DIR}/usr/share/examples/postfix \
 	    || return 1
 
-	compare_dir ${op} ${dir} ${DEST_DIR}/etc/postfix 555 postfix-script
+	compare_dir ${op} ${dir} ${DEST_DIR}/etc/postfix 555 \
+	    post-install postfix-script
 	failed=$(( ${failed} + $? ))
-	compare_dir ${op} ${dir} \
-	    ${DEST_DIR}/etc/postfix 444 post-install postfix-files
+	compare_dir ${op} ${dir} ${DEST_DIR}/etc/postfix 444 postfix-files
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
