@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.240 2006/10/25 20:14:00 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.241 2006/11/14 18:39:10 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.240 2006/10/25 20:14:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.241 2006/11/14 18:39:10 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -238,7 +238,13 @@ wdc_sataprobe(struct ata_channel *chp)
 	bus_space_write_4(wdr->sata_iot, wdr->sata_control, 0, scontrol);
 
 	tsleep(wdr, PRIBIO, "sataup", mstohz(50));
-	sstatus = bus_space_read_4(wdr->sata_iot, wdr->sata_status, 0);
+	/* wait up to 1s for device to come up */
+	for (i = 0; i < 100; i++) {
+		sstatus = bus_space_read_4(wdr->sata_iot, wdr->sata_status, 0);
+		if ((sstatus & SStatus_DET_mask) == SStatus_DET_DEV)
+			break;
+		tsleep(wdr, PRIBIO, "sataup", mstohz(10));
+	}
 
 	switch (sstatus & SStatus_DET_mask) {
 	case SStatus_DET_NODEV:
@@ -286,6 +292,12 @@ wdc_sataprobe(struct ata_channel *chp)
 		aprint_normal("%s: port %d: device present, speed: %s\n",
 		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
 		    sata_speed(sstatus));
+		/*
+		 * issue a reset in case only the interface part of the drive
+		 * is up
+		 */
+		if (wdcreset(chp, RESET_SLEEP) != 0)
+			chp->ch_drive[0].drive_flags = 0;
 		break;
 
 	default:
