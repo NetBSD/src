@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.61 2006/11/14 21:01:46 apb Exp $	*/
+/*	$NetBSD: main.c,v 1.62 2006/11/14 22:51:11 apb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.61 2006/11/14 21:01:46 apb Exp $");
+__RCSID("$NetBSD: main.c,v 1.62 2006/11/14 22:51:11 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -281,7 +281,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	}
 #ifdef PROGRESS
 	if (preen)
-		progress_sethighlim(progress_limits[1]);
+		progress_setrange(0, progress_limits[1]);
 #endif /* PROGRESS */
 	pass1();
 
