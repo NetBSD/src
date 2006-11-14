@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_viqr.c,v 1.1 2006/11/13 15:16:31 tnozaki Exp $ */
+/* $NetBSD: citrus_viqr.c,v 1.2 2006/11/14 02:55:34 dogcow Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_viqr.c,v 1.1 2006/11/13 15:16:31 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_viqr.c,v 1.2 2006/11/14 02:55:34 dogcow Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -492,10 +492,9 @@ static int
 _citrus_VIQR_encoding_module_init(_VIQREncodingInfo * __restrict ei,
 	const void * __restrict var, size_t lenvar)
 {
-	uint32_t i;
 	int errnum;
 	const char *s;
-	size_t n;
+	size_t i, n;
 	const mnemonic_def_t *p;
 
 	_DIAGASSERT(ei != NULL);
