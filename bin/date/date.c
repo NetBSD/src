@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.46 2006/11/15 03:10:01 jdarrow Exp $ */
+/* $NetBSD: date.c,v 1.47 2006/11/15 16:55:18 christos Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.46 2006/11/15 03:10:01 jdarrow Exp $");
+__RCSID("$NetBSD: date.c,v 1.47 2006/11/15 16:55:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,11 +83,17 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "ajnr:u")) != -1) {
+	while ((ch = getopt(argc, argv, "ad:jnr:u")) != -1) {
 		switch (ch) {
 		case 'a':		/* adjust time slowly */
 			aflag = 1;
 			nflag = 1;
+			break;
+		case 'd':
+			rflag = 1;
+			tval = get_date(optarg, NULL, NULL);
+			if (tval == -1)
+				errx(1, "Cannot parse `%s'", optarg);
 			break;
 		case 'j':		/* don't set time */
 			jflag = 1;
@@ -310,7 +316,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-ajnu] [-r seconds] [+format]", getprogname());
+	    "usage: %s [-ajnu] [-d date] [-r seconds] [+format]", getprogname());
 	(void)fprintf(stderr, " [[[[[[CC]yy]mm]dd]HH]MM[.SS]]\n");
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
