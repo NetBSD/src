@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.45 2006/10/07 09:34:46 elad Exp $ */
+/* $NetBSD: date.c,v 1.46 2006/11/15 03:10:01 jdarrow Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.45 2006/10/07 09:34:46 elad Exp $");
+__RCSID("$NetBSD: date.c,v 1.46 2006/11/15 03:10:01 jdarrow Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: date.c,v 1.45 2006/10/07 09:34:46 elad Exp $");
 #include "extern.h"
 
 static time_t tval;
-static int aflag, rflag, nflag;
+static int aflag, jflag, rflag, nflag;
 int retval;
 
 static void badformat(void);
@@ -83,11 +83,14 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "anr:u")) != -1) {
+	while ((ch = getopt(argc, argv, "ajnr:u")) != -1) {
 		switch (ch) {
 		case 'a':		/* adjust time slowly */
 			aflag = 1;
 			nflag = 1;
+			break;
+		case 'j':		/* don't set time */
+			jflag = 1;
 			break;
 		case 'n':		/* don't set network */
 			nflag = 1;
@@ -274,6 +277,12 @@ setthetime(const char *p)
 	if ((new_time = mktime(lt)) == -1)
 		badtime();
 
+	/* if jflag is set, don't actually change the time, just return */
+	if (jflag) {
+		tval = new_time;
+		return;
+	}
+
 	/* set the time */
 	if (nflag || netsettime(new_time)) {
 		logwtmp("|", "date", "");
@@ -301,9 +310,8 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-u] [-r seconds] [+format]\n", getprogname());
-	(void)fprintf(stderr, "       %s [-anu] [[[[[cc]yy]mm]dd]hh]mm[.ss]\n",
-	    getprogname());
+	    "usage: %s [-ajnu] [-r seconds] [+format]", getprogname());
+	(void)fprintf(stderr, " [[[[[[CC]yy]mm]dd]HH]MM[.SS]]\n");
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
