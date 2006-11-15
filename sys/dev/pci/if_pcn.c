@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.34 2006/11/01 06:42:12 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.35 2006/11/15 03:21:54 jdarrow Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.34 2006/11/01 06:42:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.35 2006/11/15 03:21:54 jdarrow Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -520,9 +520,9 @@ pcn_is_vmware(const char *enaddr)
 	
 	/*
 	 * VMware uses the OUI 00:50:56 for manually-set MAC
-	 * addresses.
+	 * addresses (and some auto-generated ones).
 	 */
-	if (enaddr[0] == 0x00 && enaddr[1] == 0x50 && enaddr[3] == 0x56)
+	if (enaddr[0] == 0x00 && enaddr[1] == 0x50 && enaddr[2] == 0x56)
 		return (TRUE);
 
 	return (FALSE);
