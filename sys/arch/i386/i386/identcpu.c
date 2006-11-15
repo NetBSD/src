@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.47 2006/10/12 01:30:42 christos Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.48 2006/11/15 17:48:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.47 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.48 2006/11/15 17:48:56 jdolecek Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -256,7 +256,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium III Xeon (Cascades)",
 				"Pentium III (Tualatin)", 0,
 				"Pentium M (Dothan)", 
-				"Pentium M (Yonah)", 0,
+				"Pentium M (Yonah)",
+				"Core 2",
 				"Pentium Pro, II or III"	/* Default */
 			},
 			NULL,
