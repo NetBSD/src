@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.32 2006/11/04 10:47:37 elad Exp $
+.\" $NetBSD: kauth.9,v 1.33 2006/11/15 14:55:54 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 4, 2006
+.Dd November 15, 2006
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -557,7 +557,6 @@ passed as
 .Ar arg2
 to the listener, is device-specific data that may be associated with the
 request.
-.El
 .Ss Credentials Accessors and Mutators
 .Nm
 has a variety of accessor and mutator routines to handle
@@ -895,7 +894,59 @@ When that happens, it is safe to do the final cleanup.
 .Pp
 Listeners might sleep, so no locks can be held when calling an authorization
 wrapper.
-.\".Sh EXAMPLES
+.Sh EXAMPLES
+Older code had no abstraction of the security model, so most privilege
+checks looked like this:
+.Bd -literal -offset indent
+if (suser(cred, \*[Am]acflag) == 0)
+	/* allow privileged operation */
+.Ed
+.Pp
+Using the new interface, you must ask for a specific privilege explicitly.
+For example, checking whether it is possible to open a socket would look
+something like this:
+.Bd -literal -offset indent
+if (kauth_authorize_network(cred, KAUTH_NETWORK_SOCKET,
+    KAUTH_REQ_NETWORK_SOCKET_OPEN, PF_INET, SOCK_STREAM,
+    IPPROTO_TCP) == 0)
+	/* allow opening the socket */
+.Ed
+.Pp
+Note that the
+.Em securelevel
+implications were also integrated into the
+.Nm
+framework so you don't have to note anything special in the call to the
+authorization wrapper, but rather just have to make sure the security
+model handles the request as you expect it to.
+.Pp
+To do that you can just
+.Xr grep 1
+in the relevant security model directory and have a look at the code.
+.Sh EXTENDING KAUTH
+Although
+.Nm
+provides a large set of both detailed and more or less generic requests,
+it might be needed eventually to introduce more scopes, actions, or
+requests.
+.Pp
+Adding a new scope should happen only when an entire subsystem is
+introduced and it is assumed other parts of the kernel may want to
+interfere with its inner-workings.
+When a subsystem that has the potential of impacting the security
+if the system is introduced, existing security modules must be updated
+to also handle actions on the newly added scope.
+.Pp
+New actions should be added when sets of operations not covered at all
+belong in an already existing scope.
+.Pp
+Requests (or sub-actions) can be added as subsets of existing actions
+when an operation that belongs in an already covered area is introduced.
+.Pp
+Note that all additions should include updates to this manual, the
+security models shipped with
+.Nx ,
+and the example skeleton security model.
 .Sh SEE ALSO
 .Xr secmodel 9
 .Sh HISTORY
