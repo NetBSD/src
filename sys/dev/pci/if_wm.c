@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.129 2006/11/16 04:30:02 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.130 2006/11/16 06:07:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.129 2006/11/16 04:30:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.130 2006/11/16 06:07:54 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1395,13 +1395,25 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 * We can perform TCPv4 and UDPv4 checkums in-bound.  Only
 	 * on i82543 and later.
 	 */
-	if (sc->sc_type >= WM_T_82543)
+	if (sc->sc_type >= WM_T_82543) {
 		ifp->if_capabilities |=
 		    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
 		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
 		    IFCAP_CSUM_TCPv6_Tx |
 		    IFCAP_CSUM_UDPv6_Tx;
+	}
+
+	/*
+	 * XXXyamt: i'm not sure which chips support RXCSUM_IPV6OFL.
+	 *
+	 *	82541GI (8086:1076) ... no
+	 *	82572EI (8086:10b9) ... yes
+	 */
+	if (sc->sc_type >= WM_T_82571) {
+		ifp->if_capabilities |=
+		    IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
+	}
 
 	/* 
 	 * If we're a i82544 or greater (except i82547), we can do
@@ -2555,7 +2567,8 @@ wm_rxintr(struct wm_softc *sc)
 				 */
 				WM_EVCNT_INCR(&sc->sc_ev_rxtusum);
 				m->m_pkthdr.csum_flags |=
-				    M_CSUM_TCPv4|M_CSUM_UDPv4;
+				    M_CSUM_TCPv4 | M_CSUM_UDPv4 |
+				    M_CSUM_TCPv6 | M_CSUM_UDPv6;
 				if (errors & WRX_ER_TCPE)
 					m->m_pkthdr.csum_flags |=
 					    M_CSUM_TCP_UDP_BAD;
@@ -2989,17 +3002,13 @@ wm_init(struct ifnet *ifp)
 	 * Set up checksum offload parameters.
 	 */
 	reg = CSR_READ(sc, WMREG_RXCSUM);
+	reg &= ~(RXCSUM_IPOFL | RXCSUM_IPV6OFL | RXCSUM_TUOFL);
 	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx)
 		reg |= RXCSUM_IPOFL;
-	else
-		reg &= ~RXCSUM_IPOFL;
 	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx))
 		reg |= RXCSUM_IPOFL | RXCSUM_TUOFL;
-	else {
-		reg &= ~RXCSUM_TUOFL;
-		if ((ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) == 0)
-			reg &= ~RXCSUM_IPOFL;
-	}
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx))
+		reg |= RXCSUM_IPV6OFL | RXCSUM_TUOFL;
 	CSR_WRITE(sc, WMREG_RXCSUM, reg);
 
 	/*
