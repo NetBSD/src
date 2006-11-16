@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.46 2006/03/25 23:17:36 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.47 2006/11/16 21:24:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -139,6 +139,10 @@ struct mii_softc {
 	int mii_media_status;		/* last active status */
 };
 typedef struct mii_softc mii_softc_t;
+
+/* Default mii_anegticks values. */
+#define	MII_ANEGTICKS		5
+#define	MII_ANEGTICKS_GIGE	10
 
 /* mii_flags */
 #define	MIIF_INITDONE	0x0001		/* has been initialized (mii_data) */
