@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.c,v 1.8 2006/10/12 01:30:47 christos Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.9 2006/11/16 01:32:42 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.8 2006/10/12 01:30:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.9 2006/11/16 01:32:42 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,7 +64,7 @@ static void native_to_darwin_statvfs(const struct statvfs *,
     struct darwin_statfs *);
 
 int
-darwin_sys_fstatfs(struct lwp *l, void *v, register_t *retval __unused)
+darwin_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_fstatfs_args /* {
 		syscallarg(int) fd;
@@ -146,7 +146,7 @@ darwin_sys_getfsstat(l, v, retval)
 }
 
 int
-darwin_sys_statfs(struct lwp *l, void *v, register_t *retval __unused)
+darwin_sys_statfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_statfs_args /* {
 		syscallarg(char *) path;

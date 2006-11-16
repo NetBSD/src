@@ -1,4 +1,4 @@
-/*	$NetBSD: in_selsrc.c,v 1.2 2006/11/13 05:48:00 dyoung Exp $	*/
+/*	$NetBSD: in_selsrc.c,v 1.3 2006/11/16 01:33:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.2 2006/11/13 05:48:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.3 2006/11/16 01:33:45 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -167,8 +167,8 @@ SYSCTL_SETUP(sysctl_selectsrc_setup, "sysctl selectsrc subtree setup")
  * number.  Preference numbers are assigned with ioctl SIOCSIFADDRPREF.
  */
 static int
-in_preference(const struct in_addr *src __unused, int preference,
-    int idx __unused, const struct in_addr *dst __unused)
+in_preference(const struct in_addr *src, int preference,
+    int idx, const struct in_addr *dst)
 {
 	return -preference;
 }
@@ -178,8 +178,8 @@ in_preference(const struct in_addr *src __unused, int preference,
  * the ifaddr list.
  */
 static int
-in_index(const struct in_addr *src __unused, int preference __unused, int idx,
-    const struct in_addr *dst __unused)
+in_index(const struct in_addr *src, int preference, int idx,
+    const struct in_addr *dst)
 {
 	return -idx;
 }
@@ -190,8 +190,8 @@ in_index(const struct in_addr *src __unused, int preference __unused, int idx,
  * (Derived from in6_matchlen.)
  */
 static int
-in_matchlen(const struct in_addr *src, int preference __unused,
-    int idx __unused, const struct in_addr *dst)
+in_matchlen(const struct in_addr *src, int preference,
+    int idx, const struct in_addr *dst)
 {
 	int match = 0;
 	const uint8_t *s = (const uint8_t *)src, *d = (const uint8_t *)dst;
@@ -223,8 +223,8 @@ in_categorize(const struct in_addr *s)
 }
 
 static int
-in_match_category(const struct in_addr *src, int preference __unused,
-    int idx __unused, const struct in_addr *dst)
+in_match_category(const struct in_addr *src, int preference,
+    int idx, const struct in_addr *dst)
 {
 	enum in_category dst_c = in_categorize(dst),
 	                 src_c = in_categorize(src);
@@ -571,7 +571,7 @@ err:
 }
 
 void
-in_domifdetach(struct ifnet *ifp __unused, void *aux)
+in_domifdetach(struct ifnet *ifp, void *aux)
 {
 	struct in_ifsysctl *isc;
 	struct in_ifselsrc *iss;

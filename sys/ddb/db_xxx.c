@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.39 2006/10/12 01:30:50 christos Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.40 2006/11/16 01:32:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.39 2006/10/12 01:30:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.40 2006/11/16 01:32:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.39 2006/10/12 01:30:50 christos Exp $")
 #endif
 
 void
-db_kill_proc(db_expr_t addr __unused, int haddr __unused,
-    db_expr_t count __unused, const char *modif __unused)
+db_kill_proc(db_expr_t addr, int haddr,
+    db_expr_t count, const char *modif)
 {
 	struct proc *p;
 	db_expr_t pid, sig;
@@ -105,8 +105,8 @@ db_kill_proc(db_expr_t addr __unused, int haddr __unused,
 
 #ifdef KGDB
 void
-db_kgdb_cmd(db_expr_t addr __unused, int haddr __unused,
-    db_expr_t count __unused, const char *modif __unused)
+db_kgdb_cmd(db_expr_t addr, int haddr,
+    db_expr_t count, const char *modif)
 {
 	kgdb_active++;
 	kgdb_trap(db_trap_type, DDB_REGS);
@@ -115,8 +115,8 @@ db_kgdb_cmd(db_expr_t addr __unused, int haddr __unused,
 #endif
 
 void
-db_show_all_procs(db_expr_t addr __unused, int haddr __unused,
-    db_expr_t count __unused, const char *modif)
+db_show_all_procs(db_expr_t addr, int haddr,
+    db_expr_t count, const char *modif)
 {
 	int i;
 
@@ -233,16 +233,16 @@ db_show_all_procs(db_expr_t addr __unused, int haddr __unused,
 }
 
 void
-db_show_all_pools(db_expr_t addr __unused, int haddr __unused,
-    db_expr_t count __unused, const char *modif)
+db_show_all_pools(db_expr_t addr, int haddr,
+    db_expr_t count, const char *modif)
 {
 
 	pool_printall(modif, db_printf);
 }
 
 void
-db_dmesg(db_expr_t addr, int haddr, db_expr_t count __unused,
-    const char *modif __unused)
+db_dmesg(db_expr_t addr, int haddr, db_expr_t count,
+    const char *modif)
 {
 	struct kern_msgbuf *mbp;
 	db_expr_t print;
@@ -295,8 +295,8 @@ db_dmesg(db_expr_t addr, int haddr, db_expr_t count __unused,
 #endif
 
 void
-db_show_sched_qs(db_expr_t addr __unused, int haddr __unused,
-    db_expr_t count __unused, const char *modif __unused)
+db_show_sched_qs(db_expr_t addr, int haddr,
+    db_expr_t count, const char *modif)
 {
 	struct prochd *ph;
 	struct lwp *l;

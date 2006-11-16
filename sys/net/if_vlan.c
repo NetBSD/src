@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.51 2006/10/25 20:28:45 elad Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.52 2006/11/16 01:33:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.51 2006/10/25 20:28:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.52 2006/11/16 01:33:40 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -194,7 +194,7 @@ struct if_clone vlan_cloner =
 static char vlan_zero_pad_buff[ETHER_MIN_LEN];
 
 void
-vlanattach(int n __unused)
+vlanattach(int n)
 {
 
 	LIST_INIT(&ifv_list);

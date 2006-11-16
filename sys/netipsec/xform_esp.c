@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.11 2006/10/13 20:53:59 christos Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.12 2006/11/16 01:33:49 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.11 2006/10/13 20:53:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.12 2006/11/16 01:33:49 christos Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -669,7 +669,7 @@ static int
 esp_output(
     struct mbuf *m,
     struct ipsecrequest *isr,
-    struct mbuf **mp __unused,
+    struct mbuf **mp,
     int skip,
     int protoff
 )

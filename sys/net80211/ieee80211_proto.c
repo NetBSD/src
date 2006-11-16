@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.27 2006/10/12 01:32:31 christos Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.28 2006/11/16 01:33:41 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.23 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.27 2006/10/12 01:32:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.28 2006/11/16 01:33:41 christos Exp $");
 #endif
 
 /*
@@ -498,7 +498,7 @@ ieee80211_set_shortslottime(struct ieee80211com *ic, int onoff)
  * NB: the rate set is assumed to be sorted.
  */
 int
-ieee80211_iserp_rateset(struct ieee80211com *ic __unused,
+ieee80211_iserp_rateset(struct ieee80211com *ic,
     struct ieee80211_rateset *rs)
 {
 #define N(a)	(sizeof(a) / sizeof(a[0]))

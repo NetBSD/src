@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.51 2006/10/12 01:31:24 christos Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.52 2006/11/16 01:33:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.51 2006/10/12 01:31:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.52 2006/11/16 01:33:05 christos Exp $");
 
 #include "isadma.h"
 
@@ -602,7 +602,7 @@ isapnp_print(aux, str)
  */
 static int
 isapnp_submatch(struct device *parent, struct cfdata *match,
-    const int *ldesc __unused, void *aux)
+    const int *ldesc, void *aux)
 {
 
 	return (config_match(parent, match, aux));
@@ -883,7 +883,7 @@ isapnp_configure(sc, ipa)
  *	Probe routine
  */
 static int
-isapnp_match(struct device *parent, struct cfdata *match __unused, void *aux)
+isapnp_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isapnp_softc sc;
 	struct isa_attach_args *ia = aux;
@@ -932,7 +932,7 @@ isapnp_match(struct device *parent, struct cfdata *match __unused, void *aux)
  *	Attach the PnP `bus'.
  */
 static void
-isapnp_attach(struct device *parent __unused, struct device *self, void *aux)
+isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isapnp_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;

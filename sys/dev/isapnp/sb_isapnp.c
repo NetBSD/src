@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.49 2006/10/12 01:31:24 christos Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.50 2006/11/16 01:33:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.49 2006/10/12 01:31:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.50 2006/11/16 01:33:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ CFATTACH_DECL(sb_isapnp, sizeof(struct sbdsp_softc),
  * Probe for the soundblaster hardware.
  */
 int
-sb_isapnp_match(struct device *parent __unused, struct cfdata *match __unused,
+sb_isapnp_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	int pri, variant;
@@ -93,7 +93,7 @@ sb_isapnp_match(struct device *parent __unused, struct cfdata *match __unused,
  * pseudo-device driver.
  */
 void
-sb_isapnp_attach(struct device *parent __unused, struct device *self, void *aux)
+sb_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbdsp_softc *sc;
 	struct isapnp_attach_args *ipa;

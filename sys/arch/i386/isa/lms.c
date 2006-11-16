@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.50 2006/11/12 19:00:42 plunky Exp $	*/
+/*	$NetBSD: lms.c,v 1.51 2006/11/16 01:32:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.50 2006/11/12 19:00:42 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.51 2006/11/16 01:32:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ const struct wsmouse_accessops lms_accessops = {
 };
 
 int
-lmsprobe(struct device *parent __unused, struct cfdata *match __unused,
+lmsprobe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -135,7 +135,7 @@ out:
 }
 
 void
-lmsattach(struct device *parent __unused, struct device *self, void *aux)
+lmsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct lms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -200,8 +200,8 @@ lms_disable(void *v)
 }
 
 int
-lms_ioctl(void *v __unused, u_long cmd, caddr_t data, int flag __unused,
-    struct lwp *l __unused)
+lms_ioctl(void *v, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 #if 0
 	struct lms_softc *sc = v;

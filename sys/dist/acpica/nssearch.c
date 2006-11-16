@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nssearch.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nssearch.c,v 1.3 2006/11/16 01:33:31 christos Exp $");
 
 #define __NSSEARCH_C__
 
@@ -167,7 +167,7 @@ ACPI_STATUS
 AcpiNsSearchNode (
     UINT32                  TargetName,
     ACPI_NAMESPACE_NODE     *Node,
-    ACPI_OBJECT_TYPE        Type __unused,
+    ACPI_OBJECT_TYPE        Type,
     ACPI_NAMESPACE_NODE     **ReturnNode)
 {
     ACPI_NAMESPACE_NODE     *NextNode;

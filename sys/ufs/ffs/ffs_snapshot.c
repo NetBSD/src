@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.35 2006/10/25 22:01:55 reinoud Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.36 2006/11/16 01:33:53 christos Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.35 2006/10/25 22:01:55 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.36 2006/11/16 01:33:53 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -114,7 +114,7 @@ static int mapacct_ufs2(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
 
 static int ffs_copyonwrite(void *, struct buf *);
 static int readfsblk(struct vnode *, caddr_t, ufs2_daddr_t);
-static int __unused readvnblk(struct vnode *, caddr_t, ufs2_daddr_t);
+static int readvnblk(struct vnode *, caddr_t, ufs2_daddr_t);
 static int writevnblk(struct vnode *, caddr_t, ufs2_daddr_t);
 static inline int cow_enter(void);
 static inline void cow_leave(int);
@@ -132,8 +132,8 @@ static int snapdebug = 0;
  * Vnode is locked on entry and return.
  */
 int
-ffs_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
-    struct timespec *ctime __unused)
+ffs_snapshot(struct mount *mp, struct vnode *vp,
+    struct timespec *ctime)
 {
 #if defined(FFS_NO_SNAPSHOT)
 	return EOPNOTSUPP;
@@ -962,7 +962,7 @@ fullacct_ufs1(struct vnode *vp, ufs1_daddr_t *oldblkp, ufs1_daddr_t *lastblkp,
  */
 static int
 snapacct_ufs1(struct vnode *vp, ufs1_daddr_t *oldblkp, ufs1_daddr_t *lastblkp,
-    struct fs *fs, ufs_lbn_t lblkno __unused,
+    struct fs *fs, ufs_lbn_t lblkno,
     int expungetype /* BLK_SNAP or BLK_NOCOPY */)
 {
 	struct inode *ip = VTOI(vp);
@@ -1230,7 +1230,7 @@ fullacct_ufs2(struct vnode *vp, ufs2_daddr_t *oldblkp, ufs2_daddr_t *lastblkp,
  */
 static int
 snapacct_ufs2(struct vnode *vp, ufs2_daddr_t *oldblkp, ufs2_daddr_t *lastblkp,
-    struct fs *fs, ufs_lbn_t lblkno __unused,
+    struct fs *fs, ufs_lbn_t lblkno,
     int expungetype /* BLK_SNAP or BLK_NOCOPY */)
 {
 	struct inode *ip = VTOI(vp);
@@ -1467,7 +1467,7 @@ ffs_snapremove(struct vnode *vp)
  */
 int
 ffs_snapblkfree(struct fs *fs, struct vnode *devvp, ufs2_daddr_t bno,
-    long size, ino_t inum __unused)
+    long size, ino_t inum)
 {
 	struct ufsmount *ump = VFSTOUFS(devvp->v_specmountpoint);
 	struct buf *ibp;

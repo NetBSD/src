@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.12 2006/10/12 01:31:59 christos Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.13 2006/11/16 01:33:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.12 2006/10/12 01:31:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.13 2006/11/16 01:33:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -84,8 +84,8 @@ void	sysmon_envsys_release(struct sysmon_envsys *);
  *	Open the system monitor device.
  */
 int
-sysmonopen_envsys(dev_t dev __unused, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+sysmonopen_envsys(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	simple_lock(&sysmon_envsys_initialized_slock);
 	if (sysmon_envsys_initialized == 0) {
@@ -103,8 +103,8 @@ sysmonopen_envsys(dev_t dev __unused, int flag __unused, int mode __unused,
  *	Close the system monitor device.
  */
 int
-sysmonclose_envsys(dev_t dev __unused, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+sysmonclose_envsys(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 
 	/* Nothing to do */
@@ -117,8 +117,8 @@ sysmonclose_envsys(dev_t dev __unused, int flag __unused, int mode __unused,
  *	Perform an envsys control request.
  */
 int
-sysmonioctl_envsys(dev_t dev __unused, u_long cmd, caddr_t data,
-    int flag __unused, struct lwp *l __unused)
+sysmonioctl_envsys(dev_t dev, u_long cmd, caddr_t data,
+    int flag, struct lwp *l)
 {
 	struct sysmon_envsys *sme;
 	int error = 0;

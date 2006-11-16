@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.26 2006/10/16 12:58:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.27 2006/11/16 01:33:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -101,7 +101,7 @@ CFATTACH_DECL(isic_isa, sizeof(struct isic_softc),
  * Probe card
  */
 static int
-isic_isa_probe(struct device *parent __unused, struct cfdata *cf, void *aux)
+isic_isa_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t memt = ia->ia_memt, iot = ia->ia_iot;
@@ -783,7 +783,7 @@ isicattach(int flags, struct isic_softc *sc)
  * Attach the card
  */
 static void
-isic_isa_attach(struct device *parent __unused, struct device *self, void *aux)
+isic_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isic_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

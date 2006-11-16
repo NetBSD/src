@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.76 2006/10/12 01:31:30 christos Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.77 2006/11/16 01:33:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.76 2006/10/12 01:31:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.77 2006/11/16 01:33:09 christos Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -281,7 +281,7 @@ tl_lookup_product(id)
 }
 
 static int
-tl_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+tl_pci_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
@@ -293,7 +293,7 @@ tl_pci_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-tl_pci_attach(struct device *parent __unused, struct device *self, void *aux)
+tl_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	tl_softc_t *sc = (tl_softc_t *)self;
 	struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
@@ -533,7 +533,7 @@ static void tl_shutdown(v)
 	tl_stop(v, 1);
 }
 
-static void tl_stop(struct ifnet *ifp, int disable __unused)
+static void tl_stop(struct ifnet *ifp, int disable)
 {
 	tl_softc_t *sc = ifp->if_softc;
 	struct Tx_list *Tx;
@@ -916,7 +916,7 @@ tl_statchg(self)
 /********** I2C glue **********/
 
 static int
-tl_i2c_acquire_bus(void *cookie __unused, int flags __unused)
+tl_i2c_acquire_bus(void *cookie, int flags)
 {
 
 	/* private bus */
@@ -924,7 +924,7 @@ tl_i2c_acquire_bus(void *cookie __unused, int flags __unused)
 }
 
 static void
-tl_i2c_release_bus(void *cookie __unused, int flags __unused)
+tl_i2c_release_bus(void *cookie, int flags)
 {
 
 	/* private bus */

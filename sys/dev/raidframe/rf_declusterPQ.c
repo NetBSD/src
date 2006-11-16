@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_declusterPQ.c,v 1.14 2006/10/12 01:31:50 christos Exp $	*/
+/*	$NetBSD: rf_declusterPQ.c,v 1.15 2006/11/16 01:33:23 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,7 @@
  *--------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.14 2006/10/12 01:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.15 2006/11/16 01:33:23 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.14 2006/10/12 01:31:50 christos
 /* configuration code */
 
 int
-rf_ConfigureDeclusteredPQ(RF_ShutdownList_t **listp __unused, RF_Raid_t *raidPtr,
+rf_ConfigureDeclusteredPQ(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			  RF_Config_t *cfgPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);

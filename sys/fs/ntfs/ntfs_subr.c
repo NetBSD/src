@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.26 2006/10/12 01:32:11 christos Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.27 2006/11/16 01:33:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.26 2006/10/12 01:32:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.27 2006/11/16 01:33:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -748,7 +748,7 @@ ntfs_uastrcmp(ntmp, ustr, ustrlen, astr, astrlen)
  */
 int
 ntfs_fget(
-    struct ntfsmount *ntmp __unused,
+    struct ntfsmount *ntmp,
     struct ntnode *ip,
     int attrtype,
     char *attrname,

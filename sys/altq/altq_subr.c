@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.18 2006/10/15 13:17:13 peter Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.19 2006/11/16 01:32:37 christos Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.18 2006/10/15 13:17:13 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.19 2006/11/16 01:32:37 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -364,7 +364,7 @@ tbr_set(struct ifaltq *ifq, struct tb_profile *profile)
  * if necessary.
  */
 static void
-tbr_timeout(void *arg __unused)
+tbr_timeout(void *arg)
 {
 	struct ifnet *ifp;
 	int active, s;

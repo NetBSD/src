@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.11 2006/10/12 01:31:31 christos Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.12 2006/11/16 01:33:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.11 2006/10/12 01:31:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.12 2006/11/16 01:33:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.11 2006/10/12 01:31:31 christos Exp $"
 #include <dev/ic/lptvar.h>
 
 static int
-lpt_puc_probe(struct device *parent __unused, struct cfdata *match __unused,
+lpt_puc_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct puc_attach_args *aa = aux;
@@ -66,7 +66,7 @@ lpt_puc_probe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-lpt_puc_attach(struct device *parent __unused, struct device *self, void *aux)
+lpt_puc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct puc_attach_args *aa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32.c,v 1.7 2006/10/12 01:31:01 christos Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.8 2006/11/16 01:32:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.7 2006/10/12 01:31:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.8 2006/11/16 01:32:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1400,7 +1400,7 @@ njsc32_reset_detected(struct njsc32_softc *sc)
 
 static int
 njsc32_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd,
-    caddr_t addr __unused, int flag __unused, struct proc *p __unused)
+    caddr_t addr, int flag, struct proc *p)
 {
 	struct njsc32_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 

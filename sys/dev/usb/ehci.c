@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.114 2006/10/31 20:43:31 joerg Exp $ */
+/*	$NetBSD: ehci.c,v 1.115 2006/11/16 01:33:26 christos Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.114 2006/10/31 20:43:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.115 2006/11/16 01:33:26 christos Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -718,7 +718,7 @@ ehci_softintr(void *v)
 
 /* Check for an interrupt. */
 void
-ehci_check_intr(ehci_softc_t *sc __unused, struct ehci_xfer *ex)
+ehci_check_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 {
 	ehci_soft_qtd_t *sqtd, *lsqtd;
 	u_int32_t status;
@@ -1200,7 +1200,7 @@ ehci_device_clear_toggle(usbd_pipe_handle pipe)
 }
 
 Static void
-ehci_noop(usbd_pipe_handle pipe __unused)
+ehci_noop(usbd_pipe_handle pipe)
 {
 }
 
@@ -2073,7 +2073,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 }
 
 void
-ehci_disown(ehci_softc_t *sc, int index, int lowspeed __unused)
+ehci_disown(ehci_softc_t *sc, int index, int lowspeed)
 {
 	int port;
 	u_int32_t v;
@@ -2102,14 +2102,14 @@ ehci_disown(ehci_softc_t *sc, int index, int lowspeed __unused)
 
 /* Abort a root control request. */
 Static void
-ehci_root_ctrl_abort(usbd_xfer_handle xfer __unused)
+ehci_root_ctrl_abort(usbd_xfer_handle xfer)
 {
 	/* Nothing to do, all transfers are synchronous. */
 }
 
 /* Close the root pipe. */
 Static void
-ehci_root_ctrl_close(usbd_pipe_handle pipe __unused)
+ehci_root_ctrl_close(usbd_pipe_handle pipe)
 {
 	DPRINTF(("ehci_root_ctrl_close\n"));
 	/* Nothing to do. */
@@ -3233,24 +3233,24 @@ ehci_device_intr_done(usbd_xfer_handle xfer)
 /************************/
 
 Static usbd_status
-ehci_device_isoc_transfer(usbd_xfer_handle xfer __unused)
+ehci_device_isoc_transfer(usbd_xfer_handle xfer)
 {
 	return USBD_IOERROR;
 }
 Static usbd_status
-ehci_device_isoc_start(usbd_xfer_handle xfer __unused)
+ehci_device_isoc_start(usbd_xfer_handle xfer)
 {
 	return USBD_IOERROR;
 }
 Static void
-ehci_device_isoc_abort(usbd_xfer_handle xfer __unused)
+ehci_device_isoc_abort(usbd_xfer_handle xfer)
 {
 }
 Static void
-ehci_device_isoc_close(usbd_pipe_handle pipe __unused)
+ehci_device_isoc_close(usbd_pipe_handle pipe)
 {
 }
 Static void
-ehci_device_isoc_done(usbd_xfer_handle xfer __unused)
+ehci_device_isoc_done(usbd_xfer_handle xfer)
 {
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.39 2006/10/12 06:57:27 xtraeme Exp $ */
+/* $NetBSD: cgd.c,v 1.40 2006/11/16 01:32:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.39 2006/10/12 06:57:27 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.40 2006/11/16 01:32:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -399,7 +399,7 @@ cgdiodone(struct buf *nbp)
 
 /* XXX: we should probably put these into dksubr.c, mostly */
 static int
-cgdread(dev_t dev, struct uio *uio, int flags __unused)
+cgdread(dev_t dev, struct uio *uio, int flags)
 {
 	struct	cgd_softc *cs;
 	struct	dk_softc *dksc;
@@ -414,7 +414,7 @@ cgdread(dev_t dev, struct uio *uio, int flags __unused)
 
 /* XXX: we should probably put these into dksubr.c, mostly */
 static int
-cgdwrite(dev_t dev, struct uio *uio, int flags __unused)
+cgdwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct	cgd_softc *cs;
 	struct	dk_softc *dksc;
@@ -580,7 +580,7 @@ bail:
 
 /* ARGSUSED */
 static int
-cgd_ioctl_clr(struct cgd_softc *cs, void *data __unused, struct lwp *l)
+cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct lwp *l)
 {
 	int	s;
 

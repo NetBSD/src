@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.7 2006/11/07 22:10:18 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.8 2006/11/16 01:33:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.7 2006/11/07 22:10:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.8 2006/11/16 01:33:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -320,8 +320,8 @@ puffs_lwp2pid(struct lwp *l)
 
 
 static void
-puffs_gop_size(struct vnode *vp __unused, off_t size, off_t *eobp,
-	int flags __unused)
+puffs_gop_size(struct vnode *vp, off_t size, off_t *eobp,
+	int flags)
 {
 
 	*eobp = size;

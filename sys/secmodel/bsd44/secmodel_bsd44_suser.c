@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.15 2006/11/14 05:20:21 dyoung Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.16 2006/11/16 01:33:51 christos Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.15 2006/11/14 05:20:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.16 2006/11/16 01:33:51 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,8 +83,8 @@ secmodel_bsd44_suser_start(void)
  */
 int
 secmodel_bsd44_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie __unused, void *arg0 __unused, void *arg1 __unused,
-    void *arg2 __unused, void *arg3 __unused)
+    void *cookie, void *arg0, void *arg1,
+    void *arg2, void *arg3)
 {
 	boolean_t isroot;
 	int result;
@@ -123,8 +123,8 @@ secmodel_bsd44_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie __unused, void *arg0 __unused, void *arg1 __unused,
-    void *arg2 __unused, void *arg3 __unused)
+    void *cookie, void *arg0, void *arg1,
+    void *arg2, void *arg3)
 {
 	boolean_t isroot;
 	int result;
@@ -182,7 +182,7 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie __unused, void *arg0, void *arg1, void *arg2, void *arg3)
+    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	struct proc *p;
 	boolean_t isroot;
@@ -264,8 +264,8 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie __unused, void *arg0, void *arg1, void *arg2 __unused,
-    void *arg3 __unused)
+    void *cookie, void *arg0, void *arg1, void *arg2,
+    void *arg3)
 {
 	boolean_t isroot;
 	int result;
@@ -399,8 +399,8 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie __unused, void *arg0, void *arg1 __unused, void *arg2 __unused,
-    void *arg3 __unused)
+    void *cookie, void *arg0, void *arg1, void *arg2,
+    void *arg3)
 {
         boolean_t isroot;
         int result;
@@ -456,8 +456,8 @@ secmodel_bsd44_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie __unused, void *arg0, void *arg1 __unused, void *arg2 __unused,
-    void *arg3 __unused)
+    void *cookie, void *arg0, void *arg1, void *arg2,
+    void *arg3)
 {
 	struct tty *tty;
         boolean_t isroot;

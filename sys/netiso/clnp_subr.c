@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.20 2006/10/12 01:32:46 christos Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.21 2006/11/16 01:33:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.20 2006/10/12 01:32:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.21 2006/11/16 01:33:51 christos Exp $");
 
 #include "opt_iso.h"
 
@@ -626,7 +626,7 @@ clnp_echoreply(
     int             ec_len,		/* length of ec */
     struct sockaddr_iso *ec_src,	/* src of ec */
     struct sockaddr_iso *ec_dst,	/* destination of ec (i.e., us) */
-    struct clnp_optidx *ec_oidxp __unused) /* options index to ec packet */
+    struct clnp_optidx *ec_oidxp) /* options index to ec packet */
 {
 	struct isopcb   isopcb;
 	int             flags = CLNP_NOCACHE | CLNP_ECHOR;

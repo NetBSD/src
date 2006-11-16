@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.159 2006/11/11 13:42:14 jmmv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.160 2006/11/16 01:32:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.159 2006/11/11 13:42:14 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.160 2006/11/16 01:32:45 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -258,7 +258,7 @@ static struct vnd_softc	*vnd_spawn(int);
 int	vnd_destroy(struct device *);
 
 void
-vndattach(int num __unused)
+vndattach(int num)
 {
 	int error;
 
@@ -269,15 +269,15 @@ vndattach(int num __unused)
 }
 
 static int
-vnd_match(struct device *self __unused, struct cfdata *cfdata __unused,
-    void *aux __unused)
+vnd_match(struct device *self, struct cfdata *cfdata,
+    void *aux)
 {
 	return 1;
 }
 
 static void
-vnd_attach(struct device *parent __unused, struct device *self,
-    void *aux __unused)
+vnd_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct vnd_softc *sc = (struct vnd_softc *)self;
 
@@ -289,7 +289,7 @@ vnd_attach(struct device *parent __unused, struct device *self,
 }
 
 static int
-vnd_detach(struct device *self, int flags __unused)
+vnd_detach(struct device *self, int flags)
 {
 	struct vnd_softc *sc = (struct vnd_softc *)self;
 	if (sc->sc_flags & VNF_INITED)
@@ -329,7 +329,7 @@ vnd_destroy(struct device *dev)
 }
 
 static int
-vndopen(dev_t dev, int flags __unused, int mode, struct lwp *l __unused)
+vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -394,7 +394,7 @@ vndopen(dev_t dev, int flags __unused, int mode, struct lwp *l __unused)
 }
 
 static int
-vndclose(dev_t dev, int flags __unused, int mode, struct lwp *l __unused)
+vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -854,7 +854,7 @@ vndiodone(struct buf *bp)
 
 /* ARGSUSED */
 static int
-vndread(dev_t dev, struct uio *uio, int flags __unused)
+vndread(dev_t dev, struct uio *uio, int flags)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -876,7 +876,7 @@ vndread(dev_t dev, struct uio *uio, int flags __unused)
 
 /* ARGSUSED */
 static int
-vndwrite(dev_t dev, struct uio *uio, int flags __unused)
+vndwrite(dev_t dev, struct uio *uio, int flags)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
@@ -1595,8 +1595,8 @@ vndsize(dev_t dev)
 }
 
 static int
-vnddump(dev_t dev __unused, daddr_t blkno __unused, caddr_t va __unused,
-    size_t size __unused)
+vnddump(dev_t dev, daddr_t blkno, caddr_t va,
+    size_t size)
 {
 
 	/* Not implemented. */
@@ -1829,13 +1829,13 @@ compstrategy(struct buf *bp, off_t bn)
 
 /* compression memory allocation routines */
 static void *
-vnd_alloc(void *aux __unused, u_int items, u_int siz)
+vnd_alloc(void *aux, u_int items, u_int siz)
 {
 	return malloc(items * siz, M_TEMP, M_NOWAIT);
 }
 
 static void
-vnd_free(void *aux __unused, void *ptr)
+vnd_free(void *aux, void *ptr)
 {
 	free(ptr, M_TEMP);
 }

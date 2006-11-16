@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.19 2006/10/16 12:23:00 pooka Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.20 2006/11/16 01:33:49 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.19 2006/10/16 12:23:00 pooka Exp $
+ *	$Id: i4b_l2.c,v 1.20 2006/11/16 01:33:49 christos Exp $
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.19 2006/10/16 12:23:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.20 2006/11/16 01:33:49 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -104,7 +104,7 @@ int i4b_dl_release_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 /*---------------------------------------------------------------------------*
  *	DL UNIT DATA REQUEST from Layer 3
  *---------------------------------------------------------------------------*/
-int i4b_dl_unit_data_req(l2_softc_t *l2sc __unused, struct isdn_l3_driver *drv __unused, struct mbuf *m __unused)
+int i4b_dl_unit_data_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 {
 #ifdef NOTDEF
 	NDBGL2(L2_PRIM, "isdnif %d", l2sc->isdnif);
@@ -115,7 +115,7 @@ int i4b_dl_unit_data_req(l2_softc_t *l2sc __unused, struct isdn_l3_driver *drv _
 /*---------------------------------------------------------------------------*
  *	DL DATA REQUEST from Layer 3
  *---------------------------------------------------------------------------*/
-int i4b_dl_data_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv __unused, struct mbuf *m)
+int i4b_dl_data_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 {
 	switch(l2sc->Q921_state)
 	{
@@ -152,7 +152,7 @@ int i4b_dl_data_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv __unused, struc
  *	isdn_layer2_activate_ind - link activation/deactivation indication from layer 1
  *---------------------------------------------------------------------------*/
 int
-isdn_layer2_activate_ind(struct l2_softc *l2sc, struct isdn_l3_driver *drv __unused, int event_activate)
+isdn_layer2_activate_ind(struct l2_softc *l2sc, struct isdn_l3_driver *drv, int event_activate)
 {
 	if (event_activate) {
 		l2sc->ph_active = PH_ACTIVE;
@@ -208,7 +208,7 @@ i4b_l2_unit_init(l2_softc_t *l2sc)
  *	isdn_layer2_status_ind - status indication upward
  *---------------------------------------------------------------------------*/
 int
-isdn_layer2_status_ind(l2_softc_t *l2sc, struct isdn_l3_driver *drv __unused, int status, int parm)
+isdn_layer2_status_ind(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int status, int parm)
 {
 	int s;
 	int sendup = 1;

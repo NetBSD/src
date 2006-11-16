@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.57 2006/10/12 01:31:16 christos Exp $	*/
+/*	$NetBSD: ast.c,v 1.58 2006/11/16 01:33:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.57 2006/10/12 01:31:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.58 2006/11/16 01:33:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ CFATTACH_DECL(ast, sizeof(struct ast_softc),
     astprobe, astattach, NULL, NULL);
 
 int
-astprobe(struct device *parent __unused, struct cfdata *self __unused,
+astprobe(struct device *parent, struct cfdata *self,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -143,7 +143,7 @@ out:
 }
 
 void
-astattach(struct device *parent __unused, struct device *self, void *aux)
+astattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ast_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

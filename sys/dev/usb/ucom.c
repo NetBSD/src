@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.68 2006/10/12 01:31:59 christos Exp $	*/
+/*	$NetBSD: ucom.c,v 1.69 2006/11/16 01:33:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.68 2006/10/12 01:31:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.69 2006/11/16 01:33:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ ucom_shutdown(struct ucom_softc *sc)
 }
 
 int
-ucomopen(dev_t dev, int flag, int mode __unused, struct lwp *l)
+ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = UCOMUNIT(dev);
 	usbd_status err;
@@ -495,7 +495,7 @@ bad:
 }
 
 int
-ucomclose(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -869,7 +869,7 @@ XXX what if the hardware is not open
  * (un)block input via hw flowcontrol
  */
 Static void
-ucom_hwiflow(struct ucom_softc *sc __unused)
+ucom_hwiflow(struct ucom_softc *sc)
 {
 	DPRINTF(("ucom_hwiflow:\n"));
 #if 0
@@ -958,7 +958,7 @@ out:
 }
 
 void
-ucomstop(struct tty *tp __unused, int flag __unused)
+ucomstop(struct tty *tp, int flag)
 {
 	DPRINTF(("ucomstop: flag=%d\n", flag));
 #if 0
@@ -1140,7 +1140,7 @@ ucomprint(void *aux, const char *pnp)
 
 int
 ucomsubmatch(struct device *parent, struct cfdata *cf,
-	     const int *ldesc __unused, void *aux)
+	     const int *ldesc, void *aux)
 {
 	struct ucom_attach_args *uca = aux;
 

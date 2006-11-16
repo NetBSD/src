@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.6 2006/10/01 10:13:54 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.7 2006/11/16 01:33:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.6 2006/10/01 10:13:54 plunky Exp $
+ * $Id: hci.h,v 1.7 2006/11/16 01:33:45 christos Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -1907,7 +1907,7 @@ struct hci_filter {
 	uint32_t	mask[8];	/* 256 bits */
 };
 
-static __inline void __unused
+static __inline void
 hci_filter_set(uint8_t bit, struct hci_filter *filter)
 {
 	uint8_t off = bit - 1;
@@ -1916,7 +1916,7 @@ hci_filter_set(uint8_t bit, struct hci_filter *filter)
 	filter->mask[off] |= (1 << ((bit - 1) & 0x1f));
 }
 
-static __inline void __unused
+static __inline void
 hci_filter_clr(uint8_t bit, struct hci_filter *filter)
 {
 	uint8_t off = bit - 1;
@@ -1925,7 +1925,7 @@ hci_filter_clr(uint8_t bit, struct hci_filter *filter)
 	filter->mask[off] &= ~(1 << ((bit - 1) & 0x1f));
 }
 
-static __inline int __unused
+static __inline int
 hci_filter_test(uint8_t bit, struct hci_filter *filter)
 {
 	uint8_t off = bit - 1;

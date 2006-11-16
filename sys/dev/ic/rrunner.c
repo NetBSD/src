@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.58 2006/10/12 01:31:01 christos Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.59 2006/11/16 01:32:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.58 2006/10/12 01:31:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.59 2006/11/16 01:32:52 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -706,8 +706,8 @@ bad_init:
  */
 
 int 
-esh_fpopen(dev_t dev, int oflags __unused, int devtype __unused,
-    struct lwp *l __unused)
+esh_fpopen(dev_t dev, int oflags, int devtype,
+    struct lwp *l)
 {
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
@@ -924,8 +924,8 @@ bad_fp_dmamem_alloc:
 
 
 int 
-esh_fpclose(dev_t dev, int fflag __unused, int devtype __unused,
-    struct lwp *l __unused)
+esh_fpclose(dev_t dev, int fflag, int devtype,
+    struct lwp *l)
 {
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
@@ -996,7 +996,7 @@ esh_fpclose(dev_t dev, int fflag __unused, int devtype __unused,
 }
 
 int
-esh_fpread(dev_t dev, struct uio *uio, int ioflag __unused)
+esh_fpread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -1154,7 +1154,7 @@ fpread_done:
 
 
 int
-esh_fpwrite(dev_t dev, struct uio *uio, int ioflag __unused)
+esh_fpwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;

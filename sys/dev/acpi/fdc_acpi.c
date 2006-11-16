@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.29 2006/10/12 01:30:54 christos Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.30 2006/11/16 01:32:47 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.29 2006/10/12 01:30:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.30 2006/11/16 01:32:47 christos Exp $");
 
 #include "rnd.h"
 
@@ -93,7 +93,7 @@ static const char * const fdc_acpi_ids[] = {
  * fdc_acpi_match: autoconf(9) match routine
  */
 static int
-fdc_acpi_match(struct device *parent __unused, struct cfdata *match __unused,
+fdc_acpi_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -108,7 +108,7 @@ fdc_acpi_match(struct device *parent __unused, struct cfdata *match __unused,
  * fdc_acpi_attach: autoconf(9) attach routine
  */
 static void
-fdc_acpi_attach(struct device *parent __unused, struct device *self, void *aux)
+fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdc_acpi_softc *asc = (struct fdc_acpi_softc *)self;
 	struct fdc_softc *sc = &asc->sc_fdc;
@@ -333,7 +333,7 @@ out:
 }
 
 static const struct fd_type *
-fdc_acpi_nvtotype(char *fdc __unused, int nvraminfo, int drive)
+fdc_acpi_nvtotype(char *fdc, int nvraminfo, int drive)
 {
 	int type;
 

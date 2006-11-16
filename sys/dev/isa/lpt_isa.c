@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.62 2006/10/12 01:31:17 christos Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.63 2006/11/16 01:33:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.62 2006/10/12 01:31:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.63 2006/11/16 01:33:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ int lpt_port_test(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
  */
 int
 lpt_port_test(bus_space_tag_t iot, bus_space_handle_t ioh,
-    bus_addr_t base __unused, bus_size_t off, u_char data, u_char mask)
+    bus_addr_t base, bus_size_t off, u_char data, u_char mask)
 {
 	int timeout;
 	u_char temp;
@@ -143,7 +143,7 @@ lpt_port_test(bus_space_tag_t iot, bus_space_handle_t ioh,
  *	3) Set the data and control ports to a value of 0
  */
 int
-lpt_isa_probe(struct device *parent __unused, struct cfdata *match __unused,
+lpt_isa_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -214,7 +214,7 @@ out:
 }
 
 void
-lpt_isa_attach(struct device *parent __unused, struct device *self, void *aux)
+lpt_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lpt_isa_softc *sc = (void *)self;
 	struct lpt_softc *lsc = &sc->sc_lpt;

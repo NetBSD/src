@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.60 2006/10/12 01:32:27 christos Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.61 2006/11/16 01:33:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.60 2006/10/12 01:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.61 2006/11/16 01:33:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ umapfs_mount(mp, path, data, ndp, l)
  * Free reference to umap layer
  */
 int
-umapfs_unmount(struct mount *mp, int mntflags, struct lwp *l __unused)
+umapfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 {
 	struct vnode *rtvp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
 	int error;

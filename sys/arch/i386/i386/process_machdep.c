@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.58 2006/10/12 01:30:43 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.59 2006/11/16 01:32:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.58 2006/10/12 01:30:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.59 2006/11/16 01:32:38 christos Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -465,7 +465,7 @@ ptrace_machdep_dorequest(
     struct lwp *lt,
     int req,
     caddr_t addr,
-    int data __unused
+    int data
 )
 {
 	struct uio uio;

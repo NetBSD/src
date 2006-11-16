@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.25 2006/10/12 01:31:01 christos Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.26 2006/11/16 01:32:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.25 2006/10/12 01:31:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.26 2006/11/16 01:32:52 christos Exp $");
 
 #undef	TCICDEBUG
 
@@ -1047,7 +1047,7 @@ tcic_chip_io_alloc(pch, start, size, align, pcihp)
 }
 
 void
-tcic_chip_io_free(pcmcia_chipset_handle_t pch __unused,
+tcic_chip_io_free(pcmcia_chipset_handle_t pch,
     struct pcmcia_io_handle *pcihp)
 {
 	bus_space_tag_t iot = pcihp->iot;

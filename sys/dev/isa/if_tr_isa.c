@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.15 2006/10/12 01:31:16 christos Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.16 2006/11/16 01:33:00 christos Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early!! */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.15 2006/10/12 01:31:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.16 2006/11/16 01:33:00 christos Exp $");
 
 #undef TRISADEBUG
 
@@ -206,7 +206,7 @@ tr_isa_probe(parent, match, aux)
 int trtcm_setspeed(struct tr_softc *, int);
 
 void
-tr_isa_attach(struct device *parent __unused, struct device *self, void	*aux)
+tr_isa_attach(struct device *parent, struct device *self, void	*aux)
 {
 	struct tr_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;

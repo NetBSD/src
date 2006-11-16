@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.17 2006/10/12 01:31:32 christos Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.18 2006/11/16 01:33:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.17 2006/10/12 01:31:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.18 2006/11/16 01:33:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.17 2006/10/12 01:31:32 christos Exp $"
 #include <dev/pci/pcivar.h>
 
 static int
-pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type __unused,
+pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
     bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
 	pcireg_t address, mask;

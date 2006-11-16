@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.26 2006/10/12 01:31:50 christos Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.27 2006/11/16 01:33:23 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.26 2006/10/12 01:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.27 2006/11/16 01:33:23 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -114,8 +114,8 @@ void
 rf_CreateRaidOneDegradedReadDAG(RF_Raid_t *raidPtr,
 				RF_AccessStripeMap_t *asmap,
 				RF_DagHeader_t *dag_h,
-				void *bp __unused,
-				RF_RaidAccessFlags_t flags __unused,
+				void *bp,
+				RF_RaidAccessFlags_t flags,
 				RF_AllocListElem_t *allocList)
 {
 	RF_DagNode_t *rdNode, *blockNode, *commitNode, *termNode;
@@ -260,8 +260,8 @@ rf_CreateRaidOneDegradedReadDAG(RF_Raid_t *raidPtr,
 
 void
 rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
-			 RF_DagHeader_t *dag_h, void *bp __unused,
-			 RF_RaidAccessFlags_t flags __unused,
+			 RF_DagHeader_t *dag_h, void *bp,
+			 RF_RaidAccessFlags_t flags,
 			 RF_AllocListElem_t *allocList,
 			 const RF_RedFuncs_t *recFunc)
 {
@@ -575,8 +575,8 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 
 void
 rf_CreateRaidCDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
-			      RF_DagHeader_t *dag_h, void *bp __unused,
-			      RF_RaidAccessFlags_t flags __unused,
+			      RF_DagHeader_t *dag_h, void *bp,
+			      RF_RaidAccessFlags_t flags,
 			      RF_AllocListElem_t *allocList)
 {
 	RF_DagNode_t *nodes, *rdNode, *blockNode, *commitNode, *termNode;
@@ -1031,8 +1031,8 @@ rf_InitNode(node, rf_wait, RF_FALSE, rf_DiskReadFunc, rf_DiskReadUndoFunc, rf_Ge
 
 void
 rf_DoubleDegRead(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
-		 RF_DagHeader_t *dag_h, void *bp __unused,
-		 RF_RaidAccessFlags_t flags __unused,
+		 RF_DagHeader_t *dag_h, void *bp,
+		 RF_RaidAccessFlags_t flags,
 		 RF_AllocListElem_t *allocList,
 		 const char *redundantReadNodeName,
 		 const char *recoveryNodeName,

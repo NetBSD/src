@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.7 2006/10/12 06:56:48 xtraeme Exp $ */
+/*	$NetBSD: apm.c,v 1.8 2006/11/16 01:32:47 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.7 2006/10/12 06:56:48 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.8 2006/11/16 01:32:47 christos Exp $");
 
 #include "opt_apm.h"
 
@@ -359,7 +359,7 @@ apm_standby(struct apm_softc *sc)
 }
 
 static void
-apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info __unused)
+apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info)
 {
 
 	if (sc->sc_power_state == PWR_RESUME) {
@@ -733,7 +733,7 @@ apm_thread(void *arg)
 }
 
 int
-apmopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+apmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = APMUNIT(dev);
 	int ctl = APM(dev);
@@ -782,8 +782,8 @@ apmopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 }
 
 int
-apmclose(dev_t dev, int flag __unused, int mode __unused,
-	struct lwp *l __unused)
+apmclose(dev_t dev, int flag, int mode,
+	struct lwp *l)
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	int ctl = APM(dev);
@@ -810,7 +810,7 @@ apmclose(dev_t dev, int flag __unused, int mode __unused,
 
 int
 apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
-	struct lwp *l __unused)
+	struct lwp *l)
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	struct apm_power_info *powerp;
@@ -937,7 +937,7 @@ filt_apmrdetach(struct knote *kn)
 }
 
 static int
-filt_apmread(struct knote *kn, long hint __unused)
+filt_apmread(struct knote *kn, long hint)
 {
 	struct apm_softc *sc = kn->kn_hook;
 

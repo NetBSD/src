@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.6 2006/10/12 01:30:44 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.7 2006/11/16 01:32:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6 2006/10/12 01:30:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.7 2006/11/16 01:32:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,8 +453,8 @@ x86_memio_free(t, bsh, size)
 }
 
 int
-x86_memio_subregion(bus_space_tag_t t __unused, bus_space_handle_t bsh,
-    bus_size_t offset, bus_size_t size __unused, bus_space_handle_t *nbshp)
+x86_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;
@@ -462,8 +462,8 @@ x86_memio_subregion(bus_space_tag_t t __unused, bus_space_handle_t bsh,
 }
 
 paddr_t
-x86_memio_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot __unused,
-    int flags __unused)
+x86_memio_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
+    int flags)
 {
 
 	/* Can't mmap I/O space. */

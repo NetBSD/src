@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.214 2006/11/01 10:13:37 cbiere Exp $	*/
+/*	$NetBSD: audio.c,v 1.215 2006/11/16 01:32:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.214 2006/11/01 10:13:37 cbiere Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.215 2006/11/16 01:32:44 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -247,7 +247,7 @@ CFATTACH_DECL(audio, sizeof(struct audio_softc),
 extern struct cfdriver audio_cd;
 
 int
-audioprobe(struct device *parent __unused, struct cfdata *match __unused,
+audioprobe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct audio_attach_args *sa;
@@ -481,7 +481,7 @@ audioactivate(struct device *self, enum devact act)
 }
 
 int
-audiodetach(struct device *self, int flags __unused)
+audiodetach(struct device *self, int flags)
 {
 	struct audio_softc *sc;
 	int maj, mn;
@@ -1312,8 +1312,8 @@ audio_wakeup(int *chan)
 }
 
 int
-audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt __unused,
-    struct lwp *l __unused)
+audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
+    struct lwp *l)
 {
 	int error;
 	u_int mode;
@@ -1507,8 +1507,8 @@ audio_drain(struct audio_softc *sc)
  */
 /* ARGSUSED */
 int
-audio_close(struct audio_softc *sc, int flags, int ifmt __unused,
-    struct lwp *l __unused)
+audio_close(struct audio_softc *sc, int flags, int ifmt,
+    struct lwp *l)
 {
 	const struct audio_hw_if *hw;
 	int s;
@@ -1783,7 +1783,7 @@ audio_silence_copyout(struct audio_softc *sc, int n, struct uio *uio)
 
 static int
 uio_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
-    int max_used __unused)
+    int max_used)
 {
 	uio_fetcher_t *this;
 	int size;
@@ -1824,8 +1824,8 @@ uio_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
 }
 
 static int
-null_fetcher_fetch_to(stream_fetcher_t *self __unused,
-    audio_stream_t *p __unused, int max_used __unused)
+null_fetcher_fetch_to(stream_fetcher_t *self,
+    audio_stream_t *p, int max_used)
 {
 
 	return 0;
@@ -2240,7 +2240,7 @@ filt_audiordetach(struct knote *kn)
 }
 
 static int
-filt_audioread(struct knote *kn, long hint __unused)
+filt_audioread(struct knote *kn, long hint)
 {
 	struct audio_softc *sc;
 	int s;
@@ -2273,7 +2273,7 @@ filt_audiowdetach(struct knote *kn)
 }
 
 static int
-filt_audiowrite(struct knote *kn, long hint __unused)
+filt_audiowrite(struct knote *kn, long hint)
 {
 	struct audio_softc *sc;
 	audio_stream_t *stream;
@@ -3582,8 +3582,8 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
  * Mixer driver
  */
 int
-mixer_open(dev_t dev __unused, struct audio_softc *sc, int flags __unused,
-    int ifmt __unused, struct lwp *l __unused)
+mixer_open(dev_t dev, struct audio_softc *sc, int flags,
+    int ifmt, struct lwp *l)
 {
 	if (sc->hw_if == NULL)
 		return  ENXIO;
@@ -3634,7 +3634,7 @@ mixer_signal(struct audio_softc *sc)
  */
 /* ARGSUSED */
 int
-mixer_close(struct audio_softc *sc, int flags __unused, int ifmt __unused,
+mixer_close(struct audio_softc *sc, int flags, int ifmt,
     struct lwp *l)
 {
 

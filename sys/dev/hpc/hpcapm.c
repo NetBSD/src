@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.11 2006/10/12 21:19:13 uwe Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.12 2006/11/16 01:32:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.11 2006/10/12 21:19:13 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.12 2006/11/16 01:32:50 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcapm.h"
@@ -105,16 +105,16 @@ struct apm_accessops hpcapm_accessops = {
 extern struct cfdriver hpcapm_cd;
 
 static int
-hpcapm_match(struct device *parent __unused,
-	     struct cfdata *cf __unused, void *aux __unused)
+hpcapm_match(struct device *parent,
+	     struct cfdata *cf, void *aux)
 {
 
 	return 1;
 }
 
 static void
-hpcapm_attach(struct device *parent __unused,
-	      struct device *self, void *aux __unused)
+hpcapm_attach(struct device *parent,
+	      struct device *self, void *aux)
 {
 	struct apmhpc_softc *sc;
 	struct apmdev_attach_args aaa;
@@ -299,7 +299,7 @@ hpcapm_disconnect(void *scx)
 }
 
 static void
-hpcapm_enable(void *scx, int onoff __unused)
+hpcapm_enable(void *scx, int onoff)
 {
 	struct apmhpc_softc *sc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.19 2006/10/12 01:30:55 christos Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.20 2006/11/16 01:32:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.19 2006/10/12 01:30:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.20 2006/11/16 01:32:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -91,7 +91,7 @@ CFATTACH_DECL(ataraid, sizeof(struct device),
  *	Pseudo-device attach routine.
  */
 void
-ataraidattach(int count __unused)
+ataraidattach(int count)
 {
 
 	/*
@@ -127,7 +127,7 @@ ata_raid_type_name(u_int type)
  *	Autoconfiguration finalizer for ATA RAID.
  */
 static int
-ata_raid_finalize(struct device *self __unused)
+ata_raid_finalize(struct device *self)
 {
 	static struct cfdata ataraid_cfdata = {
 		.cf_name = "ataraid",
@@ -172,8 +172,8 @@ ata_raid_finalize(struct device *self __unused)
  *	Autoconfiguration glue: match routine.
  */
 static int
-ataraid_match(struct device *parent __unused, struct cfdata *cf __unused,
-    void *aux __unused)
+ataraid_match(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 
 	/* pseudo-device; always present */
@@ -186,8 +186,8 @@ ataraid_match(struct device *parent __unused, struct cfdata *cf __unused,
  *	Autoconfiguration glue: attach routine.  We attach the children.
  */
 static void
-ataraid_attach(struct device *parent __unused, struct device *self,
-    void *aux __unused)
+ataraid_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct ataraid_array_info *aai;
 	int locs[ATARAIDCF_NLOCS];

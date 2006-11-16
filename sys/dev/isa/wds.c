@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.64 2006/10/12 01:31:17 christos Exp $	*/
+/*	$NetBSD: wds.c,v 1.65 2006/11/16 01:33:00 christos Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.64 2006/10/12 01:31:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.65 2006/11/16 01:33:00 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -259,7 +259,7 @@ wds_cmd(iot, ioh, ibuf, icnt)
  * Check for the presence of a WD7000 SCSI controller.
  */
 int
-wdsprobe(struct device *parent __unused, struct cfdata *match __unused,
+wdsprobe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -324,7 +324,7 @@ wdsprobe(struct device *parent __unused, struct cfdata *match __unused,
  * Attach all available units.
  */
 void
-wdsattach(struct device *parent __unused, struct device *self, void *aux)
+wdsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct wds_softc *sc = (void *)self;
@@ -523,7 +523,7 @@ wdsintr(arg)
 }
 
 integrate void
-wds_reset_scb(struct wds_softc *sc __unused, struct wds_scb *scb)
+wds_reset_scb(struct wds_softc *sc, struct wds_scb *scb)
 {
 
 	scb->flags = 0;

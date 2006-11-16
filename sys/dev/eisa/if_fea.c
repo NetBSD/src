@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.32 2006/10/12 01:30:57 christos Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.33 2006/11/16 01:32:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.32 2006/10/12 01:30:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.33 2006/11/16 01:32:50 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -444,8 +444,8 @@ struct cfdriver feacd = {
 #if defined(__NetBSD__)
 static int
 pdq_eisa_match(
-    struct device *parent __unused,
-    struct cfdata *match __unused,
+    struct device *parent,
+    struct cfdata *match,
     void *aux)
 {
     const struct eisa_attach_args * const ea = (struct eisa_attach_args *) aux;
@@ -458,7 +458,7 @@ pdq_eisa_match(
 
 static void
 pdq_eisa_attach(
-    struct device *parent __unused,
+    struct device *parent,
     struct device *self,
     void *aux)
 {

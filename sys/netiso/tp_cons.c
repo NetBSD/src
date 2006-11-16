@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.22 2006/10/12 01:32:46 christos Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.23 2006/11/16 01:33:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.22 2006/10/12 01:32:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.23 2006/11/16 01:33:51 christos Exp $");
 
 #include "opt_iso.h"
 
@@ -341,7 +341,7 @@ struct mbuf;
 int tpcons_output (struct mbuf *m0, ...);
 
 int
-tpcons_output(struct mbuf *m0 __unused, ...)
+tpcons_output(struct mbuf *m0, ...)
 {
 	return 0;
 }

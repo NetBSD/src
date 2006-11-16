@@ -1,6 +1,6 @@
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisabusprint.c,v 1.4 2006/10/12 01:30:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisabusprint.c,v 1.5 2006/11/16 01:32:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -8,7 +8,7 @@ __KERNEL_RCSID(0, "$NetBSD: eisabusprint.c,v 1.4 2006/10/12 01:30:57 christos Ex
 #include <dev/eisa/eisavar.h>
 
 int
-eisabusprint(void *vea __unused, const char *pnp)
+eisabusprint(void *vea, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("eisa at %s", pnp);

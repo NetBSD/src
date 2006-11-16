@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.30 2006/10/12 04:24:40 thorpej Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.31 2006/11/16 01:33:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.30 2006/10/12 04:24:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.31 2006/11/16 01:33:53 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -75,7 +75,7 @@ POOL_INIT(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
  */
 /* ARGSUSED */
 int
-ufs_start(struct mount *mp __unused, int flags __unused, struct lwp *l __unused)
+ufs_start(struct mount *mp, int flags, struct lwp *l)
 {
 
 	return (0);

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.30 2006/10/12 01:30:42 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.31 2006/11/16 01:32:38 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2006/11/16 01:32:38 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -196,8 +196,8 @@ cpu_init_first()
 #endif
 
 int
-cpu_match(struct device *parent __unused, struct cfdata *match __unused,
-    void *aux __unused)
+cpu_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	return 1;
@@ -240,7 +240,7 @@ cpu_vm_init(struct cpu_info *ci)
 
 
 void
-cpu_attach(struct device *parent __unused, struct device *self, void *aux)
+cpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpu_softc *sc = (void *) self;
 	struct cpu_attach_args *caa = aux;
@@ -741,7 +741,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 
 
 int
-mp_cpu_start(struct cpu_info *ci __unused)
+mp_cpu_start(struct cpu_info *ci)
 {
 #if NLAPIC > 0
 	int error;
@@ -798,7 +798,7 @@ mp_cpu_start(struct cpu_info *ci __unused)
 }
 
 void
-mp_cpu_start_cleanup(struct cpu_info *ci __unused)
+mp_cpu_start_cleanup(struct cpu_info *ci)
 {
 	/*
 	 * Ensure the NVRAM reset byte contains something vaguely sane.

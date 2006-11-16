@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.19 2006/10/12 01:32:37 christos Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.20 2006/11/16 01:33:44 christos Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.19 2006/10/12 01:32:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.20 2006/11/16 01:33:44 christos Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -509,7 +509,7 @@ at_pcbdetach(so, ddp)
  */
 struct ddpcb   *
 ddp_search(
-    struct sockaddr_at *from __unused,
+    struct sockaddr_at *from,
     struct sockaddr_at *to,
     struct at_ifaddr *aa)
 {

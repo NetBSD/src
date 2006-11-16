@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.9 2006/10/30 00:58:21 christos Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.10 2006/11/16 01:33:45 christos Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -513,7 +513,7 @@ carp_proto_input(struct mbuf *m, ...)
 
 #ifdef INET6
 int
-carp6_proto_input(struct mbuf **mp, int *offp, int proto __unused)
+carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 	struct carp_softc *sc = NULL;
@@ -729,7 +729,7 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 
 /* ARGSUSED */
 void
-carpattach(int n __unused)
+carpattach(int n)
 {
 	if_clone_attach(&carp_cloner);
 }
@@ -854,7 +854,7 @@ carp_ifdetach(struct ifnet *ifp)
 }
 
 int
-carp_prepare_ad(struct mbuf *m __unused, struct carp_softc *sc,
+carp_prepare_ad(struct mbuf *m, struct carp_softc *sc,
     struct carp_header *ch)
 {
 	if (sc->sc_init_counter) {

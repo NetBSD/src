@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.14 2006/10/12 01:30:44 christos Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.15 2006/11/16 01:32:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.14 2006/10/12 01:30:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.15 2006/11/16 01:32:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ extern vector *IDTVEC(intr)[];
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < NUM_LEGACY_IRQS && (x) != 2)
 
 int
-isa_intr_alloc(isa_chipset_tag_t ic __unused, int mask, int type, int *irq)
+isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
 	int i, tmp, bestirq, count;
 	struct intrhand **p, *q;
@@ -209,7 +209,7 @@ isa_intr_alloc(isa_chipset_tag_t ic __unused, int mask, int type, int *irq)
 }
 
 const struct evcnt *
-isa_intr_evcnt(isa_chipset_tag_t ic __unused, int irq __unused)
+isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -218,7 +218,7 @@ isa_intr_evcnt(isa_chipset_tag_t ic __unused, int irq __unused)
 
 void *
 isa_intr_establish(
-    isa_chipset_tag_t ic __unused,
+    isa_chipset_tag_t ic,
     int irq,
     int type,
     int level,
@@ -261,7 +261,7 @@ isa_intr_establish(
  * Deregister an interrupt handler.
  */
 void
-isa_intr_disestablish(isa_chipset_tag_t ic __unused, void *arg)
+isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 	struct intrhand *ih = arg;
 
@@ -272,7 +272,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic __unused, void *arg)
 }
 
 void
-isa_attach_hook(struct device *parent __unused, struct device *self __unused,
+isa_attach_hook(struct device *parent, struct device *self,
     struct isabus_attach_args *iba)
 {
 	extern struct x86_isa_chipset x86_isa_chipset;
@@ -344,7 +344,7 @@ isa_mem_free(t, bsh, size)
  * ISA DMA controller), we may have to bounce it as well.
  */
 static int
-_isa_dma_may_bounce(bus_dma_tag_t t __unused, bus_dmamap_t map, int flags,
+_isa_dma_may_bounce(bus_dma_tag_t t, bus_dmamap_t map, int flags,
     int *cookieflagsp)
 {
 	if ((flags & ISABUS_DMA_32BIT) != 0)

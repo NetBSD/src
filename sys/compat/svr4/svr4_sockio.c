@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.c,v 1.25 2006/10/12 01:30:49 christos Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.26 2006/11/16 01:32:44 christos Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.25 2006/10/12 01:30:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.26 2006/11/16 01:32:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -94,7 +94,7 @@ bsd_to_svr4_flags(bf)
 
 int
 svr4_sock_ioctl(struct file *fp, struct lwp *l, register_t *retval,
-    int fd __unused, u_long cmd, caddr_t data)
+    int fd, u_long cmd, caddr_t data)
 {
 	int error;
 	int (*ctl)(struct file *, u_long,  void *, struct lwp *) =

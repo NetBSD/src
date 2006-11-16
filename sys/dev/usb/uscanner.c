@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.53 2006/10/12 01:32:00 christos Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.54 2006/11/16 01:33:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.53 2006/10/12 01:32:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.54 2006/11/16 01:33:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,8 +395,8 @@ USB_ATTACH(uscanner)
 }
 
 int
-uscanneropen(dev_t dev, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+uscanneropen(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct uscanner_softc *sc;
 	int unit = USCANNERUNIT(dev);
@@ -459,8 +459,8 @@ uscanneropen(dev_t dev, int flag __unused, int mode __unused,
 }
 
 int
-uscannerclose(dev_t dev, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+uscannerclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct uscanner_softc *sc;
 
@@ -519,7 +519,7 @@ uscanner_do_close(struct uscanner_softc *sc)
 }
 
 Static int
-uscanner_do_read(struct uscanner_softc *sc, struct uio *uio, int flag __unused)
+uscanner_do_read(struct uscanner_softc *sc, struct uio *uio, int flag)
 {
 	u_int32_t n, tn;
 	usbd_status err;
@@ -574,7 +574,7 @@ uscannerread(dev_t dev, struct uio *uio, int flag)
 }
 
 Static int
-uscanner_do_write(struct uscanner_softc *sc, struct uio *uio, int flag __unused)
+uscanner_do_write(struct uscanner_softc *sc, struct uio *uio, int flag)
 {
 	u_int32_t n;
 	int error = 0;
@@ -702,7 +702,7 @@ USB_DETACH(uscanner)
 }
 
 int
-uscannerpoll(dev_t dev, int events, struct lwp *l __unused)
+uscannerpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct uscanner_softc *sc;
 	int revents = 0;
@@ -769,8 +769,8 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 }
 
 int
-uscannerioctl(dev_t dev __unused, u_long cmd __unused, caddr_t addr __unused,
-    int flag __unused, struct lwp *l __unused)
+uscannerioctl(dev_t dev, u_long cmd, caddr_t addr,
+    int flag, struct lwp *l)
 {
 	return (EINVAL);
 }

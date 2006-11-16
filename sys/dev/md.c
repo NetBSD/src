@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.46 2006/10/12 01:30:51 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.47 2006/11/16 01:32:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.46 2006/10/12 01:30:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.47 2006/11/16 01:32:45 christos Exp $");
 
 #include "opt_md.h"
 
@@ -159,8 +159,8 @@ mdattach(int n)
 }
 
 static void
-md_attach(struct device *parent __unused, struct device *self,
-    void *aux __unused)
+md_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct md_softc *sc = (struct md_softc *)self;
 
@@ -218,7 +218,7 @@ mdsize(dev_t dev)
 }
 
 static int
-mdopen(dev_t dev, int flag __unused, int fmt __unused, struct lwp *l __unused)
+mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit;
 	struct md_softc *sc;
@@ -252,7 +252,7 @@ mdopen(dev_t dev, int flag __unused, int fmt __unused, struct lwp *l __unused)
 }
 
 static int
-mdclose(dev_t dev, int flag __unused, int fmt __unused, struct lwp *l __unused)
+mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit;
 
@@ -265,7 +265,7 @@ mdclose(dev_t dev, int flag __unused, int fmt __unused, struct lwp *l __unused)
 }
 
 static int
-mdread(dev_t dev, struct uio *uio, int flags __unused)
+mdread(dev_t dev, struct uio *uio, int flags)
 {
 	int unit;
 	struct md_softc *sc;
@@ -284,7 +284,7 @@ mdread(dev_t dev, struct uio *uio, int flags __unused)
 }
 
 static int
-mdwrite(dev_t dev, struct uio *uio, int flags __unused)
+mdwrite(dev_t dev, struct uio *uio, int flags)
 {
 	int unit;
 	struct md_softc *sc;
@@ -367,7 +367,7 @@ mdstrategy(struct buf *bp)
 }
 
 static int
-mdioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
+mdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit;
 	struct md_softc *sc;
@@ -411,7 +411,7 @@ mdioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
  */
 static int
 md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd,
-    struct lwp *l __unused)
+    struct lwp *l)
 {
 	vaddr_t addr;
 	vsize_t size;
@@ -437,7 +437,7 @@ md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd,
  */
 static int
 md_ioctl_server(struct md_softc *sc, struct md_conf *umd,
-    struct lwp *l __unused)
+    struct lwp *l)
 {
 	vaddr_t end;
 	int error;

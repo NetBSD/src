@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.10 2006/10/12 01:30:43 christos Exp $	*/
+/*	$NetBSD: pmc.c,v 1.11 2006/11/16 01:32:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.10 2006/10/12 01:30:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.11 2006/11/16 01:32:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,8 @@ done:
 }
 
 int
-pmc_info(struct lwp *l __unused, struct i386_pmc_info_args *uargs,
-    register_t *retval __unused)
+pmc_info(struct lwp *l, struct i386_pmc_info_args *uargs,
+    register_t *retval)
 {
 	struct i386_pmc_info_args rv;
 
@@ -147,8 +147,8 @@ pmc_info(struct lwp *l __unused, struct i386_pmc_info_args *uargs,
 }
 
 int
-pmc_startstop(struct lwp *l __unused, struct i386_pmc_startstop_args *uargs,
-    register_t *retval __unused)
+pmc_startstop(struct lwp *l, struct i386_pmc_startstop_args *uargs,
+    register_t *retval)
 {
 	struct i386_pmc_startstop_args args;
 	int error, mask, start;
@@ -255,8 +255,8 @@ pmc_startstop(struct lwp *l __unused, struct i386_pmc_startstop_args *uargs,
 }
 
 int
-pmc_read(struct lwp *l __unused, struct i386_pmc_read_args *uargs,
-    register_t *retval __unused)
+pmc_read(struct lwp *l, struct i386_pmc_read_args *uargs,
+    register_t *retval)
 {
 	struct i386_pmc_read_args args;
 	int error;

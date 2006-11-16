@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.7 2006/10/12 01:32:10 christos Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.8 2006/11/16 01:33:34 christos Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.12 2004/05/19 17:50:51 dhartmei Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -92,7 +92,7 @@ void	pflogstart(struct ifnet *);
 extern int ifqmaxlen;
 
 void
-pflogattach(int npflog __unused)
+pflogattach(int npflog)
 {
 	struct ifnet *ifp;
 	int i;
@@ -166,8 +166,8 @@ pflogstart(struct ifnet *ifp)
 }
 
 int
-pflogoutput(struct ifnet *ifp __unused, struct mbuf *m,
-    struct sockaddr *dst __unused, struct rtentry *rt __unused)
+pflogoutput(struct ifnet *ifp, struct mbuf *m,
+    struct sockaddr *dst, struct rtentry *rt)
 {
 	m_freem(m);
 	return (0);
@@ -175,8 +175,8 @@ pflogoutput(struct ifnet *ifp __unused, struct mbuf *m,
 
 /* ARGSUSED */
 void
-pflogrtrequest(int cmd __unused, struct rtentry *rt,
-    struct sockaddr *sa __unused)
+pflogrtrequest(int cmd, struct rtentry *rt,
+    struct sockaddr *sa)
 {
 	if (rt)
 		rt->rt_rmx.rmx_mtu = PFLOGMTU;
@@ -184,7 +184,7 @@ pflogrtrequest(int cmd __unused, struct rtentry *rt,
 
 /* ARGSUSED */
 int
-pflogioctl(struct ifnet *ifp, u_long cmd, caddr_t data __unused)
+pflogioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	switch (cmd) {
 	case SIOCSIFADDR:

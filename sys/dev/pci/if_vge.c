@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.26 2006/11/04 05:07:16 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.27 2006/11/16 01:33:09 christos Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.26 2006/11/04 05:07:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.27 2006/11/16 01:33:09 christos Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -781,7 +781,7 @@ vge_reset(struct vge_softc *sc)
  * IDs against our list and return a device name if we find a match.
  */
 static int
-vge_probe(struct device *parent __unused, struct cfdata *match __unused,
+vge_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -883,7 +883,7 @@ vge_allocmem(struct vge_softc *sc)
  * setup and ethernet/BPF attach.
  */
 static void
-vge_attach(struct device *parent __unused, struct device *self, void *aux)
+vge_attach(struct device *parent, struct device *self, void *aux)
 {
 	uint8_t	*eaddr;
 	struct vge_softc *sc = (void *)self;

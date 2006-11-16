@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.110 2006/10/25 20:28:45 elad Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.111 2006/11/16 01:33:40 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.110 2006/10/25 20:28:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.111 2006/11/16 01:33:40 christos Exp $");
 
 #include "ppp.h"
 
@@ -488,7 +488,7 @@ pppdealloc(struct ppp_softc *sc)
  * Ioctl routine for generic ppp devices.
  */
 int
-pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag __unused,
+pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
     struct lwp *l)
 {
     int s, error, flags, mru, npx;
@@ -878,7 +878,7 @@ pppsioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  */
 int
 pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
-    struct rtentry *rtp __unused)
+    struct rtentry *rtp)
 {
     struct ppp_softc *sc = ifp->if_softc;
     int protocol, address, control;

@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.34 2006/10/12 01:31:25 christos Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.35 2006/11/16 01:33:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.34 2006/10/12 01:31:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.35 2006/11/16 01:33:05 christos Exp $");
 
 #include "rnd.h"
 
@@ -135,7 +135,7 @@ static void	edcworker(void *);
 static void	edc_spawn_worker(void *);
 
 int
-edc_mca_probe(struct device *parent __unused, struct cfdata *match __unused,
+edc_mca_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct mca_attach_args *ma = aux;
@@ -150,7 +150,7 @@ edc_mca_probe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-edc_mca_attach(struct device *parent __unused, struct device *self, void *aux)
+edc_mca_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct edc_mca_softc *sc = device_private(self);
 	struct mca_attach_args *ma = aux;

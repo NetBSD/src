@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.192 2006/10/20 18:58:13 reinoud Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.193 2006/11/16 01:33:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.192 2006/10/20 18:58:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.193 2006/11/16 01:33:53 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -949,7 +949,7 @@ lfs_setattr(void *v)
  * or explicitly from LFCNWRAPGO.  Called with the interlock held.
  */
 static int
-lfs_wrapgo(struct lfs *fs, struct inode *ip __unused, int waitfor)
+lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 {
 	if (lockstatus(&fs->lfs_stoplock) != LK_EXCLUSIVE)
 		return EBUSY;

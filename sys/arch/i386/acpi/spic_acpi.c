@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.15 2006/10/12 01:30:42 christos Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.16 2006/11/16 01:32:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.15 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.16 2006/11/16 01:32:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ CFATTACH_DECL(spic_acpi, sizeof(struct spic_acpi_softc),
 
 
 static int
-spic_acpi_match(struct device *parent __unused, struct cfdata *match __unused,
+spic_acpi_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -86,7 +86,7 @@ spic_acpi_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-spic_acpi_attach(struct device *parent __unused, struct device *self, void *aux)
+spic_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct spic_acpi_softc *sc = (void *) self;
 	struct acpi_attach_args *aa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.42 2006/10/27 00:11:44 elad Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.43 2006/11/16 01:33:40 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.42 2006/10/27 00:11:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.43 2006/11/16 01:33:40 christos Exp $");
 #endif
 
 /*
@@ -195,7 +195,7 @@ wi_read_sigcache(void *arg, struct ieee80211_node *ni)
 #endif
 
 int
-ieee80211_cfgget(struct ieee80211com *ic, u_long cmd __unused, caddr_t data)
+ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 {
 	struct ifnet *ifp = ic->ic_ifp;
 	int i, j, error;
@@ -494,7 +494,7 @@ ieee80211_setupscan(struct ieee80211com *ic, const u_int8_t chanlist[])
 }
 
 int
-ieee80211_cfgset(struct ieee80211com *ic, u_long cmd __unused, caddr_t data)
+ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 {
 	struct ifnet *ifp = ic->ic_ifp;
 	int i, j, len, error, rate;
@@ -1327,7 +1327,7 @@ ieee80211_ioctl_getmaccmd(struct ieee80211com *ic, struct ieee80211req *ireq)
 __attribute__ ((__noinline__))
 #endif
 static int
-ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd __unused,
+ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd,
     struct ieee80211req *ireq)
 {
 	const struct ieee80211_rsnparms *rsn = &ic->ic_bss->ni_rsn;
@@ -2017,7 +2017,7 @@ cipher2cap(int cipher)
 }
 
 static int
-ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd __unused,
+ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd,
     struct ieee80211req *ireq)
 {
 #if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)

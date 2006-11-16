@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.189 2006/10/25 22:01:55 reinoud Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.190 2006/11/16 01:33:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.189 2006/10/25 22:01:55 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.190 2006/11/16 01:33:53 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1265,7 +1265,7 @@ ffs_flushfiles(struct mount *mp, int flags, struct lwp *l)
  * Get file system statistics.
  */
 int
-ffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
+ffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 	struct ufsmount *ump;
 	struct fs *fs;

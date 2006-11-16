@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.20 2006/10/12 01:32:37 christos Exp $	*/
+/*	$NetBSD: aarp.c,v 1.21 2006/11/16 01:33:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.20 2006/10/12 01:32:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.21 2006/11/16 01:33:44 christos Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -101,7 +101,7 @@ struct mowner aarp_mowner = MOWNER_INIT("atalk", "arp");
 
 /*ARGSUSED*/
 static void
-aarptimer(void *ignored __unused)
+aarptimer(void *ignored)
 {
 	struct aarptab *aat;
 	int             i, s;

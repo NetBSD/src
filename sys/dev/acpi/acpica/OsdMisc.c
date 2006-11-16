@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.4 2006/10/12 01:30:55 christos Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.5 2006/11/16 01:32:47 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.4 2006/10/12 01:30:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.5 2006/11/16 01:32:47 christos Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"
@@ -153,7 +153,7 @@ AcpiOsGetLine(char *Buffer)
 }
 
 ACPI_STATUS
-AcpiOsTableOverride(ACPI_TABLE_HEADER *ExistingTable __unused,
+AcpiOsTableOverride(ACPI_TABLE_HEADER *ExistingTable,
 		    ACPI_TABLE_HEADER **NewTable)
 {
 #ifndef ACPI_DSDT_OVERRIDE

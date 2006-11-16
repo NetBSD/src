@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.18 2006/10/16 12:23:00 pooka Exp $
+ *	$Id: i4b_rbch.c,v 1.19 2006/11/16 01:33:49 christos Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.18 2006/10/16 12:23:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.19 2006/11/16 01:33:49 christos Exp $");
 
 #include "isdnbchan.h"
 
@@ -366,8 +366,8 @@ isdnbchanattach()
  *	open rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanopen(dev_t dev, int flag __unused, int fmt __unused,
-	struct lwp *l __unused)
+isdnbchanopen(dev_t dev, int flag, int fmt,
+	struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -392,8 +392,8 @@ isdnbchanopen(dev_t dev, int flag __unused, int fmt __unused,
  *	close rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanclose(dev_t dev, int flag __unused, int fmt __unused,
-	struct lwp *l __unused)
+isdnbchanclose(dev_t dev, int flag, int fmt,
+	struct lwp *l)
 {
 	int unit = minor(dev);
 	struct rbch_softc *sc = &rbch_softc[unit];
@@ -414,7 +414,7 @@ isdnbchanclose(dev_t dev, int flag __unused, int fmt __unused,
  *	read from rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanread(dev_t dev, struct uio *uio, int ioflag __unused)
+isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct mbuf *m;
 	int error = 0;
@@ -519,7 +519,7 @@ isdnbchanread(dev_t dev, struct uio *uio, int ioflag __unused)
  *	write to rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag __unused)
+isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 {
 	struct mbuf *m;
 	int error = 0;
@@ -648,8 +648,8 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag __unused)
  *	rbch device ioctl handlibg
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag __unused,
-	struct lwp *l __unused)
+isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	int error = 0;
 	int unit = minor(dev);
@@ -812,7 +812,7 @@ filt_i4brbchdetach(struct knote *kn)
 }
 
 static int
-filt_i4brbchread(struct knote *kn, long hint __unused)
+filt_i4brbchread(struct knote *kn, long hint)
 {
 	struct rbch_softc *sc = kn->kn_hook;
 	struct ifqueue *iqp;
@@ -836,7 +836,7 @@ static const struct filterops i4brbchread_filtops =
 	{ 1, NULL, filt_i4brbchdetach, filt_i4brbchread };
 
 static int
-filt_i4brbchwrite(struct knote *kn, long hint __unused)
+filt_i4brbchwrite(struct knote *kn, long hint)
 {
 	struct rbch_softc *sc = kn->kn_hook;
 
@@ -1067,8 +1067,8 @@ rbch_disconnect(void *softc, void *cdp)
  *	feedback from daemon in case of dial problems
  *---------------------------------------------------------------------------*/
 static void
-rbch_dialresponse(void *softc __unused, int status __unused,
-	cause_t cause __unused)
+rbch_dialresponse(void *softc, int status,
+	cause_t cause)
 {
 }
 
@@ -1076,7 +1076,7 @@ rbch_dialresponse(void *softc __unused, int status __unused,
  *	interface up/down
  *---------------------------------------------------------------------------*/
 static void
-rbch_updown(void *softc __unused, int updown __unused)
+rbch_updown(void *softc, int updown)
 {
 }
 
@@ -1151,7 +1151,7 @@ rbch_tx_queue_empty(void *softc)
  *	each time a packet is received or transmitted
  *---------------------------------------------------------------------------*/
 static void
-rbch_activity(void *softc, int rxtx __unused)
+rbch_activity(void *softc, int rxtx)
 {
 	struct rbch_softc *sc = softc;
 

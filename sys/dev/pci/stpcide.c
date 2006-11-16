@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcide.c,v 1.15 2006/10/12 01:31:33 christos Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.16 2006/11/16 01:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stpcide.c,v 1.15 2006/10/12 01:31:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stpcide.c,v 1.16 2006/11/16 01:33:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ CFATTACH_DECL(stpcide, sizeof(struct pciide_softc),
     stpcide_match, stpcide_attach, NULL, NULL);
 
 static int
-stpcide_match(struct device *parent __unused, struct cfdata *match __unused,
+stpcide_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -72,7 +72,7 @@ stpcide_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-stpcide_attach(struct device *parent __unused, struct device *self, void *aux)
+stpcide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;

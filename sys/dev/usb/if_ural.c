@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.17 2006/10/31 21:53:41 joerg Exp $ */
+/*	$NetBSD: if_ural.c,v 1.18 2006/11/16 01:33:26 christos Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.17 2006/10/31 21:53:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.18 2006/11/16 01:33:26 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -817,7 +817,7 @@ ural_task(void *arg)
 
 Static int
 ural_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
-    int arg __unused)
+    int arg)
 {
 	struct ural_softc *sc = ic->ic_ifp->if_softc;
 
@@ -874,7 +874,7 @@ ural_rxrate(struct ural_rx_desc *desc)
 }
 
 Static void
-ural_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct ural_tx_data *data = priv;
@@ -2244,7 +2244,7 @@ fail:	ural_stop(ifp, 1);
 }
 
 Static void
-ural_stop(struct ifnet *ifp, int disable __unused)
+ural_stop(struct ifnet *ifp, int disable)
 {
 	struct ural_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2347,7 +2347,7 @@ ural_amrr_timeout(void *arg)
 }
 
 Static void
-ural_amrr_update(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct ural_softc *sc = (struct ural_softc *)priv;

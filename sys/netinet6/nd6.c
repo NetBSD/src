@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.106 2006/11/13 05:13:42 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.107 2006/11/16 01:33:45 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.106 2006/11/13 05:13:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.107 2006/11/16 01:33:45 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -527,7 +527,7 @@ nd6_llinfo_timer(arg)
  * ND6 timer routine to expire default route list and prefix list
  */
 void
-nd6_timer(void *ignored_arg __unused)
+nd6_timer(void *ignored_arg)
 {
 	int s;
 	struct nd_defrouter *dr;
@@ -1145,7 +1145,7 @@ nd6_nud_hint(rt, dst6, force)
 }
 
 void
-nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info __unused)
+nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
@@ -1630,7 +1630,7 @@ nd6_cache_lladdr(
     struct ifnet *ifp,
     struct in6_addr *from,
     char *lladdr,
-    int lladdrlen __unused,
+    int lladdrlen,
     int type,	/* ICMP6 type */
     int code	/* type dependent information */
 )
@@ -1873,7 +1873,7 @@ fail:
 }
 
 static void
-nd6_slowtimo(void *ignored_arg __unused)
+nd6_slowtimo(void *ignored_arg)
 {
 	int s = splsoftnet();
 	struct nd_ifinfo *nd6if;
@@ -2206,7 +2206,7 @@ nd6_sysctl(
     void *oldp,	/* syscall arg, need copyout */
     size_t *oldlenp,
     void *newp,	/* syscall arg, need copyin */
-    size_t newlen __unused
+    size_t newlen
 )
 {
 	void *p;

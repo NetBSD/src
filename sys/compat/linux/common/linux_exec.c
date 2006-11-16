@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.88 2006/10/12 01:30:48 christos Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.89 2006/11/16 01:32:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.88 2006/10/12 01:30:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.89 2006/11/16 01:32:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ linux_e_proc_init(p, parent, forkflags)
  * the executed process is of same emulation as original forked one.
  */
 static void
-linux_e_proc_exec(struct proc *p, struct exec_package *epp __unused)
+linux_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
 	/* exec, use our vmspace */
 	linux_e_proc_init(p, NULL, 0);

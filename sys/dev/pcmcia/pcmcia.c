@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.81 2006/10/24 20:54:10 drochner Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.82 2006/11/16 01:33:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.81 2006/10/24 20:54:10 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.82 2006/11/16 01:33:20 christos Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -112,7 +112,7 @@ pcmcia_ccr_write(pf, ccr, val)
 }
 
 int
-pcmcia_match(struct device *parent __unused, struct cfdata *match, void *aux)
+pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
 
@@ -124,7 +124,7 @@ pcmcia_match(struct device *parent __unused, struct cfdata *match, void *aux)
 }
 
 void
-pcmcia_attach(struct device *parent __unused, struct device *self, void *aux)
+pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) self;
@@ -202,7 +202,7 @@ done:
 }
 
 int
-pcmcia_rescan(struct device *self, const char *ifattr __unused,
+pcmcia_rescan(struct device *self, const char *ifattr,
     const int *locators)
 {
 	struct pcmcia_softc *sc = (struct pcmcia_softc *)self;

@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.4 2006/10/12 01:30:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.5 2006/11/16 01:32:44 christos Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -408,9 +408,9 @@ RtlAnsiStringToUnicodeString(dest, src, allocate)
 
 __stdcall void *
 ExAllocatePoolWithTag(
-	uint32_t		pooltype __unused,
+	uint32_t		pooltype,
 	size_t			len,
-	uint32_t		tag __unused)
+	uint32_t		tag)
 {
 	void			*buf;
 
@@ -478,10 +478,10 @@ __stdcall uint32_t
 IoCreateDevice(
 	driver_object		*drv,
 	uint32_t		devextlen,
-	unicode_string		*devname __unused,
+	unicode_string		*devname,
 	uint32_t		devtype,
 	uint32_t		devchars,
-	uint8_t			exclusive __unused,
+	uint8_t			exclusive,
 	device_object		**newdev)
 {
 	device_object		*dev;
@@ -805,7 +805,7 @@ IoBuildDeviceIoControlRequest(iocode, dobj, ibuf, ilen, obuf, olen,
 __stdcall static irp *
 IoAllocateIrp(
 	uint8_t			stsize,
-	uint8_t			chargequota __unused)
+	uint8_t			chargequota)
 {
 	irp			*i;
 
@@ -1210,9 +1210,9 @@ ntoskrnl_time(tval)
 __stdcall uint32_t
 KeWaitForSingleObject(
 	nt_dispatch_header	*obj,
-	uint32_t		reason __unused,
-	uint32_t		mode __unused,
-	uint8_t			alertable __unused,
+	uint32_t		reason,
+	uint32_t		mode,
+	uint8_t			alertable,
 	int64_t			*duetime)
 {
 #ifdef __FreeBSD__
@@ -1371,9 +1371,9 @@ KeWaitForMultipleObjects(
 	uint32_t		cnt,
 	nt_dispatch_header	*obj[],
 	uint32_t		wtype,
-	uint32_t		reason __unused,
-	uint32_t		mode __unused,
-	uint8_t			alertable __unused,
+	uint32_t		reason,
+	uint32_t		mode,
+	uint8_t			alertable,
 	int64_t			*duetime,
 	wait_block		*wb_array)
 {
@@ -1761,7 +1761,7 @@ ExInitializePagedLookasideList(
 	paged_lookaside_list	*lookaside,
 	lookaside_alloc_func	*allocfunc,
 	lookaside_free_func	*freefunc,
-	uint32_t		flags __unused,
+	uint32_t		flags,
 	size_t			size,
 	uint32_t		tag,
 	uint16_t		depth)
@@ -1815,7 +1815,7 @@ ExInitializeNPagedLookasideList(
 	npaged_lookaside_list	*lookaside,
 	lookaside_alloc_func	*allocfunc,
 	lookaside_free_func	*freefunc,
-	uint32_t		flags __unused,
+	uint32_t		flags,
 	size_t			size,
 	uint32_t		tag,
 	uint16_t		depth)
@@ -2062,7 +2062,7 @@ IoAllocateMdl(
 	void			*vaddr,
 	uint32_t		len,
 	uint8_t			secondarybuf,
-	uint8_t			chargequota __unused,
+	uint8_t			chargequota,
 	irp			*iopkt)
 {
 	mdl			*m;
@@ -2176,7 +2176,7 @@ MmBuildMdlForNonPagedPool(m)
 __stdcall static void *
 MmMapLockedPages(
 	mdl			*buf,
-	uint8_t			accessmode __unused)
+	uint8_t			accessmode)
 {
 	buf->mdl_flags |= MDL_MAPPED_TO_SYSTEM_VA;
 	return(MmGetMdlVirtualAddress(buf));
@@ -2186,17 +2186,17 @@ __stdcall static void *
 MmMapLockedPagesSpecifyCache(
 	mdl			*buf,
 	uint8_t			accessmode,
-	uint32_t		cachetype __unused,
-	void			*vaddr __unused,
-	uint32_t		bugcheck __unused,
-	uint32_t		prio __unused)
+	uint32_t		cachetype,
+	void			*vaddr,
+	uint32_t		bugcheck,
+	uint32_t		prio)
 {
 	return(MmMapLockedPages(buf, accessmode));
 }
 
 __stdcall static void
 MmUnmapLockedPages(
-	void			*vaddr __unused,
+	void			*vaddr,
 	mdl			*buf)
 {
 	buf->mdl_flags &= ~MDL_MAPPED_TO_SYSTEM_VA;
@@ -2383,7 +2383,7 @@ atol(str)
 
 #ifdef __NetBSD__
 void srandom(int);
-void srandom(int arg __unused) {return;}
+void srandom(int arg) {return;}
 #endif
 
 
@@ -2419,7 +2419,7 @@ __stdcall static ndis_status
 IoGetDeviceProperty(
 	device_object		*devobj,
 	uint32_t		regprop,
-	uint32_t		buflen __unused,
+	uint32_t		buflen,
 	void			*prop,
 	uint32_t		*reslen)
 {
@@ -2445,7 +2445,7 @@ IoGetDeviceProperty(
 __stdcall static void
 KeInitializeMutex(
 	kmutant			*kmutex,
-	uint32_t		level __unused)
+	uint32_t		level)
 {
 	INIT_LIST_HEAD((&kmutex->km_header.dh_waitlisthead));
 	kmutex->km_abandoned = FALSE;
@@ -2461,7 +2461,7 @@ KeInitializeMutex(
 __stdcall static uint32_t
 KeReleaseMutex(
 	kmutant			*kmutex,
-	uint8_t			kwait __unused)
+	uint8_t			kwait)
 {
 #ifdef __NetBSD__
 	int			s;
@@ -2550,8 +2550,8 @@ KeResetEvent(kevent)
 __stdcall uint32_t
 KeSetEvent(
 	nt_kevent		*kevent,
-	uint32_t		increment __unused,
-	uint8_t			kwait __unused)
+	uint32_t		increment,
+	uint8_t			kwait)
 {
 	uint32_t		prevstate;
 #ifdef __NetBSD__
@@ -2594,11 +2594,11 @@ KeReadStateEvent(kevent)
 __stdcall static ndis_status
 ObReferenceObjectByHandle(
 	ndis_handle		handle,
-	uint32_t		reqaccess __unused,
-	void			*otype __unused,
-	uint8_t			accessmode __unused,
+	uint32_t		reqaccess,
+	void			*otype,
+	uint8_t			accessmode,
 	void			**object,
-	void			**handleinfo __unused)
+	void			**handleinfo)
 {
 	nt_objref		*nr;
 
@@ -2628,7 +2628,7 @@ ObfDereferenceObject(REGARGS1(void *object))
 }
 
 __stdcall static uint32_t
-ZwClose(ndis_handle handle __unused)
+ZwClose(ndis_handle handle)
 {
 	return(STATUS_SUCCESS);
 }
@@ -2660,10 +2660,10 @@ ntoskrnl_thrfunc(arg)
 __stdcall static ndis_status
 PsCreateSystemThread(
 	ndis_handle		*handle,
-	uint32_t		reqaccess __unused,
-	void			*objattrs __unused,
-	ndis_handle		phandle __unused,
-	void			*clientid __unused,
+	uint32_t		reqaccess,
+	void			*objattrs,
+	ndis_handle		phandle,
+	void			*clientid,
 	void			*thrfunc,
 	void			*thrctx)
 {
@@ -2703,7 +2703,7 @@ PsCreateSystemThread(
  * them.
  */
 __stdcall static ndis_status
-PsTerminateSystemThread(ndis_status status __unused)
+PsTerminateSystemThread(ndis_status status)
 {
 	struct nt_objref	*nr;
 #ifdef __NetBSD__
@@ -2745,7 +2745,7 @@ PsTerminateSystemThread(ndis_status status __unused)
 }
 
 static uint32_t
-DbgPrint(char *fmt __unused, ...)
+DbgPrint(char *fmt, ...)
 {
 	//va_list			ap;
 

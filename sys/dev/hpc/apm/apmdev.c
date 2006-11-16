@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.8 2006/10/12 21:19:13 uwe Exp $ */
+/*	$NetBSD: apmdev.c,v 1.9 2006/11/16 01:32:50 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.8 2006/10/12 21:19:13 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.9 2006/11/16 01:32:50 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apmdev.h"
@@ -367,7 +367,7 @@ apm_standby(struct apm_softc *sc)
 }
 
 static void
-apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info __unused)
+apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info)
 {
 
 	if (sc->sc_power_state == PWR_RESUME) {
@@ -604,7 +604,7 @@ apm_periodic_check(struct apm_softc *sc)
 }
 
 static void
-apm_set_ver(struct apm_softc *self __unused, u_long detail)
+apm_set_ver(struct apm_softc *self, u_long detail)
 {
 
 	if (apm_v12_enabled &&
@@ -644,8 +644,8 @@ ok:
 }
 
 static int
-apmmatch(struct device *parent __unused,
-	 struct cfdata *match __unused, void *aux __unused)
+apmmatch(struct device *parent,
+	 struct cfdata *match, void *aux)
 {
 
 	/* There can be only one! */
@@ -656,7 +656,7 @@ apmmatch(struct device *parent __unused,
 }
 
 static void
-apmattach(struct device *parent __unused, struct device *self, void *aux)
+apmattach(struct device *parent, struct device *self, void *aux)
 {
 	struct apm_softc *sc = (void *)self;
 	struct apmdev_attach_args *aaa = aux;
@@ -723,7 +723,7 @@ apmattach(struct device *parent __unused, struct device *self, void *aux)
  * Print function (for parent devices).
  */
 int
-apmprint(void *aux __unused, const char *pnp)
+apmprint(void *aux, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("apm at %s", pnp);
@@ -765,7 +765,7 @@ apm_thread(void *arg)
 }
 
 int
-apmdevopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+apmdevopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = APMUNIT(dev);
 	int ctl = APMDEV(dev);
@@ -814,8 +814,8 @@ apmdevopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 }
 
 int
-apmdevclose(dev_t dev, int flag __unused, int mode __unused,
-	    struct lwp *l __unused)
+apmdevclose(dev_t dev, int flag, int mode,
+	    struct lwp *l)
 {
 	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
 	int ctl = APMDEV(dev);
@@ -842,7 +842,7 @@ apmdevclose(dev_t dev, int flag __unused, int mode __unused,
 
 int
 apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
-	    struct lwp *l __unused)
+	    struct lwp *l)
 {
 	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
 	struct apm_power_info *powerp;
@@ -954,7 +954,7 @@ filt_apmrdetach(struct knote *kn)
 }
 
 static int
-filt_apmread(struct knote *kn, long hint __unused)
+filt_apmread(struct knote *kn, long hint)
 {
 	struct apm_softc *sc = kn->kn_hook;
 

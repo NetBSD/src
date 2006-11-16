@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.23 2006/10/12 01:31:32 christos Exp $	*/
+/*	$NetBSD: oboe.c,v 1.24 2006/11/16 01:33:09 christos Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.23 2006/10/12 01:31:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.24 2006/11/16 01:33:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ static struct irframe_methods oboe_methods = {
 };
 
 static int
-oboe_match(struct device *parent __unused, struct cfdata *match __unused,
+oboe_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -180,7 +180,7 @@ oboe_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-oboe_attach(struct device *parent __unused, struct device *self, void *aux)
+oboe_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct oboe_softc *sc = (struct oboe_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -270,7 +270,7 @@ oboe_activate(struct device *self, enum devact act)
 }
 
 static int
-oboe_detach(struct device *self __unused, int flags __unused)
+oboe_detach(struct device *self, int flags)
 {
 #ifdef OBOE_DEBUG
 	struct oboe_softc *sc = (struct oboe_softc *)self;
@@ -282,7 +282,7 @@ oboe_detach(struct device *self __unused, int flags __unused)
 }
 
 static int
-oboe_open(void *h, int flag __unused, int mode __unused, struct lwp *l __unused)
+oboe_open(void *h, int flag, int mode, struct lwp *l)
 {
 	struct oboe_softc *sc = h;
 
@@ -297,8 +297,8 @@ oboe_open(void *h, int flag __unused, int mode __unused, struct lwp *l __unused)
 }
 
 static int
-oboe_close(void *h, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+oboe_close(void *h, int flag, int mode,
+    struct lwp *l)
 {
 	struct oboe_softc *sc = h;
 	int error = 0;
@@ -449,7 +449,7 @@ oboe_get_speeds(void *h, int *speeds)
 }
 
 static int
-oboe_get_turnarounds(void *h __unused, int *turnarounds)
+oboe_get_turnarounds(void *h, int *turnarounds)
 {
 #ifdef OBOE_DEBUG
 	struct oboe_softc *sc = h;
@@ -500,7 +500,7 @@ filt_oboerdetach(struct knote *kn)
 }
 
 static int
-filt_oboeread(struct knote *kn, long hint __unused)
+filt_oboeread(struct knote *kn, long hint)
 {
 	struct oboe_softc *sc = kn->kn_hook;
 
@@ -554,7 +554,7 @@ oboe_kqfilter(void *h, struct knote *kn)
 }
 
 static int
-oboe_reset(struct oboe_softc *sc __unused)
+oboe_reset(struct oboe_softc *sc)
 {
 #if 0
 	OUTB(sc, 0x00, OBOE_RST);

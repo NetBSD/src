@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.10 2006/10/31 14:03:07 toshii Exp $ */
+/* $NetBSD: piixpm.c,v 1.11 2006/11/16 01:33:10 christos Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ CFATTACH_DECL(piixpm, sizeof(struct piixpm_softc),
     piixpm_match, piixpm_attach, NULL, NULL);
 
 int
-piixpm_match(struct device *parent __unused, struct cfdata *match __unused,
+piixpm_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa;
@@ -124,7 +124,7 @@ piixpm_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-piixpm_attach(struct device *parent __unused, struct device *self, void *aux)
+piixpm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct piixpm_softc *sc = (struct piixpm_softc *)self;
 	struct pci_attach_args *pa = aux;

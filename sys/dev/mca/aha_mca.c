@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_mca.c,v 1.15 2006/10/12 01:31:24 christos Exp $	*/
+/*	$NetBSD: aha_mca.c,v 1.16 2006/11/16 01:33:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.15 2006/10/12 01:31:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.16 2006/11/16 01:33:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ CFATTACH_DECL(aha_mca, sizeof(struct aha_softc),
     aha_mca_probe, aha_mca_attach, NULL, NULL);
 
 int
-aha_mca_probe(struct device *parent __unused, struct cfdata *match __unused,
+aha_mca_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	register struct mca_attach_args *ma = aux;
@@ -97,7 +97,7 @@ aha_mca_probe(struct device *parent __unused, struct cfdata *match __unused,
 
 
 void
-aha_mca_attach(struct device *parent __unused, struct device *self, void *aux)
+aha_mca_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mca_attach_args *ma = aux;
 	struct aha_softc *sc = device_private(self);

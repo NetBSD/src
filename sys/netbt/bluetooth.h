@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.3 2006/10/01 06:08:08 plunky Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.4 2006/11/16 01:33:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -57,7 +57,7 @@ typedef struct {
 /*
  * bdaddr utility functions
  */
-static __inline int __unused
+static __inline int
 bdaddr_same(const bdaddr_t *a, const bdaddr_t *b)
 {
 
@@ -66,7 +66,7 @@ bdaddr_same(const bdaddr_t *a, const bdaddr_t *b)
 		&& a->b[4] == b->b[4] && a->b[5] == b->b[5]);
 }
 
-static __inline int __unused
+static __inline int
 bdaddr_any(const bdaddr_t *a)
 {
 
@@ -74,7 +74,7 @@ bdaddr_any(const bdaddr_t *a)
 		&& a->b[3] == 0 && a->b[4] == 0 && a->b[5] == 0);
 }
 
-static __inline void __unused
+static __inline void
 bdaddr_copy(bdaddr_t *d, const bdaddr_t *s)
 {
 

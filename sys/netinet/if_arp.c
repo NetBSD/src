@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.115 2006/11/13 05:13:41 dyoung Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.116 2006/11/16 01:33:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.115 2006/11/13 05:13:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.116 2006/11/16 01:33:45 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -342,7 +342,7 @@ arp_drain(void)
  */
 /* ARGSUSED */
 static void
-arptimer(void *arg __unused)
+arptimer(void *arg)
 {
 	int s;
 	struct llinfo_arp *la, *nla;
@@ -385,7 +385,7 @@ arptimer(void *arg __unused)
  * Parallel to llc_rtrequest.
  */
 void
-arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info __unused)
+arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
@@ -1216,7 +1216,7 @@ arplookup(struct mbuf *m, struct in_addr *addr, int create, int proxy)
 }
 
 int
-arpioctl(u_long cmd __unused, caddr_t data __unused)
+arpioctl(u_long cmd, caddr_t data)
 {
 
 	return (EOPNOTSUPP);
@@ -1467,7 +1467,7 @@ db_print_llinfo(caddr_t li)
  * Return non-zero error to abort walk.
  */
 static int
-db_show_radix_node(struct radix_node *rn, void *w __unused)
+db_show_radix_node(struct radix_node *rn, void *w)
 {
 	struct rtentry *rt = (struct rtentry *)rn;
 
@@ -1504,8 +1504,8 @@ db_show_radix_node(struct radix_node *rn, void *w __unused)
  * Use this from ddb:  "show arptab"
  */
 void
-db_show_arptab(db_expr_t addr __unused, int have_addr __unused,
-    db_expr_t count __unused, const char *modif __unused)
+db_show_arptab(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	struct radix_node_head *rnh;
 	rnh = rt_tables[AF_INET];

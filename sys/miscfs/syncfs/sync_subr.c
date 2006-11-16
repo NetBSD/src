@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.26 2006/11/10 22:31:19 reinoud Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.27 2006/11/16 01:33:38 christos Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.26 2006/11/10 22:31:19 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.27 2006/11/16 01:33:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ vn_syncer_remove_from_worklist(vp)
  * System filesystem synchronizer daemon.
  */
 void
-sched_sync(void *v __unused)
+sched_sync(void *v)
 {
 	struct synclist *slp;
 	struct vnode *vp;

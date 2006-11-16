@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_chaindecluster.c,v 1.14 2006/10/12 01:31:50 christos Exp $	*/
+/*	$NetBSD: rf_chaindecluster.c,v 1.15 2006/11/16 01:33:23 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_chaindecluster.c,v 1.14 2006/10/12 01:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_chaindecluster.c,v 1.15 2006/11/16 01:33:23 christos Exp $");
 
 #include "rf_archs.h"
 
@@ -61,8 +61,8 @@ typedef struct RF_ChaindeclusterConfigInfo_s {
 }       RF_ChaindeclusterConfigInfo_t;
 
 int
-rf_ConfigureChainDecluster(RF_ShutdownList_t **listp __unused,
-    RF_Raid_t *raidPtr, RF_Config_t *cfgPtr __unused)
+rf_ConfigureChainDecluster(RF_ShutdownList_t **listp,
+    RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_StripeCount_t num_used_stripeUnitsPerDisk;
@@ -218,7 +218,7 @@ rf_IdentifyStripeChainDecluster(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 }
 
 void
-rf_MapSIDToPSIDChainDecluster(RF_RaidLayout_t *layoutPtr __unused,
+rf_MapSIDToPSIDChainDecluster(RF_RaidLayout_t *layoutPtr,
 			      RF_StripeNum_t stripeID,
 			      RF_StripeNum_t *psID,
 			      RF_ReconUnitNum_t *which_ru)

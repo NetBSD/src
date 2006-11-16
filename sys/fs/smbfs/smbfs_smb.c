@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.33 2006/11/02 17:34:21 jmmv Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.34 2006/11/16 01:33:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.33 2006/11/02 17:34:21 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.34 2006/11/16 01:33:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -890,8 +890,8 @@ smbfs_smb_search(struct smbfs_fctx *ctx)
 }
 
 static int
-smbfs_findopenLM1(struct smbfs_fctx *ctx, struct smbnode *dnp __unused,
-    const char *wildcard, int wclen, int attr, struct smb_cred *scred __unused)
+smbfs_findopenLM1(struct smbfs_fctx *ctx, struct smbnode *dnp,
+    const char *wildcard, int wclen, int attr, struct smb_cred *scred)
 {
 	ctx->f_attrmask = attr;
 	if (wildcard) {
@@ -1090,8 +1090,8 @@ smbfs_smb_findclose2(struct smbfs_fctx *ctx)
 }
 
 static int
-smbfs_findopenLM2(struct smbfs_fctx *ctx, struct smbnode *dnp __unused,
-    const char *wildcard, int wclen, int attr, struct smb_cred *scred __unused)
+smbfs_findopenLM2(struct smbfs_fctx *ctx, struct smbnode *dnp,
+    const char *wildcard, int wclen, int attr, struct smb_cred *scred)
 {
 	ctx->f_name = malloc(SMB_MAXFNAMELEN, M_SMBFSDATA, M_WAITOK);
 	if (ctx->f_name == NULL)
@@ -1350,7 +1350,7 @@ smbfs_smb_lookup(struct smbnode *dnp, const char *name, int nmlen,
  * SMB_COM_OPEN is used.
  */
 int
-smbfs_smb_ntcreatex(struct smbnode *np, int accmode __unused,
+smbfs_smb_ntcreatex(struct smbnode *np, int accmode,
     struct smb_cred *scred)
 {
 	struct smb_rq *rqp;

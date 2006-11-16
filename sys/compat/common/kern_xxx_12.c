@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx_12.c,v 1.10 2006/11/14 13:34:29 elad Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.11 2006/11/16 01:32:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.10 2006/11/14 13:34:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.11 2006/11/16 01:32:41 christos Exp $");
 
 /*#ifdef COMPAT_12*/
 
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.10 2006/11/14 13:34:29 elad Exp $"
 
 /* ARGSUSED */
 int
-compat_12_sys_reboot(struct lwp *l, void *v, register_t *retval __unused)
+compat_12_sys_reboot(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_12_sys_reboot_args /* {
 		syscallarg(int) opt;

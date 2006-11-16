@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.27 2006/10/12 01:32:00 christos Exp $	*/
+/*	$NetBSD: umidi.c,v 1.28 2006/11/16 01:33:27 christos Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.27 2006/10/12 01:32:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.28 2006/11/16 01:33:27 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -350,7 +350,7 @@ umidi_close(void *addr)
 }
 
 int
-umidi_channelmsg(void *addr, int status, int channel __unused, u_char *msg,
+umidi_channelmsg(void *addr, int status, int channel, u_char *msg,
     int len)
 {
 	struct umidi_mididev *mididev = addr;
@@ -362,7 +362,7 @@ umidi_channelmsg(void *addr, int status, int channel __unused, u_char *msg,
 }
 
 int
-umidi_commonmsg(void *addr, int status __unused, u_char *msg, int len)
+umidi_commonmsg(void *addr, int status, u_char *msg, int len)
 {
 	struct umidi_mididev *mididev = addr;
 	int cin;
@@ -953,7 +953,7 @@ free_all_jacks(struct umidi_softc *sc)
 }
 
 static usbd_status
-bind_jacks_to_mididev(struct umidi_softc *sc __unused,
+bind_jacks_to_mididev(struct umidi_softc *sc,
 		      struct umidi_jack *out_jack,
 		      struct umidi_jack *in_jack,
 		      struct umidi_mididev *mididev)
@@ -1550,7 +1550,7 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 
 static void
 in_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
-    usbd_status status __unused)
+    usbd_status status)
 {
 	int cn, len, i;
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
@@ -1621,7 +1621,7 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 static void
 out_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
-    usbd_status status __unused)
+    usbd_status status)
 {
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
 	struct umidi_softc *sc = ep->sc;

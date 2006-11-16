@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.80 2006/10/24 19:36:26 drochner Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.81 2006/11/16 01:33:53 christos Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.80 2006/10/24 19:36:26 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.81 2006/11/16 01:33:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -626,7 +626,7 @@ worklist_remove(item)
 }
 
 static void
-workitem_free(struct worklist *item, int type __unused)
+workitem_free(struct worklist *item, int type)
 {
 
 	if (item->wk_state & ONWORKLIST)
@@ -1959,7 +1959,7 @@ void
 softdep_setup_freeblocks(
 	struct inode *ip,	/* The inode whose length is to be reduced */
 	off_t length,		/* The new length for the file */
-	int flags __unused)
+	int flags)
 {
 	struct freeblks *freeblks;
 	struct inodedep *inodedep;
@@ -5447,7 +5447,7 @@ request_cleanup(resource, islocked)
  * to indicate that there is no longer a timer running.
  */
 void
-pause_timer(void *arg __unused)
+pause_timer(void *arg)
 {
 
 	/* XXX was wakeup_one(), but makes no difference in uniprocessor */

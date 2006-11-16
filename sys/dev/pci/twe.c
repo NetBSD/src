@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.80 2006/11/08 00:17:09 elad Exp $	*/
+/*	$NetBSD: twe.c,v 1.81 2006/11/16 01:33:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.80 2006/11/08 00:17:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.81 2006/11/16 01:33:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ twe_outl(struct twe_softc *sc, int off, u_int32_t val)
  * Match a supported board.
  */
 static int
-twe_match(struct device *parent __unused, struct cfdata *cfdata __unused,
+twe_match(struct device *parent, struct cfdata *cfdata,
     void *aux)
 {
 	struct pci_attach_args *pa;
@@ -314,7 +314,7 @@ twe_match(struct device *parent __unused, struct cfdata *cfdata __unused,
  * XXX This doesn't fail gracefully.
  */
 static void
-twe_attach(struct device *parent __unused, struct device *self, void *aux)
+twe_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct twe_softc *sc;
@@ -1403,7 +1403,7 @@ twe_status_check(struct twe_softc *sc, u_int status)
  * Allocate and initialise a CCB.
  */
 static inline void
-twe_ccb_init(struct twe_softc *sc __unused, struct twe_ccb *ccb, int flags)
+twe_ccb_init(struct twe_softc *sc, struct twe_ccb *ccb, int flags)
 {
 	struct twe_cmd *tc;
 
@@ -1713,7 +1713,7 @@ twe_ccb_submit(struct twe_softc *sc, struct twe_ccb *ccb)
  * Accept an open operation on the control device.
  */
 static int
-tweopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
+tweopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct twe_softc *twe;
 
@@ -1730,8 +1730,8 @@ tweopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
  * Accept the last close on the control device.
  */
 static int
-tweclose(dev_t dev, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+tweclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct twe_softc *twe;
 
@@ -1741,7 +1741,7 @@ tweclose(dev_t dev, int flag __unused, int mode __unused,
 }
 
 void
-twe_ccb_wait_handler(struct twe_ccb *ccb, int error __unused)
+twe_ccb_wait_handler(struct twe_ccb *ccb, int error)
 {
 
 	/* Just wake up the sleeper. */
@@ -1752,7 +1752,7 @@ twe_ccb_wait_handler(struct twe_ccb *ccb, int error __unused)
  * Handle control operations.
  */
 static int
-tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
+tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
     struct lwp *l)
 {
 	struct twe_softc *twe;

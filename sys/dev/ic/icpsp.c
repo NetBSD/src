@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.15 2006/10/12 01:31:00 christos Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.16 2006/11/16 01:32:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.15 2006/10/12 01:31:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.16 2006/11/16 01:32:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ static const struct icp_servicecb icpsp_servicecb = {
 };
 
 int
-icpsp_match(struct device *parent __unused, struct cfdata *match __unused,
+icpsp_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct icp_attach_args *icpa;

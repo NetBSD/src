@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.31 2006/10/12 19:28:47 dogcow Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.32 2006/11/16 01:32:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.31 2006/10/12 19:28:47 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.32 2006/11/16 01:32:39 christos Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -228,7 +228,7 @@ mp_print(void *aux, const char *pnp)
 
 int
 mp_submatch(struct device *parent, struct cfdata *cf,
-	    const int *ldesc __unused, void *aux)
+	    const int *ldesc, void *aux)
 {
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
 	if (strcmp(caa->caa_name, cf->cf_name))
@@ -904,7 +904,7 @@ mp_cfg_isa_intr(const struct mpbios_int *entry, uint32_t *redir)
 
 
 static void
-mp_print_special_intr(int intr __unused)
+mp_print_special_intr(int intr)
 {
 }
 
@@ -1154,7 +1154,7 @@ mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 
 #if NPCI > 0
 int
-mpbios_pci_attach_hook(struct device *parent, struct device *self __unused,
+mpbios_pci_attach_hook(struct device *parent, struct device *self,
 		       struct pcibus_attach_args *pba)
 {
 	struct mp_bus *mpb;

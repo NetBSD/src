@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.26 2006/10/12 01:31:16 christos Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.27 2006/11/16 01:33:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.26 2006/10/12 01:31:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.27 2006/11/16 01:33:00 christos Exp $");
 
 #define	PCICISADEBUG
 
@@ -88,7 +88,7 @@ static struct pcmcia_chip_functions pcic_isa_functions = {
 };
 
 int
-pcic_isa_probe(struct device *parent __unused, struct cfdata *match __unused,
+pcic_isa_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -183,7 +183,7 @@ pcic_isa_probe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-pcic_isa_attach( struct device *parent __unused, struct device *self,
+pcic_isa_attach( struct device *parent, struct device *self,
     void *aux)
 {
 	struct pcic_softc *sc = (void *) self;

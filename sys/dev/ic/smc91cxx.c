@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.57 2006/10/12 01:31:01 christos Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.58 2006/11/16 01:32:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.57 2006/10/12 01:31:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.58 2006/11/16 01:32:52 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1450,7 +1450,7 @@ smc91cxx_activate(self, act)
 }
 
 int
-smc91cxx_detach(struct device *self, int flags __unused)
+smc91cxx_detach(struct device *self, int flags)
 {
 	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;

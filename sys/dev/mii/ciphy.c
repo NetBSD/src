@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.8 2006/10/12 01:31:25 christos Exp $ */
+/* $NetBSD: ciphy.c,v 1.9 2006/11/16 01:33:06 christos Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.8 2006/10/12 01:31:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.9 2006/11/16 01:33:06 christos Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -96,7 +96,7 @@ static const struct mii_phydesc ciphys[] = {
 };
 
 static int
-ciphymatch(struct device *parent __unused, struct cfdata *match __unused,
+ciphymatch(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -108,7 +108,7 @@ ciphymatch(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-ciphyattach(struct device *parent __unused, struct device *self, void *aux)
+ciphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;

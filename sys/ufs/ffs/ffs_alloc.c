@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.95 2006/10/15 12:23:56 yamt Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.96 2006/11/16 01:33:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.95 2006/10/15 12:23:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.96 2006/11/16 01:33:53 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -114,7 +114,7 @@ extern const u_char * const fragtbl[];
  *      available block is located.
  */
 int
-ffs_alloc(struct inode *ip, daddr_t lbn __unused, daddr_t bpref, int size,
+ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
     kauth_cred_t cred, daddr_t *bnp)
 {
 	struct fs *fs;

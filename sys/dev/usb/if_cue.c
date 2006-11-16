@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.47 2006/10/31 20:43:31 joerg Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.48 2006/11/16 01:33:26 christos Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.47 2006/10/31 20:43:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.48 2006/11/16 01:33:26 christos Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -859,7 +859,7 @@ done:
  * the list buffers.
  */
 Static void
-cue_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct cue_chain	*c = priv;

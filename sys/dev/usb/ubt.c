@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.19 2006/10/12 01:31:59 christos Exp $	*/
+/*	$NetBSD: ubt.c,v 1.20 2006/11/16 01:33:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.19 2006/10/12 01:31:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.20 2006/11/16 01:33:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1121,7 +1121,7 @@ ubt_xmit_acl_start(struct hci_unit *unit)
 }
 
 static void
-ubt_xmit_acl_complete(usbd_xfer_handle xfer __unused,
+ubt_xmit_acl_complete(usbd_xfer_handle xfer,
 		usbd_private_handle h, usbd_status status)
 {
 	struct hci_unit *unit = h;
@@ -1254,7 +1254,7 @@ ubt_xmit_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 }
 
 static void
-ubt_xmit_sco_complete(usbd_xfer_handle xfer __unused,
+ubt_xmit_sco_complete(usbd_xfer_handle xfer,
 		usbd_private_handle h, usbd_status status)
 {
 	struct ubt_isoc_xfer *isoc = h;

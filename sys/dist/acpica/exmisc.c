@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exmisc.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exmisc.c,v 1.3 2006/11/16 01:33:31 christos Exp $");
 
 #define __EXMISC_C__
 
@@ -150,7 +150,7 @@ ACPI_STATUS
 AcpiExGetObjectReference (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     ACPI_OPERAND_OBJECT     **ReturnDesc,
-    ACPI_WALK_STATE         *WalkState __unused)
+    ACPI_WALK_STATE         *WalkState)
 {
     ACPI_OPERAND_OBJECT     *ReferenceObj;
     ACPI_OPERAND_OBJECT     *ReferencedObj;
@@ -250,7 +250,7 @@ AcpiExConcatTemplate (
     ACPI_OPERAND_OBJECT     *Operand0,
     ACPI_OPERAND_OBJECT     *Operand1,
     ACPI_OPERAND_OBJECT     **ActualReturnDesc,
-    ACPI_WALK_STATE         *WalkState __unused)
+    ACPI_WALK_STATE         *WalkState)
 {
     ACPI_STATUS             Status;
     ACPI_OPERAND_OBJECT     *ReturnDesc;
@@ -342,7 +342,7 @@ AcpiExDoConcatenate (
     ACPI_OPERAND_OBJECT     *Operand0,
     ACPI_OPERAND_OBJECT     *Operand1,
     ACPI_OPERAND_OBJECT     **ActualReturnDesc,
-    ACPI_WALK_STATE         *WalkState __unused)
+    ACPI_WALK_STATE         *WalkState)
 {
     ACPI_OPERAND_OBJECT     *LocalOperand1 = Operand1;
     ACPI_OPERAND_OBJECT     *ReturnDesc;

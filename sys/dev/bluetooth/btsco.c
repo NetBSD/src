@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.10 2006/10/12 01:30:55 christos Exp $	*/
+/*	$NetBSD: btsco.c,v 1.11 2006/11/16 01:32:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.10 2006/10/12 01:30:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.11 2006/11/16 01:32:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -254,7 +254,7 @@ static void btsco_intr(void *);
  */
 
 static int
-btsco_match(struct device *self __unused, struct cfdata *cfdata __unused,
+btsco_match(struct device *self, struct cfdata *cfdata,
     void *aux)
 {
 	prop_dictionary_t dict = aux;
@@ -271,7 +271,7 @@ btsco_match(struct device *self __unused, struct cfdata *cfdata __unused,
 }
 
 static void
-btsco_attach(struct device *parent __unused, struct device *self, void *aux)
+btsco_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct btsco_softc *sc = (struct btsco_softc *)self;
 	prop_dictionary_t dict = aux;
@@ -393,7 +393,7 @@ btsco_detach(struct device *self, int flags)
  */
 
 static void
-btsco_sco_connecting(void *arg __unused)
+btsco_sco_connecting(void *arg)
 {
 /*	struct btsco_softc *sc = arg;	*/
 
@@ -468,7 +468,7 @@ btsco_sco_disconnected(void *arg, int err)
 }
 
 static void *
-btsco_sco_newconn(void *arg, struct sockaddr_bt *laddr __unused,
+btsco_sco_newconn(void *arg, struct sockaddr_bt *laddr,
     struct sockaddr_bt *raddr)
 {
 	struct btsco_softc *sc = arg;
@@ -547,7 +547,7 @@ btsco_sco_input(void *arg, struct mbuf *m)
  */
 
 static int
-btsco_open(void *hdl, int flags __unused)
+btsco_open(void *hdl, int flags)
 {
 	struct sockaddr_bt sa;
 	struct btsco_softc *sc = hdl;
@@ -678,7 +678,7 @@ btsco_close(void *hdl)
 }
 
 static int
-btsco_query_encoding(void *hdl __unused, struct audio_encoding *ae)
+btsco_query_encoding(void *hdl, struct audio_encoding *ae)
 {
 /*	struct btsco_softc *sc = hdl;	*/
 	int err = 0;
@@ -699,7 +699,7 @@ btsco_query_encoding(void *hdl __unused, struct audio_encoding *ae)
 }
 
 static int
-btsco_set_params(void *hdl __unused, int setmode, int usemode __unused,
+btsco_set_params(void *hdl, int setmode, int usemode,
 		audio_params_t *play, audio_params_t *rec,
 		stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
@@ -737,8 +737,8 @@ btsco_set_params(void *hdl __unused, int setmode, int usemode __unused,
  * If we have an MTU value to use, round the blocksize to that.
  */
 static int
-btsco_round_blocksize(void *hdl, int bs, int mode __unused,
-    const audio_params_t *param __unused)
+btsco_round_blocksize(void *hdl, int bs, int mode,
+    const audio_params_t *param)
 {
 	struct btsco_softc *sc = hdl;
 
@@ -871,7 +871,7 @@ btsco_halt_input(void *hdl)
 }
 
 static int
-btsco_getdev(void *hdl __unused, struct audio_device *ret)
+btsco_getdev(void *hdl, struct audio_device *ret)
 {
 
 	*ret = btsco_device;
@@ -879,7 +879,7 @@ btsco_getdev(void *hdl __unused, struct audio_device *ret)
 }
 
 static int
-btsco_setfd(void *hdl __unused, int fd __unused)
+btsco_setfd(void *hdl, int fd)
 {
 	DPRINTF("set %s duplex\n", fd ? "full" : "half");
 
@@ -955,7 +955,7 @@ btsco_get_port(void *hdl, mixer_ctrl_t *mc)
 }
 
 static int
-btsco_query_devinfo(void *hdl __unused, mixer_devinfo_t *di)
+btsco_query_devinfo(void *hdl, mixer_devinfo_t *di)
 {
 /*	struct btsco_softc *sc = hdl;	*/
 	int err = 0;
@@ -1054,7 +1054,7 @@ btsco_freem(void *hdl, void *addr, struct malloc_type *type)
 }
 
 static int
-btsco_get_props(void *hdl __unused)
+btsco_get_props(void *hdl)
 {
 
 	return AUDIO_PROP_FULLDUPLEX;
@@ -1065,8 +1065,8 @@ btsco_get_props(void *hdl __unused)
  * to the device and mixer.
  */
 static int
-btsco_dev_ioctl(void *hdl, u_long cmd, caddr_t addr, int flag __unused,
-    struct lwp *l __unused)
+btsco_dev_ioctl(void *hdl, u_long cmd, caddr_t addr, int flag,
+    struct lwp *l)
 {
 	struct btsco_softc *sc = hdl;
 	struct btsco_info *bi = (struct btsco_info *)addr;
@@ -1157,7 +1157,7 @@ btsco_intr(void *arg)
  * that we dont release it before its free.
  */
 static void
-btsco_extfree(struct mbuf *m, caddr_t addr __unused, size_t size __unused,
+btsco_extfree(struct mbuf *m, caddr_t addr, size_t size,
     void *arg)
 {
 	struct btsco_softc *sc = arg;

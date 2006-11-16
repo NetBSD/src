@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.42 2006/10/12 01:31:27 christos Exp $	*/
+/*	$NetBSD: agp.c,v 1.43 2006/11/16 01:33:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.42 2006/10/12 01:31:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.43 2006/11/16 01:33:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ agp_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-agpmatch(struct device *parent __unused, struct cfdata *match __unused,
+agpmatch(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct agpbus_attach_args *apa = aux;
@@ -792,8 +792,8 @@ agp_unbind_user(struct agp_softc *sc, agp_unbind *unbind)
 }
 
 static int
-agpopen(dev_t dev, int oflags __unused, int devtype __unused,
-    struct lwp *l __unused)
+agpopen(dev_t dev, int oflags, int devtype,
+    struct lwp *l)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
 
@@ -812,8 +812,8 @@ agpopen(dev_t dev, int oflags __unused, int devtype __unused,
 }
 
 static int
-agpclose(dev_t dev, int fflag __unused, int devtype __unused,
-    struct lwp *l __unused)
+agpclose(dev_t dev, int fflag, int devtype,
+    struct lwp *l)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
 	struct agp_memory *mem;
@@ -847,7 +847,7 @@ agpclose(dev_t dev, int fflag __unused, int devtype __unused,
 }
 
 static int
-agpioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l __unused)
+agpioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
 
@@ -982,7 +982,7 @@ int agp_unbind_memory(void *dev, void *handle)
 	return AGP_UNBIND_MEMORY(sc, mem);
 }
 
-void agp_memory_info(void *dev __unused, void *handle,
+void agp_memory_info(void *dev, void *handle,
     struct agp_memory_info *mi)
 {
 	struct agp_memory *mem = (struct agp_memory *) handle;

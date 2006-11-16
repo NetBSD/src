@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.32 2006/10/25 17:34:49 bouyer Exp $	*/
+/*	$NetBSD: satalink.c,v 1.33 2006/11/16 01:33:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.32 2006/10/25 17:34:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.33 2006/11/16 01:33:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ static const struct pciide_product_desc pciide_satalink_products[] =  {
 };
 
 static int
-satalink_match(struct device *parent __unused, struct cfdata *match __unused,
+satalink_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -316,7 +316,7 @@ satalink_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-satalink_attach(struct device *parent __unused, struct device *self, void *aux)
+satalink_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.14 2006/11/14 13:34:29 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.15 2006/11/16 01:32:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.14 2006/11/14 13:34:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.15 2006/11/16 01:32:41 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -138,7 +138,7 @@ vfs2fs(struct statfs12 *bfs, const struct statvfs *fs)
  */
 /* ARGSUSED */
 int
-compat_20_sys_statfs(struct lwp *l, void *v, register_t *retval __unused)
+compat_20_sys_statfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_20_sys_statfs_args /* {
 		syscallarg(const char *) path;
@@ -171,7 +171,7 @@ done:
  */
 /* ARGSUSED */
 int
-compat_20_sys_fstatfs(struct lwp *l, void *v, register_t *retval __unused)
+compat_20_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_20_sys_fstatfs_args /* {
 		syscallarg(int) fd;
@@ -273,7 +273,7 @@ out:
 }
 
 int
-compat_20_sys_fhstatfs(struct lwp *l, void *v, register_t *retval __unused)
+compat_20_sys_fhstatfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_20_sys_fhstatfs_args /*
 		syscallarg(const struct compat_30_fhandle *) fhp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.22 2006/10/28 11:35:17 peter Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.23 2006/11/16 01:32:37 christos Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.22 2006/10/28 11:35:17 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.23 2006/11/16 01:32:37 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -198,7 +198,7 @@ cbq_clear_interface(cbq_state_t *cbqp)
 }
 
 static int
-cbq_request(struct ifaltq *ifq, int req, void *arg __unused)
+cbq_request(struct ifaltq *ifq, int req, void *arg)
 {
 	cbq_state_t	*cbqp = (cbq_state_t *)ifq->altq_disc;
 
@@ -974,15 +974,15 @@ cbq_ifdetach(struct cbq_interface *ifacep)
 altqdev_decl(cbq);
 
 int
-cbqopen(dev_t dev __unused, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+cbqopen(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	return (0);
 }
 
 int
-cbqclose(dev_t dev __unused, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+cbqclose(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	struct ifnet *ifp;
 	struct cbq_interface iface;
@@ -1000,7 +1000,7 @@ cbqclose(dev_t dev __unused, int flag __unused, int fmt __unused,
 }
 
 int
-cbqioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+cbqioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
     struct lwp *l)
 {
 	int	error = 0;

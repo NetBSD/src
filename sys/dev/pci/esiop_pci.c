@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop_pci.c,v 1.11 2006/10/12 01:31:29 christos Exp $	*/
+/*	$NetBSD: esiop_pci.c,v 1.12 2006/11/16 01:33:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop_pci.c,v 1.11 2006/10/12 01:31:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop_pci.c,v 1.12 2006/11/16 01:33:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ struct esiop_pci_softc {
 };
 
 static int
-esiop_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+esiop_pci_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -76,7 +76,7 @@ esiop_pci_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-esiop_pci_attach(struct device *parent __unused, struct device *self, void *aux)
+esiop_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct esiop_pci_softc *sc = (struct esiop_pci_softc *)self;

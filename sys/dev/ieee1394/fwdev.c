@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.5 2006/10/12 01:31:15 christos Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.6 2006/11/16 01:32:59 christos Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -328,7 +328,7 @@ FW_CLOSE(fw)
 }
 
 static int
-fw_read_async(struct fw_drv1 *d, struct uio *uio, int ioflag __unused)
+fw_read_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 {
 	int err = 0, s;
 	struct fw_xfer *xfer;
@@ -441,7 +441,7 @@ readloop:
 }
 
 static int
-fw_write_async(struct fw_drv1 *d, struct uio *uio, int ioflag __unused)
+fw_write_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 {
 	struct fw_xfer *xfer;
 	struct fw_pkt pkt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.12 2006/11/12 19:00:43 plunky Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.13 2006/11/16 01:33:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -1052,7 +1052,7 @@ synaptics_check_edge(int x, int y)
 }
 
 static inline int
-synaptics_edge_motion(struct synaptics_softc *sc __unused, int delta, int dir)
+synaptics_edge_motion(struct synaptics_softc *sc, int delta, int dir)
 {
 
 	/*

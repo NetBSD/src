@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.75 2006/10/12 01:32:00 christos Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.76 2006/11/16 01:33:27 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.75 2006/10/12 01:32:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.76 2006/11/16 01:33:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,7 +500,7 @@ int ulptusein = 1;
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-ulptopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	u_char flags = ULPTFLAGS(dev);
 	struct ulpt_softc *sc;
@@ -646,8 +646,8 @@ ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 }
 
 int
-ulptclose(dev_t dev, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+ulptclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct ulpt_softc *sc;
 
@@ -689,7 +689,7 @@ ulptclose(dev_t dev, int flag __unused, int mode __unused,
 }
 
 int
-ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags __unused)
+ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 {
 	u_int32_t n;
 	int error = 0;
@@ -737,7 +737,7 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags __unused)
+ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 {
 	u_int32_t n, on;
 	int error = 0;
@@ -792,8 +792,8 @@ ulptread(dev_t dev, struct uio *uio, int flags)
 }
 
 void
-ulpt_read_cb(usbd_xfer_handle xfer, usbd_private_handle priv __unused,
-	     usbd_status status __unused)
+ulpt_read_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+	     usbd_status status)
 {
 	usbd_status err;
 	u_int32_t n;
@@ -833,8 +833,8 @@ ulpt_tick(void *xsc)
 }
 
 int
-ulptioctl(dev_t dev __unused, u_long cmd __unused, caddr_t data __unused,
-    int flag __unused, struct lwp *l __unused)
+ulptioctl(dev_t dev, u_long cmd, caddr_t data,
+    int flag, struct lwp *l)
 {
 	return ENODEV;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.36 2006/11/11 17:28:16 bjh21 Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.37 2006/11/16 01:33:31 christos Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.36 2006/11/11 17:28:16 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.37 2006/11/16 01:33:31 christos Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -156,7 +156,7 @@ usl_sync_get(struct wsscreen *scr)
 }
 
 static int
-usl_detachproc(void *cookie, int waitok __unused,
+usl_detachproc(void *cookie, int waitok,
     void (*callback)(void *, int, int), void *cbarg)
 {
 	struct usl_syncdata *sd = cookie;
@@ -221,7 +221,7 @@ usl_detachtimeout(void *arg)
 }
 
 static int
-usl_attachproc(void *cookie, int waitok __unused,
+usl_attachproc(void *cookie, int waitok,
     void (*callback)(void *, int, int), void *cbarg)
 {
 	struct usl_syncdata *sd = cookie;
@@ -282,7 +282,7 @@ usl_attachtimeout(void *arg)
 
 int
 wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
-    int flag __unused, struct lwp *l __unused)
+    int flag, struct lwp *l)
 {
 	int idx, maxidx;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.7 2006/10/13 20:53:59 christos Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.8 2006/11/16 01:33:49 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.7 2006/10/13 20:53:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.8 2006/11/16 01:33:49 christos Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -336,7 +336,7 @@ static int
 ipcomp_output(
     struct mbuf *m,
     struct ipsecrequest *isr,
-    struct mbuf **mp __unused,
+    struct mbuf **mp,
     int skip,
     int protoff
 )

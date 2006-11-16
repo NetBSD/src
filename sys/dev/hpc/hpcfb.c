@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.39 2006/10/12 21:19:13 uwe Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.40 2006/11/16 01:32:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.39 2006/10/12 21:19:13 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.40 2006/11/16 01:32:50 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -283,14 +283,14 @@ struct hpcfb_tvrow hpcfb_console_tvram[HPCFB_MAX_ROW];
  */
 
 int
-hpcfbmatch(struct device *parent __unused,
-	   struct cfdata *match __unused, void *aux __unused)
+hpcfbmatch(struct device *parent,
+	   struct cfdata *match, void *aux)
 {
 	return (1);
 }
 
 void
-hpcfbattach(struct device *parent __unused,
+hpcfbattach(struct device *parent,
 	    struct device *self, void *aux)
 {
 	struct hpcfb_softc *sc = device_private(self);
@@ -382,7 +382,7 @@ hpcfb_thread(void *arg)
 
 /* Print function (for parent devices). */
 int
-hpcfbprint(void *aux __unused, const char *pnp)
+hpcfbprint(void *aux, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("hpcfb at %s", pnp);
@@ -554,7 +554,7 @@ hpcfb_cmap_reorder(struct hpcfb_fbconf *fbconf, struct hpcfb_devconfig *dc)
 }
 
 int
-hpcfb_ioctl(void *v, void *vs __unused, u_long cmd, caddr_t data, int flag,
+hpcfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
 	struct lwp *l)
 {
 	struct hpcfb_softc *sc = v;
@@ -629,7 +629,7 @@ hpcfb_ioctl(void *v, void *vs __unused, u_long cmd, caddr_t data, int flag,
 }
 
 paddr_t
-hpcfb_mmap(void *v, void *vs __unused, off_t offset, int prot)
+hpcfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct hpcfb_softc *sc = v;
 
@@ -706,7 +706,7 @@ hpcfb_refresh_screen(struct hpcfb_softc *sc)
 }
 
 static int
-hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type __unused,
+hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type,
 		   void **cookiep, int *curxp, int *curyp, long *attrp)
 {
 	struct hpcfb_softc *sc = v;
@@ -767,7 +767,7 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type __unused,
 }
 
 static void
-hpcfb_free_screen(void *v __unused, void *cookie)
+hpcfb_free_screen(void *v, void *cookie)
 {
 	struct hpcfb_devconfig *dc = cookie;
 
@@ -782,7 +782,7 @@ hpcfb_free_screen(void *v __unused, void *cookie)
 }
 
 static int
-hpcfb_show_screen(void *v, void *cookie, int waitok __unused,
+hpcfb_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	struct hpcfb_softc *sc = v;
@@ -1126,7 +1126,7 @@ hpcfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
  */
 void
 hpcfb_tv_erasecols(struct hpcfb_devconfig *dc,
-		   int row, int startcol, int ncols, long attr __unused)
+		   int row, int startcol, int ncols, long attr)
 {
 	struct hpcfb_tvrow *vscn = dc->dc_tvram;
 
@@ -1449,7 +1449,7 @@ hpcfb_copyrows(void *cookie, int src, int dst, int num)
  */
 void
 hpcfb_tv_eraserows(struct hpcfb_devconfig *dc,
-		   int row, int nrow, long attr __unused)
+		   int row, int nrow, long attr)
 {
 	struct hpcfb_tvrow *vscn = dc->dc_tvram;
 	int cols;

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.20 2006/10/12 01:31:27 christos Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.21 2006/11/16 01:33:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.20 2006/10/12 01:31:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.21 2006/11/16 01:33:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ agp_intel_vgamatch(struct pci_attach_args *pa)
 }
 
 int
-agp_intel_attach(struct device *parent __unused, struct device *self, void *aux)
+agp_intel_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct agp_softc *sc = (struct agp_softc *)self;
 	struct pci_attach_args *pa= aux;

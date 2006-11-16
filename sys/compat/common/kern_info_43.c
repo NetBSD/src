@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.24 2006/10/12 01:30:47 christos Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.25 2006/11/16 01:32:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.24 2006/10/12 01:30:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.25 2006/11/16 01:32:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.24 2006/10/12 01:30:47 christos E
 #include <sys/syscallargs.h>
 
 int
-compat_43_sys_getdtablesize(struct lwp *l, void *v __unused, register_t *retval)
+compat_43_sys_getdtablesize(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
@@ -70,7 +70,7 @@ compat_43_sys_getdtablesize(struct lwp *l, void *v __unused, register_t *retval)
 
 /* ARGSUSED */
 int
-compat_43_sys_gethostid(struct lwp *l __unused, void *v __unused,
+compat_43_sys_gethostid(struct lwp *l, void *v,
     register_t *retval)
 {
 
@@ -81,7 +81,7 @@ compat_43_sys_gethostid(struct lwp *l __unused, void *v __unused,
 
 /*ARGSUSED*/
 int
-compat_43_sys_gethostname(struct lwp *l, void *v, register_t *retval __unused)
+compat_43_sys_gethostname(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_gethostname_args /* {
 		syscallarg(char *) hostname;
@@ -282,7 +282,7 @@ compat_43_sys_getkerninfo(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-compat_43_sys_sethostid(struct lwp *l, void *v, register_t *retval __unused)
+compat_43_sys_sethostid(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_sethostid_args /* {
 		syscallarg(int32_t) hostid;
@@ -299,7 +299,7 @@ compat_43_sys_sethostid(struct lwp *l, void *v, register_t *retval __unused)
 
 /* ARGSUSED */
 int
-compat_43_sys_sethostname(struct lwp *l, void *v, register_t *retval __unused)
+compat_43_sys_sethostname(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_sethostname_args *uap = v;
 	int name[2];

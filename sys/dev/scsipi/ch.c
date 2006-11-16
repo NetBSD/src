@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.75 2006/10/12 01:31:57 christos Exp $	*/
+/*	$NetBSD: ch.c,v 1.76 2006/11/16 01:33:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.75 2006/10/12 01:31:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.76 2006/11/16 01:33:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ static const struct chquirk chquirks[] = {
 };
 
 static int
-chmatch(struct device *parent __unused, struct cfdata *match __unused,
+chmatch(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
@@ -194,7 +194,7 @@ chmatch(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-chattach(struct device *parent __unused, struct device *self, void *aux)
+chattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ch_softc *sc = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
@@ -254,7 +254,7 @@ chattach(struct device *parent __unused, struct device *self, void *aux)
 }
 
 static int
-chopen(dev_t dev, int flags __unused, int fmt __unused, struct lwp *l __unused)
+chopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ch_softc *sc;
 	struct scsipi_periph *periph;
@@ -307,7 +307,7 @@ chopen(dev_t dev, int flags __unused, int fmt __unused, struct lwp *l __unused)
 }
 
 static int
-chclose(dev_t dev, int flags __unused, int fmt __unused, struct lwp *l __unused)
+chclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 	struct scsipi_periph *periph = sc->sc_periph;
@@ -324,7 +324,7 @@ chclose(dev_t dev, int flags __unused, int fmt __unused, struct lwp *l __unused)
 }
 
 static int
-chread(dev_t dev, struct uio *uio, int flags __unused)
+chread(dev_t dev, struct uio *uio, int flags)
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 	int error;
@@ -470,7 +470,7 @@ filt_chdetach(struct knote *kn)
 }
 
 static int
-filt_chread(struct knote *kn, long hint __unused)
+filt_chread(struct knote *kn, long hint)
 {
 	struct ch_softc *sc = kn->kn_hook;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.119 2006/10/12 01:31:00 christos Exp $	*/
+/*	$NetBSD: elink3.c,v 1.120 2006/11/16 01:32:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.119 2006/10/12 01:31:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.120 2006/11/16 01:32:51 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2081,7 +2081,7 @@ ep_activate(self, act)
  *	Detach a elink3 interface.
  */
 int
-ep_detach(struct device *self, int flags __unused)
+ep_detach(struct device *self, int flags)
 {
 	struct ep_softc *sc = (struct ep_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;

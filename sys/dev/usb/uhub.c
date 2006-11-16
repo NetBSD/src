@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.80 2006/10/24 21:03:30 drochner Exp $	*/
+/*	$NetBSD: uhub.c,v 1.81 2006/11/16 01:33:26 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.80 2006/10/24 21:03:30 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.81 2006/11/16 01:33:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -636,7 +636,7 @@ uhub_child_detached(device_t self, device_t child)
  * to be explored again.
  */
 void
-uhub_intr(usbd_xfer_handle xfer __unused, usbd_private_handle addr,
+uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
     usbd_status status)
 {
 	struct uhub_softc *sc = addr;

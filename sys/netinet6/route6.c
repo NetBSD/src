@@ -1,4 +1,4 @@
-/*	$NetBSD: route6.c,v 1.15 2006/10/12 01:32:39 christos Exp $	*/
+/*	$NetBSD: route6.c,v 1.16 2006/11/16 01:33:46 christos Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.15 2006/10/12 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.16 2006/11/16 01:33:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -53,7 +53,7 @@ static int ip6_rthdr0 __P((struct mbuf *, struct ip6_hdr *,
     struct ip6_rthdr0 *));
 
 int
-route6_input(struct mbuf **mp, int *offp, int proto __unused)
+route6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct ip6_hdr *ip6;
 	struct mbuf *m = *mp;

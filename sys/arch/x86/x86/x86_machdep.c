@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.2 2006/10/30 00:41:26 elad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.3 2006/11/16 01:32:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.2 2006/10/30 00:41:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.3 2006/11/16 01:32:39 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.2 2006/10/30 00:41:26 elad Exp $")
 
 #include <uvm/uvm_extern.h>
 
-int check_pa_acc(paddr_t, vm_prot_t __unused);
+int check_pa_acc(paddr_t, vm_prot_t);
 
 /* --------------------------------------------------------------------- */
 
@@ -92,7 +92,7 @@ lookup_bootinfo(int type)
  * check_pa_acc: check if given pa is accessible.
  */
 int
-check_pa_acc(paddr_t pa, vm_prot_t prot __unused)
+check_pa_acc(paddr_t pa, vm_prot_t prot)
 {
 	extern phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 	extern int mem_cluster_cnt;

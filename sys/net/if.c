@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.176 2006/11/13 05:13:40 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.177 2006/11/16 01:33:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.176 2006/11/13 05:13:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.177 2006/11/16 01:33:40 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -204,57 +204,57 @@ ifinit(void)
  */
 
 int
-if_nulloutput(struct ifnet *ifp __unused, struct mbuf *m __unused,
-    struct sockaddr *so __unused, struct rtentry *rt __unused)
+if_nulloutput(struct ifnet *ifp, struct mbuf *m,
+    struct sockaddr *so, struct rtentry *rt)
 {
 
 	return (ENXIO);
 }
 
 void
-if_nullinput(struct ifnet *ifp __unused, struct mbuf *m __unused)
+if_nullinput(struct ifnet *ifp, struct mbuf *m)
 {
 
 	/* Nothing. */
 }
 
 void
-if_nullstart(struct ifnet *ifp __unused)
+if_nullstart(struct ifnet *ifp)
 {
 
 	/* Nothing. */
 }
 
 int
-if_nullioctl(struct ifnet *ifp __unused, u_long cmd __unused, caddr_t data __unused)
+if_nullioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 
 	return (ENXIO);
 }
 
 int
-if_nullinit(struct ifnet *ifp __unused)
+if_nullinit(struct ifnet *ifp)
 {
 
 	return (ENXIO);
 }
 
 void
-if_nullstop(struct ifnet *ifp __unused, int disable __unused)
+if_nullstop(struct ifnet *ifp, int disable)
 {
 
 	/* Nothing. */
 }
 
 void
-if_nullwatchdog(struct ifnet *ifp __unused)
+if_nullwatchdog(struct ifnet *ifp)
 {
 
 	/* Nothing. */
 }
 
 void
-if_nulldrain(struct ifnet *ifp __unused)
+if_nulldrain(struct ifnet *ifp)
 {
 
 	/* Nothing. */
@@ -1212,7 +1212,7 @@ if_up(struct ifnet *ifp)
  * call the appropriate interface routine on expiration.
  */
 void
-if_slowtimo(void *arg __unused)
+if_slowtimo(void *arg)
 {
 	struct ifnet *ifp;
 	int s = splnet();
@@ -1597,7 +1597,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
  */
 /*ARGSUSED*/
 int
-ifconf(u_long cmd __unused, caddr_t data)
+ifconf(u_long cmd, caddr_t data)
 {
 	struct ifconf *ifc = (struct ifconf *)data;
 	struct ifnet *ifp;

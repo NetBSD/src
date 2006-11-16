@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.109 2006/10/12 01:32:39 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.110 2006/11/16 01:33:45 christos Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.109 2006/10/12 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.110 2006/11/16 01:33:45 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -842,7 +842,7 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
  *	other:	failure, and set errno.
  */
 int
-ipsec_setspidx_mbuf(struct secpolicyindex *spidx, int family __unused,
+ipsec_setspidx_mbuf(struct secpolicyindex *spidx, int family,
     struct mbuf *m, int needport)
 {
 	int error;
@@ -1350,7 +1350,7 @@ fail:
 
 /* set policy and ipsec request if present. */
 static int
-ipsec_set_policy(struct secpolicy **spp, int optname __unused, caddr_t request,
+ipsec_set_policy(struct secpolicy **spp, int optname, caddr_t request,
     size_t len, int priv)
 {
 	struct sadb_x_policy *xpl;
@@ -2620,7 +2620,7 @@ ipsec4_checksa(isr, state)
  */
 int
 ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp,
-    int flags __unused)
+    int flags)
 {
 	struct ip *ip = NULL;
 	struct ipsecrequest *isr = NULL;
@@ -2878,7 +2878,7 @@ ipsec6_checksa(isr, state, tunnel)
  */
 int
 ipsec6_output_trans(struct ipsec_output_state *state, u_char *nexthdrp,
-    struct mbuf *mprev, struct secpolicy *sp, int flags __unused, int *tun)
+    struct mbuf *mprev, struct secpolicy *sp, int flags, int *tun)
 {
 	struct ip6_hdr *ip6;
 	struct ipsecrequest *isr = NULL;
@@ -3017,7 +3017,7 @@ bad:
  */
 int
 ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
-    int flags __unused)
+    int flags)
 {
 	struct ip6_hdr *ip6;
 	struct ipsecrequest *isr = NULL;
@@ -3519,7 +3519,7 @@ ipsec_optaux(m, mtag)
 }
 
 int
-ipsec_addhist(struct mbuf *m, int proto __unused, u_int32_t spi __unused)
+ipsec_addhist(struct mbuf *m, int proto, u_int32_t spi)
 {
 	struct m_tag *mtag;
 	struct ipsecaux *aux;
@@ -3547,7 +3547,7 @@ ipsec_getnhist(m)
 }
 
 struct ipsec_history *
-ipsec_gethist(struct mbuf *m __unused, int *lenp __unused)
+ipsec_gethist(struct mbuf *m, int *lenp)
 {
 
 	panic("ipsec_gethist: obsolete API");

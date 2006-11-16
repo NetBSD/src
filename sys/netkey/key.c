@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.145 2006/10/14 21:05:40 smb Exp $	*/
+/*	$NetBSD: key.c,v 1.146 2006/11/16 01:33:51 christos Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.145 2006/10/14 21:05:40 smb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.146 2006/11/16 01:33:51 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -753,8 +753,8 @@ key_allocsa(
     caddr_t dst,
     u_int proto,
     u_int32_t spi,
-    u_int16_t sport __unused,
-    u_int16_t dport __unused
+    u_int16_t sport,
+    u_int16_t dport
 )
 {
 	struct secasvar *sav, *match;
@@ -4652,7 +4652,7 @@ key_bbcmp(p1, p2, bits)
  * XXX: year 2038 problem may remain.
  */
 void
-key_timehandler(void *arg __unused)
+key_timehandler(void *arg)
 {
 	u_int dir;
 	int s;
@@ -8103,8 +8103,8 @@ key_init()
  * xxx more checks to be provided
  */
 int
-key_checktunnelsanity(struct secasvar *sav, u_int family __unused,
-    caddr_t src __unused, caddr_t dst __unused)
+key_checktunnelsanity(struct secasvar *sav, u_int family,
+    caddr_t src, caddr_t dst)
 {
 	/* sanity check */
 	if (sav->sah == NULL)

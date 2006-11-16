@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_break.c,v 1.52 2006/10/12 01:30:48 christos Exp $	*/
+/*	$NetBSD: linux_break.c,v 1.53 2006/11/16 01:32:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_break.c,v 1.52 2006/10/12 01:30:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_break.c,v 1.53 2006/11/16 01:32:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_break.c,v 1.52 2006/10/12 01:30:48 christos Ex
  * world uses this anymore
  */
 int
-linux_sys_break(struct lwp *l __unused, void *v __unused,
-    register_t *retval __unused)
+linux_sys_break(struct lwp *l, void *v,
+    register_t *retval)
 {
 #if 0
 	struct linux_sys_brk_args /* {

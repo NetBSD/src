@@ -115,8 +115,8 @@ usbd_libfini(void)
 
 __stdcall static uint32_t
 usbd_iodispatch(
-	device_object		*dobj __unused,
-	irp			*ip __unused)
+	device_object		*dobj,
+	irp			*ip)
 {
 	return(0);
 }

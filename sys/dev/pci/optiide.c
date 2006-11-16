@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.13 2006/10/12 01:31:32 christos Exp $	*/
+/*	$NetBSD: optiide.c,v 1.14 2006/11/16 01:33:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.13 2006/10/12 01:31:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.14 2006/11/16 01:33:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ static const struct pciide_product_desc pciide_opti_products[] =  {
 };
 
 static int
-optiide_match(struct device *parent __unused, struct cfdata *match __unused,
+optiide_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -96,7 +96,7 @@ optiide_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-optiide_attach(struct device *parent __unused, struct device *self, void *aux)
+optiide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;

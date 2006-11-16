@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_elf32.c,v 1.12 2006/10/12 01:30:47 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec_elf32.c,v 1.13 2006/11/16 01:32:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.12 2006/10/12 01:30:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.13 2006/11/16 01:32:42 christos Exp $");
 
 #define ELFSIZE		32
 
@@ -124,7 +124,7 @@ out:
 
 int
 ibcs2_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh, char *itp,
-    vaddr_t *pos __unused)
+    vaddr_t *pos)
 {
 	int error;
 

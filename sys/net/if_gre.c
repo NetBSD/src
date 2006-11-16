@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.73 2006/11/04 07:13:19 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.74 2006/11/16 01:33:40 christos Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.73 2006/11/04 07:13:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.74 2006/11/16 01:33:40 christos Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -227,7 +227,7 @@ gre_clone_destroy(struct ifnet *ifp)
 }
 
 static void
-gre_receive(struct socket *so __unused, caddr_t arg, int waitflag __unused)
+gre_receive(struct socket *so, caddr_t arg, int waitflag)
 {
 	struct gre_softc *sc = (struct gre_softc *)arg;
 
@@ -264,7 +264,7 @@ gre_sodestroy(struct socket **sop)
 }
 
 static struct mbuf *
-gre_getsockmbuf(struct socket *so __unused)
+gre_getsockmbuf(struct socket *so)
 {
 	struct mbuf *m;
 
@@ -594,7 +594,7 @@ gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen, u_char proto,
  */
 static int
 gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-	   struct rtentry *rt __unused)
+	   struct rtentry *rt)
 {
 	int error = 0, hlen;
 	struct gre_softc *sc = ifp->if_softc;
@@ -1237,7 +1237,7 @@ void	greattach(int);
 
 /* ARGSUSED */
 void
-greattach(int count __unused)
+greattach(int count)
 {
 #ifdef INET
 	LIST_INIT(&gre_softc_list);

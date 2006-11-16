@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.15 2006/10/12 01:31:28 christos Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.16 2006/11/16 01:33:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.15 2006/10/12 01:31:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.16 2006/11/16 01:33:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ struct com_puc_softc {
 };
 
 static int
-com_puc_probe(struct device *parent __unused, struct cfdata *match __unused,
+com_puc_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct puc_attach_args *aa = aux;
@@ -76,7 +76,7 @@ com_puc_probe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-com_puc_attach(struct device *parent __unused, struct device *self, void *aux)
+com_puc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_puc_softc *psc = (void *)self;
 	struct com_softc *sc = &psc->sc_com;

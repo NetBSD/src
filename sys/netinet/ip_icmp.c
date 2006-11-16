@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.104 2006/10/12 01:32:38 christos Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.105 2006/11/16 01:33:45 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.104 2006/10/12 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.105 2006/11/16 01:33:45 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1182,7 +1182,7 @@ ip_next_mtu(u_int mtu, int dir)	/* XXX */
 }
 
 static void
-icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r __unused)
+icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	if (rt == NULL)
 		panic("icmp_mtudisc_timeout:  bad route to timeout");
@@ -1198,7 +1198,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r __unused)
 }
 
 static void
-icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r __unused)
+icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	if (rt == NULL)
 		panic("icmp_redirect_timeout:  bad route to timeout");
@@ -1218,8 +1218,8 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r __unused)
  * XXX per-destination/type check necessary?
  */
 static int
-icmp_ratelimit(const struct in_addr *dst __unused, const int type __unused,
-    const int code __unused)
+icmp_ratelimit(const struct in_addr *dst, const int type,
+    const int code)
 {
 
 	/* PPS limit */

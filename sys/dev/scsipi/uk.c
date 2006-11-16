@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.50 2006/10/12 01:31:58 christos Exp $	*/
+/*	$NetBSD: uk.c,v 1.51 2006/11/16 01:33:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.50 2006/10/12 01:31:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.51 2006/11/16 01:33:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,8 +86,8 @@ const struct cdevsw uk_cdevsw = {
 };
 
 static int
-ukmatch(struct device *parent __unused, struct cfdata *match __unused,
-    void *aux __unused)
+ukmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	return (1);
@@ -98,7 +98,7 @@ ukmatch(struct device *parent __unused, struct cfdata *match __unused,
  * a device suitable for this driver.
  */
 static void
-ukattach(struct device *parent __unused, struct device *self, void *aux)
+ukattach(struct device *parent, struct device *self, void *aux)
 {
 	struct uk_softc *uk = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
@@ -116,7 +116,7 @@ ukattach(struct device *parent __unused, struct device *self, void *aux)
 }
 
 static int
-ukactivate(struct device *self __unused, enum devact act)
+ukactivate(struct device *self, enum devact act)
 {
 	int rv = 0;
 
@@ -135,7 +135,7 @@ ukactivate(struct device *self __unused, enum devact act)
 }
 
 static int
-ukdetach(struct device *self, int flags __unused)
+ukdetach(struct device *self, int flags)
 {
 	/*struct uk_softc *uk = device_private(self);*/
 	int cmaj, mn;
@@ -154,7 +154,7 @@ ukdetach(struct device *self, int flags __unused)
  * open the device.
  */
 static int
-ukopen(dev_t dev, int flag __unused, int fmt __unused, struct lwp *l __unused)
+ukopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit, error;
 	struct uk_softc *uk;
@@ -196,7 +196,7 @@ ukopen(dev_t dev, int flag __unused, int fmt __unused, struct lwp *l __unused)
  * occurence of an open device
  */
 static int
-ukclose(dev_t dev, int flag __unused, int fmt __unused, struct lwp *l __unused)
+ukclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 	struct scsipi_periph *periph = uk->sc_periph;

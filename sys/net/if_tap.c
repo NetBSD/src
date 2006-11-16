@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.22 2006/10/12 01:32:28 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.23 2006/11/16 01:33:40 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.22 2006/10/12 01:32:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.23 2006/11/16 01:33:40 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -226,7 +226,7 @@ static struct tap_softc *	tap_clone_creator(int);
 int	tap_clone_destroyer(struct device *);
 
 void
-tapattach(int n __unused)
+tapattach(int n)
 {
 	int error;
 
@@ -243,15 +243,15 @@ tapattach(int n __unused)
 
 /* Pretty much useless for a pseudo-device */
 static int
-tap_match(struct device *self __unused, struct cfdata *cfdata __unused,
-    void *arg __unused)
+tap_match(struct device *self, struct cfdata *cfdata,
+    void *arg)
 {
 	return (1);
 }
 
 void
-tap_attach(struct device *parent __unused, struct device *self,
-    void *aux __unused)
+tap_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct tap_softc *sc = (struct tap_softc *)self;
 	struct ifnet *ifp;
@@ -365,7 +365,7 @@ tap_attach(struct device *parent __unused, struct device *self,
  * routine, in reversed order.
  */
 static int
-tap_detach(struct device* self, int flags __unused)
+tap_detach(struct device* self, int flags)
 {
 	struct tap_softc *sc = (struct tap_softc *)self;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
@@ -407,7 +407,7 @@ tap_detach(struct device* self, int flags __unused)
  * reconfigure the hardware.
  */
 static int
-tap_mediachange(struct ifnet *ifp __unused)
+tap_mediachange(struct ifnet *ifp)
 {
 	return (0);
 }
@@ -523,7 +523,7 @@ tap_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  * and should actually be available to all Ethernet drivers, real or not.
  */
 static int
-tap_lifaddr(struct ifnet *ifp, u_long cmd __unused, struct ifaliasreq *ifra)
+tap_lifaddr(struct ifnet *ifp, u_long cmd, struct ifaliasreq *ifra)
 {
 	struct sockaddr *sa = (struct sockaddr *)&ifra->ifra_addr;
 
@@ -559,7 +559,7 @@ tap_init(struct ifnet *ifp)
  * read requests cancelled.
  */
 static void
-tap_stop(struct ifnet *ifp, int disable __unused)
+tap_stop(struct ifnet *ifp, int disable)
 {
 	struct tap_softc *sc = (struct tap_softc *)ifp->if_softc;
 
@@ -578,7 +578,7 @@ tap_stop(struct ifnet *ifp, int disable __unused)
  * for us.
  */
 static int
-tap_clone_create(struct if_clone *ifc __unused, int unit)
+tap_clone_create(struct if_clone *ifc, int unit)
 {
 	if (tap_clone_creator(unit) == NULL) {
 		aprint_error("%s%d: unable to attach an instance\n",
@@ -663,7 +663,7 @@ tap_clone_destroyer(struct device *dev)
  */
 
 static int
-tap_cdev_open(dev_t dev, int flags __unused, int fmt __unused, struct lwp *l)
+tap_cdev_open(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct tap_softc *sc;
 
@@ -736,8 +736,8 @@ tap_dev_cloner(struct lwp *l)
  * created it closes it.
  */
 static int
-tap_cdev_close(dev_t dev, int flags __unused, int fmt __unused,
-    struct lwp *l __unused)
+tap_cdev_close(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	struct tap_softc *sc =
 	    (struct tap_softc *)device_lookup(&tap_cd, minor(dev));
@@ -755,7 +755,7 @@ tap_cdev_close(dev_t dev, int flags __unused, int fmt __unused,
  * would dead lock.  TAP_GOING ensures that this situation doesn't happen.
  */
 static int
-tap_fops_close(struct file *fp, struct lwp *l __unused)
+tap_fops_close(struct file *fp, struct lwp *l)
 {
 	int unit = (intptr_t)fp->f_data;
 	struct tap_softc *sc;
@@ -819,14 +819,14 @@ tap_cdev_read(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-tap_fops_read(struct file *fp, off_t *offp __unused, struct uio *uio,
-    kauth_cred_t cred __unused, int flags)
+tap_fops_read(struct file *fp, off_t *offp, struct uio *uio,
+    kauth_cred_t cred, int flags)
 {
 	return tap_dev_read((intptr_t)fp->f_data, uio, flags);
 }
 
 static int
-tap_dev_read(int unit, struct uio *uio, int flags __unused)
+tap_dev_read(int unit, struct uio *uio, int flags)
 {
 	struct tap_softc *sc =
 	    (struct tap_softc *)device_lookup(&tap_cd, unit);
@@ -918,14 +918,14 @@ tap_cdev_write(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-tap_fops_write(struct file *fp, off_t *offp __unused, struct uio *uio,
-    kauth_cred_t cred __unused, int flags)
+tap_fops_write(struct file *fp, off_t *offp, struct uio *uio,
+    kauth_cred_t cred, int flags)
 {
 	return tap_dev_write((intptr_t)fp->f_data, uio, flags);
 }
 
 static int
-tap_dev_write(int unit, struct uio *uio, int flags __unused)
+tap_dev_write(int unit, struct uio *uio, int flags)
 {
 	struct tap_softc *sc =
 	    (struct tap_softc *)device_lookup(&tap_cd, unit);
@@ -981,7 +981,7 @@ tap_dev_write(int unit, struct uio *uio, int flags __unused)
 }
 
 static int
-tap_cdev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags __unused,
+tap_cdev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
     struct lwp *l)
 {
 	return tap_dev_ioctl(minor(dev), cmd, data, l);
@@ -1153,7 +1153,7 @@ tap_kqdetach(struct knote *kn)
 }
 
 static int
-tap_kqread(struct knote *kn, long hint __unused)
+tap_kqread(struct knote *kn, long hint)
 {
 	struct tap_softc *sc = (struct tap_softc *)kn->kn_hook;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;

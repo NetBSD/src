@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.30 2006/10/16 13:00:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.31 2006/11/16 01:33:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -179,8 +179,8 @@ find_matching_card(pa)
  * Match card
  */
 static int
-isic_pcmcia_match(struct device *parent __unused,
-	struct cfdata *match __unused, void *aux)
+isic_pcmcia_match(struct device *parent,
+	struct cfdata *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -194,7 +194,7 @@ isic_pcmcia_match(struct device *parent __unused,
  * Attach the card
  */
 static void
-isic_pcmcia_attach(struct device *parent __unused,
+isic_pcmcia_attach(struct device *parent,
 	struct device *self, void *aux)
 {
 	struct pcmcia_isic_softc *psc = (void*) self;
@@ -243,7 +243,7 @@ fail:
 }
 
 static int
-isic_pcmcia_detach(struct device *self, int flags __unused)
+isic_pcmcia_detach(struct device *self, int flags)
 {
 	struct pcmcia_isic_softc *psc = (struct pcmcia_isic_softc *)self;
 

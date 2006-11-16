@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.136 2006/10/24 14:16:39 itohy Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.137 2006/11/16 01:33:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.136 2006/10/24 14:16:39 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.137 2006/11/16 01:33:09 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -280,7 +280,7 @@ static struct cardbus_functions pccbb_funcs = {
 #endif
 
 int
-pcicbbmatch(struct device *parent __unused, struct cfdata *match __unused,
+pcicbbmatch(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -420,7 +420,7 @@ pccbb_shutdown(void *arg)
 }
 
 void
-pccbbattach(struct device *parent __unused, struct device *self, void *aux)
+pccbbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pccbb_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
@@ -1581,7 +1581,7 @@ cb_detect_voltage(sc)
 }
 
 STATIC int
-cbbprint(void *aux __unused, const char *pcic __unused)
+cbbprint(void *aux, const char *pcic)
 {
 #if 0
 	struct cbslot_attach_args *cba = aux;
@@ -1829,7 +1829,7 @@ pccbb_intr_route(sc)
  *   The arguments irq is not used because pccbb selects intr vector.
  */
 static void *
-pccbb_intr_establish(struct pccbb_softc *sc, int irq __unused, int level,
+pccbb_intr_establish(struct pccbb_softc *sc, int irq, int level,
     int (*func)(void *), void *arg)
 {
 	struct pccbb_intrhand_list *pil, *newpil;
@@ -1996,7 +1996,7 @@ pccbb_make_tag(cc, busno, function)
 }
 
 static void
-pccbb_free_tag(cardbus_chipset_tag_t cc __unused, cardbustag_t tag __unused)
+pccbb_free_tag(cardbus_chipset_tag_t cc, cardbustag_t tag)
 {
 }
 
@@ -2394,7 +2394,7 @@ pccbb_pcmcia_wait_ready(ph)
  */
 static void
 pccbb_pcmcia_delay(
-    struct pcic_handle *ph __unused,
+    struct pcic_handle *ph,
     int timo,                       /* in ms.  must not be zero */
     const char *wmesg
 )

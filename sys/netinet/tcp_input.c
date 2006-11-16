@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.254 2006/10/21 10:08:54 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.255 2006/11/16 01:33:45 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.254 2006/10/21 10:08:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.255 2006/11/16 01:33:45 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -853,7 +853,7 @@ tcp6_log_refused(const struct ip6_hdr *ip6, const struct tcphdr *th)
  * Checksum extended TCP header and data.
  */
 int
-tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th __unused,
+tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th,
     int toff, int off, int tlen)
 {
 
@@ -2848,7 +2848,7 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 static int
 tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
     const struct tcphdr *th,
-    struct mbuf *m __unused, int toff __unused, struct tcp_opt_info *oi)
+    struct mbuf *m, int toff, struct tcp_opt_info *oi)
 {
 	u_int16_t mss;
 	int opt, optlen = 0;
@@ -3469,7 +3469,7 @@ syn_cache_lookup(const struct sockaddr *src, const struct sockaddr *dst,
  */
 struct socket *
 syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
-    struct tcphdr *th, unsigned int hlen __unused, unsigned int tlen __unused,
+    struct tcphdr *th, unsigned int hlen, unsigned int tlen,
     struct socket *so, struct mbuf *m)
 {
 	struct syn_cache *sc;

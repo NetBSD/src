@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.6 2006/10/13 16:53:36 dogcow Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.7 2006/11/16 01:33:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -136,10 +136,11 @@ void ip_lookup_unload()
 /* involves just calling another function to handle the specifics of each   */
 /* command.                                                                 */
 /* ------------------------------------------------------------------------ */
-int ip_lookup_ioctl(data, cmd, mode)
-caddr_t data;
-ioctlcmd_t cmd;
-int mode;
+int ip_lookup_ioctl(
+caddr_t data,
+ioctlcmd_t cmd,
+int mode
+)
 {
 	int err;
 	SPL_INT(s);
@@ -533,9 +534,9 @@ void *ptr;
 
 /*ARGSUSED*/
 int ip_lookup_ioctl(data, cmd, mode)
-caddr_t data __unused;
-ioctlcmd_t cmd __unused;
-int mode __unused;
+caddr_t data;
+ioctlcmd_t cmd;
+int mode;
 {
 	return EIO;
 }

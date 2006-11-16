@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.5 2006/10/25 17:34:49 bouyer Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.6 2006/11/16 01:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.5 2006/10/25 17:34:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.6 2006/11/16 01:33:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,7 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.5 2006/10/25 17:34:49 bouyer Exp $");
 static int  svwsata_match(struct device *, struct cfdata *, void *);
 static void svwsata_attach(struct device *, struct device *, void *);
 
-static void svwsata_chip_map(struct pciide_softc *, struct pci_attach_args *) __unused;
+static void svwsata_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void svwsata_mapreg_dma(struct pciide_softc *, struct pci_attach_args *);
 static void svwsata_mapchan(struct pciide_channel *);
 
@@ -70,7 +70,7 @@ static const struct pciide_product_desc pciide_svwsata_products[] =  {
 };
 
 static int
-svwsata_match(struct device *parent __unused, struct cfdata *match __unused,
+svwsata_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -84,7 +84,7 @@ svwsata_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-svwsata_attach(struct device *parent __unused, struct device *self, void *aux)
+svwsata_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (void *)self;

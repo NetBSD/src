@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.9 2006/10/12 01:30:44 christos Exp $ */
+/* $NetBSD: tsc.c,v 1.10 2006/11/16 01:32:39 christos Exp $ */
 
 
 /*-
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.9 2006/10/12 01:30:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.10 2006/11/16 01:32:39 christos Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -176,7 +176,7 @@ init_TSC_tc(void)
  * pick up tick count scaled to reference tick count
  */
 static u_int
-tsc_get_timecount(struct timecounter *tc __unused)
+tsc_get_timecount(struct timecounter *tc)
 {
 	struct cpu_info *ci = curcpu();
 	int64_t rcc, cc;
@@ -224,7 +224,7 @@ tsc_get_timecount(struct timecounter *tc __unused)
  * other cpus are called via a broadcast IPI
  */
 static void
-tsc_calibrate(struct timecounter *tc __unused)
+tsc_calibrate(struct timecounter *tc)
 {
 	struct cpu_info *ci = curcpu();
 	

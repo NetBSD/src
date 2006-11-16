@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.17 2006/10/20 18:58:12 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.18 2006/11/16 01:33:37 christos Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.17 2006/10/20 18:58:12 reinoud Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.18 2006/11/16 01:33:37 christos Exp $");
 #endif /* not lint */
 
 
@@ -587,7 +587,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 /* --------------------------------------------------------------------- */
 
 int
-udf_start(struct mount *mp __unused, int flags __unused, struct lwp *l __unused)
+udf_start(struct mount *mp, int flags, struct lwp *l)
 {
 	/* do we have to do something here? */
 	return 0;
@@ -626,8 +626,8 @@ udf_root(struct mount *mp, struct vnode **vpp)
 /* --------------------------------------------------------------------- */
 
 int
-udf_quotactl(struct mount *mp __unused, int cmds __unused, uid_t uid __unused,
-    void *arg __unused, struct lwp *l __unused)
+udf_quotactl(struct mount *mp, int cmds, uid_t uid,
+    void *arg, struct lwp *l)
 {
 	DPRINTF(NOTIMPL, ("udf_quotactl called\n"));
 	return EOPNOTSUPP;
@@ -636,7 +636,7 @@ udf_quotactl(struct mount *mp __unused, int cmds __unused, uid_t uid __unused,
 /* --------------------------------------------------------------------- */
 
 int
-udf_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
+udf_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 	struct udf_mount *ump = VFSTOUDF(mp);
 	struct logvol_int_desc *lvid;
@@ -689,8 +689,8 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
 /* --------------------------------------------------------------------- */
 
 int
-udf_sync(struct mount *mp __unused, int waitfor __unused,
-    kauth_cred_t cred __unused, struct lwp *p __unused)
+udf_sync(struct mount *mp, int waitfor,
+    kauth_cred_t cred, struct lwp *p)
 {
 	DPRINTF(CALL, ("udf_sync called\n"));
 	/* nothing to be done as upto now read-only */
@@ -705,8 +705,8 @@ udf_sync(struct mount *mp __unused, int waitfor __unused,
  * (optional) TODO lookup why some sources state NFSv3
  */
 int
-udf_vget(struct mount *mp __unused, ino_t ino __unused,
-    struct vnode **vpp __unused)
+udf_vget(struct mount *mp, ino_t ino,
+    struct vnode **vpp)
 {
 	DPRINTF(NOTIMPL, ("udf_vget called\n"));
 	return EOPNOTSUPP;
@@ -718,8 +718,8 @@ udf_vget(struct mount *mp __unused, ino_t ino __unused,
  * Lookup vnode for file handle specified
  */
 int
-udf_fhtovp(struct mount *mp __unused, struct fid *fhp __unused,
-    struct vnode **vpp __unused)
+udf_fhtovp(struct mount *mp, struct fid *fhp,
+    struct vnode **vpp)
 {
 	DPRINTF(NOTIMPL, ("udf_fhtovp called\n"));
 	return EOPNOTSUPP;
@@ -734,8 +734,8 @@ udf_fhtovp(struct mount *mp __unused, struct fid *fhp __unused,
  * have been recycled.
  */
 int
-udf_vptofh(struct vnode *vp __unused, struct fid *fid __unused,
-    size_t *fh_size __unused)
+udf_vptofh(struct vnode *vp, struct fid *fid,
+    size_t *fh_size)
 {
 	DPRINTF(NOTIMPL, ("udf_vptofh called\n"));
 	return EOPNOTSUPP;
@@ -749,8 +749,8 @@ udf_vptofh(struct vnode *vp __unused, struct fid *fid __unused,
  * integrity descriptor space
  */
 int
-udf_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
-    struct timespec *tm __unused)
+udf_snapshot(struct mount *mp, struct vnode *vp,
+    struct timespec *tm)
 {
 	DPRINTF(NOTIMPL, ("udf_snapshot called\n"));
 	return EOPNOTSUPP;

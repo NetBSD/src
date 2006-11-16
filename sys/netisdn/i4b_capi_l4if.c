@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_l4if.c,v 1.8 2006/10/16 13:03:03 pooka Exp $	*/
+/*	$NetBSD: i4b_capi_l4if.c,v 1.9 2006/11/16 01:33:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_capi_l4if.c,v 1.8 2006/10/16 13:03:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_capi_l4if.c,v 1.9 2006/11/16 01:33:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -92,7 +92,7 @@ i4b_capi_set_link(void *token, int channel,
 }
 
 static void
-i4b_capi_bch_config(void *token, int chan, int bprot, int activate __unused)
+i4b_capi_bch_config(void *token, int chan, int bprot, int activate)
 {
     capi_softc_t *sc = token;
 
@@ -197,7 +197,7 @@ capi_l4_driver = {
 */
 
 static void
-n_mgmt_command(struct isdn_l3_driver *l3, int op, void *arg __unused)
+n_mgmt_command(struct isdn_l3_driver *l3, int op, void *arg)
 {
     capi_softc_t *sc = l3->l1_token;
 
@@ -326,7 +326,7 @@ n_alert_request(call_desc_t *cd)
 */
 
 static int
-n_download(void *token, int numprotos __unused, struct isdn_dr_prot *protocols)
+n_download(void *token, int numprotos, struct isdn_dr_prot *protocols)
 {
     capi_softc_t *sc = token;
 

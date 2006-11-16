@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc_pci.c,v 1.5 2006/10/16 13:00:36 pooka Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.6 2006/11/16 01:33:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.5 2006/10/16 13:00:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.6 2006/11/16 01:33:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -108,8 +108,8 @@ find_cardname(struct pci_attach_args * pa)
 }
 
 static int
-iavc_pci_probe(struct device * parent __unused,
-	struct cfdata * match __unused, void *aux)
+iavc_pci_probe(struct device * parent,
+	struct cfdata * match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -120,7 +120,7 @@ iavc_pci_probe(struct device * parent __unused,
 }
 
 static void
-iavc_pci_attach(struct device * parent __unused,
+iavc_pci_attach(struct device * parent,
 	struct device * self, void *aux)
 {
 	struct iavc_pci_softc *psc = (void *) self;

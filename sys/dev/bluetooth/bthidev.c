@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.6 2006/10/12 01:30:55 christos Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.7 2006/11/16 01:32:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.6 2006/10/12 01:30:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.7 2006/11/16 01:32:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -151,7 +151,7 @@ static const struct btproto bthidev_int_proto = {
  */
 
 static int
-bthidev_match(struct device *self __unused, struct cfdata *cfdata __unused,
+bthidev_match(struct device *self, struct cfdata *cfdata,
     void *aux)
 {
 	prop_dictionary_t dict = aux;
@@ -165,7 +165,7 @@ bthidev_match(struct device *self __unused, struct cfdata *cfdata __unused,
 }
 
 static void
-bthidev_attach(struct device *parent __unused, struct device *self, void *aux)
+bthidev_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bthidev_softc *sc = (struct bthidev_softc *)self;
 	prop_dictionary_t dict = aux;
@@ -518,7 +518,7 @@ bthidev_connect(struct bthidev_softc *sc)
  */
 
 static void
-bthidev_connecting(void *arg __unused)
+bthidev_connecting(void *arg)
 {
 
 	/* dont care */
@@ -596,7 +596,7 @@ bthidev_int_connected(void *arg)
  * schedule another try otherwise just give up. They will contact us.
  */
 static void
-bthidev_ctl_disconnected(void *arg, int err __unused)
+bthidev_ctl_disconnected(void *arg, int err)
 {
 	struct bthidev_softc *sc = arg;
 
@@ -629,7 +629,7 @@ bthidev_ctl_disconnected(void *arg, int err __unused)
 }
 
 static void
-bthidev_int_disconnected(void *arg, int err __unused)
+bthidev_int_disconnected(void *arg, int err)
 {
 	struct bthidev_softc *sc = arg;
 
@@ -667,7 +667,7 @@ bthidev_int_disconnected(void *arg, int err __unused)
  * be called when the connection is open, so nothing else to do here
  */
 static void *
-bthidev_ctl_newconn(void *arg, struct sockaddr_bt *laddr __unused,
+bthidev_ctl_newconn(void *arg, struct sockaddr_bt *laddr,
     struct sockaddr_bt *raddr)
 {
 	struct bthidev_softc *sc = arg;
@@ -684,7 +684,7 @@ bthidev_ctl_newconn(void *arg, struct sockaddr_bt *laddr __unused,
 }
 
 static void *
-bthidev_int_newconn(void *arg, struct sockaddr_bt *laddr __unused,
+bthidev_int_newconn(void *arg, struct sockaddr_bt *laddr,
     struct sockaddr_bt *raddr)
 {
 	struct bthidev_softc *sc = arg;
@@ -701,7 +701,7 @@ bthidev_int_newconn(void *arg, struct sockaddr_bt *laddr __unused,
 }
 
 static void
-bthidev_complete(void *arg __unused, int count __unused)
+bthidev_complete(void *arg, int count)
 {
 
 	/* dont care */
@@ -797,8 +797,8 @@ release:
  */
 
 static void
-bthidev_null(struct bthidev *dev __unused, uint8_t *report __unused,
-    int len __unused)
+bthidev_null(struct bthidev *dev, uint8_t *report,
+    int len)
 {
 
 	/*

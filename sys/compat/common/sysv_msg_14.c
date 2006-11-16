@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg_14.c,v 1.11 2006/10/12 01:30:47 christos Exp $	*/
+/*	$NetBSD: sysv_msg_14.c,v 1.12 2006/11/16 01:32:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.11 2006/10/12 01:30:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.12 2006/11/16 01:32:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ native_to_msqid_ds14(msqbuf, omsqbuf)
 }
 
 int
-compat_14_sys_msgctl(struct lwp *l, void *v, register_t *retval __unused)
+compat_14_sys_msgctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_14_sys_msgctl_args /* {
 		syscallarg(int) msqid;
