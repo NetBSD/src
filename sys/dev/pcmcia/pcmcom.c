@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.28 2006/10/12 01:31:50 christos Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.29 2006/11/16 00:53:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.28 2006/10/12 01:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.29 2006/11/16 00:53:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,10 @@ CFATTACH_DECL(pcmcom, sizeof(struct pcmcom_softc),
 const struct pcmcia_product pcmcom_products[] = {
 	{ PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_DUAL_RS232,
 	  PCMCIA_CIS_INVALID },
+#if 0	/* does not work */
+	{ PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_DUAL_RS232_A,
+	  PCMCIA_CIS_INVALID },
+#endif
 };
 const size_t pcmcom_nproducts =
     sizeof(pcmcom_products) / sizeof(pcmcom_products[0]);
