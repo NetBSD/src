@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.41 2006/10/12 01:31:28 christos Exp $	*/
+/*	$NetBSD: cz.c,v 1.42 2006/11/16 01:33:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.41 2006/10/12 01:31:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.42 2006/11/16 01:33:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,8 +261,8 @@ do {									\
  *	Determine if the given PCI device is a Cyclades-Z board.
  */
 static int
-cz_match(struct device *parent __unused,
-    struct cfdata *match __unused,
+cz_match(struct device *parent,
+    struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -283,7 +283,7 @@ cz_match(struct device *parent __unused,
  *	A Cyclades-Z board was found; attach it.
  */
 static void
-cz_attach(struct device *parent __unused,
+cz_attach(struct device *parent,
     struct device *self,
     void *aux)
 {
@@ -944,7 +944,7 @@ cztty_shutdown(struct cztty_softc *sc)
  *	Open a Cyclades-Z serial port.
  */
 static int
-czttyopen(dev_t dev, int flags, int mode __unused, struct lwp *l)
+czttyopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct cz_softc *cz;
@@ -1062,7 +1062,7 @@ czttyopen(dev_t dev, int flags, int mode __unused, struct lwp *l)
  *	Close a Cyclades-Z serial port.
  */
 static int
-czttyclose(dev_t dev, int flags, int mode __unused, struct lwp *l __unused)
+czttyclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct tty *tp = sc->sc_tty;
@@ -1497,7 +1497,7 @@ czttystart(struct tty *tp)
  *	Stop output, e.g., for ^S or output flush.
  */
 static void
-czttystop(struct tty *tp __unused, int flag __unused)
+czttystop(struct tty *tp, int flag)
 {
 
 	/*

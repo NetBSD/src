@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.18 2006/10/12 01:30:50 christos Exp $	*/
+/*	$NetBSD: auconv.c,v 1.19 2006/11/16 01:32:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.18 2006/10/12 01:30:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.19 2006/11/16 01:32:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -250,8 +250,8 @@ auconv_nocontext_filter_dtor(struct stream_filter *this)
 static int \
 name##_fetch_to(stream_fetcher_t *, audio_stream_t *, int); \
 stream_filter_t * \
-name(struct audio_softc *sc __unused, const audio_params_t *from __unused, \
-     const audio_params_t *to __unused) \
+name(struct audio_softc *sc, const audio_params_t *from, \
+     const audio_params_t *to) \
 { \
 	return auconv_nocontext_filter_factory(name##_fetch_to); \
 } \
@@ -480,7 +480,7 @@ DEFINE_FILTER(linear16_to_linear8)
  */
 int
 auconv_set_converter(const struct audio_format *formats, int nformats,
-    int mode, const audio_params_t *param, int rateconv __unused,
+    int mode, const audio_params_t *param, int rateconv,
     stream_filter_list_t *list)
 {
 	audio_params_t work;
@@ -791,7 +791,7 @@ auconv_dump_params(const audio_params_t *p)
 }
 #else
 static void
-auconv_dump_params(const audio_params_t *p __unused)
+auconv_dump_params(const audio_params_t *p)
 {
 }
 #endif /* AUCONV_DEBUG */

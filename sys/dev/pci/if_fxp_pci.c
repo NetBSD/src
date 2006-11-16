@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.50 2006/10/12 01:31:29 christos Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.51 2006/11/16 01:33:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.50 2006/10/12 01:31:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.51 2006/11/16 01:33:08 christos Exp $");
 
 #include "rnd.h"
 
@@ -179,7 +179,7 @@ fxp_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-fxp_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+fxp_pci_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -263,7 +263,7 @@ fxp_pci_powerhook(int why, void *arg)
 }
 
 static void
-fxp_pci_attach(struct device *parent __unused, struct device *self, void *aux)
+fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fxp_pci_softc *psc = (struct fxp_pci_softc *)self;
 	struct fxp_softc *sc = (struct fxp_softc *)self;

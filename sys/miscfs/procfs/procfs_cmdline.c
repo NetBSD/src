@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.22 2006/10/12 01:32:27 christos Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.23 2006/11/16 01:33:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.22 2006/10/12 01:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.23 2006/11/16 01:33:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.22 2006/10/12 01:32:27 christos
  */
 int
 procfs_docmdline(
-    struct lwp *curl __unused,
+    struct lwp *curl,
     struct proc *p,
-    struct pfsnode *pfs __unused,
+    struct pfsnode *pfs,
     struct uio *uio
 )
 {

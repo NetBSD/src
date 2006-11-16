@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.253 2006/10/20 07:11:50 scw Exp $	*/
+/*	$NetBSD: sd.c,v 1.254 2006/11/16 01:33:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.253 2006/10/20 07:11:50 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.254 2006/11/16 01:33:26 christos Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -194,7 +194,7 @@ struct sd_mode_sense_data {
  * A device suitable for this driver
  */
 static int
-sdmatch(struct device *parent __unused, struct cfdata *match __unused,
+sdmatch(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
@@ -211,7 +211,7 @@ sdmatch(struct device *parent __unused, struct cfdata *match __unused,
  * Attach routine common to atapi & scsi.
  */
 static void
-sdattach(struct device *parent __unused, struct device *self, void *aux)
+sdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sd_softc *sd = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
@@ -325,7 +325,7 @@ sdattach(struct device *parent __unused, struct device *self, void *aux)
 }
 
 static int
-sdactivate(struct device *self __unused, enum devact act)
+sdactivate(struct device *self, enum devact act)
 {
 	int rv = 0;
 
@@ -344,7 +344,7 @@ sdactivate(struct device *self __unused, enum devact act)
 }
 
 static int
-sddetach(struct device *self, int flags __unused)
+sddetach(struct device *self, int flags)
 {
 	struct sd_softc *sd = device_private(self);
 	int s, bmaj, cmaj, i, mn;
@@ -396,7 +396,7 @@ sddetach(struct device *self, int flags __unused)
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 static int
-sdopen(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
+sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct sd_softc *sd;
 	struct scsipi_periph *periph;
@@ -585,7 +585,7 @@ sdopen(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
  * device.  Convenient now but usually a pain.
  */
 static int
-sdclose(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
+sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
@@ -982,14 +982,14 @@ sdminphys(struct buf *bp)
 }
 
 static int
-sdread(dev_t dev, struct uio *uio, int ioflag __unused)
+sdread(dev_t dev, struct uio *uio, int ioflag)
 {
 
 	return (physio(sdstrategy, NULL, dev, B_READ, sdminphys, uio));
 }
 
 static int
-sdwrite(dev_t dev, struct uio *uio, int ioflag __unused)
+sdwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 
 	return (physio(sdstrategy, NULL, dev, B_WRITE, sdminphys, uio));

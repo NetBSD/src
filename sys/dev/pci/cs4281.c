@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.32 2006/10/12 01:31:28 christos Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.33 2006/11/16 01:33:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.32 2006/10/12 01:31:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.33 2006/11/16 01:33:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ static struct audio_device cs4281_device = {
 
 
 static int
-cs4281_match(struct device *parent __unused, struct cfdata *match __unused,
+cs4281_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa;
@@ -181,7 +181,7 @@ cs4281_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-cs4281_attach(struct device *parent __unused, struct device *self, void *aux)
+cs4281_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cs428x_softc *sc;
 	struct pci_attach_args *pa;
@@ -378,7 +378,7 @@ cs4281_intr(void *p)
 }
 
 static int
-cs4281_query_encoding(void *addr __unused, struct audio_encoding *fp)
+cs4281_query_encoding(void *addr, struct audio_encoding *fp)
 {
 
 	switch (fp->index) {
@@ -437,7 +437,7 @@ cs4281_query_encoding(void *addr __unused, struct audio_encoding *fp)
 }
 
 static int
-cs4281_set_params(void *addr, int setmode, int usemode __unused,
+cs4281_set_params(void *addr, int setmode, int usemode,
     audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
     stream_filter_list_t *rfil)
 {
@@ -530,7 +530,7 @@ cs4281_halt_input(void *addr)
 }
 
 static int
-cs4281_getdev(void *addr __unused, struct audio_device *retp)
+cs4281_getdev(void *addr, struct audio_device *retp)
 {
 
 	*retp = cs4281_device;

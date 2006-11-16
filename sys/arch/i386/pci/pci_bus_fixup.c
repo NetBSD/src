@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_fixup.c,v 1.7 2006/10/12 01:30:43 christos Exp $	*/
+/*	$NetBSD: pci_bus_fixup.c,v 1.8 2006/11/16 01:32:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.7 2006/10/12 01:30:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.8 2006/11/16 01:32:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ pci_bus_fixup(pci_chipset_tag_t pc, int bus)
 
 /* Reset bus-bridge configuration */
 void
-pci_bridge_reset(pci_chipset_tag_t pc, pcitag_t tag, void *ctx __unused)
+pci_bridge_reset(pci_chipset_tag_t pc, pcitag_t tag, void *ctx)
 {
 	pcireg_t reg;
 

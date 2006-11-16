@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.50 2006/10/12 01:32:46 christos Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.51 2006/11/16 01:33:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.50 2006/10/12 01:32:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.51 2006/11/16 01:33:51 christos Exp $");
 
 #include "opt_eon.h"
 
@@ -571,7 +571,7 @@ eoninput(struct mbuf *m, ...)
 }
 
 void *
-eonctlinput(int cmd, struct sockaddr *sa, void *dummy __unused)
+eonctlinput(int cmd, struct sockaddr *sa, void *dummy)
 {
 	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 #ifdef ARGO_DEBUG

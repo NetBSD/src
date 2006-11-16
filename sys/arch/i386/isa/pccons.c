@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.181 2006/10/13 18:28:06 dogcow Exp $	*/
+/*	$NetBSD: pccons.c,v 1.182 2006/11/16 01:32:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.181 2006/10/13 18:28:06 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.182 2006/11/16 01:32:38 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -568,7 +568,7 @@ void update_leds()
  * these are both bad jokes
  */
 int
-pcprobe(struct device *parent __unused, struct cfdata *match __unused,
+pcprobe(struct device *parent, struct cfdata *match,
 	void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -741,7 +741,7 @@ lose:
 }
 
 void
-pcattach(struct device *parent __unused, struct device *self, void *aux)
+pcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pc_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -818,7 +818,7 @@ pcconskbd_cnattach(pckbport_tag_t tag, pckbport_slot_t slot)
 #endif
 
 int
-pcopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l)
+pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct pc_softc *sc;
 	int unit = PCUNIT(dev);
@@ -859,7 +859,7 @@ pcopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l)
 }
 
 int
-pcclose(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+pcclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -1076,7 +1076,7 @@ out:
 }
 
 void
-pcstop(struct tty *tp __unused, int flag __unused)
+pcstop(struct tty *tp, int flag)
 {
 
 	lock_state |= SCROLL;
@@ -1100,7 +1100,7 @@ pccnattach(void)
 
 /* ARGSUSED */
 void
-pccnputc(dev_t dev __unused, int c)
+pccnputc(dev_t dev, int c)
 {
 	u_char oldkernel = kernel;
 	char help = c;
@@ -1120,7 +1120,7 @@ pccnputc(dev_t dev __unused, int c)
  */
 /* ARGSUSED */
 int
-pccngetc(dev_t dev __unused)
+pccngetc(dev_t dev)
 {
 	register char *cp;
 
@@ -2664,7 +2664,7 @@ strans(u_char dt)
 }
 
 paddr_t
-pcmmap(dev_t dev __unused, off_t offset, int nprot __unused)
+pcmmap(dev_t dev, off_t offset, int nprot)
 {
 
 	if (offset > 0x20000)

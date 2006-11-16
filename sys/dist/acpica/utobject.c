@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.3 2006/11/16 01:33:32 christos Exp $");
 
 #define __UTOBJECT_C__
 
@@ -417,7 +417,7 @@ void *
 AcpiUtAllocateObjectDescDbg (
     const char              *ModuleName,
     UINT32                  LineNumber,
-    UINT32                  ComponentId __unused)
+    UINT32                  ComponentId)
 {
     ACPI_OPERAND_OBJECT     *Object;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.c,v 1.14 2006/10/12 01:31:50 christos Exp $	*/
+/*	$NetBSD: rf_cvscan.c,v 1.15 2006/11/16 01:33:23 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.14 2006/10/12 01:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.15 2006/11/16 01:33:23 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include "rf_alloclist.h"
@@ -205,7 +205,7 @@ RealEnqueue(RF_CvscanHeader_t *hdr, RF_DiskQueueData_t *req)
 
 
 void
-rf_CvscanEnqueue(void *q_in, RF_DiskQueueData_t * elem, int priority __unused)
+rf_CvscanEnqueue(void *q_in, RF_DiskQueueData_t * elem, int priority)
 {
 	RF_CvscanHeader_t *hdr = (RF_CvscanHeader_t *) q_in;
 	RealEnqueue(hdr, elem /* req */ );
@@ -322,7 +322,7 @@ rf_CvscanPeek(void *q_in)
 void   *
 rf_CvscanCreate(RF_SectorCount_t sectPerDisk,
     RF_AllocListElem_t *clList,
-    RF_ShutdownList_t **listp __unused)
+    RF_ShutdownList_t **listp)
 {
 	RF_CvscanHeader_t *hdr;
 	long    range = 2;	/* Currently no mechanism to change these */

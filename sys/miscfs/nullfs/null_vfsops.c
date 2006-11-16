@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.60 2006/10/12 01:32:27 christos Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.61 2006/11/16 01:33:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.60 2006/10/12 01:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.61 2006/11/16 01:33:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ nullfs_mount(mp, path, data, ndp, l)
  * Free reference to null layer
  */
 int
-nullfs_unmount(struct mount *mp, int mntflags, struct lwp *l __unused)
+nullfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 {
 	struct null_mount *nmp = MOUNTTONULLMOUNT(mp);
 	struct vnode *null_rootvp = nmp->nullm_rootvp;

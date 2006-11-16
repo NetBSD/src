@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.71 2006/10/29 22:35:35 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.72 2006/11/16 01:33:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.71 2006/10/29 22:35:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.72 2006/11/16 01:33:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,8 +601,8 @@ procfs_getfp(pfs, pown, fp)
 }
 
 int
-procfs_doemul(struct lwp *curl __unused, struct proc *p,
-    struct pfsnode *pfs __unused, struct uio *uio)
+procfs_doemul(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
 {
 	const char *ename = p->p_emul->e_name;
 	return uiomove_frombuf(__UNCONST(ename), strlen(ename), uio);

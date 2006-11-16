@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.8 2006/10/12 01:31:24 christos Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.9 2006/11/16 01:33:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.8 2006/10/12 01:31:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.9 2006/11/16 01:33:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ CFATTACH_DECL(joy_isapnp, sizeof(struct joy_softc),
     joy_isapnp_match, joy_isapnp_attach, NULL, NULL);
 
 int
-joy_isapnp_match(struct device *parent __unused, struct cfdata *match __unused,
+joy_isapnp_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	int pri, variant;
@@ -72,7 +72,7 @@ joy_isapnp_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-joy_isapnp_attach(struct device *parent __unused, struct device *self,
+joy_isapnp_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct joy_softc *sc = device_private(self);

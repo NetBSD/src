@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.17 2006/10/12 01:30:44 christos Exp $ */
+/* $NetBSD: lapic.c,v 1.18 2006/11/16 01:32:39 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.17 2006/10/12 01:30:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.18 2006/11/16 01:32:39 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -238,7 +238,7 @@ u_int64_t lapic_frac_cycle_per_usec;
 u_int32_t lapic_delaytab[26];
 
 void
-lapic_clockintr(void *arg __unused, struct intrframe frame)
+lapic_clockintr(void *arg, struct intrframe frame)
 {
 #if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 #ifndef __HAVE_TIMECOUNTER
@@ -596,7 +596,7 @@ x86_ipi(vec,target,dl)
  */
 
 static void
-lapic_hwmask(struct pic *pic __unused, int pin)
+lapic_hwmask(struct pic *pic, int pin)
 {
 	int reg;
 	u_int32_t val;
@@ -608,7 +608,7 @@ lapic_hwmask(struct pic *pic __unused, int pin)
 }
 
 static void
-lapic_hwunmask(struct pic *pic __unused, int pin)
+lapic_hwunmask(struct pic *pic, int pin)
 {
 	int reg;
 	u_int32_t val;
@@ -620,7 +620,7 @@ lapic_hwunmask(struct pic *pic __unused, int pin)
 }
 
 static void
-lapic_setup(struct pic *pic __unused, struct cpu_info *ci __unused,
-    int pin __unused, int idtvec __unused, int type __unused)
+lapic_setup(struct pic *pic, struct cpu_info *ci,
+    int pin, int idtvec, int type)
 {
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2006/10/13 10:09:36 hannken Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2006/11/16 01:32:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2006/10/13 10:09:36 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2006/11/16 01:32:39 christos Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -228,7 +228,7 @@ static struct timecounter i8254_timecounter = {
 
 /* XXX use sc? */
 inline u_int
-mc146818_read(void *sc __unused, u_int reg)
+mc146818_read(void *sc, u_int reg)
 {
 
 	outb(IO_RTC, reg);
@@ -237,7 +237,7 @@ mc146818_read(void *sc __unused, u_int reg)
 
 /* XXX use sc? */
 inline void
-mc146818_write(void *sc __unused, u_int reg, u_int datum)
+mc146818_write(void *sc, u_int reg, u_int datum)
 {
 
 	outb(IO_RTC, reg);
@@ -404,7 +404,7 @@ tickle_tc(void)
 }
 
 static int
-clockintr(void *arg __unused, struct intrframe frame)
+clockintr(void *arg, struct intrframe frame)
 {
 	tickle_tc();
 
@@ -420,7 +420,7 @@ clockintr(void *arg __unused, struct intrframe frame)
 }
 
 u_int
-i8254_get_timecount(struct timecounter *tc __unused)
+i8254_get_timecount(struct timecounter *tc)
 {
 	u_int count;
 	u_char high, low;
@@ -564,14 +564,14 @@ i8254_delay(int n)
 
 #if (NPCPPI > 0)
 int
-sysbeepmatch(struct device *parent __unused, struct cfdata *match __unused,
-    void *aux __unused)
+sysbeepmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	return (!ppi_attached);
 }
 
 void
-sysbeepattach(struct device *parent __unused, struct device *self __unused,
+sysbeepattach(struct device *parent, struct device *self,
     void *aux)
 {
 	aprint_naive("\n");
@@ -583,7 +583,7 @@ sysbeepattach(struct device *parent __unused, struct device *self __unused,
 #endif
 
 void
-sysbeep(int pitch __unused, int period __unused)
+sysbeep(int pitch, int period)
 {
 #if (NPCPPI > 0)
 	if (ppi_attached)
@@ -743,7 +743,7 @@ clock_expandyear(int clockyear)
 }
 
 static int
-rtc_get_ymdhms(todr_chip_handle_t tch __unused, struct clock_ymdhms *dt)
+rtc_get_ymdhms(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	int s;
 	mc_todregs rtclk;
@@ -766,7 +766,7 @@ rtc_get_ymdhms(todr_chip_handle_t tch __unused, struct clock_ymdhms *dt)
 }
 
 static int
-rtc_set_ymdhms(todr_chip_handle_t tch __unused, struct clock_ymdhms *dt)
+rtc_set_ymdhms(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	mc_todregs rtclk;
 	int century;
@@ -812,6 +812,6 @@ rtc_register(void)
 }
 
 void
-setstatclockrate(int arg __unused)
+setstatclockrate(int arg)
 {
 }

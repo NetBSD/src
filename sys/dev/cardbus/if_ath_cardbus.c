@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.17 2006/10/12 01:30:55 christos Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.18 2006/11/16 01:32:48 christos Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.17 2006/10/12 01:30:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.18 2006/11/16 01:32:48 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -125,7 +125,7 @@ void	ath_cardbus_disable(struct ath_softc *);
 void	ath_cardbus_power(struct ath_softc *, int);
 
 int
-ath_cardbus_match(struct device *parent __unused, struct cfdata *match __unused,
+ath_cardbus_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
@@ -141,7 +141,7 @@ ath_cardbus_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-ath_cardbus_attach(struct device *parent __unused, struct device *self,
+ath_cardbus_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct ath_cardbus_softc *csc = device_private(self);
@@ -213,7 +213,7 @@ ath_cardbus_attach(struct device *parent __unused, struct device *self,
 }
 
 int
-ath_cardbus_detach(struct device *self, int flags __unused)
+ath_cardbus_detach(struct device *self, int flags)
 {
 	struct ath_cardbus_softc *csc = device_private(self);
 	struct ath_softc *sc = &csc->sc_ath;

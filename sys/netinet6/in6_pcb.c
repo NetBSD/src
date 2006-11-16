@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.74 2006/10/12 01:32:39 christos Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.75 2006/11/16 01:33:45 christos Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.74 2006/10/12 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.75 2006/11/16 01:33:45 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -837,7 +837,7 @@ in6_losing(in6p)
  * and allocate a (hopefully) better one.
  */
 void
-in6_rtchange(struct in6pcb *in6p, int errno __unused)
+in6_rtchange(struct in6pcb *in6p, int errno)
 {
 	if (in6p->in6p_af != AF_INET6)
 		return;
@@ -985,7 +985,7 @@ in6_pcbrtentry(in6p)
 struct in6pcb *
 in6_pcblookup_connect(struct inpcbtable *table, struct in6_addr *faddr6,
     u_int fport_arg, const struct in6_addr *laddr6, u_int lport_arg,
-    int faith __unused)
+    int faith)
 {
 	struct inpcbhead *head;
 	struct inpcb_hdr *inph;

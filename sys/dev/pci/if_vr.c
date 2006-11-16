@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.83 2006/11/05 13:05:18 tsutsui Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.84 2006/11/16 01:33:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.83 2006/11/05 13:05:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.84 2006/11/16 01:33:09 christos Exp $");
 
 #include "rnd.h"
 
@@ -1459,7 +1459,7 @@ vr_lookup(struct pci_attach_args *pa)
 }
 
 static int
-vr_probe(struct device *parent __unused, struct cfdata *match __unused,
+vr_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -1487,7 +1487,7 @@ vr_shutdown(void *arg)
  * setup and ethernet/BPF attach.
  */
 static void
-vr_attach(struct device *parent __unused, struct device *self, void *aux)
+vr_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vr_softc *sc = (struct vr_softc *) self;
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.26 2006/10/12 01:31:16 christos Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.27 2006/11/16 01:33:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.26 2006/10/12 01:31:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.27 2006/11/16 01:33:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ CFATTACH_DECL(com_isa, sizeof(struct com_isa_softc),
     com_isa_probe, com_isa_attach, NULL, NULL);
 
 int
-com_isa_probe(struct device *parent __unused, struct cfdata *match __unused,
+com_isa_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	bus_space_tag_t iot;
@@ -162,7 +162,7 @@ com_isa_probe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-com_isa_attach(struct device *parent __unused, struct device *self,
+com_isa_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct com_isa_softc *isc = (void *)self;

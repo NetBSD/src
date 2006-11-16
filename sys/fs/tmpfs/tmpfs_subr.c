@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.29 2006/11/09 15:06:03 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.30 2006/11/16 01:33:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.29 2006/11/09 15:06:03 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.30 2006/11/16 01:33:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.29 2006/11/09 15:06:03 jmmv Exp $")
 int
 tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
     uid_t uid, gid_t gid, mode_t mode, struct tmpfs_node *parent,
-    char *target, dev_t rdev, struct proc *p __unused, struct tmpfs_node **node)
+    char *target, dev_t rdev, struct proc *p, struct tmpfs_node **node)
 {
 	struct tmpfs_node *nnode;
 
@@ -1152,8 +1152,8 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
-tmpfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred __unused,
-    struct lwp *l __unused)
+tmpfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred,
+    struct lwp *l)
 {
 	int error;
 	struct tmpfs_node *node;
@@ -1288,7 +1288,7 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 
 void
 tmpfs_update(struct vnode *vp, const struct timespec *acc,
-    const struct timespec *mod, int flags __unused)
+    const struct timespec *mod, int flags)
 {
 
 	struct tmpfs_node *node;

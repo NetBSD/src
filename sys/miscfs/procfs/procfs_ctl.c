@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.35 2006/10/12 01:32:27 christos Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.36 2006/11/16 01:33:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.35 2006/10/12 01:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.36 2006/11/16 01:33:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ int
 procfs_doctl(
     struct lwp *curl,
     struct lwp *l,
-    struct pfsnode *pfs __unused,
+    struct pfsnode *pfs,
     struct uio *uio
 )
 {

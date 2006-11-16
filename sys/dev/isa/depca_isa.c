@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_isa.c,v 1.10 2006/10/12 01:31:16 christos Exp $	*/
+/*	$NetBSD: depca_isa.c,v 1.11 2006/11/16 01:33:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.10 2006/10/12 01:31:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.11 2006/11/16 01:33:00 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -122,7 +122,7 @@ CFATTACH_DECL(depca_isa, sizeof(struct depca_isa_softc),
 void	*depca_isa_intr_establish(struct depca_softc *, struct lance_softc *);
 
 int
-depca_isa_probe(struct device *parent __unused, struct cfdata *match __unused,
+depca_isa_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -199,7 +199,7 @@ depca_isa_probe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-depca_isa_attach(struct device *parent __unused, struct device *self, void *aux)
+depca_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct depca_softc *sc = (void *) self;
 	struct depca_isa_softc *isc = (void *) self;

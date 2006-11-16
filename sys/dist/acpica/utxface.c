@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utxface.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utxface.c,v 1.3 2006/11/16 01:33:32 christos Exp $");
 
 #define __UTXFACE_C__
 
@@ -609,7 +609,7 @@ AcpiGetSystemInfo (
 ACPI_STATUS
 AcpiInstallInitializationHandler (
     ACPI_INIT_HANDLER       Handler,
-    UINT32                  Function __unused)
+    UINT32                  Function)
 {
 
     if (!Handler)

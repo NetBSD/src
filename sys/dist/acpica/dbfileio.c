@@ -117,7 +117,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbfileio.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbfileio.c,v 1.3 2006/11/16 01:33:31 christos Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -200,7 +200,7 @@ AcpiDbCloseDebugFile (
 
 void
 AcpiDbOpenDebugFile (
-    char                    *Name __unused)
+    char                    *Name)
 {
 
 #ifdef ACPI_APPLICATION
@@ -548,8 +548,8 @@ AcpiDbReadTableFromFile (
 
 ACPI_STATUS
 AcpiDbGetTableFromFile (
-    char                    *Filename __unused,
-    ACPI_TABLE_HEADER       **ReturnTable __unused)
+    char                    *Filename,
+    ACPI_TABLE_HEADER       **ReturnTable)
 {
 #ifdef ACPI_APPLICATION
     ACPI_STATUS             Status;

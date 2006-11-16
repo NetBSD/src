@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.19 2006/10/12 01:32:00 christos Exp $	*/
+/*	$NetBSD: umct.c,v 1.20 2006/11/16 01:33:27 christos Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.19 2006/10/12 01:32:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.20 2006/11/16 01:33:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,7 +377,7 @@ umct_set_line_state(struct umct_softc *sc)
 }
 
 void
-umct_set(void *addr, int portno __unused, int reg, int onoff)
+umct_set(void *addr, int portno, int reg, int onoff)
 {
 	struct umct_softc *sc = addr;
 
@@ -490,7 +490,7 @@ umct_init(struct umct_softc *sc)
 }
 
 int
-umct_param(void *addr, int portno __unused, struct termios *t)
+umct_param(void *addr, int portno, struct termios *t)
 {
 	struct umct_softc *sc = addr;
 	u_int data = 0;
@@ -534,7 +534,7 @@ umct_param(void *addr, int portno __unused, struct termios *t)
 }
 
 int
-umct_open(void *addr, int portno __unused)
+umct_open(void *addr, int portno)
 {
 	struct umct_softc *sc = addr;
 	int err, lcr_data;
@@ -567,7 +567,7 @@ umct_open(void *addr, int portno __unused)
 }
 
 void
-umct_close(void *addr, int portno __unused)
+umct_close(void *addr, int portno)
 {
 	struct umct_softc *sc = addr;
 	int err;
@@ -592,7 +592,7 @@ umct_close(void *addr, int portno __unused)
 }
 
 void
-umct_intr(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+umct_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct umct_softc *sc = priv;
@@ -625,7 +625,7 @@ umct_intr(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
 }
 
 void
-umct_get_status(void *addr, int portno __unused, u_char *lsr, u_char *msr)
+umct_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 {
 	struct umct_softc *sc = addr;
 

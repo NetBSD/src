@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.51 2006/10/12 01:31:17 christos Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.52 2006/11/16 01:33:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.51 2006/10/12 01:31:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.52 2006/11/16 01:33:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ CFATTACH_DECL(rtfps, sizeof(struct rtfps_softc),
     rtfpsprobe, rtfpsattach, NULL, NULL);
 
 int
-rtfpsprobe(struct device *parent __unused, struct cfdata *self __unused,
+rtfpsprobe(struct device *parent, struct cfdata *self,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -141,7 +141,7 @@ out:
 }
 
 void
-rtfpsattach(struct device *parent __unused, struct device *self, void *aux)
+rtfpsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct rtfps_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.15 2006/10/12 01:31:25 christos Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.16 2006/11/16 01:33:05 christos Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.15 2006/10/12 01:31:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.16 2006/11/16 01:33:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ tr_mca_lookup(id)
 }
 
 int
-tr_mca_probe(struct device *parent __unused, struct cfdata *match __unused,
+tr_mca_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct mca_attach_args *ma = aux;
@@ -111,7 +111,7 @@ tr_mca_probe(struct device *parent __unused, struct cfdata *match __unused,
 
 
 void
-tr_mca_attach(struct device *parent __unused, struct device *self, void *aux)
+tr_mca_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tr_softc *sc = device_private(self);
 	struct mca_attach_args *ma = aux;

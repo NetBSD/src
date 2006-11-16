@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.11 2006/11/03 17:05:16 tsutsui Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.12 2006/11/16 01:33:06 christos Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.11 2006/11/03 17:05:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.12 2006/11/16 01:33:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ static const struct mii_phydesc rlphys[] = {
 };
 
 int
-rlphymatch(struct device *parent, struct cfdata *match __unused, void *aux)
+rlphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -102,7 +102,7 @@ rlphymatch(struct device *parent, struct cfdata *match __unused, void *aux)
 }
 
 void
-rlphyattach(struct device *parent __unused, struct device *self, void *aux)
+rlphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;

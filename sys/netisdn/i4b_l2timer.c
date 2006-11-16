@@ -27,7 +27,7 @@
  *	i4b_l2timer.c - layer 2 timer handling
  *	--------------------------------------
  *
- *	$Id: i4b_l2timer.c,v 1.10 2006/10/16 12:23:00 pooka Exp $
+ *	$Id: i4b_l2timer.c,v 1.11 2006/11/16 01:33:49 christos Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2timer.c,v 1.10 2006/10/16 12:23:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2timer.c,v 1.11 2006/11/16 01:33:49 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -199,7 +199,7 @@ i4b_T203_timeout(l2_softc_t *l2sc)
  *	Q.921 timer T203 start
  *---------------------------------------------------------------------------*/
 void
-i4b_T203_start(l2_softc_t *l2sc __unused)
+i4b_T203_start(l2_softc_t *l2sc)
 {
 #if I4B_T203_ACTIVE
 	if (l2sc->T203 == TIMER_ACTIVE)
@@ -216,7 +216,7 @@ i4b_T203_start(l2_softc_t *l2sc __unused)
  *	Q.921 timer T203 stop
  *---------------------------------------------------------------------------*/
 void
-i4b_T203_stop(l2_softc_t *l2sc __unused)
+i4b_T203_stop(l2_softc_t *l2sc)
 {
 #if I4B_T203_ACTIVE
 	int s;
@@ -235,7 +235,7 @@ i4b_T203_stop(l2_softc_t *l2sc __unused)
  *	Q.921 timer T203 restart
  *---------------------------------------------------------------------------*/
 void
-i4b_T203_restart(l2_softc_t *l2sc __unused)
+i4b_T203_restart(l2_softc_t *l2sc)
 {
 #if I4B_T203_ACTIVE
 	int s;

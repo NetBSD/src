@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.8 2006/10/12 01:32:00 christos Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.9 2006/11/16 01:33:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.8 2006/10/12 01:32:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.9 2006/11/16 01:33:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,7 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 }
 
 int
-umodem_open(void *addr, int portno __unused)
+umodem_open(void *addr, int portno)
 {
 	struct umodem_softc *sc = addr;
 	int err;
@@ -289,7 +289,7 @@ umodem_open(void *addr, int portno __unused)
 }
 
 void
-umodem_close(void *addr, int portno __unused)
+umodem_close(void *addr, int portno)
 {
 	struct umodem_softc *sc = addr;
 	int err;
@@ -310,7 +310,7 @@ umodem_close(void *addr, int portno __unused)
 }
 
 Static void
-umodem_intr(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct umodem_softc *sc = priv;
@@ -411,7 +411,7 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
 }
 
 void
-umodem_get_status(void *addr, int portno __unused, u_char *lsr, u_char *msr)
+umodem_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 {
 	struct umodem_softc *sc = addr;
 
@@ -424,7 +424,7 @@ umodem_get_status(void *addr, int portno __unused, u_char *lsr, u_char *msr)
 }
 
 int
-umodem_param(void *addr, int portno __unused, struct termios *t)
+umodem_param(void *addr, int portno, struct termios *t)
 {
 	struct umodem_softc *sc = addr;
 	usbd_status err;
@@ -468,8 +468,8 @@ umodem_param(void *addr, int portno __unused, struct termios *t)
 }
 
 int
-umodem_ioctl(void *addr, int portno __unused, u_long cmd, caddr_t data,
-    int flag __unused, usb_proc_ptr p __unused)
+umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data,
+    int flag, usb_proc_ptr p)
 {
 	struct umodem_softc *sc = addr;
 	int error = 0;
@@ -561,7 +561,7 @@ umodem_break(struct umodem_softc *sc, int onoff)
 }
 
 void
-umodem_set(void *addr, int portno __unused, int reg, int onoff)
+umodem_set(void *addr, int portno, int reg, int onoff)
 {
 	struct umodem_softc *sc = addr;
 

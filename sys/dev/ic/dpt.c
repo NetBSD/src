@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.53 2006/11/08 00:17:09 elad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.54 2006/11/16 01:32:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.53 2006/11/08 00:17:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.54 2006/11/16 01:32:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -614,7 +614,7 @@ dpt_readcfg(struct dpt_softc *sc)
  * we tell root that it's safe to power off).
  */
 static void
-dpt_shutdown(void *cookie __unused)
+dpt_shutdown(void *cookie)
 {
 	extern struct cfdriver dpt_cd;
 	struct dpt_softc *sc;
@@ -1115,7 +1115,7 @@ dpt_hba_inquire(struct dpt_softc *sc, struct eata_inquiry_data **ei)
 }
 
 int
-dptopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
+dptopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	if (device_lookup(&dpt_cd, minor(dev)) == NULL)
@@ -1125,7 +1125,7 @@ dptopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 }
 
 int
-dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
+dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct dpt_softc *sc;
 	int rv;

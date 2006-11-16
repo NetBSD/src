@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.40 2006/10/12 01:32:26 christos Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.41 2006/11/16 01:33:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.40 2006/10/12 01:32:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.41 2006/11/16 01:33:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ dead_lookup(v)
  */
 /* ARGSUSED */
 int
-dead_open(void *v __unused)
+dead_open(void *v)
 {
 
 	return (ENXIO);
@@ -318,7 +318,7 @@ dead_bmap(v)
  */
 /* ARGSUSED */
 int
-dead_print(void *v __unused)
+dead_print(void *v)
 {
 	printf("tag VT_NON, dead vnode\n");
 	return 0;

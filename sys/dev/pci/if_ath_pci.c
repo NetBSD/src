@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.18 2006/10/12 01:31:29 christos Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.19 2006/11/16 01:33:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.18 2006/10/12 01:31:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.19 2006/11/16 01:33:08 christos Exp $");
 #endif
 
 /*
@@ -117,7 +117,7 @@ CFATTACH_DECL(ath_pci,
     NULL);
 
 static int
-ath_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+ath_pci_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	const char* devname;
@@ -163,7 +163,7 @@ ath_pci_setup(struct pci_attach_args *pa)
 }
 
 static void
-ath_pci_attach(struct device *parent __unused, struct device *self, void *aux)
+ath_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
 	struct ath_softc *sc = &psc->sc_sc;
@@ -248,7 +248,7 @@ bad:
 }
 
 static int
-ath_pci_detach(struct device *self, int flags __unused)
+ath_pci_detach(struct device *self, int flags)
 {
 	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.221 2006/10/12 01:31:51 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.222 2006/11/16 01:33:23 christos Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.221 2006/10/12 01:31:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.222 2006/11/16 01:33:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -409,7 +409,7 @@ raidattach(int num)
 }
 
 int
-rf_autoconfig(struct device *self __unused)
+rf_autoconfig(struct device *self)
 {
 	RF_AutoConfig_t *ac_list;
 	RF_ConfigSet_t *config_sets;
@@ -536,16 +536,16 @@ raidsize(dev_t dev)
 }
 
 int
-raiddump(dev_t dev __unused, daddr_t blkno __unused, caddr_t va __unused,
-    size_t  size __unused)
+raiddump(dev_t dev, daddr_t blkno, caddr_t va,
+    size_t  size)
 {
 	/* Not implemented. */
 	return ENXIO;
 }
 /* ARGSUSED */
 int
-raidopen(dev_t dev, int flags __unused, int fmt __unused,
-    struct lwp *l __unused)
+raidopen(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
@@ -624,7 +624,7 @@ bad:
 }
 /* ARGSUSED */
 int
-raidclose(dev_t dev, int flags __unused, int fmt, struct lwp *l __unused)
+raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int     unit = raidunit(dev);
 	struct cfdata *cf;
@@ -763,7 +763,7 @@ done:
 }
 /* ARGSUSED */
 int
-raidread(dev_t dev, struct uio *uio, int flags __unused)
+raidread(dev_t dev, struct uio *uio, int flags)
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
@@ -780,7 +780,7 @@ raidread(dev_t dev, struct uio *uio, int flags __unused)
 }
 /* ARGSUSED */
 int
-raidwrite(dev_t dev, struct uio *uio, int flags __unused)
+raidwrite(dev_t dev, struct uio *uio, int flags)
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
@@ -2271,7 +2271,7 @@ raidread_component_label(dev_t dev, struct vnode *b_vp,
 }
 /* ARGSUSED */
 int
-raidwrite_component_label(dev_t dev, struct vnode *b_vp __unused,
+raidwrite_component_label(dev_t dev, struct vnode *b_vp,
 			  RF_ComponentLabel_t *clabel)
 {
 	struct buf *bp;
@@ -3084,7 +3084,7 @@ rf_have_enough_components(RF_ConfigSet_t *cset)
 
 void
 rf_create_configuration(RF_AutoConfig_t *ac, RF_Config_t *config,
-			RF_Raid_t *raidPtr __unused)
+			RF_Raid_t *raidPtr)
 {
 	RF_ComponentLabel_t *clabel;
 	int i;
@@ -3417,22 +3417,22 @@ rf_getdisksize(struct vnode *vp, struct lwp *l, RF_RaidDisk_t *diskPtr)
 }
 
 static int
-raid_match(struct device *self __unused, struct cfdata *cfdata __unused,
-    void *aux __unused)
+raid_match(struct device *self, struct cfdata *cfdata,
+    void *aux)
 {
 	return 1;
 }
 
 static void
-raid_attach(struct device *parent __unused, struct device *self __unused,
-    void *aux __unused)
+raid_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 
 }
 
 
 static int
-raid_detach(struct device *self, int flags __unused)
+raid_detach(struct device *self, int flags)
 {
 	struct raid_softc *rs = (struct raid_softc *)self;
 

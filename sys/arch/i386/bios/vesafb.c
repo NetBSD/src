@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.18 2006/10/12 01:30:42 christos Exp $ */
+/* $NetBSD: vesafb.c,v 1.19 2006/11/16 01:32:38 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.18 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.19 2006/11/16 01:32:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ CFATTACH_DECL(vesafb, sizeof(struct vesafb_softc),
     vesafb_match, vesafb_attach, NULL, NULL);
 
 static int
-vesafb_match(struct device *parent __unused, struct cfdata *match __unused,
+vesafb_match(struct device *parent, struct cfdata *match,
 	void *aux)
 {
 	struct vesabiosdev_attach_args *vaa = aux;
@@ -129,7 +129,7 @@ vesafb_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-vesafb_attach(struct device *parent __unused, struct device *dev, void *aux)
+vesafb_attach(struct device *parent, struct device *dev, void *aux)
 {
 	struct vesafb_softc *sc = (struct vesafb_softc *)dev;
 	struct vesabiosdev_attach_args *vaa = aux;
@@ -317,8 +317,8 @@ out:
 }
 
 static int
-vesafb_ioctl(void *v, void *vs __unused, u_long cmd, caddr_t data,
-    int flag __unused, struct lwp *l __unused)
+vesafb_ioctl(void *v, void *vs, u_long cmd, caddr_t data,
+    int flag, struct lwp *l)
 {
 	struct vcons_data *vd;
 	struct vesafb_softc *sc;
@@ -402,7 +402,7 @@ vesafb_ioctl(void *v, void *vs __unused, u_long cmd, caddr_t data,
 }
 
 static paddr_t
-vesafb_mmap(void *v, void *vs __unused, off_t offset, int prot)
+vesafb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vcons_data *vd;
 	struct vesafb_softc *sc;
@@ -423,8 +423,8 @@ vesafb_mmap(void *v, void *vs __unused, off_t offset, int prot)
 }
 
 static void
-vesafb_init_screen(void *c, struct vcons_screen *scr, int existing __unused,
-    long *defattr __unused)
+vesafb_init_screen(void *c, struct vcons_screen *scr, int existing,
+    long *defattr)
 {
 	struct vesafb_softc *sc;
 	struct rasops_info *ri;
@@ -550,7 +550,7 @@ vesafb_init(struct vesafb_softc *sc)
 }
 
 static void
-vesafb_powerhook(int why __unused, void *opaque __unused)
+vesafb_powerhook(int why, void *opaque)
 {
 #if notyet
 	struct vesafb_softc *sc;

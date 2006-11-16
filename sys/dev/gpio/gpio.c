@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.10 2006/10/12 01:30:57 christos Exp $ */
+/* $NetBSD: gpio.c,v 1.11 2006/11/16 01:32:50 christos Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.10 2006/10/12 01:30:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.11 2006/11/16 01:32:50 christos Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -69,15 +69,15 @@ const struct cdevsw gpio_cdevsw = {
 extern struct cfdriver gpio_cd;
 
 int
-gpio_match(struct device *parent __unused, struct cfdata *cf __unused,
-    void *aux __unused)
+gpio_match(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 
 	return (1);
 }
 
 void
-gpio_attach(struct device *parent __unused, struct device *self, void *aux)
+gpio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct gpio_softc *sc = device_private(self);
 	struct gpiobus_attach_args *gba = aux;
@@ -96,7 +96,7 @@ gpio_attach(struct device *parent __unused, struct device *self, void *aux)
 }
 
 int
-gpio_detach(struct device *self __unused, int flags __unused)
+gpio_detach(struct device *self, int flags)
 {
 #if 0
 	int maj, mn;
@@ -132,7 +132,7 @@ gpio_activate(struct device *self, enum devact act)
 
 int
 gpio_search(struct device *parent, struct cfdata *cf,
-    const int *ldesc __unused, void *aux)
+    const int *ldesc, void *aux)
 {
 	struct gpio_attach_args ga;
 
@@ -147,7 +147,7 @@ gpio_search(struct device *parent, struct cfdata *cf,
 }
 
 int
-gpio_print(void *aux, const char *pnp __unused)
+gpio_print(void *aux, const char *pnp)
 {
 	struct gpio_attach_args *ga = aux;
 	int i;
@@ -161,7 +161,7 @@ gpio_print(void *aux, const char *pnp __unused)
 }
 
 int
-gpiobus_print(void *aux __unused, const char *pnp)
+gpiobus_print(void *aux, const char *pnp)
 {
 #if 0
 	struct gpiobus_attach_args *gba = aux;
@@ -254,8 +254,8 @@ gpio_npins(u_int32_t mask)
 }
 
 int
-gpioopen(dev_t dev, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+gpioopen(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct gpio_softc *sc;
 
@@ -271,8 +271,8 @@ gpioopen(dev_t dev, int flag __unused, int mode __unused,
 }
 
 int
-gpioclose(dev_t dev, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+gpioclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct gpio_softc *sc;
 
@@ -283,8 +283,8 @@ gpioclose(dev_t dev, int flag __unused, int mode __unused,
 }
 
 int
-gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
-    struct lwp *l __unused)
+gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct gpio_softc *sc;
 	gpio_chipset_tag_t gc;

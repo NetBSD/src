@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.124 2006/10/25 20:28:45 elad Exp $	*/
+/*	$NetBSD: bpf.c,v 1.125 2006/11/16 01:33:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.124 2006/10/25 20:28:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.125 2006/11/16 01:33:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,7 +366,7 @@ bpf_detachd(struct bpf_d *d)
  */
 /* ARGSUSED */
 void
-bpfilterattach(int n __unused)
+bpfilterattach(int n)
 {
 	simple_lock_init(&bpf_slock);
 
@@ -384,7 +384,7 @@ bpfilterattach(int n __unused)
  */
 /* ARGSUSED */
 int
-bpfopen(dev_t dev __unused, int flag __unused, int mode __unused, struct lwp *l)
+bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct bpf_d *d;
 	struct file *fp;
@@ -456,8 +456,8 @@ bpf_close(struct file *fp, struct lwp *l)
  *  bpfread - read next chunk of packets from buffers
  */
 static int
-bpf_read(struct file *fp, off_t *offp __unused, struct uio *uio,
-    kauth_cred_t cred __unused, int flags __unused)
+bpf_read(struct file *fp, off_t *offp, struct uio *uio,
+    kauth_cred_t cred, int flags)
 {
 	struct bpf_d *d = fp->f_data;
 	int timed_out;
@@ -585,8 +585,8 @@ bpf_timed_out(void *arg)
 
 
 static int
-bpf_write(struct file *fp, off_t *offp __unused, struct uio *uio,
-    kauth_cred_t cred __unused, int flags __unused)
+bpf_write(struct file *fp, off_t *offp, struct uio *uio,
+    kauth_cred_t cred, int flags)
 {
 	struct bpf_d *d = fp->f_data;
 	struct ifnet *ifp;
@@ -1110,7 +1110,7 @@ filt_bpfrdetach(struct knote *kn)
 }
 
 static int
-filt_bpfread(struct knote *kn, long hint __unused)
+filt_bpfread(struct knote *kn, long hint)
 {
 	struct bpf_d *d = kn->kn_hook;
 
