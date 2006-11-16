@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.60 2006/10/12 01:32:39 christos Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.61 2006/11/16 01:33:46 christos Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.60 2006/10/12 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.61 2006/11/16 01:33:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2039,7 +2039,7 @@ in6_init_prefix_ltimes(struct nd_prefix *ndpr)
 }
 
 static void
-in6_init_address_ltimes(struct nd_prefix *new __unused,
+in6_init_address_ltimes(struct nd_prefix *new,
     struct in6_addrlifetime *lt6)
 {
 
@@ -2067,7 +2067,7 @@ in6_init_address_ltimes(struct nd_prefix *new __unused,
  * it shouldn't be called when acting as a router.
  */
 void
-rt6_flush(struct in6_addr *gateway, struct ifnet *ifp __unused)
+rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
 {
 	struct radix_node_head *rnh = rt_tables[AF_INET6];
 	int s = splsoftnet();

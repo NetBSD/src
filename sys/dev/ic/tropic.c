@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.28 2006/10/12 01:31:01 christos Exp $	*/
+/*	$NetBSD: tropic.c,v 1.29 2006/11/16 01:32:52 christos Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.28 2006/10/12 01:31:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.29 2006/11/16 01:32:52 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1796,7 +1796,7 @@ tr_activate(self, act)
 }
 
 int
-tr_detach(struct device *self, int flags __unused)
+tr_detach(struct device *self, int flags)
 {
 	struct tr_softc *sc = (struct tr_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;

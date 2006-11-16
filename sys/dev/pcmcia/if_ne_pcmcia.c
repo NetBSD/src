@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.148 2006/10/12 01:31:50 christos Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.149 2006/11/16 01:33:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.148 2006/10/12 01:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.149 2006/11/16 01:33:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,7 +541,7 @@ match:
 
 
 int
-ne_pcmcia_match(struct device *parent __unused, struct cfdata *match __unused,
+ne_pcmcia_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -568,7 +568,7 @@ ne_pcmcia_validate_config(cfe)
 }
 
 void
-ne_pcmcia_attach( struct device *parent __unused, struct device *self,
+ne_pcmcia_attach( struct device *parent, struct device *self,
     void *aux)
 {
 	struct ne_pcmcia_softc *psc = (void *) self;

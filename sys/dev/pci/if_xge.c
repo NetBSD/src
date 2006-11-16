@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.3 2006/10/12 01:31:31 christos Exp $ */
+/*      $NetBSD: if_xge.c,v 1.4 2006/11/16 01:33:09 christos Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.3 2006/10/12 01:31:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.4 2006/11/16 01:33:09 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -270,7 +270,7 @@ CFATTACH_DECL(xge, sizeof(struct xge_softc),
 #define	XGE_IP_MAXPACKET	65535	/* same as IP_MAXPACKET */
 
 static int
-xge_match(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
+xge_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -282,7 +282,7 @@ xge_match(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
 }
 
 void
-xge_attach(struct device *parent __unused, struct device *self, void *aux)
+xge_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct xge_softc *sc;
@@ -591,7 +591,7 @@ xge_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 int
-xge_xgmii_mediachange(struct ifnet *ifp __unused)
+xge_xgmii_mediachange(struct ifnet *ifp)
 {
 	return 0;
 }
@@ -666,7 +666,7 @@ xge_init(struct ifnet *ifp)
 }
 
 static void
-xge_stop(struct ifnet *ifp, int disable __unused)
+xge_stop(struct ifnet *ifp, int disable)
 {
 	struct xge_softc *sc = ifp->if_softc;
 	uint64_t val;

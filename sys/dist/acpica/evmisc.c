@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evmisc.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evmisc.c,v 1.3 2006/11/16 01:33:31 christos Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -402,7 +402,7 @@ AcpiEvNotifyDispatch (
 
 static void ACPI_SYSTEM_XFACE
 AcpiEvGlobalLockThread (
-    void                    *Context __unused)
+    void                    *Context)
 {
     ACPI_STATUS             Status;
 

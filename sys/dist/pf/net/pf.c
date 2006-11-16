@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.27 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: pf.c,v 1.28 2006/11/16 01:33:34 christos Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -1464,11 +1464,11 @@ pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
 }
 
 void
-pf_send_tcp(const struct pf_rule *r __unused, sa_family_t af,
+pf_send_tcp(const struct pf_rule *r, sa_family_t af,
     const struct pf_addr *saddr, const struct pf_addr *daddr,
     u_int16_t sport, u_int16_t dport, u_int32_t seq, u_int32_t ack,
     u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl, int tag,
-    u_int16_t rtag, struct ether_header *eh, struct ifnet *ifp __unused)
+    u_int16_t rtag, struct ether_header *eh, struct ifnet *ifp)
 {
 	struct mbuf	*m;
 	int		 len, tlen;
@@ -1656,7 +1656,7 @@ pf_send_tcp(const struct pf_rule *r __unused, sa_family_t af,
 
 void
 pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
-    struct pf_rule *r __unused)
+    struct pf_rule *r)
 {
 	struct m_tag	*mtag;
 	struct mbuf	*m0;
@@ -2780,7 +2780,7 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 
 int
 pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
-    struct pfi_kif *kif, struct mbuf *m, int off, void *h __unused,
+    struct pfi_kif *kif, struct mbuf *m, int off, void *h,
     struct pf_pdesc *pd, struct pf_rule **am, struct pf_ruleset **rsm,
     struct ifqueue *ifq)
 {
@@ -3156,7 +3156,7 @@ cleanup:
 
 int
 pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
-    struct pfi_kif *kif, struct mbuf *m, int off, void *h __unused,
+    struct pfi_kif *kif, struct mbuf *m, int off, void *h,
     struct pf_pdesc *pd, struct pf_rule **am, struct pf_ruleset **rsm,
     struct ifqueue *ifq)
 {
@@ -3434,7 +3434,7 @@ cleanup:
 
 int
 pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
-    struct pfi_kif *kif, struct mbuf *m, int off, void *h __unused,
+    struct pfi_kif *kif, struct mbuf *m, int off, void *h,
     struct pf_pdesc *pd, struct pf_rule **am, struct pf_ruleset **rsm,
     struct ifqueue *ifq)
 {
@@ -3727,7 +3727,7 @@ cleanup:
 
 int
 pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
-    struct pfi_kif *kif, struct mbuf *m, int off, void *h __unused,
+    struct pfi_kif *kif, struct mbuf *m, int off, void *h,
     struct pf_pdesc *pd, struct pf_rule **am, struct pf_ruleset **rsm,
     struct ifqueue *ifq)
 {
@@ -3993,7 +3993,7 @@ cleanup:
 
 int
 pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
-    struct mbuf *m, void *h __unused, struct pf_pdesc *pd, struct pf_rule **am,
+    struct mbuf *m, void *h, struct pf_pdesc *pd, struct pf_rule **am,
     struct pf_ruleset **rsm)
 {
 	struct pf_rule		*r, *a = NULL;
@@ -4068,7 +4068,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 
 int
 pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
-    struct mbuf *m, int off, void *h __unused, struct pf_pdesc *pd,
+    struct mbuf *m, int off, void *h, struct pf_pdesc *pd,
     u_short *reason)
 {
 	struct pf_state		 key;
@@ -4505,7 +4505,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 
 int
 pf_test_state_udp(struct pf_state **state, int direction, struct pfi_kif *kif,
-    struct mbuf *m, int off, void *h __unused, struct pf_pdesc *pd)
+    struct mbuf *m, int off, void *h, struct pf_pdesc *pd)
 {
 	struct pf_state_peer	*src, *dst;
 	struct pf_state		 key;
@@ -4566,7 +4566,7 @@ pf_test_state_udp(struct pf_state **state, int direction, struct pfi_kif *kif,
 
 int
 pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
-    struct mbuf *m, int off, void *h __unused, struct pf_pdesc *pd,
+    struct mbuf *m, int off, void *h, struct pf_pdesc *pd,
     u_short *reason)
 {
 	struct pf_addr	*saddr = pd->src, *daddr = pd->dst;
@@ -5318,7 +5318,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af)
 
 int
 pf_rtlabel_match(struct pf_addr *addr, sa_family_t af,
-    struct pf_addr_wrap *aw __unused)
+    struct pf_addr_wrap *aw)
 {
 	struct sockaddr_in	*dst;
 #ifdef INET6
@@ -6515,7 +6515,7 @@ done:
 #endif /* INET6 */
 
 int
-pf_check_congestion(struct ifqueue *ifq __unused)
+pf_check_congestion(struct ifqueue *ifq)
 {
 #ifdef __OpenBSD__
 	if (ifq->ifq_congestion)

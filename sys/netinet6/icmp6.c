@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.122 2006/10/12 01:32:38 christos Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.123 2006/11/16 01:33:45 christos Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.122 2006/10/12 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.123 2006/11/16 01:33:45 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -444,7 +444,7 @@ icmp6_error(m, type, code, param)
  * Process a received ICMP6 message.
  */
 int
-icmp6_input(struct mbuf **mp, int *offp, int proto __unused)
+icmp6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp, *n;
 	struct ip6_hdr *ip6, *nip6;
@@ -1617,7 +1617,7 @@ ni6_dnsmatch(a, alen, b, blen)
  * calculate the number of addresses to be returned in the node info reply.
  */
 static int
-ni6_addrs(struct icmp6_nodeinfo *ni6, struct mbuf *m __unused,
+ni6_addrs(struct icmp6_nodeinfo *ni6, struct mbuf *m,
     struct ifnet **ifpp, char *subj)
 {
 	struct ifnet *ifp;
@@ -2695,9 +2695,9 @@ icmp6_ctloutput(op, so, level, optname, mp)
  */
 static int
 icmp6_ratelimit(
-	const struct in6_addr *dst __unused,	/* not used at this moment */
-	const int type __unused,		/* not used at this moment */
-	const int code __unused)		/* not used at this moment */
+	const struct in6_addr *dst,	/* not used at this moment */
+	const int type,		/* not used at this moment */
+	const int code)		/* not used at this moment */
 {
 	int ret;
 
@@ -2751,7 +2751,7 @@ icmp6_mtudisc_clone(dst)
 }
 
 static void
-icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r __unused)
+icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	if (rt == NULL)
 		panic("icmp6_mtudisc_timeout: bad route to timeout");
@@ -2766,7 +2766,7 @@ icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r __unused)
 }
 
 static void
-icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r __unused)
+icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	if (rt == NULL)
 		panic("icmp6_redirect_timeout: bad route to timeout");

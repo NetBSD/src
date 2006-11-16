@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.20 2006/10/12 01:30:54 christos Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.21 2006/11/16 01:32:47 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.20 2006/10/12 01:30:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.21 2006/11/16 01:32:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ static int acpiacad_streinfo(struct sysmon_envsys *, struct envsys_basic_info *)
  *	Autoconfiguration `match' routine.
  */
 static int
-acpiacad_match(struct device *parent __unused, struct cfdata *match __unused,
+acpiacad_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -154,7 +154,7 @@ acpiacad_match(struct device *parent __unused, struct cfdata *match __unused,
  *	Autoconfiguration `attach' routine.
  */
 static void
-acpiacad_attach(struct device *parent __unused, struct device *self, void *aux)
+acpiacad_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpiacad_softc *sc = (void *) self;
 	struct acpi_attach_args *aa = aux;
@@ -255,7 +255,7 @@ acpiacad_clear_status(struct acpiacad_softc *sc)
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
 static void
-acpiacad_notify_handler(ACPI_HANDLE handle __unused, UINT32 notify,
+acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify,
     void *context)
 {
 	struct acpiacad_softc *sc = context;
@@ -348,7 +348,7 @@ acpiacad_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 
 
 static int
-acpiacad_streinfo(struct sysmon_envsys *sme __unused,
+acpiacad_streinfo(struct sysmon_envsys *sme,
     struct envsys_basic_info *binfo)
 {
 

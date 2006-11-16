@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.c,v 1.14 2006/10/12 01:31:52 christos Exp $	*/
+/*	$NetBSD: rf_sstf.c,v 1.15 2006/11/16 01:33:23 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.14 2006/10/12 01:31:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.15 2006/11/16 01:33:23 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -247,9 +247,9 @@ closest_to_arm(queue, arm_pos, dir, allow_reverse)
 
 void   *
 rf_SstfCreate(
-	RF_SectorCount_t sect_per_disk __unused,
+	RF_SectorCount_t sect_per_disk,
 	RF_AllocListElem_t *cl_list,
-	RF_ShutdownList_t **listp __unused)
+	RF_ShutdownList_t **listp)
 {
 	RF_Sstf_t *sstfq;
 
@@ -261,9 +261,9 @@ rf_SstfCreate(
 
 void   *
 rf_ScanCreate(
-	RF_SectorCount_t sect_per_disk __unused,
+	RF_SectorCount_t sect_per_disk,
 	RF_AllocListElem_t *cl_list,
-	RF_ShutdownList_t **listp __unused)
+	RF_ShutdownList_t **listp)
 {
 	RF_Sstf_t *scanq;
 
@@ -275,9 +275,9 @@ rf_ScanCreate(
 
 void   *
 rf_CscanCreate(
-	RF_SectorCount_t sect_per_disk __unused,
+	RF_SectorCount_t sect_per_disk,
 	RF_AllocListElem_t *cl_list,
-	RF_ShutdownList_t **listp __unused)
+	RF_ShutdownList_t **listp)
 {
 	RF_Sstf_t *cscanq;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: joy_acpi.c,v 1.4 2006/10/12 01:30:55 christos Exp $ */
+/* $NetBSD: joy_acpi.c,v 1.5 2006/11/16 01:32:47 christos Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.4 2006/10/12 01:30:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.5 2006/11/16 01:32:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ static const char * const joy_acpi_ids[] = {
  * joy_acpi_match: autoconf(9) match routine
  */
 static int
-joy_acpi_match(struct device *parent __unused, struct cfdata *match __unused,
+joy_acpi_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -121,7 +121,7 @@ joy_acpi_match(struct device *parent __unused, struct cfdata *match __unused,
  * joy_acpi_attach: autoconf(9) attach routine
  */
 static void
-joy_acpi_attach(struct device *parent __unused, struct device *self, void *aux)
+joy_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct joy_acpi_softc *asc = (struct joy_acpi_softc *)self;
 	struct joy_softc *sc = &asc->sc_joy;

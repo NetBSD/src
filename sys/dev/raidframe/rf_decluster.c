@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.20 2006/10/12 01:31:50 christos Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.21 2006/11/16 01:33:23 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.20 2006/10/12 01:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.21 2006/11/16 01:33:23 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.20 2006/10/12 01:31:50 christos E
 /* configuration code */
 
 int
-rf_ConfigureDeclustered(RF_ShutdownList_t **listp __unused, RF_Raid_t *raidPtr,
+rf_ConfigureDeclustered(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			RF_Config_t *cfgPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
@@ -493,7 +493,7 @@ rf_GetDefaultHeadSepLimitDeclustered(RF_Raid_t *raidPtr)
  * don't use up all your system memory with buffers.
  */
 int
-rf_GetDefaultNumFloatingReconBuffersDeclustered(RF_Raid_t * raidPtr __unused)
+rf_GetDefaultNumFloatingReconBuffersDeclustered(RF_Raid_t * raidPtr)
 {
 	return (100 * rf_numBufsToAccumulate);
 }
@@ -612,7 +612,7 @@ rf_remap_to_spare_space(RF_RaidLayout_t *layoutPtr,
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 int
-rf_InstallSpareTable(RF_Raid_t *raidPtr, RF_RowCol_t frow __unused,
+rf_InstallSpareTable(RF_Raid_t *raidPtr, RF_RowCol_t frow,
     RF_RowCol_t fcol)
 {
 	RF_DeclusteredConfigInfo_t *info = (RF_DeclusteredConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;

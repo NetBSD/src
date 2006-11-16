@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.80 2006/10/12 01:30:47 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.81 2006/11/16 01:32:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.80 2006/10/12 01:30:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.81 2006/11/16 01:32:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,8 +312,8 @@ ibcs2_sys_umount(l, v, retval)
 }
 
 int
-ibcs2_sys_mount(struct lwp *l __unused, void *v __unused,
-    register_t *retval __unused)
+ibcs2_sys_mount(struct lwp *l, void *v,
+    register_t *retval)
 {
 #ifdef notyet
 	struct ibcs2_sys_mount_args /* {
@@ -797,7 +797,7 @@ ibcs2_sys_setgid(l, v, retval)
 }
 
 int
-xenix_sys_ftime(struct lwp *l __unused, void *v, register_t *retval __unused)
+xenix_sys_ftime(struct lwp *l, void *v, register_t *retval)
 {
 	struct xenix_sys_ftime_args /* {
 		syscallarg(struct xenix_timeb *) tp;
@@ -974,8 +974,8 @@ ibcs2_sys_alarm(l, v, retval)
 }
 
 int
-ibcs2_sys_getmsg(struct lwp *l __unused, void *v __unused,
-    register_t *retval __unused)
+ibcs2_sys_getmsg(struct lwp *l, void *v,
+    register_t *retval)
 {
 #ifdef notyet
 	struct ibcs2_sys_getmsg_args /* {
@@ -990,8 +990,8 @@ ibcs2_sys_getmsg(struct lwp *l __unused, void *v __unused,
 }
 
 int
-ibcs2_sys_putmsg(struct lwp *l __unused, void *v __unused,
-    register_t *retval __unused)
+ibcs2_sys_putmsg(struct lwp *l, void *v,
+    register_t *retval)
 {
 #ifdef notyet
 	struct ibcs2_sys_putmsg_args /* {
@@ -1184,7 +1184,7 @@ ibcs2_sys_pgrpsys(l, v, retval)
  */
 
 int
-ibcs2_sys_plock(struct lwp *l, void *v, register_t *retval __unused)
+ibcs2_sys_plock(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_plock_args /* {
 		syscallarg(int) cmd;
@@ -1208,7 +1208,7 @@ ibcs2_sys_plock(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-ibcs2_sys_uadmin(struct lwp *l, void *v, register_t *retval __unused)
+ibcs2_sys_uadmin(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_uadmin_args /* {
 		syscallarg(int) cmd;
@@ -1264,7 +1264,7 @@ ibcs2_sys_uadmin(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-ibcs2_sys_sysfs(struct lwp *l __unused, void *v, register_t *retval __unused)
+ibcs2_sys_sysfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_sysfs_args /* {
 		syscallarg(int) cmd;
@@ -1586,8 +1586,8 @@ ibcs2_sys_memcntl(l, v, retval)
 }
 
 int
-ibcs2_sys_gettimeofday(struct lwp *l __unused, void *v,
-    register_t *retval __unused)
+ibcs2_sys_gettimeofday(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct ibcs2_sys_gettimeofday_args /* {
 		syscallarg(struct timeval *) tp;
@@ -1620,7 +1620,7 @@ ibcs2_sys_settimeofday(l, v, retval)
 }
 
 int
-ibcs2_sys_scoinfo(struct lwp *l __unused, void *v, register_t *retval __unused)
+ibcs2_sys_scoinfo(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_scoinfo_args /* {
 		syscallarg(struct scoutsname *) bp;

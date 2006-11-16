@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.9 2006/10/12 01:30:44 christos Exp $ */
+/* $NetBSD: piixpcib.c,v 1.10 2006/11/16 01:32:39 christos Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.9 2006/10/12 01:30:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.10 2006/11/16 01:32:39 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -105,7 +105,7 @@ CFATTACH_DECL(piixpcib, sizeof(struct piixpcib_softc),
  * Autoconf callbacks.
  */
 static int
-piixpcibmatch(struct device *parent __unused, struct cfdata *match __unused,
+piixpcibmatch(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa;
@@ -350,7 +350,7 @@ piixpcib_set(struct piixpcib_softc *sc, int state)
 
 static void
 speedstep_configure(struct piixpcib_softc *sc,
-    struct pci_attach_args *pa __unused)
+    struct pci_attach_args *pa)
 {
 	const struct sysctlnode	*node, *ssnode;
 	int sig, smicmd, cmd, smidata, flags;

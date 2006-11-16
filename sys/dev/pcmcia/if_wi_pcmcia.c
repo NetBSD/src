@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.71 2006/10/12 01:31:50 christos Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.72 2006/11/16 01:33:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.71 2006/10/12 01:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.72 2006/11/16 01:33:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ static const size_t wi_pcmcia_nproducts =
     sizeof(wi_pcmcia_products) / sizeof(wi_pcmcia_products[0]);
 
 static int
-wi_pcmcia_match(struct device *parent __unused, struct cfdata *match __unused,
+wi_pcmcia_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -322,7 +322,7 @@ wi_pcmcia_validate_config(cfe)
 }
 
 static void
-wi_pcmcia_attach(struct device  *parent __unused, struct device *self,
+wi_pcmcia_attach(struct device  *parent, struct device *self,
     void *aux)
 {
 	struct wi_pcmcia_softc *psc = (void *)self;
@@ -389,7 +389,7 @@ fail:
 }
 
 static int
-wi_pcmcia_detach(struct device *self, int flags __unused)
+wi_pcmcia_detach(struct device *self, int flags)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)self;
 	int error;

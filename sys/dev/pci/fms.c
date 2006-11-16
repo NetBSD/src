@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.27 2006/10/12 01:31:29 christos Exp $	*/
+/*	$NetBSD: fms.c,v 1.28 2006/11/16 01:33:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.27 2006/10/12 01:31:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.28 2006/11/16 01:33:08 christos Exp $");
 
 #include "mpu.h"
 
@@ -216,7 +216,7 @@ static int	fms_reset_codec(void *);
 
 
 static int
-fms_match(struct device *parent __unused, struct cfdata *match __unused,
+fms_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa;
@@ -231,7 +231,7 @@ fms_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-fms_attach(struct device *parent __unused, struct device *self, void *aux)
+fms_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct fms_softc *sc;
@@ -469,7 +469,7 @@ fms_intr(void *arg)
 }
 
 static int
-fms_query_encoding(void *addr __unused, struct audio_encoding *fp)
+fms_query_encoding(void *addr, struct audio_encoding *fp)
 {
 
 	switch (fp->index) {
@@ -566,7 +566,7 @@ static const struct audio_format fms_formats[FMS_NFORMATS] = {
 };
 
 static int
-fms_set_params(void *addr, int setmode, int usemode __unused,
+fms_set_params(void *addr, int setmode, int usemode,
     audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
     stream_filter_list_t *rfil)
 {
@@ -610,8 +610,8 @@ fms_set_params(void *addr, int setmode, int usemode __unused,
 }
 
 static int
-fms_round_blocksize(void *addr __unused, int blk, int mode __unused,
-    const audio_params_t *param __unused)
+fms_round_blocksize(void *addr, int blk, int mode,
+    const audio_params_t *param)
 {
 
 	return blk & ~0xf;
@@ -648,7 +648,7 @@ fms_halt_input(void *addr)
 }
 
 static int
-fms_getdev(void *addr __unused, struct audio_device *retp)
+fms_getdev(void *addr, struct audio_device *retp)
 {
 
 	*retp = fms_device;
@@ -674,7 +674,7 @@ fms_get_port(void *addr, mixer_ctrl_t *cp)
 }
 
 static void *
-fms_malloc(void *addr, int direction __unused, size_t size,
+fms_malloc(void *addr, int direction, size_t size,
 	   struct malloc_type *pool, int flags)
 {
 	struct fms_softc *sc;
@@ -756,7 +756,7 @@ fms_free(void *addr, void *ptr, struct malloc_type *pool)
 }
 
 static size_t
-fms_round_buffersize(void *addr __unused, int direction __unused, size_t size)
+fms_round_buffersize(void *addr, int direction, size_t size)
 {
 
 	return size;
@@ -782,7 +782,7 @@ fms_mappage(void *addr, void *mem, off_t off, int prot)
 }
 
 static int
-fms_get_props(void *addr __unused)
+fms_get_props(void *addr)
 {
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
 	       AUDIO_PROP_FULLDUPLEX;
@@ -799,7 +799,7 @@ fms_query_devinfo(void *addr, mixer_devinfo_t *dip)
 
 static int
 fms_trigger_output(void *addr, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, const audio_params_t *param __unused)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	struct fms_softc *sc;
 	struct fms_dma *p;
@@ -833,7 +833,7 @@ fms_trigger_output(void *addr, void *start, void *end, int blksize,
 
 static int
 fms_trigger_input(void *addr, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, const audio_params_t *param __unused)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	struct fms_softc *sc;
 	struct fms_dma *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.29 2006/10/13 20:53:59 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.30 2006/11/16 01:33:49 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.29 2006/10/13 20:53:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.30 2006/11/16 01:33:49 christos Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4232,7 +4232,7 @@ key_bbcmp(const void *a1, const void *a2, u_int bits)
  * XXX: year 2038 problem may remain.
  */
 void
-key_timehandler(void* arg __unused)
+key_timehandler(void* arg)
 {
 	u_int dir;
 	int s;
@@ -4491,7 +4491,7 @@ key_timehandler(void* arg __unused)
 
 #ifdef __NetBSD__
 void srandom(int);
-void srandom(int arg __unused) {return;}
+void srandom(int arg) {return;}
 #endif
 
 /*
@@ -7408,9 +7408,9 @@ key_init()
 int
 key_checktunnelsanity(
     struct secasvar *sav,
-    u_int family __unused,
-    caddr_t src __unused,
-    caddr_t dst __unused
+    u_int family,
+    caddr_t src,
+    caddr_t dst
 )
 {
 	/* sanity check */

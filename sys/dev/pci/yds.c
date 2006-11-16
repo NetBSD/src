@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.36 2006/10/12 01:31:33 christos Exp $	*/
+/*	$NetBSD: yds.c,v 1.37 2006/11/16 01:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.36 2006/10/12 01:31:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.37 2006/11/16 01:33:10 christos Exp $");
 
 #include "mpu.h"
 
@@ -281,7 +281,7 @@ static const struct audio_format yds_formats[] = {
 
 #ifdef AUDIO_DEBUG
 static void
-yds_dump_play_slot(struct yds_softc *sc, int bank __unused)
+yds_dump_play_slot(struct yds_softc *sc, int bank)
 {
 	int i, j;
 	uint32_t *p;
@@ -525,7 +525,7 @@ yds_disable_dsp(struct yds_softc *sc)
 }
 
 static int
-yds_match(struct device *parent __unused, struct cfdata *match __unused,
+yds_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa;
@@ -740,7 +740,7 @@ yds_powerhook(int why, void *addr)
 }
 
 static void
-yds_attach(struct device *parent __unused, struct device *self, void *aux)
+yds_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct yds_softc *sc;
 	struct pci_attach_args *pa;
@@ -1194,7 +1194,7 @@ yds_freemem(struct yds_softc *sc, struct yds_dma *p)
 }
 
 static int
-yds_open(void *addr, int flags __unused)
+yds_open(void *addr, int flags)
 {
 	struct yds_softc *sc;
 	uint32_t mode;
@@ -1232,7 +1232,7 @@ yds_query_encoding(void *addr, struct audio_encoding *fp)
 }
 
 static int
-yds_set_params(void *addr __unused, int setmode, int usemode __unused,
+yds_set_params(void *addr, int setmode, int usemode,
 	       audio_params_t *play, audio_params_t* rec,
 	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
@@ -1250,8 +1250,8 @@ yds_set_params(void *addr __unused, int setmode, int usemode __unused,
 }
 
 static int
-yds_round_blocksize(void *addr __unused, int blk, int mode __unused,
-    const audio_params_t *param __unused)
+yds_round_blocksize(void *addr, int blk, int mode,
+    const audio_params_t *param)
 {
 
 	/*
@@ -1610,7 +1610,7 @@ yds_halt_input(void *addr)
 }
 
 static int
-yds_getdev(void *addr __unused, struct audio_device *retp)
+yds_getdev(void *addr, struct audio_device *retp)
 {
 
 	*retp = yds_device;
@@ -1648,7 +1648,7 @@ yds_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 static void *
-yds_malloc(void *addr, int direction __unused, size_t size,
+yds_malloc(void *addr, int direction, size_t size,
 	   struct malloc_type *pool, int flags)
 {
 	struct yds_softc *sc;
@@ -1698,7 +1698,7 @@ yds_find_dma(struct yds_softc *sc, void *addr)
 }
 
 static size_t
-yds_round_buffersize(void *addr __unused, int direction __unused, size_t size)
+yds_round_buffersize(void *addr, int direction, size_t size)
 {
 
 	/*
@@ -1726,7 +1726,7 @@ yds_mappage(void *addr, void *mem, off_t off, int prot)
 }
 
 static int
-yds_get_props(void *addr __unused)
+yds_get_props(void *addr)
 {
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |

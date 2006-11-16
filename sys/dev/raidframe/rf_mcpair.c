@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.20 2006/10/12 01:31:51 christos Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.21 2006/11/16 01:33:23 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.20 2006/10/12 01:31:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.21 2006/11/16 01:33:23 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.20 2006/10/12 01:31:51 christos Exp 
 static void rf_ShutdownMCPair(void *);
 
 static void
-rf_ShutdownMCPair(void *ignored __unused)
+rf_ShutdownMCPair(void *ignored)
 {
 	pool_destroy(&rf_pools.mcpair);
 }

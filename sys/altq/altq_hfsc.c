@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.21 2006/10/20 21:55:56 elad Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.22 2006/11/16 01:32:37 christos Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.26 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.21 2006/10/20 21:55:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.22 2006/11/16 01:32:37 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -355,7 +355,7 @@ hfsc_clear_interface(struct hfsc_if *hif)
 }
 
 static int
-hfsc_request(struct ifaltq *ifq, int req, void *arg __unused)
+hfsc_request(struct ifaltq *ifq, int req, void *arg)
 {
 	struct hfsc_if	*hif = (struct hfsc_if *)ifq->altq_disc;
 
@@ -959,7 +959,7 @@ update_d(struct hfsc_class *cl, int next_len)
 }
 
 static void
-init_vf(struct hfsc_class *cl, int len __unused)
+init_vf(struct hfsc_class *cl, int len)
 {
 	struct hfsc_class *max_cl, *p;
 	u_int64_t vt, f, cur_time;
@@ -1704,7 +1704,7 @@ clh_to_clp(struct hfsc_if *hif, u_int32_t chandle)
 
 #ifdef ALTQ3_COMPAT
 static struct hfsc_if *
-hfsc_attach(struct ifaltq *ifq, u_int bandwidth __unused)
+hfsc_attach(struct ifaltq *ifq, u_int bandwidth)
 {
 	struct hfsc_if *hif;
 
@@ -1860,8 +1860,8 @@ hfsc_class_modify(struct hfsc_class *cl, struct service_curve *rsc,
  * hfsc device interface
  */
 int
-hfscopen(dev_t dev __unused, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+hfscopen(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	if (machclk_freq == 0)
 		init_machclk();
@@ -1876,8 +1876,8 @@ hfscopen(dev_t dev __unused, int flag __unused, int fmt __unused,
 }
 
 int
-hfscclose(dev_t dev __unused, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+hfscclose(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	struct hfsc_if *hif;
 	int err, error = 0;
@@ -1898,7 +1898,7 @@ hfscclose(dev_t dev __unused, int flag __unused, int fmt __unused,
 }
 
 int
-hfscioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+hfscioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
     struct lwp *l)
 {
 	struct hfsc_if *hif;

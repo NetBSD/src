@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.13 2006/10/12 01:31:16 christos Exp $ */
+/* $NetBSD: cms.c,v 1.14 2006/11/16 01:33:00 christos Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.13 2006/10/12 01:31:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.14 2006/11/16 01:33:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ static char cms_note_table[] = {
 #define NOTE_TO_COUNT(note) cms_note_table[(((note)-CMS_FIRST_NOTE)%12)]
 
 int
-cms_probe(struct device *parent __unused, struct cfdata *match __unused,
+cms_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -164,7 +164,7 @@ out:
 
 
 void
-cms_attach(struct device *parent __unused, struct device *self, void *aux)
+cms_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cms_softc *sc = (struct cms_softc *)self;
 	struct isa_attach_args *ia = aux;
@@ -208,7 +208,7 @@ cms_attach(struct device *parent __unused, struct device *self, void *aux)
 
 
 int
-cms_open(midisyn *ms, int flag __unused)
+cms_open(midisyn *ms, int flag)
 {
 	struct cms_softc *sc = (struct cms_softc *)ms->data;
 
@@ -282,7 +282,7 @@ cms_on(midisyn *ms, uint_fast16_t vidx, midipitch_t mp, int16_t level_cB)
 }
 
 void
-cms_off(midisyn *ms, uint_fast16_t vidx, uint_fast8_t vel __unused)
+cms_off(midisyn *ms, uint_fast16_t vidx, uint_fast8_t vel)
 {
 	struct cms_softc *sc = (struct cms_softc *)ms->data;
 	int chip = CHAN_TO_CHIP(vidx);

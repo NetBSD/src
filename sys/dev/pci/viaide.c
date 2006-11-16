@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.36 2006/11/12 22:42:20 bouyer Exp $	*/
+/*	$NetBSD: viaide.c,v 1.37 2006/11/16 01:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.36 2006/11/12 22:42:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.37 2006/11/16 01:33:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ viaide_lookup(pcireg_t id)
 }
 
 static int
-viaide_match(struct device *parent __unused, struct cfdata *match __unused,
+viaide_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -314,7 +314,7 @@ viaide_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-viaide_attach(struct device *parent __unused, struct device *self, void *aux)
+viaide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;

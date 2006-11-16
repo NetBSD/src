@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.16 2006/11/09 15:06:03 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.17 2006/11/16 01:33:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.16 2006/11/09 15:06:03 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.17 2006/11/16 01:33:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -86,7 +86,7 @@ static int	tmpfs_snapshot(struct mount *, struct vnode *,
 
 static int
 tmpfs_mount(struct mount *mp, const char *path, void *data,
-    struct nameidata *ndp __unused, struct lwp *l)
+    struct nameidata *ndp, struct lwp *l)
 {
 	int error;
 	ino_t nodes;
@@ -191,8 +191,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_start(struct mount *mp __unused, int flags __unused,
-    struct lwp *l __unused)
+tmpfs_start(struct mount *mp, int flags,
+    struct lwp *l)
 {
 
 	return 0;
@@ -202,7 +202,7 @@ tmpfs_start(struct mount *mp __unused, int flags __unused,
 
 /* ARGSUSED2 */
 static int
-tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l __unused)
+tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 {
 	int error;
 	int flags = 0;
@@ -283,8 +283,8 @@ tmpfs_root(struct mount *mp, struct vnode **vpp)
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_quotactl(struct mount *mp __unused, int cmd __unused, uid_t uid __unused,
-    void *arg __unused, struct lwp *l __unused)
+tmpfs_quotactl(struct mount *mp, int cmd, uid_t uid,
+    void *arg, struct lwp *l)
 {
 
 	printf("tmpfs_quotactl called; need for it unknown yet\n");
@@ -294,8 +294,8 @@ tmpfs_quotactl(struct mount *mp __unused, int cmd __unused, uid_t uid __unused,
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_vget(struct mount *mp __unused, ino_t ino __unused,
-    struct vnode **vpp __unused) 
+tmpfs_vget(struct mount *mp, ino_t ino,
+    struct vnode **vpp) 
 {
 
 	printf("tmpfs_vget called; need for it unknown yet\n");
@@ -362,7 +362,7 @@ tmpfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 
 /* ARGSUSED2 */
 static int
-tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
+tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 	fsfilcnt_t freenodes, usednodes;
 	struct tmpfs_mount *tmp;
@@ -398,8 +398,8 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
 
 /* ARGSUSED0 */
 static int
-tmpfs_sync(struct mount *mp __unused, int waitfor __unused,
-    kauth_cred_t uc __unused, struct lwp *l __unused)
+tmpfs_sync(struct mount *mp, int waitfor,
+    kauth_cred_t uc, struct lwp *l)
 {
 
 	return 0;
@@ -430,8 +430,8 @@ tmpfs_done(void)
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
-    struct timespec *ctime __unused)
+tmpfs_snapshot(struct mount *mp, struct vnode *vp,
+    struct timespec *ctime)
 {
 
 	return EOPNOTSUPP;

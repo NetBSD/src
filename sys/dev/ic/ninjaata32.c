@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjaata32.c,v 1.4 2006/10/12 20:16:59 dogcow Exp $	*/
+/*	$NetBSD: ninjaata32.c,v 1.5 2006/11/16 01:32:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.4 2006/10/12 20:16:59 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.5 2006/11/16 01:32:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -370,7 +370,7 @@ njata32_setup_channel(chp)
  * map DMA buffer
  */
 int
-njata32_dma_init(void *v, int channel __unused, int drive, void *databuf,
+njata32_dma_init(void *v, int channel, int drive, void *databuf,
 		 size_t datalen, int flags)
 {
 	struct njata32_softc *sc = v;
@@ -432,7 +432,7 @@ njata32_dma_init(void *v, int channel __unused, int drive, void *databuf,
  * size: xferlen
  */
 void
-njata32_piobm_start(void *v, int channel __unused, int drive __unused,
+njata32_piobm_start(void *v, int channel, int drive,
 		    int skip, int xferlen, int flags)
 {
 	struct njata32_softc *sc = v;
@@ -538,7 +538,7 @@ njata32_piobm_start(void *v, int channel __unused, int drive __unused,
  * end of DMA
  */
 int
-njata32_dma_finish(void *v, int channel __unused, int drive __unused,
+njata32_dma_finish(void *v, int channel, int drive,
 		   int force)
 {
 	struct njata32_softc *sc = v;
@@ -636,7 +636,7 @@ njata32_dma_finish(void *v, int channel __unused, int drive __unused,
  * unmap DMA buffer
  */
 void
-njata32_piobm_done(void *v, int channel __unused, int drive)
+njata32_piobm_done(void *v, int channel, int drive)
 {
 	struct njata32_softc *sc = v;
 	struct njata32_device *dev = &sc->sc_dev[drive];

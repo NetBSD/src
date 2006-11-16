@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.16 2006/10/20 21:55:56 elad Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.17 2006/11/16 01:32:37 christos Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.12 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.16 2006/10/20 21:55:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.17 2006/11/16 01:32:37 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -317,14 +317,14 @@ afm_match(struct ifnet *ifp, struct flowinfo *flow)
 altqdev_decl(afm);
 
 int
-afmopen(dev_t dev __unused, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+afmopen(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	return 0;
 }
 
 int
-afmclose(dev_t dev, int flag, int fmt __unused, struct lwp *l)
+afmclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int err, error = 0;
 	struct atm_flowmap fmap;
@@ -344,7 +344,7 @@ afmclose(dev_t dev, int flag, int fmt __unused, struct lwp *l)
 }
 
 int
-afmioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+afmioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
     struct lwp *l)
 {
 	int	error = 0;

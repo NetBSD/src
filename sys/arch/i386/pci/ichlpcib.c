@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.17 2006/10/12 01:30:43 christos Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.18 2006/11/16 01:32:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.17 2006/10/12 01:30:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.18 2006/11/16 01:32:39 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,7 +106,7 @@ CFATTACH_DECL(ichlpcib, sizeof(struct lpcib_softc),
  * Autoconf callbacks.
  */
 static int
-lpcibmatch(struct device *parent __unused, struct cfdata *match __unused,
+lpcibmatch(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;

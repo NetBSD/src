@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.114 2006/11/13 05:13:41 dyoung Exp $	*/
+/*	$NetBSD: in.c,v 1.115 2006/11/16 01:33:45 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.114 2006/11/13 05:13:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.115 2006/11/16 01:33:45 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -808,7 +808,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 }
 
 static int
-in_ifaddrpref_ioctl(struct socket *so __unused, u_long cmd, caddr_t data,
+in_ifaddrpref_ioctl(struct socket *so, u_long cmd, caddr_t data,
     struct ifnet *ifp)
 {
 	struct if_addrprefreq *ifap = (struct if_addrprefreq *)data;
@@ -871,7 +871,7 @@ in_ifaddrpref_ioctl(struct socket *so __unused, u_long cmd, caddr_t data,
  * Delete any existing route for an interface.
  */
 void
-in_ifscrub(struct ifnet *ifp __unused, struct in_ifaddr *ia)
+in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
 {
 
 	in_scrubprefix(ia);

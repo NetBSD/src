@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.47 2006/10/30 12:37:08 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.48 2006/11/16 01:32:45 christos Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.47 2006/10/30 12:37:08 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.48 2006/11/16 01:32:45 christos Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.47 2006/10/30 12:37:08 elad Exp $\n$NetBSD: verified_exec.c,v 1.47 2006/10/30 12:37:08 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.48 2006/11/16 01:32:45 christos Exp $\n$NetBSD: verified_exec.c,v 1.48 2006/11/16 01:32:45 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -115,8 +115,8 @@ int     veriexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 		       struct lwp *l);
 
 void
-veriexecattach(DEVPORT_DEVICE *parent __unused, DEVPORT_DEVICE *self __unused,
-    void *aux __unused)
+veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self,
+    void *aux)
 {
 	veriexec_dev_usage = 0;
 
@@ -125,8 +125,8 @@ veriexecattach(DEVPORT_DEVICE *parent __unused, DEVPORT_DEVICE *self __unused,
 }
 
 int
-veriexecopen(dev_t dev __unused, int flags __unused,
-		 int fmt __unused, struct lwp *l __unused)
+veriexecopen(dev_t dev, int flags,
+		 int fmt, struct lwp *l)
 {
 	if (veriexec_verbose >= 2) {
 		log(LOG_DEBUG, "Veriexec: Pseudo-device open attempt by "
@@ -152,8 +152,8 @@ veriexecopen(dev_t dev __unused, int flags __unused,
 }
 
 int
-veriexecclose(dev_t dev __unused, int flags __unused, int fmt __unused,
-    struct lwp *l __unused)
+veriexecclose(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	if (veriexec_dev_usage > 0)
 		veriexec_dev_usage--;
@@ -161,7 +161,7 @@ veriexecclose(dev_t dev __unused, int flags __unused, int fmt __unused,
 }
 
 int
-veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data, int flags __unused,
+veriexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
     struct lwp *l)
 {
 	int error = 0;
@@ -203,7 +203,7 @@ veriexecioctl(dev_t dev __unused, u_long cmd, caddr_t data, int flags __unused,
 
 #if defined(__FreeBSD__)
 static void
-veriexec_drvinit(void *unused __unused)
+veriexec_drvinit(void *unused)
 {
 	make_dev(&verifiedexec_cdevsw, 0, UID_ROOT, GID_WHEEL, 0600,
 	    "veriexec");

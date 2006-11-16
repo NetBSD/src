@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.109 2006/10/12 01:31:00 christos Exp $ */
+/* $NetBSD: isp.c,v 1.110 2006/11/16 01:32:51 christos Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.109 2006/10/12 01:31:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.110 2006/11/16 01:32:51 christos Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -4308,7 +4308,7 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 
 static int
 isp_handle_other_response(struct ispsoftc *isp, int type,
-    isphdr_t *hp, u_int16_t *optrp __unused)
+    isphdr_t *hp, u_int16_t *optrp)
 {
 	switch (type) {
 	case RQSTYPE_STATUS_CONT:

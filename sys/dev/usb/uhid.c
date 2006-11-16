@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.71 2006/10/12 01:31:59 christos Exp $	*/
+/*	$NetBSD: uhid.c,v 1.72 2006/11/16 01:33:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.71 2006/10/12 01:31:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.72 2006/11/16 01:33:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +125,8 @@ Static int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int, struct lwp *)
 USB_DECLARE_DRIVER(uhid);
 
 int
-uhid_match(struct device *parent __unused, struct cfdata *match,
-    void *aux __unused)
+uhid_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 #ifdef UHID_DEBUG
 	struct uhidev_attach_arg *uha = aux;
@@ -141,7 +141,7 @@ uhid_match(struct device *parent __unused, struct cfdata *match,
 }
 
 void
-uhid_attach(struct device *parent __unused, struct device *self, void *aux)
+uhid_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uhid_softc *sc = (struct uhid_softc *)self;
 	struct uhidev_attach_arg *uha = aux;
@@ -181,7 +181,7 @@ uhid_activate(device_ptr_t self, enum devact act)
 }
 
 int
-uhid_detach(struct device *self, int flags __unused)
+uhid_detach(struct device *self, int flags)
 {
 	struct uhid_softc *sc = (struct uhid_softc *)self;
 	int s;
@@ -255,8 +255,8 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 }
 
 int
-uhidopen(dev_t dev, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+uhidopen(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct uhid_softc *sc;
 	int error;
@@ -284,8 +284,8 @@ uhidopen(dev_t dev, int flag __unused, int mode __unused,
 }
 
 int
-uhidclose(dev_t dev, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+uhidclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct uhid_softc *sc;
 
@@ -375,7 +375,7 @@ uhidread(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag __unused)
+uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 {
 	int error;
 	int size;
@@ -418,7 +418,7 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 
 int
 uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
-    int flag __unused, struct lwp *l)
+    int flag, struct lwp *l)
 {
 	struct usb_ctl_report_desc *rd;
 	struct usb_ctl_report *re;
@@ -608,7 +608,7 @@ filt_uhidrdetach(struct knote *kn)
 }
 
 static int
-filt_uhidread(struct knote *kn, long hint __unused)
+filt_uhidread(struct knote *kn, long hint)
 {
 	struct uhid_softc *sc = kn->kn_hook;
 

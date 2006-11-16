@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.39 2006/10/12 01:30:54 christos Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.40 2006/11/16 01:32:47 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.39 2006/10/12 01:30:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.40 2006/11/16 01:32:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ EcUnlock(struct acpi_ec_softc *sc)
  *	Autoconfiguration `match' routine.
  */
 static int
-acpiec_match(struct device *parent __unused, struct cfdata *match __unused,
+acpiec_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -481,7 +481,7 @@ acpiec_early_attach(struct device *parent)
  *	Autoconfiguration `attach' routine.
  */
 static void
-acpiec_attach(struct device *parent __unused, struct device *self, void *aux)
+acpiec_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpi_ec_softc *sc = (void *) self;
 	struct acpi_attach_args *aa = aux;
@@ -747,7 +747,7 @@ EcGpeHandler(void *Context)
 }
 
 static ACPI_STATUS
-EcSpaceSetup(ACPI_HANDLE Region __unused, UINT32 Function, void *Context,
+EcSpaceSetup(ACPI_HANDLE Region, UINT32 Function, void *Context,
     void **RegionContext)
 {
 
@@ -766,7 +766,7 @@ EcSpaceSetup(ACPI_HANDLE Region __unused, UINT32 Function, void *Context,
 
 static ACPI_STATUS
 EcSpaceHandler(UINT32 Function, ACPI_PHYSICAL_ADDRESS Address, UINT32 width,
-    ACPI_INTEGER *Value, void *Context, void *RegionContext __unused)
+    ACPI_INTEGER *Value, void *Context, void *RegionContext)
 {
 	struct acpi_ec_softc *sc = Context;
 	ACPI_STATUS rv = AE_OK;

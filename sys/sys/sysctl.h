@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.163 2006/11/02 13:28:25 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.164 2006/11/16 01:33:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -960,11 +960,11 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 #define SYSCTLFN_PROTO const int *, u_int, void *, \
 	size_t *, const void *, size_t, \
 	const int *, struct lwp *, const struct sysctlnode *
-#define SYSCTLFN_ARGS const int *name __unused, u_int namelen __unused, \
-	void *oldp __unused, size_t *oldlenp __unused, \
-	const void *newp __unused, size_t newlen __unused, \
-	const int *oname __unused, struct lwp *l __unused, \
-	const struct sysctlnode *rnode __unused
+#define SYSCTLFN_ARGS const int *name, u_int namelen, \
+	void *oldp, size_t *oldlenp, \
+	const void *newp, size_t newlen, \
+	const int *oname, struct lwp *l, \
+	const struct sysctlnode *rnode
 #define SYSCTLFN_CALL(node) name, namelen, oldp, \
 	oldlenp, newp, newlen, \
 	oname, l, node
@@ -980,11 +980,11 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 		printf("%s\n", desc);				\
 		__CONCAT(___,name)(clog); }			\
 	__link_set_add_text(sysctl_funcs, name);		\
-	static void __CONCAT(___,name)(struct sysctllog **clog __unused)
+	static void __CONCAT(___,name)(struct sysctllog **clog)
 #else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
 	__link_set_add_text(sysctl_funcs, name);		\
-	void name(struct sysctllog **clog __unused)
+	void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */
 
 #else /* !_LKM */
@@ -997,12 +997,12 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 		printf("%s\n", desc);				\
 		__CONCAT(___,name)(clog); }			\
 	__link_set_add_text(sysctl_funcs, name);		\
-	static void __CONCAT(___,name)(struct sysctllog **clog __unused)
+	static void __CONCAT(___,name)(struct sysctllog **clog)
 #else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
 	static void name(struct sysctllog **);			\
 	__link_set_add_text(sysctl_funcs, name);		\
-	static void name(struct sysctllog **clog __unused)
+	static void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */
 typedef void (*sysctl_setup_func)(struct sysctllog **);
 

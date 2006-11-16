@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.14 2006/10/20 21:55:56 elad Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.15 2006/11/16 01:32:37 christos Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.12 2003/07/10 12:07:48 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.14 2006/10/20 21:55:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.15 2006/11/16 01:32:37 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -83,8 +83,8 @@ static void 		fifoq_purge(fifoq_state_t *);
 altqdev_decl(fifoq);
 
 int
-fifoqopen(dev_t dev __unused, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+fifoqopen(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
@@ -102,8 +102,8 @@ fifoqopen(dev_t dev __unused, int flag __unused, int fmt __unused,
  *       is removed (only once with multiple simultaneous references.)
  */
 int
-fifoqclose(dev_t dev __unused, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+fifoqclose(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	fifoq_state_t *q;
 	int err, error = 0;
@@ -119,7 +119,7 @@ fifoqclose(dev_t dev __unused, int flag __unused, int fmt __unused,
 }
 
 int
-fifoqioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+fifoqioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
     struct lwp *l)
 {
 	fifoq_state_t *q;
@@ -267,7 +267,7 @@ fifoqioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
  */
 static int
 fifoq_enqueue(struct ifaltq *ifq, struct mbuf *m,
-    struct altq_pktattr *pktattr __unused)
+    struct altq_pktattr *pktattr)
 {
 	fifoq_state_t *q = (fifoq_state_t *)ifq->altq_disc;
 
@@ -333,7 +333,7 @@ fifoq_dequeue(struct ifaltq *ifq, int op)
 }
 
 static int
-fifoq_request(struct ifaltq *ifq, int req, void *arg __unused)
+fifoq_request(struct ifaltq *ifq, int req, void *arg)
 {
 	fifoq_state_t *q = (fifoq_state_t *)ifq->altq_disc;
 

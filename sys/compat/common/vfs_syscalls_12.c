@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.18 2006/10/12 01:30:47 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.19 2006/11/16 01:32:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.18 2006/10/12 01:30:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.19 2006/11/16 01:32:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ compat_12_sys_getdirentries(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-compat_12_sys_stat(struct lwp *l, void *v, register_t *retval __unused)
+compat_12_sys_stat(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_12_sys_stat_args /* {
 		syscallarg(const char *) path;
@@ -161,7 +161,7 @@ compat_12_sys_stat(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-compat_12_sys_lstat(struct lwp *l, void *v, register_t *retval __unused)
+compat_12_sys_lstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_12_sys_lstat_args /* {
 		syscallarg(const char *) path;
@@ -190,7 +190,7 @@ compat_12_sys_lstat(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-compat_12_sys_fstat(struct lwp *l, void *v, register_t *retval __unused)
+compat_12_sys_fstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_12_sys_fstat_args /* {
 		syscallarg(int) fd;

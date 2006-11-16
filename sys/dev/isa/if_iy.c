@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.73 2006/10/12 01:31:16 christos Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.74 2006/11/16 01:33:00 christos Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.73 2006/10/12 01:31:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.74 2006/11/16 01:33:00 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -192,7 +192,7 @@ static u_int8_t eepro_irqmap[] = EEPP_INTMAP;
 static u_int8_t eepro_revirqmap[] = EEPP_RINTMAP;
 
 int
-iyprobe(struct device *parent __unused,  struct cfdata *match __unused,
+iyprobe(struct device *parent,  struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -292,7 +292,7 @@ out:
 }
 
 void
-iyattach(struct device *parent __unused, struct device *self, void *aux)
+iyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct iy_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

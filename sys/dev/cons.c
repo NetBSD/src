@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.60 2006/10/12 01:30:50 christos Exp $	*/
+/*	$NetBSD: cons.c,v 1.61 2006/11/16 01:32:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.60 2006/10/12 01:30:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.61 2006/11/16 01:32:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -377,7 +377,7 @@ cnpollc(int on)
 }
 
 void
-nullcnpollc(dev_t dev __unused, int on __unused)
+nullcnpollc(dev_t dev, int on)
 {
 
 }

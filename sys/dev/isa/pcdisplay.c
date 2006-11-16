@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.31 2006/10/12 01:31:17 christos Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.32 2006/11/16 01:33:00 christos Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.31 2006/10/12 01:31:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.32 2006/11/16 01:33:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ pcdisplay_init(dc, iot, memt, mono)
 }
 
 int
-pcdisplay_match(struct device *parent __unused, struct cfdata *match __unused,
+pcdisplay_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -285,7 +285,7 @@ pcdisplay_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-pcdisplay_attach(struct device *parent __unused, struct device *self, void *aux)
+pcdisplay_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct pcdisplay_softc *sc = (struct pcdisplay_softc *)self;
@@ -375,8 +375,8 @@ pcdisplay_is_console(iot)
 }
 
 static int
-pcdisplay_ioctl(void *v __unused, void *vs __unused, u_long cmd __unused,
-    caddr_t data __unused, int flag __unused, struct lwp *l __unused)
+pcdisplay_ioctl(void *v, void *vs, u_long cmd,
+    caddr_t data, int flag, struct lwp *l)
 {
 	/*
 	 * XXX "do something!"
@@ -385,14 +385,14 @@ pcdisplay_ioctl(void *v __unused, void *vs __unused, u_long cmd __unused,
 }
 
 static paddr_t
-pcdisplay_mmap(void *v __unused, void *vs __unused, off_t offset __unused,
-    int prot __unused)
+pcdisplay_mmap(void *v, void *vs, off_t offset,
+    int prot)
 {
 	return (-1);
 }
 
 static int
-pcdisplay_alloc_screen(void *v, const struct wsscreen_descr *type __unused,
+pcdisplay_alloc_screen(void *v, const struct wsscreen_descr *type,
     void **cookiep, int *curxp, int *curyp, long *defattrp)
 {
 	struct pcdisplay_softc *sc = v;
@@ -409,7 +409,7 @@ pcdisplay_alloc_screen(void *v, const struct wsscreen_descr *type __unused,
 }
 
 static void
-pcdisplay_free_screen(void *v, void *cookie __unused)
+pcdisplay_free_screen(void *v, void *cookie)
 {
 	struct pcdisplay_softc *sc = v;
 
@@ -420,9 +420,9 @@ pcdisplay_free_screen(void *v, void *cookie __unused)
 }
 
 static int
-pcdisplay_show_screen(void *v __unused, void *cookie __unused,
-    int waitok __unused, void (*cb)(void *, int, int) __unused,
-    void *cbarg __unused)
+pcdisplay_show_screen(void *v, void *cookie,
+    int waitok, void (*cb)(void *, int, int),
+    void *cbarg)
 {
 #ifdef DIAGNOSTIC
 	struct pcdisplay_softc *sc = v;
@@ -434,7 +434,7 @@ pcdisplay_show_screen(void *v __unused, void *cookie __unused,
 }
 
 static int
-pcdisplay_allocattr(void *id __unused, int fg __unused, int bg __unused,
+pcdisplay_allocattr(void *id, int fg, int bg,
     int flags, long *attrp)
 {
 	if (flags & WSATTR_REVERSE)

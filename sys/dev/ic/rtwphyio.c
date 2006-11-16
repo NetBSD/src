@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphyio.c,v 1.13 2006/10/12 01:31:01 christos Exp $ */
+/* $NetBSD: rtwphyio.c,v 1.14 2006/11/16 01:32:52 christos Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.13 2006/10/12 01:31:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.14 2006/11/16 01:32:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ rtw_rf_macbangbits(struct rtw_regs *regs, uint32_t reg)
 }
 
 static uint32_t
-rtw_grf5101_host_crypt(u_int addr __unused, uint32_t val __unused)
+rtw_grf5101_host_crypt(u_int addr, uint32_t val)
 {
 	/* TBD */
 	return 0;

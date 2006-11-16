@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.55 2006/10/12 01:30:49 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.56 2006/11/16 01:32:44 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.55 2006/10/12 01:30:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.56 2006/11/16 01:32:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ native_to_svr4_sigaltstack(bss, sss)
 }
 
 int
-svr4_sys_sigaction(struct lwp *l, void *v, register_t *retval __unused)
+svr4_sys_sigaction(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sigaction_args /* {
 		syscallarg(int) signum;
@@ -247,7 +247,7 @@ svr4_sys_sigaction(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-svr4_sys_sigaltstack(struct lwp *l, void *v, register_t *retval __unused)
+svr4_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sigaltstack_args /* {
 		syscallarg(const struct svr4_sigaltstack *) nss;
@@ -342,7 +342,7 @@ svr4_sys_signal(l, v, retval)
 }
 
 int
-svr4_sys_sigprocmask(struct lwp *l, void *v, register_t *retval __unused)
+svr4_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sigprocmask_args /* {
 		syscallarg(int) how;
@@ -396,7 +396,7 @@ svr4_sys_sigprocmask(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-svr4_sys_sigpending(struct lwp *l, void *v, register_t *retval __unused)
+svr4_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sigpending_args /* {
 		syscallarg(int) what;
@@ -422,7 +422,7 @@ svr4_sys_sigpending(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-svr4_sys_sigsuspend(struct lwp *l, void *v, register_t *retval __unused)
+svr4_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sigsuspend_args /* {
 		syscallarg(const svr4_sigset_t *) set;
@@ -442,7 +442,7 @@ svr4_sys_sigsuspend(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-svr4_sys_pause(struct lwp *l, void *v __unused, register_t *retval __unused)
+svr4_sys_pause(struct lwp *l, void *v, register_t *retval)
 {
 
 	return (sigsuspend1(l->l_proc, 0));

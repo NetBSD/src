@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.106 2006/10/30 16:15:56 skrll Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.107 2006/11/16 01:33:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -701,7 +701,7 @@ void	show_scsipi_cmd(struct scsipi_xfer *);
 void	show_mem(u_char *, int);
 #endif /* _KERNEL */
 
-static __inline void __unused
+static __inline void
 _lto2b(u_int32_t val, u_int8_t *bytes)
 {
 
@@ -709,7 +709,7 @@ _lto2b(u_int32_t val, u_int8_t *bytes)
 	bytes[1] = val & 0xff;
 }
 
-static __inline void __unused
+static __inline void
 _lto3b(u_int32_t val, u_int8_t *bytes)
 {
 
@@ -718,7 +718,7 @@ _lto3b(u_int32_t val, u_int8_t *bytes)
 	bytes[2] = val & 0xff;
 }
 
-static __inline void __unused
+static __inline void
 _lto4b(u_int32_t val, u_int8_t *bytes)
 {
 
@@ -728,7 +728,7 @@ _lto4b(u_int32_t val, u_int8_t *bytes)
 	bytes[3] = val & 0xff;
 }
 
-static __inline void __unused
+static __inline void
 _lto8b(u_int64_t val, u_int8_t *bytes)
 {
 
@@ -742,7 +742,7 @@ _lto8b(u_int64_t val, u_int8_t *bytes)
 	bytes[7] = val         & 0xff;
 }
 
-static __inline u_int32_t __unused
+static __inline u_int32_t
 _2btol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
@@ -752,7 +752,7 @@ _2btol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int32_t __unused
+static __inline u_int32_t
 _3btol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
@@ -763,7 +763,7 @@ _3btol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int32_t __unused
+static __inline u_int32_t
 _4btol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
@@ -775,7 +775,7 @@ _4btol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int64_t __unused
+static __inline u_int64_t
 _5btol(const u_int8_t *bytes)
 {
 	u_int64_t rv;
@@ -788,7 +788,7 @@ _5btol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int64_t __unused
+static __inline u_int64_t
 _8btol(const u_int8_t *bytes)
 {
 	u_int64_t rv;
@@ -804,7 +804,7 @@ _8btol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline void __unused
+static __inline void
 _lto2l(u_int32_t val, u_int8_t *bytes)
 {
 
@@ -812,7 +812,7 @@ _lto2l(u_int32_t val, u_int8_t *bytes)
 	bytes[1] = (val >> 8) & 0xff;
 }
 
-static __inline void __unused
+static __inline void
 _lto3l(u_int32_t val, u_int8_t *bytes)
 {
 
@@ -821,7 +821,7 @@ _lto3l(u_int32_t val, u_int8_t *bytes)
 	bytes[2] = (val >> 16) & 0xff;
 }
 
-static __inline void __unused
+static __inline void
 _lto4l(u_int32_t val, u_int8_t *bytes)
 {
 
@@ -831,7 +831,7 @@ _lto4l(u_int32_t val, u_int8_t *bytes)
 	bytes[3] = (val >> 24) & 0xff;
 }
 
-static __inline u_int32_t __unused
+static __inline u_int32_t
 _2ltol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
@@ -841,7 +841,7 @@ _2ltol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int32_t __unused
+static __inline u_int32_t
 _3ltol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
@@ -852,7 +852,7 @@ _3ltol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int32_t __unused
+static __inline u_int32_t
 _4ltol(const u_int8_t *bytes)
 {
 	u_int32_t rv;

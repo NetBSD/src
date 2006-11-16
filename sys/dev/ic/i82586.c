@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.56 2006/10/12 01:31:00 christos Exp $	*/
+/*	$NetBSD: i82586.c,v 1.57 2006/11/16 01:32:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.56 2006/10/12 01:31:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.57 2006/11/16 01:32:51 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -1047,7 +1047,7 @@ bad:
 static int
 ie_readframe(
     struct ie_softc *sc,
-    int num __unused)		/* frame number to read */
+    int num)		/* frame number to read */
 {
 	struct mbuf *m;
 	u_int16_t bstart, bend;
@@ -1782,7 +1782,7 @@ i82586_start_transceiver(sc)
 void
 i82586_stop(
     struct ifnet *ifp,
-    int disable __unused)
+    int disable)
 {
 	struct ie_softc *sc = ifp->if_softc;
 

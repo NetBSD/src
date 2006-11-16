@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.34 2006/10/12 01:31:33 christos Exp $ */
+/*      $NetBSD: sv.c,v 1.35 2006/11/16 01:33:10 christos Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.34 2006/10/12 01:31:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.35 2006/11/16 01:33:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ sv_write_indirect(struct sv_softc *sc, uint8_t reg, uint8_t val)
 }
 
 static int
-sv_match(struct device *parent __unused, struct cfdata *match __unused,
+sv_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa;
@@ -349,7 +349,7 @@ sv_defer(struct device *self)
 }
 
 static void
-sv_attach(struct device *parent __unused, struct device *self, void *aux)
+sv_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sv_softc *sc;
 	struct pci_attach_args *pa;
@@ -580,7 +580,7 @@ sv_freemem(struct sv_softc *sc, struct sv_dma *p)
 }
 
 static int
-sv_open(void *addr, int flags __unused)
+sv_open(void *addr, int flags)
 {
 	struct sv_softc *sc;
 
@@ -593,7 +593,7 @@ sv_open(void *addr, int flags __unused)
 }
 
 static int
-sv_query_encoding(void *addr __unused, struct audio_encoding *fp)
+sv_query_encoding(void *addr, struct audio_encoding *fp)
 {
 
 	switch (fp->index) {
@@ -773,8 +773,8 @@ sv_set_params(void *addr, int setmode, int usemode, audio_params_t *play,
 }
 
 static int
-sv_round_blocksize(void *addr __unused, int blk, int mode __unused,
-    const audio_params_t *param __unused)
+sv_round_blocksize(void *addr, int blk, int mode,
+    const audio_params_t *param)
 {
 
 	return blk & -32;	/* keep good alignment */
@@ -921,7 +921,7 @@ sv_halt_input(void *addr)
 }
 
 static int
-sv_getdev(void *addr __unused, struct audio_device *retp)
+sv_getdev(void *addr, struct audio_device *retp)
 {
 
 	*retp = sv_device;
@@ -991,7 +991,7 @@ static const struct {
 #define SV_SRS_MODE (SV_LAST_MIXER + 4)
 
 static int
-sv_query_devinfo(void *addr __unused, mixer_devinfo_t *dip)
+sv_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 	int i;
 
@@ -1418,7 +1418,7 @@ sv_free(void *addr, void *ptr, struct malloc_type *pool)
 }
 
 static size_t
-sv_round_buffersize(void *addr __unused, int direction __unused, size_t size)
+sv_round_buffersize(void *addr, int direction, size_t size)
 {
 
 	return size;
@@ -1442,7 +1442,7 @@ sv_mappage(void *addr, void *mem, off_t off, int prot)
 }
 
 static int
-sv_get_props(void *addr __unused)
+sv_get_props(void *addr)
 {
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
 }

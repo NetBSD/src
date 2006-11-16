@@ -1,4 +1,4 @@
-/*	$NetBSD: dest6.c,v 1.14 2006/10/12 01:32:38 christos Exp $	*/
+/*	$NetBSD: dest6.c,v 1.15 2006/11/16 01:33:45 christos Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.14 2006/10/12 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.15 2006/11/16 01:33:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.14 2006/10/12 01:32:38 christos Exp $");
  * Destination options header processing.
  */
 int
-dest6_input(struct mbuf **mp, int *offp, int proto __unused)
+dest6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 	int off = *offp, dstoptlen, optlen;

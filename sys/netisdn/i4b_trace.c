@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.16 2006/10/16 12:23:00 pooka Exp $
+ *	$Id: i4b_trace.c,v 1.17 2006/11/16 01:33:49 christos Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -35,7 +35,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.16 2006/10/16 12:23:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.17 2006/11/16 01:33:49 christos Exp $");
 
 #include "isdntrc.h"
 
@@ -138,7 +138,7 @@ isdntrcattach()
  *	device's queue the data is put into.
  *---------------------------------------------------------------------------*/
 int
-isdn_layer2_trace_ind(struct l2_softc *sc, struct isdn_l3_driver *drv __unused, i4b_trace_hdr *hdr, size_t len, unsigned char *buf)
+isdn_layer2_trace_ind(struct l2_softc *sc, struct isdn_l3_driver *drv, i4b_trace_hdr *hdr, size_t len, unsigned char *buf)
 {
 	struct mbuf *m;
 	int isdnif, x;
@@ -238,8 +238,8 @@ isdn_layer2_trace_ind(struct l2_softc *sc, struct isdn_l3_driver *drv __unused, 
  *	open trace device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntrcopen(dev_t dev, int flag __unused, int fmt __unused,
-	struct lwp *l __unused)
+isdntrcopen(dev_t dev, int flag, int fmt,
+	struct lwp *l)
 {
 	int x;
 	int unit = minor(dev);
@@ -267,8 +267,8 @@ isdntrcopen(dev_t dev, int flag __unused, int fmt __unused,
  *	close trace device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntrcclose(dev_t dev, int flag __unused, int fmt __unused,
-	struct lwp *l __unused)
+isdntrcclose(dev_t dev, int flag, int fmt,
+	struct lwp *l)
 {
 	int isdnif = minor(dev);
 	int x;
@@ -308,7 +308,7 @@ isdntrcclose(dev_t dev, int flag __unused, int fmt __unused,
  *	read from trace device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntrcread(dev_t dev, struct uio * uio, int ioflag __unused)
+isdntrcread(dev_t dev, struct uio * uio, int ioflag)
 {
 	struct mbuf *m;
 	int x;
@@ -364,8 +364,8 @@ i4btrcpoll(dev_t dev, int events, struct proc *p)
  *	device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
-	struct lwp *l __unused)
+isdntrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	int error = 0;
 	int isdnif = minor(dev);

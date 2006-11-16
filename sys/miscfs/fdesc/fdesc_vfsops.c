@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.61 2006/10/12 01:32:26 christos Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.62 2006/11/16 01:33:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.61 2006/10/12 01:32:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.62 2006/11/16 01:33:38 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -77,8 +77,8 @@ int	fdesc_vget(struct mount *, ino_t, struct vnode **);
  * Mount the per-process file descriptors (/dev/fd)
  */
 int
-fdesc_mount(struct mount *mp, const char *path, void *data __unused,
-    struct nameidata *ndp __unused, struct lwp *l)
+fdesc_mount(struct mount *mp, const char *path, void *data,
+    struct nameidata *ndp, struct lwp *l)
 {
 	int error = 0;
 	struct fdescmount *fmp;
@@ -113,14 +113,14 @@ fdesc_mount(struct mount *mp, const char *path, void *data __unused,
 }
 
 int
-fdesc_start(struct mount *mp __unused, int flags __unused, 
-    struct lwp *l __unused)
+fdesc_start(struct mount *mp, int flags, 
+    struct lwp *l)
 {
 	return (0);
 }
 
 int
-fdesc_unmount(struct mount *mp, int mntflags, struct lwp *l __unused)
+fdesc_unmount(struct mount *mp, int mntflags, struct lwp *l)
 {
 	int error;
 	int flags = 0;
@@ -174,8 +174,8 @@ fdesc_root(mp, vpp)
 }
 
 int
-fdesc_quotactl(struct mount *mp __unused, int cmd __unused, uid_t uid __unused,
-    void *arg __unused, struct lwp *l __unused)
+fdesc_quotactl(struct mount *mp, int cmd, uid_t uid,
+    void *arg, struct lwp *l)
 {
 
 	return (EOPNOTSUPP);
@@ -233,8 +233,8 @@ fdesc_statvfs(mp, sbp, l)
 
 /*ARGSUSED*/
 int
-fdesc_sync(struct mount *mp __unused, int waitfor __unused,
-    kauth_cred_t uc __unused, struct lwp *l __unused)
+fdesc_sync(struct mount *mp, int waitfor,
+    kauth_cred_t uc, struct lwp *l)
 {
 
 	return (0);
@@ -245,8 +245,8 @@ fdesc_sync(struct mount *mp __unused, int waitfor __unused,
  * Currently unsupported.
  */
 int
-fdesc_vget(struct mount *mp __unused, ino_t ino __unused,
-    struct vnode **vpp __unused)
+fdesc_vget(struct mount *mp, ino_t ino,
+    struct vnode **vpp)
 {
 
 	return (EOPNOTSUPP);

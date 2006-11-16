@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psopcode.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psopcode.c,v 1.3 2006/11/16 01:33:31 christos Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -543,7 +543,7 @@ AcpiPsGetOpcodeInfo (
 
 const char *
 AcpiPsGetOpcodeName (
-    UINT16                  Opcode __unused)
+    UINT16                  Opcode)
 {
 #if defined(ACPI_DISASSEMBLER) || defined (ACPI_DEBUG_OUTPUT)
 

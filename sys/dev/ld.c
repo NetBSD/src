@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.41 2006/10/12 01:30:51 christos Exp $	*/
+/*	$NetBSD: ld.c,v 1.42 2006/11/16 01:32:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.41 2006/10/12 01:30:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.42 2006/11/16 01:32:45 christos Exp $");
 
 #include "rnd.h"
 
@@ -256,7 +256,7 @@ ldenddetach(struct ld_softc *sc)
 
 /* ARGSUSED */
 static void
-ldshutdown(void *cookie __unused)
+ldshutdown(void *cookie)
 {
 	struct ld_softc *sc;
 	int i;
@@ -272,7 +272,7 @@ ldshutdown(void *cookie __unused)
 
 /* ARGSUSED */
 static int
-ldopen(dev_t dev, int flags __unused, int fmt, struct lwp *l __unused)
+ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ld_softc *sc;
 	int error, unit, part;
@@ -322,7 +322,7 @@ ldopen(dev_t dev, int flags __unused, int fmt, struct lwp *l __unused)
 
 /* ARGSUSED */
 static int
-ldclose(dev_t dev, int flags __unused, int fmt, struct lwp *l __unused)
+ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ld_softc *sc;
 	int error, part, unit;
@@ -359,7 +359,7 @@ ldclose(dev_t dev, int flags __unused, int fmt, struct lwp *l __unused)
 
 /* ARGSUSED */
 static int
-ldread(dev_t dev, struct uio *uio, int ioflag __unused)
+ldread(dev_t dev, struct uio *uio, int ioflag)
 {
 
 	return (physio(ldstrategy, NULL, dev, B_READ, ldminphys, uio));
@@ -367,7 +367,7 @@ ldread(dev_t dev, struct uio *uio, int ioflag __unused)
 
 /* ARGSUSED */
 static int
-ldwrite(dev_t dev, struct uio *uio, int ioflag __unused)
+ldwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 
 	return (physio(ldstrategy, NULL, dev, B_WRITE, ldminphys, uio));

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.67 2006/10/12 01:32:27 christos Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.68 2006/11/16 01:33:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.67 2006/10/12 01:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.68 2006/11/16 01:33:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -595,7 +595,7 @@ portal_setattr(v)
  */
 /*ARGSUSED*/
 int
-portal_readdir(void *v __unused)
+portal_readdir(void *v)
 {
 
 	return (0);
@@ -680,7 +680,7 @@ portal_pathconf(v)
  */
 /* ARGSUSED */
 int
-portal_print(void *v __unused)
+portal_print(void *v)
 {
 	printf("tag VT_PORTAL, portal vnode\n");
 	return (0);

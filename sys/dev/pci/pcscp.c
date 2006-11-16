@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.37 2006/10/12 01:31:33 christos Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.38 2006/11/16 01:33:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.37 2006/10/12 01:31:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.38 2006/11/16 01:33:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ static struct ncr53c9x_glue pcscp_glue = {
 };
 
 static int
-pcscp_match(struct device *parent __unused, struct cfdata *match __unused,
+pcscp_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -152,7 +152,7 @@ pcscp_match(struct device *parent __unused, struct cfdata *match __unused,
  * Attach this instance, and then all the sub-devices
  */
 static void
-pcscp_attach(struct device *parent __unused, struct device *self, void *aux)
+pcscp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pcscp_softc *esc = (void *)self;

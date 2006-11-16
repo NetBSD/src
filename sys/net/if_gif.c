@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.62 2006/10/25 20:28:45 elad Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.63 2006/11/16 01:33:40 christos Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.62 2006/10/25 20:28:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.63 2006/11/16 01:33:40 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -130,7 +130,7 @@ static int max_gif_nesting = MAX_GIF_NEST;
 
 /* ARGSUSED */
 void
-gifattach(int count __unused)
+gifattach(int count)
 {
 
 	LIST_INIT(&gif_softc_list);
@@ -282,7 +282,7 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 
 int
 gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-    struct rtentry *rt __unused)
+    struct rtentry *rt)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	int error = 0;

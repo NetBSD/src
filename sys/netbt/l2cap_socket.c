@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.2 2006/10/12 01:32:37 christos Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.3 2006/11/16 01:33:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.2 2006/10/12 01:32:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.3 2006/11/16 01:33:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -95,7 +95,7 @@ int l2cap_recvspace = 4096;
  */
 int
 l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
-    struct mbuf *nam, struct mbuf *ctl, struct lwp *l __unused)
+    struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
 	struct l2cap_channel *pcb = up->so_pcb;
 	struct sockaddr_bt *sa;
@@ -326,8 +326,8 @@ l2cap_disconnected(void *arg, int err)
 }
 
 static void *
-l2cap_newconn(void *arg, struct sockaddr_bt *laddr __unused,
-    struct sockaddr_bt *raddr __unused)
+l2cap_newconn(void *arg, struct sockaddr_bt *laddr,
+    struct sockaddr_bt *raddr)
 {
 	struct socket *so = arg;
 

@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.23 2006/10/16 13:00:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.24 2006/11/16 01:33:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -163,8 +163,8 @@ isic_isapnp_descriptions[] =
  * Probe card
  */
 static int
-isic_isapnp_probe(struct device *parent __unused,
-	struct cfdata *cf __unused, void *aux)
+isic_isapnp_probe(struct device *parent,
+	struct cfdata *cf, void *aux)
 {
 	struct isapnp_attach_args *ipa = aux;
 	const struct isic_isapnp_card_desc *desc = isic_isapnp_descriptions;
@@ -194,7 +194,7 @@ isic_isapnp_probe(struct device *parent __unused,
 #endif
 
 static void
-isic_isapnp_attach(struct device *parent __unused,
+isic_isapnp_attach(struct device *parent,
 	struct device *self, void *aux)
 {
   	static const char *ISACversion[] = {

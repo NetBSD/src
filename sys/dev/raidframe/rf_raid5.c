@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5.c,v 1.18 2006/10/12 01:31:52 christos Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.19 2006/11/16 01:33:23 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.18 2006/10/12 01:31:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.19 2006/11/16 01:33:23 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -55,8 +55,8 @@ typedef struct RF_Raid5ConfigInfo_s {
 }       RF_Raid5ConfigInfo_t;
 
 int
-rf_ConfigureRAID5(RF_ShutdownList_t **listp __unused, RF_Raid_t *raidPtr,
-		  RF_Config_t *cfgPtr __unused)
+rf_ConfigureRAID5(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		  RF_Config_t *cfgPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_Raid5ConfigInfo_t *info;
@@ -95,13 +95,13 @@ rf_ConfigureRAID5(RF_ShutdownList_t **listp __unused, RF_Raid_t *raidPtr,
 }
 
 int
-rf_GetDefaultNumFloatingReconBuffersRAID5(RF_Raid_t *raidPtr __unused)
+rf_GetDefaultNumFloatingReconBuffersRAID5(RF_Raid_t *raidPtr)
 {
 	return (20);
 }
 
 RF_HeadSepLimit_t
-rf_GetDefaultHeadSepLimitRAID5(RF_Raid_t *raidPtr __unused)
+rf_GetDefaultHeadSepLimitRAID5(RF_Raid_t *raidPtr)
 {
 	return (10);
 }
@@ -117,7 +117,7 @@ rf_ShutdownRAID5(RF_Raid_t *raidPtr)
 void
 rf_MapSectorRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		  RF_RowCol_t *col, RF_SectorNum_t *diskSector,
-		  int remap __unused)
+		  int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	*col = (SUID % raidPtr->numCol);
@@ -128,7 +128,7 @@ rf_MapSectorRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 void
 rf_MapParityRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		  RF_RowCol_t *col, RF_SectorNum_t *diskSector,
-		  int remap __unused)
+		  int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 
@@ -148,7 +148,7 @@ rf_IdentifyStripeRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 }
 
 void
-rf_MapSIDToPSIDRAID5(RF_RaidLayout_t *layoutPtr __unused,
+rf_MapSIDToPSIDRAID5(RF_RaidLayout_t *layoutPtr,
 		     RF_StripeNum_t stripeID,
 		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {

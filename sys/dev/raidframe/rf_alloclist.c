@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.24 2006/10/12 01:31:50 christos Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.25 2006/11/16 01:33:23 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.24 2006/10/12 01:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.25 2006/11/16 01:33:23 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.24 2006/10/12 01:31:50 christos E
 
 static void rf_ShutdownAllocList(void *);
 
-static void rf_ShutdownAllocList(void *ignored __unused)
+static void rf_ShutdownAllocList(void *ignored)
 {
 	pool_destroy(&rf_pools.alloclist);
 }

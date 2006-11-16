@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.39 2006/10/20 18:58:12 reinoud Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.40 2006/11/16 01:33:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.39 2006/10/20 18:58:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.40 2006/11/16 01:33:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,8 +315,8 @@ bad:
  */
  /*ARGSUSED*/
 int
-union_start(struct mount *mp __unused, int flags __unused,
-    struct lwp *l __unused)
+union_start(struct mount *mp, int flags,
+    struct lwp *l)
 {
 
 	return (0);
@@ -326,7 +326,7 @@ union_start(struct mount *mp __unused, int flags __unused,
  * Free reference to union layer
  */
 int
-union_unmount(struct mount *mp, int mntflags, struct lwp *l __unused)
+union_unmount(struct mount *mp, int mntflags, struct lwp *l)
 {
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	int freeing;
@@ -433,8 +433,8 @@ union_root(mp, vpp)
 
 /*ARGSUSED*/
 int
-union_quotactl(struct mount *mp __unused, int cmd __unused, uid_t uid __unused,
-    void *arg __unused, struct lwp *l __unused)
+union_quotactl(struct mount *mp, int cmd, uid_t uid,
+    void *arg, struct lwp *l)
 {
 
 	return (EOPNOTSUPP);
@@ -502,8 +502,8 @@ done:
 
 /*ARGSUSED*/
 int
-union_sync(struct mount *mp __unused, int waitfor __unused,
-    kauth_cred_t cred __unused, struct lwp *l __unused)
+union_sync(struct mount *mp, int waitfor,
+    kauth_cred_t cred, struct lwp *l)
 {
 
 	/*
@@ -514,8 +514,8 @@ union_sync(struct mount *mp __unused, int waitfor __unused,
 
 /*ARGSUSED*/
 int
-union_vget(struct mount *mp __unused, ino_t ino __unused,
-    struct vnode **vpp __unused)
+union_vget(struct mount *mp, ino_t ino,
+    struct vnode **vpp)
 {
 
 	return (EOPNOTSUPP);

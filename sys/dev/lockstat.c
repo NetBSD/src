@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.3 2006/10/12 06:56:47 xtraeme Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.4 2006/11/16 01:32:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.3 2006/10/12 06:56:47 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.4 2006/11/16 01:32:45 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -431,8 +431,8 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
  * Accept an open() on /dev/lockstat.
  */
 int
-lockstat_open(dev_t dev __unused, int flag __unused, int mode __unused,
-	struct lwp *l __unused)
+lockstat_open(dev_t dev, int flag, int mode,
+	struct lwp *l)
 {
 	int error;
 
@@ -455,8 +455,8 @@ lockstat_open(dev_t dev __unused, int flag __unused, int mode __unused,
  * Accept the last close() on /dev/lockstat.
  */
 int
-lockstat_close(dev_t dev __unused, int flag __unused, int mode __unused,
-	struct lwp *l __unused)
+lockstat_close(dev_t dev, int flag, int mode,
+	struct lwp *l)
 {
 	int error;
 
@@ -475,8 +475,8 @@ lockstat_close(dev_t dev __unused, int flag __unused, int mode __unused,
  * Handle control operations.
  */
 int
-lockstat_ioctl(dev_t dev __unused, u_long cmd, caddr_t data,
-	int flag __unused, struct lwp *l __unused)
+lockstat_ioctl(dev_t dev, u_long cmd, caddr_t data,
+	int flag, struct lwp *l)
 {
 	lsenable_t *le;
 	int error;
@@ -550,7 +550,7 @@ lockstat_ioctl(dev_t dev __unused, u_long cmd, caddr_t data,
  * Copy buffers out to user-space.
  */
 int
-lockstat_read(dev_t dev __unused, struct uio *uio, int flag __unused)
+lockstat_read(dev_t dev, struct uio *uio, int flag)
 {
 	int error;
 

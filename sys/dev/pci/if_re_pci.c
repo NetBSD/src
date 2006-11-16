@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.17 2006/11/03 17:51:47 tsutsui Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.18 2006/11/16 01:33:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -155,7 +155,7 @@ CFATTACH_DECL(re_pci, sizeof(struct re_pci_softc), re_pci_probe, re_pci_attach,
  * IDs against our list and return a device name if we find a match.
  */
 static int
-re_pci_probe(struct device *parent __unused, struct cfdata *match __unused,
+re_pci_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	const struct rtk_type		*t;
@@ -212,7 +212,7 @@ re_pci_probe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-re_pci_attach(struct device *parent __unused, struct device *self, void *aux)
+re_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct re_pci_softc	*psc = (void *)self;
 	struct rtk_softc	*sc = &psc->sc_rtk;

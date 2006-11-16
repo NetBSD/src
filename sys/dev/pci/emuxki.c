@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.48 2006/10/12 01:31:28 christos Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.49 2006/11/16 01:33:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.48 2006/10/12 01:31:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.49 2006/11/16 01:33:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -387,7 +387,7 @@ emuxki_ac97_init(struct emuxki_softc *sc)
 }
 
 static int
-emuxki_match(struct device *parent __unused, struct cfdata *match __unused,
+emuxki_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa;
@@ -407,7 +407,7 @@ emuxki_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-emuxki_attach(struct device *parent __unused, struct device *self, void *aux)
+emuxki_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct emuxki_softc *sc;
 	struct pci_attach_args *pa;
@@ -490,7 +490,7 @@ emuxki_attach(struct device *parent __unused, struct device *self, void *aux)
 }
 
 static int
-emuxki_detach(struct device *self, int flags __unused)
+emuxki_detach(struct device *self, int flags)
 {
 	struct emuxki_softc *sc;
 
@@ -2093,7 +2093,7 @@ emuxki_close(void *addr)
 }
 
 static int
-emuxki_query_encoding(void *addr __unused, struct audio_encoding *fp)
+emuxki_query_encoding(void *addr, struct audio_encoding *fp)
 {
 #ifdef EMUXKI_DEBUG
 	struct emuxki_softc *sc;
@@ -2327,8 +2327,8 @@ emuxki_freem(void *addr, void *ptr, struct malloc_type *type)
 /* blocksize should be a divisor of allowable buffersize */
 /* XXX probably this could be done better */
 static int
-emuxki_round_blocksize(void *addr __unused, int blksize,
-    int mode __unused, const audio_params_t* param __unused)
+emuxki_round_blocksize(void *addr, int blksize,
+    int mode, const audio_params_t* param)
 {
 #if 0
 	struct emuxki_softc *sc;
@@ -2357,7 +2357,7 @@ emuxki_round_blocksize(void *addr __unused, int blksize,
 }
 
 static size_t
-emuxki_round_buffersize(void *addr __unused, int direction, size_t bsize)
+emuxki_round_buffersize(void *addr, int direction, size_t bsize)
 {
 
 	if (direction == AUMODE_PLAY) {
@@ -2409,7 +2409,7 @@ emuxki_mappage(void *addr, void *ptr, off_t off, int prot)
 }
 
 static int
-emuxki_get_props(void *addr __unused)
+emuxki_get_props(void *addr)
 {
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
 	    AUDIO_PROP_FULLDUPLEX;
@@ -2509,14 +2509,14 @@ emuxki_ac97_write(void *arg, uint8_t reg, uint16_t val)
 }
 
 static int
-emuxki_ac97_reset(void *arg __unused)
+emuxki_ac97_reset(void *arg)
 {
 
 	return 0;
 }
 
 enum ac97_host_flags
-emuxki_ac97_flags(void *arg __unused)
+emuxki_ac97_flags(void *arg)
 {
 
 	return AC97_HOST_SWAPPED_CHANNELS;

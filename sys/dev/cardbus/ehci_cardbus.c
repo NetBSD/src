@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.15 2006/10/12 01:30:55 christos Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.16 2006/11/16 01:32:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.15 2006/10/12 01:30:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.16 2006/11/16 01:32:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,8 @@ static TAILQ_HEAD(, usb_cardbus) ehci_cardbus_alldevs =
 	TAILQ_HEAD_INITIALIZER(ehci_cardbus_alldevs);
 
 int
-ehci_cardbus_match(struct device *parent __unused,
-    struct cfdata *match __unused, void *aux)
+ehci_cardbus_match(struct device *parent,
+    struct cfdata *match, void *aux)
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
@@ -110,7 +110,7 @@ ehci_cardbus_match(struct device *parent __unused,
 }
 
 void
-ehci_cardbus_attach(struct device *parent __unused, struct device *self,
+ehci_cardbus_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct ehci_cardbus_softc *sc = device_private(self);

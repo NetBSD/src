@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.21 2006/10/12 01:32:06 christos Exp $ */
+/* $NetBSD: wsevent.c,v 1.22 2006/11/16 01:33:31 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.21 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.22 2006/11/16 01:33:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -265,7 +265,7 @@ filt_wseventrdetach(struct knote *kn)
 }
 
 static int
-filt_wseventread(struct knote *kn, long hint __unused)
+filt_wseventread(struct knote *kn, long hint)
 {
 	struct wseventvar *ev = kn->kn_hook;
 

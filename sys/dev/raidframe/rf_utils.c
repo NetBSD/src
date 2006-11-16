@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.15 2006/10/12 01:31:52 christos Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.16 2006/11/16 01:33:23 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.15 2006/10/12 01:31:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.16 2006/11/16 01:33:23 christos Exp $");
 
 #include "rf_archs.h"
 #include "rf_utils.h"
@@ -57,7 +57,7 @@ rf_make_2d_array(int b, int k, RF_AllocListElem_t *allocList)
 #if (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0)
 
 void
-rf_free_2d_array(RF_RowCol_t **a, int b, int k __unused)
+rf_free_2d_array(RF_RowCol_t **a, int b, int k)
 {
 	RF_RowCol_t i;
 
@@ -79,7 +79,7 @@ rf_make_1d_array(int c, RF_AllocListElem_t *allocList)
 }
 
 void
-rf_free_1d_array(RF_RowCol_t *a, int n __unused)
+rf_free_1d_array(RF_RowCol_t *a, int n)
 {
 	RF_Free(a, n * sizeof(RF_RowCol_t));
 }

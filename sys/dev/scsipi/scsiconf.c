@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.239 2006/10/12 01:31:57 christos Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.240 2006/11/16 01:33:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.239 2006/10/12 01:31:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.240 2006/11/16 01:33:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ scsiprint(void *aux, const char *pnp)
 }
 
 static int
-scsibusmatch(struct device *parent __unused, struct cfdata *cf, void *aux)
+scsibusmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct scsipi_channel *chan = aux;
 
@@ -160,7 +160,7 @@ scsibusmatch(struct device *parent __unused, struct cfdata *cf, void *aux)
 }
 
 static void
-scsibusattach(struct device *parent __unused, struct device *self, void *aux)
+scsibusattach(struct device *parent, struct device *self, void *aux)
 {
 	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = aux;
@@ -381,7 +381,7 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 }
 
 static int
-scsibusrescan(struct device *sc, const char *ifattr __unused,
+scsibusrescan(struct device *sc, const char *ifattr,
     const int *locators)
 {
 
@@ -968,8 +968,8 @@ bad:
 /****** Entry points for user control of the SCSI bus. ******/
 
 static int
-scsibusopen(dev_t dev, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+scsibusopen(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	struct scsibus_softc *sc;
 	int error, unit = minor(dev);
@@ -990,8 +990,8 @@ scsibusopen(dev_t dev, int flag __unused, int fmt __unused,
 }
 
 static int
-scsibusclose(dev_t dev, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+scsibusclose(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.36 2006/10/12 01:30:47 christos Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.37 2006/11/16 01:32:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.36 2006/10/12 01:30:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.37 2006/11/16 01:32:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,7 +541,7 @@ out:
 }
 
 int
-ibcs2_sys_gtty(struct lwp *l, void *v, register_t *retval __unused)
+ibcs2_sys_gtty(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_gtty_args /* {
 		syscallarg(int) fd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.19 2006/10/12 21:19:13 uwe Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.20 2006/11/16 01:32:50 christos Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.19 2006/10/12 21:19:13 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.20 2006/11/16 01:32:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,14 +147,14 @@ struct wskbd_mapdata hpckbd_keymapdata = {
 };
 
 int
-hpckbd_match(struct device *parent __unused,
-	     struct cfdata *cf __unused, void *aux __unused)
+hpckbd_match(struct device *parent,
+	     struct cfdata *cf, void *aux)
 {
 	return (1);
 }
 
 void
-hpckbd_attach(struct device *parent __unused, struct device *self, void *aux)
+hpckbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpckbd_attach_args *haa = aux;
 	struct hpckbd_softc *sc = device_private(self);
@@ -193,7 +193,7 @@ hpckbd_attach(struct device *parent __unused, struct device *self, void *aux)
 }
 
 int
-hpckbd_print(void *aux __unused, const char *pnp)
+hpckbd_print(void *aux, const char *pnp)
 {
 	return (pnp ? QUIET : UNCONF);
 }
@@ -264,7 +264,7 @@ hpckbd_getevent(struct hpckbd_core* hc, u_int *type, int *data)
 }
 
 void
-hpckbd_keymap_setup(struct hpckbd_core *hc __unused,
+hpckbd_keymap_setup(struct hpckbd_core *hc,
 		    const keysym_t *map, int mapsize)
 {
 	int i;
@@ -328,7 +328,7 @@ hpckbd_keymap_lookup(struct hpckbd_core *hc)
 }
 
 void
-__hpckbd_input_hook(void *arg __unused)
+__hpckbd_input_hook(void *arg)
 {
 #if 0
 	struct hpckbd_core *hc = arg;
@@ -462,14 +462,14 @@ hpckbd_enable(void *arg, int on)
 }
 
 void
-hpckbd_set_leds(void *arg __unused, int leds __unused)
+hpckbd_set_leds(void *arg, int leds)
 {
 	/* Can you find any LED which tells you about keyboard? */
 }
 
 int
-hpckbd_ioctl(void *arg, u_long cmd, caddr_t data, int flag __unused,
-	     struct lwp *l __unused)
+hpckbd_ioctl(void *arg, u_long cmd, caddr_t data, int flag,
+	     struct lwp *l)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct hpckbd_core *hc = arg;
