@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.32 2006/11/16 04:15:13 christos Exp $	*/
+/*	$NetBSD: subr.c,v 1.33 2006/11/16 04:31:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.32 2006/11/16 04:15:13 christos Exp $");
+__RCSID("$NetBSD: subr.c,v 1.33 2006/11/16 04:31:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ gettable(char *name, char *buf)
 		return;
 
 	for (sp = gettystrs; sp->field; sp++)
-		cgetstr(buf, sp->field, &sp->value);
+		(void)cgetstr(buf, sp->field, &sp->value);
 	for (np = gettynums; np->field; np++) {
 		if (cgetnum(buf, np->field, &n) == -1)
 			np->set = 0;
@@ -588,7 +588,8 @@ edithost(char *pat)
 		pat++;
 	}
 	if (*host)
-		strncpy(res, host, sizeof editedhost - (res - editedhost) - 1);
+		(void)strncpy(res, host,
+		    sizeof editedhost - (res - editedhost) - 1);
 	else
 		*res = '\0';
 	editedhost[sizeof editedhost - 1] = '\0';
@@ -603,7 +604,7 @@ makeenv(char *env[])
 
 	ep = env;
 	if (TT && *TT) {
-		strlcat(termbuf, TT, sizeof(termbuf));
+		(void)strlcat(termbuf, TT, sizeof(termbuf));
 		*ep++ = termbuf;
 	}
 	if ((p = EV) != NULL) {
@@ -649,7 +650,7 @@ portselector(void)
 	struct portselect *ps;
 	int len;
 
-	alarm(5*60);
+	(void)alarm(5*60);
 	for (len = 0; len < sizeof (baud) - 1; len++) {
 		if (read(STDIN_FILENO, &c, 1) <= 0)
 			break;
@@ -666,7 +667,7 @@ portselector(void)
 			type = ps->ps_type;
 			break;
 		}
-	sleep(2);	/* wait for connection to complete */
+	(void)sleep(2);	/* wait for connection to complete */
 	return (type);
 }
 
