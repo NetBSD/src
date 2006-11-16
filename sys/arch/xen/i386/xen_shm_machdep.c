@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.19 2006/11/16 05:43:47 yamt Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.20 2006/11/16 22:38:18 oster Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -86,8 +86,10 @@ struct xen_shm_callback_entry {
 /* a pool of struct xen_shm_callback_entry */
 static struct pool xen_shm_callback_pool;
 
+#ifdef DEBUG
 /* for ratecheck(9) */
 static struct timeval xen_shm_errintvl = { 60, 0 };  /* a minute, each */
+#endif
 
 void
 xen_shm_init()
