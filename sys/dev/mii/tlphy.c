@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.49 2006/11/16 01:33:06 christos Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.50 2006/11/16 21:24:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.49 2006/11/16 01:33:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.50 2006/11/16 21:24:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ tlphyattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_funcs = &tlphy_funcs;
 	sc->sc_mii.mii_pdata = mii;
 	sc->sc_mii.mii_flags = ma->mii_flags;
-	sc->sc_mii.mii_anegticks = 5;
+	sc->sc_mii.mii_anegticks = MII_ANEGTICKS;
 
 	PHY_RESET(&sc->sc_mii);
 

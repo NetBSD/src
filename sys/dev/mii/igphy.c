@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.9 2006/11/16 01:33:06 christos Exp $	*/
+/*	$NetBSD: igphy.c,v 1.10 2006/11/16 21:24:07 christos Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.9 2006/11/16 01:33:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.10 2006/11/16 21:24:07 christos Exp $");
 
 #include "opt_mii.h"
 
@@ -156,7 +156,7 @@ igphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &igphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 10;
+	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	PHY_RESET(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.11 2006/11/16 01:33:06 christos Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.12 2006/11/16 21:24:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.11 2006/11/16 01:33:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.12 2006/11/16 21:24:07 christos Exp $");
 
 
 /*
@@ -120,7 +120,7 @@ rgephy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	sc->mii_funcs = &rgephy_funcs;
 
@@ -308,7 +308,7 @@ setit:
 		/*
 		 * Only retry autonegotiation every 5 seconds.
 		 */
-		if (++sc->mii_ticks <= 5/*10*/)
+		if (++sc->mii_ticks <= MII_ANEGTICKS)
 			break;
 
 		sc->mii_ticks = 0;

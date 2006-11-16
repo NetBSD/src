@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.9 2006/11/16 01:33:06 christos Exp $ */
+/* $NetBSD: ciphy.c,v 1.10 2006/11/16 21:24:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.9 2006/11/16 01:33:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.10 2006/11/16 21:24:07 christos Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -124,7 +124,7 @@ ciphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &ciphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 
@@ -273,7 +273,7 @@ setit:
 		/*
 		 * Only retry autonegotiation every 5 seconds.
 		 */
-		if (++sc->mii_ticks <= 5/*10*/)
+		if (++sc->mii_ticks <= MII_ANEGTICKS)
 			break;
 
 		sc->mii_ticks = 0;
