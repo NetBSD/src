@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.42 2006/09/07 02:40:33 dogcow Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.43 2006/11/16 22:26:36 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.42 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.43 2006/11/16 22:26:36 dyoung Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -146,13 +146,13 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 
 	if ((sc = gre_lookup(m, proto)) == NULL) {
 		/* No matching tunnel or tunnel is down. */
-		return (0);
+		return 0;
 	}
 
 	if (m->m_len < sizeof(*gip)) {
 		m = m_pullup(m, sizeof(*gip));
 		if (m == NULL)
-			return (ENOBUFS);
+			return ENOBUFS;
 	}
 	gip = mtod(m, const struct greip *);
 
@@ -240,9 +240,8 @@ gre_mobile_input(struct mbuf *m, ...)
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);
-	} else {
+	} else
 		IF_ENQUEUE(ifq, m);
-	}
 	splx(s);
 }
 
@@ -257,14 +256,14 @@ gre_lookup(struct mbuf *m, u_int8_t proto)
 
 	for (sc = LIST_FIRST(&gre_softc_list); sc != NULL;
 	     sc = LIST_NEXT(sc, sc_list)) {
-		if ((sc->g_dst.s_addr == ip->ip_src.s_addr) &&
-		    (sc->g_src.s_addr == ip->ip_dst.s_addr) &&
-		    (sc->g_proto == proto) &&
-		    ((sc->sc_if.if_flags & IFF_UP) != 0))
-			return (sc);
+		if (sc->g_dst.s_addr == ip->ip_src.s_addr &&
+		    sc->g_src.s_addr == ip->ip_dst.s_addr &&
+		    sc->sc_proto == proto &&
+		    (sc->sc_if.if_flags & IFF_UP) != 0)
+			return sc;
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 #endif /* if NGRE > 0 */
