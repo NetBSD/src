@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.4 2003/10/21 08:46:15 agc Exp $	*/
+/*	$NetBSD: getopt.c,v 1.5 2006/11/16 21:34:53 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,8 +62,8 @@ main(int argc, char *argv[])
 				free(optstring);
 			optstring = strtok(&line[6], WS);
 			if (optstring == NULL)
-			    err(1, "missing optstring at line %ld",
-				(unsigned long) line);
+			    errx(1, "missing optstring at line %ld",
+				(unsigned long)lineno);
 			optstring = strdup(optstring);
 			if (debug)
 				fprintf(stderr, "optstring = %s\n", optstring);
@@ -74,7 +74,8 @@ main(int argc, char *argv[])
 			}
 			args[nargs = 0] = strtok(&line[6], WS);
 			if (args[nargs] == NULL)
-				err(1, "Missing args");
+				errx(1, "missing args at line %ld",
+				    (unsigned long)lineno);
 
 			args[nargs] = strdup(args[nargs]);
 			while ((args[++nargs] = strtok(NULL, WS)) != NULL)
@@ -92,10 +93,11 @@ main(int argc, char *argv[])
 				free(result);
 			result = strtok(&line[8], WS);
 			if (result == NULL)
-				err(1, "result: without load:");
+				errx(1, "missing result at line %ld",
+				    (unsigned long)lineno);
 			result = strdup(result);
 			if (nargs == -1)
-				err(1, "result: without args:");
+				errx(1, "result: without args:");
 			if (debug)
 				fprintf(stderr, "result = %s\n", result);
 			while ((c = getopt(nargs, args, optstring)) != -1)  {
@@ -124,7 +126,7 @@ main(int argc, char *argv[])
 			snprintf(arg, sizeof(arg), "%d", nargs - optind);
 			strcat(buf, arg);
 			if (strcmp(buf, result) != 0)
-				err(1, "`%s' != `%s'", buf, result);
+				errx(1, "`%s' != `%s'", buf, result);
 		}
 		free(line);
 	}
