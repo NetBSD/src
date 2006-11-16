@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.7 2006/11/16 14:35:07 elad Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.8 2006/11/16 16:10:43 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -845,7 +845,7 @@ out:
 			else
 				len = fwdev->rommax - CSRROMOFF + 4;
 		}
-		if (crom_buf->len > 0 && crom_buf->len < len)
+		if (crom_buf->len < len)
 			len = crom_buf->len;
 		else
 			crom_buf->len = len;
