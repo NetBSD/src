@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.31 2005/05/21 17:18:51 christos Exp $	*/
+/*	$NetBSD: subr.c,v 1.32 2006/11/16 04:15:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.31 2005/05/21 17:18:51 christos Exp $");
+__RCSID("$NetBSD: subr.c,v 1.32 2006/11/16 04:15:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ charnames[] = {
 	&SU, &DS, &RP, &FL, &WE, &LN, &ST, &B2, 0
 };
 
-static char *
+static cc_t *
 charvars[] = {
 	&tmode.c_cc[VERASE], &tmode.c_cc[VKILL], &tmode.c_cc[VINTR],
 	&tmode.c_cc[VQUIT], &tmode.c_cc[VSTART], &tmode.c_cc[VSTOP],

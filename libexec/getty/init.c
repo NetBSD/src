@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.15 2005/05/21 17:18:51 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.16 2006/11/16 04:15:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)init.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.15 2005/05/21 17:18:51 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.16 2006/11/16 04:15:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,36 +52,38 @@ __RCSID("$NetBSD: init.c,v 1.15 2005/05/21 17:18:51 christos Exp $");
 extern	struct termios tmode;
 extern	char hostname[];
 
+#define M(a) ((char *)&tmode.c_cc[a])
+
 struct	gettystrs gettystrs[] = {
-	{ "nx" },			/* next table */
-	{ "cl" },			/* screen clear characters */
-	{ "im" },			/* initial message */
-	{ "lm", "login: " },		/* login message */
-	{ "er", &tmode.c_cc[VERASE] },	/* erase character */
-	{ "kl", &tmode.c_cc[VKILL] },	/* kill character */
-	{ "et", &tmode.c_cc[VEOF] },	/* eof chatacter (eot) */
-	{ "pc", "" },			/* pad character */
-	{ "tt" },			/* terminal type */
-	{ "ev" },			/* environment */
-	{ "lo", _PATH_LOGIN },		/* login program */
-	{ "hn", hostname },		/* host name */
-	{ "he" },			/* host name edit */
-	{ "in", &tmode.c_cc[VINTR] },	/* interrupt char */
-	{ "qu", &tmode.c_cc[VQUIT] },	/* quit char */
-	{ "xn", &tmode.c_cc[VSTART] },	/* XON (start) char */
-	{ "xf", &tmode.c_cc[VSTOP] },	/* XOFF (stop) char */
-	{ "bk", &tmode.c_cc[VEOL] },	/* brk char (alt \n) */
-	{ "su", &tmode.c_cc[VSUSP] },	/* suspend char */
-	{ "ds", &tmode.c_cc[VDSUSP] },	/* delayed suspend */
-	{ "rp", &tmode.c_cc[VREPRINT] },/* reprint char */
-	{ "fl", &tmode.c_cc[VDISCARD] },/* flush output */
-	{ "we", &tmode.c_cc[VWERASE] },	/* word erase */
-	{ "ln", &tmode.c_cc[VLNEXT] },	/* literal next */
-	{ "st", &tmode.c_cc[VSTATUS] },	/* status */
-	{ "b2", &tmode.c_cc[VEOL2] },	/* alt brk char */
-	{ "pp" },			/* ppp login program */
-	{ "if" },                       /* sysv-like 'issue' filename */
-	{ "al" },                       /* user to auto-login */
+	{ "nx" },		/* next table */
+	{ "cl" },		/* screen clear characters */
+	{ "im" },		/* initial message */
+	{ "lm", "login: " },	/* login message */
+	{ "er", M(VERASE) },	/* erase character */
+	{ "kl", M(VKILL) },	/* kill character */
+	{ "et", M(VEOF) },	/* eof chatacter (eot) */
+	{ "pc", "" },		/* pad character */
+	{ "tt" },		/* terminal type */
+	{ "ev" },		/* environment */
+	{ "lo", _PATH_LOGIN },	/* login program */
+	{ "hn", hostname },	/* host name */
+	{ "he" },		/* host name edit */
+	{ "in", M(VINTR) },	/* interrupt char */
+	{ "qu", M(VQUIT) },	/* quit char */
+	{ "xn", M(VSTART) },	/* XON (start) char */
+	{ "xf", M(VSTOP) },	/* XOFF (stop) char */
+	{ "bk", M(VEOL) },	/* brk char (alt \n) */
+	{ "su", M(VSUSP) },	/* suspend char */
+	{ "ds", M(VDSUSP) },	/* delayed suspend */
+	{ "rp", M(VREPRINT) },	/* reprint char */
+	{ "fl", M(VDISCARD) },	/* flush output */
+	{ "we", M(VWERASE) },	/* word erase */
+	{ "ln", M(VLNEXT) },	/* literal next */
+	{ "st", M(VSTATUS) },	/* status */
+	{ "b2", M(VEOL2) },	/* alt brk char */
+	{ "pp" },		/* ppp login program */
+	{ "if" },               /* sysv-like 'issue' filename */
+	{ "al" },               /* user to auto-login */
 	{ 0 }
 };
 
