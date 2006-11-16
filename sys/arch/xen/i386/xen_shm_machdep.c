@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.18 2006/10/22 09:44:55 yamt Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.19 2006/11/16 05:43:47 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -59,9 +59,9 @@
  */
 
 /* pointers to our VM space */
-vaddr_t xen_shm_base_address;
-u_long xen_shm_base_address_pg;
-vaddr_t xen_shm_end_address;
+static vaddr_t xen_shm_base_address;
+static u_long xen_shm_base_address_pg;
+static vaddr_t xen_shm_end_address;
 
 /* Grab enouth VM space to map an entire vbd ring. */
 #ifdef XEN3
@@ -69,24 +69,25 @@ vaddr_t xen_shm_end_address;
 #endif
 #define XENSHM_NPAGES (BLKIF_RING_SIZE * (BLKIF_MAX_SEGMENTS_PER_REQUEST + 1))
 
-vsize_t xen_shm_size = (XENSHM_NPAGES * PAGE_SIZE);
+static vsize_t xen_shm_size = (XENSHM_NPAGES * PAGE_SIZE);
 
 /* vm space management */
-vmem_t *xen_shm_arena;
+static vmem_t *xen_shm_arena;
 
 /* callbacks are registered in a FIFO list. */
 
-SIMPLEQ_HEAD(xen_shm_callback_head, xen_shm_callback_entry) xen_shm_callbacks;
+static SIMPLEQ_HEAD(xen_shm_callback_head, xen_shm_callback_entry)
+    xen_shm_callbacks;
 struct xen_shm_callback_entry {
 	SIMPLEQ_ENTRY(xen_shm_callback_entry) xshmc_entries;
 	int (*xshmc_callback)(void *); /* our callback */
 	void *xshmc_arg; /* cookie passed to the callback */
 };
 /* a pool of struct xen_shm_callback_entry */
-struct pool xen_shm_callback_pool;
+static struct pool xen_shm_callback_pool;
 
 /* for ratecheck(9) */
-struct timeval xen_shm_errintvl = { 60, 0 };  /* a minute, each */
+static struct timeval xen_shm_errintvl = { 60, 0 };  /* a minute, each */
 
 void
 xen_shm_init()
