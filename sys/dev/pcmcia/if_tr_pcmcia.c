@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.17 2006/10/12 01:31:50 christos Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.18 2006/11/16 01:33:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.17 2006/10/12 01:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.18 2006/11/16 01:33:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ CFATTACH_DECL(tr_pcmcia, sizeof(struct tr_pcmcia_softc),
     tr_pcmcia_match, tr_pcmcia_attach, tr_pcmcia_detach, tr_activate);
 
 static int
-tr_pcmcia_match(struct device *parent __unused, struct cfdata *match __unused,
+tr_pcmcia_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -121,7 +121,7 @@ tr_pcmcia_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-tr_pcmcia_attach(struct device *parent __unused, struct device *self, void *aux)
+tr_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tr_pcmcia_softc *psc = (void *)self;
 	struct tr_softc *sc = &psc->sc_tr;

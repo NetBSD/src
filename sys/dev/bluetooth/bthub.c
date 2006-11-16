@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.7 2006/10/12 01:30:55 christos Exp $	*/
+/*	$NetBSD: bthub.c,v 1.8 2006/11/16 01:32:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.7 2006/10/12 01:30:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.8 2006/11/16 01:32:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -91,15 +91,15 @@ static int	bthub_pioctl(dev_t, unsigned long, prop_dictionary_t, int, struct lwp
  */
 
 static int
-bthub_match(struct device *self __unused, struct cfdata *cfdata __unused,
-    void *arg __unused)
+bthub_match(struct device *self, struct cfdata *cfdata,
+    void *arg)
 {
 
 	return 1;
 }
 
 static void
-bthub_attach(struct device *parent __unused, struct device *self, void *aux)
+bthub_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bthub_softc *sc = (struct bthub_softc *)self;
 	bdaddr_t *addr = aux;
@@ -174,8 +174,8 @@ bthubioctl(dev_t devno, unsigned long cmd, caddr_t data, int flag, struct lwp *l
 }
 
 static int
-bthub_pioctl(dev_t devno __unused, unsigned long cmd, prop_dictionary_t dict,
-    int flag __unused, struct lwp *l __unused)
+bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
+    int flag, struct lwp *l)
 {
 	struct bthub_softc *sc;
 	struct btdev *dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.66 2006/10/30 00:41:26 elad Exp $	*/
+/*	$NetBSD: mem.c,v 1.67 2006/11/16 01:32:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.66 2006/10/30 00:41:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.67 2006/11/16 01:32:38 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -113,7 +113,7 @@ int check_pa_acc(paddr_t, vm_prot_t);
 
 /*ARGSUSED*/
 int
-mmopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	switch (minor(dev)) {
@@ -138,7 +138,7 @@ mmopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 
 /*ARGSUSED*/
 int
-mmrw(dev_t dev, struct uio *uio, int flags __unused)
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	register vaddr_t o, v;
 	register int c;

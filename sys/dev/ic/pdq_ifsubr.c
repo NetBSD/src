@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.46 2006/10/12 01:31:01 christos Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.47 2006/11/16 01:32:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.46 2006/10/12 01:31:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.47 2006/11/16 01:32:52 christos Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -520,7 +520,7 @@ pdq_ifioctl(
 void
 pdq_ifattach(
     pdq_softc_t *sc,
-    ifnet_ret_t (*ifwatchdog)(int unit) __unused)
+    ifnet_ret_t (*ifwatchdog)(int unit))
 {
     struct ifnet *ifp = &sc->sc_if;
 

@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.31 2006/10/16 12:23:00 pooka Exp $
+ *	$Id: i4b_l4.c,v 1.32 2006/11/16 01:33:49 christos Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.31 2006/10/16 12:23:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.32 2006/11/16 01:33:49 christos Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -273,7 +273,7 @@ int isdn_l4_driver_detatch(const char *name)
 	return 0;
 }
 
-const struct isdn_l4_driver_functions *isdn_l4_find_driver(const char *name, int unit __unused)
+const struct isdn_l4_driver_functions *isdn_l4_find_driver(const char *name, int unit)
 {
 	struct l4_driver_desc * d;
 	SLIST_FOREACH(d, &l4_driver_registry, l4drvq)
@@ -293,7 +293,7 @@ int isdn_l4_find_driverid(const char *name)
 	return -1;
 }
 
-const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int unit __unused)
+const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int unit)
 {
 	struct l4_driver_desc * d;
 	SLIST_FOREACH(d, &l4_driver_registry, l4drvq)
@@ -379,7 +379,7 @@ i4b_l4_l12stat(struct isdn_l3_driver *d, int layer, int state)
  *	send MSG_TEIASG_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_teiasg(struct isdn_l3_driver *d, int tei __unused)
+i4b_l4_teiasg(struct isdn_l3_driver *d, int tei)
 {
 	struct mbuf *m;
 
@@ -720,7 +720,7 @@ i4b_l4_charging_ind(call_desc_t *cd)
  *	send MSG_STATUS_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_status_ind(call_desc_t *cd __unused)
+i4b_l4_status_ind(call_desc_t *cd)
 {
 }
 
@@ -747,7 +747,7 @@ i4b_l4_alert_ind(call_desc_t *cd)
  *	send MSG_INFO_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_info_ind(call_desc_t *cd __unused)
+i4b_l4_info_ind(call_desc_t *cd)
 {
 }
 

@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.72 2006/10/24 21:03:30 drochner Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.73 2006/11/16 01:33:27 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -155,14 +155,14 @@ CFATTACH_DECL(USB_DNAME(dname), \
     ___CONCAT(dname,_activate))
 
 #define USB_MATCH(dname) \
-int __CONCAT(dname,_match)(struct device *parent __unused, \
-    struct cfdata *match __unused, void *aux __unused)
+int __CONCAT(dname,_match)(struct device *parent, \
+    struct cfdata *match, void *aux)
 
 #define USB_MATCH_START(dname, uaa) \
 	struct usb_attach_arg *uaa = aux
 
 #define USB_ATTACH(dname) \
-void __CONCAT(dname,_attach)(struct device *parent __unused, \
+void __CONCAT(dname,_attach)(struct device *parent, \
     struct device *self, void *aux)
 
 #define USB_ATTACH_START(dname, sc, uaa) \
@@ -177,7 +177,7 @@ void __CONCAT(dname,_attach)(struct device *parent __unused, \
 #define USB_ATTACH_SETUP printf("\n")
 
 #define USB_DETACH(dname) \
-int __CONCAT(dname,_detach)(struct device *self __unused, int flags __unused)
+int __CONCAT(dname,_detach)(struct device *self, int flags)
 
 #define USB_DETACH_START(dname, sc) \
 	struct __CONCAT(dname,_softc) *sc = \

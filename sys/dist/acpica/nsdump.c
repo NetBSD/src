@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsdump.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsdump.c,v 1.3 2006/11/16 01:33:31 christos Exp $");
 
 #define __NSDUMP_C__
 
@@ -262,7 +262,7 @@ AcpiNsDumpOneObject (
     ACPI_HANDLE             ObjHandle,
     UINT32                  Level,
     void                    *Context,
-    void                    **ReturnValue __unused)
+    void                    **ReturnValue)
 {
     ACPI_WALK_INFO          *Info = (ACPI_WALK_INFO *) Context;
     ACPI_NAMESPACE_NODE     *ThisNode;

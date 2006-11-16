@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.17 2006/10/28 11:35:17 peter Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.18 2006/11/16 01:32:37 christos Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.17 2006/10/28 11:35:17 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.18 2006/11/16 01:32:37 christos Exp $");
 
 #ident "@(#)rm_class.c  1.48     97/12/05 SMI"
 
@@ -345,7 +345,7 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 
 int
 rmc_modclass(struct rm_class *cl, u_int nsecPerByte, int maxq, u_int maxidle,
-    int minidle, u_int offtime, int pktsize __unused)
+    int minidle, u_int offtime, int pktsize)
 {
 	struct rm_ifdat	*ifd;
 	u_int		 old_allotment;
@@ -1581,8 +1581,8 @@ rmc_restart(struct rm_class *cl)
  */
 
 static void
-rmc_root_overlimit(struct rm_class *cl __unused,
-    struct rm_class *borrow __unused)
+rmc_root_overlimit(struct rm_class *cl,
+    struct rm_class *borrow)
 {
 	panic("rmc_root_overlimit");
 }

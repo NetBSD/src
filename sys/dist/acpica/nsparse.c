@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsparse.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsparse.c,v 1.3 2006/11/16 01:33:31 christos Exp $");
 
 #define __NSPARSE_C__
 
@@ -208,7 +208,7 @@ AcpiNsOneCompleteParse (
 ACPI_STATUS
 AcpiNsParseTable (
     ACPI_TABLE_DESC         *TableDesc,
-    ACPI_NAMESPACE_NODE     *StartNode __unused)
+    ACPI_NAMESPACE_NODE     *StartNode)
 {
     ACPI_STATUS             Status;
 

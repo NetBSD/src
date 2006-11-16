@@ -1,4 +1,4 @@
-/*	$NetBSD: pcic_pci_machdep.c,v 1.6 2006/10/12 01:30:43 christos Exp $	*/
+/*	$NetBSD: pcic_pci_machdep.c,v 1.7 2006/11/16 01:32:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcic_pci_machdep.c,v 1.6 2006/10/12 01:30:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcic_pci_machdep.c,v 1.7 2006/11/16 01:32:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcic_pci_machdep.c,v 1.6 2006/10/12 01:30:43 christo
 extern int pcic_isa_intr_alloc_mask;
 
 void *
-pcic_pci_machdep_intr_est(pci_chipset_tag_t pc __unused)
+pcic_pci_machdep_intr_est(pci_chipset_tag_t pc)
 {
 	return NULL;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pnpbios.c,v 1.9 2006/10/12 01:30:44 christos Exp $	*/
+/*	$NetBSD: pckbc_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.9 2006/10/12 01:30:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,8 @@ CFATTACH_DECL(pckbc_pnpbios, sizeof(struct pckbc_pnpbios_softc),
 void	pckbc_pnpbios_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 int
-pckbc_pnpbios_match(struct device *parent __unused,
-    struct cfdata *match __unused, void *aux)
+pckbc_pnpbios_match(struct device *parent,
+    struct cfdata *match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
@@ -109,7 +109,7 @@ pckbc_pnpbios_match(struct device *parent __unused,
 }
 
 void
-pckbc_pnpbios_attach(struct device *parent __unused, struct device *self,
+pckbc_pnpbios_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct pckbc_pnpbios_softc *psc = (void *) self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.93 2006/10/12 01:32:26 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.94 2006/11/16 01:33:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.93 2006/10/12 01:32:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.94 2006/11/16 01:33:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1067,7 +1067,7 @@ fdesc_pathconf(v)
  */
 /* ARGSUSED */
 int
-fdesc_print(void *v __unused)
+fdesc_print(void *v)
 {
 	printf("tag VT_NON, fdesc vnode\n");
 	return (0);

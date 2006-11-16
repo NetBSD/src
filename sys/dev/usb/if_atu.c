@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.22 2006/10/31 20:43:31 joerg Exp $ */
+/*	$NetBSD: if_atu.c,v 1.23 2006/11/16 01:33:26 christos Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.22 2006/10/31 20:43:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.23 2006/11/16 01:33:26 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -1442,7 +1442,7 @@ atu_activate(device_ptr_t self, enum devact act)
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
 int
-atu_newbuf(struct atu_softc *sc __unused, struct atu_chain *c, struct mbuf *m)
+atu_newbuf(struct atu_softc *sc, struct atu_chain *c, struct mbuf *m)
 {
 	struct mbuf		*m_new = NULL;
 
@@ -1533,7 +1533,7 @@ atu_tx_list_init(struct atu_softc *sc)
 }
 
 void
-atu_xfer_list_free(struct atu_softc *sc __unused, struct atu_chain *ch,
+atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
     int listlen)
 {
 	int			i;
@@ -1668,7 +1668,7 @@ done:
  * the list buffers.
  */
 void
-atu_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct atu_chain	*c = (struct atu_chain *)priv;
@@ -1727,7 +1727,7 @@ atu_calculate_padding(int size)
 }
 
 int
-atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni __unused,
+atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
     struct atu_chain *c, struct mbuf *m)
 {
 	int			len;
@@ -2169,7 +2169,7 @@ atu_watchdog(struct ifnet *ifp)
  * RX and TX lists.
  */
 void
-atu_stop(struct ifnet *ifp, int disable __unused)
+atu_stop(struct ifnet *ifp, int disable)
 {
 	struct atu_softc	*sc = ifp->if_softc;
 	struct ieee80211com	*ic = &sc->sc_ic;

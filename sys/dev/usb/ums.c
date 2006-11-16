@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.66 2006/11/12 19:00:43 plunky Exp $	*/
+/*	$NetBSD: ums.c,v 1.67 2006/11/16 01:33:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.66 2006/11/12 19:00:43 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.67 2006/11/16 01:33:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ const struct wsmouse_accessops ums_accessops = {
 USB_DECLARE_DRIVER(ums);
 
 int
-ums_match(struct device *parent __unused, struct cfdata *match __unused,
+ums_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
@@ -145,7 +145,7 @@ ums_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-ums_attach(struct device *parent __unused, struct device *self, void *aux)
+ums_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ums_softc *sc = (struct ums_softc *)self;
 	struct uhidev_attach_arg *uha = aux;
@@ -306,7 +306,7 @@ ums_detach(struct device *self, int flags)
 }
 
 void
-ums_intr(struct uhidev *addr, void *ibuf, u_int len __unused)
+ums_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
 	struct ums_softc *sc = (struct ums_softc *)addr;
 	int dx, dy, dz, dw;
@@ -379,8 +379,8 @@ ums_disable(void *v)
 }
 
 Static int
-ums_ioctl(void *v __unused, u_long cmd, caddr_t data, int flag __unused,
-    struct lwp * p __unused)
+ums_ioctl(void *v, u_long cmd, caddr_t data, int flag,
+    struct lwp * p)
 
 {
 	switch (cmd) {

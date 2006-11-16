@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.57 2006/10/12 01:31:30 christos Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.58 2006/11/16 01:33:08 christos Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.57 2006/10/12 01:31:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.58 2006/11/16 01:33:08 christos Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -202,7 +202,7 @@ CFATTACH_DECL(iwi, sizeof (struct iwi_softc), iwi_match, iwi_attach,
     iwi_detach, NULL);
 
 static int
-iwi_match(struct device *parent __unused, struct cfdata *match __unused,
+iwi_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -223,7 +223,7 @@ iwi_match(struct device *parent __unused, struct cfdata *match __unused,
 #define IWI_PCI_BAR0	0x10
 
 static void
-iwi_attach(struct device *parent __unused, struct device *self, void *aux)
+iwi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct iwi_softc *sc = (struct iwi_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -480,7 +480,7 @@ fail:	iwi_detach(self, 0);
 }
 
 static int
-iwi_detach(struct device* self, int flags __unused)
+iwi_detach(struct device* self, int flags)
 {
 	struct iwi_softc *sc = (struct iwi_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;
@@ -796,7 +796,7 @@ fail:	iwi_free_rx_ring(sc, ring);
 }
 
 static void
-iwi_reset_rx_ring(struct iwi_softc *sc __unused, struct iwi_rx_ring *ring)
+iwi_reset_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring)
 {
 	ring->cur = 0;
 }
@@ -883,7 +883,7 @@ iwi_powerhook(int why, void *arg)
 }
 
 static struct ieee80211_node *
-iwi_node_alloc(struct ieee80211_node_table *nt __unused)
+iwi_node_alloc(struct ieee80211_node_table *nt)
 {
 	struct iwi_node *in;
 
@@ -2890,7 +2890,7 @@ err:
 }
 
 static void
-iwi_stop(struct ifnet *ifp, int disable __unused)
+iwi_stop(struct ifnet *ifp, int disable)
 {
 	struct iwi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;

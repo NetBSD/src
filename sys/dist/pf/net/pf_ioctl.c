@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.27 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.28 2006/11/16 01:33:34 christos Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -172,7 +172,7 @@ extern struct pfil_head if_pfil;
 #endif
 
 void
-pfattach(int num __unused)
+pfattach(int num)
 {
 	u_int32_t *timeout = pf_default_rule.timeout;
 
@@ -324,7 +324,7 @@ pfdetach(void)
 #endif
 
 int
-pfopen(dev_t dev, int flags __unused, int fmt __unused, struct lwp *l __unused)
+pfopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	if (minor(dev) >= 1)
 		return (ENXIO);
@@ -332,7 +332,7 @@ pfopen(dev_t dev, int flags __unused, int fmt __unused, struct lwp *l __unused)
 }
 
 int
-pfclose(dev_t dev, int flags __unused, int fmt __unused, struct lwp *l __unused)
+pfclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	if (minor(dev) >= 1)
 		return (ENXIO);
@@ -849,7 +849,7 @@ pf_tag_unref(u_int16_t tag)
 }
 
 int
-pf_rtlabel_add(struct pf_addr_wrap *a __unused)
+pf_rtlabel_add(struct pf_addr_wrap *a)
 {
 #ifdef __OpenBSD__
 	if (a->type == PF_ADDR_RTLABEL &&
@@ -860,7 +860,7 @@ pf_rtlabel_add(struct pf_addr_wrap *a __unused)
 }
 
 void
-pf_rtlabel_remove(struct pf_addr_wrap *a __unused)
+pf_rtlabel_remove(struct pf_addr_wrap *a)
 {
 #ifdef __OpenBSD__
 	if (a->type == PF_ADDR_RTLABEL)
@@ -869,7 +869,7 @@ pf_rtlabel_remove(struct pf_addr_wrap *a __unused)
 }
 
 void
-pf_rtlabel_copyout(struct pf_addr_wrap *a __unused)
+pf_rtlabel_copyout(struct pf_addr_wrap *a)
 {
 #ifdef __OpenBSD__
 	const char	*name;
@@ -1138,7 +1138,7 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor)
 }
 
 int
-pfioctl(dev_t dev __unused, u_long cmd, caddr_t addr, int flags, struct lwp *l)
+pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct lwp *l)
 {
 	struct pf_pooladdr	*pa = NULL;
 	struct pf_pool		*pool = NULL;
@@ -2965,7 +2965,7 @@ fail:
 #ifdef __NetBSD__
 #ifdef INET
 int
-pfil4_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp, int dir)
+pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
 	int error;
 
@@ -3016,7 +3016,7 @@ pfil4_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp, int dir)
 
 #ifdef INET6
 int
-pfil6_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp, int dir)
+pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
 	int error;
 
@@ -3056,8 +3056,8 @@ pfil6_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp, int dir)
 #endif
 
 int
-pfil_ifnet_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp,
-    int dir __unused)
+pfil_ifnet_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp,
+    int dir)
 {
 	u_long cmd = (u_long)mp;
 
@@ -3074,8 +3074,8 @@ pfil_ifnet_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp,
 }
 
 int
-pfil_ifaddr_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp,
-    int dir __unused)
+pfil_ifaddr_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp,
+    int dir)
 {
 	extern void pfi_kifaddr_update_if(struct ifnet *);
 

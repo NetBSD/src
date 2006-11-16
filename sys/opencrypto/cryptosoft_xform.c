@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.3 2006/10/27 21:20:48 christos Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.4 2006/11/16 01:33:51 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.3 2006/10/27 21:20:48 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.4 2006/11/16 01:33:51 christos Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -266,15 +266,15 @@ static const struct swcr_comp_algo swcr_comp_algo_deflate = {
  * Encryption wrapper routines.
  */
 static void
-null_encrypt(caddr_t key __unused, u_int8_t *blk __unused)
+null_encrypt(caddr_t key, u_int8_t *blk)
 {
 }
 static void
-null_decrypt(caddr_t key __unused, u_int8_t *blk __unused)
+null_decrypt(caddr_t key, u_int8_t *blk)
 {
 }
 static int
-null_setkey(u_int8_t **sched, const u_int8_t *key __unused, int len __unused)
+null_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	*sched = NULL;
 	return 0;
@@ -304,7 +304,7 @@ des1_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 static int
-des1_setkey(u_int8_t **sched, const u_int8_t *key, int len __unused)
+des1_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	des_key_schedule *p;
 	int err;
@@ -348,7 +348,7 @@ des3_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 static int
-des3_setkey(u_int8_t **sched, const u_int8_t *key, int len __unused)
+des3_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	des_key_schedule *p;
 	int err;
@@ -480,7 +480,7 @@ skipjack_decrypt(caddr_t key, u_int8_t *blk)
 }
 
 static int
-skipjack_setkey(u_int8_t **sched, const u_int8_t *key, int len __unused)
+skipjack_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	int err;
 
@@ -560,19 +560,19 @@ rijndael128_zerokey(u_int8_t **sched)
  */
 
 static void
-null_init(void *ctx __unused)
+null_init(void *ctx)
 {
 }
 
 static int
-null_update(void *ctx __unused, const u_int8_t *buf __unused,
-    u_int16_t len __unused)
+null_update(void *ctx, const u_int8_t *buf,
+    u_int16_t len)
 {
 	return 0;
 }
 
 static void
-null_final(u_int8_t *buf, void *ctx __unused)
+null_final(u_int8_t *buf, void *ctx)
 {
 	if (buf != (u_int8_t *) 0)
 		bzero(buf, 12);

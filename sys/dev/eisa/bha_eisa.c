@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.27 2006/10/12 01:30:57 christos Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.28 2006/11/16 01:32:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.27 2006/10/12 01:30:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.28 2006/11/16 01:32:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ bha_eisa_address(bus_space_tag_t iot, bus_space_handle_t ioh, int *portp)
  * the actual probe routine to check it out.
  */
 static int
-bha_eisa_match(struct device *parent __unused, struct cfdata *match __unused,
+bha_eisa_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct eisa_attach_args *ea = aux;
@@ -143,7 +143,7 @@ bha_eisa_match(struct device *parent __unused, struct cfdata *match __unused,
  * Attach all the sub-devices we can find
  */
 static void
-bha_eisa_attach(struct device *parent __unused, struct device *self, void *aux)
+bha_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct bha_softc *sc = device_private(self);

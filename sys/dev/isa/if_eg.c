@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.70 2006/10/12 01:31:16 christos Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.71 2006/11/16 01:33:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.70 2006/10/12 01:31:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.71 2006/11/16 01:33:00 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -162,7 +162,7 @@ egprintpcb(pcb)
 
 
 static inline void
-egprintstat(u_char b __unused)
+egprintstat(u_char b)
 {
 	DPRINTF(("%s %s %s %s %s %s %s\n",
 		 (b & EG_STAT_HCRE)?"HCRE":"",
@@ -313,7 +313,7 @@ egreadPCB(iot, ioh, pcb)
  */
 
 int
-egprobe(struct device *parent __unused, struct cfdata *match __unused,
+egprobe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -392,7 +392,7 @@ egprobe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-egattach(struct device *parent __unused, struct device *self, void *aux)
+egattach(struct device *parent, struct device *self, void *aux)
 {
 	struct eg_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

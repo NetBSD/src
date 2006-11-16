@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.193 2006/10/12 01:30:42 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.194 2006/11/16 01:32:38 christos Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.193 2006/10/12 01:30:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.194 2006/11/16 01:32:38 christos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -529,7 +529,7 @@ pmap_is_active(pmap, cpu_id)
 
 
 inline static void
-pmap_apte_flush(struct pmap *pmap __unused)
+pmap_apte_flush(struct pmap *pmap)
 {
 #if defined(MULTIPROCESSOR)
 	struct pmap_tlb_shootdown_q *pq;
@@ -1161,7 +1161,7 @@ pmap_alloc_pv(pmap, mode)
  */
 
 static struct pv_entry *
-pmap_alloc_pvpage(struct pmap *pmap __unused, int mode)
+pmap_alloc_pvpage(struct pmap *pmap, int mode)
 {
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
@@ -1515,7 +1515,7 @@ pmap_get_ptp(pmap, pde_index)
  */
 
 int
-pmap_pdp_ctor(void *arg __unused, void *object, int flags __unused)
+pmap_pdp_ctor(void *arg, void *object, int flags)
 {
 	pd_entry_t *pdir = object;
 	paddr_t pdirpa = 0;	/* XXX: GCC */
@@ -2965,7 +2965,7 @@ no_tlb_shootdown:
 
 void
 pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
-    vm_prot_t prot __unused)
+    vm_prot_t prot)
 {
 	pt_entry_t *ptes, *epte;
 	volatile pt_entry_t *spte;

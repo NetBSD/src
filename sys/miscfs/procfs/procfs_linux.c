@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.29 2006/10/27 16:49:01 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.30 2006/11/16 01:33:38 christos Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.29 2006/10/27 16:49:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.30 2006/11/16 01:33:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,8 @@ extern int max_devsw_convs;
  * mountflag is used.
  */
 int
-procfs_domeminfo(struct lwp *curl __unused, struct proc *p __unused,
-    struct pfsnode *pfs __unused, struct uio *uio)
+procfs_domeminfo(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
 {
 	char *bf;
 	int len;
@@ -124,8 +124,8 @@ out:
  * mountflag is used.
  */
 int
-procfs_dodevices(struct lwp *curl __unused, struct proc *p __unused,
-    struct pfsnode *pfs __unused, struct uio *uio)
+procfs_dodevices(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
 {
 	char *bf;
 	int offset = 0;
@@ -174,8 +174,8 @@ out:
  * mountflag is used.
  */
 int
-procfs_do_pid_stat(struct lwp *curl __unused, struct lwp *l,
-    struct pfsnode *pfs __unused, struct uio *uio)
+procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
+    struct pfsnode *pfs, struct uio *uio)
 {
 	char *bf;
 	struct proc *p = l->l_proc;
@@ -282,8 +282,8 @@ out:
 }
 
 int
-procfs_docpuinfo(struct lwp *curl __unused, struct proc *p __unused,
-    struct pfsnode *pfs __unused, struct uio *uio)
+procfs_docpuinfo(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
 {
 	int len = LBFSZ;
 	char *bf = malloc(len, M_TEMP, M_WAITOK);
@@ -306,8 +306,8 @@ done:
 }
 
 int
-procfs_douptime(struct lwp *curl __unused, struct proc *p __unused,
-    struct pfsnode *pfs __unused, struct uio *uio)
+procfs_douptime(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
 {
 	char *bf;
 	int len;
@@ -334,8 +334,8 @@ out:
 }
 
 int
-procfs_domounts(struct lwp *curl __unused, struct proc *p __unused,
-    struct pfsnode *pfs __unused, struct uio *uio)
+procfs_domounts(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
 {
 	char *bf, *mtab = NULL;
 	const char *fsname;

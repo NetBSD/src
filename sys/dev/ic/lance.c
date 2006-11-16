@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.36 2006/10/12 01:31:01 christos Exp $	*/
+/*	$NetBSD: lance.c,v 1.37 2006/11/16 01:32:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.36 2006/10/12 01:31:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.37 2006/11/16 01:32:51 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -284,7 +284,7 @@ lance_reset(sc)
 }
 
 void
-lance_stop(struct ifnet *ifp, int disable __unused)
+lance_stop(struct ifnet *ifp, int disable)
 {
 	struct lance_softc *sc = ifp->if_softc;
 

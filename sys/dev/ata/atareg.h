@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.28 2006/09/30 15:56:18 itohy Exp $	*/
+/*	$NetBSD: atareg.h,v 1.29 2006/11/16 01:32:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -147,7 +147,7 @@
 #include <dev/ata/ataconf.h>
 
 /* Convert a 32-bit command to a 48-bit command. */
-static __inline int __unused
+static __inline int
 atacmd_to48(int cmd32)
 {
 	switch (cmd32) {
@@ -178,7 +178,7 @@ atacmd_to48(int cmd32)
 
 #ifdef _KERNEL
 /* Convert a 32-bit command to a Native SATA Queued command. */
-static __inline int __unused
+static __inline int
 atacmd_tostatq(int cmd32)
 {
 	switch (cmd32) {

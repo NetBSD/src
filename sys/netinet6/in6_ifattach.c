@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.66 2006/10/12 01:32:39 christos Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.67 2006/11/16 01:33:45 christos Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.66 2006/10/12 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.67 2006/11/16 01:33:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ get_hostid_ifid(ifp, in6)
  * We currently use MD5(hostname) for it.
  */
 static int
-get_rand_ifid(struct ifnet *ifp __unused,
+get_rand_ifid(struct ifnet *ifp,
 	struct in6_addr *in6)	/* upper 64bits are preserved */
 {
 	MD5_CTX ctxt;
@@ -980,7 +980,7 @@ in6_get_tmpifid(ifp, retbuf, baseid, generate)
 }
 
 void
-in6_tmpaddrtimer(void *ignored_arg __unused)
+in6_tmpaddrtimer(void *ignored_arg)
 {
 	struct nd_ifinfo *ndi;
 	u_int8_t nullbuf[8];

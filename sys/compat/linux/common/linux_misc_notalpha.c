@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.83 2006/11/14 13:34:29 elad Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.84 2006/11/16 01:32:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.83 2006/11/14 13:34:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.84 2006/11/16 01:32:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ linux_sys_readdir(l, v, retval)
  * need to deal with it.
  */
 int
-linux_sys_time(struct lwp *l __unused, void *v, register_t *retval)
+linux_sys_time(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_time_args /* {
 		linux_time_t *t;
@@ -326,7 +326,7 @@ linux_sys_waitpid(l, v, retval)
 #endif /* !amd64 */
 
 int
-linux_sys_setresgid(struct lwp *l, void *v, register_t *retval __unused)
+linux_sys_setresgid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_setresgid_args /* {
 		syscallarg(gid_t) rgid;
@@ -347,7 +347,7 @@ linux_sys_setresgid(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-linux_sys_getresgid(struct lwp *l, void *v, register_t *retval __unused)
+linux_sys_getresgid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_getresgid_args /* {
 		syscallarg(gid_t *) rgid;
@@ -384,7 +384,7 @@ linux_sys_getresgid(struct lwp *l, void *v, register_t *retval __unused)
  * need to deal with it.
  */
 int
-linux_sys_stime(struct lwp *l, void *v, register_t *retval __unused)
+linux_sys_stime(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_time_args /* {
 		linux_time_t *t;

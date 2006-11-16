@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.123 2006/11/13 03:35:59 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.124 2006/11/16 01:32:51 christos Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.123 2006/11/13 03:35:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.124 2006/11/16 01:32:51 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -2167,7 +2167,7 @@ atw_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
 
 static int
 atw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
-	const u_int8_t mac[IEEE80211_ADDR_LEN] __unused)
+	const u_int8_t mac[IEEE80211_ADDR_LEN])
 {
 	struct atw_softc *sc = ic->ic_ifp->if_softc;
 
@@ -2182,7 +2182,7 @@ atw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
 }
 
 static void
-atw_key_update_begin(struct ieee80211com *ic __unused)
+atw_key_update_begin(struct ieee80211com *ic)
 {
 #ifdef ATW_DEBUG
 	struct ifnet *ifp = ic->ic_ifp;

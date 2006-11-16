@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.10 2006/11/09 14:43:10 tsutsui Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.11 2006/11/16 01:33:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.10 2006/11/09 14:43:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.11 2006/11/16 01:33:06 christos Exp $");
 
 
 /*
@@ -89,7 +89,7 @@ static const struct mii_phydesc rgephys[] = {
 };
 
 static int
-rgephy_match(struct device *parent __unused, struct cfdata *match __unused,
+rgephy_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -101,7 +101,7 @@ rgephy_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-rgephy_attach(struct device *parent __unused, struct device *self, void *aux)
+rgephy_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_thread.c,v 1.11 2006/10/12 01:30:47 christos Exp $ */
+/*	$NetBSD: darwin_thread.c,v 1.12 2006/11/16 01:32:42 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.11 2006/10/12 01:30:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.12 2006/11/16 01:32:42 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_thread.c,v 1.11 2006/10/12 01:30:47 christos 
  * the parent as well as the child.
  */
 int
-darwin_sys_fork(struct lwp *l, void *v __unused, register_t *retval)
+darwin_sys_fork(struct lwp *l, void *v, register_t *retval)
 {
 	int error;
 
@@ -79,7 +79,7 @@ darwin_sys_fork(struct lwp *l, void *v __unused, register_t *retval)
 }
 
 int
-darwin_sys_vfork(struct lwp *l, void *v __unused, register_t *retval)
+darwin_sys_vfork(struct lwp *l, void *v, register_t *retval)
 {
 	int error;
 

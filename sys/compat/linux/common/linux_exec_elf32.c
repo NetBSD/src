@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.75 2006/10/12 01:30:48 christos Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.76 2006/11/16 01:32:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.75 2006/10/12 01:30:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.76 2006/11/16 01:32:42 christos Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -373,7 +373,7 @@ out:
 
 int
 ELFNAME2(linux,probe)(struct lwp *l, struct exec_package *epp, void *eh,
-    char *itp, vaddr_t *pos __unused)
+    char *itp, vaddr_t *pos)
 {
 	int error;
 

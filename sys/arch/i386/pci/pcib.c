@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.41 2006/10/12 01:30:43 christos Exp $	*/
+/*	$NetBSD: pcib.c,v 1.42 2006/11/16 01:32:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.41 2006/10/12 01:30:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.42 2006/11/16 01:32:39 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,7 +64,7 @@ CFATTACH_DECL(pcib, sizeof(struct device),
 void	pcib_callback(struct device *);
 
 int
-pcibmatch(struct device *parent __unused, struct cfdata *match __unused,
+pcibmatch(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -186,7 +186,7 @@ pcibmatch(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-pcibattach(struct device *parent __unused, struct device *self, void *aux)
+pcibattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];

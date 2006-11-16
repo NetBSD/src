@@ -1,4 +1,4 @@
-/* $NetBSD: joy_eap.c,v 1.5 2006/10/12 01:31:31 christos Exp $ */
+/* $NetBSD: joy_eap.c,v 1.6 2006/11/16 01:33:09 christos Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ eap_joy_detach(struct device *joydev, struct eap_gameport_args *gpa)
 }
 
 static int
-joy_eap_match(struct device *parent __unused, struct cfdata *match __unused,
+joy_eap_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct joy_eap_aa *eaa = aux;
@@ -93,7 +93,7 @@ joy_eap_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-joy_eap_attach(struct device *parent __unused, struct device *self, void *aux)
+joy_eap_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct joy_softc *sc = (struct joy_softc *)self;
 	struct joy_eap_aa *eaa = aux;

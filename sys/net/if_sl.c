@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.101 2006/10/12 01:32:28 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.102 2006/11/16 01:33:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.101 2006/10/12 01:32:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.102 2006/11/16 01:33:40 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -301,7 +301,7 @@ slinit(struct sl_softc *sc)
  */
 /* ARGSUSED */
 static int
-slopen(dev_t dev __unused, struct tty *tp)
+slopen(dev_t dev, struct tty *tp)
 {
 	struct lwp *l = curlwp;		/* XXX */
 	struct sl_softc *sc;
@@ -378,7 +378,7 @@ slopen(dev_t dev __unused, struct tty *tp)
  * Detach the tty from the sl unit.
  */
 static int
-slclose(struct tty *tp, int flag __unused)
+slclose(struct tty *tp, int flag)
 {
 	struct sl_softc *sc;
 	int s;
@@ -429,8 +429,8 @@ slclose(struct tty *tp, int flag __unused)
  */
 /* ARGSUSED */
 static int
-sltioctl(struct tty *tp, u_long cmd, caddr_t data, int flag __unused,
-    struct lwp *l __unused)
+sltioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct sl_softc *sc = (struct sl_softc *)tp->t_sc;
 
@@ -453,7 +453,7 @@ sltioctl(struct tty *tp, u_long cmd, caddr_t data, int flag __unused,
  */
 static int
 sloutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-    struct rtentry *rtp __unused)
+    struct rtentry *rtp)
 {
 	struct sl_softc *sc = ifp->if_softc;
 	struct ip *ip;

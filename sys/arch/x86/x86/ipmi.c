@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.3 2006/11/10 18:15:12 christos Exp $ */
+/*	$NetBSD: ipmi.c,v 1.4 2006/11/16 01:32:39 christos Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.3 2006/11/10 18:15:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.4 2006/11/16 01:32:39 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -426,7 +426,7 @@ bt_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t *data)
 }
 
 int
-bt_recvmsg(struct ipmi_softc *sc, int maxlen __unused, int *rxlen,
+bt_recvmsg(struct ipmi_softc *sc, int maxlen, int *rxlen,
     u_int8_t *data)
 {
 	u_int8_t len, v, i;
@@ -451,7 +451,7 @@ bt_recvmsg(struct ipmi_softc *sc, int maxlen __unused, int *rxlen,
 }
 
 int
-bt_reset(struct ipmi_softc *sc __unused)
+bt_reset(struct ipmi_softc *sc)
 {
 	return (-1);
 }
@@ -522,7 +522,7 @@ int	smic_read_data(struct ipmi_softc *, u_int8_t *);
 
 int
 smic_wait(struct ipmi_softc *sc, u_int8_t mask, u_int8_t val,
-    const char *lbl __unused)
+    const char *lbl)
 {
 	int v;
 
@@ -628,7 +628,7 @@ smic_recvmsg(struct ipmi_softc *sc, int maxlen, int *len, u_int8_t *data)
 }
 
 int
-smic_reset(struct ipmi_softc *sc __unused)
+smic_reset(struct ipmi_softc *sc)
 {
 	return (-1);
 }
@@ -786,7 +786,7 @@ kcs_recvmsg(struct ipmi_softc *sc, int maxlen, int *rxlen, u_int8_t * data)
 }
 
 int
-kcs_reset(struct ipmi_softc *sc __unused)
+kcs_reset(struct ipmi_softc *sc)
 {
 	return (-1);
 }
@@ -998,7 +998,7 @@ bt_buildmsg(struct ipmi_softc *sc, int nfLun, int cmd, int len,
  *   of allocated message
  */
 void *
-cmn_buildmsg(struct ipmi_softc *sc __unused, int nfLun, int cmd, int len,
+cmn_buildmsg(struct ipmi_softc *sc, int nfLun, int cmd, int len,
     const void *data, int *txlen)
 {
 	u_int8_t *buf;
@@ -1455,7 +1455,7 @@ ipmi_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 }
 
 int
-ipmi_streinfo(struct sysmon_envsys *sme __unused,
+ipmi_streinfo(struct sysmon_envsys *sme,
     struct envsys_basic_info *binfo)
 {
 	/* XXX Not implemented */
@@ -1634,7 +1634,7 @@ ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 }
 
 void
-ipmi_unmap_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia __unused)
+ipmi_unmap_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 {
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh,
 	    sc->sc_if->nregs * sc->sc_if_iospacing);
@@ -1694,7 +1694,7 @@ ipmi_probe(struct ipmi_attach_args *ia)
 }
 
 int
-ipmi_match(struct device *parent __unused, struct cfdata *cf __unused,
+ipmi_match(struct device *parent, struct cfdata *cf,
     void *aux)
 {
 	struct ipmi_softc	sc;
@@ -1729,7 +1729,7 @@ unmap:
 }
 
 void
-ipmi_attach(struct device *parent __unused, struct device *self, void *aux)
+ipmi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ipmi_softc	*sc = (void *) self;
 	struct ipmi_attach_args *ia = aux;

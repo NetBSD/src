@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.22 2006/10/12 01:31:29 christos Exp $	*/
+/*	$NetBSD: hptide.c,v 1.23 2006/11/16 01:33:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.22 2006/10/12 01:31:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.23 2006/11/16 01:33:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ static const struct pciide_product_desc pciide_triones_products[] =  {
 };
 
 static int
-hptide_match(struct device *parent __unused, struct cfdata *match __unused,
+hptide_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -98,7 +98,7 @@ hptide_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-hptide_attach(struct device *parent __unused, struct device *self, void *aux)
+hptide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.13 2006/10/31 20:43:31 joerg Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.14 2006/11/16 01:33:26 christos Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.13 2006/10/31 20:43:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.14 2006/11/16 01:33:26 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1056,7 +1056,7 @@ udav_send(struct udav_softc *sc, struct mbuf *m, int idx)
 }
 
 Static void
-udav_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct udav_chain *c = priv;
@@ -1276,7 +1276,7 @@ udav_stop_task(struct udav_softc *sc)
 
 /* Stop the adapter and free any mbufs allocated to the RX and TX lists. */
 Static void
-udav_stop(struct ifnet *ifp, int disable __unused)
+udav_stop(struct ifnet *ifp, int disable)
 {
 	struct udav_softc *sc = ifp->if_softc;
 	usbd_status err;
@@ -1602,7 +1602,7 @@ udav_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 }
 
 Static void
-udav_miibus_statchg(device_ptr_t dev __unused)
+udav_miibus_statchg(device_ptr_t dev)
 {
 #ifdef UDAV_DEBUG
 	struct udav_softc *sc;

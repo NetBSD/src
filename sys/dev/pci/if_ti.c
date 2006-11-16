@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.72 2006/10/12 01:31:30 christos Exp $ */
+/* $NetBSD: if_ti.c,v 1.73 2006/11/16 01:33:09 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.72 2006/10/12 01:31:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.73 2006/11/16 01:33:09 christos Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -673,7 +673,7 @@ static void *ti_jalloc(sc)
 /*
  * Release a jumbo buffer.
  */
-static void ti_jfree(struct mbuf *m, caddr_t tbuf, size_t size __unused,
+static void ti_jfree(struct mbuf *m, caddr_t tbuf, size_t size,
     void *arg)
 {
 	struct ti_softc		*sc;
@@ -1629,7 +1629,7 @@ ti_type_match(pa)
  * against our list and return its name if we find a match.
  */
 static int
-ti_probe(struct device *parent __unused, struct cfdata *match __unused,
+ti_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -1641,7 +1641,7 @@ ti_probe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-ti_attach(struct device *parent __unused, struct device *self, void *aux)
+ti_attach(struct device *parent, struct device *self, void *aux)
 {
 	u_int32_t		command;
 	struct ifnet		*ifp;

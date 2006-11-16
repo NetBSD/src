@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.60 2006/11/08 00:17:09 elad Exp $	*/
+/*	$NetBSD: iop.c,v 1.61 2006/11/16 01:32:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.60 2006/11/08 00:17:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.61 2006/11/16 01:32:50 christos Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -905,7 +905,7 @@ iop_print(void *aux, const char *pnp)
  * Shut down all configured IOPs.
  */
 static void
-iop_shutdown(void *junk __unused)
+iop_shutdown(void *junk)
 {
 	struct iop_softc *sc;
 	int i;
@@ -1823,7 +1823,7 @@ iop_intr(void *arg)
  * Handle an event signalled by the executive.
  */
 static void
-iop_intr_event(struct device *dv, struct iop_msg *im __unused, void *reply)
+iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 {
 	struct i2o_util_event_register_reply *rb;
 	u_int event;
@@ -2257,7 +2257,7 @@ iop_msg_poll(struct iop_softc *sc, struct iop_msg *im, int timo)
  * Sleep until the specified message is replied to.
  */
 static void
-iop_msg_wait(struct iop_softc *sc __unused, struct iop_msg *im, int timo)
+iop_msg_wait(struct iop_softc *sc, struct iop_msg *im, int timo)
 {
 	int s, rv;
 
@@ -2488,7 +2488,7 @@ int iop_util_eventreg(struct iop_softc *sc, struct iop_initiator *ii, int mask)
 }
 
 int
-iopopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
+iopopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct iop_softc *sc;
 
@@ -2504,8 +2504,8 @@ iopopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 }
 
 int
-iopclose(dev_t dev, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+iopclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct iop_softc *sc;
 
@@ -2516,7 +2516,7 @@ iopclose(dev_t dev, int flag __unused, int mode __unused,
 }
 
 int
-iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
+iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct iop_softc *sc;
 	struct iovec *iov;

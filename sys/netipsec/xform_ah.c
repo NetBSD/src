@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.11 2006/10/13 20:53:59 christos Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.12 2006/11/16 01:33:49 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.11 2006/10/13 20:53:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.12 2006/11/16 01:33:49 christos Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -957,7 +957,7 @@ static int
 ah_output(
     struct mbuf *m,
     struct ipsecrequest *isr,
-    struct mbuf **mp __unused,
+    struct mbuf **mp,
     int skip,
     int protoff
 )

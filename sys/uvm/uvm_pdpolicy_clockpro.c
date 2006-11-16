@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.4 2006/10/12 10:14:43 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.5 2006/11/16 01:33:53 christos Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.4 2006/10/12 10:14:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.5 2006/11/16 01:33:53 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -280,7 +280,7 @@ clockpro_insert_tail(struct clockpro_state *s, int qidx, struct vm_page *pg)
 	pageq_insert_tail(q, pg);
 }
 
-static void __unused
+static void
 clockpro_insert_head(struct clockpro_state *s, int qidx, struct vm_page *pg)
 {
 	pageq_t *q = clockpro_queue(s, qidx);

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.137 2006/10/20 18:58:12 reinoud Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.138 2006/11/16 01:33:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.137 2006/10/20 18:58:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.138 2006/11/16 01:33:38 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -142,7 +142,7 @@ genfs_fcntl(void *v)
 
 /*ARGSUSED*/
 int
-genfs_badop(void *v __unused)
+genfs_badop(void *v)
 {
 
 	panic("genfs: bad op");
@@ -150,7 +150,7 @@ genfs_badop(void *v __unused)
 
 /*ARGSUSED*/
 int
-genfs_nullop(void *v __unused)
+genfs_nullop(void *v)
 {
 
 	return (0);
@@ -158,7 +158,7 @@ genfs_nullop(void *v __unused)
 
 /*ARGSUSED*/
 int
-genfs_einval(void *v __unused)
+genfs_einval(void *v)
 {
 
 	return (EINVAL);
@@ -215,7 +215,7 @@ genfs_eopnotsupp(void *v)
 
 /*ARGSUSED*/
 int
-genfs_ebadf(void *v __unused)
+genfs_ebadf(void *v)
 {
 
 	return (EBADF);
@@ -223,7 +223,7 @@ genfs_ebadf(void *v __unused)
 
 /* ARGSUSED */
 int
-genfs_enoioctl(void *v __unused)
+genfs_enoioctl(void *v)
 {
 
 	return (EPASSTHROUGH);
@@ -361,14 +361,14 @@ genfs_nolock(void *v)
 }
 
 int
-genfs_nounlock(void *v __unused)
+genfs_nounlock(void *v)
 {
 
 	return (0);
 }
 
 int
-genfs_noislocked(void *v __unused)
+genfs_noislocked(void *v)
 {
 
 	return (0);
@@ -403,7 +403,7 @@ genfs_lease_check(void *v)
 }
 
 int
-genfs_mmap(void *v __unused)
+genfs_mmap(void *v)
 {
 
 	return (0);
@@ -1637,7 +1637,7 @@ genfs_node_init(struct vnode *vp, const struct genfs_ops *ops)
 }
 
 void
-genfs_size(struct vnode *vp, off_t size, off_t *eobp, int flags __unused)
+genfs_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 {
 	int bsize;
 
@@ -1741,7 +1741,7 @@ genfs_compat_getpages(void *v)
 
 int
 genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
-    int flags __unused)
+    int flags)
 {
 	off_t offset;
 	struct iovec iov;
@@ -1794,7 +1794,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
  */
 
 void
-genfs_directio(struct vnode *vp, struct uio *uio, int ioflag __unused)
+genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 {
 	struct vmspace *vs;
 	struct iovec *iov;

@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmwalk.c,v 1.2 2006/10/12 01:32:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmwalk.c,v 1.3 2006/11/16 01:33:31 christos Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -178,7 +178,7 @@ void
 AcpiDmDisassemble (
     ACPI_WALK_STATE         *WalkState,
     ACPI_PARSE_OBJECT       *Origin,
-    UINT32                  NumOpcodes __unused)
+    UINT32                  NumOpcodes)
 {
     ACPI_PARSE_OBJECT       *Op = Origin;
     ACPI_OP_WALK_INFO       Info;
