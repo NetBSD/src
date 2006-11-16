@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.18 2006/09/01 01:34:05 dyoung Exp $ */
+/*	$NetBSD: if_gre.h,v 1.19 2006/11/16 22:32:38 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ struct gre_softc {
 	LIST_ENTRY(gre_softc)	sc_list;
 	struct route route;	/* routing entry that determines, where a
 				   encapsulated packet should go */
-	u_char g_proto;		/* protocol of encapsulator */
+	int			sc_proto;	/* protocol of encapsulator */
 };
 #define	g_src		sc_soparm.sp_src
 #define	g_srcport	sc_soparm.sp_srcport
