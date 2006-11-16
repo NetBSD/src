@@ -1,4 +1,4 @@
-/*	$NetBSD: gettytab.h,v 1.15 2005/05/21 17:18:51 christos Exp $	*/
+/*	$NetBSD: gettytab.h,v 1.16 2006/11/16 04:31:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -171,4 +171,3 @@ struct gettyflags {
 extern	struct gettyflags gettyflags[];
 extern	struct gettynums gettynums[];
 extern	struct gettystrs gettystrs[];
-extern	int hopcount;

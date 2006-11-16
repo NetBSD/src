@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.50 2005/12/28 09:43:05 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.51 2006/11/16 04:31:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.50 2005/12/28 09:43:05 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.51 2006/11/16 04:31:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,6 @@ __RCSID("$NetBSD: main.c,v 1.50 2005/12/28 09:43:05 christos Exp $");
 #include "pathnames.h"
 #include "extern.h"
 
-extern char **environ;
 extern char editedhost[];
 
 /*
@@ -113,7 +112,7 @@ char	tabent[TABBUFSIZ];
 
 char	*env[128];
 
-const char partab[] = {
+const unsigned char partab[] = {
 	0001,0201,0201,0001,0201,0001,0001,0201,
 	0202,0004,0003,0205,0005,0206,0201,0001,
 	0201,0001,0001,0201,0001,0201,0201,0001,
@@ -141,21 +140,23 @@ static void	clearscreen(void);
 jmp_buf timeout;
 
 static void
+/*ARGSUSED*/
 dingdong(int signo)
 {
 
-	alarm(0);
-	signal(SIGALRM, SIG_DFL);
+	(void)alarm(0);
+	(void)signal(SIGALRM, SIG_DFL);
 	longjmp(timeout, 1);
 }
 
 jmp_buf	intrupt;
 
 static void
+/*ARGSUSED*/
 interrupt(int signo)
 {
 
-	signal(SIGINT, interrupt);
+	(void)signal(SIGINT, interrupt);
 	longjmp(intrupt, 1);
 }
 
@@ -163,6 +164,7 @@ interrupt(int signo)
  * Action to take when getty is running too long.
  */
 static void
+/*ARGSUSED*/
 timeoverrun(int signo)
 {
 
@@ -170,7 +172,6 @@ timeoverrun(int signo)
 	exit(1);
 }
 
-int		main(int, char *[]);
 static int	getname(void);
 static void	oflush(void);
 static void	prompt(void);
@@ -180,7 +181,7 @@ static void	putpad(const char *);
 static void	xputs(const char *);
 
 int
-main(int argc, char *argv[])
+main(int argc, char *argv[], char *envp[])
 {
 	const char *progname;
 	char *tname;
@@ -189,20 +190,13 @@ main(int argc, char *argv[])
 	struct passwd *pw;
         int rval;
 
-#ifdef __GNUC__
-	(void)&tname;		/* XXX gcc -Wall */
-#endif
-
-	signal(SIGINT, SIG_IGN);
-/*
-	signal(SIGQUIT, SIG_DFL);
-*/
+	(void)signal(SIGINT, SIG_IGN);
 	openlog("getty", LOG_PID, LOG_AUTH);
-	gethostname(hostname, sizeof(hostname));
+	(void)gethostname(hostname, sizeof(hostname));
 	hostname[sizeof(hostname) - 1] = '\0';
 	if (hostname[0] == '\0')
-		strlcpy(hostname, "Amnesiac", sizeof(hostname));
-	uname(&kerninfo);
+		(void)strlcpy(hostname, "Amnesiac", sizeof(hostname));
+	(void)uname(&kerninfo);
 
 	progname = getprogname();
 	if (progname[0] == 'u' && progname[1] == 'u')
@@ -232,54 +226,62 @@ main(int argc, char *argv[])
 	 * J. Gettys - MIT Project Athena.
 	 */
 	if (argc <= 2 || strcmp(argv[2], "-") == 0) {
-	    strlcpy(ttyn, ttyname(0), sizeof(ttyn));
+		(void)strlcpy(ttyn, ttyname(0), sizeof(ttyn));
 	}
 	else {
-	    int i;
+		    int i;
 
-	    rawttyn = argv[2];
-	    strlcpy(ttyn, dev, sizeof(ttyn));
-	    strlcat(ttyn, argv[2], sizeof(ttyn));
-
-	    if (uugetty)  {
-		chown(ttyn, ttyowner, 0);
-		strlcpy(lockfile, _PATH_LOCK, sizeof(lockfile));
-		strlcat(lockfile, argv[2], sizeof(lockfile));
-		/* wait for lockfiles to go away before we try to open */
-		if ( pidlock(lockfile, 0, 0, 0) != 0 )  {
-		    syslog(LOG_ERR, "%s: can't create lockfile", ttyn);
-		    exit(1);
+		    rawttyn = argv[2];
+		    (void)strlcpy(ttyn, dev, sizeof(ttyn));
+		    (void)strlcat(ttyn, argv[2], sizeof(ttyn));
+		    if (uugetty)  {
+			    (void)chown(ttyn, ttyowner, 0);
+			    (void)strlcpy(lockfile, _PATH_LOCK,
+				sizeof(lockfile));
+			    (void)strlcat(lockfile, argv[2],
+				sizeof(lockfile));
+			    /* 
+			     * wait for lockfiles to go away before we try
+			     * to open
+			     */
+			    if (pidlock(lockfile, 0, 0, 0) != 0)  {
+				    syslog(LOG_ERR,
+					"%s: can't create lockfile", ttyn);
+				    exit(1);
+			    }
+			    (void)unlink(lockfile);
+		    }
+		    if (strcmp(argv[0], "+") != 0) {
+			    (void)chown(ttyn, ttyowner, 0);
+			    (void)chmod(ttyn, 0600);
+			    (void)revoke(ttyn);
+			    if (ttyaction(ttyn, "getty", "root"))
+				    syslog(LOG_WARNING, "%s: ttyaction failed",
+					ttyn);
+			    /*
+			     * Delay the open so DTR stays down long enough
+			     * to be detected.
+			     */
+			    (void)sleep(2);
+			    while ((i = open(ttyn, O_RDWR)) == -1) {
+				    if ((repcnt % 10 == 0) &&
+					(errno != ENXIO || !failopenlogged)) {
+					    syslog(LOG_WARNING, "%s: %m", ttyn);
+					    closelog();
+					    failopenlogged = 1;
+				    }
+				    repcnt++;
+				    (void)sleep(60);
+			    }
+			    if (uugetty && pidlock(lockfile, 0, 0, 0) != 0)  {
+				    syslog(LOG_ERR, "%s: can't create lockfile",
+					ttyn);
+				    exit(1);
+			    }
+			    if (uugetty)
+				    (void)chown(lockfile, ttyowner, 0);
+			    (void)login_tty(i);
 		}
-		unlink(lockfile);
-	    }
-	    if (strcmp(argv[0], "+") != 0) {
-		chown(ttyn, ttyowner, 0);
-		chmod(ttyn, 0600);
-		revoke(ttyn);
-		if (ttyaction(ttyn, "getty", "root"))
-			syslog(LOG_WARNING, "%s: ttyaction failed", ttyn);
-		/*
-		 * Delay the open so DTR stays down long enough to be detected.
-		 */
-		sleep(2);
-		while ((i = open(ttyn, O_RDWR)) == -1) {
-			if ((repcnt % 10 == 0) &&
-			    (errno != ENXIO || !failopenlogged)) {
-				syslog(LOG_WARNING, "%s: %m", ttyn);
-				closelog();
-				failopenlogged = 1;
-			}
-			repcnt++;
-			sleep(60);
-		}
-		if (uugetty && pidlock(lockfile, 0, 0, 0) != 0)  {
-			syslog(LOG_ERR, "%s: can't create lockfile", ttyn);
-			exit(1);
-		}
-		if (uugetty)
-			(void) chown(lockfile, ttyowner, 0);
-		login_tty(i);
-	    }
 	}
 
 	/* Start with default tty settings */
@@ -304,17 +306,17 @@ main(int argc, char *argv[])
 		setdefaults();
 		off = 0;
 		(void)tcflush(0, TCIOFLUSH);	/* clear out the crap */
-		ioctl(0, FIONBIO, &off);	/* turn off non-blocking mode */
-		ioctl(0, FIOASYNC, &off);	/* ditto for async mode */
+		(void)ioctl(0, FIONBIO, &off);	/* turn off non-blocking mode */
+		(void)ioctl(0, FIOASYNC, &off);	/* ditto for async mode */
 
 		if (IS)
-			cfsetispeed(&tmode, IS);
+			(void)cfsetispeed(&tmode, (speed_t)IS);
 		else if (SP)
-			cfsetispeed(&tmode, SP);
+			(void)cfsetispeed(&tmode, (speed_t)SP);
 		if (OS)
-			cfsetospeed(&tmode, OS);
+			(void)cfsetospeed(&tmode, (speed_t)OS);
 		else if (SP)
-			cfsetospeed(&tmode, SP);
+			(void)cfsetospeed(&tmode, (speed_t)SP);
 		setflags(0);
 		setchars();
 		if (tcsetattr(0, TCSANOW, &tmode) < 0) {
@@ -341,12 +343,12 @@ main(int argc, char *argv[])
                  */
 		if (first_time != 0 && IF != NULL) {
 			char buf[_POSIX2_LINE_MAX];
-			FILE *fd;
+			FILE *fp;
 
-			if ((fd = fopen(IF, "r")) != NULL) {
-				while (fgets(buf, sizeof(buf) - 1, fd) != NULL)
+			if ((fp = fopen(IF, "r")) != NULL) {
+				while (fgets(buf, sizeof(buf) - 1, fp) != NULL)
 					putf(buf);
-				fclose(fd);
+				(void)fclose(fp);
 			}
 		}
 		first_time = 0;
@@ -360,8 +362,8 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		if (TO) {
-			signal(SIGALRM, dingdong);
-			alarm(TO);
+			(void)signal(SIGALRM, dingdong);
+			(void)alarm((unsigned int)TO);
 		}
 		if (NN) {
 			name[0] = '\0';
@@ -382,7 +384,7 @@ main(int argc, char *argv[])
 			}
 		} else if ((rval = getname()) == 2) {
 			setflags(2);
-		        execle(PP, "ppplogin", ttyn, (char *) 0, env);
+		        (void)execle(PP, "ppplogin", ttyn, (char *) 0, env);
 		        syslog(LOG_ERR, "%s: %m", PP);
 		        exit(1);
 		} 
@@ -391,8 +393,8 @@ main(int argc, char *argv[])
 			int i;
 
 			oflush();
-			alarm(0);
-			signal(SIGALRM, SIG_DFL);
+			(void)alarm(0);
+			(void)signal(SIGALRM, SIG_DFL);
 			if (name[0] == '-') {
 				xputs("user names may not start with '-'.");
 				continue;
@@ -414,30 +416,30 @@ main(int argc, char *argv[])
 				syslog(LOG_ERR, "%s: %m", ttyn);
 				exit(1);
 			}
-			signal(SIGINT, SIG_DFL);
-			for (i = 0; environ[i] != (char *)0; i++)
-				env[i] = environ[i];
+			(void)signal(SIGINT, SIG_DFL);
+			for (i = 0; envp[i] != NULL; i++)
+				env[i] = envp[i];
 			makeenv(&env[i]);
 
 			limit.rlim_max = RLIM_INFINITY;
 			limit.rlim_cur = RLIM_INFINITY;
 			(void)setrlimit(RLIMIT_CPU, &limit);
 			if (NN)
-				execle(LO, "login", AL ? "-fp" : "-p",
+				(void)execle(LO, "login", AL ? "-fp" : "-p",
 				    NULL, env);
 			else
-				execle(LO, "login", AL ? "-fp" : "-p",
+				(void)execle(LO, "login", AL ? "-fp" : "-p",
 				    "--", name, NULL, env);
 			syslog(LOG_ERR, "%s: %m", LO);
 			exit(1);
 		}
-		alarm(0);
-		signal(SIGALRM, SIG_DFL);
-		signal(SIGINT, SIG_IGN);
+		(void)alarm(0);
+		(void)signal(SIGALRM, SIG_DFL);
+		(void)signal(SIGINT, SIG_IGN);
 		if (NX && *NX)
 			tname = NX;
 		if (uugetty)
-			unlink(lockfile);
+			(void)unlink(lockfile);
 	}
 }
 
@@ -453,15 +455,15 @@ getname(void)
 	 * Interrupt may happen if we use CBREAK mode
 	 */
 	if (setjmp(intrupt)) {
-		signal(SIGINT, SIG_IGN);
+		(void)signal(SIGINT, SIG_IGN);
 		return (0);
 	}
-	signal(SIGINT, interrupt);
+	(void)signal(SIGINT, interrupt);
 	setflags(1);
 	prompt();
 	if (PF > 0) {
 		oflush();
-		sleep(PF);
+		(void)sleep((unsigned int)PF);
 		PF = 0;
 	}
 	if (tcsetattr(0, TCSANOW, &tmode) < 0) {
@@ -555,7 +557,7 @@ getname(void)
 		if (strstr(name, "CLIENT"))
 		       putf("\r\n");
 	}
-	signal(SIGINT, SIG_IGN);
+	(void)signal(SIGINT, SIG_IGN);
 	*np = 0;
 	if (c == '\r')
 		crmod = 1;
@@ -569,7 +571,7 @@ static void
 putpad(const char *s)
 {
 	int pad = 0;
-	speed_t ospeed = cfgetospeed(&tmode);
+	speed_t ospd = cfgetospeed(&tmode);
 
 	if (isdigit((unsigned char)*s)) {
 		while (isdigit((unsigned char)*s)) {
@@ -588,7 +590,7 @@ putpad(const char *s)
 	 * If no delay needed, or output speed is
 	 * not comprehensible, then don't try to delay.
 	 */
-	if (pad == 0 || ospeed <= 0)
+	if (pad == 0)
 		return;
 
 	/*
@@ -597,7 +599,7 @@ putpad(const char *s)
 	 * Transmitting pad characters slows many terminals down and also
 	 * loads the system.
 	 */
-	pad = (pad * ospeed + 50000) / 100000;
+	pad = (pad * ospd + 50000) / 100000;
 	while (pad--)
 		putchr(*PC);
 }
@@ -610,12 +612,12 @@ xputs(const char *s)
 }
 
 char	outbuf[OBUFSIZ];
-int	obufcnt = 0;
+size_t	obufcnt = 0;
 
 static void
 putchr(int cc)
 {
-	char c;
+	unsigned char c;
 
 	c = cc;
 	if (!NP) {
@@ -628,14 +630,14 @@ putchr(int cc)
 		if (obufcnt >= OBUFSIZ)
 			oflush();
 	} else
-		write(STDOUT_FILENO, &c, 1);
+		(void)write(STDOUT_FILENO, &c, 1);
 }
 
 static void
 oflush(void)
 {
 	if (obufcnt)
-		write(STDOUT_FILENO, outbuf, obufcnt);
+		(void)write(STDOUT_FILENO, outbuf, obufcnt);
 	obufcnt = 0;
 }
 
