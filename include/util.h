@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.42 2006/11/17 22:10:57 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.43 2006/11/17 22:44:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -79,7 +79,7 @@ off_t		getlabeloffset(void);
 int		getlabelsector(void);
 int		getmaxpartitions(void);
 int		getrawpartition(void);
-time_t		getdate(const char *, time_t *, int *);
+time_t		getdate(const char *, const time_t *, const int *);
 int		humanize_number(char *, size_t, int64_t, const char *, int,
 		    int);
 void		login(const struct utmp *);
