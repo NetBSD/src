@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.276 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.277 2006/11/17 17:05:18 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.276 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.277 2006/11/17 17:05:18 hannken Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -332,6 +332,7 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
 	mp->mnt_unmounter = NULL;
 	mp->mnt_leaf = mp;
+	mount_initspecific(mp);
 
 	/*
 	 * The underlying file system may refuse the mount for
@@ -649,6 +650,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		panic("unmount: dangling vnode");
 	mp->mnt_iflag |= IMNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
+	mount_finispecific(mp);
 	if (used_syncer)
 		lockmgr(&syncer_lock, LK_RELEASE, NULL);
 	simple_lock(&mp->mnt_slock);
