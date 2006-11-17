@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 2006/07/10 16:28:44 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 2006/11/17 21:01:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 2006/07/10 16:28:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32 2006/11/17 21:01:03 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -81,7 +81,11 @@ cpu_configure()
 	    splmasks[IPL_BIO] >> 8, splmasks[IPL_NET] >> 8, 
 	    splmasks[IPL_TTY] >> 8, splmasks[IPL_CLOCK] >> 8);
 
-	_splnone();
+	/*
+	 * Hardware interrupts will be enabled in cpu_initclocks(9)
+	 * to avoid hardclock(9) by CPU INT5 before softclockintr is
+	 * initialized in initclocks().
+	 */
 }
 
 /*
