@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.62 2006/11/16 01:32:52 christos Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.63 2006/11/17 21:29:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -690,7 +690,8 @@ re_attach(struct rtk_softc *sc)
 	}
 
 	/* Allocate DMA'able memory for the RX ring */
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, RE_RX_LIST_SZ,
+	if ((error = bus_dmamem_alloc(sc->sc_dmat,
+	    RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN,
 	    RE_RING_ALIGN, 0, &sc->re_ldata.re_rx_listseg, 1,
 	    &sc->re_ldata.re_rx_listnseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't allocate rx listseg, error = %d\n",
@@ -700,17 +701,18 @@ re_attach(struct rtk_softc *sc)
 
 	/* Load the map for the RX ring. */
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->re_ldata.re_rx_listseg,
-	    sc->re_ldata.re_rx_listnseg, RE_RX_LIST_SZ,
+	    sc->re_ldata.re_rx_listnseg, RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN,
 	    (caddr_t *)&sc->re_ldata.re_rx_list,
 	    BUS_DMA_COHERENT | BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't map rx list, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_5;
 	}
-	memset(sc->re_ldata.re_rx_list, 0, RE_RX_LIST_SZ);
+	memset(sc->re_ldata.re_rx_list, 0, RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN);
 
-	if ((error = bus_dmamap_create(sc->sc_dmat, RE_RX_LIST_SZ, 1,
-	    RE_RX_LIST_SZ, 0, 0,
+	if ((error = bus_dmamap_create(sc->sc_dmat,
+	    RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN, 1,
+	    RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN, 0, 0,
 	    &sc->re_ldata.re_rx_list_map)) != 0) {
 		aprint_error("%s: can't create rx list map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -719,7 +721,7 @@ re_attach(struct rtk_softc *sc)
 
 	if ((error = bus_dmamap_load(sc->sc_dmat,
 	    sc->re_ldata.re_rx_list_map, sc->re_ldata.re_rx_list,
-	    RE_RX_LIST_SZ, NULL, BUS_DMA_NOWAIT)) != 0) {
+	    RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN, NULL, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't load rx list, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_7;
@@ -765,7 +767,7 @@ re_attach(struct rtk_softc *sc)
 	 */
 
 	ifp->if_capabilities |=
-	    /* IFCAP_CSUM_IPv4_Tx | */ IFCAP_CSUM_IPv4_Rx |
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
 	    IFCAP_TSOv4;
@@ -1324,7 +1326,7 @@ re_txeof(struct rtk_softc *sc)
 			break;
 		}
 
-		sc->re_ldata.re_tx_free += txq->txq_dmamap->dm_nsegs;
+		sc->re_ldata.re_tx_free += txq->txq_nsegs;
 		KASSERT(sc->re_ldata.re_tx_free <= RE_TX_DESC_CNT(sc));
 		bus_dmamap_sync(sc->sc_dmat, txq->txq_dmamap,
 		    0, txq->txq_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -1514,8 +1516,9 @@ re_start(struct ifnet *ifp)
 	struct m_tag		*mtag;
 #endif
 	uint32_t		cmdstat, re_flags;
-	int			ofree, idx, error, seg;
+	int			ofree, idx, error, nsegs, seg;
 	int			startdesc, curdesc, lastdesc;
+	boolean_t		pad;
 
 	sc = ifp->if_softc;
 	ofree = sc->re_ldata.re_txq_free;
@@ -1581,7 +1584,15 @@ re_start(struct ifnet *ifp)
 			continue;
 		}
 
-		if (map->dm_nsegs > sc->re_ldata.re_tx_free - RE_NTXDESC_RSVD) {
+		nsegs = map->dm_nsegs;
+		pad = FALSE;
+		if (m->m_pkthdr.len <= RE_IP4CSUMTX_PADLEN &&
+		    (re_flags & RE_TDESC_CMD_IPCSUM) != 0) {
+			pad = TRUE;
+			nsegs++;
+		}
+
+		if (nsegs > sc->re_ldata.re_tx_free - RE_NTXDESC_RSVD) {
 			/*
 			 * Not enough free descriptors to transmit this packet.
 			 */
@@ -1640,13 +1651,31 @@ re_start(struct ifnet *ifp)
 				cmdstat |= RE_TDESC_CMD_OWN;
 			if (curdesc == (RE_TX_DESC_CNT(sc) - 1))
 				cmdstat |= RE_TDESC_CMD_EOR;
-			if (seg == map->dm_nsegs - 1) {
+			if (seg == nsegs - 1) {
 				cmdstat |= RE_TDESC_CMD_EOF;
 				lastdesc = curdesc;
 			}
 			d->re_cmdstat = htole32(cmdstat);
 			RE_TXDESCSYNC(sc, curdesc,
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		}
+		if (pad) {
+			bus_addr_t paddaddr;
+
+			d = &sc->re_ldata.re_tx_list[curdesc];
+			paddaddr = RE_TXPADDADDR(sc);
+			d->re_bufaddr_lo = htole32(RE_ADDR_LO(paddaddr));
+			d->re_bufaddr_hi = htole32(RE_ADDR_HI(paddaddr));
+			cmdstat = re_flags |
+			    RE_TDESC_CMD_OWN | RE_TDESC_CMD_EOF |
+			    (RE_IP4CSUMTX_PADLEN + 1 - m->m_pkthdr.len);
+			if (curdesc == (RE_TX_DESC_CNT(sc) - 1))
+				cmdstat |= RE_TDESC_CMD_EOR;
+			d->re_cmdstat = htole32(cmdstat);
+			RE_TXDESCSYNC(sc, curdesc,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			lastdesc = curdesc;
+			curdesc = RE_NEXT_TX_DESC(sc, curdesc);
 		}
 		KASSERT(lastdesc != -1);
 
@@ -1674,9 +1703,10 @@ re_start(struct ifnet *ifp)
 		/* update info of TX queue and descriptors */
 		txq->txq_mbuf = m;
 		txq->txq_descidx = lastdesc;
+		txq->txq_nsegs = nsegs;
 
 		sc->re_ldata.re_txq_free--;
-		sc->re_ldata.re_tx_free -= map->dm_nsegs;
+		sc->re_ldata.re_tx_free -= nsegs;
 		sc->re_ldata.re_tx_nextfree = curdesc;
 
 #if NBPFILTER > 0

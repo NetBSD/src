@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.34 2006/11/12 03:09:37 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.35 2006/11/17 21:29:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -148,6 +148,7 @@ struct re_txq {
 	struct mbuf *txq_mbuf;
 	bus_dmamap_t txq_dmamap;
 	int txq_descidx;
+	int txq_nsegs;
 };
 
 struct re_list_data {
@@ -243,6 +244,22 @@ struct rtk_softc {
 	    sizeof(struct re_desc) * (idx),				\
 	    sizeof(struct re_desc),					\
 	    (ops))
+
+/*
+ * re(4) hardware ip4csum-tx could be mangled with 28 byte or less IP packets
+ */
+#define RE_IP4CSUMTX_MINLEN	28                                
+#define RE_IP4CSUMTX_PADLEN	(ETHER_HDR_LEN + RE_IP4CSUMTX_MINLEN)
+/*
+ * XXX
+ * We are allocating pad DMA buffer after RX DMA descs for now
+ * because RE_TX_LIST_SZ(sc) always occupies whole page but
+ * RE_RX_LIST_SZ is less than PAGE_SIZE so there is some unused region.
+ */
+#define RE_TXPADOFF		RE_RX_LIST_SZ
+#define RE_TXPADDADDR(sc)	\
+	((sc)->re_ldata.re_rx_list_map->dm_segs[0].ds_addr + RE_TXPADOFF)
+
 
 #define RTK_ATTACHED 0x00000001 /* attach has succeeded */
 #define RTK_ENABLED  0x00000002 /* chip is enabled	*/
