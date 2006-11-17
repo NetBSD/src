@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.116 2006/11/11 18:47:10 jmmv Exp $
+#	$NetBSD: DISKLESS,v 1.117 2006/11/17 22:18:22 tsutsui Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -17,7 +17,7 @@ options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 
-makeoptions	COPTS="-march=i486 -mtune=pentiumpro"	# Assume at least 486,
+makeoptions	COPTS="-O2 -march=i486 -mtune=pentiumpro" # Assume at least 486,
 							# tune for more modern
 
 # The following options override the memory sizes passed in from the boot

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.796 2006/11/11 19:00:16 jmmv Exp $
+# $NetBSD: GENERIC,v 1.797 2006/11/17 22:18:22 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.796 $"
+#ident 		"GENERIC-$Revision: 1.797 $"
 
 maxusers	32		# estimated number of users
 
@@ -32,7 +32,7 @@ options 	I486_CPU
 options 	I586_CPU
 options 	I686_CPU
 
-makeoptions	COPTS="-march=i486 -mtune=pentiumpro"	# Assume at least 486,
+makeoptions	COPTS="-O2 -march=i486 -mtune=pentiumpro" # Assume at least 486,
 							# tune for more modern
 
 # CPU-related options.
