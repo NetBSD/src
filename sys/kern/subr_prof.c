@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.33.20.1 2006/10/20 21:32:46 ad Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.33.20.2 2006/11/17 16:34:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.1 2006/10/20 21:32:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.2 2006/11/17 16:34:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,10 +147,12 @@ sysctl_kern_profiling(SYSCTLFN_ARGS)
 		return (error);
 
 	if (node.sysctl_num == GPROF_STATE) {
+		mutex_enter(proc0.p_smutex);
 		if (gp->state == GMON_PROF_OFF)
 			stopprofclock(&proc0);
 		else
 			startprofclock(&proc0);
+		mutex_exit(proc0.p_smutex);
 	}
 
 	return (0);
@@ -230,19 +232,23 @@ sys_profil(struct lwp *l, void *v, register_t *retval)
 	if (SCARG(uap, scale) > (1 << 16))
 		return (EINVAL);
 	if (SCARG(uap, scale) == 0) {
+		mutex_enter(&p->p_smutex);
 		stopprofclock(p);
+		mutex_exit(&p->p_smutex);
 		return (0);
 	}
 	upp = &p->p_stats->p_prof;
 
 	/* Block profile interrupts while changing state. */
-	s = splstatclock();
+	mutex_enter(&p->p_smutex);
+	s = splstatclock();	/* XXX */
 	upp->pr_off = SCARG(uap, offset);
 	upp->pr_scale = SCARG(uap, scale);
 	upp->pr_base = SCARG(uap, samples);
 	upp->pr_size = SCARG(uap, size);
 	startprofclock(p);
 	splx(s);
+	mutex_exit(&p->p_smutex);
 
 	return (0);
 }
@@ -279,22 +285,29 @@ addupc_intr(struct lwp *l, u_long pc)
 	int v;
 
 	p = l->l_proc;
+
+	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+
 	prof = &p->p_stats->p_prof;
 	if (pc < prof->pr_off ||
 	    (i = PC_TO_INDEX(pc, prof)) >= prof->pr_size)
 		return;			/* out of range; ignore */
 
 	addr = prof->pr_base + i;
+	mutex_exit(&p->p_smutex);
 	if ((v = fuswintr(addr)) == -1 || suswintr(addr, v + 1) == -1) {
 		prof->pr_addr = pc;
 		prof->pr_ticks++;
 		cpu_need_proftick(l);
 	}
+	mutex_enter(&p->p_smutex);
 }
 
 /*
  * Much like before, but we can afford to take faults here.  If the
  * update fails, we simply turn off profiling.
+ *
+ * XXXSMP unlocked
  */
 void
 addupc_task(struct lwp *l, u_long pc, u_int ticks)
@@ -308,7 +321,7 @@ addupc_task(struct lwp *l, u_long pc, u_int ticks)
 	p = l->l_proc;
 
 	/* Testing P_PROFIL may be unnecessary, but is certainly safe. */
-	if ((p->p_flag & P_PROFIL) == 0 || ticks == 0)
+	if ((p->p_sflag & PS_PROFIL) == 0 || ticks == 0)
 		return;
 
 	prof = &p->p_stats->p_prof;
@@ -322,5 +335,8 @@ addupc_task(struct lwp *l, u_long pc, u_int ticks)
 		if (copyout((caddr_t)&v, addr, sizeof(v)) == 0)
 			return;
 	}
+
+	mutex_enter(&p->p_smutex);
 	stopprofclock(p);
+	mutex_exit(&p->p_smutex);
 }

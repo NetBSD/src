@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.66.2.1 2006/10/20 19:23:34 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.66.2.2 2006/11/17 16:34:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -430,7 +430,7 @@ do {								\
 		(count) = SPINLOCK_BACKOFF_MAX;			\
 } while (/* CONSTCOND */ 0);
 
-extern struct kmutex	kernel_mutex;
+extern __cpu_simple_lock_t	kernel_lock;
 
 #endif /* _KERNEL */
 

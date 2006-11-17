@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.1.2.2 2006/10/24 21:10:21 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.1.2.3 2006/11/17 16:34:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
@@ -36,8 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Lightweight process (LWP) system calls.  See kern_lwp.c for a description
+ * of LWPs.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.2 2006/10/24 21:10:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.3 2006/11/17 16:34:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,11 +73,11 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	int error, lid;
 
 	mutex_enter(&p->p_smutex);
-	if (p->p_flag & (P_SA | P_WEXIT)) {
+	if ((p->p_sflag & (PS_SA | PS_WEXIT)) != 0 || p->p_sa != NULL) {
 		mutex_exit(&p->p_smutex);
 		return EINVAL;
 	}
-	/* XXXAD p->p_flag |= P_NOSA; */
+	p->p_sflag |= PS_NOSA;
 	mutex_exit(&p->p_smutex);
 
 	newuc = pool_get(&lwp_uc_pool, PR_WAITOK);
@@ -103,7 +108,8 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	mutex_enter(&p->p_smutex);
 	lwp_lock(l2);
 	lid = l2->l_lid;
-	if ((SCARG(uap, flags) & LWP_SUSPENDED) == 0) {
+	if ((SCARG(uap, flags) & LWP_SUSPENDED) == 0 &&
+	    (l->l_flag & L_WREBOOT) == 0) {
 		p->p_nrlwps++;
 		lwp_relock(l2, &sched_mutex);
 		l2->l_stat = LSRUN;
@@ -126,9 +132,7 @@ int
 sys__lwp_exit(struct lwp *l, void *v, register_t *retval)
 {
 
-	lwp_exit(l);
-	/* NOTREACHED */
-	return (0);
+	return lwp_exit(l, 1);
 }
 
 int
@@ -175,7 +179,7 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 
 	mutex_enter(&p->p_smutex);
 
-	if (p->p_flag & P_SA) {
+	if ((p->p_flag & P_SA) != 0 || p->p_sa != NULL) {
 		mutex_exit(&p->p_smutex);
 		return EINVAL;
 	}
@@ -229,7 +233,7 @@ sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 
 	mutex_enter(&p->p_smutex);
 
-	if (p->p_flag & P_SA)
+	if ((p->p_flag & P_SA) != 0 || p->p_sa != NULL)
 		error = EINVAL;
 	else if ((t = lwp_byid(p, SCARG(uap, target))) == NULL)
 		error = ESRCH;
@@ -271,9 +275,7 @@ sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 		goto bad;
 	}
 
-	/*
-	 * Tell ltsleep to wakeup.  setrunnable() will release the mutex.
-	 */
+	/* wake it up  setrunnable() will release the LWP lock. */
 	t->l_flag |= L_CANCELLED;
 	setrunnable(t);
 	mutex_exit(&p->p_smutex);
@@ -348,5 +350,5 @@ sys__lwp_kill(struct lwp *l, void *v, register_t *retval)
 	mutex_exit(&p->p_smutex);
 	rw_exit(&proclist_lock);
 
-	return (0);
+	return (error);
 }

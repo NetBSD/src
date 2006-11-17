@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.14.20.1 2006/10/21 15:20:48 ad Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.14.20.2 2006/11/17 16:34:40 ad Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -94,6 +94,8 @@ typedef struct ksiginfo {
 
 #define	KSI_TRAP	0x01	/* signal caused by trap */
 #define	KSI_EMPTY	0x02	/* no additional information */
+#define	KSI_QUEUED	0x04	/* on a sigpend_t queue */
+#define	KSI_FROMPOOL	0x08	/* allocated from the ksiginfo pool */
 
 /* Macros to initialize a ksiginfo_t. */
 #define	KSI_INIT(ksi)							\

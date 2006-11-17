@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.227.4.2 2006/10/21 15:20:46 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.227.4.3 2006/11/17 16:34:36 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.2 2006/10/21 15:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.3 2006/11/17 16:34:36 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -431,14 +431,16 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		l->l_flag &= ~(L_SA | L_SA_UPCALL);
 
 	p = l->l_proc;
+
 	/*
-	 * Lock the process and set the P_INEXEC flag to indicate that
-	 * it should be left alone until we're done here.  This is
-	 * necessary to avoid race conditions - e.g. in ptrace() -
-	 * that might allow a local user to illicitly obtain elevated
-	 * privileges.
+	 * Drain existing references and forbid new ones.  The process
+	 * should be left alone until we're done here.  This is necessary
+	 * to avoid race conditions - e.g. in ptrace() - that might allow
+	 * a local user to illicitly obtain elevated privileges.
 	 */
-	p->p_flag |= P_INEXEC;
+	mutex_enter(&p->p_mutex);
+	proc_drainrefs(p);
+	mutex_exit(&p->p_mutex);
 
 	base_vcp = NULL;
 	/*
@@ -665,12 +667,14 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		if (error) {
 			int j;
 			struct exec_vmcmd *vp = &pack.ep_vmcmds.evs_cmds[0];
+			rw_enter(&proclist_lock, RW_READER);
 			for (j = 0; j <= i; j++)
 				uprintf(
 			    "vmcmd[%d] = %#lx/%#lx fd@%#lx prot=0%o flags=%d\n",
 				    j, vp[j].ev_addr, vp[j].ev_len,
 				    vp[j].ev_offset, vp[j].ev_prot,
 				    vp[j].ev_flags);
+			rw_exit(&proclist_lock);
 		}
 #endif /* DEBUG_EXEC */
 		if (vcp->ev_flags & VMCMD_BASE)
@@ -750,7 +754,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto exec_abort;
 	}
 
-	stopprofclock(p);	/* stop profiling */
 	fdcloseexec(l);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
 
@@ -763,16 +766,31 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	p->p_acflag &= ~AFORK;
 
 	p->p_flag |= P_EXEC;
-	if (p->p_flag & P_PPWAIT) {
-		p->p_flag &= ~P_PPWAIT;
-		wakeup((caddr_t) p->p_pptr);
+
+	/*
+	 * It's OK to test PS_PPWAIT unlocked here, as other LWPs have
+	 * exited and exec()/exit() are the only places it will be cleared.
+	 */
+	if (p->p_sflag & PS_PPWAIT) {
+		rw_enter(&proclist_lock, RW_READER);
+		mutex_enter(&p->p_smutex);
+		stopprofclock(p);	/* stop profiling */
+		p->p_sflag &= ~PS_PPWAIT;
+		cv_broadcast(&p->p_pptr->p_waitcv);
+		mutex_exit(&p->p_smutex);
+		rw_exit(&proclist_lock);
+	} else {
+		mutex_enter(&p->p_smutex);
+		stopprofclock(p);	/* stop profiling */
+		mutex_exit(&p->p_smutex);
 	}
 
 	/*
-	 * deal with set[ug]id.
-	 * MNT_NOSUID has already been used to disable s[ug]id.
+	 * Deal with set[ug]id.  MNT_NOSUID has already been used to disable
+	 * s[ug]id.  It's OK to check for PSL_TRACED here as we have blocked
+	 * out additional references on the process for the moment.
 	 */
-	if ((p->p_flag & P_TRACED) == 0 &&
+	if ((p->p_slflag & PSL_TRACED) == 0 &&
 
 	    (((attr.va_mode & S_ISUID) != 0 &&
 	      kauth_cred_geteuid(l->l_cred) != attr.va_uid) ||
@@ -833,10 +851,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		kauth_cred_t ocred;
 
 		kauth_cred_hold(l->l_cred);
-		mutex_enter(&p->p_crmutex);
+		mutex_enter(&p->p_mutex);
 		ocred = p->p_cred;
 		p->p_cred = l->l_cred;
-		mutex_exit(&p->p_crmutex);
+		mutex_exit(&p->p_mutex);
 		kauth_cred_free(ocred);
 	}
 
@@ -866,11 +884,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		DPRINTF(("execve: map sigcode failed %d\n", error));
 		goto exec_abort;
 	}
-
-	rw_enter(&proclist_lock, RW_READER);
-	if ((p->p_flag & (P_TRACED|P_SYSCALL)) == P_TRACED)
-		psignal(p, SIGTRAP);
-	rw_exit(&proclist_lock);
 
 	free(pack.ep_hdr, M_EXEC);
 
@@ -912,26 +925,40 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #ifdef LKM
 	rw_exit(&exec_lock);
 #endif
-	p->p_flag &= ~P_INEXEC;
 
-	if (p->p_flag & P_STOPEXEC) {
-		rw_enter(&proclist_lock, RW_WRITER);
+	rw_enter(&proclist_lock, RW_READER);
+
+	if ((p->p_slflag & (PSL_TRACED|PSL_SYSCALL)) == PSL_TRACED)
+		psignal(p, SIGTRAP);
+
+	if (p->p_sflag & PS_STOPEXEC) {
+		mutex_enter(&proc_stop_mutex);
+		p->p_pptr->p_nstopchild++;
+		rw_exit(&proclist_lock);
 
 		mutex_enter(&p->p_smutex);
 		sigclearall(p, &contsigmask);
-		p->p_stat = SSTOP;
-		p->p_pptr->p_nstopchild++;
 		lwp_lock(l);
+		lwp_relock(l, &lwp_mutex);
+
+		/* Unlock the process once we are about to switch away. */
+		mb_write();
+		p->p_refcnt = 1;
 		l->l_stat = LSSTOP;
+		p->p_stat = SSTOP;
 		p->p_nrlwps--;
-		mutex_exit_linked(&p->p_smutex, l->l_mutex);
-
-		rw_exit(&proclist_lock);
-
+		mutex_exit(&p->p_smutex);
+		mutex_exit(&proc_stop_mutex);
 		mi_switch(l, NULL);
+	} else {
+		rw_exit(&proclist_lock);
+		/* Unlock the process. */
+		mb_write();
+		p->p_refcnt = 1;
 	}
 
 #ifdef SYSTRACE
+	/* XXXSMP */
 	if (ISSET(p->p_flag, P_SYSTRACE) &&
 	    wassugid && !ISSET(p->p_flag, P_SUGID))
 		systrace_execve1(pathbuf, p);
@@ -940,7 +967,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	return (EJUSTRETURN);
 
  bad:
-	p->p_flag &= ~P_INEXEC;
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
 	/* kill any opened file descriptor, if necessary */
@@ -961,8 +987,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #ifdef SYSTRACE
  clrflg:
 #endif /* SYSTRACE */
-	l->l_flag |= oldlwpflags;
-	p->p_flag &= ~P_INEXEC;
+	l->l_flag |= oldlwpflags;	/* XXXSMP */
+
+	/* Unlock the process. */
+	mb_write();
+	p->p_refcnt = 1;
+
 #ifdef LKM
 	rw_exit(&exec_lock);
 #endif
@@ -987,9 +1017,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 	free(pack.ep_hdr, M_EXEC);
 
-	/* Acquire the sched-state mutex.  exit1() will release it. */
+	/*
+	 * Acquire the sched-state mutex (exit1() will release it).  Since
+	 * this is a failed exec and we are exiting, keep the process locked
+	 * (p->p_refcnt == 0) through exit1().
+	 */
 	mutex_enter(&p->p_smutex);
-	p->p_flag &= ~P_INEXEC;
 	exit1(l, W_EXITCODE(error, SIGABRT));
 
 	/* NOTREACHED */

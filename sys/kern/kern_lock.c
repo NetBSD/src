@@ -1,12 +1,12 @@
-/*	$NetBSD: kern_lock.c,v 1.99.2.3 2006/10/24 19:21:40 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.99.2.4 2006/11/17 16:34:36 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Andrew Doran.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Ross Harvey.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.3 2006/10/24 19:21:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.4 2006/11/17 16:34:36 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -123,9 +123,10 @@ int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
  * XXX IPL_VM or IPL_AUDIO should be enough.
  */
 #if !defined(__HAVE_SPLBIGLOCK)
-#define	IPL_BIGLOCK	IPL_CLOCK
+#define	splbiglock	splclock
 #endif
-kmutex_t kernel_mutex;
+__cpu_simple_lock_t kernel_lock;
+int kernel_lock_id;
 #endif
 
 /*
@@ -1436,110 +1437,159 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
 #endif /* LOCKDEBUG */ /* } */
 
 #if defined(MULTIPROCESSOR)
+
 /*
  * Functions for manipulating the kernel_lock.  We put them here
  * so that they show up in profiles.
  */
 
+#define	_KERNEL_LOCK_ABORT(msg)						\
+    LOCKDEBUG_ABORT(kernel_lock_id, &kernel_lock, &_kernel_lock_ops,	\
+        __FUNCTION__, msg)
 
+int	_kernel_lock_dump(volatile void *, char *, size_t);
+
+lockops_t _kernel_lock_ops = {
+	"Kernel lock",
+	0,
+	_kernel_lock_dump
+};
+
+/*
+ * Initialize the kernel lock.
+ */
 void
 _kernel_lock_init(void)
 {
 
-	mutex_init(&kernel_mutex, MUTEX_SPIN, IPL_BIGLOCK);
+	__cpu_simple_lock_init(&kernel_lock);
+	kernel_lock_id = LOCKDEBUG_ALLOC(&kernel_lock, &_kernel_lock_ops);
 }
 
 /*
- * Acquire/release the kernel lock.  Intended for use in the scheduler
- * and the lower half of the kernel.
+ * Print debugging information about the kernel lock.
  */
-void
-_kernel_lock(int flag)
+int
+_kernel_lock_dump(volatile void *junk, char *buf, size_t l)
 {
 	struct cpu_info *ci = curcpu();
 
-	if (ci->ci_data.cpu_biglock_count > 0) {
-		LOCK_ASSERT(mutex_owned(&kernel_mutex));
-		ci->ci_data.cpu_biglock_count++;
-	} else {
-		mutex_enter(&kernel_mutex);
-		ci->ci_data.cpu_biglock_count++;
-		splx(mutex_getspl(&kernel_mutex));
-	}
+	(void)junk;
+
+	return snprintf(buf, l, "curcpu holds : %18d want cnt.: %18d\n",
+	    ci->ci_biglock_count, ci->ci_biglock_wanted);
 }
 
+/*
+ * Acquire 'nlocks' holds on the kernel lock.  If 'l' is non-null, the
+ * acquisition is from process context.
+ */
 void
-_kernel_unlock(void)
+_kernel_lock(u_int nlocks, struct lwp *l)
 {
 	struct cpu_info *ci = curcpu();
+	LOCKSTAT_TIMER(spintime);
+	u_int count;
 	int s;
 
-	KASSERT(ci->ci_data.cpu_biglock_count > 0);
+	(void)l;
 
-	s = splraiseipl(kernel_mutex.mtx_minspl);
-	if ((--ci->ci_data.cpu_biglock_count) == 0) {
-		mutex_setspl(&kernel_mutex, s);
-		mutex_exit(&kernel_mutex);
-	} else
+	KASSERT(nlocks > 0);
+
+	s = splbiglock();
+
+	if (ci->ci_biglock_count != 0) {
+		KDASSERT(__cpu_simple_lock_held(&kernel_lock));
+		ci->ci_biglock_count += nlocks;
 		splx(s);
+		return;
+	}
+
+	if (__cpu_simple_lock_try(&kernel_lock)) {
+		ci->ci_biglock_count = nlocks;
+		LOCKDEBUG_LOCKED(kernel_lock_id,
+		    (uintptr_t)__builtin_return_address(0), 0);
+		splx(s);
+		return;
+	}
+
+	LOCKSTAT_START_TIMER(spintime);
+	count = 0;
+	ci->ci_biglock_wanted++;
+
+	while (!__cpu_simple_lock_try(&kernel_lock)) {
+		splx(s);
+#ifdef LOCKDEBUG
+		SPINLOCK_BACKOFF(count);
+#else
+		if (++count > 0x0fffffff)
+			_KERNEL_LOCK_ABORT("spinout");
+#endif
+		s = splbiglock();
+	}
+
+	ci->ci_biglock_wanted--;
+	ci->ci_biglock_count += nlocks;
+	LOCKSTAT_STOP_TIMER(spintime);
+	LOCKDEBUG_LOCKED(kernel_lock_id,
+	    (uintptr_t)__builtin_return_address(0), 0);
+	splx(s);
+
+	if (count == 0)
+		return;
+
+	LOCKSTAT_EVENT(&kernel_lock, LB_KERNEL_LOCK | LB_SPIN, 1, spintime);
 }
 
 /*
- * Acquire/release the kernel_lock on behalf of a process.  Intended for
- * use in the top half of the kernel.
+ * Release 'nlocks' holds on the kernel lock.  If 'nlocks' is zero, release
+ * all holds.  If 'l' is non-null, the release is from process context.
  */
-void
-_kernel_proc_lock(struct lwp *l)
-{
-
-	LOCKDEBUG_BARRIER(&kernel_mutex, 0);
-	_kernel_lock(0);
-}
-
-void
-_kernel_proc_unlock(struct lwp *l)
-{
-
-	_kernel_unlock();
-}
-
-int
-_kernel_lock_release_all()
+u_int
+_kernel_unlock(u_int nlocks, struct lwp *l)
 {
 	struct cpu_info *ci = curcpu();
-	int hold_count;
+	u_int olocks;
+	int s;
 
-	hold_count = ci->ci_data.cpu_biglock_count;
+	(void)l;
 
-	if (hold_count) {
-		mutex_setspl(&kernel_mutex, splraiseipl(kernel_mutex.mtx_minspl));
-		ci->ci_data.cpu_biglock_count = 0;
-		mutex_exit(&kernel_mutex);
+	KASSERT(nlocks < 2);
+
+	olocks = ci->ci_biglock_count;
+
+	if (olocks == 0) {
+		KASSERT(nlocks == 0);
+		return 0;
 	}
 
-	return hold_count;
-}
+	KDASSERT(__cpu_simple_lock_held(&kernel_lock));
 
-void
-_kernel_lock_acquire_count(int hold_count)
-{
+	if (nlocks == 0)
+		nlocks = olocks;
 
-	KASSERT(curcpu()->ci_data.cpu_biglock_count == 0);
-
-	if (hold_count != 0) {
-		struct cpu_info *ci = curcpu();
-
-		mutex_enter(&kernel_mutex);
-		ci->ci_data.cpu_biglock_count = hold_count;
-		splx(mutex_getspl(&kernel_mutex));
+	s = splbiglock();
+	if ((ci->ci_biglock_count -= nlocks) == 0) {
+		LOCKDEBUG_UNLOCKED(kernel_lock_id,
+		    (uintptr_t)__builtin_return_address(0), 0);
+		__cpu_simple_unlock(&kernel_lock);
 	}
+	splx(s);
+
+	return olocks;
 }
+
 #if defined(DEBUG)
+/*
+ * Assert that the kernel lock is held.
+ */
 void
-_kernel_lock_assert_locked()
+_kernel_lock_assert_locked(void)
 {
 
-	LOCK_ASSERT(mutex_owned(&kernel_mutex));
+	if (!__cpu_simple_lock_held(&kernel_lock) ||
+	    ci->ci_biglock_count == 0)
+		_KERNEL_LOCK_ABORT("not locked");
 }
 #endif
 
@@ -1550,8 +1600,8 @@ lock_owner_onproc(uintptr_t owner)
 	struct cpu_info *ci;
 
 	for (CPU_INFO_FOREACH(cii, ci))
-		if (owner == (uintptr_t)ci || owner == (uintptr_t)ci->ci_curlwp)
-			return (1); 
+		if (owner == (uintptr_t)ci->ci_curlwp)
+			return ci->ci_biglock_wanted == 0;
 
 	return (0);
 }

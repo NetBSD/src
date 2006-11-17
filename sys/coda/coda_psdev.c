@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.32.2.1 2006/10/20 20:08:47 ad Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.32.2.2 2006/11/17 16:34:34 ad Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.32.2.1 2006/10/20 20:08:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.32.2.2 2006/11/17 16:34:34 ad Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -552,10 +552,9 @@ coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize,
 	int error;
 #ifdef	CTL_C
 	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
 	sigset_t psig_omask;
 	int i;
-	psig_omask = l->l_proc->p_sigctx.ps_siglist;	/* array assignment */
+	psig_omask = l->l_sigpend->sp_set;	/* array assignment */
 #endif
 	if (mntinfo == NULL) {
 	    /* Unlikely, but could be a race condition with a dying warden */
@@ -617,42 +616,42 @@ coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize,
 #ifdef	CODA_VERBOSE
 		    printf("coda_call: tsleep TIMEOUT %d sec\n", 2+2*i);
 #endif
-    	    } else if (sigismember(&p->p_sigctx.ps_siglist, SIGIO)) {
-		    sigaddset(&p->p_sigctx.ps_sigmask, SIGIO);
+    	    } else if (sigismember(&l->l_sigpend->sp_set, SIGIO)) {
+		    sigaddset(l->l_sigmask, SIGIO);
 #ifdef	CODA_VERBOSE
 		    printf("coda_call: tsleep returns %d SIGIO, cnt %d\n", error, i);
 #endif
-    	    } else if (sigismember(&p->p_sigctx.ps_siglist, SIGALRM)) {
-		    sigaddset(&p->p_sigctx.ps_sigmask, SIGALRM);
+    	    } else if (sigismember(&l->l_sigpend->sp_set, SIGALRM)) {
+		    sigaddset(l->l_sigmask, SIGALRM);
 #ifdef	CODA_VERBOSE
 		    printf("coda_call: tsleep returns %d SIGALRM, cnt %d\n", error, i);
 #endif
 	    } else {
 		    sigset_t tmp;
-		    tmp = p->p_sigctx.ps_siglist;	/* array assignment */
-		    sigminusset(&p->p_sigctx.ps_sigmask, &tmp);
+		    tmp = l->l_sigpend->sp_set;	/* array assignment */
+		    sigminusset(l->l_sigmask, &tmp);
 
 #ifdef	CODA_VERBOSE
 		    printf("coda_call: tsleep returns %d, cnt %d\n", error, i);
 		    printf("coda_call: siglist = %x.%x.%x.%x, sigmask = %x.%x.%x.%x, mask %x.%x.%x.%x\n",
-			    p->p_sigctx.ps_siglist.__bits[0], p->p_sigctx.ps_siglist.__bits[1],
-			    p->p_sigctx.ps_siglist.__bits[2], p->p_sigctx.ps_siglist.__bits[3],
-			    p->p_sigctx.ps_sigmask.__bits[0], p->p_sigctx.ps_sigmask.__bits[1],
-			    p->p_sigctx.ps_sigmask.__bits[2], p->p_sigctx.ps_sigmask.__bits[3],
+			    l->l_sigpend->sp_set.__bits[0], l->l_sigpend->sp_set.__bits[1],
+			    l->l_sigpend->sp_set.__bits[2], l->l_sigpend->sp_set.__bits[3],
+			    l->l_sigmask.__bits[0], l->l_sigmask.__bits[1],
+			    l->l_sigmask.__bits[2], l->l_sigmask.__bits[3],
 			    tmp.__bits[0], tmp.__bits[1], tmp.__bits[2], tmp.__bits[3]);
 #endif
 		    break;
 #ifdef	notyet
-		    sigminusset(&p->p_sigctx.ps_sigmask, &p->p_sigctx.ps_siglist);
+		    sigminusset(l->l_sigmask, &l->l_sigpend->sp_set);
 		    printf("coda_call: siglist = %x.%x.%x.%x, sigmask = %x.%x.%x.%x\n",
-			    p->p_sigctx.ps_siglist.__bits[0], p->p_sigctx.ps_siglist.__bits[1],
-			    p->p_sigctx.ps_siglist.__bits[2], p->p_sigctx.ps_siglist.__bits[3],
-			    p->p_sigctx.ps_sigmask.__bits[0], p->p_sigctx.ps_sigmask.__bits[1],
-			    p->p_sigctx.ps_sigmask.__bits[2], p->p_sigctx.ps_sigmask.__bits[3]);
+			    l->l_sigpend->sp_set.__bits[0], l->l_sigpend->sp_set.__bits[1],
+			    l->l_sigpend->sp_set.__bits[2], l->l_sigpend->sp_set.__bits[3],
+			    l->l_sigmask.__bits[0], l->l_sigmask.__bits[1],
+			    l->l_sigmask.__bits[2], l->l_sigmask.__bits[3]);
 #endif
 	    }
 	} while (error && i++ < 128 && VC_OPEN(vcp));
-	p->p_sigctx.ps_siglist = psig_omask;	/* array assignment */
+	l->l_sigpend->sp_set = psig_omask;	/* array assignment */
 #else
 	(void) tsleep(&vmp->vm_sleep, coda_call_sleep, "coda_call", 0);
 #endif

@@ -1,8 +1,11 @@
-/*	$NetBSD: sys_sig.c,v 1.1.2.2 2006/10/24 21:10:21 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.1.2.3 2006/11/17 16:34:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.2 2006/10/24 21:10:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.3 2006/11/17 16:34:38 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -273,7 +276,7 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 		/* kill single process */
 		if ((p = p_find(SCARG(uap, pid), PFIND_UNLOCK_FAIL)) == NULL)
 			return (ESRCH);
-		mutex_enter(&p->p_crmutex);
+		mutex_enter(&p->p_mutex);
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_CANSIGNAL, p, (void *)(uintptr_t)signum,
 		    NULL, NULL);
@@ -282,7 +285,7 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 			kpsignal2(p, &ksi);
 			mutex_exit(&p->p_smutex);
 		}
-		mutex_exit(&p->p_crmutex);
+		mutex_exit(&p->p_mutex);
 		rw_exit(&proclist_lock);
 		return (0);
 	}
@@ -372,12 +375,13 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	struct proc *p;
 	struct sigacts *ps;
 	sigset_t tset;
-	int prop;
+	int prop, error;
 
 	if (signum <= 0 || signum >= NSIG)
 		return (EINVAL);
 
 	p = l->l_proc;
+	error = 0;
 
 	/*
 	 * Trampoline ABI version 0 is reserved for the legacy kernel
@@ -398,19 +402,19 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 		return (EINVAL);
 	}
 
+	mutex_enter(&p->p_mutex);	/* p_flag */
 	mutex_enter(&p->p_smutex);
+
 	ps = p->p_sigacts;
 	if (osa)
 		*osa = SIGACTION_PS(ps, signum);
-	if (!nsa) {
-		mutex_exit(&p->p_smutex);
-		return (0);
-	}
+	if (!nsa)
+		goto out;
 
 	prop = sigprop[signum];
 	if ((nsa->sa_flags & ~SA_ALLBITS) || (prop & SA_CANTMASK)) {
-		mutex_exit(&p->p_smutex);
-		return (EINVAL);
+		error = EINVAL;
+		goto out;
 	}
 
 	SIGACTION_PS(ps, signum) = *nsa;
@@ -423,9 +427,9 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 
 	if (signum == SIGCHLD) {
 		if (nsa->sa_flags & SA_NOCLDSTOP)
-			p->p_flag |= P_NOCLDSTOP;
+			p->p_sflag |= PS_NOCLDSTOP;
 		else
-			p->p_flag &= ~P_NOCLDSTOP;
+			p->p_sflag &= ~PS_NOCLDSTOP;
 		if (nsa->sa_flags & SA_NOCLDWAIT) {
 			/*
 			 * Paranoia: since SA_NOCLDWAIT is implemented by
@@ -489,9 +493,11 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	lwp_lock(l);
 	signotify(l);
 	lwp_unlock(l);
-
+ out:
 	mutex_exit(&p->p_smutex);
-	return (0);
+	mutex_exit(&p->p_mutex);
+
+	return (error);
 }
 
 int
@@ -501,6 +507,15 @@ sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 	int more;
 
 	mutex_enter(&p->p_smutex);
+
+	/*
+	 * If we've got pending signals that we haven't processed yet,
+	 * make sure that we take them before changing the mask.
+	 */
+	if (sigispending(l)) {
+		mutex_exit(&p->p_smutex);
+		return ERESTART;
+	}
 
 	if (oss)
 		*oss = *l->l_sigmask;
@@ -525,7 +540,7 @@ sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 		sigminusset(&sigcantmask, l->l_sigmask);
 		if (more) {
 			/*
-			 * Pinch any signals from the per-process pending
+			 * Grab signals from the per-process pending
 			 * list that are now of interest to us.
 			 */
 			if ((p->p_flag & P_SA) == 0)
@@ -553,7 +568,6 @@ sigpending1(struct lwp *l, sigset_t *ss)
 
 	mutex_enter(&p->p_smutex);
 	*ss = l->l_sigpend->sp_set;
-	sigplusset(&p->p_sigpend.sp_set, ss);
 	sigminusset(l->l_sigmask, ss);
 	mutex_exit(&p->p_smutex);
 }
@@ -569,6 +583,15 @@ sigsuspend1(struct lwp *l, const sigset_t *ss)
 
 	mutex_enter(&p->p_smutex);
 
+	/*
+	 * If we've got pending signals that we haven't processed yet,
+	 * make sure that we take them before changing the mask.
+	 */
+	if (sigispending(l)) {
+		mutex_exit(&p->p_smutex);
+		return ERESTART;
+	}
+
 	if (ss) {
 		/*
 		 * When returning from sigpause, we want
@@ -581,6 +604,14 @@ sigsuspend1(struct lwp *l, const sigset_t *ss)
 		l->l_sigrestore = 1;
 		*l->l_sigmask = *ss;
 		sigminusset(&sigcantmask, l->l_sigmask);
+
+		/*
+		 * Pinch any signals from the per-process pending
+		 * list that are now of interest to us.
+		 */
+		if ((p->p_flag & P_SA) == 0)
+			sigpinch(&p->p_sigpend, l->l_sigpend, l->l_sigmask);
+
 		lwp_lock(l);
 		signotify(l);
 		lwp_unlock(l);
@@ -683,13 +714,21 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	/*
 	 * Allocate a ksi up front.  We can't sleep with the mutex held.
 	 */
-	ksi = pool_get(&ksiginfo_pool, PR_WAITOK);
+	if ((ksi = ksiginfo_alloc(p, NULL, PR_WAITOK)) == NULL) {
+		FREE(waitset, M_TEMP);
+		return (ENOMEM);
+	}
+
+	mutex_enter(&p->p_smutex);
 
 	/*
-	 * First scan the per-proc and per-LWP lists and check if there is
-	 * signal from our waitset already pending.
+	 * If we've got pending signals that we haven't processed yet,
+	 * make sure that we take them before changing the mask.
 	 */
-	mutex_enter(&p->p_smutex);
+	if ((error = sigispending(l)) != 0) {
+		mutex_exit(&p->p_smutex);
+		goto out;
+	}
 
 	/*
 	 * SA processes can have no more than 1 sigwaiter.
@@ -779,7 +818,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	 */
  out:
 	FREE(waitset, M_TEMP);
-	pool_put(&ksiginfo_pool, ksi);
+	ksiginfo_free(ksi);
 
 	if (error == 0)
 		error = (*put_info)(&ksi->ksi_info, SCARG(uap, info),

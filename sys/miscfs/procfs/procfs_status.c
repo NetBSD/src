@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.27.8.1 2006/10/21 14:37:18 ad Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.27.8.2 2006/11/17 16:34:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.27.8.1 2006/10/21 14:37:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.27.8.2 2006/11/17 16:34:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,9 @@ procfs_dostatus(curl, l, pfs, uio)
 	if (uio->uio_rw != UIO_READ)
 		return (EOPNOTSUPP);
 
+	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&p->p_mutex);
+
 	pid = p->p_pid;
 	ppid = p->p_pptr ? p->p_pptr->p_pid : 0,
 	pgid = p->p_pgrp->pg_id;
@@ -124,7 +127,7 @@ procfs_dostatus(curl, l, pfs, uio)
 	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %d %d %d %d ",
 	    pid, ppid, pgid, sid);
 
-	if ((p->p_flag&P_CONTROLT) && (tp = sess->s_ttyp))
+	if ((p->p_lflag & PL_CONTROLT) && (tp = sess->s_ttyp))
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "%d,%d ",
 		    major(tp->t_dev), minor(tp->t_dev));
 	else
@@ -143,6 +146,7 @@ procfs_dostatus(curl, l, pfs, uio)
 	if (*sep != ',')
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "noflags");
 
+	mutex_enter(&p->p_smutex);
 	if (l->l_flag & L_INMEM)
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %ld,%ld",
 		    p->p_stats->p_start.tv_sec, p->p_stats->p_start.tv_usec);
@@ -157,9 +161,12 @@ procfs_dostatus(curl, l, pfs, uio)
 		    " %ld,%ld %ld,%ld", ut.tv_sec, ut.tv_usec, st.tv_sec,
 		    st.tv_usec);
 	}
+	mutex_exit(&p->p_smutex);
 
+	lwp_lock(l);
 	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %s",
 	    (l->l_wchan && l->l_wmesg) ? l->l_wmesg : "nochan");
+	lwp_unlock(l);
 
 	cr = p->p_cred;
 
@@ -172,6 +179,9 @@ procfs_dostatus(curl, l, pfs, uio)
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), ",%d",
 		    kauth_cred_group(cr, i));
 	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "\n");
+
+	mutex_exit(&p->p_mutex);
+	rw_exit(&proclist_lock);
 
 	return (uiomove_frombuf(psbuf, ps - psbuf, uio));
 }

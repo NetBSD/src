@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.58.2.3 2006/10/21 15:20:47 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.58.2.4 2006/11/17 16:34:37 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.3 2006/10/21 15:20:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.4 2006/11/17 16:34:37 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -438,6 +438,9 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		break;
 	}
 
+	mutex_enter(&p->p_mutex);
+	proc_delref(strp->proc);
+	mutex_exit(&p->p_mutex);
  unlock:
 	SYSTRACE_UNLOCK(fst, curlwp);
 
@@ -616,17 +619,26 @@ struct proc *
 systrace_find(struct str_process *strp)
 {
 	struct proc *proc;
+	int error;
 
-	if ((proc = pfind(strp->pid)) == NULL)
+	rw_enter(&proclist_lock, RW_READER);
+
+	if ((proc = p_find(strp->pid, PFIND_LOCKED)) == NULL) {
+		rw_exit(&proclist_lock);
 		return (NULL);
+	}
 
-	if (proc != strp->proc)
+	mutex_enter(&proc->p_mutex);
+	if (proc != strp->proc || !ISSET(proc->p_flag, P_SYSTRACE) {
+		mutex_exit(&proc->p_mutex);
+		rw_exit(&proclist_lock);
 		return (NULL);
+	}
+	error = proc_addref(proc);
+	mutex_exit(&proc->p_mutex);
+	rw_exit(&proclist_lock);
 
-	if (!ISSET(proc->p_flag, P_SYSTRACE))
-		return (NULL);
-
-	return (proc);
+	return (error ? NULL : proc);
 }
 
 void
@@ -1083,8 +1095,12 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 			return (EINVAL);
 
 		/* Check that emulation matches */
-		if (strpol->emul && strpol->emul != strp->proc->p_emul)
+		if (strpol->emul && strpol->emul != strp->proc->p_emul) {
+			mutex_enter(&p->p_mutex);
+			proc_delref(strp->proc);
+			mutex_exit(&p->p_mutex);
 			return (EINVAL);
+		}
 
 		if (strp->policy)
 			systrace_closepolicy(fst, strp->policy);
@@ -1095,6 +1111,9 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 		if (strpol->emul == NULL)
 			strpol->emul = strp->proc->p_emul;
 
+		mutex_enter(&p->p_mutex);
+		proc_delref(strp->proc);
+		mutex_exit(&p->p_mutex);
 		break;
 	case SYSTR_POLICY_MODIFY:
 		DPRINTF(("%s: %d: code %d -> policy %d\n", __func__,
@@ -1221,13 +1240,14 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 
 #ifdef __NetBSD__
 	{
-		/* XXXAD I/O while locked */
 		struct lwp *tl;
-		mutex_enter(&p->p_smutex);	/* XXXAD */
+		mutex_enter(&p->p_smutex);
 		tl = proc_representative_lwp(t, NULL, 1);
-		error = process_domem(l, tl, &uio);
+		lwp_addref(tl);
 		lwp_unlock(tl);
-		mutex_exit(&p->p_smutex);	/* XXXAD */
+		mutex_exit(&p->p_smutex);
+		error = process_domem(l, tl, &uio);
+		lwp_delref(tl);
 	}
 #else
 	error = procfs_domem(p, t, NULL, &uio);
@@ -1243,15 +1263,22 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 {
 	int error = 0;
 	struct proc *proc, *p = curproc;
+	struct lwp *l = curlwp;
 
-	if ((proc = pfind(pid)) == NULL) {
-		error = ESRCH;
-		goto out;
+	rw_enter(&proclist_lock, RW_READER);
+
+	if ((proc = p_find(pid, PFIND_LOCKED)) == NULL) {
+		rw_exit(&proclist_lock);
+		return (ESRCH);
 	}
 
-	if (ISSET(proc->p_flag, P_INEXEC)) {
-		error = EAGAIN;
-		goto out;
+	mutex_enter(&proc->p_mutex);
+	error = proc_addref(proc);
+	rw_exit(&proclist_lock);
+
+	if (error != 0) {
+		mutex_exit(&proc->p_mutex);
+		return (error);
 	}
 
 	/*
@@ -1290,11 +1317,17 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 *	special privileges using setuid() from being
 	 *	traced. This is good security.]
 	 */
-	if ((kauth_cred_getuid(proc->p_cred) != kauth_cred_getuid(p->p_cred) ||
-		ISSET(proc->p_flag, P_SUGID)) &&
-	    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
-		goto out;
+	mutex_enter(&proc->p_mutex);
+
+	if (kauth_cred_getuid(proc->p_cred) != kauth_cred_getuid(l->l_cred) ||
+	    ISSET(proc->p_flag, P_SUGID)) {
+	    	error = kauth_authorize_generic(l->l_cred,
+	    	    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+	    	if (error != 0) {
+	    		mutex_exit(&proc->p_mutex);
+	    		goto out;
+		}
+	}
 
 	/*
 	 *	(5) ...it's init, which controls the security level
@@ -1303,11 +1336,14 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 *	    on.
 	 */
 	if ((proc->p_pid == 1) && (securelevel > -1)) {
+		mutex_exit(&proc->p_mutex);
 		error = EPERM;
 		goto out;
 	}
 
 	error = systrace_insert_process(fst, proc, NULL);
+
+	mutex_exit(&proc->p_mutex);
 
 #if defined(__NetBSD__) && defined(__HAVE_SYSCALL_INTERN)
 	/*
@@ -1318,6 +1354,8 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 		(*proc->p_emul->e_syscall_intern)(proc);
 #endif
  out:
+ 	proc_delref(proc);
+ 	mutex_exit(&proc->p_mutex);
 	return (error);
 }
 
@@ -1626,6 +1664,10 @@ systrace_detach(struct str_process *strp)
 		systrace_closepolicy(fst, strp->policy);
 	systrace_replacefree(strp);
 	pool_put(&systr_proc_pl, strp);
+
+	mutex_enter(&p->p_mutex);
+	proc_delref(strp->proc);
+	mutex_exit(&p->p_mutex);
 
 	return (error);
 }

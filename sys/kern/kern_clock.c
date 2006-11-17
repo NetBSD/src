@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.102.2.1 2006/10/21 14:03:42 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.102.2.2 2006/11/17 16:34:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.102.2.1 2006/10/21 14:03:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.102.2.2 2006/11/17 16:34:35 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -891,9 +891,9 @@ hardclock(struct clockframe *frame)
 			 * it now.
 			 */
 			spllowersoftclock();
-			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+			KERNEL_LOCK(1, NULL);
 			softclock(NULL);
-			KERNEL_UNLOCK();
+			(void)KERNEL_UNLOCK(1, NULL);
 		} else {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 			softintr_schedule(softclock_si);
@@ -1071,8 +1071,10 @@ void
 startprofclock(struct proc *p)
 {
 
-	if ((p->p_flag & P_PROFIL) == 0) {
-		p->p_flag |= P_PROFIL;
+	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+
+	if ((p->p_sflag & PS_PROFIL) == 0) {
+		p->p_sflag |= PS_PROFIL;
 		/*
 		 * This is only necessary if using the clock as the
 		 * profiling source.
@@ -1089,8 +1091,10 @@ void
 stopprofclock(struct proc *p)
 {
 
-	if (p->p_flag & P_PROFIL) {
-		p->p_flag &= ~P_PROFIL;
+	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+
+	if (p->p_sflag & PS_PROFIL) {
+		p->p_sflag &= ~PS_PROFIL;
 		/*
 		 * This is only necessary if using the clock as the
 		 * profiling source.
@@ -1119,7 +1123,7 @@ proftick(struct clockframe *frame)
 	l = curlwp;
 	p = (l ? l->l_proc : NULL);
 	if (CLKF_USERMODE(frame)) {
-		if (p->p_flag & P_PROFIL)
+		if (p->p_sflag & PS_PROFIL)
 			addupc_intr(l, CLKF_PC(frame));
 	} else {
 #ifdef GPROF
@@ -1175,7 +1179,7 @@ statclock(struct clockframe *frame)
 	if (CLKF_USERMODE(frame)) {
 		KASSERT(p != NULL);
 
-		if ((p->p_flag & P_PROFIL) && profsrc == PROFSRC_CLOCK)
+		if ((p->p_sflag & PS_PROFIL) && profsrc == PROFSRC_CLOCK)
 			addupc_intr(l, CLKF_PC(frame));
 		if (--spc->spc_pscnt > 0)
 			return;
@@ -1203,7 +1207,7 @@ statclock(struct clockframe *frame)
 		}
 #endif
 #ifdef LWP_PC
-		if (p && profsrc == PROFSRC_CLOCK && (p->p_flag & P_PROFIL))
+		if (p && profsrc == PROFSRC_CLOCK && (p->p_sflag & PS_PROFIL))
 			addupc_intr(l, LWP_PC(l));
 #endif
 		if (--spc->spc_pscnt > 0)

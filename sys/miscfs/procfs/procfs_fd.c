@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fd.c,v 1.8.4.1 2006/10/21 14:37:18 ad Exp $	*/
+/*	$NetBSD: procfs_fd.c,v 1.8.4.2 2006/11/17 16:34:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.8.4.1 2006/10/21 14:37:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.8.4.2 2006/11/17 16:34:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,13 @@ procfs_dofd(curl, p, pfs, uio)
 {
 	int error;
 	struct file *fp;
-	struct proc *pown;
 	off_t offs;
 
-	if ((error = procfs_getfp(pfs, &pown, &fp)) != 0)
-		return error;
+	mutex_enter(&p->p_mutex);
+	fp = fd_getfile(p->p_fd, pfs->pfs_fd);
+	mutex_exit(&p->p_mutex);
+	if (fp == NULL)
+		return (EBADF);
 
 	FILE_USE(fp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.15 2006/09/01 21:20:46 matt Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.15.2.1 2006/11/17 16:34:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.15 2006/09/01 21:20:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.15.2.1 2006/11/17 16:34:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -157,6 +157,8 @@ linux_sys_ptrace_arch(l, v, retval)
 	    (request != LINUX_PTRACE_SETFPREGS))
 		return EIO;
 
+	/* XXXAD locking */
+
 	/* Find the process we're supposed to be operating on. */
 	if ((t = pfind(SCARG(uap, pid))) == NULL)
 		return ESRCH;
@@ -165,14 +167,14 @@ linux_sys_ptrace_arch(l, v, retval)
 	 * You can't do what you want to the process if:
 	 *	(1) It's not being traced at all,
 	 */
-	if (!ISSET(t->p_flag, P_TRACED))
+	if (!ISSET(t->p_slflag, PSL_TRACED))
 		return EPERM;
 
 	/*
 	 *	(2) it's being traced by procfs (which has
 	 *	    different signal delivery semantics),
 	 */
-	if (ISSET(t->p_flag, P_FSTRACE))
+	if (ISSET(t->p_slflag, PSL_FSTRACE))
 		return EBUSY;
 
 	/*
@@ -184,7 +186,7 @@ linux_sys_ptrace_arch(l, v, retval)
 	/*
 	 *	(4) it's not currently stopped.
 	 */
-	if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
+	if (t->p_stat != SSTOP || !ISSET(t->p_lflag, PL_WAITED))
 		return EBUSY;
 
 	/* XXX NJWLWP

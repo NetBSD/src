@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12.4.1 2006/10/20 21:26:44 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.4.2 2006/11/17 16:34:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,6 +81,8 @@ struct cpu_info {
 	int ci_idle_tss_sel;
 
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
+	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
+	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
 	u_int32_t	ci_ipending;
 	int		ci_ilevel;
 	int		ci_idepth;

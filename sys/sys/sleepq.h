@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.1.2.1 2006/10/20 19:38:44 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.1.2.2 2006/11/17 16:34:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -39,8 +39,13 @@
 #ifndef	_SYS_SLEEPQ_H_
 #define	_SYS_SLEEPQ_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
+
 #include <sys/queue.h>
 #include <sys/mutex.h>
+#include <sys/sched.h>
 
 /*
  * Generic sleep queues.
@@ -54,24 +59,38 @@ struct lwp;
 
 typedef struct sleepq {
 	TAILQ_HEAD(, lwp)	sq_queue;	/* queue of waiters */
-	kmutex_t		*sq_mutex;	/* mutex on struct */
+	kmutex_t		*sq_mutex;	/* mutex on struct & queue */
 	u_int			sq_waiters;	/* count of waiters */
 } sleepq_t;
 
+typedef struct sleeptab {
+	sleepq_t		st_queues[SLEEPTAB_HASH_SIZE];
+#ifdef MULTIPROCESSOR
+	kmutex_t		st_mutexes[SLEEPTAB_HASH_SIZE];
+#endif
+} sleeptab_t;
+
 void	sleepq_init(sleepq_t *, kmutex_t *);
 int	sleepq_remove(sleepq_t *, struct lwp *);
-void	sleepq_enter(sleepq_t *, int, wchan_t, const char *, int, int);
+void	sleepq_enter(sleepq_t *, int, wchan_t, const char *, int, int,
+		     syncobj_t *);
 int	sleepq_block(sleepq_t *, int);
 void	sleepq_unsleep(struct lwp *);
 void	sleepq_timeout(void *);
 void	sleepq_wakeone(sleepq_t *, wchan_t);
 void	sleepq_wakeall(sleepq_t *, wchan_t, u_int);
 int	sleepq_abort(kmutex_t *, int);
+void	sleepq_changepri(struct lwp *, int);
+void	sleepq_unblock(void);
 
-void	sleeptab_init(void); 
+void	sleeptab_init(sleeptab_t *);
+
+extern sleeptab_t	sleeptab;
 
 /*
  * Return non-zero if it is unsafe to sleep.
+ *
+ * XXX This only exists because panic() is broken.
  */
 static inline int
 sleepq_dontsleep(struct lwp *l)
@@ -86,12 +105,11 @@ sleepq_dontsleep(struct lwp *l)
  * acquires and holds the per-queue interlock.
  */
 static inline sleepq_t *
-sleeptab_lookup(wchan_t wchan)
+sleeptab_lookup(sleeptab_t *st, wchan_t wchan)
 {
-	extern sleepq_t sleeptab[];
 	sleepq_t *sq;
 
-	sq = &sleeptab[SLEEPTAB_HASH(wchan)];
+	sq = &st->st_queues[SLEEPTAB_HASH(wchan)];
 	mutex_enter(sq->sq_mutex);
 	return sq;
 }
@@ -102,7 +120,6 @@ sleeptab_lookup(wchan_t wchan)
 static inline void
 sleepq_unlock(sleepq_t *sq)
 {
-
 	mutex_exit(sq->sq_mutex);
 }
 
@@ -113,12 +130,12 @@ sleepq_unlock(sleepq_t *sq)
 typedef struct turnstile {
 	LIST_ENTRY(turnstile)	ts_chain;	/* link on hash chain */
 	struct turnstile	*ts_free;	/* turnstile free list */
-	volatile const void	*ts_obj;	/* lock object */
+	wchan_t			ts_obj;		/* lock object */
 	sleepq_t		ts_sleepq[2];	/* sleep queues */
 } turnstile_t;
 
 typedef struct tschain {
-	kmutex_t		tc_mutex;	/* mutex on hash chain */
+	kmutex_t		*tc_mutex;	/* mutex on structs & queues */
 	LIST_HEAD(, turnstile)	tc_chain;	/* turnstile chain */
 } tschain_t;
 
@@ -143,6 +160,12 @@ void	turnstile_block(turnstile_t *, int, int, wchan_t);
 void	turnstile_wakeup(turnstile_t *, int, int, struct lwp *);
 
 extern struct pool_cache turnstile_cache; 
+
+static inline void
+turnstile_unblock(void)
+{
+	sleepq_unblock();
+}
 
 #endif	/* _KERNEL */
 

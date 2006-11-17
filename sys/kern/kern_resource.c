@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.103.4.3 2006/10/24 21:10:21 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.103.4.4 2006/11/17 16:34:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.3 2006/10/24 21:10:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.4 2006/11/17 16:34:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,11 +119,11 @@ sys_getpriority(struct lwp *l, void *v, register_t *retval)
 			who = (int)kauth_cred_geteuid(l->l_cred);
 		rw_enter(&proclist_lock, RW_READER);
 		PROCLIST_FOREACH(p, &allproc) {
-			mutex_enter(&p->p_crmutex);
+			mutex_enter(&p->p_mutex);
 			if (kauth_cred_geteuid(p->p_cred) ==
 			    (uid_t)who && p->p_nice < low)
 				low = p->p_nice;
-			mutex_exit(&p->p_crmutex);
+			mutex_exit(&p->p_mutex);
 		}
 		rw_exit(&proclist_lock);
 		break;
@@ -158,9 +158,9 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 		else
 			p = p_find(who, 0);
 		if (p != 0) {
-			mutex_enter(&p->p_crmutex);
+			mutex_enter(&p->p_mutex);
 			error = donice(l, p, SCARG(uap, prio));
-			mutex_exit(&p->p_crmutex);
+			mutex_exit(&p->p_mutex);
 		}
 		if (who != 0)
 			rw_exit(&proclist_lock);
@@ -176,9 +176,9 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 		else if ((pg = pg_find(who, PFIND_LOCKED | PFIND_UNLOCK_FAIL)) == NULL)
 			break;
 		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
-			mutex_enter(&p->p_crmutex);
+			mutex_enter(&p->p_mutex);
 			error = donice(l, p, SCARG(uap, prio));
-			mutex_exit(&p->p_crmutex);
+			mutex_exit(&p->p_mutex);
 			found++;
 		}
 		rw_exit(&proclist_lock);
@@ -190,13 +190,13 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 			who = (int)kauth_cred_geteuid(l->l_cred);
 		rw_enter(&proclist_lock, RW_READER);
 		PROCLIST_FOREACH(p, &allproc) {
-			mutex_enter(&p->p_crmutex);
+			mutex_enter(&p->p_mutex);
 			if (kauth_cred_geteuid(p->p_cred) ==
 			    (uid_t)SCARG(uap, who)) {
 				error = donice(l, p, SCARG(uap, prio));
 				found++;
 			}
-			mutex_exit(&p->p_crmutex);
+			mutex_exit(&p->p_mutex);
 		}
 		rw_exit(&proclist_lock);
 		break;
@@ -220,7 +220,7 @@ donice(struct lwp *l, struct proc *chgp, int n)
 	kauth_cred_t cred = l->l_cred;
 	int onice;
 
-	LOCK_ASSERT(mutex_owned(&chgp->p_crmutex));
+	LOCK_ASSERT(mutex_owned(&chgp->p_mutex));
 
 	if (kauth_cred_geteuid(cred) && kauth_cred_getuid(cred) &&
 	    kauth_cred_geteuid(cred) != kauth_cred_geteuid(chgp->p_cred) &&
@@ -779,13 +779,13 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 
 	switch (rnode->sysctl_num) {
 	case PROC_PID_STOPFORK:
-		f = P_STOPFORK;
+		f = PS_STOPFORK;
 		break;
 	case PROC_PID_STOPEXEC:
-		f = P_STOPEXEC;
+		f = PS_STOPEXEC;
 		break;
 	case PROC_PID_STOPEXIT:
-		f = P_STOPEXIT;
+		f = PS_STOPEXIT;
 		break;
 	default:
 		return (EINVAL);
@@ -798,10 +798,12 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
+	mutex_enter(&ptmp->p_smutex);
 	if (i)
-		ptmp->p_flag |= f;
+		ptmp->p_sflag |= f;
 	else
-		ptmp->p_flag &= ~f;
+		ptmp->p_sflag &= ~f;
+	mutex_exit(&ptmp->p_smutex);
 
 	return (0);
 }

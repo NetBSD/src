@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.1.36.3 2006/10/20 19:45:13 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.1.36.4 2006/11/17 16:34:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.3 2006/10/20 19:45:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.4 2006/11/17 16:34:36 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -114,10 +114,11 @@ do {									\
 
 #endif	/* DIAGNOSTIC */
 
-int	rw_dump(void *, char *, size_t);
+int	rw_dump(volatile void *, char *, size_t);
 
 lockops_t rwlock_lockops = {
 	"Reader / writer lock",
+	1,
 	rw_dump
 };
 
@@ -127,11 +128,11 @@ lockops_t rwlock_lockops = {
  *	Dump the contents of a rwlock structure.
  */
 int
-rw_dump(void *cookie, char *buf, size_t l)
+rw_dump(volatile void *cookie, char *buf, size_t l)
 {
-	krwlock_t *rw = cookie;
+	volatile krwlock_t *rw = cookie;
 
-	return snprintf(buf, l, "owner/count: 0x%16lx flags   : 0x%16x\n",
+	return snprintf(buf, l, "owner/count  : 0x%16lx flags    : 0x%16x\n",
 	    (long)RW_OWNER(rw), (int)RW_FLAGS(rw));
 }
 
@@ -147,7 +148,7 @@ rw_init(krwlock_t *rw)
 
 	memset(rw, 0, sizeof(*rw));
 
-	id = LOCKDEBUG_ALLOC(rw, &rwlock_lockops, 1);
+	id = LOCKDEBUG_ALLOC(rw, &rwlock_lockops);
 	RW_SETID(rw, id);
 }
 
@@ -170,19 +171,27 @@ rw_destroy(krwlock_t *rw)
  *	Acquire a rwlock.
  */
 void
+#ifdef __NEED_RW_CALLSITE
+rw_vector_enter(krwlock_t *rw, krw_t op, uintptr_t callsite)
+#else
 rw_vector_enter(krwlock_t *rw, krw_t op)
+#endif
 {
 	uintptr_t owner, incr, need_wait, set_wait, curthread;
 	turnstile_t *ts;
 	int queue;
 	LOCKSTAT_TIMER(slptime);
+	struct lwp *l;
 
-	curthread = (uintptr_t)curlwp;
+	l = curlwp;
+	curthread = (uintptr_t)l;
 	RW_ASSERT(rw, curthread != 0);
 
 #ifdef LOCKDEBUG
-	if (panicstr == NULL)
+	if (panicstr == NULL) {
 		simple_lock_only_held(NULL, "rw_enter");
+		LOCKDEBUG_BARRIER(&kernel_lock, 1);
+	}
 #endif
 
 	/*
@@ -248,13 +257,19 @@ rw_vector_enter(krwlock_t *rw, krw_t op)
 
 		LOCKSTAT_START_TIMER(slptime);
 
-		turnstile_block(ts, queue, sched_kpri(curlwp), rw);
-
-		LOCKSTAT_STOP_TIMER(slptime);
-		LOCKSTAT_EVENT(rw, LB_ADAPTIVE_RWLOCK | LB_SLEEP, 1, slptime);
+		turnstile_block(ts, queue, sched_kpri(l), rw);
 
 		/* If we wake up and arrive here, we've been handed the lock. */
 		RW_RECEIVE(rw);
+
+		LOCKSTAT_STOP_TIMER(slptime);
+#ifdef __NEED_RW_CALLSITE
+		LOCKSTAT_EVENT_RA(rw, LB_RWLOCK | LB_SLEEP, 1, slptime, callsite);
+#else
+		LOCKSTAT_EVENT(rw, LB_RWLOCK | LB_SLEEP, 1, slptime);
+#endif
+
+		turnstile_unblock();
 		break;
 	}
 
@@ -555,13 +570,30 @@ rw_write_held(krwlock_t *rw)
 }
 
 /*
+ * rw_lock_held:
+ *
+ *	Returns true if the rwlock is held for reading or writing.  Must
+ *	only be used for diagnostic assertions, and never be used to make
+ *	decisions about how to use a rwlock.
+ */
+int
+rw_lock_held(krwlock_t *rw)
+{
+
+	if (panicstr != NULL)
+		return 1;
+
+	return (rw->rw_owner & RW_THREAD) != 0;
+}
+
+/*
  * Slow stubs for platforms that do not implement fast-path ones.
  */
 #ifndef __HAVE_RW_ENTER
 void
 rw_enter(krwlock_t *rw, krw_t op)
 {
-	rw_vector_enter(rw, op);
+	rw_vector_enter(rw, op, (uintptr_t)__builtin_return_address(0));
 	RW_LOCKED(rw, op);
 }
 #endif

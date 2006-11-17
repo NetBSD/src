@@ -1,12 +1,12 @@
-/*	$NetBSD: kern_proc.c,v 1.94.4.4 2006/10/24 21:10:21 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94.4.5 2006/11/17 16:34:36 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.4 2006/10/24 21:10:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.5 2006/11/17 16:34:36 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -144,7 +144,7 @@ struct proclist zombproc;	/* resources have been freed */
  * kernel_mutex
  * -> proclist_lock
  *    -> proclist_mutex
- *	-> proc::p_crmutex
+ *	-> proc::p_mutex
  *         -> proc::p_smutex
  *	      -> alllwp_mutex
  * 	         -> lwp::l_mutex
@@ -152,6 +152,7 @@ struct proclist zombproc;	/* resources have been freed */
  */
 krwlock_t	proclist_lock;
 kmutex_t	proclist_mutex;
+kmutex_t	proc_stop_mutex;
 
 /*
  * pid to proc lookup is done by indexing the pid_table array.
@@ -264,6 +265,7 @@ procinit(void)
 	mutex_init(&proclist_mutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&alllwp_mutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&lwp_mutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&proc_stop_mutex, MUTEX_SPIN, IPL_NONE);
 
 	pid_table = malloc(INITIAL_PID_TABLE_SIZE * sizeof *pid_table,
 			    M_PROC, M_WAITOK);
@@ -307,14 +309,18 @@ proc0_init(void)
 	l = &lwp0;
 
 	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_SCHED);
-	mutex_init(&p->p_crmutex, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&p->p_rasmutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&p->p_rasmutex, MUTEX_SPIN, IPL_NONE);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&p->p_refcv, "drainref");
+	cv_init(&p->p_waitcv, "wait");
+
 	LIST_INIT(&p->p_lwps);
 	LIST_INIT(&p->p_sigwaiters);
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
+
 	p->p_nlwps = 1;
 	p->p_nrlwps = 1;
+	p->p_refcnt = 1;
 
 	pid_table[0].pt_proc = p;
 	LIST_INSERT_HEAD(&allproc, p, p_list);
@@ -352,6 +358,8 @@ proc0_init(void)
 	l->l_flag = L_INMEM | L_SYSTEM;
 	l->l_stat = LSONPROC;
 	l->l_ts = &turnstile0;
+	l->l_syncobj = &sched_syncobj;
+	l->l_refcnt = 1;
 
 	callout_init(&l->l_tsleep_ch);
 
@@ -411,7 +419,7 @@ proc0_init(void)
 
 	/* Initialize signal state for proc0. */
 	p->p_sigacts = &sigacts0;
-	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_SPIN, IPL_NONE);
 	siginit(p);
 }
 
@@ -792,7 +800,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 			sess->s_flags = p->p_session->s_flags & ~S_LOGIN_SET;
 			memcpy(sess->s_login, p->p_session->s_login,
 			    sizeof(sess->s_login));
-			p->p_flag &= ~P_CONTROLT;
+			p->p_lflag &= ~PL_CONTROLT;
 		} else {
 			sess = p->p_pgrp->pg_session;
 			SESSHOLD(sess);
@@ -850,13 +858,13 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 #endif
 
     done:
+	if (pg_id != NO_PGID)
+		pg_delete(pg_id);
 	rw_exit(&proclist_lock);
 	if (sess != NULL)
 		pool_put(&session_pool, sess);
 	if (new_pgrp != NULL)
 		pool_put(&pgrp_pool, new_pgrp);
-	if (pg_id != NO_PGID)
-		pg_delete(pg_id);
 #ifdef DEBUG_PGRP
 	if (__predict_false(rval))
 		printf("enterpgrp(%d,%d,%d), curproc %d, rval %d\n",
@@ -866,20 +874,21 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 }
 
 /*
- * Remove a process from its process group.
+ * Remove a process from its process group.  Must be called with the
+ * proclist_lock write held.
  */
 void
 leavepgrp(struct proc *p)
 {
 	struct pgrp *pgrp;
 
+	LOCK_ASSERT(rw_write_held(&proclist_lock));
+
 	/*
 	 * If there's a controlling terminal for the session, we have to
 	 * interlock with it.  See ttread().
 	 */
-	rw_enter(&proclist_lock, RW_WRITER);
 	mutex_enter(&proclist_mutex);
-
 #ifdef notyet
 	if (p_>p_session->s_ttyvp != NULL) {
 		tp = p->p_session->s_ttyp;
@@ -897,19 +906,22 @@ leavepgrp(struct proc *p)
 		mutex_exit(&tp->t_mutex);
 #endif
 	mutex_exit(&proclist_mutex);
-	rw_exit(&proclist_lock);
 
 	if (LIST_EMPTY(&pgrp->pg_members))
 		pg_delete(pgrp->pg_id);
 }
 
+/*
+ * Free a process group.  Must be called with the proclist_lock write held.
+ */
 static void
 pg_free(pid_t pg_id)
 {
 	struct pgrp *pgrp;
 	struct pid_table *pt;
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	LOCK_ASSERT(rw_write_held(&proclist_lock));
+
 	pt = &pid_table[pg_id & pid_tbl_mask];
 	pgrp = pt->pt_pgrp;
 #ifdef DIAGNOSTIC
@@ -933,13 +945,12 @@ pg_free(pid_t pg_id)
 		last_free_pt = pg_id;
 		pid_alloc_cnt--;
 	}
-	rw_exit(&proclist_lock);
-
 	pool_put(&pgrp_pool, pgrp);
 }
 
 /*
- * delete a process group
+ * Delete a process group.  Must be called with the proclist_lock write
+ * held.
  */
 static void
 pg_delete(pid_t pg_id)
@@ -949,13 +960,12 @@ pg_delete(pid_t pg_id)
 	struct session *ss;
 	int is_pgrp_leader;
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	LOCK_ASSERT(rw_write_held(&proclist_lock));
+
 	pgrp = pid_table[pg_id & pid_tbl_mask].pt_pgrp;
 	if (pgrp == NULL || pgrp->pg_id != pg_id ||
-	    !LIST_EMPTY(&pgrp->pg_members)) {
-		rw_exit(&proclist_lock);
+	    !LIST_EMPTY(&pgrp->pg_members))
 		return;
-	}
 
 	ss = pgrp->pg_session;
 
@@ -974,7 +984,6 @@ pg_delete(pid_t pg_id)
 	 * by sessdelete() if last reference.
 	 */
 	is_pgrp_leader = (ss->s_sid == pgrp->pg_id);
-	rw_exit(&proclist_lock);
 	SESSRELE(ss);
 
 	if (is_pgrp_leader)
@@ -985,19 +994,21 @@ pg_delete(pid_t pg_id)
 
 /*
  * Delete session - called from SESSRELE when s_count becomes zero.
+ * Must be called with the proclist_lock write held.
  */
 void
 sessdelete(struct session *ss)
 {
+
+	LOCK_ASSERT(rw_write_held(&proclist_lock));
+
 	/*
 	 * We keep the pgrp with the same id as the session in
 	 * order to stop a process being given the same pid.
 	 * Since the pgrp holds a reference to the session, it
 	 * must be a 'zombie' pgrp by now.
 	 */
-
 	pg_free(ss->s_sid);
-
 	pool_put(&session_pool, ss);
 }
 
@@ -1011,7 +1022,7 @@ sessdelete(struct session *ss)
  * entering == 0 => p is leaving specified group.
  * entering == 1 => p is entering specified group.
  *
- * Call with proclist_lock held.
+ * Call with proclist_lock write held.
  */
 void
 fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
@@ -1020,6 +1031,8 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 	struct session *mysession = pgrp->pg_session;
 	struct proc *child;
 
+	LOCK_ASSERT(rw_write_held(&proclist_lock));
+
 	/*
 	 * Check p's parent to see whether p qualifies its own process
 	 * group; if so, adjust count for p's process group.
@@ -1027,7 +1040,9 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 	hispgrp = p->p_pptr->p_pgrp;
 	if (hispgrp != pgrp && hispgrp->pg_session == mysession) {
 		if (entering) {
-			p->p_flag &= ~P_ORPHANPG;
+			mutex_enter(&p->p_smutex);
+			p->p_sflag &= ~PS_ORPHANPG;
+			mutex_exit(&p->p_smutex);
 			pgrp->pg_jobc++;
 		} else if (--pgrp->pg_jobc == 0)
 			orphanpg(pgrp);
@@ -1043,7 +1058,9 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 		if (hispgrp != pgrp && hispgrp->pg_session == mysession &&
 		    !P_ZOMBIE(child)) {
 			if (entering) {
-				p->p_flag &= ~P_ORPHANPG;
+				mutex_enter(&child->p_smutex);
+				child->p_sflag &= ~PS_ORPHANPG;
+				mutex_exit(&child->p_smutex);
 				hispgrp->pg_jobc++;
 			} else if (--hispgrp->pg_jobc == 0)
 				orphanpg(hispgrp);
@@ -1056,7 +1073,7 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
  * if there are any stopped processes in the group,
  * hang-up all process in that group.
  *
- * Call with proclist_lock held.
+ * Call with proclist_lock write held.
  */
 static void
 orphanpg(struct pgrp *pg)
@@ -1064,13 +1081,15 @@ orphanpg(struct pgrp *pg)
 	struct proc *p;
 	int doit;
 
+	LOCK_ASSERT(rw_write_held(&proclist_lock));
+
 	doit = 0;
 
 	LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 		mutex_enter(&p->p_smutex);
 		if (p->p_stat == SSTOP) {
 			doit = 1;
-			p->p_flag |= P_ORPHANPG;
+			p->p_sflag |= PS_ORPHANPG;
 		}
 		mutex_exit(&p->p_smutex);
 	}
@@ -1272,7 +1291,7 @@ proc_vmspace_getref(struct proc *p, struct vmspace **vm)
 
 	/* curproc exception is for coredump. */
 
-	if ((p != curproc && (p->p_flag & P_WEXIT) != 0) ||
+	if ((p != curproc && (p->p_sflag & PS_WEXIT) != 0) ||
 	    (p->p_vmspace->vm_refcnt < 1)) { /* XXX */
 		return EFAULT;
 	}
@@ -1287,10 +1306,20 @@ proc_vmspace_getref(struct proc *p, struct vmspace **vm)
  * Acquire a write lock on the process credential.
  */
 void 
-proc_crmod_enter(struct proc *p)
+proc_crmod_enter(void)
 {
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+	kauth_cred_t oc;
 
-	mutex_enter(&p->p_crmutex);
+	mutex_enter(&p->p_mutex);
+
+	/* Ensure the LWP cached credentials are up to date. */
+	if ((oc = l->l_cred) != p->p_cred) {
+		kauth_cred_hold(p->p_cred);
+		l->l_cred = p->p_cred;
+		kauth_cred_free(oc);
+	}
 }
 
 /*
@@ -1300,13 +1329,80 @@ proc_crmod_enter(struct proc *p)
  * briefly acquire the sched state mutex.
  */
 void
-proc_crmod_leave(struct proc *p, kauth_cred_t scred, kauth_cred_t fcred)
+proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred)
 {
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+	kauth_cred_t oc;
 
 	mutex_enter(&p->p_smutex);
 	p->p_cred = scred;
 	mutex_exit(&p->p_smutex);
-	mutex_exit(&p->p_crmutex);
-	if (fcred != NULL)
-		kauth_cred_free(fcred);
+
+	/* Ensure the LWP cached credentials are up to date. */
+	if ((oc = l->l_cred) != scred) {
+		kauth_cred_hold(scred);
+		l->l_cred = scred;
+	}
+
+	mutex_exit(&p->p_mutex);
+	kauth_cred_free(fcred);
+	if (oc != scred)
+		kauth_cred_free(oc);
+}
+
+/*
+ * Acquire a reference on a process, to prevent it from exiting or execing.
+ */
+int
+proc_addref(struct proc *p)
+{
+
+	LOCK_ASSERT(mutex_owned(&p->p_mutex));
+
+	if (p->p_refcnt <= 0)
+		return EAGAIN;
+	p->p_refcnt++;
+
+	return 0;
+}
+
+/*
+ * Release a reference on a process.
+ */
+void
+proc_delref(struct proc *p)
+{
+
+	LOCK_ASSERT(mutex_owned(&p->p_mutex));
+
+	if (p->p_refcnt < 0) {
+		if (++p->p_refcnt == 0)
+			cv_signal(&p->p_refcv);
+	} else {
+		p->p_refcnt--;
+		KASSERT(p->p_refcnt != 0);
+	}
+}
+
+/*
+ * Wait for all references on the process to drain, and prevent new
+ * references from being acquired.
+ */
+void
+proc_drainrefs(struct proc *p)
+{
+
+	LOCK_ASSERT(mutex_owned(&p->p_mutex));
+	KASSERT(p->p_refcnt > 0);
+
+	/*
+	 * The process itself holds the last reference.  Once it's released,
+	 * no new references will be granted.  If we have already locked out
+	 * new references (refcnt <= 0), potentially due to a failed exec,
+	 * there is nothing more to do.
+	 */
+	p->p_refcnt = 1 - p->p_refcnt;
+	while (p->p_refcnt != 0)
+		cv_wait(&p->p_refcv, &p->p_mutex);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.1.2.1 2006/10/20 19:40:17 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.1.2.2 2006/11/17 16:34:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * Kernel condition variables implementation, modeled after those found in
+ * Kernel condition variable implementation, modeled after those found in
  * Solaris, a description of which can be found in:
  *
  *	Solaris Internals: Core Kernel Architecture, Jim Mauro and
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.1.2.1 2006/10/20 19:40:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.1.2.2 2006/11/17 16:34:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -54,16 +54,25 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.1.2.1 2006/10/20 19:40:17 ad Exp 
 #include <sys/condvar.h>
 #include <sys/sleepq.h>
 
+void	cv_unsleep(struct lwp *);
+
+syncobj_t cv_syncobj = {
+	SOBJ_SLEEPQ_SORTED,
+	cv_unsleep,
+	sleepq_changepri
+};
+
 /*
  * cv_init:
  *
  *	Initialize a condition variable for use.
  */
 void
-cv_init(kcondvar_t *cv, kcondvar_type_t type, const char *wmesg)
+cv_init(kcondvar_t *cv, const char *wmesg)
 {
 
-	KASSERT(type == CV_DEFAULT);
+	KASSERT(wmesg != NULL);
+
 	cv->cv_wmesg = wmesg;
 	cv->cv_ptr = NULL;
 }
@@ -77,7 +86,48 @@ void
 cv_destroy(kcondvar_t *cv)
 {
 
-	KASSERT(cv->cv_waiters == 0);
+	KASSERT(cv->cv_waiters == 0 && cv->cv_wmesg != NULL);
+}
+
+/*
+ * cv_enter:
+ *
+ *	Look up and lock the sleep queue corresponding to the given
+ *	condition variable, and increment the number of waiters.
+ */
+static inline sleepq_t *
+cv_enter(kcondvar_t *cv)
+{
+	sleepq_t *sq;
+
+	KASSERT(cv->cv_wmesg != NULL);
+
+	sq = sleeptab_lookup(&sleeptab, cv);
+	cv->cv_waiters++;
+
+	return sq;
+}
+
+/*
+ * cv_unsleep:
+ *
+ *	Remove an LWP from the condition variable and sleep queue.  This
+ *	is called when the LWP has not been awoken normally but instead
+ *	interrupted: for example, when a signal is received.  Must be called
+ *	with the LWP locked, and must return it unlocked.
+ */
+void
+cv_unsleep(struct lwp *l)
+{
+	uintptr_t addr;
+
+	KASSERT(l->l_wchan != NULL);
+	LOCK_ASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
+
+	addr = (uintptr_t)l->l_wchan;
+	((kcondvar_t *)addr)->cv_waiters--;
+
+	sleepq_unsleep(l);
 }
 
 /*
@@ -98,15 +148,12 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 		return;
 	}
 
-	sq = sleeptab_lookup(cv);
-	cv->cv_waiters++;
-
-	sleepq_enter(sq, sched_kpri(l), cv, cv->cv_wmesg, 0, 0);
-
-	mutex_exit_linked(mtx, l->l_mutex);
-
+	sq = cv_enter(cv);
+	sleepq_enter(sq, sched_kpri(l), cv, cv->cv_wmesg, 0, 0,
+	    &cv_syncobj);
+	mutex_exit(mtx);
 	(void)sleepq_block(sq, 0);
-
+	sleepq_unblock();
 	mutex_enter(mtx);
 }
 
@@ -130,17 +177,14 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(mtx, 0);
 
-	sq = sleeptab_lookup(cv);
-	cv->cv_waiters++;
-
-	sleepq_enter(sq, sched_kpri(l), cv, cv->cv_wmesg, 0, 1);
-
-	mutex_exit_linked(mtx, l->l_mutex);
-
+	sq = cv_enter(cv);
+	sleepq_enter(sq, sched_kpri(l), cv, cv->cv_wmesg, 0, 1,
+	    &cv_syncobj);
+	mutex_exit(mtx);
 	error = sleepq_block(sq, 0);
-
+	sleepq_unblock();
 	mutex_enter(mtx);
- 
+
 	return error;
 }
 
@@ -163,18 +207,15 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(mtx, 0);
 
-	sq = sleeptab_lookup(cv);
-	cv->cv_waiters++;
-
-	sleepq_enter(sq, sched_kpri(l), cv, cv->cv_wmesg, timo, 0);
-
-	mutex_exit_linked(mtx, l->l_mutex);
-
+	sq = cv_enter(cv);
+	sleepq_enter(sq, sched_kpri(l), cv, cv->cv_wmesg, timo, 0,
+	    &cv_syncobj);
+	mutex_exit(mtx);
 	error = sleepq_block(sq, timo);
-
+	sleepq_unblock();
 	mutex_enter(mtx);
- 
-	return error;
+
+ 	return error;
 }
 
 /*
@@ -198,18 +239,15 @@ cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(mtx, 0);
 
-	sq = sleeptab_lookup(cv);
-	cv->cv_waiters++;
-
-	sleepq_enter(sq, sched_kpri(l), cv, cv->cv_wmesg, timo, 1);
-
-	mutex_exit_linked(mtx, l->l_mutex);
-
+	sq = cv_enter(cv);
+	sleepq_enter(sq, sched_kpri(l), cv, cv->cv_wmesg, timo, 1,
+	    &cv_syncobj);
+	mutex_exit(mtx);
 	error = sleepq_block(sq, timo);
-
+	sleepq_unblock();
 	mutex_enter(mtx);
- 
-	return error;
+
+ 	return error;
 }
 
 /*
@@ -222,7 +260,7 @@ cv_signal(kcondvar_t *cv)
 {
 	sleepq_t *sq;
 
-	sq = sleeptab_lookup(cv);
+	sq = sleeptab_lookup(&sleeptab, cv);
 	if (cv->cv_waiters != 0) {
 		cv->cv_waiters--;
 		sleepq_wakeone(sq, cv);
@@ -240,7 +278,7 @@ cv_broadcast(kcondvar_t *cv)
 {
 	sleepq_t *sq;
 
-	sq = sleeptab_lookup(cv);
+	sq = sleeptab_lookup(&sleeptab, cv);
 	if (cv->cv_waiters != 0) {
 		sleepq_wakeall(sq, cv, cv->cv_waiters);
 		cv->cv_waiters = 0;

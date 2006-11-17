@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.2 2006/09/07 01:03:02 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.2.2.1 2006/11/17 16:34:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.2 2006/09/07 01:03:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.2.2.1 2006/11/17 16:34:35 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -238,18 +238,11 @@ lockstat_start(lsenable_t *le)
 	lockstat_csstart = le->le_csstart;
 	lockstat_csend = le->le_csend;
 	lockstat_lockaddr = le->le_lock;
-
-	/*
-	 * Force a write barrier.  XXX This may not be sufficient..
-	 */
-	lockstat_unlock(0);
-	tsleep(&lockstat_start, PPAUSE, "lockstat", mstohz(10));
-	(void)lockstat_lock(0);
+	mb_write();
 
 	getnanotime(&lockstat_stime);
 	lockstat_enabled = le->le_mask;
-	lockstat_unlock(0);
-	(void)lockstat_lock(0);
+	mb_write();
 }
 
 /*
@@ -268,7 +261,7 @@ lockstat_stop(lsdisable_t *ld)
 
 	/*
 	 * Set enabled false, force a write barrier, and wait for other CPUs
-	 * to exit lockstat_event().  XXX This may not be sufficient..
+	 * to exit lockstat_event().
 	 */
 	lockstat_enabled = 0;
 	lockstat_unlock(0);

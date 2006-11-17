@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.117 2006/06/09 23:24:24 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.117.6.1 2006/11/17 16:34:35 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.117 2006/06/09 23:24:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.117.6.1 2006/11/17 16:34:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.117 2006/06/09 23:24:24 christos Exp
 static int svr4_to_bsd_mmap_flags __P((int));
 
 static inline clock_t timeval_to_clock_t __P((struct timeval *));
-static int svr4_setinfo	__P((struct proc *, int, svr4_siginfo_t *));
+static void svr4_setinfo	__P((struct proc *, int, svr4_siginfo_t *));
 
 struct svr4_hrtcntl_args;
 static int svr4_hrtcntl	__P((struct lwp *, struct svr4_hrtcntl_args *,
@@ -1101,60 +1101,57 @@ svr4_sys_hrtsys(l, v, retval)
 }
 
 
-static int
+static void
 svr4_setinfo(p, st, s)
 	struct proc *p;
 	int st;
 	svr4_siginfo_t *s;
 {
-	svr4_siginfo_t i;
 	int sig;
 
-	memset(&i, 0, sizeof(i));
+	memset(s, 0, sizeof(*s));
 
-	i.si_signo = SVR4_SIGCHLD;
-	i.si_errno = 0;	/* XXX? */
+	s->si_signo = SVR4_SIGCHLD;
+	s->si_errno = 0;	/* XXX? */
 
 	if (p) {
-		i.si_pid = p->p_pid;
+		s->si_pid = p->p_pid;
 		if (p->p_stat == SZOMB) {
-			i.si_stime = p->p_ru->ru_stime.tv_sec;
-			i.si_utime = p->p_ru->ru_utime.tv_sec;
+			s->si_stime = p->p_ru->ru_stime.tv_sec;
+			s->si_utime = p->p_ru->ru_utime.tv_sec;
 		}
 		else {
-			i.si_stime = p->p_stats->p_ru.ru_stime.tv_sec;
-			i.si_utime = p->p_stats->p_ru.ru_utime.tv_sec;
+			s->si_stime = p->p_stats->p_ru.ru_stime.tv_sec;
+			s->si_utime = p->p_stats->p_ru.ru_utime.tv_sec;
 		}
 	}
 
 	if (WIFEXITED(st)) {
-		i.si_status = WEXITSTATUS(st);
-		i.si_code = SVR4_CLD_EXITED;
+		s->si_status = WEXITSTATUS(st);
+		s->si_code = SVR4_CLD_EXITED;
 	} else if (WIFSTOPPED(st)) {
 		sig = WSTOPSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			i.si_status = native_to_svr4_signo[sig];
+			s->si_status = native_to_svr4_signo[sig];
 
-		if (i.si_status == SVR4_SIGCONT)
-			i.si_code = SVR4_CLD_CONTINUED;
+		if (s->si_status == SVR4_SIGCONT)
+			s->si_code = SVR4_CLD_CONTINUED;
 		else
-			i.si_code = SVR4_CLD_STOPPED;
+			s->si_code = SVR4_CLD_STOPPED;
 	} else {
 		sig = WTERMSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			i.si_status = native_to_svr4_signo[sig];
+			s->si_status = native_to_svr4_signo[sig];
 
 		if (WCOREDUMP(st))
-			i.si_code = SVR4_CLD_DUMPED;
+			s->si_code = SVR4_CLD_DUMPED;
 		else
-			i.si_code = SVR4_CLD_KILLED;
+			s->si_code = SVR4_CLD_KILLED;
 	}
 
 	DPRINTF(("siginfo [pid %ld signo %d code %d errno %d status %d]\n",
-		(long) i.si_pid,
-		i.si_signo, i.si_code, i.si_errno, i.si_status));
-
-	return copyout(&i, s, sizeof(i));
+		(long) s->si_pid,
+		s->si_signo, s->si_code, s->si_errno, s->si_status));
 }
 
 
@@ -1169,6 +1166,8 @@ svr4_sys_waitsys(l, v, retval)
 	int error;
 	struct proc *parent = l->l_proc;
 	struct proc *child;
+	struct rusage *ru;
+	svr4_siginfo_t i;
 
 	switch (SCARG(uap, grp)) {
 	case SVR4_P_PID:
@@ -1201,32 +1200,41 @@ svr4_sys_waitsys(l, v, retval)
 	         SCARG(uap, grp), SCARG(uap, id),
 		 SCARG(uap, info), SCARG(uap, options)));
 
+	rw_enter(&proclist_lock, RW_WRITER);
+
 	error = find_stopped_child(parent, SCARG(uap, id), options, &child);
-	if (error != 0)
+	if (error != 0) {
+		rw_exit(&proclist_lock);
 		return error;
+	}
 	*retval = 0;
-	if (child == NULL)
-		return svr4_setinfo(NULL, 0, SCARG(uap, info));
+	if (child == NULL) {
+		rw_exit(&proclist_lock);
+		svr4_setinfo(NULL, 0, &i);
+		return copyout(&i, SCARG(uap, info), sizeof(i));
+	}
 
 	if (child->p_stat == SZOMB) {
 		DPRINTF(("found %d\n", child->p_pid));
-		if ((error = svr4_setinfo(child, child->p_xstat,
-					  SCARG(uap, info))) != 0)
-			return error;
-
+		svr4_setinfo(child, child->p_xstat, &i);
 
 		if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
 			DPRINTF(("Don't wait\n"));
+			rw_exit(&proclist_lock);
 			return 0;
 		}
 
-		proc_free(child);
-		return 0;
+		/* proc_free() will release the lock. */
+		proc_free(child, &ru);
+		pool_put(&rusage_pool, ru);
+		return copyout(&i, SCARG(uap, info), sizeof(i));
 	}
 
 	DPRINTF(("jobcontrol %d\n", child->p_pid));
-	return svr4_setinfo(child, W_STOPCODE(child->p_xstat),
-			    SCARG(uap, info));
+
+	svr4_setinfo(child, W_STOPCODE(child->p_xstat), &i);
+	rw_exit(&proclist_lock);
+	return copyout(&i, SCARG(uap, info), sizeof(i));
 }
 
 

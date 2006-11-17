@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.143 2006/09/02 06:30:53 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.143.2.1 2006/11/17 16:34:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143 2006/09/02 06:30:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143.2.1 2006/11/17 16:34:36 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -150,7 +150,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 	char *cp = buf;
 	int hold_count;
 
-	hold_count = KERNEL_LOCK_RELEASE_ALL();
+	hold_count = KERNEL_UNLOCK(0, NULL);
 
 	ASSERT_SLEEPABLE(NULL, "uiomove");
 
@@ -193,7 +193,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		KDASSERT(cnt <= n);
 		n -= cnt;
 	}
-	KERNEL_LOCK_ACQUIRE_COUNT(hold_count);
+	KERNEL_LOCK(hold_count, NULL);
 	return (error);
 }
 
@@ -1337,7 +1337,7 @@ trace_is_enabled(struct proc *p)
 		return (TRUE);
 #endif
 #ifdef PTRACE
-	if (ISSET(p->p_flag, P_SYSCALL))
+	if (ISSET(p->p_slflag, PSL_SYSCALL))
 		return (TRUE);
 #endif
 
@@ -1368,7 +1368,8 @@ trace_enter(struct lwp *l, register_t code,
 #endif /* KTRACE */
 
 #ifdef PTRACE
-	if ((p->p_flag & (P_SYSCALL|P_TRACED)) == (P_SYSCALL|P_TRACED))
+	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
+	    (PSL_SYSCALL|PSL_TRACED))
 		process_stoptrace(l);
 #endif
 
@@ -1400,22 +1401,23 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		ktrsysret(l, code, error, rval);
-		KERNEL_PROC_UNLOCK(l);
+		LOCK_ASSERT(KERNEL_UNLOCK(1, l) == 1);
 	}
 #endif /* KTRACE */
 	
 #ifdef PTRACE
-	if ((p->p_flag & (P_SYSCALL|P_TRACED)) == (P_SYSCALL|P_TRACED))
+	if ((p->p_flag & (PSL_SYSCALL|PSL_TRACED)) ==
+	    (PSL_SYSCALL|PSL_TRACED))
 		process_stoptrace(l);
 #endif
 
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		systrace_exit(l, code, args, rval, error);
-		KERNEL_PROC_UNLOCK(l);
+		LOCK_ASSERT(KERNEL_UNLOCK(1, l) == 1);
 	}
 #endif
 #endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.50 2006/07/23 22:06:09 ad Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.50.4.1 2006/11/17 16:34:35 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.50 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.50.4.1 2006/11/17 16:34:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,8 +391,10 @@ svr4_sys_open(l, v, retval)
 	if (error)
 		return error;
 
+	/* XXXAD locking */
+
 	if (!(SCARG(&cup, flags) & O_NOCTTY) && SESS_LEADER(p) &&
-	    !(p->p_flag & P_CONTROLT)) {
+	    !(p->p_lflag & PL_CONTROLT)) {
 		struct filedesc	*fdp = p->p_fd;
 		struct file	*fp;
 

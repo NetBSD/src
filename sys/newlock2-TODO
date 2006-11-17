@@ -1,4 +1,4 @@
-$NetBSD: newlock2-TODO,v 1.1.2.1 2006/10/24 21:41:48 ad Exp $
+$NetBSD: newlock2-TODO,v 1.1.2.2 2006/11/17 16:34:32 ad Exp $
 
 Goals:
 
@@ -22,32 +22,19 @@ Goals:
 
 TODO:
 
-	- sysvmsg must be marked/made MPSAFE for compat code,
-	  otherwise we could have lock order problems.
-	- Eliminate lwp_setlock_linked() if possible
-	- Fix and improve subr_lockdebug.c
-	- Split p_flags into interrupt / non-interrupt parts
+	- Uniprocessor kernels don't work, due to LWP locking
+	- Fix ptrace
+	- Locking around PCB / setcontext for ptrace
+	- Further locking around sigstack
 	- Lock the SA subsystem
-	- Fix signals for SA
-	- Finish updating signals
-	- Locking for procfs
-	- Locking for ptrace
-	- Just enough locking for exec, exit
+	- Save and restore old SPL / mutex count for each idepth
+	- Architectures other than i386, amd64
+	- Compat struct proc flags for sysctl, other emulations
+	- Check proc flags usage outside MI kernel
+	- Check for memory barriers before posting an AST
+	- Verify that the signals stuff is correct for SA
 	- Test and verify: SA, LWP syscalls, signals, procfs
 	- Benchmark comparisons against newlock2-base
-	- Review proc table locking
 	- Eliminate all XXXAD comments
 	- Sync with head
 	- Examine diff against HEAD
-
-Would be nice to have:
-
-	- Posting of signals via a workqueue to reduce locking impact
-	- Replace spinlocks in UVM
-	- Remove spinlockmgr()
-
-Bugs:
-
-	- The SA signal mask stuff was not well thought out.
-	- Signalling is incomplete and doesn't always work
-	- Hang on shutdown

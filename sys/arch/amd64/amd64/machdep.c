@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40.2.1 2006/10/20 21:26:44 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.2.2 2006/11/17 16:34:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.2.1 2006/10/20 21:26:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.2.2 2006/11/17 16:34:32 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -444,12 +444,12 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		sp = ((caddr_t)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
+		sp = ((caddr_t)l->l_sigstk->ss_sp + l->l_sigstk->ss_size);
 	else
 		sp = (caddr_t)tf->tf_rsp - 128;
 
@@ -484,7 +484,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = NULL;
-	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
+	frame.sf_uc.uc_flags |= (l->l_sigstk->ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
@@ -506,7 +506,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 }
 
 void 
@@ -1658,9 +1658,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 
 	return 0;
 }

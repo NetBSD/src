@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.79.4.1 2006/09/11 18:48:11 ad Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.79.4.2 2006/11/17 16:34:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.79.4.1 2006/09/11 18:48:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.79.4.2 2006/11/17 16:34:34 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -610,9 +610,9 @@ hpux_sys_rtprio(lp, v, retval)
 		nice = (SCARG(uap, prio) >> 3) - 16;
 		break;
 	}
-	mutex_enter(&p->p_crmutex);
+	mutex_enter(&p->p_mutex);
 	error = donice(lp, p, nice);
-	mutex_exit(&p->p_crmutex);
+	mutex_exit(&p->p_mutex);
 	if (error == EACCES)
 		error = EPERM;
 	return (error);
@@ -1339,9 +1339,9 @@ hpux_sys_nice_6x(l, v, retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	mutex_enter(&p->p_crmutex);
+	mutex_enter(&p->p_mutex);
 	error = donice(l, p, (p->p_nice - NZERO) + SCARG(uap, nval));
-	mutex_exit(&p->p_crmutex);
+	mutex_exit(&p->p_mutex);
 	if (error == 0)
 		*retval = p->p_nice - NZERO;
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.36.2 2006/10/20 19:45:12 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.36.3 2006/11/17 16:34:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -134,6 +134,9 @@ typedef struct krwlock krwlock_t;
 #if defined(__RWLOCK_PRIVATE) && defined(LOCKDEBUG)
 #undef	__HAVE_RW_ENTER
 #undef	__HAVE_RW_EXIT
+#define	__NEED_RW_CALLSITE	1
+#elif !defined(__HAVE_RW_ENTER)
+#define	__NEED_RW_CALLSITE	1
 #endif
 
 #ifdef _KERNEL
@@ -150,15 +153,15 @@ void	rw_downgrade(krwlock_t *);
 
 int	rw_read_held(krwlock_t *);
 int	rw_write_held(krwlock_t *);
-
-int	rw_read_owned(krwlock_t *);
-int	rw_write_owned(krwlock_t *);
-
-struct lwp	*rw_owner(krwlock_t *);
+int	rw_lock_held(krwlock_t *);
 
 #ifdef __RWLOCK_PRIVATE
 
+#ifdef __NEED_RW_CALLSITE
+void	rw_vector_enter(krwlock_t *, krw_t, uintptr_t);
+#else
 void	rw_vector_enter(krwlock_t *, krw_t);
+#endif
 void	rw_vector_exit(krwlock_t *, krw_t);
 
 #endif	/* __RWLOCK_PRIVATE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.36.20.1 2006/10/21 15:20:48 ad Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.36.20.2 2006/11/17 16:34:35 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36.20.1 2006/10/21 15:20:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36.20.2 2006/11/17 16:34:35 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,20 +122,17 @@ mach_sys_swtch_pri(l, v, retval)
 		syscallarg(int) pri;
 	} */ *uap = v;
 #endif
-	int s;
 
 	/*
 	 * Copied from preempt(9). We cannot just call preempt
 	 * because we want to return mi_switch(9) return value.
 	 */
-	SCHED_LOCK(s);
-	l->l_priority = l->l_usrpri;
-	l->l_stat = LSRUN;
-	setrunqueue(l);
-	l->l_proc->p_stats->p_ru.ru_nivcsw++;
+	lwp_lock(l);
+	if (l->l_stat == LSONPROC) {
+		l->l_priority = l->l_usrpri;
+		l->l_proc->p_stats->p_ru.ru_nivcsw++;	/* XXXSMP */
+	}
 	*retval = mi_switch(l, NULL);
-	SCHED_ASSERT_UNLOCKED();
-	splx(s);
 	if ((l->l_flag & L_SA) != 0 && *retval != 0)
 		sa_preempt(l);
 
@@ -200,7 +197,6 @@ mach_thread_create_running(args)
 	int flags;
 	int error;
 	int inmem;
-	int s;
 	int end_offset;
 
 	/* Sanity check req_count */
@@ -228,12 +224,14 @@ mach_thread_create_running(args)
 	/*
 	 * Make the child runnable.
 	 */
-	SCHED_LOCK(s);
+	mutex_enter(&p->p_smutex);
+	lwp_lock(mctc.mctc_lwp);
 	mctc.mctc_lwp->l_private = 0;
 	mctc.mctc_lwp->l_stat = LSRUN;
 	setrunqueue(mctc.mctc_lwp);
 	p->p_nrlwps++;
-	SCHED_UNLOCK(s);
+	lwp_unlock(mctc.mctc_lwp);
+	mutex_exit(&p->p_smutex);
 
 	/*
 	 * Get the child's kernel port
@@ -466,7 +464,7 @@ mach_thread_abort(args)
 	size_t *msglen = args->rsize;
 	struct lwp *tl = args->tl;
 
-	lwp_exit(tl);
+	(void)lwp_exit(tl, 0);
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);

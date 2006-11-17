@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.71 2006/06/03 18:18:26 christos Exp $	*/
+/*	$NetBSD: tty.h,v 1.71.6.1 2006/11/17 16:34:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -187,7 +187,7 @@ struct speedtab {
 
 /* Is tp controlling terminal for p? */
 #define	isctty(p, tp)							\
-	((p)->p_session == (tp)->t_session && (p)->p_flag & P_CONTROLT)
+	((p)->p_session == (tp)->t_session && (p)->p_lflag & PL_CONTROLT)
 
 /* Is p in background of tp? */
 #define	isbackground(p, tp)						\
