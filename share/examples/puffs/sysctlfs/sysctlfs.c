@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.2 2006/11/17 00:27:16 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.3 2006/11/17 17:48:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -102,8 +102,8 @@ main(int argc, char *argv[])
 	pvn.puffs_read = sysctlfs_read;
 	pvn.puffs_reclaim = sysctlfs_reclaim;
 
-	if ((pu = puffs_mount(&pvfs, &pvn, argv[1], 0, "sysctlfs", 0, 0))
-	    == NULL)
+	if ((pu = puffs_mount(&pvfs, &pvn, argv[1], 0, "sysctlfs",
+	    PUFFSFLAG_NOCACHE, 0)) == NULL)
 		err(1, "mount");
 
 	if (puffs_mainloop(pu) == -1)
