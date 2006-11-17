@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.41 2006/08/26 18:11:12 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.42 2006/11/17 22:10:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -40,6 +40,12 @@
 #include <termios.h>
 #include <utmp.h>
 #include <utmpx.h>
+#include <machine/ansi.h>
+
+#ifdef  _BSD_TIME_T_
+typedef _BSD_TIME_T_    time_t;
+#undef  _BSD_TIME_T_
+#endif
 
 #define	PIDLOCK_NONBLOCK	1
 #define	PIDLOCK_USEHOSTNAME	2
@@ -73,6 +79,7 @@ off_t		getlabeloffset(void);
 int		getlabelsector(void);
 int		getmaxpartitions(void);
 int		getrawpartition(void);
+time_t		getdate(const char *, time_t *, int *);
 int		humanize_number(char *, size_t, int64_t, const char *, int,
 		    int);
 void		login(const struct utmp *);
