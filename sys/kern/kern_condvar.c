@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.1.2.2 2006/11/17 16:34:35 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.1.2.3 2006/11/17 16:53:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.1.2.2 2006/11/17 16:34:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.1.2.3 2006/11/17 16:53:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -263,7 +263,7 @@ cv_signal(kcondvar_t *cv)
 	sq = sleeptab_lookup(&sleeptab, cv);
 	if (cv->cv_waiters != 0) {
 		cv->cv_waiters--;
-		sleepq_wakeone(sq, cv);
+		sleepq_wake(sq, cv, 1);
 	} else
 		sleepq_unlock(sq);
 }
@@ -277,11 +277,12 @@ void
 cv_broadcast(kcondvar_t *cv)
 {
 	sleepq_t *sq;
+	u_int cnt;
 
 	sq = sleeptab_lookup(&sleeptab, cv);
-	if (cv->cv_waiters != 0) {
-		sleepq_wakeall(sq, cv, cv->cv_waiters);
+	if ((cnt = cv->cv_waiters) != 0) {
 		cv->cv_waiters = 0;
+		sleepq_wake(sq, cv, cnt);
 	} else
 		sleepq_unlock(sq);
 }

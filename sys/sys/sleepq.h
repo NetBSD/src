@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.1.2.2 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.1.2.3 2006/11/17 16:53:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -77,8 +77,7 @@ void	sleepq_enter(sleepq_t *, int, wchan_t, const char *, int, int,
 int	sleepq_block(sleepq_t *, int);
 void	sleepq_unsleep(struct lwp *);
 void	sleepq_timeout(void *);
-void	sleepq_wakeone(sleepq_t *, wchan_t);
-void	sleepq_wakeall(sleepq_t *, wchan_t, u_int);
+void	sleepq_wake(sleepq_t *, wchan_t, u_int);
 int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(struct lwp *, int);
 void	sleepq_unblock(void);

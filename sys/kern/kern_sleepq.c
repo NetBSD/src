@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.1.2.5 2006/11/17 16:34:36 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.1.2.6 2006/11/17 16:53:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.5 2006/11/17 16:34:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.6 2006/11/17 16:53:08 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -386,36 +386,12 @@ sleepq_unblock(void)
 }
 
 /*
- * sleepq_wakeone:
+ * sleepq_wake:
  *
- *	Remove the highest priority LWP from the sleep queue and wake it.
+ *	Wake zero or more LWPs blocked on a single wait channel.
  */
 void
-sleepq_wakeone(sleepq_t *sq, wchan_t wchan)
-{
-	struct lwp *l;
-	int swapin;
-
-	LOCK_ASSERT(mutex_owned(sq->sq_mutex));
-
-	swapin = 0;
-
-	if ((l = TAILQ_FIRST(&sq->sq_queue)) != NULL)
-		swapin = sleepq_remove(sq, l);
-
-	mutex_exit(sq->sq_mutex);
-
-	if (swapin)
-		wakeup(&proc0);
-}
-
-/*
- * sleepq_wakeall:
- *
- *	Wake all LWPs blocked on a single wait channel.
- */
-void
-sleepq_wakeall(sleepq_t *sq, wchan_t wchan, u_int expected)
+sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected)
 {
 	struct lwp *l, *next;
 	int swapin = 0;
