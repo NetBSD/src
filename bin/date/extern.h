@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.7 2006/11/15 17:00:09 christos Exp $ */
+/* $NetBSD: extern.h,v 1.8 2006/11/17 22:11:28 christos Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -35,6 +35,5 @@
 #define _EXTERN_H_
 
 int netsettime(time_t);
-time_t get_date(const char *, time_t *, int *);
 
 #endif /* !_EXTERN_H_ */
