@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.12 2006/11/12 02:49:46 tsutsui Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.13 2006/11/17 21:35:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -274,8 +274,7 @@ struct ex_txdesc {
  * To avoid this bug, we have to pad such very short packets manually.
  */
 #define EX_IP4CSUMTX_MINLEN	22
-#define EX_IP4CSUMTX_PADLEN	\
-	(sizeof(struct ether_header) + EX_IP4CSUMTX_MINLEN)
+#define EX_IP4CSUMTX_PADLEN	(ETHER_HDR_LEN + EX_IP4CSUMTX_MINLEN)
 
 #define DPDMEM_SIZE		(sizeof(struct ex_dpd) * EX_NDPD)
 #define DPDMEMPAD_OFF		DPDMEM_SIZE
