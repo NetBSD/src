@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.850 2006/11/13 22:02:58 xtraeme Exp $
+$NetBSD: pcidevs,v 1.851 2006/11/17 23:57:27 tsutsui Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2953,11 +2953,13 @@ product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
 /* Realtek (Creative Labs?) products */
 product REALTEK	RT8029		0x8029	8029 Ethernet
 product REALTEK	RT8129		0x8129	8129 10/100 Ethernet
+product REALTEK RT8101E		0x8136	8101E 10/100 Ethernet
 product REALTEK RT8138		0x8138	8138 10/100 Ethernet
 product REALTEK RT8139B		0x8138	8139B 10/100 Ethernet
 product REALTEK RT8139		0x8139	8139 10/100 Ethernet
-product REALTEK RT8168		0x8168	8168 10/100/1000 Ethernet
-product REALTEK RT8169		0x8169	8169 10/100/1000 Ethernet
+product REALTEK RT8167		0x8167	8169SC/8110SC 10/100/1000 Ethernet
+product REALTEK RT8168		0x8168	8168B/8111B 10/100/1000 Ethernet
+product REALTEK RT8169		0x8169	8169/S/SB 10/100/1000 Ethernet
 product REALTEK RT8180		0x8180	8180 802.11b
 
 /* RICOH products */
