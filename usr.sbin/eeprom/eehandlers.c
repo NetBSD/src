@@ -1,4 +1,4 @@
-/*	$NetBSD: eehandlers.c,v 1.10 2004/11/08 08:05:20 dsl Exp $	*/
+/*	$NetBSD: eehandlers.c,v 1.11 2006/11/17 22:13:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <machine/eeprom.h>
 #ifdef __sparc__
@@ -62,9 +63,6 @@ extern	int ignore_checksum;
 extern	int fix_checksum;
 extern	int cksumfail;
 extern	u_short writecount;
-
-struct	timeb;
-extern	time_t get_date (char *, struct timeb *);
 
 static	char err_str[BUFSIZE];
 
@@ -162,7 +160,7 @@ ee_hwupdate(ktent, arg)
 				return;
 			}
 		} else
-			if ((t = get_date(arg, NULL)) == (time_t)(-1))
+			if ((t = getdate(arg, NULL, NULL)) == (time_t)(-1))
 				BARF(ktent);
 
 		if (doio(ktent, (u_char *)&t, sizeof(t), IO_WRITE))
