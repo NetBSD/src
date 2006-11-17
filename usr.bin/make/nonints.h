@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.40 2006/11/01 23:48:20 sjg Exp $	*/
+/*	$NetBSD: nonints.h,v 1.41 2006/11/17 22:07:39 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -181,6 +181,7 @@ char *Targ_FmtTime(time_t);
 void Targ_PrintType(int);
 void Targ_PrintGraph(int);
 void Targ_Propagate(void);
+void Targ_Propagate_Wait(void);
 
 /* var.c */
 void Var_Delete(const char *, GNode *);
