@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.4,v 1.1 2006/11/09 01:29:34 pooka Exp $
+.\"	$NetBSD: puffs.4,v 1.2 2006/11/17 18:00:20 pooka Exp $
 .\"
 .\" Copyright (c) 2006 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 8, 2006
+.Dd November 17, 2006
 .Dt PUFFS 4
 .Os
 .Sh NAME
@@ -79,44 +79,51 @@ The
 .Va pa_fd
 member is the file descriptor number from opening the device node.
 .Va pa_flags
-controls some operations specific to puffs and currently can be 0
-or
-.Dv PUFFS_FLAG_ALLOWCTL
-to allow file system fcntl and ioctl operations (these have security
-implications).
+controls some operations specific to puffs:
+.Bl -tag -width "PUFFSFLAG_ALLOWCTL"
+.It Dv PUFFSFLAG_ALLOWCTL
+Allow file system fcntl and ioctl operations.
+Allowing these has security implications as the file system can
+technically read anything out of a calling processes address space.
+This flag may additionally be enforced by the kernel security policy.
+.It Dv PUFFSFLAG_NOCACHE
+Do not store data in the page cache.
+This causes operations to always consult the user server instead of
+consulting the page cache.
+This makes sense in situations where there is relatively little
+bulk data to be transferred and the user server does not want to take
+part in complex cache management routines in case the file system data
+can be modified through routes other than the file system interface.
+.El
+.Pp
 The
 .Va pa_maxreqlen
 member signifies the length of the incoming data buffer in userspace.
 A good value is
 .Dv PUFFS_REQ_MAXSIZE ,
-which is the maximum the kernel will use.
-A minimum value is also enforced, so the value of this field should
-be checked after the mount operation to determine the correct buffer
-size.
-During operation, in case request fetch is attempted with a buffer
-too short, the error
+which is the maximum the kernel will use.  A minimum value is also
+enforced, so the value of this field should be checked after the
+mount operation to determine the correct buffer size.  During
+operation, in case request fetch is attempted with a buffer too
+short, the error
 .Er E2BIG
 will be returned.
 .Pp
 After a succesful mount system call, the the ioctl
 .Dv PUFFSMOUNTOP
-must be issued through the open device node.
-The parameter for this ioctl is the following structure:
+must be issued through the open device node.  The parameter for
+this ioctl is the following structure:
 .Bd -literal -offset indent
-struct puffs_startreq {    
-	void	*psr_cookie;
-	fsid_t	psr_fsidx;
-};
+struct puffs_startreq {
+	void    *psr_cookie; fsid_t  psr_fsidx; };
 .Ed
 .Pp
 The member
 .Va psr_cookie
-should be set before calling.
-This signals the cookie value of the root node of the file system
-(see
+should be set before calling.  This signals the cookie value of
+the root node of the file system (see
 .Xr puffs 3
-for more details on cookie strategies).
-The value of
+for more details on cookie strategies).  The value of
 .Va psr_fsidx
 will be filled by the kernel and should be recorded for future use.
 After succesfully executing this operation the file system is
@@ -131,8 +138,8 @@ Normally the system will block until an event is available for
 but it is possible to set the file descriptor into non-blocking
 mode, in which case
 .Er EWOULDBLOCK
-is returned if no event is available.
-Asynchoronous I/O calls (i.e.
+is returned if no event is available.  Asynchoronous I/O calls
+(i.e.
 .Xr select 2 ,
 .Xr poll 2 ,
 and
@@ -142,10 +149,8 @@ can be issued to be notified of events.
 As the argument both get and push use the following structure:
 .Bd -literal -offset indent
 struct puffs_req {
-	uint64_t	preq_id;
-	uint8_t		preq_opclass;
-	uint8_t		preq_optype;
-	void		*preq_cookie;
+	uint64_t        preq_id; uint8_t         preq_opclass;
+	uint8_t         preq_optype; void            *preq_cookie;
 
 	int		preq_rv;
 
