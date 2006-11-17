@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.975 2006/11/16 00:50:19 christos Exp $
+#	$NetBSD: mi,v 1.976 2006/11/17 22:18:48 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4527,6 +4527,7 @@
 ./usr/share/man/cat3/getcurx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getcury.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getcwd.0			comp-c-catman		.cat
+./usr/share/man/cat3/getdate.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getdevmajor.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdirentries.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdiskbyname.0		comp-c-catman		.cat
@@ -8783,6 +8784,7 @@
 ./usr/share/man/man3/getcurx.3			comp-c-man		.man
 ./usr/share/man/man3/getcury.3			comp-c-man		.man
 ./usr/share/man/man3/getcwd.3			comp-c-man		.man
+./usr/share/man/man3/getdate.3			comp-c-man		.man
 ./usr/share/man/man3/getdevmajor.3		comp-c-man		.man
 ./usr/share/man/man3/getdirentries.3		comp-c-man		.man
 ./usr/share/man/man3/getdiskbyname.3		comp-c-man		.man
