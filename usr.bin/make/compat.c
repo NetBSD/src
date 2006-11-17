@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.65 2006/10/27 21:00:18 dsl Exp $	*/
+/*	$NetBSD: compat.c,v 1.66 2006/11/17 22:07:39 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.65 2006/10/27 21:00:18 dsl Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.66 2006/11/17 22:07:39 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.65 2006/10/27 21:00:18 dsl Exp $");
+__RCSID("$NetBSD: compat.c,v 1.66 2006/11/17 22:07:39 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -671,7 +671,7 @@ Compat_Run(Lst targs)
      * Expand .USE nodes right now, because they can modify the structure
      * of the tree.
      */
-    Lst_Destroy(Make_ExpandUse(targs), NOFREE);
+    Make_ExpandUse(targs);
 
     /*
      * For each entry in the list of targets to create, call Compat_Make on

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.119 2006/10/27 21:00:19 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.120 2006/11/17 22:07:39 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.119 2006/10/27 21:00:19 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.120 2006/11/17 22:07:39 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.119 2006/10/27 21:00:19 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.120 2006/11/17 22:07:39 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -218,7 +218,6 @@ typedef enum {
 } ParseSpecial;
 
 static ParseSpecial specType;
-static int waiting;
 
 #define	LPAREN	'('
 #define	RPAREN	')'
@@ -280,26 +279,15 @@ static struct {
 { ".WAIT",	  Wait, 	0 },
 };
 
-/*
- * Used by ParseDoSpecialSrc()
- */
-typedef struct {
-    int		op;
-    char	*src;
-    Lst		curSrcs;
-} SpecialSrc;
-
 static int ParseIsEscaped(const char *, const char *);
 static void ParseErrorInternal(char *, size_t, int, const char *, ...)
      __attribute__((__format__(__printf__, 4, 5)));
 static void ParseVErrorInternal(char *, size_t, int, const char *, va_list)
      __attribute__((__format__(__printf__, 4, 0)));
-static int ParseFindKeyword(char *);
+static int ParseFindKeyword(const char *);
 static int ParseLinkSrc(ClientData, ClientData);
 static int ParseDoOp(ClientData, ClientData);
-static int ParseAddDep(ClientData, ClientData);
-static int ParseDoSpecialSrc(ClientData, ClientData);
-static void ParseDoSrc(int, char *, Lst, Boolean);
+static void ParseDoSrc(int, const char *);
 static int ParseFindMain(ClientData, ClientData);
 static int ParseAddDir(ClientData, ClientData);
 static int ParseClearPath(ClientData, ClientData);
@@ -363,7 +351,7 @@ ParseIsEscaped(const char *line, const char *c)
  *----------------------------------------------------------------------
  */
 static int
-ParseFindKeyword(char *str)
+ParseFindKeyword(const char *str)
 {
     int    start, end, cur;
     int    diff;
@@ -577,7 +565,7 @@ ParseDoOp(ClientData gnp, ClientData opp)
 	 */
 	gn->type |= op & ~OP_OPMASK;
 
-	cohort = Targ_NewGN(gn->name);
+	cohort = Targ_FindNode(gn->name, TARG_NOHASH);
 	/*
 	 * Make the cohort invisible as well to avoid duplicating it into
 	 * other variables. True, parents of this target won't tend to do
@@ -589,6 +577,8 @@ ParseDoOp(ClientData gnp, ClientData opp)
 	(void)Lst_AtEnd(gn->cohorts, cohort);
 	cohort->centurion = gn;
 	gn->unmade_cohorts += 1;
+	snprintf(cohort->cohort_num, sizeof cohort->cohort_num, "#%d",
+		gn->unmade_cohorts);
     } else {
 	/*
 	 * We don't want to nuke any previous flags (whatever they were) so we
@@ -602,138 +592,6 @@ ParseDoOp(ClientData gnp, ClientData opp)
 
 /*-
  *---------------------------------------------------------------------
- * ParseAddDep  --
- *	Check if the pair of GNodes given needs to be synchronized.
- *	This has to be when two nodes are on different sides of a
- *	.WAIT directive.
- *
- * Results:
- *	Returns 1 if the two targets need to be ordered, 0 otherwise.
- *	If it returns 1, the search can stop
- *
- * Side Effects:
- *	A dependency can be added between the two nodes.
- *	The dependency is tagged for recursive addition to
- *	all children of sp.
- *
- *---------------------------------------------------------------------
- */
-static int
-ParseAddDep(ClientData pp, ClientData sp)
-{
-    GNode *p = (GNode *)pp;
-    GNode *s = (GNode *)sp;
-
-    if (DEBUG(PARSE))
-	fprintf(debug_file, "ParseAddDep: %p(%s):%d %p(%s):%d\n",
-		p, p->name, p->order, s, s->name, s->order);
-    if (p->order >= s->order)
-	return 1;
-
-    /*
-     * XXX: This can cause loops, and loops can cause unmade targets,
-     * but checking is tedious, and the debugging output can show the
-     * problem
-     */
-    (void)Lst_AtEnd(p->successors, s);
-    (void)Lst_AtEnd(s->preds, p);
-    (void)Lst_AtEnd(s->recpreds, p);
-    if (DEBUG(PARSE)) {
-	fprintf(debug_file, "# ParseAddDep: added .WAIT dependency %s - %s\n",
-		p->name, s->name);
-	Targ_PrintNode(p, 0);
-	Targ_PrintNode(s, 0);
-    }
-    return 0;
-}
-
-/* -
- *---------------------------------------------------------------------
- * ParseDoSpecialSrc  --
- *	ParseDoSrc struck an unexpanded variable in a src.
- *	The most likely reason is a src that refers to .TARGET or
- *	.PREFIX so we get called to set those for each target
- *	and then call ParseDoSrc again to do the real work.
- *
- * Input:
- *	tp		A target GNode *
- *	sp		A SpecialSrc * which contains the args we need
- *			for ParseDoSrc.
- *
- * Results:
- *	Goodness
- *
- * Side Effects:
- *	The target GNode will have .TARGET and .PREFIX set, this seems
- *	harmless.
- */
-static int
-ParseDoSpecialSrc(ClientData tp, ClientData sp)
-{
-    GNode *tn = (GNode *)tp;
-    GNode *gn;
-    SpecialSrc *ss = (SpecialSrc *)sp;
-    char *cp;
-    char *cp2;
-    char *pref;
-    
-    /*
-     * If the target is a suffix rule, leave it alone.
-     */
-    if (Suff_IsTransform(tn->name)) {
-	ParseDoSrc(ss->op, ss->src, ss->curSrcs, FALSE); /* don't come back */
-	return 0;
-    }
-
-    /* Expand the variables that depend on the current target just in case */
-    Var_Set(TARGET, tn->name, tn, 0);
-
-    /* Get the filename part of the target name, excluding all suffixes */
-    if ((pref = strrchr(tn->name, '/')))
-	pref++;
-    else
-	pref = tn->name;
-    if ((cp2 = strchr(pref, '.')) > pref) {
-	cp = estrdup(pref);
-	cp[cp2 - pref] = '\0';
-	Var_Set(PREFIX, cp, tn, 0);
-	free(cp);
-    } else
-	Var_Set(PREFIX, pref, tn, 0);   
-
-    /* Now we can expant the name itself */
-    cp = Var_Subst(NULL, ss->src, tn, FALSE);
-    /* XXX, better not need to have $ in a filesname! */
-    if (strchr(cp, '$')) {
-	Parse_Error(PARSE_WARNING, "Cannot resolve '%s' here", ss->src);
-	ParseDoSrc(ss->op, ss->src, ss->curSrcs, FALSE); /* don't come back */
-	return 1;			/* stop list traversal */
-    } 
-
-    /*
-     * We don't want to make every target dependent on sources for
-     * other targets.  This is the bit of ParseDoSrc which is relevant.
-     * The main difference is we don't link the resolved src to all targets.
-     */
-    gn = Targ_FindNode(cp, TARG_CREATE);
-    if (ss->op) {
-	gn->type |= ss->op;
-    } else {
-	ParseLinkSrc(tn, gn);
-    }
-    if (DEBUG(PARSE))
-	fprintf(debug_file, "ParseDoSpecialSrc: set %p(%s):%d (was %d)\n",
-		gn, gn->name, waiting, gn->order);
-    gn->order = waiting;
-    (void)Lst_AtEnd(ss->curSrcs, gn);
-    if (waiting)
-	Lst_ForEach(ss->curSrcs, ParseAddDep, gn);
-    return 0;
-}
-
-
-/*-
- *---------------------------------------------------------------------
  * ParseDoSrc  --
  *	Given the name of a source, figure out if it is an attribute
  *	and apply it to the targets if it is. Else decide if there is
@@ -744,8 +602,6 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
  * Input:
  *	tOp		operator (if any) from special targets
  *	src		name of the source to handle
- *	curSrcs		List of all sources to wait for
- *	resolve		boolean - should we try and resolve .TARGET refs.
  *
  * Results:
  *	None
@@ -756,9 +612,11 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
  *---------------------------------------------------------------------
  */
 static void
-ParseDoSrc(int tOp, char *src, Lst curSrcs, Boolean resolve)
+ParseDoSrc(int tOp, const char *src)
 {
     GNode	*gn = NULL;
+    static int wait_number = 0;
+    char wait_src[16];
 
     if (*src == '.' && isupper ((unsigned char)src[1])) {
 	int keywd = ParseFindKeyword(src);
@@ -769,7 +627,19 @@ ParseDoSrc(int tOp, char *src, Lst curSrcs, Boolean resolve)
 		return;
 	    }
 	    if (parseKeywords[keywd].spec == Wait) {
-		waiting++;
+		/*
+		 * We add a .WAIT node in the dependency list.
+		 * After any dynamic dependencies (and filename globbing)
+		 * have happened, it is given a dependency on the each
+		 * previous child back to and previous .WAIT node.
+		 * The next child won't be scheduled until the .WAIT node
+		 * is built.
+		 * We give each .WAIT node a unique name (mainly for diag).
+		 */
+		snprintf(wait_src, sizeof wait_src, ".WAIT_%u", ++wait_number);
+		gn = Targ_FindNode(wait_src, TARG_NOHASH);
+		gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
+		Lst_ForEach(targets, ParseLinkSrc, gn);
 		return;
 	    }
 	}
@@ -800,8 +670,8 @@ ParseDoSrc(int tOp, char *src, Lst curSrcs, Boolean resolve)
 	 */
 	gn = Targ_FindNode(src, TARG_CREATE);
 	if (predecessor != NILGNODE) {
-	    (void)Lst_AtEnd(predecessor->successors, gn);
-	    (void)Lst_AtEnd(gn->preds, predecessor);
+	    (void)Lst_AtEnd(predecessor->order_succ, gn);
+	    (void)Lst_AtEnd(gn->order_pred, predecessor);
 	    if (DEBUG(PARSE)) {
 		fprintf(debug_file, "# ParseDoSrc: added Order dependency %s - %s\n",
 			predecessor->name, gn->name);
@@ -827,29 +697,6 @@ ParseDoSrc(int tOp, char *src, Lst curSrcs, Boolean resolve)
 	 * the 'cohorts' list of the node) or all the cohorts are linked
 	 * to all the targets.
 	 */
-	if (resolve && strchr(src, '$')) {
-	    /*
-	     * If the 'src' needs expanding, and we have a .WAIT in the
-	     * list of sources, then we expand 'src' with respect to each
-	     * of the targets and add the modified nodes separately to
-	     * their own target.
-	     * This only makes a difference if the 'src' has a dynamic
-	     * dependency against .TARGET (etc), and even then it is probably
-	     * not a very useful optimisation.
-	     */
-	    SpecialSrc ss;
-
-	    ss.op = tOp;
-	    ss.src = src;
-	    ss.curSrcs = curSrcs;
-
-	    /*
-	     * If src cannot be fully resolved, we'll be called again
-	     * with resolve==FALSE.
-	     */
-	    Lst_ForEach(targets, ParseDoSpecialSrc, &ss);
-	    return;
-	}
 
 	/* Find/create the 'src' node and attach to all targets */
 	gn = Targ_FindNode(src, TARG_CREATE);
@@ -860,22 +707,6 @@ ParseDoSrc(int tOp, char *src, Lst curSrcs, Boolean resolve)
 	}
 	break;
     }
-
-    if (DEBUG(PARSE))
-	fprintf(debug_file, "ParseDoSrc: set %p(%s):%d (was %d)\n",
-		gn, gn->name, waiting, gn->order);
-    gn->order = waiting;
-
-    /* Keep a list of the 'src' on this dependence line for .WAIT below */
-    (void)Lst_AtEnd(curSrcs, gn);
-
-    /*
-     * If we have passed a .WAIT, then make this 'src' depend on all the
-     * earlier 'src' of the current dependency line that preceed the last
-     * .WAIT directive.
-     */
-    if (waiting)
-	Lst_ForEach(curSrcs, ParseAddDep, gn);
 }
 
 /*-
@@ -1000,18 +831,16 @@ ParseDoDependency(char *line)
 				 * expansion */
     Lst 	    curTargs;	/* list of target names to be found and added
 				 * to the targets list */
-    Lst		    curSrcs;	/* list of sources in order */
     char	   *lstart = line;
-    Boolean	    hasWait;	/* is .WAIT present in srcs */
 
+    if (DEBUG(PARSE))
+	fprintf(debug_file, "ParseDoDependency(%s)\n", line);
     tOp = 0;
 
     specType = Not;
-    waiting = 0;
     paths = (Lst)NULL;
 
     curTargs = Lst_Init(FALSE);
-    curSrcs = Lst_Init(FALSE);
 
     do {
 	for (cp = line;
@@ -1441,11 +1270,6 @@ ParseDoDependency(char *line)
 	if (specType == ExPath)
 	    Dir_SetPATH();
     } else {
-	/*
-	 * We don't need ParseDoSpecialSrc unless .WAIT is present.
-	 */
-	hasWait = (strstr(line, ".WAIT") != NULL);
-
 	while (*line) {
 	    /*
 	     * The targets take real sources, so we must beware of archive
@@ -1474,7 +1298,7 @@ ParseDoDependency(char *line)
 
 		while (!Lst_IsEmpty (sources)) {
 		    gn = (GNode *)Lst_DeQueue(sources);
-		    ParseDoSrc(tOp, gn->name, curSrcs, hasWait);
+		    ParseDoSrc(tOp, gn->name);
 		}
 		Lst_Destroy(sources, NOFREE);
 		cp = line;
@@ -1484,7 +1308,7 @@ ParseDoDependency(char *line)
 		    cp += 1;
 		}
 
-		ParseDoSrc(tOp, line, curSrcs, hasWait);
+		ParseDoSrc(tOp, line);
 	    }
 	    while (*cp && isspace ((unsigned char)*cp)) {
 		cp++;
@@ -1506,10 +1330,6 @@ ParseDoDependency(char *line)
 out:
     if (curTargs)
 	    Lst_Destroy(curTargs, NOFREE);
-    /*
-     * Finally, destroy the list of sources
-     */
-    Lst_Destroy(curSrcs, NOFREE);
 }
 
 /*-
@@ -1816,9 +1636,12 @@ static int
 ParseAddCmd(ClientData gnp, ClientData cmd)
 {
     GNode *gn = (GNode *)gnp;
-    /* if target already supplied, ignore commands */
+
+    /* Add to last (ie current) cohort for :: targets */
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (gn->cohorts))
 	gn = (GNode *)Lst_Datum(Lst_Last(gn->cohorts));
+
+    /* if target already supplied, ignore commands */
     if (!(gn->type & OP_HAS_COMMANDS)) {
 	(void)Lst_AtEnd(gn->commands, cmd);
 	ParseMark(gn);
@@ -2792,6 +2615,8 @@ Parse_File(const char *name, FILE *stream)
 
     do {
 	for (; (line = ParseReadLine()) != NULL; free(line)) {
+	    if (DEBUG(PARSE))
+		fprintf(debug_file, "ParseReadLine: %s\n", line);
 	    if (*line == '.') {
 		/*
 		 * Lines that begin with the special character are either

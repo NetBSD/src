@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.63 2006/10/15 08:38:22 dsl Exp $	*/
+/*	$NetBSD: make.h,v 1.64 2006/11/17 22:07:39 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -155,34 +155,33 @@ typedef struct GNode {
     char            *uname;    	/* The unexpanded name of a .USE node */
     char    	    *path;     	/* The full pathname of the file */
     int             type;      	/* Its type (see the OP flags, below) */
-    int		    order;	/* Its wait weight */
 
     int             flags;
-#define REMAKE		0x1    	/* this target needs to be remade */
+#define REMAKE		0x1    	/* this target needs to be (re)made */
 #define	CHILDMADE	0x2	/* children of this target were made */
 #define FORCE		0x4	/* children don't exist, and we pretend made */
-    enum {
-	UNMADE, BEINGMADE, MADE, UPTODATE, ERROR, ABORTED,
-	CYCLE, ENDCYCLE
+#define DONE_WAIT	0x8	/* Set by Make_ProcessWait() */
+#define DONE_ORDER	0x10	/* Build requested by .ORDER processing */
+#define CYCLE		0x1000  /* Used by MakePrintStatus */
+#define ENDCYCLE	0x2000  /* Used by MakePrintStatus */
+#define ONCYCLE		0x4000  /* Used by MakePrintStatus */
+#define DONECYCLE	0x8000  /* Used by MakePrintStatus */
+    enum enum_made {
+	UNMADE, DEFERRED, REQUESTED, BEINGMADE,
+	MADE, UPTODATE, ERROR, ABORTED
     }	    	    made;    	/* Set to reflect the state of processing
 				 * on this node:
 				 *  UNMADE - Not examined yet
+				 *  DEFERRED - Examined once (building child)
+				 *  REQUESTED - on toBeMade list
 				 *  BEINGMADE - Target is already being made.
-				 *  	Indicates a cycle in the graph. (compat
-				 *  	mode only)
+				 *  	Indicates a cycle in the graph.
 				 *  MADE - Was out-of-date and has been made
 				 *  UPTODATE - Was already up-to-date
 				 *  ERROR - An error occurred while it was being
 				 *  	made (used only in compat mode)
 				 *  ABORTED - The target was aborted due to
 				 *  	an error making an inferior (compat).
-				 *  CYCLE - Marked as potentially being part of
-				 *  	a graph cycle. If we come back to a
-				 *  	node marked this way, it is printed
-				 *  	and 'made' is changed to ENDCYCLE.
-				 *  ENDCYCLE - the cycle has been completely
-				 *  	printed. Go back and unmark all its
-				 *  	members.
 				 */
     int             unmade;    	/* The number of unmade children */
 
@@ -194,12 +193,11 @@ typedef struct GNode {
 				 * implied source, if any */
     Lst	    	    cohorts;  	/* Other nodes for the :: operator */
     Lst             parents;   	/* Nodes that depend on this one */
-    Lst             ancestors; 	/* Parents, parents of parents, ... */
     Lst             children;  	/* Nodes on which this one depends */
-    Lst	    	    successors;	/* Nodes that must be made after this one */
-    Lst	    	    preds;  	/* Nodes that must be made before this one */
-    Lst	    	    recpreds;	/* Nodes that must be added to preds
-				 * recursively for all child nodes */
+    Lst             order_pred;	/* .ORDER nodes we need made */
+    Lst             order_succ;	/* .ORDER nodes who need us */
+
+    char	    cohort_num[8]; /* #n for this cohort */
     int		    unmade_cohorts;/* # of unmade instances on the
 				      cohorts list */
     struct GNode    *centurion;	/* Pointer to the first instance of a ::
@@ -264,6 +262,7 @@ typedef struct GNode {
 				     * target' processing in parse.c */
 #define OP_PHONY	0x00010000  /* Not a file target; run always */
 #define OP_NOPATH	0x00020000  /* Don't search for file in the path */
+#define OP_WAIT 	0x00040000  /* .WAIT phony node */
 /* Attributes applied by PMake */
 #define OP_TRANSFORM	0x80000000  /* The node is a transformation rule */
 #define OP_MEMBER 	0x40000000  /* Target is a member of an archive */
@@ -293,8 +292,9 @@ typedef struct GNode {
  * table of all targets and its address returned. If TARG_NOCREATE is given,
  * a NIL pointer will be returned.
  */
-#define TARG_CREATE	0x01	  /* create node if not found */
 #define TARG_NOCREATE	0x00	  /* don't create it */
+#define TARG_CREATE	0x01	  /* create node if not found */
+#define TARG_NOHASH	0x02	  /* don't look in/add to hash table */
 
 /*
  * There are several places where expandable buffers are used (parse.c and
@@ -446,7 +446,7 @@ extern int debug;
 
 int Make_TimeStamp(GNode *, GNode *);
 Boolean Make_OODate(GNode *);
-Lst Make_ExpandUse(Lst);
+void Make_ExpandUse(Lst);
 time_t Make_Recheck(GNode *);
 void Make_HandleUse(GNode *, GNode *);
 void Make_Update(GNode *);
