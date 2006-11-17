@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.63 2006/11/17 21:29:36 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.64 2006/11/17 21:49:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -152,6 +152,7 @@
 
 #include <dev/ic/rtl8169var.h>
 
+static inline void re_set_bufaddr(struct re_desc *, bus_addr_t);
 
 static int re_newbuf(struct rtk_softc *, int, struct mbuf *);
 static int re_rx_list_init(struct rtk_softc *);
@@ -181,6 +182,17 @@ static void re_miibus_writereg(struct device *, int, int, int);
 static void re_miibus_statchg(struct device *);
 
 static void re_reset(struct rtk_softc *);
+
+static inline void
+re_set_bufaddr(struct re_desc *d, bus_addr_t addr)
+{
+
+	d->re_bufaddr_lo = htole32((uint32_t)addr);
+	if (sizeof(bus_addr_t) == sizeof(uint64_t))
+		d->re_bufaddr_hi = htole32((uint64_t)addr >> 32);
+	else
+		d->re_bufaddr_hi = 0;
+}
 
 static int
 re_gmii_readreg(struct device *self, int phy, int reg)
@@ -1075,8 +1087,7 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	cmdstat = map->dm_segs[0].ds_len;
 	if (idx == (RE_RX_DESC_CNT - 1))
 		cmdstat |= RE_RDESC_CMD_EOR;
-	d->re_bufaddr_lo = htole32(RE_ADDR_LO(map->dm_segs[0].ds_addr));
-	d->re_bufaddr_hi = htole32(RE_ADDR_HI(map->dm_segs[0].ds_addr));
+	re_set_bufaddr(d, map->dm_segs[0].ds_addr);
 	d->re_cmdstat = htole32(cmdstat);
 	RE_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	cmdstat |= RE_RDESC_CMD_OWN;
@@ -1640,10 +1651,7 @@ re_start(struct ifnet *ifp)
 			}
 #endif
 
-			d->re_bufaddr_lo =
-			    htole32(RE_ADDR_LO(map->dm_segs[seg].ds_addr));
-			d->re_bufaddr_hi =
-			    htole32(RE_ADDR_HI(map->dm_segs[seg].ds_addr));
+			re_set_bufaddr(d, map->dm_segs[seg].ds_addr);
 			cmdstat = re_flags | map->dm_segs[seg].ds_len;
 			if (seg == 0)
 				cmdstat |= RE_TDESC_CMD_SOF;
@@ -1664,8 +1672,7 @@ re_start(struct ifnet *ifp)
 
 			d = &sc->re_ldata.re_tx_list[curdesc];
 			paddaddr = RE_TXPADDADDR(sc);
-			d->re_bufaddr_lo = htole32(RE_ADDR_LO(paddaddr));
-			d->re_bufaddr_hi = htole32(RE_ADDR_HI(paddaddr));
+			re_set_bufaddr(d, paddaddr);
 			cmdstat = re_flags |
 			    RE_TDESC_CMD_OWN | RE_TDESC_CMD_EOF |
 			    (RE_IP4CSUMTX_PADLEN + 1 - m->m_pkthdr.len);
