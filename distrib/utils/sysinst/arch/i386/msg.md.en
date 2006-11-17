@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.49 2006/01/15 20:37:57 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.50 2006/11/17 21:04:22 reed Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -136,7 +136,7 @@ Are you sure you that you want to do this?
 message missing_bootmenu_text
 {You have more than one operating system on this disk, but have not
 specified a 'bootmenu' for either the active partition, or the
-Netbsd partition that you are going to install into. 
+NetBSD partition that you are going to install into. 
 
 Do you want to re-edit the partition to add a bootmenu entry?}
 
