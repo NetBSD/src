@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.3 2006/11/17 16:34:34 ad Exp $	*/
+/*	$NetBSD: mutexmi.h,v 1.1.2.1 2006/11/17 16:34:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -36,35 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_MUTEX_H_
-#define	_X86_MUTEX_H_
-
 /*
- * Spin mutexes take this format:
- *
- *	N        16       8           2         1   0
- *	+--------------------------------------------+
- *	|  unused  | minspl |  unused   | locked | 1 | 
- *	+--------------------------------------------+
- *
- * Adaptive mutexes take this format:
- *
- *	N                   4         2         1   0
- *	+--------------------------------------------+
- *	|        owner       | unused  | waiters | 0 |
- *	+--------------------------------------------+
+ * Slow, bare bones lock constructs for architectures that do not provide
+ * them.
  */
-struct kmutex {
-	union {
-		volatile uintptr_t	mtxa_owner;
 
-		struct {
-			volatile uint8_t	mtxs_flags;
-			volatile uint8_t	mtxs_minspl;
-			volatile uint16_t	mtxs_unused;
-		} s;
-	} u;
-	volatile uint32_t	mtx_id;
+#ifndef _SYS_MUTEXMI_H_
+#define	_SYS_MUTEXMI_H_
+
+struct kmutex {
+	volatile uintptr_t	mtx_storage;
+	volatile uint8_t	mtx_id[3];
+	volatile uint8_t	mtx_flags;
 };
 
 #ifdef __MUTEX_PRIVATE
@@ -74,16 +57,8 @@ struct kmutex {
 #define	MUTEX_INITIALIZE_SPIN(mtx, ipl)					\
 do {									\
 	(mtx)->mtx_flags = MUTEX_BIT_SPIN;				\
-	(mtx)->mtx_minspl = (ipl);					\
+	(mtx)->mtx_storage = (ipl);					\
 } while (/* CONSTCOND */ 0)
-
-#define	mtx_owner 			u.mtxa_owner
-#define	mtx_flags 			u.s.mtxs_flags
-#define	mtx_minspl 			u.s.mtxs_minspl
-
-#define __HAVE_MUTEX_ENTER		1
-#define __HAVE_MUTEX_EXIT		1
-#define	__NEED_MUTEX_CALLSITE		1
 
 #define	MUTEX_BIT_SPIN			0x01
 #define	MUTEX_BIT_WAITERS		0x02
@@ -97,8 +72,19 @@ do {									\
 #define	MUTEX_ADAPTIVE_P(mtx)		\
     (((mtx)->mtx_flags & MUTEX_BIT_SPIN) == 0)
 
-#define	MUTEX_SETID(mtx, id)		((mtx)->mtx_id = id)
-#define	MUTEX_GETID(mtx)		((mtx)->mtx_id)
+static inline void
+MUTEX_SETID(struct kmutex *mtx, u_int id)
+{
+	mtx->mtx_id[0] = (uint8_t)id;
+	mtx->mtx_id[1] = (uint8_t)(id >> 8);
+	mtx->mtx_id[2] = (uint8_t)(id >> 16);
+}
+
+static inline u_int
+MUTEX_GETID(struct kmutex *mtx)
+{
+	return mtx->mtx_id[0] | (mtx->mtx_id[1] << 8) | (mtx->mtx_id[2] << 16);
+}
 
 /*
  * Spin mutex methods.
@@ -107,17 +93,17 @@ do {									\
 #define	MUTEX_SPIN_HELD(mtx)		\
     ((mtx)->mtx_flags == MUTEX_SPIN_LOCKED)
 
-static inline uint8_t
-MUTEX_SPIN_ACQUIRE(kmutex_t *mtx)
+static inline u_int
+MUTEX_SPIN_ACQUIRE(struct kmutex *mtx)
 {
-	uint8_t rv;
-	__asm volatile ("movb $3,%0; xchgb %0,%1" :
-			"=a" (rv) : "m" (mtx->mtx_flags) : "memory");
-	return rv == MUTEX_SPIN_UNLOCKED;
+	if (mtx->mtx_flags != MUTEX_SPIN_UNLOCKED)
+		return 0;
+	mtx->mtx_flags = MUTEX_SPIN_LOCKED;
+	return 1;
 }
 
 static inline void
-MUTEX_SPIN_RELEASE(kmutex_t *mtx)
+MUTEX_SPIN_RELEASE(struct kmutex *mtx)
 {
 	__insn_barrier();
 	mtx->mtx_flags = MUTEX_SPIN_UNLOCKED;
@@ -139,34 +125,50 @@ do {									\
 		splx(s);						\
 } while (/* CONSTCOND */ 0)
 
-#define	MUTEX_SPIN_MINSPL(mtx)		((mtx)->mtx_minspl)
+#define	MUTEX_SPIN_MINSPL(mtx)		((mtx)->mtx_storage)
 #define	MUTEX_SPIN_OLDSPL(ci)		((ci)->ci_mtx_oldspl)
 
 /*
  * Adaptive mutex methods.
  */        
-#define	MUTEX_OWNER(mtx)						\
-	((uintptr_t)((mtx)->mtx_owner & MUTEX_THREAD))
-#define	MUTEX_HAS_WAITERS(mtx)						\
-	(((int)(mtx)->mtx_owner & MUTEX_BIT_WAITERS) != 0)
-#define	MUTEX_SET_WAITERS(mtx)						\
-	_lock_set_waiters(&(mtx)->mtx_owner,				\
-	     MUTEX_THREAD | MUTEX_BIT_SPIN, MUTEX_BIT_WAITERS)
-#define	MUTEX_ACQUIRE(mtx, ct)						\
-	_lock_cas(&(mtx)->mtx_owner, 0UL, (ct))
+#define	MUTEX_OWNER(mtx)		((mtx)->mtx_storage)
+#define	MUTEX_HAS_WAITERS(mtx)		((mtx)->mtx_flags)
+
+static inline int
+MUTEX_SET_WAITERS(struct kmutex *mtx)
+{
+	int s = splsched();
+	if (mtx->mtx_storage == 0) {
+		splx(s);
+		return 0;
+	}
+	mtx->mtx_flags = MUTEX_BIT_WAITERS;
+	splx(s);
+	return 1;
+}
+
+static inline int
+MUTEX_ACQUIRE(struct kmutex *mtx, uintptr_t thread)
+{
+	int s = splsched();
+	if (mtx->mtx_storage != 0) {
+		splx(s);
+		return 0;
+	}
+	mtx->mtx_storage = thread;
+	mtx->mtx_flags = 0;
+	splx(s);
+	return 1;
+}
 
 static inline void
 MUTEX_RELEASE(kmutex_t *mtx)
 {
-	__insn_barrier();
-	mtx->mtx_owner = 0;
+	int s = splsched();
+	mtx->mtx_storage = 0;
+	splx(s);
 }
-
-#ifdef _KERNEL
-int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
-int	_lock_set_waiters(volatile uintptr_t *, uintptr_t, uintptr_t);
-#endif /* _KERNEL */
 
 #endif	/* __MUTEX_PRIVATE */
 
-#endif /* _X86_MUTEX_H_ */
+#endif /* _SYS_MUTEXMI_H_ */

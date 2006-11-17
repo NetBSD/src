@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.34.2.1 2006/10/21 14:37:18 ad Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.34.2.2 2006/11/17 16:34:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.34.2.1 2006/10/21 14:37:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.34.2.2 2006/11/17 16:34:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,9 +128,6 @@ static const vfs_namemap_t signames[] = {
 
 int procfs_control(struct lwp *, struct lwp *, int, int);
 
-/*
- * XXXAD needs locking.
- */ 
 int
 procfs_control(curl, l, op, sig)
 	struct lwp *curl;
@@ -139,13 +136,10 @@ procfs_control(curl, l, op, sig)
 {
 	struct proc *curp = curl->l_proc;
 	struct proc *p = l->l_proc;
-	int error;
+	int error = 0;
 
-	/*
-	 * You cannot do anything to the process if it is currently exec'ing
-	 */
-	if (ISSET(p->p_flag, P_INEXEC))
-		return (EAGAIN);
+	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&p->p_mutex);
 
 	switch (op) {
 	/*
@@ -157,24 +151,29 @@ procfs_control(curl, l, op, sig)
 		 * You can't attach to a process if:
 		 *      (1) it's the process that's doing the attaching,
 		 */
-		if (p->p_pid == curp->p_pid)
-			return (EINVAL);
+		if (p->p_pid == curp->p_pid) {
+			error = EINVAL;
+			break;
+		}
 
 		/*
 		 *      (2) it's already being traced, or
 		 */
-		if (ISSET(p->p_flag, P_TRACED))
-			return (EBUSY);
+		if (ISSET(p->p_slflag, PSL_TRACED)) {
+			error = EBUSY;
+			break;
+		}
 
 		/*
 		 *      (3) it's not owned by you, or is set-id on exec
 		 *          (unless you're root), or...
 		 */
-		if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curl->l_cred) ||
+		if ((kauth_cred_getuid(p->p_cred) !=
+		    kauth_cred_getuid(curl->l_cred) ||
 		    ISSET(p->p_flag, P_SUGID)) &&
-		    (error = kauth_authorize_generic(curl->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &curl->l_acflag)) != 0)
-			return (error);
+		    (error = kauth_authorize_generic(curl->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &curl->l_acflag)) != 0)
+			break;
 
 		/*
 		 *      (4) ...it's init, which controls the security level
@@ -183,12 +182,13 @@ procfs_control(curl, l, op, sig)
 		 *          on.
 		 */
 		if (p == initproc && securelevel > -1)
-			return (EPERM);
+			error = EPERM;
+
 		break;
 
 	/*
 	 * Target process must be stopped, owned by (curp) and
-	 * be set up for tracing (P_TRACED flag set).
+	 * be set up for tracing (PSL_TRACED flag set).
 	 * Allow DETACH to take place at any time for sanity.
 	 * Allow WAIT any time, of course.
 	 *
@@ -201,21 +201,26 @@ procfs_control(curl, l, op, sig)
 		 * You can't do what you want to the process if:
 		 *      (1) It's not being traced at all,
 		 */
-		if (!ISSET(p->p_flag, P_TRACED))
-			return (EPERM);
+		if (!ISSET(p->p_slflag, PSL_TRACED)) {
+			error = EPERM;
+			break;
+		}
 
 		/*
 		 *	(2) it's being traced by ptrace(2) (which has
 		 *	    different signal delivery semantics), or
 		 */
-		if (!ISSET(p->p_flag, P_FSTRACE))
-			return (EBUSY);
+		if (!ISSET(p->p_slflag, PSL_FSTRACE)) {
+			error = EBUSY;
+			break;
+		}
 
 		/*
 		 *      (3) it's not being traced by _you_.
 		 */
 		if (p->p_pptr != curp)
-			return (EBUSY);
+			error = EBUSY;
+
 		break;
 
 	default:
@@ -223,28 +228,41 @@ procfs_control(curl, l, op, sig)
 		 * You can't do what you want to the process if:
 		 *      (1) It's not being traced at all,
 		 */
-		if (!ISSET(p->p_flag, P_TRACED))
-			return (EPERM);
+		if (!ISSET(p->p_slflag, PSL_TRACED)) {
+			error = EPERM;
+			break;
+		}
 
 		/*
 		 *	(2) it's being traced by ptrace(2) (which has
 		 *	    different signal delivery semantics),
 		 */
-		if (!ISSET(p->p_flag, P_FSTRACE))
-			return (EBUSY);
+		if (!ISSET(p->p_slflag, PSL_FSTRACE)) {
+			error = EBUSY;
+			break;
+		}
 
 		/*
 		 *      (3) it's not being traced by _you_, or
 		 */
-		if (p->p_pptr != curp)
-			return (EBUSY);
+		if (p->p_pptr != curp) {
+			error = EBUSY;
+			break;
+		}
 
 		/*
 		 *      (4) it's not currently stopped.
 		 */
-		if (p->p_stat != SSTOP || !ISSET(p->p_flag, P_WAITED))
-			return (EBUSY);
+		if (p->p_stat != SSTOP || !ISSET(p->p_lflag, PL_WAITED))
+			error = EBUSY;
+
 		break;
+	}
+
+	if (error != 0) {
+		mutex_exit(&p->p_mutex);
+		rw_exit(&proclist_lock);
+		return (error);
 	}
 
 	/* Do single-step fixup if needed. */
@@ -260,10 +278,14 @@ procfs_control(curl, l, op, sig)
 		 *   proc gets to see all the action.
 		 * Stop the target.
 		 */
-		SET(p->p_flag, P_TRACED|P_FSTRACE);
+		mutex_enter(&p->p_smutex);
+		SET(p->p_slflag, PSL_TRACED|PSL_FSTRACE);
+		mutex_exit(&p->p_smutex);
 		p->p_opptr = p->p_pptr;
 		if (p->p_pptr != curp) {
-			p->p_pptr->p_flag |= P_CHTRACED;
+			mutex_enter(&p->p_pptr->p_smutex);
+			p->p_pptr->p_slflag |= PSL_CHTRACED;
+			mutex_exit(&p->p_pptr->p_smutex);
 			proc_reparent(p, curp);
 		}
 		sig = SIGSTOP;
@@ -279,10 +301,11 @@ procfs_control(curl, l, op, sig)
 	case PROCFS_CTL_DETACH:
 #ifdef PT_STEP
 		PHOLD(l);
+		/* XXXAD locking? */
 		error = process_sstep(l, op == PROCFS_CTL_STEP);
 		PRELE(l);
 		if (error)
-			return (error);
+			break;
 #endif
 
 		if (op == PROCFS_CTL_DETACH) {
@@ -294,33 +317,53 @@ procfs_control(curl, l, op, sig)
 
 			/* not being traced any more */
 			p->p_opptr = NULL;
-			CLR(p->p_flag, P_TRACED|P_FSTRACE|P_WAITED);
+			mutex_enter(&p->p_smutex);
+			CLR(p->p_slflag, PSL_TRACED|PSL_FSTRACE);
+			mutex_exit(&p->p_smutex);
+			CLR(p->p_lflag, PL_WAITED);
 		}
 
 	sendsig:
 		/* Finally, deliver the requested signal (or none). */
+		mutex_exit(&p->p_mutex);
+		mutex_enter(&p->p_smutex);
+		lwp_lock(l);
 		if (l->l_stat == LSSTOP) {
 			p->p_xstat = sig;
+			/* setrunnable() will release the lock. */
 			setrunnable(l);
 		} else {
+			lwp_unlock(l);
 			if (sig != 0)
 				psignal(p, sig);
 		}
-		return (0);
+		mutex_exit(&p->p_smutex);
+		rw_exit(&proclist_lock);
+		return (error);
 
 	case PROCFS_CTL_WAIT:
+		mutex_exit(&p->p_mutex);
+		rw_exit(&proclist_lock);
+
 		/*
 		 * Wait for the target process to stop.
 		 */
 		while (l->l_stat != LSSTOP && P_ZOMBIE(p)) {
 			error = tsleep(l, PWAIT|PCATCH, "procfsx", 0);
 			if (error)
-				return (error);
+				break;
 		}
-		return (0);
+
+		return (error);
+
+	default:
+		panic("procfs_ctl");
+		/* NOTREACHED */
 	}
 
-	panic("procfs_control");
+	mutex_exit(&p->p_mutex);
+	rw_exit(&proclist_lock);
+	return (error);
 }
 
 int
@@ -361,7 +404,7 @@ procfs_doctl(curl, l, pfs, uio)
 	} else {
 		nm = vfs_findname(signames, msg, xlen);
 		if (nm) {
-			if (ISSET(p->p_flag, P_TRACED) &&
+			if (ISSET(p->p_slflag, PSL_TRACED) &&
 			    p->p_pptr == p)
 				error = procfs_control(curl, l, PROCFS_CTL_RUN,
 				    nm->nm_val);

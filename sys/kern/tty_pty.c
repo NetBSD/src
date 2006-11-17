@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.93.4.1 2006/10/21 15:20:47 ad Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.93.4.2 2006/11/17 16:34:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93.4.1 2006/10/21 15:20:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93.4.2 2006/11/17 16:34:38 ad Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -391,10 +391,10 @@ ptsread(dev, uio, flag)
 
 again:
 	if (pti->pt_flags & PF_REMOTE) {
-		while (isbackground(p, tp)) {
+		while (isbackground(p, tp)) {	/* XXXAD */
 			if (sigismasked(curlwp, SIGTTIN) ||
 			    p->p_pgrp->pg_jobc == 0 ||
-			    p->p_flag & P_PPWAIT)
+			    p->p_flag & PS_PPWAIT)
 				return (EIO);
 			pgsignal(p->p_pgrp, SIGTTIN, 1);
 			s = spltty();

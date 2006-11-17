@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.4 2006/10/24 21:02:06 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.5 2006/11/17 16:34:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.4 2006/10/24 21:02:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.5 2006/11/17 16:34:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -70,7 +70,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.4 2006/10/24 21:02:06 ad Exp $
     LOCKDEBUG_UNLOCKED(MUTEX_GETID(mtx),			\
         (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_ABORT(mtx, msg)					\
-    LOCKDEBUG_ABORT(MUTEX_GETID(mtx), mtx, &mutex_lockops, __FUNCTION__, msg)
+    LOCKDEBUG_ABORT(MUTEX_GETID(mtx), mtx, (MUTEX_SPIN_P(mtx) ?	\
+        &mutex_spin_lockops : &mutex_adaptive_lockops),	\
+        __FUNCTION__, msg)
 
 #if defined(LOCKDEBUG)
 
@@ -100,10 +102,17 @@ do {								\
 
 #endif	/* DIAGNOSTIC */
 
-int	mutex_dump(void *, char *, size_t);
+int	mutex_dump(volatile void *, char *, size_t);
 
-lockops_t mutex_lockops = {
+lockops_t mutex_spin_lockops = {
 	"Mutex",
+	0,
+	mutex_dump
+};
+
+lockops_t mutex_adaptive_lockops = {
+	"Mutex",
+	1,
 	mutex_dump
 };
 
@@ -113,14 +122,14 @@ lockops_t mutex_lockops = {
  *	Dump the contents of a mutex structure.
  */
 int
-mutex_dump(void *cookie, char *buf, size_t l)
+mutex_dump(volatile void *cookie, char *buf, size_t l)
 {
-	kmutex_t *mtx = cookie;
+	volatile kmutex_t *mtx = cookie;
 
 	return snprintf(buf, l, "owner field  : %#018lx wait/spin: %16d/%d\n"
-	    "minspl       : %#018x oldspl   : %#018x\n",
+	    "minspl       : %#018x\n",
 	    (long)MUTEX_OWNER(mtx), MUTEX_HAS_WAITERS(mtx), MUTEX_SPIN_P(mtx),
-	    (int)mtx->mtx_minspl, (int)mtx->mtx_oldspl);
+	    (int)MUTEX_SPIN_MINSPL(mtx));
 }
 
 /*
@@ -143,12 +152,11 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 	case MUTEX_DEFAULT:
 		KASSERT(ipl == IPL_NONE);
 		MUTEX_INITIALIZE_ADAPTIVE(mtx);
-		id = LOCKDEBUG_ALLOC(mtx, &mutex_lockops, 1);
+		id = LOCKDEBUG_ALLOC(mtx, &mutex_adaptive_lockops);
 		break;
 	case MUTEX_SPIN:
-		KASSERT(ipl != IPL_NONE);
 		MUTEX_INITIALIZE_SPIN(mtx, ipl);
-		id = LOCKDEBUG_ALLOC(mtx, &mutex_lockops, 0);
+		id = LOCKDEBUG_ALLOC(mtx, &mutex_spin_lockops);
 		break;
 	default:
 		panic("mutex_init: impossible type");
@@ -163,12 +171,12 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
  *
  *	Tear down a mutex.
  */
-void
-mutex_destroy(kmutex_t *mtx)
+void mutex_destroy(kmutex_t *mtx)
 {
 
 	if (MUTEX_ADAPTIVE_P(mtx))
-		MUTEX_ASSERT(mtx, MUTEX_OWNER(mtx) == 0 && !MUTEX_HAS_WAITERS(mtx));
+		MUTEX_ASSERT(mtx,
+		    MUTEX_OWNER(mtx) == 0 && !MUTEX_HAS_WAITERS(mtx));
 	else
 		MUTEX_ASSERT(mtx, !MUTEX_SPIN_HELD(mtx));
 
@@ -184,7 +192,11 @@ mutex_destroy(kmutex_t *mtx)
  *	the caller must have already raised the SPL.
  */
 void
+#if defined(__NEED_MUTEX_CALLSITE)
+mutex_vector_enter(kmutex_t *mtx, int s, uintptr_t callsite)
+#else
 mutex_vector_enter(kmutex_t *mtx, int s)
+#endif
 {
 	uintptr_t owner, curthread;
 	turnstile_t *ts;
@@ -199,8 +211,7 @@ mutex_vector_enter(kmutex_t *mtx, int s)
 	 * Handle spin mutexes.
 	 */
 	if (MUTEX_SPIN_P(mtx)) {
-		minspl = mtx->mtx_minspl;
-
+		minspl = MUTEX_SPIN_MINSPL(mtx);
 		LOCKSTAT_START_TIMER(spintime);
 
 		for (count = 0; !MUTEX_SPIN_ACQUIRE(mtx);) {
@@ -211,29 +222,36 @@ mutex_vector_enter(kmutex_t *mtx, int s)
 #else
 			SPINLOCK_BACKOFF(count); 
 #endif
-			s = splraiseipl(minspl);
+			(void)splraiseipl(minspl);
 			if (panicstr != NULL)
 				break;
 		}
 
 		if (count != 0) {
 			LOCKSTAT_STOP_TIMER(spintime);
+#if defined(__NEED_MUTEX_CALLSITE)
+			LOCKSTAT_EVENT_RA(mtx, LB_SPIN_MUTEX | LB_SPIN, 1,
+			    spintime, callsite);
+#else
 			LOCKSTAT_EVENT(mtx, LB_SPIN_MUTEX | LB_SPIN, 1,
 			    spintime);
+#endif
 		}
 
-		mtx->mtx_oldspl = s;
+		MUTEX_SPIN_SPLSAVE(mtx, s);
 		return;
 	}
 
 	curthread = (uintptr_t)curlwp;
 
 	MUTEX_DASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
-	MUTEX_DASSERT(mtx, curthread != 0);
+	MUTEX_ASSERT(mtx, curthread != 0);
 
 #ifdef LOCKDEBUG
-	if (panicstr == NULL)
+	if (panicstr == NULL) {
 		simple_lock_only_held(NULL, "mutex_enter");
+		LOCKDEBUG_BARRIER(&kernel_lock, 1);
+	}
 #endif
 
 	/*
@@ -310,10 +328,23 @@ mutex_vector_enter(kmutex_t *mtx, int s)
 
 		LOCKSTAT_STOP_TIMER(slptime);
 		LOCKSTAT_COUNT(slpcnt, 1);
+
+		/*
+		 * XXXSMP: in the loop because ktrace is not MP safe and we
+		 * may re-enter turnstile_block().
+		 */
+		turnstile_unblock();
 	}
 
+#if defined(__NEED_MUTEX_CALLSITE)
+	LOCKSTAT_EVENT_RA(mtx, LB_ADAPTIVE_MUTEX | LB_SLEEP, slpcnt, slptime,
+	    callsite);
+	LOCKSTAT_EVENT_RA(mtx, LB_ADAPTIVE_MUTEX | LB_SPIN, spincnt, spintime,
+	    callsite);
+#else
 	LOCKSTAT_EVENT(mtx, LB_ADAPTIVE_MUTEX | LB_SLEEP, slpcnt, slptime);
 	LOCKSTAT_EVENT(mtx, LB_ADAPTIVE_MUTEX | LB_SPIN, spincnt, spintime);
+#endif
 
 	MUTEX_DASSERT(mtx, MUTEX_OWNER(mtx) == curthread);
 }
@@ -408,9 +439,9 @@ mutex_tryenter(kmutex_t *mtx)
 	 * Handle spin mutexes.
 	 */
 	if (MUTEX_SPIN_P(mtx)) {
-		s = splraiseipl(mtx->mtx_minspl);
+		s = splraiseipl(MUTEX_SPIN_MINSPL(mtx));
 		if (MUTEX_SPIN_ACQUIRE(mtx)) {
-			mtx->mtx_oldspl = s;
+			MUTEX_SPIN_SPLSAVE(mtx, s);
 			MUTEX_LOCKED(mtx);
 			return 1;
 		}
@@ -429,7 +460,7 @@ mutex_tryenter(kmutex_t *mtx)
 }
 
 /*
- * mutex_enter, mutex_exit, mutex_link, mutex_exit_linked
+ * mutex_enter, mutex_exit
  *
  *	Stub for platforms that don't implement them
  */
@@ -443,8 +474,9 @@ mutex_enter(kmutex_t *mtx)
 	int s = 0;
 
 	if (MUTEX_SPIN_P(mtx))
-		s = splraiseipl(mtx->mtx_minspl);
-	mutex_vector_enter(mtx, s);
+		s = splraiseipl(MUTEX_SPIN_MINSPL(mtx));
+
+	mutex_vector_enter(mtx, s, (uintptr_t)__builtin_return_address(0));
 	MUTEX_LOCKED(mtx);
 }
 #endif
@@ -453,36 +485,15 @@ mutex_enter(kmutex_t *mtx)
 void
 mutex_exit(kmutex_t *mtx)
 {
-	int s;
-
 	if (MUTEX_SPIN_P(mtx)) {
 		if (!MUTEX_SPIN_HELD(mtx))
 			mutex_vector_exit(mtx);
 		MUTEX_UNLOCKED(mtx);
-		s = mtx->mtx_oldspl;
 		MUTEX_SPIN_RELEASE(mtx);
-		splx(s);
+		MUTEX_SPIN_SPLRESTORE(mtx);
 	} else {
 		MUTEX_UNLOCKED(mtx);
 		mutex_vector_exit(mtx);
-	}
-}
-#endif
-
-#ifndef __HAVE_MUTEX_EXIT_LINKED
-void
-mutex_exit_linked(kmutex_t *from, kmutex_t *to)
-{
-
-	if (MUTEX_SPIN_P(from)) {
-		if (!MUTEX_SPIN_HELD(from))
-			mutex_vector_exit(from);
-		MUTEX_UNLOCKED(from);
-		to->mtx_oldspl = from->mtx_oldspl;
-		MUTEX_SPIN_RELEASE(from);
-	} else {
-		MUTEX_UNLOCKED(from);
-		mutex_vector_exit(from);
 	}
 }
 #endif
@@ -493,11 +504,15 @@ mutex_exit_linked(kmutex_t *from, kmutex_t *to)
 void
 mutex_enter(kmutex_t *mtx)
 {
+	int s;
+
 	if (MUTEX_SPIN_P(mtx)) {
-		mtx->mtx_oldspl = splraiseipl(mtx->mtx_minspl);
+		s = splraiseipl(MUTEX_SPIN_MINSPL(mtx));
+		MUTEX_SPIN_SPLSAVE(mtx, s);
 		return;
 	}
-	mutex_vector_enter(mtx, 0);
+
+	mutex_vector_enter(mtx, 0, (uintptr_t)__builtin_return_address(0));
 }
 #endif
 
@@ -506,22 +521,10 @@ void
 mutex_exit(kmutex_t *mtx)
 {
 	if (MUTEX_SPIN_P(mtx)) {
-		splx(mtx->mtx_oldspl);
+		MUTEX_SPIN_SPLRESTORE(mtx);
 		return;
 	}
 	mutex_vector_exit(mtx);
-}
-#endif
-
-#ifndef __HAVE_MUTEX_EXIT_LINKED
-void
-mutex_exit_linked(kmutex_t *from, kmutex_t *to)
-{
-	if (MUTEX_SPIN_P(from)) {
-		to->mtx_oldspl = from->mtx_oldspl;
-		return;
-	}
-	mutex_vector_exit(from);
 }
 #endif
 

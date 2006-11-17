@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.20 2006/06/25 08:12:54 yamt Exp $	*/
+/*	$NetBSD: savar.h,v 1.20.4.1 2006/11/17 16:34:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@ struct sastack {
 struct sadata_vp {
 	int	savp_id;		/* "virtual processor" identifier */
 	SLIST_ENTRY(sadata_vp)	savp_next; /* link to next sadata_vp */
-	struct simplelock	savp_lock; /* lock on these fields */
 	struct lwp	*savp_lwp;	/* lwp on "virtual processor" */
 	struct lwp	*savp_blocker;	/* recently blocked lwp */
 	struct lwp	*savp_wokenq_head; /* list of woken lwps */
@@ -114,7 +113,6 @@ struct sadata_vp {
 };
 
 struct sadata {
-	struct simplelock sa_lock;	/* lock on these fields */
 	int	sa_flag;		/* SA_* flags */
 	sa_upcall_t	sa_upcall;	/* upcall entry point */
 	int	sa_concurrency;		/* current concurrency */
@@ -141,7 +139,7 @@ int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *,
 		  void (*)(void *));
 
 void	sa_putcachelwp(struct proc *, struct lwp *);
-struct lwp *sa_getcachelwp(struct sadata_vp *);
+struct lwp *sa_getcachelwp(struct proc *, struct sadata_vp *);
 
 
 void	sa_unblock_userret(struct lwp *);

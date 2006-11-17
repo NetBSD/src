@@ -1,11 +1,11 @@
-/* 	$NetBSD: lwp.h,v 1.41.4.3 2006/10/24 21:10:21 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.41.4.4 2006/11/17 16:34:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Nathan J. Williams and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,19 +56,22 @@ typedef volatile const void *wchan_t;
  * a:	alllwp_mutex
  * l:	*l->l_mutex
  * p:	p->p_smutex
+ * s:	sched_mutex, which may be referenced by l->l_mutex
+ * S:	sched_mutex, may be accessed unlocked by the LWP itself
  * (:	unlocked, stable
  * !:	unlocked, may only be safely accessed by the LWP itself
  * ?:	undecided
  */
 struct	lwp {
-	struct lwp	*l_forw;	/* l: run queue */
-	struct lwp	*l_back;	/* l: run queue */
+	struct lwp	*l_forw;	/* s: run queue */
+	struct lwp	*l_back;	/* s: run queue */
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
-	kmutex_t	*l_omutex;	/* l: mutex owned by lwp_lock() */
-	struct cpu_info * volatile l_cpu; /* l: CPU we're on if LSONPROC */
+	u_int		l_refcnt;	/* l: reference count on this LWP */
+	struct cpu_info * volatile l_cpu; /* s: CPU we're on if LSONPROC */
 	int		l_flag;		/* l: misc flag values */
 	int		l_stat;		/* l: overall LWP status */
 	struct turnstile *l_ts;		/* l: current turnstile */
+	struct syncobj	*l_syncobj;	/* l: sync object operations set */
 
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
 
@@ -89,13 +92,15 @@ struct	lwp {
 	u_short		l_exlocks;	/* !: lockdebug: excl. locks held */
 
 	int		l_holdcnt;	/* l: if non-zero, don't swap */
-	TAILQ_ENTRY(lwp) l_sleepq;	/* l: sleep queue */
+	TAILQ_ENTRY(lwp) l_sleepchain;	/* l: sleep queue */
 	wchan_t		l_wchan;	/* l: sleep address */
 	struct callout	l_tsleep_ch;	/* l: callout for tsleep */
 	const char	*l_wmesg;	/* l: reason for sleep */
+	struct sleepq	*l_sleepq;	/* l: current sleep queue */
 	long		l_nvcsw;	/* l: voluntary context switches */
 	long		l_nivcsw;	/* l: involuntary context switches */
 	struct timeval 	l_rtime;	/* l: real time */
+	int		l_biglocks;	/* l: biglock count before sleep */
 
 	struct sadata_vp *l_savp;	/* ?: SA "virtual processor" */
 
@@ -113,10 +118,9 @@ struct	lwp {
 	sigset_t	l_sigoldmask;	/* p: mask from before sigpause */
 	sigstore_t	l_sigstore;	/* p: signal state for 1:1 threads */
 
-#define l_endzero l_sigmask
+#define l_endzero l_startcopy
 
-#define l_startcopy l_sigmask
-
+#define l_startcopy l_priority
 
 	u_char		l_priority;	/* l: process priority */
 	u_char		l_usrpri;	/* l: user-priority */
@@ -156,6 +160,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_SINTR		0x00000080 /* [*] Sleep is interruptible. */
 #define	L_SYSTEM	0x00000200 /* [*] Kernel thread */
 #define	L_SA		0x00000400 /* [*] Scheduler activations LWP */
+#define	L_WSUSPEND	0x00020000 /* Suspend before return to user */
 #define	L_OWEUPC	0x00040000 /* Owe user profiling tick */
 #define	L_WCORE		0x00080000 /* Stop for core dump on return to user */
 #define	L_WEXIT		0x00100000 /* Exit before return to user */
@@ -165,6 +170,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_PENDSIG	0x01000000 /* Pending signal for us */
 #define	L_CANCELLED	0x02000000 /* tsleep should not sleep */
 #define	L_SA_PAGEFAULT	0x04000000 /* SA LWP in pagefault handler */
+#define	L_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	L_SA_YIELD	0x10000000 /* LWP on VP is yielding */
 #define	L_SA_IDLE	0x20000000 /* VP is idle */
 #define	L_COWINPROGRESS	0x40000000 /* UFS: doing copy on write */
@@ -174,7 +180,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
  * Mask indicating that there is "exceptional" work to be done on return to
  * user.
  */
-#define	L_USERRET	(L_WCORE|L_WEXIT|L_PENDSIG)
+#define	L_USERRET	(L_WEXIT|L_PENDSIG|L_WREBOOT|L_WSUSPEND)
 
 /*
  * Status values.
@@ -184,12 +190,12 @@ extern struct lwp lwp0;			/* LWP for proc0 */
  * indicates that the process is actually executing on a CPU, i.e.
  * it is no longer on a run queue.
  */
-#define	LSIDL	1		/* Process being created by fork. */
-#define	LSRUN	2		/* Currently runnable. */
-#define	LSSLEEP	3		/* Sleeping on an address. */
-#define	LSSTOP	4		/* Process debugging or suspension. */
-#define	LSZOMB	5		/* Awaiting collection by parent. */
-#define	LSDEAD	6		/* Process is almost a zombie. */
+#define	LSIDL		1	/* Process being created by fork. */
+#define	LSRUN		2	/* Currently runnable. */
+#define	LSSLEEP		3	/* Sleeping on an address. */
+#define	LSSTOP		4	/* Process debugging or suspension. */
+#define	LSZOMB		5	/* Awaiting collection by parent. */
+#define	LSDEAD		6	/* Process is almost a zombie. */
 #define	LSONPROC	7	/* Process is currently on a CPU. */
 #define	LSSUSPENDED	8	/* Not running, not signalable. */
 
@@ -230,10 +236,60 @@ void	cpu_switchto (struct lwp *, struct lwp *);
 
 int	lwp_locked(struct lwp *, kmutex_t *);
 void	lwp_setlock(struct lwp *, kmutex_t *);
-void	lwp_setlock_unlock(struct lwp *, kmutex_t *);
-void	lwp_lock(struct lwp *l);
+void	lwp_unlock_to(struct lwp *, kmutex_t *);
+void	lwp_lock_retry(struct lwp *l, kmutex_t *);
 void	lwp_relock(struct lwp *l, kmutex_t *);
-void	lwp_unlock(struct lwp *l);
+void	lwp_addref(struct lwp *l);
+void	lwp_delref(struct lwp *l);
+
+/*
+ * Lock an LWP. XXXLKM
+ */
+static inline void
+lwp_lock(struct lwp *l)
+{
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	kmutex_t *old;
+
+	mutex_enter(old = l->l_mutex);
+
+	/*
+	 * mutex_enter() will have posted a read barrier.  Re-test
+	 * l->l_mutex.  If it has changed, we need to try again.
+	 */
+	if (__predict_false(l->l_mutex != old))
+		lwp_lock_retry(l, old);
+#else
+	mutex_enter(l->l_mutex);
+#endif
+}
+
+/*
+ * Unlock an LWP. XXXLKM
+ */
+static inline void
+lwp_unlock(struct lwp *l)
+{
+	LOCK_ASSERT(mutex_owned(l->l_mutex));
+
+	mutex_exit(l->l_mutex);
+}
+
+static inline void
+lwp_changepri(struct lwp *l, int pri)
+{
+	LOCK_ASSERT(mutex_owned(l->l_mutex));
+
+	(*l->l_syncobj->sobj_changepri)(l, pri);
+}
+
+static inline void
+lwp_unsleep(struct lwp *l)
+{
+	LOCK_ASSERT(mutex_owned(l->l_mutex));
+
+	(*l->l_syncobj->sobj_unsleep)(l);
+}
 
 int newlwp(struct lwp *, struct proc *, vaddr_t, int /* XXX boolean_t */, int,
     void *, size_t, void (*)(void *), void *, struct lwp **);
@@ -245,8 +301,8 @@ void	lwp_continue(struct lwp *);
 void	cpu_setfunc(struct lwp *, void (*)(void *), void *);
 void	startlwp(void *);
 void	upcallret(struct lwp *);
-void	lwp_exit (struct lwp *);
-void	lwp_exit2 (struct lwp *);
+int	lwp_exit(struct lwp *, int);
+void	lwp_exit2(struct lwp *);
 struct lwp *proc_representative_lwp(struct proc *, int *, int);
 int	lwp_halt(struct lwp *, struct lwp *, int);
 int	lwp_create1(struct lwp *, const void *, size_t, u_long, lwpid_t *);

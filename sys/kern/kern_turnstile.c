@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.36.3 2006/10/24 21:10:21 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.36.4 2006/11/17 16:34:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -67,11 +67,12 @@
  * not currently implement that.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.4 2006/11/17 16:34:37 ad Exp $");
+
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.3 2006/10/24 21:10:21 ad Exp $");
+#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -82,16 +83,27 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.3 2006/10/24 21:10:21 ad E
 
 #define	TS_HASH_SIZE	64
 #define	TS_HASH_MASK	(TS_HASH_SIZE - 1)
-#define	TS_HASH(obj)	(((uintptr_t)(obj) >> 8) & TS_HASH_MASK)
+#define	TS_HASH(obj)	(((uintptr_t)(obj) >> 3) & TS_HASH_MASK)
 
 tschain_t	turnstile_tab[TS_HASH_SIZE];
 
 struct pool turnstile_pool;
 struct pool_cache turnstile_cache;
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+kmutex_t	turnstile_mutexes[TS_HASH_SIZE];
+#endif
 
 int	turnstile_ctor(void *, void *, int);
+void	turnstile_unsleep(struct lwp *);
+void	turnstile_changepri(struct lwp *, int);
 
 extern turnstile_t turnstile0;
+
+syncobj_t turnstile_syncobj = {
+	SOBJ_SLEEPQ_FIFO,
+	turnstile_unsleep,
+	turnstile_changepri
+};
 
 /*
  * turnstile_init:
@@ -106,8 +118,13 @@ turnstile_init(void)
 
 	for (i = 0; i < TS_HASH_SIZE; i++) {
 		tc = &turnstile_tab[i];
-		mutex_init(&tc->tc_mutex, MUTEX_SPIN, IPL_SCHED);
 		LIST_INIT(&tc->tc_chain);
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+		mutex_init(&turnstile_mutexes[i], MUTEX_SPIN, IPL_SCHED);
+		tc->tc_mutex = &turnstile_mutexes[i];
+#else
+		tc->tc_mutex = &sched_mutex;
+#endif
 	}
 
 	pool_init(&turnstile_pool, sizeof(turnstile_t), 0, 0, 0,
@@ -181,7 +198,7 @@ turnstile_lookup(wchan_t obj)
 
 	tc = &turnstile_tab[TS_HASH(obj)];
 
-	mutex_enter(&tc->tc_mutex);
+	mutex_enter(tc->tc_mutex);
 
 	LIST_FOREACH(ts, &tc->tc_chain, ts_chain)
 		if (ts->ts_obj == obj)
@@ -205,7 +222,7 @@ turnstile_exit(wchan_t obj)
 	tschain_t *tc;
 
 	tc = &turnstile_tab[TS_HASH(obj)];
-	mutex_exit(&tc->tc_mutex);
+	mutex_exit(tc->tc_mutex);
 }
 
 /*
@@ -227,7 +244,7 @@ turnstile_block(turnstile_t *ts, int q, int pri, wchan_t obj)
 	tc = &turnstile_tab[TS_HASH(obj)];
 	l = curlwp;
 
-	LOCK_ASSERT(mutex_owned(&tc->tc_mutex));
+	LOCK_ASSERT(mutex_owned(tc->tc_mutex));
 	KASSERT(l != NULL && l->l_ts != NULL);
 
 	if (ts == NULL) {
@@ -240,8 +257,8 @@ turnstile_block(turnstile_t *ts, int q, int pri, wchan_t obj)
 		KASSERT(TAILQ_EMPTY(&ts->ts_sleepq[TS_READER_Q].sq_queue) &&
 			TAILQ_EMPTY(&ts->ts_sleepq[TS_WRITER_Q].sq_queue));
 		ts->ts_obj = obj;
-		ts->ts_sleepq[TS_READER_Q].sq_mutex = &tc->tc_mutex;
-		ts->ts_sleepq[TS_WRITER_Q].sq_mutex = &tc->tc_mutex;
+		ts->ts_sleepq[TS_READER_Q].sq_mutex = tc->tc_mutex;
+		ts->ts_sleepq[TS_WRITER_Q].sq_mutex = tc->tc_mutex;
 		LIST_INSERT_HEAD(&tc->tc_chain, ts, ts_chain);
 	} else {
 		/*
@@ -260,7 +277,7 @@ turnstile_block(turnstile_t *ts, int q, int pri, wchan_t obj)
 	}
 
 	sq = &ts->ts_sleepq[q];
-	sleepq_enter(sq, pri, obj, "tstile", 0, 0);
+	sleepq_enter(sq, pri, obj, "tstile", 0, 0, &turnstile_syncobj);
 	(void)sleepq_block(sq, 0);
 }
 
@@ -285,12 +302,11 @@ turnstile_wakeup(turnstile_t *ts, int rw, int count, struct lwp *nl)
 	tc = &turnstile_tab[TS_HASH(ts->ts_obj)];
 	sq = &ts->ts_sleepq[rw];
 
-	LOCK_ASSERT(mutex_owned(&tc->tc_mutex) && sq->sq_mutex == &tc->tc_mutex);
+	LOCK_ASSERT(mutex_owned(tc->tc_mutex) && sq->sq_mutex == tc->tc_mutex);
 
-	sched_lock();
 	if (nl != NULL) {
 #if defined(DEBUG) || defined(LOCKDEBUG)
-		TAILQ_FOREACH(l, &sq->sq_queue, l_sleepq) {
+		TAILQ_FOREACH(l, &sq->sq_queue, l_sleepchain) {
 			if (l == nl)
 				break;
 		}
@@ -305,8 +321,7 @@ turnstile_wakeup(turnstile_t *ts, int rw, int count, struct lwp *nl)
 			swapin |= turnstile_remove(ts, l, sq);
 		}
 	}
-	sched_unlock();
-	mutex_exit(&tc->tc_mutex);
+	mutex_exit(tc->tc_mutex);
 
 	/*
 	 * If there are newly awakend threads that need to be swapped in,
@@ -314,4 +329,34 @@ turnstile_wakeup(turnstile_t *ts, int rw, int count, struct lwp *nl)
 	 */
 	if (swapin)
 		wakeup(&proc0);
+}
+
+/*
+ * turnstile_unsleep:
+ *
+ *	Remove an LWP from the turnstile.  This is called when the LWP has
+ *	not been awoken normally but instead interrupted: for example, if it
+ *	has received a signal.  It's not a valid action for turnstiles,
+ *	since LWPs blocking on a turnstile are not interupptable.
+ */
+void
+turnstile_unsleep(struct lwp *l)
+{
+
+	lwp_unlock(l);
+	panic("turnstile_unsleep");
+}
+
+/*
+ * turnstile_changepri:
+ *
+ *	Adjust the priority of an LWP residing on a turnstile.  Since we do
+ *	not yet do priority inheritance, we currently ignore this action.
+ */
+void
+turnstile_changepri(struct lwp *l, int pri)
+{
+
+	(void)l;
+	(void)pri;
 }

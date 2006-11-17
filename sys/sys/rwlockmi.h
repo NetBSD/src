@@ -1,11 +1,11 @@
-/*	$NetBSD: lockdebug.h,v 1.1.2.3 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: rwlockmi.h,v 1.1.2.1 2006/11/17 16:34:40 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
+ * by Jason R. Thorpe and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,49 +36,59 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_lockdebug.h"
+/*
+ * Slow, bare bones lock constructs for architectures that do not provide
+ * them.
+ */
 
-#ifndef __SYS_LOCKDEBUG_H__
-#define	__SYS_LOCKDEBUG_H__
+#ifndef _SYS_RWLOCKMI_H_
+#define	_SYS_RWLOCKMI_H_
 
-#ifndef _KERNEL
-#error "Sorry, nothing of interest to user level programs here."
-#endif
+struct krwlock {
+	volatile uintptr_t	rw_owner;
+	uint32_t		rw_id;
+};
 
-typedef	struct lockops {
-	const char	*lo_name;
-	int		lo_sleeplock;
-	int		(*lo_dump)(volatile void *, char *, size_t);
-} lockops_t;
+#ifdef __RWLOCK_PRIVATE
 
-#define	LOCKDEBUG_ABORT(id, l, o, f, m)	lockdebug_abort(id, l, o, f, m)
+#define	RW_ACQUIRE(rw, old, new)					\
+	_rwlock_cas((uintptr_t *)(rw), (old), (new))
+#define	RW_RELEASE(rw, old, new)					\
+	_rwlock_cas((uintptr_t *)(rw), (old), (new))
+#define	RW_SET_WAITERS(rw, need_wait, set_wait)				\
+	_rwlock_set_waiters((uintptr_t *)(rw), (need_wait), (set_wait))
+#define	RW_RECEIVE(rw)							\
+	__insn_barrier()
 
-void	lockdebug_abort(int, volatile void *, lockops_t *,
-			const char *, const char *);
+#define	RW_SETID(rw, id)		((rw)->rw_id = id)
+#define	RW_GETID(rw)			((rw)->rw_id)
 
-#ifdef LOCKDEBUG
+static inline u_int
+_rwlock_cas(uintptr_t *p, uintptr_t old, uintptr_t new)
+{
+	int s = splsched();
+	if (*p != old) {
+		splx(s);
+		return 0;
+	}
+	*p = new;
+	splx(s);
+	return 1;
+}
 
-void	lockdebug_init(void);
-u_int	lockdebug_alloc(volatile void *, lockops_t *);
-void	lockdebug_free(volatile void *, u_int);
-void	lockdebug_locked(u_int, uintptr_t, int);
-void	lockdebug_unlocked(u_int, uintptr_t, int);
-void	lockdebug_barrier(volatile void *, int);
+static inline u_int
+_rwlock_set_waiters(uintptr_t *p, uintptr_t need, uintptr_t set)
+{
+	int s = splsched();
+	if ((*p & need) == 0) {
+		splx(s);
+		return 0;
+	}
+	*p |= set;
+	splx(s);
+	return 1;
+}
 
-#define	LOCKDEBUG_ALLOC(lock, ops)		lockdebug_alloc(lock, ops)
-#define	LOCKDEBUG_FREE(lock, id)		lockdebug_free(lock, id)
-#define	LOCKDEBUG_LOCKED(id, where, s)		lockdebug_locked(id, where, s)
-#define	LOCKDEBUG_UNLOCKED(id, where, s)	lockdebug_unlocked(id, where, s)
-#define	LOCKDEBUG_BARRIER(lk, slp)		lockdebug_barrier(lk, slp)
+#endif	/* __RWLOCK_PRIVATE */
 
-#else	/* LOCKDEBUG */
-
-#define	LOCKDEBUG_ALLOC(lock, ops)		0
-#define	LOCKDEBUG_FREE(lock, id)		/* nothing */
-#define	LOCKDEBUG_LOCKED(id, where, s)		/* nothing */
-#define	LOCKDEBUG_UNLOCKED(id, where, s)	/* nothing */
-#define	LOCKDEBUG_BARRIER(lk, slp)		/* nothing */
-
-#endif	/* LOCKDEBUG */
-
-#endif	/* __SYS_LOCKDEBUG_H__ */
+#endif /* _SYS_RWLOCKMI_H_ */

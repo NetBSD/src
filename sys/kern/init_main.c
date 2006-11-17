@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.276.4.2 2006/10/21 14:31:56 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.276.4.3 2006/11/17 16:34:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.2 2006/10/21 14:31:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.3 2006/11/17 16:34:35 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -288,7 +288,7 @@ main(void)
 	/* Initialize the run queues, turnstiles and sleep queues. */
 	rqinit();
 	turnstile_init();
-	sleeptab_init();
+	sleeptab_init(&sleeptab);
 
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
@@ -318,7 +318,7 @@ main(void)
 	ubc_init();		/* must be after autoconfig */
 
 	/* Lock the kernel on behalf of proc0. */
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
@@ -709,7 +709,7 @@ start_init(void *arg)
 		 */
 		error = sys_execve(l, &args, retval);
 		if (error == 0 || error == EJUSTRETURN) {
-			KERNEL_PROC_UNLOCK(l);
+			(void)KERNEL_UNLOCK(1, l);
 			return;
 		}
 		printf("exec %s: error %d\n", path, error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.29 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.29.4.1 2006/11/17 16:34:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.29 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.29.4.1 2006/11/17 16:34:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.29 2006/07/23 22:06:11 ad Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 
-#define cttyvp(p) ((p)->p_flag & P_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
+/* XXXSMP */
+#define cttyvp(p) ((p)->p_lflag & PL_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
 
 /*ARGSUSED*/
 static int
@@ -126,7 +127,7 @@ cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		return (EINVAL);
 	if (cmd == TIOCNOTTY) {
 		if (!SESS_LEADER(l->l_proc)) {
-			l->l_proc->p_flag &= ~P_CONTROLT;
+			l->l_proc->p_flag &= ~PL_CONTROLT;
 			return (0);
 		} else
 			return (EINVAL);

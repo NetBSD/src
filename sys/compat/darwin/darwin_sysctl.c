@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.43 2006/08/29 23:57:49 christos Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.43.2.1 2006/11/17 16:34:34 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.43 2006/08/29 23:57:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.43.2.1 2006/11/17 16:34:34 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -653,7 +653,7 @@ darwin_sysctl_dokproc(SYSCTLFN_ARGS)
 		elem_count = name[3];
 	}
 
-	proclist_lock_read();
+	rw_enter(&proclist_lock, RW_READER);
 
 	pd = proclists;
 again:
@@ -688,11 +688,11 @@ again:
 
 		case DARWIN_KERN_PROC_TTY:
 			if (arg == (int) KERN_PROC_TTY_REVOKE) {
-				if ((p->p_flag & P_CONTROLT) == 0 ||
+				if ((p->p_lflag & PL_CONTROLT) == 0 ||
 				    p->p_session->s_ttyp == NULL ||
 				    p->p_session->s_ttyvp != NULL)
 					continue;
-			} else if ((p->p_flag & P_CONTROLT) == 0 ||
+			} else if ((p->p_lflag & PL_CONTROLT) == 0 ||
 			    p->p_session->s_ttyp == NULL) {
 					continue;
 			} else if (p->p_session->s_ttyp->t_dev !=
@@ -731,7 +731,7 @@ again:
 	pd++;
 	if (pd->pd_list != NULL)
 		goto again;
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 
 	if (where != NULL) {
 		*oldlenp = (caddr_t)dp - where;
@@ -837,7 +837,7 @@ darwin_fill_kproc(p, dkp)
 	de->e_ppid = p->p_pptr->p_pid;
 	de->e_pgid = p->p_pgid;
 	de->e_jobc = p->p_pgrp->pg_jobc;
-	if ((p->p_flag & P_CONTROLT) && (p->p_session->s_ttyp != NULL)) {
+	if ((p->p_lflag & PL_CONTROLT) && (p->p_session->s_ttyp != NULL)) {
 		de->e_tdev =
 		    native_to_darwin_dev(p->p_session->s_ttyp->t_dev);
 		de->e_tpgid = p->p_session->s_ttyp->t_pgrp ?
@@ -875,7 +875,7 @@ native_to_darwin_pflag(dfp, bf)
 
 	if (bf & P_ADVLOCK)
 		df |= DARWIN_P_ADVLOCK;
-	if (bf & P_CONTROLT)
+	if (bf & PL_CONTROLT)			/* XXXAD */
 		df |= DARWIN_P_CONTROLT;
 	if (bf & P_NOCLDSTOP)
 		df |= DARWIN_P_NOCLDSTOP;

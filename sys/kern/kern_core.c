@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.1.2.1 2006/10/21 14:26:41 ad Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.1.2.2 2006/11/17 16:34:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.1.2.1 2006/10/21 14:26:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.1.2.2 2006/11/17 16:34:35 ad Exp $");
 
 #include "opt_coredump.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.1.2.1 2006/10/21 14:26:41 ad Exp $")
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/filedesc.h>
+#include <sys/kauth.h>
 
 #if !defined(COREDUMP)
 
@@ -91,14 +92,19 @@ coredump(struct lwp *l, const char *pattern)
 
 	p = l->l_proc;
 	vm = p->p_vmspace;
-	cred = l->l_cred;
+
+	rw_enter(&proclist_lock, RW_READER);	/* p_session */
+	mutex_enter(&p->p_mutex);
 
 	/*
 	 * Make sure the process has not set-id, to prevent data leaks,
 	 * unless it was specifically requested to allow set-id coredumps.
 	 */
-	if ((p->p_flag & P_SUGID) && !security_setidcore_dump)
+	if ((p->p_flag & P_SUGID) && !security_setidcore_dump) {
+		mutex_exit(&p->p_mutex);
+		rw_exit(&proclist_lock);
 		return EPERM;
+	}
 
 	/*
 	 * Refuse to core if the data + stack + user size is larger than
@@ -106,8 +112,18 @@ coredump(struct lwp *l, const char *pattern)
 	 * data.
 	 */
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
-	    p->p_rlimit[RLIMIT_CORE].rlim_cur)
+	    p->p_rlimit[RLIMIT_CORE].rlim_cur) {
+		mutex_exit(&p->p_mutex);
+		rw_exit(&proclist_lock);
 		return EFBIG;		/* better error code? */
+	}
+
+	/*
+	 * It may well not be curproc, so grab a reference to its current
+	 * credentials.
+	 */
+	kauth_cred_hold(p->p_cred);
+	cred = p->p_cred;
 
 restart:
 	/*
@@ -119,6 +135,8 @@ restart:
 	if (vp->v_mount == NULL ||
 	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0) {
 		error = EPERM;
+		mutex_exit(&p->p_mutex);
+		rw_exit(&proclist_lock);
 		goto done;
 	}
 
@@ -130,7 +148,10 @@ restart:
 	if (name == NULL) {
 		name = PNBUF_GET();
 	}
-	if ((error = coredump_buildname(p, name, pattern, MAXPATHLEN)) != 0)
+	error = coredump_buildname(p, name, pattern, MAXPATHLEN);
+	mutex_exit(&p->p_mutex);
+	rw_exit(&proclist_lock);
+	if (error)
 		goto done;
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, l);
 	if ((error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE,
@@ -145,6 +166,8 @@ restart:
 		if ((error = vn_start_write(NULL, &mp,
 		    V_WAIT | V_SLEEPONLY | V_PCATCH)) != 0)
 			goto done;
+		rw_enter(&proclist_lock, RW_READER);	/* p_session */
+		mutex_enter(&p->p_mutex);
 		goto restart;
 	}
 
@@ -192,6 +215,8 @@ coredump_buildname(struct proc *p, char *dst, const char *src, size_t len)
 	const char	*s;
 	char		*d, *end;
 	int		i;
+
+	LOCK_ASSERT(rw_read_held(&proclist_lock));
 
 	for (s = src, d = dst, end = d + len; *s != '\0'; s++) {
 		if (*s == '%') {

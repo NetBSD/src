@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.1 2006/09/07 00:20:28 ad Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.1.2.1 2006/11/17 16:34:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #define	IOC_LOCKSTAT_GVERSION	_IOR('L', 0, int)
 
-#define	LS_VERSION	0
+#define	LS_VERSION	1
 
 /*
  * Enable request.  We can limit tracing by the call site and by
@@ -114,10 +114,10 @@ typedef struct lsdisable {
  * provided with the enable request in le_mask.
  */
 #define	LB_ADAPTIVE_MUTEX	0x00000100
-#define	LB_ADAPTIVE_RWLOCK	0x00000200
-#define	LB_SPIN_MUTEX		0x00000300
-#define	LB_SPIN_RWLOCK		0x00000400
-#define	LB_LOCKMGR		0x00000500
+#define	LB_SPIN_MUTEX		0x00000200
+#define	LB_RWLOCK		0x00000300
+#define	LB_LOCKMGR		0x00000400
+#define	LB_KERNEL_LOCK		0x00000500
 #define	LB_NLOCK		0x00000500
 #define	LB_LOCK_MASK		0x0000ff00
 #define	LB_LOCK_SHIFT		8

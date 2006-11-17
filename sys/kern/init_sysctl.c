@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.81.4.3 2006/10/24 21:10:21 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.81.4.4 2006/11/17 16:34:35 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.3 2006/10/24 21:10:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.4 2006/11/17 16:34:35 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2242,11 +2242,11 @@ again:
 
 		case KERN_PROC_TTY:
 			if (arg == (int) KERN_PROC_TTY_REVOKE) {
-				if ((p->p_flag & P_CONTROLT) == 0 ||
+				if ((p->p_lflag & PL_CONTROLT) == 0 ||
 				    p->p_session->s_ttyp == NULL ||
 				    p->p_session->s_ttyvp != NULL)
 					continue;
-			} else if ((p->p_flag & P_CONTROLT) == 0 ||
+			} else if ((p->p_lflag & PL_CONTROLT) == 0 ||
 			    p->p_session->s_ttyp == NULL) {
 				if ((dev_t)arg != KERN_PROC_TTY_NODEV)
 					continue;
@@ -2872,6 +2872,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	struct tty *tp;
 	struct lwp *l, *l2;
 	struct timeval ut, st, rt;
+	sigset_t ss1, ss2;
 
 	memset(ki, 0, sizeof(*ki));
 
@@ -2912,7 +2913,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	    min(ki->p_ngroups, sizeof(ki->p_groups) / sizeof(ki->p_groups[0])));
 
 	ki->p_jobc = p->p_pgrp->pg_jobc;
-	if ((p->p_flag & P_CONTROLT) && (tp = p->p_session->s_ttyp)) {
+	if ((p->p_lflag & PL_CONTROLT) && (tp = p->p_session->s_ttyp)) {
 		ki->p_tdev = tp->t_dev;
 		ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 		ki->p_tsess = PTRTOUINT64(tp->t_session);
@@ -2933,10 +2934,20 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 
 	mutex_enter(&p->p_smutex);
 
-	memcpy(&ki->p_siglist, &p->p_sigpend.sp_set, sizeof(ki_sigset_t));
-	/* memcpy(&ki->p_sigmask, &p->p_sigctx.ps_sigmask, sizeof(ki_sigset_t)); XXXAD */
 	memcpy(&ki->p_sigignore, &p->p_sigctx.ps_sigignore,sizeof(ki_sigset_t));
 	memcpy(&ki->p_sigcatch, &p->p_sigctx.ps_sigcatch, sizeof(ki_sigset_t));
+
+	ss1 = p->p_sigpend.sp_set;
+	if ((p->p_flag & P_SA) == 0) {
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			/* This is hardly correct, but... */
+			sigplusset(&l->l_sigpend->sp_set, &ss1);
+			sigplusset(l->l_sigmask, &ss2);
+		}
+	} else
+		ss2 = p->p_sigstore.ss_mask;
+	memcpy(&ki->p_siglist, &ss1, sizeof(ki_sigset_t));
+	memcpy(&ki->p_sigmask, &ss2, sizeof(ki_sigset_t));
 
 	ki->p_stat = p->p_stat; /* Will likely be overridden by LWP status */
 	ki->p_realstat = p->p_stat;
@@ -3130,7 +3141,7 @@ fill_eproc(struct proc *p, struct eproc *ep)
 	ep->e_pgid = p->p_pgrp->pg_id;
 	ep->e_sid = ep->e_sess->s_sid;
 	ep->e_jobc = p->p_pgrp->pg_jobc;
-	if ((p->p_flag & P_CONTROLT) &&
+	if ((p->p_lflag & PL_CONTROLT) &&
 	    (tp = ep->e_sess->s_ttyp)) {
 		ep->e_tdev = tp->t_dev;
 		ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;

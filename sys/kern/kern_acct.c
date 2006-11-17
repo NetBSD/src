@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.66.4.3 2006/10/24 21:10:21 ad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.66.4.4 2006/11/17 16:34:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.66.4.3 2006/10/24 21:10:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.66.4.4 2006/11/17 16:34:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,7 +444,7 @@ acct_process(struct lwp *l)
 
 	/* (7) The terminal from which the process was started */
 	rw_enter(&proclist_lock, RW_READER);
-	if ((p->p_flag & P_CONTROLT) && p->p_pgrp->pg_session->s_ttyp)
+	if ((p->p_lflag & PL_CONTROLT) && p->p_pgrp->pg_session->s_ttyp)
 		acct.ac_tty = p->p_pgrp->pg_session->s_ttyp->t_dev;
 	else
 		acct.ac_tty = NODEV;

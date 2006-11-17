@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.25 2006/07/23 22:06:12 ad Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.25.4.1 2006/11/17 16:34:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.25 2006/07/23 22:06:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.25.4.1 2006/11/17 16:34:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,8 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 {
 	size_t len;
 	int error;
-	struct vm_map *map = &p->p_vmspace->vm_map;
+	struct vmspace *vm;
+	struct vm_map *map;
 	struct vm_map_entry *entry;
 	char mebuffer[MEBUFFERSIZE];
 	char *path;
@@ -130,8 +131,23 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		return (0);
 
 	error = 0;
-	if (map != &curl->l_proc->p_vmspace->vm_map)
-		vm_map_lock_read(map);
+	path = NULL;
+
+	if (linuxmode != 0) {
+		path = (char *)malloc(MAXPATHLEN * 4, M_TEMP, M_WAITOK);
+		if (path == NULL)
+			return ENOMEM;
+	}
+
+	if ((error = proc_vmspace_getref(p, &vm)) != 0) {
+		if (path != NULL)
+			free(path, M_TEMP);
+		return (error);
+	}
+
+	map = &vm->vm_map;
+	vm_map_lock_read(map);
+
 	for (entry = map->header.next;
 		((uio->uio_resid > 0) && (entry != &map->header));
 		entry = entry->next) {
@@ -140,13 +156,7 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 			continue;
 
 		if (linuxmode != 0) {
-			path = (char *)malloc(MAXPATHLEN * 4, M_TEMP, M_WAITOK);
-			if (path == NULL) {
-				error = ENOMEM;
-				break;
-			}
 			*path = 0;
-
 			dev = (dev_t)0;
 			fileid = 0;
 			if (UVM_ET_ISOBJ(entry) &&
@@ -172,7 +182,6 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 			    (int)sizeof(void *) * 2,
 			    (unsigned long)entry->offset,
 			    major(dev), minor(dev), fileid, path);
-			free(path, M_TEMP);
 		} else {
 			snprintf(mebuffer, sizeof(mebuffer),
 			    "0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d\n",
@@ -200,15 +209,19 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		if (error)
 			break;
 	}
-	if (map != &curl->l_proc->p_vmspace->vm_map)
-		vm_map_unlock_read(map);
+
+	vm_map_unlock_read(map);
+	uvmspace_free(vm);
+	if (path != NULL)
+		free(path, M_TEMP);
+
 	return error;
 }
 
 int
 procfs_validmap(struct lwp *l, struct mount *mp)
 {
-	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
+	return ((l->l_flag & L_SYSTEM) == 0);
 }
 
 /*

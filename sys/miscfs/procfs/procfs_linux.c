@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.25.4.1 2006/10/21 14:37:18 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.25.4.2 2006/11/17 16:34:40 ad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.25.4.1 2006/10/21 14:37:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.25.4.2 2006/11/17 16:34:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,13 +121,16 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 	struct tty *tty = p->p_session->s_ttyp;
 	struct rusage *ru = &p->p_stats->p_ru;
 	struct rusage *cru = &p->p_stats->p_cru;
-	struct vm_map *map = &p->p_vmspace->vm_map;
+	struct vmspace *vm;
+	struct vm_map *map;
 	struct vm_map_entry *entry;
 	unsigned long stext = 0, etext = 0, sstack = 0;
 	struct timeval rt;
 
-	if (map != &curproc->p_vmspace->vm_map)
-		vm_map_lock_read(map);
+	proc_vmspace_getref(p, &vm);
+	map = &vm->vm_map;
+	vm_map_lock_read(map);
+
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
 		if (UVM_ET_ISSUBMAP(entry))
@@ -147,8 +150,12 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 #endif
 		sstack = (unsigned long) USRSTACK;
 
-	if (map != &curproc->p_vmspace->vm_map)
-		vm_map_unlock_read(map);
+	vm_map_unlock_read(map);
+	uvmspace_free(vm);
+
+	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&p->p_mutex);
+	mutex_enter(&p->p_smutex);
 
 	calcru(p, NULL, NULL, NULL, &rt);
 
@@ -209,6 +216,10 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 	    ru->ru_nivcsw,
 	    p->p_exitsig,
 	    0);						/* XXX: processor */
+
+	mutex_exit(&p->p_smutex);
+	mutex_exit(&p->p_mutex);
+	rw_exit(&proclist_lock);
 
 	if (len == 0)
 		return 0;

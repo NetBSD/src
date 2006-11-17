@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.188 2006/07/26 20:50:56 bjh21 Exp $	*/
+/*	$NetBSD: systm.h,v 1.188.4.1 2006/11/17 16:34:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -469,30 +469,22 @@ void scdebug_ret(struct lwp *, register_t, int, register_t[]);
 
 #if defined(MULTIPROCESSOR)
 void	_kernel_lock_init(void);
-void	_kernel_lock(int);
-void	_kernel_unlock(void);
-void	_kernel_proc_lock(struct lwp *);
-void	_kernel_proc_unlock(struct lwp *);
-int	_kernel_lock_release_all(void);
-void	_kernel_lock_acquire_count(int);
+void	_kernel_lock(u_int, struct lwp *);
+u_int	_kernel_unlock(u_int, struct lwp *);
 
 #define	KERNEL_LOCK_INIT()		_kernel_lock_init()
-#define	KERNEL_LOCK(flag)		_kernel_lock((flag))
-#define	KERNEL_UNLOCK()			_kernel_unlock()
-#define	KERNEL_PROC_LOCK(l)		_kernel_proc_lock((l))
-#define	KERNEL_PROC_UNLOCK(l)		_kernel_proc_unlock((l))
-#define	KERNEL_LOCK_RELEASE_ALL()	_kernel_lock_release_all()
-#define	KERNEL_LOCK_ACQUIRE_COUNT(count) _kernel_lock_acquire_count(count)
+#define	KERNEL_LOCK(count, lwp)			\
+do {						\
+	if ((count) != 0)			\
+		_kernel_lock((count), (lwp));	\
+} while (/* CONSTCOND */ 0)
+#define	KERNEL_UNLOCK(all, lwp)		_kernel_unlock((all), (lwp))
 
 #else /* ! MULTIPROCESSOR */
 
 #define	KERNEL_LOCK_INIT()		/* nothing */
-#define	KERNEL_LOCK(flag)		/* nothing */
-#define	KERNEL_UNLOCK()			/* nothing */
-#define	KERNEL_PROC_LOCK(l)		/* nothing */
-#define	KERNEL_PROC_UNLOCK(l)		/* nothing */
-#define	KERNEL_LOCK_RELEASE_ALL()	(0)
-#define	KERNEL_LOCK_ACQUIRE_COUNT(count) /* nothing */
+#define	KERNEL_LOCK(count, lwp)		/* nothing */
+#define	KERNEL_UNLOCK(all, lwp)		(0)
 
 #endif /* MULTIPROCESSOR */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.105.4.2 2006/10/21 15:20:47 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.105.4.3 2006/11/17 16:34:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.2 2006/10/21 15:20:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.3 2006/11/17 16:34:37 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -153,13 +153,13 @@ settime(struct proc *p, struct timespec *ts)
 
 		rw_enter(&proclist_lock, RW_READER);
 		pp = p->p_pptr;
-		mutex_enter(&pp->p_crmutex);
+		mutex_enter(&pp->p_mutex);
 		log(LOG_WARNING, "pid %d (%s) "
 		    "invoked by uid %d ppid %d (%s) "
 		    "tried to set clock forward to %ld\n",
 		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, (long)ts->tv_sec);
-		mutex_exit(&pp->p_crmutex);
+		mutex_exit(&pp->p_mutex);
 		rw_exit(&proclist_lock);
 		return (EPERM);
 	}
@@ -1057,7 +1057,7 @@ timerupcall(struct lwp *l, void *arg)
 	if (l->l_savp->savp_lwp != l)
 		return ;
 
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 
 	fired = pt->pts_fired;
 	done = 0;
@@ -1083,7 +1083,7 @@ timerupcall(struct lwp *l, void *arg)
 	if (pt->pts_fired == 0)
 		l->l_proc->p_userret = NULL;
 
-	KERNEL_PROC_UNLOCK(l);
+	(void)KERNEL_UNLOCK(1, l);
 }
 
 /*
@@ -1461,9 +1461,7 @@ itimerfire(struct ptimer *pt)
 		 * value.
 		 */
 		if (sigismember(&p->p_sigpend.sp_set, pt->pt_ev.sigev_signo)) {
-			/*
-			 * XXXAD Timers need to become per-LWP.
-			 */
+			/* XXX Timers need to become per-LWP. */
 			pt->pt_overruns++;
 		} else {
 			ksiginfo_t ksi;
@@ -1477,7 +1475,7 @@ itimerfire(struct ptimer *pt)
 			kpsignal(p, &ksi, NULL);
 			mutex_exit(&proclist_mutex);
 		}
-	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_flag & P_SA)) {
+	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_sflag & PS_SA)) {
 		/* Cause the process to generate an upcall when it returns. */
 
 		if (p->p_userret == NULL) {
@@ -1494,16 +1492,15 @@ itimerfire(struct ptimer *pt)
 			p->p_userret = timerupcall;
 			p->p_userret_arg = p->p_timers;
 
-			mutex_enter(&p->p_smutex);	/* XXXAD locking */
+			mutex_enter(&p->p_smutex);
 			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
 				if (vp->savp_lwp->l_flag & L_SA_IDLE) {
 					vp->savp_lwp->l_flag &= ~L_SA_IDLE;
-					/* XXXAD */
 					wakeup(vp->savp_lwp);
 					break;
 				}
 			}
-			mutex_exit(&p->p_smutex);	/* XXXAD locking */
+			mutex_exit(&p->p_smutex);
 		} else if (p->p_userret == timerupcall) {
 			i = 1 << pt->pt_entry;
 			if ((p->p_timers->pts_fired & i) == 0) {
@@ -1514,8 +1511,9 @@ itimerfire(struct ptimer *pt)
 				pt->pt_overruns++;
 		} else {
 			pt->pt_overruns++;
-			if ((p->p_flag & P_WEXIT) == 0)
-				printf("itimerfire(%d): overrun %d on timer %x (userret is %p)\n",
+			if ((p->p_sflag & PS_WEXIT) == 0)
+				printf("itimerfire(%d): overrun %d on "
+				    "timer %x (userret is %p)\n",
 				    p->p_pid, pt->pt_overruns,
 				    pt->pt_ev.sigev_value.sival_int,
 				    p->p_userret);

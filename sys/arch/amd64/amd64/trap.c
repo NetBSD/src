@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27.4.3 2006/10/21 13:43:51 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.27.4.4 2006/11/17 16:34:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27.4.3 2006/10/21 13:43:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27.4.4 2006/11/17 16:34:32 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -372,9 +372,9 @@ copyfault:
 		uvmexp.softs++;
 		if (l->l_flag & L_OWEUPC) {
 			p->p_flag &= ~L_OWEUPC;
-			KERNEL_PROC_LOCK(l);
+			KERNEL_LOCK(1, l);
 			ADDUPROF(l);
-			KERNEL_PROC_UNLOCK(l);
+			(void)KERNEL_UNLOCK(1, l);
 		}
 		/* Allow a forced task switch. */
 		if (curcpu()->ci_want_resched)
@@ -429,7 +429,7 @@ copyfault:
 			goto copyefault;
 
 		cr2 = rcr2();
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		KERNEL_LOCK(1, NULL);
 		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
@@ -443,7 +443,7 @@ copyfault:
 		if (p->p_emul->e_usertrap != NULL &&
 		    (*p->p_emul->e_usertrap)(l, cr2, frame) != 0)
 			return;
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		if (l->l_flag & L_SA) {
 			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
 			l->l_flag |= L_SA_PAGEFAULT;
@@ -489,11 +489,11 @@ faultcommon:
 				uvm_grow(p, va);
 
 			if (type == T_PAGEFLT) {
-				KERNEL_UNLOCK();
+				(void)KERNEL_UNLOCK(1, NULL);
 				return;
 			}
 			l->l_flag &= ~L_SA_PAGEFAULT;
-			KERNEL_PROC_UNLOCK(l);
+			(void)KERNEL_UNLOCK(1, l);
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -507,7 +507,7 @@ faultcommon:
 
 		if (type == T_PAGEFLT) {
 			if (pcb->pcb_onfault != 0) {
-				KERNEL_UNLOCK();
+				(void)KERNEL_UNLOCK(1, l);
 				goto copyfault;
 			}
 			printf("uvm_fault(%p, 0x%lx, %d) -> %x\n",
@@ -530,10 +530,10 @@ faultcommon:
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		if (type == T_PAGEFLT)
-			KERNEL_UNLOCK();
+			(void)KERNEL_UNLOCK(1, NULL);
 		else {
 			l->l_flag &= ~L_SA_PAGEFAULT;
-			KERNEL_PROC_UNLOCK(l);
+			(void)KERNEL_UNLOCK(1, l);
 		}
 		break;
 	}
@@ -564,9 +564,9 @@ faultcommon:
 				ksi.ksi_code = TRAP_BRKPT;
 			else
 				ksi.ksi_code = TRAP_TRACE;
-			KERNEL_PROC_LOCK(l);
+			KERNEL_LOCK(1, l);
 			(*p->p_emul->e_trapsignal)(l, &ksi);
-			KERNEL_PROC_UNLOCK(l);
+			(void)KERNEL_UNLOCK(1, l);
 		}
 		break;
 
@@ -600,9 +600,9 @@ out:
 	userret(l);
 	return;
 trapsignal:
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
-	KERNEL_PROC_UNLOCK(l);
+	(void)KERNEL_UNLOCK(1, l);
 	userret(l);
 }
 
@@ -616,7 +616,7 @@ startlwp(void *arg)
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	pool_put(&lwp_uc_pool, uc);
 
-	KERNEL_PROC_UNLOCK(l);
+	(void)KERNEL_UNLOCK(1, l);
 
 	userret(l);
 }
@@ -624,7 +624,7 @@ startlwp(void *arg)
 void
 upcallret(struct lwp *l)
 {
-	KERNEL_PROC_UNLOCK(l);
+	(void)KERNEL_UNLOCK(1, l);
 
 	userret(l);
 }

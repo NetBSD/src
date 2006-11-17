@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.9.10.1 2006/10/21 15:20:48 ad Exp $ */
+/* $NetBSD: userret.h,v 1.9.10.2 2006/11/17 16:34:40 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006 The NetBSD Foundation, Inc.
@@ -85,28 +85,21 @@
 static __inline void
 mi_userret(struct lwp *l)
 {
-
 	/* Generate UNBLOCKED upcall. */
 	if (l->l_flag & L_SA_BLOCKING)
 		sa_unblock_userret(l);
 
-#ifdef MULTIPROCESSOR
-	lwp_lock(l);
-#endif
-
 	/*
 	 * Handle "exceptional" events: pending signals, stop/exit actions,
-	 * etc.
+	 * etc.  Note that the event must be flagged BEFORE any AST is
+	 * posted as we are reading unlocked.
 	 */
 	if ((l->l_flag & L_USERRET) != 0)
 		lwp_userret(l);
 
+	/* XXXSMP unlocked */
 	l->l_priority = l->l_usrpri;
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
-
-#ifdef MULTIPROCESSOR
-	lwp_unlock(l);
-#endif
+	l->l_cpu->ci_schedstate.spc_curpriority = l->l_priority;
 
 	/* Invoke any pending upcalls. */
 	if (l->l_flag & L_SA_UPCALL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.66.4.2 2006/10/24 21:10:21 ad Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.66.4.3 2006/11/17 16:34:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -176,11 +176,11 @@ void	sigclear(sigpend_t *, sigset_t *);
 void	sigclearall(struct proc *, sigset_t *);
 void	sigpinch(sigpend_t *, sigpend_t *, sigset_t *);
 
-void	kpsignal2(struct proc *, const ksiginfo_t *);
+void	kpsignal2(struct proc *, ksiginfo_t *);
 
 void	signal_init(void);
 
-void	sigactsinit(struct proc *, struct proc *, int);
+struct sigacts	*sigactsinit(struct proc *, int);
 void	sigactsunshare(struct proc *);
 void	sigactsfree(struct sigacts *);
 
@@ -188,11 +188,14 @@ void	kpsendsig(struct lwp *, const struct ksiginfo *, const sigset_t *);
 void	sendsig_reset(struct lwp *, int);
 siginfo_t *siginfo_alloc(int);
 void	siginfo_free(void *);
+ksiginfo_t	*ksiginfo_alloc(struct proc *, ksiginfo_t *, int);
+void	ksiginfo_free(ksiginfo_t *);
 
 int	__sigtimedwait1(struct lwp *, void *, register_t *, copyout_t,
     copyin_t, copyout_t);
 
 void	signotify(struct lwp *);
+int	sigispending(struct lwp *);
 
 /*
  * Machine-dependent functions:

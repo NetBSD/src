@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.1.2.2 2006/10/24 19:07:49 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.1.2.3 2006/11/17 16:34:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,14 +38,12 @@
 
 /*
  * Basic lock debugging code shared among lock primatives.
- *
- * XXX malloc() may want to initialize new mutexes.  To be fixed.
  */
 
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.2 2006/10/24 19:07:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.3 2006/11/17 16:34:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -67,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.2 2006/10/24 19:07:49 ad Ex
 #define	LD_LOCKED	0x01
 #define	LD_SLEEPER	0x02
 
+#define	LD_NOID		LD_MAX_LOCKS
+
 typedef struct lockdebuglk {
 	__cpu_simple_lock_t	lk_lock;
 	int			lk_oldspl;
@@ -74,7 +74,7 @@ typedef struct lockdebuglk {
 
 typedef struct lockdebug {
 	_TAILQ_ENTRY(struct lockdebug, volatile) ld_chain;
-	void		*ld_lock;
+	volatile void	*ld_lock;
 	lockops_t	*ld_lockops;
 	struct lwp	*ld_lwp;
 	uintptr_t	ld_locked;
@@ -98,6 +98,7 @@ int			ld_nfree;
 int			ld_freeptr;
 int			ld_recurse;
 lockdebug_t		*ld_table[LD_MAX_LOCKS / LD_BATCH];
+char			ld_panicbuf[1024];
 
 lockdebug_t		ld_prime[LD_BATCH];
 
@@ -136,6 +137,9 @@ static inline lockdebug_t *
 lockdebug_lookup(u_int id, lockdebuglk_t **lk)
 {
 	lockdebug_t *ld;
+
+	if (id == LD_NOID)
+		return NULL;
 
 	ld = ld_table[id >> LD_BATCH_SHIFT] + (id & LD_BATCH_MASK);
 
@@ -191,26 +195,48 @@ lockdebug_init(void)
  *	structure.
  */
 u_int
-lockdebug_alloc(void *lock, lockops_t *lo, int sleeplock)
+lockdebug_alloc(volatile void *lock, lockops_t *lo)
 {
+	struct cpu_info *ci;
 	lockdebug_t *ld;
 
 	if (panicstr != NULL)
 		return 0;
 
-	/* Pinch a new debug structure. */
+	ci = curcpu();
+
+	/*
+	 * Pinch a new debug structure.  We may recurse because we call
+	 * malloc(), which may need to initialize new locks somewhere
+	 * down the path.  If not recursing, we try to maintain at keep
+	 * LD_SLOP structures free, which should hopefully be enough to
+	 * satisfy malloc().  If we can't provide a structure, not to
+	 * worry: we'll just mark the lock as not having an ID.
+	 */
 	lockdebug_lock(&ld_free_lk);
-	if (TAILQ_EMPTY(&ld_free))
+	ci->ci_lkdebug_recurse++;
+
+	if (TAILQ_EMPTY(&ld_free)) {
+		if (ci->ci_lkdebug_recurse > 1) {
+			ci->ci_lkdebug_recurse--;
+			lockdebug_unlock(&ld_free_lk);
+			return (LD_NOID);
+		}
 		lockdebug_more();
+	} else if (ci->ci_lkdebug_recurse == 1 && ld_nfree < LD_SLOP)
+		lockdebug_more();
+
 	ld = TAILQ_FIRST(&ld_free);
 	TAILQ_REMOVE(&ld_free, ld, ld_chain);
 	ld_nfree--;
+
+	ci->ci_lkdebug_recurse--;
 	lockdebug_unlock(&ld_free_lk);
 
 	if (ld->ld_lock != NULL)
 		panic("lockdebug_alloc: corrupt table");
 
-	if (sleeplock)
+	if (lo->lo_sleeplock)
 		lockdebug_lock(&ld_sleeper_lk);
 	else
 		lockdebug_lock(&ld_spinner_lk);
@@ -222,7 +248,7 @@ lockdebug_alloc(void *lock, lockops_t *lo, int sleeplock)
 	ld->ld_unlocked = 0;
 	ld->ld_lwp = NULL;
 
-	if (sleeplock) {
+	if (lo->lo_sleeplock) {
 		ld->ld_flags = LD_SLEEPER;
 		lockdebug_unlock(&ld_sleeper_lk);
 	} else {
@@ -239,7 +265,7 @@ lockdebug_alloc(void *lock, lockops_t *lo, int sleeplock)
  *	A lock is being destroyed, so release debugging resources.
  */
 void
-lockdebug_free(void *lock, u_int id)
+lockdebug_free(volatile void *lock, u_int id)
 {
 	lockdebug_t *ld;
 	lockdebuglk_t *lk;
@@ -247,7 +273,8 @@ lockdebug_free(void *lock, u_int id)
 	if (panicstr != NULL)
 		return;
 
-	ld = lockdebug_lookup(id, &lk);
+	if ((ld = lockdebug_lookup(id, &lk)) == NULL)
+		return;
 
 	if (ld->ld_lock != lock) {
 		panic("lockdebug_free: destroying uninitialized lock %p"
@@ -280,7 +307,7 @@ lockdebug_more(void)
 	void *block;
 	int i, base;
 
-	while (TAILQ_EMPTY(&ld_free)) {
+	while (ld_nfree < LD_SLOP) {
 		lockdebug_unlock(&ld_free_lk);
 		block = malloc(LD_BATCH * sizeof(lockdebug_t), M_LOCKDEBUG,
 		    M_NOWAIT | M_ZERO); /* XXX M_NOWAIT */
@@ -296,6 +323,7 @@ lockdebug_more(void)
 		}
 		ld_table[base] = block;
 		ld_freeptr++;
+		ld_nfree += LD_BATCH;
 		ld = block;
 		base <<= LD_BATCH_SHIFT;
 
@@ -305,8 +333,8 @@ lockdebug_more(void)
 			TAILQ_INSERT_TAIL(&ld_free, ld, ld_chain);
 		}
 
-		ld_table[base] = ld;
 		mb_write();
+		ld_table[base] = ld;
 	}
 }
 
@@ -325,7 +353,8 @@ lockdebug_locked(u_int id, uintptr_t where, int shared)
 	if (panicstr != NULL)
 		return;
 
-	ld = lockdebug_lookup(id, &lk);
+	if ((ld = lockdebug_lookup(id, &lk)) == NULL)
+		return;
 
 	if ((ld->ld_flags & LD_LOCKED) != 0)
 		lockdebug_abort1(ld, lk, __FUNCTION__, "already locked");
@@ -370,7 +399,8 @@ lockdebug_unlocked(u_int id, uintptr_t where, int shared)
 	if (panicstr != NULL)
 		return;
 
-	ld = lockdebug_lookup(id, &lk);
+	if ((ld = lockdebug_lookup(id, &lk)) == NULL)
+		return;
 
 	if (shared) {
 		if (l == NULL)
@@ -419,7 +449,7 @@ lockdebug_unlocked(u_int id, uintptr_t where, int shared)
  *	if we hold sleep locks.
  */
 void
-lockdebug_barrier(void *spinlock, int slplocks)
+lockdebug_barrier(volatile void *spinlock, int slplocks)
 {
 	struct lwp *l = curlwp;
 	lockdebug_t *ld;
@@ -463,31 +493,11 @@ lockdebug_barrier(void *spinlock, int slplocks)
 	}
 }
 
-/*
- * lockdebug_abort:
- *
- *	An error has been trapped - dump lock info call panic().
- */
-void
-lockdebug_abort(int id, void *lock, lockops_t *ops, const char *func,
-		const char *msg)
-{
-	lockdebug_t *ld;
-	lockdebuglk_t *lk;
-
-	(void)lock;
-	(void)ops;
-
-	ld = lockdebug_lookup(id, &lk);
-
-	lockdebug_abort1(ld, lk, func, msg);
-}
-
 void
 lockdebug_abort1(lockdebug_t *ld, lockdebuglk_t *lk, const char *func,
 		 const char *msg)
 {
-	static char buf[1024];
+	char *buf;
 	int p;
 
 	/*
@@ -495,7 +505,9 @@ lockdebug_abort1(lockdebug_t *ld, lockdebuglk_t *lk, const char *func,
 	 * will be enough to hold the dump and abuse the return value from
 	 * snprintf.
 	 */
-	p = snprintf(buf, sizeof(buf), "%s error: %s: %s\n",
+	buf = ld_panicbuf;
+
+	p = snprintf(buf, sizeof(buf), "%s error: %s: %s\n\n",
 	    ld->ld_lockops->lo_name, func, msg);
 
 	p += snprintf(buf + p, sizeof(buf) - p,
@@ -511,47 +523,51 @@ lockdebug_abort1(lockdebug_t *ld, lockdebuglk_t *lk, const char *func,
 	    (int)cpu_number(), (int)ld->ld_cpu,
 	    (long)curlwp, (long)ld->ld_lwp);
 
-	(void)(*ld->ld_lockops->lo_dump)(ld->ld_lock, buf + p, sizeof(buf) - p);
+	if (ld->ld_lockops->lo_dump != NULL)
+		(void)(*ld->ld_lockops->lo_dump)(ld->ld_lock, buf + p,
+		    sizeof(buf) - p);
 
 	lockdebug_unlock(lk);
-
 	printf("%s", buf);
 	panic("LOCKDEBUG");
 }
 
-#else	/* LOCKDEBUG */
+#endif	/* LOCKDEBUG */
 
 /*
  * lockdebug_abort:
  *
  *	An error has been trapped - dump lock info and call panic().
- *	Called in the non-LOCKDEBUG case to print basic information.
  */
 void
-lockdebug_abort(int id, void *lock, lockops_t *ops, const char *func,
-		const char *msg)
+lockdebug_abort(int id, volatile void *lock, lockops_t *ops,
+		const char *func, const char *msg)
 {
-	static char buf[1024];
-	int p;
+	char buf[192];
+#ifdef LOCKDEBUG
+	lockdebug_t *ld;
+	lockdebuglk_t *lk;
+
+	if ((ld = lockdebug_lookup(id, &lk)) != NULL) {
+		lockdebug_abort1(ld, lk, func, msg);
+		/* NOTREACHED */
+	}
+#endif	/* LOCKDEBUG */
 
 	/*
-	 * The kernel is about to fall flat on its face, so assume that 1k
-	 * will be enough to hold the dump and abuse the return value from
-	 * snprintf.
+	 * The kernel is about to fall flat on its face, so assume that 192
+	 * bytes will be enough to hold the dump.
 	 */
-	p = snprintf(buf, sizeof(buf), "%s error: %s: %s\n",
-	    ops->lo_name, func, msg);
-
-	p += snprintf(buf + p, sizeof(buf) - p,
+	printf("%s error: %s: %s\n\n"
 	    "lock address : %#018lx\n"
 	    "current cpu  : %18d\n"
 	    "current lwp  : %#018lx\n",
-	    (long)lock, (int)cpu_number(), (long)curlwp);
+	    ops->lo_name, func, msg, (long)lock, (int)cpu_number(),
+	    (long)curlwp);
 
-	(void)(*ops->lo_dump)(lock, buf + p, sizeof(buf) - p);
+	(void)(*ops->lo_dump)(lock, buf, sizeof(buf));
 
 	printf("%s", buf);
+
 	panic("lock error");
 }
-
-#endif	/* LOCKDEBUG */

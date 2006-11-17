@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.36.2 2006/10/20 19:45:12 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.36.3 2006/11/17 16:34:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  * functions to implement the easy (unlocked / no waiters) cases:
  *
  *	mutex_enter()
- *	mutex_exit(), mutex_exit_linked()
+ *	mutex_exit()
  *
  * For each function implemented, define the associated preprocessor
  * macro in the MD mutex header file.  For example: __HAVE_MUTEX_ENTER.
@@ -129,13 +129,19 @@ typedef struct kmutex kmutex_t;
 
 #include <machine/mutex.h>
 
-#if defined(__MUTEX_PRIVATE) && defined(LOCKDEBUG)
+#if defined(__MUTEX_PRIVATE)
+
+#if defined(LOCKDEBUG)
 #undef	__HAVE_MUTEX_ENTER
 #undef	__HAVE_MUTEX_EXIT
-#undef	__HAVE_MUTEX_EXIT_LINKED
+#define	__NEED_MUTEX_CALLSITE	1
+#elif !defined(__HAVE_MUTEX_ENTER)
+#define	__NEED_MUTEX_CALLSITE	1
 #endif
 
-#ifdef _KERNEL
+#endif	/* __MUTEX_PRIVATE */
+
+#if defined(_KERNEL)
 
 void	mutex_init(kmutex_t *, kmutex_type_t, int);
 void	mutex_destroy(kmutex_t *);
@@ -145,26 +151,19 @@ void	mutex_exit(kmutex_t *);
 
 #if defined(__MUTEX_PRIVATE)
 
+#if !defined(__NEED_MUTEX_CALLSITE)
 void	mutex_vector_enter(kmutex_t *, int);
+#else
+void	mutex_vector_enter(kmutex_t *, int, uintptr_t);
+#endif
+
 void	mutex_vector_exit(kmutex_t *);
 
-static inline int
-mutex_getspl(kmutex_t *mtx)
-{
-	return mtx->mtx_oldspl;
-}
-
-static inline void
-mutex_setspl(kmutex_t *mtx, int s)
-{
-	mtx->mtx_oldspl = s;
-}
 #endif	/* __MUTEX_PRIVATE */
 
 void	mutex_enter(kmutex_t *);
 void	mutex_exit(kmutex_t *);
 int	mutex_tryenter(kmutex_t *);
-void	mutex_exit_linked(kmutex_t *, kmutex_t *);
 
 struct lwp *mutex_owner(kmutex_t *);
 int	mutex_owned(kmutex_t *);

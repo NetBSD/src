@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5.14.2 2006/10/20 19:46:53 ad Exp $
+#	$NetBSD: genassym.cf,v 1.5.14.3 2006/11/17 16:34:32 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -235,6 +235,8 @@ define  CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
 define  CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
 define  CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define  CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
+define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
+define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 
 if NIOAPIC > 0
 define		IOAPIC_SC_REG		offsetof(struct ioapic_softc, sc_reg)
@@ -272,11 +274,14 @@ define	IS_PIN		offsetof(struct intrsource, is_pin)
 define	IS_TYPE		offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
 
-define	MTX_MINSPL	offsetof(struct kmutex, u.s.mtxs_minspl)
-define	MTX_OLDSPL	offsetof(struct kmutex, u.s.mtxs_oldspl)
-define	MTX_ALLONE	offsetof(struct kmutex, u.s.mtxs_allone)
-define	MTX_LOCK	offsetof(struct kmutex, u.s.mtxs_lock)
+define	MTX_MINSPL		offsetof(struct kmutex, u.s.mtxs_minspl)
+define	MTX_FLAGS		offsetof(struct kmutex, u.s.mtxs_flags)
+define	MTX_OWNER		offsetof(struct kmutex, u.mtxa_owner)
+define	MUTEX_BIT_SPIN		MUTEX_BIT_SPIN
+define	MUTEX_SPIN_LOCKED	MUTEX_SPIN_LOCKED
+define	MUTEX_SPIN_UNLOCKED	MUTEX_SPIN_UNLOCKED
 
+define	RW_OWNER	offsetof(struct krwlock, rw_owner)
 define	RW_WRITE_LOCKED	RW_WRITE_LOCKED
 define	RW_WRITE_WANTED	RW_WRITE_WANTED
 define	RW_READ_INCR	RW_READ_INCR

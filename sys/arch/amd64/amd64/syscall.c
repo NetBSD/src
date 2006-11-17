@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.21 2006/08/26 20:05:25 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.21.2.1 2006/11/17 16:34:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21 2006/08/26 20:05:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21.2.1 2006/11/17 16:34:32 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -74,14 +74,14 @@ child_return(void *arg)
 	tf->tf_rax = 0;
 	tf->tf_rflags &= ~PSL_C;
 
-	KERNEL_PROC_UNLOCK(l);
+	(void)KERNEL_UNLOCK(1, l);
 
 	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		ktrsysret(l, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(l);
+		(void)KERNEL_UNLOCK(1, l);
 	}
 #endif
 }
@@ -174,9 +174,9 @@ syscall_plain(struct trapframe *frame)
 	if (callp->sy_flags & SYCALL_MPSAFE)
 		error = (*callp->sy_call)(l, argp, rval);
 	else {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		error = (*callp->sy_call)(l, argp, rval);
-		KERNEL_PROC_UNLOCK(l);
+		(void)KERNEL_UNLOCK(1, l);
 	}
 
 	switch (error) {
@@ -275,9 +275,9 @@ syscall_fancy(struct trapframe *frame)
 		}
 	}
 
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 	if ((error = trace_enter(l, code, code, NULL, argp)) != 0) {
-		KERNEL_PROC_UNLOCK(l);
+		(void)KERNEL_UNLOCK(1, l);
 		goto out;
 	}
 
@@ -285,11 +285,11 @@ syscall_fancy(struct trapframe *frame)
 	rval[1] = 0;
 
 	if (callp->sy_flags & SYCALL_MPSAFE) {
-		KERNEL_PROC_UNLOCK(l);
+		(void)KERNEL_UNLOCK(1, l);
 		error = (*callp->sy_call)(l, argp, rval);
 	} else {
 		error = (*callp->sy_call)(l, argp, rval);
-		KERNEL_PROC_UNLOCK(l);
+		(void)KERNEL_UNLOCK(1, l);
 	}
 out:
 	switch (error) {

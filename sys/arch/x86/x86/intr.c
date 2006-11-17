@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.24 2006/07/08 21:23:38 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.24.4.1 2006/11/17 16:34:34 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2006/07/08 21:23:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24.4.1 2006/11/17 16:34:34 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -539,11 +539,11 @@ intr_biglock_wrapper(void *vp)
 	struct intrhand *ih = vp;
 	int ret;
 
-	KERNEL_LOCK(LK_EXCLUSIVE|LK_CANRECURSE);
+	KERNEL_LOCK(1, NULL);
 
 	ret = (*ih->ih_realfun)(ih->ih_realarg);
 
-	KERNEL_UNLOCK();
+	(void)KERNEL_UNLOCK(1, NULL);
 
 	return ret;
 }
@@ -898,13 +898,13 @@ cpu_intr_init(struct cpu_info *ci)
 void
 x86_softintlock(void)
 {
-	KERNEL_LOCK(LK_EXCLUSIVE|LK_CANRECURSE);
+	KERNEL_LOCK(1, NULL);
 }
 
 void
 x86_softintunlock(void)
 {
-	KERNEL_UNLOCK();
+	(void)KERNEL_UNLOCK(1, NULL);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.187.4.2 2006/10/24 21:10:21 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.187.4.3 2006/11/17 16:34:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.187.4.2 2006/10/24 21:10:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.187.4.3 2006/11/17 16:34:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,14 +316,22 @@ ttyclose(struct tty *tp)
 
 	tp->t_gen++;
 	tp->t_pgrp = NULL;
-	if (tp->t_session != NULL) {
-		SESSRELE(tp->t_session);
-		tp->t_session = NULL;
-	}
 	tp->t_state = 0;
 
 	TTY_UNLOCK(tp);
 	splx(s);
+
+	rw_enter(&proclist_lock, RW_WRITER);
+	s = spltty();
+	TTY_LOCK(tp);
+	if (tp->t_session != NULL) {
+		SESSRELE(tp->t_session);
+		tp->t_session = NULL;
+	}
+	TTY_UNLOCK(tp);
+	splx(s);
+	rw_exit(&proclist_lock);
+
 	return (0);
 }
 
@@ -850,8 +858,9 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case  TIOCSETP:
 	case  TIOCSLTC:
 #endif
+		/* XXXAD */
 		while (isbackground(curproc, tp) &&
-		    p->p_pgrp->pg_jobc && (p->p_flag & P_PPWAIT) == 0 &&
+		    p->p_pgrp->pg_jobc && (p->p_sflag & PS_PPWAIT) == 0 &&
 		    !sigismasked(l, SIGTTOU)) {
 			mutex_enter(&proclist_mutex);
 			pgsignal(p->p_pgrp, SIGTTOU, 1);
@@ -1148,11 +1157,15 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 	}
 	case TIOCSCTTY:			/* become controlling tty */
+		rw_enter(&proclist_lock, RW_WRITER);
+
 		/* Session ctty vnode pointer set in vnode layer. */
 		if (!SESS_LEADER(p) ||
 		    ((p->p_session->s_ttyvp || tp->t_session) &&
-		    (tp->t_session != p->p_session)))
+		    (tp->t_session != p->p_session))) {
+			rw_exit(&proclist_lock);
 			return (EPERM);
+		}
 
 		/*
 		 * `p_session' acquires a reference.
@@ -1166,7 +1179,8 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		tp->t_session = p->p_session;
 		tp->t_pgrp = p->p_pgrp;
 		p->p_session->s_ttyp = tp;
-		p->p_flag |= P_CONTROLT;
+		p->p_lflag |= PL_CONTROLT;
+		rw_exit(&proclist_lock);
 		break;
 	case FIOSETOWN: {		/* set pgrp of tty */
 		pid_t pgid = *(int *)data;
@@ -1694,12 +1708,12 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		ttypend(tp);
 
 	/*
-	 * Hang process if it's in the background.
+	 * Hang process if it's in the background. XXXAD
 	 */
 	if (isbackground(p, tp)) {
 		if (sigismember(&p->p_sigctx.ps_sigignore, SIGTTIN) ||
 		    sigismember(curlwp->l_sigmask, SIGTTIN) ||
-		    p->p_flag & P_PPWAIT || p->p_pgrp->pg_jobc == 0) {
+		    p->p_sflag & PS_PPWAIT || p->p_pgrp->pg_jobc == 0) {
 			TTY_UNLOCK(tp);
 			splx(s);
 			return (EIO);
@@ -1978,11 +1992,11 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	TTY_UNLOCK(tp);
 	splx(s);
 	/*
-	 * Hang the process if it's in the background.
+	 * Hang the process if it's in the background. XXXAD
 	 */
 	p = curproc;
 	if (isbackground(p, tp) &&
-	    ISSET(tp->t_lflag, TOSTOP) && (p->p_flag & P_PPWAIT) == 0 &&
+	    ISSET(tp->t_lflag, TOSTOP) && (p->p_sflag & PS_PPWAIT) == 0 &&
 	    !sigismember(&p->p_sigctx.ps_sigignore, SIGTTOU) &&
 	    !sigismember(curlwp->l_sigmask, SIGTTOU)) {
 		if (p->p_pgrp->pg_jobc == 0) {

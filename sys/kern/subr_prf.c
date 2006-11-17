@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.103 2006/09/03 17:06:36 martin Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.103.2.1 2006/11/17 16:34:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.103 2006/09/03 17:06:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.103.2.1 2006/11/17 16:34:37 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -428,7 +428,9 @@ uprintf(const char *fmt, ...)
 	struct proc *p = curproc;
 	va_list ap;
 
-	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
+	LOCK_ASSERT(rw_lock_held(&proclist_lock));
+
+	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
 		/* No mutex needed; going to process TTY. */
 		va_start(ap, fmt);
 		kprintf(fmt, TOTTY, p->p_session->s_ttyp, NULL, ap);
@@ -455,7 +457,9 @@ tpr_t
 tprintf_open(struct proc *p)
 {
 
-	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
+	LOCK_ASSERT(rw_lock_held(&proclist_lock));
+
+	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
 		SESSHOLD(p->p_session);
 		return ((tpr_t) p->p_session);
 	}
@@ -469,6 +473,8 @@ tprintf_open(struct proc *p)
 void
 tprintf_close(tpr_t sess)
 {
+
+	LOCK_ASSERT(rw_write_held(&proclist_lock));
 
 	if (sess)
 		SESSRELE((struct session *) sess);
