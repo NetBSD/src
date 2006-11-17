@@ -1,4 +1,4 @@
-# $NetBSD: PARALLELS,v 1.7 2006/11/11 19:00:17 jmmv Exp $
+# $NetBSD: PARALLELS,v 1.8 2006/11/17 22:18:22 tsutsui Exp $
 #
 # PARALLELS machine description file
 #
@@ -14,7 +14,7 @@ maxusers	32
 
 # CPU support.
 options 	I686_CPU
-makeoptions	COPTS="-march=pentiumpro -mtune=pentiumpro"
+makeoptions	COPTS="-O2 -march=pentiumpro -mtune=pentiumpro"
 
 # CPU-related options.
 options 	VM86		# virtual 8086 emulation
