@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18 2006/09/16 08:50:27 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.19 2006/11/17 21:01:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2006/09/16 08:50:27 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2006/11/17 21:01:03 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -125,11 +125,25 @@ void
 cpu_initclocks()
 {
 
+	switch (mach_type) {
+#if defined(MIPS1)
+	case MACH_SGI_IP12:
+		/* enable hardware interrupts including hardclock(9) */
+		_splnone();
+		break;
+#endif /* MIPS1 */
 #if defined(MIPS3)
-	if (mach_type != MACH_SGI_IP12) {
+	case MACH_SGI_IP20:
+	case MACH_SGI_IP22:
+	case MACH_SGI_IP30:
+	case MACH_SGI_IP32:
 		mips3_initclocks();
-	}
+		break;
 #endif /* MIPS3 */
+	default:
+		panic("cpu_initclocks(): unknown mach_type IP%d", mach_type);
+		break;
+	}
 }
 
 void
