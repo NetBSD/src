@@ -859,7 +859,7 @@ difftm (struct tm *a, struct tm *b)
 }
 
 time_t
-getdate(const char *p, time_t *now, int *zone)
+getdate(const char *p, const time_t *now, const int *zone)
 {
     struct tm gmt, local, *gmt_ptr, *tm;
     time_t		nowt;
@@ -871,24 +871,24 @@ getdate(const char *p, time_t *now, int *zone)
     if (now == NULL || zone == NULL) {
         now = &nowt;
 	zone = &zonet;
-	(void)time(now);
+	(void)time(&nowt);
 
 	gmt_ptr = gmtime_r(now, &gmt);
 	if ((tm = localtime_r(now, &local)) == NULL)
 	    return -1;
 
 	if (gmt_ptr != NULL)
-	    *zone = difftm(&gmt, &local) / 60;
+	    zonet = difftm(&gmt, &local) / 60;
 	else
 	    /* We are on a system like VMS, where the system clock is
 	       in local time and the system has no concept of timezones.
 	       Hopefully we can fake this out (for the case in which the
 	       user specifies no timezone) by just saying the timezone
 	       is zero.  */
-	    *zone = 0;
+	    zonet = 0;
 
 	if (local.tm_isdst)
-	    *zone += 60;
+	    zonet += 60;
     } else {
 	if ((tm = localtime_r(now, &local)) == NULL)
 	    return -1;
