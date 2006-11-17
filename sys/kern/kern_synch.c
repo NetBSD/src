@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.4 2006/11/17 16:34:36 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.5 2006/11/17 16:53:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.4 2006/11/17 16:34:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.5 2006/11/17 16:53:08 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -549,7 +549,7 @@ wakeup(wchan_t ident)
 		return;
 
 	sq = sleeptab_lookup(&sleeptab, ident);
-	sleepq_wakeall(sq, ident, (u_int)-1);
+	sleepq_wake(sq, ident, (u_int)-1);
 }
 
 /*
@@ -565,7 +565,7 @@ wakeup_one(wchan_t ident)
 		return;
 	
 	sq = sleeptab_lookup(&sleeptab, ident);
-	sleepq_wakeone(sq, ident);
+	sleepq_wake(sq, ident, 1);
 }
 
 
