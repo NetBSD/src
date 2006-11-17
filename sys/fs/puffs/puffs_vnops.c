@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.10 2006/11/13 20:57:56 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.11 2006/11/17 17:48:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.10 2006/11/13 20:57:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.11 2006/11/17 17:48:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1129,18 +1129,23 @@ puffs_read(void *v)
 	void *win;
 	size_t tomove, argsize;
 	vsize_t bytelen;
-	int error;
+	int error, ubcflags;
 
 	uio = ap->a_uio;
 	vp = ap->a_vp;
 	read_argp = NULL;
 	error = 0;
+	pmp = MPTOPUFFSMP(vp->v_mount);
 
 	/* std sanity */
 	if (uio->uio_resid == 0)
 		return 0;
 	if (uio->uio_offset < 0)
 		return EINVAL;
+
+	ubcflags = 0;
+	if (UBC_WANT_UNMAP(vp) || pmp->pmp_flags & PUFFSFLAG_NOCACHE)
+		ubcflags = UBC_UNMAP;
 
 	if (vp->v_type == VREG) {
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
@@ -1154,9 +1159,16 @@ puffs_read(void *v)
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 			    &bytelen, advice, UBC_READ);
 			error = uiomove(win, bytelen, uio);
-			ubc_release(win, UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0);
+			ubc_release(win, ubcflags);
 			if (error)
 				break;
+		}
+
+		/* tell page cache to go flush itself */
+		if (pmp->pmp_flags & PUFFSFLAG_NOCACHE) {
+			simple_lock(&vp->v_interlock);
+			VOP_PUTPAGES(vp, 0, 0,
+			    PGO_ALLPAGES | PGO_FREE | PGO_SYNCIO);
 		}
 
 		if ((vp->v_mount->mnt_flag & MNT_NOATIME) == 0)
@@ -1174,7 +1186,6 @@ puffs_read(void *v)
 		 * XXX: this path is not really tested now
 		 */
 
-		pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 		tomove = PUFFS_TOMOVE(uio->uio_resid, pmp);
 		argsize = sizeof(struct puffs_vnreq_read);
 		read_argp = malloc(argsize, M_PUFFS, M_WAITOK | M_ZERO);
@@ -1237,14 +1248,19 @@ puffs_write(void *v)
 	size_t tomove, argsize;
 	off_t oldoff, newoff, origoff;
 	vsize_t bytelen;
-	int error, uflags;
-	int async;
+	int error, uflags, pflags;
+	int async, ubcflags;
 
 	vp = ap->a_vp;
 	uio = ap->a_uio;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	error = uflags = 0;
 	write_argp = NULL;
+	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
+
+	ubcflags = 0;
+	if (UBC_WANT_UNMAP(vp) || pmp->pmp_flags & PUFFSFLAG_NOCACHE)
+		ubcflags = UBC_UNMAP;
 
 	if (vp->v_type == VREG) {
 		/*
@@ -1286,7 +1302,7 @@ puffs_write(void *v)
 					memset(win, 0, bytelen);
 			}
 
-			ubc_release(win, UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0);
+			ubc_release(win, ubcflags);
 			if (error)
 				break;
 
@@ -1300,17 +1316,21 @@ puffs_write(void *v)
 			}
 		}
 
-		if (error == 0 && ap->a_ioflag & IO_SYNC) {
+		pflags = 0;
+		if (ap->a_ioflag & IO_SYNC)
+			pflags |= PGO_CLEANIT | PGO_SYNCIO;
+		if (pmp->pmp_flags & PUFFSFLAG_NOCACHE)
+			pflags |= PGO_CLEANIT | PGO_SYNCIO | PGO_FREE;
+
+		if (error == 0 && pflags) {
 			simple_lock(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, trunc_page(origoff),
-			    round_page(uio->uio_offset),
-			    PGO_CLEANIT | PGO_SYNCIO);
+			    round_page(uio->uio_offset), pflags);
 		}
 
 		puffs_updatenode(vp, uflags);
 	} else {
 
-		pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 		tomove = PUFFS_TOMOVE(uio->uio_resid, pmp);
 		argsize = sizeof(struct puffs_vnreq_write) + tomove;
 		write_argp = malloc(argsize, M_PUFFS, M_WAITOK | M_ZERO);
@@ -1392,7 +1412,7 @@ puffs_fcnioctl(struct vop_ioctl_args *ap, int puffsop)
 	 * be a whopping security hole.
 	 */
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
-	if ((pmp->pmp_args.pa_flags & PUFFS_FLAG_ALLOWCTL) == 0)
+	if ((pmp->pmp_flags & PUFFSFLAG_ALLOWCTL) == 0)
 		return EINVAL; /* only shoe that fits */
 
 	/* fill in sizereq and store it */

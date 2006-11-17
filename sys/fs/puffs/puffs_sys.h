@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.7 2006/11/09 13:09:34 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.8 2006/11/17 17:48:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -134,6 +134,8 @@ struct puffs_mount {
 	unsigned int			pmp_nextreq;
 	uint8_t				pmp_status;
 };
+#define pmp_flags pmp_args.pa_flags
+
 #define PUFFSTAT_BEFOREINIT	0
 #define PUFFSTAT_MOUNTING	1
 #define PUFFSTAT_RUNNING	2
