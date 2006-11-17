@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: expand.sh,v 1.2 2006/11/09 12:17:35 rillig Exp $
+# $NetBSD: expand.sh,v 1.3 2006/11/17 22:25:46 dsl Exp $
 #
 
 #
@@ -27,6 +27,11 @@ assert_equals "1" " EOL" "$got"
 set -- "" ""				# This code triggered the bug.
 got=`echo "$@" | sed 's,$,EOL,'`
 assert_equals "2" " EOL" "$got"
+
+set -- -
+shift
+n_arg() { echo $#; }
+assert_equals "3" "0" `n_arg "$@"`
 
 line='#define bindir "/usr/bin" /* comment */'
 stripped='#define bindir "/usr/bin" '
