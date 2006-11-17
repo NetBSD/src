@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.8 2006/08/17 03:50:21 macallan Exp $	*/
+/*	$NetBSD: defs.h,v 1.9 2006/11/17 22:13:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -101,10 +101,6 @@ struct	extabent {
 					/* handler function for this entry */
 };
 #endif
-
-/* date parser */
-struct	timeb;
-time_t	get_date (char *, struct timeb *);
 
 /* Sun 3/4 EEPROM handlers. */
 void	ee_action (char *, char *);
