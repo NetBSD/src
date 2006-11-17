@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.1 2006/11/14 21:37:36 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.2 2006/11/17 00:27:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -287,7 +287,7 @@ sysctlfs_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
 	va->va_nlink = getlinks(sfs);
 	va->va_fsid = pu->pu_fsidx.__fsid_val[0];
 	va->va_fileid = sfs->myid;
-	va->va_size = 0;
+	va->va_size = getsize(sfs);
 	va->va_gen = 1;
 	va->va_rdev = PUFFS_VNOVAL;
 	va->va_blocksize = 512;
