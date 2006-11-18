@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.64 2006/11/17 21:49:49 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.65 2006/11/18 00:21:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -650,6 +650,7 @@ re_attach(struct rtk_softc *sc)
 
 	aprint_verbose("%s: using %d tx descriptors\n",
 	    sc->sc_dev.dv_xname, sc->re_ldata.re_tx_desc_cnt);
+	KASSERT(RE_NEXT_TX_DESC(sc, RE_TX_DESC_CNT(sc) - 1) == 0);
 
 	/* Allocate DMA'able memory for the TX ring */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, RE_TX_LIST_SZ(sc),

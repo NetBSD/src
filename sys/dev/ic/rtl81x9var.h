@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.35 2006/11/17 21:29:36 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.36 2006/11/18 00:21:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -132,6 +132,10 @@ struct rtk_mii_frame {
  */
 #define RE_RING_ALIGN		256
 
+/*
+ * Size of descriptors and TX queue.
+ * These numbers must be power of two to simplify RE_NEXT_*() macro.
+ */
 #define RE_RX_DESC_CNT		64
 #define RE_TX_DESC_CNT_8139	64
 #define RE_TX_DESC_CNT_8169	1024
@@ -225,12 +229,12 @@ struct rtk_softc {
 
 #define RE_TX_DESC_CNT(sc)	((sc)->re_ldata.re_tx_desc_cnt)
 #define RE_TX_LIST_SZ(sc)	(RE_TX_DESC_CNT(sc) * sizeof(struct re_desc))
-#define RE_NEXT_TX_DESC(sc, x)	(((x) + 1) % RE_TX_DESC_CNT(sc))
+#define RE_NEXT_TX_DESC(sc, x)	(((x) + 1) & (RE_TX_DESC_CNT(sc) - 1))
 
 #define RE_RX_LIST_SZ		(RE_RX_DESC_CNT * sizeof(struct re_desc))
-#define RE_NEXT_RX_DESC(sc, x)	(((x) + 1) % RE_RX_DESC_CNT)
+#define RE_NEXT_RX_DESC(sc, x)	(((x) + 1) & (RE_RX_DESC_CNT - 1))
 
-#define RE_NEXT_TXQ(sc, x)	(((x) + 1) % RE_TX_QLEN)
+#define RE_NEXT_TXQ(sc, x)	(((x) + 1) & (RE_TX_QLEN - 1))
 
 #define RE_TXDESCSYNC(sc, idx, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat,					\
