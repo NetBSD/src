@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2006/11/18 16:09:57 dsl Exp $
+#	$NetBSD: list,v 1.3 2006/11/18 16:16:19 dsl Exp $
 
 PROG	bin/chio
 PROG	bin/dd
@@ -10,7 +10,6 @@ PROG	bin/sync
 
 PROG	sbin/fdisk
 PROG	sbin/mbrlabel
-PROG	sbin/mount_kernfs
 PROG	sbin/restore	sbin/rrestore
 PROG	sbin/scsictl
 
