@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.24 2005/12/11 12:17:48 christos Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.25 2006/11/18 19:58:56 erh Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -271,8 +271,8 @@ readsects(struct biosdisk_ll *d, daddr_t dblk, int num, char *buf, int cold)
 			while ((nsec = do_read(d, dblk, maxsecs, trbuf)) < 0) {
 #ifdef DISK_DEBUG
 				if (!cold)
-					printf("read error dblk %d-%d\n", dblk,
-					       dblk + maxsecs - 1);
+					printf("read error dblk %d-%d\n", (int)dblk,
+					       (int)(dblk + maxsecs - 1));
 #endif
 				if (--retries >= 0)
 					continue;
