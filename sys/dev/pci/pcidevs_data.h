@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.848 2006/11/13 22:03:21 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.849 2006/11/18 00:01:14 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.850 2006/11/13 22:02:58 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.851 2006/11/17 23:57:27 tsutsui Exp
  */
 
 /*
@@ -10148,6 +10148,10 @@ static const struct pci_product pci_products[] = {
 	    "8129 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8101E,
+	    "8101E 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8138,
 	    "8138 10/100 Ethernet",
 	},
@@ -10160,12 +10164,16 @@ static const struct pci_product pci_products[] = {
 	    "8139 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8167,
+	    "8169SC/8110SC 10/100/1000 Ethernet",
+	},
+	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168,
-	    "8168 10/100/1000 Ethernet",
+	    "8168B/8111B 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
-	    "8169 10/100/1000 Ethernet",
+	    "8169/S/SB 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8180,
@@ -12460,4 +12468,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2521;
+const int pci_nproducts = 2523;
