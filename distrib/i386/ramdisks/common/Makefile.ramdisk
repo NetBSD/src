@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.1 2006/06/02 22:11:07 hubertf Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.2 2006/11/18 16:09:57 dsl Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -11,7 +11,8 @@ WARNS=		1
 DBG=		-Os
 
 CRUNCHBIN=	ramdiskbin
-LISTS=		${.CURDIR}/list ${I386COMMON}/list.ramdisk
+LISTS=		${I386COMMON}/list.ramdisk
+LISTS+=		${.CURDIR}/list
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	le
 IMAGEDEPENDS+= 	${CRUNCHBIN} \
