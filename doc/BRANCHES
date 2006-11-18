@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.128 2006/11/18 06:46:13 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.129 2006/11/18 06:47:51 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -389,16 +389,16 @@ Base Tag:	yamt-splraiseipl-base2
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
-		tested:
-			alpha	(yamt)
-			hp300	(tsutsui)
-			i386	(yamt)
-			news68k	(tsutsui)
-			sparc(sun4c) (tsutsui)
-			sun2	(tsutsui)
-			sun3	(tsutsui)
-			sun3x	(tsutsui)
-			xen	(yamt)
+		tested (by who):
+			alpha		(yamt)
+			hp300		(tsutsui)
+			i386		(yamt)
+			news68k		(tsutsui)
+			sparc(sun4c)	(tsutsui)
+			sun2		(tsutsui)
+			sun3		(tsutsui)
+			sun3x		(tsutsui)
+			xen		(yamt)
 
 		compile-tested:
 			acorn26
