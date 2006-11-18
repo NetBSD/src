@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.65 2006/11/18 00:21:36 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.66 2006/11/18 07:40:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -401,7 +401,7 @@ re_reset(struct rtk_softc *sc)
 	 * MCFG_METHOD_2, which corresponds to sc->sc_rev == 2.
 	 */
 	if (1) /* XXX check softc flag for 8169s version */
-		CSR_WRITE_1(sc, 0x82, 1);
+		CSR_WRITE_1(sc, RTK_LDPS, 1);
 
 	return;
 }
@@ -1816,7 +1816,7 @@ re_init(struct ifnet *ifp)
 
 	/* XXX: from Realtek-supplied Linux driver. Wholly undocumented. */
 	if (sc->rtk_type == RTK_8169)
-		CSR_WRITE_2(sc, RTK_CPLUS_CMD+0x2, 0x0000);
+		CSR_WRITE_2(sc, RTK_IM, 0x0000);
 
 	DELAY(10000);
 
