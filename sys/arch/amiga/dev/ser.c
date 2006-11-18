@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.73 2006/07/23 22:06:04 ad Exp $ */
+/*	$NetBSD: ser.c,v 1.73.4.1 2006/11/18 21:29:04 ad Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.73 2006/07/23 22:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.73.4.1 2006/11/18 21:29:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,10 +294,7 @@ seropen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = sc->ser_tty;
 
-	if ((tp->t_state & TS_ISOPEN) &&
-	    (tp->t_state & TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -741,8 +738,8 @@ serioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		*(int *)data = serswflags;
 		break;
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error != 0)
 			return(EPERM);
 

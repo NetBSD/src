@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.13 2006/03/29 06:58:14 thorpej Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.13.8.1 2006/11/18 21:34:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.13 2006/03/29 06:58:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.13.8.1 2006/11/18 21:34:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,8 @@ static const u_int8_t sknet_mcp_media[] = {
 };
 
 int
-le_mca_match(struct device *parent, struct cfdata *cf, void *aux)
+le_mca_match(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 	struct mca_attach_args *ma = aux;
 

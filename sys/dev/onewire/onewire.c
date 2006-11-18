@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.2 2006/09/03 21:00:01 christos Exp $ */
+/* $NetBSD: onewire.c,v 1.2.2.1 2006/11/18 21:34:28 ad Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.2 2006/09/03 21:00:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.2.2.1 2006/11/18 21:34:28 ad Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -87,7 +87,8 @@ const struct cdevsw onewire_cdevsw = {
 extern struct cfdriver onewire_cd;
 
 int
-onewire_match(struct device *parent, struct cfdata *cf, void *aux)
+onewire_match(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 	return 1;
 }

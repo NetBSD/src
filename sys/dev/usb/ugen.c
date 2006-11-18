@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.85 2006/09/03 07:14:47 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.85.2.1 2006/11/18 21:34:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.85 2006/09/03 07:14:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.85.2.1 2006/11/18 21:34:51 ad Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 
@@ -788,7 +788,8 @@ ugenread(dev_t dev, struct uio *uio, int flag)
 }
 
 Static int
-ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
+ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
+	int flag)
 {
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][OUT];
 	u_int32_t n;

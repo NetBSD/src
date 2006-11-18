@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.34 2006/08/23 15:44:30 christos Exp $	*/
+/*	$NetBSD: stic.c,v 1.34.2.1 2006/11/18 21:34:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.34 2006/08/23 15:44:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.34.2.1 2006/11/18 21:34:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.34 2006/08/23 15:44:30 christos Exp $");
 #include <sys/ioctl.h>
 #include <sys/callout.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1456,10 +1457,11 @@ static int
 sticopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct stic_info *si;
-	int s;
+	int s, error;
 
-	if (securelevel > 0)
-		return (EPERM);
+	error = kauth_authorize_device_passthru(l->l_cred, dev, NULL);
+	if (error)
+		return (error);
 	if (minor(dev) >= STIC_MAXDV)
 		return (ENXIO);
 	if ((si = stic_info[minor(dev)]) == NULL)
@@ -1496,9 +1498,6 @@ sticmmap(dev_t dev, off_t offset, int prot)
 	struct stic_info *si;
 	struct stic_xmap *sxm;
 	paddr_t pa;
-
-	if (securelevel > 0)
-		return (-1L);
 
 	si = stic_info[minor(dev)];
 	sxm = NULL;

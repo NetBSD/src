@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.c,v 1.2 2006/09/07 01:55:03 uwe Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.2.2.1 2006/11/18 21:29:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,28 +31,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.2 2006/09/07 01:55:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.2.2.1 2006/11/18 21:29:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <sh3/clock.h>
 
-static void landisk_rtc_init(void *cookie);
-
-static struct rtc_ops landisk_rtc_ops = {
-	.init = landisk_rtc_init,
-};
-
 void
 machine_clock_init(void)
 {
 
-	sh_clock_init(SH_CLOCK_NORTC, &landisk_rtc_ops);
-}
-
-static void
-landisk_rtc_init(void *cookie)
-{
-	/* DUMMY */
+	sh_clock_init(SH_CLOCK_NORTC);
 }

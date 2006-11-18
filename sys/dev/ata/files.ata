@@ -1,4 +1,4 @@
-#	$NetBSD: files.ata,v 1.13 2005/12/11 12:21:14 christos Exp $
+#	$NetBSD: files.ata,v 1.13.20.1 2006/11/18 21:34:04 ad Exp $
 #
 # Config file and device description for machine-independent devices
 # which attach to ATA busses.  Included by ports that need it.  Ports
@@ -25,4 +25,4 @@ attach	ld at ataraid with ld_ataraid
 file	dev/ata/ld_ataraid.c		ld_ataraid
 
 # Common SATA subroutines
-file	dev/ata/sata_subr.c		sata
+file	dev/ata/sata_subr.c		sata			needs-flag

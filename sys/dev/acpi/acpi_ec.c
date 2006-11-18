@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.38 2006/05/14 03:02:14 dogcow Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.38.8.1 2006/11/18 21:34:03 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.38 2006/05/14 03:02:14 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.38.8.1 2006/11/18 21:34:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,8 @@ EcUnlock(struct acpi_ec_softc *sc)
  *	Autoconfiguration `match' routine.
  */
 static int
-acpiec_match(struct device *parent, struct cfdata *match, void *aux)
+acpiec_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 

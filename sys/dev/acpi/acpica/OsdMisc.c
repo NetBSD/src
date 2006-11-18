@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.3 2006/04/13 08:27:09 kochi Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.3.14.1 2006/11/18 21:34:03 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.3 2006/04/13 08:27:09 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.3.14.1 2006/11/18 21:34:03 ad Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"

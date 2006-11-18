@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.5 2003/01/21 19:46:49 martin Exp $ */
+/*	$NetBSD: trap.h,v 1.5.48.1 2006/11/18 21:29:33 ad Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -63,7 +63,7 @@
 #define	T_STDF_ALIGN	0x036	/* (10) STDF address not properly aligned */
 #define T_PRIVACT	0x037	/* (11) privileged action */
 /*			0x038	   unused */
-/*	through		0x03F	   unused */
+/*	through		0x03f	   unused */
 #define T_ASYNC_ERROR	0x040	/* ???? */
 #define	T_L1INT		0x041	/* (31) level 1 interrupt */
 #define	T_L2INT		0x042	/* (30) level 2 interrupt */
@@ -81,7 +81,7 @@
 #define	T_L14INT	0x04e	/* (18) level 14 interrupt */
 #define	T_L15INT	0x04f	/* (17) level 15 interrupt */
 /*			0x050	   unused */
-/*	through		0x05F	   unused */
+/*	through		0x05f	   unused */
 #define T_INTVEC	0x060	/* (16) interrupt vector [Interrupt Global Regs]*/
 #define T_PA_WATCHPT	0x061	/* (12) Physical addr data watchpoint */
 #define T_VA_WATCHPT	0x062	/* (11) Virtual addr data watchpoint */
@@ -90,11 +90,11 @@
 /*	through		0x067	   unused */
 #define T_FDMMU_MISS	0x068	/* (2) fast data access MMU miss */
 /*	through		0x06b	   unused */
-#define T_FDMMU_PROT	0x06C	/* (2) fast data access protection */
-/*	through		0x06F	   unused */
+#define T_FDMMU_PROT	0x06c	/* (2) fast data access protection */
+/*	through		0x06f	   unused */
 /*  0x070...0x07f implementation dependent exceptions */
 #define T_SPILL_N_NORM	0x080	/* (9) spill (n=0..7) normal */
-/*	through		0x09F	   unused */
+/*	through		0x09f	   unused */
 #define T_SPILL_N_OTHER	0x0a0	/* (9) spill (n=0..7) other */
 /*	through		0x0bF	   unused */
 #define T_FILL_N_NORM	0x0c0	/* (9) fill (n=0..7) normal */
@@ -115,7 +115,7 @@
 #define	T_BSD_SYSCALL	0x109	/* BSD system call */
 #define	T_KGDB_EXEC	0x10a	/* for kernel gdb */
 
-/* 0x10b..0x1ff are currently unallocated, except the following */
+/* 0x10c..0x1ff are currently unallocated, except the following */
 #define T_SVR4_GETCC		0x120
 #define T_SVR4_SETCC		0x121
 #define T_SVR4_GETPSR		0x122

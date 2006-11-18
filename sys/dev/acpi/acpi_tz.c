@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.18 2006/02/20 12:17:49 kochi Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.18.14.1 2006/11/18 21:34:03 ad Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.18 2006/02/20 12:17:49 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.18.14.1 2006/11/18 21:34:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,8 @@ CFATTACH_DECL(acpitz, sizeof(struct acpitz_softc), acpitz_match,
  * acpitz_match: autoconf(9) match routine
  */
 static int
-acpitz_match(struct device *parent, struct cfdata *match, void *aux)
+acpitz_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -630,7 +631,8 @@ acpitz_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 }
 
 static int
-acpitz_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
+acpitz_streinfo(struct sysmon_envsys *sme,
+    struct envsys_basic_info *binfo)
 {
 
 	/* XXX not implemented */

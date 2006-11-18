@@ -1,4 +1,4 @@
-/* $NetBSD: ym_acpi.c,v 1.1 2006/08/14 09:34:43 itohy Exp $ */
+/* $NetBSD: ym_acpi.c,v 1.1.4.1 2006/11/18 21:34:03 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Jasper Wallace <jasper@pointless.net>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.1 2006/08/14 09:34:43 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.1.4.1 2006/11/18 21:34:03 ad Exp $");
 
 #include "mpu_ym.h"
 
@@ -58,7 +58,8 @@ CFATTACH_DECL(ym_acpi, sizeof(struct ym_softc), ym_acpi_match,
  * ym_acpi_match: autoconf(9) match routine
  */
 static int
-ym_acpi_match(struct device *parent, struct cfdata *match, void *aux)
+ym_acpi_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 

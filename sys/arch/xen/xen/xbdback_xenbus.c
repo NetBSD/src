@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.1 2006/07/02 16:35:24 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.1.8.1 2006/11/18 21:29:39 ad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -289,7 +289,8 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 {
 	struct xbdback_instance *xbdi;
 	long domid, handle;
-	int error;
+	int error, i;
+	char *ep;
 
 	if ((error = xenbus_read_ul(NULL, xbusd->xbusd_path,
 	    "frontend-id", &domid, 10)) != 0) {
@@ -297,13 +298,28 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 		    xbusd->xbusd_path, error);
 		return error;
 	}
-	if ((error = xenbus_read_ul(NULL, xbusd->xbusd_path,
-	    "dev", &handle, 16)) != 0) {
-		aprint_error("xbdback: can' read %s/handle: %d\n",
-		    xbusd->xbusd_path, error);
-		return error;
-	}
 
+	/*
+	 * get handle: this is the last component of the path; which is
+	 * a decimal number. $path/dev contains the device name, which is not
+	 * appropriate.
+	 */
+	for (i = strlen(xbusd->xbusd_path); i > 0; i--) {
+		if (xbusd->xbusd_path[i] == '/')
+			break;
+	}
+	if (i == 0) {
+		aprint_error("xbdback: can't parse %s\n",
+		    xbusd->xbusd_path);
+		return EFTYPE;
+	}
+	handle = strtoul(&xbusd->xbusd_path[i+1], &ep, 10);
+	if (*ep != '\0') {
+		aprint_error("xbdback: can't parse %s\n",
+		    xbusd->xbusd_path);
+		return EFTYPE;
+	}
+			
 	if (xbdif_lookup(domid, handle) != NULL) {
 		return EEXIST;
 	}
@@ -575,6 +591,13 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	if (err) {
 		printf("xbdback %s: can't open device 0x%x: %d\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
+		return;
+	}
+	err = vn_lock(xbdi->xbdi_vp, LK_EXCLUSIVE | LK_RETRY);
+	if (err) {
+		printf("xbdback %s: can't vn_lock device 0x%x: %d\n",
+		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
+		vrele(xbdi->xbdi_vp);
 		return;
 	}
 	err  = VOP_OPEN(xbdi->xbdi_vp, FREAD, NOCRED, 0);

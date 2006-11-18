@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.8 2006/07/04 00:30:23 christos Exp $	*/
+/*	$NetBSD: i8259.c,v 1.8.4.1 2006/11/18 21:29:39 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.8 2006/07/04 00:30:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.8.4.1 2006/11/18 21:29:39 ad Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -250,7 +250,8 @@ i8259_reinit_irqs(void)
 }
 
 static void
-i8259_setup(struct pic *pic, struct cpu_info *ci, int pin, int idtvec, int type)
+i8259_setup(struct pic *pic, struct cpu_info *ci,
+    int pin, int idtvec, int type)
 {
 	if (CPU_IS_PRIMARY(ci))
 		i8259_reinit_irqs();

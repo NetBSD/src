@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.5.20.1 2006/11/18 21:29:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,6 +80,9 @@
  * Machine-dependent constants (VM, etc) common across MIPS cpus
  */
 
+#ifndef	_MIPSCO_PARAM_H_
+#define	_MIPSCO_PARAM_H_
+
 #include <mips/mips_param.h>
 
 /*
@@ -136,7 +139,17 @@
 
 extern void delay __P((int n));
 extern int cpuspeed;
-#define DELAY(n) { register int N = cpuspeed * (n); while (--N > 0); }
+static __inline void __attribute__((__unused__))
+DELAY(int n)
+{
+	register int __N = cpuspeed * n;
+
+	do {
+		__asm("addiu %0,%1,-1" : "=r" (__N) : "0" (__N));
+	} while (__N > 0);
+}
 
 #endif	/* !_LOCORE */
 #endif	/* _KERNEL */
+
+#endif	/* !_MIPSCO_PARAM_H_ */

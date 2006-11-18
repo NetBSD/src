@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.577.4.2 2006/10/24 21:10:22 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.577.4.3 2006/11/18 21:29:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.2 2006/10/24 21:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.3 2006/11/18 21:29:18 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -899,7 +899,7 @@ haltsys:
 		 * and users have reported disk corruption.
 		 */
 		delay(500000);
-		apm_set_powstate(NULL,  APM_DEV_DISK(0xff), APM_SYS_OFF);
+		apm_set_powstate(NULL, APM_DEV_DISK(APM_DEV_ALLUNITS), APM_SYS_OFF);
 		delay(500000);
 		apm_set_powstate(NULL, APM_DEV_ALLDEVS, APM_SYS_OFF);
 		printf("WARNING: APM powerdown failed!\n");
@@ -1046,8 +1046,10 @@ cpu_dumpconf()
 	if (dumpdev == NODEV)
 		goto bad;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		goto bad;
+	}
 	if (bdev->d_psize == NULL)
 		goto bad;
 	nblks = (*bdev->d_psize)(dumpdev);
@@ -1416,7 +1418,8 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 
 	/* XXX XXX XXX */
 	if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
-		panic("init386: too many memory segments");
+		panic("init386: too many memory segments "
+		    "(increase VM_PHYSSEG_MAX)");
 
 	seg_start = round_page(seg_start);
 	seg_end = trunc_page(seg_end);
@@ -1990,22 +1993,28 @@ init386(paddr_t first_avail)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
+		boolean_t loaded;
 		struct btinfo_symtab *symtab;
 
 #ifdef DDB
 		db_machine_init();
 #endif
 
-		symtab = lookup_bootinfo(BTINFO_SYMTAB);
-
-		if (symtab) {
-			symtab->ssym += KERNBASE;
-			symtab->esym += KERNBASE;
-			ksyms_init(symtab->nsym, (int *)symtab->ssym,
-			    (int *)symtab->esym);
+#if defined(MULTIBOOT)
+		loaded = multiboot_ksyms_init();
+#else
+		loaded = FALSE;
+#endif
+		if (!loaded) {
+		    symtab = lookup_bootinfo(BTINFO_SYMTAB);
+		    if (symtab) {
+			    symtab->ssym += KERNBASE;
+			    symtab->esym += KERNBASE;
+			    ksyms_init(symtab->nsym, (int *)symtab->ssym,
+				(int *)symtab->esym);
+		    } else
+			    ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
 		}
-		else
-			ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #endif
 #ifdef DDB
@@ -2138,6 +2147,9 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #ifdef COMPAT_NOMID
 	if ((error = exec_nomid(l, epp)) == 0)
 		return error;
+#else
+	(void) l;
+	(void) epp;
 #endif /* ! COMPAT_NOMID */
 
 	return error;
@@ -2291,7 +2303,7 @@ int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.45 2006/03/29 06:32:36 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.45.8.1 2006/11/18 21:34:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.45 2006/03/29 06:32:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.45.8.1 2006/11/18 21:34:04 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -158,7 +158,8 @@ CFATTACH_DECL(ahb, sizeof(struct ahb_softc),
  * the actual probe routine to check it out.
  */
 static int
-ahbmatch(struct device *parent, struct cfdata *match, void *aux)
+ahbmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;

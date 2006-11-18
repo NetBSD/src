@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.20 2006/06/07 22:33:35 kardel Exp $	*/
+/*	$NetBSD: icp.c,v 1.20.6.1 2006/11/18 21:34:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.20 2006/06/07 22:33:35 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.20.6.1 2006/11/18 21:34:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

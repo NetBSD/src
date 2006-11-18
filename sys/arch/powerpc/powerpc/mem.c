@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.24 2006/07/25 18:14:20 elad Exp $ */
+/*	$NetBSD: mem.c,v 1.24.4.1 2006/11/18 21:29:29 ad Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.24 2006/07/25 18:14:20 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.24.4.1 2006/11/18 21:29:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -97,7 +97,7 @@ dev_type_mmap(mmmmap);
 
 const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, mmmmap, nokqfilter,
+	nostop, notty, nopoll, mmmmap, nokqfilter, D_OTHER,
 };
 
 /*ARGSUSED*/

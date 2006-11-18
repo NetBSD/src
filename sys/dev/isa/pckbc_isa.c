@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.18 2006/04/11 17:14:44 garbled Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.18.8.1 2006/11/18 21:34:21 ad Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.18 2006/04/11 17:14:44 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.18.8.1 2006/11/18 21:34:21 ad Exp $");
 
 #include "opt_pckbc.h"
 
@@ -64,10 +64,8 @@ CFATTACH_DECL(pckbc_isa, sizeof(struct pckbc_isa_softc),
 void	pckbc_isa_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 int
-pckbc_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pckbc_isa_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -146,9 +144,7 @@ pckbc_isa_match(parent, match, aux)
 }
 
 void
-pckbc_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pckbc_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pckbc_isa_softc *isc = (void *)self;
 	struct pckbc_softc *sc = &isc->sc_pckbc;

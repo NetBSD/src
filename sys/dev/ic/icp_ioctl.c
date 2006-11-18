@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.10 2006/08/30 15:25:58 christos Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.10.2.1 2006/11/18 21:34:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.10 2006/08/30 15:25:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.10.2.1 2006/11/18 21:34:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.10 2006/08/30 15:25:58 christos Exp 
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
@@ -119,7 +120,8 @@ icpopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 static int
-icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	int error;
 
@@ -132,8 +134,9 @@ icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		struct icp_softc *icp;
 		gdt_ucmd_t *ucmd = (void *) data;
 
-		if (securelevel > 1)
-			return (EPERM);
+		error = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		if (error)
+			break;
 
 		icp = device_lookup(&icp_cd, ucmd->io_node);
 		if (icp == NULL) {

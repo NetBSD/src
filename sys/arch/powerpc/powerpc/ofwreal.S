@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwreal.S,v 1.7 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: ofwreal.S,v 1.7.20.1 2006/11/18 21:29:29 ad Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -259,7 +259,7 @@ restoremmu:
 
 	lwz	%r4,0(%r3)
 	mtibatl	0,%r4			/* restore BATs */
-	lwz	%r4,%r4(%r3)
+	lwz	%r4,4(%r3)
 	mtibatu	0,%r4
 	lwz	%r4,8(%r3)
 	mtibatl	1,%r4

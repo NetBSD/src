@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.18.20.1 2006/11/18 21:29:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18.20.1 2006/11/18 21:29:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,9 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2005/12/11 12:17:33 christos Exp $");
 
 #include <dev/clock_subr.h>
 #include <machine/sysconf.h>		/* platform */
-
-#define MINYEAR			2002	/* "today" */
-#define UNIX_YEAR_OFFSET	0
 
 /* 
  * platform_clock_attach:
@@ -150,15 +147,6 @@ cpu_initclocks()
 
 	hz = clock->hz;
 	tick = 1000000 / hz;	
-	/* number of microseconds between interrupts */
-	tickfix = 1000000 - (hz * tick);
-	if (tickfix) {
-		int ftp;
-		
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= (ftp - 1);
-		tickfixinterval = hz >> (ftp - 1);
-	}
 
 	/* start periodic timer */
 	(*clock->init)(clock->self);
@@ -176,152 +164,6 @@ setstatclockrate(int newhz)
 {
 
 	/* nothing we can do */
-}
-
-/*
- * inittodr:
- *
- *	initializes the time of day hardware which provides
- *	date functions.  Its primary function is to use some file
- *	system information in case the hardare clock lost state.
- *
- *	Initialze the time of day register, based on the time base which is,
- *	e.g. from a filesystem.  Base provides the time to within six months,
- *	and the time of year clock (if any) provides the rest.
- */
-void
-inittodr(time_t base)
-{
-	struct platform_clock *clock = platform.clock;
-	struct clock_ymdhms dt;
-	int year, badbase;
-	time_t deltat;
-
-	if (clock == NULL)
-		panic("inittodr: no clock attached");		
-
-	if (base < (MINYEAR - 1970) * SECYR) {
-		printf("WARNING: preposterous time in file system");
-		/* read the system clock anyway */
-		base = (MINYEAR - 1970) * SECYR;
-		badbase = 1;
-	} else
-		badbase = 0;
-
-	(*clock->rtc_get)(clock->self, base, &dt);
-#ifdef DEBUG
-	printf("readclock: %d/%d/%d/%d/%d/%d", dt.dt_year, dt.dt_mon, dt.dt_day,
-	    dt.dt_hour, dt.dt_min, dt.dt_sec);
-#endif
-	clock->start = 1;
-
-	year = 1900 + UNIX_YEAR_OFFSET + dt.dt_year;
-	if (year < 1970)
-		year += 100;
-	/* simple sanity checks (2037 = time_t overflow) */
-	if (year < MINYEAR || year > 2037 ||
-	    dt.dt_mon < 1 || dt.dt_mon > 12 || dt.dt_day < 1 ||
-	    dt.dt_day > 31 || dt.dt_hour > 23 || dt.dt_min > 59 ||
-	    dt.dt_sec > 59) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
-		 */
-		time.tv_sec = base;
-		if (!badbase) {
-			printf("WARNING: preposterous clock chip time\n");
-			resettodr();
-		}
-		goto bad;
-	}
-
-	dt.dt_year = year;
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
-#ifdef DEBUG
-	printf("=>%ld (%ld)\n", time.tv_sec, base);
-#endif
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days;
-		 * if so, assume something is amiss.
-		 */
-		deltat = time.tv_sec - base;
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %ld days",
-		    time.tv_sec < base ? "lost" : "gained",
-		    (long)deltat / SECDAY);
-	}
- bad:
-	printf(" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * resettodr:
- *
- *	restores the time of day hardware after a time change.
- *
- *	Reset the TODR based on the time value; used when the TODR
- *	has a preposterous value and also when the time is reset
- *	by the stime system call.  Also called when the TODR goes past
- *	TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
- *	to wrap the TODR around.
- */
-void
-resettodr()
-{
-	struct platform_clock *clock = platform.clock;
-	struct clock_ymdhms dt;
-
-	if (clock == NULL)
-		panic("inittodr: no clock attached");		
-
-	if (!clock->start)
-		return;
-
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
-
-	/* rt clock wants 2 digits XXX */
-	dt.dt_year = (dt.dt_year - UNIX_YEAR_OFFSET) % 100;
-#ifdef DEBUG
-	printf("setclock: %d/%d/%d/%d/%d/%d\n", dt.dt_year, dt.dt_mon,
-	    dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec);
-#endif
-
-	(*clock->rtc_set)(clock->self, &dt);
-}
-
-/*
- * microtime:
- *
- *	Return the best possible estimate of the time in the timeval to
- *	which tvp points.  We guarantee that the time will be greater than
- *	the value obtained by a previous call.
- */
-void
-microtime(struct timeval *tvp)
-{
-	int s = splclock();
-	static struct timeval lasttime;
-
-	*tvp = time;
-
-	if (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
 }
 
 /*

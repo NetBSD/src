@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.37 2006/09/04 20:32:11 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.37.2.1 2006/11/18 21:29:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,11 +85,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37 2006/09/04 20:32:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37.2.1 2006/11/18 21:29:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#ifdef __HAVE_TIMECOUNTER
+#include <sys/timetc.h>
+#endif
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
@@ -102,9 +105,15 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37 2006/09/04 20:32:11 tsutsui Exp $");
 #endif
 
 void	statintr(struct clockframe *);
+#ifdef __HAVE_TIMECOUNTER
+static u_int mc6840_counter(struct timecounter *);
+#endif
 
 static int clkstd[1];
-static int clkint;		/* clock interval, as loaded */
+
+int clkint;			/* clock interval, as loaded */
+uint32_t clkcounter;		/* for timecounter */
+
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
  * power of two.  Since this gives us an even number, not an odd number,
@@ -221,6 +230,16 @@ cpu_initclocks(void)
 {
 	volatile struct clkreg *clk;
 	int intvl, statint, profint, minint;
+#ifdef __HAVE_TIMECOUNTER
+	static struct timecounter tc = {
+		mc6840_counter,		/* get_timecount */
+		NULL,			/* no poll_pps */
+		~0,			/* counter mask */
+		COUNTS_PER_SEC,		/* frequency */
+		"mc6840",		/* name */
+		100			/* quality */
+	};
+#endif
 
 	clkstd[0] = IIOV(0x5F8000);		/* XXX grot */
 	clk = (volatile struct clkreg *)clkstd[0];
@@ -278,6 +297,10 @@ cpu_initclocks(void)
 	clk->clk_cr1 = CLK_IENAB;
 	clk->clk_cr2 = CLK_CR3;
 	clk->clk_cr3 = CLK_IENAB;
+
+#ifdef __HAVE_TIMECOUNTER
+	tc_init(&tc);
+#endif
 }
 
 /*
@@ -329,6 +352,35 @@ statintr(struct clockframe *fp)
 	statclock(fp);
 }
 
+#ifdef __HAVE_TIMECOUNTER
+u_int
+mc6840_counter(struct timecounter *tc)
+{
+	volatile struct clkreg *clk;
+	uint32_t ccounter, count;
+	static uint32_t lastcount;
+	int s;
+
+	clk = (volatile struct clkreg *)clkstd[0];
+
+	s = splclock();
+	ccounter = clkcounter;
+	/* XXX reading counter clears interrupt flag?? */
+	__asm volatile (" clrl %0; movpw %1@(5),%0"
+		      : "=d" (count) : "a" (clk));
+	splx(s);
+
+	count = ccounter + (clkint - count);
+	if ((int32_t)(count - lastcount) < 0) {
+		/* XXX wrapped; maybe hardclock() is blocked more than 1/HZ */
+		count = lastcount + 1;
+	}
+	lastcount = count;
+
+	return count;
+}
+#else
+
 /*
  * Return the best possible estimate of the current time.
  */
@@ -374,3 +426,4 @@ microtime(struct timeval *tvp)
 	tvp->tv_usec = u;
 	lasttime = *tvp;
 }
+#endif

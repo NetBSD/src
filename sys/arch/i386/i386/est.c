@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.26 2006/09/03 06:49:57 xtraeme Exp $	*/
+/*	$NetBSD: est.c,v 1.26.2.1 2006/11/18 21:29:18 ad Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.26 2006/09/03 06:49:57 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.26.2.1 2006/11/18 21:29:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -742,27 +742,23 @@ static const uint16_t pm90_n765e[] = {
 
 /* Intel Pentium M processor 770 2.13 GHz */
 static const uint16_t pm90_n770[] = {
-	ID16(2133, 1551, BUS133),
-	ID16(1800, 1429, BUS133),
-	ID16(1600, 1356, BUS133),
-	ID16(1400, 1180, BUS133),
-	ID16(1200, 1132, BUS133),
-	ID16(1000, 1084, BUS133),
-	ID16( 800, 1036, BUS133),
-	ID16( 600,  988, BUS133),
+	ID16(2133, 1356, BUS133),
+	ID16(1867, 1292, BUS133),
+	ID16(1600, 1212, BUS133),
+	ID16(1333, 1148, BUS133),
+	ID16(1067, 1068, BUS133),
+	ID16( 800,  988, BUS133),
 };
 
 struct fqlist {
-	int vendor : 5;
-	unsigned bus_clk : 1;
-	unsigned n : 5;
+	int vendor;
+	unsigned bus_clk;
+	unsigned n;
 	const uint16_t *table;
 };
 
-#define NELEM(x) (sizeof(x) / sizeof((x)[0]))
-
 #define ENTRY(ven, bus_clk, tab) \
-	{ CPUVENDOR_##ven, bus_clk == BUS133 ? 1 : 0, NELEM(tab), tab }
+	{ CPUVENDOR_##ven, bus_clk == BUS133 ? 1 : 0, __arraycount(tab), tab }
 
 #define BUS_CLK(fqp) ((fqp)->bus_clk ? BUS133 : BUS100)
 
@@ -840,6 +836,8 @@ static const struct fqlist est_cpus[] = {
 #define MSR2MV(msr)		(MSR2VOLTINC(msr) * 16 + 700)
 
 static const struct 	fqlist *est_fqlist; /* not NULL if functional */
+static uint16_t         fake_table[3];      /* guessed est_cpu table */
+static struct fqlist    fake_fqlist;
 static int 		est_node_target, est_node_current;
 static const char 	est_desc[] = "Enhanced SpeedStep";
 /* bus_clock is assigned in identcpu.c */
@@ -903,7 +901,7 @@ est_init(struct cpu_info *ci, int vendor)
 	char			*freq_names, *cpuname = ci->ci_dev->dv_xname;
 
 	if (bus_clock == 0) {
-		printf("%s: unknown system bus clock\n", __func__);
+		aprint_debug("%s: unknown system bus clock\n", __func__);
 		return;
 	}
 
@@ -914,7 +912,7 @@ est_init(struct cpu_info *ci, int vendor)
 	if (idhi == 0 || idlo == 0 || cur == 0 ||
 	    ((cur >> 8) & 0xff) < ((idlo >> 8) & 0xff) ||
 	    ((cur >> 8) & 0xff) > ((idhi >> 8) & 0xff)) {
-		printf("%s: strange msr value 0x%016llx\n", __func__, msr);
+		aprint_debug("%s: strange msr value 0x%016llx\n", __func__, msr);
 		return;
 	}
 
@@ -926,7 +924,8 @@ est_init(struct cpu_info *ci, int vendor)
 	/*
 	 * Find an entry which matches (vendor, bus_clock, idhi, idlo)
 	 */
-	for (i = 0; i < NELEM(est_cpus); i++) {
+	est_fqlist = NULL;
+	for (i = 0; i < __arraycount(est_cpus); i++) {
 		fql = &est_cpus[i];
 		if (vendor == fql->vendor && bus_clock == BUS_CLK(fql) &&
 		    idhi == fql->table[0] && idlo == fql->table[fql->n - 1]) {
@@ -936,9 +935,6 @@ est_init(struct cpu_info *ci, int vendor)
 	}
 
 	if (est_fqlist == NULL) {
-		uint16_t fake_table[3];
-		struct fqlist fake_fqlist;
-
                 aprint_normal("%s: unknown Enhanced SpeedStep CPU.\n",
                     cpuname);
                 /*

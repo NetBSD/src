@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.15 2006/07/21 16:48:48 ad Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.15.4.1 2006/11/18 21:34:07 ad Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.15 2006/07/21 16:48:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.15.4.1 2006/11/18 21:34:07 ad Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -41,9 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.15 2006/07/21 16:48:48 ad Exp $")
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
-#ifdef GPROF
-#include <sys/gmon.h>
-#endif
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -247,7 +244,8 @@ hpf1275aattach(int n)
  * XXX: unused: config_attach_pseudo(9) does not call ca_match.
  */
 static int
-hpf1275a_match(struct device *self, struct cfdata *cfdata, void *arg)
+hpf1275a_match(struct device *self,
+	       struct cfdata *cfdata, void *arg)
 {
 
 	/* pseudo-device; always present */
@@ -260,7 +258,8 @@ hpf1275a_match(struct device *self, struct cfdata *cfdata, void *arg)
  * open the line discipline.
  */
 static void
-hpf1275a_attach(struct device *parent, struct device *self, void *aux)
+hpf1275a_attach(struct device *parent,
+		struct device *self, void *aux)
 {
 	struct hpf1275a_softc *sc = device_private(self);
 	struct wskbddev_attach_args wska;
@@ -312,9 +311,8 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 	struct hpf1275a_softc *sc;
 	int error, s;
 
-	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag);
-	if (error != 0)
+	if ((error = kauth_authorize_device_tty(l->l_cred,
+			KAUTH_DEVICE_TTY_OPEN, tp)))
 		return (error);
 
 	s = spltty();

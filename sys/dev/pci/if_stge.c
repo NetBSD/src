@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.33 2006/06/17 23:34:27 christos Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.33.4.1 2006/11/18 21:34:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.33 2006/06/17 23:34:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.33.4.1 2006/11/18 21:34:30 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -373,7 +373,8 @@ stge_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-stge_match(struct device *parent, struct cfdata *cf, void *aux)
+stge_match(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

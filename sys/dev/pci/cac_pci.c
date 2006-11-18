@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.21 2006/08/28 00:18:30 christos Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.21.2.1 2006/11/18 21:34:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.21 2006/08/28 00:18:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.21.2.1 2006/11/18 21:34:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,8 @@ cac_pci_findtype(struct pci_attach_args *pa)
 }
 
 static int
-cac_pci_match(struct device *parent, struct cfdata *match, void *aux)
+cac_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	return (cac_pci_findtype(aux) != NULL);

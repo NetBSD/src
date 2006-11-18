@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.5 2006/08/29 00:50:29 macallan Exp $ */
+/* $NetBSD: radeonfb.c,v 1.5.4.1 2006/11/18 21:34:33 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.5 2006/08/29 00:50:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.5.4.1 2006/11/18 21:34:33 ad Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -2507,7 +2507,7 @@ radeonfb_bitblt(struct radeonfb_display *dp, int srcx, int srcy,
 		dsty += height - 1;
 		dir = 0;
 	}
-	if (dstx < dsty) {
+	if (dstx < srcx) {
 		dir |= RADEON_DST_X_LEFT_TO_RIGHT;
 	} else {
 		srcx += width - 1;

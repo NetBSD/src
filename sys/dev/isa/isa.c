@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.124 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: isa.c,v 1.124.20.1 2006/11/18 21:34:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.124 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.124.20.1 2006/11/18 21:34:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,8 @@ int	isasubmatch(struct device *, struct cfdata *, const int *, void *);
 int	isasearch(struct device *, struct cfdata *, const int *, void *);
 
 int
-isamatch(struct device *parent, struct cfdata *cf, void *aux)
+isamatch(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 	/* XXX check other indicators */
 
@@ -288,7 +289,7 @@ checkattachargs(struct isa_attach_args *ia, const int *loc)
 
 int
 isasubmatch(struct device *parent, struct cfdata *cf,
-	    const int *ldesc, void *aux)
+    const int *ldesc, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -380,7 +381,7 @@ isaprint(void *aux, const char *isa)
 
 int
 isasearch(struct device *parent, struct cfdata *cf,
-	  const int *slocs, void *aux)
+    const int *slocs, void *aux)
 {
 	struct isa_io res_io[1];
 	struct isa_iomem res_mem[1];

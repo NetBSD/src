@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2006/09/07 03:38:54 gdamore Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22.2.1 2006/11/18 21:29:08 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2006/09/07 03:38:54 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22.2.1 2006/11/18 21:29:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,8 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2006/09/07 03:38:54 gdamore Exp $"
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-
-#include <cobalt/cobalt/clockvar.h>
 
 extern char	bootstring[];
 extern int	netboot;
@@ -52,7 +50,6 @@ cpu_configure(void)
 
 	(void)splhigh();
 
-	evcnt_attach_static(&hardclock_ev);
 	icu_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)

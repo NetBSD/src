@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.14 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.14.2.1 2006/11/18 21:34:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.14 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.14.2.1 2006/11/18 21:34:50 ad Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -898,7 +898,8 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  */
 
 Static void
-axe_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+axe_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct axe_softc	*sc;
 	struct axe_chain	*c;
@@ -957,7 +958,7 @@ axe_tick(void *xsc)
 		return;
 
 	/* Perform periodic stuff in process context */
-	usb_add_task(sc->axe_udev, &sc->axe_tick_task);
+	usb_add_task(sc->axe_udev, &sc->axe_tick_task, USB_TASKQ_DRIVER);
 
 }
 

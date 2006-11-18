@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.23 2005/12/11 12:21:25 christos Exp $        */
+/*      $NetBSD: advlib.c,v 1.23.20.1 2006/11/18 21:34:07 ad Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.23 2005/12/11 12:21:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.23.20.1 2006/11/18 21:34:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

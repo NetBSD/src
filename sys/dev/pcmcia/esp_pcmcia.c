@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.27 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.27.20.1 2006/11/18 21:34:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.27 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.27.20.1 2006/11/18 21:34:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,10 +133,8 @@ const size_t esp_pcmcia_nproducts =
     sizeof(esp_pcmcia_products) / sizeof(esp_pcmcia_products[0]);
 
 int
-esp_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+esp_pcmcia_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -158,9 +156,8 @@ esp_pcmcia_validate_config(cfe)
 }
 
 void
-esp_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+esp_pcmcia_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct esp_pcmcia_softc *esc = (void *)self;
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
@@ -449,8 +446,7 @@ esp_pcmcia_dma_go(sc)
 }
 
 void
-esp_pcmcia_dma_stop(sc)
-	struct ncr53c9x_softc *sc;
+esp_pcmcia_dma_stop(struct ncr53c9x_softc *sc)
 {
 }
 

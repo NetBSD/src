@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_k6.c,v 1.8 2006/09/03 21:05:01 christos Exp $	*/
+/*	$NetBSD: mtrr_k6.c,v 1.8.2.1 2006/11/18 21:29:19 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.8 2006/09/03 21:05:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.8.2.1 2006/11/18 21:29:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.7 2006/08/17 17:11:28 christos Exp $ */
+/* $NetBSD: piixpm.c,v 1.7.2.1 2006/11/18 21:34:33 ad Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -96,7 +96,8 @@ CFATTACH_DECL(piixpm, sizeof(struct piixpm_softc),
     piixpm_match, piixpm_attach, NULL, NULL);
 
 int
-piixpm_match(struct device *parent, struct cfdata *match, void *aux)
+piixpm_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -112,6 +113,8 @@ piixpm_match(struct device *parent, struct cfdata *match, void *aux)
 	case PCI_VENDOR_ATI:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_ATI_SB200_SMB:
+		case PCI_PRODUCT_ATI_SB300_SMB:
+		case PCI_PRODUCT_ATI_SB400_SMB:
 			return 1;
 		}
 		break;
@@ -139,7 +142,8 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Power Management Controller\n");
 
-	sc->sc_powerhook = powerhook_establish(piixpm_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    piixpm_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: can't establish powerhook\n",
 		    sc->sc_dev.dv_xname);

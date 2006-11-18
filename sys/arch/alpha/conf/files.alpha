@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.169 2006/07/29 19:10:56 ad Exp $
+# $NetBSD: files.alpha,v 1.169.4.1 2006/11/18 21:29:02 ad Exp $
 #
 # alpha-specific configuration info
 
@@ -523,6 +523,10 @@ include "dev/pcmcia/files.pcmcia"
 # Machine-independent USB device support
 #
 include "dev/usb/files.usb"
+#
+# Machine-independent Bluetooth support
+#
+include "dev/bluetooth/files.bluetooth"
 #
 # Machine-independent IEEE 1394 device support
 #

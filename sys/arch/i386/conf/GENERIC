@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.779 2006/09/07 14:23:44 itohy Exp $
+# $NetBSD: GENERIC,v 1.779.2.1 2006/11/18 21:29:18 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,18 +22,21 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.779 $"
+#ident 		"GENERIC-$Revision: 1.779.2.1 $"
 
 maxusers	32		# estimated number of users
 
 # CPU support.  At least one is REQUIRED.
-options 	I386_CPU
+#options 	I386_CPU
 options 	I486_CPU
 options 	I586_CPU
 options 	I686_CPU
 
+makeoptions	COPTS="-march=i486 -mtune=pentiumpro"	# Assume at least 486,
+							# tune for more modern
+
 # CPU-related options.
-options 	MATH_EMULATE	# floating point emulation
+#options 	MATH_EMULATE	# floating point emulation
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # insert delay no-ops in interrupts; recommended on very old machines
@@ -47,14 +50,13 @@ options 	ENHANCED_SPEEDSTEP
 options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
-options         POWERNOW_K8
+options 	POWERNOW_K8
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
 #options 	PERFCTRS	# performance-monitoring counters support
 
 options 	MULTIBOOT	# Multiboot support (see multiboot(8))
-#options 	MULTIBOOT_SYMTAB_SPACE=1048576
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -173,7 +175,7 @@ file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/ptm support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -265,11 +267,12 @@ options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	WSKBD_EVENT_AUTOREPEAT		# auto repeat in event mode
+#options 	WSKBD_USONLY			# strip off non-US keymaps
 # don't attach pckbd as the console if no PS/2 keyboard is found
 options 	PCKBD_CNATTACH_MAY_FAIL
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" # for pckbd driver
-#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver 
+#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
@@ -314,6 +317,9 @@ cpu* at mainbus?
 
 
 # Basic Bus Support
+
+#IPMI support
+#ipmi0		at mainbus?
 
 # Advanced Configuration and Power Interface
 
@@ -755,7 +761,7 @@ wdc*	at isapnp?
 wdc*	at pcmcia? function ?
 
 # CardBus IDE controllers
-#njata*  at cardbus? function ? flags 0		# Workbit NinjaATA-32
+#njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
@@ -840,6 +846,8 @@ ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
+msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 #ndis* 	at pci? dev ? function ?	# Experimental - NDIS Network Driver
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
@@ -961,6 +969,7 @@ glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
@@ -1062,6 +1071,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
@@ -1115,7 +1125,7 @@ radio*	at udsbr?
 # USB Generic driver
 ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
-options	UGEN_BULK_RA_WB
+options UGEN_BULK_RA_WB
 
 
 # IrDA and Consumer Ir devices
@@ -1251,11 +1261,12 @@ bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 # Bluetooth USB Controllers
 ubt* at uhub? port ? configuration ? interface ?
 
-# Bluetooth Devices
-pseudo-device btdev	4
+# Bluetooth Device Hub
+bthub* at bt3c?
+bthub* at ubt?
 
 # Bluetooth HID support
-bthidev* at btdev?
+bthidev* at bthub?
 
 # Bluetooth Mouse
 btms* at bthidev? reportid ?
@@ -1266,7 +1277,7 @@ btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
 # Bluetooth Audio support
-btsco* at btdev?
+btsco* at bthub?
 
 
 # Mice
@@ -1384,19 +1395,21 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-#options	FILEASSOC		# fileassoc(9) - required for Veriexec 
-#options	FILEASSOC_NHOOKS=4	# Default number of storage slots
+options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+#options 	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
-#pseudo-device	veriexec
+pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
+options VERIFIED_EXEC_FP_RMD160
+options VERIFIED_EXEC_FP_SHA256
+options VERIFIED_EXEC_FP_SHA384
+options VERIFIED_EXEC_FP_SHA512
+options VERIFIED_EXEC_FP_SHA1
+options VERIFIED_EXEC_FP_MD5
+
+options PAX_MPROTECT=0			# PaX mprotect(2) restrictions

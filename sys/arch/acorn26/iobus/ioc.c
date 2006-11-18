@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.12 2005/12/11 12:16:04 christos Exp $ */
+/* $NetBSD: ioc.c,v 1.12.20.1 2006/11/18 21:28:58 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.12 2005/12/11 12:16:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.12.20.1 2006/11/18 21:28:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.12 2005/12/11 12:16:04 christos Exp $");
 #include <sys/queue.h>
 #include <sys/reboot.h>	/* For bootverbose */
 #include <sys/systm.h>
+#include <sys/timetc.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -58,6 +59,7 @@ static int ioc_search(struct device *parent, struct cfdata *cf,
 static int ioc_print(void *aux, const char *pnp);
 static int ioc_irq_clock(void *cookie);
 static int ioc_irq_statclock(void *cookie);
+static u_int ioc_get_timecount(struct timecounter *);
 
 CFATTACH_DECL(ioc, sizeof(struct ioc_softc),
     ioc_match, ioc_attach, NULL, NULL);
@@ -297,12 +299,9 @@ void ioc_counter_start(struct device *self, int counter, int value)
 	default: panic("%s: ioc_counter_start: bad counter (%d)",
 		       self->dv_xname, counter);
 	}
-	bus_space_barrier(bst, bsh, tlow, tgo - tlow + 1, BUS_BARRIER_WRITE);
 	bus_space_write_1(bst, bsh, tlow, value & 0xff);
 	bus_space_write_1(bst, bsh, thigh, value >> 8 & 0xff);
-	bus_space_barrier(bst, bsh, tlow, tgo - tlow + 1, BUS_BARRIER_WRITE);
 	bus_space_write_1(bst, bsh, tgo, 0);
-	bus_space_barrier(bst, bsh, tlow, tgo - tlow, BUS_BARRIER_WRITE);
 }
 
 /* Cache to save microtime recalculating it */
@@ -329,13 +328,20 @@ cpu_initclocks(void)
 	stathz = hz; /* XXX what _should_ it be? */
 
 	if (hz == 0 || IOC_TIMER_RATE % hz != 0 ||
-	    (t0_count = IOC_TIMER_RATE / hz) > 65535)
+	    (t0_count = IOC_TIMER_RATE / hz - 1) > 65535)
 		panic("ioc_initclocks: Impossible clock rate: %d Hz", hz);
 	ioc_counter_start(the_ioc, 0, t0_count);
 	evcnt_attach_dynamic(&sc->sc_clkev, EVCNT_TYPE_INTR, NULL,
 	    sc->sc_dev.dv_xname, "clock");
 	sc->sc_clkirq = irq_establish(IOC_IRQ_TM0, IPL_CLOCK, ioc_irq_clock,
 	    NULL, &sc->sc_clkev);
+	sc->sc_tc.tc_get_timecount = ioc_get_timecount;
+	sc->sc_tc.tc_counter_mask = ~(u_int)0;
+	sc->sc_tc.tc_frequency = IOC_TIMER_RATE;
+	sc->sc_tc.tc_name = sc->sc_dev.dv_xname;
+	sc->sc_tc.tc_quality = 100;
+	sc->sc_tc.tc_priv = sc;
+	tc_init(&sc->sc_tc);
 	if (bootverbose)
 		printf("%s: %d Hz clock interrupting at %s\n",
 		    the_ioc->dv_xname, hz, irq_string(sc->sc_clkirq));
@@ -344,7 +350,7 @@ cpu_initclocks(void)
 		profhz = stathz; /* Makes life simpler */
 		
 		if (stathz == 0 || IOC_TIMER_RATE % stathz != 0 ||
-		    (statint = IOC_TIMER_RATE / stathz) > 65535)
+		    (statint = IOC_TIMER_RATE / stathz - 1) > 65535)
 			panic("Impossible statclock rate: %d Hz", stathz);
 
 		minint = statint / 2 + 100;
@@ -368,7 +374,9 @@ cpu_initclocks(void)
 static int
 ioc_irq_clock(void *cookie)
 {
+	struct ioc_softc *sc = (void *)the_ioc;
 
+	sc->sc_tcbase += t0_count + 1;
 	hardclock(cookie);
 	return IRQ_HANDLED;
 }
@@ -406,82 +414,40 @@ setstatclockrate(int hzrate)
 	KASSERT(hzrate == stathz);
 }
 
-void
-microtime(struct timeval *tvp)
+/*
+ * IOC timecounter
+ *
+ * We construct a timecounter from timer 0, which is also running the
+ * hardclock interrupt.  Since the timer 0 resets on every hardclock
+ * interrupt, we keep track of the high-order bits of the counter in
+ * software, incrementing it on every hardclock.  If hardclock
+ * interrupts are disabled, there's a period where the timer has reset
+ * but the interrupt handler hasn't incremented the hight-order bits.
+ * We detect this by checking whether there's a hardclock interrupt
+ * pending.  We take a bit of extra care to ensure that we aren't
+ * confused by the interrupt happening between our latching the
+ * timer's count and reading the interrupt flag.
+ */
+static u_int
+ioc_get_timecount(struct timecounter *tc)
 {
-	static struct timeval lasttime;
-	struct timeval t;
-	struct device *self;
-	struct ioc_softc *sc;
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	long sec, usec;
-	int t0, s, intbefore, intafter;
-
-	KASSERT(the_ioc != NULL);
-	self = the_ioc;
-	sc = (struct ioc_softc *)self;
-
-	bst = sc->sc_bst;
-	bsh = sc->sc_bsh;
+	struct ioc_softc *sc = tc->tc_priv;
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+	u_int t0, count;
+	int s, intpending;
 
 	s = splclock();
-
-	t = time;
-
-	intbefore = ioc_irq_status(IOC_IRQ_TM0);
 	bus_space_write_1(bst, bsh, IOC_T0LATCH, 0);
+	if (__predict_false((intpending = ioc_irq_status(IOC_IRQ_TM0))))
+		bus_space_write_1(bst, bsh, IOC_T0LATCH, 0);	
 	t0 = bus_space_read_1(bst, bsh, IOC_T0LOW);
 	t0 += bus_space_read_1(bst, bsh, IOC_T0HIGH) << 8;
-	intafter = ioc_irq_status(IOC_IRQ_TM0);
-
+	count = sc->sc_tcbase - t0;
+	if (intpending)
+		count += t0_count + 1;
 	splx(s);
-
-	/*
-	 * If there's a timer interrupt pending, the counter has
-	 * probably wrapped around once since "time" was last updated.
-	 * Things are complicated by the fact that this could happen
-	 * while we're trying to work out the time.  We include some
-	 * heuristics to spot this.
-	 *
-	 * NB: t0 counts down from t0_count to 0.
-	 */
-
-	if (intbefore || (intafter && t0 < t0_count / 2))
-		t0 -= t0_count;
-
-	t.tv_usec += (t0_count - t0) / (IOC_TIMER_RATE / 1000000);
-
-	while (t.tv_usec > 1000000) {
-		t.tv_usec -= 1000000;
-		t.tv_sec++;
-	}
-
-	/*
-	 * Ordinarily, the current clock time is guaranteed to be later
-	 * by at least one microsecond than the last time the clock was
-	 * read.  However, this rule applies only if the current time is
-	 * within one second of the last time.  Otherwise, the clock will
-	 * (shudder) be set backward.  The clock adjustment daemon or
-	 * human equivalent is presumed to be correctly implemented and
-	 * to set the clock backward only upon unavoidable crisis.
-	 */
-	sec = lasttime.tv_sec - t.tv_sec;
-	usec = lasttime.tv_usec - t.tv_usec;
-	if (usec < 0) {
-		usec += 1000000;
-		sec--;
-	}
-	if (sec == 0) {
-		t.tv_usec += usec + 1;
-		if (t.tv_usec >= 1000000) {
-			t.tv_usec -= 1000000;
-			t.tv_sec++;
-		}
-	}
-	lasttime = t;
-
-	*tvp = t;
+	return count;
 }
 
 void

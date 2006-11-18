@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.46 2005/12/11 12:17:03 christos Exp $
+#	$NetBSD: files.bebox,v 1.46.20.1 2006/11/18 21:29:08 ad Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -82,6 +82,10 @@ file	arch/bebox/isa/isadma_machdep.c	isa
 
 # PC clock
 file	arch/bebox/isa/isaclock.c		isa
+
+device	mcclock: mc146818
+attach	mcclock at isa with mcclock_isa
+file	arch/bebox/isa/mcclock_isa.c		mcclock_isa
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device

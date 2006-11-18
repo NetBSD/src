@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.11 2006/09/07 04:33:55 simonb Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.11.2.1 2006/11/18 21:34:13 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.11 2006/09/07 04:33:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.11.2.1 2006/11/18 21:34:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ mc146818_attach(struct mc146818_softc *sc)
 	handle->cookie = sc;
 	handle->todr_gettime = NULL;
 	handle->todr_settime = NULL;
-	handle->todr_settime_ymdhms = mc146818_gettime_ymdhms;
+	handle->todr_gettime_ymdhms = mc146818_gettime_ymdhms;
 	handle->todr_settime_ymdhms = mc146818_settime_ymdhms;
 	handle->todr_setwen  = NULL;
 }

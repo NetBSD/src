@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.13 2005/12/11 12:19:47 christos Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.13.20.1 2006/11/18 21:29:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.13 2005/12/11 12:19:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.13.20.1 2006/11/18 21:29:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,13 +217,14 @@ isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 }
 
 void *
-isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
-	isa_chipset_tag_t ic;
-	int irq;
-	int type;
-	int level;
-	int (*ih_fun) __P((void *));
-	void *ih_arg;
+isa_intr_establish(
+    isa_chipset_tag_t ic,
+    int irq,
+    int type,
+    int level,
+    int (*ih_fun)(void *),
+    void *ih_arg
+)
 {
 	struct pic *pic;
 	int pin;
@@ -260,9 +261,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
  * Deregister an interrupt handler.
  */
 void
-isa_intr_disestablish(ic, arg)
-	isa_chipset_tag_t ic;
-	void *arg;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 	struct intrhand *ih = arg;
 
@@ -273,9 +272,8 @@ isa_intr_disestablish(ic, arg)
 }
 
 void
-isa_attach_hook(parent, self, iba)
-	struct device *parent, *self;
-	struct isabus_attach_args *iba;
+isa_attach_hook(struct device *parent, struct device *self,
+    struct isabus_attach_args *iba)
 {
 	extern struct x86_isa_chipset x86_isa_chipset;
 	extern int isa_has_been_seen;
@@ -347,7 +345,7 @@ isa_mem_free(t, bsh, size)
  */
 static int
 _isa_dma_may_bounce(bus_dma_tag_t t, bus_dmamap_t map, int flags,
-		    int *cookieflagsp)
+    int *cookieflagsp)
 {
 	if ((flags & ISABUS_DMA_32BIT) != 0)
 		map->_dm_bounce_thresh = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbreg.h,v 1.5 2005/12/11 12:19:09 christos Exp $	*/
+/*	$NetBSD: ffbreg.h,v 1.5.20.1 2006/11/18 21:29:32 ad Exp $	*/
 /*	$OpenBSD: creatorreg.h,v 1.5 2002/07/29 06:21:45 jason Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef FFB_REG_H
+#define FFB_REG_H
 
 /* Number of register sets */
 #define	FFB_NREGS		24
@@ -238,3 +241,5 @@
 #define	FBC_DRAWOP_FASTFILL	0x09
 #define	FBC_DRAWOP_BCOPY	0x0a	/* block copy: not implemented */
 #define	FBC_DRAWOP_VSCROLL	0x0b	/* vertical scroll */
+
+#endif /* FFB_REG_H */

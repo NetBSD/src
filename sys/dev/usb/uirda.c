@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.20 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uirda.c,v 1.20.20.1 2006/11/18 21:34:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.20 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.20.20.1 2006/11/18 21:34:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,7 +441,8 @@ uirda_activate(device_ptr_t self, enum devact act)
 }
 
 int
-uirda_open(void *h, int flag, int mode, struct lwp *l)
+uirda_open(void *h, int flag, int mode,
+    struct lwp *l)
 {
 	struct uirda_softc *sc = h;
 	int error;
@@ -510,7 +511,8 @@ bad1:
 }
 
 int
-uirda_close(void *h, int flag, int mode, struct lwp *l)
+uirda_close(void *h, int flag, int mode,
+    struct lwp *l)
 {
 	struct uirda_softc *sc = h;
 

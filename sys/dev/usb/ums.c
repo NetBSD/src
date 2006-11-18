@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.64 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: ums.c,v 1.64.20.1 2006/11/18 21:34:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.64 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.64.20.1 2006/11/18 21:34:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,8 @@ const struct wsmouse_accessops ums_accessops = {
 USB_DECLARE_DRIVER(ums);
 
 int
-ums_match(struct device *parent, struct cfdata *match, void *aux)
+ums_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 	int size;
@@ -332,9 +333,10 @@ ums_intr(struct uhidev *addr, void *ibuf, u_int len)
 		sc->sc_buttons = buttons;
 		if (sc->sc_wsmousedev != NULL) {
 			s = spltty();
-			wsmouse_input_xyzw(sc->sc_wsmousedev, buttons,
-					   dx, dy, dz, dw,
-					   WSMOUSE_INPUT_DELTA);
+			wsmouse_input(sc->sc_wsmousedev,
+					buttons,
+					dx, dy, dz, dw,
+					WSMOUSE_INPUT_DELTA);
 			splx(s);
 		}
 	}
@@ -377,7 +379,8 @@ ums_disable(void *v)
 }
 
 Static int
-ums_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp * p)
+ums_ioctl(void *v, u_long cmd, caddr_t data, int flag,
+    struct lwp * p)
 
 {
 	switch (cmd) {

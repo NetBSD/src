@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.6 2006/09/05 21:59:51 gdamore Exp $ */
+/*	$NetBSD: apmdev.c,v 1.6.2.1 2006/11/18 21:34:07 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,9 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.6 2006/09/05 21:59:51 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.6.2.1 2006/11/18 21:34:07 ad Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_apmdev.h"
+#endif
 
 #ifdef APM_NOIDLE
 #error APM_NOIDLE option deprecated; use APM_NO_IDLE instead
@@ -72,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.6 2006/09/05 21:59:51 gdamore Exp $");
 
 #include <machine/stdarg.h>
 
-#define	APMDEBUG
 #if defined(APMDEBUG)
 #define	DPRINTF(f, x)		do { if (apmdebug & (f)) printf x; } while (0)
 
@@ -161,7 +162,7 @@ dev_type_kqfilter(apmdevkqfilter);
 
 const struct cdevsw apmdev_cdevsw = {
 	apmdevopen, apmdevclose, noread, nowrite, apmdevioctl,
-	nostop, notty, apmdevpoll, nommap, apmdevkqfilter,
+	nostop, notty, apmdevpoll, nommap, apmdevkqfilter, D_OTHER
 };
 
 /* configurable variables */
@@ -643,7 +644,8 @@ ok:
 }
 
 static int
-apmmatch(struct device *parent, struct cfdata *match, void *aux)
+apmmatch(struct device *parent,
+	 struct cfdata *match, void *aux)
 {
 
 	/* There can be only one! */
@@ -812,7 +814,8 @@ apmdevopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-apmdevclose(dev_t dev, int flag, int mode, struct lwp *l)
+apmdevclose(dev_t dev, int flag, int mode,
+	    struct lwp *l)
 {
 	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
 	int ctl = APMDEV(dev);
@@ -838,7 +841,8 @@ apmdevclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+	    struct lwp *l)
 {
 	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
 	struct apm_power_info *powerp;

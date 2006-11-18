@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.SKI,v 1.2 2006/07/02 17:23:59 cherry Exp $
+# $NetBSD: GENERIC.SKI,v 1.2.4.1 2006/11/18 21:29:20 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC-$Revision: 1.2.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -77,6 +77,14 @@ include	"arch/ia64/conf/GENERIC.local"
 #wsdisplay*	at ssccons0 console ?
 #wskbd*		at ssccons0 console ?
 
+# Enable the hooks used for initializing the root memory-disk.
+options     MEMORY_DISK_HOOKS
+options     MEMORY_DISK_IS_ROOT         # force root on memory disk
+options     MEMORY_DISK_SERVER=1        # make the ramdisk writeable
+#options    MEMORY_DISK_ROOT_SIZE=2880  # 1.44M, same as a floppy
+options     MEMORY_DISK_ROOT_SIZE=8192  # 4Meg
+options     MEMORY_RBFLAGS=0            # don't force single user
+
 # Pseudo-Devices
 
 
@@ -87,10 +95,3 @@ pseudo-device	ssccons			# Ski emulator console
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	md		1
 
-# Enable the hooks used for initializing the root memory-disk.
-options     MEMORY_DISK_HOOKS
-options     MEMORY_DISK_IS_ROOT         # force root on memory disk
-options     MEMORY_DISK_SERVER=1        # make the ramdisk writeable
-#options    MEMORY_DISK_ROOT_SIZE=2880  # 1.44M, same as a floppy
-options     MEMORY_DISK_ROOT_SIZE=8192  # 4Meg
-options     MEMORY_RBFLAGS=0            # don't force single user

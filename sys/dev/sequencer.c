@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.34 2006/09/03 05:19:38 christos Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.34.2.1 2006/11/18 21:34:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.34 2006/09/03 05:19:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.34.2.1 2006/11/18 21:34:03 ad Exp $");
 
 #include "sequencer.h"
 
@@ -284,7 +284,8 @@ seq_startoutput(struct sequencer_softc *sc)
 }
 
 static int
-sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
+sequencerclose(dev_t dev, int flags, int ifmt,
+    struct lwp *l)
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
 	int n, s;
@@ -435,7 +436,8 @@ sequencerwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 static int
-sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+    struct lwp *l)
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
 	struct synth_info *si;
@@ -1330,7 +1332,7 @@ static dev_type_close(midiclose);
 
 const struct cdevsw midi_cdevsw = {
 	midiopen, midiclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 /*

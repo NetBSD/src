@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.18 2006/03/29 07:05:24 thorpej Exp $	*/
+/*	$NetBSD: makphy.c,v 1.18.8.1 2006/11/18 21:34:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.18 2006/03/29 07:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.18.8.1 2006/11/18 21:34:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,8 @@ static const struct mii_phydesc makphys[] = {
 };
 
 static int
-makphymatch(struct device *parent, struct cfdata *match, void *aux)
+makphymatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -147,7 +148,7 @@ makphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &makphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	PHY_RESET(sc);
 
@@ -198,6 +199,15 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			break;
 
 		mii_phy_setmedia(sc);
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
+			/*
+			 * when not in auto mode, we need to restart nego
+			 * anyway, or a switch from a fixed mode to another
+			 * fixed mode may not be seen by the switch.
+			 */
+			PHY_WRITE(sc, MII_BMCR,
+			    PHY_READ(sc, MII_BMCR) | BMCR_STARTNEG);
+		}
 		break;
 
 	case MII_TICK:

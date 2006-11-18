@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.14 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.14.20.1 2006/11/18 21:34:51 ad Exp $	*/
 
 /*
  * TODO:
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.14 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.14.20.1 2006/11/18 21:34:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,7 +393,8 @@ uisdata_reset_channel(struct ata_channel *chp, int flags)
 }
 
 void
-uisdata_exec_cb(struct umass_softc *sc, void *priv, int residue, int status)
+uisdata_exec_cb(struct umass_softc *sc, void *priv,
+    int residue, int status)
 {
 	struct ata_command *cmd = priv;
 

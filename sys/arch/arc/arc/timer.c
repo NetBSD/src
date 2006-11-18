@@ -1,4 +1,4 @@
-/* $NetBSD: timer.c,v 1.7 2006/06/24 04:00:21 tsutsui Exp $ */
+/* $NetBSD: timer.c,v 1.7.4.1 2006/11/18 21:29:05 ad Exp $ */
 /* NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp  */
 
 /*
@@ -79,13 +79,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.7 2006/06/24 04:00:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.7.4.1 2006/11/18 21:29:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
 #include <mips/locore.h>
+#include <mips/mips3_clock.h>
 
 #include <arc/arc/timervar.h>
 
@@ -149,20 +150,13 @@ cpu_initclocks(void)
 	if (timerfns == NULL)
 		panic("cpu_initclocks: no timer attached");
 
-	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-	tickfix = 1000000 - (hz * tick);
-	if (tickfix) {
-		int ftp;
-
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= (ftp - 1);
-		tickfixinterval = hz >> (ftp - 1);
-        }
-
 	/*
 	 * Get the clock started.
 	 */
 	(*timerfns->tf_init)(timerdev);
+
+	/* init timecounter */
+	mips3_init_tc();
 
 #ifdef ENABLE_INT5_STATCLOCK
 	/* enable interrupts including CPU INT 5 */
@@ -234,32 +228,3 @@ statclockintr(struct clockframe *cfp)
 	statprev = statnext;
 }
 #endif
-
-/*
- * Wait "n" microseconds.
- */
-void
-delay(unsigned int n)
-{
-	uint32_t cur, last, delta, usecs;
-
-	last = mips3_cp0_count_read();
-	delta = usecs = 0;
-
-	while (n > usecs) {
-		cur = mips3_cp0_count_read();
-
-		/* Check to see if the timer has wrapped around. */
-		if (cur < last)
- 			delta += ((curcpu()->ci_cycles_per_hz - last) + cur);
-		else
-			delta += (cur - last);
-
-		last = cur;
-
-		if (delta >= curcpu()->ci_divisor_delay) {
-			usecs += delta / curcpu()->ci_divisor_delay;
-			delta %= curcpu()->ci_divisor_delay;
-		}
-	}
-}

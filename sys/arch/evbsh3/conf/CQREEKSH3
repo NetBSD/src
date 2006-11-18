@@ -1,4 +1,4 @@
-#	$NetBSD: CQREEKSH3,v 1.27 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: CQREEKSH3,v 1.27.20.1 2006/11/18 21:29:12 ad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -63,6 +63,7 @@ config		netbsd	root on ? type ?
 #
 mainbus0 at root
 shb* at mainbus?
+rtc0 at shb?
 wdog0 at shb?
 options 	SCICONSOLE,SCICN_SPEED=38400
 sci0 at shb?

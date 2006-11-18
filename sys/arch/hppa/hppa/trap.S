@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.13 2006/08/26 06:00:07 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.13.2.1 2006/11/18 21:29:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -201,7 +201,7 @@ gateway_page_end:
 $syscall:
 	/*
 	 *
-	 * t1:	curlwp
+	 * t1:	syscall number
 	 * t2:	user
 	 * t3:	args
 	 * t4:	user stack

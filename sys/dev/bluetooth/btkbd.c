@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.3 2006/09/05 18:14:57 plunky Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.3.2.1 2006/11/18 21:34:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.3 2006/09/05 18:14:57 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.3.2.1 2006/11/18 21:34:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -164,7 +164,8 @@ static void btkbd_repeat(void *);
  */
 
 static int
-btkbd_match(struct device *self, struct cfdata *cfdata, void *aux)
+btkbd_match(struct device *self, struct cfdata *cfdata,
+    void *aux)
 {
 	struct bthidev_attach_args *ba = aux;
 
@@ -336,7 +337,8 @@ btkbd_set_leds(void *self, int leds)
 }
 
 static int
-btkbd_ioctl(void *self, unsigned long cmd, caddr_t data, int flag, struct lwp *l)
+btkbd_ioctl(void *self, unsigned long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct btkbd_softc *sc = (struct btkbd_softc *)self;
 

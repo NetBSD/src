@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.11 2006/07/04 23:05:11 rpaulo Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.11.4.1 2006/11/18 21:34:14 ad Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.11 2006/07/04 23:05:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.11.4.1 2006/11/18 21:34:14 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -147,7 +147,9 @@ static void	rt2661_set_chan(struct rt2661_softc *,
 static void	rt2661_set_bssid(struct rt2661_softc *, const uint8_t *);
 static void	rt2661_set_macaddr(struct rt2661_softc *, const uint8_t *);
 static void	rt2661_update_promisc(struct rt2661_softc *);
-static int	rt2661_wme_update(struct ieee80211com *) __unused;
+#if 0
+static int	rt2661_wme_update(struct ieee80211com *);
+#endif
 
 static void	rt2661_update_slot(struct ifnet *);
 static const char *
@@ -2427,6 +2429,7 @@ rt2661_update_promisc(struct rt2661_softc *sc)
 	    "entering" : "leaving"));
 }
 
+#if 0
 /*
  * Update QoS (802.11e) settings for each h/w Tx ring.
  */
@@ -2472,6 +2475,7 @@ rt2661_wme_update(struct ieee80211com *ic)
 
 	return 0;
 }
+#endif
 
 static void
 rt2661_update_slot(struct ifnet *ifp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.47 2006/09/03 21:05:01 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.47.2.1 2006/11/18 21:29:18 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.47 2006/09/03 21:05:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.47.2.1 2006/11/18 21:29:18 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -340,11 +340,11 @@ ddb_suspend(struct trapframe *frame)
 extern void cpu_debug_dump(void); /* XXX */
 
 void
-db_mach_cpu(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	const char *	modif;
+db_mach_cpu(
+	db_expr_t	addr,
+	int		have_addr,
+	db_expr_t	count,
+	const char *	modif)
 {
 	struct cpu_info *ci;
 	if (!have_addr) {

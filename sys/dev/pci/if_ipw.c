@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.27 2006/08/02 13:58:39 rpaulo Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.27.4.1 2006/11/18 21:34:30 ad Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.27 2006/08/02 13:58:39 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.27.4.1 2006/11/18 21:34:30 ad Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -160,7 +160,8 @@ CFATTACH_DECL(ipw, sizeof (struct ipw_softc), ipw_match, ipw_attach,
     ipw_detach, NULL);
 
 static int
-ipw_match(struct device *parent, struct cfdata *match, void *aux)
+ipw_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -346,7 +347,8 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_sdhook == NULL)
 		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
-	sc->sc_powerhook = powerhook_establish(ipw_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    ipw_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
@@ -889,7 +891,8 @@ ipw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 }
 
 static int
-ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
+ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
+    int arg)
 {
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ipw_softc *sc = ifp->if_softc;
@@ -2023,6 +2026,8 @@ ipw_cache_firmware(struct ipw_softc *sc)
 	    fw->ucode_size));
 
 	sc->flags |= IPW_FLAG_FW_CACHED;
+
+	firmware_close(fwh);
 
 	return 0;
 

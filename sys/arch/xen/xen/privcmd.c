@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.13 2006/05/14 21:57:13 elad Exp $ */
+/* $NetBSD: privcmd.c,v 1.13.8.1 2006/11/18 21:29:39 ad Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.13 2006/05/14 21:57:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.13.8.1 2006/11/18 21:29:39 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -77,7 +77,13 @@ privcmd_ioctl(void *v)
 			"movl 16(%%eax),%%esi ;"
 			"movl 20(%%eax),%%edi ;"
 			"movl   (%%eax),%%eax ;"
+#if defined(XEN3) && !defined(XEN_COMPAT_030001)
+			"shll $5,%%eax ;"
+			"addl $hypercall_page,%%eax ;"
+			"call *%%eax ;"
+#else
 			TRAP_INSTR "; "
+#endif
 			"popl %%edi; popl %%esi; popl %%edx;"
 			"popl %%ecx; popl %%ebx"
 			: "=a" (error) : "0" (ap->a_data) : "memory" );

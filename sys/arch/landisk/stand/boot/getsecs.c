@@ -1,4 +1,4 @@
-/*	$NetBSD: getsecs.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: getsecs.c,v 1.1.4.1 2006/11/18 21:29:23 ad Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -14,7 +14,7 @@
 #include <sh3/devreg.h>
 #include <sh3/scireg.h>
 
-#include <arch/landisk/dev/rs5c313reg.h>
+#include <dev/ic/rs5c313reg.h>
 
 /**
  * RICOH RS5C313
@@ -173,19 +173,19 @@ getsecs(void)
 #endif
 	time_t secs;
 
-	sec = rtc_read(RS5C313_ADDR_SEC1);
-	sec += rtc_read(RS5C313_ADDR_SEC10) * 10;
-	min = rtc_read(RS5C313_ADDR_MIN1);
-	min += rtc_read(RS5C313_ADDR_MIN10) * 10;
-	hour = rtc_read(RS5C313_ADDR_HOUR1);
-	hour += rtc_read(RS5C313_ADDR_HOUR10) * 10;
-	day = rtc_read(RS5C313_ADDR_DAY1);
-	day += rtc_read(RS5C313_ADDR_DAY10) * 10;
+	sec = rtc_read(RS5C313_SEC1);
+	sec += rtc_read(RS5C313_SEC10) * 10;
+	min = rtc_read(RS5C313_MIN1);
+	min += rtc_read(RS5C313_MIN10) * 10;
+	hour = rtc_read(RS5C313_HOUR1);
+	hour += rtc_read(RS5C313_HOUR10) * 10;
+	day = rtc_read(RS5C313_DAY1);
+	day += rtc_read(RS5C313_DAY10) * 10;
 #if 0
-	mon = rtc_read(RS5C313_ADDR_MON1);
-	mon += rtc_read(RS5C313_ADDR_MON10) * 10;
-	year = rtc_read(RS5C313_ADDR_YEAR1);
-	year += rtc_read(RS5C313_ADDR_YEAR10) * 10;
+	mon = rtc_read(RS5C313_MON1);
+	mon += rtc_read(RS5C313_MON10) * 10;
+	year = rtc_read(RS5C313_YEAR1);
+	year += rtc_read(RS5C313_YEAR10) * 10;
 #endif
 
 	secs = sec;

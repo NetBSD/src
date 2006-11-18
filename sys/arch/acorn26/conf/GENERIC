@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47 2006/08/26 20:26:43 christos Exp $
+# $NetBSD: GENERIC,v 1.47.2.1 2006/11/18 21:28:58 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -61,7 +61,7 @@ file-system	PROCFS		# /proc
 file-system	KERNFS		# /kern
 file-system	FDESC		# /dev/fd
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -194,6 +194,9 @@ atabus* 	at dtide? channel ?	# ATA bus
 
 hcide*		at podulebus0 slot ?	# HCCS IDE interface
 atabus* 	at hcide? channel ?	# ATA bus
+
+sec*		at podulebus0 slot ?	# Acorn SCSI interface
+scsibus*	at sec?
 
 hcsc*		at podulebus0 slot ?	# HCCS 8-bit SCSI interface
 scsibus*	at hcsc?

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.35 2006/08/27 05:07:12 christos Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.35.2.1 2006/11/18 21:34:46 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.35 2006/08/27 05:07:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.35.2.1 2006/11/18 21:34:46 ad Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -69,8 +69,7 @@ static void rf_CopybackOne(RF_CopybackDesc_t * desc, int typ,
 static void rf_CopybackComplete(RF_CopybackDesc_t * desc, int status);
 
 int
-rf_ConfigureCopyback(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureCopyback(RF_ShutdownList_t **listp)
 {
 	rf_copyback_in_progress = 0;
 	return (0);

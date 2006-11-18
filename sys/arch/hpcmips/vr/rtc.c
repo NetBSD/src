@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.23 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: rtc.c,v 1.23.20.1 2006/11/18 21:29:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,12 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.23 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.23.20.1 2006/11/18 21:29:17 ad Exp $");
 
 #include "opt_vr41xx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 
 #include <machine/sysconf.h>
 #include <machine/bus.h>
@@ -80,15 +81,19 @@ struct vrrtc_softc {
 	int sc_tclk_h_reg, sc_tclk_l_reg;
 	int sc_tclk_cnt_h_reg, sc_tclk_cnt_l_reg;
 #endif /* SINGLE_VRIP_BASE */
+	int64_t sc_epoch;
+	struct todr_chip_handle sc_todr;
+	struct timecounter sc_tc;
 };
 
-void	clock_init(struct device *);
-void	clock_get(struct device *, time_t, struct clock_ymdhms *);
-void	clock_set(struct device *, struct clock_ymdhms *);
+void	vrrtc_init(struct device *);
+int	vrrtc_get(todr_chip_handle_t, volatile struct timeval *);
+int	vrrtc_set(todr_chip_handle_t, volatile struct timeval *);
+uint32_t vrrtc_get_timecount(struct timecounter *);
 
 struct platform_clock vr_clock = {
 #define CLOCK_RATE	128
-	CLOCK_RATE, clock_init, clock_get, clock_set,
+	CLOCK_RATE, vrrtc_init,
 };
 
 int	vrrtc_match(struct device *, struct cfdata *, void *);
@@ -98,27 +103,6 @@ void	vrrtc_dump_regs(struct vrrtc_softc *);
 
 CFATTACH_DECL(vrrtc, sizeof(struct vrrtc_softc),
     vrrtc_match, vrrtc_attach, NULL, NULL);
-
-static inline void vrrtc_write(struct vrrtc_softc *, int, u_int16_t);
-static inline u_int16_t vrrtc_read(struct vrrtc_softc *, int);
-void	cvt_timehl_ymdhms(u_int32_t, u_int32_t, struct clock_ymdhms *);
-
-extern int rtc_offset;
-static int m2d[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-static inline void
-vrrtc_write(struct vrrtc_softc *sc, int port, u_int16_t val)
-{
-
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, port, val);
-}
-
-static inline u_int16_t
-vrrtc_read(struct vrrtc_softc *sc, int port)
-{
-
-	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, port));
-}
 
 int
 vrrtc_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -140,6 +124,7 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
 	struct vrrtc_softc *sc = (void *)self;
+	int year;
 
 #ifndef SINGLE_VRIP_BASE
 	if (va->va_addr == VR4102_RTC_ADDR) {
@@ -212,6 +197,26 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCINT_REG_W, RTCINT_ALL);
 
+	/*
+	 * Figure out the epoch, which could be either forward or
+	 * backwards in time.  We assume that the start date will always
+	 * be on Jan 1.
+	 */
+	for (year = EPOCHYEAR; year < POSIX_BASE_YEAR; year++) {
+		sc->sc_epoch += LEAPYEAR4(year) ? SECYR + SECDAY : SECYR;
+	}
+	for (year = POSIX_BASE_YEAR; year < EPOCHYEAR; year++) {
+		sc->sc_epoch -= LEAPYEAR4(year) ? SECYR + SECDAY : SECYR;
+	}
+
+	/*
+	 * Initialize MI todr(9)
+	 */
+	sc->sc_todr.todr_settime = vrrtc_set;
+	sc->sc_todr.todr_gettime = vrrtc_get;
+	sc->sc_todr.cookie = sc;
+	todr_attach(&sc->sc_todr);
+
 	platform_clock_attach(sc, &vr_clock);
 }
 
@@ -230,7 +235,7 @@ vrrtc_intr(void *arg, u_int32_t pc, u_int32_t statusReg)
 }
 
 void
-clock_init(struct device *dev)
+vrrtc_init(struct device *dev)
 {
 	struct vrrtc_softc *sc = (struct vrrtc_softc *)dev;
 
@@ -241,17 +246,39 @@ clock_init(struct device *dev)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCL1_H_REG_W, 0);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCL1_L_REG_W,
 	    RTCL1_L_HZ/CLOCK_RATE);
+
+	/*
+	 * Initialize timecounter.
+	 */
+	sc->sc_tc.tc_get_timecount = vrrtc_get_timecount;
+	sc->sc_tc.tc_name = "vrrtc";
+	sc->sc_tc.tc_counter_mask = 0xffff;
+	sc->sc_tc.tc_frequency = ETIME_L_HZ;
+	sc->sc_tc.tc_priv = sc;
+	sc->sc_tc.tc_quality = 100;
+	tc_init(&sc->sc_tc);
 }
 
-void
-clock_get(struct device *dev, time_t base, struct clock_ymdhms *dt)
+uint32_t
+vrrtc_get_timecount(struct timecounter *tc)
+{
+	struct vrrtc_softc *sc = (struct vrrtc_softc *)tc->tc_priv;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+
+	return (bus_space_read_2(iot, ioh, ETIME_L_REG_W));
+}
+
+int
+vrrtc_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 
-	struct vrrtc_softc *sc = (struct vrrtc_softc *)dev;
+	struct vrrtc_softc *sc = (struct vrrtc_softc *)tch->cookie;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int32_t timeh;	/* elapse time (2*timeh sec) */
 	u_int32_t timel;	/* timel/32768 sec */
+	int64_t sec, usec;
 
 	timeh = bus_space_read_2(iot, ioh, ETIME_H_REG_W);
 	timeh = (timeh << 16) | bus_space_read_2(iot, ioh, ETIME_M_REG_W);
@@ -259,135 +286,47 @@ clock_get(struct device *dev, time_t base, struct clock_ymdhms *dt)
 
 	DPRINTF(("clock_get: timeh %08x timel %08x\n", timeh, timel));
 
-	cvt_timehl_ymdhms(timeh, timel, dt);
+	timeh -= EPOCHOFF;
+	sec = timeh * 2;
+	sec -= sc->sc_epoch;
+	tvp->tv_sec = sec;
+	tvp->tv_sec += timel / ETIME_L_HZ;
 
-	DPRINTF(("clock_get: %d/%d/%d/%d/%d/%d\n", dt->dt_year, dt->dt_mon,
-	    dt->dt_day, dt->dt_hour, dt->dt_min, dt->dt_sec));
+	/* scale from 32kHz to 1MHz */
+	usec = (timel % ETIME_L_HZ);
+	usec *= 1000000;
+	usec /= ETIME_L_HZ;
+	tvp->tv_usec = (uint32_t)usec;
+
+	return 0;
 }
 
-void
-clock_set(struct device *dev, struct clock_ymdhms *dt)
+int
+vrrtc_set(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
-	struct vrrtc_softc *sc = (struct vrrtc_softc *)dev;
+	struct vrrtc_softc *sc = (struct vrrtc_softc *)tch->cookie;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int32_t timeh;	/* elapse time (2*timeh sec) */
 	u_int32_t timel;	/* timel/32768 sec */
-	int year, month, sec2;
+	int64_t sec, cnt;
 
-	timeh = 0;
-	timel = 0;
+	sec = tvp->tv_sec + sc->sc_epoch;
+	sec += sc->sc_epoch;
+	timeh = EPOCHOFF + (sec / 2);
+	timel = sec % 2;
 
-	DPRINTF(("clock_set: %d/%d/%d/%d/%d/%d\n", dt->dt_year, dt->dt_mon,
-	    dt->dt_day, dt->dt_hour, dt->dt_min, dt->dt_sec));
-
-	dt->dt_year += YBASE;
-
-	DPRINTF(("clock_set: %d/%d/%d/%d/%d/%d\n", dt->dt_year, dt->dt_mon,
-	    dt->dt_day, dt->dt_hour, dt->dt_min, dt->dt_sec));
-
-	year = EPOCHYEAR;
-	sec2 = LEAPYEAR4(year)?SEC2YR+SEC2DAY:SEC2YR;
-	while (year < dt->dt_year) {
-		year++;
-		timeh += sec2;
-		sec2 = LEAPYEAR4(year)?SEC2YR+SEC2DAY:SEC2YR;
-	}
-	month = 1; /* now month is 1..12 */
-	sec2 = SEC2DAY * m2d[month-1];
-	while (month < dt->dt_mon) {
-		month++;
-		timeh += sec2;
-		sec2 = SEC2DAY * m2d[month-1];
-		if (month == 2 && LEAPYEAR4(year)) /* feb. and leapyear */
-			sec2 += SEC2DAY;
-	}
-
-	timeh += (dt->dt_day - 1)*SEC2DAY;
-
-	timeh += dt->dt_hour*SEC2HOUR;
-
-	timeh += dt->dt_min*SEC2MIN;
-
-	timeh += dt->dt_sec/2;
-	timel += (dt->dt_sec%2)*ETIME_L_HZ;
-
-	timeh += EPOCHOFF;
-	timeh -= (rtc_offset*SEC2MIN);
-
-#ifdef VRRTCDEBUG
-	cvt_timehl_ymdhms(timeh, timel, NULL);
-#endif /* RTCDEBUG */
+	cnt = tvp->tv_usec;
+	/* scale from 1MHz to 32kHz */
+	cnt *= ETIME_L_HZ;
+	cnt /= 1000000;
+	timel += (uint32_t)cnt;
 
 	bus_space_write_2(iot, ioh, ETIME_H_REG_W, (timeh >> 16) & 0xffff);
 	bus_space_write_2(iot, ioh, ETIME_M_REG_W, timeh & 0xffff);
 	bus_space_write_2(iot, ioh, ETIME_L_REG_W, timel);
-}
 
-void
-cvt_timehl_ymdhms(
-	u_int32_t timeh, /* 2 sec */
-	u_int32_t timel, /* 1/32768 sec */
-	struct clock_ymdhms *dt)
-{
-	u_int32_t year, month, date, hour, mins, sec, sec2;
-
-	timeh -= EPOCHOFF;
-
-	timeh += (rtc_offset*SEC2MIN);
-
-	year = EPOCHYEAR;
-	sec2 = LEAPYEAR4(year)?SEC2YR+SEC2DAY:SEC2YR;
-	while (timeh > sec2) {
-		year++;
-		timeh -= sec2;
-		sec2 = LEAPYEAR4(year)?SEC2YR+SEC2DAY:SEC2YR;
-	}
-
-	DPRINTF(("cvt_timehl_ymdhms: timeh %08x year %d yrref %d\n", 
-	    timeh, year, sec2));
-
-	month = 0; /* now month is 0..11 */
-	sec2 = SEC2DAY * m2d[month];
-	while (timeh > sec2) {
-		timeh -= sec2;
-		month++;
-		sec2 = SEC2DAY * m2d[month];
-		if (month == 1 && LEAPYEAR4(year)) /* feb. and leapyear */
-			sec2 += SEC2DAY;
-	}
-	month +=1; /* now month is 1..12 */
-
-	DPRINTF(("cvt_timehl_ymdhms: timeh %08x month %d mref %d\n", 
-	    timeh, month, sec2));
-
-	sec2 = SEC2DAY;
-	date = timeh/sec2+1; /* date is 1..31 */
-	timeh -= (date-1)*sec2;
-
-	DPRINTF(("cvt_timehl_ymdhms: timeh %08x date %d dref %d\n", 
-	    timeh, date, sec2));
-
-	sec2 = SEC2HOUR;
-	hour = timeh/sec2;
-	timeh -= hour*sec2;
-
-	sec2 = SEC2MIN;
-	mins = timeh/sec2;
-	timeh -= mins*sec2;
-
-	sec = timeh*2 + timel/ETIME_L_HZ;	
-
-	DPRINTF(("cvt_timehl_ymdhms: hour %d min %d sec %d\n", hour, mins, sec));
-
-	if (dt) {
-		dt->dt_year	= year - YBASE; /* base 1900 */
-		dt->dt_mon	= month;
-		dt->dt_day	= date;
-		dt->dt_hour	= hour;
-		dt->dt_min	= mins;
-		dt->dt_sec	= sec;
-	}
+	return 0;
 }
 
 void

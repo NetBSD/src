@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.6 2006/08/26 20:26:45 christos Exp $
+# $NetBSD: XEN2_DOM0,v 1.6.2.1 2006/11/18 21:29:18 ad Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -11,10 +11,10 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 maxusers	32		# estimated number of users
 
 #
-options  	XEN
+options 	XEN
 options 	DOM0OPS
-#making MCLBYTES == PAGE_SIZE avoids a copy when a mbuf cluster is sent
-# do a domU, at the expense of a highter memory usage by the network stack.
+# making MCLBYTES = PAGE_SIZE avoids a copy when a mbuf cluster is sent
+# to a domU, at the expense of a higher memory usage by the network stack.
 #options 	MCLSHIFT=12
 
 options 	I686_CPU
@@ -109,7 +109,7 @@ file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -189,6 +189,9 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 cpu* at mainbus?
+
+# IPMI support
+#ipmi0		at mainbus?
 
 hypervisor*	at mainbus?		# Xen hypervisor
 
@@ -275,6 +278,8 @@ ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
+msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
@@ -311,6 +316,7 @@ glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
@@ -534,6 +540,7 @@ url*    at uhub? port ?         # Realtek RTL8150L based adapters
 # USB 802.11 adapters
 atu*    at uhub? port ?         # Atmel AT76C50XX based adapters
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*    at uhub? port ?
@@ -632,6 +639,32 @@ mpu*	at yds?
 # MIDI support
 midi*	at midibus?
 
+# Bluetooth Controller and Device support
+
+# Bluetooth PCMCIA Controllers
+# bt3c* at pcmcia? function ?             # 3Com 3CRWB6096-A
+
+# Bluetooth USB Controllers
+ubt* at uhub? port ? configuration ? interface ?
+
+# Bluetooth Device Hub
+#bthub* at bt3c?
+bthub* at ubt?
+
+# Bluetooth HID support
+bthidev* at bthub?
+
+# Bluetooth Mouse
+btms* at bthidev? reportid ?
+wsmouse* at btms? mux 0
+
+# Bluetooth Keyboard
+btkbd* at bthidev? reportid ?
+wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Audio support
+btsco* at bthub?
+
 # Cryptographic Devices
 
 # PCI cryptographic devices
@@ -703,5 +736,5 @@ pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-#xen pseudo-devices
+# xen pseudo-devices
 pseudo-device	xenevt

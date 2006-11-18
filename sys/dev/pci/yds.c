@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.34 2006/09/03 21:45:28 christos Exp $	*/
+/*	$NetBSD: yds.c,v 1.34.2.1 2006/11/18 21:34:34 ad Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.34 2006/09/03 21:45:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.34.2.1 2006/11/18 21:34:34 ad Exp $");
 
 #include "mpu.h"
 
@@ -525,7 +525,8 @@ yds_disable_dsp(struct yds_softc *sc)
 }
 
 static int
-yds_match(struct device *parent, struct cfdata *match, void *aux)
+yds_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -928,7 +929,7 @@ detected:
 	sc->sc_legacy_iot = pa->pa_iot;
 	config_defer((struct device*) sc, yds_configure_legacy);
 
-	powerhook_establish(yds_powerhook, sc);
+	powerhook_establish(sc->sc_dev.dv_xname, yds_powerhook, sc);
 }
 
 static int
@@ -1249,7 +1250,8 @@ yds_set_params(void *addr, int setmode, int usemode,
 }
 
 static int
-yds_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
+yds_round_blocksize(void *addr, int blk, int mode,
+    const audio_params_t *param)
 {
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2006/09/04 20:31:30 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.3.2.1 2006/11/18 21:29:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,13 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2006/09/04 20:31:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3.2.1 2006/11/18 21:29:12 ad Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>		/* time */
 
-#include <mips/locore.h>	/* mips3_cp0_count_read */
+#include <mips/mips3_clock.h>
 
 #include <machine/sbdvar.h>
 
@@ -51,6 +49,8 @@ cpu_initclocks(void)
 	KASSERT(platform.initclocks);
 
 	(*platform.initclocks)();
+
+	mips3_init_tc();
 }
 
 void
@@ -58,62 +58,4 @@ setstatclockrate(int arg)
 {
 
 	/* not yet */
-}
-
-/*
- * Return the best possible estimate of the time in the timeval to
- * which tv points.
- */
-void
-microtime(struct timeval *tvp)
-{
-	int s = splclock();
-	static struct timeval lasttime;
-
-	*tvp = time;
-	if (platform.readclock)
-		tvp->tv_usec += (*platform.readclock)();
-
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
-}
-
-/*
- *  Wait at least `n' usec.
- */
-void
-delay(unsigned int n)
-{
-	uint32_t cur, last, delta, usecs;
-	
-	last = mips3_cp0_count_read();
-	delta = usecs = 0;
-
-	while (n > usecs) {
-		cur = mips3_cp0_count_read();
-
-		/* Check to see if the timer has wrapped around. */
-		if (cur < last)
-			delta += ((curcpu()->ci_cycles_per_hz - last) + cur);
-		else
-			delta += (cur - last);
-
-		last = cur;
-
-		if (delta >= curcpu()->ci_divisor_delay) {
-			usecs += delta / curcpu()->ci_divisor_delay;
-			delta %= curcpu()->ci_divisor_delay;
-		}
-	}
 }

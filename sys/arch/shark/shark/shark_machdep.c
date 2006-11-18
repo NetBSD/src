@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.23 2006/02/26 05:31:54 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.23.14.1 2006/11/18 21:29:32 ad Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.23 2006/02/26 05:31:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.23.14.1 2006/11/18 21:29:32 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.23 2006/02/26 05:31:54 thorpej E
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
+#include <arm/arm32/machdep.h>
 #include <arm/undefined.h>
 
 #include "opt_ipkdb.h"
@@ -107,7 +108,6 @@ extern u_int undefined_handler_address;
 /*
  *  Imported routines
  */
-extern void parse_mi_bootargs		__P((char *args));
 extern void data_abort_handler		__P((trapframe_t *frame));
 extern void prefetch_abort_handler	__P((trapframe_t *frame));
 extern void undefinedinstruction_bounce	__P((trapframe_t *frame));
@@ -148,7 +148,6 @@ CFATTACH_DECL(ofbus_root, sizeof(struct device),
  */
 /* Move to header file? */
 extern void cpu_reboot		__P((int, char *));
-extern vaddr_t initarm		__P((ofw_handle_t));
 extern void ofrootfound		__P((void));
 
 /* Local routines */
@@ -181,7 +180,7 @@ cpu_reboot(howto, bootstr)
 }
 
 /*
- * vaddr_t initarm(ofw_handle_t handle)
+ * u_int initarm(void *handle)
  *
  * Initial entry point on startup for a GENERIC OFW
  * system.  Called with MMU on, running in the OFW
@@ -200,10 +199,10 @@ cpu_reboot(howto, bootstr)
 struct fiqhandler shark_fiqhandler;
 struct fiqregs shark_fiqregs;
 
-vaddr_t
-initarm(ofw_handle)
-	ofw_handle_t ofw_handle;
+u_int
+initarm(void *arg)
 {
+	ofw_handle_t ofw_handle = arg;
 	paddr_t  pclean;
 	paddr_t  isa_io_physaddr, isa_mem_physaddr;
 	vaddr_t  isa_io_virtaddr, isa_mem_virtaddr;
@@ -332,7 +331,7 @@ static void
 process_kernel_args(void)
 {
 #ifdef RB_QUIET
-	int bool;
+	int value;
 #endif
 	
 #if defined(RB_QUIET) && defined(BOOT_QUIETLY)
@@ -343,14 +342,14 @@ process_kernel_args(void)
 	parse_mi_bootargs(boot_args);
 
 #ifdef RB_QUIET
-	if (get_bootconf_option(args, "noquiet", BOOTOPT_TYPE_BOOLEAN, &bool)) {
-		if (!bool)
+	if (get_bootconf_option(args, "noquiet", BOOTOPT_TYPE_BOOLEAN, &value)) {
+		if (!value)
 			boothowto |= RB_QUIET;
 		else
 			boothowto &= ~RB_QUIET;
 	}
-	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &bool)) {
-		if (bool)
+	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &value)) {
+		if (value)
 			boothowto |= RB_QUIET;
 		else
 			boothowto &= ~RB_QUIET;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.8 2002/02/10 14:36:52 sato Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.8.62.1 2006/11/18 21:29:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -34,22 +34,6 @@
  * SUCH DAMAGE.
  *
  */
-
-#define	SECMIN	((unsigned)60)			/* seconds per minute */
-#define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
-
-#define	SEC2MIN	((unsigned)60/2)		/* 2seconds per minute */
-#define	SEC2HOUR ((unsigned)(60*SECMIN)/2)	/* 2seconds per hour */
-#define	SEC2DAY	((unsigned)(24*SECHOUR)/2)	/* 2seconds per day */
-#define	SEC2YR	((unsigned)(365*SECDAY)/2)	/* 2seconds per common year */
-
-#define	YRREF		1999
-#define	MREF		1
-#define	DREF		1
-
-#ifndef YBASE
-#define YBASE		1900
-#endif
 
 #define EPOCHOFF	0			/* epoch offset */
 #ifndef EPOCHYEAR

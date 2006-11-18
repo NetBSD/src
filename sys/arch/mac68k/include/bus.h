@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.24 2006/02/16 20:17:14 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.24.14.1 2006/11/18 21:29:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -310,22 +310,28 @@ void mac68k_bsrms4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 
 #if defined(DIAGNOSTIC)
 #define	bus_space_read_multi_1(t, h, o, a, c) do {			 \
-	if (!c) panic("bus_space_read_multi_1 called with zero count."); \
+	if ((c) == 0)							 \
+		panic("bus_space_read_multi_1 called with zero count."); \
 	(h).bsrm1(t,&(h),o,a,c); } while (0)
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			 \
-	if (!c) panic("bus_space_read_multi_2 called with zero count."); \
+	if ((c) == 0)							 \
+		panic("bus_space_read_multi_2 called with zero count."); \
 	(h).bsrm2(t,&(h),o,a,c); } while (0)
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			 \
-	if (!c) panic("bus_space_read_multi_4 called with zero count."); \
+	if ((c) == 0)							 \
+		panic("bus_space_read_multi_4 called with zero count."); \
 	(h).bsrm4(t,&(h),o,a,c); } while (0)
 #define	bus_space_read_multi_stream_1(t, h, o, a, c) do {		 \
-	if (!c) panic("bus_space_read_multi_stream_1 called with count=0."); \
+	if ((c) == 0)							 \
+		panic("bus_space_read_multi_stream_1 called with count=0."); \
 	(h).bsrms1(t,&(h),o,a,c); } while (0)
 #define	bus_space_read_multi_stream_2(t, h, o, a, c) do {		 \
-	if (!c) panic("bus_space_read_multi_stream_2 called with count=0."); \
+	if ((c) == 0)							 \
+		panic("bus_space_read_multi_stream_2 called with count=0."); \
 	(h).bsrms2(t,&(h),o,a,c); } while (0)
 #define	bus_space_read_multi_stream_4(t, h, o, a, c) do {		 \
-	if (!c) panic("bus_space_read_multi_stream_4 called with count=0."); \
+	if ((c) == 0)							 \
+		panic("bus_space_read_multi_stream_4 called with count=0."); \
 	(h).bsrms4(t,&(h),o,a,c); } while (0)
 #else
 #define	bus_space_read_multi_1(t, h, o, a, c) \
@@ -381,22 +387,28 @@ void mac68k_bsrrs4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 
 #if defined(DIAGNOSTIC)
 #define	bus_space_read_region_1(t, h, o, a, c) do {			  \
-	if (!c) panic("bus_space_read_region_1 called with zero count."); \
+	if ((c) == 0)							  \
+		panic("bus_space_read_region_1 called with zero count."); \
 	(h).bsrr1(t,&(h),o,a,c); } while (0)
 #define	bus_space_read_region_2(t, h, o, a, c) do {			  \
-	if (!c) panic("bus_space_read_region_2 called with zero count."); \
+	if ((c) == 0)							  \
+		panic("bus_space_read_region_2 called with zero count."); \
 	(h).bsrr2(t,&(h),o,a,c); } while (0)
 #define	bus_space_read_region_4(t, h, o, a, c) do {			  \
-	if (!c) panic("bus_space_read_region_4 called with zero count."); \
+	if ((c) == 0)							  \
+		panic("bus_space_read_region_4 called with zero count."); \
 	(h).bsrr4(t,&(h),o,a,c); } while (0)
 #define	bus_space_read_region_stream_1(t, h, o, a, c) do {		  \
-	if (!c) panic("bus_space_read_region_stream_1 called with count=0."); \
+	if ((c) == 0)							  \
+		panic("bus_space_read_region_stream_1 called with count=0."); \
 	(h).bsrrs1(t,&(h),o,a,c); } while (0)
 #define	bus_space_read_region_stream_2(t, h, o, a, c) do {		  \
-	if (!c) panic("bus_space_read_region_stream_2 called with count=0."); \
+	if ((c) == 0)							  \
+		 panic("bus_space_read_region_stream_2 called with count=0."); \
 	(h).bsrrs2(t,&(h),o,a,c); } while (0)
 #define	bus_space_read_region_stream_4(t, h, o, a, c) do {		  \
-	if (!c) panic("bus_space_read_region_stream_4 called with count=0."); \
+	if ((c) == 0)							  \
+		panic("bus_space_read_region_stream_4 called with count=0."); \
 	(h).bsrrs4(t,&(h),o,a,c); } while (0)
 #else
 #define	bus_space_read_region_1(t, h, o, a, c) \
@@ -490,22 +502,28 @@ void mac68k_bswms4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 
 #if defined(DIAGNOSTIC)
 #define	bus_space_write_multi_1(t, h, o, a, c) do {			  \
-	if (!c) panic("bus_space_write_multi_1 called with zero count."); \
+	if ((c) == 0)							  \
+		panic("bus_space_write_multi_1 called with zero count."); \
 	(h).bswm1(t,&(h),o,a,c); } while (0)
 #define	bus_space_write_multi_2(t, h, o, a, c) do {			  \
-	if (!c) panic("bus_space_write_multi_2 called with zero count."); \
+	if ((c) == 0)							  \
+		panic("bus_space_write_multi_2 called with zero count."); \
 	(h).bswm2(t,&(h),o,a,c); } while (0)
 #define	bus_space_write_multi_4(t, h, o, a, c) do {			  \
-	if (!c) panic("bus_space_write_multi_4 called with zero count."); \
+	if ((c) == 0)							  \
+		panic("bus_space_write_multi_4 called with zero count."); \
 	(h).bswm4(t,&(h),o,a,c); } while (0)
 #define	bus_space_write_multi_stream_1(t, h, o, a, c) do {		  \
-	if (!c) panic("bus_space_write_multi_stream_1 called with count=0."); \
+	if ((c) == 0)							  \
+		panic("bus_space_write_multi_stream_1 called with count=0."); \
 	(h).bswms1(t,&(h),o,a,c); } while (0)
 #define	bus_space_write_multi_stream_2(t, h, o, a, c) do {		  \
-	if (!c) panic("bus_space_write_multi_stream_2 called with count=0."); \
+	if ((c) == 0)							  \
+		panic("bus_space_write_multi_stream_2 called with count=0."); \
 	(h).bswms2(t,&(h),o,a,c); } while (0)
 #define	bus_space_write_multi_stream_4(t, h, o, a, c) do {		  \
-	if (!c) panic("bus_space_write_multi_stream_4 called with count=0."); \
+	if ((c) == 0)							  \
+		panic("bus_space_write_multi_stream_4 called with count=0."); \
 	(h).bswms4(t,&(h),o,a,c); } while (0)
 #else
 #define	bus_space_write_multi_1(t, h, o, a, c) \
@@ -561,22 +579,28 @@ void mac68k_bswrs4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 
 #if defined(DIAGNOSTIC)
 #define	bus_space_write_region_1(t, h, o, a, c) do {			   \
-	if (!c) panic("bus_space_write_region_1 called with zero count."); \
+	if ((c) == 0)							   \
+		panic("bus_space_write_region_1 called with zero count."); \
 	(h).bswr1(t,&(h),o,a,c); } while (0)
 #define	bus_space_write_region_2(t, h, o, a, c) do {			   \
-	if (!c) panic("bus_space_write_region_2 called with zero count."); \
+	if ((c) == 0)							   \
+		panic("bus_space_write_region_2 called with zero count."); \
 	(h).bswr2(t,&(h),o,a,c); } while (0)
 #define	bus_space_write_region_4(t, h, o, a, c) do {			   \
-	if (!c) panic("bus_space_write_region_4 called with zero count."); \
+	if ((c) == 0)							   \
+		panic("bus_space_write_region_4 called with zero count."); \
 	(h).bswr4(t,&(h),o,a,c); } while (0)
 #define	bus_space_write_region_stream_1(t, h, o, a, c) do {		   \
-	if (!c) panic("bus_space_write_region_stream_1 called with count=0."); \
+	if ((c) == 0)							   \
+		panic("bus_space_write_region_stream_1 called with count=0."); \
 	(h).bswrs1(t,&(h),o,a,c); } while (0)
 #define	bus_space_write_region_stream_2(t, h, o, a, c) do {		   \
-	if (!c) panic("bus_space_write_region_stream_2 called with count=0."); \
+	if ((c) == 0)							   \
+		panic("bus_space_write_region_stream_2 called with count=0."); \
 	(h).bswrs2(t,&(h),o,a,c); } while (0)
 #define	bus_space_write_region_stream_4(t, h, o, a, c) do {		   \
-	if (!c) panic("bus_space_write_region_stream_4 called with count=0."); \
+	if ((c) == 0)							   \
+		panic("bus_space_write_region_stream_4 called with count=0."); \
 	(h).bswrs4(t,&(h),o,a,c); } while (0)
 #else
 #define	bus_space_write_region_1(t, h, o, a, c) \
@@ -628,13 +652,16 @@ void mac68k_bssm4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 
 #if defined(DIAGNOSTIC)
 #define	bus_space_set_multi_1(t, h, o, val, c) do {			\
-	if (!c) panic("bus_space_set_multi_1 called with zero count."); \
+	if ((c) == 0)							\
+		 panic("bus_space_set_multi_1 called with zero count."); \
 	(h).bssm1(t,&(h),o,val,c); } while (0)
 #define	bus_space_set_multi_2(t, h, o, val, c) do {			\
-	if (!c) panic("bus_space_set_multi_2 called with zero count."); \
+	if ((c) == 0)							\
+		panic("bus_space_set_multi_2 called with zero count."); \
 	(h).bssm2(t,&(h),o,val,c); } while (0)
 #define	bus_space_set_multi_4(t, h, o, val, c) do {			\
-	if (!c) panic("bus_space_set_multi_4 called with zero count."); \
+	if ((c) == 0)							\
+		panic("bus_space_set_multi_4 called with zero count."); \
 	(h).bssm4(t,&(h),o,val,c); } while (0)
 #else
 #define	bus_space_set_multi_1(t, h, o, val, c) \
@@ -678,13 +705,16 @@ void mac68k_bssr4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 
 #if defined(DIAGNOSTIC)
 #define	bus_space_set_region_1(t, h, o, val, c) do {			 \
-	if (!c) panic("bus_space_set_region_1 called with zero count."); \
+	if ((c) == 0)							 \
+		panic("bus_space_set_region_1 called with zero count."); \
 	(h).bssr1(t,&(h),o,val,c); } while (0)
 #define	bus_space_set_region_2(t, h, o, val, c) do {			 \
-	if (!c) panic("bus_space_set_region_2 called with zero count."); \
+	if ((c) == 0)							 \
+		panic("bus_space_set_region_2 called with zero count."); \
 	(h).bssr2(t,&(h),o,val,c); } while (0)
 #define	bus_space_set_region_4(t, h, o, val, c) do {			 \
-	if (!c) panic("bus_space_set_region_4 called with zero count."); \
+	if ((c) == 0)							 \
+		panic("bus_space_set_region_4 called with zero count."); \
 	(h).bssr4(t,&(h),o,val,c); } while (0)
 #else
 #define	bus_space_set_region_1(t, h, o, val, c) \

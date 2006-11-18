@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.267 2006/09/07 12:34:42 itohy Exp $
+#	$NetBSD: files.pci,v 1.267.2.1 2006/11/18 21:34:29 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -14,8 +14,6 @@ defparam opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
 
 defflag	opt_pciide.h	PCIIDE_CMD064x_DISABLE PCIIDE_AMD756_ENABLEDMA
 			PCIIDE_CMD0646U_ENABLEUDMA PCIIDE_I31244_DISABLEDMA
-
-defflag	opt_pcn.h	PCN_NO_PROM
 
 device	pci {[dev = -1], [function = -1]}
 attach	pci at pcibus
@@ -264,7 +262,7 @@ attach	piixide at pci
 file	dev/pci/piixide.c		piixide
 
 # Promise Serial ATA controllers
-device	pdcsata: ata, ata_dma, ata_udma, pciide_common, wdc_common
+device	pdcsata: ata, ata_dma, ata_udma, pciide_common, wdc_common, sata
 attach	pdcsata at pci
 file	dev/pci/pdcsata.c		pdcsata
 
@@ -304,7 +302,7 @@ file	dev/pci/slide.c		slide
 #file	dev/pci/swide.c		swide
 
 # VIA/AMD/Nvidia IDE controllers
-device	viaide: ata, ata_dma, ata_udma, pciide_common, wdc_common
+device	viaide: ata, ata_dma, ata_udma, pciide_common, wdc_common, sata
 attach	viaide at pci
 file	dev/pci/viaide.c	viaide
 
@@ -764,6 +762,11 @@ file	dev/pci/radeonfb.c	radeonfb
 file	dev/pci/radeonfb_i2c.c	radeonfb
 file	dev/pci/radeonfb_bios.c	radeonfb
 
+# Chips & Technologies 65550 framebuffer console driver
+device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
+attach	chipsfb at pci
+file	dev/pci/chipsfb.c		chipsfb
+
 # 3Com 3c990
 device	txp: ether, ifnet, arp
 attach	txp at pci
@@ -839,3 +842,10 @@ file    dev/pci/if_nfe.c                nfe
 device	kse: ether, ifnet, arp
 attach	kse at pci
 file	dev/pci/if_kse.c		kse
+
+# Yukon 2
+device	mskc { }
+attach	mskc at pci
+device	msk: ether, ifnet, arp, mii
+attach	msk at mskc
+file	dev/pci/if_msk.c		mskc | msk

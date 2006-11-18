@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.15 2006/02/20 12:17:49 kochi Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.15.14.1 2006/11/18 21:34:03 ad Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.15 2006/02/20 12:17:49 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.15.14.1 2006/11/18 21:34:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,8 @@ wss_acpi_hints_index(idstr)
  * wss_acpi_match: autoconf(9) match routine
  */
 static int
-wss_acpi_match(struct device *parent, struct cfdata *match, void *aux)
+wss_acpi_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 

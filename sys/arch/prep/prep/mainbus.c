@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.25 2006/09/01 07:02:29 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.25.2.1 2006/11/18 21:29:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 2006/09/01 07:02:29 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25.2.1 2006/11/18 21:29:30 ad Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
@@ -163,6 +163,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	mba.mba_paa.paa_iot = &prep_isa_io_space_tag;
 	mba.mba_paa.paa_memt = &prep_isa_mem_space_tag;
 	mba.mba_paa.paa_ic = &prep_isa_chipset;
+	mba.mba_paa.paa_dmat = &isa_bus_dma_tag;
 	config_found_ia(self, "mainbus", &mba.mba_pba, mainbus_print);
 #endif /* NPNPBUS */
 

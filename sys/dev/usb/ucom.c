@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.65 2006/07/21 16:48:53 ad Exp $	*/
+/*	$NetBSD: ucom.c,v 1.65.4.1 2006/11/18 21:34:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.65 2006/07/21 16:48:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.65.4.1 2006/11/18 21:34:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,10 +326,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	DPRINTF(("ucomopen: unit=%d, tp=%p\n", unit, tp));
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -658,8 +655,8 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

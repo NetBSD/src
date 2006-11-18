@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.84 2006/08/26 20:26:55 christos Exp $
+# $NetBSD: GENERIC,v 1.84.2.1 2006/11/18 21:29:26 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -69,7 +69,7 @@ file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -196,9 +196,6 @@ footbridge0	at mainbus?
 
 # system clock via footbridge
 #clock*		at footbridge?
-
-# time-of-day device via footbridge
-todclock0	at footbridge?
 
 # PCI bus via footbridge
 pci0		at footbridge?			# PCI bus

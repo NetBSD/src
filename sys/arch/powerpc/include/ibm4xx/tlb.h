@@ -1,4 +1,4 @@
-/*	$NetBSD: tlb.h,v 1.3 2006/08/31 22:13:51 freza Exp $	*/
+/*	$NetBSD: tlb.h,v 1.3.2.1 2006/11/18 21:29:29 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -108,7 +108,5 @@ void 	*ppc4xx_tlb_mapiodev(paddr_t, psize_t);
 #endif
 
 #define TLB_PID_INVALID 0xFFFF
-
-#define TLB_NRESERVED	4	/* XXXfreza: kill. */
 
 #endif	/* _IBM4XX_TLB_H_ */

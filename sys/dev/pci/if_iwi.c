@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.55 2006/08/30 16:43:56 christos Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.55.2.1 2006/11/18 21:34:30 ad Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.55 2006/08/30 16:43:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.55.2.1 2006/11/18 21:34:30 ad Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -202,7 +202,8 @@ CFATTACH_DECL(iwi, sizeof (struct iwi_softc), iwi_match, iwi_attach,
     iwi_detach, NULL);
 
 static int
-iwi_match(struct device *parent, struct cfdata *match, void *aux)
+iwi_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -465,7 +466,8 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_sdhook == NULL)
 		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
-	sc->sc_powerhook = powerhook_establish(iwi_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    iwi_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

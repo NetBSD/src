@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.11 2006/07/23 22:06:04 ad Exp $ */
+/*	$NetBSD: epcom.c,v 1.11.4.1 2006/11/18 21:29:06 ad Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.11 2006/07/23 22:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.11.4.1 2006/11/18 21:29:06 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -469,10 +469,7 @@ epcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -694,8 +691,8 @@ epcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag); 
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp); 
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

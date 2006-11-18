@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.65 2006/09/07 14:23:44 itohy Exp $
+# $NetBSD: GENERIC,v 1.65.2.1 2006/11/18 21:29:32 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.65 $"
+#ident 		"GENERIC-$Revision: 1.65.2.1 $"
 
 maxusers	64
 
@@ -94,13 +94,9 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 
 ## You may also use gdb, on another computer connected to this machine over
 ## a serial port.
-# ttyb on an Ultra5 is aliased to: "/pci@1f,0/pci@1,1/ebus@1/se:b", which is
-# "/pci@1f,0/pci@1,1/ebus@1/se@14,400000", port b.
-# options 	KGDB			# support for kernel gdb
-# options 	KGDB_DEVNAME="\"sab\""	# driver name for the kgdb serial chip
-# options 	KGDB_DEVADDR=0x400000	# physical address of the chip
-# options 	KGDB_DEVPORT=1		# port b
-# options 	KGDB_DEVRATE=38400	# baud rate
+# options 	KGDB
+# options 	KGDB_DEVNAME="\"sabtty1\""	# kgdb device name
+# options 	KGDB_DEVRATE=38400		# baud rate (defaults to 9600)
 
 
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
@@ -183,7 +179,7 @@ file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 file-system	PTYFS		# /dev/pts/N support
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-#file-system	TMPFS		# experimental - Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 ## File system options.
@@ -260,10 +256,12 @@ auxio*	at sbus? slot ? offset ?		# auxio registers
 bpp*	at sbus? slot ? offset ?		# parallel port
 lpt*	at ebus?				# parallel port
 
-## Mostek clock found on 4/300, sun4c, sun4m and sun4u systems.
-## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
+## Mostek clock found on sbus on Ultra-1,2 systems
+## and found on ebus on Ultra-5 and other systems.
 clock*	at sbus? slot ? offset ?
 clock*	at ebus?
+
+## DS1287 compatible clock found on ebus on Netra X1 and other systems.
 rtc*	at ebus?
 
 ## Timer chip found on 4/300, sun4c, sun4m and (some) sun4u systems.
@@ -412,9 +410,9 @@ ld*	at mlx? unit ?
 # need share with the sparc, and everyone else.  needs to use auxio.
 # actually, the ebus version has (will have) direct access to it's AUXIO
 # register space (it is mapped in to fdthree not auxio).
-#fdc0	at sbus? slot ? offset ?		# SUNW,fdtwo
-#fdc0	at ebus?				# fdthree
-#fd*	at fdc0 	 			# the drive itself
+fdc0	at sbus? slot ? offset ?		# SUNW,fdtwo
+#fdc0	at ebus?				# fdthree, EXPERIMENTAL
+fd*	at fdc0 	 			# the drive itself
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
@@ -515,6 +513,7 @@ acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 igphy*	at mii? phy ?			# Intel IGP01E1000
@@ -523,6 +522,8 @@ makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
@@ -721,7 +722,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
 
 # CardBus IDE controllers
-#njata*  at cardbus? function ? flags 0	# Workbit NinjaATA-32
+#njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
 
 # CardBus network interfaces
 #ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
@@ -774,6 +775,32 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 # PCMCIA audio devices
 #esl*	at pcmcia? function ?			# ESS 1688 AudioDrive UT
+
+#### Bluetooth Controller and Device support
+
+## Bluetooth PCMCIA Controllers
+#bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+
+## Bluetooth USB Controllers
+ubt* at uhub? port ? configuration ? interface ?
+
+## Bluetooth Device Hub
+#bthub* at bt3c?
+bthub* at ubt?
+
+## Bluetooth HID support
+bthidev* at bthub?
+
+## Bluetooth Mouse
+btms* at bthidev? reportid ?
+wsmouse* at btms? mux 0
+
+## Bluetooth Keyboard
+btkbd* at bthidev? reportid ?
+wskbd* at btkbd? console ? mux 1
+
+## Bluetooth Audio support
+btsco* at bthub?
 
 #### Audio and video devices
 
@@ -855,24 +882,26 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 pseudo-device	fss		4	# file system snapshot device
 
-#options	FILEASSOC		# fileassoc(9) - required for Veriexec 
+options		FILEASSOC		# fileassoc(9) - required for Veriexec 
 #options	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+pseudo-device	veriexec		1
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
+options VERIFIED_EXEC_FP_RMD160
+options VERIFIED_EXEC_FP_SHA256
+options VERIFIED_EXEC_FP_SHA384
+options VERIFIED_EXEC_FP_SHA512
+options VERIFIED_EXEC_FP_SHA1
+options VERIFIED_EXEC_FP_MD5
 
 # a pseudo device needed for SMBFS
 pseudo-device   nsmb		# experimental - SMB requester
+
+options PAX_MPROTECT=0			# PaX mprotect(2) restrictions

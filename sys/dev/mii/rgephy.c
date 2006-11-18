@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.8 2006/03/29 07:05:24 thorpej Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.8.8.1 2006/11/18 21:34:27 ad Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.8 2006/03/29 07:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.8.8.1 2006/11/18 21:34:27 ad Exp $");
 
 
 /*
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.8 2006/03/29 07:05:24 thorpej Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/device.h>
 #include <sys/socket.h>
 
 
@@ -88,7 +89,8 @@ static const struct mii_phydesc rgephys[] = {
 };
 
 static int
-rgephy_match(struct device *parent, struct cfdata *match, void *aux)
+rgephy_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -118,7 +120,7 @@ rgephy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	sc->mii_funcs = &rgephy_funcs;
 
@@ -306,7 +308,7 @@ setit:
 		/*
 		 * Only retry autonegotiation every 5 seconds.
 		 */
-		if (++sc->mii_ticks <= 5/*10*/)
+		if (++sc->mii_ticks <= MII_ANEGTICKS)
 			break;
 
 		sc->mii_ticks = 0;

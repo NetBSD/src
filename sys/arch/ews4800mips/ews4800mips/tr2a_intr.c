@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2a_intr.c,v 1.2 2006/06/10 12:42:37 tsutsui Exp $	*/
+/*	$NetBSD: tr2a_intr.c,v 1.2.8.1 2006/11/18 21:29:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.2 2006/06/10 12:42:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.2.8.1 2006/11/18 21:29:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,8 +133,6 @@ struct tr2a_intc_handler {
 struct evcnt timer_tr2a_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "intc", "timer");
 
-static uint32_t last_clock_intr;
-
 void
 tr2a_intr_init(void)
 {
@@ -215,7 +213,6 @@ tr2a_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	intc_cause = *INTC_STATUS_REG & *INTC_MASK_REG;
 
 	if ((ipending & MIPS_INT_MASK_5) && (intc_cause & INTC_INT5)) {
-		last_clock_intr = mips3_cp0_count_read();
 		cf.pc = pc;
 		cf.sr = status;
 		tr2a_wbflush();
@@ -361,35 +358,7 @@ void
 tr2a_initclocks(void)
 {
 
-	last_clock_intr = mips3_cp0_count_read();
-
-	/* number of microseconds between interrupts */
-	tick = 1000000 / hz;
-	tickfix = 1000000 - (hz * tick);
-#ifdef NTP
-	fixtick = tickfix;
-#endif
-	if (tickfix) {
-		int ftp;
-
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= ftp - 1;
-		tickfixinterval = hz >> (ftp - 1);
-	}
-
 	/* Enable INT5 */
 	*INTC_MASK_REG |= INTC_INT5;
 	tr2a_wbflush();
-}
-
-u_long
-tr2a_readclock(void)
-{
-	uint32_t res, count;
-
-	/* 32bit wrap-around during subtruction ok here. */
-	count = mips3_cp0_count_read() - last_clock_intr;
-	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
-
-	return res;
 }

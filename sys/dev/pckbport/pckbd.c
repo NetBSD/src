@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.11 2006/06/18 02:25:18 christos Exp $ */
+/* $NetBSD: pckbd.c,v 1.11.4.1 2006/11/18 21:34:43 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.11 2006/06/18 02:25:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.11.4.1 2006/11/18 21:34:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,7 +403,8 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &pckbd_accessops;
 	a.accesscookie = sc;
 
-	sc->sc_powerhook = powerhook_establish(pckbd_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    pckbd_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: unable to install powerhook\n",
 		    sc->sc_dev.dv_xname);
@@ -595,7 +596,8 @@ pckbd_input(void *vsc, int data)
 }
 
 int
-pckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct pckbd_softc *sc = v;
 

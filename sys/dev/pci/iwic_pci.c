@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.8 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.8.20.1 2006/11/18 21:34:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.8 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.8.20.1 2006/11/18 21:34:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -211,7 +211,8 @@ iwic_find_card(const struct pci_attach_args * pa)
  *	iwic PCI probe
  *---------------------------------------------------------------------------*/
 static int
-iwic_pci_probe(struct device * dev, struct cfdata * match, void *aux)
+iwic_pci_probe(struct device * dev,
+	struct cfdata * match, void *aux)
 {
 	if (iwic_find_card(aux))
 		return 1;

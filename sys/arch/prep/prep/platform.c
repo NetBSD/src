@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.21 2006/07/12 21:28:33 garbled Exp $	*/
+/*	$NetBSD: platform.c,v 1.21.4.1 2006/11/18 21:29:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.21 2006/07/12 21:28:33 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.21.4.1 2006/11/18 21:29:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ extern void ds1585_reboot(void);
 struct platform_quirkdata platform_quirks[] = {
 	{ "IBM PPS Model 6015", PLAT_QUIRK_INTRFIXUP,
 	   pci_intr_fixup_ibm_6015, NULL, 0 },
-	{ "(e1)", PLAT_QUIRK_ISA_HANDLER, NULL, NULL, EXT_INTR_I8259 },
 	{ NULL, 0, NULL, NULL, 0 }
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.22.20.1 2006/11/18 21:29:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22.20.1 2006/11/18 21:29:38 ad Exp $");
 
 #include "clock.h"
 
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 2005/12/24 22:45:40 perry Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
@@ -109,6 +110,8 @@ CFATTACH_DECL(clock, sizeof(struct clock_softc),
     clock_match, clock_attach, NULL, NULL);
 
 static int clock_attached;
+
+static unsigned mfp_get_timecount(struct timecounter *);
 
 static int
 clock_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -135,24 +138,20 @@ clock_attach(struct device *parent, struct device *self, void *aux)
 /*
  * MFP of X68k uses 4MHz clock always and we use 1/200 prescaler here.
  * Therefore, clock interval is 50 usec.
+ *
+ * Note that for timecounters, we'd like to use a finger grained clock, but
+ * since we only have an 8-bit clock, we can't do that without increasing
+ * the system clock rate.  (Otherwise the counter would roll in less than
+ * a single system clock.)
  */
 #define CLK_RESOLUTION	(50)
 #define CLOCKS_PER_SEC	(1000000 / CLK_RESOLUTION)
-
-static int clkint;		/* clock interval */
-
-static int clkread(void);
 
 /*
  * Machine-dependent clock routines.
  *
  * Startrtclock restarts the real-time clock, which provides
  * hardclock interrupts to kern_clock.c.
- *
- * Inittodr initializes the time of day hardware which provides
- * date functions.
- *
- * Resettodr restores the time of day hardware after a time change.
  *
  * A note on the real-time clock:
  * We actually load the clock with CLK_INTERVAL-1 instead of CLK_INTERVAL.
@@ -168,18 +167,30 @@ static int clkread(void);
 void
 cpu_initclocks(void)
 {
+	static struct	timecounter tc = {
+		.tc_name = "mfp",
+		.tc_frequency = CLOCKS_PER_SEC,
+		.tc_counter_mask = 0xff,
+		.tc_get_timecount = mfp_get_timecount,
+		.tc_quality = 100,
+	};
+	
 	if (CLOCKS_PER_SEC % hz ||
 	    hz <= (CLOCKS_PER_SEC / 256) || hz > CLOCKS_PER_SEC) {
 		printf("cannot set %d Hz clock. using 100 Hz\n", hz);
 		hz = 100;
 	}
-	clkint = CLOCKS_PER_SEC / hz;
 
-	mfp_set_tcdcr(mfp_get_tcdcr() & 0x0f); /* stop timer C */
+	mfp_set_tcdcr(0);		/* stop timers C and D */
 	mfp_set_tcdcr(mfp_get_tcdcr() | 0x70); /* 1/200 delay mode */
 
-	mfp_set_tcdr(clkint);
+	mfp_set_tcdr(CLOCKS_PER_SEC / hz);
 	mfp_bit_set_ierb(MFP_INTR_TIMER_C);
+
+	mfp_set_tddr(0xff);	/* maximum free run -- only 8 bits wide */
+	mfp_set_tcdcr(mfp_get_tcdcr() | 0x07);	/* 1/200 prescaler */
+
+	tc_init(&tc);
 }
 
 /*
@@ -196,12 +207,13 @@ setstatclockrate(int newhz)
  * Returns number of usec since last recorded clock "tick"
  * (i.e. clock interrupt).
  */
-int
-clkread(void)
+unsigned
+mfp_get_timecount(struct timecounter *tc)
 {
-	return (clkint - mfp_get_tcdr()) * CLK_RESOLUTION;
+	uint8_t	val;
+	val = ~(mfp_get_tddr());
+	return (val);
 }
-
 
 #if 0
 void
@@ -512,69 +524,6 @@ profclock(caddr_t pc, int ps)
 #endif	/* PROF */
 #endif	/* PROFTIMER */
 
-/*
- * Return the best possible estimate of the current time.
- */
-void
-microtime(struct timeval *tvp)
-{
-	static struct timeval lasttime;
-
-	*tvp = time;
-	tvp->tv_usec += clkread();
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-}
-
-/* this is a hook set by a clock driver for the configured realtime clock,
-   returning plain current unix-time */
-time_t (*gettod)(void) = 0;
-int    (*settod)(long) = 0;
-
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-void
-inittodr(time_t base)
-{
-	u_long timbuf = base;	/* assume no battery clock exists */
-  
-	if (!gettod)
-		printf ("WARNING: no battery clock\n");
-	else
-		timbuf = gettod();
-  
-	if (timbuf < base) {
-		printf ("WARNING: bad date in battery clock\n");
-		timbuf = base;
-	}
-	if (base < 5*SECYR) {
-		printf("WARNING: preposterous time in file system");
-		timbuf = 6*SECYR + 186*SECDAY + SECDAY/2;
-		printf(" -- CHECK AND RESET THE DATE!\n");
-	}
-
-	/* Battery clock does not store usec's, so forget about it. */
-	time.tv_sec = timbuf;
-}
-
-void
-resettodr(void)
-{
-	if (settod)
-		if (settod (time.tv_sec) != 1)
-			printf("Cannot set battery backed clock\n");
-}
 #else	/* NCLOCK */
 #error loose.
 #endif

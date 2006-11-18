@@ -1,4 +1,4 @@
-/* $NetBSD: iocvar.h,v 1.2 2002/03/24 23:37:44 bjh21 Exp $ */
+/* $NetBSD: iocvar.h,v 1.2.60.1 2006/11/18 21:28:58 ad Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -32,6 +32,7 @@
 #ifndef _ARM26_IOCVAR_H
 #define _ARM26_IOCVAR_H
 
+#include <sys/timetc.h>
 #include <machine/irq.h>
 
 /* Structure passed to children of an IOC */
@@ -58,6 +59,8 @@ struct ioc_softc {
 	struct evcnt		sc_clkev;
 	struct irq_handler	*sc_sclkirq;
 	struct evcnt		sc_sclkev;
+	struct timecounter	sc_tc;
+	u_int			sc_tcbase;
 	u_int8_t		sc_ctl;
 };
 
@@ -111,9 +114,7 @@ ioc_ctl_write(struct device *self, u_int value, u_int mask)
 	
 	s = splhigh();
 	sc->sc_ctl = (sc->sc_ctl & ~mask) | (value & mask);
-	bus_space_barrier(bst, bsh, IOC_CTL, 1, BUS_BARRIER_WRITE);
 	bus_space_write_1(bst, bsh, IOC_CTL, sc->sc_ctl);
-	bus_space_barrier(bst, bsh, IOC_CTL, 1, BUS_BARRIER_WRITE);
 	splx(s);
 }
 

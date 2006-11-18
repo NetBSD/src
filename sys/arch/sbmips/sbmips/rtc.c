@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.13 2006/09/04 23:45:30 gdamore Exp $ */
+/* $NetBSD: rtc.c,v 1.13.2.1 2006/11/18 21:29:30 ad Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.13 2006/09/04 23:45:30 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.13.2.1 2006/11/18 21:29:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -68,16 +68,14 @@ struct rtc_softc {
 
 static int xirtc_match(struct device *, struct cfdata *, void *);
 static void xirtc_attach(struct device *, struct device *, void *);
-static int xirtc_gettime(todr_chip_handle_t, volatile struct timeval *);
-static int xirtc_settime(todr_chip_handle_t, volatile struct timeval *);
+static int xirtc_gettime(todr_chip_handle_t, struct clock_ymdhms *);
+static int xirtc_settime(todr_chip_handle_t, struct clock_ymdhms *);
 
 static int strtc_match(struct device *, struct cfdata *, void *);
 static void strtc_attach(struct device *, struct device *, void *);
-static int strtc_gettime(todr_chip_handle_t, volatile struct timeval *);
-static int strtc_settime(todr_chip_handle_t, volatile struct timeval *);
+static int strtc_gettime(todr_chip_handle_t, struct clock_ymdhms *);
+static int strtc_settime(todr_chip_handle_t, struct clock_ymdhms *);
 
-static void rtc_inittodr(void *, time_t base);
-static void rtc_resettodr(void *);
 static void rtc_cal_timer(void);
 
 static void time_smbus_init(int);
@@ -138,23 +136,20 @@ xirtc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Set up MI todr(9) stuff */
 	sc->sc_ct.cookie = sc;
-	sc->sc_ct.todr_settime = xirtc_settime;
-	sc->sc_ct.todr_gettime = xirtc_gettime;
+	sc->sc_ct.todr_settime_ymdhms = xirtc_settime;
+	sc->sc_ct.todr_gettime_ymdhms = xirtc_gettime;
 
-	system_set_todrfns(sc, rtc_inittodr, rtc_resettodr);
+	todr_attach(&sc->sc_ct);
 
 	printf("\n");
 	rtc_cal_timer();	/* XXX */
 }
 
 static int
-xirtc_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
+xirtc_settime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 {
 	struct rtc_softc *sc = handle->cookie;
-	struct clock_ymdhms ymdhms;
 	uint8_t year, y2k;
-
-	clock_secs_to_ymdhms(tv->tv_sec, &ymdhms);
 
 	time_smbus_init(sc->sc_smbus_chan);
 
@@ -163,16 +158,16 @@ xirtc_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
 	WRITERTC(sc, X1241REG_SR, X1241REG_SR_WEL | X1241REG_SR_RWEL);
 
 	/* set the time */
-	WRITERTC(sc, X1241REG_HR, TOBCD(ymdhms.dt_hour) | X1241REG_HR_MIL);
-	WRITERTC(sc, X1241REG_MN, TOBCD(ymdhms.dt_min));
-	WRITERTC(sc, X1241REG_SC, TOBCD(ymdhms.dt_sec));
+	WRITERTC(sc, X1241REG_HR, TOBCD(ymdhms->dt_hour) | X1241REG_HR_MIL);
+	WRITERTC(sc, X1241REG_MN, TOBCD(ymdhms->dt_min));
+	WRITERTC(sc, X1241REG_SC, TOBCD(ymdhms->dt_sec));
 
 	/* set the date */
-	y2k = (ymdhms.dt_year >= 2000) ? 0x20 : 0x19;
-	year = ymdhms.dt_year % 100;
+	y2k = (ymdhms->dt_year >= 2000) ? 0x20 : 0x19;
+	year = ymdhms->dt_year % 100;
 
-	WRITERTC(sc, X1241REG_MO, TOBCD(ymdhms.dt_mon));
-	WRITERTC(sc, X1241REG_DT, TOBCD(ymdhms.dt_day));
+	WRITERTC(sc, X1241REG_MO, TOBCD(ymdhms->dt_mon));
+	WRITERTC(sc, X1241REG_DT, TOBCD(ymdhms->dt_day));
 	WRITERTC(sc, X1241REG_YR, TOBCD(year));
 	WRITERTC(sc, X1241REG_Y2K, TOBCD(y2k));
 
@@ -183,36 +178,32 @@ xirtc_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
 }
 
 static int
-xirtc_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
+xirtc_gettime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 {
 	struct rtc_softc *sc = handle->cookie;
-	struct clock_ymdhms ymdhms;
 	uint8_t hour, year, y2k;
 	uint8_t status;
 
 	time_smbus_init(sc->sc_smbus_chan);
-	ymdhms.dt_day = FROMBCD(READRTC(sc, X1241REG_DT));
-	ymdhms.dt_mon =  FROMBCD(READRTC(sc, X1241REG_MO));
+	ymdhms->dt_day = FROMBCD(READRTC(sc, X1241REG_DT));
+	ymdhms->dt_mon =  FROMBCD(READRTC(sc, X1241REG_MO));
 	year =  READRTC(sc, X1241REG_YR);
 	y2k = READRTC(sc, X1241REG_Y2K);
-	ymdhms.dt_year = FROMBCD(y2k) * 100 + FROMBCD(year);
+	ymdhms->dt_year = FROMBCD(y2k) * 100 + FROMBCD(year);
 
 
-	ymdhms.dt_sec = FROMBCD(READRTC(sc, X1241REG_SC));
-	ymdhms.dt_min = FROMBCD(READRTC(sc, X1241REG_MN));
+	ymdhms->dt_sec = FROMBCD(READRTC(sc, X1241REG_SC));
+	ymdhms->dt_min = FROMBCD(READRTC(sc, X1241REG_MN));
 	hour = READRTC(sc, X1241REG_HR);
-	ymdhms.dt_hour = FROMBCD(hour & ~X1241REG_HR_MIL);
+	ymdhms->dt_hour = FROMBCD(hour & ~X1241REG_HR_MIL);
 
 	status = READRTC(sc, X1241REG_SR);
 
 	if (status & X1241REG_SR_RTCF) {
 		printf("%s: battery has failed, clock setting is not accurate\n",
 		    sc->sc_dev.dv_xname);
-		return (-1);
+		return (EIO);
 	}
-
-	tv->tv_sec = clock_ymdhms_to_secs(&ymdhms);
-	tv->tv_usec = 0;
 
 	return (0);
 }
@@ -254,118 +245,60 @@ strtc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Set up MI todr(9) stuff */
 	sc->sc_ct.cookie = sc;
-	sc->sc_ct.todr_settime = strtc_settime;
-	sc->sc_ct.todr_gettime = strtc_gettime;
+	sc->sc_ct.todr_settime_ymdhms = strtc_settime;
+	sc->sc_ct.todr_gettime_ymdhms = strtc_gettime;
 
-	system_set_todrfns(sc, rtc_inittodr, rtc_resettodr);
+	todr_attach(&sc->sc_ct);
 
 	printf("\n");
 	rtc_cal_timer();	/* XXX */
 }
 
 static int
-strtc_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
+strtc_settime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 {
 	struct rtc_softc *sc = handle->cookie;
-	struct clock_ymdhms ymdhms;
 	uint8_t hour;
-
-	clock_secs_to_ymdhms(tv->tv_sec, &ymdhms);
 
 	time_smbus_init(sc->sc_smbus_chan);
 
-	hour = TOBCD(ymdhms.dt_hour);
-	if (ymdhms.dt_year >= 2000)	/* Should be always true! */
+	hour = TOBCD(ymdhms->dt_hour);
+	if (ymdhms->dt_year >= 2000)	/* Should be always true! */
 		hour |= M41T81_HOUR_CB | M41T81_HOUR_CEB;
 
 	/* set the time */
-	WRITERTC(sc, M41T81_SEC, TOBCD(ymdhms.dt_sec));
-	WRITERTC(sc, M41T81_MIN, TOBCD(ymdhms.dt_min));
+	WRITERTC(sc, M41T81_SEC, TOBCD(ymdhms->dt_sec));
+	WRITERTC(sc, M41T81_MIN, TOBCD(ymdhms->dt_min));
 	WRITERTC(sc, M41T81_HOUR, hour);
 
 	/* set the date */
-	WRITERTC(sc, M41T81_DATE, TOBCD(ymdhms.dt_day));
-	WRITERTC(sc, M41T81_MON, TOBCD(ymdhms.dt_mon));
-	WRITERTC(sc, M41T81_YEAR, TOBCD(ymdhms.dt_year % 100));
+	WRITERTC(sc, M41T81_DATE, TOBCD(ymdhms->dt_day));
+	WRITERTC(sc, M41T81_MON, TOBCD(ymdhms->dt_mon));
+	WRITERTC(sc, M41T81_YEAR, TOBCD(ymdhms->dt_year % 100));
 
 	return (0);
 }
 
 static int
-strtc_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
+strtc_gettime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 {
 	struct rtc_softc *sc = handle->cookie;
-	struct clock_ymdhms ymdhms;
 	uint8_t hour;
 
 	time_smbus_init(sc->sc_smbus_chan);
 
-	ymdhms.dt_sec = FROMBCD(READRTC(sc, M41T81_SEC));
-	ymdhms.dt_min = FROMBCD(READRTC(sc, M41T81_MIN));
+	ymdhms->dt_sec = FROMBCD(READRTC(sc, M41T81_SEC));
+	ymdhms->dt_min = FROMBCD(READRTC(sc, M41T81_MIN));
 	hour = READRTC(sc, M41T81_HOUR & M41T81_HOUR_MASK);
-	ymdhms.dt_hour = FROMBCD(hour & M41T81_HOUR_MASK);
+	ymdhms->dt_hour = FROMBCD(hour & M41T81_HOUR_MASK);
 
-	ymdhms.dt_day = FROMBCD(READRTC(sc, M41T81_DATE));
-	ymdhms.dt_mon =  FROMBCD(READRTC(sc, M41T81_MON));
-	ymdhms.dt_year =  1900 + FROMBCD(READRTC(sc, M41T81_YEAR));
+	ymdhms->dt_day = FROMBCD(READRTC(sc, M41T81_DATE));
+	ymdhms->dt_mon =  FROMBCD(READRTC(sc, M41T81_MON));
+	ymdhms->dt_year =  1900 + FROMBCD(READRTC(sc, M41T81_YEAR));
 	if (hour & M41T81_HOUR_CB)
-		ymdhms.dt_year += 100;
-
-	tv->tv_sec = clock_ymdhms_to_secs(&ymdhms);
-	tv->tv_usec = 0;
+		ymdhms->dt_year += 100;
 
 	return (0);
-}
-
-static void
-rtc_inittodr(void *cookie, time_t base)
-{
-	struct timeval todrtime;
-	todr_chip_handle_t chip;
-	struct rtc_softc *sc = cookie;
-	int check;
-
-	check = 0;
-	if (sc == NULL) {
-		printf("inittodr: rtc0 not present");
-		time.tv_sec = base;
-		time.tv_usec = 0;
-		check = 1;
-	} else {
-		chip = &sc->sc_ct;
-		if (todr_gettime(chip, &todrtime) != 0) {
-			printf("inittodr: Error reading clock");
-			time.tv_sec = base;
-			time.tv_usec = 0;
-			check = 1;
-		} else {
-			time = todrtime;
-			if (time.tv_sec > base + 3 * SECDAY) {
-				printf("inittodr: Clock has gained %ld days",
-				    (time.tv_sec - base) / SECDAY);
-				check = 1;
-			} else if (time.tv_sec + SECDAY < base) {
-				printf("inittodr: Clock has lost %ld day(s)",
-				    (base - time.tv_sec) / SECDAY);
-				check = 1;
-			}
-		}
-	}
-	if (check)
-		printf(" - CHECK AND RESET THE DATE.\n");
-
-}
-
-static void
-rtc_resettodr(void *cookie)
-{
-	struct rtc_softc *sc = cookie;
-
-	if (time.tv_sec == 0)
-		return;
-
-	if (todr_settime(&sc->sc_ct, &time) != 0)
-		printf("resettodr: cannot set time in time-of-day clock\n");
 }
 
 #define	NITERS			3

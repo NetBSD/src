@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.24 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.24.20.1 2006/11/18 21:34:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.24 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.24.20.1 2006/11/18 21:34:03 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

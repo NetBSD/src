@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_low.c,v 1.6 2006/05/12 06:05:23 simonb Exp $	*/
+/*	$NetBSD: scsi_low.c,v 1.6.8.1 2006/11/18 21:29:28 ad Exp $	*/
 
 /****************************************************************************
  * NS32K Monitor SCSI low-level driver
@@ -15,6 +15,7 @@
  * this code.
  ****************************************************************************/
 
+#include <sys/inttypes.h>
 #include <lib/libsa/stand.h>
 
 #include <pc532/stand/common/so.h>
@@ -97,8 +98,8 @@ PRIVATE unsigned char		sc_cur_phase,
 				sc_accept_int,
 				sc_dma_dir;
 
-long	sc_dma_port = SC_DMA,
-	sc_dma_adr;
+volatile long	*sc_dma_port = (void *)SC_DMA;
+long		*sc_dma_adr;
 
 #ifdef DEBUG
 struct sc_log {
@@ -307,7 +308,7 @@ scsi_interrupt(void)
 		if (sc_cur_phase != PH_NONE) {	/* if did DMA, save the new
 								pointer */
 			/* fetch new pointer from DMA cntlr */
-			new_ptr = sc_dma_adr;
+			new_ptr = (uintptr_t)sc_dma_adr;
 			if (sc_cur_phase == PH_IMSG &&
 			    new_ptr != sc_ptrs->ptr[PH_IMSG]) /* have message? */
 				sc_have_msg = 1;
@@ -402,10 +403,10 @@ void
 sc_dma_setup(int dir, long adr)
 {
 
-	if (sc_dma_port > SC_DMA + MAX_CACHE)
-		sc_dma_port = SC_DMA;
+	if ((uintptr_t)sc_dma_port > SC_DMA + MAX_CACHE)
+		sc_dma_port = (void *)SC_DMA;
 	sc_dma_dir = dir;
-	sc_dma_adr = adr;
+	sc_dma_adr = (void *)adr;
 }
 
 /*===========================================================================*
@@ -428,11 +429,11 @@ sc_receive(void)
 		} else if (stat2 & SC_S_DRQ) {	/* test really not necessary on
 						   pc532 */
 			if (sc_dma_dir == DISK_READ)
-				*((long *)sc_dma_adr)++ =
+				*sc_dma_adr++ =
 				    *((volatile long *)sc_dma_port)++;
 			else
 				*((volatile long *)sc_dma_port)++ =
-				    *((long *)sc_dma_adr)++;
+				    *sc_dma_adr++;
 		}
 	}
 	return isr_ret;

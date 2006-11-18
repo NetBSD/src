@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdma.c,v 1.5 2006/04/30 14:18:41 kiyohara Exp $	*/
+/*	$NetBSD: fwdma.c,v 1.5.10.1 2006/11/18 21:34:20 ad Exp $	*/
 /*-
  * Copyright (c) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -168,8 +168,8 @@ fwdma_malloc_size(fw_bus_dma_tag_t dmat, bus_dmamap_t *dmamap,
 }
 
 void
-fwdma_free_size(fw_bus_dma_tag_t dmat, bus_dmamap_t dmamap,
-		void *vaddr, bus_size_t size)
+fwdma_free_size(fw_bus_dma_tag_t dmat, bus_dmamap_t dmamap, void *vaddr,
+    bus_size_t size)
 {
 	fw_bus_dmamap_unload(dmat, dmamap);
 	fw_bus_dmamem_free(dmat, vaddr, dmamap);

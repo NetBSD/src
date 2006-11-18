@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55.4.1 2006/11/18 21:29:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55.4.1 2006/11/18 21:29:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -456,11 +456,24 @@ __pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va)
 
 	s = splvm();
 	if (SH_HAS_VIRTUAL_ALIAS) {
-		/* Remove all other mapping on this physical page */
+		/*
+		 * Remove all other mappings on this physical page
+		 * which have different virtual cache indexes to
+		 * avoid virtual cache aliases.
+		 *
+		 * XXX We should also handle shared mappings which
+		 * XXX have different virtual cache indexes by
+		 * XXX mapping them uncached (like arm and mips do).
+		 */
+ again:
 		pvh = &pg->mdpage;
-		while ((pv = SLIST_FIRST(&pvh->pvh_head)) != NULL) {
-			pmap_remove(pv->pv_pmap, pv->pv_va,
-			    pv->pv_va + PAGE_SIZE);
+		SLIST_FOREACH(pv, &pvh->pvh_head, pv_link) {
+			if (sh_cache_indexof(va) !=
+			    sh_cache_indexof(pv->pv_va)) {
+				pmap_remove(pv->pv_pmap, pv->pv_va,
+				    pv->pv_va + PAGE_SIZE);
+				goto again;
+			}
 		}
 	}
 
@@ -859,6 +872,26 @@ pmap_phys_address(int cookie)
 	return (sh3_ptob(cookie));
 }
 
+#ifdef SH4
+/*
+ * pmap_prefer(vaddr_t foff, vaddr_t *vap)
+ *
+ * Find first virtual address >= *vap that doesn't cause
+ * a virtual cache alias against vaddr_t foff.
+ */
+void
+pmap_prefer(vaddr_t foff, vaddr_t *vap)
+{
+	vaddr_t va;
+
+	if (SH_HAS_VIRTUAL_ALIAS) {
+		va = *vap;
+
+		*vap = va + ((foff - va) & sh_cache_prefer_mask);
+	}
+}
+#endif /* SH4 */
+
 /*
  * pv_entry pool allocator:
  *	void *__pmap_pv_page_alloc(struct pool *pool, int flags):
@@ -939,10 +972,13 @@ __pmap_pte_lookup(pmap_t pmap, vaddr_t va)
 pt_entry_t *
 __pmap_kpte_lookup(vaddr_t va)
 {
+	pt_entry_t *ptp;
 
-	return (__pmap_kernel.pm_ptp
-	    [__PMAP_PTP_INDEX(va - VM_MIN_KERNEL_ADDRESS)] +
-	    __PMAP_PTP_OFSET(va));
+	ptp = __pmap_kernel.pm_ptp[__PMAP_PTP_INDEX(va-VM_MIN_KERNEL_ADDRESS)];
+	if (ptp == NULL)
+		return NULL;
+
+	return (ptp + __PMAP_PTP_OFSET(va));
 }
 
 /*

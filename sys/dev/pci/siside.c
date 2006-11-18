@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.19 2006/06/26 18:19:08 xtraeme Exp $	*/
+/*	$NetBSD: siside.c,v 1.19.4.1 2006/11/18 21:34:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.19 2006/06/26 18:19:08 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.19.4.1 2006/11/18 21:34:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,8 @@ static const struct pciide_product_desc pciide_sis_products[] =  {
 };
 
 static int
-siside_match(struct device *parent, struct cfdata *match, void *aux)
+siside_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

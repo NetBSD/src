@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.59 2006/07/04 00:30:22 christos Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.59.4.1 2006/11/18 21:29:18 ad Exp $
 #
 #	GENERIC.MP -- Generic, plus enable Multiprocessor support.
 #
@@ -47,8 +47,10 @@ wss* 		at acpi?		# NeoMagic 256AV in wss mode
 #sony* 		at acpi?		# Sony Miscellaneous Controller
 
 # Remove support for old cpus
-no options I386_CPU, I486_CPU, I586_CPU
-no options MATH_EMULATE
+no options I486_CPU, I586_CPU
+#no options MATH_EMULATE
+no makeoptions COPTS
+makeoptions	COPTS="-march=pentiumpro -mtune=pentiumpro"
 
 # It is doubtful that an EISA system supports ACPI
 no options EISAVERBOSE

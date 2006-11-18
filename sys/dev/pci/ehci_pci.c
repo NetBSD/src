@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.23 2006/03/10 17:21:20 jmcneill Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.23.10.1 2006/11/18 21:34:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.23 2006/03/10 17:21:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.23.10.1 2006/11/18 21:34:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,8 @@ struct ehci_pci_softc {
 #define EHCI_MAX_BIOS_WAIT		1000 /* ms */
 
 static int
-ehci_pci_match(struct device *parent, struct cfdata *match, void *aux)
+ehci_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -208,7 +209,8 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_powerhook = powerhook_establish(ehci_pci_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(
+	    USBDEVNAME(sc->sc.sc_bus.bdev) , ehci_pci_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: couldn't establish powerhook\n",
 		    devname);

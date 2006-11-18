@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.10 2006/07/07 00:56:15 simonb Exp $	 */
+/* $NetBSD: if_bce.c,v 1.10.4.1 2006/11/18 21:34:29 ad Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -256,7 +256,8 @@ bce_lookup(const struct pci_attach_args * pa)
  * against drivers product list, and return its name if a match is found.
  */
 static int
-bce_probe(struct device *parent, struct cfdata *match, void *aux)
+bce_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 

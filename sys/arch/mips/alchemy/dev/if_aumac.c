@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.17 2006/05/05 18:04:41 thorpej Exp $ */
+/* $NetBSD: if_aumac.c,v 1.17.8.1 2006/11/18 21:29:25 ad Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.17 2006/05/05 18:04:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.17.8.1 2006/11/18 21:29:25 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -658,8 +658,20 @@ aumac_rxintr(struct aumac_softc *sc)
 		if (stat & RX_STAT_ERRS) {
 			int error = 0;
 
+#if 0	/*
+	 * Missed frames are a semi-frequent occurence with this hardware,
+	 * and reporting of them just makes everything run slower and fills
+	 * the system log.  Be silent.
+	 * 
+	 * Additionally, this missed bit indicates an error with the previous
+	 * packet, and not with this one!  So PRINTERR is definitely wrong
+	 * here.
+	 *
+	 * These should probably all be converted to evcnt counters anyway.
+	 */
 			if (stat & RX_STAT_MI)
 				PRINTERR("missed frame");
+#endif
 			if (stat & RX_STAT_UC)
 				PRINTERR("unknown control frame");
 			if (stat & RX_STAT_LE)

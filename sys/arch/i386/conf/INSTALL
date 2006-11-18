@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.288 2006/08/26 20:26:45 christos Exp $
+#	$NetBSD: INSTALL,v 1.288.2.1 2006/11/18 21:29:18 ad Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -13,7 +13,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
+makeoptions	COPTS="-Os -march=i486 -mtune=i486"	# i486 is densest code
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -24,13 +24,13 @@ options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 maxusers	2		# estimated number of users
 
 # CPU support.  At least one is REQUIRED.
-options 	I386_CPU
+#options 	I386_CPU
 options 	I486_CPU
 options 	I586_CPU
 options 	I686_CPU
 
 # CPU-related options.
-options 	MATH_EMULATE	# floating point emulation
+#options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
@@ -68,7 +68,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 no options	EXEC_AOUT
 
 # Diagnostic/debugging support options
@@ -121,7 +120,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 
 # Filesystem options
 #options 	QUOTA		# UFS quotas
@@ -523,6 +522,8 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
+msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
@@ -615,6 +616,7 @@ glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
+ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs

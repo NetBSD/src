@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.57 2006/08/31 16:39:13 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.57.2.1 2006/11/18 21:29:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.57 2006/08/31 16:39:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.57.2.1 2006/11/18 21:29:19 ad Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -460,12 +460,13 @@ process_machdep_write_xmmregs(struct lwp *l, struct xmmregs *regs)
 }
 
 int
-ptrace_machdep_dorequest(l, lt, req, addr, data)
-	struct lwp *l;
-	struct lwp *lt;
-	int req;
-	caddr_t addr;
-	int data;
+ptrace_machdep_dorequest(
+    struct lwp *l,
+    struct lwp *lt,
+    int req,
+    caddr_t addr,
+    int data
+)
 {
 	struct uio uio;
 	struct iovec iov;

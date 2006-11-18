@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.27 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.27.20.1 2006/11/18 21:34:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.27 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.27.20.1 2006/11/18 21:34:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,10 +69,8 @@ CFATTACH_DECL(bha_isa, sizeof(struct bha_softc),
  * the actual probe routine to check it out.
  */
 int
-bha_isa_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+bha_isa_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -127,9 +125,8 @@ bha_isa_probe(parent, match, aux)
  * Attach all the sub-devices we can find
  */
 void
-bha_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+bha_isa_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct bha_softc *sc = (void *)self;

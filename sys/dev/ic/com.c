@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.251 2006/08/08 10:32:09 mrg Exp $	*/
+/*	$NetBSD: com.c,v 1.251.2.1 2006/11/18 21:34:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.251 2006/08/08 10:32:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.251.2.1 2006/11/18 21:34:09 ad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -568,7 +568,8 @@ fifodone:
 
 	com_config(sc);
 
-	sc->sc_powerhook = powerhook_establish(com_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    com_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 			sc->sc_dev.dv_xname);
@@ -794,10 +795,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-		kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -1022,8 +1020,8 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	error = 0;
 	switch (cmd) {
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		break;
 	default:
 		/* nothing */

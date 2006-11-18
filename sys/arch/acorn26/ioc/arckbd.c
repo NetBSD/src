@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.8 2005/12/11 12:16:04 christos Exp $ */
+/* $NetBSD: arckbd.c,v 1.8.20.1 2006/11/18 21:28:58 ad Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.8 2005/12/11 12:16:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.8.20.1 2006/11/18 21:28:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -452,9 +452,7 @@ arckbd_send(struct device *self, int data, enum arckbd_state newstate,
 			return 0;
 		}
 	}
-	bus_space_barrier(bst, bsh, 0, 1, BUS_BARRIER_WRITE);
 	bus_space_write_1(bst, bsh, 0, data);
-	bus_space_barrier(bst, bsh, 0, 1, BUS_BARRIER_WRITE);
 	sc->sc_state = newstate;
 #ifdef ARCKBD_DEBUG
 	log(LOG_DEBUG, "%s: sent 0x%02x.  now in state %s\n",
@@ -501,9 +499,7 @@ arckbd_rint(void *cookie)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	int data;
 
-	bus_space_barrier(bst, bsh, 0, 1, BUS_BARRIER_READ);
 	data = bus_space_read_1(bst, bsh, 0);
-	bus_space_barrier(bst, bsh, 0, 1, BUS_BARRIER_READ);
 #ifdef ARCKBD_DEBUG
 	log(LOG_DEBUG, "%s: got 0x%02x in state %s\n", self->dv_xname, data,
 	    arckbd_statenames[sc->sc_state]);
@@ -588,8 +584,9 @@ arckbd_mousemoved(struct device *self, int byte1, int byte2)
 		dx = byte1 < 0x40 ? byte1 : byte1 - 0x80;
 		dy = byte2 < 0x40 ? byte2 : byte2 - 0x80;
 		wsmouse_input(sc->sc_wsmousedev,
-			      sc->sc_mouse_buttons, dx, dy, 0,
-			      WSMOUSE_INPUT_DELTA);
+				sc->sc_mouse_buttons,
+				dx, dy, 0, 0,
+				WSMOUSE_INPUT_DELTA);
 	}
 }
 #endif
@@ -624,8 +621,10 @@ arckbd_keyupdown(struct device *self, int byte1, int byte2)
 		else
 			sc->sc_mouse_buttons &= ~(1 << (byte2 & 0x0f));
 		if (sc->sc_wsmousedev != NULL)
-			wsmouse_input(sc->sc_wsmousedev, sc->sc_mouse_buttons,
-				      0, 0, 0, WSMOUSE_INPUT_DELTA);
+			wsmouse_input(sc->sc_wsmousedev,
+					sc->sc_mouse_buttons,
+					0, 0, 0, 0,
+					WSMOUSE_INPUT_DELTA);
 #endif
 	} else {
 #if NARCWSKBD > 0

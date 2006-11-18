@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.10 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.10.20.1 2006/11/18 21:34:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.10 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.10.20.1 2006/11/18 21:34:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.10 2005/12/11 12:22:50 christos Exp $"
 #include <dev/ic/lptvar.h>
 
 static int
-lpt_puc_probe(struct device *parent, struct cfdata *match, void *aux)
+lpt_puc_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct puc_attach_args *aa = aux;
 

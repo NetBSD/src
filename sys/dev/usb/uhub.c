@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.78 2006/04/14 16:26:46 christos Exp $	*/
+/*	$NetBSD: uhub.c,v 1.78.8.1 2006/11/18 21:34:51 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.78 2006/04/14 16:26:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.78.8.1 2006/11/18 21:34:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,10 +103,6 @@ Static bus_child_detached_t uhub_child_detached;
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 USB_DECLARE_DRIVER(uhub);
-
-/* Create the driver instance for the hub connected to hub case */
-CFATTACH_DECL(uhub_uhub, sizeof(struct uhub_softc),
-    uhub_match, uhub_attach, uhub_detach, uhub_activate);
 #elif defined(__FreeBSD__)
 USB_DECLARE_DRIVER_INIT(uhub,
 			DEVMETHOD(bus_child_detached, uhub_child_detached));
@@ -640,7 +636,8 @@ uhub_child_detached(device_t self, device_t child)
  * to be explored again.
  */
 void
-uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
+uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
+    usbd_status status)
 {
 	struct uhub_softc *sc = addr;
 

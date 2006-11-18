@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.45 2006/09/02 07:07:33 christos Exp $	*/
+/*	$NetBSD: mlx.c,v 1.45.2.1 2006/11/18 21:34:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.45 2006/09/02 07:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.45.2.1 2006/11/18 21:34:13 ad Exp $");
 
 #include "ld.h"
 
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.45 2006/09/02 07:07:33 christos Exp $");
 #include <sys/conf.h>
 #include <sys/kthread.h>
 #include <sys/disk.h>
+#include <sys/kauth.h>
 
 #include <machine/vmparam.h>
 #include <machine/bus.h>
@@ -711,7 +712,8 @@ mlxopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Accept the last close on the control device.
  */
 int
-mlxclose(dev_t dev, int flag, int mode, struct lwp *l)
+mlxclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct mlx_softc *mlx;
 
@@ -724,7 +726,8 @@ mlxclose(dev_t dev, int flag, int mode, struct lwp *l)
  * Handle control operations.
  */
 int
-mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct mlx_softc *mlx;
 	struct mlx_rebuild_request *rb;
@@ -795,8 +798,9 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return (0);
 
 	case MLX_COMMAND:
-		if (securelevel >= 2)
-			return (EPERM);
+		rv = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		if (rv)
+			return (rv);
 
 		/*
 		 * Accept a command passthrough-style.

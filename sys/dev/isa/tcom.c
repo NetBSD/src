@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.11 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: tcom.c,v 1.11.20.1 2006/11/18 21:34:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.11 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.11.20.1 2006/11/18 21:34:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,10 +118,8 @@ CFATTACH_DECL(tcom, sizeof(struct tcom_softc),
     tcomprobe, tcomattach, NULL, NULL);
 
 int
-tcomprobe(parent, self, aux)
-	struct device *parent;
-	struct cfdata *self;
-	void *aux;
+tcomprobe(struct device *parent, struct cfdata *self,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -190,9 +188,7 @@ out:
 }
 
 void
-tcomattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tcomattach(struct device *parent, struct device *self, void *aux)
 {
 	struct tcom_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

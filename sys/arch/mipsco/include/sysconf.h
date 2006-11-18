@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.2 2000/08/15 04:56:46 wdk Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.2.72.1 2006/11/18 21:29:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -49,17 +49,15 @@ struct platform {
 	 *	cons_init	-	console initialization
 	 *	iointr		-	I/O interrupt handler
 	 *	memsize		-	Size external memory
-	 *	clkread		-	interporate HZ with hi-resolution timer
 	 *	read_todr	-	Read TOD registers
 	 *	write_todr	-	Write TOD registers
+	 *	clkinit		-	Initialize clocks
 	 */
 	void	(*cons_init) __P((void));
 	void	(*iointr) __P((unsigned, unsigned, unsigned, unsigned));
 	int	(*memsize) __P((caddr_t));
-	unsigned (*clkread) __P((void));
-	void	(*read_todr) __P((struct clock_ymdhms *));
-	void	(*write_todr) __P((struct clock_ymdhms *));
 	void	(*intr_establish) __P((int, int (*)__P((void *)), void *)); 
+	void	(*clkinit) __P((void));
 };
 
 extern struct platform platform;

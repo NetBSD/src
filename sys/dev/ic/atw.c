@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.119 2006/08/31 19:24:37 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.119.2.1 2006/11/18 21:34:09 ad Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.119 2006/08/31 19:24:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.119.2.1 2006/11/18 21:34:09 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -414,7 +414,7 @@ atw_read_srom(struct atw_softc *sc)
 		sd.sd_chip = C46;
 		break;
 	default:
-		printf("%s: unknown SROM type %d\n",
+		printf("%s: unknown SROM type %" __PRIuBITS "\n",
 		    sc->sc_dev.dv_xname,
 		    __SHIFTOUT(test0, ATW_TEST0_EPTYP_MASK));
 		return -1;
@@ -872,7 +872,8 @@ atw_attach(struct atw_softc *sc)
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	sc->sc_powerhook = powerhook_establish(atw_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    atw_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
@@ -2879,13 +2880,15 @@ atw_intr(void *arg)
 			/* Sweep up transmit descriptors. */
 			atw_txintr(sc);
 
-			if (txstatus & ATW_INTR_TLT)
+			if (txstatus & ATW_INTR_TLT) {
 				DPRINTF(sc, ("%s: tx lifetime exceeded\n",
 				    sc->sc_dev.dv_xname));
+			}
 
-			if (txstatus & ATW_INTR_TRT)
+			if (txstatus & ATW_INTR_TRT) {
 				DPRINTF(sc, ("%s: tx retry limit exceeded\n",
 				    sc->sc_dev.dv_xname));
+			}
 
 			/* If Tx under-run, increase our transmit threshold
 			 * if another is available.
@@ -3298,8 +3301,8 @@ atw_txintr(struct atw_softc *sc)
 		    (txstat & TXSTAT_ERRMASK) != 0) {
 			bitmask_snprintf(txstat & TXSTAT_ERRMASK, TXSTAT_FMT,
 			    txstat_buf, sizeof(txstat_buf));
-			printf("%s: txstat %s %d\n", sc->sc_dev.dv_xname,
-			    txstat_buf,
+			printf("%s: txstat %s %" __PRIuBITS "\n",
+			    sc->sc_dev.dv_xname, txstat_buf,
 			    __SHIFTOUT(txstat, ATW_TXSTAT_ARC_MASK));
 		}
 

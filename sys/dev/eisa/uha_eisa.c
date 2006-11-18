@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.24 2006/03/29 06:32:36 thorpej Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.24.8.1 2006/11/18 21:34:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.24 2006/03/29 06:32:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.24.8.1 2006/11/18 21:34:04 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -87,7 +87,8 @@ static void	u24_init(struct uha_softc *);
  * the actual probe routine to check it out.
  */
 static int
-uha_eisa_match(struct device *parent, struct cfdata *match, void *aux)
+uha_eisa_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.33 2006/09/06 23:58:20 ad Exp $ */
+/*	$NetBSD: db_trace.c,v 1.33.2.1 2006/11/18 21:29:33 ad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.33 2006/09/06 23:58:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.33.2.1 2006/11/18 21:29:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -42,11 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.33 2006/09/06 23:58:20 ad Exp $");
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
-void db_dump_fpstate(db_expr_t, int, db_expr_t, const char *);
-void db_dump_window(db_expr_t, int, db_expr_t, const char *);
-void db_dump_stack(db_expr_t, int, db_expr_t, const char *);
-void db_dump_trap(db_expr_t, int, db_expr_t, const char *);
-void db_dump_ts(db_expr_t, int, db_expr_t, const char *);
 void db_print_window(uint64_t);
 
 #if 0
@@ -337,7 +332,7 @@ db_dump_trap(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 	struct trapframe64 *tf;
 
 	/* Use our last trapframe? */
-	tf = &ddb_regs.ddb_tf;
+	tf = DDB_TF;
 	{
 		/* Or the user trapframe? */
 		register char c;
@@ -418,7 +413,7 @@ db_dump_fpstate(db_expr_t addr, int have_addr, db_expr_t count, const char *modi
 	struct fpstate64 *fpstate;
 
 	/* Use our last trapframe? */
-	fpstate = &ddb_regs.ddb_fpstate;
+	fpstate = DDB_FP;
 	/* Or an arbitrary trapframe */
 	if (have_addr)
 		fpstate = (struct fpstate64 *)addr;
@@ -507,8 +502,8 @@ db_dump_ts(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 	int			i, tl;
 
 	/* Use our last trapframe? */
-	ts = &ddb_regs.ddb_ts[0];
-	tl = ddb_regs.ddb_tl;
+	ts = &DDB_REGS->db_ts[0];
+	tl = DDB_REGS->db_tl;
 	for (i=0; i<tl; i++) {
 		printf("%d tt=%lx tstate=%lx tpc=%p tnpc=%p\n",
 		       i+1, (long)ts[i].tt, (u_long)ts[i].tstate,
@@ -516,5 +511,3 @@ db_dump_ts(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 	}
 
 }
-
-

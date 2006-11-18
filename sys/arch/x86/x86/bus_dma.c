@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.30 2006/08/28 19:58:57 bouyer Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.30.2.1 2006/11/18 21:29:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.30 2006/08/28 19:58:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.30.2.1 2006/11/18 21:29:38 ad Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -157,9 +157,9 @@ static inline int _bus_dmamap_load_busaddr(bus_dma_tag_t, bus_dmamap_t,
  * Called by DMA-safe memory allocation methods.
  */
 int
-_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
-    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags, bus_addr_t low, bus_addr_t high)
+_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
+    bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
+    int nsegs, int *rsegs, int flags, bus_addr_t low, bus_addr_t high)
 {
 	paddr_t curaddr, lastaddr;
 	struct vm_page *m;
@@ -673,8 +673,9 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
  * bus_dmamem_alloc().
  */
 int
-_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
-    int nsegs, bus_size_t size, int flags)
+_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs,
+    bus_size_t size, int flags)
 {
 
 	panic("_bus_dmamap_load_raw: not implemented");

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.43 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.43.20.1 2006/11/18 21:34:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.43 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.43.20.1 2006/11/18 21:34:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,8 @@ le_pci_mediachange(struct lance_softc *sc)
 }
 
 static int
-le_pci_match(struct device *parent, struct cfdata *match, void *aux)
+le_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

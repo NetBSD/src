@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.32 2006/08/29 23:42:18 christos Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.32.2.1 2006/11/18 21:34:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.32 2006/08/29 23:42:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.32.2.1 2006/11/18 21:34:29 ad Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -359,7 +359,8 @@ cmpci_index_to_divider(int index)
  * interface to configure the device.
  */
 static int
-cmpci_match(struct device *parent, struct cfdata *match, void *aux)
+cmpci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -630,8 +631,8 @@ cmpci_query_encoding(void *handle, struct audio_encoding *fp)
 
 static int
 cmpci_set_params(void *handle, int setmode, int usemode,
-		 audio_params_t *play, audio_params_t *rec,
-		 stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	int i;
 	struct cmpci_softc *sc;
@@ -710,7 +711,7 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 /* ARGSUSED */
 static int
 cmpci_round_blocksize(void *handle, int block,
-		      int mode, const audio_params_t *param)
+    int mode, const audio_params_t *param)
 {
 
 	return block & -4;
@@ -1636,7 +1637,8 @@ cmpci_get_port(void *handle, mixer_ctrl_t *cp)
 
 /* ARGSUSED */
 static size_t
-cmpci_round_buffersize(void *handle, int direction, size_t bufsize)
+cmpci_round_buffersize(void *handle, int direction,
+    size_t bufsize)
 {
 
 	if (bufsize > 0x10000)

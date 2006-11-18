@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid4.c,v 1.10 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_raid4.c,v 1.10.20.1 2006/11/18 21:34:46 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid4.c,v 1.10 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid4.c,v 1.10.20.1 2006/11/18 21:34:46 ad Exp $");
 
 #include "rf_raid.h"
 #include "rf_dag.h"
@@ -98,7 +98,8 @@ rf_GetDefaultHeadSepLimitRAID4(RF_Raid_t *raidPtr)
 
 void
 rf_MapSectorRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector,
+		  int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	*col = SUID % raidPtr->Layout.numDataCol;
@@ -108,7 +109,8 @@ rf_MapSectorRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 
 void
 rf_MapParityRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector,
+		  int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 
@@ -127,7 +129,8 @@ rf_IdentifyStripeRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 }
 
 void
-rf_MapSIDToPSIDRAID4(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
+rf_MapSIDToPSIDRAID4(RF_RaidLayout_t *layoutPtr,
+		     RF_StripeNum_t stripeID,
 		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {
 	*which_ru = 0;

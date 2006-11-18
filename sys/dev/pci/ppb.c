@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.32 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: ppb.c,v 1.32.20.1 2006/11/18 21:34:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.32 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.32.20.1 2006/11/18 21:34:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,8 @@ struct ppb_softc {
 };
 
 static int
-ppbmatch(struct device *parent, struct cfdata *match, void *aux)
+ppbmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

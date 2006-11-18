@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.60 2006/04/14 17:50:27 christos Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.60.8.1 2006/11/18 21:34:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.60 2006/04/14 17:50:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.60.8.1 2006/11/18 21:34:43 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -475,10 +475,8 @@ CFATTACH_DECL(ray, sizeof(struct ray_softc),
  */
 
 static int
-ray_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ray_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -507,9 +505,7 @@ ray_validate_config(cfe)
 }
 
 static void
-ray_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ray_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ray_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -614,7 +610,7 @@ ray_attach(parent, self, aux)
 		ifmedia_set(&sc->sc_media, IFM_INFRA);
 
 	sc->sc_sdhook = shutdownhook_establish(ray_shutdown, sc);
-	sc->sc_pwrhook = powerhook_establish(ray_power, sc);
+	sc->sc_pwrhook = powerhook_establish(self->dv_xname, ray_power, sc);
 
 	/* The attach is successful. */
 	sc->sc_attached = 1;
@@ -654,9 +650,7 @@ ray_activate(dev, act)
 }
 
 static int
-ray_detach(self, flags)
-	struct device *self;
-	int flags;
+ray_detach(struct device *self, int flags)
 {
 	struct ray_softc *sc;
 	struct ifnet *ifp;
@@ -885,9 +879,7 @@ ray_reset_resetloop(arg)
 }
 
 void
-ray_power(why, arg)
-	int why;
-	void *arg;
+ray_power(int why, void *arg)
 {
 #if 0
 	struct ray_softc *sc;

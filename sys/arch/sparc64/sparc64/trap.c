@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133 2006/07/23 22:06:07 ad Exp $ */
+/*	$NetBSD: trap.c,v 1.133.4.1 2006/11/18 21:29:33 ad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133 2006/07/23 22:06:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133.4.1 2006/11/18 21:29:33 ad Exp $");
 
 #define NEW_FPSTATE
 
@@ -113,7 +113,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133 2006/07/23 22:06:07 ad Exp $");
 #endif
 
 /* trapstats */
-int trapstats = 0;
 int protfix = 0;
 int udmiss = 0;	/* Number of normal/nucleus data/text miss/protection faults */
 int udhit = 0;	
@@ -178,6 +177,7 @@ int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/
  */
 __asm(".align 64");
 struct	fpstate64 initfpstate = {
+	.fs_regs =
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
@@ -371,7 +371,6 @@ const char *trap_type[] = {
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
-
 void trap(struct trapframe64 *, unsigned int, vaddr_t, long);
 void data_access_fault(struct trapframe64 *, unsigned int, vaddr_t, vaddr_t,
 	vaddr_t, u_long);
@@ -384,6 +383,7 @@ void text_access_error(struct trapframe64 *, unsigned int, vaddr_t, u_long,
 
 #ifdef DEBUG
 void print_trapframe(struct trapframe64 *);
+
 void
 print_trapframe(struct trapframe64 *tf)
 {
@@ -529,6 +529,9 @@ extern void db_printf(const char * , ...);
 				newfplwp = &lwp0;
 			} else {
 				newfplwp = curlwp;
+				/* force other cpus to give up this fpstate */
+				if (curlwp->l_md.md_fpstate)
+					save_and_clear_fpstate(newfplwp);
 			}
 			if (fplwp != newfplwp) {
 				if (fplwp != NULL) {
@@ -537,7 +540,7 @@ extern void db_printf(const char * , ...);
 					fplwp = NULL;
 				}
 				/* If we have an allocated fpstate, load it */
-				if (newfplwp->l_md.md_fpstate != 0) {
+				if (newfplwp->l_md.md_fpstate != NULL) {
 					fplwp = newfplwp;
 					loadfpstate(fplwp->l_md.md_fpstate);
 				} else
@@ -571,8 +574,8 @@ dopanic:
 			{
 				char sbuf[sizeof(PSTATE_BITS) + 64];
 
-				printf("trap type 0x%x: pc=%lx",
-				       type, pc); 
+				printf("trap type 0x%x: cpu %d, pc=%lx",
+				       type, cpu_number(), pc); 
 				bitmask_snprintf(pstate, PSTATE_BITS, sbuf,
 						 sizeof(sbuf));
 				printf(" npc=%lx pstate=%s\n",
@@ -690,6 +693,8 @@ badtrap:
 			break;
 		}
 		if (fplwp != l) {		/* we do not have it */
+			/* but maybe another CPU has it? */
+			save_and_clear_fpstate(l);
 			if (fplwp != NULL)	/* someone else had it */
 				savefpstate(fplwp->l_md.md_fpstate);
 			loadfpstate(fs);
@@ -1021,8 +1026,10 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 			(long)(curproc?curproc->p_pid:-1), tf, type,
 			(void *)addr, (void *)pc,
 			sfva, sfsr, (int)curpcb->pcb_nsaved);
+#ifdef DDB
 		if ((trapdebug & TDB_NSAVED && curpcb->pcb_nsaved))
 			Debugger();
+#endif
 	}
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
@@ -1053,7 +1060,8 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 
 #ifdef DEBUG
 	if (lastdouble) {
-		printf("stacked data fault @ %lx (pc %lx);", addr, pc);
+		printf("cpu%d: stacked data fault @ %lx (pc %lx);",
+		       cpu_number(), addr, pc);
 		lastdouble = 0;
 		if (curproc == NULL)
 			printf("NULL proc\n");
@@ -1106,17 +1114,17 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 			 * message.
 			 */
 			if (curlwp == NULL) {
-				panic("kernel data access fault accessing"
-				    " 0x%lx at pc 0x%lx\n",
-				    va, (long)tf->tf_pc);
+				panic("cpu%d: kernel data access fault "
+				    "accessing 0x%lx at pc 0x%lx\n",
+				    cpu_number(), va, (long)tf->tf_pc);
 			}
 #endif
 			rv = uvm_fault(kernel_map, va, access_type);
 #ifdef DEBUG
 			if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
-				printf("data_access_fault: kernel "
+				printf("cpu%d: data_access_fault: kernel "
 					"uvm_fault(%p, %lx, %x) "
-					"sez %x -- %s\n",
+					"sez %x -- %s\n", cpu_number(),
 					kernel_map, va, access_type, rv,
 					rv ? "failure" : "success");
 #endif
@@ -1141,8 +1149,8 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 
 #ifdef DEBUG
 	if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
-		printf("data_access_fault: %s uvm_fault(%p, %lx, %x) "
-			"sez %x -- %s\n",
+		printf("cpu%d: data_access_fault: %s uvm_fault(%p, %lx, %x) "
+			"sez %x -- %s\n", cpu_number(),
 			&vm->vm_map == kernel_map ? "kernel!!!" : "user",
 			&vm->vm_map, va, access_type, rv,
 			rv ? "failure" : "success");
@@ -1178,8 +1186,8 @@ kfault:
 				/* Disable traptrace for printf */
 				trap_trace_dis = 1;
 				(void) splhigh();
-				printf("data fault: pc=%lx addr=%lx\n",
-				    pc, addr);
+				printf("cpu%d: data fault: pc=%lx addr=%lx\n",
+				    cpu_number(), pc, addr);
 				DEBUGGER(type, tf);
 				panic("kernel fault");
 				/* NOTREACHED */
@@ -1200,8 +1208,8 @@ kfault:
 		if (trapdebug & (TDB_ADDFLT | TDB_STOPSIG)) {
 			extern int trap_trace_dis;
 			trap_trace_dis = 1;
-			printf("data_access_fault at addr %p: "
-			    "sending SIGSEGV\n", (void *)addr);
+			printf("cpu%d: data_access_fault at addr %p: "
+			    "sending SIGSEGV\n", cpu_number(), (void *)addr);
 			printf("%ld: data_access_fault(%p, %x, %p, %p, "
 			       "%lx, %lx) nsaved=%d\n",
 				(long)(curproc ? curproc->p_pid : -1), tf, type,
@@ -1372,8 +1380,9 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 		if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW | TDB_STOPCPIO)) {
 			printf("data_access_error: kern fault -- "
 			       "skipping instr\n");
-			if (trapdebug & TDB_STOPCPIO)
+			if (trapdebug & TDB_STOPCPIO) {
 				DEBUGGER(type, tf);
+			}
 		}
 #endif
 		tf->tf_pc = onfault;

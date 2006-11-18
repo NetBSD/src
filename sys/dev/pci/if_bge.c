@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.109 2006/06/01 02:20:54 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.109.6.1 2006/11/18 21:34:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.109 2006/06/01 02:20:54 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.109.6.1 2006/11/18 21:34:29 ad Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2539,7 +2539,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	ifp->if_watchdog = bge_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(BGE_TX_RING_CNT - 1, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
-	DPRINTFN(5, ("bcopy\n"));
+	DPRINTFN(5, ("strcpy if_xname\n"));
 	strcpy(ifp->if_xname, sc->bge_dev.dv_xname);
 
 	if ((sc->bge_quirks & BGE_QUIRK_CSUM_BROKEN) == 0)
@@ -2659,7 +2659,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(5, ("callout_init\n"));
 	callout_init(&sc->bge_timeout);
 
-	sc->bge_powerhook = powerhook_establish(bge_powerhook, sc);
+	sc->bge_powerhook = powerhook_establish(sc->bge_dev.dv_xname,
+	    bge_powerhook, sc);
 	if (sc->bge_powerhook == NULL)
 		printf("%s: WARNING: unable to establish PCI power hook\n",
 		    sc->bge_dev.dv_xname);
@@ -3273,7 +3274,7 @@ bge_cksum_pad(struct mbuf *pkt)
 
 	/* if there's only the packet-header and we can pad there, use it. */
 	if (pkt->m_pkthdr.len == pkt->m_len &&
-	    !M_READONLY(pkt) && M_TRAILINGSPACE(pkt) >= padlen) {
+	    M_TRAILINGSPACE(pkt) >= padlen) {
 		last = pkt;
 	} else {
 		/*
@@ -3282,13 +3283,11 @@ bge_cksum_pad(struct mbuf *pkt)
 		 * (thus perhaps avoiding the bcm5700 dma-min bug).
 		 */
 		for (last = pkt; last->m_next != NULL; last = last->m_next) {
-	      	       (void) 0; /* do nothing*/
+	      	       continue; /* do nothing */
 		}
 
 		/* `last' now points to last in chain. */
-		if (!M_READONLY(last) && M_TRAILINGSPACE(last) >= padlen) {
-			(void) 0; /* we can pad here, in-place. */
-		} else {
+		if (M_TRAILINGSPACE(last) < padlen) {
 			/* Allocate new empty mbuf, pad it. Compact later. */
 			struct mbuf *n;
 			MGET(n, M_DONTWAIT, MT_DATA);
@@ -3298,10 +3297,9 @@ bge_cksum_pad(struct mbuf *pkt)
 		}
 	}
 
-#ifdef DEBUG
-	  /*KASSERT(M_WRITABLE(last), ("to-pad mbuf not writeable\n"));*/
-	  KASSERT(M_TRAILINGSPACE(last) >= padlen /*, ("insufficient space to pad\n")*/ );
-#endif
+	KDASSERT(!M_READONLY(last));
+	KDASSERT(M_TRAILINGSPACE(last) >= padlen);
+
 	/* Now zero the pad area, to avoid the bge cksum-assist bug */
 	memset(mtod(last, caddr_t) + last->m_len, 0, padlen);
 	last->m_len += padlen;
@@ -3339,11 +3337,8 @@ bge_compact_dma_runt(struct mbuf *pkt)
 		 */
 
 		/* Internal frag. If fits in prev, copy it there. */
-		if (prev && !M_READONLY(prev) &&
-		      M_TRAILINGSPACE(prev) >= m->m_len) {
-		  	bcopy(m->m_data,
-			      prev->m_data+prev->m_len,
-			      mlen);
+		if (prev && M_TRAILINGSPACE(prev) >= m->m_len) {
+		  	memcpy(prev->m_data + prev->m_len, m->m_data, mlen);
 			prev->m_len += mlen;
 			m->m_len = 0;
 			/* XXX stitch chain */
@@ -3351,14 +3346,13 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			m = prev;
 			continue;
 		}
-		else if (m->m_next != NULL && !M_READONLY(m) &&
+		else if (m->m_next != NULL &&
 			     M_TRAILINGSPACE(m) >= shortfall &&
 			     m->m_next->m_len >= (8 + shortfall)) {
 		    /* m is writable and have enough data in next, pull up. */
 
-		  	bcopy(m->m_next->m_data,
-			      m->m_data+m->m_len,
-			      shortfall);
+		  	memcpy(m->m_data + m->m_len, m->m_next->m_data,
+			    shortfall);
 			m->m_len += shortfall;
 			m->m_next->m_len -= shortfall;
 			m->m_next->m_data += shortfall;
@@ -3371,10 +3365,9 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			 */
 
 			/* if we'd make prev a runt, just move all of its data. */
-#ifdef DEBUG
 			KASSERT(prev != NULL /*, ("runt but null PREV")*/);
 			KASSERT(prev->m_len >= 8 /*, ("runt prev")*/);
-#endif
+
 			if ((prev->m_len - shortfall) < 8)
 				shortfall = prev->m_len;
 
@@ -3401,13 +3394,15 @@ bge_compact_dma_runt(struct mbuf *pkt)
 					  ("runt %d +prev %d too big\n", m->m_len, shortfall)*/);
 
 				/* first copy the data we're stealing from prev */
-				bcopy(prev->m_data + newprevlen, n->m_data, shortfall);
+				memcpy(n->m_data, prev->m_data + newprevlen,
+				    shortfall);
 
 				/* update prev->m_len accordingly */
 				prev->m_len -= shortfall;
 
 				/* copy data from runt m */
-				bcopy(m->m_data, n->m_data + shortfall, m->m_len);
+				memcpy(n->m_data + shortfall, m->m_data,
+				    m->m_len);
 
 				/* n holds what we stole from prev, plus m */
 				n->m_len = shortfall + m->m_len;

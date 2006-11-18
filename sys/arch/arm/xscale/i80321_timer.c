@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.13 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: i80321_timer.c,v 1.13.20.1 2006/11/18 21:29:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.13 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.13.20.1 2006/11/18 21:29:07 ad Exp $");
 
 #include "opt_perfctrs.h"
 #include "opt_i80321.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.13 2005/12/24 20:06:52 perry Exp 
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 
 #include <dev/clock_subr.h>
 
@@ -66,6 +67,10 @@ void	(*i80321_hardclock_hook)(void);
 #define	COUNTS_PER_SEC		200000000	/* 200MHz */
 #endif
 #define	COUNTS_PER_USEC		(COUNTS_PER_SEC / 1000000)
+
+#ifdef __HAVE_TIMECOUNTER
+static void tmr1_tc_init(void);
+#endif
 
 static void *clock_ih;
 
@@ -120,6 +125,57 @@ trr0_write(uint32_t val)
 		: "r" (val));
 }
 
+#ifdef __HAVE_TIMECOUNTER
+
+static inline uint32_t
+tmr1_read(void)
+{
+	uint32_t rv;
+
+	__asm volatile("mrc p6, 0, %0, c1, c1, 0"
+		: "=r" (rv));
+	return (rv);
+}
+
+static inline void
+tmr1_write(uint32_t val)
+{
+
+	__asm volatile("mcr p6, 0, %0, c1, c1, 0"
+		:
+		: "r" (val));
+}
+
+static inline uint32_t
+tcr1_read(void)
+{
+	uint32_t rv;
+
+	__asm volatile("mrc p6, 0, %0, c3, c1, 0"
+		: "=r" (rv));
+	return (rv);
+}
+
+static inline void
+tcr1_write(uint32_t val)
+{
+
+	__asm volatile("mcr p6, 0, %0, c3, c1, 0"
+		:
+		: "r" (val));
+}
+
+static inline void
+trr1_write(uint32_t val)
+{
+
+	__asm volatile("mcr p6, 0, %0, c5, c1, 0"
+		:
+		: "r" (val));
+}
+
+#endif /* __HAVE_TIMECOUNTER */
+
 static inline void
 tisr_write(uint32_t val)
 {
@@ -169,6 +225,7 @@ cpu_initclocks(void)
 		aprint_error("Cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 	}
+#ifndef __HAVE_TIMECOUNTER
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
 	tickfix = 1000000 - (hz * tick);
 	if (tickfix) {
@@ -178,6 +235,7 @@ cpu_initclocks(void)
 		tickfix >>= (ftp - 1);
 		tickfixinterval = hz >> (ftp - 1);
 	}
+#endif
 
 	/*
 	 * We only have one timer available; stathz and profhz are
@@ -223,6 +281,10 @@ cpu_initclocks(void)
 	tmr0_write(TMRx_ENABLE|TMRx_RELOAD|TMRx_CSEL_CORE);
 
 	restore_interrupts(oldirqstate);
+
+#ifdef	__HAVE_TIMECOUNTER
+	tmr1_tc_init();
+#endif
 }
 
 /*
@@ -242,6 +304,8 @@ setstatclockrate(int newhz)
 	 * XXX Use TMR1?
 	 */
 }
+
+#ifndef __HAVE_TIMECOUNTER
 
 /*
  * microtime:
@@ -285,6 +349,38 @@ microtime(struct timeval *tvp)
 	restore_interrupts(oldirqstate);
 }
 
+
+#else
+
+static inline uint32_t
+tmr1_tc_get(struct timecounter *tch)
+{
+	return (~tcr1_read());
+}
+
+void
+tmr1_tc_init(void)
+{
+	static struct timecounter tmr1_tc = {
+		.tc_get_timecount = tmr1_tc_get,
+		.tc_frequency = COUNTS_PER_SEC,
+		.tc_counter_mask = ~0,
+		.tc_name = "tmr1_count",
+		.tc_quality = 100,
+	};
+
+	/* program the tc */
+	trr1_write(~0);	/* reload value */
+	tcr1_write(~0);	/* current value */
+
+	tmr1_write(TMRx_ENABLE|TMRx_RELOAD|TMRx_CSEL_CORE);
+
+
+	trr1_write(~0);
+	tc_init(&tmr1_tc);
+}
+#endif
+
 /*
  * delay:
  *
@@ -320,6 +416,7 @@ delay(u_int n)
 	}
 }
 
+#ifndef __HAVE_GENERIC_TODR
 todr_chip_handle_t todr_handle;
 
 /*
@@ -406,6 +503,7 @@ resettodr(void)
 	    todr_settime(todr_handle, &time) != 0)
 		printf("resettodr: failed to set time\n");
 }
+#endif
 
 /*
  * clockhandler:

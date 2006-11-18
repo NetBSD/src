@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.10 2006/07/21 16:48:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.10.4.1 2006/11/18 21:34:20 ad Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -1630,7 +1630,7 @@ ndis_ticktask(xsc)
 		aprint_normal("%s: link up\n", sc->ndis_dev->dv_xname);
 		sc->ndis_link = 1;
 	
-		NDIS_UNLOCK(sc);	
+		NDIS_UNLOCK(sc);
 		if (sc->ndis_80211)
 			ndis_getstate_80211(sc);
 		NDIS_LOCK(sc);
@@ -2402,7 +2402,7 @@ ndis_getstate_80211(sc)
 	struct ieee80211com	*ic;
 	ndis_80211_ssid		ssid;
 	ndis_80211_config	config;
-	ndis_wlan_bssid_ex	*bs;
+	ndis_wlan_bssid_ex	*bs = 0;
 	int			rval, len, i = 0;
 	uint32_t		arg;
 	struct ifnet		*ifp;

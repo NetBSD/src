@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.11 2006/09/03 05:01:32 christos Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.11.2.1 2006/11/18 21:34:32 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.11 2006/09/03 05:01:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.11.2.1 2006/11/18 21:34:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -56,7 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.11 2006/09/03 05:01:32 christos Exp
 #include <dev/pci/pciio.h>
 
 static int
-pciopen(dev_t dev, int flags, int mode, struct lwp *l)
+pciopen(dev_t dev, int flags, int mode,
+    struct lwp *l)
 {
 	struct pci_softc *sc;
 	int unit;

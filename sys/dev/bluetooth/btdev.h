@@ -1,4 +1,4 @@
-/*	$NetBSD: btdev.h,v 1.2 2006/07/26 10:31:00 tron Exp $	*/
+/*	$NetBSD: btdev.h,v 1.2.4.1 2006/11/18 21:34:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -37,5 +37,18 @@
 /* btdev attach/detach ioctl's */
 #define BTDEV_ATTACH		_IOW('b', 14, struct plistref)
 #define BTDEV_DETACH		_IOW('b', 15, struct plistref)
+
+/* btdev properties */
+#define BTDEVtype		"device-type"
+#define BTDEVladdr		"local-bdaddr"
+#define BTDEVraddr		"remote-bdaddr"
+#define BTDEVservice		"service-name"
+
+#ifdef _KERNEL
+struct btdev {
+	struct device		sc_dev;
+	LIST_ENTRY(btdev)	sc_next;
+};
+#endif /* _KERNEL */
 
 #endif /* _DEV_BLUETOOTH_BTDEV_H_ */

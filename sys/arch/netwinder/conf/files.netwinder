@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.34 2005/12/11 12:18:20 christos Exp $
+#	$NetBSD: files.netwinder,v 1.34.20.1 2006/11/18 21:29:26 ad Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -17,8 +17,6 @@ defflag	XSERVER
 
 # Bootloader options (COMPAT... to be dropped ASAP)
 defflag	COMPAT_OLD_BOOTLOADER
-
-define todservice {}
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
@@ -43,10 +41,6 @@ file	arch/arm/footbridge/isa/isadma_machdep.c isadma
 
 # Memory disk driver
 file	dev/md_root.c				md & memory_disk_hooks
-
-device	todclock
-attach	todclock at todservice
-file	arch/arm/footbridge/todclock.c		todclock	needs-count
 
 #
 # Machine-independent SCSI drivers
@@ -74,7 +68,7 @@ device	sysbeep
 attach	sysbeep at pcppi with sysbeep_isa
 file	arch/arm/footbridge/isa/sysbeep_isa.c	sysbeep_isa
 
-device ds1687rtc: todservice
+device ds1687rtc
 attach ds1687rtc at isa
 file	arch/arm/footbridge/isa/dsrtc.c		ds1687rtc
 

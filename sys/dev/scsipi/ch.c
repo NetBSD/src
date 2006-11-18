@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.74 2006/08/28 00:38:47 christos Exp $	*/
+/*	$NetBSD: ch.c,v 1.74.2.1 2006/11/18 21:34:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.74 2006/08/28 00:38:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.74.2.1 2006/11/18 21:34:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,8 @@ static const struct chquirk chquirks[] = {
 };
 
 static int
-chmatch(struct device *parent, struct cfdata *match, void *aux)
+chmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;

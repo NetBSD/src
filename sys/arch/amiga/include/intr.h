@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2005/12/11 12:16:36 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.14.20.1 2006/11/18 21:29:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@
  * include files.
  */
 
-#ifndef _MACHINE_INTR_H_
-#define _MACHINE_INTR_H_
+#ifndef _AMIGA_INTR_H_
+#define _AMIGA_INTR_H_
 
 #include <amiga/amiga/isr.h>
 #include <amiga/include/mtpr.h>
@@ -127,4 +127,4 @@ extern int _spllkm7(void);
 
 #define splx(s)		_spl(s)
 
-#endif
+#endif	/* !_AMIGA_INTR_H_ */

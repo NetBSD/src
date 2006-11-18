@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.13 2006/04/13 03:36:26 christos Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.13.8.1 2006/11/18 21:34:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.13 2006/04/13 03:36:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.13.8.1 2006/11/18 21:34:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,8 @@ CFATTACH_DECL(an_isapnp, sizeof(struct an_isapnp_softc),
     an_isapnp_match, an_isapnp_attach, NULL, NULL);
 
 int
-an_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
+an_isapnp_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	int pri, variant;
 

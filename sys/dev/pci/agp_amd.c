@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.15 2006/04/11 16:19:39 rpaulo Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.15.8.1 2006/11/18 21:34:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.15 2006/04/11 16:19:39 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.15.8.1 2006/11/18 21:34:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.20 2006/07/14 05:02:00 xtraeme Exp $ */
+/* $NetBSD: com_acpi.c,v 1.20.4.1 2006/11/18 21:34:03 ad Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.20 2006/07/14 05:02:00 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.20.4.1 2006/11/18 21:34:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,8 @@ static const char * const com_acpi_ids[] = {
  * com_acpi_match: autoconf(9) match routine
  */
 static int
-com_acpi_match(struct device *parent, struct cfdata *match, void *aux)
+com_acpi_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 

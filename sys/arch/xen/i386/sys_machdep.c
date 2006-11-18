@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.7 2006/07/23 22:06:08 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.7.4.1 2006/11/18 21:29:39 ad Exp $	*/
 /*	NetBSD: sys_machdep.c,v 1.70 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.7 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.7.4.1 2006/11/18 21:29:39 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -359,12 +359,9 @@ i386_iopl(l, args, retval)
 	if ((xen_start_info.flags & SIF_PRIVILEGED) == 0)
 		return EPERM;
 
-	if (securelevel > 1)
+	if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
+	    KAUTH_REQ_MACHDEP_X86_IOPL, NULL, NULL, NULL))
 		return EPERM;
-
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
-		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return error;
@@ -422,12 +419,9 @@ i386_set_ioperm(l, args, retval)
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct i386_set_ioperm_args ua;
 
-	if (securelevel > 1)
+	if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
+	    KAUTH_REQ_MACHDEP_X86_IOPERM, NULL, NULL, NULL))
 		return EPERM;
-
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
-		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
@@ -469,8 +463,8 @@ i386_set_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag);
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
+	    KAUTH_REQ_MACHDEP_X86_MTRR_SET, NULL, NULL, NULL);
 	if (error != 0)
 		return error;
 

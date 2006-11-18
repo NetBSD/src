@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.9 2006/03/08 23:46:27 lukem Exp $ */
+/* $NetBSD: if_vge.c,v 1.9.10.1 2006/11/18 21:34:31 ad Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.9 2006/03/08 23:46:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.9.10.1 2006/11/18 21:34:31 ad Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -113,56 +113,219 @@ __KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.9 2006/03/08 23:46:27 lukem Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_vgereg.h>
-#include <dev/pci/if_vgevar.h>
 
-static int vge_probe	(struct device *, struct cfdata *, void *);
-static void vge_attach	(struct device *, struct device *, void *);
+#define VGE_JUMBO_MTU		9000
 
-static int vge_encap		(struct vge_softc *, struct mbuf *, int);
+#define VGE_IFQ_MAXLEN		64
 
-static int vge_dma_map_rx_desc	(struct vge_softc *, int);
-static void vge_dma_map_tx_desc	(struct vge_softc *, struct mbuf *, int, int);
-static int vge_allocmem		(struct vge_softc *);
-static int vge_newbuf		(struct vge_softc *, int, struct mbuf *);
-static int vge_rx_list_init	(struct vge_softc *);
-static int vge_tx_list_init	(struct vge_softc *);
-#ifdef VGE_FIXUP_RX
-static inline void vge_fixup_rx
-				(struct mbuf *);
+#define VGE_RING_ALIGN		256
+
+#define VGE_NTXDESC		256
+#define VGE_NTXDESC_MASK	(VGE_NTXDESC - 1)
+#define VGE_NEXT_TXDESC(x)	((x + 1) & VGE_NTXDESC_MASK)
+
+#define VGE_NRXDESC		256	/* Must be a multiple of 4!! */
+#define VGE_NRXDESC_MASK	(VGE_NRXDESC - 1)
+#define VGE_NEXT_RXDESC(x)	((x + 1) & VGE_NRXDESC_MASK)
+#define VGE_PREV_RXDESC(x)	((x - 1) & VGE_NRXDESC_MASK)
+
+#define VGE_ADDR_LO(y)		((uint64_t)(y) & 0xFFFFFFFF)
+#define VGE_ADDR_HI(y)		((uint64_t)(y) >> 32)
+#define VGE_BUFLEN(y)		((y) & 0x7FFF)
+#define ETHER_PAD_LEN		(ETHER_MIN_LEN - ETHER_CRC_LEN)
+
+#ifdef __NO_STRICT_ALIGNMENT 
+#define VGE_RX_PAD		sizeof(uint32_t)
+#else
+#define VGE_RX_PAD		0
 #endif
-static void vge_rxeof		(struct vge_softc *);
-static void vge_txeof		(struct vge_softc *);
-static int vge_intr		(void *);
-static void vge_tick		(void *);
-static void vge_start		(struct ifnet *);
-static int vge_ioctl		(struct ifnet *, u_long, caddr_t);
-static int vge_init		(struct ifnet *);
-static void vge_stop		(struct vge_softc *);
-static void vge_watchdog	(struct ifnet *);
-#if VGE_POWER_MANAGEMENT
-static int vge_suspend		(struct device *);
-static int vge_resume		(struct device *);
-#endif
-static void vge_shutdown	(void *);
-static int vge_ifmedia_upd	(struct ifnet *);
-static void vge_ifmedia_sts	(struct ifnet *, struct ifmediareq *);
 
-static void vge_eeprom_getword	(struct vge_softc *, int, u_int16_t *);
-static void vge_read_eeprom	(struct vge_softc *, caddr_t, int, int, int);
+/*
+ * Control structures are DMA'd to the vge chip. We allocate them in
+ * a single clump that maps to a single DMA segment to make several things
+ * easier.
+ */
+struct vge_control_data {
+	/* TX descriptors */
+	struct vge_txdesc	vcd_txdescs[VGE_NTXDESC];
+	/* RX descriptors */
+	struct vge_rxdesc	vcd_rxdescs[VGE_NRXDESC];
+	/* dummy data for TX padding */
+	uint8_t			vcd_pad[ETHER_PAD_LEN];
+};
 
-static void vge_miipoll_start	(struct vge_softc *);
-static void vge_miipoll_stop	(struct vge_softc *);
-static int vge_miibus_readreg	(struct device *, int, int);
-static void vge_miibus_writereg	(struct device *, int, int, int);
-static void vge_miibus_statchg	(struct device *);
+#define VGE_CDOFF(x)	offsetof(struct vge_control_data, x)
+#define VGE_CDTXOFF(x)	VGE_CDOFF(vcd_txdescs[(x)])
+#define VGE_CDRXOFF(x)	VGE_CDOFF(vcd_rxdescs[(x)])
+#define VGE_CDPADOFF()	VGE_CDOFF(vcd_pad[0])
 
-static void vge_cam_clear	(struct vge_softc *);
-static int vge_cam_set		(struct vge_softc *, uint8_t *);
-static void vge_setmulti	(struct vge_softc *);
-static void vge_reset		(struct vge_softc *);
+/*
+ * Software state for TX jobs.
+ */
+struct vge_txsoft {
+	struct mbuf	*txs_mbuf;		/* head of our mbuf chain */
+	bus_dmamap_t	txs_dmamap;		/* our DMA map */
+};
+
+/*
+ * Software state for RX jobs.
+ */
+struct vge_rxsoft {
+	struct mbuf	*rxs_mbuf;		/* head of our mbuf chain */
+	bus_dmamap_t	rxs_dmamap;		/* our DMA map */
+};
+
+
+struct vge_softc {
+	struct device		sc_dev;
+
+	bus_space_tag_t		sc_bst;		/* bus space tag */
+	bus_space_handle_t	sc_bsh;		/* bus space handle */
+	bus_dma_tag_t		sc_dmat;
+
+	struct ethercom		sc_ethercom;	/* interface info */
+	uint8_t			sc_eaddr[ETHER_ADDR_LEN];
+
+	void			*sc_intrhand;
+	struct mii_data		sc_mii;
+	uint8_t			sc_type;
+	int			sc_if_flags;
+	int			sc_link;
+	int			sc_camidx;
+	struct callout		sc_timeout;
+
+	bus_dmamap_t		sc_cddmamap;
+#define sc_cddma		sc_cddmamap->dm_segs[0].ds_addr
+
+	struct vge_txsoft	sc_txsoft[VGE_NTXDESC];
+	struct vge_rxsoft	sc_rxsoft[VGE_NRXDESC];
+	struct vge_control_data	*sc_control_data;
+#define sc_txdescs		sc_control_data->vcd_txdescs
+#define sc_rxdescs		sc_control_data->vcd_rxdescs
+
+	int			sc_tx_prodidx;
+	int			sc_tx_considx;
+	int			sc_tx_free;
+
+	struct mbuf		*sc_rx_mhead;
+	struct mbuf		*sc_rx_mtail;
+	int			sc_rx_prodidx;
+	int			sc_rx_consumed;
+
+	int			sc_suspended;	/* 0 = normal  1 = suspended */
+	uint32_t		sc_saved_maps[5];	/* pci data */
+	uint32_t		sc_saved_biosaddr;
+	uint8_t			sc_saved_intline;
+	uint8_t			sc_saved_cachelnsz;
+	uint8_t			sc_saved_lattimer;
+};
+
+#define VGE_CDTXADDR(sc, x)	((sc)->sc_cddma + VGE_CDTXOFF(x))
+#define VGE_CDRXADDR(sc, x)	((sc)->sc_cddma + VGE_CDRXOFF(x))
+#define VGE_CDPADADDR(sc)	((sc)->sc_cddma + VGE_CDPADOFF())
+
+#define VGE_TXDESCSYNC(sc, idx, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat,(sc)->sc_cddmamap,		\
+	    VGE_CDTXOFF(idx),						\
+	    offsetof(struct vge_txdesc, td_frag[0]),			\
+	    (ops))
+#define VGE_TXFRAGSYNC(sc, idx, nsegs, ops)				\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    VGE_CDTXOFF(idx) +						\
+	    offsetof(struct vge_txdesc, td_frag[0]),			\
+	    sizeof(struct vge_txfrag) * (nsegs),			\
+	    (ops))
+#define VGE_RXDESCSYNC(sc, idx, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
+	    VGE_CDRXOFF(idx),						\
+	    sizeof(struct vge_rxdesc),					\
+	    (ops))
+
+/*
+ * Mbuf adjust factor to force 32-bit alignment of IP header.
+ * Drivers should do m_adj(m, ETHER_ALIGN) when setting up a
+ * receive so the upper layers get the IP header properly aligned
+ * past the 14-byte Ethernet header.
+ */
+#define	ETHER_ALIGN	2
+
+#define	VGE_POWER_MANAGEMENT	0	/* disabled for now */
+
+/*
+ * register space access macros
+ */
+#define CSR_WRITE_4(sc, reg, val)	\
+	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+#define CSR_WRITE_2(sc, reg, val)	\
+	bus_space_write_2((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+#define CSR_WRITE_1(sc, reg, val)	\
+	bus_space_write_1((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+
+#define CSR_READ_4(sc, reg)		\
+	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
+#define CSR_READ_2(sc, reg)		\
+	bus_space_read_2((sc)->sc_bst, (sc)->sc_bsh, (reg))
+#define CSR_READ_1(sc, reg)		\
+	bus_space_read_1((sc)->sc_bst, (sc)->sc_bsh, (reg))
+
+#define CSR_SETBIT_1(sc, reg, x)	\
+	CSR_WRITE_1((sc), (reg), CSR_READ_1((sc), (reg)) | (x))
+#define CSR_SETBIT_2(sc, reg, x)	\
+	CSR_WRITE_2((sc), (reg), CSR_READ_2((sc), (reg)) | (x))
+#define CSR_SETBIT_4(sc, reg, x)	\
+	CSR_WRITE_4((sc), (reg), CSR_READ_4((sc), (reg)) | (x))
+
+#define CSR_CLRBIT_1(sc, reg, x)	\
+	CSR_WRITE_1((sc), (reg), CSR_READ_1((sc), (reg)) & ~(x))
+#define CSR_CLRBIT_2(sc, reg, x)	\
+	CSR_WRITE_2((sc), (reg), CSR_READ_2((sc), (reg)) & ~(x))
+#define CSR_CLRBIT_4(sc, reg, x)	\
+	CSR_WRITE_4((sc), (reg), CSR_READ_4((sc), (reg)) & ~(x))
+
+#define VGE_TIMEOUT		10000
 
 #define VGE_PCI_LOIO             0x10
 #define VGE_PCI_LOMEM            0x14
+
+static int vge_probe(struct device *, struct cfdata *, void *);
+static void vge_attach(struct device *, struct device *, void *);
+
+static int vge_encap(struct vge_softc *, struct mbuf *, int);
+
+static int vge_allocmem(struct vge_softc *);
+static int vge_newbuf(struct vge_softc *, int, struct mbuf *);
+#ifndef __NO_STRICT_ALIGNMENT
+static inline void vge_fixup_rx(struct mbuf *);
+#endif
+static void vge_rxeof(struct vge_softc *);
+static void vge_txeof(struct vge_softc *);
+static int vge_intr(void *);
+static void vge_tick(void *);
+static void vge_start(struct ifnet *);
+static int vge_ioctl(struct ifnet *, u_long, caddr_t);
+static int vge_init(struct ifnet *);
+static void vge_stop(struct vge_softc *);
+static void vge_watchdog(struct ifnet *);
+#if VGE_POWER_MANAGEMENT
+static int vge_suspend(struct device *);
+static int vge_resume(struct device *);
+#endif
+static void vge_shutdown(void *);
+static int vge_ifmedia_upd(struct ifnet *);
+static void vge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+
+static uint16_t vge_read_eeprom(struct vge_softc *, int);
+
+static void vge_miipoll_start(struct vge_softc *);
+static void vge_miipoll_stop(struct vge_softc *);
+static int vge_miibus_readreg(struct device *, int, int);
+static void vge_miibus_writereg(struct device *, int, int, int);
+static void vge_miibus_statchg(struct device *);
+
+static void vge_cam_clear(struct vge_softc *);
+static int vge_cam_set(struct vge_softc *, uint8_t *);
+static void vge_setmulti(struct vge_softc *);
+static void vge_reset(struct vge_softc *);
 
 CFATTACH_DECL(vge, sizeof(struct vge_softc),
     vge_probe, vge_attach, NULL, NULL);
@@ -228,14 +391,11 @@ vge_m_defrag(struct mbuf *mold, int flags)
 /*
  * Read a word of data stored in the EEPROM at address 'addr.'
  */
-static void
-vge_eeprom_getword(sc, addr, dest)
-	struct vge_softc	*sc;
-	int			addr;
-	u_int16_t		*dest;
+static uint16_t
+vge_read_eeprom(struct vge_softc *sc, int addr)
 {
-	register int		i;
-	u_int16_t		word = 0;
+	int i;
+	uint16_t word = 0;
 
 	/*
 	 * Enter EEPROM embedded programming mode. In order to
@@ -258,9 +418,9 @@ vge_eeprom_getword(sc, addr, dest)
 	}
 
 	if (i == VGE_TIMEOUT) {
-		printf("%s: EEPROM read timed out\n", sc->sc_dev.dv_xname);
-		*dest = 0;
-		return;
+		aprint_error("%s: EEPROM read timed out\n",
+		    sc->sc_dev.dv_xname);
+		return 0;
 	}
 
 	/* Read the result */
@@ -270,40 +430,13 @@ vge_eeprom_getword(sc, addr, dest)
 	CSR_CLRBIT_1(sc, VGE_EECSR, VGE_EECSR_EMBP/*|VGE_EECSR_ECS*/);
 	CSR_CLRBIT_1(sc, VGE_CHIPCFG2, VGE_CHIPCFG2_EELOAD);
 
-	*dest = word;
-
-	return;
-}
-
-/*
- * Read a sequence of words from the EEPROM.
- */
-static void
-vge_read_eeprom(sc, dest, off, cnt, swap)
-	struct vge_softc	*sc;
-	caddr_t			dest;
-	int			off;
-	int			cnt;
-	int			swap;
-{
-	int			i;
-	u_int16_t		word = 0, *ptr;
-
-	for (i = 0; i < cnt; i++) {
-		vge_eeprom_getword(sc, off + i, &word);
-		ptr = (u_int16_t *)(dest + (i * 2));
-		if (swap)
-			*ptr = ntohs(word);
-		else
-			*ptr = word;
-	}
+	return word;
 }
 
 static void
-vge_miipoll_stop(sc)
-	struct vge_softc	*sc;
+vge_miipoll_stop(struct vge_softc *sc)
 {
-	int			i;
+	int i;
 
 	CSR_WRITE_1(sc, VGE_MIICMD, 0);
 
@@ -314,18 +447,15 @@ vge_miipoll_stop(sc)
 	}
 
 	if (i == VGE_TIMEOUT) {
-		printf("%s: failed to idle MII autopoll\n",
+		aprint_error("%s: failed to idle MII autopoll\n",
 		    sc->sc_dev.dv_xname);
 	}
-
-	return;
 }
 
 static void
-vge_miipoll_start(sc)
-	struct vge_softc	*sc;
+vge_miipoll_start(struct vge_softc *sc)
 {
-	int			i;
+	int i;
 
 	/* First, make sure we're idle. */
 
@@ -339,7 +469,7 @@ vge_miipoll_start(sc)
 	}
 
 	if (i == VGE_TIMEOUT) {
-		printf("%s: failed to idle MII autopoll\n",
+		aprint_error("%s: failed to idle MII autopoll\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -357,24 +487,24 @@ vge_miipoll_start(sc)
 	}
 
 	if (i == VGE_TIMEOUT) {
-		printf("%s: failed to start MII autopoll\n",
+		aprint_error("%s: failed to start MII autopoll\n",
 		    sc->sc_dev.dv_xname);
 	}
 }
 
 static int
-vge_miibus_readreg(dev, phy, reg)
-	struct device *dev;
-	int phy, reg;
+vge_miibus_readreg(struct device *dev, int phy, int reg)
 {
-	struct vge_softc	*sc = (struct vge_softc *)dev;
-	int			i;
-	u_int16_t		rval = 0;
+	struct vge_softc *sc;
+	int i, s;
+	uint16_t rval;
 
+	sc = (void *)dev;
+	rval = 0;
 	if (phy != (CSR_READ_1(sc, VGE_MIICFG) & 0x1F))
-		return(0);
+		return 0;
 
-	VGE_LOCK(sc);
+	s = splnet();
 	vge_miipoll_stop(sc);
 
 	/* Specify the register we want to read. */
@@ -391,28 +521,27 @@ vge_miibus_readreg(dev, phy, reg)
 	}
 
 	if (i == VGE_TIMEOUT)
-		printf("%s: MII read timed out\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: MII read timed out\n", sc->sc_dev.dv_xname);
 	else
 		rval = CSR_READ_2(sc, VGE_MIIDATA);
 
 	vge_miipoll_start(sc);
-	VGE_UNLOCK(sc);
+	splx(s);
 
-	return (rval);
+	return rval;
 }
 
 static void
-vge_miibus_writereg(dev, phy, reg, data)
-	struct device	*dev;
-	int		phy, reg, data;
+vge_miibus_writereg(struct device *dev, int phy, int reg, int data)
 {
-	struct vge_softc	*sc = (struct vge_softc *)dev;
-	int			i;
+	struct vge_softc *sc;
+	int i, s;
 
+	sc = (void *)dev;
 	if (phy != (CSR_READ_1(sc, VGE_MIICFG) & 0x1F))
 		return;
 
-	VGE_LOCK(sc);
+	s = splnet();
 	vge_miipoll_stop(sc);
 
 	/* Specify the register we want to write. */
@@ -432,18 +561,17 @@ vge_miibus_writereg(dev, phy, reg, data)
 	}
 
 	if (i == VGE_TIMEOUT) {
-		printf("%s: MII write timed out\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: MII write timed out\n", sc->sc_dev.dv_xname);
 	}
 
 	vge_miipoll_start(sc);
-	VGE_UNLOCK(sc);
+	splx(s);
 }
 
 static void
-vge_cam_clear(sc)
-	struct vge_softc	*sc;
+vge_cam_clear(struct vge_softc *sc)
 {
-	int			i;
+	int i;
 
 	/*
 	 * Turn off all the mask bits. This tells the chip
@@ -467,27 +595,25 @@ vge_cam_clear(sc)
 	CSR_CLRBIT_1(sc, VGE_CAMCTL, VGE_CAMCTL_PAGESEL);
 	CSR_SETBIT_1(sc, VGE_CAMCTL, VGE_PAGESEL_MAR);
 
-	sc->vge_camidx = 0;
-
-	return;
+	sc->sc_camidx = 0;
 }
 
 static int
-vge_cam_set(sc, addr)
-	struct vge_softc	*sc;
-	uint8_t			*addr;
+vge_cam_set(struct vge_softc *sc, uint8_t *addr)
 {
-	int			i, error = 0;
+	int i, error;
 
-	if (sc->vge_camidx == VGE_CAM_MAXADDRS)
-		return(ENOSPC);
+	error = 0;
+
+	if (sc->sc_camidx == VGE_CAM_MAXADDRS)
+		return ENOSPC;
 
 	/* Select the CAM data page. */
 	CSR_CLRBIT_1(sc, VGE_CAMCTL, VGE_CAMCTL_PAGESEL);
 	CSR_SETBIT_1(sc, VGE_CAMCTL, VGE_PAGESEL_CAMDATA);
 
 	/* Set the filter entry we want to update and enable writing. */
-	CSR_WRITE_1(sc, VGE_CAMADDR, VGE_CAMADDR_ENABLE|sc->vge_camidx);
+	CSR_WRITE_1(sc, VGE_CAMADDR, VGE_CAMADDR_ENABLE | sc->sc_camidx);
 
 	/* Write the address to the CAM registers */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
@@ -504,7 +630,8 @@ vge_cam_set(sc, addr)
 	}
 
 	if (i == VGE_TIMEOUT) {
-		printf("%s: setting CAM filter failed\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: setting CAM filter failed\n",
+		    sc->sc_dev.dv_xname);
 		error = EIO;
 		goto fail;
 	}
@@ -514,35 +641,35 @@ vge_cam_set(sc, addr)
 	CSR_SETBIT_1(sc, VGE_CAMCTL, VGE_PAGESEL_CAMMASK);
 
 	/* Set the mask bit that enables this filter. */
-	CSR_SETBIT_1(sc, VGE_CAM0 + (sc->vge_camidx/8),
-	    1<<(sc->vge_camidx & 7));
+	CSR_SETBIT_1(sc, VGE_CAM0 + (sc->sc_camidx / 8),
+	    1 << (sc->sc_camidx & 7));
 
-	sc->vge_camidx++;
+	sc->sc_camidx++;
 
-fail:
+ fail:
 	/* Turn off access to CAM. */
 	CSR_WRITE_1(sc, VGE_CAMADDR, 0);
 	CSR_CLRBIT_1(sc, VGE_CAMCTL, VGE_CAMCTL_PAGESEL);
 	CSR_SETBIT_1(sc, VGE_CAMCTL, VGE_PAGESEL_MAR);
 
-	return (error);
+	return error;
 }
 
 /*
  * Program the multicast filter. We use the 64-entry CAM filter
  * for perfect filtering. If there's more than 64 multicast addresses,
- * we use the hash filter insted.
+ * we use the hash filter instead.
  */
 static void
-vge_setmulti(sc)
-	struct vge_softc	*sc;
+vge_setmulti(struct vge_softc *sc)
 {
-	struct ifnet		*ifp;
-	int			error = 0;
-	u_int32_t		h, hashes[2] = { 0, 0 };
+	struct ifnet *ifp;
+	int error;
+	uint32_t h, hashes[2] = { 0, 0 };
 	struct ether_multi *enm;
 	struct ether_multistep step;
 
+	error = 0;
 	ifp = &sc->sc_ethercom.ec_if;
 
 	/* First, zot all the multicast entries. */
@@ -556,7 +683,7 @@ vge_setmulti(sc)
 	 * of all multicast frames.
 	 */
 	if (ifp->if_flags & IFF_PROMISC) {
-    allmulti:
+ allmulti:
 		CSR_WRITE_4(sc, VGE_MAR0, 0xFFFFFFFF);
 		CSR_WRITE_4(sc, VGE_MAR1, 0xFFFFFFFF);
 		ifp->if_flags |= IFF_ALLMULTI;
@@ -565,7 +692,7 @@ vge_setmulti(sc)
 
 	/* Now program new ones */
 	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
-	while(enm != NULL) {
+	while (enm != NULL) {
 		/*
 		 * If multicast range, fall back to ALLMULTI.
 		 */
@@ -585,7 +712,7 @@ vge_setmulti(sc)
 		vge_cam_clear(sc);
 
 		ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
-		while(enm != NULL) {
+		while (enm != NULL) {
 			/*
 			 * If multicast range, fall back to ALLMULTI.
 			 */
@@ -603,15 +730,12 @@ vge_setmulti(sc)
 		CSR_WRITE_4(sc, VGE_MAR0, hashes[0]);
 		CSR_WRITE_4(sc, VGE_MAR1, hashes[1]);
 	}
-
-	return;
 }
 
 static void
-vge_reset(sc)
-	struct vge_softc		*sc;
+vge_reset(struct vge_softc *sc)
 {
-	register int		i;
+	int i;
 
 	CSR_WRITE_1(sc, VGE_CRS1, VGE_CR1_SOFTRESET);
 
@@ -622,7 +746,7 @@ vge_reset(sc)
 	}
 
 	if (i == VGE_TIMEOUT) {
-		printf("%s: soft reset timed out", sc->sc_dev.dv_xname);
+		aprint_error("%s: soft reset timed out", sc->sc_dev.dv_xname);
 		CSR_WRITE_1(sc, VGE_CRS3, VGE_CR3_STOP_FORCE);
 		DELAY(2000);
 	}
@@ -638,13 +762,18 @@ vge_reset(sc)
 	}
 
 	if (i == VGE_TIMEOUT) {
-		printf("%s: EEPROM reload timed out\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: EEPROM reload timed out\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
-	CSR_CLRBIT_1(sc, VGE_CHIPCFG0, VGE_CHIPCFG0_PACPI);
+	/*
+	 * On some machine, the first read data from EEPROM could be
+	 * messed up, so read one dummy data here to avoid the mess.
+	 */
+	(void)vge_read_eeprom(sc, 0);
 
-	return;
+	CSR_CLRBIT_1(sc, VGE_CHIPCFG0, VGE_CHIPCFG0_PACPI);
 }
 
 /*
@@ -652,7 +781,8 @@ vge_reset(sc)
  * IDs against our list and return a device name if we find a match.
  */
 static int
-vge_probe(struct device *parent, struct cfdata *match, void *aux)
+vge_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -660,214 +790,92 @@ vge_probe(struct device *parent, struct cfdata *match, void *aux)
 	    && PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT612X)
 		return 1;
 
-	return (0);
+	return 0;
 }
 
 static int
-vge_dma_map_rx_desc(sc, idx)
-	struct vge_softc	*sc;
-	int			idx;
+vge_allocmem(struct vge_softc *sc)
 {
-	struct vge_rx_desc	*d = NULL;
-	bus_dma_segment_t	*segs;
+	int error;
+	int nseg;
+	int i;
+	bus_dma_segment_t seg;
 
 	/*
-	 * Map the segment array into descriptors.
+	 * Allocate memory for control data.
 	 */
 
-	d = &sc->vge_ldata.vge_rx_list[idx];
-
-	/* If this descriptor is still owned by the chip, bail. */
-
-	if (le32toh(d->vge_sts) & VGE_RDSTS_OWN) {
-		printf("%s: tried to map busy descriptor\n",
-		    sc->sc_dev.dv_xname);
-		return (EBUSY);
-	}
-
-	segs = sc->vge_ldata.vge_rx_dmamap[idx]->dm_segs;
-
-	d->vge_buflen = htole16(VGE_BUFLEN(segs[0].ds_len) | VGE_RXDESC_I);
-	d->vge_addrlo = htole32(VGE_ADDR_LO(segs[0].ds_addr));
-	d->vge_addrhi = htole16(VGE_ADDR_HI(segs[0].ds_addr) & 0xFFFF);
-	d->vge_sts = 0;
-	d->vge_ctl = 0;
-
-	return (0);
-}
-
-static void
-vge_dma_map_tx_desc(sc, m0, idx, flags)
-	struct vge_softc	*sc;
-	struct mbuf		*m0;
-	int			idx, flags;
-{
-	struct vge_tx_desc	*d = &sc->vge_ldata.vge_tx_list[idx];
-	struct vge_tx_frag	*f;
-	int			i = 0;
-	bus_dma_segment_t	*segs;
-	size_t			sz;
-	bus_dmamap_t		map = sc->vge_ldata.vge_tx_dmamap[idx];
-
-	/* Map the segment array into descriptors. */
-
-	segs = map->dm_segs;
-	for (i = 0; i < map->dm_nsegs; i++) {
-		f = &d->vge_frag[i];
-		f->vge_buflen = htole16(VGE_BUFLEN(segs[i].ds_len));
-		f->vge_addrlo = htole32(VGE_ADDR_LO(segs[i].ds_addr));
-		f->vge_addrhi = htole16(VGE_ADDR_HI(segs[i].ds_addr) & 0xFFFF);
-	}
-
-	/* Argh. This chip does not autopad short frames */
-
-	sz = m0->m_pkthdr.len;
-	if (m0->m_pkthdr.len < VGE_MIN_FRAMELEN) {
-		f = &d->vge_frag[i];
-		f->vge_buflen = htole16(VGE_BUFLEN(VGE_MIN_FRAMELEN - sz));
-		f->vge_addrlo = htole32(VGE_ADDR_LO(segs[0].ds_addr));
-		f->vge_addrhi = htole16(VGE_ADDR_HI(segs[0].ds_addr) & 0xFFFF);
-		sz = VGE_MIN_FRAMELEN;
-		i++;
-	}
-
-	/*
-	 * When telling the chip how many segments there are, we
-	 * must use nsegs + 1 instead of just nsegs. Darned if I
-	 * know why.
-	 */
-	i++;
-
-	d->vge_sts = sz << 16;
-	d->vge_ctl = flags|(i << 28)|VGE_TD_LS_NORM;
-
-	if (sz > ETHERMTU + ETHER_HDR_LEN)
-		d->vge_ctl |= VGE_TDCTL_JUMBO;
-}
-
-static int
-vge_allocmem(sc)
-	struct vge_softc *sc;
-{
-	int			error;
-	int			nseg;
-	int			i;
-	bus_dma_segment_t	seg;
-
-	/*
-	 * Allocate map for TX descriptor list.
-	 */
-	error = bus_dmamap_create(sc->vge_dmat,
-	    round_page(VGE_TX_LIST_SZ), 1, round_page(VGE_TX_LIST_SZ),
-	    0, BUS_DMA_ALLOCNOW|BUS_DMA_NOWAIT,
-	    &sc->vge_ldata.vge_tx_list_map);
+	error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct vge_control_data),
+	     VGE_RING_ALIGN, 0, &seg, 1, &nseg, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: could not allocate TX dma list map\n",
+		aprint_error("%s: could not allocate control data dma memory\n",
 		    sc->sc_dev.dv_xname);
-		return (ENOMEM);
-	}
-
-	/*
-	 * Allocate memory for TX descriptor list.
-	 */
-
-	error = bus_dmamem_alloc(sc->vge_dmat, VGE_TX_LIST_SZ, VGE_RING_ALIGN,
-	    0, &seg, 1, &nseg, BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: could not allocate TX ring dma memory\n",
-		    sc->sc_dev.dv_xname);
-		return (ENOMEM);
+		return ENOMEM;
 	}
 
 	/* Map the memory to kernel VA space */
 
-	error = bus_dmamem_map(sc->vge_dmat, &seg, nseg, seg.ds_len,
-	     (caddr_t *) &sc->vge_ldata.vge_tx_list, BUS_DMA_NOWAIT);
+	error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
+	    sizeof(struct vge_control_data), (caddr_t *)&sc->sc_control_data,
+	    BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: could not map TX ring dma memory\n",
+		aprint_error("%s: could not map control data dma memory\n",
 		    sc->sc_dev.dv_xname);
-		return (ENOMEM);
+		return ENOMEM;
+	}
+	memset(sc->sc_control_data, 0, sizeof(struct vge_control_data));
+
+	/*
+	 * Create map for control data.
+	 */
+	error = bus_dmamap_create(sc->sc_dmat,
+	    sizeof(struct vge_control_data), 1,
+	    sizeof(struct vge_control_data), 0, BUS_DMA_NOWAIT,
+	    &sc->sc_cddmamap);
+	if (error) {
+		aprint_error("%s: could not create control data dmamap\n",
+		    sc->sc_dev.dv_xname);
+		return ENOMEM;
 	}
 
-	/* Load the map for the TX ring. */
-	error = bus_dmamap_load(sc->vge_dmat, sc->vge_ldata.vge_tx_list_map,
-	    sc->vge_ldata.vge_tx_list, seg.ds_len, NULL, BUS_DMA_NOWAIT);
+	/* Load the map for the control data. */
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
+	    sc->sc_control_data, sizeof(struct vge_control_data), NULL,
+	    BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: could not load TX ring dma memory\n",
+		aprint_error("%s: could not load control data dma memory\n",
 		    sc->sc_dev.dv_xname);
-		return (ENOMEM);
+		return ENOMEM;
 	}
-
-	sc->vge_ldata.vge_tx_list_addr =
-		sc->vge_ldata.vge_tx_list_map->dm_segs[0].ds_addr;
 
 	/* Create DMA maps for TX buffers */
 
-	for (i = 0; i < VGE_TX_DESC_CNT; i++) {
-		error = bus_dmamap_create(sc->vge_dmat, VGE_TX_MAXLEN,
-		    VGE_TX_FRAGS, VGE_TX_MAXLEN, 0,
-		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
-		    &sc->vge_ldata.vge_tx_dmamap[i]);
+	for (i = 0; i < VGE_NTXDESC; i++) {
+		error = bus_dmamap_create(sc->sc_dmat, VGE_TX_MAXLEN,
+		    VGE_TX_FRAGS, VGE_TX_MAXLEN, 0, BUS_DMA_NOWAIT,
+		    &sc->sc_txsoft[i].txs_dmamap);
 		if (error) {
-			printf("%s: can't create DMA map for TX\n",
+			aprint_error("%s: can't create DMA map for TX descs\n",
 			    sc->sc_dev.dv_xname);
-			return (ENOMEM);
+			return ENOMEM;
 		}
 	}
-
-	/*
-	 * Allocate map for RX descriptor list.
-	 */
-	error = bus_dmamap_create(sc->vge_dmat,
-	    round_page(VGE_RX_LIST_SZ), 1, round_page(VGE_RX_LIST_SZ),
-	    0, BUS_DMA_ALLOCNOW|BUS_DMA_NOWAIT,
-	    &sc->vge_ldata.vge_rx_list_map);
-	if (error) {
-		printf("%s: could not allocate RX dma list map\n",
-		    sc->sc_dev.dv_xname);
-		return (ENOMEM);
-	}
-
-	/* Allocate DMA'able memory for the RX ring */
-
-	error = bus_dmamem_alloc(sc->vge_dmat, VGE_RX_LIST_SZ, VGE_RING_ALIGN,
-	    0, &seg, 1, &nseg, BUS_DMA_NOWAIT);
-	if (error)
-		return (ENOMEM);
-
-	/* Map the memory to kernel VA space */
-
-	error = bus_dmamem_map(sc->vge_dmat, &seg, nseg, seg.ds_len,
-	     (caddr_t *) &sc->vge_ldata.vge_rx_list, BUS_DMA_NOWAIT);
-	if (error)
-		return (ENOMEM);
-
-	/* Load the map for the RX ring. */
-	error = bus_dmamap_load(sc->vge_dmat, sc->vge_ldata.vge_rx_list_map,
-	    sc->vge_ldata.vge_rx_list, seg.ds_len, NULL, BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: could not load RX ring dma memory\n",
-		    sc->sc_dev.dv_xname);
-		return (ENOMEM);
-	}
-
-	sc->vge_ldata.vge_rx_list_addr =
-		sc->vge_ldata.vge_rx_list_map->dm_segs[0].ds_addr;
 
 	/* Create DMA maps for RX buffers */
 
-	for (i = 0; i < VGE_RX_DESC_CNT; i++) {
-		error = bus_dmamap_create(sc->vge_dmat, MCLBYTES,
-		    1, MCLBYTES, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
-		    &sc->vge_ldata.vge_rx_dmamap[i]);
+	for (i = 0; i < VGE_NRXDESC; i++) {
+		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+		    1, MCLBYTES, 0, BUS_DMA_NOWAIT,
+		    &sc->sc_rxsoft[i].rxs_dmamap);
 		if (error) {
-			printf("%s: can't create DMA map for RX\n",
-			     sc->sc_dev.dv_xname);
-			return (ENOMEM);
+			aprint_error("%s: can't create DMA map for RX descs\n",
+			    sc->sc_dev.dv_xname);
+			return ENOMEM;
 		}
+		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -877,30 +885,29 @@ vge_allocmem(sc)
 static void
 vge_attach(struct device *parent, struct device *self, void *aux)
 {
-	u_char			eaddr[ETHER_ADDR_LEN];
-	struct vge_softc	*sc = (struct vge_softc *)self;
-	struct ifnet		*ifp;
+	uint8_t	*eaddr;
+	struct vge_softc *sc = (void *)self;
+	struct ifnet *ifp;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	const char *intrstr;
 	pci_intr_handle_t ih;
+	uint16_t val;
 
 	aprint_normal(": VIA VT612X Gigabit Ethernet (rev. %#x)\n",
 		PCI_REVISION(pa->pa_class));
 
 	/* Make sure bus-mastering is enabled */
         pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-		PCI_COMMAND_MASTER_ENABLE);
+	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
+	    PCI_COMMAND_MASTER_ENABLE);
 
 	/*
 	 * Map control/status registers.
 	 */
-	if (0 != pci_mapreg_map(pa, VGE_PCI_LOMEM,
-	    PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->vge_btag, &sc->vge_bhandle, NULL, NULL)) {
-		aprint_error("%s: couldn't map memory\n",
-			sc->sc_dev.dv_xname);
+	if (pci_mapreg_map(pa, VGE_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_bst, &sc->sc_bsh, NULL, NULL) != 0) {
+		aprint_error("%s: couldn't map memory\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -913,13 +920,13 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->vge_intrhand = pci_intr_establish(pc, ih, IPL_NET, vge_intr, sc);
-	if (sc->vge_intrhand == NULL) {
-		printf("%s: unable to establish interrupt",
+	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET, vge_intr, sc);
+	if (sc->sc_intrhand == NULL) {
+		aprint_error("%s: unable to establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
@@ -930,17 +937,25 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get station address from the EEPROM.
 	 */
-	vge_read_eeprom(sc, (caddr_t)eaddr, VGE_EE_EADDR, 3, 0);
-	bcopy(eaddr, (char *)&sc->vge_eaddr, ETHER_ADDR_LEN);
+	eaddr = sc->sc_eaddr;
+	val = vge_read_eeprom(sc, VGE_EE_EADDR + 0);
+	eaddr[0] = val & 0xff;
+	eaddr[1] = val >> 8;
+	val = vge_read_eeprom(sc, VGE_EE_EADDR + 1);
+	eaddr[2] = val & 0xff;
+	eaddr[3] = val >> 8;
+	val = vge_read_eeprom(sc, VGE_EE_EADDR + 2);
+	eaddr[4] = val & 0xff;
+	eaddr[5] = val >> 8;
 
-	printf("%s: Ethernet address: %s\n", sc->sc_dev.dv_xname,
+	aprint_normal("%s: Ethernet address: %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(eaddr));
 
 	/*
 	 * Use the 32bit tag. Hardware supports 48bit physical addresses,
 	 * but we don't use that for now.
 	 */
-	sc->vge_dmat = pa->pa_dmat;
+	sc->sc_dmat = pa->pa_dmat;
 
 	if (vge_allocmem(sc))
 		return;
@@ -1002,44 +1017,45 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 
-	callout_init(&sc->vge_timeout);
-	callout_setfunc(&sc->vge_timeout, vge_tick, sc);
+	callout_init(&sc->sc_timeout);
+	callout_setfunc(&sc->sc_timeout, vge_tick, sc);
 
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
 	if (shutdownhook_establish(vge_shutdown, sc) == NULL) {
-		printf("%s: WARNING: unable to establish shutdown hook\n",
+		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 	}
 }
 
 static int
-vge_newbuf(sc, idx, m)
-	struct vge_softc	*sc;
-	int			idx;
-	struct mbuf		*m;
+vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 {
-	struct mbuf		*n = NULL;
-	int			i, error;
+	struct mbuf *m_new;
+	struct vge_rxdesc *rxd;
+	struct vge_rxsoft *rxs;
+	bus_dmamap_t map;
+	int i;
 
+	m_new = NULL;
 	if (m == NULL) {
-		n = m_gethdr(M_DONTWAIT, MT_DATA);
-		if (n == NULL)
-			return (ENOBUFS);
+		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+		if (m_new == NULL)
+			return ENOBUFS;
 
-		m_clget(n, M_DONTWAIT);
-		if ((n->m_flags & M_EXT) == 0) {
-			m_freem(n);
-			return (ENOBUFS);
+		MCLGET(m_new, M_DONTWAIT);
+		if ((m_new->m_flags & M_EXT) == 0) {
+			m_freem(m_new);
+			return ENOBUFS;
 		}
 
-		m = n;
+		m = m_new;
 	} else
 		m->m_data = m->m_ext.ext_buf;
 
 
-#ifdef VGE_FIXUP_RX
+#ifndef __NO_STRICT_ALIGNMENT
 	/*
 	 * This is part of an evil trick to deal with non-x86 platforms.
 	 * The VIA chip requires RX buffers to be aligned on 32-bit
@@ -1050,19 +1066,40 @@ vge_newbuf(sc, idx, m)
 	 * than allocating a new buffer, copying the contents, and
 	 * discarding the old buffer.
 	 */
-	m->m_len = m->m_pkthdr.len = MCLBYTES - VGE_ETHER_ALIGN;
-	m_adj(m, VGE_ETHER_ALIGN);
+	m->m_len = m->m_pkthdr.len = MCLBYTES - VGE_RX_PAD;
+	m->m_data += VGE_RX_PAD;
 #else
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
 #endif
+	rxs = &sc->sc_rxsoft[idx];
+	map = rxs->rxs_dmamap;
 
-	error = bus_dmamap_load_mbuf(sc->vge_dmat,
-	    sc->vge_ldata.vge_rx_dmamap[idx], m, BUS_DMA_NOWAIT);
-	if (error || vge_dma_map_rx_desc(sc, idx)) {
-		if (n != NULL)
-			m_freem(n);
-		return (ENOMEM);
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT) != 0)
+		goto out;
+
+	rxd = &sc->sc_rxdescs[idx];
+
+	/* If this descriptor is still owned by the chip, bail. */
+
+	VGE_RXDESCSYNC(sc, idx, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	if (le32toh(rxd->rd_sts) & VGE_RDSTS_OWN) {
+		aprint_error("%s: tried to map busy RX descriptor\n",
+		    sc->sc_dev.dv_xname);
+		VGE_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
+		goto out;
 	}
+
+	rxs->rxs_mbuf = m;
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
+
+	rxd->rd_buflen =
+	    htole16(VGE_BUFLEN(map->dm_segs[0].ds_len) | VGE_RXDESC_I);
+	rxd->rd_addrlo = htole32(VGE_ADDR_LO(map->dm_segs[0].ds_addr));
+	rxd->rd_addrhi = htole16(VGE_ADDR_HI(map->dm_segs[0].ds_addr) & 0xFFFF);
+	rxd->rd_sts = 0;
+	rxd->rd_ctl = 0;
+	VGE_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Note: the manual fails to document the fact that for
@@ -1074,82 +1111,30 @@ vge_newbuf(sc, idx, m)
 	 */
 
 #define VGE_RXCHUNK 4
-	sc->vge_rx_consumed++;
-	if (sc->vge_rx_consumed == VGE_RXCHUNK) {
-		for (i = idx; i != idx - sc->vge_rx_consumed; i--)
-			sc->vge_ldata.vge_rx_list[i].vge_sts |=
-			    htole32(VGE_RDSTS_OWN);
-		sc->vge_rx_consumed = 0;
+	sc->sc_rx_consumed++;
+	if (sc->sc_rx_consumed == VGE_RXCHUNK) {
+		for (i = idx; i != idx - VGE_RXCHUNK; i--) {
+			KASSERT(i >= 0);
+			sc->sc_rxdescs[i].rd_sts |= htole32(VGE_RDSTS_OWN);
+			VGE_RXDESCSYNC(sc, i,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		}
+		sc->sc_rx_consumed = 0;
 	}
 
-	sc->vge_ldata.vge_rx_mbuf[idx] = m;
-
-	bus_dmamap_sync(sc->vge_dmat,
-	    sc->vge_ldata.vge_rx_dmamap[idx],
-	    0, sc->vge_ldata.vge_rx_dmamap[idx]->dm_mapsize,
-	    BUS_DMASYNC_PREREAD);
-
-	return (0);
+	return 0;
+ out:
+	if (m_new != NULL)
+		m_freem(m_new);
+	return ENOMEM;
 }
 
-static int
-vge_tx_list_init(sc)
-	struct vge_softc		*sc;
-{
-	bzero ((char *)sc->vge_ldata.vge_tx_list, VGE_TX_LIST_SZ);
-	bzero ((char *)&sc->vge_ldata.vge_tx_mbuf,
-	    (VGE_TX_DESC_CNT * sizeof(struct mbuf *)));
-
-	bus_dmamap_sync(sc->vge_dmat,
-	    sc->vge_ldata.vge_tx_list_map,
-	    0, sc->vge_ldata.vge_tx_list_map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-
-	sc->vge_ldata.vge_tx_prodidx = 0;
-	sc->vge_ldata.vge_tx_considx = 0;
-	sc->vge_ldata.vge_tx_free = VGE_TX_DESC_CNT;
-
-	return (0);
-}
-
-static int
-vge_rx_list_init(sc)
-	struct vge_softc		*sc;
-{
-	int			i;
-
-	bzero ((char *)sc->vge_ldata.vge_rx_list, VGE_RX_LIST_SZ);
-	bzero ((char *)&sc->vge_ldata.vge_rx_mbuf,
-	    (VGE_RX_DESC_CNT * sizeof(struct mbuf *)));
-
-	sc->vge_rx_consumed = 0;
-
-	for (i = 0; i < VGE_RX_DESC_CNT; i++) {
-		if (vge_newbuf(sc, i, NULL) == ENOBUFS)
-			return (ENOBUFS);
-	}
-
-	/* Flush the RX descriptors */
-
-	bus_dmamap_sync(sc->vge_dmat,
-	    sc->vge_ldata.vge_rx_list_map,
-	    0, sc->vge_ldata.vge_rx_list_map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
-
-	sc->vge_ldata.vge_rx_prodidx = 0;
-	sc->vge_rx_consumed = 0;
-	sc->vge_head = sc->vge_tail = NULL;
-
-	return (0);
-}
-
-#ifdef VGE_FIXUP_RX
+#ifndef __NO_STRICT_ALIGNMENT
 static inline void
-vge_fixup_rx(m)
-	struct mbuf		*m;
+vge_fixup_rx(struct mbuf *m)
 {
-	int			i;
-	uint16_t		*src, *dst;
+	int i;
+	uint16_t *src, *dst;
 
 	src = mtod(m, uint16_t *);
 	dst = src - 1;
@@ -1158,8 +1143,6 @@ vge_fixup_rx(m)
 		*dst++ = *src++;
 
 	m->m_data -= ETHER_ALIGN;
-
-	return;
 }
 #endif
 
@@ -1168,51 +1151,41 @@ vge_fixup_rx(m)
  * been fragmented across multiple 2K mbuf cluster buffers.
  */
 static void
-vge_rxeof(sc)
-	struct vge_softc	*sc;
+vge_rxeof(struct vge_softc *sc)
 {
-	struct mbuf		*m;
-	struct ifnet		*ifp;
-	int			i, total_len;
-	int			lim = 0;
-	struct vge_rx_desc	*cur_rx;
-	u_int32_t		rxstat, rxctl;
+	struct mbuf *m;
+	struct ifnet *ifp;
+	int idx, total_len, lim;
+	struct vge_rxdesc *cur_rxd;
+	struct vge_rxsoft *rxs;
+	uint32_t rxstat, rxctl;
 
-	VGE_LOCK_ASSERT(sc);
 	ifp = &sc->sc_ethercom.ec_if;
-	i = sc->vge_ldata.vge_rx_prodidx;
+	lim = 0;
 
 	/* Invalidate the descriptor memory */
 
-	bus_dmamap_sync(sc->vge_dmat,
-	    sc->vge_ldata.vge_rx_list_map,
-	    0, sc->vge_ldata.vge_rx_list_map->dm_mapsize,
-	    BUS_DMASYNC_POSTREAD);
+	for (idx = sc->sc_rx_prodidx;; idx = VGE_NEXT_RXDESC(idx)) {
+		cur_rxd = &sc->sc_rxdescs[idx];
 
-	while (!VGE_OWN(&sc->vge_ldata.vge_rx_list[i])) {
-
-#ifdef DEVICE_POLLING
-		if (ifp->if_flags & IFF_POLLING) {
-			if (sc->rxcycles <= 0)
-				break;
-			sc->rxcycles--;
+		VGE_RXDESCSYNC(sc, idx,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		rxstat = le32toh(cur_rxd->rd_sts);
+		if ((rxstat & VGE_RDSTS_OWN) != 0) {
+			VGE_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
+			break;
 		}
-#endif /* DEVICE_POLLING */
 
-		cur_rx = &sc->vge_ldata.vge_rx_list[i];
-		m = sc->vge_ldata.vge_rx_mbuf[i];
-		total_len = VGE_RXBYTES(cur_rx);
-		rxstat = le32toh(cur_rx->vge_sts);
-		rxctl = le32toh(cur_rx->vge_ctl);
+		rxctl = le32toh(cur_rxd->rd_ctl);
+		rxs = &sc->sc_rxsoft[idx];
+		m = rxs->rxs_mbuf;
+		total_len = (rxstat & VGE_RDSTS_BUFSIZ) >> 16;
 
 		/* Invalidate the RX mbuf and unload its map */
 
-		bus_dmamap_sync(sc->vge_dmat,
-		    sc->vge_ldata.vge_rx_dmamap[i],
-		    0, sc->vge_ldata.vge_rx_dmamap[i]->dm_mapsize,
-		    BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->vge_dmat,
-		    sc->vge_ldata.vge_rx_dmamap[i]);
+		bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap,
+		    0, rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
 
 		/*
 		 * If the 'start of frame' bit is set, this indicates
@@ -1221,16 +1194,15 @@ vge_rxeof(sc)
 		 * accumulate the buffers.
 		 */
 		if (rxstat & VGE_RXPKT_SOF) {
-			m->m_len = MCLBYTES - VGE_ETHER_ALIGN;
-			if (sc->vge_head == NULL)
-				sc->vge_head = sc->vge_tail = m;
+			m->m_len = MCLBYTES - VGE_RX_PAD;
+			if (sc->sc_rx_mhead == NULL)
+				sc->sc_rx_mhead = sc->sc_rx_mtail = m;
 			else {
 				m->m_flags &= ~M_PKTHDR;
-				sc->vge_tail->m_next = m;
-				sc->vge_tail = m;
+				sc->sc_rx_mtail->m_next = m;
+				sc->sc_rx_mtail = m;
 			}
-			vge_newbuf(sc, i, NULL);
-			VGE_RX_DESC_INC(i);
+			vge_newbuf(sc, idx, NULL);
 			continue;
 		}
 
@@ -1250,12 +1222,11 @@ vge_rxeof(sc)
 			 * If this is part of a multi-fragment packet,
 			 * discard all the pieces.
 			 */
-			if (sc->vge_head != NULL) {
-				m_freem(sc->vge_head);
-				sc->vge_head = sc->vge_tail = NULL;
+			if (sc->sc_rx_mhead != NULL) {
+				m_freem(sc->sc_rx_mhead);
+				sc->sc_rx_mhead = sc->sc_rx_mtail = NULL;
 			}
-			vge_newbuf(sc, i, m);
-			VGE_RX_DESC_INC(i);
+			vge_newbuf(sc, idx, m);
 			continue;
 		}
 
@@ -1264,21 +1235,18 @@ vge_rxeof(sc)
 		 * reload the current one.
 		 */
 
-		if (vge_newbuf(sc, i, NULL)) {
+		if (vge_newbuf(sc, idx, NULL)) {
 			ifp->if_ierrors++;
-			if (sc->vge_head != NULL) {
-				m_freem(sc->vge_head);
-				sc->vge_head = sc->vge_tail = NULL;
+			if (sc->sc_rx_mhead != NULL) {
+				m_freem(sc->sc_rx_mhead);
+				sc->sc_rx_mhead = sc->sc_rx_mtail = NULL;
 			}
-			vge_newbuf(sc, i, m);
-			VGE_RX_DESC_INC(i);
+			vge_newbuf(sc, idx, m);
 			continue;
 		}
 
-		VGE_RX_DESC_INC(i);
-
-		if (sc->vge_head != NULL) {
-			m->m_len = total_len % (MCLBYTES - VGE_ETHER_ALIGN);
+		if (sc->sc_rx_mhead != NULL) {
+			m->m_len = total_len % (MCLBYTES - VGE_RX_PAD);
 			/*
 			 * Special case: if there's 4 bytes or less
 			 * in this buffer, the mbuf can be discarded:
@@ -1286,22 +1254,21 @@ vge_rxeof(sc)
 			 * care about anyway.
 			 */
 			if (m->m_len <= ETHER_CRC_LEN) {
-				sc->vge_tail->m_len -=
+				sc->sc_rx_mtail->m_len -=
 				    (ETHER_CRC_LEN - m->m_len);
 				m_freem(m);
 			} else {
 				m->m_len -= ETHER_CRC_LEN;
 				m->m_flags &= ~M_PKTHDR;
-				sc->vge_tail->m_next = m;
+				sc->sc_rx_mtail->m_next = m;
 			}
-			m = sc->vge_head;
-			sc->vge_head = sc->vge_tail = NULL;
+			m = sc->sc_rx_mhead;
+			sc->sc_rx_mhead = sc->sc_rx_mtail = NULL;
 			m->m_pkthdr.len = total_len - ETHER_CRC_LEN;
 		} else
-			m->m_pkthdr.len = m->m_len =
-			    (total_len - ETHER_CRC_LEN);
+			m->m_pkthdr.len = m->m_len = total_len - ETHER_CRC_LEN;
 
-#ifdef VGE_FIXUP_RX
+#ifndef __NO_STRICT_ALIGNMENT
 		vge_fixup_rx(m);
 #endif
 		ifp->if_ipackets++;
@@ -1335,9 +1302,16 @@ vge_rxeof(sc)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
 
-		if (rxstat & VGE_RDSTS_VTAG)
+		if (rxstat & VGE_RDSTS_VTAG) {
+			/*
+			 * We use bswap16() here because:
+			 * On LE machines, tag is stored in BE as stream data.
+			 * On BE machines, tag is stored in BE as stream data
+			 *  but it was already swapped by le32toh() above.
+			 */
 			VLAN_INPUT_TAG(ifp, m,
-			    ntohs((rxctl & VGE_RDCTL_VLANID)), continue);
+			    bswap16(rxctl & VGE_RDCTL_VLANID), continue);
+		}
 
 #if NBPFILTER > 0
 		/*
@@ -1347,58 +1321,46 @@ vge_rxeof(sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		VGE_UNLOCK(sc);
 		(*ifp->if_input)(ifp, m);
-		VGE_LOCK(sc);
 
 		lim++;
-		if (lim == VGE_RX_DESC_CNT)
+		if (lim == VGE_NRXDESC)
 			break;
 
 	}
 
-	/* Flush the RX DMA ring */
-
-	bus_dmamap_sync(sc->vge_dmat,
-	    sc->vge_ldata.vge_rx_list_map,
-	    0, sc->vge_ldata.vge_rx_list_map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
-
-	sc->vge_ldata.vge_rx_prodidx = i;
+	sc->sc_rx_prodidx = idx;
 	CSR_WRITE_2(sc, VGE_RXDESC_RESIDUECNT, lim);
-
-
-	return;
 }
 
 static void
-vge_txeof(sc)
-	struct vge_softc		*sc;
+vge_txeof(struct vge_softc *sc)
 {
-	struct ifnet		*ifp;
-	u_int32_t		txstat;
-	int			idx;
+	struct ifnet *ifp;
+	struct vge_txsoft *txs;
+	uint32_t txstat;
+	int idx;
 
 	ifp = &sc->sc_ethercom.ec_if;
-	idx = sc->vge_ldata.vge_tx_considx;
+	idx = sc->sc_tx_considx;
 
-	/* Invalidate the TX descriptor list */
-
-	bus_dmamap_sync(sc->vge_dmat,
-	    sc->vge_ldata.vge_tx_list_map,
-	    0,  sc->vge_ldata.vge_tx_list_map->dm_mapsize,
-	    BUS_DMASYNC_POSTREAD);
-
-	while (idx != sc->vge_ldata.vge_tx_prodidx) {
-
-		txstat = le32toh(sc->vge_ldata.vge_tx_list[idx].vge_sts);
-		if (txstat & VGE_TDSTS_OWN)
+	for (idx = sc->sc_tx_considx;
+	    idx != sc->sc_tx_prodidx;
+	    idx = VGE_NEXT_TXDESC(idx)) {
+		VGE_TXDESCSYNC(sc, idx,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		txstat = le32toh(sc->sc_txdescs[idx].td_sts);
+		if (txstat & VGE_TDSTS_OWN) {
+			VGE_TXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
 			break;
+		}
 
-		m_freem(sc->vge_ldata.vge_tx_mbuf[idx]);
-		sc->vge_ldata.vge_tx_mbuf[idx] = NULL;
-		bus_dmamap_unload(sc->vge_dmat,
-		    sc->vge_ldata.vge_tx_dmamap[idx]);
+		txs = &sc->sc_txsoft[idx];
+		m_freem(txs->txs_mbuf);
+		txs->txs_mbuf = NULL;
+		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap, 0,
+		    txs->txs_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
 		if (txstat & (VGE_TDSTS_EXCESSCOLL|VGE_TDSTS_COLL))
 			ifp->if_collisions++;
 		if (txstat & VGE_TDSTS_TXERR)
@@ -1406,16 +1368,14 @@ vge_txeof(sc)
 		else
 			ifp->if_opackets++;
 
-		sc->vge_ldata.vge_tx_free++;
-		VGE_TX_DESC_INC(idx);
+		sc->sc_tx_free++;
 	}
 
 	/* No changes made to the TX ring, so no flush needed */
 
-	if (idx != sc->vge_ldata.vge_tx_considx) {
-		sc->vge_ldata.vge_tx_considx = idx;
+	if (idx != sc->sc_tx_considx) {
+		sc->sc_tx_considx = idx;
 		ifp->if_flags &= ~IFF_OACTIVE;
-		ifp->if_timer = 0;
 	}
 
 	/*
@@ -1424,140 +1384,63 @@ vge_txeof(sc)
 	 * interrupt that will cause us to re-enter this routine.
 	 * This is done in case the transmitter has gone idle.
 	 */
-	if (sc->vge_ldata.vge_tx_free != VGE_TX_DESC_CNT) {
+	if (sc->sc_tx_free != VGE_NTXDESC)
 		CSR_WRITE_1(sc, VGE_CRS1, VGE_CR1_TIMER0_ENABLE);
-	}
-
-	return;
+	else
+		ifp->if_timer = 0;
 }
 
 static void
-vge_tick(xsc)
-	void			*xsc;
+vge_tick(void *xsc)
 {
-	struct vge_softc	*sc = xsc;
-	struct ifnet		*ifp = &sc->sc_ethercom.ec_if;
-	struct mii_data		*mii = &sc->sc_mii;
+	struct vge_softc *sc;
+	struct ifnet *ifp;
+	struct mii_data *mii;
 	int s;
+
+	sc = xsc;
+	ifp = &sc->sc_ethercom.ec_if;
+	mii = &sc->sc_mii;
 
 	s = splnet();
 
-	VGE_LOCK(sc);
-
-	callout_schedule(&sc->vge_timeout, hz);
+	callout_schedule(&sc->sc_timeout, hz);
 
 	mii_tick(mii);
-	if (sc->vge_link) {
+	if (sc->sc_link) {
 		if (!(mii->mii_media_status & IFM_ACTIVE))
-			sc->vge_link = 0;
+			sc->sc_link = 0;
 	} else {
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-			sc->vge_link = 1;
+			sc->sc_link = 1;
 			if (!IFQ_IS_EMPTY(&ifp->if_snd))
 				vge_start(ifp);
 		}
 	}
 
-	VGE_UNLOCK(sc);
-
 	splx(s);
 }
 
-#ifdef DEVICE_POLLING
-static void
-vge_poll (struct ifnet *ifp, enum poll_cmd cmd, int count)
-{
-	struct vge_softc *sc = ifp->if_softc;
-
-	VGE_LOCK(sc);
-#ifdef IFCAP_POLLING
-	if (!(ifp->if_capenable & IFCAP_POLLING)) {
-		ether_poll_deregister(ifp);
-		cmd = POLL_DEREGISTER;
-	}
-#endif
-	if (cmd == POLL_DEREGISTER) { /* final call, enable interrupts */
-		CSR_WRITE_4(sc, VGE_IMR, VGE_INTRS);
-		CSR_WRITE_4(sc, VGE_ISR, 0xFFFFFFFF);
-		CSR_WRITE_1(sc, VGE_CRS3, VGE_CR3_INT_GMSK);
-		goto done;
-	}
-
-	sc->rxcycles = count;
-	vge_rxeof(sc);
-	vge_txeof(sc);
-
-#if __FreeBSD_version < 502114
-	if (ifp->if_snd.ifq_head != NULL)
-#else
-	if (!IFQ_DRV_IS_EMPTY(&ifp->if_snd))
-#endif
-		taskqueue_enqueue(taskqueue_swi, &sc->vge_txtask);
-
-	if (cmd == POLL_AND_CHECK_STATUS) { /* also check status register */
-		u_int32_t       status;
-		status = CSR_READ_4(sc, VGE_ISR);
-		if (status == 0xFFFFFFFF)
-			goto done;
-		if (status)
-			CSR_WRITE_4(sc, VGE_ISR, status);
-
-		/*
-		 * XXX check behaviour on receiver stalls.
-		 */
-
-		if (status & VGE_ISR_TXDMA_STALL ||
-		    status & VGE_ISR_RXDMA_STALL)
-			vge_init(sc);
-
-		if (status & (VGE_ISR_RXOFLOW|VGE_ISR_RXNODESC)) {
-			vge_rxeof(sc);
-			ifp->if_ierrors++;
-			CSR_WRITE_1(sc, VGE_RXQCSRS, VGE_RXQCSR_RUN);
-			CSR_WRITE_1(sc, VGE_RXQCSRS, VGE_RXQCSR_WAK);
-		}
-	}
-done:
-	VGE_UNLOCK(sc);
-}
-#endif /* DEVICE_POLLING */
-
 static int
-vge_intr(arg)
-	void			*arg;
+vge_intr(void *arg)
 {
-	struct vge_softc	*sc = arg;
-	struct ifnet		*ifp = &sc->sc_ethercom.ec_if;
-	u_int32_t		status;
-	int claim = 0;
+	struct vge_softc *sc;
+	struct ifnet *ifp;
+	uint32_t status;
+	int claim;
 
-	if (sc->suspended) {
+	sc = arg;
+	claim = 0;
+	if (sc->sc_suspended) {
 		return claim;
 	}
 
-	VGE_LOCK(sc);
+	ifp = &sc->sc_ethercom.ec_if;
 
 	if (!(ifp->if_flags & IFF_UP)) {
-		VGE_UNLOCK(sc);
 		return claim;
 	}
-
-#ifdef DEVICE_POLLING
-	if  (ifp->if_flags & IFF_POLLING)
-		goto done;
-	if (
-#ifdef IFCAP_POLLING
-	    (ifp->if_capenable & IFCAP_POLLING) &&
-#endif
-	    ether_poll_register(vge_poll, ifp)) { /* ok, disable interrupts */
-		CSR_WRITE_4(sc, VGE_IMR, 0);
-		CSR_WRITE_1(sc, VGE_CRC3, VGE_CR3_INT_GMSK);
-		vge_poll(ifp, 0, 1);
-		goto done;
-	}
-
-#endif /* DEVICE_POLLING */
 
 	/* Disable interrupts */
 	CSR_WRITE_1(sc, VGE_CRC3, VGE_CR3_INT_GMSK);
@@ -1599,11 +1482,6 @@ vge_intr(arg)
 	/* Re-enable interrupts */
 	CSR_WRITE_1(sc, VGE_CRS3, VGE_CR3_INT_GMSK);
 
-#ifdef DEVICE_POLLING
-done:
-#endif
-	VGE_UNLOCK(sc);
-
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		vge_start(ifp);
 
@@ -1611,68 +1489,122 @@ done:
 }
 
 static int
-vge_encap(sc, m_head, idx)
-	struct vge_softc	*sc;
-	struct mbuf		*m_head;
-	int			idx;
+vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 {
-	struct mbuf		*m_new = NULL;
-	bus_dmamap_t		map;
-	int			error, flags;
-	struct m_tag		*mtag;
+	struct vge_txsoft *txs;
+	struct vge_txdesc *txd;
+	struct vge_txfrag *f;
+	struct mbuf *m_new;
+	bus_dmamap_t map;
+	int m_csumflags, seg, error, flags;
+	struct m_tag *mtag;
+	size_t sz;
 
+	KASSERT(sc->sc_tx_free > 0);
+
+	txd = &sc->sc_txdescs[idx];
+
+#ifdef DIAGNOSTIC
 	/* If this descriptor is still owned by the chip, bail. */
-	if (sc->vge_ldata.vge_tx_free <= 2
-	    || le32toh(sc->vge_ldata.vge_tx_list[idx].vge_sts) & VGE_TDSTS_OWN)
-		return (ENOBUFS);
+	VGE_TXDESCSYNC(sc, idx, 
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	if (le32toh(txd->td_sts) & VGE_TDSTS_OWN) {
+		VGE_TXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
+		return ENOBUFS;
+	}
+#endif
 
-	flags = 0;
+	/*
+	 * Preserve m_pkthdr.csum_flags here since m_head might be
+	 * updated by m_defrag()
+	 */
+	m_csumflags = m_head->m_pkthdr.csum_flags;
 
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_IPv4)
-		flags |= VGE_TDCTL_IPCSUM;
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_TCPv4)
-		flags |= VGE_TDCTL_TCPCSUM;
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_UDPv4)
-		flags |= VGE_TDCTL_UDPCSUM;
-
-	map = sc->vge_ldata.vge_tx_dmamap[idx];
-	error = bus_dmamap_load_mbuf(sc->vge_dmat, map,
-	    m_head, BUS_DMA_NOWAIT);
+	txs = &sc->sc_txsoft[idx];
+	map = txs->txs_dmamap;
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m_head, BUS_DMA_NOWAIT);
 
 	/* If too many segments to map, coalesce */
-	if (error == EFBIG) {
+	if (error == EFBIG ||
+	    (m_head->m_pkthdr.len < ETHER_PAD_LEN &&
+	     map->dm_nsegs == VGE_TX_FRAGS)) {
 		m_new = m_defrag(m_head, M_DONTWAIT);
 		if (m_new == NULL)
-			return (error);
+			return EFBIG;
 
-		error = bus_dmamap_load_mbuf(sc->vge_dmat, map,
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, map,
 		    m_new, BUS_DMA_NOWAIT);
 		if (error) {
 			m_freem(m_new);
-			return (error);
+			return error;
 		}
 
 		m_head = m_new;
 	} else if (error)
-		return (error);
+		return error;
 
-	vge_dma_map_tx_desc(sc, m_head, idx, flags);
+	txs->txs_mbuf = m_head;
 
-	sc->vge_ldata.vge_tx_mbuf[idx] = m_head;
-	sc->vge_ldata.vge_tx_free--;
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
+	for (seg = 0, f = &txd->td_frag[0]; seg < map->dm_nsegs; seg++, f++) {
+		f->tf_buflen = htole16(VGE_BUFLEN(map->dm_segs[seg].ds_len));
+		f->tf_addrlo = htole32(VGE_ADDR_LO(map->dm_segs[seg].ds_addr));
+		f->tf_addrhi = htole16(VGE_ADDR_HI(map->dm_segs[seg].ds_addr));
+	}
+
+	/* Argh. This chip does not autopad short frames */
+	sz = m_head->m_pkthdr.len;
+	if (sz < ETHER_PAD_LEN) {
+		f->tf_buflen = htole16(VGE_BUFLEN(ETHER_PAD_LEN - sz));
+		f->tf_addrlo = htole32(VGE_ADDR_LO(VGE_CDPADADDR(sc)));
+		f->tf_addrhi = htole16(VGE_ADDR_HI(VGE_CDPADADDR(sc)) & 0xFFFF);
+		sz = ETHER_PAD_LEN;
+		seg++;
+	}
+	VGE_TXFRAGSYNC(sc, idx, seg, BUS_DMASYNC_PREWRITE);
+
+	/*
+	 * When telling the chip how many segments there are, we
+	 * must use nsegs + 1 instead of just nsegs. Darned if I
+	 * know why.
+	 */
+	seg++;
+
+	flags = 0;
+	if (m_csumflags & M_CSUM_IPv4)
+		flags |= VGE_TDCTL_IPCSUM;
+	if (m_csumflags & M_CSUM_TCPv4)
+		flags |= VGE_TDCTL_TCPCSUM;
+	if (m_csumflags & M_CSUM_UDPv4)
+		flags |= VGE_TDCTL_UDPCSUM;
+	txd->td_sts = htole32(sz << 16);
+	txd->td_ctl = htole32(flags | (seg << 28) | VGE_TD_LS_NORM);
+
+	if (sz > ETHERMTU + ETHER_HDR_LEN)
+		txd->td_ctl |= htole32(VGE_TDCTL_JUMBO);
 
 	/*
 	 * Set up hardware VLAN tagging.
 	 */
 
 	mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m_head);
-	if (mtag != NULL)
-		sc->vge_ldata.vge_tx_list[idx].vge_ctl |=
-		    htole32(htons(VLAN_TAG_VALUE(mtag)) | VGE_TDCTL_VTAG);
+	if (mtag != NULL) {
+		/* 
+		 * No need htons() here since vge(4) chip assumes
+		 * that tags are written in little endian and
+		 * we already use htole32() here.
+		 */
+		txd->td_ctl |= htole32(VLAN_TAG_VALUE(mtag) | VGE_TDCTL_VTAG);
+	}
 
-	sc->vge_ldata.vge_tx_list[idx].vge_sts |= htole32(VGE_TDSTS_OWN);
+	txd->td_sts |= htole32(VGE_TDSTS_OWN);
+	VGE_TXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	return (0);
+	sc->sc_tx_free--;
+
+	return 0;
 }
 
 /*
@@ -1680,40 +1612,39 @@ vge_encap(sc, m_head, idx)
  */
 
 static void
-vge_start(ifp)
-	struct ifnet		*ifp;
+vge_start(struct ifnet *ifp)
 {
-	struct vge_softc	*sc;
-	struct mbuf		*m_head = NULL;
-	int			idx, pidx = 0, error;
+	struct vge_softc *sc;
+	struct vge_txsoft *txs;
+	struct mbuf *m_head;
+	int idx, pidx, error;
 
 	sc = ifp->if_softc;
-	VGE_LOCK(sc);
 
-	if (!sc->vge_link
-	    || (ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING) {
-		VGE_UNLOCK(sc);
+	if (!sc->sc_link ||
+	    (ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING) {
 		return;
 	}
 
-	idx = sc->vge_ldata.vge_tx_prodidx;
+	m_head = NULL;
+	idx = sc->sc_tx_prodidx;
 
-	pidx = idx - 1;
-	if (pidx < 0)
-		pidx = VGE_TX_DESC_CNT - 1;
+	pidx = (idx - 1) & VGE_NTXDESC_MASK;
 
 	/*
 	 * Loop through the send queue, setting up transmit descriptors
 	 * until we drain the queue, or use up all available transmit
 	 * descriptors.
 	 */
-	for(;;) {
+	for (;;) {
 		/* Grab a packet off the queue. */
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
-		if (sc->vge_ldata.vge_tx_mbuf[idx] != NULL) {
+		txs = &sc->sc_txsoft[idx];
+
+		if (txs->txs_mbuf != NULL) {
 			/*
 			 * Slot already used, stop for now.
 			 */
@@ -1723,7 +1654,7 @@ vge_start(ifp)
 
 		if ((error = vge_encap(sc, m_head, idx))) {
 			if (error == EFBIG) {
-				printf("%s: Tx packet consumes too many "
+				aprint_error("%s: Tx packet consumes too many "
 				    "DMA segments, dropping...\n",
 				    sc->sc_dev.dv_xname);
 				IFQ_DEQUEUE(&ifp->if_snd, m_head);
@@ -1745,16 +1676,18 @@ vge_start(ifp)
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
 		 */
 
-		sc->vge_ldata.vge_tx_list[pidx].vge_frag[0].vge_buflen |=
+		sc->sc_txdescs[pidx].td_frag[0].tf_buflen |=
 		    htole16(VGE_TXDESC_Q);
+		VGE_TXFRAGSYNC(sc, pidx, 1,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-		if (sc->vge_ldata.vge_tx_mbuf[idx] != m_head) {
+		if (txs->txs_mbuf != m_head) {
 			m_freem(m_head);
-			m_head = sc->vge_ldata.vge_tx_mbuf[idx];
+			m_head = txs->txs_mbuf;
 		}
 
 		pidx = idx;
-		VGE_TX_DESC_INC(idx);
+		idx = VGE_NEXT_TXDESC(idx);
 
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
@@ -1766,22 +1699,14 @@ vge_start(ifp)
 #endif
 	}
 
-	if (idx == sc->vge_ldata.vge_tx_prodidx) {
-		VGE_UNLOCK(sc);
+	if (idx == sc->sc_tx_prodidx) {
 		return;
 	}
-
-	/* Flush the TX descriptors */
-
-	bus_dmamap_sync(sc->vge_dmat,
-	    sc->vge_ldata.vge_tx_list_map,
-	    0, sc->vge_ldata.vge_tx_list_map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	/* Issue a transmit command. */
 	CSR_WRITE_2(sc, VGE_TXQCSRS, VGE_TXQCSR_WAK0);
 
-	sc->vge_ldata.vge_tx_prodidx = idx;
+	sc->sc_tx_prodidx = idx;
 
 	/*
 	 * Use the countdown timer for interrupt moderation.
@@ -1794,25 +1719,20 @@ vge_start(ifp)
 	 */
 	CSR_WRITE_1(sc, VGE_CRS1, VGE_CR1_TIMER0_ENABLE);
 
-	VGE_UNLOCK(sc);
-
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
 	 */
 	ifp->if_timer = 5;
-
-	return;
 }
 
 static int
-vge_init(ifp)
-	struct ifnet *ifp;
+vge_init(struct ifnet *ifp)
 {
-	struct vge_softc	*sc = ifp->if_softc;
-	struct mii_data		*mii = &sc->sc_mii;
-	int			i;
+	struct vge_softc *sc;
+	struct vge_rxsoft *rxs;
+	int i;
 
-	VGE_LOCK(sc);
+	sc = ifp->if_softc;
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1820,16 +1740,41 @@ vge_init(ifp)
 	vge_stop(sc);
 	vge_reset(sc);
 
-	/*
-	 * Initialize the RX and TX descriptors and mbufs.
-	 */
+	/* Initialize the RX descriptors and mbufs. */
+	memset(sc->sc_rxdescs, 0, sizeof(sc->sc_rxdescs));
+	for (i = 0; i < VGE_NRXDESC; i++) {
+		rxs = &sc->sc_rxsoft[i];
+		if (rxs->rxs_mbuf) {
+			m_freem(rxs->rxs_mbuf);
+			rxs->rxs_mbuf = NULL;
+		}
+		if (rxs->rxs_dmamap)
+			bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
+		if (vge_newbuf(sc, i, NULL) == ENOBUFS) {
+			aprint_error("%s: unable to allocate or map "
+			    "rx buffer\n", sc->sc_dev.dv_xname);
+			return 1; /* XXX */
+		}
+	}
+	sc->sc_rx_prodidx = 0;
+	sc->sc_rx_consumed = 0;
+	sc->sc_rx_mhead = sc->sc_rx_mtail = NULL;
 
-	vge_rx_list_init(sc);
-	vge_tx_list_init(sc);
+	/* Initialize the  TX descriptors and mbufs. */
+	memset(sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_cddmamap,
+	    VGE_CDTXOFF(0), sizeof(sc->sc_txdescs),
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	for (i = 0; i < VGE_NTXDESC; i++)
+		sc->sc_txsoft[i].txs_mbuf = NULL;
+
+	sc->sc_tx_prodidx = 0;
+	sc->sc_tx_considx = 0;
+	sc->sc_tx_free = VGE_NTXDESC;
 
 	/* Set our station address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		CSR_WRITE_1(sc, VGE_PAR0 + i, sc->vge_eaddr[i]);
+		CSR_WRITE_1(sc, VGE_PAR0 + i, sc->sc_eaddr[i]);
 
 	/*
 	 * Set receive FIFO threshold. Also allow transmission and
@@ -1857,14 +1802,12 @@ vge_init(ifp)
 	 * Note that we only use one transmit queue.
 	 */
 
-	CSR_WRITE_4(sc, VGE_TXDESC_ADDR_LO0,
-	    VGE_ADDR_LO(sc->vge_ldata.vge_tx_list_addr));
-	CSR_WRITE_2(sc, VGE_TXDESCNUM, VGE_TX_DESC_CNT - 1);
+	CSR_WRITE_4(sc, VGE_TXDESC_ADDR_LO0, VGE_ADDR_LO(VGE_CDTXADDR(sc, 0)));
+	CSR_WRITE_2(sc, VGE_TXDESCNUM, VGE_NTXDESC - 1);
 
-	CSR_WRITE_4(sc, VGE_RXDESC_ADDR_LO,
-	    VGE_ADDR_LO(sc->vge_ldata.vge_rx_list_addr));
-	CSR_WRITE_2(sc, VGE_RXDESCNUM, VGE_RX_DESC_CNT - 1);
-	CSR_WRITE_2(sc, VGE_RXDESC_RESIDUECNT, VGE_RX_DESC_CNT);
+	CSR_WRITE_4(sc, VGE_RXDESC_ADDR_LO, VGE_ADDR_LO(VGE_CDRXADDR(sc, 0)));
+	CSR_WRITE_2(sc, VGE_RXDESCNUM, VGE_NRXDESC - 1);
+	CSR_WRITE_2(sc, VGE_RXDESC_RESIDUECNT, VGE_NRXDESC);
 
 	/* Enable and wake up the RX descriptor queue */
 	CSR_WRITE_1(sc, VGE_RXQCSRS, VGE_RXQCSR_RUN);
@@ -1963,62 +1906,60 @@ vge_init(ifp)
 		CSR_WRITE_1(sc, VGE_CRS3, VGE_CR3_INT_GMSK);
 	}
 
-	mii_mediachg(mii);
+	mii_mediachg(&sc->sc_mii);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	sc->vge_if_flags = 0;
-	sc->vge_link = 0;
+	sc->sc_if_flags = 0;
+	sc->sc_link = 0;
 
-	VGE_UNLOCK(sc);
+	callout_schedule(&sc->sc_timeout, hz);
 
-	callout_schedule(&sc->vge_timeout, hz);
-
-	return (0);
+	return 0;
 }
 
 /*
  * Set media options.
  */
 static int
-vge_ifmedia_upd(ifp)
-	struct ifnet		*ifp;
+vge_ifmedia_upd(struct ifnet *ifp)
 {
-	struct vge_softc	*sc = ifp->if_softc;
-	struct mii_data		*mii = &sc->sc_mii;
+	struct vge_softc *sc;
 
-	mii_mediachg(mii);
+	sc = ifp->if_softc;
+	mii_mediachg(&sc->sc_mii);
 
-	return (0);
+	return 0;
 }
 
 /*
  * Report current media status.
  */
 static void
-vge_ifmedia_sts(ifp, ifmr)
-	struct ifnet		*ifp;
-	struct ifmediareq	*ifmr;
+vge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	struct vge_softc	*sc = ifp->if_softc;
-	struct mii_data		*mii = &sc->sc_mii;
+	struct vge_softc *sc;
+	struct mii_data *mii;
+
+	sc = ifp->if_softc;
+	mii = &sc->sc_mii;
 
 	mii_pollstat(mii);
 	ifmr->ifm_active = mii->mii_media_active;
 	ifmr->ifm_status = mii->mii_media_status;
-
-	return;
 }
 
 static void
-vge_miibus_statchg(self)
-	struct device	*self;
+vge_miibus_statchg(struct device *self)
 {
-	struct vge_softc	*sc = (struct vge_softc *) self;
-	struct mii_data		*mii = &sc->sc_mii;
-	struct ifmedia_entry	*ife = mii->mii_media.ifm_cur;
+	struct vge_softc *sc;
+	struct mii_data *mii;
+	struct ifmedia_entry *ife;
 
+	sc = (void *)self;
+	mii = &sc->sc_mii;
+	ife = mii->mii_media.ifm_cur;
 	/*
 	 * If the user manually selects a media mode, we need to turn
 	 * on the forced MAC mode bit in the DIAGCTL register. If the
@@ -2049,25 +1990,24 @@ vge_miibus_statchg(self)
 		}
 		break;
 	default:
-		printf("%s: unknown media type: %x\n",
+		aprint_error("%s: unknown media type: %x\n",
 		    sc->sc_dev.dv_xname,
 		    IFM_SUBTYPE(ife->ifm_media));
 		break;
 	}
-
-	return;
 }
 
 static int
-vge_ioctl(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	caddr_t			data;
+vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
-	struct vge_softc	*sc = ifp->if_softc;
-	struct ifreq		*ifr = (struct ifreq *) data;
-	struct mii_data		*mii;
-	int			s, error = 0;
+	struct vge_softc *sc;
+	struct ifreq *ifr;
+	struct mii_data *mii;
+	int s, error;
+
+	sc = ifp->if_softc;
+	ifr = (struct ifreq *)data;
+	error = 0;
 
 	s = splnet();
 
@@ -2081,13 +2021,13 @@ vge_ioctl(ifp, command, data)
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
 			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->vge_if_flags & IFF_PROMISC)) {
+			    !(sc->sc_if_flags & IFF_PROMISC)) {
 				CSR_SETBIT_1(sc, VGE_RXCTL,
 				    VGE_RXCTL_RX_PROMISC);
 				vge_setmulti(sc);
 			} else if (ifp->if_flags & IFF_RUNNING &&
 			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->vge_if_flags & IFF_PROMISC) {
+			    sc->sc_if_flags & IFF_PROMISC) {
 				CSR_CLRBIT_1(sc, VGE_RXCTL,
 				    VGE_RXCTL_RX_PROMISC);
 				vge_setmulti(sc);
@@ -2097,7 +2037,7 @@ vge_ioctl(ifp, command, data)
 			if (ifp->if_flags & IFF_RUNNING)
 				vge_stop(sc);
 		}
-		sc->vge_if_flags = ifp->if_flags;
+		sc->sc_if_flags = ifp->if_flags;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -2126,18 +2066,18 @@ vge_ioctl(ifp, command, data)
 	}
 
 	splx(s);
-	return (error);
+	return error;
 }
 
 static void
-vge_watchdog(ifp)
-	struct ifnet		*ifp;
+vge_watchdog(struct ifnet *ifp)
 {
-	struct vge_softc		*sc;
+	struct vge_softc *sc;
+	int s;
 
 	sc = ifp->if_softc;
-	VGE_LOCK(sc);
-	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
+	s = splnet();
+	aprint_error("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 
 	vge_txeof(sc);
@@ -2145,9 +2085,7 @@ vge_watchdog(ifp)
 
 	vge_init(ifp);
 
-	VGE_UNLOCK(sc);
-
-	return;
+	splx(s);
 }
 
 /*
@@ -2155,13 +2093,16 @@ vge_watchdog(ifp)
  * RX and TX lists.
  */
 static void
-vge_stop(sc)
-	struct vge_softc		*sc;
+vge_stop(struct vge_softc *sc)
 {
-	register int		i;
-	struct ifnet		*ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp;
+	struct vge_txsoft *txs;
+	struct vge_rxsoft *rxs;
+	int i, s;
 
-	VGE_LOCK(sc);
+	ifp = &sc->sc_ethercom.ec_if;
+
+	s = splnet();
 	ifp->if_timer = 0;
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -2176,36 +2117,34 @@ vge_stop(sc)
 	CSR_WRITE_1(sc, VGE_RXQCSRC, 0xFF);
 	CSR_WRITE_4(sc, VGE_RXDESC_ADDR_LO, 0);
 
-	if (sc->vge_head != NULL) {
-		m_freem(sc->vge_head);
-		sc->vge_head = sc->vge_tail = NULL;
+	if (sc->sc_rx_mhead != NULL) {
+		m_freem(sc->sc_rx_mhead);
+		sc->sc_rx_mhead = sc->sc_rx_mtail = NULL;
 	}
 
 	/* Free the TX list buffers. */
 
-	for (i = 0; i < VGE_TX_DESC_CNT; i++) {
-		if (sc->vge_ldata.vge_tx_mbuf[i] != NULL) {
-			bus_dmamap_unload(sc->vge_dmat,
-			    sc->vge_ldata.vge_tx_dmamap[i]);
-			m_freem(sc->vge_ldata.vge_tx_mbuf[i]);
-			sc->vge_ldata.vge_tx_mbuf[i] = NULL;
+	for (i = 0; i < VGE_NTXDESC; i++) {
+		txs = &sc->sc_txsoft[i];
+		if (txs->txs_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
+			m_freem(txs->txs_mbuf);
+			txs->txs_mbuf = NULL;
 		}
 	}
 
 	/* Free the RX list buffers. */
 
-	for (i = 0; i < VGE_RX_DESC_CNT; i++) {
-		if (sc->vge_ldata.vge_rx_mbuf[i] != NULL) {
-			bus_dmamap_unload(sc->vge_dmat,
-			    sc->vge_ldata.vge_rx_dmamap[i]);
-			m_freem(sc->vge_ldata.vge_rx_mbuf[i]);
-			sc->vge_ldata.vge_rx_mbuf[i] = NULL;
+	for (i = 0; i < VGE_NRXDESC; i++) {
+		rxs = &sc->sc_rxsoft[i];
+		if (rxs->rxs_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
+			m_freem(rxs->rxs_mbuf);
+			rxs->rxs_mbuf = NULL;
 		}
 	}
 
-	VGE_UNLOCK(sc);
-
-	return;
+	splx(s);
 }
 
 #if VGE_POWER_MANAGEMENT
@@ -2215,26 +2154,26 @@ vge_stop(sc)
  * resume.
  */
 static int
-vge_suspend(dev)
-	struct device *		dev;
+vge_suspend(struct device *dev)
 {
-	struct vge_softc	*sc;
-	int			i;
+	struct vge_softc *sc;
+	int i;
 
 	sc = device_get_softc(dev);
 
 	vge_stop(sc);
 
         for (i = 0; i < 5; i++)
-		sc->saved_maps[i] = pci_read_config(dev, PCIR_MAPS + i * 4, 4);
-	sc->saved_biosaddr = pci_read_config(dev, PCIR_BIOS, 4);
-	sc->saved_intline = pci_read_config(dev, PCIR_INTLINE, 1);
-	sc->saved_cachelnsz = pci_read_config(dev, PCIR_CACHELNSZ, 1);
-	sc->saved_lattimer = pci_read_config(dev, PCIR_LATTIMER, 1);
+		sc->sc_saved_maps[i] =
+		    pci_read_config(dev, PCIR_MAPS + i * 4, 4);
+	sc->sc_saved_biosaddr = pci_read_config(dev, PCIR_BIOS, 4);
+	sc->sc_saved_intline = pci_read_config(dev, PCIR_INTLINE, 1);
+	sc->sc_saved_cachelnsz = pci_read_config(dev, PCIR_CACHELNSZ, 1);
+	sc->sc_saved_lattimer = pci_read_config(dev, PCIR_LATTIMER, 1);
 
 	sc->suspended = 1;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -2243,20 +2182,23 @@ vge_suspend(dev)
  * appropriate.
  */
 static int
-vge_resume(dev)
-	struct device *		dev;
+vge_resume(struct device *dev)
 {
-	struct vge_softc	*sc = (struct vge_softc *)dev;
-	struct ifnet		*ifp = &sc->sc_ethercom.ec_if;
-	int			i;
+	struct vge_softc *sc;
+	struct ifnet *ifp;
+	int i;
+
+	sc = (void *)dev;
+	ifp = &sc->sc_ethercom.ec_if;
 
         /* better way to do this? */
 	for (i = 0; i < 5; i++)
-		pci_write_config(dev, PCIR_MAPS + i * 4, sc->saved_maps[i], 4);
-	pci_write_config(dev, PCIR_BIOS, sc->saved_biosaddr, 4);
-	pci_write_config(dev, PCIR_INTLINE, sc->saved_intline, 1);
-	pci_write_config(dev, PCIR_CACHELNSZ, sc->saved_cachelnsz, 1);
-	pci_write_config(dev, PCIR_LATTIMER, sc->saved_lattimer, 1);
+		pci_write_config(dev, PCIR_MAPS + i * 4,
+		    sc->sc_saved_maps[i], 4);
+	pci_write_config(dev, PCIR_BIOS, sc->sc_saved_biosaddr, 4);
+	pci_write_config(dev, PCIR_INTLINE, sc->sc_saved_intline, 1);
+	pci_write_config(dev, PCIR_CACHELNSZ, sc->sc_saved_cachelnsz, 1);
+	pci_write_config(dev, PCIR_LATTIMER, sc->sc_saved_lattimer, 1);
 
 	/* reenable busmastering */
 	pci_enable_busmaster(dev);
@@ -2268,7 +2210,7 @@ vge_resume(dev)
 
 	sc->suspended = 0;
 
-	return (0);
+	return 0;
 }
 #endif
 
@@ -2277,10 +2219,10 @@ vge_resume(dev)
  * get confused by errant DMAs when rebooting.
  */
 static void
-vge_shutdown(arg)
-	void *arg;
+vge_shutdown(void *arg)
 {
-	struct vge_softc *sc = (struct vge_softc *)arg;
+	struct vge_softc *sc;
 
+	sc = arg;
 	vge_stop(sc);
 }

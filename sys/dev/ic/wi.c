@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.215 2006/07/21 16:48:49 ad Exp $	*/
+/*	$NetBSD: wi.c,v 1.215.4.1 2006/11/18 21:34:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.215 2006/07/21 16:48:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.215.4.1 2006/11/18 21:34:15 ad Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */

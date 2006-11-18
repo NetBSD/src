@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.176 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.176.20.1 2006/11/18 21:29:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.176 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.176.20.1 2006/11/18 21:29:36 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -152,8 +152,6 @@ caddr_t	msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
-
-union sun3sir sun3sir;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -537,8 +535,10 @@ cpu_dumpconf(void)
 		return;
 
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		return;
+	}
 	getsize = bdev->d_psize;
 	if (getsize == NULL)
 		return;

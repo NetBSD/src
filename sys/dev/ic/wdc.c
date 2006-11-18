@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.237 2006/08/17 17:11:28 christos Exp $ */
+/*	$NetBSD: wdc.c,v 1.237.2.1 2006/11/18 21:34:15 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.237 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.237.2.1 2006/11/18 21:34:15 ad Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -98,6 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.237 2006/08/17 17:11:28 christos Exp $");
 
 #include <dev/ata/atavar.h>
 #include <dev/ata/atareg.h>
+#include <dev/ata/satareg.h>
+#include <dev/ata/satavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 
@@ -105,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.237 2006/08/17 17:11:28 christos Exp $");
 
 #include "atapibus.h"
 #include "wd.h"
+#include "sata.h"
 
 #define WDCDELAY  100 /* 100 microseconds */
 #define WDCNDELAY_RST (WDC_RESET_WAIT * 1000 / WDCDELAY)
@@ -201,6 +204,111 @@ wdc_allocate_regs(struct wdc_softc *wdc)
 			   sizeof(struct wdc_regs), M_DEVBUF, M_WAITOK);
 }
 
+#if NSATA > 0
+/*
+ * probe drives on SATA controllers with standard SATA registers:
+ * bring the PHYs online, read the drive signature and set drive flags
+ * appropriately.
+ */
+void
+wdc_sataprobe(struct ata_channel *chp)
+{
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
+	uint32_t scontrol, sstatus;
+	uint16_t scnt, sn, cl, ch;
+	int i, s;
+
+	/* XXX This should be done by other code. */
+	for (i = 0; i < chp->ch_ndrive; i++) {
+		chp->ch_drive[i].chnl_softc = chp;
+		chp->ch_drive[i].drive = i;
+	}
+
+	/* bring the PHYs online.
+	 * The work-around for errata #1 for the 31244 says that we must
+	 * write 0 to the port first to be sure of correctly initializing
+	 * the device. It doesn't hurt for other devices.
+	 */
+	bus_space_write_4(wdr->sata_iot, wdr->sata_control, 0, 0);
+	scontrol = SControl_IPM_NONE | SControl_SPD_ANY | SControl_DET_INIT;
+	bus_space_write_4 (wdr->sata_iot, wdr->sata_control, 0, scontrol);
+
+	tsleep(wdr, PRIBIO, "sataup", mstohz(50));
+	scontrol &= ~SControl_DET_INIT;
+	bus_space_write_4(wdr->sata_iot, wdr->sata_control, 0, scontrol);
+
+	tsleep(wdr, PRIBIO, "sataup", mstohz(50));
+	/* wait up to 1s for device to come up */
+	for (i = 0; i < 100; i++) {
+		sstatus = bus_space_read_4(wdr->sata_iot, wdr->sata_status, 0);
+		if ((sstatus & SStatus_DET_mask) == SStatus_DET_DEV)
+			break;
+		tsleep(wdr, PRIBIO, "sataup", mstohz(10));
+	}
+
+	switch (sstatus & SStatus_DET_mask) {
+	case SStatus_DET_NODEV:
+		/* No Device; be silent.  */
+		break;
+
+	case SStatus_DET_DEV_NE:
+		aprint_error("%s: port %d: device connected, but "
+		    "communication not established\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel);
+		break;
+
+	case SStatus_DET_OFFLINE:
+		aprint_error("%s: port %d: PHY offline\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel);
+		break;
+
+	case SStatus_DET_DEV:
+		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
+		    WDSD_IBM);
+		delay(10);	/* 400ns delay */
+		scnt = bus_space_read_2(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_seccnt], 0);
+		sn = bus_space_read_2(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_sector], 0);
+		cl = bus_space_read_2(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_cyl_lo], 0);
+		ch = bus_space_read_2(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_cyl_hi], 0);
+		ATADEBUG_PRINT(("%s: port %d: scnt=0x%x sn=0x%x "
+		    "cl=0x%x ch=0x%x\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
+		    scnt, sn, cl, ch), DEBUG_PROBE);
+		/*
+		 * scnt and sn are supposed to be 0x1 for ATAPI, but in some
+		 * cases we get wrong values here, so ignore it.
+		 */
+		s = splbio();
+		if (cl == 0x14 && ch == 0xeb)
+			chp->ch_drive[0].drive_flags |= DRIVE_ATAPI;
+		else
+			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
+		splx(s);
+
+		aprint_normal("%s: port %d: device present, speed: %s\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
+		    sata_speed(sstatus));
+		/*
+		 * issue a reset in case only the interface part of the drive
+		 * is up
+		 */
+		if (wdcreset(chp, RESET_SLEEP) != 0)
+			chp->ch_drive[0].drive_flags = 0;
+		break;
+
+	default:
+		aprint_error("%s: port %d: unknown SStatus: 0x%08x\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
+		    sstatus);
+	}
+}
+#endif /* NSATA > 0 */
+
+
 /* Test to see controller with at last one attached drive is there.
  * Returns a bit for each possible drive found (0x01 for drive 0,
  * 0x02 for drive 1).
@@ -215,7 +323,7 @@ wdc_allocate_regs(struct wdc_softc *wdc)
  * - try an ATA command on the master.
  */
 
-static void
+void
 wdc_drvprobe(struct ata_channel *chp)
 {
 	struct ataparams params;
@@ -280,11 +388,13 @@ wdc_drvprobe(struct ata_channel *chp)
 		chp->ch_drive[i].chnl_softc = chp;
 		chp->ch_drive[i].drive = i;
 
+#if NATA_DMA
 		/*
 		 * Init error counter so that an error withing the first xfers
 		 * will trigger a downgrade
 		 */
 		chp->ch_drive[i].n_dmaerrs = NERRS_MAX-1;
+#endif
 
 		/* If controller can't do 16bit flag the drives as 32bit */
 		if ((atac->atac_cap &
@@ -808,6 +918,7 @@ wdcintr(void *arg)
 		panic("wdcintr: wrong channel");
 	}
 #endif
+#if NATA_DMA || NATA_PIOBM
 	if (chp->ch_flags & ATACH_DMA_WAIT) {
 		wdc->dma_status =
 		    (*wdc->dma_finish)(wdc->dma_arg, chp->ch_channel,
@@ -818,6 +929,7 @@ wdcintr(void *arg)
 		}
 		chp->ch_flags &= ~ATACH_DMA_WAIT;
 	}
+#endif
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
 	ret = xfer->c_intr(chp, xfer, 1);
 	if (ret == 0) /* irq was not for us, still waiting for irq */
@@ -844,7 +956,9 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 {
 	TAILQ_HEAD(, ata_xfer) reset_xfer;
 	struct ata_xfer *xfer, *next_xfer;
+#if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
+#endif
 
 	TAILQ_INIT(&reset_xfer);
 
@@ -904,6 +1018,7 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 				ata_reset_channel(xfer->c_chp, flags);
 			else {
 				callout_stop(&chp->ch_callout);
+#if NATA_DMA || NATA_PIOBM
 				/*
 				 * If we're waiting for DMA, stop the
 				 * DMA engine
@@ -916,6 +1031,7 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 					    WDC_DMAEND_ABRT_QUIET);
 					chp->ch_flags &= ~ATACH_DMA_WAIT;
 				}
+#endif
 				chp->ch_queue->active_xfer = NULL;
 				if ((flags & AT_RST_EMERG) == 0)
 					xfer->c_kill_xfer(
@@ -1206,6 +1322,7 @@ wdcwait(struct ata_channel *chp, int mask, int bits, int timeout, int flags)
 }
 
 
+#if NATA_DMA
 /*
  * Busy-wait for DMA to complete
  */
@@ -1228,12 +1345,15 @@ wdc_dmawait(struct ata_channel *chp, struct ata_xfer *xfer, int timeout)
 	    chp->ch_channel, xfer->c_drive, WDC_DMAEND_ABRT);
 	return 1;
 }
+#endif
 
 void
 wdctimeout(void *arg)
 {
 	struct ata_channel *chp = (struct ata_channel *)arg;
+#if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
+#endif
 	struct ata_xfer *xfer = chp->ch_queue->active_xfer;
 	int s;
 
@@ -1246,6 +1366,7 @@ wdctimeout(void *arg)
 		    (xfer->c_flags & C_ATAPI) ?  "atapi" : "ata",
 		    xfer->c_bcount,
 		    xfer->c_skip);
+#if NATA_DMA || NATA_PIOBM
 		if (chp->ch_flags & ATACH_DMA_WAIT) {
 			wdc->dma_status =
 			    (*wdc->dma_finish)(wdc->dma_arg,
@@ -1253,6 +1374,7 @@ wdctimeout(void *arg)
 				WDC_DMAEND_ABRT);
 			chp->ch_flags &= ~ATACH_DMA_WAIT;
 		}
+#endif
 		/*
 		 * Call the interrupt routine. If we just missed an interrupt,
 		 * it will do what's needed. Else, it will take the needed

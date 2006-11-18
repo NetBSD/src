@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.85 2006/09/07 12:46:47 itohy Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.85.2.1 2006/11/18 21:34:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -61,6 +61,14 @@ struct wdc_regs {
 	/* data32{iot,ioh} are only used for 32-bit data xfers */
 	bus_space_tag_t       data32iot;
 	bus_space_handle_t    data32ioh;
+
+	/* SATA native registers */
+	bus_space_tag_t       sata_iot;
+	bus_space_handle_t    sata_baseioh;
+	bus_space_handle_t    sata_control;
+	bus_space_handle_t    sata_status;
+	bus_space_handle_t    sata_error;
+
 };
 
 /*
@@ -76,6 +84,7 @@ struct wdc_softc {
 #define WDC_CAPABILITY_PREATA	0x0200	/* ctrl can be a pre-ata one */
 #define WDC_CAPABILITY_WIDEREGS 0x0400  /* Ctrl has wide (16bit) registers  */
 
+#if NATA_DMA || NATA_PIOBM
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void            *dma_arg;
 	int            (*dma_init)(void *, int, int, void *, size_t, int);
@@ -105,6 +114,7 @@ struct wdc_softc {
 #define WDC_DMAST_NOIRQ	0x01	/* missing IRQ */
 #define WDC_DMAST_ERR	0x02	/* DMA error */
 #define WDC_DMAST_UNDER	0x04	/* DMA underrun */
+#endif	/* NATA_DMA || NATA_PIOBM */
 
 	/* Optional callback to select drive. */
 	void		(*select)(struct ata_channel *,int);
@@ -139,6 +149,9 @@ void	wdcattach(struct ata_channel *);
 int	wdcdetach(struct device *, int);
 int	wdcactivate(struct device *, enum devact);
 int	wdcintr(void *);
+
+void	wdc_sataprobe(struct ata_channel *);
+void	wdc_drvprobe(struct ata_channel *);
 
 void	wdcrestart(void*);
 

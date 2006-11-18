@@ -1,4 +1,4 @@
-/*	$NetBSD: addcom_isa.c,v 1.13 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: addcom_isa.c,v 1.13.20.1 2006/11/18 21:34:21 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Graff.  All rights reserved.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.13 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.13.20.1 2006/11/18 21:34:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,8 @@ CFATTACH_DECL(addcom_isa, sizeof(struct addcom_softc),
     addcomprobe, addcomattach, NULL, NULL);
 
 int
-addcomprobe(struct device *parent, struct cfdata *self, void *aux)
+addcomprobe(struct device *parent, struct cfdata *self,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;

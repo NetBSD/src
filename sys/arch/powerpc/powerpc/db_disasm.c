@@ -1,8 +1,8 @@
-/*	$NetBSD: db_disasm.c,v 1.20 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.20.20.1 2006/11/18 21:29:29 ad Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20.20.1 2006/11/18 21:29:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -244,7 +244,7 @@ const struct opcode opcodes_1f[] = {
 	{ "stdx",	0xfc0007fe, 0x7c00012a, Op_S | Op_A | Op_B },
 	{ "stwcx.",	0xfc0007ff, 0x7c00012d, Op_S | Op_A | Op_B },
 	{ "stwx",	0xfc0007fe, 0x7c00012e, Op_S | Op_A | Op_B },
-	{ "wrteei",	0xfc0003fe, 0x7c000146 },	/* XXX: out of flags! */
+	{ "wrteei",	0xfc0003fe, 0x7c000146, 0 },	/* XXX: out of flags! */
 	{ "stdux",	0xfc0007fe, 0x7c00016a, Op_S | Op_A | Op_B },
 	{ "stwux",	0xfc0007fe, 0x7c00016e, Op_S | Op_A | Op_B },
 	{ "subfze",	0xfc0003fe, 0x7c000190, Op_D | Op_A | Op_OE | Op_Rc },

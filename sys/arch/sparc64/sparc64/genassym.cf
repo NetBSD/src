@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.40 2006/01/27 18:37:49 cdi Exp $
+#	$NetBSD: genassym.cf,v 1.40.18.1 2006/11/18 21:29:33 ad Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -229,6 +229,7 @@ define	TF_TSTATE	offsetof(struct trapframe64, tf_tstate)
 define	TF_PC		offsetof(struct trapframe64, tf_pc)
 define	TF_NPC		offsetof(struct trapframe64, tf_npc)
 define	TF_FAULT	offsetof(struct trapframe64, tf_fault)
+define	TF_KSTACK	offsetof(struct trapframe64, tf_kstack)
 define	TF_Y		offsetof(struct trapframe64, tf_y)
 define	TF_PIL		offsetof(struct trapframe64, tf_pil)
 define	TF_OLDPIL	offsetof(struct trapframe64, tf_oldpil)

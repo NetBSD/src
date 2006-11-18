@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.70 2006/09/03 21:09:46 christos Exp $	*/
+/*	$NetBSD: uhid.c,v 1.70.2.1 2006/11/18 21:34:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.70 2006/09/03 21:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.70.2.1 2006/11/18 21:34:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,8 @@ Static int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int, struct lwp *)
 USB_DECLARE_DRIVER(uhid);
 
 int
-uhid_match(struct device *parent, struct cfdata *match, void *aux)
+uhid_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 #ifdef UHID_DEBUG
 	struct uhidev_attach_arg *uha = aux;
@@ -254,7 +255,8 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 }
 
 int
-uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
+uhidopen(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct uhid_softc *sc;
 	int error;
@@ -282,7 +284,8 @@ uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
+uhidclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct uhid_softc *sc;
 
@@ -415,7 +418,7 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 
 int
 uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
-	      int flag, struct lwp *l)
+    int flag, struct lwp *l)
 {
 	struct usb_ctl_report_desc *rd;
 	struct usb_ctl_report *re;

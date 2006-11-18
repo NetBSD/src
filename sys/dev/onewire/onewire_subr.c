@@ -1,4 +1,4 @@
-/* $NetBSD: onewire_subr.c,v 1.3 2006/04/14 18:38:50 riz Exp $ */
+/* $NetBSD: onewire_subr.c,v 1.3.16.1 2006/11/18 21:34:28 ad Exp $ */
 /*	$OpenBSD: onewire_subr.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*

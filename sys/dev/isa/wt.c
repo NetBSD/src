@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.72 2006/04/26 17:21:30 rpaulo Exp $	*/
+/*	$NetBSD: wt.c,v 1.72.8.1 2006/11/18 21:34:22 ad Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.72 2006/04/26 17:21:30 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.72.8.1 2006/11/18 21:34:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,8 @@ extern struct cfdriver wt_cd;
  * Probe for the presence of the device.
  */
 int
-wtprobe(struct device *parent, struct cfdata *match, void *aux)
+wtprobe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -329,7 +330,8 @@ ok:
 }
 
 static int
-wtdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+wtdump(dev_t dev, daddr_t blkno, caddr_t va,
+    size_t size)
 {
 
 	/* Not implemented. */
@@ -433,7 +435,8 @@ wtopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Close routine, called on last device close.
  */
 static int
-wtclose(dev_t dev, int flags, int mode, struct lwp *l)
+wtclose(dev_t dev, int flags, int mode,
+    struct lwp *l)
 {
 	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
 
@@ -482,7 +485,8 @@ done:
  * ioctl(int fd, WTQICMD, int qicop)		-- do QIC op
  */
 static int
-wtioctl(dev_t dev, unsigned long cmd, caddr_t addr, int flag, struct lwp *l)
+wtioctl(dev_t dev, unsigned long cmd, caddr_t addr, int flag,
+    struct lwp *l)
 {
 	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
 	int error, count, op;

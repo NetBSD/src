@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.21 2006/09/05 01:33:24 gdamore Exp $
+#	$NetBSD: files.algor,v 1.21.2.1 2006/11/18 21:28:59 ad Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -43,6 +43,7 @@ file	arch/algor/algor/pmon.c
 
 file	arch/mips/mips/softintr.c
 file	arch/mips/mips/mips3_clock.c
+file	arch/mips/mips/mips3_clockintr.c
 
 #
 # The autoconfiguration root.

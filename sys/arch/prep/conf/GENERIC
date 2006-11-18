@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.129 2006/09/01 07:41:57 garbled Exp $
+# $NetBSD: GENERIC,v 1.129.2.1 2006/11/18 21:29:29 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.129 $"
+#ident		"GENERIC-$Revision: 1.129.2.1 $"
 
 maxusers	32
 
@@ -98,7 +98,7 @@ file-system 	PROCFS		# /proc
 file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -520,9 +520,8 @@ include "arch/prep/conf/GENERIC.local"
 
 # Pseudo-Devices
 
-# Not yet ready -- prep lacks generic soft interrupts
-#pseudo-device 	crypto		# /dev/crypto device
-#pseudo-device	swcrypto	# software crypto implementation
+pseudo-device 	crypto		# /dev/crypto device
+pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
@@ -578,18 +577,20 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
+options	FILEASSOC			# fileassoc(9) - required for Veriexec
+
 # Veriexec
 #
 # a pseudo device needed for veriexec
-#pseudo-device	veriexec		1
+pseudo-device	veriexec		1
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
+options VERIFIED_EXEC_FP_RMD160
+options VERIFIED_EXEC_FP_SHA256
+options VERIFIED_EXEC_FP_SHA384
+options VERIFIED_EXEC_FP_SHA512
+options VERIFIED_EXEC_FP_SHA1
+options VERIFIED_EXEC_FP_MD5

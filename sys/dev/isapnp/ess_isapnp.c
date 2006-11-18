@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isapnp.c,v 1.14 2006/03/29 06:51:47 thorpej Exp $	*/
+/*	$NetBSD: ess_isapnp.c,v 1.14.8.1 2006/11/18 21:34:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.14 2006/03/29 06:51:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.14.8.1 2006/11/18 21:34:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,8 @@ CFATTACH_DECL(ess_isapnp, sizeof(struct ess_softc),
  * Probe for the ess hardware.
  */
 int
-ess_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
+ess_isapnp_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	int pri, variant;
 
@@ -91,7 +92,8 @@ ess_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
  * pseudo-device driver.
  */
 void
-ess_isapnp_attach(struct device *parent, struct device *self, void *aux)
+ess_isapnp_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct ess_softc *sc;
 	struct isapnp_attach_args *ipa;
@@ -122,7 +124,7 @@ ess_isapnp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf("%s:", sc->sc_dev.dv_xname);
+	printf("%s", sc->sc_dev.dv_xname);
 
 	essattach(sc, 0);
 }

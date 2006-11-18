@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.30 2006/06/26 17:55:49 xtraeme Exp $	*/
+/*	$NetBSD: satalink.c,v 1.30.4.1 2006/11/18 21:34:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.30 2006/06/26 17:55:49 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.30.4.1 2006/11/18 21:34:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,8 @@ static const struct pciide_product_desc pciide_satalink_products[] =  {
 };
 
 static int
-satalink_match(struct device *parent, struct cfdata *match, void *aux)
+satalink_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -776,6 +777,9 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 }
 
+/* Probe the drives using SATA registers.
+ * Note we can't use wdc_sataprobe as we may not be able to map ba5
+ */
 static void
 sii3112_drv_probe(struct ata_channel *chp)
 {

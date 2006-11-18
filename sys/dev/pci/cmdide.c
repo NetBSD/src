@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.23 2006/02/07 20:37:24 bouyer Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.23.14.1 2006/11/18 21:34:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.23 2006/02/07 20:37:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.23.14.1 2006/11/18 21:34:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,8 @@ static const struct pciide_product_desc pciide_cmd_products[] =  {
 };
 
 static int
-cmdide_match(struct device *parent, struct cfdata *match, void *aux)
+cmdide_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

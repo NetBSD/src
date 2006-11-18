@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_pci.c,v 1.3 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: njs_pci.c,v 1.3.20.1 2006/11/18 21:34:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.3 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.3.20.1 2006/11/18 21:34:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,8 @@ njs_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-njs_pci_match(struct device *parent, struct cfdata *match, void *aux)
+njs_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

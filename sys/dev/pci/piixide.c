@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.29 2006/09/03 18:30:35 xtraeme Exp $	*/
+/*	$NetBSD: piixide.c,v 1.29.2.1 2006/11/18 21:34:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.29 2006/09/03 18:30:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.29.2.1 2006/11/18 21:34:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,8 @@ CFATTACH_DECL(piixide, sizeof(struct pciide_softc),
     piixide_match, piixide_attach, NULL, NULL);
 
 static int
-piixide_match(struct device *parent, struct cfdata *match, void *aux)
+piixide_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -261,7 +262,8 @@ piixide_attach(struct device *parent, struct device *self, void *aux)
 	    pciide_lookup_product(pa->pa_id, pciide_intel_products));
 
 	/* Setup our powerhook */
-	sc->sc_powerhook = powerhook_establish(piixide_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, piixide_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish PCI power hook\n",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
@@ -825,7 +827,7 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 
 	cmdsts = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
-	cmdsts &= ~0x0400;
+	cmdsts &= ~PCI_COMMAND_INTERRUPT_DISABLE;
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG, cmdsts);
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&

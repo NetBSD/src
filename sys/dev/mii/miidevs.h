@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.69 2006/04/27 16:45:04 jonathan Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.69.8.1 2006/11/18 21:34:26 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.66 2006/04/27 16:43:14 jonathan Exp
+ *	NetBSD: miidevs,v 1.68 2006/10/21 14:10:33 bouyer Exp
  */
 
 /*-
@@ -213,12 +213,16 @@
 #define	MII_STR_yyINTEL_I82555	"i82555 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82562EH	0x0017
 #define	MII_STR_yyINTEL_I82562EH	"i82562EH HomePNA interface"
+#define	MII_MODEL_yyINTEL_I82562G	0x0031
+#define	MII_STR_yyINTEL_I82562G	"i82562G 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82562EM	0x0032
 #define	MII_STR_yyINTEL_I82562EM	"i82562EM 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82562ET	0x0033
 #define	MII_STR_yyINTEL_I82562ET	"i82562ET 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82553	0x0035
 #define	MII_STR_yyINTEL_I82553	"i82553 10/100 media interface"
+#define	MII_MODEL_xxMARVELL_I82563	0x000a
+#define	MII_STR_xxMARVELL_I82563	"i82563 10/100/1000 media interface"
 
 #define	MII_MODEL_yyINTEL_IGP01E1000	0x0038
 #define	MII_STR_yyINTEL_IGP01E1000	"Intel IGP01E1000 Gigabit PHY"

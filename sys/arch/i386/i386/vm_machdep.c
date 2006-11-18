@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.124 2006/08/30 15:34:31 cube Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.124.2.1 2006/11/18 21:29:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.124 2006/08/30 15:34:31 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.124.2.1 2006/11/18 21:29:19 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"

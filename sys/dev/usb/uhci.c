@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.199 2006/09/03 21:08:43 christos Exp $	*/
+/*	$NetBSD: uhci.c,v 1.199.2.1 2006/11/18 21:34:51 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.199 2006/09/03 21:08:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.199.2.1 2006/11/18 21:34:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,7 +547,8 @@ uhci_init(uhci_softc_t *sc)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(uhci_power, sc);
+	sc->sc_powerhook = powerhook_establish(USBDEVNAME(sc->sc_bus.bdev),
+	    uhci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(uhci_shutdown, sc);
 #endif
 
@@ -1256,8 +1257,10 @@ uhci_intr1(uhci_softc_t *sc)
 		return (0);
 
 	if (sc->sc_suspend != PWR_RESUME) {
+#ifdef DIAGNOSTIC
 		printf("%s: interrupt while not operating ignored\n",
 		       USBDEVNAME(sc->sc_bus.bdev));
+#endif
 		UWRITE2(sc, UHCI_STS, status); /* acknowledge the ints */
 		return (0);
 	}
@@ -1549,7 +1552,8 @@ uhci_timeout(void *addr)
 
 	/* Execute the abort in a process context. */
 	usb_init_task(&uxfer->abort_task, uhci_timeout_task, ii->xfer);
-	usb_add_task(uxfer->xfer.pipe->device, &uxfer->abort_task);
+	usb_add_task(uxfer->xfer.pipe->device, &uxfer->abort_task,
+	    USB_TASKQ_HC);
 }
 
 void
@@ -1803,6 +1807,7 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 	for (i = ntd; i >= 0; i--) {
 		p = uhci_alloc_std(sc);
 		if (p == NULL) {
+			KASSERT(lastp != NULL);
 			uhci_free_std_chain(sc, lastp, NULL);
 			return (USBD_NOMEM);
 		}

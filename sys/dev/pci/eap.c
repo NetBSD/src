@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.86 2006/08/30 00:42:41 christos Exp $	*/
+/*	$NetBSD: eap.c,v 1.86.2.1 2006/11/18 21:34:29 ad Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.86 2006/08/30 00:42:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.86.2.1 2006/11/18 21:34:29 ad Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -329,7 +329,8 @@ static const struct audio_format eap_formats[EAP_NFORMATS] = {
 };
 
 static int
-eap_match(struct device *parent, struct cfdata *match, void *aux)
+eap_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -1195,7 +1196,8 @@ eap_set_params(void *addr, int setmode, int usemode,
 }
 
 static int
-eap_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
+eap_round_blocksize(void *addr, int blk, int mode,
+    const audio_params_t *param)
 {
 
 	return blk & -32;	/* keep good alignment */

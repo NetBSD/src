@@ -1,4 +1,4 @@
-/*	$NetBSD: dtms.c,v 1.6 2005/12/11 12:18:41 christos Exp $	*/
+/*	$NetBSD: dtms.c,v 1.6.20.1 2006/11/18 21:29:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.6 2005/12/11 12:18:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.6.20.1 2006/11/18 21:29:28 ad Exp $");
 
 #include "locators.h"
 
@@ -174,6 +174,8 @@ dtms_handler(void *cookie, struct dt_msg *msg)
 	else
 		dy = tmp & 0x1f;
 
-	wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, 0,
-	    WSMOUSE_INPUT_DELTA);
+	wsmouse_input(sc->sc_wsmousedev,
+			buttons,
+			dx, dy, 0, 0,
+			WSMOUSE_INPUT_DELTA);
 }

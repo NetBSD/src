@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.29 2006/09/07 08:39:37 martin Exp $	*/
+/*	$NetBSD: ffb.c,v 1.29.2.1 2006/11/18 21:29:32 ad Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.29 2006/09/07 08:39:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.29.2.1 2006/11/18 21:29:32 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,10 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.29 2006/09/07 08:39:37 martin Exp $");
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
 
+#include <dev/wsfont/wsfont.h>
+#include <dev/wscons/wsdisplay_vconsvar.h>
+
 #include <sparc64/dev/ffbreg.h>
 #include <sparc64/dev/ffbvar.h>
-
-#include <dev/wsfont/wsfont.h>
 
 #ifndef WS_DEFAULT_BG
 /* Sun -> background should be white */
@@ -71,7 +72,8 @@ struct wsscreen_descr ffb_stdscreen = {
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
 	0,
 	0, 0,
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
+	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS,
+	NULL	/* modecookie */
 };
 
 const struct wsscreen_descr *ffb_scrlist[] = {
@@ -84,7 +86,7 @@ struct wsscreen_list ffb_screenlist = {
 	    ffb_scrlist
 };
 
-static struct ffb_screen ffb_console_screen;
+static struct vcons_screen ffb_console_screen;
 
 int	ffb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
 static int ffb_blank(struct ffb_softc *, u_long, u_int *);
@@ -93,24 +95,15 @@ void	ffb_ras_fifo_wait(struct ffb_softc *, int);
 void	ffb_ras_wait(struct ffb_softc *);
 void	ffb_ras_init(struct ffb_softc *);
 void	ffb_ras_copyrows(void *, int, int, int);
-void	ffb_ras_copycols(void *, int, int, int, int);
 void	ffb_ras_erasecols(void *, int, int, int, long int);
 void	ffb_ras_eraserows(void *, int, int, long int);
 void	ffb_ras_do_cursor(struct rasops_info *);
 void	ffb_ras_fill(struct ffb_softc *);
 void	ffb_ras_setfg(struct ffb_softc *, int32_t);
 
-int	ffb_alloc_screen(void *, const struct wsscreen_descr *, void **, 
-	    int *, int *, long *);
-void	ffb_free_screen(void *, void *);
-int	ffb_show_screen(void *, void *, int, void (*)(void *, int, int),
-	    void *);
-void	ffb_switch_screen(struct ffb_softc *);
-void	ffb_restore_screen(struct ffb_screen *, 
-	    const struct wsscreen_descr *, uint16_t *);
 void	ffb_clearscreen(struct ffb_softc *);
 int	ffb_load_font(void *, void *, struct wsdisplay_font *);
-void	ffb_init_screen(struct ffb_softc *, struct ffb_screen *, int, 
+void	ffb_init_screen(void *, struct vcons_screen *, int, 
 	    long *);
 int	ffb_allocattr(void *, int, int, int, long *);
 void	ffb_putchar(void *, int, int, u_int, long);
@@ -129,14 +122,8 @@ static struct fbdriver ffb_fbdriver = {
 };
 
 struct wsdisplay_accessops ffb_accessops = {
-	ffb_ioctl,
-	ffb_mmap,
-	ffb_alloc_screen,
-	ffb_free_screen,
-	ffb_show_screen,
-	NULL,	/* load font */
-	NULL,	/* pollc */
-	NULL,	/* scroll */
+	.ioctl = ffb_ioctl,
+	.mmap = ffb_mmap,
 };
 
 void
@@ -147,6 +134,7 @@ ffb_attach(struct ffb_softc *sc)
 	long defattr;
 	const char *model;
 	int btype;
+	uint32_t dac;
 	int maxrow, maxcol;
 	u_int blank = WSDISPLAYIO_VIDEO_ON;
 	char buf[6+1];
@@ -154,7 +142,6 @@ ffb_attach(struct ffb_softc *sc)
 	printf(":");
 	
 	sc->putchar = NULL;
-	sc->copycols = NULL;
 	
 	if (sc->sc_type == FFB_CREATOR) {
 		btype = prom_getpropint(sc->sc_node, "board_type", 0);
@@ -173,12 +160,15 @@ ffb_attach(struct ffb_softc *sc)
 	sc->sc_linebytes = 8192;
 	sc->sc_height = prom_getpropint(sc->sc_node, "height", 0);
 	sc->sc_width = prom_getpropint(sc->sc_node, "width", 0);
-
+	
+	sc->sc_locked = 0;
+	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+	
 	maxcol = (prom_getoption("screen-#columns", buf, sizeof buf) == 0)
 		? strtoul(buf, NULL, 10)
 		: 80;
 
-	maxrow = (prom_getoption("screen-#rows", buf, sizeof buf) == 0)
+	maxrow = (prom_getoption("screen-#rows", buf, sizeof buf) != 0)
 		? strtoul(buf, NULL, 10)
 		: 34;
 
@@ -186,11 +176,25 @@ ffb_attach(struct ffb_softc *sc)
 
 	/* collect DAC version, as Elite3D cursor enable bit is reversed */
 	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_GVERS);
-	sc->sc_dacrev = DAC_READ(sc, FFB_DAC_VALUE) >> 28;
+	dac = DAC_READ(sc, FFB_DAC_VALUE);
+	sc->sc_dacrev = (dac >> 28) & 0xf;
 
-	if (sc->sc_type == FFB_AFB)
+	if (sc->sc_type == FFB_AFB) {
 		sc->sc_dacrev = 10;
+		sc->sc_needredraw = 0;
+	} else {
+		/* see what kind of DAC we have */
+		int pnum = (dac & 0x0ffff000) >> 12;
+		if (pnum == 0x236e) {
+			sc->sc_needredraw = 0;
+		} else {
+			sc->sc_needredraw = 1;
+		}
+	}
 	printf(", model %s, dac %u\n", model, sc->sc_dacrev);
+	if (sc->sc_needredraw) 
+		printf("%s: found old DAC, enabling redraw on unblank\n", 
+		    sc->sc_dv.dv_xname);
 
 	ffb_blank(sc, WSDISPLAYIO_SVIDEO, &blank);
 
@@ -199,15 +203,26 @@ ffb_attach(struct ffb_softc *sc)
 		
 	wsfont_init();
 
-	/* we mess with ffb_console_screen only once */
-	if (ffb_console_screen.ri.ri_rows == 0)
-		ffb_init_screen(sc, &ffb_console_screen, 1, &defattr);
+	vcons_init(&sc->vd, sc, &ffb_stdscreen, &ffb_accessops);
+	sc->vd.init_screen = ffb_init_screen;
 
+	/* we mess with ffb_console_screen only once */
 	if (sc->sc_console) {
-		ffb_console_screen.active = 1;
-		sc->active = &ffb_console_screen;
+		vcons_init_screen(&sc->vd, &ffb_console_screen, 1, &defattr);
+		SCREEN_VISIBLE((&ffb_console_screen));
+		/* 
+		 * XXX we shouldn't use a global variable for the console
+		 * screen
+		 */
+		sc->vd.active = &ffb_console_screen;
+		ffb_console_screen.scr_flags = VCONS_SCREEN_IS_STATIC;
+	} else {
+		if (ffb_console_screen.scr_ri.ri_rows == 0) {
+			/* do some minimal setup to avoid weirdnesses later */
+			vcons_init_screen(&sc->vd, &ffb_console_screen, 1, &defattr);
+		}
 	}
-	ri = &ffb_console_screen.ri;
+	ri = &ffb_console_screen.scr_ri;
 
 	ffb_stdscreen.nrows = ri->ri_rows;
 	ffb_stdscreen.ncols = ri->ri_cols;
@@ -233,17 +248,18 @@ ffb_attach(struct ffb_softc *sc)
 	waa.console = sc->sc_console;
 	waa.scrdata = &ffb_screenlist;
 	waa.accessops = &ffb_accessops;
-	waa.accesscookie = sc;
+	waa.accesscookie = &sc->vd;
 	config_found(&sc->sc_dv, &waa, wsemuldisplaydevprint);
 }
 
 int
 ffb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
-	struct ffb_softc *sc = v;
+	struct vcons_data *vd = v;
+	struct ffb_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
-	struct ffb_screen *ms = sc->active;
-
+	struct vcons_screen *ms = vd->active;
+	
 #ifdef FFBDEBUG
 	printf("ffb_ioctl: %s cmd _IO%s%s('%c', %lu)\n",
 	       sc->sc_dv.dv_xname,
@@ -299,13 +315,10 @@ ffb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flags, struct lwp *l)
 		{ 
 			if (sc->sc_mode != *(u_int *)data) {
 				sc->sc_mode = *(u_int *)data;
-				if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+				if ((sc->sc_mode == WSDISPLAYIO_MODE_EMUL) &&
+				    (sc->sc_locked == 0)) {
 					ffb_ras_init(sc);		
-					ffb_restore_screen(ms, ms->type, 
-					    ms->chars);
-					ffb_cursor(ms, ms->cursoron, 
-					    ms->cursorrow, 
-					    ms->cursorcol);
+					vcons_redraw_screen(ms);
 				}
 			}
 		}		
@@ -349,8 +362,9 @@ ffb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flags, struct lwp *l)
 static int
 ffb_blank(struct ffb_softc *sc, u_long cmd, u_int *data)
 {
+	struct vcons_screen *ms = sc->vd.active;
 	u_int val;
-
+	
 	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_GSBLANK);
 	val = DAC_READ(sc, FFB_DAC_VALUE);
 
@@ -373,6 +387,16 @@ ffb_blank(struct ffb_softc *sc, u_long cmd, u_int *data)
 
 	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_GSBLANK);
 	DAC_WRITE(sc, FFB_DAC_VALUE, val);
+	
+	if ((val & 1) && sc->sc_needredraw) {
+		if (ms != NULL) {
+			if ((sc->sc_mode == WSDISPLAYIO_MODE_EMUL) && 
+			    (sc->sc_locked == 0)) {
+				ffb_ras_init(sc);		
+				vcons_redraw_screen(ms);
+			}
+		}
+	}
 
 	return(0);
 }
@@ -380,7 +404,8 @@ ffb_blank(struct ffb_softc *sc, u_long cmd, u_int *data)
 paddr_t
 ffb_mmap(void *vsc, void *vs, off_t off, int prot)
 {
-	struct ffb_softc *sc = vsc;
+	struct vcons_data *vd = vsc;
+	struct ffb_softc *sc = vd->cookie;
 	int i;
 
 	switch (sc->sc_mode) {
@@ -464,87 +489,65 @@ void
 ffb_ras_eraserows(void *cookie, int row, int n, long attr)
 {
 	struct rasops_info *ri = cookie;
-	struct ffb_screen *scr = ri->ri_hw;
-	struct ffb_softc *sc = scr->sc;;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct ffb_softc *sc = scr->scr_cookie;
 
-	int start, end, i;
-	
-	start = ri->ri_cols * row;
-	end = ri->ri_cols * (row + n);
-	
-	for (i = start; i < end; i++) {
-		scr->attrs[i] = attr;
-		scr->chars[i] = 0x20;
+	if (row < 0) {
+		n += row;
+		row = 0;
 	}
-
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		if (row < 0) {
-			n += row;
-			row = 0;
-		}
-		if (row + n > ri->ri_rows)
-			n = ri->ri_rows - row;
-		if (n <= 0)
-			return;
+	if (row + n > ri->ri_rows)
+		n = ri->ri_rows - row;
+	if (n <= 0)
+		return;
 	
-		ffb_ras_fill(sc);
-		ffb_ras_setfg(sc, ri->ri_devcmap[(attr >> 16) & 0xf]);
-		ffb_ras_fifo_wait(sc, 4);
-		if ((n == ri->ri_rows) && (ri->ri_flg & RI_FULLCLEAR)) {
-			FBC_WRITE(sc, FFB_FBC_BY, 0);
-			FBC_WRITE(sc, FFB_FBC_BX, 0);
-			FBC_WRITE(sc, FFB_FBC_BH, ri->ri_height);
-			FBC_WRITE(sc, FFB_FBC_BW, ri->ri_width);
-		} else {
-			row *= ri->ri_font->fontheight;
-			FBC_WRITE(sc, FFB_FBC_BY, ri->ri_yorigin + row);
-			FBC_WRITE(sc, FFB_FBC_BX, ri->ri_xorigin);
-			FBC_WRITE(sc, FFB_FBC_BH, n * ri->ri_font->fontheight);
-			FBC_WRITE(sc, FFB_FBC_BW, ri->ri_emuwidth);
-		}
-		ffb_ras_wait(sc);
+	ffb_ras_fill(sc);
+	ffb_ras_setfg(sc, ri->ri_devcmap[(attr >> 16) & 0xf]);
+	ffb_ras_fifo_wait(sc, 4);
+	if ((n == ri->ri_rows) && (ri->ri_flg & RI_FULLCLEAR)) {
+		FBC_WRITE(sc, FFB_FBC_BY, 0);
+		FBC_WRITE(sc, FFB_FBC_BX, 0);
+		FBC_WRITE(sc, FFB_FBC_BH, ri->ri_height);
+		FBC_WRITE(sc, FFB_FBC_BW, ri->ri_width);
+	} else {
+		row *= ri->ri_font->fontheight;
+		FBC_WRITE(sc, FFB_FBC_BY, ri->ri_yorigin + row);
+		FBC_WRITE(sc, FFB_FBC_BX, ri->ri_xorigin);
+		FBC_WRITE(sc, FFB_FBC_BH, n * ri->ri_font->fontheight);
+		FBC_WRITE(sc, FFB_FBC_BW, ri->ri_emuwidth);
 	}
+	ffb_ras_wait(sc);
 }
 
 void
 ffb_ras_erasecols(void *cookie, int row, int col, int n, long attr)
 {
 	struct rasops_info *ri = cookie;
-	struct ffb_screen *scr = ri->ri_hw;
-	struct ffb_softc *sc = scr->sc;;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct ffb_softc *sc = scr->scr_cookie;
 
-	int start = col + row * ri->ri_cols;
-	int end = start + n, i;
-	
-	for (i = start; i < end; i++) {
-		scr->attrs[i] = attr;
-		scr->chars[i] = 0x20;
+	if ((row < 0) || (row >= ri->ri_rows))
+		return;
+	if (col < 0) {
+		n += col;
+		col = 0;
 	}
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+	if (col + n > ri->ri_cols)
+		n = ri->ri_cols - col;
+	if (n <= 0)
+		return;
+	n *= ri->ri_font->fontwidth;
+	col *= ri->ri_font->fontwidth;
+	row *= ri->ri_font->fontheight;
 
-		if ((row < 0) || (row >= ri->ri_rows))
-			return;
-		if (col < 0) {
-			n += col;
-			col = 0;
-		}
-		if (col + n > ri->ri_cols)
-			n = ri->ri_cols - col;
-		if (n <= 0)
-			return;
-		n *= ri->ri_font->fontwidth;
-		col *= ri->ri_font->fontwidth;
-		row *= ri->ri_font->fontheight;
-	
-		ffb_ras_fill(sc);
-		ffb_ras_setfg(sc, ri->ri_devcmap[(attr >> 16) & 0xf]);
-		ffb_ras_fifo_wait(sc, 4);
-		FBC_WRITE(sc, FFB_FBC_BY, ri->ri_yorigin + row);
-		FBC_WRITE(sc, FFB_FBC_BX, ri->ri_xorigin + col);
-		FBC_WRITE(sc, FFB_FBC_BH, ri->ri_font->fontheight);
-		FBC_WRITE(sc, FFB_FBC_BW, n - 1);
-		ffb_ras_wait(sc);
-	}
+	ffb_ras_fill(sc);
+	ffb_ras_setfg(sc, ri->ri_devcmap[(attr >> 16) & 0xf]);
+	ffb_ras_fifo_wait(sc, 4);
+	FBC_WRITE(sc, FFB_FBC_BY, ri->ri_yorigin + row);
+	FBC_WRITE(sc, FFB_FBC_BX, ri->ri_xorigin + col);
+	FBC_WRITE(sc, FFB_FBC_BH, ri->ri_font->fontheight);
+	FBC_WRITE(sc, FFB_FBC_BW, n - 1);
+	ffb_ras_wait(sc);
 }
 
 void
@@ -560,69 +563,39 @@ void
 ffb_ras_copyrows(void *cookie, int src, int dst, int n)
 {
 	struct rasops_info *ri = cookie;
-	struct ffb_screen *scr = ri->ri_hw;
-	struct ffb_softc *sc = scr->sc;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct ffb_softc *sc = scr->scr_cookie;
 
-	int from, to, len;
-	
-	from = ri->ri_cols * src;
-	to = ri->ri_cols * dst;
-	len = ri->ri_cols * n;
-	
-	memmove(&scr->attrs[to], &scr->attrs[from], len * sizeof(long));
-	memmove(&scr->chars[to], &scr->chars[from], len * sizeof(uint16_t));
-	
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-
-		if (dst == src)
-			return;
-		if (src < 0) {
-			n += src;
-			src = 0;
-		}
-		if ((src + n) > ri->ri_rows)
-			n = ri->ri_rows - src;
-		if (dst < 0) {
-			n += dst;
-			dst = 0;
-		}
-		if ((dst + n) > ri->ri_rows)
-			n = ri->ri_rows - dst;
-		if (n <= 0)
-			return;
-		n *= ri->ri_font->fontheight;
-		src *= ri->ri_font->fontheight;
-		dst *= ri->ri_font->fontheight;
-	
-		ffb_ras_fifo_wait(sc, 8);
-		FBC_WRITE(sc, FFB_FBC_ROP, FBC_ROP_OLD | (FBC_ROP_OLD << 8));
-		FBC_WRITE(sc, FFB_FBC_DRAWOP, FBC_DRAWOP_VSCROLL);
-		FBC_WRITE(sc, FFB_FBC_BY, ri->ri_yorigin + src);
-		FBC_WRITE(sc, FFB_FBC_BX, ri->ri_xorigin);
-		FBC_WRITE(sc, FFB_FBC_DY, ri->ri_yorigin + dst);
-		FBC_WRITE(sc, FFB_FBC_DX, ri->ri_xorigin);
-		FBC_WRITE(sc, FFB_FBC_BH, n);
-		FBC_WRITE(sc, FFB_FBC_BW, ri->ri_emuwidth);
-		ffb_ras_wait(sc);
+	if (dst == src)
+		return;
+	if (src < 0) {
+		n += src;
+		src = 0;
 	}
-}
-
-void
-ffb_ras_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
-{
-	struct rasops_info *ri = cookie;
-	struct ffb_screen *scr = ri->ri_hw;
-	struct ffb_softc *sc = scr->sc;
-	int from = srccol + row * ri->ri_cols;
-	int to = dstcol + row * ri->ri_cols;
-	
-	memmove(&scr->attrs[to], &scr->attrs[from], ncols * sizeof(long));
-	memmove(&scr->chars[to], &scr->chars[from], ncols * sizeof(uint16_t));
-
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		ffb_ras_wait(sc);
-		sc->copycols(cookie, row, srccol, dstcol, ncols);
+	if ((src + n) > ri->ri_rows)
+		n = ri->ri_rows - src;
+	if (dst < 0) {
+		n += dst;
+		dst = 0;
 	}
+	if ((dst + n) > ri->ri_rows)
+		n = ri->ri_rows - dst;
+	if (n <= 0)
+		return;
+	n *= ri->ri_font->fontheight;
+	src *= ri->ri_font->fontheight;
+	dst *= ri->ri_font->fontheight;
+
+	ffb_ras_fifo_wait(sc, 8);
+	FBC_WRITE(sc, FFB_FBC_ROP, FBC_ROP_OLD | (FBC_ROP_OLD << 8));
+	FBC_WRITE(sc, FFB_FBC_DRAWOP, FBC_DRAWOP_VSCROLL);
+	FBC_WRITE(sc, FFB_FBC_BY, ri->ri_yorigin + src);
+	FBC_WRITE(sc, FFB_FBC_BX, ri->ri_xorigin);
+	FBC_WRITE(sc, FFB_FBC_DY, ri->ri_yorigin + dst);
+	FBC_WRITE(sc, FFB_FBC_DX, ri->ri_xorigin);
+	FBC_WRITE(sc, FFB_FBC_BH, n);
+	FBC_WRITE(sc, FFB_FBC_BW, ri->ri_emuwidth);
+	ffb_ras_wait(sc);
 }
 
 void
@@ -640,25 +613,66 @@ ffb_ras_setfg(struct ffb_softc *sc, int32_t fg)
 static void
 ffbfb_unblank(struct device *dev)
 {
+	struct ffb_softc *sc = (struct ffb_softc *)dev;
+	struct vcons_screen *ms = sc->vd.active;
 	u_int on = 1;
-
+	int redraw = 0;
+	
+	ffb_ras_init(sc);
+	if (sc->sc_locked) {
+		sc->sc_locked = 0;
+		redraw = 1;
+	}
+	
 	ffb_blank((struct ffb_softc*)dev, WSDISPLAYIO_SVIDEO, &on);
+	if ((sc->vd.active != &ffb_console_screen) &&
+	    (ffb_console_screen.scr_flags & VCONS_SCREEN_IS_STATIC)) {
+		/* 
+		 * force-switch to the console screen.
+		 * Caveat: the higher layer will think we're still on the
+		 * other screen
+		 */
+		
+		SCREEN_INVISIBLE(sc->vd.active);
+		sc->vd.active = &ffb_console_screen;
+		SCREEN_VISIBLE(sc->vd.active);
+		ms = sc->vd.active;
+		redraw = 1;
+	}
+	
+	if (redraw) {
+		vcons_redraw_screen(ms);
+	}
 }
 
 int
 ffbfb_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	struct ffb_softc *sc;
 	int unit = minor(dev);
 
+	sc = ffb_cd.cd_devs[unit];
 	if (unit >= ffb_cd.cd_ndevs || ffb_cd.cd_devs[unit] == NULL)
 		return ENXIO;
-
+		
+	sc->sc_locked = 1;
 	return 0;
 }
 
 int
 ffbfb_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	struct ffb_softc *sc = ffb_cd.cd_devs[minor(dev)];
+	struct vcons_screen *ms = sc->vd.active;
+	
+	sc->sc_locked = 0;
+	if (ms != NULL) {
+		if ((sc->sc_mode == WSDISPLAYIO_MODE_EMUL) &&
+		    (sc->sc_locked == 0)) {
+			ffb_ras_init(sc);		
+			vcons_redraw_screen(ms);
+		}
+	}
 	return 0;
 }
 
@@ -667,7 +681,7 @@ ffbfb_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct ffb_softc *sc = ffb_cd.cd_devs[minor(dev)];
 
-	return ffb_ioctl(sc, NULL, cmd, data, flags, l);
+	return ffb_ioctl(&sc->vd, NULL, cmd, data, flags, l);
 }
 
 paddr_t
@@ -743,135 +757,70 @@ ffbfb_mmap(dev_t dev, off_t off, int prot)
 void
 ffb_clearscreen(struct ffb_softc *sc)
 {
-	struct rasops_info *ri = &ffb_console_screen.ri;
+	struct rasops_info *ri = &ffb_console_screen.scr_ri;
 	ffb_ras_fill(sc);
 	ffb_ras_setfg(sc, ri->ri_devcmap[WS_DEFAULT_BG]);
 	ffb_ras_fifo_wait(sc, 4);
 	FBC_WRITE(sc, FFB_FBC_BY, 0);
 	FBC_WRITE(sc, FFB_FBC_BX, 0);
-	FBC_WRITE(sc, FFB_FBC_BH, ri->ri_height);
-	FBC_WRITE(sc, FFB_FBC_BW, ri->ri_width);
-}
-
-void
-ffb_switch_screen(struct ffb_softc *sc)
-{
-	struct ffb_screen *scr, *oldscr;
-
-	scr = sc->wanted;
-	if (!scr) {
-		printf("ffb_switch_screen: disappeared\n");
-		(*sc->switchcb)(sc->switchcbarg, EIO, 0);
-		return;
-	}
-	oldscr = sc->active; /* can be NULL! */
-#ifdef DIAGNOSTIC
-	if (oldscr) {
-		if (!oldscr->active)
-			panic("ffb_switch_screen: not active");
-	}
-#endif
-	if (scr == oldscr)
-		return;
-
-#ifdef DIAGNOSTIC
-	if (scr->active)
-		panic("ffb_switch_screen: active");
-#endif
-
-	if (oldscr)
-		oldscr->active = 0;
-#ifdef notyet
-	if (sc->currenttype != type) {
-		ffb_set_screentype(sc, type);
-		sc->currenttype = type;
-	}
-#endif
-
-	/* Clear the entire screen. */		
-
-	scr->active = 1;
-	ffb_restore_screen(scr, &ffb_stdscreen, scr->chars);
-
-	sc->active = scr;
-	
-	scr->ri.ri_ops.cursor(scr, scr->cursoron, scr->cursorrow, 
-	    scr->cursorcol);
-
-	sc->wanted = 0;
-	if (sc->switchcb)
-		(*sc->switchcb)(sc->switchcbarg, 0, 0);
-}
-
-void
-ffb_restore_screen(struct ffb_screen *scr,
-    const struct wsscreen_descr *type, uint16_t *mem)
-{
-	int i, j, offset = 0;
-	uint16_t *charptr = scr->chars;
-	long *attrptr = scr->attrs;
-	
-	ffb_clearscreen(scr->sc);
-	ffb_ras_wait(scr->sc);
-	for (i = 0; i < scr->ri.ri_rows; i++) {
-		for (j = 0; j < scr->ri.ri_cols; j++) {
-			scr->sc->putchar(scr, i, j, charptr[offset], 
-			    attrptr[offset]);
-			offset++;
-		}
-	}
-	scr->cursordrawn = 0;
+	FBC_WRITE(sc, FFB_FBC_BH, sc->sc_height);
+	FBC_WRITE(sc, FFB_FBC_BW, sc->sc_width);
 }
 
 void
 ffb_cursor(void *cookie, int on, int row, int col)
 {
 	struct rasops_info *ri = cookie;
-	struct ffb_screen *scr = ri->ri_hw;
-	struct ffb_softc *sc = scr->sc;
+	struct vcons_screen *scr;
+	struct ffb_softc *sc;
 	int x, y, wi, he, coffset;
 	
-	wi = ri->ri_font->fontwidth;
-	he = ri->ri_font->fontheight;
+	if (cookie != NULL) {
+		scr = ri->ri_hw;
+		sc = scr->scr_cookie;
 	
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x = scr->cursorcol * wi + ri->ri_xorigin;
-		y = scr->cursorrow * he + ri->ri_yorigin;
-		
-		if (scr->cursordrawn) {
-			/* remove cursor */
-			coffset = scr->cursorcol + 
-			    (scr->cursorrow * ri->ri_cols);
-			ffb_ras_wait(sc);
-			sc->putchar(cookie, scr->cursorrow, scr->cursorcol, 
-			    scr->chars[coffset], scr->attrs[coffset]);
-			scr->cursordrawn = 0;
-		}
-		scr->cursorrow = row;
-		scr->cursorcol = col;
-		if ((scr->cursoron = on) != 0)
-		{
-			long attr, revattr;
-			x = scr->cursorcol * wi + ri->ri_xorigin;
-			y = scr->cursorrow * he + ri->ri_yorigin;
-			coffset = col + (row * ri->ri_cols);
-			attr = scr->attrs[coffset];
+		wi = ri->ri_font->fontwidth;
+		he = ri->ri_font->fontheight;
+
+		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+			x = ri->ri_ccol * wi + ri->ri_xorigin;
+			y = ri->ri_crow * he + ri->ri_yorigin;
+	
+			if (ri->ri_flg & RI_CURSOR) {
+				/* remove cursor */
+				coffset = ri->ri_ccol + (ri->ri_crow *
+				    ri->ri_cols);
+				ffb_ras_wait(sc);
+				sc->putchar(cookie, ri->ri_crow, 
+				    ri->ri_ccol, scr->scr_chars[coffset], 
+				    scr->scr_attrs[coffset]);
+				ri->ri_flg &= ~RI_CURSOR;
+			}
+			ri->ri_crow = row;
+			ri->ri_ccol = col;
+			if (on)
+			{
+				long attr, revattr;
+				x = ri->ri_ccol * wi + ri->ri_xorigin;
+				y = ri->ri_crow * he + ri->ri_yorigin;
+				coffset = col + (row * ri->ri_cols);
+				attr = scr->scr_attrs[coffset];
 #ifdef FFB_CURSOR_SWAP_COLOURS
-			revattr=((attr >> 8 ) & 0x000f0000) | ((attr & 
-			    0x000f0000)<<8) | (attr & 0x0000ffff);
+				revattr=((attr >> 8 ) & 0x000f0000) | ((attr & 
+				    0x000f0000)<<8) | (attr & 0x0000ffff);
 #else
-			revattr = attr ^ 0xffff0000;
+				revattr = attr ^ 0xffff0000;
 #endif
-			ffb_ras_wait(sc);
-			sc->putchar(cookie, scr->cursorrow, scr->cursorcol, 
-			    scr->chars[coffset], revattr);
-			scr->cursordrawn = 1;
+				ffb_ras_wait(sc);
+				sc->putchar(cookie, ri->ri_crow, ri->ri_ccol,
+				    scr->scr_chars[coffset], revattr);
+				ri->ri_flg |= RI_CURSOR;
+			}
+		} else {
+			ri->ri_crow = row;
+			ri->ri_ccol = col;
+			ri->ri_flg &= ~RI_CURSOR;
 		}
-	} else {
-		scr->cursoron = on;
-		scr->cursorrow = row;
-		scr->cursorcol = col;
-		scr->cursordrawn = 0;
 	}
 }
 
@@ -879,54 +828,17 @@ void
 ffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri = cookie;
-	struct ffb_screen *scr = ri->ri_hw;
-	struct ffb_softc *sc = scr->sc;
-	int pos;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct ffb_softc *sc = scr->scr_cookie;
 	
-	if ((row >= 0) && (row < ri->ri_rows) && (col >= 0) && 
-	     (col < ri->ri_cols)) {
-		pos = col + row * ri->ri_cols;
-		scr->attrs[pos] = attr;
-		scr->chars[pos] = c;
-
-#if 1
-		if ((sc->putchar != NULL) && (	scr->active) && 
-		    (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-			ffb_ras_wait(sc);
-			sc->putchar(cookie, row, col, c, attr);
-		}
-#else
-		if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-			int fg, bg, uc, i;
-			uint8_t *data;
-			int x, y, wi,he;
-			
-			wi = ri->ri_font->fontwidth;
-			he = ri->ri_font->fontheight;
-		
-			if (!CHAR_IN_FONT(c, ri->ri_font))
-				return;
-			bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0xff];
-			fg = (u_char)ri->ri_devcmap[(attr >> 24) & 0xff];
-			x = ri->ri_xorigin + col * wi;
-			y = ri->ri_yorigin + row * he;
-			if (c == 0x20) {
-				ffb_rectfill(sc, x, y, wi, he, bg);
-			} else {
-				uc = c-ri->ri_font->firstchar;
-				data = (uint8_t *)ri->ri_font->data + uc * 
-				    ri->ri_fontscale;
-
-				ffb_setup_mono(sc, x, y, wi, 1, fg, bg);		
-				for (i = 0; i < he; i++) {
-					ffb_feed_line(sc, ri->ri_font->stride,
-					    data);
-					data += ri->ri_font->stride;
-				}
-				/*ffb_ras_wait(sc);*/
-			}
-		}
-#endif
+	if (sc->putchar != NULL) {
+		/* 
+		 * the only reason why we need to hook putchar - wait for
+		 * the drawing engine to be idle so we don't interfere
+		 * ( and we should really use the colour expansion hardware )
+		 */
+		ffb_ras_wait(sc);
+		sc->putchar(cookie, row, col, c, attr);
 	}
 }
 
@@ -948,17 +860,12 @@ ffb_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
 }
 
 void
-ffb_init_screen(struct ffb_softc *sc, struct ffb_screen *scr,
+ffb_init_screen(void *cookie, struct vcons_screen *scr,
     int existing, long *defattr)
 {
-	struct rasops_info *ri = &scr->ri;
-	int cnt;
+	struct ffb_softc *sc = cookie;
+	struct rasops_info *ri = &scr->scr_ri;
 
-	scr->sc = sc;
-	scr->cursorcol = 0;
-	scr->cursorrow = 0;
-	scr->cursordrawn=0;
-	   
 	ri->ri_depth = 32;
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
@@ -967,7 +874,7 @@ ffb_init_screen(struct ffb_softc *sc, struct ffb_screen *scr,
 
 	ri->ri_bits = bus_space_vaddr(sc->sc_bt, sc->sc_pixel_h);
 	
-#ifdef DEBUG_FFB
+#ifdef FFBDEBUG
 	printf("addr: %08lx\n",(ulong)ri->ri_bits);
 #endif
 	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
@@ -975,19 +882,7 @@ ffb_init_screen(struct ffb_softc *sc, struct ffb_screen *scr,
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
 
-	ffb_allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG, 0, defattr);
-
-	/* 
-	 * we allocate both chars and attributes in one chunk, attributes first 
-	 * because they have the (potentially) bigger alignment 
-	 */
-	cnt=ri->ri_rows * ri->ri_cols;
-	scr->attrs = (long *)malloc(cnt * (sizeof(long) + sizeof(uint16_t)),
-	    M_DEVBUF, M_WAITOK);
-	scr->chars = (uint16_t *)&scr->attrs[cnt];
-
 	/* enable acceleration */
-	ri->ri_hw = scr;
 	ri->ri_ops.copyrows = ffb_ras_copyrows;
 	ri->ri_ops.eraserows = ffb_ras_eraserows;
 	ri->ri_ops.erasecols = ffb_ras_erasecols;
@@ -995,83 +890,5 @@ ffb_init_screen(struct ffb_softc *sc, struct ffb_screen *scr,
 	ri->ri_ops.allocattr = ffb_allocattr;
 	if (sc->putchar == NULL)
 		sc->putchar = ri->ri_ops.putchar;
-		sc->copycols = ri->ri_ops.copycols;
 	ri->ri_ops.putchar = ffb_putchar;
-	ri->ri_ops.copycols = ffb_ras_copycols;
-	
-	
-	if (existing) {
-		scr->active = 1;
-	} else {
-		scr->active = 0;
-	}
-
-	ffb_ras_eraserows(&scr->ri, 0, ri->ri_rows, *defattr);
-
-	LIST_INSERT_HEAD(&sc->screens, scr, next);
 }
-
-int
-ffb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *defattrp)
-{
-	struct ffb_softc *sc = v;
-	struct ffb_screen *scr;
-
-	scr = malloc(sizeof(struct ffb_screen), M_DEVBUF, M_WAITOK | M_ZERO);
-	ffb_init_screen(sc, scr, 0, defattrp);
-
-	if (sc->active == NULL) {
-		scr->active = 1;
-		sc->active = scr;
-		sc->currenttype = type;
-	}
-
-	*cookiep = scr;
-	*curxp = scr->cursorcol;
-	*curyp = scr->cursorrow;
-	return 0;
-}
-
-void
-ffb_free_screen(void *v, void *cookie)
-{
-	struct ffb_softc *sc = v;
-	struct ffb_screen *scr = cookie;
-
-	LIST_REMOVE(scr, next);
-	if (scr != &ffb_console_screen) {
-		free(scr->attrs, M_DEVBUF);
-		free(scr, M_DEVBUF);
-	} else
-		panic("ffb_free_screen: console");
-
-	if (sc->active == scr)
-		sc->active = 0;
-}
-
-int
-ffb_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-	struct ffb_softc *sc = v;
-	struct ffb_screen *scr, *oldscr;
-
-	scr = cookie;
-	oldscr = sc->active;
-	if (scr == oldscr)
-		return 0;
-
-	sc->wanted = scr;
-	sc->switchcb = cb;
-	sc->switchcbarg = cbarg;
-	if (cb) {
-		callout_reset(&sc->switch_callout, 0,
-		    (void(*)(void *))ffb_switch_screen, sc);
-		return EAGAIN;
-	}
-
-	ffb_switch_screen(sc);
-	return 0;
-}
-

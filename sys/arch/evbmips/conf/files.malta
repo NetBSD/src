@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.12 2006/09/02 22:54:47 gdamore Exp $
+#	$NetBSD: files.malta,v 1.12.2.1 2006/11/18 21:29:11 ad Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -15,6 +15,7 @@ file	arch/evbmips/evbmips/interrupt.c
 file	arch/evbmips/evbmips/yamon.c			# XXX should be in arch/mips/yamon ?
 
 file	arch/mips/mips/mips3_clock.c
+file	arch/mips/mips/mips3_clockintr.c
 file	arch/mips/mips/softintr.c
 
 # The autoconfiguration root.

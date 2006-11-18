@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.1 2006/08/13 02:21:45 simonb Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.1.4.1 2006/11/18 21:34:31 ad Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -90,13 +90,9 @@ struct wpi_rx_ring {
 	int			cur;
 };
 
-struct wpi_amrr {
+struct wpi_node {
 	struct	ieee80211_node ni;	/* must be the first */
-	int	txcnt;
-	int	retrycnt;
-	int	success;
-	int	success_threshold;
-	int	recovery;
+	struct	ieee80211_amrr_node	amn;
 };
 
 struct wpi_softc {
@@ -105,6 +101,7 @@ struct wpi_softc {
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 					enum ieee80211_state, int);
+	struct ieee80211_amrr	amrr;
 
 	uint32_t		flags;
 #define WPI_FLAG_FW_INITED	(1 << 0)

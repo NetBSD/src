@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.111 2006/08/30 00:49:56 christos Exp $ */
+/*	$NetBSD: ehci.c,v 1.111.2.1 2006/11/18 21:34:50 ad Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.111 2006/08/30 00:49:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.111.2.1 2006/11/18 21:34:50 ad Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -417,7 +417,8 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_bus.methods = &ehci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ehci_pipe);
 
-	sc->sc_powerhook = powerhook_establish(ehci_power, sc);
+	sc->sc_powerhook = powerhook_establish(USBDEVNAME(sc->sc_bus.bdev),
+	    ehci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(ehci_shutdown, sc);
 
 	sc->sc_eintrs = EHCI_NORMAL_INTRS;
@@ -2598,7 +2599,8 @@ ehci_timeout(void *addr)
 
 	/* Execute the abort in a process context. */
 	usb_init_task(&exfer->abort_task, ehci_timeout_task, addr);
-	usb_add_task(exfer->xfer.pipe->device, &exfer->abort_task);
+	usb_add_task(exfer->xfer.pipe->device, &exfer->abort_task,
+	    USB_TASKQ_HC);
 }
 
 void
@@ -3230,8 +3232,25 @@ ehci_device_intr_done(usbd_xfer_handle xfer)
 
 /************************/
 
-Static usbd_status	ehci_device_isoc_transfer(usbd_xfer_handle xfer) { return USBD_IOERROR; }
-Static usbd_status	ehci_device_isoc_start(usbd_xfer_handle xfer) { return USBD_IOERROR; }
-Static void		ehci_device_isoc_abort(usbd_xfer_handle xfer) { }
-Static void		ehci_device_isoc_close(usbd_pipe_handle pipe) { }
-Static void		ehci_device_isoc_done(usbd_xfer_handle xfer) { }
+Static usbd_status
+ehci_device_isoc_transfer(usbd_xfer_handle xfer)
+{
+	return USBD_IOERROR;
+}
+Static usbd_status
+ehci_device_isoc_start(usbd_xfer_handle xfer)
+{
+	return USBD_IOERROR;
+}
+Static void
+ehci_device_isoc_abort(usbd_xfer_handle xfer)
+{
+}
+Static void
+ehci_device_isoc_close(usbd_pipe_handle pipe)
+{
+}
+Static void
+ehci_device_isoc_done(usbd_xfer_handle xfer)
+{
+}

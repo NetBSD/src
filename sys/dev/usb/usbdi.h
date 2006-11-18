@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.69 2005/11/28 13:14:48 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.69.20.1 2006/11/18 21:34:52 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -196,12 +196,16 @@ struct usb_task {
 	TAILQ_ENTRY(usb_task) next;
 	void (*fun)(void *);
 	void *arg;
-	char onqueue;
+	int queue;
 };
+#define	USB_TASKQ_HC		0
+#define	USB_TASKQ_DRIVER	1
+#define	USB_NUM_TASKQS		2
+#define	USB_TASKQ_NAMES		{"usbtask-hc", "usbtask-dr"}
 
-void usb_add_task(usbd_device_handle, struct usb_task *);
+void usb_add_task(usbd_device_handle, struct usb_task *, int);
 void usb_rem_task(usbd_device_handle, struct usb_task *);
-#define usb_init_task(t, f, a) ((t)->fun = (f), (t)->arg = (a), (t)->onqueue = 0)
+#define usb_init_task(t, f, a) ((t)->fun = (f), (t)->arg = (a), (t)->queue = -1)
 
 struct usb_devno {
 	u_int16_t ud_vendor;

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.75 2006/08/26 20:26:55 christos Exp $
+# $NetBSD: GENERIC,v 1.75.2.1 2006/11/18 21:29:23 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.75 $"
+#ident 		"GENERIC-$Revision: 1.75.2.1 $"
 
 maxusers	8
 
@@ -95,7 +95,7 @@ file-system 	NULLFS		# loopback file system
 #file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcode (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 #options 	NFSSERVER	# nfs server support

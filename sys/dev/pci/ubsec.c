@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.9 2006/03/28 17:38:34 thorpej Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.9.8.1 2006/11/18 21:34:33 ad Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -284,7 +284,8 @@ ubsec_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-ubsec_probe(struct device *parent, struct cfdata *match, void *aux)
+ubsec_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 

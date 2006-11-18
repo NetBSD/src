@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pnpbios.c,v 1.8 2002/12/28 17:13:39 matt Exp $	*/
+/*	$NetBSD: pckbc_pnpbios.c,v 1.8.48.1 2006/11/18 21:29:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.8 2002/12/28 17:13:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.8.48.1 2006/11/18 21:29:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,7 @@ void	pckbc_pnpbios_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 int
 pckbc_pnpbios_match(struct device *parent,
-    struct cfdata *match,
-    void *aux)
+    struct cfdata *match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
@@ -110,8 +109,7 @@ pckbc_pnpbios_match(struct device *parent,
 }
 
 void
-pckbc_pnpbios_attach(struct device *parent,
-    struct device *self,
+pckbc_pnpbios_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct pckbc_pnpbios_softc *psc = (void *) self;

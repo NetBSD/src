@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.39 2006/08/28 00:04:21 christos Exp $	*/
+/*	$NetBSD: azalia.c,v 1.39.2.1 2006/11/18 21:34:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.39 2006/08/28 00:04:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.39.2.1 2006/11/18 21:34:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -276,7 +276,8 @@ static const char *pin_devices[16] = {
 #define PCIID_VT8237A		PCI_ID_CODE0(VIATECH, VT8237A_HDA)
 
 static int
-azalia_pci_match(struct device *parent, struct cfdata *match, void *aux)
+azalia_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -288,7 +289,8 @@ azalia_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-azalia_pci_attach(struct device *parent, struct device *self, void *aux)
+azalia_pci_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	azalia_t *sc;
 	struct pci_attach_args *pa;
@@ -738,8 +740,10 @@ azalia_init_rirb(azalia_t *az)
 		return ENOMEM;
 	}
 
-	//rirbctl = AZ_READ_1(az, RIRBCTL);
-	//AZ_WRITE_1(az, RIRBCTL, rirbctl & ~HDA_RIRBCTL_RINTCTL);
+#if notyet
+	rirbctl = AZ_READ_1(az, RIRBCTL);
+	AZ_WRITE_1(az, RIRBCTL, rirbctl & ~HDA_RIRBCTL_RINTCTL);
+#endif
 
 	/* reset the write pointer */
 	rirbwp = AZ_READ_2(az, RIRBWP);
@@ -1918,7 +1922,8 @@ azalia_set_params(void *v, int smode, int umode, audio_params_t *p,
 }
 
 static int
-azalia_round_blocksize(void *v, int blk, int mode, const audio_params_t *param)
+azalia_round_blocksize(void *v, int blk, int mode,
+    const audio_params_t *param)
 {
 	azalia_t *az;
 	size_t size;
@@ -2014,7 +2019,8 @@ azalia_query_devinfo(void *v, mixer_devinfo_t *mdev)
 }
 
 static void *
-azalia_allocm(void *v, int dir, size_t size, struct malloc_type *pool, int flags)
+azalia_allocm(void *v, int dir, size_t size, struct malloc_type *pool,
+    int flags)
 {
 	azalia_t *az;
 	stream_t *stream;

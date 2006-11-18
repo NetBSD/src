@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 2006/08/04 02:07:59 mhitch Exp $	*/
+/*	$NetBSD: clock.c,v 1.10.4.1 2006/11/18 21:29:27 ad Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2006/08/04 02:07:59 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10.4.1 2006/11/18 21:29:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,52 +83,6 @@ next68k_calibrate_delay(void)
 
 	/* Calculate CPU speed. */
 	cpuspeed = 2048 / delay_divisor;
-}
-
-#define	SECDAY		(24 * 60 * 60)
-#define	SECYR		(SECDAY * 365)
-
-/*
- * Set up the system's time, given a `reasonable' time value.
- */
-void
-inittodr(time_t base)
-{
-	int badbase = 0;
-
-	if (base < 5*SECYR) {
-		printf("WARNING: preposterous time in file system");
-		base = 6*SECYR + 186*SECDAY + SECDAY/2;
-		badbase = 1;
-	}
-
-	if ((time.tv_sec = getsecs()) == 0) {
-		printf("WARNING: bad date in battery clock");
-
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the clock.
-		 */
-
-		time.tv_sec = base;
-		if (!badbase)
-			resettodr();
-	} else {
-		int deltat = time.tv_sec - base;
-
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %d days\n",
-		       time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-	}
-}
-
-void
-resettodr(void)
-{
-	setsecs(time.tv_sec);
 }
 
 int clock_intr(void *);
@@ -199,39 +153,7 @@ setstatclockrate(int newhz)
 
 /* @@@ update this to use the usec timer 
  * Darrin B Jewell <jewell@mit.edu>  Sun Feb  8 05:01:02 1998
+ * XXX: Well, there is no more microtime.  But if there is a hardware
+ * timer of any sort, it could be added.   ENODOCS.  gdamore.
  */
 
-
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  We do this by returning the current time
- * plus the amount of time since the last clock interrupt (clock.c:clkread).
- *
- * Check that this time is no less than any previously-reported time,
- * which could happen around the time of a clock adjustment.  Just for fun,
- * we guarantee that the time will be greater than the value obtained by a
- * previous call.
- */
-
-void
-microtime(struct timeval *tvp)
-{
-	int s;
-	static struct timeval lasttime;
-
-	s = splhigh();
-	*tvp = time;
-	tvp->tv_usec++;
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
-}

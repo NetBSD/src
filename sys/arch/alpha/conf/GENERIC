@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.296 $"
+#ident 		"GENERIC-$Revision: 1.296.2.1 $"
 
 maxusers 32
 
@@ -80,7 +80,7 @@ file-system	KERNFS		# Kernel variable file system (/kern)
 file-system	PROCFS		# Process file system (/proc)
 file-system	NULLFS		# Null file system layer
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -136,6 +136,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 options		COMPAT_16
 options		COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -590,6 +591,34 @@ ugen*	at uhub? port ?
 #fwip*	at ieee1394if?			# IP over IEEE1394
 #sbp*	at ieee1394if? euihi ? euilo ?
 
+
+# Bluetooth Controller and Device support
+
+# Bluetooth PCMCIA Controllers
+bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+
+# Bluetooth USB Controllers
+ubt* at uhub? port ? configuration ? interface ?
+
+# Bluetooth Device Hub
+bthub* at bt3c?
+bthub* at ubt?
+
+# Bluetooth HID support
+bthidev* at bthub?
+
+# Bluetooth Mouse
+btms* at bthidev? reportid ?
+wsmouse* at btms? mux 0
+
+# Bluetooth Keyboard
+btkbd* at bthidev? reportid ?
+wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Audio support
+btsco* at bthub?
+
+
 # Audio support
 audio*	at audiobus?
 midi*	at midibus?
@@ -669,3 +698,5 @@ pseudo-device	ksyms			# /dev/ksyms
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
+
+options PAX_MPROTECT=0			# PaX mprotect(2) restrictions

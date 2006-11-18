@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.26 2006/01/09 01:33:27 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.26.18.1 2006/11/18 21:34:46 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.26 2006/01/09 01:33:27 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.26.18.1 2006/11/18 21:34:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

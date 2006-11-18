@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.25 2006/09/04 22:51:42 dan Exp $ */
+/* $NetBSD: dksubr.c,v 1.25.2.1 2006/11/18 21:34:03 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.25 2006/09/04 22:51:42 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.25.2.1 2006/11/18 21:34:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ dk_sc_init(struct dk_softc *dksc, void *osc, char *xname)
 /* ARGSUSED */
 int
 dk_open(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	   int flags, int fmt, struct lwp *l)
+    int flags, int fmt, struct lwp *l)
 {
 	struct	disklabel *lp = dksc->sc_dkdev.dk_label;
 	int	part = DISKPART(dev);
@@ -156,7 +156,7 @@ done:
 /* ARGSUSED */
 int
 dk_close(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	    int flags, int fmt, struct lwp *l)
+    int flags, int fmt, struct lwp *l)
 {
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
@@ -516,7 +516,7 @@ static volatile int	dk_dumping = 0;
 /* ARGSUSED */
 int
 dk_dump(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	   daddr_t blkno, caddr_t va, size_t size)
+    daddr_t blkno, caddr_t va, size_t size)
 {
 
 	/*

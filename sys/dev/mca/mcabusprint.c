@@ -1,6 +1,6 @@
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcabusprint.c,v 1.3 2005/12/11 12:22:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcabusprint.c,v 1.3.20.1 2006/11/18 21:34:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.44.20.1 2006/10/24 21:10:22 ad Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.44.20.2 2006/11/18 21:29:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.44.20.1 2006/10/24 21:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.44.20.2 2006/11/18 21:29:18 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -187,10 +187,7 @@ freebsd_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * a machine fault.
  */
 int
-freebsd_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
 	struct freebsd_sys_sigreturn_args /* {
 		syscallarg(struct freebsd_sigcontext *) scp;

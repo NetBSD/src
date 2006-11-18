@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.31 2006/03/29 06:32:36 thorpej Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.31.8.1 2006/11/18 21:34:04 ad Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.31 2006/03/29 06:32:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.31.8.1 2006/11/18 21:34:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,8 @@ CFATTACH_DECL(ahc_eisa, sizeof(struct ahc_softc),
  * the actual probe routine to check it out.
  */
 static int
-ahc_eisa_match(struct device *parent, struct cfdata *match, void *aux)
+ahc_eisa_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;

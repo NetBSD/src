@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4 2005/11/24 13:08:34 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4.20.1 2006/11/18 21:29:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4 2005/11/24 13:08:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4.20.1 2006/11/18 21:29:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4 2005/11/24 13:08:34 yamt Exp $");
  * The extent maps are not static!  Machine-dependent ISA and EISA
  * routines need access to them for bus address space allocation.
  */
-static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
+static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
 struct	extent *ioport_ex;
 struct	extent *iomem_ex;
 static	int ioport_malloc_safe;
@@ -453,11 +453,8 @@ x86_memio_free(t, bsh, size)
 }
 
 int
-x86_memio_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+x86_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;
@@ -465,12 +462,8 @@ x86_memio_subregion(t, bsh, offset, size, nbshp)
 }
 
 paddr_t
-x86_memio_mmap(t, addr, off, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t addr;
-	off_t off;
-	int prot;
-	int flags;
+x86_memio_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
+    int flags)
 {
 
 	/* Can't mmap I/O space. */

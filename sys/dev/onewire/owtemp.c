@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.4 2006/07/10 16:28:44 thorpej Exp $ */
+/*	$NetBSD: owtemp.c,v 1.4.4.1 2006/11/18 21:34:28 ad Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.4 2006/07/10 16:28:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.4.4.1 2006/11/18 21:34:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,8 @@ static uint32_t	owtemp_decode_ds18b20(const uint8_t *);
 static uint32_t	owtemp_decode_ds1920(const uint8_t *);
 
 int
-owtemp_match(struct device *parent, struct cfdata *cf, void *aux)
+owtemp_match(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 	return (onewire_matchbyfam(aux, owtemp_fams,
 	    sizeof(owtemp_fams) /sizeof(owtemp_fams[0])));

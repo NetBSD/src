@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmb.c,v 1.13 2006/02/19 14:59:23 thorpej Exp $	*/
+/*	$NetBSD: pcmb.c,v 1.13.14.1 2006/11/18 21:29:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.13 2006/02/19 14:59:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.13.14.1 2006/11/18 21:29:19 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,7 +68,8 @@ CFATTACH_DECL(pcmb, sizeof(struct device),
 void	pcmb_callback(struct device *);
 
 int
-pcmbmatch(struct device *parent, struct cfdata *match, void *aux)
+pcmbmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

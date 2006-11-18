@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.114 2006/08/26 20:26:45 christos Exp $
+#	$NetBSD: DISKLESS,v 1.114.2.1 2006/11/18 21:29:17 ad Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -9,13 +9,16 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-options 	I386_CPU	# CPU classes; at least one is REQUIRED
+#options 	I386_CPU	# CPU classes; at least one is REQUIRED
 options 	I486_CPU
 options 	I586_CPU
 options 	I686_CPU
 options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
+
+makeoptions	COPTS="-march=i486 -mtune=pentiumpro"	# Assume at least 486,
+							# tune for more modern
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct
@@ -87,7 +90,7 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 
 #options 	QUOTA		# UFS quotas
 #options 	NFSSERVER	# Network File System server

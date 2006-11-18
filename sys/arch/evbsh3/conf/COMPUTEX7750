@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.24 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: COMPUTEX7750,v 1.24.20.1 2006/11/18 21:29:12 ad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -66,6 +66,7 @@ config		netbsd	root on ? type ?
 #
 mainbus0 at root
 shb*	at mainbus?
+rtc0	at shb?
 
 # Serial Devices
 

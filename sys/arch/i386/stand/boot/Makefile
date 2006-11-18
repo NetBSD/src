@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.6 2005/12/11 12:17:47 christos Exp $
+# $NetBSD: Makefile,v 1.6.20.1 2006/11/18 21:29:20 ad Exp $
 
 SUBDIR= biosboot
 
-LIBOBJ:= ${.OBJDIR}
+LIBOBJ= ${.OBJDIR}
 .MAKEOVERRIDES+= LIBOBJ
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.19 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.19.20.1 2006/11/18 21:34:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.19 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.19.20.1 2006/11/18 21:34:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,8 @@ CFATTACH_DECL(esh_pci, sizeof(struct esh_softc),
     esh_pci_match, esh_pci_attach, NULL, NULL);
 
 static int
-esh_pci_match(struct device *parent, struct cfdata *match, void *aux)
+esh_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 

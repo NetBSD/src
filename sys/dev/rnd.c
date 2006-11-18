@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.53 2006/09/03 05:03:42 christos Exp $	*/
+/*	$NetBSD: rnd.c,v 1.53.2.1 2006/11/18 21:34:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.53 2006/09/03 05:03:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.53.2.1 2006/11/18 21:34:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -341,7 +341,8 @@ rnd_init(void)
 }
 
 int
-rndopen(dev_t dev, int flags, int ifmt, struct lwp *l)
+rndopen(dev_t dev, int flags, int ifmt,
+    struct lwp *l)
 {
 
 	if (rnd_ready == 0)
@@ -481,7 +482,8 @@ rndwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 int
-rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+    struct lwp *l)
 {
 	rndsource_element_t *rse;
 	rndstat_t *rst;
@@ -813,7 +815,7 @@ rnd_sample_free(rnd_sample_t *c)
  * Add a source to our list of sources.
  */
 void
-rnd_attach_source(rndsource_element_t *rs, char *name, u_int32_t type,
+rnd_attach_source(rndsource_element_t *rs, const char *name, u_int32_t type,
     u_int32_t flags)
 {
 	u_int32_t ts;
@@ -899,9 +901,8 @@ rnd_detach_source(rndsource_element_t *rs)
 }
 
 /*
- * Add a value to the entropy pool.  If rs is NULL no entropy estimation
- * will be performed, otherwise it should point to the source-specific
- * source structure.
+ * Add a value to the entropy pool. The rs parameter should point to the
+ * source-specific source structure.
  */
 void
 rnd_add_uint32(rndsource_element_t *rs, u_int32_t val)

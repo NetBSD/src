@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.17 2006/09/05 05:32:30 mhitch Exp $ */
+/*	$NetBSD: a34kbbc.c,v 1.17.2.1 2006/11/18 21:29:04 ad Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.17 2006/09/05 05:32:30 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.17.2.1 2006/11/18 21:29:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -101,13 +101,14 @@ CFATTACH_DECL(a34kbbc, sizeof(struct device),
     a34kbbc_match, a34kbbc_attach, NULL, NULL);
 
 void *a34kclockaddr;
-int a34kugettod(todr_chip_handle_t, volatile struct timeval *);
-int a34kusettod(todr_chip_handle_t, volatile struct timeval *);
+int a34kugettod(todr_chip_handle_t, struct clock_ymdhms *);
+int a34kusettod(todr_chip_handle_t, struct clock_ymdhms *);
 static struct todr_chip_handle a34ktodr;
 
 int
 a34kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
+	struct clock_ymdhms dt;
 	static int a34kbbc_matched = 0;
 
 	if (!matchname("a34kbbc", auxp))
@@ -121,7 +122,7 @@ a34kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 		return(0);
 
 	a34kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
-	if (a34kugettod(&a34ktodr, 0) != 0)
+	if (a34kugettod(&a34ktodr, &dt) != 0)
 		return(0);
 
 	a34kbbc_matched = 1;
@@ -138,17 +139,15 @@ a34kbbc_attach(struct device *pdp, struct device *dp, void *auxp)
 	a34kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
 
 	a34ktodr.cookie = a34kclockaddr;
-	a34ktodr.todr_gettime = a34kugettod;
-	a34ktodr.todr_settime = a34kusettod;
+	a34ktodr.todr_gettime_ymdhms = a34kugettod;
+	a34ktodr.todr_settime_ymdhms = a34kusettod;
 	todr_attach(&a34ktodr);
 }
 
 int
-a34kugettod(todr_chip_handle_t h, volatile struct timeval *tvp)
+a34kugettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
 {
 	struct rtclock3000 *rt;
-	struct clock_ymdhms dt;
-	time_t secs;
 
 	rt = a34kclockaddr;
 
@@ -156,70 +155,68 @@ a34kugettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 	rt->control1 = A3CONTROL1_HOLD_CLOCK;
 
 	/* Copy the info.  Careful about the order! */
-	dt.dt_sec   = rt->second1 * 10 + rt->second2;
-	dt.dt_min   = rt->minute1 * 10 + rt->minute2;
-	dt.dt_hour  = rt->hour1   * 10 + rt->hour2;
-	dt.dt_wday  = rt->weekday;
-	dt.dt_day   = rt->day1    * 10 + rt->day2;
-	dt.dt_mon   = rt->month1  * 10 + rt->month2;
-	dt.dt_year  = rt->year1   * 10 + rt->year2;
+	dt->dt_sec   = rt->second1 * 10 + rt->second2;
+	dt->dt_min   = rt->minute1 * 10 + rt->minute2;
+	dt->dt_hour  = rt->hour1   * 10 + rt->hour2;
+	dt->dt_wday  = rt->weekday;
+	dt->dt_day   = rt->day1    * 10 + rt->day2;
+	dt->dt_mon   = rt->month1  * 10 + rt->month2;
+	dt->dt_year  = rt->year1   * 10 + rt->year2;
 
-	dt.dt_year += CLOCK_BASE_YEAR;
+	dt->dt_year += CLOCK_BASE_YEAR;
 	/* let it run again.. */
 	rt->control1 = A3CONTROL1_FREE_CLOCK;
 
-	if (dt.dt_year < STARTOFTIME)
-		dt.dt_year += 100;
+	if (dt->dt_year < STARTOFTIME)
+		dt->dt_year += 100;
 
 
-	if ((dt.dt_hour > 23) ||
-	    (dt.dt_wday > 6) ||
-	    (dt.dt_day  > 31) ||
-	    (dt.dt_mon  > 12) ||
-	    /* (dt.dt_year < STARTOFTIME) || */ (dt.dt_year > 2036))
-		return (0);
+	/*
+	 * These checks are mostly redundant against those already in the
+	 * generic todr, but apparently the attach code checks against the
+	 * return value of this function, so we have to include a check here,
+	 * too.
+	 */
+	if ((dt->dt_hour > 23) ||
+	    (dt->dt_wday > 6) ||
+	    (dt->dt_day  > 31) ||
+	    (dt->dt_mon  > 12) ||
+	    /* (dt.dt_year < STARTOFTIME) || */ (dt->dt_year > 2036))
+		return (EINVAL);
 
-	secs = clock_ymdhms_to_secs(&dt);
-	if (tvp)
-		tvp->tv_sec = secs;
 	return (0);
 }
 
 int
-a34kusettod(todr_chip_handle_t h, volatile struct timeval *tvp)
+a34kusettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
 {
 	struct rtclock3000 *rt;
-	struct clock_ymdhms dt;
-	time_t secs;
 
 	rt = a34kclockaddr;
-	secs = tvp->tv_sec;
 	/*
 	 * there seem to be problems with the bitfield addressing
 	 * currently used..
 	 */
 
 	if (! rt)
-		return (1);
-
-	clock_secs_to_ymdhms(secs, &dt);
+		return (ENXIO);
 
 	rt->control1 = A3CONTROL1_HOLD_CLOCK;		/* implies mode 0 */
-	rt->second1 = dt.dt_sec / 10;
-	rt->second2 = dt.dt_sec % 10;
-	rt->minute1 = dt.dt_min / 10;
-	rt->minute2 = dt.dt_min % 10;
-	rt->hour1   = dt.dt_hour / 10;
-	rt->hour2   = dt.dt_hour % 10;
-	rt->weekday = dt.dt_wday;
-	rt->day1    = dt.dt_day / 10;
-	rt->day2    = dt.dt_day % 10;
-	rt->month1  = dt.dt_mon / 10;
-	rt->month2  = dt.dt_mon % 10;
-	rt->year1   = (dt.dt_year / 10) % 10;
-	rt->year2   = dt.dt_year % 10;
+	rt->second1 = dt->dt_sec / 10;
+	rt->second2 = dt->dt_sec % 10;
+	rt->minute1 = dt->dt_min / 10;
+	rt->minute2 = dt->dt_min % 10;
+	rt->hour1   = dt->dt_hour / 10;
+	rt->hour2   = dt->dt_hour % 10;
+	rt->weekday = dt->dt_wday;
+	rt->day1    = dt->dt_day / 10;
+	rt->day2    = dt->dt_day % 10;
+	rt->month1  = dt->dt_mon / 10;
+	rt->month2  = dt->dt_mon % 10;
+	rt->year1   = (dt->dt_year / 10) % 10;
+	rt->year2   = dt->dt_year % 10;
 	rt->control1 = A3CONTROL1_HOLD_CLOCK | 1;	/* mode 1 registers */
-	rt->leapyear = dt.dt_year; 		/* XXX implicit % 4 */
+	rt->leapyear = dt->dt_year; 		/* XXX implicit % 4 */
 	rt->control1 = A3CONTROL1_FREE_CLOCK;		/* implies mode 1 */
 
 	return (0);

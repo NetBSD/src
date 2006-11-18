@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.13 2006/07/23 22:06:06 ad Exp $ */
+/* $NetBSD: sbjcn.c,v 1.13.4.1 2006/11/18 21:29:25 ad Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.13 2006/07/23 22:06:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.13.4.1 2006/11/18 21:29:25 ad Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -519,10 +519,7 @@ sbjcnopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = ch->ch_tty;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -721,8 +718,8 @@ sbjcnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		ch->ch_swflags = *(int *)data;

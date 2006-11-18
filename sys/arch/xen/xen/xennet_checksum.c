@@ -1,4 +1,4 @@
-/*	$NetBSD: xennet_checksum.c,v 1.1 2006/07/12 15:02:15 yamt Exp $	*/
+/*	$NetBSD: xennet_checksum.c,v 1.1.8.1 2006/11/18 21:29:39 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.1 2006/07/12 15:02:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.1.8.1 2006/11/18 21:29:39 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -119,7 +119,6 @@ xennet_checksum_fill(struct mbuf **mp)
 
 	iph = m_extract(m, ehlen, sizeof(*iph), &iph_store);
 	if (iph == NULL) {
-		printf("iph\n");
 		return EINVAL;
 	}
 	nxt = iph->ip_p;

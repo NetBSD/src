@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.6 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.6.20.1 2006/11/18 21:29:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -49,6 +49,8 @@ typedef struct _PhysMem {
 
 #ifdef _KERNEL
 
+#include <arm/bootconfig.h>
+
 #define DRAM_BLOCKS	1
 
 typedef struct _BootConfig {
@@ -59,16 +61,6 @@ typedef struct _BootConfig {
 
 extern BootConfig bootconfig;
 
-#define BOOTOPT_TYPE_BOOLEAN		0
-#define BOOTOPT_TYPE_STRING		1
-#define BOOTOPT_TYPE_INT		2
-#define BOOTOPT_TYPE_BININT		3
-#define BOOTOPT_TYPE_HEXINT		4
-#define BOOTOPT_TYPE_MASK		7
-
-int get_bootconf_option(char *, const char *, int, void *);
-
-extern char *boot_args;
 extern char boot_file[];
 #endif	/* _KERNEL */
 

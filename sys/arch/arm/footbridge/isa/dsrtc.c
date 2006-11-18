@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.8 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.8.20.1 2006/11/18 21:29:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.8 2005/12/11 12:16:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.8.20.1 2006/11/18 21:29:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,20 +60,20 @@ struct dsrtc_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-void dsrtcattach __P((struct device *parent, struct device *self, void *aux));
-int dsrtcmatch __P((struct device *parent, struct cfdata *cf, void *aux));
-int ds1687_read __P((struct dsrtc_softc *sc, int addr));
-void ds1687_write __P((struct dsrtc_softc *sc, int addr, int data));
-int ds1687_ram_read __P((struct dsrtc_softc *sc, int addr));
-void ds1687_ram_write __P((struct dsrtc_softc *sc, int addr, int data));
-static void ds1687_bank_select __P((struct dsrtc_softc *, int));
-static int dsrtc_write __P((void *, rtc_t *));
-static int dsrtc_read __P((void *, rtc_t *));
+void dsrtcattach(struct device *parent, struct device *self, void *aux);
+int dsrtcmatch(struct device *parent, struct cfdata *cf, void *aux);
+int ds1687_read(struct dsrtc_softc *sc, int addr);
+void ds1687_write(struct dsrtc_softc *sc, int addr, int data);
+#if 0
+int ds1687_ram_read(struct dsrtc_softc *sc, int addr);
+void ds1687_ram_write(struct dsrtc_softc *sc, int addr, int data);
+#endif
+static void ds1687_bank_select(struct dsrtc_softc *, int);
+static int dsrtc_write(void *, rtc_t *);
+static int dsrtc_read(void *, rtc_t *);
 
 int
-ds1687_read(sc, addr)
-	struct dsrtc_softc *sc;
-	int addr;
+ds1687_read(struct dsrtc_softc *sc, int addr)
 {
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_ADDR_REG, addr);
@@ -81,10 +81,7 @@ ds1687_read(sc, addr)
 }
 
 void
-ds1687_write(sc, addr, data)
-	struct dsrtc_softc *sc;
-	int addr;
-	int data;
+ds1687_write(struct dsrtc_softc *sc, int addr, int data)
 {
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_ADDR_REG, addr);
@@ -92,9 +89,7 @@ ds1687_write(sc, addr, data)
 }
 
 static void
-ds1687_bank_select(sc, bank)
-	struct dsrtc_softc *sc;
-	int bank;
+ds1687_bank_select(struct dsrtc_softc *sc, int bank)
 {
 	int data;
 
@@ -108,9 +103,7 @@ ds1687_bank_select(sc, bank)
 #if 0
 /* Nothing uses these yet */
 int
-ds1687_ram_read(sc, addr)
-	struct dsrtc_softc *sc;
-	int addr;
+ds1687_ram_read(struct dsrtc_softc *sc, int addr)
 {
 	if (addr < RTC_PC_RAM_SIZE)
 		return(ds1687_read(sc, RTC_PC_RAM_START + addr));
@@ -133,10 +126,7 @@ ds1687_ram_read(sc, addr)
 }
 
 void
-ds1687_ram_write(sc, addr, val)
-	struct dsrtc_softc *sc;
-	int addr;
-	int val;
+ds1687_ram_write(struct dsrtc_softc *sc, int addr, int val)
 {
 	if (addr < RTC_PC_RAM_SIZE)
 		return(ds1687_write(sc, RTC_PC_RAM_START + addr, val));
@@ -156,9 +146,7 @@ ds1687_ram_write(sc, addr, val)
 #endif
 
 static int
-dsrtc_write(arg, rtc)
-	void *arg;
-	rtc_t *rtc;
+dsrtc_write(void *arg, rtc_t *rtc)
 {
 	struct dsrtc_softc *sc = arg;
 
@@ -175,9 +163,7 @@ dsrtc_write(arg, rtc)
 }
 
 static int
-dsrtc_read(arg, rtc)
-	void *arg;
-	rtc_t *rtc;
+dsrtc_read(void *arg, rtc_t *rtc)
 {
 	struct dsrtc_softc *sc = arg;
 
@@ -207,10 +193,7 @@ CFATTACH_DECL(ds1687rtc, sizeof(struct dsrtc_softc),
  */
 
 int
-dsrtcmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+dsrtcmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -235,10 +218,7 @@ dsrtcmatch(parent, cf, aux)
  */
 
 void
-dsrtcattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+dsrtcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct dsrtc_softc *sc = (struct dsrtc_softc *)self;
 	struct isa_attach_args *ia = aux;

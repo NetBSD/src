@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.17 2006/06/27 10:56:16 peter Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.17.4.1 2006/11/18 21:34:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,9 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.17 2006/06/27 10:56:16 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.17.4.1 2006/11/18 21:34:07 ad Exp $");
 
-#define BTNMGRDEBUG
+#ifdef _KERNEL_OPT
+#include "opt_btnmgr.h"
+#include "opt_wsdisplay_compat.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.17 2006/06/27 10:56:16 peter Exp $");
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
-#include "opt_wsdisplay_compat.h"
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
@@ -182,7 +184,8 @@ btnmgrmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-btnmgrattach(struct device *parent, struct device *self, void *aux)
+btnmgrattach(struct device *parent,
+	     struct device *self, void *aux)
 {
 	int id;
 	struct btnmgr_softc *sc = device_private(self);
@@ -277,7 +280,7 @@ btnmgr_wskbd_set_leds(void *scx, int leds)
 
 int
 btnmgr_wskbd_ioctl(void *scx, u_long cmd, caddr_t data, int flag,
-    struct lwp *l)
+		   struct lwp *l)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct btnmgr_softc *sc = scx;

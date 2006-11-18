@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.28 2006/08/31 23:14:38 freza Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.28.2.1 2006/11/18 21:29:29 ad Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.28 2006/08/31 23:14:38 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.28.2.1 2006/11/18 21:29:29 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -686,8 +686,6 @@ oea_startup(const char *model)
 			panic("startup: cannot allocate VM for msgbuf");
 		v = (caddr_t)minaddr;
 		for (i = 0; i < sz; i += PAGE_SIZE) {
-			printf("pmap_kenter_pa: 0x%08lx, 0x%08lx\n",
-				minaddr + i, msgbuf_paddr + i);
 			pmap_kenter_pa(minaddr + i, msgbuf_paddr + i,
 			    VM_PROT_READ|VM_PROT_WRITE);
 		}

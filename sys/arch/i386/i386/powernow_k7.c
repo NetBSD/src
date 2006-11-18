@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.17 2006/08/24 16:28:22 xtraeme Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.17.2.1 2006/11/18 21:29:19 ad Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.17 2006/08/24 16:28:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.17.2.1 2006/11/18 21:29:19 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,6 +101,19 @@ static int k7pnow_fid_to_mult[32] = {
 	150, 225, 160, 165, 170, 180, -1, -1
 };
 
+/*
+ * The following CPUs do not have same CPUID signature
+ * in the PST tables, but they have correct FID/VID values.
+ */
+static struct pnow_cpu_quirk {
+	uint32_t rcpusig;	/* Correct cpu signature */
+	uint32_t pcpusig;	/* PST cpu signature */
+} pnow_cpu_quirk[] = {
+	{ 0x6a0, 0x781 },	/* Reported by Eric Schnoebelen */
+	{ 0x6a0, 0x7a0 },	/* Reported by Nino Dehne */
+	{ 0, 0 }
+};
+
 static struct powernow_cpu_state *k7pnow_current_state;
 static unsigned int cur_freq, cpu_mhz;
 static int powernow_node_target, powernow_node_current;
@@ -108,13 +121,26 @@ static char *freq_names;
 static size_t freq_names_len;
 static uint8_t k7pnow_flag;
 
-/* Prototypes */
+static boolean_t pnow_cpu_quirk_check(uint32_t, uint32_t);
 int k7_powernow_setperf(unsigned int);
 int k7pnow_sysctl_helper(SYSCTLFN_PROTO);
 int k7pnow_decode_pst(struct powernow_cpu_state *, uint8_t *, int);
 int k7pnow_states(struct powernow_cpu_state *, uint32_t, unsigned int, unsigned int);
 
-/* Functions */
+static boolean_t
+pnow_cpu_quirk_check(uint32_t real_cpusig, uint32_t pst_cpusig)
+{
+	int j;
+
+	for (j = 0; pnow_cpu_quirk[j].rcpusig != 0; j++) {
+		if ((real_cpusig == pnow_cpu_quirk[j].rcpusig) &&
+		    (pst_cpusig == pnow_cpu_quirk[j].pcpusig))
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 int
 k7pnow_sysctl_helper(SYSCTLFN_ARGS)
 {
@@ -253,11 +279,13 @@ int
 k7pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
     unsigned int fid, unsigned int vid)
 {
-	int maxpst;
+	int j, maxpst;
 	struct powernow_psb_s *psb;
 	struct powernow_pst_s *pst;
 	uint8_t *p;
+	boolean_t cpusig_ok;
 
+	j = 0;
 	/*
 	 * Look in the 0xe0000 - 0x100000 physical address
 	 * range for the pst tables; 16 byte blocks
@@ -280,9 +308,24 @@ k7pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
 			for (maxpst = 0; maxpst < psb->n_pst; maxpst++) {
 				pst = (struct powernow_pst_s*) p;
 
-				if (cpusig == pst->signature && fid == pst->fid
-				    && vid == pst->vid) {
-					
+				/*
+				 * The model with cpuid 0x6a0 has a different
+				 * signature in the PST table. Accept to
+				 * report frequencies via a quirk table
+				 * and fid/vid match.
+				 */
+				DPRINTF(("%s: cpusig=0x%x pst->signature:0x%x\n",
+				    __func__, cpusig, pst->signature));
+
+				cpusig_ok = pnow_cpu_quirk_check(cpusig,
+						pst->signature);
+
+				if (((cpusig == pst->signature) &&
+				    (fid == pst->fid && vid == pst->vid)) ||
+				    ((cpusig_ok == TRUE) && 
+				    (fid == pst->fid && vid == pst->vid))) {
+					DPRINTF(("%s: pst->signature ok\n",
+					    __func__));
 					if (abs(cstate->fsb - pst->pll) > 5)
 						continue;
 					cstate->n_states = pst->n_states;
@@ -425,12 +468,10 @@ k7_powernow_init(void)
 
 	cur_freq = cstate->state_table[cstate->n_states-1].freq;
 
-	DPRINTF(("%s: cur_freq = %d\n", __func__, cur_freq));
-
-	aprint_normal("%s: AMD %s Technology\n", cpuname, techname);
-	aprint_normal("%s: available frequencies (Mhz): %s\n", cpuname,
-	    freq_names);
-	aprint_normal("%s: current frequency (Mhz): %d\n", cpuname, cur_freq);
+	aprint_normal("%s: AMD %s Technology %d (MHz)\n",
+	    cpuname, techname, cur_freq);
+	aprint_normal("%s: frequencies available (Mhz): %s\n",
+	    cpuname, freq_names);
 
 	return;
 

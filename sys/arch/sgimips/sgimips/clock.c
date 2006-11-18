@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 2006/09/05 01:38:59 rumble Exp $	*/
+/*	$NetBSD: clock.c,v 1.17.2.1 2006/11/18 21:29:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2006/09/05 01:38:59 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17.2.1 2006/11/18 21:29:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2006/09/05 01:38:59 rumble Exp $");
 #include <machine/sysconf.h>
 
 #include <mips/locore.h>
+#include <mips/mips3_clock.h>
 #include <dev/clock_subr.h>
 #include <dev/ic/i8253reg.h>
 
@@ -96,12 +97,9 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2006/09/05 01:38:59 rumble Exp $");
 
 u_int32_t next_clk_intr;
 u_int32_t missed_clk_intrs;
-unsigned long last_clk_intr;
 
 void mips1_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-unsigned long mips1_clkread(void);
-unsigned long mips3_clkread(void);
 
 /*
  * Machine-dependent clock routines.
@@ -129,20 +127,7 @@ cpu_initclocks()
 
 #if defined(MIPS3)
 	if (mach_type != MACH_SGI_IP12) {
-		next_clk_intr = mips3_cp0_count_read()
-		    + curcpu()->ci_cycles_per_hz;
-		mips3_cp0_compare_write(next_clk_intr);
-
-		/* number of microseconds between interrupts */
-		tick = 1000000 / hz;
-		tickfix = 1000000 - (hz * tick);
-		if (tickfix) {
-			int ftp;
-
-			ftp = min(ffs(tickfix), ffs(hz));
-			tickfix >>= (ftp - 1);
-			tickfixinterval = hz >> (ftp - 1);
-		}
+		mips3_initclocks();
 	}
 #endif /* MIPS3 */
 }
@@ -166,51 +151,16 @@ mips1_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 	}
 }
 
-unsigned long
-mips1_clkread()
-{
-
-	return 0;
-}
-
 #if defined(MIPS3)
 void
 mips3_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 		 u_int32_t ipending)
 {
-        u_int32_t newcnt;
 	struct clockframe cf;
-
-	last_clk_intr = mips3_cp0_count_read();
-
-	next_clk_intr += curcpu()->ci_cycles_per_hz;
-	mips3_cp0_compare_write(next_clk_intr);
-	newcnt = mips3_cp0_count_read();
-
-	/*
-	 * Missed one or more clock interrupts, so let's start
-	 * counting again from the current value.
-	 */
-	if ((next_clk_intr - newcnt) & 0x80000000) {
-		missed_clk_intrs++;
-
-		next_clk_intr = newcnt + curcpu()->ci_cycles_per_hz;
-		mips3_cp0_compare_write(next_clk_intr);
-	}
 
 	cf.pc = pc;
 	cf.sr = status;
-
-	hardclock(&cf);
+	mips3_clockintr(&cf);
 }
 
-unsigned long
-mips3_clkread()
-{
-	uint32_t res, count;
-
-	count = mips3_cp0_count_read() - last_clk_intr;
-	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
-	return (res);
-}
 #endif /* MIPS3 */

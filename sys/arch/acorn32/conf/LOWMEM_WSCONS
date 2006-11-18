@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.45 2006/08/26 20:26:43 christos Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.45.2.1 2006/11/18 21:28:59 ad Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -84,6 +84,7 @@ options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
+options 	COMPAT_15	# NetBSD 1.5 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.
 options 	COMPAT_13	# NetBSD 1.3 compatibility.
 #options 	COMPAT_12	# NetBSD 1.2 compatibility.
@@ -231,8 +232,8 @@ audio*		at vidcaudio0
 # Podule bus device
 #podulebus0	at root
 
-#asc*	at podulebus?			# Acorn SCSI card
-#scsibus* at asc?
+#sec*	at podulebus?			# Acorn SCSI card
+#scsibus* at sec?
 
 #cosc*	at podulebus?			# MCS Connect32 SCSI II card
 #scsibus* at cosc?
@@ -268,7 +269,7 @@ audio*		at vidcaudio0
 #amps*	at podulebus?			# Atomwide Multi-Port Serial card
 #com*	at amps?
 
-#ie*	at podulebus?			# Ether1 podules
+#ei*	at podulebus?			# Ether1 podules
 #ea*	at podulebus?			# Ether3 podules
 #eb0	at podulebus?			# EtherB network slot cards
 #ne*	at podulebus?			# NE2000 clone cards

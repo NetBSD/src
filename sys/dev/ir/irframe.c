@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.34 2006/08/30 19:16:03 christos Exp $	*/
+/*	$NetBSD: irframe.c,v 1.34.2.1 2006/11/18 21:34:20 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.34 2006/08/30 19:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.34.2.1 2006/11/18 21:34:20 ad Exp $");
 
 #include "irframe.h"
 
@@ -99,7 +99,8 @@ extern struct cfdriver irframe_cd;
 #define IRFRAMEUNIT(dev) (minor(dev))
 
 int
-irframe_match(struct device *parent, struct cfdata *match, void *aux)
+irframe_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct ir_attach_args *ia = aux;
 
@@ -338,7 +339,8 @@ irf_reset_params(struct irframe_softc *sc)
 }
 
 int
-irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+    struct lwp *l)
 {
 	struct irframe_softc *sc;
 	void *vaddr = addr;

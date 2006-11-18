@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.187 2006/08/26 20:18:36 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.187.2.1 2006/11/18 21:29:25 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.187 2006/08/26 20:18:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.187.2.1 2006/11/18 21:29:25 ad Exp $");
 
 #include "opt_cputype.h"
 
@@ -1317,8 +1317,10 @@ cpu_dumpconf(void)
 	if (dumpdev == NODEV)
 		goto bad;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		goto bad;
+	}
 	if (bdev->d_psize == NULL)
 		goto bad;
 	nblks = (*bdev->d_psize)(dumpdev);
@@ -1767,7 +1769,7 @@ cpu_setmcontext(l, mcp, flags)
 	unsigned int flags;
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 
 	/* Restore register context, if any. */
 	if (flags & _UC_CPU) {

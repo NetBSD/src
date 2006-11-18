@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.13 2006/01/21 02:09:06 uwe Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.13.18.1 2006/11/18 21:29:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Internet Initiative Japan Inc.
@@ -29,72 +29,75 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2006/01/21 02:09:06 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13.18.1 2006/11/18 21:29:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <machine/db_machdep.h>
 
+#include <ddb/db_command.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
-static void	get_opcode(uint16_t *, char *);
-static void	get_ascii(unsigned char *, char *);
-static void	f_02(uint16_t *, char *);
-static void	f_03(uint16_t *, char *);
-static void	f_04(uint16_t *, char *);
-static void	f_08(uint16_t *, char *);
-static void	f_09(uint16_t *, char *);
-static void	f_0a(uint16_t *, char *);
-static void	f_0b(uint16_t *, char *);
-static void	f_0c(uint16_t *, char *);
-static void	f_10(uint16_t *, char *);
-static void	f_20(uint16_t *, char *);
-static void	f_24(uint16_t *, char *);
-static void	f_28(uint16_t *, char *);
-static void	f_2c(uint16_t *, char *);
-static void	f_30(uint16_t *, char *);
-static void	f_34(uint16_t *, char *);
-static void	f_38(uint16_t *, char *);
-static void	f_3c(uint16_t *, char *);
-static void	f_40(uint16_t *, char *);
-static void	f_41(uint16_t *, char *);
-static void	f_42(uint16_t *, char *);
-static void	f_43(uint16_t *, char *);
-static void	f_44(uint16_t *, char *);
-static void	f_45(uint16_t *, char *);
-static void	f_46(uint16_t *, char *);
-static void	f_47(uint16_t *, char *);
-static void	f_48(uint16_t *, char *);
-static void	f_49(uint16_t *, char *);
-static void	f_4a(uint16_t *, char *);
-static void	f_4b(uint16_t *, char *);
-static void	f_4c(uint16_t *, char *);
-static void	f_4d(uint16_t *, char *);
-static void	f_4e(uint16_t *, char *);
-static void	f_4f(uint16_t *, char *);
-static void	f_50(uint16_t *, char *);
-static void	f_60(uint16_t *, char *);
-static void	f_64(uint16_t *, char *);
-static void	f_68(uint16_t *, char *);
-static void	f_6c(uint16_t *, char *);
-static void	f_70(uint16_t *, char *);
-static void	f_80(uint16_t *, char *);
-static void	f_90(uint16_t *, char *);
-static void	f_a0(uint16_t *, char *);
-static void	f_b0(uint16_t *, char *);
-static void	f_c0(uint16_t *, char *);
-static void	f_d0(uint16_t *, char *);
-static void	f_e0(uint16_t *, char *);
-static void	f_f0(uint16_t *, char *);
-static void	f_f4(uint16_t *, char *);
-static void	f_f8(uint16_t *, char *);
-static void	f_fc(uint16_t *, char *);
-static void	f_fd(uint16_t *, char *);
-static void	f_fe(uint16_t *, char *);
+static uint16_t	get_insn(const void *);
 
-typedef	void (*rasm_t)(uint16_t *, char *);
+static void	get_opcode(const uint16_t *, char *);
+
+static void	f_02(const uint16_t *, char *);
+static void	f_03(const uint16_t *, char *);
+static void	f_04(const uint16_t *, char *);
+static void	f_08(const uint16_t *, char *);
+static void	f_09(const uint16_t *, char *);
+static void	f_0a(const uint16_t *, char *);
+static void	f_0b(const uint16_t *, char *);
+static void	f_0c(const uint16_t *, char *);
+static void	f_10(const uint16_t *, char *);
+static void	f_20(const uint16_t *, char *);
+static void	f_24(const uint16_t *, char *);
+static void	f_28(const uint16_t *, char *);
+static void	f_2c(const uint16_t *, char *);
+static void	f_30(const uint16_t *, char *);
+static void	f_34(const uint16_t *, char *);
+static void	f_38(const uint16_t *, char *);
+static void	f_3c(const uint16_t *, char *);
+static void	f_40(const uint16_t *, char *);
+static void	f_41(const uint16_t *, char *);
+static void	f_42(const uint16_t *, char *);
+static void	f_43(const uint16_t *, char *);
+static void	f_44(const uint16_t *, char *);
+static void	f_45(const uint16_t *, char *);
+static void	f_46(const uint16_t *, char *);
+static void	f_47(const uint16_t *, char *);
+static void	f_48(const uint16_t *, char *);
+static void	f_49(const uint16_t *, char *);
+static void	f_4a(const uint16_t *, char *);
+static void	f_4b(const uint16_t *, char *);
+static void	f_4c(const uint16_t *, char *);
+static void	f_4d(const uint16_t *, char *);
+static void	f_4e(const uint16_t *, char *);
+static void	f_4f(const uint16_t *, char *);
+static void	f_50(const uint16_t *, char *);
+static void	f_60(const uint16_t *, char *);
+static void	f_64(const uint16_t *, char *);
+static void	f_68(const uint16_t *, char *);
+static void	f_6c(const uint16_t *, char *);
+static void	f_70(const uint16_t *, char *);
+static void	f_80(const uint16_t *, char *);
+static void	f_90(const uint16_t *, char *);
+static void	f_a0(const uint16_t *, char *);
+static void	f_b0(const uint16_t *, char *);
+static void	f_c0(const uint16_t *, char *);
+static void	f_d0(const uint16_t *, char *);
+static void	f_e0(const uint16_t *, char *);
+static void	f_f0(const uint16_t *, char *);
+static void	f_f4(const uint16_t *, char *);
+static void	f_f8(const uint16_t *, char *);
+static void	f_fc(const uint16_t *, char *);
+static void	f_fd(const uint16_t *, char *);
+static void	f_fe(const uint16_t *, char *);
+
+typedef	void (*rasm_t)(const uint16_t *, char *);
 static	rasm_t	f[16][16] = {
 	{ /* [0][0-7] */	NULL, NULL, f_02, f_03, f_04, f_04, f_04, f_04,
 	  /* [0][8-f] */	f_08, f_09, f_0a, f_0b, f_0c, f_0c, f_0c, f_0c },
@@ -133,52 +136,69 @@ static	rasm_t	f[16][16] = {
 db_addr_t
 db_disasm(db_addr_t loc, boolean_t altfmt)
 {
-	char line[40], ascii[4];
-	void *pc = (void *)loc;
+	const void *pc = (void *)loc;
+	char line[40];
 
 	get_opcode(pc, line);
-	if (altfmt) {
-		get_ascii(pc, ascii);
-		db_printf("%-32s ! %s\n", line, ascii);
-	} else
-		db_printf("%s\n", line);
+	db_printf("%s\n", line);
 
 	return (loc + 2);
 }
 
-static void
-get_ascii(unsigned char *cp, char *str)
-{
 
-	*str++ = (0x20 <= *cp && *cp < 0x7f) ? *cp : '.';
-	cp++;
-	*str++ = (0x20 <= *cp && *cp < 0x7f) ? *cp : '.';
-	*str = '\0';
+static uint16_t
+get_insn(const void *pc)
+{
+	vaddr_t addr = (uintptr_t)pc;
+	uint16_t insn;
+	int retval;
+
+	if (addr & 1)
+		db_error("Instruction address not aligned\n");
+
+	if (addr >= SH3_P4SEG_BASE) /* p4: on-chip i/o registers */
+		db_error("Instruction address in P4 area\n");
+
+	if ((int)addr >= 0) {	/* p0: user-space */
+		retval = fusword(pc);
+		if (retval < 0)
+			db_error("Instruction fetch fault (user)\n");
+		insn = (uint16_t)retval;
+	}
+	else {			/* kernel p1/p2/p3 */
+		retval = kcopy(pc, &insn, sizeof(insn));
+		if (retval != 0)
+			db_error("Instruction fetch fault (kernel)\n");
+	}
+
+	return insn;
 }
 
 static void
-get_opcode(uint16_t *sp, char *buf)
+get_opcode(const uint16_t *pc, char *buf)
 {
-	int	n0, n3;
+	uint16_t insn = get_insn(pc);
+	int n0, n3;
 
 	strcpy(buf, "????");
 
-	n0 = (*sp & 0xf000) >> 12;
-	n3 = (*sp & 0x000f);
+	n0 = (insn & 0xf000) >> 12;
+	n3 = (insn & 0x000f);
 
 	if (f[n0][n3] != NULL) {
-		(*f[n0][n3])(sp, buf);
+		(*f[n0][n3])(pc, buf);
 	}
 }
 
 static void
-f_02(uint16_t *code, char *buf)
+f_02(const uint16_t *pc, char *buf)
 {
-	int	rn, type, md;
+	uint16_t insn = get_insn(pc);
+	int rn, type, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -221,13 +241,14 @@ f_02(uint16_t *code, char *buf)
 }
 
 static void
-f_03(uint16_t *code, char *buf)
+f_03(const uint16_t *pc, char *buf)
 {
-	int	rn, type, md;
+	uint16_t insn = get_insn(pc);
+	int rn, type, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -254,13 +275,14 @@ f_03(uint16_t *code, char *buf)
 
 
 static void
-f_04(uint16_t *code, char *buf)
+f_04(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -282,13 +304,14 @@ f_04(uint16_t *code, char *buf)
 }
 
 static void
-f_08(uint16_t *code, char *buf)
+f_08(const uint16_t *pc, char *buf)
 {
-	int	n1, type, md;
+	uint16_t insn = get_insn(pc);
+	int n1, type, md;
 
-	n1   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	n1   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	if (n1 != 0)
 		return;
@@ -329,12 +352,13 @@ f_08(uint16_t *code, char *buf)
 }
 
 static void
-f_09(uint16_t *code, char *buf)
+f_09(const uint16_t *pc, char *buf)
 {
-	int	rn, fx;
+	uint16_t insn = get_insn(pc);
+	int rn, fx;
 
-	rn = (*code & 0x0f00) >> 8;
-	fx = (*code & 0x00f0) >> 4;
+	rn = (insn & 0x0f00) >> 8;
+	fx = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
@@ -356,13 +380,14 @@ f_09(uint16_t *code, char *buf)
 }
 
 static void
-f_0a(uint16_t *code, char *buf)
+f_0a(const uint16_t *pc, char *buf)
 {
-	int	rn, type, md;
+	uint16_t insn = get_insn(pc);
+	int rn, type, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -396,15 +421,16 @@ f_0a(uint16_t *code, char *buf)
 }
 
 static void
-f_0b(uint16_t *code, char *buf)
+f_0b(const uint16_t *pc, char *buf)
 {
-	int	n1, fx;
+	uint16_t insn = get_insn(pc);
+	int n1, fx;
 
-	n1 = (*code & 0x0f00) >> 8;
+	n1 = (insn & 0x0f00) >> 8;
 	if (n1 != 0)
 		return;
 
-	fx = (*code & 0x00f0) >> 4;
+	fx = (insn & 0x00f0) >> 4;
 	switch (fx) {
 	case 0:
 		sprintf(buf, "rts");
@@ -421,13 +447,14 @@ f_0b(uint16_t *code, char *buf)
 }
 
 static void
-f_0c(uint16_t *code, char *buf)
+f_0c(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -449,26 +476,28 @@ f_0c(uint16_t *code, char *buf)
 }
 
 static void
-f_10(uint16_t *code, char *buf)
+f_10(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, disp;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, disp;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	disp = (*code & 0x000f);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	disp = (insn & 0x000f);
 	disp *= 4;
 
 	sprintf(buf, "mov.l   r%d, @(%d, r%d)", rm, disp, rn);
 }
 
 static void
-f_20(uint16_t *code, char *buf)
+f_20(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -487,13 +516,14 @@ f_20(uint16_t *code, char *buf)
 
 
 static void
-f_24(uint16_t *code, char *buf)
+f_24(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -515,13 +545,14 @@ f_24(uint16_t *code, char *buf)
 }
 
 static void
-f_28(uint16_t *code, char *buf)
+f_28(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -544,13 +575,14 @@ f_28(uint16_t *code, char *buf)
 
 
 static void
-f_2c(uint16_t *code, char *buf)
+f_2c(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -572,13 +604,14 @@ f_2c(uint16_t *code, char *buf)
 }
 
 static void
-f_30(uint16_t *code, char *buf)
+f_30(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -597,13 +630,14 @@ f_30(uint16_t *code, char *buf)
 
 
 static void
-f_34(uint16_t *code, char *buf)
+f_34(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -625,13 +659,14 @@ f_34(uint16_t *code, char *buf)
 }
 
 static void
-f_38(uint16_t *code, char *buf)
+f_38(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -650,13 +685,14 @@ f_38(uint16_t *code, char *buf)
 
 
 static void
-f_3c(uint16_t *code, char *buf)
+f_3c(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -679,12 +715,13 @@ f_3c(uint16_t *code, char *buf)
 
 
 static void
-f_40(uint16_t *code, char *buf)
+f_40(const uint16_t *pc, char *buf)
 {
-	int	rn, fx;
+	uint16_t insn = get_insn(pc);
+	int rn, fx;
 
-	rn   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
@@ -702,12 +739,13 @@ f_40(uint16_t *code, char *buf)
 }
 
 static void
-f_41(uint16_t *code, char *buf)
+f_41(const uint16_t *pc, char *buf)
 {
-	int	rn, fx;
+	uint16_t insn = get_insn(pc);
+	int rn, fx;
 
-	rn   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
@@ -726,13 +764,14 @@ f_41(uint16_t *code, char *buf)
 
 
 static void
-f_42(uint16_t *code, char *buf)
+f_42(const uint16_t *pc, char *buf)
 {
-	int	rn, type, md;
+	uint16_t insn = get_insn(pc);
+	int rn, type, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -766,13 +805,14 @@ f_42(uint16_t *code, char *buf)
 }
 
 static void
-f_43(uint16_t *code, char *buf)
+f_43(const uint16_t *pc, char *buf)
 {
-	int	rn, type, md;
+	uint16_t insn = get_insn(pc);
+	int rn, type, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -814,12 +854,13 @@ f_43(uint16_t *code, char *buf)
 }
 
 static void
-f_44(uint16_t *code, char *buf)
+f_44(const uint16_t *pc, char *buf)
 {
-	int	rn, fx;
+	uint16_t insn = get_insn(pc);
+	int rn, fx;
 
-	rn   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
@@ -833,12 +874,13 @@ f_44(uint16_t *code, char *buf)
 }
 
 static void
-f_45(uint16_t *code, char *buf)
+f_45(const uint16_t *pc, char *buf)
 {
-	int	rn, fx;
+	uint16_t insn = get_insn(pc);
+	int rn, fx;
 
-	rn   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
@@ -856,13 +898,14 @@ f_45(uint16_t *code, char *buf)
 }
 
 static void
-f_46(uint16_t *code, char *buf)
+f_46(const uint16_t *pc, char *buf)
 {
-	int	rm, type, md;
+	uint16_t insn = get_insn(pc);
+	int rm, type, md;
 
-	rm   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rm   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -896,13 +939,14 @@ f_46(uint16_t *code, char *buf)
 }
 
 static void
-f_47(uint16_t *code, char *buf)
+f_47(const uint16_t *pc, char *buf)
 {
-	int	rm, type, md;
+	uint16_t insn = get_insn(pc);
+	int rm, type, md;
 
-	rm   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rm   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -944,12 +988,13 @@ f_47(uint16_t *code, char *buf)
 }
 
 static void
-f_48(uint16_t *code, char *buf)
+f_48(const uint16_t *pc, char *buf)
 {
-	int	rn, fx;
+	uint16_t insn = get_insn(pc);
+	int rn, fx;
 
-	rn   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
@@ -967,12 +1012,13 @@ f_48(uint16_t *code, char *buf)
 }
 
 static void
-f_49(uint16_t *code, char *buf)
+f_49(const uint16_t *pc, char *buf)
 {
-	int	rn, fx;
+	uint16_t insn = get_insn(pc);
+	int rn, fx;
 
-	rn   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
@@ -990,13 +1036,14 @@ f_49(uint16_t *code, char *buf)
 }
 
 static void
-f_4a(uint16_t *code, char *buf)
+f_4a(const uint16_t *pc, char *buf)
 {
-	int	rm, type, md;
+	uint16_t insn = get_insn(pc);
+	int rm, type, md;
 
-	rm   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rm   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -1030,12 +1077,13 @@ f_4a(uint16_t *code, char *buf)
 }
 
 static void
-f_4b(uint16_t *code, char *buf)
+f_4b(const uint16_t *pc, char *buf)
 {
-	int	rm, fx;
+	uint16_t insn = get_insn(pc);
+	int rm, fx;
 
-	rm   = (*code & 0x0f00) >> 8;
-	fx   = (*code & 0x00f0) >> 4;
+	rm   = (insn & 0x0f00) >> 8;
+	fx   = (insn & 0x00f0) >> 4;
 
 	switch (fx) {
 	case 0:
@@ -1053,33 +1101,36 @@ f_4b(uint16_t *code, char *buf)
 }
 
 static void
-f_4c(uint16_t *code, char *buf)
+f_4c(const uint16_t *pc, char *buf)
 {
-	int	rn, rm;
+	uint16_t insn = get_insn(pc);
+	int rn, rm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
 	sprintf(buf, "shad    r%d, r%d", rm, rn);
 }
 
 static void
-f_4d(uint16_t *code, char *buf)
+f_4d(const uint16_t *pc, char *buf)
 {
-	int	rn, rm;
+	uint16_t insn = get_insn(pc);
+	int rn, rm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
 	sprintf(buf, "shld    r%d, r%d", rm, rn);
 }
 
 static void
-f_4e(uint16_t *code, char *buf)
+f_4e(const uint16_t *pc, char *buf)
 {
-	int	rm, type, md;
+	uint16_t insn = get_insn(pc);
+	int rm, type, md;
 
-	rm   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rm   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -1121,36 +1172,39 @@ f_4e(uint16_t *code, char *buf)
 }
 
 static void
-f_4f(uint16_t *code, char *buf)
+f_4f(const uint16_t *pc, char *buf)
 {
-	int	rn, rm;
+	uint16_t insn = get_insn(pc);
+	int rn, rm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
 	sprintf(buf, "mac.w   @r%d+, @r%d+", rm, rn);
 }
 
 static void
-f_50(uint16_t *code, char *buf)
+f_50(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, disp;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, disp;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	disp = (*code & 0x000f);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	disp = (insn & 0x000f);
 	disp *= 4;
 
 	sprintf(buf, "mov.l   @(%d, r%d), r%d", disp, rm, rn);
 }
 
 static void
-f_60(uint16_t *code, char *buf)
+f_60(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -1172,13 +1226,14 @@ f_60(uint16_t *code, char *buf)
 }
 
 static void
-f_64(uint16_t *code, char *buf)
+f_64(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -1200,13 +1255,14 @@ f_64(uint16_t *code, char *buf)
 }
 
 static void
-f_68(uint16_t *code, char *buf)
+f_68(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -1228,13 +1284,14 @@ f_68(uint16_t *code, char *buf)
 }
 
 static void
-f_6c(uint16_t *code, char *buf)
+f_6c(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -1256,28 +1313,30 @@ f_6c(uint16_t *code, char *buf)
 }
 
 static void
-f_70(uint16_t *code, char *buf)
+f_70(const uint16_t *pc, char *buf)
 {
-	int	rn, imm;
+	uint16_t insn = get_insn(pc);
+	int rn, imm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	imm  = (int) ((char) (*code & 0x00ff));
+	rn   = (insn & 0x0f00) >> 8;
+	imm  = (int) ((char) (insn & 0x00ff));
 
 	sprintf(buf, "add     #0x%x, r%d", imm, rn);
 }
 
 static void
-f_80(uint16_t *code, char *buf)
+f_80(const uint16_t *pc, char *buf)
 {
-	int	type, md, rn, disp;
+	uint16_t insn = get_insn(pc);
+	int type, md, rn, disp;
 
-	type = (*code & 0x0c00) >> 10;
-	md   = (*code & 0x0300) >> 8;
+	type = (insn & 0x0c00) >> 10;
+	md   = (insn & 0x0300) >> 8;
 
 	switch (type) {
 	case 0:
-		rn   = (*code & 0x00f0) >> 4;
-		disp = (*code & 0x000f);
+		rn   = (insn & 0x00f0) >> 4;
+		disp = (insn & 0x000f);
 
 		switch (md) {
 		case 0:
@@ -1292,8 +1351,8 @@ f_80(uint16_t *code, char *buf)
 		break;
 
 	case 1:
-		rn   = (*code & 0x00f0) >> 4;
-		disp = (*code & 0x000f);
+		rn   = (insn & 0x00f0) >> 4;
+		disp = (insn & 0x000f);
 
 		switch (md) {
 		case 0:
@@ -1308,7 +1367,7 @@ f_80(uint16_t *code, char *buf)
 		break;
 
 	case 2:
-		disp = (*code & 0x00ff);
+		disp = (insn & 0x00ff);
 
 		switch (md) {
 		case 0:
@@ -1330,7 +1389,7 @@ f_80(uint16_t *code, char *buf)
 		break;
 
 	case 3:
-		disp = (int) ((char) (*code & 0x00ff));
+		disp = (int) ((char) (insn & 0x00ff));
 		disp *= 2;
 
 		switch (md) {
@@ -1347,23 +1406,25 @@ f_80(uint16_t *code, char *buf)
 }
 
 static void
-f_90(uint16_t *code, char *buf)
+f_90(const uint16_t *pc, char *buf)
 {
-	int	rn, disp;
+	uint16_t insn = get_insn(pc);
+	int rn, disp;
 
-	rn   = (*code & 0x0f00) >> 8;
-	disp = (*code & 0x00ff);
+	rn   = (insn & 0x0f00) >> 8;
+	disp = (insn & 0x00ff);
 	disp *= 2;
 
 	sprintf(buf, "mov.w   @(%d, pc), r%d", disp, rn);
 }
 
 static void
-f_a0(uint16_t *code, char *buf)
+f_a0(const uint16_t *pc, char *buf)
 {
-	int	disp;
+	uint16_t insn = get_insn(pc);
+	int disp;
 
-	disp = (*code & 0x0fff);
+	disp = (insn & 0x0fff);
 	if (disp & 0x0800)	/* negative displacement? */
 		disp |= 0xfffff000; /* sign extend */
 	disp *= 2;
@@ -1372,11 +1433,12 @@ f_a0(uint16_t *code, char *buf)
 }
 
 static void
-f_b0(uint16_t *code, char *buf)
+f_b0(const uint16_t *pc, char *buf)
 {
-	int	disp;
+	uint16_t insn = get_insn(pc);
+	int disp;
 
-	disp = (*code & 0x0fff);
+	disp = (insn & 0x0fff);
 	if (disp & 0x0800)	/* negative displacement? */
 		disp |= 0xfffff000; /* sign extend */
 	disp *= 2;
@@ -1385,13 +1447,14 @@ f_b0(uint16_t *code, char *buf)
 }
 
 static void
-f_c0(uint16_t *code, char *buf)
+f_c0(const uint16_t *pc, char *buf)
 {
-	int	type, md, imm;
+	uint16_t insn = get_insn(pc);
+	int type, md, imm;
 
-	type = (*code & 0x0c00) >> 10;
-	md   = (*code & 0x0300) >> 8;
-	imm  = (*code & 0x00ff);
+	type = (insn & 0x0c00) >> 10;
+	md   = (insn & 0x0300) >> 8;
+	imm  = (insn & 0x00ff);
 
 	switch (type) {
 	case 0:
@@ -1483,36 +1546,39 @@ f_c0(uint16_t *code, char *buf)
 
 
 static void
-f_d0(uint16_t *code, char *buf)
+f_d0(const uint16_t *pc, char *buf)
 {
-	int	rn, disp;
+	uint16_t insn = get_insn(pc);
+	int rn, disp;
 
-	rn   = (*code & 0x0f00) >> 8;
-	disp = (*code & 0x00ff);
+	rn   = (insn & 0x0f00) >> 8;
+	disp = (insn & 0x00ff);
 	disp *= 4;
 
 	sprintf(buf, "mov.l   @(%d, pc), r%d", disp, rn);
 }
 
 static void
-f_e0(uint16_t *code, char *buf)
+f_e0(const uint16_t *pc, char *buf)
 {
-	int	rn, imm;
+	uint16_t insn = get_insn(pc);
+	int rn, imm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	imm  = (int) ((char) (*code & 0x00ff));
+	rn   = (insn & 0x0f00) >> 8;
+	imm  = (int) ((char) (insn & 0x00ff));
 
 	sprintf(buf, "mov     #0x%x, r%d", imm, rn);
 }
 
 static void
-f_f0(uint16_t *code, char *buf)
+f_f0(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -1534,13 +1600,14 @@ f_f0(uint16_t *code, char *buf)
 }
 
 static void
-f_f4(uint16_t *code, char *buf)
+f_f4(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -1562,13 +1629,14 @@ f_f4(uint16_t *code, char *buf)
 }
 
 static void
-f_f8(uint16_t *code, char *buf)
+f_f8(const uint16_t *pc, char *buf)
 {
-	int	rn, rm, md;
+	uint16_t insn = get_insn(pc);
+	int rn, rm, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
-	md   = (*code & 0x0003);
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
+	md   = (insn & 0x0003);
 
 	switch (md) {
 	case 0:
@@ -1590,24 +1658,26 @@ f_f8(uint16_t *code, char *buf)
 }
 
 static void
-f_fc(uint16_t *code, char *buf)
+f_fc(const uint16_t *pc, char *buf)
 {
-	int	rn, rm;
+	uint16_t insn = get_insn(pc);
+	int rn, rm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
 
 	sprintf(buf, "fmov    fr%d, fr%d", rm, rn);
 }
 
 static void
-f_fd(uint16_t *code, char *buf)
+f_fd(const uint16_t *pc, char *buf)
 {
-	int	rn, type, md;
+	uint16_t insn = get_insn(pc);
+	int rn, type, md;
 
-	rn   = (*code & 0x0f00) >> 8;
-	type = (*code & 0x00c0) >> 6;
-	md   = (*code & 0x0030) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	type = (insn & 0x00c0) >> 6;
+	md   = (insn & 0x0030) >> 4;
 
 	switch (type) {
 	case 0:
@@ -1658,12 +1728,13 @@ f_fd(uint16_t *code, char *buf)
 }
 
 static void
-f_fe(uint16_t *code, char *buf)
+f_fe(const uint16_t *pc, char *buf)
 {
-	int	rn, rm;
+	uint16_t insn = get_insn(pc);
+	int rn, rm;
 
-	rn   = (*code & 0x0f00) >> 8;
-	rm   = (*code & 0x00f0) >> 4;
+	rn   = (insn & 0x0f00) >> 8;
+	rm   = (insn & 0x00f0) >> 4;
 
 	sprintf(buf, "fmac    fr0, fr%d, fr%d", rm, rn);
 }

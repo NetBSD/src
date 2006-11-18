@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.sandpoint,v 1.30 2006/05/09 19:04:33 he Exp $
+# $NetBSD: GENERIC.sandpoint,v 1.30.8.1 2006/11/18 21:29:30 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.30 $"
+#ident 		"GENERIC-$Revision: 1.30.8.1 $"
 
 maxusers	32
 
@@ -52,6 +52,7 @@ options 	COMPAT_10
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -141,6 +142,8 @@ pchb*	at pci? dev ? function ?	# PCI host bridge
 pcib*	at pci? dev ? function ?	# Winbond 83c553 PCI-ISA bridges
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
+
+mcclock0 at isa? port 0x70		# time-of-day clock
 
 #pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 #acardide* at pci? dev ? function ?	# Acard IDE controllers

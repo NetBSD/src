@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 2006/09/07 16:00:29 sanjayl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40.2.1 2006/11/18 21:29:29 ad Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2006/09/07 16:00:29 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40.2.1 2006/11/18 21:29:29 ad Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -212,11 +212,15 @@ STATIC void pmap_pool_ufree(struct pool *, void *);
 STATIC void pmap_pool_mfree(struct pool *, void *);
 
 static struct pool_allocator pmap_pool_mallocator = {
-	pmap_pool_malloc, pmap_pool_mfree, 0,
+	.pa_alloc = pmap_pool_malloc,
+	.pa_free = pmap_pool_mfree,
+	.pa_pagesz = 0,
 };
 
 static struct pool_allocator pmap_pool_uallocator = {
-	pmap_pool_ualloc, pmap_pool_ufree, 0,
+	.pa_alloc = pmap_pool_ualloc,
+	.pa_free = pmap_pool_ufree,
+	.pa_pagesz = 0,
 };
 
 #if defined(DEBUG) || defined(PMAPCHECK) || defined(DDB)
@@ -3466,4 +3470,32 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 
 	pool_init(&pmap_pool, sizeof(struct pmap),
 	    sizeof(void *), 0, 0, "pmap_pl", &pmap_pool_uallocator);
+
+#if defined(PMAP_NEED_MAPKERNEL)
+	{
+		extern int etext[], kernel_text[];
+		vaddr_t va, va_etext = (paddr_t) etext;
+		paddr_t pa;
+		register_t sr;
+
+		sr = KERNELN_SEGMENT(kernelstart >> ADDR_SR_SHFT)
+		    |SR_SUKEY|SR_PRKEY;
+
+		va = (vaddr_t) kernel_text;
+
+		for (pa = kernelstart; va < va_etext;
+		     pa += PAGE_SIZE, va += PAGE_SIZE)
+			pmap_enter(pmap_kernel(), va, pa,
+			    VM_PROT_READ|VM_PROT_EXECUTE, 0);
+
+		for (; pa < kernelend;
+		     pa += PAGE_SIZE, va += PAGE_SIZE)
+			pmap_enter(pmap_kernel(), va, pa,
+			    VM_PROT_READ|VM_PROT_WRITE, 0);
+
+		pmap_kernel()->pm_sr[kernelstart >> ADDR_SR_SHFT] = sr;
+		__asm volatile ("mtsrin %0,%1"
+ 			      :: "r"(sr), "r"(kernelstart));
+	}
+#endif
 }

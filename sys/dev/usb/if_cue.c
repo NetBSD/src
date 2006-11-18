@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.45 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.45.2.1 2006/11/18 21:34:50 ad Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.45 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.45.2.1 2006/11/18 21:34:50 ad Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -859,7 +859,8 @@ done:
  * the list buffers.
  */
 Static void
-cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct cue_chain	*c = priv;
 	struct cue_softc	*sc = c->cue_sc;
@@ -916,7 +917,7 @@ cue_tick(void *xsc)
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __func__));
 
 	/* Perform statistics update in process context. */
-	usb_add_task(sc->cue_udev, &sc->cue_tick_task);
+	usb_add_task(sc->cue_udev, &sc->cue_tick_task, USB_TASKQ_DRIVER);
 }
 
 Static void
@@ -975,7 +976,8 @@ cue_send(struct cue_softc *sc, struct mbuf *m, int idx)
 		printf("%s: cue_send error=%s\n", USBDEVNAME(sc->cue_dev),
 		       usbd_errstr(err));
 		/* Stop the interface from process context. */
-		usb_add_task(sc->cue_udev, &sc->cue_stop_task);
+		usb_add_task(sc->cue_udev, &sc->cue_stop_task,
+		    USB_TASKQ_DRIVER);
 		return (EIO);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.17 2005/12/11 12:17:41 christos Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.17.20.1 2006/11/18 21:29:18 ad Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.17 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.17.20.1 2006/11/18 21:29:18 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -163,10 +163,13 @@ void
 mach_host_basic_info(info)
     struct mach_host_basic_info *info;
 {
+	int active, inactive;
+
 	/* XXX fill this  accurately */
 	info->max_cpus = 1;
 	info->avail_cpus = 1;
-	info->memory_size = uvmexp.active + uvmexp.inactive;
+	uvm_estimatepageable(&active, &inactive);
+	info->memory_size = active + inactive;
 #undef cpu_type
 	info->cpu_type = MACHO_CPU_TYPE_I386;
 	switch (cpu_info_primary.ci_cpu_class) {
@@ -251,22 +254,24 @@ mach_create_thread_child(arg)
 }
 
 int
-mach_thread_get_state_machdep(struct lwp *l, int flavor, void *state,
-    int *size)
+mach_thread_get_state_machdep(struct lwp *l, int flavor,
+    void *state, int *size)
 {
 	printf("Unimplemented thread state flavor %d\n", flavor);
 	return EINVAL;
 }
 
 int
-mach_thread_set_state_machdep(struct lwp *l, int flavor, void *state)
+mach_thread_set_state_machdep(struct lwp *l, int flavor,
+    void *state)
 {
 	printf("Unimplemented thread state flavor %d\n", flavor);
 	return EINVAL;
 }
 
 int
-mach_vm_machine_attribute_machdep(struct lwp *l, vaddr_t v, size_t s, int *ip)
+mach_vm_machine_attribute_machdep(struct lwp *l, vaddr_t v,
+    size_t s, int *ip)
 {
 	return 0;
 }

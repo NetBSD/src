@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.7 2006/06/07 22:33:37 kardel Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.7.6.1 2006/11/18 21:34:46 ad Exp $ */
 
 /*
  * ported to timecounters by Frank Kardel 2006
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.7 2006/06/07 22:33:37 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.7.6.1 2006/11/18 21:34:46 ad Exp $");
 
 #include "opt_ntp.h"
 
@@ -71,7 +71,7 @@ static dev_type_close(ppsclose);
 static dev_type_ioctl(ppsioctl);
 const struct cdevsw pps_cdevsw = {
 	ppsopen, ppsclose, noread, nowrite, ppsioctl,
-	nostop, notty, nopoll, nommap, nokqfilter
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 static void ppsintr(void *arg);

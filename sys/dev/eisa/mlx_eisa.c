@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.16 2006/09/02 07:08:39 christos Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.16.2.1 2006/11/18 21:34:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.16 2006/09/02 07:08:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.16.2.1 2006/11/18 21:34:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,8 @@ static struct mlx_eisa_prod {
 };
 
 static int
-mlx_eisa_match(struct device *parent, struct cfdata *match, void *aux)
+mlx_eisa_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct eisa_attach_args *ea;
 	int i;
