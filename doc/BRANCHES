@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.127 2006/11/05 08:37:20 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.128 2006/11/18 06:46:13 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -390,19 +390,58 @@ Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
 		tested:
-			alpha, i386, xen (yamt)
-			hp300, news68k, sparc(sun4c), sun2,
-			    sun3, sun3x (tsutsui)
+			alpha	(yamt)
+			hp300	(tsutsui)
+			i386	(yamt)
+			news68k	(tsutsui)
+			sparc(sun4c) (tsutsui)
+			sun2	(tsutsui)
+			sun3	(tsutsui)
+			sun3x	(tsutsui)
+			xen	(yamt)
 
 		compile-tested:
-			amd64, sparc, sparc64 (GENERIC),
-			vax, evbarm, evbmips, evbsh3, iyonix, acorn26,
-			hp700, evbppc (marvell, ibm4xx),
-			mac68k, x68k, hpcarm, shark, acorn32,
-			cats, netwinder, algor, arc, ews4800mips, hpcmips,
-			newsmips, luna68k, cobalt, pmax, sbmips, hpcsh,
-			landisk, next68k, macppc, amiga, cesfic, sgimips,
-			sandpoint, ia64, ibmnws, atari, pc532, prep
+			acorn26
+			acorn32
+			algor
+			amd64
+			amiga
+			arc
+			atari
+			cats
+			cesfic
+			cobalt
+			evbarm
+			evbmips
+			evbppc(marvell)
+			evbpps(ibm4xx)
+			evbsh3
+			ews4800mips
+			hp700
+			hpcarm
+			hpcmips
+			hpcsh
+			ia64
+			ibmnws
+			iyonix
+			landisk
+			luna68k
+			mac68k
+			macppc
+			netwinder
+			newsmips
+			next68k
+			pc532
+			pmax
+			prep
+			sandpoint
+			sbmips
+			sgimips
+			shark
+			sparc
+			sparc64(GENERIC)
+			vax
+			x68k
 
 		not tested:
 			pdp10 (i don't know how to build)
