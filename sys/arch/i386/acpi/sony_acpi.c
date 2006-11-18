@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.3 2006/02/19 14:59:22 thorpej Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.3.16.1 2006/11/18 21:29:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.3 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.3.16.1 2006/11/18 21:29:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,8 @@ CFATTACH_DECL(sony_acpi, sizeof(struct sony_acpi_softc),
     sony_acpi_match, sony_acpi_attach, NULL, NULL);
 
 static int
-sony_acpi_match(struct device *parent, struct cfdata *match, void *aux)
+sony_acpi_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -127,7 +128,8 @@ sony_sysctl_helper(SYSCTLFN_ARGS)
 }
 
 static ACPI_STATUS
-sony_walk_cb(ACPI_HANDLE hnd, UINT32 v, void *context, void **status)
+sony_walk_cb(ACPI_HANDLE hnd, UINT32 v, void *context,
+    void **status)
 {
 	struct sony_acpi_softc *sc = (void*)context;
 	const struct sysctlnode *node, *snode;

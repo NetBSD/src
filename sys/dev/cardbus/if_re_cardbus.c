@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.8 2006/09/07 02:40:32 dogcow Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.8.2.1 2006/11/18 21:34:04 ad Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.8 2006/09/07 02:40:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.8.2.1 2006/11/18 21:34:04 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -150,7 +150,8 @@ re_cardbus_lookup(const struct cardbus_attach_args *ca)
 }
 
 int
-re_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
+re_cardbus_match(struct device *parent,
+	struct cfdata *match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -162,7 +163,8 @@ re_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 
 
 void
-re_cardbus_attach(struct device *parent, struct device *self, void *aux)
+re_cardbus_attach(struct device *parent, struct device *self,
+	void *aux)
 {
 	struct re_cardbus_softc *csc = device_private(self);
 	struct rtk_softc *sc = &csc->sc_rtk;
@@ -289,7 +291,7 @@ re_cardbus_setup(struct re_cardbus_softc *csc)
 	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		command = cardbus_conf_read(cc, cf, csc->sc_tag,
 		    pmreg + PCI_PMCSR);
-		if (command & RTK_PSTATE_MASK) {
+		if (command & PCI_PMCSR_STATE_MASK) {
 			pcireg_t		iobase, membase, irq;
 
 			/* Save important PCI config data. */
@@ -303,8 +305,8 @@ re_cardbus_setup(struct re_cardbus_softc *csc)
 			/* Reset the power state. */
 			aprint_normal("%s: chip is in D%d power mode "
 			    "-- setting to D0\n", sc->sc_dev.dv_xname,
-			    command & RTK_PSTATE_MASK);
-			command &= ~RTK_PSTATE_MASK;
+			    command & PCI_PMCSR_STATE_MASK);
+			command &= ~PCI_PMCSR_STATE_MASK;
 			cardbus_conf_write(cc, cf, csc->sc_tag,
 			    pmreg + PCI_PMCSR, command);
 

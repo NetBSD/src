@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2006/06/27 23:26:13 garbled Exp $
+#	$NetBSD: Makefile,v 1.20.4.1 2006/11/18 21:29:30 ad Exp $
 
 NOMAN= # defined
 
@@ -49,7 +49,7 @@ LIBCRTEND=
 
 RELOC= 0x800000
 
-CLEANFILES+= vers.c machine powerpc
+CLEANFILES+= vers.c machine powerpc ${PROG}.elf
 
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
 
@@ -70,7 +70,8 @@ vers.c: ${.CURDIR}/../boot/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/../boot/version "prep" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBS}
-	${LD} -o ${PROG} -s -N -T ${.CURDIR}/../boot/ld.script \
+	${LD} -o ${PROG}.elf -N -T ${.CURDIR}/../boot/ld.script \
 		-Ttext ${RELOC} ${OBJS} ${LIBS}
+	${STRIP} -o ${PROG} ${PROG}.elf
 
 .include <bsd.prog.mk>

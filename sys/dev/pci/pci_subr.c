@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.65 2006/09/03 05:01:32 christos Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.65.2.1 2006/11/18 21:34:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.65 2006/09/03 05:01:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.65.2.1 2006/11/18 21:34:31 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -473,6 +473,7 @@ pci_conf_print_common(
 	onoff("Address/data stepping", PCI_COMMAND_STEPPING_ENABLE);
 	onoff("System error (SERR)", PCI_COMMAND_SERR_ENABLE);
 	onoff("Fast back-to-back transactions", PCI_COMMAND_BACKTOBACK_ENABLE);
+	onoff("Interrupt disable", PCI_COMMAND_INTERRUPT_DISABLE);
 
 	printf("    Status register: 0x%04x\n", (rval >> 16) & 0xffff);
 	onoff("Capability List support", PCI_STATUS_CAPLIST_SUPPORT);

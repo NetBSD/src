@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.18 2005/12/11 12:18:51 christos Exp $
+#	$NetBSD: files.sandpoint,v 1.18.20.1 2006/11/18 21:29:30 ad Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -80,6 +80,11 @@ include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
 
 include "dev/pckbport/files.pckbport"
+
+# PC clock
+device	mcclock: mc146818
+attach	mcclock at isa with mcclock_isa
+file	arch/sandpoint/isa/mcclock_isa.c	mcclock_isa
 
 # Floppy disk controller
 device	fdc {drive = -1}: isadma

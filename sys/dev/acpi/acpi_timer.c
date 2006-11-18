@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_timer.c,v 1.6 2006/08/27 23:13:47 christos Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.6.2.1 2006/11/18 21:34:03 ad Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.6 2006/08/27 23:13:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.6.2.1 2006/11/18 21:34:03 ad Exp $");
 
 #include <sys/types.h>
 #include <dev/acpi/acpi_timer.h>

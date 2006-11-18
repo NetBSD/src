@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.40 2005/12/11 12:18:52 christos Exp $
+#	$NetBSD: files.sgimips,v 1.40.20.1 2006/11/18 21:29:30 ad Exp $
 
 maxpartitions 16
 
@@ -27,6 +27,8 @@ file arch/sgimips/sgimips/disksubr.c
 file arch/sgimips/sgimips/machdep.c
 
 file arch/mips/mips/softintr.c
+file arch/mips/mips/mips3_clock.c	mips3
+file arch/mips/mips/mips3_clockintr.c	mips3
 
 file dev/md_root.c			memory_disk_hooks
 

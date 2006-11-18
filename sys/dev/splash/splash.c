@@ -1,4 +1,4 @@
-/* $NetBSD: splash.c,v 1.1 2006/02/18 19:00:23 jmcneill Exp $ */
+/* $NetBSD: splash.c,v 1.1.20.1 2006/11/18 21:34:50 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.1 2006/02/18 19:00:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.1.20.1 2006/11/18 21:34:50 ad Exp $");
 
 #include "opt_splash.h"
 
@@ -409,7 +409,6 @@ splash_progress_update(struct splash_progress *sp)
 		return;
 
 #ifdef __HAVE_CPU_COUNTER
-#define UPDATE_INTERVAL (cpu_frequency(&cpu_info_primary) / 4)
 	if (cpu_hascounter()) {
 		uint64_t now;
 
@@ -417,12 +416,12 @@ splash_progress_update(struct splash_progress *sp)
 			splash_last_update = cpu_counter();
 		} else {
 			now = cpu_counter();
-			if (splash_last_update + UPDATE_INTERVAL > now)
+			if (splash_last_update + cpu_frequency(curcpu())/4 >
+			    now)
 				return;
 			splash_last_update = now;
 		}
 	}
-#undef UPDATE_INTERVAL
 #endif
 	sp->sp_state++;
 	if (sp->sp_state >= SPLASH_PROGRESS_NSTATES)

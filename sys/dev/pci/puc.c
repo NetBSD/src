@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.27 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: puc.c,v 1.27.20.1 2006/11/18 21:34:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.27 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.27.20.1 2006/11/18 21:34:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,8 @@ static int	puc_print(void *, const char *);
 static const char *puc_port_type_name(int);
 
 static int
-puc_match(struct device *parent, struct cfdata *match, void *aux)
+puc_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct puc_device_description *desc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.38 2006/08/27 23:31:15 christos Exp $	*/
+/*	$NetBSD: amr.c,v 1.38.2.1 2006/11/18 21:34:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.38 2006/08/27 23:31:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.38.2.1 2006/11/18 21:34:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.38 2006/08/27 23:31:15 christos Exp $");
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/kthread.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -228,7 +229,8 @@ amr_outl(struct amr_softc *amr, int off, u_int32_t val)
  * Match a supported device.
  */
 static int
-amr_match(struct device *parent, struct cfdata *match, void *aux)
+amr_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 	pcireg_t s;
@@ -1354,7 +1356,8 @@ amrclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 static int
-amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct amr_softc *amr;
 	struct amr_user_ioctl *au;
@@ -1374,8 +1377,9 @@ amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		*(int *)data = AMR_IO_VERSION_NUMBER;
 		return 0;
 	case AMR_IO_COMMAND:
-		if (securelevel >= 2)
-			return (EPERM);
+		error = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		if (error)
+			return (error);
 
 		au = (struct amr_user_ioctl *)data;
 		au_cmd = au->au_cmd;

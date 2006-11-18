@@ -1,9 +1,10 @@
-/*	$NetBSD: types.h,v 1.3 2006/09/04 20:31:30 tsutsui Exp $	*/
+/*	$NetBSD: types.h,v 1.3.2.1 2006/11/18 21:29:12 ad Exp $	*/
 
 #include <mips/types.h>
 
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__HAVE_GENERIC_TODR
+#define	__HAVE_TIMECOUNTER
 
 /* MIPS specific options */
 #define	__HAVE_MIPS_MACHDEP_CACHE_CONFIG

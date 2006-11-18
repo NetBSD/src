@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.37 2006/02/05 05:01:49 cube Exp $
+#	$NetBSD: INSTALL,v 1.37.14.1 2006/11/18 21:29:08 ad Exp $
 #
 # First try for BEBOX config file
 #
@@ -33,7 +33,6 @@ options 		MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
 options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43
@@ -42,6 +41,7 @@ options 	COMPAT_10
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -106,6 +106,8 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 isa*	at pcib?			# ISA on PCI-ISA bridge
 
 pc0	at isa? port 0x60 irq 1		# generic PC console device
+
+mcclock0 at isa? port 0x70		# generic time-of-day clock
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3

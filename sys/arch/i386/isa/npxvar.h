@@ -1,4 +1,4 @@
-/*	$NetBSD: npxvar.h,v 1.4 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: npxvar.h,v 1.4.20.1 2006/11/18 21:29:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,6 +71,7 @@ enum npx_type {
 	NPX_INTERRUPT,
 	NPX_EXCEPTION,
 	NPX_BROKEN,
+	NPX_CPUID
 };
 
 struct npx_softc {

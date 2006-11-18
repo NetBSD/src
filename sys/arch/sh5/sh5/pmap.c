@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.20.1 2006/11/18 21:29:31 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.20.1 2006/11/18 21:29:31 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"
@@ -1294,7 +1294,7 @@ pmap_create(void)
 static void
 pmap_pinit(pmap_t pm)
 {
-	u_int entropy = (sh5_getctc() >> 2) + (u_int)time.tv_sec;
+	u_int entropy = (sh5_getctc() >> 2) + (u_int)time_second;
 	int i;
 
 	pm->pm_refs = 1;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.12 2005/12/11 12:23:23 christos Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.12.20.1 2006/11/18 21:34:43 ad Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.12 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.12.20.1 2006/11/18 21:34:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,8 @@ CFATTACH_DECL(cs_pcmcia, sizeof(struct cs_pcmcia_softc),
     cs_pcmcia_match, cs_pcmcia_attach, cs_pcmcia_detach, cs_activate);
 
 static int
-cs_pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
+cs_pcmcia_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 

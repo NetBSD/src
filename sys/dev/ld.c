@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.40 2006/03/28 17:38:29 thorpej Exp $	*/
+/*	$NetBSD: ld.c,v 1.40.8.1 2006/11/18 21:34:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.40 2006/03/28 17:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.40.8.1 2006/11/18 21:34:03 ad Exp $");
 
 #include "rnd.h"
 

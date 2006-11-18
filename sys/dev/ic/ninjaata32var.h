@@ -1,4 +1,4 @@
-/*	$Id: ninjaata32var.h,v 1.1 2006/09/07 14:22:08 itohy Exp $	*/
+/*	$NetBSD: ninjaata32var.h,v 1.1.2.1 2006/11/18 21:34:13 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -91,7 +91,7 @@ struct njata32_softc {
 	uint8_t			sc_timing_dma;
 #endif
 
-	uint8_t			sc_bmwait;
+	uint8_t			sc_atawait;
 
 	/* per-device structure */
 	struct njata32_device {

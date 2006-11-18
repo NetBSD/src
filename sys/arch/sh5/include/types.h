@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.13 2006/09/05 07:34:54 gdamore Exp $	*/
+/*	$NetBSD: types.h,v 1.13.2.1 2006/11/18 21:29:31 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -81,6 +81,7 @@ typedef	volatile __int64_t	__cpu_simple_lock_t;
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_FUNCTION_DESCRIPTORS
 #define	__HAVE_GENERIC_TODR
+#define	__HAVE_TIMECOUNTER
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS

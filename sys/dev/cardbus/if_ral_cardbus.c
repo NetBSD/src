@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.5 2006/06/06 21:00:41 rpaulo Exp $	*/
+/*	$NetBSD: if_ral_cardbus.c,v 1.5.6.1 2006/11/18 21:34:04 ad Exp $	*/
 /*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.5 2006/06/06 21:00:41 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.5.6.1 2006/11/18 21:34:04 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -105,7 +105,8 @@ void	ral_cardbus_power(struct rt2560_softc *, int);
 void	ral_cardbus_setup(struct ral_cardbus_softc *);
 
 int
-ral_cardbus_match(struct device *parent, struct cfdata *cfdata, void *aux)
+ral_cardbus_match(struct device *parent,
+    struct cfdata *cfdata, void *aux)
 {
         struct cardbus_attach_args *ca = aux;
 
@@ -125,7 +126,8 @@ ral_cardbus_match(struct device *parent, struct cfdata *cfdata, void *aux)
 }
 
 void
-ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
+ral_cardbus_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)self;
 	struct rt2560_softc *sc = &csc->sc_sc;
@@ -247,12 +249,17 @@ ral_cardbus_disable(struct rt2560_softc *sc)
 void
 ral_cardbus_power(struct rt2560_softc *sc, int why)
 {
-	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)sc;
 
-	if (why == PWR_RESUME) {
-		/* kick the PCI configuration registers */
-		ral_cardbus_setup(csc);
+	switch (why) {
+	case PWR_RESUME:
+		ral_cardbus_enable(sc);
+		break;
+	case PWR_SUSPEND:
+		ral_cardbus_disable(sc);
+		break;
 	}
+
+	return;
 }
 
 void

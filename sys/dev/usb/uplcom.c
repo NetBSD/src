@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.48 2006/09/04 15:39:39 martin Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.48.2.1 2006/11/18 21:34:51 ad Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.48 2006/09/04 15:39:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.48.2.1 2006/11/18 21:34:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -778,7 +778,8 @@ uplcom_close(void *addr, int portno)
 }
 
 void
-uplcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+uplcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct uplcom_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;

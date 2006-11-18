@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 2006/08/03 20:26:24 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.116.4.1 2006/11/18 21:29:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2006/08/03 20:26:24 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116.4.1 2006/11/18 21:29:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ int pmapdebug = PDB_PARANOIA;
 
 #define	PMAP_DPRINTF(l, x)	if (pmapdebug & (l)) printf x
 
-static void	pmap_check_wiring(char *, vaddr_t);
+static void	pmap_check_wiring(const char *, vaddr_t);
 static void	pmap_pvdump(paddr_t);
 #else
 #define	PMAP_DPRINTF(l, x)
@@ -1293,7 +1293,7 @@ validate:
 #if DEBUG
 	if (pmapdebug & 0x10000 && mmutype == MMU_68040 &&
 	    pmap == pmap_kernel()) {
-		char *s;
+		const char *s;
 		struct proc *cp = curproc;
 		if (va >= amiga_uptbase &&
 		    va < (amiga_uptbase + AMIGA_UPTMAXSIZE))
@@ -2471,13 +2471,15 @@ pmap_enter_ptpage(pmap, va)
 #if defined(M68060)
 			stpa = (u_int)pmap->pm_stpa;
 			if (cputype == CPU_68060) {
+				pt_entry_t	*pte;
+
+				pte = pmap_pte(pmap_kernel(), pmap->pm_stab);
 				while (stpa < (u_int)pmap->pm_stpa +
 				    AMIGA_STSIZE) {
-					pmap_changebit(stpa, PG_CCB, 0);
-					pmap_changebit(stpa, PG_CI, 1);
+					*pte = (*pte & ~PG_CMASK) | PG_CI;
+					++pte;
 					stpa += PAGE_SIZE;
 				}
-				DCIS(); /* XXX */
 	 		}
 #endif
 			pmap->pm_stfree = protostfree;
@@ -2715,7 +2717,7 @@ pmap_pvdump(pa)
  */
 void
 pmap_check_wiring(str, va)
-	char *str;
+	const char *str;
 	vaddr_t va;
 {
 	pt_entry_t *pte;

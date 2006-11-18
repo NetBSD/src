@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.28 2006/08/19 22:38:42 bjh21 Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.28.2.1 2006/11/18 21:29:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.28 2006/08/19 22:38:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.28.2.1 2006/11/18 21:29:07 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -496,7 +496,7 @@ vidcvideo_setmode(struct vidc_mode *mode)
 	/* XXX VIDC20 data sheet say to subtract 2 */
 	vidcvideo_write(VIDC_VCR, vm->vtotal - 1);
 
-	IOMD_WRITE_WORD(IOMD_FSIZE, vm->vdisplay - 1);
+	IOMD_WRITE_WORD(IOMD_FSIZE, vm->vtotal - vm->vdisplay - 1);
 
 	if (dispsize <= 1024*1024)
 		vidcvideo_write(VIDC_DCTL, vm->hdisplay>>2 | 1<<16 | 1<<12);
@@ -509,14 +509,19 @@ vidcvideo_setmode(struct vidc_mode *mode)
 	if (vm->flags & VID_NVSYNC)
 		ereg |= 1<<18;
 	vidcvideo_write(VIDC_EREG, ereg);
-	if (dispsize > 1024*1024) {
-		if (vm->hdisplay >= 800)
- 			vidcvideo_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
-		else
-			vidcvideo_write(VIDC_CONREG, 6<<8 | bpp_mask<<5);
-	} else {
+
+	/*
+	 * Set the video FIFO preload value and bit depth.  Chapter 6
+	 * of the VIDC20 Data Sheet has full details of the FIFO
+	 * preload, but we don't do anything clever and just use the
+	 * largest possible value, which is 7 when the VIDC20 is in
+	 * 32-bit mode (0MB or 1MB VRAM) and 6 when it is in 64-bit
+	 * mode (2MB VRAM).
+	 */
+	if (dispsize > 1024*1024)
+		vidcvideo_write(VIDC_CONREG, 6<<8 | bpp_mask<<5);
+	else
 		vidcvideo_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
-	}
 }
 
 

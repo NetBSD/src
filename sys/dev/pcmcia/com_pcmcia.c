@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.52 2006/07/13 22:56:02 gdamore Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.52.4.1 2006/11/18 21:34:43 ad Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.52 2006/07/13 22:56:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.52.4.1 2006/11/18 21:34:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,10 +124,8 @@ static const size_t com_pcmcia_nproducts =
     sizeof(com_pcmcia_products) / sizeof(com_pcmcia_products[0]);
 
 int
-com_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+com_pcmcia_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	int comportmask;
 	struct pcmcia_attach_args *pa = aux;
@@ -180,9 +178,8 @@ com_pcmcia_validate_config(cfe)
 }
 
 void
-com_pcmcia_attach(parent, self, aux)
-	struct device  *parent, *self;
-	void *aux;
+com_pcmcia_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct com_pcmcia_softc *psc = (void *) self;
 	struct com_softc *sc = &psc->sc_com;

@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.11 2006/05/23 01:34:49 uwe Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.11.6.1 2006/11/18 21:29:17 ad Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.11 2006/05/23 01:34:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.11.6.1 2006/11/18 21:29:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -36,9 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.11 2006/05/23 01:34:49 uwe Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
-#ifdef GPROF
-#include <sys/gmon.h>
-#endif
 
 #include "opt_j6x0tp.h"
 
@@ -576,7 +573,7 @@ j6x0tp_callout_wsmouse(void *self)
 		j6x0tp_wsmouse_input(sc, rawx, rawy); /* mouse dragged */
 		callout_schedule(&sc->sc_touch_ch, hz/32);
 	} else {
-		wsmouse_input(sc->sc_wsmousedev, 0, 0, 0, 0, /* button up */
+		wsmouse_input(sc->sc_wsmousedev, 0, 0, 0, 0, 0, /* button up */
 			      WSMOUSE_INPUT_DELTA);
 		j6x0tp_stop_polling(sc);
 	}
@@ -598,10 +595,9 @@ j6x0tp_wsmouse_input(struct j6x0tp_softc *sc, int rawx, int rawy)
 		     sc->sc_dev.dv_xname, rawx, rawy, x, y));
 
 	wsmouse_input(sc->sc_wsmousedev,
-		      1,	/* button */
-		      x, y,
-		      0,	/* flags */
-		      WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
+			1,	/* button */
+			x, y, 0, 0,
+			WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
 }
 
 

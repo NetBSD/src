@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2006/09/07 00:18:50 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.4.2.1 2006/11/18 21:29:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2006/09/07 00:18:50 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4.2.1 2006/11/18 21:29:38 ad Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -564,13 +564,15 @@ i8254_delay(int n)
 
 #if (NPCPPI > 0)
 int
-sysbeepmatch(struct device *parent, struct cfdata *match, void *aux)
+sysbeepmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	return (!ppi_attached);
 }
 
 void
-sysbeepattach(struct device *parent, struct device *self, void *aux)
+sysbeepattach(struct device *parent, struct device *self,
+    void *aux)
 {
 	aprint_naive("\n");
 	aprint_normal("\n");

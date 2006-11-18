@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.18 2006/09/05 05:32:30 mhitch Exp $ */
+/*	$NetBSD: a2kbbc.c,v 1.18.2.1 2006/11/18 21:29:04 ad Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.18 2006/09/05 05:32:30 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.18.2.1 2006/11/18 21:29:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -101,13 +101,14 @@ CFATTACH_DECL(a2kbbc, sizeof(struct device),
     a2kbbc_match, a2kbbc_attach, NULL, NULL);
 
 void *a2kclockaddr;
-int a2kugettod(todr_chip_handle_t, volatile struct timeval *);
-int a2kusettod(todr_chip_handle_t, volatile struct timeval *);
+int a2kugettod(todr_chip_handle_t, struct clock_ymdhms *);
+int a2kusettod(todr_chip_handle_t, struct clock_ymdhms *);
 static struct todr_chip_handle a2ktodr;
 
 int
 a2kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
+	struct clock_ymdhms dt;
 	static int a2kbbc_matched = 0;
 
 	if (!matchname("a2kbbc", auxp))
@@ -125,7 +126,7 @@ a2kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 		return (0);
 
 	a2kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
-	if (a2kugettod(&a2ktodr, 0) != 0)
+	if (a2kugettod(&a2ktodr, &dt) != 0)
 		return (0);
 
 	a2kbbc_matched = 1;
@@ -142,17 +143,15 @@ a2kbbc_attach(struct device *pdp, struct device *dp, void *auxp)
 	a2kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
 
 	a2ktodr.cookie = a2kclockaddr;
-	a2ktodr.todr_gettime = a2kugettod;
-	a2ktodr.todr_settime = a2kusettod;
+	a2ktodr.todr_gettime_ymdhms = a2kugettod;
+	a2ktodr.todr_settime_ymdhms = a2kusettod;
 	todr_attach(&a2ktodr);
 }
 
 int
-a2kugettod(todr_chip_handle_t h, volatile struct timeval *tvp)
+a2kugettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
 {
 	struct rtclock2000 *rt;
-	struct clock_ymdhms dt;
-	time_t secs;
 	int i;
 
 	rt = a2kclockaddr;
@@ -165,16 +164,16 @@ a2kugettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 	while (rt->control1 & A2CONTROL1_BUSY && i--)
 		;
 	if (rt->control1 & A2CONTROL1_BUSY)
-		return (0);	/* Give up and say it's not there */
+		return (ENXIO);		/* Give up and say it's not there */
 
 	/* Copy the info.  Careful about the order! */
-	dt.dt_sec   = rt->second1 * 10 + rt->second2;
-	dt.dt_min   = rt->minute1 * 10 + rt->minute2;
-	dt.dt_hour  = (rt->hour1 & 3) * 10 + rt->hour2;
-	dt.dt_day   = rt->day1    * 10 + rt->day2;
-	dt.dt_mon   = rt->month1  * 10 + rt->month2;
-	dt.dt_year  = rt->year1   * 10 + rt->year2;
-	dt.dt_wday  = rt->weekday;
+	dt->dt_sec   = rt->second1 * 10 + rt->second2;
+	dt->dt_min   = rt->minute1 * 10 + rt->minute2;
+	dt->dt_hour  = (rt->hour1 & 3) * 10 + rt->hour2;
+	dt->dt_day   = rt->day1    * 10 + rt->day2;
+	dt->dt_mon   = rt->month1  * 10 + rt->month2;
+	dt->dt_year  = rt->year1   * 10 + rt->year2;
+	dt->dt_wday  = rt->weekday;
 
 	/*
 	 * The oki clock chip has a register to put the clock into
@@ -195,10 +194,10 @@ a2kugettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 	 */
 
 	if ((rt->control3 & A2CONTROL3_24HMODE) == 0) {
-		if ((rt->hour1 & A2HOUR1_PM) == 0 && dt.dt_hour == 12)
-			dt.dt_hour = 0;
-		else if ((rt->hour1 & A2HOUR1_PM) && dt.dt_hour != 12)
-			dt.dt_hour += 12;
+		if ((rt->hour1 & A2HOUR1_PM) == 0 && dt->dt_hour == 12)
+			dt->dt_hour = 0;
+		else if ((rt->hour1 & A2HOUR1_PM) && dt->dt_hour != 12)
+			dt->dt_hour += 12;
 	}
 
 	/*
@@ -206,42 +205,36 @@ a2kugettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 	 */
 	rt->control1 &= ~A2CONTROL1_HOLD;
 
-	dt.dt_year += CLOCK_BASE_YEAR;
-	if (dt.dt_year < STARTOFTIME)
-		dt.dt_year += 100;
+	dt->dt_year += CLOCK_BASE_YEAR;
+	if (dt->dt_year < STARTOFTIME)
+		dt->dt_year += 100;
 
-	if ((dt.dt_hour > 23) ||
-	    (dt.dt_day  > 31) ||
-	    (dt.dt_mon  > 12) ||
-	    /* (dt.dt_year < STARTOFTIME) || */ (dt.dt_year > 2036))
-		return (0);
+	/*
+	 * Note that this check is redundant with one in kern_todr.c, but
+	 * attach relies on it being here.
+	 */
+	if ((dt->dt_hour > 23) ||
+	    (dt->dt_day  > 31) ||
+	    (dt->dt_mon  > 12) ||
+	    /* (dt->dt_year < STARTOFTIME) || */ (dt->dt_year > 2036))
+		return (EINVAL);
 
-	secs = clock_ymdhms_to_secs(&dt);
-	if (tvp) {
-		tvp->tv_sec = secs;
-		tvp->tv_usec = 0;
-	}
 	return (0);
 }
 
 int
-a2kusettod(todr_chip_handle_t h, volatile struct timeval *tvp)
+a2kusettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
 {
 	struct rtclock2000 *rt;
-	struct clock_ymdhms dt;
 	int ampm, i;
-	time_t secs;
 
-	secs = tvp->tv_sec;
 	rt = a2kclockaddr;
 	/*
 	 * there seem to be problems with the bitfield addressing
 	 * currently used..
 	 */
 	if (! rt)
-		return (1);
-
-	clock_secs_to_ymdhms(secs, &dt);
+		return (ENXIO);
 
 	/*
 	 * hold clock
@@ -251,31 +244,31 @@ a2kusettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 	while (rt->control1 & A2CONTROL1_BUSY && i--)
 		;
 	if (rt->control1 & A2CONTROL1_BUSY)
-		return (0);	/* Give up and say it's not there */
+		return (ENXIO);		/* Give up and say it's not there */
 
 	ampm = 0;
 	if ((rt->control3 & A2CONTROL3_24HMODE) == 0) {
-		if (dt.dt_hour >= 12) {
+		if (dt->dt_hour >= 12) {
 			ampm = A2HOUR1_PM;
-			if (dt.dt_hour != 12)
-				dt.dt_hour -= 12;
-		} else if (dt.dt_hour == 0) {
-			dt.dt_hour = 12;
+			if (dt->dt_hour != 12)
+				dt->dt_hour -= 12;
+		} else if (dt->dt_hour == 0) {
+			dt->dt_hour = 12;
 		}
 	}
-	rt->hour1   = (dt.dt_hour / 10) | ampm;
-	rt->hour2   = dt.dt_hour % 10;
-	rt->second1 = dt.dt_sec / 10;
-	rt->second2 = dt.dt_sec % 10;
-	rt->minute1 = dt.dt_min / 10;
-	rt->minute2 = dt.dt_min % 10;
-	rt->day1    = dt.dt_day / 10;
-	rt->day2    = dt.dt_day % 10;
-	rt->month1  = dt.dt_mon / 10;
-	rt->month2  = dt.dt_mon % 10;
-	rt->year1   = (dt.dt_year / 10) % 10;
-	rt->year2   = dt.dt_year % 10;
-	rt->weekday = dt.dt_wday;
+	rt->hour1   = (dt->dt_hour / 10) | ampm;
+	rt->hour2   = dt->dt_hour % 10;
+	rt->second1 = dt->dt_sec / 10;
+	rt->second2 = dt->dt_sec % 10;
+	rt->minute1 = dt->dt_min / 10;
+	rt->minute2 = dt->dt_min % 10;
+	rt->day1    = dt->dt_day / 10;
+	rt->day2    = dt->dt_day % 10;
+	rt->month1  = dt->dt_mon / 10;
+	rt->month2  = dt->dt_mon % 10;
+	rt->year1   = (dt->dt_year / 10) % 10;
+	rt->year2   = dt->dt_year % 10;
+	rt->weekday = dt->dt_wday;
 
 	/*
 	 * release the clock

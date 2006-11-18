@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.68 2006/09/07 02:40:32 dogcow Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.68.2.1 2006/11/18 21:34:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.68 2006/09/07 02:40:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.68.2.1 2006/11/18 21:34:21 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -162,8 +162,7 @@ egprintpcb(pcb)
 
 
 static inline void
-egprintstat(b)
-	u_char b;
+egprintstat(u_char b)
 {
 	DPRINTF(("%s %s %s %s %s %s %s\n",
 		 (b & EG_STAT_HCRE)?"HCRE":"",
@@ -314,10 +313,8 @@ egreadPCB(iot, ioh, pcb)
  */
 
 int
-egprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+egprobe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -395,9 +392,7 @@ egprobe(parent, match, aux)
 }
 
 void
-egattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+egattach(struct device *parent, struct device *self, void *aux)
 {
 	struct eg_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -894,8 +889,9 @@ egioctl(ifp, cmd, data)
 		} else {
 			sc->eg_pcb[0] = EG_CMD_GETSTATS;
 			sc->eg_pcb[1] = 0;
-			if (egwritePCB(sc->sc_iot, sc->sc_ioh, sc->eg_pcb) != 0)
+			if (egwritePCB(sc->sc_iot, sc->sc_ioh, sc->eg_pcb) != 0) {
 				DPRINTF(("write error\n"));
+			}
 			/*
 			 * XXX deal with flags changes:
 			 * IFF_MULTICAST, IFF_PROMISC,

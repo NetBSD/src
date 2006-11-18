@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.19 2006/03/29 07:10:25 thorpej Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.19.8.1 2006/11/18 21:34:28 ad Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -30,9 +30,41 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Copyright 1997
+ * Digital Equipment Corporation. All rights reserved.
+ *
+ * This software is furnished under license and may be used and
+ * copied only in accordance with the following terms and conditions.
+ * Subject to these conditions, you may download, copy, install,
+ * use, modify and distribute this software in source and/or binary
+ * form. No title or ownership is transferred hereby.
+ *
+ * 1) Any source code used, modified or distributed must reproduce
+ *    and retain this copyright notice and list of conditions as
+ *    they appear in the source file.
+ *
+ * 2) No right is granted to use any trade name, trademark, or logo of
+ *    Digital Equipment Corporation. Neither the "Digital Equipment
+ *    Corporation" name nor any trademark or logo of Digital Equipment
+ *    Corporation may be used to endorse or promote products derived
+ *    from this software without the prior written permission of
+ *    Digital Equipment Corporation.
+ *
+ * 3) This software is provided "AS-IS" and any express or implied
+ *    warranties, including but not limited to, any implied warranties
+ *    of merchantability, fitness for a particular purpose, or
+ *    non-infringement are disclaimed. In no event shall DIGITAL be
+ *    liable for any damages whatsoever, and in particular, DIGITAL
+ *    shall not be liable for special, indirect, consequential, or
+ *    incidental damages or damages for lost profits, loss of
+ *    revenue or loss of use, whether such damages arise in contract,
+ *    negligence, tort, under statute, in equity, at law or otherwise,
+ *    even if advised of the possibility of such damage.
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.19 2006/03/29 07:10:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.19.8.1 2006/11/18 21:34:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,30 +72,30 @@ __KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.19 2006/03/29 07:10:25 thorpej Exp $");
 #include <sys/conf.h>
 #include <sys/event.h>
 
+#include <dev/clock_subr.h>
 #include <dev/ofw/openfirm.h>
+
+#define OFRTC_SEC 0
+#define OFRTC_MIN 1
+#define OFRTC_HR  2
+#define OFRTC_DOM 3
+#define OFRTC_MON 4
+#define OFRTC_YR  5
 
 struct ofrtc_softc {
 	struct device sc_dev;
 	int sc_phandle;
 	int sc_ihandle;
+	struct todr_chip_handle sc_todr;
 };
 
 static int ofrtc_match(struct device *, struct cfdata *, void *);
 static void ofrtc_attach(struct device *, struct device *, void *);
+static int ofrtc_gettod(todr_chip_handle_t, struct clock_ymdhms *);
+static int ofrtc_settod(todr_chip_handle_t, struct clock_ymdhms *);
 
 CFATTACH_DECL(ofrtc, sizeof(struct ofrtc_softc),
     ofrtc_match, ofrtc_attach, NULL, NULL);
-
-extern struct cfdriver ofrtc_cd;
-
-dev_type_open(ofrtc_open);
-dev_type_read(ofrtc_read);
-dev_type_write(ofrtc_write);
-
-const struct cdevsw ofrtc_cdevsw = {
-	ofrtc_open, nullclose, ofrtc_read, ofrtc_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
-};
 
 static int
 ofrtc_match(struct device *parent, struct cfdata *match, void *aux)
@@ -79,6 +111,8 @@ ofrtc_match(struct device *parent, struct cfdata *match, void *aux)
 	    l >= sizeof type)
 		return 0;
 
+	/* ensure null termination */
+	type[l] = 0;
 	return !strcmp(type, "rtc");
 }
 
@@ -88,6 +122,7 @@ ofrtc_attach(struct device *parent, struct device *self, void *aux)
 	struct ofrtc_softc *of = device_private(self);
 	struct ofbus_attach_args *oba = aux;
 	char name[32];
+	char path[256];
 	int l;
 
 	of->sc_phandle = oba->oba_phandle;
@@ -98,115 +133,74 @@ ofrtc_attach(struct device *parent, struct device *self, void *aux)
 	if (l >= sizeof name)
 		l = sizeof name - 1;
 	name[l] = 0;
+
+	if (!of->sc_ihandle) {
+		if ((l = OF_package_to_path(of->sc_phandle, path,
+			 sizeof path - 1)) < 0 ||
+		    l >= sizeof path) {
+			aprint_error(": cannot determine package path\n");
+ 			return;
+		}
+		path[l] = 0;
+
+		if (!(of->sc_ihandle = OF_open(path))) {
+			aprint_error(": cannot open path\n");
+ 			return;
+ 		}
+ 	}
+
+	of->sc_todr.todr_gettime_ymdhms = ofrtc_gettod;
+	of->sc_todr.todr_settime_ymdhms = ofrtc_settod;
+	of->sc_todr.cookie = of;
+	todr_attach(&of->sc_todr);
 	printf(": %s\n", name);
 }
 
 int
-ofrtc_open(dev_t dev, int flags, int fmt, struct lwp *lwp)
+ofrtc_gettod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct ofrtc_softc *of;
-	int unit = minor(dev);
-	char path[256];
-	int l;
+	struct ofrtc_softc *of = tch->cookie;
+	int date[6];
 
-	if (unit >= ofrtc_cd.cd_ndevs)
-		return ENXIO;
-	if (!(of = ofrtc_cd.cd_devs[unit]))
-		return ENXIO;
-	if (!of->sc_ihandle) {
-		if ((l = OF_package_to_path(of->sc_phandle, path,
-		    sizeof path - 1)) < 0 ||
-		    l >= sizeof path)
-			return ENXIO;
-		path[l] = 0;
+	/*
+	 * We mostly ignore the suggested time and go for the RTC clock time
+	 * stored in the CMOS RAM.  If the time can't be obtained from the
+	 * CMOS, or if the time obtained from the CMOS is 5 or more years
+	 * less than the suggested time, we used the suggested time.  (In
+	 * the latter case, it's likely that the CMOS battery has died.)
+	 */
 
-		if (!(of->sc_ihandle = OF_open(path))) {
-			if (of->sc_ihandle) {
-				OF_close(of->sc_ihandle);
-				of->sc_ihandle = 0;
-			}
-			return ENXIO;
-		}
-
+	if (OF_call_method("get-time", of->sc_ihandle, 0, 6,
+	    date, date + 1, date + 2, date + 3, date + 4, date + 5)) {
+		return EIO;
 	}
+
+	dt->dt_sec = date[OFRTC_SEC];
+	dt->dt_min = date[OFRTC_MIN];
+	dt->dt_hour = date[OFRTC_HR];
+	dt->dt_day = date[OFRTC_DOM];
+	dt->dt_mon = date[OFRTC_MON];
+	dt->dt_year = date[OFRTC_YR];
 
 	return 0;
 }
 
-static void
-twodigit(char *bp, int i)
-{
-	*bp++ = i / 10 + '0';
-	*bp = i % 10 + '0';
-}
-
-static int
-twodigits(char *bp)
-{
-	int i;
-
-	i = *bp++ - '0';
-	return i * 10 + *bp++ - '0';
-}
-
 int
-ofrtc_read(dev_t dev, struct uio *uio, int flag)
+ofrtc_settod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct ofrtc_softc *of = ofrtc_cd.cd_devs[minor(dev)];
-	int date[6];
-	char buf[14];
-	int xlen;
+	struct ofrtc_softc *of = tch->cookie;
+	int sec, minute, hr, dom, mon, yr;
 
-	if (uio->uio_offset >= sizeof buf)
-		return 0;
+	sec = dt->dt_sec;
+	minute = dt->dt_min;
+	hr = dt->dt_hour;
+	dom = dt->dt_day;
+	mon = dt->dt_mon;
+	yr = dt->dt_year;
 
-	if (OF_call_method("get-time", of->sc_ihandle, 0, 6,
-			   date, date + 1, date + 2,
-			   date + 3, date + 4, date + 5))
-		return EIO;
-
-	twodigit(buf, date[5] % 100);
-	twodigit(buf + 2, date[4]);
-	twodigit(buf + 4, date[3]);
-	twodigit(buf + 6, date[2]);
-	twodigit(buf + 8, date[1]);
-	buf[10] = '.';
-	twodigit(buf + 11, date[0]);
-	buf[13] = '\n';
-
-	xlen = sizeof(buf) - uio->uio_offset;
-	if (xlen > uio->uio_resid)
-		xlen = uio->uio_resid;
-
-	return uiomove((caddr_t)buf, xlen, uio);
-}
-
-int
-ofrtc_write(dev_t dev, struct uio *uio, int flag)
-{
-	struct ofrtc_softc *of = ofrtc_cd.cd_devs[minor(dev)];
-	char buf[14];
-	int cnt, year, error;
-
-	/*
-	 * We require atomic updates!
-	 */
-	cnt = uio->uio_resid;
-	if (uio->uio_offset || (cnt != sizeof buf && cnt != sizeof buf - 1))
-		return EINVAL;
-
-	if ((error = uiomove((caddr_t)buf, sizeof buf, uio)) != 0)
-		return error;
-
-	if (cnt == sizeof buf && buf[sizeof buf - 1] != '\n')
-		return EINVAL;
-
-	year = twodigits(buf) + 1900;
-	if (year < 1970)
-		year += 100;
 	if (OF_call_method("set-time", of->sc_ihandle, 6, 0,
-			   twodigits(buf + 11), twodigits(buf + 8), twodigits(buf + 6),
-			   twodigits(buf + 4), twodigits(buf + 2), year))
+	     sec, minute, hr, dom, mon, yr))
 		return EIO;
+
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.249 2006/07/09 17:12:21 drochner Exp $	*/
+/*	$NetBSD: sd.c,v 1.249.4.1 2006/11/18 21:34:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.249 2006/07/09 17:12:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.249.4.1 2006/11/18 21:34:49 ad Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -194,7 +194,8 @@ struct sd_mode_sense_data {
  * A device suitable for this driver
  */
 static int
-sdmatch(struct device *parent, struct cfdata *match, void *aux)
+sdmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
@@ -935,8 +936,11 @@ sddone(struct scsipi_xfer *xs, int error)
 	if (bp) {
 		bp->b_error = error;
 		bp->b_resid = xs->resid;
-		if (error)
+		if (error) {
+			/* on a read/write error bp->b_resid is zero, so fix */
+			bp->b_resid  =bp->b_bcount;
 			bp->b_flags |= B_ERROR;
+		}
 
 		disk_unbusy(&sd->sc_dk, bp->b_bcount - bp->b_resid,
 		    (bp->b_flags & B_READ));
@@ -1648,7 +1652,7 @@ sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 		u_int8_t resvd;
 	} scsipi_sense;
 	u_int64_t sectors;
-	int error;
+	int error, blksize;
 
 	/*
 	 * scsipi_size (ie "read capacity") and mode sense page 6
@@ -1657,7 +1661,7 @@ sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	 * XXX probably differs for removable media
 	 */
 	dp->blksize = 512;
-	if ((sectors = scsipi_size(sd->sc_periph, flags)) == 0)
+	if ((sectors = scsipi_size(sd->sc_periph, &blksize, 512, flags)) == 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	error = scsipi_mode_sense(sd->sc_periph, SMS_DBD, 6,
@@ -1669,7 +1673,7 @@ sd_get_simplifiedparms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 
 	dp->blksize = _2btol(scsipi_sense.lbs);
 	if (dp->blksize == 0)
-		dp->blksize = 512;
+		dp->blksize = blksize;
 
 	/*
 	 * Create a pseudo-geometry.
@@ -1697,13 +1701,14 @@ static int
 sd_get_capacity(struct sd_softc *sd, struct disk_parms *dp, int flags)
 {
 	u_int64_t sectors;
-	int error;
+	int error, blksize;
 #if 0
 	int i;
 	u_int8_t *p;
 #endif
 
-	dp->disksize = sectors = scsipi_size(sd->sc_periph, flags);
+	dp->disksize = sectors = scsipi_size(sd->sc_periph, &blksize, 512,
+	    flags);
 	if (sectors == 0) {
 		struct scsipi_read_format_capacities cmd;
 		struct {
@@ -1758,7 +1763,7 @@ printf("rfc result:"); for (i = sizeof(struct scsipi_capacity_list_header) + dat
 		memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 		error = sd_mode_sense(sd, 0, &scsipi_sense,
 		    sizeof(scsipi_sense.blk_desc), 0, flags | XS_CTL_SILENT, &big);
-		dp->blksize = 512;
+		dp->blksize = blksize;
 		if (!error) {
 			if (big) {
 				bdesc = (void *)(&scsipi_sense.header.big + 1);
@@ -1777,7 +1782,7 @@ printf("page 0 ok\n");
 			if (bsize >= 8) {
 				dp->blksize = _3btol(bdesc->blklen);
 				if (dp->blksize == 0)
-					dp->blksize = 512;
+					dp->blksize = blksize;
 			}
 		}
 	}

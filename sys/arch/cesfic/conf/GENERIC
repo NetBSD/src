@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.45 2006/08/26 07:59:21 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.45.2.1 2006/11/18 21:29:08 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -77,7 +77,7 @@ file-system 	NFS		# Network filesystem client
 #file-system 	PROCFS		# /proc filesystem
 #file-system 	MFS		# Memory-based filesystem
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # Filesystem options

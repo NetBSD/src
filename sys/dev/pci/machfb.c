@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.46 2006/09/02 06:59:20 christos Exp $	*/
+/*	$NetBSD: machfb.c,v 1.46.2.1 2006/11/18 21:34:31 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.46 2006/09/02 06:59:20 christos Exp $");
+	"$NetBSD: machfb.c,v 1.46.2.1 2006/11/18 21:34:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,7 +467,8 @@ wait_for_idle(struct mach64_softc *sc)
 }
 
 static int
-mach64_match(struct device *parent, struct cfdata *match, void *aux)
+mach64_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	int i;

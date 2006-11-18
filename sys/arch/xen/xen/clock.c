@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 2006/08/16 13:23:33 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.28.2.1 2006/11/18 21:29:39 ad Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28 2006/08/16 13:23:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28.2.1 2006/11/18 21:29:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,13 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28 2006/08/16 13:23:33 yamt Exp $");
 
 static int xen_timer_handler(void *, struct intrframe *);
 
-/* These are peridically updated in shared_info, and then copied here. */
-volatile static uint64_t shadow_tsc_stamp;
-volatile static uint64_t shadow_system_time;
-#ifndef XEN3
-volatile static unsigned long shadow_time_version;
-#endif
-volatile static struct timeval shadow_tv;
+/* These are periodically updated in shared_info, and then copied here. */
+static volatile uint64_t shadow_tsc_stamp;
+static volatile uint64_t shadow_system_time;
+static volatile unsigned long shadow_time_version; /* XXXSMP */
+static volatile uint32_t shadow_freq_mul;
+static volatile int8_t shadow_freq_shift;
+static volatile struct timeval shadow_tv;
 
 static int timeset;
 
@@ -85,13 +85,16 @@ get_time_values_from_xen(void)
 	volatile struct vcpu_time_info *t =
 	    &HYPERVISOR_shared_info->vcpu_info[0].time;
 	uint32_t tversion;
+
 	do {
-		tversion = t->version;
+		shadow_time_version = t->version;
 		x86_lfence();
 		shadow_tsc_stamp = t->tsc_timestamp;
 		shadow_system_time = t->system_time;
+		shadow_freq_mul = t->tsc_to_system_mul;
+		shadow_freq_shift = t->tsc_shift;
 		x86_lfence();
-	} while ((t->version & 1) || (tversion != t->version));
+	} while ((t->version & 1) || (shadow_time_version != t->version));
 	do {
 		tversion = HYPERVISOR_shared_info->wc_version;
 		x86_lfence();
@@ -114,20 +117,89 @@ get_time_values_from_xen(void)
 #endif
 }
 
+/*
+ * Are the values we have up to date?
+ */
+static inline int
+time_values_up_to_date(void)
+{
+	int rv;
+
+	x86_lfence();
+#ifndef XEN3
+	rv = shadow_time_version == HYPERVISOR_shared_info->time_version1;
+#else
+	rv = shadow_time_version == 
+	    HYPERVISOR_shared_info->vcpu_info[0].time.version;  /* XXXSMP */
+#endif
+	x86_lfence();
+
+	return rv;
+}
+
+#ifdef XEN3
+/*
+ * Xen 3 helpfully provides the CPU clock speed in the form of a multiplier
+ * and shift that can be used to convert a cycle count into nanoseconds
+ * without using an actual (slow) divide insn.
+ */
+static inline uint64_t
+scale_delta(uint64_t delta, uint32_t mul_frac, int8_t shift)
+{
+	if (shift < 0)
+		delta >>= -shift;
+	else
+		delta <<= shift;
+
+	/*
+	 * Here, we multiply a 64-bit and a 32-bit value, and take the top
+	 * 64 bits of that 96-bit product.  This is broken up into two
+	 * 32*32=>64-bit multiplies and a 64-bit add.  The casts are needed
+	 * to hint to GCC that both multiplicands really are 32-bit; the
+	 * generated code is still fairly bad, but not insanely so.
+	 */
+	return ((uint64_t)(uint32_t)(delta >> 32) * mul_frac)
+	    + ((((uint64_t)(uint32_t)(delta & 0xFFFFFFFF)) * mul_frac) >> 32);
+}
+#endif
+
 static uint64_t
 get_tsc_offset_ns(void)
 {
 	uint64_t tsc_delta, offset;
+#ifndef XEN3
 	struct cpu_info *ci = curcpu();
+#endif
 
 	tsc_delta = cpu_counter() - shadow_tsc_stamp;
+#ifndef XEN3
 	offset = tsc_delta * 1000000000ULL / cpu_frequency(ci);
+#else
+	offset = scale_delta(tsc_delta, shadow_freq_mul,
+	    shadow_freq_shift);
+#endif
 #ifdef XEN_CLOCK_DEBUG
 	if (offset > 10000000000ULL)
 		printf("get_tsc_offset_ns: tsc_delta=%llu offset=%llu\n",
-		    tsc_delta, offset); 
+		    tsc_delta, offset);
 #endif
 	return offset;
+}
+
+static uint64_t
+get_system_time(void)
+{
+	uint64_t stime;
+
+	for (;;) {
+		stime = shadow_system_time + get_tsc_offset_ns();
+		
+		/* if the timestamp went stale before we used it, refresh */
+		if (time_values_up_to_date())
+			break;
+		get_time_values_from_xen();
+	}
+	return stime;
 }
 
 void
@@ -329,6 +401,28 @@ xen_microtime(struct timeval *tv)
 		    " since last hardclock(9)\n", -cycles);
  	}
 #endif
+
+#ifndef XEN3
+	/*
+	 * Work around an intermittent Xen2 bug where, for a period of
+	 * 1<<32 ns, currently running domains don't get their timer
+	 * events as usual (and also aren't preempted in favor of
+	 * other runnable domains).  Setting the timer into the past
+	 * in this way causes it to fire immediately.
+	 */
+	if (cycles > cpu_frequency(ci) / 25 && time_values_up_to_date()) {
+		/*
+		 * 40ms; under Xen2 the timestamp updates and timer ticks
+		 * should arrive every 10ms.
+		 */
+#ifdef XEN_CLOCK_DEBUG
+		printf("xen_microtime: overlarge TSC offset %llu"
+		    " (pst=%llu sst=%llu); forcing timer...\n", cycles,
+		    processed_system_time, shadow_system_time);
+#endif
+		HYPERVISOR_set_timer_op(shadow_system_time);
+	}
+#endif
 	cycles += ci->ci_cc.cc_denom * cpu_frequency(ci) / 1000000000LL;
 	tv->tv_usec += cycles * ci->ci_cc.cc_ms_delta * hz / cpu_frequency(ci);
 #ifdef XEN_CLOCK_DEBUG
@@ -443,8 +537,7 @@ xen_timer_handler(void *arg, struct intrframe *regs)
 	newcc = cpu_counter();
 
 	ticks_done = 0;
-	delta = (int64_t)(shadow_system_time + get_tsc_offset_ns()
-	    - processed_system_time);
+	delta = (int64_t)(get_system_time() - processed_system_time);
 	while (delta >= (int64_t)NS_PER_TICK) {
 		/* Have hardclock do its thing. */
 		oldtime = time;
@@ -464,6 +557,13 @@ xen_timer_handler(void *arg, struct intrframe *regs)
 		processed_system_time += NS_PER_TICK;
 		ticks_done++;
 	}
+	/*
+	 * Re-arm the timer here, if needed; Xen's auto-ticking while runnable
+	 * is useful only for HZ==100, and even then may be out of phase with
+	 * the processed_system_time steps.
+	 */
+	if (ticks_done != 0)
+		HYPERVISOR_set_timer_op(processed_system_time + NS_PER_TICK);
 
 	/*
 	 * Right now, delta holds the number of ns elapsed from when the last
@@ -484,12 +584,16 @@ setstatclockrate(int arg)
 void
 idle_block(void)
 {
+	int s, r;
 	/*
 	 * We set the timer to when we expect the next timer
 	 * interrupt.  We could set the timer to later if we could
 	 * easily find out when we will have more work (callouts) to
 	 * process from hardclock.
 	 */
-	if (HYPERVISOR_set_timer_op(processed_system_time + NS_PER_TICK) == 0)
+	s = splclock();
+	r = HYPERVISOR_set_timer_op(processed_system_time + NS_PER_TICK);
+	splx(s);
+	if (r == 0)
 		HYPERVISOR_block();
 }

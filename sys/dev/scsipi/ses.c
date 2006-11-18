@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.35 2006/09/03 05:20:21 christos Exp $ */
+/*	$NetBSD: ses.c,v 1.35.2.1 2006/11/18 21:34:49 ad Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.35 2006/09/03 05:20:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.35.2.1 2006/11/18 21:34:49 ad Exp $");
 
 #include "opt_scsi.h"
 
@@ -184,7 +184,8 @@ static const struct scsipi_periphsw ses_switch = {
 };
 
 static int
-ses_match(struct device *parent, struct cfdata *match, void *aux)
+ses_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 
@@ -333,7 +334,8 @@ out:
 }
 
 static int
-sesclose(dev_t dev, int flags, int fmt, struct lwp *l)
+sesclose(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	struct ses_softc *softc;
 	int unit;
@@ -1038,7 +1040,8 @@ ses_getconfig(ses_softc_t *ssc)
 }
 
 static int
-ses_getputstat(ses_softc_t *ssc, int objid, SesComStat *sp, int slp, int in)
+ses_getputstat(ses_softc_t *ssc, int objid, SesComStat *sp, int slp,
+    int in)
 {
 	struct sscfg *cc;
 	int err, amt, bufsiz, tidx, oidx;

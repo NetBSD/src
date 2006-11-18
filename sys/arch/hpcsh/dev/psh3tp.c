@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.5 2005/12/14 00:08:34 christos Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.5.20.1 2006/11/18 21:29:17 ad Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -415,7 +415,7 @@ psh3tp_callout_wsmouse(void *self)
 		callout_schedule(&sc->sc_touch_ch, hz/32);
 	} else {
 		wsmouse_input( /* button up */
-		    sc->sc_wsmousedev, 0, 0, 0, 0, WSMOUSE_INPUT_DELTA);
+		    sc->sc_wsmousedev, 0, 0, 0, 0, 0, WSMOUSE_INPUT_DELTA);
 		psh3tp_stop_polling(sc);
 	}
 	splx(s);
@@ -437,8 +437,7 @@ psh3tp_wsmouse_input(struct psh3tp_softc *sc, int rawx, int rawy)
 
 	wsmouse_input(sc->sc_wsmousedev,
 	    1,	/* button */
-	    x, y,
-	    0,	/* flags */
+	    x, y, 0, 0,
 	    WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
 }
 

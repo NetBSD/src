@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.62 2006/08/27 05:07:12 christos Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.62.2.1 2006/11/18 21:34:46 ad Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.62 2006/08/27 05:07:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.62.2.1 2006/11/18 21:34:46 ad Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -1102,7 +1102,8 @@ rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
 }
 
 int
-rf_incorporate_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
+rf_incorporate_hot_spare(RF_Raid_t *raidPtr,
+    RF_SingleComponent_t *component)
 {
 
 	/* Issues here include how to 'move' this in if there is IO

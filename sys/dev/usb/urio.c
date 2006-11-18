@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.24 2006/09/03 21:30:24 christos Exp $	*/
+/*	$NetBSD: urio.c,v 1.24.2.1 2006/11/18 21:34:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.24 2006/09/03 21:30:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.24.2.1 2006/11/18 21:34:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,8 @@ urioopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-urioclose(dev_t dev, int flag, int mode, struct lwp *l)
+urioclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct urio_softc *sc;
 	USB_GET_SC(urio, URIOUNIT(dev), sc);

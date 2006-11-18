@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.1 2006/08/16 21:06:23 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.1 2006/09/09 16:17:50 riz Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.1.8.1 2006/11/18 21:34:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

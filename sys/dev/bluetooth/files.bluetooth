@@ -1,17 +1,18 @@
-#	$NetBSD: files.bluetooth,v 1.9 2006/07/26 10:43:02 tron Exp $
+#	$NetBSD: files.bluetooth,v 1.9.4.1 2006/11/18 21:34:04 ad Exp $
 #
 # Config file for machine independent Bluetooth devices
 
-# Bluetooth Devices
-defpseudo btdev { }
-file dev/bluetooth/btdev.c		btdev
+# Bluetooth Device Hub
+device bthub { }
+attach bthub at btbus
+file dev/bluetooth/bthub.c		bthub
 
 # HID "bus"
 define bthidbus {[ reportid = -1 ]}
 
 # HID Device
 device bthidev: bluetooth, bthidbus, hid
-attach bthidev at btdev
+attach bthidev at bthub
 file dev/bluetooth/bthidev.c		bthidev
 
 # HID Keyboards
@@ -28,5 +29,5 @@ file dev/bluetooth/btms.c		btms
 
 # SCO Audio
 device btsco: bluetooth, audiobus, auconv, mulaw, aurateconv
-attach btsco at btdev
+attach btsco at bthub
 file dev/bluetooth/btsco.c		btsco

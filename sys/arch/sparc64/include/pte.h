@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.17 2006/02/20 19:00:27 cdi Exp $ */
+/*	$NetBSD: pte.h,v 1.17.14.1 2006/11/18 21:29:33 ad Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -22,6 +22,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#ifndef _MACHINE_PTE_H_
+#define _MACHINE_PTE_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -291,3 +294,5 @@ typedef u_short pmeg_t;		/* 10 bits needed per Sun-4 segmap entry */
 		/* PTE FIELDS */
 #define SRMMU_PPNMASK	0xFFFFFF00
 #define SRMMU_PPNPASHIFT 0x4 		/* shift to put ppn into PAddr */
+
+#endif /* _MACHINE_PTE_H_ */

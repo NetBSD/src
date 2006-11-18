@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463.c,v 1.4 2006/04/30 18:54:20 xtraeme Exp $ */
+/*	$NetBSD: adt7463.c,v 1.4.10.1 2006/11/18 21:34:07 ad Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.4 2006/04/30 18:54:20 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.4.10.1 2006/11/18 21:34:07 ad Exp $");
 
 /* Fan speed control added by Hanns Hartman */
 #include <sys/param.h>
@@ -71,7 +71,8 @@ CFATTACH_DECL(adt7463c, sizeof(struct adt7463c_softc),
     adt7463c_match, adt7463c_attach, NULL, NULL);
 
 static int
-adt7463c_match(struct device *parent, struct cfdata *cf, void *aux)
+adt7463c_match(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
         struct i2c_attach_args *ia = aux;
 	struct adt7463c_softc sc;

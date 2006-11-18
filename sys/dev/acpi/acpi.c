@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.94 2006/08/06 15:46:54 christos Exp $	*/
+/*	$NetBSD: acpi.c,v 1.94.4.1 2006/11/18 21:34:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.94 2006/08/06 15:46:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.94.4.1 2006/11/18 21:34:03 ad Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -268,7 +268,8 @@ acpi_OsGetRootPointer(UINT32 Flags, ACPI_POINTER *PhysicalAddress)
  *	Autoconfiguration `match' routine.
  */
 static int
-acpi_match(struct device *parent, struct cfdata *match, void *aux)
+acpi_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	/*
 	 * XXX Check other locators?  Hard to know -- machine
@@ -1078,7 +1079,6 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			/* just enter the state */
 			acpi_md_OsDisableInterrupt();
 			AcpiEnterSleepState((UINT8)state);
-			AcpiUtReleaseMutex(ACPI_MTX_HARDWARE);
 		} else {
 			/* XXX: powerhooks(9) framework is too poor to
 			 * support ACPI sleep state...

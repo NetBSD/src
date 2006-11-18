@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.7 2006/06/07 18:03:00 smb Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.7.6.1 2006/11/18 21:34:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.7 2006/06/07 18:03:00 smb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.7.6.1 2006/11/18 21:34:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,8 @@ umodem_close(void *addr, int portno)
 }
 
 Static void
-umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct umodem_softc *sc = priv;
 	u_char mstatus;
@@ -467,8 +468,8 @@ umodem_param(void *addr, int portno, struct termios *t)
 }
 
 int
-umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
-	     usb_proc_ptr p)
+umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data,
+    int flag, usb_proc_ptr p)
 {
 	struct umodem_softc *sc = addr;
 	int error = 0;

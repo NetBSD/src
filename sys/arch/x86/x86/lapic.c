@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.16 2006/06/07 22:41:09 kardel Exp $ */
+/* $NetBSD: lapic.c,v 1.16.6.1 2006/11/18 21:29:39 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.16 2006/06/07 22:41:09 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.16.6.1 2006/11/18 21:29:39 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -620,6 +620,7 @@ lapic_hwunmask(struct pic *pic, int pin)
 }
 
 static void
-lapic_setup(struct pic *pic, struct cpu_info *ci, int pin, int idtvec, int type)
+lapic_setup(struct pic *pic, struct cpu_info *ci,
+    int pin, int idtvec, int type)
 {
 }

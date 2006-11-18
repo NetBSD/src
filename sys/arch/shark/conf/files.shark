@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.10 2005/12/11 12:19:02 christos Exp $
+#	$NetBSD: files.shark,v 1.10.20.1 2006/11/18 21:29:31 ad Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -43,7 +43,6 @@ include "dev/ofw/files.ofw"
 include "arch/arm/ofw/files.ofw"
 attach	ofbus at root with ofbus_root
 file	arch/shark/ofw/ofw.c
-file	arch/shark/ofw/oftodclock.c
 
 # console initialization
 file	arch/shark/shark/consinit.c

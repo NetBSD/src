@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.24 2006/08/28 21:37:37 christos Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.24.2.1 2006/11/18 21:34:57 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.24 2006/08/28 21:37:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.24.2.1 2006/11/18 21:34:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

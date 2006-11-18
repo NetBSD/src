@@ -1,4 +1,4 @@
-#	$NetBSD: std.lcard,v 1.6 2005/12/11 12:17:33 christos Exp $
+#	$NetBSD: std.lcard,v 1.6.20.1 2006/11/18 21:29:16 ad Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
@@ -17,7 +17,6 @@ options		NO_SYMBOLSZ_ENTRY
 
 options 	VR4181			# NEC VR4181
 
-options		YBASE=2000
 options		EPOCHYEAR=1970
 
 mainbus0	at root

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.16 2006/08/01 18:11:32 martin Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.16.4.1 2006/11/18 21:34:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.16 2006/08/01 18:11:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.16.4.1 2006/11/18 21:34:29 ad Exp $");
 #endif
 
 /*
@@ -117,7 +117,8 @@ CFATTACH_DECL(ath_pci,
     NULL);
 
 static int
-ath_pci_match(struct device *parent, struct cfdata *match, void *aux)
+ath_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	const char* devname;
 	struct pci_attach_args *pa = aux;
@@ -226,7 +227,8 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bad3;
 	}
 
-	phook = powerhook_establish(ath_pci_powerhook, psc);
+	phook = powerhook_establish(sc->sc_dev.dv_xname,
+	    ath_pci_powerhook, psc);
 	if (phook == NULL) {
 		aprint_error("couldn't make power hook\n");
 		goto bad3;

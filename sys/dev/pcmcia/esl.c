@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.19 2006/08/30 01:09:39 christos Exp $	*/
+/*	$NetBSD: esl.c,v 1.19.2.1 2006/11/18 21:34:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.19 2006/08/30 01:09:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.19.2.1 2006/11/18 21:34:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,8 +246,8 @@ esl_query_encoding(void *hdl, struct audio_encoding *ae)
 
 int
 esl_set_params(void *hdl, int setmode, int usemode,
-	       audio_params_t *play, audio_params_t *rec,
-	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+    audio_params_t *play, audio_params_t *rec,
+    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
 	struct esl_pcmcia_softc *sc;
@@ -298,7 +298,8 @@ esl_set_params(void *hdl, int setmode, int usemode,
 }
 
 int
-esl_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
+esl_round_blocksize(void *hdl, int bs, int mode,
+    const audio_params_t *param)
 {
 
 	return (bs / 128) * 128;

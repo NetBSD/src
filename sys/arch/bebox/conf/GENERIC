@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.101 2006/08/26 07:59:21 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.101.2.1 2006/11/18 21:29:08 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.101 $"
+#ident 		"GENERIC-$Revision: 1.101.2.1 $"
 
 maxusers	32
 
@@ -56,6 +56,7 @@ options 	COMPAT_10
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -77,7 +78,7 @@ file-system 	PROCFS
 file-system 	UMAPFS
 file-system 	UNION
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 #options 	FFS_EI		# FFS Endian Independant support
@@ -186,6 +187,8 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
+
+mcclock0 at isa? port 0x70		# time-of-day clock
 
 #pc0	at isa? port 0x60 irq 1		# generic PC console device
 

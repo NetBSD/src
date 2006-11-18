@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.44 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.44.20.1 2006/11/18 21:29:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -108,13 +108,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.44 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.44.20.1 2006/11/18 21:29:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+
+#include <dev/clock_subr.h>
 
 #include <machine/autoconf.h>
 #include <machine/psl.h>
@@ -134,6 +136,8 @@ int	clock_debug = 0;
 #endif
 
 void	rtclock_intr(void);
+static int mac68k_gettime(todr_chip_handle_t, volatile struct timeval *);
+static int mac68k_settime(todr_chip_handle_t, volatile struct timeval *);
 
 #define	DIFF19041970	2082844800
 #define	DIFF19701990	630720000
@@ -181,7 +185,13 @@ enablertclock(void)
 void
 cpu_initclocks(void)
 {
+	static struct todr_chip_handle todr = {
+		.todr_settime = mac68k_settime,
+		.todr_gettime = mac68k_gettime,
+	};
+	
 	enablertclock();
+	todr_attach(&todr);
 }
 
 void
@@ -332,7 +342,7 @@ ugmt_2_pramt(u_long t)
 	/* don't know how to open a file properly. */
 	/* assume compiled timezone is correct. */
 
-	return (t = t + DIFF19041970 - 60 * rtc_offset);
+	return (t = t + DIFF19041970);
 }
 
 /*
@@ -342,7 +352,7 @@ ugmt_2_pramt(u_long t)
 static u_long
 pramt_2_ugmt(u_long t)
 {
-	return (t = t - DIFF19041970 + 60 * rtc_offset);
+	return (t = t - DIFF19041970);
 }
 
 /*
@@ -367,65 +377,29 @@ int	mac68k_trust_pram = 1;
  * Set global GMT time register, using a file system time base for comparison
  * and sanity checking.
  */
-void
-inittodr(time_t base)
+int
+mac68k_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	u_long timbuf;
 
 	timbuf = pramt_2_ugmt(pram_readtime());
-	if ((timbuf - (macos_boottime + 60 * rtc_offset)) > 10 * 60) {
+	if ((timbuf - macos_boottime) > 10 * 60) {
 #if DIAGNOSTIC
 		printf(
 		    "PRAM time does not appear to have been read correctly.\n");
 		printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
-		    timbuf, macos_boottime + 60 * rtc_offset);
+		    timbuf, macos_boottime);
 #endif
 		timbuf = macos_boottime;
 		mac68k_trust_pram = 0;
 	}
-#ifdef DIAGNOSTIC
-	else
-		printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
-		    timbuf, macos_boottime);
-#endif
-
-	/*
-	 * GMT bias is passed in from Booter
-	 * To get GMT, *subtract* GMTBIAS from *our* time
-	 * (gmtbias is in minutes, mult by 60)
-	 */
-	timbuf -= macos_gmtbias * 60;
-
-	if (base < 5 * SECYR) {
-		printf("WARNING: file system time earlier than 1975\n");
-		printf(" -- CHECK AND RESET THE DATE!\n");
-		base = 21 * SECYR;	/* 1991 is our sane date */
-	}
-	/*
-	 * Check sanity against the year 2010.  Let's hope NetBSD/mac68k
-	 * doesn't run that long!
-	 */
-	if (base > 40 * SECYR) {
-		printf("WARNING: file system time later than 2010\n");
-		printf(" -- CHECK AND RESET THE DATE!\n");
-		base = 21 * SECYR;	/* 1991 is our sane date */
-	}
-	if (timbuf < base) {
-		printf(
-		    "WARNING: Battery clock has earlier time than UNIX fs.\n");
-		if (((u_long) base) < (40 * SECYR))
-			timbuf = base;
-	}
-	time.tv_sec = timbuf;
-	time.tv_usec = 0;
+	tvp->tv_sec = timbuf;
+	tvp->tv_usec = 0;
+	return 0;
 }
 
-/*
- * Set battery backed clock to a new time, presumably after someone has
- * changed system time.
- */
-void
-resettodr(void)
+int
+mac68k_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	if (mac68k_trust_pram)
 		/*
@@ -439,8 +413,8 @@ resettodr(void)
 		printf("NetBSD/mac68k does not trust itself to try and write "
 		    "to the PRAM on this system.\n");
 #endif
+	return 0;
 }
-
 
 /*
  * The Macintosh timers decrement once every 1.2766 microseconds.

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.110 2006/07/22 15:09:09 martin Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.110.4.1 2006/11/18 21:34:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.110 2006/07/22 15:09:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.110.4.1 2006/11/18 21:34:16 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -587,10 +587,7 @@ zsopen(dev, flags, mode, l)
 	if (tp == NULL)
 		return (EBUSY);
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -839,8 +836,8 @@ zsioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag);
+		error = kauth_authorize_device_tty(l->l_cred, 
+			KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		zst->zst_swflags = *(int *)data;

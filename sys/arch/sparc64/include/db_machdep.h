@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.19 2006/04/01 15:45:00 cherry Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.19.8.1 2006/11/18 21:29:33 ad Exp $ */
 
 /*
  * Mach Operating System
@@ -52,28 +52,32 @@ struct trapstate {
 };
 
 typedef struct {
-	struct trapframe64	ddb_tf;
-	struct frame64		ddb_fr;
-	struct trapstate	ddb_ts[5];
-	int			ddb_tl;
-	struct fpstate64	ddb_fpstate;
+	struct trapframe64	db_tf;
+	struct frame64		db_fr;
+	struct trapstate	db_ts[5];
+	int			db_tl;
+	struct fpstate64	db_fpstate;
 } db_regs_t;
 
-extern db_regs_t		ddb_regs;
-#define	DDB_REGS	(&ddb_regs)
-#define	DDB_TF		(&ddb_regs.ddb_tf)
-#define	DDB_FR		(&ddb_regs.ddb_fr)
-#define	DDB_FP		(&ddb_regs.ddb_fpstate)
+/* Current CPU register state */
+extern struct cpu_info	*ddb_cpuinfo;
+extern db_regs_t	*ddb_regp;
+#define	DDB_REGS	ddb_regp
+#define	DDB_TF		(&ddb_regp->db_tf)
+#define	DDB_FP		(&ddb_regp->db_fpstate)
 
-#if defined(lint)
-#define	PC_REGS(regs)	((regs)->ddb_tf.tf_pc)
-#else
-#define	PC_REGS(regs)	((db_addr_t)(regs)->ddb_tf.tf_pc)
-#endif
+/* DDB commands not in db_interface.c */
+void	db_dump_ts(db_expr_t, int, db_expr_t, const char *);
+void	db_dump_trap(db_expr_t, int, db_expr_t, const char *);
+void	db_dump_fpstate(db_expr_t, int, db_expr_t, const char *);
+void	db_dump_window(db_expr_t, int, db_expr_t, const char *);
+void	db_dump_stack(db_expr_t, int, db_expr_t, const char *);
+
+#define	PC_REGS(regs)	((regs)->db_tf.tf_pc)
 #define	PC_ADVANCE(regs) do {				\
-	vaddr_t n = (regs)->ddb_tf.tf_npc;		\
-	(regs)->ddb_tf.tf_pc = n;			\
-	(regs)->ddb_tf.tf_npc = n + 4;			\
+	vaddr_t n = (regs)->db_tf.tf_npc;		\
+	(regs)->db_tf.tf_pc = n;			\
+	(regs)->db_tf.tf_npc = n + 4;			\
 } while(0)
 
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
@@ -113,7 +117,7 @@ db_addr_t	db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
 
 /* see note in db_interface.c about reversed breakpoint addrs */
 #define next_instr_address(pc, bd) \
-	((bd) ? (pc) : ddb_regs.ddb_tf.tf_npc)
+	((bd) ? (pc) : ddb_regp->db_tf.tf_npc)
 
 #define DB_MACHINE_COMMANDS
 

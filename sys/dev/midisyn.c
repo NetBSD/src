@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.18 2006/06/30 13:56:25 chap Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.18.4.1 2006/11/18 21:34:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.18 2006/06/30 13:56:25 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.18.4.1 2006/11/18 21:34:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -132,7 +132,7 @@ struct channelstate { /* dyamically allocated in open() on account of size */
 
 int
 midisyn_open(void *addr, int flags, void (*iintr)(void *, int),
-	     void (*ointr)(void *), void *arg)
+    void (*ointr)(void *), void *arg)
 {
 	midisyn *ms = addr;
 	int rslt;
@@ -311,7 +311,8 @@ midisyn_sysrt(void *addr, int b)
 	return 0;
 }
 
-int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
+int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf,
+    int len)
 {
 	midisyn *ms = addr;
 	int voice = 0;		/* initialize to keep gcc quiet */
@@ -399,7 +400,8 @@ int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 	return 0;
 }
 
-int midisyn_commonmsg(void *addr, int status, u_char *buf, int len)
+int midisyn_commonmsg(void *addr, int status,
+    u_char *buf, int len)
 {
 	return 0;
 }

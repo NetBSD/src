@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.93 2006/08/27 05:07:13 christos Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.93.2.1 2006/11/18 21:34:47 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.93 2006/08/27 05:07:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.93.2.1 2006/11/18 21:34:47 ad Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -1593,7 +1593,8 @@ static int
 CheckForcedOrBlockedReconstruction(RF_Raid_t *raidPtr,
 				   RF_ReconParityStripeStatus_t *pssPtr,
 				   RF_PerDiskReconCtrl_t *ctrl,
-				   RF_RowCol_t col, RF_StripeNum_t psid,
+				   RF_RowCol_t col,
+				   RF_StripeNum_t psid,
 				   RF_ReconUnitNum_t which_ru)
 {
 	RF_CallbackDesc_t *cb;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.69 2006/07/28 08:02:39 scottr Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.69.4.1 2006/11/18 21:34:43 ad Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.69 2006/07/28 08:02:39 scottr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.69.4.1 2006/11/18 21:34:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,10 +252,8 @@ static const size_t wi_pcmcia_nproducts =
     sizeof(wi_pcmcia_products) / sizeof(wi_pcmcia_products[0]);
 
 static int
-wi_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+wi_pcmcia_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -324,9 +322,8 @@ wi_pcmcia_validate_config(cfe)
 }
 
 static void
-wi_pcmcia_attach(parent, self, aux)
-	struct device  *parent, *self;
-	void           *aux;
+wi_pcmcia_attach(struct device  *parent, struct device *self,
+    void *aux)
 {
 	struct wi_pcmcia_softc *psc = (void *)self;
 	struct wi_softc *sc = &psc->sc_wi;
@@ -378,7 +375,8 @@ wi_pcmcia_attach(parent, self, aux)
 	}
 
 	psc->sc_sdhook    = shutdownhook_establish(wi_pcmcia_shutdown, psc);
-	psc->sc_powerhook = powerhook_establish(wi_pcmcia_powerhook, psc);
+	psc->sc_powerhook = powerhook_establish(self->dv_xname,
+	    wi_pcmcia_powerhook, psc);
 
 	wi_pcmcia_disable(sc);
 	psc->sc_state = WI_PCMCIA_ATTACHED;
@@ -391,9 +389,7 @@ fail:
 }
 
 static int
-wi_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+wi_pcmcia_detach(struct device *self, int flags)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)self;
 	int error;

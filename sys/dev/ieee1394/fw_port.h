@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.16 2006/08/30 01:59:06 christos Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.16.2.1 2006/11/18 21:34:20 ad Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -132,7 +132,8 @@ typedef struct proc fw_proc;
  */
 #define FW_CLOSE(dname)		\
 	int			\
-	__CONCAT(dname,_close)(DEV_T dev, int flags, int fmt, fw_proc *td)
+	__CONCAT(dname,_close)(DEV_T dev, int flags, \
+	int fmt, fw_proc *td)
 #define FW_CLOSE_START
 
 /*
@@ -613,7 +614,8 @@ struct fwbus_attach_args {
  */
 #define FW_OPEN(dname)	\
 	int		\
-	__CONCAT(dname,_open)(dev_t _dev, int flags, int fmt, fw_proc *td)
+	__CONCAT(dname,_open)(dev_t _dev, int flags, int fmt,  \
+	fw_proc *td)
 #define FW_OPEN_START							\
 	struct firewire_softc *sc, *dev;				\
 									\
@@ -626,7 +628,8 @@ struct fwbus_attach_args {
  */
 #define FW_CLOSE(dname)		\
 	int			\
-	__CONCAT(dname,_close)(dev_t _dev, int flags, int fmt, fw_proc *td)
+	__CONCAT(dname,_close)(dev_t _dev, int flags, \
+	int fmt, fw_proc *td)
 #define FW_CLOSE_START							  \
 	int unit = DEV2UNIT(_dev);					  \
 	struct firewire_softc *dev = device_lookup(&ieee1394if_cd, unit); \
@@ -668,7 +671,8 @@ struct fwbus_attach_args {
 #define FW_IOCTL(dname)					\
 	int						\
 	__CONCAT(dname,_ioctl)				\
-	    (dev_t _dev, u_long cmd, caddr_t data, int flag, fw_proc *td)
+	    (dev_t _dev, u_long cmd, caddr_t data,	\
+	    int flag, fw_proc *td)
 #define FW_IOCTL_START					\
 	int unit = DEV2UNIT(_dev);			\
 	struct firewire_softc *sc, *dev;		\
@@ -682,7 +686,8 @@ struct fwbus_attach_args {
  */
 #define FW_POLL(dname)	\
 	int		\
-	__CONCAT(dname,_poll)(dev_t _dev, int events, fw_proc *td)
+	__CONCAT(dname,_poll)(dev_t _dev, int events, \
+	fw_proc *td)
 #define FW_POLL_START					\
 	int unit = DEV2UNIT(_dev);			\
 	struct firewire_softc *dev;			\
@@ -696,7 +701,8 @@ struct fwbus_attach_args {
  */
 #define FW_MMAP(dname)	\
 	paddr_t		\
-	__CONCAT(dname,_mmap)(dev_t _dev, off_t offset, int nproto)
+	__CONCAT(dname,_mmap)(dev_t _dev, off_t offset, \
+	int nproto)
 #define FW_MMAP_START					\
 	int unit = DEV2UNIT(_dev);			\
 	struct firewire_softc *dev;			\
@@ -748,7 +754,8 @@ struct fwbus_attach_args {
 		struct fwbus_attach_args faa;				      \
 		faa.name = "ieee1394if";				      \
 		sc->sc_shutdownhook = shutdownhook_establish(fwohci_stop, sc);\
-		sc->sc_powerhook = powerhook_establish(fwohci_power, sc);     \
+		sc->sc_powerhook = powerhook_establish(sc->fc._dev.dv_xname,  \
+		    fwohci_power, sc);					      \
 		sc->fc.bdev = config_found(sc->fc.dev, &faa, fwohci_print);   \
 	} while (/*CONSTCOND*/0)
 #define FWOHCI_DETACH()	\
@@ -1074,7 +1081,9 @@ typedef struct scsipi_inquiry_data sbp_scsi_inquiry_data;
 #define splsoftvm()	splbio()
 
 #define roundup2(x, y) roundup((x), (y))
+#ifndef rounddown
 #define rounddown(x, y) ((x) / (y) * (y))
+#endif
 
 #define timevalcmp(tv1, tv2, op)	timercmp((tv1), (tv2), op)
 #define timevalsub(tv1, tv2)		timersub((tv1), (tv2), (tv1))

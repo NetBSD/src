@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.8.20.1 2006/11/18 21:29:11 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2005/12/24 20:07:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.20.1 2006/11/18 21:29:11 ad Exp $");
 
 #include "opt_ppcparam.h"
 
@@ -87,130 +87,6 @@ yeartoday(int year)
 #define SECPERNYEAR	(365*SECPERDAY)
 #define SECPER4YEARS	(4*SECPERNYEAR+SECPERDAY)
 #define EPOCHYEAR	1970
-
-/*
- * Initialze the time of day register, based on the time base which is, e.g.
- * from a filesystem.  Base provides the time to within six months,
- * and the time of year clock (if any) provides the rest.
- */
-#define MINYEAR			2002	/* minimum plausible year */
-void
-inittodr(base)
-	time_t base;
-{
-#if NRTC > 0
-	rtc_t rtc;
-	int year;
-	struct clock_ymdhms dt;
-	time_t deltat;
-	int badbase;
-	int s;
-
-	if (base < (MINYEAR-1970)*SECYR) {
-		printf("WARNING: preposterous time in file system");
-		/* read the system clock anyway */
-		base = (MINYEAR-1970)*SECYR;
-		badbase = 1;
-	} else
-		badbase = 0;
-
-	s = splclock();
-	rtc_read(&rtc);
-	(void)splx(s);
-
-#if defined(DEBUG) && 0
-	printf("inittodr: %02d%02d/%02d/%02d %02d:%02d:%02d\n",
-		rtc.rtc_century, rtc.rtc_year, rtc.rtc_month, rtc.rtc_day,
-		rtc.rtc_hour, rtc.rtc_minute, rtc.rtc_second);
-#endif
-	clockinitted = 1;
-
-	year = (rtc.rtc_century * 100) + rtc.rtc_year;
-
-	/* simple sanity checks (2037 = time_t overflow) */
-	if (year < MINYEAR || year > 2037 ||
-	    rtc.rtc_month < 1 || rtc.rtc_month > 12 || rtc.rtc_day < 1 ||
-	    rtc.rtc_day > 31 || rtc.rtc_hour > 23 || rtc.rtc_minute > 59 ||
-	    rtc.rtc_second > 59) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
-		 */
-		time.tv_sec = base;
-		if (!badbase) {
-			printf("WARNING: preposterous clock chip time\n");
-			resettodr();
-		}
-		goto bad;
-	}
-
-	dt.dt_year = year;
-	dt.dt_mon = rtc.rtc_month;
-	dt.dt_day = rtc.rtc_day;
-	dt.dt_hour = rtc.rtc_hour;
-	dt.dt_min = rtc.rtc_minute;
-	dt.dt_sec = rtc.rtc_second;
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days;
-		 * if so, assume something is amiss.
-		 */
-		deltat = time.tv_sec - base;
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;				/* all is well */
-		printf("WARNING: clock %s %ld days\n",
-		    time.tv_sec < base ? "lost" : "gained",
-		    (long)deltat / SECDAY);
-	}
-bad:
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
-#else	/* NRTC */
-	time.tv_sec = base;
-#endif /* NRTC */
-}
-
-/*
- * Reset the TODR based on the time value; used when the TODR
- * has a preposterous value and also when the time is reset
- * by the stime system call.  Also called when the TODR goes past
- * TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
- * to wrap the TODR around.
- */
-void
-resettodr()
-{
-#if NRTC > 0
-	struct clock_ymdhms dt;
-	rtc_t rtc;
-	int s;
-
-	if (!clockinitted)
-		return;
-
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
-
-	rtc.rtc_century = dt.dt_year / 100;
-	rtc.rtc_year = dt.dt_year % 100;
-	rtc.rtc_month = dt.dt_mon;
-	rtc.rtc_day = dt.dt_day;
-	rtc.rtc_hour = dt.dt_hour;
-	rtc.rtc_minute = dt.dt_min;
-	rtc.rtc_second = dt.dt_sec;
-#if defined(DEBUG) && 0
-	printf("resettodr: %02d%02d/%02d/%02d %02d:%02d:%02d\n",
-		rtc.rtc_century, rtc.rtc_year, rtc.rtc_month, rtc.rtc_day,
-		rtc.rtc_hour, rtc.rtc_minute, rtc.rtc_second);
-#endif
-
-	s = splclock();
-	rtc_write(&rtc);
-	(void)splx(s);
-#endif /* NRTC */
-}
 
 #ifdef DEBUG
 struct clockframe *clockframe = 0;

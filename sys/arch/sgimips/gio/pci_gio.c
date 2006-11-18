@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.1 2006/08/30 23:58:13 rumble Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.1.4.1 2006/11/18 21:29:30 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.1 2006/08/30 23:58:13 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.1.4.1 2006/11/18 21:29:30 ad Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -73,6 +73,7 @@ struct giopci_softc {
 	struct sgimips_pci_chipset	sc_pc;
 	int				sc_slot;
 	int				sc_gprid;
+	uint32_t			sc_pci_len;
 	bus_space_tag_t			sc_iot;
 	bus_space_handle_t		sc_ioh;
 };
@@ -190,6 +191,7 @@ giopci_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: unable to map PCI registers\n",sc->sc_dev.dv_xname);
 		return;
 	}
+	sc->sc_pci_len = pci_len;
 
 	pc->pc_bus_maxdevs	= giopci_bus_maxdevs;
 	pc->pc_conf_read	= giopci_conf_read;
@@ -239,6 +241,12 @@ giopci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	if (bus != 0 || dev != 0 || func != 0)
 		return (0);
 
+	/* XXX - should just use bus_space_peek */
+	if (reg >= sc->sc_pci_len) {
+		DPRINTF(("giopci_conf_read: reg 0x%x out of bounds\n", reg));
+		return (0);
+	}
+
 	DPRINTF(("giopci_conf_read: reg 0x%x = 0x", reg));
 	data = bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg);
 	DPRINTF(("%08x\n", data));
@@ -255,6 +263,13 @@ giopci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 	if (bus != 0 || dev != 0 || func != 0)
 		return;
+
+	/* XXX - should just use bus_space_poke */
+	if (reg >= sc->sc_pci_len) {
+		DPRINTF(("giopci_conf_write: reg 0x%x out of bounds "
+		    "(val = 0x%08x)\n", reg, data));
+		return;
+	}
 
 	DPRINTF(("giopci_conf_write: reg 0x%x = 0x%08x\n", reg, data));
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, reg, data);

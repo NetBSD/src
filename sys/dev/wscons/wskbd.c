@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.94 2006/08/28 21:33:16 christos Exp $ */
+/* $NetBSD: wskbd.c,v 1.94.2.1 2006/11/18 21:34:57 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.94 2006/08/28 21:33:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.94.2.1 2006/11/18 21:34:57 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -839,7 +839,8 @@ wskbd_do_open(struct wskbd_softc *sc, struct wseventvar *evp)
 }
 
 int
-wskbdclose(dev_t dev, int flags, int mode, struct lwp *l)
+wskbdclose(dev_t dev, int flags, int mode,
+    struct lwp *l)
 {
 	struct wskbd_softc *sc =
 	    (struct wskbd_softc *)wskbd_cd.cd_devs[minor(dev)];

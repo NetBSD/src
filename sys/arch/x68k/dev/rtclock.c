@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.18 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.18.20.1 2006/11/18 21:29:38 ad Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.18 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.18.20.1 2006/11/18 21:29:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.18 2005/12/11 12:19:37 christos Exp $"
 #include <arch/x68k/dev/rtclock_var.h>
 #include <arch/x68k/dev/intiovar.h>
 
-static time_t rtgettod(void);
-static int  rtsettod(long);
+static int rtgettod(todr_chip_handle_t, struct clock_ymdhms *);
+static int rtsettod(todr_chip_handle_t, struct clock_ymdhms *);
 
 static int rtc_match(struct device *, struct cfdata *, void *);
 static void rtc_attach(struct device *, struct device *, void *);
@@ -87,9 +87,6 @@ rtc_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-
-static struct rtc_softc *rtc;	/* XXX: softc cache */
-
 static void 
 rtc_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -109,65 +106,42 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_bst = ia->ia_bst;
 	bus_space_map(sc->sc_bst, ia->ia_addr, 0x2000, 0, &sc->sc_bht);
-	rtc = sc;
 
-	rtclockinit();
+	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_gettime_ymdhms = rtgettod;
+	sc->sc_todr.todr_settime_ymdhms = rtsettod;
+	todr_attach(&sc->sc_todr);
+
 	printf (": RP5C15\n");
 }
 
-
-
-/*
- * x68k/clock.c calls thru the get/set tod vector, if it is set, to read
- * the realtime clock.
- */
-
-int
-rtclockinit(void)
+static int
+rtgettod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	if (rtgettod())	{
-		gettod = rtgettod;
-		settod = rtsettod;
-	} else {
-		return 0;
-	}
-	return 1;
-}
-
-static time_t
-rtgettod(void)
-{
-	struct clock_ymdhms dt;
+	struct rtc_softc *rtc = tch->cookie;
 
 	/* hold clock */
 	RTC_WRITE(RTC_MODE, RTC_HOLD_CLOCK);
 
 	/* read it */
-	dt.dt_sec  = RTC_REG(RTC_SEC10)  * 10 + RTC_REG(RTC_SEC);
-	dt.dt_min  = RTC_REG(RTC_MIN10)  * 10 + RTC_REG(RTC_MIN);
-	dt.dt_hour = RTC_REG(RTC_HOUR10) * 10 + RTC_REG(RTC_HOUR);
-	dt.dt_day  = RTC_REG(RTC_DAY10)  * 10 + RTC_REG(RTC_DAY);
-	dt.dt_mon  = RTC_REG(RTC_MON10)  * 10 + RTC_REG(RTC_MON);
-	dt.dt_year = RTC_REG(RTC_YEAR10) * 10 + RTC_REG(RTC_YEAR)
+	dt->dt_sec  = RTC_REG(RTC_SEC10)  * 10 + RTC_REG(RTC_SEC);
+	dt->dt_min  = RTC_REG(RTC_MIN10)  * 10 + RTC_REG(RTC_MIN);
+	dt->dt_hour = RTC_REG(RTC_HOUR10) * 10 + RTC_REG(RTC_HOUR);
+	dt->dt_day  = RTC_REG(RTC_DAY10)  * 10 + RTC_REG(RTC_DAY);
+	dt->dt_mon  = RTC_REG(RTC_MON10)  * 10 + RTC_REG(RTC_MON);
+	dt->dt_year = RTC_REG(RTC_YEAR10) * 10 + RTC_REG(RTC_YEAR)
 							+RTC_BASE_YEAR;
 
 	/* let it run again.. */
 	RTC_WRITE(RTC_MODE, RTC_FREE_CLOCK);
 
-#ifdef DIAGNOSTIC
-	range_test0(dt.dt_hour, 23);
-	range_test(dt.dt_day, 1, 31);
-	range_test(dt.dt_mon, 1, 12);
-	range_test(dt.dt_year, RTC_BASE_YEAR, RTC_BASE_YEAR+100-1);
-#endif
-  
-	return clock_ymdhms_to_secs (&dt) + rtc_offset * 60;
+	return 0;
 }
 
 static int
-rtsettod(time_t tim)
+rtsettod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct clock_ymdhms dt;
+	struct rtc_softc *rtc = tch->cookie;
 	u_char sec1, sec2;
 	u_char min1, min2;
 	u_char hour1, hour2;
@@ -175,22 +149,20 @@ rtsettod(time_t tim)
 	u_char mon1, mon2;
 	u_char year1, year2;
 
-	clock_secs_to_ymdhms (tim - rtc_offset * 60, &dt);
-
 	/* prepare values to be written to clock */
-	sec1  = dt.dt_sec  / 10;
-	sec2  = dt.dt_sec  % 10;
-	min1  = dt.dt_min  / 10;
-	min2  = dt.dt_min  % 10;
-	hour1 = dt.dt_hour / 10;
-	hour2 = dt.dt_hour % 10;
+	sec1  = dt->dt_sec  / 10;
+	sec2  = dt->dt_sec  % 10;
+	min1  = dt->dt_min  / 10;
+	min2  = dt->dt_min  % 10;
+	hour1 = dt->dt_hour / 10;
+	hour2 = dt->dt_hour % 10;
 
-	day1  = dt.dt_day  / 10;
-	day2  = dt.dt_day  % 10;
-	mon1  = dt.dt_mon  / 10;
-	mon2  = dt.dt_mon  % 10;
-	year1 = (dt.dt_year - RTC_BASE_YEAR) / 10;
-	year2 = dt.dt_year % 10;
+	day1  = dt->dt_day  / 10;
+	day2  = dt->dt_day  % 10;
+	mon1  = dt->dt_mon  / 10;
+	mon2  = dt->dt_mon  % 10;
+	year1 = (dt->dt_year - RTC_BASE_YEAR) / 10;
+	year2 = dt->dt_year % 10;
 
 	RTC_WRITE(RTC_MODE,   RTC_HOLD_CLOCK);
 	RTC_WRITE(RTC_SEC10,  sec1);
@@ -207,5 +179,5 @@ rtsettod(time_t tim)
 	RTC_WRITE(RTC_YEAR,   year2);
 	RTC_WRITE(RTC_MODE,   RTC_FREE_CLOCK);
 
-	return 1;
+	return 0;
 }

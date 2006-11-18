@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.17 2006/09/03 05:02:21 christos Exp $ */
+/* $NetBSD: radio.c,v 1.17.2.1 2006/11/18 21:34:03 ad Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.17 2006/09/03 05:02:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.17.2.1 2006/11/18 21:34:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,8 @@ const struct cdevsw radio_cdevsw = {
 extern struct cfdriver radio_cd;
 
 int
-radioprobe(struct device *parent, struct cfdata *match, void *aux)
+radioprobe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	return (1);
 }
@@ -117,7 +118,8 @@ radioclose(dev_t dev, int flags, int fmt, struct lwp *l)
 }
 
 int
-radioioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+radioioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
+    struct lwp *l)
 {
 	struct radio_softc *sc;
 	int unit, error;

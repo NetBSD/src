@@ -1,11 +1,11 @@
-#	$NetBSD: files.pcmcia,v 1.50 2006/06/21 17:14:13 drochner Exp $
+#	$NetBSD: files.pcmcia,v 1.50.4.1 2006/11/18 21:34:43 ad Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
 
 defflag				PCMCIAVERBOSE
 
-device	pcmcia {[function = -1], [irq = -1]}
+device	pcmcia {[function = -1]}
 file	dev/pcmcia/pcmcia.c			pcmcia
 file	dev/pcmcia/pcmcia_cis.c			pcmcia
 file	dev/pcmcia/pcmcia_cis_quirks.c		pcmcia
@@ -142,6 +142,6 @@ attach	opl at esl with opl_esl
 file	dev/pcmcia/opl_esl.c			opl_esl
 
 # 3Com Bluetooth controller 3CRW6096
-device	bt3c: bluetooth, firmload
+device	bt3c: btbus, bluetooth, firmload
 attach	bt3c at pcmcia
 file	dev/pcmcia/bt3c.c			bt3c		needs-flag

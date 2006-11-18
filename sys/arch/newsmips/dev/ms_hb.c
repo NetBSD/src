@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.10 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.10.20.1 2006/11/18 21:29:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.10 2005/12/11 12:18:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.10.20.1 2006/11/18 21:29:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -169,8 +169,10 @@ ms_hb_intr(void *v)
 			else
 				dy = byte2;
 
-			wsmouse_input(sc->sc_wsmousedev, button, dx, -dy, 0,
-			    WSMOUSE_INPUT_DELTA);
+			wsmouse_input(sc->sc_wsmousedev,
+					button,
+					dx, -dy, 0, 0,
+					WSMOUSE_INPUT_DELTA);
 		}
 	}
 

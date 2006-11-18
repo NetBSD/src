@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.64 2006/08/16 09:47:26 bjh21 Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.64.2.1 2006/11/18 21:28:58 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.64 2006/08/16 09:47:26 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.64.2.1 2006/11/18 21:28:58 ad Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -209,7 +209,6 @@ extern void dump_spl_masks(void);
 
 void rpc_sa110_cc_setup(void);
 
-extern void parse_mi_bootargs(char *args);
 void parse_rpc_bootargs(char *args);
 
 extern void dumpsys(void);

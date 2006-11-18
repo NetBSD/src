@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.4 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: ms.c,v 1.4.20.1 2006/11/18 21:29:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.4 2005/12/11 12:18:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.4.20.1 2006/11/18 21:29:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -92,7 +92,9 @@ ms_intr(struct ms_softc *sc)
 		if (byte0 & MS_S_YSIGN)
 			dy = -dy;
 
-		wsmouse_input(sc->sc_wsmousedev, button, dx, -dy, 0,
-		    WSMOUSE_INPUT_DELTA);
+		wsmouse_input(sc->sc_wsmousedev,
+				button,
+				dx, -dy, 0, 0,
+		    		WSMOUSE_INPUT_DELTA);
 	}
 }

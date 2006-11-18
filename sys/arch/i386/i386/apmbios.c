@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.3 2006/07/17 21:04:17 salo Exp $ */
+/*	$NetBSD: apmbios.c,v 1.3.6.1 2006/11/18 21:29:18 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.3 2006/07/17 21:04:17 salo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.3.6.1 2006/11/18 21:29:18 ad Exp $");
 
 #include "opt_apm.h"
 #include "opt_compat_mach.h"	/* Needed to get the right segment def */
@@ -353,7 +353,7 @@ apm_get_powstat(void *c, u_int batteryid, struct apm_power_info *pi)
 {
 	struct bioscallregs regs;
 	int error;
-	u_int nbattery, caps;
+	u_int nbattery = 0, caps;
 
 	if (apm_minver >= 2) {
 		apm_get_capabilities(&regs, &nbattery, &caps);
@@ -435,7 +435,8 @@ apm_busprobe(void)
 }
 
 static int
-apmbiosmatch(struct device *parent, struct cfdata *match, void *aux)
+apmbiosmatch(struct device *parent, struct cfdata *match,
+	     void *aux)
 {
 	/* There can be only one! */
 	if (apm_inited)
@@ -467,7 +468,8 @@ apmbiosmatch(struct device *parent, struct cfdata *match, void *aux)
 	    (bits), sizeof(bits)), (regs).ESI, (regs).EDI))
 
 static void
-apmbiosattach(struct device *parent, struct device *self, void *aux)
+apmbiosattach(struct device *parent, struct device *self,
+	      void *aux)
 {
 	struct apm_softc *apmsc = (void *)self;
 	struct bioscallregs regs;

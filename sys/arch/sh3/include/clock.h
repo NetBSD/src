@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.h,v 1.2 2002/04/28 17:10:33 uch Exp $	*/
+/*	$NetBSD: clock.h,v 1.2.58.1 2006/11/18 21:29:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -58,32 +58,16 @@
  *	file, this value is estimated by sh_clock_init().
  *
  */
-struct rtc_ops;
-struct clock_ymdhms;
+#ifndef _SH3_CLOCK_H_
+#define _SH3_CLOCK_H_
 
-void sh_clock_init(int, struct rtc_ops *);
+void machine_clock_init(void);
+
+void sh_clock_init(int);
 #define	SH_CLOCK_NORTC			0x00000001
 #define	SH_CLOCK_NOINITTODR		0x00000002
-void machine_clock_init(void);
 
 int sh_clock_get_cpuclock(void);
 int sh_clock_get_pclock(void);
 
-/*
- * SH RTC module interface.
- */
-void sh_rtc_init(void *);
-void sh_rtc_get(void *, time_t, struct clock_ymdhms *);
-void sh_rtc_set(void *, struct clock_ymdhms *);
-
-/*
- * machine specific RTC ops
- */
-struct clock_ymdhms;
-struct rtc_ops {
-	void *_cookie;
-	void (*init)(void *);
-	void (*get)(void *, time_t, struct clock_ymdhms *);
-	void (*set)(void *, struct clock_ymdhms *);
-};
-
+#endif /* _SH3_CLOCK_H_ */

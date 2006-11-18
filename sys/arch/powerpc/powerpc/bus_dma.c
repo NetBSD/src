@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.27 2006/03/12 22:44:27 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.27.10.1 2006/11/18 21:29:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.27 2006/03/12 22:44:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.27.10.1 2006/11/18 21:29:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags, lastaddrp, segp, first)
 			     map->dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
-			     (curaddr & bmask)))
+			     (PHYS_TO_BUS_MEM(t, curaddr) & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
 				if (++seg >= map->_dm_segcnt)
@@ -486,7 +486,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	__asm volatile("eieio");
 	for (; len > 0; ds++, offset = 0) {
 		bus_size_t seglen = ds->ds_len - offset;
-		bus_addr_t addr = ds->ds_addr + offset;
+		bus_addr_t addr = BUS_MEM_TO_PHYS(t, ds->ds_addr) + offset;
 		if (seglen > len)
 			seglen = len;
 		len -= seglen;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.30 2006/08/30 16:49:07 christos Exp $ */
+/* $NetBSD: if_lmc.c,v 1.30.2.1 2006/11/18 21:34:30 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -7062,7 +7062,8 @@ MODULE_DEPEND(if_lmc, sppp, 1, 1, 1);
 /* Looking for a DEC 21140A chip on any Lan Media Corp card. */
 /* context: kernel (boot) or process (syscall) */
 static int
-nbsd_match(struct device *parent, struct cfdata *match, void *aux)
+nbsd_match(struct device *parent, struct cfdata *match,
+    void *aux)
   {
   struct pci_attach_args *pa = aux;
   u_int32_t cfid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CFID);

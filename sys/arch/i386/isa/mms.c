@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.45 2006/02/19 14:59:22 thorpej Exp $	*/
+/*	$NetBSD: mms.c,v 1.45.14.1 2006/11/18 21:29:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.45 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.45.14.1 2006/11/18 21:29:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,8 @@ const struct wsmouse_accessops mms_accessops = {
 };
 
 int
-mmsprobe(struct device *parent, struct cfdata *match, void *aux)
+mmsprobe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -190,7 +191,8 @@ mms_disable(void *v)
 }
 
 int
-mms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mms_ioctl(void *v, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 #if 0
 	struct mms_softc *sc = v;
@@ -249,7 +251,9 @@ mmsintr(void *arg)
 
 	if (dx || dy || changed)
 		wsmouse_input(sc->sc_wsmousedev,
-			      buttons, dx, dy, 0, WSMOUSE_INPUT_DELTA);
+				buttons,
+				dx, dy, 0, 0,
+				WSMOUSE_INPUT_DELTA);
 
 	return -1;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.10 2005/11/11 23:45:56 simonb Exp $ */
+/* $NetBSD: systemsw.c,v 1.10.22.1 2006/11/18 21:29:30 ad Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.10 2005/11/11 23:45:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.10.22.1 2006/11/18 21:29:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,7 @@ static void	clock_init_triv(void *);
 static uint32_t	clkread_triv(void);
 static void	cpu_intr_triv(uint32_t, uint32_t, uint32_t, uint32_t);
 static void	delay_triv(u_long);
-static void	inittodr_triv(void *, time_t);
 static void	microtime_triv(struct timeval *);
-static void	resettodr_triv(void *);
 
 /* system function switch */
 struct systemsw systemsw = {
@@ -66,9 +64,6 @@ struct systemsw systemsw = {
 	NULL,			/* s_statclock_init: dflt no-op */
 	NULL,			/* s_statclock_setrate: dflt no-op */
 
-	NULL,			/* todr functions arg */
-	inittodr_triv,
-	resettodr_triv,
 	NULL,			/* intr_establish */
 };
 
@@ -82,21 +77,6 @@ system_set_clockfns(void *arg, void (*init)(void *))
 	systemsw.s_clock_init = init;
 	return 0;
 }
-
-int
-system_set_todrfns(void *arg, void (*init)(void *, time_t),
-    void (*reset)(void *))
-{
-
-	if (systemsw.s_inittodr != inittodr_triv ||
-	    systemsw.s_resettodr != resettodr_triv)
-		return 1;
-	systemsw.s_todr_arg = arg;
-	systemsw.s_inittodr = init;
-	systemsw.s_resettodr = reset;
-	return 0;
-}
-
 
 /* trivial microtime() implementation */
 static void
@@ -178,20 +158,6 @@ clock_init_triv(void *arg)
 	panic("clock_init_triv");
 }
 
-static void
-inittodr_triv(void *arg, time_t t)
-{
-
-	time.tv_sec = t;
-}
-
-static void
-resettodr_triv(void *arg)
-{
-
-	/* do nothing */
-}
-
 void
 cpu_initclocks(void)
 {
@@ -217,18 +183,4 @@ setstatclockrate(int hzrate)
 	if (systemsw.s_statclock_setrate != NULL)
 		(*systemsw.s_statclock_setrate)(systemsw.s_statclock_arg,
 		    hzrate);
-}
-
-void
-inittodr(time_t t)
-{
-
-	(*systemsw.s_inittodr)(systemsw.s_todr_arg, t);
-}
-
-void
-resettodr(void)
-{
-
-	(*systemsw.s_resettodr)(systemsw.s_todr_arg);
 }

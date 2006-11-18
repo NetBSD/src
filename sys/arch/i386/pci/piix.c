@@ -1,4 +1,4 @@
-/*	$NetBSD: piix.c,v 1.11 2006/06/22 16:24:34 jmcneill Exp $	*/
+/*	$NetBSD: piix.c,v 1.11.4.1 2006/11/18 21:29:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.11 2006/06/22 16:24:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.11.4.1 2006/11/18 21:29:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

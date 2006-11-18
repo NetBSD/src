@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.28 2006/02/19 14:59:22 thorpej Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.28.14.1 2006/11/18 21:29:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.28 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.28.14.1 2006/11/18 21:29:19 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

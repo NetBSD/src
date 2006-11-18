@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2006/03/08 23:46:24 lukem Exp $	*/
+/*	$NetBSD: clock.c,v 1.4.10.1 2006/11/18 21:29:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2006/03/08 23:46:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4.10.1 2006/11/18 21:29:28 ad Exp $");
 
 #include "debug_playstation2.h"
 
@@ -49,61 +49,28 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2006/03/08 23:46:24 lukem Exp $");
 
 #include <playstation2/ee/timervar.h>
 
-#define MINYEAR		2001	/* "today" */
-
-static void get_bootinfo_tod(struct clock_ymdhms *);
+static int get_bootinfo_tod(todr_chip_handle_t, struct clock_ymdhms *);
 
 void
 cpu_initclocks()
 {
+	struct todr_chip_handle	todr = {
+		.todr_gettime_ymdhms = get_bootinfo_tod;
+	};
+
+	/*
+	 *  PS2 R5900 CPU clock is 294.912 MHz = (1 << 15) * 9 * 1000
+	 */
+	curcpu()->ci_cpu_freq = 294912000;
 
 	hz = 100;
 
 	/* Install clock interrupt */
 	timer_clock_init();
-}
 
-void
-inittodr(time_t base)
-{
-	struct clock_ymdhms dt;
-	time_t rtc;
-	int s;
-	
-	get_bootinfo_tod(&dt);
-	
-	rtc = clock_ymdhms_to_secs(&dt);
+	todr_attach(&todr);
 
-	if (rtc < base ||
-	    dt.dt_year < MINYEAR || dt.dt_year > 2037 ||
-	    dt.dt_mon < 1 || dt.dt_mon > 12 ||
-	    dt.dt_wday > 6 ||
-	    dt.dt_day < 1 || dt.dt_day > 31 ||
-	    dt.dt_hour > 23 || dt.dt_min > 59 || dt.dt_sec > 59) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the RTC.
-		 */
-		s = splclock();
-		time.tv_sec = base;
-		time.tv_usec = 0;
-		splx(s);
-		printf("WARNING: preposterous clock chip time\n");
-		resettodr();
-		printf(" -- CHECK AND RESET THE DATE!\n");
-		return;
-	}
-
-	s = splclock();
-	time.tv_sec = rtc + rtc_offset * 60;
-	time.tv_usec = 0;
-	splx(s);
-}
-
-void
-resettodr()
-{
-	/* NetBSD kernel can't access PS2 RTC module. nothing to do */
+	mips3_init_tc();
 }
 
 void
@@ -112,65 +79,8 @@ setstatclockrate(int arg)
 	/* not yet */
 }
 
-/*
- * Return the best possible estimate of the time in the timeval to
- * which tv points.
- */
-void
-microtime(struct timeval *tvp)
-{
-	int s = splclock();
-	static struct timeval lasttime;
-
-	*tvp = time;
-
-	if (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
-}
-
-/*
- *  Wait at least `n' usec. (max 15 sec)
- *  PS2 R5900 CPU clock is 294.912 MHz = (1 << 15) * 9 * 1000
- */
-void
-delay(unsigned usec)
-{
-	u_int32_t r0, r1, r2;
-	u_int64_t n;
-	int overlap;
-
-	r0 = mips3_cp0_count_read();
-	n = (((u_int64_t)usec * 294912) / 1000) + (u_int64_t)r0;
-
-	overlap = n  > 0xffffffff;
-	r2 = (u_int32_t)(overlap ? 0xffffffff : n);
-
-	do {
-		r1 = mips3_cp0_count_read();
-	} while (r1 < r2 && r1 > r0);
-
-	if (overlap) {
-		r0 = r1;
-		r2 = (u_int32_t)(n - 0xffffffff);
-		do {
-			r1 = mips3_cp0_count_read();
-		} while (r1 < r2 && r1 > r0);
-	}
-}
-
-static void
-get_bootinfo_tod(struct clock_ymdhms *dt)
+static int
+get_bootinfo_tod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	time_t utc;
 	struct bootinfo_rtc *rtc = 
@@ -192,4 +102,5 @@ get_bootinfo_tod(struct clock_ymdhms *dt)
 	    dt->dt_mon, dt->dt_day, dt->dt_hour, dt->dt_min, dt->dt_sec,
 	    rtc_offset);
 #endif
+	return 0;
 }

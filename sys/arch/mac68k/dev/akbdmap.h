@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdmap.h,v 1.8 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: akbdmap.h,v 1.8.20.1 2006/11/18 21:29:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(7),			KS_x,
     KC(8),			KS_c,
     KC(9),			KS_v,
-
+    KC(10),			KS_paragraph,   
     KC(11),			KS_b,
     KC(12),			KS_q,
     KC(13),			KS_w,
@@ -128,13 +128,13 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(92),			KS_KP_Prior,	KS_KP_9,
 
     KC(95),			KS_KP_Delete,	KS_KP_Decimal,
-    KC(96),			KS_f5,
-    KC(97),			KS_f6,
-    KC(98),			KS_f7,
-    KC(99),			KS_f3,
-    KC(100),			KS_f8,
+    KC(96),	KS_Cmd_Screen4,		KS_f5,
+    KC(97),	KS_Cmd_Screen5,		KS_f6,
+    KC(98),	KS_Cmd_Screen6,		KS_f7,
+    KC(99),	KS_Cmd_Screen2,		KS_f3,
+    KC(100),KS_Cmd_Screen7,		KS_f8,
 
-    KC(101),			KS_f9,
+    KC(101),KS_Cmd_Screen8,		KS_f9,
 
     KC(103),			KS_f11,
 
@@ -142,7 +142,7 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(106),			KS_KP_Enter,
     KC(107),			KS_Hold_Screen,
 
-    KC(109),			KS_f10,
+    KC(109),KS_Cmd_Screen9,	KS_f10,
 
     KC(111),			KS_f12,
 
@@ -150,12 +150,12 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(114),			KS_Insert,
     KC(115),			KS_Home,
     KC(116),			KS_Prior,
-    KC(117),			KS_Delete,
-    KC(118),			KS_f4,
+    KC(117),			KS_Delete,	/* BackSpace */
+    KC(118),KS_Cmd_Screen3,	KS_f4,
     KC(119),			KS_End,
-    KC(120),			KS_f2,
+    KC(120),KS_Cmd_Screen1,	KS_f2,
     KC(121),			KS_Next,
-    KC(122),			KS_f1,
+    KC(122),KS_Cmd_Screen0,	KS_f1,
 
     KC(127),  KS_Cmd_Debugger,
 };

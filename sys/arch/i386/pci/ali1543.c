@@ -1,4 +1,4 @@
-/*	$NetBSD: ali1543.c,v 1.7 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: ali1543.c,v 1.7.20.1 2006/11/18 21:29:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -94,7 +94,7 @@
 /* HAYAKAWA Koichi wrote ALi 1543 PCI ICU code basing on VIA82C586 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ali1543.c,v 1.7 2005/12/11 12:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ali1543.c,v 1.7.20.1 2006/11/18 21:29:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

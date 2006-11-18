@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.14.20.1 2006/11/18 21:29:13 ad Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -700,40 +700,6 @@ forever:					; Loop until bus reset takes effect.
 	nop
 	nop
 EXIT(cpu_die)
-
-/*
- * adjust the time value
- * XXX: do it the easy way, later we will calculate actual fuzz from itr
- */
-LEAF_ENTRY(microtime)
-
-	.import time, data
-	ldil	L%-1000000, %t3
-	ldil	L%time, %t1
-	ldo	R%-1000000(%t3), %t3
-
-	/* t4 = splhigh() */
-	mfctl	%eiem, %t4
-	mtctl	%r0, %eiem
-
-	ldw	R%time+4(%t1), %t2
-	ldw	R%time(%t1), %t1
-
-	/* splx(%t4) */
-	mtctl	%t4, %eiem
-
-	addi	1, %t2, %t2
-	addb,<,n	%t2, %t3, microtime_no
-	addi	1, %t1, %t1
-
-	copy	%t3, %t2
-
-microtime_no:
-	stwm	%t1, 4(%arg0)
-	bv	(%rp)
-	stw	%t2, 0(%arg0)
-
-EXIT(microtime)
 
 /* Include the system call and trap handling. */
 #include <hppa/hppa/trap.S>

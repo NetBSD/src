@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.123 2006/09/03 05:16:01 christos Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.123.2.1 2006/11/18 21:34:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.123 2006/09/03 05:16:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.123.2.1 2006/11/18 21:34:21 ad Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -441,7 +441,7 @@ sbdsp_attach(struct sbdsp_softc *sc)
 		}
 	}
 
-	powerhook_establish (sbdsp_powerhook, sc);
+	powerhook_establish(sc->sc_dev.dv_xname, sbdsp_powerhook, sc);
 }
 
 static void
@@ -915,11 +915,8 @@ sbdsp_speaker_ctl(void *addr, int newstate)
 }
 
 int
-sbdsp_round_blocksize(
-	void *addr,
-	int blk,
-	int mode,
-	const audio_params_t *param)
+sbdsp_round_blocksize(void *addr, int blk, int mode,
+    const audio_params_t *param)
 {
 	return blk & -4;	/* round to biggest sample size */
 }
@@ -2284,7 +2281,7 @@ sbdsp_mixer_query_devinfo(void *addr, mixer_devinfo_t *dip)
 
 void *
 sb_malloc(void *addr, int direction, size_t size,
-	  struct malloc_type *pool, int flags)
+    struct malloc_type *pool, int flags)
 {
 	struct sbdsp_softc *sc;
 	int drq;
@@ -2345,7 +2342,7 @@ sbdsp_get_props(void *addr)
 
 int
 sbdsp_midi_open(void *addr, int flags, void (*iintr)(void *, int),
-		void (*ointr)(void *), void *arg)
+    void (*ointr)(void *), void *arg)
 {
 	struct sbdsp_softc *sc;
 

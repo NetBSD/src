@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.13 2006/03/15 15:39:26 christos Exp $        */
+/*      $NetBSD: rtc.c,v 1.13.10.1 2006/11/18 21:29:27 ad Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.13 2006/03/15 15:39:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.13.10.1 2006/11/18 21:29:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>          /* for panic */
@@ -59,9 +59,20 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.13 2006/03/15 15:39:26 christos Exp $");
 u_char new_clock;
 volatile u_int *scr2 = (u_int *)NEXT_P_SCR2; /* will get memory mapped in rtc_init */
 
+static int gettime_old(todr_chip_handle_t, struct clock_ymdhms *);
+static int settime_old(todr_chip_handle_t, struct clock_ymdhms *);
+static int gettime_new(todr_chip_handle_t, volatile struct timeval *);
+static int settime_new(todr_chip_handle_t, volatile struct timeval *);
+
+/*
+ * NB: This code should probably be converted to a _true_ device, then this
+ * initialization could happen in attach.  The printf could get fixed then,
+ * too.
+ */
 void
 rtc_init(void)
 {
+	static struct todr_chip_handle tch;
 	u_char val;
 	
 	scr2 = (u_int *)IIOV(NEXT_P_SCR2);
@@ -76,6 +87,21 @@ rtc_init(void)
 #ifdef RTC_DEBUG
 	rtc_print();
 #endif
+
+	if (new_clock) {
+		tch.todr_gettime = gettime_new;
+		tch.todr_settime = settime_new;
+		tch.todr_gettime_ymdhms = NULL;
+		tch.todr_settime_ymdhms = NULL;
+	} else {
+		tch.todr_gettime_ymdhms = gettime_old;
+		tch.todr_settime_ymdhms = settime_old;
+		tch.todr_gettime = NULL;
+		tch.todr_settime = NULL;
+	}
+	tch.todr_setwen = NULL;
+
+	todr_attach(&tch);
 }
 
 void
@@ -241,56 +267,45 @@ poweroff(void)
 }
 
 
-time_t
-getsecs(void)
+int
+gettime_old(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	u_int secs = 0;
+	u_char h, y;
 	
-	if (new_clock) {
-		secs = rtc_read(RTC_CNTR0) << 24 |
-				rtc_read(RTC_CNTR1) << 16 |
-				rtc_read(RTC_CNTR2) << 8	 |
-				rtc_read(RTC_CNTR3);
+	struct clock_ymdhms val;
+	y = FROMBCD(rtc_read(RTC_YR));
+	if (y >= 69) {
+		dt->dt_year = 1900+y;
 	} else {
-		struct clock_ymdhms val;
-		{
-			u_char y;
-			y = FROMBCD(rtc_read(RTC_YR));
-			if (y >= 69) {
-				val.dt_year = 1900+y;
-			} else {
-				val.dt_year = 2000+y;
-			}
-		}
-		val.dt_mon	= FROMBCD(rtc_read(RTC_MON)&0x1f);
-		val.dt_day	= FROMBCD(rtc_read(RTC_DATE)&0x3f);
-		val.dt_wday = FROMBCD(rtc_read(RTC_DAY)&0x7);
-		{
-			u_char h;
-			h = rtc_read(RTC_HRS);
-			if (h & 0x80) {					/* time is am/pm format */
-				val.dt_hour = FROMBCD(h&0x1f);
-				if (h & 0x20) { /* pm */
-					if (val.dt_hour < 12) val.dt_hour += 12;
-				} else {  /* am */
-					if (val.dt_hour == 12) val.dt_hour = 0;
-				}
-			} else {								/* time is 24 hour format */
-				val.dt_hour = FROMBCD(h & 0x3f);
-			}
-		}
-		val.dt_min	= FROMBCD(rtc_read(RTC_MIN)&0x7f);
-		val.dt_sec	= FROMBCD(rtc_read(RTC_SEC)&0x7f);
-
-		secs = clock_ymdhms_to_secs(&val);
+		dt->dt_year = 2000+y;
 	}
 
-	return secs;
+	dt->dt_mon	= FROMBCD(rtc_read(RTC_MON)&0x1f);
+	dt->dt_day	= FROMBCD(rtc_read(RTC_DATE)&0x3f);
+	dt->dt_wday = FROMBCD(rtc_read(RTC_DAY)&0x7);
+
+	h = rtc_read(RTC_HRS);
+	if (h & 0x80) {			/* time is am/pm format */
+		dt->dt_hour = FROMBCD(h&0x1f);
+		if (h & 0x20) { /* pm */
+			if (dt->dt_hour < 12) dt->dt_hour += 12;
+		} else {  /* am */
+			if (dt->dt_hour == 12) dt->dt_hour = 0;
+		}
+	} else {	/* time is 24 hour format */
+		val.dt_hour = FROMBCD(h & 0x3f);
+	}
+
+	dt->dt_min	= FROMBCD(rtc_read(RTC_MIN)&0x7f);
+	dt->dt_sec	= FROMBCD(rtc_read(RTC_SEC)&0x7f);
+
+	return 0;
 }
 
-void
-setsecs(time_t secs)
+int
+settime_old(todr_chip_handle_t tcr, struct clock_ymdhms *dt)
 {
+	u_char h;
 
 	/* Stop the clock */
 	rtc_write(RTC_CONTROL,rtc_read(RTC_CONTROL) & ~RTC_START);
@@ -300,39 +315,62 @@ setsecs(time_t secs)
 	rtc_print();
 #endif
 
-	if (new_clock) {
-		rtc_write(RTC_CNTR0, (secs >> 24) & 0xff);
-		rtc_write(RTC_CNTR1, (secs >> 16) & 0xff);
-		rtc_write(RTC_CNTR2, (secs >> 8) & 0xff);
-		rtc_write(RTC_CNTR3, (secs) & 0xff);
-
-	} else {
-		struct clock_ymdhms val;
-		clock_secs_to_ymdhms(secs,&val);
-		rtc_write(RTC_SEC,TOBCD(val.dt_sec));
-		rtc_write(RTC_MIN,TOBCD(val.dt_min));
-		{
-			u_char h;
-			h = rtc_read(RTC_HRS);
-			if (h & 0x80) {						/* time is am/pm format */
-				if (val.dt_hour == 0) {
-					rtc_write(RTC_HRS,TOBCD(12)|0x80);
-				} else if (val.dt_hour < 12) {	/* am */
-					rtc_write(RTC_HRS,TOBCD(val.dt_hour)|0x80);
-				} else if (val.dt_hour == 12) {
-						rtc_write(RTC_HRS,TOBCD(12)|0x80|0x20);
-				} else {								/* pm */
-					rtc_write(RTC_HRS,TOBCD(val.dt_hour-12)|0x80|0x20);
-				}
-			} else {									/* time is 24 hour format */
-				rtc_write(RTC_HRS,TOBCD(val.dt_hour));
-			}
-		}
-		rtc_write(RTC_DAY,TOBCD(val.dt_wday));
-		rtc_write(RTC_DATE,TOBCD(val.dt_day));
-		rtc_write(RTC_MON,TOBCD(val.dt_mon));
-		rtc_write(RTC_YR,TOBCD(val.dt_year%100));
+	rtc_write(RTC_SEC,TOBCD(dt->dt_sec));
+	rtc_write(RTC_MIN,TOBCD(dt->dt_min));
+	h = rtc_read(RTC_HRS);
+	if (h & 0x80) {		/* time is am/pm format */
+		if (dt->dt_hour == 0) {
+			rtc_write(RTC_HRS,TOBCD(12)|0x80);
+		} else if (dt->dt_hour < 12) {	/* am */
+			rtc_write(RTC_HRS,TOBCD(dt->dt_hour)|0x80);
+		} else if (dt->dt_hour == 12) {
+				rtc_write(RTC_HRS,TOBCD(12)|0x80|0x20);
+		} else 		/* pm */
+			rtc_write(RTC_HRS,TOBCD(dt->dt_hour-12)|0x80|0x20);
+	} else {	/* time is 24 hour format */
+			rtc_write(RTC_HRS,TOBCD(dt->dt_hour));
 	}
+	rtc_write(RTC_DAY,TOBCD(dt->dt_wday));
+	rtc_write(RTC_DATE,TOBCD(dt->dt_day));
+	rtc_write(RTC_MON,TOBCD(dt->dt_mon));
+	rtc_write(RTC_YR,TOBCD(dt->dt_year%100));
+
+#ifdef RTC_DEBUG
+	printf("Regs after:\n",secs);
+	rtc_print();
+#endif
+
+	/* restart the clock */
+	rtc_write(RTC_CONTROL,rtc_read(RTC_CONTROL) | RTC_START);
+	return 0;
+}
+
+int
+gettime_new(todr_chip_handle_t tch, volatile struct timeval *tvp)
+{
+	tvp->tv_sec = rtc_read(RTC_CNTR0) << 24 |
+			rtc_read(RTC_CNTR1) << 16 |
+			rtc_read(RTC_CNTR2) << 8	 |
+			rtc_read(RTC_CNTR3);
+	return 0;
+}
+
+int
+settime_new(todr_chip_handle_t tch, volatile struct timeval *tvp)
+{
+
+	/* Stop the clock */
+	rtc_write(RTC_CONTROL,rtc_read(RTC_CONTROL) & ~RTC_START);
+
+#ifdef RTC_DEBUG
+	printf("Setting RTC to 0x%08x.  Regs before:\n",tvp->tv_sec);
+	rtc_print();
+#endif
+
+	rtc_write(RTC_CNTR0, (tvp->tv_sec >> 24) & 0xff);
+	rtc_write(RTC_CNTR1, (tvp->tv_sec >> 16) & 0xff);
+	rtc_write(RTC_CNTR2, (tvp->tv_sec >> 8) & 0xff);
+	rtc_write(RTC_CNTR3, (tvp->tv_sec) & 0xff);
 
 #ifdef RTC_DEBUG
 	printf("Regs after:\n",secs);
@@ -342,4 +380,5 @@ setsecs(time_t secs)
 	/* restart the clock */
 	rtc_write(RTC_CONTROL,rtc_read(RTC_CONTROL) | RTC_START);
 
+	return 0;
 }

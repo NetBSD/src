@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54 2006/06/07 22:39:38 kardel Exp $ */
+/*	$NetBSD: cpu.h,v 1.54.6.1 2006/11/18 21:29:33 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,6 +133,8 @@ struct cpu_info {
 	int			ci_want_resched;
 
 	struct cpu_data		ci_data;	/* MI per-cpu data */
+
+	volatile void		*ci_ddb_regs;	/* DDB regs */
 };
 
 #define CPUF_PRIMARY	1
@@ -197,6 +199,18 @@ extern  u_long  mp_tramp_ci;
 
 void	cpu_hatch(void);
 void	cpu_boot_secondary_processors(void);
+
+/*
+ * Call a function on other cpus:
+ *	multicast - send to everyone in the cpuset_t
+ *	broadcast - send to to all cpus but ourselves
+ *	send - send to just this cpu
+ */
+typedef void (* ipifunc_t)(void *);
+
+void	sparc64_multicast_ipi (cpuset_t, ipifunc_t);
+void	sparc64_broadcast_ipi (ipifunc_t);
+void	sparc64_send_ipi (int, ipifunc_t);
 #endif
 
 extern uint64_t cpu_clockrate[];
@@ -291,9 +305,6 @@ extern struct intrhand *intrlev[MAXINTNUM];
 
 void	intr_establish(int level, struct intrhand *);
 
-#define mp_pause_cpus()		sparc64_ipi_pause_cpus()
-#define mp_resume_cpus()	sparc64_ipi_resume_cpus()
-
 /* disksubr.c */
 struct dkbad;
 int isbad(struct dkbad *bt, int, int, int);
@@ -308,6 +319,7 @@ int	statintr(void *);	/* level 14 (statclock) interrupt code */
 struct fpstate64;
 void	savefpstate(struct fpstate64 *);
 void	loadfpstate(struct fpstate64 *);
+void	clearfpstate(void);
 uint64_t	probeget(paddr_t, int, int);
 int	probeset(paddr_t, int, int, uint64_t);
 
@@ -326,9 +338,6 @@ int	rwindow_save(struct lwp *);
 int	cnrom(void);
 /* zs.c */
 void zsconsole(struct tty *, int, int, void (**)(struct tty *, int));
-#ifdef KGDB
-void zs_kgdb_init(void);
-#endif
 /* fb.c */
 void	fb_unblank(void);
 /* kgdb_stub.c */
@@ -340,25 +349,6 @@ void kgdb_panic(void);
 /* emul.c */
 int	fixalign(struct lwp *, struct trapframe64 *);
 int	emulinstr(vaddr_t, struct trapframe64 *);
-
-/*
- *
- * The SPARC has a Trap Base Register (TBR) which holds the upper 20 bits
- * of the trap vector table.  The next eight bits are supplied by the
- * hardware when the trap occurs, and the bottom four bits are always
- * zero (so that we can shove up to 16 bytes of executable code---exactly
- * four instructions---into each trap vector).
- *
- * The hardware allocates half the trap vectors to hardware and half to
- * software.
- *
- * Traps have priorities assigned (lower number => higher priority).
- */
-
-struct trapvec {
-	int	tv_instr[8];		/* the eight instructions */
-};
-extern struct trapvec *trapbase;	/* the 256 vectors */
 
 #endif /* _KERNEL */
 #endif /* _CPU_H_ */

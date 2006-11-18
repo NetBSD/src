@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.18 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.18.20.1 2006/11/18 21:34:52 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.18 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.18.20.1 2006/11/18 21:34:52 ad Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.64 2006/08/31 16:49:21 matt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.64.2.1 2006/11/18 21:29:33 ad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.64 2006/08/31 16:49:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.64.2.1 2006/11/18 21:29:33 ad Exp $");
 
 #include "opt_coredump.h"
 
@@ -232,10 +232,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 #endif
 	memcpy(npcb, opcb, sizeof(struct pcb));
        	if (l1->l_md.md_fpstate) {
-		if (l1 == fplwp) {
-			savefpstate(l1->l_md.md_fpstate);
-			fplwp = NULL;
-		}
+       		save_and_clear_fpstate(l1);
 		l2->l_md.md_fpstate = malloc(sizeof(struct fpstate64),
 		    M_SUBPROC, M_WAITOK);
 		memcpy(l2->l_md.md_fpstate, l1->l_md.md_fpstate,
@@ -298,6 +295,30 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 }
 
 void
+save_and_clear_fpstate(struct lwp *l)
+{
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci;
+#endif
+
+	if (l == fplwp) {
+		savefpstate(l->l_md.md_fpstate);
+		fplwp = NULL;
+		return;
+	}
+#ifdef MULTIPROCESSOR
+	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+		if (ci == curcpu())
+			continue;
+		if (ci->ci_fplwp != l)
+			continue;
+		sparc64_send_ipi(ci->ci_upaid, sparc64_ipi_save_fpstate);
+		break;
+	}
+#endif
+}
+
+void
 cpu_setfunc(l, func, arg)
 	struct lwp *l;
 	void (*func)(void *);
@@ -322,14 +343,39 @@ cpu_lwp_free(l, proc)
 	int proc;
 {
 	register struct fpstate64 *fs;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci;
+	int found;
 
+	found = 0;
+#endif
 	if ((fs = l->l_md.md_fpstate) != NULL) {
 		if (l == fplwp) {
-			savefpstate(fs);
+			clearfpstate();
 			fplwp = NULL;
+#ifdef MULTIPROCESSOR
+			found = 1;
+#endif
 		}
 		free((void *)fs, M_SUBPROC);
+#ifdef MULTIPROCESSOR
+		if (found)
+			return;
+#endif
 	}
+#ifdef MULTIPROCESSOR
+	/* check if anyone else has this lwp as fplwp */
+	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+		if (ci == curcpu())
+			continue;
+		if (l == ci->ci_fplwp) {
+			/* drop the fplwp from the other fpu */
+			sparc64_send_ipi(ci->ci_upaid,
+			    sparc64_ipi_drop_fpstate);
+			break;
+		}
+	}
+#endif
 }
 
 #ifdef COREDUMP
@@ -400,10 +446,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	md_core.md_tf.tf_in[7] = l->l_md.md_tf->tf_in[7];
 #endif
 	if (l->l_md.md_fpstate) {
-		if (l == fplwp) {
-			savefpstate(l->l_md.md_fpstate);
-			fplwp = NULL;
-		}
+		save_and_clear_fpstate(l);
 		md_core.md_fpstate = *l->l_md.md_fpstate;
 	} else
 		memset(&md_core.md_fpstate, 0,

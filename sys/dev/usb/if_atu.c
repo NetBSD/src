@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.17 2006/05/22 21:01:15 rpaulo Exp $ */
+/*	$NetBSD: if_atu.c,v 1.17.6.1 2006/11/18 21:34:50 ad Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.17 2006/05/22 21:01:15 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.17.6.1 2006/11/18 21:34:50 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -122,6 +122,9 @@ struct atu_type atu_devs[] = {
 	  RadioIntersil,	ATU_NO_QUIRK },
 	{ USB_VENDOR_LEXAR,	USB_PRODUCT_LEXAR_2662WAR,
 	  RadioRFMD,		ATU_NO_QUIRK },
+	/* Belkin F5D6050 */
+	{ USB_VENDOR_SMC3,	USB_PRODUCT_SMC3_2662WUSB,
+	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_LINKSYS2,	USB_PRODUCT_LINKSYS2_WUSB11,
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_LINKSYS3,	USB_PRODUCT_LINKSYS3_WUSB11V28,
@@ -143,6 +146,8 @@ struct atu_type atu_devs[] = {
 	  RadioIntersil,	ATU_NO_QUIRK },
 	{ USB_VENDOR_OQO,	USB_PRODUCT_OQO_WIFI01,
 	  RadioRFMD2958_SMC,	ATU_QUIRK_NO_REMAP | ATU_QUIRK_FW_DELAY },
+	{ USB_VENDOR_SMC3,	USB_PRODUCT_SMC3_2662WV1,
+	  RadioIntersil,	ATU_NO_QUIRK },
 };
 
 struct atu_radfirm {
@@ -1134,7 +1139,7 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		/* tell the event thread that we want a scan */
 		sc->sc_cmd = ATU_C_SCAN;
-		usb_add_task(sc->atu_udev, &sc->sc_task);
+		usb_add_task(sc->atu_udev, &sc->sc_task, USB_TASKQ_DRIVER);
 
 		/* handle this ourselves */
 		ic->ic_state = nstate;
@@ -1144,7 +1149,8 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_RUN:
 		if (ostate == IEEE80211_S_SCAN) {
 			sc->sc_cmd = ATU_C_JOIN;
-			usb_add_task(sc->atu_udev, &sc->sc_task);
+			usb_add_task(sc->atu_udev, &sc->sc_task,
+			    USB_TASKQ_DRIVER);
 		}
 		break;
 	default:
@@ -1662,7 +1668,8 @@ done:
  * the list buffers.
  */
 void
-atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct atu_chain	*c = (struct atu_chain *)priv;
 	struct atu_softc	*sc = c->atu_sc;
@@ -1986,9 +1993,10 @@ atu_init(struct ifnet *ifp)
 	/* XXX the following HAS to be replaced */
 	s = splnet();
 	err = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-	if (err)
+	if (err) {
 		DPRINTFN(1, ("%s: atu_init: error calling "
 		    "ieee80211_net_state", USBDEVNAME(sc->atu_dev)));
+	}
 	splx(s);
 
 	return 0;

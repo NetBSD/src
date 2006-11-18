@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.32 2006/08/25 20:16:57 riz Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.32.2.1 2006/11/18 21:34:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -227,24 +227,6 @@ void sk_dump_bytes(const char *, int);
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-#define SK_SETBIT(sc, reg, x)		\
-	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) | x)
-
-#define SK_CLRBIT(sc, reg, x)		\
-	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) & ~x)
-
-#define SK_WIN_SETBIT_4(sc, reg, x)	\
-	sk_win_write_4(sc, reg, sk_win_read_4(sc, reg) | x)
-
-#define SK_WIN_CLRBIT_4(sc, reg, x)	\
-	sk_win_write_4(sc, reg, sk_win_read_4(sc, reg) & ~x)
-
-#define SK_WIN_SETBIT_2(sc, reg, x)	\
-	sk_win_write_2(sc, reg, sk_win_read_2(sc, reg) | x)
-
-#define SK_WIN_CLRBIT_2(sc, reg, x)	\
-	sk_win_write_2(sc, reg, sk_win_read_2(sc, reg) & ~x)
 
 static int sk_sysctl_handler(SYSCTLFN_PROTO);
 static int sk_root_num;
@@ -950,7 +932,7 @@ sk_jalloc(struct sk_if_softc *sc_if)
  * Release a jumbo buffer.
  */
 void
-sk_jfree(struct mbuf *m, caddr_t buf, size_t size, void	*arg)
+sk_jfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 {
 	struct sk_jpool_entry *entry;
 	struct sk_if_softc *sc;
@@ -1153,7 +1135,8 @@ sk_lookup(const struct pci_attach_args *pa)
  */
 
 int
-skc_probe(struct device *parent, struct cfdata *match, void *aux)
+skc_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	const struct sk_product *psk;
@@ -1212,7 +1195,8 @@ void sk_reset(struct sk_softc *sc)
 }
 
 int
-sk_probe(struct device *parent, struct cfdata *match, void *aux)
+sk_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct skc_attach_args *sa = aux;
 

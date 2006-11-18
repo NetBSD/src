@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.100 2006/05/28 13:01:46 blymn Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.100.6.1 2006/11/18 21:34:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.100 2006/05/28 13:01:46 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.100.6.1 2006/11/18 21:34:20 ad Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -918,7 +918,7 @@ fwohci_execute_db(void *arg, bus_dma_segment_t *segs, int nseg, int error)
 
 static void
 fwohci_execute_db2(void *arg, bus_dma_segment_t *segs, int nseg,
-						bus_size_t size, int error)
+    bus_size_t size, int error)
 {
 	fwohci_execute_db(arg, segs, nseg, error);
 }
@@ -3117,10 +3117,10 @@ err:
 int
 fwohci_print(void *aux, const char *pnp)
 {
-	char *name = aux;
+	struct fw_attach_args *fwa = (struct fw_attach_args *)aux;
 
 	if (pnp)
-		aprint_normal("%s at %s", name, pnp);
+		aprint_normal("%s at %s", fwa->name, pnp);
 
 	return UNCONF;
 }

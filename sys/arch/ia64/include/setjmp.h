@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.1.18.1 2006/11/18 21:29:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000
@@ -90,41 +90,12 @@
 #define	J_SIGMASK	0x1d8
 #define	J_SIGSET	0x1e0
 
-#define	_JBLEN		0x20			/* Size in long doubles */
-
-/*
- * XXX this check is wrong, since LOCORE is in the application namespace and
- * applications shouldn't be able to affect the implementation.  One workaround
- * would be to only check LOCORE if _KERNEL is defined, but unfortunately
- * LOCORE is used outside of the kernel.  The best solution would be to rename
- * LOCORE to _LOCORE, so that it can be used in userland to safely affect the
- * implementation.
- */
-#ifndef _LOCORE
-
-/*
- * jmp_buf and sigjmp_buf are encapsulated in different structs to force
- * compile-time diagnostics for mismatches.  The structs are the same
- * internally to avoid some run-time errors for mismatches.
- */
-#if __BSD_VISIBLE || __POSIX_VISIBLE || __XSI_VISIBLE
-struct _sigjmp_buf {
-	long double buf[_JBLEN];
-};
-typedef struct _sigjmp_buf sigjmp_buf[1];
-#endif
-
-struct _jmp_buf {
-	long double buf[_JBLEN];
-};
-typedef struct _jmp_buf	jmp_buf[1];
+#define	_JBLEN		0x200			/* Size in long XXX: Set to sizeof(mcontext_t)/sizeof(long) */
 
 #ifdef _KERNEL
 #ifdef CTASSERT
 CTASSERT(sizeof(struct _jmp_buf) == 512);
 #endif
 #endif
-
-#endif /* !LOCORE */
 
 #endif /* !_MACHINE_SETJMP_H_ */

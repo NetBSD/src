@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.135 2006/04/17 14:30:40 nathanw Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.135.8.1 2006/11/18 21:34:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.135 2006/04/17 14:30:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.135.8.1 2006/11/18 21:34:49 ad Exp $");
 
 #include "opt_scsi.h"
 
@@ -196,7 +196,8 @@ scsipi_insert_periph(struct scsipi_channel *chan, struct scsipi_periph *periph)
  *	Remove a periph from the channel.
  */
 void
-scsipi_remove_periph(struct scsipi_channel *chan, struct scsipi_periph *periph)
+scsipi_remove_periph(struct scsipi_channel *chan,
+    struct scsipi_periph *periph)
 {
 	int s;
 
@@ -1020,12 +1021,45 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 }
 
 /*
+ * scsipi_validate_secsize:
+ *
+ *	Validate the sector size reported by READ_CAPACITY_1[06].
+ *	Use the supplied default if the reported size looks wrong.
+ */
+static int
+scsipi_validate_secsize(struct scsipi_periph *periph, const char *opcode,
+    int raw_len, int def_len)
+{
+
+	switch (raw_len) {
+	case 256:
+	case 512:
+	case 1024:
+	case 2048:
+	case 4096:
+		break;
+
+	default:
+		scsipi_printaddr(periph);
+		printf("%s returned %s sector size: 0x%x. Defaulting to %d "
+		    "bytes.\n", opcode, (raw_len ^ (1 << (ffs(raw_len) - 1))) ?
+		    "preposterous" : "unsupported", raw_len, def_len);
+		/*FALLTHROUGH*/
+	case 0:
+		raw_len = def_len;
+		break;
+	}
+
+	return (raw_len);
+}
+
+/*
  * scsipi_size:
  *
  *	Find out from the device what its capacity is.
  */
 u_int64_t
-scsipi_size(struct scsipi_periph *periph, int flags)
+scsipi_size(struct scsipi_periph *periph, int *secsize, int defsize, int flags)
 {
 	union {
 		struct scsipi_read_capacity_10 cmd;
@@ -1048,8 +1082,14 @@ scsipi_size(struct scsipi_periph *periph, int flags)
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
 		return (0);
 
-	if (_4btol(data.data.addr) != 0xffffffff)
+	if (_4btol(data.data.addr) != 0xffffffff) {
+		if (secsize) {
+			*secsize = scsipi_validate_secsize(periph,
+			    "READ_CAPACITY_10", _4btol(data.data.length),
+			    defsize);
+		}
 		return (_4btol(data.data.addr) + 1);
+	}
 
 	/*
 	 * Device is larger than can be reflected by READ CAPACITY (10).
@@ -1067,6 +1107,10 @@ scsipi_size(struct scsipi_periph *periph, int flags)
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
 		return (0);
 
+	if (secsize) {
+		*secsize = scsipi_validate_secsize(periph, "READ_CAPACITY_16",
+		    _4btol(data.data16.length), defsize);
+	}
 	return (_8btol(data.data16.addr) + 1);
 }
 

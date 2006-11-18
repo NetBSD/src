@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.11 2006/06/26 17:55:49 xtraeme Exp $	*/
+/*	$NetBSD: artsata.c,v 1.11.4.1 2006/11/18 21:34:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_pciide.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.11 2006/06/26 17:55:49 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.11.4.1 2006/11/18 21:34:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,8 @@ CFATTACH_DECL(artsata, sizeof(struct pciide_softc),
     artsata_match, artsata_attach, NULL, NULL);
 
 static int
-artsata_match(struct device *parent, struct cfdata *match, void *aux)
+artsata_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -123,103 +124,9 @@ artsata_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-artisea_drv_probe(struct ata_channel *chp)
-{
-	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
-	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
-	uint32_t scontrol, sstatus;
-	uint16_t scnt, sn, cl, ch;
-	int i, s;
-
-	/* XXX This should be done by other code. */
-	for (i = 0; i < 2; i++) {
-		chp->ch_drive[i].chnl_softc = chp;
-		chp->ch_drive[i].drive = i;
-	}
-
-	/*
-	 * First we have to bring the PHYs online, in case the firmware
-	 * has not already done so.  The 31244 leaves the disks off-line
-	 * on reset to avoid excessive power surges due to multiple spindle
-	 * spin up.
-	 *
-	 * The work-around for errata #1 says that we must write 0 to the
-	 * port first to be sure of correctly initializing the device.
-	 *
-	 * XXX will this try to bring multiple disks on-line too quickly?
-	 */
-	bus_space_write_4 (wdr->cmd_iot, wdr->cmd_baseioh,
-	    ARTISEA_SUPERSET_DPA_OFF + ARTISEA_SUPDSSCR, 0);
-	scontrol = SControl_IPM_NONE | SControl_SPD_ANY | SControl_DET_INIT;
-	bus_space_write_4 (wdr->cmd_iot, wdr->cmd_baseioh,
-	    ARTISEA_SUPERSET_DPA_OFF + ARTISEA_SUPDSSCR, scontrol);
-
-	scontrol &= ~SControl_DET_INIT;
-	bus_space_write_4 (wdr->cmd_iot, wdr->cmd_baseioh,
-	    ARTISEA_SUPERSET_DPA_OFF + ARTISEA_SUPDSSCR, scontrol);
-
-	delay(50 * 1000);
-	sstatus = bus_space_read_4(wdr->cmd_iot, wdr->cmd_baseioh,
-	    ARTISEA_SUPERSET_DPA_OFF + ARTISEA_SUPDSSSR);
-
-	switch (sstatus & SStatus_DET_mask) {
-	case SStatus_DET_NODEV:
-		/* No Device; be silent.  */
-		break;
-
-	case SStatus_DET_DEV_NE:
-		aprint_error("%s: port %d: device connected, but "
-		    "communication not established\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel);
-		break;
-
-	case SStatus_DET_OFFLINE:
-		aprint_error("%s: port %d: PHY offline\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel);
-		break;
-
-	case SStatus_DET_DEV:
-		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
-		    WDSD_IBM);
-		delay(10);	/* 400ns delay */
-		scnt = bus_space_read_2(wdr->cmd_iot,
-		    wdr->cmd_iohs[wd_seccnt], 0);
-		sn = bus_space_read_2(wdr->cmd_iot,
-		    wdr->cmd_iohs[wd_sector], 0);
-		cl = bus_space_read_2(wdr->cmd_iot,
-		    wdr->cmd_iohs[wd_cyl_lo], 0);
-		ch = bus_space_read_2(wdr->cmd_iot,
-		    wdr->cmd_iohs[wd_cyl_hi], 0);
-		printf("%s: port %d: scnt=0x%x sn=0x%x cl=0x%x ch=0x%x\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel,
-		    scnt, sn, cl, ch);
-		/*
-		 * scnt and sn are supposed to be 0x1 for ATAPI, but in some
-		 * cases we get wrong values here, so ignore it.
-		 */
-		s = splbio();
-		if (cl == 0x14 && ch == 0xeb)
-			chp->ch_drive[0].drive_flags |= DRIVE_ATAPI;
-		else
-			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
-		splx(s);
-
-		aprint_normal("%s: port %d: device present, speed: %s\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel,
-		    sata_speed(sstatus));
-		break;
-
-	default:
-		aprint_error("%s: port %d: unknown SStatus: 0x%08x\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel,
-		    sstatus);
-	}
-
-}
-
-static void
 artisea_mapregs(struct pci_attach_args *pa, struct pciide_channel *cp,
-	bus_size_t *cmdsizep, bus_size_t *ctlsizep, int (*pci_intr)(void *))
+    bus_size_t *cmdsizep, bus_size_t *ctlsizep,
+    int (*pci_intr)(void *))
 {
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 	struct ata_channel *wdc_cp = &cp->ata_channel;
@@ -286,16 +193,48 @@ artisea_mapregs(struct pci_attach_args *pa, struct pciide_channel *cp,
 	wdr->data32iot = wdr->cmd_iot;
 	wdr->data32ioh = wdr->cmd_iohs[0];
 
+	wdr->sata_iot = wdr->cmd_iot;
+	wdr->sata_baseioh = wdr->cmd_baseioh;
+
+	if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
+	    ARTISEA_SUPERSET_DPA_OFF + ARTISEA_SUPDSSSR, 1,
+	    &wdr->sata_status) != 0) {
+		aprint_error("%s: couldn't map channel %d "
+		    "sata_status regs\n",
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+		    wdc_cp->ch_channel);
+		goto bad;
+	}
+	if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
+	    ARTISEA_SUPERSET_DPA_OFF + ARTISEA_SUPDSSER, 1,
+	    &wdr->sata_error) != 0) {
+		aprint_error("%s: couldn't map channel %d "
+		    "sata_error regs\n",
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+		    wdc_cp->ch_channel);
+		goto bad;
+	}
+	if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
+	    ARTISEA_SUPERSET_DPA_OFF + ARTISEA_SUPDSSCR, 1,
+	    &wdr->sata_control) != 0) {
+		aprint_error("%s: couldn't map channel %d "
+		    "sata_control regs\n",
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+		    wdc_cp->ch_channel);
+		goto bad;
+	}
+
 	wdcattach(wdc_cp);
 	return;
 
 bad:
-	cp->ata_channel.ch_flags |= ATACH_DISABLED;
+	wdc_cp->ch_flags |= ATACH_DISABLED;
 	return;
 }
 
 static int
-artisea_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
+artisea_chansetup(struct pciide_softc *sc, int channel,
+    pcireg_t interface)
 {
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
 	sc->wdc_chanarray[channel] = &cp->ata_channel;
@@ -420,7 +359,7 @@ artisea_chip_map_dpa(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = ARTISEA_NUM_CHAN;
-	sc->sc_wdcdev.sc_atac.atac_probe = artisea_drv_probe;
+	sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 

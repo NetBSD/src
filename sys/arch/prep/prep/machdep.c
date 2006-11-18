@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2006/07/13 17:50:37 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64.4.1 2006/11/18 21:29:30 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2006/07/13 17:50:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64.4.1 2006/11/18 21:29:30 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -392,28 +392,40 @@ lcsplx(int ipl)
 }
 
 struct powerpc_bus_space prep_io_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	0x80000000, 0x00000000, 0x3f800000,
+	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	.pbs_offset = 0x80000000,
+	.pbs_base = 0x00000000,
+	.pbs_limit = 0x3f800000,
 };
 struct powerpc_bus_space prep_isa_io_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	0x80000000, 0x00000000, 0x00010000,
+	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	.pbs_offset = 0x80000000,
+	.pbs_base = 0x00000000,
+	.pbs_limit = 0x00010000,
 };
 struct powerpc_bus_space prep_eisa_io_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
-	0x80000000, 0x00000000, 0x0000f000,
+	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	.pbs_offset = 0x80000000,
+	.pbs_base = 0x00000000,
+	.pbs_limit = 0x0000f000,
 };
 struct powerpc_bus_space prep_mem_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	0xC0000000, 0x00000000, 0x3f000000,
+	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	.pbs_offset = 0xC0000000,
+	.pbs_base = 0x00000000,
+	.pbs_limit = 0x3f000000,
 };
 struct powerpc_bus_space prep_isa_mem_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	0xC0000000, 0x00000000, 0x01000000,
+	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	.pbs_offset = 0xC0000000,
+	.pbs_base = 0x00000000,
+	.pbs_limit = 0x01000000,
 };
 struct powerpc_bus_space prep_eisa_mem_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	0xC0000000, 0x00000000, 0x3f000000,
+	.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	.pbs_offset = 0xC0000000,
+	.pbs_base = 0x00000000,
+	.pbs_limit = 0x3f000000,
 };
 
 static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]

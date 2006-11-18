@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.6 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: mkclock.c,v 1.6.20.1 2006/11/18 21:29:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.6 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.6.20.1 2006/11/18 21:29:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,6 +58,7 @@ struct	mkclock_softc {
         struct  device dev; 
 	bus_space_tag_t	sc_bst;
 	bus_space_handle_t sc_bsh;
+	struct todr_chip_handle sc_todr;
 };
 
 static int mkclock_match (struct device *, struct cfdata *, void *);
@@ -66,10 +67,8 @@ static void mkclock_attach (struct device *, struct device *, void *);
 CFATTACH_DECL(mkclock, sizeof(struct mkclock_softc),
     mkclock_match, mkclock_attach, NULL, NULL);
 
-static struct mkclock_softc *mk0; 
-
-void mkclock_read (struct clock_ymdhms *);
-void mkclock_write (struct clock_ymdhms *);
+int mkclock_read (todr_chip_handle_t, struct clock_ymdhms *);
+int mkclock_write (todr_chip_handle_t, struct clock_ymdhms *);
 
 static int mk_read (struct mkclock_softc *, int);
 static void mk_write (struct mkclock_softc *, int, int);
@@ -100,9 +99,11 @@ mkclock_attach(parent, self, aux)
 		return;
 	}
 
-	platform.write_todr = mkclock_write;
-	platform.read_todr  = mkclock_read;
-	mk0 = sc;
+	sc->sc_todr.todr_settime_ymdhms = mkclock_write;
+	sc->sc_todr.todr_gettime_ymdhms = mkclock_read;
+	sc->sc_todr.cookie = sc;
+	todr_attach(&sc->sc_todr);
+
 	printf("\n");
 }
 
@@ -126,11 +127,10 @@ mk_write(sc, reg, val)
 			  DATA_PORT + reg*4, TOBCD(val));
 }
 
-void
-mkclock_read(dt)
-	struct clock_ymdhms *dt;
+int
+mkclock_read(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct mkclock_softc *sc = mk0;
+	struct mkclock_softc *sc = tch->cookie;
 	int s = splclock();
 
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, RTC_PORT, READ_CLOCK); 
@@ -145,13 +145,13 @@ mkclock_read(dt)
 	splx(s);
 
 	dt->dt_year = dt->dt_year + (dt->dt_year >= 70 ? 1900 : 2000);
+	return 0;
 }
 
-void
-mkclock_write(dt)
-	struct clock_ymdhms *dt;
+int
+mkclock_write(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct mkclock_softc *sc = mk0;
+	struct mkclock_softc *sc = tch->cookie;
 	int year, s;
 
 	year = dt->dt_year % 100;
@@ -167,4 +167,5 @@ mkclock_write(dt)
 	mk_write(sc, 6, year);
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, RTC_PORT, 0); 
 	splx(s);
+	return 0;
 }

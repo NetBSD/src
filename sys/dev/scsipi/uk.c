@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.49 2006/09/03 21:16:09 christos Exp $	*/
+/*	$NetBSD: uk.c,v 1.49.2.1 2006/11/18 21:34:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.49 2006/09/03 21:16:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.49.2.1 2006/11/18 21:34:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,8 @@ const struct cdevsw uk_cdevsw = {
 };
 
 static int
-ukmatch(struct device *parent, struct cfdata *match, void *aux)
+ukmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	return (1);

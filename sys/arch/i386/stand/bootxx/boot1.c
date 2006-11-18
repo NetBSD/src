@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.9 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: boot1.c,v 1.9.20.1 2006/11/18 21:29:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.9 2005/12/11 12:17:48 christos Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.9.20.1 2006/11/18 21:29:20 ad Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -60,6 +60,12 @@ extern void putstr(const char *);
 
 extern struct disklabel ptn_disklabel;
 
+static int
+ob(void)
+{
+	return open("boot", 0);
+}
+
 const char *
 boot1(uint32_t biosdev, uint32_t *sector)
 {
@@ -74,55 +80,55 @@ boot1(uint32_t biosdev, uint32_t *sector)
 	if (set_geometry(&d, NULL))
 		return "set_geometry\r\n";
 
-	do {
-		/*
-		 * We default to the filesystem at the start of the
-		 * MBR partition
-		 */
-		fd = open("boot", 0);
-		if (fd != -1)
-			break;
-		/*
-		 * Maybe the filesystem is enclosed in a raid set.
-		 * add in size of raidframe header and try again.
-		 * (Maybe this should only be done if the filesystem
-		 * magic number is absent.)
-		 */
+	/*
+	 * We default to the filesystem at the start of the
+	 * MBR partition
+	 */
+	fd = ob();
+	if (fd != -1)
+		goto done;
+	/*
+	 * Maybe the filesystem is enclosed in a raid set.
+	 * add in size of raidframe header and try again.
+	 * (Maybe this should only be done if the filesystem
+	 * magic number is absent.)
+	 */
+	bios_sector += RF_PROTECTED_SECTORS;
+	fd = ob();
+	if (fd != -1)
+		goto done;
+	/*
+	 * Nothing at the start of the MBR partition, fallback on
+	 * partition 'a' from the disklabel in this MBR partition.
+	 */
+	if (ptn_disklabel.d_magic != DISKMAGIC ||
+	    ptn_disklabel.d_magic2 != DISKMAGIC ||
+	    ptn_disklabel.d_partitions[0].p_fstype == FS_UNUSED)
+		goto done;
+	bios_sector = ptn_disklabel.d_partitions[0].p_offset;
+	*sector = bios_sector;
+	if (ptn_disklabel.d_partitions[0].p_fstype == FS_RAID)
 		bios_sector += RF_PROTECTED_SECTORS;
-		fd = open("boot", 0);
-		if (fd != -1)
-			break;
 
-		/*
-		 * Nothing at the start of the MBR partition, fallback on
-		 * partition 'a' from the disklabel in this MBR partition.
-		 */
-		if (ptn_disklabel.d_magic != DISKMAGIC)
-			break;
-		if (ptn_disklabel.d_magic2 != DISKMAGIC)
-			break;
-		if (ptn_disklabel.d_partitions[0].p_fstype == FS_UNUSED)
-			break;
-		bios_sector = ptn_disklabel.d_partitions[0].p_offset;
-		*sector = bios_sector;
-		if (ptn_disklabel.d_partitions[0].p_fstype == FS_RAID)
-			bios_sector += RF_PROTECTED_SECTORS;
-		fd = open("boot", 0);
-	} while (0);
+	fd = ob();
 
-	if (fd == -1 || fstat(fd, &sb) == -1)
-		return "Can't open /boot.\r\n";
+done:
+	/* if we fail here, so will fstat, so keep going */
+	if (fstat(fd, &sb) == -1) {
+		return "Can't open /boot\r\n";
+	}
 
+	biosdev = (uint32_t)sb.st_size;
 #if 0
-	if (sb.st_size > SECONDARY_MAX_LOAD)
-		return "/boot too large.\r\n";
+	if (biosdev > SECONDARY_MAX_LOAD)
+		return "/boot too large\r\n";
 #endif
 
-	if (read(fd, (void *)SECONDARY_LOAD_ADDRESS, sb.st_size) != sb.st_size)
-		return "/boot load failed.\r\n";
+	if (read(fd, (void *)SECONDARY_LOAD_ADDRESS, biosdev) != biosdev)
+		return "/boot load failed\r\n";
 
 	if (*(uint32_t *)(SECONDARY_LOAD_ADDRESS + 4) != X86_BOOT_MAGIC_2)
-		return "Invalid /boot file format.\r\n";
+		return "Invalid /boot file format\r\n";
 
 	/* We need to jump to the secondary bootstrap in realmode */
 	return 0;

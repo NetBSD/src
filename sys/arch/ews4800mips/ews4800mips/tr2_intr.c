@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2_intr.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: tr2_intr.c,v 1.1.22.1 2006/11/18 21:29:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.1.22.1 2006/11/18 21:29:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,8 +110,6 @@ struct tr2_intr_handler {
 struct evcnt timer_tr2_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "picnic", "timer");
 
-static u_long last_clock_intr;
-
 void
 tr2_intr_init(void)
 {
@@ -175,7 +173,6 @@ tr2_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	cause0 = cause;
 
 	if (ipending & MIPS_INT_MASK_5) {	/* CLOCK */
-		last_clock_intr = mips3_cp0_count_read();
 		cf.pc = pc;
 		cf.sr = status;
 
@@ -308,34 +305,6 @@ void
 tr2_initclocks(void)
 {
 
-	last_clock_intr = mips3_cp0_count_read();
-
-	/* number of microseconds between interrupts */
-	tick = 1000000 / hz;
-	tickfix = 1000000 - (hz * tick);
-#ifdef NTP
-	fixtick = tickfix;
-#endif
-	if (tickfix) {
-		int ftp;
-
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= ftp - 1;
-		tickfixinterval = hz >> (ftp - 1);
-	}
-
 	/* Enable clock interrupt */
 	*PICNIC_INT5_MASK_REG |= PICNIC_INT_CLOCK;
-}
-
-u_long
-tr2_readclock(void)
-{
-	uint32_t res, count;
-
-	/* 32bit wrap-around during subtruction ok here. */
-	count = mips3_cp0_count_read() - last_clock_intr;
-	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
-
-	return res;
 }

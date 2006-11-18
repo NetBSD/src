@@ -1,4 +1,4 @@
-/*	$NetBSD: via82c586.c,v 1.8 2006/06/18 09:55:11 xtraeme Exp $	*/
+/*	$NetBSD: via82c586.c,v 1.8.4.1 2006/11/18 21:29:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via82c586.c,v 1.8 2006/06/18 09:55:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via82c586.c,v 1.8.4.1 2006/11/18 21:29:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.h,v 1.4 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: cpuset.h,v 1.4.20.1 2006/11/18 21:29:33 ad Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,8 +45,7 @@ extern volatile cpuset_t cpus_active;
 #define	CPUSET_DEL(set, cpu)		((set) &= ~CPUSET_SINGLE(cpu))
 #define	CPUSET_SUB(set1, set2)		((set1) &= ~(set2))
 
-#define	CPUSET_ALL(set)			((set) = (cpuset_t)-1)
-#define	CPUSET_ALL_BUT(set, cpu)	((set) = ~CPUSET_SINGLE(cpu))
+#define	CPUSET_EXCEPT(set, cpu)		((set) & ~CPUSET_SINGLE(cpu))
 
 #define	CPUSET_HAS(set, cpu)		((set) & CPUSET_SINGLE(cpu))
 #define	CPUSET_NEXT(set)		(ffs(set) - 1)

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.24 2006/06/25 15:01:00 lukem Exp $
+# $NetBSD: Makefile.bootxx,v 1.24.4.1 2006/11/18 21:29:20 ad Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -46,6 +46,7 @@ CPPFLAGS+= -DFS=${FS}
 
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
+DBG=
 
 CPPFLAGS+= -DNO_LBA_CHECK
 

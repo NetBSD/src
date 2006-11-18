@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.25 2006/09/03 22:17:35 christos Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.25.2.1 2006/11/18 21:34:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.25 2006/09/03 22:17:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.25.2.1 2006/11/18 21:34:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1535,7 +1535,8 @@ generic_mixer_to_device_value(const codec_t *this, nid_t nid, int target,
 }
 
 static uint32_t
-generic_mixer_max(const codec_t *this, nid_t nid, int target)
+generic_mixer_max(const codec_t *this, nid_t nid,
+    int target)
 {
 #ifdef MAX_VOLUME_255
 	return AUDIO_MAX_GAIN;
@@ -1553,8 +1554,8 @@ generic_mixer_max(const codec_t *this, nid_t nid, int target)
 }
 
 static boolean_t
-generic_mixer_validate_value(const codec_t *this, nid_t nid, int target,
-    u_char uv)
+generic_mixer_validate_value(const codec_t *this, nid_t nid,
+    int target, u_char uv)
 {
 #ifdef MAX_VOLUME_255
 	return TRUE;

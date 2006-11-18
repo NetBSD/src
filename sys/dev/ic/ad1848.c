@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.23 2006/09/03 04:27:11 christos Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.23.2.1 2006/11/18 21:34:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.23 2006/09/03 04:27:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.23.2.1 2006/11/18 21:34:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -861,8 +861,9 @@ ad1848_query_encoding(void *addr, struct audio_encoding *fp)
 }
 
 int
-ad1848_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
-    audio_params_t *r, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+ad1848_set_params(void *addr, int setmode, int usemode,
+    audio_params_t *p, audio_params_t *r, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	audio_params_t phw, rhw;
 	struct ad1848_softc *sc;

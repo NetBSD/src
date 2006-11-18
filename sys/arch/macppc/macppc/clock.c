@@ -1,4 +1,5 @@
-/*	$NetBSD: clock.c,v 1.27 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.27.20.1 2006/11/18 21:29:24 ad Exp $	*/
+/*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,127 +33,100 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 2005/12/24 22:45:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27.20.1 2006/11/18 21:29:24 ad Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <dev/ofw/openfirm.h>
-#include <machine/cpu.h>
-#include <machine/autoconf.h>
-
 #include <powerpc/spr.h>
 
-#include "adb.h"
+void decr_intr(struct clockframe *);
+void init_macppc_tc(void);
+static u_int get_macppc_timecount(struct timecounter *);
+
+uint32_t ticks_per_sec;
+uint32_t ns_per_tick;
+uint32_t ticks_per_intr = 0;
+
+static struct timecounter macppc_timecounter = {
+	get_macppc_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0x7fffffff,		/* counter_mask */
+	0,			/* frequency */
+	"mftb",			/* name */
+	100			/* quality */
+};
 
 /*
- * Initially we assume a processor with a bus frequency of 50 MHz.
+ * Start the real-time and statistics clocks. Leave stathz 0 since there
+ * are no other timers available.
  */
-static u_long ticks_per_sec = 50*1000*1000/4;
-static u_long ns_per_tick = 80;
-long ticks_per_intr;
-static int clockinitted;
-static int clockrunning;
-
-#ifdef TIMEBASE_FREQ
-u_int timebase_freq = TIMEBASE_FREQ;
-#else
-u_int timebase_freq = 0;
-#endif
-
-#define SECDAY 86400
-#define DIFF19041970 2082844800
-
-#if NADB > 0
-extern int adb_read_date_time __P((int *));
-extern int adb_set_date_time __P((int));
-#endif
-
 void
-inittodr(base)
-	time_t base;
+cpu_initclocks(void)
 {
-	time_t deltat;
-	u_int rtc_time;
+	struct cpu_info * const ci = curcpu();
+	uint32_t msr;
+
+	ticks_per_intr = ticks_per_sec / hz;
+	cpu_timebase = ticks_per_sec;
+	if ((mfpvr() >> 16) == MPC601)
+		__asm volatile 
+		    ("mfspr %0,%1" : "=r"(ci->ci_lasttb) : "n"(SPR_RTCL_R));
+	else
+		__asm volatile ("mftb %0" : "=r"(ci->ci_lasttb));
+	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
+	init_macppc_tc();
 
 	/*
-	 * If we can't read from RTC, use the fs time.
+	 * Now allow all hardware interrupts including hardclock(9).
 	 */
-#if NADB > 0
-	if (adb_read_date_time(&rtc_time) < 0)
-#endif
-	{
-		time.tv_sec = base;
-		return;
-	}
-	clockinitted = 1;
-	time.tv_sec = rtc_time - DIFF19041970 + rtc_offset * 60;
-
-	deltat = time.tv_sec - base;
-	if (deltat < 0)
-		deltat = -deltat;
-	if (deltat < 2 * SECDAY)
-		return;
-
-	printf("WARNING: clock %s %d days",
-	    time.tv_sec < base ? "lost" : "gained", (int)(deltat / SECDAY));
-	if (time.tv_sec < base && deltat > 1000 * SECDAY) {
-		printf(", using FS time");
-		time.tv_sec = base;
-	}
-	printf(" -- CHECK AND RESET THE DATE!\n");
+	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+	    : "=r"(msr) : "K"(PSL_EE|PSL_RI));
 }
 
 /*
- * Similar to the above
+ * We assume newhz is either stathz or profhz, and that neither will
+ * change after being set up above.  Could recalculate intervals here
+ * but that would be a drag.
  */
 void
-resettodr()
+setstatclockrate(int arg)
 {
-#if NADB > 0
-	u_int rtc_time;
 
-	if (clockinitted) {
-		rtc_time = time.tv_sec + DIFF19041970 - rtc_offset * 60;
-		adb_set_date_time(rtc_time);
-	}
-#endif
+	/* Nothing we can do */
 }
 
 void
 decr_intr(struct clockframe *frame)
 {
 	struct cpu_info * const ci = curcpu();
+	int msr;
+	int pri;
 	u_long tb;
 	long ticks;
 	int nticks;
-	int pri, msr;
-
-	/*
-	 * Check whether we are initialized.
-	 */
-	if (!ticks_per_intr)
-		return;
 
 	/*
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	ticks = mfspr(SPR_DEC);
+	__asm ("mfdec %0" : "=r"(ticks));
 	for (nticks = 0; ticks < 0; nticks++)
 		ticks += ticks_per_intr;
-	mtspr(SPR_DEC, ticks);
+	__asm volatile ("mtdec %0" :: "r"(ticks));
 
 	uvmexp.intrs++;
 	ci->ci_ev_clock.ev_count++;
 
 	pri = splclock();
-	if (pri & (1 << SPL_CLOCK))
+	if (pri & (1 << SPL_CLOCK)) {
 		ci->ci_tickspending += nticks;
-	else {
+	} else {
 		nticks += ci->ci_tickspending;
 		ci->ci_tickspending = 0;
 
@@ -160,7 +134,12 @@ decr_intr(struct clockframe *frame)
 		 * lasttb is used during microtime. Set it to the virtual
 		 * start of this tick interval.
 		 */
-		tb = mftbl();
+		if ((mfpvr() >> 16) == MPC601) {
+			__asm volatile 
+			    ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
+		} else {
+			__asm volatile ("mftb %0" : "=r"(tb));
+		}
 		ci->ci_lasttb = tb + ticks - ticks_per_intr;
 
 		/*
@@ -169,123 +148,79 @@ decr_intr(struct clockframe *frame)
 		__asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 
-		if (clockrunning) {
-			/*
-			 * Do standard timer interrupt stuff.
-			 * Do softclock stuff only on the last iteration.
-			 */
-			frame->pri = pri | (1 << SIR_CLOCK);
-			while (--nticks > 0)
-				hardclock(frame);
-			frame->pri = pri;
+		/*
+		 * Do standard timer interrupt stuff.
+		 * Do softclock stuff only on the last iteration.
+		 */
+		frame->pri = pri | (1 << SIR_CLOCK);
+		while (--nticks > 0)
 			hardclock(frame);
-		}
+		frame->pri = pri;
+		hardclock(frame);
 	}
 	splx(pri);
-}
-
-void
-cpu_initclocks(void)
-{
-	clockrunning = 1;	/* we can now start calling hardclock */
-}
-
-void
-calc_delayconst(void)
-{
-	int qhandle, phandle;
-	char type[32];
-	int msr, scratch;
-	
-	/*
-	 * Get this info during autoconf?				XXX
-	 */
-	if (timebase_freq != 0) {
-		ticks_per_sec = timebase_freq;
-		goto found;
-	}
-
-	for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
-		if (OF_getprop(qhandle, "device_type", type, sizeof type) > 0
-		    && strcmp(type, "cpu") == 0
-		    && OF_getprop(qhandle, "timebase-frequency",
-			   &ticks_per_sec, sizeof ticks_per_sec) > 0) {
-			goto found;
-		}
-		if ((phandle = OF_child(qhandle)))
-			continue;
-		while (qhandle) {
-			if ((phandle = OF_peer(qhandle)))
-				break;
-			qhandle = OF_parent(qhandle);
-		}
-	}
-	panic("no cpu node");
-
-found:
-	/*
-	 * Should check for correct CPU here?		XXX
-	 */
-	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
-		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	ns_per_tick = 1000000000 / ticks_per_sec;
-	ticks_per_intr = ticks_per_sec / hz;
-	cpu_timebase = ticks_per_sec;
-	curcpu()->ci_lasttb = mftbl();
-	mtspr(SPR_DEC, ticks_per_intr);
-	mtmsr(msr);
-}
-
-/*
- * Fill in *tvp with current time with microsecond resolution.
- */
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-	u_long tb;
-	u_long ticks;
-	int msr, scratch;
-	
-	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
-		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	tb = mftbl();
-	ticks = (tb - curcpu()->ci_lasttb) * ns_per_tick;
-	*tvp = time;
-	mtmsr(msr);
-	ticks /= 1000;
-	tvp->tv_usec += ticks;
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
 }
 
 /*
  * Wait for about n microseconds (at least!).
  */
 void
-delay(n)
-	unsigned int n;
+delay(unsigned int n)
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;
-	
-	tb = mftb();
-	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
-	tbh = tb >> 32;
-	tbl = tb;
-	__asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
-		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
-		      : "=&r"(scratch) : "r"(tbh), "r"(tbl));
+
+	if ((mfpvr() >> 16) == MPC601) {
+		u_int32_t rtc[2];
+
+		mfrtc(rtc);
+		while (n >= 1000000) {
+			rtc[0]++;
+			n -= 1000000;
+		}
+		rtc[1] += (n * 1000);
+		if (rtc[1] >= 1000000000) {
+			rtc[0]++;
+			rtc[1] -= 1000000000;
+		}
+		__asm volatile ("1: mfspr %0,%3; cmplw %0,%1; blt 1b; bgt 2f;"
+		    "mfspr %0,%4; cmplw %0,%2; blt 1b; 2:"
+		    : "=&r"(scratch)
+		    : "r"(rtc[0]), "r"(rtc[1]), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R)
+		    : "cr0");
+	} else {
+		tb = mftb();
+		tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
+		tbh = tb >> 32;
+		tbl = tb;
+		__asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
+			      "mftb %0; cmplw %0,%2; blt 1b; 2:"
+			      : "=&r"(scratch) : "r"(tbh), "r"(tbl)
+			      : "cr0");
+	}
 }
 
-/*
- * Nothing to do.
- */
-void
-setstatclockrate(arg)
-	int arg;
+static u_int
+get_macppc_timecount(struct timecounter *tc)
 {
-	/* Do nothing */
+	u_long tb;
+	int msr, scratch;
+	
+	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
+		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
+	if ((mfpvr() >> 16) == MPC601)
+		__asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
+	else
+		__asm volatile ("mftb %0" : "=r"(tb));
+	mtmsr(msr);
+
+	return tb;
+}
+
+void
+init_macppc_tc()
+{
+	/* from machdep initialization */
+	macppc_timecounter.tc_frequency = ticks_per_sec;
+	tc_init(&macppc_timecounter);
 }

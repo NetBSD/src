@@ -1,4 +1,4 @@
-/*	$NetBSD: tmu.c,v 1.10 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: tmu.c,v 1.10.20.1 2006/11/18 21:29:31 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,12 +40,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmu.c,v 1.10 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmu.c,v 1.10.20.1 2006/11/18 21:29:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/timetc.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -68,6 +69,7 @@ struct tmu_softc {
 	void *sc_clkih;
 	void *sc_statih;
 	u_int sc_ticksperms;
+	struct timecounter sc_tc;
 };
 
 static int tmumatch(struct device *, struct cfdata *, void *);
@@ -81,9 +83,10 @@ static struct tmu_softc *tmu_sc;
 
 
 static void tmu_start(void *, int, u_int);
-static long tmu_microtime(void *);
 static int tmu_clkint(void *);
 static int tmu_statint(void *);
+static void tmu_init_timecounter(struct tmu_softc *);
+static unsigned tmu_get_timecounter(struct timecounter *);
 
 
 /*ARGSUSED*/
@@ -177,8 +180,12 @@ tmuattach(struct device *parent, struct device *self, void *args)
 	sc->sc_ca.ca_has_stat_clock = 0;
 	sc->sc_ca.ca_arg = sc;
 	sc->sc_ca.ca_start = tmu_start;
-	sc->sc_ca.ca_microtime = tmu_microtime;
 	clock_config(self, &sc->sc_ca, sh5_intr_evcnt(sc->sc_clkih));
+
+	/*
+	 * Attach to timecounters.
+	 */
+	tmu_init_timecounter(sc);
 }
 
 static void
@@ -225,24 +232,36 @@ tmu_start(void *arg, int which, u_int clkint)
 	}
 }
 
-static long
-tmu_microtime(void *arg)
+static void
+tmu_init_timecounter(struct tmu_softc *sc)
 {
-	struct tmu_softc *sc = arg;
-	u_int32_t tcnt, d;
 
-	tcnt = bus_space_read_4(sc->sc_bust, sc->sc_bush, TMU_REG_TCNT(0));
-	d = bus_space_read_4(sc->sc_bust, sc->sc_bush, TMU_REG_TCOR(0)) - tcnt;
+	sc->sc_tc.tc_priv = sc;
+	sc->sc_tc.tc_get_timecount = tmu_get_timecounter;
+	sc->sc_tc.tc_name = "tmu_pclock_4";
+	sc->sc_tc.tc_frequency = sc->sc_ca.ca_rate;
+	sc->sc_tc.tc_counter_mask = ~0;
+	sc->sc_tc.tc_quality = 0;
 
-	/*
-	 * Catch the common case of a 64MHz peripheral bus clock.
-	 * This turns an expensive integer division into a simple shift.
-	 */
-	if (sc->sc_ticksperms == 16000)
-		return ((long)(d >> 4));
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, TMU_REG_TCNT(2), ~0);
+	bus_space_write_2(sc->sc_bust, sc->sc_bush, TMU_REG_TCR(2),
+	    TMU_TCR_TPSC_PDIV4 | TMU_TCR_CKEG_RISING);
+	/* start timer 2 running */
+	bus_space_write_1(sc->sc_bust, sc->sc_bush, TMU_REG_TSTR,
+	    bus_space_read_1(sc->sc_bust, sc->sc_bush, TMU_REG_TSTR) |
+	    TMU_TSTR(2));
 
-	/* Otherwise, need to do things the hard way */
-	return ((long)((d * 1000) / sc->sc_ticksperms));
+	tc_init(&sc->sc_tc);
+}
+
+static unsigned
+tmu_get_timecounter(struct timecounter *tc)
+{
+	struct tmu_softc *sc = tc->tc_priv;
+	unsigned	count;
+
+	count = bus_space_read_4(sc->sc_bust, sc->sc_bush, TMU_REG_TCNT(2));
+	return (~count);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.29 2006/09/02 07:10:51 christos Exp $	*/
+/*	$NetBSD: mly.c,v 1.29.2.1 2006/11/18 21:34:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.29 2006/09/02 07:10:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.29.2.1 2006/11/18 21:34:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.29 2006/09/02 07:10:51 christos Exp $");
 #include <sys/ioctl.h>
 #include <sys/scsiio.h>
 #include <sys/kthread.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -264,7 +265,8 @@ mly_find_ident(struct pci_attach_args *pa)
  * Match a supported board.
  */
 static int
-mly_match(struct device *parent, struct cfdata *cfdata, void *aux)
+mly_match(struct device *parent, struct cfdata *cfdata,
+    void *aux)
 {
 
 	return (mly_find_ident(aux) != NULL);
@@ -2087,7 +2089,7 @@ mly_get_xfer_mode(struct mly_softc *mly, int bus, struct scsipi_xfer_mode *xm)
  */
 static int
 mly_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t data,
-		 int flag, struct proc *p)
+    int flag, struct proc *p)
 {
 	struct mly_softc *mly;
 	int rv;
@@ -2292,7 +2294,8 @@ mlyopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Accept the last close on the control device.
  */
 int
-mlyclose(dev_t dev, int flag, int mode, struct lwp *l)
+mlyclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct mly_softc *mly;
 
@@ -2305,7 +2308,8 @@ mlyclose(dev_t dev, int flag, int mode, struct lwp *l)
  * Handle control operations.
  */
 int
-mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct mly_softc *mly;
 	int rv;
@@ -2314,10 +2318,11 @@ mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case MLYIO_COMMAND:
-		if (securelevel >= 2)
-			rv = EPERM;
-		else
-			rv = mly_user_command(mly, (void *)data);
+		rv = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		if (rv)
+			break;
+
+		rv = mly_user_command(mly, (void *)data);
 		break;
 	case MLYIO_HEALTH:
 		rv = mly_user_health(mly, (void *)data);

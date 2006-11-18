@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.10 2003/04/29 01:52:59 thorpej Exp $	*/
+/*	$NetBSD: md_root.c,v 1.10.48.1 2006/11/18 21:34:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.10 2003/04/29 01:52:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.10.48.1 2006/11/18 21:34:03 ad Exp $");
 
 #include "opt_md.h"
 

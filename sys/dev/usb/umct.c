@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.18 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: umct.c,v 1.18.20.1 2006/11/18 21:34:51 ad Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.18 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.18.20.1 2006/11/18 21:34:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -592,7 +592,8 @@ umct_close(void *addr, int portno)
 }
 
 void
-umct_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+umct_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct umct_softc *sc = priv;
 	u_char *tbuf = sc->sc_intr_buf;

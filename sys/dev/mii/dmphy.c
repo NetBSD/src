@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.24 2006/03/29 07:05:24 thorpej Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.24.8.1 2006/11/18 21:34:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.24 2006/03/29 07:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.24.8.1 2006/11/18 21:34:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,8 @@ static const struct mii_phydesc dmphys[] = {
 };
 
 static int
-dmphymatch(struct device *parent, struct cfdata *match, void *aux)
+dmphymatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -145,7 +146,7 @@ dmphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &dmphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	PHY_RESET(sc);
 

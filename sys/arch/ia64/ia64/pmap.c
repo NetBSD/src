@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.3 2006/09/01 22:21:17 mrg Exp $ */
+/* $NetBSD: pmap.c,v 1.3.2.1 2006/11/18 21:29:22 ad Exp $ */
 
 
 /*-
@@ -92,7 +92,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3 2006/09/01 22:21:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3.2.1 2006/11/18 21:29:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1436,7 +1436,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
                 pmap_install(oldpmap);
                 PMAP_UNLOCK(pmap);
                 PMAP_MAP_TO_HEAD_UNLOCK();
-                UVM_KICK_PDAEMON();
+                uvm_kick_pdaemon();
                 PMAP_MAP_TO_HEAD_LOCK();
                 PMAP_LOCK(pmap);
                 oldpmap = pmap_install(pmap);

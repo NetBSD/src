@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.192 2006/08/23 17:19:32 christos Exp $ */
+/*	$NetBSD: st.c,v 1.192.2.1 2006/11/18 21:34:49 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.192 2006/08/23 17:19:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.192.2.1 2006/11/18 21:34:49 ad Exp $");
 
 #include "opt_scsi.h"
 
@@ -2398,7 +2398,8 @@ bad:			free(bf, M_TEMP);
 }
 
 static int
-stdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+stdump(dev_t dev, daddr_t blkno, caddr_t va,
+    size_t size)
 {
 
 	/* Not implemented. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_cmpci.c,v 1.10 2006/06/09 21:55:34 christos Exp $	*/
+/*	$NetBSD: opl_cmpci.c,v 1.10.6.1 2006/11/18 21:34:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.10 2006/06/09 21:55:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.10.6.1 2006/11/18 21:34:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

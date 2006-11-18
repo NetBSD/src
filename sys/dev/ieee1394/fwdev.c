@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.4 2006/08/30 02:08:20 christos Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.4.2.1 2006/11/18 21:34:20 ad Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa

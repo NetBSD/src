@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.47 2006/08/28 21:33:16 christos Exp $ */
+/* $NetBSD: wsmouse.c,v 1.47.2.1 2006/11/18 21:34:57 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.47 2006/08/28 21:33:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.47.2.1 2006/11/18 21:34:57 ad Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -233,7 +233,8 @@ wsmousedevprint(void *aux, const char *pnp)
 }
 
 int
-wsmouse_match(struct device *parent, struct cfdata *match, void *aux)
+wsmouse_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	return (1);
 }
@@ -340,7 +341,7 @@ wsmouse_detach(struct device  *self, int flags)
 }
 
 void
-wsmouse_input_xyzw(struct device *wsmousedev, u_int btns /* 0 is up */,
+wsmouse_input(struct device *wsmousedev, u_int btns /* 0 is up */,
 	int x, int y, int z, int w, u_int flags)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)wsmousedev;
@@ -599,7 +600,8 @@ wsmouseopen(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int
-wsmouseclose(dev_t dev, int flags, int mode, struct lwp *l)
+wsmouseclose(dev_t dev, int flags, int mode,
+    struct lwp *l)
 {
 	struct wsmouse_softc *sc =
 	    (struct wsmouse_softc *)wsmouse_cd.cd_devs[minor(dev)];

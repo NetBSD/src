@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.57 2006/03/08 23:46:22 lukem Exp $ */
+/*	$NetBSD: sbic.c,v 1.57.10.1 2006/11/18 21:29:04 ad Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.57 2006/03/08 23:46:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.57.10.1 2006/11/18 21:29:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,13 +182,13 @@ void sbictimeout(struct sbic_softc *dev);
 #define CSR_TRACE_SIZE 32
 #if CSR_TRACE_SIZE
 #define CSR_TRACE(w,c,a,x) do { \
-	int s = splbio(); \
+	int s_csr_trace = splbio(); \
 	csr_trace[csr_traceptr].whr = (w); csr_trace[csr_traceptr].csr = (c); \
 	csr_trace[csr_traceptr].asr = (a); csr_trace[csr_traceptr].xtn = (x); \
 	dma_cachectl((caddr_t)&csr_trace[csr_traceptr], sizeof(csr_trace[0])); \
 	csr_traceptr = (csr_traceptr + 1) & (CSR_TRACE_SIZE - 1); \
 /*	dma_cachectl((caddr_t)&csr_traceptr, sizeof(csr_traceptr));*/ \
-	splx(s); \
+	splx(s_csr_trace); \
 } while (0)
 int csr_traceptr;
 int csr_tracesize = CSR_TRACE_SIZE;

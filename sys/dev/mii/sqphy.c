@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.39 2006/03/29 07:05:24 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.39.8.1 2006/11/18 21:34:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.39 2006/03/29 07:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.39.8.1 2006/11/18 21:34:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,8 @@ static const struct mii_phydesc sqphys[] = {
 };
 
 static int
-sqphymatch(struct device *parent, struct cfdata *match, void *aux)
+sqphymatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -149,7 +150,7 @@ sqphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	switch (MII_MODEL(ma->mii_id2)) {
 	case MII_MODEL_SEEQ_84220:

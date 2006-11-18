@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.17 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.17.2.1 2006/11/18 21:34:52 ad Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.17 2006/08/17 17:11:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.17.2.1 2006/11/18 21:34:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -847,7 +847,8 @@ uvscom_close(void *addr, int portno)
 }
 
 Static void
-uvscom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+uvscom_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct uvscom_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;

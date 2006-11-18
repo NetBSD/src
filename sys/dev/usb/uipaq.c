@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.2 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.2.22.1 2006/11/18 21:34:51 ad Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*

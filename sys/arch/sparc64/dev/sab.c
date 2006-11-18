@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.31 2006/07/28 14:08:11 hannken Exp $	*/
+/*	$NetBSD: sab.c,v 1.31.4.1 2006/11/18 21:29:32 ad Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,8 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.31 2006/07/28 14:08:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.31.4.1 2006/11/18 21:29:32 ad Exp $");
 
+#include "opt_kgdb.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.31 2006/07/28 14:08:11 hannken Exp $");
 #include <sys/tty.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
+#include <sys/kgdb.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
@@ -151,6 +153,11 @@ void sabtty_cnpollc(struct sabtty_softc *, int);
 void sabtty_shutdown(void *);
 int sabttyparam(struct sabtty_softc *, struct tty *, struct termios *);
 
+#ifdef KGDB
+int sab_kgdb_check(struct sabtty_softc *);
+void sab_kgdb_init(struct sabtty_softc *);
+#endif
+
 void sabtty_cnputc(struct sabtty_softc *, int);
 int sabtty_cngetc(struct sabtty_softc *);
 
@@ -242,7 +249,8 @@ sab_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Use prom mapping, if available. */
 	if (ea->ea_nvaddr)
-		sparc_promaddr_to_handle(sc->sc_bt, ea->ea_vaddr[0], &sc->sc_bh);
+		sparc_promaddr_to_handle(sc->sc_bt, ea->ea_vaddr[0],
+		    &sc->sc_bh);
 	else if (bus_space_map(sc->sc_bt, EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
 				 ea->ea_reg[0].size, 0, &sc->sc_bh) != 0) {
 		printf(": can't map register space\n");
@@ -366,15 +374,22 @@ sabtty_attach(struct device *parent, struct device *self, void *aux)
 	struct sabtty_attach_args *sa = aux;
 	int r;
 	int maj;
+	int is_kgdb = 0;
 
-	sc->sc_tty = ttymalloc();
-	if (sc->sc_tty == NULL) {
-		aprint_normal(": failed to allocate tty\n");
-		return;
+#ifdef KGDB
+	is_kgdb = sab_kgdb_check(sc);
+#endif
+
+	if (!is_kgdb) {
+		sc->sc_tty = ttymalloc();
+		if (sc->sc_tty == NULL) {
+			aprint_normal(": failed to allocate tty\n");
+			return;
+		}
+		tty_attach(sc->sc_tty);
+		sc->sc_tty->t_oproc = sabtty_start;
+		sc->sc_tty->t_param = sabtty_param;
 	}
-	tty_attach(sc->sc_tty);
-	sc->sc_tty->t_oproc = sabtty_start;
-	sc->sc_tty->t_param = sabtty_param;
 
 	sc->sc_parent = (struct sab_softc *)parent;
 	sc->sc_bt = sc->sc_parent->sc_bt;
@@ -453,6 +468,13 @@ sabtty_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		/* Not a console... */
 		sabtty_reset(sc);
+
+#ifdef KGDB
+		if (is_kgdb) {
+			sab_kgdb_init(sc);
+			aprint_normal(": kgdb");
+		}
+#endif
 	}
 
 	aprint_normal("\n");
@@ -616,7 +638,8 @@ sabtty_softintr(struct sabtty_softc *sc)
 	}
 
 	if (flags & SABTTYF_RINGOVERFLOW)
-		log(LOG_WARNING, "%s: ring overflow\n", sc->sc_dv.dv_xname);
+		log(LOG_WARNING, "%s: ring overflow\n",
+		    device_xname(&sc->sc_dv));
 
 	if (flags & SABTTYF_DONE) {
 		ndflush(&tp->t_outq, sc->sc_txp - tp->t_outq.c_cf);
@@ -640,6 +663,9 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 	tp = sc->sc_tty;
 	tp->t_dev = dev;
 	p = l->l_proc;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
@@ -684,10 +710,6 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
-	} else if ((tp->t_state & TS_XCLUDE) &&
-	    (!kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag))) {
-		return (EBUSY);
 	} else {
 		s = spltty();
 	}
@@ -833,8 +855,8 @@ sabioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 		*((int *)data) = sc->sc_openflags;
 		break;
 	case TIOCSFLAGS:
-		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag))
+		if (kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp))
 			error = EPERM;
 		else
 			sc->sc_openflags = *((int *)data) &
@@ -1008,6 +1030,7 @@ sabttyparam(struct sabtty_softc *sc, struct tty *tp, struct termios *t)
 			dafo |= SAB_DAFO_PAR_EVEN;
 	} else
 		dafo |= SAB_DAFO_PAR_NONE;
+	SAB_WRITE(sc, SAB_DAFO, dafo);
 
 	if (ospeed != 0) {
 		SAB_WRITE(sc, SAB_BGR, ospeed & 0xff);
@@ -1297,3 +1320,62 @@ sabtty_shutdown(void *vsc)
 	SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
 	sabtty_cec_wait(sc);
 }
+
+#ifdef KGDB
+static int
+sab_kgdb_getc(void *arg)
+{
+	struct sabtty_softc *sc = arg;
+
+	return sabtty_cngetc(sc);
+}
+
+static void
+sab_kgdb_putc(void *arg, int c)
+{
+	struct sabtty_softc *sc = arg;
+
+	return sabtty_cnputc(sc, c);
+}
+
+#ifndef KGDB_DEVRATE
+#define KGDB_DEVRATE    9600
+#endif
+
+int
+sab_kgdb_check(struct sabtty_softc *sc)
+{
+	return strcmp(device_xname(&sc->sc_dv), KGDB_DEVNAME) == 0;
+}
+
+void
+sab_kgdb_init(struct sabtty_softc *sc)
+{
+	int sp;
+	uint8_t dafo, r;
+	extern int kgdb_break_at_attach;
+
+	kgdb_attach(sab_kgdb_getc, sab_kgdb_putc, sc);
+	kgdb_dev = 123;	/* not used, but checked against NODEV */
+
+	/*
+	 * Configure the port to speed/8n1
+	 */
+	dafo = SAB_READ(sc, SAB_DAFO);
+	dafo &= ~(SAB_DAFO_STOP|SAB_DAFO_CHL_CSIZE|SAB_DAFO_PARMASK);
+	dafo |= SAB_DAFO_CHL_CS8|SAB_DAFO_PAR_NONE;
+	SAB_WRITE(sc, SAB_DAFO, dafo);
+	sp = sabtty_speed(KGDB_DEVRATE);
+	SAB_WRITE(sc, SAB_BGR, sp & 0xff);
+	r = SAB_READ(sc, SAB_CCR2);
+	r &= ~(SAB_CCR2_BR9 | SAB_CCR2_BR8);
+	r |= (sp >> 2) & (SAB_CCR2_BR9 | SAB_CCR2_BR8);
+	SAB_WRITE(sc, SAB_CCR2, r);
+
+	/*
+	 * If we are booting with -d, break into kgdb now
+	 */
+	if (kgdb_break_at_attach)
+		kgdb_connect(1);
+}
+#endif

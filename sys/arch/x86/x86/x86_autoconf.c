@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.22 2006/08/27 04:31:55 christos Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.22.2.1 2006/11/18 21:29:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -123,6 +123,7 @@ handle_wedges(struct device *dv, int par)
 	wl.dkwl_buf = wi = malloc(wl.dkwl_bufsize, M_TEMP, M_WAITOK);
 
 	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED, 0);
+	VOP_CLOSE(vn, FREAD, NOCRED, 0);
 	vput(vn);
 	if (error) {
 #ifdef DEBUG_WEDGE

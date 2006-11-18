@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.6 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: ansi.h,v 1.6.20.1 2006/11/18 21:29:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -98,8 +98,8 @@
  * stream conversions.  The content must not be referenced by user programs.
  */
 typedef union {
-	char __mbstate8[128];
 	__int64_t __mbstateL;	/* for alignment */
+	char __mbstate8[128];
 } __mbstate_t;
 #define	_BSD_MBSTATE_T_		__mbstate_t	/* mbstate_t */
 

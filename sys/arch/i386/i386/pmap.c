@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.192.8.1 2006/11/17 16:34:32 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.192.8.2 2006/11/18 21:29:19 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.192.8.1 2006/11/17 16:34:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.192.8.2 2006/11/18 21:29:19 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1161,9 +1161,7 @@ pmap_alloc_pv(pmap, mode)
  */
 
 static struct pv_entry *
-pmap_alloc_pvpage(pmap, mode)
-	struct pmap *pmap;
-	int mode;
+pmap_alloc_pvpage(struct pmap *pmap, int mode)
 {
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
@@ -2966,10 +2964,8 @@ no_tlb_shootdown:
  */
 
 void
-pmap_write_protect(pmap, sva, eva, prot)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
+pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
+    vm_prot_t prot)
 {
 	pt_entry_t *ptes, *epte;
 	volatile pt_entry_t *spte;

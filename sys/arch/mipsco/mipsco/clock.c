@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.6.20.1 2006/11/18 21:29:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6.20.1 2006/11/18 21:29:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -125,79 +125,6 @@ setstatclockrate(newhz)
 void
 cpu_initclocks()
 {
+	if (platform.clkinit)
+		(*platform.clkinit)();
 }
-
-/*
- * Initialze the time of day register, based on the time base which is, e.g.
- * from a filesystem.  Base provides the time to within six months,
- * and the time of year clock (if any) provides the rest.
- */
-void
-inittodr(base)
-	time_t base;
-{
-	struct clock_ymdhms dt;
-
-	int deltat, badbase = 0;
-
-	if (base < (MINYEAR-1970)*SECYR) {
-		printf("WARNING: preposterous time in file system\n");
-		/* read the system clock anyway */
-		base = 6*SECYR + 186*SECDAY + SECDAY/2;
-		badbase = 1;
-	}
-
-	(*platform.read_todr)(&dt);
-
-	/* simple sanity checks */
-	if (dt.dt_mon < 1 || dt.dt_mon > 12 ||
-	    dt.dt_day < 1 || dt.dt_day > 31 ||
-	    dt.dt_hour > 23 || dt.dt_min > 59 || dt.dt_sec > 59) {
-		printf("WARNING: preposterous clock chip time\n");
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
-		 */
-		time.tv_sec = base;
-		if (!badbase)
-			resettodr();
-		return;
-	}
-
-	/* now have days since Jan 1, 1970; the rest is easy... */
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days;
-		 * if so, assume something is amiss.
-		 */
-		deltat = time.tv_sec - base;
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %d days",
-		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-		printf(" -- CHECK AND RESET THE DATE!\n");
-	}
-}
-
-/*
- * Reset the TODR based on the time value; used when the TODR
- * has a preposterous value and also when the time is reset
- * by the stime system call.  Also called when the TODR goes past
- * TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
- * to wrap the TODR around.
- */
-void
-resettodr()
-{
-	struct clock_ymdhms dt;
-
-	if (time.tv_sec >= (MINYEAR-1970)*SECYR) {
-		clock_secs_to_ymdhms(time.tv_sec, &dt);
-		(*platform.write_todr)(&dt);
-	}
-}
-

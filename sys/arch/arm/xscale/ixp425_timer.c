@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.11 2006/04/10 03:36:03 simonb Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.11.8.1 2006/11/18 21:29:07 ad Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.11 2006/04/10 03:36:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.11.8.1 2006/11/18 21:29:07 ad Exp $");
 
 #include "opt_ixp425.h"
 #include "opt_perfctrs.h"
@@ -290,6 +290,9 @@ delay(u_int n)
 	}
 }
 
+
+#ifndef __HAVE_GENERIC_TODR
+
 todr_chip_handle_t todr_handle;
 
 /*
@@ -376,6 +379,8 @@ resettodr(void)
 	    todr_settime(todr_handle, &time) != 0)
 		printf("resettodr: failed to set time\n");
 }
+
+#endif
 
 /*
  * ixpclk_intr:

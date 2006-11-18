@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.15 2006/04/10 22:32:56 bouyer Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.15.8.1 2006/11/18 21:34:08 ad Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.15 2006/04/10 22:32:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.15.8.1 2006/11/18 21:34:08 ad Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic7xxx_cam.h>

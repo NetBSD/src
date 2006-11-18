@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.25.2.2 2006/11/17 16:34:32 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.25.2.3 2006/11/18 21:29:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.25.2.2 2006/11/17 16:34:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.25.2.3 2006/11/18 21:29:03 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -615,8 +615,9 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag);
+	/* XXX this looks like a copy/paste error. */
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86_64,
+	    KAUTH_REQ_MACHDEP_X86_64_MTRR_GET, NULL, NULL, NULL);
 	if (error != 0)
 		return error;
 
@@ -682,8 +683,8 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag);
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
+	    KAUTH_REQ_MACHDEP_X86_MTRR_SET, NULL, NULL, NULL);
 	if (error != 0)
 		return error;
 
@@ -794,7 +795,7 @@ int
 cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	__greg32_t *gr = mcp->__gregs;
+	const __greg32_t *gr = mcp->__gregs;
 	int error;
 
 	/* Restore register context, if any. */

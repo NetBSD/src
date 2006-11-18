@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.72 2006/07/23 22:06:05 ad Exp $	*/
+/*	$NetBSD: hil.c,v 1.72.4.1 2006/11/18 21:29:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.72 2006/07/23 22:06:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.72.4.1 2006/11/18 21:29:12 ad Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"
@@ -1064,7 +1064,7 @@ hilevent(struct hil_softc *hilp)
 	HILQ *hq;
 	struct timeval ourtime;
 	hil_packet *proto;
-	int s, len0;
+	int len0;
 	long tenths;
 
 #ifdef DEBUG
@@ -1095,9 +1095,7 @@ hilevent(struct hil_softc *hilp)
 	/*
 	 * Everybody gets the same time stamp
 	 */
-	s = splclock();
-	ourtime = time;
-	splx(s);
+	microtime(&ourtime);
 	tenths = (ourtime.tv_sec * 100) + (ourtime.tv_usec / 10000);
 
 	proto = NULL;
@@ -1156,14 +1154,11 @@ hpuxhilevent(struct hil_softc *hilp, struct hilloopdev *dptr)
 	int len;
 	struct timeval ourtime;
 	long tstamp;
-	int s;
 
 	/*
 	 * Everybody gets the same time stamp
 	 */
-	s = splclock();
-	ourtime = time;
-	splx(s);
+	microtime(&ourtime);
 	tstamp = (ourtime.tv_sec * 100) + (ourtime.tv_usec / 10000);
 
 	/*

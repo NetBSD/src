@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.23 2006/03/29 06:45:05 thorpej Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.23.8.1 2006/11/18 21:34:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.23 2006/03/29 06:45:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.23.8.1 2006/11/18 21:34:07 ad Exp $");
 
 #include "opt_i2o.h"
 
@@ -633,8 +633,8 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
  * ioctl hook; used here only to initiate low-level rescans.
  */
 static int
-iopsp_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t data, int flag,
-	    struct proc *p)
+iopsp_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t data,
+    int flag, struct proc *p)
 {
 	int rv;
 

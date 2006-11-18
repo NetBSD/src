@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 2006/02/23 05:49:42 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47.14.1 2006/11/18 21:29:24 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2006/02/23 05:49:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47.14.1 2006/11/18 21:29:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -69,22 +69,14 @@ u_int *heathrow_FCR = NULL;
 void
 cpu_configure()
 {
-	int msr;
 
 	init_interrupt();
-	calc_delayconst();
 	canonicalize_bootpath();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
 	(void)spl0();
-
-	/*
-	 * Now allow hardware interrupts.
-	 */
-	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
-		      : "=r"(msr) : "K"(PSL_EE|PSL_RI));
 }
 
 void

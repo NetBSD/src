@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.72 2006/06/04 19:27:59 christos Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.72.6.1 2006/11/18 21:34:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.72 2006/06/04 19:27:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.72.6.1 2006/11/18 21:34:04 ad Exp $");
 
 #include "opt_cardbus.h"
 
@@ -407,7 +407,8 @@ cardbus_attach_card(struct cardbus_softc *sc)
 }
 
 int
-cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
+cardbus_rescan(struct device *self, const char *ifattr,
+    const int *locators)
 {
 	struct cardbus_softc *sc = device_private(self);
 	cardbus_chipset_tag_t cc;

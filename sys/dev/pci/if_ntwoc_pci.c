@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.17 2006/03/29 04:16:50 thorpej Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.17.8.1 2006/11/18 21:34:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.17 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.17.8.1 2006/11/18 21:34:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,8 @@ ntwoc_pci_sca_read_2(struct sca_softc *sc, u_int reg)
 
 
 static int
-ntwoc_pci_match(struct device *parent, struct cfdata *match, void *aux)
+ntwoc_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 

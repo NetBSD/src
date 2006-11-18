@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.67 2006/09/03 05:30:48 christos Exp $	*/
+/*	$NetBSD: ss.c,v 1.67.2.1 2006/11/18 21:34:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.67 2006/09/03 05:30:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.67.2.1 2006/11/18 21:34:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,8 @@ static const struct scsipi_inquiry_pattern ss_patterns[] = {
 };
 
 static int
-ssmatch(struct device *parent, struct cfdata *match, void *aux)
+ssmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;

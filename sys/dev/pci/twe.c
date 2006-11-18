@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.78 2006/09/03 07:05:16 christos Exp $	*/
+/*	$NetBSD: twe.c,v 1.78.2.1 2006/11/18 21:34:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.78 2006/09/03 07:05:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.78.2.1 2006/11/18 21:34:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.78 2006/09/03 07:05:16 christos Exp $");
 #include <sys/disk.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -295,7 +296,8 @@ twe_outl(struct twe_softc *sc, int off, u_int32_t val)
  * Match a supported board.
  */
 static int
-twe_match(struct device *parent, struct cfdata *cfdata, void *aux)
+twe_match(struct device *parent, struct cfdata *cfdata,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -1728,7 +1730,8 @@ tweopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Accept the last close on the control device.
  */
 static int
-tweclose(dev_t dev, int flag, int mode, struct lwp *l)
+tweclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct twe_softc *twe;
 
@@ -1749,7 +1752,8 @@ twe_ccb_wait_handler(struct twe_ccb *ccb, int error)
  * Handle control operations.
  */
 static int
-tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct twe_softc *twe;
 	struct twe_ccb *ccb;
@@ -1769,8 +1773,9 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	/* This is intended to be compatible with the FreeBSD interface. */
 	switch (cmd) {
 	case TWEIO_COMMAND:
-		if (securelevel >= 2)
-			return (EPERM);
+		error = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		if (error)
+			return (error);
 
 		/* XXX mutex */
 		if (tu->tu_size > 0) {

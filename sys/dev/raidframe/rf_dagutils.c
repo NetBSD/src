@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.48 2006/01/09 01:33:27 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.48.18.1 2006/11/18 21:34:46 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.48 2006/01/09 01:33:27 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.48.18.1 2006/11/18 21:34:46 ad Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -346,7 +346,8 @@ rf_FreeFuncList(RF_FuncList_t *funcList)
 */
 
 void *
-rf_AllocStripeBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h, int size)
+rf_AllocStripeBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h,
+    int size)
 {
 	RF_VoidPointerListElem_t *vple;
 	void *p;

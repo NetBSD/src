@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.3 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.3.20.1 2006/11/18 21:29:31 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,7 +45,6 @@ struct clock_attach_args {
 	int	ca_has_stat_clock;	/* Non-zero if supports stat clock */
 	void	*ca_arg;		/* Back-end cookie */
 	void	(*ca_start)(void *, int, u_int);	/* Start/Reset timer */
-	long	(*ca_microtime)(void *);	/* uS since last hardclock() */
 };
 
 /*

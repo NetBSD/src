@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.22 2006/08/17 22:14:38 he Exp $	*/
+/*	$NetBSD: oboe.c,v 1.22.2.1 2006/11/18 21:34:31 ad Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.22 2006/08/17 22:14:38 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.22.2.1 2006/11/18 21:34:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,8 @@ static struct irframe_methods oboe_methods = {
 };
 
 static int
-oboe_match(struct device *parent, struct cfdata *match, void *aux)
+oboe_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -296,7 +297,8 @@ oboe_open(void *h, int flag, int mode, struct lwp *l)
 }
 
 static int
-oboe_close(void *h, int flag, int mode, struct lwp *l)
+oboe_close(void *h, int flag, int mode,
+    struct lwp *l)
 {
 	struct oboe_softc *sc = h;
 	int error = 0;

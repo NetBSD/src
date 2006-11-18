@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.74 2006/09/03 21:18:42 christos Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.74.2.1 2006/11/18 21:34:51 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.74 2006/09/03 21:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.74.2.1 2006/11/18 21:34:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -646,7 +646,8 @@ ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 }
 
 int
-ulptclose(dev_t dev, int flag, int mode, struct lwp *l)
+ulptclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct ulpt_softc *sc;
 
@@ -832,16 +833,10 @@ ulpt_tick(void *xsc)
 }
 
 int
-ulptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ulptioctl(dev_t dev, u_long cmd, caddr_t data,
+    int flag, struct lwp *l)
 {
-	int error = 0;
-
-	switch (cmd) {
-	default:
-		error = ENODEV;
-	}
-
-	return (error);
+	return ENODEV;
 }
 
 #if 0

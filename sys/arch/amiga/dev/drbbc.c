@@ -1,4 +1,4 @@
-/*	$NetBSD: drbbc.c,v 1.15 2006/09/05 05:32:30 mhitch Exp $ */
+/*	$NetBSD: drbbc.c,v 1.15.2.1 2006/11/18 21:29:04 ad Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.15 2006/09/05 05:32:30 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.15.2.1 2006/11/18 21:29:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -203,5 +203,5 @@ dracougettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 int
 dracousettod(todr_chip_handle_t h, volatile struct timeval *tvp)
 {
-	return 1;
+	return (ENXIO);
 }

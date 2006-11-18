@@ -1,4 +1,4 @@
-/* $NetBSD: opl_esl.c,v 1.12 2006/06/09 21:55:34 christos Exp $ */
+/* $NetBSD: opl_esl.c,v 1.12.6.1 2006/11/18 21:34:43 ad Exp $ */
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.12 2006/06/09 21:55:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.12.6.1 2006/11/18 21:34:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

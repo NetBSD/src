@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.11 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.11.20.1 2006/11/18 21:34:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.11 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.11.20.1 2006/11/18 21:34:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,8 @@ icp_pci_find_class(struct pci_attach_args *pa)
 }
 
 int
-icp_pci_match(struct device *parent, struct cfdata *match, void *aux)
+icp_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -654,7 +655,8 @@ icp_pci_intr(struct icp_softc *icp, struct icp_intr_ctx *ctx)
 }
 
 void
-icp_pci_release_event(struct icp_softc *icp, struct icp_ccb *ccb)
+icp_pci_release_event(struct icp_softc *icp,
+    struct icp_ccb *ccb)
 {
 
 	/* XXX Not yet implemented */
@@ -680,7 +682,8 @@ icp_pci_test_busy(struct icp_softc *icp)
  */
 
 void
-icp_pcinew_copy_cmd(struct icp_softc *icp, struct icp_ccb *ccb)
+icp_pcinew_copy_cmd(struct icp_softc *icp,
+    struct icp_ccb *ccb)
 {
 
 	/* XXX Not yet implemented */
@@ -695,14 +698,16 @@ icp_pcinew_get_status(struct icp_softc *icp)
 }
 
 void
-icp_pcinew_intr(struct icp_softc *icp, struct icp_intr_ctx *ctx)
+icp_pcinew_intr(struct icp_softc *icp,
+    struct icp_intr_ctx *ctx)
 {
 
 	/* XXX Not yet implemented */
 }
 
 void
-icp_pcinew_release_event(struct icp_softc *icp, struct icp_ccb *ccb)
+icp_pcinew_release_event(struct icp_softc *icp,
+    struct icp_ccb *ccb)
 {
 
 	/* XXX Not yet implemented */

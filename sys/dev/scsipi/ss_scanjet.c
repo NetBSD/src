@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.45 2006/09/03 06:23:27 christos Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.45.2.1 2006/11/18 21:34:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.45 2006/09/03 06:23:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.45.2.1 2006/11/18 21:34:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

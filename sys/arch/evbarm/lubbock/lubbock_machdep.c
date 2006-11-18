@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.12 2006/05/17 04:22:46 mrg Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.12.8.1 2006/11/18 21:29:10 ad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.12 2006/05/17 04:22:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.12.8.1 2006/11/18 21:29:10 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -242,7 +242,6 @@ struct user *proc0paddr;
 
 #if 0
 void	process_kernel_args(char *);
-void	parse_mi_bootargs(char *args);
 #endif
 
 void	consinit(void);

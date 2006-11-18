@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.23 2006/09/03 21:42:09 christos Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.23.2.1 2006/11/18 21:34:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.23 2006/09/03 21:42:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.23.2.1 2006/11/18 21:34:15 ad Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -525,7 +525,8 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 
 void
 vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
-    bus_space_tag_t memt, int type, int quirks, const struct vga_funcs *vf)
+    bus_space_tag_t memt, int type, int quirks,
+    const struct vga_funcs *vf)
 {
 	int console;
 	struct vga_config *vc;
@@ -797,7 +798,8 @@ vga_switch_screen(struct vga_config *vc)
 }
 
 static int
-vga_raster_load_font(void *v, void *id, struct wsdisplay_font *data)
+vga_raster_load_font(void *v, void *id,
+    struct wsdisplay_font *data)
 {
 	/* XXX */
 	printf("vga_raster_load_font: called\n");

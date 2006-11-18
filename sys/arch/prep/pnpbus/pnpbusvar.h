@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbusvar.h,v 1.3 2006/06/23 03:08:41 garbled Exp $	*/
+/*	$NetBSD: pnpbusvar.h,v 1.3.4.1 2006/11/18 21:29:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ struct pnpbus_attach_args {
 	bus_space_tag_t paa_iot;		/* i/o space tag */
 	bus_space_tag_t paa_memt;		/* mem space tag */
 	isa_chipset_tag_t paa_ic;		/* ISA chipset tag */
+	bus_dma_tag_t paa_dmat;			/* ISA DMA tag */
 };
 
 /*
@@ -99,6 +100,7 @@ struct pnpbus_dev_attach_args {
 	bus_space_tag_t pna_iot;	/* i/o space tag */
 	bus_space_tag_t pna_memt;	/* mem space tag */
 	isa_chipset_tag_t pna_ic;	/* ISA chipset tag */
+	bus_dma_tag_t pna_dmat;		/* ISA DMA tag */
 
 	struct pnpresources pna_res;	/* resources gathered from PNP */
 	char	pna_devid[8];		/* PNP device id string */
@@ -121,6 +123,7 @@ struct pnpbus_softc {
 
 	bus_space_tag_t sc_iot;		/* io space tag */
 	bus_space_tag_t sc_memt;	/* mem space tag */
+	bus_dma_tag_t sc_dmat;		/* ISA DMA tag */
 };
 
 int	pnpbus_scan(struct pnpbus_dev_attach_args *pna, PPC_DEVICE *dev);

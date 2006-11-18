@@ -1,4 +1,4 @@
-#	$NetBSD: files.shb,v 1.4 2005/12/11 12:18:58 christos Exp $
+#	$NetBSD: files.shb,v 1.4.20.1 2006/11/18 21:29:31 ad Exp $
 #
 # SuperH internal devices.
 #
@@ -6,6 +6,10 @@ device	shb { }
 attach	shb at mainbus
 
 file	arch/sh3/dev/shb.c		shb
+
+device	rtc
+attach	rtc at shb
+file	arch/sh3/dev/rtc.c		rtc	needs-flag
 
 device	wdog
 attach	wdog at shb

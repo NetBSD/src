@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.15 2005/12/11 12:18:25 christos Exp $	*/
+/*	$NetBSD: news5000.c,v 1.15.20.1 2006/11/18 21:29:27 ad Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.15 2005/12/11 12:18:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.15.20.1 2006/11/18 21:29:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/timetc.h>
 
 #include <machine/adrsmap.h>
 #include <machine/cpu.h>
@@ -40,18 +41,15 @@ __KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.15 2005/12/11 12:18:25 christos Exp $
 #include <newsmips/apbus/apbusvar.h>
 #include <newsmips/newsmips/machid.h>
 
-extern void (*readmicrotime)(struct timeval *tvp);
-
 static void news5000_level1_intr(void);
 static void news5000_level0_intr(void);
 
 static void news5000_enable_intr(void);
 static void news5000_disable_intr(void);
 static void news5000_enable_timer(void);
-static void news5000_readmicrotime(struct timeval *);
 static void news5000_readidrom(uint8_t *);
-
-static u_int freerun_off;
+static void news5000_tc_init(void);
+static uint32_t news5000_getfreerun(struct timecounter *);
 
 /*
  * Handle news5000 interrupts.
@@ -81,7 +79,6 @@ news5000_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 		if (int2stat & NEWS5000_INT2_TIMER0) {
 			*(volatile uint32_t *)NEWS5000_TIMER0 = 1;
-			freerun_off = *(volatile uint32_t *)NEWS5000_FREERUN;
 
 			cf.pc = pc;
 			cf.sr = status;
@@ -222,26 +219,32 @@ static void
 news5000_enable_timer(void)
 {
 
+	news5000_tc_init();
+
 	/* enable timer interrpt */
 	*(volatile uint32_t *)NEWS5000_INTEN2 = NEWS5000_INT2_TIMER0;
 }
 
-static void
-news5000_readmicrotime(struct timeval *tvp)
+static uint32_t
+news5000_getfreerun(struct timecounter *tc)
 {
-	uint32_t freerun;
-
-	*tvp = time;
-	freerun = *(volatile uint32_t *)NEWS5000_FREERUN;
-	freerun -= freerun_off;
-	if (freerun > 1000000)
-		freerun = 1000000;
-	tvp->tv_usec += freerun;
-	if (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
+	return *(volatile uint32_t *)NEWS5000_FREERUN;
 }
+
+static void
+news5000_tc_init(void)
+{
+	static struct timecounter tc = {
+		.tc_get_timecount = news5000_getfreerun,
+		.tc_frequency = 1000000,
+		.tc_counter_mask = ~0,
+		.tc_name = "news5000_freerun",
+		.tc_quality = 100,
+	};
+
+	tc_init(&tc);
+}
+	
 
 static void
 news5000_readidrom(uint8_t *rom)
@@ -264,7 +267,6 @@ news5000_init(void)
 	enable_timer = news5000_enable_timer;
 
 	news5000_readidrom((uint8_t *)&idrom);
-	readmicrotime = news5000_readmicrotime;
 	hostid = idrom.id_serial;
 
 	/* XXX reset uPD72067 FDC to avoid spurious interrupts */

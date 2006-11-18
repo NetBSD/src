@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.53 2005/12/26 19:24:00 perry Exp $ */
+/* $NetBSD: pnpbios.c,v 1.53.20.1 2006/11/18 21:29:20 ad Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.53 2005/12/26 19:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.53.20.1 2006/11/18 21:29:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,8 @@ pnpbios_probe(void)
 }
 
 static int
-pnpbios_match(struct device *parent, struct cfdata *match, void *aux)
+pnpbios_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	/* There can be only one! */
@@ -1192,7 +1193,8 @@ pnp_newioport(struct pnpresources *r, const void *vres, size_t len)
 }
 
 static int
-pnp_newfixedioport(struct pnpresources *r, const void *vres, size_t len)
+pnp_newfixedioport(struct pnpresources *r, const void *vres,
+    size_t len)
 {
 	const struct pnpfixedportres *res;
 	struct pnp_io *io;

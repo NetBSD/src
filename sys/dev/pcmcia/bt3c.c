@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.3 2006/08/28 10:34:33 plunky Exp $ */
+/* $NetBSD: bt3c.c,v 1.3.2.1 2006/11/18 21:34:43 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.3 2006/08/28 10:34:33 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.3.2.1 2006/11/18 21:34:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -823,7 +823,8 @@ bt3c_disable(struct hci_unit *unit)
  */
 
 static int
-bt3c_match(struct device *parent, struct cfdata *match, void *aux)
+bt3c_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -883,7 +884,8 @@ bt3c_attach(struct device *parent, struct device *self, void *aux)
 	hci_attach(&sc->sc_unit);
 
 	/* establish a power change hook */
-	sc->sc_powerhook = powerhook_establish(bt3c_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    bt3c_power, sc);
 	return;
 
 iomap_failed:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.42 2006/08/29 23:53:06 christos Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.42.2.1 2006/11/18 21:34:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.42 2006/08/29 23:53:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.42.2.1 2006/11/18 21:34:29 ad Exp $");
 
 #include "midi.h"
 
@@ -218,7 +218,8 @@ static struct audio_device cs4280_device = {
 
 
 static int
-cs4280_match(struct device *parent, struct cfdata *match, void *aux)
+cs4280_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -362,7 +363,8 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(cs4280_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    cs4280_power, sc);
 }
 
 /* Interrupt handling function */
@@ -605,8 +607,8 @@ cs4280_query_encoding(void *addr, struct audio_encoding *fp)
 
 static int
 cs4280_set_params(void *addr, int setmode, int usemode,
-		  audio_params_t *play, audio_params_t *rec,
-		  stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
 	struct cs428x_softc *sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.26 2006/02/16 20:17:16 perry Exp $	*/
+/*	$NetBSD: atareg.h,v 1.26.14.1 2006/11/18 21:34:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -131,7 +131,7 @@
 #define	WDCC_STANDBY_IMMED	0xe0	/* enter standby mode */
 #define	WDCC_CHECK_PWR		0xe5	/* check power mode */
 
-#define WCDD_SECURITY_FREEZE	0xf5	/* freeze locking state */
+#define WDCC_SECURITY_FREEZE	0xf5	/* freeze locking state */
 
 /* Big Drive support */
 #define	WDCC_READ_EXT		0x24	/* read 48-bit addressing */
@@ -144,8 +144,10 @@
 #define	WDCC_WRITEDMA_EXT	0x35	/* write 48-bit addressing with DMA */
 
 #ifdef _KERNEL
+#include <dev/ata/ataconf.h>
+
 /* Convert a 32-bit command to a 48-bit command. */
-static __inline int __unused
+static __inline int
 atacmd_to48(int cmd32)
 {
 	switch (cmd32) {
@@ -157,10 +159,12 @@ atacmd_to48(int cmd32)
 		return WDCC_READMULTI_EXT;
 	case WDCC_WRITEMULTI:
 		return WDCC_WRITEMULTI_EXT;
+#if NATA_DMA
 	case WDCC_READDMA:
 		return WDCC_READDMA_EXT;
 	case WDCC_WRITEDMA:
 		return WDCC_WRITEDMA_EXT;
+#endif
 	default:
 		panic("atacmd_to48: illegal 32-bit command: %d", cmd32);
 		/* NOTREACHED */
@@ -174,7 +178,7 @@ atacmd_to48(int cmd32)
 
 #ifdef _KERNEL
 /* Convert a 32-bit command to a Native SATA Queued command. */
-static __inline int __unused
+static __inline int
 atacmd_tostatq(int cmd32)
 {
 	switch (cmd32) {

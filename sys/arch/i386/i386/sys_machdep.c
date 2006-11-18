@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.74 2006/07/23 22:06:05 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.74.4.1 2006/11/18 21:29:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.74 2006/07/23 22:06:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.74.4.1 2006/11/18 21:29:19 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -345,20 +345,15 @@ out:
 #endif	/* USER_LDT */
 
 int
-i386_iopl(l, args, retval)
-	struct lwp *l;
-	void *args;
-	register_t *retval;
+i386_iopl(struct lwp *l, void *args, register_t *retval)
 {
 	int error;
 	struct trapframe *tf = l->l_md.md_regs;
 	struct i386_iopl_args ua;
 
-	if (securelevel > 1)
-		return EPERM;
-
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_machdep(l->l_cred,
+	    KAUTH_MACHDEP_X86, KAUTH_REQ_MACHDEP_X86_IOPL,
+	    NULL, NULL, NULL)) != 0)
 		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -373,10 +368,7 @@ i386_iopl(l, args, retval)
 }
 
 int
-i386_get_ioperm(l, args, retval)
-	struct lwp *l;
-	void *args;
-	register_t *retval;
+i386_get_ioperm(struct lwp *l, void *args, register_t *retval)
 {
 	int error;
 	struct pcb *pcb = &l->l_addr->u_pcb;
@@ -389,20 +381,15 @@ i386_get_ioperm(l, args, retval)
 }
 
 int
-i386_set_ioperm(l, args, retval)
-	struct lwp *l;
-	void *args;
-	register_t *retval;
+i386_set_ioperm(struct lwp *l, void *args, register_t *retval)
 {
 	int error;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct i386_set_ioperm_args ua;
 
-	if (securelevel > 1)
-		return EPERM;
-
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_machdep(l->l_cred,
+	    KAUTH_MACHDEP_X86, KAUTH_REQ_MACHDEP_X86_IOPERM,
+	    NULL, NULL, NULL)) != 0)
 		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -445,8 +432,8 @@ i386_set_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag);
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
+	    KAUTH_REQ_MACHDEP_X86_MTRR_SET, NULL, NULL, NULL);
 	if (error != 0)
 		return error;
 

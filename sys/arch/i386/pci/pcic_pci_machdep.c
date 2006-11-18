@@ -1,4 +1,4 @@
-/*	$NetBSD: pcic_pci_machdep.c,v 1.5 2006/02/19 14:59:23 thorpej Exp $	*/
+/*	$NetBSD: pcic_pci_machdep.c,v 1.5.14.1 2006/11/18 21:29:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcic_pci_machdep.c,v 1.5 2006/02/19 14:59:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcic_pci_machdep.c,v 1.5.14.1 2006/11/18 21:29:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

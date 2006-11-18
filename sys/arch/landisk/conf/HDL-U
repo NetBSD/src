@@ -1,11 +1,9 @@
-# $NetBSD: HDL-U,v 1.1 2006/09/01 21:26:18 uwe Exp $
+# $NetBSD: HDL-U,v 1.1.4.1 2006/11/18 21:29:23 ad Exp $
 #
 # HDL-U/LAN Tank
 #
 
 include "arch/landisk/conf/GENERIC.in"
-
-options 	PCLOCK=33333333			# 33.33MHz
 
 pciide*		at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers

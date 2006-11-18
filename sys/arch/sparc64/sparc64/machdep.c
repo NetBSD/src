@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.189 2006/09/03 22:27:45 gdamore Exp $ */
+/*	$NetBSD: machdep.c,v 1.189.2.1 2006/11/18 21:29:33 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189 2006/09/03 22:27:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189.2.1 2006/11/18 21:29:33 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -634,7 +634,7 @@ cpu_reboot(register int howto, char *user_boot_string)
 
 #if defined(MULTIPROCESSOR)
 	/* Stop all secondary cpus */
-	sparc64_ipi_halt_cpus();
+	mp_halt_cpus();
 #endif
 
 	/* If rebooting and a dump is requested, do it. */
@@ -1210,7 +1210,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		 *    in the transfer.
 		 */
 		PHOLD(p);
-		if (__predict_false(uvm_vslock(p, vaddr, buflen,
+		if (__predict_false(uvm_vslock(p->p_vmspace, vaddr, buflen,
 			    (uio->uio_rw == UIO_WRITE) ?
 			    VM_PROT_WRITE : VM_PROT_READ) != 0)) {
 				goto after_vsunlock;
@@ -1242,7 +1242,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 			segs[i]._ds_mlist = NULL;
 			i++;
 		}
-		uvm_vsunlock(p, bp->b_data, todo);
+		uvm_vsunlock(p->p_vmspace, bp->b_data, todo);
 		PRELE(p);
  		if (buflen > 0 && i >= MAX_DMA_SEGS) 
 			/* Exceeded the size of our dmamap */
@@ -1882,7 +1882,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 	struct trapframe64 *tf = l->l_md.md_tf;
 
 	/* First ensure consistent stack state (see sendsig). */

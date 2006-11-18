@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.133 2006/07/08 23:02:55 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.133.4.1 2006/11/18 21:34:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.133 2006/07/08 23:02:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.133.4.1 2006/11/18 21:34:31 ad Exp $");
 
 /*
 #define CBB_DEBUG
@@ -280,10 +280,8 @@ static struct cardbus_functions pccbb_funcs = {
 #endif
 
 int
-pcicbbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pcicbbmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -422,10 +420,7 @@ pccbb_shutdown(void *arg)
 }
 
 void
-pccbbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+pccbbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pccbb_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
@@ -680,7 +675,7 @@ pccbb_pci_callback(self)
 	}
 
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
-	powerhook_establish(pccbb_powerhook, sc);
+	powerhook_establish(sc->sc_dev.dv_xname, pccbb_powerhook, sc);
 
 	{
 		u_int32_t sockstat;
@@ -1542,7 +1537,7 @@ cb_reset(sc)
 	 * Some machines request longer duration.
 	 */
 	int reset_duration =
-	    (sc->sc_chipset == CB_RX5C47X ? 400 : 40);
+	    (sc->sc_chipset == CB_RX5C47X ? 400 : 50);
 	u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
 
 	/* Reset bit Assert (bit 6 at 0x3E) */
@@ -1586,17 +1581,15 @@ cb_detect_voltage(sc)
 }
 
 STATIC int
-cbbprint(aux, pcic)
-	void *aux;
-	const char *pcic;
+cbbprint(void *aux, const char *pcic)
 {
-/*
-  struct cbslot_attach_args *cba = aux;
+#if 0
+	struct cbslot_attach_args *cba = aux;
 
-  if (cba->cba_slot >= 0) {
-    aprint_normal(" slot %d", cba->cba_slot);
-  }
-*/
+	if (cba->cba_slot >= 0) {
+		aprint_normal(" slot %d", cba->cba_slot);
+	}
+#endif
 	return UNCONF;
 }
 
@@ -1836,11 +1829,8 @@ pccbb_intr_route(sc)
  *   The arguments irq is not used because pccbb selects intr vector.
  */
 static void *
-pccbb_intr_establish(sc, irq, level, func, arg)
-	struct pccbb_softc *sc;
-	int irq, level;
-	int (*func)(void *);
-	void *arg;
+pccbb_intr_establish(struct pccbb_softc *sc, int irq, int level,
+    int (*func)(void *), void *arg)
 {
 	struct pccbb_intrhand_list *pil, *newpil;
 
@@ -2006,9 +1996,7 @@ pccbb_make_tag(cc, busno, function)
 }
 
 static void
-pccbb_free_tag(cc, tag)
-	cardbus_chipset_tag_t cc;
-	cardbustag_t tag;
+pccbb_free_tag(cardbus_chipset_tag_t cc, cardbustag_t tag)
 {
 }
 
@@ -2405,10 +2393,11 @@ pccbb_pcmcia_wait_ready(ph)
  * Perform long (msec order) delay.
  */
 static void
-pccbb_pcmcia_delay(ph, timo, wmesg)
-	struct pcic_handle *ph;
-	int timo;                       /* in ms.  must not be zero */
-	const char *wmesg;
+pccbb_pcmcia_delay(
+    struct pcic_handle *ph,
+    int timo,                       /* in ms.  must not be zero */
+    const char *wmesg
+)
 {
 #ifdef DIAGNOSTIC
 	if (timo <= 0)

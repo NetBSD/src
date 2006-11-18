@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.101 2006/07/10 17:54:08 gdamore Exp $
+#	$NetBSD: files.sparc64,v 1.101.4.1 2006/11/18 21:29:32 ad Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -40,12 +40,14 @@ device ebus {[addr = -1]}: pcibus
 attach ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
 
-device clock: mk48txx, mc146818
-attach clock at mainbus, sbus with clock_sbus
-attach clock at ebus with clock_ebus
+device clock: mk48txx
+attach clock at sbus with mkclock_sbus
+attach clock at ebus with mkclock_ebus
+file	arch/sparc64/dev/mkclock.c		clock
 
 device rtc: mc146818
 attach rtc at ebus with rtc_ebus
+file	arch/sparc64/dev/rtc.c			rtc
 
 device psm: sysmon_envsys, sysmon_power
 attach psm at ebus
@@ -53,10 +55,6 @@ file	arch/sparc64/dev/psm.c			psm
 
 device timer
 attach timer at mainbus, sbus
-
-device eeprom
-attach eeprom at sbus, ebus
-file	arch/sparc64/sparc64/clock.c
 
 device power
 attach power at sbus, ebus
@@ -77,12 +75,11 @@ attach	lpt at ebus with lpt_ebus
 file	arch/sparc64/dev/lpt_ebus.c		lpt_ebus
 
 device fdc {}
-attach fdc at mainbus, sbus, ebus
-# attach fdc at ebus
+attach fdc at sbus with fdc_sbus
+attach fdc at ebus with fdc_ebus
 device fd: disk
 attach fd at fdc
-file	dev/sun/fd.c				fdc | fd needs-flag
-file	arch/sparc64/sparc64/bsd_fdintr.s	fdc
+file	arch/sparc64/dev/fdc.c			fdc | fd needs-flag
 
 attach	audiocs at ebus with audiocs_ebus
 file	dev/ebus/cs4231_ebus.c			audiocs_ebus
@@ -142,7 +139,7 @@ device cgfourteen
 attach cgfourteen at sbus
 file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
 
-device ffb: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, fb
+device ffb: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, fb, vcons
 file	arch/sparc64/dev/ffb.c			ffb
 
 attach ffb at mainbus with ffb_mainbus
@@ -173,6 +170,7 @@ file	arch/sparc/fpu/fpu_subr.c
 
 file	arch/sparc/sparc/promlib.c
 file	arch/sparc64/sparc64/autoconf.c
+file	arch/sparc64/sparc64/clock.c
 file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/in_cksum.S
 file	arch/sparc64/sparc64/in4_cksum.c	inet
@@ -206,6 +204,9 @@ include "dev/wsfont/files.wsfont"
 
 # USB Support
 include "dev/usb/files.usb"
+
+# Bluetooth Support
+include "dev/bluetooth/files.bluetooth"
 
 # IEEE1394 Support
 include "dev/ieee1394/files.ieee1394"

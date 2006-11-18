@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.c,v 1.10 2006/08/31 19:24:38 dyoung Exp $ */
+/* $NetBSD: rtwphy.c,v 1.10.2.1 2006/11/18 21:34:14 ad Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.10 2006/08/31 19:24:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.10.2.1 2006/11/18 21:34:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,7 +586,8 @@ rtw_grf5101_destroy(struct rtw_rf *rf)
 }
 
 struct rtw_rf *
-rtw_grf5101_create(struct rtw_regs *regs, rtw_rf_write_t rf_write, int digphy)
+rtw_grf5101_create(struct rtw_regs *regs, rtw_rf_write_t rf_write,
+    int digphy)
 {
 	struct rtw_grf5101 *gr;
 	struct rtw_rfbus *bus;

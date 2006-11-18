@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.47 2006/09/02 07:04:46 christos Exp $	*/
+/*	$NetBSD: midi.c,v 1.47.2.1 2006/11/18 21:34:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.47 2006/09/02 07:04:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.47.2.1 2006/11/18 21:34:03 ad Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -130,7 +130,8 @@ CFATTACH_DECL(midi, sizeof(struct midi_softc),
 extern struct cfdriver midi_cd;
 
 int
-midiprobe(struct device *parent, struct cfdata *match, void *aux)
+midiprobe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct audio_attach_args *sa = aux;
 
@@ -826,7 +827,8 @@ midiopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 }
 
 int
-midiclose(dev_t dev, int flags, int ifmt, struct lwp *l)
+midiclose(dev_t dev, int flags, int ifmt,
+    struct lwp *l)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];

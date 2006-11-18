@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.22 2006/04/10 22:35:28 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.22.8.1 2006/11/18 21:34:08 ad Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.22 2006/04/10 22:35:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.22.8.1 2006/11/18 21:34:08 ad Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -243,8 +243,8 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 }
 
 static int
-ahc_ioctl(struct scsipi_channel *channel, u_long cmd, caddr_t addr, int flag,
-	  struct proc *p)
+ahc_ioctl(struct scsipi_channel *channel, u_long cmd, caddr_t addr,
+    int flag, struct proc *p)
 {
 	struct ahc_softc *ahc = (void *)channel->chan_adapter->adapt_dev;
 	int s, ret = ENOTTY;

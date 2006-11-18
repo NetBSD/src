@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.19 2006/02/20 12:17:49 kochi Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.19.14.1 2006/11/18 21:34:03 ad Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.19 2006/02/20 12:17:49 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.19.14.1 2006/11/18 21:34:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,8 @@ static void	acpilid_notify_handler(ACPI_HANDLE, UINT32, void *);
  *	Autoconfiguration `match' routine.
  */
 static int
-acpilid_match(struct device *parent, struct cfdata *match, void *aux)
+acpilid_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -150,7 +151,8 @@ acpilid_status_changed(void *arg)
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
 static void
-acpilid_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
+acpilid_notify_handler(ACPI_HANDLE handle, UINT32 notify,
+    void *context)
 {
 	struct acpilid_softc *sc = context;
 	int rv;

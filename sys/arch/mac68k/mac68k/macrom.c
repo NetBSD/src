@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.60 2006/06/07 11:29:56 he Exp $	*/
+/*	$NetBSD: macrom.c,v 1.60.6.1 2006/11/18 21:29:24 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.60 2006/06/07 11:29:56 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.60.6.1 2006/11/18 21:29:24 ad Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -742,12 +742,7 @@ mrg_aline_super(struct frame *frame)
 
 		: "a" (&frame->f_regs), "g" (trapaddr)
 
-		: "d0","d1","a0","a1","a2",
-#ifdef __ELF__
-			  "fp"
-#else
-			  "a6"
-#endif
+		: "d0","d1","a0","a1","a2"
 );
 
 #if defined(MRG_TRACE)

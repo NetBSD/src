@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.71 2006/08/28 00:03:15 christos Exp $	*/
+/*	$NetBSD: awi.c,v 1.71.2.1 2006/11/18 21:34:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.71 2006/08/28 00:03:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.71.2.1 2006/11/18 21:34:09 ad Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -352,7 +352,8 @@ awi_attach(struct awi_softc *sc)
 	if ((sc->sc_sdhook = shutdownhook_establish(awi_shutdown, sc)) == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    ifp->if_xname);
-	if ((sc->sc_powerhook = powerhook_establish(awi_power, sc)) == NULL)
+	if ((sc->sc_powerhook =
+	     powerhook_establish(ifp->if_xname, awi_power, sc)) == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    ifp->if_xname);
 #endif
@@ -1592,9 +1593,10 @@ awi_mib(struct awi_softc *sc, u_int8_t cmd, u_int8_t mib, int wflag)
 	}
 	if (sc->sc_cmd_inprog) {
 		if ((error = awi_cmd_wait(sc)) != 0) {
-			if (error == EWOULDBLOCK)
+			if (error == EWOULDBLOCK) {
 				DPRINTF(("awi_mib: cmd %d inprog",
 				    sc->sc_cmd_inprog));
+			}
 			return error;
 		}
 	}

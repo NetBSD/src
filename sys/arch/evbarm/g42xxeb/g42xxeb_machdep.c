@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.8 2006/05/17 04:22:46 mrg Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.8.8.1 2006/11/18 21:29:10 ad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -237,7 +237,6 @@ struct user *proc0paddr;
 
 #if 0
 void	process_kernel_args(char *);
-void	parse_mi_bootargs(char *args);
 #endif
 
 void	consinit(void);

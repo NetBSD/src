@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.43 2006/09/03 19:06:32 bouyer Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.43.2.1 2006/11/18 21:34:43 ad Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.43 2006/09/03 19:06:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.43.2.1 2006/11/18 21:34:43 ad Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1359,14 +1359,8 @@ static struct radio_hw_if bktr_hw_if = {
 #endif
 
 int
-bktr_probe(parent, match, aux)
-	struct device *parent;
-#if defined(__OpenBSD__)
-        void *match;
-#else
-        struct cfdata *match;
-#endif
-        void *aux;
+bktr_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
         struct pci_attach_args *pa = aux;
 
@@ -1655,7 +1649,8 @@ free_bktr_mem(bktr, dmap, kva)
  *
  */
 int
-bktr_open(dev_t dev, int flags, int fmt, struct lwp *l)
+bktr_open(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1688,7 +1683,8 @@ bktr_open(dev_t dev, int flags, int fmt, struct lwp *l)
  *
  */
 int
-bktr_close(dev_t dev, int flags, int fmt, struct lwp *l)
+bktr_close(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1747,7 +1743,8 @@ bktr_write(dev_t dev, struct uio *uio, int ioflag)
  *
  */
 int
-bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag, struct lwp *l)
+bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag,
+    struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;

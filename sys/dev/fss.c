@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.27 2006/07/21 16:48:47 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.27.4.1 2006/11/18 21:34:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.27 2006/07/21 16:48:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.27.4.1 2006/11/18 21:34:03 ad Exp $");
 
 #include "fss.h"
 
@@ -345,7 +345,8 @@ fss_size(dev_t dev)
 }
 
 int
-fss_dump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+fss_dump(dev_t dev, daddr_t blkno, caddr_t va,
+    size_t size)
 {
 	return EROFS;
 }

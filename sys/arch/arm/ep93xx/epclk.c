@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.8 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: epclk.c,v 1.8.20.1 2006/11/18 21:29:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.8 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.8.20.1 2006/11/18 21:29:06 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -325,6 +325,8 @@ delay(unsigned int len)
 	}
 }
 
+#ifndef __HAVE_GENERIC_TODR
+
 todr_chip_handle_t todr_handle;
 
 /*
@@ -411,3 +413,4 @@ resettodr(void)
 	    todr_settime(todr_handle, &time) != 0)
 		printf("resettodr: failed to set time\n");
 }
+#endif

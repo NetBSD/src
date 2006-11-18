@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.76 2006/09/03 05:10:24 christos Exp $ */
+/* $NetBSD: rtw.c,v 1.76.2.1 2006/11/18 21:34:14 ad Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.76 2006/09/03 05:10:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.76.2.1 2006/11/18 21:34:14 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -591,7 +591,7 @@ rtw_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
 
 static int
 rtw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
-	const u_int8_t mac[IEEE80211_ADDR_LEN])
+    const u_int8_t mac[IEEE80211_ADDR_LEN])
 {
 	struct rtw_softc *sc = ic->ic_ifp->if_softc;
 
@@ -824,8 +824,8 @@ rtw_srom_free(struct rtw_srom *sr)
 }
 
 static void
-rtw_srom_defaults(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
-    enum rtw_rfchipid *rfchipid, uint32_t *rcr)
+rtw_srom_defaults(struct rtw_srom *sr, uint32_t *flags,
+    uint8_t *cs_threshold, enum rtw_rfchipid *rfchipid, uint32_t *rcr)
 {
 	*flags |= (RTW_F_DIGPHY|RTW_F_ANTDIV);
 	*cs_threshold = RTW_SR_ENERGYDETTHR_DEFAULT;
@@ -1540,7 +1540,8 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 
 		hwrate = __SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK);
 		if (hwrate >= sizeof(ratetbl) / sizeof(ratetbl[0])) {
-			printf("%s: unknown rate #%d\n", sc->sc_dev.dv_xname,
+			printf("%s: unknown rate #%" __PRIuBITS "\n",
+			    sc->sc_dev.dv_xname,
 			    __SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK));
 			ifp->if_ierrors++;
 			goto next;
@@ -3843,7 +3844,7 @@ rtw_establish_hooks(struct rtw_hooks *hooks, const char *dvname,
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	hooks->rh_power = powerhook_establish(rtw_power, arg);
+	hooks->rh_power = powerhook_establish(dvname, rtw_power, arg);
 	if (hooks->rh_power == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    dvname);

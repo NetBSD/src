@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.90 2006/08/28 11:45:38 xtraeme Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.90.2.1 2006/11/18 21:34:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.90 2006/08/28 11:45:38 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.90.2.1 2006/11/18 21:34:07 ad Exp $");
 
 #include "opt_ddb.h"
 

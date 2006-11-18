@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.45 2006/09/04 03:44:10 macallan Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.45.2.1 2006/11/18 21:29:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.45 2006/09/04 03:44:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.45.2.1 2006/11/18 21:29:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,12 +151,6 @@ wdc_obio_attach(parent, self, aux)
 		return;
 	}
 
-	/* disable DMA on Heathrow */
-	if (strcmp(compat, "heathrow-ata") == 0) {
-		use_dma = 0;
-		printf(": DMA disabled");
-	}
-	
 	if (use_dma)
 		printf(": DMA transfer");
 

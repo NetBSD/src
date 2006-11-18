@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.23 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.23.20.1 2006/11/18 21:34:46 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.23 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.23.20.1 2006/11/18 21:34:46 ad Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

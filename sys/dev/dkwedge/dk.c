@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.17 2006/08/24 21:57:11 dbj Exp $	*/
+/*	$NetBSD: dk.c,v 1.17.2.1 2006/11/18 21:34:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.17 2006/08/24 21:57:11 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.17.2.1 2006/11/18 21:34:04 ad Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -135,7 +135,8 @@ static struct lock dkwedge_discovery_methods_lock =
  *	Autoconfiguration match function for pseudo-device glue.
  */
 static int
-dkwedge_match(struct device *parent, struct cfdata *match, void *aux)
+dkwedge_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	/* Pseudo-device; always present. */
@@ -148,7 +149,8 @@ dkwedge_match(struct device *parent, struct cfdata *match, void *aux)
  *	Autoconfiguration attach function for pseudo-device glue.
  */
 static void
-dkwedge_attach(struct device *parent, struct device *self, void *aux)
+dkwedge_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 
 	/* Nothing to do. */
@@ -679,7 +681,7 @@ dkwedge_set_bootwedge(struct device *parent, daddr_t startblk, uint64_t nblks)
 }
 
 /*
- * We need a dummy objet to stuff into the dkwedge discovery method link
+ * We need a dummy object to stuff into the dkwedge discovery method link
  * set to ensure that there is always at least one object in the set.
  */
 static struct dkwedge_discovery_method dummy_discovery_method;
@@ -837,8 +839,8 @@ dkwedge_discover(struct disk *pdk)
  *	partition discovery.
  */
 int
-dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno, void *tbuf,
-    size_t len)
+dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
+    void *tbuf, size_t len)
 {
 	struct buf b;
 
@@ -1251,7 +1253,8 @@ dksize(dev_t dev)
  *	Perform a crash dump to a wedge.
  */
 static int
-dkdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+dkdump(dev_t dev, daddr_t blkno, caddr_t va,
+    size_t size)
 {
 
 	/* XXX */

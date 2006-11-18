@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.87 2006/05/12 23:35:24 uwe Exp $ */
+/*	$NetBSD: db_interface.c,v 1.87.8.1 2006/11/18 21:29:33 ad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.87 2006/05/12 23:35:24 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.87.8.1 2006/11/18 21:29:33 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -63,11 +63,13 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.87 2006/05/12 23:35:24 uwe Exp $"
 #include <machine/promlib.h>
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
+#include <machine/intr.h>
 
 #include "fb.h"
 #include "esp_sbus.h"
 
-db_regs_t		ddb_regs;
+/* pointer to the saved DDB registers */
+db_regs_t *ddb_regp;
 
 extern struct traptrace {
 	unsigned short tl:3,	/* Trap level */
@@ -80,22 +82,28 @@ extern struct traptrace {
 	u_int tfault;		/* MMU tag access */
 } trap_trace[], trap_trace_end[];
 
-static int nil;
+/*
+ * Helpers for ddb variables.
+ */
+static uint64_t nil;
 
 static int
-db__char_value(const struct db_variable *var, db_expr_t *expr, int mode)
+db_sparc_charop(const struct db_variable *vp, db_expr_t *val, int opcode)
 {
+	char *regaddr =
+	    (char *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
+	char *valaddr = (char *)val;
 
-	switch (mode) {
+	switch (opcode) {
 	case DB_VAR_SET:
-		*var->valuep = *(char *)expr;
+		*valaddr = *regaddr;
 		break;
 	case DB_VAR_GET:
-		*expr = *(char *)var->valuep;
+		*regaddr = *valaddr;
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		printf("db__char_value: mode %d\n", mode);
+		printf("db_sparc_charop: opcode %d\n", opcode);
 		break;
 #endif
 	}
@@ -103,21 +111,24 @@ db__char_value(const struct db_variable *var, db_expr_t *expr, int mode)
 	return 0;
 }
 
-#ifdef notdef_yet
+#ifdef not_used
 static int
-db__short_value(const struct db_variable *var, db_expr_t *expr, int mode)
+db_sparc_shortop(const struct db_variable *vp, db_expr_t *val, int opcode)
 {
+	short *regaddr =
+	    (short *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
+	short *valaddr = (short *)val;
 
-	switch (mode) {
+	switch (opcode) {
 	case DB_VAR_SET:
-		*var->valuep = *(short *)expr;
+		*valaddr = *regaddr;
 		break;
 	case DB_VAR_GET:
-		*expr = *(short *)var->valuep;
+		*regaddr = *valaddr;
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		printf("db__short_value: mode %d\n", mode);
+		printf("sparc_shortop: opcode %d\n", opcode);
 		break;
 #endif
 	}
@@ -127,99 +138,132 @@ db__short_value(const struct db_variable *var, db_expr_t *expr, int mode)
 #endif
 
 static int
-db__int_value(const struct db_variable *var, db_expr_t *expr, int mode)
+db_sparc_intop(const struct db_variable *vp, db_expr_t *val, int opcode)
 {
+	int *regaddr =
+	    (int *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
+	int *valaddr = (int *)val;
 
-	switch (mode) {
+	switch (opcode) {
 	case DB_VAR_SET:
-		*var->valuep = *(int *)expr;
+		*valaddr = *regaddr;
 		break;
 	case DB_VAR_GET:
-		*expr = *(int *)var->valuep;
+		*regaddr = *valaddr;
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		printf("db__int_value: mode %d\n", mode);
+		printf("db_sparc_intop: opcode %d\n", opcode);
 		break;
 #endif
 	}
 
 	return 0;
 }
+
+static int
+db_sparc_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
+{
+	db_expr_t *regaddr =
+	    (db_expr_t *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
+
+	switch (opcode) {
+	case DB_VAR_GET:
+		*val = *regaddr;
+		break;
+	case DB_VAR_SET:
+		*regaddr = *val;
+		break;
+#ifdef DIAGNOSTIC
+	default:
+		printf("db_sparc_regop: unknown op %d\n", opcode);
+		break;
+#endif
+	}
+	return 0;
+}
+
+/*
+ * Machine register set.
+ */
+#define dbreg(xx) (long *)offsetof(db_regs_t, db_tf.tf_ ## xx)
+#define dbregfr(xx) (long *)offsetof(db_regs_t, db_fr.fr_ ## xx)
+#define dbregfp(xx) (long *)offsetof(db_regs_t, db_fpstate.fs_ ## xx)
+
+static int db_sparc_regop(const struct db_variable *, db_expr_t *, int);
 
 const struct db_variable db_regs[] = {
-	{ "tstate", (long *)&DDB_TF->tf_tstate, FCN_NULL, },
-	{ "pc", (long *)&DDB_TF->tf_pc, FCN_NULL, },
-	{ "npc", (long *)&DDB_TF->tf_npc, FCN_NULL, },
-	{ "ipl", (long *)&DDB_TF->tf_oldpil, db__char_value, },
-	{ "y", (long *)&DDB_TF->tf_y, db__int_value, },
-	{ "g0", (void *)&nil, FCN_NULL, },
-	{ "g1", (long *)&DDB_TF->tf_global[1], FCN_NULL, },
-	{ "g2", (long *)&DDB_TF->tf_global[2], FCN_NULL, },
-	{ "g3", (long *)&DDB_TF->tf_global[3], FCN_NULL, },
-	{ "g4", (long *)&DDB_TF->tf_global[4], FCN_NULL, },
-	{ "g5", (long *)&DDB_TF->tf_global[5], FCN_NULL, },
-	{ "g6", (long *)&DDB_TF->tf_global[6], FCN_NULL, },
-	{ "g7", (long *)&DDB_TF->tf_global[7], FCN_NULL, },
-	{ "o0", (long *)&DDB_TF->tf_out[0], FCN_NULL, },
-	{ "o1", (long *)&DDB_TF->tf_out[1], FCN_NULL, },
-	{ "o2", (long *)&DDB_TF->tf_out[2], FCN_NULL, },
-	{ "o3", (long *)&DDB_TF->tf_out[3], FCN_NULL, },
-	{ "o4", (long *)&DDB_TF->tf_out[4], FCN_NULL, },
-	{ "o5", (long *)&DDB_TF->tf_out[5], FCN_NULL, },
-	{ "o6", (long *)&DDB_TF->tf_out[6], FCN_NULL, },
-	{ "o7", (long *)&DDB_TF->tf_out[7], FCN_NULL, },
-	{ "l0", (long *)&DDB_FR->fr_local[0], FCN_NULL, },
-	{ "l1", (long *)&DDB_FR->fr_local[1], FCN_NULL, },
-	{ "l2", (long *)&DDB_FR->fr_local[2], FCN_NULL, },
-	{ "l3", (long *)&DDB_FR->fr_local[3], FCN_NULL, },
-	{ "l4", (long *)&DDB_FR->fr_local[4], FCN_NULL, },
-	{ "l5", (long *)&DDB_FR->fr_local[5], FCN_NULL, },
-	{ "l6", (long *)&DDB_FR->fr_local[6], FCN_NULL, },
-	{ "l7", (long *)&DDB_FR->fr_local[7], FCN_NULL, },
-	{ "i0", (long *)&DDB_FR->fr_arg[0], FCN_NULL, },
-	{ "i1", (long *)&DDB_FR->fr_arg[1], FCN_NULL, },
-	{ "i2", (long *)&DDB_FR->fr_arg[2], FCN_NULL, },
-	{ "i3", (long *)&DDB_FR->fr_arg[3], FCN_NULL, },
-	{ "i4", (long *)&DDB_FR->fr_arg[4], FCN_NULL, },
-	{ "i5", (long *)&DDB_FR->fr_arg[5], FCN_NULL, },
-	{ "i6", (long *)&DDB_FR->fr_arg[6], FCN_NULL, },
-	{ "i7", (long *)&DDB_FR->fr_arg[7], FCN_NULL, },
-	{ "f0", (long *)&DDB_FP->fs_regs[0], FCN_NULL, },
-	{ "f2", (long *)&DDB_FP->fs_regs[2], FCN_NULL, },
-	{ "f4", (long *)&DDB_FP->fs_regs[4], FCN_NULL, },
-	{ "f6", (long *)&DDB_FP->fs_regs[6], FCN_NULL, },
-	{ "f8", (long *)&DDB_FP->fs_regs[8], FCN_NULL, },
-	{ "f10", (long *)&DDB_FP->fs_regs[10], FCN_NULL, },
-	{ "f12", (long *)&DDB_FP->fs_regs[12], FCN_NULL, },
-	{ "f14", (long *)&DDB_FP->fs_regs[14], FCN_NULL, },
-	{ "f16", (long *)&DDB_FP->fs_regs[16], FCN_NULL, },
-	{ "f18", (long *)&DDB_FP->fs_regs[18], FCN_NULL, },
-	{ "f20", (long *)&DDB_FP->fs_regs[20], FCN_NULL, },
-	{ "f22", (long *)&DDB_FP->fs_regs[22], FCN_NULL, },
-	{ "f24", (long *)&DDB_FP->fs_regs[24], FCN_NULL, },
-	{ "f26", (long *)&DDB_FP->fs_regs[26], FCN_NULL, },
-	{ "f28", (long *)&DDB_FP->fs_regs[28], FCN_NULL, },
-	{ "f30", (long *)&DDB_FP->fs_regs[30], FCN_NULL, },
-	{ "f32", (long *)&DDB_FP->fs_regs[32], FCN_NULL, },
-	{ "f34", (long *)&DDB_FP->fs_regs[34], FCN_NULL, },
-	{ "f36", (long *)&DDB_FP->fs_regs[36], FCN_NULL, },
-	{ "f38", (long *)&DDB_FP->fs_regs[38], FCN_NULL, },
-	{ "f40", (long *)&DDB_FP->fs_regs[40], FCN_NULL, },
-	{ "f42", (long *)&DDB_FP->fs_regs[42], FCN_NULL, },
-	{ "f44", (long *)&DDB_FP->fs_regs[44], FCN_NULL, },
-	{ "f46", (long *)&DDB_FP->fs_regs[46], FCN_NULL, },
-	{ "f48", (long *)&DDB_FP->fs_regs[48], FCN_NULL, },
-	{ "f50", (long *)&DDB_FP->fs_regs[50], FCN_NULL, },
-	{ "f52", (long *)&DDB_FP->fs_regs[52], FCN_NULL, },
-	{ "f54", (long *)&DDB_FP->fs_regs[54], FCN_NULL, },
-	{ "f56", (long *)&DDB_FP->fs_regs[56], FCN_NULL, },
-	{ "f58", (long *)&DDB_FP->fs_regs[58], FCN_NULL, },
-	{ "f60", (long *)&DDB_FP->fs_regs[60], FCN_NULL, },
-	{ "f62", (long *)&DDB_FP->fs_regs[62], FCN_NULL, },
-	{ "fsr", (long *)&DDB_FP->fs_fsr, FCN_NULL, },
-	{ "gsr", (long *)&DDB_FP->fs_gsr, FCN_NULL, },
-
+	{ "tstate",	dbreg(tstate),		db_sparc_regop, 0 },
+	{ "pc",		dbreg(pc),		db_sparc_regop, 0 },
+	{ "npc",	dbreg(npc),		db_sparc_regop, 0 },
+	{ "ipl",	dbreg(oldpil),		db_sparc_charop, 0 },
+	{ "y",		dbreg(y),		db_sparc_intop, 0 },
+	{ "g0",		(void *)&nil,		FCN_NULL, 0 },
+	{ "g1",		dbreg(global[1]),	db_sparc_regop, 0 },
+	{ "g2",		dbreg(global[2]),	db_sparc_regop, 0 },
+	{ "g3",		dbreg(global[3]),	db_sparc_regop, 0 },
+	{ "g4",		dbreg(global[4]),	db_sparc_regop, 0 },
+	{ "g5",		dbreg(global[5]),	db_sparc_regop, 0 },
+	{ "g6",		dbreg(global[6]),	db_sparc_regop, 0 },
+	{ "g7",		dbreg(global[7]),	db_sparc_regop, 0 },
+	{ "o0",		dbreg(out[0]),		db_sparc_regop, 0 },
+	{ "o1",		dbreg(out[1]),		db_sparc_regop, 0 },
+	{ "o2",		dbreg(out[2]),		db_sparc_regop, 0 },
+	{ "o3",		dbreg(out[3]),		db_sparc_regop, 0 },
+	{ "o4",		dbreg(out[4]),		db_sparc_regop, 0 },
+	{ "o5",		dbreg(out[5]),		db_sparc_regop, 0 },
+	{ "o6",		dbreg(out[6]),		db_sparc_regop, 0 },
+	{ "o7",		dbreg(out[7]),		db_sparc_regop, 0 },
+	{ "l0",		dbregfr(local[0]),	db_sparc_regop, 0 },
+	{ "l1",		dbregfr(local[1]),	db_sparc_regop, 0 },
+	{ "l2",		dbregfr(local[2]),	db_sparc_regop, 0 },
+	{ "l3",		dbregfr(local[3]),	db_sparc_regop, 0 },
+	{ "l4",		dbregfr(local[4]),	db_sparc_regop, 0 },
+	{ "l5",		dbregfr(local[5]),	db_sparc_regop, 0 },
+	{ "l6",		dbregfr(local[6]),	db_sparc_regop, 0 },
+	{ "l7",		dbregfr(local[7]),	db_sparc_regop, 0 },
+	{ "i0",		dbregfr(arg[0]),	db_sparc_regop, 0 },
+	{ "i1",		dbregfr(arg[1]),	db_sparc_regop, 0 },
+	{ "i2",		dbregfr(arg[2]),	db_sparc_regop, 0 },
+	{ "i3",		dbregfr(arg[3]),	db_sparc_regop, 0 },
+	{ "i4",		dbregfr(arg[4]),	db_sparc_regop, 0 },
+	{ "i5",		dbregfr(arg[5]),	db_sparc_regop, 0 },
+	{ "i6",		dbregfr(arg[6]),	db_sparc_regop, 0 },
+	{ "i7",		dbregfr(arg[7]),	db_sparc_regop, 0 },
+	{ "f0",		dbregfp(regs[0]),	db_sparc_regop, 0 },
+	{ "f2",		dbregfp(regs[2]),	db_sparc_regop, 0 },
+	{ "f4",		dbregfp(regs[4]),	db_sparc_regop, 0 },
+	{ "f6",		dbregfp(regs[6]),	db_sparc_regop, 0 },
+	{ "f8",		dbregfp(regs[8]),	db_sparc_regop, 0 },
+	{ "f10",	dbregfp(regs[10]),	db_sparc_regop, 0 },
+	{ "f12",	dbregfp(regs[12]),	db_sparc_regop, 0 },
+	{ "f14",	dbregfp(regs[14]),	db_sparc_regop, 0 },
+	{ "f16",	dbregfp(regs[16]),	db_sparc_regop, 0 },
+	{ "f18",	dbregfp(regs[18]),	db_sparc_regop, 0 },
+	{ "f20",	dbregfp(regs[20]),	db_sparc_regop, 0 },
+	{ "f22",	dbregfp(regs[22]),	db_sparc_regop, 0 },
+	{ "f24",	dbregfp(regs[24]),	db_sparc_regop, 0 },
+	{ "f26",	dbregfp(regs[26]),	db_sparc_regop, 0 },
+	{ "f28",	dbregfp(regs[28]),	db_sparc_regop, 0 },
+	{ "f30",	dbregfp(regs[30]),	db_sparc_regop, 0 },
+	{ "f32",	dbregfp(regs[32]),	db_sparc_regop, 0 },
+	{ "f34",	dbregfp(regs[34]),	db_sparc_regop, 0 },
+	{ "f36",	dbregfp(regs[36]),	db_sparc_regop, 0 },
+	{ "f38",	dbregfp(regs[38]),	db_sparc_regop, 0 },
+	{ "f40",	dbregfp(regs[40]),	db_sparc_regop, 0 },
+	{ "f42",	dbregfp(regs[42]),	db_sparc_regop, 0 },
+	{ "f44",	dbregfp(regs[44]),	db_sparc_regop, 0 },
+	{ "f46",	dbregfp(regs[46]),	db_sparc_regop, 0 },
+	{ "f48",	dbregfp(regs[48]),	db_sparc_regop, 0 },
+	{ "f50",	dbregfp(regs[50]),	db_sparc_regop, 0 },
+	{ "f52",	dbregfp(regs[52]),	db_sparc_regop, 0 },
+	{ "f54",	dbregfp(regs[54]),	db_sparc_regop, 0 },
+	{ "f56",	dbregfp(regs[56]),	db_sparc_regop, 0 },
+	{ "f58",	dbregfp(regs[58]),	db_sparc_regop, 0 },
+	{ "f60",	dbregfp(regs[60]),	db_sparc_regop, 0 },
+	{ "f62",	dbregfp(regs[62]),	db_sparc_regop, 0 },
+	{ "fsr",	dbregfp(fsr),		db_sparc_regop, 0 },
+	{ "gsr",	dbregfp(gsr),		db_sparc_regop, 0 },
 };
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
@@ -232,11 +276,6 @@ void db_prom_cmd(db_expr_t, int, db_expr_t, const char *);
 void db_lwp_cmd(db_expr_t, int, db_expr_t, const char *);
 void db_proc_cmd(db_expr_t, int, db_expr_t, const char *);
 void db_ctx_cmd(db_expr_t, int, db_expr_t, const char *);
-void db_dump_window(db_expr_t, int, db_expr_t, const char *);
-void db_dump_stack(db_expr_t, int, db_expr_t, const char *);
-void db_dump_trap(db_expr_t, int, db_expr_t, const char *);
-void db_dump_fpstate(db_expr_t, int, db_expr_t, const char *);
-void db_dump_ts(db_expr_t, int, db_expr_t, const char *);
 void db_dump_pcb(db_expr_t, int, db_expr_t, const char *);
 void db_dump_pv(db_expr_t, int, db_expr_t, const char *);
 void db_setpcb(db_expr_t, int, db_expr_t, const char *);
@@ -247,15 +286,70 @@ void db_dump_itsb(db_expr_t, int, db_expr_t, const char *);
 void db_pmap_kernel(db_expr_t, int, db_expr_t, const char *);
 void db_pload_cmd(db_expr_t, int, db_expr_t, const char *);
 void db_pmap_cmd(db_expr_t, int, db_expr_t, const char *);
-void db_lock(db_expr_t, int, db_expr_t, const char *);
+void db_lock_cmd(db_expr_t, int, db_expr_t, const char *);
 void db_traptrace(db_expr_t, int, db_expr_t, const char *);
 void db_watch(db_expr_t, int, db_expr_t, const char *);
 void db_pm_extract(db_expr_t, int, db_expr_t, const char *);
-void db_cpus_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_cpu_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_sir_cmd(db_expr_t, int, db_expr_t, const char *);
 
 #ifdef DDB
 static void db_dump_pmap(struct pmap *);
 static void db_print_trace_entry(struct traptrace *, int);
+
+/* struct cpu_info of CPU being investigated */
+struct cpu_info *ddb_cpuinfo;
+
+#ifdef MULTIPROCESSOR
+
+#define NOCPU -1
+
+static int db_suspend_others(void);
+static void db_resume_others(void);
+static void ddb_suspend(struct trapframe64 *);
+
+__cpu_simple_lock_t db_lock;
+int ddb_cpu = NOCPU;
+
+static int
+db_suspend_others(void)
+{
+	int cpu_me = cpu_number();
+	int win;
+
+	if (cpus == NULL)
+		return 1;
+
+	__cpu_simple_lock(&db_lock);
+	if (ddb_cpu == NOCPU)
+		ddb_cpu = cpu_me;
+	win = (ddb_cpu == cpu_me);
+	__cpu_simple_unlock(&db_lock);
+
+	if (win)
+		mp_pause_cpus();
+
+	return win;
+}
+
+static void
+db_resume_others(void)
+{
+
+	mp_resume_cpus();
+
+	__cpu_simple_lock(&db_lock);
+	ddb_cpu = NOCPU;
+	__cpu_simple_unlock(&db_lock);
+}
+
+static void
+ddb_suspend(struct trapframe64 *tf)
+{
+
+	sparc64_ipi_pause_thiscpu(tf);
+}
+#endif /* MULTIPROCESSOR */
 
 /*
  * Received keyboard interrupt sequence.
@@ -275,8 +369,9 @@ kdb_kbd_trap(struct trapframe64 *tf)
 int
 kdb_trap(int type, register struct trapframe64 *tf)
 {
+	db_regs_t dbregs;
 	int s, tl;
-	struct trapstate *ts = &ddb_regs.ddb_ts[0];
+	struct trapstate *ts;
 	extern int savetstate(struct trapstate *);
 	extern void restoretstate(int, struct trapstate *);
 	extern int trap_trace_dis;
@@ -289,7 +384,7 @@ kdb_trap(int type, register struct trapframe64 *tf)
 #endif
 	switch (type) {
 	case T_BREAKPOINT:	/* breakpoint */
-		printf("kdb breakpoint at %llx\n",
+		printf("cpu%d: kdb breakpoint at %llx\n", cpu_number(),
 		    (unsigned long long)tf->tf_pc);
 		break;
 	case -1:		/* keyboard interrupt */
@@ -312,22 +407,39 @@ kdb_trap(int type, register struct trapframe64 *tf)
 	/* Should switch to kdb`s own stack here. */
 	write_all_windows();
 
-	ddb_regs.ddb_tf = *tf;
+#if defined(MULTIPROCESSOR)
+	if (!db_suspend_others()) {
+		ddb_suspend(tf);
+		return 1;
+	}
+#endif
+
+	/* Initialise local dbregs storage from trap frame */
+	dbregs.db_tf = *tf;
+	dbregs.db_fr = *(struct frame64 *)(uintptr_t)tf->tf_out[6];
+
+	/* Setup current CPU & reg pointers */
+	ddb_cpuinfo = curcpu();
+	curcpu()->ci_ddb_regs = ddb_regp = &dbregs;
+
+	ts = &ddb_regp->db_ts[0];
+
+	fplwp = NULL;
 	if (fplwp) {
 		savefpstate(fplwp->l_md.md_fpstate);
-		ddb_regs.ddb_fpstate = *fplwp->l_md.md_fpstate;
+		dbregs.db_fpstate = *fplwp->l_md.md_fpstate;
 		loadfpstate(fplwp->l_md.md_fpstate);
 	}
 	/* We should do a proper copyin and xlate 64-bit stack frames, but... */
-/*	if (tf->tf_tstate & TSTATE_PRIV) { */
+/*	if (tf->tf_tstate & TSTATE_PRIV) { .. } */
 	
 #if 0
 	/* make sure this is not causing ddb problems. */
 	if (tf->tf_out[6] & 1) {
 		if ((unsigned)(tf->tf_out[6] + BIAS) > (unsigned)KERNBASE)
-			ddb_regs.ddb_fr = *(struct frame64 *)(tf->tf_out[6] + BIAS);
+			dbregs.db_fr = *(struct frame64 *)(tf->tf_out[6] + BIAS);
 		else
-			copyin((caddr_t)(tf->tf_out[6] + BIAS), &ddb_regs.ddb_fr, sizeof(struct frame64));
+			copyin((caddr_t)(tf->tf_out[6] + BIAS), &dbregs.db_fr, sizeof(struct frame64));
 	} else {
 		struct frame32 tfr;
 		
@@ -338,43 +450,45 @@ kdb_trap(int type, register struct trapframe64 *tf)
 			copyin((caddr_t)(tf->tf_out[6]), &tfr, sizeof(struct frame32));
 		/* Now copy each field from the 32-bit value to the 64-bit value */
 		for (i=0; i<8; i++)
-			ddb_regs.ddb_fr.fr_local[i] = tfr.fr_local[i];
+			dbregs.db_fr.fr_local[i] = tfr.fr_local[i];
 		for (i=0; i<6; i++)
-			ddb_regs.ddb_fr.fr_arg[i] = tfr.fr_arg[i];
-		ddb_regs.ddb_fr.fr_fp = (long)tfr.fr_fp;
-		ddb_regs.ddb_fr.fr_pc = tfr.fr_pc;
+			dbregs.db_fr.fr_arg[i] = tfr.fr_arg[i];
+		dbregs.db_fr.fr_fp = (long)tfr.fr_fp;
+		dbregs.db_fr.fr_pc = tfr.fr_pc;
 	}
 #endif
 
 	s = splhigh();
 	db_active++;
-#if defined(MULTIPROCESSOR)
-	sparc64_ipi_pause_cpus();
-#endif
 	cnpollc(TRUE);
 	/* Need to do spl stuff till cnpollc works */
-	tl = ddb_regs.ddb_tl = savetstate(ts);
+	tl = dbregs.db_tl = savetstate(ts);
 	db_dump_ts(0, 0, 0, 0);
 	db_trap(type, 0/*code*/);
 	restoretstate(tl,ts);
 	cnpollc(FALSE);
 	db_active--;
-#if defined(MULTIPROCESSOR)
-	sparc64_ipi_resume_cpus();
-#endif
+
 	splx(s);
 
 	if (fplwp) {	
-		*fplwp->l_md.md_fpstate = ddb_regs.ddb_fpstate;
+		*fplwp->l_md.md_fpstate = dbregs.db_fpstate;
 		loadfpstate(fplwp->l_md.md_fpstate);
 	}
 #if 0
 	/* We will not alter the machine's running state until we get everything else working */
-	*(struct frame *)tf->tf_out[6] = ddb_regs.ddb_fr;
+	*(struct frame *)tf->tf_out[6] = dbregs.db_fr;
 #endif
-	*tf = ddb_regs.ddb_tf;
+	*tf = dbregs.db_tf;
+	curcpu()->ci_ddb_regs = ddb_regp = 0;
+	ddb_cpuinfo = NULL;
+
 	trap_trace_dis--;
 	doing_shutdown--;
+
+#if defined(MULTIPROCESSOR)
+	db_resume_others();
+#endif
 
 	return (1);
 }
@@ -676,7 +790,7 @@ db_pmap_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 
 
 void
-db_lock(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_lock_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 #if 0
 	struct lock *l;
@@ -1063,16 +1177,65 @@ db_watch(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 	}
 }
 
-void
-db_cpus_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+/* XXX this belongs in cpu.c */
+static void cpu_debug_dump(void);
+static void
+cpu_debug_dump(void)
 {
 	struct cpu_info *ci;
 
 	for (ci = cpus; ci; ci = ci->ci_next) {
-		db_printf("cpu%d: self 0x%08lx lwp 0x%08lx pcb 0x%08lx\n",
+		db_printf("cpu%d: self 0x%08lx lwp 0x%08lx pcb 0x%08lx idle 0x%08lx\n",
 			  ci->ci_number, (u_long)ci->ci_self,
-			  (u_long)ci->ci_curlwp, (u_long)ci->ci_cpcb);
+			  (u_long)ci->ci_curlwp, (u_long)ci->ci_cpcb,
+			  (u_long)ci->ci_idle_u);
 	}
+}
+
+void
+db_cpu_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+{
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci;
+#endif
+	
+	if (!have_addr) {
+		cpu_debug_dump();
+		return;
+	}
+#ifdef MULTIPROCESSOR
+	if ((addr < 0) || (addr >= sparc_ncpus)) {
+		db_printf("%ld: CPU out of range\n", addr);
+		return;
+	}
+	for (ci = cpus; ci != NULL; ci = ci->ci_next)
+		if (ci->ci_number == addr)
+			break;
+	if (ci == NULL) {
+		db_printf("CPU %ld not configured\n", addr);
+		return;
+	}
+	if (ci != curcpu()) {
+		if (!mp_cpu_is_paused(ci->ci_number)) {
+			db_printf("CPU %ld not paused\n", addr);
+			return;
+		}
+	}
+	if (ci->ci_ddb_regs == 0) {
+		db_printf("CPU %ld has no saved regs\n", addr);
+		return;
+	}
+	db_printf("using CPU %ld", addr);
+	ddb_regp = __UNVOLATILE(ci->ci_ddb_regs);
+	ddb_cpuinfo = ci;
+#endif
+}
+
+void
+db_sir_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+{
+
+	__asm("sir; nop");
 }
 
 #include <uvm/uvm.h>
@@ -1107,7 +1270,7 @@ const struct db_command db_machine_command_table[] = {
 	{ "extract",	db_pm_extract,	0,	0 },
 	{ "fpstate",	db_dump_fpstate,0,	0 },
 	{ "kmap",	db_pmap_kernel,	0,	0 },
-	{ "lock",	db_lock,	0,	0 },
+	{ "lock",	db_lock_cmd,	0,	0 },
 	{ "lwp",	db_lwp_cmd,	0,	0 },
 	{ "pcb",	db_dump_pcb,	0,	0 },
 	{ "pctx",	db_setpcb,	0,	0 },
@@ -1124,8 +1287,9 @@ const struct db_command db_machine_command_table[] = {
 	{ "uvmdump",	db_uvmhistdump,	0,	0 },
 	{ "watch",	db_watch,	0,	0 },
 	{ "window",	db_dump_window,	0,	0 },
-	{ "cpus",	db_cpus_cmd,	0,	0 },
-	{ NULL, }
+	{ "cpu",	db_cpu_cmd,	0,	0 },
+	{ "sir",	db_sir_cmd,	0,	0 },
+	{ .name = NULL, }
 };
 
 #endif	/* DDB */
@@ -1145,7 +1309,10 @@ db_addr_t
 db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 {
     union instr insn;
-    db_addr_t npc = ddb_regs.ddb_tf.tf_npc;
+    db_addr_t npc;
+
+    KASSERT(ddb_regp); /* XXX */
+    npc = ddb_regp->db_tf.tf_npc;
 
     insn.i_int = inst;
 

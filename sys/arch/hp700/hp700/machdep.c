@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2006/08/26 06:17:48 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.1 2006/11/18 21:29:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2006/08/26 06:17:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.1 2006/11/18 21:29:13 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -832,9 +832,9 @@ do {									\
 #endif /* KGDB */
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
-		extern int end[];
+		extern int end;
 
-		ksyms_init(1, end, (int*)esym);
+		ksyms_init(esym - (int)&end, &end, (int*)esym);
 	}
 #endif
 
@@ -1361,10 +1361,12 @@ cpu_reboot(int howto, char *user_boot_string)
 	if (!(howto & RB_NOSYNC) && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
-#if 0
+
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
+		 */
 		resettodr();
-#endif
-		printf("WARNING: not updating battery clock\n");
 	}
 
 	/* XXX probably save howto into stable storage */

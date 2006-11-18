@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.12 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.12.20.1 2006/11/18 21:34:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.12 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.12.20.1 2006/11/18 21:34:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -89,7 +89,8 @@ void	sysmon_wdog_shutdown(void *);
  *	Open the system monitor device.
  */
 int
-sysmonopen_wdog(dev_t dev, int flag, int mode, struct lwp *l)
+sysmonopen_wdog(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 
 	simple_lock(&sysmon_wdog_list_slock);
@@ -111,7 +112,8 @@ sysmonopen_wdog(dev_t dev, int flag, int mode, struct lwp *l)
  *	Close the system monitor device.
  */
 int
-sysmonclose_wdog(dev_t dev, int flag, int mode, struct lwp *l)
+sysmonclose_wdog(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct sysmon_wdog *smw;
 	int s, error = 0;
@@ -149,7 +151,8 @@ sysmonclose_wdog(dev_t dev, int flag, int mode, struct lwp *l)
  *	Perform a watchdog control request.
  */
 int
-sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct sysmon_wdog *smw;
 	int s, error = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.3 2006/06/15 18:15:32 garbled Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.3.6.1 2006/11/18 21:29:30 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.3 2006/06/15 18:15:32 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.3.6.1 2006/11/18 21:29:30 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,7 +96,7 @@ dev_type_close(prep_nvramclose);
 
 const struct cdevsw prep_nvram_cdevsw = {
 	prep_nvramopen, prep_nvramclose, noread, nowrite, prep_nvramioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 extern struct cfdriver nvram_cd;
@@ -204,6 +204,7 @@ nvram_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal("%s: attaching clock", device_xname(self));
 	mk48txx_attach((struct mk48txx_softc *)&sc->sc_mksc);
+	aprint_normal("\n");
 	todr_attach(&sc->sc_mksc.sc_handle);
 }
 

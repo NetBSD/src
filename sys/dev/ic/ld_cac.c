@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.13 2006/03/25 23:10:12 thorpej Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.13.8.1 2006/11/18 21:34:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.13 2006/03/25 23:10:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.13.8.1 2006/11/18 21:34:13 ad Exp $");
 
 #include "rnd.h"
 
@@ -84,7 +84,8 @@ CFATTACH_DECL(ld_cac, sizeof(struct ld_cac_softc),
     ld_cac_match, ld_cac_attach, NULL, NULL);
 
 int
-ld_cac_match(struct device *parent, struct cfdata *match, void *aux)
+ld_cac_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	return (1);

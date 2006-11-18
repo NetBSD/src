@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffrd.c,v 1.16 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_dagffrd.c,v 1.16.20.1 2006/11/18 21:34:46 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.16 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.16.20.1 2006/11/18 21:34:46 ad Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -124,11 +124,10 @@ rf_CreateFaultFreeReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
  *****************************************************************************/
 
 void
-rf_CreateNonredundantDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
-			 RF_DagHeader_t *dag_h, void *bp,
-			 RF_RaidAccessFlags_t flags,
-			 RF_AllocListElem_t *allocList,
-			 RF_IoType_t type)
+rf_CreateNonredundantDAG(RF_Raid_t *raidPtr,
+    RF_AccessStripeMap_t *asmap, RF_DagHeader_t *dag_h, void *bp,
+    RF_RaidAccessFlags_t flags, RF_AllocListElem_t *allocList,
+    RF_IoType_t type)
 {
 	RF_DagNode_t *diskNodes, *blockNode, *commitNode, *termNode;
 	RF_DagNode_t *tmpNode, *tmpdiskNode;
@@ -319,10 +318,9 @@ rf_CreateNonredundantDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 
 static void
 CreateMirrorReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
-		    RF_DagHeader_t *dag_h, void *bp,
-		    RF_RaidAccessFlags_t flags,
-		    RF_AllocListElem_t *allocList,
-		    int (*readfunc) (RF_DagNode_t * node))
+    RF_DagHeader_t *dag_h, void *bp,
+    RF_RaidAccessFlags_t flags, RF_AllocListElem_t *allocList,
+    int (*readfunc) (RF_DagNode_t * node))
 {
 	RF_DagNode_t *readNodes, *blockNode, *commitNode, *termNode;
 	RF_DagNode_t *tmpNode, *tmpreadNode;

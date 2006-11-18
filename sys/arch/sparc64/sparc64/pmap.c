@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.172 2006/06/10 06:47:43 rjs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.172.6.1 2006/11/18 21:29:33 ad Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.172 2006/06/10 06:47:43 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.172.6.1 2006/11/18 21:29:33 ad Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -298,15 +298,16 @@ static void pmap_free_page(paddr_t pa);
  * page bits.  That is: these are the bits between 8K pages and
  * larger page sizes that cause aliasing.
  */
+#define PSMAP_ENTRY(MASK, CODE)	{ .mask = MASK, .code = CODE }
 struct page_size_map page_size_map[] = {
 #ifdef DEBUG
-	{ 0, PGSZ_8K & 0 },	/* Disable large pages */
+	PSMAP_ENTRY(0, PGSZ_8K & 0),	/* Disable large pages */
 #endif
-	{ (4 * 1024 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_4M },
-	{ (512 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_512K  },
-	{ (64 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_64K  },
-	{ (8 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_8K  },
-	{ 0, 0  }
+	PSMAP_ENTRY((4 * 1024 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_4M),
+	PSMAP_ENTRY((512 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_512K),
+	PSMAP_ENTRY((64 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_64K),
+	PSMAP_ENTRY((8 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_8K),
+	PSMAP_ENTRY(0, 0),
 };
 
 /*
@@ -422,7 +423,7 @@ pmap_mp_init(void)
 
 	extern void cpu_mp_startup(void);
 
-	if ( (v = OF_claim(NULL, PAGE_SIZE, PAGE_SIZE)) == NULL) {
+	if ((v = OF_claim(NULL, PAGE_SIZE, PAGE_SIZE)) == NULL) {
 		panic("pmap_mp_init: Cannot claim a page.");
 	}
 
@@ -443,8 +444,9 @@ pmap_mp_init(void)
 				1, /* valid */
 				0 /* ie */);
 		tp[i].data |= TLB_L | TLB_CV;
-		printf("xtlb[%d]: Tag: %p Data: %p\n",
-				i, (void*)tp[i].tag, (void*)tp[i].data);
+		printf("xtlb[%d]: Tag: %" PRIx64 " Data: %" PRIx64 "\n",
+				i, tp[i].tag,
+				   tp[i].data);
 	}
 
 	for (i = 0; i < PAGE_SIZE; i += sizeof(long))
@@ -592,7 +594,7 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	int64_t data;
 	vaddr_t va, intstk;
 	uint64_t phys_msgbuf;
-	paddr_t newp;
+	paddr_t newp = 0;
 
 	void *prom_memlist;
 	int prom_memlist_size;
@@ -654,11 +656,12 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		("We should have the memory at %lx, let's map it in\n",
 			phys_msgbuf));
 	if (prom_map_phys(phys_msgbuf, msgbufsiz, (vaddr_t)msgbufp,
-			  -1/* sunos does this */) == -1)
+			  -1/* sunos does this */) == -1) {
 		prom_printf("Failed to map msgbuf\n");
-	else
+	} else {
 		BDPRINTF(PDB_BOOT, ("msgbuf mapped at %p\n",
 			(void *)msgbufp));
+	}
 	msgbufmapped = 1;	/* enable message buffer */
 	initmsgbuf((caddr_t)msgbufp, msgbufsiz);
 
@@ -725,10 +728,11 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	 * Here's a quick in-lined reverse bubble sort.  It gets rid of
 	 * any translations inside the kernel data VA range.
 	 */
-	for(i = 0; i < prom_map_size; i++) {
-		for(j = i; j < prom_map_size; j++) {
+	for (i = 0; i < prom_map_size; i++) {
+		for (j = i; j < prom_map_size; j++) {
 			if (prom_map[j].vstart > prom_map[i].vstart) {
 				struct prom_map tmp;
+
 				tmp = prom_map[i];
 				prom_map[i] = prom_map[j];
 				prom_map[j] = tmp;
@@ -750,10 +754,11 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 #endif
 
 	/*
-	 * Allocate a 64MB page for the cpu_info structure now.
+	 * Allocate a ncpu*128KB page for the cpu_info & stack structure now.
 	 */
-	if ((cpu0paddr = prom_alloc_phys(8 * PAGE_SIZE * sparc_ncpus, 8 * PAGE_SIZE)) == 0 ) {
-		prom_printf("Cannot allocate new cpu_info\n");
+	cpu0paddr = prom_alloc_phys(16 * PAGE_SIZE * sparc_ncpus, 8 * PAGE_SIZE);
+	if (cpu0paddr == 0) {
+		prom_printf("Cannot allocate cpu_infos\n");
 		prom_halt();
 	}
 
@@ -1005,22 +1010,18 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	/* Let's keep 1 page of redzone after the kernel */
 	vmmap += PAGE_SIZE;
 	{
-		extern vaddr_t u0[2];
-		extern struct pcb* proc0paddr;
+		extern struct pcb *proc0paddr;
 		extern void main(void);
+		vaddr_t u0va;
 		paddr_t pa;
 
-		/* Initialize all the pointers to u0 */
-		proc0paddr = (struct pcb *)vmmap;
-		u0[0] = vmmap;
-		/* Allocate some VAs for u0 */
-		u0[1] = vmmap + 2*USPACE;
+		u0va = vmmap;
 
 		BDPRINTF(PDB_BOOT1,
-			("Inserting stack 0 into pmap_kernel() at %p\n",
+			("Inserting proc0 USPACE into pmap_kernel() at %p\n",
 				vmmap));
 
-		while (vmmap < u0[1]) {
+		while (vmmap < u0va + 2*USPACE) {
 			int64_t data1;
 
 			if (!pmap_get_page(&pa))
@@ -1053,9 +1054,9 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		BDPRINTF(PDB_BOOT1,
 			("Inserting cpu_info into pmap_kernel() at %p\n",
 				 cpus));
-		/* Now map in all 8 pages of cpu_info */
+		/* Now map in all 16 pages of interrupt stack/cpu_info */
 		pa = cpu0paddr;
-		prom_map_phys(pa, 64*KB, vmmap, -1);
+		prom_map_phys(pa, 128*KB, vmmap, -1);
 
 		/*
 		 * Also map it in as the interrupt stack.
@@ -1064,8 +1065,9 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		 * XXXX locore.s does not flush these mappings
 		 * before installing the locked TTE.
 		 */
-		prom_map_phys(pa, 64*KB, CPUINFO_VA, -1);
-		for (i = 0; i < 8; i++) {
+		prom_map_phys(pa, 64*KB, INTSTACK, -1);
+		prom_map_phys(pa + 64*KB, 64*KB, KSTACK_VA, -1);
+		for (i = 0; i < 16; i++) {
 			int64_t data1;
 
 			data1 = TSB_DATA(0 /* global */,
@@ -1084,23 +1086,23 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		BDPRINTF(PDB_BOOT1, ("Initializing cpu_info\n"));
 
 		/* Initialize our cpu_info structure */
-		memset((void *)intstk, 0, 8 * PAGE_SIZE);
+		memset((void *)intstk, 0, 128 * KB);
 		cpus->ci_self = cpus;
 		cpus->ci_next = NULL;
 		cpus->ci_curlwp = &lwp0;
-		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
 		cpus->ci_flags = CPUF_PRIMARY;
 		cpus->ci_upaid = CPU_UPAID;
 		cpus->ci_number = 0;
 		cpus->ci_cpuid = cpus->ci_upaid;
 		cpus->ci_fplwp = NULL;
 		cpus->ci_spinup = main; /* Call main when we're running. */
-		cpus->ci_initstack = (void *)u0[1];
 		cpus->ci_paddr = cpu0paddr;
-		cpus->ci_eintstack = (void *)EINTSTACK;
-		cpus->ci_idle_u = (struct pcb *)(CPUINFO_VA + 2 * PAGE_SIZE);
+		cpus->ci_idle_u = (struct pcb *)IDLE_U_VA;
+		cpus->ci_cpcb = (struct pcb *)u0va;
+		cpus->ci_initstack = (void *)INITSTACK_VA;
+		proc0paddr = cpus->ci_cpcb;
 
-		cpu0paddr += 64 * KB;
+		cpu0paddr += 128 * KB;
 
 		CPUSET_CLEAR(cpus_active);
 		CPUSET_ADD(cpus_active, 0);
@@ -1233,7 +1235,7 @@ pmap_growkernel(maxkvaddr)
 			    ("pmap_growkernel: extending %lx\n", kbreak));
 			pa = 0;
 			if (!pmap_get_page(&pa))
-				panic("pmap_grow_kernel: no pages");
+				panic("pmap_growkernel: no pages");
 			ENTER_STAT(ptpneeded);
 		}
 	}
@@ -1473,8 +1475,9 @@ pmap_kenter_pa(va, pa, prot)
 	 */
 
 	ENTER_STAT(unmanaged);
-	if (pa & (PMAP_NVC|PMAP_NC))
+	if (pa & (PMAP_NVC|PMAP_NC)) {
 		ENTER_STAT(ci);
+	}
 
 	tte.data = TSB_DATA(0, PGSZ_8K, pa, 1 /* Privileged */,
 			    (VM_PROT_WRITE & prot),
@@ -1692,8 +1695,9 @@ pmap_enter(pm, va, pa, prot, flags)
 	if (pa & PMAP_NVC)
 #endif
 		uncached = 1;
-	if (uncached)
+	if (uncached) {
 		ENTER_STAT(ci);
+	}
 	tte.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
 		flags & VM_PROT_WRITE, !(pa & PMAP_NC),
 		uncached, 1, pa & PMAP_LITTLE);
@@ -2051,6 +2055,20 @@ pmap_extract(pm, va, pap)
 		pa = pmap_kextract(va);
 		DPRINTF(PDB_EXTRACT, ("pmap_extract: va=%lx pa=%llx\n",
 		    (u_long)va, (unsigned long long)pa));
+	} else if (pm == pmap_kernel() && va >= INTSTACK && va < (INTSTACK + 64*KB)) {
+		pa = (paddr_t)(curcpu()->ci_paddr - INTSTACK + va);
+		DPRINTF(PDB_EXTRACT, ("pmap_extract (intstack): va=%lx pa=%llx\n",
+		    (u_long)va, (unsigned long long)pa));
+		if (pap != NULL)
+			*pap = pa;
+		return TRUE;
+	} else if (pm == pmap_kernel() && va >= KSTACK_VA && va < (KSTACK_VA + 64*KB)) {
+		pa = (paddr_t)(curcpu()->ci_paddr - KSTACK_VA + va);
+		DPRINTF(PDB_EXTRACT, ("pmap_extract (kstack): va=%lx pa=%llx\n",
+		    (u_long)va, (unsigned long long)pa));
+		if (pap != NULL)
+			*pap = pa;
+		return TRUE;
 	} else {
 		if (pm != pmap_kernel()) {
 			simple_lock(&pm->pm_lock);
@@ -3012,8 +3030,9 @@ pmap_enter_pv(struct pmap *pmap, vaddr_t va, paddr_t pa, struct vm_page *pg,
 		npv->pv_next = pvh->pv_next;
 		pvh->pv_next = npv;
 
-		if (!npv->pv_next)
+		if (!npv->pv_next) {
 			ENTER_STAT(secondpv);
+		}
 	}
 }
 
@@ -3410,7 +3429,7 @@ pmap_update(struct pmap *pmap)
 {
 
 #ifdef MULTIPROCESSOR
-	smp_tlb_flush_all();
+	smp_tlb_flush_all();	/* XXX */
 #endif
 
 	if (pmap->pm_refs > 0) {

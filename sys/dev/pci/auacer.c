@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.12 2006/08/27 23:53:10 christos Exp $	*/
+/*	$NetBSD: auacer.c,v 1.12.2.1 2006/11/18 21:34:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.12 2006/08/27 23:53:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.12.2.1 2006/11/18 21:34:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +247,8 @@ static int	auacer_write_codec(void *, uint8_t, uint16_t);
 static int	auacer_reset_codec(void *);
 
 static int
-auacer_match(struct device *parent, struct cfdata *match, void *aux)
+auacer_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -351,7 +352,8 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Watch for power change */
 	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(auacer_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    auacer_powerhook, sc);
 
 	audio_attach_mi(&auacer_hw_if, sc, &sc->sc_dev);
 
@@ -532,8 +534,9 @@ auacer_set_rate(struct auacer_softc *sc, int mode, u_int srate)
 }
 
 static int
-auacer_set_params(void *v, int setmode, int usemode, audio_params_t *play,
-    audio_params_t *rec, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+auacer_set_params(void *v, int setmode, int usemode,
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	struct auacer_softc *sc;
 	struct audio_params *p;
@@ -589,7 +592,8 @@ auacer_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 }
 
 static int
-auacer_round_blocksize(void *v, int blk, int mode, const audio_params_t *param)
+auacer_round_blocksize(void *v, int blk, int mode,
+    const audio_params_t *param)
 {
 
 	return blk & ~0x3f;		/* keep good alignment */
@@ -637,8 +641,6 @@ auacer_halt_output(void *v)
 static int
 auacer_halt_input(void *v)
 {
-	/*struct auacer_softc *sc = v;*/
-
 	DPRINTF(ALI_DEBUG_DMA, ("auacer_halt_input\n"));
 
 	return 0;
@@ -686,8 +688,8 @@ auacer_query_devinfo(void *v, mixer_devinfo_t *dp)
 }
 
 static void *
-auacer_allocm(void *v, int direction, size_t size, struct malloc_type *pool,
-    int flags)
+auacer_allocm(void *v, int direction, size_t size,
+    struct malloc_type *pool, int flags)
 {
 	struct auacer_softc *sc;
 	struct auacer_dma *p;
@@ -916,9 +918,9 @@ auacer_trigger_output(void *v, void *start, void *end, int blksize,
 }
 
 static int
-auacer_trigger_input(void *v, void *start, void *end, int blksize,
-		     void (*intr)(void *), void *arg,
-		     const audio_params_t *param)
+auacer_trigger_input(void *v, void *start, void *end,
+    int blksize, void (*intr)(void *), void *arg,
+    const audio_params_t *param)
 {
 	return EINVAL;
 }

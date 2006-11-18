@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.43 2006/08/30 01:14:24 christos Exp $	*/
+/*	$NetBSD: eso.c,v 1.43.2.1 2006/11/18 21:34:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.43 2006/08/30 01:14:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.43.2.1 2006/11/18 21:34:29 ad Exp $");
 
 #include "mpu.h"
 
@@ -208,7 +208,8 @@ static void	eso_freemem(struct eso_dma *);
 
 
 static int
-eso_match(struct device *parent, struct cfdata *match, void *aux)
+eso_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -716,8 +717,9 @@ eso_query_encoding(void *hdl, struct audio_encoding *fp)
 }
 
 static int
-eso_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
-    audio_params_t *rec, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+eso_set_params(void *hdl, int setmode, int usemode,
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	struct eso_softc *sc;
 	struct audio_params *p;
@@ -786,7 +788,8 @@ eso_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
 }
 
 static int
-eso_round_blocksize(void *hdl, int blk, int mode, const audio_params_t *param)
+eso_round_blocksize(void *hdl, int blk, int mode,
+    const audio_params_t *param)
 {
 
 	return blk & -32;	/* keep good alignment; at least 16 req'd */
@@ -1455,8 +1458,8 @@ eso_query_devinfo(void *hdl, mixer_devinfo_t *dip)
 }
 
 static int
-eso_allocmem(struct eso_softc *sc, size_t size, size_t align, size_t boundary,
-    int flags, int direction, struct eso_dma *ed)
+eso_allocmem(struct eso_softc *sc, size_t size, size_t align,
+    size_t boundary, int flags, int direction, struct eso_dma *ed)
 {
 	int error, wait;
 

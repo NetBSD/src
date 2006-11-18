@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.111 2006/08/03 03:01:39 bsh Exp $	*/
+/*	$NetBSD: auich.c,v 1.111.4.1 2006/11/18 21:34:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.111 2006/08/03 03:01:39 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.111.4.1 2006/11/18 21:34:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,7 +436,8 @@ auich_lookup(struct pci_attach_args *pa, const struct auich_devtype *auich_devic
 }
 
 static int
-auich_match(struct device *parent, struct cfdata *match, void *aux)
+auich_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -645,7 +646,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Watch for power change */
 	sc->sc_suspend = PWR_RESUME;
-	sc->sc_powerhook = powerhook_establish(auich_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    auich_powerhook, sc);
 
 	config_interrupts(self, auich_finish_attach);
 
@@ -973,8 +975,9 @@ auich_set_rate(struct auich_softc *sc, int mode, u_long srate)
 }
 
 static int
-auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
-    audio_params_t *rec, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+auich_set_params(void *v, int setmode, int usemode,
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	struct auich_softc *sc;
 	audio_params_t *p;
@@ -1046,7 +1049,8 @@ auich_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 }
 
 static int
-auich_round_blocksize(void *v, int blk, int mode, const audio_params_t *param)
+auich_round_blocksize(void *v, int blk, int mode,
+    const audio_params_t *param)
 {
 
 	return blk & ~0x3f;		/* keep good alignment */
@@ -1139,8 +1143,8 @@ auich_query_devinfo(void *v, mixer_devinfo_t *dp)
 }
 
 static void *
-auich_allocm(void *v, int direction, size_t size, struct malloc_type *pool,
-    int flags)
+auich_allocm(void *v, int direction, size_t size,
+    struct malloc_type *pool, int flags)
 {
 	struct auich_softc *sc;
 	struct auich_dma *p;
@@ -1613,7 +1617,6 @@ static void
 auich_powerhook(int why, void *addr)
 {
 	struct auich_softc *sc;
-	int rv;
 
 	sc = (struct auich_softc *)addr;
 	switch (why) {
@@ -1634,15 +1637,6 @@ auich_powerhook(int why, void *addr)
 		if (sc->sc_ih != NULL)
 			pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 
-		rv = pci_get_powerstate(sc->sc_pc, sc->sc_pt, &sc->sc_powerstate);
-		if (rv)
-			aprint_error("%s: unable to get power state (err=%d)\n",
-			    sc->sc_dev.dv_xname, rv);
-		rv = pci_set_powerstate(sc->sc_pc, sc->sc_pt, PCI_PMCSR_STATE_D3);
-		if (rv)
-			aprint_error("%s: unable to set power state (err=%d)\n",
-			    sc->sc_dev.dv_xname, rv);
-
 		break;
 
 	case PWR_RESUME:
@@ -1654,11 +1648,6 @@ auich_powerhook(int why, void *addr)
 			sc->sc_suspend = why;
 			return;
 		}
-
-		rv = pci_set_powerstate(sc->sc_pc, sc->sc_pt, sc->sc_powerstate);
-		if (rv)
-			aprint_error("%s: unable to set power state (err=%d)\n",
-			    sc->sc_dev.dv_xname, rv);
 
 		sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh, IPL_AUDIO,
 		    auich_intr, sc);

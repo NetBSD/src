@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.33 2006/08/26 20:26:44 christos Exp $
+#	$NetBSD: WALNUT,v 1.33.2.1 2006/11/18 21:29:11 ad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -53,6 +53,7 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 #options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -242,7 +243,6 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 pbus*	at plb?				# off-chip Peripheral BUS
 
 ds1743rtc0	at pbus? addr ?			# RTC
-todclock0 at ds1743rtc?			# time-of-day device via rtc device
 
 #pckbc0	at pbus?
 #pckbd*	at pckbc?

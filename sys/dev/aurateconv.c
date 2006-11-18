@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.15 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.15.20.1 2006/11/18 21:34:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.15 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.15.20.1 2006/11/18 21:34:03 ad Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2006/04/09 01:18:14 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46.8.1 2006/11/18 21:29:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2006/04/09 01:18:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46.8.1 2006/11/18 21:29:26 ad Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -195,19 +195,15 @@ extern void pizazz_init __P((void));
 static void	unimpl_cons_init __P((void));
 static void	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
 static int	unimpl_memsize __P((caddr_t));
-static unsigned	unimpl_clkread __P((void));
-static void	unimpl_todr __P((struct clock_ymdhms *));
 static void	unimpl_intr_establish __P((int, int (*)__P((void *)), void *));
 
 struct platform platform = {
-	"iobus not set",
-	unimpl_cons_init,
-	unimpl_iointr,
-	unimpl_memsize,
-	unimpl_clkread,
-	unimpl_todr,
-	unimpl_todr,
-	unimpl_intr_establish,
+	.iobus = "iobus not set",
+	.cons_init = unimpl_cons_init,
+	.iointr = unimpl_iointr,
+	.memsize = unimpl_memsize,
+	.intr_establish = unimpl_intr_establish,
+	.clkinit = NULL,
 };
 
 struct consdev *cn_tab = NULL;
@@ -550,38 +546,6 @@ haltsys:
 	/*NOTREACHED*/
 }
 
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  Unfortunately, we can't read the hardware registers.
- * We guarantee that the time will be greater than the value obtained by a
- * previous call.
- */
-void
-microtime(tvp)
-	register struct timeval *tvp;
-{
-	static struct timeval lasttime;
-	int s = splclock();
-
-	*tvp = time;
-
-	tvp->tv_usec += (*platform.clkread)();
-
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
-}
-
 int
 initcpu()
 {
@@ -613,19 +577,6 @@ caddr_t first;
 {
 
 	panic("sysconf.init didn't set memsize");
-}
-
-static unsigned
-unimpl_clkread()
-{
-	return 0;	/* No microtime available */
-}
-
-static void
-unimpl_todr(dt)
-	struct clock_ymdhms *dt;
-{
-	panic("sysconf.init didn't init TOD");
 }
 
 void

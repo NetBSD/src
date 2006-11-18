@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.26 2006/08/30 02:00:26 christos Exp $	*/
+/*	$NetBSD: fms.c,v 1.26.2.1 2006/11/18 21:34:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.26 2006/08/30 02:00:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.26.2.1 2006/11/18 21:34:29 ad Exp $");
 
 #include "mpu.h"
 
@@ -216,7 +216,8 @@ static int	fms_reset_codec(void *);
 
 
 static int
-fms_match(struct device *parent, struct cfdata *match, void *aux)
+fms_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -566,8 +567,8 @@ static const struct audio_format fms_formats[FMS_NFORMATS] = {
 
 static int
 fms_set_params(void *addr, int setmode, int usemode,
-	       audio_params_t *play, audio_params_t *rec,
-	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	struct fms_softc *sc;
 	int i, index;
@@ -609,7 +610,8 @@ fms_set_params(void *addr, int setmode, int usemode,
 }
 
 static int
-fms_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
+fms_round_blocksize(void *addr, int blk, int mode,
+    const audio_params_t *param)
 {
 
 	return blk & ~0xf;
@@ -797,8 +799,7 @@ fms_query_devinfo(void *addr, mixer_devinfo_t *dip)
 
 static int
 fms_trigger_output(void *addr, void *start, void *end, int blksize,
-		   void (*intr)(void *), void *arg,
-		   const audio_params_t *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	struct fms_softc *sc;
 	struct fms_dma *p;
@@ -832,7 +833,7 @@ fms_trigger_output(void *addr, void *start, void *end, int blksize,
 
 static int
 fms_trigger_input(void *addr, void *start, void *end, int blksize,
-		  void (*intr)(void *), void *arg, const audio_params_t *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	struct fms_softc *sc;
 	struct fms_dma *p;

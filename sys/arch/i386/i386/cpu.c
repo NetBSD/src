@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.29.2.1 2006/10/20 19:25:41 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.29.2.2 2006/11/18 21:29:18 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29.2.1 2006/10/20 19:25:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29.2.2 2006/11/18 21:29:18 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -196,10 +196,8 @@ cpu_init_first()
 #endif
 
 int
-cpu_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+cpu_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	return 1;
@@ -242,9 +240,7 @@ cpu_vm_init(struct cpu_info *ci)
 
 
 void
-cpu_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpu_softc *sc = (void *) self;
 	struct cpu_attach_args *caa = aux;

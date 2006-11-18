@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41.20.1 2006/11/18 21:29:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2005/12/24 20:07:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.20.1 2006/11/18 21:29:34 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -630,8 +630,10 @@ cpu_dumpconf(void)
 		return;
 
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		return;
+	}
 	getsize = bdev->d_psize;
 	if (getsize == NULL)
 		return;
@@ -1133,4 +1135,66 @@ vmebus_translate(vme_am_t mod, vme_addr_t addr, bus_type_t *btp,
 	*bap = base | addr;
 	*btp = (*bap & 0x800000 ? PMAP_VME8 : PMAP_VME0);
 	return (0);
+}
+
+/*
+ * If we can find a mapping that was established by the PROM, use it.
+ */
+int
+find_prom_map(paddr_t pa, bus_type_t iospace, int len, vaddr_t *vap)
+{
+	u_long	pf;
+	int	pgtype;
+	vaddr_t	va, eva;
+	int	sme;
+	u_long	pte;
+	int	saved_ctx;
+
+	/*
+	 * The mapping must fit entirely within one page.
+	 */
+	if ((((u_long)pa & PGOFSET) + len) > PAGE_SIZE)
+		return EINVAL;
+
+	pf = PA_PGNUM(pa);
+	pgtype = iospace << PG_MOD_SHIFT;
+	saved_ctx = kernel_context();
+
+	/*
+	 * Walk the PROM address space, looking for a page with the
+	 * mapping we want.
+	 */
+	for (va = SUN_MONSTART; va < SUN_MONEND; ) {
+
+		/*
+		 * Make sure this segment is mapped.
+		 */
+		sme = get_segmap(va);
+		if (sme == SEGINV) {
+			va += NBSG;
+			continue;			/* next segment */
+		}
+
+		/*
+		 * Walk the pages of this segment.
+		 */
+		for(eva = va + NBSG; va < eva; va += PAGE_SIZE) {
+			pte = get_pte(va);
+
+			if ((pte & (PG_VALID | PG_TYPE)) ==
+				(PG_VALID | pgtype) &&
+			    PG_PFNUM(pte) == pf)
+			{
+				/* 
+				 * Found the PROM mapping.
+				 * note: preserve page offset
+				 */
+				*vap = (va | ((vaddr_t)pa & PGOFSET));
+				restore_context(saved_ctx);
+				return 0;
+			}
+		}
+	}
+	restore_context(saved_ctx);
+	return ENOENT;
 }

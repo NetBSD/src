@@ -1,4 +1,4 @@
-/*	$NetBSD: rambo.c,v 1.7 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: rambo.c,v 1.7.20.1 2006/11/18 21:29:26 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.7 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.7.20.1 2006/11/18 21:29:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 
 #include <machine/cpu.h>
 #include <machine/mainboard.h>
@@ -58,8 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.7 2005/12/11 12:18:13 christos Exp $");
 
 static int	rambo_match  __P((struct device *, struct cfdata *, void *));
 static void	rambo_attach __P((struct device *, struct device *, void *));
-static unsigned rambo_clkread __P((void));
+static unsigned rambo_get_timecount(struct timecounter *);
 void rambo_clkintr __P((struct clockframe *));
+static void rambo_tc_init(void);
 
 struct rambo_softc {
         struct device		dev; 
@@ -115,7 +117,7 @@ rambo_attach(parent, self, aux)
 
 	printf(": parity enabled\n");
 	rambo = sc;
-	platform.clkread = rambo_clkread;
+	platform.clkinit = rambo_tc_init;
 }
 
 void
@@ -161,10 +163,22 @@ rambo_clkintr(cf)
  * Calculate the number of microseconds since the last clock tick
  */
 static unsigned
-rambo_clkread()
+rambo_get_timecount(struct timecounter *tc)
 {
-        register u_int32_t tcount;
-	
-	tcount = bus_space_read_4(rambo->sc_bst, rambo->sc_bsh, RB_TCOUNT);
-	return TICKS_TO_USECS(tcount - rambo->sc_tclast);
+
+	return (bus_space_read_4(rambo->sc_bst, rambo->sc_bsh, RB_TCOUNT));
+}
+
+static void
+rambo_tc_init(void)
+{
+	static struct timecounter tc = {
+		.tc_get_timecount = rambo_get_timecount,
+		.tc_frequency = RB_FREQUENCY,
+		.tc_quality = 100,
+		.tc_name = "rambo_tcount",
+		.tc_counter_mask = ~0
+	};
+
+	tc_init(&tc);
 }

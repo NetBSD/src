@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.22 2006/02/19 14:59:22 thorpej Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.22.14.1 2006/11/18 21:29:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.22 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.22.14.1 2006/11/18 21:29:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,8 @@ CFATTACH_DECL(vald_acpi, sizeof(struct vald_acpi_softc),
  *	Autoconfiguration `match' routine.
  */
 static int
-vald_acpi_match(struct device *parent, struct cfdata *match, void *aux)
+vald_acpi_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -258,7 +259,8 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
  *	Notify handler.
  */
 static void
-vald_acpi_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
+vald_acpi_notify_handler(ACPI_HANDLE handle, UINT32 notify,
+    void *context)
 {
 	struct vald_acpi_softc *sc = context;
 	ACPI_STATUS rv;
@@ -447,8 +449,8 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
  *	and save this handle.
  */
 static ACPI_STATUS
-vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level, void *context,
-    void **status)
+vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level,
+    void *context, void **status)
 {
 	struct vald_acpi_softc *sc = context;
 	ACPI_STATUS rv;

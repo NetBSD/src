@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.57 2006/08/30 17:07:33 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.57.2.1 2006/11/18 21:34:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.57 2006/08/30 17:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.57.2.1 2006/11/18 21:34:07 ad Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.57 2006/08/30 17:07:33 christos Exp $");
 #include <sys/endian.h>
 #include <sys/conf.h>
 #include <sys/kthread.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -753,8 +754,9 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 	 */
 	iop_configure_devices(sc, IC_CONFIGURE | IC_PRIORITY,
 	    IC_CONFIGURE | IC_PRIORITY);
-	if ((rv = iop_lct_get(sc)) != 0)
+	if ((rv = iop_lct_get(sc)) != 0) {
 		DPRINTF(("iop_reconfigure: unable to re-read LCT\n"));
+	}
 	iop_configure_devices(sc, IC_CONFIGURE | IC_PRIORITY,
 	    IC_CONFIGURE);
 
@@ -2502,7 +2504,8 @@ iopopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-iopclose(dev_t dev, int flag, int mode, struct lwp *l)
+iopclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct iop_softc *sc;
 
@@ -2523,8 +2526,9 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case IOPIOCPT:
-		if (securelevel >= 2)
-			return (EPERM);
+		rv = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		if (rv)
+			return (rv);
 
 		return (iop_passthrough(sc, (struct ioppt *)data, l->l_proc));
 

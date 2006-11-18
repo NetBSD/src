@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.31 2006/08/30 02:13:20 christos Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.31.2.1 2006/11/18 21:34:29 ad Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.31 2006/08/30 02:13:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.31.2.1 2006/11/18 21:34:29 ad Exp $");
 
 #include "rnd.h"
 
@@ -227,7 +227,8 @@ hifn_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-hifn_probe(struct device *parent, struct cfdata *match, void *aux)
+hifn_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
