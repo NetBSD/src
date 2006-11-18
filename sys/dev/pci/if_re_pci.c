@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.19 2006/11/18 07:22:06 tsutsui Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.20 2006/11/18 15:58:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -93,7 +93,7 @@ struct re_pci_softc {
 	pcitag_t sc_pcitag;
 };
 
-static int	re_pci_probe(struct device *, struct cfdata *, void *);
+static int	re_pci_match(struct device *, struct cfdata *, void *);
 static void	re_pci_attach(struct device *, struct device *, void *);
 
 /*
@@ -170,7 +170,7 @@ static const struct rtk_hwrev re_hwrevs[] = {
 
 #define RE_LINKSYS_EG1032_SUBID	0x00241737
 
-CFATTACH_DECL(re_pci, sizeof(struct re_pci_softc), re_pci_probe, re_pci_attach,
+CFATTACH_DECL(re_pci, sizeof(struct re_pci_softc), re_pci_match, re_pci_attach,
 	      NULL, NULL);
 
 /*
@@ -178,8 +178,7 @@ CFATTACH_DECL(re_pci, sizeof(struct re_pci_softc), re_pci_probe, re_pci_attach,
  * IDs against our list and return a device name if we find a match.
  */
 static int
-re_pci_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+re_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	const struct rtk_type		*t;
 	struct pci_attach_args	*pa = aux;
