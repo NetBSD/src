@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.11 2006/11/17 17:48:02 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.12 2006/11/18 08:18:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.11 2006/11/17 17:48:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.12 2006/11/18 08:18:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1143,12 +1143,16 @@ puffs_read(void *v)
 	if (uio->uio_offset < 0)
 		return EINVAL;
 
-	ubcflags = 0;
-	if (UBC_WANT_UNMAP(vp) || pmp->pmp_flags & PUFFSFLAG_NOCACHE)
-		ubcflags = UBC_UNMAP;
-
 	if (vp->v_type == VREG) {
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
+
+		ubcflags = 0;
+		if (UBC_WANT_UNMAP(vp) || pmp->pmp_flags & PUFFSFLAG_NOCACHE)
+			ubcflags = UBC_UNMAP;
+
+		/* XXX: first generation hack */
+		if (pmp->pmp_flags & PUFFSFLAG_NOCACHE)
+			puffs_updatevpsize(vp);
 
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(uio->uio_resid,
@@ -1258,11 +1262,15 @@ puffs_write(void *v)
 	write_argp = NULL;
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 
-	ubcflags = 0;
-	if (UBC_WANT_UNMAP(vp) || pmp->pmp_flags & PUFFSFLAG_NOCACHE)
-		ubcflags = UBC_UNMAP;
-
 	if (vp->v_type == VREG) {
+		ubcflags = 0;
+		if (UBC_WANT_UNMAP(vp) || pmp->pmp_flags & PUFFSFLAG_NOCACHE)
+			ubcflags = UBC_UNMAP;
+
+		/* XXX: first generation hack */
+		if (pmp->pmp_flags & PUFFSFLAG_NOCACHE)
+			puffs_updatevpsize(vp);
+
 		/*
 		 * userspace *should* be allowed to control this,
 		 * but with UBC it's a bit unclear how to handle it

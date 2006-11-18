@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.8 2006/11/16 01:33:37 christos Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.9 2006/11/18 08:18:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.8 2006/11/16 01:33:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.9 2006/11/18 08:18:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -372,4 +372,16 @@ puffs_updatenode(struct vnode *vp, int flags)
 	/* setattr_arg ownership shifted to callee */
 	puffs_vntouser_faf(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_SETATTR,
 	    setattr_arg, sizeof(struct puffs_vnreq_setattr), VPTOPNC(vp));
+}
+
+void
+puffs_updatevpsize(struct vnode *vp)
+{
+	struct vattr va;
+
+	if (VOP_GETATTR(vp, &va, FSCRED, NULL))
+		return;
+
+	if (va.va_size != VNOVAL)
+		vp->v_size = va.va_size;
 }
