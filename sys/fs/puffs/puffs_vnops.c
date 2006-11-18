@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.14 2006/11/18 19:33:02 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.15 2006/11/18 22:45:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.14 2006/11/18 19:33:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.15 2006/11/18 22:45:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1152,16 +1152,12 @@ puffs_read(void *v)
 	if (uio->uio_offset < 0)
 		return EINVAL;
 
-	if (vp->v_type == VREG) {
+	if (vp->v_type == VREG && (pmp->pmp_flags & PUFFSFLAG_NOCACHE) == 0) {
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
 		ubcflags = 0;
-		if (UBC_WANT_UNMAP(vp) || pmp->pmp_flags & PUFFSFLAG_NOCACHE)
+		if (UBC_WANT_UNMAP(vp))
 			ubcflags = UBC_UNMAP;
-
-		/* XXX: first generation hack */
-		if (pmp->pmp_flags & PUFFSFLAG_NOCACHE)
-			puffs_updatevpsize(vp);
 
 		while (uio->uio_resid > 0) {
 			bytelen = MIN(uio->uio_resid,
@@ -1177,26 +1173,13 @@ puffs_read(void *v)
 				break;
 		}
 
-		/* tell page cache to go flush itself */
-		if (pmp->pmp_flags & PUFFSFLAG_NOCACHE) {
-			simple_lock(&vp->v_interlock);
-			VOP_PUTPAGES(vp, 0, 0,
-			    PGO_ALLPAGES | PGO_FREE | PGO_SYNCIO);
-		}
-
 		if ((vp->v_mount->mnt_flag & MNT_NOATIME) == 0)
 			puffs_updatenode(vp, PUFFS_UPDATEATIME);
 	} else {
-#ifdef DIAGNOSTIC
-		if (!(vp->v_type == VDIR || vp->v_type == VLNK))
-			panic("puffs_read: bad vnode type %d\n", vp->v_type);
-#endif
 		/*
-		 * in case it's not a regular file, do it in the
-		 * old-fashioned style, i.e. explicit read without going
-		 * through the page cache.
-		 *
-		 * XXX: this path is not really tested now
+		 * in case it's not a regular file or we're operating
+		 * uncached, do read in the old-fashioned style,
+		 * i.e. explicit read operations
 		 */
 
 		tomove = PUFFS_TOMOVE(uio->uio_resid, pmp);
@@ -1261,7 +1244,7 @@ puffs_write(void *v)
 	size_t tomove, argsize;
 	off_t oldoff, newoff, origoff;
 	vsize_t bytelen;
-	int error, uflags, pflags;
+	int error, uflags;
 	int async, ubcflags;
 
 	vp = ap->a_vp;
@@ -1271,14 +1254,10 @@ puffs_write(void *v)
 	write_argp = NULL;
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 
-	if (vp->v_type == VREG) {
+	if (vp->v_type == VREG && (pmp->pmp_flags & PUFFSFLAG_NOCACHE) == 0) {
 		ubcflags = 0;
-		if (UBC_WANT_UNMAP(vp) || pmp->pmp_flags & PUFFSFLAG_NOCACHE)
+		if (UBC_WANT_UNMAP(vp))
 			ubcflags = UBC_UNMAP;
-
-		/* XXX: first generation hack */
-		if (pmp->pmp_flags & PUFFSFLAG_NOCACHE)
-			puffs_updatevpsize(vp);
 
 		/*
 		 * userspace *should* be allowed to control this,
@@ -1333,21 +1312,15 @@ puffs_write(void *v)
 			}
 		}
 
-		pflags = 0;
-		if (ap->a_ioflag & IO_SYNC)
-			pflags |= PGO_CLEANIT | PGO_SYNCIO;
-		if (pmp->pmp_flags & PUFFSFLAG_NOCACHE)
-			pflags |= PGO_CLEANIT | PGO_SYNCIO | PGO_FREE;
-
-		if (error == 0 && pflags) {
+		if (error == 0 && ap->a_ioflag & IO_SYNC) {
 			simple_lock(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, trunc_page(origoff),
-			    round_page(uio->uio_offset), pflags);
+			    round_page(uio->uio_offset),
+			    PGO_CLEANIT | PGO_SYNCIO);
 		}
 
 		puffs_updatenode(vp, uflags);
 	} else {
-
 		tomove = PUFFS_TOMOVE(uio->uio_resid, pmp);
 		argsize = sizeof(struct puffs_vnreq_write) + tomove;
 		write_argp = malloc(argsize, M_PUFFS, M_WAITOK | M_ZERO);
