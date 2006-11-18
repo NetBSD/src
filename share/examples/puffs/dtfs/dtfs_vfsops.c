@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.5 2006/11/14 11:27:35 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.6 2006/11/18 12:41:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -63,25 +63,12 @@ dtfs_mount(struct puffs_usermount *pu, void **rootcookie)
 	if (!pn)
 		errx(1, "puffs_newpnode");
 
+	dtfs_baseattrs(&pn->pn_va, VDIR, dtm->dtm_nextfileid++);
+	/* not adddented, so compensate */
+	pn->pn_va.va_nlink = 2;
+
 	pu->pu_rootnode = pn;
 	*rootcookie = pn;
-
-	return 0;
-}
-
-int
-dtfs_start(struct puffs_usermount *pu)
-{
-	struct dtfs_mount *dtm;
-
-	/* we don't have the fsidx in mount, so do attrs here */
-	dtm = pu->pu_privdata;
-	dtfs_baseattrs(&pu->pu_rootnode->pn_va, VDIR,pu->pu_fsidx.__fsid_val[0],
-	    dtm->dtm_nextfileid);
-	/* not adddented, so compensate */
-	pu->pu_rootnode->pn_va.va_nlink = 2;
-
-	dtm->dtm_nextfileid++;
 
 	return 0;
 }
@@ -103,8 +90,6 @@ dtfs_start(struct puffs_usermount *pu)
  * fsfilcnt_t      f_ffree;         free file nodes in file system
  * fsfilcnt_t      f_favail;        free file nodes avail to non-root
  * fsfilcnt_t      f_fresvd;        file nodes reserved for root
- *
- * fsid_t          f_fsidx;         NetBSD compatible fsid
  *
  *
  * The rest are filled in by the kernel.
@@ -142,8 +127,6 @@ dtfs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp, pid_t pid)
 	sbp->f_ffree = sbp->f_favail = NFILES - dtm->dtm_nfiles;
 
 	sbp->f_bresvd = sbp->f_fresvd = 0;
-
-	sbp->f_fsidx = pu->pu_fsidx;
 
 	return 0;
 }

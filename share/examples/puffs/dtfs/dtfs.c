@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.6 2006/11/14 11:45:53 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.7 2006/11/18 12:41:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -69,7 +69,6 @@ main(int argc, char *argv[])
 	memset(&pvn, 0, sizeof(struct puffs_vnops));
 
 	pvfs.puffs_mount = dtfs_mount;
-	pvfs.puffs_start = dtfs_start;
 	pvfs.puffs_unmount = puffs_vfsnop_unmount;
 	pvfs.puffs_sync = puffs_vfsnop_sync;
 	pvfs.puffs_statvfs = dtfs_statvfs;

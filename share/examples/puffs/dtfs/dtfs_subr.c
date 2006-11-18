@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.6 2006/11/09 13:11:52 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.7 2006/11/18 12:41:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
 #include "dtfs.h"
 
 void
-dtfs_baseattrs(struct vattr *vap, enum vtype type, int32_t fsid, ino_t id)
+dtfs_baseattrs(struct vattr *vap, enum vtype type, ino_t id)
 {
 	struct timeval tv;
 	struct timespec ts;
@@ -61,7 +61,6 @@ dtfs_baseattrs(struct vattr *vap, enum vtype type, int32_t fsid, ino_t id)
 	}
 	vap->va_uid = 0;
 	vap->va_gid = 0;
-	vap->va_fsid = fsid;
 	vap->va_fileid = id;
 	vap->va_size = 0;
 	vap->va_blocksize = getpagesize();
@@ -102,8 +101,7 @@ dtfs_genfile(struct puffs_node *dir, const char *name, enum vtype type)
 	newpn = puffs_newpnode(dir->pn_mnt, dff, type);
 	if (newpn == NULL)
 		errx(1, "getnewpnode");
-	dtfs_baseattrs(&newpn->pn_va, type, dir->pn_mnt->pu_fsidx.__fsid_val[0],
-	    dtm->dtm_nextfileid++);
+	dtfs_baseattrs(&newpn->pn_va, type, dtm->dtm_nextfileid++);
 
 	df_dir = dir->pn_data;
 	dfd = emalloc(sizeof(struct dtfs_dirent));
