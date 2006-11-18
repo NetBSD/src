@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.5 2006/11/14 17:50:35 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.6 2006/11/18 14:57:35 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -61,4 +61,9 @@ usr.sbin/postinstall/postinstall		1.30
 
 	/etc/postfix/post-install needs to be 555 not 444.
 	[lukem, ticket #1585]
+
+sys/dev/pci/bktr/bktr_core.c			patch
+	fix bug introduced by missing braces around a if() block in
+	ticket #1511
+	[aymeric, ticket #1587]
 
