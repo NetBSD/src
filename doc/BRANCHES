@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.133 2006/11/18 18:20:38 rpaulo Exp $
+#	$NetBSD: BRANCHES,v 1.134 2006/11/18 19:04:32 tsutsui Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -394,6 +394,7 @@ Notes:
 			ews4800mips	(tsutsui)
 			hp300		(tsutsui)
 			i386		(yamt)
+			macppc		(tsutsui)
 			news68k		(tsutsui)
 			sparc(sun4c)	(tsutsui)
 			sun2		(tsutsui)
@@ -427,7 +428,6 @@ Notes:
 			landisk
 			luna68k
 			mac68k
-			macppc
 			netwinder
 			newsmips
 			next68k
