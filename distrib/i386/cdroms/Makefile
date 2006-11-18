@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2006/10/29 17:58:15 hubertf Exp $
+#	$NetBSD: Makefile,v 1.3 2006/11/18 20:15:59 dsl Exp $
 
 SUBDIR=
 SUBDIR+=	bootcd
 SUBDIR+=	bootcd-com
 SUBDIR+=	bootcd-laptop
-SUBDIR+=	bootcd-ps2
-SUBDIR+=	bootcd-tiny
 #SUBDIR+=	installcd
 
 TARGETS+=       release
