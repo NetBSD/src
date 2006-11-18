@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.57 2006/10/24 01:56:33 uwe Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58 2006/11/18 14:25:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 2006/10/24 01:56:33 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2006/11/18 14:25:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/pool.h>
 #include <sys/msgbuf.h>
+#include <sys/socketvar.h>	/* XXX: for sock_loan_thresh */
 
 #include <uvm/uvm.h>
 
@@ -221,6 +222,23 @@ pmap_init()
 	pool_init(&__pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
 	    &pmap_pv_page_allocator);
 	pool_setlowat(&__pmap_pv_pool, 16);
+
+#ifdef SH4
+	if (SH_HAS_VIRTUAL_ALIAS) {
+		/*
+		 * XXX
+		 * Disable sosend_loan() in src/sys/kern/uipc_socket.c
+		 * on SH4 to avoid possible virtual cache aliases and
+		 * unnecessary map/unmap thrashing in __pmap_pv_enter().
+		 * (also see comments in __pmap_pv_enter())
+		 * 
+		 * Ideally, read only shared mapping won't cause aliases
+		 * so __pmap_pv_enter() should handle any shared read only
+		 * mappings like ARM pmap.
+		 */
+		sock_loan_thresh = -1;
+	}
+#endif
 }
 
 pmap_t
