@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.8 2006/11/17 17:48:02 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.9 2006/11/18 12:39:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.8 2006/11/17 17:48:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.9 2006/11/18 12:39:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -168,9 +168,11 @@ puffs_start2(struct puffs_mount *pmp, struct puffs_startreq *sreq)
 	/* We're good to fly */
 	pmp->pmp_rootcookie = sreq->psr_cookie;
 	pmp->pmp_status = PUFFSTAT_RUNNING;
-	sreq->psr_fsidx = mp->mnt_stat.f_fsidx; 
-
 	simple_unlock(&pmp->pmp_lock);
+
+	/* do the VFS_STATVFS() we missed out on in sys_mount() */
+	copy_statvfs_info(&sreq->psr_sb, mp);
+	(void)memcpy(&mp->mnt_stat, &sreq->psr_sb, sizeof(mp->mnt_stat));
 
 	DPRINTF(("puffs_start2: root vp %p, cur root pnode %p, cookie %p\n",
 	    pmp->pmp_root, pn, sreq->psr_cookie));
