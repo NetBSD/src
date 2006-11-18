@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.11 2006/09/01 19:43:51 perseant Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.12 2006/11/18 18:43:25 tls Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1395,6 +1395,12 @@ main(int argc, char **argv)
 	if (inval_segment >= 0 && argc != 1) {
 		errx(1, "lfs_cleanerd: may only specify one filesystem when "
 		     "using -i flag");
+	}
+
+	if (do_coalesce) {
+		errx(1, "lfs_cleanerd: -c disabled due to reports of file "
+		     "corruption; you may re-enable it by rebuilding the "
+		     "cleaner");
 	}
 
 	/*
