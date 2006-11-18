@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.33.16.1 2006/09/16 11:28:05 ghen Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.33.16.1.2.1 2006/11/18 14:55:43 bouyer Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.33.16.1 2006/09/16 11:28:05 ghen Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.33.16.1.2.1 2006/11/18 14:55:43 bouyer Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -505,11 +505,11 @@ common_bktr_attach(bktr_ptr_t bktr, int unit, u_long pci_id, u_int rev)
 		return 0;
 
         /* allocate space for pixel buffer */
-        if (BROOKTREE_ALLOC)
+        if (BROOKTREE_ALLOC) {
                 buf = get_bktr_mem(bktr, &bktr->dm_mem, BROOKTREE_ALLOC);
 		if (buf == 0)
 			return 0;
-        else
+        } else
                 buf = 0;
 #endif
 
