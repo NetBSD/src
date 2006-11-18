@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.9 2006/11/18 12:39:48 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.10 2006/11/18 12:50:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.9 2006/11/18 12:39:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.10 2006/11/18 12:50:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -103,6 +103,7 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	    UIO_SYSSPACE, mp, l);
 	if (error)
 		return error;
+	mp->mnt_stat.f_iosize = DEV_BSIZE;
 
 	MALLOC(pmp, struct puffs_mount *, sizeof(struct puffs_mount),
 	    M_PUFFS, M_WAITOK | M_ZERO);
@@ -173,6 +174,8 @@ puffs_start2(struct puffs_mount *pmp, struct puffs_startreq *sreq)
 	/* do the VFS_STATVFS() we missed out on in sys_mount() */
 	copy_statvfs_info(&sreq->psr_sb, mp);
 	(void)memcpy(&mp->mnt_stat, &sreq->psr_sb, sizeof(mp->mnt_stat));
+	if (mp->mnt_stat.f_iosize == 0)
+		mp->mnt_stat.f_iosize = DEV_BSIZE;
 
 	DPRINTF(("puffs_start2: root vp %p, cur root pnode %p, cookie %p\n",
 	    pmp->pmp_root, pn, sreq->psr_cookie));
@@ -347,6 +350,9 @@ puffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 
 	error = puffs_vfstouser(pmp, PUFFS_VFS_STATVFS,
 	    statvfs_arg, sizeof(*statvfs_arg));
+
+	if (statvfs_arg->pvfsr_sb.f_iosize == 0)
+		statvfs_arg->pvfsr_sb.f_iosize = DEV_BSIZE;
 
 	/*
 	 * Try to produce a sensible result even in the event
