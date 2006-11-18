@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.18 2006/11/04 21:24:20 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.19 2006/11/18 20:52:14 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -205,7 +205,7 @@ enum {
  * Device scope - sub-actions.
  */
 enum kauth_device_req {
-	KAUTH_REQ_DEVICE_RAWIO_SPEC_READ,
+	KAUTH_REQ_DEVICE_RAWIO_SPEC_READ=1,
 	KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE,
 	KAUTH_REQ_DEVICE_RAWIO_SPEC_RW,
 };
