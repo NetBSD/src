@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.95 2006/04/28 06:04:27 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.96 2006/11/18 01:20:58 oster Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd April 27, 2006
+.Dd November 17, 2006
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -612,6 +612,7 @@ Modifiers are the same as
 .Op Cm /a
 .Op Cm /n
 .Op Cm /w
+.Op Cm /l
 .Sm on
 .Xc
 Display all process information.
@@ -634,6 +635,9 @@ command.
 .It Cm /w
 show each process' PID, command, system call emulation, wait channel
 address, and wait channel message.
+.It Cm /l
+show each process' associated LWP information, including each LWP's
+LID, flags, kernel LWP structure address, u-area, and wait channel.
 .El
 .It Ic show breaks
 Display all breakpoints.
