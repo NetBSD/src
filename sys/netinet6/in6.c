@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.116 2006/11/18 16:17:55 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.117 2006/11/18 16:23:15 dyoung Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.116 2006/11/18 16:17:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.117 2006/11/18 16:23:15 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -130,11 +130,11 @@ const struct in6_addr in6mask128 = IN6MASK128;
 const struct sockaddr_in6 sa6_any = {sizeof(sa6_any), AF_INET6,
 				     0, 0, IN6ADDR_ANY_INIT, 0};
 
-static int in6_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
-	struct ifnet *, struct lwp *));
-static int in6_ifinit __P((struct ifnet *, struct in6_ifaddr *,
-	struct sockaddr_in6 *, int));
-static void in6_unlink_ifa __P((struct in6_ifaddr *, struct ifnet *));
+static int in6_lifaddr_ioctl(struct socket *, u_long, caddr_t,
+	struct ifnet *, struct lwp *);
+static int in6_ifinit(struct ifnet *, struct in6_ifaddr *,
+	struct sockaddr_in6 *, int);
+static void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
 
 /*
  * Subroutine for in6_ifaddloop() and in6_ifremloop().
@@ -1327,7 +1327,7 @@ in6_purgeaddr(ifa)
 	/*
 	 * leave from multicast groups we have joined for the interface
 	 */
-	while ((imm = ia->ia6_memberships.lh_first) != NULL) {
+	while ((imm = LIST_FIRST(&ia->ia6_memberships)) != NULL) {
 		LIST_REMOVE(imm, i6mm_chain);
 		in6_leavegroup(imm);
 	}
@@ -1361,7 +1361,7 @@ in6_unlink_ifa(ia, ifp)
 		}
 	}
 
-	if (oia->ia6_multiaddrs.lh_first != NULL) {
+	if (!LIST_EMPTY(&oia->ia6_multiaddrs)) {
 		/*
 		 * XXX thorpej@NetBSD.org -- if the interface is going
 		 * XXX away, don't save the multicast entries, delete them!
