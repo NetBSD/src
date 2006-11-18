@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.23 2006/11/18 07:51:34 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.24 2006/11/18 07:51:54 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.23 2006/11/18 07:51:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.24 2006/11/18 07:51:54 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -513,8 +513,8 @@ qc_destroy(vmem_t *vm)
 
 	qcache_idx_max = vm->vm_qcache_max >> vm->vm_quantum_shift;
 	prevqc = NULL;
-	for (i = 1; i <= qcache_idx_max; i++) {
-		qcache_t *qc = vm->vm_qcache[i - 1];
+	for (i = 0; i < qcache_idx_max; i++) {
+		qcache_t *qc = vm->vm_qcache[i];
 
 		if (prevqc == qc) {
 			continue;
@@ -535,8 +535,8 @@ qc_reap(vmem_t *vm)
 
 	qcache_idx_max = vm->vm_qcache_max >> vm->vm_quantum_shift;
 	prevqc = NULL;
-	for (i = 1; i <= qcache_idx_max; i++) {
-		qcache_t *qc = vm->vm_qcache[i - 1];
+	for (i = 0; i < qcache_idx_max; i++) {
+		qcache_t *qc = vm->vm_qcache[i];
 
 		if (prevqc == qc) {
 			continue;
