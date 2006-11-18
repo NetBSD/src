@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.66 2006/11/18 07:40:13 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.67 2006/11/18 10:37:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -575,9 +575,6 @@ re_attach(struct rtk_softc *sc)
 	struct ifnet		*ifp;
 	int			error = 0, i, addr_len;
 
-
-	/* XXX JRS: bus-attach-independent code begins approximately here */
-
 	/* Reset the adapter. */
 	re_reset(sc);
 
@@ -776,9 +773,10 @@ re_attach(struct rtk_softc *sc)
 	ifp->if_stop = re_stop;
 
 	/*
-	 * IFCAP_CSUM_IPv4_Tx seems broken for small packets.
+	 * IFCAP_CSUM_IPv4_Tx on re(4) is broken for small packets,
+	 * so we have a workaround to handle the bug by padding
+	 * such packets manually.
 	 */
-
 	ifp->if_capabilities |=
 	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
