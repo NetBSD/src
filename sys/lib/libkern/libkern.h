@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.65 2006/08/31 19:24:38 dyoung Exp $	*/
+/*	$NetBSD: libkern.h,v 1.65.2.1 2006/11/18 21:39:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -235,6 +235,12 @@ tolower(int ch)
     ((size_t)(unsigned long)(&(((type *)0)->member)))
 #endif
 
+#if defined(__STDC__) && __GNUC_PREREQ__(3, 0)
+#define bool	_Bool
+#define true	1
+#define false	0
+#endif
+
 /* Prototypes for non-quad routines. */
 /* XXX notyet #ifdef _STANDALONE */
 int	 bcmp __P((const void *, const void *, size_t));
@@ -315,5 +321,7 @@ size_t	 strlcpy __P((char *, const char *, size_t));
 size_t	 strlcat __P((char *, const char *, size_t));
 int	 strncasecmp __P((const char *, const char *, size_t));
 u_long	 strtoul __P((const char *, char **, int));
+long long strtoll __P((const char *, char **, int));
+unsigned long long strtoull __P((const char *, char **, int));
 uintmax_t strtoumax __P((const char *, char **, int));
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

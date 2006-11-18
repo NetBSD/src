@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.225.4.4 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.225.4.5 2006/11/18 21:39:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
 #include <sys/event.h>
+#include <sys/specificdata.h>
 
 #ifndef _KERNEL
 #include <sys/time.h>
@@ -229,7 +230,8 @@ struct proc {
 	struct vmspace	*p_vmspace;	/*    Address space */
 	struct sigacts	*p_sigacts;	/*    Process sigactions */
 
-	void		*p_ksems;	/*    p1003.1b semaphores */
+	specificdata_reference
+			p_specdataref;	/* subsystem proc-specific data */
 
 	int		p_exitsig;	/* l: signal to send to parent on exit */
 	int		p_flag;		/* p: P_* flags */
@@ -537,7 +539,6 @@ void	fixjobc(struct proc *, struct pgrp *, int);
 int	inferior(struct proc *, struct proc *);
 void	sessdelete(struct session *);
 void	yield(void);
-struct lwp *chooselwp(void);
 void	pgdelete(struct pgrp *);
 void	procinit(void);
 void	resetprocpriority(struct proc *);
@@ -585,6 +586,13 @@ void	proc_crmod_enter(void);
 int	proc_addref(struct proc *);
 void	proc_delref(struct proc *);
 void	proc_drainrefs(struct proc *);
+
+int	proc_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
+void	proc_specific_key_delete(specificdata_key_t);
+void 	proc_initspecific(struct proc *);
+void 	proc_finispecific(struct proc *);
+void *	proc_getspecific(struct proc *, specificdata_key_t);
+void	proc_setspecific(struct proc *, specificdata_key_t, void *);
 
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);

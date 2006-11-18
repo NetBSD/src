@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.5 2006/07/10 22:38:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.5.4.1 2006/11/18 21:39:12 ad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -962,18 +962,14 @@ ndis_thresume(p)
 }
 
 __stdcall static void
-ndis_sendrsrcavail_func(adapter)
-	ndis_handle		adapter;
+ndis_sendrsrcavail_func(ndis_handle adapter)
 {
 	return;
 }
 
 __stdcall static void
-ndis_status_func(adapter, status, sbuf, slen)
-	ndis_handle		adapter;
-	ndis_status		status;
-	void			*sbuf;
-	uint32_t		slen;
+ndis_status_func(ndis_handle adapter, ndis_status status, void *sbuf,
+    uint32_t slen)
 {
 	ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
@@ -1050,10 +1046,8 @@ ndis_getdone_func(adapter, status)
 }
 
 __stdcall static void
-ndis_resetdone_func(adapter, status, addressingreset)
-	ndis_handle		adapter;
-	ndis_status		status;
-	uint8_t			addressingreset;
+ndis_resetdone_func(ndis_handle adapter, ndis_status status,
+    uint8_t addressingreset)
 {
 	ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
@@ -1416,7 +1410,8 @@ ndis_return_packet(buf, arg)
 	void			*buf;	/* not used */
 	void			*arg;
 #else
-ndis_return_packet(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+ndis_return_packet(struct mbuf *m, caddr_t buf,
+    size_t size, void *arg)
 #endif
 
 {
@@ -2238,11 +2233,8 @@ ndis_isr(arg, ourintr, callhandler)
 }
 
 __stdcall static void
-ndis_intrhand(dpc, dobj, ip, sc)
-	kdpc			*dpc;
-	device_object		*dobj;
-	irp			*ip;
-	struct ndis_softc	*sc;
+ndis_intrhand(kdpc *dpc, device_object *dobj,
+    irp *ip, struct ndis_softc *sc)
 {
 	ndis_handle		adapter;
 	__stdcall ndis_interrupt_handler	intrfunc;

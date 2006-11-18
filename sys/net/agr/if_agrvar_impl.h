@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrvar_impl.h,v 1.3 2006/07/08 05:57:41 yamt Exp $	*/
+/*	$NetBSD: if_agrvar_impl.h,v 1.3.4.1 2006/11/18 21:39:32 ad Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -32,6 +32,9 @@
 /*
  * implementaion details for agr(4) driver.  (contrast to if_agrvar.h)
  */
+
+#include <sys/lock.h>
+#include <sys/queue.h>
 
 struct agr_port;
 struct agr_softc;

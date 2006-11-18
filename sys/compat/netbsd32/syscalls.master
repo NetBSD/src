@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.53 2006/09/01 20:58:18 matt Exp $
+	$NetBSD: syscalls.master,v 1.53.2.1 2006/11/18 21:39:14 ad Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -181,13 +181,8 @@
 106	STD		{ int netbsd32_listen(int s, int backlog); }
 107	OBSOL		vtimes
 108	COMPAT_43	{ int netbsd32_osigvec(int signum, netbsd32_sigvecp_t nsv, netbsd32_sigvecp_t osv); }
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 109	COMPAT_43	{ int netbsd32_sigblock(int mask); }
 110	COMPAT_43	{ int netbsd32_sigsetmask(int mask); }
-#else
-109	OBSOL		sigblock
-110	OBSOL		sigsetmask
-#endif
 111	COMPAT_13	{ int netbsd32_sigsuspend(int mask); } sigsuspend13
 112	COMPAT_43	{ int netbsd32_osigstack(netbsd32_sigstackp_t nss, netbsd32_sigstackp_t oss); }
 113	COMPAT_43	{ int netbsd32_orecvmsg(int s, netbsd32_omsghdrp_t msg, int flags); }
@@ -220,18 +215,10 @@
 140	STD		{ int netbsd32_adjtime(const netbsd32_timevalp_t delta, netbsd32_timevalp_t olddelta); }
 141	COMPAT_43	{ int netbsd32_ogetpeername(int fdes, netbsd32_caddr_t asa, netbsd32_intp alen); }
 142	COMPAT_43	{ int32_t sys_gethostid(void); } ogethostid
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 143	COMPAT_43	{ int netbsd32_sethostid(int32_t hostid); }
-#else
-143	OBSOL		sethostid
-#endif
 144	COMPAT_43	{ int netbsd32_ogetrlimit(int which, netbsd32_orlimitp_t rlp); }
 145	COMPAT_43	{ int netbsd32_osetrlimit(int which, const netbsd32_orlimitp_t rlp); }
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 146	COMPAT_43	{ int netbsd32_killpg(int pgid, int signum); }
-#else
-146	OBSOL		killpg
-#endif
 147	NOARGS		{ int sys_setsid(void); }
 148	STD		{ int netbsd32_quotactl(const netbsd32_charp path, int cmd, int uid, netbsd32_caddr_t arg); }
 149	COMPAT_43	{ int sys_quota(void); } oquota
@@ -448,15 +435,15 @@
 269	UNIMPL
 270	STD		{ int netbsd32___posix_rename(const netbsd32_charp from, const netbsd32_charp to); }
 271	STD		{ int netbsd32_swapctl(int cmd, netbsd32_voidp arg, int misc); }
-272	STD		{ int netbsd32_getdents(int fd, netbsd32_charp buf, netbsd32_size_t count); }
+272	COMPAT_30	{ int netbsd32_getdents(int fd, netbsd32_charp buf, netbsd32_size_t count); }
 273	STD		{ int netbsd32_minherit(netbsd32_voidp addr, netbsd32_size_t len, int inherit); }
 274	STD		{ int netbsd32_lchmod(const netbsd32_charp path, mode_t mode); }
 275	STD		{ int netbsd32_lchown(const netbsd32_charp path, uid_t uid, gid_t gid); }
 276	STD		{ int netbsd32_lutimes(const netbsd32_charp path, const netbsd32_timevalp_t tptr); }
 277	STD		{ int netbsd32___msync13(netbsd32_voidp addr, netbsd32_size_t len, int flags); }
-278	STD		{ int netbsd32___stat13(const netbsd32_charp path, netbsd32_stat13p_t ub); }
-279	STD		{ int netbsd32___fstat13(int fd, netbsd32_stat13p_t sb); }
-280	STD		{ int netbsd32___lstat13(const netbsd32_charp path, netbsd32_stat13p_t ub); }
+278	COMPAT_30	{ int netbsd32___stat13(const netbsd32_charp path, netbsd32_stat13p_t ub); }
+279	COMPAT_30	{ int netbsd32___fstat13(int fd, netbsd32_stat13p_t sb); }
+280	COMPAT_30	{ int netbsd32___lstat13(const netbsd32_charp path, netbsd32_stat13p_t ub); }
 281	STD		{ int netbsd32___sigaltstack14(const netbsd32_sigaltstackp_t nss, netbsd32_sigaltstackp_t oss); }
 282	NOARGS		{ int sys___vfork14(void); }
 283	STD		{ int netbsd32___posix_chown(const netbsd32_charp path, uid_t uid, gid_t gid); }

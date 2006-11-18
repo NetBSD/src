@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.21 2006/04/02 00:57:30 he Exp $	*/
+/*	$NetBSD: db_break.c,v 1.21.8.1 2006/11/18 21:39:16 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_break.c,v 1.21 2006/04/02 00:57:30 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_break.c,v 1.21.8.1 2006/11/18 21:39:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -224,7 +224,8 @@ db_list_breakpoints(void)
 /* Delete breakpoint */
 /*ARGSUSED*/
 void
-db_delete_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_delete_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    const char *modif)
 {
 
 	db_delete_breakpoint(db_map_addr(addr), (db_addr_t)addr);
@@ -233,7 +234,8 @@ db_delete_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 /* Set breakpoint with skip count */
 /*ARGSUSED*/
 void
-db_breakpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_breakpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    const char *modif)
 {
 
 	if (count == -1)
@@ -245,7 +247,8 @@ db_breakpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *mo
 /* list breakpoints */
 /*ARGSUSED*/
 void
-db_listbreak_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_listbreak_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 
 	db_list_breakpoints();

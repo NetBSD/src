@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.8 2006/08/21 09:05:22 martin Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.8.2.1 2006/11/18 21:39:23 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -32,12 +32,13 @@
  *	to Many CPUs and Arbitrary Resources
  *	http://www.usenix.org/event/usenix01/bonwick.html
  *
- * TODO:
- * -	implement vmem_xalloc/vmem_xfree
+ * todo:
+ * -	decide how to import segments for vmem_xalloc.
+ * -	don't rely on malloc(9).
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.8 2006/08/21 09:05:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.8.2.1 2006/11/18 21:39:23 ad Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -165,6 +166,11 @@ typedef struct vmem_btag bt_t;
 
 /* ---- misc */
 
+#define	VMEM_ALIGNUP(addr, align) \
+	(-(-(addr) & -(align)))
+#define	VMEM_CROSS_P(addr1, addr2, boundary) \
+	((((addr1) ^ (addr2)) & -(boundary)) != 0)
+
 #define	ORDER2SIZE(order)	((vmem_size_t)1 << (order))
 
 static int
@@ -227,9 +233,13 @@ bt_alloc(vmem_t *vm, vm_flag_t flags)
 	bt_t *bt;
 
 #if defined(_KERNEL)
+	int s;
+
 	/* XXX bootstrap */
+	s = splvm();
 	bt = pool_cache_get(&bt_poolcache,
 	    (flags & VM_SLEEP) != 0 ? PR_WAITOK : PR_NOWAIT);
+	splx(s);
 #else /* defined(_KERNEL) */
 	bt = malloc(sizeof *bt);
 #endif /* defined(_KERNEL) */
@@ -242,8 +252,12 @@ bt_free(vmem_t *vm, bt_t *bt)
 {
 
 #if defined(_KERNEL)
+	int s;
+
 	/* XXX bootstrap */
+	s = splvm();
 	pool_cache_put(&bt_poolcache, bt);
+	splx(s);
 #else /* defined(_KERNEL) */
 	free(bt);
 #endif /* defined(_KERNEL) */
@@ -473,8 +487,8 @@ qc_init(vmem_t *vm, size_t qcache_max)
 		qc->qc_vmem = vm;
 		snprintf(qc->qc_name, sizeof(qc->qc_name), "%s-%zu",
 		    vm->vm_name, size);
-		pool_init(&qc->qc_pool, size, 0, 0,
-		    PR_NOALIGN | PR_NOTOUCH /* XXX */, qc->qc_name, pa);
+		pool_init(&qc->qc_pool, size, ORDER2SIZE(vm->vm_quantum_shift),
+		    0, PR_NOALIGN | PR_NOTOUCH /* XXX */, qc->qc_name, pa);
 		pool_cache_init(&qc->qc_cache, &qc->qc_pool, NULL, NULL, NULL);
 	}
 }
@@ -614,6 +628,56 @@ vmem_rehash(vmem_t *vm, size_t newhashsize, vm_flag_t flags)
 	return 0;
 }
 
+/*
+ * vmem_fit: check if a bt can satisfy the given restrictions.
+ */
+
+static vmem_addr_t
+vmem_fit(const bt_t *bt, vmem_size_t size, vmem_size_t align, vmem_size_t phase,
+    vmem_size_t nocross, vmem_addr_t minaddr, vmem_addr_t maxaddr)
+{
+	vmem_addr_t start;
+	vmem_addr_t end;
+
+	KASSERT(bt->bt_size >= size);
+
+	/*
+	 * XXX assumption: vmem_addr_t and vmem_size_t are
+	 * unsigned integer of the same size.
+	 */
+
+	start = bt->bt_start;
+	if (start < minaddr) {
+		start = minaddr;
+	}
+	end = BT_END(bt);
+	if (end > maxaddr - 1) {
+		end = maxaddr - 1;
+	}
+	if (start >= end) {
+		return VMEM_ADDR_NULL;
+	}
+
+	start = VMEM_ALIGNUP(start - phase, align) + phase;
+	if (start < bt->bt_start) {
+		start += align;
+	}
+	if (VMEM_CROSS_P(start, start + size - 1, nocross)) {
+		KASSERT(align < nocross);
+		start = VMEM_ALIGNUP(start - phase, nocross) + phase;
+	}
+	if (start < end && end - start >= size) {
+		KASSERT((start & (align - 1)) == phase);
+		KASSERT(!VMEM_CROSS_P(start, start + size - 1, nocross));
+		KASSERT(minaddr <= start);
+		KASSERT(maxaddr == 0 || start + size <= maxaddr);
+		KASSERT(bt->bt_start <= start);
+		KASSERT(start + size <= BT_END(bt));
+		return start;
+	}
+	return VMEM_ADDR_NULL;
+}
+
 /* ---- vmem API */
 
 /*
@@ -720,13 +784,8 @@ vmem_roundup_size(vmem_t *vm, vmem_size_t size)
 vmem_addr_t
 vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 {
-	struct vmem_freelist *list;
-	struct vmem_freelist *first;
-	struct vmem_freelist *end;
-	bt_t *bt;
-	bt_t *btnew;
-	const vmem_size_t size = vmem_roundup_size(vm, size0);
-	vm_flag_t strat = flags & VM_FITMASK;
+	const vmem_size_t size __unused = vmem_roundup_size(vm, size0);
+	const vm_flag_t strat __unused = flags & VM_FITMASK;
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
@@ -736,7 +795,7 @@ vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 	KASSERT(size > 0);
 	KASSERT(strat == VM_BESTFIT || strat == VM_INSTANTFIT);
 	if ((flags & VM_SLEEP) != 0) {
-		ASSERT_SLEEPABLE(NULL, "vmem_alloc");
+		ASSERT_SLEEPABLE(NULL, __func__);
 	}
 
 #if defined(QCACHE)
@@ -749,8 +808,50 @@ vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 	}
 #endif /* defined(QCACHE) */
 
+	return vmem_xalloc(vm, size0, 0, 0, 0, 0, 0, flags);
+}
+
+vmem_addr_t
+vmem_xalloc(vmem_t *vm, vmem_size_t size0, vmem_size_t align, vmem_size_t phase,
+    vmem_size_t nocross, vmem_addr_t minaddr, vmem_addr_t maxaddr,
+    vm_flag_t flags)
+{
+	struct vmem_freelist *list;
+	struct vmem_freelist *first;
+	struct vmem_freelist *end;
+	bt_t *bt;
+	bt_t *btnew;
+	bt_t *btnew2;
+	const vmem_size_t size = vmem_roundup_size(vm, size0);
+	vm_flag_t strat = flags & VM_FITMASK;
+	vmem_addr_t start;
+
+	KASSERT(size0 > 0);
+	KASSERT(size > 0);
+	KASSERT(strat == VM_BESTFIT || strat == VM_INSTANTFIT);
+	if ((flags & VM_SLEEP) != 0) {
+		ASSERT_SLEEPABLE(NULL, __func__);
+	}
+	KASSERT((align & vm->vm_quantum_mask) == 0);
+	KASSERT((align & (align - 1)) == 0);
+	KASSERT((phase & vm->vm_quantum_mask) == 0);
+	KASSERT((nocross & vm->vm_quantum_mask) == 0);
+	KASSERT((nocross & (nocross - 1)) == 0);
+	KASSERT((align == 0 && phase == 0) || phase < align);
+	KASSERT(nocross == 0 || nocross >= size);
+	KASSERT(maxaddr == 0 || minaddr < maxaddr);
+	KASSERT(!VMEM_CROSS_P(phase, phase + size - 1, nocross));
+
+	if (align == 0) {
+		align = vm->vm_quantum_mask + 1;
+	}
 	btnew = bt_alloc(vm, flags);
 	if (btnew == NULL) {
+		return VMEM_ADDR_NULL;
+	}
+	btnew2 = bt_alloc(vm, flags); /* XXX not necessary if no restrictions */
+	if (btnew2 == NULL) {
+		bt_free(vm, btnew);
 		return VMEM_ADDR_NULL;
 	}
 
@@ -764,14 +865,22 @@ retry:
 		for (list = first; list < end; list++) {
 			bt = LIST_FIRST(list);
 			if (bt != NULL) {
-				goto gotit;
+				start = vmem_fit(bt, size, align, phase,
+				    nocross, minaddr, maxaddr);
+				if (start != VMEM_ADDR_NULL) {
+					goto gotit;
+				}
 			}
 		}
 	} else { /* VM_BESTFIT */
 		for (list = first; list < end; list++) {
 			LIST_FOREACH(bt, list, bt_freelist) {
 				if (bt->bt_size >= size) {
-					goto gotit;
+					start = vmem_fit(bt, size, align, phase,
+					    nocross, minaddr, maxaddr);
+					if (start != VMEM_ADDR_NULL) {
+						goto gotit;
+					}
 				}
 			}
 		}
@@ -783,16 +892,40 @@ retry:
 		goto retry_strat;
 	}
 #endif
+	if (align != vm->vm_quantum_mask + 1 || phase != 0 ||
+	    nocross != 0 || minaddr != 0 || maxaddr != 0) {
+
+		/*
+		 * XXX should try to import a region large enough to
+		 * satisfy restrictions?
+		 */
+
+		goto fail;
+	}
 	if (vmem_import(vm, size, flags) == 0) {
 		goto retry;
 	}
 	/* XXX */
+fail:
+	bt_free(vm, btnew);
+	bt_free(vm, btnew2);
 	return VMEM_ADDR_NULL;
 
 gotit:
 	KASSERT(bt->bt_type == BT_TYPE_FREE);
 	KASSERT(bt->bt_size >= size);
 	bt_remfree(vm, bt);
+	if (bt->bt_start != start) {
+		btnew2->bt_type = BT_TYPE_FREE;
+		btnew2->bt_start = bt->bt_start;
+		btnew2->bt_size = start - bt->bt_start;
+		bt->bt_start = start;
+		bt->bt_size -= btnew2->bt_size;
+		bt_insfree(vm, btnew2);
+		bt_insseg(vm, btnew2, CIRCLEQ_PREV(bt, bt_seglist));
+		btnew2 = NULL;
+	}
+	KASSERT(bt->bt_start == start);
 	if (bt->bt_size != size && bt->bt_size - size > vm->vm_quantum_mask) {
 		/* split */
 		btnew->bt_type = BT_TYPE_BUSY;
@@ -811,6 +944,9 @@ gotit:
 		bt_free(vm, btnew);
 		btnew = bt;
 	}
+	if (btnew2 != NULL) {
+		bt_free(vm, btnew2);
+	}
 	KASSERT(btnew->bt_size >= size);
 	btnew->bt_type = BT_TYPE_BUSY;
 
@@ -827,11 +963,8 @@ gotit:
 void
 vmem_free(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 {
-	bt_t *bt;
-	bt_t *t;
 
 	VMEM_ASSERT_UNLOCKED(vm);
-
 	KASSERT(addr != VMEM_ADDR_NULL);
 	KASSERT(size > 0);
 
@@ -843,6 +976,19 @@ vmem_free(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 		return pool_cache_put(&qc->qc_cache, (void *)addr);
 	}
 #endif /* defined(QCACHE) */
+
+	vmem_xfree(vm, addr, size);
+}
+
+void
+vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
+{
+	bt_t *bt;
+	bt_t *t;
+
+	VMEM_ASSERT_UNLOCKED(vm);
+	KASSERT(addr != VMEM_ADDR_NULL);
+	KASSERT(size > 0);
 
 	VMEM_LOCK(vm);
 
@@ -988,6 +1134,7 @@ main()
 	struct reg {
 		vmem_addr_t p;
 		vmem_size_t sz;
+		boolean_t x;
 	} *reg = NULL;
 	int nreg = 0;
 	int nalloc = 0;
@@ -1015,15 +1162,57 @@ main()
 	vmem_dump(vm);
 	for (;;) {
 		struct reg *r;
+		int t = rand() % 100;
 
-		if (rand() % 100 > 40) {
+		if (t > 45) {
+			/* alloc */
 			vmem_size_t sz = rand() % 500 + 1;
+			boolean_t x;
+			vmem_size_t align, phase, nocross;
+			vmem_addr_t minaddr, maxaddr;
 
-			printf("=== alloc %" PRIu64 "\n", (uint64_t)sz);
-			p = vmem_alloc(vm, sz, strat|VM_SLEEP);
+			if (t > 70) {
+				x = TRUE;
+				/* XXX */
+				align = 1 << (rand() % 15);
+				phase = rand() % 65536;
+				nocross = 1 << (rand() % 15);
+				if (align <= phase) {
+					phase = 0;
+				}
+				if (VMEM_CROSS_P(phase, phase + sz - 1,
+				    nocross)) {
+					nocross = 0;
+				}
+				minaddr = rand() % 50000;
+				maxaddr = rand() % 70000;
+				if (minaddr > maxaddr) {
+					minaddr = 0;
+					maxaddr = 0;
+				}
+				printf("=== xalloc %" PRIu64
+				    " align=%" PRIu64 ", phase=%" PRIu64
+				    ", nocross=%" PRIu64 ", min=%" PRIu64
+				    ", max=%" PRIu64 "\n",
+				    (uint64_t)sz,
+				    (uint64_t)align,
+				    (uint64_t)phase,
+				    (uint64_t)nocross,
+				    (uint64_t)minaddr,
+				    (uint64_t)maxaddr);
+				p = vmem_xalloc(vm, sz, align, phase, nocross,
+				    minaddr, maxaddr, strat|VM_SLEEP);
+			} else {
+				x = FALSE;
+				printf("=== alloc %" PRIu64 "\n", (uint64_t)sz);
+				p = vmem_alloc(vm, sz, strat|VM_SLEEP);
+			}
 			printf("-> %" PRIu64 "\n", (uint64_t)p);
 			vmem_dump(vm);
 			if (p == VMEM_ADDR_NULL) {
+				if (x) {
+					continue;
+				}
 				break;
 			}
 			nreg++;
@@ -1031,13 +1220,19 @@ main()
 			r = &reg[nreg - 1];
 			r->p = p;
 			r->sz = sz;
+			r->x = x;
 			total += sz;
 			nalloc++;
 		} else if (nreg != 0) {
+			/* free */
 			r = &reg[rand() % nreg];
 			printf("=== free %" PRIu64 ", %" PRIu64 "\n",
 			    (uint64_t)r->p, (uint64_t)r->sz);
-			vmem_free(vm, r->p, r->sz);
+			if (r->x) {
+				vmem_xfree(vm, r->p, r->sz);
+			} else {
+				vmem_free(vm, r->p, r->sz);
+			}
 			total -= r->sz;
 			vmem_dump(vm);
 			*r = reg[nreg - 1];

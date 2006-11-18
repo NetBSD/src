@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.67 2006/07/23 22:06:12 ad Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.67.4.1 2006/11/18 21:39:29 ad Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.67 2006/07/23 22:06:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.67.4.1 2006/11/18 21:39:29 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -627,7 +627,8 @@ stripclose(struct tty *tp, int flag)
  */
 /* ARGSUSED */
 int
-striptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
+striptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct strip_softc *sc = (struct strip_softc *)tp->t_sc;
 

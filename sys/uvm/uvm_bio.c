@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.48 2006/09/03 21:33:33 christos Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.48.2.1 2006/11/18 21:39:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,9 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.48 2006/09/03 21:33:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.48.2.1 2006/11/18 21:39:49 ad Exp $");
 
 #include "opt_uvmhist.h"
+#include "opt_ubc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +121,24 @@ int ubc_nqueues;
 #define UBC_NQUEUES 1
 #endif
 
+#if defined(UBC_STATS)
+
+#define	UBC_EVCNT_DEFINE(name) \
+struct evcnt ubc_evcnt_##name = \
+EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "ubc", #name); \
+EVCNT_ATTACH_STATIC(ubc_evcnt_##name);
+#define	UBC_EVCNT_INCR(name) ubc_evcnt_##name.ev_count++
+
+#else /* defined(UBC_STATS) */
+
+#define	UBC_EVCNT_DEFINE(name)	/* nothing */
+#define	UBC_EVCNT_INCR(name)	/* nothing */
+
+#endif /* defined(UBC_STATS) */
+
+UBC_EVCNT_DEFINE(wincachehit)
+UBC_EVCNT_DEFINE(wincachemiss)
+
 /*
  * ubc_init
  *
@@ -201,8 +220,7 @@ ubc_init(void)
 
 static int
 ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
-    int ign3, int ign4, vm_prot_t access_type,
-    int flags)
+    int ign3, int ign4, vm_prot_t access_type, int flags)
 {
 	struct uvm_object *uobj;
 	struct ubc_map *umap;
@@ -227,6 +245,7 @@ ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
 	ubc_offset = va - (vaddr_t)ubc_object.kva;
 	umap = &ubc_object.umap[ubc_offset >> ubc_winshift];
 	KASSERT(umap->refcount != 0);
+	KASSERT((umap->flags & UMAP_PAGES_LOCKED) == 0);
 	slot_offset = ubc_offset & (ubc_winsize - 1);
 
 	/*
@@ -356,8 +375,9 @@ again:
 		 * is marked as PG_RDONLY.
 		 */
 
-		rdonly = (access_type & VM_PROT_WRITE) == 0 &&
-		    (pg->flags & PG_RDONLY) != 0;
+		rdonly = ((access_type & VM_PROT_WRITE) == 0 &&
+		    (pg->flags & PG_RDONLY) != 0) ||
+		    UVM_OBJ_NEEDS_WRITEFAULT(uobj);
 		KASSERT((pg->flags & PG_RDONLY) == 0 ||
 		    (access_type & VM_PROT_WRITE) == 0 ||
 		    pg->offset < umap->writeoff ||
@@ -434,6 +454,7 @@ again:
 	simple_lock(&ubc_object.uobj.vmobjlock);
 	umap = ubc_find_mapping(uobj, umap_offset);
 	if (umap == NULL) {
+		UBC_EVCNT_INCR(wincachemiss);
 		umap = TAILQ_FIRST(UBC_QUEUE(offset));
 		if (umap == NULL) {
 			simple_unlock(&ubc_object.uobj.vmobjlock);
@@ -459,6 +480,7 @@ again:
 			pmap_update(pmap_kernel());
 		}
 	} else {
+		UBC_EVCNT_INCR(wincachehit);
 		va = UBC_UMAP_ADDR(umap);
 	}
 

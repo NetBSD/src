@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.45 2006/04/06 07:18:23 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.45.8.1 2006/11/18 21:39:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -169,18 +169,34 @@ struct vm_page {
 #define	PG_FAKE		0x0040		/* page is not yet initialized */
 #define	PG_RDONLY	0x0080		/* page must be mapped read-only */
 #define	PG_ZERO		0x0100		/* page is pre-zero'd */
-#define	PG_SPECULATIVE	0x0200		/* page has been read speculatively */
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 
-#define PQ_FREE		0x01		/* page is on free list */
-#define PQ_INACTIVE	0x02		/* page is in inactive list */
-#define PQ_ACTIVE	0x04		/* page is in active list */
-#define PQ_ANON		0x10		/* page is part of an anon, rather
+#define	UVM_PGFLAGBITS \
+	"\20\1BUSY\2WANTED\3TABLED\4CLEAN\5PAGEOUT\6RELEASED\7FAKE\10RDONLY" \
+	"\11ZERO\15PAGER1"
+
+#define PQ_FREE		0x0001		/* page is on free list */
+#define PQ_ANON		0x0002		/* page is part of an anon, rather
 					   than an uvm_object */
-#define PQ_AOBJ		0x20		/* page is part of an anonymous
+#define PQ_AOBJ		0x0004		/* page is part of an anonymous
 					   uvm_object */
 #define PQ_SWAPBACKED	(PQ_ANON|PQ_AOBJ)
+#define PQ_READAHEAD	0x0008	/* read-ahead but has not been "hit" yet */
+
+#define PQ_PRIVATE1	0x0100
+#define PQ_PRIVATE2	0x0200
+#define PQ_PRIVATE3	0x0400
+#define PQ_PRIVATE4	0x0800
+#define PQ_PRIVATE5	0x1000
+#define PQ_PRIVATE6	0x2000
+#define PQ_PRIVATE7	0x4000
+#define PQ_PRIVATE8	0x8000
+
+#define	UVM_PQFLAGBITS \
+	"\20\1FREE\2ANON\3AOBJ\4READAHEAD" \
+	"\11PRIVATE1\12PRIVATE2\13PRIVATE3\14PRIVATE4" \
+	"\15PRIVATE5\16PRIVATE6\17PRIVATE7\20PRIVATE8"
 
 /*
  * physical memory layout structure
@@ -253,6 +269,7 @@ vaddr_t uvm_pageboot_alloc(vsize_t);
 void uvm_pagecopy(struct vm_page *, struct vm_page *);
 void uvm_pagedeactivate(struct vm_page *);
 void uvm_pagedequeue(struct vm_page *);
+void uvm_pageenqueue(struct vm_page *);
 void uvm_pagefree(struct vm_page *);
 void uvm_page_unbusy(struct vm_page **, int);
 struct vm_page *uvm_pagelookup(struct uvm_object *, voff_t);

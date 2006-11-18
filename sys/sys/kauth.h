@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.5 2006/07/17 14:37:20 ad Exp $ */
+/* $NetBSD: kauth.h,v 1.5.4.1 2006/11/18 21:39:46 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -42,6 +42,8 @@ struct uucred;
 struct ucred;
 struct pcred;
 struct proc;
+struct tty;
+struct vnode;
 
 /* Types. */
 typedef struct kauth_scope     *kauth_scope_t;
@@ -61,20 +63,152 @@ typedef int (*kauth_scope_callback_t)(kauth_cred_t, kauth_action_t,
  * Scopes.
  */
 #define	KAUTH_SCOPE_GENERIC	"org.netbsd.kauth.generic"
+#define	KAUTH_SCOPE_SYSTEM	"org.netbsd.kauth.system"
 #define	KAUTH_SCOPE_PROCESS	"org.netbsd.kauth.process"
-
-/*
- * Process scope - actions.
- */
-#define	KAUTH_PROCESS_CANPTRACE	1	/* check if can attach ptrace */
-#define	KAUTH_PROCESS_CANSIGNAL	2	/* check if can post signal */
-#define	KAUTH_PROCESS_CANSEE	3	/* check if can see proc info */
+#define	KAUTH_SCOPE_NETWORK	"org.netbsd.kauth.network"
+#define	KAUTH_SCOPE_MACHDEP	"org.netbsd.kauth.machdep"
+#define	KAUTH_SCOPE_DEVICE	"org.netbsd.kauth.device"
 
 /*
  * Generic scope - actions.
  */
-#define	KAUTH_GENERIC_ISSUSER	1	/* check for super-user */
-#define	KAUTH_GENERIC_CANSEE	2	/* check if can see other cred */
+enum {
+	KAUTH_GENERIC_CANSEE=1,
+	KAUTH_GENERIC_ISSUSER
+};
+
+/*
+ * System scope - actions.
+ */
+enum {
+	KAUTH_SYSTEM_ACCOUNTING=1,
+	KAUTH_SYSTEM_CHROOT,
+	KAUTH_SYSTEM_DEBUG,
+	KAUTH_SYSTEM_FILEHANDLE,
+	KAUTH_SYSTEM_LKM,
+	KAUTH_SYSTEM_MKNOD,
+	KAUTH_SYSTEM_REBOOT,
+	KAUTH_SYSTEM_SETIDCORE,
+	KAUTH_SYSTEM_SWAPCTL,
+	KAUTH_SYSTEM_SYSCTL,
+	KAUTH_SYSTEM_TIME
+};
+
+/*
+ * System scope - sub-actions.
+ */
+enum kauth_system_req {
+	KAUTH_REQ_SYSTEM_CHROOT_CHROOT=1,
+	KAUTH_REQ_SYSTEM_CHROOT_FCHROOT,
+	KAUTH_REQ_SYSTEM_DEBUG_IPKDB,
+	KAUTH_REQ_SYSTEM_SYSCTL_ADD,
+	KAUTH_REQ_SYSTEM_SYSCTL_DELETE,
+	KAUTH_REQ_SYSTEM_SYSCTL_DESC,
+	KAUTH_REQ_SYSTEM_SYSCTL_PRVT,
+	KAUTH_REQ_SYSTEM_TIME_ADJTIME,
+	KAUTH_REQ_SYSTEM_TIME_BACKWARDS,
+	KAUTH_REQ_SYSTEM_TIME_NTPADJTIME,
+	KAUTH_REQ_SYSTEM_TIME_RTCOFFSET,
+	KAUTH_REQ_SYSTEM_TIME_SYSTEM
+};	
+
+/*
+ * Process scope - actions.
+ */
+enum {
+	KAUTH_PROCESS_CANSEE=1,
+	KAUTH_PROCESS_CANSIGNAL,
+	KAUTH_PROCESS_CORENAME,
+	KAUTH_PROCESS_RESOURCE,
+	KAUTH_PROCESS_SETID
+};
+
+/*
+ * Process scope - sub-actions.
+ */
+enum {
+	KAUTH_REQ_PROCESS_RESOURCE_NICE=1,
+	KAUTH_REQ_PROCESS_RESOURCE_RLIMIT
+};
+
+/*
+ * Network scope - actions.
+ */
+enum {
+	KAUTH_NETWORK_ALTQ=1,
+	KAUTH_NETWORK_BIND,
+	KAUTH_NETWORK_FIREWALL,
+	KAUTH_NETWORK_INTERFACE,
+	KAUTH_NETWORK_FORWSRCRT,
+	KAUTH_NETWORK_ROUTE,
+	KAUTH_NETWORK_SOCKET
+};
+
+/*
+ * Network scope - sub-actions.
+ */
+enum kauth_network_req {
+	KAUTH_REQ_NETWORK_ALTQ_AFMAP=1,
+	KAUTH_REQ_NETWORK_ALTQ_BLUE,
+	KAUTH_REQ_NETWORK_ALTQ_CBQ,
+	KAUTH_REQ_NETWORK_ALTQ_CDNR,
+	KAUTH_REQ_NETWORK_ALTQ_CONF,
+	KAUTH_REQ_NETWORK_ALTQ_FIFOQ,
+	KAUTH_REQ_NETWORK_ALTQ_HFSC,
+	KAUTH_REQ_NETWORK_ALTQ_JOBS,
+	KAUTH_REQ_NETWORK_ALTQ_PRIQ,
+	KAUTH_REQ_NETWORK_ALTQ_RED,
+	KAUTH_REQ_NETWORK_ALTQ_RIO,
+	KAUTH_REQ_NETWORK_ALTQ_WFQ,
+	KAUTH_REQ_NETWORK_BIND_PORT,
+	KAUTH_REQ_NETWORK_BIND_PRIVPORT,
+	KAUTH_REQ_NETWORK_FIREWALL_FW,
+	KAUTH_REQ_NETWORK_FIREWALL_NAT,
+	KAUTH_REQ_NETWORK_INTERFACE_GET,
+	KAUTH_REQ_NETWORK_INTERFACE_GETPRIV,
+	KAUTH_REQ_NETWORK_INTERFACE_SET,
+	KAUTH_REQ_NETWORK_INTERFACE_SETPRIV,
+	KAUTH_REQ_NETWORK_SOCKET_OPEN,
+	KAUTH_REQ_NETWORK_SOCKET_RAWSOCK,
+	KAUTH_REQ_NETWORK_SOCKET_CANSEE
+};
+
+/*
+ * Machdep scope - actions.
+ */
+enum {
+	KAUTH_MACHDEP_X86=1,
+	KAUTH_MACHDEP_X86_64
+};
+
+/*
+ * Machdep scope - sub-actions.
+ */
+enum kauth_machdep_req {
+	KAUTH_REQ_MACHDEP_X86_64_MTRR_GET=1, /* ridiculous. */
+	KAUTH_REQ_MACHDEP_X86_IOPERM,
+	KAUTH_REQ_MACHDEP_X86_IOPL,
+	KAUTH_REQ_MACHDEP_X86_MTRR_SET
+};
+
+/*
+ * Device scope - actions.
+ */
+enum {
+	KAUTH_DEVICE_TTY_OPEN=1,
+	KAUTH_DEVICE_TTY_PRIVSET,
+	KAUTH_DEVICE_RAWIO_SPEC,
+	KAUTH_DEVICE_RAWIO_PASSTHRU
+};
+
+/*
+ * Device scope - sub-actions.
+ */
+enum kauth_device_req {
+	KAUTH_REQ_DEVICE_RAWIO_SPEC_READ,
+	KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE,
+	KAUTH_REQ_DEVICE_RAWIO_SPEC_RW,
+};
 
 #define NOCRED ((kauth_cred_t)-1)	/* no credential available */
 #define FSCRED ((kauth_cred_t)-2)	/* filesystem credential */
@@ -88,18 +222,22 @@ void kauth_deregister_scope(kauth_scope_t);
 kauth_listener_t kauth_listen_scope(const char *, kauth_scope_callback_t, void *);
 void kauth_unlisten_scope(kauth_listener_t);
 int kauth_authorize_action(kauth_scope_t, kauth_cred_t, kauth_action_t, void *,
-			   void *, void *, void *);
-
-/* Default callbacks for built-in scopes. */
-int kauth_authorize_cb_generic(kauth_cred_t, kauth_action_t, void *,
-			       void *, void *, void *, void *);
-int kauth_authorize_cb_process(kauth_cred_t, kauth_action_t, void *,
-			       void *, void *, void *, void *);
+    void *, void *, void *);
 
 /* Authorization wrappers. */
 int kauth_authorize_generic(kauth_cred_t, kauth_action_t, void *);
+int kauth_authorize_system(kauth_cred_t, kauth_action_t, enum kauth_system_req,
+    void *, void *, void *);
 int kauth_authorize_process(kauth_cred_t, kauth_action_t, struct proc *,
     void *, void *, void *);
+int kauth_authorize_network(kauth_cred_t, kauth_action_t,
+    enum kauth_network_req, void *, void *, void *);
+int kauth_authorize_machdep(kauth_cred_t, kauth_action_t,
+    enum kauth_machdep_req, void *, void *, void *);
+int kauth_authorize_device_tty(kauth_cred_t, kauth_action_t, struct tty *);
+int kauth_authorize_device_spec(kauth_cred_t, enum kauth_device_req,
+    struct vnode *);
+int kauth_authorize_device_passthru(kauth_cred_t, dev_t, void *);
 
 /* Kauth credentials management routines. */
 kauth_cred_t kauth_cred_alloc(void);
@@ -131,7 +269,9 @@ u_int kauth_cred_getrefcnt(kauth_cred_t);
 int kauth_cred_setgroups(kauth_cred_t, gid_t *, size_t, uid_t);
 int kauth_cred_getgroups(kauth_cred_t, gid_t *, size_t);
 
-void kauth_cred_uucvt(kauth_cred_t, const struct uucred *);
+int kauth_cred_uidmatch(kauth_cred_t, kauth_cred_t);
+void kauth_uucred_to_cred(kauth_cred_t, const struct uucred *);
+void kauth_cred_to_uucred(struct uucred *, const kauth_cred_t);
 int kauth_cred_uucmp(kauth_cred_t, const struct uucred *);
 void kauth_cred_toucred(kauth_cred_t, struct ucred *);
 void kauth_cred_topcred(kauth_cred_t, struct pcred *);

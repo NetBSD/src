@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.81.4.4 2006/11/17 16:34:35 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.81.4.5 2006/11/18 21:39:21 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,11 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.4 2006/11/17 16:34:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.5 2006/11/18 21:39:21 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 #include "opt_posix.h"
+#include "opt_compat_netbsd32.h"
+#include "opt_ktrace.h"
 #include "veriexec.h"
 #include "pty.h"
 #include "rnd.h"
@@ -76,6 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.4 2006/11/17 16:34:35 ad Exp 
 #endif /* NVERIEXEC > 0 */
 #include <sys/stat.h>
 #include <sys/kauth.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 #include <sys/ipc.h>
@@ -90,10 +95,13 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.4 2006/11/17 16:34:35 ad Exp 
 #include <sys/shm.h>
 #endif
 
+#ifdef COMPAT_NETBSD32
+#include <compat/netbsd32/netbsd32.h>
+#endif
+
 #include <machine/cpu.h>
 
 /* XXX this should not be here */
-int security_curtain = 0;
 int security_setidcore_dump;
 char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
 uid_t security_setidcore_owner = 0;
@@ -106,6 +114,31 @@ mode_t security_setidcore_mode = (S_IRUSR|S_IWUSR);
 #define KERN_PROCSLOP	(5 * sizeof(struct kinfo_proc))
 #define KERN_LWPSLOP	(5 * sizeof(struct kinfo_lwp))
 
+#ifdef KTRACE
+int dcopyout(struct lwp *, const void *, void *, size_t);
+
+int
+dcopyout(l, kaddr, uaddr, len)
+	struct lwp *l;
+	const void *kaddr;
+	void *uaddr;
+	size_t len;
+{
+	int error;
+
+	error = copyout(kaddr, uaddr, len);
+	if (!error && KTRPOINT(l->l_proc, KTR_MIB)) {
+		struct iovec iov;
+
+		iov.iov_base = uaddr;
+		iov.iov_len = len;
+		ktrgenio(l, -1, UIO_READ, &iov, len, 0);
+	}
+	return error;
+}
+#else /* !KTRACE */
+#define dcopyout(l, kaddr, uaddr, len) copyout(kaddr, uaddr, len)
+#endif /* KTRACE */
 #ifndef MULTIPROCESSOR
 #define	sysctl_ncpus()	(1)
 #else /* MULTIPROCESSOR */
@@ -148,6 +181,7 @@ static int sysctl_kern_maxptys(SYSCTLFN_PROTO);
 #endif /* NPTY > 0 */
 static int sysctl_kern_sbmax(SYSCTLFN_PROTO);
 static int sysctl_kern_urnd(SYSCTLFN_PROTO);
+static int sysctl_kern_arnd(SYSCTLFN_PROTO);
 static int sysctl_kern_lwp(SYSCTLFN_PROTO);
 static int sysctl_kern_forkfsleep(SYSCTLFN_PROTO);
 static int sysctl_kern_root_partition(SYSCTLFN_PROTO);
@@ -650,6 +684,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       sysctl_kern_urnd, 0, NULL, 0,
 		       CTL_KERN, KERN_URND, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "arandom",
+		       SYSCTL_DESCR("n bytes of random data"),
+		       sysctl_kern_arnd, 0, NULL, 0,
+		       CTL_KERN, KERN_ARND, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "labelsector",
 		       SYSCTL_DESCR("Sector number containing the disklabel"),
@@ -1070,25 +1110,6 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 }
 #endif /* DEBUG */
 
-SYSCTL_SETUP(sysctl_security_setup, "sysctl security subtree setup")
-{
-	const struct sysctlnode *rnode = NULL;
-
-	sysctl_createv(clog, 0, NULL, &rnode,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "security", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_SECURITY, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "curtain",
-		       SYSCTL_DESCR("Curtain information about objects"
-				    " to users not owning them."),
-		       NULL, 0, &security_curtain, 0,
-		       CTL_CREATE, CTL_EOL);
-}
-
 /*
  * ********************************************************************
  * section 2: private node-specific helper routines.
@@ -1166,7 +1187,9 @@ sysctl_kern_rtc_offset(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	if (securelevel > 0)
+	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
+	    KAUTH_REQ_SYSTEM_TIME_RTCOFFSET,
+	    (void *)(u_long)new_rtc_offset, NULL, NULL))
 		return (EPERM);
 	if (rtc_offset == new_rtc_offset)
 		return (0);
@@ -1302,13 +1325,13 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	}
 
 	/*
-	 * first copyout filehead
+	 * first dcopyout filehead
 	 */
 	if (buflen < sizeof(filehead)) {
 		*oldlenp = 0;
 		return (0);
 	}
-	error = copyout(&filehead, where, sizeof(filehead));
+	error = dcopyout(l, &filehead, where, sizeof(filehead));
 	if (error)
 		return (error);
 	buflen -= sizeof(filehead);
@@ -1325,7 +1348,7 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 			*oldlenp = where - start;
 			return (ENOMEM);
 		}
-		error = copyout(fp, where, sizeof(struct file));
+		error = dcopyout(l, fp, where, sizeof(struct file));
 		if (error)
 			return (error);
 		buflen -= sizeof(struct file);
@@ -1422,7 +1445,7 @@ sysctl_msgbuf(SYSCTLFN_ARGS)
 		len = MIN(end - beg, maxlen);
 		if (len == 0)
 			break;
-		error = copyout(&msgbufp->msg_bufc[beg], where, len);
+		error = dcopyout(l, &msgbufp->msg_bufc[beg], where, len);
 		if (error)
 			break;
 		where += len;
@@ -1748,8 +1771,8 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 		}
 	}
 	*sizep -= buflen;
-	error = copyout(bf, start, *sizep);
-	/* If copyout succeeded, use return code set earlier. */
+	error = dcopyout(l, bf, start, *sizep);
+	/* If dcopyout succeeded, use return code set earlier. */
 	if (error == 0)
 		error = ret;
 	if (bf)
@@ -1837,6 +1860,35 @@ sysctl_kern_urnd(SYSCTLFN_ARGS)
 }
 
 /*
+ * sysctl helper routine for kern.arandom node.  picks a random number
+ * for you.
+ */
+static int
+sysctl_kern_arnd(SYSCTLFN_ARGS)
+{
+#if NRND > 0
+	int error;
+	void *v;
+	struct sysctlnode node = *rnode;
+
+	if (*oldlenp == 0)
+		return 0;
+	if (*oldlenp > 8192)
+		return E2BIG;
+
+	v = malloc(*oldlenp, M_TEMP, M_WAITOK);
+
+	arc4randbytes(v, *oldlenp);
+	node.sysctl_data = v;
+	node.sysctl_size = *oldlenp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	free(v, M_TEMP);
+	return error;
+#else
+	return (EOPNOTSUPP);
+#endif
+}
+/*
  * sysctl helper routine to do kern.lwp.* work.
  */
 static int
@@ -1879,7 +1931,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 			 * XXX We should not be holding p_smutex, but
 			 * for now, the buffer is wired.  Fix later.
 			 */
-			error = copyout(&klwp, dp,
+			error = dcopyout(l, &klwp, dp,
 			    min(sizeof(klwp), elem_size));
 			if (error)
 				goto cleanup;
@@ -1994,7 +2046,7 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 		kd.d_bmajor = devsw_conv[i].d_bmajor;
 		kd.d_cmajor = devsw_conv[i].d_cmajor;
 		strlcpy(kd.d_name, dname, sizeof kd.d_name);
-		error = copyout(&kd, where, sizeof kd);
+		error = dcopyout(l, &kd, where, sizeof kd);
 		if (error != 0)
 			break;
 		buflen -= sizeof kd;
@@ -2051,7 +2103,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				continue;
 			if (len >= elem_size && elem_count > 0) {
 				fill_file(&kf, fp, NULL, 0);
-				error = copyout(&kf, dp, out_size);
+				error = dcopyout(l, &kf, dp, out_size);
 				if (error)
 					break;
 				dp += elem_size;
@@ -2088,7 +2140,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				if (len >= elem_size && elem_count > 0) {
 					fill_file(&kf, fd->fd_ofiles[i],
 						  p, i);
-					error = copyout(&kf, dp, out_size);
+					error = dcopyout(l, &kf, dp, out_size);
 					if (error)
 						break;
 					dp += elem_size;
@@ -2285,11 +2337,11 @@ again:
 		if (type == KERN_PROC) {
 			if (buflen >= sizeof(struct kinfo_proc)) {
 				fill_eproc(p, eproc);
-				error = copyout(p, &dp->kp_proc,
+				error = dcopyout(l, p, &dp->kp_proc,
 				    sizeof(struct proc));
 				if (error)
 					goto cleanup;
-				error = copyout(eproc, &dp->kp_eproc,
+				error = dcopyout(l, eproc, &dp->kp_eproc,
 				    sizeof(*eproc));
 				if (error)
 					goto cleanup;
@@ -2304,7 +2356,7 @@ again:
 				 * Copy out elem_size, but not larger than
 				 * the size of a struct kinfo_proc2.
 				 */
-				error = copyout(kproc2, dp2,
+				error = dcopyout(l, kproc2, dp2,
 				    min(sizeof(*kproc2), elem_size));
 				if (error)
 					goto cleanup;
@@ -2356,13 +2408,13 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 {
 	struct ps_strings pss;
 	struct proc *p;
-	size_t len, upper_bound, xlen, i;
+	size_t len, i;
 	struct uio auio;
 	struct iovec aiov;
-	vaddr_t argv;
 	pid_t pid;
 	int nargv, type, error;
 	char *arg;
+	char **argv = NULL;
 	char *tmp;
 	struct vmspace *vmspace;
 	vaddr_t psstr_addr;
@@ -2404,14 +2456,10 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 
 	/* only root or same user change look at the environment */
 	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
-		if (kauth_cred_geteuid(l->l_cred) != 0) {
-			if (kauth_cred_getuid(l->l_cred) !=
-			    kauth_cred_getuid(p->p_cred) ||
-			    kauth_cred_getuid(l->l_cred) !=
-			    kauth_cred_getsvuid(p->p_cred)) {
+		if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
+		     p, NULL, NULL, NULL)) {
 				error = EPERM;
 				goto out_locked;
-			}
 		}
 	}
 
@@ -2477,7 +2525,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 
 	memcpy(&nargv, (char *)&pss + offsetn, sizeof(nargv));
 	if (type == KERN_PROC_NARGV || type == KERN_PROC_NENV) {
-		error = copyout(&nargv, oldp, sizeof(nargv));
+		error = dcopyout(l, &nargv, oldp, sizeof(nargv));
 		*oldlenp = sizeof(nargv);
 		goto done;
 	}
@@ -2486,7 +2534,6 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	 */
 	switch (type) {
 	case KERN_PROC_ARGV:
-		/* XXX compat32 stuff here */
 		/* FALLTHROUGH */
 	case KERN_PROC_ENV:
 		memcpy(&tmp, (char *)&pss + offsetv, sizeof(tmp));
@@ -2494,63 +2541,97 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	default:
 		return (EINVAL);
 	}
-	auio.uio_offset = (off_t)(unsigned long)tmp;
-	aiov.iov_base = &argv;
-	aiov.iov_len = sizeof(argv);
+
+#ifdef COMPAT_NETBSD32
+	if (p->p_flag & P_32)
+		len = sizeof(netbsd32_charp) * nargv;
+	else
+#endif
+		len = sizeof(char *) * nargv;
+
+	argv = malloc(len, M_TEMP, M_WAITOK);
+
+	aiov.iov_base = argv;
+	aiov.iov_len = len;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_resid = sizeof(argv);
+	auio.uio_offset = (off_t)(unsigned long)tmp;
+	auio.uio_resid = len;
 	auio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&auio);
 	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
 
-	/*
-	 * Now copy in the actual argument vector, one page at a time,
-	 * since we don't know how long the vector is (though, we do
-	 * know how many NUL-terminated strings are in the vector).
+	/* 
+	 * Now copy each string.
 	 */
-	len = 0;
-	upper_bound = *oldlenp;
-	for (; nargv != 0 && len < upper_bound; len += xlen) {
-		aiov.iov_base = arg;
-		aiov.iov_len = PAGE_SIZE;
-		auio.uio_iov = &aiov;
-		auio.uio_iovcnt = 1;
-		auio.uio_offset = argv + len;
-		xlen = PAGE_SIZE - ((argv + len) & PAGE_MASK);
-		auio.uio_resid = xlen;
-		auio.uio_rw = UIO_READ;
-		UIO_SETUP_SYSSPACE(&auio);
-		error = uvm_io(&vmspace->vm_map, &auio);
-		if (error)
-			goto done;
+	len = 0; /* bytes written to user buffer */
+	for (i = 0; i < nargv; i++) {
+		int finished = 0;
+		vaddr_t base;
+		size_t xlen;
+		int j;
 
-		for (i = 0; i < xlen && nargv != 0; i++) {
-			if (arg[i] == '\0')
-				nargv--;	/* one full string */
-		}
+#ifdef COMPAT_NETBSD32
+		if (p->p_flag & P_32) {
+			netbsd32_charp *argv32;
 
-		/*
-		 * Make sure we don't copyout past the end of the user's
-		 * buffer.
-		 */
-		if (len + i > upper_bound)
-			i = upper_bound - len;
+			argv32 = (netbsd32_charp *)argv;
 
-		error = copyout(arg, (char *)oldp + len, i);
-		if (error)
-			break;
+			base = (vaddr_t)NETBSD32PTR64(argv32[i]);
+		} else
+#endif
+			base = (vaddr_t)argv[i];
 
-		if (nargv == 0) {
-			len += i;
-			break;
+		while (!finished) {
+			xlen = PAGE_SIZE - (base & PAGE_MASK);
+
+			aiov.iov_base = arg;
+			aiov.iov_len = PAGE_SIZE;
+			auio.uio_iov = &aiov;
+			auio.uio_iovcnt = 1;
+			auio.uio_offset = base;
+			auio.uio_resid = xlen;
+			auio.uio_rw = UIO_READ;
+			UIO_SETUP_SYSSPACE(&auio);
+			error = uvm_io(&vmspace->vm_map, &auio);
+			if (error)
+				goto done;
+
+			/* Look for the end of the string */
+			for (j = 0; j < xlen; j++) {
+				if (arg[j] == '\0') {
+					xlen = j + 1;
+					finished = 1;
+					break;
+				}
+			}
+
+			/* Check for user buffer overflow */
+			if (len + xlen > *oldlenp) {
+				finished = 1;
+				if (len > *oldlenp) 
+					xlen = 0;
+				else
+					xlen = *oldlenp - len;
+			}
+				
+			/* Copyout the page */
+			error = dcopyout(l, arg, (char *)oldp + len, xlen);
+			if (error)
+				goto done;
+
+			len += xlen;
+			base += xlen;
 		}
 	}
 	*oldlenp = len;
 
 done:
+	if (argv != NULL)
+		free(argv, M_TEMP);
+
 	uvmspace_free(vmspace);
 
 	free(arg, M_TEMP);
@@ -2617,7 +2698,8 @@ sysctl_security_setidcore(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	if (securelevel > 0)
+	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_SETIDCORE,
+	    0, NULL, NULL, NULL))
 		return (EPERM);
 
 	*(int *)rnode->sysctl_data = newsize;
@@ -2640,7 +2722,8 @@ sysctl_security_setidcorename(SYSCTLFN_ARGS)
 	if (error || newp == NULL) {
 		goto out;
 	}
-	if (securelevel > 0) {
+	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_SETIDCORE,
+	    0, NULL, NULL, NULL)) {
 		error = EPERM;
 		goto out;
 	}

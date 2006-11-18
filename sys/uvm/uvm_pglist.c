@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.35 2006/05/14 05:30:31 christos Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.35.8.1 2006/11/18 21:39:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.35 2006/05/14 05:30:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.35.8.1 2006/11/18 21:39:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.35 2006/05/14 05:30:31 christos Exp
 #include <sys/proc.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_pdpolicy.h>
 
 #ifdef VM_PAGE_ALLOC_MEMORY_STATS
 #define	STAT_INCR(v)	(v)++
@@ -277,7 +278,7 @@ out:
 	 * the pagedaemon.
 	 */
 
-	UVM_KICK_PDAEMON();
+	uvm_kick_pdaemon();
 	uvm_unlock_fpageq(s);
 	return (error);
 }
@@ -369,7 +370,7 @@ out:
 	 * the pagedaemon.
 	 */
 
-	UVM_KICK_PDAEMON();
+	uvm_kick_pdaemon();
 	uvm_unlock_fpageq(s);
 	if (error) {
 		if (waitok) {
@@ -443,7 +444,7 @@ uvm_pglistfree(struct pglist *list)
 	while ((pg = TAILQ_FIRST(list)) != NULL) {
 		boolean_t iszero;
 
-		KASSERT((pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) == 0);
+		KASSERT(!uvmpdpol_pageisqueued_p(pg));
 		TAILQ_REMOVE(list, pg, pageq);
 		iszero = (pg->flags & PG_ZERO);
 		pg->pqflags = PQ_FREE;

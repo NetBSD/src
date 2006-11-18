@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.39 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.39.18.1 2006/11/18 21:39:37 ad Exp $	*/
 /*	$KAME: ah_core.c,v 1.57 2003/07/25 09:33:36 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.39 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.39.18.1 2006/11/18 21:39:37 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -80,8 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.39 2006/01/21 00:15:36 rpaulo Exp $");
 #define MD5_RESULTLEN	16
 #include <sys/sha1.h>
 #define SHA1_RESULTLEN	20
-#include <crypto/sha2/sha2.h>
-#include <crypto/ripemd160/rmd160.h>
+#include <sys/sha2.h>
+#include <sys/rmd160.h>
 #define RIPEMD160_RESULTLEN	20
 
 #include <net/net_osdep.h>
@@ -279,33 +279,26 @@ ah_none_mature(sav)
 }
 
 static int
-ah_none_init(state, sav)
-	struct ah_algorithm_state *state;
-	struct secasvar *sav;
+ah_none_init(struct ah_algorithm_state *state, struct secasvar *sav)
 {
 	state->foo = NULL;
 	return 0;
 }
 
 static void
-ah_none_loop(state, addr, len)
-	struct ah_algorithm_state *state;
-	u_int8_t * addr;
-	size_t len;
+ah_none_loop(struct ah_algorithm_state *state,
+    u_int8_t *addr, size_t len)
 {
 }
 
 static void
-ah_none_result(state, addr, l)
-	struct ah_algorithm_state *state;
-	u_int8_t *addr;
-	size_t l;
+ah_none_result(struct ah_algorithm_state *state,
+    u_int8_t *addr, size_t l)
 {
 }
 
 static int
-ah_keyed_md5_mature(sav)
-	struct secasvar *sav;
+ah_keyed_md5_mature(struct secasvar *sav)
 {
 	/* anything is okay */
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.71 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: route.c,v 1.71.2.1 2006/11/18 21:39:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.71 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.71.2.1 2006/11/18 21:39:30 ad Exp $");
 
 
 #include <sys/param.h>
@@ -162,8 +162,12 @@ route_init(void)
 void
 rtalloc(struct route *ro)
 {
-	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
-		return;				 /* XXX */
+	if (ro->ro_rt != NULL) {
+		if (ro->ro_rt->rt_ifp != NULL &&
+		    (ro->ro_rt->rt_flags & RTF_UP) != 0)
+			return;
+		RTFREE(ro->ro_rt);
+	}
 	ro->ro_rt = rtalloc1(&ro->ro_dst, 1);
 }
 
@@ -493,7 +497,6 @@ int
 rt_getifa(struct rt_addrinfo *info)
 {
 	struct ifaddr *ifa;
-	int error = 0;
 	const struct sockaddr *dst = info->rti_info[RTAX_DST];
 	const struct sockaddr *gateway = info->rti_info[RTAX_GATEWAY];
 	const struct sockaddr *ifaaddr = info->rti_info[RTAX_IFA];
@@ -522,12 +525,13 @@ rt_getifa(struct rt_addrinfo *info)
 		else if (sa != NULL)
 			info->rti_ifa = ifa_ifwithroute(flags, sa, sa);
 	}
-	if ((ifa = info->rti_ifa) != NULL) {
-		if (info->rti_ifp == NULL)
-			info->rti_ifp = ifa->ifa_ifp;
-	} else
-		error = ENETUNREACH;
-	return (error);
+	if ((ifa = info->rti_ifa) == NULL)
+		return ENETUNREACH;
+	if (ifa->ifa_getifa != NULL)
+		info->rti_ifa = ifa = (*ifa->ifa_getifa)(ifa, dst);
+	if (info->rti_ifp == NULL)
+		info->rti_ifp = ifa->ifa_ifp;
+	return 0;
 }
 
 int
@@ -607,6 +611,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			senderr(error);
 		ifa = info->rti_ifa;
 	makeroute:
+		/* Already at splsoftnet() so pool_get/pool_put are safe */
 		rt = pool_get(&rtentry_pool, PR_NOWAIT);
 		if (rt == NULL)
 			senderr(ENOBUFS);
@@ -622,8 +627,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			rt_maskedcopy(dst, ndst, netmask);
 		} else
 			Bcopy(dst, ndst, dst->sa_len);
-		IFAREF(ifa);
-		rt->rt_ifa = ifa;
+		rt_set_ifa(rt, ifa);
 		rt->rt_ifp = ifa->ifa_ifp;
 		if (req == RTM_RESOLVE) {
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
@@ -790,10 +794,8 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 				rt->rt_ifa);
 			if (rt->rt_ifa->ifa_rtrequest)
 				rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt, NULL);
-			IFAFREE(rt->rt_ifa);
-			rt->rt_ifa = ifa;
+			rt_replace_ifa(rt, ifa);
 			rt->rt_ifp = ifa->ifa_ifp;
-			IFAREF(ifa);
 			if (ifa->ifa_rtrequest)
 				ifa->ifa_rtrequest(RTM_ADD, rt, NULL);
 		}
@@ -880,6 +882,7 @@ rt_timer_queue_remove_all(struct rttimer_queue *rtq, int destroy)
 		TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
 		if (destroy)
 			RTTIMER_CALLOUT(r);
+		/* we are already at splsoftnet */
 		pool_put(&rttimer_pool, r);
 		if (rtq->rtq_count > 0)
 			rtq->rtq_count--;
@@ -922,6 +925,7 @@ rt_timer_remove_all(struct rtentry *rt, int destroy)
 			r->rtt_queue->rtq_count--;
 		else
 			printf("rt_timer_remove_all: rtq_count reached 0\n");
+		/* we are already at splsoftnet */
 		pool_put(&rttimer_pool, r);
 	}
 }
@@ -932,6 +936,7 @@ rt_timer_add(struct rtentry *rt,
 	struct rttimer_queue *queue)
 {
 	struct rttimer *r;
+	int s;
 
 	/*
 	 * If there's already a timer with this action, destroy it before
@@ -946,12 +951,16 @@ rt_timer_add(struct rtentry *rt,
 				r->rtt_queue->rtq_count--;
 			else
 				printf("rt_timer_add: rtq_count reached 0\n");
+			s = splsoftnet();
 			pool_put(&rttimer_pool, r);
+			splx(s);
 			break;  /* only one per list, so we can quit... */
 		}
 	}
 
+	s = splsoftnet();
 	r = pool_get(&rttimer_pool, PR_NOWAIT);
+	splx(s);
 	if (r == NULL)
 		return (ENOBUFS);
 	Bzero(r, sizeof(*r));

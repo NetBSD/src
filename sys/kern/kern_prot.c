@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.93.4.2 2006/11/17 16:34:36 ad Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.93.4.3 2006/11/18 21:39:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.93.4.2 2006/11/17 16:34:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.93.4.3 2006/11/18 21:39:22 ad Exp $");
 
 #include "opt_compat_43.h"
 
@@ -342,8 +342,8 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 	    && !((flags & ID_S_EQ_S) && sv == kauth_cred_getsvuid(cred)))) {
 		int error;
 
-		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag);
+		error = kauth_authorize_process(cred, KAUTH_PROCESS_SETID,
+		    p, NULL, NULL, NULL);
 		if (error != 0) {
 		 	proc_crmod_leave(cred, ncred);
 			return error;
@@ -417,8 +417,8 @@ do_setresgid(struct lwp *l, gid_t r, gid_t e, gid_t sv, u_int flags)
 	    && !((flags & ID_S_EQ_S) && sv == kauth_cred_getsvgid(cred)))) {
 		int error;
 
-		error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag);
+		error = kauth_authorize_process(cred, KAUTH_PROCESS_SETID,
+		    p, NULL, NULL, NULL);
 		if (error != 0) {
 		 	proc_crmod_leave(cred, ncred);
 			return error;
@@ -629,8 +629,8 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 	proc_crmod_enter();
 	cred = p->p_cred;
 
-	if ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_process(cred, KAUTH_PROCESS_SETID,
+	    p, NULL, NULL, NULL)) != 0)
 		goto bad;
 
 	ngrp = SCARG(uap, gidsetsize);
@@ -698,8 +698,8 @@ sys___setlogin(struct lwp *l, void *v, register_t *retval)
 	char newname[sizeof sp->s_login + 1];
 	int error;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SETID,
+	    p, NULL, NULL, NULL)) != 0)
 		return (error);
 	error = copyinstr(SCARG(uap, namebuf), &newname, sizeof newname, NULL);
 	if (error != 0)

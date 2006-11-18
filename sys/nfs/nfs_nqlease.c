@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.69.2.1 2006/09/11 00:20:01 ad Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.69.2.2 2006/11/18 21:39:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.69.2.1 2006/09/11 00:20:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.69.2.2 2006/11/18 21:39:44 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -760,11 +760,8 @@ nqnfsrv_getlease(nfsd, slp, lwp, mrq)
  * client. Find the entry and expire it.
  */
 int
-nqnfsrv_vacated(nfsd, slp, lwp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct lwp *lwp;
-	struct mbuf **mrq;
+nqnfsrv_vacated(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct lwp *lwp, struct mbuf **mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
@@ -1006,13 +1003,8 @@ nqnfs_callback(struct nfsmount *nmp, struct mbuf *mrep, struct mbuf *md,
  * the list asynchronously.
  */
 int
-nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
-	struct nfsmount *nmp;
-	kauth_cred_t cred;
-	struct nfsd_cargs *ncd;
-	int flag;
-	caddr_t argp;
-	struct lwp *l;
+nqnfs_clientd(struct nfsmount *nmp, kauth_cred_t cred, struct nfsd_cargs *ncd,
+    int flag, caddr_t argp, struct lwp *l)
 {
 #ifndef NFS_V2_ONLY
 	struct nfsnode *np;

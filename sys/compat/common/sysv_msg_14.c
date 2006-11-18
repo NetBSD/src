@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg_14.c,v 1.10 2006/07/23 22:06:08 ad Exp $	*/
+/*	$NetBSD: sysv_msg_14.c,v 1.10.4.1 2006/11/18 21:39:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.10 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.10.4.1 2006/11/18 21:39:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

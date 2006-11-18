@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.11 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.11.4.1 2006/11/18 21:39:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.11 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.11.4.1 2006/11/18 21:39:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

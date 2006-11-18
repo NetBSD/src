@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.23 2006/07/23 22:06:08 ad Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.23.4.1 2006/11/18 21:39:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.23 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.23.4.1 2006/11/18 21:39:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,8 @@ compat_43_sys_getdtablesize(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-compat_43_sys_gethostid(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_gethostid(struct lwp *l, void *v,
+    register_t *retval)
 {
 
 	*(int32_t *)retval = hostid;

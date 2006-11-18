@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.105.4.3 2006/11/17 16:34:37 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.105.4.4 2006/11/18 21:39:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.3 2006/11/17 16:34:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.4 2006/11/18 21:39:22 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -173,12 +173,14 @@ settime(struct proc *p, struct timespec *ts)
 #else /* !__HAVE_TIMECOUNTER */
 	timersub(&tv, &time, &delta);
 #endif /* !__HAVE_TIMECOUNTER */
-	if ((delta.tv_sec < 0 || delta.tv_usec < 0) && securelevel > 1) {
+	if ((delta.tv_sec < 0 || delta.tv_usec < 0) &&
+	    kauth_authorize_system(p->p_cred, KAUTH_SYSTEM_TIME,
+	    KAUTH_REQ_SYSTEM_TIME_BACKWARDS, NULL, NULL, NULL)) {
 		splx(s);
 		return (EPERM);
 	}
 #ifdef notyet
-	if ((delta.tv_sec < 86400) && securelevel > 0) {
+	if ((delta.tv_sec < 86400) && securelevel > 0) { /* XXX elad - notyet */
 		splx(s);
 		return (EPERM);
 	}
@@ -259,8 +261,8 @@ sys_clock_settime(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int error;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
+	    KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL)) != 0)
 		return (error);
 
 	return clock_settime1(l->l_proc, SCARG(uap, clock_id), SCARG(uap, tp));
@@ -475,8 +477,8 @@ sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int error;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
+	    KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL)) != 0)
 		return (error);
 
 	return settimeofday1(SCARG(uap, tv), SCARG(uap, tzp), l->l_proc);
@@ -526,8 +528,8 @@ sys_adjtime(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int error;
 
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
+	    KAUTH_REQ_SYSTEM_TIME_ADJTIME, NULL, NULL, NULL)) != 0)
 		return (error);
 
 	return adjtime1(SCARG(uap, delta), SCARG(uap, olddelta), l->l_proc);
@@ -1477,7 +1479,7 @@ itimerfire(struct ptimer *pt)
 		}
 	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_sflag & PS_SA)) {
 		/* Cause the process to generate an upcall when it returns. */
-
+		signotify(LIST_FIRST(&p->p_lwps));	/* XXXAD */
 		if (p->p_userret == NULL) {
 			/*
 			 * XXX stop signals can be processed inside tsleep,
@@ -1494,11 +1496,15 @@ itimerfire(struct ptimer *pt)
 
 			mutex_enter(&p->p_smutex);
 			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+				lwp_lock(vp->savp_lwp);
 				if (vp->savp_lwp->l_flag & L_SA_IDLE) {
 					vp->savp_lwp->l_flag &= ~L_SA_IDLE;
 					wakeup(vp->savp_lwp);
+					signotify(vp->savp_lwp);
+					lwp_unlock(vp->savp_lwp);
 					break;
 				}
+				lwp_unlock(vp->savp_lwp);
 			}
 			mutex_exit(&p->p_smutex);
 		} else if (p->p_userret == timerupcall) {

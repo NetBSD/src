@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.29 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.29.4.1 2006/11/18 21:39:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.29 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.29.4.1 2006/11/18 21:39:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ dump_mbuf(struct mbuf *n, const char *str)
  */
 int
 tp_rcvoob(struct tp_pcb *tpcb, struct socket *so, struct mbuf *m,
-	int *outflags, int inflags)
+    int *outflags, int inflags)
 {
 	struct mbuf *n;
 	struct sockbuf *sb = &so->so_rcv;
@@ -273,7 +273,7 @@ restart:
  */
 int
 tp_sendoob(struct tp_pcb *tpcb, struct socket *so, struct mbuf *xdata,
-	int *outflags)
+    int *outflags)
 {
 	/*
 	 * Each mbuf chain represents a sequence # in the XPD seq space.

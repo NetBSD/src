@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.25.4.2 2006/11/17 16:34:40 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.25.4.3 2006/11/18 21:39:29 ad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.25.4.2 2006/11/17 16:34:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.25.4.3 2006/11/18 21:39:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.25.4.2 2006/11/17 16:34:40 ad Exp
 #include <sys/tty.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/conf.h>
 
 #include <miscfs/procfs/procfs.h>
 #include <compat/linux/common/linux_exec.h>
@@ -59,21 +60,29 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.25.4.2 2006/11/17 16:34:40 ad Exp
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
 
+extern struct devsw_conv *devsw_conv;
+extern int max_devsw_convs;
+
 #define PGTOB(p)	((unsigned long)(p) << PAGE_SHIFT)
 #define PGTOKB(p)	((unsigned long)(p) << (PAGE_SHIFT - 10))
+
+#define LBFSZ (8 * 1024)
 
 /*
  * Linux compatible /proc/meminfo. Only active when the -o linux
  * mountflag is used.
  */
 int
-procfs_domeminfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
-		 struct uio *uio)
+procfs_domeminfo(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
 {
-	char bf[512];
+	char *bf;
 	int len;
+	int error = 0;
 
-	len = snprintf(bf, sizeof bf,
+	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
+
+	len = snprintf(bf, LBFSZ,
 		"        total:    used:    free:  shared: buffers: cached:\n"
 		"Mem:  %8lu %8lu %8lu %8lu %8lu %8lu\n"
 		"Swap: %8lu %8lu %8lu\n"
@@ -102,9 +111,62 @@ procfs_domeminfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		PGTOKB(uvmexp.swpages - uvmexp.swpginuse));
 
 	if (len == 0)
-		return 0;
+		goto out;
 
-	return (uiomove_frombuf(bf, len, uio));
+	error = uiomove_frombuf(bf, len, uio);
+out:
+	free(bf, M_TEMP);
+	return error;
+}
+
+/*
+ * Linux compatible /proc/devices. Only active when the -o linux
+ * mountflag is used.
+ */
+int
+procfs_dodevices(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	char *bf;
+	int offset = 0;
+	int i, error = ENAMETOOLONG;
+
+	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
+
+	offset += snprintf(&bf[offset], LBFSZ - offset, "Character devices:\n");
+	if (offset >= LBFSZ)
+		goto out;
+
+	for (i = 0; i < max_devsw_convs; i++) {
+		if ((devsw_conv[i].d_name == NULL) || 
+		    (devsw_conv[i].d_cmajor == -1))
+			continue;
+
+		offset += snprintf(&bf[offset], LBFSZ - offset, 
+		    "%3d %s\n", devsw_conv[i].d_cmajor, devsw_conv[i].d_name);
+		if (offset >= LBFSZ)
+			goto out;
+	}
+
+	offset += snprintf(&bf[offset], LBFSZ - offset, "\nBlock devices:\n");
+	if (offset >= LBFSZ)
+		goto out;
+
+	for (i = 0; i < max_devsw_convs; i++) {
+		if ((devsw_conv[i].d_name == NULL) || 
+		    (devsw_conv[i].d_bmajor == -1))
+			continue;
+
+		offset += snprintf(&bf[offset], LBFSZ - offset, 
+		    "%3d %s\n", devsw_conv[i].d_bmajor, devsw_conv[i].d_name);
+		if (offset >= LBFSZ)
+			goto out;
+	}
+
+	error = uiomove_frombuf(bf, offset, uio);
+out:
+	free(bf, M_TEMP);
+	return error;
 }
 
 /*
@@ -112,10 +174,10 @@ procfs_domeminfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
  * mountflag is used.
  */
 int
-procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
-		 struct uio *uio)
+procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
+    struct pfsnode *pfs, struct uio *uio)
 {
-	char bf[512];
+	char *bf;
 	struct proc *p = l->l_proc;
 	int len;
 	struct tty *tty = p->p_session->s_ttyp;
@@ -126,6 +188,9 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 	struct vm_map_entry *entry;
 	unsigned long stext = 0, etext = 0, sstack = 0;
 	struct timeval rt;
+	int error = 0;
+
+	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
 	proc_vmspace_getref(p, &vm);
 	map = &vm->vm_map;
@@ -159,7 +224,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 
 	calcru(p, NULL, NULL, NULL, &rt);
 
-	len = snprintf(bf, sizeof(bf),
+	len = snprintf(bf, LBFSZ,
 	    "%d (%s) %c %d %d %d %d %d "
 	    "%u "
 	    "%lu %lu %lu %lu %lu %lu %lu %lu "
@@ -173,7 +238,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 	    p->p_pid,
 	    p->p_comm,
 	    "0IR3SZD"[(p->p_stat > 6) ? 0 : (int)p->p_stat],
-	    p->p_pptr->p_pid,
+	    (p->p_pptr != NULL) ? p->p_pptr->p_pid : 0,
 
 	    p->p_pgid,
 	    p->p_session->s_sid,
@@ -222,16 +287,19 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 	rw_exit(&proclist_lock);
 
 	if (len == 0)
-		return 0;
+		goto out;
 
-	return (uiomove_frombuf(bf, len, uio));
+	error = uiomove_frombuf(bf, len, uio);
+out:
+	free(bf, M_TEMP);
+	return error;
 }
 
 int
-procfs_docpuinfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
-		 struct uio *uio)
+procfs_docpuinfo(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
 {
-	int len = 4096;
+	int len = LBFSZ;
 	char *bf = malloc(len, M_TEMP, M_WAITOK);
 	int error;
 
@@ -252,38 +320,45 @@ done:
 }
 
 int
-procfs_douptime(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
-		 struct uio *uio)
+procfs_douptime(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
 {
-	char bf[512];
+	char *bf;
 	int len;
 	struct timeval runtime;
 	u_int64_t idle;
+	int error = 0;
+
+	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
 	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
 	idle = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
-	len = snprintf(bf, sizeof(bf),
+	len = snprintf(bf, LBFSZ,
 	    "%lu.%02lu %" PRIu64 ".%02" PRIu64 "\n",
 	    runtime.tv_sec, runtime.tv_usec / 10000,
 	    idle / hz, (((idle % hz) * 100) / hz) % 100);
 
 	if (len == 0)
-		return 0;
+		goto out;
 
-	return (uiomove_frombuf(bf, len, uio));
+	error = uiomove_frombuf(bf, len, uio);
+out:
+	free(bf, M_TEMP);
+	return error;
 }
 
 int
-procfs_domounts(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
-		 struct uio *uio)
+procfs_domounts(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
 {
-	char bf[512], *mtab = NULL;
+	char *bf, *mtab = NULL;
 	const char *fsname;
 	size_t len, mtabsz = 0;
 	struct mount *mp, *nmp;
 	struct statvfs *sfs;
 	int error = 0;
 
+	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 	simple_lock(&mountlist_slock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
@@ -301,7 +376,7 @@ procfs_domounts(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		else if (strcmp(fsname, "ext2fs") == 0)
 			fsname = "ext2";
 
-		len = snprintf(bf, sizeof(bf), "%s %s %s %s%s%s%s%s%s 0 0\n",
+		len = snprintf(bf, LBFSZ, "%s %s %s %s%s%s%s%s%s 0 0\n",
 			sfs->f_mntfromname,
 			sfs->f_mntonname,
 			fsname,
@@ -322,6 +397,7 @@ procfs_domounts(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		vfs_unbusy(mp);
 	}
 	simple_unlock(&mountlist_slock);
+	free(bf, M_TEMP);
 
 	if (mtabsz > 0) {
 		error = uiomove_frombuf(mtab, mtabsz, uio);

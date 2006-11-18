@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.227 2006/06/25 08:03:46 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.227.4.1 2006/11/18 21:39:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.227 2006/06/25 08:03:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.227.4.1 2006/11/18 21:39:50 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.227 2006/06/25 08:03:46 yamt Exp $");
 
 #else /* defined(UVMMAP_NOCOUNTERS) */
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #define	UVMMAP_EVCNT_DEFINE(name) \
 struct evcnt uvmmap_evcnt_##name = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, \
     "uvmmap", #name); \
@@ -4709,11 +4709,8 @@ uvm_object_printit(struct uvm_object *uobj, boolean_t full,
  * uvm_page_printit: actually print the page
  */
 
-static const char page_flagbits[] =
-	"\20\1BUSY\2WANTED\3TABLED\4CLEAN\5PAGEOUT\6RELEASED\7FAKE\10RDONLY"
-	"\11ZERO\15PAGER1";
-static const char page_pqflagbits[] =
-	"\20\1FREE\2INACTIVE\3ACTIVE\5ANON\6AOBJ";
+static const char page_flagbits[] = UVM_PGFLAGBITS;
+static const char page_pqflagbits[] = UVM_PQFLAGBITS;
 
 void
 uvm_page_printit(struct vm_page *pg, boolean_t full,
@@ -4776,10 +4773,6 @@ uvm_page_printit(struct vm_page *pg, boolean_t full,
 		int color = VM_PGCOLOR_BUCKET(pg);
 		pgl = &uvm.page_free[fl].pgfl_buckets[color].pgfl_queues[
 		    ((pg)->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN];
-	} else if (pg->pqflags & PQ_INACTIVE) {
-		pgl = &uvm.page_inactive;
-	} else if (pg->pqflags & PQ_ACTIVE) {
-		pgl = &uvm.page_active;
 	} else {
 		pgl = NULL;
 	}
@@ -4808,14 +4801,14 @@ uvm_page_printall(void (*pr)(const char *, ...))
 	unsigned i;
 	struct vm_page *pg;
 
-	(*pr)("%18s %4s %2s %18s %18s"
+	(*pr)("%18s %4s %4s %18s %18s"
 #ifdef UVM_PAGE_TRKOWN
 	    " OWNER"
 #endif
 	    "\n", "PAGE", "FLAG", "PQ", "UOBJECT", "UANON");
 	for (i = 0; i < vm_nphysseg; i++) {
 		for (pg = vm_physmem[i].pgs; pg <= vm_physmem[i].lastpg; pg++) {
-			(*pr)("%18p %04x %02x %18p %18p",
+			(*pr)("%18p %04x %04x %18p %18p",
 			    pg, pg->flags, pg->pqflags, pg->uobject,
 			    pg->uanon);
 #ifdef UVM_PAGE_TRKOWN

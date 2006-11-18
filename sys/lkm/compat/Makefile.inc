@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2005/12/11 12:24:47 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.17.20.1 2006/11/18 21:39:28 ad Exp $
 
 .if !target(assym.h)
 S!=	cd ${.CURDIR}/../../..;pwd

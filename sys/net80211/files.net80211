@@ -1,7 +1,8 @@
-#	$NetBSD: files.net80211,v 1.1 2005/11/27 21:14:26 thorpej Exp $
+#	$NetBSD: files.net80211,v 1.1.26.1 2006/11/18 21:39:32 ad Exp $
 
 file	net80211/ieee80211.c			wlan
 file	net80211/ieee80211_acl.c		wlan
+file	net80211/ieee80211_amrr.c		wlan
 file	net80211/ieee80211_crypto.c		wlan
 file	net80211/ieee80211_crypto_ccmp.c	wlan
 file	net80211/ieee80211_crypto_none.c	wlan

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.62 2006/08/30 15:34:58 christos Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.62.2.1 2006/11/18 21:39:32 ad Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.62 2006/08/30 15:34:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.62.2.1 2006/11/18 21:39:32 ad Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -924,8 +924,8 @@ ieee80211_setup_rates(struct ieee80211_node *ni,
 
 static void
 ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
-    struct ieee80211_node *ni, int rssi, u_int32_t rstamp, u_int16_t seq,
-    u_int16_t status)
+    struct ieee80211_node *ni, int rssi, u_int32_t rstamp,
+    u_int16_t seq, u_int16_t status)
 {
 
 	if (ni->ni_authmode == IEEE80211_AUTH_SHARED) {

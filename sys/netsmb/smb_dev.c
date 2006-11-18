@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.23 2006/09/03 05:25:43 christos Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.23.2.1 2006/11/18 21:39:44 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.23 2006/09/03 05:25:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.23.2.1 2006/11/18 21:39:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -180,7 +180,8 @@ nsmbattach(int num)
 #endif /* __NetBSD__ */
 
 int
-nsmb_dev_open(dev_t dev, int oflags, int devtype, struct lwp *l)
+nsmb_dev_open(dev_t dev, int oflags, int devtype,
+    struct lwp *l)
 {
 	struct smb_dev *sdp;
 	int s;
@@ -260,7 +261,8 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct lwp *l)
 
 
 int
-nsmb_dev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+nsmb_dev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct smb_dev *sdp;
 	struct smb_vc *vcp;
@@ -465,7 +467,7 @@ DEV_MODULE (dev_netsmb, nsmb_dev_load, 0);
  */
 int
 smb_dev2share(int fd, int mode, struct smb_cred *scred,
-	struct smb_share **sspp)
+    struct smb_share **sspp)
 {
 	struct lwp *l = scred->scr_l;
 	struct file *fp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.17.10.2 2006/11/17 16:34:35 ad Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.17.10.3 2006/11/18 21:39:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.17.10.2 2006/11/17 16:34:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.17.10.3 2006/11/18 21:39:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,10 +396,13 @@ netbsd32_setcontext(struct lwp *l, void *v, register_t *retval)
 	void *p;
 
 	p = NETBSD32PTR64(SCARG(uap, ucp));
-	if (p == NULL)
-		exit1(l, W_EXITCODE(0, 0));
-	else if ((error = copyin(p, &uc, sizeof (uc))) != 0 ||
-	    (error = setucontext32(l, &uc)) != 0)
+	error = copyin(p, &uc, sizeof (uc));
+	if (error)
+		return (error);
+	if (!(uc.uc_flags & _UC_CPU))
+		return (EINVAL);
+	error = setucontext32(l, &uc);
+	if (error)
 		return (error);
 
 	return (EJUSTRETURN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.103 2006/08/30 18:53:04 christos Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.103.2.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.103 2006/08/30 18:53:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.103.2.1 2006/11/18 21:39:36 ad Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1217,9 +1217,9 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
  *
  * XXX per-destination/type check necessary?
  */
-/* "type" and "code" are not used at this moment */
 static int
-icmp_ratelimit(const struct in_addr *dst, const int type, const int code)
+icmp_ratelimit(const struct in_addr *dst, const int type,
+    const int code)
 {
 
 	/* PPS limit */

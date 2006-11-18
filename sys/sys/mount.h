@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.148 2006/08/04 16:29:51 yamt Exp $	*/
+/*	$NetBSD: mount.h,v 1.148.4.1 2006/11/18 21:39:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -83,13 +83,14 @@
 #define	MOUNT_TMPFS	"tmpfs"		/* Efficient memory file-system */
 #define MOUNT_UDF	"udf"		/* UDF CD/DVD filesystem */
 #define	MOUNT_SYSVBFS	"sysvbfs"	/* System V Boot Filesystem */
+#define MOUNT_PUFFS	"puffs"		/* Pass-to-Userspace filesystem */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
  * array of operations and an instance record.  The file systems are
  * put on a doubly linked list.
  */
-LIST_HEAD(vnodelst, vnode);
+TAILQ_HEAD(vnodelst, vnode);
 
 struct mount {
 	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
@@ -182,6 +183,30 @@ struct mbuf;
 struct vnodeopv_desc;
 struct kauth_cred;
 #endif
+
+#define VFS_PROTOS(fsname)						\
+int	fsname##_mount(struct mount *, const char *, void *,		\
+		struct nameidata *, struct lwp *);			\
+int	fsname##_start(struct mount *, int, struct lwp *);		\
+int	fsname##_unmount(struct mount *, int, struct lwp *);		\
+int	fsname##_root(struct mount *, struct vnode **);			\
+int	fsname##_quotactl(struct mount *, int, uid_t, void *,		\
+		struct lwp *);						\
+int	fsname##_statvfs(struct mount *, struct statvfs *,		\
+		struct lwp *);						\
+int	fsname##_sync(struct mount *, int, struct kauth_cred *,		\
+		struct lwp *);						\
+int	fsname##_vget(struct mount *, ino_t, struct vnode **);		\
+int	fsname##_fhtovp(struct mount *, struct fid *, struct vnode **);	\
+int	fsname##_vptofh(struct vnode *, struct fid *);			\
+void	fsname##_init(void);						\
+void	fsname##_reinit(void);						\
+void	fsname##_done(void);						\
+int	fsname##_mountroot(void);					\
+int	fsname##_snapshot(struct mount *, struct vnode *,		\
+		struct timespec *);					\
+int	fsname##_extattrctl(struct mount *, int, struct vnode *, int,	\
+		const char *, struct lwp *);
 
 struct vfsops {
 	const char *vfs_name;

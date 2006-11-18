@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.81 2006/07/23 22:06:15 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.81.4.1 2006/11/18 21:39:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.81 2006/07/23 22:06:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.81.4.1 2006/11/18 21:39:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

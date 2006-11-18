@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.20 2006/08/30 19:20:48 christos Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.20.2.1 2006/11/18 21:39:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.20 2006/08/30 19:20:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.20.2.1 2006/11/18 21:39:43 ad Exp $");
 
 
 #include <sys/param.h>
@@ -188,5 +188,5 @@ struct domain   isodomain = {
 	0,
 	{ &clnlintrq, NULL },		/* ifqueues */
 	{ NULL },
-	MOWNER_INIT,
+	MOWNER_INIT("",""),
 };

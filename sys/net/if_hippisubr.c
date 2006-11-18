@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.23 2006/06/07 22:33:42 kardel Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.23.6.1 2006/11/18 21:39:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.23 2006/06/07 22:33:42 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.23.6.1 2006/11/18 21:39:29 ad Exp $");
 
 #include "opt_inet.h"
 

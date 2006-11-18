@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.38 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.38.20.1 2006/11/18 21:39:49 ad Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.38 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.38.20.1 2006/11/18 21:39:49 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.38 2005/12/11 12:25:29 christos Exp $
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap.h>
+#include <uvm/uvm_pdpolicy.h>
 
 static POOL_INIT(uvm_anon_pool, sizeof(struct vm_anon), 0, 0, 0, "anonpl",
     &pool_allocator_nointr);
@@ -206,6 +207,12 @@ uvm_anfree(struct vm_anon *anon)
 	 */
 
 	uvm_anon_dropswap(anon);
+
+	/*
+	 * give a page replacement hint.
+	 */
+
+	uvmpdpol_anfree(anon);
 
 	/*
 	 * now that we've stripped the data areas from the anon,

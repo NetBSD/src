@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.12 2006/09/07 15:49:49 gdamore Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.12.2.1 2006/11/18 21:39:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.12 2006/09/07 15:49:49 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.12.2.1 2006/11/18 21:39:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,11 +96,11 @@ void
 todr_attach(todr_chip_handle_t todr)
 {
 
-        if (todr_handle) {
-                printf("todr_attach: TOD already configured\n");
+	if (todr_handle) {
+		printf("todr_attach: TOD already configured\n");
 		return;
 	}
-        todr_handle = todr;
+	todr_handle = todr;
 }
 
 static int timeset = 0;
@@ -141,12 +141,12 @@ inittodr(time_t base)
 	/*
 	 * Some ports need to be supplied base in order to fabricate a time_t.
 	 */
-	tv.tv_sec = base;
-	tv.tv_usec = 0;
+	if (todr_handle)
+		todr_handle->base_time = base;
 
 	if ((todr_handle == NULL) ||
 	    (todr_gettime(todr_handle, &tv) != 0) ||
-	    (tv.tv_sec < (5 * SECYR))) {
+	    (tv.tv_sec < (25 * SECYR))) {
 
 		if (todr_handle != NULL)
 			printf("WARNING: preposterous TOD clock time\n");
@@ -171,8 +171,7 @@ inittodr(time_t base)
 				printf("WARNING: clock lost %d days\n",
 				    deltat / SECDAY);
 				badrtc = 1;
-			}
-			else {
+			} else {
 				printf("WARNING: clock gained %d days\n",
 				    deltat / SECDAY);
 			}
@@ -246,18 +245,58 @@ resettodr(void)
 
 #endif	/* __HAVE_GENERIC_TODR */
 
+#ifdef	TODR_DEBUG
+static void
+todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
+    volatile struct timeval *tvp)
+{
+	struct timeval tv_val;
+	struct clock_ymdhms dt_val;
+
+	if (dt == NULL) {
+		clock_secs_to_ymdhms(tvp->tv_sec, &dt_val);
+		dt = &dt_val;
+	}
+	if (tvp == NULL) {
+		tvp = &tv_val;
+		tvp->tv_sec = clock_ymdhms_to_secs(dt);
+		tvp->tv_usec = 0;
+	}
+	printf("%s: rv = %d\n", prefix, rv);
+	printf("%s: rtc_offset = %d\n", prefix, rtc_offset);
+	printf("%s: %4u/%02u/%02u %02u:%02u:%02u, (wday %d) (epoch %u.%06u)\n",
+	    prefix,
+	    dt->dt_year, dt->dt_mon, dt->dt_day,
+	    dt->dt_hour, dt->dt_min, dt->dt_sec,
+	    dt->dt_wday, (unsigned)tvp->tv_sec, (unsigned)tvp->tv_usec);
+}
+#else	/* !TODR_DEBUG */
+#define	todr_debug(prefix, rv, dt, tvp)
+#endif	/* TODR_DEBUG */
+
 
 int
-todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
+todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	struct clock_ymdhms	dt;
 	int			rv;
 
-	if (tch->todr_gettime)
-		return tch->todr_gettime(tch, tvp);
-
-	if (tch->todr_gettime_ymdhms) {
-		if ((rv = tch->todr_gettime_ymdhms(tch, &dt)) != 0)	
+	if (tch->todr_gettime) {
+		rv = tch->todr_gettime(tch, tvp);
+		/*
+		 * Some unconverted ports have their own references to
+		 * rtc_offset.   A converted port must not do that.
+		 */
+#ifdef	__HAVE_GENERIC_TODR
+		if (rv == 0)
+			tvp->tv_sec += rtc_offset * 60;
+#endif
+		todr_debug("TODR-GET-SECS", rv, NULL, tvp);
+		return rv;
+	} else if (tch->todr_gettime_ymdhms) {
+		rv = tch->todr_gettime_ymdhms(tch, &dt);
+		todr_debug("TODR-GET-YMDHMS", rv, &dt, NULL);
+		if (rv)
 			return rv;
 
 		/*
@@ -266,38 +305,63 @@ todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 		 *
 		 * However, clock_ymdhms_to_secs performs the same
 		 * check for us, so we need not worry about it.  Note
-		 * that this assumes that the tvp->tv_sec member is is
+		 * that this assumes that the tvp->tv_sec member is
 		 * a time_t.
 		 */
 
-		/* simple sanity checks */
-		if (dt.dt_mon > 12 || dt.dt_day > 31 ||
-		    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
-			return -1;
-
+		/*
+		 * Simple sanity checks.  Note that this includes a
+		 * value for clocks that can return a leap second.
+		 * Note that we don't support double leap seconds,
+		 * since this was apparently an error/misunderstanding
+		 * on the part of the ISO C committee, and can never
+		 * actually occur.  If your clock issues us a double
+		 * leap second, it must be broken.  Ultimately, you'd
+		 * have to be trying to read time at precisely that
+		 * instant to even notice, so even broken clocks will
+		 * work the vast majority of the time.  In such a case
+		 * it is recommended correction be applied in the
+		 * clock driver.
+		 */
+		if (dt.dt_mon < 1 || dt.dt_mon > 12 ||
+		    dt.dt_day < 1 || dt.dt_day > 31 ||
+		    dt.dt_hour > 23 || dt.dt_min > 59 || dt.dt_sec > 60) {
+			return EINVAL;
+		}
 		tvp->tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
 		tvp->tv_usec = 0;
-		return tvp->tv_sec < 0 ? -1 : 0;
+		return tvp->tv_sec < 0 ? EINVAL : 0;
 	}
 
-	return -1;
+	return ENXIO;
 }
 
 int
 todr_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	struct clock_ymdhms	dt;
+	int			rv;
 
-	if (tch->todr_settime)
-		return tch->todr_settime(tch, tvp);
-
-	if (tch->todr_settime_ymdhms) {
+	if (tch->todr_settime) {
+		/* See comments above in gettime why this is ifdef'd */
+#ifdef	__HAVE_GENERIC_TODR
+		struct timeval	copy = *tvp;
+		copy.tv_sec -= rtc_offset * 60;
+		rv = tch->todr_settime(tch, &copy);
+#else
+		rv = tch->todr_settime(tch, tvp);
+#endif
+		todr_debug("TODR-SET-SECS", rv, NULL, tvp);
+		return rv;
+	} else if (tch->todr_settime_ymdhms) {
 		time_t	sec = tvp->tv_sec - rtc_offset * 60;
 		if (tvp->tv_usec >= 500000)
 			sec++;
 		clock_secs_to_ymdhms(sec, &dt);
-		return tch->todr_settime_ymdhms(tch, &dt);
+		rv = tch->todr_settime_ymdhms(tch, &dt);
+		todr_debug("TODR-SET-YMDHMS", rv, &dt, NULL);
+		return rv;
+	} else {
+		return ENXIO;
 	}
-
-	return -1;
 }

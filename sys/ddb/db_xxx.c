@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.38.8.1 2006/10/21 14:31:10 ad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.38.8.2 2006/11/18 21:39:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.38.8.1 2006/10/21 14:31:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.38.8.2 2006/11/18 21:39:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.38.8.1 2006/10/21 14:31:10 ad Exp $");
 #endif
 
 void
-db_kill_proc(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
+db_kill_proc(db_expr_t addr, int haddr,
+    db_expr_t count, const char *modif)
 {
 	struct proc *p;
 	db_expr_t pid, sig;
@@ -104,7 +105,8 @@ db_kill_proc(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 
 #ifdef KGDB
 void
-db_kgdb_cmd(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
+db_kgdb_cmd(db_expr_t addr, int haddr,
+    db_expr_t count, const char *modif)
 {
 	kgdb_active++;
 	kgdb_trap(db_trap_type, DDB_REGS);
@@ -113,7 +115,8 @@ db_kgdb_cmd(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 #endif
 
 void
-db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
+db_show_all_procs(db_expr_t addr, int haddr,
+    db_expr_t count, const char *modif)
 {
 	int i;
 
@@ -230,14 +233,16 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 }
 
 void
-db_show_all_pools(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
+db_show_all_pools(db_expr_t addr, int haddr,
+    db_expr_t count, const char *modif)
 {
 
 	pool_printall(modif, db_printf);
 }
 
 void
-db_dmesg(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
+db_dmesg(db_expr_t addr, int haddr, db_expr_t count,
+    const char *modif)
 {
 	struct kern_msgbuf *mbp;
 	db_expr_t print;
@@ -290,7 +295,8 @@ db_dmesg(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 #endif
 
 void
-db_show_sched_qs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
+db_show_sched_qs(db_expr_t addr, int haddr,
+    db_expr_t count, const char *modif)
 {
 	struct prochd *ph;
 	struct lwp *l;

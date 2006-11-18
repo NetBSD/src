@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.113 2006/08/30 15:45:54 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.113.2.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.113 2006/08/30 15:45:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.113.2.1 2006/11/18 21:39:36 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -587,11 +587,8 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 * with source address selection.
 			 */
 			ifa = &ia->ia_ifa;
-			if (ifa != rt->rt_ifa) {
-				IFAFREE(rt->rt_ifa);
-				IFAREF(ifa);
-				rt->rt_ifa = ifa;
-			}
+			if (ifa != rt->rt_ifa)
+				rt_replace_ifa(rt, ifa);
 		}
 		break;
 
@@ -1507,7 +1504,8 @@ db_show_radix_node(struct radix_node *rn, void *w)
  * Use this from ddb:  "show arptab"
  */
 void
-db_show_arptab(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_show_arptab(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	struct radix_node_head *rnh;
 	rnh = rt_tables[AF_INET];

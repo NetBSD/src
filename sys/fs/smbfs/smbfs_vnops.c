@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.53 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.53.4.1 2006/11/18 21:39:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.53 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.53.4.1 2006/11/18 21:39:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -882,8 +882,7 @@ smbfs_readdir(v)
 
 /* ARGSUSED */
 int
-smbfs_fsync(v)
-     void *v;
+smbfs_fsync(void *v)
 {
 	/*return (smb_flush(ap->a_vp, ap->a_cred, ap->a_waitfor, ap->a_l, 1));*/
     return (0);
@@ -901,7 +900,7 @@ smbfs_print(v)
 
 	printf("tag VT_SMBFS, name = %.*s, parent = %p, open = %d\n",
 	    (int)np->n_nmlen, np->n_name,
-	    np->n_parent ? SMBTOV(np->n_parent) : NULL,
+	    np->n_parent ? np->n_parent : NULL,
 	    (np->n_flag & NOPEN) != 0);
 	printf("       ");
 	lockmgr_printinfo(vp->v_vnlock);
@@ -1309,7 +1308,8 @@ smbfs_lookup(v)
 	 */
 	smb_makescred(&scred, cnp->cn_lwp, cnp->cn_cred);
 	if (flags & ISDOTDOT)
-		error = smbfs_smb_lookup(dnp->n_parent, NULL, 0, &fattr, &scred);
+		error = smbfs_smb_lookup(VTOSMB(dnp->n_parent), NULL, 0,
+		    &fattr, &scred);
 	else
 		error = smbfs_smb_lookup(dnp, name, nmlen, &fattr, &scred);
 

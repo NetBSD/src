@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.61 2006/08/31 19:24:38 dyoung Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.61.2.1 2006/11/18 21:39:46 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -194,7 +194,7 @@
 #if __GNUC_PREREQ__(3, 1)
 #define	__used		__attribute__((__used__))
 #else
-#define	__used		/* delete */
+#define	__used		__unused
 #endif
 
 #if __GNUC_PREREQ__(2, 7)
@@ -371,12 +371,14 @@
 /* find least significant bit that is set */
 #define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
 
+#define	__PRIuBIT	PRIuMAX
+#define	__PRIuBITS	__PRIuBIT
+
 #define	__PRIxBIT	PRIxMAX
 #define	__PRIxBITS	__PRIxBIT
 
-#define	__SHIFTOUT(__x, __mask)	\
-	((typeof(__x))(((__x) & (__mask)) / __LOWEST_SET_BIT(__mask)))
-#define	__SHIFTIN(__x, __mask) ((typeof(__x))((__x) * __LOWEST_SET_BIT(__mask)))
+#define	__SHIFTOUT(__x, __mask)	(((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
+#define	__SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
 #define	__SHIFTOUT_MASK(__mask) __SHIFTOUT((__mask), (__mask))
 
 #endif /* !_SYS_CDEFS_H_ */

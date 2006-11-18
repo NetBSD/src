@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.276.4.3 2006/11/17 16:34:35 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.276.4.4 2006/11/18 21:39:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.3 2006/11/17 16:34:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.4 2006/11/18 21:39:21 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -171,6 +171,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.3 2006/11/17 16:34:35 ad Exp $
 #include <net/if.h>
 #include <net/raw_cb.h>
 
+#include <secmodel/secmodel.h>
+
 extern struct proc proc0;
 extern struct lwp lwp0;
 extern struct cwdinfo cwdi0;
@@ -191,6 +193,17 @@ volatile int start_init_exec;		/* semaphore for start_init() */
 static void check_console(struct lwp *l);
 static void start_init(void *);
 void main(void);
+
+#if defined(__SSP__) || defined(__SSP_ALL__)
+long __stack_chk_guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+void __stack_chk_fail(void);
+
+void
+__stack_chk_fail(void)
+{
+	panic("stack overflow detected; terminated");
+}
+#endif
 
 /*
  * System startup; initialize the world, create process 0, mount root
@@ -273,6 +286,7 @@ main(void)
 
 	/* Initialize process and pgrp structures. */
 	procinit();
+	lwpinit();
 
 	/* Initialize signal-related data structures. */
 	signal_init();
@@ -312,9 +326,35 @@ main(void)
 	ntp_init();
 #endif /* __HAVE_TIMECOUNTER */
 
+	/* Initialize kauth. */
+	kauth_init();
+
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
 
+#if defined(__SSP__) || defined(__SSP_ALL__)
+	{
+#ifdef DIAGNOSTIC
+		printf("Initializing SSP:");
+#endif
+		/*
+		 * We initialize ssp here carefully:
+		 *	1. after we got some entropy
+		 *	2. without calling a function
+		 */
+		size_t i;
+		long guard[__arraycount(__stack_chk_guard)];
+
+		arc4randbytes(guard, sizeof(guard));
+		for (i = 0; i < __arraycount(guard); i++)
+			__stack_chk_guard[i] = guard[i];
+#ifdef DIAGNOSTIC
+		for (i = 0; i < __arraycount(guard); i++)
+			printf("%lx ", guard[i]);
+		printf("\n");
+#endif
+	}
+#endif
 	ubc_init();		/* must be after autoconfig */
 
 	/* Lock the kernel on behalf of proc0. */
@@ -340,8 +380,8 @@ main(void)
 	ksem_init();
 #endif
 
-	/* Initialize kauth. */
-	kauth_init();
+	/* Initialize default security model. */
+	secmodel_start();
 
 #ifdef FILEASSOC
 	fileassoc_init();

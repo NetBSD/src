@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.50 2006/08/29 23:45:23 christos Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.50.2.1 2006/11/18 21:39:04 ad Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.50 2006/08/29 23:45:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.50.2.1 2006/11/18 21:39:04 ad Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -149,10 +149,10 @@ coda_vfsopstats_init(void)
 /*ARGSUSED*/
 int
 coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
-	const char *path,	/* path covered: ignored by the fs-layer */
-	void *data,		/* Need to define a data type for this in netbsd? */
-	struct nameidata *ndp,	/* Clobber this to lookup the device name */
-	struct lwp *l)		/* The ever-famous lwp pointer */
+    const char *path,	/* path covered: ignored by the fs-layer */
+    void *data,		/* Need to define a data type for this in netbsd? */
+    struct nameidata *ndp,	/* Clobber this to lookup the device name */
+    struct lwp *l)		/* The ever-famous lwp pointer */
 {
     struct vnode *dvp;
     struct cnode *cp;
@@ -398,8 +398,8 @@ coda_root(struct mount *vfsp, struct vnode **vpp)
 }
 
 int
-coda_quotactl(struct mount *vfsp, int cmd, uid_t uid, void *arg,
-	struct lwp *l)
+coda_quotactl(struct mount *vfsp, int cmd, uid_t uid,
+    void *arg, struct lwp *l)
 {
     ENTRY;
     return (EOPNOTSUPP);
@@ -452,7 +452,8 @@ coda_nb_statvfs(struct mount *vfsp, struct statvfs *sbp, struct lwp *l)
  * Flush any pending I/O.
  */
 int
-coda_sync(struct mount *vfsp, int waitfor, kauth_cred_t cred, struct lwp *l)
+coda_sync(struct mount *vfsp, int waitfor,
+    kauth_cred_t cred, struct lwp *l)
 {
     ENTRY;
     MARK_ENTRY(CODA_SYNC_STATS);
@@ -461,7 +462,8 @@ coda_sync(struct mount *vfsp, int waitfor, kauth_cred_t cred, struct lwp *l)
 }
 
 int
-coda_vget(struct mount *vfsp, ino_t ino, struct vnode **vpp)
+coda_vget(struct mount *vfsp, ino_t ino,
+    struct vnode **vpp)
 {
     ENTRY;
     return (EOPNOTSUPP);
@@ -474,7 +476,8 @@ coda_vget(struct mount *vfsp, ino_t ino, struct vnode **vpp)
  */
 int
 coda_fhtovp(struct mount *vfsp, struct fid *fhp, struct mbuf *nam,
-	struct vnode **vpp, int *exflagsp, kauth_cred_t *creadanonp)
+    struct vnode **vpp, int *exflagsp,
+    kauth_cred_t *creadanonp)
 {
     struct cfid *cfid = (struct cfid *)fhp;
     struct cnode *cp = 0;

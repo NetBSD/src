@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.h,v 1.8 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: gmon.h,v 1.8.20.1 2006/11/18 21:39:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1992, 1993
@@ -114,12 +114,6 @@ struct rawarc {
 	u_long	raw_selfpc;
 	long	raw_count;
 };
-
-/*
- * general rounding functions.
- */
-#define ROUNDDOWN(x,y)	(((x)/(y))*(y))
-#define ROUNDUP(x,y)	((((x)+(y)-1)/(y))*(y))
 
 /*
  * The profiling data structures are housed in this structure.

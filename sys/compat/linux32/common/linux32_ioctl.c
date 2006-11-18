@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.c,v 1.3 2006/08/25 08:25:03 manu Exp $ */
+/*	$NetBSD: linux32_ioctl.c,v 1.3.2.1 2006/11/18 21:39:11 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.3 2006/08/25 08:25:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.3.2.1 2006/11/18 21:39:11 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,8 +72,10 @@ linux32_sys_ioctl(l, v, retval)
 
 	group = LINUX32_IOCGROUP((int)SCARG(uap, com));
 
+#ifdef DEBUG_LINUX
 	printf("linux32_sys_ioctl(%d, 0x%x/\'%c\', %p)\n", SCARG(uap, fd),
 	    SCARG(uap, com), (char)group, NETBSD32PTR64(SCARG(uap, data)));
+#endif
 
 	switch(group) {
 	case 'T':

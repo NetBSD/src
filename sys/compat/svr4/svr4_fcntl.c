@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.50.4.1 2006/11/17 16:34:35 ad Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.50.4.2 2006/11/18 21:39:14 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.50.4.1 2006/11/17 16:34:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.50.4.2 2006/11/18 21:39:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,10 +259,7 @@ svr4_to_bsd_flock64(iflp, oflp)
 
 
 static int
-fd_revoke(l, fd, retval)
-	struct lwp *l;
-	int fd;
-	register_t *retval;
+fd_revoke(struct lwp *l, int fd, register_t *retval)
 {
 	struct filedesc *fdp = l->l_proc->p_fd;
 	struct file *fp;

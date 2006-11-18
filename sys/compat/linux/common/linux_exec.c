@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.86 2006/09/02 06:52:13 christos Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.86.2.1 2006/11/18 21:39:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.86 2006/09/02 06:52:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.86.2.1 2006/11/18 21:39:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,6 +191,7 @@ linux_e_proc_init(p, parent, forkflags)
 #ifdef DIAGNOSTIC
 		if (ep == NULL) {
 			killproc(p, "FORK_SHAREVM while emuldata is NULL\n");
+			FREE(e, M_EMULDATA);
 			return;
 		}
 #endif
@@ -254,9 +255,7 @@ linux_e_proc_init(p, parent, forkflags)
  * the executed process is of same emulation as original forked one.
  */
 static void
-linux_e_proc_exec(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+linux_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
 	/* exec, use our vmspace */
 	linux_e_proc_init(p, NULL, 0);

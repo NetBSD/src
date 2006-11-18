@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.143.2.1 2006/11/17 16:34:36 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.143.2.2 2006/11/18 21:39:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143.2.1 2006/11/17 16:34:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143.2.2 2006/11/18 21:39:22 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143.2.1 2006/11/17 16:34:36 ad Exp $
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
 #include "opt_systrace.h"
+#include "opt_powerhook.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,13 +673,14 @@ struct powerhook_desc {
 	CIRCLEQ_ENTRY(powerhook_desc) sfd_list;
 	void	(*sfd_fn)(int, void *);
 	void	*sfd_arg;
+	char	sfd_name[16];
 };
 
 static CIRCLEQ_HEAD(, powerhook_desc) powerhook_list =
     CIRCLEQ_HEAD_INITIALIZER(powerhook_list);
 
 void *
-powerhook_establish(void (*fn)(int, void *), void *arg)
+powerhook_establish(const char *name, void (*fn)(int, void *), void *arg)
 {
 	struct powerhook_desc *ndp;
 
@@ -689,6 +691,7 @@ powerhook_establish(void (*fn)(int, void *), void *arg)
 
 	ndp->sfd_fn = fn;
 	ndp->sfd_arg = arg;
+	strlcpy(ndp->sfd_name, name, sizeof(ndp->sfd_name));
 	CIRCLEQ_INSERT_HEAD(&powerhook_list, ndp, sfd_list);
 
 	return (ndp);
@@ -720,15 +723,47 @@ dopowerhooks(int why)
 {
 	struct powerhook_desc *dp;
 
+#ifdef POWERHOOK_DEBUG
+	printf("dopowerhooks ");
+	switch (why) {
+	case PWR_RESUME:
+		printf("resume");
+		break;
+	case PWR_SOFTRESUME:
+		printf("softresume");
+		break;
+	case PWR_SUSPEND:
+		printf("suspend");
+		break;
+	case PWR_SOFTSUSPEND:
+		printf("softsuspend");
+		break;
+	case PWR_STANDBY:
+		printf("standby");
+		break;
+	}
+	printf(":");
+#endif
+
 	if (why == PWR_RESUME || why == PWR_SOFTRESUME) {
 		CIRCLEQ_FOREACH_REVERSE(dp, &powerhook_list, sfd_list) {
+#ifdef POWERHOOK_DEBUG
+			printf(" %s", dp->sfd_name);
+#endif
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}
 	} else {
 		CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list) {
+#ifdef POWERHOOK_DEBUG
+			printf(" %s", dp->sfd_name);
+#endif
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}
 	}
+
+#ifdef POWERHOOK_DEBUG
+	printf(".\n");
+#endif
 }
 
 /*
@@ -747,16 +782,6 @@ extern struct cfdriver md_cd;
 
 #ifdef MEMORY_DISK_IS_ROOT
 #define BOOT_FROM_MEMORY_HOOKS 1
-#endif
-
-#include "raid.h"
-#if NRAID == 1
-#define BOOT_FROM_RAID_HOOKS 1
-#endif
-
-#ifdef BOOT_FROM_RAID_HOOKS
-extern int numraid;
-extern struct device *raidrootdev;
 #endif
 
 /*
@@ -1116,18 +1141,9 @@ static struct device *
 finddevice(const char *name)
 {
 	struct device *dv;
-#if defined(BOOT_FROM_RAID_HOOKS) || defined(BOOT_FROM_MEMORY_HOOKS)
+#if defined(BOOT_FROM_MEMORY_HOOKS)
 	int j;
-#endif /* BOOT_FROM_RAID_HOOKS || BOOT_FROM_MEMORY_HOOKS */
-
-#ifdef BOOT_FROM_RAID_HOOKS
-	for (j = 0; j < numraid; j++) {
-		if (strcmp(name, raidrootdev[j].dv_xname) == 0) {
-			dv = &raidrootdev[j];
-			return (dv);
-		}
-	}
-#endif /* BOOT_FROM_RAID_HOOKS */
+#endif /* BOOT_FROM_MEMORY_HOOKS */
 
 #ifdef BOOT_FROM_MEMORY_HOOKS
 	for (j = 0; j < NMD; j++) {
@@ -1152,9 +1168,6 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 #ifdef MEMORY_DISK_HOOKS
 	int		i;
 #endif
-#ifdef BOOT_FROM_RAID_HOOKS
-	int 		j;
-#endif
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
@@ -1162,12 +1175,6 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 		if (isdump == 0)
 			for (i = 0; i < NMD; i++)
 				printf(" %s[a-%c]", fakemdrootdev[i].dv_xname,
-				    'a' + MAXPARTITIONS - 1);
-#endif
-#ifdef BOOT_FROM_RAID_HOOKS
-		if (isdump == 0)
-			for (j = 0; j < numraid; j++)
-				printf(" %s[a-%c]", raidrootdev[j].dv_xname,
 				    'a' + MAXPARTITIONS - 1);
 #endif
 		TAILQ_FOREACH(dv, &alldevs, dv_list) {
@@ -1355,9 +1362,10 @@ int
 trace_enter(struct lwp *l, register_t code,
     register_t realcode, const struct sysent *callp, void *args)
 {
-#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 	struct proc *p = l->l_proc;
 
+
+#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 #ifdef SYSCALL_DEBUG
 	scdebug_call(l, code, args);
 #endif /* SYSCALL_DEBUG */
@@ -1392,9 +1400,9 @@ void
 trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
     int error)
 {
-#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 	struct proc *p = l->l_proc;
 
+#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */

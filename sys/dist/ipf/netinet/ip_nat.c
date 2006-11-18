@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.12 2006/06/13 02:08:20 christos Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.12.6.1 2006/11/18 21:39:17 ad Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -19,6 +19,9 @@
 #if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
     defined(_KERNEL)
 # include "opt_ipfilter.h"
+#endif
+#if (__NetBSD_Version__ >= 399002000)
+#include <sys/kauth.h>
 #endif
 #if !defined(_KERNEL)
 # include <stdio.h>
@@ -621,7 +624,13 @@ int mode;
 	ipnat_t natd;
 
 #if (BSD >= 199306) && defined(_KERNEL)
+#if (__NetBSD_Version__ >= 399002000)
+	if ((mode & FWRITE) && kauth_authorize_network(curlwp->l_cred,
+	    KAUTH_NETWORK_FIREWALL, KAUTH_REQ_NETWORK_FIREWALL_NAT,
+	    NULL, NULL, NULL))
+#else
 	if ((securelevel >= 2) && (mode & FWRITE))
+#endif
 		return EPERM;
 #endif
 
@@ -2401,13 +2410,14 @@ done:
 /* for both IPv4 and IPv6.                                                  */
 /* ------------------------------------------------------------------------ */
 /*ARGSUSED*/
-static int nat_finalise(fin, nat, ni, tcp, natsave, direction)
-fr_info_t *fin;
-nat_t *nat;
-natinfo_t *ni;
-tcphdr_t *tcp;
-nat_t **natsave;
-int direction;
+static int nat_finalise(
+    fr_info_t *fin,
+    nat_t *nat,
+    natinfo_t *ni,
+    tcphdr_t *tcp,
+    nat_t **natsave,
+    int direction
+)
 {
 	frentry_t *fr;
 	ipnat_t *np;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.45 2006/03/08 23:46:27 lukem Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.45.10.1 2006/11/18 21:39:32 ad Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.45 2006/03/08 23:46:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.45.10.1 2006/11/18 21:39:32 ad Exp $");
 #endif
 
 /*

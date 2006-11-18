@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.17 2005/12/17 05:37:17 jmc Exp $
+ *	$Id: i4b_rbch.c,v 1.17.20.1 2006/11/18 21:39:41 ad Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.17 2005/12/17 05:37:17 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.17.20.1 2006/11/18 21:39:41 ad Exp $");
 
 #include "isdnbchan.h"
 
@@ -191,7 +191,8 @@ PDEVSTATIC int isdnbchanselect __P((dev_t dev, int rw, struct lwp *l));
 #ifdef __NetBSD__
 const struct cdevsw isdnbchan_cdevsw = {
 	isdnbchanopen, isdnbchanclose, isdnbchanread, isdnbchanwrite,
-	isdnbchanioctl, nostop, notty, isdnbchanpoll, nommap,
+	isdnbchanioctl, nostop, notty, isdnbchanpoll, nommap, nokqfilter,
+	D_OTHER
 };
 #endif /* __NetBSD__ */
 
@@ -365,7 +366,8 @@ isdnbchanattach()
  *	open rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanopen(dev_t dev, int flag, int fmt, struct lwp *l)
+isdnbchanopen(dev_t dev, int flag, int fmt,
+	struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -390,7 +392,8 @@ isdnbchanopen(dev_t dev, int flag, int fmt, struct lwp *l)
  *	close rbch device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanclose(dev_t dev, int flag, int fmt, struct lwp *l)
+isdnbchanclose(dev_t dev, int flag, int fmt,
+	struct lwp *l)
 {
 	int unit = minor(dev);
 	struct rbch_softc *sc = &rbch_softc[unit];
@@ -645,7 +648,8 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
  *	rbch device ioctl handlibg
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct lwp *l)
+isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	int error = 0;
 	int unit = minor(dev);
@@ -1063,7 +1067,8 @@ rbch_disconnect(void *softc, void *cdp)
  *	feedback from daemon in case of dial problems
  *---------------------------------------------------------------------------*/
 static void
-rbch_dialresponse(void *softc, int status, cause_t cause)
+rbch_dialresponse(void *softc, int status,
+	cause_t cause)
 {
 }
 

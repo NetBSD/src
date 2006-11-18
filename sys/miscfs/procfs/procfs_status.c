@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.27.8.2 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.27.8.3 2006/11/18 21:39:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.27.8.2 2006/11/17 16:34:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.27.8.3 2006/11/18 21:39:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,11 +89,12 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.27.8.2 2006/11/17 16:34:40 ad Ex
 #include <miscfs/procfs/procfs.h>
 
 int
-procfs_dostatus(curl, l, pfs, uio)
-	struct lwp *curl;
-	struct lwp *l;
-	struct pfsnode *pfs;
-	struct uio *uio;
+procfs_dostatus(
+    struct lwp *curl,
+    struct lwp *l,
+    struct pfsnode *pfs,
+    struct uio *uio
+)
 {
 	struct session *sess;
 	struct tty *tp;

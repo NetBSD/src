@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.11 2006/07/23 22:06:11 ad Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.11.4.1 2006/11/18 21:39:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.11 2006/07/23 22:06:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.11.4.1 2006/11/18 21:39:23 ad Exp $");
 
 #include "opt_ptm.h"
 
@@ -153,13 +153,17 @@ retry:
 		goto bad;
 	}
 	if (ptm == NULL) {
+		DPRINTF(("no ptm\n"));
 		error = EOPNOTSUPP;
 		goto bad;
 	}
-	if ((error = (*ptm->allocvp)(ptm, l, &vp, *dev, 'p')) != 0)
+	if ((error = (*ptm->allocvp)(ptm, l, &vp, *dev, 'p')) != 0) {
+		DPRINTF(("pty_allocvp %d\n", error));
 		goto bad;
+	}
 
 	if ((error = pty_vn_open(vp, l)) != 0) {
+		DPRINTF(("pty_vn_open %d\n", error));
 		/*
 		 * Check if the master open failed because we lost
 		 * the race to grab it.
@@ -167,6 +171,7 @@ retry:
 		if (error != EIO)
 			goto bad;
 		error = !pty_isfree(md, 1);
+		DPRINTF(("pty_isfree %d\n", error));
 		if (error)
 			goto retry;
 		else
@@ -204,7 +209,6 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 	 */
 	if (ptm == NULL)
 		return EOPNOTSUPP;
-
 	if ((error = (*ptm->allocvp)(ptm, l, &vp, dev, 't')) != 0)
 		return error;
 
@@ -318,11 +322,28 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int error;
 	int fd;
+	dev_t ttydev;
 
 	switch(minor(dev)) {
 	case 0:		/* /dev/ptmx */
-		if ((error = pty_alloc_master(l, &fd, &dev)) != 0)
+	case 2:		/* /emul/linux/dev/ptmx */
+		if ((error = pty_alloc_master(l, &fd, &ttydev)) != 0)
 			return error;
+		if (minor(dev) == 2) {
+			/*
+			 * Linux ptyfs grants the pty right here.
+			 * Handle this case here, instead of writing
+			 * a new linux module.
+			 */
+			if ((error = pty_grant_slave(l, ttydev)) != 0) {
+				struct file *fp =
+				    fd_getfile(l->l_proc->p_fd, fd);
+				FILE_UNUSE(fp, l);
+				fdremove(l->l_proc->p_fd, fd);
+				ffree(fp);
+				return error;
+			}
+		}
 		curlwp->l_dupfd = fd;
 		return EMOVEFD;
 	case 1:		/* /dev/ptm */
@@ -336,6 +357,7 @@ static int
 /*ARGSUSED*/
 ptmclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
+
 	return (0);
 }
 
@@ -369,6 +391,7 @@ ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	}
 bad:
 	fp = fd_getfile(p->p_fd, cfd);
+	FILE_UNUSE(fp, l);
 	fdremove(p->p_fd, cfd);
 	ffree(fp);
 	return error;

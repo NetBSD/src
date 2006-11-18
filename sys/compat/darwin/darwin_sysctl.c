@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.43.2.1 2006/11/17 16:34:34 ad Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.43.2.2 2006/11/18 21:39:04 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.43.2.1 2006/11/17 16:34:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.43.2.2 2006/11/18 21:39:04 ad Exp $");
+
+#include "opt_ktrace.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.43.2.1 2006/11/17 16:34:34 ad Ex
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 #include <sys/sa.h>
 #include <sys/tty.h>
 #include <sys/kauth.h>
@@ -314,15 +319,9 @@ darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-#ifdef DEBUG_DARWIN
-	if (1) {
-		int i;
-
-		printf("darwin_sys___sysctl: ");
-		for (i = 0; i < SCARG(uap, namelen); i++)
-			printf("%d ", name[i]);
-		printf("\n");
-	}
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_MIB))
+		ktrmib(l, name, SCARG(uap, namelen));
 #endif
 
 	/*
@@ -448,10 +447,7 @@ SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
  * of course).
  */
 int
-darwin_sys_getpid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_getpid(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_emuldata *ded;
 	struct proc *p = l->l_proc;

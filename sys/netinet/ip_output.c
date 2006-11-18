@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.165 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.165.4.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.165 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.165.4.1 2006/11/18 21:39:36 ad Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -219,6 +219,7 @@ ip_output(struct mbuf *m0, ...)
 	struct route iproute;
 	struct sockaddr_in *dst;
 	struct in_ifaddr *ia;
+	struct ifaddr *xifa;
 	struct mbuf *opt;
 	struct route *ro;
 	int flags, sw_csum;
@@ -431,6 +432,11 @@ ip_output(struct mbuf *m0, ...)
 				error = EADDRNOTAVAIL;
 				goto bad;
 			}
+			xifa = &xia->ia_ifa;
+			if (xifa->ifa_getifa != NULL) {
+				xia = ifatoia((*xifa->ifa_getifa)(xifa,
+				    &ro->ro_dst));
+			}
 			ip->ip_src = xia->ia_addr.sin_addr;
 		}
 
@@ -487,8 +493,12 @@ ip_output(struct mbuf *m0, ...)
 	 * If source address not specified yet, use address
 	 * of outgoing interface.
 	 */
-	if (in_nullhost(ip->ip_src))
+	if (in_nullhost(ip->ip_src)) {
+		xifa = &ia->ia_ifa;
+		if (xifa->ifa_getifa != NULL)
+			ia = ifatoia((*xifa->ifa_getifa)(xifa, &ro->ro_dst));
 		ip->ip_src = ia->ia_addr.sin_addr;
+	}
 
 	/*
 	 * packets with Class-D address as source are not valid per

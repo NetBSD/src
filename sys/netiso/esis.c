@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.38 2006/08/30 01:08:43 christos Exp $	*/
+/*	$NetBSD: esis.c,v 1.38.2.1 2006/11/18 21:39:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.38 2006/08/30 01:08:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.38.2.1 2006/11/18 21:39:43 ad Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -196,11 +196,14 @@ esis_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			break;
 		}
-		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))) {
+
+		if (l == NULL) {
 			error = EACCES;
 			break;
 		}
+
+		/* XXX: raw socket permission is checked in socreate() */
+
 		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
 			error = soreserve(so, esis_sendspace, esis_recvspace);
 			if (error)
@@ -1178,9 +1181,9 @@ release:
  */
 void *
 esis_ctlinput(
-	int    req,		/* request: we handle only PRC_IFDOWN */
-	struct sockaddr *siso,	/* address of ifp */
-	void *dummy)
+    int    req,			/* request: we handle only PRC_IFDOWN */
+    struct sockaddr *siso,	/* address of ifp */
+    void *dummy)
 {
 	struct iso_ifaddr *ia;	/* scan through interface addresses */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.18 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.18.8.1 2006/11/18 21:39:49 ad Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.18 2006/05/14 21:32:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.18.8.1 2006/11/18 21:39:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -45,22 +45,24 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.18 2006/05/14 21:32:45 elad E
 #include <ufs/ufs/ufs_extern.h>
 
 int
-softdep_flushworklist(struct mount *oldmnt, int *countp, struct lwp *l)
+softdep_flushworklist(struct mount *oldmnt, int *countp,
+    struct lwp *l)
 {
 
 	panic("softdep_flushworklist called");
 }
 
 int
-softdep_flushfiles(struct mount *oldmnt, int flags, struct lwp *l)
+softdep_flushfiles(struct mount *oldmnt, int flags,
+    struct lwp *l)
 {
 
 	panic("softdep_flushfiles called");
 }
 
 int
-softdep_mount(struct vnode *devvp, struct mount *mp, struct fs *fs,
-    kauth_cred_t cred)
+softdep_mount(struct vnode *devvp, struct mount *mp,
+    struct fs *fs, kauth_cred_t cred)
 {
 
 	return (0);
@@ -81,83 +83,93 @@ softdep_reinitialize(void)
 }
 
 void
-softdep_setup_inomapdep(struct buf *bp, struct inode *ip, ino_t newinum)
+softdep_setup_inomapdep(struct buf *bp, struct inode *ip,
+    ino_t newinum)
 {
 
 	panic("softdep_setup_inomapdep called");
 }
 
 void
-softdep_setup_blkmapdep(struct buf *bp, struct fs *fs, daddr_t newblkno)
+softdep_setup_blkmapdep(struct buf *bp, struct fs *fs,
+    daddr_t newblkno)
 {
 
 	panic("softdep_setup_blkmapdep called");
 }
 
 void
-softdep_setup_allocdirect(struct inode *ip, daddr_t lbn, daddr_t newblkno,
-    daddr_t oldblkno, long newsize, long oldsize, struct buf *bp)
+softdep_setup_allocdirect(struct inode *ip, daddr_t lbn,
+    daddr_t newblkno, daddr_t oldblkno,
+    long newsize, long oldsize, struct buf *bp)
 {
 
 	panic("softdep_setup_allocdirect called");
 }
 
 void
-softdep_setup_allocindir_page(struct inode *ip, daddr_t lbn, struct buf *bp,
-    int ptrno, daddr_t newblkno, daddr_t oldblkno, struct buf *nbp)
+softdep_setup_allocindir_page(struct inode *ip, daddr_t lbn,
+    struct buf *bp, int ptrno, daddr_t newblkno,
+    daddr_t oldblkno, struct buf *nbp)
 {
 
 	panic("softdep_setup_allocindir_page called");
 }
 
 void
-softdep_setup_allocindir_meta(struct buf *nbp, struct inode *ip, struct buf *bp,
-    int ptrno, daddr_t newblkno)
+softdep_setup_allocindir_meta(struct buf *nbp,
+    struct inode *ip, struct buf *bp, int ptrno,
+    daddr_t newblkno)
 {
 
 	panic("softdep_setup_allocindir_meta called");
 }
 
 void
-softdep_setup_freeblocks(struct inode *ip, off_t length, int flags)
+softdep_setup_freeblocks(struct inode *ip, off_t length,
+    int flags)
 {
 
 	panic("softdep_setup_freeblocks called");
 }
 
 void
-softdep_freefile(struct vnode *v, ino_t ino, int mode)
+softdep_freefile(struct vnode *v, ino_t ino,
+    int mode)
 {
 	panic("softdep_freefile called");
 }
 
 int
-softdep_setup_directory_add(struct buf *bp, struct inode *dp, off_t diroffset,
-    ino_t newinum, struct buf *newdirbp, int isnewblk)
+softdep_setup_directory_add(struct buf *bp, struct inode *dp,
+    off_t diroffset, ino_t newinum,
+    struct buf *newdirbp, int isnewblk)
 {
 
 	panic("softdep_setup_directory_add called");
 }
 
 void
-softdep_change_directoryentry_offset(struct inode *dp, caddr_t base,
-    caddr_t oldloc, caddr_t newloc, int entrysize)
+softdep_change_directoryentry_offset(struct inode *dp,
+    caddr_t base, caddr_t oldloc,
+    caddr_t newloc, int entrysize)
 {
 
 	panic("softdep_change_directoryentry_offset called");
 }
 
 void
-softdep_setup_remove(struct buf *bp, struct inode *dp, struct inode *ip,
-    int isrmdir)
+softdep_setup_remove(struct buf *bp, struct inode *dp,
+    struct inode *ip, int isrmdir)
 {
 
 	panic("softdep_setup_remove called");
 }
 
 void
-softdep_setup_directory_change(struct buf *bp, struct inode *dp,
-    struct inode *ip, ino_t newinum, int isrmdir)
+softdep_setup_directory_change(struct buf *bp,
+    struct inode *dp, struct inode *ip,
+    ino_t newinum, int isrmdir)
 {
 
 	panic("softdep_setup_directory_change called");
@@ -178,7 +190,8 @@ softdep_load_inodeblock(struct inode *ip)
 }
 
 void
-softdep_update_inodeblock(struct inode *ip, struct buf *bp, int waitfor)
+softdep_update_inodeblock(struct inode *ip, struct buf *bp,
+    int waitfor)
 {
 
 	panic("softdep_update_inodeblock called");

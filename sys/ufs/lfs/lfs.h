@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.114 2006/09/01 19:41:28 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.114.2.1 2006/11/18 21:39:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -108,23 +108,29 @@
 #define PG_DELWRI	PG_PAGER1	/* Local def for delayed pageout */
 
 /* Resource limits */
-#define LFS_MAX_BUFS	    ((nbuf >> 2) - 10)
-#define LFS_WAIT_BUFS	    ((nbuf >> 1) - (nbuf >> 3) - 10)
-#define LFS_INVERSE_MAX_BUFS(n) (((n) + 10) << 2)
-#define LFS_MAX_BYTES	    ((bufmem_lowater >> 2) - 10 * PAGE_SIZE)
-#define LFS_INVERSE_MAX_BYTES(n) (((n) + 10 * PAGE_SIZE) << 2)
-#define LFS_WAIT_BYTES	    ((bufmem_lowater >> 1) - (bufmem_lowater >> 3) - 10 * PAGE_SIZE)
+#define	LFS_MAX_RESOURCE(x, u)	(((x) >> 2) - 10 * (u))
+#define	LFS_WAIT_RESOURCE(x, u)	(((x) >> 1) - ((x) >> 3) - 10 * (u))
+#define	LFS_INVERSE_MAX_RESOURCE(x, u)	(((x) + 10 * (u)) << 2)
+#define LFS_MAX_BUFS	    LFS_MAX_RESOURCE(nbuf, 1)
+#define LFS_WAIT_BUFS	    LFS_WAIT_RESOURCE(nbuf, 1)
+#define LFS_INVERSE_MAX_BUFS(n)	LFS_INVERSE_MAX_RESOURCE(n, 1)
+#define LFS_MAX_BYTES	    LFS_MAX_RESOURCE(bufmem_lowater, PAGE_SIZE)
+#define LFS_INVERSE_MAX_BYTES(n) LFS_INVERSE_MAX_RESOURCE(n, PAGE_SIZE)
+#define LFS_WAIT_BYTES	    LFS_WAIT_RESOURCE(bufmem_lowater, PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
 #define SIZEOF_DIROP(fs)	(2 * ((fs)->lfs_bsize + DINODE1_SIZE))
 #define LFS_MAX_FSDIROP(fs)						\
 	((fs)->lfs_nclean <= (fs)->lfs_resvseg ? 0 :			\
 	 (((fs)->lfs_nclean - (fs)->lfs_resvseg) * (fs)->lfs_ssize) /	\
           (2 * SIZEOF_DIROP(fs)))
-#define LFS_MAX_PAGES \
-     (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemin) >> 8)
-#define LFS_WAIT_PAGES \
-     (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemax) >> 8)
+#define LFS_MAX_PAGES	lfs_max_pages()
+#define LFS_WAIT_PAGES	lfs_wait_pages()
 #define LFS_BUFWAIT	    2	/* How long to wait if over *_WAIT_* */
+
+#ifdef _KERNEL
+int lfs_wait_pages(void);
+int lfs_max_pages(void);
+#endif /* _KERNEL */
 
 /* How starved can we be before we start holding back page writes */
 #define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_resvseg)
@@ -344,7 +350,7 @@ struct lfid {
 
 /* Heuristic emptiness measure */
 #define VPISEMPTY(vp)	 (LIST_EMPTY(&(vp)->v_dirtyblkhd) && 		\
-			  !((vp)->v_flag & VONWORKLST) &&		\
+			  !(vp->v_type == VREG && (vp)->v_flag & VONWORKLST) &&\
 			  VTOI(vp)->i_lfs_nbtree == 0)
 
 #define WRITEINPROG(vp) ((vp)->v_numoutput > 0 ||			\
@@ -818,6 +824,7 @@ struct lfs {
 	size_t lfs_devbshift;		/* Device block shift */
 	struct lock lfs_fraglock;
 	struct lock lfs_iflock;		/* Ifile lock */
+	struct lock lfs_stoplock;	/* Wrap lock */
 	pid_t lfs_rfpid;		/* Process ID of roll-forward agent */
 	int	  lfs_nadirop;		/* number of active dirop nodes */
 	long	  lfs_ravail;		/* blocks pre-reserved for writing */

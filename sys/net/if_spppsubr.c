@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.97 2006/09/07 02:40:33 dogcow Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.97.2.1 2006/11/18 21:39:29 ad Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.97 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.97.2.1 2006/11/18 21:39:29 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -676,7 +676,7 @@ queue_pkt:
  */
 static int
 sppp_output(struct ifnet *ifp, struct mbuf *m,
-	    struct sockaddr *dst, struct rtentry *rt)
+    struct sockaddr *dst, struct rtentry *rt)
 {
 	struct sppp *sp = (struct sppp *) ifp;
 	struct ppp_header *h = NULL;
@@ -1032,6 +1032,7 @@ sppp_dequeue(struct ifnet *ifp)
 int
 sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
+	struct lwp *l = curlwp;	/* XXX */
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct sppp *sp = (struct sppp *) ifp;
 	int s, error=0, going_up, going_down, newmode;
@@ -1108,22 +1109,32 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SPPPSETAUTHCFG:
-	case SPPPGETAUTHCFG:
 	case SPPPSETLCPCFG:
-	case SPPPGETLCPCFG:
 	case SPPPSETIDLETO:
 	case SPPPSETAUTHFAILURE:
-	case SPPPGETAUTHFAILURES:
 	case SPPPSETDNSOPTS:
 	case SPPPSETKEEPALIVE:
-	{
-		struct lwp *l = curlwp;		/* XXX */
-
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL);
+		if (error)
 			break;
-	}
-	/* FALLTHROUGH */
+		error = sppp_params(sp, cmd, data);
+		break;
+
+	case SPPPGETAUTHCFG:
+	case SPPPGETLCPCFG:
+	case SPPPGETAUTHFAILURES:
+		error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, ifp, (void *)cmd,
+		    NULL);
+		if (error)
+			break;
+		error = sppp_params(sp, cmd, data);
+		break;
+
 	case SPPPGETSTATUS:
 	case SPPPGETSTATUSNCP:
 	case SPPPGETIDLETO:
@@ -3711,61 +3722,77 @@ sppp_ipv6cp_scr(struct sppp *sp)
 	sppp_cp_send(sp, PPP_IPV6CP, CONF_REQ, sp->confid[IDX_IPV6CP], i, &opt);
 }
 #else /*INET6*/
-static void sppp_ipv6cp_init(struct sppp *sp)
+static void
+sppp_ipv6cp_init(struct sppp *sp)
 {
 }
 
-static void sppp_ipv6cp_up(struct sppp *sp)
+static void
+sppp_ipv6cp_up(struct sppp *sp)
 {
 }
 
-static void sppp_ipv6cp_down(struct sppp *sp)
+static void
+sppp_ipv6cp_down(struct sppp *sp)
 {
 }
 
-
-static void sppp_ipv6cp_open(struct sppp *sp)
+static void
+sppp_ipv6cp_open(struct sppp *sp)
 {
 }
 
-static void sppp_ipv6cp_close(struct sppp *sp)
+static void
+sppp_ipv6cp_close(struct sppp *sp)
 {
 }
 
-static void sppp_ipv6cp_TO(void *sp)
+static void
+sppp_ipv6cp_TO(void *sp)
 {
 }
 
-static int sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
+static int
+sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h,
+		int len)
 {
 	return 0;
 }
 
-static void sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
+static void
+sppp_ipv6cp_RCN_rej(struct sppp *sp, struct lcp_header *h,
+		    int len)
 {
 }
 
-static void sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
+static void
+sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h,
+		    int len)
 {
 }
 
-static void sppp_ipv6cp_tlu(struct sppp *sp)
+static void
+sppp_ipv6cp_tlu(struct sppp *sp)
 {
 }
 
-static void sppp_ipv6cp_tld(struct sppp *sp)
+static void
+sppp_ipv6cp_tld(struct sppp *sp)
 {
 }
 
-static void sppp_ipv6cp_tls(struct sppp *sp)
+static void
+sppp_ipv6cp_tls(struct sppp *sp)
 {
 }
 
-static void sppp_ipv6cp_tlf(struct sppp *sp)
+static void
+sppp_ipv6cp_tlf(struct sppp *sp)
 {
 }
 
-static void sppp_ipv6cp_scr(struct sppp *sp)
+static void
+sppp_ipv6cp_scr(struct sppp *sp)
 {
 }
 #endif /*INET6*/

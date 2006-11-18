@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.4 2006/11/17 16:34:36 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.5 2006/11/18 21:39:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.4 2006/11/17 16:34:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.5 2006/11/18 21:39:22 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -197,8 +197,9 @@ sigactsinit(struct proc *pp, int share)
 {
 	struct sigacts *ps;
 
-	if (pp != NULL)
+	if (pp != NULL) {
 		LOCK_ASSERT(mutex_owned(&pp->p_smutex));
+	}
 
 	if (share) {
 		ps = pp->p_sigacts;

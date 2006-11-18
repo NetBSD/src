@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.170 2006/09/04 08:38:16 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.170.2.1 2006/11/18 21:39:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.170 2006/09/04 08:38:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.170.2.1 2006/11/18 21:39:44 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -589,11 +589,7 @@ int nfs_webnamei __P((struct nameidata *, struct vnode *, struct proc *));
  * (just used to decide if a cluster is a good idea)
  */
 struct mbuf *
-nfsm_reqh(np, procid, hsiz, bposp)
-	struct nfsnode *np;
-	u_long procid;
-	int hsiz;
-	caddr_t *bposp;
+nfsm_reqh(struct nfsnode *np, u_long procid, int hsiz, caddr_t *bposp)
 {
 	struct mbuf *mb;
 	caddr_t bpos;
@@ -1299,9 +1295,7 @@ nfs_putdircache(np, ndp)
 }
 
 static void
-nfs_putdircache_unlocked(np, ndp)
-	struct nfsnode *np;
-	struct nfsdircache *ndp;
+nfs_putdircache_unlocked(struct nfsnode *np, struct nfsdircache *ndp)
 {
 	int ref;
 
@@ -1385,11 +1379,8 @@ nfs_searchdircache(vp, off, do32, hashent)
 
 
 struct nfsdircache *
-nfs_enterdircache(vp, off, blkoff, en, blkno)
-	struct vnode *vp;
-	off_t off, blkoff;
-	int en;
-	daddr_t blkno;
+nfs_enterdircache(struct vnode *vp, off_t off, off_t blkoff, int en,
+    daddr_t blkno)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdirhashhead *ndhp;
@@ -1833,11 +1824,13 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 				if (flags & NAC_NOTRUNC) {
 					np->n_flag |= NTRUNCDELAYED;
 				} else {
+					genfs_node_wrlock(vp);
 					simple_lock(&vp->v_interlock);
 					(void)VOP_PUTPAGES(vp, 0,
 					    0, PGO_SYNCIO | PGO_CLEANIT |
 					    PGO_FREE | PGO_ALLPAGES);
 					uvm_vnp_setsize(vp, np->n_size);
+					genfs_node_unlock(vp);
 				}
 			}
 		}
@@ -1885,7 +1878,9 @@ nfs_getattrcache(vp, vaper)
 					np->n_size = vap->va_size;
 			} else
 				np->n_size = vap->va_size;
+			genfs_node_wrlock(vp);
 			uvm_vnp_setsize(vp, np->n_size);
+			genfs_node_unlock(vp);
 		} else
 			np->n_size = vap->va_size;
 	}
@@ -1907,10 +1902,12 @@ nfs_delayedtruncate(vp)
 
 	if (np->n_flag & NTRUNCDELAYED) {
 		np->n_flag &= ~NTRUNCDELAYED;
+		genfs_node_wrlock(vp);
 		simple_lock(&vp->v_interlock);
 		(void)VOP_PUTPAGES(vp, 0,
 		    0, PGO_SYNCIO | PGO_CLEANIT | PGO_FREE | PGO_ALLPAGES);
 		uvm_vnp_setsize(vp, np->n_size);
+		genfs_node_unlock(vp);
 	}
 }
 
@@ -2523,16 +2520,9 @@ nfsm_srvfattr(nfsd, vap, fp)
  *	- if not lockflag unlock it with VOP_UNLOCK()
  */
 int
-nfsrv_fhtovp(nsfh, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
-	nfsrvfh_t *nsfh;
-	int lockflag;
-	struct vnode **vpp;
-	kauth_cred_t cred;
-	struct nfssvc_sock *slp;
-	struct mbuf *nam;
-	int *rdonlyp;
-	int kerbflag;
-	int pubflag;
+nfsrv_fhtovp(nfsrvfh_t *nsfh, int lockflag, struct vnode **vpp,
+    kauth_cred_t cred, struct nfssvc_sock *slp, struct mbuf *nam, int *rdonlyp,
+    int kerbflag, int pubflag)
 {
 	struct mount *mp;
 	kauth_cred_t credanon;
@@ -2693,7 +2683,7 @@ nfs_clearcommit(mp)
 
 	lockmgr(&nmp->nm_writeverflock, LK_EXCLUSIVE, NULL);
 
-	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		KASSERT(vp->v_mount == mp);
 		if (vp->v_type != VREG)
 			continue;

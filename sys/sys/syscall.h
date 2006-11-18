@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.174.2.1 2006/10/24 21:44:17 ad Exp $ */
+/* $NetBSD: syscall.h,v 1.174.2.2 2006/11/18 21:39:47 ad Exp $ */
 
 /*
  * System call numbers.
@@ -452,7 +452,7 @@
 /* syscall: "setsid" ret: "int" args: */
 #define	SYS_setsid	147
 
-/* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "caddr_t" */
+/* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "void *" */
 #define	SYS_quotactl	148
 
 /* syscall: "compat_43_oquota" ret: "int" args: */

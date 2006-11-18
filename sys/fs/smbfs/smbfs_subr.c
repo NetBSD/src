@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.10 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.10.20.1 2006/11/18 21:39:20 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.10 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.10.20.1 2006/11/18 21:39:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ smb_fphelp(struct mbchain *mbp, struct smb_vc *vcp, struct smbnode *np,
 			return ENAMETOOLONG;
 		}
 		*npp++ = np;
-		np = np->n_parent;
+		np = VTOSMB(np->n_parent);
 	}
 	while (i--) {
 		np = *--npp;
@@ -318,7 +318,8 @@ smbfs_fullpath(struct mbchain *mbp, struct smb_vc *vcp, struct smbnode *dnp,
 }
 
 int
-smbfs_fname_tolocal(struct smb_vc *vcp, char *name, int nmlen, int caseopt)
+smbfs_fname_tolocal(struct smb_vc *vcp, char *name, int nmlen,
+    int caseopt)
 {
 /*	if (caseopt & SMB_CS_UPPER)
 		iconv_convmem(vcp->vc_toupper, name, name, nmlen);

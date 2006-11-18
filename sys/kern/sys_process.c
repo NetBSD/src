@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.110.2.3 2006/11/17 16:34:37 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.110.2.4 2006/11/18 21:39:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.3 2006/11/17 16:34:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.4 2006/11/18 21:39:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	struct ptrace_io_desc piod;
 	struct ptrace_lwpinfo pl;
 	struct vmspace *vm;
-	int error, write, tmp, size, req, pheld;
+	int error, write, tmp, req, pheld;
 #ifdef COREDUMP
 	char *path;
 #endif
@@ -447,7 +447,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		if ((path = SCARG(uap, addr)) != NULL) {
 			char *dst;
 			int len = SCARG(uap, data);
-			if (len >= MAXPATHLEN) {
+			if (len < 0 || len >= MAXPATHLEN) {
 				error = EINVAL;
 				break;
 			}
@@ -598,12 +598,11 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		goto sendsig;
 
 	case PT_LWPINFO:
-		size = SCARG(uap, data);
-		if (size < sizeof(lwpid_t)) {
+		if (SCARG(uap, data) != sizeof(pl)) {
 			error = EINVAL;
 			break;
 		}
-		error = copyin(SCARG(uap, addr), &pl, sizeof(lwpid_t));
+		error = copyin(SCARG(uap, addr), &pl, sizeof(pl));
 		if (error)
 			break;
 		tmp = pl.pl_lwpid;
@@ -630,7 +629,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		lwp_unlock(lt);
 		mutex_exit(&p->p_smutex);
 
-		error = copyout(&pl, SCARG(uap, addr), SCARG(uap, data));
+		error = copyout(&pl, SCARG(uap, addr), sizeof(pl));
 		break;
 
 #ifdef PT_SETREGS

@@ -1,4 +1,4 @@
-/* $NetBSD: overlay.h,v 1.1 2006/09/08 20:58:57 elad Exp $ */
+/* $NetBSD: overlay.h,v 1.1.6.1 2006/11/18 21:39:46 ad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.

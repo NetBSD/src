@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.23 2006/08/29 23:52:06 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.23.2.1 2006/11/18 21:39:44 ad Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.23 2006/08/29 23:52:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.23.2.1 2006/11/18 21:39:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,16 +138,16 @@ static int	cryptodevkey_cb(void *);
 
 /* ARGSUSED */
 int
-cryptof_read(struct file *fp, off_t *poff, struct uio *uio,
-	     kauth_cred_t cred, int flags)
+cryptof_read(struct file *fp, off_t *poff,
+    struct uio *uio, kauth_cred_t cred, int flags)
 {
 	return (EIO);
 }
 
 /* ARGSUSED */
 int
-cryptof_write(struct file *fp, off_t *poff, struct uio *uio,
-	      kauth_cred_t cred, int flags)
+cryptof_write(struct file *fp, off_t *poff,
+    struct uio *uio, kauth_cred_t cred, int flags)
 {
 	return (EIO);
 }
@@ -703,7 +703,8 @@ csefree(struct csession *cse)
 }
 
 static int
-cryptoopen(dev_t dev, int flag, int mode, struct lwp *l)
+cryptoopen(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	if (crypto_usercrypto == 0)
 		return (ENXIO);
@@ -723,7 +724,8 @@ cryptowrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 static int
-cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct file *f;
 	struct fcrypt *fcr;

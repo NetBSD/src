@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.29 2005/11/29 15:45:28 yamt Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.29.20.1 2006/11/18 21:39:50 ad Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.29 2005/11/29 15:45:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.29.20.1 2006/11/18 21:39:50 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -197,25 +197,21 @@ uvm_hist(u_int32_t bitmask)	/* XXX only support 32 hists */
 void
 uvmexp_print(void (*pr)(const char *, ...))
 {
+	int active, inactive;
+
+	uvm_estimatepageable(&active, &inactive);
 
 	(*pr)("Current UVM status:\n");
 	(*pr)("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d\n",
 	    uvmexp.pagesize, uvmexp.pagesize, uvmexp.pagemask,
 	    uvmexp.pageshift);
 	(*pr)("  %d VM pages: %d active, %d inactive, %d wired, %d free\n",
-	    uvmexp.npages, uvmexp.active, uvmexp.inactive, uvmexp.wired,
+	    uvmexp.npages, active, inactive, uvmexp.wired,
 	    uvmexp.free);
-	(*pr)("  min  %d%% (%d) anon, %d%% (%d) file, %d%% (%d) exec\n",
-	    uvmexp.anonminpct, uvmexp.anonmin, uvmexp.fileminpct,
-	    uvmexp.filemin, uvmexp.execminpct, uvmexp.execmin);
-	(*pr)("  max  %d%% (%d) anon, %d%% (%d) file, %d%% (%d) exec\n",
-	    uvmexp.anonmaxpct, uvmexp.anonmax, uvmexp.filemaxpct,
-	    uvmexp.filemax, uvmexp.execmaxpct, uvmexp.execmax);
 	(*pr)("  pages  %d anon, %d file, %d exec\n",
 	    uvmexp.anonpages, uvmexp.filepages, uvmexp.execpages);
-	(*pr)("  freemin=%d, free-target=%d, inactive-target=%d, "
-	    "wired-max=%d\n", uvmexp.freemin, uvmexp.freetarg, uvmexp.inactarg,
-	    uvmexp.wiredmax);
+	(*pr)("  freemin=%d, free-target=%d, wired-max=%d\n",
+	    uvmexp.freemin, uvmexp.freetarg, uvmexp.wiredmax);
 	(*pr)("  faults=%d, traps=%d, intrs=%d, ctxswitch=%d\n",
 	    uvmexp.faults, uvmexp.traps, uvmexp.intrs, uvmexp.swtch);
 	(*pr)("  softint=%d, syscalls=%d, swapins=%d, swapouts=%d\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.92 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.92.2.1 2006/11/18 21:39:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.92 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.92.2.1 2006/11/18 21:39:30 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -310,7 +310,8 @@ out_nolock:
  * routing info
  */
 int
-tunclose(dev_t dev, int flag, int mode, struct lwp *l)
+tunclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	int	s;
 	struct tun_softc *tp;

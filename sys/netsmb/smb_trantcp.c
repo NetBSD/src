@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.25 2006/09/03 05:27:28 christos Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.25.2.1 2006/11/18 21:39:44 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.25 2006/09/03 05:27:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.25.2.1 2006/11/18 21:39:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,7 +391,7 @@ nbssn_rq_request(struct nbpcb *nbp, struct lwp *l)
 
 static int
 nbssn_recvhdr(struct nbpcb *nbp, int *lenp,
-	u_int8_t *rpcodep, int flags, struct lwp *l)
+    u_int8_t *rpcodep, int flags, struct lwp *l)
 {
 	struct socket *so = nbp->nbp_tso;
 	struct uio auio;

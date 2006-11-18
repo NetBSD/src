@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_none.c,v 1.5 2005/06/10 16:11:24 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.5 2006/03/16 15:59:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.5.10.1 2006/11/18 21:39:32 ad Exp $");
 #endif
 
 /*

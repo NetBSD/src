@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.9 2006/09/06 13:37:49 blymn Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.9.2.1 2006/11/18 21:39:22 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,12 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.9 2006/09/06 13:37:49 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.9.2.1 2006/11/18 21:39:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
-#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
@@ -91,8 +90,7 @@ LIST_HEAD(, fileassoc_table) fileassoc_tables;
  * index into the hash table.
  */
 #define FILEASSOC_HASH(tbl, handle)	\
-	(hash32_buf(FHANDLE_FILEID(handle), \
-	FHANDLE_FILEID(handle)->fid_len, HASH32_BUF_INIT) \
+	(hash32_buf((handle), FHANDLE_SIZE(handle), HASH32_BUF_INIT) \
 	 & ((tbl)->hash_mask))
 
 /*
@@ -184,19 +182,31 @@ fileassoc_file_lookup(struct vnode *vp, fhandle_t *hint)
 		th = hint;
 
 	tbl = fileassoc_table_lookup(vp->v_mount);
-	if (tbl == NULL)
+	if (tbl == NULL) {
+		if (hint == NULL)
+			vfs_composefh_free(th);
+
 		return (NULL);
+	}
 
 	indx = FILEASSOC_HASH(tbl, th);
 	tble = &(tbl->hash_tbl[indx]);
 
 	LIST_FOREACH(e, tble, entries) {
 		if ((e != NULL) &&
-		    (FHANDLE_SIZE(e->handle) == FHANDLE_SIZE(th)) &&
+		    ((FHANDLE_FILEID(e->handle)->fid_len ==
+		     FHANDLE_FILEID(th)->fid_len)) &&
 		    (memcmp(FHANDLE_FILEID(e->handle), FHANDLE_FILEID(th),
-			   (FHANDLE_FILEID(th))->fid_len) == 0))
+			   (FHANDLE_FILEID(th))->fid_len) == 0)) {
+			if (hint == NULL)
+				vfs_composefh_free(th);
+
 			return (e);
+		}
 	}
+
+	if (hint == NULL)
+		vfs_composefh_free(th);
 
 	return (NULL);
 }
@@ -270,7 +280,7 @@ fileassoc_table_delete(struct mount *mp)
 					    (mhe->hooks[j],
 					    FILEASSOC_CLEANUP_FILE);
 
-			kmem_free(mhe->handle, FHANDLE_SIZE(mhe->handle));
+			vfs_composefh_free(mhe->handle);
 			free(mhe, M_TEMP);
 		}
 	}
@@ -422,12 +432,20 @@ fileassoc_file_add(struct vnode *vp, fhandle_t *hint)
 		th = hint;
 
 	e = fileassoc_file_lookup(vp, th);
-	if (e != NULL)
+	if (e != NULL) {
+		if (hint == NULL)
+			vfs_composefh_free(th);
+
 		return (e);
+	}
 
 	tbl = fileassoc_table_lookup(vp->v_mount);
-	if (tbl == NULL)
+	if (tbl == NULL) {
+		if (hint == NULL)
+			vfs_composefh_free(th);
+
 		return (NULL);
+	}
 
 	indx = FILEASSOC_HASH(tbl, th);
 	vhh = &(tbl->hash_tbl[indx]);

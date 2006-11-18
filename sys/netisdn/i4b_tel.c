@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.16 2005/12/11 12:25:06 christos Exp $
+ *	$Id: i4b_tel.c,v 1.16.20.1 2006/11/18 21:39:41 ad Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.16 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.16.20.1 2006/11/18 21:39:41 ad Exp $");
 
 #include "isdntel.h"
 
@@ -198,7 +198,7 @@ int isdntelsel __P((dev_t dev, int rw, struct lwp *l));
 #ifdef __NetBSD__
 const struct cdevsw isdntel_cdevsw = {
 	isdntelopen, isdntelclose, isdntelread, isdntelwrite, isdntelioctl,
-	nostop, notty, isdntelpoll, nommap, isdntelkqfilter,
+	nostop, notty, isdntelpoll, nommap, isdntelkqfilter, D_OTHER
 };
 #endif /* __NetBSD__ */
 
@@ -388,7 +388,8 @@ isdntelattach()
  *	open tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntelopen(dev_t dev, int flag, int fmt, struct lwp *l)
+isdntelopen(dev_t dev, int flag, int fmt,
+	struct lwp *l)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -417,7 +418,8 @@ isdntelopen(dev_t dev, int flag, int fmt, struct lwp *l)
  *	close tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntelclose(dev_t dev, int flag, int fmt, struct lwp *l)
+isdntelclose(dev_t dev, int flag, int fmt,
+	struct lwp *l)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -459,7 +461,8 @@ isdntelclose(dev_t dev, int flag, int fmt, struct lwp *l)
  *	i4btelioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+isdntelioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);

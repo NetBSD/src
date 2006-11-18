@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.145.2.2 2006/11/17 16:34:35 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.145.2.3 2006/11/18 21:39:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.145.2.2 2006/11/17 16:34:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.145.2.3 2006/11/18 21:39:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1928,6 +1928,7 @@ fdclone(struct lwp *l, struct file *fp, int fd, int flag,
 int
 fnullop_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
 {
+
 	if (cmd == F_SETFL)
 		return 0;
 
@@ -1938,6 +1939,7 @@ fnullop_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
 int
 fnullop_poll(struct file *fp, int which, struct lwp *l)
 {
+
 	return 0;
 }
 
@@ -1954,5 +1956,6 @@ fnullop_kqfilter(struct file *fp, struct knote *kn)
 int
 fbadop_stat(struct file *fp, struct stat *sb, struct lwp *l)
 {
+
 	return EOPNOTSUPP;
 }

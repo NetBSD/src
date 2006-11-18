@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.71 2006/07/23 22:06:12 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.71.4.1 2006/11/18 21:39:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.71 2006/07/23 22:06:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.71.4.1 2006/11/18 21:39:23 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -163,6 +163,12 @@ symlink_magic(struct proc *p, char *cp, int *len)
 		} else if (MATCH("ostype")) {
 			SUBSTITUTE("ostype", ostype,
 			    strlen(ostype));
+		} else if (MATCH("uid")) {
+			char uidtmp[11]; /* XXX elad */
+
+			(void)snprintf(uidtmp, sizeof(uidtmp), "%u",
+			    kauth_cred_geteuid(kauth_cred_get()));
+			SUBSTITUTE("uid", uidtmp, strlen(uidtmp));
 		} else {
 			tmp[newlen++] = '@';
 			if (termchar == VC)

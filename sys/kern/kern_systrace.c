@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.58.2.4 2006/11/17 16:34:37 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.58.2.5 2006/11/18 21:39:22 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.4 2006/11/17 16:34:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.5 2006/11/18 21:39:22 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -229,12 +229,8 @@ const struct cdevsw systrace_cdevsw = {
 
 /* ARGSUSED */
 int
-systracef_read(struct file *fp, off_t *poff, struct uio *uio,
-    kauth_cred_t cred
-#ifdef __NetBSD__
-    , int flags
-#endif
-)
+systracef_read(struct file *fp, off_t *poff, struct uio *uio, kauth_cred_t cred,
+    int flags)
 {
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
 	struct str_msgcontainer *cont;
@@ -281,12 +277,9 @@ systracef_read(struct file *fp, off_t *poff, struct uio *uio,
 /* ARGSUSED */
 int
 systracef_write(struct file *fp, off_t *poff, struct uio *uio,
-    kauth_cred_t cred
-#ifdef __NetBSD__
-    , int flags
-#endif
-)
+    kauth_cred_t cred, int flags)
 {
+
 	return (EIO);
 }
 
@@ -1054,7 +1047,7 @@ systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 
 int
 systrace_setscriptname(struct str_process *strp,
-		       struct systrace_scriptname *ans)
+    struct systrace_scriptname *ans)
 {
 	strlcpy(strp->scriptname, ans->sn_scriptname,
 		sizeof(strp->scriptname));
@@ -1424,9 +1417,16 @@ systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
 		return (EINVAL);
 
 	for (i = 0, len = 0; i < repl->strr_nrepl; i++) {
-		len += repl->strr_offlen[i];
+		if (repl->strr_argind[i] < 0 ||
+		    repl->strr_argind[i] >= SYSTR_MAXARGS)
+			return (EINVAL);
 		if (repl->strr_offlen[i] == 0)
 			continue;
+		len += repl->strr_offlen[i];
+		if (repl->strr_offlen[i] > SYSTR_MAXREPLEN ||
+		    repl->strr_off[i] > SYSTR_MAXREPLEN ||
+		    len > SYSTR_MAXREPLEN)
+			return (EINVAL);
 		if (repl->strr_offlen[i] + repl->strr_off[i] > len)
 			return (EINVAL);
 	}
@@ -1436,7 +1436,7 @@ systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
 		return (EINVAL);
 
 	/* Check against a maximum length */
-	if (repl->strr_len > 2048)
+	if (repl->strr_len > SYSTR_MAXREPLEN)
 		return (EINVAL);
 
 	strp->replace = (struct systrace_replace *)
@@ -1477,6 +1477,10 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 	sg = stackgap_init(p->p_emul);
 	ubase = stackgap_alloc(&sg, repl->strr_len);
 #endif
+	if (ubase == NULL) {
+		ret = EINVAL;
+		goto out;
+	}
 
 	kbase = repl->strr_base;
 	for (i = 0; i < maxarg && i < repl->strr_nrepl; i++) {
@@ -1766,8 +1770,8 @@ systrace_newpolicy(struct fsystrace *fst, int maxents)
 }
 
 int
-systrace_msg_ask(struct fsystrace *fst, struct str_process *strp,
-    int code, size_t argsize, register_t args[])
+systrace_msg_ask(struct fsystrace *fst, struct str_process *strp, int code,
+    size_t argsize, register_t args[])
 {
 	struct str_message msg;
 	struct str_msg_ask *msg_ask = &msg.msg_data.msg_ask;
@@ -1782,8 +1786,8 @@ systrace_msg_ask(struct fsystrace *fst, struct str_process *strp,
 }
 
 int
-systrace_msg_result(struct fsystrace *fst, struct str_process *strp,
-    int error, int code, size_t argsize, register_t args[], register_t rval[])
+systrace_msg_result(struct fsystrace *fst, struct str_process *strp, int error,
+    int code, size_t argsize, register_t args[], register_t rval[])
 {
 	struct str_message msg;
 	struct str_msg_ask *msg_ask = &msg.msg_data.msg_ask;

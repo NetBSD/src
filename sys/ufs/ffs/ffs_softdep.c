@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.76 2006/07/23 22:06:15 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.76.4.1 2006/11/18 21:39:48 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.76 2006/07/23 22:06:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.76.4.1 2006/11/18 21:39:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -161,7 +161,7 @@ static	struct dirrem *newdirrem(struct buf *, struct inode *,
 static	void free_diradd(struct diradd *);
 static	void free_allocindir(struct allocindir *, struct inodedep *);
 static	void free_newdirblk(struct newdirblk *);
-static	int indir_trunc(struct inode *, daddr_t, int, daddr_t,
+static	int indir_trunc(const struct freeblks *, daddr_t, int, daddr_t,
 	    int64_t *);
 static	void deallocate_dependencies(struct buf *, struct inodedep *);
 static	void free_allocdirect(struct allocdirectlst *,
@@ -198,7 +198,7 @@ void softdep_pageiodone1(struct buf *);
 #endif
 void softdep_pageiodone(struct buf *);
 void softdep_flush_vnode(struct vnode *, daddr_t);
-static void softdep_trackbufs(struct inode *, int, boolean_t);
+static void softdep_trackbufs(struct vnode *, int, boolean_t);
 
 #define	PCBP_BITMAP(off, size) \
 	(((1 << howmany((size), PAGE_SIZE)) - 1) << ((off) >> PAGE_SHIFT))
@@ -626,9 +626,7 @@ worklist_remove(item)
 }
 
 static void
-workitem_free(item, type)
-	struct worklist *item;
-	int type;
+workitem_free(struct worklist *item, int type)
 {
 
 	if (item->wk_state & ONWORKLIST)
@@ -1703,23 +1701,9 @@ handle_workitem_freefrag(freefrag)
 	struct freefrag *freefrag;
 {
 	struct ufsmount *ump = VFSTOUFS(freefrag->ff_mnt);
-	struct inode tip;
-	struct vnode vp;
 
-	tip.i_fs = freefrag->ff_fs;
-	tip.i_ump = ump;
-	tip.i_devvp = ump->um_devvp;
-	tip.i_dev = ump->um_devvp->v_rdev;
-	tip.i_number = freefrag->ff_inum;
-	tip.i_uid = freefrag->ff_state & ~ONWORKLIST; /* XXX - set above */
-	vp.v_data = &tip;
-	vp.v_mount = ump->um_devvp->v_specmountpoint;
-	tip.i_vnode = &vp;
-	lockinit(&tip.i_gnode.g_glock, PVFS, "fglock", 0, 0);
-	lockmgr(&tip.i_gnode.g_glock, LK_EXCLUSIVE, NULL);
 	ffs_blkfree(ump->um_fs, ump->um_devvp, freefrag->ff_blkno,
-	    freefrag->ff_fragsize, tip.i_number);
-	lockmgr(&tip.i_gnode.g_glock, LK_RELEASE, NULL);
+	    freefrag->ff_fragsize, freefrag->ff_inum);
 	pool_put(&freefrag_pool, freefrag);
 }
 
@@ -1903,6 +1887,7 @@ setup_allocindir_phase2(bp, ip, aip)
 				free_allocindir(oldaip, NULL);
 			}
 			LIST_INSERT_HEAD(&indirdep->ir_deplisthd, aip, ai_next);
+			KASSERT(indirdep->ir_savebp != NULL);
 			if (ip->i_ump->um_fstype == UFS1)
 				((int32_t *)indirdep->ir_savebp->b_data)
 				    [aip->ai_offset] = aip->ai_oldblkno;
@@ -1916,7 +1901,7 @@ setup_allocindir_phase2(bp, ip, aip)
 		if (newindirdep) {
 			if (indirdep->ir_savebp != NULL) {
 				brelse(newindirdep->ir_savebp);
-				softdep_trackbufs(ip, -1, FALSE);
+				softdep_trackbufs(ip->i_devvp, -1, FALSE);
 			}
 			WORKITEM_FREE(newindirdep, D_INDIRDEP);
 		}
@@ -1933,7 +1918,7 @@ setup_allocindir_phase2(bp, ip, aip)
 			VOP_BMAP(bp->b_vp, bp->b_lblkno, NULL, &bp->b_blkno,
 				 NULL);
 		}
-		softdep_trackbufs(ip, 1, TRUE);
+		softdep_trackbufs(ip->i_devvp, 1, TRUE);
 		newindirdep->ir_savebp =
 		    getblk(ip->i_devvp, bp->b_blkno, bp->b_bcount, 0, 0);
 		newindirdep->ir_savebp->b_flags |= B_ASYNC;
@@ -1971,10 +1956,10 @@ setup_allocindir_phase2(bp, ip, aip)
  * can release it.
  */
 void
-softdep_setup_freeblocks(ip, length, flags)
-	struct inode *ip;	/* The inode whose length is to be reduced */
-	off_t length;		/* The new length for the file */
-	int flags;
+softdep_setup_freeblocks(
+	struct inode *ip,	/* The inode whose length is to be reduced */
+	off_t length,		/* The new length for the file */
+	int flags)
 {
 	struct freeblks *freeblks;
 	struct inodedep *inodedep;
@@ -2456,8 +2441,7 @@ static void
 handle_workitem_freeblocks(freeblks)
 	struct freeblks *freeblks;
 {
-	struct inode tip;
-	struct vnode vp, *devvp;
+	struct vnode *devvp;
 	daddr_t bn;
 	struct fs *fs;
 	int i, level, bsize, nblocks;
@@ -2466,16 +2450,7 @@ handle_workitem_freeblocks(freeblks)
 	daddr_t baselbns[NIADDR], tmpval;
 
 	devvp = freeblks->fb_ump->um_devvp;
-	tip.i_devvp = devvp;
-	tip.i_dev = devvp->v_rdev;
-	tip.i_number = freeblks->fb_previousinum;
-	tip.i_ump = freeblks->fb_ump;
-	tip.i_fs = fs = freeblks->fb_ump->um_fs;
-	tip.i_size = freeblks->fb_oldsize;
-	tip.i_uid =  freeblks->fb_uid;
-	vp.v_data = &tip;
-	vp.v_mount = devvp->v_specmountpoint;
-	tip.i_vnode = &vp;
+	fs = freeblks->fb_ump->um_fs;
 	tmpval = 1;
 	baselbns[0] = NDADDR;
 	for (i = 1; i < NIADDR; i++) {
@@ -2485,19 +2460,17 @@ handle_workitem_freeblocks(freeblks)
 	nblocks = btodb(fs->fs_bsize);
 	blocksreleased = 0;
 
-	lockinit(&tip.i_gnode.g_glock, PVFS, "fglock", 0, 0);
-	lockmgr(&tip.i_gnode.g_glock, LK_EXCLUSIVE, NULL);
-
 	/*
 	 * Indirect blocks first.
 	 */
 	for (level = (NIADDR - 1); level >= 0; level--) {
 		if ((bn = freeblks->fb_iblks[level]) == 0)
 			continue;
-		if ((error = indir_trunc(&tip, fsbtodb(fs, bn), level,
+		if ((error = indir_trunc(freeblks, fsbtodb(fs, bn), level,
 		    baselbns[level], &blocksreleased)) != 0)
 			allerror = error;
-		ffs_blkfree(fs, devvp, bn, fs->fs_bsize, tip.i_number);
+		ffs_blkfree(fs, devvp, bn, fs->fs_bsize,
+		    freeblks->fb_previousinum);
 		fs->fs_pendingblocks -= nblocks;
 		blocksreleased += nblocks;
 	}
@@ -2507,12 +2480,11 @@ handle_workitem_freeblocks(freeblks)
 	for (i = (NDADDR - 1); i >= 0; i--) {
 		if ((bn = freeblks->fb_dblks[i]) == 0)
 			continue;
-		bsize = blksize(fs, &tip, i);
-		ffs_blkfree(fs, devvp, bn, bsize, tip.i_number);
+		bsize = sblksize(fs, freeblks->fb_oldsize, i);
+		ffs_blkfree(fs, devvp, bn, bsize, freeblks->fb_previousinum);
 		fs->fs_pendingblocks -= btodb(bsize);
 		blocksreleased += btodb(bsize);
 	}
-	lockmgr(&tip.i_gnode.g_glock, LK_RELEASE, NULL);
 
 #ifdef DIAGNOSTIC
 	if (freeblks->fb_chkcnt != blocksreleased)
@@ -2524,14 +2496,15 @@ handle_workitem_freeblocks(freeblks)
 }
 
 /*
- * Release blocks associated with the inode ip and stored in the indirect
- * block dbn. If level is greater than SINGLE, the block is an indirect block
+ * Release blocks associated with the inode freeblks->fb_previousinum and
+ * stored in the indirect block dbn.
+ * If level is greater than SINGLE, the block is an indirect block
  * and recursive calls to indirtrunc must be used to cleanse other indirect
  * blocks.
  */
 static int
-indir_trunc(ip, dbn, level, lbn, countp)
-	struct inode *ip;
+indir_trunc(freeblks, dbn, level, lbn, countp)
+	const struct freeblks *freeblks;
 	daddr_t dbn;
 	int level;
 	daddr_t lbn;
@@ -2541,12 +2514,13 @@ indir_trunc(ip, dbn, level, lbn, countp)
 	int32_t *bap1 = NULL;
 	int64_t *bap2 = NULL;
 	daddr_t nb;
-	struct fs *fs = ip->i_fs;
+	struct fs *fs = freeblks->fb_ump->um_fs;
 	struct worklist *wk;
 	struct indirdep *indirdep;
 	daddr_t lbnadd;
 	int i, nblocks, ufs1fmt;
 	int error, allerror = 0;
+	struct vnode *devvp = freeblks->fb_ump->um_devvp;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
@@ -2567,7 +2541,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 	 * Otherwise we have to read the blocks in from the disk.
 	 */
 	ACQUIRE_LOCK(&lk);
-	if ((bp = incore(ip->i_devvp, dbn)) != NULL &&
+	if ((bp = incore(devvp, dbn)) != NULL &&
 	    (wk = LIST_FIRST(&bp->b_dep)) != NULL) {
 		if (wk->wk_type != D_INDIRDEP ||
 		    (indirdep = WK_INDIRDEP(wk))->ir_savebp != bp ||
@@ -2580,8 +2554,8 @@ indir_trunc(ip, dbn, level, lbn, countp)
 		FREE_LOCK(&lk);
 	} else {
 		FREE_LOCK(&lk);
-		softdep_trackbufs(ip, 1, FALSE);
-		error = bread(ip->i_devvp, dbn, (int)fs->fs_bsize, NOCRED, &bp);
+		softdep_trackbufs(devvp, 1, FALSE);
+		error = bread(devvp, dbn, (int)fs->fs_bsize, NOCRED, &bp);
 		if (error)
 			return (error);
 	}
@@ -2589,7 +2563,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 	/*
 	 * Recursively free indirect blocks.
 	 */
-	if (ip->i_ump->um_fstype == UFS1) {
+	if (freeblks->fb_ump->um_fstype == UFS1) {
 		ufs1fmt = 1;
 		bap1 = (int32_t *)bp->b_data;
 	} else {
@@ -2606,17 +2580,18 @@ indir_trunc(ip, dbn, level, lbn, countp)
 		if (nb == 0)
 			continue;
 		if (level != 0) {
-			if ((error = indir_trunc(ip, fsbtodb(fs, nb),
+			if ((error = indir_trunc(freeblks, fsbtodb(fs, nb),
 			     level - 1, lbn + (i * lbnadd), countp)) != 0)
 				allerror = error;
 		}
-		ffs_blkfree(fs, ip->i_devvp, nb, fs->fs_bsize, ip->i_number);
+		ffs_blkfree(fs, devvp, nb, fs->fs_bsize,
+		    freeblks->fb_previousinum);
 		fs->fs_pendingblocks -= nblocks;
 		*countp += nblocks;
 	}
 	bp->b_flags |= B_INVAL | B_NOCACHE;
 	brelse(bp);
-	softdep_trackbufs(ip, -1, FALSE);
+	softdep_trackbufs(devvp, -1, FALSE);
 	return (allerror);
 }
 
@@ -3346,6 +3321,8 @@ handle_workitem_remove(dirrem)
 	}
 	WORKLIST_INSERT(&inodedep->id_inowait, &dirrem->dm_list);
 	FREE_LOCK(&lk);
+	ip->i_flag |= IN_CHANGE;
+	ffs_update(vp, NULL, NULL, 0);
 	vput(vp);
 }
 
@@ -5470,8 +5447,7 @@ request_cleanup(resource, islocked)
  * to indicate that there is no longer a timer running.
  */
 void
-pause_timer(arg)
-	void *arg;
+pause_timer(void *arg)
 {
 
 	/* XXX was wakeup_one(), but makes no difference in uniprocessor */
@@ -5882,7 +5858,7 @@ softdep_lookupvp(fs, ino)
 }
 
 static void
-softdep_trackbufs(struct inode *ip, int delta, boolean_t throttle)
+softdep_trackbufs(struct vnode *devvp, int delta, boolean_t throttle)
 {
 	struct proc *p = curproc;
 
@@ -5895,7 +5871,7 @@ softdep_trackbufs(struct inode *ip, int delta, boolean_t throttle)
 		return;
 	}
 
-	KASSERT(ip != NULL);
+	KASSERT(devvp != NULL);
 	/*
 	 * Kernel threads never get blocked.
 	 * User processes check for file system suspension every 10 msecs.
@@ -5905,7 +5881,7 @@ softdep_trackbufs(struct inode *ip, int delta, boolean_t throttle)
 		if (p && (p->p_flag & P_SYSTEM))
 			break;
 		tsleep(&softdep_lockedbufs, PRIBIO, "softdbufs", mstohz(10));
-		if ((ITOV(ip)->v_mount->mnt_iflag & IMNT_SUSPEND))
+		if ((devvp->v_specmountpoint->mnt_iflag & IMNT_SUSPEND) != 0)
 			break;
 	}
 	softdep_lockedbufs += delta;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.22 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.22.8.1 2006/11/18 21:39:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.22 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.22.8.1 2006/11/18 21:39:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -787,8 +787,7 @@ cd9660_strategy(v)
  */
 /*ARGSUSED*/
 int
-cd9660_print(v)
-	void *v;
+cd9660_print(void *v)
 {
 
 	printf("tag VT_ISOFS, isofs vnode\n");

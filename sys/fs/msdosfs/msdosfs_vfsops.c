@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.35 2006/09/02 07:12:11 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.35.2.1 2006/11/18 21:39:18 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.35 2006/09/02 07:12:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.35.2.1 2006/11/18 21:39:18 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -767,10 +767,8 @@ error_exit:;
 }
 
 int
-msdosfs_start(mp, flags, l)
-	struct mount *mp;
-	int flags;
-	struct lwp *l;
+msdosfs_start(struct mount *mp, int flags,
+    struct lwp *l)
 {
 
 	return (0);
@@ -850,26 +848,15 @@ msdosfs_root(mp, vpp)
 }
 
 int
-msdosfs_quotactl(mp, cmds, uid, arg, l)
-	struct mount *mp;
-	int cmds;
-	uid_t uid;
-	void *arg;
-	struct lwp *l;
+msdosfs_quotactl(struct mount *mp, int cmds,
+    uid_t uid, void *arg, struct lwp *l)
 {
 
-#ifdef QUOTA
 	return (EOPNOTSUPP);
-#else
-	return (EOPNOTSUPP);
-#endif
 }
 
 int
-msdosfs_statvfs(mp, sbp, l)
-	struct mount *mp;
-	struct statvfs *sbp;
-	struct lwp *l;
+msdosfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 	struct msdosfsmount *pmp;
 
@@ -917,7 +904,7 @@ msdosfs_sync(mp, waitfor, cred, l)
 	 */
 	simple_lock(&mntvnode_slock);
 loop:
-	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * assoicated with this mount point, start over.
@@ -925,7 +912,7 @@ loop:
 		if (vp->v_mount != mp)
 			goto loop;
 		simple_lock(&vp->v_interlock);
-		nvp = vp->v_mntvnodes.le_next;
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		dep = VTODE(vp);
 		if (waitfor == MNT_LAZY || vp->v_type == VNON ||
 		    (((dep->de_flag &
@@ -1011,10 +998,8 @@ msdosfs_vptofh(vp, fhp, fh_size)
 }
 
 int
-msdosfs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+msdosfs_vget(struct mount *mp, ino_t ino,
+    struct vnode **vpp)
 {
 
 	return (EOPNOTSUPP);

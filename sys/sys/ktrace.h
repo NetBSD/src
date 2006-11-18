@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.43 2005/12/11 20:07:30 christos Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.43.20.1 2006/11/18 21:39:46 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -224,6 +224,12 @@ struct ktr_saupcall {
 	 */
 };
 
+/*
+ * KTR_MIB - MIB name and data
+ */
+#define KTR_MIB		14
+	/* Record contains MIB name */
+
 
 /*
  * kernel trace points (in p_traceflag)
@@ -242,6 +248,7 @@ struct ktr_saupcall {
 #define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
 #define KTRFAC_MOOL	(1<<KTR_MOOL)
 #define	KTRFAC_SAUPCALL	(1<<KTR_SAUPCALL)
+#define	KTRFAC_MIB	(1<<KTR_MIB)
 /*
  * trace flags (also in p_traceflags)
  */
@@ -277,9 +284,10 @@ void ktrpsig(struct lwp *, int, sig_t, const sigset_t *, const ksiginfo_t *);
 void ktrsyscall(struct lwp *, register_t, register_t,
     const struct sysent *, register_t []);
 void ktrsysret(struct lwp *, register_t, int, register_t *);
-void ktruser(struct lwp *, const char *, void *, size_t, int);
+int ktruser(struct lwp *, const char *, void *, size_t, int);
 void ktrmmsg(struct lwp *, const void *, size_t);
 void ktrkmem(struct lwp *, int, const void *, size_t);
+void ktrmib(struct lwp *, const int *, u_int);
 void ktrmool(struct lwp *, const void *, size_t, const void *);
 void ktrsaupcall(struct lwp *, int, int, int, void *, void *);
 

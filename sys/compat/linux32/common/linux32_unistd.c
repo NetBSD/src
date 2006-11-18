@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.3 2006/09/06 08:32:00 manu Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.3.2.1 2006/11/18 21:39:11 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.3 2006/09/06 08:32:00 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.3.2.1 2006/11/18 21:39:11 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -549,7 +549,7 @@ linux32_sys_getgroups16(l, v, retval)
 	struct linux_sys_getgroups16_args ua;
 
 	NETBSD32TO64_UAP(gidsetsize);
-	NETBSD32TOP_UAP(gidset, linux32_gid_t);
+	NETBSD32TOP_UAP(gidset, linux_gid_t);
 	
 	return linux_sys_getgroups16(l, &ua, retval);
 }
@@ -567,7 +567,7 @@ linux32_sys_setgroups16(l, v, retval)
 	struct linux_sys_setgroups16_args ua;
 
 	NETBSD32TO64_UAP(gidsetsize);
-	NETBSD32TOP_UAP(gidset, linux32_gid_t);
+	NETBSD32TOP_UAP(gidset, linux_gid_t);
 	
 	return linux_sys_setgroups16(l, &ua, retval);
 }

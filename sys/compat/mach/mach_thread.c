@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.36.20.2 2006/11/17 16:34:35 ad Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.36.20.3 2006/11/18 21:39:12 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36.20.2 2006/11/17 16:34:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36.20.3 2006/11/18 21:39:12 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,10 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36.20.2 2006/11/17 16:34:35 ad Exp
 #include <compat/mach/mach_syscallargs.h>
 
 int
-mach_sys_syscall_thread_switch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_syscall_thread_switch(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct mach_sys_syscall_thread_switch_args /* {
 		syscallarg(mach_port_name_t) thread_name;
@@ -112,10 +110,7 @@ mach_sys_syscall_thread_switch(l, v, retval)
 }
 
 int
-mach_sys_swtch_pri(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_swtch_pri(struct lwp *l, void *v, register_t *retval)
 {
 #if 0	/* pri is not used yet */
 	struct mach_sys_swtch_pri_args /* {
@@ -140,10 +135,7 @@ mach_sys_swtch_pri(l, v, retval)
 }
 
 int
-mach_sys_swtch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_swtch(struct lwp *l, void *v, register_t *retval)
 {
 	struct mach_sys_swtch_pri_args cup;
 

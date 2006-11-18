@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.41.4.4 2006/11/17 16:34:40 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.41.4.5 2006/11/18 21:39:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/signalvar.h>
+#include <sys/specificdata.h>
 
 typedef volatile const void *wchan_t;
 
@@ -79,6 +80,9 @@ struct	lwp {
 
 	struct proc	*l_proc;	/* p: parent process */
 	LIST_ENTRY(lwp)	l_sibling;	/* p: entry on proc's list of LWPs */
+
+	specificdata_reference
+		l_specdataref;		/* !: subsystem lwp-specific data */
 
 #define l_startzero l_cred
 
@@ -148,7 +152,6 @@ extern kmutex_t alllwp_mutex;		/* Mutex on alllwp */
 extern kmutex_t lwp_mutex;		/* Idle LWP mutex */
 extern struct lwplist alllwp;		/* List of all LWPs. */
 
-extern struct pool lwp_pool;		/* memory pool for LWPs */
 extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
 
 extern struct lwp lwp0;			/* LWP for proc0 */
@@ -296,6 +299,7 @@ int newlwp(struct lwp *, struct proc *, vaddr_t, int /* XXX boolean_t */, int,
 
 /* Flags for _lwp_wait1 */
 #define LWPWAIT_EXITCONTROL	0x00000001
+void	lwpinit(void);
 int 	lwp_wait1(struct lwp *, lwpid_t, lwpid_t *, int);
 void	lwp_continue(struct lwp *);
 void	cpu_setfunc(struct lwp *, void (*)(void *), void *);
@@ -310,6 +314,16 @@ void	lwp_update_creds(struct lwp *);
 struct lwp *lwp_byid(struct proc *, int);
 void	lwp_userret(struct lwp *);
 int	lwp_lastlive(int);
+
+int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
+void	lwp_specific_key_delete(specificdata_key_t);
+void 	lwp_initspecific(struct lwp *);
+void 	lwp_finispecific(struct lwp *);
+void *	lwp_getspecific(specificdata_key_t);
+#if defined(_LWP_API_PRIVATE)
+void *	_lwp_getspecific_by_lwp(struct lwp *, specificdata_key_t);
+#endif
+void	lwp_setspecific(specificdata_key_t, void *);
 #endif	/* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */

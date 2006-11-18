@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.1.12.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.1.12.1 2006/11/18 21:39:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -422,6 +422,9 @@ hci_event_inquiry_result(struct hci_unit *unit, struct mbuf *m)
 		m_copydata(m, 0, sizeof(hci_inquiry_response),
 			(caddr_t)&memo->response);
 		m_adj(m, sizeof(hci_inquiry_response));
+
+		memo->response.clock_offset =
+		    le16toh(memo->response.clock_offset);
 	}
 }
 

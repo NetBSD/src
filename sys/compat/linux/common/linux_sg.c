@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sg.c,v 1.7 2005/12/11 12:20:19 christos Exp $ */
+/* $NetBSD: linux_sg.c,v 1.7.20.1 2006/11/18 21:39:08 ad Exp $ */
 
 /*
  * Copyright (c) 2004 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.7 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.7.20.1 2006/11/18 21:39:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,8 +172,9 @@ linux_ioctl_sg(struct lwp *l, struct linux_sys_ioctl_args *uap,
 		lreq.duration = req.timeout;	/* XXX */
 		lreq.info = 0;			/* XXX */
 		error = copyout(&lreq, SCARG(uap, data), sizeof(lreq));
-		if (error)
+		if (error) {
 			DPRINTF(("failed to copy out req data %d\n", error));
+		}
 		break;
 	case LINUX_SG_EMULATED_HOST:
 	case LINUX_SG_SET_TRANSFORM:
