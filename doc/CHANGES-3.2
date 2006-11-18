@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.12 2006/11/15 22:11:09 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.13 2006/11/18 14:57:49 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -157,4 +157,9 @@ sys/dev/pci/if_pcn.c				1.35
 	Fix typo (enaddr[3] should be enaddr[2]), and add note to comment,
 	both in VMware bug-workaround section.
 	[thorpej, ticket #1586]
+
+sys/dev/pci/bktr/bktr_core.c			patch
+	fix bug introduced by missing braces around a if() block in
+	ticket #1511
+	[aymeric, ticket #1587]
 
