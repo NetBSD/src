@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.13 2006/11/18 12:39:48 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.14 2006/11/18 19:33:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.13 2006/11/18 12:39:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.14 2006/11/18 19:33:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1566,49 +1566,69 @@ puffs_strategy(void *v)
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct puffs_mount *pmp;
-	struct puffs_vnreq_read *read_argp;
-	struct puffs_vnreq_write *write_argp;
+	struct puffs_vnreq_read *read_argp = NULL;
+	struct puffs_vnreq_write *write_argp = NULL;
 	struct buf *bp;
 	size_t argsize;
+	size_t tomove, moved;
 	int error;
 
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 	bp = ap->a_bp;
 
 #ifdef DIAGNOSTIC
-	if (bp->b_bcount > pmp->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX)
-		panic("puffs_strategy: wildly inappropriate buf bcount %d",
-		    bp->b_bcount);
+	if (bp->b_resid > pmp->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX)
+		panic("puffs_strategy: wildly inappropriate buf resid %d",
+		    bp->b_resid);
 #endif
 
 	if (bp->b_flags & B_READ) {
 		argsize = sizeof(struct puffs_vnreq_read);
-		read_argp = malloc(argsize, M_PUFFS, M_WAITOK | M_ZERO);
+		read_argp = malloc(argsize, M_PUFFS, M_NOWAIT | M_ZERO);
+		if (read_argp == NULL) {
+			error = ENOMEM;
+			goto out;
+		}
+
+		tomove = PUFFS_TOMOVE(bp->b_resid, pmp);
+
 		read_argp->pvnr_ioflag = 0;
-		read_argp->pvnr_resid = bp->b_bcount;
+		read_argp->pvnr_resid = tomove;
 		read_argp->pvnr_offset = bp->b_blkno << DEV_BSHIFT;
-		/* XXX: puffs_credcvt */
+		puffs_credcvt(&read_argp->pvnr_cred, FSCRED);
 
 		error = puffs_vntouser_adjbuf(pmp, PUFFS_VN_READ,
 		    (void **)&read_argp, &argsize, argsize,
 		    VPTOPNC(ap->a_vp), LOCKEDVP(ap->a_vp), NULL);
 
-		/* XXX */
 		if (error)
-			printf("virhe %d\n", error);
+			goto out;
 
-		/* XXX */
-		bp->b_resid = read_argp->pvnr_resid;
-		(void)memcpy(bp->b_data, read_argp->pvnr_data, bp->b_bcount);
-		free(read_argp, M_PUFFS);
+		if (read_argp->pvnr_resid > tomove) {
+			error = EINVAL;
+			goto out;
+		}
+
+		moved = tomove - read_argp->pvnr_resid;
+
+		(void)memcpy(bp->b_data, read_argp->pvnr_data, moved);
+		bp->b_resid -= moved;
 	} else {
 		argsize = sizeof(struct puffs_vnreq_write) + bp->b_bcount;
-		write_argp = malloc(argsize, M_PUFFS, M_WAITOK | M_ZERO);
+		write_argp = malloc(argsize, M_PUFFS, M_NOWAIT | M_ZERO);
+		if (write_argp == NULL) {
+			error = ENOMEM;
+			goto out;
+		}
+
+		tomove = PUFFS_TOMOVE(bp->b_resid, pmp);
+
 		write_argp->pvnr_ioflag = 0;
-		write_argp->pvnr_resid = bp->b_bcount;
+		write_argp->pvnr_resid = tomove;
 		write_argp->pvnr_offset = bp->b_blkno << DEV_BSHIFT;
-		/* XXX, stupid */
-		(void)memcpy(&write_argp->pvnr_data, bp->b_data, bp->b_bcount);
+		puffs_credcvt(&write_argp->pvnr_cred, FSCRED);
+
+		(void)memcpy(&write_argp->pvnr_data, bp->b_data, tomove);
 
 		error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount),
 		    PUFFS_VN_WRITE, write_argp, argsize,
@@ -1616,20 +1636,24 @@ puffs_strategy(void *v)
 		if (error)
 			goto out;
 
-		bp->b_resid = write_argp->pvnr_resid;
+		moved = write_argp->pvnr_resid - tomove;
 
-		/* XXX: if any of the following trigger, we're in trouble */
+		if (write_argp->pvnr_resid > tomove) {
+			error = EINVAL;
+			goto out;
+		}
 
-		/* check 1 */
+		bp->b_resid -= moved;
 		if (write_argp->pvnr_resid != 0)
 			error = EIO;
-
-		/* check 2 */
-		if (write_argp->pvnr_resid > bp->b_bcount)
-			error = EINVAL;
 	}
 
  out:
+	if (read_argp)
+		free(read_argp, M_PUFFS);
+	if (write_argp)
+		free(write_argp, M_PUFFS);
+
 	biodone(ap->a_bp);
 	return error;
 }
