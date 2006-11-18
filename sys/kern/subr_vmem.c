@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.22 2006/11/18 07:51:06 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.23 2006/11/18 07:51:34 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.22 2006/11/18 07:51:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.23 2006/11/18 07:51:34 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -504,6 +504,27 @@ qc_init(vmem_t *vm, size_t qcache_max)
 	}
 }
 
+static void
+qc_destroy(vmem_t *vm)
+{
+	const qcache_t *prevqc;
+	int i;
+	int qcache_idx_max;
+
+	qcache_idx_max = vm->vm_qcache_max >> vm->vm_quantum_shift;
+	prevqc = NULL;
+	for (i = 1; i <= qcache_idx_max; i++) {
+		qcache_t *qc = vm->vm_qcache[i - 1];
+
+		if (prevqc == qc) {
+			continue;
+		}
+		pool_cache_destroy(&qc->qc_cache);
+		pool_destroy(&qc->qc_pool);
+		prevqc = qc;
+	}
+}
+
 static boolean_t
 qc_reap(vmem_t *vm)
 {
@@ -768,6 +789,9 @@ vmem_destroy(vmem_t *vm)
 
 	VMEM_ASSERT_UNLOCKED(vm);
 
+#if defined(QCACHE)
+	qc_destroy(vm);
+#endif /* defined(QCACHE) */
 	if (vm->vm_hashlist != NULL) {
 		int i;
 
