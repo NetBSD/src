@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.132 2006/11/18 13:48:01 tsutsui Exp $
+#	$NetBSD: BRANCHES,v 1.133 2006/11/18 18:20:38 rpaulo Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -323,7 +323,7 @@ Notes:		A more flexible infrastructure for third-party packages by
 
 Branch:		rpaulo-netinet-merge-pcb
 Description:	merge in6pcb with inpcb
-Status:		Active
+Status:		Dormant
 Start Date:	Wed Feb 01 2006
 End Date:	
 Base Tag:	rpaulo-netinet-merge-pcb-base
