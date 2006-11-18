@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.7 2006/11/17 17:48:02 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.8 2006/11/18 12:39:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -200,8 +200,8 @@ struct puffs_cn {
 
 
 struct puffs_startreq {
-	void	*psr_cookie;		/* IN:  root node cookie */
-	fsid_t	psr_fsidx;		/* OUT: fsid value */
+	void		*psr_cookie;	/* IN: root node cookie */
+	struct statvfs	psr_sb;		/* IN: statvfs buffer */
 };
 
 /*

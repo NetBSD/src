@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.12 2006/11/18 08:18:24 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.13 2006/11/18 12:39:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.12 2006/11/18 08:18:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.13 2006/11/18 12:39:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -542,9 +542,12 @@ puffs_getattr(void *v)
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
+	struct mount *mp;
 	int error;
 
 	PUFFS_VNREQ(getattr);
+
+	mp = ap->a_vp->v_mount;
 
 	vattr_null(&getattr_arg.pvnr_va);
 	puffs_credcvt(&getattr_arg.pvnr_cred, ap->a_cred);
@@ -563,6 +566,12 @@ puffs_getattr(void *v)
 		return error;
 
 	(void)memcpy(ap->a_vap, &getattr_arg.pvnr_va, sizeof(struct vattr));
+
+	/*
+	 * fill in information userspace does not have
+	 * XXX: but would it be better to do fsid at the generic level?
+	 */
+	ap->a_vap->va_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 
 	return 0;
 }
