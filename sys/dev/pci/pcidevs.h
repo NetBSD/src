@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.850 2006/11/18 00:01:14 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.851 2006/11/18 01:01:23 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.851 2006/11/17 23:57:27 tsutsui Exp
+ *	NetBSD: pcidevs,v 1.852 2006/11/18 01:00:18 tsutsui Exp
  */
 
 /*
@@ -2957,14 +2957,15 @@
 /* RATOC Systems products */
 #define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
 
-/* Realtek (Creative Labs?) products */
+/* Realtek products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8100	0x8100		/* 8100 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8101E	0x8136		/* 8101E 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8139B	0x8138		/* 8139B 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 10/100 Ethernet */
-#define	PCI_PRODUCT_REALTEK_RT8167	0x8167		/* 8169SC/8110SC 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8169SC	0x8167		/* 8169SC/8110SC 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8168	0x8168		/* 8168B/8111B 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8169	0x8169		/* 8169/S/SB 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8180	0x8180		/* 8180 802.11b */
