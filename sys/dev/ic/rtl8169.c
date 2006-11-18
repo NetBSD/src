@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.67 2006/11/18 10:37:24 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.68 2006/11/18 17:39:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1267,26 +1267,21 @@ re_rxeof(struct rtk_softc *sc)
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 
-		/* Do RX checksumming if enabled */
+		/* Do RX checksumming */
 
-		if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) {
-
-			/* Check IP header checksum */
-			if (rxstat & RE_RDESC_STAT_PROTOID)
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+		/* Check IP header checksum */
+		if (rxstat & RE_RDESC_STAT_PROTOID) {
+			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			if (rxstat & RE_RDESC_STAT_IPSUMBAD)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
 		}
 
 		/* Check TCP/UDP checksum */
-		if (RE_TCPPKT(rxstat) &&
-		    (ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx)) {
+		if (RE_TCPPKT(rxstat)) {
 			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
 			if (rxstat & RE_RDESC_STAT_TCPSUMBAD)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
-		}
-		if (RE_UDPPKT(rxstat) &&
-		    (ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx)) {
+		} else if (RE_UDPPKT(rxstat)) {
 			m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
 			if (rxstat & RE_RDESC_STAT_UDPSUMBAD)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
