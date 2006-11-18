@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.131 2006/11/18 07:08:47 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.132 2006/11/18 13:48:01 tsutsui Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -391,6 +391,7 @@ Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
 		tested (by who):
 			alpha		(yamt)
+			ews4800mips	(tsutsui)
 			hp300		(tsutsui)
 			i386		(yamt)
 			news68k		(tsutsui)
@@ -416,7 +417,6 @@ Notes:
 			evbppc(marvell)
 			evbppc(ibm4xx)
 			evbsh3
-			ews4800mips
 			hp700
 			hpcarm
 			hpcmips
