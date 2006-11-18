@@ -1,4 +1,4 @@
-$NetBSD: newlock2-TODO,v 1.1.2.2 2006/11/17 16:34:32 ad Exp $
+$NetBSD: newlock2-TODO,v 1.1.2.3 2006/11/18 23:55:49 ad Exp $
 
 Goals:
 
@@ -22,8 +22,15 @@ Goals:
 
 TODO:
 
-	- Uniprocessor kernels don't work, due to LWP locking
 	- Fix ptrace
+	- kgmon is broken, is it broken on HEAD?
+	- amd64: SPL NOT LOWERED ON SYSCALL EXIT under load, i386 is stable
+	- p_userret replacement
+	- Repair syscalls.master
+	- Wakeups too early in exit1()
+	- Check usage of P_ISZOMBIE / SZOMB
+	- Memory barriers between setting one of L_USERRET and signotify()
+	- itimers need work (per-LWP vs SA)
 	- Locking around PCB / setcontext for ptrace
 	- Further locking around sigstack
 	- Lock the SA subsystem
