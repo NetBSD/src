@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.129 2006/11/18 06:47:51 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.130 2006/11/18 06:59:24 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -448,7 +448,17 @@ Notes:
 			sparc64 (GENERIC.MP seems to have an unrelated problem)
 
 		notyet:
-			others
+			amigappc
+			bebox
+			dreamcast
+			mipsco
+			mmeye
+			mvme68k
+			mvmeppc
+			ofppc
+			playstation2
+			pmppc
+			sh5
 
 
 ########################################################################
