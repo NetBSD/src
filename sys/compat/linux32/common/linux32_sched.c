@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sched.c,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/*	$NetBSD: linux32_sched.c,v 1.1.20.1 2006/11/18 21:39:11 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_sched.c,v 1.1 2006/02/09 19:18:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sched.c,v 1.1.20.1 2006/11/18 21:39:11 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,3 +111,22 @@ linux32_sys_sched_setscheduler(l, v, retval)
 
 	return linux_sys_sched_setscheduler(l, &ua, retval);
 }
+
+int
+linux32_sys_sched_getparam(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_sched_getparam_args /* {
+		syscallarg(pid_t) pid;
+		syscallarg(linux32_sched_paramp_t *) sp;
+	} */ *uap = v;
+	struct linux_sys_sched_getparam_args ua;
+
+	NETBSD32TO64_UAP(pid);
+	NETBSD32TOP_UAP(sp, struct linux_sched_param);
+	
+	return linux_sys_sched_getparam(l, &ua, retval);
+}
+

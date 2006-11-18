@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.43 2006/02/11 12:45:07 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.43.14.1 2006/11/18 21:39:49 ad Exp $	*/
 
 /*
  *
@@ -82,8 +82,6 @@ struct uvm {
 		/* vm_page queues */
 	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
 	int page_free_nextcolor;	/* next color to allocate from */
-	struct pglist page_active;	/* allocated pages, in use */
-	struct pglist page_inactive;	/* pages between the clock hands */
 	struct simplelock pageqlock;	/* lock for active/inactive page q */
 	struct simplelock fpageqlock;	/* lock for free page q */
 	boolean_t page_init_done;	/* TRUE if uvm_page_init() finished */
@@ -167,19 +165,7 @@ do {									\
 	    msg, timo, slock);						\
 } while (/*CONSTCOND*/ 0)
 
-/*
- * UVM_KICK_PDAEMON: perform checks to determine if we need to
- * give the pagedaemon a nudge, and do so if necessary.
- */
-
-#define	UVM_KICK_PDAEMON()						\
-do {									\
-	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||		\
-	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&		\
-	     uvmexp.inactive < uvmexp.inactarg)) {			\
-		wakeup(&uvm.pagedaemon);				\
-	}								\
-} while (/*CONSTCOND*/0)
+void uvm_kick_pdaemon(void);
 
 /*
  * UVM_PAGE_OWN: track page ownership (only if UVM_PAGE_TRKOWN)

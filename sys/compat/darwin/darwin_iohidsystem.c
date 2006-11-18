@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.33 2006/03/28 17:38:29 thorpej Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.33.8.1 2006/11/18 21:39:04 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.33 2006/03/28 17:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.33.8.1 2006/11/18 21:39:04 ad Exp $");
+
+#include "opt_ktrace.h"
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -55,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.33 2006/03/28 17:38:29 thor
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kthread.h>
+#include <sys/ktrace.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wseventvar.h>
@@ -694,9 +697,7 @@ darwin_wscons_to_iohidsystem(wsevt, hidevt)
 }
 
 static void
-mach_notify_iohidsystem(l, mr)
-	struct lwp *l;
-	struct mach_right *mr;
+mach_notify_iohidsystem(struct lwp *l, struct mach_right *mr)
 {
 	struct mach_port *mp;
 	mach_notify_iohidsystem_request_t *req;
@@ -722,7 +723,7 @@ mach_notify_iohidsystem(l, mr)
 
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_USER))
-		ktruser(l, "notify_iohidsystem", NULL, 0, 0);
+		(void)ktruser(l, "notify_iohidsystem", NULL, 0, 0);
 #endif
 
 	mr->mr_refcount++;

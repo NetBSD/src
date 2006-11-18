@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.14 2005/12/11 12:20:12 christos Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.14.20.1 2006/11/18 21:39:05 ad Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.14 2005/12/11 12:20:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.14.20.1 2006/11/18 21:39:05 ad Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -194,12 +194,13 @@ irix_sysmp_saget(cmd, buf, len)
 	case IRIX_MPSA_RMINFO: {
 		struct irix_sysmp_rminfo *irm =
 		    (struct irix_sysmp_rminfo *)kbuf;
+		int active, inactive;
 
+		uvm_estimatepageable(&active, &inactive);
 		irm->freemem = uvmexp.free + uvmexp.filepages;
-		irm->availsmem = uvmexp.free + uvmexp.active + uvmexp.inactive
+		irm->availsmem = uvmexp.free + active + inactive
 		    + uvmexp.wired + (uvmexp.swpages - uvmexp.swpgonly);
-		irm->availrmem = uvmexp.free + uvmexp.active + uvmexp.inactive
-		    + uvmexp.wired;
+		irm->availrmem = uvmexp.free + active + inactive + uvmexp.wired;
 		irm->bufmem = bufpages;
 		irm->physmem = uvmexp.npages;
 		irm->dchunkpages = 0; /* unsupported */
@@ -208,7 +209,7 @@ irix_sysmp_saget(cmd, buf, len)
 		irm->chunkpages = 0;  /* unsupported */
 		irm->dpages = 0;      /* unsupported */
 		irm->emptymem = uvmexp.free;
-		irm->ravailrmem = uvmexp.active + uvmexp.inactive + uvmexp.free;
+		irm->ravailrmem = active + inactive + uvmexp.free;
 		break;
 	}
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.188.4.1 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.188.4.2 2006/11/18 21:39:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -320,7 +320,7 @@ void	doshutdownhooks(void);
 /*
  * Power management hooks.
  */
-void	*powerhook_establish(void (*)(int, void *), void *);
+void	*powerhook_establish(const char *, void (*)(int, void *), void *);
 void	powerhook_disestablish(void *);
 void	dopowerhooks(int);
 #define PWR_RESUME	0
@@ -490,9 +490,12 @@ do {						\
 
 #if defined(MULTIPROCESSOR) && defined(DEBUG)
 #define	KERNEL_LOCK_ASSERT_LOCKED()	_kernel_lock_assert_locked()
+#define	KERNEL_LOCK_ASSERT_UNLOCKED()	_kernel_lock_assert_unlocked()
 void _kernel_lock_assert_locked(void);
+void _kernel_lock_assert_unlocked(void);
 #else
 #define	KERNEL_LOCK_ASSERT_LOCKED()	/* nothing */
+#define	KERNEL_LOCK_ASSERT_UNLOCKED()	/* nothing */
 #endif
 
 #endif	/* !_SYS_SYSTM_H_ */

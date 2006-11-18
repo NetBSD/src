@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.164 2006/09/02 13:37:52 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.164.2.1 2006/11/18 21:39:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.164 2006/09/02 13:37:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.164.2.1 2006/11/18 21:39:44 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -580,12 +580,8 @@ nfs_decode_args(nmp, argp, l)
  */
 /* ARGSUSED */
 int
-nfs_mount(mp, path, data, ndp, l)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	struct nameidata *ndp;
-	struct lwp *l;
+nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
+    struct lwp *l)
 {
 	int error;
 	struct nfs_args args;
@@ -843,10 +839,7 @@ bad:
  * unmount system call
  */
 int
-nfs_unmount(mp, mntflags, l)
-	struct mount *mp;
-	int mntflags;
-	struct lwp *l;
+nfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 {
 	struct nfsmount *nmp;
 	struct vnode *vp;
@@ -961,20 +954,25 @@ nfs_sync(mp, waitfor, cred, l)
 	kauth_cred_t cred;
 	struct lwp *l;
 {
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	int error, allerror = 0;
 
 	/*
 	 * Force stale buffer cache information to be flushed.
 	 */
 loop:
-	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	/*
+	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
+	 * and vclean() can be called indirectly
+	 */
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0))
@@ -996,10 +994,7 @@ loop:
  */
 /* ARGSUSED */
 int
-nfs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+nfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 
 	return (EOPNOTSUPP);
@@ -1127,10 +1122,7 @@ nfs_vptofh(struct vnode *vp, struct fid *buf, size_t *bufsize)
  */
 /* ARGSUSED */
 int
-nfs_start(mp, flags, l)
-	struct mount *mp;
-	int flags;
-	struct lwp *l;
+nfs_start(struct mount *mp, int flags, struct lwp *l)
 {
 
 	return (0);
@@ -1141,12 +1133,7 @@ nfs_start(mp, flags, l)
  */
 /* ARGSUSED */
 int
-nfs_quotactl(mp, cmd, uid, arg, l)
-	struct mount *mp;
-	int cmd;
-	uid_t uid;
-	void *arg;
-	struct lwp *l;
+nfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg, struct lwp *l)
 {
 
 	return (EOPNOTSUPP);

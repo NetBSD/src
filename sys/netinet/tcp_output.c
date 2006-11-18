@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.143 2006/09/05 00:29:36 rpaulo Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.143.2.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.143 2006/09/05 00:29:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.143.2.1 2006/11/18 21:39:36 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -196,6 +196,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.143 2006/09/05 00:29:36 rpaulo Exp 
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 #include <netinet/in_offload.h>
@@ -673,14 +674,26 @@ tcp_output(struct tcpcb *tp)
 	txsegsize_nosack = txsegsize;
 again:
 	use_tso = has_tso;
+	if ((tp->t_flags & (TF_ECN_SND_CWR|TF_ECN_SND_ECE)) != 0) {
+		/* don't duplicate CWR/ECE. */
+		use_tso = 0;
+	}
 	TCP_REASS_LOCK(tp);
 	sack_numblks = tcp_sack_numblks(tp);
 	if (sack_numblks) {
-		if ((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
-			/* don't duplicate D-SACK. */
-			use_tso = 0;
+		int sackoptlen;
+
+		sackoptlen = TCP_SACK_OPTLEN(sack_numblks);
+		if (sackoptlen > txsegsize_nosack) {
+			sack_numblks = 0; /* give up SACK */
+			txsegsize = txsegsize_nosack;
+		} else {
+			if ((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
+				/* don't duplicate D-SACK. */
+				use_tso = 0;
+			}
+			txsegsize = txsegsize_nosack - sackoptlen;
 		}
-		txsegsize = txsegsize_nosack - TCP_SACK_OPTLEN(sack_numblks);
 	} else {
 		txsegsize = txsegsize_nosack;
 	}
@@ -795,14 +808,8 @@ again:
 		}
 	}
 
-	if (!TCP_SACK_ENABLED(tp)) {
-		if (win < so->so_snd.sb_cc) {
-			len = win - off;
-			flags &= ~TH_FIN;
-		} else
-			len = so->so_snd.sb_cc - off;
-	} else if (sack_rxmit == 0) {
-		if (sack_bytes_rxmt != 0) {
+	if (sack_rxmit == 0) {
+		if (TCP_SACK_ENABLED(tp) && tp->t_partialacks >= 0) {
 			long cwin;
 
 			/*
@@ -828,8 +835,8 @@ again:
 			 */
 			if (len > 0) {
 				cwin = tp->snd_cwnd - 
-						(tp->snd_nxt - tp->sack_newdata) -
-						sack_bytes_rxmt;
+				    (tp->snd_nxt - tp->sack_newdata) -
+				    sack_bytes_rxmt;
 				if (cwin < 0)
 					cwin = 0;
 				if (cwin < len) {
@@ -840,8 +847,9 @@ again:
 		} else if (win < so->so_snd.sb_cc) {
 			len = win - off;
 			flags &= ~TH_FIN;
-		} else
+		} else {
 			len = so->so_snd.sb_cc - off;
+		}
 	}
 
 	if (len < 0) {
@@ -1604,7 +1612,7 @@ out:
 	if (maxburst < 0)
 		printf("tcp_output: maxburst exceeded by %d\n", -maxburst);
 #endif
-	if (sendalot && (!tcp_do_newreno || --maxburst))
+	if (sendalot && (tp->t_congctl == &tcp_reno_ctl || --maxburst))
 		goto again;
 	return (0);
 }

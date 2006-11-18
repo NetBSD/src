@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs.h,v 1.14 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: smbfs.h,v 1.14.8.1 2006/11/18 21:39:20 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -85,6 +85,7 @@ struct smbmount {
 	struct lock		sm_hashlock;
 	LIST_HEAD(smbnode_hashhead, smbnode) *sm_hash;
 	u_long			sm_hashlen;
+	int			sm_didrele;
 };
 
 #define VFSTOSMBFS(mp)		((struct smbmount *)((mp)->mnt_data))

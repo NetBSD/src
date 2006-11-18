@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.110 2006/08/25 18:29:17 matt Exp $	*/
+/*	$NetBSD: in6.c,v 1.110.2.1 2006/11/18 21:39:37 ad Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.110 2006/08/25 18:29:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.110.2.1 2006/11/18 21:39:37 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -180,11 +180,8 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	 * ip6_input, we assume that the rt_ifa points to the address instead
 	 * of the loopback address.
 	 */
-	if (cmd == RTM_ADD && nrt && ifa != nrt->rt_ifa) {
-		IFAFREE(nrt->rt_ifa);
-		IFAREF(ifa);
-		nrt->rt_ifa = ifa;
-	}
+	if (cmd == RTM_ADD && nrt && ifa != nrt->rt_ifa)
+		rt_replace_ifa(nrt, ifa);
 
 	/*
 	 * Report the addition/removal of the address to the routing socket.
@@ -1560,6 +1557,8 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, l)
 		ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
 		in6_prefixlen2mask(&ifra.ifra_prefixmask.sin6_addr, prefixlen);
 
+		ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
+		ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
 		ifra.ifra_flags = iflr->flags & ~IFLR_PREFIX;
 		return in6_control(so, SIOCAIFADDR_IN6, (caddr_t)&ifra, ifp, l);
 	    }
@@ -1686,7 +1685,7 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, l)
 }
 
 /*
- * Initialize an interface's intetnet6 address
+ * Initialize an interface's internet6 address
  * and routing table entry.
  */
 static int
@@ -2218,9 +2217,7 @@ in6_domifattach(ifp)
 }
 
 void
-in6_domifdetach(ifp, aux)
-	struct ifnet *ifp;
-	void *aux;
+in6_domifdetach(struct ifnet *ifp, void *aux)
 {
 	struct in6_ifextra *ext = (struct in6_ifextra *)aux;
 

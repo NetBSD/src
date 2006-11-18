@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.40.6.1 2006/09/11 18:19:09 ad Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.40.6.2 2006/11/18 21:39:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,14 +41,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.40.6.1 2006/09/11 18:19:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.40.6.2 2006/11/18 21:39:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
+
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_pdpolicy.h>
 
 /*
  * maxslp: ???? XXXCDC
@@ -152,6 +154,9 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	struct uvmexp_sysctl u;
+	int active, inactive;
+
+	uvm_estimatepageable(&active, &inactive);
 
 	memset(&u, 0, sizeof(u));
 
@@ -161,8 +166,8 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.pageshift = uvmexp.pageshift;
 	u.npages = uvmexp.npages;
 	u.free = uvmexp.free;
-	u.active = uvmexp.active;
-	u.inactive = uvmexp.inactive;
+	u.active = active;
+	u.inactive = inactive;
 	u.paging = uvmexp.paging;
 	u.wired = uvmexp.wired;
 	u.zeropages = uvmexp.zeropages;
@@ -170,7 +175,7 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.reserve_kernel = uvmexp.reserve_kernel;
 	u.freemin = uvmexp.freemin;
 	u.freetarg = uvmexp.freetarg;
-	u.inactarg = uvmexp.inactarg;
+	u.inactarg = 0; /* unused */
 	u.wiredmax = uvmexp.wiredmax;
 	u.nswapdev = uvmexp.nswapdev;
 	u.swpages = uvmexp.swpages;
@@ -237,72 +242,10 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for the vm.{anon,exec,file}{min,max} nodes.
- * makes sure that they all correlate properly and none are set too
- * large.
- */
-static int
-sysctl_vm_updateminmax(SYSCTLFN_ARGS)
-{
-	int t, error;
-	struct sysctlnode node;
-
-	node = *rnode;
-	node.sysctl_data = &t;
-	t = *(int*)rnode->sysctl_data;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	if (t < 0 || t > 100)
-		return (EINVAL);
-
-#define UPDATEMIN(a, ap, bp, cp, tp) do { \
-		if (tp + uvmexp.bp + uvmexp.cp > 95) \
-			return (EINVAL); \
-		uvmexp.ap = tp; \
-		uvmexp.a = uvmexp.ap * 256 / 100; \
-	} while (0/*CONSTCOND*/)
-
-#define UPDATEMAX(a, ap, tp) do { \
-		uvmexp.ap = tp; \
-		uvmexp.a = tp * 256 / 100; \
-	} while (0/*CONSTCOND*/)
-
-	switch (rnode->sysctl_num) {
-	case VM_ANONMIN:
-		UPDATEMIN(anonmin, anonminpct, fileminpct, execminpct, t);
-		break;
-	case VM_EXECMIN:
-		UPDATEMIN(execmin, execminpct, anonminpct, fileminpct, t);
-		break;
-	case VM_FILEMIN:
-		UPDATEMIN(filemin, fileminpct, execminpct, anonminpct, t);
-		break;
-	case VM_ANONMAX:
-		UPDATEMAX(anonmax, anonmaxpct, t);
-		break;
-	case VM_EXECMAX:
-		UPDATEMAX(execmax, execmaxpct, t);
-		break;
-	case VM_FILEMAX:
-		UPDATEMAX(filemax, filemaxpct, t);
-		break;
-	default:
-		return (EINVAL);
-	}
-
-#undef UPDATEMIN
-#undef UPDATEMAX
-
-	return (0);
-}
-
-/*
  * sysctl helper routine for uvm_pctparam.
  */
 static int
-sysctl_uvmpctparam(SYSCTLFN_ARGS)
+uvm_sysctlpctparam(SYSCTLFN_ARGS)
 {
 	int t, error;
 	struct sysctlnode node;
@@ -313,7 +256,6 @@ sysctl_uvmpctparam(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	node.sysctl_data = &t;
-	t = *(int*)rnode->sysctl_data;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
@@ -321,6 +263,10 @@ sysctl_uvmpctparam(SYSCTLFN_ARGS)
 	if (t < 0 || t > 100)
 		return EINVAL;
 
+	error = uvm_pctparam_check(pct, t);
+	if (error) {
+		return error;
+	}
 	uvm_pctparam_set(pct, t);
 
 	return (0);
@@ -371,27 +317,6 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 		       sysctl_vm_uvmexp2, 0, NULL, 0,
 		       CTL_VM, VM_UVMEXP2, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "anonmin",
-		       SYSCTL_DESCR("Percentage of physical memory reserved "
-				    "for anonymous application data"),
-		       sysctl_vm_updateminmax, 0, &uvmexp.anonminpct, 0,
-		       CTL_VM, VM_ANONMIN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "execmin",
-		       SYSCTL_DESCR("Percentage of physical memory reserved "
-				    "for cached executable data"),
-		       sysctl_vm_updateminmax, 0, &uvmexp.execminpct, 0,
-		       CTL_VM, VM_EXECMIN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "filemin",
-		       SYSCTL_DESCR("Percentage of physical memory reserved "
-				    "for cached file data"),
-		       sysctl_vm_updateminmax, 0, &uvmexp.fileminpct, 0,
-		       CTL_VM, VM_FILEMIN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT, CTLTYPE_INT, "maxslp",
 		       SYSCTL_DESCR("Maximum process sleep time before being "
 				    "swapped"),
@@ -406,41 +331,12 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 		       CTL_VM, VM_USPACE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "anonmax",
-		       SYSCTL_DESCR("Percentage of physical memory which will "
-				    "be reclaimed from other usage for "
-				    "anonymous application data"),
-		       sysctl_vm_updateminmax, 0, &uvmexp.anonmaxpct, 0,
-		       CTL_VM, VM_ANONMAX, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "execmax",
-                       SYSCTL_DESCR("Percentage of physical memory which will "
-				    "be reclaimed from other usage for cached "
-				    "executable data"),
-		       sysctl_vm_updateminmax, 0, &uvmexp.execmaxpct, 0,
-		       CTL_VM, VM_EXECMAX, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "filemax",
-		       SYSCTL_DESCR("Percentage of physical memory which will "
-				    "be reclaimed from other usage for cached "
-				    "file data"),
-		       sysctl_vm_updateminmax, 0, &uvmexp.filemaxpct, 0,
-		       CTL_VM, VM_FILEMAX, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "idlezero",
 		       SYSCTL_DESCR("Whether try to zero pages in idle loop"),
 		       NULL, 0, &vm_page_zero_enable, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "inactivepct",
-		       SYSCTL_DESCR("Percentage of inactive queue of "
-				    "the entire (active + inactive) queue"),
-		       sysctl_uvmpctparam, 0, &uvmexp.inactivepct, 0,
-		       CTL_VM, CTL_CREATE, CTL_EOL);
+
+	uvmpdpol_sysctlsetup();
 }
 
 /*
@@ -455,6 +351,7 @@ uvm_total(struct vmtotal *totalp)
 	struct vm_map *map;
 	int paging;
 #endif
+	int active;
 
 	memset(totalp, 0, sizeof *totalp);
 
@@ -520,11 +417,12 @@ uvm_total(struct vmtotal *totalp)
 	/*
 	 * Calculate object memory usage statistics.
 	 */
+	uvm_estimatepageable(&active, NULL);
 	totalp->t_free = uvmexp.free;
 	totalp->t_vm = uvmexp.npages - uvmexp.free + uvmexp.swpginuse;
-	totalp->t_avm = uvmexp.active + uvmexp.swpginuse;	/* XXX */
+	totalp->t_avm = active + uvmexp.swpginuse;	/* XXX */
 	totalp->t_rm = uvmexp.npages - uvmexp.free;
-	totalp->t_arm = uvmexp.active;
+	totalp->t_arm = active;
 	totalp->t_vmshr = 0;		/* XXX */
 	totalp->t_avmshr = 0;		/* XXX */
 	totalp->t_rmshr = 0;		/* XXX */
@@ -537,4 +435,41 @@ uvm_pctparam_set(struct uvm_pctparam *pct, int val)
 
 	pct->pct_pct = val;
 	pct->pct_scaled = val * UVM_PCTPARAM_SCALE / 100;
+}
+
+int
+uvm_pctparam_get(struct uvm_pctparam *pct)
+{
+
+	return pct->pct_pct;
+}
+
+int
+uvm_pctparam_check(struct uvm_pctparam *pct, int val)
+{
+
+	if (pct->pct_check == NULL) {
+		return 0;
+	}
+	return (*pct->pct_check)(pct, val);
+}
+
+void
+uvm_pctparam_init(struct uvm_pctparam *pct, int val,
+    int (*fn)(struct uvm_pctparam *, int))
+{
+
+	pct->pct_check = fn;
+	uvm_pctparam_set(pct, val);
+}
+
+int
+uvm_pctparam_createsysctlnode(struct uvm_pctparam *pct, const char *name,
+    const char *desc)
+{
+
+	return sysctl_createv(NULL, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, name, SYSCTL_DESCR(desc),
+	    uvm_sysctlpctparam, 0, pct, 0, CTL_VM, CTL_CREATE, CTL_EOL);
 }

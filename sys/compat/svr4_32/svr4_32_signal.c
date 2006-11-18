@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.15.20.1 2006/10/21 15:20:48 ad Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.15.20.2 2006/11/18 21:39:15 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.15.20.1 2006/10/21 15:20:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.15.20.2 2006/11/18 21:39:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -280,17 +280,19 @@ svr4_32_to_native_sigaction(ssa, bsa)
 		bsa->sa_flags |= SA_RESETHAND;
 	if ((ssa->svr4_32_sa_flags & SVR4_SA_RESTART) != 0)
 		bsa->sa_flags |= SA_RESTART;
-	if ((ssa->svr4_32_sa_flags & SVR4_SA_SIGINFO) != 0)
+	if ((ssa->svr4_32_sa_flags & SVR4_SA_SIGINFO) != 0) {
 		DPRINTF(("svr4_to_native_sigaction: SA_SIGINFO ignored\n"));
+	}
 	if ((ssa->svr4_32_sa_flags & SVR4_SA_NODEFER) != 0)
 		bsa->sa_flags |= SA_NODEFER;
 	if ((ssa->svr4_32_sa_flags & SVR4_SA_NOCLDWAIT) != 0)
 		bsa->sa_flags |= SA_NOCLDWAIT;
 	if ((ssa->svr4_32_sa_flags & SVR4_SA_NOCLDSTOP) != 0)
 		bsa->sa_flags |= SA_NOCLDSTOP;
-	if ((ssa->svr4_32_sa_flags & ~SVR4_SA_ALLBITS) != 0)
+	if ((ssa->svr4_32_sa_flags & ~SVR4_SA_ALLBITS) != 0) {
 		DPRINTF(("svr4_32_to_native_sigaction: extra bits %x ignored\n",
 		    ssa->svr4_32_sa_flags & ~SVR4_SA_ALLBITS));
+	}
 }
 
 void

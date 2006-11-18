@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.5 2006/11/17 16:34:36 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.6 2006/11/18 21:39:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.5 2006/11/17 16:34:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.6 2006/11/18 21:39:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -174,11 +174,12 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 void mutex_destroy(kmutex_t *mtx)
 {
 
-	if (MUTEX_ADAPTIVE_P(mtx))
+	if (MUTEX_ADAPTIVE_P(mtx)) {
 		MUTEX_ASSERT(mtx,
 		    MUTEX_OWNER(mtx) == 0 && !MUTEX_HAS_WAITERS(mtx));
-	else
+	} else {
 		MUTEX_ASSERT(mtx, !MUTEX_SPIN_HELD(mtx));
+	}
 
 	LOCKDEBUG_FREE(mtx, MUTEX_GETID(mtx));
 	MUTEX_SETID(mtx, -1);

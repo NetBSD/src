@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utalloc.c,v 1.2 2006/05/14 21:38:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utalloc.c,v 1.2.10.1 2006/11/18 21:39:17 ad Exp $");
 
 #define __UTALLOC_C__
 

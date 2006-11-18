@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.15 2006/08/04 16:58:27 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.15.4.1 2006/11/18 21:39:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.15 2006/08/04 16:58:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.15.4.1 2006/11/18 21:39:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,8 +166,8 @@ compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
+	    0, NULL, NULL, NULL)))
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fh))) != 0)
@@ -370,8 +370,8 @@ compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag);
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
+	    0, NULL, NULL, NULL);
 	if (error)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,

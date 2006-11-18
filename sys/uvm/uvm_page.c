@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.112.8.1 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.112.8.2 2006/11/18 21:39:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,9 +71,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.112.8.1 2006/11/17 16:34:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.112.8.2 2006/11/18 21:39:50 ad Exp $");
 
 #include "opt_uvmhist.h"
+#include "opt_readahead.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.112.8.1 2006/11/17 16:34:40 ad Exp $"
 #include <sys/proc.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_pdpolicy.h>
 
 /*
  * global vars... XXXCDC: move to uvm. structure.
@@ -285,8 +287,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * structures).
 	 */
 
-	TAILQ_INIT(&uvm.page_active);
-	TAILQ_INIT(&uvm.page_inactive);
+	uvmpdpol_init();
 	simple_lock_init(&uvm.pageqlock);
 	simple_lock_init(&uvm.fpageqlock);
 
@@ -420,19 +421,6 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 
 	uvmexp.reserve_pagedaemon = 1;
 	uvmexp.reserve_kernel = 5;
-	uvmexp.anonminpct = 10;
-	uvmexp.fileminpct = 10;
-	uvmexp.execminpct = 5;
-	uvmexp.anonmaxpct = 80;
-	uvmexp.filemaxpct = 50;
-	uvmexp.execmaxpct = 30;
-	uvmexp.anonmin = uvmexp.anonminpct * 256 / 100;
-	uvmexp.filemin = uvmexp.fileminpct * 256 / 100;
-	uvmexp.execmin = uvmexp.execminpct * 256 / 100;
-	uvmexp.anonmax = uvmexp.anonmaxpct * 256 / 100;
-	uvmexp.filemax = uvmexp.filemaxpct * 256 / 100;
-	uvmexp.execmax = uvmexp.execmaxpct * 256 / 100;
-	uvm_pctparam_set(&uvmexp.inactivepct, 33);
 
 	/*
 	 * determine if we should zero pages in the idle loop.
@@ -817,8 +805,10 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	ps->free_list = free_list;
 	vm_nphysseg++;
 
-	if (!preload)
+	if (!preload) {
 		uvm_page_rehash();
+		uvmpdpol_reinit();
+	}
 }
 
 /*
@@ -982,7 +972,7 @@ uvm_page_recolor(int newncolors)
  * uvm_pagealloc_pgfl: helper routine for uvm_pagealloc_strat
  */
 
-static inline struct vm_page *
+static struct vm_page *
 uvm_pagealloc_pgfl(struct pgfreelist *pgfl, int try1, int try2,
     int *trycolorp)
 {
@@ -1048,6 +1038,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	boolean_t use_reserve;
 
 	KASSERT(obj == NULL || anon == NULL);
+	KASSERT(anon == NULL || off == 0);
 	KASSERT(off == trunc_page(off));
 	LOCK_ASSERT(obj == NULL || simple_lock_held(&obj->vmobjlock));
 	LOCK_ASSERT(anon == NULL || simple_lock_held(&anon->an_lock));
@@ -1069,7 +1060,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	 * the pagedaemon.
 	 */
 
-	UVM_KICK_PDAEMON();
+	uvm_kick_pdaemon();
 
 	/*
 	 * fail if any of these conditions is true:
@@ -1303,7 +1294,7 @@ uvm_pagefree(struct vm_page *pg)
 
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
 	LOCK_ASSERT(simple_lock_held(&uvm.pageqlock) ||
-		    (pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) == 0);
+		    !uvmpdpol_pageisqueued_p(pg));
 	LOCK_ASSERT(pg->uobject == NULL ||
 		    simple_lock_held(&pg->uobject->vmobjlock));
 	LOCK_ASSERT(pg->uobject != NULL || pg->uanon == NULL ||
@@ -1517,7 +1508,7 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 		    "page (%p)\n", pg);
 		panic("uvm_page_own");
 	}
-	KASSERT((pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) ||
+	KASSERT(uvmpdpol_pageisqueued_p(pg) ||
 	    (pg->uanon == NULL && pg->uobject == NULL) ||
 	    pg->uobject == uvm.kernel_object ||
 	    pg->wire_count > 0 ||
@@ -1676,6 +1667,12 @@ void
 uvm_pagewire(struct vm_page *pg)
 {
 	UVM_LOCK_ASSERT_PAGEQ();
+#if defined(READAHEAD_STATS)
+	if ((pg->pqflags & PQ_READAHEAD) != 0) {
+		uvm_ra_hit.ev_count++;
+		pg->pqflags &= ~PQ_READAHEAD;
+	}
+#endif /* defined(READAHEAD_STATS) */
 	if (pg->wire_count == 0) {
 		uvm_pagedequeue(pg);
 		uvmexp.wired++;
@@ -1713,18 +1710,10 @@ uvm_pageunwire(struct vm_page *pg)
 void
 uvm_pagedeactivate(struct vm_page *pg)
 {
+
 	UVM_LOCK_ASSERT_PAGEQ();
-	if (pg->pqflags & PQ_ACTIVE) {
-		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-		pg->pqflags &= ~PQ_ACTIVE;
-		uvmexp.active--;
-	}
-	if ((pg->pqflags & PQ_INACTIVE) == 0) {
-		KASSERT(pg->wire_count == 0);
-		TAILQ_INSERT_TAIL(&uvm.page_inactive, pg, pageq);
-		pg->pqflags |= PQ_INACTIVE;
-		uvmexp.inactive++;
-	}
+	KASSERT(pg->wire_count != 0 || uvmpdpol_pageisqueued_p(pg));
+	uvmpdpol_pagedeactivate(pg);
 }
 
 /*
@@ -1736,13 +1725,18 @@ uvm_pagedeactivate(struct vm_page *pg)
 void
 uvm_pageactivate(struct vm_page *pg)
 {
+
 	UVM_LOCK_ASSERT_PAGEQ();
-	uvm_pagedequeue(pg);
-	if (pg->wire_count == 0) {
-		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
-		pg->pqflags |= PQ_ACTIVE;
-		uvmexp.active++;
+#if defined(READAHEAD_STATS)
+	if ((pg->pqflags & PQ_READAHEAD) != 0) {
+		uvm_ra_hit.ev_count++;
+		pg->pqflags &= ~PQ_READAHEAD;
 	}
+#endif /* defined(READAHEAD_STATS) */
+	if (pg->wire_count != 0) {
+		return;
+	}
+	uvmpdpol_pageactivate(pg);
 }
 
 /*
@@ -1752,17 +1746,29 @@ uvm_pageactivate(struct vm_page *pg)
 void
 uvm_pagedequeue(struct vm_page *pg)
 {
-	if (pg->pqflags & PQ_ACTIVE) {
+
+#if defined(LOCKDEBUG)
+	if (uvmpdpol_pageisqueued_p(pg)) {
 		UVM_LOCK_ASSERT_PAGEQ();
-		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-		pg->pqflags &= ~PQ_ACTIVE;
-		uvmexp.active--;
-	} else if (pg->pqflags & PQ_INACTIVE) {
-		UVM_LOCK_ASSERT_PAGEQ();
-		TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
-		pg->pqflags &= ~PQ_INACTIVE;
-		uvmexp.inactive--;
 	}
+#endif /* defined(LOCKDEBUG) */
+	uvmpdpol_pagedequeue(pg);
+}
+
+/*
+ * uvm_pageenqueue: add a page to a paging queue without activating.
+ * used where a page is not really demanded (yet).  eg. read-ahead
+ */
+
+void
+uvm_pageenqueue(struct vm_page *pg)
+{
+
+	UVM_LOCK_ASSERT_PAGEQ();
+	if (pg->wire_count != 0) {
+		return;
+	}
+	uvmpdpol_pageenqueue(pg);
 }
 
 /*

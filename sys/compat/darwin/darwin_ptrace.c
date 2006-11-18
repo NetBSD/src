@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.8.2.2 2006/11/17 16:34:34 ad Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.8.2.3 2006/11/18 21:39:04 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.8.2.2 2006/11/17 16:34:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.8.2.3 2006/11/18 21:39:04 ad Exp $");
 
 #include "opt_ptrace.h"
 
@@ -203,10 +203,8 @@ darwin_sys_ptrace(l, v, retval)
 }
 
 int
-darwin_sys_kdebug_trace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_kdebug_trace(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct darwin_sys_kdebug_trace_args /* {
 		syscallarg(int) debugid;

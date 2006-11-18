@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.44 2006/09/02 07:30:30 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.44.2.1 2006/11/18 21:39:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.44 2006/09/02 07:30:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.44.2.1 2006/11/18 21:39:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,9 +568,9 @@ out1:
 	for(i=0;i<NTFS_SYSNODESNUM;i++)
 		if(ntmp->ntm_sysvn[i]) vrele(ntmp->ntm_sysvn[i]);
 
-	if (vflush(mp,NULLVP,0))
+	if (vflush(mp,NULLVP,0)) {
 		dprintf(("ntfs_mountfs: vflush failed\n"));
-
+	}
 out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
@@ -591,7 +591,7 @@ static int
 ntfs_start (
 	struct mount *mp,
 	int flags,
-	struct lwp *l )
+	struct lwp *l)
 {
 	return (0);
 }

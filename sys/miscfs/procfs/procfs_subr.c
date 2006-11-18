@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.68.14.3 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.68.14.4 2006/11/18 21:39:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68.14.3 2006/11/17 16:34:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68.14.4 2006/11/18 21:39:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,6 +208,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 	case PFSself:	/* /proc/self    = lr-xr-xr-x */
 	case PFScwd:	/* /proc/N/cwd = lr-xr-xr-x */
 	case PFSchroot:	/* /proc/N/chroot = lr-xr-xr-x */
+	case PFSexe:	/* /proc/N/exe = lr-xr-xr-x */
 		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		vp->v_type = VLNK;
 		break;
@@ -285,7 +286,9 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 	case PFSstatus:	/* /proc/N/status = -r--r--r-- */
 	case PFSstat:	/* /proc/N/stat = -r--r--r-- */
 	case PFScmdline:	/* /proc/N/cmdline = -r--r--r-- */
+	case PFSemul:	/* /proc/N/emul = -r--r--r-- */
 	case PFSmeminfo:	/* /proc/meminfo = -r--r--r-- */
+	case PFSdevices:	/* /proc/devices = -r--r--r-- */
 	case PFScpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
 	case PFSuptime:	/* /proc/uptime = -r--r--r-- */
 	case PFSmounts:	/* /proc/mounts = -r--r--r-- */
@@ -418,6 +421,9 @@ procfs_rw(v)
 		error = procfs_domeminfo(curl, p, pfs, uio);
 		break;
 
+	case PFSdevices:
+		return (procfs_dodevices(curl, p, pfs, uio));
+
 	case PFScpuinfo:
 		error = procfs_docpuinfo(curl, p, pfs, uio);
 		break;
@@ -433,6 +439,9 @@ procfs_rw(v)
 	case PFSmounts:
 		error = procfs_domounts(curl, p, pfs, uio);
 		break;
+
+	case PFSemul:
+		return procfs_doemul(curl, p, pfs, uio);
 
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
@@ -675,4 +684,12 @@ procfs_proc_unlock(struct proc *p)
 	mutex_enter(&p->p_mutex);
 	proc_delref(p);
 	mutex_exit(&p->p_mutex);
+}
+
+int
+procfs_doemul(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	const char *ename = p->p_emul->e_name;
+	return uiomove_frombuf(__UNCONST(ename), strlen(ename), uio);
 }

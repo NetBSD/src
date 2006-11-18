@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsparse.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsparse.c,v 1.1.18.1 2006/11/18 21:39:17 ad Exp $");
 
 #define __NSPARSE_C__
 

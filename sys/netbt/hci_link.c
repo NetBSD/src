@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.3 2006/07/26 10:20:56 tron Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.3.4.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.3 2006/07/26 10:20:56 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.3.4.1 2006/11/18 21:39:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,7 +98,7 @@ hci_acl_open(struct hci_unit *unit, bdaddr_t *bdaddr)
 		if (memo != NULL) {
 			cp.page_scan_rep_mode = memo->response.page_scan_rep_mode;
 			cp.page_scan_mode = memo->response.page_scan_mode;
-			cp.clock_offset = memo->response.clock_offset;
+			cp.clock_offset = htole16(memo->response.clock_offset);
 		}
 
 		if (unit->hci_link_policy & HCI_LINK_POLICY_ENABLE_ROLE_SWITCH)
@@ -218,9 +218,10 @@ hci_acl_timeout(void *arg)
 		err = hci_send_cmd(link->hl_unit, HCI_CMD_DISCONNECT,
 					&cp, sizeof(cp));
 
-		if (err)
+		if (err) {
 			DPRINTF("error %d sending HCI_CMD_DISCONNECT\n",
-					err);
+			    err);
+		}
 
 		break;
 
@@ -261,7 +262,8 @@ hci_acl_recv(struct mbuf *m, struct hci_unit *unit)
 	}
 
 	if (m->m_pkthdr.len != le16toh(hdr.length)) {
-		printf("%s: bad ACL packet length\n", unit->hci_devname);
+		printf("%s: bad ACL packet length (%d != %d)\n",
+			unit->hci_devname, m->m_pkthdr.len, le16toh(hdr.length));
 		goto bad;
 	}
 #endif
@@ -748,7 +750,7 @@ hci_link_free(struct hci_link *link, int err)
 {
 	struct l2cap_req *req;
 	struct l2cap_pdu *pdu;
-	struct l2cap_channel *chan;
+	struct l2cap_channel *chan, *next;
 
 	KASSERT(link);
 
@@ -758,7 +760,9 @@ hci_link_free(struct hci_link *link, int err)
 
 	/* ACL reference count */
 	if (link->hl_refcnt > 0) {
-		LIST_FOREACH(chan, &l2cap_active_list, lc_ncid) {
+		next = LIST_FIRST(&l2cap_active_list);
+		while ((chan = next) != NULL) {
+			next = LIST_NEXT(chan, lc_ncid);
 			if (chan->lc_link == link)
 				l2cap_close(chan, err);
 		}

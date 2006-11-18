@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.3 2006/05/20 15:45:37 elad Exp $ */
+/* $NetBSD: kern_pax.c,v 1.3.14.1 2006/11/18 21:39:22 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -35,12 +35,11 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/exec_elf.h>
-#include <uvm/uvm_extern.h>
 #include <sys/pax.h>
 #include <sys/sysctl.h>
 
-int pax_mprotect_enabled = 1;
-int pax_mprotect_global = PAX_MPROTECT;
+static int pax_mprotect_enabled = 1;
+static int pax_mprotect_global = PAX_MPROTECT;
 
 SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 {
@@ -73,9 +72,9 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &rnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "global_protection",
+		       CTLTYPE_INT, "global",
 		       SYSCTL_DESCR("When enabled, unless explicitly "
-				    "specified, apply restrictions to"
+				    "specified, apply restrictions to "
 				    "all processes."),
 		       NULL, 0, &pax_mprotect_global, 0,
 		       CTL_CREATE, CTL_EOL);

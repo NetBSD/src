@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.23.4.1 2006/09/11 00:20:01 ad Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.23.4.2 2006/11/18 21:39:29 ad Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.23.4.1 2006/09/11 00:20:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.23.4.2 2006/11/18 21:39:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ vn_initialize_syncerd()
 	    M_VNODE, M_WAITOK);
 
 	for (i = 0; i < syncer_last; i++)
-		LIST_INIT(&syncer_workitem_pending[i]);
+		TAILQ_INIT(&syncer_workitem_pending[i]);
 
 	mutex_init(&syncer_mutex, MUTEX_DEFAULT, IPL_NONE);
 }
@@ -118,37 +118,42 @@ vn_syncer_add_to_worklist(vp, delayx)
 	struct vnode *vp;
 	int delayx;
 {
-	int s, slot;
+	struct synclist *slp;
+	int s;
 
 	s = splbio();
 
 	if (vp->v_flag & VONWORKLST) {
-		LIST_REMOVE(vp, v_synclist);
+		slp = &syncer_workitem_pending[vp->v_synclist_slot];
+		TAILQ_REMOVE(slp, vp, v_synclist);
 	}
 
 	if (delayx > syncer_maxdelay - 2)
 		delayx = syncer_maxdelay - 2;
-	slot = (syncer_delayno + delayx) % syncer_last;
+	vp->v_synclist_slot = (syncer_delayno + delayx) % syncer_last;
 
-	LIST_INSERT_HEAD(&syncer_workitem_pending[slot], vp, v_synclist);
+	slp = &syncer_workitem_pending[vp->v_synclist_slot];
+	TAILQ_INSERT_TAIL(slp, vp, v_synclist);
 	vp->v_flag |= VONWORKLST;
 	splx(s);
 }
 
 /*
- * Remove an item fromthe syncer work queue.
+ * Remove an item from the syncer work queue.
  */
 void
 vn_syncer_remove_from_worklist(vp)
 	struct vnode *vp;
 {
+	struct synclist *slp;
 	int s;
 
 	s = splbio();
 
 	if (vp->v_flag & VONWORKLST) {
 		vp->v_flag &= ~VONWORKLST;
-		LIST_REMOVE(vp, v_synclist);
+		slp = &syncer_workitem_pending[vp->v_synclist_slot];
+		TAILQ_REMOVE(slp, vp, v_synclist);
 	}
 
 	splx(s);
@@ -158,8 +163,7 @@ vn_syncer_remove_from_worklist(vp)
  * System filesystem synchronizer daemon.
  */
 void
-sched_sync(v)
-	void *v;
+sched_sync(void *v)
 {
 	struct synclist *slp;
 	struct vnode *vp;
@@ -185,7 +189,7 @@ sched_sync(v)
 
 		mutex_enter(&syncer_mutex);
 
-		while ((vp = LIST_FIRST(slp)) != NULL) {
+		while ((vp = TAILQ_FIRST(slp)) != NULL) {
 			if (vn_start_write(vp, &mp, V_NOWAIT) == 0) {
 				if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT)
 				    == 0) {
@@ -196,7 +200,7 @@ sched_sync(v)
 				vn_finished_write(mp, 0);
 			}
 			s = splbio();
-			if (LIST_FIRST(slp) == vp) {
+			if (TAILQ_FIRST(slp) == vp) {
 
 				/*
 				 * Put us back on the worklist.  The worklist

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.90 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.90.4.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.90 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.90.4.1 2006/11/18 21:39:36 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -516,14 +516,16 @@ rip_usrreq(struct socket *so, int req,
 		return (in_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, l));
 
+	s = splsoftnet();
+
 	if (req == PRU_PURGEIF) {
 		in_pcbpurgeif0(&rawcbtable, (struct ifnet *)control);
 		in_purgeif((struct ifnet *)control);
 		in_pcbpurgeif(&rawcbtable, (struct ifnet *)control);
+		splx(s);
 		return (0);
 	}
 
-	s = splsoftnet();
 	inp = sotoinpcb(so);
 #ifdef DIAGNOSTIC
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
@@ -541,11 +543,14 @@ rip_usrreq(struct socket *so, int req,
 			error = EISCONN;
 			break;
 		}
-		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))) {
+
+		if (l == NULL) {
 			error = EACCES;
 			break;
 		}
+
+		/* XXX: raw socket permissions are checked in socreate() */
+
 		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
 			error = soreserve(so, rip_sendspace, rip_recvspace);
 			if (error)

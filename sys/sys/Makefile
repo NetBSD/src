@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84.8.2 2006/10/21 14:26:59 ad Exp $
+#	$NetBSD: Makefile,v 1.84.8.3 2006/11/18 21:39:46 ad Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -7,6 +7,7 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	callout.h cdefs.h cdefs_aout.h \
 	cdefs_elf.h cdio.h chio.h clockctl.h condvar.h conf.h core.h \
 	device.h dir.h dirent.h disk.h disklabel.h disklabel_acorn.h \
+	disklabel_gpt.h \
 	dkbad.h dkio.h dkstat.h domain.h drvctlio.h dvdio.h \
 	endian.h envsys.h errno.h evcnt.h event.h exec.h exec_aout.h \
 	exec_coff.h exec_ecoff.h exec_elf.h exec_script.h extattr.h extent.h \
@@ -21,11 +22,12 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	namei.h null.h \
 	param.h pipe.h pmc.h poll.h pool.h power.h proc.h \
 	protosw.h ptrace.h queue.h \
-	ras.h reboot.h radioio.h resource.h resourcevar.h rnd.h rwlock.h \
-	sa.h scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h shm.h \
-	siginfo.h signal.h signalvar.h sigtypes.h sleepq.h socket.h \
-	socketvar.h sockio.h stat.h statvfs.h syscall.h syscallargs.h \
-	sysctl.h stdint.h swap.h syslimits.h syslog.h \
+	ras.h reboot.h radioio.h resource.h resourcevar.h rmd160.h rnd.h rwlock.h \
+	sa.h scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h sha2.h \
+	shm.h siginfo.h signal.h signalvar.h sigtypes.h sleepq.h socket.h \
+	socketvar.h sockio.h specificdata.h stat.h statvfs.h \
+	syscall.h syscallargs.h sysctl.h systrace.h stdint.h swap.h \
+	syslimits.h syslog.h \
 	tape.h termios.h time.h timeb.h timepps.h times.h \
 	timex.h trace.h tree.h tty.h ttychars.h ttycom.h \
 	ttydefaults.h ttydev.h types.h \
@@ -40,7 +42,9 @@ INCSYMLINKS=\
 	sys/stdint.h /usr/include/stdint.h \
 	sys/syslog.h /usr/include/syslog.h \
 	sys/termios.h /usr/include/termios.h \
+	sys/rmd160.h /usr/include/rmd160.h \
 	sys/sha1.h /usr/include/sha1.h \
+	sys/sha2.h /usr/include/sha2.h \
 	sys/md4.h /usr/include/md4.h \
 	sys/md5.h /usr/include/md5.h
 

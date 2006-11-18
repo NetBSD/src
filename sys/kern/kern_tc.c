@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.11 2006/09/07 15:48:14 simonb Exp $ */
+/* $NetBSD: kern_tc.c,v 1.11.2.1 2006/11/18 21:39:22 ad Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.11 2006/09/07 15:48:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.11.2.1 2006/11/18 21:39:22 ad Exp $");
 
 #include "opt_ntp.h"
 
@@ -455,17 +455,18 @@ tc_init(struct timecounter *tc)
 	 * worse since this timecounter may not be monotonous.
 	 */
 	if (tc->tc_quality < 0)
-		return;
+		goto out;
 	if (tc->tc_quality < timecounter->tc_quality)
-		return;
+		goto out;
 	if (tc->tc_quality == timecounter->tc_quality &&
 	    tc->tc_frequency < timecounter->tc_frequency)
-		return;
+		goto out;
 	(void)tc->tc_get_timecount(tc);
 	(void)tc->tc_get_timecount(tc);
 	timecounter = tc;
 	tc_windup();
 
+ out:
 	splx(s);
 }
 
@@ -517,9 +518,10 @@ tc_windup(void)
 	struct timehands *th, *tho;
 	u_int64_t scale;
 	u_int delta, ncount, ogen;
-	int i;
+	int i, s_update;
 	time_t t;
 
+	s_update = 0;
 	/*
 	 * Make the next timehands a copy of the current one, but do not
 	 * overwrite the generation or next pointer.  While we update
@@ -575,6 +577,7 @@ tc_windup(void)
 	for (; i > 0; i--) {
 		t = bt.sec;
 		ntp_update_second(&th->th_adjustment, &bt.sec);
+		s_update = 1;
 		if (bt.sec != t)
 			timebasebin.sec += bt.sec - t;
 	}
@@ -588,10 +591,7 @@ tc_windup(void)
 	if (th->th_counter != timecounter) {
 		th->th_counter = timecounter;
 		th->th_offset_count = ncount;
-
-		printf("timecounter: selected timecounter \"%s\" frequency %ju Hz quality %d\n",
-		    timecounter->tc_name, (uintmax_t)timecounter->tc_frequency,
-		    timecounter->tc_quality);
+		s_update = 1;
 	}
 
 	/*-
@@ -617,11 +617,12 @@ tc_windup(void)
 	 * to the goddess of code clarity.
 	 *
 	 */
-	scale = (u_int64_t)1 << 63;
-	scale += (th->th_adjustment / 1024) * 2199;
-	scale /= th->th_counter->tc_frequency;
-	th->th_scale = scale * 2;
-
+	if (s_update) {
+		scale = (u_int64_t)1 << 63;
+		scale += (th->th_adjustment / 1024) * 2199;
+		scale /= th->th_counter->tc_frequency;
+		th->th_scale = scale * 2;
+	}
 	/*
 	 * Now that the struct timehands is again consistent, set the new
 	 * generation number, making sure to not make it zero.

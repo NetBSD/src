@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.32 2006/07/23 22:06:12 ad Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.32.4.1 2006/11/18 21:39:23 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.32 2006/07/23 22:06:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.32.4.1 2006/11/18 21:39:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,11 +400,6 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 		goto out;
 	}
 	do {
-		if (lvp->v_type != VDIR) {
-			error = ENOTDIR;
-			goto out;
-		}
-
 		/*
 		 * access check here is optional, depending on
 		 * whether or not caller cares.
@@ -448,8 +443,13 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 		 * directory..
 		 */
 		error = getcwd_getcache(&lvp, &uvp, &bp, bufp);
-		if (error == -1)
+		if (error == -1) {
+			if (lvp->v_type != VDIR) {
+				error = ENOTDIR;
+				goto out;
+			}
 			error = getcwd_scandir(&lvp, &uvp, &bp, bufp, l);
+		}
 		if (error)
 			goto out;
 #if DIAGNOSTIC

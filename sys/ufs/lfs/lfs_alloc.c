@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.97 2006/09/01 19:41:28 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.97.2.1 2006/11/18 21:39:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.97 2006/09/01 19:41:28 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.97.2.1 2006/11/18 21:39:49 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -198,7 +198,8 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 /* ARGSUSED */
 /* VOP_BWRITE 2i times */
 int
-lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred, struct vnode **vpp)
+lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
+    struct vnode **vpp)
 {
 	struct lfs *fs;
 	struct buf *bp, *cbp;

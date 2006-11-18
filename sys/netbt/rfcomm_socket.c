@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.1.12.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.1.12.1 2006/11/18 21:39:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -326,7 +326,8 @@ rfcomm_disconnected(void *arg, int err)
 }
 
 static void *
-rfcomm_newconn(void *arg, struct sockaddr_bt *laddr, struct sockaddr_bt *raddr)
+rfcomm_newconn(void *arg, struct sockaddr_bt *laddr,
+    struct sockaddr_bt *raddr)
 {
 	struct socket *so = arg;
 

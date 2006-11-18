@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.199 2006/09/05 00:29:36 rpaulo Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.199.2.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.199 2006/09/05 00:29:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.199.2.1 2006/11/18 21:39:36 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -151,6 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.199 2006/09/05 00:29:36 rpaulo Exp $"
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 
 #ifdef IPSEC
@@ -182,7 +183,6 @@ int	tcp_do_rfc1948 = 0;	/* ISS by cryptographic hash */
 int	tcp_do_sack = 1;	/* selective acknowledgement */
 int	tcp_do_win_scale = 1;	/* RFC1323 window scaling */
 int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
-int	tcp_do_newreno = 1;	/* Use the New Reno algorithms */
 int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 int	tcp_do_ecn = 0;		/* Explicit Congestion Notification */
 #ifndef TCP_INIT_WIN
@@ -202,11 +202,12 @@ int	tcp_compat_42 = 0;
 int	tcp_rst_ppslim = 100;	/* 100pps */
 int	tcp_ackdrop_ppslim = 100;	/* 100pps */
 int	tcp_do_loopback_cksum = 0;
+int	tcp_do_abc = 1;		/* RFC3465 Appropriate byte counting. */
+int	tcp_abc_aggressive = 1;	/* 1: L=2*SMSS  0: L=1*SMSS */
 int	tcp_sack_tp_maxholes = 32;
 int	tcp_sack_globalmaxholes = 1024;
 int	tcp_sack_globalholes = 0;
 int	tcp_ecn_maxretries = 1;
-
 
 /* tcb hash */
 #ifndef TCBHASHSIZE
@@ -361,9 +362,9 @@ EVCNT_ATTACH_STATIC(tcp_reass_fragdup);
 #endif /* TCP_REASS_COUNTERS */
 
 #ifdef MBUFTRACE
-struct mowner tcp_mowner = { "tcp" };
-struct mowner tcp_rx_mowner = { "tcp", "rx" };
-struct mowner tcp_tx_mowner = { "tcp", "tx" };
+struct mowner tcp_mowner = MOWNER_INIT("tcp", "");
+struct mowner tcp_rx_mowner = MOWNER_INIT("tcp", "rx");
+struct mowner tcp_tx_mowner = MOWNER_INIT("tcp", "tx");
 #endif
 
 /*
@@ -401,6 +402,9 @@ tcp_init(void)
 
 	/* Initialize the compressed state engine. */
 	syn_cache_init();
+
+	/* Initialize the congestion control algorithms. */
+	tcp_congctl_init();
 
 	MOWNER_ATTACH(&tcp_tx_mowner);
 	MOWNER_ATTACH(&tcp_rx_mowner);
@@ -933,6 +937,7 @@ static struct tcpcb tcpcb_template = {
 	.snd_numholes = 0,
 
 	.t_partialacks = -1,
+	.t_bytes_acked = 0,
 };
 
 /*
@@ -979,7 +984,7 @@ tcp_newtcpcb(int family, void *aux)
 	int i;
 
 	/* XXX Consider using a pool_cache for speed. */
-	tp = pool_get(&tcpcb_pool, PR_NOWAIT);
+	tp = pool_get(&tcpcb_pool, PR_NOWAIT);	/* splsoftnet via tcp_usrreq */
 	if (tp == NULL)
 		return (NULL);
 	memcpy(tp, &tcpcb_template, sizeof(*tp));
@@ -1022,7 +1027,7 @@ tcp_newtcpcb(int family, void *aux)
 	    }
 #endif /* INET6 */
 	default:
-		pool_put(&tcpcb_pool, tp);
+		pool_put(&tcpcb_pool, tp);	/* splsoftnet via tcp_usrreq */
 		return (NULL);
 	}
 
@@ -1034,7 +1039,10 @@ tcp_newtcpcb(int family, void *aux)
 	 * and thus how many TCP sequence increments have occurred.
 	 */
 	tp->ts_timebase = tcp_now;
-
+	
+	tp->t_congctl = tcp_congctl_global;
+	tp->t_congctl->refcnt++;
+	
 	return (tp);
 }
 
@@ -1095,7 +1103,7 @@ tcp_isdead(struct tcpcb *tp)
 				/* not quite there yet -- count separately? */
 			return dead;
 		tcpstat.tcps_delayed_free++;
-		pool_put(&tcpcb_pool, tp);
+		pool_put(&tcpcb_pool, tp);	/* splsoftnet via tcp_timer.c */
 	}
 	return dead;
 }
@@ -1211,6 +1219,8 @@ tcp_close(struct tcpcb *tp)
 
 	/* free the SACK holes list. */
 	tcp_free_sackholes(tp);
+	
+	tp->t_congctl->refcnt--;
 
 	tcp_canceltimers(tp);
 	TCP_CLEAR_DELACK(tp);
@@ -1640,8 +1650,10 @@ tcp_quench(struct inpcb *inp, int errno)
 {
 	struct tcpcb *tp = intotcpcb(inp);
 
-	if (tp)
+	if (tp) {
 		tp->snd_cwnd = tp->t_segsz;
+		tp->t_bytes_acked = 0;
+	}
 }
 #endif
 
@@ -1651,8 +1663,10 @@ tcp6_quench(struct in6pcb *in6p, int errno)
 {
 	struct tcpcb *tp = in6totcpcb(in6p);
 
-	if (tp)
+	if (tp) {
 		tp->snd_cwnd = tp->t_segsz;
+		tp->t_bytes_acked = 0;
+	}
 }
 #endif
 

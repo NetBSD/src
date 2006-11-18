@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.81 2006/07/23 22:06:09 ad Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.81.4.1 2006/11/18 21:39:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.81 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.81.4.1 2006/11/18 21:39:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,10 +237,7 @@ linux_sys_readdir(l, v, retval)
  * need to deal with it.
  */
 int
-linux_sys_time(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_time(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_time_args /* {
 		linux_time_t *t;
@@ -329,10 +326,7 @@ linux_sys_waitpid(l, v, retval)
 #endif /* !amd64 */
 
 int
-linux_sys_setresgid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setresgid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_setresgid_args /* {
 		syscallarg(gid_t) rgid;
@@ -353,10 +347,7 @@ linux_sys_setresgid(l, v, retval)
 }
 
 int
-linux_sys_getresgid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_getresgid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_getresgid_args /* {
 		syscallarg(gid_t *) rgid;
@@ -393,10 +384,7 @@ linux_sys_getresgid(l, v, retval)
  * need to deal with it.
  */
 int
-linux_sys_stime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_stime(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_time_args /* {
 		linux_time_t *t;
@@ -405,8 +393,9 @@ linux_sys_stime(l, v, retval)
 	linux_time_t tt;
 	int error;
 
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL,
+	    NULL)) != 0)
 		return (error);
 
 	if ((error = copyin(&tt, SCARG(uap, t), sizeof tt)) != 0)

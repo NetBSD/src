@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.125 2006/06/23 20:54:21 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.125.4.1 2006/11/18 21:39:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.125 2006/06/23 20:54:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.125.4.1 2006/11/18 21:39:28 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -454,7 +454,7 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 
 	case KFShostname: {
 		char *cp = hostname;
-		int xlen = hostnamelen;
+		size_t xlen = hostnamelen;
 
 		if (xlen >= (len - 2))
 			return (EINVAL);
@@ -915,8 +915,7 @@ kernfs_getattr(v)
 
 /*ARGSUSED*/
 int
-kernfs_setattr(v)
-	void *v;
+kernfs_setattr(void *v)
 {
 
 	/*
@@ -991,7 +990,8 @@ kernfs_default_xwrite(v)
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 	struct uio *uio = ap->a_uio;
-	int error, xlen;
+	int error;
+	size_t xlen;
 	char strbuf[KSTRING];
 
 	if (uio->uio_offset != 0)
@@ -1519,8 +1519,7 @@ kernfs_pathconf(v)
  */
 /* ARGSUSED */
 int
-kernfs_print(v)
-	void *v;
+kernfs_print(void *v)
 {
 
 	printf("tag VT_KERNFS, kernfs vnode\n");

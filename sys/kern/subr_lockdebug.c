@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.1.2.3 2006/11/17 16:34:37 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.1.2.4 2006/11/18 21:39:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.3 2006/11/17 16:34:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.4 2006/11/18 21:39:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -498,7 +498,6 @@ lockdebug_abort1(lockdebug_t *ld, lockdebuglk_t *lk, const char *func,
 		 const char *msg)
 {
 	char *buf;
-	int p;
 
 	/*
 	 * The kernel is about to fall flat on its face, so assume that 1k
@@ -507,16 +506,13 @@ lockdebug_abort1(lockdebug_t *ld, lockdebuglk_t *lk, const char *func,
 	 */
 	buf = ld_panicbuf;
 
-	p = snprintf(buf, sizeof(buf), "%s error: %s: %s\n\n",
-	    ld->ld_lockops->lo_name, func, msg);
-
-	p += snprintf(buf + p, sizeof(buf) - p,
+	printf("%s error: %s: %s\n\n"
 	    "lock address : %#018lx type     : %18s\n"
 	    "shared holds : %18d exclusive: %12slocked\n"
 	    "last locked  : %#018lx unlocked : %#018lx\n"
 	    "current cpu  : %18d last held: %18d\n"
 	    "current lwp  : %#018lx last held: %#018lx\n",
-	    (long)ld->ld_lock,
+	    ld->ld_lockops->lo_name, func, msg, (long)ld->ld_lock,
 	    ((ld->ld_flags & LD_SLEEPER) == 0 ? "spin" : "sleep"),
 	    ld->ld_shares, ((ld->ld_flags & LD_LOCKED) == 0 ? "un" : " "),
 	    (long)ld->ld_locked, (long)ld->ld_unlocked,
@@ -524,12 +520,11 @@ lockdebug_abort1(lockdebug_t *ld, lockdebuglk_t *lk, const char *func,
 	    (long)curlwp, (long)ld->ld_lwp);
 
 	if (ld->ld_lockops->lo_dump != NULL)
-		(void)(*ld->ld_lockops->lo_dump)(ld->ld_lock, buf + p,
-		    sizeof(buf) - p);
+		(void)(*ld->ld_lockops->lo_dump)(ld->ld_lock, buf,
+		    sizeof(buf));
 
 	lockdebug_unlock(lk);
-	printf("%s", buf);
-	panic("LOCKDEBUG");
+	panic("%s\nLOCKDEBUG", buf);
 }
 
 #endif	/* LOCKDEBUG */
@@ -567,7 +562,5 @@ lockdebug_abort(int id, volatile void *lock, lockops_t *ops,
 
 	(void)(*ops->lo_dump)(lock, buf, sizeof(buf));
 
-	printf("%s", buf);
-
-	panic("lock error");
+	panic("%s\nlock error", buf);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.20 2006/05/14 21:20:13 elad Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.20.8.1 2006/11/18 21:39:44 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.20 2006/05/14 21:20:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.20.8.1 2006/11/18 21:39:44 ad Exp $");
 
 /*
  * Connection engine.

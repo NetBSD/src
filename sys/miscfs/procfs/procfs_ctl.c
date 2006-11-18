@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.34.2.2 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.34.2.3 2006/11/18 21:39:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.34.2.2 2006/11/17 16:34:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.34.2.3 2006/11/18 21:39:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,11 +367,12 @@ procfs_control(curl, l, op, sig)
 }
 
 int
-procfs_doctl(curl, l, pfs, uio)
-	struct lwp *curl;
-	struct lwp *l;
-	struct pfsnode *pfs;
-	struct uio *uio;
+procfs_doctl(
+    struct lwp *curl,
+    struct lwp *l,
+    struct pfsnode *pfs,
+    struct uio *uio
+)
 {
 	struct proc *p = l->l_proc;
 	char msg[PROCFS_CTLLEN+1];

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.76 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.76.2.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.76 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.76.2.1 2006/11/18 21:39:36 ad Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.76 2006/09/07 02:40:33 dogcow Exp $")
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/in_ifattach.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_proto.h>
 
@@ -299,10 +300,17 @@ extern struct ifqueue ipintrq;
 struct domain inetdomain = {
     PF_INET, "internet", 0, 0, 0,
     inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])],
-    rn_inithead, 32, sizeof(struct sockaddr_in), 0, 0,
+    rn_inithead, 32, sizeof(struct sockaddr_in),
+#ifdef IPSELSRC
+      in_domifattach,
+      in_domifdetach,
+#else
+      NULL,
+      NULL,
+#endif
     { &ipintrq, NULL },
     { NULL },
-    MOWNER_INIT,
+    MOWNER_INIT("",""),
 };
 
 u_char	ip_protox[IPPROTO_MAX];

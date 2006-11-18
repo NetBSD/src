@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.72 2006/08/30 16:57:59 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.72.2.1 2006/11/18 21:39:29 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.72 2006/08/30 16:57:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.72.2.1 2006/11/18 21:39:29 ad Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -555,7 +555,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				if (n && error) {
 					strncpy(error, 
 					    mtod(n, caddr_t) + noff, len);
-					error[len-1] = '\0';
+					error[len] = '\0';
 				}
 			}
 			if (error) {
@@ -857,9 +857,10 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 	case PPPOESETPARMS:
 	{
 		struct pppoediscparms *parms = (struct pppoediscparms*)data;
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
-			return error;
+		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL) != 0)
+			return (EPERM);
 		if (parms->eth_ifname[0] != 0) {
 			struct ifnet	*eth_if;
 
@@ -1447,7 +1448,8 @@ pppoe_start(struct ifnet *ifp)
 
 #ifdef PFIL_HOOKS
 static int
-pppoe_ifattach_hook(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+pppoe_ifattach_hook(void *arg, struct mbuf **mp, struct ifnet *ifp,
+    int dir)
 {
 	struct pppoe_softc *sc;
 	int s;

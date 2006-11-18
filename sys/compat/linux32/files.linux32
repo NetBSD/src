@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux32,v 1.2 2006/02/15 09:31:17 manu Exp $
+#	$NetBSD: files.linux32,v 1.2.20.1 2006/11/18 21:39:10 ad Exp $
 #
 # Config file description for machine-independent Linux 32 bit compat code.
 # Included by ports that need it.
@@ -19,6 +19,7 @@ file	compat/linux32/common/linux32_socket.c	compat_linux32
 file	compat/linux32/common/linux32_socketcall.c	compat_linux32
 file	compat/linux32/common/linux32_stat.c	compat_linux32
 file	compat/linux32/common/linux32_sysctl.c	compat_linux32
+file	compat/linux32/common/linux32_sysinfo.c	compat_linux32
 file	compat/linux32/common/linux32_time.c	compat_linux32
 file	compat/linux32/common/linux32_termios.c	compat_linux32
 file	compat/linux32/common/linux32_unistd.c	compat_linux32

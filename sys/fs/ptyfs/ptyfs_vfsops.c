@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.19 2006/09/03 04:58:20 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.19.2.1 2006/11/18 21:39:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.19 2006/09/03 04:58:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.19.2.1 2006/11/18 21:39:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,8 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 
 /*ARGSUSED*/
 int
-ptyfs_start(struct mount *mp, int flags, struct lwp *p)
+ptyfs_start(struct mount *mp, int flags,
+    struct lwp *p)
 {
 	return 0;
 }
@@ -322,7 +323,8 @@ ptyfs_root(struct mount *mp, struct vnode **vpp)
 
 /*ARGSUSED*/
 int
-ptyfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg, struct lwp *p)
+ptyfs_quotactl(struct mount *mp, int cmd, uid_t uid,
+    void *arg, struct lwp *p)
 {
 	return EOPNOTSUPP;
 }
@@ -349,7 +351,8 @@ ptyfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *p)
 
 /*ARGSUSED*/
 int
-ptyfs_sync(struct mount *mp, int waitfor, kauth_cred_t uc, struct lwp *p)
+ptyfs_sync(struct mount *mp, int waitfor,
+    kauth_cred_t uc, struct lwp *p)
 {
 	return 0;
 }
@@ -360,7 +363,8 @@ ptyfs_sync(struct mount *mp, int waitfor, kauth_cred_t uc, struct lwp *p)
  */
 /*ARGSUSED*/
 int
-ptyfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+ptyfs_vget(struct mount *mp, ino_t ino,
+    struct vnode **vpp)
 {
 	return EOPNOTSUPP;
 }

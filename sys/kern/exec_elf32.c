@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.115 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.115.4.1 2006/11/18 21:39:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.115 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.115.4.1 2006/11/18 21:39:21 ad Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -811,8 +811,8 @@ out:
 }
 
 int
-netbsd_elf_probe(struct lwp *l, struct exec_package *epp,
-    void *eh, char *itp, vaddr_t *pos)
+netbsd_elf_probe(struct lwp *l, struct exec_package *epp, void *eh, char *itp,
+    vaddr_t *pos)
 {
 	int error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.h,v 1.7 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: rmd160.h,v 1.1.2.2 2006/11/18 21:39:47 ad Exp $	*/
 /*	$KAME: rmd160.h,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.h,v 1.3 2002/03/14 01:26:51 millert Exp $	*/
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.22.4.1 2006/11/17 16:34:35 ad Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.22.4.2 2006/11/18 21:39:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.22.4.1 2006/11/17 16:34:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.22.4.2 2006/11/18 21:39:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,10 +241,7 @@ ibcs2_sys_access(l, v, retval)
 }
 
 int
-ibcs2_sys_eaccess(l, v, retval)
-        struct lwp *l;
-	void *v;
-        register_t *retval;
+ibcs2_sys_eaccess(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_eaccess_args /* {
 		syscallarg(char *) path;

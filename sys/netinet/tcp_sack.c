@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.14 2005/12/11 12:24:58 christos Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.14.20.1 2006/11/18 21:39:36 ad Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,12 +109,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.14 2005/12/11 12:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.14.20.1 2006/11/18 21:39:36 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_inet_csum.h"
 #include "opt_tcp_debug.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +170,61 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.14 2005/12/11 12:24:58 christos Exp $
 #include <machine/stdarg.h>
 
 /* SACK block pool. */
-POOL_INIT(sackhole_pool, sizeof(struct sackhole), 0, 0, 0, "sackholepl", NULL);
+static POOL_INIT(sackhole_pool, sizeof(struct sackhole), 0, 0, 0, "sackholepl",
+    NULL);
+
+static struct sackhole *
+sack_allochole(struct tcpcb *tp)
+{
+	struct sackhole *hole;
+
+	if (tp->snd_numholes >= tcp_sack_tp_maxholes ||
+	    tcp_sack_globalholes >= tcp_sack_globalmaxholes) {
+		return NULL;
+	}
+	hole = pool_get(&sackhole_pool, PR_NOWAIT);
+	if (hole == NULL) {
+		return NULL;
+	}
+	tp->snd_numholes++;
+	tcp_sack_globalholes++;
+
+	return hole;
+}
+
+static struct sackhole *
+sack_inserthole(struct tcpcb *tp, tcp_seq start, tcp_seq end,
+    struct sackhole *prev)
+{
+	struct sackhole *hole;
+
+	hole = sack_allochole(tp);
+	if (hole == NULL) {
+		return NULL;
+	}
+	hole->start = hole->rxmit = start;
+	hole->end = end;
+	if (prev != NULL) {
+		TAILQ_INSERT_AFTER(&tp->snd_holes, prev, hole, sackhole_q);
+	} else {
+		TAILQ_INSERT_TAIL(&tp->snd_holes, hole, sackhole_q);
+	}
+	return hole;
+}
+
+static struct sackhole *
+sack_removehole(struct tcpcb *tp, struct sackhole *hole)
+{
+	struct sackhole *next;
+
+	next = TAILQ_NEXT(hole, sackhole_q);
+	tp->snd_numholes--;
+	tcp_sack_globalholes--;
+	TAILQ_REMOVE(&tp->snd_holes, hole, sackhole_q);
+	pool_put(&sackhole_pool, hole);
+
+	return next;
+}
 
 void
 tcp_new_dsack(struct tcpcb *tp, tcp_seq seq, u_int32_t len)
@@ -182,14 +237,15 @@ tcp_new_dsack(struct tcpcb *tp, tcp_seq seq, u_int32_t len)
 }
 
 void
-tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
+tcp_sack_option(struct tcpcb *tp, const struct tcphdr *th, const u_char *cp,
+    int optlen)
 {
 	struct sackblk
 	    t_sack_block[(MAX_TCPOPTLEN - 2) / (sizeof(u_int32_t) * 2)];
 	struct sackblk *sack = NULL;
 	struct sackhole *cur = NULL;
 	struct sackhole *tmp = NULL;
-	u_int32_t *lp = (u_int32_t *) (cp + 2);
+	const char *lp = cp + 2;
 	int i, j, num_sack_blks;
 	tcp_seq left, right, acked;
 
@@ -222,9 +278,9 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	 */
 	num_sack_blks = optlen / 8;
 	acked = (SEQ_GT(th->th_ack, tp->snd_una)) ? th->th_ack : tp->snd_una;
-	for (i = 0; i < num_sack_blks; i++, lp += 2) {
-		memcpy(&left, lp, sizeof(*lp));
-		memcpy(&right, lp + 1, sizeof(*lp));
+	for (i = 0; i < num_sack_blks; i++, lp += sizeof(uint32_t) * 2) {
+		memcpy(&left, lp, sizeof(uint32_t));
+		memcpy(&right, lp + sizeof(uint32_t), sizeof(uint32_t));
 		left = ntohl(left);
 		right = ntohl(right);
 
@@ -259,22 +315,12 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 
 		if (TAILQ_EMPTY(&tp->snd_holes)) {
 			/* First hole. */
-			if (tcp_sack_globalholes >= tcp_sack_globalmaxholes) {
-				return;
-			}
-			cur = (struct sackhole *)
-			    pool_get(&sackhole_pool, PR_NOWAIT);
+			cur = sack_inserthole(tp, th->th_ack, sack->left, NULL);
 			if (cur == NULL) {
 				/* ENOBUFS, bail out*/
 				return;
 			}
-			cur->start = th->th_ack;
-			cur->end = sack->left;
-			cur->rxmit = cur->start;
 			tp->rcv_lastsack = sack->right;
-			tp->snd_numholes++;
-			tcp_sack_globalholes++;
-			TAILQ_INSERT_HEAD(&tp->snd_holes, cur, sackhole_q);
 			continue; /* With next sack block */
 		}
 
@@ -294,13 +340,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				/* Data acks at least the beginning of hole */
 				if (SEQ_GEQ(sack->right, cur->end)) {
 					/* Acks entire hole, so delete hole */
-					tmp = cur;
-					cur = TAILQ_NEXT(cur, sackhole_q);
-					tp->snd_numholes--;
-					tcp_sack_globalholes--;
-					TAILQ_REMOVE(&tp->snd_holes, tmp,
-					    sackhole_q);
-					pool_put(&sackhole_pool, tmp);
+					cur = sack_removehole(tp, cur);
 					break;
 				}
 
@@ -324,27 +364,14 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				 * ACKs some data in middle of a hole; need to
 				 * split current hole
 				 */
-				if (tcp_sack_globalholes >=
-						tcp_sack_globalmaxholes ||
-						tp->snd_numholes >=
-						tcp_sack_tp_maxholes) {
-					return;
-				}
-				tmp = (struct sackhole *)
-				    pool_get(&sackhole_pool, PR_NOWAIT);
+				tmp = sack_inserthole(tp, sack->right, cur->end,
+				    cur);
 				if (tmp == NULL) {
-					/* ENOBUFS, bail out. */
 					return;
 				}
-				tmp->start = sack->right;
-				tmp->end = cur->end;
 				tmp->rxmit = SEQ_MAX(cur->rxmit, tmp->start);
 				cur->end = sack->left;
 				cur->rxmit = SEQ_MIN(cur->rxmit, cur->end);
-				tp->snd_numholes++;
-				tcp_sack_globalholes++;
-				TAILQ_INSERT_AFTER(&tp->snd_holes, cur, tmp,
-						sackhole_q);
 				cur = tmp;
 				break;
 			}
@@ -355,23 +382,11 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			/*
 			 * Need to append new hole at end.
 			 */
-			if (tcp_sack_globalholes >=
-					tcp_sack_globalmaxholes ||
-					tp->snd_numholes >=
-					tcp_sack_tp_maxholes) {
+			cur = sack_inserthole(tp, tp->rcv_lastsack, sack->left,
+			    NULL);
+			if (cur == NULL) {
 				return;
 			}
-			tmp = (struct sackhole *)
-			    pool_get(&sackhole_pool, PR_NOWAIT);
-			if (tmp == NULL)
-				continue; /* ENOBUFS */
-			tmp->start = tp->rcv_lastsack;
-			tmp->end = sack->left;
-			tmp->rxmit = tmp->start;
-			tp->snd_numholes++;
-			tcp_sack_globalholes++;
-			TAILQ_INSERT_TAIL(&tp->snd_holes, tmp, sackhole_q);
-			cur = tmp;
 		}
 		if (SEQ_LT(tp->rcv_lastsack, sack->right)) {
 			tp->rcv_lastsack = sack->right;
@@ -380,22 +395,16 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 }
 
 void
-tcp_del_sackholes(struct tcpcb *tp, struct tcphdr *th)
+tcp_del_sackholes(struct tcpcb *tp, const struct tcphdr *th)
 {
 	/* Max because this could be an older ack that just arrived. */
 	tcp_seq lastack = SEQ_GT(th->th_ack, tp->snd_una) ?
 		th->th_ack : tp->snd_una;
 	struct sackhole *cur = TAILQ_FIRST(&tp->snd_holes);
-	struct sackhole *tmp;
 
 	while (cur) {
 		if (SEQ_LEQ(cur->end, lastack)) {
-			tmp = cur;
-			cur = TAILQ_NEXT(cur, sackhole_q);
-			tp->snd_numholes--;
-			tcp_sack_globalholes--;
-			TAILQ_REMOVE(&tp->snd_holes, tmp, sackhole_q);
-			pool_put(&sackhole_pool, tmp);
+			cur = sack_removehole(tp, cur);
 		} else if (SEQ_LT(cur->start, lastack)) {
 			cur->start = lastack;
 			if (SEQ_LT(cur->rxmit, cur->start))
@@ -403,7 +412,6 @@ tcp_del_sackholes(struct tcpcb *tp, struct tcphdr *th)
 			break;
 		} else
 			break;
-
 	}
 }
 
@@ -413,14 +421,10 @@ tcp_free_sackholes(struct tcpcb *tp)
 	struct sackhole *sack;
 
 	/* Free up the SACK hole list. */
-	while (!TAILQ_EMPTY(&tp->snd_holes)) {
-		sack = TAILQ_FIRST(&tp->snd_holes);
-		tcp_sack_globalholes--;
-		TAILQ_REMOVE(&tp->snd_holes, sack, sackhole_q);
-		pool_put(&sackhole_pool, sack);
+	while ((sack = TAILQ_FIRST(&tp->snd_holes)) != NULL) {
+		sack_removehole(tp, sack);
 	}
-
-	tp->snd_numholes = 0;
+	KASSERT(tp->snd_numholes == 0);
 }
 
 /*
@@ -428,7 +432,7 @@ tcp_free_sackholes(struct tcpcb *tp)
  * in fast recovery.
  */
 void
-tcp_sack_newack(struct tcpcb *tp, struct tcphdr *th)
+tcp_sack_newack(struct tcpcb *tp, const struct tcphdr *th)
 {
 	if (tp->t_partialacks < 0) {
 		/*
@@ -495,7 +499,7 @@ tcp_sack_output(struct tcpcb *tp, int *sack_bytes_rexmt)
 {
 	struct sackhole *cur = NULL;
 
-	if(!TCP_SACK_ENABLED(tp))
+	if (!TCP_SACK_ENABLED(tp))
 		return (NULL);
 
 	*sack_bytes_rexmt = 0;
@@ -574,3 +578,23 @@ tcp_sack_numblks(const struct tcpcb *tp)
 
 	return numblks;
 }
+
+#if defined(DDB)
+void sack_dump(const struct tcpcb *);
+
+void
+sack_dump(const struct tcpcb *tp)
+{
+	const struct sackhole *cur;
+
+	printf("snd_una=%" PRIu32 ", snd_max=%" PRIu32 "\n",
+	    tp->snd_una, tp->snd_max);
+	printf("rcv_lastsack=%" PRIu32 ", snd_fack=%" PRIu32 "\n",
+	    tp->rcv_lastsack, tp->snd_fack);
+	printf("numholes=%d\n", tp->snd_numholes);
+	TAILQ_FOREACH(cur, &tp->snd_holes, sackhole_q) {
+		printf("\t%" PRIu32 "-%" PRIu32 ", rxmit=%" PRIu32 "\n",
+		    cur->start, cur->end, cur->rxmit);
+	}
+}
+#endif /* defined(DDB) */

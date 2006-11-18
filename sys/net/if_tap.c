@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.21 2006/09/01 16:28:53 cube Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.21.2.1 2006/11/18 21:39:29 ad Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.21 2006/09/01 16:28:53 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.21.2.1 2006/11/18 21:39:29 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -243,13 +243,15 @@ tapattach(int n)
 
 /* Pretty much useless for a pseudo-device */
 static int
-tap_match(struct device *self, struct cfdata *cfdata, void *arg)
+tap_match(struct device *self, struct cfdata *cfdata,
+    void *arg)
 {
 	return (1);
 }
 
 void
-tap_attach(struct device *parent, struct device *self, void *aux)
+tap_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct tap_softc *sc = (struct tap_softc *)self;
 	struct ifnet *ifp;
@@ -734,7 +736,8 @@ tap_dev_cloner(struct lwp *l)
  * created it closes it.
  */
 static int
-tap_cdev_close(dev_t dev, int flags, int fmt, struct lwp *l)
+tap_cdev_close(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	struct tap_softc *sc =
 	    (struct tap_softc *)device_lookup(&tap_cd, minor(dev));

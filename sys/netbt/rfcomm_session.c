@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.1.12.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.1.12.1 2006/11/18 21:39:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1296,16 +1296,21 @@ close:
  * process Non Supported Command command/response
  */
 static void
-rfcomm_session_recv_mcc_nsc(struct rfcomm_session *rs, int cr, struct mbuf *m)
+rfcomm_session_recv_mcc_nsc(struct rfcomm_session *rs,
+    int cr, struct mbuf *m)
 {
-	struct rfcomm_dlc *dlc;
+	struct rfcomm_dlc *dlc, *next;
 
 	/*
 	 * Since we did nothing that is not mandatory,
 	 * we just abort the whole session..
 	 */
-	LIST_FOREACH(dlc, &rs->rs_dlcs, rd_next)
+
+	next = LIST_FIRST(&rs->rs_dlcs);
+	while ((dlc = next) != NULL) {
+		next = LIST_NEXT(dlc, rd_next);
 		rfcomm_dlc_close(dlc, ECONNABORTED);
+	}
 
 	rfcomm_session_free(rs);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.103.4.4 2006/11/17 16:34:36 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.103.4.5 2006/11/18 21:39:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.4 2006/11/17 16:34:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.5 2006/11/18 21:39:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,8 +233,9 @@ donice(struct lwp *l, struct proc *chgp, int n)
 	n += NZERO;
 
   again:
-	if (n < (onice = chgp->p_nice) && kauth_authorize_generic(cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
+	if (n < (onice = chgp->p_nice) && kauth_authorize_process(cred,
+	    KAUTH_PROCESS_RESOURCE, chgp, (void *)KAUTH_REQ_PROCESS_RESOURCE_NICE,
+	    (void *)(u_long)n, NULL))
 		return (EACCES);
 	mutex_enter(&chgp->p_smutex);
 	if (onice != chgp->p_nice) {
@@ -292,8 +293,9 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 		return (EINVAL);
 	}
 	if (limp->rlim_max > alimp->rlim_max && (error =
-	    kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	    kauth_authorize_process(l->l_cred, KAUTH_PROCESS_RESOURCE,
+	    p, (void *)KAUTH_REQ_PROCESS_RESOURCE_RLIMIT, limp,
+	    (void *)(u_long)which)))
 			return (error);
 
 	if (p->p_limit->p_refcnt > 1 &&
@@ -629,6 +631,8 @@ sysctl_proc_findproc(struct lwp *l, struct proc **p2, pid_t pid)
 	else if ((ptmp = pfind(pid)) == NULL)
 		error = ESRCH;
 	else {
+		boolean_t isroot = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, NULL);
 		/*
 		 * suid proc of ours or proc not ours
 		 */
@@ -636,16 +640,14 @@ sysctl_proc_findproc(struct lwp *l, struct proc **p2, pid_t pid)
 		    kauth_cred_getuid(ptmp->p_cred) ||
 		    kauth_cred_getuid(l->l_cred) !=
 		    kauth_cred_getsvuid(ptmp->p_cred))
-			error = kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+			error = isroot ? 0 : EPERM;
 
 		/*
 		 * sgid proc has sgid back to us temporarily
 		 */
 		else if (kauth_cred_getgid(ptmp->p_cred) !=
 		    kauth_cred_getsvgid(ptmp->p_cred))
-			error = kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+			error = isroot ? 0 : EPERM;
 
 		/*
 		 * our rgid must be in target's group list (ie,
@@ -657,8 +659,7 @@ sysctl_proc_findproc(struct lwp *l, struct proc **p2, pid_t pid)
 			if (kauth_cred_ismember_gid(l->l_cred,
 			    kauth_cred_getgid(ptmp->p_cred), &ismember) != 0 ||
 			    !ismember) {
-				error = kauth_authorize_generic(l->l_cred,
-				    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+				error = isroot ? 0 : EPERM;
 			}
 		}
 	}
@@ -715,7 +716,8 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 		goto done;
 	}
 
-	if (securelevel > 1)
+	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CORENAME,
+	    l->l_proc, NULL, NULL, NULL) != 0)
 		return (EPERM);
 
 	/*

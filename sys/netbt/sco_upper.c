@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.2 2006/08/27 11:41:58 plunky Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.2.2.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.2 2006/08/27 11:41:58 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.2.2.1 2006/11/18 21:39:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

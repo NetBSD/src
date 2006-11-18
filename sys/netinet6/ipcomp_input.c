@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.28 2006/02/14 21:43:02 rpaulo Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.28.14.1 2006/11/18 21:39:37 ad Exp $	*/
 /*	$KAME: ipcomp_input.c,v 1.29 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.28 2006/02/14 21:43:02 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.28.14.1 2006/11/18 21:39:37 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -260,9 +260,7 @@ fail:
 
 #ifdef INET6
 int
-ipcomp6_input(mp, offp, proto)
-	struct mbuf **mp;
-	int *offp, proto;
+ipcomp6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m, *md;
 	int off;

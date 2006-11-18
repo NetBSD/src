@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.14 2006/08/23 19:49:09 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.14.2.1 2006/11/18 21:39:05 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.14 2006/08/23 19:49:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.14.2.1 2006/11/18 21:39:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -339,7 +339,9 @@ linux_fakedev(dev, raw)
         dev_t dev;
 	int raw;
 {
-	return 0;
+	return ((minor(dev) & 0xff) | ((major(dev) & 0xfff) << 8)
+	    | (((unsigned long long int) (minor(dev) & ~0xff)) << 12)
+	    | (((unsigned long long int) (major(dev) & ~0xfff)) << 32));
 }
 
 int  

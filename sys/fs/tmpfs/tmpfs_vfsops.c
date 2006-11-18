@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.14 2006/09/03 06:51:04 christos Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.14.2.1 2006/11/18 21:39:21 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.14 2006/09/03 06:51:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.14.2.1 2006/11/18 21:39:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -191,7 +191,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_start(struct mount *mp, int flags, struct lwp *l)
+tmpfs_start(struct mount *mp, int flags,
+    struct lwp *l)
 {
 
 	return 0;
@@ -236,6 +237,7 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 				struct tmpfs_dirent *nde;
 
 				nde = TAILQ_NEXT(de, td_entries);
+				KASSERT(de->td_node->tn_vnode == NULL);
 				tmpfs_free_dirent(tmp, de, FALSE);
 				de = nde;
 				node->tn_size -= sizeof(struct tmpfs_dirent);
@@ -281,8 +283,8 @@ tmpfs_root(struct mount *mp, struct vnode **vpp)
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg,
-    struct lwp *l)
+tmpfs_quotactl(struct mount *mp, int cmd, uid_t uid,
+    void *arg, struct lwp *l)
 {
 
 	printf("tmpfs_quotactl called; need for it unknown yet\n");
@@ -292,7 +294,8 @@ tmpfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg,
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp) 
+tmpfs_vget(struct mount *mp, ino_t ino,
+    struct vnode **vpp) 
 {
 
 	printf("tmpfs_vget called; need for it unknown yet\n");
@@ -395,7 +398,8 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 
 /* ARGSUSED0 */
 static int
-tmpfs_sync(struct mount *mp, int waitfor, kauth_cred_t uc, struct lwp *l)
+tmpfs_sync(struct mount *mp, int waitfor,
+    kauth_cred_t uc, struct lwp *l)
 {
 
 	return 0;
@@ -426,7 +430,8 @@ tmpfs_done(void)
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
+tmpfs_snapshot(struct mount *mp, struct vnode *vp,
+    struct timespec *ctime)
 {
 
 	return EOPNOTSUPP;

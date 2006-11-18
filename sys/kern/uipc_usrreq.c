@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.93 2006/09/03 21:15:29 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.93.2.1 2006/11/18 21:39:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.93 2006/09/03 21:15:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.93.2.1 2006/11/18 21:39:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1012,16 +1012,16 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 	 * reverse order so that if pointers are bigger than ints, the
 	 * int won't get until we're done.
 	 */
-	fdp = (int *)CMSG_DATA(cm) + nfds - 1;
-	rp = files + nfds - 1;
+	fdp = (int *)CMSG_DATA(cm) + nfds;
+	rp = files + nfds;
 	for (i = 0; i < nfds; i++) {
-		fp = fdescp->fd_ofiles[*fdp--];
+		fp = fdescp->fd_ofiles[*--fdp];
 		simple_lock(&fp->f_slock);
 #ifdef DIAGNOSTIC
 		if (fp->f_iflags & FIF_WANTCLOSE)
 			panic("unp_internalize: file already closed");
 #endif
-		*rp-- = fp;
+		*--rp = fp;
 		fp->f_count++;
 		fp->f_msgcount++;
 		simple_unlock(&fp->f_slock);

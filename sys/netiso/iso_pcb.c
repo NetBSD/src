@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.31 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.31.2.1 2006/11/18 21:39:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.31 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.31.2.1 2006/11/18 21:39:43 ad Exp $");
 
 #include "opt_iso.h"
 

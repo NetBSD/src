@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.85 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.85.4.1 2006/11/18 21:39:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.85 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.85.4.1 2006/11/18 21:39:44 ad Exp $");
 
 #include "opt_nfs.h"
 
@@ -340,6 +340,7 @@ int
 nfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
     kauth_cred_t cred)
 {
+
 	return 0;
 }
 

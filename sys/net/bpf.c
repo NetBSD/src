@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.122 2006/08/28 00:09:28 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.122.2.1 2006/11/18 21:39:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.122 2006/08/28 00:09:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.122.2.1 2006/11/18 21:39:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,7 +457,7 @@ bpf_close(struct file *fp, struct lwp *l)
  */
 static int
 bpf_read(struct file *fp, off_t *offp, struct uio *uio,
-	 kauth_cred_t cred, int flags)
+    kauth_cred_t cred, int flags)
 {
 	struct bpf_d *d = fp->f_data;
 	int timed_out;
@@ -586,7 +586,7 @@ bpf_timed_out(void *arg)
 
 static int
 bpf_write(struct file *fp, off_t *offp, struct uio *uio,
-	  kauth_cred_t cred, int flags)
+    kauth_cred_t cred, int flags)
 {
 	struct bpf_d *d = fp->f_data;
 	struct ifnet *ifp;
@@ -1719,9 +1719,11 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 	if (namelen != 2)
 		return (EINVAL);
 
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
-		return (error);
+	/* BPF peers is privileged information. */
+	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+	    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, NULL, NULL, NULL);
+	if (error)
+		return (EPERM);
 
 	len = (oldp != NULL) ? *oldlenp : 0;
 	sp = oldp;

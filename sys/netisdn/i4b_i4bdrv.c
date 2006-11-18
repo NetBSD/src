@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.28 2005/12/11 12:25:06 christos Exp $
+ *	$Id: i4b_i4bdrv.c,v 1.28.20.1 2006/11/18 21:39:41 ad Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.28 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.28.20.1 2006/11/18 21:39:41 ad Exp $");
 
 #include "isdn.h"
 
@@ -197,7 +197,7 @@ SYSINIT(i4bdev,SI_SUB_DRIVERS,SI_ORDER_MIDDLE+CDEV_MAJOR,i4b_drvinit,NULL)
 #ifdef __NetBSD__
 const struct cdevsw isdn_cdevsw = {
 	isdnopen, isdnclose, isdnread, nowrite, isdnioctl,
-	nostop, notty, isdnpoll, nommap, isdnkqfilter,
+	nostop, notty, isdnpoll, nommap, isdnkqfilter, D_OTHER
 };
 #endif /* __NetBSD__ */
 
@@ -284,7 +284,8 @@ isdnopen(dev_t dev, int flag, int fmt, struct lwp *l)
  *	i4bclose - device driver close routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnclose(dev_t dev, int flag, int fmt, struct lwp *l)
+isdnclose(dev_t dev, int flag, int fmt,
+	struct lwp *l)
 {
 	int x = splnet();
 	openflag = 0;
@@ -337,7 +338,8 @@ isdnread(dev_t dev, struct uio *uio, int ioflag)
  *	i4bioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct isdn_l3_driver *d;
 	call_desc_t *cd;

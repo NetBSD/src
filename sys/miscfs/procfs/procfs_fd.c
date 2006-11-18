@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fd.c,v 1.8.4.2 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: procfs_fd.c,v 1.8.4.3 2006/11/18 21:39:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,8 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.8.4.2 2006/11/17 16:34:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.8.4.3 2006/11/18 21:39:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,11 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.8.4.2 2006/11/17 16:34:40 ad Exp $")
 #include <miscfs/procfs/procfs.h>
 
 int
-procfs_dofd(curl, p, pfs, uio)
-	struct lwp *curl;
-	struct proc *p;
-	struct pfsnode *pfs;
-	struct uio *uio;
+procfs_dofd(
+    struct lwp *curl,
+    struct proc *p,
+    struct pfsnode *pfs,
+    struct uio *uio
+)
 {
 	int error;
 	struct file *fp;

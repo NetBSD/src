@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.168 2006/08/25 19:33:50 matt Exp $	*/
+/*	$NetBSD: if.c,v 1.168.2.1 2006/11/18 21:39:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.168 2006/08/25 19:33:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.168.2.1 2006/11/18 21:39:29 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -204,8 +204,8 @@ ifinit(void)
  */
 
 int
-if_nulloutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *so,
-    struct rtentry *rt)
+if_nulloutput(struct ifnet *ifp, struct mbuf *m,
+    struct sockaddr *so, struct rtentry *rt)
 {
 
 	return (ENXIO);
@@ -886,9 +886,10 @@ if_clone_list(struct if_clonereq *ifcr)
 
 	for (ifc = LIST_FIRST(&if_cloners); ifc != NULL && count != 0;
 	     ifc = LIST_NEXT(ifc, ifc_list), count--, dst += IFNAMSIZ) {
-		strncpy(outbuf, ifc->ifc_name, IFNAMSIZ);
-		outbuf[IFNAMSIZ - 1] = '\0';	/* sanity */
-		error = copyout(outbuf, dst, IFNAMSIZ);
+		(void)strncpy(outbuf, ifc->ifc_name, sizeof(outbuf));
+		if (outbuf[sizeof(outbuf) - 1] != '\0')
+			return ENAMETOOLONG;
+		error = copyout(outbuf, dst, sizeof(outbuf));
 		if (error)
 			break;
 	}
@@ -971,7 +972,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 	const struct sockaddr_dl *sdl;
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
-	char *addr_data = addr->sa_data, *cplim;
+	const char *addr_data = addr->sa_data, *cplim;
 
 	if (af == AF_LINK) {
 		sdl = (const struct sockaddr_dl *)addr;
@@ -1008,7 +1009,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 			continue;
 		for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
 		     ifa = TAILQ_NEXT(ifa, ifa_list)) {
-			char *cp, *cp2, *cp3;
+			const char *cp, *cp2, *cp3;
 
 			if (ifa->ifa_addr->sa_family != af ||
 			    ifa->ifa_netmask == 0)
@@ -1016,7 +1017,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 			cp = addr_data;
 			cp2 = ifa->ifa_addr->sa_data;
 			cp3 = ifa->ifa_netmask->sa_data;
-			cplim = (char *)ifa->ifa_netmask +
+			cplim = (const char *)ifa->ifa_netmask +
 			    ifa->ifa_netmask->sa_len;
 			while (cp3 < cplim) {
 				if ((*cp++ ^ *cp2++) & *cp3++) {
@@ -1088,8 +1089,7 @@ ifaof_ifpforaddr(const struct sockaddr *addr, struct ifnet *ifp)
 	if (af >= AF_MAX)
 		return (NULL);
 
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
-	     ifa = TAILQ_NEXT(ifa, ifa_list)) {
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != af)
 			continue;
 		ifa_maybe = ifa;
@@ -1130,9 +1130,7 @@ link_rtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	    ((ifp = ifa->ifa_ifp) == 0) || ((dst = rt_key(rt)) == 0))
 		return;
 	if ((ifa = ifaof_ifpforaddr(dst, ifp)) != NULL) {
-		IFAFREE(rt->rt_ifa);
-		rt->rt_ifa = ifa;
-		IFAREF(ifa);
+		rt_replace_ifa(rt, ifa);
 		if (ifa->ifa_rtrequest && ifa->ifa_rtrequest != link_rtrequest)
 			ifa->ifa_rtrequest(cmd, rt, info);
 	}
@@ -1345,12 +1343,16 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 	ifcr = (struct ifcapreq *)data;
 	ifdr = (struct ifdatareq *)data;
 
+	ifp = ifunit(ifr->ifr_name);
+
 	switch (cmd) {
 	case SIOCIFCREATE:
 	case SIOCIFDESTROY:
 		if (l) {
-			error = kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+			error = kauth_authorize_network(l->l_cred,
+			    KAUTH_NETWORK_INTERFACE,
+			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
+			    (void *)cmd, NULL);
 			if (error)
 				return error;
 		}
@@ -1362,7 +1364,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 		return (if_clone_list((struct if_clonereq *)data));
 	}
 
-	ifp = ifunit(ifr->ifr_name);
 	if (ifp == 0)
 		return (ENXIO);
 
@@ -1388,8 +1389,10 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 	case SIOCS80211BSSID:
 	case SIOCS80211CHANNEL:
 		if (l) {
-			error = kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+			error = kauth_authorize_network(l->l_cred,
+			    KAUTH_NETWORK_INTERFACE,
+			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
+			    (void *)cmd, NULL);
 			if (error)
 				return error;
 		}
@@ -1611,7 +1614,10 @@ ifconf(u_long cmd, caddr_t data)
 		sign = 1;
 	}
 	IFNET_FOREACH(ifp) {
-		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
+		(void)strncpy(ifr.ifr_name, ifp->if_xname,
+		    sizeof(ifr.ifr_name));
+		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0')
+			return ENAMETOOLONG;
 		if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == 0) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (ifrp != NULL && space >= sz) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.96 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.96.4.1 2006/11/18 21:39:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.96 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.96.4.1 2006/11/18 21:39:44 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -147,10 +147,7 @@ static void nfsd_rt __P((int, struct nfsrv_descript *, int));
  * - remains in the kernel as an nfsiod
  */
 int
-sys_nfssvc(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_nfssvc_args /* {
 		syscallarg(int) flag;
@@ -332,7 +329,8 @@ sys_nfssvc(l, v, retval)
 					m_freem(nuidp->nu_nam);
 			        }
 				nuidp->nu_flag = 0;
-				kauth_cred_uucvt(nuidp->nu_cr, &nsd->nsd_cr);
+				kauth_uucred_to_cred(nuidp->nu_cr,
+				    &nsd->nsd_cr);
 				nuidp->nu_timestamp = nsd->nsd_timestamp;
 				nuidp->nu_expire = time_second + nsd->nsd_ttl;
 				/*
@@ -1148,8 +1146,7 @@ nfs_iodinit()
 }
 
 void
-start_nfsio(arg)
-	void *arg;
+start_nfsio(void *arg)
 {
 	nfssvc_iod(curlwp);
 
@@ -1255,13 +1252,8 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
  * Get a nickname authenticator and verifier.
  */
 int
-nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
-	struct nfsmount *nmp;
-	kauth_cred_t cred;
-	char **auth_str;
-	int *auth_len;
-	char *verf_str;
-	int verf_len;
+nfs_getnickauth(struct nfsmount *nmp, kauth_cred_t cred, char **auth_str,
+    int *auth_len, char *verf_str, int verf_len)
 {
 	struct timeval ktvin, ktvout, tv;
 	struct nfsuid *nuidp;

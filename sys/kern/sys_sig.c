@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.1.2.3 2006/11/17 16:34:38 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.1.2.4 2006/11/18 21:39:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.3 2006/11/17 16:34:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.4 2006/11/18 21:39:23 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -343,13 +343,14 @@ sys_setcontext(struct lwp *l, void *v, register_t *retval)
 	ucontext_t uc;
 	int error;
 
-	if (SCARG(uap, ucp) == NULL) {	/* i.e. end of uc_link chain */
-		/* Acquire the sched state mutex.  exit1() will release it. */
-		mutex_enter(&l->l_proc->p_smutex);
-		exit1(l, W_EXITCODE(0, 0));
-	} else if ((error = copyin(SCARG(uap, ucp), &uc, sizeof (uc))) != 0 ||
-	    (error = setucontext(l, &uc)) != 0)
+	error = copyin(SCARG(uap, ucp), &uc, sizeof (uc));
+	if (error)
 		return (error);
+	if (!(uc.uc_flags & _UC_CPU))
+		return (EINVAL);
+	error = setucontext(l, &uc);
+	if (error)
+ 		return (error);
 
 	return (EJUSTRETURN);
 }

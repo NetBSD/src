@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.98 2006/08/30 19:00:22 christos Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.98.2.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.98 2006/08/30 19:00:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.98.2.1 2006/11/18 21:39:36 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3207,7 +3207,7 @@ pim_register_prepare(struct ip *ip, struct mbuf *m)
  */
 static int
 pim_register_send_upcall(struct ip *ip, struct vif *vifp,
-	struct mbuf *mb_copy, struct mfc *rt)
+    struct mbuf *mb_copy, struct mfc *rt)
 {
     struct mbuf *mb_first;
     int len = ntohs(ip->ip_len);

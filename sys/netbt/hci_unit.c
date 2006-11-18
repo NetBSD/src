@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_unit.c,v 1.2 2006/07/17 19:20:16 gdamore Exp $	*/
+/*	$NetBSD: hci_unit.c,v 1.2.4.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.2 2006/07/17 19:20:16 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.2.4.1 2006/11/18 21:39:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -154,6 +154,12 @@ hci_enable(struct hci_unit *unit)
 		 */
 	}
 
+	/*
+	 * Attach Bluetooth Device Hub
+	 */
+	unit->hci_bthub = config_found_ia((struct device *)unit->hci_softc,
+					  "btbus", &unit->hci_bdaddr, NULL);
+
 	return 0;
 
 bad2:
@@ -174,6 +180,11 @@ hci_disable(struct hci_unit *unit)
 	struct hci_link *link, *next;
 	struct hci_memo *memo;
 	int s, acl;
+
+	if (unit->hci_bthub) {
+		config_detach(unit->hci_bthub, DETACH_FORCE);
+		unit->hci_bthub = NULL;
+	}
 
 	if (unit->hci_rxint) {
 		softintr_disestablish(unit->hci_rxint);

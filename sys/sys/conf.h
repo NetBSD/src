@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.123 2006/08/27 23:21:58 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.123.2.1 2006/11/18 21:39:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -86,7 +86,7 @@ struct cdevsw {
 	struct tty *	(*d_tty)(dev_t);
 	int		(*d_poll)(dev_t, int, struct lwp *);
 	paddr_t		(*d_mmap)(dev_t, off_t, int);
-	int		(*d_kqfilter)(dev_t dev, struct knote *kn);
+	int		(*d_kqfilter)(dev_t, struct knote *);
 	int		d_type;
 };
 
@@ -192,6 +192,8 @@ void	       ttyldisc_release(struct linesw *);
 
 int	ttyerrpoll (struct tty *, int, struct lwp *);
 int	ttynullioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
+
+int	iskmemdev(dev_t);
 #endif
 
 #ifdef _KERNEL

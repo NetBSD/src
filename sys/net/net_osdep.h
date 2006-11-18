@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.14 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.14.4.1 2006/11/18 21:39:30 ad Exp $	*/
 /*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
@@ -51,8 +51,8 @@
  * bsdi4:          xs            x
  * freebsd[23]:    xs     x      x
  * freebsd4:       xs            x
- * NetBSD:          x            x
- * OpenBSD:        xs     x      x
+ * NetBSD:
+ * OpenBSD:        xs            x
  *
  * - ifa_ifwithaf()
  *   bsdi[34], netbsd, and openbsd define it in sys/net/if.c

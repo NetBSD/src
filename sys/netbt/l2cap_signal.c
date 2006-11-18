@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.1.12.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.1.12.1 2006/11/18 21:39:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -412,7 +412,7 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 
 	/* ready our response packet */
 	rp = (l2cap_cfg_rsp_cp *)buf;
-	rp->scid = chan->lc_rcid;
+	rp->scid = htole16(chan->lc_rcid);
 	rp->flags = 0;	/* "No Continuation" */
 	rp->result = L2CAP_SUCCESS;
 	len = sizeof(*rp);

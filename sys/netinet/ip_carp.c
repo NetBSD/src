@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.5 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.5.4.1 2006/11/18 21:39:36 ad Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -854,7 +854,8 @@ carp_ifdetach(struct ifnet *ifp)
 }
 
 int
-carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
+carp_prepare_ad(struct mbuf *m, struct carp_softc *sc,
+    struct carp_header *ch)
 {
 	if (sc->sc_init_counter) {
 		/* this could also be seconds since unix epoch */
@@ -1841,12 +1842,10 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	struct carpreq carpr;
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
-	struct ifaliasreq *ifra;
 	struct ifnet *cdev = NULL;
 	int error = 0;
 
 	ifa = (struct ifaddr *)addr;
-	ifra = (struct ifaliasreq *)addr;
 	ifr = (struct ifreq *)addr;
 
 	switch (cmd) {
@@ -1864,28 +1863,6 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		case AF_INET6:
 			sc->sc_if.if_flags|= IFF_UP;
 			error = carp_set_addr6(sc, satosin6(ifa->ifa_addr));
-			break;
-#endif /* INET6 */
-		default:
-			error = EAFNOSUPPORT;
-			break;
-		}
-		break;
-
-	case SIOCAIFADDR:
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			sc->sc_if.if_flags |= IFF_UP;
-			bcopy(ifa->ifa_addr, ifa->ifa_dstaddr,
-			    sizeof(struct sockaddr));
-			error = carp_set_addr(sc, satosin(&ifra->ifra_addr));
-			break;
-#endif /* INET */
-#ifdef INET6
-		case AF_INET6:
-			sc->sc_if.if_flags |= IFF_UP;
-			error = carp_set_addr6(sc, satosin6(&ifra->ifra_addr));
 			break;
 #endif /* INET6 */
 		default:
@@ -1915,8 +1892,12 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		break;
 
 	case SIOCSVH:
-		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
+		if (l == NULL)
+			break;
+		if ((error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL)) != 0)
 			break;
 		if ((error = copyin(ifr->ifr_data, &carpr, sizeof carpr)))
 			break;
@@ -1991,8 +1972,10 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		carpr.carpr_advbase = sc->sc_advbase;
 		carpr.carpr_advskew = sc->sc_advskew;
 
-		if (l != 0 || !(error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
+		if ((l == NULL) || (error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL)) != 0)
 			bcopy(sc->sc_key, carpr.carpr_key,
 			    sizeof(carpr.carpr_key));
 		error = copyout(&carpr, ifr->ifr_data, sizeof(carpr));

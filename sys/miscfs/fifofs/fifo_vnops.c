@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.55 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.55.8.1 2006/11/18 21:39:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.55 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.55.8.1 2006/11/18 21:39:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

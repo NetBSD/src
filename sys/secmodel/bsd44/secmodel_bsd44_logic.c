@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_logic.c,v 1.2 2006/09/08 21:57:38 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_logic.c,v 1.2.6.1 2006/11/18 21:39:46 ad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_logic.c,v 1.2 2006/09/08 21:57:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_logic.c,v 1.2.6.1 2006/11/18 21:39:46 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.116 2006/09/01 19:41:28 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.116.2.1 2006/11/18 21:39:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.116 2006/09/01 19:41:28 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.116.2.1 2006/11/18 21:39:49 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -222,7 +222,8 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 #define	LFS_MARKV_MAX_BLOCKS	(LFS_MAX_BUFS)
 
 int
-lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
+lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
+    int blkcnt)
 {
 	BLOCK_INFO *blkp;
 	IFILE *ifp;

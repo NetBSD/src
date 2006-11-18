@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.117.6.1 2006/11/17 16:34:35 ad Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.117.6.2 2006/11/18 21:39:14 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.117.6.1 2006/11/17 16:34:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.117.6.2 2006/11/18 21:39:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,10 +227,7 @@ svr4_sys_execve(l, v, retval)
 
 
 int
-svr4_sys_time(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_time(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_time_args *uap = v;
 	int error = 0;
@@ -636,23 +633,19 @@ svr4_sys_xmknod(l, v, retval)
 
 
 int
-svr4_sys_vhangup(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_vhangup(struct lwp *l, void *v,
+    register_t *retval)
 {
 	return 0;
 }
 
 
 int
-svr4_sys_sysconfig(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_sysconfig(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sysconfig_args *uap = v;
 	extern int	maxfiles;
+	int active;
 
 	switch (SCARG(uap, name)) {
 	case SVR4_CONFIG_NGROUPS:
@@ -734,7 +727,8 @@ svr4_sys_sysconfig(l, v, retval)
 		*retval = uvmexp.free;	/* XXX: free instead of total */
 		break;
 	case SVR4_CONFIG_AVPHYS_PAGES:
-		*retval = uvmexp.active;	/* XXX: active instead of avg */
+		uvm_estimatepageable(&active, NULL);
+		*retval = active;	/* XXX: active instead of avg */
 		break;
 	case SVR4_CONFIG_COHERENCY:
 		*retval = 0;	/* XXX */
@@ -783,10 +777,7 @@ svr4_sys_sysconfig(l, v, retval)
 
 /* ARGSUSED */
 int
-svr4_sys_break(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_break(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_break_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -934,7 +925,7 @@ svr4_sys_ulimit(l, v, retval)
 			if (r == -1)
 				r = 0x7fffffff;
 			r += (long) vm->vm_daddr;
-			if (r < 0)
+			if (r > 0x7fffffff)
 				r = 0x7fffffff;
 			*retval = r;
 			return 0;
@@ -1024,10 +1015,8 @@ struct svr4_hrtcntl_args {
 
 
 static int
-svr4_hrtcntl(l, uap, retval)
-	struct lwp *l;
-	struct svr4_hrtcntl_args *uap;
-	register_t *retval;
+svr4_hrtcntl(struct lwp *l, struct svr4_hrtcntl_args *uap,
+    register_t *retval)
 {
 	switch (SCARG(uap, fun)) {
 	case SVR4_HRT_CNTL_RES:
@@ -1245,12 +1234,12 @@ svr4_copystatvfs64(struct svr4_statvfs64 *sufs, const struct statvfs *bufs)
 	struct statvfs *bkfs = malloc(sizeof(*bkfs), M_TEMP, M_WAITOK);
 	int error;
 
-	if ((error = copyin(sufs, bkfs, sizeof(*bkfs))) != 0)
+	if ((error = copyin(bufs, bkfs, sizeof(*bkfs))) != 0)
 		goto out;
 
 	bsd_statvfs_to_svr4_statvfs64(bkfs, skfs);
 
-	error = copyout(skfs, sufs, sizeof(*skfs));
+	error = copyout(skfs, sufs, sizeof(*sufs));
 out:
 	free(skfs, M_TEMP);
 	free(bkfs, M_TEMP);
@@ -1468,10 +1457,8 @@ svr4_sys_alarm(l, v, retval)
 
 
 int
-svr4_sys_gettimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_gettimeofday(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct svr4_sys_gettimeofday_args *uap = v;
 
@@ -1487,10 +1474,7 @@ svr4_sys_gettimeofday(l, v, retval)
 
 
 int
-svr4_sys_facl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_facl(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_facl_args *uap = v;
 
@@ -1525,10 +1509,8 @@ svr4_sys_acl(l, v, retval)
 
 
 int
-svr4_sys_auditsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_auditsys(struct lwp *l, void *v,
+    register_t *retval)
 {
 	/*
 	 * XXX: Big brother is *not* watching.

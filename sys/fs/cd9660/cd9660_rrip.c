@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.10 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.10.8.1 2006/11/18 21:39:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.10 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.10.8.1 2006/11/18 21:39:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,9 +336,7 @@ cd9660_rrip_pclink(v, ana)
  */
 /*ARGSUSED*/
 static int
-cd9660_rrip_reldir(v, ana)
-	void *v;
-	ISO_RRIP_ANALYZE *ana;
+cd9660_rrip_reldir(void *v, ISO_RRIP_ANALYZE *ana)
 {
 	/* special hack to make caller aware of RE field */
 	*ana->outlen = 0;
@@ -475,9 +473,7 @@ cd9660_rrip_cont(v, ana)
  * System Use end
  */
 static int
-cd9660_rrip_stop(v, ana)
-	void *v;
-	ISO_RRIP_ANALYZE *ana;
+cd9660_rrip_stop(void *v, ISO_RRIP_ANALYZE *ana)
 {
 	return ISO_SUSP_STOP;
 }

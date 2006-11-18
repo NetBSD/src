@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.27 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.27.4.1 2006/11/18 21:39:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.27 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.27.4.1 2006/11/18 21:39:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -193,11 +193,11 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * the appropriate raw interface routine.
 	 */
 	case PRU_ATTACH:
-		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))) {
-			error = EACCES;
+		if (l == NULL)
 			break;
-		}
+
+		/* XXX: raw socket permissions are checked in socreate() */
+
 		error = raw_attach(so, (int)(long)nam);
 		break;
 

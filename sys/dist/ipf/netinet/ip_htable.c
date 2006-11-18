@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.5 2006/08/26 20:36:17 christos Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.5.2.1 2006/11/18 21:39:17 ad Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -12,6 +12,11 @@
 # define        _KERNEL	1
 #endif
 #include <sys/param.h>
+#if defined(__NetBSD__)
+# if (NetBSD >= 199905) && !defined(IPFILTER_LKM) && defined(_KERNEL)
+#  include "opt_ipfilter.h"
+# endif
+#endif
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/time.h>

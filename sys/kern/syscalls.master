@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.159.2.1 2006/10/24 21:37:01 ad Exp $
+	$NetBSD: syscalls.master,v 1.159.2.2 2006/11/18 21:39:23 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -298,7 +298,7 @@
 146	COMPAT_43	{ int sys_killpg(int pgid, int signum); } okillpg
 147	STD		{ int sys_setsid(void); }
 148	STD		{ int sys_quotactl(const char *path, int cmd, \
-			    int uid, caddr_t arg); }
+			    int uid, void *arg); }
 149	COMPAT_43	{ int sys_quota(void); } oquota
 150	COMPAT_43	{ int sys_getsockname(int fdec, caddr_t asa, \
 			    int *alen); } ogetsockname

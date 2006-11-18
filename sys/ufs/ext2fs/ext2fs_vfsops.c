@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.101 2006/08/30 01:26:47 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.101.2.1 2006/11/18 21:39:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.101 2006/08/30 01:26:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.101.2.1 2006/11/18 21:39:47 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -540,13 +540,16 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 	}
 
 loop:
+	/*
+	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
+	 * and vclean() can be called indirectly
+	 */
 	simple_lock(&mntvnode_slock);
-	for (vp = mountp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
+	for (vp = TAILQ_FIRST(&mountp->mnt_vnodelist); vp; vp = nvp) {
 		if (vp->v_mount != mountp) {
 			simple_unlock(&mntvnode_slock);
 			goto loop;
 		}
-		nvp = vp->v_mntvnodes.le_next;
 		/*
 		 * Step 4: invalidate all inactive vnodes.
 		 */
@@ -556,6 +559,7 @@ loop:
 		 * Step 5: invalidate all cached file data.
 		 */
 		simple_lock(&vp->v_interlock);
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		simple_unlock(&mntvnode_slock);
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 			goto loop;
@@ -846,7 +850,11 @@ ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 	 */
 	simple_lock(&mntvnode_slock);
 loop:
-	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nvp) {
+	/*
+	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
+	 * and vclean() can be called indirectly
+	 */
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
@@ -854,7 +862,7 @@ loop:
 		if (vp->v_mount != mp)
 			goto loop;
 		simple_lock(&vp->v_interlock);
-		nvp = LIST_NEXT(vp, v_mntvnodes);
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
 		if (vp->v_type == VNON ||
 		    ((ip->i_flag &

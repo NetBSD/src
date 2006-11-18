@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.38 2006/08/30 19:20:48 christos Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.38.2.1 2006/11/18 21:39:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.38 2006/08/30 19:20:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.38.2.1 2006/11/18 21:39:43 ad Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -762,8 +762,8 @@ snpac_rtrequest(int req, struct iso_addr *host, struct iso_addr *gateway,
  *			the existing route before adding a new one.
  */
 void
-snpac_addrt(struct ifnet *ifp, struct iso_addr *host, struct iso_addr *gateway,
-	struct iso_addr *netmask)
+snpac_addrt(struct ifnet *ifp, struct iso_addr *host,
+    struct iso_addr *gateway, struct iso_addr *netmask)
 {
 	struct iso_addr *r;
 

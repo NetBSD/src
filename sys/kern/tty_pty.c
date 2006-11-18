@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.93.4.2 2006/11/17 16:34:38 ad Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.93.4.3 2006/11/18 21:39:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93.4.2 2006/11/17 16:34:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93.4.3 2006/11/18 21:39:23 ad Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93.4.2 2006/11/17 16:34:38 ad Exp $");
 #include <sys/tty.h>
 #include <sys/stat.h>
 #include <sys/file.h>
-#include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
@@ -307,10 +306,7 @@ ptyattach(n)
 
 /*ARGSUSED*/
 int
-ptsopen(dev, flag, devtype, l)
-	dev_t dev;
-	int flag, devtype;
-	struct lwp *l;
+ptsopen(dev_t dev, int flag, int devtype, struct lwp *l)
 {
 	struct pt_softc *pti;
 	struct tty *tp;
@@ -361,10 +357,7 @@ ptsopen(dev, flag, devtype, l)
 }
 
 int
-ptsclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+ptsclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -555,10 +548,7 @@ ptcwakeup(tp, flag)
 
 /*ARGSUSED*/
 int
-ptcopen(dev, flag, devtype, l)
-	dev_t dev;
-	int flag, devtype;
-	struct lwp *l;
+ptcopen(dev_t dev, int flag, int devtype, struct lwp *l)
 {
 	struct pt_softc *pti;
 	struct tty *tp;
@@ -592,10 +582,7 @@ ptcopen(dev, flag, devtype, l)
 
 /*ARGSUSED*/
 int
-ptcclose(dev, flag, devtype, l)
-	dev_t dev;
-	int flag, devtype;
-	struct lwp *l;
+ptcclose(dev_t dev, int flag, int devtype, struct lwp *l)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;

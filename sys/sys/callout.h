@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.22.20.2 2006/10/20 19:24:28 ad Exp $	*/
+/*	$NetBSD: callout.h,v 1.22.20.3 2006/11/18 21:39:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003, 2006 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ struct callout {
 #define	CALLOUT_INVOKING	0x0008	/* callout function is being invoked */
 
 #define	CALLOUT_INITIALIZER_SETFUNC(func, arg)				\
-				{ {{NULL}, {NULL}}, func, arg, 0, 0 }
+				{ {{NULL}, {NULL}}, func, arg, 0, 0, NULL }
 
 #define	CALLOUT_INITIALIZER	CALLOUT_INITIALIZER_SETFUNC(NULL, NULL)
 

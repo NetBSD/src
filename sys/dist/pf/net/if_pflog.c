@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.6 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.6.20.1 2006/11/18 21:39:17 ad Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.12 2004/05/19 17:50:51 dhartmei Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -166,8 +166,8 @@ pflogstart(struct ifnet *ifp)
 }
 
 int
-pflogoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-	struct rtentry *rt)
+pflogoutput(struct ifnet *ifp, struct mbuf *m,
+    struct sockaddr *dst, struct rtentry *rt)
 {
 	m_freem(m);
 	return (0);
@@ -175,7 +175,8 @@ pflogoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 /* ARGSUSED */
 void
-pflogrtrequest(int cmd, struct rtentry *rt, struct sockaddr *sa)
+pflogrtrequest(int cmd, struct rtentry *rt,
+    struct sockaddr *sa)
 {
 	if (rt)
 		rt->rt_rmx.rmx_mtu = PFLOGMTU;

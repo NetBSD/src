@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.74 2006/06/25 08:03:46 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.74.4.1 2006/11/18 21:39:49 ad Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.74 2006/06/25 08:03:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.74.4.1 2006/11/18 21:39:49 ad Exp $");
 
 #include "opt_uvmhist.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.267.2.1 2006/09/11 00:20:01 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.267.2.2 2006/11/18 21:39:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.267.2.1 2006/09/11 00:20:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.267.2.2 2006/11/18 21:39:23 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -645,7 +645,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		vrele(coveredvp);
 	}
 	mp->mnt_op->vfs_refcount--;
-	if (LIST_FIRST(&mp->mnt_vnodelist) != NULL)
+	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
 	mp->mnt_iflag |= IMNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
@@ -719,7 +719,7 @@ sys_quotactl(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(int) cmd;
 		syscallarg(int) uid;
-		syscallarg(caddr_t) arg;
+		syscallarg(void *) arg;
 	} */ *uap = v;
 	struct mount *mp;
 	int error;
@@ -1019,8 +1019,8 @@ sys_fchroot(struct lwp *l, void *v, register_t *retval)
 	struct file	*fp;
 	int		 error;
 
-	if ((error = kauth_authorize_generic(l->l_cred, 
-	 	KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_CHROOT,
+ 	    KAUTH_REQ_SYSTEM_CHROOT_FCHROOT, NULL, NULL, NULL)) != 0)
 		return error;
 	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
@@ -1099,8 +1099,8 @@ sys_chroot(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_CHROOT,
+	    KAUTH_REQ_SYSTEM_CHROOT_CHROOT, NULL, NULL, NULL)) != 0)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), l);
@@ -1435,8 +1435,8 @@ sys___getfh30(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag);
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
+	    0, NULL, NULL, NULL);
 	if (error)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
@@ -1495,8 +1495,8 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
+	    0, NULL, NULL, NULL)))
 		return (error);
 
 	flags = FFLAGS(oflags);
@@ -1630,8 +1630,8 @@ dofhstat(struct lwp *l, const void *ufhp, size_t fhsize, struct stat *sbp,
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
+	    0, NULL, NULL, NULL)))
 		return (error);
 
 	error = vfs_copyinfh_alloc(ufhp, fhsize, &fh);
@@ -1681,8 +1681,8 @@ dofhstatvfs(struct lwp *l, const void *ufhp, size_t fhsize, struct statvfs *buf,
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
+	    0, NULL, NULL, NULL)))
 		return error;
 
 	error = vfs_copyinfh_alloc(ufhp, fhsize, &fh);
@@ -1744,8 +1744,8 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 	int whiteout = 0;
 	struct nameidata nd;
 
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MKNOD,
+	    0, NULL, NULL, NULL)) != 0)
 		return (error);
 restart:
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, path), l);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.31 2006/07/23 22:06:15 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.31.4.1 2006/11/18 21:39:48 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.31 2006/07/23 22:06:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.31.4.1 2006/11/18 21:39:48 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -110,11 +110,11 @@ static int snapacct_ufs2(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
     struct fs *, ufs_lbn_t, int);
 static int mapacct_ufs2(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
     struct fs *, ufs_lbn_t, int);
+static int readvnblk(struct vnode *, caddr_t, ufs2_daddr_t);
 #endif /* !defined(FFS_NO_SNAPSHOT) */
 
 static int ffs_copyonwrite(void *, struct buf *);
 static int readfsblk(struct vnode *, caddr_t, ufs2_daddr_t);
-static int __unused readvnblk(struct vnode *, caddr_t, ufs2_daddr_t);
 static int writevnblk(struct vnode *, caddr_t, ufs2_daddr_t);
 static inline int cow_enter(void);
 static inline void cow_leave(int);
@@ -132,7 +132,8 @@ static int snapdebug = 0;
  * Vnode is locked on entry and return.
  */
 int
-ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
+ffs_snapshot(struct mount *mp, struct vnode *vp,
+    struct timespec *ctime)
 {
 #if defined(FFS_NO_SNAPSHOT)
 	return EOPNOTSUPP;
@@ -362,15 +363,19 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	    FSMAXSNAP + 1 /* superblock */ + 1 /* last block */ + 1 /* size */;
 	MNT_ILOCK(mp);
 loop:
-	for (xvp = LIST_FIRST(&mp->mnt_vnodelist); xvp; xvp = nvp) {
+	/*
+	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
+	 * and vclean() can be called indirectly
+	 */
+	for (xvp = TAILQ_FIRST(&mp->mnt_vnodelist); xvp; xvp = nvp) {
 		/*
 		 * Make sure this vnode wasn't reclaimed in getnewvnode().
 		 * Start over if it has (it won't be on the list anymore).
 		 */
 		if (xvp->v_mount != mp)
 			goto loop;
-		nvp = LIST_NEXT(xvp, v_mntvnodes);
 		VI_LOCK(xvp);
+		nvp = TAILQ_NEXT(xvp, v_mntvnodes);
 		MNT_IUNLOCK(mp);
 		if ((xvp->v_flag & VXLOCK) ||
 		    xvp->v_usecount == 0 || xvp->v_type == VNON ||
@@ -1520,8 +1525,10 @@ retry:
 			    lockmgr(vp->v_vnlock,
 			      LK_INTERLOCK | LK_EXCLUSIVE | LK_NOWAIT,
 			      VI_MTX(devvp)) != 0) {
+#if 0 /* CID-2949: dead code */
 				if (lbn >= NDADDR)
 					brelse(ibp);
+#endif 
 				vn_lock(vp, LK_EXCLUSIVE | LK_SLEEPFAIL);
 				goto retry;
 			}
@@ -2008,6 +2015,7 @@ readfsblk(struct vnode *vp, caddr_t data, ufs2_daddr_t lbn)
 	return error;
 }
 
+#if !defined(FFS_NO_SNAPSHOT)
 /*
  * Read the specified block. Bypass UBC to prevent deadlocks.
  */
@@ -2040,6 +2048,7 @@ readvnblk(struct vnode *vp, caddr_t data, ufs2_daddr_t lbn)
 
 	return 0;
 }
+#endif /* !defined(FFS_NO_SNAPSHOT) */
 
 /*
  * Write the specified block. Bypass UBC to prevent deadlocks.

@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.156.2.1 2006/10/24 21:44:17 ad Exp $ */
+/* $NetBSD: syscallargs.h,v 1.156.2.2 2006/11/18 21:39:47 ad Exp $ */
 
 /*
  * System call argument lists.
@@ -689,7 +689,7 @@ struct sys_quotactl_args {
 	syscallarg(const char *) path;
 	syscallarg(int) cmd;
 	syscallarg(int) uid;
-	syscallarg(caddr_t) arg;
+	syscallarg(void *) arg;
 };
 
 struct compat_43_sys_getsockname_args {

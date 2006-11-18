@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.22 2006/09/03 06:53:08 christos Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.22.2.1 2006/11/18 21:39:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.22 2006/09/03 06:53:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.22.2.1 2006/11/18 21:39:43 ad Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO

@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.3 2006/08/27 11:41:58 plunky Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.3.2.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.3 2006/08/27 11:41:58 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.3.2.1 2006/11/18 21:39:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -107,11 +107,11 @@ hci_dump(void)
 		    BDADDR(chan->lc_raddr.bt_bdaddr));
 		LIST_FOREACH(dlc, &rs->rs_dlcs, rd_next) {
 			printf("+DLC channel=%d, dlci=%d, "
-			    "state=%d, flags=0x%4.4x, rxcred=%d, rxsize=%d, "
+			    "state=%d, flags=0x%4.4x, rxcred=%d, rxsize=%ld, "
 			    "txcred=%d, pending=%d, txqlen=%d\n",
 			    dlc->rd_raddr.bt_channel, dlc->rd_dlci,
 			    dlc->rd_state, dlc->rd_flags,
-			    dlc->rd_rxcred, dlc->rd_rxsize,
+			    dlc->rd_rxcred, (unsigned long)dlc->rd_rxsize,
 			    dlc->rd_txcred, dlc->rd_pending,
 			    (dlc->rd_txbuf ? dlc->rd_txbuf->m_pkthdr.len : 0));
 		}

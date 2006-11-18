@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.4 2006/08/27 11:41:58 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.4.2.1 2006/11/18 21:39:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.4 2006/08/27 11:41:58 plunky Exp $
+ * $Id: hci.h,v 1.4.2.1 2006/11/18 21:39:36 ad Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -1907,7 +1907,7 @@ struct hci_filter {
 	uint32_t	mask[8];	/* 256 bits */
 };
 
-static __inline void __unused
+static __inline void
 hci_filter_set(uint8_t bit, struct hci_filter *filter)
 {
 	uint8_t off = bit - 1;
@@ -1916,7 +1916,7 @@ hci_filter_set(uint8_t bit, struct hci_filter *filter)
 	filter->mask[off] |= (1 << ((bit - 1) & 0x1f));
 }
 
-static __inline void __unused
+static __inline void
 hci_filter_clr(uint8_t bit, struct hci_filter *filter)
 {
 	uint8_t off = bit - 1;
@@ -1925,7 +1925,7 @@ hci_filter_clr(uint8_t bit, struct hci_filter *filter)
 	filter->mask[off] &= ~(1 << ((bit - 1) & 0x1f));
 }
 
-static __inline int __unused
+static __inline int
 hci_filter_test(uint8_t bit, struct hci_filter *filter)
 {
 	uint8_t off = bit - 1;
@@ -2083,6 +2083,7 @@ struct hci_memo {
  */
 struct hci_unit {
 	void		*hci_softc;		/* ptr to device softc */
+	struct device	*hci_bthub;		/* bthub(4) handle */
 
 	/* device info */
 	char		*hci_devname;		/* device name */
@@ -2183,7 +2184,6 @@ void hci_memo_free(struct hci_memo *);
 void hci_drop(void *);
 int hci_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 int hci_ctloutput(int, struct socket *, int, int, struct mbuf **);
-void hci_drain(void);
 void hci_mtap(struct mbuf *, struct hci_unit *);
 
 /* hci_unit.c */

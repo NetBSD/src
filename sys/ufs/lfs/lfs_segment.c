@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.190 2006/09/02 06:46:04 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.190.2.1 2006/11/18 21:39:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.190 2006/09/02 06:46:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.190.2.1 2006/11/18 21:39:49 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -432,8 +432,8 @@ lfs_vflush(struct vnode *vp)
 				lfs_writefile(fs, sp, vp);
 			}
 #ifdef DEBUG
-			if (++loopcount > 1)
-				printf("lfs_vflush: loopcount=%d\n", loopcount);
+			if (++loopcount > 2)
+				log(LOG_NOTICE, "lfs_vflush: looping count=%d\n", loopcount);
 #endif
 		} while (lfs_writeinode(fs, sp, ip));
 	} while (lfs_writeseg(fs, sp) && ip->i_number == LFS_IFILE_INUM);
@@ -489,31 +489,19 @@ int
 lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 {
 	struct inode *ip;
-	struct vnode *vp, *nvp;
+	struct vnode *vp;
 	int inodes_written = 0, only_cleaning;
 	int error = 0;
 
 	ASSERT_SEGLOCK(fs);
-#ifndef LFS_NO_BACKVP_HACK
-	/* BEGIN HACK */
-#define	VN_OFFSET	\
-	(((caddr_t)&LIST_NEXT(vp, v_mntvnodes)) - (caddr_t)vp)
-#define	BACK_VP(VP)	\
-	((struct vnode *)(((caddr_t)(VP)->v_mntvnodes.le_prev) - VN_OFFSET))
-#define	BEG_OF_VLIST	\
-	((struct vnode *)(((caddr_t)&LIST_FIRST(&mp->mnt_vnodelist)) \
-	- VN_OFFSET))
-
-	/* Find last vnode. */
- loop:	for (vp = LIST_FIRST(&mp->mnt_vnodelist);
-	     vp && LIST_NEXT(vp, v_mntvnodes) != NULL;
-	     vp = LIST_NEXT(vp, v_mntvnodes));
-	for (; vp && vp != BEG_OF_VLIST; vp = nvp) {
-		nvp = BACK_VP(vp);
+#if 0
+	/* start at last (newest) vnode. */
+ loop:
+	TAILQ_FOREACH_REVERSE(vp, &mp->mnt_vnodelist, vnodelst, v_mntvnodes) {
 #else
-	loop:
-	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
-		nvp = LIST_NEXT(vp, v_mntvnodes);
+	/* start at oldest accessed vnode */
+ loop:
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 #endif
 		/*
 		 * If the vnode that we are about to sync is no longer
@@ -768,8 +756,8 @@ lfs_segwrite(struct mount *mp, int flags)
 			redo += (fs->lfs_flags & LFS_IFDIRTY);
 			simple_unlock(&fs->lfs_interlock);
 #ifdef DEBUG
-			if (++loopcount > 1)
-				printf("lfs_segwrite: loopcount=%d\n",
+			if (++loopcount > 2)
+				log(LOG_NOTICE, "lfs_segwrite: looping count=%d\n",
 					loopcount);
 #endif
 		} while (redo && do_ckp);
@@ -1094,8 +1082,8 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 			sp->idp = NULL;
 		}
 		++count;
-		if (count > 1)
-			printf("lfs_writeinode: looping count=%d\n", count);
+		if (count > 2)
+			log(LOG_NOTICE, "lfs_writeinode: looping count=%d\n", count);
 		lfs_writefile(fs, sp, fs->lfs_ivnode);
 	}
 
@@ -1243,10 +1231,11 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 			     IN_UPDATE | IN_MODIFY);
 		if (ip->i_lfs_effnblks == ip->i_ffs1_blocks)
 			LFS_CLR_UINO(ip, IN_MODIFIED);
-		else
-			DLOG((DLOG_VNODE, "lfs_writeinode: ino %d: real blks=%d, "
-			      "eff=%d\n", ip->i_number, ip->i_ffs1_blocks,
-			      ip->i_lfs_effnblks));
+		else {
+			DLOG((DLOG_VNODE, "lfs_writeinode: ino %d: real "
+			    "blks=%d, eff=%d\n", ip->i_number,
+			    ip->i_ffs1_blocks, ip->i_lfs_effnblks));
+		}
 	}
 
 	if (ip->i_number == LFS_IFILE_INUM) {
@@ -1435,8 +1424,8 @@ loop:
  * called with sp == NULL by roll-forwarding code.
  */
 void
-lfs_update_single(struct lfs *fs, struct segment *sp, struct vnode *vp,
-    daddr_t lbn, int32_t ndaddr, int size)
+lfs_update_single(struct lfs *fs, struct segment *sp,
+    struct vnode *vp, daddr_t lbn, int32_t ndaddr, int size)
 {
 	SEGUSE *sup;
 	struct buf *bp;
@@ -1925,7 +1914,8 @@ lfs_newseg(struct lfs *fs)
 }
 
 static struct buf *
-lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
+lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr,
+    int n)
 {
 	struct lfs_cluster *cl;
 	struct buf **bpp, *bp;

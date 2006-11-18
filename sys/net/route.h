@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.43 2005/12/11 12:24:52 christos Exp $	*/
+/*	$NetBSD: route.h,v 1.43.20.1 2006/11/18 21:39:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,6 +36,8 @@
 
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <net/if.h>
 
 /*
  * Kernel resident routing tables.
@@ -102,6 +104,7 @@ struct rtentry {
 	u_long	rt_use;			/* raw # packets forwarded */
 	struct	ifnet *rt_ifp;		/* the answer: interface to use */
 	struct	ifaddr *rt_ifa;		/* the answer: interface to use */
+	uint32_t rt_ifa_seqno;
 	const struct sockaddr *rt_genmask; /* for generation of cloned routes */
 	caddr_t	rt_llinfo;		/* pointer to link level info cache */
 	struct	rt_metrics rt_rmx;	/* metrics used by rx'ing protocols */
@@ -140,6 +143,7 @@ struct ortentry {
 #define	RTF_CLONED	0x2000		/* this is a cloned route */
 #define RTF_PROTO2	0x4000		/* protocol specific routing flag */
 #define RTF_PROTO1	0x8000		/* protocol specific routing flag */
+#define RTF_SRC		0x10000		/* route has fixed source address */
 
 
 /*
@@ -321,5 +325,49 @@ int	 rtrequest(int, const struct sockaddr *,
 	    const struct sockaddr *, const struct sockaddr *, int,
 	    struct rtentry **);
 int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
+
+static inline void
+rt_set_ifa1(struct rtentry *rt, struct ifaddr *ifa)
+{
+	rt->rt_ifa = ifa;
+	if (ifa->ifa_seqno != NULL)
+		rt->rt_ifa_seqno = *ifa->ifa_seqno;
+}
+
+static inline void
+rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
+{
+	IFAREF(ifa);
+	IFAFREE(rt->rt_ifa);
+	rt_set_ifa1(rt, ifa);
+}
+
+static inline struct ifaddr *
+rt_get_ifa(struct rtentry *rt)
+{
+	struct ifaddr *ifa;
+
+	if ((ifa = rt->rt_ifa) == NULL)
+		return ifa;
+	else if (ifa->ifa_getifa == NULL)
+		return ifa;
+#if 0
+	else if (ifa->ifa_seqno != NULL && *ifa->ifa_seqno == rt->rt_ifa_seqno)
+		return ifa;
+#endif
+	else {
+		ifa = (*ifa->ifa_getifa)(ifa, rt_key(rt));
+		rt_replace_ifa(rt, ifa);
+		return ifa;
+	}
+}
+
+static inline void
+rt_set_ifa(struct rtentry *rt, struct ifaddr *ifa)
+{
+	IFAREF(ifa);
+	rt_set_ifa1(rt, ifa);
+}
+
 #endif /* _KERNEL */
 #endif /* !_NET_ROUTE_H_ */

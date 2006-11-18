@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.5 2006/11/17 16:53:08 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.6 2006/11/18 21:39:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.5 2006/11/17 16:53:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.6 2006/11/18 21:39:22 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -1071,7 +1071,7 @@ scheduler_wait_hook(struct proc *parent, struct proc *child)
 int
 sched_kpri(struct lwp *l)
 {
-	const static uint8_t kpri_tab[] = {
+	static const uint8_t kpri_tab[] = {
 		 0,   0,   1,   2,   3,   4,   4,   5,
 		 6,   7,   8,   8,   9,  10,  11,  12,
 		12,  13,  14,  15,  16,  16,  17,  18,

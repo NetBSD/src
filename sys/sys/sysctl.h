@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.156 2006/08/17 17:11:29 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.156.2.1 2006/11/18 21:39:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -251,9 +251,6 @@ struct ctlname {
 #define	KERN_TKSTAT		59	/* tty in/out counters */
 #define	KERN_MONOTONIC_CLOCK	60	/* int: POSIX monotonic clock */
 #define	KERN_URND		61	/* int: random integer from urandom */
-#ifndef _KERNEL
-#define	KERN_ARND		KERN_URND	/* compat w/ openbsd */
-#endif
 #define	KERN_LABELSECTOR	62	/* int: disklabel sector */
 #define	KERN_LABELOFFSET	63	/* int: offset of label within sector */
 #define	KERN_LWP		64	/* struct: lwp entries */
@@ -273,7 +270,8 @@ struct ctlname {
 #define	KERN_VERIEXEC		78	/* node: verified exec */
 #define	KERN_CP_ID		79	/* struct: cpu id numbers */
 #define	KERN_HARDCLOCK_TICKS	80	/* int: number of hardclock ticks */
-#define	KERN_MAXID		81	/* number of valid kern ids */
+#define	KERN_ARND		81	/* void *buf, size_t siz random */
+#define	KERN_MAXID		82	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -358,6 +356,7 @@ struct ctlname {
 	{ "veriexec", CTLTYPE_NODE }, \
 	{ "cp_id", CTLTYPE_STRUCT }, \
 	{ "hardclock_ticks", CTLTYPE_INT }, \
+	{ "arandom", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -439,6 +438,7 @@ struct kinfo_proc {
 #define	KI_MAXCOMLEN	24	/* extra for 8 byte alignment */
 #define	KI_WMESGLEN	8
 #define	KI_MAXLOGNAME	24	/* extra for 8 byte alignment */
+#define	KI_MAXEMULLEN	16
 
 #define KI_NOCPU	(~(uint64_t)0)
 
@@ -561,6 +561,7 @@ struct kinfo_proc2 {
 	uint64_t p_realstat;		/* LONG: non-LWP process status */
 	uint32_t p_svuid;		/* UID_T: saved user id */
 	uint32_t p_svgid;		/* GID_T: saved group id */
+	char p_ename[KI_MAXEMULLEN];	/* emulation name */
 };
 
 /*
@@ -919,9 +920,6 @@ struct kinfo_file {
 /* Root node of the kernel sysctl tree */
 extern struct sysctlnode sysctl_root;
 
-/* XXX this should not be here */
-extern int security_curtain;
-
 /*
  * A log of nodes created by a setup function or set of setup
  * functions so that they can be torn down in one "transaction"
@@ -962,9 +960,11 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 #define SYSCTLFN_PROTO const int *, u_int, void *, \
 	size_t *, const void *, size_t, \
 	const int *, struct lwp *, const struct sysctlnode *
-#define SYSCTLFN_ARGS const int *name, u_int namelen, void *oldp, \
-	size_t *oldlenp, const void *newp, size_t newlen, \
-	const int *oname, struct lwp *l, const struct sysctlnode *rnode
+#define SYSCTLFN_ARGS const int *name, u_int namelen, \
+	void *oldp, size_t *oldlenp, \
+	const void *newp, size_t newlen, \
+	const int *oname, struct lwp *l, \
+	const struct sysctlnode *rnode
 #define SYSCTLFN_CALL(node) name, namelen, oldp, \
 	oldlenp, newp, newlen, \
 	oname, l, node
