@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.134 2006/11/18 19:04:32 tsutsui Exp $
+#	$NetBSD: BRANCHES,v 1.135 2006/11/18 20:45:16 rpaulo Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -329,7 +329,27 @@ End Date:
 Base Tag:	rpaulo-netinet-merge-pcb-base
 Maintainer:	Rui Paulo <rpaulo@NetBSD.org>
 Scope:		src/sys
-Notes:
+Notes:		No longer active due to the lack of time. If you plan to
+		continue this branch, sys/netinet/in_pcb.h already contains
+		the proposed structure layout (which was roughly discussed
+		in the tech-net mailing list).
+		I also defined INP_*() macros to mimicate FreeBSD's inpcb
+		locking style, but currently they do nothing and are not
+		yet called at the correct places (needs discussion about
+		kernel fine-grained locking).
+		To continue this branch, one needs to read all the relevant
+		inpcb/in6pcb source files and change the function names,
+		structure names, structure fileds according to the new
+		layout (in6pcb is gone).
+		Don't try to build a kernel from this branch because it won't
+		work. The missing pieces required to do a complete build
+		were not committed because they were incomplete and generated
+		panics.
+		You shouldn't need to worry about KAME syncs because
+		they did most of them by now.
+		After the work is done, you are required to test the branch
+		(before the merge to -current) with an interop IPv6 test.
+		More info at: http://www.tahi.org/
 
 Branch:		rtr-xorg-branch
 Description:	xorg & static build alterations to src/x11
