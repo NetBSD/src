@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.7 2006/11/17 17:48:32 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.8 2006/11/18 12:40:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.7 2006/11/17 17:48:32 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.8 2006/11/18 12:40:35 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -98,18 +98,14 @@ puffs_mount(struct puffs_vfsops *pvfs, struct puffs_vnops *pvn,
 		goto failfree;
 	}
 
+	if ((rv = pu->pu_pvfs.puffs_statvfs(pu, &sreq.psr_sb, 0)) != 0) {
+		errno = rv;
+		goto failfree;
+	}
+
 	/* tell kernel we're flying */
 	if (ioctl(pu->pu_fd, PUFFSSTARTOP, &sreq) == -1)
 		goto failfree;
-
-	/* finally, store fsidx and call start if appropriate */
-	pu->pu_fsidx = sreq.psr_fsidx;
-	if (pu->pu_pvfs.puffs_start) {
-		if ((rv = pu->pu_pvfs.puffs_start(pu)) != 0) {
-			errno = rv;
-			goto failfree;
-		}
-	}
 
 	return pu;
 

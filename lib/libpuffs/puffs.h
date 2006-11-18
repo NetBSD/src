@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.8 2006/11/17 17:48:32 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.9 2006/11/18 12:40:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -74,7 +74,6 @@ struct puffs_node {
 /* callbacks for operations */
 struct puffs_vfsops {
 	int (*puffs_mount)(struct puffs_usermount *, void **);
-	int (*puffs_start)(struct puffs_usermount *);
 	int (*puffs_unmount)(struct puffs_usermount *, int, pid_t);
 	int (*puffs_statvfs)(struct puffs_usermount *,
 	    struct statvfs *, pid_t);
@@ -232,7 +231,6 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 
 #define PUFFSVFS_PROTOS(fsname)						\
 	int fsname##_mount(struct puffs_usermount *, void **);		\
-	int fsname##_start(struct puffs_usermount *);			\
 	int fsname##_unmount(struct puffs_usermount *, int, pid_t);	\
 	int fsname##_statvfs(struct puffs_usermount *,			\
 	    struct statvfs *, pid_t);					\
