@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_cleanerd.8,v 1.15 2006/04/01 08:44:57 perseant Exp $
+.\"	$NetBSD: lfs_cleanerd.8,v 1.16 2006/11/18 18:43:25 tls Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,6 +74,7 @@ Coalescing mode.
 For each live inode, check to see if it has too many
 blocks that are not contiguous, and if it does, rewrite it.
 After a single pass through the filesystem the cleaner will exit.
+This option has been reported to corrupt file data; do not use it.
 .It Fl d
 Run in debug mode.
 Do not become a daemon process, and print debugging information.
