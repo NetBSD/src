@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.37.2.1.2.1 2005/02/23 16:22:49 he Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.37.2.1.2.2 2006/11/19 17:37:01 bouyer Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.37.2.1.2.1 2005/02/23 16:22:49 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.37.2.1.2.2 2006/11/19 17:37:01 bouyer Exp $");
 
 #include "opt_systrace.h"
 
@@ -1295,9 +1295,16 @@ systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
 		return (EINVAL);
 
 	for (i = 0, len = 0; i < repl->strr_nrepl; i++) {
-		len += repl->strr_offlen[i];
+		if (repl->strr_argind[i] < 0 ||
+		    repl->strr_argind[i] >= SYSTR_MAXARGS)
+			return (EINVAL);
 		if (repl->strr_offlen[i] == 0)
 			continue;
+		len += repl->strr_offlen[i];
+		if (repl->strr_offlen[i] > SYSTR_MAXREPLEN ||
+		    repl->strr_off[i] > SYSTR_MAXREPLEN ||
+		    len > SYSTR_MAXREPLEN)
+			return (EINVAL);
 		if (repl->strr_offlen[i] + repl->strr_off[i] > len)
 			return (EINVAL);
 	}
@@ -1307,7 +1314,7 @@ systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
 		return (EINVAL);
 
 	/* Check against a maximum length */
-	if (repl->strr_len > 2048)
+	if (repl->strr_len > SYSTR_MAXREPLEN)
 		return (EINVAL);
 
 	strp->replace = (struct systrace_replace *)
@@ -1348,6 +1355,10 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 	sg = stackgap_init(p->p_emul);
 	ubase = stackgap_alloc(&sg, repl->strr_len);
 #endif
+	if (ubase == NULL) {
+		ret = EINVAL;
+		goto out;
+	}
 
 	kbase = repl->strr_base;
 	for (i = 0; i < maxarg && i < repl->strr_nrepl; i++) {
