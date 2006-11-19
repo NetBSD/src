@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.33 2006/11/15 14:55:54 elad Exp $
+.\" $NetBSD: kauth.9,v 1.34 2006/11/19 00:11:30 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 15, 2006
+.Dd November 19, 2006
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -480,7 +480,12 @@ Network devices specifically are handled by the
 .Em network
 scope.
 .Pp
-This scope provides authorization wrappers for various device types.
+In addition to the standard authorization wrapper:
+.Pp
+.Ft int Fn kauth_authorize_device "kauth_cred_t cred" "kauth_action_t op" \
+"void *arg0" "void *arg1" "void *arg2" "void *arg3"
+.Pp
+this scope provides authorization wrappers for various device types.
 .Pp
 .Ft int Fn kauth_authorize_device_tty "kauth_cred_t cred" "kauth_action_t op" \
 "struct tty *tty"

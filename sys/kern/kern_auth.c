@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.31 2006/11/04 09:30:00 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.32 2006/11/19 00:11:29 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.31 2006/11/04 09:30:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.32 2006/11/19 00:11:29 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -808,6 +808,14 @@ kauth_authorize_machdep(kauth_cred_t cred, kauth_action_t action,
 {
 	return (kauth_authorize_action(kauth_builtin_scope_machdep, cred,
 	    action, (void *)req, arg1, arg2, arg3));
+}
+
+int
+kauth_authorize_device(kauth_cred_t cred, kauth_action_t action,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	return (kauth_authorize_action(kauth_builtin_scope_device, cred,
+	    action, arg0, arg1, arg2, arg3));
 }
 
 int

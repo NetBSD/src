@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.19 2006/11/18 20:52:14 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.20 2006/11/19 00:11:30 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -120,7 +120,8 @@ enum {
 	KAUTH_PROCESS_CANSIGNAL,
 	KAUTH_PROCESS_CORENAME,
 	KAUTH_PROCESS_RESOURCE,
-	KAUTH_PROCESS_SETID
+	KAUTH_PROCESS_SETID,
+	KAUTH_PROCESS_DEBUGINIT,
 };
 
 /*
@@ -234,6 +235,8 @@ int kauth_authorize_network(kauth_cred_t, kauth_action_t,
     enum kauth_network_req, void *, void *, void *);
 int kauth_authorize_machdep(kauth_cred_t, kauth_action_t,
     enum kauth_machdep_req, void *, void *, void *);
+int kauth_authorize_device(kauth_cred_t, kauth_action_t,
+    void *, void *, void *, void *);
 int kauth_authorize_device_tty(kauth_cred_t, kauth_action_t, struct tty *);
 int kauth_authorize_device_spec(kauth_cred_t, enum kauth_device_req,
     struct vnode *);
