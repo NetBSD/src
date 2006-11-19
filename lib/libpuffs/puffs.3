@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.3 2006/11/13 21:09:16 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.4 2006/11/19 00:11:21 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Antti Kantee.  All rights reserved.
 .\"
@@ -145,7 +145,7 @@
 .Fa "struct puffs_usermount *pu" "void *opc" "pid_t pid" "int *refcount"
 .Fc
 .Sh DESCRIPTION
-.Sy IMPORTANT NOTE!
+.Em IMPORTANT NOTE!
 This document describes interfaces which are not yet guaranteed to be
 stable.
 In case you update your system sources, please recompile everything
@@ -165,14 +165,13 @@ It is possible to use
 .Nm
 in two different ways.
 Either it can handle all the details via callbacks supplied to it in
-.Fn puffs_mount 
+.Fn puffs_mount
 by calling
 .Fn puffs_mainloop ,
 or it can be used to handle a single operation whenever one is available.
 The latter is useful if implementing a single threaded server which
 requires an event loop.
 .Ss Library operation
-.Pp
 The file system is mounted using
 .Fn puffs_mount .
 The callbacks are passed as the fields in the structures
@@ -222,7 +221,7 @@ To handle all requests automatically until the file system is
 unmounted,
 .Fn puffs_mainloop
 should be used.
-It returns 0 if the file system was succesfully unmounted or -1 if it
+It returns 0 if the file system was succesfully unmounted or \-1 if it
 was killed in action.
 .Pp
 To handle a single operation,
@@ -233,15 +232,15 @@ possible, should match the buffer length gotten from mount.
 In case the request was succefully handled (orthogonal to if the
 request itself was a success from the file system point of view),
 0 is returned.
-Otherwise, -1 is returned and errno is set.
+Otherwise, \-1 is returned and errno is set.
 .Pp
 .Fn puffs_getselectable
 can be used to query a handle to do I/O multiplexing with:
 .Xr select 2 ,
-.Xr poll 2
+.Xr poll 2 ,
 and
 .Xr kqueue 2
-are all examples of accetable operations.
+are all examples of acceptable operations.
 .Pp
 The library can be set in blocking or non-blocking mode using
 .Fn puffs_setblockingmode .
@@ -259,7 +258,6 @@ The cookie can be recycled when
 .Fn puffs_reclaim
 is called for a node.
 .Ss File system callbacks
-.Pp
 The callbacks do all the actual work in implementing the file system.
 Currently they are fairly close to the vfs and vnode operations in
 the kernel but with simplified operation.
@@ -324,13 +322,14 @@ These operations operate in the level of individual files.
 The file cookie is always provided as the second argument
 .Fa opc .
 If the operation is for a file, it will be the cookie of the file.
-The case the operation involves a directory (such as "create file in
-directory"), the cookie will be for the directory.
+The case the operation involves a directory (such as
+.Dq create file in directory ) ,
+the cookie will be for the directory.
 Some operations take additional cookies to describe the rest of
 the operands.
 The return value 0 signals success, else an appropriate errno value
 should be returned.
-Please note that this list nor the descriptions are complete.
+Please note that neither this list nor the descriptions are complete.
 .Pp
 The callbacks can be prototyped according to file system name by
 using the macro
@@ -450,7 +449,7 @@ A device node is created using
 .Fn puffs_mknod .
 The only difference to creating a normal file is that the attribute
 struct contains the device identifier in
-.Fa va->va_rdev .
+.Fa va-\*[Gt]va_rdev .
 .Pp
 .Fn puffs_read
 reads the contents of a file.
