@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.114 2006/10/24 15:32:36 gson Exp $ */
+/*	$NetBSD: md.c,v 1.115 2006/11/19 19:01:26 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -465,7 +465,7 @@ md_cleanup_install(void)
 	
 	add_rc_conf("wscons=YES\n");
 
-#if defined(__i386__)
+#if defined(__i386__) && defined(SET_KERNEL_TINY)
 	/*
 	 * For GENERIC_TINY, do not enable any extra screens or wsmux.
 	 * Otherwise, run getty on 4 VTs.
@@ -586,12 +586,18 @@ get_bootmodel(void)
 	if (uname(&ut) < 0)
 		ut.version[0] = 0;
 
+#if defined(SET_KERNEL_TINY)
 	if (strstr(ut.version, "TINY") != NULL)
 		return SET_KERNEL_TINY;
+#endif
+#if defined(SET_KERNEL_LAPTOP)
 	if (strstr(ut.version, "LAPTOP") != NULL)
 		return SET_KERNEL_LAPTOP;
+#endif
+#if defined(SET_KERNEL_PS2)
 	if (strstr(ut.version, "PS2") != NULL)
 		return SET_KERNEL_PS2;
+#endif
 #endif
 	return SET_KERNEL_GENERIC;
 }
