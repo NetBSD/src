@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.4 2006/11/14 17:49:56 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.5 2006/11/19 17:54:58 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -56,4 +56,10 @@ usr.sbin/postinstall/postinstall		1.30
 
 	/etc/postfix/post-install needs to be 555 not 444.
 	[lukem, ticket #1585]
+
+sys/net/if_pppoe.c				1.61
+
+	Fix bogus uninitialized variable warning ifdef PPPOE_SERVER.
+	Noticed by Marcin Jessa on current-users.
+	[martin, ticket #1588]
 
