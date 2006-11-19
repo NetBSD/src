@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.12 2003/10/31 03:28:14 simonb Exp $	*/
+/*	$NetBSD: systrace.h,v 1.12.6.1 2006/11/19 17:37:01 bouyer Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -51,6 +51,7 @@ struct str_msg_ugid {
 #define SYSTR_MAX_POLICIES	64
 #define SYSTR_MAXARGS		64
 #define SYSTR_MAXFNAME		8
+#define SYSTR_MAXREPLEN		2048
 
 struct str_msg_ask {
 	int32_t code;
