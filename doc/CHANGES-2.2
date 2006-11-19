@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.90 2006/10/29 13:04:59 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.91 2006/11/19 17:42:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -970,4 +970,16 @@ sys/kern/uipc_syscalls.c			1.104
 
 	PR kern/34873: sendmsg() can cause kernel panic.
 	[adrianp, ticket #10740]
+
+sys/net/if.c:					1.172, 1.173, 1.175 via patch
+
+	Avoid kernel memory disclose in if_clone_list().
+	[adrianp, ticket #10759]
+
+sys/kern/kern_systrace.c			1.59
+sys/sys/systrace.h				1.21
+
+	Fix an exploitable integer overflow found by Chris Evans of
+	Google Security.
+	[adrianp, ticket #10760]
 
