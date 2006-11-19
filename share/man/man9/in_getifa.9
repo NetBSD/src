@@ -1,3 +1,4 @@
+.\" $NetBSD: in_getifa.9,v 1.2 2006/11/19 00:26:52 wiz Exp $
 .\"
 .\" Copyright (c) 2006 David Young.  All rights reserved.
 .\"
@@ -31,10 +32,10 @@
 .\"
 .Dd October 15, 2006
 .Os
-.Dt in_getifa 9
+.Dt IN_GETIFA 9
 .Sh NAME
 .Nm in_getifa
-.Nd Look up the IPv4 source address best matching an IPv4 destination.
+.Nd Look up the IPv4 source address best matching an IPv4 destination
 .Sh SYNOPSIS
 .Cd options IPSELSRC
 .In netinet/in_selsrc.h
@@ -55,7 +56,8 @@ Note that the policy is applied
 .Em after
 the kernel makes its forwarding decision, thereby choosing the
 output interface;
-in other words, this mechanism does not affect whether or not NetBSD
+in other words, this mechanism does not affect whether or not
+.Nx
 is a
 .Dq strong ES .
 .Pp
@@ -100,7 +102,7 @@ Presently, there are four ranking functions to choose from:
 .It index
 ranks by
 .Em source index ;
-lower indices are ranked more highly
+lower indices are ranked more highly.
 .It preference
 ranks by
 .Em source preference ;
@@ -110,14 +112,14 @@ ranks each
 .Em source address
 by the length of the longest prefix it has in common with
 .Em destination address ;
-longer common prefixes rank more highly
+longer common prefixes rank more highly.
 .It same-category
 determines the "categories" of
 .Em source
 and
 .Em destination address .
 A category is one of
-.Em private,
+.Em private ,
 .Em link-local ,
 or
 .Em other .
@@ -178,7 +180,8 @@ The default policy,
 .Em index ,
 is the
 .Dq historical
-policy in NetBSD.
+policy in
+.Nx .
 .Pp
 The operator may override the default policy on ath0,
 .Bd -literal -offset indent
@@ -194,7 +197,7 @@ net.inet.ip.interfaces.ath0.selectsrc = same-category,common-prefix-len,preferen
 The operator may set a new default,
 .Bd -literal -offset indent
 # sysctl -w net.inet.ip.selectsrc.debug=\
-> same-category,common-prefix-len,preference
+\*[Gt] same-category,common-prefix-len,preference
 # sysctl -w net.inet.ip.interfaces.ath0.selectsrc=
 .Ed
 .Pp
@@ -214,16 +217,16 @@ suitable source addresses if ath0 is configured in this way:
 # ifconfig ath0 inet 192.168.37.1/24 preference 9
 .Ed
 A sysctl, net.inet.ip.selectsrc.debug, turns on and off debug messages
-concerned with source selection.  You may set it to 0 (no messages) or 1.
-.Pp
+concerned with source selection.
+You may set it to 0 (no messages) or 1.
 .Sh SEE ALSO
-.Xr sysctl 8 ,
-.Xr ifconfig 8 .
+.Xr ifconfig 8 ,
+.Xr sysctl 8
 .Sh STANDARDS
 The family of IPv6 source-address selection policies defined by
 .Li RFC3484
 resembles the family of IPv4 policies that
-.Xr in_getifa 9
+.Nm
 enforces.
 .Sh AUTHORS
 .An David Young Aq dyoung@NetBSD.org
