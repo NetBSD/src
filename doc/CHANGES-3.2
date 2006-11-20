@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.14 2006/11/19 17:54:50 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.15 2006/11/20 13:47:34 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -168,4 +168,1943 @@ sys/net/if_pppoe.c				1.61
 	Fix bogus uninitialized variable warning ifdef PPPOE_SERVER.
 	Noticed by Marcin Jessa on current-users.
 	[martin, ticket #1588]
+
+distrib/sets/lists/man/mi			patch
+distrib/sets/lists/misc/mi			patch
+gnu/dist/postfix/AAAREADME			patch
+gnu/dist/postfix/COMPATIBILITY			patch
+gnu/dist/postfix/HISTORY			patch
+gnu/dist/postfix/INSTALL			patch
+gnu/dist/postfix/Makefile.in			patch
+gnu/dist/postfix/README_FILES/AAAREADME		patch
+gnu/dist/postfix/README_FILES/ADDRESS_REWRITING_README patch
+gnu/dist/postfix/README_FILES/ADDRESS_VERIFICATION_README patch
+gnu/dist/postfix/README_FILES/BACKSCATTER_README patch
+gnu/dist/postfix/README_FILES/CDB_README	patch
+gnu/dist/postfix/README_FILES/CONNECTION_CACHE_README patch
+gnu/dist/postfix/README_FILES/CONTENT_INSPECTION_README patch
+gnu/dist/postfix/README_FILES/DB_README		patch
+gnu/dist/postfix/README_FILES/DSN_README	new file
+gnu/dist/postfix/README_FILES/DSN_README	patch
+gnu/dist/postfix/README_FILES/FILTER_README	patch
+gnu/dist/postfix/README_FILES/INSTALL		patch
+gnu/dist/postfix/README_FILES/IPV6_README	patch
+gnu/dist/postfix/README_FILES/LINUX_README	patch
+gnu/dist/postfix/README_FILES/MAILDROP_README	patch
+gnu/dist/postfix/README_FILES/MILTER_README	new file
+gnu/dist/postfix/README_FILES/MILTER_README	patch
+gnu/dist/postfix/README_FILES/PGSQL_README	patch
+gnu/dist/postfix/README_FILES/RELEASE_NOTES	patch
+gnu/dist/postfix/README_FILES/RESTRICTION_CLASS_README patch
+gnu/dist/postfix/README_FILES/SASL_README	patch
+gnu/dist/postfix/README_FILES/SMTPD_ACCESS_README patch
+gnu/dist/postfix/README_FILES/SMTPD_POLICY_README patch
+gnu/dist/postfix/README_FILES/SMTPD_PROXY_README patch
+gnu/dist/postfix/README_FILES/STANDARD_CONFIGURATION_README patch
+gnu/dist/postfix/README_FILES/TLS_README	patch
+gnu/dist/postfix/README_FILES/VERP_README	patch
+gnu/dist/postfix/README_FILES/XCLIENT_README	patch
+gnu/dist/postfix/README_FILES/XFORWARD_README	patch
+gnu/dist/postfix/RELEASE_NOTES			patch
+gnu/dist/postfix/RELEASE_NOTES-2.2		new file
+gnu/dist/postfix/RELEASE_NOTES-2.2		patch
+gnu/dist/postfix/TLS_TODO			patch
+gnu/dist/postfix/anvil/Makefile.in		patch
+gnu/dist/postfix/anvil/anvil.c			patch
+gnu/dist/postfix/bounce/2template_test.in	patch
+gnu/dist/postfix/bounce/Makefile.in		patch
+gnu/dist/postfix/bounce/annotate.pl		patch
+gnu/dist/postfix/bounce/bounce.c		patch
+gnu/dist/postfix/bounce/bounce_append_service.c patch
+gnu/dist/postfix/bounce/bounce_cleanup.c	patch
+gnu/dist/postfix/bounce/bounce_notify_service.c patch
+gnu/dist/postfix/bounce/bounce_notify_util.c	patch
+gnu/dist/postfix/bounce/bounce_notify_verp.c	patch
+gnu/dist/postfix/bounce/bounce_one_service.c	patch
+gnu/dist/postfix/bounce/bounce_service.h	patch
+gnu/dist/postfix/bounce/bounce_template.c	patch
+gnu/dist/postfix/bounce/bounce_template.h	patch
+gnu/dist/postfix/bounce/bounce_templates.c	patch
+gnu/dist/postfix/bounce/bounce_trace_service.c	patch
+gnu/dist/postfix/bounce/bounce_warn_service.c	patch
+gnu/dist/postfix/bounce/template_test.ref	patch
+gnu/dist/postfix/cleanup/Makefile.in		patch
+gnu/dist/postfix/cleanup/cleanup.c		patch
+gnu/dist/postfix/cleanup/cleanup.h		patch
+gnu/dist/postfix/cleanup/cleanup_addr.c		patch
+gnu/dist/postfix/cleanup/cleanup_api.c		patch
+gnu/dist/postfix/cleanup/cleanup_bounce.c	patch
+gnu/dist/postfix/cleanup/cleanup_envelope.c	patch
+gnu/dist/postfix/cleanup/cleanup_extracted.c	patch
+gnu/dist/postfix/cleanup/cleanup_init.c		patch
+gnu/dist/postfix/cleanup/cleanup_masquerade.c	patch
+gnu/dist/postfix/cleanup/cleanup_message.c	patch
+gnu/dist/postfix/cleanup/cleanup_milter.c	patch
+gnu/dist/postfix/cleanup/cleanup_milter.in1	patch
+gnu/dist/postfix/cleanup/cleanup_milter.ref1	patch
+gnu/dist/postfix/cleanup/cleanup_out.c		patch
+gnu/dist/postfix/cleanup/cleanup_out_recipient.c patch
+gnu/dist/postfix/cleanup/cleanup_state.c	patch
+gnu/dist/postfix/conf/access			patch
+gnu/dist/postfix/conf/aliases			patch
+gnu/dist/postfix/conf/canonical			patch
+gnu/dist/postfix/conf/generic			patch
+gnu/dist/postfix/conf/header_checks		patch
+gnu/dist/postfix/conf/main.cf			patch
+gnu/dist/postfix/conf/master.cf			patch
+gnu/dist/postfix/conf/post-install		patch
+gnu/dist/postfix/conf/postfix-files		patch
+gnu/dist/postfix/conf/relocated			patch
+gnu/dist/postfix/conf/transport			patch
+gnu/dist/postfix/conf/virtual			patch
+gnu/dist/postfix/discard/Makefile.in		patch
+gnu/dist/postfix/discard/discard.c		patch
+gnu/dist/postfix/dns/Makefile.in		patch
+gnu/dist/postfix/dns/dns.h			patch
+gnu/dist/postfix/dns/dns_lookup.c		patch
+gnu/dist/postfix/dns/dns_rr.c			patch
+gnu/dist/postfix/dns/dns_rr_eq_sa.c		patch
+gnu/dist/postfix/dns/dns_rr_eq_sa.in		patch
+gnu/dist/postfix/dns/dns_rr_eq_sa.ref		patch
+gnu/dist/postfix/dns/dns_rr_to_pa.ref		patch
+gnu/dist/postfix/dns/dns_rr_to_sa.c		patch
+gnu/dist/postfix/dns/dns_rr_to_sa.ref		patch
+gnu/dist/postfix/dns/dns_sa_to_rr.ref		patch
+gnu/dist/postfix/dns/test_dns_lookup.c		patch
+gnu/dist/postfix/error/Makefile.in		patch
+gnu/dist/postfix/error/error.c			patch
+gnu/dist/postfix/examples/smtpd-policy/postfix-policyd-spf.pl new file
+gnu/dist/postfix/examples/smtpd-policy/postfix-policyd-spf.pl patch
+gnu/dist/postfix/flush/Makefile.in		patch
+gnu/dist/postfix/flush/flush.c			patch
+gnu/dist/postfix/fsstone/Makefile.in		patch
+gnu/dist/postfix/global/Makefile.in		patch
+gnu/dist/postfix/global/abounce.c		patch
+gnu/dist/postfix/global/abounce.h		patch
+gnu/dist/postfix/global/anvil_clnt.c		patch
+gnu/dist/postfix/global/anvil_clnt.h		patch
+gnu/dist/postfix/global/bounce.c		patch
+gnu/dist/postfix/global/bounce.h		patch
+gnu/dist/postfix/global/bounce_log.c		patch
+gnu/dist/postfix/global/bounce_log.h		patch
+gnu/dist/postfix/global/cfg_parser.c		patch
+gnu/dist/postfix/global/cleanup_strerror.c	patch
+gnu/dist/postfix/global/cleanup_strflags.c	patch
+gnu/dist/postfix/global/cleanup_user.h		patch
+gnu/dist/postfix/global/conv_time.c		patch
+gnu/dist/postfix/global/conv_time.h		patch
+gnu/dist/postfix/global/db_common.c		patch
+gnu/dist/postfix/global/db_common.h		patch
+gnu/dist/postfix/global/debug_peer.c		patch
+gnu/dist/postfix/global/defer.c			patch
+gnu/dist/postfix/global/defer.h			patch
+gnu/dist/postfix/global/deliver_completed.c	patch
+gnu/dist/postfix/global/deliver_pass.c		patch
+gnu/dist/postfix/global/deliver_pass.h		patch
+gnu/dist/postfix/global/deliver_request.c	patch
+gnu/dist/postfix/global/deliver_request.h	patch
+gnu/dist/postfix/global/dict_ldap.c		patch
+gnu/dist/postfix/global/dict_mysql.c		patch
+gnu/dist/postfix/global/dict_pgsql.c		patch
+gnu/dist/postfix/global/dict_proxy.c		patch
+gnu/dist/postfix/global/domain_list.c		patch
+gnu/dist/postfix/global/dsb_scan.c		patch
+gnu/dist/postfix/global/dsb_scan.h		patch
+gnu/dist/postfix/global/dsn.c			patch
+gnu/dist/postfix/global/dsn.h			patch
+gnu/dist/postfix/global/dsn_buf.c		patch
+gnu/dist/postfix/global/dsn_buf.h		patch
+gnu/dist/postfix/global/dsn_mask.c		patch
+gnu/dist/postfix/global/dsn_mask.h		patch
+gnu/dist/postfix/global/dsn_print.c		patch
+gnu/dist/postfix/global/dsn_print.h		patch
+gnu/dist/postfix/global/dsn_util.c		patch
+gnu/dist/postfix/global/dsn_util.h		patch
+gnu/dist/postfix/global/ehlo_mask.c		patch
+gnu/dist/postfix/global/ehlo_mask.h		patch
+gnu/dist/postfix/global/ehlo_mask.ref		patch
+gnu/dist/postfix/global/ext_prop.c		patch
+gnu/dist/postfix/global/flush_clnt.c		patch
+gnu/dist/postfix/global/header_token.c		patch
+gnu/dist/postfix/global/header_token.h		patch
+gnu/dist/postfix/global/hold_message.c		patch
+gnu/dist/postfix/global/input_transp.c		patch
+gnu/dist/postfix/global/input_transp.h		patch
+gnu/dist/postfix/global/int_filt.c		patch
+gnu/dist/postfix/global/int_filt.h		patch
+gnu/dist/postfix/global/is_header.c		patch
+gnu/dist/postfix/global/is_header.h		patch
+gnu/dist/postfix/global/log_adhoc.c		patch
+gnu/dist/postfix/global/log_adhoc.h		patch
+gnu/dist/postfix/global/mail_addr_crunch.c	patch
+gnu/dist/postfix/global/mail_addr_find.c	patch
+gnu/dist/postfix/global/mail_addr_map.c		patch
+gnu/dist/postfix/global/mail_command_client.c	patch
+gnu/dist/postfix/global/mail_conf.h		patch
+gnu/dist/postfix/global/mail_conf_long.c	patch
+gnu/dist/postfix/global/mail_conf_raw.c		patch
+gnu/dist/postfix/global/mail_conf_str.c		patch
+gnu/dist/postfix/global/mail_conf_time.c	patch
+gnu/dist/postfix/global/mail_conf_time.ref	patch
+gnu/dist/postfix/global/mail_copy.c		patch
+gnu/dist/postfix/global/mail_copy.h		patch
+gnu/dist/postfix/global/mail_date.c		patch
+gnu/dist/postfix/global/mail_params.c		patch
+gnu/dist/postfix/global/mail_params.h		patch
+gnu/dist/postfix/global/mail_proto.h		patch
+gnu/dist/postfix/global/mail_queue.c		patch
+gnu/dist/postfix/global/mail_queue.h		patch
+gnu/dist/postfix/global/mail_run.c		patch
+gnu/dist/postfix/global/mail_stream.c		patch
+gnu/dist/postfix/global/mail_stream.h		patch
+gnu/dist/postfix/global/mail_trigger.c		patch
+gnu/dist/postfix/global/mail_version.h		patch
+gnu/dist/postfix/global/maps.c			patch
+gnu/dist/postfix/global/mark_corrupt.c		patch
+gnu/dist/postfix/global/match_parent_style.c	patch
+gnu/dist/postfix/global/mbox_conf.c		patch
+gnu/dist/postfix/global/mbox_open.c		patch
+gnu/dist/postfix/global/mbox_open.h		patch
+gnu/dist/postfix/global/mime_state.c		patch
+gnu/dist/postfix/global/mime_state.h		patch
+gnu/dist/postfix/global/msg_stats.h		patch
+gnu/dist/postfix/global/msg_stats_print.c	patch
+gnu/dist/postfix/global/msg_stats_scan.c	patch
+gnu/dist/postfix/global/mynetworks.c		patch
+gnu/dist/postfix/global/mypwd.c			patch
+gnu/dist/postfix/global/namadr_list.c		patch
+gnu/dist/postfix/global/off_cvt.c		patch
+gnu/dist/postfix/global/own_inet_addr.c		patch
+gnu/dist/postfix/global/pipe_command.c		patch
+gnu/dist/postfix/global/pipe_command.h		patch
+gnu/dist/postfix/global/post_mail.c		patch
+gnu/dist/postfix/global/post_mail.h		patch
+gnu/dist/postfix/global/qmgr_user.h		patch
+gnu/dist/postfix/global/quote_821_local.c	patch
+gnu/dist/postfix/global/quote_821_local.h	patch
+gnu/dist/postfix/global/quote_822_local.c	patch
+gnu/dist/postfix/global/rcpt_buf.c		patch
+gnu/dist/postfix/global/rcpt_buf.h		patch
+gnu/dist/postfix/global/rcpt_print.c		patch
+gnu/dist/postfix/global/rcpt_print.h		patch
+gnu/dist/postfix/global/rec2stream.c		patch
+gnu/dist/postfix/global/rec_attr_map.c		patch
+gnu/dist/postfix/global/rec_attr_map.h		patch
+gnu/dist/postfix/global/rec_type.c		patch
+gnu/dist/postfix/global/rec_type.h		patch
+gnu/dist/postfix/global/recdump.c		patch
+gnu/dist/postfix/global/recipient_list.c	patch
+gnu/dist/postfix/global/recipient_list.h	patch
+gnu/dist/postfix/global/record.c		patch
+gnu/dist/postfix/global/record.h		patch
+gnu/dist/postfix/global/resolve_clnt.c		patch
+gnu/dist/postfix/global/resolve_clnt.h		patch
+gnu/dist/postfix/global/resolve_clnt.ref	patch
+gnu/dist/postfix/global/resolve_local.c		patch
+gnu/dist/postfix/global/rewrite_clnt.c		patch
+gnu/dist/postfix/global/rewrite_clnt.ref	patch
+gnu/dist/postfix/global/scache.c		patch
+gnu/dist/postfix/global/scache.h		patch
+gnu/dist/postfix/global/scache_clnt.c		patch
+gnu/dist/postfix/global/sent.c			patch
+gnu/dist/postfix/global/sent.h			patch
+gnu/dist/postfix/global/smtp_stream.c		patch
+gnu/dist/postfix/global/smtp_stream.h		patch
+gnu/dist/postfix/global/stream2rec.c		patch
+gnu/dist/postfix/global/string_list.c		patch
+gnu/dist/postfix/global/sys_exits.c		patch
+gnu/dist/postfix/global/sys_exits.h		patch
+gnu/dist/postfix/global/tok822.h		patch
+gnu/dist/postfix/global/tok822_parse.c		patch
+gnu/dist/postfix/global/tok822_resolve.c	patch
+gnu/dist/postfix/global/trace.c			patch
+gnu/dist/postfix/global/trace.h			patch
+gnu/dist/postfix/global/user_acl.h		patch
+gnu/dist/postfix/global/verify.c		patch
+gnu/dist/postfix/global/verify.h		patch
+gnu/dist/postfix/global/verify_clnt.c		patch
+gnu/dist/postfix/global/verify_clnt.h		patch
+gnu/dist/postfix/global/verp_sender.c		patch
+gnu/dist/postfix/global/xtext.c			patch
+gnu/dist/postfix/html/ADDRESS_REWRITING_README.html patch
+gnu/dist/postfix/html/ADDRESS_VERIFICATION_README.html patch
+gnu/dist/postfix/html/BACKSCATTER_README.html	patch
+gnu/dist/postfix/html/CDB_README.html		patch
+gnu/dist/postfix/html/CONNECTION_CACHE_README.html patch
+gnu/dist/postfix/html/CONTENT_INSPECTION_README.html patch
+gnu/dist/postfix/html/DATABASE_README.html	patch
+gnu/dist/postfix/html/DB_README.html		patch
+gnu/dist/postfix/html/DSN_README.html		new file
+gnu/dist/postfix/html/DSN_README.html		patch
+gnu/dist/postfix/html/FILTER_README.html	patch
+gnu/dist/postfix/html/INSTALL.html		patch
+gnu/dist/postfix/html/IPV6_README.html		patch
+gnu/dist/postfix/html/LINUX_README.html		patch
+gnu/dist/postfix/html/MAILDROP_README.html	patch
+gnu/dist/postfix/html/MILTER_README.html	new file
+gnu/dist/postfix/html/MILTER_README.html	patch
+gnu/dist/postfix/html/Makefile.in		patch
+gnu/dist/postfix/html/OVERVIEW.html		patch
+gnu/dist/postfix/html/PGSQL_README.html		patch
+gnu/dist/postfix/html/RESTRICTION_CLASS_README.html patch
+gnu/dist/postfix/html/SASL_README.html		patch
+gnu/dist/postfix/html/SMTPD_ACCESS_README.html	patch
+gnu/dist/postfix/html/SMTPD_POLICY_README.html	patch
+gnu/dist/postfix/html/SMTPD_PROXY_README.html	patch
+gnu/dist/postfix/html/STANDARD_CONFIGURATION_README.html patch
+gnu/dist/postfix/html/TLS_README.html		patch
+gnu/dist/postfix/html/VERP_README.html		patch
+gnu/dist/postfix/html/XCLIENT_README.html	patch
+gnu/dist/postfix/html/XFORWARD_README.html	patch
+gnu/dist/postfix/html/access.5.html		patch
+gnu/dist/postfix/html/aliases.5.html		patch
+gnu/dist/postfix/html/anvil.8.html		patch
+gnu/dist/postfix/html/bounce.5.html		new file
+gnu/dist/postfix/html/bounce.5.html		patch
+gnu/dist/postfix/html/bounce.8.html		patch
+gnu/dist/postfix/html/canonical.5.html		patch
+gnu/dist/postfix/html/cleanup.8.html		patch
+gnu/dist/postfix/html/defer.8.html		patch
+gnu/dist/postfix/html/discard.8.html		patch
+gnu/dist/postfix/html/error.8.html		patch
+gnu/dist/postfix/html/flush.8.html		patch
+gnu/dist/postfix/html/generic.5.html		patch
+gnu/dist/postfix/html/header_checks.5.html	patch
+gnu/dist/postfix/html/index.html		patch
+gnu/dist/postfix/html/ldap_table.5.html		patch
+gnu/dist/postfix/html/lmtp.8.html		patch
+gnu/dist/postfix/html/local.8.html		patch
+gnu/dist/postfix/html/mailq.1.html		patch
+gnu/dist/postfix/html/master.5.html		patch
+gnu/dist/postfix/html/master.8.html		patch
+gnu/dist/postfix/html/newaliases.1.html		patch
+gnu/dist/postfix/html/oqmgr.8.html		patch
+gnu/dist/postfix/html/pcre_table.5.html		patch
+gnu/dist/postfix/html/pickup.8.html		patch
+gnu/dist/postfix/html/pipe.8.html		patch
+gnu/dist/postfix/html/postalias.1.html		patch
+gnu/dist/postfix/html/postcat.1.html		patch
+gnu/dist/postfix/html/postconf.1.html		patch
+gnu/dist/postfix/html/postconf.5.html		patch
+gnu/dist/postfix/html/postdrop.1.html		patch
+gnu/dist/postfix/html/postfix-manuals.html	patch
+gnu/dist/postfix/html/postfix.1.html		patch
+gnu/dist/postfix/html/postlock.1.html		patch
+gnu/dist/postfix/html/postmap.1.html		patch
+gnu/dist/postfix/html/postqueue.1.html		patch
+gnu/dist/postfix/html/postsuper.1.html		patch
+gnu/dist/postfix/html/proxymap.8.html		patch
+gnu/dist/postfix/html/qmgr.8.html		patch
+gnu/dist/postfix/html/qmqp-source.1.html	patch
+gnu/dist/postfix/html/qmqpd.8.html		patch
+gnu/dist/postfix/html/qshape.1.html		patch
+gnu/dist/postfix/html/regexp_table.5.html	patch
+gnu/dist/postfix/html/relocated.5.html		patch
+gnu/dist/postfix/html/scache.8.html		patch
+gnu/dist/postfix/html/sendmail.1.html		patch
+gnu/dist/postfix/html/showq.8.html		patch
+gnu/dist/postfix/html/smtp-sink.1.html		patch
+gnu/dist/postfix/html/smtp-source.1.html	patch
+gnu/dist/postfix/html/smtp.8.html		patch
+gnu/dist/postfix/html/smtpd.8.html		patch
+gnu/dist/postfix/html/spawn.8.html		patch
+gnu/dist/postfix/html/tcp_table.5.html		new file
+gnu/dist/postfix/html/tcp_table.5.html		patch
+gnu/dist/postfix/html/tlsmgr.8.html		patch
+gnu/dist/postfix/html/trace.8.html		patch
+gnu/dist/postfix/html/transport.5.html		patch
+gnu/dist/postfix/html/trivial-rewrite.8.html	patch
+gnu/dist/postfix/html/verify.8.html		patch
+gnu/dist/postfix/html/virtual.5.html		patch
+gnu/dist/postfix/html/virtual.8.html		patch
+gnu/dist/postfix/implementation-notes/DSN	new file
+gnu/dist/postfix/implementation-notes/DSN	patch
+gnu/dist/postfix/implementation-notes/ENHANCED_STATUS_CODES new file
+gnu/dist/postfix/implementation-notes/ENHANCED_STATUS_CODES patch
+gnu/dist/postfix/lmtp/Makefile.in		patch
+gnu/dist/postfix/lmtp/lmtp.c			patch
+gnu/dist/postfix/lmtp/lmtp.h			patch
+gnu/dist/postfix/lmtp/lmtp_addr.c		patch
+gnu/dist/postfix/lmtp/lmtp_addr.h		patch
+gnu/dist/postfix/lmtp/lmtp_chat.c		patch
+gnu/dist/postfix/lmtp/lmtp_connect.c		patch
+gnu/dist/postfix/lmtp/lmtp_proto.c		patch
+gnu/dist/postfix/lmtp/lmtp_sasl.h		patch
+gnu/dist/postfix/lmtp/lmtp_sasl_glue.c		patch
+gnu/dist/postfix/lmtp/lmtp_sasl_proto.c		patch
+gnu/dist/postfix/lmtp/lmtp_session.c		patch
+gnu/dist/postfix/lmtp/lmtp_state.c		patch
+gnu/dist/postfix/lmtp/lmtp_trouble.c		patch
+gnu/dist/postfix/local/Makefile.in		patch
+gnu/dist/postfix/local/alias.c			patch
+gnu/dist/postfix/local/biff_notify.c		patch
+gnu/dist/postfix/local/biff_notify.h		patch
+gnu/dist/postfix/local/command.c		patch
+gnu/dist/postfix/local/deliver_attr.c		patch
+gnu/dist/postfix/local/delivered.c		patch
+gnu/dist/postfix/local/dotforward.c		patch
+gnu/dist/postfix/local/file.c			patch
+gnu/dist/postfix/local/forward.c		patch
+gnu/dist/postfix/local/include.c		patch
+gnu/dist/postfix/local/indirect.c		patch
+gnu/dist/postfix/local/local.c			patch
+gnu/dist/postfix/local/local.h			patch
+gnu/dist/postfix/local/local_expand.c		patch
+gnu/dist/postfix/local/mailbox.c		patch
+gnu/dist/postfix/local/maildir.c		patch
+gnu/dist/postfix/local/recipient.c		patch
+gnu/dist/postfix/local/resolve.c		patch
+gnu/dist/postfix/local/token.c			patch
+gnu/dist/postfix/local/unknown.c		patch
+gnu/dist/postfix/makedefs			patch
+gnu/dist/postfix/man/Makefile.in		patch
+gnu/dist/postfix/man/man1/postalias.1		patch
+gnu/dist/postfix/man/man1/postconf.1		patch
+gnu/dist/postfix/man/man1/postdrop.1		patch
+gnu/dist/postfix/man/man1/postfix.1		patch
+gnu/dist/postfix/man/man1/postmap.1		patch
+gnu/dist/postfix/man/man1/postqueue.1		patch
+gnu/dist/postfix/man/man1/postsuper.1		patch
+gnu/dist/postfix/man/man1/qmqp-source.1		patch
+gnu/dist/postfix/man/man1/qshape.1		patch
+gnu/dist/postfix/man/man1/sendmail.1		patch
+gnu/dist/postfix/man/man1/smtp-sink.1		patch
+gnu/dist/postfix/man/man1/smtp-source.1		patch
+gnu/dist/postfix/man/man5/access.5		patch
+gnu/dist/postfix/man/man5/aliases.5		patch
+gnu/dist/postfix/man/man5/bounce.5		new file
+gnu/dist/postfix/man/man5/bounce.5		patch
+gnu/dist/postfix/man/man5/canonical.5		patch
+gnu/dist/postfix/man/man5/generic.5		patch
+gnu/dist/postfix/man/man5/header_checks.5	patch
+gnu/dist/postfix/man/man5/ldap_table.5		patch
+gnu/dist/postfix/man/man5/master.5		patch
+gnu/dist/postfix/man/man5/pcre_table.5		patch
+gnu/dist/postfix/man/man5/postconf.5		patch
+gnu/dist/postfix/man/man5/regexp_table.5	patch
+gnu/dist/postfix/man/man5/relocated.5		patch
+gnu/dist/postfix/man/man5/tcp_table.5		new file
+gnu/dist/postfix/man/man5/tcp_table.5		patch
+gnu/dist/postfix/man/man5/transport.5		patch
+gnu/dist/postfix/man/man5/virtual.5		patch
+gnu/dist/postfix/man/man8/anvil.8		patch
+gnu/dist/postfix/man/man8/bounce.8		patch
+gnu/dist/postfix/man/man8/cleanup.8		patch
+gnu/dist/postfix/man/man8/discard.8		patch
+gnu/dist/postfix/man/man8/error.8		patch
+gnu/dist/postfix/man/man8/lmtp.8		patch
+gnu/dist/postfix/man/man8/local.8		patch
+gnu/dist/postfix/man/man8/master.8		patch
+gnu/dist/postfix/man/man8/oqmgr.8		patch
+gnu/dist/postfix/man/man8/pipe.8		patch
+gnu/dist/postfix/man/man8/qmgr.8		patch
+gnu/dist/postfix/man/man8/smtp.8		patch
+gnu/dist/postfix/man/man8/smtpd.8		patch
+gnu/dist/postfix/man/man8/tlsmgr.8		patch
+gnu/dist/postfix/man/man8/trivial-rewrite.8	patch
+gnu/dist/postfix/man/man8/virtual.8		patch
+gnu/dist/postfix/mantools/dehtml		new file
+gnu/dist/postfix/mantools/dehtml		patch
+gnu/dist/postfix/mantools/postconf2man		patch
+gnu/dist/postfix/mantools/postlink		patch
+gnu/dist/postfix/mantools/srctoman		patch
+gnu/dist/postfix/mantools/xpostdef		patch
+gnu/dist/postfix/master/Makefile.in		patch
+gnu/dist/postfix/master/mail_flow.c		patch
+gnu/dist/postfix/master/mail_flow.h		patch
+gnu/dist/postfix/master/master.c		patch
+gnu/dist/postfix/master/master.h		patch
+gnu/dist/postfix/master/master_avail.c		patch
+gnu/dist/postfix/master/master_conf.c		patch
+gnu/dist/postfix/master/master_ent.c		patch
+gnu/dist/postfix/master/master_flow.c		patch
+gnu/dist/postfix/master/master_listen.c		patch
+gnu/dist/postfix/master/master_proto.c		patch
+gnu/dist/postfix/master/master_sig.c		patch
+gnu/dist/postfix/master/master_spawn.c		patch
+gnu/dist/postfix/master/master_status.c		patch
+gnu/dist/postfix/master/master_wakeup.c		patch
+gnu/dist/postfix/master/multi_server.c		patch
+gnu/dist/postfix/master/single_server.c		patch
+gnu/dist/postfix/master/trigger_server.c	patch
+gnu/dist/postfix/milter/Makefile.in		patch
+gnu/dist/postfix/milter/milter.c		patch
+gnu/dist/postfix/milter/milter.h		patch
+gnu/dist/postfix/milter/milter8.c		patch
+gnu/dist/postfix/milter/test-list		patch
+gnu/dist/postfix/milter/test-milter.c		patch
+gnu/dist/postfix/oqmgr/Makefile.in		patch
+gnu/dist/postfix/oqmgr/qmgr.c			patch
+gnu/dist/postfix/oqmgr/qmgr.h			patch
+gnu/dist/postfix/oqmgr/qmgr_active.c		patch
+gnu/dist/postfix/oqmgr/qmgr_bounce.c		patch
+gnu/dist/postfix/oqmgr/qmgr_defer.c		patch
+gnu/dist/postfix/oqmgr/qmgr_deliver.c		patch
+gnu/dist/postfix/oqmgr/qmgr_entry.c		patch
+gnu/dist/postfix/oqmgr/qmgr_message.c		patch
+gnu/dist/postfix/oqmgr/qmgr_move.c		patch
+gnu/dist/postfix/oqmgr/qmgr_queue.c		patch
+gnu/dist/postfix/oqmgr/qmgr_scan.c		patch
+gnu/dist/postfix/oqmgr/qmgr_transport.c		patch
+gnu/dist/postfix/pflogsumm-conn-delays-dsn-patch new file
+gnu/dist/postfix/pflogsumm-conn-delays-dsn-patch patch
+gnu/dist/postfix/pickup/Makefile.in		patch
+gnu/dist/postfix/pickup/pickup.c		patch
+gnu/dist/postfix/pipe/Makefile.in		patch
+gnu/dist/postfix/pipe/pipe.c			patch
+gnu/dist/postfix/postalias/Makefile.in		patch
+gnu/dist/postfix/postalias/map-ABC1.ref		patch
+gnu/dist/postfix/postalias/map-ABC2.ref		patch
+gnu/dist/postfix/postalias/postalias.c		patch
+gnu/dist/postfix/postcat/Makefile.in		patch
+gnu/dist/postfix/postcat/postcat.c		patch
+gnu/dist/postfix/postconf/Makefile.in		patch
+gnu/dist/postfix/postconf/extract.awk		patch
+gnu/dist/postfix/postconf/postconf.c		patch
+gnu/dist/postfix/postdrop/Makefile.in		patch
+gnu/dist/postfix/postdrop/postdrop.c		patch
+gnu/dist/postfix/postfix-install		patch
+gnu/dist/postfix/postfix/Makefile.in		patch
+gnu/dist/postfix/postfix/postfix.c		patch
+gnu/dist/postfix/postkick/Makefile.in		patch
+gnu/dist/postfix/postlock/Makefile.in		patch
+gnu/dist/postfix/postlock/postlock.c		patch
+gnu/dist/postfix/postlog/Makefile.in		patch
+gnu/dist/postfix/postlog/postlog.c		patch
+gnu/dist/postfix/postmap/Makefile.in		patch
+gnu/dist/postfix/postmap/map-ABC1.ref		patch
+gnu/dist/postfix/postmap/map-ABC2.ref		patch
+gnu/dist/postfix/postmap/postmap.c		patch
+gnu/dist/postfix/postqueue/Makefile.in		patch
+gnu/dist/postfix/postqueue/postqueue.c		patch
+gnu/dist/postfix/postsuper/Makefile.in		patch
+gnu/dist/postfix/postsuper/postsuper.c		patch
+gnu/dist/postfix/proto/ADDRESS_REWRITING_README.html patch
+gnu/dist/postfix/proto/ADDRESS_VERIFICATION_README.html patch
+gnu/dist/postfix/proto/BACKSCATTER_README.html	patch
+gnu/dist/postfix/proto/CDB_README.html		patch
+gnu/dist/postfix/proto/CONNECTION_CACHE_README.html patch
+gnu/dist/postfix/proto/CONTENT_INSPECTION_README.html patch
+gnu/dist/postfix/proto/DB_README.html		patch
+gnu/dist/postfix/proto/DSN_README.html		new file
+gnu/dist/postfix/proto/DSN_README.html		patch
+gnu/dist/postfix/proto/FILTER_README.html	patch
+gnu/dist/postfix/proto/INSTALL.html		patch
+gnu/dist/postfix/proto/IPV6_README.html		patch
+gnu/dist/postfix/proto/LINUX_README.html	patch
+gnu/dist/postfix/proto/MAILDROP_README.html	patch
+gnu/dist/postfix/proto/MILTER_README.html	new file
+gnu/dist/postfix/proto/MILTER_README.html	patch
+gnu/dist/postfix/proto/Makefile.in		patch
+gnu/dist/postfix/proto/PGSQL_README.html	patch
+gnu/dist/postfix/proto/RESTRICTION_CLASS_README.html patch
+gnu/dist/postfix/proto/SASL_README.html		patch
+gnu/dist/postfix/proto/SMTPD_ACCESS_README.html patch
+gnu/dist/postfix/proto/SMTPD_POLICY_README.html patch
+gnu/dist/postfix/proto/SMTPD_PROXY_README.html	patch
+gnu/dist/postfix/proto/STANDARD_CONFIGURATION_README.html patch
+gnu/dist/postfix/proto/TLS_README.html		patch
+gnu/dist/postfix/proto/VERP_README.html		patch
+gnu/dist/postfix/proto/XCLIENT_README.html	patch
+gnu/dist/postfix/proto/XFORWARD_README.html	patch
+gnu/dist/postfix/proto/access			patch
+gnu/dist/postfix/proto/aliases			patch
+gnu/dist/postfix/proto/bounce			new file
+gnu/dist/postfix/proto/bounce			patch
+gnu/dist/postfix/proto/canonical		patch
+gnu/dist/postfix/proto/generic			patch
+gnu/dist/postfix/proto/header_checks		patch
+gnu/dist/postfix/proto/ldap_table		patch
+gnu/dist/postfix/proto/master			patch
+gnu/dist/postfix/proto/pcre_table		patch
+gnu/dist/postfix/proto/postconf.proto		patch
+gnu/dist/postfix/proto/regexp_table		patch
+gnu/dist/postfix/proto/relocated		patch
+gnu/dist/postfix/proto/stop			patch
+gnu/dist/postfix/proto/tcp_table		new file
+gnu/dist/postfix/proto/tcp_table		patch
+gnu/dist/postfix/proto/transport		patch
+gnu/dist/postfix/proto/virtual			patch
+gnu/dist/postfix/proxymap/Makefile.in		patch
+gnu/dist/postfix/proxymap/proxymap.c		patch
+gnu/dist/postfix/qmgr/Makefile.in		patch
+gnu/dist/postfix/qmgr/qmgr.c			patch
+gnu/dist/postfix/qmgr/qmgr.h			patch
+gnu/dist/postfix/qmgr/qmgr_active.c		patch
+gnu/dist/postfix/qmgr/qmgr_bounce.c		patch
+gnu/dist/postfix/qmgr/qmgr_defer.c		patch
+gnu/dist/postfix/qmgr/qmgr_deliver.c		patch
+gnu/dist/postfix/qmgr/qmgr_entry.c		patch
+gnu/dist/postfix/qmgr/qmgr_job.c		patch
+gnu/dist/postfix/qmgr/qmgr_message.c		patch
+gnu/dist/postfix/qmgr/qmgr_move.c		patch
+gnu/dist/postfix/qmgr/qmgr_peer.c		patch
+gnu/dist/postfix/qmgr/qmgr_queue.c		patch
+gnu/dist/postfix/qmgr/qmgr_scan.c		patch
+gnu/dist/postfix/qmgr/qmgr_transport.c		patch
+gnu/dist/postfix/qmqpd/Makefile.in		patch
+gnu/dist/postfix/qmqpd/qmqpd.c			patch
+gnu/dist/postfix/qmqpd/qmqpd.h			patch
+gnu/dist/postfix/qmqpd/qmqpd_peer.c		patch
+gnu/dist/postfix/qmqpd/qmqpd_state.c		patch
+gnu/dist/postfix/scache/Makefile.in		patch
+gnu/dist/postfix/scache/scache.c		patch
+gnu/dist/postfix/sendmail/Makefile.in		patch
+gnu/dist/postfix/sendmail/sendmail.c		patch
+gnu/dist/postfix/showq/Makefile.in		patch
+gnu/dist/postfix/showq/showq.c			patch
+gnu/dist/postfix/smtp/Makefile.in		patch
+gnu/dist/postfix/smtp/legacy.c			patch
+gnu/dist/postfix/smtp/levels.c			patch
+gnu/dist/postfix/smtp/lmtp_params.c		patch
+gnu/dist/postfix/smtp/smtp-only			patch
+gnu/dist/postfix/smtp/smtp.c			patch
+gnu/dist/postfix/smtp/smtp.h			patch
+gnu/dist/postfix/smtp/smtp_addr.c		patch
+gnu/dist/postfix/smtp/smtp_addr.h		patch
+gnu/dist/postfix/smtp/smtp_chat.c		patch
+gnu/dist/postfix/smtp/smtp_connect.c		patch
+gnu/dist/postfix/smtp/smtp_map11.c		patch
+gnu/dist/postfix/smtp/smtp_map11.ref		patch
+gnu/dist/postfix/smtp/smtp_params.c		patch
+gnu/dist/postfix/smtp/smtp_proto.c		patch
+gnu/dist/postfix/smtp/smtp_rcpt.c		patch
+gnu/dist/postfix/smtp/smtp_reuse.c		patch
+gnu/dist/postfix/smtp/smtp_reuse.h		patch
+gnu/dist/postfix/smtp/smtp_sasl.h		patch
+gnu/dist/postfix/smtp/smtp_sasl_glue.c		patch
+gnu/dist/postfix/smtp/smtp_sasl_proto.c		patch
+gnu/dist/postfix/smtp/smtp_session.c		patch
+gnu/dist/postfix/smtp/smtp_state.c		patch
+gnu/dist/postfix/smtp/smtp_trouble.c		patch
+gnu/dist/postfix/smtp/smtp_unalias.c		patch
+gnu/dist/postfix/smtp/tls_policy.in		patch
+gnu/dist/postfix/smtp/tls_policy.ref		patch
+gnu/dist/postfix/smtpd/Makefile.in		patch
+gnu/dist/postfix/smtpd/smtpd.c			patch
+gnu/dist/postfix/smtpd/smtpd.h			patch
+gnu/dist/postfix/smtpd/smtpd_acl.ref		patch
+gnu/dist/postfix/smtpd/smtpd_chat.c		patch
+gnu/dist/postfix/smtpd/smtpd_chat.h		patch
+gnu/dist/postfix/smtpd/smtpd_check.c		patch
+gnu/dist/postfix/smtpd/smtpd_check.h		patch
+gnu/dist/postfix/smtpd/smtpd_check.ref		patch
+gnu/dist/postfix/smtpd/smtpd_check.ref2		patch
+gnu/dist/postfix/smtpd/smtpd_check.ref4		patch
+gnu/dist/postfix/smtpd/smtpd_check_access	patch
+gnu/dist/postfix/smtpd/smtpd_check_backup.in	patch
+gnu/dist/postfix/smtpd/smtpd_check_backup.ref	patch
+gnu/dist/postfix/smtpd/smtpd_check_dsn.in	patch
+gnu/dist/postfix/smtpd/smtpd_check_dsn.ref	patch
+gnu/dist/postfix/smtpd/smtpd_dsn_fix.c		patch
+gnu/dist/postfix/smtpd/smtpd_dsn_fix.h		patch
+gnu/dist/postfix/smtpd/smtpd_exp.ref		patch
+gnu/dist/postfix/smtpd/smtpd_milter.c		patch
+gnu/dist/postfix/smtpd/smtpd_milter.h		patch
+gnu/dist/postfix/smtpd/smtpd_peer.c		patch
+gnu/dist/postfix/smtpd/smtpd_proxy.c		patch
+gnu/dist/postfix/smtpd/smtpd_proxy.h		patch
+gnu/dist/postfix/smtpd/smtpd_sasl_glue.c	patch
+gnu/dist/postfix/smtpd/smtpd_sasl_glue.h	patch
+gnu/dist/postfix/smtpd/smtpd_sasl_proto.c	patch
+gnu/dist/postfix/smtpd/smtpd_state.c		patch
+gnu/dist/postfix/smtpd/smtpd_token.c		patch
+gnu/dist/postfix/smtpstone/Makefile.in		patch
+gnu/dist/postfix/smtpstone/qmqp-sink.c		patch
+gnu/dist/postfix/smtpstone/qmqp-source.c	patch
+gnu/dist/postfix/smtpstone/smtp-sink.c		patch
+gnu/dist/postfix/smtpstone/smtp-source.c	patch
+gnu/dist/postfix/spawn/Makefile.in		patch
+gnu/dist/postfix/spawn/spawn.c			patch
+gnu/dist/postfix/src/bounce/2template_test.in	new file
+gnu/dist/postfix/src/bounce/annotate.pl		new file
+gnu/dist/postfix/src/bounce/bounce_template.c	new file
+gnu/dist/postfix/src/bounce/bounce_template.h	new file
+gnu/dist/postfix/src/bounce/bounce_templates.c	new file
+gnu/dist/postfix/src/bounce/template_test.ref	new file
+gnu/dist/postfix/src/cleanup/cleanup_bounce.c	new file
+gnu/dist/postfix/src/cleanup/cleanup_milter.c	new file
+gnu/dist/postfix/src/cleanup/cleanup_milter.in1 new file
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref1 new file
+gnu/dist/postfix/src/global/conv_time.c		new file
+gnu/dist/postfix/src/global/conv_time.h		new file
+gnu/dist/postfix/src/global/dsb_scan.c		new file
+gnu/dist/postfix/src/global/dsb_scan.h		new file
+gnu/dist/postfix/src/global/dsn.c		new file
+gnu/dist/postfix/src/global/dsn.h		new file
+gnu/dist/postfix/src/global/dsn_buf.c		new file
+gnu/dist/postfix/src/global/dsn_buf.h		new file
+gnu/dist/postfix/src/global/dsn_mask.c		new file
+gnu/dist/postfix/src/global/dsn_mask.h		new file
+gnu/dist/postfix/src/global/dsn_print.c		new file
+gnu/dist/postfix/src/global/dsn_print.h		new file
+gnu/dist/postfix/src/global/dsn_util.c		new file
+gnu/dist/postfix/src/global/dsn_util.h		new file
+gnu/dist/postfix/src/global/int_filt.c		new file
+gnu/dist/postfix/src/global/int_filt.h		new file
+gnu/dist/postfix/src/global/mail_conf_long.c	new file
+gnu/dist/postfix/src/global/mail_conf_time.ref	new file
+gnu/dist/postfix/src/global/msg_stats.h		new file
+gnu/dist/postfix/src/global/msg_stats_print.c	new file
+gnu/dist/postfix/src/global/msg_stats_scan.c	new file
+gnu/dist/postfix/src/global/rcpt_buf.c		new file
+gnu/dist/postfix/src/global/rcpt_buf.h		new file
+gnu/dist/postfix/src/global/rcpt_print.c	new file
+gnu/dist/postfix/src/global/rcpt_print.h	new file
+gnu/dist/postfix/src/global/rec_attr_map.c	new file
+gnu/dist/postfix/src/global/rec_attr_map.h	new file
+gnu/dist/postfix/src/lmtp/Makefile.in		delete
+gnu/dist/postfix/src/lmtp/lmtp.c		delete
+gnu/dist/postfix/src/lmtp/lmtp.h		delete
+gnu/dist/postfix/src/lmtp/lmtp_addr.c		delete
+gnu/dist/postfix/src/lmtp/lmtp_addr.h		delete
+gnu/dist/postfix/src/lmtp/lmtp_chat.c		delete
+gnu/dist/postfix/src/lmtp/lmtp_connect.c	delete
+gnu/dist/postfix/src/lmtp/lmtp_proto.c		delete
+gnu/dist/postfix/src/lmtp/lmtp_sasl.h		delete
+gnu/dist/postfix/src/lmtp/lmtp_sasl_glue.c	delete
+gnu/dist/postfix/src/lmtp/lmtp_sasl_proto.c	delete
+gnu/dist/postfix/src/lmtp/lmtp_session.c	delete
+gnu/dist/postfix/src/lmtp/lmtp_state.c		delete
+gnu/dist/postfix/src/lmtp/lmtp_trouble.c	delete
+gnu/dist/postfix/src/milter/Makefile.in		new file
+gnu/dist/postfix/src/milter/milter.c		new file
+gnu/dist/postfix/src/milter/milter.h		new file
+gnu/dist/postfix/src/milter/milter8.c		new file
+gnu/dist/postfix/src/milter/test-list		new file
+gnu/dist/postfix/src/milter/test-milter.c	new file
+gnu/dist/postfix/src/postalias/map-ABC1.ref	delete
+gnu/dist/postfix/src/postalias/map-ABC2.ref	delete
+gnu/dist/postfix/src/postmap/map-ABC1.ref	delete
+gnu/dist/postfix/src/postmap/map-ABC2.ref	delete
+gnu/dist/postfix/src/smtp/legacy.c		new file
+gnu/dist/postfix/src/smtp/levels.c		new file
+gnu/dist/postfix/src/smtp/lmtp_params.c		new file
+gnu/dist/postfix/src/smtp/smtp-only		new file
+gnu/dist/postfix/src/smtp/smtp_params.c		new file
+gnu/dist/postfix/src/smtp/tls_policy.in		new file
+gnu/dist/postfix/src/smtp/tls_policy.ref	new file
+gnu/dist/postfix/src/smtpd/smtpd_check_backup.in new file
+gnu/dist/postfix/src/smtpd/smtpd_check_backup.ref new file
+gnu/dist/postfix/src/smtpd/smtpd_check_dsn.in	new file
+gnu/dist/postfix/src/smtpd/smtpd_check_dsn.ref	new file
+gnu/dist/postfix/src/smtpd/smtpd_dsn_fix.c	new file
+gnu/dist/postfix/src/smtpd/smtpd_dsn_fix.h	new file
+gnu/dist/postfix/src/smtpd/smtpd_milter.c	new file
+gnu/dist/postfix/src/smtpd/smtpd_milter.h	new file
+gnu/dist/postfix/src/tls/tls_level.c		new file
+gnu/dist/postfix/src/util/allascii.c		new file
+gnu/dist/postfix/src/util/allprint.c		new file
+gnu/dist/postfix/src/util/allspace.c		new file
+gnu/dist/postfix/src/util/format_tv.c		new file
+gnu/dist/postfix/src/util/format_tv.h		new file
+gnu/dist/postfix/src/util/format_tv.in		new file
+gnu/dist/postfix/src/util/format_tv.ref		new file
+gnu/dist/postfix/src/util/gccw.c		new file
+gnu/dist/postfix/src/util/gccw.ref		new file
+gnu/dist/postfix/src/util/load_file.c		new file
+gnu/dist/postfix/src/util/load_file.h		new file
+gnu/dist/postfix/src/util/sane_basename.c	new file
+gnu/dist/postfix/src/util/sane_basename.in	new file
+gnu/dist/postfix/src/util/sane_basename.ref	new file
+gnu/dist/postfix/src/xsasl/Makefile.in		new file
+gnu/dist/postfix/src/xsasl/README		new file
+gnu/dist/postfix/src/xsasl/xsasl.h		new file
+gnu/dist/postfix/src/xsasl/xsasl_client.c	new file
+gnu/dist/postfix/src/xsasl/xsasl_cyrus.h	new file
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_client.c new file
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_common.h new file
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_log.c	new file
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_security.c new file
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_server.c new file
+gnu/dist/postfix/src/xsasl/xsasl_dovecot.h	new file
+gnu/dist/postfix/src/xsasl/xsasl_dovecot_server.c new file
+gnu/dist/postfix/src/xsasl/xsasl_server.c	new file
+gnu/dist/postfix/tls/Makefile.in		patch
+gnu/dist/postfix/tls/tls.h			patch
+gnu/dist/postfix/tls/tls_certkey.c		patch
+gnu/dist/postfix/tls/tls_client.c		patch
+gnu/dist/postfix/tls/tls_dh.c			patch
+gnu/dist/postfix/tls/tls_level.c		patch
+gnu/dist/postfix/tls/tls_mgr.c			patch
+gnu/dist/postfix/tls/tls_mgr.h			patch
+gnu/dist/postfix/tls/tls_misc.c			patch
+gnu/dist/postfix/tls/tls_prng_dev.c		patch
+gnu/dist/postfix/tls/tls_prng_file.c		patch
+gnu/dist/postfix/tls/tls_scache.c		patch
+gnu/dist/postfix/tls/tls_scache.h		patch
+gnu/dist/postfix/tls/tls_server.c		patch
+gnu/dist/postfix/tls/tls_session.c		patch
+gnu/dist/postfix/tls/tls_stream.c		patch
+gnu/dist/postfix/tls/tls_verify.c		patch
+gnu/dist/postfix/tlsmgr/Makefile.in		patch
+gnu/dist/postfix/tlsmgr/tlsmgr.c		patch
+gnu/dist/postfix/trivial-rewrite/Makefile.in	patch
+gnu/dist/postfix/trivial-rewrite/resolve.c	patch
+gnu/dist/postfix/trivial-rewrite/rewrite.c	patch
+gnu/dist/postfix/trivial-rewrite/transport.c	patch
+gnu/dist/postfix/trivial-rewrite/trivial-rewrite.c patch
+gnu/dist/postfix/trivial-rewrite/trivial-rewrite.h patch
+gnu/dist/postfix/util/Makefile.in		patch
+gnu/dist/postfix/util/allascii.c		patch
+gnu/dist/postfix/util/allprint.c		patch
+gnu/dist/postfix/util/allspace.c		patch
+gnu/dist/postfix/util/argv.c			patch
+gnu/dist/postfix/util/argv.h			patch
+gnu/dist/postfix/util/attr.h			patch
+gnu/dist/postfix/util/attr_clnt.c		patch
+gnu/dist/postfix/util/attr_print0.c		patch
+gnu/dist/postfix/util/attr_print64.c		patch
+gnu/dist/postfix/util/attr_print_plain.c	patch
+gnu/dist/postfix/util/attr_scan0.c		patch
+gnu/dist/postfix/util/attr_scan64.c		patch
+gnu/dist/postfix/util/attr_scan_plain.c		patch
+gnu/dist/postfix/util/auto_clnt.c		patch
+gnu/dist/postfix/util/auto_clnt.h		patch
+gnu/dist/postfix/util/base64_code.c		patch
+gnu/dist/postfix/util/base64_code.h		patch
+gnu/dist/postfix/util/binhash.c			patch
+gnu/dist/postfix/util/clean_env.c		patch
+gnu/dist/postfix/util/concatenate.c		patch
+gnu/dist/postfix/util/ctable.c			patch
+gnu/dist/postfix/util/dict.c			patch
+gnu/dist/postfix/util/dict.h			patch
+gnu/dist/postfix/util/dict_alloc.c		patch
+gnu/dist/postfix/util/dict_cdb.c		patch
+gnu/dist/postfix/util/dict_cidr.c		patch
+gnu/dist/postfix/util/dict_cidr.ref		patch
+gnu/dist/postfix/util/dict_db.c			patch
+gnu/dist/postfix/util/dict_dbm.c		patch
+gnu/dist/postfix/util/dict_env.c		patch
+gnu/dist/postfix/util/dict_ni.c			patch
+gnu/dist/postfix/util/dict_nis.c		patch
+gnu/dist/postfix/util/dict_nisplus.c		patch
+gnu/dist/postfix/util/dict_open.c		patch
+gnu/dist/postfix/util/dict_pcre.c		patch
+gnu/dist/postfix/util/dict_regexp.c		patch
+gnu/dist/postfix/util/dict_regexp.ref		patch
+gnu/dist/postfix/util/dict_sdbm.c		patch
+gnu/dist/postfix/util/dict_tcp.c		patch
+gnu/dist/postfix/util/dict_test.ref		patch
+gnu/dist/postfix/util/dict_unix.c		patch
+gnu/dist/postfix/util/dir_forest.c		patch
+gnu/dist/postfix/util/dummy_read.c		patch
+gnu/dist/postfix/util/dummy_write.c		patch
+gnu/dist/postfix/util/dup2_pass_on_exec.c	patch
+gnu/dist/postfix/util/environ.c			patch
+gnu/dist/postfix/util/events.c			patch
+gnu/dist/postfix/util/fifo_listen.c		patch
+gnu/dist/postfix/util/fifo_open.c		patch
+gnu/dist/postfix/util/fifo_rdonly_bug.c		patch
+gnu/dist/postfix/util/fifo_rdwr_bug.c		patch
+gnu/dist/postfix/util/fifo_trigger.c		patch
+gnu/dist/postfix/util/find_inet.c		patch
+gnu/dist/postfix/util/format_tv.c		patch
+gnu/dist/postfix/util/format_tv.h		patch
+gnu/dist/postfix/util/format_tv.in		patch
+gnu/dist/postfix/util/format_tv.ref		patch
+gnu/dist/postfix/util/fsspace.c			patch
+gnu/dist/postfix/util/fullname.c		patch
+gnu/dist/postfix/util/gccw.c			patch
+gnu/dist/postfix/util/gccw.ref			patch
+gnu/dist/postfix/util/hex_code.c		patch
+gnu/dist/postfix/util/hex_code.h		patch
+gnu/dist/postfix/util/hex_quote.c		patch
+gnu/dist/postfix/util/host_port.ref		patch
+gnu/dist/postfix/util/htable.c			patch
+gnu/dist/postfix/util/inet_addr_host.c		patch
+gnu/dist/postfix/util/inet_addr_list.c		patch
+gnu/dist/postfix/util/inet_addr_local.c		patch
+gnu/dist/postfix/util/inet_proto.c		patch
+gnu/dist/postfix/util/inet_trigger.c		patch
+gnu/dist/postfix/util/iostuff.h			patch
+gnu/dist/postfix/util/load_file.c		patch
+gnu/dist/postfix/util/load_file.h		patch
+gnu/dist/postfix/util/mac_expand.c		patch
+gnu/dist/postfix/util/mac_parse.c		patch
+gnu/dist/postfix/util/mask_addr.c		patch
+gnu/dist/postfix/util/match_list.c		patch
+gnu/dist/postfix/util/match_ops.c		patch
+gnu/dist/postfix/util/msg.c			patch
+gnu/dist/postfix/util/msg_syslog.c		patch
+gnu/dist/postfix/util/msg_vstream.c		patch
+gnu/dist/postfix/util/myaddrinfo.c		patch
+gnu/dist/postfix/util/myaddrinfo.ref		patch
+gnu/dist/postfix/util/myaddrinfo.ref2		patch
+gnu/dist/postfix/util/myflock.c			patch
+gnu/dist/postfix/util/mymalloc.c		patch
+gnu/dist/postfix/util/mymalloc.h		patch
+gnu/dist/postfix/util/mystrtok.c		patch
+gnu/dist/postfix/util/name_code.c		patch
+gnu/dist/postfix/util/name_mask.c		patch
+gnu/dist/postfix/util/name_mask.h		patch
+gnu/dist/postfix/util/netstring.c		patch
+gnu/dist/postfix/util/netstring.h		patch
+gnu/dist/postfix/util/open_lock.c		patch
+gnu/dist/postfix/util/open_lock.h		patch
+gnu/dist/postfix/util/peekfd.c			patch
+gnu/dist/postfix/util/percentm.c		patch
+gnu/dist/postfix/util/rand_sleep.c		patch
+gnu/dist/postfix/util/readlline.c		patch
+gnu/dist/postfix/util/safe_open.c		patch
+gnu/dist/postfix/util/safe_open.h		patch
+gnu/dist/postfix/util/sane_basename.c		patch
+gnu/dist/postfix/util/sane_basename.in		patch
+gnu/dist/postfix/util/sane_basename.ref		patch
+gnu/dist/postfix/util/sane_link.c		patch
+gnu/dist/postfix/util/sane_rename.c		patch
+gnu/dist/postfix/util/scan_dir.c		patch
+gnu/dist/postfix/util/select_bug.c		patch
+gnu/dist/postfix/util/sigdelay.c		patch
+gnu/dist/postfix/util/sock_addr.c		patch
+gnu/dist/postfix/util/sock_addr.h		patch
+gnu/dist/postfix/util/spawn_command.c		patch
+gnu/dist/postfix/util/strcasecmp.c		patch
+gnu/dist/postfix/util/stream_connect.c		patch
+gnu/dist/postfix/util/stream_recv_fd.c		patch
+gnu/dist/postfix/util/stream_send_fd.c		patch
+gnu/dist/postfix/util/stream_test.c		patch
+gnu/dist/postfix/util/stream_trigger.c		patch
+gnu/dist/postfix/util/stringops.h		patch
+gnu/dist/postfix/util/sys_defs.h		patch
+gnu/dist/postfix/util/timed_connect.c		patch
+gnu/dist/postfix/util/timed_read.c		patch
+gnu/dist/postfix/util/timed_wait.c		patch
+gnu/dist/postfix/util/timed_write.c		patch
+gnu/dist/postfix/util/trigger.h			patch
+gnu/dist/postfix/util/unescape.c		patch
+gnu/dist/postfix/util/unescape.ref		patch
+gnu/dist/postfix/util/unix_connect.c		patch
+gnu/dist/postfix/util/unix_listen.c		patch
+gnu/dist/postfix/util/unix_recv_fd.c		patch
+gnu/dist/postfix/util/unix_send_fd.c		patch
+gnu/dist/postfix/util/unix_trigger.c		patch
+gnu/dist/postfix/util/valid_hostname.c		patch
+gnu/dist/postfix/util/vbuf.c			patch
+gnu/dist/postfix/util/vbuf.h			patch
+gnu/dist/postfix/util/vbuf_print.c		patch
+gnu/dist/postfix/util/vstream.c			patch
+gnu/dist/postfix/util/vstream.h			patch
+gnu/dist/postfix/util/vstream_popen.c		patch
+gnu/dist/postfix/util/vstring.c			patch
+gnu/dist/postfix/util/vstring.h			patch
+gnu/dist/postfix/util/vstring_vstream.c		patch
+gnu/dist/postfix/util/vstring_vstream.h		patch
+gnu/dist/postfix/util/watchdog.c		patch
+gnu/dist/postfix/util/write_buf.c		patch
+gnu/dist/postfix/verify/Makefile.in		patch
+gnu/dist/postfix/verify/verify.c		patch
+gnu/dist/postfix/virtual/Makefile.in		patch
+gnu/dist/postfix/virtual/deliver_attr.c		patch
+gnu/dist/postfix/virtual/mailbox.c		patch
+gnu/dist/postfix/virtual/maildir.c		patch
+gnu/dist/postfix/virtual/recipient.c		patch
+gnu/dist/postfix/virtual/unknown.c		patch
+gnu/dist/postfix/virtual/virtual.c		patch
+gnu/dist/postfix/virtual/virtual.h		patch
+gnu/dist/postfix/xsasl/Makefile.in		patch
+gnu/dist/postfix/xsasl/README			patch
+gnu/dist/postfix/xsasl/xsasl.h			patch
+gnu/dist/postfix/xsasl/xsasl_client.c		patch
+gnu/dist/postfix/xsasl/xsasl_cyrus.h		patch
+gnu/dist/postfix/xsasl/xsasl_cyrus_client.c	patch
+gnu/dist/postfix/xsasl/xsasl_cyrus_common.h	patch
+gnu/dist/postfix/xsasl/xsasl_cyrus_log.c	patch
+gnu/dist/postfix/xsasl/xsasl_cyrus_security.c	patch
+gnu/dist/postfix/xsasl/xsasl_cyrus_server.c	patch
+gnu/dist/postfix/xsasl/xsasl_dovecot.h		patch
+gnu/dist/postfix/xsasl/xsasl_dovecot_server.c	patch
+gnu/dist/postfix/xsasl/xsasl_server.c		patch
+gnu/usr.sbin/postfix/Makefile			patch
+gnu/usr.sbin/postfix/Makefile.inc		patch
+gnu/usr.sbin/postfix/README_FILES/Makefile	patch
+gnu/usr.sbin/postfix/bounce/Makefile		patch
+gnu/usr.sbin/postfix/cleanup/Makefile		patch
+gnu/usr.sbin/postfix/global/Makefile		patch
+gnu/usr.sbin/postfix/html/Makefile		patch
+gnu/usr.sbin/postfix/lmtp/Makefile		delete
+gnu/usr.sbin/postfix/lmtp/Makefile		patch
+gnu/usr.sbin/postfix/man/man5/Makefile		patch
+gnu/usr.sbin/postfix/man/man8/Makefile		patch
+gnu/usr.sbin/postfix/milter/Makefile		new file
+gnu/usr.sbin/postfix/milter/Makefile		patch
+gnu/usr.sbin/postfix/oqmgr/Makefile		patch
+gnu/usr.sbin/postfix/postconf/Makefile		patch
+gnu/usr.sbin/postfix/qmgr/Makefile		patch
+gnu/usr.sbin/postfix/smtp/Makefile		patch
+gnu/usr.sbin/postfix/smtpd/Makefile		patch
+gnu/usr.sbin/postfix/tls/Makefile		patch
+gnu/usr.sbin/postfix/util/Makefile		patch
+gnu/usr.sbin/postfix/xsasl/Makefile		new file
+gnu/usr.sbin/postfix/xsasl/Makefile		patch
+distrib/sets/lists/man/mi			patch
+distrib/sets/lists/misc/mi			patch
+gnu/dist/postfix/AAAREADME			patch
+gnu/dist/postfix/COMPATIBILITY			patch
+gnu/dist/postfix/HISTORY			patch
+gnu/dist/postfix/INSTALL			patch
+gnu/dist/postfix/Makefile.in			patch
+gnu/dist/postfix/README_FILES/AAAREADME		patch
+gnu/dist/postfix/README_FILES/ADDRESS_REWRITING_README patch
+gnu/dist/postfix/README_FILES/ADDRESS_VERIFICATION_README patch
+gnu/dist/postfix/README_FILES/BACKSCATTER_README patch
+gnu/dist/postfix/README_FILES/CDB_README	patch
+gnu/dist/postfix/README_FILES/CONNECTION_CACHE_README patch
+gnu/dist/postfix/README_FILES/CONTENT_INSPECTION_README patch
+gnu/dist/postfix/README_FILES/DB_README		patch
+gnu/dist/postfix/README_FILES/DSN_README	new file
+gnu/dist/postfix/README_FILES/DSN_README	patch
+gnu/dist/postfix/README_FILES/FILTER_README	patch
+gnu/dist/postfix/README_FILES/INSTALL		patch
+gnu/dist/postfix/README_FILES/IPV6_README	patch
+gnu/dist/postfix/README_FILES/LINUX_README	patch
+gnu/dist/postfix/README_FILES/MAILDROP_README	patch
+gnu/dist/postfix/README_FILES/MILTER_README	new file
+gnu/dist/postfix/README_FILES/MILTER_README	patch
+gnu/dist/postfix/README_FILES/PGSQL_README	patch
+gnu/dist/postfix/README_FILES/RELEASE_NOTES	patch
+gnu/dist/postfix/README_FILES/RESTRICTION_CLASS_README patch
+gnu/dist/postfix/README_FILES/SASL_README	patch
+gnu/dist/postfix/README_FILES/SMTPD_ACCESS_README patch
+gnu/dist/postfix/README_FILES/SMTPD_POLICY_README patch
+gnu/dist/postfix/README_FILES/SMTPD_PROXY_README patch
+gnu/dist/postfix/README_FILES/STANDARD_CONFIGURATION_README patch
+gnu/dist/postfix/README_FILES/TLS_README	patch
+gnu/dist/postfix/README_FILES/VERP_README	patch
+gnu/dist/postfix/README_FILES/XCLIENT_README	patch
+gnu/dist/postfix/README_FILES/XFORWARD_README	patch
+gnu/dist/postfix/RELEASE_NOTES-2.2		new file
+gnu/dist/postfix/RELEASE_NOTES-2.2		patch
+gnu/dist/postfix/TLS_TODO			patch
+gnu/dist/postfix/anvil/Makefile.in		patch
+gnu/dist/postfix/anvil/anvil.c			patch
+gnu/dist/postfix/bounce/2template_test.in	patch
+gnu/dist/postfix/bounce/Makefile.in		patch
+gnu/dist/postfix/bounce/annotate.pl		patch
+gnu/dist/postfix/bounce/bounce.c		patch
+gnu/dist/postfix/bounce/bounce_append_service.c patch
+gnu/dist/postfix/bounce/bounce_cleanup.c	patch
+gnu/dist/postfix/bounce/bounce_notify_service.c patch
+gnu/dist/postfix/bounce/bounce_notify_util.c	patch
+gnu/dist/postfix/bounce/bounce_notify_verp.c	patch
+gnu/dist/postfix/bounce/bounce_one_service.c	patch
+gnu/dist/postfix/bounce/bounce_service.h	patch
+gnu/dist/postfix/bounce/bounce_template.c	patch
+gnu/dist/postfix/bounce/bounce_template.h	patch
+gnu/dist/postfix/bounce/bounce_templates.c	patch
+gnu/dist/postfix/bounce/bounce_trace_service.c	patch
+gnu/dist/postfix/bounce/bounce_warn_service.c	patch
+gnu/dist/postfix/bounce/template_test.ref	patch
+gnu/dist/postfix/cleanup/Makefile.in		patch
+gnu/dist/postfix/cleanup/cleanup.c		patch
+gnu/dist/postfix/cleanup/cleanup.h		patch
+gnu/dist/postfix/cleanup/cleanup_addr.c		patch
+gnu/dist/postfix/cleanup/cleanup_api.c		patch
+gnu/dist/postfix/cleanup/cleanup_bounce.c	patch
+gnu/dist/postfix/cleanup/cleanup_envelope.c	patch
+gnu/dist/postfix/cleanup/cleanup_extracted.c	patch
+gnu/dist/postfix/cleanup/cleanup_init.c		patch
+gnu/dist/postfix/cleanup/cleanup_masquerade.c	patch
+gnu/dist/postfix/cleanup/cleanup_message.c	patch
+gnu/dist/postfix/cleanup/cleanup_milter.c	patch
+gnu/dist/postfix/cleanup/cleanup_milter.in1	patch
+gnu/dist/postfix/cleanup/cleanup_milter.ref1	patch
+gnu/dist/postfix/cleanup/cleanup_out.c		patch
+gnu/dist/postfix/cleanup/cleanup_out_recipient.c patch
+gnu/dist/postfix/cleanup/cleanup_state.c	patch
+gnu/dist/postfix/conf/access			patch
+gnu/dist/postfix/conf/aliases			patch
+gnu/dist/postfix/conf/canonical			patch
+gnu/dist/postfix/conf/generic			patch
+gnu/dist/postfix/conf/header_checks		patch
+gnu/dist/postfix/conf/main.cf			patch
+gnu/dist/postfix/conf/master.cf			patch
+gnu/dist/postfix/conf/post-install		patch
+gnu/dist/postfix/conf/postfix-files		patch
+gnu/dist/postfix/conf/relocated			patch
+gnu/dist/postfix/conf/transport			patch
+gnu/dist/postfix/conf/virtual			patch
+gnu/dist/postfix/discard/Makefile.in		patch
+gnu/dist/postfix/discard/discard.c		patch
+gnu/dist/postfix/dns/Makefile.in		patch
+gnu/dist/postfix/dns/dns.h			patch
+gnu/dist/postfix/dns/dns_lookup.c		patch
+gnu/dist/postfix/dns/dns_rr.c			patch
+gnu/dist/postfix/dns/dns_rr_eq_sa.c		patch
+gnu/dist/postfix/dns/dns_rr_eq_sa.in		patch
+gnu/dist/postfix/dns/dns_rr_eq_sa.ref		patch
+gnu/dist/postfix/dns/dns_rr_to_pa.ref		patch
+gnu/dist/postfix/dns/dns_rr_to_sa.c		patch
+gnu/dist/postfix/dns/dns_rr_to_sa.ref		patch
+gnu/dist/postfix/dns/dns_sa_to_rr.ref		patch
+gnu/dist/postfix/dns/test_dns_lookup.c		patch
+gnu/dist/postfix/error/Makefile.in		patch
+gnu/dist/postfix/error/error.c			patch
+gnu/dist/postfix/examples/smtpd-policy/postfix-policyd-spf.pl new file
+gnu/dist/postfix/examples/smtpd-policy/postfix-policyd-spf.pl patch
+gnu/dist/postfix/flush/Makefile.in		patch
+gnu/dist/postfix/flush/flush.c			patch
+gnu/dist/postfix/fsstone/Makefile.in		patch
+gnu/dist/postfix/global/Makefile.in		patch
+gnu/dist/postfix/global/abounce.c		patch
+gnu/dist/postfix/global/abounce.h		patch
+gnu/dist/postfix/global/anvil_clnt.c		patch
+gnu/dist/postfix/global/anvil_clnt.h		patch
+gnu/dist/postfix/global/bounce.c		patch
+gnu/dist/postfix/global/bounce.h		patch
+gnu/dist/postfix/global/bounce_log.c		patch
+gnu/dist/postfix/global/bounce_log.h		patch
+gnu/dist/postfix/global/cfg_parser.c		patch
+gnu/dist/postfix/global/cleanup_strerror.c	patch
+gnu/dist/postfix/global/cleanup_strflags.c	patch
+gnu/dist/postfix/global/cleanup_user.h		patch
+gnu/dist/postfix/global/conv_time.c		patch
+gnu/dist/postfix/global/conv_time.h		patch
+gnu/dist/postfix/global/db_common.c		patch
+gnu/dist/postfix/global/db_common.h		patch
+gnu/dist/postfix/global/debug_peer.c		patch
+gnu/dist/postfix/global/defer.c			patch
+gnu/dist/postfix/global/defer.h			patch
+gnu/dist/postfix/global/deliver_completed.c	patch
+gnu/dist/postfix/global/deliver_pass.c		patch
+gnu/dist/postfix/global/deliver_pass.h		patch
+gnu/dist/postfix/global/deliver_request.c	patch
+gnu/dist/postfix/global/deliver_request.h	patch
+gnu/dist/postfix/global/dict_ldap.c		patch
+gnu/dist/postfix/global/dict_mysql.c		patch
+gnu/dist/postfix/global/dict_pgsql.c		patch
+gnu/dist/postfix/global/dict_proxy.c		patch
+gnu/dist/postfix/global/domain_list.c		patch
+gnu/dist/postfix/global/dsb_scan.c		patch
+gnu/dist/postfix/global/dsb_scan.h		patch
+gnu/dist/postfix/global/dsn.c			patch
+gnu/dist/postfix/global/dsn.h			patch
+gnu/dist/postfix/global/dsn_buf.c		patch
+gnu/dist/postfix/global/dsn_buf.h		patch
+gnu/dist/postfix/global/dsn_mask.c		patch
+gnu/dist/postfix/global/dsn_mask.h		patch
+gnu/dist/postfix/global/dsn_print.c		patch
+gnu/dist/postfix/global/dsn_print.h		patch
+gnu/dist/postfix/global/dsn_util.c		patch
+gnu/dist/postfix/global/dsn_util.h		patch
+gnu/dist/postfix/global/ehlo_mask.c		patch
+gnu/dist/postfix/global/ehlo_mask.h		patch
+gnu/dist/postfix/global/ehlo_mask.ref		patch
+gnu/dist/postfix/global/ext_prop.c		patch
+gnu/dist/postfix/global/flush_clnt.c		patch
+gnu/dist/postfix/global/header_token.c		patch
+gnu/dist/postfix/global/header_token.h		patch
+gnu/dist/postfix/global/hold_message.c		patch
+gnu/dist/postfix/global/input_transp.c		patch
+gnu/dist/postfix/global/input_transp.h		patch
+gnu/dist/postfix/global/int_filt.c		patch
+gnu/dist/postfix/global/int_filt.h		patch
+gnu/dist/postfix/global/is_header.c		patch
+gnu/dist/postfix/global/is_header.h		patch
+gnu/dist/postfix/global/log_adhoc.c		patch
+gnu/dist/postfix/global/log_adhoc.h		patch
+gnu/dist/postfix/global/mail_addr_crunch.c	patch
+gnu/dist/postfix/global/mail_addr_find.c	patch
+gnu/dist/postfix/global/mail_addr_map.c		patch
+gnu/dist/postfix/global/mail_command_client.c	patch
+gnu/dist/postfix/global/mail_conf.h		patch
+gnu/dist/postfix/global/mail_conf_long.c	patch
+gnu/dist/postfix/global/mail_conf_raw.c		patch
+gnu/dist/postfix/global/mail_conf_str.c		patch
+gnu/dist/postfix/global/mail_conf_time.c	patch
+gnu/dist/postfix/global/mail_conf_time.ref	patch
+gnu/dist/postfix/global/mail_copy.c		patch
+gnu/dist/postfix/global/mail_copy.h		patch
+gnu/dist/postfix/global/mail_date.c		patch
+gnu/dist/postfix/global/mail_params.c		patch
+gnu/dist/postfix/global/mail_params.h		patch
+gnu/dist/postfix/global/mail_proto.h		patch
+gnu/dist/postfix/global/mail_queue.c		patch
+gnu/dist/postfix/global/mail_queue.h		patch
+gnu/dist/postfix/global/mail_run.c		patch
+gnu/dist/postfix/global/mail_stream.c		patch
+gnu/dist/postfix/global/mail_stream.h		patch
+gnu/dist/postfix/global/mail_trigger.c		patch
+gnu/dist/postfix/global/mail_version.h		patch
+gnu/dist/postfix/global/maps.c			patch
+gnu/dist/postfix/global/mark_corrupt.c		patch
+gnu/dist/postfix/global/match_parent_style.c	patch
+gnu/dist/postfix/global/mbox_conf.c		patch
+gnu/dist/postfix/global/mbox_open.c		patch
+gnu/dist/postfix/global/mbox_open.h		patch
+gnu/dist/postfix/global/mime_state.c		patch
+gnu/dist/postfix/global/mime_state.h		patch
+gnu/dist/postfix/global/msg_stats.h		patch
+gnu/dist/postfix/global/msg_stats_print.c	patch
+gnu/dist/postfix/global/msg_stats_scan.c	patch
+gnu/dist/postfix/global/mynetworks.c		patch
+gnu/dist/postfix/global/mypwd.c			patch
+gnu/dist/postfix/global/namadr_list.c		patch
+gnu/dist/postfix/global/off_cvt.c		patch
+gnu/dist/postfix/global/own_inet_addr.c		patch
+gnu/dist/postfix/global/pipe_command.c		patch
+gnu/dist/postfix/global/pipe_command.h		patch
+gnu/dist/postfix/global/post_mail.c		patch
+gnu/dist/postfix/global/post_mail.h		patch
+gnu/dist/postfix/global/qmgr_user.h		patch
+gnu/dist/postfix/global/quote_821_local.c	patch
+gnu/dist/postfix/global/quote_821_local.h	patch
+gnu/dist/postfix/global/quote_822_local.c	patch
+gnu/dist/postfix/global/rcpt_buf.c		patch
+gnu/dist/postfix/global/rcpt_buf.h		patch
+gnu/dist/postfix/global/rcpt_print.c		patch
+gnu/dist/postfix/global/rcpt_print.h		patch
+gnu/dist/postfix/global/rec2stream.c		patch
+gnu/dist/postfix/global/rec_attr_map.c		patch
+gnu/dist/postfix/global/rec_attr_map.h		patch
+gnu/dist/postfix/global/rec_type.c		patch
+gnu/dist/postfix/global/rec_type.h		patch
+gnu/dist/postfix/global/recdump.c		patch
+gnu/dist/postfix/global/recipient_list.c	patch
+gnu/dist/postfix/global/recipient_list.h	patch
+gnu/dist/postfix/global/record.c		patch
+gnu/dist/postfix/global/record.h		patch
+gnu/dist/postfix/global/resolve_clnt.c		patch
+gnu/dist/postfix/global/resolve_clnt.h		patch
+gnu/dist/postfix/global/resolve_clnt.ref	patch
+gnu/dist/postfix/global/resolve_local.c		patch
+gnu/dist/postfix/global/rewrite_clnt.c		patch
+gnu/dist/postfix/global/rewrite_clnt.ref	patch
+gnu/dist/postfix/global/scache.c		patch
+gnu/dist/postfix/global/scache.h		patch
+gnu/dist/postfix/global/scache_clnt.c		patch
+gnu/dist/postfix/global/sent.c			patch
+gnu/dist/postfix/global/sent.h			patch
+gnu/dist/postfix/global/smtp_stream.c		patch
+gnu/dist/postfix/global/smtp_stream.h		patch
+gnu/dist/postfix/global/stream2rec.c		patch
+gnu/dist/postfix/global/string_list.c		patch
+gnu/dist/postfix/global/sys_exits.c		patch
+gnu/dist/postfix/global/sys_exits.h		patch
+gnu/dist/postfix/global/tok822.h		patch
+gnu/dist/postfix/global/tok822_parse.c		patch
+gnu/dist/postfix/global/tok822_resolve.c	patch
+gnu/dist/postfix/global/trace.c			patch
+gnu/dist/postfix/global/trace.h			patch
+gnu/dist/postfix/global/user_acl.h		patch
+gnu/dist/postfix/global/verify.c		patch
+gnu/dist/postfix/global/verify.h		patch
+gnu/dist/postfix/global/verify_clnt.c		patch
+gnu/dist/postfix/global/verify_clnt.h		patch
+gnu/dist/postfix/global/verp_sender.c		patch
+gnu/dist/postfix/global/xtext.c			patch
+gnu/dist/postfix/html/ADDRESS_REWRITING_README.html patch
+gnu/dist/postfix/html/ADDRESS_VERIFICATION_README.html patch
+gnu/dist/postfix/html/BACKSCATTER_README.html	patch
+gnu/dist/postfix/html/CDB_README.html		patch
+gnu/dist/postfix/html/CONNECTION_CACHE_README.html patch
+gnu/dist/postfix/html/CONTENT_INSPECTION_README.html patch
+gnu/dist/postfix/html/DATABASE_README.html	patch
+gnu/dist/postfix/html/DB_README.html		patch
+gnu/dist/postfix/html/DSN_README.html		new file
+gnu/dist/postfix/html/DSN_README.html		patch
+gnu/dist/postfix/html/FILTER_README.html	patch
+gnu/dist/postfix/html/INSTALL.html		patch
+gnu/dist/postfix/html/IPV6_README.html		patch
+gnu/dist/postfix/html/LINUX_README.html		patch
+gnu/dist/postfix/html/MAILDROP_README.html	patch
+gnu/dist/postfix/html/MILTER_README.html	new file
+gnu/dist/postfix/html/MILTER_README.html	patch
+gnu/dist/postfix/html/Makefile.in		patch
+gnu/dist/postfix/html/OVERVIEW.html		patch
+gnu/dist/postfix/html/PGSQL_README.html		patch
+gnu/dist/postfix/html/RESTRICTION_CLASS_README.html patch
+gnu/dist/postfix/html/SASL_README.html		patch
+gnu/dist/postfix/html/SMTPD_ACCESS_README.html	patch
+gnu/dist/postfix/html/SMTPD_POLICY_README.html	patch
+gnu/dist/postfix/html/SMTPD_PROXY_README.html	patch
+gnu/dist/postfix/html/STANDARD_CONFIGURATION_README.html patch
+gnu/dist/postfix/html/TLS_README.html		patch
+gnu/dist/postfix/html/VERP_README.html		patch
+gnu/dist/postfix/html/XCLIENT_README.html	patch
+gnu/dist/postfix/html/XFORWARD_README.html	patch
+gnu/dist/postfix/html/access.5.html		patch
+gnu/dist/postfix/html/aliases.5.html		patch
+gnu/dist/postfix/html/anvil.8.html		patch
+gnu/dist/postfix/html/bounce.5.html		new file
+gnu/dist/postfix/html/bounce.5.html		patch
+gnu/dist/postfix/html/bounce.8.html		patch
+gnu/dist/postfix/html/canonical.5.html		patch
+gnu/dist/postfix/html/cleanup.8.html		patch
+gnu/dist/postfix/html/defer.8.html		patch
+gnu/dist/postfix/html/discard.8.html		patch
+gnu/dist/postfix/html/error.8.html		patch
+gnu/dist/postfix/html/flush.8.html		patch
+gnu/dist/postfix/html/generic.5.html		patch
+gnu/dist/postfix/html/header_checks.5.html	patch
+gnu/dist/postfix/html/index.html		patch
+gnu/dist/postfix/html/ldap_table.5.html		patch
+gnu/dist/postfix/html/lmtp.8.html		patch
+gnu/dist/postfix/html/local.8.html		patch
+gnu/dist/postfix/html/mailq.1.html		patch
+gnu/dist/postfix/html/master.5.html		patch
+gnu/dist/postfix/html/master.8.html		patch
+gnu/dist/postfix/html/newaliases.1.html		patch
+gnu/dist/postfix/html/oqmgr.8.html		patch
+gnu/dist/postfix/html/pcre_table.5.html		patch
+gnu/dist/postfix/html/pickup.8.html		patch
+gnu/dist/postfix/html/pipe.8.html		patch
+gnu/dist/postfix/html/postalias.1.html		patch
+gnu/dist/postfix/html/postcat.1.html		patch
+gnu/dist/postfix/html/postconf.1.html		patch
+gnu/dist/postfix/html/postconf.5.html		patch
+gnu/dist/postfix/html/postdrop.1.html		patch
+gnu/dist/postfix/html/postfix-manuals.html	patch
+gnu/dist/postfix/html/postfix.1.html		patch
+gnu/dist/postfix/html/postlock.1.html		patch
+gnu/dist/postfix/html/postmap.1.html		patch
+gnu/dist/postfix/html/postqueue.1.html		patch
+gnu/dist/postfix/html/postsuper.1.html		patch
+gnu/dist/postfix/html/proxymap.8.html		patch
+gnu/dist/postfix/html/qmgr.8.html		patch
+gnu/dist/postfix/html/qmqp-source.1.html	patch
+gnu/dist/postfix/html/qmqpd.8.html		patch
+gnu/dist/postfix/html/qshape.1.html		patch
+gnu/dist/postfix/html/regexp_table.5.html	patch
+gnu/dist/postfix/html/relocated.5.html		patch
+gnu/dist/postfix/html/scache.8.html		patch
+gnu/dist/postfix/html/sendmail.1.html		patch
+gnu/dist/postfix/html/showq.8.html		patch
+gnu/dist/postfix/html/smtp-sink.1.html		patch
+gnu/dist/postfix/html/smtp-source.1.html	patch
+gnu/dist/postfix/html/smtp.8.html		patch
+gnu/dist/postfix/html/smtpd.8.html		patch
+gnu/dist/postfix/html/spawn.8.html		patch
+gnu/dist/postfix/html/tcp_table.5.html		new file
+gnu/dist/postfix/html/tcp_table.5.html		patch
+gnu/dist/postfix/html/tlsmgr.8.html		patch
+gnu/dist/postfix/html/trace.8.html		patch
+gnu/dist/postfix/html/transport.5.html		patch
+gnu/dist/postfix/html/trivial-rewrite.8.html	patch
+gnu/dist/postfix/html/verify.8.html		patch
+gnu/dist/postfix/html/virtual.5.html		patch
+gnu/dist/postfix/html/virtual.8.html		patch
+gnu/dist/postfix/implementation-notes/DSN	new file
+gnu/dist/postfix/implementation-notes/DSN	patch
+gnu/dist/postfix/implementation-notes/ENHANCED_STATUS_CODES new file
+gnu/dist/postfix/implementation-notes/ENHANCED_STATUS_CODES patch
+gnu/dist/postfix/lmtp/Makefile.in		patch
+gnu/dist/postfix/lmtp/lmtp.c			patch
+gnu/dist/postfix/lmtp/lmtp.h			patch
+gnu/dist/postfix/lmtp/lmtp_addr.c		patch
+gnu/dist/postfix/lmtp/lmtp_addr.h		patch
+gnu/dist/postfix/lmtp/lmtp_chat.c		patch
+gnu/dist/postfix/lmtp/lmtp_connect.c		patch
+gnu/dist/postfix/lmtp/lmtp_proto.c		patch
+gnu/dist/postfix/lmtp/lmtp_sasl.h		patch
+gnu/dist/postfix/lmtp/lmtp_sasl_glue.c		patch
+gnu/dist/postfix/lmtp/lmtp_sasl_proto.c		patch
+gnu/dist/postfix/lmtp/lmtp_session.c		patch
+gnu/dist/postfix/lmtp/lmtp_state.c		patch
+gnu/dist/postfix/lmtp/lmtp_trouble.c		patch
+gnu/dist/postfix/local/Makefile.in		patch
+gnu/dist/postfix/local/alias.c			patch
+gnu/dist/postfix/local/biff_notify.c		patch
+gnu/dist/postfix/local/biff_notify.h		patch
+gnu/dist/postfix/local/command.c		patch
+gnu/dist/postfix/local/deliver_attr.c		patch
+gnu/dist/postfix/local/delivered.c		patch
+gnu/dist/postfix/local/dotforward.c		patch
+gnu/dist/postfix/local/file.c			patch
+gnu/dist/postfix/local/forward.c		patch
+gnu/dist/postfix/local/include.c		patch
+gnu/dist/postfix/local/indirect.c		patch
+gnu/dist/postfix/local/local.c			patch
+gnu/dist/postfix/local/local.h			patch
+gnu/dist/postfix/local/local_expand.c		patch
+gnu/dist/postfix/local/mailbox.c		patch
+gnu/dist/postfix/local/maildir.c		patch
+gnu/dist/postfix/local/recipient.c		patch
+gnu/dist/postfix/local/resolve.c		patch
+gnu/dist/postfix/local/token.c			patch
+gnu/dist/postfix/local/unknown.c		patch
+gnu/dist/postfix/makedefs			patch
+gnu/dist/postfix/man/Makefile.in		patch
+gnu/dist/postfix/man/man1/postalias.1		patch
+gnu/dist/postfix/man/man1/postconf.1		patch
+gnu/dist/postfix/man/man1/postdrop.1		patch
+gnu/dist/postfix/man/man1/postfix.1		patch
+gnu/dist/postfix/man/man1/postmap.1		patch
+gnu/dist/postfix/man/man1/postqueue.1		patch
+gnu/dist/postfix/man/man1/postsuper.1		patch
+gnu/dist/postfix/man/man1/qmqp-source.1		patch
+gnu/dist/postfix/man/man1/qshape.1		patch
+gnu/dist/postfix/man/man1/sendmail.1		patch
+gnu/dist/postfix/man/man1/smtp-sink.1		patch
+gnu/dist/postfix/man/man1/smtp-source.1		patch
+gnu/dist/postfix/man/man5/access.5		patch
+gnu/dist/postfix/man/man5/aliases.5		patch
+gnu/dist/postfix/man/man5/bounce.5		new file
+gnu/dist/postfix/man/man5/bounce.5		patch
+gnu/dist/postfix/man/man5/canonical.5		patch
+gnu/dist/postfix/man/man5/generic.5		patch
+gnu/dist/postfix/man/man5/header_checks.5	patch
+gnu/dist/postfix/man/man5/ldap_table.5		patch
+gnu/dist/postfix/man/man5/master.5		patch
+gnu/dist/postfix/man/man5/pcre_table.5		patch
+gnu/dist/postfix/man/man5/postconf.5		patch
+gnu/dist/postfix/man/man5/regexp_table.5	patch
+gnu/dist/postfix/man/man5/relocated.5		patch
+gnu/dist/postfix/man/man5/tcp_table.5		new file
+gnu/dist/postfix/man/man5/tcp_table.5		patch
+gnu/dist/postfix/man/man5/transport.5		patch
+gnu/dist/postfix/man/man5/virtual.5		patch
+gnu/dist/postfix/man/man8/anvil.8		patch
+gnu/dist/postfix/man/man8/bounce.8		patch
+gnu/dist/postfix/man/man8/cleanup.8		patch
+gnu/dist/postfix/man/man8/discard.8		patch
+gnu/dist/postfix/man/man8/error.8		patch
+gnu/dist/postfix/man/man8/lmtp.8		patch
+gnu/dist/postfix/man/man8/local.8		patch
+gnu/dist/postfix/man/man8/master.8		patch
+gnu/dist/postfix/man/man8/oqmgr.8		patch
+gnu/dist/postfix/man/man8/pipe.8		patch
+gnu/dist/postfix/man/man8/qmgr.8		patch
+gnu/dist/postfix/man/man8/smtp.8		patch
+gnu/dist/postfix/man/man8/smtpd.8		patch
+gnu/dist/postfix/man/man8/tlsmgr.8		patch
+gnu/dist/postfix/man/man8/trivial-rewrite.8	patch
+gnu/dist/postfix/man/man8/virtual.8		patch
+gnu/dist/postfix/mantools/dehtml		new file
+gnu/dist/postfix/mantools/dehtml		patch
+gnu/dist/postfix/mantools/postconf2man		patch
+gnu/dist/postfix/mantools/postlink		patch
+gnu/dist/postfix/mantools/srctoman		patch
+gnu/dist/postfix/mantools/xpostdef		patch
+gnu/dist/postfix/master/Makefile.in		patch
+gnu/dist/postfix/master/mail_flow.c		patch
+gnu/dist/postfix/master/mail_flow.h		patch
+gnu/dist/postfix/master/master.c		patch
+gnu/dist/postfix/master/master.h		patch
+gnu/dist/postfix/master/master_avail.c		patch
+gnu/dist/postfix/master/master_conf.c		patch
+gnu/dist/postfix/master/master_ent.c		patch
+gnu/dist/postfix/master/master_flow.c		patch
+gnu/dist/postfix/master/master_listen.c		patch
+gnu/dist/postfix/master/master_proto.c		patch
+gnu/dist/postfix/master/master_sig.c		patch
+gnu/dist/postfix/master/master_spawn.c		patch
+gnu/dist/postfix/master/master_status.c		patch
+gnu/dist/postfix/master/master_wakeup.c		patch
+gnu/dist/postfix/master/multi_server.c		patch
+gnu/dist/postfix/master/single_server.c		patch
+gnu/dist/postfix/master/trigger_server.c	patch
+gnu/dist/postfix/milter/Makefile.in		patch
+gnu/dist/postfix/milter/milter.c		patch
+gnu/dist/postfix/milter/milter.h		patch
+gnu/dist/postfix/milter/milter8.c		patch
+gnu/dist/postfix/milter/test-list		patch
+gnu/dist/postfix/milter/test-milter.c		patch
+gnu/dist/postfix/oqmgr/Makefile.in		patch
+gnu/dist/postfix/oqmgr/qmgr.c			patch
+gnu/dist/postfix/oqmgr/qmgr.h			patch
+gnu/dist/postfix/oqmgr/qmgr_active.c		patch
+gnu/dist/postfix/oqmgr/qmgr_bounce.c		patch
+gnu/dist/postfix/oqmgr/qmgr_defer.c		patch
+gnu/dist/postfix/oqmgr/qmgr_deliver.c		patch
+gnu/dist/postfix/oqmgr/qmgr_entry.c		patch
+gnu/dist/postfix/oqmgr/qmgr_message.c		patch
+gnu/dist/postfix/oqmgr/qmgr_move.c		patch
+gnu/dist/postfix/oqmgr/qmgr_queue.c		patch
+gnu/dist/postfix/oqmgr/qmgr_scan.c		patch
+gnu/dist/postfix/oqmgr/qmgr_transport.c		patch
+gnu/dist/postfix/pflogsumm-conn-delays-dsn-patch new file
+gnu/dist/postfix/pflogsumm-conn-delays-dsn-patch patch
+gnu/dist/postfix/pickup/Makefile.in		patch
+gnu/dist/postfix/pickup/pickup.c		patch
+gnu/dist/postfix/pipe/Makefile.in		patch
+gnu/dist/postfix/pipe/pipe.c			patch
+gnu/dist/postfix/postalias/Makefile.in		patch
+gnu/dist/postfix/postalias/map-ABC1.ref		patch
+gnu/dist/postfix/postalias/map-ABC2.ref		patch
+gnu/dist/postfix/postalias/postalias.c		patch
+gnu/dist/postfix/postcat/Makefile.in		patch
+gnu/dist/postfix/postcat/postcat.c		patch
+gnu/dist/postfix/postconf/Makefile.in		patch
+gnu/dist/postfix/postconf/extract.awk		patch
+gnu/dist/postfix/postconf/postconf.c		patch
+gnu/dist/postfix/postdrop/Makefile.in		patch
+gnu/dist/postfix/postdrop/postdrop.c		patch
+gnu/dist/postfix/postfix-install		patch
+gnu/dist/postfix/postfix/Makefile.in		patch
+gnu/dist/postfix/postfix/postfix.c		patch
+gnu/dist/postfix/postkick/Makefile.in		patch
+gnu/dist/postfix/postlock/Makefile.in		patch
+gnu/dist/postfix/postlock/postlock.c		patch
+gnu/dist/postfix/postlog/Makefile.in		patch
+gnu/dist/postfix/postlog/postlog.c		patch
+gnu/dist/postfix/postmap/Makefile.in		patch
+gnu/dist/postfix/postmap/map-ABC1.ref		patch
+gnu/dist/postfix/postmap/map-ABC2.ref		patch
+gnu/dist/postfix/postmap/postmap.c		patch
+gnu/dist/postfix/postqueue/Makefile.in		patch
+gnu/dist/postfix/postqueue/postqueue.c		patch
+gnu/dist/postfix/postsuper/Makefile.in		patch
+gnu/dist/postfix/postsuper/postsuper.c		patch
+gnu/dist/postfix/proto/ADDRESS_REWRITING_README.html patch
+gnu/dist/postfix/proto/ADDRESS_VERIFICATION_README.html patch
+gnu/dist/postfix/proto/BACKSCATTER_README.html	patch
+gnu/dist/postfix/proto/CDB_README.html		patch
+gnu/dist/postfix/proto/CONNECTION_CACHE_README.html patch
+gnu/dist/postfix/proto/CONTENT_INSPECTION_README.html patch
+gnu/dist/postfix/proto/DB_README.html		patch
+gnu/dist/postfix/proto/DSN_README.html		new file
+gnu/dist/postfix/proto/DSN_README.html		patch
+gnu/dist/postfix/proto/FILTER_README.html	patch
+gnu/dist/postfix/proto/INSTALL.html		patch
+gnu/dist/postfix/proto/IPV6_README.html		patch
+gnu/dist/postfix/proto/LINUX_README.html	patch
+gnu/dist/postfix/proto/MAILDROP_README.html	patch
+gnu/dist/postfix/proto/MILTER_README.html	new file
+gnu/dist/postfix/proto/MILTER_README.html	patch
+gnu/dist/postfix/proto/Makefile.in		patch
+gnu/dist/postfix/proto/PGSQL_README.html	patch
+gnu/dist/postfix/proto/RESTRICTION_CLASS_README.html patch
+gnu/dist/postfix/proto/SASL_README.html		patch
+gnu/dist/postfix/proto/SMTPD_ACCESS_README.html patch
+gnu/dist/postfix/proto/SMTPD_POLICY_README.html patch
+gnu/dist/postfix/proto/SMTPD_PROXY_README.html	patch
+gnu/dist/postfix/proto/STANDARD_CONFIGURATION_README.html patch
+gnu/dist/postfix/proto/TLS_README.html		patch
+gnu/dist/postfix/proto/VERP_README.html		patch
+gnu/dist/postfix/proto/XCLIENT_README.html	patch
+gnu/dist/postfix/proto/XFORWARD_README.html	patch
+gnu/dist/postfix/proto/access			patch
+gnu/dist/postfix/proto/aliases			patch
+gnu/dist/postfix/proto/bounce			new file
+gnu/dist/postfix/proto/bounce			patch
+gnu/dist/postfix/proto/canonical		patch
+gnu/dist/postfix/proto/generic			patch
+gnu/dist/postfix/proto/header_checks		patch
+gnu/dist/postfix/proto/ldap_table		patch
+gnu/dist/postfix/proto/master			patch
+gnu/dist/postfix/proto/pcre_table		patch
+gnu/dist/postfix/proto/postconf.proto		patch
+gnu/dist/postfix/proto/regexp_table		patch
+gnu/dist/postfix/proto/relocated		patch
+gnu/dist/postfix/proto/stop			patch
+gnu/dist/postfix/proto/tcp_table		new file
+gnu/dist/postfix/proto/tcp_table		patch
+gnu/dist/postfix/proto/transport		patch
+gnu/dist/postfix/proto/virtual			patch
+gnu/dist/postfix/proxymap/Makefile.in		patch
+gnu/dist/postfix/proxymap/proxymap.c		patch
+gnu/dist/postfix/qmgr/Makefile.in		patch
+gnu/dist/postfix/qmgr/qmgr.c			patch
+gnu/dist/postfix/qmgr/qmgr.h			patch
+gnu/dist/postfix/qmgr/qmgr_active.c		patch
+gnu/dist/postfix/qmgr/qmgr_bounce.c		patch
+gnu/dist/postfix/qmgr/qmgr_defer.c		patch
+gnu/dist/postfix/qmgr/qmgr_deliver.c		patch
+gnu/dist/postfix/qmgr/qmgr_entry.c		patch
+gnu/dist/postfix/qmgr/qmgr_job.c		patch
+gnu/dist/postfix/qmgr/qmgr_message.c		patch
+gnu/dist/postfix/qmgr/qmgr_move.c		patch
+gnu/dist/postfix/qmgr/qmgr_peer.c		patch
+gnu/dist/postfix/qmgr/qmgr_queue.c		patch
+gnu/dist/postfix/qmgr/qmgr_scan.c		patch
+gnu/dist/postfix/qmgr/qmgr_transport.c		patch
+gnu/dist/postfix/qmqpd/Makefile.in		patch
+gnu/dist/postfix/qmqpd/qmqpd.c			patch
+gnu/dist/postfix/qmqpd/qmqpd.h			patch
+gnu/dist/postfix/qmqpd/qmqpd_peer.c		patch
+gnu/dist/postfix/qmqpd/qmqpd_state.c		patch
+gnu/dist/postfix/scache/Makefile.in		patch
+gnu/dist/postfix/scache/scache.c		patch
+gnu/dist/postfix/sendmail/Makefile.in		patch
+gnu/dist/postfix/sendmail/sendmail.c		patch
+gnu/dist/postfix/showq/Makefile.in		patch
+gnu/dist/postfix/showq/showq.c			patch
+gnu/dist/postfix/smtp/Makefile.in		patch
+gnu/dist/postfix/smtp/legacy.c			patch
+gnu/dist/postfix/smtp/levels.c			patch
+gnu/dist/postfix/smtp/lmtp_params.c		patch
+gnu/dist/postfix/smtp/smtp-only			patch
+gnu/dist/postfix/smtp/smtp.c			patch
+gnu/dist/postfix/smtp/smtp.h			patch
+gnu/dist/postfix/smtp/smtp_addr.c		patch
+gnu/dist/postfix/smtp/smtp_addr.h		patch
+gnu/dist/postfix/smtp/smtp_chat.c		patch
+gnu/dist/postfix/smtp/smtp_connect.c		patch
+gnu/dist/postfix/smtp/smtp_map11.c		patch
+gnu/dist/postfix/smtp/smtp_map11.ref		patch
+gnu/dist/postfix/smtp/smtp_params.c		patch
+gnu/dist/postfix/smtp/smtp_proto.c		patch
+gnu/dist/postfix/smtp/smtp_rcpt.c		patch
+gnu/dist/postfix/smtp/smtp_reuse.c		patch
+gnu/dist/postfix/smtp/smtp_reuse.h		patch
+gnu/dist/postfix/smtp/smtp_sasl.h		patch
+gnu/dist/postfix/smtp/smtp_sasl_glue.c		patch
+gnu/dist/postfix/smtp/smtp_sasl_proto.c		patch
+gnu/dist/postfix/smtp/smtp_session.c		patch
+gnu/dist/postfix/smtp/smtp_state.c		patch
+gnu/dist/postfix/smtp/smtp_trouble.c		patch
+gnu/dist/postfix/smtp/smtp_unalias.c		patch
+gnu/dist/postfix/smtp/tls_policy.in		patch
+gnu/dist/postfix/smtp/tls_policy.ref		patch
+gnu/dist/postfix/smtpd/Makefile.in		patch
+gnu/dist/postfix/smtpd/smtpd.c			patch
+gnu/dist/postfix/smtpd/smtpd.h			patch
+gnu/dist/postfix/smtpd/smtpd_acl.ref		patch
+gnu/dist/postfix/smtpd/smtpd_chat.c		patch
+gnu/dist/postfix/smtpd/smtpd_chat.h		patch
+gnu/dist/postfix/smtpd/smtpd_check.c		patch
+gnu/dist/postfix/smtpd/smtpd_check.h		patch
+gnu/dist/postfix/smtpd/smtpd_check.ref		patch
+gnu/dist/postfix/smtpd/smtpd_check.ref2		patch
+gnu/dist/postfix/smtpd/smtpd_check.ref4		patch
+gnu/dist/postfix/smtpd/smtpd_check_access	patch
+gnu/dist/postfix/smtpd/smtpd_check_backup.in	patch
+gnu/dist/postfix/smtpd/smtpd_check_backup.ref	patch
+gnu/dist/postfix/smtpd/smtpd_check_dsn.in	patch
+gnu/dist/postfix/smtpd/smtpd_check_dsn.ref	patch
+gnu/dist/postfix/smtpd/smtpd_dsn_fix.c		patch
+gnu/dist/postfix/smtpd/smtpd_dsn_fix.h		patch
+gnu/dist/postfix/smtpd/smtpd_exp.ref		patch
+gnu/dist/postfix/smtpd/smtpd_milter.c		patch
+gnu/dist/postfix/smtpd/smtpd_milter.h		patch
+gnu/dist/postfix/smtpd/smtpd_peer.c		patch
+gnu/dist/postfix/smtpd/smtpd_proxy.c		patch
+gnu/dist/postfix/smtpd/smtpd_proxy.h		patch
+gnu/dist/postfix/smtpd/smtpd_sasl_glue.c	patch
+gnu/dist/postfix/smtpd/smtpd_sasl_glue.h	patch
+gnu/dist/postfix/smtpd/smtpd_sasl_proto.c	patch
+gnu/dist/postfix/smtpd/smtpd_state.c		patch
+gnu/dist/postfix/smtpd/smtpd_token.c		patch
+gnu/dist/postfix/smtpstone/Makefile.in		patch
+gnu/dist/postfix/smtpstone/qmqp-sink.c		patch
+gnu/dist/postfix/smtpstone/qmqp-source.c	patch
+gnu/dist/postfix/smtpstone/smtp-sink.c		patch
+gnu/dist/postfix/smtpstone/smtp-source.c	patch
+gnu/dist/postfix/spawn/Makefile.in		patch
+gnu/dist/postfix/spawn/spawn.c			patch
+gnu/dist/postfix/src/bounce/2template_test.in	new file
+gnu/dist/postfix/src/bounce/annotate.pl		new file
+gnu/dist/postfix/src/bounce/bounce_template.c	new file
+gnu/dist/postfix/src/bounce/bounce_template.h	new file
+gnu/dist/postfix/src/bounce/bounce_templates.c	new file
+gnu/dist/postfix/src/bounce/template_test.ref	new file
+gnu/dist/postfix/src/cleanup/cleanup_bounce.c	new file
+gnu/dist/postfix/src/cleanup/cleanup_milter.c	new file
+gnu/dist/postfix/src/cleanup/cleanup_milter.in1 new file
+gnu/dist/postfix/src/cleanup/cleanup_milter.ref1 new file
+gnu/dist/postfix/src/global/conv_time.c		new file
+gnu/dist/postfix/src/global/conv_time.h		new file
+gnu/dist/postfix/src/global/dsb_scan.c		new file
+gnu/dist/postfix/src/global/dsb_scan.h		new file
+gnu/dist/postfix/src/global/dsn.c		new file
+gnu/dist/postfix/src/global/dsn.h		new file
+gnu/dist/postfix/src/global/dsn_buf.c		new file
+gnu/dist/postfix/src/global/dsn_buf.h		new file
+gnu/dist/postfix/src/global/dsn_mask.c		new file
+gnu/dist/postfix/src/global/dsn_mask.h		new file
+gnu/dist/postfix/src/global/dsn_print.c		new file
+gnu/dist/postfix/src/global/dsn_print.h		new file
+gnu/dist/postfix/src/global/dsn_util.c		new file
+gnu/dist/postfix/src/global/dsn_util.h		new file
+gnu/dist/postfix/src/global/int_filt.c		new file
+gnu/dist/postfix/src/global/int_filt.h		new file
+gnu/dist/postfix/src/global/mail_conf_long.c	new file
+gnu/dist/postfix/src/global/mail_conf_time.ref	new file
+gnu/dist/postfix/src/global/msg_stats.h		new file
+gnu/dist/postfix/src/global/msg_stats_print.c	new file
+gnu/dist/postfix/src/global/msg_stats_scan.c	new file
+gnu/dist/postfix/src/global/rcpt_buf.c		new file
+gnu/dist/postfix/src/global/rcpt_buf.h		new file
+gnu/dist/postfix/src/global/rcpt_print.c	new file
+gnu/dist/postfix/src/global/rcpt_print.h	new file
+gnu/dist/postfix/src/global/rec_attr_map.c	new file
+gnu/dist/postfix/src/global/rec_attr_map.h	new file
+gnu/dist/postfix/src/lmtp/Makefile.in		delete
+gnu/dist/postfix/src/lmtp/lmtp.c		delete
+gnu/dist/postfix/src/lmtp/lmtp.h		delete
+gnu/dist/postfix/src/lmtp/lmtp_addr.c		delete
+gnu/dist/postfix/src/lmtp/lmtp_addr.h		delete
+gnu/dist/postfix/src/lmtp/lmtp_chat.c		delete
+gnu/dist/postfix/src/lmtp/lmtp_connect.c	delete
+gnu/dist/postfix/src/lmtp/lmtp_proto.c		delete
+gnu/dist/postfix/src/lmtp/lmtp_sasl.h		delete
+gnu/dist/postfix/src/lmtp/lmtp_sasl_glue.c	delete
+gnu/dist/postfix/src/lmtp/lmtp_sasl_proto.c	delete
+gnu/dist/postfix/src/lmtp/lmtp_session.c	delete
+gnu/dist/postfix/src/lmtp/lmtp_state.c		delete
+gnu/dist/postfix/src/lmtp/lmtp_trouble.c	delete
+gnu/dist/postfix/src/milter/Makefile.in		new file
+gnu/dist/postfix/src/milter/milter.c		new file
+gnu/dist/postfix/src/milter/milter.h		new file
+gnu/dist/postfix/src/milter/milter8.c		new file
+gnu/dist/postfix/src/milter/test-list		new file
+gnu/dist/postfix/src/milter/test-milter.c	new file
+gnu/dist/postfix/src/postalias/map-ABC1.ref	delete
+gnu/dist/postfix/src/postalias/map-ABC2.ref	delete
+gnu/dist/postfix/src/postmap/map-ABC1.ref	delete
+gnu/dist/postfix/src/postmap/map-ABC2.ref	delete
+gnu/dist/postfix/src/smtp/legacy.c		new file
+gnu/dist/postfix/src/smtp/levels.c		new file
+gnu/dist/postfix/src/smtp/lmtp_params.c		new file
+gnu/dist/postfix/src/smtp/smtp-only		new file
+gnu/dist/postfix/src/smtp/smtp_params.c		new file
+gnu/dist/postfix/src/smtp/tls_policy.in		new file
+gnu/dist/postfix/src/smtp/tls_policy.ref	new file
+gnu/dist/postfix/src/smtpd/smtpd_check_backup.in new file
+gnu/dist/postfix/src/smtpd/smtpd_check_backup.ref new file
+gnu/dist/postfix/src/smtpd/smtpd_check_dsn.in	new file
+gnu/dist/postfix/src/smtpd/smtpd_check_dsn.ref	new file
+gnu/dist/postfix/src/smtpd/smtpd_dsn_fix.c	new file
+gnu/dist/postfix/src/smtpd/smtpd_dsn_fix.h	new file
+gnu/dist/postfix/src/smtpd/smtpd_milter.c	new file
+gnu/dist/postfix/src/smtpd/smtpd_milter.h	new file
+gnu/dist/postfix/src/tls/tls_level.c		new file
+gnu/dist/postfix/src/util/allascii.c		new file
+gnu/dist/postfix/src/util/allprint.c		new file
+gnu/dist/postfix/src/util/allspace.c		new file
+gnu/dist/postfix/src/util/format_tv.c		new file
+gnu/dist/postfix/src/util/format_tv.h		new file
+gnu/dist/postfix/src/util/format_tv.in		new file
+gnu/dist/postfix/src/util/format_tv.ref		new file
+gnu/dist/postfix/src/util/gccw.c		new file
+gnu/dist/postfix/src/util/gccw.ref		new file
+gnu/dist/postfix/src/util/load_file.c		new file
+gnu/dist/postfix/src/util/load_file.h		new file
+gnu/dist/postfix/src/util/sane_basename.c	new file
+gnu/dist/postfix/src/util/sane_basename.in	new file
+gnu/dist/postfix/src/util/sane_basename.ref	new file
+gnu/dist/postfix/src/xsasl/Makefile.in		new file
+gnu/dist/postfix/src/xsasl/README		new file
+gnu/dist/postfix/src/xsasl/xsasl.h		new file
+gnu/dist/postfix/src/xsasl/xsasl_client.c	new file
+gnu/dist/postfix/src/xsasl/xsasl_cyrus.h	new file
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_client.c new file
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_common.h new file
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_log.c	new file
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_security.c new file
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_server.c new file
+gnu/dist/postfix/src/xsasl/xsasl_dovecot.h	new file
+gnu/dist/postfix/src/xsasl/xsasl_dovecot_server.c new file
+gnu/dist/postfix/src/xsasl/xsasl_server.c	new file
+gnu/dist/postfix/tls/Makefile.in		patch
+gnu/dist/postfix/tls/tls.h			patch
+gnu/dist/postfix/tls/tls_certkey.c		patch
+gnu/dist/postfix/tls/tls_client.c		patch
+gnu/dist/postfix/tls/tls_dh.c			patch
+gnu/dist/postfix/tls/tls_level.c		patch
+gnu/dist/postfix/tls/tls_mgr.c			patch
+gnu/dist/postfix/tls/tls_mgr.h			patch
+gnu/dist/postfix/tls/tls_misc.c			patch
+gnu/dist/postfix/tls/tls_prng_dev.c		patch
+gnu/dist/postfix/tls/tls_prng_file.c		patch
+gnu/dist/postfix/tls/tls_scache.c		patch
+gnu/dist/postfix/tls/tls_scache.h		patch
+gnu/dist/postfix/tls/tls_server.c		patch
+gnu/dist/postfix/tls/tls_session.c		patch
+gnu/dist/postfix/tls/tls_stream.c		patch
+gnu/dist/postfix/tls/tls_verify.c		patch
+gnu/dist/postfix/tlsmgr/Makefile.in		patch
+gnu/dist/postfix/tlsmgr/tlsmgr.c		patch
+gnu/dist/postfix/trivial-rewrite/Makefile.in	patch
+gnu/dist/postfix/trivial-rewrite/resolve.c	patch
+gnu/dist/postfix/trivial-rewrite/rewrite.c	patch
+gnu/dist/postfix/trivial-rewrite/transport.c	patch
+gnu/dist/postfix/trivial-rewrite/trivial-rewrite.c patch
+gnu/dist/postfix/trivial-rewrite/trivial-rewrite.h patch
+gnu/dist/postfix/util/Makefile.in		patch
+gnu/dist/postfix/util/allascii.c		patch
+gnu/dist/postfix/util/allprint.c		patch
+gnu/dist/postfix/util/allspace.c		patch
+gnu/dist/postfix/util/argv.c			patch
+gnu/dist/postfix/util/argv.h			patch
+gnu/dist/postfix/util/attr.h			patch
+gnu/dist/postfix/util/attr_clnt.c		patch
+gnu/dist/postfix/util/attr_print0.c		patch
+gnu/dist/postfix/util/attr_print64.c		patch
+gnu/dist/postfix/util/attr_print_plain.c	patch
+gnu/dist/postfix/util/attr_scan0.c		patch
+gnu/dist/postfix/util/attr_scan64.c		patch
+gnu/dist/postfix/util/attr_scan_plain.c		patch
+gnu/dist/postfix/util/auto_clnt.c		patch
+gnu/dist/postfix/util/auto_clnt.h		patch
+gnu/dist/postfix/util/base64_code.c		patch
+gnu/dist/postfix/util/base64_code.h		patch
+gnu/dist/postfix/util/binhash.c			patch
+gnu/dist/postfix/util/clean_env.c		patch
+gnu/dist/postfix/util/concatenate.c		patch
+gnu/dist/postfix/util/ctable.c			patch
+gnu/dist/postfix/util/dict.c			patch
+gnu/dist/postfix/util/dict.h			patch
+gnu/dist/postfix/util/dict_alloc.c		patch
+gnu/dist/postfix/util/dict_cdb.c		patch
+gnu/dist/postfix/util/dict_cidr.c		patch
+gnu/dist/postfix/util/dict_cidr.ref		patch
+gnu/dist/postfix/util/dict_db.c			patch
+gnu/dist/postfix/util/dict_dbm.c		patch
+gnu/dist/postfix/util/dict_env.c		patch
+gnu/dist/postfix/util/dict_ni.c			patch
+gnu/dist/postfix/util/dict_nis.c		patch
+gnu/dist/postfix/util/dict_nisplus.c		patch
+gnu/dist/postfix/util/dict_open.c		patch
+gnu/dist/postfix/util/dict_pcre.c		patch
+gnu/dist/postfix/util/dict_regexp.c		patch
+gnu/dist/postfix/util/dict_regexp.ref		patch
+gnu/dist/postfix/util/dict_sdbm.c		patch
+gnu/dist/postfix/util/dict_tcp.c		patch
+gnu/dist/postfix/util/dict_test.ref		patch
+gnu/dist/postfix/util/dict_unix.c		patch
+gnu/dist/postfix/util/dir_forest.c		patch
+gnu/dist/postfix/util/dummy_read.c		patch
+gnu/dist/postfix/util/dummy_write.c		patch
+gnu/dist/postfix/util/dup2_pass_on_exec.c	patch
+gnu/dist/postfix/util/environ.c			patch
+gnu/dist/postfix/util/events.c			patch
+gnu/dist/postfix/util/fifo_listen.c		patch
+gnu/dist/postfix/util/fifo_open.c		patch
+gnu/dist/postfix/util/fifo_rdonly_bug.c		patch
+gnu/dist/postfix/util/fifo_rdwr_bug.c		patch
+gnu/dist/postfix/util/fifo_trigger.c		patch
+gnu/dist/postfix/util/find_inet.c		patch
+gnu/dist/postfix/util/format_tv.c		patch
+gnu/dist/postfix/util/format_tv.h		patch
+gnu/dist/postfix/util/format_tv.in		patch
+gnu/dist/postfix/util/format_tv.ref		patch
+gnu/dist/postfix/util/fsspace.c			patch
+gnu/dist/postfix/util/fullname.c		patch
+gnu/dist/postfix/util/gccw.c			patch
+gnu/dist/postfix/util/gccw.ref			patch
+gnu/dist/postfix/util/hex_code.c		patch
+gnu/dist/postfix/util/hex_code.h		patch
+gnu/dist/postfix/util/hex_quote.c		patch
+gnu/dist/postfix/util/host_port.ref		patch
+gnu/dist/postfix/util/htable.c			patch
+gnu/dist/postfix/util/inet_addr_host.c		patch
+gnu/dist/postfix/util/inet_addr_list.c		patch
+gnu/dist/postfix/util/inet_addr_local.c		patch
+gnu/dist/postfix/util/inet_proto.c		patch
+gnu/dist/postfix/util/inet_trigger.c		patch
+gnu/dist/postfix/util/iostuff.h			patch
+gnu/dist/postfix/util/load_file.c		patch
+gnu/dist/postfix/util/load_file.h		patch
+gnu/dist/postfix/util/mac_expand.c		patch
+gnu/dist/postfix/util/mac_parse.c		patch
+gnu/dist/postfix/util/mask_addr.c		patch
+gnu/dist/postfix/util/match_list.c		patch
+gnu/dist/postfix/util/match_ops.c		patch
+gnu/dist/postfix/util/msg.c			patch
+gnu/dist/postfix/util/msg_syslog.c		patch
+gnu/dist/postfix/util/msg_vstream.c		patch
+gnu/dist/postfix/util/myaddrinfo.c		patch
+gnu/dist/postfix/util/myaddrinfo.ref		patch
+gnu/dist/postfix/util/myaddrinfo.ref2		patch
+gnu/dist/postfix/util/myflock.c			patch
+gnu/dist/postfix/util/mymalloc.c		patch
+gnu/dist/postfix/util/mymalloc.h		patch
+gnu/dist/postfix/util/mystrtok.c		patch
+gnu/dist/postfix/util/name_code.c		patch
+gnu/dist/postfix/util/name_mask.c		patch
+gnu/dist/postfix/util/name_mask.h		patch
+gnu/dist/postfix/util/netstring.c		patch
+gnu/dist/postfix/util/netstring.h		patch
+gnu/dist/postfix/util/open_lock.c		patch
+gnu/dist/postfix/util/open_lock.h		patch
+gnu/dist/postfix/util/peekfd.c			patch
+gnu/dist/postfix/util/percentm.c		patch
+gnu/dist/postfix/util/rand_sleep.c		patch
+gnu/dist/postfix/util/readlline.c		patch
+gnu/dist/postfix/util/safe_open.c		patch
+gnu/dist/postfix/util/safe_open.h		patch
+gnu/dist/postfix/util/sane_basename.c		patch
+gnu/dist/postfix/util/sane_basename.in		patch
+gnu/dist/postfix/util/sane_basename.ref		patch
+gnu/dist/postfix/util/sane_link.c		patch
+gnu/dist/postfix/util/sane_rename.c		patch
+gnu/dist/postfix/util/scan_dir.c		patch
+gnu/dist/postfix/util/select_bug.c		patch
+gnu/dist/postfix/util/sigdelay.c		patch
+gnu/dist/postfix/util/sock_addr.c		patch
+gnu/dist/postfix/util/sock_addr.h		patch
+gnu/dist/postfix/util/spawn_command.c		patch
+gnu/dist/postfix/util/strcasecmp.c		patch
+gnu/dist/postfix/util/stream_connect.c		patch
+gnu/dist/postfix/util/stream_recv_fd.c		patch
+gnu/dist/postfix/util/stream_send_fd.c		patch
+gnu/dist/postfix/util/stream_test.c		patch
+gnu/dist/postfix/util/stream_trigger.c		patch
+gnu/dist/postfix/util/stringops.h		patch
+gnu/dist/postfix/util/sys_defs.h		patch
+gnu/dist/postfix/util/timed_connect.c		patch
+gnu/dist/postfix/util/timed_read.c		patch
+gnu/dist/postfix/util/timed_wait.c		patch
+gnu/dist/postfix/util/timed_write.c		patch
+gnu/dist/postfix/util/trigger.h			patch
+gnu/dist/postfix/util/unescape.c		patch
+gnu/dist/postfix/util/unescape.ref		patch
+gnu/dist/postfix/util/unix_connect.c		patch
+gnu/dist/postfix/util/unix_listen.c		patch
+gnu/dist/postfix/util/unix_recv_fd.c		patch
+gnu/dist/postfix/util/unix_send_fd.c		patch
+gnu/dist/postfix/util/unix_trigger.c		patch
+gnu/dist/postfix/util/valid_hostname.c		patch
+gnu/dist/postfix/util/vbuf.c			patch
+gnu/dist/postfix/util/vbuf.h			patch
+gnu/dist/postfix/util/vbuf_print.c		patch
+gnu/dist/postfix/util/vstream.c			patch
+gnu/dist/postfix/util/vstream.h			patch
+gnu/dist/postfix/util/vstream_popen.c		patch
+gnu/dist/postfix/util/vstring.c			patch
+gnu/dist/postfix/util/vstring.h			patch
+gnu/dist/postfix/util/vstring_vstream.c		patch
+gnu/dist/postfix/util/vstring_vstream.h		patch
+gnu/dist/postfix/util/watchdog.c		patch
+gnu/dist/postfix/util/write_buf.c		patch
+gnu/dist/postfix/verify/Makefile.in		patch
+gnu/dist/postfix/verify/verify.c		patch
+gnu/dist/postfix/virtual/Makefile.in		patch
+gnu/dist/postfix/virtual/deliver_attr.c		patch
+gnu/dist/postfix/virtual/mailbox.c		patch
+gnu/dist/postfix/virtual/maildir.c		patch
+gnu/dist/postfix/virtual/recipient.c		patch
+gnu/dist/postfix/virtual/unknown.c		patch
+gnu/dist/postfix/virtual/virtual.c		patch
+gnu/dist/postfix/virtual/virtual.h		patch
+gnu/dist/postfix/xsasl/Makefile.in		patch
+gnu/dist/postfix/xsasl/README			patch
+gnu/dist/postfix/xsasl/xsasl.h			patch
+gnu/dist/postfix/xsasl/xsasl_client.c		patch
+gnu/dist/postfix/xsasl/xsasl_cyrus.h		patch
+gnu/dist/postfix/xsasl/xsasl_cyrus_client.c	patch
+gnu/dist/postfix/xsasl/xsasl_cyrus_common.h	patch
+gnu/dist/postfix/xsasl/xsasl_cyrus_log.c	patch
+gnu/dist/postfix/xsasl/xsasl_cyrus_security.c	patch
+gnu/dist/postfix/xsasl/xsasl_cyrus_server.c	patch
+gnu/dist/postfix/xsasl/xsasl_dovecot.h		patch
+gnu/dist/postfix/xsasl/xsasl_dovecot_server.c	patch
+gnu/dist/postfix/xsasl/xsasl_server.c		patch
+gnu/usr.sbin/postfix/Makefile			patch
+gnu/usr.sbin/postfix/Makefile.inc		patch
+gnu/usr.sbin/postfix/README_FILES/Makefile	patch
+gnu/usr.sbin/postfix/bounce/Makefile		patch
+gnu/usr.sbin/postfix/cleanup/Makefile		patch
+gnu/usr.sbin/postfix/global/Makefile		patch
+gnu/usr.sbin/postfix/html/Makefile		patch
+gnu/usr.sbin/postfix/lmtp/Makefile		delete
+gnu/usr.sbin/postfix/lmtp/Makefile		patch
+gnu/usr.sbin/postfix/man/man5/Makefile		patch
+gnu/usr.sbin/postfix/man/man8/Makefile		patch
+gnu/usr.sbin/postfix/milter/Makefile		new file
+gnu/usr.sbin/postfix/milter/Makefile		patch
+gnu/usr.sbin/postfix/oqmgr/Makefile		patch
+gnu/usr.sbin/postfix/postconf/Makefile		patch
+gnu/usr.sbin/postfix/qmgr/Makefile		patch
+gnu/usr.sbin/postfix/smtp/Makefile		patch
+gnu/usr.sbin/postfix/smtpd/Makefile		patch
+gnu/usr.sbin/postfix/tls/Makefile		patch
+gnu/usr.sbin/postfix/util/Makefile		patch
+gnu/usr.sbin/postfix/xsasl/Makefile		new file
+gnu/usr.sbin/postfix/xsasl/Makefile		patch
+
+	Update Postfix to version 2.3.4.
+	[ghen, ticket #1589]
 
