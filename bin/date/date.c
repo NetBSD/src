@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.48 2006/11/17 22:11:28 christos Exp $ */
+/* $NetBSD: date.c,v 1.49 2006/11/20 20:35:14 christos Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.48 2006/11/17 22:11:28 christos Exp $");
+__RCSID("$NetBSD: date.c,v 1.49 2006/11/20 20:35:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			rflag = 1;
-			tval = getdate(optarg, NULL, NULL);
+			tval = parsedate(optarg, NULL, NULL);
 			if (tval == -1)
 				errx(1, "Cannot parse `%s'", optarg);
 			break;

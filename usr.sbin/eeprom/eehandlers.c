@@ -1,4 +1,4 @@
-/*	$NetBSD: eehandlers.c,v 1.11 2006/11/17 22:13:08 christos Exp $	*/
+/*	$NetBSD: eehandlers.c,v 1.12 2006/11/20 20:36:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ ee_hwupdate(ktent, arg)
 				return;
 			}
 		} else
-			if ((t = getdate(arg, NULL, NULL)) == (time_t)(-1))
+			if ((t = parsedate(arg, NULL, NULL)) == (time_t)(-1))
 				BARF(ktent);
 
 		if (doio(ktent, (u_char *)&t, sizeof(t), IO_WRITE))
