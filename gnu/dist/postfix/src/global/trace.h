@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.h,v 1.1.1.2 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: trace.h,v 1.1.1.2.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 #ifndef _TRACE_H_INCLUDED_
 #define _TRACE_H_INCLUDED_
@@ -14,30 +14,17 @@
 /* .nf
 
  /*
-  * System library.
-  */
-#include <time.h>
-#include <stdarg.h>
-
- /*
   * Global library.
   */
-#include <deliver_request.h>
+#include <bounce.h>
 
  /*
   * External interface.
   */
-extern int PRINTFLIKE(9, 10) trace_append(int, const char *,
-					          const char *, const char *,
-					          const char *, time_t,
-					          const char *, const char *,
-					          const char *,...);
-extern int vtrace_append(int, const char *,
-			         const char *, const char *,
-			         const char *, time_t,
-			         const char *, const char *,
-			         const char *, va_list);
-extern int trace_flush(int, const char *, const char *, const char *, const char *);
+extern int trace_append(int, const char *, MSG_STATS *, RECIPIENT *,
+			        const char *, DSN *);
+extern int trace_flush(int, const char *, const char *, const char *,
+		               const char *, const char *, int);
 
 /* LICENSE
 /* .ad

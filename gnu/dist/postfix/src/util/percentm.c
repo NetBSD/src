@@ -1,4 +1,4 @@
-/*	$NetBSD: percentm.c,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: percentm.c,v 1.1.1.2.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -69,6 +69,7 @@ char   *percentm(const char *str, int err)
 	    switch (ip[1]) {
 	    default:				/* leave %<any> alone */
 		VSTRING_ADDCH(vp, *ip++);
+		/* FALLTHROUGH */
 	    case '\0':				/* don't fall off end */
 		VSTRING_ADDCH(vp, *ip++);
 		break;

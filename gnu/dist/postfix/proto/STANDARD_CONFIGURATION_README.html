@@ -391,6 +391,22 @@ whenever you change the relay_recipients table. </p>
 <p> Execute the command "<b>postmap /etc/postfix/transport</b>"
 whenever you change the transport table. </p>
 
+<p> In some installations, there may be separate instances of Postfix
+processing inbound and outbound mail on a multi-homed firewall. The
+inbound Postfix instance has an SMTP server listening on the external
+firewall interface, and the outbound Postfix instance has an SMTP server
+listening on the internal interface. In such a configuration is it is
+tempting to configure $inet_interfaces in each instance with just the
+corresponding interface address. </p>
+
+<p> In most cases, using inet_interfaces in this way will not work,
+because as documented in the $inet_interfaces reference manual, the
+smtp(8) delivery agent will also use the specified interface address
+as the source address for outbound connections and will be unable to
+reach hosts on "the other side" of the firewall. The symptoms are that
+the firewall is unable to connect to hosts that are in fact up. See the
+inet_interfaces parameter documentation for suggested work-arounds.</p>
+
 <h2><a name="some_local">Delivering some but not all accounts
 locally</a></h2>
 
@@ -421,22 +437,6 @@ $myorigin, when "site" is listed in $mydestination, or when it
 matches $inet_interfaces or $proxy_interfaces. </p>
 
 </ul>
-
-<p> In some installations, there may be separate instances of Postfix
-processing inbound and outbound mail on a multi-homed firewall. The
-inbound Postfix instance has an SMTP server listening on the external
-firewall interface, and the outbound Postfix instance has an SMTP server
-listening on the internal interface. In such a configuration is it is
-tempting to configure $inet_interfaces in each instance with just the
-corresponding interface address. </p>
-
-<p> In most cases, using inet_interfaces in this way will not work,
-because as documented in the $inet_interfaces reference manual, the
-smtp(8) delivery agent will also use the specified interface address
-as the source address for outbound connections and will be unable to
-reach hosts on "the other side" of the firewall. The symptoms are that
-the firewall is unable to connect to hosts that are in fact up. See the
-inet_interfaces parameter documentation for suggested work-arounds.</p>
 
 <h2><a name="intranet">Running Postfix behind a firewall</a></h2>
 
@@ -566,8 +566,8 @@ world than the local machine. </p>
 from filling up with undeliverable MAILER-DAEMON messages. If you
 can't maintain a list of valid recipients then you must specify
 "relay_recipient_maps =" (that is, an empty value), or you must
-specify an "@example.com  x" wild-card in the relay_recipients
-table. </p>
+specify an "@the.backed-up.domain.tld  x" wild-card in the
+relay_recipients table. </p>
 
 <li> <p> Line 22: The <tt>[]</tt> forces Postfix to do no MX lookup. </p>
 
@@ -580,7 +580,8 @@ tables Postfix supports, use the command "<b>postconf -m</b>". </p>
 <p> Execute the command "<b>postmap /etc/postfix/transport</b>"
 whenever you change the transport table. </p>
 
-<p> NOTE: Do not use the fallback_relay feature when relaying mail 
+<p> NOTE for Postfix &lt; 2.2: Do not use the fallback_relay feature
+when relaying mail
 for a backup or primary MX domain. Mail would loop between the
 Postfix MX host and the fallback_relay host when the final destination
 is unavailable. </p>

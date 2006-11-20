@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_vstream.c,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: msg_vstream.c,v 1.1.1.2.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -58,7 +58,7 @@ static VSTREAM *msg_stream;
 
 static void msg_vstream_print(int level, const char *text)
 {
-    static char *level_text[] = {
+    static const char *level_text[] = {
 	"info", "warning", "error", "fatal", "panic",
     };
 

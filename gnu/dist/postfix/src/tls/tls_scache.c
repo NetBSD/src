@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_scache.c,v 1.1.1.1.2.2 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: tls_scache.c,v 1.1.1.1.2.3 2006/11/20 13:30:55 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,45 +8,31 @@
 /* SYNOPSIS
 /*	#include <tls_scache.h>
 /*
-/*	TLS_SCACHE *tls_scache_open(dbname, cache_label, log_level, timeout)
+/*	TLS_SCACHE *tls_scache_open(dbname, cache_label, verbose, timeout)
 /*	const char *dbname
 /*	const char *cache_label;
-/*	int	log_level;
+/*	int	verbose;
 /*	int	timeout;
 /*
 /*	void	tls_scache_close(cache)
 /*	TLS_SCACHE *cache;
 /*
-/*	int	tls_scache_lookup(cache, cache_id, openssl_version,
-/*				flags, out_openssl_version, out_flags,
-/*				out_session)
+/*	int	tls_scache_lookup(cache, cache_id, out_session)
 /*	TLS_SCACHE *cache;
 /*	const char *cache_id;
-/*	long	openssl_version;
-/*	int	flags;
-/*	long	*out_openssl_version;
-/*	int	*out_flags;
 /*	VSTRING	*out_session;
 /*
-/*	int	tls_scache_update(cache, cache_id, openssl_version,
-/*				flags, session, session_len)
+/*	int	tls_scache_update(cache, cache_id, session, session_len)
 /*	TLS_SCACHE *cache;
 /*	const char *cache_id;
-/*	long	openssl_version;
-/*	int	flags;
 /*	const char *session;
-/*	int	session_len;
+/*	ssize_t	session_len;
 /*
-/*	int	tls_scache_sequence(cache, first_next, openssl_version, flags,
-/*				out_cache_id, out_openssl_version, out_flags,
+/*	int	tls_scache_sequence(cache, first_next, out_cache_id,
 /*				VSTRING *out_session)
 /*	TLS_SCACHE *cache;
 /*	int	first_next;
-/*	long	openssl_version;
-/*	int	flags;
 /*	char	**out_cache_id;
-/*	long	*out_openssl_version;
-/*	int	*out_flags;
 /*	VSTRING	*out_session;
 /*
 /*	int	tls_scache_delete(cache, cache_id)
@@ -55,11 +41,7 @@
 /* DESCRIPTION
 /*	This module maintains Postfix TLS session cache files.
 /*	each session is stored under a lookup key (hostname or
-/*	session ID) together with the OpenSSL version that
-/*	created the session and application-specific flags.
-/*	Upon lookup, the OpenSSL version and flags can be
-/*	specified as optional filters. Entries that don't
-/*	satisfy the filter requirements are silently deleted.
+/*	session ID).
 /*
 /*	tls_scache_open() opens the specified TLS session cache
 /*	and returns a handle that must be used for subsequent
@@ -69,25 +51,20 @@
 /*	and releases memory that was allocated by tls_scache_open().
 /*
 /*	tls_scache_lookup() looks up the specified session in the
-/*	specified cache, and applies the session timeout, openssl
-/*	version and flags restrictions. Entries that don't satisfy
-/*	the requirements are silently deleted.
+/*	specified cache, and applies session timeout restrictions.
+/*	Entries that are too old are silently deleted.
 /*
 /*	tls_scache_update() updates the specified TLS session cache
 /*	with the specified session information.
 /*
 /*	tls_scache_sequence() iterates over the specified TLS session
-/*	cache and looks up the first or next entry. If that entry
-/*	matches the session timeout, OpenSSL version and flags
-/*	restrictions, tls_scache_sequence() saves the entry by
-/*	updating the result parameters; otherwise it deletes the
-/*	entry and does not update the result parameters.  Specify
-/*	TLS_SCACHE_SEQUENCE_NOTHING
-/*	as the third and last argument to disable OpenSSL version
-/*	and flags restrictions, and to disable saving of cache
-/*	entry content or cache entry ID information.  This is useful
-/*	when purging expired entries. A result value of zero means
-/*	that the end of the cache was reached.
+/*	cache and either returns the first or next entry that has not
+/*	timed out, or returns no data. Entries that are too old are
+/*	silently deleted. Specify TLS_SCACHE_SEQUENCE_NOTHING as the
+/*	third and last argument to disable saving of cache entry
+/*	content or cache entry ID information. This is useful when
+/*	purging expired entries. A result value of zero means that
+/*	the end of the cache was reached.
 /*
 /*	tls_scache_delete() removes the specified cache entry from
 /*	the specified TLS session cache.
@@ -97,8 +74,8 @@
 /*	The base name of the session cache file.
 /* .IP cache_label
 /*	A string that is used in logging and error messages.
-/* .IP log_level
-/*	The logging level for cache operations.
+/* .IP verbose
+/*	Do verbose logging of cache operations? (zero == no)
 /* .IP timeout
 /*	The time after wich a session cache entry is considered too old.
 /* .IP first_next
@@ -106,37 +83,17 @@
 /*	(next cache element).
 /* .IP cache_id
 /*	Session cache lookup key.
-/* .IP openssl_version
-/*	When storing information, the OpenSSL version that generated a
-/*	session. When retrieving information, delete cache entries that
-/*	don't match the specified OpenSSL version.
-/*
-/*	Specify TLS_SCACHE_ANY_OPENSSL_VSN to match any OpenSSL version.
-/* .IP flags
-/*	When storing information, application flags that specify properties
-/*	of a session. When retrieving information, delete cache entries that
-/*	have the specified flags set.
-/*
-/*	Specify TLS_SCACHE_ANY_FLAGS to match any flags value.
 /* .IP session
 /*	Storage for session information.
 /* .IP session_len
 /*	The size of the session information in bytes.
 /* .IP out_cache_id
-/* .IP out_openssl_version
-/* .IP out_flags
 /* .IP out_session
-/*	Storage for saving the cache_id, openssl_version, flags
-/*	or session information of the current cache entry.
+/*	Storage for saving the cache_id or session information of the
+/*	current cache entry.
 /*
 /*	Specify TLS_SCACHE_DONT_NEED_CACHE_ID to avoid saving
 /*	the session cache ID of the cache entry.
-/*
-/*	Specify TLS_SCACHE_DONT_NEED_OPENSSL_VSN to avoid
-/*	saving the OpenSSL version in the cache entry.
-/*
-/*	Specify TLS_SCACHE_DONT_NEED_FLAGS to avoid
-/*	saving the flags information in the cache entry.
 /*
 /*	Specify TLS_SCACHE_DONT_NEED_SESSION to avoid
 /*	saving the session information in the cache entry.
@@ -189,19 +146,11 @@
 
  /*
   * Session cache entry format.
-  * 
-  * XXX The session cache version number is not needed because we truncate the
-  * database when it is opened.
   */
 typedef struct {
-    long    scache_db_version;		/* obsolete */
-    long    openssl_version;		/* clients may differ... */
     time_t  timestamp;			/* time when saved */
-    int     flags;			/* enforcement etc. */
     char    session[1];			/* actually a bunch of bytes */
 } TLS_SCACHE_ENTRY;
-
-#define TLS_SCACHE_DB_VERSION	0x00000003L
 
  /*
   * SLMs.
@@ -212,13 +161,12 @@ typedef struct {
 /* tls_scache_encode - encode TLS session cache entry */
 
 static VSTRING *tls_scache_encode(TLS_SCACHE *cp, const char *cache_id,
-				          long openssl_version, int flags,
 				          const char *session,
-				          int session_len)
+				          ssize_t session_len)
 {
     TLS_SCACHE_ENTRY *entry;
     VSTRING *hex_data;
-    int     binary_data_len;
+    ssize_t binary_data_len;
 
     /*
      * Assemble the TLS session cache entry.
@@ -228,10 +176,7 @@ static VSTRING *tls_scache_encode(TLS_SCACHE *cp, const char *cache_id,
      */
     binary_data_len = session_len + offsetof(TLS_SCACHE_ENTRY, session);
     entry = (TLS_SCACHE_ENTRY *) mymalloc(binary_data_len);
-    entry->scache_db_version = TLS_SCACHE_DB_VERSION;
-    entry->openssl_version = openssl_version;
     entry->timestamp = time((time_t *) 0);
-    entry->flags = flags;
     memcpy(entry->session, session, session_len);
 
     /*
@@ -243,15 +188,10 @@ static VSTRING *tls_scache_encode(TLS_SCACHE *cp, const char *cache_id,
     /*
      * Logging.
      */
-    if (cp->log_level >= 3)
-	msg_info("write %s TLS cache entry %s: cache_version=%ld"
-	       " openssl_version=0x%lx flags=0x%x time=%ld [data %d bytes]",
-		 cp->cache_label, cache_id,
-		 (long) entry->scache_db_version,
-		 (long) entry->openssl_version,
-		 entry->flags,
-		 (long) entry->timestamp,
-		 session_len);
+    if (cp->verbose)
+	msg_info("write %s TLS cache entry %s: time=%ld [data %ld bytes]",
+		 cp->cache_label, cache_id, (long) entry->timestamp,
+		 (long) session_len);
 
     /*
      * Clean up.
@@ -264,10 +204,7 @@ static VSTRING *tls_scache_encode(TLS_SCACHE *cp, const char *cache_id,
 /* tls_scache_decode - decode TLS session cache entry */
 
 static int tls_scache_decode(TLS_SCACHE *cp, const char *cache_id,
-			             const char *hex_data, int hex_data_len,
-			             long openssl_version, int flags,
-			             long *out_openssl_version,
-			             int *out_flags,
+			         const char *hex_data, ssize_t hex_data_len,
 			             VSTRING *out_session)
 {
     TLS_SCACHE_ENTRY *entry;
@@ -283,8 +220,7 @@ static int tls_scache_decode(TLS_SCACHE *cp, const char *cache_id,
     }
 
     /*
-     * Disassemble the TLS session cache entry and enforce the restrictions
-     * specified as version numbers or flags.
+     * Disassemble the TLS session cache entry.
      * 
      * No early returns or we have a memory leak.
      */
@@ -296,29 +232,15 @@ static int tls_scache_decode(TLS_SCACHE *cp, const char *cache_id,
 		 cp->cache_label, cache_id, hex_data);
 	FREE_AND_RETURN(bin_data, 0);
     }
-
-    /*
-     * Before doing anything else, verify that the database format version
-     * matches this program.
-     */
     entry = (TLS_SCACHE_ENTRY *) STR(bin_data);
-    if (entry->scache_db_version != TLS_SCACHE_DB_VERSION) {
-	msg_warn("%s TLS cache: cache version mis-match for %s: 0x%lx != 0x%lx",
-		 cp->cache_label, cache_id, entry->scache_db_version,
-		 TLS_SCACHE_DB_VERSION);
-	FREE_AND_RETURN(bin_data, 0);
-    }
 
     /*
      * Logging.
      */
-    if (cp->log_level >= 3)
-	msg_info("read %s TLS cache entry %s: cache_version=%ld"
-	       " openssl_version=0x%lx time=%ld flags=0x%x [data %d bytes]",
-		 cp->cache_label, cache_id, (long) entry->scache_db_version,
-		 (long) entry->openssl_version, (long) entry->timestamp,
-		 entry->flags,
-	       (int) (LEN(bin_data) - offsetof(TLS_SCACHE_ENTRY, session)));
+    if (cp->verbose)
+	msg_info("read %s TLS cache entry %s: time=%ld [data %ld bytes]",
+		 cp->cache_label, cache_id, (long) entry->timestamp,
+	      (long) (LEN(bin_data) - offsetof(TLS_SCACHE_ENTRY, session)));
 
     /*
      * Other mandatory restrictions.
@@ -327,27 +249,8 @@ static int tls_scache_decode(TLS_SCACHE *cp, const char *cache_id,
 	FREE_AND_RETURN(bin_data, 0);
 
     /*
-     * Optional restrictions.
-     */
-    if (openssl_version != 0 && entry->openssl_version != openssl_version) {
-	msg_warn("%s TLS cache: openssl version mis-match for %s: 0x%lx != 0x%lx",
-		 cp->cache_label, cache_id, entry->openssl_version,
-		 openssl_version);
-	FREE_AND_RETURN(bin_data, 0);
-    }
-    if (flags != 0 && (entry->flags & flags) != flags) {
-	msg_warn("%s TLS cache: flags mis-match for %s: 0x%x is not subset of 0x%x",
-		 cp->cache_label, cache_id, entry->flags, flags);
-	FREE_AND_RETURN(bin_data, 0);
-    }
-
-    /*
      * Optional output.
      */
-    if (out_openssl_version != 0)
-	*out_openssl_version = entry->openssl_version;
-    if (out_flags != 0)
-	*out_flags = entry->flags;
     if (out_session != 0)
 	vstring_memcpy(out_session, entry->session,
 		       LEN(bin_data) - offsetof(TLS_SCACHE_ENTRY, session));
@@ -361,8 +264,6 @@ static int tls_scache_decode(TLS_SCACHE *cp, const char *cache_id,
 /* tls_scache_lookup - load session from cache */
 
 int     tls_scache_lookup(TLS_SCACHE *cp, const char *cache_id,
-			          long openssl_version, int flags,
-			          long *out_openssl_version, int *out_flags,
 			          VSTRING *session)
 {
     const char *hex_data;
@@ -370,9 +271,8 @@ int     tls_scache_lookup(TLS_SCACHE *cp, const char *cache_id,
     /*
      * Logging.
      */
-    if (cp->log_level >= 3)
-	msg_info("lookup %s session id=%s ssl=0x%lx flags=0x%x",
-		 cp->cache_label, cache_id, openssl_version, flags);
+    if (cp->verbose)
+	msg_info("lookup %s session id=%s", cp->cache_label, cache_id);
 
     /*
      * Initialize. Don't leak data.
@@ -387,15 +287,10 @@ int     tls_scache_lookup(TLS_SCACHE *cp, const char *cache_id,
 	return (0);
 
     /*
-     * Decode entry and verify version and flags information.
-     * 
-     * XXX We throw away sessions when flags don't match. If we want to allow
-     * for co-existing cache entries with different flags, the flags would
-     * have to be encoded in the cache lookup key.
+     * Decode entry and delete if expired or malformed.
      */
     if (tls_scache_decode(cp, cache_id, hex_data, strlen(hex_data),
-			  openssl_version, flags, out_openssl_version,
-			  out_flags, session) == 0) {
+			  session) == 0) {
 	tls_scache_delete(cp, cache_id);
 	return (0);
     } else {
@@ -406,23 +301,21 @@ int     tls_scache_lookup(TLS_SCACHE *cp, const char *cache_id,
 /* tls_scache_update - save session to cache */
 
 int     tls_scache_update(TLS_SCACHE *cp, const char *cache_id,
-			          long openssl_version, int flags,
-			          const char *buf, int len)
+			          const char *buf, ssize_t len)
 {
     VSTRING *hex_data;
 
     /*
      * Logging.
      */
-    if (cp->log_level >= 3)
-	msg_info("put %s session id=%s ssl=0x%lx flags=0x%x [data %d bytes]",
-		 cp->cache_label, cache_id, openssl_version, flags, len);
+    if (cp->verbose)
+	msg_info("put %s session id=%s [data %ld bytes]",
+		 cp->cache_label, cache_id, (long) len);
 
     /*
      * Encode the cache entry.
      */
-    hex_data =
-	tls_scache_encode(cp, cache_id, openssl_version, flags, buf, len);
+    hex_data = tls_scache_encode(cp, cache_id, buf, len);
 
     /*
      * Store the cache entry.
@@ -443,11 +336,7 @@ int     tls_scache_update(TLS_SCACHE *cp, const char *cache_id,
 /* tls_scache_sequence - get first/next TLS session cache entry */
 
 int     tls_scache_sequence(TLS_SCACHE *cp, int first_next,
-			            long openssl_version,
-			            int flags,
 			            char **out_cache_id,
-			            long *out_openssl_version,
-			            int *out_flags,
 			            VSTRING *out_session)
 {
     const char *member;
@@ -470,8 +359,8 @@ int     tls_scache_sequence(TLS_SCACHE *cp, int first_next,
 
     /*
      * Find the first or next database entry. Activate the passivated entry
-     * and check the version, time stamp and flags information. Schedule the
-     * entry for deletion if it is bad or too old.
+     * and check the time stamp. Schedule the entry for deletion if it is too
+     * old.
      * 
      * Save the member (cache id) so that it will not be clobbered by the
      * tls_scache_lookup() call below.
@@ -479,9 +368,7 @@ int     tls_scache_sequence(TLS_SCACHE *cp, int first_next,
     found_entry = (dict_seq(cp->db, first_next, &member, &value) == 0);
     if (found_entry) {
 	keep_entry = tls_scache_decode(cp, member, value, strlen(value),
-				       openssl_version, flags,
-				       out_openssl_version,
-				       out_flags, out_session);
+				       out_session);
 	if (keep_entry && out_cache_id)
 	    *out_cache_id = mystrdup(member);
 	saved_member = mystrdup(member);
@@ -496,9 +383,7 @@ int     tls_scache_sequence(TLS_SCACHE *cp, int first_next,
 	cp->flags &= ~TLS_SCACHE_FLAG_DEL_SAVED_CURSOR;
 	saved_cursor = cp->saved_cursor;
 	cp->saved_cursor = 0;
-	tls_scache_lookup(cp, saved_cursor, cp->saved_openssl_version,
-			  cp->saved_flags, (long *) 0, (int *) 0,
-			  (VSTRING *) 0);
+	tls_scache_lookup(cp, saved_cursor, (VSTRING *) 0);
 	myfree(saved_cursor);
     }
 
@@ -519,11 +404,8 @@ int     tls_scache_sequence(TLS_SCACHE *cp, int first_next,
      */
     if (found_entry) {
 	cp->saved_cursor = saved_member;
-	if (keep_entry == 0) {
+	if (keep_entry == 0)
 	    cp->flags |= TLS_SCACHE_FLAG_DEL_SAVED_CURSOR;
-	    cp->saved_openssl_version = openssl_version;
-	    cp->saved_flags = flags;
-	}
     }
     return (found_entry);
 }
@@ -536,7 +418,7 @@ int     tls_scache_delete(TLS_SCACHE *cp, const char *cache_id)
     /*
      * Logging.
      */
-    if (cp->log_level >= 3)
+    if (cp->verbose)
 	msg_info("delete %s session id=%s", cp->cache_label, cache_id);
 
     /*
@@ -551,7 +433,7 @@ int     tls_scache_delete(TLS_SCACHE *cp, const char *cache_id)
 /* tls_scache_open - open TLS session cache file */
 
 TLS_SCACHE *tls_scache_open(const char *dbname, const char *cache_label,
-			            int log_level, int timeout)
+			            int verbose, int timeout)
 {
     TLS_SCACHE *cp;
     DICT   *dict;
@@ -559,7 +441,7 @@ TLS_SCACHE *tls_scache_open(const char *dbname, const char *cache_label,
     /*
      * Logging.
      */
-    if (log_level >= 3)
+    if (verbose)
 	msg_info("open %s TLS cache %s", cache_label, dbname);
 
     /*
@@ -599,7 +481,7 @@ TLS_SCACHE *tls_scache_open(const char *dbname, const char *cache_label,
     cp->flags = 0;
     cp->db = dict;
     cp->cache_label = mystrdup(cache_label);
-    cp->log_level = log_level;
+    cp->verbose = verbose;
     cp->timeout = timeout;
     cp->saved_cursor = 0;
 
@@ -614,7 +496,7 @@ void    tls_scache_close(TLS_SCACHE *cp)
     /*
      * Logging.
      */
-    if (cp->log_level >= 3)
+    if (cp->verbose)
 	msg_info("close %s TLS cache %s", cp->cache_label, cp->db->name);
 
     /*

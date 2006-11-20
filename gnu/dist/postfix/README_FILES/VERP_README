@@ -67,6 +67,15 @@ In order to make VERP useful with majordomo etc. mailing lists, you would
 configure the list manager to submit mail according to one of the following two
 forms:
 
+Postfix 2.3 and later:
+
+    % sendmail -XV -f owner-listname other-arguments...
+
+    % sendmail -XV+= -f owner-listname other-arguments...
+
+Postfix 2.2 and earlier (Postfix 2.3 understands the old syntax for backwards
+compatibility, but will log a warning that reminds you of the new syntax):
+
     % sendmail -V -f owner-listname other-arguments...
 
     % sendmail -V+= -f owner-listname other-arguments...
@@ -133,6 +142,15 @@ VVEERRPP ssuuppppoorrtt iinn tthhee PPoossttffiixx ssee
 
 The Postfix sendmail command has a -V flag to request VERP style delivery.
 Specify one of the following two forms:
+
+Postfix 2.3 and later:
+
+    % sendmail -XV -f owner-listname ....
+
+    % sendmail -XV+= -f owner-listname ....
+
+Postfix 2.2 and earlier (Postfix 2.3 understands the old syntax for backwards
+compatibility, but will log a warning that reminds you of the new syntax):
 
     % sendmail -V -f owner-listname ....
 

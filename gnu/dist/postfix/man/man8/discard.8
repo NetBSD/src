@@ -1,4 +1,4 @@
-.\"	$NetBSD: discard.8,v 1.1.1.1.2.2 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: discard.8,v 1.1.1.1.2.3 2006/11/20 13:30:18 tron Exp $
 .\"
 .TH DISCARD 8 
 .ad
@@ -19,6 +19,7 @@ delivery requests from
 the queue manager. Each request specifies a queue file, a sender
 address, a domain or host name that is treated as the reason for
 discarding the mail, and recipient information.
+The reason may be prefixed with an RFC 3463-compatible detail code.
 This program expects to be run from the \fBmaster\fR(8) process
 manager.
 
@@ -65,6 +66,9 @@ configuration files.
 .IP "\fBdaemon_timeout (18000s)\fR"
 How much time a Postfix daemon process may take to handle a
 request before it is terminated by a built-in watchdog timer.
+.IP "\fBdelay_logging_resolution_limit (2)\fR"
+The maximal number of digits after the decimal point when logging
+sub-second delay values.
 .IP "\fBdouble_bounce_sender (double-bounce)\fR"
 The sender address of postmaster notifications that are generated
 by the mail system.

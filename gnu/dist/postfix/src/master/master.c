@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.1.1.6.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: master.c,v 1.1.1.6.2.2 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -6,7 +6,7 @@
 /* SUMMARY
 /*	Postfix master process
 /* SYNOPSIS
-/*	\fBmaster\fR [\fB-Dtv\fR] [\fB-c \fIconfig_dir\fR] [\fB-e \fIexit_time\fR]
+/*	\fBmaster\fR [\fB-Ddtv\fR] [\fB-c \fIconfig_dir\fR] [\fB-e \fIexit_time\fR]
 /* DESCRIPTION
 /*	The \fBmaster\fR(8) daemon is the resident process that runs Postfix
 /*	daemons on demand: daemons to send or receive messages via the
@@ -28,13 +28,17 @@
 /*	the named directory instead of the default configuration directory.
 /*	This also overrides the configuration files for other Postfix
 /*	daemon processes.
-/* .IP "\fB-e \fIexit_time\fR"
-/*	Terminate the master process after \fIexit_time\fR seconds. Child
-/*	processes terminate at their convenience.
 /* .IP \fB-D\fR
 /*	After initialization, run a debugger on the master process. The
 /*	debugging command is specified with the \fBdebugger_command\fR in
 /*	the \fBmain.cf\fR global configuration file.
+/* .IP \fB-d\fR
+/*	Do not redirect stdin, stdout or stderr to /dev/null, and
+/*	do not discard the controlling terminal. This must be used
+/*	for debugging only.
+/* .IP "\fB-e \fIexit_time\fR"
+/*	Terminate the master process after \fIexit_time\fR seconds. Child
+/*	processes terminate at their convenience.
 /* .IP \fB-t\fR
 /*	Test mode. Return a zero exit status when the \fBmaster.pid\fR lock
 /*	file does not exist or when that file is not locked.  This is evidence
@@ -190,6 +194,8 @@
 
 #include "master.h"
 
+int     master_detach = 1;
+
 /* master_exit_event - exit for memory leak testing purposes */
 
 static void master_exit_event(int unused_event, char *unused_context)
@@ -202,7 +208,7 @@ static void master_exit_event(int unused_event, char *unused_context)
 
 static NORETURN usage(const char *me)
 {
-    msg_fatal("usage: %s [-c config_dir] [-e exit_time] [-D (debug)] [-t (test)] [-v]", me);
+    msg_fatal("usage: %s [-c config_dir] [-D (debug)] [-d (don't detach from terminal)] [-e exit_time] [-t (test)] [-v]", me);
 }
 
 /* main - main program */
@@ -277,45 +283,16 @@ int     main(int argc, char **argv)
 	msg_fatal("the master command must not run as a set-uid process");
 
     /*
-     * If started from a terminal, get rid of any tty association. This also
-     * means that all errors and warnings must go to the syslog daemon.
-     */
-    for (fd = 0; fd < 3; fd++) {
-	(void) close(fd);
-	if (open("/dev/null", O_RDWR, 0) != fd)
-	    msg_fatal("open /dev/null: %m");
-    }
-
-    /*
-     * Run in a separate process group, so that "postfix stop" can terminate
-     * all MTA processes cleanly. Give up if we can't separate from our
-     * parent process. We're not supposed to blow away the parent.
-     */
-    if (debug_me == 0 && setsid() == -1)
-	msg_fatal("unable to set session and process group ID: %m");
-
-    /*
-     * Make some room for plumbing with file descriptors. XXX This breaks
-     * when a service listens on many ports. In order to do this right we
-     * must change the master-child interface so that descriptors do not need
-     * to have fixed numbers.
-     * 
-     * In a child we need two descriptors for the flow control pipe, one for
-     * child->master status updates and at least one for listening.
-     */
-    for (n = 0; n < 5; n++) {
-	if (close_on_exec(dup(0), CLOSE_ON_EXEC) < 0)
-	    msg_fatal("dup(0): %m");
-    }
-
-    /*
      * Process JCL.
      */
-    while ((ch = GETOPT(argc, argv, "c:e:Dtv")) > 0) {
+    while ((ch = GETOPT(argc, argv, "c:Dde:tv")) > 0) {
 	switch (ch) {
 	case 'c':
 	    if (setenv(CONF_ENV_PATH, optarg, 1) < 0)
 		msg_fatal("out of memory");
+	    break;
+	case 'd':
+	    master_detach = 0;
 	    break;
 	case 'e':
 	    event_request_timer(master_exit_event, (char *) 0, atoi(optarg));
@@ -340,6 +317,39 @@ int     main(int argc, char **argv)
      */
     if (argc > optind)
 	usage(argv[0]);
+
+    /*
+     * If started from a terminal, get rid of any tty association. This also
+     * means that all errors and warnings must go to the syslog daemon.
+     */
+    if (master_detach)
+	for (fd = 0; fd < 3; fd++) {
+	    (void) close(fd);
+	    if (open("/dev/null", O_RDWR, 0) != fd)
+		msg_fatal("open /dev/null: %m");
+	}
+
+    /*
+     * Run in a separate process group, so that "postfix stop" can terminate
+     * all MTA processes cleanly. Give up if we can't separate from our
+     * parent process. We're not supposed to blow away the parent.
+     */
+    if (debug_me == 0 && master_detach != 0 && setsid() == -1 && getsid(0) != getpid())
+	msg_fatal("unable to set session and process group ID: %m");
+
+    /*
+     * Make some room for plumbing with file descriptors. XXX This breaks
+     * when a service listens on many ports. In order to do this right we
+     * must change the master-child interface so that descriptors do not need
+     * to have fixed numbers.
+     * 
+     * In a child we need two descriptors for the flow control pipe, one for
+     * child->master status updates and at least one for listening.
+     */
+    for (n = 0; n < 5; n++) {
+	if (close_on_exec(dup(0), CLOSE_ON_EXEC) < 0)
+	    msg_fatal("dup(0): %m");
+    }
 
     /*
      * Final initializations. Unfortunately, we must read the global Postfix

@@ -1,4 +1,4 @@
-/*	$NetBSD: find_inet.c,v 1.1.1.3.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: find_inet.c,v 1.1.1.3.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -87,6 +87,8 @@ int     find_inet_port(const char *service, const char *protocol)
     int     port;
 
     if (alldig(service) && (port = atoi(service)) != 0) {
+	if (port < 0 || port > 65535)
+	    msg_fatal("bad port number: %s", service);
 	return (htons(port));
     } else {
 	if ((sp = getservbyname(service, protocol)) == 0)

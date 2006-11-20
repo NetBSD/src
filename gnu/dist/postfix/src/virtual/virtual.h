@@ -1,4 +1,4 @@
-/*	$NetBSD: virtual.h,v 1.1.1.4 2004/05/31 00:25:03 heas Exp $	*/
+/*	$NetBSD: virtual.h,v 1.1.1.4.2.1 2006/11/20 13:31:05 tron Exp $	*/
 
 /*++
 /* NAME
@@ -27,6 +27,8 @@
 #include <deliver_request.h>
 #include <maps.h>
 #include <mbox_conf.h>
+#include <dsn_buf.h>
+#include <dsn.h>
 
  /*
   * Mappings.
@@ -58,7 +60,7 @@ typedef struct USER_ATTR {
  /*
   * The delivery attributes are inherited from files, from aliases, and from
   * whatnot. Some of the information is changed on the fly. DELIVER_ATTR
-  * structres are therefore passed by value, so there is no need to undo
+  * structures are therefore passed by value, so there is no need to undo
   * changes.
   */
 typedef struct DELIVER_ATTR {
@@ -67,18 +69,20 @@ typedef struct DELIVER_ATTR {
     char   *queue_name;			/* mail queue id */
     char   *queue_id;			/* mail queue id */
     long    offset;			/* data offset */
-    char   *sender;			/* taken from envelope */
-    char   *orig_rcpt;			/* taken from sender */
-    char   *recipient;			/* taken from resolver */
-    long    rcpt_offset;		/* taken from resolver */
+    const char *sender;			/* taken from envelope */
+    char   *dsn_envid;			/* DSN envelope ID */
+    int     dsn_ret;			/* DSN headers/full */
+    RECIPIENT rcpt;			/* from delivery request */
     char   *user;			/* recipient lookup handle */
-    char   *delivered;			/* for loop detection */
+    const char *delivered;		/* for loop detection */
     char   *relay;			/* relay host */
-    long    arrival_time;		/* arrival time */
+    MSG_STATS msg_stats;		/* time profile */
+    DSN_BUF *why;			/* delivery status */
 } DELIVER_ATTR;
 
 extern void deliver_attr_init(DELIVER_ATTR *);
 extern void deliver_attr_dump(DELIVER_ATTR *);
+extern void deliver_attr_free(DELIVER_ATTR *);
 
 #define FEATURE_NODELIVERED	(1<<0)	/* no delivered-to */
 
@@ -89,7 +93,7 @@ extern void deliver_attr_dump(DELIVER_ATTR *);
   */
 typedef struct LOCAL_STATE {
     int     level;			/* nesting level, for logging */
-    DELIVER_ATTR msg_attr;		/* message attributes */
+    DELIVER_ATTR msg_attr;		/* message/recipient attributes */
     DELIVER_REQUEST *request;		/* as from queue manager */
 } LOCAL_STATE;
 
@@ -98,19 +102,19 @@ typedef struct LOCAL_STATE {
   */
 #define BOUNCE_FLAGS(request)	DEL_REQ_TRACE_FLAGS((request)->flags)
 
-#define BOUNCE_ATTR(attr)	attr.queue_id, attr.orig_rcpt, attr.recipient, \
-					attr.rcpt_offset, attr.relay, \
-					attr.arrival_time
-#define SENT_ATTR(attr)		attr.queue_id, attr.orig_rcpt, attr.recipient, \
-					attr.rcpt_offset, attr.relay, \
-					attr.arrival_time
-#define COPY_ATTR(attr)		attr.sender, attr.orig_rcpt, attr.delivered, \
-					attr.fp
+#define BOUNCE_ATTR(attr) \
+	attr.queue_id, &attr.msg_stats, &attr.rcpt, attr.relay, \
+	DSN_FROM_DSN_BUF(attr.why)
+#define SENT_ATTR(attr) \
+	attr.queue_id, &attr.msg_stats, &attr.rcpt, attr.relay, \
+	DSN_FROM_DSN_BUF(attr.why)
+#define COPY_ATTR(attr) \
+	attr.sender, attr.rcpt.orig_addr, attr.delivered, attr.fp
 
 #define MSG_LOG_STATE(m, p) \
 	msg_info("%s[%d]: recip %s deliver %s", m, \
                 p.level, \
-		p.msg_attr.recipient ? p.msg_attr.recipient : "", \
+		p.msg_attr.rcpt.address ? p.msg_attr.rcpt.address : "", \
 		p.msg_attr.delivered ? p.msg_attr.delivered : "")
 
  /*
@@ -130,6 +134,11 @@ extern int deliver_unknown(LOCAL_STATE);
   * Mailbox lock protocol.
   */
 extern int virtual_mbox_lock_mask;
+
+ /*
+  * Silly little macros.
+  */
+#define STR(s)	vstring_str(s)
 
 /* LICENSE
 /* .ad

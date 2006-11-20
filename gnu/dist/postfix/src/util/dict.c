@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.c,v 1.1.1.6.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: dict.c,v 1.1.1.6.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -57,7 +57,10 @@
 /*
 /*	void	dict_load_fp(dict_name, fp)
 /*	const char *dict_name;
-/*	FILE	*fp;
+/*	VSTREAM	*fp;
+/*
+/*	const char *dict_flags_str(dict_flags)
+/*	int	dict_flags;
 /* DESCRIPTION
 /*	This module maintains a collection of name-value dictionaries.
 /*	Each dictionary has its own name and has its own methods to read
@@ -143,6 +146,10 @@
 /*
 /*	dict_load_fp() reads name-value entries from an open stream.
 /*	It has the same semantics as the dict_load_file() function.
+/*
+/*	dict_flags_str() returns a printable representation of the
+/*	specified dictionary flags. The result is overwritten upon
+/*	each call.
 /* SEE ALSO
 /*	htable(3)
 /* BUGS
@@ -188,6 +195,7 @@
 #include "mac_expand.h"
 #include "stringops.h"
 #include "iostuff.h"
+#include "name_mask.h"
 #include "dict.h"
 #include "dict_ht.h"
 
@@ -219,7 +227,7 @@ typedef struct {
 
 void    dict_register(const char *dict_name, DICT *dict_info)
 {
-    char   *myname = "dict_register";
+    const char *myname = "dict_register";
     DICT_NODE *node;
 
     if (dict_table == 0)
@@ -242,7 +250,7 @@ DICT   *dict_handle(const char *dict_name)
 {
     DICT_NODE *node;
 
-    return ((node = dict_node(dict_name)) ? node->dict : 0);
+    return ((node = dict_node(dict_name)) != 0 ? node->dict : 0);
 }
 
 /* dict_node_free - dict_unregister() callback */
@@ -261,7 +269,7 @@ static void dict_node_free(char *ptr)
 
 void    dict_unregister(const char *dict_name)
 {
-    char   *myname = "dict_unregister";
+    const char *myname = "dict_unregister";
     DICT_NODE *node;
 
     if ((node = dict_node(dict_name)) == 0)
@@ -276,7 +284,7 @@ void    dict_unregister(const char *dict_name)
 
 void    dict_update(const char *dict_name, const char *member, const char *value)
 {
-    char   *myname = "dict_update";
+    const char *myname = "dict_update";
     DICT_NODE *node;
     DICT   *dict;
 
@@ -296,7 +304,7 @@ void    dict_update(const char *dict_name, const char *member, const char *value
 
 const char *dict_lookup(const char *dict_name, const char *member)
 {
-    char   *myname = "dict_lookup";
+    const char *myname = "dict_lookup";
     DICT_NODE *node;
     DICT   *dict;
     const char *ret = 0;
@@ -319,7 +327,7 @@ const char *dict_lookup(const char *dict_name, const char *member)
 
 int     dict_delete(const char *dict_name, const char *member)
 {
-    char   *myname = "dict_delete";
+    const char *myname = "dict_delete";
     DICT_NODE *node;
     DICT   *dict;
     int     result;
@@ -344,7 +352,7 @@ int     dict_delete(const char *dict_name, const char *member)
 int     dict_sequence(const char *dict_name, const int func,
 		              const char **member, const char **value)
 {
-    char   *myname = "dict_sequence";
+    const char *myname = "dict_sequence";
     DICT_NODE *node;
     DICT   *dict;
 
@@ -479,7 +487,7 @@ void    dict_walk(DICT_WALK_ACTION action, char *ptr)
 
 const char *dict_changed_name(void)
 {
-    char   *myname = "dict_changed_name";
+    const char *myname = "dict_changed_name";
     struct stat st;
     HTABLE_INFO **ht_info_list;
     HTABLE_INFO **ht;
@@ -508,4 +516,38 @@ const char *dict_changed_name(void)
 int     dict_changed(void)
 {
     return (dict_changed_name() != 0);
+}
+
+ /*
+  * Mapping between flag names and flag values.
+  */
+static NAME_MASK dict_mask[] = {
+    "warn_dup", (1 << 0),		/* if file, warn about dups */
+    "ignore_dup", (1 << 1),		/* if file, ignore dups */
+    "try0null", (1 << 2),		/* do not append 0 to key/value */
+    "try1null", (1 << 3),		/* append 0 to key/value */
+    "fixed", (1 << 4),			/* fixed key map */
+    "pattern", (1 << 5),		/* keys are patterns */
+    "lock", (1 << 6),			/* lock before access */
+    "replace", (1 << 7),		/* if file, replace dups */
+    "sync_update", (1 << 8),		/* if file, sync updates */
+    "debug", (1 << 9),			/* log access */
+    "no_regsub", (1 << 11),		/* disallow regexp substitution */
+    "no_proxy", (1 << 12),		/* disallow proxy mapping */
+    "no_unauth", (1 << 13),		/* disallow unauthenticated data */
+    "fold_fix", (1 << 14),		/* case-fold with fixed-case key map */
+    "fold_mul", (1 << 15),		/* case-fold with multi-case key map */
+};
+
+/* dict_flags_str - convert mask to string for debugging purposes */
+
+const char *dict_flags_str(int dict_flags)
+{
+    static VSTRING *buf = 0;
+
+    if (buf == 0)
+	buf = vstring_alloc(1);
+
+    return (str_name_mask_opt(buf, "dictionary flags", dict_mask, dict_flags,
+			      NAME_MASK_RETURN | NAME_MASK_PIPE));
 }

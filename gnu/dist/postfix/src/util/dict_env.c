@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_env.c,v 1.1.1.2 2004/05/31 00:24:57 heas Exp $	*/
+/*	$NetBSD: dict_env.c,v 1.1.1.2.2.1 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -44,23 +44,39 @@
 #include "mymalloc.h"
 #include "msg.h"
 #include "safe.h"
+#include "stringops.h"
 #include "dict.h"
 #include "dict_env.h"
 
 /* dict_env_update - update environment array */
 
-static void dict_env_update(DICT *unused_dict, const char *name, const char *value)
+static void dict_env_update(DICT *dict, const char *name, const char *value)
 {
+
+    /*
+     * Optionally fold the key.
+     */
+    if (dict->fold_buf) {
+	vstring_strcpy(dict->fold_buf, name);
+	name = lowercase(vstring_str(dict->fold_buf));
+    }
     if (setenv(name, value, 1))
 	msg_fatal("setenv: %m");
 }
 
 /* dict_env_lookup - access environment array */
 
-static const char *dict_env_lookup(DICT *unused_dict, const char *name)
+static const char *dict_env_lookup(DICT *dict, const char *name)
 {
     dict_errno = 0;
 
+    /*
+     * Optionally fold the key.
+     */
+    if (dict->fold_buf) {
+	vstring_strcpy(dict->fold_buf, name);
+	name = lowercase(vstring_str(dict->fold_buf));
+    }
     return (safe_getenv(name));
 }
 
@@ -68,6 +84,8 @@ static const char *dict_env_lookup(DICT *unused_dict, const char *name)
 
 static void dict_env_close(DICT *dict)
 {
+    if (dict->fold_buf)
+	vstring_free(dict->fold_buf);
     dict_free(dict);
 }
 
@@ -82,5 +100,7 @@ DICT   *dict_env_open(const char *name, int unused_flags, int dict_flags)
     dict->update = dict_env_update;
     dict->close = dict_env_close;
     dict->flags = dict_flags | DICT_FLAG_FIXED;
-    return (DICT_DEBUG(dict));
+    if (dict_flags & DICT_FLAG_FOLD_FIX)
+	dict->fold_buf = vstring_alloc(10);
+    return (DICT_DEBUG (dict));
 }

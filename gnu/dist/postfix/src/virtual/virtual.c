@@ -1,4 +1,4 @@
-/*	$NetBSD: virtual.c,v 1.1.1.6.2.1 2006/07/12 15:06:48 tron Exp $	*/
+/*	$NetBSD: virtual.c,v 1.1.1.6.2.2 2006/11/20 13:31:05 tron Exp $	*/
 
 /*++
 /* NAME
@@ -77,6 +77,12 @@
 /*	The \fBvirtual_minimum_uid\fR parameter imposes a lower bound on
 /*	numerical user ID values that may be specified in any
 /*	\fBvirtual_uid_maps\fR.
+/* CASE FOLDING
+/* .ad
+/* .fi
+/*	All delivery decisions are made using the full recipient
+/*	address, folded to lower case. See also the next section
+/*	for a few exceptions with optional address extensions.
 /* TABLE SEARCH ORDER
 /* .ad
 /* .fi
@@ -176,8 +182,8 @@
 /*	Postfix is final destination for the specified list of domains;
 /*	mail is delivered via the $virtual_transport mail delivery transport.
 /* .IP "\fBvirtual_transport (virtual)\fR"
-/*	The default mail delivery transport for domains that match the
-/*	$virtual_mailbox_domains parameter value.
+/*	The default mail delivery transport and next-hop destination for
+/*	final delivery to domains listed with $virtual_mailbox_domains.
 /* LOCKING CONTROLS
 /* .ad
 /* .fi
@@ -213,6 +219,9 @@
 /* .IP "\fBdaemon_timeout (18000s)\fR"
 /*	How much time a Postfix daemon process may take to handle a
 /*	request before it is terminated by a built-in watchdog timer.
+/* .IP "\fBdelay_logging_resolution_limit (2)\fR"
+/*	The maximal number of digits after the decimal point when logging
+/*	sub-second delay values.
 /* .IP "\fBipc_timeout (3600s)\fR"
 /*	The time limit for sending or receiving information over an internal
 /*	communication channel.
@@ -337,7 +346,7 @@ int     virtual_mbox_lock_mask;
 
 static int local_deliver(DELIVER_REQUEST *rqst, char *service)
 {
-    char   *myname = "local_deliver";
+    const char *myname = "local_deliver";
     RECIPIENT *rcpt_end = rqst->rcpt_list.info + rqst->rcpt_list.len;
     RECIPIENT *rcpt;
     int     rcpt_stat;
@@ -358,8 +367,10 @@ static int local_deliver(DELIVER_REQUEST *rqst, char *service)
     state.msg_attr.fp = rqst->fp;
     state.msg_attr.offset = rqst->data_offset;
     state.msg_attr.sender = rqst->sender;
+    state.msg_attr.dsn_envid = rqst->dsn_envid;
+    state.msg_attr.dsn_ret = rqst->dsn_ret;
     state.msg_attr.relay = service;
-    state.msg_attr.arrival_time = rqst->arrival_time;
+    state.msg_attr.msg_stats = rqst->msg_stats;
     RESET_USER_ATTR(usr_attr, state.level);
     state.request = rqst;
 
@@ -370,15 +381,14 @@ static int local_deliver(DELIVER_REQUEST *rqst, char *service)
      * recipient. Update the per-message delivery status.
      */
     for (msg_stat = 0, rcpt = rqst->rcpt_list.info; rcpt < rcpt_end; rcpt++) {
-	state.msg_attr.orig_rcpt = rcpt->orig_addr;
-	state.msg_attr.recipient = rcpt->address;
-	state.msg_attr.rcpt_offset = rcpt->offset;
+	state.msg_attr.rcpt = *rcpt;
 	rcpt_stat = deliver_recipient(state, usr_attr);
 	if (rcpt_stat == 0 && (rqst->flags & DEL_REQ_FLAG_SUCCESS))
 	    deliver_completed(state.msg_attr.fp, rcpt->offset);
 	msg_stat |= rcpt_stat;
     }
 
+    deliver_attr_free(&state.msg_attr);
     return (msg_stat);
 }
 
@@ -430,6 +440,9 @@ static void post_init(char *unused_name, char **unused_argv)
      */
     set_eugid(var_owner_uid, var_owner_gid);
 
+    /*
+     * No case folding needed: the recipient address is case folded.
+     */
     virtual_mailbox_maps =
 	maps_create(VAR_VIRT_MAILBOX_MAPS, var_virt_mailbox_maps,
 		    DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
@@ -496,5 +509,6 @@ int     main(int argc, char **argv)
 		       MAIL_SERVER_PRE_INIT, pre_init,
 		       MAIL_SERVER_POST_INIT, post_init,
 		       MAIL_SERVER_PRE_ACCEPT, pre_accept,
+		       MAIL_SERVER_PRIVILEGED,
 		       0);
 }

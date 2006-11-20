@@ -1,4 +1,4 @@
-/*	$NetBSD: hold_message.c,v 1.1.1.2.2.1 2006/07/31 19:16:54 tron Exp $	*/
+/*	$NetBSD: hold_message.c,v 1.1.1.2.2.2 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -91,8 +91,7 @@ int     hold_message(VSTRING *path_buf, const char *queue_name,
     (void) mail_queue_path(old_path, queue_name, queue_id);
     (void) mail_queue_path(path_buf, MAIL_QUEUE_HOLD, queue_id);
     if ((err = sane_rename(STR(old_path), STR(path_buf))) == 0
-	/* 20060604: BEAM found mis-placed parenthesis */
-	|| ((err = mail_queue_mkdirs(STR(path_buf))) == 0
+	|| ((err = mail_queue_mkdirs(STR(path_buf)) == 0)
 	    && (err = sane_rename(STR(old_path), STR(path_buf))) == 0)) {
 	if (msg_verbose)
 	    msg_info("%s: placed on hold", queue_id);

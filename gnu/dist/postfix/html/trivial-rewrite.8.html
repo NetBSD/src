@@ -36,14 +36,14 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
                      the <a href="ADDRESS_CLASS_README.html#local_domain_class">local domain</a> to spam from poorly written
                      remote clients.
 
-       <b>resolve</b> <i>address</i>
-              Resolve an address to a (<i>transport</i>, <i>nexthop</i>, <i>recip-</i>
-              <i>ient</i>, <i>flags</i>) quadruple. The meaning of the  results
-              is as follows:
+       <b>resolve</b> <i>sender address</i>
+              Resolve  the  address  to  a  (<i>transport</i>,  <i>nexthop</i>,
+              <i>recipient</i>, <i>flags</i>) quadruple.  The  meaning  of  the
+              results is as follows:
 
               <i>transport</i>
                      The delivery agent to use. This is the first
-                     field of an entry in the <b>master.cf</b> file.
+                     field of an entry in the <a href="master.5.html"><b>master.cf</b></a> file.
 
               <i>nexthop</i>
                      The host to send to  and  optional  delivery
@@ -57,8 +57,8 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
                      requires  relaying,  whether the address has
                      problems, and whether the request failed.
 
-       <b>verify</b> <i>address</i>
-              Resolve an address for  address  verification  pur-
+       <b>verify</b> <i>sender address</i>
+              Resolve the address for address  verification  pur-
               poses.
 
 <b>SERVER PROCESS MANAGEMENT</b>
@@ -85,7 +85,7 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
        Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>CONFIGURATION PARAMETERS</b>
-       On busy mail systems a long time may pass before a <b>main.cf</b>
+       On busy mail systems a long time may pass before a <a href="postconf.5.html"><b>main.cf</b></a>
        change  affecting <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a> is picked up. Use the
        command "<b>postfix reload</b>" to speed up a change.
 
@@ -102,24 +102,28 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
               as if the local hostname were specified, instead of
               rejecting the address as invalid.
 
+       <b><a href="postconf.5.html#resolve_numeric_domain">resolve_numeric_domain</a> (no)</b>
+              Resolve  "user@ipaddress"  as   "user@[ipaddress]",
+              instead of rejecting the address as invalid.
+
 <b>ADDRESS REWRITING CONTROLS</b>
        <b><a href="postconf.5.html#myorigin">myorigin</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
               The domain name that locally-posted mail appears to
-              come  from,  and that locally posted mail is deliv-
+              come from, and that locally posted mail  is  deliv-
               ered to.
 
        <b><a href="postconf.5.html#allow_percent_hack">allow_percent_hack</a> (yes)</b>
-              Enable the rewriting of the form  "user%domain"  to
+              Enable  the  rewriting of the form "user%domain" to
               "user@domain".
 
        <b><a href="postconf.5.html#append_at_myorigin">append_at_myorigin</a> (yes)</b>
-              With  locally  submitted  mail,  append  the string
-              "@$<a href="postconf.5.html#myorigin">myorigin</a>"  to  mail  addresses  without   domain
+              With locally  submitted  mail,  append  the  string
+              "@$<a href="postconf.5.html#myorigin">myorigin</a>"   to  mail  addresses  without  domain
               information.
 
        <b><a href="postconf.5.html#append_dot_mydomain">append_dot_mydomain</a> (yes)</b>
-              With  locally  submitted  mail,  append  the string
-              ".$<a href="postconf.5.html#mydomain">mydomain</a>" to addresses that  have  no  ".domain"
+              With locally  submitted  mail,  append  the  string
+              ".$<a href="postconf.5.html#mydomain">mydomain</a>"  to  addresses  that have no ".domain"
               information.
 
        <b><a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a> (empty)</b>
@@ -127,43 +131,46 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
               sions (user+foo).
 
        <b><a href="postconf.5.html#swap_bangpath">swap_bangpath</a> (yes)</b>
-              Enable   the   rewriting   of   "site!user"    into
+              Enable    the   rewriting   of   "site!user"   into
               "user@site".
 
        Available in Postfix 2.2 and later:
 
        <b><a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> (empty)</b>
-              Don't  rewrite  message headers from remote clients
+              Don't rewrite message headers from  remote  clients
               at all when this parameter is empty; otherwise, re-
-              write  remote message headers and append the speci-
-              fied domain name to incomplete addresses.
+              write message  headers  and  append  the  specified
+              domain name to incomplete addresses.
 
 <b>ROUTING CONTROLS</b>
-       The following is applicable to  Postfix  version  2.0  and
-       later.   Earlier  versions  do  not have support for: <a href="postconf.5.html#virtual_transport">vir</a>-
-       <a href="postconf.5.html#virtual_transport">tual_transport</a>,  <a href="postconf.5.html#relay_transport">relay_transport</a>,   <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a>,
+       The  following  is  applicable  to Postfix version 2.0 and
+       later.  Earlier versions do not  have  support  for:  <a href="postconf.5.html#virtual_transport">vir</a>-
+       <a href="postconf.5.html#virtual_transport">tual_transport</a>,   <a href="postconf.5.html#relay_transport">relay_transport</a>,  <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a>,
        <a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> or <a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>.
 
-       <b><a href="postconf.5.html#local_transport">local_transport</a> (local:$<a href="postconf.5.html#myhostname">myhostname</a>)</b>
-              The  default  mail  delivery  transport for domains
-              that  match  $<a href="postconf.5.html#mydestination">mydestination</a>,  $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a>   or
-              $<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>.
+       <b><a href="postconf.5.html#local_transport">local_transport</a> (<a href="local.8.html">local</a>:$<a href="postconf.5.html#myhostname">myhostname</a>)</b>
+              The default mail delivery  transport  and  next-hop
+              destination  for  final  delivery to domains listed
+              with <a href="postconf.5.html#mydestination">mydestination</a>, and  for  [ipaddress]  destina-
+              tions  that match $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> or $<a href="postconf.5.html#proxy_interfaces">proxy_inter</a>-
+              <a href="postconf.5.html#proxy_interfaces">faces</a>.
 
        <b><a href="postconf.5.html#virtual_transport">virtual_transport</a> (virtual)</b>
-              The  default  mail  delivery  transport for domains
-              that match the  $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>  parameter
-              value.
+              The default mail delivery  transport  and  next-hop
+              destination  for  final  delivery to domains listed
+              with $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>.
 
        <b><a href="postconf.5.html#relay_transport">relay_transport</a> (relay)</b>
-              The  default  mail  delivery transport and next-hop
-              information   for   domains    that    match    the
-              $<a href="postconf.5.html#relay_domains">relay_domains</a> parameter value.
+              The default mail delivery  transport  and  next-hop
+              destination  for  remote delivery to domains listed
+              with $<a href="postconf.5.html#relay_domains">relay_domains</a>.
 
        <b><a href="postconf.5.html#default_transport">default_transport</a> (smtp)</b>
-              The  default  mail  delivery  transport for domains
-              that do not match $<a href="postconf.5.html#mydestination">mydestination</a>, $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a>,
-              $<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>,   $<a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a>,  $<a href="postconf.5.html#virtual_mailbox_domains">vir</a>-
-              <a href="postconf.5.html#virtual_mailbox_domains">tual_mailbox_domains</a>, or $<a href="postconf.5.html#relay_domains">relay_domains</a>.
+              The default mail delivery  transport  and  next-hop
+              destination  for  destinations  that  do  not match
+              $<a href="postconf.5.html#mydestination">mydestination</a>,   $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a>,   $<a href="postconf.5.html#proxy_interfaces">proxy_inter</a>-
+              <a href="postconf.5.html#proxy_interfaces">faces</a>,    $<a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a>,    $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mail-
+              box_domains</a>, or $<a href="postconf.5.html#relay_domains">relay_domains</a>.
 
        <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a> (see 'postconf  -d'  out-</b>
        <b>put)</b>
@@ -172,14 +179,19 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
               explicit ".domain.tld" pattern.
 
        <b><a href="postconf.5.html#relayhost">relayhost</a> (empty)</b>
-              The default host to send non-local mail to when  no
-              entry  is  matched in the optional <a href="transport.5.html"><b>transport</b>(5)</a> ta-
-              ble.
+              The next-hop destination of non-local  mail;  over-
+              rides non-<a href="ADDRESS_CLASS_README.html#local_domain_class">local domains</a> in recipient addresses.
 
        <b><a href="postconf.5.html#transport_maps">transport_maps</a> (empty)</b>
               Optional lookup tables with mappings from recipient
-              address  to  (message  delivery transport, next-hop
+              address to (message  delivery  transport,  next-hop
               destination).
+
+       Available in Postfix version 2.3 and later:
+
+       <b><a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> (empty)</b>
+              A  sender-dependent  override for the global <a href="postconf.5.html#relayhost">relay</a>-
+              <a href="postconf.5.html#relayhost">host</a> parameter setting.
 
 <b>ADDRESS VERIFICATION CONTROLS</b>
        Postfix  version  2.1  introduces  sender  and   recipient
@@ -214,10 +226,16 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
               Overrides  the <a href="postconf.5.html#transport_maps">transport_maps</a> parameter setting for
               address verification probes.
 
+       Available in Postfix version 2.3 and later:
+
+       <b><a href="postconf.5.html#address_verify_sender_dependent_relayhost_maps">address_verify_sender_dependent_relayhost_maps</a> (empty)</b>
+              Overrides    the    <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a>
+              parameter  setting for address verification probes.
+
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  main.cf  and
-              master.cf configuration files.
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
               How  much time a Postfix daemon process may take to

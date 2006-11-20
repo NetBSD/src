@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_state.c,v 1.1.1.3.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: mime_state.c,v 1.1.1.3.2.2 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -9,15 +9,15 @@
 /*	#include <mime_state.h>
 /*
 /*	MIME_STATE *mime_state_alloc(flags, head_out, head_end,
-/*				     body_out, body_end,
-/*				     err_print, context)
+/*					 body_out, body_end,
+/*					 err_print, context)
 /*	int	flags;
 /*	void	(*head_out)(void *ptr, int header_class,
 /*				HEADER_OPTS *header_info,
 /*				VSTRING *buf, off_t offset);
 /*	void	(*head_end)(void *ptr);
 /*	void	(*body_out)(void *ptr, int rec_type,
-/*				const char *buf, int len,
+/*				const char *buf, ssize_t len,
 /*				off_t offset);
 /*	void	(*body_end)(void *ptr);
 /*	void	(*err_print)(void *ptr, int err_flag, const char *text)
@@ -27,12 +27,23 @@
 /*	MIME_STATE *state;
 /*	int	rec_type;
 /*	const char *buf;
-/*	int	len;
+/*	ssize_t	len;
 /*
 /*	MIME_STATE *mime_state_free(state)
 /*	MIME_STATE *state;
 /*
 /*	const char *mime_state_error(error_code)
+/*	int	error_code;
+/*
+/*	typedef struct {
+/* .in +4
+/*		const int code;		/* internal error code */
+/*		const char *dsn;	/* RFC 3463 */
+/*		const char *text;	/* descriptive text */
+/* .in -4
+/*	} MIME_STATE_DETAIL;
+/*
+/*	MIME_STATE_DETAIL *mime_state_detail(error_code)
 /*	int	error_code;
 /* DESCRIPTION
 /*	This module implements a one-pass MIME processor with optional
@@ -71,6 +82,11 @@
 /*	mime_state_error() returns a string representation for the
 /*	specified error code. When multiple errors are specified it
 /*	reports what it deems the most serious one.
+/*
+/*	mime_state_detail() returns a table entry with error
+/*	information for the specified error code. When multiple
+/*	errors are specified it reports what it deems the most
+/*	serious one.
 /*
 /*	Arguments:
 /* .IP body_out
@@ -255,7 +271,7 @@ typedef struct MIME_STACK {
     int     def_ctype;			/* default content type */
     int     def_stype;			/* default content subtype */
     char   *boundary;			/* boundary string */
-    int     bound_len;			/* boundary length */
+    ssize_t bound_len;			/* boundary length */
     struct MIME_STACK *next;		/* linkage */
 } MIME_STACK;
 
@@ -377,28 +393,42 @@ static MIME_ENCODING mime_encoding_map[] = {	/* RFC 2045 */
 #define END(x)		vstring_end(x)
 #define CU_CHAR_PTR(x)	((const unsigned char *) (x))
 
-#define REPORT_ERROR(state, err_type, text) do { \
+#define REPORT_ERROR_LEN(state, err_type, text, len) do { \
 	if ((state->err_flags & err_type) == 0) { \
 	    if (state->err_print != 0) \
-		state->err_print(state->app_context, err_type, text); \
+		state->err_print(state->app_context, err_type, text, len); \
 	    state->err_flags |= err_type; \
 	} \
     } while (0)
+
+#define REPORT_ERROR(state, err_type, text) do { \
+	const char *_text = text; \
+	ssize_t _len = strlen(text); \
+	REPORT_ERROR_LEN(state, err_type, _text, _len); \
+    } while (0)
+
+#define REPORT_ERROR_BUF(state, err_type, buf) \
+    REPORT_ERROR_LEN(state, err_type, STR(buf), LEN(buf))
+
 
  /*
   * Outputs and state changes are interleaved, so we must maintain separate
   * offsets for header and body segments.
   */
 #define HEAD_OUT(ptr, info, len) do { \
-	(ptr)->head_out((ptr)->app_context, (ptr)->curr_state, \
-			(info), (ptr)->output_buffer, (ptr)->head_offset); \
-	(ptr)->head_offset += (len) + 1; \
+	if ((ptr)->head_out) { \
+	    (ptr)->head_out((ptr)->app_context, (ptr)->curr_state, \
+			    (info), (ptr)->output_buffer, (ptr)->head_offset); \
+	    (ptr)->head_offset += (len) + 1; \
+	} \
     } while(0)
 
 #define BODY_OUT(ptr, rec_type, text, len) do { \
-	(ptr)->body_out((ptr)->app_context, (rec_type), \
-			(text), (len), (ptr)->body_offset); \
-	(ptr)->body_offset += (len) + 1; \
+	if ((ptr)->body_out) { \
+	    (ptr)->body_out((ptr)->app_context, (rec_type), \
+			    (text), (len), (ptr)->body_offset); \
+	    (ptr)->body_offset += (len) + 1; \
+	} \
     } while(0)
 
 /* mime_state_push - push boundary onto stack */
@@ -502,7 +532,7 @@ static void mime_state_content_type(MIME_STATE *state,
 				            HEADER_OPTS *header_info)
 {
     const char *cp;
-    int     tok_count;
+    ssize_t tok_count;
     int     def_ctype;
     int     def_stype;
 
@@ -586,8 +616,8 @@ static void mime_state_content_type(MIME_STATE *state,
 		    && state->token[1].type == '=') {
 		    if (state->nesting_level > var_mime_maxdepth) {
 			if (state->static_flags & MIME_OPT_REPORT_NESTING)
-			    REPORT_ERROR(state, MIME_ERR_NESTING,
-					 STR(state->output_buffer));
+			    REPORT_ERROR_BUF(state, MIME_ERR_NESTING,
+					     state->output_buffer);
 		    } else {
 			mime_state_push(state, def_ctype, def_stype,
 					state->token[2].u.value);
@@ -651,7 +681,7 @@ static const char *mime_state_enc_name(int encoding)
 /* mime_state_downgrade - convert 8-bit data to quoted-printable */
 
 static void mime_state_downgrade(MIME_STATE *state, int rec_type,
-				         const char *text, int len)
+				         const char *text, ssize_t len)
 {
     static char hexchars[] = "0123456789ABCDEF";
     const unsigned char *cp;
@@ -709,7 +739,7 @@ static void mime_state_downgrade(MIME_STATE *state, int rec_type,
 /* mime_state_update - update MIME state machine */
 
 int     mime_state_update(MIME_STATE *state, int rec_type,
-			          const char *text, int len)
+			          const char *text, ssize_t len)
 {
     int     input_is_text = (rec_type == REC_TYPE_NORM
 			     || rec_type == REC_TYPE_CONT);
@@ -752,22 +782,22 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 	    if (input_is_text) {
 		if (state->prev_rec_type == REC_TYPE_CONT) {
 		    if (LEN(state->output_buffer) < var_header_limit) {
-			vstring_strcat(state->output_buffer, text);
+			vstring_strncat(state->output_buffer, text, len);
 		    } else {
 			if (state->static_flags & MIME_OPT_REPORT_TRUNC_HEADER)
-			    REPORT_ERROR(state, MIME_ERR_TRUNC_HEADER,
-					 STR(state->output_buffer));
+			    REPORT_ERROR_BUF(state, MIME_ERR_TRUNC_HEADER,
+					     state->output_buffer);
 		    }
 		    SAVE_PREV_REC_TYPE_AND_RETURN_ERR_FLAGS(state, rec_type);
 		}
 		if (IS_SPACE_TAB(*text)) {
 		    if (LEN(state->output_buffer) < var_header_limit) {
 			vstring_strcat(state->output_buffer, "\n");
-			vstring_strcat(state->output_buffer, text);
+			vstring_strncat(state->output_buffer, text, len);
 		    } else {
 			if (state->static_flags & MIME_OPT_REPORT_TRUNC_HEADER)
-			    REPORT_ERROR(state, MIME_ERR_TRUNC_HEADER,
-					 STR(state->output_buffer));
+			    REPORT_ERROR_BUF(state, MIME_ERR_TRUNC_HEADER,
+					     state->output_buffer);
 		    }
 		    SAVE_PREV_REC_TYPE_AND_RETURN_ERR_FLAGS(state, rec_type);
 		}
@@ -797,8 +827,8 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 		    for (cp = CU_CHAR_PTR(STR(state->output_buffer));
 			 cp < CU_CHAR_PTR(END(state->output_buffer)); cp++)
 			if (*cp & 0200) {
-			    REPORT_ERROR(state, MIME_ERR_8BIT_IN_HEADER,
-					 STR(state->output_buffer));
+			    REPORT_ERROR_BUF(state, MIME_ERR_8BIT_IN_HEADER,
+					     state->output_buffer);
 			    break;
 			}
 		}
@@ -818,18 +848,23 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 	 * clean slate.
 	 */
 	if (input_is_text) {
-	    int     header_len;
+	    ssize_t header_len;
 
 	    /*
 	     * See if this input is (the beginning of) a message header.
+	     * 
 	     * Normalize obsolete "name space colon" syntax to "name colon".
 	     * Things would be too confusing otherwise.
+	     * 
+	     * Don't assume that the input is null terminated.
 	     */
-	    if ((header_len = is_header(text)) > 0) {
+	    if ((header_len = is_header_buf(text, len)) > 0) {
 		vstring_strncpy(state->output_buffer, text, header_len);
-		for (text += header_len; IS_SPACE_TAB(*text); text++)
+		for (text += header_len, len -= header_len;
+		     len > 0 && IS_SPACE_TAB(*text);
+		     text++, len--)
 		     /* void */ ;
-		vstring_strcat(state->output_buffer, text);
+		vstring_strncat(state->output_buffer, text, len);
 		SAVE_PREV_REC_TYPE_AND_RETURN_ERR_FLAGS(state, rec_type);
 	    }
 	}
@@ -900,9 +935,11 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 	 * 
 	 * XXX This changes state to MIME_STATE_NESTED and then outputs a body
 	 * line, so that the body offset is not properly reset.
+	 * 
+	 * Don't assume that the input is null terminated.
 	 */
 	if (input_is_text) {
-	    if (*text == 0) {
+	    if (len == 0) {
 		state->body_offset = 0;		/* XXX */
 		if (state->curr_ctype == MIME_CTYPE_MESSAGE) {
 		    if (state->curr_stype == MIME_STYPE_RFC822
@@ -959,6 +996,8 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 	 * string.
 	 * 
 	 * Don't look for boundary strings at the start of a continued record.
+	 * 
+	 * Don't assume that the input is null terminated.
 	 */
     case MIME_STATE_BODY:
 	if (input_is_text) {
@@ -967,17 +1006,20 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 		&& (state->err_flags & MIME_ERR_8BIT_IN_7BIT_BODY) == 0) {
 		for (cp = CU_CHAR_PTR(text); cp < CU_CHAR_PTR(text + len); cp++)
 		    if (*cp & 0200) {
-			REPORT_ERROR(state, MIME_ERR_8BIT_IN_7BIT_BODY, text);
+			REPORT_ERROR_LEN(state, MIME_ERR_8BIT_IN_7BIT_BODY,
+					 text, len);
 			break;
 		    }
 	    }
 	    if (state->stack && state->prev_rec_type != REC_TYPE_CONT
-		&& text[0] == '-' && text[1] == '-') {
+		&& len > 2 && text[0] == '-' && text[1] == '-') {
 		for (sp = state->stack; sp != 0; sp = sp->next) {
-		    if (strncmp(text + 2, sp->boundary, sp->bound_len) == 0) {
+		    if (len >= 2 + sp->bound_len &&
+		      strncmp(text + 2, sp->boundary, sp->bound_len) == 0) {
 			while (sp != state->stack)
 			    mime_state_pop(state);
-			if (strncmp(text + 2 + sp->bound_len, "--", 2) == 0) {
+			if (len >= 4 + sp->bound_len &&
+			  strncmp(text + 2 + sp->bound_len, "--", 2) == 0) {
 			    mime_state_pop(state);
 			    SET_MIME_STATE(state, MIME_STATE_BODY,
 					 MIME_CTYPE_OTHER, MIME_STYPE_OTHER,
@@ -1017,27 +1059,51 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
     }
 }
 
+ /*
+  * Mime error to (DSN, text) mapping. Order matters; more serious errors
+  * must precede less serious errors, because the error-to-text conversion
+  * can report only one error.
+  */
+static MIME_STATE_DETAIL mime_err_detail[] = {
+    MIME_ERR_NESTING, "5.6.0", "MIME nesting exceeds safety limit",
+    MIME_ERR_TRUNC_HEADER, "5.6.0", "message header length exceeds safety limit",
+    MIME_ERR_8BIT_IN_HEADER, "5.6.0", "improper use of 8-bit data in message header",
+    MIME_ERR_8BIT_IN_7BIT_BODY, "5.6.0", "improper use of 8-bit data in message body",
+    MIME_ERR_ENCODING_DOMAIN, "5.6.0", "invalid message/* or multipart/* encoding domain",
+    0,
+};
+
 /* mime_state_error - error code to string */
 
 const char *mime_state_error(int error_code)
 {
+    MIME_STATE_DETAIL *mp;
+
     if (error_code == 0)
 	msg_panic("mime_state_error: there is no error");
-    if (error_code & MIME_ERR_NESTING)
-	return ("MIME nesting exceeds safety limit");
-    if (error_code & MIME_ERR_TRUNC_HEADER)
-	return ("message header length exceeds safety limit");
-    if (error_code & MIME_ERR_8BIT_IN_HEADER)
-	return ("improper use of 8-bit data in message header");
-    if (error_code & MIME_ERR_8BIT_IN_7BIT_BODY)
-	return ("improper use of 8-bit data in message body");
-    if (error_code & MIME_ERR_ENCODING_DOMAIN)
-	return ("invalid message/* or multipart/* encoding domain");
+    for (mp = mime_err_detail; mp->code; mp++)
+	if (mp->code & error_code)
+	    return (mp->text);
     msg_panic("mime_state_error: unknown error code %d", error_code);
+}
+
+/* mime_state_detail - error code to table entry with assorted data */
+
+MIME_STATE_DETAIL *mime_state_detail(int error_code)
+{
+    MIME_STATE_DETAIL *mp;
+
+    if (error_code == 0)
+	msg_panic("mime_state_detail: there is no error");
+    for (mp = mime_err_detail; mp->code; mp++)
+	if (mp->code & error_code)
+	    return (mp);
+    msg_panic("mime_state_detail: unknown error code %d", error_code);
 }
 
 #ifdef TEST
 
+#include <stdlib.h>
 #include <stringops.h>
 #include <vstream.h>
 #include <msg_vstream.h>
@@ -1070,7 +1136,7 @@ static void head_end(void *context)
     vstream_fprintf(stream, "HEADER END\n");
 }
 
-static void body_out(void *context, int rec_type, const char *buf, int len,
+static void body_out(void *context, int rec_type, const char *buf, ssize_t len,
 		             off_t offset)
 {
     VSTREAM *stream = (VSTREAM *) context;
@@ -1088,9 +1154,11 @@ static void body_end(void *context)
     vstream_fprintf(stream, "BODY END\n");
 }
 
-static void err_print(void *unused_context, int err_flag, const char *text)
+static void err_print(void *unused_context, int err_flag,
+		              const char *text, ssize_t len)
 {
-    msg_warn("%s: %.100s", mime_state_error(err_flag), text);
+    msg_warn("%s: %.*s", mime_state_error(err_flag),
+	     len < 100 ? (int) len : 100, text);
 }
 
 int     var_header_limit = 2000;

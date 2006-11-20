@@ -1,4 +1,4 @@
-/*	$NetBSD: delivered.c,v 1.1.1.2 2004/05/31 00:24:37 heas Exp $	*/
+/*	$NetBSD: delivered.c,v 1.1.1.2.2.1 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -13,7 +13,7 @@
 /*
 /*	int	delivered_find(table, address)
 /*	HTABLE	*table;
-/*	char	*address;
+/*	const char *address;
 /*
 /*	void	delivered_free(table)
 /*	HTABLE	*table;
@@ -86,8 +86,6 @@
 
 static VSTRING *buf;
 
-#define STR vstring_str
-
 /* delivered_init - extract delivered-to information from the message */
 
 HTABLE *delivered_init(DELIVER_ATTR attr)
@@ -130,7 +128,7 @@ HTABLE *delivered_init(DELIVER_ATTR attr)
 
 /* delivered_find - look up recipient in delivered table */
 
-int     delivered_find(HTABLE *table, char *address)
+int     delivered_find(HTABLE *table, const char *address)
 {
     HTABLE_INFO *ht;
 

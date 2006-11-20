@@ -1,4 +1,4 @@
-/*	$NetBSD: master_status.c,v 1.1.1.3.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: master_status.c,v 1.1.1.3.2.2 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -61,7 +61,7 @@
 
 static void master_status_event(int event, char *context)
 {
-    char   *myname = "master_status_event";
+    const char *myname = "master_status_event";
     MASTER_SERV *serv = (MASTER_SERV *) context;
     MASTER_STATUS stat;
     MASTER_PROC *proc;
@@ -91,8 +91,8 @@ static void master_status_event(int event, char *context)
 	/* NOTREACHED */
 
     default:
-	msg_warn("service %s: child (pid %d) sent partial status update (%d bytes)", 
-		 serv->name, stat.pid, n);
+	msg_warn("service %s(%s): child (pid %d) sent partial status update (%d bytes)",
+		 serv->ext_name, serv->name, stat.pid, n);
 	return;
 
     case sizeof(stat):
@@ -151,7 +151,7 @@ static void master_status_event(int event, char *context)
 
 void    master_status_init(MASTER_SERV *serv)
 {
-    char   *myname = "master_status_init";
+    const char *myname = "master_status_init";
 
     /*
      * Sanity checks.
@@ -178,7 +178,7 @@ void    master_status_init(MASTER_SERV *serv)
 
 void    master_status_cleanup(MASTER_SERV *serv)
 {
-    char   *myname = "master_status_cleanup";
+    const char *myname = "master_status_cleanup";
 
     /*
      * Sanity checks.

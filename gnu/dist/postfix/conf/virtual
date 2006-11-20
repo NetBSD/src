@@ -12,11 +12,11 @@
 # 
 # DESCRIPTION
 #        The  optional  virtual(5)  alias  table rewrites recipient
-#        addresses for all local, virtual and remote mail  destina-
-#        tions.   This is unlike the aliases(5) table which is used
-#        only for local(8) delivery.  Virtual  aliasing  is  recur-
-#        sive,  and is implemented by the Postfix cleanup(8) daemon
-#        before mail is queued.
+#        addresses for all local, all virtual, and all remote  mail
+#        destinations.   This  is unlike the aliases(5) table which
+#        is used only for local(8) delivery.  Virtual  aliasing  is
+#        recursive,  and  is  implemented by the Postfix cleanup(8)
+#        daemon before mail is queued.
 # 
 #        The main applications of virtual aliasing are:
 # 
@@ -34,27 +34,33 @@
 #               address can have its own mailbox.
 # 
 #        Virtual  aliasing  is  applied  only to recipient envelope
-#        addresses, and does not  affect  message  headers.   Think
-#        Sendmail  rule  set S0, if you like. Use canonical(5) map-
-#        ping to rewrite header and envelope addresses in  general.
+#        addresses, and  does  not  affect  message  headers.   Use
+#        canonical(5)   mapping  to  rewrite  header  and  envelope
+#        addresses in general.
 # 
-#        Normally,  the  virtual(5)  alias  table is specified as a
-#        text file that serves as input to the postmap(1)  command.
-#        The  result,  an indexed file in dbm or db format, is used
+#        Normally, the virtual(5) alias table  is  specified  as  a
+#        text  file that serves as input to the postmap(1) command.
+#        The result, an indexed file in dbm or db format,  is  used
 #        for fast searching by the mail system. Execute the command
-#        "postmap  /etc/postfix/virtual"  in  order  to rebuild the
+#        "postmap /etc/postfix/virtual" in  order  to  rebuild  the
 #        indexed file after changing the text file.
 # 
-#        When the table is provided via other means  such  as  NIS,
-#        LDAP  or  SQL,  the  same lookups are done as for ordinary
+#        When  the  table  is provided via other means such as NIS,
+#        LDAP or SQL, the same lookups are  done  as  for  ordinary
 #        indexed files.
 # 
-#        Alternatively, the table can be  provided  as  a  regular-
+#        Alternatively,  the  table  can  be provided as a regular-
 #        expression map where patterns are given as regular expres-
-#        sions, or lookups can be directed to TCP-based server.  In
-#        that  case,  the  lookups are done in a slightly different
-#        way as described below under "REGULAR  EXPRESSION  TABLES"
+#        sions,  or lookups can be directed to TCP-based server. In
+#        that case, the lookups are done in  a  slightly  different
+#        way  as  described below under "REGULAR EXPRESSION TABLES"
 #        and "TCP-BASED TABLES".
+# 
+# CASE FOLDING
+#        The search string is folded to lowercase  before  database
+#        lookup.  As  of Postfix 2.3, the search string is not case
+#        folded with database types such as regexp: or pcre:  whose
+#        lookup fields can match both upper and lower case.
 # 
 # TABLE FORMAT
 #        The input format for the postmap(1) command is as follows:
@@ -197,7 +203,7 @@
 #        lookups are directed to a TCP-based server. For a descrip-
 #        tion of the TCP client/server lookup protocol, see tcp_ta-
 #        ble(5).  This feature is not available up to and including
-#        Postfix version 2.2.
+#        Postfix version 2.3.
 # 
 #        Each lookup operation uses the entire address once.  Thus,
 #        user@domain  mail  addresses  are not broken up into their

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_addr.c,v 1.1.1.2.2.1 2006/07/12 15:06:38 tron Exp $	*/
+/*	$NetBSD: cleanup_addr.c,v 1.1.1.2.2.2 2006/11/20 13:30:20 tron Exp $	*/
 
 /*++
 /* NAME
@@ -79,6 +79,7 @@
 #include <canon_addr.h>
 #include <mail_addr_find.h>
 #include <mail_proto.h>
+#include <dsn_mask.h>
 
 /* Application-specific. */
 
@@ -100,6 +101,9 @@ void    cleanup_addr_sender(CLEANUP_STATE *state, const char *buf)
      * for replying. Having to support both forms is error prone, therefore
      * an incomplete envelope address is rewritten to fully qualified form in
      * the local domain context.
+     * 
+     * 20000520: Replace mailer-daemon@$myorigin by the null address, to handle
+     * bounced mail traffic more robustly.
      */
     cleanup_rewrite_internal(MAIL_ATTR_RWR_LOCAL, clean_addr, buf);
     if (strncasecmp(STR(clean_addr), MAIL_ADDR_MAIL_DAEMON "@",
@@ -162,7 +166,8 @@ void    cleanup_addr_recipient(CLEANUP_STATE *state, const char *buf)
 	    && (cleanup_masq_flags & CLEANUP_MASQ_FLAG_ENV_RCPT))
 	    cleanup_masquerade_internal(clean_addr, cleanup_masq_domains);
     }
-    cleanup_out_recipient(state, state->orig_rcpt, STR(clean_addr));
+    cleanup_out_recipient(state, state->dsn_orcpt, state->dsn_notify,
+			  state->orig_rcpt, STR(clean_addr));
     if (state->recip == 0)
 	state->recip = mystrdup(STR(clean_addr));
     if ((state->flags & CLEANUP_FLAG_BCC_OK)
@@ -184,6 +189,8 @@ void    cleanup_addr_bcc(CLEANUP_STATE *state, const char *bcc)
      * Note: BCC addresses are supplied locally, and must be rewritten in the
      * local address rewriting context.
      */
+#define NO_DSN_ORCPT	((char *) 0)
+
     cleanup_rewrite_internal(MAIL_ATTR_RWR_LOCAL, clean_addr, bcc);
     if (state->flags & CLEANUP_FLAG_MAP_OK) {
 	if (cleanup_rcpt_canon_maps
@@ -198,6 +205,7 @@ void    cleanup_addr_bcc(CLEANUP_STATE *state, const char *bcc)
 	    && (cleanup_masq_flags & CLEANUP_MASQ_FLAG_ENV_RCPT))
 	    cleanup_masquerade_internal(clean_addr, cleanup_masq_domains);
     }
-    cleanup_out_recipient(state, STR(clean_addr), STR(clean_addr));
+    cleanup_out_recipient(state, NO_DSN_ORCPT, DSN_NOTIFY_NEVER,
+			  STR(clean_addr), STR(clean_addr));
     vstring_free(clean_addr);
 }

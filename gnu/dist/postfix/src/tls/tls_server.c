@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_server.c,v 1.1.1.1.2.2 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: tls_server.c,v 1.1.1.1.2.3 2006/11/20 13:30:55 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,29 +8,27 @@
 /* SYNOPSIS
 /*	#include <tls.h>
 /*
-/*	SSL_CTX	*tls_server_init(verifydepth, askcert)
-/*	int	verifydepth;
-/*	int	askcert;
+/*	SSL_CTX	*tls_server_init(props)
+/*	const tls_server_props *props;
 /*
-/*	TLScontext_t *tls_server_start(server_ctx, stream, timeout,
-/*					peername, peeraddr,
-/*					tls_info, requirecert)
+/*	TLScontext_t *tls_server_start(server_ctx, stream, timeout, log_level,
+/*					peername, peeraddr, requirecert)
 /*	SSL_CTX	*server_ctx;
 /*	VSTREAM	*stream;
 /*	int	timeout;
+/*	int	log_level;
 /*	const char *peername;
 /*	const char *peeraddr;
-/*	tls_info_t *tls_info;
 /*	int	requirecert;
 /*
-/*	void	tls_server_stop(server_ctx, stream, failure, tls_info)
+/*	void	tls_server_stop(server_ctx, stream, failure, TLScontext)
 /*	SSL_CTX	*server_ctx;
 /*	VSTREAM	*stream;
 /*	int	failure;
-/*	tls_info_t *tls_info;
+/*	TLScontext_t *TLScontext;
 /* DESCRIPTION
-/*	This module is the interface between Postfix TLS servers
-/*	and the OpenSSL library and TLS entropy and cache manager.
+/*	This module is the interface between Postfix TLS servers,
+/*	the OpenSSL library, and the TLS entropy and cache manager.
 /*
 /*	tls_server_init() is called once when the SMTP server
 /*	initializes.
@@ -38,9 +36,8 @@
 /*	so that peer-specific behavior is not possible.
 /*
 /*	tls_server_start() activates the TLS feature for the VSTREAM
-/*	passed as argument. We assume that network buffers are flushed and the
-/*	TLS handshake can begin	immediately. Information about the peer
-/*	is stored into the tls_info structure passed as argument.
+/*	passed as argument. We assume that network buffers are flushed
+/*	and the TLS handshake can begin	immediately.
 /*
 /*	tls_server_stop() sends the "close notify" alert via
 /*	SSL_shutdown() to the peer and resets all connection specific
@@ -51,34 +48,35 @@
 /*	If the failure flag is set, no SSL_shutdown() handshake is performed.
 /*
 /*	Once the TLS connection is initiated, information about the TLS
-/*	state is available via the tls_info structure:
-/* .IP tls_info->protocol
+/*	state is available via the TLScontext structure:
+/* .IP TLScontext->protocol
 /*	the protocol name (SSLv2, SSLv3, TLSv1),
-/* .IP tls_info->cipher_name
+/* .IP TLScontext->cipher_name
 /*	the cipher name (e.g. RC4/MD5),
-/* .IP tls_info->cipher_usebits
+/* .IP TLScontext->cipher_usebits
 /*	the number of bits actually used (e.g. 40),
-/* .IP tls_info->cipher_algbits
+/* .IP TLScontext->cipher_algbits
 /*	the number of bits the algorithm is based on (e.g. 128).
 /* .PP
 /*	The last two values may differ from each other when export-strength
 /*	encryption is used.
 /*
 /*	The status of the peer certificate verification is available in
-/*	tls_info->peer_verified. It is set to 1 when the certificate could
+/*	TLScontext->peer_verified. It is set to 1 when the certificate could
 /*	be verified.
 /*	If the peer offered a certificate, part of the certificate data are
 /*	available as:
-/* .IP tls_info->peer_subject
-/*	X509v3-oneline with the DN of the peer
-/* .IP tls_info->peer_CN
-/*	extracted CommonName of the peer
-/* .IP tls_info->peer_issuer
-/*	X509v3-oneline with the DN of the issuer
-/* .IP tls_info->issuer_CN
-/*	extracted CommonName of the issuer
-/* .IP tls_info->peer_fingerprint
-/*	fingerprint of the certificate
+/* .IP TLScontext->peer_CN
+/*	Extracted CommonName of the peer, or zero-length string
+/*	when information could not be extracted.
+/* .IP TLScontext->issuer_CN
+/*	Extracted CommonName of the issuer, or zero-length string
+/*	when information could not be extracted.
+/* .IP TLScontext->peer_fingerprint
+/*	Fingerprint of the certificate, or null pointer when no
+/*	certificate digest is available.
+/* .PP
+/*	Otherwise these fields are set to null pointers.
 /* LICENSE
 /* .ad
 /* .fi
@@ -143,45 +141,39 @@ static const char hexcodes[] = "0123456789ABCDEF";
   */
 static char server_session_id_context[] = "Postfix/TLS";
 
-static int tls_server_cache = 0;
-
-/* server_verify_callback - server verification wrapper */
-
-static int server_verify_callback(int ok, X509_STORE_CTX *ctx)
-{
-    return (tls_verify_certificate_callback(ok, ctx, TLS_VERIFY_DEFAULT));
-}
-
 /* get_server_session_cb - callback to retrieve session from server cache */
 
-static SSL_SESSION *get_server_session_cb(SSL *unused_ssl,
-					          unsigned char *session_id,
+static SSL_SESSION *get_server_session_cb(SSL *ssl, unsigned char *session_id,
 					          int session_id_length,
 					          int *unused_copy)
 {
+    const char *myname = "get_server_session_cb";
+    TLScontext_t *TLScontext;
     VSTRING *cache_id;
     VSTRING *session_data = vstring_alloc(2048);
     SSL_SESSION *session = 0;
 
-#define MAKE_SERVER_CACHE_ID(id, len) \
+    if ((TLScontext = SSL_get_ex_data(ssl, TLScontext_index)) == 0)
+	msg_panic("%s: null TLScontext in session lookup callback", myname);
+
+#define HEX_CACHE_ID(id, len) \
     hex_encode(vstring_alloc(2 * (len) + 1), (char *) (id), (len))
 
-    /*
-     * Encode the session ID.
-     */
-    cache_id = MAKE_SERVER_CACHE_ID(session_id, session_id_length);
-    if (var_smtpd_tls_loglevel >= 3)
-	msg_info("looking up session %s in server cache", STR(cache_id));
+    cache_id = HEX_CACHE_ID(session_id, session_id_length);
+
+    if (TLScontext->log_level >= 2)
+	msg_info("looking up session %s in %s cache",
+		 STR(cache_id), TLScontext->cache_type);
 
     /*
      * Load the session from cache and decode it.
      */
-    if (tls_mgr_lookup(tls_server_cache, STR(cache_id),
-		       OPENSSL_VERSION_NUMBER, TLS_MGR_NO_FLAGS,
+    if (tls_mgr_lookup(TLScontext->cache_type, STR(cache_id),
 		       session_data) == TLS_MGR_STAT_OK) {
 	session = tls_session_activate(STR(session_data), LEN(session_data));
-	if (session && (var_smtpd_tls_loglevel >= 3))
-	    msg_info("reloaded session %s from server cache", STR(cache_id));
+	if (session && (TLScontext->log_level >= 2))
+	    msg_info("reloaded session %s from %s cache",
+		     STR(cache_id), TLScontext->cache_type);
     }
 
     /*
@@ -193,28 +185,51 @@ static SSL_SESSION *get_server_session_cb(SSL *unused_ssl,
     return (session);
 }
 
-/* new_server_session_cb - callback to save session to server cache */
+/* uncache_session - remove session from internal & external cache */
 
-static int new_server_session_cb(SSL *unused_ssl, SSL_SESSION *session)
+static void uncache_session(SSL_CTX *ctx, TLScontext_t *TLScontext)
 {
     VSTRING *cache_id;
+    SSL_SESSION *session = SSL_get_session(TLScontext->con);
+
+    SSL_CTX_remove_session(ctx, session);
+
+    if (TLScontext->cache_type == 0)
+	return;
+
+    cache_id = HEX_CACHE_ID(session->session_id, session->session_id_length);
+    if (TLScontext->log_level >= 2)
+	msg_info("remove session %s from %s cache",
+		 STR(cache_id), TLScontext->cache_type);
+
+    tls_mgr_delete(TLScontext->cache_type, STR(cache_id));
+    vstring_free(cache_id);
+}
+
+/* new_server_session_cb - callback to save session to server cache */
+
+static int new_server_session_cb(SSL *ssl, SSL_SESSION *session)
+{
+    const char *myname = "new_server_session_cb";
+    VSTRING *cache_id;
+    TLScontext_t *TLScontext;
     VSTRING *session_data;
 
-    /*
-     * Encode the session ID.
-     */
-    cache_id =
-	MAKE_SERVER_CACHE_ID(session->session_id, session->session_id_length);
-    if (var_smtpd_tls_loglevel >= 3)
-	msg_info("save session %s to server cache", STR(cache_id));
+    if ((TLScontext = SSL_get_ex_data(ssl, TLScontext_index)) == 0)
+	msg_panic("%s: null TLScontext in new session callback", myname);
+
+    cache_id = HEX_CACHE_ID(session->session_id, session->session_id_length);
+
+    if (TLScontext->log_level >= 2)
+	msg_info("save session %s to %s cache",
+		 STR(cache_id), TLScontext->cache_type);
 
     /*
      * Passivate and save the session state.
      */
     session_data = tls_session_passivate(session);
     if (session_data)
-	tls_mgr_update(tls_server_cache, STR(cache_id),
-		       OPENSSL_VERSION_NUMBER, TLS_MGR_NO_FLAGS,
+	tls_mgr_update(TLScontext->cache_type, STR(cache_id),
 		       STR(session_data), LEN(session_data));
 
     /*
@@ -230,17 +245,22 @@ static int new_server_session_cb(SSL *unused_ssl, SSL_SESSION *session)
 
 /* tls_server_init - initialize the server-side TLS engine */
 
-SSL_CTX *tls_server_init(int unused_verifydepth, int askcert)
+SSL_CTX *tls_server_init(const tls_server_props *props)
 {
-    int     off = 0;
+    long    off = 0;
     int     verify_flags = SSL_VERIFY_NONE;
     SSL_CTX *server_ctx;
-    int     cache_types;
+    int     cachable;
 
     /* See skeleton at OpenSSL apps/s_server.c. */
 
-    if (var_smtpd_tls_loglevel >= 2)
+    if (props->log_level >= 2)
 	msg_info("initializing the server-side TLS engine");
+
+    /*
+     * Detect mismatch between compile-time headers and run-time library.
+     */
+    tls_check_version();
 
     /*
      * Initialize the OpenSSL library by the book! To start with, we must
@@ -278,25 +298,40 @@ SSL_CTX *tls_server_init(int unused_verifydepth, int askcert)
     }
 
     /*
-     * Here we might set SSL_OP_NO_SSLv2, SSL_OP_NO_SSLv3, SSL_OP_NO_TLSv1.
-     * Of course, the last one would not make sense, since RFC2487 is only
-     * defined for TLS, but we also want to accept Netscape communicator
-     * requests, and it only supports SSLv3.
+     * Protocol work-arounds, OpenSSL version dependent.
      */
-    off |= SSL_OP_ALL;				/* Work around all known bugs */
+    off |= tls_bug_bits();
     SSL_CTX_set_options(server_ctx, off);
+
+#define DISABLE_ALL (SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1)
+
+    /*
+     * Global protocol selection. Not enabling any explicitly, enables all.
+     */
+    if (props->protocols != 0 && props->protocols != TLS_ALL_PROTOCOLS) {
+	long    disable = DISABLE_ALL;
+
+	if (props->protocols & TLS_PROTOCOL_TLSv1)
+	    disable &= ~SSL_OP_NO_TLSv1;
+	if (props->protocols & TLS_PROTOCOL_SSLv3)
+	    disable &= ~SSL_OP_NO_SSLv3;
+	if (props->protocols & TLS_PROTOCOL_SSLv2)
+	    disable &= ~SSL_OP_NO_SSLv2;
+
+	SSL_CTX_set_options(server_ctx, disable);
+    }
 
     /*
      * Set the call-back routine for verbose logging.
      */
-    if (var_smtpd_tls_loglevel >= 2)
+    if (props->log_level >= 2)
 	SSL_CTX_set_info_callback(server_ctx, tls_info_callback);
 
     /*
      * Override the default cipher list with our own list.
      */
-    if (*var_smtpd_tls_cipherlist != 0)
-	if (SSL_CTX_set_cipher_list(server_ctx, var_smtpd_tls_cipherlist) == 0) {
+    if (*props->cipherlist != 0)
+	if (SSL_CTX_set_cipher_list(server_ctx, props->cipherlist) == 0) {
 	    tls_print_errors();
 	    SSL_CTX_free(server_ctx);		/* 200411 */
 	    return (0);
@@ -313,8 +348,8 @@ SSL_CTX *tls_server_init(int unused_verifydepth, int askcert)
      * at startup time, so that you don't have the hassle to maintain another
      * copy of the CApath directory for chroot-jail.
      */
-    if (tls_set_ca_certificate_info(server_ctx, var_smtpd_tls_CAfile,
-				    var_smtpd_tls_CApath) < 0) {
+    if (tls_set_ca_certificate_info(server_ctx,
+				    props->CAfile, props->CApath) < 0) {
 	SSL_CTX_free(server_ctx);		/* 200411 */
 	return (0);
     }
@@ -332,10 +367,9 @@ SSL_CTX *tls_server_init(int unused_verifydepth, int askcert)
      * openssl-library will use RSA first if not especially changed in the
      * cipher setup.
      */
-    if (tls_set_my_certificate_key_info(server_ctx, var_smtpd_tls_cert_file,
-					var_smtpd_tls_key_file,
-					var_smtpd_tls_dcert_file,
-					var_smtpd_tls_dkey_file) < 0) {
+    if (tls_set_my_certificate_key_info(server_ctx, props->cert_file,
+					props->key_file, props->dcert_file,
+					props->dkey_file) < 0) {
 	SSL_CTX_free(server_ctx);		/* 200411 */
 	return (0);
     }
@@ -356,10 +390,10 @@ SSL_CTX *tls_server_init(int unused_verifydepth, int askcert)
      * will not abort but just log the error message.
      */
     SSL_CTX_set_tmp_dh_callback(server_ctx, tls_tmp_dh_cb);
-    if (*var_smtpd_tls_dh1024_param_file != 0)
-	tls_set_dh_1024_from_file(var_smtpd_tls_dh1024_param_file);
-    if (*var_smtpd_tls_dh512_param_file != 0)
-	tls_set_dh_512_from_file(var_smtpd_tls_dh512_param_file);
+    if (*props->dh1024_param_file != 0)
+	tls_set_dh_1024_from_file(props->dh1024_param_file);
+    if (*props->dh512_param_file != 0)
+	tls_set_dh_512_from_file(props->dh512_param_file);
 
     /*
      * If we want to check client certificates, we have to indicate it in
@@ -381,28 +415,13 @@ SSL_CTX *tls_server_init(int unused_verifydepth, int askcert)
      * reasons, but this would involve severe changes in the internal postfix
      * logic, so we have to live with it the way it is.
      */
-    if (askcert)
+    if (props->ask_ccert)
 	verify_flags = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
-    SSL_CTX_set_verify(server_ctx, verify_flags, server_verify_callback);
-    if (*var_smtpd_tls_CAfile)
+    SSL_CTX_set_verify(server_ctx, verify_flags,
+		       tls_verify_certificate_callback);
+    if (*props->CAfile)
 	SSL_CTX_set_client_CA_list(server_ctx,
-			     SSL_load_client_CA_file(var_smtpd_tls_CAfile));
-
-    /*
-     * Initialize the session cache. In order to share cached sessions among
-     * multiple SMTP server processes, we use an external cache and set the
-     * internal cache size to a minimum value of 1. Access to the external
-     * cache is handled by the appropriate callback functions.
-     * 
-     * Set a session id context to identify to what type of server process
-     * created a session. In our case, the context is simply the name of the
-     * mail system: "Postfix/TLS".
-     */
-    SSL_CTX_sess_set_cache_size(server_ctx, 1);
-    SSL_CTX_set_timeout(server_ctx, var_smtpd_tls_scache_timeout);
-    SSL_CTX_set_session_id_context(server_ctx,
-				   (void *) &server_session_id_context,
-				   sizeof(server_session_id_context));
+				   SSL_load_client_CA_file(props->CAfile));
 
     /*
      * The session cache is implemented by the tlsmgr(8) server.
@@ -414,12 +433,68 @@ SSL_CTX *tls_server_init(int unused_verifydepth, int askcert)
      * entries, and leave it up to the tlsmgr process instead. Found by
      * Victor Duchovni.
      */
-    if (tls_mgr_policy(&cache_types) == TLS_MGR_STAT_OK
-	&& (tls_server_cache = (cache_types & TLS_MGR_SCACHE_SERVER)) != 0) {
+
+    if (TLSscache_index < 0)
+	TLSscache_index =
+	    SSL_CTX_get_ex_new_index(0, "TLScontext ex_data index",
+				     NULL, NULL, NULL);
+
+    if (tls_mgr_policy(props->cache_type, &cachable) != TLS_MGR_STAT_OK)
+	cachable = 0;
+
+    if (cachable &&
+	!SSL_CTX_set_ex_data(server_ctx, TLSscache_index,
+			     (void *) props->cache_type)) {
+	msg_warn("Session cache off: error saving cache type in SSL context.");
+	tls_print_errors();
+	cachable = 0;
+    }
+    if (cachable || props->set_sessid) {
+
+	/*
+	 * Initialize the session cache.
+	 * 
+	 * With a large number of concurrent smtpd(8) processes, it is not a
+	 * good idea to cache multiple large session objects in each process.
+	 * We set the internal cache size to 1, and don't register a
+	 * "remove_cb" so as to avoid deleting good sessions from the
+	 * external cache prematurely (when the internal cache is full,
+	 * OpenSSL removes sessions from the external cache also)!
+	 * 
+	 * This makes SSL_CTX_remove_session() not useful for flushing broken
+	 * sessions from the external cache, so we must delete them directly
+	 * (not via a callback).
+	 * 
+	 * Set a session id context to identify to what type of server process
+	 * created a session. In our case, the context is simply the name of
+	 * the mail system: "Postfix/TLS".
+	 */
+	SSL_CTX_sess_set_cache_size(server_ctx, 1);
+	SSL_CTX_set_session_id_context(server_ctx,
+				       (void *) &server_session_id_context,
+				       sizeof(server_session_id_context));
 	SSL_CTX_set_session_cache_mode(server_ctx,
-		      SSL_SESS_CACHE_SERVER | SSL_SESS_CACHE_NO_AUTO_CLEAR);
-	SSL_CTX_sess_set_get_cb(server_ctx, get_server_session_cb);
-	SSL_CTX_sess_set_new_cb(server_ctx, new_server_session_cb);
+				       SSL_SESS_CACHE_SERVER |
+				       SSL_SESS_CACHE_NO_AUTO_CLEAR);
+	if (cachable) {
+	    SSL_CTX_sess_set_get_cb(server_ctx, get_server_session_cb);
+	    SSL_CTX_sess_set_new_cb(server_ctx, new_server_session_cb);
+	}
+
+	/*
+	 * OpenSSL ignores timed-out sessions. We need to set the internal
+	 * cache timeout at least as high as the external cache timeout. This
+	 * applies even if no internal cache is used.
+	 */
+	SSL_CTX_set_timeout(server_ctx, props->scache_timeout);
+    } else {
+
+	/*
+	 * If we have no external cache, disable all caching. No use wasting
+	 * server memory resources with sessions they are unlikely to be able
+	 * to reuse.
+	 */
+	SSL_CTX_set_session_cache_mode(server_ctx, SSL_SESS_CACHE_OFF);
     }
 
     /*
@@ -440,50 +515,41 @@ SSL_CTX *tls_server_init(int unused_verifydepth, int askcert)
   * the client, so that we can immediately start the TLS handshake process.
   */
 TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
-			               int timeout, const char *peername,
-			               const char *peeraddr,
-			               tls_info_t *tls_info,
-			               int requirecert)
+			               int timeout, int log_level,
+			               const char *peername,
+			               const char *peeraddr, int requirecert)
 {
     int     sts;
     int     j;
     int     verify_flags;
     unsigned int n;
     TLScontext_t *TLScontext;
-    SSL_SESSION *session;
     SSL_CIPHER *cipher;
     X509   *peer;
+    unsigned char md[EVP_MAX_MD_SIZE];
+    char    buf[CCERT_BUFSIZ];
 
-    if (var_smtpd_tls_loglevel >= 1)
+    if (log_level >= 1)
 	msg_info("setting up TLS connection from %s[%s]", peername, peeraddr);
 
     /*
      * Allocate a new TLScontext for the new connection and get an SSL
      * structure. Add the location of TLScontext to the SSL to later retrieve
      * the information inside the tls_verify_certificate_callback().
-     * 
-     * XXX Need a dedicated procedure for consistent initialization of all the
-     * fields in this structure.
      */
-#define PEERNAME_SIZE sizeof(TLScontext->peername_save)
-
-    NEW_TLS_CONTEXT(TLScontext);
-    TLScontext->log_level = var_smtpd_tls_loglevel;
-    strncpy(TLScontext->peername_save, peername, PEERNAME_SIZE - 1);
-    TLScontext->peername_save[PEERNAME_SIZE - 1] = 0;
-    (void) lowercase(TLScontext->peername_save);
+    TLScontext = tls_alloc_context(log_level, peername);
+    TLScontext->cache_type = SSL_CTX_get_ex_data(server_ctx, TLSscache_index);
 
     if ((TLScontext->con = (SSL *) SSL_new(server_ctx)) == NULL) {
-	msg_info("Could not allocate 'TLScontext->con' with SSL_new()");
+	msg_warn("Could not allocate 'TLScontext->con' with SSL_new()");
 	tls_print_errors();
-	FREE_TLS_CONTEXT(TLScontext);
+	tls_free_context(TLScontext);
 	return (0);
     }
     if (!SSL_set_ex_data(TLScontext->con, TLScontext_index, TLScontext)) {
-	msg_info("Could not set application data for 'TLScontext->con'");
+	msg_warn("Could not set application data for 'TLScontext->con'");
 	tls_print_errors();
-	SSL_free(TLScontext->con);
-	FREE_TLS_CONTEXT(TLScontext);
+	tls_free_context(TLScontext);
 	return (0);
     }
 
@@ -495,7 +561,8 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
 	verify_flags = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
 	verify_flags |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
 	TLScontext->enforce_verify_errors = 1;
-	SSL_set_verify(TLScontext->con, verify_flags, server_verify_callback);
+	SSL_set_verify(TLScontext->con, verify_flags,
+		       tls_verify_certificate_callback);
     } else {
 	TLScontext->enforce_verify_errors = 0;
     }
@@ -511,10 +578,9 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
      */
     if (!BIO_new_bio_pair(&TLScontext->internal_bio, TLS_BIO_BUFSIZE,
 			  &TLScontext->network_bio, TLS_BIO_BUFSIZE)) {
-	msg_info("Could not obtain BIO_pair");
+	msg_warn("Could not obtain BIO_pair");
 	tls_print_errors();
-	SSL_free(TLScontext->con);
-	FREE_TLS_CONTEXT(TLScontext);
+	tls_free_context(TLScontext);
 	return (0);
     }
 
@@ -547,7 +613,7 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
      * Well there is a BIO below the SSL routines that is automatically
      * created for us, so we can use it for debugging purposes.
      */
-    if (var_smtpd_tls_loglevel >= 3)
+    if (log_level >= 3)
 	BIO_set_callback(SSL_get_rbio(TLScontext->con), tls_bio_dump_cb);
 
     /*
@@ -561,14 +627,20 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
     if (sts <= 0) {
 	msg_info("SSL_accept error from %s[%s]: %d", peername, peeraddr, sts);
 	tls_print_errors();
-	SSL_free(TLScontext->con);
-	BIO_free(TLScontext->network_bio);	/* 200411 */
-	FREE_TLS_CONTEXT(TLScontext);
+	tls_free_context(TLScontext);
 	return (0);
     }
     /* Only loglevel==4 dumps everything */
-    if (var_smtpd_tls_loglevel < 4)
+    if (log_level < 4)
 	BIO_set_callback(SSL_get_rbio(TLScontext->con), 0);
+
+    /*
+     * The caller may want to know if this session was reused or if a new
+     * session was negotiated.
+     */
+    TLScontext->session_reused = SSL_session_reused(TLScontext->con);
+    if (log_level >= 2 && TLScontext->session_reused)
+	msg_info("Reusing old session");
 
     /*
      * Let's see whether a peer certificate is available and what is the
@@ -577,66 +649,38 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
     peer = SSL_get_peer_certificate(TLScontext->con);
     if (peer != NULL) {
 	if (SSL_get_verify_result(TLScontext->con) == X509_V_OK)
-	    tls_info->peer_verified = 1;
+	    TLScontext->peer_verified = 1;
 
-	X509_NAME_oneline(X509_get_subject_name(peer),
-			  TLScontext->peer_subject,
-			  sizeof(TLScontext->peer_subject));
-	if (var_smtpd_tls_loglevel >= 2)
-	    msg_info("subject=%s", TLScontext->peer_subject);
-	tls_info->peer_subject = TLScontext->peer_subject;
-
-	X509_NAME_oneline(X509_get_issuer_name(peer),
-			  TLScontext->peer_issuer,
-			  sizeof(TLScontext->peer_issuer));
-	if (var_smtpd_tls_loglevel >= 2)
-	    msg_info("issuer=%s", TLScontext->peer_issuer);
-	tls_info->peer_issuer = TLScontext->peer_issuer;
-
-	if (X509_digest(peer, EVP_md5(), TLScontext->md, &n)) {
+	if (log_level >= 2) {
+	    X509_NAME_oneline(X509_get_subject_name(peer),
+			      buf, sizeof(buf));
+	    msg_info("subject=%s", buf);
+	    X509_NAME_oneline(X509_get_issuer_name(peer),
+			      buf, sizeof(buf));
+	    msg_info("issuer=%s", buf);
+	}
+	if (X509_digest(peer, EVP_md5(), md, &n) && n > 0) {
+	    TLScontext->peer_fingerprint = mymalloc(n * 3);
 	    for (j = 0; j < (int) n; j++) {
-		TLScontext->fingerprint[j * 3] =
-		    hexcodes[(TLScontext->md[j] & 0xf0) >> 4];
-		TLScontext->fingerprint[(j * 3) + 1] =
-		    hexcodes[(TLScontext->md[j] & 0x0f)];
+		TLScontext->peer_fingerprint[j * 3] =
+		    hexcodes[(md[j] & 0xf0) >> 4U];
+		TLScontext->peer_fingerprint[(j * 3) + 1] =
+		    hexcodes[(md[j] & 0x0f)];
 		if (j + 1 != (int) n)
-		    TLScontext->fingerprint[(j * 3) + 2] = ':';
+		    TLScontext->peer_fingerprint[(j * 3) + 2] = ':';
 		else
-		    TLScontext->fingerprint[(j * 3) + 2] = '\0';
+		    TLScontext->peer_fingerprint[(j * 3) + 2] = '\0';
 	    }
-	    if (var_smtpd_tls_loglevel >= 1)
-		msg_info("fingerprint=%s", TLScontext->fingerprint);
-	    tls_info->peer_fingerprint = TLScontext->fingerprint;
+	    if (log_level >= 1)
+		msg_info("fingerprint=%s", TLScontext->peer_fingerprint);
 	}
-	TLScontext->peer_CN[0] = '\0';
-	if (!X509_NAME_get_text_by_NID(X509_get_subject_name(peer),
-				       NID_commonName, TLScontext->peer_CN,
-				       sizeof(TLScontext->peer_CN))) {
-	    msg_info("Could not parse client's subject CN");
-	    tls_print_errors();
-	}
-	tls_info->peer_CN = TLScontext->peer_CN;
+	if ((TLScontext->peer_CN = tls_peer_CN(peer)) == 0)
+	    TLScontext->peer_CN = mystrdup("");
+	if ((TLScontext->issuer_CN = tls_issuer_CN(peer)) == 0)
+	    TLScontext->issuer_CN = mystrdup("");
 
-	TLScontext->issuer_CN[0] = '\0';
-	if (!X509_NAME_get_text_by_NID(X509_get_issuer_name(peer),
-				       NID_commonName, TLScontext->issuer_CN,
-				       sizeof(TLScontext->issuer_CN))) {
-	    msg_info("Could not parse client's issuer CN");
-	    tls_print_errors();
-	}
-	if (!TLScontext->issuer_CN[0]) {
-	    /* No issuer CN field, use Organization instead */
-	    if (!X509_NAME_get_text_by_NID(X509_get_issuer_name(peer),
-				NID_organizationName, TLScontext->issuer_CN,
-					   sizeof(TLScontext->issuer_CN))) {
-		msg_info("Could not parse client's issuer Organization");
-		tls_print_errors();
-	    }
-	}
-	tls_info->issuer_CN = TLScontext->issuer_CN;
-
-	if (var_smtpd_tls_loglevel >= 1) {
-	    if (tls_info->peer_verified)
+	if (log_level >= 1) {
+	    if (TLScontext->peer_verified)
 		msg_info("Verified: subject_CN=%s, issuer=%s",
 			 TLScontext->peer_CN, TLScontext->issuer_CN);
 	    else
@@ -651,13 +695,12 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
      * session peer was verified.
      */
     if (requirecert) {
-	if (!tls_info->peer_verified || !tls_info->peer_CN) {
+	if (!TLScontext->peer_verified || !TLScontext->peer_CN) {
+	    if (TLScontext->session_reused == 0)
+		msg_panic("tls_server_start: peer was not verified");
 	    msg_info("Re-used session without peer certificate removed");
-	    session = SSL_get_session(TLScontext->con);
-	    SSL_CTX_remove_session(server_ctx, session);
-	    SSL_free(TLScontext->con);
-	    BIO_free(TLScontext->network_bio);	/* 200411 */
-	    FREE_TLS_CONTEXT(TLScontext);
+	    uncache_session(server_ctx, TLScontext);
+	    tls_free_context(TLScontext);
 	    return (0);
 	}
     }
@@ -665,11 +708,11 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
     /*
      * Finally, collect information about protocol and cipher for logging
      */
-    tls_info->protocol = SSL_get_version(TLScontext->con);
+    TLScontext->protocol = SSL_get_version(TLScontext->con);
     cipher = SSL_get_current_cipher(TLScontext->con);
-    tls_info->cipher_name = SSL_CIPHER_get_name(cipher);
-    tls_info->cipher_usebits = SSL_CIPHER_get_bits(cipher,
-					       &(tls_info->cipher_algbits));
+    TLScontext->cipher_name = SSL_CIPHER_get_name(cipher);
+    TLScontext->cipher_usebits = SSL_CIPHER_get_bits(cipher,
+					     &(TLScontext->cipher_algbits));
 
     /*
      * The TLS engine is active. Switch to the tls_timed_read/write()
@@ -677,11 +720,11 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
      */
     tls_stream_start(stream, TLScontext);
 
-    if (var_smtpd_tls_loglevel >= 1)
+    if (log_level >= 1)
 	msg_info("TLS connection established from %s[%s]: %s with cipher %s (%d/%d bits)",
 		 peername, peeraddr,
-		 tls_info->protocol, tls_info->cipher_name,
-		 tls_info->cipher_usebits, tls_info->cipher_algbits);
+		 TLScontext->protocol, TLScontext->cipher_name,
+		 TLScontext->cipher_usebits, TLScontext->cipher_algbits);
     tls_int_seed();
 
     return (TLScontext);

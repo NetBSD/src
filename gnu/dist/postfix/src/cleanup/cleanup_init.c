@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_init.c,v 1.6.2.1 2006/07/12 15:06:38 tron Exp $	*/
+/*	$NetBSD: cleanup_init.c,v 1.6.2.2 2006/11/20 13:30:20 tron Exp $	*/
 
 /*++
 /* NAME
@@ -27,8 +27,12 @@
 /*	char	**argv;
 /*
 /*	char	*cleanup_path;
+/*	VSTRING	*cleanup_trace_path;
 /*
 /*	void	cleanup_all()
+/*
+/*	void	cleanup_sig(sigval)
+/*	int	sigval;
 /* DESCRIPTION
 /*	This module implements a callable interface to the cleanup service
 /*	for one-time initializations that must be done before any message
@@ -46,12 +50,18 @@
 /*
 /*	cleanup_path is either a null pointer or it is the name of a queue
 /*	file that currently is being written. This information is used
-/*	by cleanup_all() to remove incomplete files after a fatal error.
+/*	by cleanup_all() to remove incomplete files after a fatal error,
+/*	or by cleanup_sig() after arrival of a SIGTERM signal.
+/*
+/*	cleanup_trace_path is either a null pointer or the pathname of a
+/*	trace logfile with DSN SUCCESS notifications. This information is
+/*	used to remove a trace file when the mail transaction is canceled.
 /*
 /*	cleanup_all() must be called in case of fatal error, in order
-/*	to remove an incomplete queue file. Normally, as part of process
-/*	initialization, one registers a msg_cleanup() handler and a signal()
-/*	handler that both call cleanup_all() before terminating the process.
+/*	to remove an incomplete queue file.
+/*
+/*	cleanup_sig() must be called in case of SIGTERM, in order
+/*	to remove an incomplete queue file.
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* SEE ALSO
@@ -70,17 +80,21 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <signal.h>
+#include <string.h>
 
 /* Utility library. */
 
 #include <msg.h>
 #include <iostuff.h>
 #include <name_mask.h>
+#include <stringops.h>
 
 /* Global library. */
 
 #include <mail_addr.h>
 #include <mail_params.h>
+#include <mail_version.h>		/* milter_macro_v */
 #include <ext_prop.h>
 #include <flush_clnt.h>
 
@@ -93,6 +107,12 @@
   * handler can clean up in case of trouble.
   */
 char   *cleanup_path;			/* queue file name */
+
+ /*
+  * Another piece of global state: pathnames of partial bounce or trace
+  * logfiles that need to be cleaned up when the cleanup request is aborted.
+  */
+VSTRING *cleanup_trace_path;
 
  /*
   * Tunable parameters.
@@ -127,6 +147,24 @@ int     var_body_check_len;		/* when to stop body scan */
 char   *var_send_bcc_maps;		/* sender auto-bcc maps */
 char   *var_rcpt_bcc_maps;		/* recipient auto-bcc maps */
 char   *var_remote_rwr_domain;		/* header-only surrogate */
+char   *var_msg_reject_chars;		/* reject these characters */
+char   *var_msg_strip_chars;		/* strip these characters */
+int     var_verp_bounce_off;		/* don't verp the bounces */
+int     var_milt_conn_time;		/* milter connect/handshake timeout */
+int     var_milt_cmd_time;		/* milter command timeout */
+int     var_milt_msg_time;		/* milter content timeout */
+char   *var_milt_protocol;		/* Sendmail 8 milter protocol */
+char   *var_milt_def_action;		/* default milter action */
+char   *var_milt_daemon_name;		/* {daemon_name} macro value */
+char   *var_milt_v;			/* {v} macro value */
+char   *var_milt_conn_macros;		/* connect macros */
+char   *var_milt_helo_macros;		/* HELO macros */
+char   *var_milt_mail_macros;		/* MAIL FROM macros */
+char   *var_milt_rcpt_macros;		/* RCPT TO macros */
+char   *var_milt_data_macros;		/* DATA macros */
+char   *var_milt_eod_macros;		/* end-of-data macros */
+char   *var_milt_unk_macros;		/* unknown command macros */
+char   *var_cleanup_milters;		/* non-SMTP mail */
 
 CONFIG_INT_TABLE cleanup_int_table[] = {
     VAR_HOPCOUNT_LIMIT, DEF_HOPCOUNT_LIMIT, &var_hopcount_limit, 1, 0,
@@ -140,11 +178,15 @@ CONFIG_INT_TABLE cleanup_int_table[] = {
 
 CONFIG_BOOL_TABLE cleanup_bool_table[] = {
     VAR_ENABLE_ORCPT, DEF_ENABLE_ORCPT, &var_enable_orcpt,
+    VAR_VERP_BOUNCE_OFF, DEF_VERP_BOUNCE_OFF, &var_verp_bounce_off,
     0,
 };
 
 CONFIG_TIME_TABLE cleanup_time_table[] = {
     VAR_DELAY_WARN_TIME, DEF_DELAY_WARN_TIME, &var_delay_warn_time, 0, 0,
+    VAR_MILT_CONN_TIME, DEF_MILT_CONN_TIME, &var_milt_conn_time, 1, 0,
+    VAR_MILT_CMD_TIME, DEF_MILT_CMD_TIME, &var_milt_cmd_time, 1, 0,
+    VAR_MILT_MSG_TIME, DEF_MILT_MSG_TIME, &var_milt_msg_time, 1, 0,
     0,
 };
 
@@ -170,6 +212,20 @@ CONFIG_STR_TABLE cleanup_str_table[] = {
     VAR_SEND_BCC_MAPS, DEF_SEND_BCC_MAPS, &var_send_bcc_maps, 0, 0,
     VAR_RCPT_BCC_MAPS, DEF_RCPT_BCC_MAPS, &var_rcpt_bcc_maps, 0, 0,
     VAR_REM_RWR_DOMAIN, DEF_REM_RWR_DOMAIN, &var_remote_rwr_domain, 0, 0,
+    VAR_MSG_REJECT_CHARS, DEF_MSG_REJECT_CHARS, &var_msg_reject_chars, 0, 0,
+    VAR_MSG_STRIP_CHARS, DEF_MSG_STRIP_CHARS, &var_msg_strip_chars, 0, 0,
+    VAR_MILT_PROTOCOL, DEF_MILT_PROTOCOL, &var_milt_protocol, 1, 0,
+    VAR_MILT_DEF_ACTION, DEF_MILT_DEF_ACTION, &var_milt_def_action, 1, 0,
+    VAR_MILT_DAEMON_NAME, DEF_MILT_DAEMON_NAME, &var_milt_daemon_name, 1, 0,
+    VAR_MILT_V, DEF_MILT_V, &var_milt_v, 1, 0,
+    VAR_MILT_CONN_MACROS, DEF_MILT_CONN_MACROS, &var_milt_conn_macros, 0, 0,
+    VAR_MILT_HELO_MACROS, DEF_MILT_HELO_MACROS, &var_milt_helo_macros, 0, 0,
+    VAR_MILT_MAIL_MACROS, DEF_MILT_MAIL_MACROS, &var_milt_mail_macros, 0, 0,
+    VAR_MILT_RCPT_MACROS, DEF_MILT_RCPT_MACROS, &var_milt_rcpt_macros, 0, 0,
+    VAR_MILT_DATA_MACROS, DEF_MILT_DATA_MACROS, &var_milt_data_macros, 0, 0,
+    VAR_MILT_EOD_MACROS, DEF_MILT_EOD_MACROS, &var_milt_eod_macros, 0, 0,
+    VAR_MILT_UNK_MACROS, DEF_MILT_UNK_MACROS, &var_milt_unk_macros, 0, 0,
+    VAR_CLEANUP_MILTERS, DEF_CLEANUP_MILTERS, &var_cleanup_milters, 0, 0,
     0,
 };
 
@@ -194,16 +250,52 @@ MAPS   *cleanup_send_bcc_maps;
 MAPS   *cleanup_rcpt_bcc_maps;
 
  /*
+  * Character filters.
+  */
+VSTRING *cleanup_reject_chars;
+VSTRING *cleanup_strip_chars;
+
+ /*
   * Address extension propagation restrictions.
   */
 int     cleanup_ext_prop_mask;
+
+ /*
+  * Milter support.
+  */
+MILTERS *cleanup_milters;
 
 /* cleanup_all - callback for the runtime error handler */
 
 void    cleanup_all(void)
 {
-    if (cleanup_path && REMOVE(cleanup_path))
-	msg_warn("cleanup_all: remove %s: %m", cleanup_path);
+    cleanup_sig(0);
+}
+
+/* cleanup_sig - callback for the SIGTERM handler */
+
+void    cleanup_sig(int sig)
+{
+
+    /*
+     * msg_fatal() is safe against calling itself recursively, but signals
+     * need extra safety.
+     * 
+     * XXX While running as a signal handler, can't ask the memory manager to
+     * release VSTRING storage.
+     */
+    if (signal(SIGTERM, SIG_IGN) != SIG_IGN) {
+	if (cleanup_trace_path) {
+	    (void) REMOVE(vstring_str(cleanup_trace_path));
+	    cleanup_trace_path = 0;
+	}
+	if (cleanup_path) {
+	    (void) REMOVE(cleanup_path);
+	    cleanup_path = 0;
+	}
+	if (sig)
+	    _exit(sig);
+    }
 }
 
 /* cleanup_pre_jail - initialize before entering the chroot jail */
@@ -238,19 +330,21 @@ void    cleanup_pre_jail(char *unused_name, char **unused_argv)
 
     if (*var_canonical_maps)
 	cleanup_comm_canon_maps =
-	    maps_create(VAR_CANONICAL_MAPS, var_canonical_maps, DICT_FLAG_LOCK);
+	    maps_create(VAR_CANONICAL_MAPS, var_canonical_maps,
+			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
     if (*var_send_canon_maps)
 	cleanup_send_canon_maps =
 	    maps_create(VAR_SEND_CANON_MAPS, var_send_canon_maps,
-			DICT_FLAG_LOCK);
+			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
     if (*var_rcpt_canon_maps)
 	cleanup_rcpt_canon_maps =
 	    maps_create(VAR_RCPT_CANON_MAPS, var_rcpt_canon_maps,
-			DICT_FLAG_LOCK);
+			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
     if (*var_virt_alias_maps)
 	cleanup_virt_alias_maps = maps_create(VAR_VIRT_ALIAS_MAPS,
 					      var_virt_alias_maps,
-					      DICT_FLAG_LOCK);
+					      DICT_FLAG_LOCK
+					      | DICT_FLAG_FOLD_FIX);
     if (*var_canon_classes)
 	cleanup_comm_canon_flags =
 	    name_mask(VAR_CANON_CLASSES, canon_class_table,
@@ -286,11 +380,25 @@ void    cleanup_pre_jail(char *unused_name, char **unused_argv)
     if (*var_send_bcc_maps)
 	cleanup_send_bcc_maps =
 	    maps_create(VAR_SEND_BCC_MAPS, var_send_bcc_maps,
-			DICT_FLAG_LOCK);
+			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
     if (*var_rcpt_bcc_maps)
 	cleanup_rcpt_bcc_maps =
 	    maps_create(VAR_RCPT_BCC_MAPS, var_rcpt_bcc_maps,
-			DICT_FLAG_LOCK);
+			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
+    if (*var_cleanup_milters)
+	cleanup_milters = milter_create(var_cleanup_milters,
+                                      var_milt_conn_time,
+                                      var_milt_cmd_time,
+                                      var_milt_msg_time,
+                                      var_milt_protocol,
+                                      var_milt_def_action,
+                                      var_milt_conn_macros,
+                                      var_milt_helo_macros,
+                                      var_milt_mail_macros,
+                                      var_milt_rcpt_macros,
+                                      var_milt_data_macros,
+                                      var_milt_eod_macros,
+                                      var_milt_unk_macros);
 
     flush_init();
 }
@@ -315,4 +423,17 @@ void    cleanup_post_jail(char *unused_name, char **unused_argv)
      */
     cleanup_ext_prop_mask =
 	ext_prop_mask(VAR_PROP_EXTENSION, var_prop_extension);
+
+    /*
+     * Setup the filters for characters that should be rejected, and for
+     * characters that should be removed.
+     */
+    if (*var_msg_reject_chars) {
+	cleanup_reject_chars = vstring_alloc(strlen(var_msg_reject_chars));
+	unescape(cleanup_reject_chars, var_msg_reject_chars);
+    }
+    if (*var_msg_strip_chars) {
+	cleanup_strip_chars = vstring_alloc(strlen(var_msg_strip_chars));
+	unescape(cleanup_strip_chars, var_msg_strip_chars);
+    }
 }

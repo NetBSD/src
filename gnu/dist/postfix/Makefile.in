@@ -1,9 +1,10 @@
 SHELL	= /bin/sh
 WARN    = -Wmissing-prototypes -Wformat
 OPTS	= 'CC=$(CC)'
-DIRS	= src/util src/global src/dns src/tls src/master src/postfix src/smtpstone \
+DIRS	= src/util src/global src/dns src/tls src/xsasl src/milter src/master \
+	src/postfix src/smtpstone \
 	src/sendmail src/error src/pickup src/cleanup src/smtpd src/local \
-	src/lmtp src/trivial-rewrite src/qmgr src/oqmgr src/smtp src/bounce \
+	src/trivial-rewrite src/qmgr src/oqmgr src/smtp src/bounce \
 	src/pipe src/showq src/postalias src/postcat src/postconf src/postdrop \
 	src/postkick src/postlock src/postlog src/postmap src/postqueue \
 	src/postsuper src/qmqpd src/spawn src/flush src/verify \
@@ -22,7 +23,7 @@ makefiles Makefiles:
 	done;
 	rm -f Makefile; (cat conf/makedefs.out Makefile.in) >Makefile
 
-update printfck tests:
+update printfck tests root_tests:
 	set -e; for i in $(DIRS); do \
 	 (set -e; echo "[$$i]"; cd $$i; $(MAKE) $(OPTS) $@ MAKELEVEL=) || exit 1; \
 	done
@@ -60,6 +61,8 @@ depend_update:
 tidy:	clean
 	rm -f Makefile */Makefile src/*/Makefile
 	cp Makefile.init Makefile
+	rm -f README_FILES/RELEASE_NOTES
+	ln -s ../RELEASE_NOTES README_FILES
 	rm -f bin/[!CRS]* lib/[!CRS]* include/[!CRS]* libexec/[!CRS]* \
 	    junk */junk */*/junk \
 	    *core */*core */*/*core \
@@ -74,7 +77,7 @@ tidy:	clean
 	    *.bak */*.bak */*/*.bak \
 	    make.err */make.err */*/make.err \
 	    *.gmon */*.gmon */*/*.gmon \
-	    conf/main.cf.default
+	    conf/main.cf.default conf/bounce.cf.default
 	find . -type s -print | xargs rm -f
 	find . -type d -print | xargs chmod 755
 	find . -type f -print | xargs chmod a+r

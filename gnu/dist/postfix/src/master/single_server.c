@@ -1,4 +1,4 @@
-/*	$NetBSD: single_server.c,v 1.1.1.5.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: single_server.c,v 1.1.1.5.2.2 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -152,6 +152,7 @@
 
 #include <msg.h>
 #include <msg_syslog.h>
+#include <msg_vstream.h>
 #include <chroot_uid.h>
 #include <vstring.h>
 #include <vstream.h>
@@ -375,11 +376,12 @@ static void single_server_accept_inet(int unused_event, char *context)
 
 NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
 {
-    char   *myname = "single_server_main";
+    const char *myname = "single_server_main";
     VSTREAM *stream = 0;
     char   *root_dir = 0;
     char   *user_name = 0;
     int     debug_me = 0;
+    int     daemon_mode = 1;
     char   *service_name = basename(argv[0]);
     int     delay;
     int     c;
@@ -398,6 +400,7 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
     WATCHDOG *watchdog;
     char   *oval;
     char   *generation;
+    int     msg_vstream_needed = 0;
 
     /*
      * Process environment options as early as we can.
@@ -449,10 +452,13 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
      * stderr, because no-one is going to see them.
      */
     opterr = 0;
-    while ((c = GETOPT(argc, argv, "cDi:lm:n:o:s:St:uvz")) > 0) {
+    while ((c = GETOPT(argc, argv, "cdDi:lm:n:o:s:St:uvVz")) > 0) {
 	switch (c) {
 	case 'c':
 	    root_dir = "setme";
+	    break;
+	case 'd':
+	    daemon_mode = 0;
 	    break;
 	case 'D':
 	    debug_me = 1;
@@ -489,6 +495,10 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
 	    break;
 	case 'v':
 	    msg_verbose++;
+	    break;
+	case 'V':
+	    if (++msg_vstream_needed == 1)
+		msg_vstream_init(mail_task(var_procname), VSTREAM_ERR);
 	    break;
 	case 'z':
 	    zerolimit = 1;
@@ -544,12 +554,12 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
 	    single_server_in_flow_delay = 1;
 	    break;
 	case MAIL_SERVER_SOLITARY:
-	    if (!alone)
+	    if (stream == 0 && !alone)
 		msg_fatal("service %s requires a process limit of 1",
 			  service_name);
 	    break;
 	case MAIL_SERVER_UNLIMITED:
-	    if (!zerolimit)
+	    if (stream == 0 && !zerolimit)
 		msg_fatal("service %s requires a process limit of 0",
 			  service_name);
 	    break;
@@ -572,7 +582,7 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
     /*
      * If not connected to stdin, stdin must not be a terminal.
      */
-    if (stream == 0 && isatty(STDIN_FILENO)) {
+    if (daemon_mode && stream == 0 && isatty(STDIN_FILENO)) {
 	msg_vstream_init(var_procname, VSTREAM_ERR);
 	msg_fatal("do not run this command by hand");
     }
@@ -650,9 +660,7 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
      * Optionally, restrict the damage that this process can do.
      */
     resolve_local_init();
-#ifdef SNAPSHOT
     tzset();
-#endif
     chroot_uid(root_dir, user_name);
 
     /*

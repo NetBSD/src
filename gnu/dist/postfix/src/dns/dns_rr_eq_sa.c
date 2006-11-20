@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rr_eq_sa.c,v 1.1.1.1.2.2 2006/07/12 15:06:38 tron Exp $	*/
+/*	$NetBSD: dns_rr_eq_sa.c,v 1.1.1.1.2.3 2006/11/20 13:30:23 tron Exp $	*/
 
 /*++
 /* NAME
@@ -134,6 +134,7 @@ int     main(int argc, char **argv)
 	vstream_fflush(VSTREAM_OUT);
 	argv += 1;
     }
+    return (0);
 }
 
 #endif

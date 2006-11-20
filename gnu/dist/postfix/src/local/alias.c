@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.1.1.6 2004/05/31 00:24:37 heas Exp $	*/
+/*	$NetBSD: alias.c,v 1.1.1.6.2.1 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -90,6 +90,8 @@
 #include <mypwd.h>
 #include <canon_addr.h>
 #include <sent.h>
+#include <trace.h>
+#include <dsn_mask.h>
 
 /* Application-specific. */
 
@@ -104,7 +106,7 @@
 
 static uid_t dict_owner(char *table)
 {
-    char   *myname = "dict_owner";
+    const char *myname = "dict_owner";
     DICT   *dict;
     struct stat st;
 
@@ -126,9 +128,9 @@ static uid_t dict_owner(char *table)
 int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 		              char *name, int *statusp)
 {
-    char   *myname = "deliver_alias";
+    const char *myname = "deliver_alias";
     const char *alias_result;
-    char   *expansion;
+    char   *saved_alias_result;
     char   *owner;
     char  **cpp;
     uid_t   alias_uid;
@@ -137,6 +139,10 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
     DICT   *dict;
     const char *owner_rhs;		/* owner alias, RHS */
     int     alias_count;
+    int     dsn_notify;
+    char   *dsn_envid;
+    int     dsn_ret;
+    const char *dsn_orcpt;
 
     /*
      * Make verbose logging easier to understand.
@@ -164,10 +170,11 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	&& strcasecmp(state.msg_attr.exp_from, name) == 0)
 	return (NO);
     if (state.level > 100) {
-	msg_warn("possible alias database loop for %s", name);
+	msg_warn("alias database loop for %s", name);
+	dsb_simple(state.msg_attr.why, "5.4.6",
+		   "alias database loop for %s", name);
 	*statusp = bounce_append(BOUNCE_FLAGS(state.request),
-				 BOUNCE_ATTR(state.msg_attr),
-			       "possible alias database loop for %s", name);
+				 BOUNCE_ATTR(state.msg_attr));
 	return (YES);
     }
     state.msg_attr.exp_from = name;
@@ -198,10 +205,11 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	    /*
 	     * Don't expand a verify-only request.
 	     */
-	    if (state.request->flags & DEL_REQ_FLAG_VERIFY) {
+	    if (state.request->flags & DEL_REQ_FLAG_MTA_VRFY) {
+		dsb_simple(state.msg_attr.why, "2.0.0",
+			   "aliased to %s", alias_result);
 		*statusp = sent(BOUNCE_FLAGS(state.request),
-				SENT_ATTR(state.msg_attr),
-				"aliased to %s", alias_result);
+				SENT_ATTR(state.msg_attr));
 		return (YES);
 	    }
 
@@ -227,9 +235,10 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	    } else {
 		if ((alias_pwd = mypwuid(alias_uid)) == 0) {
 		    msg_warn("cannot find alias database owner for %s", *cpp);
+		    dsb_simple(state.msg_attr.why, "4.3.0",
+			       "cannot find alias database owner");
 		    *statusp = defer_append(BOUNCE_FLAGS(state.request),
-					    BOUNCE_ATTR(state.msg_attr),
-					"cannot find alias database owner");
+					    BOUNCE_ATTR(state.msg_attr));
 		    return (YES);
 		}
 		SET_USER_ATTR(usr_attr, alias_pwd, state.level);
@@ -244,19 +253,20 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	     * 
 	     * Don't match aliases that are based on regexps.
 	     */
-#define STR(x)	vstring_str(x)
 #define OWNER_ASSIGN(own) \
 	    (own = (var_ownreq_special == 0 ? 0 : \
 	    concatenate("owner-", name, (char *) 0)))
 
-	    expansion = mystrdup(alias_result);
+	    saved_alias_result = mystrdup(alias_result);
 	    if (OWNER_ASSIGN(owner) != 0
 		&& (owner_rhs = maps_find(alias_maps, owner, DICT_FLAG_NONE)) != 0) {
 		canon_owner = canon_addr_internal(vstring_alloc(10),
 				     var_exp_own_alias ? owner_rhs : owner);
+		/* Set envelope sender and owner attribute. */
 		SET_OWNER_ATTR(state.msg_attr, STR(canon_owner), state.level);
 	    } else {
 		canon_owner = 0;
+		/* Note: this does not reset the envelope sender. */
 		RESET_OWNER_ATTR(state.msg_attr, state.level);
 	    }
 
@@ -266,32 +276,96 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	     * Set the delivered message attribute to the recipient, so that
 	     * this message will list the correct forwarding address.
 	     */
-	    state.msg_attr.delivered = state.msg_attr.recipient;
+	    if (var_frozen_delivered == 0)
+		state.msg_attr.delivered = state.msg_attr.rcpt.address;
 
 	    /*
 	     * Deliver.
 	     */
 	    alias_count = 0;
-	    *statusp =
-		(dict_errno ?
-		 defer_append(BOUNCE_FLAGS(state.request),
-			      BOUNCE_ATTR(state.msg_attr),
-			      "alias database unavailable") :
-	    deliver_token_string(state, usr_attr, expansion, &alias_count));
-#if 0
-	    if (var_ownreq_special
-		&& strncmp("owner-", state.msg_attr.sender, 6) != 0
-		&& alias_count > 10)
-		msg_warn("mailing list \"%s\" needs an \"owner-%s\" alias",
-			 name, name);
-#endif
-	    if (alias_count < 1) {
-		msg_warn("no recipient in alias lookup result for %s", name);
+	    if (dict_errno != 0) {
+		dsb_simple(state.msg_attr.why, "4.3.0",
+			   "alias database unavailable");
 		*statusp = defer_append(BOUNCE_FLAGS(state.request),
-					BOUNCE_ATTR(state.msg_attr),
-					"alias database unavailable");
+					BOUNCE_ATTR(state.msg_attr));
+	    } else {
+
+		/*
+		 * XXX DSN
+		 * 
+		 * When delivering to a mailing list (i.e. the envelope sender
+		 * is replaced) the ENVID, NOTIFY, RET, and ORCPT parameters
+		 * which accompany the redistributed message MUST NOT be
+		 * derived from those of the original message.
+		 * 
+		 * When delivering to an alias (i.e. the envelope sender is not
+		 * replaced) any ENVID, RET, or ORCPT parameters are
+		 * propagated to all forwarding addresses associated with
+		 * that alias.  The NOTIFY parameter is propagated to the
+		 * forwarding addresses, except that any SUCCESS keyword is
+		 * removed.
+		 */
+#define DSN_SAVE_UPDATE(saved, old, new) do { \
+	saved = old; \
+	old = new; \
+    } while (0)
+
+		DSN_SAVE_UPDATE(dsn_notify, state.msg_attr.rcpt.dsn_notify,
+				dsn_notify == DSN_NOTIFY_SUCCESS ?
+				DSN_NOTIFY_NEVER :
+				dsn_notify & ~DSN_NOTIFY_SUCCESS);
+		if (canon_owner != 0) {
+		    DSN_SAVE_UPDATE(dsn_envid, state.msg_attr.dsn_envid, "");
+		    DSN_SAVE_UPDATE(dsn_ret, state.msg_attr.dsn_ret, 0);
+		    DSN_SAVE_UPDATE(dsn_orcpt, state.msg_attr.rcpt.dsn_orcpt, "");
+		    state.msg_attr.rcpt.orig_addr = "";
+		}
+		*statusp =
+		    deliver_token_string(state, usr_attr, saved_alias_result,
+					 &alias_count);
+#if 0
+		if (var_ownreq_special
+		    && strncmp("owner-", state.msg_attr.sender, 6) != 0
+		    && alias_count > 10)
+		    msg_warn("mailing list \"%s\" needs an \"owner-%s\" alias",
+			     name, name);
+#endif
+		if (alias_count < 1) {
+		    msg_warn("no recipient in alias lookup result for %s", name);
+		    dsb_simple(state.msg_attr.why, "4.3.0",
+			       "alias database unavailable");
+		    *statusp = defer_append(BOUNCE_FLAGS(state.request),
+					    BOUNCE_ATTR(state.msg_attr));
+		} else {
+
+		    /*
+		     * XXX DSN
+		     * 
+		     * When delivering to a mailing list (i.e. the envelope
+		     * sender address is replaced) and NOTIFY=SUCCESS was
+		     * specified, report a DSN of "delivered".
+		     * 
+		     * When delivering to an alias (i.e. the envelope sender
+		     * address is not replaced) and NOTIFY=SUCCESS was
+		     * specified, report a DSN of "expanded".
+		     */
+		    if (dsn_notify & DSN_NOTIFY_SUCCESS) {
+			state.msg_attr.rcpt.dsn_notify = dsn_notify;
+			if (canon_owner != 0) {
+			    state.msg_attr.dsn_envid = dsn_envid;
+			    state.msg_attr.dsn_ret = dsn_ret;
+			    state.msg_attr.rcpt.dsn_orcpt = dsn_orcpt;
+			}
+			dsb_update(state.msg_attr.why, "2.0.0", canon_owner ?
+				   "delivered" : "expanded",
+				   DSB_SKIP_RMTA, DSB_SKIP_REPLY,
+				   "alias expanded");
+			(void) trace_append(BOUNCE_FLAG_NONE,
+					    SENT_ATTR(state.msg_attr));
+		    }
+		}
 	    }
-	    myfree(expansion);
+	    myfree(saved_alias_result);
 	    if (owner)
 		myfree(owner);
 	    if (canon_owner)
@@ -306,9 +380,10 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	 * further delivery for the current top-level recipient.
 	 */
 	if (dict_errno != 0) {
+	    dsb_simple(state.msg_attr.why, "4.3.0",
+		       "alias database unavailable");
 	    *statusp = defer_append(BOUNCE_FLAGS(state.request),
-				    BOUNCE_ATTR(state.msg_attr),
-				    "alias database unavailable");
+				    BOUNCE_ATTR(state.msg_attr));
 	    return (YES);
 	} else {
 	    if (msg_verbose)

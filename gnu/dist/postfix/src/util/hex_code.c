@@ -1,4 +1,4 @@
-/*	$NetBSD: hex_code.c,v 1.1.1.1.2.2 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: hex_code.c,v 1.1.1.1.2.3 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -11,12 +11,12 @@
 /*	VSTRING	*hex_encode(result, in, len)
 /*	VSTRING	*result;
 /*	const char *in;
-/*	int	len;
+/*	ssize_t	len;
 /*
 /*	VSTRING	*hex_decode(result, in, len)
 /*	VSTRING	*result;
 /*	const char *in;
-/*	int	len;
+/*	ssize_t	len;
 /* DESCRIPTION
 /*	hex_encode() takes a block of len bytes and encodes it as one
 /*      upper-case null-terminated string.  The result value is
@@ -61,11 +61,11 @@ static const unsigned char hex_chars[] = "0123456789ABCDEF";
 
 /* hex_encode - raw data to encoded */
 
-VSTRING *hex_encode(VSTRING *result, const char *in, int len)
+VSTRING *hex_encode(VSTRING *result, const char *in, ssize_t len)
 {
     const unsigned char *cp;
     int     ch;
-    int     count;
+    ssize_t count;
 
     VSTRING_RESET(result);
     for (cp = UCHAR_PTR(in), count = len; count > 0; count--, cp++) {
@@ -79,10 +79,10 @@ VSTRING *hex_encode(VSTRING *result, const char *in, int len)
 
 /* hex_decode - encoded data to raw */
 
-VSTRING *hex_decode(VSTRING *result, const char *in, int len)
+VSTRING *hex_decode(VSTRING *result, const char *in, ssize_t len)
 {
     const unsigned char *cp;
-    int     count;
+    ssize_t count;
     unsigned int hex;
     unsigned int bin;
 
@@ -101,11 +101,11 @@ VSTRING *hex_decode(VSTRING *result, const char *in, int len)
 	    return (0);
 	hex = cp[1];
 	if (hex >= '0' && hex <= '9')
-	    bin |= (hex - '0') ;
+	    bin |= (hex - '0');
 	else if (hex >= 'A' && hex <= 'F')
-	    bin |= (hex - 'A' + 10) ;
+	    bin |= (hex - 'A' + 10);
 	else if (hex >= 'a' && hex <= 'f')
-	    bin |= (hex - 'a' + 10) ;
+	    bin |= (hex - 'a' + 10);
 	else
 	    return (0);
 	VSTRING_ADDCH(result, bin);

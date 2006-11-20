@@ -1,4 +1,4 @@
-/*	$NetBSD: sigdelay.c,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: sigdelay.c,v 1.1.1.2.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -97,13 +97,14 @@ void    sigdelay(void)
 
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 static void gotsig(int sig)
 {
     printf("Got signal %d\n", sig);
 }
 
-int     main(int unused_argc, int unused_argv)
+int     main(int unused_argc, char **unused_argv)
 {
     signal(SIGINT, gotsig);
     signal(SIGQUIT, gotsig);

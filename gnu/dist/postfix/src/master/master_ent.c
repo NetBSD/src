@@ -1,4 +1,4 @@
-/*	$NetBSD: master_ent.c,v 1.12.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: master_ent.c,v 1.12.2.2 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -88,6 +88,7 @@
 #include <inet_addr_list.h>
 #include <host_port.h>
 #include <inet_addr_host.h>
+#include <sock_addr.h>
 
 /* Global library. */
 
@@ -123,7 +124,7 @@ void    fset_master_ent(char *path)
 
 void    set_master_ent()
 {
-    char   *myname = "set_master_ent";
+    const char *myname = "set_master_ent";
 
     if (master_fp != 0)
 	msg_panic("%s: configuration file still open", myname);
@@ -138,7 +139,7 @@ void    set_master_ent()
 
 void    end_master_ent()
 {
-    char   *myname = "end_master_ent";
+    const char *myname = "end_master_ent";
 
     if (master_fp == 0)
 	msg_panic("%s: configuration file not open", myname);
@@ -151,7 +152,7 @@ void    end_master_ent()
 
 static NORETURN fatal_with_context(char *format,...)
 {
-    char   *myname = "fatal_with_context";
+    const char *myname = "fatal_with_context";
     VSTRING *vp = vstring_alloc(100);
     va_list ap;
 
@@ -283,8 +284,14 @@ MASTER_SERV *get_master_ent()
     serv->flags = 0;
 
     /*
+     * All servers busy warning timer.
+     */
+    serv->busy_warn_time = 0;
+
+    /*
      * Service name. Syntax is transport-specific.
      */
+    serv->ext_name = mystrdup(cp);
     name = cp;
 
     /*
@@ -296,7 +303,7 @@ MASTER_SERV *get_master_ent()
     if (STR_SAME(transport, MASTER_XPORT_NAME_INET)) {
 	if (!STR_SAME(saved_interfaces, var_inet_interfaces)) {
 	    msg_warn("service %s: ignoring %s change",
-		     name, VAR_INET_INTERFACES);
+		     serv->ext_name, VAR_INET_INTERFACES);
 	    msg_warn("to change %s, stop and start Postfix",
 		     VAR_INET_INTERFACES);
 	}
@@ -325,16 +332,27 @@ MASTER_SERV *get_master_ent()
 	    serv->listen_fd_count = MASTER_INET_ADDRLIST(serv)->used;
 	}
 	MASTER_INET_PORT(serv) = mystrdup(port);
+	for (n = 0; /* see below */ ; n++) {
+	    if (n >= MASTER_INET_ADDRLIST(serv)->used) {
+		serv->flags |= MASTER_FLAG_LOCAL_ONLY;
+		break;
+	    }
+	    if (!sock_addr_in_loopback(SOCK_ADDR_PTR(MASTER_INET_ADDRLIST(serv)->addrs + n)))
+		break;
+	}
     } else if (STR_SAME(transport, MASTER_XPORT_NAME_UNIX)) {
 	serv->type = MASTER_SERV_TYPE_UNIX;
 	serv->listen_fd_count = 1;
+	serv->flags |= MASTER_FLAG_LOCAL_ONLY;
     } else if (STR_SAME(transport, MASTER_XPORT_NAME_FIFO)) {
 	serv->type = MASTER_SERV_TYPE_FIFO;
 	serv->listen_fd_count = 1;
+	serv->flags |= MASTER_FLAG_LOCAL_ONLY;
 #ifdef MASTER_SERV_TYPE_PASS
     } else if (STR_SAME(transport, MASTER_XPORT_NAME_PASS)) {
 	serv->type = MASTER_SERV_TYPE_PASS;
 	serv->listen_fd_count = 1;
+	/* If this is a connection screener, remote clients are likely. */
 #endif
     } else {
 	fatal_with_context("bad transport type: %s", transport);
@@ -356,7 +374,11 @@ MASTER_SERV *get_master_ent()
 
 	if (private)
 	    fatal_with_context("inet service cannot be private");
-#ifdef SNAPSHOT
+
+	/*
+	 * Canonicalize endpoint names so that we correctly handle "reload"
+	 * requests after someone changes "25" into "smtp" or vice versa.
+	 */
 	if (*host == 0)
 	    host = 0;
 	/* Canonicalize numeric host and numeric or symbolic service. */
@@ -368,7 +390,7 @@ MASTER_SERV *get_master_ent()
 					     serv_port.buf, (char *) 0) :
 			  mystrdup(serv_port.buf));
 	    freeaddrinfo(res0);
-	} 
+	}
 	/* Canonicalize numeric or symbolic service. */
 	else if (hostaddr_to_sockaddr((char *) 0, port, 0, &res0) == 0) {
 	    SOCKADDR_TO_HOSTADDR(res0->ai_addr, res0->ai_addrlen,
@@ -377,10 +399,9 @@ MASTER_SERV *get_master_ent()
 					     serv_port.buf, (char *) 0) :
 			  mystrdup(serv_port.buf));
 	    freeaddrinfo(res0);
-	} 
+	}
 	/* Bad service name? */
 	else
-#endif
 	    serv->name = mystrdup(name);
 	myfree(atmp);
     } else if (serv->type == MASTER_SERV_TYPE_UNIX) {
@@ -484,6 +505,8 @@ MASTER_SERV *get_master_ent()
     if (strcmp(basename(command), name) != 0)
 	argv_add(serv->args, "-n", name, (char *) 0);
     argv_add(serv->args, "-t", transport, (char *) 0);
+    if (master_detach == 0)
+	argv_add(serv->args, "-d", (char *) 0);
     if (msg_verbose)
 	argv_add(serv->args, "-v", (char *) 0);
     if (unprivileged)
@@ -552,6 +575,7 @@ void    free_master_ent(MASTER_SERV *serv)
     }
     if (serv->type == MASTER_SERV_TYPE_INET)
 	myfree(MASTER_INET_PORT(serv));
+    myfree(serv->ext_name);
     myfree(serv->name);
     myfree(serv->path);
     argv_free(serv->args);

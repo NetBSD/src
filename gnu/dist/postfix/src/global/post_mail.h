@@ -1,4 +1,4 @@
-/*	$NetBSD: post_mail.h,v 1.1.1.4 2004/05/31 00:24:34 heas Exp $	*/
+/*	$NetBSD: post_mail.h,v 1.1.1.4.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 #ifndef _POST_MAIL_H_INCLUDED_
 #define _POST_MAIL_H_INCLUDED_
@@ -17,19 +17,21 @@
   * Utility library.
   */
 #include <vstream.h>
+#include <vstring.h>
 
  /*
   * Global library.
   */
 #include <cleanup_user.h>
+#include <int_filt.h>
 
  /*
   * External interface.
   */
 typedef void (*POST_MAIL_NOTIFY)(VSTREAM *, void *);
-extern VSTREAM *post_mail_fopen(const char *, const char *, int, int);
-extern VSTREAM *post_mail_fopen_nowait(const char *, const char *, int, int);
-extern void post_mail_fopen_async(const char *, const char *, int, int, POST_MAIL_NOTIFY, void *);
+extern VSTREAM *post_mail_fopen(const char *, const char *, int, int, VSTRING *);
+extern VSTREAM *post_mail_fopen_nowait(const char *, const char *, int, int, VSTRING *);
+extern void post_mail_fopen_async(const char *, const char *, int, int, VSTRING *, POST_MAIL_NOTIFY, void *);
 extern int PRINTFLIKE(2, 3) post_mail_fprintf(VSTREAM *, const char *,...);
 extern int post_mail_fputs(VSTREAM *, const char *);
 extern int post_mail_buffer(VSTREAM *, const char *, int);

@@ -102,7 +102,7 @@ CCrreeddiittss
   * Liviu Daia with further refinements from Jose Luis Tallon and Victor
     Duchovni developed the common query, result_format, domain and
     expansion_limit interface for LDAP, MySQL and PosgreSQL.
-  * Leandro Santi updated the PostgreSQL client to reflect PostgreSQL security
-    issues with respect to quoting which resulted in major database API
-    changes, and made PQexec() handling more robust.
+  * Leandro Santi updated the PostgreSQL client after the PostgreSQL developers
+    made major database API changes in response to SQL injection problems, and
+    made PQexec() handling more robust.
 

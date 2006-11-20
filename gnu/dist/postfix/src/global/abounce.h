@@ -1,4 +1,4 @@
-/*	$NetBSD: abounce.h,v 1.1.1.4 2004/05/31 00:24:28 heas Exp $	*/
+/*	$NetBSD: abounce.h,v 1.1.1.4.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 #ifndef _ABOUNCE_H_INCLUDED_
 #define _ABOUNCE_H_INCLUDED_
@@ -23,12 +23,12 @@
   */
 typedef void (*ABOUNCE_FN) (int, char *);
 
-extern void abounce_flush(int, const char *, const char *, const char *, const char *, ABOUNCE_FN, char *);
-extern void adefer_flush(int, const char *, const char *, const char *, const char *, ABOUNCE_FN, char *);
-extern void adefer_warn(int, const char *, const char *, const char *, const char *, ABOUNCE_FN, char *);
+extern void abounce_flush(int, const char *, const char *, const char *, const char *, const char *, int, ABOUNCE_FN, char *);
+extern void adefer_flush(int, const char *, const char *, const char *, const char *, const char *, int, ABOUNCE_FN, char *);
+extern void adefer_warn(int, const char *, const char *, const char *, const char *, const char *, int, ABOUNCE_FN, char *);
 
-extern void abounce_flush_verp(int, const char *, const char *, const char *, const char *, const char *, ABOUNCE_FN, char *);
-extern void adefer_flush_verp(int, const char *, const char *, const char *, const char *, const char *, ABOUNCE_FN, char *);
+extern void abounce_flush_verp(int, const char *, const char *, const char *, const char *, const char *, int, const char *, ABOUNCE_FN, char *);
+extern void adefer_flush_verp(int, const char *, const char *, const char *, const char *, const char *, int, const char *, ABOUNCE_FN, char *);
 
 /* LICENSE
 /* .ad

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_run.c,v 1.1.1.3 2004/05/31 00:24:32 heas Exp $	*/
+/*	$NetBSD: mail_run.c,v 1.1.1.3.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -94,6 +94,8 @@ int     mail_run_foreground(const char *dir, char **argv)
 	    msg_warn("fork %s: %m", path);
 	    break;
 	case 0:
+	    /* Reset the msg_cleanup() handlers in the child process. */
+	    (void) msg_cleanup((MSG_CLEANUP_FN) 0);
 	    execv(path, argv);
 	    msg_fatal("execv %s: %m", path);
 	default:
@@ -126,6 +128,8 @@ int     mail_run_background(const char *dir, char **argv)
 	    msg_warn("fork %s: %m", path);
 	    break;
 	case 0:
+	    /* Reset the msg_cleanup() handlers in the child process. */
+	    (void) msg_cleanup((MSG_CLEANUP_FN) 0);
 	    execv(path, argv);
 	    msg_fatal("execv %s: %m", path);
 	default:

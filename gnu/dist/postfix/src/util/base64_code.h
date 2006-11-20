@@ -1,4 +1,4 @@
-/*	$NetBSD: base64_code.h,v 1.1.1.2 2004/05/31 00:24:56 heas Exp $	*/
+/*	$NetBSD: base64_code.h,v 1.1.1.2.2.1 2006/11/20 13:30:59 tron Exp $	*/
 
 #ifndef _BASE64_CODE_H_INCLUDED_
 #define _BASE64_CODE_H_INCLUDED_
@@ -21,8 +21,8 @@
  /*
   * External interface.
   */
-extern VSTRING *base64_encode(VSTRING *, const char *, int);
-extern VSTRING *base64_decode(VSTRING *, const char *, int);
+extern VSTRING *base64_encode(VSTRING *, const char *, ssize_t);
+extern VSTRING *base64_decode(VSTRING *, const char *, ssize_t);
 
 /* LICENSE
 /* .ad

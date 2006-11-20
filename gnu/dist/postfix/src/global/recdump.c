@@ -1,4 +1,4 @@
-/*	$NetBSD: recdump.c,v 1.1.1.3 2004/05/31 00:24:34 heas Exp $	*/
+/*	$NetBSD: recdump.c,v 1.1.1.3.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -26,6 +26,7 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <stdlib.h>
 
 /* Utility library. */
 
@@ -48,9 +49,9 @@ int     main(int unused_argc, char **argv)
     while (offset = vstream_ftell(VSTREAM_IN),
 	   ((type = rec_get(VSTREAM_IN, buf, 0)) != REC_TYPE_EOF
 	   && type != REC_TYPE_ERROR)) {
-	vstream_fprintf(VSTREAM_OUT, "%15s|%4ld|%3d|%s\n",
+	vstream_fprintf(VSTREAM_OUT, "%15s|%4ld|%3ld|%s\n",
 			rec_type_name(type), offset,
-			VSTRING_LEN(buf), vstring_str(buf));
+			(long) VSTRING_LEN(buf), vstring_str(buf));
     }
     vstream_fflush(VSTREAM_OUT);
     vstring_free(buf);

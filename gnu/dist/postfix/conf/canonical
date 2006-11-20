@@ -37,28 +37,33 @@
 #        By default the canonical(5) mapping affects  both  message
 #        header  addresses  (i.e. addresses that appear inside mes-
 #        sages) and message envelope addresses  (for  example,  the
-#        addresses  that are used in SMTP protocol commands). Think
-#        Sendmail rule set S3, if you  like.   This  is  controlled
-#        with the canonical_classes parameter.
+#        addresses  that  are used in SMTP protocol commands). This
+#        is controlled with the canonical_classes parameter.
 # 
 #        NOTE: Postfix versions 2.2 and later rewrite message head-
-#        ers from remote SMTP clients only if  the  client  matches
+#        ers  from  remote  SMTP clients only if the client matches
 #        the  local_header_rewrite_clients  parameter,  or  if  the
 #        remote_header_rewrite_domain configuration parameter spec-
-#        ifies  a non-empty value. To get the behavior before Post-
-#        fix   2.2,   specify    "local_header_rewrite_clients    =
+#        ifies a non-empty value. To get the behavior before  Post-
+#        fix    2.2,    specify   "local_header_rewrite_clients   =
 #        static:all".
 # 
 #        Typically, one would use the canonical(5) table to replace
-#        login  names  by  Firstname.Lastname,  or  to   clean   up
+#        login   names   by  Firstname.Lastname,  or  to  clean  up
 #        addresses produced by legacy mail systems.
 # 
-#        The  canonical(5)  mapping is not to be confused with vir-
-#        tual domain support. Use the virtual(5) map for that  pur-
+#        The canonical(5) mapping is not to be confused  with  vir-
+#        tual  domain support. Use the virtual(5) map for that pur-
 #        pose.
 # 
-#        The  canonical(5) mapping is not to be confused with local
+#        The canonical(5) mapping is not to be confused with  local
 #        aliasing.  Use the aliases(5) map for that purpose.
+# 
+# CASE FOLDING
+#        The  search  string is folded to lowercase before database
+#        lookup. As of Postfix 2.3, the search string is  not  case
+#        folded  with database types such as regexp: or pcre: whose
+#        lookup fields can match both upper and lower case.
 # 
 # TABLE FORMAT
 #        The input format for the postmap(1) command is as follows:
@@ -151,7 +156,7 @@
 #        lookups are directed to a TCP-based server. For a descrip-
 #        tion of the TCP client/server lookup protocol, see tcp_ta-
 #        ble(5).  This feature is not available up to and including
-#        Postfix version 2.2.
+#        Postfix version 2.3.
 # 
 #        Each lookup operation uses the entire address once.  Thus,
 #        user@domain  mail  addresses  are not broken up into their

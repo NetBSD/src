@@ -1,4 +1,4 @@
-/*	$NetBSD: header_token.h,v 1.1.1.2 2004/05/31 00:24:30 heas Exp $	*/
+/*	$NetBSD: header_token.h,v 1.1.1.2.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 #ifndef _HEADER_TOKEN_H_INCLUDED_
 #define _HEADER_TOKEN_H_INCLUDED_
@@ -26,14 +26,14 @@ typedef struct HEADER_TOKEN {
     int     type;			/* see below */
     union {
 	const char *value;		/* just a pointer, not a copy */
-	int     offset;			/* index into token buffer */
+	ssize_t offset;			/* index into token buffer */
     }       u;				/* indent beats any alternative */
 } HEADER_TOKEN;
 
 #define HEADER_TOK_TOKEN	256
 #define HEADER_TOK_QSTRING	257
 
-extern int header_token(HEADER_TOKEN *, int, VSTRING *, const char **, const char *, int);
+extern ssize_t header_token(HEADER_TOKEN *, ssize_t, VSTRING *, const char **, const char *, int);
 
 /* LICENSE
 /* .ad

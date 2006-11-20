@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_strerror.c,v 1.1.1.3 2004/05/31 00:24:28 heas Exp $	*/
+/*	$NetBSD: cleanup_strerror.c,v 1.1.1.3.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,13 +8,29 @@
 /* SYNOPSIS
 /*	#include <cleanup_user.h>
 /*
+/*	typedef struct {
+/* .in +4
+/*	    const unsigned status;	/* cleanup status */
+/*	    const int smtp;	/* RFC 821 */
+/*	    const char *dsn;	/* RFC 3463 */
+/*	    const char *text;	/* free text */
+/* .in -4
+/*	} CLEANUP_STAT_DETAIL;
+/*
 /*	const char *cleanup_strerror(code)
+/*	int	code;
+/*
+/*	CLEANUP_STAT_DETAIL *cleanup_stat_detail(code)
 /*	int	code;
 /* DESCRIPTION
 /*	cleanup_strerror() maps a status code returned by the \fIcleanup\fR
 /*	service to printable string.
-/*	The result is for read purposes only. Unknown status codes share
-/*	a common result buffer.
+/*	The result is for read purposes only.
+/*
+/*	cleanup_stat_detail() returns a pointer to structure with
+/*	assorted information.
+/* DIAGNOSTICS:
+/*	Panic: unknown status.
 /* LICENSE
 /* .ad
 /* .fi
@@ -33,47 +49,60 @@
 /* Utility library. */
 
 #include <vstring.h>
+#include <msg.h>
 
 /* Global library. */
 
-#include "cleanup_user.h"
+#include <cleanup_user.h>
 
  /*
   * Mapping from status code to printable string. One message may suffer from
   * multiple errors, to it is important to list the most severe errors first,
-  * or to list the cause (header overflow) before the effect (no recipients),
   * because cleanup_strerror() can report only one error.
   */
-struct cleanup_stat_map {
-    unsigned status;
-    const char *text;
+static CLEANUP_STAT_DETAIL cleanup_stat_map[] = {
+    CLEANUP_STAT_DEFER, 451, "4.7.1", "service unavailable",
+    CLEANUP_STAT_PROXY, 451, "4.3.0", "queue file write error",
+    CLEANUP_STAT_BAD, 451, "4.3.0", "internal protocol error",
+    CLEANUP_STAT_RCPT, 550, "5.1.0", "no recipients specified",
+    CLEANUP_STAT_HOPS, 554, "5.4.0", "too many hops",
+    CLEANUP_STAT_SIZE, 552, "5.3.4", "message file too big",
+    CLEANUP_STAT_CONT, 550, "5.7.1", "message content rejected",
+    CLEANUP_STAT_WRITE, 451, "4.3.0", "queue file write error",
 };
 
-static struct cleanup_stat_map cleanup_stat_map[] = {
-    CLEANUP_STAT_BAD, "Internal protocol error",
-    CLEANUP_STAT_RCPT, "No recipients specified",
-    CLEANUP_STAT_HOPS, "Too many hops",
-    CLEANUP_STAT_SIZE, "Message file too big",
-    CLEANUP_STAT_CONT, "Message content rejected",
-    CLEANUP_STAT_WRITE, "Error writing message file",
+static CLEANUP_STAT_DETAIL cleanup_stat_success = {
+    CLEANUP_STAT_OK, 250, "2.0.0", "Success",
 };
 
 /* cleanup_strerror - map status code to printable string */
 
 const char *cleanup_strerror(unsigned status)
 {
-    static VSTRING *unknown;
     unsigned i;
 
-    if (status == 0)
+    if (status == CLEANUP_STAT_OK)
 	return ("Success");
 
     for (i = 0; i < sizeof(cleanup_stat_map) / sizeof(cleanup_stat_map[0]); i++)
 	if (cleanup_stat_map[i].status & status)
 	    return (cleanup_stat_map[i].text);
 
-    if (unknown == 0)
-	unknown = vstring_alloc(20);
-    vstring_sprintf(unknown, "Unknown status %u", status);
-    return (vstring_str(unknown));
+    msg_panic("cleanup_strerror: unknown status %u", status);
+}
+
+/* cleanup_stat_detail - map status code to table entry with assorted data */
+
+CLEANUP_STAT_DETAIL *cleanup_stat_detail(unsigned status)
+{
+    unsigned i;
+
+    if (status == CLEANUP_STAT_OK)
+	return (&cleanup_stat_success);
+
+    for (i = 0; i < sizeof(cleanup_stat_map) / sizeof(cleanup_stat_map[0]); i++)
+	if (cleanup_stat_map[i].status & status)
+	    return (cleanup_stat_map + i);
+
+    msg_panic("cleanup_stat_detail: unknown status %u", status);
 }

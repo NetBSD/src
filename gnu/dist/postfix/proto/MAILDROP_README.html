@@ -100,9 +100,12 @@ to deliver the mail.  </p>
 <pre>
 /etc/postfix/master.cf:
     maildrop  unix  -       n       n       -       -       pipe
-      flags=DRhu user=vmail argv=/path/to/maildrop -d ${recipient}
+      flags=ODRhu user=vmail argv=/path/to/maildrop -d ${recipient}
 </pre>
 </blockquote>
+
+<p> The pipe(8) manual page gives a detailed description of the
+above command line arguments, and more. </p>
 
 <p> If you want to support user+extension@domain style addresses,
 use the following instead: </p>
@@ -111,7 +114,7 @@ use the following instead: </p>
 <pre>
 /etc/postfix/master.cf:
     maildrop  unix  -       n       n       -       -       pipe
-      flags=DRhu user=vmail argv=/path/to/maildrop 
+      flags=ODRhu user=vmail argv=/path/to/maildrop 
       -d ${user}@${nexthop} ${extension} ${recipient} ${user} ${nexthop}
 </pre>
 </blockquote>

@@ -1,4 +1,4 @@
-/*	$NetBSD: attr.h,v 1.1.1.4.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: attr.h,v 1.1.1.4.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 #ifndef _ATTR_H_INCLUDED_
 #define _ATTR_H_INCLUDED_
@@ -27,12 +27,14 @@
   * Attribute types. See attr_scan(3) for documentation.
   */
 #define ATTR_TYPE_END		0	/* end of data */
-#define ATTR_TYPE_NUM		1	/* Unsigned integer */
+#define ATTR_TYPE_INT		1	/* Unsigned integer */
+#define ATTR_TYPE_NUM		ATTR_TYPE_INT
 #define ATTR_TYPE_STR		2	/* Character string */
 #define ATTR_TYPE_HASH		3	/* Hash table */
 #define ATTR_TYPE_NV		3	/* Name-value table */
 #define ATTR_TYPE_LONG		4	/* Unsigned long */
 #define ATTR_TYPE_DATA		5	/* Binary data */
+#define ATTR_TYPE_FUNC		6	/* Function pointer */
 
 #define ATTR_HASH_LIMIT		1024	/* Size of hash table */
 
@@ -47,6 +49,17 @@
 #define ATTR_FLAG_STRICT	(ATTR_FLAG_MISSING | ATTR_FLAG_EXTRA)
 #define ATTR_FLAG_ALL		(07)
 
+ /*
+  * Delegation for better data abstraction.
+  */
+typedef int (*ATTR_SCAN_MASTER_FN) (VSTREAM *, int, ...);
+typedef int (*ATTR_SCAN_SLAVE_FN) (ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
+typedef int (*ATTR_PRINT_MASTER_FN) (VSTREAM *, int,...);
+typedef int (*ATTR_PRINT_SLAVE_FN) (ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
+
+ /*
+  * Default to null-terminated, as opposed to base64-encoded.
+  */
 #define attr_print	attr_print0
 #define attr_vprint	attr_vprint0
 #define attr_scan	attr_scan0
@@ -94,7 +107,7 @@ extern int attr_vscan_plain(VSTREAM *, int, va_list);
   * routines.
   */
 #ifdef TEST
-#define ATTR_NAME_NUM		"number"
+#define ATTR_NAME_INT		"number"
 #define ATTR_NAME_STR		"string"
 #define ATTR_NAME_LONG		"long_number"
 #define ATTR_NAME_DATA		"data"

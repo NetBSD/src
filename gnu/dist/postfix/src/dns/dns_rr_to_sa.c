@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rr_to_sa.c,v 1.1.1.1.2.2 2006/07/12 15:06:38 tron Exp $	*/
+/*	$NetBSD: dns_rr_to_sa.c,v 1.1.1.1.2.3 2006/11/20 13:30:23 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,11 +8,11 @@
 /* SYNOPSIS
 /*	#include <dns.h>
 /*
-/*	int	dns_rr_to_sa(rr, port, sa, sa_len)
+/*	int	dns_rr_to_sa(rr, port, sa, sa_length)
 /*	DNS_RR	*rr;
 /*	unsigned port;
 /*	struct sockaddr *sa;
-/*	SOCKADDR_SIZE *sa_len;
+/*	SOCKADDR_SIZE *sa_length;
 /* DESCRIPTION
 /*	dns_rr_to_sa() converts the address in a DNS resource record into
 /*	a socket address of the corresponding type.
@@ -24,7 +24,7 @@
 /*	TCP or UDP port, network byte order.
 /* .IP sa
 /*	Socket address pointer.
-/* .IP sa_len
+/* .IP sa_length
 /*	On input, the available socket address storage space.
 /*	On output, the amount of space actually used.
 /* DIAGNOSTICS
@@ -57,7 +57,7 @@
 /* dns_rr_to_sa - resource record to socket address */
 
 int     dns_rr_to_sa(DNS_RR *rr, unsigned port, struct sockaddr * sa,
-		             SOCKADDR_SIZE *sa_len)
+		             SOCKADDR_SIZE *sa_length)
 {
     SOCKADDR_SIZE sock_addr_len;
 
@@ -65,7 +65,7 @@ int     dns_rr_to_sa(DNS_RR *rr, unsigned port, struct sockaddr * sa,
 	if (rr->data_len != sizeof(SOCK_ADDR_IN_ADDR(sa))) {
 	    errno = EINVAL;
 	    return (-1);
-	} else if ((sock_addr_len = sizeof(*SOCK_ADDR_IN_PTR(sa))) > *sa_len) {
+	} else if ((sock_addr_len = sizeof(*SOCK_ADDR_IN_PTR(sa))) > *sa_length) {
 	    errno = ENOSPC;
 	    return (-1);
 	} else {
@@ -76,7 +76,7 @@ int     dns_rr_to_sa(DNS_RR *rr, unsigned port, struct sockaddr * sa,
 #ifdef HAS_SA_LEN
 	    sa->sa_len = sock_addr_len;
 #endif
-	    *sa_len = sock_addr_len;
+	    *sa_length = sock_addr_len;
 	    return (0);
 	}
 #ifdef HAS_IPV6
@@ -84,7 +84,7 @@ int     dns_rr_to_sa(DNS_RR *rr, unsigned port, struct sockaddr * sa,
 	if (rr->data_len != sizeof(SOCK_ADDR_IN6_ADDR(sa))) {
 	    errno = EINVAL;
 	    return (-1);
-	} else if ((sock_addr_len = sizeof(*SOCK_ADDR_IN6_PTR(sa))) > *sa_len) {
+	} else if ((sock_addr_len = sizeof(*SOCK_ADDR_IN6_PTR(sa))) > *sa_length) {
 	    errno = ENOSPC;
 	    return (-1);
 	} else {
@@ -95,7 +95,7 @@ int     dns_rr_to_sa(DNS_RR *rr, unsigned port, struct sockaddr * sa,
 #ifdef HAS_SA_LEN
 	    sa->sa_len = sock_addr_len;
 #endif
-	    *sa_len = sock_addr_len;
+	    *sa_length = sock_addr_len;
 	    return (0);
 	}
 #endif
@@ -129,7 +129,7 @@ int     main(int argc, char **argv)
     MAI_SERVPORT_STR portnum;
     struct sockaddr_storage ss;
     struct sockaddr *sa = (struct sockaddr *) & ss;
-    SOCKADDR_SIZE sa_len = sizeof(ss);
+    SOCKADDR_SIZE sa_length = sizeof(ss);
     VSTRING *why;
     int     type;
     int     port;
@@ -148,10 +148,10 @@ int     main(int argc, char **argv)
 	    usage();
 	if (dns_lookup(argv[1], type, 0, &rr, (VSTRING *) 0, why) != DNS_OK)
 	    msg_fatal("%s: %s", argv[1], vstring_str(why));
-	sa_len = sizeof(ss);
-	if (dns_rr_to_sa(rr, htons(port), sa, &sa_len) != 0)
+	sa_length = sizeof(ss);
+	if (dns_rr_to_sa(rr, htons(port), sa, &sa_length) != 0)
 	    msg_fatal("dns_rr_to_sa: %m");
-	SOCKADDR_TO_HOSTADDR(sa, sa_len, &hostaddr, &portnum, 0);
+	SOCKADDR_TO_HOSTADDR(sa, sa_length, &hostaddr, &portnum, 0);
 	vstream_printf("%s %s -> %s %s\n",
 		       argv[1], argv[2], hostaddr.buf, portnum.buf);
 	vstream_fflush(VSTREAM_OUT);

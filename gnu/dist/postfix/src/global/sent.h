@@ -1,4 +1,4 @@
-/*	$NetBSD: sent.h,v 1.1.1.5 2004/05/31 00:24:30 heas Exp $	*/
+/*	$NetBSD: sent.h,v 1.1.1.5.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 #ifndef _SENT_H_INCLUDED_
 #define _SENT_H_INCLUDED_
@@ -23,16 +23,15 @@
   * Global library.
   */
 #include <deliver_request.h>
+#include <bounce.h>
 
  /*
   * External interface.
   */
 #define SENT_FLAG_NONE	(0)
 
-extern int PRINTFLIKE(8, 9) sent(int, const char *, const char *, const char *,
-		              long, const char *, time_t, const char *,...);
-extern int vsent(int, const char *, const char *, const char *, long,
-		         const char *, time_t, const char *, va_list);
+extern int sent(int, const char *, MSG_STATS *, RECIPIENT *, const char *, 
+			DSN *);
 
 /* LICENSE
 /* .ad

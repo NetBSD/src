@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_chat.c,v 1.1.1.6 2004/05/31 00:24:48 heas Exp $	*/
+/*	$NetBSD: smtpd_chat.c,v 1.1.1.6.2.1 2006/11/20 13:30:53 tron Exp $	*/
 
 /*++
 /* NAME
@@ -31,7 +31,8 @@
 /*	smtpd_chat_reply() formats a server reply, sends it to the
 /*	client, and appends a copy to the SMTP transaction log.
 /*	When soft_bounce is enabled, all 5xx (reject) reponses are
-/*	replaced by 4xx (try again).
+/*	replaced by 4xx (try again). In case of a 421 reply the
+/*	SMTPD_FLAG_HANGUP flag is set for orderly disconnect.
 /*
 /*	smtpd_chat_notify() sends a copy of the SMTP transaction log
 /*	to the postmaster for review. The postmaster notice is sent only
@@ -138,7 +139,7 @@ void    smtpd_chat_query(SMTPD_STATE *state)
 
 /* smtpd_chat_reply - format, send and record an SMTP response */
 
-void    smtpd_chat_reply(SMTPD_STATE *state, char *format,...)
+void    smtpd_chat_reply(SMTPD_STATE *state, const char *format,...)
 {
     va_list ap;
     int     delay = 0;
@@ -146,8 +147,12 @@ void    smtpd_chat_reply(SMTPD_STATE *state, char *format,...)
     va_start(ap, format);
     vstring_vsprintf(state->buffer, format, ap);
     va_end(ap);
-    if (var_soft_bounce && STR(state->buffer)[0] == '5')
+    /* All 5xx replies must have a 5.xx.xx detail code. */
+    if (var_soft_bounce && STR(state->buffer)[0] == '5') {
 	STR(state->buffer)[0] = '4';
+	if (STR(state->buffer)[4] == '5')
+	    STR(state->buffer)[4] = '4';
+    }
     smtp_chat_append(state, "Out: ");
 
     if (msg_verbose)
@@ -177,6 +182,12 @@ void    smtpd_chat_reply(SMTPD_STATE *state, char *format,...)
 	vstream_longjmp(state->client, SMTP_ERR_TIME);
     if (vstream_ferror(state->client))
 	vstream_longjmp(state->client, SMTP_ERR_EOF);
+
+    /*
+     * Orderly disconnect in case of 421 reply.
+     */
+    if (strncmp(STR(state->buffer), "421", 3) == 0)
+	state->flags |= SMTPD_FLAG_HANGUP;
 }
 
 /* print_line - line_wrap callback */
@@ -192,7 +203,7 @@ static void print_line(const char *str, int len, int indent, char *context)
 
 void    smtpd_chat_notify(SMTPD_STATE *state)
 {
-    char   *myname = "smtpd_chat_notify";
+    const char *myname = "smtpd_chat_notify";
     VSTREAM *notice;
     char  **cpp;
 
@@ -212,13 +223,14 @@ void    smtpd_chat_notify(SMTPD_STATE *state)
      * generate from untrusted data.
      */
 #define NULL_TRACE_FLAGS	0
+#define NO_QUEUE_ID		((VSTRING *) 0)
 #define LENGTH	78
 #define INDENT	4
 
     notice = post_mail_fopen_nowait(mail_addr_double_bounce(),
 				    var_error_rcpt,
-				    CLEANUP_FLAG_MASK_INTERNAL,
-				    NULL_TRACE_FLAGS);
+				    INT_FILT_NOTIFY,
+				    NULL_TRACE_FLAGS, NO_QUEUE_ID);
     if (notice == 0) {
 	msg_warn("postmaster notify: %m");
 	return;

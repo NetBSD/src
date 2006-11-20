@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_host.c,v 1.5.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: inet_addr_host.c,v 1.5.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -66,7 +66,7 @@ int     inet_addr_host(INET_ADDR_LIST *addr_list, const char *hostname)
     struct addrinfo *res0;
     struct addrinfo *res;
     int     aierr;
-    int     hostnamelen;
+    ssize_t hostnamelen;
     const char *hname;
     const char *serv;
     int     initial_count = addr_list->used;
@@ -148,22 +148,22 @@ int     main(int argc, char **argv)
     if (argc < 3)
 	msg_fatal("usage: %s protocols hostname...", argv[0]);
 
-    proto_info = inet_proto_init(argv[0], *++argv);
-
-    inet_addr_list_init(&list);
+    proto_info = inet_proto_init(argv[0], argv[1]);
+    argv += 1;
 
     while (--argc && *++argv) {
+	inet_addr_list_init(&list);
 	if (inet_addr_host(&list, *argv) == 0)
 	    msg_fatal("not found: %s", *argv);
 
 	for (sa = list.addrs; sa < list.addrs + list.used; sa++) {
 	    SOCKADDR_TO_HOSTADDR(SOCK_ADDR_PTR(sa), SOCK_ADDR_LEN(sa),
 				 &hostaddr, (MAI_SERVPORT_STR *) 0, 0);
-	    vstream_printf("%s\n", hostaddr.buf);
+	    vstream_printf("%s\t%s\n", *argv, hostaddr.buf);
 	}
 	vstream_fflush(VSTREAM_OUT);
+	inet_addr_list_free(&list);
     }
-    inet_addr_list_free(&list);
     return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe_command.c,v 1.1.1.8.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: pipe_command.c,v 1.1.1.8.2.2 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -10,19 +10,25 @@
 /*
 /*	int	pipe_command(src, why, key, value, ...)
 /*	VSTREAM	*src;
-/*	VSTRING *why;
+/*	DSN_BUF	*why;
 /*	int	key;
 /* DESCRIPTION
 /*	pipe_command() runs a command with a message as standard
 /*	input.  A limited amount of standard output and standard error
 /*	output is captured for diagnostics purposes.
 /*
+/*	If the command invokes exit() with a non-zero status,
+/*	the delivery status is taken from an RFC 3463-style code
+/*	at the beginning of command output. If that information is
+/*	unavailable, the delivery status is taken from the command
+/*	exit status as per <sysexits.h>.
+/*
 /*	Arguments:
 /* .IP src
 /*	An open message queue file, positioned at the start of the actual
 /*	message content.
 /* .IP why
-/*	Storage for diagnostic information.
+/*	Delivery status information.
 /* .IP key
 /*	Specifies what value will follow. pipe_command() takes a list
 /*	of (key, value) arguments, terminated by PIPE_CMD_END. The
@@ -40,8 +46,14 @@
 /*	The command is specified as an argument vector. This vector is
 /*	passed without further inspection to the \fIexecvp\fR() routine.
 /*	One of PIPE_CMD_COMMAND or PIPE_CMD_ARGV must be specified.
+/* .IP "PIPE_CMD_CHROOT (char *)"
+/*	Root and working directory for command execution. This takes
+/*	effect before PIPE_CMD_CWD. A null pointer means don't
+/*	change root and working directory anyway. Failure to change
+/*	directory causes mail delivery to be deferred.
 /* .IP "PIPE_CMD_CWD (char *)"
-/*	Working directory for command execution. A null pointer means
+/*	Working directory for command execution, after changing process
+/*	privileges to PIPE_CMD_UID and PIPE_CMD_GID. A null pointer means
 /*	don't change directory anyway. Failure to change directory
 /*	causes mail delivery to be deferred.
 /* .IP "PIPE_CMD_ENV (char **)"
@@ -65,11 +77,11 @@
 /*	\fImail_copy\fR() routine.
 /* .IP "PIPE_CMD_EOL (char *)"
 /*	End-of-line delimiter. The default is to use the newline character.
-/* .IP "PIPE_CMD_UID (int)"
+/* .IP "PIPE_CMD_UID (uid_t)"
 /*	The user ID to execute the command as. The default is
 /*	the user ID corresponding to the \fIdefault_privs\fR
 /*	configuration parameter. The user ID must be non-zero.
-/* .IP "PIPE_CMD_GID (int)"
+/* .IP "PIPE_CMD_GID (gid_t)"
 /*	The group ID to execute the command as. The default is
 /*	the group ID corresponding to the \fIdefault_privs\fR
 /*	configuration parameter. The group ID must be non-zero.
@@ -141,6 +153,7 @@
 #include <set_ugid.h>
 #include <set_eugid.h>
 #include <argv.h>
+#include <chroot_uid.h>
 
 /* Global library. */
 
@@ -150,6 +163,8 @@
 #include <pipe_command.h>
 #include <exec_command.h>
 #include <sys_exits.h>
+#include <dsn_util.h>
+#include <dsn_buf.h>
 
 /* Application-specific. */
 
@@ -167,6 +182,7 @@ struct pipe_args {
     char  **export;			/* exportable environment */
     char   *shell;			/* command shell */
     char   *cwd;			/* preferred working directory */
+    char   *chroot;			/* root directory */
 };
 
 static int pipe_command_timeout;	/* command has timed out */
@@ -176,7 +192,7 @@ static int pipe_command_maxtime;	/* available time to complete */
 
 static void get_pipe_args(struct pipe_args * args, va_list ap)
 {
-    char   *myname = "get_pipe_args";
+    const char *myname = "get_pipe_args";
     int     key;
 
     /*
@@ -195,6 +211,7 @@ static void get_pipe_args(struct pipe_args * args, va_list ap)
     args->export = 0;
     args->shell = 0;
     args->cwd = 0;
+    args->chroot = 0;
 
     pipe_command_maxtime = var_command_maxtime;
 
@@ -229,10 +246,10 @@ static void get_pipe_args(struct pipe_args * args, va_list ap)
 	    args->command = va_arg(ap, char *);
 	    break;
 	case PIPE_CMD_UID:
-	    args->uid = va_arg(ap, int);	/* in case uid_t is short */
+	    args->uid = va_arg(ap, uid_t);	/* in case uid_t is short */
 	    break;
 	case PIPE_CMD_GID:
-	    args->gid = va_arg(ap, int);	/* in case gid_t is short */
+	    args->gid = va_arg(ap, gid_t);	/* in case gid_t is short */
 	    break;
 	case PIPE_CMD_TIME_LIMIT:
 	    pipe_command_maxtime = va_arg(ap, int);
@@ -249,6 +266,9 @@ static void get_pipe_args(struct pipe_args * args, va_list ap)
 	case PIPE_CMD_CWD:
 	    args->cwd = va_arg(ap, char *);
 	    break;
+	case PIPE_CMD_CHROOT:
+	    args->chroot = va_arg(ap, char *);
+	    break;
 	default:
 	    msg_panic("%s: unknown key: %d", myname, key);
 	}
@@ -263,10 +283,12 @@ static void get_pipe_args(struct pipe_args * args, va_list ap)
 
 /* pipe_command_write - write to command with time limit */
 
-static int pipe_command_write(int fd, void *buf, unsigned len)
+static ssize_t pipe_command_write(int fd, void *buf, size_t len,
+				          int unused_timeout,
+				          void *unused_context)
 {
     int     maxtime = (pipe_command_timeout == 0) ? pipe_command_maxtime : 0;
-    char   *myname = "pipe_command_write";
+    const char *myname = "pipe_command_write";
 
     /*
      * Don't wait when all available time was already used up.
@@ -284,10 +306,12 @@ static int pipe_command_write(int fd, void *buf, unsigned len)
 
 /* pipe_command_read - read from command with time limit */
 
-static int pipe_command_read(int fd, void *buf, unsigned len)
+static ssize_t pipe_command_read(int fd, void *buf, ssize_t len,
+				         int unused_timeout,
+				         void *unused_context)
 {
     int     maxtime = (pipe_command_timeout == 0) ? pipe_command_maxtime : 0;
-    char   *myname = "pipe_command_read";
+    const char *myname = "pipe_command_read";
 
     /*
      * Don't wait when all available time was already used up.
@@ -307,7 +331,7 @@ static int pipe_command_read(int fd, void *buf, unsigned len)
 
 static void kill_command(pid_t pid, int sig, uid_t kill_uid, gid_t kill_gid)
 {
-    pid_t   saved_euid = geteuid();
+    uid_t   saved_euid = geteuid();
     gid_t   saved_egid = getegid();
 
     /*
@@ -327,7 +351,7 @@ static int pipe_command_wait_or_kill(pid_t pid, WAIT_STATUS_T *statusp, int sig,
 				             uid_t kill_uid, gid_t kill_gid)
 {
     int     maxtime = (pipe_command_timeout == 0) ? pipe_command_maxtime : 1;
-    char   *myname = "pipe_command_wait_or_kill";
+    const char *myname = "pipe_command_wait_or_kill";
     int     n;
 
     /*
@@ -344,11 +368,26 @@ static int pipe_command_wait_or_kill(pid_t pid, WAIT_STATUS_T *statusp, int sig,
     return (n);
 }
 
+/* pipe_child_cleanup - child fatal error handler */
+
+static void pipe_child_cleanup(void)
+{
+
+    /*
+     * WARNING: don't place code here. This code may run as mail_owner, as
+     * root, or as the user/group specified with the "user" attribute. The
+     * only safe action is to terminate.
+     * 
+     * Future proofing. If you need exit() here then you broke Postfix.
+     */
+    _exit(EX_TEMPFAIL);
+}
+
 /* pipe_command - execute command with extreme prejudice */
 
-int     pipe_command(VSTREAM *src, VSTRING *why,...)
+int     pipe_command(VSTREAM *src, DSN_BUF *why,...)
 {
-    char   *myname = "pipe_command";
+    const char *myname = "pipe_command";
     va_list ap;
     VSTREAM *cmd_in_stream;
     VSTREAM *cmd_out_stream;
@@ -363,6 +402,8 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
     struct pipe_args args;
     char  **cpp;
     ARGV   *argv;
+    DSN_SPLIT dp;
+    SYS_EXITS_DETAIL *sp;
 
     /*
      * Process the variadic argument list. This also does sanity checks on
@@ -416,15 +457,42 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
 	 */
     case -1:
 	msg_warn("fork: %m");
-	vstring_sprintf(why, "Delivery failed: %m");
+	dsb_unix(why, "4.3.0", sys_exits_detail(EX_OSERR)->text,
+		 "Delivery failed: %m");
 	return (PIPE_STAT_DEFER);
 
 	/*
 	 * Child. Run the child in a separate process group so that the
 	 * parent can kill not just the child but also its offspring.
+	 * 
+	 * Redirect fatal exits to our own fatal exit handler (never leave the
+	 * parent's handler enabled :-) so we can replace random exit status
+	 * codes by EX_TEMPFAIL.
 	 */
     case 0:
-	(void) msg_cleanup((MSG_CLEANUP_FN) 0);
+	(void) msg_cleanup(pipe_child_cleanup);
+
+	/*
+	 * In order to chroot it is necessary to switch euid back to root.
+	 * Right after chroot we call set_ugid() so all privileges will be
+	 * dropped again.
+	 * 
+	 * XXX For consistency we use chroot_uid() to change root+current
+	 * directory. However, we must not use chroot_uid() to change process
+	 * privileges (assuming a version that accepts numeric privileges).
+	 * That would create a maintenance problem, because we would have two
+	 * different code paths to set the external command's privileges.
+	 */
+	if (args.chroot) {
+	    seteuid(0);
+	    chroot_uid(args.chroot, (char *) 0);
+	}
+
+	/*
+	 * XXX If we put code before the set_ugid() call, then the code that
+	 * changes root directory must switch back to the mail_owner UID,
+	 * otherwise we'd be running with root privileges.
+	 */
 	set_ugid(args.uid, args.gid);
 	if (setsid() < 0)
 	    msg_warn("setsid failed: %m");
@@ -444,12 +512,10 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
 	/*
 	 * Working directory plumbing.
 	 */
-	if (args.cwd && chdir(args.cwd) < 0) {
-	    msg_warn("cannot change directory to \"%s\" for uid=%lu gid=%lu: %m",
-		     args.cwd, (unsigned long) args.uid,
-		     (unsigned long) args.gid);
-	    exit(EX_TEMPFAIL);
-	}
+	if (args.cwd && chdir(args.cwd) < 0)
+	    msg_fatal("cannot change directory to \"%s\" for uid=%lu gid=%lu: %m",
+		      args.cwd, (unsigned long) args.uid,
+		      (unsigned long) args.gid);
 
 	/*
 	 * Environment plumbing. Always reset the command search path. XXX
@@ -513,17 +579,14 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
 	pipe_command_timeout = 0;
 
 	/*
-	 * Pipe the message into the command. XXX We shouldn't be ignoring
-	 * screams for help from mail_copy() like this. But, the command may
-	 * stop reading input early, and that should not be considered an
-	 * error condition.
+	 * Pipe the message into the command. Examine the error report only
+	 * if we can't recognize a more specific error from the command exit
+	 * status or from the command output.
 	 */
-#define DONT_CARE_WHY	((VSTRING *) 0)
-
 	write_status = mail_copy(args.sender, args.orig_rcpt,
 				 args.delivered, src,
 				 cmd_in_stream, args.flags,
-				 args.eol, DONT_CARE_WHY);
+				 args.eol, why);
 	write_errno = errno;
 
 	/*
@@ -553,9 +616,11 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
 				      args.uid, args.gid) < 0)
 	    msg_fatal("wait: %m");
 	if (pipe_command_timeout) {
-	    vstring_sprintf(why, "Command time limit exceeded: \"%s\"%s%s",
-			    args.command,
-			    log_len ? ". Command output: " : "", log_buf);
+	    dsb_unix(why, "5.3.0", log_len ?
+		     log_buf : sys_exits_detail(EX_SOFTWARE)->text,
+		     "Command time limit exceeded: \"%s\"%s%s",
+		     args.command,
+		     log_len ? ". Command output: " : "", log_buf);
 	    return (PIPE_STAT_BOUNCE);
 	}
 
@@ -565,33 +630,50 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
 	 */
 	if (!NORMAL_EXIT_STATUS(wait_status)) {
 	    if (WIFSIGNALED(wait_status)) {
-		vstring_sprintf(why, "Command died with signal %d: \"%s\"%s%s",
-				WTERMSIG(wait_status),
-				args.command,
-			      log_len ? ". Command output: " : "", log_buf);
-		return (PIPE_STAT_DEFER);
-	    } else if (SYS_EXITS_CODE(WEXITSTATUS(wait_status))) {
-		vstring_sprintf(why, "%s%s%s",
-				sys_exits_strerror(WEXITSTATUS(wait_status)),
-			      log_len ? ". Command output: " : "", log_buf);
-		return (sys_exits_softerror(WEXITSTATUS(wait_status)) ?
-			PIPE_STAT_DEFER : PIPE_STAT_BOUNCE);
-	    } else {
-		vstring_sprintf(why, "Command died with status %d: \"%s\"%s%s",
-				WEXITSTATUS(wait_status),
-				args.command,
-			      log_len ? ". Command output: " : "", log_buf);
+		dsb_unix(why, "5.3.0", log_len ?
+			 log_buf : sys_exits_detail(EX_SOFTWARE)->text,
+			 "Command died with signal %d: \"%s\"%s%s",
+			 WTERMSIG(wait_status), args.command,
+			 log_len ? ". Command output: " : "", log_buf);
 		return (PIPE_STAT_BOUNCE);
 	    }
-	} else if (write_status & MAIL_COPY_STAT_CORRUPT) {
+	    /* Use "D.S.N text" command output. XXX What diagnostic code? */
+	    else if (dsn_valid(log_buf) > 0) {
+		dsn_split(&dp, "5.3.0", log_buf);
+		dsb_unix(why, DSN_STATUS(dp.dsn), dp.text, "%s", dp.text);
+		return (DSN_CLASS(dp.dsn) == '4' ?
+			PIPE_STAT_DEFER : PIPE_STAT_BOUNCE);
+	    }
+	    /* Use <sysexits.h> compatible exit status. */
+	    else if (SYS_EXITS_CODE(WEXITSTATUS(wait_status))) {
+		sp = sys_exits_detail(WEXITSTATUS(wait_status));
+		dsb_unix(why, sp->dsn,
+			 log_len ? log_buf : sp->text, "%s%s%s", sp->text,
+			 log_len ? ". Command output: " : "", log_buf);
+		return (sp->dsn[0] == '4' ?
+			PIPE_STAT_DEFER : PIPE_STAT_BOUNCE);
+	    }
+
+	    /*
+	     * No "D.S.N text" or <sysexits.h> compatible status. Fake it.
+	     */
+	    else {
+		sp = sys_exits_detail(WEXITSTATUS(wait_status));
+		dsb_unix(why, sp->dsn,
+			 log_len ? log_buf : sp->text,
+			 "Command died with status %d: \"%s\"%s%s",
+			 WEXITSTATUS(wait_status), args.command,
+			 log_len ? ". Command output: " : "", log_buf);
+		return (PIPE_STAT_BOUNCE);
+	    }
+	} else if (write_status &
+		   MAIL_COPY_STAT_CORRUPT) {
 	    return (PIPE_STAT_CORRUPT);
 	} else if (write_status && write_errno != EPIPE) {
-	    errno = write_errno;
-	    vstring_sprintf(why, "Command failed due to %s: %m: \"%s\"",
-	      (write_status & MAIL_COPY_STAT_READ) ? "delivery read error" :
-	    (write_status & MAIL_COPY_STAT_WRITE) ? "delivery write error" :
-			    "some delivery error", args.command);
-	    return (PIPE_STAT_DEFER);
+	    vstring_prepend(why->reason, "Command failed: ",
+			    sizeof("Command failed: ") - 1);
+	    vstring_sprintf_append(why->reason, ": \"%s\"", args.command);
+	    return (PIPE_STAT_BOUNCE);
 	} else {
 	    return (PIPE_STAT_OK);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: concatenate.c,v 1.1.1.2 2004/05/31 00:24:57 heas Exp $	*/
+/*	$NetBSD: concatenate.c,v 1.1.1.2.2.1 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -44,7 +44,7 @@ char   *concatenate(const char *arg0,...)
 {
     char   *result;
     va_list ap;
-    int     len;
+    ssize_t len;
     char   *arg;
 
     /*

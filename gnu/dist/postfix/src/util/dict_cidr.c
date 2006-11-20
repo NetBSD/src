@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cidr.c,v 1.1.1.2.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: dict_cidr.c,v 1.1.1.2.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -79,6 +79,8 @@ static const char *dict_cidr_lookup(DICT *dict, const char *key)
 
     if (msg_verbose)
 	msg_info("dict_cidr_lookup: %s: %s", dict->name, key);
+
+    dict_errno = 0;
 
     if ((entry = (DICT_CIDR_ENTRY *)
 	 cidr_match_execute(&(dict_cidr->head->cidr_info), key)) != 0)

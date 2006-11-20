@@ -18,47 +18,62 @@ TRANSPORT(5)                                                      TRANSPORT(5)
 
 <b>DESCRIPTION</b>
        The  optional  <a href="transport.5.html"><b>transport</b>(5)</a> table specifies a mapping from
-       email addresses  to  message  delivery  transports  and/or
-       relay hosts. The mapping is used by the <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a>
+       email addresses to message delivery transports  and  next-
+       hop hosts. The table is searched by the <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a>
        daemon.
 
-       This mapping overrides the default routing that  is  built
-       into Postfix:
+       This  mapping  overrides  the  default   <i>transport</i>:<i>nexthop</i>
+       selection that is built into Postfix:
 
-       <b><a href="postconf.5.html#mydestination">mydestination</a></b>
-              A  list of domains that is by default delivered via
-              <b>$<a href="postconf.5.html#local_transport">local_transport</a></b>. This also includes  domains  that
-              match <b>$<a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b> or <b>$<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a></b>.
+       <b><a href="postconf.5.html#local_transport">local_transport</a> (default: <a href="local.8.html">local</a>:$<a href="postconf.5.html#myhostname">myhostname</a>)</b>
+              This  is  the default for final delivery to domains
+              listed with <b><a href="postconf.5.html#mydestination">mydestination</a></b>, and for [<i>ipaddress</i>] des-
+              tinations    that    match    <b>$<a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b>   or
+              <b>$<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a></b>. The default <i>nexthop</i>  destination
+              is the MTA hostname.
 
-       <b><a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a></b>
-              A  list of domains that is by default delivered via
-              <b>$<a href="postconf.5.html#virtual_transport">virtual_transport</a></b>.
+       <b><a href="postconf.5.html#virtual_transport">virtual_transport</a> (default: <a href="virtual.8.html">virtual</a>:)</b>
+              This  is  the default for final delivery to domains
+              listed with  <b><a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a></b>.  The  default
+              <i>nexthop</i> destination is the recipient domain.
 
-       <b><a href="postconf.5.html#relay_domains">relay_domains</a></b>
-              A list of domains that is by default delivered  via
-              <b>$<a href="postconf.5.html#relay_transport">relay_transport</a></b>.
+       <b><a href="postconf.5.html#relay_transport">relay_transport</a> (default: relay:)</b>
+              This  is the default for remote delivery to domains
+              listed with <b><a href="postconf.5.html#relay_domains">relay_domains</a></b>. In order  of  decreasing
+              precedence,  the  <i>nexthop</i> destination is taken from
+              <b><a href="postconf.5.html#relay_transport">relay_transport</a></b>,   <b><a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a></b>,
+              <b><a href="postconf.5.html#relayhost">relayhost</a></b>, or from the recipient domain.
 
-       any other destination
-              Mail for any other destination is by default deliv-
-              ered via <b>$<a href="postconf.5.html#default_transport">default_transport</a></b>.
+       <b><a href="postconf.5.html#default_transport">default_transport</a> (default: <a href="smtp.8.html">smtp</a>:)</b>
+              This  is  the  default for remote delivery to other
+              destinations.  In order of  decreasing  precedence,
+              the    <i>nexthop</i>    destination    is    taken   from
+              <b><a href="postconf.5.html#default_transport">default_transport</a></b>, <b><a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a></b>,
+              <b><a href="postconf.5.html#relayhost">relayhost</a></b>, or from the recipient domain.
 
-       Normally, the <a href="transport.5.html"><b>transport</b>(5)</a> table is specified  as  a  text
-       file  that serves as input to the <a href="postmap.1.html"><b>postmap</b>(1)</a> command.  The
-       result, an indexed file in <b>dbm</b> or <b>db</b> format, is  used  for
-       fast  searching  by  the  mail system. Execute the command
-       "<b>postmap /etc/postfix/transport</b>" in order to  rebuild  the
+       Normally,  the  <a href="transport.5.html"><b>transport</b>(5)</a>  table is specified as a text
+       file that serves as input to the <a href="postmap.1.html"><b>postmap</b>(1)</a> command.   The
+       result,  an  indexed file in <b>dbm</b> or <b>db</b> format, is used for
+       fast searching by the mail  system.  Execute  the  command
+       "<b>postmap  /etc/postfix/transport</b>"  in order to rebuild the
        indexed file after changing the transport table.
 
-       When  the  table  is provided via other means such as NIS,
-       LDAP or SQL, the same lookups are  done  as  for  ordinary
+       When the table is provided via other means  such  as  NIS,
+       LDAP  or  SQL,  the  same lookups are done as for ordinary
        indexed files.
 
-       Alternatively,  the  table  can  be provided as a regular-
+       Alternatively, the table can be  provided  as  a  regular-
        expression map where patterns are given as regular expres-
-       sions,  or lookups can be directed to TCP-based server. In
-       that case, the lookups are done in  a  slightly  different
-       way  as  described below under "REGULAR EXPRESSION TABLES"
+       sions, or lookups can be directed to TCP-based server.  In
+       that  case,  the  lookups are done in a slightly different
+       way as described below under "REGULAR  EXPRESSION  TABLES"
        and "TCP-BASED TABLES".
+
+<b>CASE FOLDING</b>
+       The  search  string is folded to lowercase before database
+       lookup. As of Postfix 2.3, the search string is  not  case
+       folded  with database types such as <a href="regexp_table.5.html">regexp</a>: or <a href="pcre_table.5.html">pcre</a>: whose
+       lookup fields can match both upper and lower case.
 
 <b>TABLE FORMAT</b>
        The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
@@ -105,8 +120,8 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        <i>.domain transport</i>:<i>nexthop</i>
               Deliver  mail  for  any subdomain of <i>domain</i> through
               <i>transport</i> to <i>nexthop</i>. This applies  only  when  the
-              string  <b><a href="postconf.5.html#transport_maps">transport_maps</a></b>  is  not  listed in the <b>par-</b>
-              <b>ent_domain_matches_subdomains</b>  configuration   set-
+              string  <b><a href="postconf.5.html#transport_maps">transport_maps</a></b>  is  not  listed in the <b><a href="postconf.5.html#parent_domain_matches_subdomains">par</a>-</b>
+              <b><a href="postconf.5.html#parent_domain_matches_subdomains">ent_domain_matches_subdomains</a></b>  configuration   set-
               ting.   Otherwise, a domain name matches itself and
               its subdomains.
 
@@ -128,7 +143,7 @@ TRANSPORT(5)                                                      TRANSPORT(5)
 
        The  transport field specifies the name of a mail delivery
        transport (the first name of a mail delivery service entry
-       in the Postfix <b>master.cf</b> file).
+       in the Postfix <a href="master.5.html"><b>master.cf</b></a> file).
 
        The  interpretation  of  the  nexthop  field  is transport
        dependent. In the case of SMTP, specify  a  service  on  a
@@ -226,9 +241,9 @@ TRANSPORT(5)                                                      TRANSPORT(5)
 <b>TCP-BASED TABLES</b>
        This  section  describes how the table lookups change when
        lookups are directed to a TCP-based server. For a descrip-
-       tion of the TCP client/server lookup protocol, see <b>tcp_ta-</b>
-       <b>ble</b>(5).  This feature is not available up to and including
-       Postfix version 2.2.
+       tion of the TCP client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_ta-</b></a>
+       <a href="tcp_table.5.html"><b>ble</b>(5)</a>.  This feature is not available up to and including
+       Postfix version 2.3.
 
        Each  lookup  operation  uses the entire recipient address
        once.  Thus, <i>some.domain.hierarchy</i> is not  looked  up  via
@@ -238,7 +253,7 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        Results are the same as with indexed file lookups.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The following <b>main.cf</b> parameters are especially  relevant.
+       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially  relevant.
        The  text  below  provides  only  a parameter summary. See
        <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 

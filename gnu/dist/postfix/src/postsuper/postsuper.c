@@ -1,4 +1,4 @@
-/*	$NetBSD: postsuper.c,v 1.1.1.8.2.1 2006/07/12 15:06:41 tron Exp $	*/
+/*	$NetBSD: postsuper.c,v 1.1.1.8.2.2 2006/11/20 13:30:47 tron Exp $	*/
 
 /*++
 /* NAME
@@ -38,7 +38,7 @@
 /*	queue IDs from standard input. For example, to delete all mail
 /*	with exactly one recipient \fBuser@example.com\fR:
 /* .sp
-/*	mailq | tail +2 | awk  \'BEGIN { RS = "" }
+/*	mailq | tail +2 | grep -v '^ *(' | awk  \'BEGIN { RS = "" }
 /* .ti +4
 /*	# $7=sender, $8=recipient1, $9=recipient2
 /* .ti +4
@@ -123,13 +123,31 @@
 /*	Specify \fB-r ALL\fR to requeue all messages. As a safety
 /*	measure, the word \fBALL\fR must be specified in upper case.
 /* .sp
-/*	A requeued message is moved to the \fBmaildrop\fR queue, from
-/*	where it is copied by the pickup daemon to a new file whose name
-/*	is guaranteed to match the new queue file inode number. The
-/*	new queue file is subjected again to mail address rewriting and
-/*	substitution. This is useful when rewriting rules or virtual
-/*	mappings have changed.
+/*	A requeued message is moved to the \fBmaildrop\fR queue,
+/*	from where it is copied by the \fBpickup\fR(8) and
+/*	\fBcleanup\fR(8) daemons to a new queue file. In many
+/*	respects its handling differs from that of a new local
+/*	submission.
+/* .RS
+/* .IP \(bu
+/*	The message is not subjected to the smtpd_milters or
+/*	non_smtpd_milters settings.  When mail has passed through
+/*	an external content filter, this would produce incorrect
+/*	results with Milter applications that depend on original
+/*	SMTP connection state information.
+/* .IP \(bu
+/*	The message is subjected again to mail address rewriting
+/*	and substitution.  This is useful when rewriting rules or
+/*	virtual mappings have changed.
 /* .sp
+/*	The address rewriting context (local or remote) is the same
+/*	as when the message was received.
+/* .IP \(bu
+/*	The message is subjected to the same content_filter settings
+/*	(if any) as used for new local mail submissions.  This is
+/*	useful when content_filter settings have changed.
+/* .RE
+/* .IP
 /*	Warning: Postfix queue IDs are reused.
 /*	There is a very small possibility that \fBpostsuper\fR(1) requeues
 /*	the wrong message file when it is executed while the Postfix mail

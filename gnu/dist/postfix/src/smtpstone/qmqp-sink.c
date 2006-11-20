@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqp-sink.c,v 1.1.1.3.2.1 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: qmqp-sink.c,v 1.1.1.3.2.2 2006/11/20 13:30:54 tron Exp $	*/
 
 /*++
 /* NAME
@@ -58,10 +58,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
-
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
+#include <signal.h>
 
 /* Utility library. */
 
@@ -90,7 +87,7 @@ typedef struct {
 static int var_tmout;
 static VSTRING *buffer;
 static void disconnect(SINK_STATE *);
-static int count;
+static int count_deliveries;
 static int counter;
 
 /* send_reply - finish conversation */
@@ -100,7 +97,7 @@ static void send_reply(SINK_STATE *state)
     vstring_sprintf(buffer, "%cOk", QMQP_STAT_OK);
     NETSTRING_PUT_BUF(state->stream, buffer);
     netstring_fflush(state->stream);
-    if (count) {
+    if (count_deliveries) {
 	counter++;
 	vstream_printf("%d\r", counter);
 	vstream_fflush(VSTREAM_OUT);
@@ -249,6 +246,11 @@ int     main(int argc, char **argv)
     INET_PROTO_INFO *proto_info;
 
     /*
+     * Fix 20051207.
+     */
+    signal(SIGPIPE, SIG_IGN);
+
+    /*
      * Initialize diagnostics.
      */
     msg_vstream_init(argv[0], VSTREAM_ERR);
@@ -265,7 +267,7 @@ int     main(int argc, char **argv)
 	    protocols = INET_PROTO_NAME_IPV6;
 	    break;
 	case 'c':
-	    count++;
+	    count_deliveries++;
 	    break;
 	case 'v':
 	    msg_verbose++;

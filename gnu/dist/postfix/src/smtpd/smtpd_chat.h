@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_chat.h,v 1.1.1.2 2004/05/31 00:24:48 heas Exp $	*/
+/*	$NetBSD: smtpd_chat.h,v 1.1.1.2.2.1 2006/11/20 13:30:53 tron Exp $	*/
 
 /*++
 /* NAME
@@ -16,7 +16,7 @@
   */
 extern void smtpd_chat_reset(SMTPD_STATE *);
 extern void smtpd_chat_query(SMTPD_STATE *);
-extern void PRINTFLIKE(2, 3) smtpd_chat_reply(SMTPD_STATE *, char *, ...);
+extern void PRINTFLIKE(2, 3) smtpd_chat_reply(SMTPD_STATE *, const char *, ...);
 extern void smtpd_chat_notify(SMTPD_STATE *);
 
 /* LICENSE

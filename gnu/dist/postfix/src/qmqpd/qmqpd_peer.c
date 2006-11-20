@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd_peer.c,v 1.1.1.3.2.1 2006/07/12 15:06:41 tron Exp $	*/
+/*	$NetBSD: qmqpd_peer.c,v 1.1.1.3.2.2 2006/11/20 13:30:48 tron Exp $	*/
 
 /*++
 /* NAME
@@ -64,6 +64,7 @@
 
 #include <mail_proto.h>
 #include <valid_mailhost_addr.h>
+#include <mail_params.h>
 
 /* Application-specific. */
 
@@ -73,19 +74,19 @@
 
 void    qmqpd_peer_init(QMQPD_STATE *state)
 {
-    char   *myname = "qmqpd_peer_init";
+    const char *myname = "qmqpd_peer_init";
     struct sockaddr_storage ss;
     struct sockaddr *sa;
-    SOCKADDR_SIZE sa_len;
+    SOCKADDR_SIZE sa_length;
     INET_PROTO_INFO *proto_info = inet_proto_info();
 
     sa = (struct sockaddr *) & ss;
-    sa_len = sizeof(ss);
+    sa_length = sizeof(ss);
 
     /*
      * Look up the peer address information.
      */
-    if (getpeername(vstream_fileno(state->client), sa, &sa_len) >= 0) {
+    if (getpeername(vstream_fileno(state->client), sa, &sa_length) >= 0) {
 	errno = 0;
     }
 
@@ -96,6 +97,7 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 	state->name = mystrdup(CLIENT_NAME_UNKNOWN);
 	state->addr = mystrdup(CLIENT_ADDR_UNKNOWN);
 	state->rfc_addr = mystrdup(CLIENT_ADDR_UNKNOWN);
+	state->addr_family = AF_UNSPEC;
     }
 
     /*
@@ -109,9 +111,20 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 	char   *colonp;
 
 	/*
+	 * Sorry, but there are some things that we just cannot do while
+	 * connected to the network.
+	 */
+	if (geteuid() != var_owner_uid || getuid() != var_owner_uid) {
+	    msg_error("incorrect QMQP server privileges: uid=%lu euid=%lu",
+		      (unsigned long) getuid(), (unsigned long) geteuid());
+	    msg_fatal("the Postfix QMQP server must run with $%s privileges",
+		      VAR_MAIL_OWNER);
+	}
+
+	/*
 	 * Convert the client address to printable form.
 	 */
-	if ((aierr = sockaddr_to_hostaddr(sa, sa_len, &client_addr,
+	if ((aierr = sockaddr_to_hostaddr(sa, sa_length, &client_addr,
 					  (MAI_SERVPORT_STR *) 0, 0)) != 0)
 	    msg_fatal("%s: cannot convert client address to string: %s",
 		      myname, MAI_STRERROR(aierr));
@@ -135,12 +148,15 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 
 		state->addr = mystrdup(colonp + 1);
 		state->rfc_addr = mystrdup(colonp + 1);
+		state->addr_family = AF_INET;
 		aierr = hostaddr_to_sockaddr(state->addr, (char *) 0, 0, &res0);
 		if (aierr)
 		    msg_fatal("%s: cannot convert %s from string to binary: %s",
 			      myname, state->addr, MAI_STRERROR(aierr));
-		sa_len = res0->ai_addrlen;
-		memcpy((char *) sa, res0->ai_addr, sa_len);
+		sa_length = res0->ai_addrlen;
+		if (sa_length > sizeof(ss))
+		    sa_length = sizeof(ss);
+		memcpy((char *) sa, res0->ai_addr, sa_length);
 		freeaddrinfo(res0);
 	    }
 
@@ -156,6 +172,7 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 		state->addr = mystrdup(client_addr.buf);
 		state->rfc_addr =
 		    concatenate(IPV6_COL, client_addr.buf, (char *) 0);
+		state->addr_family = sa->sa_family;
 	    }
 	}
 
@@ -167,6 +184,7 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 	{
 	    state->addr = mystrdup(client_addr.buf);
 	    state->rfc_addr = mystrdup(client_addr.buf);
+	    state->addr_family = sa->sa_family;
 	}
 
 	/*
@@ -183,7 +201,7 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 	state->name = mystrdup(CLIENT_NAME_UNKNOWN); \
     }
 
-	if ((aierr = sockaddr_to_hostname(sa, sa_len, &client_name,
+	if ((aierr = sockaddr_to_hostname(sa, sa_length, &client_name,
 					  (MAI_SERVNAME_STR *) 0, 0)) != 0) {
 	    state->name = mystrdup(CLIENT_NAME_UNKNOWN);
 	} else {
@@ -229,6 +247,7 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 	state->name = mystrdup("localhost");
 	state->addr = mystrdup("127.0.0.1");	/* XXX bogus. */
 	state->rfc_addr = mystrdup("127.0.0.1");/* XXX bogus. */
+	state->addr_family = AF_UNSPEC;
     }
 
     /*

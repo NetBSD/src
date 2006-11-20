@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_clnt.c,v 1.1.1.2.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: attr_clnt.c,v 1.1.1.2.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -38,15 +38,8 @@
 /*	This module implements a client for a simple attribute-based
 /*	protocol. The default protocol is described in attr_scan_plain(3).
 /*
-/*	attr_clnt_create() creates a client handle. The server
-/*	argument specifies "transport:servername" where transport is
-/*	currently limited to "inet" or "unix", and servername has the
-/*	form "host:port", "private/servicename" or "public/servicename".
-/*	The timeout parameter limits the time for sending or receiving
-/*	a reply, max_idle specifies how long an idle connection is
-/*	kept open, and the max_ttl parameter bounds the time that a
-/*	connection is kept open. 
-/*	Specify zero to disable a max_idle or max_ttl limit.
+/*	attr_clnt_create() creates a client handle. See auto_clnt(3) for
+/*	a description of the arguments.
 /*
 /*	attr_clnt_request() sends the specified request attributes and
 /*	receives a reply. The reply argument specifies a name-value table.
@@ -56,7 +49,7 @@
 /*	attr_clnt_free() destroys a client handle and closes its connection.
 /*
 /*	attr_clnt_control() allows the user to fine tune the behavior of
-/*	the specified client. The arguments are a list of (name, value) 
+/*	the specified client. The arguments are a list of (name, value)
 /*	terminated with ATTR_CLNT_CTL_END.
 /*	The following lists the names and the types of the corresponding
 /*	value arguments.
@@ -85,17 +78,15 @@
 #include <sys_defs.h>
 #include <unistd.h>
 #include <errno.h>
-#include <string.h>
 
 /* Utility library. */
 
 #include <msg.h>
 #include <mymalloc.h>
-#include <split_at.h>
 #include <vstream.h>
-#include <connect.h>
 #include <htable.h>
 #include <attr.h>
+#include <iostuff.h>
 #include <auto_clnt.h>
 #include <attr_clnt.h>
 
@@ -103,42 +94,14 @@
 
 struct ATTR_CLNT {
     AUTO_CLNT *auto_clnt;
-    int     (*connect) (const char *, int, int);
-    char   *endpoint;
-    int     timeout;
     ATTR_CLNT_PRINT_FN print;
     ATTR_CLNT_SCAN_FN scan;
 };
-
-/* attr_clnt_connect - connect to server */
-
-static VSTREAM *attr_clnt_connect(void *context)
-{
-    const char *myname = "attr_clnt_connect";
-    ATTR_CLNT *client = (ATTR_CLNT *) context;
-    VSTREAM *fp;
-    int     fd;
-
-    fd = client->connect(client->endpoint, BLOCKING, client->timeout);
-    if (fd < 0) {
-	msg_warn("connect to %s: %m", client->endpoint);
-	return (0);
-    } else {
-	if (msg_verbose)
-	    msg_info("%s: connected to %s", myname, client->endpoint);
-	fp = vstream_fdopen(fd, O_RDWR);
-	vstream_control(fp, VSTREAM_CTL_PATH, client->endpoint,
-			VSTREAM_CTL_TIMEOUT, client->timeout,
-			VSTREAM_CTL_END);
-	return (fp);
-    }
-}
 
 /* attr_clnt_free - destroy attribute client */
 
 void    attr_clnt_free(ATTR_CLNT *client)
 {
-    myfree(client->endpoint);
     auto_clnt_free(client->auto_clnt);
     myfree((char *) client);
 }
@@ -148,34 +111,12 @@ void    attr_clnt_free(ATTR_CLNT *client)
 ATTR_CLNT *attr_clnt_create(const char *service, int timeout,
 			            int max_idle, int max_ttl)
 {
-    const char *myname = "attr_clnt_create";
-    char   *transport = mystrdup(service);
-    char   *endpoint;
     ATTR_CLNT *client;
 
-    if ((endpoint = split_at(transport, ':')) == 0
-	|| *endpoint == 0 || *transport == 0)
-	msg_fatal("need service transport:endpoint instead of \"%s\"", service);
-    if (msg_verbose)
-	msg_info("%s: transport=%s endpoint=%s", myname, transport, endpoint);
-
     client = (ATTR_CLNT *) mymalloc(sizeof(*client));
+    client->auto_clnt = auto_clnt_create(service, timeout, max_idle, max_ttl);
     client->scan = attr_vscan_plain;
     client->print = attr_vprint_plain;
-    client->endpoint = mystrdup(endpoint);
-    client->timeout = timeout;
-    if (strcmp(transport, "inet") == 0) {
-	client->connect = inet_connect;
-    } else if (strcmp(transport, "local") == 0) {
-	client->connect = LOCAL_CONNECT;
-    } else if (strcmp(transport, "unix") == 0) {
-	client->connect = unix_connect;
-    } else {
-	msg_fatal("invalid attribute transport name: %s", service);
-    }
-    client->auto_clnt = auto_clnt_create(max_idle, max_ttl,
-					 attr_clnt_connect, (void *) client);
-    myfree(transport);
     return (client);
 }
 
@@ -225,9 +166,9 @@ int     attr_clnt_request(ATTR_CLNT *client, int send_flags,...)
 			SKIP_ARG(ap, char *);
 			break;
 		    case ATTR_TYPE_DATA:
-			SKIP_ARG2(ap, char *, int);
+			SKIP_ARG2(ap, ssize_t, char *);
 			break;
-		    case ATTR_TYPE_NUM:
+		    case ATTR_TYPE_INT:
 			SKIP_ARG(ap, int);
 			break;
 		    case ATTR_TYPE_LONG:
@@ -251,7 +192,8 @@ int     attr_clnt_request(ATTR_CLNT *client, int send_flags,...)
 	if (++count >= 2
 	    || msg_verbose
 	    || (errno && errno != EPIPE && errno != ENOENT && errno != ECONNRESET))
-	    msg_warn("problem talking to server %s: %m", client->endpoint);
+	    msg_warn("problem talking to server %s: %m",
+		     auto_clnt_name(client->auto_clnt));
 	if (count >= 2)
 	    return (-1);
 	sleep(1);				/* XXX make configurable */
@@ -263,7 +205,7 @@ int     attr_clnt_request(ATTR_CLNT *client, int send_flags,...)
 
 void    attr_clnt_control(ATTR_CLNT *client, int name,...)
 {
-    char   *myname = "attr_clnt_control";
+    const char *myname = "attr_clnt_control";
     va_list ap;
 
     for (va_start(ap, name); name != ATTR_CLNT_CTL_END; name = va_arg(ap, int)) {

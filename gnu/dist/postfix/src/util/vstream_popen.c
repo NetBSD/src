@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream_popen.c,v 1.1.1.3 2004/11/13 05:06:04 heas Exp $	*/
+/*	$NetBSD: vstream_popen.c,v 1.1.1.3.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -40,11 +40,12 @@
 /*	list of name, value, name, value, ... elements. By default only the
 /*	command search path is initialized to _PATH_DEFPATH.
 /* .IP "VSTREAM_POPEN_EXPORT (char **)"
+/*	This argument is passed to clean_env().
 /*	Null-terminated array of names of environment parameters
 /*	that can be exported. By default, everything is exported.
-/* .IP "VSTREAM_POPEN_UID (int)"
+/* .IP "VSTREAM_POPEN_UID (uid_t)"
 /*	The user ID to execute the command as. The user ID must be non-zero.
-/* .IP "VSTREAM_POPEN_GID (int)"
+/* .IP "VSTREAM_POPEN_GID (gid_t)"
 /*	The group ID to execute the command as. The group ID must be non-zero.
 /* .IP "VSTREAM_POPEN_SHELL (char *)"
 /*	The shell to use when executing the command specified with
@@ -125,7 +126,7 @@ typedef struct VSTREAM_POPEN_ARGS {
 
 static void vstream_parse_args(VSTREAM_POPEN_ARGS *args, va_list ap)
 {
-    char   *myname = "vstream_parse_args";
+    const char *myname = "vstream_parse_args";
     int     key;
 
     /*
@@ -158,11 +159,11 @@ static void vstream_parse_args(VSTREAM_POPEN_ARGS *args, va_list ap)
 	    break;
 	case VSTREAM_POPEN_UID:
 	    args->privileged = 1;
-	    args->uid = va_arg(ap, int);
+	    args->uid = va_arg(ap, uid_t);
 	    break;
 	case VSTREAM_POPEN_GID:
 	    args->privileged = 1;
-	    args->gid = va_arg(ap, int);
+	    args->gid = va_arg(ap, gid_t);
 	    break;
 	case VSTREAM_POPEN_ENV:
 	    args->env = va_arg(ap, char **);
@@ -193,7 +194,7 @@ static void vstream_parse_args(VSTREAM_POPEN_ARGS *args, va_list ap)
 
 VSTREAM *vstream_popen(int flags,...)
 {
-    char   *myname = "vstream_popen";
+    const char *myname = "vstream_popen";
     VSTREAM_POPEN_ARGS args;
     va_list ap;
     VSTREAM *stream;
@@ -219,6 +220,7 @@ VSTREAM *vstream_popen(int flags,...)
 	(void) close(sockfd[1]);
 	return (0);
     case 0:					/* child */
+	(void) msg_cleanup((MSG_CLEANUP_FN) 0);
 	if (close(sockfd[1]))
 	    msg_warn("close: %m");
 	for (fd = 0; fd < 2; fd++)

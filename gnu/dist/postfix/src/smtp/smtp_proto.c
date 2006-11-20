@@ -1,10 +1,10 @@
-/*	$NetBSD: smtp_proto.c,v 1.1.1.8.2.2 2006/07/31 19:16:54 tron Exp $	*/
+/*	$NetBSD: smtp_proto.c,v 1.1.1.8.2.3 2006/11/20 13:30:52 tron Exp $	*/
 
 /*++
 /* NAME
 /*	smtp_proto 3
 /* SUMMARY
-/*	client SMTP protocol
+/*	client SMTP/LMTP protocol
 /* SYNOPSIS
 /*	#include "smtp.h"
 /*
@@ -20,6 +20,7 @@
 /*	int	smtp_quit(state)
 /*	SMTP_STATE *state;
 /* DESCRIPTION
+/*	In the subsequent text, SMTP implies LMTP.
 /*	This module implements the client side of the SMTP protocol.
 /*
 /*	smtp_helo() performs the initial handshake with the SMTP server.
@@ -33,8 +34,8 @@
 /*	accordingly.
 /*
 /*	smtp_rset() sends a single RSET command and waits for the
-/*	response. In case of no response, or negative response, it
-/*	turns off connection caching.
+/*	response. In case of a negative reply it sets the
+/*	CANT_RSET_THIS_SESSION flag.
 /*
 /*	smtp_quit() sends a single QUIT command and waits for the
 /*	response if configured to do so. It always turns off connection
@@ -45,6 +46,12 @@
 /*	smtp_rset() and smtp_quit(), success means the ability to
 /*	perform an SMTP conversation, not necessarily the ability
 /*	to deliver mail, or the achievement of server happiness.
+/*
+/*	In case of a rejected or failed connection, a connection
+/*	is marked as "bad, do not cache". Otherwise, connection
+/*	caching may be turned off (without being marked "bad") at
+/*	the discretion of the code that implements the individual
+/*	protocol steps.
 /*
 /*	Warnings: corrupt message file. A corrupt message is marked
 /*	as "corrupt" by changing its queue file permissions.
@@ -130,6 +137,7 @@
 #include <off_cvt.h>
 #include <mark_corrupt.h>
 #include <quote_821_local.h>
+#include <quote_822_local.h>
 #include <mail_proto.h>
 #include <mime_state.h>
 #include <ehlo_mask.h>
@@ -138,6 +146,8 @@
 #include <mail_addr_map.h>
 #include <ext_prop.h>
 #include <lex_822.h>
+#include <dsn_mask.h>
+#include <xtext.h>
 
 /* Application-specific. */
 
@@ -222,16 +232,22 @@ char   *xfer_request[SMTP_STATE_LAST] = {
     "QUIT command",
 };
 
-static int smtp_start_tls(SMTP_STATE *, int);
+#define SMTP_MIME_DOWNGRADE(session, request) \
+    (var_disable_mime_oconv == 0 \
+     && (session->features & SMTP_FEATURE_8BITMIME) == 0 \
+     && strcmp(request->encoding, MAIL_ATTR_ENC_7BIT) != 0)
+
+static int smtp_start_tls(SMTP_STATE *);
 
 /* smtp_helo - perform initial handshake with SMTP server */
 
-int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
+int     smtp_helo(SMTP_STATE *state)
 {
-    char   *myname = "smtp_helo";
+    const char *myname = "smtp_helo";
     SMTP_SESSION *session = state->session;
     DELIVER_REQUEST *request = state->request;
     SMTP_RESP *resp;
+    SMTP_RESP fake;
     int     except;
     char   *lines;
     char   *words;
@@ -251,34 +267,37 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
 
 #ifdef USE_TLS
     int     saved_features = session->features;
+    int     tls_helo_status;
 
 #endif
+    const char *NOCLOBBER where;
 
     /*
      * Prepare for disaster.
      */
     smtp_timeout_setup(state->session->stream, var_smtp_helo_tmout);
     if ((except = vstream_setjmp(state->session->stream)) != 0)
-	return (smtp_stream_except(state, except,
-			      "performing the initial protocol handshake"));
+	return (smtp_stream_except(state, except, where));
 
     /*
      * If not recursing after STARTTLS, examine the server greeting banner
      * and decide if we are going to send EHLO as the next command.
      */
-    if ((misc_flags & SMTP_MISC_FLAG_IN_STARTTLS) == 0) {
+    if ((state->misc_flags & SMTP_MISC_FLAG_IN_STARTTLS) == 0) {
 
 	/*
 	 * Read and parse the server's SMTP greeting banner.
 	 */
+	where = "receiving the initial server greeting";
 	switch ((resp = smtp_chat_resp(session))->code / 100) {
 	case 2:
 	    break;
 	case 5:
 	    if (var_smtp_skip_5xx_greeting)
-		resp->code = 400;
+		STR(resp->dsn_buf)[0] = '4';
+	    /* FALLTHROUGH */
 	default:
-	    return (smtp_site_fail(state, resp->code,
+	    return (smtp_site_fail(state, session->host, resp,
 				   "host %s refused to talk to me: %s",
 				   session->namaddr,
 				   translit(resp->str, "\n", " ")));
@@ -302,18 +321,22 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
 	(void) mystrtok(&words, "- \t\n");
 	for (n = 0; (word = mystrtok(&words, " \t\n")) != 0; n++) {
 	    if (n == 0 && strcasecmp(word, var_myhostname) == 0) {
-		if (misc_flags & SMTP_MISC_FLAG_LOOP_DETECT)
+		if (state->misc_flags & SMTP_MISC_FLAG_LOOP_DETECT)
 		    msg_warn("host %s greeted me with my own hostname %s",
-			     session->namaddr, var_myhostname);
+			     session->namaddrport, var_myhostname);
 	    } else if (strcasecmp(word, "ESMTP") == 0)
 		session->features |= SMTP_FEATURE_ESMTP;
 	}
-	if (var_smtp_always_ehlo
-	    && (session->features & SMTP_FEATURE_MAYBEPIX) == 0)
+	if ((state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) == 0) {
+	    if (var_smtp_always_ehlo
+		&& (session->features & SMTP_FEATURE_MAYBEPIX) == 0)
+		session->features |= SMTP_FEATURE_ESMTP;
+	    if (var_smtp_never_ehlo
+		|| (session->features & SMTP_FEATURE_MAYBEPIX) != 0)
+		session->features &= ~SMTP_FEATURE_ESMTP;
+	} else {
 	    session->features |= SMTP_FEATURE_ESMTP;
-	if (var_smtp_never_ehlo
-	    || (session->features & SMTP_FEATURE_MAYBEPIX) != 0)
-	    session->features &= ~SMTP_FEATURE_ESMTP;
+	}
     }
 
     /*
@@ -328,15 +351,27 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
      * Return the compliment. Fall back to SMTP if our ESMTP recognition
      * heuristic failed.
      */
-    if (session->features & SMTP_FEATURE_ESMTP) {
-	smtp_chat_cmd(session, "EHLO %s", var_smtp_helo_name);
+    if ((state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) == 0) {
+	where = "performing the EHLO handshake";
+	if (session->features & SMTP_FEATURE_ESMTP) {
+	    smtp_chat_cmd(session, "EHLO %s", var_smtp_helo_name);
+	    if ((resp = smtp_chat_resp(session))->code / 100 != 2)
+		session->features &= ~SMTP_FEATURE_ESMTP;
+	}
+	if ((session->features & SMTP_FEATURE_ESMTP) == 0) {
+	    where = "performing the HELO handshake";
+	    smtp_chat_cmd(session, "HELO %s", var_smtp_helo_name);
+	    if ((resp = smtp_chat_resp(session))->code / 100 != 2)
+		return (smtp_site_fail(state, session->host, resp,
+				       "host %s refused to talk to me: %s",
+				       session->namaddr,
+				       translit(resp->str, "\n", " ")));
+	}
+    } else {
+	where = "performing the LHLO handshake";
+	smtp_chat_cmd(session, "LHLO %s", var_smtp_helo_name);
 	if ((resp = smtp_chat_resp(session))->code / 100 != 2)
-	    session->features &= ~SMTP_FEATURE_ESMTP;
-    }
-    if ((session->features & SMTP_FEATURE_ESMTP) == 0) {
-	smtp_chat_cmd(session, "HELO %s", var_smtp_helo_name);
-	if ((resp = smtp_chat_resp(session))->code / 100 != 2)
-	    return (smtp_site_fail(state, resp->code,
+	    return (smtp_site_fail(state, session->host, resp,
 				   "host %s refused to talk to me: %s",
 				   session->namaddr,
 				   translit(resp->str, "\n", " ")));
@@ -362,7 +397,11 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
 		     str_ehlo_mask(discard_mask));
 
 	/*
-	 * Pick up some useful features offered by the SMTP server.
+	 * Pick up some useful features offered by the SMTP server. XXX Until
+	 * we have a portable routine to convert from string to off_t with
+	 * proper overflow detection, ignore the message size limit
+	 * advertised by the SMTP server. Otherwise, we might do the wrong
+	 * thing when the server advertises a really huge message size limit.
 	 * 
 	 * XXX Allow for "code (SP|-) ehlo-keyword (SP|=) ehlo-param...",
 	 * because MicroSoft implemented AUTH based on an old draft.
@@ -374,16 +413,29 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
 		if (n == 0) {
 		    if (session->helo != 0)
 			myfree(session->helo);
-		    session->helo = lowercase(mystrdup(word));
+
+		    /*
+		     * XXX: Keep the original case: we don't expect a single
+		     * SMTP server to randomly change the case of its helo
+		     * response. If different capitalization is detected, we
+		     * should assume disjoint TLS caches.
+		     */
+		    session->helo = mystrdup(word);
 		    if (strcasecmp(word, var_myhostname) == 0
-			&& (misc_flags & SMTP_MISC_FLAG_LOOP_DETECT) != 0) {
+			&& (state->misc_flags & SMTP_MISC_FLAG_LOOP_DETECT) != 0) {
 			msg_warn("host %s replied to HELO/EHLO"
 				 " with my own hostname %s",
-				 session->namaddr, var_myhostname);
-			return (smtp_site_fail(state,
-					       (session->features & SMTP_FEATURE_BEST_MX) ? 550 : 450,
+				 session->namaddrport, var_myhostname);
+			if (session->features & SMTP_FEATURE_BEST_MX)
+			    return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
+					     SMTP_RESP_FAKE(&fake, "5.4.6"),
 					 "mail for %s loops back to myself",
-					       request->nexthop));
+						   request->nexthop));
+			else
+			    return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
+					     SMTP_RESP_FAKE(&fake, "4.4.6"),
+					 "mail for %s loops back to myself",
+						   request->nexthop));
 		    }
 		} else if (strcasecmp(word, "8BITMIME") == 0) {
 		    if ((discard_mask & EHLO_MASK_8BITMIME) == 0)
@@ -394,15 +446,16 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
 		} else if (strcasecmp(word, "XFORWARD") == 0) {
 		    if ((discard_mask & EHLO_MASK_XFORWARD) == 0)
 			while ((word = mystrtok(&words, " \t")) != 0)
-			    session->features |= name_code(xforward_features,
-						 NAME_CODE_FLAG_NONE, word);
+			    session->features |=
+				name_code(xforward_features,
+					  NAME_CODE_FLAG_NONE, word);
 		} else if (strcasecmp(word, "SIZE") == 0) {
 		    if ((discard_mask & EHLO_MASK_SIZE) == 0) {
 			session->features |= SMTP_FEATURE_SIZE;
 			if ((word = mystrtok(&words, " \t")) != 0) {
 			    if (!alldig(word))
 				msg_warn("bad EHLO SIZE limit \"%s\" from %s",
-					 word, session->namaddr);
+					 word, session->namaddrport);
 			    else
 				session->size_limit = off_cvt_string(word);
 			}
@@ -419,6 +472,9 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
 		    if ((discard_mask & EHLO_MASK_AUTH) == 0)
 			smtp_sasl_helo_auth(session, words);
 #endif
+		} else if (strcasecmp(word, "DSN") == 0) {
+		    if ((discard_mask & EHLO_MASK_DSN) == 0)
+			session->features |= SMTP_FEATURE_DSN;
 		}
 		n++;
 	    }
@@ -432,7 +488,7 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
      * We use SMTP command pipelining if the server said it supported it.
      * Since we use blocking I/O, RFC 2197 says that we should inspect the
      * TCP window size and not send more than this amount of information.
-     * Unfortunately this information is not available using the sockets
+     * Unfortunately this information is unavailable using the sockets
      * interface. However, we *can* get the TCP send buffer size on the local
      * TCP/IP stack. We should be able to fill this buffer without being
      * blocked, and then the kernel will effectively do non-blocking I/O for
@@ -458,7 +514,9 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
 		msg_fatal("%s: setsockopt: %m", myname);
 	}
 	if (msg_verbose)
-	    msg_info("Using ESMTP PIPELINING, TCP send buffer size is %d",
+	    msg_info("Using %s PIPELINING, TCP send buffer size is %d",
+		     (state->misc_flags &
+		      SMTP_MISC_FLAG_USE_LMTP) ? "LMTP" : "ESMTP",
 		     session->sndbufsize);
     } else {
 	session->sndbufsize = 0;
@@ -469,22 +527,21 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
     /*
      * Skip this part if we already sent STARTTLS.
      */
-    if ((misc_flags & SMTP_MISC_FLAG_IN_STARTTLS) == 0) {
+    if ((state->misc_flags & SMTP_MISC_FLAG_IN_STARTTLS) == 0) {
 
 	/*
 	 * Optionally log unused STARTTLS opportunities.
 	 */
 	if ((session->features & SMTP_FEATURE_STARTTLS) &&
-	    (var_smtp_tls_note_starttls_offer) &&
-	    (!(session->tls_enforce_tls || session->tls_use_tls)))
+	    var_smtp_tls_note_starttls_offer &&
+	    session->tls_level <= TLS_LEV_NONE)
 	    msg_info("Host offered STARTTLS: [%s]", session->host);
 
 	/*
 	 * Decide whether or not to send STARTTLS.
 	 */
 	if ((session->features & SMTP_FEATURE_STARTTLS) != 0
-	    && smtp_tls_ctx != 0
-	    && (session->tls_use_tls || session->tls_enforce_tls)) {
+	    && smtp_tls_ctx != 0 && session->tls_level >= TLS_LEV_MAY) {
 
 	    /*
 	     * Prepare for disaster.
@@ -508,14 +565,15 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
 	    smtp_chat_cmd(session, "STARTTLS");
 	    if ((resp = smtp_chat_resp(session))->code / 100 == 2) {
 #ifdef USE_SASL_AUTH
-		if (session->sasl_mechanism_list) {
-		    myfree(session->sasl_mechanism_list);
-		    session->sasl_mechanism_list = 0;
-		}
+		if (session->features & SMTP_FEATURE_AUTH)
+		    smtp_sasl_cleanup(session);
 #endif
 		session->features = saved_features;
-		misc_flags |= SMTP_MISC_FLAG_IN_STARTTLS;
-		return (smtp_start_tls(state, misc_flags));
+		/* XXX Mix-up of per-session and per-request flags. */
+		state->misc_flags |= SMTP_MISC_FLAG_IN_STARTTLS;
+		tls_helo_status = smtp_start_tls(state);
+		state->misc_flags &= ~SMTP_MISC_FLAG_IN_STARTTLS;
+		return (tls_helo_status);
 	    }
 
 	    /*
@@ -523,8 +581,8 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
 	     * although support for it was announced in the EHLO response.
 	     */
 	    session->features &= ~SMTP_FEATURE_STARTTLS;
-	    if (session->tls_enforce_tls)
-		return (smtp_site_fail(state, resp->code,
+	    if (session->tls_level >= TLS_LEV_ENCRYPT)
+		return (smtp_site_fail(state, session->host, resp,
 		    "TLS is required, but host %s refused to start TLS: %s",
 				       session->namaddr,
 				       translit(resp->str, "\n", " ")));
@@ -538,19 +596,22 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
 	 * block. When TLS is required we must never, ever, end up in
 	 * plain-text mode.
 	 */
-	if (session->tls_enforce_tls) {
+	if (session->tls_level >= TLS_LEV_ENCRYPT) {
 	    if (!(session->features & SMTP_FEATURE_STARTTLS)) {
-		return (smtp_site_fail(state, 450,
+		return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
+				       SMTP_RESP_FAKE(&fake, "4.7.4"),
 			  "TLS is required, but was not offered by host %s",
 				       session->namaddr));
 	    } else if (smtp_tls_ctx == 0) {
-		return (smtp_site_fail(state, 450,
+		return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
+				       SMTP_RESP_FAKE(&fake, "4.7.5"),
 		     "TLS is required, but our TLS engine is unavailable"));
 	    } else {
 		msg_warn("%s: TLS is required but unavailable, don't know why",
 			 myname);
-		return (smtp_site_fail(state, 450,
-				     "TLS is required, but not available"));
+		return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
+				       SMTP_RESP_FAKE(&fake, "4.7.0"),
+				       "TLS is required, but unavailable"));
 	    }
 	}
     }
@@ -567,10 +628,12 @@ int     smtp_helo(SMTP_STATE *state, NOCLOBBER int misc_flags)
 
 /* smtp_start_tls - turn on TLS and recurse into the HELO dialog */
 
-static int smtp_start_tls(SMTP_STATE *state, int misc_flags)
+static int smtp_start_tls(SMTP_STATE *state)
 {
     SMTP_SESSION *session = state->session;
+    tls_client_start_props tls_props;
     VSTRING *serverid;
+    SMTP_RESP fake;
 
     /*
      * Turn off SMTP connection caching. When the TLS handshake succeeds, we
@@ -581,7 +644,7 @@ static int smtp_start_tls(SMTP_STATE *state, int misc_flags)
      * SMTP connection either, because the conversation is in an unknown
      * state.
      */
-    session->reuse_count = 0;
+    DONT_CACHE_THIS_SESSION;
 
     /*
      * The actual TLS handshake may succeed, but tls_client_start() may fail
@@ -602,75 +665,121 @@ static int smtp_start_tls(SMTP_STATE *state, int misc_flags)
      * multiple hosts per hostname, or even multiple hosts per IP address.
      * All this without a shared TLS session cache, and they still want to
      * use TLS session caching???
+     * 
+     * The TLS session cache records the trust chain verification status of
+     * cached sessions. Different transports may have different CAfile or
+     * CApath settings, perhaps to allow authenticated connections to sites
+     * with private CA certs without trusting said private certs for other
+     * sites. So we cannot assume that a trust chain valid for one transport
+     * is valid for another. Therefore the client session id must include
+     * either the transport name or the values of CAfile and CApath. We use
+     * the transport name.
      */
     serverid = vstring_alloc(10);
-    vstring_sprintf(serverid, "%s:%s:%u",
-		    session->host, session->addr,
-		    ntohs(session->port));
-    if (session->helo && strcasecmp(session->host, session->helo) != 0)
-	vstring_sprintf_append(serverid, ":%s", session->helo);
-    session->tls_context =
-	tls_client_start(smtp_tls_ctx, session->stream,
-			 var_smtp_starttls_tmout,
-			 session->tls_enforce_peername,
-			 session->host,
-			 lowercase(vstring_str(serverid)),
-			 &(session->tls_info));
+    vstring_sprintf(serverid, "%s:%s:%u:%s", state->service, session->addr,
+		  ntohs(session->port), session->helo ? session->helo : "");
+
+    /*
+     * XXX: We store only one session per lookup key. Ideally the the key
+     * maps 1-to-1 to a server TLS session cache. We use the IP address, port
+     * and ehlo response name to build a lookup key that works for split
+     * caches (that announce distinct names) behind a load balancer.
+     * 
+     * Starting with Postfix 2.3 we may have incompatible security requirements
+     * for different domains hosted on the same server (peer cache). This
+     * requires multiple sessions to be negotiated with the same peer. It
+     * would be bad to store just one session and repeatedly discard it when
+     * we encounter incompatible requirements.
+     * 
+     * This drives us to separate lookup keys for each combination of cipher and
+     * protocol requirements. While at times a stronger session may not get
+     * re-used for a delivery with weaker requirements, a multi-session cache
+     * is prohibitively complex at this time.
+     * 
+     * - Expiration code would need to selectively delete sessions from a list -
+     * Re-use code would need to decode many sessions and choose the best -
+     * Store code would need to choose between replace and append.
+     * 
+     * Note: checking the compatibility of re-activated sessions against the
+     * cipher requirements of the session under construction requires us to
+     * store the cipher name in the session cache with the passivated session
+     * object. But the name is not available when the session is revived
+     * until the handshake is complete, which is too late.
+     * 
+     * XXX: When a cached session is reloaded, its cipher is not available via
+     * documented APIs until the handshake completes. We need to filter out
+     * sessions that use the wrong ciphers, but may not peek at the
+     * undocumented session->cipher_id and cipher->id structure members.
+     * 
+     * Since cipherlists are typically shared by many domains, we include the
+     * cipherlist in the session cache lookup key. This avoids false
+     * positives from the TLS session cache.
+     * 
+     * To support mutually incompatible protocol/cipher combinations, our
+     * session key must include both the protocol and the cipherlist.
+     * 
+     * XXX: the cipherlist is case sensitive, "aDH" != "ADH". So we don't
+     * lowercase() the serverid.
+     */
+    if (session->tls_level >= TLS_LEV_ENCRYPT
+	&& session->tls_protocols != 0
+	&& session->tls_protocols != TLS_ALL_PROTOCOLS)
+	vstring_sprintf_append(serverid, "&p=%s",
+			       tls_protocol_names(VAR_SMTP_TLS_MAND_PROTO,
+						  session->tls_protocols));
+    if (session->tls_level >= TLS_LEV_ENCRYPT && session->tls_cipherlist)
+	vstring_sprintf_append(serverid, "&c=%s", session->tls_cipherlist);
+
+    tls_props.ctx = smtp_tls_ctx;
+    tls_props.stream = session->stream;
+    tls_props.log_level = var_smtp_tls_loglevel;
+    tls_props.timeout = var_smtp_starttls_tmout;
+    tls_props.tls_level = session->tls_level;
+    tls_props.nexthop = session->tls_nexthop;
+    tls_props.host = session->host;
+    tls_props.serverid = vstring_str(serverid);
+    tls_props.protocols = session->tls_protocols;
+    tls_props.cipherlist = session->tls_cipherlist;
+    tls_props.certmatch = session->tls_certmatch;
+
+    session->tls_context = tls_client_start(&tls_props);
     vstring_free(serverid);
-    if (session->tls_context == 0)
-	return (smtp_site_fail(state, 450,
+    if (session->tls_context == 0) {
+
+	/*
+	 * We must avoid further I/O, the peer is in an undefined state.
+	 */
+	(void) vstream_fpurge(session->stream);
+	DONT_USE_DEAD_SESSION;
+
+	/*
+	 * If TLS is optional, try delivery to the same server over a
+	 * plaintext connection. Otherwise we would defer mail forever with
+	 * destinations that have no alternate MX host.
+	 * 
+	 * Don't fall back to plaintext if we were willing to use SASL-over-TLS
+	 * authentication. If the server doesn't announce SASL support over
+	 * plaintext connections, then we don't want delivery to fail with
+	 * "relay access denied".
+	 */
+	if (session->tls_level == TLS_LEV_MAY
+#ifdef USE_SASL_AUTH
+	    && !(var_smtp_sasl_enable
+		 && *var_smtp_sasl_passwd
+		 && smtp_sasl_passwd_lookup(session))
+#endif
+	    )
+	    RETRY_AS_PLAINTEXT;
+	return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
+			       SMTP_RESP_FAKE(&fake, "4.7.5"),
 			       "Cannot start TLS: handshake failure"));
-
-    /*
-     * Give up when TLS is required, we can parse the server certificate's
-     * CommonName field, but server certificate verification failed.
-     * 
-     * In enforce_peername state, the handshake would already have been
-     * terminated by the certificate verification call-back routine, so the
-     * check here is for logging only.
-     * 
-     * XXX It appears that the CommonName field is used as an indicator that a
-     * server certificate is available. If the latter is what we want, then
-     * we should test for that instead.
-     */
-    if (session->tls_info.peer_CN != NULL) {
-	if (!session->tls_info.peer_verified) {
-	    msg_info("Server certificate could not be verified");
-	    if (session->tls_enforce_peername) {
-		tls_client_stop(smtp_tls_ctx, session->stream,
-				var_smtp_starttls_tmout, 1,
-				&(session->tls_info));
-		session->tls_context = 0;
-		return (smtp_site_fail(state, 450,
-			  "TLS failure: Cannot verify server certificate"));
-	    }
-	}
-    }
-
-    /*
-     * Give up when TLS is required but no server certificate is available
-     * (or we could not parse the certificate's CommonName) field.
-     * 
-     * XXX The test below is not accurate: the server hostname verification may
-     * use the dNSNames instead of the CommonName. We really should be
-     * testing if a certificate is available.
-     */
-    else {
-	if (session->tls_enforce_peername) {
-	    tls_client_stop(smtp_tls_ctx, session->stream,
-			    var_smtp_starttls_tmout, 1,
-			    &(session->tls_info));
-	    session->tls_context = 0;
-	    return (smtp_site_fail(state, 450,
-			     "TLS failure: Cannot verify server hostname"));
-	}
     }
 
     /*
      * At this point we have to re-negotiate the "EHLO" to reget the
      * feature-list.
      */
-    return (smtp_helo(state, misc_flags));
+    return (smtp_helo(state));
 }
 
 #endif
@@ -678,12 +787,12 @@ static int smtp_start_tls(SMTP_STATE *state, int misc_flags)
 /* smtp_text_out - output one header/body record */
 
 static void smtp_text_out(void *context, int rec_type,
-			          const char *text, int len,
+			          const char *text, ssize_t len,
 			          off_t unused_offset)
 {
     SMTP_STATE *state = (SMTP_STATE *) context;
     SMTP_SESSION *session = state->session;
-    int     data_left;
+    ssize_t data_left;
     const char *data_start;
 
     /*
@@ -847,22 +956,37 @@ static void smtp_header_rewrite(void *context, int header_class,
     }
 }
 
+/* smtp_mime_fail - MIME problem */
+
+static void smtp_mime_fail(SMTP_STATE *state, int mime_errs)
+{
+    MIME_STATE_DETAIL *detail;
+    SMTP_RESP fake;
+
+    detail = mime_state_detail(mime_errs);
+    smtp_mesg_fail(state, DSN_BY_LOCAL_MTA,
+		   SMTP_RESP_FAKE(&fake, detail->dsn),
+		   "%s", detail->text);
+}
+
 /* smtp_loop - exercise the SMTP protocol engine */
 
 static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		             NOCLOBBER int recv_state)
 {
-    char   *myname = "smtp_loop";
+    const char *myname = "smtp_loop";
     DELIVER_REQUEST *request = state->request;
     SMTP_SESSION *session = state->session;
     SMTP_RESP *resp;
     RECIPIENT *rcpt;
     VSTRING *next_command = vstring_alloc(100);
+    int    *NOCLOBBER survivors = 0;
     NOCLOBBER int next_state;
     NOCLOBBER int next_rcpt;
     NOCLOBBER int send_rcpt;
     NOCLOBBER int recv_rcpt;
     NOCLOBBER int nrcpt;
+    NOCLOBBER int recv_done;
     int     except;
     int     rec_type;
     NOCLOBBER int prev_type = 0;
@@ -870,6 +994,8 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
     NOCLOBBER int mail_from_rejected;
     NOCLOBBER int downgrading;
     int     mime_errs;
+    SMTP_RESP fake;
+    int     fail_status;
 
     /*
      * Macros for readability.
@@ -891,6 +1017,8 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 
 #define RETURN(x) do { \
 	vstring_free(next_command); \
+	if (survivors) \
+	    myfree((char *) survivors); \
 	if (session->mime_state) \
 	    session->mime_state = mime_state_free(session->mime_state); \
 	return (x); \
@@ -904,12 +1032,6 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 
 #define SENDING_MAIL \
 	(recv_state <= SMTP_STATE_DOT)
-
-#define THIS_SESSION_IS_CACHED \
-	(session->reuse_count > 0)
-
-#define DONT_CACHE_THIS_SESSION \
-	(session->reuse_count = 0)
 
 #define CANT_RSET_THIS_SESSION \
 	(session->features |= SMTP_FEATURE_RSET_REJECTED)
@@ -945,7 +1067,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
      * SMTP dialog with RSET and QUIT.
      */
     nrcpt = 0;
-    next_rcpt = send_rcpt = recv_rcpt = 0;
+    next_rcpt = send_rcpt = recv_rcpt = recv_done = 0;
     mail_from_rejected = 0;
 
     /*
@@ -1004,14 +1126,18 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	     */
 	case SMTP_STATE_XFORWARD_NAME_ADDR:
 	    vstring_strcpy(next_command, XFORWARD_CMD);
-	    if (session->features & SMTP_FEATURE_XFORWARD_NAME)
-		vstring_sprintf_append(next_command, " %s=%s",
-		   XFORWARD_NAME, DEL_REQ_ATTR_AVAIL(request->client_name) ?
-			       request->client_name : XFORWARD_UNAVAILABLE);
-	    if (session->features & SMTP_FEATURE_XFORWARD_ADDR)
-		vstring_sprintf_append(next_command, " %s=%s",
-		   XFORWARD_ADDR, DEL_REQ_ATTR_AVAIL(request->client_addr) ?
-			       request->client_addr : XFORWARD_UNAVAILABLE);
+	    if (session->features & SMTP_FEATURE_XFORWARD_NAME) {
+		vstring_strcat(next_command, " " XFORWARD_NAME "=");
+		xtext_quote_append(next_command,
+				   DEL_REQ_ATTR_AVAIL(request->client_name) ?
+			   request->client_name : XFORWARD_UNAVAILABLE, "");
+	    }
+	    if (session->features & SMTP_FEATURE_XFORWARD_ADDR) {
+		vstring_strcat(next_command, " " XFORWARD_ADDR "=");
+		xtext_quote_append(next_command,
+				   DEL_REQ_ATTR_AVAIL(request->client_addr) ?
+			   request->client_addr : XFORWARD_UNAVAILABLE, "");
+	    }
 	    if (session->send_proto_helo)
 		next_state = SMTP_STATE_XFORWARD_PROTO_HELO;
 	    else
@@ -1020,20 +1146,26 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 
 	case SMTP_STATE_XFORWARD_PROTO_HELO:
 	    vstring_strcpy(next_command, XFORWARD_CMD);
-	    if (session->features & SMTP_FEATURE_XFORWARD_PROTO)
-		vstring_sprintf_append(next_command, " %s=%s",
-		 XFORWARD_PROTO, DEL_REQ_ATTR_AVAIL(request->client_proto) ?
-			      request->client_proto : XFORWARD_UNAVAILABLE);
-	    if (session->features & SMTP_FEATURE_XFORWARD_HELO)
-		vstring_sprintf_append(next_command, " %s=%s",
-		   XFORWARD_HELO, DEL_REQ_ATTR_AVAIL(request->client_helo) ?
-			       request->client_helo : XFORWARD_UNAVAILABLE);
-	    if (session->features & SMTP_FEATURE_XFORWARD_DOMAIN)
-		vstring_sprintf_append(next_command, " %s=%s", XFORWARD_DOMAIN,
+	    if (session->features & SMTP_FEATURE_XFORWARD_PROTO) {
+		vstring_strcat(next_command, " " XFORWARD_PROTO "=");
+		xtext_quote_append(next_command,
+				 DEL_REQ_ATTR_AVAIL(request->client_proto) ?
+			  request->client_proto : XFORWARD_UNAVAILABLE, "");
+	    }
+	    if (session->features & SMTP_FEATURE_XFORWARD_HELO) {
+		vstring_strcat(next_command, " " XFORWARD_HELO "=");
+		xtext_quote_append(next_command,
+				   DEL_REQ_ATTR_AVAIL(request->client_helo) ?
+			   request->client_helo : XFORWARD_UNAVAILABLE, "");
+	    }
+	    if (session->features & SMTP_FEATURE_XFORWARD_DOMAIN) {
+		vstring_strcat(next_command, " " XFORWARD_DOMAIN "=");
+		xtext_quote_append(next_command,
 			 DEL_REQ_ATTR_AVAIL(request->rewrite_context) == 0 ?
-				       XFORWARD_UNAVAILABLE :
+				   XFORWARD_UNAVAILABLE :
 		     strcmp(request->rewrite_context, MAIL_ATTR_RWR_LOCAL) ?
-				  XFORWARD_DOM_REMOTE : XFORWARD_DOM_LOCAL);
+			      XFORWARD_DOM_REMOTE : XFORWARD_DOM_LOCAL, "");
+	    }
 	    next_state = SMTP_STATE_MAIL;
 	    break;
 
@@ -1041,11 +1173,15 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	     * Build the MAIL FROM command.
 	     */
 	case SMTP_STATE_MAIL:
+	    request->msg_stats.reuse_count = session->reuse_count;
+	    GETTIMEOFDAY(&request->msg_stats.conn_setup_done);
 	    REWRITE_ADDRESS(session->scratch2, request->sender);
 	    QUOTE_ADDRESS(session->scratch, vstring_str(session->scratch2));
 	    vstring_sprintf(next_command, "MAIL FROM:<%s>",
 			    vstring_str(session->scratch));
-	    if (session->features & SMTP_FEATURE_SIZE)	/* RFC 1870 */
+	    /* XXX Don't announce SIZE if we're going to MIME downgrade. */
+	    if (session->features & SMTP_FEATURE_SIZE	/* RFC 1870 */
+		&& !SMTP_MIME_DOWNGRADE(session, request))
 		vstring_sprintf_append(next_command, " SIZE=%lu",
 				       request->data_size);
 	    if (session->features & SMTP_FEATURE_8BITMIME) {	/* RFC 1652 */
@@ -1056,6 +1192,15 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		else if (strcmp(request->encoding, MAIL_ATTR_ENC_NONE) != 0)
 		    msg_warn("%s: unknown content encoding: %s",
 			     request->queue_id, request->encoding);
+	    }
+	    if (session->features & SMTP_FEATURE_DSN) {
+		if (request->dsn_envid[0]) {
+		    vstring_sprintf_append(next_command, " ENVID=");
+		    xtext_quote_append(next_command, request->dsn_envid, "+=");
+		}
+		if (request->dsn_ret)
+		    vstring_sprintf_append(next_command, " RET=%s",
+					   dsn_ret_str(request->dsn_ret));
 	    }
 
 	    /*
@@ -1079,6 +1224,24 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	    QUOTE_ADDRESS(session->scratch, vstring_str(session->scratch2));
 	    vstring_sprintf(next_command, "RCPT TO:<%s>",
 			    vstring_str(session->scratch));
+	    if (session->features & SMTP_FEATURE_DSN) {
+		/* XXX DSN xtext encode address value not type. */
+		if (rcpt->dsn_orcpt[0]) {
+		    xtext_quote(session->scratch, rcpt->dsn_orcpt, "+=");
+		    vstring_sprintf_append(next_command, " ORCPT=%s",
+					   vstring_str(session->scratch));
+		} else if (rcpt->orig_addr[0]) {
+		    quote_822_local(session->scratch, rcpt->orig_addr);
+		    vstring_sprintf(session->scratch2, "rfc822;%s",
+				    vstring_str(session->scratch));
+		    xtext_quote(session->scratch, vstring_str(session->scratch2), "+=");
+		    vstring_sprintf_append(next_command, " ORCPT=%s",
+					   vstring_str(session->scratch));
+		}
+		if (rcpt->dsn_notify)
+		    vstring_sprintf_append(next_command, " NOTIFY=%s",
+					   dsn_notify_str(rcpt->dsn_notify));
+	    }
 	    if ((next_rcpt = send_rcpt + 1) == SMTP_RCPT_LEFT(state))
 		next_state = DEL_REQ_TRACE_ONLY(request->flags) ?
 		    SMTP_STATE_ABORT : SMTP_STATE_DATA;
@@ -1094,10 +1257,17 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	    break;
 
 	    /*
-	     * Build the "." command before we have seen the DATA response.
+	     * Build the "." command after we have seen the DATA response
+	     * (DATA is a protocol synchronization point).
+	     * 
+	     * Changing the connection caching state here is safe because it
+	     * affects none of the not-yet processed replies to
+	     * already-generated commands.
 	     */
 	case SMTP_STATE_DOT:
 	    vstring_strcpy(next_command, ".");
+	    if (THIS_SESSION_IS_EXPIRED)
+		DONT_CACHE_THIS_SESSION;
 	    next_state = THIS_SESSION_IS_CACHED ?
 		SMTP_STATE_LAST : SMTP_STATE_QUIT;
 	    break;
@@ -1107,9 +1277,15 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	     * when it has verified all recipients; or it is entered by the
 	     * receiver when all recipients are verified or rejected, and is
 	     * then left before the bottom of the main loop.
+	     * 
+	     * Changing the connection caching state here is safe because there
+	     * are no not-yet processed replies to already-generated
+	     * commands.
 	     */
 	case SMTP_STATE_ABORT:
 	    vstring_strcpy(next_command, "RSET");
+	    if (THIS_SESSION_IS_EXPIRED)
+		DONT_CACHE_THIS_SESSION;
 	    next_state = THIS_SESSION_IS_CACHED ?
 		SMTP_STATE_LAST : SMTP_STATE_QUIT;
 	    break;
@@ -1129,11 +1305,17 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	     * Build the QUIT command before we have seen the "." or RSET
 	     * response. This is entered as initial state from smtp_quit(),
 	     * or is reached near the end of any non-cached session.
+	     * 
+	     * Changing the connection caching state here is safe. If this
+	     * command is pipelined together with a preceding command, then
+	     * connection caching was already turned off. Do not clobber the
+	     * "bad connection" flag.
 	     */
 	case SMTP_STATE_QUIT:
 	    vstring_strcpy(next_command, "QUIT");
 	    next_state = SMTP_STATE_LAST;
-	    DONT_CACHE_THIS_SESSION;
+	    if (THIS_SESSION_IS_CACHED)
+		DONT_CACHE_THIS_SESSION;
 	    break;
 
 	    /*
@@ -1189,7 +1371,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		case SMTP_STATE_XFORWARD_NAME_ADDR:
 		    if (resp->code / 100 != 2)
 			msg_warn("host %s said: %s (in reply to %s)",
-				 session->namaddr,
+				 session->namaddrport,
 				 translit(resp->str, "\n", " "),
 			       xfer_request[SMTP_STATE_XFORWARD_NAME_ADDR]);
 		    if (session->send_proto_helo)
@@ -1201,7 +1383,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		case SMTP_STATE_XFORWARD_PROTO_HELO:
 		    if (resp->code / 100 != 2)
 			msg_warn("host %s said: %s (in reply to %s)",
-				 session->namaddr,
+				 session->namaddrport,
 				 translit(resp->str, "\n", " "),
 			      xfer_request[SMTP_STATE_XFORWARD_PROTO_HELO]);
 		    recv_state = SMTP_STATE_MAIL;
@@ -1214,7 +1396,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		     */
 		case SMTP_STATE_MAIL:
 		    if (resp->code / 100 != 2) {
-			smtp_mesg_fail(state, resp->code,
+			smtp_mesg_fail(state, session->host, resp,
 				       "host %s said: %s (in reply to %s)",
 				       session->namaddr,
 				       translit(resp->str, "\n", " "),
@@ -1239,17 +1421,28 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		case SMTP_STATE_RCPT:
 		    if (!mail_from_rejected) {
 #ifdef notdef
-			if (resp->code == 552)
+			if (resp->code == 552) {
 			    resp->code = 452;
+			    resp->dsn[0] = '4';
+			}
 #endif
 			rcpt = request->rcpt_list.info + recv_rcpt;
 			if (resp->code / 100 == 2) {
+			    if (state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) {
+				if (survivors == 0)
+				    survivors = (int *)
+					mymalloc(request->rcpt_list.len
+						 * sizeof(int));
+				survivors[nrcpt] = recv_rcpt;
+			    }
 			    ++nrcpt;
 			    /* If trace-only, mark the recipient done. */
-			    if (DEL_REQ_TRACE_ONLY(request->flags))
-				smtp_rcpt_done(state, resp->str, rcpt);
+			    if (DEL_REQ_TRACE_ONLY(request->flags)) {
+				translit(resp->str, "\n", " ");
+				smtp_rcpt_done(state, resp, rcpt);
+			    }
 			} else {
-			    smtp_rcpt_fail(state, resp->code, rcpt,
+			    smtp_rcpt_fail(state, rcpt, session->host, resp,
 					"host %s said: %s (in reply to %s)",
 					   session->namaddr,
 					   translit(resp->str, "\n", " "),
@@ -1271,7 +1464,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		case SMTP_STATE_DATA:
 		    if (resp->code / 100 != 3) {
 			if (nrcpt > 0)
-			    smtp_mesg_fail(state, resp->code,
+			    smtp_mesg_fail(state, session->host, resp,
 					"host %s said: %s (in reply to %s)",
 					   session->namaddr,
 					   translit(resp->str, "\n", " "),
@@ -1291,32 +1484,82 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		     * delivered.
 		     */
 		case SMTP_STATE_DOT:
-		    if (nrcpt > 0) {
-			if (resp->code / 100 != 2) {
-			    smtp_mesg_fail(state, resp->code,
+		    GETTIMEOFDAY(&request->msg_stats.deliver_done);
+		    if ((state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) == 0) {
+			if (nrcpt > 0) {
+			    if (resp->code / 100 != 2) {
+				smtp_mesg_fail(state, session->host, resp,
 					"host %s said: %s (in reply to %s)",
-					   session->namaddr,
-					   translit(resp->str, "\n", " "),
-					   xfer_request[SMTP_STATE_DOT]);
-			} else {
-			    for (nrcpt = 0; nrcpt < recv_rcpt; nrcpt++) {
-				rcpt = request->rcpt_list.info + nrcpt;
-				if (!SMTP_RCPT_ISMARKED(rcpt))
-				    smtp_rcpt_done(state, resp->str, rcpt);
+					       session->namaddr,
+					     translit(resp->str, "\n", " "),
+					       xfer_request[SMTP_STATE_DOT]);
+			    } else {
+				for (nrcpt = 0; nrcpt < recv_rcpt; nrcpt++) {
+				    rcpt = request->rcpt_list.info + nrcpt;
+				    if (!SMTP_RCPT_ISMARKED(rcpt)) {
+					translit(resp->str, "\n", " ");
+					smtp_rcpt_done(state, resp, rcpt);
+				    }
+				}
 			    }
 			}
 		    }
+
+		    /*
+		     * With LMTP we have one response per accepted RCPT TO
+		     * command. Stay in the SMTP_STATE_DOT state until we
+		     * have collected all responses.
+		     */
+		    else {
+			if (nrcpt > 0) {
+			    rcpt = request->rcpt_list.info
+				+ survivors[recv_done++];
+			    if (resp->code / 100 != 2) {
+				smtp_rcpt_fail(state, rcpt, session->host, resp,
+					"host %s said: %s (in reply to %s)",
+					       session->namaddr,
+					     translit(resp->str, "\n", " "),
+					       xfer_request[SMTP_STATE_DOT]);
+			    } else {
+				translit(resp->str, "\n", " ");
+				smtp_rcpt_done(state, resp, rcpt);
+			    }
+			}
+			if (msg_verbose)
+			    msg_info("%s: got %d of %d end-of-data replies",
+				     myname, recv_done, nrcpt);
+			if (recv_done < nrcpt)
+			    break;
+		    }
+
+		    /*
+		     * XXX Do not change the connection caching state here,
+		     * even if the connection caching timer expired between
+		     * generating the command and processing the reply,
+		     * otherwise the sender and receiver loops get out of
+		     * sync. The caller will call smtp_quit() if appropriate.
+		     */
 		    recv_state = (var_skip_quit_resp || THIS_SESSION_IS_CACHED ?
 				  SMTP_STATE_LAST : SMTP_STATE_QUIT);
 		    break;
 
 		    /*
-		     * Receive the RSET response, and disable session caching
-		     * in case of failure.
+		     * Receive the RSET response.
+		     * 
+		     * The SMTP_STATE_ABORT sender state is entered by the
+		     * sender when it has verified all recipients; or it is
+		     * entered by the receiver when all recipients are
+		     * verified or rejected, and is then left before the
+		     * bottom of the main loop.
+		     * 
+		     * XXX Do not change the connection caching state here, even
+		     * if the server rejected RSET or if the connection
+		     * caching timer expired between generating the command
+		     * and processing the reply, otherwise the sender and
+		     * receiver loops get out of sync. The caller will call
+		     * smtp_quit() if appropriate.
 		     */
 		case SMTP_STATE_ABORT:
-		    if (resp->code / 100 != 2)
-			DONT_CACHE_THIS_SESSION;
 		    recv_state = (var_skip_quit_resp || THIS_SESSION_IS_CACHED ?
 				  SMTP_STATE_LAST : SMTP_STATE_QUIT);
 		    break;
@@ -1360,6 +1603,8 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		send_state = recv_state = SMTP_STATE_ABORT;
 		send_rcpt = recv_rcpt = 0;
 		vstring_strcpy(next_command, "RSET");
+		if (THIS_SESSION_IS_EXPIRED)
+		    DONT_CACHE_THIS_SESSION;
 		next_state = THIS_SESSION_IS_CACHED ?
 		    SMTP_STATE_LAST : SMTP_STATE_QUIT;
 		/* XXX Also: record if non-delivering session. */
@@ -1383,13 +1628,13 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	 * transaction in progress.
 	 */
 	if (send_state == SMTP_STATE_DOT && nrcpt > 0) {
-	    downgrading =
-		(var_disable_mime_oconv == 0
-		 && (session->features & SMTP_FEATURE_8BITMIME) == 0
-		 && strcmp(request->encoding, MAIL_ATTR_ENC_7BIT) != 0);
+	    downgrading = SMTP_MIME_DOWNGRADE(session, request);
+	    /* XXX Don't downgrade just because generic_maps is turned on. */
 	    if (downgrading || smtp_generic_maps)
-		session->mime_state = mime_state_alloc(MIME_OPT_DOWNGRADE
-						  | MIME_OPT_REPORT_NESTING,
+		session->mime_state = mime_state_alloc(downgrading ?
+						       MIME_OPT_DOWNGRADE
+						 | MIME_OPT_REPORT_NESTING :
+						    MIME_OPT_REPORT_NESTING,
 						       smtp_generic_maps ?
 						       smtp_header_rewrite :
 						       smtp_header_out,
@@ -1422,8 +1667,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 					  vstring_str(session->scratch),
 					  VSTRING_LEN(session->scratch));
 		    if (mime_errs) {
-			smtp_mesg_fail(state, 554, "%s",
-				       mime_state_error(mime_errs));
+			smtp_mime_fail(state, mime_errs);
 			RETURN(0);
 		    }
 		}
@@ -1445,17 +1689,16 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		mime_errs =
 		    mime_state_update(session->mime_state, rec_type, "", 0);
 		if (mime_errs) {
-		    smtp_mesg_fail(state, 554, "%s",
-				   mime_state_error(mime_errs));
+		    smtp_mime_fail(state, mime_errs);
 		    RETURN(0);
 		}
 	    } else if (prev_type == REC_TYPE_CONT)	/* missing newline */
 		smtp_fputs("", 0, session->stream);
 	    if ((session->features & SMTP_FEATURE_MAYBEPIX) != 0
-		&& request->arrival_time < vstream_ftime(session->stream)
-		- var_smtp_pix_thresh) {
+		&& request->msg_stats.incoming_arrival.tv_sec
+		<= vstream_ftime(session->stream) - var_smtp_pix_thresh) {
 		msg_info("%s: enabling PIX <CRLF>.<CRLF> workaround for %s",
-			 request->queue_id, session->namaddr);
+			 request->queue_id, session->namaddrport);
 		smtp_flush(session->stream);	/* hurts performance */
 		sleep(var_smtp_pix_delay);	/* not to mention this */
 	    }
@@ -1464,7 +1707,12 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	    if (rec_type != REC_TYPE_XTRA) {
 		msg_warn("%s: bad record type: %d in message content",
 			 request->queue_id, rec_type);
-		RETURN(mark_corrupt(state->src));
+		fail_status = smtp_mesg_fail(state, DSN_BY_LOCAL_MTA,
+					     SMTP_RESP_FAKE(&fake, "5.3.0"),
+					     "unreadable mail queue entry");
+		if (fail_status == 0)
+		    (void) mark_corrupt(state->src);
+		RETURN(fail_status);
 	    }
 	}
 
@@ -1486,6 +1734,7 @@ int     smtp_xfer(SMTP_STATE *state)
 {
     DELIVER_REQUEST *request = state->request;
     SMTP_SESSION *session = state->session;
+    SMTP_RESP fake;
     int     send_state;
     int     recv_state;
     int     send_name_addr;
@@ -1498,7 +1747,7 @@ int     smtp_xfer(SMTP_STATE *state)
 		  SMTP_RCPT_LEFT(state));
     if (SMTP_RCPT_ISMARKED(request->rcpt_list.info))
 	msg_panic("smtp_xfer: bad recipient status: %d",
-		  request->rcpt_list.info->status);
+		  request->rcpt_list.info->u.status);
 
     /*
      * See if we should even try to send this message at all. This code sits
@@ -1506,7 +1755,8 @@ int     smtp_xfer(SMTP_STATE *state)
      * connection caching.
      */
     if (session->size_limit > 0 && session->size_limit < request->data_size) {
-	smtp_mesg_fail(state, 552,
+	smtp_mesg_fail(state, DSN_BY_LOCAL_MTA,
+		       SMTP_RESP_FAKE(&fake, "5.3.4"),
 		    "message size %lu exceeds size limit %.0f of server %s",
 		       request->data_size, (double) session->size_limit,
 		       session->namaddr);

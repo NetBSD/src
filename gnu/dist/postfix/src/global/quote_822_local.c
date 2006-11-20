@@ -1,4 +1,4 @@
-/*	$NetBSD: quote_822_local.c,v 1.1.1.4 2004/05/31 00:24:34 heas Exp $	*/
+/*	$NetBSD: quote_822_local.c,v 1.1.1.4.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -134,7 +134,7 @@ static VSTRING *make_822_quoted_string(VSTRING *dst, const char *local_part,
      * that need quoting when they occur in a quoted-string.
      */
     VSTRING_ADDCH(dst, '"');
-    for (cp = local_part; cp < end && (ch = *cp) != 0; cp++) {
+    for (cp = local_part; cp < end && (ch = *(unsigned char *) cp) != 0; cp++) {
 	if ((ch > 127 && !(flags & QUOTE_FLAG_8BITCLEAN))
 	    || ch == '"' || ch == '\\' || ch == '\r')
 	    VSTRING_ADDCH(dst, '\\');
@@ -237,6 +237,7 @@ int     main(int unused_argc, char **unused_argv)
     vstring_free(unquoted);
     vstring_free(quoted);
     vstring_free(raw);
+    return (0);
 }
 
 #endif

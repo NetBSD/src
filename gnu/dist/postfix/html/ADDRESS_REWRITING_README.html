@@ -546,14 +546,14 @@ clean up invalid domains in mail addresses produced by legacy mail
 systems. </p>
 
 <p> Canonical mapping is disabled by default. To enable, edit the
-<a href="postconf.5.html#canonical_maps">canonical_maps</a> parameter in the main.cf file and specify one or
+<a href="postconf.5.html#canonical_maps">canonical_maps</a> parameter in the <a href="postconf.5.html">main.cf</a> file and specify one or
 more lookup tables, separated by whitespace or commas. </p>
 
 <p> Example: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#canonical_maps">canonical_maps</a> = hash:/etc/postfix/canonical
 
 /etc/postfix/canonical:
@@ -575,7 +575,7 @@ applied only to sender addresses or to recipient addresses. </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#sender_canonical_maps">sender_canonical_maps</a> = hash:/etc/postfix/sender_canonical
     <a href="postconf.5.html#recipient_canonical_maps">recipient_canonical_maps</a> = hash:/etc/postfix/recipient_canonical
 </pre>
@@ -593,15 +593,15 @@ send mail to the those ugly address without creating a mailer loop.
 </p>
 
 <p> Canonical mapping can be turned off selectively for mail received
-by <a href="smtpd.8.html">smtpd(8)</a>, <a href="qmqpd.8.html">qmqpd(8)</a>, or <a href="pickup.8.html">pickup(8)</a>, by overriding main.cf settings
-in the master.cf file.  This feature is available in Postfix version
+by <a href="smtpd.8.html">smtpd(8)</a>, <a href="qmqpd.8.html">qmqpd(8)</a>, or <a href="pickup.8.html">pickup(8)</a>, by overriding <a href="postconf.5.html">main.cf</a> settings
+in the <a href="master.5.html">master.cf</a> file.  This feature is available in Postfix version
 2.1 and later.  </p>
 
 <p> Example: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
     :10026      inet  n       -       n       -       -       smtpd
         -o <a href="postconf.5.html#receive_override_options">receive_override_options</a>=<a href="postconf.5.html#no_address_mappings">no_address_mappings</a>
 </pre>
@@ -625,7 +625,7 @@ non-empty value. To get the behavior before Postfix 2.2, specify
 
 <p> Address masquerading is disabled by default, and is implemented
 by the <a href="cleanup.8.html">cleanup(8)</a> server. To enable, edit the <a href="postconf.5.html#masquerade_domains">masquerade_domains</a>
-parameter in the main.cf file and specify one or more domain names
+parameter in the <a href="postconf.5.html">main.cf</a> file and specify one or more domain names
 separated by whitespace or commas.  When Postfix tries to masquerade
 a domain, it processes the list from left to right, and processing
 stops at the first match.  </p>
@@ -634,7 +634,7 @@ stops at the first match.  </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#masquerade_domains">masquerade_domains</a> = foo.example.com example.com
 </pre>
 </blockquote>
@@ -647,7 +647,7 @@ this domain or its subdomains: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#masquerade_domains">masquerade_domains</a> = !foo.example.com example.com
 </pre>
 </blockquote>
@@ -664,7 +664,7 @@ Specify one or more user names separated by whitespace or commas.
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#masquerade_exceptions">masquerade_exceptions</a> = root
 </pre>
 </blockquote>
@@ -682,7 +682,7 @@ too, specify (Postfix version 1.1 and later):</p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#masquerade_classes">masquerade_classes</a> = envelope_sender, envelope_recipient,
         header_sender, header_recipient
 </pre>
@@ -692,15 +692,15 @@ too, specify (Postfix version 1.1 and later):</p>
 no longer be able to send mail to individual machines. </p>
 
 <p> Address masquerading can be turned off selectively for mail
-received by <a href="smtpd.8.html">smtpd(8)</a>, <a href="qmqpd.8.html">qmqpd(8)</a>, or <a href="pickup.8.html">pickup(8)</a>, by overriding main.cf
-settings in the master.cf file.  This feature is available in
+received by <a href="smtpd.8.html">smtpd(8)</a>, <a href="qmqpd.8.html">qmqpd(8)</a>, or <a href="pickup.8.html">pickup(8)</a>, by overriding <a href="postconf.5.html">main.cf</a>
+settings in the <a href="master.5.html">master.cf</a> file.  This feature is available in
 Postfix version 2.1 and later. </p>
 
 <p> Example: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
     :10026      inet  n       -       n       -       -       smtpd
         -o <a href="postconf.5.html#receive_override_options">receive_override_options</a>=<a href="postconf.5.html#no_address_mappings">no_address_mappings</a>
 </pre>
@@ -743,14 +743,14 @@ generates itself. </p>
 
 <p> Automatic BCC recipients (including <a href="postconf.5.html#always_bcc">always_bcc</a>) can be turned
 off selectively for mail received by <a href="smtpd.8.html">smtpd(8)</a>, <a href="qmqpd.8.html">qmqpd(8)</a>, or <a href="pickup.8.html">pickup(8)</a>,
-by overriding main.cf settings in the master.cf file.  This feature
+by overriding <a href="postconf.5.html">main.cf</a> settings in the <a href="master.5.html">master.cf</a> file.  This feature
 is available in Postfix version 2.1 and later. </p>
 
 <p> Example: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
     :10026      inet  n       -       n       -       -       smtpd
         -o <a href="postconf.5.html#receive_override_options">receive_override_options</a>=<a href="postconf.5.html#no_address_mappings">no_address_mappings</a>
 </pre>
@@ -774,7 +774,7 @@ for an overview of methods to host virtual domains with Postfix.
 </p>
 
 <p> Virtual aliasing is disabled by default. To enable, edit the
-<a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> parameter in the main.cf file and
+<a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> parameter in the <a href="postconf.5.html">main.cf</a> file and
 specify one or more lookup tables, separated by whitespace or
 commas. </p>
 
@@ -782,10 +782,10 @@ commas. </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
 
-/etc/postfix/virtual:
+/etc/postfix/<a href="virtual.8.html">virtual</a>:
     Wietse.Venema        wietse
 </pre>
 </blockquote>
@@ -800,21 +800,16 @@ can use regular expression tables. This requires that you become
 intimately familiar with the ideas expressed in <a href="regexp_table.5.html">regexp_table(5)</a>,
 <a href="pcre_table.5.html">pcre_table(5)</a> and <a href="virtual.5.html">virtual(5)</a>.  </p>
 
-<p> Note: automatic BCC recipients are produced only for new mail.
-To avoid mailer loops, automatic BCC recipients are not generated
-for mail that is forwarded internally, and are not generated for
-mail that is generated by Postfix itself. </p>
-
 <p> Virtual aliasing can be turned off selectively for mail received
-by <a href="smtpd.8.html">smtpd(8)</a>, <a href="qmqpd.8.html">qmqpd(8)</a>, or <a href="pickup.8.html">pickup(8)</a>, by overriding main.cf settings
-in the master.cf file.  This feature is available in Postfix version
+by <a href="smtpd.8.html">smtpd(8)</a>, <a href="qmqpd.8.html">qmqpd(8)</a>, or <a href="pickup.8.html">pickup(8)</a>, by overriding <a href="postconf.5.html">main.cf</a> settings
+in the <a href="master.5.html">master.cf</a> file.  This feature is available in Postfix version
 2.1 and later. </p>
 
 <p> Example: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
     :10026      inet  n       -       n       -       -       smtpd
         -o <a href="postconf.5.html#receive_override_options">receive_override_options</a>=<a href="postconf.5.html#no_address_mappings">no_address_mappings</a>
 </pre>
@@ -928,14 +923,14 @@ See, for example, the <a href="STANDARD_CONFIGURATION_README.html">STANDARD_CONF
 documents, and the examples in the <a href="transport.5.html">transport(5)</a> manual page.  </p>
 
 <p> Transport table lookups are disabled by default. To enable,
-edit the <a href="postconf.5.html#transport_maps">transport_maps</a> parameter in the main.cf file and specify
+edit the <a href="postconf.5.html#transport_maps">transport_maps</a> parameter in the <a href="postconf.5.html">main.cf</a> file and specify
 one or more lookup tables, separated by whitespace or commas. </p>
 
 <p> Example: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
 </pre>
 </blockquote>
@@ -955,14 +950,14 @@ table lookups, in anticipation of <a href="transport.5.html">transport(5)</a> ta
 can replace one recipient address by a different one. </p>
 
 <p> Lookups of relocated users are disabled by default. To enable,
-edit the <a href="postconf.5.html#relocated_maps">relocated_maps</a> parameter in the main.cf file and specify
+edit the <a href="postconf.5.html#relocated_maps">relocated_maps</a> parameter in the <a href="postconf.5.html">main.cf</a> file and specify
 one or more lookup tables, separated by whitespace or commas. </p>
 
 <p> Example: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#relocated_maps">relocated_maps</a> = hash:/etc/postfix/relocated
 
 /etc/postfix/relocated:
@@ -996,7 +991,7 @@ local machine. </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = hash:/etc/postfix/generic
 
 /etc/postfix/generic:
@@ -1029,7 +1024,7 @@ one of the following: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#alias_maps">alias_maps</a> = hash:/etc/aliases
     <a href="postconf.5.html#alias_maps">alias_maps</a> = dbm:/etc/aliases, nis:mail.aliases
 </pre>
@@ -1041,7 +1036,7 @@ Usually it is one of the following: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#alias_database">alias_database</a> = hash:/etc/aliases (4.4BSD, LINUX)
     <a href="postconf.5.html#alias_database">alias_database</a> = dbm:/etc/aliases (4.3BSD, SYSV&lt;4)
     <a href="postconf.5.html#alias_database">alias_database</a> = dbm:/etc/mail/aliases (SYSV4)
@@ -1082,12 +1077,12 @@ mail for non-UNIX accounts, then you must specify: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> =
 </pre>
 </blockquote>
 
-<p> (i.e. empty) in the main.cf file, otherwise the Postfix SMTP
+<p> (i.e. empty) in the <a href="postconf.5.html">main.cf</a> file, otherwise the Postfix SMTP
 server will reject mail for non-UNIX accounts with "User unknown
 in local recipient table". See the <a href="LOCAL_RECIPIENT_README.html">LOCAL_RECIPIENT_README</a> file
 for more information on this.
@@ -1204,8 +1199,8 @@ includes the original recipient address.
 
 </ul>
 
-<p> Some details are still preliminary and will change as Postfix
-implements the DSN (delivery status notification) standards. </p>
+<p> Some details depend on Postfix version. The example below is
+for Postfix version 2.3 and later. </p>
 
 <blockquote>
 <pre>
@@ -1220,7 +1215,8 @@ Arrival-Date: Tue, 13 Apr 2004 19:27:43 -0400 (EDT)
 Final-Recipient: rfc822; postfix-users@postfix.org
 Action: deliverable
 Status: 2.0.0
-Diagnostic-Code: X-Postfix; delivery via mail.cloud9.net[168.100.1.4]: 250 Ok
+Remote-MTA: dns; mail.cloud9.net
+Diagnostic-Code: smtp; 250 Ok
 </pre>
 </blockquote>
 

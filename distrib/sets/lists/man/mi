@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768.2.34 2006/08/11 04:41:25 riz Exp $
+# $NetBSD: mi,v 1.768.2.35 2006/11/20 13:30:13 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1415,6 +1415,7 @@
 ./usr/share/man/cat5/altq.conf.0		man-router-catman	.cat
 ./usr/share/man/cat5/amd.conf.0			man-amd-catman		.cat
 ./usr/share/man/cat5/ar.0			man-sys-catman		.cat
+./usr/share/man/cat5/bounce.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/body_checks.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/bootparams.0		man-bootserver-catman	.cat
 ./usr/share/man/cat5/bootptab.0			man-bootserver-catman	.cat
@@ -3655,6 +3656,7 @@
 ./usr/share/man/man5/altq.conf.5		man-router-man		.man
 ./usr/share/man/man5/amd.conf.5			man-amd-man		.man
 ./usr/share/man/man5/ar.5			man-sys-man		.man
+./usr/share/man/man5/bounce.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/body_checks.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/bootparams.5		man-bootserver-man	.man
 ./usr/share/man/man5/bootptab.5			man-bootserver-man	.man

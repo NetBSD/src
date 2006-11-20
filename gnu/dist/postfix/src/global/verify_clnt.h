@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_clnt.h,v 1.1.1.2 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: verify_clnt.h,v 1.1.1.2.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 #ifndef _VRFY_CLNT_H_INCLUDED_
 #define _VRFY_CLNT_H_INCLUDED_
@@ -40,8 +40,7 @@
   * Functional interface.
   */
 extern int verify_clnt_query(const char *, int *, VSTRING *);
-extern int PRINTFLIKE(3, 4) verify_clnt_update(const char *, int, const char *,...);
-extern int verify_clnt_vupdate(const char *, int, const char *, va_list);
+extern int verify_clnt_update(const char *, int, const char *);
 
 /* LICENSE
 /* .ad

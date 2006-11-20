@@ -5,14 +5,15 @@ PPoossttffiixx IIPPvv66 SSuuppppoorrtt
 IInnttrroodduuccttiioonn
 
 Postfix 2.2 introduces support for the IPv6 (IP version 6) protocol. IPv6
-support older Postfix versions was available as an add-on patch. The section
-"Compatibility with Postfix <2.2 IPv6 support" below discusses the differences
-between these implementations.
+support for older Postfix versions was available as an add-on patch. The
+section "Compatibility with Postfix <2.2 IPv6 support" below discusses the
+differences between these implementations.
 
 The main feature of interest is that IPv6 uses 128-bit IP addresses instead of
 the 32-bit addresses used by IPv4. It can therefore accommodate a much larger
 number of hosts and networks without ugly kluges such as NAT. A side benefit of
-the much larger address space is that it makes network scanning unpractical.
+the much larger address space is that it makes random network scanning
+impractical.
 
 Postfix uses the same SMTP protocol over IPv6 as it already uses over the older
 IPv4 network, and does AAAA record lookups in the DNS in addition to the older
@@ -106,7 +107,7 @@ configuration work with Postfix.
     smtp_bind_address parameter does for IPv4:
 
         /etc/postfix/main.cf:
-            smtp_bind_address6 = 2001:240:5c7:0:250:56ff:fe89:1
+            smtp_bind_address6 = 2001:240:587:0:250:56ff:fe89:1
 
   * If you left the value of the mynetworks parameter at its default (i.e. no
     mynetworks setting in main.cf) Postfix will figure out by itself what its
@@ -114,14 +115,14 @@ configuration work with Postfix.
 
         % postconf mynetworks
         mynetworks = 127.0.0.0/8 168.100.189.0/28 [::1]/128 [fe80::]/10 [2001:
-        240:5c7::]/64
+        240:587::]/64
 
     If you did specify the mynetworks parameter value in main.cf, you need
     update the mynetworks value to include the IPv6 networks the system is in.
     Be sure to specify IPv6 address information inside "[]", like this:
 
         /etc/postfix/main.cf:
-            mynetworks = ...IPv4 networks... [::1]/128 [2001:240:5c7::]/64 ...
+            mynetworks = ...IPv4 networks... [::1]/128 [2001:240:587::]/64 ...
 
 NNOOTTEE:: wwhheenn ccoonnffiigguurriinngg PPoossttffiixx mmaattcchh lliissttss ssuucchh aass mmyynneettwwoorrkkss oorr
 ddeebbuugg__ppeeeerr__lliisstt,, yyoouu mmuusstt ssppeecciiffyy IIPPvv66 aaddddrreessss iinnffoorrmmaattiioonn iinnssiiddee ""[[]]"" iinn tthhee
@@ -225,7 +226,7 @@ Getting Postfix IPv6 working on other platforms involves the following steps:
         168.100.189.2/255.255.255.224
         127.0.0.1/255.0.0.0
         fe80:1::2d0:b7ff:fe88:2ca7/ffff:ffff:ffff:ffff::
-        2001:240:5c7:0:2d0:b7ff:fe88:2ca7/ffff:ffff:ffff:ffff::
+        2001:240:587:0:2d0:b7ff:fe88:2ca7/ffff:ffff:ffff:ffff::
         fe80:5::1/ffff:ffff:ffff:ffff::
         ::1/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 

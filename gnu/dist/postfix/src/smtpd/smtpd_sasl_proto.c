@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_proto.c,v 1.1.1.3.2.1 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: smtpd_sasl_proto.c,v 1.1.1.3.2.2 2006/11/20 13:30:54 tron Exp $	*/
 
 /*++
 /* NAME
@@ -7,7 +7,7 @@
 /*	Postfix SMTP protocol support for SASL authentication
 /* SYNOPSIS
 /*	#include "smtpd.h"
-/*	#include "smtpd_sasl.h"
+/*	#include "smtpd_sasl_proto.h"
 /*
 /*	void	smtpd_sasl_auth_cmd(state, argc, argv)
 /*	SMTPD_STATE *state;
@@ -36,9 +36,19 @@
 /*	the SMTP protocol interface for SASL negotiation. The goal
 /*	is to reduce clutter of the main SMTP server source code.
 /*
-/*	smtpd_sasl_auth_cmd() implements the AUTH command.
-/*
+/*	smtpd_sasl_auth_cmd() implements the AUTH command and updates
+/*	the following state structure members:
+/* .IP sasl_method
+/*	The authentication method that was successfully applied.
+/*	This member is a null pointer in the absence of successful
+/*	authentication.
+/* .IP sasl_username
+/*	The username that was successfully authenticated.
+/*	This member is a null pointer in the absence of successful
+/*	authentication.
+/* .PP
 /*	smtpd_sasl_auth_reset() cleans up after the AUTH command.
+/*	This is required before smtpd_sasl_auth_cmd() can be used again.
 /*
 /*	smtpd_sasl_mail_opt() implements the SASL-specific AUTH=sender
 /*	option to the MAIL FROM command. The result is an error response
@@ -98,6 +108,10 @@
 #include <sys_defs.h>
 #include <string.h>
 
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
+
 /* Utility library. */
 
 #include <msg.h>
@@ -109,6 +123,7 @@
 #include <mail_params.h>
 #include <mail_proto.h>
 #include <mail_error.h>
+#include <ehlo_mask.h>
 
 /* Application-specific. */
 
@@ -126,33 +141,47 @@ int     smtpd_sasl_auth_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 {
     char   *auth_mechanism;
     char   *initial_response;
-    char   *err;
+    const char *err;
 
     if (var_helo_required && state->helo_name == 0) {
 	state->error_mask |= MAIL_ERROR_POLICY;
-	smtpd_chat_reply(state, "503 Error: send HELO/EHLO first");
+	smtpd_chat_reply(state, "503 5.5.1 Error: send HELO/EHLO first");
 	return (-1);
     }
-    if (SMTPD_STAND_ALONE(state) || !var_smtpd_sasl_enable) {
+    if (SMTPD_STAND_ALONE(state) || !var_smtpd_sasl_enable
+	|| (state->ehlo_discard_mask & EHLO_MASK_AUTH)) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
-	smtpd_chat_reply(state, "503 Error: authentication not enabled");
+	smtpd_chat_reply(state, "503 5.5.1 Error: authentication not enabled");
 	return (-1);
+    }
+    if (smtpd_milters != 0 && (err = milter_other_event(smtpd_milters)) != 0) {
+        if (err[0] == '5') {
+            state->error_mask |= MAIL_ERROR_POLICY;
+            smtpd_chat_reply(state, "%s", err);
+            return (-1);
+        }
+        /* Sendmail compatibility: map 4xx into 454. */
+        else if (err[0] == '4') {
+            state->error_mask |= MAIL_ERROR_POLICY;
+            smtpd_chat_reply(state, "454 4.3.0 Try again later");
+            return (-1);
+        }
     }
 #ifdef USE_TLS
     if (state->tls_auth_only && !state->tls_context) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
-	smtpd_chat_reply(state, "538 Encryption required for requested authentication mechanism");
+	smtpd_chat_reply(state, "538 5.7.0 Encryption required for requested authentication mechanism");
 	return (-1);
     }
 #endif
     if (state->sasl_username) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
-	smtpd_chat_reply(state, "503 Error: already authenticated");
+	smtpd_chat_reply(state, "503 5.5.1 Error: already authenticated");
 	return (-1);
     }
     if (argc < 2 || argc > 3) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
-	smtpd_chat_reply(state, "501 Syntax: AUTH mechanism");
+	smtpd_chat_reply(state, "501 5.5.4 Syntax: AUTH mechanism");
 	return (-1);
     }
 
@@ -163,15 +192,7 @@ int     smtpd_sasl_auth_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
      */
     auth_mechanism = argv[1].strval;
     initial_response = (argc == 3 ? argv[2].strval : 0);
-    err = smtpd_sasl_authenticate(state, auth_mechanism, initial_response);
-    if (err != 0) {
-	msg_warn("%s[%s]: SASL %s authentication failed",
-		 state->name, state->addr, auth_mechanism);
-	smtpd_chat_reply(state, "%s", err);
-	return (-1);
-    }
-    smtpd_chat_reply(state, "235 Authentication successful");
-    return (0);
+    return (smtpd_sasl_authenticate(state, auth_mechanism, initial_response));
 }
 
 /* smtpd_sasl_auth_reset - clean up after AUTH command */
@@ -191,17 +212,17 @@ char   *smtpd_sasl_mail_opt(SMTPD_STATE *state, const char *addr)
      */
     if (!var_smtpd_sasl_enable) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
-	return ("503 Error: authentication disabled");
+	return ("503 5.5.4 Error: authentication disabled");
     }
 #if 0
     if (state->sasl_username == 0) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
-	return ("503 Error: send AUTH command first");
+	return ("503 5.5.4 Error: send AUTH command first");
     }
 #endif
     if (state->sasl_sender != 0) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
-	return ("503 Error: multiple AUTH= options");
+	return ("503 5.5.4 Error: multiple AUTH= options");
     }
     if (strcmp(addr, "<>") != 0) {
 	state->sasl_sender = mystrdup(addr);

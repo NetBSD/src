@@ -167,12 +167,13 @@ described in the <a href="postconf.5.html">postconf(5)</a> manual page. </p>
 <p> Examples of simple restriction lists are: </p>
 
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     # Allow connections from trusted networks only.
     <a href="postconf.5.html#smtpd_client_restrictions">smtpd_client_restrictions</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, reject
 
     # Don't talk to mail systems that don't know their own hostname.
-    <a href="postconf.5.html#smtpd_helo_restrictions">smtpd_helo_restrictions</a> = <a href="postconf.5.html#reject_unknown_hostname">reject_unknown_hostname</a>
+    # With Postfix &lt; 2.3, specify <a href="postconf.5.html#reject_unknown_helo_hostname">reject_unknown_hostname</a>.
+    <a href="postconf.5.html#smtpd_helo_restrictions">smtpd_helo_restrictions</a> = <a href="postconf.5.html#reject_unknown_helo_hostname">reject_unknown_helo_hostname</a>
 
     # Don't accept mail from domains that don't exist.
     <a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a> = <a href="postconf.5.html#reject_unknown_sender_domain">reject_unknown_sender_domain</a>
@@ -303,11 +304,11 @@ address is accepted. And this is where surprises can happen.  </p>
 in too much access permission: </p>
 
 <pre>
-1 /etc/postfix/main.cf:
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
 2     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
 3         <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
 4         <a href="postconf.5.html#check_helo_access">check_helo_access</a> hash:/etc/postfix/helo_access
-5         <a href="postconf.5.html#reject_unknown_hostname">reject_unknown_hostname</a>
+5         <a href="postconf.5.html#reject_unknown_helo_hostname">reject_unknown_helo_hostname</a>
 6         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
 7 
 8 /etc/postfix/helo_access:
@@ -315,7 +316,8 @@ in too much access permission: </p>
 </pre>
 
 <p> Line 5 rejects mail from hosts that don't specify a proper
-hostname in the HELO command. Lines 4 and 9 make an exception to
+hostname in the HELO command (with Postfix &lt; 2.3, specify
+<a href="postconf.5.html#reject_unknown_helo_hostname">reject_unknown_hostname</a>). Lines 4 and 9 make an exception to
 allow mail from some machine that announces itself with "HELO
 localhost.localdomain".  </p>
 
@@ -342,7 +344,7 @@ testing: </p>
 <dt> <a href="postconf.5.html#soft_bounce">soft_bounce</a> </dt> <dd> <p> This is a safety net that changes
 SMTP server REJECT actions into DEFER (try again later) actions.
 This keeps mail queued that would otherwise be returned to the
-sender. Specify "<a href="postconf.5.html#soft_bounce">soft_bounce</a> = yes" in the main.cf file to prevent
+sender. Specify "<a href="postconf.5.html#soft_bounce">soft_bounce</a> = yes" in the <a href="postconf.5.html">main.cf</a> file to prevent
 the Postfix SMTP server from rejecting mail permanently, by changing
 all 5xx SMTP reply codes into 4xx. </p> </dd>
 

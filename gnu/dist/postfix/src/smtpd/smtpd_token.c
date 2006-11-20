@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_token.c,v 1.1.1.3 2004/05/31 00:24:50 heas Exp $	*/
+/*	$NetBSD: smtpd_token.c,v 1.1.1.3.2.1 2006/11/20 13:30:54 tron Exp $	*/
 
 /*++
 /* NAME
@@ -52,6 +52,10 @@
 #include <ctype.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
 
 /* Utility library. */
 
@@ -224,6 +228,7 @@ int     main(int unused_argc, char **unused_argv)
 	    vstream_printf("Token value: %s\n", tok_argv[i].strval);
 	}
     }
+    vstring_free(vp);
     exit(0);
 }
 

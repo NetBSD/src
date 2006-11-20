@@ -72,15 +72,25 @@ http://www.sleepycat.com/, use something like: </p>
 <blockquote>
 <pre>
 % make tidy
-% make makefiles CCARGS="-DHAS_DB -I/usr/local/BerkeleyDB.3.1/include" \
-    AUXLIBS="-L/usr/local/BerkeleyDB.3.1/lib -ldb"
+% make makefiles CCARGS="-DHAS_DB -I/usr/local/BerkeleyDB/include" \
+    AUXLIBS="-L/usr/local/BerkeleyDB/lib -ldb"
 % make
 </pre>
 </blockquote>
 
-<p> The exact pathnames depend on the DB version that you installed.
-For example, Berkeley DB version 2 installs in /usr/local/BerkeleyDB.
-</p>
+<p> Solaris needs this: </p>
+
+<blockquote>
+<pre>
+% make tidy
+% make makefiles CCARGS="-DHAS_DB -I/usr/local/BerkeleyDB/include" \
+    AUXLIBS="-R/usr/local/BerkeleyDB/lib -L/usr/local/BerkeleyDB/lib -ldb"
+% make
+</pre>
+</blockquote>
+
+<p> The exact pathnames depend on the Berkeley DB version, and on
+how it was installed. </p>
 
 <p> Warning: the file format produced by Berkeley DB version 1 is
 not compatible with that of versions 2 and 3 (versions 2 and 3 have
@@ -102,7 +112,7 @@ Berkeley DB versions</a></h2>
 Normally, Postfix builds with the default DB version that ships
 with the system. </p>
 
-<p> To build Postfix on BSD systems with a specific DB version,
+<p> To build Postfix on BSD systems with a non-default DB version,
 use a variant of the following commands: </p>
 
 <blockquote>
