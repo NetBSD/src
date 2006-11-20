@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.57 2006/11/19 17:42:47 bouyer Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.58 2006/11/20 21:48:15 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -521,4 +521,14 @@ sys/sys/systrace.h				1.21
 	Fix an exploitable integer overflow found by Chris Evans of
 	Google Security.
 	[adrianp, ticket #10760]
+
+sys/dev/ata/wd.c				1.326
+
+	Add yet another broken 160GB seagate drive: ST3160021A.
+	[bouyer, ticket #10746]
+
+sys/dev/ata/wd.c				1.334
+
+	Add another broken seagate drive.
+	[bouyer, ticket #10747]
 
