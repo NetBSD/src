@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.117 2006/11/18 16:23:15 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.118 2006/11/20 04:13:28 dyoung Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.117 2006/11/18 16:23:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.118 2006/11/20 04:13:28 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1411,8 +1411,7 @@ in6_purgeif(ifp)
 {
 	struct ifaddr *ifa, *nifa;
 
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa)
-	{
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
 		nifa = TAILQ_NEXT(ifa, ifa_list);
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
