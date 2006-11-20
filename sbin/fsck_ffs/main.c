@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.57 2005/01/20 15:29:40 xtraeme Exp $	*/
+/*	$NetBSD: main.c,v 1.57.2.1 2006/11/20 21:37:29 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.57 2005/01/20 15:29:40 xtraeme Exp $");
+__RCSID("$NetBSD: main.c,v 1.57.2.1 2006/11/20 21:37:29 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,7 +230,20 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	int flags;
 #endif
 #ifdef PROGRESS
-	off_t progress_total = 0;
+	/*
+	 * In prune mode, how far does the progress bar travel during
+	 * each pass?  (In non-prune mode, each pass has a separate
+	 * progress bar that travels from 0 to 100%.)
+	 *
+	 * The numbers below are percentages, intended to correspond
+	 * roughly to the cumulative time up to the end of each pass.
+	 * They don't have to be accurate.  In reality, on a large
+	 * file system, Pass 1 and Pass 2 together are likely to use
+	 * significantly more than the 95% reflected below, so users
+	 * will get a pleasant surprise when the last 5% of the progress
+	 * bar runs more quickly than they had expected.
+	 */
+	static int progress_limits[] = {0, 20, 95, 96, 97, 100};
 #endif /* PROGRESS */
 
 	if (preen && child)
@@ -253,18 +266,8 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	resolved = 1;
 
 #ifdef PROGRESS
-	/*
-	 * Pass 1, Pass 4, and Pass 5 all iterate over cylinder
-	 * groups.  Account for those now.  We'll never need to
-	 * add in Pass 1b, since that pass is never executed when
-	 * preening.
-	 *
-	 * Pass 2 and Pass 3 iterate over directory inodes, but we
-	 * don't know how many of those exist until after Pass 1.
-	 * We'll add those in after Pass 1 has completed.
-	 */
-	if (preen)
-		progress_total += sblock->fs_ncg * 3;
+	progress_switch(progress);
+	progress_init();
 #endif /* PROGRESS */
 
 	/*
@@ -276,16 +279,11 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 			pwarn("** Root file system\n");
 		pwarn("** Phase 1 - Check Blocks and Sizes\n");
 	}
-	pass1();
-
 #ifdef PROGRESS
-	/* Account for number of directory inodes (used twice). */
 	if (preen)
-		progress_total += inplast * 2;
-	progress_switch(progress);
-	progress_init(progress_total);
+		progress_sethighlim(progress_limits[1]);
 #endif /* PROGRESS */
-
+	pass1();
 
 	/*
 	 * 1b: locate first references to duplicates, if any
@@ -304,6 +302,10 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	 */
 	if (preen == 0)
 		pwarn("** Phase 2 - Check Pathnames\n");
+#ifdef PROGRESS
+	if (preen)
+		progress_sethighlim(progress_limits[2]);
+#endif /* PROGRESS */
 	pass2();
 
 	/*
@@ -311,6 +313,10 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	 */
 	if (preen == 0)
 		pwarn("** Phase 3 - Check Connectivity\n");
+#ifdef PROGRESS
+	if (preen)
+		progress_sethighlim(progress_limits[3]);
+#endif /* PROGRESS */
 	pass3();
 
 	/*
@@ -318,6 +324,10 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	 */
 	if (preen == 0)
 		pwarn("** Phase 4 - Check Reference Counts\n");
+#ifdef PROGRESS
+	if (preen)
+		progress_sethighlim(progress_limits[4]);
+#endif /* PROGRESS */
 	pass4();
 
 	/*
@@ -325,6 +335,10 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	 */
 	if (preen == 0)
 		pwarn("** Phase 5 - Check Cyl groups\n");
+#ifdef PROGRESS
+	if (preen)
+		progress_sethighlim(progress_limits[5]);
+#endif /* PROGRESS */
 	pass5();
 
 	/*
