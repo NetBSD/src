@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.61 2006/11/16 01:33:46 christos Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.62 2006/11/20 04:34:16 dyoung Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.61 2006/11/16 01:33:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.62 2006/11/20 04:34:16 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -523,7 +523,7 @@ defrtrlist_del(dr)
 	/*
 	 * Also delete all the pointers to the router in each prefix lists.
 	 */
-	for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 		struct nd_pfxrouter *pfxrtr;
 		if ((pfxrtr = pfxrtr_lookup(pr, dr)) != NULL)
 			pfxrtr_del(pfxrtr);
@@ -836,7 +836,7 @@ pfxrtr_lookup(pr, dr)
 {
 	struct nd_pfxrouter *search;
 
-	for (search = pr->ndpr_advrtrs.lh_first; search; search = search->pfr_next) {
+	LIST_FOREACH(search, &pr->ndpr_advrtrs, pfr_entry) {
 		if (search->router == dr)
 			break;
 	}
@@ -876,7 +876,7 @@ nd6_prefix_lookup(key)
 {
 	struct nd_prefix *search;
 
-	for (search = nd_prefix.lh_first; search; search = search->ndpr_next) {
+	LIST_FOREACH(search, &nd_prefix, ndpr_entry) {
 		if (key->ndpr_ifp == search->ndpr_ifp &&
 		    key->ndpr_plen == search->ndpr_plen &&
 		    in6_are_prefix_equal(&key->ndpr_prefix.sin6_addr,
@@ -984,8 +984,8 @@ prelist_remove(pr)
 	LIST_REMOVE(pr, ndpr_entry);
 
 	/* free list of routers that adversed the prefix */
-	for (pfr = pr->ndpr_advrtrs.lh_first; pfr; pfr = next) {
-		next = pfr->pfr_next;
+	for (pfr = LIST_FIRST(&pr->ndpr_advrtrs); pfr != NULL; pfr = next) {
+		next = LIST_NEXT(pfr, pfr_entry);
 
 		free(pfr, M_IP6NDP);
 	}
@@ -1131,8 +1131,7 @@ prelist_update(new, dr, m, mcast)
 	 * consider autoconfigured addresses while RFC2462 simply said
 	 * "address".
 	 */
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-	{
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		struct in6_ifaddr *ifa6;
 		u_int32_t remaininglifetime;
 
@@ -1381,7 +1380,7 @@ pfxlist_onlink_check()
 	 * Check if there is a prefix that has a reachable advertising
 	 * router.
 	 */
-	for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 		if (pr->ndpr_raf_onlink && find_pfxlist_reachable_router(pr))
 			break;
 	}
@@ -1390,12 +1389,10 @@ pfxlist_onlink_check()
 	 * that does not advertise any prefixes.
 	 */
 	if (pr == NULL) {
-		for (dr = TAILQ_FIRST(&nd_defrouter); dr;
-		    dr = TAILQ_NEXT(dr, dr_entry)) {
+		TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
 			struct nd_prefix *pr0;
 
-			for (pr0 = nd_prefix.lh_first; pr0;
-			    pr0 = pr0->ndpr_next) {
+			LIST_FOREACH(pr0, &nd_prefix, ndpr_entry) {
 				if ((pfxrtr = pfxrtr_lookup(pr0, dr)) != NULL)
 					break;
 			}
@@ -1413,7 +1410,7 @@ pfxlist_onlink_check()
 		 * Detach prefixes which have no reachable advertising
 		 * router, and attach other prefixes.
 		 */
-		for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+		LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 			/* XXX: a link-local prefix should never be detached */
 			if (IN6_IS_ADDR_LINKLOCAL(&pr->ndpr_prefix.sin6_addr))
 				continue;
@@ -1434,7 +1431,7 @@ pfxlist_onlink_check()
 		}
 	} else {
 		/* there is no prefix that has a reachable router */
-		for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+		LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 			if (IN6_IS_ADDR_LINKLOCAL(&pr->ndpr_prefix.sin6_addr))
 				continue;
 
@@ -1454,7 +1451,7 @@ pfxlist_onlink_check()
 	 * interfaces.  Such cases will be handled in nd6_prefix_onlink,
 	 * so we don't have to care about them.
 	 */
-	for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 		int e;
 
 		if (IN6_IS_ADDR_LINKLOCAL(&pr->ndpr_prefix.sin6_addr))
@@ -1574,7 +1571,7 @@ nd6_prefix_onlink(pr)
 	 * Although such a configuration is expected to be rare, we explicitly
 	 * allow it.
 	 */
-	for (opr = nd_prefix.lh_first; opr; opr = opr->ndpr_next) {
+	LIST_FOREACH(opr, &nd_prefix, ndpr_entry) {
 		if (opr == pr)
 			continue;
 
@@ -1595,10 +1592,7 @@ nd6_prefix_onlink(pr)
 	    IN6_IFF_NOTREADY | IN6_IFF_ANYCAST);
 	if (ifa == NULL) {
 		/* XXX: freebsd does not have ifa_ifwithaf */
-		for (ifa = ifp->if_addrlist.tqh_first;
-		     ifa;
-		     ifa = ifa->ifa_list.tqe_next)
-		{
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family == AF_INET6)
 				break;
 		}
@@ -1702,7 +1696,7 @@ nd6_prefix_offlink(pr)
 		 * If there's one, try to make the prefix on-link on the
 		 * interface.
 		 */
-		for (opr = nd_prefix.lh_first; opr; opr = opr->ndpr_next) {
+		LIST_FOREACH(opr, &nd_prefix, ndpr_entry) {
 			if (opr == pr)
 				continue;
 
