@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.11 2006/10/27 22:17:09 elad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.12 2006/11/20 21:50:51 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.11 2006/10/27 22:17:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.12 2006/11/20 21:50:51 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -424,7 +424,7 @@ fileassoc_file_add(struct vnode *vp, fhandle_t *hint)
 	fhandle_t *th;
 	int error;
 
-	if (hint == 0) {
+	if (hint == NULL) {
 		error = vfs_composefh_alloc(vp, &th);
 		if (error)
 			return (NULL);
