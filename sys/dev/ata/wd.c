@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.274.2.8.2.6.2.4 2006/11/20 21:44:04 tron Exp $ */
+/*	$NetBSD: wd.c,v 1.274.2.8.2.6.2.5 2006/11/20 21:47:03 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.274.2.8.2.6.2.4 2006/11/20 21:44:04 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.274.2.8.2.6.2.5 2006/11/20 21:47:03 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -234,6 +234,8 @@ static const struct wd_quirk {
 	 * LBA48
 	 */
 	{ "ST3160021A*",
+	  WD_QUIRK_FORCE_LBA48 },
+	{ "ST3160811A*",
 	  WD_QUIRK_FORCE_LBA48 },
 	{ "ST3160812A*",
 	  WD_QUIRK_FORCE_LBA48 },
