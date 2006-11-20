@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.976 2006/11/17 22:18:48 christos Exp $
+#	$NetBSD: mi,v 1.977 2006/11/20 20:40:41 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4527,7 +4527,7 @@
 ./usr/share/man/cat3/getcurx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getcury.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getcwd.0			comp-c-catman		.cat
-./usr/share/man/cat3/getdate.0			comp-c-catman		.cat
+./usr/share/man/cat3/getdate.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/getdevmajor.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdirentries.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getdiskbyname.0		comp-c-catman		.cat
@@ -5373,6 +5373,7 @@
 ./usr/share/man/cat3/pam_verror.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_vinfo.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_vprompt.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/parsedate.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pause.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pcap.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pci.0			comp-c-catman		.cat
@@ -8784,7 +8785,7 @@
 ./usr/share/man/man3/getcurx.3			comp-c-man		.man
 ./usr/share/man/man3/getcury.3			comp-c-man		.man
 ./usr/share/man/man3/getcwd.3			comp-c-man		.man
-./usr/share/man/man3/getdate.3			comp-c-man		.man
+./usr/share/man/man3/getdate.3			comp-obsolete		obsolete
 ./usr/share/man/man3/getdevmajor.3		comp-c-man		.man
 ./usr/share/man/man3/getdirentries.3		comp-c-man		.man
 ./usr/share/man/man3/getdiskbyname.3		comp-c-man		.man
@@ -9630,6 +9631,7 @@
 ./usr/share/man/man3/pam_verror.3		comp-c-man		.man,pam
 ./usr/share/man/man3/pam_vinfo.3		comp-c-man		.man,pam
 ./usr/share/man/man3/pam_vprompt.3		comp-c-man		.man,pam
+./usr/share/man/man3/parsedate.3		comp-c-man		.man
 ./usr/share/man/man3/pause.3			comp-c-man		.man
 ./usr/share/man/man3/pcap.3			comp-c-man		.man
 ./usr/share/man/man3/pci.3			comp-c-man		.man
