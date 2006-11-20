@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.34 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: mld6.c,v 1.35 2006/11/20 04:26:22 dyoung Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.34 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.35 2006/11/20 04:26:22 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -428,10 +428,7 @@ mld_input(m, off)
 		if (ia == NULL)
 			break;
 
-		for (in6m = ia->ia6_multiaddrs.lh_first;
-		     in6m;
-		     in6m = in6m->in6m_entry.le_next)
-		{
+		LIST_FOREACH(in6m, &ia->ia6_multiaddrs, in6m_entry) {
 			if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, &all_in6) ||
 			    IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) <
 			    IPV6_ADDR_SCOPE_LINKLOCAL)
@@ -745,8 +742,9 @@ in6_delmulti(in6m)
 		 * Unlink from list.
 		 */
 		LIST_REMOVE(in6m, in6m_entry);
-		if (in6m->in6m_ia) {
+		if (in6m->in6m_ia != NULL) {
 			IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
+			in6m->in6m_ia = NULL;
 		}
 
 		/*
@@ -755,8 +753,7 @@ in6_delmulti(in6m)
 		 */
 		for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
 			struct in6_multi_mship *imm;
-			LIST_FOREACH(imm, &ia->ia6_memberships,
-			    i6mm_chain) {
+			LIST_FOREACH(imm, &ia->ia6_memberships, i6mm_chain) {
 				if (imm->i6mm_maddr == in6m)
 					imm->i6mm_maddr = NULL;
 			}
@@ -831,8 +828,10 @@ in6_savemkludge(oia)
 
 	IFP_TO_IA6(oia->ia_ifp, ia);
 	if (ia) {	/* there is another address */
-		for (in6m = oia->ia6_multiaddrs.lh_first; in6m; in6m = next) {
-			next = in6m->in6m_entry.le_next;
+		for (in6m = LIST_FIRST(&oia->ia6_multiaddrs);
+		     in6m != NULL;
+		     in6m = next) {
+			next = LIST_NEXT(in6m, in6m_entry);
 			IFAFREE(&in6m->in6m_ia->ia_ifa);
 			IFAREF(&ia->ia_ifa);
 			in6m->in6m_ia = ia;
@@ -841,15 +840,17 @@ in6_savemkludge(oia)
 	} else {	/* last address on this if deleted, save */
 		struct multi6_kludge *mk;
 
-		for (mk = in6_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
+		LIST_FOREACH(mk, &in6_mk, mk_entry) {
 			if (mk->mk_ifp == oia->ia_ifp)
 				break;
 		}
 		if (mk == NULL) /* this should not happen! */
 			panic("in6_savemkludge: no kludge space");
 
-		for (in6m = oia->ia6_multiaddrs.lh_first; in6m; in6m = next) {
-			next = in6m->in6m_entry.le_next;
+		for (in6m = LIST_FIRST(&oia->ia6_multiaddrs);
+		     in6m != NULL;
+		     in6m = next) {
+			next = LIST_NEXT(in6m, in6m_entry);
 			IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
 			in6m->in6m_ia = NULL;
 			LIST_INSERT_HEAD(&mk->mk_head, in6m, in6m_entry);
@@ -868,22 +869,21 @@ in6_restoremkludge(ia, ifp)
 	struct ifnet *ifp;
 {
 	struct multi6_kludge *mk;
+	struct in6_multi *in6m, *next;
 
-	for (mk = in6_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
-		if (mk->mk_ifp == ifp) {
-			struct in6_multi *in6m, *next;
-
-			for (in6m = mk->mk_head.lh_first; in6m; in6m = next) {
-				next = in6m->in6m_entry.le_next;
-				in6m->in6m_ia = ia;
-				IFAREF(&ia->ia_ifa);
-				LIST_INSERT_HEAD(&ia->ia6_multiaddrs,
-						 in6m, in6m_entry);
-			}
-			LIST_INIT(&mk->mk_head);
+	LIST_FOREACH(mk, &in6_mk, mk_entry) {
+		if (mk->mk_ifp == ifp)
 			break;
-		}
 	}
+	if (mk == NULL)
+		return;
+	for (in6m = LIST_FIRST(&mk->mk_head); in6m != NULL; in6m = next) {
+		next = LIST_NEXT(in6m, in6m_entry);
+		in6m->in6m_ia = ia;
+		IFAREF(&ia->ia_ifa);
+		LIST_INSERT_HEAD(&ia->ia6_multiaddrs, in6m, in6m_entry);
+	}
+	LIST_INIT(&mk->mk_head);
 }
 
 /*
@@ -903,7 +903,7 @@ in6_createmkludge(ifp)
 {
 	struct multi6_kludge *mk;
 
-	for (mk = in6_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
+	LIST_FOREACH(mk, &in6_mk, mk_entry) {
 		/* If we've already had one, do not allocate. */
 		if (mk->mk_ifp == ifp)
 			return;
@@ -924,16 +924,17 @@ in6_purgemkludge(ifp)
 	struct multi6_kludge *mk;
 	struct in6_multi *in6m;
 
-	for (mk = in6_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
-		if (mk->mk_ifp != ifp)
-			continue;
-
-		/* leave from all multicast groups joined */
-		while ((in6m = LIST_FIRST(&mk->mk_head)) != NULL) {
-			in6_delmulti(in6m);
-		}
-		LIST_REMOVE(mk, mk_entry);
-		free(mk, M_IPMADDR);
-		break;
+	LIST_FOREACH(mk, &in6_mk, mk_entry) {
+		if (mk->mk_ifp == ifp)
+			break;
 	}
+	if (mk == NULL)
+		return;
+
+	/* leave from all multicast groups joined */
+	while ((in6m = LIST_FIRST(&mk->mk_head)) != NULL) {
+		in6_delmulti(in6m);
+	}
+	LIST_REMOVE(mk, mk_entry);
+	free(mk, M_IPMADDR);
 }
