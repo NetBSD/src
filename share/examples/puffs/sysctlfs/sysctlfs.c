@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.3 2006/11/17 17:48:51 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.4 2006/11/20 00:04:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -100,6 +100,7 @@ main(int argc, char *argv[])
 	pvn.puffs_getattr = sysctlfs_getattr;
 	pvn.puffs_readdir = sysctlfs_readdir;
 	pvn.puffs_read = sysctlfs_read;
+	pvn.puffs_write = sysctlfs_write;
 	pvn.puffs_reclaim = sysctlfs_reclaim;
 
 	if ((pu = puffs_mount(&pvfs, &pvn, argv[1], 0, "sysctlfs",
@@ -154,6 +155,7 @@ doprint(struct sfsnode *sfs, char *buf, size_t bufsize)
 		if (sysctl(sfs->name, sfs->hierlen, &q, &sz, NULL, 0) == -1)
 			break;
 		snprintf(buf, bufsize, "%" PRId64, q);
+		break;
 	}
 	case CTLTYPE_STRUCT:
 		snprintf(buf, bufsize, "CTLTYPE_STRUCT: implement me and "
@@ -361,6 +363,52 @@ sysctlfs_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	memcpy(buf, localbuf + offset, xfer);
 	*resid -= xfer;
 
+	return 0;
+}
+
+int
+sysctlfs_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
+	off_t offset, size_t *resid, const struct puffs_cred *cred,
+	int ioflag)
+{
+	struct sfsnode *sfs = opc;
+	long long ll;
+	int i, rv;
+
+	if (ISADIR(sfs))
+		return EISDIR;
+
+	if (offset != 0)
+		return EINVAL;
+
+	if (ioflag & PUFFS_IO_APPEND)
+		return EINVAL;
+
+	switch (SYSCTL_TYPE(sfs->sctln.sysctl_flags)) {
+	case CTLTYPE_INT:
+		if (sscanf((const char *)buf, "%d", &i) != 1)
+			return EINVAL;
+		rv = sysctl(sfs->name, sfs->hierlen, NULL, NULL,
+		    &i, sizeof(int));
+		break;
+	case CTLTYPE_QUAD:
+		if (sscanf((const char *)buf, "%lld", &ll) != 1)
+			return EINVAL;
+		rv =  sysctl(sfs->name, sfs->hierlen, NULL, NULL,
+		    &ll, sizeof(long long));
+		break;
+	case CTLTYPE_STRING:
+		rv = sysctl(sfs->name, sfs->hierlen, NULL, NULL, buf, *resid);
+		break;
+	default:
+		rv = EINVAL;
+		break;
+	}
+
+	if (rv)
+		return rv;
+
+	*resid = 0;
 	return 0;
 }
 
