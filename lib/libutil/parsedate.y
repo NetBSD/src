@@ -18,7 +18,7 @@
 #include <time.h>
 #include <util.h>
 
-/* NOTES on rebuilding getdate.c (particularly for inclusion in CVS
+/* NOTES on rebuilding parsedate.c (particularly for inclusion in CVS
    releases):
 
    We don't want to mess with all the portability hassles of alloca.
@@ -28,12 +28,12 @@
    is to use byacc instead of bison, which should generate a portable
    parser.  I played with adding "#define alloca dont_use_alloca", to
    give an error if the parser generator uses alloca (and thus detect
-   unportable getdate.c's), but that seems to cause as many problems
+   unportable parsedate.c's), but that seems to cause as many problems
    as it solves.  */
 
-#define yyparse getdate_yyparse
-#define yylex getdate_yylex
-#define yyerror getdate_yyerror
+#define yyparse parsedate_yyparse
+#define yylex parsedate_yylex
+#define yyerror parsedate_yyerror
 
 #define EPOCH		1970
 #define HOUR(x)		((time_t)(x) * 60)
@@ -859,7 +859,7 @@ difftm (struct tm *a, struct tm *b)
 }
 
 time_t
-getdate(const char *p, const time_t *now, const int *zone)
+parsedate(const char *p, const time_t *now, const int *zone)
 {
     struct tm gmt, local, *gmt_ptr, *tm;
     time_t		nowt;
@@ -954,7 +954,7 @@ main(ac, av)
     (void)printf("Enter date, or blank line to exit.\n\t> ");
     (void)fflush(stdout);
     while (gets(buff) && buff[0]) {
-	d = getdate(buff, NULL, NULL);
+	d = parsedate(buff, NULL, NULL);
 	if (d == -1)
 	    (void)printf("Bad format - couldn't convert.\n");
 	else

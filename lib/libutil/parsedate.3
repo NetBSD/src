@@ -1,4 +1,4 @@
-.\"     $NetBSD: getdate.3,v 1.1 2006/11/17 22:10:23 christos Exp $
+.\"     $NetBSD: parsedate.3,v 1.1 2006/11/20 20:33:02 christos Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,20 +35,20 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd November 17, 2006
-.Dt getdate 3
+.Dt parsedate 3
 .Os
 .Sh NAME
-.Nm getdate
+.Nm parsedate
 .Nd date parsing function
 .Sh LIBRARY
 .Lb libutil
 .Sh SYNOPSIS
 .In util.h
 .Ft time_t
-.Fn getdate "const char *datestr" "const time_t *time" "const int *tzoff"
+.Fn parsedate "const char *datestr" "const time_t *time" "const int *tzoff"
 .Sh DESCRIPTION
 The
-.Nm getdate 
+.Nm parsedate 
 function parses a datetime from 
 .Ar datestr
 described in english relative to an optional
@@ -236,7 +236,7 @@ Relative items are also supported:
 .It +2 years
 .El
 .Sh RETURN VALUES 
-.Fn getdate 
+.Fn parsedate 
 returns the number of seconds passed since the Epoch, or 
 .Dv -1
 if the date could not be parsed properly.
@@ -244,14 +244,14 @@ if the date could not be parsed properly.
 .Xr date 1 ,
 .Xr eeprom 8 .
 .Sh HISTORY
-The parser used
-.Fn getdate
+The parser used in
+.Fn parsedate
 was originally written by Steven M. Bellovin while at the University
 of North Carolina at Chapel Hill.  Later tweaked by a couple of
 people on Usenet. Completely overhauled by Rich $alz and Jim Berets
 in August, 1990.
 .Pp
 The
-.Fn getdate
+.Fn parsedate
 function first appeared in
 .Nx 4.0 .
