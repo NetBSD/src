@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.135 2006/11/18 20:45:16 rpaulo Exp $
+#	$NetBSD: BRANCHES,v 1.136 2006/11/20 15:55:17 tsutsui Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -411,6 +411,7 @@ Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
 		tested (by who):
 			alpha		(yamt)
+			cobalt		(tsutsui)
 			ews4800mips	(tsutsui)
 			hp300		(tsutsui)
 			i386		(yamt)
@@ -432,7 +433,6 @@ Notes:
 			atari
 			cats
 			cesfic
-			cobalt
 			evbarm
 			evbmips
 			evbppc(marvell)
