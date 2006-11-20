@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.8 2006/11/20 19:58:38 hauke Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.9 2006/11/20 20:48:36 hauke Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -44,7 +44,7 @@
 #define CLK_FREQ	783360		/* VIA clock frequency (Hz) */
 
 /* Clock needed to hit HZ ticks/sec. */
-#define CLK_INTERVAL	(CLK_FREQ / hz)
+#define CLK_INTERVAL	((unsigned int)(CLK_FREQ / hz))
 
 #define CLK_INTH	((CLK_INTERVAL >> 8) & 0xff)	/* high byte */
 #define CLK_INTL	(CLK_INTERVAL & 0xff)		/* low byte */
