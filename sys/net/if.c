@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.177 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.178 2006/11/20 04:09:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.177 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.178 2006/11/20 04:09:25 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -487,7 +487,7 @@ if_attachdomain(void)
 	int s;
 
 	s = splnet();
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
+	TAILQ_FOREACH(ifp, &ifnet, if_list)
 		if_attachdomain1(ifp);
 	splx(s);
 }
@@ -548,7 +548,7 @@ void
 if_detach(struct ifnet *ifp)
 {
 	struct socket so;
-	struct ifaddr *ifa, **ifap;
+	struct ifaddr *ifa;
 #ifdef IFAREF_DEBUG
 	struct ifaddr *last_ifa = NULL;
 #endif
@@ -593,9 +593,18 @@ if_detach(struct ifnet *ifp)
 	/*
 	 * Rip all the addresses off the interface.  This should make
 	 * all of the routes go away.
+	 *
+	 * pr_usrreq calls can remove an arbitrary number of ifaddrs
+	 * from the list, including our "cursor", ifa.  For safety,
+	 * and to honor the TAILQ abstraction, I just restart the
+	 * loop after each removal.  Note that the loop will exit
+	 * when all of the remaining ifaddrs belong to the AF_LINK
+	 * family.  I am counting on the historical fact that at
+	 * least one pr_usrreq in each address domain removes at
+	 * least one ifaddr.
 	 */
-	ifap = &TAILQ_FIRST(&ifp->if_addrlist); /* XXX abstraction violation */
-	while ((ifa = *ifap)) {
+again:
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		family = ifa->ifa_addr->sa_family;
 #ifdef IFAREF_DEBUG
 		printf("if_detach: ifaddr %p, family %d, refcnt %d\n",
@@ -604,10 +613,8 @@ if_detach(struct ifnet *ifp)
 			panic("if_detach: loop detected");
 		last_ifa = ifa;
 #endif
-		if (family == AF_LINK) {
-			ifap = &TAILQ_NEXT(ifa, ifa_list);
+		if (family == AF_LINK)
 			continue;
-		}
 		dp = pffinddomain(family);
 #ifdef DIAGNOSTIC
 		if (dp == NULL)
@@ -641,6 +648,7 @@ if_detach(struct ifnet *ifp)
 			    family);
 			TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 		}
+		goto again;
 	}
 
 	if_free_sadl(ifp);
@@ -910,12 +918,10 @@ ifa_ifwithaddr(const struct sockaddr *addr)
 #define	equal(a1, a2) \
   (bcmp((a1), (a2), ((const struct sockaddr *)(a1))->sa_len) == 0)
 
-	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
-	     ifp = TAILQ_NEXT(ifp, if_list)) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_output == if_nulloutput)
 			continue;
-		for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
-		     ifa = TAILQ_NEXT(ifa, ifa_list)) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != addr->sa_family)
 				continue;
 			if (equal(addr, ifa->ifa_addr))
@@ -941,13 +947,11 @@ ifa_ifwithdstaddr(const struct sockaddr *addr)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 
-	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
-	     ifp = TAILQ_NEXT(ifp, if_list)) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_output == if_nulloutput)
 			continue;
 		if (ifp->if_flags & IFF_POINTOPOINT) {
-			for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
-			     ifa = TAILQ_NEXT(ifa, ifa_list)) {
+			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 				if (ifa->ifa_addr->sa_family !=
 				      addr->sa_family ||
 				    ifa->ifa_dstaddr == NULL)
@@ -985,8 +989,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 	if (af == AF_APPLETALK) {
 		const struct sockaddr_at *sat, *sat2;
 		sat = (const struct sockaddr_at *)addr;
-		for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
-		     ifp = TAILQ_NEXT(ifp, if_list)) {
+		TAILQ_FOREACH(ifp, &ifnet, if_list) {
 			if (ifp->if_output == if_nulloutput)
 				continue;
 			ifa = at_ifawithnet((const struct sockaddr_at *)addr, ifp);
@@ -1003,12 +1006,10 @@ ifa_ifwithnet(const struct sockaddr *addr)
 		return (ifa_maybe);
 	}
 #endif
-	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
-	     ifp = TAILQ_NEXT(ifp, if_list)) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_output == if_nulloutput)
 			continue;
-		for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
-		     ifa = TAILQ_NEXT(ifa, ifa_list)) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			const char *cp, *cp2, *cp3;
 
 			if (ifa->ifa_addr->sa_family != af ||
@@ -1057,17 +1058,15 @@ ifa_ifwithaf(int af)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 
-	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
-	     ifp = TAILQ_NEXT(ifp, if_list)) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_output == if_nulloutput)
 			continue;
-		for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
-		     ifa = TAILQ_NEXT(ifa, ifa_list)) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family == af)
-				return (ifa);
+				return ifa;
 		}
 	}
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -1165,8 +1164,7 @@ if_down(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_UP;
 	microtime(&ifp->if_lastchange);
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
-	     ifa = TAILQ_NEXT(ifa, ifa_list))
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	IFQ_PURGE(&ifp->if_snd);
 #if NCARP > 0
@@ -1192,8 +1190,7 @@ if_up(struct ifnet *ifp)
 	microtime(&ifp->if_lastchange);
 #ifdef notyet
 	/* this has no effect on IP, and will kill all ISO connections XXX */
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
-	     ifa = TAILQ_NEXT(ifa, ifa_list))
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
 		pfctlinput(PRC_IFUP, ifa->ifa_addr);
 #endif
 #if NCARP > 0
@@ -1217,8 +1214,7 @@ if_slowtimo(void *arg)
 	struct ifnet *ifp;
 	int s = splnet();
 
-	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
-	     ifp = TAILQ_NEXT(ifp, if_list)) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_timer == 0 || --ifp->if_timer)
 			continue;
 		if (ifp->if_watchdog)
@@ -1310,8 +1306,7 @@ ifunit(const char *name)
 		return (ifp);
 	}
 
-	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
-	     ifp = TAILQ_NEXT(ifp, if_list)) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_output == if_nulloutput)
 			continue;
 	 	if (strcmp(ifp->if_xname, name) == 0)
@@ -1618,7 +1613,7 @@ ifconf(u_long cmd, caddr_t data)
 		    sizeof(ifr.ifr_name));
 		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0')
 			return ENAMETOOLONG;
-		if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == 0) {
+		if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == NULL) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (ifrp != NULL && space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
