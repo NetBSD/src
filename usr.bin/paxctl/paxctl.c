@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.7 2006/11/10 21:39:57 christos Exp $ */
+/* $NetBSD: paxctl.c,v 1.8 2006/11/20 16:51:44 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: paxctl.c,v 1.7 2006/11/10 21:39:57 christos Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.8 2006/11/20 16:51:44 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,19 +208,14 @@ main(int argc, char **argv)
 		errx(EXIT_FAILURE,
 		    "Bad ELF magic from `%s' (maybe it's not an ELF?)", opt);
 
-	switch (e.h32.e_ehsize) {
-	case sizeof(e.h32):
+	if (e.h32.e_ehsize == sizeof(e.h32))
 		size = 32;
-		break;
-	case sizeof(e.h64):
+	else if (e.h64.e_ehsize == sizeof(e.h64))
 		size = 64;
-		break;
-	default:
+	else
 		errx(EXIT_FAILURE,
 		    "Bad ELF size %d from `%s' (maybe it's not an ELF?)",
 		    (int)e.h32.e_ehsize, opt);
-	}
-
 
 	for (i = 0; i < EH(e_phnum); i++) {
 		if (pread(fd, &p, PHSIZE,
