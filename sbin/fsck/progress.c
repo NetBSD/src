@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.1.2.1 2005/05/11 12:22:16 tron Exp $	*/
+/*	$NetBSD: progress.c,v 1.1.2.2 2006/11/20 21:37:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef SMALL
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: progress.c,v 1.1.2.1 2005/05/11 12:22:16 tron Exp $");
+__RCSID("$NetBSD: progress.c,v 1.1.2.2 2006/11/20 21:37:29 tron Exp $");
 
 /*
  * File system independent fsck progress bar routines.
@@ -57,8 +57,8 @@ __RCSID("$NetBSD: progress.c,v 1.1.2.1 2005/05/11 12:22:16 tron Exp $");
 static int	ttywidth = 80;
 
 static int	progress_onoff;
-static off_t	progress_current;
-static off_t	progress_total;
+static int	progress_lowlim;
+static int	progress_highlim;
 
 #define	BUFLEFT		(sizeof(buf) - len)
 
@@ -69,18 +69,30 @@ progress_switch(int onoff)
 }
 
 void
-progress_init(off_t total)
+progress_init(void)
 {
-	progress_current = 0;
-	progress_total = total;
+	progress_setrange(0, 100);
 }
 
+/* Set both low and high limit. */
 void
-progress_add(off_t amt)
+progress_setrange(int lowlim, int highlim)
 {
-	progress_current += amt;
+	progress_lowlim = lowlim;
+	progress_highlim = highlim;
 }
 
+/* Previous high limit becomes new low limit; set new high limit. */
+void
+progress_sethighlim(int highlim)
+{
+	progress_setrange(progress_highlim, highlim);
+}
+
+/*
+ * Display a progress bar, assuming that current/total represents a
+ * percentage in the range [progress_lowlim .. progress_highlim].
+ */
 void
 progress_bar(const char *dev, const char *label, off_t current, off_t total)
 {
@@ -94,7 +106,7 @@ progress_bar(const char *dev, const char *label, off_t current, off_t total)
 #define	BAROVERHEAD	10	/* non-* portion of progress bar */
 
 	/*
-	 * starts should contain at least sizeof(buf) - BAROVERHEAD
+	 * stars should contain at least sizeof(buf) - BAROVERHEAD
 	 * entries.
 	 */
 	static const char stars[] =
@@ -105,12 +117,10 @@ progress_bar(const char *dev, const char *label, off_t current, off_t total)
 	if (progress_onoff == 0)
 		return;
 
-	current += progress_current;
-	total += progress_total;
-
 	len = 0;
 	lengthextras = strlen(dev) + (label != NULL ? strlen(label) : 0);
-	percentage = (current * 100) / total;
+	percentage = progress_lowlim +
+		(current * (progress_highlim - progress_lowlim)) / total;
 	percentage = MAX(percentage, 0);
 	percentage = MIN(percentage, 100);
 
