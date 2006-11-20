@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.36 2006/08/27 09:38:24 ghen Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.37 2006/11/20 15:51:12 ghen Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.37 2006/08/15 10:58:21 ghen Exp
+ *	NetBSD
  */
 
 /*
@@ -7780,6 +7780,10 @@ const struct pci_product pci_products[] = {
 	    "Quad UART and 1284 Printer port",
 	},
 	{
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9855,
+	    "9855 Quad UART and 1284 Printer port",
+	},
+	{
 	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,
 	    "7751",
 	},
@@ -10900,4 +10904,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2142;
+const int pci_nproducts = 2143;
