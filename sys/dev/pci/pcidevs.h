@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.702.2.36 2006/08/27 09:38:23 ghen Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702.2.37 2006/11/20 15:51:12 ghen Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.37 2006/08/15 10:58:21 ghen Exp
+ *	NetBSD
  */
 
 /*
@@ -2308,6 +2308,7 @@
 #define	PCI_PRODUCT_NETMOS_NM9815	0x9815		/* Dual 1284 Printer port */
 #define	PCI_PRODUCT_NETMOS_NM9835	0x9835		/* Dual UART and 1284 Printer port */
 #define	PCI_PRODUCT_NETMOS_NM9845	0x9845		/* Quad UART and 1284 Printer port */
+#define	PCI_PRODUCT_NETMOS_NM9855	0x9855		/* 9855 Quad UART and 1284 Printer port */
 
 /* Network Security Technologies */
 #define	PCI_PRODUCT_NETSEC_7751	0x7751		/* 7751 */
