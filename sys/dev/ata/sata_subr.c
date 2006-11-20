@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.2 2005/12/11 12:21:14 christos Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.3 2006/11/20 23:42:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 
 #include <dev/ata/satareg.h>
 #include <dev/ata/satavar.h>
@@ -75,4 +77,65 @@ sata_speed(uint32_t sstatus)
 
 	return (sata_speedtab[(sstatus & SStatus_SPD_mask) >>
 			      SStatus_SPD_shift]);
+}
+
+/*
+ * reset the PHY and bring it online
+ */
+uint32_t
+sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
+    bus_space_handle_t scontrol_r, bus_space_handle_t sstatus_r)
+{
+	uint32_t scontrol, sstatus;
+	int i;
+
+	/* bring the PHYs online.
+	 * The work-around for errata #1 for the 31244 says that we must
+	 * write 0 to the port first to be sure of correctly initializing
+	 * the device. It doesn't hurt for other devices.
+	 */
+	bus_space_write_4(sata_t, scontrol_r, 0, 0);
+	scontrol = SControl_IPM_NONE | SControl_SPD_ANY | SControl_DET_INIT;
+	bus_space_write_4 (sata_t, scontrol_r, 0, scontrol);
+
+	tsleep(chp, PRIBIO, "sataup", mstohz(50));
+	scontrol &= ~SControl_DET_INIT;
+	bus_space_write_4(sata_t, scontrol_r, 0, scontrol);
+
+	tsleep(chp, PRIBIO, "sataup", mstohz(50));
+	/* wait up to 1s for device to come up */
+	for (i = 0; i < 100; i++) {
+		sstatus = bus_space_read_4(sata_t, sstatus_r, 0);
+		if ((sstatus & SStatus_DET_mask) == SStatus_DET_DEV)
+			break;
+		tsleep(chp, PRIBIO, "sataup", mstohz(10));
+	}
+
+	switch (sstatus & SStatus_DET_mask) {
+	case SStatus_DET_NODEV:
+		/* No Device; be silent.  */
+		break;
+
+	case SStatus_DET_DEV_NE:
+		aprint_error("%s: port %d: device connected, but "
+		    "communication not established\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel);
+		break;
+
+	case SStatus_DET_OFFLINE:
+		aprint_error("%s: port %d: PHY offline\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel);
+		break;
+
+	case SStatus_DET_DEV:
+		aprint_normal("%s: port %d: device present, speed: %s\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
+		    sata_speed(sstatus));
+		break;
+	default:
+		aprint_error("%s: port %d: unknown SStatus: 0x%08x\n",
+		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
+		    sstatus);
+	}
+	return(sstatus);
 }
