@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.107 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: nd6.c,v 1.108 2006/11/20 04:34:16 dyoung Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.107 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.108 2006/11/20 04:34:16 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -530,8 +530,8 @@ void
 nd6_timer(void *ignored_arg)
 {
 	int s;
-	struct nd_defrouter *dr;
-	struct nd_prefix *pr;
+	struct nd_defrouter *next_dr, *dr;
+	struct nd_prefix *next_pr, *pr;
 	struct in6_ifaddr *ia6, *nia6;
 	struct in6_addrlifetime *lt6;
 
@@ -540,15 +540,11 @@ nd6_timer(void *ignored_arg)
 	    nd6_timer, NULL);
 
 	/* expire default router list */
-	dr = TAILQ_FIRST(&nd_defrouter);
-	while (dr) {
+	
+	for (dr = TAILQ_FIRST(&nd_defrouter); dr != NULL; dr = next_dr) {
+		next_dr = TAILQ_NEXT(dr, dr_entry);
 		if (dr->expire && dr->expire < time_second) {
-			struct nd_defrouter *t;
-			t = TAILQ_NEXT(dr, dr_entry);
 			defrtrlist_del(dr);
-			dr = t;
-		} else {
-			dr = TAILQ_NEXT(dr, dr_entry);
 		}
 	}
 
@@ -625,8 +621,8 @@ nd6_timer(void *ignored_arg)
 	}
 
 	/* expire prefix list */
-	pr = nd_prefix.lh_first;
-	while (pr) {
+	for (pr = LIST_FIRST(&nd_prefix); pr != NULL; pr = next_pr) {
+		next_pr = LIST_NEXT(pr, ndpr_entry);
 		/*
 		 * check prefix lifetime.
 		 * since pltime is just for autoconf, pltime processing for
@@ -634,8 +630,6 @@ nd6_timer(void *ignored_arg)
 		 */
 		if (pr->ndpr_vltime != ND6_INFINITE_LIFETIME &&
 		    time_second - pr->ndpr_lastupdate > pr->ndpr_vltime) {
-			struct nd_prefix *t;
-			t = pr->ndpr_next;
 
 			/*
 			 * address expiration and prefix expiration are
@@ -643,9 +637,7 @@ nd6_timer(void *ignored_arg)
 			 */
 
 			prelist_remove(pr);
-			pr = t;
-		} else
-			pr = pr->ndpr_next;
+		}
 	}
 	splx(s);
 }
@@ -659,8 +651,7 @@ regen_tmpaddr(ia6)
 	struct in6_ifaddr *public_ifa6 = NULL;
 
 	ifp = ia6->ia_ifa.ifa_ifp;
-	for (ifa = ifp->if_addrlist.tqh_first; ifa;
-	     ifa = ifa->ifa_list.tqe_next) {
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		struct in6_ifaddr *it6;
 
 		if (ifa->ifa_addr->sa_family != AF_INET6)
@@ -753,8 +744,8 @@ nd6_purge(ifp)
 	}
 
 	/* Nuke prefix list entries toward ifp */
-	for (pr = nd_prefix.lh_first; pr; pr = npr) {
-		npr = pr->ndpr_next;
+	for (pr = LIST_FIRST(&nd_prefix); pr != NULL; pr = npr) {
+		npr = LIST_NEXT(pr, ndpr_entry);
 		if (pr->ndpr_ifp == ifp) {
 			/*
 			 * Because if_detach() does *not* release prefixes
@@ -946,7 +937,7 @@ nd6_is_addr_neighbor(addr, ifp)
 	 * If the address matches one of our on-link prefixes, it should be a
 	 * neighbor.
 	 */
-	for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 		if (pr->ndpr_ifp != ifp)
 			continue;
 
@@ -1412,8 +1403,9 @@ nd6_ioctl(cmd, data, ifp)
 		 */
 		bzero(drl, sizeof(*drl));
 		s = splsoftnet();
-		dr = TAILQ_FIRST(&nd_defrouter);
-		while (dr && i < DRLSTSIZ) {
+		TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
+			if (i >= DRLSTSIZ)
+				break;
 			drl->defrouter[i].rtaddr = dr->rtaddr;
 			in6_clearscope(&drl->defrouter[i].rtaddr);
 
@@ -1422,7 +1414,6 @@ nd6_ioctl(cmd, data, ifp)
 			drl->defrouter[i].expire = dr->expire;
 			drl->defrouter[i].if_index = dr->ifp->if_index;
 			i++;
-			dr = TAILQ_NEXT(dr, dr_entry);
 		}
 		splx(s);
 		break;
@@ -1441,11 +1432,12 @@ nd6_ioctl(cmd, data, ifp)
 		 */
 		bzero(oprl, sizeof(*oprl));
 		s = splsoftnet();
-		pr = nd_prefix.lh_first;
-		while (pr && i < PRLSTSIZ) {
+		LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 			struct nd_pfxrouter *pfr;
 			int j;
 
+			if (i >= PRLSTSIZ)
+				break;
 			oprl->prefix[i].prefix = pr->ndpr_prefix.sin6_addr;
 			oprl->prefix[i].raflags = pr->ndpr_raf;
 			oprl->prefix[i].prefixlen = pr->ndpr_plen;
@@ -1470,9 +1462,8 @@ nd6_ioctl(cmd, data, ifp)
 					oprl->prefix[i].expire = maxexpire;
 			}
 
-			pfr = pr->ndpr_advrtrs.lh_first;
 			j = 0;
-			while (pfr) {
+			LIST_FOREACH(pfr, &pr->ndpr_advrtrs, pfr_entry) {
 				if (j < DRLSTSIZ) {
 #define RTRADDR oprl->prefix[i].advrtr[j]
 					RTRADDR = pfr->router->rtaddr;
@@ -1480,13 +1471,11 @@ nd6_ioctl(cmd, data, ifp)
 #undef RTRADDR
 				}
 				j++;
-				pfr = pfr->pfr_next;
 			}
 			oprl->prefix[i].advrtrs = j;
 			oprl->prefix[i].origin = PR_ORIG_RA;
 
 			i++;
-			pr = pr->ndpr_next;
 		}
 		splx(s);
 
@@ -1550,10 +1539,10 @@ nd6_ioctl(cmd, data, ifp)
 		struct nd_prefix *pfx, *next;
 
 		s = splsoftnet();
-		for (pfx = nd_prefix.lh_first; pfx; pfx = next) {
+		for (pfx = LIST_FIRST(&nd_prefix); pfx; pfx = next) {
 			struct in6_ifaddr *ia, *ia_next;
 
-			next = pfx->ndpr_next;
+			next = LIST_NEXT(pfx, ndpr_entry);
 
 			if (IN6_IS_ADDR_LINKLOCAL(&pfx->ndpr_prefix.sin6_addr))
 				continue; /* XXX */
@@ -1881,8 +1870,7 @@ nd6_slowtimo(void *ignored_arg)
 
 	callout_reset(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz,
 	    nd6_slowtimo, NULL);
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
-	{
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		nd6if = ND_IFINFO(ifp);
 		if (nd6if->basereachable && /* already initialized */
 		    (nd6if->recalctm -= ND6_SLOWTIMER_INTERVAL) <= 0) {
@@ -2271,8 +2259,7 @@ fill_drlist(oldp, oldlenp, ol)
 	}
 	l = 0;
 
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
-	     dr = TAILQ_NEXT(dr, dr_entry)) {
+	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
 
 		if (oldp && d + 1 <= de) {
 			bzero(d, sizeof(*d));
@@ -2327,7 +2314,7 @@ fill_prlist(oldp, oldlenp, ol)
 	}
 	l = 0;
 
-	for (pr = nd_prefix.lh_first; pr; pr = pr->ndpr_next) {
+	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
 		u_short advrtrs;
 		size_t advance;
 		struct sockaddr_in6 *sin6;
@@ -2371,8 +2358,7 @@ fill_prlist(oldp, oldlenp, ol)
 			p->flags = pr->ndpr_stateflags;
 			p->origin = PR_ORIG_RA;
 			advrtrs = 0;
-			for (pfr = pr->ndpr_advrtrs.lh_first; pfr;
-			     pfr = pfr->pfr_next) {
+			LIST_FOREACH(pfr, &pr->ndpr_advrtrs, pfr_entry) {
 				if ((void *)&sin6[advrtrs + 1] > (void *)pe) {
 					advrtrs++;
 					continue;
@@ -2394,8 +2380,7 @@ fill_prlist(oldp, oldlenp, ol)
 		}
 		else {
 			advrtrs = 0;
-			for (pfr = pr->ndpr_advrtrs.lh_first; pfr;
-			     pfr = pfr->pfr_next)
+			LIST_FOREACH(pfr, &pr->ndpr_advrtrs, pfr_entry)
 				advrtrs++;
 		}
 
