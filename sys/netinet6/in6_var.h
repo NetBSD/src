@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.46 2006/10/17 14:52:21 christos Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.47 2006/11/20 04:17:57 dyoung Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -490,7 +490,7 @@ extern unsigned long in6_maxmtu;
 /* struct in6_ifaddr *ia; */				\
 do {									\
 	struct ifaddr *_ifa;						\
-	for (_ifa = (ifp)->if_addrlist.tqh_first; _ifa; _ifa = _ifa->ifa_list.tqe_next) {	\
+	TAILQ_FOREACH(_ifa, &(ifp)->if_addrlist, ifa_list) {	\
 		if (!_ifa->ifa_addr)					\
 			continue;					\
 		if (_ifa->ifa_addr->sa_family == AF_INET6)		\
