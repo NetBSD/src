@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.1.1.3 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: msg.c,v 1.1.1.3.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -54,7 +54,7 @@
 /*	msg_fatal() reports an unrecoverable error and terminates the program
 /*	with a non-zero exit status.
 /*
-/*	msg_fatal_status() reports an unrecoverable error and terminates the 
+/*	msg_fatal_status() reports an unrecoverable error and terminates the
 /*	program with the specified exit status.
 /*
 /*	msg_panic() reports an internal inconsistency, terminates the
@@ -83,6 +83,14 @@
 /*	Some output functions may suffer from intentional or accidental
 /*	record length restrictions that are imposed by library routines
 /*	and/or by the runtime environment.
+/*
+/*	Code that spawns a child process should almost always reset
+/*	the cleanup handler. The exception is when the parent exits
+/*	immediately and the child continues.
+/*
+/*	msg_cleanup() may be unsafe in code that changes process
+/*	privileges, because the call-back routine may run with the
+/*	wrong privileges.
 /* LICENSE
 /* .ad
 /* .fi

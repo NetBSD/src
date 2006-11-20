@@ -1,4 +1,4 @@
-/*	$NetBSD: stream_trigger.c,v 1.1.1.3 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: stream_trigger.c,v 1.1.1.3.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -11,7 +11,7 @@
 /*	int	stream_trigger(service, buf, len, timeout)
 /*	const char *service;
 /*	const char *buf;
-/*	int	len;
+/*	ssize_t	len;
 /*	int	timeout;
 /* DESCRIPTION
 /*	stream_trigger() wakes up the named stream server by making
@@ -71,7 +71,7 @@ struct stream_trigger {
 static void stream_trigger_event(int event, char *context)
 {
     struct stream_trigger *sp = (struct stream_trigger *) context;
-    static char *myname = "stream_trigger_event";
+    static const char *myname = "stream_trigger_event";
 
     /*
      * Disconnect.
@@ -88,9 +88,9 @@ static void stream_trigger_event(int event, char *context)
 
 /* stream_trigger - wakeup stream server */
 
-int     stream_trigger(const char *service, const char *buf, int len, int timeout)
+int     stream_trigger(const char *service, const char *buf, ssize_t len, int timeout)
 {
-    char   *myname = "stream_trigger";
+    const char *myname = "stream_trigger";
     struct stream_trigger *sp;
     int     fd;
 

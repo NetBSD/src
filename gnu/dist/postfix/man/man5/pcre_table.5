@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcre_table.5,v 1.1.1.7.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: pcre_table.5,v 1.1.1.7.2.2 2006/11/20 13:30:17 tron Exp $
 .\"
 .TH PCRE_TABLE 5 
 .ad
@@ -50,11 +50,18 @@ and \fBendif\fR, if and only if the input string also matches
 .sp
 Note: do not prepend whitespace to patterns inside
 \fBif\fR..\fBendif\fR.
+.sp
+This feature is available in Postfix 2.1 and later.
 .IP "\fBif !/\fIpattern\fB/\fIflags\fR"
 .IP "\fBendif\fR"
 Match the input string against the patterns between \fBif\fR
 and \fBendif\fR, if and only if the input string does \fBnot\fR
 match \fIpattern\fR. The \fBif\fR..\fBendif\fR can nest.
+.sp
+Note: do not prepend whitespace to patterns inside
+\fBif\fR..\fBendif\fR.
+.sp
+This feature is available in Postfix 2.1 and later.
 .IP "blank lines and comments"
 Empty lines and whitespace-only lines are ignored, as
 are lines whose first non-whitespace character is a `#'.
@@ -139,7 +146,8 @@ broken up into \fIuser\fR and \fIfoo\fR.
 .ad
 .fi
 Substitution of substrings from the matched expression into the result
-string is possible using the conventional perl syntax ($1, $2, etc.).
+string is possible using the conventional perl syntax ($1, $2, etc.);
+specify $$ to produce a $ character as output.
 The macros in the result string may need to be written as ${n}
 or $(n) if they aren't followed by whitespace.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sendmail.c,v 1.1.1.9.2.1 2006/07/12 15:06:41 tron Exp $	*/
+/*	$NetBSD: sendmail.c,v 1.1.1.9.2.2 2006/11/20 13:30:48 tron Exp $	*/
 
 /*++
 /* NAME
@@ -87,18 +87,30 @@
 /*	for testing address rewriting and routing configurations.
 /* .sp
 /*	This feature is available in Postfix version 2.1 and later.
-/* .IP "\fB-C \fIconfig_file\fR (ignored)"
-/*	The path name of the \fBsendmail.cf\fR file. Postfix configuration
-/*	files are kept in the \fB/etc/postfix\fR directory.
+/* .IP "\fB-C \fIconfig_file\fR"
+/* .IP "\fB-C \fIconfig_dir\fR"
+/*	The path name of the Postfix \fBmain.cf\fR file, or of its
+/*	parent directory. This information is ignored with Postfix
+/*	versions before 2.3.
+/*
+/*	With all Postfix versions, you can specify a directory pathname
+/*	with the MAIL_CONFIG environment variable to override the
+/*	location of configuration files.
 /* .IP "\fB-F \fIfull_name\fR
-/*	Set the sender full name. This is used only with messages that
+/*	Set the sender full name. This overrides the NAME environment
+/*	variable, and is used only with messages that
 /*	have no \fBFrom:\fR message header.
 /* .IP "\fB-f \fIsender\fR"
 /*	Set the envelope sender address. This is the address where
 /*	delivery problems are sent to. With Postfix versions before 2.1, the
 /*	\fBErrors-To:\fR message header overrides the error return address.
-/* .IP "\fB-G\fR (ignored)"
-/*	Gateway (relay) submission, as opposed to initial user submission.
+/* .IP \fB-G\fR
+/*	Gateway (relay) submission, as opposed to initial user
+/*	submission.  Either do not rewrite addresses at all, or
+/*	update incomplete addresses with the domain information
+/*	specified with \fBremote_header_rewrite_domain\fR.
+/*
+/*	This option is ignored before Postfix version 2.3.
 /* .IP "\fB-h \fIhop_count\fR (ignored)"
 /*	Hop count limit. Use the \fBhopcount_limit\fR configuration
 /*	parameter instead.
@@ -113,9 +125,15 @@
 /*	parameter instead.
 /* .IP "\fB-m\fR (ignored)"
 /*	Backwards compatibility.
-/* .IP "\fB-N \fIdsn\fR (ignored)"
-/*	Delivery status notification control. Currently, Postfix does
-/*	not implement \fBDSN\fR.
+/* .IP "\fB-N \fIdsn\fR (default: 'delay, failure')"
+/*	Delivery status notification control. Specify either a
+/*	comma-separated list with one or more of \fBfailure\fR (send
+/*	notification when delivery fails), \fBdelay\fR (send
+/*	notification when delivery is delayed), or \fBsuccess\fR
+/*	(send notification when the message is delivered); or specify
+/*	\fBnever\fR (don't send any notifications at all).
+/*
+/*	This feature is available in Postfix 2.3 and later.
 /* .IP "\fB-n\fR (ignored)"
 /*	Backwards compatibility.
 /* .IP "\fB-oA\fIalias_database\fR"
@@ -170,7 +188,12 @@
 /*	no recipient addresses are specified on the command line.
 /* .IP "\fB-U\fR (ignored)"
 /*	Initial user submission.
-/* .IP \fB-V\fR
+/* .IP "\fB-V \fIenvid\fR"
+/*	Specify the envelope ID for notification by servers that
+/*	support DSN.
+/*
+/*	This feature is available in Postfix 2.3 and later.
+/* .IP "\fB-XV\fR (Postfix 2.2 and earlier: \fB-V\fR)"
 /*	Variable Envelope Return Path. Given an envelope sender address
 /*	of the form \fIowner-listname\fR@\fIorigin\fR, each recipient
 /*	\fIuser\fR@\fIdomain\fR receives mail with a personalized envelope
@@ -180,10 +203,8 @@
 /*	\fIowner-listname\fB+\fIuser\fB=\fIdomain\fR@\fIorigin\fR. The default
 /*	\fB+\fR and \fB=\fR characters are configurable with the
 /*	\fBdefault_verp_delimiters\fR configuration parameter.
-/* .sp
-/*	This feature is available in Postfix version 1.1 and later.
-/* .IP \fB-V\fIxy\fR
-/*	As \fB-V\fR, but uses \fIx\fR and \fIy\fR as the VERP delimiter
+/* .IP "\fB-XV\fIxy\fR (Postfix 2.2 and earlier: \fB-V\fIxy\fR)"
+/*	As \fB-XV\fR, but uses \fIx\fR and \fIy\fR as the VERP delimiter
 /*	characters, instead of the characters specified with the
 /*	\fBdefault_verp_delimiters\fR configuration parameter.
 /* .IP \fB-v\fR
@@ -209,11 +230,15 @@
 /* .fi
 /* .IP \fBMAIL_CONFIG\fR
 /*	Directory with Postfix configuration files.
-/* .IP \fBMAIL_VERBOSE\fR
+/* .IP "\fBMAIL_VERBOSE\fR (value does not matter)"
 /*	Enable verbose logging for debugging purposes.
-/* .IP \fBMAIL_DEBUG\fR
+/* .IP "\fBMAIL_DEBUG\fR (value does not matter)"
 /*	Enable debugging with an external command, as specified with the
 /*	\fBdebugger_command\fR configuration parameter.
+/* .IP \fBNAME\fR
+/*	The sender full name. This is used only with messages that
+/*	have no \fBFrom:\fR message header. See also the \fB-F\fR
+/*	option above.
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
@@ -303,22 +328,23 @@
 /* .IP "\fBenable_errors_to (no)\fR"
 /*	Report mail delivery errors to the address specified with the
 /*	non-standard Errors-To: message header, instead of the envelope
-/*	sender address (this feature is removed with Postfix 2.2, is
-/*	turned off by default with Postfix 2.1, and is always turned on
+/*	sender address (this feature is removed with Postfix version 2.2, is
+/*	turned off by default with Postfix version 2.1, and is always turned on
 /*	with older Postfix versions).
 /* .IP "\fBmail_owner (postfix)\fR"
 /*	The UNIX system account that owns the Postfix queue and most Postfix
 /*	daemon processes.
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.
+/* .IP "\fBremote_header_rewrite_domain (empty)\fR"
+/*	Don't rewrite message headers from remote clients at all when
+/*	this parameter is empty; otherwise, rewrite message headers and
+/*	append the specified domain name to incomplete addresses.
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (postfix)\fR"
 /*	The mail system name that is prepended to the process name in syslog
 /*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
-/* .IP "\fBtrigger_timeout (10s)\fR"
-/*	The time limit for sending a trigger to a Postfix daemon (for
-/*	example, the \fBpickup\fR(8) or \fBqmgr\fR(8) daemon).
 /* FILES
 /*	/var/spool/postfix, mail queue
 /*	/etc/postfix, configuration files
@@ -406,6 +432,7 @@
 #include <mime_state.h>
 #include <header_opts.h>
 #include <user_acl.h>
+#include <dsn_mask.h>
 
 /* Application-specific. */
 
@@ -463,7 +490,7 @@ static CONFIG_STR_TABLE str_table[] = {
 
 /* output_text - output partial or complete text line */
 
-static void output_text(void *context, int rec_type, const char *buf, int len,
+static void output_text(void *context, int rec_type, const char *buf, ssize_t len,
 			        off_t unused_offset)
 {
     SM_STATE *state = (SM_STATE *) context;
@@ -488,7 +515,7 @@ static void output_header(void *context, int header_class,
     char   *start;
     char   *line;
     char   *next_line;
-    int     len;
+    ssize_t len;
 
     /*
      * Parse the header line, and save copies of recipient addresses in the
@@ -540,7 +567,9 @@ static void output_header(void *context, int header_class,
 
 /* enqueue - post one message */
 
-static void enqueue(const int flags, const char *encoding, const char *sender,
+static void enqueue(const int flags, const char *encoding,
+		            const char *dsn_envid, int dsn_notify,
+		            const char *rewrite_context, const char *sender,
 		            const char *full_name, char **recipients)
 {
     VSTRING *buf;
@@ -557,7 +586,7 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
 	STRIP_CR_DUNNO, STRIP_CR_DO, STRIP_CR_DONT
     }       strip_cr;
     MAIL_STREAM *handle;
-    char   *postdrop_command;
+    VSTRING *postdrop_command;
     uid_t   uid = getuid();
     int     status;
     int     naddr;
@@ -567,6 +596,7 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
     int     mime_errs;
     const char *errstr;
     int     addr_count;
+    int     level;
 
     /*
      * Access control is enforced in the postdrop command. The code here
@@ -617,12 +647,14 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
      * the content. XXX Make postdrop a manifest constant.
      */
     errno = 0;
-    postdrop_command = concatenate(var_command_dir, "/postdrop -r",
-			      msg_verbose ? " -v" : (char *) 0, (char *) 0);
-    if ((handle = mail_stream_command(postdrop_command)) == 0)
+    postdrop_command = vstring_alloc(1000);
+    vstring_sprintf(postdrop_command, "%s/postdrop -r", var_command_dir);
+    for (level = 0; level < msg_verbose; level++)
+	vstring_strcat(postdrop_command, " -v");
+    if ((handle = mail_stream_command(STR(postdrop_command))) == 0)
 	msg_fatal_status(EX_UNAVAILABLE, "%s(%ld): unable to execute %s: %m",
-			 saved_sender, (long) uid, postdrop_command);
-    myfree(postdrop_command);
+			 saved_sender, (long) uid, STR(postdrop_command));
+    vstring_free(postdrop_command);
     dst = handle->stream;
 
     /*
@@ -637,7 +669,15 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
      * having the queue manager nuke duplicate recipient status records.
      * 
      * XXX Should limit the size of envelope records.
+     * 
+     * With "sendmail -N", instead of a per-message NOTIFY record we store one
+     * per recipient so that we can simplify the implementation somewhat.
      */
+    if (dsn_envid)
+	rec_fprintf(dst, REC_TYPE_ATTR, "%s=%s",
+		    MAIL_ATTR_DSN_ENVID, dsn_envid);
+    rec_fprintf(dst, REC_TYPE_ATTR, "%s=%s",
+		MAIL_ATTR_RWR_CONTEXT, rewrite_context);
     if (full_name || (full_name = fullname()) != 0)
 	rec_fputs(dst, REC_TYPE_FULL, full_name);
     rec_fputs(dst, REC_TYPE_FROM, saved_sender);
@@ -657,6 +697,9 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
 	    for (addr_count = 0, tp = tree; tp != 0; tp = tp->next) {
 		if (tp->type == TOK822_ADDR) {
 		    tok822_internalize(buf, tp->head, TOK822_STR_DEFL);
+		    if (dsn_notify)
+			rec_fprintf(dst, REC_TYPE_ATTR, "%s=%d",
+				    MAIL_ATTR_DSN_NOTIFY, dsn_notify);
 		    if (REC_PUT_BUF(dst, REC_TYPE_RCPT, buf) < 0)
 			msg_fatal_status(EX_TEMPFAIL,
 				    "%s(%ld): error writing queue file: %m",
@@ -744,10 +787,8 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
 		skip_from_ = 0;
 	    }
 	    if (strip_cr == STRIP_CR_DO && type == REC_TYPE_NORM)
-		if (VSTRING_LEN(buf) > 0 && vstring_end(buf)[-1] == '\r') {
+		if (VSTRING_LEN(buf) > 0 && vstring_end(buf)[-1] == '\r')
 		    vstring_truncate(buf, VSTRING_LEN(buf) - 1);
-		    VSTRING_TERMINATE(buf);
-		}
 	    if ((flags & SM_FLAG_AEOF) && prev_type != REC_TYPE_CONT
 		&& VSTRING_LEN(buf) == 1 && *STR(buf) == '.')
 		break;
@@ -790,6 +831,9 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
     if (flags & SM_FLAG_XRCPT) {
 	for (cpp = state.resent ? state.resent_recip->argv :
 	     state.recipients->argv; *cpp; cpp++) {
+	    if (dsn_notify)
+		rec_fprintf(dst, REC_TYPE_ATTR, "%s=%d",
+			    MAIL_ATTR_DSN_NOTIFY, dsn_notify);
 	    if (rec_put(dst, REC_TYPE_RCPT, *cpp, strlen(*cpp)) < 0)
 		msg_fatal_status(EX_TEMPFAIL,
 				 "%s(%ld): error writing queue file: %m",
@@ -864,6 +908,10 @@ int     main(int argc, char **argv)
     char   *qtime = 0;
     const char *errstr;
     uid_t   uid;
+    const char *rewrite_context = MAIL_ATTR_RWR_LOCAL;
+    int     dsn_notify = 0;
+    const char *dsn_envid = 0;
+    int     saved_optind;
 
     /*
      * Be consistent with file permissions.
@@ -922,8 +970,31 @@ int     main(int argc, char **argv)
     }
 
     /*
-     * Further initialization...
+     * Further initialization. Load main.cf first, so that command-line
+     * options can override main.cf settings. Pre-scan the argument list so
+     * that we load the right main.cf file.
      */
+#define GETOPT_LIST "A:B:C:F:GIL:N:O:R:UV:X:b:ce:f:h:imno:p:r:q:tvx"
+
+    saved_optind = optind;
+    while (argv[OPTIND] != 0) {
+	if (strcmp(argv[OPTIND], "-q") == 0) {	/* not getopt compatible */
+	    optind++;
+	    continue;
+	}
+	if ((c = GETOPT(argc, argv, GETOPT_LIST)) <= 0)
+	    break;
+	if (c == 'C') {
+	    VSTRING *buf = vstring_alloc(1);
+
+	    if (setenv(CONF_ENV_PATH,
+		   strcmp(sane_basename(buf, optarg), MAIN_CONF_FILE) == 0 ?
+		       sane_dirname(buf, optarg) : optarg, 1) < 0)
+		msg_fatal_status(EX_UNAVAILABLE, "out of memory");
+	    vstring_free(buf);
+	}
+    }
+    optind = saved_optind;
     mail_conf_read();
     get_mail_conf_str_table(str_table);
 
@@ -972,11 +1043,22 @@ int     main(int argc, char **argv)
 	    continue;
 	}
 	if (strcmp(argv[OPTIND], "-V") == 0) {
+	    msg_warn("option -V is deprecated with Postfix 2.3; "
+		     "specify -XV instead");
+	    argv[OPTIND] = "-XV";
+	}
+	if (strncmp(argv[OPTIND], "-V", 2) == 0 && strlen(argv[OPTIND]) == 4) {
+	    msg_warn("option %s is deprecated with Postfix 2.3; "
+		     "specify -X%s instead",
+		     argv[OPTIND], argv[OPTIND] + 1);
+	    argv[OPTIND] = concatenate("-X", argv[OPTIND] + 1, (char *) 0);
+	}
+	if (strcmp(argv[OPTIND], "-XV") == 0) {
 	    verp_delims = var_verp_delims;
 	    optind++;
 	    continue;
 	}
-	if ((c = GETOPT(argc, argv, "A:B:C:F:GIL:N:O:R:UV:X:b:ce:f:h:imno:p:r:q:tvx")) <= 0)
+	if ((c = GETOPT(argc, argv, GETOPT_LIST)) <= 0)
 	    break;
 	switch (c) {
 	default:
@@ -996,14 +1078,35 @@ int     main(int argc, char **argv)
 	case 'F':				/* full name */
 	    full_name = optarg;
 	    break;
+	case 'G':				/* gateway submission */
+	    rewrite_context = MAIL_ATTR_RWR_REMOTE;
+	    break;
 	case 'I':				/* newaliases */
 	    mode = SM_MODE_NEWALIAS;
 	    break;
-	case 'V':				/* VERP */
-	    if (verp_delims_verify(optarg) != 0)
-		msg_fatal_status(EX_USAGE, "-V requires two characters from %s",
-				 var_verp_filter);
-	    verp_delims = optarg;
+	case 'N':
+	    if ((dsn_notify = dsn_notify_mask(optarg)) == 0)
+		msg_warn("bad -N option value -- ignored");
+	    break;
+	case 'V':				/* DSN, was: VERP */
+	    if (strlen(optarg) > 100)
+		msg_warn("too long -V option value -- ignored");
+	    else if (!allprint(optarg))
+		msg_warn("bad syntax in -V option value -- ignored");
+	    else
+		dsn_envid = optarg;
+	    break;
+	case 'X':
+	    switch (*optarg) {
+	    default:
+		msg_fatal_status(EX_USAGE, "unsupported: -%c%c", c, *optarg);
+	    case 'V':				/* VERP */
+		if (verp_delims_verify(optarg + 1) != 0)
+		    msg_fatal_status(EX_USAGE, "-V requires two characters from %s",
+				     var_verp_filter);
+		verp_delims = optarg + 1;
+		break;
+	    }
 	    break;
 	case 'b':
 	    switch (*optarg) {
@@ -1031,7 +1134,7 @@ int     main(int argc, char **argv)
 		mode = SM_MODE_USER;
 		break;
 	    case 'v':				/* expand recipients */
-		flags |= DEL_REQ_FLAG_EXPAND;
+		flags |= DEL_REQ_FLAG_USR_VRFY;
 		break;
 	    }
 	    break;
@@ -1099,6 +1202,15 @@ int     main(int argc, char **argv)
     if (site_to_flush && mode != SM_MODE_ENQUEUE)
 	msg_fatal_status(EX_USAGE, "-qR can be used only in delivery mode");
 
+    if (flags & DEL_REQ_FLAG_USR_VRFY) {
+	if (flags & SM_FLAG_XRCPT)
+	    msg_fatal_status(EX_USAGE, "-t option cannot be used with -bv");
+	if (dsn_notify)
+	    msg_fatal_status(EX_USAGE, "-N option cannot be used with -bv");
+	if (msg_verbose == 1)
+	    msg_fatal_status(EX_USAGE, "-v option cannot be used with -bv");
+    }
+
     /*
      * The -v option plays double duty. One requests verbose delivery, more
      * than one requests verbose logging.
@@ -1119,7 +1231,8 @@ int     main(int argc, char **argv)
 	/* NOTREACHED */
     case SM_MODE_ENQUEUE:
 	if (site_to_flush == 0) {
-	    enqueue(flags, encoding, sender, full_name, argv + OPTIND);
+	    enqueue(flags, encoding, dsn_envid, dsn_notify,
+		    rewrite_context, sender, full_name, argv + OPTIND);
 	    exit(0);
 	}
 	if (argv[OPTIND])

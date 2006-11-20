@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_date.c,v 1.1.1.4 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: mail_date.c,v 1.1.1.4.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -123,7 +123,7 @@ const char *mail_date(time_t when)
      * Finally, add the time zone name.
      */
     while (strftime(vstring_end(vp), vstring_avail(vp), " (%Z)", lt) == 0)
-	VSTRING_SPACE(vp, 100);
+	VSTRING_SPACE(vp, vstring_avail(vp) + 100);
     VSTRING_SKIP(vp);
 
     return (vstring_str(vp));

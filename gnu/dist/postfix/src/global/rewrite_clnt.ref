@@ -56,7 +56,7 @@ result     ""@
 
 rule       remote
 address    a!
-result     ""@a.domain.invalid
+result     ""@a.INVALID_DOMAIN
 
 rule       remote
 address    !b
@@ -64,7 +64,7 @@ result     b@
 
 rule       remote
 address    a!b
-result     b@a.domain.invalid
+result     b@a.INVALID_DOMAIN
 
 rule       remote
 address    %
@@ -76,11 +76,11 @@ result     a@
 
 rule       remote
 address    %b
-result     ""@b.domain.invalid
+result     ""@b.INVALID_DOMAIN
 
 rule       remote
 address    a%b
-result     a@b.domain.invalid
+result     a@b.INVALID_DOMAIN
 
 rule       remote
 address    @
@@ -96,7 +96,7 @@ result     a@.
 
 rule       remote
 address    a@b
-result     a@b.domain.invalid
+result     a@b.INVALID_DOMAIN
 
 rule       remote
 address    a@b.

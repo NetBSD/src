@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.1 2006/07/12 15:06:48 tron Exp $
+#	$NetBSD: Makefile,v 1.10.2.2 2006/11/20 13:31:06 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -24,15 +24,17 @@ PFX_CONFIG= access.5.html aliases.5.html canonical.5.html cidr_table.5.html \
 	generic.5.html header_checks.5.html ldap_table.5.html \
 	master.5.html mysql_table.5.html nisplus_table.5.html \
 	pcre_table.5.html pgsql_table.5.html postconf.5.html \
-	regexp_table.5.html relocated.5.html transport.5.html virtual.5.html
+	regexp_table.5.html relocated.5.html transport.5.html virtual.5.html \
+	postfix-manuals.html
 PFX_READMES= ADDRESS_CLASS_README.html ADDRESS_REWRITING_README.html \
 	ADDRESS_VERIFICATION_README.html BACKSCATTER_README.html \
 	BASIC_CONFIGURATION_README.html BUILTIN_FILTER_README.html \
 	CONNECTION_CACHE_README.html CONTENT_INSPECTION_README.html \
-	DATABASE_README.html DB_README.html DEBUG_README.html \
+	DATABASE_README.html DSN_README.html DB_README.html DEBUG_README.html \
 	ETRN_README.html FILTER_README.html IPV6_README.html \
 	LDAP_README.html LMTP_README.html \
 	LOCAL_RECIPIENT_README.html MAILDROP_README.html MYSQL_README.html \
+	MILTER_README.html \
 	NFS_README.html OVERVIEW.html PCRE_README.html \
 	PGSQL_README.html QMQP_README.html QSHAPE_README.html \
 	RESTRICTION_CLASS_README.html SASL_README.html SCHEDULER_README.html \

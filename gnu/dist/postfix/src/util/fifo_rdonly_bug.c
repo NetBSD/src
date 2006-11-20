@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_rdonly_bug.c,v 1.1.1.2 2004/05/31 00:24:58 heas Exp $	*/
+/*	$NetBSD: fifo_rdonly_bug.c,v 1.1.1.2.2.1 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -10,8 +10,8 @@
 /* DESCRIPTION
 /*	fifo_rdonly_bug creates a FIFO and opens it read only. It
 /*	then opens the FIFO for writing, writes one byte, and closes
-/*	the writing end. On Linux Redhat 4.2 and 5.0, and HP-UX 9.05 
-/*	and 10.20, select() will report that the FIFO remains readable 
+/*	the writing end. On Linux Redhat 4.2 and 5.0, and HP-UX 9.05
+/*	and 10.20, select() will report that the FIFO remains readable
 /*	even after multiple read operations.
 /* DIAGNOSTICS
 /*	Problems are reported to the standard error stream.
@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <string.h>
 
 #define FIFO_PATH	"test-fifo"
 #define TRIGGER_DELAY	5

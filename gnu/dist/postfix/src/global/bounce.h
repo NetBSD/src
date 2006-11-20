@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce.h,v 1.1.1.5 2004/05/31 00:24:29 heas Exp $	*/
+/*	$NetBSD: bounce.h,v 1.1.1.5.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 #ifndef _BOUNCE_H_INCLUDED_
 #define _BOUNCE_H_INCLUDED_
@@ -17,31 +17,26 @@
   * System library.
   */
 #include <time.h>
-#include <stdarg.h>
 
  /*
   * Global library.
   */
 #include <deliver_request.h>
+#include <dsn_buf.h>
 
  /*
   * Client interface.
   */
-extern int PRINTFLIKE(8, 9) bounce_append(int, const char *,
-					          const char *, const char *,
-					          long, const char *, time_t,
-					          const char *,...);
-extern int vbounce_append(int, const char *, const char *, const char *, long,
-		               const char *, time_t, const char *, va_list);
-extern int bounce_flush(int, const char *, const char *, const char *, const char *);
-extern int PRINTFLIKE(11, 12) bounce_one(int, const char *, const char *,
-					         const char *, const char *,
-					         const char *, const char *,
-					         long, const char *, time_t,
-					         const char *,...);
-extern int vbounce_one(int, const char *, const char *, const char *,
-		               const char *, const char *, const char *, long,
-		               const char *, time_t, const char *, va_list);
+extern int bounce_append(int, const char *, MSG_STATS *, RECIPIENT *,
+			         const char *, DSN *);
+extern int bounce_flush(int, const char *, const char *, const char *,
+			        const char *, const char *, int);
+extern int bounce_flush_verp(int, const char *, const char *, const char *,
+		             const char *, const char *, int, const char *);
+extern int bounce_one(int, const char *, const char *, const char *,
+		              const char *, const char *,
+		              int, MSG_STATS *, RECIPIENT *,
+		              const char *, DSN *);
 
  /*
   * Bounce/defer protocol commands.
@@ -52,6 +47,13 @@ extern int vbounce_one(int, const char *, const char *, const char *,
 #define BOUNCE_CMD_VERP		3	/* send log, verp style */
 #define BOUNCE_CMD_ONE		4	/* send one recipient notice */
 #define BOUNCE_CMD_TRACE	5	/* send delivery record */
+
+ /*
+  * Macros to make obscure code more readable.
+  */
+#define NO_DSN_DCODE		((char *) 0)
+#define NO_RELAY_AGENT		"none"
+#define NO_DSN_RMTA		((char *) 0)
 
  /*
   * Flags.

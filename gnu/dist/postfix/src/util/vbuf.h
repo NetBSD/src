@@ -1,4 +1,4 @@
-/*	$NetBSD: vbuf.h,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: vbuf.h,v 1.1.1.2.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 #ifndef _VBUF_H_INCLUDED_
 #define _VBUF_H_INCLUDED_
@@ -28,18 +28,19 @@
   *
   * This interface is pretty normal. With one exception: the number of bytes
   * left to read is negated. This is done so that we can change direction
-  * between reading and writing on the fly.
+  * between reading and writing on the fly. The alternative would be to use
+  * separate read and write counters per buffer.
   */
 typedef struct VBUF VBUF;
 typedef int (*VBUF_GET_READY_FN) (VBUF *);
 typedef int (*VBUF_PUT_READY_FN) (VBUF *);
-typedef int (*VBUF_SPACE_FN) (VBUF *, int);
+typedef int (*VBUF_SPACE_FN) (VBUF *, ssize_t);
 
 struct VBUF {
     int     flags;			/* status, see below */
     unsigned char *data;		/* variable-length buffer */
-    int     len;			/* buffer length */
-    int     cnt;			/* bytes left to read/write */
+    ssize_t len;			/* buffer length */
+    ssize_t cnt;			/* bytes left to read/write */
     unsigned char *ptr;			/* read/write position */
     VBUF_GET_READY_FN get_ready;	/* read buffer empty action */
     VBUF_PUT_READY_FN put_ready;	/* write buffer full action */
@@ -85,8 +86,8 @@ struct VBUF {
 extern int vbuf_get(VBUF *);
 extern int vbuf_put(VBUF *, int);
 extern int vbuf_unget(VBUF *, int);
-extern int vbuf_read(VBUF *, char *, int);
-extern int vbuf_write(VBUF *, const char *, int);
+extern ssize_t vbuf_read(VBUF *, char *, ssize_t);
+extern ssize_t vbuf_write(VBUF *, const char *, ssize_t);
 
 /* LICENSE
 /* .ad

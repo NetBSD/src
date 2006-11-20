@@ -98,9 +98,9 @@ The content filter can be a simple shell script like this:
      3 # Simple shell-based filter. It is meant to be invoked as follows:
      4 #       /path/to/script -f sender recipients...
      5
-     6 # Localize these.
+     6 # Localize these. The -G option does nothing before Postfix 2.3.
      7 INSPECT_DIR=/var/spool/filter
-     8 SENDMAIL="/usr/sbin/sendmail -i"
+     8 SENDMAIL="/usr/sbin/sendmail -G -i" # NEVER NEVER NEVER use "-t" here.
      9
     10 # Exit codes from <sysexits.h>
     11 EX_TEMPFAIL=75
@@ -125,6 +125,15 @@ The content filter can be a simple shell script like this:
     30 exit $?
 
 Notes:
+
+  * Line 8: The -G option does nothing before Postfix 2.3, otherwise it
+    disables address rewriting of message headers.
+
+  * Line 8: The -i option says don't stop reading input when a line contains
+    "." only.
+
+  * Line 8: NEVER NEVER NEVER use the "-t" command-line option here. It will
+    mis-deliver mail, like sending mailing list mail back to the mailing list.
 
   * Line 21: The idea is to first capture the message to file and then run the
     content through a third-party content filter program.
@@ -321,6 +330,7 @@ the Postfix master.cf file:
         # =============================================================
         scan      unix  -       -       n       -       10      smtp
             -o smtp_send_xforward_command=yes
+            -o disable_mime_output_conversion=yes
 
   * This runs up to 10 content filters in parallel. Instead of a limit of 10
     concurrent processes, use whatever process limit is feasible for your
@@ -329,9 +339,15 @@ the Postfix master.cf file:
     time.
 
   * With "-o smtp_send_xforward_command=yes", the scan transport will try to
-    forward the original client name and IP address to the after-filter smtpd
-    process, so that filtered mail is logged with the real client name IP
-    address. See smtp(8) and XFORWARD_README for more information.
+    forward the original client name and IP address through the content filter
+    to the after-filter smtpd process, so that filtered mail is logged with the
+    real client name IP address. See smtp(8) and XFORWARD_README for more
+    information.
+
+  * The "-o disable_mime_output_conversion=yes" is a workaround that prevents
+    the breaking of domainkeys and other digital signatures. This is needed
+    because some SMTP-based content filters don't announce 8BITMIME support,
+    even though they can handle it just fine.
 
 AAddvvaanncceedd ccoonntteenntt ffiilltteerr:: rruunnnniinngg tthhee ccoonntteenntt ffiilltteerr
 
@@ -376,7 +392,7 @@ without sending `.' on the connection that injects mail back into Postfix.
             -o content_filter=
             -
     o
-    receive_override_options=no_unknown_recipient_checks,no_header_body_checks
+    receive_override_options=no_unknown_recipient_checks,no_header_body_checks,no_milters
             -o smtpd_helo_restrictions=
             -o smtpd_client_restrictions=
             -o smtpd_sender_restrictions=
@@ -393,15 +409,23 @@ without sending `.' on the connection that injects mail back into Postfix.
     content filtering for mail from the content filter. This is required or
     else mail will stay in the content filtering loop.
 
-  * The "-o receive_override_options" overrides main.cf settings. It is
-    complementary to the options that are specified in main.cf:
+  * The "-o receive_override_options" overrides main.cf settings to avoid
+    duplicating work that was already done before the content filter. These
+    options are complementary to the options that are specified in main.cf:
 
-      o Disable attempts to find out if a recipient is unknown, and disable
-        header/body checks. This work was already done before the content
-        filter and repeating it would be wasteful.
+      o We specify "no_unknown_recipient_checks" to disable attempts to find
+        out if a recipient is unknown.
 
-      o Enable virtual alias expansion, canonical mappings, address
-        masquerading, and other address mappings.
+      o We specify "no_header_body_checks" to disable header/body checks.
+
+      o We specify "no_milters" to disable Milter applications (this option is
+        available only in Postfix 2.3 and later).
+
+      o We don't specify "no_address_mapping" here. This enables virtual alias
+        expansion, canonical mappings, address masquerading, and other address
+        mappings after the content filter. The main.cf setting of
+        "receive_override_options" disables these mappings before the content
+        filter.
 
     These receive override options are either implemented by the SMTP server
     itself, or they are passed on to the cleanup server.

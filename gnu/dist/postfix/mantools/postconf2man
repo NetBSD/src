@@ -43,6 +43,7 @@ while(<>) {
     $block =~ s/<\/DD>/\n/g;
     $block =~ s/<DL>/\n/g;
     $block =~ s/<\/DL>/\n/g;
+    $block =~ s/\\/\\e/g;
     $block =~ s/<b>/\\fB/g;
     $block =~ s/<i>/\\fI/g;
     $block =~ s/<\/b>/\\fR/g;

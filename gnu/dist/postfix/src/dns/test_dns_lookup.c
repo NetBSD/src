@@ -1,4 +1,4 @@
-/*	$NetBSD: test_dns_lookup.c,v 1.1.1.2.2.1 2006/07/12 15:06:38 tron Exp $	*/
+/*	$NetBSD: test_dns_lookup.c,v 1.1.1.2.2.2 2006/11/20 13:30:23 tron Exp $	*/
 
 /*++
 /* NAME
@@ -102,7 +102,7 @@ int     main(int argc, char **argv)
     name = argv[2];
     msg_verbose = 1;
     switch (dns_lookup_v(name, RES_DEFNAMES | RES_DEBUG, &rr, fqdn, why,
-			 DNS_REQ_FLAG_ALL, types)) {
+			 DNS_REQ_FLAG_NONE, types)) {
     default:
 	msg_fatal("%s", vstring_str(why));
     case DNS_OK:

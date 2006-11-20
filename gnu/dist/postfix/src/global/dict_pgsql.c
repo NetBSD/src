@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_pgsql.c,v 1.1.1.2.2.2 2006/07/31 19:16:53 tron Exp $	*/
+/*	$NetBSD: dict_pgsql.c,v 1.1.1.2.2.3 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -169,6 +169,7 @@
 #include "find_inet.h"
 #include "myrand.h"
 #include "events.h"
+#include "stringops.h"
 
 /* Global library. */
 
@@ -210,7 +211,6 @@ typedef struct {
     CFG_PARSER *parser;
     char   *query;
     char   *result_format;
-    STRING_LIST *domain;
     void   *ctx;
     int     expansion_limit;
     char   *username;
@@ -322,7 +322,7 @@ static void dict_pgsql_quote(DICT *dict, const char *name, VSTRING *result)
 
 static const char *dict_pgsql_lookup(DICT *dict, const char *name)
 {
-    char   *myname = "dict_pgsql_lookup";
+    const char *myname = "dict_pgsql_lookup";
     PGSQL_RES *query_res;
     DICT_PGSQL *dict_pgsql;
     PLPGSQL *pldb;
@@ -349,12 +349,21 @@ static const char *dict_pgsql_lookup(DICT *dict, const char *name)
     INIT_VSTR(result, 10);
 
     dict_errno = 0;
+
+    /*
+     * Optionally fold the key.
+     */
+    if (dict->fold_buf) {
+	vstring_strcpy(dict->fold_buf, name);
+	name = lowercase(vstring_str(dict->fold_buf));
+    }
+
     /*
      * If there is a domain list for this map, then only search for
      * addresses in domains on the list. This can significantly reduce
-     * the load on the server. Do not try "@domain" keys.
+     * the load on the server.
      */
-    if (db_common_check_domain(dict_pgsql->domain, name) == 0) {
+    if (db_common_check_domain(dict_pgsql->ctx, name) == 0) {
         if (msg_verbose)
 	    msg_info("%s: Skipping lookup of '%s'", myname, name);
         return (0);
@@ -444,7 +453,7 @@ static HOST *dict_pgsql_find_host(PLPGSQL *PLDB, unsigned stat, unsigned type)
 
 	for (i = 0; i < PLDB->len_hosts; i++) {
 	    if (dict_pgsql_check_stat(PLDB->db_hosts[i], stat, type, t) &&
-				      --idx == 0)
+		--idx == 0)
 		return PLDB->db_hosts[i];
 	}
     }
@@ -678,7 +687,6 @@ static void pgsql_parse_config(DICT_PGSQL *dict_pgsql, const char *pgsqlcf)
     char   *hosts;
     VSTRING *query;
     char   *select_function;
-    char   *domain;
 
     p = dict_pgsql->parser = cfg_parser_alloc(pgsqlcf);
     dict_pgsql->username = cfg_get_str(p, "user", "", 0, 0);
@@ -714,21 +722,18 @@ static void pgsql_parse_config(DICT_PGSQL *dict_pgsql, const char *pgsqlcf)
     (void) db_common_parse(&dict_pgsql->dict, &dict_pgsql->ctx,
 			   dict_pgsql->query, 1);
     (void) db_common_parse(0, &dict_pgsql->ctx, dict_pgsql->result_format, 0);
+    db_common_parse_domain(p, dict_pgsql->ctx);
 
-    domain = cfg_get_str(p, "domain", "", 0, 0);
-    if (*domain) {
-        if (!(dict_pgsql->domain = string_list_init(MATCH_FLAG_NONE, domain)))
-	    /*
-	     * The "domain" optimization skips input keys that may in fact
-	     * have unwanted matches in the database, so failure to create
-	     * the match list is fatal.
-	     */
-	    msg_fatal("%s: %s: domain match list creation using '%s' failed",
-		      myname, pgsqlcf, domain);
-    }
+    /*
+     * Maps that use substring keys should only be used with the full
+     * input key.
+     */
+    if (db_common_dict_partial(dict_pgsql->ctx))
+	dict_pgsql->dict.flags |= DICT_FLAG_PATTERN;
     else
-        dict_pgsql->domain = 0;
-    myfree(domain);
+	dict_pgsql->dict.flags |= DICT_FLAG_FIXED;
+    if (dict_pgsql->dict.flags & DICT_FLAG_FOLD_FIX)
+	dict_pgsql->dict.fold_buf = vstring_alloc(10);
 
     hosts = cfg_get_str(p, "hosts", "", 0, 0);
 
@@ -757,10 +762,10 @@ DICT   *dict_pgsql_open(const char *name, int open_flags, int dict_flags)
 					   sizeof(DICT_PGSQL));
     dict_pgsql->dict.lookup = dict_pgsql_lookup;
     dict_pgsql->dict.close = dict_pgsql_close;
+    dict_pgsql->dict.flags = dict_flags;
     pgsql_parse_config(dict_pgsql, name);
     dict_pgsql->active_host = 0;
     dict_pgsql->pldb = plpgsql_init(dict_pgsql->hosts);
-    dict_pgsql->dict.flags = dict_flags | DICT_FLAG_FIXED;
     if (dict_pgsql->pldb == NULL)
 	msg_fatal("couldn't intialize pldb!\n");
     return &dict_pgsql->dict;
@@ -831,12 +836,12 @@ static void dict_pgsql_close(DICT *dict)
     myfree(dict_pgsql->dbname);
     myfree(dict_pgsql->query);
     myfree(dict_pgsql->result_format);
-    if (dict_pgsql->domain)
-        string_list_free(dict_pgsql->domain);
     if (dict_pgsql->hosts)
     	argv_free(dict_pgsql->hosts);
     if (dict_pgsql->ctx)
 	db_common_free_ctx(dict_pgsql->ctx);
+    if (dict->fold_buf)
+	vstring_free(dict->fold_buf);
     dict_free(dict);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_proxy.c,v 1.1.1.3.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: dict_proxy.c,v 1.1.1.3.2.2 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -10,7 +10,7 @@
 /*
 /*	DICT	*dict_proxy_open(map, open_flags, dict_flags)
 /*	const char *map;
-/*	int	dummy;
+/*	int	open_flags;
 /*	int	dict_flags;
 /* DESCRIPTION
 /*	dict_proxy_open() relays read-only operations through
@@ -108,20 +108,21 @@ static const char *dict_proxy_lookup(DICT *dict, const char *key)
 	if (attr_print(stream, ATTR_FLAG_NONE,
 		       ATTR_TYPE_STR, MAIL_ATTR_REQ, PROXY_REQ_LOOKUP,
 		       ATTR_TYPE_STR, MAIL_ATTR_TABLE, dict->name,
-		       ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, dict_proxy->in_flags,
+		       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, dict_proxy->in_flags,
 		       ATTR_TYPE_STR, MAIL_ATTR_KEY, key,
 		       ATTR_TYPE_END) != 0
 	    || vstream_fflush(stream)
 	    || attr_scan(stream, ATTR_FLAG_STRICT,
-			 ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &status,
+			 ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
 			 ATTR_TYPE_STR, MAIL_ATTR_VALUE, dict_proxy->result,
 			 ATTR_TYPE_END) != 2) {
 	    if (msg_verbose || (errno != EPIPE && errno != ENOENT))
 		msg_warn("%s: service %s: %m", myname, VSTREAM_PATH(stream));
 	} else {
 	    if (msg_verbose)
-		msg_info("%s: table=%s flags=0%o key=%s -> status=%d result=%s",
-			 myname, dict->name, dict_proxy->in_flags, key,
+		msg_info("%s: table=%s flags=%s key=%s -> status=%d result=%s",
+			 myname, dict->name,
+			 dict_flags_str(dict_proxy->in_flags), key,
 			 status, STR(dict_proxy->result));
 	    switch (status) {
 	    case PROXY_STAT_BAD:
@@ -227,19 +228,20 @@ DICT   *dict_proxy_open(const char *map, int open_flags, int dict_flags)
 	if (attr_print(stream, ATTR_FLAG_NONE,
 		       ATTR_TYPE_STR, MAIL_ATTR_REQ, PROXY_REQ_OPEN,
 		       ATTR_TYPE_STR, MAIL_ATTR_TABLE, dict_proxy->dict.name,
-		       ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, dict_proxy->in_flags,
+		       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, dict_proxy->in_flags,
 		       ATTR_TYPE_END) != 0
 	    || vstream_fflush(stream)
 	    || attr_scan(stream, ATTR_FLAG_STRICT,
-			 ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &status,
-			 ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, &server_flags,
+			 ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
+			 ATTR_TYPE_INT, MAIL_ATTR_FLAGS, &server_flags,
 			 ATTR_TYPE_END) != 2) {
 	    if (msg_verbose || (errno != EPIPE && errno != ENOENT))
 		msg_warn("%s: service %s: %m", VSTREAM_PATH(stream), myname);
 	} else {
 	    if (msg_verbose)
-		msg_info("%s: connect to map=%s status=%d server_flags=0%o",
-		       myname, dict_proxy->dict.name, status, server_flags);
+		msg_info("%s: connect to map=%s status=%d server_flags=%s",
+			 myname, dict_proxy->dict.name, status,
+			 dict_flags_str(server_flags));
 	    switch (status) {
 	    case PROXY_STAT_BAD:
 		msg_fatal("%s open failed for table \"%s\": invalid request",

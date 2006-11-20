@@ -47,7 +47,6 @@ Web sites:
 Mail addresses (PLEASE send questions to the mailing list)
 
     postfix-users@postfix.org		Postfix users mailing list
-    wietse@porcupine.org		the original author
 
 In order to subscribe to the mailing list, see http://www.postfix.org/.
 
@@ -162,8 +161,9 @@ Miscellaneous:
     auxiliary/		Auxiliary software etc.
     bin/		Postfix command executables
     conf/		Configuration files, run-time scripts
-    include/		Installed include files
-    lib/		Installed object libraries
+    include/		Include files
+    implementation-notes/ Background information
+    lib/		Object libraries
     libexec/		Postfix daemon executables
-    mantools/		Manual page utilities
+    mantools/		Documentation utilities
     proto/		Documentation source

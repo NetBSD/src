@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_append_service.c,v 1.1.1.4 2004/05/31 00:24:26 heas Exp $	*/
+/*	$NetBSD: bounce_append_service.c,v 1.1.1.4.2.1 2006/11/20 13:30:19 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,15 +8,12 @@
 /* SYNOPSIS
 /*	#include "bounce_service.h"
 /*
-/*	int     bounce_append_service(flags, queue_id, orig_rcpt, recipient,
-/*					status, action, why)
+/*	int     bounce_append_service(flags, service, queue_id, rcpt, dsn),
 /*	int	flags;
+/*	char	*service;
 /*	char	*queue_id;
-/*	char	*orig_rcpt;
-/*	char	*recipient;
-/*	char	*status;
-/*	char	*action;
-/*	char	*why;
+/*	RECIPIENT *rcpt;
+/*	DSN	*dsn;
 /* DESCRIPTION
 /*	This module implements the server side of the bounce_append()
 /*	(append bounce log) request. This routine either succeeds or
@@ -72,12 +69,9 @@
 /* bounce_append_service - append bounce log */
 
 int     bounce_append_service(int unused_flags, char *service, char *queue_id,
-			              char *orig_rcpt, char *recipient,
-			              long offset, char *status, char *action,
-			              char *why)
+			              RECIPIENT *rcpt, DSN *dsn)
 {
     VSTRING *in_buf = vstring_alloc(100);
-    VSTRING *out_buf = vstring_alloc(100);
     VSTREAM *log;
     long    orig_length;
 
@@ -120,23 +114,42 @@ int     bounce_append_service(int unused_flags, char *service, char *queue_id,
     if ((orig_length = vstream_fseek(log, 0L, SEEK_END)) < 0)
 	msg_fatal("seek file %s %s: %m", service, queue_id);
 
+#define NOT_NULL_EMPTY(s) ((s) != 0 && *(s) != 0)
+#define STR(x) vstring_str(x)
+
     vstream_fputs("\n", log);
     if (var_oldlog_compat) {
-	vstream_fprintf(log, "<%s>: %s\n", *recipient == 0 ? "" :
-	    printable(vstring_str(quote_822_local(in_buf, recipient)), '?'),
-			printable(why, '?'));
+	vstream_fprintf(log, "<%s>: %s\n", *rcpt->address == 0 ? "" :
+			STR(quote_822_local(in_buf, rcpt->address)),
+			dsn->reason);
     }
-    vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_RECIP, *recipient ?
-	   printable(vstring_str(quote_822_local(in_buf, recipient)), '?') :
-		    "<>");
-    if (*orig_rcpt && strcasecmp(recipient, orig_rcpt) != 0)
+    vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_RECIP, *rcpt->address ?
+		  STR(quote_822_local(in_buf, rcpt->address)) : "<>");
+    if (NOT_NULL_EMPTY(rcpt->orig_addr)
+	&& strcasecmp(rcpt->address, rcpt->orig_addr) != 0)
 	vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_ORCPT,
-	   printable(vstring_str(quote_822_local(in_buf, orig_rcpt)), '?'));
-    if (offset > 0)
-	vstream_fprintf(log, "%s=%ld\n", MAIL_ATTR_OFFSET, offset);
-    vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_STATUS, printable(status, '?'));
-    vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_ACTION, printable(action, '?'));
-    vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_WHY, printable(why, '?'));
+			STR(quote_822_local(in_buf, rcpt->orig_addr)));
+    if (rcpt->offset > 0)
+	vstream_fprintf(log, "%s=%ld\n", MAIL_ATTR_OFFSET, rcpt->offset);
+    if (NOT_NULL_EMPTY(rcpt->dsn_orcpt))
+	vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_DSN_ORCPT, rcpt->dsn_orcpt);
+    if (rcpt->dsn_notify != 0)
+	vstream_fprintf(log, "%s=%d\n", MAIL_ATTR_DSN_NOTIFY, rcpt->dsn_notify);
+
+    if (NOT_NULL_EMPTY(dsn->status))
+	vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_DSN_STATUS, dsn->status);
+    if (NOT_NULL_EMPTY(dsn->action))
+	vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_DSN_ACTION, dsn->action);
+    if (NOT_NULL_EMPTY(dsn->dtype) && NOT_NULL_EMPTY(dsn->dtext)) {
+	vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_DSN_DTYPE, dsn->dtype);
+	vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_DSN_DTEXT, dsn->dtext);
+    }
+    if (NOT_NULL_EMPTY(dsn->mtype) && NOT_NULL_EMPTY(dsn->mname)) {
+	vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_DSN_MTYPE, dsn->mtype);
+	vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_DSN_MNAME, dsn->mname);
+    }
+    if (NOT_NULL_EMPTY(dsn->reason))
+	vstream_fprintf(log, "%s=%s\n", MAIL_ATTR_WHY, dsn->reason);
     vstream_fputs("\n", log);
 
     if (vstream_fflush(log) != 0 || fsync(vstream_fileno(log)) < 0) {
@@ -157,6 +170,5 @@ int     bounce_append_service(int unused_flags, char *service, char *queue_id,
 	msg_warn("append file %s %s: %m", service, queue_id);
 
     vstring_free(in_buf);
-    vstring_free(out_buf);
     return (0);
 }

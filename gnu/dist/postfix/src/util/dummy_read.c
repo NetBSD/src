@@ -1,4 +1,4 @@
-/*	$NetBSD: dummy_read.c,v 1.1.1.1.2.2 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: dummy_read.c,v 1.1.1.1.2.3 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,10 +8,10 @@
 /* SYNOPSIS
 /*	#include <iostuff.h>
 /*
-/*	int	dummy_read(fd, buf, buf_len, timeout, context)
+/*	ssize_t	dummy_read(fd, buf, buf_len, timeout, context)
 /*	int	fd;
 /*	void	*buf;
-/*	unsigned len;
+/*	size_t	len;
 /*	int	timeout;
 /*	void	*context;
 /* DESCRIPTION
@@ -54,10 +54,10 @@
 
 /* dummy_read - dummy read operation */
 
-int     dummy_read(int fd, void *unused_buf, unsigned len,
+ssize_t dummy_read(int fd, void *unused_buf, size_t len,
 		           int unused_timeout, void *unused_context)
 {
     if (msg_verbose)
-	msg_info("dummy_read: fd %d, len %d", fd, len);
+	msg_info("dummy_read: fd %d, len %lu", fd, (unsigned long) len);
     return (0);
 }

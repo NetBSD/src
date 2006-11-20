@@ -1,4 +1,4 @@
-/*	$NetBSD: defer.c,v 1.1.1.6 2004/07/28 22:49:14 heas Exp $	*/
+/*	$NetBSD: defer.c,v 1.1.1.6.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,48 +8,38 @@
 /* SYNOPSIS
 /*	#include <defer.h>
 /*
-/*	int	defer_append(flags, id, orig_rcpt, recipient, offset, relay,
-/*				entry, format, ...)
+/*	int	defer_append(flags, id, stats, rcpt, relay, dsn)
 /*	int	flags;
 /*	const char *id;
-/*	const char *orig_rcpt;
-/*	const char *recipient;
-/*	long	offset;
+/*	MSG_STATS *stats;
+/*	RECIPIENT *rcpt;
 /*	const char *relay;
-/*	time_t	entry;
-/*	const char *format;
+/*	DSN	*dsn;
 /*
-/*	int	vdefer_append(flags, id, orig_rcpt, recipient, offset, relay,
-/*				entry, format, ap)
-/*	int	flags;
-/*	const char *id;
-/*	const char *orig_rcpt;
-/*	const char *recipient;
-/*	long	offset;
-/*	const char *relay;
-/*	time_t	entry;
-/*	const char *format;
-/*	va_list	ap;
-/*
-/*	int	defer_flush(flags, queue, id, encoding, sender)
+/*	int	defer_flush(flags, queue, id, encoding, sender,
+/*				dsn_envid, dsn_ret)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *encoding;
 /*	const char *sender;
+/*	const char *dsn_envid;
+/*	int	dsn_ret;
 /*
-/*	int	defer_warn(flags, queue, id, sender)
+/*	int	defer_warn(flags, queue, id, sender, dsn_envid, dsn_ret)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *sender;
+/*	const char *dsn_envid;
+/*	int	dsn_ret;
 /* DESCRIPTION
 /*	This module implements a client interface to the defer service,
 /*	which maintains a per-message logfile with status records for
-/*	each recipient whose delivery is deferred, and the reason why.
+/*	each recipient whose delivery is deferred, and the dsn_text why.
 /*
 /*	defer_append() appends a record to the per-message defer log,
-/*	with the reason for delayed delivery to the named recipient,
+/*	with the dsn_text for delayed delivery to the named rcpt,
 /*	updates the address verification service, or updates a message
 /*	delivery record on request by the sender. The flags argument
 /*	determines the action.
@@ -57,16 +47,16 @@
 /*	When the fast flush cache is enabled, the fast flush server is
 /*	notified of deferred mail.
 /*
-/*	vdefer_append() implements an alternative client interface.
-/*
 /*	defer_flush() bounces the specified message to the specified
 /*	sender, including the defer log that was built with defer_append().
 /*	defer_flush() requests that the deferred recipients are deleted
-/*	from the original queue file.
+/*	from the original queue file; the defer logfile is deleted after
+/*	successful completion.
 /*	The result is zero in case of success, non-zero otherwise.
 /*
-/*	defer_warn() sends a warning message that the mail in question has
-/*	been deferred.  It does not flush the log.
+/*	defer_warn() sends a warning message that the mail in
+/*	question has been deferred.  The defer log is not deleted,
+/*	and no recipients are deleted from the original queue file.
 /*
 /*	Arguments:
 /* .IP flags
@@ -76,12 +66,14 @@
 /* .IP BOUNCE_FLAG_CLEAN
 /*	Delete the defer log in case of an error (as in: pretend
 /*	that we never even tried to defer this message).
-/* .IP DEL_REQ_FLAG_VERIFY
-/*	The message is an address verification probe. Update the
-/*	address verification database instead of deferring mail.
-/* .IP DEL_REQ_FLAG_EXPAND
-/*	The message is an address expansion probe. Update the
-/*	the message delivery record instead of deferring mail.
+/* .IP DEL_REQ_FLAG_MTA_VRFY
+/*	The message is an MTA-requested address verification probe.
+/*	Update the address verification database instead of deferring
+/*	mail.
+/* .IP DEL_REQ_FLAG_USR_VRFY
+/*	The message is a user-requested address expansion probe.
+/*	Update the message delivery record instead of deferring
+/*	mail.
 /* .IP DEL_REQ_FLAG_RECORD
 /*	This is a normal message with logged delivery. Update the
 /*	message delivery record and defer mail delivery.
@@ -90,26 +82,23 @@
 /*	The message queue name of the original message file.
 /* .IP id
 /*	The queue id of the original message file.
-/* .IP orig_rcpt
-/*	The original envelope recipient address. If unavailable,
-/*	specify a null string or null pointer.
-/* .IP recipient
-/*	A recipient address that is being deferred. The domain part
-/*	of the address is marked dead (for a limited amount of time).
-/* .IP offset
-/*	Queue file offset of recipient record.
+/* .IP stats
+/*	Time stamps from different message delivery stages
+/*	and session reuse count.
+/* .IP rcpt
+/*	Recipient information. See recipient_list(3).
+/* .IP relay
+/*	Host we could not talk to.
+/* .IP dsn
+/*	Delivery status. See dsn(3). The specified action is ignored.
 /* .IP encoding
 /*	The body content encoding: MAIL_ATTR_ENC_{7BIT,8BIT,NONE}.
 /* .IP sender
 /*	The sender envelope address.
-/* .IP relay
-/*	Host we could not talk to.
-/* .IP entry
-/*	Message arrival time.
-/* .IP format
-/*	The reason for non-delivery.
-/* .IP ap
-/*	Variable-length argument list.
+/* .IP dsn_envid
+/*	Optional DSN envelope ID.
+/* .IP dsn_ret
+/*	Optional DSN return full/headers option.
 /* .PP
 /*	For convenience, these functions always return a non-zero result.
 /* DIAGNOSTICS
@@ -132,13 +121,7 @@
 /* System library. */
 
 #include <sys_defs.h>
-#include <stdlib.h>			/* 44BSD stdarg.h uses abort() */
-#include <stdarg.h>
 #include <string.h>
-
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
 
 /* Utility library. */
 
@@ -152,45 +135,41 @@
 #include <mail_proto.h>
 #include <flush_clnt.h>
 #include <verify.h>
+#include <dsn_util.h>
+#include <rcpt_print.h>
+#include <dsn_print.h>
 #include <log_adhoc.h>
 #include <trace.h>
-#include <bounce.h>
 #include <defer.h>
 
 #define STR(x)	vstring_str(x)
 
 /* defer_append - defer message delivery */
 
-int     defer_append(int flags, const char *id, const char *orig_rcpt,
-	              const char *recipient, long offset, const char *relay,
-		             time_t entry, const char *fmt,...)
-{
-    va_list ap;
-    int     status;
-
-    va_start(ap, fmt);
-    status = vdefer_append(flags, id, orig_rcpt, recipient,
-			   offset, relay, entry, fmt, ap);
-    va_end(ap);
-    return (status);
-}
-
-/* vdefer_append - defer delivery of queue file */
-
-int     vdefer_append(int flags, const char *id, const char *orig_rcpt,
-	              const char *recipient, long offset, const char *relay,
-		              time_t entry, const char *fmt, va_list ap)
+int     defer_append(int flags, const char *id, MSG_STATS *stats,
+		             RECIPIENT *rcpt, const char *relay,
+		             DSN *dsn)
 {
     const char *rcpt_domain;
+    DSN     my_dsn = *dsn;
     int     status;
+
+    /*
+     * Sanity check.
+     */
+    if (my_dsn.status[0] != '4' || !dsn_valid(my_dsn.status)) {
+	msg_warn("defer_append: ignoring dsn code \"%s\"", my_dsn.status);
+	my_dsn.status = "4.0.0";
+    }
 
     /*
      * MTA-requested address verification information is stored in the verify
      * service database.
      */
-    if (flags & DEL_REQ_FLAG_VERIFY) {
-	status = vverify_append(id, orig_rcpt, recipient, relay, entry,
-			     "undeliverable", DEL_RCPT_STAT_DEFER, fmt, ap);
+    if (flags & DEL_REQ_FLAG_MTA_VRFY) {
+	my_dsn.action = "undeliverable";
+	status = verify_append(id, stats, rcpt, relay, &my_dsn,
+			       DEL_RCPT_STAT_DEFER);
 	return (status);
     }
 
@@ -198,51 +177,49 @@ int     vdefer_append(int flags, const char *id, const char *orig_rcpt,
      * User-requested address verification information is logged and mailed
      * to the requesting user.
      */
-    if (flags & DEL_REQ_FLAG_EXPAND) {
-	status = vtrace_append(flags, id, orig_rcpt, recipient, relay,
-			       entry, "4.0.0", "undeliverable", fmt, ap);
+    if (flags & DEL_REQ_FLAG_USR_VRFY) {
+	my_dsn.action = "undeliverable";
+	status = trace_append(flags, id, stats, rcpt, relay, &my_dsn);
 	return (status);
     }
 
     /*
      * Normal mail delivery. May also send a delivery record to the user.
+     * 
+     * XXX DSN We write all deferred recipients to the defer logfile regardless
+     * of DSN NOTIFY options, because those options don't apply to mailq(1)
+     * reports or to postmaster notifications.
      */
     else {
-	VSTRING *why = vstring_alloc(100);
 
-	vstring_vsprintf(why, fmt, ap);
+	/*
+	 * Supply default action.
+	 */
+	my_dsn.action = "delayed";
 
-	if (orig_rcpt == 0)
-	    orig_rcpt = "";
 	if (mail_command_client(MAIL_CLASS_PRIVATE, var_defer_service,
-			   ATTR_TYPE_NUM, MAIL_ATTR_NREQ, BOUNCE_CMD_APPEND,
-				ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
+			   ATTR_TYPE_INT, MAIL_ATTR_NREQ, BOUNCE_CMD_APPEND,
+				ATTR_TYPE_INT, MAIL_ATTR_FLAGS, flags,
 				ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
-				ATTR_TYPE_STR, MAIL_ATTR_ORCPT, orig_rcpt,
-				ATTR_TYPE_STR, MAIL_ATTR_RECIP, recipient,
-				ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, offset,
-				ATTR_TYPE_STR, MAIL_ATTR_STATUS, "4.0.0",
-				ATTR_TYPE_STR, MAIL_ATTR_ACTION, "delayed",
-			     ATTR_TYPE_STR, MAIL_ATTR_WHY, vstring_str(why),
+				ATTR_TYPE_FUNC, rcpt_print, (void *) rcpt,
+				ATTR_TYPE_FUNC, dsn_print, (void *) &my_dsn,
 				ATTR_TYPE_END) != 0)
 	    msg_warn("%s: %s service failure", id, var_defer_service);
-	log_adhoc(id, orig_rcpt, recipient, relay, entry, "deferred",
-		  "%s", vstring_str(why));
+	log_adhoc(id, stats, rcpt, relay, &my_dsn, "deferred");
 
 	/*
 	 * Traced delivery.
 	 */
 	if (flags & DEL_REQ_FLAG_RECORD)
-	    if (trace_append(flags, id, orig_rcpt, recipient, relay,
-			     entry, "4.0.0", "deferred",
-			     "%s", vstring_str(why)) != 0)
+	    if (trace_append(flags, id, stats, rcpt, relay, &my_dsn) != 0)
 		msg_warn("%s: %s service failure", id, var_trace_service);
 
 	/*
 	 * Notify the fast flush service. XXX Should not this belong in the
 	 * bounce/defer daemon? Well, doing it here is more robust.
 	 */
-	if ((rcpt_domain = strrchr(recipient, '@')) != 0 && *++rcpt_domain != 0)
+	if ((rcpt_domain = strrchr(rcpt->address, '@')) != 0
+	    && *++rcpt_domain != 0)
 	    switch (flush_add(rcpt_domain, id)) {
 	    case FLUSH_STAT_OK:
 	    case FLUSH_STAT_DENY:
@@ -251,7 +228,6 @@ int     vdefer_append(int flags, const char *id, const char *orig_rcpt,
 		msg_warn("%s: %s service failure", id, var_flush_service);
 		break;
 	    }
-	vstring_free(why);
 	return (-1);
     }
 }
@@ -259,17 +235,20 @@ int     vdefer_append(int flags, const char *id, const char *orig_rcpt,
 /* defer_flush - flush the defer log and deliver to the sender */
 
 int     defer_flush(int flags, const char *queue, const char *id,
-		            const char *encoding, const char *sender)
+		            const char *encoding, const char *sender,
+		            const char *dsn_envid, int dsn_ret)
 {
     flags |= BOUNCE_FLAG_DELRCPT;
 
     if (mail_command_client(MAIL_CLASS_PRIVATE, var_defer_service,
-			    ATTR_TYPE_NUM, MAIL_ATTR_NREQ, BOUNCE_CMD_FLUSH,
-			    ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
+			    ATTR_TYPE_INT, MAIL_ATTR_NREQ, BOUNCE_CMD_FLUSH,
+			    ATTR_TYPE_INT, MAIL_ATTR_FLAGS, flags,
 			    ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue,
 			    ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
 			    ATTR_TYPE_STR, MAIL_ATTR_ENCODING, encoding,
 			    ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
+			    ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, dsn_envid,
+			    ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, dsn_ret,
 			    ATTR_TYPE_END) == 0) {
 	return (0);
     } else {
@@ -281,14 +260,16 @@ int     defer_flush(int flags, const char *queue, const char *id,
  * do not flush the log */
 
 int     defer_warn(int flags, const char *queue, const char *id,
-		           const char *sender)
+		         const char *sender, const char *envid, int dsn_ret)
 {
     if (mail_command_client(MAIL_CLASS_PRIVATE, var_defer_service,
-			    ATTR_TYPE_NUM, MAIL_ATTR_NREQ, BOUNCE_CMD_WARN,
-			    ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
+			    ATTR_TYPE_INT, MAIL_ATTR_NREQ, BOUNCE_CMD_WARN,
+			    ATTR_TYPE_INT, MAIL_ATTR_FLAGS, flags,
 			    ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue,
 			    ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
 			    ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
+			    ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, envid,
+			    ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, dsn_ret,
 			    ATTR_TYPE_END) == 0) {
 	return (0);
     } else {

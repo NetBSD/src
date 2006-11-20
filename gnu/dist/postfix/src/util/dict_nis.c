@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_nis.c,v 1.1.1.3.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: dict_nis.c,v 1.1.1.3.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -56,6 +56,7 @@
 #include "msg.h"
 #include "mymalloc.h"
 #include "vstring.h"
+#include "stringops.h"
 #include "dict.h"
 #include "dict_nis.h"
 
@@ -77,7 +78,7 @@ static char *dict_nis_domain;
 
 static void dict_nis_init(void)
 {
-    char   *myname = "dict_nis_init";
+    const char *myname = "dict_nis_init";
 
     if (yp_get_default_domain(&dict_nis_domain) != 0
 	|| dict_nis_domain == 0 || *dict_nis_domain == 0
@@ -156,6 +157,14 @@ static const char *dict_nis_lookup(DICT *dict, const char *key)
 	return (0);
 
     /*
+     * Optionally fold the key.
+     */
+    if (dict->fold_buf) {
+	vstring_strcpy(dict->fold_buf, key);
+	key = lowercase(vstring_str(dict->fold_buf));
+    }
+
+    /*
      * See if this NIS map was written with one null byte appended to key and
      * value.
      */
@@ -204,6 +213,8 @@ static const char *dict_nis_lookup(DICT *dict, const char *key)
 
 static void dict_nis_close(DICT *dict)
 {
+    if (dict->fold_buf)
+	vstring_free(dict->fold_buf);
     dict_free(dict);
 }
 
@@ -223,6 +234,8 @@ DICT   *dict_nis_open(const char *map, int open_flags, int dict_flags)
     dict_nis->dict.flags = dict_flags | DICT_FLAG_FIXED;
     if ((dict_flags & (DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL)) == 0)
 	dict_nis->dict.flags |= (DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL);
+    if (dict_flags & DICT_FLAG_FOLD_FIX)
+	dict_nis->dict.fold_buf = vstring_alloc(10);
     if (dict_nis_domain == 0)
 	dict_nis_init();
     return (DICT_DEBUG (&dict_nis->dict));

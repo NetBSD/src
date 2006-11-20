@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.1.1.5.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: local.h,v 1.1.1.5.2.2 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -25,6 +25,8 @@
 #include <deliver_request.h>
 #include <mbox_conf.h>
 #include <maps.h>
+#include <dsn_buf.h>
+#include <dsn.h>
 
  /*
   * User attributes: these control the privileges for delivery to external
@@ -61,7 +63,7 @@ typedef struct USER_ATTR {
  /*
   * The delivery attributes are inherited from files, from aliases, and from
   * whatnot. Some of the information is changed on the fly. DELIVER_ATTR
-  * structres are therefore passed by value, so there is no need to undo
+  * structures are therefore passed by value, so there is no need to undo
   * changes.
   */
 typedef struct DELIVER_ATTR {
@@ -71,26 +73,28 @@ typedef struct DELIVER_ATTR {
     char   *queue_id;			/* mail queue id */
     long    offset;			/* data offset */
     char   *encoding;			/* MIME encoding */
-    char   *sender;			/* taken from envelope */
-    char   *orig_rcpt;			/* from submission */
-    char   *recipient;			/* taken from resolver */
-    long    rcpt_offset;		/* taken from resolver */
+    const char *sender;			/* taken from envelope */
+    char   *dsn_envid;			/* DSN envelope ID */
+    int     dsn_ret;			/* DSN headers/full */
+    RECIPIENT rcpt;			/* from delivery request */
     char   *domain;			/* recipient domain */
     char   *local;			/* recipient full localpart */
     char   *user;			/* recipient localpart, base name */
     char   *extension;			/* recipient localpart, extension */
     char   *unmatched;			/* unmatched extension */
-    char   *owner;			/* null or list owner */
-    char   *delivered;			/* for loop detection */
+    const char *owner;			/* null or list owner */
+    const char *delivered;		/* for loop detection */
     char   *relay;			/* relay host */
-    long    arrival_time;		/* arrival time */
+    MSG_STATS msg_stats;		/* time profile */
     int     exp_type;			/* expansion type. see below */
     char   *exp_from;			/* expanded_from */
     DELIVER_REQUEST *request;		/* the kitchen sink */
+    DSN_BUF *why;			/* delivery status */
 } DELIVER_ATTR;
 
 extern void deliver_attr_init(DELIVER_ATTR *);
 extern void deliver_attr_dump(DELIVER_ATTR *);
+extern void deliver_attr_free(DELIVER_ATTR *);
 
 #define EXPAND_TYPE_ALIAS	(1<<0)
 #define EXPAND_TYPE_FWD		(1<<1)
@@ -127,26 +131,28 @@ typedef struct LOCAL_STATE {
   */
 #define BOUNCE_FLAGS(request)	DEL_REQ_TRACE_FLAGS((request)->flags)
 
-#define BOUNCE_ATTR(attr)	attr.queue_id, attr.orig_rcpt, attr.recipient, \
-					attr.rcpt_offset, attr.relay, \
-					attr.arrival_time
-#define BOUNCE_ONE_ATTR(attr)	attr.queue_name, attr.queue_id, attr.encoding, \
-					attr.sender, attr.orig_rcpt, \
-					attr.recipient, attr.rcpt_offset, \
-					attr.relay, attr.arrival_time
-#define SENT_ATTR(attr)		attr.queue_id, attr.orig_rcpt, attr.recipient, \
-					attr.rcpt_offset, attr.relay, \
-					attr.arrival_time
-#define OPENED_ATTR(attr)	attr.queue_id, attr.sender
-#define COPY_ATTR(attr)		attr.sender, attr.orig_rcpt, attr.delivered, \
-					attr.fp
+#define BOUNCE_ATTR(attr) \
+	attr.queue_id, &attr.msg_stats, &attr.rcpt, attr.relay, \
+	DSN_FROM_DSN_BUF(attr.why)
+#define BOUNCE_ONE_ATTR(attr) \
+	attr.queue_name, attr.queue_id, attr.encoding, \
+	attr.sender, attr.dsn_envid, attr.dsn_ret, \
+	&attr.msg_stats, &attr.rcpt, attr.relay, \
+	DSN_FROM_DSN_BUF(attr.why)
+#define SENT_ATTR(attr) \
+	attr.queue_id, &attr.msg_stats, &attr.rcpt, attr.relay, \
+	DSN_FROM_DSN_BUF(attr.why)
+#define OPENED_ATTR(attr) \
+	attr.queue_id, attr.sender
+#define COPY_ATTR(attr) \
+	attr.sender, attr.rcpt.orig_addr, attr.delivered, attr.fp
 
 #define MSG_LOG_STATE(m, p) \
 	msg_info("%s[%d]: local %s recip %s exten %s deliver %s exp_from %s", \
 		m, \
                 p.level, \
 		p.msg_attr.local ? p.msg_attr.local : "" , \
-		p.msg_attr.recipient ? p.msg_attr.recipient : "", \
+		p.msg_attr.rcpt.address ? p.msg_attr.rcpt.address : "", \
 		p.msg_attr.extension ? p.msg_attr.extension : "", \
 		p.msg_attr.delivered ? p.msg_attr.delivered : "", \
 		p.msg_attr.exp_from ? p.msg_attr.exp_from : "")
@@ -203,7 +209,7 @@ extern int local_deliver_hdr_mask;
   * delivered.c
   */
 extern HTABLE *delivered_init(DELIVER_ATTR);
-extern int delivered_find(HTABLE *, char *);
+extern int delivered_find(HTABLE *, const char *);
 
 #define delivered_free(t) htable_free((t), (void (*) (char *)) 0)
 
@@ -230,6 +236,11 @@ int     local_expand(VSTRING *, const char *, LOCAL_STATE *, USER_ATTR *, const 
   * alias.c
   */
 extern MAPS *alias_maps;
+
+ /*
+  * Silly little macros.
+  */
+#define STR(s)	vstring_str(s)
 
 /* LICENSE
 /* .ad

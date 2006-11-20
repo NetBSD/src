@@ -16,7 +16,7 @@ MASTER(5)                                                            MASTER(5)
 
        Postfix  services  are  implemented  by  daemon processes.
        These run in the background under control of the <a href="master.8.html"><b>master</b>(8)</a>
-       process.   The  master.cf configuration file defines how a
+       process.   The  <a href="master.5.html">master.cf</a> configuration file defines how a
        client program connects to a service, and what daemon pro-
        gram  runs  when a service is requested.  Most daemon pro-
        cesses are short-lived and terminate after serving <b><a href="postconf.5.html#max_use">max_use</a></b>
@@ -28,17 +28,17 @@ MASTER(5)                                                            MASTER(5)
        <a href="local.8.html"><b>local</b>(8)</a>, <a href="pipe.8.html"><b>pipe</b>(8)</a> or <a href="spawn.8.html"><b>spawn</b>(8)</a> services, or run the  server
        under control by <b>inetd</b>(8) or equivalent.
 
-       After changing master.cf you must execute "<b>postfix reload</b>"
+       After changing <a href="master.5.html">master.cf</a> you must execute "<b>postfix reload</b>"
        to reload the configuration.
 
 <b>SYNTAX</b>
-       The general format of the master.cf file is as follows:
+       The general format of the <a href="master.5.html">master.cf</a> file is as follows:
 
        <b>o</b>      Each logical line defines a single Postfix service.
               Each  service is identified by its name and type as
               described below.  When multiple lines  specify  the
               same  service  name  and type, only the last one is
-              remembered.  Otherwise, the order of master.cf ser-
+              remembered.  Otherwise, the order of <a href="master.5.html">master.cf</a> ser-
               vice definitions does not matter.
 
        <b>o</b>      Empty  lines and whitespace-only lines are ignored,
@@ -51,7 +51,7 @@ MASTER(5)                                                            MASTER(5)
 
        Each  logical  line  consists of eight fields separated by
        whitespace.  These are described below  in  the  order  as
-       they appear in the master.cf file.
+       they appear in the <a href="master.5.html">master.cf</a> file.
 
        Where applicable a field of "-" requests that the built-in
        default value be used. For boolean fields specify  "y"  or
@@ -86,9 +86,9 @@ MASTER(5)                                                            MASTER(5)
 
                      Note: with Postfix  version  2.2  and  later
                      specify "<b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a> = loopback-only</b>" in
-                     main.cf, instead of hard-coding loopback  IP
-                     address   information  in  master.cf  or  in
-                     main.cf.
+                     <a href="postconf.5.html">main.cf</a>, instead of hard-coding loopback  IP
+                     address   information  in  <a href="master.5.html">master.cf</a>  or  in
+                     <a href="postconf.5.html">main.cf</a>.
 
               <b>unix</b>   The service listens on a UNIX-domain  socket
                      and is accessible for local clients only.
@@ -96,7 +96,7 @@ MASTER(5)                                                            MASTER(5)
                      The  service  name is a pathname relative to
                      the Postfix queue directory  (pathname  con-
                      trolled  with the <b><a href="postconf.5.html#queue_directory">queue_directory</a></b> configura-
-                     tion parameter in main.cf).
+                     tion parameter in <a href="postconf.5.html">main.cf</a>).
 
                      On Solaris systems the <b>unix</b> type  is  imple-
                      mented with streams sockets.
@@ -107,7 +107,7 @@ MASTER(5)                                                            MASTER(5)
                      The service name is a pathname  relative  to
                      the  Postfix  queue directory (pathname con-
                      trolled with the <b><a href="postconf.5.html#queue_directory">queue_directory</a></b>  configura-
-                     tion parameter in main.cf).
+                     tion parameter in <a href="postconf.5.html">main.cf</a>).
 
        <b>Private (default: y)</b>
               Whether  or  not  access  is restricted to the mail
@@ -118,7 +118,7 @@ MASTER(5)                                                            MASTER(5)
               Whether the service runs with root privileges or as
               the owner of the Postfix system (the owner name  is
               controlled by the <b><a href="postconf.5.html#mail_owner">mail_owner</a></b> configuration variable
-              in the main.cf file).
+              in the <a href="postconf.5.html">main.cf</a> file).
 
               The <a href="local.8.html"><b>local</b>(8)</a>,  <a href="pipe.8.html"><b>pipe</b>(8)</a>,  <a href="spawn.8.html"><b>spawn</b>(8)</a>,  and  <a href="virtual.8.html"><b>virtual</b>(8)</a>
               daemons require privileges.
@@ -127,7 +127,7 @@ MASTER(5)                                                            MASTER(5)
               Whether  or  not  the  service runs chrooted to the
               mail queue directory (pathname is controlled by the
               <b><a href="postconf.5.html#queue_directory">queue_directory</a></b>   configuration   variable  in  the
-              main.cf file).
+              <a href="postconf.5.html">main.cf</a> file).
 
               Chroot  should  not  be  used  with  the  <a href="local.8.html"><b>local</b>(8)</a>,
               <a href="pipe.8.html"><b>pipe</b>(8)</a>,    <a href="spawn.8.html"><b>spawn</b>(8)</a>,   and   <a href="virtual.8.html"><b>virtual</b>(8)</a>   daemons.
@@ -136,19 +136,19 @@ MASTER(5)                                                            MASTER(5)
               service in the first place.
 
               The files in the examples/chroot-setup subdirectory
-              of  the  Postfix source archive describe how to set
-              up a Postfix chroot environment for  your  type  of
-              machine,  and  <a href="BASIC_CONFIGURATION_README.html">BASIC_CONFIGURATION_README</a> discusses
-              issues related to running daemons chrooted.
+              of the Postfix source archive show set up a Postfix
+              chroot environment on a  variety  of  systems.  See
+              also  <a href="BASIC_CONFIGURATION_README.html">BASIC_CONFIGURATION_README</a> for issues related
+              to running daemons chrooted.
 
        <b>Wake up time (default: 0)</b>
               Automatically wake up the named service  after  the
               specified  number of seconds. The wake up is imple-
               mented by connecting to the service and  sending  a
               wake  up  request.   A  ? at the end of the wake-up
-              time field requests that wake  up  events  be  sent
-              only  to  services  that  are  actually being used.
-              Specify 0 for no automatic wake up.
+              time field requests that no wake up events be  sent
+              before the first time a service is used.  Specify 0
+              for no automatic wake up.
 
               The <a href="pickup.8.html"><b>pickup</b>(8)</a>, <a href="qmgr.8.html"><b>qmgr</b>(8)</a> and <a href="flush.8.html"><b>flush</b>(8)</a> daemons require
               a wake up timer.
@@ -182,21 +182,21 @@ MASTER(5)                                                            MASTER(5)
 
               <b>-D</b>     Run  the daemon under control by the command
                      specified with the <b><a href="postconf.5.html#debugger_command">debugger_command</a></b> variable
-                     in  the  main.cf  configuration  file.   See
+                     in  the  <a href="postconf.5.html">main.cf</a>  configuration  file.   See
                      <a href="DEBUG_README.html">DEBUG_README</a> for hints and tips.
 
               <b>-o</b> <i>name</i>=<i>value</i>
-                     Override  the  named  main.cf  configuration
+                     Override  the  named  <a href="postconf.5.html">main.cf</a>  configuration
                      parameter.  The parameter value can refer to
                      other parameters as <i>$name</i> etc., just like in
-                     main.cf.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for syntax.
+                     <a href="postconf.5.html">main.cf</a>.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for syntax.
 
                      NOTE 1: do not specify whitespace around the
                      "=".  In  parameter  values,  either   avoid
                      whitespace altogether, use commas instead of
                      spaces,  or  consider  overrides  like   "-o
                      name=$override_parameter"     with    $over-
-                     ride_parameter set in main.cf.
+                     ride_parameter set in <a href="postconf.5.html">main.cf</a>.
 
                      NOTE 2: Over-zealous use of parameter  over-
                      rides  makes  the Postfix configuration hard

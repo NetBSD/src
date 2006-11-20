@@ -1,0 +1,9 @@
+#!/bin/sh
+
+for i
+do
+    case $i in
+    /*) lynx -dump file://localhost$i;;
+     *) lynx -dump file://localhost`pwd`/$i;;
+    esac
+done

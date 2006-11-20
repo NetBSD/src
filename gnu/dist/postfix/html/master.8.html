@@ -10,7 +10,7 @@ MASTER(8)                                                            MASTER(8)
        master - Postfix master process
 
 <b>SYNOPSIS</b>
-       <b>master</b> [<b>-Dtv</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-e</b> <i>exit</i><b>_</b><i>time</i>]
+       <b>master</b> [<b>-Ddtv</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-e</b> <i>exit</i><b>_</b><i>time</i>]
 
 <b>DESCRIPTION</b>
        The  <a href="master.8.html"><b>master</b>(8)</a>  daemon  is  the resident process that runs
@@ -38,15 +38,19 @@ MASTER(8)                                                            MASTER(8)
               figuration files  for  other  Postfix  daemon  pro-
               cesses.
 
-       <b>-e</b> <i>exit</i><b>_</b><i>time</i>
-              Terminate  the  master process after <i>exit</i><b>_</b><i>time</i> sec-
-              onds. Child processes  terminate  at  their  conve-
-              nience.
-
        <b>-D</b>     After  initialization, run a debugger on the master
               process. The debugging command  is  specified  with
               the <b><a href="postconf.5.html#debugger_command">debugger_command</a></b> in the <b>main.cf</b> global configu-
               ration file.
+
+       <b>-d</b>     Do  not  redirect  stdin,  stdout  or   stderr   to
+              /dev/null,  and do not discard the controlling ter-
+              minal. This must be used for debugging only.
+
+       <b>-e</b> <i>exit</i><b>_</b><i>time</i>
+              Terminate the master process after  <i>exit</i><b>_</b><i>time</i>  sec-
+              onds.  Child  processes  terminate  at their conve-
+              nience.
 
        <b>-t</b>     Test mode. Return a zero exit status when the  <b>mas-</b>
               <b>ter.pid</b>  lock file does not exist or when that file

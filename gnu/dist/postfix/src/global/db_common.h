@@ -1,4 +1,4 @@
-/*	$NetBSD: db_common.h,v 1.1.1.1.2.2 2006/07/12 15:06:38 tron Exp $	*/
+/*	$NetBSD: db_common.h,v 1.1.1.1.2.3 2006/11/20 13:30:24 tron Exp $	*/
 
 #ifndef _DB_COMMON_H_INCLUDED_
 #define _DB_COMMON_H_INCLUDED_
@@ -23,10 +23,12 @@
 typedef void (*db_quote_callback_t)(DICT *, const char *, VSTRING *);
 
 extern int db_common_parse(DICT *, void **, const char *, int);
-extern void db_common_free_ctx(void *);
+extern void db_common_parse_domain(CFG_PARSER *, void *);
+extern int db_common_dict_partial(void *);
 extern int db_common_expand(void *, const char *, const char *,
 			    const char *, VSTRING *, db_quote_callback_t);
-extern int db_common_check_domain(STRING_LIST *, const char *);
+extern int db_common_check_domain(void *, const char *);
+extern void db_common_free_ctx(void *);
 extern void db_common_sql_build_query(VSTRING *query, CFG_PARSER *parser);
 
 /* LICENSE

@@ -1,0 +1,163 @@
+>>> #
+>>> # Initialize.
+>>> #
+>>> #! ../bin/postmap smtpd_check_access
+>>> #msg_verbose 1
+>>> smtpd_delay_reject 0
+OK
+>>> mynetworks 127.0.0.0/8,168.100.189.0/28
+OK
+>>> #
+>>> # Test the client restrictions.
+>>> #
+>>> client_restrictions hash:./smtpd_check_access
+OK
+>>> client 4.1.1_dsn 1.2.3.4
+./smtpd_check: mapping DSN status 4.1.1 into Client host status 4.0.0
+./smtpd_check: <queue id>: reject: CONNECT from 4.1.1_dsn[1.2.3.4]: 554 5.0.0 <4.1.1_dsn[1.2.3.4]>: Client host rejected: reject; proto=SMTP
+554 5.0.0 <4.1.1_dsn[1.2.3.4]>: Client host rejected: reject
+>>> client 4.1.2_dsn 1.2.3.4
+./smtpd_check: mapping DSN status 4.1.2 into Client host status 4.0.0
+./smtpd_check: <queue id>: reject: CONNECT from 4.1.2_dsn[1.2.3.4]: 554 5.0.0 <4.1.2_dsn[1.2.3.4]>: Client host rejected: reject; proto=SMTP
+554 5.0.0 <4.1.2_dsn[1.2.3.4]>: Client host rejected: reject
+>>> client 4.1.3_dsn 1.2.3.4
+./smtpd_check: mapping DSN status 4.1.3 into Client host status 4.0.0
+./smtpd_check: <queue id>: reject: CONNECT from 4.1.3_dsn[1.2.3.4]: 554 5.0.0 <4.1.3_dsn[1.2.3.4]>: Client host rejected: reject; proto=SMTP
+554 5.0.0 <4.1.3_dsn[1.2.3.4]>: Client host rejected: reject
+>>> client 4.1.4_dsn 1.2.3.4
+./smtpd_check: mapping DSN status 4.1.4 into Client host status 4.0.0
+./smtpd_check: <queue id>: reject: CONNECT from 4.1.4_dsn[1.2.3.4]: 554 5.0.0 <4.1.4_dsn[1.2.3.4]>: Client host rejected: reject; proto=SMTP
+554 5.0.0 <4.1.4_dsn[1.2.3.4]>: Client host rejected: reject
+>>> client 4.1.5_dsn 1.2.3.4
+./smtpd_check: mapping DSN status 4.1.5 into Client host status 4.0.0
+./smtpd_check: <queue id>: reject: CONNECT from 4.1.5_dsn[1.2.3.4]: 554 5.0.0 <4.1.5_dsn[1.2.3.4]>: Client host rejected: reject; proto=SMTP
+554 5.0.0 <4.1.5_dsn[1.2.3.4]>: Client host rejected: reject
+>>> client 4.1.6_dsn 1.2.3.4
+./smtpd_check: mapping DSN status 4.1.6 into Client host status 4.0.0
+./smtpd_check: <queue id>: reject: CONNECT from 4.1.6_dsn[1.2.3.4]: 554 5.0.0 <4.1.6_dsn[1.2.3.4]>: Client host rejected: reject; proto=SMTP
+554 5.0.0 <4.1.6_dsn[1.2.3.4]>: Client host rejected: reject
+>>> client 4.1.7_dsn 1.2.3.4
+./smtpd_check: mapping DSN status 4.1.7 into Client host status 4.0.0
+./smtpd_check: <queue id>: reject: CONNECT from 4.1.7_dsn[1.2.3.4]: 554 5.0.0 <4.1.7_dsn[1.2.3.4]>: Client host rejected: reject; proto=SMTP
+554 5.0.0 <4.1.7_dsn[1.2.3.4]>: Client host rejected: reject
+>>> client 4.1.8_dsn 1.2.3.4
+./smtpd_check: mapping DSN status 4.1.8 into Client host status 4.0.0
+./smtpd_check: <queue id>: reject: CONNECT from 4.1.8_dsn[1.2.3.4]: 554 5.0.0 <4.1.8_dsn[1.2.3.4]>: Client host rejected: reject; proto=SMTP
+554 5.0.0 <4.1.8_dsn[1.2.3.4]>: Client host rejected: reject
+>>> client 4.4.0_dsn 1.2.3.4
+./smtpd_check: <queue id>: reject: CONNECT from 4.4.0_dsn[1.2.3.4]: 554 5.4.0 <4.4.0_dsn[1.2.3.4]>: Client host rejected: reject; proto=SMTP
+554 5.4.0 <4.4.0_dsn[1.2.3.4]>: Client host rejected: reject
+>>> client dummy dummy
+OK
+>>> #
+>>> # Test the helo restrictions
+>>> #
+>>> helo_restrictions hash:./smtpd_check_access
+OK
+>>> helo 4.1.1_dsn
+./smtpd_check: mapping DSN status 4.1.1 into Helo command status 4.0.0
+./smtpd_check: <queue id>: reject: HELO from dummy[dummy]: 554 5.0.0 <4.1.1_dsn>: Helo command rejected: reject; proto=SMTP helo=<4.1.1_dsn>
+554 5.0.0 <4.1.1_dsn>: Helo command rejected: reject
+>>> helo 4.1.2_dsn
+./smtpd_check: mapping DSN status 4.1.2 into Helo command status 4.0.0
+./smtpd_check: <queue id>: reject: HELO from dummy[dummy]: 554 5.0.0 <4.1.2_dsn>: Helo command rejected: reject; proto=SMTP helo=<4.1.2_dsn>
+554 5.0.0 <4.1.2_dsn>: Helo command rejected: reject
+>>> helo 4.1.3_dsn
+./smtpd_check: mapping DSN status 4.1.3 into Helo command status 4.0.0
+./smtpd_check: <queue id>: reject: HELO from dummy[dummy]: 554 5.0.0 <4.1.3_dsn>: Helo command rejected: reject; proto=SMTP helo=<4.1.3_dsn>
+554 5.0.0 <4.1.3_dsn>: Helo command rejected: reject
+>>> helo 4.1.4_dsn
+./smtpd_check: mapping DSN status 4.1.4 into Helo command status 4.0.0
+./smtpd_check: <queue id>: reject: HELO from dummy[dummy]: 554 5.0.0 <4.1.4_dsn>: Helo command rejected: reject; proto=SMTP helo=<4.1.4_dsn>
+554 5.0.0 <4.1.4_dsn>: Helo command rejected: reject
+>>> helo 4.1.5_dsn
+./smtpd_check: mapping DSN status 4.1.5 into Helo command status 4.0.0
+./smtpd_check: <queue id>: reject: HELO from dummy[dummy]: 554 5.0.0 <4.1.5_dsn>: Helo command rejected: reject; proto=SMTP helo=<4.1.5_dsn>
+554 5.0.0 <4.1.5_dsn>: Helo command rejected: reject
+>>> helo 4.1.6_dsn
+./smtpd_check: mapping DSN status 4.1.6 into Helo command status 4.0.0
+./smtpd_check: <queue id>: reject: HELO from dummy[dummy]: 554 5.0.0 <4.1.6_dsn>: Helo command rejected: reject; proto=SMTP helo=<4.1.6_dsn>
+554 5.0.0 <4.1.6_dsn>: Helo command rejected: reject
+>>> helo 4.1.7_dsn
+./smtpd_check: mapping DSN status 4.1.7 into Helo command status 4.0.0
+./smtpd_check: <queue id>: reject: HELO from dummy[dummy]: 554 5.0.0 <4.1.7_dsn>: Helo command rejected: reject; proto=SMTP helo=<4.1.7_dsn>
+554 5.0.0 <4.1.7_dsn>: Helo command rejected: reject
+>>> helo 4.1.8_dsn
+./smtpd_check: mapping DSN status 4.1.8 into Helo command status 4.0.0
+./smtpd_check: <queue id>: reject: HELO from dummy[dummy]: 554 5.0.0 <4.1.8_dsn>: Helo command rejected: reject; proto=SMTP helo=<4.1.8_dsn>
+554 5.0.0 <4.1.8_dsn>: Helo command rejected: reject
+>>> helo 4.4.0_dsn
+./smtpd_check: <queue id>: reject: HELO from dummy[dummy]: 554 5.4.0 <4.4.0_dsn>: Helo command rejected: reject; proto=SMTP helo=<4.4.0_dsn>
+554 5.4.0 <4.4.0_dsn>: Helo command rejected: reject
+>>> #
+>>> # Test the sender restrictions
+>>> #
+>>> sender_restrictions hash:./smtpd_check_access
+OK
+>>> mail user@4.1.1_dsn
+./smtpd_check: mapping DSN status 4.1.1 into Sender address status 4.1.7
+./smtpd_check: <queue id>: reject: MAIL from dummy[dummy]: 554 5.1.7 <user@4.1.1_dsn>: Sender address rejected: reject; from=<user@4.1.1_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.7 <user@4.1.1_dsn>: Sender address rejected: reject
+>>> mail user@4.1.2_dsn
+./smtpd_check: mapping DSN status 4.1.2 into Sender address status 4.1.8
+./smtpd_check: <queue id>: reject: MAIL from dummy[dummy]: 554 5.1.8 <user@4.1.2_dsn>: Sender address rejected: reject; from=<user@4.1.2_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.8 <user@4.1.2_dsn>: Sender address rejected: reject
+>>> mail user@4.1.3_dsn
+./smtpd_check: mapping DSN status 4.1.3 into Sender address status 4.1.7
+./smtpd_check: <queue id>: reject: MAIL from dummy[dummy]: 554 5.1.7 <user@4.1.3_dsn>: Sender address rejected: reject; from=<user@4.1.3_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.7 <user@4.1.3_dsn>: Sender address rejected: reject
+>>> mail user@4.1.4_dsn
+./smtpd_check: mapping DSN status 4.1.4 into Sender address status 4.1.7
+./smtpd_check: <queue id>: reject: MAIL from dummy[dummy]: 554 5.1.7 <user@4.1.4_dsn>: Sender address rejected: reject; from=<user@4.1.4_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.7 <user@4.1.4_dsn>: Sender address rejected: reject
+>>> mail user@4.1.5_dsn
+./smtpd_check: mapping DSN status 4.1.5 into Sender address status 4.1.0
+./smtpd_check: <queue id>: reject: MAIL from dummy[dummy]: 554 5.1.0 <user@4.1.5_dsn>: Sender address rejected: reject; from=<user@4.1.5_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.0 <user@4.1.5_dsn>: Sender address rejected: reject
+>>> mail user@4.1.6_dsn
+./smtpd_check: mapping DSN status 4.1.6 into Sender address status 4.1.7
+./smtpd_check: <queue id>: reject: MAIL from dummy[dummy]: 554 5.1.7 <user@4.1.6_dsn>: Sender address rejected: reject; from=<user@4.1.6_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.7 <user@4.1.6_dsn>: Sender address rejected: reject
+>>> mail user@4.1.7_dsn
+./smtpd_check: <queue id>: reject: MAIL from dummy[dummy]: 554 5.1.7 <user@4.1.7_dsn>: Sender address rejected: reject; from=<user@4.1.7_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.7 <user@4.1.7_dsn>: Sender address rejected: reject
+>>> mail user@4.1.8_dsn
+./smtpd_check: <queue id>: reject: MAIL from dummy[dummy]: 554 5.1.8 <user@4.1.8_dsn>: Sender address rejected: reject; from=<user@4.1.8_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.8 <user@4.1.8_dsn>: Sender address rejected: reject
+>>> mail user@4.4.0_dsn
+./smtpd_check: <queue id>: reject: MAIL from dummy[dummy]: 554 5.4.0 <user@4.4.0_dsn>: Sender address rejected: reject; from=<user@4.4.0_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.4.0 <user@4.4.0_dsn>: Sender address rejected: reject
+>>> #
+>>> # Test the recipient restrictions
+>>> #
+>>> recipient_restrictions hash:./smtpd_check_access
+OK
+>>> rcpt user@4.1.1_dsn
+./smtpd_check: <queue id>: reject: RCPT from dummy[dummy]: 554 5.1.1 <user@4.1.1_dsn>: Recipient address rejected: reject; from=<user@4.4.0_dsn> to=<user@4.1.1_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.1 <user@4.1.1_dsn>: Recipient address rejected: reject
+>>> rcpt user@4.1.2_dsn
+./smtpd_check: <queue id>: reject: RCPT from dummy[dummy]: 554 5.1.2 <user@4.1.2_dsn>: Recipient address rejected: reject; from=<user@4.4.0_dsn> to=<user@4.1.2_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.2 <user@4.1.2_dsn>: Recipient address rejected: reject
+>>> rcpt user@4.1.3_dsn
+./smtpd_check: <queue id>: reject: RCPT from dummy[dummy]: 554 5.1.3 <user@4.1.3_dsn>: Recipient address rejected: reject; from=<user@4.4.0_dsn> to=<user@4.1.3_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.3 <user@4.1.3_dsn>: Recipient address rejected: reject
+>>> rcpt user@4.1.4_dsn
+./smtpd_check: <queue id>: reject: RCPT from dummy[dummy]: 554 5.1.4 <user@4.1.4_dsn>: Recipient address rejected: reject; from=<user@4.4.0_dsn> to=<user@4.1.4_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.4 <user@4.1.4_dsn>: Recipient address rejected: reject
+>>> rcpt user@4.1.5_dsn
+./smtpd_check: <queue id>: reject: RCPT from dummy[dummy]: 554 5.1.5 <user@4.1.5_dsn>: Recipient address rejected: reject; from=<user@4.4.0_dsn> to=<user@4.1.5_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.5 <user@4.1.5_dsn>: Recipient address rejected: reject
+>>> rcpt user@4.1.6_dsn
+./smtpd_check: <queue id>: reject: RCPT from dummy[dummy]: 554 5.1.6 <user@4.1.6_dsn>: Recipient address rejected: reject; from=<user@4.4.0_dsn> to=<user@4.1.6_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.6 <user@4.1.6_dsn>: Recipient address rejected: reject
+>>> rcpt user@4.1.7_dsn
+./smtpd_check: mapping DSN status 4.1.7 into Recipient address status 4.1.3
+./smtpd_check: <queue id>: reject: RCPT from dummy[dummy]: 554 5.1.3 <user@4.1.7_dsn>: Recipient address rejected: reject; from=<user@4.4.0_dsn> to=<user@4.1.7_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.3 <user@4.1.7_dsn>: Recipient address rejected: reject
+>>> rcpt user@4.1.8_dsn
+./smtpd_check: mapping DSN status 4.1.8 into Recipient address status 4.1.2
+./smtpd_check: <queue id>: reject: RCPT from dummy[dummy]: 554 5.1.2 <user@4.1.8_dsn>: Recipient address rejected: reject; from=<user@4.4.0_dsn> to=<user@4.1.8_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.1.2 <user@4.1.8_dsn>: Recipient address rejected: reject
+>>> rcpt user@4.4.0_dsn
+./smtpd_check: <queue id>: reject: RCPT from dummy[dummy]: 554 5.4.0 <user@4.4.0_dsn>: Recipient address rejected: reject; from=<user@4.4.0_dsn> to=<user@4.4.0_dsn> proto=SMTP helo=<4.4.0_dsn>
+554 5.4.0 <user@4.4.0_dsn>: Recipient address rejected: reject

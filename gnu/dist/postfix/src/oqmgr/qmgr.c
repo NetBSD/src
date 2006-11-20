@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.c,v 1.1.1.2.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: qmgr.c,v 1.1.1.2.2.2 2006/11/20 13:30:40 tron Exp $	*/
 
 /*++
 /* NAME
@@ -118,9 +118,8 @@
 /*	one would request \fBA F D\fR; in order to notify the queue manager
 /*	of the arrival of new mail one would request \fBI\fR.
 /* STANDARDS
-/* .ad
-/* .fi
-/*	None. The \fBqmgr\fR(8) daemon does not interact with the outside world.
+/*	RFC 3463 (Enhanced status codes)
+/*	RFC 3464 (Delivery status notifications)
 /* SECURITY
 /* .ad
 /* .fi
@@ -222,8 +221,11 @@
 /*	How much time a Postfix daemon process may take to handle a
 /*	request before it is terminated by a built-in watchdog timer.
 /* .IP "\fBdefer_transports (empty)\fR"
-/*	The names of message delivery transports that should not be delivered
-/*	to unless someone issues "\fBsendmail -q\fR" or equivalent.
+/*	The names of message delivery transports that should not deliver mail
+/*	unless someone issues "\fBsendmail -q\fR" or equivalent.
+/* .IP "\fBdelay_logging_resolution_limit (2)\fR"
+/*	The maximal number of digits after the decimal point when logging
+/*	sub-second delay values.
 /* .IP "\fBhelpful_warnings (yes)\fR"
 /*	Log warnings about problematic configuration settings, and provide
 /*	helpful suggestions.
@@ -328,7 +330,6 @@ int     var_local_rcpt_lim;		/* XXX */
 int     var_local_con_lim;		/* XXX */
 int     var_proc_limit;
 bool    var_verp_bounce_off;
-bool    var_sender_routing;
 int     var_qmgr_clog_warn_time;
 
 static QMGR_SCAN *qmgr_incoming;
@@ -559,7 +560,6 @@ int     main(int argc, char **argv)
     static CONFIG_BOOL_TABLE bool_table[] = {
 	VAR_ALLOW_MIN_USER, DEF_ALLOW_MIN_USER, &var_allow_min_user,
 	VAR_VERP_BOUNCE_OFF, DEF_VERP_BOUNCE_OFF, &var_verp_bounce_off,
-	VAR_SENDER_ROUTING, DEF_SENDER_ROUTING, &var_sender_routing,
 	0,
     };
 

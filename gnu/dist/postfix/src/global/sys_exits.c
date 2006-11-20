@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_exits.c,v 1.1.1.2 2004/05/31 00:24:35 heas Exp $	*/
+/*	$NetBSD: sys_exits.c,v 1.1.1.2.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,28 +8,45 @@
 /* SYNOPSIS
 /*	#include <sys_exits.h>
 /*
+/*	typedef struct {
+/* .in +4
+/*	    int   status;	/* exit status */
+/*	    const char *dsn;	/* RFC 3463 */
+/*	    const char *text;	/* free text */
+/* .in -4
+/*	} SYS_EXITS_DETAIL;
+/*
 /*	int	SYS_EXITS_CODE(code)
 /*	int	code;
 /*
 /*	const char *sys_exits_strerror(code)
 /*	int	code;
 /*
+/*	SYS_EXITS_DETAIL *sys_exits_detail(code)
+/*	int	code;
+/*
 /*	int	sys_exits_softerror(code)
 /*	int	code;
 /* DESCRIPTION
 /*	This module interprets sendmail-compatible process exit status
-/*	codes. A default result is returned for other exit codes.
+/*	codes.
 /*
 /*	SYS_EXITS_CODE() returns non-zero when the specified code
 /*	is a sendmail-compatible process exit status code.
 /*
 /*	sys_exits_strerror() returns a descriptive text for the
-/*	specified sendmail-compatible status code.
+/*	specified sendmail-compatible status code, or a generic
+/*	text for an unknown status code.
+/*
+/*	sys_exits_detail() returns a table entry with assorted
+/*	information about the specified sendmail-compatible status
+/*	code, or a generic entry for an unknown status code.
 /*
 /*	sys_exits_softerror() returns non-zero when the specified
 /*	sendmail-compatible status code corresponds to a recoverable error.
+/*	An unknown status code is always unrecoverable.
 /* DIAGNOSTICS
-/*	Panic: invalid status code. Fatal error: out of memory.
+/*	Fatal: out of memory.
 /* LICENSE
 /* .ad
 /* .fi
@@ -48,6 +65,7 @@
 /* Utility library. */
 
 #include <msg.h>
+#include <vstring.h>
 
 /* Global library. */
 
@@ -55,50 +73,71 @@
 
 /* Application-specific. */
 
-typedef struct {
-    int     flags;			/* non-zero if recoverable */
-    int     code;			/* exit status code */
-    const char *text;			/* descriptive text */
-} SYS_EXITS_TABLE;
-
-static SYS_EXITS_TABLE sys_exits_table[] = {
-    0, EX_USAGE, "command line usage error",
-    0, EX_DATAERR, "data format error",
-    0, EX_NOINPUT, "cannot open input",
-    0, EX_NOUSER, "user unknown",
-    0, EX_NOHOST, "host name unknown",
-    0, EX_UNAVAILABLE, "service unavailable",
-    0, EX_SOFTWARE, "internal software error",
-    1, EX_OSERR, "system resource problem",
-    0, EX_OSFILE, "critical OS file missing",
-    0, EX_CANTCREAT, "can't create user output file",
-    0, EX_IOERR, "input/output error",
-    1, EX_TEMPFAIL, "temporary failure",
-    0, EX_PROTOCOL, "remote error in protocol",
-    0, EX_NOPERM, "permission denied",
-    0, EX_CONFIG, "local configuration error",
+static SYS_EXITS_DETAIL sys_exits_table[] = {
+    EX_USAGE, "5.3.0", "command line usage error",
+    EX_DATAERR, "5.6.0", "data format error",
+    EX_NOINPUT, "5.3.0", "cannot open input",
+    EX_NOUSER, "5.1.1", "user unknown",
+    EX_NOHOST, "5.1.2", "host name unknown",
+    EX_UNAVAILABLE, "5.3.0", "service unavailable",
+    EX_SOFTWARE, "5.3.0", "internal software error",
+    EX_OSERR, "4.3.0", "system resource problem",
+    EX_OSFILE, "5.3.0", "critical OS file missing",
+    EX_CANTCREAT, "5.2.0", "can't create user output file",
+    EX_IOERR, "5.3.0", "input/output error",
+    EX_TEMPFAIL, "4.3.0", "temporary failure",
+    EX_PROTOCOL, "5.5.0", "remote error in protocol",
+    EX_NOPERM, "5.7.0", "permission denied",
+    EX_CONFIG, "5.3.5", "local configuration error",
 };
+
+static VSTRING *sys_exits_def_text = 0;
+
+static SYS_EXITS_DETAIL sys_exits_default[] = {
+    0, "5.3.0", 0,
+};
+
+/* sys_exits_fake - fake an entry for an unknown code */
+
+static SYS_EXITS_DETAIL *sys_exits_fake(int code)
+{
+    if (sys_exits_def_text == 0)
+	sys_exits_def_text = vstring_alloc(30);
+
+    vstring_sprintf(sys_exits_def_text, "unknown mail system error %d", code);
+    sys_exits_default->text = vstring_str(sys_exits_def_text);
+    return(sys_exits_default);
+}
 
 /* sys_exits_strerror - map exit status to error string */
 
 const char *sys_exits_strerror(int code)
 {
-    char   *myname = "sys_exits_strerror";
+    if (!SYS_EXITS_CODE(code)) {
+	return (sys_exits_fake(code)->text);
+    } else {
+	return (sys_exits_table[code - EX__BASE].text);
+    }
+}
 
-    if (!SYS_EXITS_CODE(code))
-	msg_panic("%s: bad code: %d", myname, code);
+/* sys_exits_detail - map exit status info table entry */
 
-    return (sys_exits_table[code - EX__BASE].text);
+SYS_EXITS_DETAIL *sys_exits_detail(int code)
+{
+    if (!SYS_EXITS_CODE(code)) {
+	return (sys_exits_fake(code));
+    } else {
+	return (sys_exits_table + code - EX__BASE);
+    }
 }
 
 /* sys_exits_softerror  - determine if error is transient */
 
 int     sys_exits_softerror(int code)
 {
-    char   *myname = "sys_exits_softerror";
-
-    if (!SYS_EXITS_CODE(code))
-	msg_panic("%s: bad code: %d", myname, code);
-
-    return (sys_exits_table[code - EX__BASE].flags);
+    if (!SYS_EXITS_CODE(code)) {
+	return (sys_exits_default->dsn[0] == '4');
+    } else {
+	return (sys_exits_table[code - EX__BASE].dsn[0] == '4');
+    }
 }

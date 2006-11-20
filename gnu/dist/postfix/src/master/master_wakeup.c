@@ -1,4 +1,4 @@
-/*	$NetBSD: master_wakeup.c,v 1.1.1.3.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: master_wakeup.c,v 1.1.1.3.2.2 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -77,7 +77,7 @@
 
 static void master_wakeup_timer_event(int unused_event, char *context)
 {
-    char   *myname = "master_wakeup_timer_event";
+    const char *myname = "master_wakeup_timer_event";
     MASTER_SERV *serv = (MASTER_SERV *) context;
     int     status;
     static char wakeup = TRIGGER_REQ_WAKEUP;
@@ -141,7 +141,8 @@ static void master_wakeup_timer_event(int unused_event, char *context)
 	    msg_panic("%s: unknown service type: %d", myname, serv->type);
 	}
 	if (status < 0)
-	    msg_warn("%s: service %s: %m", myname, serv->name);
+	    msg_warn("%s: service %s(%s): %m",
+		     myname, serv->ext_name, serv->name);
     }
 
     /*
@@ -155,7 +156,7 @@ static void master_wakeup_timer_event(int unused_event, char *context)
 
 void    master_wakeup_init(MASTER_SERV *serv)
 {
-    char   *myname = "master_wakeup_init";
+    const char *myname = "master_wakeup_init";
 
     if (serv->wakeup_time == 0 || (serv->flags & MASTER_FLAG_CONDWAKE))
 	return;
@@ -169,7 +170,7 @@ void    master_wakeup_init(MASTER_SERV *serv)
 
 void    master_wakeup_cleanup(MASTER_SERV *serv)
 {
-    char   *myname = "master_wakeup_cleanup";
+    const char *myname = "master_wakeup_cleanup";
 
     /*
      * Cleanup, even when the wakeup feature has been turned off. There might

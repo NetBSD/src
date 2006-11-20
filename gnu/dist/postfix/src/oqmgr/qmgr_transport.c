@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_transport.c,v 1.1.1.2 2004/05/31 00:24:41 heas Exp $	*/
+/*	$NetBSD: qmgr_transport.c,v 1.1.1.2.2.1 2006/11/20 13:30:40 tron Exp $	*/
 
 /*++
 /* NAME
@@ -20,9 +20,9 @@
 /*	QMGR_TRANSPORT *transport;
 /*	void	(*notify)(QMGR_TRANSPORT *transport, VSTREAM *fp);
 /*
-/*	void	qmgr_transport_throttle(transport, reason)
+/*	void	qmgr_transport_throttle(transport, dsn)
 /*	QMGR_TRANSPORT *transport;
-/*	const char *reason;
+/*	DSN	*dsn;
 /*
 /*	void	qmgr_transport_unthrottle(transport)
 /*	QMGR_TRANSPORT *transport;
@@ -118,7 +118,7 @@ static void qmgr_transport_unthrottle_wrapper(int unused_event, char *context)
 
 void    qmgr_transport_unthrottle(QMGR_TRANSPORT *transport)
 {
-    char   *myname = "qmgr_transport_unthrottle";
+    const char *myname = "qmgr_transport_unthrottle";
 
     /*
      * This routine runs after expiration of the timer set by
@@ -130,10 +130,11 @@ void    qmgr_transport_unthrottle(QMGR_TRANSPORT *transport)
 	if (msg_verbose)
 	    msg_info("%s: transport %s", myname, transport->name);
 	transport->flags &= ~QMGR_TRANSPORT_STAT_DEAD;
-	if (transport->reason == 0)
-	    msg_panic("%s: transport %s: null reason", myname, transport->name);
-	myfree(transport->reason);
-	transport->reason = 0;
+	if (transport->dsn == 0)
+	    msg_panic("%s: transport %s: null reason",
+		      myname, transport->name);
+	dsn_free(transport->dsn);
+	transport->dsn = 0;
 	event_cancel_timer(qmgr_transport_unthrottle_wrapper,
 			   (char *) transport);
     }
@@ -141,9 +142,9 @@ void    qmgr_transport_unthrottle(QMGR_TRANSPORT *transport)
 
 /* qmgr_transport_throttle - disable delivery process allocation */
 
-void    qmgr_transport_throttle(QMGR_TRANSPORT *transport, const char *reason)
+void    qmgr_transport_throttle(QMGR_TRANSPORT *transport, DSN *dsn)
 {
-    char   *myname = "qmgr_transport_throttle";
+    const char *myname = "qmgr_transport_throttle";
 
     /*
      * We are unable to connect to a deliver process for this type of message
@@ -152,13 +153,13 @@ void    qmgr_transport_throttle(QMGR_TRANSPORT *transport, const char *reason)
      */
     if ((transport->flags & QMGR_TRANSPORT_STAT_DEAD) == 0) {
 	if (msg_verbose)
-	    msg_info("%s: transport %s: reason: %s",
-		     myname, transport->name, reason);
+	    msg_info("%s: transport %s: status: %s reason: %s",
+		     myname, transport->name, dsn->status, dsn->reason);
 	transport->flags |= QMGR_TRANSPORT_STAT_DEAD;
-	if (transport->reason)
+	if (transport->dsn)
 	    msg_panic("%s: transport %s: spurious reason: %s",
-		      myname, transport->name, transport->reason);
-	transport->reason = mystrdup(reason);
+		      myname, transport->name, transport->dsn->reason);
+	transport->dsn = DSN_COPY(dsn);
 	event_request_timer(qmgr_transport_unthrottle_wrapper,
 			    (char *) transport, var_transport_retry_time);
     }
@@ -260,6 +261,7 @@ void    qmgr_transport_alloc(QMGR_TRANSPORT *transport, QMGR_TRANSPORT_ALLOC_NOT
 {
     QMGR_TRANSPORT_ALLOC *alloc;
     VSTREAM *stream;
+    DSN     dsn;
 
     /*
      * Sanity checks.
@@ -288,7 +290,9 @@ void    qmgr_transport_alloc(QMGR_TRANSPORT *transport, QMGR_TRANSPORT_ALLOC_NOT
 
     if ((stream = mail_connect(MAIL_CLASS_PRIVATE, transport->name, BLOCK_MODE)) == 0) {
 	msg_warn("connect to transport %s: %m", transport->name);
-	qmgr_transport_throttle(transport, "transport is unavailable");
+	qmgr_transport_throttle(transport,
+				DSN_SIMPLE(&dsn, "4.3.0",
+					   "mail transport unavailable"));
 	return;
     }
     alloc = (QMGR_TRANSPORT_ALLOC *) mymalloc(sizeof(*alloc));
@@ -335,7 +339,7 @@ QMGR_TRANSPORT *qmgr_transport_create(const char *name)
 
     transport->queue_byname = htable_create(0);
     QMGR_LIST_INIT(transport->queue_list);
-    transport->reason = 0;
+    transport->dsn = 0;
     if (qmgr_transport_byname == 0)
 	qmgr_transport_byname = htable_create(10);
     htable_enter(qmgr_transport_byname, name, (char *) transport);

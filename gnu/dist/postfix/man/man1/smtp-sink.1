@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtp-sink.1,v 1.1.1.3.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: smtp-sink.1,v 1.1.1.3.2.2 2006/11/20 13:30:17 tron Exp $
 .\"
 .TH SMTP-SINK 1 
 .ad
@@ -35,17 +35,28 @@ Postfix is built without IPv6 support.
 .IP \fB-6\fR
 Support IPv6 only. This option is not available when
 Postfix is built without IPv6 support.
+.IP \fB-8\fR
+Do not announce 8BITMIME support.
 .IP \fB-a\fR
 Do not announce SASL authentication support.
 .IP \fB-c\fR
-Display a running counter that is updated whenever an SMTP
-QUIT command is executed.
+Display running counters that are updated whenever an SMTP
+session ends, a QUIT command is executed, or when "." is
+received.
 .IP \fB-C\fR
 Disable XCLIENT support.
 .IP \fB-e\fR
 Do not announce ESMTP support.
+.IP \fB-E\fR
+Do not announce ENHANCEDSTATUSCODES support.
 .IP "\fB-f \fIcommand,command,...\fR"
 Reject the specified commands with a hard (5xx) error code.
+This option implies \fB-p\fR.
+.sp
+Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT, VRFY,
+DATA, ., RSET, NOOP, and QUIT. Separate command names by
+white space or commas, and use quotes to protect white space
+from the shell. Command names are case-insensitive.
 .IP \fB-F\fR
 Disable XFORWARD support.
 .IP "\fB-h\fI hostname\fR"
@@ -63,20 +74,33 @@ a CISCO PIX system. Implies \fB-e\fR.
 .IP "\fB-q \fIcommand,command,...\fR"
 Disconnect (without replying) after receiving one of the
 specified commands.
+.sp
+Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT, VRFY,
+DATA, ., RSET, NOOP, and QUIT. Separate command names by
+white space or commas, and use quotes to protect white space
+from the shell. Command names are case-insensitive.
 .IP "\fB-r \fIcommand,command,...\fR"
 Reject the specified commands with a soft (4xx) error code.
+This option implies \fB-p\fR.
+.sp
+Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT, VRFY,
+DATA, ., RSET, NOOP, and QUIT. Separate command names by
+white space or commas, and use quotes to protect white space
+from the shell. Command names are case-insensitive.
 .IP "\fB-s \fIcommand,command,...\fR"
 Log the named commands to syslogd.
-Examples of commands that can be logged are HELO, EHLO, LHLO, MAIL,
-RCPT, VRFY, RSET, NOOP, and QUIT. Separate command names by white
-space or commas, and use quotes to protect white space from the
-shell. Command names are case-insensitive.
+.sp
+Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT, VRFY,
+DATA, ., RSET, NOOP, and QUIT. Separate command names by
+white space or commas, and use quotes to protect white space
+from the shell. Command names are case-insensitive.
+.IP "\fB-t \fItimeout\fR (default: 100)"
+Limit the time for receiving a command or sending a response.
+The time limit is specified in seconds.
 .IP \fB-v\fR
 Show the SMTP conversations.
 .IP "\fB-w \fIdelay\fR"
 Wait \fIdelay\fR seconds before responding to a DATA command.
-.IP \fB-8\fR
-Do not announce 8BITMIME support.
 .IP [\fBinet:\fR][\fIhost\fR]:\fIport\fR
 Listen on network interface \fIhost\fR (default: any interface)
 TCP port \fIport\fR. Both \fIhost\fR and \fIport\fR may be

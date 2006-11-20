@@ -1,4 +1,4 @@
-.\"	$NetBSD: oqmgr.8,v 1.1.1.2.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: oqmgr.8,v 1.1.1.2.2.2 2006/11/20 13:30:18 tron Exp $
 .\"
 .TH OQMGR 8 
 .ad
@@ -134,9 +134,8 @@ of the arrival of new mail one would request \fBI\fR.
 .SH "STANDARDS"
 .na
 .nf
-.ad
-.fi
-None. The \fBoqmgr\fR(8) daemon does not interact with the outside world.
+RFC 3463 (Enhanced status codes)
+RFC 3464 (Delivery status notifications)
 .SH "SECURITY"
 .na
 .nf
@@ -256,8 +255,11 @@ configuration files.
 How much time a Postfix daemon process may take to handle a
 request before it is terminated by a built-in watchdog timer.
 .IP "\fBdefer_transports (empty)\fR"
-The names of message delivery transports that should not be delivered
-to unless someone issues "\fBsendmail -q\fR" or equivalent.
+The names of message delivery transports that should not deliver mail
+unless someone issues "\fBsendmail -q\fR" or equivalent.
+.IP "\fBdelay_logging_resolution_limit (2)\fR"
+The maximal number of digits after the decimal point when logging
+sub-second delay values.
 .IP "\fBhelpful_warnings (yes)\fR"
 Log warnings about problematic configuration settings, and provide
 helpful suggestions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mask_addr.c,v 1.1.1.1.2.2 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: mask_addr.c,v 1.1.1.1.2.3 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -56,8 +56,8 @@ void    mask_addr(unsigned char *addr_bytes,
     unsigned char *p;
 
     if (network_bits > addr_byte_count * CHAR_BIT)
-	msg_panic("mask_addr: address byte count %d too small for bit count %d", 
-		addr_byte_count, network_bits);
+	msg_panic("mask_addr: address byte count %d too small for bit count %d",
+		  addr_byte_count, network_bits);
 
     p = addr_bytes + network_bits / CHAR_BIT;
     network_bits %= CHAR_BIT;

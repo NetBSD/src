@@ -1,18 +1,18 @@
-/*	$NetBSD: ext_prop.c,v 1.1.1.3.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: ext_prop.c,v 1.1.1.3.2.2 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
-/*	exp_prop 3
+/*	ext_prop 3
 /* SUMMARY
 /*	address extension propagation control
 /* SYNOPSIS
-/*	#include <exp_prop.h>
+/*	#include <ext_prop.h>
 /*
 /*	int	ext_prop_mask(param_name, pattern)
 /*	const char *param_name;
 /*	const char *pattern;
 /* DESCRIPTION
-/*	This module controld address extension propagation.
+/*	This module controls address extension propagation.
 /*
 /*	ext_prop_mask() takes a comma-separated list of names and
 /*	computes the corresponding mask. The following names are

@@ -35,7 +35,7 @@ until the address has been verified to be deliverable.  </p>
 with an unreplyable sender address.  </p>
 
 <p> The technique may also be useful to block mail for undeliverable
-recipients, for example on a mail relay host that does not have a
+recipients, for example on a mail <a href="postconf.5.html#relayhost">relay host</a> that does not have a
 list of all the valid recipient addresses. This prevents undeliverable
 junk mail from entering the queue, so that Postfix doesn't have to
 waste resources trying to send MAILER-DAEMON messages back. </p>
@@ -166,7 +166,7 @@ the status is cached and Postfix replies immediately. </p>
 <p> When verification takes too long the Postfix SMTP server defers
 the sender or recipient address with a 450 reply. Normal mail
 clients will connect again after some delay.  The address verification
-delay is configurable with the main.cf <a href="postconf.5.html#address_verify_poll_count">address_verify_poll_count</a>
+delay is configurable with the <a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#address_verify_poll_count">address_verify_poll_count</a>
 and <a href="postconf.5.html#address_verify_poll_delay">address_verify_poll_delay</a> parameters.  See <a href="postconf.5.html">postconf(5)</a> for
 details. </p>
 
@@ -230,9 +230,13 @@ and there are no surprises. If a recipient probe fails, then Postfix
 rejects mail for the recipient address.  If a recipient probe
 succeeds, then Postfix accepts mail for the recipient address. </p>
 
+<p> By default, address verification results are not saved. To avoid
+probing the same address repeatedly, you can store the result in a
+<a href="#caching">persistent database</a> as described later.  </p>
+
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
         <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
@@ -259,7 +263,7 @@ specific domains that often appear in forged email. </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a> = hash:/etc/postfix/sender_access
     <a href="postconf.5.html#unverified_sender_reject_code">unverified_sender_reject_code</a> = 550
     # Note 1: Be sure to read the "<a href="#caching">Caching</a>" section below!
@@ -274,9 +278,9 @@ specific domains that often appear in forged email. </p>
 </pre>
 </blockquote>
 
-<p> A list of frequently forged MAIL FROM domains can be found at
-<a href="http://www.monkeys.com/anti-spam/filtering/sender-domain-validate.in">http://www.monkeys.com/anti-spam/filtering/sender-domain-validate.in</a>.
-</p>
+<p> At some point in cyberspace/time, a list of frequently forged
+MAIL FROM domains could be found at
+<a href="http://www.monkeys.com/anti-spam/filtering/sender-domain-validate.in">http://www.monkeys.com/anti-spam/filtering/sender-domain-validate.in</a>.  </p>
 
 <p> NOTE: One of the first things you might want to do is to turn
 on sender address verification for all your own domains. </p>
@@ -296,7 +300,7 @@ you can see what mail would be blocked: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a> = 
         <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
         ... 
@@ -344,7 +348,7 @@ judgments. </p>
 <h2><a name="caching">Address verification database</a></h2>
 
 <p> NOTE: By default, address verification information is not stored
-in a persistent file. You have to specify one in main.cf (see
+in a persistent file. You have to specify one in <a href="postconf.5.html">main.cf</a> (see
 below). Persistent storage is off by default because it may need
 more disk space than is available in your file system. </p>
 
@@ -354,7 +358,7 @@ of positive and negative results. Refer to the <a href="verify.8.html">verify(8)
 page for details. </p>
 
 <p> The <a href="postconf.5.html#address_verify_map">address_verify_map</a> (NOTE: singular) configuration parameter
-specifies an optional persistent database for sender address
+specifies an optional database for sender or recipient address
 verification results.  If you don't specify a file, all address
 verification information is lost after "postfix reload" or "postfix
 stop". </p>
@@ -363,7 +367,7 @@ stop". </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     # Note: avoid hash files here. Use btree instead.
     <a href="postconf.5.html#address_verify_map">address_verify_map</a> = btree:/var/mta/verify
 </pre>
@@ -416,7 +420,9 @@ parameters when it delivers an address verification probe message.
 
 <p> First, the <a href="postconf.5.html#address_verify_relayhost">address_verify_relayhost</a> parameter allows you to
 override the <a href="postconf.5.html#relayhost">relayhost</a> setting, and the <a href="postconf.5.html#address_verify_transport_maps">address_verify_transport_maps</a>
-parameter allows you to override the <a href="postconf.5.html#transport_maps">transport_maps</a> setting. </p>
+parameter allows you to override the <a href="postconf.5.html#transport_maps">transport_maps</a> setting. 
+The <a href="postconf.5.html#address_verify_sender_dependent_relayhost_maps">address_verify_sender_dependent_relayhost_maps</a> parameter
+does the same for sender-dependent <a href="postconf.5.html#relayhost">relayhost</a> selection. </p>
 
 <p> Second, each address class is given its own address verification
 version of the message delivery transport, as shown in the table
@@ -461,7 +467,7 @@ for address verification probes and leave everything else alone:
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#relayhost">relayhost</a> = $<a href="postconf.5.html#mydomain">mydomain</a>
     <a href="postconf.5.html#address_verify_relayhost">address_verify_relayhost</a> =
     ...
@@ -474,12 +480,12 @@ information:  </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#relayhost">relayhost</a> = $<a href="postconf.5.html#mydomain">mydomain</a>
     <a href="postconf.5.html#address_verify_relayhost">address_verify_relayhost</a> =
     <a href="postconf.5.html#address_verify_default_transport">address_verify_default_transport</a> = direct_smtp
 
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
     direct_smtp .. .. .. ..  .. .. .. .. .. smtp
         -o <a href="postconf.5.html#smtp_helo_name">smtp_helo_name</a>=nat.box.tld
 </pre>

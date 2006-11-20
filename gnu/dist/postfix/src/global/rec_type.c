@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_type.c,v 1.1.1.4 2004/05/31 00:24:34 heas Exp $	*/
+/*	$NetBSD: rec_type.c,v 1.1.1.4.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -44,19 +44,23 @@ REC_TYPE_NAME rec_type_names[] = {
     REC_TYPE_ERROR, "error",		/* not Postfix-specific. */
     REC_TYPE_SIZE, "message_size",
     REC_TYPE_TIME, "message_arrival_time",
+    REC_TYPE_CTIME, "queue_file_create_time",
     REC_TYPE_FULL, "sender_fullname",
     REC_TYPE_INSP, "content_inspector",
     REC_TYPE_FILT, "content_filter",
     REC_TYPE_FROM, "sender",
     REC_TYPE_DONE, "done_recipient",
+    REC_TYPE_DRCP, "canceled_recipient",
     REC_TYPE_RCPT, "recipient",
     REC_TYPE_ORCP, "original_recipient",
     REC_TYPE_WARN, "warning_message_time",
     REC_TYPE_ATTR, "named_attribute",
+    REC_TYPE_PTR, "pointer_record",
     REC_TYPE_KILL, "killed_record",
     REC_TYPE_MESG, "message_content",
     REC_TYPE_CONT, "unterminated_text",
     REC_TYPE_NORM, "regular_text",
+    REC_TYPE_DTXT, "deleted_text",
     REC_TYPE_XTRA, "extracted_info",
     REC_TYPE_RRTO, "return_receipt",
     REC_TYPE_ERTO, "errors_to",
@@ -65,6 +69,10 @@ REC_TYPE_NAME rec_type_names[] = {
     REC_TYPE_END, "message_end",
     REC_TYPE_RDR, "redirect_to",
     REC_TYPE_FLGS, "flags",
+    REC_TYPE_DSN_RET, "dsn_return_flags",
+    REC_TYPE_DSN_ENVID, "dsn_envelope_id",
+    REC_TYPE_DSN_ORCPT, "dsn_original_recipient",
+    REC_TYPE_DSN_NOTIFY, "dsn_notify_flags",
     0, 0,
 };
 

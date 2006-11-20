@@ -1,4 +1,4 @@
-/*	$NetBSD: local.c,v 1.1.1.6.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: local.c,v 1.1.1.6.2.2 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -20,6 +20,12 @@
 /*	be tried again at a later time. Delivery status reports are sent
 /*	to the \fBbounce\fR(8), \fBdefer\fR(8) or \fBtrace\fR(8) daemon as
 /*	appropriate.
+/* CASE FOLDING
+/* .ad
+/* .fi
+/*	All delivery decisions are made using the bare recipient
+/*	name (i.e. the address localpart), folded to lower case.
+/*	See also under ADDRESS EXTENSION below for a few exceptions.
 /* SYSTEM-WIDE AND USER-LEVEL ALIASING
 /* .ad
 /* .fi
@@ -33,9 +39,9 @@
 /*	The system administrator can specify a comma/space separated list
 /*	of ~\fR/.\fBforward\fR like files through the \fBforward_path\fR
 /*	configuration parameter. Upon delivery, the local delivery agent
-/*	tries each pathname in the list until a file is found. 
+/*	tries each pathname in the list until a file is found.
 /*
-/*	Delivery via ~/.\fB.forward\fR files is done with the privileges 
+/*	Delivery via ~/.\fBforward\fR files is done with the privileges
 /*	of the recipient.
 /*	Thus, ~/.\fBforward\fR like files must be readable by the
 /*	recipient, and their parent directory needs to have "execute"
@@ -103,18 +109,23 @@
 /*	ending in \fB/\fR for \fBqmail\fR-compatible \fBmaildir\fR delivery.
 /*
 /*	Mailbox delivery can be delegated to an external command specified
-/*	with the \fBmailbox_command\fR configuration parameter. The command
-/*	executes with the privileges of the recipient user (exceptions: 
-/*	secondary groups are not enabled; in case of delivery as root, 
+/*	with the \fBmailbox_command_maps\fR and \fBmailbox_command\fR
+/*	configuration parameters. The command
+/*	executes with the privileges of the recipient user (exceptions:
+/*	secondary groups are not enabled; in case of delivery as root,
 /*	the command executes with the privileges of \fBdefault_privs\fR).
 /*
 /*	Mailbox delivery can be delegated to alternative message transports
 /*	specified in the \fBmaster.cf\fR file.
-/*	The \fBmailbox_transport\fR configuration parameter specifies a
+/*	The \fBmailbox_transport_maps\fR and \fBmailbox_transport\fR
+/*	configuration parameters specify an optional
 /*	message transport that is to be used for all local recipients,
 /*	regardless of whether they are found in the UNIX passwd database.
-/*	The \fBfallback_transport\fR parameter specifies a message transport
-/*	for recipients that are not found in the UNIX passwd database.
+/*	The \fBfallback_transport_maps\fR and
+/*	\fBfallback_transport\fR parameters specify an optional
+/*	message transport
+/*	for recipients that are not found in the aliases(5) or UNIX
+/*	passwd database.
 /*
 /*	In the case of UNIX-style mailbox delivery,
 /*	the \fBlocal\fR(8) daemon prepends a "\fBFrom \fIsender time_stamp\fR"
@@ -173,6 +184,13 @@
 /*	A command is forcibly terminated if it does not complete within
 /*	\fBcommand_time_limit\fR seconds.  Command exit status codes are
 /*	expected to follow the conventions defined in <\fBsysexits.h\fR>.
+/*	Exit status 0 means normal successful completion.
+/*
+/*	Postfix version 2.3 and later support RFC 3463-style enhanced
+/*	status codes.  If a command terminates with a non-zero exit
+/*	status, and the command output begins with an enhanced
+/*	status code, this status code takes precedence over the
+/*	non-zero exit status.
 /*
 /*	A limited amount of message context is exported via environment
 /*	variables. Characters that may have special meaning to the shell
@@ -297,6 +315,7 @@
 /*	parameter.
 /* STANDARDS
 /*	RFC 822 (ARPA Internet Text Messages)
+/*	RFC 3463 (Enhanced status codes)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*	Corrupted message files are marked so that the queue
@@ -354,18 +373,30 @@
 /*	recipient_delimiter is set to "-".
 /* .IP "\fBsun_mailtool_compatibility (no)\fR"
 /*	Obsolete SUN mailtool compatibility feature.
+/* .PP
+/*	Available in Postfix version 2.3 and later:
+/* .IP "\fBfrozen_delivered_to (yes)\fR"
+/*	Update the \fBlocal\fR(8) delivery agent's idea of the Delivered-To:
+/*	address (see prepend_delivered_header) only once, at the start of
+/*	a delivery attempt; do not update the Delivered-To: address while
+/*	expanding aliases or .forward files.
 /* DELIVERY METHOD CONTROLS
 /* .ad
 /* .fi
 /*	The precedence of \fBlocal\fR(8) delivery methods from high to low is:
-/*	aliases, .forward files, mailbox_transport, mailbox_command_maps,
-/*	mailbox_command, home_mailbox, mail_spool_directory, fallback_transport
-/*	and luser_relay.
+/*	aliases, .forward files, mailbox_transport_maps,
+/*	mailbox_transport, mailbox_command_maps, mailbox_command,
+/*	home_mailbox, mail_spool_directory, fallback_transport_maps,
+/*	fallback_transport, and luser_relay.
 /* .IP "\fBalias_maps (see 'postconf -d' output)\fR"
 /*	The alias databases that are used for \fBlocal\fR(8) delivery.
 /* .IP "\fBforward_path (see 'postconf -d' output)\fR"
 /*	The \fBlocal\fR(8) delivery agent search list for finding a .forward
 /*	file with user-specified delivery methods.
+/* .IP "\fBmailbox_transport_maps (empty)\fR"
+/*	Optional lookup tables with per-recipient message delivery
+/*	transports to use for \fBlocal\fR(8) mailbox delivery, whether or not the
+/*	recipients are found in the UNIX passwd database.
 /* .IP "\fBmailbox_transport (empty)\fR"
 /*	Optional message delivery transport that the \fBlocal\fR(8) delivery
 /*	agent should use for mailbox delivery to all local recipients,
@@ -381,10 +412,14 @@
 /*	home directory.
 /* .IP "\fBmail_spool_directory (see 'postconf -d' output)\fR"
 /*	The directory where \fBlocal\fR(8) UNIX-style mailboxes are kept.
+/* .IP "\fBfallback_transport_maps (empty)\fR"
+/*	Optional lookup tables with per-recipient message delivery
+/*	transports for recipients that the \fBlocal\fR(8) delivery agent could
+/*	not find in the \fBaliases\fR(5) or UNIX password database.
 /* .IP "\fBfallback_transport (empty)\fR"
 /*	Optional message delivery transport that the \fBlocal\fR(8) delivery
 /*	agent should use for names that are not found in the \fBaliases\fR(5)
-/*	database or in the UNIX passwd database.
+/*	or UNIX password database.
 /* .IP "\fBluser_relay (empty)\fR"
 /*	Optional catch-all destination for unknown \fBlocal\fR(8) recipients.
 /* .PP
@@ -456,6 +491,9 @@
 /* .IP "\fBdaemon_timeout (18000s)\fR"
 /*	How much time a Postfix daemon process may take to handle a
 /*	request before it is terminated by a built-in watchdog timer.
+/* .IP "\fBdelay_logging_resolution_limit (2)\fR"
+/*	The maximal number of digits after the decimal point when logging
+/*	sub-second delay values.
 /* .IP "\fBexport_environment (see 'postconf -d' output)\fR"
 /*	The list of environment variables that a Postfix process will export
 /*	to non-Postfix processes.
@@ -472,7 +510,8 @@
 /*	process terminates.
 /* .IP "\fBprepend_delivered_header (command, file, forward)\fR"
 /*	The message delivery contexts where the Postfix \fBlocal\fR(8) delivery
-/*	agent prepends a Delivered-To:  message header.
+/*	agent prepends a Delivered-To:  message header with the address
+/*	that the mail was delivered to.
 /* .IP "\fBprocess_id (read-only)\fR"
 /*	The process ID of a Postfix command or daemon process.
 /* .IP "\fBprocess_name (read-only)\fR"
@@ -587,7 +626,9 @@ char   *var_luser_relay;
 int     var_biff;
 char   *var_mail_spool_dir;
 char   *var_mailbox_transport;
+char   *var_mbox_transp_maps;
 char   *var_fallback_transport;
+char   *var_fbck_transp_maps;
 char   *var_exec_directory;
 char   *var_exec_exp_filter;
 char   *var_forward_path;
@@ -600,6 +641,7 @@ int     var_stat_home_dir;
 int     var_mailtool_compat;
 char   *var_mailbox_lock;
 int     var_mailbox_limit;
+bool    var_frozen_delivered;
 
 int     local_cmd_deliver_mask;
 int     local_file_deliver_mask;
@@ -612,7 +654,7 @@ MAPS   *alias_maps;
 
 static int local_deliver(DELIVER_REQUEST *rqst, char *service)
 {
-    char   *myname = "local_deliver";
+    const char *myname = "local_deliver";
     RECIPIENT *rcpt_end = rqst->rcpt_list.info + rqst->rcpt_list.len;
     RECIPIENT *rcpt;
     int     rcpt_stat;
@@ -645,8 +687,10 @@ static int local_deliver(DELIVER_REQUEST *rqst, char *service)
     state.msg_attr.offset = rqst->data_offset;
     state.msg_attr.encoding = rqst->encoding;
     state.msg_attr.sender = rqst->sender;
+    state.msg_attr.dsn_envid = rqst->dsn_envid;
+    state.msg_attr.dsn_ret = rqst->dsn_ret;
     state.msg_attr.relay = service;
-    state.msg_attr.arrival_time = rqst->arrival_time;
+    state.msg_attr.msg_stats = rqst->msg_stats;
     state.msg_attr.request = rqst;
     RESET_OWNER_ATTR(state.msg_attr, state.level);
     RESET_USER_ATTR(usr_attr, state.level);
@@ -662,9 +706,7 @@ static int local_deliver(DELIVER_REQUEST *rqst, char *service)
     for (msg_stat = 0, rcpt = rqst->rcpt_list.info; rcpt < rcpt_end; rcpt++) {
 	state.dup_filter = been_here_init(var_dup_filter_limit, BH_FLAG_FOLD);
 	forward_init();
-	state.msg_attr.orig_rcpt = rcpt->orig_addr;
-	state.msg_attr.recipient = rcpt->address;
-	state.msg_attr.rcpt_offset = rcpt->offset;
+	state.msg_attr.rcpt = *rcpt;
 	rcpt_stat = deliver_recipient(state, usr_attr);
 	rcpt_stat |= forward_finish(rqst, state.msg_attr, rcpt_stat);
 	if (rcpt_stat == 0 && (rqst->flags & DEL_REQ_FLAG_SUCCESS))
@@ -677,6 +719,7 @@ static int local_deliver(DELIVER_REQUEST *rqst, char *service)
      * Clean up.
      */
     delivered_free(state.loop_info);
+    deliver_attr_free(&state.msg_attr);
 
     return (msg_stat);
 }
@@ -798,7 +841,8 @@ static void pre_init(char *unused_name, char **unused_argv)
 	set_file_limit(var_mailbox_limit);
     }
     alias_maps = maps_create("aliases", var_alias_maps,
-			     DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
+			     DICT_FLAG_LOCK | DICT_FLAG_PARANOID
+			     | DICT_FLAG_FOLD_FIX);
 
     flush_init();
 }
@@ -824,7 +868,9 @@ int     main(int argc, char **argv)
 	VAR_LOCAL_CMD_SHELL, DEF_LOCAL_CMD_SHELL, &var_local_cmd_shell, 0, 0,
 	VAR_MAIL_SPOOL_DIR, DEF_MAIL_SPOOL_DIR, &var_mail_spool_dir, 0, 0,
 	VAR_MAILBOX_TRANSP, DEF_MAILBOX_TRANSP, &var_mailbox_transport, 0, 0,
+	VAR_MBOX_TRANSP_MAPS, DEF_MBOX_TRANSP_MAPS, &var_mbox_transp_maps, 0, 0,
 	VAR_FALLBACK_TRANSP, DEF_FALLBACK_TRANSP, &var_fallback_transport, 0, 0,
+	VAR_FBCK_TRANSP_MAPS, DEF_FBCK_TRANSP_MAPS, &var_fbck_transp_maps, 0, 0,
 	VAR_CMD_EXP_FILTER, DEF_CMD_EXP_FILTER, &var_cmd_exp_filter, 1, 0,
 	VAR_FWD_EXP_FILTER, DEF_FWD_EXP_FILTER, &var_fwd_exp_filter, 1, 0,
 	VAR_EXEC_EXP_FILTER, DEF_EXEC_EXP_FILTER, &var_exec_exp_filter, 1, 0,
@@ -839,6 +885,7 @@ int     main(int argc, char **argv)
 	VAR_EXP_OWN_ALIAS, DEF_EXP_OWN_ALIAS, &var_exp_own_alias,
 	VAR_STAT_HOME_DIR, DEF_STAT_HOME_DIR, &var_stat_home_dir,
 	VAR_MAILTOOL_COMPAT, DEF_MAILTOOL_COMPAT, &var_mailtool_compat,
+	VAR_FROZEN_DELIVERED, DEF_FROZEN_DELIVERED, &var_frozen_delivered,
 	0,
     };
 

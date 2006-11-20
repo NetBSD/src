@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd_state.c,v 1.1.1.3 2004/05/31 00:24:45 heas Exp $	*/
+/*	$NetBSD: qmqpd_state.c,v 1.1.1.3.2.1 2006/11/20 13:30:48 tron Exp $	*/
 
 /*++
 /* NAME
@@ -66,7 +66,7 @@ QMQPD_STATE *qmqpd_state_alloc(VSTREAM *stream)
     state->client = stream;
     state->message = vstring_alloc(1000);
     state->buf = vstring_alloc(100);
-    state->time = time((time_t *) 0);
+    GETTIMEOFDAY(&state->arrival_time);
     qmqpd_peer_init(state);
     state->queue_id = 0;
     state->cleanup = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.h,v 1.1.1.3.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: trivial-rewrite.h,v 1.1.1.3.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -20,6 +20,7 @@
   * Global library.
   */
 #include <tok822.h>
+#include <maps.h>
 
  /*
   * Connection management.
@@ -34,7 +35,7 @@ typedef struct {
     char  **origin;			/* default origin */
     const char *domain_name;		/* name of variable */
     char  **domain;			/* default domain */
-}       RWR_CONTEXT;
+} RWR_CONTEXT;
 
 #define REW_PARAM_VALUE(x) (*(x))	/* make it easy to do it right */
 
@@ -59,6 +60,9 @@ typedef struct {
     char  **def_transport;		/* default transport:nexthop */
     const char *relayhost_name;		/* name of variable */
     char  **relayhost;			/* for relay and default transport */
+    const char *snd_relay_maps_name;	/* name of variable */
+    char  **snd_relay_maps;		/* maptype:mapname */
+    MAPS   *snd_relay_info;		/* handle */
     const char *transport_maps_name;	/* name of variable */
     char  **transport_maps;		/* maptype:mapname */
     struct TRANSPORT_INFO *transport_info;	/* handle */

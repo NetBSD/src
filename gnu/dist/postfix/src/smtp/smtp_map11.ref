@@ -1,5 +1,5 @@
 smtp_map11: -- start foo@example.com --
-smtp_map11: maps_find: hash:map11_map: hash:map11_map(0,0): foo@example.com = bar@com.example
+smtp_map11: maps_find: hash:map11_map: hash:map11_map(0,fold_fix): foo@example.com = bar@com.example
 smtp_map11: mail_addr_find: foo@example.com -> bar@com.example
 smtp_map11: connect to subsystem private/rewrite
 smtp_map11: send attr request = rewrite
@@ -18,7 +18,7 @@ smtp_map11: mail_addr_map: foo@example.com -> 0: bar@com.example
 smtp_map11: smtp_map11_external: foo@example.com -> bar@com.example
 smtp_map11: -- end foo@example.com --
 smtp_map11: -- start bar@example.com --
-smtp_map11: maps_find: hash:map11_map: hash:map11_map(0,0): bar@example.com = bar
+smtp_map11: maps_find: hash:map11_map: hash:map11_map(0,fold_fix): bar@example.com = bar
 smtp_map11: mail_addr_find: bar@example.com -> bar
 smtp_map11: send attr request = rewrite
 smtp_map11: send attr rule = local
@@ -36,7 +36,7 @@ smtp_map11: mail_addr_map: bar@example.com -> 0: bar@MYDOMAIN
 smtp_map11: smtp_map11_external: bar@example.com -> bar@MYDOMAIN
 smtp_map11: -- end bar@example.com --
 smtp_map11: -- start baz@example.com --
-smtp_map11: maps_find: hash:map11_map: hash:map11_map(0,0): baz@example.com = @com.example
+smtp_map11: maps_find: hash:map11_map: hash:map11_map(0,fold_fix): baz@example.com = @com.example
 smtp_map11: mail_addr_find: baz@example.com -> @com.example
 smtp_map11: send attr request = rewrite
 smtp_map11: send attr rule = local
@@ -64,3 +64,4 @@ smtp_map11: mail_addr_find: foo@example.net -> (not found)
 smtp_map11: mail_addr_map: foo@example.net -> (not found)
 smtp_map11: smtp_map11_external: foo@example.net not found
 smtp_map11: -- end foo@example.net --
+smtp_map11: maps_free: hash:map11_map(0,fold_fix)

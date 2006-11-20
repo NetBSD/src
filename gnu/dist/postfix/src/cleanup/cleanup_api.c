@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_api.c,v 1.1.1.6.2.1 2006/07/12 15:06:38 tron Exp $	*/
+/*	$NetBSD: cleanup_api.c,v 1.1.1.6.2.2 2006/11/20 13:30:20 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,8 @@
 /* SYNOPSIS
 /*	#include "cleanup.h"
 /*
-/*	CLEANUP_STATE *cleanup_open()
+/*	CLEANUP_STATE *cleanup_open(src)
+/*	VSTREAM	*src;
 /*
 /*	void	cleanup_control(state, flags)
 /*	CLEANUP_STATE *state;
@@ -46,6 +47,10 @@
 /*	It is OK to add automatic BCC recipient addresses.
 /* .IP CLEANUP_FLAG_FILTER
 /*	Enable header/body filtering. This should be enabled only with mail
+/*	that enters Postfix, not with locally forwarded mail or with bounce
+/*	messages.
+/* .IP CLEANUP_FLAG_MILTER
+/*	Enable Milter applications. This should be enabled only with mail
 /*	that enters Postfix, not with locally forwarded mail or with bounce
 /*	messages.
 /* .IP CLEANUP_FLAG_MAP_OK
@@ -107,7 +112,11 @@
 #include <bounce.h>
 #include <mail_params.h>
 #include <mail_stream.h>
-#include <hold_message.h>
+#include <mail_flow.h>
+
+/* Milter library. */
+
+#include <milter.h>
 
 /* Application-specific. */
 
@@ -115,20 +124,21 @@
 
 /* cleanup_open - open queue file and initialize */
 
-CLEANUP_STATE *cleanup_open(void)
+CLEANUP_STATE *cleanup_open(VSTREAM *src)
 {
     CLEANUP_STATE *state;
-    static char *log_queues[] = {
+    static const char *log_queues[] = {
 	MAIL_QUEUE_DEFER,
 	MAIL_QUEUE_BOUNCE,
+	MAIL_QUEUE_TRACE,
 	0,
     };
-    char  **cpp;
+    const char **cpp;
 
     /*
      * Initialize private state.
      */
-    state = cleanup_state_alloc();
+    state = cleanup_state_alloc(src);
 
     /*
      * Open the queue file. Save the queue file name in a global variable, so
@@ -147,13 +157,13 @@ CLEANUP_STATE *cleanup_open(void)
 	msg_info("cleanup_open: open %s", cleanup_path);
 
     /*
-     * If there is a time to get rid of spurious bounce/defer log files, this
-     * is it. The down side is that this costs performance for every message,
-     * while the probability of spurious bounce/defer log files is quite low.
-     * Perhaps we should put the queue file ID inside the defer and bounce
-     * files, so that the bounce and defer daemons can figure out if a file
-     * is a left-over from a previous message instance. For now, we play safe
-     * and check each time a new queue file is created.
+     * If there is a time to get rid of spurious log files, this is it. The
+     * down side is that this costs performance for every message, while the
+     * probability of spurious log files is quite low.
+     * 
+     * XXX The defer logfile is deleted when the message is moved into the
+     * active queue. We must also remove it now, otherwise mailq produces
+     * nonsense.
      */
     for (cpp = log_queues; *cpp; cpp++) {
 	if (mail_queue_remove(*cpp, state->queue_id) == 0)
@@ -190,9 +200,9 @@ void    cleanup_control(CLEANUP_STATE *state, int flags)
 
 int     cleanup_flush(CLEANUP_STATE *state)
 {
-    char   *junk;
     int     status;
-    char   *encoding;
+    char   *junk;
+    VSTRING *trace_junk;
 
     /*
      * Raise these errors only if we examined all queue file records.
@@ -205,27 +215,91 @@ int     cleanup_flush(CLEANUP_STATE *state)
     }
 
     /*
-     * If there are no errors, be very picky about queue file write errors
-     * because we are about to tell the sender that it can throw away its
-     * copy of the message.
+     * Status sanitization. Always report success when the discard flag was
+     * raised by some user-specified access rule.
+     */
+    if (state->flags & CLEANUP_FLAG_DISCARD)
+	state->errs = 0;
+
+    /*
+     * Apply external mail filter.
      * 
+     * XXX Include test for a built-in action to tempfail this message.
+     */
+    if (CLEANUP_MILTER_OK(state)) {
+	if (state->milters)
+	    cleanup_milter_inspect(state, state->milters);
+	else if (cleanup_milters) {
+	    cleanup_milter_emul_data(state, cleanup_milters);
+	    if (CLEANUP_MILTER_OK(state))
+		cleanup_milter_inspect(state, cleanup_milters);
+	}
+    }
+
+    /*
+     * If there was an error that requires us to generate a bounce message
+     * (mail submitted with the Postfix sendmail command, mail forwarded by
+     * the local(8) delivery agent, or mail re-queued with "postsuper -r"),
+     * send a bounce notification, reset the error flags in case of success,
+     * and request deletion of the the incoming queue file and of the
+     * optional DSN SUCCESS records from virtual alias expansion.
+     * 
+     * XXX It would make no sense to knowingly report success after we already
+     * have bounced all recipients, especially because the information in the
+     * DSN SUCCESS notice is completely redundant compared to the information
+     * in the bounce notice (however, both may be incomplete when the queue
+     * file size would exceed the safety limit).
+     * 
+     * An alternative is to keep the DSN SUCCESS records and to delegate bounce
+     * notification to the queue manager, just like we already delegate
+     * success notification. This requires that we leave the undeliverable
+     * message in the incoming queue; versions up to 20050726 did exactly
+     * that. Unfortunately, this broke with over-size queue files, because
+     * the queue manager cannot handle incomplete queue files (and it should
+     * not try to do so).
+     */
+#define CAN_BOUNCE() \
+	((state->errs & CLEANUP_STAT_MASK_CANT_BOUNCE) == 0 \
+	    && state->sender != 0 \
+	    && (state->flags & CLEANUP_FLAG_BOUNCE) != 0)
+
+    if (state->errs != 0 && CAN_BOUNCE())
+	cleanup_bounce(state);
+
+    /*
      * Optionally, place the message on hold, but only if the message was
-     * received successfully. This involves renaming the queue file before
-     * "finishing" it (or else the queue manager would open it for delivery)
-     * and updating our own idea of the queue file name for error recovery
-     * and for error reporting purposes.
+     * received successfully and only if it's not being discarded for other
+     * reasons. This involves renaming the queue file before "finishing" it
+     * (or else the queue manager would grab it too early) and updating our
+     * own idea of the queue file name for error recovery and for error
+     * reporting purposes.
+     * 
+     * XXX Include test for a built-in action to tempfail this message.
      */
     if (state->errs == 0 && (state->flags & CLEANUP_FLAG_DISCARD) == 0) {
-	if ((state->flags & CLEANUP_FLAG_HOLD) != 0) {
-	    if (hold_message(state->temp1, state->queue_name, state->queue_id) < 0)
-		msg_fatal("%s: problem putting message on hold: %m",
-			  state->queue_id);
+	if ((state->flags & CLEANUP_FLAG_HOLD) != 0
+#ifdef DELAY_ACTION
+	    || state->defer_delay > 0
+#endif
+	    ) {
+	    myfree(state->queue_name);
+#ifdef DELAY_ACTION
+	    state->queue_name = mystrdup((state->flags & CLEANUP_FLAG_HOLD) ?
+				     MAIL_QUEUE_HOLD : MAIL_QUEUE_DEFERRED);
+#else
+	    state->queue_name = mystrdup(MAIL_QUEUE_HOLD);
+#endif
+	    mail_stream_ctl(state->handle,
+			    MAIL_STREAM_CTL_QUEUE, state->queue_name,
+			    MAIL_STREAM_CTL_CLASS, 0,
+			    MAIL_STREAM_CTL_SERVICE, 0,
+#ifdef DELAY_ACTION
+			    MAIL_STREAM_CTL_DELAY, state->defer_delay,
+#endif
+			    MAIL_STREAM_CTL_END);
 	    junk = cleanup_path;
-	    cleanup_path = mystrdup(vstring_str(state->temp1));
+	    cleanup_path = mystrdup(VSTREAM_PATH(state->handle->stream));
 	    myfree(junk);
-	    vstream_control(state->handle->stream,
-			    VSTREAM_CTL_PATH, cleanup_path,
-			    VSTREAM_CTL_END);
 
 	    /*
 	     * XXX: When delivering to a non-incoming queue, do not consume
@@ -237,57 +311,27 @@ int     cleanup_flush(CLEANUP_STATE *state)
 	}
 	state->errs = mail_stream_finish(state->handle, (VSTRING *) 0);
     } else {
+
+	/*
+	 * XXX: When discarding mail, should we consume in_flow tokens? See
+	 * also the comments above for mail that is placed on hold.
+	 */
+#if 0
+	(void) mail_flow_put(1);
+#endif
 	mail_stream_cleanup(state->handle);
-	if ((state->flags & CLEANUP_FLAG_DISCARD) != 0)
-	    state->errs = 0;
     }
     state->handle = 0;
     state->dst = 0;
 
     /*
-     * If there was an error, remove the queue file, after optionally
-     * bouncing it. An incomplete message should never be bounced: it was
-     * canceled by the client, and may not even have an address to bounce to.
-     * That last test is redundant but we keep it just for robustness.
-     * 
-     * If we are responsible for bouncing a message, we must must report success
-     * to the client unless the bounce message file could not be written
-     * (which is just as bad as not being able to write the message queue
-     * file in the first place).
-     * 
-     * Do not log the arrival of a message that will be bounced by the client.
-     * 
-     * XXX When bouncing, should log sender because qmgr won't be able to.
+     * If there was an error, or if the message must be discarded for other
+     * reasons, remove the queue file and the optional trace file with DSN
+     * SUCCESS records from virtual alias expansion.
      */
-#define CAN_BOUNCE() \
-	((state->errs & CLEANUP_STAT_MASK_CANT_BOUNCE) == 0 \
-	    && state->sender != 0 \
-	    && (state->flags & CLEANUP_FLAG_BOUNCE) != 0)
-
-    if (state->errs != 0) {
-	if (CAN_BOUNCE()) {
-	    if (bounce_append(BOUNCE_FLAG_CLEAN, state->queue_id,
-			      state->recip ? state->recip : "unknown",
-			      state->recip ? state->recip : "unknown",
-			      (long) 0, "none", state->time,
-			      "%s", state->reason ? state->reason :
-			      cleanup_strerror(state->errs)) == 0
-		&& bounce_flush(BOUNCE_FLAG_CLEAN, state->queue_name,
-				state->queue_id,
-		(encoding = nvtable_find(state->attr, MAIL_ATTR_ENCODING)) ?
-				encoding : MAIL_ATTR_ENC_NONE,
-				state->sender) == 0) {
-		state->errs = 0;
-	    } else {
-		if (var_soft_bounce == 0) {
-		    msg_warn("%s: bounce message failure", state->queue_id);
-		    state->errs = CLEANUP_STAT_WRITE;
-		}
-	    }
-	}
-	if (REMOVE(cleanup_path))
-	    msg_warn("remove %s: %m", cleanup_path);
-    } else if ((state->flags & CLEANUP_FLAG_DISCARD) != 0) {
+    if (state->errs != 0 || (state->flags & CLEANUP_FLAG_DISCARD) != 0) {
+	if (cleanup_trace_path)
+	    (void) REMOVE(vstring_str(cleanup_trace_path));
 	if (REMOVE(cleanup_path))
 	    msg_warn("remove %s: %m", cleanup_path);
     }
@@ -297,8 +341,13 @@ int     cleanup_flush(CLEANUP_STATE *state)
      * AFTER we have taken responsibility for delivery. Better to deliver
      * twice than to lose mail.
      */
+    trace_junk = cleanup_trace_path;
+    cleanup_trace_path = 0;			/* don't delete upon error */
     junk = cleanup_path;
     cleanup_path = 0;				/* don't delete upon error */
+
+    if (trace_junk)
+	vstring_free(trace_junk);
     myfree(junk);
 
     /*
@@ -315,5 +364,12 @@ int     cleanup_flush(CLEANUP_STATE *state)
 
 void    cleanup_free(CLEANUP_STATE *state)
 {
+
+    /*
+     * Emulate disconnect event. CLEANUP_FLAG_MILTER may be turned off after
+     * we have started.
+     */
+    if (cleanup_milters != 0 && state->milters == 0)
+	milter_disc_event(cleanup_milters);
     cleanup_state_free(state);
 }

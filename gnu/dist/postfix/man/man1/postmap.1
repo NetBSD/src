@@ -1,4 +1,4 @@
-.\"	$NetBSD: postmap.1,v 1.1.1.7.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: postmap.1,v 1.1.1.7.2.2 2006/11/20 13:30:17 tron Exp $
 .\"
 .TH POSTMAP 1 
 .ad
@@ -52,8 +52,16 @@ starts with whitespace continues a logical line.
 The \fIkey\fR and \fIvalue\fR are processed as is, except that
 surrounding white space is stripped off. Unlike with Postfix alias
 databases, quotes cannot be used to protect lookup keys that contain
-special characters such as `#' or whitespace. The \fIkey\fR is mapped
-to lowercase to make mapping lookups case insensitive.
+special characters such as `#' or whitespace.
+
+By default the lookup key is mapped to lowercase to make
+the lookups case insensitive; as of Postfix 2.3 this case
+folding happens only with tables whose lookup keys are
+fixed-case strings such as btree:, dbm: or hash:. With
+earlier versions, the lookup key is folded even with tables
+where a lookup field can match both upper and lower case
+text, such as regexp: and pcre:. This resulted in loss of
+information with $\fInumber\fR substitutions.
 .SH "COMMAND-LINE ARGUMENTS"
 .na
 .nf
@@ -71,7 +79,7 @@ values from the standard input stream. The exit status is zero
 when at least one of the requested keys was found.
 .IP \fB-f\fR
 Do not fold the lookup key to lower case while creating or querying
-a map.
+a table.
 .IP \fB-i\fR
 Incremental mode. Read entries from standard input and do not
 truncate an existing database. By default, \fBpostmap\fR(1) creates

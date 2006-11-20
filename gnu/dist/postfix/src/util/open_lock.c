@@ -1,4 +1,4 @@
-/*	$NetBSD: open_lock.c,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: open_lock.c,v 1.1.1.2.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,10 +8,10 @@
 /* SYNOPSIS
 /*	#include <open_lock.h>
 /*
-/*	VSTREAM	*open_lock(path, int flags, int mode, why)
+/*	VSTREAM	*open_lock(path, flags, mode, why)
 /*	const char *path;
 /*	int	flags;
-/*	int	mode;
+/*	mode_t	mode;
 /*	VSTRING *why;
 /* DESCRIPTION
 /*	This module opens or creates the named file and attempts to
@@ -57,7 +57,7 @@
 
 /* open_lock - open file and lock it for exclusive access */
 
-VSTREAM *open_lock(const char *path, int flags, int mode, VSTRING *why)
+VSTREAM *open_lock(const char *path, int flags, mode_t mode, VSTRING *why)
 {
     VSTREAM *fp;
 

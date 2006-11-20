@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_send_fd.c,v 1.1.1.1.2.2 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: unix_send_fd.c,v 1.1.1.1.2.3 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -38,6 +38,7 @@
 #include <sys_defs.h>			/* includes <sys/types.h> */
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <string.h>
 
 /* Utility library. */
 
@@ -54,7 +55,7 @@ int     unix_send_fd(int fd, int sendfd)
      * not compile with version <2 Linux libraries.
      */
 #ifdef CANT_USE_SEND_RECV_MSG
-    char   *myname = "unix_send_fd";
+    const char *myname = "unix_send_fd";
 
     msg_warn("%s: your system has no support for file descriptor passing",
 	     myname);
@@ -75,6 +76,7 @@ int     unix_send_fd(int fd, int sendfd)
     }       control_un;
     struct cmsghdr *cmptr;
 
+    memset((char *) &msg, 0, sizeof(msg));		/* Fix 200512 */
     msg.msg_control = control_un.control;
     msg.msg_controllen = CMSG_LEN(sizeof(sendfd));	/* Fix 200506 */
 

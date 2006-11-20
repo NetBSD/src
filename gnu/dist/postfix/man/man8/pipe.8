@@ -1,4 +1,4 @@
-.\"	$NetBSD: pipe.8,v 1.1.1.7.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: pipe.8,v 1.1.1.7.2.2 2006/11/20 13:30:18 tron Exp $
 .\"
 .TH PIPE 8 
 .ad
@@ -34,8 +34,8 @@ appropriate.
 .ad
 .fi
 Some external commands cannot handle more than one recipient
-per delivery request. Examples of such transports are pagers,
-fax machines, and so on.
+per delivery request. Examples of such transports are pagers
+or fax machines.
 
 To prevent Postfix from sending multiple recipients per delivery
 request, specify
@@ -53,12 +53,23 @@ entry for the pipe-based delivery transport.
 .fi
 The external command attributes are given in the \fBmaster.cf\fR
 file at the end of a service definition.  The syntax is as follows:
-.IP "\fBdirectory=\fIpathname\fR (optional, default: \fB$queue_directory\fR)"
+.IP "\fBchroot=\fIpathname\fR (optional)"
+Change the process root directory and working directory to
+the named directory. This happens before switching to the
+privileges specified with the \fBuser\fR attribute, and
+before executing the optional \fBdirectory=\fIpathname\fR
+directive. Delivery is deferred in case of failure.
+.sp
+This feature is available as of Postfix 2.3.
+.IP "\fBdirectory=\fIpathname\fR (optional)"
 Change to the named directory before executing the external command.
+The directory must be accessible for the user specified with the
+\fBuser\fR attribute (see below).
+The default working directory is \fB$queue_directory\fR.
 Delivery is deferred in case of failure.
 .sp
 This feature is available as of Postfix 2.2.
-.IP "\fBeol=string\fR (optional, default: \fB\en\fR)"
+.IP "\fBeol=\fIstring\fR (optional, default: \fB\en\fR)"
 The output record delimiter. Typically one would use either
 \fB\er\en\fR or \fB\en\fR. The usual C-style backslash escape
 sequences are recognized: \fB\ea \eb \ef \en \er \et \ev
@@ -118,12 +129,42 @@ by, for example, \fBBSMTP\fR software.
 Prepend "\fB>\fR" to lines starting with "\fBFrom \fR". This is expected
 by, for example, \fBUUCP\fR software.
 .RE
+.IP "\fBnull_sender\fR=\fIreplacement\fR (default: MAILER-DAEMON)"
+Replace the null sender address, which is typically used
+for delivery status notifications, with the specified text
+when expanding the \fB$sender\fR command-line macro, and
+when generating a From_ or Return-Path: message header.
+
+If the null sender replacement text is a non-empty string
+then it is affected by the \fBq\fR flag for address quoting
+in command-line arguments.
+
+The null sender replacement text may be empty; this form
+is recommended for content filters that feed mail back into
+Postfix. The empty sender address is not affected by the
+\fBq\fR flag for address quoting in command-line arguments.
+.sp
+Caution: a null sender address is easily mis-parsed by
+naive software. For example, when the \fBpipe\fR(8) daemon
+executes a command such as:
+
+.ti +4
+command -f$sender -- $recipient (\fIbad\fR)
+
+the command will mis-parse the -f option value when the
+sender address is a null string.  For correct parsing,
+specify \fB$sender\fR as an argument by itself:
+
+.ti +4
+command -f $sender -- $recipient (\fIgood\fR)
+
+This feature is available with Postfix 2.3 and later.
 .IP "\fBsize\fR=\fIsize_limit\fR (optional)"
-Messages greater in size than this limit (in bytes) will be bounced
-back to the sender.
+Messages greater in size than this limit (in bytes) will
+be returned to the sender as undeliverable.
 .IP "\fBuser\fR=\fIusername\fR (required)"
 .IP "\fBuser\fR=\fIusername\fR:\fIgroupname\fR"
-The external command is executed with the rights of the
+Execute the external command with the rights of the
 specified \fIusername\fR.  The software refuses to execute
 commands with root privileges, or with the privileges of the
 mail system owner. If \fIgroupname\fR is specified, the
@@ -174,7 +215,7 @@ For example, with an address \fIuser+foo@domain\fR the mailbox is
 \fIuser+foo\fR.
 .sp
 A command-line argument that contains \fB${\fBmailbox\fR}\fR
-expands into as many command-line arguments as there are recipients.
+expands to as many command-line arguments as there are recipients.
 .sp
 This information is modified by the \fBu\fR flag for case folding.
 .IP \fB${\fBnexthop\fR}\fR
@@ -185,7 +226,7 @@ This information is modified by the \fBh\fR flag for case folding.
 This macro expands to the complete recipient address.
 .sp
 A command-line argument that contains \fB${\fBrecipient\fR}\fR
-expands into as many command-line arguments as there are recipients.
+expands to as many command-line arguments as there are recipients.
 .sp
 This information is modified by the \fBhqu\fR flags for quoting
 and case folding.
@@ -207,7 +248,10 @@ received without SASL authentication.
 .sp
 This is available in Postfix 2.2 and later.
 .IP \fB${\fBsender\fR}\fR
-This macro expands to the envelope sender address.
+This macro expands to the envelope sender address. By default,
+the null sender address expands to MAILER-DAEMON; this can
+be changed with the \fBnull_sender\fR attribute, as described
+above.
 .sp
 This information is modified by the \fBq\fR flag for quoting.
 .IP \fB${\fBsize\fR}\fR
@@ -223,11 +267,22 @@ into as many command-line arguments as there are recipients.
 .sp
 This information is modified by the \fBu\fR flag for case folding.
 .RE
+.SH "STANDARDS"
+.na
+.nf
+RFC 3463 (Enhanced status codes)
 .SH DIAGNOSTICS
 .ad
 .fi
 Command exit status codes are expected to
 follow the conventions defined in <\fBsysexits.h\fR>.
+Exit status 0 means normal successful completion.
+
+Postfix version 2.3 and later support RFC 3463-style enhanced
+status codes.  If a command terminates with a non-zero exit
+status, and the command output begins with an enhanced
+status code, this status code takes precedence over the
+non-zero exit status.
 
 Problems and transactions are logged to \fBsyslogd\fR(8).
 Corrupted message files are marked so that the queue manager
@@ -281,6 +336,9 @@ configuration files.
 .IP "\fBdaemon_timeout (18000s)\fR"
 How much time a Postfix daemon process may take to handle a
 request before it is terminated by a built-in watchdog timer.
+.IP "\fBdelay_logging_resolution_limit (2)\fR"
+The maximal number of digits after the decimal point when logging
+sub-second delay values.
 .IP "\fBexport_environment (see 'postconf -d' output)\fR"
 The list of environment variables that a Postfix process will export
 to non-Postfix processes.

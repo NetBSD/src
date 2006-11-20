@@ -230,6 +230,10 @@ and there are no surprises. If a recipient probe fails, then Postfix
 rejects mail for the recipient address.  If a recipient probe
 succeeds, then Postfix accepts mail for the recipient address. </p>
 
+<p> By default, address verification results are not saved. To avoid
+probing the same address repeatedly, you can store the result in a
+<a href="#caching">persistent database</a> as described later.  </p>
+
 <blockquote>
 <pre>
 /etc/postfix/main.cf:
@@ -274,9 +278,9 @@ specific domains that often appear in forged email. </p>
 </pre>
 </blockquote>
 
-<p> A list of frequently forged MAIL FROM domains can be found at
-http://www.monkeys.com/anti-spam/filtering/sender-domain-validate.in.
-</p>
+<p> At some point in cyberspace/time, a list of frequently forged
+MAIL FROM domains could be found at
+http://www.monkeys.com/anti-spam/filtering/sender-domain-validate.in.  </p>
 
 <p> NOTE: One of the first things you might want to do is to turn
 on sender address verification for all your own domains. </p>
@@ -354,7 +358,7 @@ of positive and negative results. Refer to the verify(8) manual
 page for details. </p>
 
 <p> The address_verify_map (NOTE: singular) configuration parameter
-specifies an optional persistent database for sender address
+specifies an optional database for sender or recipient address
 verification results.  If you don't specify a file, all address
 verification information is lost after "postfix reload" or "postfix
 stop". </p>
@@ -416,7 +420,9 @@ parameters when it delivers an address verification probe message.
 
 <p> First, the address_verify_relayhost parameter allows you to
 override the relayhost setting, and the address_verify_transport_maps
-parameter allows you to override the transport_maps setting. </p>
+parameter allows you to override the transport_maps setting. 
+The address_verify_sender_dependent_relayhost_maps parameter
+does the same for sender-dependent relayhost selection. </p>
 
 <p> Second, each address class is given its own address verification
 version of the message delivery transport, as shown in the table

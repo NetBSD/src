@@ -36,7 +36,8 @@ the Postfix source code, in the directory examples/smtpd-policy.
 to Postfix. It's much easier to develop a new feature in few lines
 of Perl, than trying to do the same in C code. The difference in
 performance will be unnoticeable except in the most demanding
-environments. </p>
+environments. On active systems a policy daemon process is used
+multiple times, for up to $max_use incoming SMTP connections. </p>
 
 <p> This document covers the following topics: </p>
 
@@ -78,16 +79,23 @@ helo_name=some.domain.tld
 queue_id=8045F2AB23
 sender=foo@bar.tld
 recipient=bar@foo.tld
+recipient_count=0
 client_address=1.2.3.4
 client_name=another.domain.tld
+reverse_client_name=another.domain.tld
 instance=123.456.7
+<b>Postfix version 2.2 and later:</b>
 sasl_method=plain
 sasl_username=you
 sasl_sender=
+size=12345
 ccert_subject=solaris9.porcupine.org
 ccert_issuer=Wietse+20Venema
 ccert_fingerprint=C2:9D:F4:87:71:73:73:D9:18:E7:C2:F3:C1:DA:6E:04
-size=12345
+<b>Postfix version 2.3 and later:</b>
+encryption_protocol=TLSv1/SSLv3
+encryption_cipher=DHE-RSA-AES256-SHA
+encryption_keysize=256
 etrn_domain=
 [empty line]
 </pre>
@@ -109,12 +117,28 @@ etrn_domain=
     </p>
 
     <li> <p> When an attribute value is unavailable, the client
-    either does not send the attribute, or sends the attribute with
-    an empty value ("name="). </p>
+    either does not send the attribute, sends the attribute with
+    an empty value ("name="), or sends a zero value ("name=0") in
+    the case of a numerical attribute. </p>
+
+    <li> <p> The "recipient" attribute is available only in the
+    "RCPT TO" stage, and in the "DATA" and "END-OF-MESSAGE" stages
+    when Postfix accepted only one recipient for the current message.
+    </p>
+
+    <li> <p> The "recipient_count" attribute (Postfix 2.3 and later)
+    is non-zero only in the "DATA" and "END-OF-MESSAGE" stages. It
+    specifies the number of recipients that Postfix accepted for
+    the current message.  </p>
 
     <li> <p> The client address is an IPv4 dotted quad in the form
     1.2.3.4 or it is an IPv6 address in the form 1:2:3::4:5:6.
     </p>
+
+    <li> <p> For a discussion of the differences between reverse
+    and verified client_name information, see the
+    reject_unknown_client_hostname discussion in the postconf(5)
+    document.  </p>
 
     <li> <p> An attribute name must not contain "=", null or newline,
     and an attribute value must not contain null or newline. </p>
@@ -131,13 +155,21 @@ etrn_domain=
 
     <li> <p> The "sasl_*" attributes (Postfix 2.2 and later) specify
     information about how the client was authenticated via SASL.
+    These attributes are empty in case of no SASL authentication.
     </p>
 
     <li> <p> The "ccert_*" attributes (Postfix 2.2 and later) specify
-    information about how the client was authenticated via TLS.  As
-    of Postfix 2.2.11 these attribute values are encoded as xtext:
-    some characters are represented by +XX, where XX is the two-digit
-    hecadecimal representation of the character value.  </p>
+    information about how the client was authenticated via TLS.
+    These attributes are empty in case of no certificate authentication.
+    As of Postfix 2.2.11 these attribute values are encoded as
+    xtext: some characters are represented by +XX, where XX is the
+    two-digit hecadecimal representation of the character value.
+    </p>
+
+    <li> <p> The "encryption_*" attributes (Postfix 2.3 and later)
+    specify information about how the connection is encrypted. With
+    plaintext connections the protocol and cipher attributes are
+    empty and the keysize is zero.  </p>
 
     <li> <p> The "etrn_domain" attribute is defined only in the
     context of the ETRN command, and specifies the ETRN command
@@ -381,8 +413,9 @@ inet:127.0.0.1:9998". </p>
 <h2><a name="frequent">Greylisting mail from frequently forged domains</a></h2>
 
 <p> It is relatively safe to turn on greylisting for specific
-domains that often appear in forged email.  A list of frequently
-forged MAIL FROM domains can be found at
+domains that often appear in forged email.  At some point
+in cyberspace/time a list of frequently
+forged MAIL FROM domains could be found at
 http://www.monkeys.com/anti-spam/filtering/sender-domain-validate.in.
 
 <blockquote>

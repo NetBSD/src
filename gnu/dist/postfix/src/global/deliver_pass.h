@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_pass.h,v 1.1.1.3 2004/05/31 00:24:29 heas Exp $	*/
+/*	$NetBSD: deliver_pass.h,v 1.1.1.3.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 #ifndef _DELIVER_PASS_H_INCLUDED_
 #define _DELIVER_PASS_H_INCLUDED_
@@ -22,7 +22,7 @@
  /*
   * External interface.
   */
-extern int deliver_pass(const char *, const char *, DELIVER_REQUEST *, const char *, const char *, long);
+extern int deliver_pass(const char *, const char *, DELIVER_REQUEST *, RECIPIENT *);
 extern int deliver_pass_all(const char *, const char *, DELIVER_REQUEST *);
 
 /* LICENSE

@@ -1,4 +1,4 @@
-/*	$NetBSD: name_mask.c,v 1.1.1.2.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: name_mask.c,v 1.1.1.2.2.2 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -24,7 +24,15 @@
 /*	const char *names;
 /*	int	flags;
 /*
-/*	const char *str_name_mask_opt(context, table, mask, flags)
+/*	int	name_mask_delim_opt(context, table, names, delim, flags)
+/*	const char *context;
+/*	NAME_MASK *table;
+/*	const char *names;
+/*	const char *delim;
+/*	int	flags;
+/*
+/*	const char *str_name_mask_opt(buf, context, table, mask, flags)
+/*	VSTRING	*buf;
 /*	const char *context;
 /*	NAME_MASK *table;
 /*	int	mask;
@@ -40,9 +48,12 @@
 /*	upon each call.
 /*
 /*	name_mask_opt() and str_name_mask_opt() are extended versions
-/*	with additional fine control.
+/*	with additional fine control. name_mask_delim_opt() supports
+/*	non-default delimiter characters.
 /*
 /*	Arguments:
+/* .IP buf
+/*	Null pointer or pointer to buffer storage.
 /* .IP context
 /*	What kind of names and
 /*	masks are being manipulated, in order to make error messages
@@ -56,16 +67,31 @@
 /*	A bit mask.
 /* .IP flags
 /*	Bit-wise OR of zero or more of the following:
+/* .IP delim
+/*	Delimiter characters to use instead of whitespace and commas.
 /* .RS
-/* .IP NAME_MASK_MATCH_REQ
+/* .IP NAME_MASK_FATAL
 /*	Require that all names listed in \fIname\fR exist in \fItable\fR,
 /*	and that all bits listed in \fImask\fR exist in \fItable\fR.
+/*	Terminate with a fatal run-time error if this condition is not met.
 /*	This feature is enabled by default when calling name_mask()
 /*	or str_name_mask().
+/* .IP NAME_MASK_RETURN
+/*	Require that all names listed in \fIname\fR exist in \fItable\fR,
+/*	and that all bits listed in \fImask\fR exist in \fItable\fR.
+/*	Log a warning, and return 0 (name_mask()) or a null pointer
+/*	(str_name_mask()) if this condition is not met.
+/* .IP NAME_MASK_NUMBER
+/*	Require that all bits listed in \fImask\fR exist in \fItable\fR.
+/*	For unrecognized bits, print the numerical hexadecimal form.
 /* .IP NAME_MASK_ANY_CASE
 /*	Enable case-insensitive matching.
 /*	This feature is not enabled by default when calling name_mask();
 /*	it has no effect with str_name_mask().
+/* .IP NAME_MASK_COMMA
+/*	Use comma instead of space when converting a mask to string.
+/* .IP NAME_MASK_PIPE
+/*	Use "|" instead of space when converting a mask to string.
 /* .RE
 /*	The value NAME_MASK_NONE explicitly requests no features,
 /*	and NAME_MASK_DEFAULT enables the default options.
@@ -103,32 +129,42 @@
 
 #define STR(x) vstring_str(x)
 
-/* name_mask_opt - compute mask corresponding to list of names */
+/* name_mask_delim_opt - compute mask corresponding to list of names */
 
-int     name_mask_opt(const char *context, NAME_MASK *table, const char *names,
-		              int flags)
+int     name_mask_delim_opt(const char *context, NAME_MASK *table,
+		            const char *names, const char *delim, int flags)
 {
-    char   *myname = "name_mask";
+    const char *myname = "name_mask";
     char   *saved_names = mystrdup(names);
     char   *bp = saved_names;
     int     result = 0;
     NAME_MASK *np;
     char   *name;
+    int     (*lookup) (const char *, const char *);
+
+    if (flags & NAME_MASK_ANY_CASE)
+	lookup = strcasecmp;
+    else
+	lookup = strcmp;
 
     /*
      * Break up the names string, and look up each component in the table. If
      * the name is found, merge its mask with the result.
      */
-    while ((name = mystrtok(&bp, ", \t\r\n")) != 0) {
+    while ((name = mystrtok(&bp, delim)) != 0) {
 	for (np = table; /* void */ ; np++) {
 	    if (np->name == 0) {
-		if (flags & NAME_MASK_MATCH_REQ)
+		if (flags & NAME_MASK_FATAL)
 		    msg_fatal("unknown %s value \"%s\" in \"%s\"",
 			      context, name, names);
+		if (flags & NAME_MASK_RETURN) {
+		    msg_warn("unknown %s value \"%s\" in \"%s\"",
+			     context, name, names);
+		    return (0);
+		}
 		break;
 	    }
-	    if (((flags & NAME_MASK_ANY_CASE) ? strcasecmp : strcmp)
-			(name, np->name) == 0) {
+	    if (lookup(name, np->name) == 0) {
 		if (msg_verbose)
 		    msg_info("%s: %s", myname, name);
 		result |= np->mask;
@@ -142,33 +178,46 @@ int     name_mask_opt(const char *context, NAME_MASK *table, const char *names,
 
 /* str_name_mask_opt - mask to string */
 
-const char *str_name_mask_opt(const char *context, NAME_MASK *table,
+const char *str_name_mask_opt(VSTRING *buf, const char *context,
+			              NAME_MASK *table,
 			              int mask, int flags)
 {
-    char   *myname = "name_mask";
+    const char *myname = "name_mask";
     NAME_MASK *np;
     int     len;
-    static VSTRING *buf = 0;
+    static VSTRING *my_buf = 0;
+    int     delim = (flags & NAME_MASK_COMMA ? ',' :
+		     (flags & NAME_MASK_PIPE ? '|' : ' '));
 
-    if (buf == 0)
-	buf = vstring_alloc(1);
-
+    if (buf == 0) {
+	if (my_buf == 0)
+	    my_buf = vstring_alloc(1);
+	buf = my_buf;
+    }
     VSTRING_RESET(buf);
 
     for (np = table; mask != 0; np++) {
 	if (np->name == 0) {
-	    if (flags & NAME_MASK_MATCH_REQ)
-		msg_fatal("%s: invalid %s bit in mask: 0x%x",
+	    if (flags & NAME_MASK_FATAL) {
+		msg_fatal("%s: unknown %s bit in mask: 0x%x",
 			  myname, context, mask);
+	    } else if (flags & NAME_MASK_RETURN) {
+		msg_warn("%s: unknown %s bit in mask: 0x%x",
+			 myname, context, mask);
+		return (0);
+	    } else if (flags & NAME_MASK_NUMBER) {
+		vstring_sprintf_append(buf, "0x%x%c", mask, delim);
+	    }
 	    break;
 	}
 	if (mask & np->mask) {
 	    mask &= ~np->mask;
-	    vstring_sprintf_append(buf, "%s ", np->name);
+	    vstring_sprintf_append(buf, "%s%c", np->name, delim);
 	}
     }
     if ((len = VSTRING_LEN(buf)) > 0)
 	vstring_truncate(buf, len - 1);
+    VSTRING_TERMINATE(buf);
 
     return (STR(buf));
 }
@@ -178,7 +227,7 @@ const char *str_name_mask_opt(const char *context, NAME_MASK *table,
  /*
   * Stand-alone test program.
   */
-
+#include <stdlib.h>
 #include <vstream.h>
 
 int     main(int argc, char **argv)
@@ -196,7 +245,8 @@ int     main(int argc, char **argv)
     while (--argc && *++argv) {
 	mask = name_mask("test", table, *argv);
 	vstream_printf("%s -> 0x%x -> %s\n",
-		       *argv, mask, str_name_mask("mask_test", table, mask));
+		       *argv, mask, str_name_mask((VSTRING *) 0, "mask_test",
+						  table, mask));
 	vstream_fflush(VSTREAM_OUT);
     }
     vstring_free(buf);

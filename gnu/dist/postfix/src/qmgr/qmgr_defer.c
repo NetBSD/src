@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_defer.c,v 1.1.1.4 2004/05/31 00:24:44 heas Exp $	*/
+/*	$NetBSD: qmgr_defer.c,v 1.1.1.4.2.1 2006/11/20 13:30:47 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,18 +8,18 @@
 /* SYNOPSIS
 /*	#include "qmgr.h"
 /*
-/*	void	qmgr_defer_recipient(message, recipient, reason)
+/*	void	qmgr_defer_recipient(message, recipient, dsn)
 /*	QMGR_MESSAGE *message;
-/*	QMGR_RCPT *recipient;
-/*	const char *reason;
+/*	RECIPIENT *recipient;
+/*	DSN	*dsn;
 /*
-/*	void	qmgr_defer_todo(queue, reason)
+/*	void	qmgr_defer_todo(queue, dsn)
 /*	QMGR_QUEUE *queue;
-/*	const char *reason;
+/*	DSN	*dsn;
 /*
-/*	QMGR_QUEUE *qmgr_defer_transport(transport, reason)
+/*	QMGR_QUEUE *qmgr_defer_transport(transport, dsn)
 /*	QMGR_TRANSPORT *transport;
-/*	const char *reason;
+/*	DSN	*dsn;
 /* DESCRIPTION
 /*	qmgr_defer_recipient() defers delivery of the named message to
 /*	the named recipient. It updates the message structure and writes
@@ -45,10 +45,8 @@
 /*	host (or local user).
 /* .IP transport
 /*	Specifies a message delivery transport.
-/* .IP reason
-/*	Free-format text that describes why delivery is deferred; this
-/*	used for logging purposes, and for updating the message-specific
-/*	\fIdefer\fR log.
+/* .IP dsn
+/*	See dsn(3).
 /* BUGS
 /*	The side effects of calling this routine are quite dramatic.
 /* DIAGNOSTICS
@@ -88,47 +86,40 @@
 
 /* qmgr_defer_transport - defer todo entries for named transport */
 
-void    qmgr_defer_transport(QMGR_TRANSPORT *transport, const char *reason)
+void    qmgr_defer_transport(QMGR_TRANSPORT *transport, DSN *dsn)
 {
-    char   *myname = "qmgr_defer_transport";
     QMGR_QUEUE *queue;
     QMGR_QUEUE *next;
 
-    /*
-     * Sanity checks.
-     */
-    if (reason == 0)
-	msg_panic("%s: null reason", myname);
     if (msg_verbose)
-	msg_info("defer transport %s: %s", transport->name, reason);
+	msg_info("defer transport %s: %s %s",
+		 transport->name, dsn->status, dsn->reason);
 
     /*
      * Proceed carefully. Queues may disappear as a side effect.
      */
     for (queue = transport->queue_list.next; queue; queue = next) {
 	next = queue->peers.next;
-	qmgr_defer_todo(queue, reason);
+	qmgr_defer_todo(queue, dsn);
     }
 }
 
 /* qmgr_defer_todo - defer all todo queue entries for specific site */
 
-void    qmgr_defer_todo(QMGR_QUEUE *queue, const char *reason)
+void    qmgr_defer_todo(QMGR_QUEUE *queue, DSN *dsn)
 {
-    char   *myname = "qmgr_defer_todo";
     QMGR_ENTRY *entry;
     QMGR_ENTRY *next;
     QMGR_MESSAGE *message;
-    QMGR_RCPT *recipient;
+    RECIPIENT *recipient;
     int     nrcpt;
 
     /*
      * Sanity checks.
      */
-    if (reason == 0)
-	msg_panic("%s: null reason", myname);
     if (msg_verbose)
-	msg_info("defer site %s: %s", queue->name, reason);
+	msg_info("defer site %s: %s %s",
+		 queue->name, dsn->status, dsn->reason);
 
     /*
      * Proceed carefully. Queue entries will disappear as a side effect.
@@ -138,7 +129,7 @@ void    qmgr_defer_todo(QMGR_QUEUE *queue, const char *reason)
 	message = entry->message;
 	for (nrcpt = 0; nrcpt < entry->rcpt_list.len; nrcpt++) {
 	    recipient = entry->rcpt_list.info + nrcpt;
-	    qmgr_defer_recipient(message, recipient, reason);
+	    qmgr_defer_recipient(message, recipient, dsn);
 	}
 	qmgr_entry_done(entry, QMGR_QUEUE_TODO);
     }
@@ -146,23 +137,15 @@ void    qmgr_defer_todo(QMGR_QUEUE *queue, const char *reason)
 
 /* qmgr_defer_recipient - defer delivery of specific recipient */
 
-void    qmgr_defer_recipient(QMGR_MESSAGE *message, QMGR_RCPT *recipient,
-			             const char *reason)
+void    qmgr_defer_recipient(QMGR_MESSAGE *message, RECIPIENT *recipient,
+			             DSN *dsn)
 {
-    char   *myname = "qmgr_defer_recipient";
-
-    /*
-     * Sanity checks.
-     */
-    if (reason == 0)
-	msg_panic("%s: reason 0", myname);
+    MSG_STATS stats;
 
     /*
      * Update the message structure and log the message disposition.
      */
     message->flags |= defer_append(message->tflags, message->queue_id,
-				   recipient->orig_rcpt, recipient->address,
-				   recipient->offset, "none",
-				   message->arrival_time,
-       "delivery temporarily suspended: %s", reason);
+				 QMGR_MSG_STATS(&stats, message), recipient,
+				   "none", dsn);
 }

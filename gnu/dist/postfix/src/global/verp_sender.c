@@ -1,4 +1,4 @@
-/*	$NetBSD: verp_sender.c,v 1.1.1.2 2004/05/31 00:24:36 heas Exp $	*/
+/*	$NetBSD: verp_sender.c,v 1.1.1.2.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -68,16 +68,16 @@
 VSTRING *verp_sender(VSTRING *buf, const char *delimiters,
 		             const char *sender, const char *recipient)
 {
-    int     send_local_len;
-    int     rcpt_local_len;
+    ssize_t send_local_len;
+    ssize_t rcpt_local_len;
     const char *cp;
 
     /*
      * Change prefix@origin into prefix+user=domain@origin.
      */
-    send_local_len = ((cp = strrchr(sender, '@')) ?
+    send_local_len = ((cp = strrchr(sender, '@')) != 0 ?
 		      cp - sender : strlen(sender));
-    rcpt_local_len = ((cp = strrchr(recipient, '@')) ?
+    rcpt_local_len = ((cp = strrchr(recipient, '@')) != 0 ?
 		      cp - recipient : strlen(recipient));
     vstring_strncpy(buf, sender, send_local_len);
     VSTRING_ADDCH(buf, delimiters[0] & 0xff);

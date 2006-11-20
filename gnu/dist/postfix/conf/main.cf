@@ -1,15 +1,16 @@
-#	$NetBSD: main.cf,v 1.11.2.1 2006/07/12 15:06:33 tron Exp $
+#	$NetBSD: main.cf,v 1.11.2.2 2006/11/20 13:30:15 tron Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
-# of all 300+ parameters. See the postconf(5) manual page for a
-# complete list.
+# of all parameters. For the syntax, and for a complete parameter
+# list, see the postconf(5) manual page (command: "man 5 postconf").
 #
-# The general format of each line is: parameter = value. Lines
-# that begin with whitespace continue the previous line. A value can
-# contain references to other $names or ${name}s.
+# For common configuration examples, see BASIC_CONFIGURATION_README
+# and STANDARD_CONFIGURATION_README. To find these documents, use
+# the command "postconf html_directory readme_directory", or go to
+# http://www.postfix.org/.
 #
-# NOTE - CHANGE NO MORE THAN 2-3 PARAMETERS AT A TIME, AND TEST IF
-# POSTFIX STILL WORKS AFTER EVERY CHANGE.
+# For best results, change no more than 2-3 parameters at a time,
+# and test if Postfix still works after every change.
 
 # SOFT BOUNCE
 #

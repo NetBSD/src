@@ -46,8 +46,8 @@
 #	written in main.cf, which is normally world-readable.  Support
 #	for this form will be removed in a future Postfix version.
 #
-#	Postfix 2.2 has enhanced query interfaces for MySQL and PostgreSQL,
-#	these now include features previously available only in the
+#	Postfix 2.2 has enhanced query interfaces for MySQL and PostgreSQL.
+#	These include features that were previously available only in the
 #	Postfix LDAP client. This work also created an opportunity for
 #	improvements in the LDAP interface. The primary compatibility
 #	issue is that \fBresult_filter\fR (a name that has caused some
@@ -292,6 +292,8 @@
 #	for LDAP lookups.
 #
 #	NOTE: DO NOT define this parameter for local(8) aliases.
+#
+#	This feature is available in Postfix 1.0 and later.
 # .IP "\fBresult_attribute (default: maildrop)\fR"
 #	The attribute(s) Postfix will read from any directory
 #	entries returned by the lookup, to be resolved to an email

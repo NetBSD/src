@@ -1,31 +1,33 @@
-/*	$NetBSD: stream_test.c,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: stream_test.c,v 1.1.1.2.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 #include "sys_defs.h"
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <stropts.h>
-#include "iostuff.h"
 
+#include "iostuff.h"
 #include "msg.h"
 #include "msg_vstream.h"
 #include "listen.h"
 #include "connect.h"
 
+#ifdef SUNOS5
+#include <stropts.h>
+
 #define FIFO	"/tmp/test-fifo"
 
 static const char *progname;
 
-static  print_fstat(int fd)
+static void print_fstat(int fd)
 {
     struct stat st;
 
     if (fstat(fd, &st) < 0)
 	msg_fatal("fstat: %m");
     vstream_printf("fd	%d\n", fd);
-    vstream_printf("dev	%d\n", st.st_dev);
-    vstream_printf("ino	%d\n", st.st_ino);
+    vstream_printf("dev	%ld\n", (long) st.st_dev);
+    vstream_printf("ino	%ld\n", (long) st.st_ino);
     vstream_fflush(VSTREAM_OUT);
 }
 
@@ -34,7 +36,7 @@ static NORETURN usage(void)
     msg_fatal("usage: %s [-p] [-n count] [-v]", progname);
 }
 
-main(int argc, char **argv)
+int     main(int argc, char **argv)
 {
     int     server_fd;
     int     client_fd;
@@ -101,4 +103,11 @@ main(int argc, char **argv)
     }
     if (close(server_fd) < 0)
 	msg_fatal("close server fd");
+    return (0);
 }
+#else
+int     main(int argc, char **argv)
+{
+    return (0);
+}
+#endif

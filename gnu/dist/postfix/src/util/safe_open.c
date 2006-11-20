@@ -1,4 +1,4 @@
-/*	$NetBSD: safe_open.c,v 1.1.1.5.2.1 2006/07/31 19:16:54 tron Exp $	*/
+/*	$NetBSD: safe_open.c,v 1.1.1.5.2.2 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -11,7 +11,7 @@
 /*	VSTREAM	*safe_open(path, flags, mode, st, user, group, why)
 /*	const char *path;
 /*	int	flags;
-/*	int	mode;
+/*	mode_t	mode;
 /*	struct stat *st;
 /*	uid_t	user;
 /*	gid_t	group;
@@ -176,7 +176,7 @@ static VSTREAM *safe_open_exist(const char *path, int flags,
 
 /* safe_open_create - create new file */
 
-static VSTREAM *safe_open_create(const char *path, int flags, int mode,
+static VSTREAM *safe_open_create(const char *path, int flags, mode_t mode,
 	            struct stat * st, uid_t user, gid_t group, VSTRING *why)
 {
     VSTREAM *fp;
@@ -224,7 +224,7 @@ static VSTREAM *safe_open_create(const char *path, int flags, int mode,
 
 /* safe_open - safely open or create file */
 
-VSTREAM *safe_open(const char *path, int flags, int mode,
+VSTREAM *safe_open(const char *path, int flags, mode_t mode,
 	            struct stat * st, uid_t user, gid_t group, VSTRING *why)
 {
     VSTREAM *fp;

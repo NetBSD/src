@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.1.1.8.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: resolve.c,v 1.1.1.8.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -136,11 +136,11 @@ static MAPS *relocated_maps;
 
 /* resolve_addr - resolve address according to rule set */
 
-static void resolve_addr(RES_CONTEXT *rp, char *addr,
+static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
 			         VSTRING *channel, VSTRING *nexthop,
 			         VSTRING *nextrcpt, int *flags)
 {
-    char   *myname = "resolve_addr";
+    const char *myname = "resolve_addr";
     VSTRING *addr_buf = vstring_alloc(100);
     TOK822 *tree = 0;
     TOK822 *saved_domain = 0;
@@ -148,12 +148,13 @@ static void resolve_addr(RES_CONTEXT *rp, char *addr,
     char   *destination;
     const char *blame = 0;
     const char *rcpt_domain;
-    int     addr_len;
-    int     loop_count;
-    int     loop_max;
+    ssize_t addr_len;
+    ssize_t loop_count;
+    ssize_t loop_max;
     char   *local;
     char   *oper;
     char   *junk;
+    const char *relay;
 
     *flags = 0;
     vstring_strcpy(channel, "CHANNEL NOT UPDATED");
@@ -189,8 +190,8 @@ static void resolve_addr(RES_CONTEXT *rp, char *addr,
     tree = tok822_scan_addr(vstring_str(addr_buf));
 
     /*
-     * Let the optimizer replace multiple expansions of this macro by a GOTO
-     * to a single instance.
+     * The optimizer will eliminate tests that always fail, and will replace
+     * multiple expansions of this macro by a GOTO to a single instance.
      */
 #define FREE_MEMORY_AND_RETURN { \
 	if (saved_domain) \
@@ -235,8 +236,8 @@ static void resolve_addr(RES_CONTEXT *rp, char *addr,
 	 * disrupt the operation of an MTA.
 	 */
 	if (loop_count > loop_max) {
-	    msg_warn("resolve_addr: <%s>: giving up after %d iterations",
-		     addr, loop_count);
+	    msg_warn("resolve_addr: <%s>: giving up after %ld iterations",
+		     addr, (long) loop_count);
 	    break;
 	}
 
@@ -367,9 +368,22 @@ static void resolve_addr(RES_CONTEXT *rp, char *addr,
      */
     tok822_internalize(nextrcpt, tree, TOK822_STR_DEFL);
     rcpt_domain = strrchr(STR(nextrcpt), '@') + 1;
-    if (*rcpt_domain == '[' ? !valid_mailhost_literal(rcpt_domain, DONT_GRIPE) :
-	!valid_hostname(rcpt_domain, DONT_GRIPE))
-	*flags |= RESOLVE_FLAG_ERROR;
+    if (rcpt_domain == 0)
+	msg_panic("no @ in address: \"%s\"", STR(nextrcpt));
+    if (*rcpt_domain == '[') {
+	if (!valid_mailhost_literal(rcpt_domain, DONT_GRIPE))
+	    *flags |= RESOLVE_FLAG_ERROR;
+    } else if (!valid_hostname(rcpt_domain, DONT_GRIPE)) {
+	if (var_resolve_num_dom && valid_hostaddr(rcpt_domain, DONT_GRIPE)) {
+	    vstring_insert(nextrcpt, rcpt_domain - STR(nextrcpt), "[", 1);
+	    vstring_strcat(nextrcpt, "]");
+	    rcpt_domain = strrchr(STR(nextrcpt), '@') + 1;
+	    if (resolve_local(rcpt_domain))	/* XXX */
+		domain = 0;
+	} else {
+	    *flags |= RESOLVE_FLAG_ERROR;
+	}
+    }
     tok822_free_tree(tree);
     tree = 0;
 
@@ -397,7 +411,8 @@ static void resolve_addr(RES_CONTEXT *rp, char *addr,
      * highest precedence to transport associated nexthop information.
      * 
      * Otherwise, with relay or other non-local destinations, the relayhost
-     * setting overrides the destination domain name.
+     * setting overrides the recipient domain name, and the sender-dependent
+     * relayhost overrides both.
      * 
      * XXX Nag if the recipient domain is listed in multiple domain lists. The
      * result is implementation defined, and may break when internals change.
@@ -491,9 +506,14 @@ static void resolve_addr(RES_CONTEXT *rp, char *addr,
 	    }
 
 	    /*
-	     * With off-host delivery, relayhost overrides recipient domain.
+	     * With off-host delivery, sender-dependent or global relayhost
+	     * override the recipient domain.
 	     */
-	    if (*RES_PARAM_VALUE(rp->relayhost))
+	    if (rp->snd_relay_info && *sender
+		&& (relay = mail_addr_find(rp->snd_relay_info, sender,
+					   (char **) 0)) != 0)
+		vstring_strcpy(nexthop, relay);
+	    else if (*RES_PARAM_VALUE(rp->relayhost))
 		vstring_strcpy(nexthop, RES_PARAM_VALUE(rp->relayhost));
 	    else
 		vstring_strcpy(nexthop, rcpt_domain);
@@ -622,6 +642,7 @@ static VSTRING *channel;
 static VSTRING *nexthop;
 static VSTRING *nextrcpt;
 static VSTRING *query;
+static VSTRING *sender;
 
 /* resolve_proto - read request and send reply */
 
@@ -630,23 +651,25 @@ int     resolve_proto(RES_CONTEXT *context, VSTREAM *stream)
     int     flags;
 
     if (attr_scan(stream, ATTR_FLAG_STRICT,
+		  ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
 		  ATTR_TYPE_STR, MAIL_ATTR_ADDR, query,
-		  ATTR_TYPE_END) != 1)
+		  ATTR_TYPE_END) != 2)
 	return (-1);
 
-    resolve_addr(context, STR(query),
+    resolve_addr(context, STR(sender), STR(query),
 		 channel, nexthop, nextrcpt, &flags);
 
     if (msg_verbose)
-	msg_info("%s -> (`%s' `%s' `%s' `%d')", STR(query), STR(channel),
+	msg_info("`%s' -> `%s' -> (`%s' `%s' `%s' `%d')",
+		 STR(sender), STR(query), STR(channel),
 		 STR(nexthop), STR(nextrcpt), flags);
 
     attr_print(stream, ATTR_FLAG_NONE,
-	       ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, server_flags,
+	       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, server_flags,
 	       ATTR_TYPE_STR, MAIL_ATTR_TRANSPORT, STR(channel),
 	       ATTR_TYPE_STR, MAIL_ATTR_NEXTHOP, STR(nexthop),
 	       ATTR_TYPE_STR, MAIL_ATTR_RECIP, STR(nextrcpt),
-	       ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
+	       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, flags,
 	       ATTR_TYPE_END);
 
     if (vstream_fflush(stream) != 0) {
@@ -660,6 +683,7 @@ int     resolve_proto(RES_CONTEXT *context, VSTREAM *stream)
 
 void    resolve_init(void)
 {
+    sender = vstring_alloc(100);
     query = vstring_alloc(100);
     channel = vstring_alloc(100);
     nexthop = vstring_alloc(100);
@@ -681,5 +705,5 @@ void    resolve_init(void)
     if (*var_relocated_maps)
 	relocated_maps =
 	    maps_create(VAR_RELOCATED_MAPS, var_relocated_maps,
-			DICT_FLAG_LOCK);
+			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
 }

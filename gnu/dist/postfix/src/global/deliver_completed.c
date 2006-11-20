@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_completed.c,v 1.1.1.2 2004/05/31 00:24:28 heas Exp $	*/
+/*	$NetBSD: deliver_completed.c,v 1.1.1.2.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -48,7 +48,7 @@
 
 void    deliver_completed(VSTREAM *stream, long offset)
 {
-    char   *myname = "deliver_completed";
+    const char *myname = "deliver_completed";
 
     if (offset == -1)
 	return;

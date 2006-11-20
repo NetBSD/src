@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.1.1.2.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -45,10 +45,10 @@ int     strcasecmp(const char *s1, const char *s2)
     const unsigned char *us1 = (const unsigned char *) s1;
     const unsigned char *us2 = (const unsigned char *) s2;
 
-    while (TOLOWER(*us1) == TOLOWER(*us2++))
+    while (tolower(*us1) == tolower(*us2++))
 	if (*us1++ == '\0')
 	    return (0);
-    return (TOLOWER(*us1) - TOLOWER(*--us2));
+    return (tolower(*us1) - tolower(*--us2));
 }
 
 int     strncasecmp(const char *s1, const char *s2, size_t n)
@@ -58,8 +58,8 @@ int     strncasecmp(const char *s1, const char *s2, size_t n)
 	const unsigned char *us2 = (const unsigned char *) s2;
 
 	do {
-	    if (TOLOWER(*us1) != TOLOWER(*us2++))
-		return (TOLOWER(*us1) - TOLOWER(*--us2));
+	    if (tolower(*us1) != tolower(*us2++))
+		return (tolower(*us1) - tolower(*--us2));
 	    if (*us1++ == '\0')
 		break;
 	} while (--n != 0);

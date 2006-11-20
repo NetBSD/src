@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12.2.1 2006/07/12 15:06:48 tron Exp $
+#	$NetBSD: Makefile.inc,v 1.12.2.2 2006/11/20 13:31:05 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -6,10 +6,12 @@ WARNS?=	0
 
 PFIX_DISTDIR=	${NETBSDSRCDIR}/gnu/dist/postfix
 
-CPPFLAGS+= -DNETBSD1 -I${DIST} \
+CPPFLAGS+= -DNETBSD3 -DUSE_SASL_AUTH -DDEF_SERVER_SASL_TYPE=\"dovecot\" \
+	-I${DIST} \
 	-I${PFIX_DISTDIR}/src/dns -I${PFIX_DISTDIR}/src/global \
 	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util \
-	-I${PFIX_DISTDIR}/src/tls
+	-I${PFIX_DISTDIR}/src/tls -I${PFIX_DISTDIR}/src/milter \
+	-I${PFIX_DISTDIR}/src/xsasl
 
 # TLS support.
 .if ${MKCRYPTO} != "no"
@@ -22,7 +24,8 @@ CPPFLAGS+=	-DNO_IPV6
 .endif
 
 PFIX_SRCDIR=	${NETBSDSRCDIR}/gnu/usr.sbin/postfix
-PFIX_LIBSDIRS=	dns dns masterlib master global global util util
+PFIX_LIBSDIRS=	dns dns masterlib master global global util util \
+		milter milter xsasl xsasl
 
 .if ${MKCRYPTO} != "no" 
 PFIX_LIBSDIRS+=	tls tls

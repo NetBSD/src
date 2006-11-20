@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_queue.c,v 1.1.1.5.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: mail_queue.c,v 1.1.1.5.2.2 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -10,14 +10,14 @@
 /*
 /*	VSTREAM	*mail_queue_enter(queue_name, mode, tp)
 /*	const char *queue_name;
-/*	int	mode;
+/*	mode_t	mode;
 /*	struct timeval *tp;
 /*
 /*	VSTREAM	*mail_queue_open(queue_name, queue_id, flags, mode)
 /*	const char *queue_name;
 /*	const char *queue_id;
 /*	int	flags;
-/*	int	mode;
+/*	mode_t	mode;
 /*
 /*	char	*mail_queue_dir(buf, queue_name, queue_id)
 /*	VSTRING	*buf;
@@ -146,7 +146,7 @@
 const char *mail_queue_dir(VSTRING *buf, const char *queue_name,
 			           const char *queue_id)
 {
-    char   *myname = "mail_queue_dir";
+    const char *myname = "mail_queue_dir";
     static VSTRING *private_buf = 0;
     static VSTRING *hash_buf = 0;
     static ARGV *hash_queue_names = 0;
@@ -220,7 +220,7 @@ const char *mail_queue_path(VSTRING *buf, const char *queue_name,
 
 int     mail_queue_mkdirs(const char *path)
 {
-    char   *myname = "mail_queue_mkdirs";
+    const char *myname = "mail_queue_mkdirs";
     char   *saved_path = mystrdup(path);
     int     ret;
 
@@ -309,10 +309,10 @@ int     mail_queue_id_ok(const char *queue_id)
 
 /* mail_queue_enter - make mail queue entry with locally-unique name */
 
-VSTREAM *mail_queue_enter(const char *queue_name, int mode,
+VSTREAM *mail_queue_enter(const char *queue_name, mode_t mode,
 			          struct timeval * tp)
 {
-    char   *myname = "mail_queue_enter";
+    const char *myname = "mail_queue_enter";
     static VSTRING *id_buf;
     static int pid;
     static VSTRING *path_buf;
@@ -350,9 +350,8 @@ VSTREAM *mail_queue_enter(const char *queue_name, int mode,
 			(int) tp->tv_usec, pid);
 	if ((fd = open(STR(temp_path), O_RDWR | O_CREAT | O_EXCL, mode)) >= 0)
 	    break;
-	if (errno == EEXIST || errno == EISDIR) {
+	if (errno == EEXIST || errno == EISDIR)
 	    continue;
-	}
 	msg_warn("%s: create file %s: %m", myname, STR(temp_path));
 	sleep(10);
     }
@@ -384,9 +383,8 @@ VSTREAM *mail_queue_enter(const char *queue_name, int mode,
 	mail_queue_path(path_buf, queue_name, STR(id_buf));
 	if (sane_rename(STR(temp_path), STR(path_buf)) == 0)	/* success */
 	    break;
-	if (errno == EPERM || errno == EISDIR) {/* collision. weird. */
+	if (errno == EPERM || errno == EISDIR)	/* collision. weird. */
 	    continue;
-	}
 	if (errno != ENOENT || mail_queue_mkdirs(STR(path_buf)) < 0) {
 	    msg_warn("%s: rename %s to %s: %m", myname,
 		     STR(temp_path), STR(path_buf));
@@ -404,7 +402,7 @@ VSTREAM *mail_queue_enter(const char *queue_name, int mode,
 /* mail_queue_open - open mail queue file */
 
 VSTREAM *mail_queue_open(const char *queue_name, const char *queue_id,
-			         int flags, int mode)
+			         int flags, mode_t mode)
 {
     const char *path = mail_queue_path((VSTRING *) 0, queue_name, queue_id);
     VSTREAM *fp;

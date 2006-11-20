@@ -1,4 +1,4 @@
-/*	$NetBSD: vstring_vstream.c,v 1.1.1.3.2.1 2006/07/12 15:06:45 tron Exp $	*/
+/*	$NetBSD: vstring_vstream.c,v 1.1.1.3.2.2 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -23,17 +23,17 @@
 /*	int	vstring_get_bound(vp, fp, bound)
 /*	VSTRING	*vp;
 /*	VSTREAM	*fp;
-/*	int	bound;
+/*	ssize_t	bound;
 /*
 /*	int	vstring_get_nonl_bound(vp, fp, bound)
 /*	VSTRING	*vp;
 /*	VSTREAM	*fp;
-/*	int	bound;
+/*	ssize_t	bound;
 /*
 /*	int	vstring_get_null_bound(vp, fp, bound)
 /*	VSTRING	*vp;
 /*	VSTREAM	*fp;
-/*	int	bound;
+/*	ssize_t	bound;
 /* DESCRIPTION
 /*	The routines in this module each read one newline or null-terminated
 /*	string from an input stream. In all cases the result is either the
@@ -128,12 +128,12 @@ int     vstring_get_null(VSTRING *vp, VSTREAM *fp)
 
 /* vstring_get_bound - read line from file, keep newline, up to bound */
 
-int     vstring_get_bound(VSTRING *vp, VSTREAM *fp, int bound)
+int     vstring_get_bound(VSTRING *vp, VSTREAM *fp, ssize_t bound)
 {
     int     c;
 
     if (bound <= 0)
-	msg_panic("vstring_get_bound: invalid bound %d", bound);
+	msg_panic("vstring_get_bound: invalid bound %ld", (long) bound);
 
     VSTRING_RESET(vp);
     while (bound-- > 0 && (c = VSTREAM_GETC(fp)) != VSTREAM_EOF) {
@@ -147,12 +147,12 @@ int     vstring_get_bound(VSTRING *vp, VSTREAM *fp, int bound)
 
 /* vstring_get_nonl_bound - read line from file, strip newline, up to bound */
 
-int     vstring_get_nonl_bound(VSTRING *vp, VSTREAM *fp, int bound)
+int     vstring_get_nonl_bound(VSTRING *vp, VSTREAM *fp, ssize_t bound)
 {
     int     c;
 
     if (bound <= 0)
-	msg_panic("vstring_get_nonl_bound: invalid bound %d", bound);
+	msg_panic("vstring_get_nonl_bound: invalid bound %ld", (long) bound);
 
     VSTRING_RESET(vp);
     while (bound-- > 0 && (c = VSTREAM_GETC(fp)) != VSTREAM_EOF && c != '\n')
@@ -163,12 +163,12 @@ int     vstring_get_nonl_bound(VSTRING *vp, VSTREAM *fp, int bound)
 
 /* vstring_get_null_bound - read null-terminated string from file */
 
-int     vstring_get_null_bound(VSTRING *vp, VSTREAM *fp, int bound)
+int     vstring_get_null_bound(VSTRING *vp, VSTREAM *fp, ssize_t bound)
 {
     int     c;
 
     if (bound <= 0)
-	msg_panic("vstring_get_nonl_bound: invalid bound %d", bound);
+	msg_panic("vstring_get_nonl_bound: invalid bound %ld", (long) bound);
 
     VSTRING_RESET(vp);
     while (bound-- > 0 && (c = VSTREAM_GETC(fp)) != VSTREAM_EOF && c != 0)
@@ -198,6 +198,7 @@ int     main(void)
     vstream_fclose(fp);
     vstream_fflush(VSTREAM_OUT);
     vstring_free(vp);
+    return (0);
 }
 
 #endif

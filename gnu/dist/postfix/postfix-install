@@ -44,6 +44,9 @@
 #	Do not ask the user for parameter settings. Installation parameters
 #	are specified via one of the non-interactive methods described
 #	below.
+# .IP -package
+#	Build a ready-to-install package. This requires that a
+#	non-default install_root parameter is specified.
 # INSTALLATION PARAMETER INPUT METHODS
 # .ad
 # .fi

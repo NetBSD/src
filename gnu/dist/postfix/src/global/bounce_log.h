@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_log.h,v 1.1.1.5 2004/05/31 00:24:29 heas Exp $	*/
+/*	$NetBSD: bounce_log.h,v 1.1.1.5.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 #ifndef _BOUNCE_LOG_H_INCLUDED_
 #define _BOUNCE_LOG_H_INCLUDED_
@@ -20,32 +20,25 @@
 #include <vstring.h>
 
  /*
+  * Global library.
+  */
+#include <recipient_list.h>
+#include <rcpt_buf.h>
+#include <dsn_buf.h>
+
+ /*
   * External interface.
   */
 typedef struct {
-    /* Private. */
     VSTREAM *fp;			/* open file */
     VSTRING *buf;			/* I/O buffer */
-    VSTRING *rcpt_buf;			/* final recipient */
-    VSTRING *orcp_buf;			/* original recipient */
-    VSTRING *status_buf;		/* dsn code */
-    const char *compat_status;		/* old logfile compatibility */
-    VSTRING *action_buf;		/* dsn action */
-    const char *compat_action;		/* old logfile compatibility */
-    VSTRING *text_buf;			/* descriptive text */
-    /* Public. */
-    const char *recipient;		/* final recipient */
-    const char *orig_rcpt;		/* original recipient */
-    long    rcpt_offset;		/* queue file offset */
-    const char *dsn_status;		/* dsn code */
-    const char *dsn_action;		/* dsn action */
-    const char *text;			/* descriptive text */
+    char    *compat_status;		/* old logfile compatibility */
+    char    *compat_action;		/* old logfile compatibility */
 } BOUNCE_LOG;
 
-extern BOUNCE_LOG *bounce_log_open(const char *, const char *, int, int);
-extern BOUNCE_LOG *bounce_log_read(BOUNCE_LOG *);
+extern BOUNCE_LOG *bounce_log_open(const char *, const char *, int, mode_t);
+extern BOUNCE_LOG *bounce_log_read(BOUNCE_LOG *, RCPT_BUF *, DSN_BUF *);
 extern BOUNCE_LOG *bounce_log_delrcpt(BOUNCE_LOG *);
-extern BOUNCE_LOG *bounce_log_forge(const char *, const char *, long, const char *, const char *, const char *);
 extern int bounce_log_close(BOUNCE_LOG *);
 
 #define bounce_log_rewind(bp) vstream_fseek((bp)->fp, 0L, SEEK_SET)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.h,v 1.1.1.7 2004/05/31 00:24:57 heas Exp $	*/
+/*	$NetBSD: dict.h,v 1.1.1.7.2.1 2006/11/20 13:30:59 tron Exp $	*/
 
 #ifndef _DICT_H_INCLUDED_
 #define _DICT_H_INCLUDED_
@@ -23,6 +23,7 @@
   */
 #include <vstream.h>
 #include <argv.h>
+#include <vstring.h>
 
  /*
   * Generic dictionary interface - in reality, a dictionary extends this
@@ -40,9 +41,10 @@ typedef struct DICT {
     int     lock_fd;			/* for dict_update() lock */
     int     stat_fd;			/* change detection */
     time_t  mtime;			/* mod time at open */
+    VSTRING *fold_buf;			/* key folding buffer */
 } DICT;
 
-extern DICT *dict_alloc(const char *, const char *, int);
+extern DICT *dict_alloc(const char *, const char *, ssize_t);
 extern void dict_free(DICT *);
 
 extern DICT *dict_debug(DICT *);
@@ -59,10 +61,15 @@ extern DICT *dict_debug(DICT *);
 #define DICT_FLAG_DUP_REPLACE	(1<<7)	/* if file, replace dups */
 #define DICT_FLAG_SYNC_UPDATE	(1<<8)	/* if file, sync updates */
 #define DICT_FLAG_DEBUG		(1<<9)	/* log access */
-#define DICT_FLAG_FOLD_KEY	(1<<10)	/* lowercase the lookup key */
+/*#define DICT_FLAG_FOLD_KEY	(1<<10)	/* lowercase the lookup key */
 #define DICT_FLAG_NO_REGSUB	(1<<11)	/* disallow regexp substitution */
 #define DICT_FLAG_NO_PROXY	(1<<12)	/* disallow proxy mapping */
 #define DICT_FLAG_NO_UNAUTH	(1<<13)	/* disallow unauthenticated data */
+#define DICT_FLAG_FOLD_FIX	(1<<14)	/* case-fold key with fixed-case map */
+#define DICT_FLAG_FOLD_MUL	(1<<15)	/* case-fold key with multi-case map */
+#define DICT_FLAG_FOLD_ANY	(DICT_FLAG_FOLD_FIX | DICT_FLAG_FOLD_MUL)
+
+ /* IMPORTANT: Update the dict_mask[] table when the above changes */
 
 #define DICT_FLAG_PARANOID \
 	(DICT_FLAG_NO_REGSUB | DICT_FLAG_NO_PROXY | DICT_FLAG_NO_UNAUTH)
@@ -114,6 +121,7 @@ typedef void (*DICT_WALK_ACTION) (const char *, DICT *, char *);
 extern void dict_walk(DICT_WALK_ACTION, char *);
 extern int dict_changed(void);
 extern const char *dict_changed_name(void);
+extern const char *dict_flags_str(int);
 
 /* LICENSE
 /* .ad

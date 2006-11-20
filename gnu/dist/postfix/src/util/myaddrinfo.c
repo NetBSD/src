@@ -1,4 +1,4 @@
-/*	$NetBSD: myaddrinfo.c,v 1.1.1.1.2.2 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: myaddrinfo.c,v 1.1.1.1.2.3 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -179,6 +179,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>			/* sprintf() */
 
 /* Utility library. */
 
@@ -401,8 +402,12 @@ int     hostname_to_sockaddr(const char *hostname, const char *service,
      * might blow up. Instead we turn off IPV6_V6ONLY in inet_listen(), and
      * supply a protocol-dependent hard-coded string value to getaddrinfo()
      * below, so that it will convert into the appropriate wild-card address.
+     * 
+     * XXX AIX 5.[1-3] getaddrinfo() may return a non-null port when a null
+     * service argument is specified.
      */
     struct addrinfo hints;
+    int     err;
 
     memset((char *) &hints, 0, sizeof(hints));
     hints.ai_family = inet_proto_info()->ai_family;
@@ -424,7 +429,18 @@ int     hostname_to_sockaddr(const char *hostname, const char *service,
 	}
 #endif
     }
-    return (getaddrinfo(hostname, service, &hints, res));
+    err = getaddrinfo(hostname, service, &hints, res);
+#if defined(BROKEN_AI_NULL_SERVICE)
+    if (service == 0 && err == 0) {
+	struct addrinfo *r;
+	unsigned short *portp;
+
+	for (r = *res; r != 0; r = r->ai_next)
+	    if (*(portp = SOCK_ADDR_PORTP(r->ai_addr)) != 0)
+		*portp = 0;
+    }
+#endif
+    return (err);
 #endif
 }
 
@@ -501,8 +517,12 @@ int     hostaddr_to_sockaddr(const char *hostaddr, const char *service,
      * ai_family=PF_UNSPEC, ai_flags=AI_NUMERICHOST, ai_socktype=SOCK_STREAM,
      * ai_protocol=0 or IPPROTO_TCP, and service=0. The workaround is to
      * ignore all but the first result.
+     * 
+     * XXX AIX 5.[1-3] getaddrinfo() may return a non-null port when a null
+     * service argument is specified.
      */
     struct addrinfo hints;
+    int     err;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = inet_proto_info()->ai_family;
@@ -525,7 +545,18 @@ int     hostaddr_to_sockaddr(const char *hostaddr, const char *service,
 	}
 #endif
     }
-    return (getaddrinfo(hostaddr, service, &hints, res));
+    err = getaddrinfo(hostaddr, service, &hints, res);
+#if defined(BROKEN_AI_NULL_SERVICE)
+    if (service == 0 && err == 0) {
+	struct addrinfo *r;
+	unsigned short *portp;
+
+	for (r = *res; r != 0; r = r->ai_next)
+	    if (*(portp = SOCK_ADDR_PORTP(r->ai_addr)) != 0)
+		*portp = 0;
+    }
+#endif
+    return (err);
 #endif
 }
 
@@ -538,7 +569,7 @@ int     sockaddr_to_hostaddr(const struct sockaddr * sa, SOCKADDR_SIZE salen,
 {
 #ifdef EMULATE_IPV4_ADDRINFO
     char    portbuf[sizeof("65535")];
-    int     len;
+    ssize_t len;
 
     /*
      * Emulated getnameinfo(3) version. The buffer length includes the space

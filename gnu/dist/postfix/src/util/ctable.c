@@ -1,4 +1,4 @@
-/*	$NetBSD: ctable.c,v 1.1.1.2 2004/05/31 00:24:57 heas Exp $	*/
+/*	$NetBSD: ctable.c,v 1.1.1.2.2.1 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -106,7 +106,7 @@ CTABLE *ctable_create(int limit, CTABLE_CREATE_FN create,
 		              CTABLE_DELETE_FN delete, void *context)
 {
     CTABLE *cache = (CTABLE *) mymalloc(sizeof(CTABLE));
-    char   *myname = "ctable_create";
+    const char *myname = "ctable_create";
 
     if (limit < 1)
 	msg_panic("%s: bad cache limit: %d", myname, limit);
@@ -125,7 +125,7 @@ CTABLE *ctable_create(int limit, CTABLE_CREATE_FN create,
 
 const void *ctable_locate(CTABLE *cache, const char *key)
 {
-    char   *myname = "ctable_locate";
+    const char *myname = "ctable_locate";
     CTABLE_ENTRY *entry;
 
     /*

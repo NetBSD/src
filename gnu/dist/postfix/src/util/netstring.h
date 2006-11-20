@@ -1,4 +1,4 @@
-/*	$NetBSD: netstring.h,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: netstring.h,v 1.1.1.2.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 #ifndef _NETSTRING_H_INCLUDED_
 #define _NETSTRING_H_INCLUDED_
@@ -29,15 +29,15 @@
 
 extern void netstring_except(VSTREAM *, int);
 extern void netstring_setup(VSTREAM *, int);
-extern int netstring_get_length(VSTREAM *);
-extern VSTRING *netstring_get_data(VSTREAM *, VSTRING *, int);
+extern ssize_t netstring_get_length(VSTREAM *);
+extern VSTRING *netstring_get_data(VSTREAM *, VSTRING *, ssize_t);
 extern void netstring_get_terminator(VSTREAM *);
-extern VSTRING *netstring_get(VSTREAM *, VSTRING *, int);
-extern void netstring_put(VSTREAM *, const char *, int);
+extern VSTRING *netstring_get(VSTREAM *, VSTRING *, ssize_t);
+extern void netstring_put(VSTREAM *, const char *, ssize_t);
 extern void netstring_put_multi(VSTREAM *,...);
 extern void netstring_fflush(VSTREAM *);
-extern VSTRING *netstring_memcpy(VSTRING *, const char *, int);
-extern VSTRING *netstring_memcat(VSTRING *, const char *, int);
+extern VSTRING *netstring_memcpy(VSTRING *, const char *, ssize_t);
+extern VSTRING *netstring_memcat(VSTRING *, const char *, ssize_t);
 
 #define NETSTRING_PUT_BUF(str, buf) \
 	netstring_put((str), vstring_str(buf), VSTRING_LEN(buf))

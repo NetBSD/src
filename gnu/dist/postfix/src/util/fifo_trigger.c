@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_trigger.c,v 1.1.1.3 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: fifo_trigger.c,v 1.1.1.3.2.1 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -11,7 +11,7 @@
 /*	int	fifo_trigger(service, buf, len, timeout)
 /*	const char *service;
 /*	const char *buf;
-/*	int	len;
+/*	ssize_t	len;
 /*	int	timeout;
 /* DESCRIPTION
 /*	fifo_trigger() wakes up the named fifo server by writing
@@ -57,10 +57,10 @@
 
 /* fifo_trigger - wakeup fifo server */
 
-int     fifo_trigger(const char *service, const char *buf, int len, int timeout)
+int     fifo_trigger(const char *service, const char *buf, ssize_t len, int timeout)
 {
     static VSTRING *why;
-    char   *myname = "fifo_trigger";
+    const char *myname = "fifo_trigger";
     VSTREAM *fp;
     int     fd;
 
@@ -132,7 +132,7 @@ static void handler(int sig)
 
 static void read_event(int unused_event, char *context)
 {
-    int     fd = (int) context;
+    int     fd = CAST_CHAR_PTR_TO_INT(context);
     char    ch;
 
     wakeup_count++;
@@ -147,7 +147,7 @@ int     main(int unused_argc, char **unused_argv)
 
     listen_fd = fifo_listen(TEST_FIFO, 0600, NON_BLOCKING);
     msg_cleanup(cleanup);
-    event_enable_read(listen_fd, read_event, (char *) listen_fd);
+    event_enable_read(listen_fd, read_event, CAST_INT_TO_CHAR_PTR(listen_fd));
     signal(SIGINT, handler);
     signal(SIGALRM, handler);
     for (;;) {

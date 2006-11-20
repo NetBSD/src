@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_stream.c,v 1.1.1.1.2.2 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: tls_stream.c,v 1.1.1.1.2.3 2006/11/20 13:30:55 tron Exp $	*/
 
 /*++
 /* NAME
@@ -69,11 +69,11 @@
 
 /* tls_timed_read - read content from stream, then TLS decapsulate */
 
-static int tls_timed_read(int fd, void *buf, unsigned len, int timeout,
-			          void *context)
+static ssize_t tls_timed_read(int fd, void *buf, size_t len, int timeout,
+			              void *context)
 {
-    char   *myname = "tls_timed_read";
-    int     ret;
+    const char *myname = "tls_timed_read";
+    ssize_t ret;
     TLScontext_t *TLScontext;
 
     TLScontext = (TLScontext_t *) context;
@@ -82,15 +82,15 @@ static int tls_timed_read(int fd, void *buf, unsigned len, int timeout,
 
     ret = tls_bio_read(fd, buf, len, timeout, TLScontext);
     if (ret > 0 && TLScontext->log_level >= 4)
-	msg_info("Read %d chars: %.*s",
-		 ret, ret > 40 ? 40 : ret, (char *) buf);
+	msg_info("Read %ld chars: %.*s",
+		 (long) ret, (int) (ret > 40 ? 40 : ret), (char *) buf);
     return (ret);
 }
 
 /* tls_timed_write - TLS encapsulate content, then write to stream */
 
-static int tls_timed_write(int fd, void *buf, unsigned len, int timeout,
-			           void *context)
+static ssize_t tls_timed_write(int fd, void *buf, size_t len, int timeout,
+			               void *context)
 {
     const char *myname = "tls_timed_write";
     TLScontext_t *TLScontext;
@@ -100,14 +100,14 @@ static int tls_timed_write(int fd, void *buf, unsigned len, int timeout,
 	msg_panic("%s: no context", myname);
 
     if (TLScontext->log_level >= 4)
-	msg_info("Write %d chars: %.*s",
-		 len, (int) (len > 40 ? 40 : len), (char *) buf);
+	msg_info("Write %ld chars: %.*s",
+		 (long) len, (int) (len > 40 ? 40 : len), (char *) buf);
     return (tls_bio_write(fd, buf, len, timeout, TLScontext));
 }
 
 /* tls_stream_start - start VSTREAM over TLS */
 
-void    tls_stream_start(VSTREAM *stream, TLScontext_t * context)
+void    tls_stream_start(VSTREAM *stream, TLScontext_t *context)
 {
     vstream_control(stream,
 		    VSTREAM_CTL_READ_FN, tls_timed_read,

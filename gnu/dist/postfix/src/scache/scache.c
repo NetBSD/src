@@ -1,4 +1,4 @@
-/*	$NetBSD: scache.c,v 1.1.1.2.2.2 2006/07/12 15:06:41 tron Exp $	*/
+/*	$NetBSD: scache.c,v 1.1.1.2.2.3 2006/11/20 13:30:48 tron Exp $	*/
 
 /*++
 /* NAME
@@ -221,14 +221,14 @@ static void scache_save_endp_service(VSTREAM *client_stream)
 
     if (attr_scan(client_stream,
 		  ATTR_FLAG_STRICT,
-		  ATTR_TYPE_NUM, MAIL_ATTR_TTL, &ttl,
+		  ATTR_TYPE_INT, MAIL_ATTR_TTL, &ttl,
 		  ATTR_TYPE_STR, MAIL_ATTR_LABEL, scache_endp_label,
 		  ATTR_TYPE_STR, MAIL_ATTR_PROP, scache_endp_prop,
 		  ATTR_TYPE_END) != 3
 	|| ttl <= 0) {
 	msg_warn("%s: bad or missing request parameter", myname);
 	attr_print(client_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_NUM, MAIL_ATTR_STATUS, SCACHE_STAT_BAD,
+		   ATTR_TYPE_INT, MAIL_ATTR_STATUS, SCACHE_STAT_BAD,
 		   ATTR_TYPE_END);
 	return;
     } else if (
@@ -244,7 +244,7 @@ static void scache_save_endp_service(VSTREAM *client_stream)
 	       (fd = LOCAL_RECV_FD(vstream_fileno(client_stream))) < 0) {
 	msg_warn("%s: unable to receive file descriptor: %m", myname);
 	(void) attr_print(client_stream, ATTR_FLAG_NONE,
-			  ATTR_TYPE_NUM, MAIL_ATTR_STATUS, SCACHE_STAT_FAIL,
+			  ATTR_TYPE_INT, MAIL_ATTR_STATUS, SCACHE_STAT_FAIL,
 			  ATTR_TYPE_END);
 	return;
     } else {
@@ -252,7 +252,7 @@ static void scache_save_endp_service(VSTREAM *client_stream)
 			 ttl > var_scache_ttl_lim ? var_scache_ttl_lim : ttl,
 			 STR(scache_endp_label), STR(scache_endp_prop), fd);
 	(void) attr_print(client_stream, ATTR_FLAG_NONE,
-			  ATTR_TYPE_NUM, MAIL_ATTR_STATUS, SCACHE_STAT_OK,
+			  ATTR_TYPE_INT, MAIL_ATTR_STATUS, SCACHE_STAT_OK,
 			  ATTR_TYPE_END);
 	scache_size(scache, &size);
 	if (size.endp_count > scache_endp_count)
@@ -276,21 +276,21 @@ static void scache_find_endp_service(VSTREAM *client_stream)
 		  ATTR_TYPE_END) != 1) {
 	msg_warn("%s: bad or missing request parameter", myname);
 	attr_print(client_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_NUM, MAIL_ATTR_STATUS, SCACHE_STAT_BAD,
+		   ATTR_TYPE_INT, MAIL_ATTR_STATUS, SCACHE_STAT_BAD,
 		   ATTR_TYPE_STR, MAIL_ATTR_PROP, "",
 		   ATTR_TYPE_END);
 	return;
     } else if ((fd = scache_find_endp(scache, STR(scache_endp_label),
 				      scache_endp_prop)) < 0) {
 	attr_print(client_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_NUM, MAIL_ATTR_STATUS, SCACHE_STAT_FAIL,
+		   ATTR_TYPE_INT, MAIL_ATTR_STATUS, SCACHE_STAT_FAIL,
 		   ATTR_TYPE_STR, MAIL_ATTR_PROP, "",
 		   ATTR_TYPE_END);
 	scache_endp_miss++;
 	return;
     } else {
 	attr_print(client_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_NUM, MAIL_ATTR_STATUS, SCACHE_STAT_OK,
+		   ATTR_TYPE_INT, MAIL_ATTR_STATUS, SCACHE_STAT_OK,
 		   ATTR_TYPE_STR, MAIL_ATTR_PROP, STR(scache_endp_prop),
 		   ATTR_TYPE_END);
 	if (vstream_fflush(client_stream) != 0
@@ -324,7 +324,7 @@ static void scache_save_dest_service(VSTREAM *client_stream)
 
     if (attr_scan(client_stream,
 		  ATTR_FLAG_STRICT,
-		  ATTR_TYPE_NUM, MAIL_ATTR_TTL, &ttl,
+		  ATTR_TYPE_INT, MAIL_ATTR_TTL, &ttl,
 		  ATTR_TYPE_STR, MAIL_ATTR_LABEL, scache_dest_label,
 		  ATTR_TYPE_STR, MAIL_ATTR_PROP, scache_dest_prop,
 		  ATTR_TYPE_STR, MAIL_ATTR_LABEL, scache_endp_label,
@@ -332,7 +332,7 @@ static void scache_save_dest_service(VSTREAM *client_stream)
 	|| ttl <= 0) {
 	msg_warn("%s: bad or missing request parameter", myname);
 	attr_print(client_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_NUM, MAIL_ATTR_STATUS, SCACHE_STAT_BAD,
+		   ATTR_TYPE_INT, MAIL_ATTR_STATUS, SCACHE_STAT_BAD,
 		   ATTR_TYPE_END);
 	return;
     } else {
@@ -341,7 +341,7 @@ static void scache_save_dest_service(VSTREAM *client_stream)
 			 STR(scache_dest_label), STR(scache_dest_prop),
 			 STR(scache_endp_label));
 	attr_print(client_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_NUM, MAIL_ATTR_STATUS, SCACHE_STAT_OK,
+		   ATTR_TYPE_INT, MAIL_ATTR_STATUS, SCACHE_STAT_OK,
 		   ATTR_TYPE_END);
 	scache_size(scache, &size);
 	if (size.dest_count > scache_dest_count)
@@ -365,7 +365,7 @@ static void scache_find_dest_service(VSTREAM *client_stream)
 		  ATTR_TYPE_END) != 1) {
 	msg_warn("%s: bad or missing request parameter", myname);
 	attr_print(client_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_NUM, MAIL_ATTR_STATUS, SCACHE_STAT_BAD,
+		   ATTR_TYPE_INT, MAIL_ATTR_STATUS, SCACHE_STAT_BAD,
 		   ATTR_TYPE_STR, MAIL_ATTR_PROP, "",
 		   ATTR_TYPE_STR, MAIL_ATTR_PROP, "",
 		   ATTR_TYPE_END);
@@ -374,7 +374,7 @@ static void scache_find_dest_service(VSTREAM *client_stream)
 				      scache_dest_prop,
 				      scache_endp_prop)) < 0) {
 	attr_print(client_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_NUM, MAIL_ATTR_STATUS, SCACHE_STAT_FAIL,
+		   ATTR_TYPE_INT, MAIL_ATTR_STATUS, SCACHE_STAT_FAIL,
 		   ATTR_TYPE_STR, MAIL_ATTR_PROP, "",
 		   ATTR_TYPE_STR, MAIL_ATTR_PROP, "",
 		   ATTR_TYPE_END);
@@ -382,7 +382,7 @@ static void scache_find_dest_service(VSTREAM *client_stream)
 	return;
     } else {
 	attr_print(client_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_NUM, MAIL_ATTR_STATUS, SCACHE_STAT_OK,
+		   ATTR_TYPE_INT, MAIL_ATTR_STATUS, SCACHE_STAT_OK,
 		   ATTR_TYPE_STR, MAIL_ATTR_PROP, STR(scache_dest_prop),
 		   ATTR_TYPE_STR, MAIL_ATTR_PROP, STR(scache_endp_prop),
 		   ATTR_TYPE_END);
@@ -423,29 +423,36 @@ static void scache_service(VSTREAM *client_stream, char *unused_service,
      * This routine runs whenever a client connects to the UNIX-domain socket
      * dedicated to the scache service. All connection-management stuff is
      * handled by the common code in multi_server.c.
+     * 
+     * XXX Workaround: with some requests, the client sends a dummy message
+     * after the server replies (yes that's a botch). When the scache server
+     * is slow, this dummy message may become concatenated with the next
+     * request from the same client. The do-while loop below will repeat
+     * instead of discarding the client request. We must process it now
+     * because there will be no select() notification.
      */
-do {
-    if (attr_scan(client_stream,
-		  ATTR_FLAG_MORE | ATTR_FLAG_STRICT,
-		  ATTR_TYPE_STR, MAIL_ATTR_REQ, scache_request,
-		  ATTR_TYPE_END) == 1) {
-	if (VSTREQ(scache_request, SCACHE_REQ_SAVE_DEST)) {
-	    scache_save_dest_service(client_stream);
-	} else if (VSTREQ(scache_request, SCACHE_REQ_FIND_DEST)) {
-	    scache_find_dest_service(client_stream);
-	} else if (VSTREQ(scache_request, SCACHE_REQ_SAVE_ENDP)) {
-	    scache_save_endp_service(client_stream);
-	} else if (VSTREQ(scache_request, SCACHE_REQ_FIND_ENDP)) {
-	    scache_find_endp_service(client_stream);
-	} else {
-	    msg_warn("unrecognized request: \"%s\", ignored",
-		     STR(scache_request));
-	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, SCACHE_STAT_BAD,
-		       ATTR_TYPE_END);
+    do {
+	if (attr_scan(client_stream,
+		      ATTR_FLAG_MORE | ATTR_FLAG_STRICT,
+		      ATTR_TYPE_STR, MAIL_ATTR_REQ, scache_request,
+		      ATTR_TYPE_END) == 1) {
+	    if (VSTREQ(scache_request, SCACHE_REQ_SAVE_DEST)) {
+		scache_save_dest_service(client_stream);
+	    } else if (VSTREQ(scache_request, SCACHE_REQ_FIND_DEST)) {
+		scache_find_dest_service(client_stream);
+	    } else if (VSTREQ(scache_request, SCACHE_REQ_SAVE_ENDP)) {
+		scache_save_endp_service(client_stream);
+	    } else if (VSTREQ(scache_request, SCACHE_REQ_FIND_ENDP)) {
+		scache_find_endp_service(client_stream);
+	    } else {
+		msg_warn("unrecognized request: \"%s\", ignored",
+			 STR(scache_request));
+		attr_print(client_stream, ATTR_FLAG_NONE,
+			   ATTR_TYPE_INT, MAIL_ATTR_STATUS, SCACHE_STAT_BAD,
+			   ATTR_TYPE_END);
+	    }
 	}
-    }
-} while (vstream_peek(client_stream) > 0);
+    } while (vstream_peek(client_stream) > 0);
     vstream_fflush(client_stream);
 }
 

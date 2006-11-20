@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve_clnt.h,v 1.1.1.5 2004/05/31 00:24:35 heas Exp $	*/
+/*	$NetBSD: resolve_clnt.h,v 1.1.1.5.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 #ifndef _RESOLVE_CLNT_H_INCLUDED_
 #define _RESOLVE_CLNT_H_INCLUDED_
@@ -47,14 +47,23 @@ typedef struct RESOLVE_REPLY {
     VSTRING *nexthop;
     VSTRING *recipient;
     int     flags;
-}       RESOLVE_REPLY;
+} RESOLVE_REPLY;
 
 extern void resolve_clnt_init(RESOLVE_REPLY *);
-extern void resolve_clnt(const char *, const char *, RESOLVE_REPLY *);
+extern void resolve_clnt(const char *, const char *, const char *, RESOLVE_REPLY *);
 extern void resolve_clnt_free(RESOLVE_REPLY *);
 
-#define resolve_clnt_query(a, r) resolve_clnt(RESOLVE_REGULAR, (a), (r))
-#define resolve_clnt_verify(a, r) resolve_clnt(RESOLVE_VERIFY, (a), (r))
+#define RESOLVE_NULL_FROM	""
+
+#define resolve_clnt_query(a, r) \
+	resolve_clnt(RESOLVE_REGULAR, RESOLVE_NULL_FROM, (a), (r))
+#define resolve_clnt_verify(a, r) \
+	resolve_clnt(RESOLVE_VERIFY, RESOLVE_NULL_FROM, (a), (r))
+
+#define resolve_clnt_query_from(f, a, r) \
+	resolve_clnt(RESOLVE_REGULAR, (f), (a), (r))
+#define resolve_clnt_verify_from(f, a, r) \
+	resolve_clnt(RESOLVE_VERIFY, (f), (a), (r))
 
 #define RESOLVE_CLNT_ASSIGN(reply, transport, nexthop, recipient) { \
 	(reply).transport = (transport); \

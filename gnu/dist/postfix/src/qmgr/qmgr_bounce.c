@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_bounce.c,v 1.1.1.4 2004/05/31 00:24:44 heas Exp $	*/
+/*	$NetBSD: qmgr_bounce.c,v 1.1.1.4.2.1 2006/11/20 13:30:47 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,10 +8,10 @@
 /* SYNOPSIS
 /*	#include "qmgr.h"
 /*
-/*	QMGR_QUEUE *qmgr_bounce_recipient(message, recipient, format, ...)
+/*	QMGR_QUEUE *qmgr_bounce_recipient(message, recipient, dsn)
 /*	QMGR_MESSAGE *message;
-/*	QMGR_RCPT *recipient;
-/*	const char *format;
+/*	RECIPIENT *recipient;
+/*	DSN	*dsn;
 /* DESCRIPTION
 /*	qmgr_bounce_recipient() produces a bounce log record.
 /*	Once the bounce record is written successfully, the recipient
@@ -24,8 +24,8 @@
 /*	Open queue file with the message being bounced.
 /* .IP recipient
 /*	The recipient that will not be delivered.
-/* .IP format
-/*	Free-format text that describes why delivery will not happen.
+/* .IP dsn
+/*	Delivery status information. See dsn(3).
 /* DIAGNOSTICS
 /*	Panic: consistency check failure. Fatal: out of memory.
 /* LICENSE
@@ -47,7 +47,6 @@
 /* System library. */
 
 #include <sys_defs.h>
-#include <stdarg.h>
 
 /* Utility library. */
 
@@ -62,18 +61,15 @@
 
 /* qmgr_bounce_recipient - bounce one message recipient */
 
-void    qmgr_bounce_recipient(QMGR_MESSAGE *message, QMGR_RCPT *recipient,
-			              const char *format,...)
+void    qmgr_bounce_recipient(QMGR_MESSAGE *message, RECIPIENT *recipient,
+			              DSN *dsn)
 {
-    va_list ap;
+    MSG_STATS stats;
     int     status;
 
-    va_start(ap, format);
-    status = vbounce_append(message->tflags, message->queue_id,
-			    recipient->orig_rcpt, recipient->address,
-			    recipient->offset, "none", message->arrival_time,
-			    format, ap);
-    va_end(ap);
+    status = bounce_append(message->tflags, message->queue_id,
+			   QMGR_MSG_STATS(&stats, message), recipient,
+			   "none", dsn);
 
     if (status == 0)
 	deliver_completed(message->fp, recipient->offset);

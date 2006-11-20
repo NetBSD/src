@@ -1,4 +1,4 @@
-/*	$NetBSD: flush_clnt.c,v 1.1.1.5 2004/05/31 00:24:30 heas Exp $	*/
+/*	$NetBSD: flush_clnt.c,v 1.1.1.5.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -107,7 +107,7 @@ void    flush_init(void)
 
 int     flush_purge(void)
 {
-    char   *myname = "flush_purge";
+    const char *myname = "flush_purge";
     int     status;
 
     if (msg_verbose)
@@ -133,7 +133,7 @@ int     flush_purge(void)
 
 int     flush_refresh(void)
 {
-    char   *myname = "flush_refresh";
+    const char *myname = "flush_refresh";
     int     status;
 
     if (msg_verbose)
@@ -159,7 +159,7 @@ int     flush_refresh(void)
 
 int     flush_send(const char *site)
 {
-    char   *myname = "flush_send";
+    const char *myname = "flush_send";
     int     status;
 
     if (msg_verbose)
@@ -189,7 +189,7 @@ int     flush_send(const char *site)
 
 int     flush_add(const char *site, const char *queue_id)
 {
-    char   *myname = "flush_add";
+    const char *myname = "flush_add";
     int     status;
 
     if (msg_verbose)

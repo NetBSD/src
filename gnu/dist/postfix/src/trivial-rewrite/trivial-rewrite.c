@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.c,v 1.1.1.8.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: trivial-rewrite.c,v 1.1.1.8.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -28,8 +28,8 @@
 /*      Postfix from appending the local domain to spam from poorly
 /*	written remote clients.
 /* .RE
-/* .IP "\fBresolve \fIaddress\fR"
-/*	Resolve an address to a (\fItransport\fR, \fInexthop\fR,
+/* .IP "\fBresolve \fIsender\fR \fIaddress\fR"
+/*	Resolve the address to a (\fItransport\fR, \fInexthop\fR,
 /*      \fIrecipient\fR, \fIflags\fR) quadruple. The meaning of
 /*	the results is as follows:
 /* .RS
@@ -44,8 +44,8 @@
 /*	The address class, whether the address requires relaying,
 /*	whether the address has problems, and whether the request failed.
 /* .RE
-/* .IP "\fBverify \fIaddress\fR"
-/*	Resolve an address for address verification purposes.
+/* .IP "\fBverify \fIsender\fR \fIaddress\fR"
+/*	Resolve the address for address verification purposes.
 /* SERVER PROCESS MANAGEMENT
 /* .ad
 /* .fi
@@ -89,6 +89,9 @@
 /*	Resolve an address that ends in the "@" null domain as if the
 /*	local hostname were specified, instead of rejecting the address as
 /*	invalid.
+/* .IP "\fBresolve_numeric_domain (no)\fR"
+/*	Resolve "user@ipaddress" as "user@[ipaddress]", instead of
+/*	rejecting the address as invalid.
 /* ADDRESS REWRITING CONTROLS
 /* .ad
 /* .fi
@@ -111,8 +114,8 @@
 /*	Available in Postfix 2.2 and later:
 /* .IP "\fBremote_header_rewrite_domain (empty)\fR"
 /*	Don't rewrite message headers from remote clients at all when
-/*	this parameter is empty; otherwise, rewrite remote message headers
-/*	and append the specified domain name to incomplete addresses.
+/*	this parameter is empty; otherwise, rewrite message headers and
+/*	append the specified domain name to incomplete addresses.
 /* ROUTING CONTROLS
 /* .ad
 /* .fi
@@ -121,27 +124,34 @@
 /*	relay_transport, virtual_alias_domains, virtual_mailbox_domains
 /*	or proxy_interfaces.
 /* .IP "\fBlocal_transport (local:$myhostname)\fR"
-/*	The default mail delivery transport for domains that match
-/*	$mydestination, $inet_interfaces or $proxy_interfaces.
+/*	The default mail delivery transport and next-hop destination
+/*	for final delivery to domains listed with mydestination, and for
+/*	[ipaddress] destinations that match $inet_interfaces or $proxy_interfaces.
 /* .IP "\fBvirtual_transport (virtual)\fR"
-/*	The default mail delivery transport for domains that match the
-/*	$virtual_mailbox_domains parameter value.
+/*	The default mail delivery transport and next-hop destination for
+/*	final delivery to domains listed with $virtual_mailbox_domains.
 /* .IP "\fBrelay_transport (relay)\fR"
-/*	The default mail delivery transport and next-hop information for
-/*	domains that match the $relay_domains parameter value.
+/*	The default mail delivery transport and next-hop destination for
+/*	remote delivery to domains listed with $relay_domains.
 /* .IP "\fBdefault_transport (smtp)\fR"
-/*	The default mail delivery transport for domains that do not match
-/*	$mydestination, $inet_interfaces, $proxy_interfaces,
-/*	$virtual_alias_domains, $virtual_mailbox_domains, or $relay_domains.
+/*	The default mail delivery transport and next-hop destination for
+/*	destinations that do not match $mydestination, $inet_interfaces,
+/*	$proxy_interfaces, $virtual_alias_domains, $virtual_mailbox_domains,
+/*	or $relay_domains.
 /* .IP "\fBparent_domain_matches_subdomains (see 'postconf -d' output)\fR"
 /*	What Postfix features match subdomains of "domain.tld" automatically,
 /*	instead of requiring an explicit ".domain.tld" pattern.
 /* .IP "\fBrelayhost (empty)\fR"
-/*	The default host to send non-local mail to when no entry is matched
-/*	in the optional \fBtransport\fR(5) table.
+/*	The next-hop destination of non-local mail; overrides non-local
+/*	domains in recipient addresses.
 /* .IP "\fBtransport_maps (empty)\fR"
 /*	Optional lookup tables with mappings from recipient address to
 /*	(message delivery transport, next-hop destination).
+/* .PP
+/*	Available in Postfix version 2.3 and later:
+/* .IP "\fBsender_dependent_relayhost_maps (empty)\fR"
+/*	A sender-dependent override for the global relayhost parameter
+/*	setting.
 /* ADDRESS VERIFICATION CONTROLS
 /* .ad
 /* .fi
@@ -170,6 +180,11 @@
 /* .IP "\fBaddress_verify_transport_maps ($transport_maps)\fR"
 /*	Overrides the transport_maps parameter setting for address verification
 /*	probes.
+/* .PP
+/*	Available in Postfix version 2.3 and later:
+/* .IP "\fBaddress_verify_sender_dependent_relayhost_maps (empty)\fR"
+/*	Overrides the sender_dependent_relayhost_maps parameter setting for address
+/*	verification probes.
 /* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
@@ -300,6 +315,8 @@ char   *var_empty_addr;
 int     var_show_unk_rcpt_table;
 int     var_resolve_nulldom;
 char   *var_remote_rwr_domain;
+char   *var_snd_relay_maps;
+int     var_resolve_num_dom;
 
  /*
   * Shadow personality for address verification.
@@ -310,6 +327,7 @@ char   *var_vrfy_virt_xport;
 char   *var_vrfy_relay_xport;
 char   *var_vrfy_def_xport;
 char   *var_vrfy_relayhost;
+char   *var_vrfy_relay_maps;
 
  /*
   * Different resolver personalities depending on the kind of request.
@@ -320,6 +338,7 @@ RES_CONTEXT resolve_regular = {
     VAR_RELAY_TRANSPORT, &var_relay_transport,
     VAR_DEF_TRANSPORT, &var_def_transport,
     VAR_RELAYHOST, &var_relayhost,
+    VAR_SND_RELAY_MAPS, &var_snd_relay_maps, 0,
     VAR_TRANSPORT_MAPS, &var_transport_maps, 0
 };
 
@@ -329,6 +348,7 @@ RES_CONTEXT resolve_verify = {
     VAR_VRFY_RELAY_XPORT, &var_vrfy_relay_xport,
     VAR_VRFY_DEF_XPORT, &var_vrfy_def_xport,
     VAR_VRFY_RELAYHOST, &var_vrfy_relayhost,
+    VAR_VRFY_RELAY_MAPS, &var_vrfy_relay_maps, 0,
     VAR_VRFY_XPORT_MAPS, &var_vrfy_xport_maps, 0
 };
 
@@ -455,8 +475,6 @@ static void pre_accept(char *unused_name, char **unused_argv)
 
 #endif
 
-#ifdef CHECK_TABLE_STATS_PERIODICALLY
-
 static void check_table_stats(int unused_event, char *unused_context)
 {
     const char *table;
@@ -467,8 +485,6 @@ static void check_table_stats(int unused_event, char *unused_context)
     }
     event_request_timer(check_table_stats, (char *) 0, 10);
 }
-
-#endif
 
 /* pre_jail_init - initialize before entering chroot jail */
 
@@ -485,6 +501,18 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
 	resolve_verify.transport_info =
 	    transport_pre_init(resolve_verify.transport_maps_name,
 			    RES_PARAM_VALUE(resolve_verify.transport_maps));
+    if (*RES_PARAM_VALUE(resolve_regular.snd_relay_maps))
+	resolve_regular.snd_relay_info =
+	    maps_create(resolve_regular.snd_relay_maps_name,
+			RES_PARAM_VALUE(resolve_regular.snd_relay_maps),
+			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX
+			| DICT_FLAG_NO_REGSUB);
+    if (*RES_PARAM_VALUE(resolve_verify.snd_relay_maps))
+	resolve_verify.snd_relay_info =
+	    maps_create(resolve_verify.snd_relay_maps_name,
+			RES_PARAM_VALUE(resolve_verify.snd_relay_maps),
+			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX
+			| DICT_FLAG_NO_REGSUB);
 }
 
 /* post_jail_init - initialize after entering chroot jail */
@@ -495,9 +523,13 @@ static void post_jail_init(char *unused_name, char **unused_argv)
 	transport_post_init(resolve_regular.transport_info);
     if (resolve_verify.transport_info)
 	transport_post_init(resolve_verify.transport_info);
-#ifdef CHECK_TABLE_STATS_PERIODICALLY
     check_table_stats(0, (char *) 0);
-#endif
+
+    /*
+     * This process is called by clients that already enforce the max_idle
+     * time, so we don't have to do it another time.
+     */
+    var_idle_limit = 1;
 }
 
 /* main - pass control to the multi-threaded skeleton code */
@@ -523,6 +555,8 @@ int     main(int argc, char **argv)
 	VAR_VRFY_DEF_XPORT, DEF_VRFY_DEF_XPORT, &var_vrfy_def_xport, 1, 0,
 	VAR_VRFY_RELAYHOST, DEF_VRFY_RELAYHOST, &var_vrfy_relayhost, 0, 0,
 	VAR_REM_RWR_DOMAIN, DEF_REM_RWR_DOMAIN, &var_remote_rwr_domain, 0, 0,
+	VAR_SND_RELAY_MAPS, DEF_SND_RELAY_MAPS, &var_snd_relay_maps, 0, 0,
+	VAR_VRFY_RELAY_MAPS, DEF_VRFY_RELAY_MAPS, &var_vrfy_relay_maps, 0, 0,
 	0,
     };
     static CONFIG_BOOL_TABLE bool_table[] = {
@@ -533,6 +567,7 @@ int     main(int argc, char **argv)
 	VAR_RESOLVE_DEQUOTED, DEF_RESOLVE_DEQUOTED, &var_resolve_dequoted,
 	VAR_SHOW_UNK_RCPT_TABLE, DEF_SHOW_UNK_RCPT_TABLE, &var_show_unk_rcpt_table,
 	VAR_RESOLVE_NULLDOM, DEF_RESOLVE_NULLDOM, &var_resolve_nulldom,
+	VAR_RESOLVE_NUM_DOM, DEF_RESOLVE_NUM_DOM, &var_resolve_num_dom,
 	0,
     };
 

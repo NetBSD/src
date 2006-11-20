@@ -1,4 +1,4 @@
-/*	$NetBSD: multi_server.c,v 1.1.1.6.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: multi_server.c,v 1.1.1.6.2.2 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -169,6 +169,7 @@
 
 #include <msg.h>
 #include <msg_syslog.h>
+#include <msg_vstream.h>
 #include <chroot_uid.h>
 #include <listen.h>
 #include <events.h>
@@ -251,7 +252,7 @@ static void multi_server_timeout(int unused_event, char *unused_context)
 
 /*  multi_server_drain - stop accepting new clients */
 
-int multi_server_drain(void)
+int     multi_server_drain(void)
 {
     int     fd;
 
@@ -261,6 +262,7 @@ int multi_server_drain(void)
 	return (-1);
 	/* Finish existing clients in the background, then terminate. */
     case 0:
+	(void) msg_cleanup((MSG_CLEANUP_FN) 0);
 	for (fd = MASTER_LISTEN_FD; fd < MASTER_LISTEN_FD + socket_count; fd++)
 	    event_disable_readwrite(fd);
 	var_use_limit = 1;
@@ -458,11 +460,12 @@ static void multi_server_accept_inet(int unused_event, char *context)
 
 NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 {
-    char   *myname = "multi_server_main";
+    const char *myname = "multi_server_main";
     VSTREAM *stream = 0;
     char   *root_dir = 0;
     char   *user_name = 0;
     int     debug_me = 0;
+    int     daemon_mode = 1;
     char   *service_name = basename(argv[0]);
     int     delay;
     int     c;
@@ -473,15 +476,18 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
     MAIL_SERVER_LOOP_FN loop = 0;
     int     key;
     char   *transport = 0;
+
 #if 0
     char   *lock_path;
     VSTRING *why;
+
 #endif
     int     alone = 0;
     int     zerolimit = 0;
     WATCHDOG *watchdog;
     char   *oval;
     char   *generation;
+    int     msg_vstream_needed = 0;
 
     /*
      * Process environment options as early as we can.
@@ -533,10 +539,13 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
      * stderr, because no-one is going to see them.
      */
     opterr = 0;
-    while ((c = GETOPT(argc, argv, "cDi:lm:n:o:s:St:uvz")) > 0) {
+    while ((c = GETOPT(argc, argv, "cdDi:lm:n:o:s:St:uvVz")) > 0) {
 	switch (c) {
 	case 'c':
 	    root_dir = "setme";
+	    break;
+	case 'd':
+	    daemon_mode = 0;
 	    break;
 	case 'D':
 	    debug_me = 1;
@@ -573,6 +582,10 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	    break;
 	case 'v':
 	    msg_verbose++;
+	    break;
+	case 'V':
+	    if (++msg_vstream_needed == 1)
+		msg_vstream_init(mail_task(var_procname), VSTREAM_ERR);
 	    break;
 	case 'z':
 	    zerolimit = 1;
@@ -631,12 +644,12 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	    multi_server_in_flow_delay = 1;
 	    break;
 	case MAIL_SERVER_SOLITARY:
-	    if (!alone)
+	    if (stream == 0 && !alone)
 		msg_fatal("service %s requires a process limit of 1",
 			  service_name);
 	    break;
 	case MAIL_SERVER_UNLIMITED:
-	    if (!zerolimit)
+	    if (stream == 0 && !zerolimit)
 		msg_fatal("service %s requires a process limit of 0",
 			  service_name);
 	    break;
@@ -659,7 +672,7 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
     /*
      * If not connected to stdin, stdin must not be a terminal.
      */
-    if (stream == 0 && isatty(STDIN_FILENO)) {
+    if (daemon_mode && stream == 0 && isatty(STDIN_FILENO)) {
 	msg_vstream_init(var_procname, VSTREAM_ERR);
 	msg_fatal("do not run this command by hand");
     }
@@ -744,9 +757,7 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
      * Optionally, restrict the damage that this process can do.
      */
     resolve_local_init();
-#ifdef SNAPSHOT
     tzset();
-#endif
     chroot_uid(root_dir, user_name);
 
     /*

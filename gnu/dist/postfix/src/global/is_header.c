@@ -1,4 +1,4 @@
-/*	$NetBSD: is_header.c,v 1.1.1.4 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: is_header.c,v 1.1.1.4.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,12 +8,19 @@
 /* SYNOPSIS
 /*	#include <is_header.h>
 /*
-/*	int	is_header(string)
+/*	ssize_t	is_header(string)
 /*	const char *string;
+/*
+/*	ssize_t	is_header_buf(string, len)
+/*	const char *string;
+/*	ssize_t	len;
 /* DESCRIPTION
 /*	is_header() examines the given string and returns non-zero (true)
 /*	when it begins with a mail header name + optional space + colon.
 /*	The result is the length of the mail header name.
+/*
+/*	is_header_buf() is a more elaborate interface for use with strings
+/*	that may not be null terminated.
 /* STANDARDS
 /*	RFC 822 (ARPA Internet Text Messages)
 /* LICENSE
@@ -36,14 +43,14 @@
 
 #include "is_header.h"
 
-/* is_header - determine if this can be a header line */
+/* is_header_buf - determine if this can be a header line */
 
-int     is_header(const char *str)
+ssize_t is_header_buf(const char *str, ssize_t str_len)
 {
     const unsigned char *cp;
     int     state;
     int     c;
-    int     len;
+    ssize_t len;
 
 #define INIT		0
 #define IN_CHAR		1
@@ -53,11 +60,16 @@ int     is_header(const char *str)
     /*
      * XXX RFC 2822 Section 4.5, Obsolete header fields: whitespace may
      * appear between header label and ":" (see: RFC 822, Section 3.4.2.).
+     * 
+     * XXX Don't run off the end in case some non-standard iscntrl()
+     * implementation considers null a non-control character...
      */
-    for (len = 0, state = INIT, cp = CU_CHAR_PTR(str); (c = *cp) != 0; cp++) {
-	switch (c) {
+    for (len = 0, state = INIT, cp = CU_CHAR_PTR(str); /* see below */; cp++) {
+	if (str_len != IS_HEADER_NULL_TERMINATED && str_len-- <= 0)
+	    return (0);
+	switch (c = *cp) {
 	default:
-	    if (!ISASCII(c) || ISCNTRL(c))
+	    if (c == 0 || !ISASCII(c) || ISCNTRL(c))
 		return (0);
 	    if (state == INIT)
 		state = IN_CHAR;
@@ -77,5 +89,6 @@ int     is_header(const char *str)
 	    return ((state == IN_CHAR || state == IN_CHAR_SPACE) ? len : 0);
 	}
     }
+    /* Redundant return for future proofing. */
     return (0);
 }

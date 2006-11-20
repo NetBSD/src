@@ -1,4 +1,4 @@
-/*	$NetBSD: netstring.c,v 1.1.1.2.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: netstring.c,v 1.1.1.2.2.2 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -19,17 +19,17 @@
 /*	VSTRING	*netstring_get(stream, buf, limit)
 /*	VSTREAM	*stream;
 /*	VSTRING	*buf;
-/*	int	limit;
+/*	ssize_t	limit;
 /*
 /*	void	netstring_put(stream, data, len)
 /*	VSTREAM *stream;
 /*	const char *data;
-/*	int	len;
+/*	ssize_t	len;
 /*
 /*	void	netstring_put_multi(stream, data, len, data, len, ..., 0)
 /*	VSTREAM *stream;
 /*	const char *data;
-/*	int	len;
+/*	ssize_t	len;
 /*
 /*	void	NETSTRING_PUT_BUF(stream, buf)
 /*	VSTREAM *stream;
@@ -41,20 +41,20 @@
 /*	VSTRING	*netstring_memcpy(buf, data, len)
 /*	VSTRING	*buf;
 /*	const char *data;
-/*	int	len;
+/*	ssize_t	len;
 /*
 /*	VSTRING	*netstring_memcat(buf, data, len)
 /*	VSTRING	*buf;
 /*	const char *src;
-/*	int len;
+/*	ssize_t len;
 /* AUXILIARY ROUTINES
-/*	int	netstring_get_length(stream)
+/*	ssize_t	netstring_get_length(stream)
 /*	VSTREAM *stream;
 /*
 /*	VSTRING	*netstring_get_data(stream, buf, len)
 /*	VSTREAM *stream;
 /*	VSTRING	*buf;
-/*	int	len;
+/*	ssize_t	len;
 /*
 /*	void	netstring_get_terminator(stream)
 /*	VSTREAM *stream;
@@ -187,10 +187,10 @@ void    netstring_except(VSTREAM *stream, int exception)
 
 /* netstring_get_length - read netstring length + terminator */
 
-int     netstring_get_length(VSTREAM *stream)
+ssize_t netstring_get_length(VSTREAM *stream)
 {
-    char   *myname = "netstring_get_length";
-    int     len = 0;
+    const char *myname = "netstring_get_length";
+    ssize_t len = 0;
     int     ch;
 
     for (;;) {
@@ -200,12 +200,15 @@ int     netstring_get_length(VSTREAM *stream)
 			     NETSTRING_ERR_TIME : NETSTRING_ERR_EOF);
 	case ':':
 	    if (msg_verbose > 1)
-		msg_info("%s: read netstring length %d", myname, len);
+		msg_info("%s: read netstring length %ld", myname, (long) len);
 	    return (len);
 	default:
 	    if (!ISDIGIT(ch))
 		netstring_except(stream, NETSTRING_ERR_FORMAT);
 	    len = len * 10 + ch - '0';
+	    /* vstream_fread() would read zero bytes. Reject input anyway. */
+	    if (len < 0)
+		netstring_except(stream, NETSTRING_ERR_SIZE);
 	    break;
 	}
     }
@@ -213,9 +216,9 @@ int     netstring_get_length(VSTREAM *stream)
 
 /* netstring_get_data - read netstring payload + terminator */
 
-VSTRING *netstring_get_data(VSTREAM *stream, VSTRING *buf, int len)
+VSTRING *netstring_get_data(VSTREAM *stream, VSTRING *buf, ssize_t len)
 {
-    char   *myname = "netstring_get_data";
+    const char *myname = "netstring_get_data";
 
     /*
      * Allocate buffer space.
@@ -231,7 +234,7 @@ VSTRING *netstring_get_data(VSTREAM *stream, VSTRING *buf, int len)
 			 NETSTRING_ERR_TIME : NETSTRING_ERR_EOF);
     if (msg_verbose > 1)
 	msg_info("%s: read netstring data %.*s",
-		 myname, len < 30 ? len : 30, STR(buf));
+		 myname, (int) (len < 30 ? len : 30), STR(buf));
     netstring_get_terminator(stream);
 
     /*
@@ -251,9 +254,9 @@ void    netstring_get_terminator(VSTREAM *stream)
 
 /* netstring_get - read string from netstring stream */
 
-VSTRING *netstring_get(VSTREAM *stream, VSTRING *buf, int limit)
+VSTRING *netstring_get(VSTREAM *stream, VSTRING *buf, ssize_t limit)
 {
-    int     len;
+    ssize_t len;
 
     len = netstring_get_length(stream);
     if (limit && len > limit)
@@ -264,14 +267,14 @@ VSTRING *netstring_get(VSTREAM *stream, VSTRING *buf, int limit)
 
 /* netstring_put - send string as netstring */
 
-void    netstring_put(VSTREAM *stream, const char *data, int len)
+void    netstring_put(VSTREAM *stream, const char *data, ssize_t len)
 {
-    char   *myname = "netstring_put";
+    const char *myname = "netstring_put";
 
     if (msg_verbose > 1)
-	msg_info("%s: write netstring len %d data %.*s",
-		 myname, len, len < 30 ? len : 30, data);
-    vstream_fprintf(stream, "%d:", len);
+	msg_info("%s: write netstring len %ld data %.*s",
+		 myname, (long) len, (int) (len < 30 ? len : 30), data);
+    vstream_fprintf(stream, "%ld:", (long) len);
     vstream_fwrite(stream, data, len);
     VSTREAM_PUTC(',', stream);
 }
@@ -280,10 +283,10 @@ void    netstring_put(VSTREAM *stream, const char *data, int len)
 
 void    netstring_put_multi(VSTREAM *stream,...)
 {
-    char   *myname = "netstring_put_multi";
-    int     total;
+    const char *myname = "netstring_put_multi";
+    ssize_t total;
     char   *data;
-    int     data_len;
+    ssize_t data_len;
     va_list ap;
 
     /*
@@ -291,8 +294,8 @@ void    netstring_put_multi(VSTREAM *stream,...)
      */
     va_start(ap, stream);
     for (total = 0; (data = va_arg(ap, char *)) != 0; total += data_len)
-	if ((data_len = va_arg(ap, int)) < 0)
-	    msg_panic("netstring_put_multi: bad data length %d", data_len);
+	if ((data_len = va_arg(ap, ssize_t)) < 0)
+	    msg_panic("netstring_put_multi: bad data length %ld", (long) data_len);
     va_end(ap);
 
     /*
@@ -301,19 +304,19 @@ void    netstring_put_multi(VSTREAM *stream,...)
     if (msg_verbose > 1) {
 	va_start(ap, stream);
 	data = va_arg(ap, char *);
-	data_len = va_arg(ap, int);
-	msg_info("%s: write netstring len %d data %.*s",
-		 myname, total, data_len < 30 ? data_len : 30, data);
+	data_len = va_arg(ap, ssize_t);
+	msg_info("%s: write netstring len %ld data %.*s",
+	 myname, (long) total, (int) (data_len < 30 ? data_len : 30), data);
 	va_end(ap);
     }
 
     /*
      * Send the length, content and terminator.
      */
-    vstream_fprintf(stream, "%d:", total);
+    vstream_fprintf(stream, "%ld:", (long) total);
     va_start(ap, stream);
     while ((data = va_arg(ap, char *)) != 0) {
-	data_len = va_arg(ap, int);
+	data_len = va_arg(ap, ssize_t);
 	if (data_len > 0)
 	    if (vstream_fwrite(stream, data, data_len) != data_len)
 		netstring_except(stream, vstream_ftimeout(stream) ?
@@ -334,9 +337,9 @@ void    netstring_fflush(VSTREAM *stream)
 
 /* netstring_memcpy - copy data as in-memory netstring */
 
-VSTRING *netstring_memcpy(VSTRING *buf, const char *src, int len)
+VSTRING *netstring_memcpy(VSTRING *buf, const char *src, ssize_t len)
 {
-    vstring_sprintf(buf, "%d:", len);
+    vstring_sprintf(buf, "%ld:", (long) len);
     vstring_memcat(buf, src, len);
     VSTRING_ADDCH(buf, ',');
     return (buf);
@@ -344,9 +347,9 @@ VSTRING *netstring_memcpy(VSTRING *buf, const char *src, int len)
 
 /* netstring_memcat - append data as in-memory netstring */
 
-VSTRING *netstring_memcat(VSTRING *buf, const char *src, int len)
+VSTRING *netstring_memcat(VSTRING *buf, const char *src, ssize_t len)
 {
-    vstring_sprintf_append(buf, "%d:", len);
+    vstring_sprintf_append(buf, "%ld:", (long) len);
     vstring_memcat(buf, src, len);
     VSTRING_ADDCH(buf, ',');
     return (buf);

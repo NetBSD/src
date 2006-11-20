@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_command_client.c,v 1.1.1.2 2004/05/31 00:24:29 heas Exp $	*/
+/*	$NetBSD: mail_command_client.c,v 1.1.1.2.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -77,7 +77,7 @@ int     mail_command_client(const char *class, const char *name,...)
     va_end(ap);
     if (status != 0
 	|| attr_scan(stream, ATTR_FLAG_STRICT,
-		     ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &status, 0) != 1)
+		     ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status, 0) != 1)
 	status = -1;
     (void) vstream_fclose(stream);
     return (status);

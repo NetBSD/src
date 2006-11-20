@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_attr.c,v 1.1.1.2 2004/05/31 00:25:03 heas Exp $	*/
+/*	$NetBSD: deliver_attr.c,v 1.1.1.2.2.1 2006/11/20 13:31:05 tron Exp $	*/
 
 /*++
 /* NAME
@@ -13,11 +13,17 @@
 /*
 /*	void	deliver_attr_dump(attrp)
 /*	DELIVER_ATTR *attrp;
+/*
+/*	void	deliver_attr_free(attrp)
+/*	DELIVER_ATTR *attrp;
 /* DESCRIPTION
 /*	deliver_attr_init() initializes a structure with message delivery
 /*	attributes to a known initial state (all zeros).
 /*
 /*	deliver_attr_dump() logs the contents of the given attribute list.
+/*
+/*	deliver_attr_free() releases memory that was allocated by
+/*	deliver_attr_init().
 /* LICENSE
 /* .ad
 /* .fi
@@ -52,10 +58,11 @@ void    deliver_attr_init(DELIVER_ATTR *attrp)
     attrp->queue_id = 0;
     attrp->offset = 0;
     attrp->sender = 0;
-    attrp->recipient = 0;
+    RECIPIENT_ASSIGN(&(attrp->rcpt), 0, 0, 0, 0, 0);
     attrp->user = 0;
     attrp->delivered = 0;
     attrp->relay = 0;
+    attrp->why = dsb_create();
 }
 
 /* deliver_attr_dump - log message delivery attributes */
@@ -69,8 +76,17 @@ void    deliver_attr_dump(DELIVER_ATTR *attrp)
     msg_info("queue_id: %s", attrp->queue_id ? attrp->queue_id : "null");
     msg_info("offset: %ld", attrp->offset);
     msg_info("sender: %s", attrp->sender ? attrp->sender : "null");
-    msg_info("recipient: %s", attrp->recipient ? attrp->recipient : "null");
+    msg_info("recipient: %s", attrp->rcpt.address ? attrp->rcpt.address : "null");
     msg_info("user: %s", attrp->user ? attrp->user : "null");
     msg_info("delivered: %s", attrp->delivered ? attrp->delivered : "null");
     msg_info("relay: %s", attrp->relay ? attrp->relay : "null");
+    msg_info("why: %s", attrp->why ? "buffer" : "null");
+}
+
+
+/* deliver_attr_free - release storage */
+
+void    deliver_attr_free(DELIVER_ATTR *attrp)
+{
+    dsb_free(attrp->why);
 }

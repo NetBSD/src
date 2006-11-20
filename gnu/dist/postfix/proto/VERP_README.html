@@ -110,6 +110,20 @@ parameters.
 you would configure the list manager to submit mail according
 to one of the following two forms: </p>
 
+<p> Postfix 2.3 and later: </p>
+
+<blockquote>
+<pre>
+% sendmail -XV -f owner-listname other-arguments...
+
+% sendmail -XV+= -f owner-listname other-arguments...
+</pre>
+</blockquote>
+
+<p> Postfix 2.2 and earlier (Postfix 2.3 understands the old syntax
+for backwards compatibility, but will log a warning that reminds
+you of the new syntax): </p>
+
 <blockquote>
 <pre>
 % sendmail -V -f owner-listname other-arguments...
@@ -207,6 +221,19 @@ recommended ones. </p>
 
 <p> The Postfix sendmail command has a -V flag to request VERP style
 delivery.  Specify one of the following two forms: </p>
+
+<p> Postfix 2.3 and later:</p>
+<blockquote>
+<pre>
+% sendmail -XV -f owner-listname ....
+
+% sendmail -XV+= -f owner-listname ....
+</pre>
+</blockquote>
+
+<p> Postfix 2.2 and earlier (Postfix 2.3 understands the old syntax
+for backwards compatibility, but will log a warning that reminds
+you of the new syntax): </p>
 
 <blockquote>
 <pre>

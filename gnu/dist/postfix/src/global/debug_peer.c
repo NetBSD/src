@@ -1,4 +1,4 @@
-/*	$NetBSD: debug_peer.c,v 1.1.1.3 2004/05/31 00:24:29 heas Exp $	*/
+/*	$NetBSD: debug_peer.c,v 1.1.1.3.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -84,7 +84,7 @@ static int saved_level = UNUSED_SAVED_LEVEL;
 
 void    debug_peer_init(void)
 {
-    char   *myname = "debug_peer_init";
+    const char *myname = "debug_peer_init";
 
     /*
      * Sanity check.

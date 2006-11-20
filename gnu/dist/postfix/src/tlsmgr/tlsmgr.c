@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsmgr.c,v 1.1.1.1.2.2 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: tlsmgr.c,v 1.1.1.1.2.3 2006/11/20 13:30:55 tron Exp $	*/
 
 /*++
 /* NAME
@@ -59,17 +59,30 @@
 /* TLS SESSION CACHE
 /* .ad
 /* .fi
-/* .IP "\fBsmtpd_tls_session_cache_database (empty)\fR"
-/*	Name of the file containing the optional Postfix SMTP server
-/*	TLS session cache.
-/* .IP "\fBsmtpd_tls_session_cache_timeout (3600s)\fR"
-/*	The expiration time of Postfix SMTP server TLS session cache
-/*	information.
+/* .IP "\fBlmtp_tls_loglevel (0)\fR"
+/*	The LMTP-specific version of the smtp_tls_loglevel
+/*	configuration parameter.
+/* .IP "\fBlmtp_tls_session_cache_database (empty)\fR"
+/*	The LMTP-specific version of the smtp_tls_session_cache_database
+/*	configuration parameter.
+/* .IP "\fBlmtp_tls_session_cache_timeout (3600s)\fR"
+/*	The LMTP-specific version of the smtp_tls_session_cache_timeout
+/*	configuration parameter.
+/* .IP "\fBsmtp_tls_loglevel (0)\fR"
+/*	Enable additional Postfix SMTP client logging of TLS activity.
 /* .IP "\fBsmtp_tls_session_cache_database (empty)\fR"
 /*	Name of the file containing the optional Postfix SMTP client
 /*	TLS session cache.
 /* .IP "\fBsmtp_tls_session_cache_timeout (3600s)\fR"
 /*	The expiration time of Postfix SMTP client TLS session cache
+/*	information.
+/* .IP "\fBsmtpd_tls_loglevel (0)\fR"
+/*	Enable additional Postfix SMTP server logging of TLS activity.
+/* .IP "\fBsmtpd_tls_session_cache_database (empty)\fR"
+/*	Name of the file containing the optional Postfix SMTP server
+/*	TLS session cache.
+/* .IP "\fBsmtpd_tls_session_cache_timeout (3600s)\fR"
+/*	The expiration time of Postfix SMTP server TLS session cache
 /*	information.
 /* PSEUDO RANDOM NUMBER GENERATOR
 /* .ad
@@ -192,6 +205,7 @@
 /* TLS library. */
 
 #ifdef USE_TLS
+#include <tls.h>			/* TLS_MGR_SCACHE_<type> */
 #include <tls_prng.h>
 #include <tls_scache.h>
 
@@ -204,6 +218,16 @@ char   *var_tls_rand_source;
 int     var_tls_rand_bytes;
 int     var_tls_reseed_period;
 int     var_tls_prng_exch_period;
+int     var_smtpd_tls_loglevel;
+char   *var_smtpd_tls_scache_db;
+int     var_smtpd_tls_scache_timeout;
+int     var_smtp_tls_loglevel;
+char   *var_smtp_tls_scache_db;
+int     var_smtp_tls_scache_timeout;
+int     var_lmtp_tls_loglevel;
+char   *var_lmtp_tls_scache_db;
+int     var_lmtp_tls_scache_timeout;
+char   *var_tls_rand_exch_name;
 
  /*
   * Bound the time that we are willing to wait for an I/O operation. This
@@ -238,17 +262,26 @@ static TLS_PRNG_SRC *rand_source_file;
 #define EGD_PATH(egd) ((egd) + EGD_PREF_LEN)
 
  /*
-  * State for TLS client and server session caches.
+  * State for TLS session caches.
   */
-static TLS_SCACHE *clnt_scache_info;	/* cache handle */
-static int clnt_scache_active;		/* scan in progress */
+typedef struct {
+    char   *cache_label;
+    TLS_SCACHE *cache_info;
+    int     cache_active;
+    char  **cache_db;
+    int    *cache_loglevel;
+    int    *cache_timeout;
+} TLSMGR_SCACHE;
 
-static TLS_SCACHE *srvr_scache_info;	/* cache handle */
-static int srvr_scache_active;		/* scan in progress */
-
-#define WHICH_CACHE_INFO(type) \
-    (type == TLS_MGR_SCACHE_CLIENT ? clnt_scache_info : \
-	type == TLS_MGR_SCACHE_SERVER ? srvr_scache_info : 0)
+TLSMGR_SCACHE cache_table[] = {
+    TLS_MGR_SCACHE_SMTPD, 0, 0, &var_smtpd_tls_scache_db,
+    &var_smtpd_tls_loglevel, &var_smtpd_tls_scache_timeout,
+    TLS_MGR_SCACHE_SMTP, 0, 0, &var_smtp_tls_scache_db,
+    &var_smtp_tls_loglevel, &var_smtp_tls_scache_timeout,
+    TLS_MGR_SCACHE_LMTP, 0, 0, &var_lmtp_tls_scache_db,
+    &var_lmtp_tls_loglevel, &var_lmtp_tls_scache_timeout,
+    0,
+};
 
  /*
   * SLMs.
@@ -376,11 +409,12 @@ static void tlsmgr_reseed_event(int unused_event, char *dummy)
     event_request_timer(tlsmgr_reseed_event, dummy, next_period);
 }
 
-/* tlsmgr_clnt_cache_run_event - start SMTP client TLS session cache scan */
+/* tlsmgr_cache_run_event - start TLS session cache scan */
 
-static void tlsmgr_clnt_cache_run_event(int unused_event, char *dummy)
+static void tlsmgr_cache_run_event(int unused_event, char *ctx)
 {
-    const char *myname = "tlsmgr_clnt_cache_run_event";
+    const char *myname = "tlsmgr_cache_run_event";
+    TLSMGR_SCACHE *cache = (TLSMGR_SCACHE *) ctx;
 
     /*
      * This routine runs when it is time for another TLS session cache scan.
@@ -389,41 +423,17 @@ static void tlsmgr_clnt_cache_run_event(int unused_event, char *dummy)
      * Don't start a new scan when the timer goes off while cache cleanup is
      * still in progress.
      */
-    if (var_smtp_tls_loglevel >= 3)
-	msg_info("%s: start TLS client session cache cleanup", myname);
+    if (cache->cache_info->verbose)
+	msg_info("%s: start TLS %s session cache cleanup",
+		 myname, cache->cache_label);
 
-    if (clnt_scache_active == 0)
-	clnt_scache_active =
-	    tls_scache_sequence(clnt_scache_info, DICT_SEQ_FUN_FIRST,
+    if (cache->cache_active == 0)
+	cache->cache_active =
+	    tls_scache_sequence(cache->cache_info, DICT_SEQ_FUN_FIRST,
 				TLS_SCACHE_SEQUENCE_NOTHING);
 
-    event_request_timer(tlsmgr_clnt_cache_run_event, dummy,
-			var_smtp_tls_scache_timeout);
-}
-
-/* tlsmgr_srvr_cache_run_event - start SMTP server TLS session cache scan */
-
-static void tlsmgr_srvr_cache_run_event(int unused_event, char *dummy)
-{
-    const char *myname = "tlsmgr_srvr_cache_run_event";
-
-    /*
-     * This routine runs when it is time for another TLS session cache scan.
-     * Make sure this routine gets called again in the future.
-     * 
-     * Don't start a new scan when the timer goes off while cache cleanup is
-     * still in progress.
-     */
-    if (var_smtpd_tls_loglevel >= 3)
-	msg_info("%s: start TLS server session cache cleanup", myname);
-
-    if (srvr_scache_active == 0)
-	srvr_scache_active =
-	    tls_scache_sequence(srvr_scache_info, DICT_SEQ_FUN_FIRST,
-				TLS_SCACHE_SEQUENCE_NOTHING);
-
-    event_request_timer(tlsmgr_srvr_cache_run_event, dummy,
-			var_smtpd_tls_scache_timeout);
+    event_request_timer(tlsmgr_cache_run_event, (char *) cache,
+			cache->cache_info->timeout);
 }
 
 /* tlsmgr_loop - TLS manager main loop */
@@ -431,6 +441,8 @@ static void tlsmgr_srvr_cache_run_event(int unused_event, char *dummy)
 static int tlsmgr_loop(char *unused_name, char **unused_argv)
 {
     struct timeval tv;
+    int     active = 0;
+    TLSMGR_SCACHE *ent;
 
     /*
      * Update the PRNG pool with the time of day. We do it here after every
@@ -454,18 +466,14 @@ static int tlsmgr_loop(char *unused_name, char **unused_argv)
 #define DONT_WAIT	0
 #define WAIT_FOR_EVENT	(-1)
 
-    if (clnt_scache_active)
-	clnt_scache_active =
-	    tls_scache_sequence(clnt_scache_info, DICT_SEQ_FUN_NEXT,
-				TLS_SCACHE_SEQUENCE_NOTHING);
-    if (srvr_scache_active)
-	srvr_scache_active =
-	    tls_scache_sequence(srvr_scache_info, DICT_SEQ_FUN_NEXT,
-				TLS_SCACHE_SEQUENCE_NOTHING);
+    for (ent = cache_table; ent->cache_label; ++ent) {
+	if (ent->cache_info && ent->cache_active)
+	    active |= ent->cache_active =
+		tls_scache_sequence(ent->cache_info, DICT_SEQ_FUN_NEXT,
+				    TLS_SCACHE_SEQUENCE_NOTHING);
+    }
 
-    if (clnt_scache_active || srvr_scache_active)
-	return (DONT_WAIT);
-    return (WAIT_FOR_EVENT);
+    return (active ? DONT_WAIT : WAIT_FOR_EVENT);
 }
 
 /* tlsmgr_request_receive - receive request */
@@ -519,17 +527,15 @@ static void tlsmgr_service(VSTREAM *client_stream, char *unused_service,
 			           char **argv)
 {
     static VSTRING *request = 0;
+    static VSTRING *cache_type = 0;
     static VSTRING *cache_id = 0;
     static VSTRING *buffer = 0;
-    int     cache_type;
     int     len;
-    long    openssl_vsn;
-    int     flags;
     static char wakeup[] = {		/* master wakeup request */
 	TRIGGER_REQ_WAKEUP,
 	0,
     };
-    TLS_SCACHE *cache;
+    TLSMGR_SCACHE *ent;
     int     status = TLS_MGR_STAT_FAIL;
 
     /*
@@ -543,6 +549,7 @@ static void tlsmgr_service(VSTREAM *client_stream, char *unused_service,
      */
     if (request == 0) {
 	request = vstring_alloc(10);
+	cache_type = vstring_alloc(10);
 	cache_id = vstring_alloc(10);
 	buffer = vstring_alloc(10);
     }
@@ -560,27 +567,30 @@ static void tlsmgr_service(VSTREAM *client_stream, char *unused_service,
 	 */
 	if (STREQ(STR(request), TLS_MGR_REQ_LOOKUP)) {
 	    if (attr_scan(client_stream, ATTR_FLAG_STRICT,
-			ATTR_TYPE_NUM, TLS_MGR_ATTR_CACHE_TYPE, &cache_type,
+			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_TYPE, cache_type,
 			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_ID, cache_id,
-			  ATTR_TYPE_LONG, TLS_MGR_ATTR_VERSION, &openssl_vsn,
-			  ATTR_TYPE_NUM, TLS_MGR_ATTR_FLAGS, &flags,
-			  ATTR_TYPE_END) == 4) {
-		if ((cache = WHICH_CACHE_INFO(cache_type)) == 0) {
-		    msg_warn("bogus cache type \"%d\" in \"%s\" request",
-			     cache_type, TLS_MGR_REQ_LOOKUP);
+			  ATTR_TYPE_END) == 2) {
+		for (ent = cache_table; ent->cache_label; ++ent)
+		    if (strcmp(ent->cache_label, STR(cache_type)) == 0)
+			break;
+		if (ent->cache_label == 0) {
+		    msg_warn("bogus cache type \"%s\" in \"%s\" request",
+			     STR(cache_type), TLS_MGR_REQ_LOOKUP);
+		    VSTRING_RESET(buffer);
+		} else if (ent->cache_info == 0) {
+
+		    /*
+		     * Cache type valid, but not enabled
+		     */
 		    VSTRING_RESET(buffer);
 		} else {
-		    status =
-			tls_scache_lookup(cache, STR(cache_id), openssl_vsn,
-					  flags,
-					  TLS_SCACHE_DONT_NEED_OPENSSL_VSN,
-					  TLS_SCACHE_DONT_NEED_FLAGS,
-					  buffer) ?
+		    status = tls_scache_lookup(ent->cache_info,
+					       STR(cache_id), buffer) ?
 			TLS_MGR_STAT_OK : TLS_MGR_STAT_ERR;
 		}
 	    }
 	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, status,
+		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
 		       ATTR_TYPE_DATA, TLS_MGR_ATTR_SESSION,
 		       LEN(buffer), STR(buffer),
 		       ATTR_TYPE_END);
@@ -591,24 +601,25 @@ static void tlsmgr_service(VSTREAM *client_stream, char *unused_service,
 	 */
 	else if (STREQ(STR(request), TLS_MGR_REQ_UPDATE)) {
 	    if (attr_scan(client_stream, ATTR_FLAG_STRICT,
-			ATTR_TYPE_NUM, TLS_MGR_ATTR_CACHE_TYPE, &cache_type,
+			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_TYPE, cache_type,
 			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_ID, cache_id,
-			  ATTR_TYPE_LONG, TLS_MGR_ATTR_VERSION, &openssl_vsn,
-			  ATTR_TYPE_NUM, TLS_MGR_ATTR_FLAGS, &flags,
 			  ATTR_TYPE_DATA, TLS_MGR_ATTR_SESSION, buffer,
-			  ATTR_TYPE_END) == 5) {
-		if ((cache = WHICH_CACHE_INFO(cache_type)) == 0) {
-		    msg_warn("bogus cache type \"%d\" in \"%s\" request",
-			     cache_type, TLS_MGR_REQ_UPDATE);
-		} else {
+			  ATTR_TYPE_END) == 3) {
+		for (ent = cache_table; ent->cache_label; ++ent)
+		    if (strcmp(ent->cache_label, STR(cache_type)) == 0)
+			break;
+		if (ent->cache_label == 0) {
+		    msg_warn("bogus cache type \"%s\" in \"%s\" request",
+			     STR(cache_type), TLS_MGR_REQ_UPDATE);
+		} else if (ent->cache_info != 0) {
 		    status =
-			tls_scache_update(cache, STR(cache_id), openssl_vsn,
-					  flags, STR(buffer), LEN(buffer)) ?
+			tls_scache_update(ent->cache_info, STR(cache_id),
+					  STR(buffer), LEN(buffer)) ?
 			TLS_MGR_STAT_OK : TLS_MGR_STAT_ERR;
 		}
 	    }
 	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, status,
+		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
 		       ATTR_TYPE_END);
 	}
 
@@ -617,19 +628,23 @@ static void tlsmgr_service(VSTREAM *client_stream, char *unused_service,
 	 */
 	else if (STREQ(STR(request), TLS_MGR_REQ_DELETE)) {
 	    if (attr_scan(client_stream, ATTR_FLAG_STRICT,
-			ATTR_TYPE_NUM, TLS_MGR_ATTR_CACHE_TYPE, &cache_type,
+			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_TYPE, cache_type,
 			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_ID, cache_id,
 			  ATTR_TYPE_END) == 2) {
-		if ((cache = WHICH_CACHE_INFO(cache_type)) == 0) {
-		    msg_warn("bogus cache type \"%d\" in \"%s\" request",
-			     cache_type, TLS_MGR_REQ_DELETE);
-		} else {
-		    status = tls_scache_delete(cache, STR(cache_id)) ?
+		for (ent = cache_table; ent->cache_label; ++ent)
+		    if (strcmp(ent->cache_label, STR(cache_type)) == 0)
+			break;
+		if (ent->cache_label == 0) {
+		    msg_warn("bogus cache type \"%s\" in \"%s\" request",
+			     STR(cache_type), TLS_MGR_REQ_DELETE);
+		} else if (ent->cache_info != 0) {
+		    status = tls_scache_delete(ent->cache_info,
+					       STR(cache_id)) ?
 			TLS_MGR_STAT_OK : TLS_MGR_STAT_ERR;
 		}
 	    }
 	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, status,
+		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
 		       ATTR_TYPE_END);
 	}
 
@@ -638,7 +653,7 @@ static void tlsmgr_service(VSTREAM *client_stream, char *unused_service,
 	 */
 	else if (STREQ(STR(request), TLS_MGR_REQ_SEED)) {
 	    if (attr_scan(client_stream, ATTR_FLAG_STRICT,
-			  ATTR_TYPE_NUM, TLS_MGR_ATTR_SIZE, &len,
+			  ATTR_TYPE_INT, TLS_MGR_ATTR_SIZE, &len,
 			  ATTR_TYPE_END) == 1) {
 		VSTRING_RESET(buffer);
 		if (len <= 0 || len > 255) {
@@ -653,7 +668,7 @@ static void tlsmgr_service(VSTREAM *client_stream, char *unused_service,
 		}
 	    }
 	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, status,
+		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
 		       ATTR_TYPE_DATA, TLS_MGR_ATTR_SEED,
 		       LEN(buffer), STR(buffer),
 		       ATTR_TYPE_END);
@@ -663,19 +678,25 @@ static void tlsmgr_service(VSTREAM *client_stream, char *unused_service,
 	 * Caching policy request.
 	 */
 	else if (STREQ(STR(request), TLS_MGR_REQ_POLICY)) {
-	    int     cache_types = 0;
+	    int     cachable = 0;
 
 	    if (attr_scan(client_stream, ATTR_FLAG_STRICT,
-			  ATTR_TYPE_END) == 0) {
-		if (clnt_scache_info)
-		    cache_types |= TLS_MGR_SCACHE_CLIENT;
-		if (srvr_scache_info)
-		    cache_types |= TLS_MGR_SCACHE_SERVER;
-		status = TLS_MGR_STAT_OK;
+			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_TYPE, cache_type,
+			  ATTR_TYPE_END) == 1) {
+		for (ent = cache_table; ent->cache_label; ++ent)
+		    if (strcmp(ent->cache_label, STR(cache_type)) == 0)
+			break;
+		if (ent->cache_label == 0) {
+		    msg_warn("bogus cache type \"%s\" in \"%s\" request",
+			     STR(cache_type), TLS_MGR_REQ_POLICY);
+		} else {
+		    cachable = (ent->cache_info != 0) ? 1 : 0;
+		    status = TLS_MGR_STAT_OK;
+		}
 	    }
 	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, status,
-		       ATTR_TYPE_NUM, TLS_MGR_ATTR_POLICY, cache_types,
+		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
+		       ATTR_TYPE_INT, TLS_MGR_ATTR_CACHABLE, cachable,
 		       ATTR_TYPE_END);
 	}
 
@@ -703,7 +724,7 @@ static void tlsmgr_service(VSTREAM *client_stream, char *unused_service,
      */
     else {
 	attr_print(client_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_NUM, MAIL_ATTR_STATUS, TLS_MGR_STAT_FAIL,
+		   ATTR_TYPE_INT, MAIL_ATTR_STATUS, TLS_MGR_STAT_FAIL,
 		   ATTR_TYPE_END);
     }
     vstream_fflush(client_stream);
@@ -715,15 +736,19 @@ static void tlsmgr_pre_init(char *unused_name, char **unused_argv)
 {
     char   *path;
     struct timeval tv;
+    TLSMGR_SCACHE *ent;
 
     /*
      * If nothing else works then at least this will get us a few bits of
      * entropy.
+     * 
+     * XXX This is our first call into the OpenSSL library. We should find out
+     * if this can be moved to the post-jail initialization phase, without
+     * breaking compatibility with existing installations.
      */
     GETTIMEOFDAY(&tv);
     tv.tv_sec ^= getpid();
     RAND_seed(&tv, sizeof(struct timeval));
-
 
     /*
      * Open the external entropy source. We will not be able to open it again
@@ -786,22 +811,19 @@ static void tlsmgr_pre_init(char *unused_name, char **unused_argv)
      * privileged. Start the cache maintenance pseudo threads after dropping
      * privileges.
      */
-    if (*var_smtp_tls_scache_db)
-	clnt_scache_info =
-	    tls_scache_open(var_smtp_tls_scache_db, "client",
-			    var_smtp_tls_loglevel,
-			    var_smtp_tls_scache_timeout);
-    if (*var_smtpd_tls_scache_db)
-	srvr_scache_info =
-	    tls_scache_open(var_smtpd_tls_scache_db, "server",
-			    var_smtpd_tls_loglevel,
-			    var_smtpd_tls_scache_timeout);
+    for (ent = cache_table; ent->cache_label; ++ent)
+	if (**ent->cache_db)
+	    ent->cache_info =
+		tls_scache_open(*ent->cache_db, ent->cache_label,
+			    *ent->cache_loglevel >= 2, *ent->cache_timeout);
 }
 
 /* tlsmgr_post_init - post-jail initialization */
 
 static void tlsmgr_post_init(char *unused_name, char **unused_argv)
 {
+    TLSMGR_SCACHE *ent;
+
 #define NULL_EVENT	(0)
 #define NULL_CONTEXT	((char *) 0)
 
@@ -838,10 +860,9 @@ static void tlsmgr_post_init(char *unused_name, char **unused_argv)
      * length, but early cleanup makes verbose logging more informative (we
      * get positive confirmation that the cleanup threads are running).
      */
-    if (*var_smtp_tls_scache_db)
-	tlsmgr_clnt_cache_run_event(NULL_EVENT, NULL_CONTEXT);
-    if (*var_smtpd_tls_scache_db)
-	tlsmgr_srvr_cache_run_event(NULL_EVENT, NULL_CONTEXT);
+    for (ent = cache_table; ent->cache_label; ++ent)
+	if (ent->cache_info)
+	    tlsmgr_cache_run_event(NULL_EVENT, (char *) ent);
 }
 
 /* tlsmgr_before_exit - save PRNG state before exit */
@@ -862,15 +883,25 @@ int     main(int argc, char **argv)
 {
     static CONFIG_STR_TABLE str_table[] = {
 	VAR_TLS_RAND_SOURCE, DEF_TLS_RAND_SOURCE, &var_tls_rand_source, 0, 0,
+	VAR_TLS_RAND_EXCH_NAME, DEF_TLS_RAND_EXCH_NAME, &var_tls_rand_exch_name, 0, 0,
+	VAR_SMTPD_TLS_SCACHE_DB, DEF_SMTPD_TLS_SCACHE_DB, &var_smtpd_tls_scache_db, 0, 0,
+	VAR_SMTP_TLS_SCACHE_DB, DEF_SMTP_TLS_SCACHE_DB, &var_smtp_tls_scache_db, 0, 0,
+	VAR_LMTP_TLS_SCACHE_DB, DEF_LMTP_TLS_SCACHE_DB, &var_lmtp_tls_scache_db, 0, 0,
 	0,
     };
     static CONFIG_TIME_TABLE time_table[] = {
 	VAR_TLS_RESEED_PERIOD, DEF_TLS_RESEED_PERIOD, &var_tls_reseed_period, 1, 0,
 	VAR_TLS_PRNG_UPD_PERIOD, DEF_TLS_PRNG_UPD_PERIOD, &var_tls_prng_exch_period, 1, 0,
+	VAR_SMTPD_TLS_SCACHTIME, DEF_SMTPD_TLS_SCACHTIME, &var_smtpd_tls_scache_timeout, 0, 0,
+	VAR_SMTP_TLS_SCACHTIME, DEF_SMTP_TLS_SCACHTIME, &var_smtp_tls_scache_timeout, 0, 0,
+	VAR_LMTP_TLS_SCACHTIME, DEF_LMTP_TLS_SCACHTIME, &var_lmtp_tls_scache_timeout, 0, 0,
 	0,
     };
     static CONFIG_INT_TABLE int_table[] = {
 	VAR_TLS_RAND_BYTES, DEF_TLS_RAND_BYTES, &var_tls_rand_bytes, 1, 0,
+	VAR_SMTPD_TLS_LOGLEVEL, DEF_SMTPD_TLS_LOGLEVEL, &var_smtpd_tls_loglevel, 0, 0,
+	VAR_SMTP_TLS_LOGLEVEL, DEF_SMTP_TLS_LOGLEVEL, &var_smtp_tls_loglevel, 0, 0,
+	VAR_LMTP_TLS_LOGLEVEL, DEF_LMTP_TLS_LOGLEVEL, &var_lmtp_tls_loglevel, 0, 0,
 	0,
     };
 

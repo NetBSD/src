@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd.h,v 1.1.1.3.2.1 2006/07/12 15:06:41 tron Exp $	*/
+/*	$NetBSD: qmqpd.h,v 1.1.1.3.2.2 2006/11/20 13:30:48 tron Exp $	*/
 
 /*++
 /* NAME
@@ -13,7 +13,7 @@
  /*
   * System library.
   */
-#include <time.h>
+#include <sys/time.h>
 
  /*
   * Utility library.
@@ -34,11 +34,12 @@ typedef struct {
     VSTREAM *client;			/* client connection */
     VSTRING *message;			/* message buffer */
     VSTRING *buf;			/* line buffer */
-    time_t  time;			/* start of session */
+    struct timeval arrival_time;	/* start of session */
     char   *name;			/* client name */
     char   *addr;			/* client IP address */
     char   *namaddr;			/* name[addr] */
     char   *rfc_addr;			/* RFC 2821 client IP address */
+    int     addr_family;		/* address family */
     char   *queue_id;			/* queue file ID */
     VSTREAM *cleanup;			/* cleanup server */
     MAIL_STREAM *dest;			/* cleanup server */

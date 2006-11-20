@@ -70,7 +70,7 @@ FLUSH(8)                                                              FLUSH(8)
        fore can accumulate outdated or redundant data.  In  order
        to  maintain  sanity,  "refresh" must be executed periodi-
        cally. This can be automated with a suitable wakeup  timer
-       setting in the <b>master.cf</b> configuration file.
+       setting in the <a href="master.5.html"><b>master.cf</b></a> configuration file.
 
        Upon  receipt of a request to deliver mail for an eligible
        destination, the <a href="flush.8.html"><b>flush</b>(8)</a> server requests delivery of  all
@@ -81,7 +81,7 @@ FLUSH(8)                                                              FLUSH(8)
        in one domain.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes to <b>main.cf</b> are picked up automatically as <a href="flush.8.html"><b>flush</b>(8)</a>
+       Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically as <a href="flush.8.html"><b>flush</b>(8)</a>
        processes run for only a limited amount of time.  Use  the
        command "<b>postfix reload</b>" to speed up a change.
 
@@ -89,8 +89,8 @@ FLUSH(8)                                                              FLUSH(8)
        <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  main.cf  and
-              master.cf configuration files.
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
               How  much time a Postfix daemon process may take to

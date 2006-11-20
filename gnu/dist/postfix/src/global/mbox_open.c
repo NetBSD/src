@@ -1,4 +1,4 @@
-/*	$NetBSD: mbox_open.c,v 1.1.1.2 2004/05/31 00:24:32 heas Exp $	*/
+/*	$NetBSD: mbox_open.c,v 1.1.1.2.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -10,23 +10,29 @@
 /*
 /*	typedef struct {
 /* .in +4
-/*	/* public members... */
-/*	VSTREAM	*fp;
+/*		/* public members... */
+/*		VSTREAM	*fp;
 /* .in -4
 /*	} MBOX;
 /*
-/*	MBOX	*mbox_open(path, flags, mode, st, user, group, lock_style, why)
+/*	MBOX	*mbox_open(path, flags, mode, st, user, group, lock_style,
+/*				def_dsn, why)
 /*	const char *path;
 /*	int	flags;
-/*	int	mode;
+/*	mode_t	mode;
 /*	struct stat *st;
 /*	uid_t	user;
 /*	gid_t	group;
 /*	int	lock_style;
-/*	VSTRING	*why;
+/*	const char *def_dsn;
+/*	DSN_BUF	*why;
 /*
 /*	void	mbox_release(mbox)
 /*	MBOX	*mbox;
+/*
+/*	const char *mbox_dsn(err, def_dsn)
+/*	int	err;
+/*	const char *def_dsn;
 /* DESCRIPTION
 /*	This module manages access to UNIX mailbox-style files.
 /*
@@ -38,9 +44,22 @@
 /*	The \fBlock_style\fR argument specifies a lock style from
 /*	mbox_lock_mask(). Locks are applied to regular files only.
 /*	The result is a handle that must be destroyed by mbox_release().
+/*	The \fBdef_dsn\fR argument is given to mbox_dsn().
 /*
 /*	mbox_release() releases the named mailbox. It is up to the
 /*	application to close the stream.
+/*
+/*	mbox_dsn() translates an errno value to a mailbox related
+/*	enhanced status code.
+/* .IP "EAGAIN, ESTALE"
+/*	These result in a 4.2.0 soft error (mailbox problem).
+/* .IP ENOSPC
+/*	This results in a 4.3.0 soft error (mail system full).
+/* .IP "EDQUOT, EFBIG"
+/*	These result in a 5.2.2 hard error (mailbox full).
+/* .PP
+/*	All other errors are assigned the specified default error
+/*	code. Typically, one would specify 4.2.0 or 5.2.0.
 /* DIAGNOSTICS
 /*	mbox_open() returns a null pointer in case of problems, and
 /*	sets errno to EAGAIN if someone else has exclusive access.
@@ -62,6 +81,10 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#ifndef EDQUOT
+#define EDQUOT EFBIG
+#endif
+
 /* Utility library. */
 
 #include <msg.h>
@@ -80,15 +103,15 @@
 
 /* mbox_open - open mailbox-style file for exclusive access */
 
-MBOX   *mbox_open(const char *path, int flags, int mode, struct stat * st,
+MBOX   *mbox_open(const char *path, int flags, mode_t mode, struct stat * st,
 		          uid_t chown_uid, gid_t chown_gid,
-		          int lock_style, VSTRING *why)
+		          int lock_style, const char *def_dsn,
+		          DSN_BUF *why)
 {
     struct stat local_statbuf;
     MBOX   *mp;
     int     locked = 0;
     VSTREAM *fp;
-    int     saved_errno;
 
     /*
      * Open or create the target file. In case of a privileged open, the
@@ -105,7 +128,8 @@ MBOX   *mbox_open(const char *path, int flags, int mode, struct stat * st,
     if (st == 0)
 	st = &local_statbuf;
     if ((fp = safe_open(path, flags | O_NONBLOCK, mode, st,
-			chown_uid, chown_gid, why)) == 0) {
+			chown_uid, chown_gid, why->reason)) == 0) {
+	dsb_status(why, mbox_dsn(errno, def_dsn));
 	return (0);
     }
     close_on_exec(vstream_fileno(fp), CLOSE_ON_EXEC);
@@ -126,15 +150,16 @@ MBOX   *mbox_open(const char *path, int flags, int mode, struct stat * st,
      * an unprivileged user is not supposed to be able to do.
      */
     if (S_ISREG(st->st_mode) && (lock_style & MBOX_DOT_LOCK)) {
-	if (dot_lockfile(path, why) == 0) {
+	if (dot_lockfile(path, why->reason) == 0) {
 	    locked |= MBOX_DOT_LOCK;
 	} else if (errno == EEXIST) {
-	    errno = EAGAIN;
+	    dsb_status(why, mbox_dsn(EAGAIN, def_dsn));
 	    vstream_fclose(fp);
 	    return (0);
 	} else if (lock_style & MBOX_DOT_LOCK_MAY_FAIL) {
-	    msg_warn("%s", vstring_str(why));
+	    msg_warn("%s", vstring_str(why->reason));
 	} else {
+	    dsb_status(why, mbox_dsn(errno, def_dsn));
 	    vstream_fclose(fp);
 	    return (0);
 	}
@@ -147,18 +172,17 @@ MBOX   *mbox_open(const char *path, int flags, int mode, struct stat * st,
      * problems.
      */
 #define HUNKY_DORY(lock_mask, myflock_style) ((lock_style & (lock_mask)) == 0 \
-         || deliver_flock(vstream_fileno(fp), (myflock_style), why) == 0)
+         || deliver_flock(vstream_fileno(fp), (myflock_style), why->reason) == 0)
 
     if (S_ISREG(st->st_mode)) {
 	if (HUNKY_DORY(MBOX_FLOCK_LOCK, MYFLOCK_STYLE_FLOCK)
 	    && HUNKY_DORY(MBOX_FCNTL_LOCK, MYFLOCK_STYLE_FCNTL)) {
 	    locked |= lock_style;
 	} else {
-	    saved_errno = errno;
+	    dsb_status(why, mbox_dsn(errno, def_dsn));
 	    if (locked & MBOX_DOT_LOCK)
 		dot_unlockfile(path);
 	    vstream_fclose(fp);
-	    errno = saved_errno;
 	    return (0);
 	}
     }
@@ -179,11 +203,28 @@ void    mbox_release(MBOX *mp)
      * (AFS), the only way to find out if a file was written successfully is
      * to close it, and therefore the close() operation is in the mail_copy()
      * routine. If we really insist on owning the vstream member, then we
-     * should export appropriate methods that mail_copy() can use in order
-     * to manipulate a message stream.
+     * should export appropriate methods that mail_copy() can use in order to
+     * manipulate a message stream.
      */
     if (mp->locked & MBOX_DOT_LOCK)
 	dot_unlockfile(mp->path);
     myfree(mp->path);
     myfree((char *) mp);
+}
+
+/* mbox_dsn - map errno value to mailbox-related DSN detail */
+
+const char *mbox_dsn(int err, const char *def_dsn)
+{
+#define TRY_AGAIN_ERROR(e) \
+	(e == EAGAIN || e == ESTALE)
+#define SYSTEM_FULL_ERROR(e) \
+	(e == ENOSPC)
+#define MBOX_FULL_ERROR(e) \
+	(e == EDQUOT || e == EFBIG)
+
+    return (TRY_AGAIN_ERROR(err) ? "4.2.0" :
+	    SYSTEM_FULL_ERROR(err) ? "4.3.0" :
+	    MBOX_FULL_ERROR(err) ? "5.2.2" :
+	    def_dsn);
 }

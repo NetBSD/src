@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf_raw.c,v 1.1.1.2 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: mail_conf_raw.c,v 1.1.1.2.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -78,14 +78,14 @@
 static void check_mail_conf_raw(const char *name, const char *strval,
 			             int min, int max)
 {
-    int     len = strlen(strval);
+    ssize_t len = strlen(strval);
 
     if (min && len < min)
-	msg_fatal("bad string length (%d < %d): %s = %s",
-		  len, min, name, strval);
+	msg_fatal("bad string length (%ld < %d): %s = %s",
+		  (long) len, min, name, strval);
     if (max && len > max)
-	msg_fatal("bad string length (%d > %d): %s = %s",
-		  len, max, name, strval);
+	msg_fatal("bad string length (%ld > %d): %s = %s",
+		  (long) len, max, name, strval);
 }
 
 /* get_mail_conf_raw - evaluate string-valued configuration variable */

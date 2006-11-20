@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.113.2.7 2006/07/12 15:06:32 tron Exp $
+# $NetBSD: mi,v 1.113.2.8 2006/11/20 13:30:13 tron Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -135,6 +135,7 @@
 ./usr/share/doc/html/postfix/CDB_README.html		misc-obsolete	obsolete
 ./usr/share/doc/html/postfix/CYRUS_README.html		misc-obsolete	obsolete
 ./usr/share/doc/html/postfix/DATABASE_README.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/DSN_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/DB_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/DEBUG_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/ETRN_README.html		misc-postfix-htmldoc	postfix,doc
@@ -146,6 +147,7 @@
 ./usr/share/doc/html/postfix/LOCAL_RECIPIENT_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/MAILDROP_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/MYSQL_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/MILTER_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/NFS_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/OVERVIEW.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/PACKAGE_README.html	misc-obsolete	obsolete
@@ -215,6 +217,7 @@
 ./usr/share/doc/html/postfix/postconf.5.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postdrop.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postfix-logo.jpg	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/postfix-manuals.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postfix.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postkick.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postlock.1.html	misc-postfix-htmldoc	postfix,doc
@@ -578,6 +581,7 @@
 ./usr/share/examples/postfix/CONTENT_INSPECTION_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/DATABASE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/DB_README		misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/DSN_README		misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/DEBUG_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/ETRN_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/FILTER_README	misc-postfix-examples	postfix,doc
@@ -588,6 +592,7 @@
 ./usr/share/examples/postfix/LOCAL_RECIPIENT_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MAILDROP_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/MYSQL_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/MILTER_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/NFS_README		misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/OVERVIEW		misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/PCRE_README	misc-postfix-examples	postfix,doc

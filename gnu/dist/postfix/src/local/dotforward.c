@@ -1,4 +1,4 @@
-/*	$NetBSD: dotforward.c,v 1.1.1.3 2004/05/31 00:24:37 heas Exp $	*/
+/*	$NetBSD: dotforward.c,v 1.1.1.3.2.1 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -81,6 +81,8 @@
 #include <mail_conf.h>
 #include <ext_prop.h>
 #include <sent.h>
+#include <dsn_mask.h>
+#include <trace.h>
 
 /* Application-specific. */
 
@@ -93,7 +95,7 @@
 
 int     deliver_dotforward(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
 {
-    char   *myname = "deliver_dotforward";
+    const char *myname = "deliver_dotforward";
     struct stat st;
     VSTRING *path;
     struct mypasswd *mypwd;
@@ -107,6 +109,7 @@ int     deliver_dotforward(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
     char   *lhs;
     char   *next;
     int     expand_status;
+    int     saved_notify;
 
     /*
      * Make verbose logging easier to understand.
@@ -138,7 +141,8 @@ int     deliver_dotforward(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
      * Set the delivered message attribute to the recipient, so that this
      * message will list the correct forwarding address.
      */
-    state.msg_attr.delivered = state.msg_attr.recipient;
+    if (var_frozen_delivered == 0)
+	state.msg_attr.delivered = state.msg_attr.rcpt.address;
 
     /*
      * DELIVERY RIGHTS
@@ -177,8 +181,6 @@ int     deliver_dotforward(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
      * name includes the address extension, don't propagate the extension to
      * the recipient addresses.
      */
-#define STR(x)	vstring_str(x)
-
     status = 0;
     path = vstring_alloc(100);
     saved_forward_path = mystrdup(var_forward_path);
@@ -221,10 +223,11 @@ int     deliver_dotforward(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
 	/*
 	 * Don't expand a verify-only request.
 	 */
-	if (state.request->flags & DEL_REQ_FLAG_VERIFY) {
-	    *statusp = sent(BOUNCE_FLAGS(state.request), 
-				SENT_ATTR(state.msg_attr),
-			    "forward via file: %s", STR(path));
+	if (state.request->flags & DEL_REQ_FLAG_MTA_VRFY) {
+	    dsb_simple(state.msg_attr.why, "2.0.0",
+		       "forward via file: %s", STR(path));
+	    *statusp = sent(BOUNCE_FLAGS(state.request),
+			    SENT_ATTR(state.msg_attr));
 	    forward_found = YES;
 	} else if (been_here(state.dup_filter, "forward %s", STR(path)) == 0) {
 	    state.msg_attr.exp_from = state.msg_attr.local;
@@ -238,15 +241,44 @@ int     deliver_dotforward(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
 	    } else if ((fd = open_as(STR(path), O_RDONLY, 0, usr_attr.uid, usr_attr.gid)) < 0) {
 		msg_warn("cannot open file %s: %m", STR(path));
 	    } else {
+
+		/*
+		 * XXX DSN. When delivering to an alias (i.e. the envelope
+		 * sender address is not replaced) any ENVID, RET, or ORCPT
+		 * parameters are propagated to all forwarding addresses
+		 * associated with that alias.  The NOTIFY parameter is
+		 * propagated to the forwarding addresses, except that any
+		 * SUCCESS keyword is removed.
+		 */
 		close_on_exec(fd, CLOSE_ON_EXEC);
 		addr_count = 0;
 		fp = vstream_fdopen(fd, O_RDONLY);
+		saved_notify = state.msg_attr.rcpt.dsn_notify;
+		state.msg_attr.rcpt.dsn_notify =
+		    (saved_notify == DSN_NOTIFY_SUCCESS ?
+		     DSN_NOTIFY_NEVER : saved_notify & ~DSN_NOTIFY_SUCCESS);
 		status = deliver_token_stream(state, usr_attr, fp, &addr_count);
 		if (vstream_fclose(fp))
 		    msg_warn("close file %s: %m", STR(path));
 		if (addr_count > 0) {
 		    forward_found = YES;
 		    been_here(state.dup_filter, "forward-done %s", STR(path));
+
+		    /*
+		     * XXX DSN. When delivering to an alias (i.e. the
+		     * envelope sender address is not replaced) and the
+		     * original NOTIFY parameter for the alias contained the
+		     * SUCCESS keyword, an "expanded" DSN is issued for the
+		     * alias.
+		     */
+		    if (status == 0 && (saved_notify & DSN_NOTIFY_SUCCESS)) {
+			state.msg_attr.rcpt.dsn_notify = saved_notify;
+			dsb_update(state.msg_attr.why, "2.0.0", "expanded",
+				   DSB_SKIP_RMTA, DSB_SKIP_REPLY,
+				   "alias expanded");
+			(void) trace_append(BOUNCE_FLAG_NONE,
+					    SENT_ATTR(state.msg_attr));
+		    }
 		}
 	    }
 	} else if (been_here_check(state.dup_filter, "forward-done %s", STR(path)) != 0)

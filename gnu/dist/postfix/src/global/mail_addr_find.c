@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_addr_find.c,v 1.1.1.4.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: mail_addr_find.c,v 1.1.1.4.2.2 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -15,7 +15,8 @@
 /* DESCRIPTION
 /*	mail_addr_find() searches the specified maps for an entry with as
 /*	key the specified address, and derivations from that address.
-/*	The search is case insensitive.
+/*	It is up to the caller to specify its case sensitivity
+/*	preferences when it opens the maps.
 /*	The result is overwritten upon each call.
 /*
 /*	An address that is in the form \fIuser\fR matches itself.
@@ -95,7 +96,7 @@
 
 const char *mail_addr_find(MAPS *path, const char *address, char **extp)
 {
-    char   *myname = "mail_addr_find";
+    const char *myname = "mail_addr_find";
     const char *result;
     char   *ratsign = 0;
     char   *full_key;
@@ -105,14 +106,11 @@ const char *mail_addr_find(MAPS *path, const char *address, char **extp)
     /*
      * Initialize.
      */
-    full_key = lowercase(mystrdup(address));
+    full_key = mystrdup(address);
     if (*var_rcpt_delim == 0) {
 	bare_key = saved_ext = 0;
     } else {
-	/* Preserve case of extension. */
-	bare_key = strip_addr(address, &saved_ext, *var_rcpt_delim);
-	if (bare_key != 0)
-	    lowercase(bare_key);
+	bare_key = strip_addr(full_key, &saved_ext, *var_rcpt_delim);
     }
 
     /*
@@ -204,7 +202,7 @@ int     main(int argc, char **argv)
      * Initialize.
      */
     mail_conf_read();
-    path = maps_create(argv[0], argv[1], DICT_FLAG_LOCK);
+    path = maps_create(argv[0], argv[1], DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
     while (vstring_fgets_nonl(buffer, VSTREAM_IN)) {
 	extent = 0;
 	result = mail_addr_find(path, STR(buffer), &extent);
@@ -218,6 +216,7 @@ int     main(int argc, char **argv)
     vstring_free(buffer);
 
     maps_free(path);
+    return (0);
 }
 
 #endif

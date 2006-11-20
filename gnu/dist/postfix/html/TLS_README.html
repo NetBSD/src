@@ -37,7 +37,7 @@ SMTP mail or with SASL authentication.
 <p> Postfix version 2.2 introduces support for TLS as described in
 <a href="http://www.faqs.org/rfcs/rfc3207.html">RFC 3207</a>.  TLS Support for older Postfix versions was available as
 an add-on patch.  The section "<a href="#compat">Compatibility with
-Postfix < 2.2 TLS support</a>" below discusses the differences
+Postfix &lt; 2.2 TLS support</a>" below discusses the differences
 between these implementations.  </p>
 
 <p> Topics covered in this document: </p>
@@ -56,7 +56,7 @@ between these implementations.  </p>
 
 <li><a href="#problems"> Reporting problems </a>
 
-<li><a href="#compat">Compatibility with Postfix < 2.2 TLS support</a>
+<li><a href="#compat">Compatibility with Postfix &lt; 2.2 TLS support</a>
 
 <li><a href="#credits"> Credits </a>
 
@@ -174,7 +174,7 @@ are in directory <tt>/usr/local/lib</tt>:  </p>
 </ul>
 
 <p> If you need to apply other customizations (such as Berkeley DB
-databases, MySQL, PosgreSQL, LDAP or SASL), see the respective
+databases, MySQL, PostgreSQL, LDAP or SASL), see the respective
 Postfix README documents, and combine their "<tt>make makefiles</tt>"
 instructions with the instructions above:  </p>
 
@@ -224,11 +224,31 @@ key configuration </a>
 <h3><a name="server_cert_key">Server-side certificate and private
 key configuration </a> </h3>
 
-<p> In order to use TLS, the Postfix SMTP server needs a certificate
-and a private key. Both must be in "pem" format. The private key
-must not be encrypted, meaning:  the key must be accessible without
-password.  Both certificate and private key may be in the same
-file.  </p>
+<p> In order to use TLS, the Postfix SMTP server generally needs
+a certificate and a private key. Both must be in "PEM" format. The
+private key must not be encrypted, meaning:  the key must be accessible
+without password.  Both certificate and private key may be in the same
+file, in which case the certificate file should be owned by "root" and
+not be readable by any other user. If the key is stored separately,
+this applies to the key file only, and the certificate file may be
+"world-readable". </p>
+
+<p> Public Internet MX hosts without certificates signed by a "reputable"
+CA must generate, and be prepared to present to most clients, a
+self-signed or private-CA signed certificate. The client will not be
+able to authenticate the server, but unless it is running Postfix 2.3 or
+similar software, it will still insist on a server certificate. </p>
+
+<p> For servers that are <b>not</b> public Internet MX hosts, Postfix
+2.3 supports configurations with no certificates. This entails the
+use of just the anonymous TLS ciphers, which are not supported by
+typical SMTP clients. Since such clients will not, as a rule, fall
+back to plain text after a TLS handshake failure, the server will
+be unable to receive email from most TLS enabled clients. To avoid
+accidental configurations with no certificates, Postfix 2.3 enables
+certificate-less operation only when the administrator explicitly sets
+"<a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a> = none". This ensures that new Postfix
+configurations will not accidentally run with no certificates. </p>
 
 <p> Both RSA and DSA certificates are supported. Typically you will
 only have RSA certificates issued by a commercial CA. In addition,
@@ -240,9 +260,9 @@ preferred. </p>
 
 <p> In order for remote SMTP clients to check the Postfix SMTP
 server certificates, the CA certificate (in case of a certificate
-chain, all CA certificates) must be available.  You should add
-these certificates to the server certificate, the server certificate
-first, then the issuing CA(s).  </p>
+chain, all CA certificates) must be available.  You should add any
+intermediate CA certificates to the server certificate: the server
+certificate first, then the intermediate CA(s).  </p>
 
 <p> Example: the certificate for "server.dom.ain" was issued by
 "intermediate CA" which itself has a certificate issued by "root
@@ -279,7 +299,7 @@ is correctly configured to supply its intermediate CA certificate). </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a> = /etc/postfix/server.pem
     <a href="postconf.5.html#smtpd_tls_key_file">smtpd_tls_key_file</a> = $<a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a>
 </pre>
@@ -289,15 +309,25 @@ is correctly configured to supply its intermediate CA certificate). </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_tls_dcert_file">smtpd_tls_dcert_file</a> = /etc/postfix/server-dsa.pem
     <a href="postconf.5.html#smtpd_tls_dkey_file">smtpd_tls_dkey_file</a> = $<a href="postconf.5.html#smtpd_tls_dcert_file">smtpd_tls_dcert_file</a>
 </pre>  
 </blockquote>
 
+<p> Postfix 2.3 and later, TLS without certificates for servers serving
+exclusively anonymous-cipher capable clients: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a> = none
+</pre>  
+</blockquote>
+
 <p> To verify a remote SMTP client certificate, the Postfix SMTP
 server needs to trust the certificates of the issuing certification
-authorities. These certificates in "pem" format can be stored in a
+authorities. These certificates in "PEM" format can be stored in a
 single $<a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> or in multiple files, one CA per file in
 the $<a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a> directory. If you use a directory, don't forget
 to create the necessary "hash" links with: </p>
@@ -319,16 +349,16 @@ privileges) from the files in the directory when the information
 is needed. Thus, the $<a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a> directory needs to be
 accessible inside the optional chroot jail. </p>
 
-<p> When you configure Postfix to request client certificates (by
-setting $<a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a> = yes), any certificates in
-$<a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> are sent to the client, in order to allow it to
+<p> When you configure Postfix to request <a
+href="#server_vrfy_client">client certificates</a>, any CA certificates
+in $<a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> are sent to the client, in order to allow it to
 choose an identity signed by a CA you trust. If no $<a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a>
-is specified, no preferred CA list is sent, and the client is free
-to choose an identity signed by any CA. Many clients use a fixed
-identity regardless of the preferred CA list and you may be able
-to reduce TLS negotiation overhead by installing client CA certificates
-mostly or only in $<a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a>. In the latter case you need
-not specify a $<a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a>. </p>
+is specified, no preferred CA list is sent, and the client is free to
+choose an identity signed by any CA. Many clients use a fixed identity
+regardless of the preferred CA list and you may be able to reduce TLS
+negotiation overhead by installing client CA certificates mostly or
+only in $<a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a>. In the latter case you need not specify a
+$<a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a>. </p>
 
 <p> Note, that unless client certificates are used to allow greater
 access to TLS authenticated clients, it is best to not ask for
@@ -339,7 +369,7 @@ the TLS handshake when client certificates are requested. </p>
 <p> Example: </p>
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> = /etc/postfix/CAcert.pem
     <a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a> = /etc/postfix/certs
 </pre>
@@ -348,7 +378,7 @@ the TLS handshake when client certificates are requested. </p>
 <h3><a name="server_logging"> Server-side TLS activity logging </a> </h3>
 
 <p> To get additional information about Postfix SMTP server TLS
-activity you can increase the loglevel from 0..4. Each logging
+activity you can increase the log level from 0..4. Each logging
 level also includes the information that is logged at a lower
 logging level. </p>
 
@@ -374,14 +404,14 @@ transmission after STARTTLS </td> </tr>
 
 </blockquote>
 
-<p> Use loglevel 3 only in case of problems. Use of loglevel 4 is
+<p> Use log level 3 only in case of problems. Use of log level 4 is
 strongly discouraged. </p>
 
 <p> Example: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_tls_loglevel">smtpd_tls_loglevel</a> = 0
 </pre>
 </blockquote>
@@ -397,7 +427,7 @@ since the headers may be changed by intermediate servers. </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_tls_received_header">smtpd_tls_received_header</a> = yes
 </pre>
 </blockquote>
@@ -406,13 +436,18 @@ since the headers may be changed by intermediate servers. </p>
 
 <p> By default, TLS is disabled in the Postfix SMTP server, so no
 difference to plain Postfix is visible.  Explicitly switch it on
-using "<a href="postconf.5.html#smtpd_use_tls">smtpd_use_tls</a> = yes". </p>
+with "<a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a> = may" (Postfix 2.3 and
+later) or "<a href="postconf.5.html#smtpd_use_tls">smtpd_use_tls</a> = yes" (obsolete but still
+supported). </p>
 
 <p> Example: </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    # Postfix 2.3 and later
+    <a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a> = may
+    # Obsolete, but still supported
     <a href="postconf.5.html#smtpd_use_tls">smtpd_use_tls</a> = yes
 </pre>
 </blockquote>
@@ -425,17 +460,23 @@ SMTP clients, but does not require that clients use TLS encryption.
 is never offered due to insufficient privileges to access the server
 private key. This is intended behavior. </p>
 
-<p> You can ENFORCE the use of TLS, so that the Postfix SMTP server
-announces STARTTLS and accepts no mail without TLS encryption, by
-setting "<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> = yes". According to <a href="http://www.faqs.org/rfcs/rfc2487.html">RFC 2487</a> this MUST
-NOT be applied in case of a publicly-referenced Postfix SMTP server.
-This option is off by default and should only seldom be used. </p>
+<p> <a name="server_enforce">You can ENFORCE the use of TLS</a>,
+so that the Postfix SMTP server announces STARTTLS and accepts no
+mail without TLS encryption, by setting
+"<a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a> = encrypt" (Postfix 2.3 and
+later) or "<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> = yes" (obsolete but still
+supported). According to <a href="http://www.faqs.org/rfcs/rfc2487.html">RFC 2487</a> this MUST NOT be applied in case
+of a publicly-referenced Postfix SMTP server.  This option is off
+by default and should only seldom be used. </p>
 
 <p> Example: </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    # Postfix 2.3 and later
+    <a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a> = encrypt
+    # Obsolete, but still supported
     <a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> = yes
 </pre>
 </blockquote>
@@ -447,17 +488,18 @@ Outlook [Express] prefer the "wrapper" mode.  This is true for OE
 (Win32 &lt; 5.0 and Win32 &gt;=5.0 when run on a port&lt;&gt;25
 and OE (5.01 Mac on all ports). </p>
 
-<p> It is strictly discouraged to use this mode from main.cf. If
-you want to support this service, enable a special port in master.cf
-and specify "-o <a href="postconf.5.html#smtpd_tls_wrappermode">smtpd_tls_wrappermode</a> = yes" as an <a href="smtpd.8.html">smtpd(8)</a> command
-line option.  Port 465 (smtps) was once chosen for this feature.
+<p> It is strictly discouraged to use this mode from <a href="postconf.5.html">main.cf</a>. If
+you want to support this service, enable a special port in <a href="master.5.html">master.cf</a>
+and specify "-o <a href="postconf.5.html#smtpd_tls_wrappermode">smtpd_tls_wrappermode</a>=yes" (note: no space around
+the "=") as an <a href="smtpd.8.html">smtpd(8)</a> command line option.  Port 465 (smtps) was
+once chosen for this feature.
 </p>
 
 <p> Example: </p>
  
 <blockquote>
 <pre>
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
     smtps    inet  n       -       n       -       -       smtpd
       -o <a href="postconf.5.html#smtpd_tls_wrappermode">smtpd_tls_wrappermode</a>=yes -o <a href="postconf.5.html#smtpd_sasl_auth_enable">smtpd_sasl_auth_enable</a>=yes
 </pre>
@@ -467,46 +509,49 @@ line option.  Port 465 (smtps) was once chosen for this feature.
 
 <p> To receive a remote SMTP client certificate, the Postfix SMTP
 server must explicitly ask for one (any contents of $<a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a>
-are also sent to the client as a hint for choosing a certificate
-from a suitable CA). Unfortunately, Netscape clients will either
-complain if no matching client certificate is available or will
-offer the user client a list of certificates to choose from.
-Additionally some MTAs (notably some versions of qmail) are unable
-to complete TLS negotiation when client certificates are requested,
-and abort the SMTP session. So this option is "off" by default.
-You will however need the certificate if you want to use certificate
-based relaying with, for example, the <a href="postconf.5.html#permit_tls_clientcerts">permit_tls_clientcerts</a>
-feature.  </p>
+are also sent to the client as a hint for choosing a certificate from
+a suitable CA). Unfortunately, Netscape clients will either complain
+if no matching client certificate is available or will offer the user
+client a list of certificates to choose from. Additionally some MTAs
+(notably some versions of qmail) are unable to complete TLS negotiation
+when client certificates are requested, and abort the SMTP session. So
+this option is "off" by default. You will however need the certificate
+if you want to use certificate based relaying with, for example, the
+<a href="postconf.5.html#permit_tls_clientcerts">permit_tls_clientcerts</a> feature. A server that wants client certificates
+must first present its own certificate. While Postfix 2.3 by default
+offers anonymous ciphers to clients, these are automatically suppressed
+when the server is configured to ask for client certificates. </p>
 
 <p> Example: </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
-    <a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a> = no
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a> = yes
+    # Postfix 2.3 and later
+    <a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a> = may
+    # Obsolete, but still supported
+    <a href="postconf.5.html#smtpd_use_tls">smtpd_use_tls</a> = yes
 </pre>
 </blockquote>
 
-<p> You may also decide to REQUIRE a remote SMTP client certificate
-before allowing TLS connections.  This feature is included for
-completeness, and implies "<a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a> = yes".  </p>
-
-<p> Please be aware, that this will inhibit TLS connections without
-a proper client certificate and that it makes sense only when
-non-TLS submission is disabled (<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> = yes). Otherwise,
-clients could bypass the restriction by simply not using STARTTLS
-at all. </p>
-
-<p> When TLS is not enforced, the connection will be handled as
-if only "<a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a> = yes" is specified, and a warning is
+<p> When TLS is <a href="#server_enforce">enforced</a> you may also decide
+to REQUIRE a remote SMTP client certificate for all TLS connections,
+by setting "<a href="postconf.5.html#smtpd_tls_req_ccert">smtpd_tls_req_ccert</a> = yes". This feature implies
+"<a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a> = yes". When TLS is not enforced,
+"<a href="postconf.5.html#smtpd_tls_req_ccert">smtpd_tls_req_ccert</a> = yes" is ignored and a warning is
 logged. </p>
 
 <p> Example: </p>
- 
+
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
-    <a href="postconf.5.html#smtpd_tls_req_ccert">smtpd_tls_req_ccert</a> = no
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtpd_tls_req_ccert">smtpd_tls_req_ccert</a> = yes
+    # Postfix 2.3 and later
+    <a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a> = encrypt
+    # Obsolete, but still supported
+    <a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> = yes
 </pre>
 </blockquote>
 
@@ -520,7 +565,7 @@ CA issues special CA which then issues the actual certificate...)
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_tls_ccert_verifydepth">smtpd_tls_ccert_verifydepth</a> = 5
 </pre>
 </blockquote>
@@ -528,20 +573,23 @@ CA issues special CA which then issues the actual certificate...)
 <h3><a name="server_tls_auth">Supporting AUTH over TLS only</a></h3>
 
 <p> Sending AUTH data over an unencrypted channel poses a security
-risk. When TLS layer encryption is required (<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> =
-yes), the Postfix SMTP server will announce and accept AUTH only
-after the TLS layer has been activated with STARTTLS. When TLS
-layer encryption is optional (<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> = no), it may
-however still be useful to only offer AUTH when TLS is active. To
-maintain compatibility with non-TLS clients, the default is to
-accept AUTH without encryption. In order to change this behavior,
-set "<a href="postconf.5.html#smtpd_tls_auth_only">smtpd_tls_auth_only</a> = yes". </p>
+risk.  When TLS layer encryption is required
+("<a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a> = encrypt" or the obsolete
+"<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> = yes"), the Postfix SMTP server will
+announce and accept AUTH only after the TLS layer has been activated
+with STARTTLS. When TLS layer encryption is optional
+("<a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a> = may" or the obsolete
+"<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> = no"), it may however still be useful
+to only offer AUTH when TLS is active. To maintain compatibility
+with non-TLS clients, the default is to accept AUTH without encryption.
+In order to change this behavior, set
+"<a href="postconf.5.html#smtpd_tls_auth_only">smtpd_tls_auth_only</a> = yes". </p>
 
 <p> Example: </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_tls_auth_only">smtpd_tls_auth_only</a> = no
 </pre>
 </blockquote>
@@ -565,7 +613,7 @@ the cost of repeatedly negotiating TLS session keys is high.</p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> = btree:/etc/postfix/smtpd_scache
 </pre>
 </blockquote>
@@ -579,8 +627,24 @@ recommends a maximum of 24 hours.  </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_tls_session_cache_timeout">smtpd_tls_session_cache_timeout</a> = 3600s
+</pre>
+</blockquote>
+
+<p> When the Postfix SMTP server does not save TLS sessions to an
+external cache database, client-side session caching is unlikely
+to be useful.  To prevent such wastage, the Postfix SMTP server can
+be configured to not issue TLS session ids. By default the Postfix
+SMTP server always issues TLS session ids. This works around known
+interoperability issues with some MUAs, and prevents possible
+interoperability issues with other MTAs. </p>
+
+<p> Example: </p>
+
+<blockquote>
+<pre>
+    <a href="postconf.5.html#smtpd_tls_always_issue_session_ids">smtpd_tls_always_issue_session_ids</a> = no
 </pre>
 </blockquote>
 
@@ -596,7 +660,7 @@ Postfix SMTP server access control:  </p>
 <dt> <a href="postconf.5.html#permit_tls_clientcerts">permit_tls_clientcerts</a> </dt> <dd> <p> Allow the remote SMTP
 client SMTP request if the client certificate passes verification,
 and if its fingerprint is listed in the list of client certificates
-(see relay_clientcerts discussion below). </p> </dd>
+(see <a href="postconf.5.html#relay_clientcerts">relay_clientcerts</a> discussion below). </p> </dd>
 
 <dt> <a href="postconf.5.html#permit_tls_all_clientcerts">permit_tls_all_clientcerts</a> </dt> <dd> <p> Allow the remote
 client SMTP request if the client certificate passes verification.
@@ -619,7 +683,7 @@ The <a href="postconf.5.html#permit_tls_all_clientcerts">permit_tls_all_clientce
 specially created email relay server.  </p>
 
 <p> It is however recommended to stay with the <a href="postconf.5.html#permit_tls_clientcerts">permit_tls_clientcerts</a>
-feature and list all certificates via $relay_clientcerts, as
+feature and list all certificates via $<a href="postconf.5.html#relay_clientcerts">relay_clientcerts</a>, as
 <a href="postconf.5.html#permit_tls_all_clientcerts">permit_tls_all_clientcerts</a> does not permit any control when a
 certificate must no longer be used (e.g. an employee leaving). </p>
 
@@ -627,7 +691,7 @@ certificate must no longer be used (e.g. an employee leaving). </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
         ... 
         <a href="postconf.5.html#permit_tls_clientcerts">permit_tls_clientcerts</a> 
@@ -648,8 +712,8 @@ the user or host.</p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
-    relay_clientcerts = hash:/etc/postfix/relay_clientcerts
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#relay_clientcerts">relay_clientcerts</a> = hash:/etc/postfix/relay_clientcerts
 
 /etc/postfix/relay_clientcerts:
     D7:04:2F:A7:0B:8C:A5:21:FA:31:77:E1:41:8A:EE:80 lutzpc.at.home
@@ -658,30 +722,60 @@ the user or host.</p>
 
 <h3><a name="server_cipher">Server-side cipher controls</a> </h3>
 
-<p> To influence the Postfix SMTP server cipher selection scheme,
-you can give cipherlist string.  A detailed description would go
-to far here; please refer to the OpenSSL documentation.  If you
-don't know what to do with it, simply don't touch it and leave the
-(openssl-)compiled in default! </p>
+<p> The description below is for Postfix 2.3; for Postfix &lt; 2.3 the
+<a href="postconf.5.html#smtpd_tls_cipherlist">smtpd_tls_cipherlist</a> parameter specifies the acceptable ciphers as an
+explicit OpenSSL cipherlist. The obsolete setting applies even when TLS
+encryption is not enforced. Use of this control on public MX hosts is
+strongly discouraged. </p>
 
-<p> DO NOT USE " to enclose the string, specify just the string!!! </p>
+<p> With mandatory TLS encryption, the Postfix SMTP server will by
+default only use SSLv3 or TLSv1. SSLv2 is only used when TLS encryption
+is optional. This is controlled by the <a href="postconf.5.html#smtpd_tls_mandatory_protocols">smtpd_tls_mandatory_protocols</a>
+configuration parameter. </p>
 
-<p> Example: </p>
- 
+<p> The Postfix SMTP server supports 5 distinct cipher security levels
+as specified by the <a href="postconf.5.html#smtpd_tls_mandatory_ciphers">smtpd_tls_mandatory_ciphers</a> configuration parameter,
+which determines the cipher grade with mandatory TLS encryption. The
+default value is "medium" which is essentially 128-bit encryption or better.
+With opportunistic TLS encryption, the minimum accepted cipher grade is
+always "export". </p>
+
+<p> By default anonymous ciphers are allowed, and automatically disabled
+when client certificates are requested. If clients are expected to always
+verify the server certificate you may want to exclude anonymous ciphers
+by setting "<a href="postconf.5.html#smtpd_tls_mandatory_exclude_ciphers">smtpd_tls_mandatory_exclude_ciphers</a> = aNULL".
+One can't force a client to check the server certificate, so excluding
+anonymous ciphers is generally unnecessary. </p>
+
+<p> For a server that is not a public Internet MX host, Postfix 2.3
+supports configurations with no <a href="#server_cert_key">server
+certificates</a> that use <b>only</b> the anonymous ciphers. This is
+enabled by explicitly setting "<a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a> = none"
+and not specifying an <a href="postconf.5.html#smtpd_tls_dcert_file">smtpd_tls_dcert_file</a>. </p>
+
+<p> Example: (MSA that requires  TLS with high grade ciphers) </p>
+
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
-    <a href="postconf.5.html#smtpd_tls_cipherlist">smtpd_tls_cipherlist</a> = DEFAULT
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a> = /etc/postfix/cert.pem
+    <a href="postconf.5.html#smtpd_tls_key_file">smtpd_tls_key_file</a> = /etc/postfix/key.pem
+    <a href="postconf.5.html#smtpd_tls_mandatory_ciphers">smtpd_tls_mandatory_ciphers</a> = high
+    <a href="postconf.5.html#smtpd_tls_mandatory_exclude_ciphers">smtpd_tls_mandatory_exclude_ciphers</a> = aNULL, MD5
+    # Postfix 2.3 and later
+    <a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a> = encrypt
+    # Obsolete, but still supported
+    <a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> = yes
 </pre>
 </blockquote>
 
 <p> If you want to take advantage of ciphers with EDH, DH parameters
 are needed.  Instead of using the built-in DH parameters for both
-1024bit and 512bit, it is better to generate "own" parameters,
+1024bit and 512bit, it is better to generate your own parameters,
 since otherwise it would "pay" for a possible attacker to start a
 brute force attack against parameters that are used by everybody.
-For this reason, the parameters chosen are already different from
-those distributed with other TLS packages. </p>
+For this reason, the default parameters chosen by OpenSSL are already
+different from those distributed with other TLS packages. </p>
 
 <p> To generate your own set of DH parameters, use: </p>
 
@@ -696,7 +790,7 @@ those distributed with other TLS packages. </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_tls_dh1024_param_file">smtpd_tls_dh1024_param_file</a> = /etc/postfix/dh_1024.pem
     <a href="postconf.5.html#smtpd_tls_dh512_param_file">smtpd_tls_dh512_param_file</a> = /etc/postfix/dh_512.pem
 </pre>
@@ -712,7 +806,7 @@ handshake procedures.  </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_starttls_timeout">smtpd_starttls_timeout</a> = 300s
 </pre>
 </blockquote>
@@ -723,6 +817,8 @@ handshake procedures.  </p>
 
 <ul>
 
+<li><a href="#client_lmtp_tls"> TLS support in the LMTP delivery agent </a>
+
 <li><a href="#client_cert_key">Client-side certificate and private
 key configuration </a>
 
@@ -731,19 +827,25 @@ key configuration </a>
 
 <li><a href="#client_tls_cache">Client-side TLS session cache</a>
 
-<li><a href="#client_tls_enable"> Enabling TLS in the Postfix SMTP client </a>
+<li><a href="#client_tls_limits"> Client TLS limitations </a>
 
-<li><a href="#client_tls_require"> Requiring TLS encryption </a>
+<li><a href="#client_tls_levels"> Client TLS security levels </a>
 
-<li><a href="#client_tls_nopeer"> Disabling server certificate verification </a>
+<li><a href="#client_tls_none"> Disabling TLS in the SMTP/LMTP client</a>
 
-<li><a href="#client_tls_per_site"> Per-site TLS policies </a>
+<li><a href="#client_tls_may"> Enabling TLS in the SMTP/LMTP client </a>
 
-<!--
+<li><a href="#client_tls_encrypt"> Mandating TLS encryption </a>
+
+<li><a href="#client_tls_verify"> Mandating server certificate verification </a>
+
+<li><a href="#client_tls_secure"> Secure server certificate verification </a>
+
+<li><a href="#client_tls_policy"> Per-destination TLS policy </a>
+
 <li><a href="#client_tls_obs"> Obsolete per-site TLS policy support </a>
--->
 
-<li><a href="#client_tls_harden"> Closing a DNS loophole with <!-- legacy --> per-site TLS policies </a>
+<li><a href="#client_tls_harden"> Closing a DNS loophole with obsolete per-site TLS policies </a>
 
 <li><a href="#client_tls_discover"> Discovering servers that support TLS </a>
 
@@ -755,8 +857,46 @@ key configuration </a>
 
 </ul>
 
+<h3><a name="client_lmtp_tls"> TLS support in the LMTP delivery agent </a>
+</h3>
+
+<p> In Postfix 2.3, the <a href="smtp.8.html">smtp(8)</a> and <a href="lmtp.8.html">lmtp(8)</a> delivery agents have been
+merged into a single dual-purpose program. As a result the <a href="lmtp.8.html">lmtp(8)</a>
+delivery agent is no longer the poor cousin of the more extensively used
+<a href="smtp.8.html">smtp(8)</a>. Specifically, as of Postfix 2.3, all the TLS features described
+below apply equally to SMTP and LMTP, after replacing the "smtp_"
+prefix of the each parameter name with "lmtp_".
+
+<p> The LMTP delivery agent can communicate with LMTP servers listening
+on UNIX-domain sockets. When server certificate verification is enabled
+and the server is listening on a UNIX-domain socket, the $<a href="postconf.5.html#myhostname">myhostname</a>
+parameter is used to set the TLS verification <i>nexthop</i> and
+<i>hostname</i>. Note, opportunistic encryption of LMTP traffic over
+UNIX-domain sockets is futile. TLS is only useful in this context when
+it is mandatory, typically to allow at least one of the server or the
+client to authenticate the other. The "null" cipher grade may be
+appropriate in this context, when available on both client and server.
+The "null" ciphers provide authentication without encryption. </p>
+
 <h3><a name="client_cert_key">Client-side certificate and private
 key configuration </a> </h3>
+
+<p> Do not configure client certificates unless you <b>must</b> present
+client TLS certificates to one or more servers. Client certificates are
+not usually needed, and can cause problems in configurations that work
+well without them. The recommended setting is to let the defaults stand: </p>
+
+<blockquote>
+<pre>
+    <a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a> =
+    <a href="postconf.5.html#smtp_tls_dcert_file">smtp_tls_dcert_file</a> =
+    <a href="postconf.5.html#smtp_tls_key_file">smtp_tls_key_file</a> =
+    <a href="postconf.5.html#smtp_tls_dkey_file">smtp_tls_dkey_file</a> =
+</pre>
+</blockquote>
+
+<p> The best way to use the default settings is to comment out the above
+parameters in <a href="postconf.5.html">main.cf</a> if present. </p>
 
 <p> During TLS startup negotiation the Postfix SMTP client may present
 a certificate to the remote SMTP server.  The Netscape client is
@@ -773,7 +913,7 @@ certificate is presented.  </p>
 
 <p> It is possible for the Postfix SMTP client to use the same
 key/certificate pair as the Postfix SMTP server.  If a certificate
-is to be presented, it must be in "pem" format. The private key
+is to be presented, it must be in "PEM" format. The private key
 must not be encrypted, meaning: it must be accessible without
 password. Both parts (certificate and private key) may be in the
 same file. </p>
@@ -819,7 +959,7 @@ is correctly configured to supply its intermediate CA certificate). </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a> = /etc/postfix/client.pem
     <a href="postconf.5.html#smtp_tls_key_file">smtp_tls_key_file</a> = $<a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a>
 </pre>
@@ -829,7 +969,7 @@ is correctly configured to supply its intermediate CA certificate). </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_tls_dcert_file">smtp_tls_dcert_file</a> = /etc/postfix/client-dsa.pem
     <a href="postconf.5.html#smtp_tls_dkey_file">smtp_tls_dkey_file</a> = $<a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a>
 </pre>  
@@ -868,7 +1008,7 @@ when the certificate is needed.  </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> = /etc/postfix/CAcert.pem
     <a href="postconf.5.html#smtp_tls_CApath">smtp_tls_CApath</a> = /etc/postfix/certs
 </pre>
@@ -907,7 +1047,7 @@ transmission after STARTTLS </td> </tr>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_tls_loglevel">smtp_tls_loglevel</a> = 0
 </pre>
 </blockquote>
@@ -934,7 +1074,7 @@ is allowed to negotiate per unit time.</p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> = btree:/etc/postfix/smtp_scache
 </pre>
 </blockquote>
@@ -948,124 +1088,750 @@ recommends a maximum of 24 hours.  </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_tls_session_cache_timeout">smtp_tls_session_cache_timeout</a> = 3600s
 </pre>
 </blockquote>
 
-<h3><a name="client_tls_enable"> Enabling TLS in the Postfix SMTP
-client </a> </h3>
-
-<p> By default, TLS is disabled in the Postfix SMTP client, so no
-difference to plain Postfix is visible.  If you enable TLS, the
-Postfix SMTP client will send STARTTLS when TLS support is announced
-by the remote SMTP server. </p>
-
-<p> When the server accepts the STARTTLS command, but the subsequent
-TLS handshake fails, and no other server is available, the Postfix SMTP
-client defers the delivery attempt, and the mail stays in the queue. After
-a handshake failure, the communications channel is in an indeterminate
-state and cannot be used for non-TLS deliveries. </p>
-
-<p> Example: </p>
- 
-<blockquote>
-<pre>
-/etc/postfix/main.cf:
-    <a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a> = yes
-</pre>
-</blockquote>
-
-<h3><a name="client_tls_require"> Requiring TLS encryption </a>
+<h3><a name="client_tls_limits"> Client TLS limitations </a>
 </h3>
 
-<p> You can ENFORCE the use of TLS, so that the Postfix SMTP client
-will not deliver mail over unencrypted connections.  In this mode,
-the remote SMTP server hostname must match the information in the
-remote server certificate, and the server certificate must be issued
-by a CA that is trusted by the Postfix SMTP client.  If the remote
-server certificate doesn't verify or the remote SMTP server hostname
-doesn't match, and no other server is available, the delivery
-attempt is deferred and the mail stays in the queue.  </p>
+<p> The security properties of TLS communication channels are
+application specific. While the TLS protocol can provide a confidential,
+tamper-resistant, mutually authenticated channel between client
+and server, not all of these security features are applicable to every
+communication. </p>
 
-<p> The remote SMTP server hostname is verified against all names
-provided as dNSNames
-in the SubjectAlternativeName. If no dNSNames are specified, the
-CommonName is checked.  Verification may be turned off with the
-<a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> option which is discussed below. </p>
+<p> For example, while mutual TLS authentication between browsers and web
+servers is possible, it is not practical, or even useful, for web-servers
+that serve the public to verify the identity of every potential user. In
+practice, most HTTPS transactions are asymmetric: the browser verifies
+the HTTPS server's identity, but the user remains anonymous. Much of
+the security policy is up to the client. If the client chooses to not
+verify the server's name, the server is not aware of this. There are many
+interesting browser security topics, but we shall not dwell
+on them here. Rather, our goal is to understand the security features
+of TLS in conjunction with SMTP. </p>
 
-<p> Enforcing the use of TLS is useful if you know that you will
-only
-connect to servers that support <a href="http://www.faqs.org/rfcs/rfc2487.html">RFC 2487</a> _and_ that present server
-certificates that meet the above requirements.  An example would
-be a client only sends email to one specific mailhub that offers
-the necessary STARTTLS support.  </p>
+<p> An important SMTP-specific observation is that a public MX host is
+even more at the mercy of the SMTP client than is an HTTPS server. Not only
+can it not enforce due care in the client's use of TLS, but it cannot even
+enforce the use of TLS, because TLS support in SMTP clients is still the
+exception rather than the rule. One cannot, in practice, limit access to
+one's MX hosts to just TLS-enabled clients. Such a policy would result
+in a vast reduction in one's ability to communicate by email with the
+world at large. </p>
+
+<p> One may be tempted to try enforcing TLS for mail from specific
+sending organizations, but this, too, runs into obstacles. One such
+obstacle is that we don't know who is (allegedly) sending mail until
+we see the "MAIL FROM:" SMTP command, and at that point, if TLS
+is not already in use, a potentially sensitive sender address (and
+with SMTP PIPELINING one or more of the recipients) has (have) already been
+leaked in the clear. Another obstacle is that mail from the sender to
+the recipient may be forwarded, and the forwarding organization may not
+have any security arrangements with the final destination. Bounces also
+need to be protected. These can only be identified by the IP address and
+HELO name of the connecting client, and it is difficult to keep track
+of all the potential IP addresses or HELO names of the outbound email
+servers of the sending organization. </p>
+
+<p> Consequently, TLS security for mail delivery to public MX hosts is
+almost entirely the client's responsibility. The server is largely a
+passive enabler of TLS security, the rest is up to the client. While the
+server has a greater opportunity to mandate client security policy when
+it is a dedicated MSA that only handles outbound mail from trusted clients,
+below we focus on the client security policy. </p>
+
+<p> On the SMTP client, there are further complications. When delivering
+mail to a given domain, in contrast to HTTPS, one rarely uses the domain
+name directly as the target host of the SMTP session. More typically,
+one uses MX lookups - these are usually unauthenticated - to obtain the domain's SMTP server
+hostname(s). When, as is current practice, the client verifies the
+insecurely obtained MX hostname, it is subject to a DNS man-in-the-middle
+attack. </p>
+
+<p> If clients instead attempted to verify the recipient domain name,
+an SMTP server for multiple domains would need to
+list all its email domain names in its certificate, and generate a
+new certificate each time a new domain were added. At least some CAs set
+fairly low limits (20 for one prominent CA) on the number of names that
+server certificates can contain. This approach is not consistent with
+current practice and does not scale. </p>
+
+<p> It is regrettably the case that TLS <i>secure-channels</i>
+(fully authenticated and immune to man-in-the-middle attacks) impose
+constraints on the sending and receiving sites that preclude ubiquitous
+deployment. One needs to manually configure this type of security for
+each destination domain, and in many cases implement non-default TLS
+<a href="#client_tls_policy">policy table</a> entries for additional
+domains hosted at a common secured destination. With Postfix 2.3, we
+make secure-channel configurations substantially easier to configure,
+but they will never be the norm. For the generic domain with which you
+have made no specific security arrangements, this security level is not
+a good fit. </p>
+
+<p> Given that strong authentication is not generally possible, and that
+verifiable certificates cost time and money, many servers that implement
+TLS use self-signed certificates or private CAs. This further limits
+the applicability of verified TLS on the public Internet. </p>
+
+<p> Historical note: while the documentation of these issues and many of the
+related features are new with Postfix 2.3, the issue was well
+understood before Postfix 1.0, when Lutz J&auml;nicke was designing
+the first unofficial Postfix TLS patch. See his original post <a
+href="http://www.imc.org/ietf-apps-tls/mail-archive/msg00304.html">http://www.imc.org/ietf-apps-tls/mail-archive/msg00304.html</a>
+and the first response <a
+href="http://www.imc.org/ietf-apps-tls/mail-archive/msg00305.html">http://www.imc.org/ietf-apps-tls/mail-archive/msg00305.html</a>.
+The problem is not even unique to SMTP or even TLS, similar issues exist
+for secure connections via aliases for HTTPS and Kerberos. SMTP merely
+uses indirect naming (via MX records) more frequently. </p>
+
+<h3><a name="client_tls_levels"> Client TLS security levels </a>
+</h3>
+
+<p> The TLS security levels listed below are described in more detail
+in the sections that follow.</p>
+
+<dl>
+<dt><b>none</b></dt>
+<dd><a href="#client_tls_none">No TLS.</a></dd>
+<dt><b>may</b></dt>
+<dd><a href="#client_tls_may">Opportunistic TLS.</a></dd>
+<dt><b>encrypt</b></dt>
+<dd><a href="#client_tls_encrypt">Mandatory TLS encryption.</a>
+<dt><b>verify</b></dt>
+<dd><a href="#client_tls_verify">Mandatory server certificate verification.</a>
+<dt><b>secure</b></dt>
+<dd><a href="#client_tls_secure">Secure-channel TLS.</a>
+</dl>
+
+<h3><a name="client_tls_none"> Disabling TLS in the SMTP/LMTP client </a>
+</h3>
+
+<p> At the "none" TLS security level, TLS encryption is
+disabled. This is the default security level. With Postfix 2.3 and later,
+it can be configured explicitly by setting "<a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = none". </p>
+
+<p> With Postfix 2.2 and earlier, or when <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> is set to
+its default (backwards compatible) empty value, the appropriate configuration
+settings are "<a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a> = no" and "<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = no".
+With either approach, TLS is not used even if supported by the server.
+For LMTP, use the corresponding "lmtp_" parameters. </p>
+
+<p> Per destination settings may override this default setting, in which case
+TLS is used selectively, only with destinations explicitly configured
+for TLS. </p>
+
+<p> You can disable TLS for a subset of destinations, while leaving
+it enabled for the rest. With the Postfix 2.3+ TLS <a
+href="#client_tls_policy">policy table</a>, specify the "none"
+security level. With the obsolete <a href="#client_tls_obs">per-site</a>
+table, specify the "NONE" keyword. </p>
+
+<h3><a name="client_tls_may"> Opportunistic TLS </a>
+</h3>
+
+<p> At the "may" TLS security level, TLS encryption is <i>opportunistic</i>.
+The SMTP transaction is encrypted if the STARTTLS ESMTP feature
+is supported by the server. Otherwise, messages are sent in the clear.
+With Postfix 2.3 and later, opportunistic TLS can be configured by
+setting "<a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = may".
+
+<p> Since sending in the clear is acceptable, demanding stronger
+than default TLS security merely reduces inter-operability.  For
+this reason, Postfix 2.3 and later ignore the <a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a>
+and <a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a> parameters at the "may"
+security level: all protocols are allowed, and "export" grade or
+better ciphers are used. </p>
+
+<p> With Postfix 2.2 and earlier, or when <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> is
+set to its default (backwards compatible) empty value, the appropriate
+configuration settings are "<a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a> = yes" and
+"<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = no".
+For LMTP use the corresponding "lmtp_" parameters. </p>
+
+<p> With opportunistic TLS, mail delivery continues even if the
+server certificate is untrusted or bears the wrong name.  Starting
+with Postfix 2.3, when the TLS handshake fails for an opportunistic
+TLS session, rather than give up on mail delivery, the transaction
+is retried with TLS disabled. Trying an unencrypted connection makes
+it possible to deliver mail to sites with non-interoperable server
+TLS implementations. </p>
+
+<p> Opportunistic encryption is never used for LMTP over UNIX-domain
+sockets. The communications channel is already confidential without
+TLS, so the only potential benefit of TLS is authentication. Do not
+configure opportunistic TLS for LMTP deliveries over UNIX-domain sockets.
+Only configure TLS for LMTP over UNIX-domain sockets at the
+<a href="#client_tls_encrypt">encrypt</a> security level or higher.
+Attempts to configure opportunistic encryption of LMTP sessions will
+be ignored with a warning written to the mail logs. </p>
+
+<p> You can enable opportunistic TLS just for selected destinations. With
+the Postfix 2.3+ TLS <a href="#client_tls_policy">policy table</a>,
+specify the "may" security level. With the obsolete <a
+href="#client_tls_obs">per-site</a> table, specify the "MAY" keyword.</p>
+
+<p> This is the most common security level for TLS protected SMTP
+sessions, stronger security is not generally available and, if needed,
+is typically only configured on a per-destination basis. See the section
+on TLS <a href="#client_tls_limits">limitations</a> above. </p>
 
 <p> Example: </p>
- 
+
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
-    <a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = yes
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = may
 </pre>
 </blockquote>
 
-<h3> <a name="client_tls_nopeer"> Disabling server certificate
-verification </a> </h3>
+<p> Postfix 2.2 syntax: </p>
 
-<p> As of <a href="http://www.faqs.org/rfcs/rfc2487.html">RFC 2487</a> the requirements for hostname checking for MTA
-clients are not set. When TLS is required (<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = yes),
-the option <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> can be set to "no" to disable
-strict remote SMTP server hostname checking. In this case, the mail
-delivery will proceed regardless of the CommonName etc. listed in
-the certificate. </p>
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a> = yes
+    <a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = no
+</pre>
+</blockquote>
 
-<p>  Despite the potential for eliminating "man-in-the-middle" and
-other attacks, mandatory certificate/peername verification is not
-viable as a default Internet mail delivery policy at this time.  A
-significant fraction of TLS enabled MTAs uses self-signed certificates,
-or certificates that are signed by a private certificate authority.
-On a machine that delivers mail to the Internet, if you set
-<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = yes, you should probably also set
-<a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> = no.  You can use the per-site TLS
-policies (see below) to enable full peer verification for specific
-destinations that are known to have verifiable TLS server certificates.
+<h3><a name="client_tls_encrypt"> Mandatory TLS encryption </a>
+</h3>
+
+<p> At the "encrypt" TLS security level, messages are sent only
+over TLS encrypted sessions. The SMTP transaction is aborted unless
+the STARTTLS ESMTP feature is supported by the server. If no suitable
+servers are found, the message will be deferred. With Postfix 2.3
+and later, mandatory TLS encryption can be configured by setting
+"<a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = encrypt". Even though TLS
+encryption is always used, mail delivery continues if the server
+certificate is untrusted or bears the wrong name. </p>
+
+<p> At this security level and higher, the <a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a>
+and <a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a> configuration parameters determine
+the list of sufficiently secure SSL protocol versions and the minimum
+cipher strength. If the protocol or cipher requirements are not
+met, the mail transaction is aborted.  The documentation for these
+parameters includes useful interoperability and security guidelines.
 </p>
 
-<p> Example: </p>
- 
+<p> With Postfix 2.2 and earlier, or when <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a>
+is set to its default (backwards compatible) empty value, the
+appropriate configuration settings are "<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = yes"
+and "<a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> = no". For LMTP use the corresponding
+"lmtp_" parameters. </p>
+
+<p> Despite the potential for eliminating passive eavesdropping attacks,
+mandatory TLS encryption is not viable as a default security level for
+mail delivery to the public Internet. Most MX hosts do not support TLS at
+all, and some of those that do have broken implementations. On a host
+that delivers mail to the Internet, you should not configure mandatory
+TLS encryption as the default security level. </p>
+
+<p> You can enable mandatory TLS encryption just for specific destinations.
+With the Postfix 2.3+ TLS <a href="#client_tls_policy">policy
+table</a>, specify the "encrypt" security level. With the
+obsolete <a href="#client_tls_obs">per-site</a> table, specify the
+"MUST_NOPEERMATCH" keyword. While the obsolete approach still works
+with Postfix 2.3, it is strongly discouraged: users of Postfix 2.3+
+should use the new TLS policy settings. </p>
+
+<p> Examples: </p>
+
+<p> In the example below, traffic to <i>example.com</i> and its sub-domains
+via the corresponding MX hosts always uses TLS. The protocol version will be
+"SSLv3" or "TLSv1" (the default setting of <a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a>
+excludes "SSLv2"). Only high or medium strength (i.e. 128 bit or
+better) ciphers will be used by default for all "encrypt" security
+level sessions. </p>
+
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
-    <a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = yes
-    <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> = no
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a> = hash:/etc/postfix/tls_policy
+
+/etc/postfix/tls_policy:
+    example.com       encrypt
+    .example.com      encrypt
 </pre>
 </blockquote>
 
-<h3> <a name="client_tls_per_site"> Per-site TLS policies </a> </h3>
+<p> Postfix 2.2 syntax (no support for sub-domains without resorting to
+regexp tables). With Postfix 2.3+, do not use the obsolete <a
+href="#client_tls_obs">per-site</a> table. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> = hash:/etc/postfix/tls_per_site
+
+/etc/postfix/tls_per_site:
+    example.com       MUST_NOPEERMATCH
+</pre>
+</blockquote>
+
+<p> In the next example, secure message submission is configured
+via the MSA "<tt>[example.net]:587</tt>". TLS sessions are encrypted
+without authentication, because this MSA does not possess an acceptable
+certificate. This MSA is known to be capable of "TLSv1" and "high" grade
+ciphers, so these are selected via the <a href="#client_tls_policy">policy
+table</a>. </p>
+
+<p><b>Note:</b> the policy table lookup key is the verbatim next-hop
+specification from the recipient domain, <a href="transport.5.html">transport(5)</a> table or <a href="postconf.5.html#relayhost">relayhost</a>
+parameter, with any enclosing square brackets and optional port. Take
+care to be consistent: the suffixes ":smtp" or ":25" or no port suffix
+result in different policy table lookup keys, even though they are
+functionally equivalent nexthop specifications. Use at most one of these
+forms for all destinations. Below, the policy table has multiple keys,
+just in case the transport table entries are not specified consistently. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a> = hash:/etc/postfix/tls_policy
+
+/etc/services:
+    submission      587/tcp         msa             # mail message submission
+
+/etc/postfix/tls_policy:
+    [example.net]:587 encrypt protocols=TLSv1 ciphers=high
+    [example.net]:msa encrypt protocols=TLSv1 ciphers=high
+    [example.net]:submission encrypt protocols=TLSv1 ciphers=high
+</pre>
+</blockquote>
+
+<p> Postfix 2.2 syntax: </p>
+
+<p> <b>Note:</b> Avoid policy lookups with the bare hostname (for
+example, "example.net").  Instead,
+use the destination (for example, "[example.net]:587"), as the <a
+href="#client_tls_obs">per-site</a> table lookup key (a recipient domain
+or MX-enabled transport nexthop with no port suffix may look like a bare
+hostname, but is still a suitable <i>destination</i>). With Postfix 2.3+,
+do not use the obsolete <a href="#client_tls_obs">per-site</a> table;
+use the new <a href="#client_tls_policy">policy table</a> instead. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> = hash:/etc/postfix/tls_per_site
+
+/etc/postfix/tls_per_site:
+    [example.net]:587   MUST_NOPEERMATCH
+</pre>
+</blockquote>
+
+<h3><a name="client_tls_verify"> Mandatory server certificate verification </a>
+</h3>
+
+<p> At the "verify" TLS security level, messages are sent only over
+TLS encrypted sessions if the server certificate is valid (not
+expired or revoked, and signed by a trusted certificate authority)
+and if the server certificate name matches a known pattern.  Mandatory
+server certificate verification can be configured by setting
+"<a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = verify".  The
+<a href="postconf.5.html#smtp_tls_verify_cert_match">smtp_tls_verify_cert_match</a> parameter can override the default
+"hostname" certificate name matching strategy. Fine-tuning the
+matching strategy is generally only appropriate for <a
+href="#client_tls_secure">secure-channel</a> destinations. </p>
+
+<p> With Postfix 2.2 and earlier, or when <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a>
+is set to its default (backwards compatible) empty value, the
+appropriate configuration settings are "<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = yes" and
+"<a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> = yes". For LMTP use the corresponding
+"lmtp_" parameters. </p>
+
+<p> If the server certificate chain is trusted (see <a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a>
+and <a href="postconf.5.html#smtp_tls_CApath">smtp_tls_CApath</a>), any DNS names in the SubjectAlternativeName
+certificate extension are used to verify the server name.  If no
+DNS names are specified, the certificate CommonName is checked.
+If you want mandatory encryption without server certificate
+verification, see <a href="#client_tls_encrypt">above</a>. </p>
+
+<p> Despite the potential for eliminating "man-in-the-middle" and other
+attacks, mandatory certificate trust chain and subject name verification
+is not viable as a default Internet mail delivery policy.  Most MX hosts
+do not support TLS at all, and a significant portion of TLS enabled
+MTAs use self-signed certificates, or certificates that are signed by
+a private certificate authority. On a machine that delivers mail to
+the Internet, you should not configure mandatory server certificate
+verification as a default policy. </p>
+
+<p> Mandatory server certificate verification as a default security
+level may be appropriate if you know that you will only connect to
+servers that support <a href="http://www.faqs.org/rfcs/rfc2487.html">RFC 2487</a> <i>and</i> that present verifiable
+server certificates. An example would be a client that sends all
+email to a central mailhub that offers the necessary STARTTLS
+support. In such cases, you can often use a <a
+href="#client_tls_secure">secure-channel</a> configuration instead.
+</p>
+
+<p> You can enable mandatory server certificate verification just
+for specific destinations.  With the Postfix 2.3+ TLS <a
+href="#client_tls_policy">policy table</a>, specify the "verify"
+security level. With the obsolete <a href="#client_tls_obs">per-site</a>
+table, specify the "MUST" keyword.  While the obsolete approach
+still works with Postfix 2.3, it is strongly discouraged: users of
+Postfix 2.3+ should use the new TLS policy settings. </p>
+
+<p> Example: </p>
+
+<p> In this example, the client encrypts all traffic to the
+<i>example.com</i> domain. The peer hostname is verified, but
+verification is vulnerable to DNS response forgery. Mail transmission
+to <i>example.com</i> recipients uses "high" grade ciphers. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    indexed = ${<a href="postconf.5.html#default_database_type">default_database_type</a>}:${<a href="postconf.5.html#config_directory">config_directory</a>}/
+    <a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> = ${<a href="postconf.5.html#config_directory">config_directory</a>}/CAfile.pem
+    <a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a> = ${indexed}tls_policy
+
+/etc/postfix/tls_policy:
+    example.com       verify ciphers=high
+</pre>
+</blockquote>
+
+<p> Postfix 2.2 syntax: </p>
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    indexed = ${<a href="postconf.5.html#default_database_type">default_database_type</a>}:${<a href="postconf.5.html#config_directory">config_directory</a>}/
+    <a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> = ${<a href="postconf.5.html#config_directory">config_directory</a>}/CAfile.pem
+    <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> = ${indexed}tls_per_site
+
+/etc/postfix/tls_per_site:
+    example.com         MUST
+</pre>
+</blockquote>
+
+<h3><a name="client_tls_secure"> Secure server certificate verification </a>
+</h3>
+
+<p> At the <i>secure</i> TLS security level, messages are sent only over
+<i>secure-channel</i> TLS sessions where DNS forgery resistant server
+certificate verification succeeds. If no suitable servers are found, the
+message will be deferred. With Postfix 2.3 and later, secure-channels
+can be configured by setting "<a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = secure".
+The <a href="postconf.5.html#smtp_tls_secure_cert_match">smtp_tls_secure_cert_match</a> parameter can override the default
+"nexthop, dot-nexthop" certificate match strategy. </p>
+
+<p> With Postfix 2.2 and earlier, or when <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a>
+is set to its default (backwards compatible) empty value, the
+appropriate configuration settings are "<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = yes"
+and "<a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> = yes" with additional settings to
+<a href="#client_tls_harden">harden</a> peer certificate verification
+against forged DNS data. For LMTP, use the corresponding "lmtp_"
+parameters. </p>
+
+<p> If the server certificate chain is trusted (see <a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> and
+<a href="postconf.5.html#smtp_tls_CApath">smtp_tls_CApath</a>), any DNS names in the SubjectAlternativeName certificate
+extension are used to verify the server name. If no DNS names are
+specified, the CommonName is checked. If you want mandatory encryption
+without server certificate verification, see <a
+href="#client_tls_encrypt">above</a>. </p>
+
+<p> Despite the potential for eliminating "man-in-the-middle" and other
+attacks, mandatory secure server certificate verification is not
+viable as a default Internet mail delivery policy.  Most MX hosts
+do not support TLS at all, and a significant portion of TLS enabled
+MTAs use self-signed certificates, or certificates that are signed
+by a private certificate authority. On a machine that delivers mail
+to the Internet, you should not configure secure TLS verification
+as a default policy. </p>
+
+<p> Mandatory secure server certificate verification as a default
+security level may be appropriate if you know that you will only
+connect to servers that support <a href="http://www.faqs.org/rfcs/rfc2487.html">RFC 2487</a> <i>and</i> that present
+verifiable server certificates. An example would be a client that
+sends all email to a central mailhub that offers the necessary
+STARTTLS support. </p>
+
+<p> You can enable secure TLS verification just for specific destinations.
+With the Postfix 2.3+ TLS <a href="#client_tls_policy">policy table</a>,
+specify the "secure" security level. With the obsolete
+<a href="#client_tls_obs">per-site</a> table, specify the "MUST"
+keyword and <a href="#client_tls_harden">harden</a> the certificate
+verification against DNS forgery. While the obsolete approach still
+works with Postfix 2.3, it is strongly discouraged: users of Postfix 2.3+
+should use the new TLS policy settings. </p>
+
+<p> Examples: </p>
+
+<p> Secure-channel TLS without <a href="transport.5.html">transport(5)</a> table overrides: </p>
+
+<p> The client will encrypt all traffic and verify the destination name
+immune from forged DNS responses. MX lookups are still used to find
+the SMTP servers for <i>example.com</i>, but these are not used when
+checking the names in the server certificate(s). Rather, the requirement
+is that the MX hosts for <i>example.com</i> have trusted certificates
+with a subject name of <i>example.com</i> or a sub-domain, see the
+documentation for the <a href="postconf.5.html#smtp_tls_secure_cert_match">smtp_tls_secure_cert_match</a> parameter. </p>
+
+<p> The related domains <i>example.co.uk</i> and <i>example.co.jp</i> are
+hosted on the same MX hosts as the primary <i>example.com</i> domain, and
+traffic to these is secured by verifying the primary <i>example.com</i>
+domain in the server certificates. This frees the server administrator
+from needing the CA to sign certificates that list all the secondary
+domains. The downside is that clients that want secure channels to the
+secondary domains need explicit TLS <a href="#client_tls_policy">policy
+table</a> entries. </p>
+
+<p> Note, there are two ways to handle related domains.  The first is to
+use the default routing for each domain, but add policy table entries
+to override the expected certificate subject name.  The second is to
+override the next-hop in the transport table, and use a single policy
+table entry for the common nexthop.  We choose the first approach,
+because it works better when domain ownership changes. With the second
+approach we securely deliver mail to the wrong destination, with the
+first approach, authentication fails and mail stays in the local queue,
+the first approach is more appropriate in most cases. <p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> = /etc/postfix/CAfile.pem
+    <a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a> = hash:/etc/postfix/tls_policy
+
+/etc/postfix/transport:
+
+/etc/postfix/tls_policy:
+    example.com     secure
+    example.co.uk   secure match=example.com:.example.com
+    example.co.jp   secure match=example.com:.example.com
+</pre>
+</blockquote>
+
+<p> Secure-channel TLS with <a href="transport.5.html">transport(5)</a> table overrides: <p>
+
+<p> In this case traffic to <i>example.com</i> and its related domains
+is sent to a single logical gateway (to avoid a single point of failure,
+its name may resolve to one or more load-balancer addresses, or to the
+combined addresses of multiple physical hosts). All the physical hosts
+reachable via the gateway's IP addresses have the logical gateway name
+listed in their certificates. This secure-channel configuration can also
+be implemented via a <a href="#client_tls_harden">hardened</a> variant of
+the MUST policy in the obsolete <a href="#client_tls_obs">per-site</a>
+table. As stated above, this approach has the potential to mis-deliver
+email if the related domains change hands. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> = /etc/postfix/CAfile.pem
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+    <a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a> = hash:/etc/postfix/tls_policy
+
+/etc/postfix/transport:
+    example.com     <a href="smtp.8.html">smtp</a>:[tls.example.com]
+    example.co.uk   <a href="smtp.8.html">smtp</a>:[tls.example.com]
+    example.co.jp   <a href="smtp.8.html">smtp</a>:[tls.example.com]
+
+/etc/postfix/tls_policy:
+    [tls.example.com] secure match=tls.example.com
+</pre>
+</blockquote>
+
+<p> Postfix 2.2.9+ syntax: </p>
+
+<p> <b>Note:</b> Avoid policy lookups with the bare hostname (for
+example, "tls.example.com").  Instead, use the destination (for
+example, "[tls.example.com]") as the <a
+href="#client_tls_obs">per-site</a> table lookup key (a recipient domain
+or MX-enabled transport nexthop with no port suffix may look like a bare
+hostname, but is still a suitable <i>destination</i>). With Postfix 2.3+,
+do not use the obsolete <a href="#client_tls_obs">per-site</a> table;
+use the new <a href="#client_tls_policy">policy table</a> instead. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_cname_overrides_servername">smtp_cname_overrides_servername</a> = no
+    <a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> = /etc/postfix/CAfile.pem
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+    <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> = hash:/etc/postfix/tls_per_site
+
+/etc/postfix/transport:
+    example.com     <a href="smtp.8.html">smtp</a>:[tls.example.com]
+    example.co.uk   <a href="smtp.8.html">smtp</a>:[tls.example.com]
+    example.co.jp   <a href="smtp.8.html">smtp</a>:[tls.example.com]
+
+/etc/postfix/tls_per_site:
+    [tls.example.com]       MUST
+</pre>
+</blockquote>
+
+<h3> <a name="client_tls_policy"> TLS policy table </a>
+</h3>
+
+<p> Postfix 2.3 introduces a new more flexible TLS policy table. For
+earlier releases, read the description of the obsolete Postfix 2.2 <a
+href="#client_tls_obs">per-site</a> table. </p>
 
 <p> A small fraction of servers offer STARTTLS but the negotiation
-consistently fails, leading to mail aging out of the queue and
-bouncing back to the sender. In such cases, you can use the per-site
-policies to disable TLS for the problem sites.  Alternatively, you
-can enable TLS for just a few specific sites and not enable it for
-all sites. </p>
+consistently fails. With Postfix 2.3, so long as encryption is not
+enforced, the delivery is immediately retried with TLS disabled.  You no
+longer need to explicitly disable TLS for the problem destinations.
+As soon as their TLS software or configuration is repaired, encryption
+will be used. </p>
 
-<!-- insert new-style TLS policy mechanism here
+<p> The new policy table is specified via the <a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a>
+parameter. This lists optional lookup tables with the Postfix SMTP client
+TLS security policy by next-hop destination. When $<a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a>
+is not empty, the obsolete <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> parameter is ignored
+(a warning is written to the logs if both parameter values are
+non-empty).  </p>
+
+<p> The TLS policy table is indexed by the full next-hop destination,
+which is either the recipient domain, or the verbatim next-hop
+specified in the transport table, $<a href="postconf.5.html#local_transport">local_transport</a>, $<a href="postconf.5.html#virtual_transport">virtual_transport</a>,
+$<a href="postconf.5.html#relay_transport">relay_transport</a> or $<a href="postconf.5.html#default_transport">default_transport</a>. This includes any enclosing
+square brackets and any non-default destination server port suffix. The
+<a href="#client_lmtp_tls">LMTP</a> socket type prefix (inet: or unix:)
+is not included in the lookup key. </p>
+
+<p> Only the next-hop domain, or $<a href="postconf.5.html#myhostname">myhostname</a> with LMTP over UNIX-domain
+sockets, is used as the nexthop name for certificate verification. The
+port and any enclosing square brackets are used in the table lookup key,
+but are not used for server name verification. </p>
+
+<p> When the lookup key is a domain name without enclosing square brackets
+or any <i>:port</i> suffix (typically the recipient domain), and the full
+domain is not found in the table, just as with the <a href="transport.5.html">transport(5)</a> table,
+the parent domain starting with a leading "." is matched recursively. This
+allows one to specify a security policy for a recipient domain and all
+its sub-domains. </p>
+
+<p> The lookup result is a security level, followed by an optional
+list of whitespace and/or comma separated name=value attributes
+that override related <a href="postconf.5.html">main.cf</a> settings.  The TLS security <a
+href="#client_tls_levels">levels</a> are described above. Below, we
+describe the corresponding table syntax: </p>
+
+<dl>
+
+<dt><b>none</b></dt>         
+<dd>No TLS. No additional attributes are supported at this level. </dd>
+
+<dt><b>may</b></dt>
+<dd>Opportunistic TLS. No additional attributes are supported at this
+level. </dd>
+
+<dt><b>encrypt</b></dt> <dd>Mandatory TLS encryption. Mail is
+delivered only if remote SMTP server offers STARTTLS and the TLS
+handshake succeeds.  At this level and higher the optional "ciphers"
+attribute overrides the <a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a> parameter
+and the optional "protocols" keyword overrides the <a href="postconf.5.html">main.cf</a>
+<a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a> parameter. </dd>
+
+<dt><b>verify</b></dt> <dd>Mandatory server certificate verification.
+Mail is delivered only if the TLS handshake succeeds, if the server
+certificate can be validated (not expired or revoked, and signed
+by a trusted certificate authority), and if the server certificate
+name matches the optional "match" attribute (or the <a href="postconf.5.html">main.cf</a>
+<a href="postconf.5.html#smtp_tls_verify_cert_match">smtp_tls_verify_cert_match</a> parameter value when no optional "match"
+attribute is specified).  </dd>
+
+<dt><b>secure</b></dt> <dd>Secure-channel TLS. Mail is delivered
+only if the TLS handshake succeeds, if the server certificate can
+be validated (not expired or revoked, and signed by a trusted
+certificate authority), and if the server certificate name matches
+the optional "match" attribute (or the <a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_secure_cert_match">smtp_tls_secure_cert_match</a>
+parameter value when no optional "match" attribute is specified).
+</dd>
+
+</dl>
+
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> The "match" attribute is especially useful to verify TLS
+certificates for domains that are hosted on a shared server.  In
+that case, specify "match" rules for the shared server's name.
+While secure verification can also be achieved with manual routing
+overrides in Postfix <a href="transport.5.html">transport(5)</a> tables, that approach can deliver
+mail to the wrong host when domains are assigned to new gateway
+hosts.  The "match" attribute approach avoids the problems of manual
+routing overrides; mail is deferred if verification of a new MX
+host fails.  </p>
+
+<li> <p> When a policy table entry specifies multiple match patterns,
+multiple match strategies, or multiple protocols, these must be
+separated by colons.  </p>
+
+</ul>
+
+<p>
+Example:
+</p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a> = hash:/etc/postfix/tls_policy
+/etc/postfix/tls_policy:
+    example.edu             none
+    example.mil             may
+    example.gov             encrypt protocols=SSLv3:TLSv1 ciphers=high
+    example.com             verify     
+            match=hostname:dot-nexthop protocols=SSLv3:TLSv1 ciphers=high
+    example.net             secure
+    .example.net            secure match=.example.net:example.net
+    [mail.example.org]:587  secure match=nexthop
+</pre>
+</blockquote>
+
+<p> <b>Note:</b> The "hostname" strategy if listed in a non-default setting
+of <a href="postconf.5.html#smtp_tls_secure_cert_match">smtp_tls_secure_cert_match</a> or in the "match" attribute in the policy
+table can render the "secure" level vulnerable to DNS forgery. Do not use
+the "hostname" strategy for <a href="#client_tls_secure">secure-channel</a>
+configurations in environments where DNS security is not assured. </p>
 
 <h3> <a name="client_tls_obs"> Obsolete per-site TLS policy support 
 </a> </h3>
 
 <p> This section describes an obsolete per-site TLS policy mechanism.
-Unlike the newer mechanism it supports TLS policy lookup by server
-hostname, and lacks control over what names can appear in server
-certificates.  Because of this, the obsolete mechanism is vulnerable
-to false DNS hostname information in MX or CNAME records.  These
-attacks can be eliminated only with great difficulty.  </p>
+Unlike the Postfix 2.3 <a href="#client_tls_policy">policy table</a>
+mechanism, this uses as a policy lookup key a potentially untrusted
+server hostname, and lacks control over what names can appear in
+server certificates.  Because of this, the obsolete mechanism is
+typically vulnerable to false DNS hostname information in MX or
+CNAME records.  These attacks can be eliminated only with great
+difficulty. The new <a href="#client_tls_policy">policy table</a>
+makes <a href="#client_tls_secure">secure-channel</a> configurations
+easier and provides more control over the cipher and protocol selection
+for sessions with mandatory encryption. </p>
 
--->
+<p> Avoid policy lookups with the bare hostname.  Instead, use the
+full destination nexthop (enclosed in [] with a possible ":port"
+suffix) as the per-site table lookup key (a recipient domain or
+MX-enabled transport nexthop with no port suffix may look like a bare
+hostname, but is still a suitable <i>destination</i>).  With Postfix 2.3+,
+use of the obsolete approach documented here is strongly discouraged:
+use the new <a href="#client_tls_policy">policy table</a> instead. </p>
 
-<p> The <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> table is searched for a policy that matches
+<p> Starting with Postfix 2.3, the underlying TLS enforcement levels are
+common to the obsolete per-site table and the new policy table. The
+<a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a> and <a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a>
+parameters control the TLS ciphers and protocols for mandatory
+encryption regardless of which table is used. The
+<a href="postconf.5.html#smtp_tls_verify_cert_match">smtp_tls_verify_cert_match</a> parameter determines the match strategy
+for the obsolete "MUST" keyword in the same way as for the "verify"
+level in the new policy. </p>
+
+<p> With Postfix &lt; 2.3, the obsolete <a href="postconf.5.html#smtp_tls_cipherlist">smtp_tls_cipherlist</a> parameter
+is also applied for opportunistic TLS sessions, and should be used with
+care, or not at all. Setting cipherlist restrictions that are incompatible
+with a remote SMTP server render that server unreachable, TLS handshakes
+are always attempted and always fail. </p>
+
+<p> When <a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a> is empty (default) and <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a>
+is not empty, the per-site table is searched for a policy that matches
 the following information:  </p>
 
 <blockquote>
@@ -1075,15 +1841,17 @@ the following information:  </p>
 <dt> remote SMTP server hostname </dt> <dd> This is simply the DNS
 name of the server that the Postfix SMTP client connects to; this
 name may be obtained from other DNS lookups, such as MX lookups or
-CNAME lookups. </dd>
+CNAME lookups. Use of the hostname lookup key is discouraged; always
+use the next-hop destination instead. </dd>
 
-<dt> next-hop destination </dt> <dd> This is normally the domain
-portion of the recipient address, but it may be overruled by
-information from the <a href="transport.5.html">transport(5)</a> table, from the <a href="postconf.5.html#relayhost">relayhost</a> parameter
-setting, or from the <a href="postconf.5.html#relay_transport">relay_transport</a> setting. When it's not the
-recipient domain, the next-hop destination can have the Postfix-specific
-form "<tt>[name]</tt>", <tt>[name]:port</tt>", "<tt>name</tt>" or
-"<tt>name:port</tt>".  </dd>
+<dt> next-hop destination </dt> <dd> This is normally the domain portion
+of the recipient address, but it may be overridden by information from
+the <a href="transport.5.html">transport(5)</a> table, from the <a href="postconf.5.html#relayhost">relayhost</a> parameter setting, or from
+the <a href="postconf.5.html#relay_transport">relay_transport</a> setting. When it is not the recipient domain, the
+next-hop destination can have the Postfix-specific form "<tt>[name]</tt>",
+"<tt>[name]:port</tt>", "<tt>name</tt>" or "<tt>name:port</tt>".  This is
+the recommended lookup key for per-site policy lookups (and incidentally
+for <a href="SASL_README.html#client_sasl">SASL password</a> lookups). </dd>
 
 </dl>
 
@@ -1103,40 +1871,33 @@ side specify one of the following keywords:  </p>
 
 <dl>
 
-<dt> NONE </dt> <dd> Don't use TLS at all. This overrides a less
-specific <b>MAY</b> lookup result from the alternate host or next-hop
-lookup key, and overrides the global <a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a>, <a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a>,
-and <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> settings. </dd>
-
-<dt> MAY </dt> <dd> Try to use TLS if the server announces support,
-otherwise use the unencrypted connection. This has less precedence
-than a more specific result (including <b>NONE</b>) from the alternate
-host or next-hop lookup key, and has less precedence than the more
-specific global "<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = yes" or "<a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a>
-= yes".  </dd>
-
-<dt> MUST_NOPEERMATCH </dt> <dd> Require TLS encryption, but do not
-require that the remote SMTP server hostname matches the information
-in the remote SMTP server certificate, or that the server certificate
-was issued by a trusted CA. This overrides a less secure <b>NONE</b>
-or a less specific <b>MAY</b> lookup result from the alternate host
-or next-hop lookup key, and overrides the global <a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a>,
-<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> and <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> settings.  </dd>
-
-<dt> MUST </dt> <dd> Require TLS encryption, require that the remote
-SMTP server hostname matches the information in the remote SMTP
-server certificate, and require that the remote SMTP server certificate
-was issued by a trusted CA. This overrides a less secure <b>NONE</b>
-and <b>MUST_NOPEERMATCH</b> or a less specific <b>MAY</b> lookup
+<dt> NONE </dt> <dd> No TLS. This overrides a less specific "MAY" lookup
 result from the alternate host or next-hop lookup key, and overrides
-the global <a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a>, <a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> and <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a>
-settings.  </dd>
+the global <a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a>, <a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a>, and <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a>
+settings. </dd>
+
+<dt> MAY </dt> <dd> Opportunistic TLS. This has less precedence than
+a more specific result (including "NONE") from the alternate host or
+next-hop lookup key, and has less precedence than the more specific global
+"<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = yes" or "<a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> = yes".  </dd>
+
+<dt> MUST_NOPEERMATCH </dt> <dd> Mandatory TLS encryption. This
+overrides a less secure "NONE" or a less specific "MAY" lookup result
+from the alternate host or next-hop lookup key, and overrides the global
+<a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a>, <a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> and <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> settings.
+</dd>
+
+<dt> MUST </dt> <dd> Mandatory server certificate verification.
+This overrides a less secure "NONE" and "MUST_NOPEERMATCH" or a
+less specific "MAY" lookup result from the alternate host or next-hop
+lookup key, and overrides the global <a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a>, <a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a>
+and <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> settings.  </dd>
 
 </dl>
 
 </blockquote>
 
-<p> The precedences between global (main.cf) and per-site TLS
+<p> The precedences between global (<a href="postconf.5.html">main.cf</a>) and per-site TLS
 policies can be summarized as follows: </p>
 
 <ul>
@@ -1154,7 +1915,7 @@ policy (MUST, etc) overrides the less secure one (NONE).  </p>
 
 <li> <p> After the per-site policy lookups are combined, the result
 generally overrides the global policy. The exception is the less
-specific <b>MAY</b> per-site policy, which is overruled by the more
+specific "MAY" per-site policy, which is overruled by the more
 specific global "<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = yes" with server certificate
 verification as specified with the <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a>
 parameter.  </p>
@@ -1162,52 +1923,75 @@ parameter.  </p>
 </ul>
 
 <h3> <a name="client_tls_harden"> Closing a DNS loophole with 
-<!-- legacy --> per-site TLS policies </a> </h3>
+obsolete per-site TLS policies </a> </h3>
+
+<p> For a general discussion of TLS security for SMTP see <a
+href="#client_tls_limits">TLS limitations</a> above. What follows applies
+only to Postfix 2.2.9 and subsequent Postfix 2.2 patch levels. Do
+not use this approach with Postfix 2.3+; instead see the instructions under <a
+href="#client_tls_secure">secure</a> server certificate verification. </p>
 
 <p> As long as no secure DNS lookup mechanism is available, false
-hostnames in MX or CNAME responses can change the server hostname
-that Postfix uses for TLS policy lookup and server certificate
-verification. Even with a perfect match between the server hostname
-and the server certificate, there is no guarantee that Postfix is
-connected to the right server.  To avoid this loophole take the
-following steps: </p>
+hostnames in MX or CNAME responses can change Postfix's notion of the
+server hostname that is used for TLS policy lookup and server certificate
+verification. Even with a perfect match between the server hostname and
+the server certificate, there is no guarantee that Postfix is connected
+to the right server.  To avoid this loophole, take all of the following
+steps: </p>
 
-<ul>
+<ol>
+
+<li> <p> Use a dedicated message delivery transport (for example,
+"securetls") as illustrated below. </p>
 
 <li> <p> Eliminate MX lookups. Specify local <a href="transport.5.html">transport(5)</a> table
-entries for sensitive domains with explicit <a href="smtp.8.html">smtp</a>:[<i>mailhost</i>]
-or <a href="smtp.8.html">smtp</a>:[<i>mailhost</i>]:<i>port</i> destinations (you can assure
-security of this table unlike DNS); in the <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> table
-specify the value <b>MUST</b> for the key [<i>mailhost</i>] or
-<a href="smtp.8.html">smtp</a>:[<i>mailhost</i>]:<i>port</i>. This prevents false hostname
-information in DNS MX records from changing the server hostname
-that Postfix uses for TLS policy lookup and server certificate
-verification. </p>
+entries for sensitive domains with explicit securetls:[<i>mailhost</i>]
+or securetls:[<i>mailhost</i>]:<i>port</i> destinations (you can
+assure security of this table unlike DNS). This prevents false
+hostname information in DNS MX records from changing Postfix's
+notion of the server hostname that is used for TLS policy lookup
+and server certificate verification. The "securetls" transport is
+configured to enforce TLS with peername verification, and to disable
+the SMTP connection cache which could interfere with enforcement
+of <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> policies. </p>
 
-<li> <p> Disallow CNAME hostname overrides. In main.cf specify
+<li> <p> Disallow CNAME hostname overrides. In <a href="postconf.5.html">main.cf</a>, specify
 "<a href="postconf.5.html#smtp_cname_overrides_servername">smtp_cname_overrides_servername</a> = no". This prevents false hostname
 information in DNS CNAME records from changing the server hostname
 that Postfix uses for TLS policy lookup and server certificate
-verification. This feature requires Postfix 2.2.9 or later.  </p>
+verification. This feature requires Postfix 2.2.9 or later.  The
+default value is "no" starting with Postfix 2.3. </p>
 
-</ul>
+</ol>
 
 <p> Example: </p>
 
-<blockquote> <pre>
-/etc/postfix/main.cf:
-    <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> = hash:/etc/postfix/tls_per_site
-    <a href="postconf.5.html#relayhost">relayhost</a> = [msa.example.net]:587
+<p> We give the <a href="postconf.5.html#default_transport">non-default</a>
+"securetls" transport an explicit <a href="master.5.html">master.cf</a> process limit, so that we
+don't raise its process limit when raising $<a href="postconf.5.html#default_process_limit">default_process_limit</a>. The
+total process limit for *all* transports should stay somewhat under 1024
+(the typical select() file descriptor limit); otherwise transports may
+be throttled under steady high load, compounding congestion.  It is not
+uncommon at high volume sites to set the default process limit to 500
+or more. </p>
 
-/etc/postfix/tls_per_site:
-    # <a href="postconf.5.html#relayhost">relayhost</a> exact nexthop match
-    [msa.example.net]:587       MUST
+<p> We also default the "securetls" transport TLS security level to
+<a href="#client_tls_verify">MUST</a>, obviating the need for <a
+href="#client_tls_obs">per-site</a> table entries for secure-channel
+destinations. </p>
 
-    # TLS should not be used with the <i>example.org</i> MX hosts.
-    example.org                 NONE
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
 
-    # TLS should not be used with the host <i>smtp.example.com</i>.
-    smtp.example.com             NONE
+/etc/postfix/transport:
+    example.com         securetls:[tls.example.com]
+
+/etc/postfix/<a href="master.5.html">master.cf</a>:
+    securetls unix  -       -       n       -       100     smtp
+        -o <a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a>=yes
+        -o <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a>=yes
 </pre>
 </blockquote>
 
@@ -1229,10 +2013,10 @@ postfix/smtp[pid]: Host offered STARTTLS: [hostname.example.com]
 </blockquote>
 
 <p> Example: </p>
- 
+
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_tls_note_starttls_offer">smtp_tls_note_starttls_offer</a> = yes
 </pre>
 </blockquote>
@@ -1242,34 +2026,47 @@ postfix/smtp[pid]: Host offered STARTTLS: [hostname.example.com]
 <p> When verifying a remote SMTP server certificate, a verification
 depth of 1 is sufficient if the certificate is directly issued by
 a CA specified with <a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> or <a href="postconf.5.html#smtp_tls_CApath">smtp_tls_CApath</a>.  The default
-value of 5 should also suffice for longer chains (root CA issues
-special CA which then issues the actual certificate...) </p>
+value of 5 should also suffice for longer chains (where the root CA issues
+a special CA certificate which then issues the actual certificate). </p>
 
 <p> Example: </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_tls_scert_verifydepth">smtp_tls_scert_verifydepth</a> = 5
 </pre>
 </blockquote>
 
 <h3> <a name="client_cipher">Client-side cipher controls </a> </h3>
 
-<p> To influence the Postfix SMTP client cipher selection scheme,
-you can give cipherlist string.  A detailed description would go
-to far here; please refer to the OpenSSL documentation.  If you
-don't know what to do with it, simply don't touch it and leave the
-(openssl-)compiled in default! </p>
+<p> The Postfix SMTP client supports 5 distinct cipher security levels
+as specified by the <a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a> configuration
+parameter. This setting controls the minimum acceptable SMTP client
+TLS cipher grade for use with mandatory TLS encryption. The default
+value "medium" is suitable for most destinations with which you may
+want to enforce TLS, and is beyond the reach of today's crypt-analytic
+methods. See <a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a> for information on how to configure
+ciphers on a per-destination basis. </p>
 
-<p> DO NOT USE " to enclose the string, specify just the string!!! </p>
+<p> By default anonymous ciphers are allowed, and automatically
+disabled when server certificates are verified. If you want to
+disable anonymous ciphers even at the "encrypt" security level, set
+"<a href="postconf.5.html#smtp_tls_mandatory_exclude_ciphers">smtp_tls_mandatory_exclude_ciphers</a> = aNULL"; and to
+disable anonymous ciphers even with opportunistic TLS, set
+"<a href="postconf.5.html#smtp_tls_exclude_ciphers">smtp_tls_exclude_ciphers</a> = aNULL". There is generally
+no need to take these measures. Anonymous ciphers save bandwidth
+and TLS session cache space, if certificates are ignored, there is
+little point in requesting them. </p>
 
 <p> Example: </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
-    <a href="postconf.5.html#smtp_tls_cipherlist">smtp_tls_cipherlist</a> = DEFAULT
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a> = medium
+    <a href="postconf.5.html#smtp_tls_mandatory_exclude_ciphers">smtp_tls_mandatory_exclude_ciphers</a> = RC4, MD5
+    <a href="postconf.5.html#smtp_tls_exclude_ciphers">smtp_tls_exclude_ciphers</a> = aNULL
 </pre>
 </blockquote>
 
@@ -1285,7 +2082,7 @@ defers delivery if no alternative server is available. </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_starttls_timeout">smtp_starttls_timeout</a> = 300s
 </pre>
 </blockquote>
@@ -1305,7 +2102,7 @@ session key.  </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#tls_daemon_random_bytes">tls_daemon_random_bytes</a> = 32
 </pre>
 </blockquote>
@@ -1320,11 +2117,11 @@ regular file, you must prepend the source type to the source name:
 "dev:" for a device special file, or "egd:" for a source with EGD
 compatible socket interface.  </p>
 
-<p> Examples (specify only one in main.cf): </p>
+<p> Examples (specify only one in <a href="postconf.5.html">main.cf</a>): </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#tls_random_source">tls_random_source</a> = dev:/dev/urandom
     <a href="postconf.5.html#tls_random_source">tls_random_source</a> = egd:/var/run/egd-pool
 </pre>
@@ -1341,7 +2138,7 @@ entropy source, a larger amount of data can be read.  </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#tls_random_bytes">tls_random_bytes</a> = 32
 </pre>
 </blockquote>
@@ -1356,7 +2153,7 @@ The default maximal time interval is 1 hour. </p>
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#tls_random_reseed_period">tls_random_reseed_period</a> = 3600s
 </pre>
 </blockquote>
@@ -1374,7 +2171,7 @@ the file location should probably be on the /var partition (but
  
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#tls_random_exchange_name">tls_random_exchange_name</a> = /etc/postfix/prng_exch
     <a href="postconf.5.html#tls_random_prng_update_period">tls_random_prng_update_period</a> = 3600s
 </pre>
@@ -1460,7 +2257,7 @@ steps ago. </p>
 <blockquote>
 <pre>
 % <b>openssl ca -out FOO-cert.pem -infiles FOO-req.pem</b>
-Uing configuration from /etc/ssl/openssl.cnf
+Using configuration from /etc/ssl/openssl.cnf
 Enter PEM pass phrase:<b>whatever</b>
 Check that the request matches the signature
 Signature ok
@@ -1494,22 +2291,32 @@ super-user privileges. </p>
 </blockquote>
 
 <li> <p> Configure Postfix, by adding the following to
-<tt>/etc/postfix/main.cf </tt>. </p>
+<tt>/etc/postfix/<a href="postconf.5.html">main.cf</a> </tt>. It is generally best to not configure
+client certificates, unless there are servers which authenticate your mail
+submission via client certificates. Often servers that perform TLS client
+authentication will issue the required certificates signed by their own
+CA. If you configure the client certificate and key incorrectly, you
+will be unable to send mail to sites that request client certificate,
+but don't require them from all clients. </p>
 
 <blockquote>
 <pre>
-<a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> = /etc/postfix/cacert.pem
-<a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a> = /etc/postfix/FOO-cert.pem
-<a href="postconf.5.html#smtp_tls_key_file">smtp_tls_key_file</a> = /etc/postfix/FOO-key.pem
-<a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> = btree:/var/run/smtp_tls_session_cache
-<a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a> = yes
-<a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> = /etc/postfix/cacert.pem
-<a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a> = /etc/postfix/FOO-cert.pem
-<a href="postconf.5.html#smtpd_tls_key_file">smtpd_tls_key_file</a> = /etc/postfix/FOO-key.pem
-<a href="postconf.5.html#smtpd_tls_received_header">smtpd_tls_received_header</a> = yes
-<a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> = btree:/var/run/smtpd_tls_session_cache
-<a href="postconf.5.html#smtpd_use_tls">smtpd_use_tls</a> = yes
-<a href="postconf.5.html#tls_random_source">tls_random_source</a> = dev:/dev/urandom
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> = /etc/postfix/cacert.pem
+    <a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> =
+	btree:/var/spool/postfix/smtp_tls_session_cache
+    <a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a> = yes
+    <a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> = /etc/postfix/cacert.pem
+    <a href="postconf.5.html#smtpd_tls_cert_file">smtpd_tls_cert_file</a> = /etc/postfix/FOO-cert.pem
+    <a href="postconf.5.html#smtpd_tls_key_file">smtpd_tls_key_file</a> = /etc/postfix/FOO-key.pem
+    <a href="postconf.5.html#smtpd_tls_received_header">smtpd_tls_received_header</a> = yes
+    <a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> =
+	btree:/var/spool/postfix/smtpd_tls_session_cache
+    <a href="postconf.5.html#tls_random_source">tls_random_source</a> = dev:/dev/urandom
+    # Postfix 2.3 and later
+    <a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a> = may
+    # Obsolete, but still supported
+    <a href="postconf.5.html#smtpd_use_tls">smtpd_use_tls</a> = yes
 </pre>
 </blockquote>
 
@@ -1518,27 +2325,19 @@ super-user privileges. </p>
 
 <h2> <a name="problems"> Reporting problems </a> </h2>
 
-<p> When reporting a problem, please be thorough in the report.
-Patches, when possible, are greatly appreciated too. </p>
+<p> Problems are preferably reported via &lt;postfix-users@postfix.org&gt;.
+See <a href="http://www.postfix.org/lists.html">http://www.postfix.org/lists.html</a> for subscription information.
+When reporting a problem, please be thorough in the report.  Patches,
+when possible, are greatly appreciated too. </p>
 
-<p> Please differentiate when possible between: </p>
-
-<ul>
-
-<li> Problems in the TLS code: &lt;postfix_tls@aet.tu-cottbus.de&gt;
-
-<li> Problems in vanilla Postfix: &lt;postfix-users@postfix.org&gt;
-
-</ul>
-
-<h2><a name="compat">Compatibility with Postfix <2.2 TLS support</a></h2>
+<h2><a name="compat">Compatibility with Postfix &lt; 2.2 TLS support</a></h2>
 
 <p> Postfix version 2.2 TLS support is based on the Postfix/TLS
 patch by Lutz J&auml;nicke, but differs in a few minor ways. </p>
 
 <ul>
 
-<li> <p> main.cf: Specify "btree" instead of "sdbm" for TLS
+<li> <p> <a href="postconf.5.html">main.cf</a>: Specify "btree" instead of "sdbm" for TLS
 session cache databases. </p>
 
 <p> TLS session cache databases are now accessed only by the
@@ -1550,10 +2349,10 @@ lines of code) is not included with Postfix. </p>
 of several kbytes or more, and that implements the sequence operation.
 In most cases, btree databases should be adequate.  </p>
 
-<p> NOTE:  You cannot use dbm databases. TLS session objects
+<p> NOTE:  You cannot use DBM databases. TLS session objects
 are too large. </p>
 
-<li> <p> master.cf: Specify "unix" instead of "fifo" as
+<li> <p> <a href="master.5.html">master.cf</a>: Specify "unix" instead of "fifo" as
 the tlsmgr service type. </p>
 
 <p> The <a href="smtp.8.html">smtp(8)</a> and <a href="smtpd.8.html">smtpd(8)</a> processes now use a client-server
@@ -1567,7 +2366,7 @@ cannot override the global "<a href="postconf.5.html#smtp_tls_enforce_peername">
 
 <li> <p> <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a>: a combined (NONE + MAY) lookup result
 for (hostname and next-hop destination) produces counter-intuitive
-results for different main.cf settings.  TLS is enabled with
+results for different <a href="postconf.5.html">main.cf</a> settings.  TLS is enabled with
 "<a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> = no", but it is disabled when both
 "<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = yes" and "<a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> = yes".
 </p>

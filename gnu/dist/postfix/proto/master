@@ -120,16 +120,15 @@
 #	place.
 # .sp
 #	The files in the examples/chroot-setup subdirectory of the
-#	Postfix source archive describe how to set up a Postfix
-#	chroot environment for your type of machine, and
-#	BASIC_CONFIGURATION_README discusses issues related to
-#	running daemons chrooted.
+#	Postfix source archive show set up a Postfix chroot environment
+#	on a variety of systems. See also BASIC_CONFIGURATION_README
+#	for issues related to running daemons chrooted.
 # .IP "\fBWake up time (default: 0)\fR"
 #	Automatically wake up the named service after the specified
 #	number of seconds. The wake up is implemented by connecting
 #	to the service and sending a wake up request.  A ? at the
-#	end of the wake-up time field requests that wake up events
-#	be sent only to services that are actually being used.
+#	end of the wake-up time field requests that no wake up
+#	events be sent before the first time a service is used.
 #	Specify 0 for no automatic wake up.
 # .sp
 #	The \fBpickup\fR(8), \fBqmgr\fR(8) and \fBflush\fR(8)

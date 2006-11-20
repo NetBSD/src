@@ -139,57 +139,60 @@
 # 
 #               Note:   this  action  disables  further  header  or
 #               body_checks inspection of the current  message  and
-#               affects all recipients.
+#               affects all recipients.  To discard only one recip-
+#               ient without discarding the entire message, use the
+#               transport(5) table to direct mail to the discard(8)
+#               service.
 # 
 #               This feature is available in Postfix 2.0 and later.
 # 
-#        DUNNO  Pretend that the input line did not match any  pat-
-#               tern,  and inspect the next input line. This action
+#        DUNNO  Pretend  that the input line did not match any pat-
+#               tern, and inspect the next input line. This  action
 #               can be used to shorten the table search.
 # 
-#               For backwards compatibility reasons,  Postfix  also
-#               accepts  OK but it is (and always has been) treated
+#               For  backwards  compatibility reasons, Postfix also
+#               accepts OK but it is (and always has been)  treated
 #               as DUNNO.
 # 
 #               This feature is available in Postfix 2.1 and later.
 # 
 #        FILTER transport:destination
-#               Write  a  content  filter request to the queue file
-#               and inspect the next input line.   After  the  com-
-#               plete  message  is received it will be sent through
+#               Write a content filter request to  the  queue  file
+#               and  inspect  the  next input line.  After the com-
+#               plete message is received it will be  sent  through
 #               the specified external content filter.  More infor-
-#               mation  about  external  content  filters is in the
+#               mation about external content  filters  is  in  the
 #               Postfix FILTER_README file.
 # 
-#               Note:  this  action  overrides  the  main.cf   con-
-#               tent_filter  setting, and affects all recipients of
-#               the message.  In  the  case  that  multiple  FILTER
+#               Note:   this  action  overrides  the  main.cf  con-
+#               tent_filter setting, and affects all recipients  of
+#               the  message.  In  the  case  that  multiple FILTER
 #               actions fire, only the last one is executed.
 # 
 #               This feature is available in Postfix 2.0 and later.
 # 
 #        HOLD optional text...
-#               Arrange for the message to be placed  on  the  hold
-#               queue,  and  inspect the next input line.  The mes-
-#               sage remains on hold until someone  either  deletes
-#               it  or  releases it for delivery.  Log the optional
+#               Arrange  for  the  message to be placed on the hold
+#               queue, and inspect the next input line.   The  mes-
+#               sage  remains  on hold until someone either deletes
+#               it or releases it for delivery.  Log  the  optional
 #               text if specified, otherwise log a generic message.
 # 
-#               Mail  that  is  placed on hold can be examined with
-#               the postcat(1) command, and  can  be  destroyed  or
+#               Mail that is placed on hold can  be  examined  with
+#               the  postcat(1)  command,  and  can be destroyed or
 #               released with the postsuper(1) command.
 # 
-#               Note:  use  "postsuper -r" to release mail that was
-#               kept on hold for a significant fraction  of  $maxi-
+#               Note: use "postsuper -r" to release mail  that  was
+#               kept  on  hold for a significant fraction of $maxi-
 #               mal_queue_lifetime  or  $bounce_queue_lifetime,  or
 #               longer.
 # 
-#               Note: this action affects  all  recipients  of  the
+#               Note:  this  action  affects  all recipients of the
 #               message.
 # 
 #               This feature is available in Postfix 2.0 and later.
 # 
-#        IGNORE Delete the current line from the input and  inspect
+#        IGNORE Delete  the current line from the input and inspect
 #               the next input line.
 # 
 #        PREPEND text...
@@ -198,18 +201,18 @@
 # 
 #               Notes:
 # 
-#               o      The prepended text is output on  a  separate
+#               o      The  prepended  text is output on a separate
 #                      line,  immediately  before  the  input  that
 #                      triggered the PREPEND action.
 # 
 #               o      The prepended text is not considered part of
-#                      the  input  stream:  it  is  not  subject to
+#                      the input  stream:  it  is  not  subject  to
 #                      header/body checks or address rewriting, and
 #                      it does not affect the way that Postfix adds
 #                      missing message headers.
 # 
 #               o      When prepending text before a message header
-#                      line,  the  prepended text must begin with a
+#                      line, the prepended text must begin  with  a
 #                      valid message header label.
 # 
 #               o      This action cannot be used to prepend multi-
@@ -218,47 +221,52 @@
 #               This feature is available in Postfix 2.1 and later.
 # 
 #        REDIRECT user@domain
-#               Write a message redirection request  to  the  queue
-#               file  and  inspect  the  next input line. After the
+#               Write  a  message  redirection request to the queue
+#               file and inspect the next  input  line.  After  the
 #               message is queued, it will be sent to the specified
 #               address instead of the intended recipient(s).
 # 
-#               Note:  this action overrides the FILTER action, and
-#               affects all recipients of the message. If  multiple
-#               REDIRECT  actions  fire,  only the last one is exe-
+#               Note: this action overrides the FILTER action,  and
+#               affects  all recipients of the message. If multiple
+#               REDIRECT actions fire, only the last  one  is  exe-
 #               cuted.
 # 
 #               This feature is available in Postfix 2.1 and later.
 # 
 #        REPLACE text...
-#               Replace  the  current  line with the specified text
+#               Replace the current line with  the  specified  text
 #               and inspect the next input line.
 # 
 #               This feature is available in Postfix 2.2 and later.
-#               The  description below applies to Postfix 2.2.2 and
+#               The description below applies to Postfix 2.2.2  and
 #               later.
 # 
 #               Notes:
 # 
-#               o      When replacing a message  header  line,  the
-#                      replacement  text  must  begin  with a valid
+#               o      When  replacing  a  message header line, the
+#                      replacement text must  begin  with  a  valid
 #                      header label.
 # 
-#               o      The replaced text remains part of the  input
-#                      stream.  Unlike  the result from the PREPEND
-#                      action, a replaced  message  header  may  be
-#                      subject  to address rewriting and may affect
-#                      the way that Postfix  adds  missing  message
+#               o      The  replaced text remains part of the input
+#                      stream. Unlike the result from  the  PREPEND
+#                      action,  a  replaced  message  header may be
+#                      subject to address rewriting and may  affect
+#                      the  way  that  Postfix adds missing message
 #                      headers.
 # 
 #        REJECT optional text...
-#               Reject  the  entire  message.  Reply  with optional
+#               Reject the  entire  message.  Reply  with  optional
 #               text... when the optional text is specified, other-
 #               wise reply with a generic error message.
 # 
-#               Note:   this  action  disables  further  header  or
-#               body_checks inspection of the current  message  and
+#               Note:  this  action  disables  further  header   or
+#               body_checks  inspection  of the current message and
 #               affects all recipients.
+# 
+#               Postfix version 2.3 and later support enhanced sta-
+#               tus codes.  When no code is specified at the begin-
+#               ning of optional text..., Postfix inserts a default
+#               enhanced status code of "5.7.1".
 # 
 #        WARN optional text...
 #               Log  a  warning with the optional text... (or log a

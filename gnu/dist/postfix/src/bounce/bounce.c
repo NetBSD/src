@@ -1,15 +1,15 @@
-/*	$NetBSD: bounce.c,v 1.1.1.5.2.1 2006/07/12 15:06:38 tron Exp $	*/
+/*	$NetBSD: bounce.c,v 1.1.1.5.2.2 2006/11/20 13:30:19 tron Exp $	*/
 
 /*++
 /* NAME
 /*	bounce 8
 /* SUMMARY
-/*	Postfix message bounce or defer daemon
+/*	Postfix delivery status reports
 /* SYNOPSIS
 /*	\fBbounce\fR [generic Postfix daemon options]
 /* DESCRIPTION
 /*	The \fBbounce\fR(8) daemon maintains per-message log files with
-/*	non-delivery status information. Each log file is named after the
+/*	delivery status information. Each log file is named after the
 /*	queue file that it corresponds to, and is kept in a queue subdirectory
 /*	named after the service name in the \fBmaster.cf\fR file (either
 /*	\fBbounce\fR, \fBdefer\fR or \fBtrace\fR).
@@ -35,8 +35,11 @@
 /*	themselves, and that depend on retry logic in their own client.
 /* STANDARDS
 /*	RFC 822 (ARPA Internet Text Messages)
-/*	RFC 1894 (Delivery Status Notifications)
 /*	RFC 2045 (Format of Internet Message Bodies)
+/*	RFC 2822 (ARPA Internet Text Messages)
+/*	RFC 3462 (Delivery Status Notifications)
+/*	RFC 3464 (Delivery Status Notifications)
+/*	RFC 3834 (Auto-Submitted: message header)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* CONFIGURATION PARAMETERS
@@ -61,6 +64,8 @@
 /* .IP "\fBbounce_size_limit (50000)\fR"
 /*	The maximal amount of original message text that is sent in a
 /*	non-delivery notification.
+/* .IP "\fBbounce_template_file (empty)\fR"
+/*	Pathname of a configuration file with bounce message templates.
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
@@ -80,6 +85,10 @@
 /* .IP "\fBipc_timeout (3600s)\fR"
 /*	The time limit for sending or receiving information over an internal
 /*	communication channel.
+/* .IP "\fBinternal_mail_filter_classes (empty)\fR"
+/*	What categories of Postfix-generated mail are subject to
+/*	before-queue content inspection by non_smtpd_milters, header_checks
+/*	and body_checks.
 /* .IP "\fBmail_name (Postfix)\fR"
 /*	The mail system name that is displayed in Received: headers, in
 /*	the SMTP greeting banner, and in bounced mail.
@@ -107,6 +116,7 @@
 /*	/var/spool/postfix/defer/* non-delivery records
 /*	/var/spool/postfix/trace/* delivery status records
 /* SEE ALSO
+/*	bounce(5), bounce message template format
 /*	qmgr(8), queue manager
 /*	postconf(5), configuration parameters
 /*	master(5), generic daemon options
@@ -127,6 +137,7 @@
 
 #include <sys_defs.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifdef STRCASECMP_IN_STRINGS_H
 #include <strings.h>
@@ -138,6 +149,7 @@
 #include <vstring.h>
 #include <vstream.h>
 #include <stringops.h>
+#include <load_file.h>
 
 /* Global library. */
 
@@ -147,6 +159,8 @@
 #include <mail_conf.h>
 #include <bounce.h>
 #include <mail_addr.h>
+#include <rcpt_buf.h>
+#include <dsb_scan.h>
 
 /* Single-threaded server skeleton. */
 
@@ -154,7 +168,7 @@
 
 /* Application-specific. */
 
-#include "bounce_service.h"
+#include <bounce_service.h>
 
  /*
   * Tunables.
@@ -166,56 +180,81 @@ char   *var_notify_classes;
 char   *var_bounce_rcpt;
 char   *var_2bounce_rcpt;
 char   *var_delay_rcpt;
+char   *var_bounce_tmpl;
 
  /*
   * We're single threaded, so we can avoid some memory allocation overhead.
   */
 static VSTRING *queue_id;
 static VSTRING *queue_name;
-static VSTRING *orig_rcpt;
-static VSTRING *recipient;
+static RCPT_BUF *rcpt_buf;
 static VSTRING *encoding;
 static VSTRING *sender;
+static VSTRING *dsn_envid;
 static VSTRING *verp_delims;
-static VSTRING *dsn_status;
-static VSTRING *dsn_action;
-static VSTRING *why;
+static DSN_BUF *dsn_buf;
+
+ /*
+  * Templates.
+  */
+BOUNCE_TEMPLATES *bounce_templates;
 
 #define STR vstring_str
+
+#define VS_NEUTER(s) printable(vstring_str(s), '?')
 
 /* bounce_append_proto - bounce_append server protocol */
 
 static int bounce_append_proto(char *service_name, VSTREAM *client)
 {
-    char   *myname = "bounce_append_proto";
+    const char *myname = "bounce_append_proto";
     int     flags;
-    long    offset;
 
     /*
-     * Read the and validate the client request.
+     * Read and validate the client request.
      */
     if (mail_command_server(client,
-			    ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, &flags,
+			    ATTR_TYPE_INT, MAIL_ATTR_FLAGS, &flags,
 			    ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, queue_id,
-			    ATTR_TYPE_STR, MAIL_ATTR_ORCPT, orig_rcpt,
-			    ATTR_TYPE_STR, MAIL_ATTR_RECIP, recipient,
-			    ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, &offset,
-			    ATTR_TYPE_STR, MAIL_ATTR_STATUS, dsn_status,
-			    ATTR_TYPE_STR, MAIL_ATTR_ACTION, dsn_action,
-			    ATTR_TYPE_STR, MAIL_ATTR_WHY, why,
-			    ATTR_TYPE_END) != 8) {
+			    ATTR_TYPE_FUNC, rcpb_scan, (void *) rcpt_buf,
+			    ATTR_TYPE_FUNC, dsb_scan, (void *) dsn_buf,
+			    ATTR_TYPE_END) != 4) {
 	msg_warn("malformed request");
 	return (-1);
     }
+
+    /*
+     * Sanitize input.
+     */
     if (mail_queue_id_ok(STR(queue_id)) == 0) {
 	msg_warn("malformed queue id: %s", printable(STR(queue_id), '?'));
 	return (-1);
     }
+    VS_NEUTER(rcpt_buf->address);
+    VS_NEUTER(rcpt_buf->orig_addr);
+    VS_NEUTER(rcpt_buf->dsn_orcpt);
+    VS_NEUTER(dsn_buf->status);
+    VS_NEUTER(dsn_buf->action);
+    VS_NEUTER(dsn_buf->reason);
+    VS_NEUTER(dsn_buf->dtype);
+    VS_NEUTER(dsn_buf->dtext);
+    VS_NEUTER(dsn_buf->mtype);
+    VS_NEUTER(dsn_buf->mname);
+    (void) RECIPIENT_FROM_RCPT_BUF(rcpt_buf);
+    (void) DSN_FROM_DSN_BUF(dsn_buf);
+
+    /*
+     * Beware: some DSN or RECIPIENT fields may be null; access dsn_buf and
+     * rcpt_buf buffers instead. See DSN_FROM_DSN_BUF() and
+     * RECIPIENT_FROM_RCPT_BUF().
+     */
     if (msg_verbose)
-	msg_info("%s: flags=0x%x service=%s id=%s org_to=%s to=%s off=%ld stat=%s act=%s why=%s",
-		 myname, flags, service_name, STR(queue_id), STR(orig_rcpt),
-		 STR(recipient), offset, STR(dsn_status),
-		 STR(dsn_action), STR(why));
+	msg_info("%s: flags=0x%x service=%s id=%s org_to=%s to=%s off=%ld dsn_org=%s, notif=0x%x stat=%s act=%s why=%s",
+		 myname, flags, service_name, STR(queue_id),
+		 STR(rcpt_buf->orig_addr), STR(rcpt_buf->address),
+		 rcpt_buf->offset, STR(rcpt_buf->dsn_orcpt),
+		 rcpt_buf->dsn_notify, STR(dsn_buf->status),
+		 STR(dsn_buf->action), STR(dsn_buf->reason));
 
     /*
      * On request by the client, set up a trap to delete the log file in case
@@ -228,32 +267,39 @@ static int bounce_append_proto(char *service_name, VSTREAM *client)
      * Execute the request.
      */
     return (bounce_append_service(flags, service_name, STR(queue_id),
-				  STR(orig_rcpt), STR(recipient), offset,
-				  STR(dsn_status), STR(dsn_action),
-				  STR(why)));
+				  &rcpt_buf->rcpt, &dsn_buf->dsn));
 }
 
 /* bounce_notify_proto - bounce_notify server protocol */
 
 static int bounce_notify_proto(char *service_name, VSTREAM *client,
-               int (*service) (int, char *, char *, char *, char *, char *))
+			        int (*service) (int, char *, char *, char *,
+					        char *, char *, char *, int,
+						        BOUNCE_TEMPLATES *))
 {
-    char   *myname = "bounce_notify_proto";
+    const char *myname = "bounce_notify_proto";
     int     flags;
+    int     dsn_ret;
 
     /*
      * Read and validate the client request.
      */
     if (mail_command_server(client,
-			    ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, &flags,
+			    ATTR_TYPE_INT, MAIL_ATTR_FLAGS, &flags,
 			    ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue_name,
 			    ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, queue_id,
 			    ATTR_TYPE_STR, MAIL_ATTR_ENCODING, encoding,
 			    ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
-			    ATTR_TYPE_END) != 5) {
+			    ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, dsn_envid,
+			    ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, &dsn_ret,
+			    ATTR_TYPE_END) != 7) {
 	msg_warn("malformed request");
 	return (-1);
     }
+
+    /*
+     * Sanitize input.
+     */
     if (mail_queue_name_ok(STR(queue_name)) == 0) {
 	msg_warn("malformed queue name: %s", printable(STR(queue_name), '?'));
 	return (-1);
@@ -262,10 +308,11 @@ static int bounce_notify_proto(char *service_name, VSTREAM *client,
 	msg_warn("malformed queue id: %s", printable(STR(queue_id), '?'));
 	return (-1);
     }
+    printable(STR(dsn_envid), '?');
     if (msg_verbose)
-	msg_info("%s: flags=0x%x service=%s queue=%s id=%s encoding=%s sender=%s",
+	msg_info("%s: flags=0x%x service=%s queue=%s id=%s encoding=%s sender=%s envid=%s ret=0x%x",
 		 myname, flags, service_name, STR(queue_name), STR(queue_id),
-		 STR(encoding), STR(sender));
+		 STR(encoding), STR(sender), STR(dsn_envid), dsn_ret);
 
     /*
      * On request by the client, set up a trap to delete the log file in case
@@ -279,30 +326,38 @@ static int bounce_notify_proto(char *service_name, VSTREAM *client,
      */
     return (service(flags, service_name, STR(queue_name),
 		    STR(queue_id), STR(encoding),
-		    STR(sender)));
+		    STR(sender), STR(dsn_envid), dsn_ret,
+		    bounce_templates));
 }
 
 /* bounce_verp_proto - bounce_notify server protocol, VERP style */
 
 static int bounce_verp_proto(char *service_name, VSTREAM *client)
 {
-    char   *myname = "bounce_verp_proto";
+    const char *myname = "bounce_verp_proto";
     int     flags;
+    int     dsn_ret;
 
     /*
      * Read and validate the client request.
      */
     if (mail_command_server(client,
-			    ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, &flags,
+			    ATTR_TYPE_INT, MAIL_ATTR_FLAGS, &flags,
 			    ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue_name,
 			    ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, queue_id,
 			    ATTR_TYPE_STR, MAIL_ATTR_ENCODING, encoding,
 			    ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
+			    ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, dsn_envid,
+			    ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, &dsn_ret,
 			    ATTR_TYPE_STR, MAIL_ATTR_VERPDL, verp_delims,
-			    ATTR_TYPE_END) != 6) {
+			    ATTR_TYPE_END) != 8) {
 	msg_warn("malformed request");
 	return (-1);
     }
+
+    /*
+     * Sanitize input.
+     */
     if (mail_queue_name_ok(STR(queue_name)) == 0) {
 	msg_warn("malformed queue name: %s", printable(STR(queue_name), '?'));
 	return (-1);
@@ -311,15 +366,17 @@ static int bounce_verp_proto(char *service_name, VSTREAM *client)
 	msg_warn("malformed queue id: %s", printable(STR(queue_id), '?'));
 	return (-1);
     }
+    printable(STR(dsn_envid), '?');
     if (strlen(STR(verp_delims)) != 2) {
 	msg_warn("malformed verp delimiter string: %s",
 		 printable(STR(verp_delims), '?'));
 	return (-1);
     }
     if (msg_verbose)
-	msg_info("%s: flags=0x%x service=%s queue=%s id=%s encoding=%s sender=%s delim=%s",
-		 myname, flags, service_name, STR(queue_name), STR(queue_id),
-		 STR(encoding), STR(sender), STR(verp_delims));
+	msg_info("%s: flags=0x%x service=%s queue=%s id=%s encoding=%s sender=%s envid=%s ret=0x%x delim=%s",
+		 myname, flags, service_name, STR(queue_name),
+		 STR(queue_id), STR(encoding), STR(sender),
+		 STR(dsn_envid), dsn_ret, STR(verp_delims));
 
     /*
      * On request by the client, set up a trap to delete the log file in case
@@ -336,40 +393,44 @@ static int bounce_verp_proto(char *service_name, VSTREAM *client)
 	msg_warn("request to send VERP-style notification of bounced mail");
 	return (bounce_notify_service(flags, service_name, STR(queue_name),
 				      STR(queue_id), STR(encoding),
-				      STR(sender)));
+				      STR(sender), STR(dsn_envid), dsn_ret,
+				      bounce_templates));
     } else
 	return (bounce_notify_verp(flags, service_name, STR(queue_name),
 				   STR(queue_id), STR(encoding),
-				   STR(sender), STR(verp_delims)));
+				   STR(sender), STR(dsn_envid), dsn_ret,
+				   STR(verp_delims), bounce_templates));
 }
 
 /* bounce_one_proto - bounce_one server protocol */
 
 static int bounce_one_proto(char *service_name, VSTREAM *client)
 {
-    char   *myname = "bounce_one_proto";
+    const char *myname = "bounce_one_proto";
     int     flags;
-    long    offset;
+    int     dsn_ret;
 
     /*
      * Read and validate the client request.
      */
     if (mail_command_server(client,
-			    ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, &flags,
+			    ATTR_TYPE_INT, MAIL_ATTR_FLAGS, &flags,
 			    ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue_name,
 			    ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, queue_id,
 			    ATTR_TYPE_STR, MAIL_ATTR_ENCODING, encoding,
 			    ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
-			    ATTR_TYPE_STR, MAIL_ATTR_ORCPT, orig_rcpt,
-			    ATTR_TYPE_STR, MAIL_ATTR_RECIP, recipient,
-			    ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, &offset,
-			    ATTR_TYPE_STR, MAIL_ATTR_STATUS, dsn_status,
-			    ATTR_TYPE_STR, MAIL_ATTR_ACTION, dsn_action,
-			    ATTR_TYPE_STR, MAIL_ATTR_WHY, why,
-			    ATTR_TYPE_END) != 11) {
+			    ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, dsn_envid,
+			    ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, &dsn_ret,
+			    ATTR_TYPE_FUNC, rcpb_scan, (void *) rcpt_buf,
+			    ATTR_TYPE_FUNC, dsb_scan, (void *) dsn_buf,
+			    ATTR_TYPE_END) != 9) {
 	msg_warn("malformed request");
 	return (-1);
     }
+
+    /*
+     * Sanitize input.
+     */
     if (strcmp(service_name, MAIL_SERVICE_BOUNCE) != 0) {
 	msg_warn("wrong service name \"%s\" for one-recipient bouncing",
 		 service_name);
@@ -383,19 +444,40 @@ static int bounce_one_proto(char *service_name, VSTREAM *client)
 	msg_warn("malformed queue id: %s", printable(STR(queue_id), '?'));
 	return (-1);
     }
+    printable(STR(dsn_envid), '?');
+    VS_NEUTER(rcpt_buf->address);
+    VS_NEUTER(rcpt_buf->orig_addr);
+    VS_NEUTER(rcpt_buf->dsn_orcpt);
+    VS_NEUTER(dsn_buf->status);
+    VS_NEUTER(dsn_buf->action);
+    VS_NEUTER(dsn_buf->reason);
+    VS_NEUTER(dsn_buf->dtype);
+    VS_NEUTER(dsn_buf->dtext);
+    VS_NEUTER(dsn_buf->mtype);
+    VS_NEUTER(dsn_buf->mname);
+    (void) RECIPIENT_FROM_RCPT_BUF(rcpt_buf);
+    (void) DSN_FROM_DSN_BUF(dsn_buf);
+
+    /*
+     * Beware: some DSN or RECIPIENT fields may be null; access dsn_buf and
+     * rcpt_buf buffers instead. See DSN_FROM_DSN_BUF() and
+     * RECIPIENT_FROM_RCPT_BUF().
+     */
     if (msg_verbose)
-	msg_info("%s: flags=0x%x queue=%s id=%s encoding=%s sender=%s orig_to=%s to=%s off=%ld stat=%s act=%s why=%s",
-	       myname, flags, STR(queue_name), STR(queue_id), STR(encoding),
-		 STR(sender), STR(orig_rcpt), STR(recipient), offset,
-		 STR(dsn_status), STR(dsn_action), STR(why));
+	msg_info("%s: flags=0x%x queue=%s id=%s encoding=%s sender=%s envid=%s dsn_ret=0x%x orig_to=%s to=%s off=%ld dsn_orig=%s notif=0x%x stat=%s act=%s why=%s",
+		 myname, flags, STR(queue_name), STR(queue_id),
+		 STR(encoding), STR(sender), STR(dsn_envid), dsn_ret,
+		 STR(rcpt_buf->orig_addr), STR(rcpt_buf->address),
+		 rcpt_buf->offset, STR(rcpt_buf->dsn_orcpt),
+		 rcpt_buf->dsn_notify, STR(dsn_buf->status),
+		 STR(dsn_buf->action), STR(dsn_buf->reason));
 
     /*
      * Execute the request.
      */
     return (bounce_one_service(flags, STR(queue_name), STR(queue_id),
-			       STR(encoding), STR(sender), STR(orig_rcpt),
-			       STR(recipient), offset, STR(dsn_status),
-			       STR(dsn_action), STR(why)));
+			       STR(encoding), STR(sender), STR(dsn_envid),
+			     dsn_ret, rcpt_buf, dsn_buf, bounce_templates));
 }
 
 /* bounce_service - parse bounce command type and delegate */
@@ -419,7 +501,7 @@ static void bounce_service(VSTREAM *client, char *service_name, char **argv)
      * request-specific protocol routines take care of the remainder.
      */
     if (attr_scan(client, ATTR_FLAG_STRICT | ATTR_FLAG_MORE,
-		  ATTR_TYPE_NUM, MAIL_ATTR_NREQ, &command, 0) != 1) {
+		  ATTR_TYPE_INT, MAIL_ATTR_NREQ, &command, 0) != 1) {
 	msg_warn("malformed request");
 	status = -1;
     } else if (command == BOUNCE_CMD_VERP) {
@@ -447,7 +529,7 @@ static void bounce_service(VSTREAM *client, char *service_name, char **argv)
      * client.
      */
     attr_print(client, ATTR_FLAG_NONE,
-	       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, status,
+	       ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
 	       ATTR_TYPE_END);
     vstream_fflush(client);
 
@@ -463,10 +545,52 @@ static void bounce_service(VSTREAM *client, char *service_name, char **argv)
     }
 }
 
+static void load_helper(VSTREAM *stream, void *context)
+{
+    BOUNCE_TEMPLATES *templates = (BOUNCE_TEMPLATES *) context;
+
+    bounce_templates_load(stream, templates);
+}
+
+/* pre_jail_init - pre-jail initialization */
+
+static void pre_jail_init(char *unused_name, char **unused_argv)
+{
+
+    /*
+     * Bundle up a bunch of bounce template information.
+     */
+    bounce_templates = bounce_templates_create();
+
+    /*
+     * Load the alternate message files (if specified) before entering the
+     * chroot jail.
+     */
+    if (*var_bounce_tmpl)
+	load_file(var_bounce_tmpl, load_helper, (char *) bounce_templates);
+}
+
 /* post_jail_init - initialize after entering chroot jail */
 
-static void post_jail_init(char *unused_name, char **unused_argv)
+static void post_jail_init(char *service_name, char **unused_argv)
 {
+
+    /*
+     * Special case: dump bounce templates. This is not part of the master(5)
+     * public interface. This internal interface is used by the postconf
+     * command. It was implemented before bounce templates were isolated
+     * into modules that could have been called directly.
+     */
+    if (strcmp(service_name, "dump_templates") == 0) {
+	bounce_templates_dump(VSTREAM_OUT, bounce_templates);
+	vstream_fflush(VSTREAM_OUT);
+	exit(0);
+    }
+    if (strcmp(service_name, "expand_templates") == 0) {
+	bounce_templates_expand(VSTREAM_OUT, bounce_templates);
+	vstream_fflush(VSTREAM_OUT);
+	exit(0);
+    }
 
     /*
      * Initialize. We're single threaded so we can reuse some memory upon
@@ -474,14 +598,12 @@ static void post_jail_init(char *unused_name, char **unused_argv)
      */
     queue_id = vstring_alloc(10);
     queue_name = vstring_alloc(10);
-    orig_rcpt = vstring_alloc(10);
-    recipient = vstring_alloc(10);
+    rcpt_buf = rcpb_create();
     encoding = vstring_alloc(10);
     sender = vstring_alloc(10);
+    dsn_envid = vstring_alloc(10);
     verp_delims = vstring_alloc(10);
-    dsn_status = vstring_alloc(10);
-    dsn_action = vstring_alloc(10);
-    why = vstring_alloc(10);
+    dsn_buf = dsb_create();
 }
 
 /* main - the main program */
@@ -502,6 +624,7 @@ int     main(int argc, char **argv)
 	VAR_BOUNCE_RCPT, DEF_BOUNCE_RCPT, &var_bounce_rcpt, 1, 0,
 	VAR_2BOUNCE_RCPT, DEF_2BOUNCE_RCPT, &var_2bounce_rcpt, 1, 0,
 	VAR_DELAY_RCPT, DEF_DELAY_RCPT, &var_delay_rcpt, 1, 0,
+	VAR_BOUNCE_TMPL, DEF_BOUNCE_TMPL, &var_bounce_tmpl, 0, 0,
 	0,
     };
 
@@ -512,6 +635,7 @@ int     main(int argc, char **argv)
 		       MAIL_SERVER_INT_TABLE, int_table,
 		       MAIL_SERVER_STR_TABLE, str_table,
 		       MAIL_SERVER_TIME_TABLE, time_table,
+		       MAIL_SERVER_PRE_INIT, pre_jail_init,
 		       MAIL_SERVER_POST_INIT, post_jail_init,
 		       MAIL_SERVER_UNLIMITED,
 		       0);

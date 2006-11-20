@@ -1,4 +1,4 @@
-/*	$NetBSD: mac_parse.c,v 1.1.1.3.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: mac_parse.c,v 1.1.1.3.2.2 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -86,7 +86,7 @@
 
 int     mac_parse(const char *value, MAC_PARSE_FN action, char *context)
 {
-    char   *myname = "mac_parse";
+    const char *myname = "mac_parse";
     VSTRING *buf = vstring_alloc(1);	/* result buffer */
     const char *vp;			/* value pointer */
     const char *pp;			/* open_paren pointer */
@@ -193,6 +193,7 @@ int     main(int unused_argc, char **unused_argv)
 	vstream_fflush(VSTREAM_OUT);
     }
     vstring_free(buf);
+    return (0);
 }
 
 #endif

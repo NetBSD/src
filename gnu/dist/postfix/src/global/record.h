@@ -1,4 +1,4 @@
-/*	$NetBSD: record.h,v 1.1.1.2 2004/05/31 00:24:35 heas Exp $	*/
+/*	$NetBSD: record.h,v 1.1.1.2.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 #ifndef _RECORD_H_INCLUDED_
 #define _RECORD_H_INCLUDED_
@@ -34,13 +34,25 @@
  /*
   * Functional interface.
   */
-extern int rec_get(VSTREAM *, VSTRING *, int);
-extern int rec_put(VSTREAM *, int, const char *, int);
-extern int rec_put_type(VSTREAM *, int, long);
+extern int rec_get_raw(VSTREAM *, VSTRING *, ssize_t, int);
+extern int rec_put(VSTREAM *, int, const char *, ssize_t);
+extern int rec_put_type(VSTREAM *, int, off_t);
 extern int PRINTFLIKE(3, 4) rec_fprintf(VSTREAM *, int, const char *,...);
 extern int rec_fputs(VSTREAM *, int, const char *);
+extern int rec_goto(VSTREAM *, const char *);
 
 #define REC_PUT_BUF(v, t, b) rec_put((v), (t), vstring_str(b), VSTRING_LEN(b))
+
+#define REC_FLAG_NONE	(0)
+#define REC_FLAG_FOLLOW_PTR	(1<<0)		/* follow PTR records */
+#define REC_FLAG_SKIP_DTXT	(1<<1)		/* skip DTXT records */
+#define REC_FLAG_SEEK_END	(1<<2)		/* seek EOF after END record */
+
+#define REC_FLAG_DEFAULT \
+	(REC_FLAG_FOLLOW_PTR | REC_FLAG_SKIP_DTXT | REC_FLAG_SEEK_END)
+
+#define rec_get(fp, buf, limit) \
+	rec_get_raw((fp), (buf), (limit), REC_FLAG_DEFAULT)
 
  /*
   * Stuff that needs <stdarg.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2004/02/08 22:28:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.11.6.1 2006/11/20 13:31:06 tron Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -28,8 +28,8 @@ CLEANFILES+= ${GENSRCS}
 
 CPPFLAGS+= -I.
 
-DPADD+= ${LIBPGLOBAL} ${LIBPUTIL}
-LDADD+= ${LIBPGLOBAL} ${LIBPUTIL}
+DPADD+= ${LIBPGLOBAL} ${LIBPXSASL} ${LIBPUTIL}
+LDADD+= ${LIBPGLOBAL} ${LIBPXSASL} ${LIBPUTIL}
 
 # XXX Note that there is no ${AWK} variable in our build system. This
 # is probably a deficiency.

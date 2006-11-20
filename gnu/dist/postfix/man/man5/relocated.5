@@ -1,4 +1,4 @@
-.\"	$NetBSD: relocated.5,v 1.1.1.7.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: relocated.5,v 1.1.1.7.2.2 2006/11/20 13:30:18 tron Exp $
 .\"
 .TH RELOCATED 5 
 .ad
@@ -34,6 +34,15 @@ done in a slightly different way as described below under
 "REGULAR EXPRESSION TABLES" and "TCP-BASED TABLES".
 
 Table lookups are case insensitive.
+.SH "CASE FOLDING"
+.na
+.nf
+.ad
+.fi
+The search string is folded to lowercase before database
+lookup. As of Postfix 2.3, the search string is not case
+folded with database types such as regexp: or pcre: whose
+lookup fields can match both upper and lower case.
 .SH "TABLE FORMAT"
 .na
 .nf
@@ -91,7 +100,7 @@ directed to a TCP-based server. For a description of regular
 expression lookup table syntax, see \fBregexp_table\fR(5) or
 \fBpcre_table\fR(5). For a description of the TCP client/server
 table lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available up to and including Postfix version 2.2.
+This feature is not available up to and including Postfix version 2.3.
 
 Each pattern is a regular expression that is applied to the entire
 address being looked up. Thus, \fIuser@domain\fR mail addresses are not
@@ -112,7 +121,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 This section describes how the table lookups change when lookups
 are directed to a TCP-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available up to and including Postfix version 2.2.
+This feature is not available up to and including Postfix version 2.3.
 
 Each lookup operation uses the entire address once.  Thus,
 \fIuser@domain\fR mail addresses are not broken up into their

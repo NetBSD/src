@@ -1,4 +1,4 @@
-/*	$NetBSD: post_mail.c,v 1.1.1.5 2004/05/31 00:24:34 heas Exp $	*/
+/*	$NetBSD: post_mail.c,v 1.1.1.5.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,26 +8,30 @@
 /* SYNOPSIS
 /*	#include <post_mail.h>
 /*
-/*	VSTREAM	*post_mail_fopen(sender, recipient, cleanup_flags, trace_flags)
+/*	VSTREAM	*post_mail_fopen(sender, recipient, filter_class, trace_flags,
+/*		queue_id)
 /*	const char *sender;
 /*	const char *recipient;
-/*	int	cleanup_flags;
+/*	int	filter_class;
 /*	int	trace_flags;
+/*	VSTRING *queue_id;
 /*
 /*	VSTREAM	*post_mail_fopen_nowait(sender, recipient,
-/*					cleanup_flags, trace_flags)
+/*					filter_class, trace_flags, queue_id)
 /*	const char *sender;
 /*	const char *recipient;
-/*	int	cleanup_flags;
+/*	int	filter_class;
 /*	int	trace_flags;
+/*	VSTRING *queue_id;
 /*
 /*	void	post_mail_fopen_async(sender, recipient,
-/*					cleanup_flags, trace_flags,
-/*					notify, context)
+/*					filter_class, trace_flags,
+/*					queue_id, notify, context)
 /*	const char *sender;
 /*	const char *recipient;
-/*	int	cleanup_flags;
+/*	int	filter_class;
 /*	int	trace_flags;
+/*	VSTRING *queue_id;
 /*	void	(*notify)(VSTREAM *stream, char *context);
 /*	char	*context;
 /*
@@ -93,13 +97,16 @@
 /* .IP recipient
 /*	The recipient envelope address. It is up to the application
 /*	to produce To: headers.
-/* .IP cleanup_flags
-/*	The binary OR of zero or more of the options defined in
-/*	\fB<cleanup_user.h>\fR.
+/* .IP filter_class
+/*	The internal mail filtering class, as defined in
+/*	\fB<int_filt.h>\fR.  Depending on the setting of the
+/*	internal_mail_filter_classes parameter the message will or
+/*	won't be subject to content inspection.
 /* .IP trace_flags
 /*	Message tracing flags as specified in \fB<deliver_request.h>\fR.
-/* .IP via
-/*	The name of the service responsible for posting this message.
+/* .IP queue_id
+/*	Null pointer, or pointer to buffer that receives the queue
+/*	ID of the new message.
 /* .IP stream
 /*	A stream opened by mail_post_fopen().
 /* .IP notify
@@ -137,7 +144,7 @@
 /* System library. */
 
 #include <sys_defs.h>
-#include <time.h>
+#include <sys/time.h>
 #include <stdlib.h>			/* 44BSD stdarg.h uses abort() */
 #include <stdarg.h>
 #include <string.h>
@@ -166,22 +173,29 @@
 typedef struct {
     char   *sender;
     char   *recipient;
-    int     cleanup_flags;
+    int     filter_class;
     int     trace_flags;
     POST_MAIL_NOTIFY notify;
     void   *context;
     VSTREAM *stream;
+    VSTRING *queue_id;
 } POST_MAIL_STATE;
 
 /* post_mail_init - initial negotiations */
 
 static void post_mail_init(VSTREAM *stream, const char *sender,
 			           const char *recipient,
-			           int cleanup_flags, int trace_flags)
+			           int filter_class, int trace_flags,
+			           VSTRING *queue_id)
 {
-    VSTRING *id = vstring_alloc(100);
-    long    now = time((time_t *) 0);
-    const char *date = mail_date(now);
+    VSTRING *id = queue_id ? queue_id : vstring_alloc(100);
+    struct timeval now;
+    const char *date;
+    int cleanup_flags =
+	int_filt_flags(filter_class) | CLEANUP_FLAG_MASK_INTERNAL;
+
+    GETTIMEOFDAY(&now);
+    date = mail_date(now.tv_sec);
 
     /*
      * Negotiate with the cleanup service. Give up if we can't agree.
@@ -190,7 +204,7 @@ static void post_mail_init(VSTREAM *stream, const char *sender,
 		  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
 		  ATTR_TYPE_END) != 1
 	|| attr_print(stream, ATTR_FLAG_NONE,
-		      ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, cleanup_flags,
+		      ATTR_TYPE_INT, MAIL_ATTR_FLAGS, cleanup_flags,
 		      ATTR_TYPE_END) != 0)
 	msg_fatal("unable to contact the %s service", var_cleanup_service);
 
@@ -198,9 +212,10 @@ static void post_mail_init(VSTREAM *stream, const char *sender,
      * Generate a minimal envelope section. The cleanup service will add a
      * size record.
      */
-    rec_fprintf(stream, REC_TYPE_TIME, "%ld", (long) now);
+    rec_fprintf(stream, REC_TYPE_TIME, REC_TYPE_TIME_FORMAT,
+		REC_TYPE_TIME_ARG(now));
     rec_fprintf(stream, REC_TYPE_ATTR, "%s=%s",
-		MAIL_ATTR_ORIGIN, MAIL_ATTR_ORG_LOCAL);
+		MAIL_ATTR_LOG_ORIGIN, MAIL_ATTR_ORG_LOCAL);
     rec_fprintf(stream, REC_TYPE_ATTR, "%s=%d",
 		MAIL_ATTR_TRACE_FLAGS, trace_flags);
     rec_fputs(stream, REC_TYPE_FROM, sender);
@@ -215,31 +230,36 @@ static void post_mail_init(VSTREAM *stream, const char *sender,
 		      var_myhostname, var_mail_name);
     post_mail_fprintf(stream, "\tid %s; %s", vstring_str(id), date);
     post_mail_fprintf(stream, "Date: %s", date);
-    vstring_free(id);
+    if (queue_id == 0)
+	vstring_free(id);
 }
 
 /* post_mail_fopen - prepare for posting a message */
 
 VSTREAM *post_mail_fopen(const char *sender, const char *recipient,
-			         int cleanup_flags, int trace_flags)
+			         int filter_class, int trace_flags,
+			         VSTRING *queue_id)
 {
     VSTREAM *stream;
 
     stream = mail_connect_wait(MAIL_CLASS_PUBLIC, var_cleanup_service);
-    post_mail_init(stream, sender, recipient, cleanup_flags, trace_flags);
+    post_mail_init(stream, sender, recipient, filter_class, trace_flags,
+		   queue_id);
     return (stream);
 }
 
 /* post_mail_fopen_nowait - prepare for posting a message */
 
 VSTREAM *post_mail_fopen_nowait(const char *sender, const char *recipient,
-				        int cleanup_flags, int trace_flags)
+				        int filter_class, int trace_flags,
+				        VSTRING *queue_id)
 {
     VSTREAM *stream;
 
     if ((stream = mail_connect(MAIL_CLASS_PUBLIC, var_cleanup_service,
 			       BLOCKING)) != 0)
-	post_mail_init(stream, sender, recipient, cleanup_flags, trace_flags);
+	post_mail_init(stream, sender, recipient, filter_class, trace_flags,
+		       queue_id);
     return (stream);
 }
 
@@ -248,7 +268,7 @@ VSTREAM *post_mail_fopen_nowait(const char *sender, const char *recipient,
 static void post_mail_open_event(int event, char *context)
 {
     POST_MAIL_STATE *state = (POST_MAIL_STATE *) context;
-    char   *myname = "post_mail_open_event";
+    const char *myname = "post_mail_open_event";
 
     switch (event) {
 
@@ -278,8 +298,8 @@ static void post_mail_open_event(int event, char *context)
 	event_cancel_timer(post_mail_open_event, context);
 	event_disable_readwrite(vstream_fileno(state->stream));
 	post_mail_init(state->stream, state->sender,
-		       state->recipient, state->cleanup_flags,
-		       state->trace_flags);
+		       state->recipient, state->filter_class,
+		       state->trace_flags, state->queue_id);
 	myfree(state->sender);
 	myfree(state->recipient);
 	state->notify(state->stream, state->context);
@@ -329,7 +349,8 @@ static void post_mail_open_event(int event, char *context)
 /* post_mail_fopen_async - prepare for posting a message */
 
 void    post_mail_fopen_async(const char *sender, const char *recipient,
-			              int cleanup_flags, int trace_flags,
+			              int filter_class, int trace_flags,
+			              VSTRING *queue_id,
 			              void (*notify) (VSTREAM *, void *),
 			              void *context)
 {
@@ -340,11 +361,12 @@ void    post_mail_fopen_async(const char *sender, const char *recipient,
     state = (POST_MAIL_STATE *) mymalloc(sizeof(*state));
     state->sender = mystrdup(sender);
     state->recipient = mystrdup(recipient);
-    state->cleanup_flags = cleanup_flags;
+    state->filter_class = filter_class;
     state->trace_flags = trace_flags;
     state->notify = notify;
     state->context = context;
     state->stream = stream;
+    state->queue_id = queue_id;
 
     /*
      * To keep interfaces as simple as possible we report all errors via the
@@ -385,7 +407,7 @@ int     post_mail_buffer(VSTREAM *cleanup, const char *buf, int len)
 
 int     post_mail_fputs(VSTREAM *cleanup, const char *str)
 {
-    int     len = str ? strlen(str) : 0;
+    ssize_t len = str ? strlen(str) : 0;
 
     return (rec_put(cleanup, REC_TYPE_NORM, str, len) != REC_TYPE_NORM ?
 	    CLEANUP_STAT_WRITE : 0);
@@ -407,7 +429,7 @@ int     post_mail_fclose(VSTREAM *cleanup)
 	rec_fputs(cleanup, REC_TYPE_END, "");
 	if (vstream_fflush(cleanup)
 	    || attr_scan(cleanup, ATTR_FLAG_MISSING,
-			 ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &status,
+			 ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
 			 ATTR_TYPE_END) != 1)
 	    status = CLEANUP_STAT_WRITE;
     }

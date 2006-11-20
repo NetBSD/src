@@ -250,9 +250,9 @@ document for an introduction to the Postfix architecture. </p>
  3 # Simple shell-based filter. It is meant to be invoked as follows:
  4 #       /path/to/script -f sender recipients...
  5 
- 6 # Localize these.
+ 6 # Localize these. The -G option does nothing before Postfix 2.3.
  7 INSPECT_DIR=/var/spool/filter
- 8 SENDMAIL="/usr/sbin/sendmail -i"
+ 8 SENDMAIL="/usr/sbin/sendmail -G -i" # NEVER NEVER NEVER use "-t" here.
  9 
 10 # Exit codes from &lt;sysexits.h&gt;
 11 EX_TEMPFAIL=75
@@ -281,6 +281,16 @@ document for an introduction to the Postfix architecture. </p>
 <p> Notes: </p>
 
 <ul>
+
+<li> <p> Line 8: The -G option does nothing before Postfix 2.3,
+otherwise it disables address rewriting of message headers. </p>
+
+<li> <p> Line 8: The -i option says don't stop reading input when
+a line contains "." only.  </p>
+
+<li> <p> Line 8: NEVER NEVER NEVER use the "-t" command-line option
+here. It will mis-deliver mail, like sending mailing list mail back
+to the mailing list. </p>
 
 <li> <p> Line 21: The idea is to first capture the message to
 file and then run the content through a third-party content filter
@@ -342,7 +352,7 @@ is supposed to store its temporary files. </p>
 with the <a href="pipe.8.html">pipe(8)</a> delivery agent. </p>
 
 <pre>
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
   # =============================================================
   # service type  private unpriv  chroot  wakeup  maxproc command
   #               (yes)   (yes)   (yes)   (never) (100)
@@ -358,11 +368,11 @@ up a lot of system resources, so you don't want to have too much
 of it running at the same time. </p>
 
 <li> <p> To turn on content filtering for mail arriving via SMTP
-only, append "-o <a href="postconf.5.html#content_filter">content_filter</a>=filter:dummy" to the master.cf
+only, append "-o <a href="postconf.5.html#content_filter">content_filter</a>=filter:dummy" to the <a href="master.5.html">master.cf</a>
 entry that defines the Postfix SMTP server: </p>
 
 <pre>
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
   # =============================================================
   # service type  private unpriv  chroot  wakeup  maxproc command
   #               (yes)   (yes)   (yes)   (never) (100)
@@ -417,7 +427,7 @@ for filtered mail. </p>
 
 <p> To turn off "simple" content filtering: </p>
 
-<ul> <li> <p> Edit the master.cf file, remove the "-o
+<ul> <li> <p> Edit the <a href="master.5.html">master.cf</a> file, remove the "-o
 <a href="postconf.5.html#content_filter">content_filter</a>=filter:dummy" text from the entry that defines the
 Postfix SMTP server. </p>
 
@@ -556,11 +566,11 @@ performance loss. </p>
 <h3>Advanced content filter: requesting that all mail is filtered</h3>  
 
 <p> To enable the advanced content filter method for all mail,
-specify in main.cf:  </p>
+specify in <a href="postconf.5.html">main.cf</a>:  </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#content_filter">content_filter</a> = scan:localhost:10025
     <a href="postconf.5.html#receive_override_options">receive_override_options</a> = <a href="postconf.5.html#no_address_mappings">no_address_mappings</a>
 </pre>
@@ -593,18 +603,19 @@ filter</h3>
 
 <p> In this example, "scan" is an instance of the Postfix SMTP
 client with slightly different configuration parameters. This is
-how one would set up the service in the Postfix master.cf file:
+how one would set up the service in the Postfix <a href="master.5.html">master.cf</a> file:
 </p>
 
 <blockquote>
 <pre>
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
     # =============================================================
     # service type  private unpriv  chroot  wakeup  maxproc command
     #               (yes)   (yes)   (yes)   (never) (100)
     # =============================================================
     scan      unix  -       -       n       -       10      smtp
         -o <a href="postconf.5.html#smtp_send_xforward_command">smtp_send_xforward_command</a>=yes
+        -o <a href="postconf.5.html#disable_mime_output_conversion">disable_mime_output_conversion</a>=yes
 </pre>
 </blockquote>
 
@@ -617,10 +628,16 @@ gobble up a lot of system resources, so you don't want to have too
 much of it running at the same time. </p>
 
 <li> <p> With "-o <a href="postconf.5.html#smtp_send_xforward_command">smtp_send_xforward_command</a>=yes", the scan transport
-will try to forward the original client name and IP address to the
+will try to forward the original client name and IP address 
+through the content filter to the
 after-filter smtpd process, so that filtered mail is logged with
 the real client name IP address. See <a href="smtp.8.html">smtp(8)</a> and <a href="XFORWARD_README.html">XFORWARD_README</a>
 for more information. </p>
+
+<li> <p> The "-o <a href="postconf.5.html#disable_mime_output_conversion">disable_mime_output_conversion</a>=yes" is a workaround
+that prevents the breaking of domainkeys and other digital signatures.
+This is needed because some SMTP-based content filters don't announce
+8BITMIME support, even though they can handle it just fine.  </p>
 
 </ul>
 
@@ -632,7 +649,7 @@ up to 10 content filtering processes on localhost port 10025: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
     # ===================================================================
     # service       type  private unpriv  chroot  wakeup  maxproc command
     #                     (yes)   (yes)   (yes)   (never) (100)
@@ -670,14 +687,14 @@ that injects mail back into Postfix. </p>
 
 <blockquote>
 <pre>
-/etc/postfix/master.cf:
+/etc/postfix/<a href="master.5.html">master.cf</a>:
     # ===================================================================
     # service       type  private unpriv  chroot  wakeup  maxproc command
     #                     (yes)   (yes)   (yes)   (never) (100)
     # ===================================================================
     localhost:10026 inet  n       -       n       -       10      smtpd
         -o <a href="postconf.5.html#content_filter">content_filter</a>= 
-        -o <a href="postconf.5.html#receive_override_options">receive_override_options</a>=<a href="postconf.5.html#no_unknown_recipient_checks">no_unknown_recipient_checks</a>,<a href="postconf.5.html#no_header_body_checks">no_header_body_checks</a>
+        -o <a href="postconf.5.html#receive_override_options">receive_override_options</a>=<a href="postconf.5.html#no_unknown_recipient_checks">no_unknown_recipient_checks</a>,<a href="postconf.5.html#no_header_body_checks">no_header_body_checks</a>,<a href="postconf.5.html#no_milters">no_milters</a>
         -o <a href="postconf.5.html#smtpd_helo_restrictions">smtpd_helo_restrictions</a>=
         -o <a href="postconf.5.html#smtpd_client_restrictions">smtpd_client_restrictions</a>=
         -o <a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a>=
@@ -692,26 +709,34 @@ that injects mail back into Postfix. </p>
 <li> <p> Note: do not use spaces around the "=" or "," characters. </p>
 
 <li> <p> Note: the SMTP server must not have a smaller process
-limit than the "filter" master.cf entry. </p>
+limit than the "filter" <a href="master.5.html">master.cf</a> entry. </p>
 
-<li> <p> The "-o <a href="postconf.5.html#content_filter">content_filter</a>=" overrides main.cf settings, and
+<li> <p> The "-o <a href="postconf.5.html#content_filter">content_filter</a>=" overrides <a href="postconf.5.html">main.cf</a> settings, and
 requests no content filtering for mail from the content filter.
 This is required or else mail will stay in the content filtering
 loop. </p>
 
-<li> <p> The "-o <a href="postconf.5.html#receive_override_options">receive_override_options</a>" overrides main.cf
-settings. It is complementary to the options that are specified in
-main.cf: </p>
+<li> <p> The "-o <a href="postconf.5.html#receive_override_options">receive_override_options</a>" overrides <a href="postconf.5.html">main.cf</a> settings
+to avoid duplicating work that was already done before the content
+filter. These options are complementary to the options that are
+specified in <a href="postconf.5.html">main.cf</a>: </p>
 
 <ul>
 
-    <li> <p> Disable attempts to find out if a recipient is unknown,
-    and disable header/body checks. This work was already done
-    before the content filter and repeating it would be wasteful.
-    </p>
+    <li> <p> We specify "<a href="postconf.5.html#no_unknown_recipient_checks">no_unknown_recipient_checks</a>" to disable
+    attempts to find out if a recipient is unknown. </p>
 
-    <li> <p> Enable virtual alias expansion, canonical mappings,
-    address masquerading, and other address mappings. </p>
+    <li> <p> We specify "<a href="postconf.5.html#no_header_body_checks">no_header_body_checks</a>" to disable header/body
+    checks.  </p>
+
+    <li> <p> We specify "<a href="postconf.5.html#no_milters">no_milters</a>" to disable Milter applications
+    (this option is available only in Postfix 2.3 and later).  </p>
+
+    <li> <p> We don't specify "no_address_mapping" here.  This
+    enables virtual alias expansion, canonical mappings, address
+    masquerading, and other address mappings after the content
+    filter. The <a href="postconf.5.html">main.cf</a> setting of "<a href="postconf.5.html#receive_override_options">receive_override_options</a>"
+    disables these mappings before the content filter.  </p>
 
 </ul>
 
@@ -720,7 +745,7 @@ main.cf: </p>
   </p>
 
 <li> <p> The "-o smtpd_xxx_restrictions" and "-o <a href="postconf.5.html#mynetworks">mynetworks</a>=127.0.0.0/8"
-override main.cf settings. They turn off junk mail controls that
+override <a href="postconf.5.html">main.cf</a> settings. They turn off junk mail controls that
 would only waste time here.
 
 <li> <p> With "-o <a href="postconf.5.html#smtpd_authorized_xforward_hosts">smtpd_authorized_xforward_hosts</a>=127.0.0.0/8",
@@ -751,13 +776,13 @@ Postfix instances will be covered in a future version.  </p>
 
 <p> To turn off "advanced" content filtering: </p>
 
-<ul> <li> <p> Delete or comment out the two following main.cf lines.
+<ul> <li> <p> Delete or comment out the two following <a href="postconf.5.html">main.cf</a> lines.
 The other changes made for advanced content filtering have no effect
 when content filtering is turned off. </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#content_filter">content_filter</a> = scan:localhost:10025
     <a href="postconf.5.html#receive_override_options">receive_override_options</a> = <a href="postconf.5.html#no_address_mappings">no_address_mappings</a>
 </pre>
@@ -773,7 +798,7 @@ filter information from existing queue files. </p>
 <h2><a name="remote_only">Filtering mail from outside users only</a></h2>
 
 <p> The easiest approach is to configure ONE Postfix instance with
-multiple SMTP server IP addresses in master.cf: </p>
+multiple SMTP server IP addresses in <a href="master.5.html">master.cf</a>: </p>
 
 <ul>
 
@@ -781,7 +806,7 @@ multiple SMTP server IP addresses in master.cf: </p>
 with content filtering turned off. </p>
 
 <pre>
-/etc/postfix.master.cf:
+/etc/postfix.<a href="master.5.html">master.cf</a>:
     # ==================================================================
     # service      type  private unpriv  chroot  wakeup  maxproc command
     #                    (yes)   (yes)   (yes)   (never) (100)
@@ -796,7 +821,7 @@ with content filtering turned off. </p>
 content filtering turned on. </p>
 
 <pre>
-/etc/postfix.master.cf:
+/etc/postfix.<a href="master.5.html">master.cf</a>:
     # =================================================================
     # service     type  private unpriv  chroot  wakeup  maxproc command
     #                   (yes)   (yes)   (yes)   (never) (100)
@@ -811,19 +836,19 @@ content filtering turned on. </p>
 <p> After this, you can follow the same procedure as outlined in
 the "advanced" or "simple" content filtering examples above, except
 that you must not specify "<a href="postconf.5.html#content_filter">content_filter</a>" or "<a href="postconf.5.html#receive_override_options">receive_override_options</a>"
-in the main.cf file. </p>
+in the <a href="postconf.5.html">main.cf</a> file. </p>
 
 <h2><a name="domain_dependent">Different filters for different
 domains</a></h2>
 
 <p> If you are an MX service provider and want to apply different
 content filters for different domains, you can configure ONE Postfix
-instance with multiple SMTP server IP addresses in master.cf. Each
+instance with multiple SMTP server IP addresses in <a href="master.5.html">master.cf</a>. Each
 address provides a different content filter service. </p>
 
 <blockquote>
 <pre>
-/etc/postfix.master.cf:
+/etc/postfix.<a href="master.5.html">master.cf</a>:
     # =================================================================
     # service     type  private unpriv  chroot  wakeup  maxproc command
     #                   (yes)   (yes)   (yes)   (never) (100)
@@ -843,7 +868,7 @@ address provides a different content filter service. </p>
 <p> After this, you can follow the same procedure as outlined in
 the "advanced" or "simple" content filtering examples above, except
 that you must not specify "<a href="postconf.5.html#content_filter">content_filter</a>" or "<a href="postconf.5.html#receive_override_options">receive_override_options</a>"
-in the main.cf file. </p>
+in the <a href="postconf.5.html">main.cf</a> file. </p>
 
 <p> Set up MX records in the DNS that route each domain to the
 proper SMTP server instance. </p>
@@ -886,7 +911,7 @@ loop. </p>
 <ul>
 
 <li> <p> FILTER actions from smtpd access maps and header/body_checks
-take precedence over filters specified with the main.cf <a href="postconf.5.html#content_filter">content_filter</a>
+take precedence over filters specified with the <a href="postconf.5.html">main.cf</a> <a href="postconf.5.html#content_filter">content_filter</a>
 parameter. </p>
 
 <li> <p> If a message triggers more than one filter action, only

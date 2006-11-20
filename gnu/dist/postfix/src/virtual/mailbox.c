@@ -1,4 +1,4 @@
-/*	$NetBSD: mailbox.c,v 1.1.1.4 2004/05/31 00:25:03 heas Exp $	*/
+/*	$NetBSD: mailbox.c,v 1.1.1.4.2.1 2006/11/20 13:31:05 tron Exp $	*/
 
 /*++
 /* NAME
@@ -63,10 +63,7 @@
 #include <sent.h>
 #include <mail_params.h>
 #include <mail_addr_find.h>
-
-#ifndef EDQUOT
-#define EDQUOT EFBIG
-#endif
+#include <dsn_util.h>
 
 /* Application-specific. */
 
@@ -79,8 +76,8 @@
 
 static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
 {
-    char   *myname = "deliver_mailbox_file";
-    VSTRING *why;
+    const char *myname = "deliver_mailbox_file";
+    DSN_BUF *why = state.msg_attr.why;
     MBOX   *mp;
     int     mail_copy_status;
     int     deliver_status;
@@ -98,9 +95,11 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
     /*
      * Don't deliver trace-only requests.
      */
-    if (DEL_REQ_TRACE_ONLY(state.request->flags))
-	return (sent(BOUNCE_FLAGS(state.request), SENT_ATTR(state.msg_attr),
-		     "delivers to mailbox"));
+    if (DEL_REQ_TRACE_ONLY(state.request->flags)) {
+	dsb_simple(why, "2.0.0", "delivers to mailbox");
+	return (sent(BOUNCE_FLAGS(state.request),
+		     SENT_ATTR(state.msg_attr)));
+    }
 
     /*
      * Initialize. Assume the operation will fail. Set the delivered
@@ -108,9 +107,8 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
      */
     if (vstream_fseek(state.msg_attr.fp, state.msg_attr.offset, SEEK_SET) < 0)
 	msg_fatal("seek message file %s: %m", VSTREAM_PATH(state.msg_attr.fp));
-    state.msg_attr.delivered = state.msg_attr.recipient;
+    state.msg_attr.delivered = state.msg_attr.rcpt.address;
     mail_copy_status = MAIL_COPY_STAT_WRITE;
-    why = vstring_alloc(100);
 
     /*
      * Lock the mailbox and open/create the mailbox file.
@@ -122,12 +120,13 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
     set_eugid(usr_attr.uid, usr_attr.gid);
     mp = mbox_open(usr_attr.mailbox, O_APPEND | O_WRONLY | O_CREAT,
 		   S_IRUSR | S_IWUSR, &st, -1, -1,
-		   virtual_mbox_lock_mask, why);
+		   virtual_mbox_lock_mask, "4.2.0", why);
     if (mp != 0) {
 	if (S_ISREG(st.st_mode) == 0) {
 	    vstream_fclose(mp->fp);
-	    vstring_sprintf(why, "destination is not a regular file");
-	    errno = 0;
+	    msg_warn("recipient %s: destination %s is not a regular file",
+		     state.msg_attr.rcpt.address, usr_attr.mailbox);
+	    dsb_simple(why, "5.3.5", "mail system configuration error");
 	} else {
 	    end = vstream_fseek(mp->fp, (off_t) 0, SEEK_END);
 	    mail_copy_status = mail_copy(COPY_ATTR(state.msg_attr), mp->fp,
@@ -143,16 +142,18 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
     if (mail_copy_status & MAIL_COPY_STAT_CORRUPT) {
 	deliver_status = DEL_STAT_DEFER;
     } else if (mail_copy_status != 0) {
-	deliver_status = (errno == EDQUOT || errno == EFBIG ?
-			  bounce_append : defer_append)
-	    (BOUNCE_FLAGS(state.request), BOUNCE_ATTR(state.msg_attr),
-	     "mailbox %s: %s", usr_attr.mailbox, vstring_str(why));
+	vstring_sprintf_prepend(why->reason, "delivery failed to mailbox %s: ",
+				usr_attr.mailbox);
+	deliver_status =
+	    (STR(why->status)[0] == '4' ?
+	     defer_append : bounce_append)
+	    (BOUNCE_FLAGS(state.request),
+	     BOUNCE_ATTR(state.msg_attr));
     } else {
+	dsb_simple(why, "2.0.0", "delivered to mailbox");
 	deliver_status = sent(BOUNCE_FLAGS(state.request),
-			      SENT_ATTR(state.msg_attr),
-			      "delivered to mailbox");
+			      SENT_ATTR(state.msg_attr));
     }
-    vstring_free(why);
     return (deliver_status);
 }
 
@@ -160,10 +161,11 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
 
 int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
 {
-    char   *myname = "deliver_mailbox";
+    const char *myname = "deliver_mailbox";
     const char *mailbox_res;
     const char *uid_res;
     const char *gid_res;
+    DSN_BUF *why = state.msg_attr.why;
     long    n;
 
     /*
@@ -191,11 +193,11 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
     if (mailbox_res == 0) {
 	if (dict_errno == 0)
 	    return (NO);
-
+	msg_warn("table %s: lookup %s: %m", virtual_mailbox_maps->title,
+		 state.msg_attr.user);
+	dsb_simple(why, "4.3.5", "mail system configuration error");
 	*statusp = defer_append(BOUNCE_FLAGS(state.request),
-				BOUNCE_ATTR(state.msg_attr),
-				"%s: lookup %s: %m",
-			  virtual_mailbox_maps->title, state.msg_attr.user);
+				BOUNCE_ATTR(state.msg_attr));
 	return (YES);
     }
     usr_attr.mailbox = concatenate(var_virt_mailbox_base, "/",
@@ -209,17 +211,19 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
     uid_res = mail_addr_find(virtual_uid_maps, state.msg_attr.user,
 			     IGNORE_EXTENSION);
     if (uid_res == 0) {
+	msg_warn("recipient %s: not found in %s",
+		 state.msg_attr.user, virtual_uid_maps->title);
+	dsb_simple(why, "4.3.5", "mail system configuration error");
 	*statusp = defer_append(BOUNCE_FLAGS(state.request),
-				BOUNCE_ATTR(state.msg_attr),
-				"recipient %s: uid not found in %s",
-			      state.msg_attr.user, virtual_uid_maps->title);
+				BOUNCE_ATTR(state.msg_attr));
 	RETURN(YES);
     }
     if ((n = atol(uid_res)) < var_virt_minimum_uid) {
+	msg_warn("recipient %s: bad uid %s in %s",
+		 state.msg_attr.user, uid_res, virtual_uid_maps->title);
+	dsb_simple(why, "4.3.5", "mail system configuration error");
 	*statusp = defer_append(BOUNCE_FLAGS(state.request),
-				BOUNCE_ATTR(state.msg_attr),
-				"recipient %s: bad uid %s in %s",
-		     state.msg_attr.user, uid_res, virtual_uid_maps->title);
+				BOUNCE_ATTR(state.msg_attr));
 	RETURN(YES);
     }
     usr_attr.uid = (uid_t) n;
@@ -230,17 +234,19 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
     gid_res = mail_addr_find(virtual_gid_maps, state.msg_attr.user,
 			     IGNORE_EXTENSION);
     if (gid_res == 0) {
+	msg_warn("recipient %s: not found in %s",
+		 state.msg_attr.user, virtual_gid_maps->title);
+	dsb_simple(why, "4.3.5", "mail system configuration error");
 	*statusp = defer_append(BOUNCE_FLAGS(state.request),
-				BOUNCE_ATTR(state.msg_attr),
-				"recipient %s: gid not found in %s",
-			      state.msg_attr.user, virtual_gid_maps->title);
+				BOUNCE_ATTR(state.msg_attr));
 	RETURN(YES);
     }
     if ((n = atol(gid_res)) <= 0) {
+	msg_warn("recipient %s: bad gid %s in %s",
+		 state.msg_attr.user, gid_res, virtual_gid_maps->title);
+	dsb_simple(why, "4.3.5", "mail system configuration error");
 	*statusp = defer_append(BOUNCE_FLAGS(state.request),
-				BOUNCE_ATTR(state.msg_attr),
-				"recipient %s: bad gid %s in %s",
-		     state.msg_attr.user, gid_res, virtual_gid_maps->title);
+				BOUNCE_ATTR(state.msg_attr));
 	RETURN(YES);
     }
     usr_attr.gid = (gid_t) n;

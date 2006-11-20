@@ -1,4 +1,4 @@
-/*	$NetBSD: recipient_list.c,v 1.1.1.4 2004/05/31 00:24:35 heas Exp $	*/
+/*	$NetBSD: recipient_list.c,v 1.1.1.4.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -11,9 +11,17 @@
 /*	typedef struct {
 /* .in +4
 /*		long    offset;
+/*		char	*dsn_orcpt;
+/*		int	dsn_notify;
 /*		char   *orig_addr;
 /*		char   *address;
-/*		int	status;
+/*		union {
+/* .in +4
+/*			int	status;
+/*			struct QMGR_QUEUE *queue;
+/*			char	*addr_type;
+/* .in -4
+/*		}
 /* .in -4
 /*	} RECIPIENT;
 /*
@@ -24,17 +32,30 @@
 /* .in -4
 /*	} RECIPIENT_LIST;
 /*
-/*	void	recipient_list_init(list)
+/*	void	recipient_list_init(list, variant)
 /*	RECIPIENT_LIST *list;
+/*	int	variant;
 /*
-/*	void	recipient_list_add(list, offset, orig_rcpt, recipient)
+/*	void	recipient_list_add(list, offset, dsn_orcpt, dsn_notify,
+/*					orig_rcpt, recipient)
 /*	RECIPIENT_LIST *list;
 /*	long	offset;
+/*	const char *dsn_orcpt;
+/*	int	dsn_notify;
 /*	const char *orig_rcpt;
 /*	const char *recipient;
 /*
 /*	void	recipient_list_free(list)
 /*	RECIPIENT_LIST *list;
+/*
+/*	void	RECIPIENT_ASSIGN(rcpt, offset, dsn_orcpt, dsn_notify,
+/*					orig_rcpt, recipient)
+/*	RECIPIENT *rcpt;
+/*	long	offset;
+/*	char	*dsn_orcpt;
+/*	int	dsn_notify;
+/*	char	*orig_rcpt;
+/*	char	*recipient;
 /* DESCRIPTION
 /*	This module maintains lists of recipient structures. Each
 /*	recipient is characterized by a destination address and
@@ -45,19 +66,29 @@
 /*
 /*	recipient_list_init() creates an empty recipient structure list.
 /*	The list argument is initialized such that it can be given to
-/*	recipient_list_add() and to recipient_list_free().
+/*	recipient_list_add() and to recipient_list_free(). The variant
+/*	argument specifies how list elements should be initialized;
+/*	specify RCPT_LIST_INIT_STATUS to zero the status field, and
+/*	RCPT_LIST_INIT_QUEUE to zero the queue field.
 /*
 /*	recipient_list_add() adds a recipient to the specified list.
-/*	The recipient address is copied with mystrdup().
+/*	Recipient address information is copied with mystrdup().
 /*
 /*	recipient_list_free() releases memory for the specified list
 /*	of recipient structures.
+/*
+/*	RECIPIENT_ASSIGN() assigns the fields of a recipient structure
+/*	without making copies of its arguments.
 /*
 /*	Arguments:
 /* .IP list
 /*	Recipient list initialized by recipient_list_init().
 /* .IP offset
 /*	Queue file offset of a recipient delivery status record.
+/* .IP dsn_orcpt
+/*	DSN original recipient.
+/* .IP notify
+/*	DSN notify flags.
 /* .IP recipient
 /*	Recipient destination address.
 /* SEE ALSO
@@ -89,16 +120,18 @@
 
 /* recipient_list_init - initialize */
 
-void    recipient_list_init(RECIPIENT_LIST *list)
+void    recipient_list_init(RECIPIENT_LIST *list, int variant)
 {
     list->avail = 1;
     list->len = 0;
     list->info = (RECIPIENT *) mymalloc(sizeof(RECIPIENT));
+    list->variant = variant;
 }
 
 /* recipient_list_add - add rcpt to list */
 
 void    recipient_list_add(RECIPIENT_LIST *list, long offset,
+			           const char *dsn_orcpt, int dsn_notify,
 			           const char *orig_rcpt, const char *rcpt)
 {
     int     new_avail;
@@ -112,7 +145,14 @@ void    recipient_list_add(RECIPIENT_LIST *list, long offset,
     list->info[list->len].orig_addr = mystrdup(orig_rcpt);
     list->info[list->len].address = mystrdup(rcpt);
     list->info[list->len].offset = offset;
-    list->info[list->len].status = 0;
+    list->info[list->len].dsn_orcpt = mystrdup(dsn_orcpt);
+    list->info[list->len].dsn_notify = dsn_notify;
+    if (list->variant == RCPT_LIST_INIT_STATUS)
+	list->info[list->len].u.status = 0;
+    else if (list->variant == RCPT_LIST_INIT_QUEUE)
+	list->info[list->len].u.queue = 0;
+    else if (list->variant == RCPT_LIST_INIT_ADDR)
+	list->info[list->len].u.addr_type = 0;
     list->len++;
 }
 
@@ -123,8 +163,9 @@ void    recipient_list_free(RECIPIENT_LIST *list)
     RECIPIENT *rcpt;
 
     for (rcpt = list->info; rcpt < list->info + list->len; rcpt++) {
-	myfree(rcpt->orig_addr);
-	myfree(rcpt->address);
+	myfree((char *) rcpt->dsn_orcpt);
+	myfree((char *) rcpt->orig_addr);
+	myfree((char *) rcpt->address);
     }
     myfree((char *) list->info);
 }

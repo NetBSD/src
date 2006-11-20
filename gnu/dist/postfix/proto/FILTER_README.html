@@ -250,9 +250,9 @@ document for an introduction to the Postfix architecture. </p>
  3 # Simple shell-based filter. It is meant to be invoked as follows:
  4 #       /path/to/script -f sender recipients...
  5 
- 6 # Localize these.
+ 6 # Localize these. The -G option does nothing before Postfix 2.3.
  7 INSPECT_DIR=/var/spool/filter
- 8 SENDMAIL="/usr/sbin/sendmail -i"
+ 8 SENDMAIL="/usr/sbin/sendmail -G -i" # NEVER NEVER NEVER use "-t" here.
  9 
 10 # Exit codes from &lt;sysexits.h&gt;
 11 EX_TEMPFAIL=75
@@ -281,6 +281,16 @@ document for an introduction to the Postfix architecture. </p>
 <p> Notes: </p>
 
 <ul>
+
+<li> <p> Line 8: The -G option does nothing before Postfix 2.3,
+otherwise it disables address rewriting of message headers. </p>
+
+<li> <p> Line 8: The -i option says don't stop reading input when
+a line contains "." only.  </p>
+
+<li> <p> Line 8: NEVER NEVER NEVER use the "-t" command-line option
+here. It will mis-deliver mail, like sending mailing list mail back
+to the mailing list. </p>
 
 <li> <p> Line 21: The idea is to first capture the message to
 file and then run the content through a third-party content filter
@@ -605,6 +615,7 @@ how one would set up the service in the Postfix master.cf file:
     # =============================================================
     scan      unix  -       -       n       -       10      smtp
         -o smtp_send_xforward_command=yes
+        -o disable_mime_output_conversion=yes
 </pre>
 </blockquote>
 
@@ -617,10 +628,16 @@ gobble up a lot of system resources, so you don't want to have too
 much of it running at the same time. </p>
 
 <li> <p> With "-o smtp_send_xforward_command=yes", the scan transport
-will try to forward the original client name and IP address to the
+will try to forward the original client name and IP address 
+through the content filter to the
 after-filter smtpd process, so that filtered mail is logged with
 the real client name IP address. See smtp(8) and XFORWARD_README
 for more information. </p>
+
+<li> <p> The "-o disable_mime_output_conversion=yes" is a workaround
+that prevents the breaking of domainkeys and other digital signatures.
+This is needed because some SMTP-based content filters don't announce
+8BITMIME support, even though they can handle it just fine.  </p>
 
 </ul>
 
@@ -677,7 +694,7 @@ that injects mail back into Postfix. </p>
     # ===================================================================
     localhost:10026 inet  n       -       n       -       10      smtpd
         -o content_filter= 
-        -o receive_override_options=no_unknown_recipient_checks,no_header_body_checks
+        -o receive_override_options=no_unknown_recipient_checks,no_header_body_checks,no_milters
         -o smtpd_helo_restrictions=
         -o smtpd_client_restrictions=
         -o smtpd_sender_restrictions=
@@ -699,19 +716,27 @@ requests no content filtering for mail from the content filter.
 This is required or else mail will stay in the content filtering
 loop. </p>
 
-<li> <p> The "-o receive_override_options" overrides main.cf
-settings. It is complementary to the options that are specified in
-main.cf: </p>
+<li> <p> The "-o receive_override_options" overrides main.cf settings
+to avoid duplicating work that was already done before the content
+filter. These options are complementary to the options that are
+specified in main.cf: </p>
 
 <ul>
 
-    <li> <p> Disable attempts to find out if a recipient is unknown,
-    and disable header/body checks. This work was already done
-    before the content filter and repeating it would be wasteful.
-    </p>
+    <li> <p> We specify "no_unknown_recipient_checks" to disable
+    attempts to find out if a recipient is unknown. </p>
 
-    <li> <p> Enable virtual alias expansion, canonical mappings,
-    address masquerading, and other address mappings. </p>
+    <li> <p> We specify "no_header_body_checks" to disable header/body
+    checks.  </p>
+
+    <li> <p> We specify "no_milters" to disable Milter applications
+    (this option is available only in Postfix 2.3 and later).  </p>
+
+    <li> <p> We don't specify "no_address_mapping" here.  This
+    enables virtual alias expansion, canonical mappings, address
+    masquerading, and other address mappings after the content
+    filter. The main.cf setting of "receive_override_options"
+    disables these mappings before the content filter.  </p>
 
 </ul>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pickup.c,v 1.1.1.9.2.1 2006/07/12 15:06:40 tron Exp $	*/
+/*	$NetBSD: pickup.c,v 1.1.1.9.2.2 2006/11/20 13:30:46 tron Exp $	*/
 
 /*++
 /* NAME
@@ -126,6 +126,7 @@
 #include <set_ugid.h>
 #include <safe_open.h>
 #include <watchdog.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -141,6 +142,7 @@
 #include <rec_type.h>
 #include <lex_822.h>
 #include <input_transp.h>
+#include <rec_attr_map.h>
 
 /* Single-threaded server skeleton. */
 
@@ -184,14 +186,24 @@ static int file_read_error(PICKUP_INFO *info, int type)
     return (REMOVE_MESSAGE_FILE);
 }
 
-/* cleanup_service_error - handle error writing to cleanup service. */
+/* cleanup_service_error_reason - handle error writing to cleanup service. */
 
-static int cleanup_service_error(PICKUP_INFO *info, int status)
+static int cleanup_service_error_reason(PICKUP_INFO *info, int status,
+					        const char *reason)
 {
-    msg_warn("%s: %s", info->path, cleanup_strerror(status));
+
+    /*
+     * XXX If the cleanup server gave a reason, then it was already logged.
+     * Don't bother logging it another time.
+     */
+    if (reason == 0)
+	msg_warn("%s: %s", info->path, cleanup_strerror(status));
     return ((status & CLEANUP_STAT_BAD) ?
 	    REMOVE_MESSAGE_FILE : KEEP_MESSAGE_FILE);
 }
+
+#define cleanup_service_error(info, status) \
+	cleanup_service_error_reason((info), (status), (char *) 0)
 
 /* copy_segment - copy a record group */
 
@@ -200,18 +212,20 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 {
     int     type;
     int     check_first = (*expected == REC_TYPE_CONTENT[0]);
+    int     time_seen = 0;
+    char   *attr_name;
+    char   *attr_value;
+    char   *saved_attr;
+    int     skip_attr;
 
     /*
      * Limit the input record size. All front-end programs should protect the
      * mail system against unreasonable inputs. This also requires that we
      * limit the size of envelope records written by the local posting agent.
      * 
-     * As time stamp we use the scrutinized queue file modification time, and
-     * ignore the time stamp embedded in the queue file.
+     * Records with named attributes are filtered by postdrop(1).
      * 
-     * Allow attribute records if the queue file is owned by the mail system
-     * (postsuper -r) or if the attribute specifies the MIME body type
-     * (sendmail -B).
+     * We must allow PTR records here because of "postsuper -r".
      */
     for (;;) {
 	if ((type = rec_get(qfile, buf, var_line_limit)) < 0
@@ -221,16 +235,22 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 	    msg_info("%s: read %c %s", info->id, type, vstring_str(buf));
 	if (type == *expected)
 	    break;
-	if (type == REC_TYPE_FROM)
+	if (type == REC_TYPE_FROM) {
 	    if (info->sender == 0)
 		info->sender = mystrdup(vstring_str(buf));
+	    /* Compatibility with Postfix < 2.3. */
+	    if (time_seen == 0)
+		rec_fprintf(cleanup, REC_TYPE_TIME, "%ld",
+			    (long) info->st.st_mtime);
+	}
 	if (type == REC_TYPE_TIME)
-	    /* Use our own arrival time record instead. */
-	    continue;
+	    time_seen = 1;
 
 	/*
 	 * XXX Workaround: REC_TYPE_FILT (used in envelopes) == REC_TYPE_CONT
 	 * (used in message content).
+	 * 
+	 * As documented in postsuper(1), ignore content filter record.
 	 */
 	if (*expected != REC_TYPE_CONTENT[0]) {
 	    if (type == REC_TYPE_FILT)
@@ -247,9 +267,16 @@ static int copy_segment(VSTREAM *qfile, VSTREAM *cleanup, PICKUP_INFO *info,
 	    if (type == REC_TYPE_ERTO)
 		/* Discard errors-to record after "postsuper -r". */
 		continue;
-	    if (type == REC_TYPE_ATTR)
+	    if (type == REC_TYPE_ATTR) {
+		saved_attr = mystrdup(vstring_str(buf));
+		skip_attr = (split_nameval(saved_attr,
+					   &attr_name, &attr_value) == 0
+			     && rec_attr_map(attr_name) == 0);
+		myfree(saved_attr);
 		/* Discard other/header/body action after "postsuper -r". */
-		continue;
+		if (skip_attr)
+		    continue;
+	    }
 	}
 
 	/*
@@ -293,16 +320,11 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
 	info->st.st_mtime = now;
     } else if (info->st.st_mtime < now - DAY_SECONDS) {
 	msg_warn("%s: message has been queued for %d days",
-		 info->id, (int) (now - info->st.st_mtime) / DAY_SECONDS);
+		 info->id, (int) ((now - info->st.st_mtime) / DAY_SECONDS));
     }
 
     /*
-     * Make sure the message has a posting-time record.
-     */
-    rec_fprintf(cleanup, REC_TYPE_TIME, "%ld", (long) info->st.st_mtime);
-
-    /*
-     * Add content inspection transport.
+     * Add content inspection transport. See also postsuper(1).
      */
     if (*var_filter_xport)
 	rec_fprintf(cleanup, REC_TYPE_FILT, "%s", var_filter_xport);
@@ -324,10 +346,13 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
      * For messages belonging to $mail_owner also log the maildrop queue id.
      * This supports message tracking for mail requeued via "postsuper -r".
      */
-    if (info->st.st_uid == var_owner_uid) {
+#define MAIL_IS_REQUEUED(info) \
+    ((info)->st.st_uid == var_owner_uid && ((info)->st.st_mode & S_IROTH) == 0)
+
+    if (MAIL_IS_REQUEUED(info)) {
 	msg_info("%s: uid=%d from=<%s> orig_id=%s", info->id,
 		 (int) info->st.st_uid, info->sender,
-		 ((name = strrchr(info->path, '/')) ?
+		 ((name = strrchr(info->path, '/')) != 0 ?
 		  name + 1 : info->path));
     } else {
 	msg_info("%s: uid=%d from=<%s>", info->id,
@@ -369,8 +394,9 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
      */
     rec_fputs(cleanup, REC_TYPE_END, "");
     if (attr_scan(cleanup, ATTR_FLAG_MISSING,
-		  ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &status,
-		  ATTR_TYPE_END) != 1)
+		  ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
+		  ATTR_TYPE_STR, MAIL_ATTR_WHY, buf,
+		  ATTR_TYPE_END) != 2)
 	return (cleanup_service_error(info, CLEANUP_STAT_WRITE));
 
     /*
@@ -380,7 +406,7 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
      * now and then.
      */
     if (status) {
-	return (cleanup_service_error(info, status));
+	return (cleanup_service_error_reason(info, status, vstring_str(buf)));
     } else {
 	return (REMOVE_MESSAGE_FILE);
     }
@@ -421,6 +447,13 @@ static int pickup_file(PICKUP_INFO *info)
      * bounces its copy of the message. because the original input file is
      * not readable by the bounce service.
      * 
+     * If mail is re-injected with "postsuper -r", disable Milter applications.
+     * If they were run before the mail was queued then there is no need to
+     * run them again. Moreover, the queue file does not contain enough
+     * information to reproduce the exact same SMTP events and Sendmail
+     * macros that Milters received when the mail originally arrived in
+     * Postfix.
+     * 
      * The actual message copying code is in a separate routine, so that it is
      * easier to implement the many possible error exits without forgetting
      * to close files, or to release memory.
@@ -428,13 +461,16 @@ static int pickup_file(PICKUP_INFO *info)
     cleanup_flags =
 	input_transp_cleanup(CLEANUP_FLAG_BOUNCE | CLEANUP_FLAG_MASK_EXTERNAL,
 			     pickup_input_transp_mask);
+    /* As documented in postsuper(1). */
+    if (MAIL_IS_REQUEUED(info))
+	cleanup_flags &= ~CLEANUP_FLAG_MILTER;
 
     cleanup = mail_connect_wait(MAIL_CLASS_PUBLIC, var_cleanup_service);
     if (attr_scan(cleanup, ATTR_FLAG_STRICT,
 		  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, buf,
 		  ATTR_TYPE_END) != 1
 	|| attr_print(cleanup, ATTR_FLAG_NONE,
-		      ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, cleanup_flags,
+		      ATTR_TYPE_INT, MAIL_ATTR_FLAGS, cleanup_flags,
 		      ATTR_TYPE_END) != 0) {
 	status = KEEP_MESSAGE_FILE;
     } else {

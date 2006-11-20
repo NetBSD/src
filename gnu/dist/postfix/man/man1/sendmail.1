@@ -1,4 +1,4 @@
-.\"	$NetBSD: sendmail.1,v 1.1.1.7.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: sendmail.1,v 1.1.1.7.2.2 2006/11/20 13:30:17 tron Exp $
 .\"
 .TH SENDMAIL 1 
 .ad
@@ -93,18 +93,30 @@ report after verifying each recipient address.  This is useful
 for testing address rewriting and routing configurations.
 .sp
 This feature is available in Postfix version 2.1 and later.
-.IP "\fB-C \fIconfig_file\fR (ignored)"
-The path name of the \fBsendmail.cf\fR file. Postfix configuration
-files are kept in the \fB/etc/postfix\fR directory.
+.IP "\fB-C \fIconfig_file\fR"
+.IP "\fB-C \fIconfig_dir\fR"
+The path name of the Postfix \fBmain.cf\fR file, or of its
+parent directory. This information is ignored with Postfix
+versions before 2.3.
+
+With all Postfix versions, you can specify a directory pathname
+with the MAIL_CONFIG environment variable to override the
+location of configuration files.
 .IP "\fB-F \fIfull_name\fR
-Set the sender full name. This is used only with messages that
+Set the sender full name. This overrides the NAME environment
+variable, and is used only with messages that
 have no \fBFrom:\fR message header.
 .IP "\fB-f \fIsender\fR"
 Set the envelope sender address. This is the address where
 delivery problems are sent to. With Postfix versions before 2.1, the
 \fBErrors-To:\fR message header overrides the error return address.
-.IP "\fB-G\fR (ignored)"
-Gateway (relay) submission, as opposed to initial user submission.
+.IP \fB-G\fR
+Gateway (relay) submission, as opposed to initial user
+submission.  Either do not rewrite addresses at all, or
+update incomplete addresses with the domain information
+specified with \fBremote_header_rewrite_domain\fR.
+
+This option is ignored before Postfix version 2.3.
 .IP "\fB-h \fIhop_count\fR (ignored)"
 Hop count limit. Use the \fBhopcount_limit\fR configuration
 parameter instead.
@@ -119,9 +131,15 @@ The logging label. Use the \fBsyslog_name\fR configuration
 parameter instead.
 .IP "\fB-m\fR (ignored)"
 Backwards compatibility.
-.IP "\fB-N \fIdsn\fR (ignored)"
-Delivery status notification control. Currently, Postfix does
-not implement \fBDSN\fR.
+.IP "\fB-N \fIdsn\fR (default: 'delay, failure')"
+Delivery status notification control. Specify either a
+comma-separated list with one or more of \fBfailure\fR (send
+notification when delivery fails), \fBdelay\fR (send
+notification when delivery is delayed), or \fBsuccess\fR
+(send notification when the message is delivered); or specify
+\fBnever\fR (don't send any notifications at all).
+
+This feature is available in Postfix 2.3 and later.
 .IP "\fB-n\fR (ignored)"
 Backwards compatibility.
 .IP "\fB-oA\fIalias_database\fR"
@@ -176,7 +194,12 @@ With Postfix versions prior to 2.1, this option requires that
 no recipient addresses are specified on the command line.
 .IP "\fB-U\fR (ignored)"
 Initial user submission.
-.IP \fB-V\fR
+.IP "\fB-V \fIenvid\fR"
+Specify the envelope ID for notification by servers that
+support DSN.
+
+This feature is available in Postfix 2.3 and later.
+.IP "\fB-XV\fR (Postfix 2.2 and earlier: \fB-V\fR)"
 Variable Envelope Return Path. Given an envelope sender address
 of the form \fIowner-listname\fR@\fIorigin\fR, each recipient
 \fIuser\fR@\fIdomain\fR receives mail with a personalized envelope
@@ -186,10 +209,8 @@ By default, the personalized envelope sender address is
 \fIowner-listname\fB+\fIuser\fB=\fIdomain\fR@\fIorigin\fR. The default
 \fB+\fR and \fB=\fR characters are configurable with the
 \fBdefault_verp_delimiters\fR configuration parameter.
-.sp
-This feature is available in Postfix version 1.1 and later.
-.IP \fB-V\fIxy\fR
-As \fB-V\fR, but uses \fIx\fR and \fIy\fR as the VERP delimiter
+.IP "\fB-XV\fIxy\fR (Postfix 2.2 and earlier: \fB-V\fIxy\fR)"
+As \fB-XV\fR, but uses \fIx\fR and \fIy\fR as the VERP delimiter
 characters, instead of the characters specified with the
 \fBdefault_verp_delimiters\fR configuration parameter.
 .IP \fB-v\fR
@@ -221,11 +242,15 @@ stream.
 .fi
 .IP \fBMAIL_CONFIG\fR
 Directory with Postfix configuration files.
-.IP \fBMAIL_VERBOSE\fR
+.IP "\fBMAIL_VERBOSE\fR (value does not matter)"
 Enable verbose logging for debugging purposes.
-.IP \fBMAIL_DEBUG\fR
+.IP "\fBMAIL_DEBUG\fR (value does not matter)"
 Enable debugging with an external command, as specified with the
 \fBdebugger_command\fR configuration parameter.
+.IP \fBNAME\fR
+The sender full name. This is used only with messages that
+have no \fBFrom:\fR message header. See also the \fB-F\fR
+option above.
 .SH "CONFIGURATION PARAMETERS"
 .na
 .nf
@@ -329,22 +354,23 @@ mail that is still queued.
 .IP "\fBenable_errors_to (no)\fR"
 Report mail delivery errors to the address specified with the
 non-standard Errors-To: message header, instead of the envelope
-sender address (this feature is removed with Postfix 2.2, is
-turned off by default with Postfix 2.1, and is always turned on
+sender address (this feature is removed with Postfix version 2.2, is
+turned off by default with Postfix version 2.1, and is always turned on
 with older Postfix versions).
 .IP "\fBmail_owner (postfix)\fR"
 The UNIX system account that owns the Postfix queue and most Postfix
 daemon processes.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 The location of the Postfix top-level queue directory.
+.IP "\fBremote_header_rewrite_domain (empty)\fR"
+Don't rewrite message headers from remote clients at all when
+this parameter is empty; otherwise, rewrite message headers and
+append the specified domain name to incomplete addresses.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (postfix)\fR"
 The mail system name that is prepended to the process name in syslog
 records, so that "smtpd" becomes, for example, "postfix/smtpd".
-.IP "\fBtrigger_timeout (10s)\fR"
-The time limit for sending a trigger to a Postfix daemon (for
-example, the \fBpickup\fR(8) or \fBqmgr\fR(8) daemon).
 .SH "FILES"
 .na
 .nf

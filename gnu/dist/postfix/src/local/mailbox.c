@@ -1,4 +1,4 @@
-/*	$NetBSD: mailbox.c,v 1.1.1.5 2004/05/31 00:24:37 heas Exp $	*/
+/*	$NetBSD: mailbox.c,v 1.1.1.5.2.1 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -75,10 +75,7 @@
 #include <deliver_pass.h>
 #include <mbox_open.h>
 #include <maps.h>
-
-#ifndef EDQUOT
-#define EDQUOT EFBIG
-#endif
+#include <dsn_util.h>
 
 /* Application-specific. */
 
@@ -92,10 +89,10 @@
 
 static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
 {
-    char   *myname = "deliver_mailbox_file";
+    const char *myname = "deliver_mailbox_file";
     char   *spool_dir;
     char   *mailbox;
-    VSTRING *why;
+    DSN_BUF *why = state.msg_attr.why;
     MBOX   *mp;
     int     mail_copy_status;
     int     deliver_status;
@@ -118,9 +115,10 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
     /*
      * Don't deliver trace-only requests.
      */
-    if (DEL_REQ_TRACE_ONLY(state.request->flags))
-	return (sent(BOUNCE_FLAGS(state.request), SENT_ATTR(state.msg_attr),
-		     "delivers to mailbox"));
+    if (DEL_REQ_TRACE_ONLY(state.request->flags)) {
+	dsb_simple(why, "2.0.0", "delivers to mailbox");
+	return (sent(BOUNCE_FLAGS(state.request), SENT_ATTR(state.msg_attr)));
+    }
 
     /*
      * Initialize. Assume the operation will fail. Set the delivered
@@ -128,9 +126,9 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
      */
     if (vstream_fseek(state.msg_attr.fp, state.msg_attr.offset, SEEK_SET) < 0)
 	msg_fatal("seek message file %s: %m", VSTREAM_PATH(state.msg_attr.fp));
-    state.msg_attr.delivered = state.msg_attr.recipient;
+    if (var_frozen_delivered == 0)
+	state.msg_attr.delivered = state.msg_attr.rcpt.address;
     mail_copy_status = MAIL_COPY_STAT_WRITE;
-    why = vstring_alloc(100);
     if (*var_home_mailbox) {
 	spool_dir = 0;
 	mailbox = concatenate(usr_attr.home, "/", var_home_mailbox, (char *) 0);
@@ -190,14 +188,14 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
     set_eugid(spool_uid, spool_gid);
     mp = mbox_open(mailbox, O_APPEND | O_WRONLY | O_CREAT,
 		   S_IRUSR | S_IWUSR, &st, chown_uid, chown_gid,
-		   local_mbox_lock_mask, why);
+		   local_mbox_lock_mask, "5.2.0", why);
     if (mp != 0) {
 	if (spool_uid != usr_attr.uid || spool_gid != usr_attr.gid)
 	    set_eugid(usr_attr.uid, usr_attr.gid);
 	if (S_ISREG(st.st_mode) == 0) {
 	    vstream_fclose(mp->fp);
-	    vstring_sprintf(why, "destination is not a regular file");
-	    errno = 0;
+	    dsb_simple(why, "5.2.0",
+		       "destination %s is not a regular file", mailbox);
 	} else {
 	    end = vstream_fseek(mp->fp, (off_t) 0, SEEK_END);
 	    mail_copy_status = mail_copy(COPY_ATTR(state.msg_attr), mp->fp,
@@ -215,19 +213,21 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
     if (mail_copy_status & MAIL_COPY_STAT_CORRUPT) {
 	deliver_status = DEL_STAT_DEFER;
     } else if (mail_copy_status != 0) {
-	deliver_status = (errno == EAGAIN || errno == ENOSPC || errno == ESTALE ?
-			  defer_append : bounce_append)
-	    (BOUNCE_FLAGS(state.request), BOUNCE_ATTR(state.msg_attr),
-	     "cannot access mailbox %s for user %s. %s",
-	     mailbox, state.msg_attr.user, vstring_str(why));
+	vstring_sprintf_prepend(why->reason,
+				"cannot update mailbox %s for user %s. ",
+				mailbox, state.msg_attr.user);
+	deliver_status =
+	    (STR(why->status)[0] == '4' ?
+	     defer_append : bounce_append)
+	    (BOUNCE_FLAGS(state.request), BOUNCE_ATTR(state.msg_attr));
     } else {
+	dsb_simple(why, "2.0.0", "delivered to mailbox");
 	deliver_status = sent(BOUNCE_FLAGS(state.request),
-			      SENT_ATTR(state.msg_attr),
-			      "delivered to mailbox");
+			      SENT_ATTR(state.msg_attr));
 	if (var_biff) {
 	    biff = vstring_alloc(100);
 	    vstring_sprintf(biff, "%s@%ld", usr_attr.logname, (long) end);
-	    biff_notify(vstring_str(biff), VSTRING_LEN(biff) + 1);
+	    biff_notify(STR(biff), VSTRING_LEN(biff) + 1);
 	    vstring_free(biff);
 	}
     }
@@ -236,7 +236,6 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
      * Clean up.
      */
     myfree(mailbox);
-    vstring_free(why);
     return (deliver_status);
 }
 
@@ -244,10 +243,12 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
 
 int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
 {
-    char   *myname = "deliver_mailbox";
+    const char *myname = "deliver_mailbox";
     int     status;
     struct mypasswd *mbox_pwd;
     char   *path;
+    static MAPS *transp_maps;
+    const char *map_transport;
     static MAPS *cmd_maps;
     const char *map_command;
 
@@ -269,10 +270,21 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
     /*
      * Delegate mailbox delivery to another message transport.
      */
+    if (*var_mbox_transp_maps && transp_maps == 0)
+	transp_maps = maps_create(VAR_MBOX_TRANSP_MAPS, var_mbox_transp_maps,
+				  DICT_FLAG_LOCK | DICT_FLAG_NO_REGSUB);
+    if (*var_mbox_transp_maps
+	&& (map_transport = maps_find(transp_maps, state.msg_attr.user,
+				      DICT_FLAG_NONE)) != 0) {
+	state.msg_attr.rcpt.offset = -1L;
+	*statusp = deliver_pass(MAIL_CLASS_PRIVATE, map_transport,
+				state.request, &state.msg_attr.rcpt);
+	return (YES);
+    }
     if (*var_mailbox_transport) {
+	state.msg_attr.rcpt.offset = -1L;
 	*statusp = deliver_pass(MAIL_CLASS_PRIVATE, var_mailbox_transport,
-				state.request, state.msg_attr.orig_rcpt,
-				state.msg_attr.recipient, -1L);
+				state.request, &state.msg_attr.rcpt);
 	return (YES);
     }
 
@@ -300,11 +312,11 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
 
     if (*var_mailbox_cmd_maps && cmd_maps == 0)
 	cmd_maps = maps_create(VAR_MAILBOX_CMD_MAPS, var_mailbox_cmd_maps,
-			       DICT_FLAG_LOCK);
+			       DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
 
     if (*var_mailbox_cmd_maps
 	&& (map_command = maps_find(cmd_maps, state.msg_attr.user,
-				    DICT_FLAG_FIXED)) != 0) {
+				    DICT_FLAG_NONE)) != 0) {
 	status = deliver_command(state, usr_attr, map_command);
     } else if (*var_mailbox_command) {
 	status = deliver_command(state, usr_attr, var_mailbox_command);

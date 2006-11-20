@@ -25,7 +25,8 @@ CCoonntteenntt iinnssppeeccttiioonn
   * BACKSCATTER_README: Stopping backscatter mail
   * BUILTIN_FILTER_README: Built-in content inspection
   * FILTER_README: After-queue content filter
-  * SMTPD_PROXY_README: Before-queue content Filter
+  * SMTPD_PROXY_README: Before-queue content filter
+  * MILTER_README: Before-queue Milter applications
 
 SSMMTTPP RReellaayy aanndd aacccceessss ccoonnttrrooll
 
@@ -70,6 +71,7 @@ OOtthheerr ttooppiiccss
   * LOCAL_RECIPIENT_README: Rejecting Unknown Local Recipients
   * ADDRESS_CLASS_README: Address Classes
   * CONNECTION_CACHE_README: Connection cache howto
+  * DSN_README: Postfix DSN support
   * PACKAGE_README: Guidelines for Package Builders
   * SCHEDULER_README: Queue Scheduler
   * XCLIENT_README: XCLIENT Command

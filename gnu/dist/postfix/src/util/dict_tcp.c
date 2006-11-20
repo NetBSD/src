@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_tcp.c,v 1.1.1.3 2004/05/31 00:24:58 heas Exp $	*/
+/*	$NetBSD: dict_tcp.c,v 1.1.1.3.2.1 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -15,7 +15,7 @@
 /* DESCRIPTION
 /*	dict_tcp_open() makes a TCP server accessible via the generic
 /*	dictionary operations described in dict_open(3).
-/*	The only implemented operation is dictionary lookup. This map 
+/*	The only implemented operation is dictionary lookup. This map
 /*	type can be useful for simulating a dynamic lookup table.
 /*
 /*	Map names have the form host:port.
@@ -156,7 +156,7 @@ static void dict_tcp_disconnect(DICT_TCP *dict_tcp)
 static const char *dict_tcp_lookup(DICT *dict, const char *key)
 {
     DICT_TCP *dict_tcp = (DICT_TCP *) dict;
-    char   *myname = "dict_tcp_lookup";
+    const char *myname = "dict_tcp_lookup";
     int     tries;
     char   *start;
     int     last_ch;
@@ -166,6 +166,13 @@ static const char *dict_tcp_lookup(DICT *dict, const char *key)
     if (msg_verbose)
 	msg_info("%s: key %s", myname, key);
 
+    /*
+     * Optionally fold the key.
+     */
+    if (dict->fold_buf) {
+	vstring_strcpy(dict->fold_buf, key);
+	key = lowercase(vstring_str(dict->fold_buf));
+    }
     for (tries = 0; /* see below */ ; /* see below */ ) {
 
 	/*
@@ -268,6 +275,8 @@ static void dict_tcp_close(DICT *dict)
 	vstring_free(dict_tcp->raw_buf);
     if (dict_tcp->hex_buf)
 	vstring_free(dict_tcp->hex_buf);
+    if (dict->fold_buf)
+	vstring_free(dict->fold_buf);
     dict_free(dict);
 }
 
@@ -299,6 +308,8 @@ DICT   *dict_tcp_open(const char *map, int open_flags, int dict_flags)
     dict_tcp->dict.lookup = dict_tcp_lookup;
     dict_tcp->dict.close = dict_tcp_close;
     dict_tcp->dict.flags = dict_flags | DICT_FLAG_PATTERN;
+    if (dict_flags & DICT_FLAG_FOLD_MUL)
+	dict_tcp->dict.fold_buf = vstring_alloc(10);
 
     return (DICT_DEBUG (&dict_tcp->dict));
 }

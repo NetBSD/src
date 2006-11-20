@@ -21,10 +21,19 @@
 
 <p> Warning: if you can't compile Postfix because the file "db.h"
 isn't found, then you MUST install the Berkeley DB development
-package (package name: db???-devel-???) that comes with your Linux
-system. Only that package contains the files that correspond to the
-Berkeley DB version that is used by the system library routines.
+package (name: db???-devel-???) that matches your system library.
+You can find out what is installed with the rpm command. For example:
 </p>
+
+<blockquote>
+<pre>
+$ <b>rpm -qf /usr/lib/libdb.so</b>
+db4-4.3.29-2
+</pre>
+</blockquote>
+
+<p> This means that you need to install db4-devel-4.3.29-2 (on
+some systems, specify <tt>/lib/libdb.so</tt> in the rpm query). </p>
 
 <p> DO NOT download some Berkeley DB version from the network.
 Every Postfix program will dump core when it is built with a different

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ni.c,v 1.1.1.2 2004/05/31 00:24:57 heas Exp $	*/
+/*	$NetBSD: dict_ni.c,v 1.1.1.2.2.1 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -46,6 +46,7 @@
 #include "dict_ni.h"
 #include "msg.h"
 #include "mymalloc.h"
+#include "stringops.h"
 
 typedef struct {
     DICT    dict;			/* my super */
@@ -104,9 +105,7 @@ static const char *dict_ni_do_lookup(char *path, char *key_prop,
 	    if (values.ni_namelist_len <= 0)
 		ni_namelist_free(&values);
 	    else {
-		unsigned int i,
-		        l,
-		        n;
+		unsigned int i, l, n;
 
 		for (i = l = 0; i < values.ni_namelist_len; i++)
 		    l += 1 + strlen(values.ni_namelist_val[i]);
@@ -153,6 +152,13 @@ static const char *dict_ni_lookup(DICT *dict, const char *key)
 {
     DICT_NI *d = (DICT_NI *) dict;
 
+    /*
+     * Optionally fold the key.
+     */
+    if (dict->fold_buf) {
+	vstring_strcpy(dict->fold_buf, key);
+	key = lowercase(vstring_str(dict->fold_buf));
+    }
     return dict_ni_do_lookup(d->dict.name, NETINFO_PROP_KEY,
 			     key, NETINFO_PROP_VALUE);
 }
@@ -163,6 +169,8 @@ static void dict_ni_close(DICT *dict)
 {
     DICT_NI *d = (DICT_NI *) dict;
 
+    if (dict->fold_buf)
+	vstring_free(dict->fold_buf);
     dict_free(dict);
 }
 
@@ -175,8 +183,10 @@ DICT   *dict_ni_open(const char *path, int unused_flags, int dict_flags)
     d->dict.lookup = dict_ni_lookup;
     d->dict.close = dict_ni_close;
     d->dict.flags = dict_flags | DICT_FLAG_FIXED;
+    if (dict_flags & DICT_FLAG_FOLD_FIX)
+	d->dict.fold_buf = vstring_alloc(10);
 
-    return (DICT_DEBUG(&d->dict));
+    return (DICT_DEBUG (&d->dict));
 }
 
 #endif

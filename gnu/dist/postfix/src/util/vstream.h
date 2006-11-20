@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream.h,v 1.1.1.4.2.1 2006/07/12 15:06:45 tron Exp $	*/
+/*	$NetBSD: vstream.h,v 1.1.1.4.2.2 2006/11/20 13:31:00 tron Exp $	*/
 
 #ifndef _VSTREAM_H_INCLUDED_
 #define _VSTREAM_H_INCLUDED_
@@ -16,6 +16,7 @@
  /*
   * System library.
   */
+#include <sys/time.h>
 #include <time.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -31,7 +32,7 @@
   * Simple buffered stream. The members of this structure are not part of the
   * official interface and can change without prior notice.
   */
-typedef int (*VSTREAM_FN) (int, void *, unsigned, int, void *);
+typedef ssize_t(*VSTREAM_FN) (int, void *, size_t, int, void *);
 typedef int (*VSTREAM_WAITPID_FN) (pid_t, WAIT_STATUS_T *, int);
 
 typedef struct VSTREAM {
@@ -50,7 +51,7 @@ typedef struct VSTREAM {
     VSTREAM_WAITPID_FN waitpid_fn;	/* vstream_popen/close() */
     int     timeout;			/* read/write timout */
     jmp_buf *jbuf;			/* exception handling */
-    time_t  iotime;			/* time of last fill/flush */
+    struct timeval iotime;		/* time of last fill/flush */
 } VSTREAM;
 
 extern VSTREAM vstream_fstd[];		/* pre-defined streams */
@@ -73,10 +74,11 @@ extern VSTREAM vstream_fstd[];		/* pre-defined streams */
 
 #define VSTREAM_BUFSIZE		4096
 
-extern VSTREAM *vstream_fopen(const char *, int, int);
+extern VSTREAM *vstream_fopen(const char *, int, mode_t);
 extern int vstream_fclose(VSTREAM *);
 extern off_t vstream_fseek(VSTREAM *, off_t, int);
 extern off_t vstream_ftell(VSTREAM *);
+extern int vstream_fpurge(VSTREAM *);
 extern int vstream_fflush(VSTREAM *);
 extern int vstream_fputs(const char *, VSTREAM *);
 extern VSTREAM *vstream_fdopen(int, int);
@@ -99,8 +101,9 @@ extern int vstream_fdclose(VSTREAM *);
 #define vstream_feof(vp)	vbuf_eof(&(vp)->buf)
 #define vstream_ftimeout(vp)	vbuf_timeout(&(vp)->buf)
 #define vstream_clearerr(vp)	vbuf_clearerr(&(vp)->buf)
-#define VSTREAM_PATH(vp)	((vp)->path ? (vp)->path : "unknown_stream")
-#define vstream_ftime(vp)	((vp)->iotime)
+#define VSTREAM_PATH(vp)	((vp)->path ? (const char *) (vp)->path : "unknown_stream")
+#define vstream_ftime(vp)	((time_t) ((vp)->iotime.tv_sec))
+#define vstream_ftimeval(vp)	((vp)->iotime)
 
 extern void vstream_control(VSTREAM *, int,...);
 
@@ -136,7 +139,7 @@ extern int vstream_pclose(VSTREAM *);
 
 extern VSTREAM *vstream_vfprintf(VSTREAM *, const char *, va_list);
 
-extern int vstream_peek(VSTREAM *);
+extern ssize_t vstream_peek(VSTREAM *);
 
  /*
   * Exception handling. We use pointer to jmp_buf to avoid a lot of unused

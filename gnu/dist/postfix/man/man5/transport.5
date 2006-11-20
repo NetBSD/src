@@ -1,4 +1,4 @@
-.\"	$NetBSD: transport.5,v 1.1.1.9.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: transport.5,v 1.1.1.9.2.2 2006/11/20 13:30:18 tron Exp $
 .\"
 .TH TRANSPORT 5 
 .ad
@@ -19,24 +19,33 @@ Postfix transport table format
 .ad
 .fi
 The optional \fBtransport\fR(5) table specifies a mapping from email
-addresses to message delivery transports and/or relay hosts. The
-mapping is used by the \fBtrivial-rewrite\fR(8) daemon.
+addresses to message delivery transports and next-hop hosts. The
+table is searched by the \fBtrivial-rewrite\fR(8) daemon.
 
-This mapping overrides the default routing that is built into
-Postfix:
-.IP \fBmydestination\fR
-A list of domains that is by default delivered via
-\fB$local_transport\fR. This also includes domains
-that match \fB$inet_interfaces\fR or \fB$proxy_interfaces\fR.
-.IP \fBvirtual_mailbox_domains\fR
-A list of domains that is by default delivered via
-\fB$virtual_transport\fR.
-.IP \fBrelay_domains\fR
-A list of domains that is by default delivered via
-\fB$relay_transport\fR.
-.IP "any other destination"
-Mail for any other destination is by default delivered via
-\fB$default_transport\fR.
+This mapping overrides the default \fItransport\fR:\fInexthop\fR
+selection that is built into Postfix:
+.IP "\fBlocal_transport (default: local:$myhostname)\fR"
+This is the default for final delivery to domains listed
+with \fBmydestination\fR, and for [\fIipaddress\fR]
+destinations that match \fB$inet_interfaces\fR or
+\fB$proxy_interfaces\fR. The default \fInexthop\fR destination
+is the MTA hostname.
+.IP "\fBvirtual_transport (default: virtual:)\fR"
+This is the default for final delivery to domains listed
+with \fBvirtual_mailbox_domains\fR. The default \fInexthop\fR
+destination is the recipient domain.
+.IP "\fBrelay_transport (default: relay:)\fR"
+This is the default for remote delivery to domains listed
+with \fBrelay_domains\fR. In order of decreasing precedence,
+the \fInexthop\fR destination is taken from \fBrelay_transport\fR,
+\fBsender_dependent_relayhost_maps\fR, \fBrelayhost\fR, or from the
+recipient domain.
+.IP "\fBdefault_transport (default: smtp:)\fR"
+This is the default for remote delivery to other destinations.
+In order of decreasing precedence, the \fInexthop\fR
+destination is taken from \fBdefault_transport\fR,
+\fBsender_dependent_relayhost_maps\fR, \fBrelayhost\fR, or from the
+recipient domain.
 .PP
 Normally, the \fBtransport\fR(5) table is specified as a text file
 that serves as input to the \fBpostmap\fR(1) command.
@@ -53,6 +62,15 @@ map where patterns are given as regular expressions, or lookups
 can be directed to TCP-based server. In that case, the lookups are
 done in a slightly different way as described below under
 "REGULAR EXPRESSION TABLES" and "TCP-BASED TABLES".
+.SH "CASE FOLDING"
+.na
+.nf
+.ad
+.fi
+The search string is folded to lowercase before database
+lookup. As of Postfix 2.3, the search string is not case
+folded with database types such as regexp: or pcre: whose
+lookup fields can match both upper and lower case.
 .SH "TABLE FORMAT"
 .na
 .nf
@@ -233,7 +251,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 This section describes how the table lookups change when lookups
 are directed to a TCP-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available up to and including Postfix version 2.2.
+This feature is not available up to and including Postfix version 2.3.
 
 Each lookup operation uses the entire recipient address once.  Thus,
 \fIsome.domain.hierarchy\fR is not looked up via its parent domains,

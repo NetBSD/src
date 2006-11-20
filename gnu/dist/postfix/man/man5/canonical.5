@@ -1,4 +1,4 @@
-.\"	$NetBSD: canonical.5,v 1.5.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: canonical.5,v 1.5.2.2 2006/11/20 13:30:17 tron Exp $
 .\"
 .TH CANONICAL 5 
 .ad
@@ -42,8 +42,7 @@ done in a slightly different way as described below under
 By default the \fBcanonical\fR(5) mapping affects both message
 header addresses (i.e. addresses that appear inside messages)
 and message envelope addresses (for example, the addresses
-that are used in SMTP protocol commands). Think Sendmail
-rule set \fBS3\fR, if you like.  This is controlled with
+that are used in SMTP protocol commands). This is controlled with
 the \fBcanonical_classes\fR parameter.
 
 NOTE: Postfix versions 2.2 and later rewrite message headers
@@ -62,6 +61,15 @@ domain\fR support. Use the \fBvirtual\fR(5) map for that purpose.
 
 The \fBcanonical\fR(5) mapping is not to be confused with local aliasing.
 Use the \fBaliases\fR(5) map for that purpose.
+.SH "CASE FOLDING"
+.na
+.nf
+.ad
+.fi
+The search string is folded to lowercase before database
+lookup. As of Postfix 2.3, the search string is not case
+folded with database types such as regexp: or pcre: whose
+lookup fields can match both upper and lower case.
 .SH "TABLE FORMAT"
 .na
 .nf
@@ -160,7 +168,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 This section describes how the table lookups change when lookups
 are directed to a TCP-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available up to and including Postfix version 2.2.
+This feature is not available up to and including Postfix version 2.3.
 
 Each lookup operation uses the entire address once.  Thus,
 \fIuser@domain\fR mail addresses are not broken up into their

@@ -1,4 +1,4 @@
-.\"	$NetBSD: anvil.8,v 1.1.1.1.2.2 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: anvil.8,v 1.1.1.1.2.3 2006/11/20 13:30:18 tron Exp $
 .\"
 .TH ANVIL 8 
 .ad
@@ -14,23 +14,25 @@ Postfix session count and request rate control
 .SH DESCRIPTION
 .ad
 .fi
-The Postfix \fBanvil\fR(8) server maintains short-term statistics
-to defend against clients that hammer a server with either too
-many simultaneous sessions, or with too many successive requests
-within a configurable time interval.
-This server is designed to run under control by the Postfix
-\fBmaster\fR(8) server.
+The Postfix \fBanvil\fR(8) server maintains statistics about
+client connection counts or client request rates. This
+information can be used to defend against clients that
+hammer a server with either too many simultaneous sessions,
+or with too many successive requests within a configurable
+time interval.  This server is designed to run under control
+by the Postfix \fBmaster\fR(8) server.
 
-The \fBanvil\fR(8) server maintains no persistent database. Standard
-library utilities do not meet Postfix performance and robustness
-requirements.
-.SH "CONNECTION COUNT/RATE LIMITING"
+In the following text, \fBident\fR specifies a (service,
+client) combination. The exact syntax of that information
+is application-dependent; the \fBanvil\fR(8) server does
+not care.
+.SH "CONNECTION COUNT/RATE CONTROL"
 .na
 .nf
 .ad
 .fi
-When a remote client connects, a connection count (or rate) limited
-server should send the following request to the \fBanvil\fR(8) server:
+To register a new connection send the following request to
+the \fBanvil\fR(8) server:
 .PP
 .in +4
 \fBrequest=connect\fR
@@ -38,11 +40,10 @@ server should send the following request to the \fBanvil\fR(8) server:
 \fBident=\fIstring\fR
 .in
 .PP
-This registers a new connection for the (service, client)
-combination specified with \fBident\fR. The \fBanvil\fR(8) server
-answers with the number of simultaneous connections and the
-number of connections per unit time for that (service, client)
-combination:
+The \fBanvil\fR(8) server answers with the number of
+simultaneous connections and the number of connections per
+unit time for the (service, client) combination specified
+with \fBident\fR:
 .PP
 .in +4
 \fBstatus=0\fR
@@ -52,13 +53,8 @@ combination:
 \fBrate=\fInumber\fR
 .in
 .PP
-The \fBrate\fR is computed as the number of connections
-that were registered in the current "time unit" interval.
-It is left up to the server to decide if the remote client
-exceeds the connection count (or rate) limit.
-.PP
-When a remote client disconnects, a connection count (or rate) limited
-server should send the following request to the \fBanvil\fR(8) server:
+To register a disconnect event send the following request
+to the \fBanvil\fR(8) server:
 .PP
 .in +4
 \fBrequest=disconnect\fR
@@ -66,19 +62,16 @@ server should send the following request to the \fBanvil\fR(8) server:
 \fBident=\fIstring\fR
 .in
 .PP
-This registers a disconnect event for the (service, client)
-combination specified with \fBident\fR. The \fBanvil\fR(8)
-server replies with:
+The \fBanvil\fR(8) server replies with:
 .PP
 .ti +4
 \fBstatus=0\fR
-.SH "MESSAGE RATE LIMITING"
+.SH "MESSAGE RATE CONTROL"
 .na
 .nf
 .ad
 .fi
-When a remote client sends a message delivery request, a
-message rate limited server should send the following
+To register a message delivery request send the following
 request to the \fBanvil\fR(8) server:
 .PP
 .in +4
@@ -87,28 +80,22 @@ request to the \fBanvil\fR(8) server:
 \fBident=\fIstring\fR
 .in
 .PP
-This registers a message delivery request for the (service, client)
-combination specified with \fBident\fR. The \fBanvil\fR(8) server
-answers with the number of message delivery requests per unit time
-for that (service, client) combination:
+The \fBanvil\fR(8) server answers with the number of message
+delivery requests per unit time for the (service, client)
+combination specified with \fBident\fR:
 .PP
 .in +4
 \fBstatus=0\fR
 .br
 \fBrate=\fInumber\fR
 .in
-.PP
-In order to prevent the \fBanvil\fR(8) server from discarding client
-request rates too early or too late, a message rate limited
-service should also register connect/disconnect events.
-.SH "RECIPIENT RATE LIMITING"
+.SH "RECIPIENT RATE CONTROL"
 .na
 .nf
 .ad
 .fi
-When a remote client sends a recipient address, a recipient
-rate limited server should send the following request to
-the \fBanvil\fR(8) server:
+To register a recipient request send the following request
+to the \fBanvil\fR(8) server:
 .PP
 .in +4
 \fBrequest=recipient\fR
@@ -116,10 +103,35 @@ the \fBanvil\fR(8) server:
 \fBident=\fIstring\fR
 .in
 .PP
-This registers a recipient request for the (service, client)
-combination specified with \fBident\fR. The \fBanvil\fR(8) server
-answers with the number of recipient addresses per unit time
-for that (service, client) combination:
+The \fBanvil\fR(8) server answers with the number of recipient
+addresses per unit time for the (service, client) combination
+specified with \fBident\fR:
+.PP
+.in +4
+\fBstatus=0\fR
+.br
+\fBrate=\fInumber\fR
+.in
+.SH "TLS SESSION NEGOTIATION RATE CONTROL"
+.na
+.nf
+.ad
+.fi
+The features described in this section are available with
+Postfix 2.3 and later.
+
+To register a request for a new (i.e. not cached) TLS session
+send the following request to the \fBanvil\fR(8) server:
+.PP
+.in +4
+\fBrequest=newtls\fR
+.br
+\fBident=\fIstring\fR
+.in
+.PP
+The \fBanvil\fR(8) server answers with the number of new
+TLS session requests per unit time for the (service, client)
+combination specified with \fBident\fR:
 .PP
 .in +4
 \fBstatus=0\fR
@@ -127,9 +139,24 @@ for that (service, client) combination:
 \fBrate=\fInumber\fR
 .in
 .PP
-In order to prevent the \fBanvil\fR(8) server from discarding client
-request rates too early or too late, a recipient rate limited
-service should also register connect/disconnect events.
+To retrieve new TLS session request rate information without
+updating the counter information, send:
+.PP
+.in +4
+\fBrequest=newtls_report\fR
+.br
+\fBident=\fIstring\fR
+.in
+.PP
+The \fBanvil\fR(8) server answers with the number of new
+TLS session requests per unit time for the (service, client)
+combination specified with \fBident\fR:
+.PP
+.in +4
+\fBstatus=0\fR
+.br
+\fBrate=\fInumber\fR
+.in
 .SH "SECURITY"
 .na
 .nf
@@ -138,12 +165,15 @@ service should also register connect/disconnect events.
 The \fBanvil\fR(8) server does not talk to the network or to local
 users, and can run chrooted at fixed low privilege.
 
-The \fBanvil\fR(8) server maintains an in-memory table with information
-about recent clients of a connection count (or rate) limited service.
-Although state is kept only temporarily, this may require a lot of
-memory on systems that handle connections from many remote clients.
-To reduce memory usage, reduce the time unit over which state
-is kept.
+The \fBanvil\fR(8) server maintains an in-memory table with
+information about recent clients requests.  No persistent
+state is kept because standard system library routines are
+not sufficiently robust for update-intensive applications.
+
+Although the in-memory state is kept only temporarily, this
+may require a lot of memory on systems that handle connections
+from many remote clients.  To reduce memory usage, reduce
+the time unit over which state is kept.
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -167,14 +197,22 @@ In this preliminary implementation, a count (or rate) limited server
 can have only one remote client at a time. If a server reports
 multiple simultaneous clients, all but the last reported client
 are ignored.
+
+The \fBanvil\fR(8) server automatically discards client
+request information after it expires.  To prevent the
+\fBanvil\fR(8) server from discarding client request rate
+information too early or too late, a rate limited service
+should always register connect/disconnect events even when
+it does not explicitly limit them.
 .SH "CONFIGURATION PARAMETERS"
 .na
 .nf
 .ad
 .fi
-Changes to \fBmain.cf\fR are picked up automatically as \fBanvil\fR(8)
-processes run for only a limited amount of time. Use the command
-"\fBpostfix reload\fR" to speed up a change.
+On low-traffic mail systems, changes to \fBmain.cf\fR are
+picked up automatically as \fBanvil\fR(8) processes run for
+only a limited amount of time. On other mail systems, use
+the command "\fBpostfix reload\fR" to speed up a change.
 
 The text below provides only a parameter summary. See
 \fBpostconf\fR(5) for more details including examples.

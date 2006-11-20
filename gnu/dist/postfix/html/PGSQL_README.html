@@ -57,11 +57,11 @@ the location of the libpq library file. </p>
 <h2>Configuring PostgreSQL lookup tables</h2>
 
 <p> Once Postfix is built with pgsql support, you can specify a
-map type in main.cf like this: </p>
+map type in <a href="postconf.5.html">main.cf</a> like this: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#alias_maps">alias_maps</a> = <a href="pgsql_table.5.html">pgsql</a>:/etc/postfix/pgsql-aliases.cf
 </pre>
 </blockquote>
@@ -130,18 +130,18 @@ calling stored procedures were added by Philip Warner.</li>
 <li> LaMont Jones was the initial Postfix pgsql maintainer.</li>
 
 <li> Liviu Daia revised the configuration interface and added the
-main.cf configuration feature.</li>
+<a href="postconf.5.html">main.cf</a> configuration feature.</li>
 
-<li> Liviu Daia revised the configuration interface and added the main.cf
+<li> Liviu Daia revised the configuration interface and added the <a href="postconf.5.html">main.cf</a>
 configuration feature.</li>
 
 <li> Liviu Daia with further refinements from Jose Luis Tallon and
 Victor Duchovni developed the common query, result_format, domain and
 expansion_limit interface for LDAP, MySQL and PosgreSQL.</li>
 
-<li> Leandro Santi updated the PostgreSQL client to reflect PostgreSQL
-security issues with respect to quoting which resulted in major
-database API changes, and made PQexec() handling more robust. </li>
+<li> Leandro Santi updated the PostgreSQL client after the PostgreSQL
+developers made major database API changes in response to SQL
+injection problems, and made PQexec() handling more robust. </li>
 
 </ul>
 

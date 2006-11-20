@@ -1,4 +1,4 @@
-.\"	$NetBSD: header_checks.5,v 1.1.1.4.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: header_checks.5,v 1.1.1.4.2.2 2006/11/20 13:30:17 tron Exp $
 .\"
 .TH HEADER_CHECKS 5 
 .ad
@@ -143,6 +143,8 @@ message.
 .sp
 Note: this action disables further header or body_checks inspection
 of the current message and affects all recipients.
+To discard only one recipient without discarding the entire message,
+use the transport(5) table to direct mail to the discard(8) service.
 .sp
 This feature is available in Postfix 2.0 and later.
 .IP \fBDUNNO\fR
@@ -244,6 +246,11 @@ message.
 .sp
 Note: this action disables further header or body_checks inspection
 of the current message and affects all recipients.
+.sp
+Postfix version 2.3 and later support enhanced status codes.
+When no code is specified at the beginning of \fIoptional
+text...\fR, Postfix inserts a default enhanced status code of
+"5.7.1".
 .IP "\fBWARN \fIoptional text...\fR
 Log a warning with the \fIoptional text...\fR (or log a
 generic message) and inspect the next input line. This

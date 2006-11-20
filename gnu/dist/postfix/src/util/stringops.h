@@ -1,4 +1,4 @@
-/*	$NetBSD: stringops.h,v 1.1.1.4 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: stringops.h,v 1.1.1.4.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 #ifndef _STRINGOPS_H_INCLUDED_
 #define _STRINGOPS_H_INCLUDED_
@@ -31,10 +31,17 @@ extern char *concatenate(const char *,...);
 extern char *mystrtok(char **, const char *);
 extern char *translit(char *, const char *, const char *);
 #ifndef HAVE_BASENAME
+#define basename postfix_basename
 extern char *basename(const char *);
 #endif
+extern char *sane_basename(VSTRING *, const char *);
+extern char *sane_dirname(VSTRING *, const char *);
 extern VSTRING *unescape(VSTRING *, const char *);
+extern VSTRING *escape(VSTRING *, const char *, ssize_t);
 extern int alldig(const char *);
+extern int allprint(const char *);
+extern int allspace(const char *);
+extern int allascii(const char *);
 extern const char *split_nameval(char *, char **, char **);
 
 /* LICENSE

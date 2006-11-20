@@ -1,4 +1,4 @@
-/*	$NetBSD: mymalloc.h,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: mymalloc.h,v 1.1.1.2.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 #ifndef _MALLOC_H_INCLUDED_
 #define _MALLOC_H_INCLUDED_
@@ -16,12 +16,12 @@
  /*
   * External interface.
   */
-extern char *mymalloc(int);
-extern char *myrealloc(char *, int);
+extern char *mymalloc(ssize_t);
+extern char *myrealloc(char *, ssize_t);
 extern void myfree(char *);
 extern char *mystrdup(const char *);
-extern char *mystrndup(const char *, int len);
-extern char *mymemdup(const char *, int);
+extern char *mystrndup(const char *, ssize_t);
+extern char *mymemdup(const char *, ssize_t);
 
 /* LICENSE
 /* .ad

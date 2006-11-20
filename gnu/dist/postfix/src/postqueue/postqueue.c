@@ -1,4 +1,4 @@
-/*	$NetBSD: postqueue.c,v 1.1.1.6.2.1 2006/07/12 15:06:41 tron Exp $	*/
+/*	$NetBSD: postqueue.c,v 1.1.1.6.2.2 2006/11/20 13:30:47 tron Exp $	*/
 
 /*++
 /* NAME
@@ -6,11 +6,11 @@
 /* SUMMARY
 /*	Postfix queue control
 /* SYNOPSIS
-/*	\fBpostqueue\fR [\fB-c \fIconfig_dir\fR] \fB-f\fR
+/*	\fBpostqueue\fR [\fB-v\fR] [\fB-c \fIconfig_dir\fR] \fB-f\fR
 /* .br
-/*	\fBpostqueue\fR [\fB-c \fIconfig_dir\fR] \fB-p\fR
+/*	\fBpostqueue\fR [\fB-v\fR] [\fB-c \fIconfig_dir\fR] \fB-p\fR
 /* .br
-/*	\fBpostqueue\fR [\fB-c \fIconfig_dir\fR] \fB-s \fIsite\fR
+/*	\fBpostqueue\fR [\fB-v\fR] [\fB-c \fIconfig_dir\fR] \fB-s \fIsite\fR
 /* DESCRIPTION
 /*	The \fBpostqueue\fR(1) command implements the Postfix user interface
 /*	for queue management. It implements operations that are
@@ -63,7 +63,8 @@
 /*	command, by contacting the Postfix \fBflush\fR(8) daemon.
 /* .IP \fB-v\fR
 /*	Enable verbose logging for debugging purposes. Multiple \fB-v\fR
-/*	options make the software increasingly verbose.
+/*	options make the software increasingly verbose. As of Postfix 2.3,
+/*	this option is available for the super-user only.
 /* SECURITY
 /* .ad
 /* .fi
@@ -185,13 +186,13 @@
 #include <mail_params.h>
 #include <mail_conf.h>
 #include <mail_task.h>
-#include <debug_process.h>
 #include <mail_run.h>
 #include <mail_flush.h>
 #include <flush_clnt.h>
 #include <smtp_stream.h>
 #include <user_acl.h>
 #include <valid_mailhost_addr.h>
+#include <mail_dict.h>
 
 /* Application-specific. */
 
@@ -382,7 +383,6 @@ int     main(int argc, char **argv)
     int     mode = PQ_MODE_DEFAULT;
     char   *site_to_flush = 0;
     ARGV   *import_env;
-    char   *last;
     int     bad_site;
 
     /*
@@ -440,7 +440,8 @@ int     main(int argc, char **argv)
 	    site_to_flush = optarg;
 	    break;
 	case 'v':
-	    msg_verbose++;
+	    if (geteuid() == 0)
+		msg_verbose++;
 	    break;
 	default:
 	    usage();

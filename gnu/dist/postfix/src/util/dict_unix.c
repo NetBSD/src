@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_unix.c,v 1.1.1.4 2004/05/31 00:24:58 heas Exp $	*/
+/*	$NetBSD: dict_unix.c,v 1.1.1.4.2.1 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -53,6 +53,7 @@
 #include "msg.h"
 #include "mymalloc.h"
 #include "vstring.h"
+#include "stringops.h"
 #include "dict.h"
 #include "dict_unix.h"
 
@@ -64,7 +65,7 @@ typedef struct {
 
 /* dict_unix_getpwnam - find password table entry */
 
-static const char *dict_unix_getpwnam(DICT *unused_dict, const char *key)
+static const char *dict_unix_getpwnam(DICT *dict, const char *key)
 {
     struct passwd *pwd;
     static VSTRING *buf;
@@ -72,6 +73,13 @@ static const char *dict_unix_getpwnam(DICT *unused_dict, const char *key)
 
     dict_errno = 0;
 
+    /*
+     * Optionally fold the key.
+     */
+    if (dict->fold_buf) {
+	vstring_strcpy(dict->fold_buf, key);
+	key = lowercase(vstring_str(dict->fold_buf));
+    }
     if ((pwd = getpwnam(key)) == 0) {
 	if (sanity_checked == 0) {
 	    sanity_checked = 1;
@@ -96,7 +104,7 @@ static const char *dict_unix_getpwnam(DICT *unused_dict, const char *key)
 
 /* dict_unix_getgrnam - find group table entry */
 
-static const char *dict_unix_getgrnam(DICT *unused_dict, const char *key)
+static const char *dict_unix_getgrnam(DICT *dict, const char *key)
 {
     struct group *grp;
     static VSTRING *buf;
@@ -105,6 +113,13 @@ static const char *dict_unix_getgrnam(DICT *unused_dict, const char *key)
 
     dict_errno = 0;
 
+    /*
+     * Optionally fold the key.
+     */
+    if (dict->fold_buf) {
+	vstring_strcpy(dict->fold_buf, key);
+	key = lowercase(vstring_str(dict->fold_buf));
+    }
     if ((grp = getgrnam(key)) == 0) {
 	if (sanity_checked == 0) {
 	    sanity_checked = 1;
@@ -135,6 +150,8 @@ static const char *dict_unix_getgrnam(DICT *unused_dict, const char *key)
 
 static void dict_unix_close(DICT *dict)
 {
+    if (dict->fold_buf)
+	vstring_free(dict->fold_buf);
     dict_free(dict);
 }
 
@@ -167,5 +184,8 @@ DICT   *dict_unix_open(const char *map, int unused_flags, int dict_flags)
     dict_unix->dict.lookup = lp->lookup;
     dict_unix->dict.close = dict_unix_close;
     dict_unix->dict.flags = dict_flags | DICT_FLAG_FIXED;
+    if (dict_flags & DICT_FLAG_FOLD_FIX)
+	dict_unix->dict.fold_buf = vstring_alloc(10);
+
     return (DICT_DEBUG (&dict_unix->dict));
 }

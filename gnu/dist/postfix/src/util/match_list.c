@@ -1,4 +1,4 @@
-/*	$NetBSD: match_list.c,v 1.6.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: match_list.c,v 1.6.2.2 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -104,10 +104,10 @@ struct MATCH_LIST {
 
 static ARGV *match_list_parse(ARGV *list, char *string)
 {
-    char   *myname = "match_list_parse";
+    const char *myname = "match_list_parse";
     VSTRING *buf = 0;
     VSTREAM *fp;
-    char   *delim = " ,\t\r\n";
+    const char *delim = " ,\t\r\n";
     char   *bp = string;
     char   *pattern;
     char   *map_type_name;
@@ -134,11 +134,12 @@ static ARGV *match_list_parse(ARGV *list, char *string)
 	    if (buf == 0)
 		buf = vstring_alloc(10);
 #define OPEN_FLAGS	O_RDONLY
-#define DICT_FLAGS	DICT_FLAG_LOCK
+#define DICT_FLAGS	(DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX)
 #define STR(x)		vstring_str(x)
 	    for (map_type_name = pattern; *map_type_name == '!'; map_type_name++)
 		 /* void */ ;
-	    vstring_sprintf(buf, "%s(%o,%o)", pattern, OPEN_FLAGS, DICT_FLAGS);
+	    vstring_sprintf(buf, "%s(%o,%s)", pattern, OPEN_FLAGS,
+			    dict_flags_str(DICT_FLAGS));
 	    map_type_name_flags = STR(buf) + (map_type_name - pattern);
 	    if (dict_handle(map_type_name_flags) == 0)
 		dict_register(map_type_name_flags,
@@ -188,7 +189,7 @@ MATCH_LIST *match_list_init(int flags, const char *patterns, int match_count,...
 
 int     match_list_match(MATCH_LIST * list,...)
 {
-    char   *myname = "match_list_match";
+    const char *myname = "match_list_match";
     char  **cpp;
     char   *pat;
     int     match;

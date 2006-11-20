@@ -62,7 +62,7 @@ POSTFIX(1)                                                          POSTFIX(1)
               <b>postfix-files</b> file.
 
               Specify <i>name</i>=<i>value</i> to override and update  specific
-              main.cf  configuration  parameters.  Use  this, for
+              <a href="postconf.5.html">main.cf</a>  configuration  parameters.  Use  this, for
               example, to change the <b><a href="postconf.5.html#mail_owner">mail_owner</a></b>  or  <b><a href="postconf.5.html#setgid_group">setgid_group</a></b>
               setting for an already installed Postfix system.
 
@@ -71,13 +71,13 @@ POSTFIX(1)                                                          POSTFIX(1)
               <b>fix/post-install set-permissions</b>".
 
        <b>upgrade-configuration [</b><i>name</i>=<i>value ...</i><b>]</b>
-              Update  the <b>main.cf</b> and <b>master.cf</b> files with infor-
+              Update  the <a href="postconf.5.html"><b>main.cf</b></a> and <a href="master.5.html"><b>master.cf</b></a> files with infor-
               mation that Postfix needs in order to run:  add  or
               update  services,  and  add or update configuration
               parameter settings.
 
               Specify <i>name</i>=<i>value</i> to override and update  specific
-              main.cf configuration parameters.
+              <a href="postconf.5.html">main.cf</a> configuration parameters.
 
               This feature is available in Postfix 2.1 and later.
               With  Postfix  2.0  and  earlier,  use  "<b>/etc/post-</b>
@@ -86,7 +86,7 @@ POSTFIX(1)                                                          POSTFIX(1)
        The following options are implemented:
 
        <b>-c</b> <i>config</i><b>_</b><i>dir</i>
-              Read  the <b>main.cf</b> and <b>master.cf</b> configuration files
+              Read  the <a href="postconf.5.html"><b>main.cf</b></a> and <a href="master.5.html"><b>master.cf</b></a> configuration files
               in the named directory instead of the default  con-
               figuration  directory.   Use  this  to  distinguish
               between multiple  Postfix  instances  on  the  same
@@ -118,7 +118,7 @@ POSTFIX(1)                                                          POSTFIX(1)
               present.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The   following   <b>main.cf</b>   configuration  parameters  are
+       The   following   <a href="postconf.5.html"><b>main.cf</b></a>   configuration  parameters  are
        exported as environment variables with the same names:
 
        <b><a href="postconf.5.html#command_directory">command_directory</a> (see 'postconf -d' output)</b>
@@ -130,8 +130,8 @@ POSTFIX(1)                                                          POSTFIX(1)
               daemon programs.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  main.cf  and
-              master.cf configuration files.
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
               The  location of the Postfix top-level queue direc-
@@ -173,8 +173,8 @@ POSTFIX(1)                                                          POSTFIX(1)
        Other configuration parameters:
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location  of  the Postfix main.cf and
-              master.cf configuration files.
+              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
+              <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
               The list of environment parameters that  a  Postfix
@@ -190,8 +190,8 @@ POSTFIX(1)                                                          POSTFIX(1)
               becomes, for example, "postfix/smtpd".
 
 <b>FILES</b>
-       /etc/postfix/main.cf, Postfix configuration parameters
-       /etc/postfix/master.cf, Postfix daemon processes
+       /etc/postfix/<a href="postconf.5.html">main.cf</a>, Postfix configuration parameters
+       /etc/postfix/<a href="master.5.html">master.cf</a>, Postfix daemon processes
        /etc/postfix/postfix-files, file/directory permissions
        /etc/postfix/postfix-script, administrative commands
        /etc/postfix/post-install, post-installation configuration
@@ -213,8 +213,9 @@ POSTFIX(1)                                                          POSTFIX(1)
        <a href="sendmail.1.html">sendmail(1)</a>, Sendmail compatibility interface
 
        Postfix configuration:
-       <a href="master.5.html">master(5)</a>, Postfix master.cf file syntax
-       <a href="postconf.5.html">postconf(5)</a>, Postfix main.cf file syntax
+       <a href="bounce.5.html">bounce(5)</a>, Postfix bounce message templates
+       <a href="master.5.html">master(5)</a>, Postfix <a href="master.5.html">master.cf</a> file syntax
+       <a href="postconf.5.html">postconf(5)</a>, Postfix <a href="postconf.5.html">main.cf</a> file syntax
 
        Table-driven mechanisms:
        <a href="access.5.html">access(5)</a>, Postfix SMTP access control table
@@ -234,6 +235,7 @@ POSTFIX(1)                                                          POSTFIX(1)
        <a href="pcre_table.5.html">pcre_table(5)</a>, Associate PCRE pattern with value
        <a href="pgsql_table.5.html">pgsql_table(5)</a>, Postfix PostgreSQL client
        <a href="regexp_table.5.html">regexp_table(5)</a>, Associate POSIX regexp pattern with value
+       <a href="tcp_table.5.html">tcp_table(5)</a>, Postfix client-server table lookup
 
        Daemon processes:
        <a href="anvil.8.html">anvil(8)</a>, Postfix connection/rate limiting
@@ -242,7 +244,6 @@ POSTFIX(1)                                                          POSTFIX(1)
        <a href="discard.8.html">discard(8)</a>, Postfix discard delivery agent
        <a href="error.8.html">error(8)</a>, Postfix error delivery agent
        <a href="flush.8.html">flush(8)</a>, Postfix fast ETRN service
-       <a href="lmtp.8.html">lmtp(8)</a>, Postfix LMTP client
        <a href="local.8.html">local(8)</a>, Postfix local delivery agent
        <a href="master.8.html">master(8)</a>, Postfix master daemon
        <a href="qmgr.8.html">oqmgr(8)</a>, old Postfix queue manager
@@ -253,7 +254,7 @@ POSTFIX(1)                                                          POSTFIX(1)
        <a href="qmqpd.8.html">qmqpd(8)</a>, Postfix QMQP server
        <a href="scache.8.html">scache(8)</a>, Postfix connection cache manager
        <a href="showq.8.html">showq(8)</a>, list Postfix mail queue
-       <a href="smtp.8.html">smtp(8)</a>, Postfix SMTP client
+       <a href="smtp.8.html">smtp(8)</a>, <a href="lmtp.8.html">lmtp(8)</a>, Postfix SMTP+LMTP client
        <a href="smtpd.8.html">smtpd(8)</a>, Postfix SMTP server
        <a href="spawn.8.html">spawn(8)</a>, run non-Postfix server
        <a href="tlsmgr.8.html">tlsmgr(8)</a>, Postfix TLS cache and randomness manager
@@ -281,6 +282,29 @@ POSTFIX(1)                                                          POSTFIX(1)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       TLS support by:
+       Lutz Jaenicke
+       Brandenburg University of Technology
+       Cottbus, Germany
+
+       Victor Duchovni
+       Morgan Stanley
+
+       SASL support originally by:
+       Till Franke
+       SuSE Rhein/Main AG
+       65760 Eschborn, Germany
+
+       LMTP support originally by:
+       Philip A. Prindeville
+       Mirapoint, Inc.
+       USA.
+
+       Amos Gouaux
+       University of Texas at Dallas
+       P.O. Box 830688, MC34
+       Richardson, TX 75083, USA
 
                                                                     POSTFIX(1)
 </pre> </body> </html>

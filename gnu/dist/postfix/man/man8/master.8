@@ -1,4 +1,4 @@
-.\"	$NetBSD: master.8,v 1.1.1.6.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: master.8,v 1.1.1.6.2.2 2006/11/20 13:30:18 tron Exp $
 .\"
 .TH MASTER 8 
 .ad
@@ -10,7 +10,7 @@ Postfix master process
 .SH "SYNOPSIS"
 .na
 .nf
-\fBmaster\fR [\fB-Dtv\fR] [\fB-c \fIconfig_dir\fR] [\fB-e \fIexit_time\fR]
+\fBmaster\fR [\fB-Ddtv\fR] [\fB-c \fIconfig_dir\fR] [\fB-e \fIexit_time\fR]
 .SH DESCRIPTION
 .ad
 .fi
@@ -34,13 +34,17 @@ Read the \fBmain.cf\fR and \fBmaster.cf\fR configuration files in
 the named directory instead of the default configuration directory.
 This also overrides the configuration files for other Postfix
 daemon processes.
-.IP "\fB-e \fIexit_time\fR"
-Terminate the master process after \fIexit_time\fR seconds. Child
-processes terminate at their convenience.
 .IP \fB-D\fR
 After initialization, run a debugger on the master process. The
 debugging command is specified with the \fBdebugger_command\fR in
 the \fBmain.cf\fR global configuration file.
+.IP \fB-d\fR
+Do not redirect stdin, stdout or stderr to /dev/null, and
+do not discard the controlling terminal. This must be used
+for debugging only.
+.IP "\fB-e \fIexit_time\fR"
+Terminate the master process after \fIexit_time\fR seconds. Child
+processes terminate at their convenience.
 .IP \fB-t\fR
 Test mode. Return a zero exit status when the \fBmaster.pid\fR lock
 file does not exist or when that file is not locked.  This is evidence

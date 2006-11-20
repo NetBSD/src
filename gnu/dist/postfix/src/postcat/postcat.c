@@ -1,4 +1,4 @@
-/*	$NetBSD: postcat.c,v 1.1.1.5.2.1 2006/07/12 15:06:40 tron Exp $	*/
+/*	$NetBSD: postcat.c,v 1.1.1.5.2.2 2006/11/20 13:30:47 tron Exp $	*/
 
 /*++
 /* NAME
@@ -67,6 +67,7 @@
 
 #include <sys_defs.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
@@ -80,6 +81,7 @@
 #include <vstring.h>
 #include <msg_vstream.h>
 #include <vstring_vstream.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -88,6 +90,7 @@
 #include <mail_queue.h>
 #include <mail_conf.h>
 #include <mail_params.h>
+#include <mail_proto.h>
 
 /* Application-specific. */
 
@@ -103,11 +106,16 @@ static void postcat(VSTREAM *fp, VSTRING *buffer, int flags)
 {
     int     prev_type = 0;
     int     rec_type;
+    struct timeval tv;
     time_t  time;
     int     first = 1;
     int     ch;
     off_t   offset;
     int     in_message = 0;
+    const char *error_text;
+    char   *attr_name;
+    char   *attr_value;
+    int     rec_flags = (msg_verbose ? REC_FLAG_NONE : REC_FLAG_DEFAULT);
 
 #define TEXT_RECORD(rec_type) \
 	    (rec_type == REC_TYPE_CONT || rec_type == REC_TYPE_NORM)
@@ -126,10 +134,10 @@ static void postcat(VSTREAM *fp, VSTRING *buffer, int flags)
     /*
      * Now look at the rest.
      */
-    for (;;) {
+    do {
 	if (flags & PC_FLAG_OFFSET)
 	    offset = vstream_ftell(fp);
-	rec_type = rec_get(fp, buffer, 0);
+	rec_type = rec_get_raw(fp, buffer, 0, rec_flags);
 	if (rec_type == REC_TYPE_ERROR)
 	    msg_fatal("record read error");
 	if (rec_type == REC_TYPE_EOF)
@@ -144,13 +152,25 @@ static void postcat(VSTREAM *fp, VSTRING *buffer, int flags)
 	    vstream_printf("%9lu ", (unsigned long) offset);
 	switch (rec_type) {
 	case REC_TYPE_TIME:
-	case REC_TYPE_WARN:
-	    time = atol(STR(buffer));
+	    REC_TYPE_TIME_SCAN(STR(buffer), tv);
+	    time = tv.tv_sec;
 	    vstream_printf("%s: %s", rec_type_name(rec_type),
 			   asctime(localtime(&time)));
 	    break;
+	case REC_TYPE_WARN:
+	    REC_TYPE_WARN_SCAN(STR(buffer), time);
+	    vstream_printf("%s: %s", rec_type_name(rec_type),
+			   asctime(localtime(&time)));
+	    break;
+	case REC_TYPE_PTR:			/* pointer */
+	    vstream_printf("%s: ", rec_type_name(rec_type));
+	    vstream_fwrite(VSTREAM_OUT, STR(buffer), LEN(buffer));
+	    VSTREAM_PUTCHAR('\n');
+	    if (rec_goto(fp, STR(buffer)) == REC_TYPE_ERROR)
+		msg_fatal("bad pointer record, or input is not seekable");
+	    break;
 	case REC_TYPE_CONT:			/* REC_TYPE_FILT collision */
-	    if (!in_message) 
+	    if (!in_message)
 		vstream_printf("%s: ", rec_type_name(rec_type));
 	    else if (msg_verbose)
 		vstream_printf("unterminated_text: ");
@@ -166,6 +186,13 @@ static void postcat(VSTREAM *fp, VSTRING *buffer, int flags)
 	    vstream_fwrite(VSTREAM_OUT, STR(buffer), LEN(buffer));
 	    VSTREAM_PUTCHAR('\n');
 	    break;
+	case REC_TYPE_DTXT:
+	    if (msg_verbose) {
+		vstream_printf("%s: ", rec_type_name(rec_type));
+		vstream_fwrite(VSTREAM_OUT, STR(buffer), LEN(buffer));
+		VSTREAM_PUTCHAR('\n');
+	    }
+	    break;
 	case REC_TYPE_MESG:
 	    vstream_printf("*** MESSAGE CONTENTS %s ***\n", VSTREAM_PATH(fp));
 	    in_message = 1;
@@ -177,6 +204,22 @@ static void postcat(VSTREAM *fp, VSTRING *buffer, int flags)
 	case REC_TYPE_END:
 	    vstream_printf("*** MESSAGE FILE END %s ***\n", VSTREAM_PATH(fp));
 	    break;
+	case REC_TYPE_ATTR:
+	    error_text = split_nameval(STR(buffer), &attr_name, &attr_value);
+	    if (error_text != 0) {
+		msg_warn("%s: malformed attribute: %s: %.100s",
+			 VSTREAM_PATH(fp), error_text, STR(buffer));
+		break;
+	    }
+	    if (strcmp(attr_name, MAIL_ATTR_CREATE_TIME) == 0) {
+		time = atol(attr_value);
+		vstream_printf("%s: %s", MAIL_ATTR_CREATE_TIME,
+			       asctime(localtime(&time)));
+		break;
+	    }
+	    vstream_printf("%s: %s=%s\n", rec_type_name(rec_type),
+			   attr_name, attr_value);
+	    break;
 	default:
 	    vstream_printf("%s: %s\n", rec_type_name(rec_type), STR(buffer));
 	    break;
@@ -187,7 +230,7 @@ static void postcat(VSTREAM *fp, VSTRING *buffer, int flags)
 	 * In case the next record is broken.
 	 */
 	vstream_fflush(VSTREAM_OUT);
-    }
+    } while (rec_type != REC_TYPE_END);
 }
 
 /* usage - explain and terminate */

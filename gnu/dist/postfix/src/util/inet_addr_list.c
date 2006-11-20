@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_list.c,v 1.7.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: inet_addr_list.c,v 1.7.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -82,7 +82,7 @@ void    inet_addr_list_init(INET_ADDR_LIST *list)
 void    inet_addr_list_append(INET_ADDR_LIST *list,
 			              struct sockaddr * addr)
 {
-    char   *myname = "inet_addr_list_append";
+    const char *myname = "inet_addr_list_append";
     MAI_HOSTADDR_STR hostaddr;
     int     new_size;
 

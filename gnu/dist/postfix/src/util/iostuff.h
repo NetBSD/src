@@ -1,4 +1,4 @@
-/*	$NetBSD: iostuff.h,v 1.1.1.2.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: iostuff.h,v 1.1.1.2.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 #ifndef _IOSTUFF_H_INCLUDED_
 #define _IOSTUFF_H_INCLUDED_
@@ -22,12 +22,12 @@ extern int readable(int);
 extern int writable(int);
 extern off_t get_file_limit(void);
 extern void set_file_limit(off_t);
-extern int peekfd(int);
+extern ssize_t peekfd(int);
 extern int read_wait(int, int);
 extern int write_wait(int, int);
-extern int write_buf(int, const char *, int, int);
-extern int timed_read(int, void *, unsigned, int, void *);
-extern int timed_write(int, void *, unsigned, int, void *);
+extern ssize_t write_buf(int, const char *, ssize_t, int);
+extern ssize_t timed_read(int, void *, size_t, int, void *);
+extern ssize_t timed_write(int, void *, size_t, int, void *);
 extern void doze(unsigned);
 extern void rand_sleep(unsigned, unsigned);
 extern int duplex_pipe(int *);
@@ -35,8 +35,8 @@ extern int stream_recv_fd(int);
 extern int stream_send_fd(int, int);
 extern int unix_recv_fd(int);
 extern int unix_send_fd(int, int);
-extern int dummy_read(int, void *, unsigned, int, void *);
-extern int dummy_write(int, void *, unsigned, int, void *);
+extern ssize_t dummy_read(int, void *, size_t, int, void *);
+extern ssize_t dummy_write(int, void *, size_t, int, void *);
 
 #define BLOCKING	0
 #define NON_BLOCKING	1

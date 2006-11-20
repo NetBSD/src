@@ -80,6 +80,11 @@ VIRTUAL(8)                                                          VIRTUAL(8)
        numerical user ID values that may be specified in any <b><a href="postconf.5.html#virtual_uid_maps">vir</a>-</b>
        <b><a href="postconf.5.html#virtual_uid_maps">tual_uid_maps</a></b>.
 
+<b>CASE FOLDING</b>
+       All  delivery  decisions are made using the full recipient
+       address, folded to lower case. See also the  next  section
+       for a few exceptions with optional address extensions.
+
 <b>TABLE SEARCH ORDER</b>
        Normally,  a lookup table is specified as a text file that
        serves as input to the <a href="postmap.1.html"><b>postmap</b>(1)</a> command. The result,  an
@@ -152,7 +157,7 @@ VIRTUAL(8)                                                          VIRTUAL(8)
        maintaining three tables, use an LDAP or MYSQL database.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes  to  <b>main.cf</b>  are picked up automatically, as <a href="virtual.8.html"><b>vir-</b></a>
+       Changes  to  <a href="postconf.5.html"><b>main.cf</b></a>  are picked up automatically, as <a href="virtual.8.html"><b>vir-</b></a>
        <a href="virtual.8.html"><b>tual</b>(8)</a> processes run for only a limited amount  of  time.
        Use the command "<b>postfix reload</b>" to speed up a change.
 
@@ -191,9 +196,9 @@ VIRTUAL(8)                                                          VIRTUAL(8)
               <a href="postconf.5.html#virtual_transport">tual_transport</a> mail delivery transport.
 
        <b><a href="postconf.5.html#virtual_transport">virtual_transport</a> (virtual)</b>
-              The default mail  delivery  transport  for  domains
-              that  match  the $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> parameter
-              value.
+              The default mail delivery  transport  and  next-hop
+              destination  for  final  delivery to domains listed
+              with $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a>.
 
 <b>LOCKING CONTROLS</b>
        <b><a href="postconf.5.html#virtual_mailbox_lock">virtual_mailbox_lock</a> (see 'postconf -d' output)</b>
@@ -230,45 +235,49 @@ VIRTUAL(8)                                                          VIRTUAL(8)
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  main.cf  and
-              master.cf configuration files.
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
               How  much time a Postfix daemon process may take to
               handle a request  before  it  is  terminated  by  a
               built-in watchdog timer.
 
+       <b><a href="postconf.5.html#delay_logging_resolution_limit">delay_logging_resolution_limit</a> (2)</b>
+              The  maximal  number  of  digits  after the decimal
+              point when logging sub-second delay values.
+
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
               The time limit for sending or receiving information
               over an internal communication channel.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The maximum amount of time  that  an  idle  Postfix
-              daemon  process  waits for the next service request
+              The  maximum  amount  of  time that an idle Postfix
+              daemon process waits for the next  service  request
               before exiting.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The maximal number of connection requests before  a
+              The  maximal number of connection requests before a
               Postfix daemon process terminates.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The  process  ID  of  a  Postfix  command or daemon
+              The process ID  of  a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The process name of a  Postfix  command  or  daemon
+              The  process  name  of  a Postfix command or daemon
               process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The  location of the Postfix top-level queue direc-
+              The location of the Postfix top-level queue  direc-
               tory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The mail system  name  that  is  prepended  to  the
-              process  name  in  syslog  records, so that "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>SEE ALSO</b>
@@ -281,20 +290,20 @@ VIRTUAL(8)                                                          VIRTUAL(8)
        <a href="VIRTUAL_README.html">VIRTUAL_README</a>, domain hosting howto
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>HISTORY</b>
-       This  delivery  agent  was originally based on the Postfix
-       local delivery agent. Modifications  mainly  consisted  of
-       removing  code  that either was not applicable or that was
-       not safe in this context: aliases,  ~user/.forward  files,
+       This delivery agent was originally based  on  the  Postfix
+       local  delivery  agent.  Modifications mainly consisted of
+       removing code that either was not applicable or  that  was
+       not  safe  in this context: aliases, ~user/.forward files,
        delivery to "|command" or to /file/name.
 
        The <b>Delivered-To:</b> message header appears in the <b>qmail</b> sys-
        tem by Daniel Bernstein.
 
-       The <b>maildir</b> structure  appears  in  the  <b>qmail</b>  system  by
+       The  <b>maildir</b>  structure  appears  in  the  <b>qmail</b> system by
        Daniel Bernstein.
 
 <b>AUTHOR(S)</b>

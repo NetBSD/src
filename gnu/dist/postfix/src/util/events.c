@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.1.1.4.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: events.c,v 1.1.1.4.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -19,7 +19,7 @@
 /*	int	delay;
 /*
 /*	int	event_cancel_timer(callback, context)
-/*	void	(*callback)(char *context);
+/*	void	(*callback)(int event, char *context);
 /*	char	*context;
 /*
 /*	void	event_enable_read(fd, callback, context)
@@ -65,7 +65,7 @@
 /*	The event argument is equal to EVENT_TIME.
 /*	Only one timer request can be active per (callback, context) pair.
 /*	Calling event_request_timer() with an existing (callback, context)
-/*	pair does not schedule a new event, but updates the moment of
+/*	pair does not schedule a new event, but updates the time of event
 /*	delivery. The result is the absolute time at which the timer is
 /*	scheduled to go off.
 /*
@@ -275,7 +275,7 @@ void    event_drain(int time_limit)
 
 void    event_enable_read(int fd, EVENT_NOTIFY_RDWR callback, char *context)
 {
-    char   *myname = "event_enable_read";
+    const char *myname = "event_enable_read";
     EVENT_FDTABLE *fdp;
 
     if (EVENT_INIT_NEEDED())
@@ -314,7 +314,7 @@ void    event_enable_read(int fd, EVENT_NOTIFY_RDWR callback, char *context)
 
 void    event_enable_write(int fd, EVENT_NOTIFY_RDWR callback, char *context)
 {
-    char   *myname = "event_enable_write";
+    const char *myname = "event_enable_write";
     EVENT_FDTABLE *fdp;
 
     if (EVENT_INIT_NEEDED())
@@ -353,7 +353,7 @@ void    event_enable_write(int fd, EVENT_NOTIFY_RDWR callback, char *context)
 
 void    event_disable_readwrite(int fd)
 {
-    char   *myname = "event_disable_readwrite";
+    const char *myname = "event_disable_readwrite";
     EVENT_FDTABLE *fdp;
 
     if (EVENT_INIT_NEEDED())
@@ -384,7 +384,7 @@ void    event_disable_readwrite(int fd)
 
 time_t  event_request_timer(EVENT_NOTIFY_TIME callback, char *context, int delay)
 {
-    char   *myname = "event_request_timer";
+    const char *myname = "event_request_timer";
     RING   *ring;
     EVENT_TIMER *timer;
 
@@ -448,7 +448,7 @@ time_t  event_request_timer(EVENT_NOTIFY_TIME callback, char *context, int delay
 
 int     event_cancel_timer(EVENT_NOTIFY_TIME callback, char *context)
 {
-    char   *myname = "event_cancel_timer";
+    const char *myname = "event_cancel_timer";
     RING   *ring;
     EVENT_TIMER *timer;
     int     time_left = -1;
@@ -481,7 +481,7 @@ int     event_cancel_timer(EVENT_NOTIFY_TIME callback, char *context)
 
 void    event_loop(int delay)
 {
-    char   *myname = "event_loop";
+    const char *myname = "event_loop";
     static int nested;
     fd_set  rmask;
     fd_set  wmask;
@@ -615,12 +615,13 @@ void    event_loop(int delay)
 #ifdef TEST
 
  /*
-  * Proof-of-concept test program for the event manager. Schedule a series
-of events at one-second intervals and let them happen,
-  while echoing any lines read from stdin. 
+  * Proof-of-concept test program for the event manager. Schedule a series of
+  * events at one-second intervals and let them happen, while echoing any
+  * lines read from stdin.
   */
 #include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 /* timer_event - display event */
 
@@ -641,7 +642,7 @@ static void echo(int unused_event, char *unused_context)
     printf("Result: %s", buf);
 }
 
-int main(void)
+int     main(void)
 {
     event_request_timer(timer_event, "3 first", 3);
     event_request_timer(timer_event, "3 second", 3);

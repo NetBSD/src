@@ -1,4 +1,4 @@
-/*	$NetBSD: sock_addr.h,v 1.1.1.1.2.2 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: sock_addr.h,v 1.1.1.1.2.3 2006/11/20 13:31:00 tron Exp $	*/
 
 #ifndef _SOCK_ADDR_EQ_H_INCLUDED_
 #define _SOCK_ADDR_EQ_H_INCLUDED_
@@ -47,6 +47,13 @@ extern int sock_addr_in_loopback(const struct sockaddr *);
      sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in))
 #endif
 
+#define SOCK_ADDR_PORT(sa) \
+    (SOCK_ADDR_PTR(sa)->sa_family == AF_INET6 ? \
+	SOCK_ADDR_IN6_PORT(sa) : SOCK_ADDR_IN_PORT(sa))
+#define SOCK_ADDR_PORTP(sa) \
+    (SOCK_ADDR_PTR(sa)->sa_family == AF_INET6 ? \
+	&SOCK_ADDR_IN6_PORT(sa) : &SOCK_ADDR_IN_PORT(sa))
+
 #define SOCK_ADDR_IN6_PTR(sa)	((struct sockaddr_in6 *)(sa))
 #define SOCK_ADDR_IN6_FAMILY(sa) SOCK_ADDR_IN6_PTR(sa)->sin6_family
 #define SOCK_ADDR_IN6_PORT(sa)	SOCK_ADDR_IN6_PTR(sa)->sin6_port
@@ -72,6 +79,9 @@ extern int sock_addr_in_loopback(const struct sockaddr *);
 #ifndef HAS_SA_LEN
 #define SOCK_ADDR_LEN(sa)	sizeof(struct sockaddr_in)
 #endif
+
+#define SOCK_ADDR_PORT(sa)	SOCK_ADDR_IN_PORT(sa))
+#define SOCK_ADDR_PORTP(sa)	&SOCK_ADDR_IN_PORT(sa))
 
 #define SOCK_ADDR_EQ_ADDR(sa, sb) \
     (SOCK_ADDR_FAMILY(sa) == AF_INET && SOCK_ADDR_FAMILY(sb) == AF_INET \

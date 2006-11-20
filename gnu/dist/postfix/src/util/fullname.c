@@ -1,4 +1,4 @@
-/*	$NetBSD: fullname.c,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: fullname.c,v 1.1.1.2.2.1 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -107,6 +107,7 @@ int     main(int unused_argc, char **unused_argv)
     const char *cp = fullname();
 
     printf("%s\n", cp ? cp : "null!");
+    return (0);
 }
 
 #endif

@@ -162,18 +162,18 @@ or pseudo-destinations: </p>
 
 <ul>
 
-<li> <p> if mail is sent without a relay host: a domain name (the
+<li> <p> if mail is sent without a <a href="postconf.5.html#relayhost">relay host</a>: a domain name (the
 right-hand side of an email address, without the [] around a numeric
 IP address), </p>
 
-<li> <p> if mail is sent via a relay host: a relay host name (without
+<li> <p> if mail is sent via a <a href="postconf.5.html#relayhost">relay host</a>: a <a href="postconf.5.html#relayhost">relay host</a> name (without
 the [] or non-default TCP port), as specified in main.cf or in the
 transport map, </p>
 
-<li> <p> a /file/name with domain names and/or relay host names as
+<li> <p> a /file/name with domain names and/or <a href="postconf.5.html#relayhost">relay host</a> names as
 defined above, </p>
 
-<li> <p> a "<a href="DATABASE_README.html">type:table</a>" with domain names and/or relay host names
+<li> <p> a "<a href="DATABASE_README.html">type:table</a>" with domain names and/or <a href="postconf.5.html#relayhost">relay host</a> names
 on the left-hand side. The right-hand side result from "<a href="DATABASE_README.html">type:table</a>"
 lookups is ignored.  </p>
 
@@ -211,9 +211,23 @@ configuration parameters. This prevents anti-social behavior. </p>
 
 <li> <p> The Postfix <a href="smtp.8.html">smtp(8)</a> client reuses a session for only a
 limited number of times. This avoids triggering bugs in implementations
-that do not correctly handle multiple deliveries per session.  The
-use count is limited with the <a href="postconf.5.html#smtp_connection_cache_reuse_limit">smtp_connection_cache_reuse_limit</a>
-configuration parameter. </p>
+that do not correctly handle multiple deliveries per session. </p>
+
+<p> With Postfix 2.2 the use count is limited with the
+<a href="postconf.5.html#smtp_connection_cache_reuse_limit">smtp_connection_cache_reuse_limit</a> configuration parameter. With
+Postfix 2.3 this is replaced by a time limit which is specified
+with the <a href="postconf.5.html#smtp_connection_reuse_time_limit">smtp_connection_reuse_time_limit</a> parameter. In addition,
+Postfix 2.3 logs the use count of multiply-used connections,
+as shown in the following example: </p>
+
+<blockquote>
+<pre>
+Nov  3 16:04:31 myname postfix/smtp[30840]: 19B6B2900FE:
+to=&lt;wietse@test.example.com&gt;, orig_to=&lt;wietse@test&gt;,
+relay=mail.example.com[1.2.3.4], <b>conn_use=2</b>, delay=0.22,
+delays=0.04/0.01/0.05/0.1, dsn=2.0.0, status=sent (250 2.0.0 Ok)
+</pre>
+</blockquote>
 
 <li> <p> The connection cache explicitly labels each cached connection
 with destination domain and IP address information.  A connection

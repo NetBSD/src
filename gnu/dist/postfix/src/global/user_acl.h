@@ -1,10 +1,10 @@
-/*	$NetBSD: user_acl.h,v 1.1.1.1.2.2 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: user_acl.h,v 1.1.1.1.2.3 2006/11/20 13:30:25 tron Exp $	*/
 
 #ifndef _USER_ACL_H_INCLUDED_
 #define _USER_ACL_H_INCLUDED_
 /*++
 /* NAME
-/*	user_acl 3
+/*	user_acl 3h
 /* SUMMARY
 /*	Convert uid to username and check against given ACL.
 /* SYNOPSIS

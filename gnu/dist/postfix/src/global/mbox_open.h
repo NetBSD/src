@@ -1,4 +1,4 @@
-/*	$NetBSD: mbox_open.h,v 1.1.1.2 2004/05/31 00:24:32 heas Exp $	*/
+/*	$NetBSD: mbox_open.h,v 1.1.1.2.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 #ifndef _MBOX_OPEN_H_INCLUDED_
 #define _MBOX_OPEN_H_INCLUDED_
@@ -21,15 +21,22 @@
 #include <safe_open.h>
 
  /*
+  * Global library.
+  */
+#include <dsn_buf.h>
+
+ /*
   * External interface.
   */
 typedef struct {
-    char    *path;			/* saved path, for dot_unlock */
+    char   *path;			/* saved path, for dot_unlock */
     VSTREAM *fp;			/* open stream or null */
     int     locked;			/* what locks were set */
 } MBOX;
-extern MBOX *mbox_open(const char *, int, int, struct stat *, uid_t, gid_t, int, VSTRING *);
+extern MBOX *mbox_open(const char *, int, mode_t, struct stat *, uid_t, gid_t,
+		               int, const char *, DSN_BUF *);
 extern void mbox_release(MBOX *);
+extern const char *mbox_dsn(int, const char *);
 
 /* LICENSE
 /* .ad

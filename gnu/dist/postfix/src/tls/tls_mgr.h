@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_mgr.h,v 1.1.1.1.2.2 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: tls_mgr.h,v 1.1.1.1.2.3 2006/11/20 13:30:55 tron Exp $	*/
 
 #ifndef _TLS_MGR_CLNT_H_INCLUDED_
 #define _TLS_MGR_CLNT_H_INCLUDED_
@@ -25,16 +25,13 @@
 #define TLS_MGR_REQ_LOOKUP	"lookup"
 #define TLS_MGR_REQ_UPDATE	"update"
 #define TLS_MGR_REQ_DELETE	"delete"
-#define TLS_MGR_ATTR_POLICY	"policy"
+#define TLS_MGR_ATTR_CACHABLE	"cachable"
 #define TLS_MGR_ATTR_CACHE_TYPE	"cache_type"
 #define TLS_MGR_ATTR_SEED	"seed"
 #define TLS_MGR_ATTR_CACHE_ID	"cache_id"
-#define TLS_MGR_ATTR_VERSION	"version"
-#define TLS_MGR_ATTR_FLAGS	"flags"
 #define TLS_MGR_ATTR_SESSION	"session"
 #define TLS_MGR_ATTR_SIZE	"size"
 #define TLS_MGR_ATTR_STATUS	"status"
-#define TLS_MGR_ATTR_FLAGS	"flags"
 
  /*
   * TLS manager request status codes.
@@ -44,21 +41,13 @@
 #define TLS_MGR_STAT_FAIL	(-2)	/* protocol error */
 
  /*
-  * Are we talking about the client or server cache?
-  */
-#define TLS_MGR_SCACHE_CLIENT	(1<<0)
-#define TLS_MGR_SCACHE_SERVER	(1<<1)
-
- /*
   * Functional interface.
   */
 extern int tls_mgr_seed(VSTRING *, int);
-extern int tls_mgr_policy(int *);
-extern int tls_mgr_lookup(int, const char *, long, int, VSTRING *);
-extern int tls_mgr_update(int, const char *, long, int, const char *, int);
-extern int tls_mgr_delete(int, const char *);
-
-#define TLS_MGR_NO_FLAGS	0
+extern int tls_mgr_policy(const char *, int *);
+extern int tls_mgr_lookup(const char *, const char *, VSTRING *);
+extern int tls_mgr_update(const char *, const char *, const char *, ssize_t);
+extern int tls_mgr_delete(const char *, const char *);
 
 /* LICENSE
 /* .ad

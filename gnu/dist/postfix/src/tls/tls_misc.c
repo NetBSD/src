@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_misc.c,v 1.1.1.2.2.2 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: tls_misc.c,v 1.1.1.2.2.3 2006/11/20 13:30:55 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,6 +8,20 @@
 /* SYNOPSIS
 /*	#define TLS_INTERNAL
 /*	#include <tls.h>
+/*
+/*	TLScontext_t *tls_alloc_context(log_level, peername)
+/*	int	log_level;
+/*	const char *peername;
+/*
+/*	void	tls_free_context(TLScontext)
+/*	TLScontext_t *TLScontext;
+/*
+/*	void	tls_check_version()
+/*
+/*	long	tls_bug_bits()
+/*
+/*	const char *tls_cipher_list(cipher_level, ...)
+/*	int	cipher_level;
 /*
 /*	void	tls_print_errors()
 /*
@@ -26,6 +40,25 @@
 /* DESCRIPTION
 /*	This module implements routines that support the TLS client
 /*	and server internals.
+/*
+/*	tls_alloc_context() creates an initialized TLScontext
+/*	structure with the specified peer name and logging level.
+/*
+/*	tls_free_context() destroys a TLScontext structure
+/*	together with OpenSSL structures that are attached to it.
+/*
+/*	tls_check_version() logs a warning when the run-time OpenSSL
+/*	library differs in its major, minor or micro number from
+/*	the compile-time OpenSSL headers.
+/*
+/*	tls_bug_bits() returns the bug compatibility mask appropriate
+/*	for the run-time library. Some of the bug work-arounds are
+/*	not appropriate for some library versions.
+/*
+/*	tls_cipher_list() generates a cipher list from the specified
+/*	grade, minus any ciphers specified via a null-terminated
+/*	list of string-valued exclusions. The result is overwritten
+/*	upon each call.
 /*
 /*	tls_print_errors() queries the OpenSSL error stack,
 /*	logs the error messages, and clears the error stack.
@@ -62,6 +95,7 @@
 
 #include <sys_defs.h>
 #include <ctype.h>
+#include <string.h>
 
 #ifdef USE_TLS
 
@@ -71,6 +105,7 @@
 #include <msg.h>
 #include <mymalloc.h>
 #include <vstring.h>
+#include <stringops.h>
 
 /* TLS library. */
 
@@ -80,10 +115,299 @@
 /* Application-specific. */
 
  /*
-  * Indices to attach our own information to SSL and to SSL_SESSION objects,
-  * so that it can be accessed by call-back routines.
+  * Index to attach TLScontext pointers to SSL objects, so that they can be
+  * accessed by call-back routines.
   */
 int     TLScontext_index = -1;
+
+ /*
+  * Index to attach session cache names SSL_CTX objects.
+  */
+int     TLSscache_index = -1;
+
+ /*
+  * Protocol name <=> mask conversion.
+  */
+NAME_MASK tls_protocol_table[] = {
+    SSL_TXT_SSLV2, TLS_PROTOCOL_SSLv2,
+    SSL_TXT_SSLV3, TLS_PROTOCOL_SSLv3,
+    SSL_TXT_TLSV1, TLS_PROTOCOL_TLSv1,
+    0, 0,
+};
+
+char   *var_tls_high_clist;
+char   *var_tls_medium_clist;
+char   *var_tls_low_clist;
+char   *var_tls_export_clist;
+char   *var_tls_null_clist;
+
+ /*
+  * Ciphersuite name <=> code conversion.
+  */
+NAME_CODE tls_cipher_level_table[] = {
+    "high", TLS_CIPHER_HIGH,
+    "medium", TLS_CIPHER_MEDIUM,
+    "low", TLS_CIPHER_LOW,
+    "export", TLS_CIPHER_EXPORT,
+    "null", TLS_CIPHER_NULL,
+    0, TLS_CIPHER_NONE,
+};
+
+ /*
+  * Parsed OpenSSL version number.
+  */
+typedef struct {
+    int     major;
+    int     minor;
+    int     micro;
+    int     patch;
+    int     status;
+} TLS_VINFO;
+
+/* tls_cipher_list - Cipherlist for given grade, less exclusions */
+
+const char *tls_cipher_list(int cipher_level,...)
+{
+    const char *myname = "tls_cipher_list";
+    static VSTRING *buf;
+    va_list ap;
+    const char *exclude;
+    char   *tok;
+    char   *save;
+    char   *cp;
+
+    buf = buf ? buf : vstring_alloc(10);
+    VSTRING_RESET(buf);
+
+    switch (cipher_level) {
+    case TLS_CIPHER_HIGH:
+	vstring_strcpy(buf, var_tls_high_clist);
+	break;
+    case TLS_CIPHER_MEDIUM:
+	vstring_strcpy(buf, var_tls_medium_clist);
+	break;
+    case TLS_CIPHER_LOW:
+	vstring_strcpy(buf, var_tls_low_clist);
+	break;
+    case TLS_CIPHER_EXPORT:
+	vstring_strcpy(buf, var_tls_export_clist);
+	break;
+    case TLS_CIPHER_NULL:
+	vstring_strcpy(buf, var_tls_null_clist);
+	break;
+    case TLS_CIPHER_NONE:
+	return 0;
+    default:
+	msg_panic("%s: invalid cipher grade: %d", myname, cipher_level);
+    }
+
+    if (VSTRING_LEN(buf) == 0)
+	msg_panic("%s: empty cipherlist", myname);
+
+    va_start(ap, cipher_level);
+    while ((exclude = va_arg(ap, char *)) != 0) {
+	if (*exclude == '\0')
+	    continue;
+	save = cp = mystrdup(exclude);
+	while ((tok = mystrtok(&cp, "\t\n\r ,")) != 0) {
+
+	    /*
+	     * Can't exclude ciphers that start with modifiers, or
+	     * multi-element (":" separated) ciphers.
+	     */
+	    if (strchr("!+-@", *tok)) {
+		msg_warn("%s: can't exclude '!+-@' modifiers, '%s' ignored",
+			 myname, tok);
+		continue;
+	    }
+	    if (strchr(tok, ':')) {
+		msg_warn("%s: can't exclude compound ciphers, '%s' ignored",
+			 myname, tok);
+		continue;
+	    }
+	    vstring_sprintf_append(buf, ":!%s", tok);
+	}
+	myfree(save);
+    }
+    va_end(ap);
+
+    return (vstring_str(buf));
+}
+
+
+/* tls_alloc_context - allocate TLScontext */
+
+TLScontext_t *tls_alloc_context(int log_level, const char *peername)
+{
+    TLScontext_t *TLScontext;
+
+    /*
+     * PORTABILITY: Do not assume that null pointers are all-zero bits. Use
+     * explicit assignments to initialize pointers.
+     * 
+     * See the C language FAQ item 5.17, or if you have time to burn,
+     * http://www.google.com/search?q=zero+bit+null+pointer
+     * 
+     * However, it's OK to use memset() to zero integer values.
+     */
+    TLScontext = (TLScontext_t *) mymalloc(sizeof(TLScontext_t));
+    memset((char *) TLScontext, 0, sizeof(*TLScontext));
+    TLScontext->con = 0;
+    TLScontext->internal_bio = 0;
+    TLScontext->network_bio = 0;
+    TLScontext->serverid = 0;
+    TLScontext->peer_CN = 0;
+    TLScontext->issuer_CN = 0;
+    TLScontext->peer_fingerprint = 0;
+    TLScontext->protocol = 0;
+    TLScontext->cipher_name = 0;
+    TLScontext->log_level = log_level;
+    TLScontext->peername = lowercase(mystrdup(peername));
+
+    return (TLScontext);
+}
+
+/* tls_free_context - deallocate TLScontext and members */
+
+void    tls_free_context(TLScontext_t *TLScontext)
+{
+
+    /*
+     * Free the SSL structure and the BIOs. Warning: the internal_bio is
+     * connected to the SSL structure and is automatically freed with it. Do
+     * not free it again (core dump)!! Only free the network_bio.
+     */
+    if (TLScontext->con != 0)
+	SSL_free(TLScontext->con);
+    if (TLScontext->network_bio)
+	BIO_free(TLScontext->network_bio);
+
+    if (TLScontext->peername)
+	myfree(TLScontext->peername);
+    if (TLScontext->serverid)
+	myfree(TLScontext->serverid);
+
+    if (TLScontext->peer_CN)
+	myfree(TLScontext->peer_CN);
+    if (TLScontext->issuer_CN)
+	myfree(TLScontext->issuer_CN);
+    if (TLScontext->peer_fingerprint)
+	myfree(TLScontext->peer_fingerprint);
+
+    myfree((char *) TLScontext);
+}
+
+/* tls_version_split - Split OpenSSL version number into major, minor, ... */
+
+static void tls_version_split(long version, TLS_VINFO *info)
+{
+
+    /*
+     * OPENSSL_VERSION_NUMBER(3):
+     * 
+     * OPENSSL_VERSION_NUMBER is a numeric release version identifier:
+     * 
+     * MMNNFFPPS: major minor fix patch status
+     * 
+     * The status nibble has one of the values 0 for development, 1 to e for
+     * betas 1 to 14, and f for release. Parsed OpenSSL version number. for
+     * example
+     * 
+     * 0x000906000 == 0.9.6 dev 0x000906023 == 0.9.6b beta 3 0x00090605f ==
+     * 0.9.6e release
+     * 
+     * Versions prior to 0.9.3 have identifiers < 0x0930.  Versions between
+     * 0.9.3 and 0.9.5 had a version identifier with this interpretation:
+     * 
+     * MMNNFFRBB major minor fix final beta/patch
+     * 
+     * for example
+     * 
+     * 0x000904100 == 0.9.4 release 0x000905000 == 0.9.5 dev
+     * 
+     * Version 0.9.5a had an interim interpretation that is like the current
+     * one, except the patch level got the highest bit set, to keep continu-
+     * ity.  The number was therefore 0x0090581f.
+     */
+
+    if (version < 0x0930) {
+	info->status = 0;
+	info->patch = version & 0x0f;
+	version >>= 4;
+	info->micro = version & 0x0f;
+	version >>= 4;
+	info->minor = version & 0x0f;
+	version >>= 4;
+	info->major = version & 0x0f;
+    } else if (version < 0x00905800L) {
+	info->patch = version & 0xff;
+	version >>= 8;
+	info->status = version & 0xf;
+	version >>= 4;
+	info->micro = version & 0xff;
+	version >>= 8;
+	info->minor = version & 0xff;
+	version >>= 8;
+	info->major = version & 0xff;
+    } else {
+	info->status = version & 0xf;
+	version >>= 4;
+	info->patch = version & 0xff;
+	version >>= 8;
+	info->micro = version & 0xff;
+	version >>= 8;
+	info->minor = version & 0xff;
+	version >>= 8;
+	info->major = version & 0xff;
+	if (version < 0x00906000L)
+	    info->patch &= ~0x80;
+    }
+}
+
+/* tls_check_version - Detect mismatch between headers and library. */
+
+void    tls_check_version(void)
+{
+    TLS_VINFO hdr_info;
+    TLS_VINFO lib_info;
+
+    tls_version_split(OPENSSL_VERSION_NUMBER, &hdr_info);
+    tls_version_split(SSLeay(), &lib_info);
+
+    if (lib_info.major != hdr_info.major
+	|| lib_info.minor != hdr_info.minor
+	|| lib_info.micro != hdr_info.micro)
+	msg_warn("run-time library vs. compile-time header version mismatch: "
+	     "OpenSSL %d.%d.%d may not be compatible with OpenSSL %d.%d.%d",
+		 lib_info.major, lib_info.minor, lib_info.micro,
+		 hdr_info.major, hdr_info.minor, hdr_info.micro);
+}
+
+/* tls_bug_bits - SSL bug compatibility bits for this OpenSSL version */
+
+long    tls_bug_bits(void)
+{
+    long    bits = SSL_OP_ALL;		/* Work around all known bugs */
+
+#if OPENSSL_VERSION_NUMBER >= 0x00908000L
+    long    lib_version = SSLeay();
+
+    /*
+     * In OpenSSL 0.9.8[ab], enabling zlib compression breaks the padding bug
+     * work-around, leading to false positives and failed connections. We may
+     * not interoperate with systems with the bug, but this is better than
+     * breaking on all 0.9.8[ab] systems that have zlib support enabled.
+     */
+    if (lib_version >= 0x00908000L && lib_version <= 0x0090802fL) {
+	STACK_OF(SSL_COMP) * comp_methods;
+
+	comp_methods = SSL_COMP_get_compression_methods();
+	if (comp_methods != 0 && sk_SSL_COMP_num(comp_methods) > 0)
+	    bits &= ~SSL_OP_TLS_BLOCK_PADDING_BUG;
+    }
+#endif
+    return (bits);
+}
 
 /* tls_print_errors - print and clear the error stack */
 

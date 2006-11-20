@@ -16,9 +16,9 @@ COMMANDS= mailq.1.html newaliases.1.html postalias.1.html postcat.1.html \
 	qshape.1.html
 CONFIG	= access.5.html aliases.5.html canonical.5.html relocated.5.html \
 	transport.5.html virtual.5.html pcre_table.5.html regexp_table.5.html \
-	cidr_table.5.html header_checks.5.html \
+	cidr_table.5.html tcp_table.5.html header_checks.5.html \
 	ldap_table.5.html mysql_table.5.html pgsql_table.5.html \
-	master.5.html nisplus_table.5.html generic.5.html
+	master.5.html nisplus_table.5.html generic.5.html bounce.5.html
 OTHER	= postfix-manuals.html
 AWK	= awk '{ print; if (NR == 2) print ".pl 9999\n.ll 65" }'
 MAN2HTML = man2html -t "Postfix manual - `IFS=.; set \`echo $@\`; echo \"$$1($$2)\"`"
@@ -68,9 +68,9 @@ scache.8.html: ../src/scache/scache.c
 	PATH=../mantools:$$PATH; \
 	srctoman $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
 
-lmtp.8.html: ../src/lmtp/lmtp.c
-	PATH=../mantools:$$PATH; \
-	srctoman $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
+lmtp.8.html: smtp.8.html
+	rm -f $@
+	ln -s $? $@
 
 local.8.html: ../src/local/local.c
 	PATH=../mantools:$$PATH; \
@@ -192,7 +192,6 @@ sendmail.1.html: ../src/sendmail/sendmail.c
 	srctoman $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
 
 mailq.1.html: sendmail.1.html
-	PATH=../mantools:$$PATH; \
 	rm -f $@
 	ln -s $? $@
 
@@ -226,6 +225,10 @@ access.5.html: ../proto/access
 	srctoman - $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
 
 aliases.5.html: ../proto/aliases
+	PATH=../mantools:$$PATH; \
+	srctoman - $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
+
+bounce.5.html: ../proto/bounce
 	PATH=../mantools:$$PATH; \
 	srctoman - $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
 

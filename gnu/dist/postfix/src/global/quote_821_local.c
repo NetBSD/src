@@ -1,4 +1,4 @@
-/*	$NetBSD: quote_821_local.c,v 1.1.1.4 2004/05/31 00:24:34 heas Exp $	*/
+/*	$NetBSD: quote_821_local.c,v 1.1.1.4.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -14,7 +14,7 @@
 /*
 /*	VSTRING	*quote_821_local_flags(dst, src, flags)
 /*	VSTRING	*dst;
-/*	char	*src;
+/*	const char *src;
 /*	int	flags;
 /* DESCRIPTION
 /*	quote_821_local() quotes the local part of a mailbox address and
@@ -74,9 +74,9 @@
 
 /* is_821_dot_string - is this local-part an rfc 821 dot-string? */
 
-static int is_821_dot_string(char *local_part, char *end, int flags)
+static int is_821_dot_string(const char *local_part, const char *end, int flags)
 {
-    char   *cp;
+    const char *cp;
     int     ch;
 
     /*
@@ -110,10 +110,10 @@ static int is_821_dot_string(char *local_part, char *end, int flags)
 
 /* make_821_quoted_string - make quoted-string from local-part */
 
-static VSTRING *make_821_quoted_string(VSTRING *dst, char *local_part,
-				               char *end, int flags)
+static VSTRING *make_821_quoted_string(VSTRING *dst, const char *local_part,
+				               const char *end, int flags)
 {
-    char   *cp;
+    const char *cp;
     int     ch;
 
     /*
@@ -121,7 +121,7 @@ static VSTRING *make_821_quoted_string(VSTRING *dst, char *local_part,
      * that need quoting when they occur in a quoted-string.
      */
     VSTRING_ADDCH(dst, '"');
-    for (cp = local_part; cp < end && (ch = *cp) != 0; cp++) {
+    for (cp = local_part; cp < end && (ch = *(unsigned char *) cp) != 0; cp++) {
 	if ((ch > 127 && !(flags & QUOTE_FLAG_8BITCLEAN))
 	    || ch == '\r' || ch == '\n' || ch == '"' || ch == '\\')
 	    VSTRING_ADDCH(dst, '\\');
@@ -134,9 +134,9 @@ static VSTRING *make_821_quoted_string(VSTRING *dst, char *local_part,
 
 /* quote_821_local_flags - quote local part of address according to rfc 821 */
 
-VSTRING *quote_821_local_flags(VSTRING *dst, char *addr, int flags)
+VSTRING *quote_821_local_flags(VSTRING *dst, const char *addr, int flags)
 {
-    char   *at;
+    const char   *at;
 
     /*
      * According to RFC 821, a local-part is a dot-string or a quoted-string.

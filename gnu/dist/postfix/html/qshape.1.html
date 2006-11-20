@@ -20,7 +20,7 @@ QSHAPE(1)                                                            QSHAPE(1)
        Postfix queue message distribution in time and  by  sender
        domain  or recipient domain. The program needs read access
        to the queue directories and queue files, so it  must  run
-       as  the  superuser  or the <b><a href="postconf.5.html#mail_owner">mail_owner</a></b> specified in <i>main.cf</i>
+       as  the  superuser  or the <b><a href="postconf.5.html#mail_owner">mail_owner</a></b> specified in <a href="postconf.5.html"><b>main.cf</b></a>
        (typically <b>postfix</b>).
 
        Options:
@@ -78,7 +78,7 @@ QSHAPE(1)                                                            QSHAPE(1)
               ters, the terminal_width limit is violated.
 
        <b>-c</b> <i>config</i><b>_</b><i>directory</i>
-              The <b>main.cf</b> configuration  file  is  in  the  named
+              The <a href="postconf.5.html"><b>main.cf</b></a> configuration  file  is  in  the  named
               directory  instead  of  the  default  configuration
               directory.
 
@@ -90,8 +90,8 @@ QSHAPE(1)                                                            QSHAPE(1)
               a different set of queues, just list  their  direc-
               tory names on the command line.  Absolute paths are
               used as is, other paths are taken relative  to  the
-              <i>main.cf</i>  <b><a href="postconf.5.html#queue_directory">queue_directory</a></b>  parameter setting.  While
-              <i>main.cf</i> supports the use of <i>$variable</i> expansion  in
+              <a href="postconf.5.html"><b>main.cf</a>  <a href="postconf.5.html#queue_directory">queue_directory</a></b>  parameter setting.  While
+              <a href="postconf.5.html"><b>main.cf</b></a> supports the use of <i>$variable</i> expansion  in
               the  definition  of  the <b><a href="postconf.5.html#queue_directory">queue_directory</a></b> parameter,
               the <b>qshape</b> program does not. If you must use  vari-
               able expansions in the <b><a href="postconf.5.html#queue_directory">queue_directory</a></b> setting, you
@@ -104,7 +104,7 @@ QSHAPE(1)                                                            QSHAPE(1)
        <a href="QSHAPE_README.html">QSHAPE_README</a> Examples and background material.
 
 <b>FILES</b>
-       $<a href="postconf.5.html#config_directory">config_directory</a>/main.cf, Postfix installation parameters.
+       $<a href="postconf.5.html#config_directory">config_directory</a>/<a href="postconf.5.html">main.cf</a>, Postfix installation parameters.
        $<a href="postconf.5.html#queue_directory">queue_directory</a>/maildrop/, local submission directory.
        $<a href="postconf.5.html#queue_directory">queue_directory</a>/incoming/, new message queue.
        $<a href="postconf.5.html#queue_directory">queue_directory</a>/hold/, messages waiting for tech support.

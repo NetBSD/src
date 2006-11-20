@@ -1,4 +1,4 @@
-/*	$NetBSD: domain_list.c,v 1.1.1.4 2004/05/31 00:24:29 heas Exp $	*/
+/*	$NetBSD: domain_list.c,v 1.1.1.4.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -40,7 +40,7 @@
 /* .RS
 /* .IP MATCH_FLAG_PARENT
 /*      The hostname pattern foo.com matches itself and any name below
-/*      the domain foo.com. If this flag is cleared, foo.com matches itself 
+/*      the domain foo.com. If this flag is cleared, foo.com matches itself
 /*	only, and .foo.com matches any name below the domain foo.com.
 /* .RE
 /*	Specify MATCH_FLAG_NONE to request none of the above.
@@ -118,6 +118,7 @@ int     main(int argc, char **argv)
 		   "YES" : "NO");
     vstream_fflush(VSTREAM_OUT);
     domain_list_free(list);
+    return (0);
 }
 
 #endif

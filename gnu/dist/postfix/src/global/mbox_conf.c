@@ -1,4 +1,4 @@
-/*	$NetBSD: mbox_conf.c,v 1.1.1.2 2004/05/31 00:24:32 heas Exp $	*/
+/*	$NetBSD: mbox_conf.c,v 1.1.1.2.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -21,11 +21,11 @@
 /*	The following gives the method names and corresponding bit
 /*	mask value:
 /* .IP "flock (MBOX_FLOCK_LOCK)"
-/*	Use flock() style lock after opening the file. This is the mailbox 
-/*	locking method traditionally used on BSD-ish systems (including 
+/*	Use flock() style lock after opening the file. This is the mailbox
+/*	locking method traditionally used on BSD-ish systems (including
 /*	Ultrix and SunOS). It is not suitable for remote file systems.
 /* .IP "fcntl (MBOX_FCNTL_LOCK)"
-/*	Use fcntl() style lock after opening the file. This is the mailbox 
+/*	Use fcntl() style lock after opening the file. This is the mailbox
 /*	locking method on System-V-ish systems (Solaris, AIX, IRIX, HP-UX).
 /*	This method is supposed to work for remote systems, but often
 /*	has problems.

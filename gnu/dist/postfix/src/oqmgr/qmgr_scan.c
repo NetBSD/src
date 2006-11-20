@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_scan.c,v 1.1.1.2 2004/05/31 00:24:41 heas Exp $	*/
+/*	$NetBSD: qmgr_scan.c,v 1.1.1.2.2.1 2006/11/20 13:30:40 tron Exp $	*/
 
 /*++
 /* NAME
@@ -78,7 +78,7 @@
 
 static void qmgr_scan_start(QMGR_SCAN *scan_info)
 {
-    char   *myname = "qmgr_scan_start";
+    const char *myname = "qmgr_scan_start";
 
     /*
      * Sanity check.

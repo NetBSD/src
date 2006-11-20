@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve_local.c,v 1.7.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: resolve_local.c,v 1.7.2.2 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -78,8 +78,11 @@ int     resolve_local(const char *addr)
     char   *dest;
     const char *bare_dest;
     struct addrinfo *res0 = 0;
-    int     len;
+    ssize_t len;
 
+    /*
+     * The optimizer will eliminate tests that always fail.
+     */
 #define RETURN(x) \
     do { \
 	myfree(saved_addr); \
@@ -172,6 +175,7 @@ int     main(int argc, char **argv)
     mail_conf_read();
     vstream_printf("%s\n", resolve_local(argv[1]) ? "yes" : "no");
     vstream_fflush(VSTREAM_OUT);
+    return (0);
 }
 
 #endif

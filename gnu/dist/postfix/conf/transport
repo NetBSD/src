@@ -1,4 +1,4 @@
-# TRANSPORT(5)                                         TRANSPORT(5)
+# TRANSPORT(5)                                                      TRANSPORT(5)
 # 
 # NAME
 #        transport - Postfix transport table format
@@ -12,47 +12,62 @@
 # 
 # DESCRIPTION
 #        The  optional  transport(5) table specifies a mapping from
-#        email addresses  to  message  delivery  transports  and/or
-#        relay hosts. The mapping is used by the trivial-rewrite(8)
+#        email addresses to message delivery transports  and  next-
+#        hop hosts. The table is searched by the trivial-rewrite(8)
 #        daemon.
 # 
-#        This mapping overrides the default routing that  is  built
-#        into Postfix:
+#        This  mapping  overrides  the  default   transport:nexthop
+#        selection that is built into Postfix:
 # 
-#        mydestination
-#               A  list of domains that is by default delivered via
-#               $local_transport. This also includes  domains  that
-#               match $inet_interfaces or $proxy_interfaces.
+#        local_transport (default: local:$myhostname)
+#               This  is  the default for final delivery to domains
+#               listed with mydestination, and for [ipaddress] des-
+#               tinations    that    match    $inet_interfaces   or
+#               $proxy_interfaces. The default nexthop  destination
+#               is the MTA hostname.
 # 
-#        virtual_mailbox_domains
-#               A  list of domains that is by default delivered via
-#               $virtual_transport.
+#        virtual_transport (default: virtual:)
+#               This  is  the default for final delivery to domains
+#               listed with  virtual_mailbox_domains.  The  default
+#               nexthop destination is the recipient domain.
 # 
-#        relay_domains
-#               A list of domains that is by default delivered  via
-#               $relay_transport.
+#        relay_transport (default: relay:)
+#               This  is the default for remote delivery to domains
+#               listed with relay_domains. In order  of  decreasing
+#               precedence,  the  nexthop destination is taken from
+#               relay_transport,   sender_dependent_relayhost_maps,
+#               relayhost, or from the recipient domain.
 # 
-#        any other destination
-#               Mail for any other destination is by default deliv-
-#               ered via $default_transport.
+#        default_transport (default: smtp:)
+#               This  is  the  default for remote delivery to other
+#               destinations.  In order of  decreasing  precedence,
+#               the    nexthop    destination    is    taken   from
+#               default_transport, sender_dependent_relayhost_maps,
+#               relayhost, or from the recipient domain.
 # 
-#        Normally, the transport(5) table is specified  as  a  text
-#        file  that serves as input to the postmap(1) command.  The
-#        result, an indexed file in dbm or db format, is  used  for
-#        fast  searching  by  the  mail system. Execute the command
-#        "postmap /etc/postfix/transport" in order to  rebuild  the
+#        Normally,  the  transport(5)  table is specified as a text
+#        file that serves as input to the postmap(1) command.   The
+#        result,  an  indexed file in dbm or db format, is used for
+#        fast searching by the mail  system.  Execute  the  command
+#        "postmap  /etc/postfix/transport"  in order to rebuild the
 #        indexed file after changing the transport table.
 # 
-#        When  the  table  is provided via other means such as NIS,
-#        LDAP or SQL, the same lookups are  done  as  for  ordinary
+#        When the table is provided via other means  such  as  NIS,
+#        LDAP  or  SQL,  the  same lookups are done as for ordinary
 #        indexed files.
 # 
-#        Alternatively,  the  table  can  be provided as a regular-
+#        Alternatively, the table can be  provided  as  a  regular-
 #        expression map where patterns are given as regular expres-
-#        sions,  or lookups can be directed to TCP-based server. In
-#        that case, the lookups are done in  a  slightly  different
-#        way  as  described below under "REGULAR EXPRESSION TABLES"
+#        sions, or lookups can be directed to TCP-based server.  In
+#        that  case,  the  lookups are done in a slightly different
+#        way as described below under "REGULAR  EXPRESSION  TABLES"
 #        and "TCP-BASED TABLES".
+# 
+# CASE FOLDING
+#        The  search  string is folded to lowercase before database
+#        lookup. As of Postfix 2.3, the search string is  not  case
+#        folded  with database types such as regexp: or pcre: whose
+#        lookup fields can match both upper and lower case.
 # 
 # TABLE FORMAT
 #        The input format for the postmap(1) command is as follows:
@@ -209,8 +224,8 @@
 #        some.domain.hierarchy  is  not  looked  up  via its parent
 #        domains, nor is user+foo@domain looked up as  user@domain.
 # 
-#        Patterns  are  applied  in  the  order as specified in the
-#        table, until a pattern is found that  matches  the  search
+#        Patterns  are applied in the order as specified in the ta-
+#        ble, until a pattern is  found  that  matches  the  search
 #        string.
 # 
 #        Results  are  the  same as with indexed file lookups, with
@@ -220,9 +235,9 @@
 # TCP-BASED TABLES
 #        This  section  describes how the table lookups change when
 #        lookups are directed to a TCP-based server. For a descrip-
-#        tion   of  the  TCP  client/server  lookup  protocol,  see
-#        tcp_table(5).  This feature is not  available  up  to  and
-#        including Postfix version 2.2.
+#        tion of the TCP client/server lookup protocol, see tcp_ta-
+#        ble(5).  This feature is not available up to and including
+#        Postfix version 2.3.
 # 
 #        Each  lookup  operation  uses the entire recipient address
 #        once.  Thus, some.domain.hierarchy is not  looked  up  via
@@ -269,4 +284,4 @@
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
 # 
-#                                                      TRANSPORT(5)
+#                                                                   TRANSPORT(5)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_addr_map.c,v 1.1.1.5 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: mail_addr_map.c,v 1.1.1.5.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -79,7 +79,7 @@
 ARGV   *mail_addr_map(MAPS *path, const char *address, int propagate)
 {
     VSTRING *buffer = 0;
-    char   *myname = "mail_addr_map";
+    const char *myname = "mail_addr_map";
     const char *string;
     char   *ratsign;
     char   *extension = 0;
@@ -177,7 +177,7 @@ int     main(int argc, char **argv)
     msg_verbose = 1;
     if (chdir(var_queue_dir) < 0)
 	msg_fatal("chdir %s: %m", var_queue_dir);
-    path = maps_create(argv[0], argv[1], DICT_FLAG_LOCK);
+    path = maps_create(argv[0], argv[1], DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
     while (vstring_fgets_nonl(buffer, VSTREAM_IN)) {
 	msg_info("=== Address extension on, extension propagation on ===");
 	UPDATE(var_rcpt_delim, "+");
@@ -193,6 +193,7 @@ int     main(int argc, char **argv)
     }
     vstring_free(buffer);
     maps_free(path);
+    return (0);
 }
 
 #endif
