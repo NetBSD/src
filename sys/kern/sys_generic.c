@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.96 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.97 2006/11/20 15:16:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.96 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.97 2006/11/20 15:16:22 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -822,9 +822,9 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	error = selscan(l, (fd_mask *)(bits + ni * 0),
 			   (fd_mask *)(bits + ni * 3), nd, retval);
 	if (error || *retval)
-		goto done;
+		goto donemask;
 	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
-		goto done;
+		goto donemask;
 	s = splsched();
 	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
@@ -835,10 +835,11 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	splx(s);
 	if (error == 0)
 		goto retry;
- done:
+ donemask:
 	if (mask)
 		(void)sigprocmask1(p, SIG_SETMASK, &oldmask, NULL);
 	l->l_flag &= ~L_SELECT;
+ done:
 	/* select is not restarted after signals... */
 	if (error == ERESTART)
 		error = EINTR;
@@ -1000,9 +1001,9 @@ pollcommon(struct lwp *l, register_t *retval,
 	l->l_flag |= L_SELECT;
 	error = pollscan(l, (struct pollfd *)bits, nfds, retval);
 	if (error || *retval)
-		goto done;
+		goto donemask;
 	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
-		goto done;
+		goto donemask;
 	s = splsched();
 	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
@@ -1013,10 +1014,11 @@ pollcommon(struct lwp *l, register_t *retval,
 	splx(s);
 	if (error == 0)
 		goto retry;
- done:
+ donemask:
 	if (mask != NULL)
 		(void)sigprocmask1(p, SIG_SETMASK, &oldmask, NULL);
 	l->l_flag &= ~L_SELECT;
+ done:
 	/* poll is not restarted after signals... */
 	if (error == ERESTART)
 		error = EINTR;
