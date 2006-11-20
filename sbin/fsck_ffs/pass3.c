@@ -1,4 +1,4 @@
-/*	$NetBSD: pass3.c,v 1.18 2005/01/13 19:56:02 christos Exp $	*/
+/*	$NetBSD: pass3.c,v 1.18.2.1 2006/11/20 21:37:29 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass3.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: pass3.c,v 1.18 2005/01/13 19:56:02 christos Exp $");
+__RCSID("$NetBSD: pass3.c,v 1.18.2.1 2006/11/20 21:37:29 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,9 +125,7 @@ pass3(void)
 		}
 	}
 #ifdef PROGRESS
-	if (preen)
-		progress_add(inplast);
-	else
+	if (!preen)
 		progress_done();
 #endif /* PROGRESS */
 }
