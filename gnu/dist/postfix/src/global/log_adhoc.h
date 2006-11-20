@@ -1,4 +1,4 @@
-/*	$NetBSD: log_adhoc.h,v 1.1.1.2 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: log_adhoc.h,v 1.1.1.2.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 #ifndef _LOG_ADHOC_H_INCLUDED_
 #define _LOG_ADHOC_H_INCLUDED_
@@ -16,20 +16,20 @@
  /*
   * System library.
   */
-#include <stdarg.h>
 #include <time.h>
+
+ /*
+  * Global library.
+  */
+#include <recipient_list.h>
+#include <dsn.h>
+#include <msg_stats.h>
 
  /*
   * Client interface.
   */
-extern void PRINTFLIKE(7, 8) log_adhoc(const char *, const char *,
-				               const char *, const char *,
-				               time_t, const char *,
-				               const char *,...);
-extern void vlog_adhoc(const char *, const char *,
-		               const char *, const char *,
-		               time_t, const char *,
-		               const char *, va_list);
+extern void log_adhoc(const char *, MSG_STATS *, RECIPIENT *, const char *,
+		              DSN *, const char *);
 
 /* LICENSE
 /* .ad

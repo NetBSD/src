@@ -1,16 +1,16 @@
-#	$NetBSD: Makefile,v 1.13.2.1 2006/07/12 15:06:48 tron Exp $
+#	$NetBSD: Makefile,v 1.13.2.2 2006/11/20 13:31:05 tron Exp $
 
 # The first four/five of these are libraries and have to be built first.
 
 .include <bsd.own.mk>
 
 .if ${MKCRYPTO} != "no"
-SUBDIR=	util global dns masterlib tls .WAIT tlsmgr
+SUBDIR=	util global dns masterlib tls .WAIT tlsmgr milter xsasl .WAIT
 .else
-SUBDIR=	util global dns masterlib .WAIT
+SUBDIR=	util global dns masterlib milter xsasl .WAIT
 .endif
 SUBDIR+=README_FILES anvil bounce cleanup discard error flush html \
-	lmtp local man master oqmgr pickup pipe postalias \
+	local man master oqmgr pickup pipe postalias \
 	postcat postconf postdrop postfix postkick postlock \
 	postlog postmap postqueue postsuper proxymap qmgr scache \
 	sendmail showq smtp smtpd spawn trivial-rewrite verify \

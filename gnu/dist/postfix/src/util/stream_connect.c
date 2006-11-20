@@ -1,4 +1,4 @@
-/*	$NetBSD: stream_connect.c,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: stream_connect.c,v 1.1.1.2.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -64,7 +64,7 @@
 int     stream_connect(const char *path, int block_mode, int unused_timeout)
 {
 #ifdef STREAM_CONNECTIONS
-    char   *myname = "stream_connect";
+    const char *myname = "stream_connect";
     int     pair[2];
     int     fifo;
 

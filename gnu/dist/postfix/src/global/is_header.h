@@ -1,4 +1,4 @@
-/*	$NetBSD: is_header.h,v 1.1.1.2 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: is_header.h,v 1.1.1.2.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 #ifndef _IS_HEADER_H_INCLUDED_
 #define _IS_HEADER_H_INCLUDED_
@@ -15,7 +15,10 @@
 
  /* External interface. */
 
-extern int is_header(const char *);
+#define IS_HEADER_NULL_TERMINATED	(-1)
+#define is_header(str)	is_header_buf(str, IS_HEADER_NULL_TERMINATED)
+
+extern ssize_t is_header_buf(const char *, ssize_t);
 
 /* LICENSE
 /* .ad

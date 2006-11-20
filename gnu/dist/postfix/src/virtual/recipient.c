@@ -1,4 +1,4 @@
-/*	$NetBSD: recipient.c,v 1.1.1.2 2004/05/31 00:25:03 heas Exp $	*/
+/*	$NetBSD: recipient.c,v 1.1.1.2.2.1 2006/11/20 13:31:05 tron Exp $	*/
 
 /*++
 /* NAME
@@ -58,7 +58,7 @@
 
 int     deliver_recipient(LOCAL_STATE state, USER_ATTR usr_attr)
 {
-    char   *myname = "deliver_recipient";
+    const char *myname = "deliver_recipient";
     int     rcpt_stat;
 
     /*
@@ -73,8 +73,8 @@ int     deliver_recipient(LOCAL_STATE state, USER_ATTR usr_attr)
      * handle is the full address.
      */
     if (state.msg_attr.delivered == 0)
-	state.msg_attr.delivered = state.msg_attr.recipient;
-    state.msg_attr.user = mystrdup(state.msg_attr.recipient);
+	state.msg_attr.delivered = state.msg_attr.rcpt.address;
+    state.msg_attr.user = mystrdup(state.msg_attr.rcpt.address);
     lowercase(state.msg_attr.user);
 
     /*

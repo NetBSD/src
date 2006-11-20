@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn_command.c,v 1.1.1.3 2004/11/13 05:06:03 heas Exp $	*/
+/*	$NetBSD: spawn_command.c,v 1.1.1.3.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -44,10 +44,10 @@
 /* .IP "SPAWN_CMD_STDERR (int)"
 /*	Each of these specifies I/O redirection of one of the standard file
 /*	descriptors for the command.
-/* .IP "SPAWN_CMD_UID (int)"
+/* .IP "SPAWN_CMD_UID (uid_t)"
 /*	The user ID to execute the command as. The value -1 is reserved
 /*	and cannot be specified.
-/* .IP "SPAWN_CMD_GID (int)"
+/* .IP "SPAWN_CMD_GID (gid_t)"
 /*	The group ID to execute the command as. The value -1 is reserved
 /*	and cannot be specified.
 /* .IP "SPAWN_CMD_TIME_LIMIT (int)"
@@ -121,7 +121,7 @@ struct spawn_args {
 
 static void get_spawn_args(struct spawn_args * args, int init_key, va_list ap)
 {
-    char   *myname = "get_spawn_args";
+    const char *myname = "get_spawn_args";
     int     key;
 
     /*
@@ -202,7 +202,7 @@ static void get_spawn_args(struct spawn_args * args, int init_key, va_list ap)
 
 WAIT_STATUS_T spawn_command(int key,...)
 {
-    char   *myname = "spawn_comand";
+    const char *myname = "spawn_comand";
     va_list ap;
     pid_t   pid;
     WAIT_STATUS_T wait_status;

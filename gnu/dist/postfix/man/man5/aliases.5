@@ -1,4 +1,4 @@
-.\"	$NetBSD: aliases.5,v 1.1.1.6.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: aliases.5,v 1.1.1.6.2.2 2006/11/20 13:30:17 tron Exp $
 .\"
 .TH ALIASES 5 
 .ad
@@ -54,8 +54,9 @@ such as whitespace, `#', `:', or `@'. The \fIname\fR is folded to
 lowercase, in order to make database lookups case insensitive.
 .PP
 In addition, when an alias exists for \fBowner-\fIname\fR, delivery
-diagnostics are directed to that address, instead of to the originator.
-This is typically used to direct delivery errors to the owner of
+diagnostics are directed to that address, instead of to the originator
+of the message.
+This is typically used to direct delivery errors to the maintainer of
 a mailing list, who is in a better position to deal with mailing
 list delivery problems than the originator of the undelivered mail.
 .PP
@@ -100,6 +101,13 @@ the search is repeated for the unextended address (e.g., \fIuser\fR).
 The \fBpropagate_unmatched_extensions\fR parameter controls
 whether an unmatched address extension (\fI+foo\fR) is
 propagated to the result of table lookup.
+.SH "CASE FOLDING"
+.na
+.nf
+.ad
+.fi
+The local(8) delivery agent always folds the search string
+to lowercase before database lookup.
 .SH "SECURITY"
 .na
 .nf
@@ -147,6 +155,13 @@ Give special treatment to \fBowner-\fIlistname\fR and
 addresses.
 .IP \fBrecipient_delimiter\fR
 Delimiter that separates recipients from address extensions.
+.PP
+Available in Postfix version 2.3 and later:
+.IP \fBfrozen_delivered_to\fR
+Update the local(8) delivery agent's Delivered-To: address
+(see prepend_delivered_header) only once, at the start of
+a delivery; do not update the Delivered-To: address while
+expanding aliases or .forward files.
 .SH "STANDARDS"
 .na
 .nf

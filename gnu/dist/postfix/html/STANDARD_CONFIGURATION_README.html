@@ -68,13 +68,13 @@ Postfix installs when you download the Postfix source code via
 <a href="http://www.postfix.org/">http://www.postfix.org/</a>. </p>
 
 <p> You can use the command "<b>postconf -n</b>" to find out what
-settings are overruled by your main.cf. Besides a few pathname
+settings are overruled by your <a href="postconf.5.html">main.cf</a>. Besides a few pathname
 settings, few parameters should be set on a stand-alone box, beyond
 what is covered in the <a href="BASIC_CONFIGURATION_README.html">BASIC_CONFIGURATION_README</a> document: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     # Optional: send mail as user@domainname instead of user@hostname.
     #<a href="postconf.5.html#myorigin">myorigin</a> = $<a href="postconf.5.html#mydomain">mydomain</a>
 
@@ -104,13 +104,13 @@ their default settings. </p>
 
 <blockquote>
 <pre>
-1 /etc/postfix/main.cf:
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
 2     <a href="postconf.5.html#myorigin">myorigin</a> = $<a href="postconf.5.html#mydomain">mydomain</a>
 3     <a href="postconf.5.html#relayhost">relayhost</a> = $<a href="postconf.5.html#mydomain">mydomain</a>
 4     <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> = 127.0.0.1
 5     <a href="postconf.5.html#local_transport">local_transport</a> = <a href="error.8.html">error</a>:local delivery is disabled
 6 
-7 /etc/postfix/master.cf:
+7 /etc/postfix/<a href="master.5.html">master.cf</a>:
 8     Comment out the local delivery agent entry
 </pre>
 </blockquote>
@@ -160,7 +160,7 @@ is final destination for "user@hostname.example.com". </p>
 
 <blockquote>
 <pre>
-1 /etc/postfix/main.cf:
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
 2     <a href="postconf.5.html#myorigin">myorigin</a> = $<a href="postconf.5.html#mydomain">mydomain</a>
 3     <a href="postconf.5.html#mynetworks">mynetworks</a> = 127.0.0.0/8 10.0.0.0/24
 4     <a href="postconf.5.html#relay_domains">relay_domains</a> =
@@ -194,7 +194,7 @@ mail as "user@example.com" and is final destination for
  1 DNS:
  2     example.com    IN    MX  10 mailhost.example.com.
  3 
- 4 /etc/postfix/main.cf:
+ 4 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  5     <a href="postconf.5.html#myorigin">myorigin</a> = $<a href="postconf.5.html#mydomain">mydomain</a>
  6     <a href="postconf.5.html#mydestination">mydestination</a> = $<a href="postconf.5.html#myhostname">myhostname</a> localhost.$<a href="postconf.5.html#mydomain">mydomain</a> localhost $<a href="postconf.5.html#mydomain">mydomain</a>
  7     <a href="postconf.5.html#mynetworks">mynetworks</a> = 127.0.0.0/8 10.0.0.0/24
@@ -278,13 +278,13 @@ harder to break. </p>
 
 <blockquote>
 <pre>
-1 /etc/postfix/main.cf:
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
 2     <a href="postconf.5.html#myorigin">myorigin</a> = example.com
 3     <a href="postconf.5.html#mydestination">mydestination</a> =
 4     <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> =
 5     <a href="postconf.5.html#local_transport">local_transport</a> = <a href="error.8.html">error</a>:local mail delivery is disabled
 6 
-7 /etc/postfix/master.cf:
+7 /etc/postfix/<a href="master.5.html">master.cf</a>:
 8     Comment out the local delivery agent
 </pre>
 </blockquote>
@@ -312,10 +312,10 @@ All the mail to these two accounts is forwarded to an inside address.
 
 <blockquote>
 <pre>
-1 /etc/postfix/main.cf:
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
 2     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
 3 
-4 /etc/postfix/virtual:
+4 /etc/postfix/<a href="virtual.8.html">virtual</a>:
 5     postmaster      postmaster@example.com
 6     abuse           abuse@example.com
 </pre>
@@ -338,7 +338,7 @@ is the real purpose of the firewall email function. </p>
 
 <blockquote>
 <pre>
- 1 /etc/postfix/main.cf:
+ 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#mynetworks">mynetworks</a> = 127.0.0.0/8 12.34.56.0/24
  3     <a href="postconf.5.html#relay_domains">relay_domains</a> = example.com
  4     <a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a> = 
@@ -391,37 +391,6 @@ whenever you change the relay_recipients table. </p>
 <p> Execute the command "<b>postmap /etc/postfix/transport</b>"
 whenever you change the transport table. </p>
 
-<h2><a name="some_local">Delivering some but not all accounts
-locally</a></h2>
-
-<p> A drawback of sending mail as "user@example.com" (instead of
-"user@hostname.example.com") is that mail for "root" and other
-system accounts is also sent to the central mailhost.  In order to
-deliver such accounts locally, you can set up virtual aliases as
-follows:  </p>
-
-<blockquote>
-<pre>
-1 /etc/postfix/main.cf:
-2     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
-3 
-4 /etc/postfix/virtual:
-5     root     root@localhost
-6     . . .
-</pre>
-</blockquote>
-
-<p> Translation: </p>
-
-<ul>
-
-<li> <p> Line 5: As described in the <a href="virtual.5.html">virtual(5)</a> manual page, the
-bare name "root" matches "root@site" when "site" is equal to
-$<a href="postconf.5.html#myorigin">myorigin</a>, when "site" is listed in $<a href="postconf.5.html#mydestination">mydestination</a>, or when it
-matches $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> or $<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>. </p>
-
-</ul>
-
 <p> In some installations, there may be separate instances of Postfix
 processing inbound and outbound mail on a multi-homed firewall. The
 inbound Postfix instance has an SMTP server listening on the external
@@ -437,6 +406,37 @@ as the source address for outbound connections and will be unable to
 reach hosts on "the other side" of the firewall. The symptoms are that
 the firewall is unable to connect to hosts that are in fact up. See the
 <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> parameter documentation for suggested work-arounds.</p>
+
+<h2><a name="some_local">Delivering some but not all accounts
+locally</a></h2>
+
+<p> A drawback of sending mail as "user@example.com" (instead of
+"user@hostname.example.com") is that mail for "root" and other
+system accounts is also sent to the central mailhost.  In order to
+deliver such accounts locally, you can set up virtual aliases as
+follows:  </p>
+
+<blockquote>
+<pre>
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+2     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+3 
+4 /etc/postfix/<a href="virtual.8.html">virtual</a>:
+5     root     root@localhost
+6     . . .
+</pre>
+</blockquote>
+
+<p> Translation: </p>
+
+<ul>
+
+<li> <p> Line 5: As described in the <a href="virtual.5.html">virtual(5)</a> manual page, the
+bare name "root" matches "root@site" when "site" is equal to
+$<a href="postconf.5.html#myorigin">myorigin</a>, when "site" is listed in $<a href="postconf.5.html#mydestination">mydestination</a>, or when it
+matches $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> or $<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>. </p>
+
+</ul>
 
 <h2><a name="intranet">Running Postfix behind a firewall</a></h2>
 
@@ -458,7 +458,7 @@ discussed the first half of this document. </p>
 
 <blockquote>
 <pre>
- 1 /etc/postfix/main.cf:
+ 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
  3     <a href="postconf.5.html#relayhost">relayhost</a> =
  4     # Optional for a machine that isn't "always on"
@@ -483,7 +483,7 @@ this example assumes that the organization uses DNS MX records
 internally.  The <tt>[]</tt> forces Postfix to do no MX lookup.
 </p>
 
-<li> <p> Line 3: IMPORTANT: do not specify a <a href="postconf.5.html#relayhost">relayhost</a> in main.cf.
+<li> <p> Line 3: IMPORTANT: do not specify a <a href="postconf.5.html#relayhost">relayhost</a> in <a href="postconf.5.html">main.cf</a>.
 </p>
 
 <li> <p> Line 5: This prevents mail from being stuck in the queue
@@ -513,7 +513,7 @@ is all you need: </p>
  1 DNS:
  2     the.backed-up.domain.tld        IN      MX 100 your.machine.tld.
  3 
- 4 /etc/postfix/main.cf:
+ 4 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  5     <a href="postconf.5.html#relay_domains">relay_domains</a> = . . . the.backed-up.domain.tld
  6     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
  7         <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a> <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
@@ -535,7 +535,7 @@ need the above, plus: </p>
 
 <blockquote>
 <pre>
-18 /etc/postfix/main.cf:
+18 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
 19     <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
 20 
 21 /etc/postfix/transport:
@@ -566,8 +566,8 @@ world than the local machine. </p>
 from filling up with undeliverable MAILER-DAEMON messages. If you
 can't maintain a list of valid recipients then you must specify
 "<a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> =" (that is, an empty value), or you must
-specify an "@example.com  x" wild-card in the relay_recipients
-table. </p>
+specify an "@the.backed-up.domain.tld  x" wild-card in the
+relay_recipients table. </p>
 
 <li> <p> Line 22: The <tt>[]</tt> forces Postfix to do no MX lookup. </p>
 
@@ -580,16 +580,17 @@ tables Postfix supports, use the command "<b>postconf -m</b>". </p>
 <p> Execute the command "<b>postmap /etc/postfix/transport</b>"
 whenever you change the transport table. </p>
 
-<p> NOTE: Do not use the <a href="postconf.5.html#fallback_relay">fallback_relay</a> feature when relaying mail 
+<p> NOTE for Postfix &lt; 2.2: Do not use the <a href="postconf.5.html#fallback_relay">fallback_relay</a> feature
+when relaying mail
 for a backup or primary MX domain. Mail would loop between the
 Postfix MX host and the <a href="postconf.5.html#fallback_relay">fallback_relay</a> host when the final destination
 is unavailable. </p>
  
 <ul>
 
-<li> In main.cf specify "<tt><a href="postconf.5.html#relay_transport">relay_transport</a> = relay</tt>",
+<li> In <a href="postconf.5.html">main.cf</a> specify "<tt><a href="postconf.5.html#relay_transport">relay_transport</a> = relay</tt>",
 
-<li> In master.cf specify "<tt>-o <a href="postconf.5.html#fallback_relay">fallback_relay</a> =</tt>" at the    
+<li> In <a href="master.5.html">master.cf</a> specify "<tt>-o <a href="postconf.5.html#fallback_relay">fallback_relay</a> =</tt>" at the    
 end of the <tt>relay</tt> entry.
 
 <li> In transport maps, specify "<tt>relay:<i>nexthop...</i></tt>"
@@ -626,7 +627,7 @@ that is connected all the time. In the example below, the <tt>[]</tt>
 prevents Postfix from trying to look up DNS MX records.  </p>
 
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#relayhost">relayhost</a> = [smtprelay.someprovider.com]
 </pre>
 
@@ -640,14 +641,14 @@ Postfix retries to deliver delayed mail. To prevent such telephone
 calls from being placed, disable spontaneous SMTP mail deliveries. </p>
 
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#defer_transports">defer_transports</a> = smtp (Only for on-demand dialup IP hosts)
 </pre>
 
 <li> <p>Disable SMTP client DNS lookups (dialup LAN only).</p>
 
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#disable_dns_lookups">disable_dns_lookups</a> = yes (Only for on-demand dialup IP hosts)
 </pre>
 
@@ -718,7 +719,7 @@ discussed the first half of this document. </p>
 
 <blockquote>
 <pre>
-1 /etc/postfix/main.cf:
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
 2     <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = hash:/etc/postfix/generic
 3 
 4 /etc/postfix/generic:
@@ -766,7 +767,7 @@ discussed the first half of this document. </p>
 
 <blockquote>
 <pre>
- 1 /etc/postfix/main.cf:
+ 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#myhostname">myhostname</a> = hostname.localdomain
  3     <a href="postconf.5.html#mydomain">mydomain</a> = localdomain
  4 
@@ -777,7 +778,7 @@ discussed the first half of this document. </p>
  9 /etc/postfix/canonical:
 10     your-login-name    your-account@your-isp.com
 11 
-12 /etc/postfix/virtual:
+12 /etc/postfix/<a href="virtual.8.html">virtual</a>:
 13     your-account@your-isp.com       your-login-name
 </pre>
 </blockquote>

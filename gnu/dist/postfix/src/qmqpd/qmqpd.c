@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd.c,v 1.1.1.6.2.1 2006/07/12 15:06:41 tron Exp $	*/
+/*	$NetBSD: qmqpd.c,v 1.1.1.6.2.2 2006/11/20 13:30:48 tron Exp $	*/
 
 /*++
 /* NAME
@@ -155,10 +155,6 @@
 #include <ctype.h>
 #include <stdarg.h>
 
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
-
 /* Utility library. */
 
 #include <msg.h>
@@ -241,7 +237,7 @@ static void qmqpd_open_file(QMQPD_STATE *state)
     state->dest = mail_stream_service(MAIL_CLASS_PUBLIC, var_cleanup_service);
     if (state->dest == 0
 	|| attr_print(state->dest->stream, ATTR_FLAG_NONE,
-		      ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, cleanup_flags,
+		      ATTR_TYPE_INT, MAIL_ATTR_FLAGS, cleanup_flags,
 		      ATTR_TYPE_END) != 0)
 	msg_fatal("unable to connect to the %s %s service",
 		  MAIL_CLASS_PUBLIC, var_cleanup_service);
@@ -254,7 +250,8 @@ static void qmqpd_open_file(QMQPD_STATE *state)
      * bloody likely, but present for the sake of consistency with all other
      * Postfix points of entrance).
      */
-    rec_fprintf(state->cleanup, REC_TYPE_TIME, "%ld", (long) state->time);
+    rec_fprintf(state->cleanup, REC_TYPE_TIME, REC_TYPE_TIME_FORMAT,
+		REC_TYPE_TIME_ARG(state->arrival_time));
     if (*var_filter_xport)
 	rec_fprintf(state->cleanup, REC_TYPE_FILT, "%s", var_filter_xport);
 }
@@ -316,17 +313,31 @@ static void qmqpd_copy_sender(QMQPD_STATE *state)
 
 static void qmqpd_write_attributes(QMQPD_STATE *state)
 {
+
+    /*
+     * Logging attributes, also used for XFORWARD.
+     */
     if (IS_AVAIL_CLIENT_NAME(state->name))
 	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
-		    MAIL_ATTR_CLIENT_NAME, state->name);
+		    MAIL_ATTR_LOG_CLIENT_NAME, state->name);
     if (IS_AVAIL_CLIENT_ADDR(state->addr))
 	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
-		    MAIL_ATTR_CLIENT_ADDR, state->rfc_addr);
+		    MAIL_ATTR_LOG_CLIENT_ADDR, state->rfc_addr);
     if (IS_AVAIL_CLIENT_NAMADDR(state->namaddr))
 	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
-		    MAIL_ATTR_ORIGIN, state->namaddr);
+		    MAIL_ATTR_LOG_ORIGIN, state->namaddr);
     rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
-		MAIL_ATTR_PROTO_NAME, state->protocol);
+		MAIL_ATTR_LOG_PROTO_NAME, state->protocol);
+
+    /*
+     * Provenance attributes for Milter policy etc.
+     */
+    rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+		MAIL_ATTR_ACT_CLIENT_NAME, state->name);
+    rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+		MAIL_ATTR_ACT_CLIENT_ADDR, state->rfc_addr);
+    rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%u",
+		MAIL_ATTR_ACT_CLIENT_AF, state->addr_family);
 }
 
 /* qmqpd_copy_recipients - copy message recipients */
@@ -408,13 +419,15 @@ static void qmqpd_write_content(QMQPD_STATE *state)
 		    state->protocol, state->queue_id);
 	quote_822_local(state->buf, state->recipient);
 	rec_fprintf(state->cleanup, REC_TYPE_NORM,
-		 "\tfor <%s>; %s", STR(state->buf), mail_date(state->time));
+		    "\tfor <%s>; %s", STR(state->buf),
+		    mail_date(state->arrival_time.tv_sec));
     } else {
 	rec_fprintf(state->cleanup, REC_TYPE_NORM,
 		    "\tby %s (%s) with %s",
 		    var_myhostname, var_mail_name, state->protocol);
 	rec_fprintf(state->cleanup, REC_TYPE_NORM,
-		    "\tid %s; %s", state->queue_id, mail_date(state->time));
+		    "\tid %s; %s", state->queue_id,
+		    mail_date(state->arrival_time.tv_sec));
     }
 #ifdef RECEIVED_ENVELOPE_FROM
     quote_822_local(state->buf, state->sender);
@@ -524,6 +537,9 @@ static void qmqpd_send_status(QMQPD_STATE *state)
     if (state->err == CLEANUP_STAT_OK) {
 	qmqpd_reply(state, DONT_LOG, QMQPD_STAT_OK,
 		    "Ok: queued as %s", state->queue_id);
+    } else if ((state->err & CLEANUP_STAT_DEFER) != 0) {
+	qmqpd_reply(state, DO_LOG, QMQPD_STAT_RETRY,
+		    "Error: %s", STR(state->why_rejected));
     } else if ((state->err & CLEANUP_STAT_BAD) != 0) {
 	qmqpd_reply(state, DO_LOG, QMQPD_STAT_RETRY,
 		    "Error: internal error %d", state->err);
@@ -534,7 +550,8 @@ static void qmqpd_send_status(QMQPD_STATE *state)
 	qmqpd_reply(state, DO_LOG, QMQPD_STAT_HARD,
 		    "Error: too many hops");
     } else if ((state->err & CLEANUP_STAT_CONT) != 0) {
-	qmqpd_reply(state, DO_LOG, QMQPD_STAT_HARD,
+	qmqpd_reply(state, DO_LOG, STR(state->why_rejected)[0] == '4' ?
+		    QMQPD_STAT_RETRY : QMQPD_STAT_HARD,
 		    "Error: %s", STR(state->why_rejected));
     } else if ((state->err & CLEANUP_STAT_WRITE) != 0) {
 	qmqpd_reply(state, DO_LOG, QMQPD_STAT_RETRY,

@@ -1,0 +1,33 @@
+Postfix DSN support implementation notes
+========================================
+
+In delivery status reports, Postfix now properly reports remote
+LMTP/SMTP server replies with Diagnostic-Type: SMTP, with the
+Diagnostic-Code: equal to the server reply, and with Remote-MTA:
+equal to the name of the remote MTA.
+
+Of course Postfix still produces the same "informal" error descriptions
+that it produced before (for example, the error text that appears
+in the first section of a bounce report).
+
+Other error reports are not in the form of SMTP-style replies.
+
+- The Postfix LMTP/SMTP client generates Diagnostic-Type: X-Postfix
+for locally generated errors (host not found, connection timed out
+etc.).  It generates Diagnostic-Type: SMTP only for replies from
+an SMTP server.
+
+- The queue manager generates Diagnostic-Type: X-Postfix for errors
+that it detects. It also receives error information from delivery
+agents and reports that information unmodified when it decides to
+"temporarily suspend" a delivery channel.
+
+- The "pipe to command" code in local(8) and pipe(8) produces
+Diagnostic-Type: X-UNIX, and Diagnostic-Code: text that is taken
+from /usr/include/sysexits.h or from the command output.
+
+- The code that delivers to mailbox produces Diagnostic-Type:
+X-Postfix and Diagnostic-Code: text that is the same good old
+Postfix error message that we are already familiar with. Typically
+these are errno-style reports about locking a file or appending a
+file.

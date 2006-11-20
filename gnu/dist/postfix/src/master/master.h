@@ -1,4 +1,4 @@
-/*	$NetBSD: master.h,v 1.7.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: master.h,v 1.7.2.2 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -17,11 +17,21 @@
   * when idle for a configurable amount of time, or after servicing a
   * configurable number of requests; the master process spawns new processes
   * on demand up to a configurable concurrency limit and/or periodically.
+  * 
+  * The canonical service name is what we use internally, so that we correctly
+  * handle a request to "reload" after someone changes "smtp" into "25".
+  * 
+  * We use the external service name from master.cf when reporting problems, so
+  * that the user can figure out what we are talking about. Of course we also
+  * include the canonical service name so that the UNIX-domain smtp service
+  * can be distinguished from the Internet smtp service.
   */
 typedef struct MASTER_SERV {
     int     flags;			/* status, features, etc. */
-    char   *name;			/* service endpoint name */
+    char   *ext_name;			/* service endpoint name (master.cf) */
+    char   *name;			/* service endpoint name (canonical) */
     int     type;			/* UNIX-domain, INET, etc. */
+    time_t  busy_warn_time;		/* limit "all servers busy" warning */
     int     wakeup_time;		/* wakeup interval */
     int    *listen_fd;			/* incoming requests */
     int     listen_fd_count;		/* nr of descriptors */
@@ -56,6 +66,7 @@ typedef struct MASTER_SERV {
 #define MASTER_FLAG_MARK	(1<<1)	/* garbage collection support */
 #define MASTER_FLAG_CONDWAKE	(1<<2)	/* wake up if actually used */
 #define MASTER_FLAG_INETHOST	(1<<3)	/* endpoint name specifies host */
+#define MASTER_FLAG_LOCAL_ONLY	(1<<4)	/* no remote clients */
 
 #define MASTER_THROTTLED(f)	((f)->flags & MASTER_FLAG_THROTTLE)
 
@@ -93,6 +104,11 @@ typedef struct MASTER_PROC {
   * Other manifest constants.
   */
 #define MASTER_BUF_LEN	2048		/* logical config line length */
+
+ /*
+  * master.c
+  */
+extern int master_detach;
 
  /*
   * master_ent.c

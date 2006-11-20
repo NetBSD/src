@@ -34,8 +34,7 @@
 #	By default the \fBcanonical\fR(5) mapping affects both message
 #	header addresses (i.e. addresses that appear inside messages)
 #	and message envelope addresses (for example, the addresses
-#	that are used in SMTP protocol commands). Think Sendmail
-#	rule set \fBS3\fR, if you like.  This is controlled with
+#	that are used in SMTP protocol commands). This is controlled with
 #	the \fBcanonical_classes\fR parameter.
 #
 #	NOTE: Postfix versions 2.2 and later rewrite message headers
@@ -54,6 +53,13 @@
 #
 #	The \fBcanonical\fR(5) mapping is not to be confused with local aliasing.
 #	Use the \fBaliases\fR(5) map for that purpose.
+# CASE FOLDING
+# .ad
+# .fi
+#	The search string is folded to lowercase before database
+#	lookup. As of Postfix 2.3, the search string is not case
+#	folded with database types such as regexp: or pcre: whose
+#	lookup fields can match both upper and lower case.
 # TABLE FORMAT
 # .ad
 # .fi
@@ -140,7 +146,7 @@
 #	This section describes how the table lookups change when lookups
 #	are directed to a TCP-based server. For a description of the TCP
 #	client/server lookup protocol, see \fBtcp_table\fR(5).
-#	This feature is not available up to and including Postfix version 2.2.
+#	This feature is not available up to and including Postfix version 2.3.
 #	
 #	Each lookup operation uses the entire address once.  Thus,
 #	\fIuser@domain\fR mail addresses are not broken up into their

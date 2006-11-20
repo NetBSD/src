@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_trigger.c,v 1.1.1.3 2004/05/31 00:24:32 heas Exp $	*/
+/*	$NetBSD: mail_trigger.c,v 1.1.1.3.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -12,7 +12,7 @@
 /*	const char *class;
 /*	const char *service;
 /*	const char *request;
-/*	int	length;
+/*	ssize_t	length;
 /* DESCRIPTION
 /*	mail_trigger() wakes up the specified mail subsystem, by
 /*	sending it the specified request.
@@ -69,7 +69,7 @@
 /* mail_trigger - trigger a service */
 
 int     mail_trigger(const char *class, const char *service,
-		             const char *req_buf, int req_len)
+		             const char *req_buf, ssize_t req_len)
 {
     struct stat st;
     char   *path;

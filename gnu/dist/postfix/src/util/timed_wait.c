@@ -1,4 +1,4 @@
-/*	$NetBSD: timed_wait.c,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: timed_wait.c,v 1.1.1.2.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -82,7 +82,7 @@ static void timed_wait_alarm(int unused_sig)
 int     timed_waitpid(pid_t pid, WAIT_STATUS_T *statusp, int options,
 		              int time_limit)
 {
-    char   *myname = "timed_waitpid";
+    const char *myname = "timed_waitpid";
     struct sigaction action;
     struct sigaction old_action;
     int     time_left;

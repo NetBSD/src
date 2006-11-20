@@ -1,4 +1,4 @@
-/*	$NetBSD: input_transp.c,v 1.1.1.2.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: input_transp.c,v 1.1.1.2.2.2 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -13,7 +13,7 @@
 /*	const char *pattern;
 /*
 /*	int	input_transp_cleanup(cleanup_flags, transp_mask)
-/*	int	cleanup_flags; 
+/*	int	cleanup_flags;
 /*	int	transp_mask;
 /* DESCRIPTION
 /*	This module controls how much processing happens before mail is
@@ -28,11 +28,13 @@
 /*	given in parentheses:
 /* .IP "no_unknown_recipient_checks (INPUT_TRANSP_UNKNOWN_RCPT)"
 /*	Do not try to reject unknown recipients.
-/* .IP "no_address_mappings (INPUT_TRANSP_ADDRESS_MAPPING)
+/* .IP "no_address_mappings (INPUT_TRANSP_ADDRESS_MAPPING)"
 /*	Disable canonical address mapping, virtual alias map expansion,
 /*	address masquerading, and automatic BCC recipients.
-/* .IP "no_header_body_checkss (INPUT_TRANSP_HEADER_BODY)
+/* .IP "no_header_body_checks (INPUT_TRANSP_HEADER_BODY)"
 /*	Disable header/body_checks.
+/* .IP "no_milters (INPUT_TRANSP_MILTER)"
+/*	Disable Milter applications.
 /*
 /*	input_transp_cleanup() takes a bunch of cleanup processing
 /*	flags and updates them according to the settings in the
@@ -73,6 +75,7 @@ int     input_transp_mask(const char *param_name, const char *pattern)
 	"no_unknown_recipient_checks", INPUT_TRANSP_UNKNOWN_RCPT,
 	"no_address_mappings", INPUT_TRANSP_ADDRESS_MAPPING,
 	"no_header_body_checks", INPUT_TRANSP_HEADER_BODY,
+	"no_milters", INPUT_TRANSP_MILTER,
 	0,
     };
 
@@ -92,6 +95,8 @@ int     input_transp_cleanup(int cleanup_flags, int transp_mask)
 	cleanup_flags &= ~(CLEANUP_FLAG_BCC_OK | CLEANUP_FLAG_MAP_OK);
     if (transp_mask & INPUT_TRANSP_HEADER_BODY)
 	cleanup_flags &= ~CLEANUP_FLAG_FILTER;
+    if (transp_mask & INPUT_TRANSP_MILTER)
+	cleanup_flags &= ~CLEANUP_FLAG_MILTER;
     if (msg_verbose)
 	msg_info("after %s: cleanup flags = %s",
 		 myname, cleanup_strflags(cleanup_flags));

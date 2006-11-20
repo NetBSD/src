@@ -1,4 +1,4 @@
-#	$NetBSD: postfix-files,v 1.3.2.1 2006/07/12 15:06:33 tron Exp $
+#	$NetBSD: postfix-files,v 1.3.2.2 2006/11/20 13:30:15 tron Exp $
 #
 # Commented out entries mean files not installed under NetBSD.
 #
@@ -70,7 +70,7 @@ $daemon_directory/cleanup:f:root:-:755
 $daemon_directory/discard:f:root:-:755
 $daemon_directory/error:f:root:-:755
 $daemon_directory/flush:f:root:-:755
-$daemon_directory/lmtp:f:root:-:755
+#$daemon_directory/lmtp:f:root:-:755
 $daemon_directory/local:f:root:-:755
 $daemon_directory/master:f:root:-:755
 $daemon_directory/oqmgr:f:root:-:755
@@ -89,6 +89,7 @@ $daemon_directory/trivial-rewrite:f:root:-:755
 $daemon_directory/verify:f:root:-:755
 $daemon_directory/virtual:f:root:-:755
 $daemon_directory/nqmgr:h:$daemon_directory/qmgr
+$daemon_directory/lmtp:h:$daemon_directory/smtp
 $command_directory/postalias:f:root:-:755
 $command_directory/postcat:f:root:-:755
 $command_directory/postconf:f:root:-:755
@@ -109,12 +110,13 @@ $sample_directory/access:f:root:-:644:p
 $sample_directory/aliases:f:root:-:644:p
 $sample_directory/canonical:f:root:-:644:p
 $config_directory/cidr_table:f:root:-:644:o
+#$config_directory/generic:f:root:-:644:p
 $config_directory/generics:f:root:-:644:o
 $sample_directory/generic:f:root:-:644:p
 $sample_directory/header_checks:f:root:-:644:p
 $config_directory/install.cf:f:root:-:644:o
-$config_directory/main.cf:f:root:-:644:p
 #$config_directory/main.cf.default:f:root:-:644
+$config_directory/main.cf:f:root:-:644:p
 #$config_directory/makedefs.out:f:root:-:644
 $config_directory/master.cf:f:root:-:644:p
 $config_directory/pcre_table:f:root:-:644:o
@@ -143,8 +145,9 @@ $manpage_directory/man1/postqueue.1:f:root:-:644
 $manpage_directory/man1/postsuper.1:f:root:-:644
 #$manpage_directory/man1/sendmail.1:f:root:-:644
 $manpage_directory/man5/access.5:f:root:-:644
-$manpage_directory/man5/aliases.5:f:root:-:644
+#$manpage_directory/man5/aliases.5:f:root:-:644
 $manpage_directory/man5/body_checks.5:f:root:-:644
+$manpage_directory/man5/bounce.5:f:root:-:644
 $manpage_directory/man5/canonical.5:f:root:-:644
 $manpage_directory/man5/cidr_table.5:f:root:-:644
 $manpage_directory/man5/generics.5:f:root:-:644:o
@@ -159,7 +162,7 @@ $manpage_directory/man5/pcre_table.5:f:root:-:644
 $manpage_directory/man5/postconf.5:f:root:-:644
 $manpage_directory/man5/regexp_table.5:f:root:-:644
 $manpage_directory/man5/relocated.5:f:root:-:644
-$manpage_directory/man5/tcp_table.5:f:root:-:644:o
+#$manpage_directory/man5/tcp_table.5:f:root:-:644
 $manpage_directory/man5/transport.5:f:root:-:644
 $manpage_directory/man5/virtual.5:f:root:-:644
 $manpage_directory/man8/bounce.8:f:root:-:644
@@ -234,6 +237,7 @@ $readme_directory/CONTENT_INSPECTION_README:f:root:-:644
 $readme_directory/DATABASE_README:f:root:-:644
 $readme_directory/DB_README:f:root:-:644
 $readme_directory/DEBUG_README:f:root:-:644
+$readme_directory/DSN_README:f:root:-:644
 $readme_directory/ETRN_README:f:root:-:644
 $readme_directory/FILTER_README:f:root:-:644
 $readme_directory/HOSTING_README:f:root:-:644:o
@@ -245,6 +249,7 @@ $readme_directory/LMTP_README:f:root:-:644
 $readme_directory/LOCAL_RECIPIENT_README:f:root:-:644
 $readme_directory/MACOSX_README:f:root:-:644:o
 $readme_directory/MAILDROP_README:f:root:-:644
+$readme_directory/MILTER_README:f:root:-:644
 $readme_directory/MYSQL_README:f:root:-:644
 $readme_directory/NFS_README:f:root:-:644
 $readme_directory/OVERVIEW:f:root:-:644
@@ -282,6 +287,7 @@ $html_directory/CONTENT_INSPECTION_README.html:f:root:-:644
 $html_directory/DATABASE_README.html:f:root:-:644
 $html_directory/DB_README.html:f:root:-:644
 $html_directory/DEBUG_README.html:f:root:-:644
+$html_directory/DSN_README.html:f:root:-:644
 $html_directory/ETRN_README.html:f:root:-:644
 $html_directory/FILTER_README.html:f:root:-:644
 #$html_directory/INSTALL.html:f:root:-:644
@@ -291,6 +297,7 @@ $html_directory/LDAP_README.html:f:root:-:644
 $html_directory/LMTP_README.html:f:root:-:644
 $html_directory/LOCAL_RECIPIENT_README.html:f:root:-:644
 $html_directory/MAILDROP_README.html:f:root:-:644
+$html_directory/MILTER_README.html:f:root:-:644
 $html_directory/MYSQL_README.html:f:root:-:644
 $html_directory/NFS_README.html:f:root:-:644
 $html_directory/OVERVIEW.html:f:root:-:644
@@ -349,6 +356,7 @@ $html_directory/postconf.1.html:f:root:-:644
 $html_directory/postconf.5.html:f:root:-:644
 $html_directory/postdrop.1.html:f:root:-:644
 $html_directory/postfix-logo.jpg:f:root:-:644
+$html_directory/postfix-manuals.html:f:root:-:644
 $html_directory/postfix.1.html:f:root:-:644
 $html_directory/postkick.1.html:f:root:-:644
 $html_directory/postlock.1.html:f:root:-:644
@@ -371,7 +379,7 @@ $html_directory/smtp-source.1.html:f:root:-:644
 $html_directory/smtp.8.html:f:root:-:644
 $html_directory/smtpd.8.html:f:root:-:644
 $html_directory/spawn.8.html:f:root:-:644
-$html_directory/tcp_table.5.html:f:root:-:644:o
+#$html_directory/tcp_table.5.html:f:root:-:644
 $html_directory/trace.8.html:f:root:-:644
 $html_directory/transport.5.html:f:root:-:644
 $html_directory/trivial-rewrite.8.html:f:root:-:644

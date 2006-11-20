@@ -1,4 +1,4 @@
-.\"	$NetBSD: local.8,v 1.5.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: local.8,v 1.5.2.2 2006/11/20 13:30:18 tron Exp $
 .\"
 .TH LOCAL 8 
 .ad
@@ -26,6 +26,14 @@ as finished, or it informs the queue manager that delivery should
 be tried again at a later time. Delivery status reports are sent
 to the \fBbounce\fR(8), \fBdefer\fR(8) or \fBtrace\fR(8) daemon as
 appropriate.
+.SH "CASE FOLDING"
+.na
+.nf
+.ad
+.fi
+All delivery decisions are made using the bare recipient
+name (i.e. the address localpart), folded to lower case.
+See also under ADDRESS EXTENSION below for a few exceptions.
 .SH "SYSTEM-WIDE AND USER-LEVEL ALIASING"
 .na
 .nf
@@ -43,7 +51,7 @@ of ~\fR/.\fBforward\fR like files through the \fBforward_path\fR
 configuration parameter. Upon delivery, the local delivery agent
 tries each pathname in the list until a file is found.
 
-Delivery via ~/.\fB.forward\fR files is done with the privileges
+Delivery via ~/.\fBforward\fR files is done with the privileges
 of the recipient.
 Thus, ~/.\fBforward\fR like files must be readable by the
 recipient, and their parent directory needs to have "execute"
@@ -115,18 +123,23 @@ configuration parameter. Specify a relative path name. Specify a name
 ending in \fB/\fR for \fBqmail\fR-compatible \fBmaildir\fR delivery.
 
 Mailbox delivery can be delegated to an external command specified
-with the \fBmailbox_command\fR configuration parameter. The command
+with the \fBmailbox_command_maps\fR and \fBmailbox_command\fR
+configuration parameters. The command
 executes with the privileges of the recipient user (exceptions:
 secondary groups are not enabled; in case of delivery as root,
 the command executes with the privileges of \fBdefault_privs\fR).
 
 Mailbox delivery can be delegated to alternative message transports
 specified in the \fBmaster.cf\fR file.
-The \fBmailbox_transport\fR configuration parameter specifies a
+The \fBmailbox_transport_maps\fR and \fBmailbox_transport\fR
+configuration parameters specify an optional
 message transport that is to be used for all local recipients,
 regardless of whether they are found in the UNIX passwd database.
-The \fBfallback_transport\fR parameter specifies a message transport
-for recipients that are not found in the UNIX passwd database.
+The \fBfallback_transport_maps\fR and
+\fBfallback_transport\fR parameters specify an optional
+message transport
+for recipients that are not found in the aliases(5) or UNIX
+passwd database.
 
 In the case of UNIX-style mailbox delivery,
 the \fBlocal\fR(8) daemon prepends a "\fBFrom \fIsender time_stamp\fR"
@@ -187,6 +200,13 @@ error) is captured for inclusion with non-delivery status reports.
 A command is forcibly terminated if it does not complete within
 \fBcommand_time_limit\fR seconds.  Command exit status codes are
 expected to follow the conventions defined in <\fBsysexits.h\fR>.
+Exit status 0 means normal successful completion.
+
+Postfix version 2.3 and later support RFC 3463-style enhanced
+status codes.  If a command terminates with a non-zero exit
+status, and the command output begins with an enhanced
+status code, this status code takes precedence over the
+non-zero exit status.
 
 A limited amount of message context is exported via environment
 variables. Characters that may have special meaning to the shell
@@ -319,6 +339,7 @@ parameter.
 .na
 .nf
 RFC 822 (ARPA Internet Text Messages)
+RFC 3463 (Enhanced status codes)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -386,20 +407,32 @@ address localparts: don't split such addresses when the
 recipient_delimiter is set to "-".
 .IP "\fBsun_mailtool_compatibility (no)\fR"
 Obsolete SUN mailtool compatibility feature.
+.PP
+Available in Postfix version 2.3 and later:
+.IP "\fBfrozen_delivered_to (yes)\fR"
+Update the \fBlocal\fR(8) delivery agent's idea of the Delivered-To:
+address (see prepend_delivered_header) only once, at the start of
+a delivery attempt; do not update the Delivered-To: address while
+expanding aliases or .forward files.
 .SH "DELIVERY METHOD CONTROLS"
 .na
 .nf
 .ad
 .fi
 The precedence of \fBlocal\fR(8) delivery methods from high to low is:
-aliases, .forward files, mailbox_transport, mailbox_command_maps,
-mailbox_command, home_mailbox, mail_spool_directory, fallback_transport
-and luser_relay.
+aliases, .forward files, mailbox_transport_maps,
+mailbox_transport, mailbox_command_maps, mailbox_command,
+home_mailbox, mail_spool_directory, fallback_transport_maps,
+fallback_transport, and luser_relay.
 .IP "\fBalias_maps (see 'postconf -d' output)\fR"
 The alias databases that are used for \fBlocal\fR(8) delivery.
 .IP "\fBforward_path (see 'postconf -d' output)\fR"
 The \fBlocal\fR(8) delivery agent search list for finding a .forward
 file with user-specified delivery methods.
+.IP "\fBmailbox_transport_maps (empty)\fR"
+Optional lookup tables with per-recipient message delivery
+transports to use for \fBlocal\fR(8) mailbox delivery, whether or not the
+recipients are found in the UNIX passwd database.
 .IP "\fBmailbox_transport (empty)\fR"
 Optional message delivery transport that the \fBlocal\fR(8) delivery
 agent should use for mailbox delivery to all local recipients,
@@ -415,10 +448,14 @@ Optional pathname of a mailbox file relative to a \fBlocal\fR(8) user's
 home directory.
 .IP "\fBmail_spool_directory (see 'postconf -d' output)\fR"
 The directory where \fBlocal\fR(8) UNIX-style mailboxes are kept.
+.IP "\fBfallback_transport_maps (empty)\fR"
+Optional lookup tables with per-recipient message delivery
+transports for recipients that the \fBlocal\fR(8) delivery agent could
+not find in the \fBaliases\fR(5) or UNIX password database.
 .IP "\fBfallback_transport (empty)\fR"
 Optional message delivery transport that the \fBlocal\fR(8) delivery
 agent should use for names that are not found in the \fBaliases\fR(5)
-database or in the UNIX passwd database.
+or UNIX password database.
 .IP "\fBluser_relay (empty)\fR"
 Optional catch-all destination for unknown \fBlocal\fR(8) recipients.
 .PP
@@ -498,6 +535,9 @@ configuration files.
 .IP "\fBdaemon_timeout (18000s)\fR"
 How much time a Postfix daemon process may take to handle a
 request before it is terminated by a built-in watchdog timer.
+.IP "\fBdelay_logging_resolution_limit (2)\fR"
+The maximal number of digits after the decimal point when logging
+sub-second delay values.
 .IP "\fBexport_environment (see 'postconf -d' output)\fR"
 The list of environment variables that a Postfix process will export
 to non-Postfix processes.
@@ -514,7 +554,8 @@ The maximal number of connection requests before a Postfix daemon
 process terminates.
 .IP "\fBprepend_delivered_header (command, file, forward)\fR"
 The message delivery contexts where the Postfix \fBlocal\fR(8) delivery
-agent prepends a Delivered-To:  message header.
+agent prepends a Delivered-To:  message header with the address
+that the mail was delivered to.
 .IP "\fBprocess_id (read-only)\fR"
 The process ID of a Postfix command or daemon process.
 .IP "\fBprocess_name (read-only)\fR"

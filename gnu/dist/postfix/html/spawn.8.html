@@ -15,7 +15,7 @@ SPAWN(8)                                                              SPAWN(8)
 <b>DESCRIPTION</b>
        The  <a href="spawn.8.html"><b>spawn</b>(8)</a>  daemon  provides  the Postfix equivalent of
        <b>inetd</b>.  It listens on a port as specified in  the  Postfix
-       <b>master.cf</b>  file  and spawns an external command whenever a
+       <a href="master.5.html"><b>master.cf</b></a>  file  and spawns an external command whenever a
        connection is established.  The  connection  can  be  made
        over  local IPC (such as UNIX-domain sockets) or over non-
        local IPC (such as TCP sockets).  The  command's  standard
@@ -26,7 +26,7 @@ SPAWN(8)                                                              SPAWN(8)
        manager.
 
 <b>COMMAND ATTRIBUTE SYNTAX</b>
-       The external command attributes are given in the <b>master.cf</b>
+       The external command attributes are given in the <a href="master.5.html"><b>master.cf</b></a>
        file at the end of a service definition.  The syntax is as
        follows:
 
@@ -66,7 +66,7 @@ SPAWN(8)                                                              SPAWN(8)
        data-driven attacks.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes to <b>main.cf</b> are picked up automatically as <a href="spawn.8.html"><b>spawn</b>(8)</a>
+       Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically as <a href="spawn.8.html"><b>spawn</b>(8)</a>
        processes run for only a limited amount of time.  Use  the
        command "<b>postfix reload</b>" to speed up a change.
 
@@ -74,7 +74,7 @@ SPAWN(8)                                                              SPAWN(8)
        <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
        In the text below, <i>transport</i> is the  first  field  of  the
-       entry in the <b>master.cf</b> file.
+       entry in the <a href="master.5.html"><b>master.cf</b></a> file.
 
 <b>RESOURCE AND RATE CONTROL</b>
        <i>transport</i><b>_time_limit ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>)</b>
@@ -83,8 +83,8 @@ SPAWN(8)                                                              SPAWN(8)
 
 <b>MISCELLANEOUS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  main.cf  and
-              master.cf configuration files.
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
               How  much time a Postfix daemon process may take to

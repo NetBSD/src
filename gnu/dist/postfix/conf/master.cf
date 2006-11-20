@@ -1,22 +1,22 @@
-#	$NetBSD: master.cf,v 1.10.2.1 2006/07/12 15:06:33 tron Exp $
+#	$NetBSD: master.cf,v 1.10.2.2 2006/11/20 13:30:15 tron Exp $
 #
 #
 # Postfix master process configuration file.  For details on the format
-# of the file, see the Postfix master(5) manual page.
+# of the file, see the master(5) manual page (command: "man 5 master").
 #
 # ==========================================================================
 # service type  private unpriv  chroot  wakeup  maxproc command + args
 #               (yes)   (yes)   (yes)   (never) (100)
 # ==========================================================================
 #smtp      inet  n       -       n       -       -       smtpd
-#submission inet n      -       n       -       -       smtpd
-#	-o smtpd_etrn_restrictions=reject
-#	-o smtpd_client_restrictions=permit_sasl_authenticated,reject
-#smtps    inet  n       -       n       -       -       smtpd
-#  -o smtpd_tls_wrappermode=yes -o smtpd_sasl_auth_enable=yes
-#submission   inet    n       -       n       -       -       smtpd
-#  -o smtpd_etrn_restrictions=reject
-#  -o smtpd_enforce_tls=yes -o smtpd_sasl_auth_enable=yes
+#submission inet n       -       n       -       -       smtpd
+#  -o smtpd_enforce_tls=yes
+#  -o smtpd_sasl_auth_enable=yes
+#  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+#smtps     inet  n       -       n       -       -       smtpd
+#  -o smtpd_tls_wrappermode=yes
+#  -o smtpd_sasl_auth_enable=yes
+#  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
 #628      inet  n       -       n       -       -       qmqpd
 pickup    unix  n       -       n       60      1       pickup
 cleanup   unix  n       -       n       -       0       cleanup
@@ -41,8 +41,8 @@ discard   unix  -       -       n       -       -       discard
 local     unix  -       n       n       -       -       local
 virtual   unix  -       n       n       -       -       virtual
 lmtp      unix  -       -       n       -       -       lmtp
-#anvil     unix  -       -       n       -       1       anvil
-#scache	  unix	-	-	n	-	1	scache
+anvil     unix  -       -       n       -       1       anvil
+scache	  unix	-	-	n	-	1	scache
 #
 # ====================================================================
 # Interfaces to non-Postfix software. Be sure to examine the manual

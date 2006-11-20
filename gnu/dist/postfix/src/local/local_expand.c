@@ -1,4 +1,4 @@
-/*	$NetBSD: local_expand.c,v 1.1.1.2.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: local_expand.c,v 1.1.1.2.2.2 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -131,7 +131,7 @@ static const char *local_expand_lookup(const char *name, int mode, char *ptr)
     } else if (STREQ(name, "mailbox")) {
 	return (local->state->msg_attr.local);
     } else if (STREQ(name, "recipient")) {
-	return (local->state->msg_attr.recipient);
+	return (local->state->msg_attr.rcpt.address);
     } else if (STREQ(name, "extension")) {
 	if (mode == MAC_EXP_MODE_USE)
 	    local->status |= LOCAL_EXP_EXTENSION_MATCHED;

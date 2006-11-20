@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_flow.h,v 1.1.1.2 2004/05/31 00:24:38 heas Exp $	*/
+/*	$NetBSD: mail_flow.h,v 1.1.1.2.2.1 2006/11/20 13:30:39 tron Exp $	*/
 
 #ifndef _MAIL_FLOW_H_INCLUDED_
 #define _MAIL_FLOW_H_INCLUDED_
@@ -16,9 +16,9 @@
  /*
   * Functional interface.
   */
-extern int mail_flow_get(int);
-extern int mail_flow_put(int);
-extern int mail_flow_count(void);
+extern ssize_t mail_flow_get(ssize_t);
+extern ssize_t mail_flow_put(ssize_t);
+extern ssize_t mail_flow_count(void);
 
 /* LICENSE
 /* .ad

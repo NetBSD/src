@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sdbm.c,v 1.1.1.1.2.2 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: dict_sdbm.c,v 1.1.1.1.2.3 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -87,6 +87,14 @@ static const char *dict_sdbm_lookup(DICT *dict, const char *name)
     dict_errno = 0;
 
     /*
+     * Optionally fold the key.
+     */
+    if (dict->fold_buf) {
+	vstring_strcpy(dict->fold_buf, name);
+	name = lowercase(vstring_str(dict->fold_buf));
+    }
+
+    /*
      * Acquire an exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
@@ -145,6 +153,14 @@ static void dict_sdbm_update(DICT *dict, const char *name, const char *value)
      */
     if ((dict->flags & (DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL)) == 0)
 	msg_panic("dict_sdbm_update: no DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL flag");
+
+    /*
+     * Optionally fold the key.
+     */
+    if (dict->fold_buf) {
+	vstring_strcpy(dict->fold_buf, name);
+	name = lowercase(vstring_str(dict->fold_buf));
+    }
 
     dbm_key.dptr = (void *) name;
     dbm_value.dptr = (void *) value;
@@ -217,6 +233,14 @@ static int dict_sdbm_delete(DICT *dict, const char *name)
 	msg_panic("dict_sdbm_delete: no DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL flag");
 
     /*
+     * Optionally fold the key.
+     */
+    if (dict->fold_buf) {
+	vstring_strcpy(dict->fold_buf, name);
+	name = lowercase(vstring_str(dict->fold_buf));
+    }
+
+    /*
      * Acquire an exclusive lock.
      */
     if ((dict->flags & DICT_FLAG_LOCK)
@@ -272,7 +296,7 @@ static int dict_sdbm_delete(DICT *dict, const char *name)
 static int dict_sdbm_sequence(DICT *dict, const int function,
 			              const char **key, const char **value)
 {
-    char   *myname = "dict_sdbm_sequence";
+    const char *myname = "dict_sdbm_sequence";
     DICT_SDBM *dict_sdbm = (DICT_SDBM *) dict;
     datum   dbm_key;
     datum   dbm_value;
@@ -359,6 +383,8 @@ static void dict_sdbm_close(DICT *dict)
 	vstring_free(dict_sdbm->key_buf);
     if (dict_sdbm->val_buf)
 	vstring_free(dict_sdbm->val_buf);
+    if (dict->fold_buf)
+	vstring_free(dict->fold_buf);
     dict_free(dict);
 }
 
@@ -426,6 +452,8 @@ DICT   *dict_sdbm_open(const char *path, int open_flags, int dict_flags)
     dict_sdbm->dict.flags = dict_flags | DICT_FLAG_FIXED;
     if ((dict_flags & (DICT_FLAG_TRY0NULL | DICT_FLAG_TRY1NULL)) == 0)
 	dict_sdbm->dict.flags |= (DICT_FLAG_TRY0NULL | DICT_FLAG_TRY1NULL);
+    if (dict_flags & DICT_FLAG_FOLD_FIX)
+	dict_sdbm->dict.fold_buf = vstring_alloc(10);
     dict_sdbm->dbm = dbm;
     dict_sdbm->key_buf = 0;
     dict_sdbm->val_buf = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_state.c,v 1.1.1.6.2.1 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: smtpd_state.c,v 1.1.1.6.2.2 2006/11/20 13:30:54 tron Exp $	*/
 
 /*++
 /* NAME
@@ -80,10 +80,12 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream,
      * Initialize the state information for this connection, and fill in the
      * connection-specific fields.
      */
+    state->flags = 0;
     state->err = CLEANUP_STAT_OK;
     state->client = stream;
     state->service = mystrdup(service);
     state->buffer = vstring_alloc(100);
+    state->addr_buf = vstring_alloc(100);
     state->error_count = 0;
     state->error_mask = 0;
     state->notify_mask = name_mask(VAR_NOTIFY_CLASSES, mail_error_masks,
@@ -110,7 +112,9 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream,
     state->defer_if_permit_client = 0;
     state->defer_if_permit_helo = 0;
     state->defer_if_permit_sender = 0;
+    state->defer_if_reject.dsn = 0;
     state->defer_if_reject.reason = 0;
+    state->defer_if_permit.dsn = 0;
     state->defer_if_permit.reason = 0;
     state->discard = 0;
     state->expand_buf = 0;
@@ -122,15 +126,25 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream,
     state->saved_filter = 0;
     state->saved_redirect = 0;
     state->saved_flags = 0;
+#ifdef DELAY_ACTION
+    state->saved_delay = 0;
+#endif
     state->instance = vstring_alloc(10);
     state->seqno = 0;
     state->rewrite_context = 0;
+#if 0
+    state->ehlo_discard_mask = ~0;
+#else
+    state->ehlo_discard_mask = 0;
+#endif
+    state->dsn_envid = 0;
+    state->dsn_buf = vstring_alloc(100);
+    state->dsn_orcpt_buf = vstring_alloc(100);
 #ifdef USE_TLS
     state->tls_use_tls = 0;
     state->tls_enforce_tls = 0;
     state->tls_auth_only = 0;
     state->tls_context = 0;
-    state->tls_info = tls_info_zero;
 #endif
 
 #ifdef USE_SASL_AUTH
@@ -139,6 +153,9 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream,
     if (var_smtpd_sasl_enable)
 	smtpd_sasl_connect(state, VAR_SMTPD_SASL_OPTS, var_smtpd_sasl_opts);
 #endif
+
+    state->milter_argv = 0;
+    state->milter_argc = 0;
 
     /*
      * Initialize peer information.
@@ -170,6 +187,10 @@ void    smtpd_state_reset(SMTPD_STATE *state)
 	myfree(state->service);
     if (state->buffer)
 	vstring_free(state->buffer);
+    if (state->addr_buf)
+	vstring_free(state->addr_buf);
+    if (state->access_denied)
+	myfree(state->access_denied);
     if (state->protocol)
 	myfree(state->protocol);
     smtpd_peer_reset(state);
@@ -178,8 +199,12 @@ void    smtpd_state_reset(SMTPD_STATE *state)
      * Buffers that are created on the fly and that may be shared among mail
      * deliveries within the same SMTP session.
      */
+    if (state->defer_if_permit.dsn)
+	vstring_free(state->defer_if_permit.dsn);
     if (state->defer_if_permit.reason)
 	vstring_free(state->defer_if_permit.reason);
+    if (state->defer_if_reject.dsn)
+	vstring_free(state->defer_if_reject.dsn);
     if (state->defer_if_reject.reason)
 	vstring_free(state->defer_if_reject.reason);
     if (state->expand_buf)
@@ -188,6 +213,10 @@ void    smtpd_state_reset(SMTPD_STATE *state)
 	vstring_free(state->proxy_buffer);
     if (state->instance)
 	vstring_free(state->instance);
+    if (state->dsn_buf)
+	vstring_free(state->dsn_buf);
+    if (state->dsn_orcpt_buf)
+	vstring_free(state->dsn_orcpt_buf);
 
 #ifdef USE_SASL_AUTH
     if (var_smtpd_sasl_enable)

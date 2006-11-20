@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_job.c,v 1.1.1.2 2004/05/31 00:24:44 heas Exp $	*/
+/*	$NetBSD: qmgr_job.c,v 1.1.1.2.2.1 2006/11/20 13:30:47 tron Exp $	*/
 
 /*++
 /* NAME
@@ -331,7 +331,7 @@ static void qmgr_job_parent_gone(QMGR_JOB *job, QMGR_JOB *parent)
 
 static void qmgr_job_unlink(QMGR_JOB *job)
 {
-    char   *myname = "qmgr_job_unlink";
+    const char *myname = "qmgr_job_unlink";
     QMGR_TRANSPORT *transport = job->transport;
 
     /*
@@ -404,7 +404,7 @@ static void qmgr_job_retire(QMGR_JOB *job)
 
 void    qmgr_job_free(QMGR_JOB *job)
 {
-    char   *myname = "qmgr_job_free";
+    const char *myname = "qmgr_job_free";
     QMGR_MESSAGE *message = job->message;
     QMGR_TRANSPORT *transport = job->transport;
 
@@ -568,7 +568,7 @@ static QMGR_JOB *qmgr_job_candidate(QMGR_JOB *current)
 
 static QMGR_JOB *qmgr_job_preempt(QMGR_JOB *current)
 {
-    char   *myname = "qmgr_job_preempt";
+    const char *myname = "qmgr_job_preempt";
     QMGR_TRANSPORT *transport = current->transport;
     QMGR_JOB *job,
            *prev;
@@ -685,7 +685,7 @@ static QMGR_JOB *qmgr_job_preempt(QMGR_JOB *current)
 
 static void qmgr_job_pop(QMGR_JOB *job)
 {
-    char   *myname = "qmgr_job_pop";
+    const char *myname = "qmgr_job_pop";
     QMGR_TRANSPORT *transport = job->transport;
     QMGR_JOB *parent;
 

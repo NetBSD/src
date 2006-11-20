@@ -1,4 +1,4 @@
-/*	$NetBSD: stream_recv_fd.c,v 1.1.1.1.2.2 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: stream_recv_fd.c,v 1.1.1.1.2.3 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -75,6 +75,8 @@ int     stream_recv_fd(int fd)
   * stream_send_fd test program) and copy its content until EOF.
   */
 #include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
 #include <split_at.h>
 #include <listen.h>
 

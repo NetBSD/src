@@ -1,15 +1,15 @@
-/*	$NetBSD: input_transp.h,v 1.1.1.2.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: input_transp.h,v 1.1.1.2.2.2 2006/11/20 13:30:24 tron Exp $	*/
 
-#ifndef _EXT_PROP_INCLUDED_
-#define _EXT_PROP_INCLUDED_
+#ifndef _INPUT_TRANSP_INCLUDED_
+#define _INPUT_TRANSP_INCLUDED_
 
 /*++
 /* NAME
-/*	ext_prop 3h
+/*	input_transp 3h
 /* SUMMARY
-/*	address extension propagation control
+/*	receive transparency control
 /* SYNOPSIS
-/*	#include <ext_prop.h>
+/*	#include <input_transp.h>
 /* DESCRIPTION
 /* .nf
 
@@ -19,6 +19,7 @@
 #define INPUT_TRANSP_UNKNOWN_RCPT	(1<<0)
 #define INPUT_TRANSP_ADDRESS_MAPPING	(1<<1)
 #define INPUT_TRANSP_HEADER_BODY	(1<<2)
+#define INPUT_TRANSP_MILTER		(1<<3)
 
 extern int input_transp_mask(const char *, const char *);
 extern int input_transp_cleanup(int, int);

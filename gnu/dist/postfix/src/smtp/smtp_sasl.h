@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl.h,v 1.1.1.3.2.1 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: smtp_sasl.h,v 1.1.1.3.2.2 2006/11/20 13:30:52 tron Exp $	*/
 
 /*++
 /* NAME
@@ -17,7 +17,7 @@ extern void smtp_sasl_initialize(void);
 extern void smtp_sasl_connect(SMTP_SESSION *);
 extern int smtp_sasl_passwd_lookup(SMTP_SESSION *);
 extern void smtp_sasl_start(SMTP_SESSION *, const char *, const char *);
-extern int smtp_sasl_authenticate(SMTP_SESSION *, VSTRING *);
+extern int smtp_sasl_authenticate(SMTP_SESSION *, DSN_BUF *);
 extern void smtp_sasl_cleanup(SMTP_SESSION *);
 
 extern void smtp_sasl_helo_auth(SMTP_SESSION *, const char *);

@@ -277,6 +277,22 @@ the relay_recipients table.
 Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ttrraannssppoorrtt" whenever you change the
 transport table.
 
+In some installations, there may be separate instances of Postfix processing
+inbound and outbound mail on a multi-homed firewall. The inbound Postfix
+instance has an SMTP server listening on the external firewall interface, and
+the outbound Postfix instance has an SMTP server listening on the internal
+interface. In such a configuration is it is tempting to configure
+$inet_interfaces in each instance with just the corresponding interface
+address.
+
+In most cases, using inet_interfaces in this way will not work, because as
+documented in the $inet_interfaces reference manual, the smtp(8) delivery agent
+will also use the specified interface address as the source address for
+outbound connections and will be unable to reach hosts on "the other side" of
+the firewall. The symptoms are that the firewall is unable to connect to hosts
+that are in fact up. See the inet_interfaces parameter documentation for
+suggested work-arounds.
+
 DDeelliivveerriinngg ssoommee bbuutt nnoott aallll aaccccoouunnttss llooccaallllyy
 
 A drawback of sending mail as "user@example.com" (instead of
@@ -297,22 +313,6 @@ Translation:
     matches "root@site" when "site" is equal to $myorigin, when "site" is
     listed in $mydestination, or when it matches $inet_interfaces or
     $proxy_interfaces.
-
-In some installations, there may be separate instances of Postfix processing
-inbound and outbound mail on a multi-homed firewall. The inbound Postfix
-instance has an SMTP server listening on the external firewall interface, and
-the outbound Postfix instance has an SMTP server listening on the internal
-interface. In such a configuration is it is tempting to configure
-$inet_interfaces in each instance with just the corresponding interface
-address.
-
-In most cases, using inet_interfaces in this way will not work, because as
-documented in the $inet_interfaces reference manual, the smtp(8) delivery agent
-will also use the specified interface address as the source address for
-outbound connections and will be unable to reach hosts on "the other side" of
-the firewall. The symptoms are that the firewall is unable to connect to hosts
-that are in fact up. See the inet_interfaces parameter documentation for
-suggested work-arounds.
 
 RRuunnnniinngg PPoossttffiixx bbeehhiinndd aa ffiirreewwaallll
 
@@ -413,8 +413,8 @@ Important notes:
     up.domain.tld" domain. This prevents your mail queue from filling up with
     undeliverable MAILER-DAEMON messages. If you can't maintain a list of valid
     recipients then you must specify "relay_recipient_maps =" (that is, an
-    empty value), or you must specify an "@example.com x" wild-card in the
-    relay_recipients table.
+    empty value), or you must specify an "@the.backed-up.domain.tld x" wild-
+    card in the relay_recipients table.
 
   * Line 22: The [] forces Postfix to do no MX lookup.
 
@@ -424,9 +424,9 @@ To find out what lookup tables Postfix supports, use the command "ppoossttc
 Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ttrraannssppoorrtt" whenever you change the
 transport table.
 
-NOTE: Do not use the fallback_relay feature when relaying mail for a backup or
-primary MX domain. Mail would loop between the Postfix MX host and the
-fallback_relay host when the final destination is unavailable.
+NOTE for Postfix < 2.2: Do not use the fallback_relay feature when relaying
+mail for a backup or primary MX domain. Mail would loop between the Postfix MX
+host and the fallback_relay host when the final destination is unavailable.
 
   * In main.cf specify "relay_transport = relay",
   * In master.cf specify "-o fallback_relay =" at the end of the relay entry.

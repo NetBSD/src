@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl_proto.c,v 1.1.1.4.2.1 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: smtp_sasl_proto.c,v 1.1.1.4.2.2 2006/11/20 13:30:53 tron Exp $	*/
 
 /*++
 /* NAME
@@ -84,16 +84,15 @@ static const char *smtp_sasl_compat_mechs(const char *words)
     char   *mech_list;
     char   *save_mech;
     char   *mech;
-    int     ret;
 
     /*
      * Use server's mechanisms if no filter specified
      */
     if (smtp_sasl_mechs == 0 || *words == 0)
-    	return (words);
+	return (words);
 
     if (buf == 0)
-    	buf = vstring_alloc(10);
+	buf = vstring_alloc(10);
 
     VSTRING_RESET(buf);
     VSTRING_TERMINATE(buf);
@@ -117,27 +116,34 @@ static const char *smtp_sasl_compat_mechs(const char *words)
 void    smtp_sasl_helo_auth(SMTP_SESSION *session, const char *words)
 {
     const char *mech_list = smtp_sasl_compat_mechs(words);
+    char   *junk;
 
     /*
-     * XXX If the server offers no compatible authentication mechanisms,
-     * then pretend that the server doesn't support SASL authentication.
+     * XXX If the server offers no compatible authentication mechanisms, then
+     * pretend that the server doesn't support SASL authentication.
+     * 
+     * XXX If the server offers multiple different lists, concatenate them. Let
+     * the SASL library worry about duplicates.
      */
     if (session->sasl_mechanism_list) {
-	if (strcasecmp(session->sasl_mechanism_list, mech_list) == 0)
-	    return;
-	myfree(session->sasl_mechanism_list);
-	msg_warn("%s offered AUTH option multiple times", session->namaddr);
-	session->sasl_mechanism_list = 0;
-	session->features &= ~SMTP_FEATURE_AUTH;
+	if (strcasecmp(session->sasl_mechanism_list, mech_list) != 0
+	    && strlen(mech_list) > 0
+	    && strlen(session->sasl_mechanism_list) < var_line_limit) {
+	    junk = concatenate(session->sasl_mechanism_list, " ", mech_list,
+			       (char *) 0);
+	    myfree(session->sasl_mechanism_list);
+	    session->sasl_mechanism_list = junk;
+	}
+	return;
     }
     if (strlen(mech_list) > 0) {
 	session->sasl_mechanism_list = mystrdup(mech_list);
-	session->features |= SMTP_FEATURE_AUTH;
     } else {
 	msg_warn(*words ? "%s offered no supported AUTH mechanisms: '%s'" :
-		    "%s offered null AUTH mechanism list",
+		 "%s offered null AUTH mechanism list",
 		 session->namaddr, words);
     }
+    session->features |= SMTP_FEATURE_AUTH;
 }
 
 /* smtp_sasl_helo_login - perform SASL login */
@@ -145,7 +151,7 @@ void    smtp_sasl_helo_auth(SMTP_SESSION *session, const char *words)
 int     smtp_sasl_helo_login(SMTP_STATE *state)
 {
     SMTP_SESSION *session = state->session;
-    VSTRING *why;
+    DSN_BUF *why = state->why;
     int     ret;
 
     /*
@@ -164,15 +170,35 @@ int     smtp_sasl_helo_login(SMTP_STATE *state)
      * error is unrecoverable from a session point of view - the session will
      * not be reused.
      */
-    why = vstring_alloc(10);
     ret = 0;
-    smtp_sasl_start(session, VAR_SMTP_SASL_OPTS, var_smtp_sasl_opts);
-    if (smtp_sasl_authenticate(session, why) <= 0) {
-	ret = smtp_site_fail(state, 450, "Authentication failed: %s",
-			     vstring_str(why));
+    if (session->sasl_mechanism_list == 0) {
+	dsb_simple(why, "4.7.0", "SASL authentication failed: "
+		   "server %s offered no compatible authentication mechanisms for this type of connection security",
+		   session->namaddr);
+	ret = smtp_sess_fail(state);
 	/* Session reuse is disabled. */
+    } else {
+#ifndef USE_TLS
+	smtp_sasl_start(session, VAR_SMTP_SASL_OPTS,
+			var_smtp_sasl_opts);
+#else
+	if (session->tls_context == 0)
+	    smtp_sasl_start(session, VAR_SMTP_SASL_OPTS,
+			    var_smtp_sasl_opts);
+#ifdef SNAPSHOT					/* XXX: Not yet */
+	else if (session->tls_context->peer_verified)
+	    smtp_sasl_start(session, VAR_SMTP_SASL_TLSV_OPTS,
+			    var_smtp_sasl_tlsv_opts);
+#endif
+	else
+	    smtp_sasl_start(session, VAR_SMTP_SASL_TLS_OPTS,
+			    var_smtp_sasl_tls_opts);
+#endif
+	if (smtp_sasl_authenticate(session, why) <= 0) {
+	    ret = smtp_sess_fail(state);
+	    /* Session reuse is disabled. */
+	}
     }
-    vstring_free(why);
     return (ret);
 }
 

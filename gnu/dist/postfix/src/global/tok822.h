@@ -1,4 +1,4 @@
-/*	$NetBSD: tok822.h,v 1.1.1.5 2004/05/31 00:24:35 heas Exp $	*/
+/*	$NetBSD: tok822.h,v 1.1.1.5.2.1 2006/11/20 13:30:25 tron Exp $	*/
 
 #ifndef _TOK822_H_INCLUDED_
 #define _TOK822_H_INCLUDED_
@@ -107,7 +107,9 @@ extern TOK822 *tok822_rewrite(TOK822 *, const char *);
  /*
   * tok822_resolve.c
   */
-extern void tok822_resolve(TOK822 *, RESOLVE_REPLY *);
+#define tok822_resolve(t, r) tok822_resolve_from(RESOLVE_NULL_FROM, (t), (r))
+
+extern void tok822_resolve_from(const char *, TOK822 *, RESOLVE_REPLY *);
 
 /* LICENSE
 /* .ad

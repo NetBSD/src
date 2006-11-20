@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_rdwr_bug.c,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: fifo_rdwr_bug.c,v 1.1.1.2.2.1 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -34,6 +34,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define FIFO_PATH       "test-fifo"
 #define perrorexit(s)   { perror(s); exit(1); }

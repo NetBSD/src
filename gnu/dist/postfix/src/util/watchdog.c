@@ -1,4 +1,4 @@
-/*	$NetBSD: watchdog.c,v 1.1.1.3.2.1 2006/07/12 15:06:45 tron Exp $	*/
+/*	$NetBSD: watchdog.c,v 1.1.1.3.2.2 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -124,7 +124,7 @@ static WATCHDOG *watchdog_curr;
 
 static void watchdog_event(int unused_sig)
 {
-    char   *myname = "watchdog_event";
+    const char *myname = "watchdog_event";
     WATCHDOG *wp;
 
     /*
@@ -150,7 +150,7 @@ static void watchdog_event(int unused_sig)
 
 WATCHDOG *watchdog_create(unsigned timeout, WATCHDOG_FN action, char *context)
 {
-    char   *myname = "watchdog_create";
+    const char *myname = "watchdog_create";
     struct sigaction sig_action;
     WATCHDOG *wp;
 
@@ -179,7 +179,7 @@ WATCHDOG *watchdog_create(unsigned timeout, WATCHDOG_FN action, char *context)
 
 void    watchdog_destroy(WATCHDOG *wp)
 {
-    char   *myname = "watchdog_destroy";
+    const char *myname = "watchdog_destroy";
 
     watchdog_stop(wp);
     watchdog_curr = wp->saved_watchdog;
@@ -196,7 +196,7 @@ void    watchdog_destroy(WATCHDOG *wp)
 
 void    watchdog_start(WATCHDOG *wp)
 {
-    char   *myname = "watchdog_start";
+    const char *myname = "watchdog_start";
 
     if (wp != watchdog_curr)
 	msg_panic("%s: wrong watchdog instance", myname);
@@ -210,7 +210,7 @@ void    watchdog_start(WATCHDOG *wp)
 
 void    watchdog_stop(WATCHDOG *wp)
 {
-    char   *myname = "watchdog_stop";
+    const char *myname = "watchdog_stop";
 
     if (wp != watchdog_curr)
 	msg_panic("%s: wrong watchdog instance", myname);
@@ -223,7 +223,7 @@ void    watchdog_stop(WATCHDOG *wp)
 
 void    watchdog_pat(void)
 {
-    char   *myname = "watchdog_pat";
+    const char *myname = "watchdog_pat";
 
     if (watchdog_curr)
 	watchdog_curr->trip_run = 0;
@@ -247,6 +247,7 @@ int     main(int unused_argc, char **unused_argv)
 	watchdog_pat();
     } while (VSTREAM_GETCHAR() != VSTREAM_EOF);
     watchdog_destroy(wp);
+    return (0);
 }
 
 #endif

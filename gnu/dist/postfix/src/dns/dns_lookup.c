@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_lookup.c,v 1.9.2.1 2006/07/12 15:06:38 tron Exp $	*/
+/*	$NetBSD: dns_lookup.c,v 1.9.2.2 2006/11/20 13:30:23 tron Exp $	*/
 
 /*++
 /* NAME
@@ -39,15 +39,18 @@
 /*	number of CNAME indirections. All result names (including
 /*	null terminator) will fit a buffer of size DNS_NAME_LEN.
 /*	All name results are validated by \fIvalid_hostname\fR();
-/*	an invalid name is reported as a transient error.
+/*	an invalid name is reported as a DNS_INVAL result, while
+/*	malformed replies are reported as transient errors.
 /*
 /*	dns_lookup_l() and dns_lookup_v() allow the user to specify
-/*	a list of resource types. 
+/*	a list of resource types.
 /* INPUTS
 /* .ad
 /* .fi
 /* .IP name
 /*	The name to be looked up in the domain name system.
+/*	This name must pass the valid_hostname() test; it
+/*	must not be an IP address.
 /* .IP type
 /*	The resource record type to be looked up (T_A, T_MX etc.).
 /* .IP rflags
@@ -61,16 +64,18 @@
 /*	Append local domain to unqualified names.
 /* .RE
 /* .IP lflags
-/*	Multi-type request control for dns_lookup_l() and
-/*	dns_lookup_v(). This is one of the following:
+/*	Multi-type request control for dns_lookup_l() and dns_lookup_v().
+/*	For convenience, DNS_REQ_FLAG_NONE requests no special
+/*	processing. Invoke dns_lookup() for all specified resource
+/*	record types in the specified order, and merge their results.
+/*	Otherwise, specify one or more of the following:
 /* .RS
-/* .IP DNS_REQ_FLAG_ANY
-/*	Call dns_lookup() for each specified resource record type
-/*	in the specified order, until the list is exhausted or
-/*	until some result is DNS_OK.
-/* .IP DNS_REQ_FLAG_ALL
-/*	Call dns_lookup() for all specified resource record types
-/*	in the specified order, and merge their results.
+/* .IP DNS_REQ_FLAG_STOP_INVAL
+/*	Invoke dns_lookup() for the resource types in the order as
+/*	specified, and return when dns_lookup() returns DNS_INVAL.
+/* .IP DNS_REQ_FLAG_STOP_OK
+/*	Invoke dns_lookup() for the resource types in the order as
+/*	specified, and return when dns_lookup() returns DNS_OK.
 /* .RE
 /* .IP ltype
 /*	The resource record types to be looked up. In the case of
@@ -95,15 +100,13 @@
 /*	The DNS query succeeded.
 /* .IP DNS_NOTFOUND
 /*	The DNS query succeeded; the requested information was not found.
+/* .IP DNS_INVAL
+/*	The DNS query succeeded; the result failed the valid_hostname() test.
 /* .IP DNS_RETRY
-/*	The query failed; the problem is transient.
+/*	The query failed, or the reply was malformed.
+/*	The problem is considered transient.
 /* .IP DNS_FAIL
 /*	The query failed.
-/*
-/*	As a workaround, this result value is also returned when
-/*	the DNS query succeeded, but the result could not be parsed,
-/*	or the result domain name did not pass the valid_hostname()
-/*	syntax test (e.g., a null MX hostname).
 /* BUGS
 /*	dns_lookup() implements a subset of all possible resource types:
 /*	CNAME, MX, A, and some records with similar formatting requirements.
@@ -149,10 +152,12 @@
  /*
   * Structure to keep track of things while decoding a name server reply.
   */
-#define DNS_REPLY_SIZE	4096		/* in case we're using TCP */
+#define DEF_DNS_REPLY_SIZE	4096	/* in case we're using TCP */
+#define MAX_DNS_REPLY_SIZE	32768	/* in case we're using TCP */
 
 typedef struct DNS_REPLY {
-    unsigned char buf[DNS_REPLY_SIZE];	/* raw reply data */
+    unsigned char *buf;			/* raw reply data */
+    size_t  buf_len;			/* reply buffer length */
     int     query_count;		/* number of queries */
     int     answer_count;		/* number of answers */
     unsigned char *query_start;		/* start of query data */
@@ -173,6 +178,14 @@ static int dns_query(const char *name, int type, int flags,
     unsigned long saved_options;
 
     /*
+     * Initialize the reply buffer.
+     */
+    if (reply->buf == 0) {
+	reply->buf = (unsigned char *) mymalloc(DEF_DNS_REPLY_SIZE);
+	reply->buf_len = DEF_DNS_REPLY_SIZE;
+    }
+
+    /*
      * Initialize the name service.
      */
     if ((_res.options & RES_INIT) == 0 && res_init() < 0) {
@@ -190,53 +203,60 @@ static int dns_query(const char *name, int type, int flags,
     if ((flags & USER_FLAGS) != flags)
 	msg_panic("dns_query: bad flags: %d", flags);
     saved_options = (_res.options & USER_FLAGS);
-    _res.options &= ~saved_options;
-    _res.options |= flags;
 
     /*
      * Perform the lookup. Claim that the information cannot be found if and
      * only if the name server told us so.
      */
-    len = res_search((char *) name, C_IN, type, reply->buf, sizeof(reply->buf));
-    _res.options &= ~flags;
-    _res.options |= saved_options;
-    if (len < 0) {
-	if (why)
-	    vstring_sprintf(why, "Host or domain name not found. "
-			    "Name service error for name=%s type=%s: %s",
+    for (;;) {
+	_res.options &= ~saved_options;
+	_res.options |= flags;
+	len = res_search((char *) name, C_IN, type, reply->buf, reply->buf_len);
+	_res.options &= ~flags;
+	_res.options |= saved_options;
+	if (len < 0) {
+	    if (why)
+		vstring_sprintf(why, "Host or domain name not found. "
+				"Name service error for name=%s type=%s: %s",
 			    name, dns_strtype(type), dns_strerror(h_errno));
-	if (msg_verbose)
-	    msg_info("dns_query: %s (%s): %s",
-		     name, dns_strtype(type), dns_strerror(h_errno));
-	switch (h_errno) {
-	case NO_RECOVERY:
-	    return (DNS_FAIL);
-	case HOST_NOT_FOUND:
-	case NO_DATA:
-	    return (DNS_NOTFOUND);
-	default:
-	    return (DNS_RETRY);
+	    if (msg_verbose)
+		msg_info("dns_query: %s (%s): %s",
+			 name, dns_strtype(type), dns_strerror(h_errno));
+	    switch (h_errno) {
+	    case NO_RECOVERY:
+		return (DNS_FAIL);
+	    case HOST_NOT_FOUND:
+	    case NO_DATA:
+		return (DNS_NOTFOUND);
+	    default:
+		return (DNS_RETRY);
+	    }
 	}
+	if (msg_verbose)
+	    msg_info("dns_query: %s (%s): OK", name, dns_strtype(type));
+
+	reply_header = (HEADER *) reply->buf;
+	if (reply_header->tc == 0 || reply->buf_len >= MAX_DNS_REPLY_SIZE)
+	    break;
+	reply->buf = (unsigned char *)
+	    myrealloc((char *) reply->buf, 2 * reply->buf_len);
+	reply->buf_len *= 2;
     }
-    if (msg_verbose)
-	msg_info("dns_query: %s (%s): OK", name, dns_strtype(type));
 
     /*
      * Paranoia.
      */
-    if (len > sizeof(reply->buf)) {
+    if (len > reply->buf_len) {
 	msg_warn("reply length %d > buffer length %d for name=%s type=%s",
-		 len, (int) sizeof(reply->buf), name, dns_strtype(type));
-	len = sizeof(reply->buf);
+		 len, (int) reply->buf_len, name, dns_strtype(type));
+	len = reply->buf_len;
     }
 
     /*
      * Initialize the reply structure. Some structure members are filled on
      * the fly while the reply is being parsed.
      */
-    if ((reply->end = reply->buf + len) > reply->buf + sizeof(reply->buf))
-	reply->end = reply->buf + sizeof(reply->buf);
-    reply_header = (HEADER *) reply->buf;
+    reply->end = reply->buf + len;
     reply->query_start = reply->buf + sizeof(HEADER);
     reply->answer_start = 0;
     reply->query_count = ntohs(reply_header->qdcount);
@@ -331,11 +351,12 @@ static int valid_rr_name(const char *name, const char *location,
 
 /* dns_get_rr - extract resource record from name server reply */
 
-static DNS_RR *dns_get_rr(const char *name, DNS_REPLY *reply, unsigned char *pos,
-			          char *rr_name, DNS_FIXED *fixed)
+static int dns_get_rr(DNS_RR **list, const char *orig_name, DNS_REPLY *reply,
+		              unsigned char *pos, char *rr_name,
+		              DNS_FIXED *fixed)
 {
     char    temp[DNS_NAME_LEN];
-    int     data_len;
+    ssize_t data_len;
     unsigned pref = 0;
     unsigned char *src;
     unsigned char *dst;
@@ -343,8 +364,9 @@ static DNS_RR *dns_get_rr(const char *name, DNS_REPLY *reply, unsigned char *pos
 
 #define MIN2(a, b)	((unsigned)(a) < (unsigned)(b) ? (a) : (b))
 
+    *list = 0;
     if (pos + fixed->length > reply->end)
-	return (0);
+	return (DNS_RETRY);
 
     switch (fixed->type) {
     default:
@@ -357,23 +379,23 @@ static DNS_RR *dns_get_rr(const char *name, DNS_REPLY *reply, unsigned char *pos
     case T_NS:
     case T_PTR:
 	if (dn_expand(reply->buf, reply->end, pos, temp, sizeof(temp)) < 0)
-	    return (0);
+	    return (DNS_RETRY);
 	if (!valid_rr_name(temp, "resource data", fixed->type, reply))
-	    return (0);
+	    return (DNS_INVAL);
 	data_len = strlen(temp) + 1;
 	break;
     case T_MX:
 	GETSHORT(pref, pos);
 	if (dn_expand(reply->buf, reply->end, pos, temp, sizeof(temp)) < 0)
-	    return (0);
+	    return (DNS_RETRY);
 	if (!valid_rr_name(temp, "resource data", fixed->type, reply))
-	    return (0);
+	    return (DNS_INVAL);
 	data_len = strlen(temp) + 1;
 	break;
     case T_A:
 	if (fixed->length != INET_ADDR_LEN) {
 	    msg_warn("extract_answer: bad address length: %d", fixed->length);
-	    return (0);
+	    return (DNS_RETRY);
 	}
 	if (fixed->length > sizeof(temp))
 	    msg_panic("dns_get_rr: length %d > DNS_NAME_LEN",
@@ -385,7 +407,7 @@ static DNS_RR *dns_get_rr(const char *name, DNS_REPLY *reply, unsigned char *pos
     case T_AAAA:
 	if (fixed->length != INET6_ADDR_LEN) {
 	    msg_warn("extract_answer: bad address length: %d", fixed->length);
-	    return (0);
+	    return (DNS_RETRY);
 	}
 	if (fixed->length > sizeof(temp))
 	    msg_panic("dns_get_rr: length %d > DNS_NAME_LEN",
@@ -404,8 +426,9 @@ static DNS_RR *dns_get_rr(const char *name, DNS_REPLY *reply, unsigned char *pos
 	*dst = 0;
 	break;
     }
-    return (dns_rr_create(name, rr_name, fixed->type, fixed->class, fixed->ttl,
-			  pref, temp, data_len));
+    *list = dns_rr_create(orig_name, rr_name, fixed->type, fixed->class,
+			  fixed->ttl, pref, temp, data_len);
+    return (DNS_OK);
 }
 
 /* dns_get_alias - extract CNAME from name server reply */
@@ -418,13 +441,13 @@ static int dns_get_alias(DNS_REPLY *reply, unsigned char *pos,
     if (dn_expand(reply->buf, reply->end, pos, cname, c_len) < 0)
 	return (DNS_RETRY);
     if (!valid_rr_name(cname, "resource data", fixed->type, reply))
-	return (DNS_RETRY);
+	return (DNS_INVAL);
     return (DNS_OK);
 }
 
 /* dns_get_answer - extract answers from name server reply */
 
-static int dns_get_answer(const char *name, DNS_REPLY *reply, int type,
+static int dns_get_answer(const char *orig_name, DNS_REPLY *reply, int type,
 	             DNS_RR **rrlist, VSTRING *fqdn, char *cname, int c_len)
 {
     char    rr_name[DNS_NAME_LEN];
@@ -435,14 +458,15 @@ static int dns_get_answer(const char *name, DNS_REPLY *reply, int type,
     DNS_RR *rr;
     int     resource_found = 0;
     int     cname_found = 0;
-    int     not_found_status = DNS_NOTFOUND;
+    int     not_found_status = DNS_NOTFOUND;	/* can't happen */
+    int     status;
 
     /*
      * Initialize. Skip over the name server query if we haven't yet.
      */
     if (reply->answer_start == 0)
-	if (dns_skip_query(reply) < 0)
-	    return (DNS_RETRY);
+	if ((status = dns_skip_query(reply)) < 0)
+	    return (status);
     pos = reply->answer_start;
     if (rrlist)
 	*rrlist = 0;
@@ -451,12 +475,12 @@ static int dns_get_answer(const char *name, DNS_REPLY *reply, int type,
      * Either this, or use a GOTO for emergency exits. The purpose is to
      * prevent incomplete answers from being passed back to the caller.
      */
-#define CORRUPT { \
+#define CORRUPT(status) { \
 	if (rrlist && *rrlist) { \
 	    dns_rr_free(*rrlist); \
 	    *rrlist = 0; \
 	} \
-	return (DNS_RETRY); \
+	return (status); \
     }
 
     /*
@@ -468,21 +492,21 @@ static int dns_get_answer(const char *name, DNS_REPLY *reply, int type,
 	 * Optionally extract the fully-qualified domain name.
 	 */
 	if (pos >= reply->end)
-	    CORRUPT;
+	    CORRUPT(DNS_RETRY);
 	len = dn_expand(reply->buf, reply->end, pos, rr_name, DNS_NAME_LEN);
 	if (len < 0)
-	    CORRUPT;
+	    CORRUPT(DNS_RETRY);
 	pos += len;
 
 	/*
 	 * Extract the fixed reply data: type, class, ttl, length.
 	 */
 	if (pos + RRFIXEDSZ > reply->end)
-	    CORRUPT;
-	if (dns_get_fixed(pos, &fixed) != DNS_OK)
-	    CORRUPT;
+	    CORRUPT(DNS_RETRY);
+	if ((status = dns_get_fixed(pos, &fixed)) != DNS_OK)
+	    CORRUPT(status);
 	if (!valid_rr_name(rr_name, "resource name", fixed.type, reply))
-	    CORRUPT;
+	    CORRUPT(DNS_INVAL);
 	if (fqdn)
 	    vstring_strcpy(fqdn, rr_name);
 	if (msg_verbose)
@@ -494,21 +518,22 @@ static int dns_get_answer(const char *name, DNS_REPLY *reply, int type,
 	 * Optionally extract the requested resource or CNAME data.
 	 */
 	if (pos + fixed.length > reply->end)
-	    CORRUPT;
+	    CORRUPT(DNS_RETRY);
 	if (type == fixed.type || type == T_ANY) {	/* requested type */
 	    if (rrlist) {
-		if ((rr = dns_get_rr(name, reply, pos, rr_name, &fixed)) != 0) {
+		if ((status = dns_get_rr(&rr, orig_name, reply, pos, rr_name,
+					 &fixed)) == DNS_OK) {
 		    resource_found++;
 		    *rrlist = dns_rr_append(*rrlist, rr);
 		} else if (not_found_status != DNS_RETRY)
-		    not_found_status = DNS_FAIL;	/* XXX */
+		    not_found_status = status;
 	    } else
 		resource_found++;
 	} else if (fixed.type == T_CNAME) {	/* cname resource */
 	    cname_found++;
 	    if (cname && c_len > 0)
-		if (dns_get_alias(reply, pos, &fixed, cname, c_len) != DNS_OK)
-		    CORRUPT;
+		if ((status = dns_get_alias(reply, pos, &fixed, cname, c_len)) != DNS_OK)
+		    CORRUPT(status);
 	}
 	pos += fixed.length;
     }
@@ -532,10 +557,10 @@ int     dns_lookup(const char *name, unsigned type, unsigned flags,
 {
     char    cname[DNS_NAME_LEN];
     int     c_len = sizeof(cname);
-    DNS_REPLY reply;
+    static DNS_REPLY reply;
     int     count;
     int     status;
-    const char *saved_name = name;
+    const char *orig_name = name;
 
     /*
      * DJBDNS produces a bogus A record when given a numerical hostname.
@@ -577,16 +602,16 @@ int     dns_lookup(const char *name, unsigned type, unsigned flags,
 	 * Extract resource records of the requested type. Pick up CNAME
 	 * information just in case the requested data is not found.
 	 */
-	status = dns_get_answer(saved_name, &reply, type, rrlist, fqdn,
+	status = dns_get_answer(orig_name, &reply, type, rrlist, fqdn,
 				cname, c_len);
 	switch (status) {
 	default:
 	    if (why)
 		vstring_sprintf(why, "Name service error for name=%s type=%s: "
-				"Malformed name server reply",
+				"Malformed or unexpected name server reply",
 				name, dns_strtype(type));
+	    /* FALLTHROUGH */
 	case DNS_OK:
-	case DNS_NOTFOUND:
 	    return (status);
 	case DNS_RECURSE:
 	    if (msg_verbose)
@@ -625,7 +650,10 @@ int     dns_lookup_l(const char *name, unsigned flags, DNS_RR **rrlist,
 	    non_err = 1;
 	    if (rrlist)
 		*rrlist = dns_rr_append(*rrlist, rr);
-	    if (lflags == DNS_REQ_FLAG_ANY)
+	    if (lflags & DNS_REQ_FLAG_STOP_OK)
+		break;
+	} else if (status == DNS_INVAL) {
+	    if (lflags & DNS_REQ_FLAG_STOP_INVAL)
 		break;
 	} else if (status == DNS_RETRY) {
 	    soft_err = 1;
@@ -659,7 +687,10 @@ int     dns_lookup_v(const char *name, unsigned flags, DNS_RR **rrlist,
 	    non_err = 1;
 	    if (rrlist)
 		*rrlist = dns_rr_append(*rrlist, rr);
-	    if (lflags == DNS_REQ_FLAG_ANY)
+	    if (lflags & DNS_REQ_FLAG_STOP_OK)
+		break;
+	} else if (status == DNS_INVAL) {
+	    if (lflags & DNS_REQ_FLAG_STOP_INVAL)
 		break;
 	} else if (status == DNS_RETRY) {
 	    soft_err = 1;

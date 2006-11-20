@@ -1,4 +1,4 @@
-/*	$NetBSD: master_listen.c,v 1.7.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: master_listen.c,v 1.7.2.2 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -72,7 +72,7 @@
 
 void    master_listen_init(MASTER_SERV *serv)
 {
-    char   *myname = "master_listen_init";
+    const char *myname = "master_listen_init";
     char   *end_point;
     int     n;
     MAI_HOSTADDR_STR hostaddr;
@@ -153,7 +153,7 @@ void    master_listen_init(MASTER_SERV *serv)
 
 void    master_listen_cleanup(MASTER_SERV *serv)
 {
-    char   *myname = "master_listen_cleanup";
+    const char *myname = "master_listen_cleanup";
     int     n;
 
     /*

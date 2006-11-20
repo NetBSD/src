@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_glue.h,v 1.1.1.3 2004/05/31 00:24:50 heas Exp $	*/
+/*	$NetBSD: smtpd_sasl_glue.h,v 1.1.1.3.2.1 2006/11/20 13:30:54 tron Exp $	*/
 
 /*++
 /* NAME
@@ -6,7 +6,7 @@
 /* SUMMARY
 /*	Postfix SMTP server, SASL support interface
 /* SYNOPSIS
-/*	#include "smtpd_sasl.h"
+/*	#include "smtpd_sasl_glue.h"
 /* DESCRIPTION
 /* .nf
 
@@ -16,7 +16,7 @@
 extern void smtpd_sasl_initialize(void);
 extern void smtpd_sasl_connect(SMTPD_STATE *, const char *, const char *);
 extern void smtpd_sasl_disconnect(SMTPD_STATE *);
-extern char *smtpd_sasl_authenticate(SMTPD_STATE *, const char *, const char *);
+extern int smtpd_sasl_authenticate(SMTPD_STATE *, const char *, const char *);
 extern void smtpd_sasl_logout(SMTPD_STATE *);
 extern int permit_sasl_auth(SMTPD_STATE *, int, int);
 

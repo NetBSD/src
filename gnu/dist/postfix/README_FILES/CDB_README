@@ -33,7 +33,7 @@ Postfix is compatible with two CDB implementations:
 Tinycdb is preferred, since it is a bit faster, has additional useful
 functionality and is much simpler to use.
 
-To build Postfix after you have installed CDB, use something like:
+To build Postfix after you have installed tinycdb, use something like:
 
     % make tidy
     % CDB=../../../tinycdb-0.5
@@ -41,7 +41,7 @@ To build Postfix after you have installed CDB, use something like:
         "AUXLIBS=$CDB/libcdb.a"
     % make
 
-    for tinycdb, or alternatively, for the D.J.B. version:
+Alternatively, for the D.J.B. version of CDB:
 
     % make tidy
     % CDB=../../../cdb-0.75
@@ -49,10 +49,11 @@ To build Postfix after you have installed CDB, use something like:
         "AUXLIBS=$CDB/cdb.a $CDB/alloc.a $CDB/buffer.a $CDB/unix.a $CDB/byte.a"
     % make
 
-After postfix has been built with cdb support, you can use "cdb" tables
+After Postfix has been built with cdb support, you can use "cdb" tables
 wherever you can use read-only "hash", "btree" or "dbm" tables. However, the
 "ppoossttmmaapp --ii" (incremental record insertion) and "ppoossttmmaapp --dd" (incremental
 record deletion) command-line options are not available. For the same reason
 the "cdb" map type cannot be used to store the persistent address verification
-cache for the verify(8) service.
+cache for the verify(8) service, or to store TLS session information for the
+tlsmgr(8) service.
 

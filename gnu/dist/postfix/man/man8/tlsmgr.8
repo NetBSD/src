@@ -1,4 +1,4 @@
-.\"	$NetBSD: tlsmgr.8,v 1.1.1.1.2.2 2006/07/12 15:06:35 tron Exp $
+.\"	$NetBSD: tlsmgr.8,v 1.1.1.1.2.3 2006/11/20 13:30:18 tron Exp $
 .\"
 .TH TLSMGR 8 
 .ad
@@ -75,17 +75,30 @@ The text below provides only a parameter summary. See
 .nf
 .ad
 .fi
-.IP "\fBsmtpd_tls_session_cache_database (empty)\fR"
-Name of the file containing the optional Postfix SMTP server
-TLS session cache.
-.IP "\fBsmtpd_tls_session_cache_timeout (3600s)\fR"
-The expiration time of Postfix SMTP server TLS session cache
-information.
+.IP "\fBlmtp_tls_loglevel (0)\fR"
+The LMTP-specific version of the smtp_tls_loglevel
+configuration parameter.
+.IP "\fBlmtp_tls_session_cache_database (empty)\fR"
+The LMTP-specific version of the smtp_tls_session_cache_database
+configuration parameter.
+.IP "\fBlmtp_tls_session_cache_timeout (3600s)\fR"
+The LMTP-specific version of the smtp_tls_session_cache_timeout
+configuration parameter.
+.IP "\fBsmtp_tls_loglevel (0)\fR"
+Enable additional Postfix SMTP client logging of TLS activity.
 .IP "\fBsmtp_tls_session_cache_database (empty)\fR"
 Name of the file containing the optional Postfix SMTP client
 TLS session cache.
 .IP "\fBsmtp_tls_session_cache_timeout (3600s)\fR"
 The expiration time of Postfix SMTP client TLS session cache
+information.
+.IP "\fBsmtpd_tls_loglevel (0)\fR"
+Enable additional Postfix SMTP server logging of TLS activity.
+.IP "\fBsmtpd_tls_session_cache_database (empty)\fR"
+Name of the file containing the optional Postfix SMTP server
+TLS session cache.
+.IP "\fBsmtpd_tls_session_cache_timeout (3600s)\fR"
+The expiration time of Postfix SMTP server TLS session cache
 information.
 .SH "PSEUDO RANDOM NUMBER GENERATOR"
 .na

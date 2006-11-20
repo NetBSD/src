@@ -122,11 +122,17 @@ case "$SYSTEM.$RELEASE" in
 		;;
   OpenBSD.3*)	SYSTYPE=OPENBSD3
 		;;
+  OpenBSD.4*)	SYSTYPE=OPENBSD4
+		;;
   ekkoBSD.1*)	SYSTYPE=EKKOBSD1
 		;;
    NetBSD.1*)	SYSTYPE=NETBSD1
 		;;
    NetBSD.2*)	SYSTYPE=NETBSD2
+		;;
+   NetBSD.3*)	SYSTYPE=NETBSD3
+		;;
+   NetBSD.4*)	SYSTYPE=NETBSD4
 		;;
    BSD/OS.2*)	SYSTYPE=BSDI2
 		;;
@@ -170,6 +176,7 @@ case "$SYSTEM.$RELEASE" in
 		?*) error "Don't set LD_LIBRARY_PATH";;
 		esac
 		case "${CC}" in
+		*" "*) ;;
 		*ucb*) error "Don't use /usr/ucb/cc or ucblib";;
 		  cc*) case `which ${CC}` in
 		*ucb*) error "Don't use /usr/ucb/cc or ucblib";;
@@ -381,9 +388,15 @@ case "$CC" in
       *CC) error "Don't use CC. That's the C++ compiler";;
         *) : ${OPT='-O'};;
 esac
+#
+# "gcc -W" 3.4.2 no longer reports functions that fail to return a
+# result.  Use "gcc -Wall -Wno-comment" instead. We'll figure out
+# later if the other -Wmumble options are really redundant. Having
+# een burned once by a compiler that lies about what warnings it
+# produces, not taking that chance again.
 
 : ${CC='gcc $(WARN)'} ${OPT='-O'} ${DEBUG='-g'} ${AWK=awk} \
-${WARN='-W -Wformat -Wimplicit -Wmissing-prototypes \
+${WARN='-Wall -Wno-comment -Wformat -Wimplicit -Wmissing-prototypes \
 	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
 	-Wunused'}
 
@@ -391,6 +404,10 @@ export SYSTYPE AR ARFL RANLIB SYSLIBS CC OPT DEBUG AWK OPTS
 
 # Snapshot only.
 #CCARGS="$CCARGS -DSNAPSHOT"
+
+# Non-production: needs thorough testing, or major changes are still
+# needed before the code stabilizes.
+#CCARGS="$CCARGS -DNONPROD"
 
 sed 's/  / /g' <<EOF
 SYSTYPE	= $SYSTYPE

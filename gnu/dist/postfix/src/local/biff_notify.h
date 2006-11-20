@@ -1,4 +1,4 @@
-/*	$NetBSD: biff_notify.h,v 1.1.1.2 2004/05/31 00:24:37 heas Exp $	*/
+/*	$NetBSD: biff_notify.h,v 1.1.1.2.2.1 2006/11/20 13:30:39 tron Exp $	*/
 
 #ifndef _BIFF_H_INCLUDED_
 #define _BIFF_H_INCLUDED_
@@ -16,7 +16,7 @@
  /*
   * External interface.
   */
-extern void biff_notify(const char *, int);
+extern void biff_notify(const char *, ssize_t);
 
 /* LICENSE
 /* .ad

@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_peer.c,v 1.1.1.2 2004/05/31 00:24:44 heas Exp $	*/
+/*	$NetBSD: qmgr_peer.c,v 1.1.1.2.2.1 2006/11/20 13:30:47 tron Exp $	*/
 
 /*++
 /* NAME
@@ -88,7 +88,7 @@ QMGR_PEER *qmgr_peer_create(QMGR_JOB *job, QMGR_QUEUE *queue)
 
 void    qmgr_peer_free(QMGR_PEER *peer)
 {
-    char   *myname = "qmgr_peer_free";
+    const char *myname = "qmgr_peer_free";
     QMGR_JOB *job = peer->job;
     QMGR_QUEUE *queue = peer->queue;
 

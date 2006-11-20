@@ -1,4 +1,4 @@
-/*	$NetBSD: scache.c,v 1.1.1.1.2.2 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: scache.c,v 1.1.1.1.2.3 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -150,6 +150,7 @@
 #include <sys_defs.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 /* Utility library. */
 

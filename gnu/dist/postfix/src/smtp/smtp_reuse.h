@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reuse.h,v 1.1.1.1.2.2 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: smtp_reuse.h,v 1.1.1.1.2.3 2006/11/20 13:30:52 tron Exp $	*/
 
 /*++
 /* NAME
@@ -11,16 +11,11 @@
 /* .nf
 
  /*
-  * DNS library.
-  */
-#include <dns.h>
-
- /*
   * Internal interfaces.
   */
 extern void smtp_save_session(SMTP_STATE *);
 extern SMTP_SESSION *smtp_reuse_domain(SMTP_STATE *, int, const char *, unsigned);
-extern SMTP_SESSION *smtp_reuse_addr(SMTP_STATE *, DNS_RR *, unsigned);
+extern SMTP_SESSION *smtp_reuse_addr(SMTP_STATE *, const char *, unsigned);
 
 /* LICENSE
 /* .ad

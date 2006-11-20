@@ -1,4 +1,4 @@
-/*	$NetBSD: match_ops.c,v 1.7.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: match_ops.c,v 1.7.2.2 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -87,9 +87,8 @@
 
 int     match_string(int unused_flags, const char *string, const char *pattern)
 {
-    char   *myname = "match_string";
+    const char *myname = "match_string";
     int     match;
-    char   *key;
 
     if (msg_verbose)
 	msg_info("%s: %s ~? %s", myname, string, pattern);
@@ -98,9 +97,7 @@ int     match_string(int unused_flags, const char *string, const char *pattern)
      * Try dictionary lookup: exact match.
      */
     if (MATCH_DICTIONARY(pattern)) {
-	key = lowercase(mystrdup(string));
-	match = (dict_lookup(pattern, key) != 0);
-	myfree(key);
+	match = (dict_lookup(pattern, string) != 0);
 	if (match != 0)
 	    return (1);
 	if (dict_errno != 0)
@@ -125,33 +122,42 @@ int     match_string(int unused_flags, const char *string, const char *pattern)
 
 int     match_hostname(int flags, const char *name, const char *pattern)
 {
-    char   *myname = "match_hostname";
+    const char *myname = "match_hostname";
     const char *pd;
     const char *entry;
-    char   *next;
-    char   *temp;
+    const char *next;
     int     match;
+    DICT   *dict;
 
     if (msg_verbose)
 	msg_info("%s: %s ~? %s", myname, name, pattern);
 
     /*
      * Try dictionary lookup: exact match and parent domains.
+     * 
+     * Don't look up parent domain substrings with regexp maps etc.
      */
     if (MATCH_DICTIONARY(pattern)) {
-	temp = lowercase(mystrdup(name));
+	if ((dict = dict_handle(pattern)) == 0)
+	    msg_panic("%s: unknown dictionary: %s", myname, pattern);
 	match = 0;
-	for (entry = temp; *entry != 0; entry = next) {
-	    if ((match = (dict_lookup(pattern, entry) != 0)) != 0)
-		break;
-	    if (dict_errno != 0)
-		msg_fatal("%s: table lookup problem", pattern);
+	for (entry = name; *entry != 0; entry = next) {
+	    if (entry == name || (dict->flags & DICT_FLAG_FIXED)) {
+		match = (dict_get(dict, entry) != 0);
+		if (msg_verbose > 1)
+		    msg_info("%s: lookup %s:%s %s: %s",
+			     myname, dict->type, dict->name, entry,
+			     match ? "found" : "notfound");
+		if (match != 0)
+		    break;
+		if (dict_errno != 0)
+		    msg_fatal("%s: table lookup problem", pattern);
+	    }
 	    if ((next = strchr(entry + 1, '.')) == 0)
 		break;
 	    if (flags & MATCH_FLAG_PARENT)
 		next += 1;
 	}
-	myfree(temp);
 	return (match);
     }
 
@@ -183,7 +189,7 @@ int     match_hostname(int flags, const char *name, const char *pattern)
 
 int     match_hostaddr(int unused_flags, const char *addr, const char *pattern)
 {
-    char   *myname = "match_hostaddr";
+    const char *myname = "match_hostaddr";
     char   *saved_patt;
     CIDR_MATCH match_info;
     VSTRING *err;
@@ -215,7 +221,7 @@ int     match_hostaddr(int unused_flags, const char *addr, const char *pattern)
 	if (strcasecmp(addr, pattern) == 0)
 	    return (1);
     } else {
-	int     addr_len = strlen(addr);
+	size_t  addr_len = strlen(addr);
 
 	if (strncasecmp(addr, pattern + 1, addr_len) == 0
 	    && strcmp(pattern + 1 + addr_len, "]") == 0)

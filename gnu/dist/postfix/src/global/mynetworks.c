@@ -1,4 +1,4 @@
-/*	$NetBSD: mynetworks.c,v 1.5.2.1 2006/07/12 15:06:39 tron Exp $	*/
+/*	$NetBSD: mynetworks.c,v 1.5.2.2 2006/11/20 13:30:25 tron Exp $	*/
 
 /*++
 /* NAME
@@ -89,13 +89,13 @@ const char *mynetworks(void)
     static VSTRING *result;
 
     if (result == 0) {
-	char   *myname = "mynetworks";
+	const char *myname = "mynetworks";
 	INET_ADDR_LIST *my_addr_list;
 	INET_ADDR_LIST *my_mask_list;
-	int     shift;
-	int     junk;
+	unsigned shift;
+	unsigned junk;
 	int     i;
-	int     mask_style;
+	unsigned mask_style;
 	struct sockaddr_storage *sa;
 	struct sockaddr_storage *ma;
 	int     net_mask_count = 0;
@@ -111,7 +111,7 @@ const char *mynetworks(void)
 	 * require exactly one value, or we need to provide an API that is
 	 * dedicated for single-valued flags.
 	 */
-	for (i = 0, junk = mask_style; junk != 0; junk >>= 1)
+	for (i = 0, junk = mask_style; junk != 0; junk >>= 1U)
 	    i += (junk & 1);
 	if (i != 1)
 	    msg_fatal("bad %s value: %s; specify exactly one value",
@@ -295,6 +295,7 @@ int     main(int argc, char **argv)
     var_mynetworks_style = argv[2];
     var_inet_interfaces = argv[3];
     mynetworks();
+    return (0);
 }
 
 #endif

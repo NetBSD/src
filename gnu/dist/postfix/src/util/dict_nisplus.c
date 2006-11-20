@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_nisplus.c,v 1.1.1.2.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: dict_nisplus.c,v 1.1.1.2.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -139,6 +139,14 @@ static const char *dict_nisplus_lookup(DICT *dict, const char *key)
     }
 
     /*
+     * Optionally fold the key.
+     */
+    if (dict->fold_buf) {
+	vstring_strcpy(dict->fold_buf, key);
+	key = lowercase(vstring_str(dict->fold_buf));
+    }
+
+    /*
      * Check that the lookup key does not contain characters disallowed by
      * nis+(1).
      * 
@@ -231,6 +239,8 @@ static void dict_nisplus_close(DICT *dict)
     DICT_NISPLUS *dict_nisplus = (DICT_NISPLUS *) dict;
 
     myfree(dict_nisplus->template);
+    if (dict->fold_buf)
+	vstring_free(dict->fold_buf);
     dict_free(dict);
 }
 
@@ -258,6 +268,8 @@ DICT   *dict_nisplus_open(const char *map, int open_flags, int dict_flags)
     dict_nisplus->dict.lookup = dict_nisplus_lookup;
     dict_nisplus->dict.close = dict_nisplus_close;
     dict_nisplus->dict.flags = dict_flags | DICT_FLAG_FIXED;
+    if (dict_flags & DICT_FLAG_FOLD_FIX)
+	dict_nisplus->dict.fold_buf = vstring_alloc(10);
 
     /*
      * Convert the query template into an indexed name and column number. The

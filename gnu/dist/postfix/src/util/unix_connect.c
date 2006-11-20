@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_connect.c,v 1.1.1.3 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: unix_connect.c,v 1.1.1.3.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -6,7 +6,7 @@
 /* SUMMARY
 /*	connect to UNIX-domain listener
 /* SYNOPSIS
-/*	#include <unix_connect.h>
+/*	#include <connect.h>
 /*
 /*	int	unix_connect(addr, block_mode, timeout)
 /*	const char *addr;

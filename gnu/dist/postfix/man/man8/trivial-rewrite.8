@@ -1,4 +1,4 @@
-.\"	$NetBSD: trivial-rewrite.8,v 1.1.1.9.2.1 2006/07/12 15:06:35 tron Exp $
+.\"	$NetBSD: trivial-rewrite.8,v 1.1.1.9.2.2 2006/11/20 13:30:18 tron Exp $
 .\"
 .TH TRIVIAL-REWRITE 8 
 .ad
@@ -34,8 +34,8 @@ the \fBlocal\fR address rewriting context. This prevents
 Postfix from appending the local domain to spam from poorly
 written remote clients.
 .RE
-.IP "\fBresolve \fIaddress\fR"
-Resolve an address to a (\fItransport\fR, \fInexthop\fR,
+.IP "\fBresolve \fIsender\fR \fIaddress\fR"
+Resolve the address to a (\fItransport\fR, \fInexthop\fR,
 \fIrecipient\fR, \fIflags\fR) quadruple. The meaning of
 the results is as follows:
 .RS
@@ -50,8 +50,8 @@ The envelope recipient address that is passed on to \fInexthop\fR.
 The address class, whether the address requires relaying,
 whether the address has problems, and whether the request failed.
 .RE
-.IP "\fBverify \fIaddress\fR"
-Resolve an address for address verification purposes.
+.IP "\fBverify \fIsender\fR \fIaddress\fR"
+Resolve the address for address verification purposes.
 .SH "SERVER PROCESS MANAGEMENT"
 .na
 .nf
@@ -107,6 +107,9 @@ looking inside quotes.
 Resolve an address that ends in the "@" null domain as if the
 local hostname were specified, instead of rejecting the address as
 invalid.
+.IP "\fBresolve_numeric_domain (no)\fR"
+Resolve "user@ipaddress" as "user@[ipaddress]", instead of
+rejecting the address as invalid.
 .SH "ADDRESS REWRITING CONTROLS"
 .na
 .nf
@@ -131,8 +134,8 @@ Enable the rewriting of "site!user" into "user@site".
 Available in Postfix 2.2 and later:
 .IP "\fBremote_header_rewrite_domain (empty)\fR"
 Don't rewrite message headers from remote clients at all when
-this parameter is empty; otherwise, rewrite remote message headers
-and append the specified domain name to incomplete addresses.
+this parameter is empty; otherwise, rewrite message headers and
+append the specified domain name to incomplete addresses.
 .SH "ROUTING CONTROLS"
 .na
 .nf
@@ -143,27 +146,34 @@ Earlier versions do not have support for: virtual_transport,
 relay_transport, virtual_alias_domains, virtual_mailbox_domains
 or proxy_interfaces.
 .IP "\fBlocal_transport (local:$myhostname)\fR"
-The default mail delivery transport for domains that match
-$mydestination, $inet_interfaces or $proxy_interfaces.
+The default mail delivery transport and next-hop destination
+for final delivery to domains listed with mydestination, and for
+[ipaddress] destinations that match $inet_interfaces or $proxy_interfaces.
 .IP "\fBvirtual_transport (virtual)\fR"
-The default mail delivery transport for domains that match the
-$virtual_mailbox_domains parameter value.
+The default mail delivery transport and next-hop destination for
+final delivery to domains listed with $virtual_mailbox_domains.
 .IP "\fBrelay_transport (relay)\fR"
-The default mail delivery transport and next-hop information for
-domains that match the $relay_domains parameter value.
+The default mail delivery transport and next-hop destination for
+remote delivery to domains listed with $relay_domains.
 .IP "\fBdefault_transport (smtp)\fR"
-The default mail delivery transport for domains that do not match
-$mydestination, $inet_interfaces, $proxy_interfaces,
-$virtual_alias_domains, $virtual_mailbox_domains, or $relay_domains.
+The default mail delivery transport and next-hop destination for
+destinations that do not match $mydestination, $inet_interfaces,
+$proxy_interfaces, $virtual_alias_domains, $virtual_mailbox_domains,
+or $relay_domains.
 .IP "\fBparent_domain_matches_subdomains (see 'postconf -d' output)\fR"
 What Postfix features match subdomains of "domain.tld" automatically,
 instead of requiring an explicit ".domain.tld" pattern.
 .IP "\fBrelayhost (empty)\fR"
-The default host to send non-local mail to when no entry is matched
-in the optional \fBtransport\fR(5) table.
+The next-hop destination of non-local mail; overrides non-local
+domains in recipient addresses.
 .IP "\fBtransport_maps (empty)\fR"
 Optional lookup tables with mappings from recipient address to
 (message delivery transport, next-hop destination).
+.PP
+Available in Postfix version 2.3 and later:
+.IP "\fBsender_dependent_relayhost_maps (empty)\fR"
+A sender-dependent override for the global relayhost parameter
+setting.
 .SH "ADDRESS VERIFICATION CONTROLS"
 .na
 .nf
@@ -194,6 +204,11 @@ probes.
 .IP "\fBaddress_verify_transport_maps ($transport_maps)\fR"
 Overrides the transport_maps parameter setting for address verification
 probes.
+.PP
+Available in Postfix version 2.3 and later:
+.IP "\fBaddress_verify_sender_dependent_relayhost_maps (empty)\fR"
+Overrides the sender_dependent_relayhost_maps parameter setting for address
+verification probes.
 .SH "MISCELLANEOUS CONTROLS"
 .na
 .nf

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: post-install,v 1.7.2.1 2006/07/12 15:06:33 tron Exp $
+#	$NetBSD: post-install,v 1.7.2.2 2006/11/20 13:30:15 tron Exp $
 #
 
 # To view the formatted manual page of this file, type:
@@ -475,6 +475,7 @@ test -n "$create" && {
 	test -n "$set_permission" && {
 	    chown $recursive $owner $path || exit 1
 	    test -z "$group" || chgrp $recursive $group $path || exit 1
+	    # Don't "chmod -R"; queue file status is encoded in mode bits.
 	    if [ "$type" = "d" -a -n "$recursive" ]
 	    then
 		find $path -type d -exec chmod $mode "{}" ";"
@@ -644,6 +645,7 @@ EOF
 	    ed $config_directory/master.cf <<EOF || exit 1
 /^tlsmgr[ 	]*fifo[ 	]/
 s/fifo/unix/
+s/[0-9][0-9]*/&?/
 p
 w
 q

@@ -1,4 +1,4 @@
-/*	$NetBSD: transport.c,v 1.1.1.7 2004/05/31 00:24:54 heas Exp $	*/
+/*	$NetBSD: transport.c,v 1.1.1.7.2.1 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -99,7 +99,8 @@ TRANSPORT_INFO *transport_pre_init(const char *transport_maps_name,
 
     tp = (TRANSPORT_INFO *) mymalloc(sizeof(*tp));
     tp->transport_path = maps_create(transport_maps_name, transport_maps,
-				     DICT_FLAG_LOCK);
+				     DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX
+				     | DICT_FLAG_NO_REGSUB);
     tp->wildcard_channel = tp->wildcard_nexthop = 0;
     tp->transport_errno = 0;
     return (tp);
@@ -246,7 +247,6 @@ int     transport_lookup(TRANSPORT_INFO *tp, const char *addr,
 			         const char *rcpt_domain,
 			         VSTRING *channel, VSTRING *nexthop)
 {
-    char   *full_addr;
     char   *stripped_addr;
     char   *ratsign = 0;
     const char *name;
@@ -263,44 +263,34 @@ int     transport_lookup(TRANSPORT_INFO *tp, const char *addr,
 	msg_warn("transport_lookup: null address - skipping table lookup");
 	return (NOTFOUND);
     }
-    full_addr = lowercase(mystrdup(addr));
-
-    /*
-     * The optimizer will replace multiple instances of this macro expansion
-     * by gotos to a single instance that does the same thing.
-     */
-#define RETURN_FREE(x) { \
-	myfree(full_addr); \
-	return (x); \
-    }
 
     /*
      * Look up the full address with the FULL flag to include regexp maps in
      * the query.
      */
-    if ((ratsign = strrchr(full_addr, '@')) == 0 || ratsign[1] == 0)
-	msg_panic("transport_lookup: bad address: \"%s\"", full_addr);
+    if ((ratsign = strrchr(addr, '@')) == 0 || ratsign[1] == 0)
+	msg_panic("transport_lookup: bad address: \"%s\"", addr);
 
-    if (find_transport_entry(tp, full_addr, rcpt_domain, FULL, channel, nexthop))
-	RETURN_FREE(FOUND);
+    if (find_transport_entry(tp, addr, rcpt_domain, FULL, channel, nexthop))
+	return (FOUND);
     if (dict_errno != 0)
-	RETURN_FREE(NOTFOUND);
+	return (NOTFOUND);
 
     /*
      * If the full address did not match, and there is an address extension,
      * look up the stripped address with the PARTIAL flag to avoid matching
      * partial lookup keys with regular expressions.
      */
-    if ((stripped_addr = strip_addr(full_addr, DISCARD_EXTENSION,
+    if ((stripped_addr = strip_addr(addr, DISCARD_EXTENSION,
 				    *var_rcpt_delim)) != 0) {
 	found = find_transport_entry(tp, stripped_addr, rcpt_domain, PARTIAL,
 				     channel, nexthop);
 
 	myfree(stripped_addr);
 	if (found)
-	    RETURN_FREE(FOUND);
+	    return (FOUND);
 	if (dict_errno != 0)
-	    RETURN_FREE(NOTFOUND);
+	    return (NOTFOUND);
     }
 
     /*
@@ -321,9 +311,9 @@ int     transport_lookup(TRANSPORT_INFO *tp, const char *addr,
      */
     for (name = ratsign + 1; *name != 0; name = next) {
 	if (find_transport_entry(tp, name, rcpt_domain, PARTIAL, channel, nexthop))
-	    RETURN_FREE(FOUND);
+	    return (FOUND);
 	if (dict_errno != 0)
-	    RETURN_FREE(NOTFOUND);
+	    return (NOTFOUND);
 	if ((next = strchr(name + 1, '.')) == 0)
 	    break;
 	if (transport_match_parent_style == MATCH_FLAG_PARENT)
@@ -337,15 +327,15 @@ int     transport_lookup(TRANSPORT_INFO *tp, const char *addr,
 	transport_wildcard_init(tp);
     if (tp->transport_errno) {
 	dict_errno = tp->transport_errno;
-	RETURN_FREE(NOTFOUND);
+	return (NOTFOUND);
     } else if (tp->wildcard_channel) {
 	update_entry(STR(tp->wildcard_channel), STR(tp->wildcard_nexthop),
 		     rcpt_domain, channel, nexthop);
-	RETURN_FREE(FOUND);
+	return (FOUND);
     }
 
     /*
      * We really did not find it.
      */
-    RETURN_FREE(NOTFOUND);
+    return (NOTFOUND);
 }

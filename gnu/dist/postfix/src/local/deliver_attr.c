@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_attr.c,v 1.1.1.2 2004/05/31 00:24:37 heas Exp $	*/
+/*	$NetBSD: deliver_attr.c,v 1.1.1.2.2.1 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -13,11 +13,17 @@
 /*
 /*	void	deliver_attr_dump(attrp)
 /*	DELIVER_ATTR *attrp;
+/*
+/*	void	deliver_attr_free(attrp)
+/*	DELIVER_ATTR *attrp;
 /* DESCRIPTION
 /*	deliver_attr_init() initializes a structure with message delivery
 /*	attributes to a known initial state (all zeros).
 /*
 /*	deliver_attr_dump() logs the contents of the given attribute list.
+/*
+/*	deliver_attr_free() releases memory that was allocated by
+/*	deliver_attr_init().
 /* LICENSE
 /* .ad
 /* .fi
@@ -38,6 +44,7 @@
 
 #include <msg.h>
 #include <vstream.h>
+#include <vstring.h>
 
 /* Application-specific. */
 
@@ -53,7 +60,7 @@ void    deliver_attr_init(DELIVER_ATTR *attrp)
     attrp->queue_id = 0;
     attrp->offset = 0;
     attrp->sender = 0;
-    attrp->recipient = 0;
+    RECIPIENT_ASSIGN(&(attrp->rcpt), 0, 0, 0, 0, 0);
     attrp->domain = 0;
     attrp->local = 0;
     attrp->user = 0;
@@ -64,6 +71,7 @@ void    deliver_attr_init(DELIVER_ATTR *attrp)
     attrp->relay = 0;
     attrp->exp_type = 0;
     attrp->exp_from = 0;
+    attrp->why = dsb_create();
 }
 
 /* deliver_attr_dump - log message delivery attributes */
@@ -75,9 +83,9 @@ void    deliver_attr_dump(DELIVER_ATTR *attrp)
     msg_info("fp: 0x%lx", (long) attrp->fp);
     msg_info("queue_name: %s", attrp->queue_name ? attrp->queue_name : "null");
     msg_info("queue_id: %s", attrp->queue_id ? attrp->queue_id : "null");
-    msg_info("offset: %ld", attrp->offset);
+    msg_info("offset: %ld", attrp->rcpt.offset);
     msg_info("sender: %s", attrp->sender ? attrp->sender : "null");
-    msg_info("recipient: %s", attrp->recipient ? attrp->recipient : "null");
+    msg_info("recipient: %s", attrp->rcpt.address ? attrp->rcpt.address : "null");
     msg_info("domain: %s", attrp->domain ? attrp->domain : "null");
     msg_info("local: %s", attrp->local ? attrp->local : "null");
     msg_info("user: %s", attrp->user ? attrp->user : "null");
@@ -88,4 +96,12 @@ void    deliver_attr_dump(DELIVER_ATTR *attrp)
     msg_info("relay: %s", attrp->relay ? attrp->relay : "null");
     msg_info("exp_type: %d", attrp->exp_type);
     msg_info("exp_from: %s", attrp->exp_from ? attrp->exp_from : "null");
+    msg_info("why: %s", attrp->why ? "buffer" : "null");
+}
+
+/* deliver_attr_free - release storage */
+
+void    deliver_attr_free(DELIVER_ATTR *attrp)
+{
+    dsb_free(attrp->why);
 }

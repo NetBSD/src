@@ -1,4 +1,4 @@
-/*	$NetBSD: postlog.c,v 1.1.1.3.2.1 2006/07/12 15:06:41 tron Exp $	*/
+/*	$NetBSD: postlog.c,v 1.1.1.3.2.2 2006/11/20 13:30:47 tron Exp $	*/
 
 /*++
 /* NAME
@@ -41,7 +41,7 @@
 /* .ad
 /* .fi
 /* .IP MAIL_CONFIG
-/*	Directory with the \fBmain.cf\fR file. 
+/*	Directory with the \fBmain.cf\fR file.
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi

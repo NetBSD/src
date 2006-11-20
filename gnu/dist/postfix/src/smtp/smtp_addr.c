@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_addr.c,v 1.9.2.1 2006/07/12 15:06:41 tron Exp $	*/
+/*	$NetBSD: smtp_addr.c,v 1.9.2.2 2006/11/20 13:30:52 tron Exp $	*/
 
 /*++
 /* NAME
@@ -11,19 +11,19 @@
 /*	DNS_RR *smtp_domain_addr(name, misc_flags, why, found_myself)
 /*	char	*name;
 /*	int	misc_flags;
-/*	VSTRING	*why;
+/*	DSN_BUF	*why;
 /*	int	*found_myself;
 /*
 /*	DNS_RR *smtp_host_addr(name, misc_flags, why)
 /*	char	*name;
 /*	int	misc_flags;
-/*	VSTRING	*why;
+/*	DSN_BUF	*why;
 /* DESCRIPTION
 /*	This module implements Internet address lookups. By default,
 /*	lookups are done via the Internet domain name service (DNS).
 /*	A reasonable number of CNAME indirections is permitted. When
 /*	DNS lookups are disabled, host address lookup is done with
-/*	gethostbyname().
+/*	getnameinfo() or gethostbyname().
 /*
 /*	smtp_domain_addr() looks up the network addresses for mail
 /*	exchanger hosts listed for the named domain. Addresses are
@@ -50,16 +50,7 @@
 /*	when DNS lookups are explicitly disabled.
 /*
 /*	All routines either return a DNS_RR pointer, or return a null
-/*	pointer and set the \fIsmtp_errno\fR global variable accordingly:
-/* .IP SMTP_ERR_RETRY
-/*	The request failed due to a soft error, and should be retried later.
-/* .IP SMTP_ERR_FAIL
-/*	The request attempt failed due to a hard error.
-/* .IP SMTP_ERR_LOOP
-/*	The local machine is the best mail exchanger.
-/* .PP
-/*	In addition, a textual description of the problem is made available
-/*	via the \fIwhy\fR argument.
+/*	pointer and update the \fIwhy\fR argument accordingly.
 /* LICENSE
 /* .ad
 /* .fi
@@ -98,6 +89,7 @@
 
 #include <mail_params.h>
 #include <own_inet_addr.h>
+#include <dsn_buf.h>
 
 /* DNS library. */
 
@@ -130,9 +122,10 @@ static void smtp_print_addr(char *what, DNS_RR *addr_list)
 
 /* smtp_addr_one - address lookup for one host name */
 
-static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRING *why)
+static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref,
+			             DSN_BUF *why)
 {
-    char   *myname = "smtp_addr_one";
+    const char *myname = "smtp_addr_one";
     DNS_RR *addr = 0;
     DNS_RR *rr;
     int     aierr;
@@ -148,7 +141,7 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRI
      * Interpret a numerical name as an address.
      */
     if (hostaddr_to_sockaddr(host, (char *) 0, 0, &res0) == 0
-	&& strchr((char *) proto_info->sa_family_list, res0->ai_family) != 0) {
+     && strchr((char *) proto_info->sa_family_list, res0->ai_family) != 0) {
 	if ((addr = dns_sa_to_rr(host, pref, res0->ai_addr)) == 0)
 	    msg_fatal("host %s: conversion error for address family %d: %m",
 		    host, ((struct sockaddr *) (res0->ai_addr))->sa_family);
@@ -159,25 +152,30 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRI
 
     /*
      * Use DNS lookup, but keep the option open to use native name service.
+     * 
+     * XXX A soft error dominates past and future hard errors. Therefore we
+     * should not clobber a soft error text and status code.
      */
     if (smtp_host_lookup_mask & SMTP_HOST_FLAG_DNS) {
-	switch (dns_lookup_v(host, RES_DEFNAMES, &addr, (VSTRING *) 0, why,
-			     DNS_REQ_FLAG_ALL, proto_info->dns_atype_list)) {
+	switch (dns_lookup_v(host, RES_DEFNAMES, &addr, (VSTRING *) 0,
+			     why->reason, DNS_REQ_FLAG_NONE,
+			     proto_info->dns_atype_list)) {
 	case DNS_OK:
 	    for (rr = addr; rr; rr = rr->next)
 		rr->pref = pref;
 	    addr_list = dns_rr_append(addr_list, addr);
 	    return (addr_list);
 	default:
-	    smtp_errno = SMTP_ERR_RETRY;
+	    dsb_status(why, "4.4.3");
 	    return (addr_list);
 	case DNS_FAIL:
-	    if (smtp_errno != SMTP_ERR_RETRY)
-		smtp_errno = SMTP_ERR_FAIL;
+	    dsb_status(why, SMTP_HAS_SOFT_DSN(why) ? "4.4.3" : "5.4.3");
+	    return (addr_list);
+	case DNS_INVAL:
+	    dsb_status(why, SMTP_HAS_SOFT_DSN(why) ? "4.4.4" : "5.4.4");
 	    return (addr_list);
 	case DNS_NOTFOUND:
-	    if (smtp_errno != SMTP_ERR_RETRY)
-		smtp_errno = SMTP_ERR_FAIL;
+	    dsb_status(why, SMTP_HAS_SOFT_DSN(why) ? "4.4.4" : "5.4.4");
 	    /* maybe native naming service will succeed */
 	    break;
 	}
@@ -185,16 +183,27 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRI
 
     /*
      * Use the native name service which also looks in /etc/hosts.
+     * 
+     * XXX A soft error dominates past and future hard errors. Therefore we
+     * should not clobber a soft error text and status code.
      */
 #define RETRY_AI_ERROR(e) \
         ((e) == EAI_AGAIN || (e) == EAI_MEMORY || (e) == EAI_SYSTEM)
+#ifdef EAI_NODATA
+#define DSN_NOHOST(e) \
+	((e) == EAI_AGAIN || (e) == EAI_NODATA || (e) == EAI_NONAME)
+#else
+#define DSN_NOHOST(e) \
+	((e) == EAI_AGAIN || (e) == EAI_NONAME)
+#endif
 
     if (smtp_host_lookup_mask & SMTP_HOST_FLAG_NATIVE) {
 	if ((aierr = hostname_to_sockaddr(host, (char *) 0, 0, &res0)) != 0) {
-	    vstring_sprintf(why, "%s: %s", host, MAI_STRERROR(aierr));
-	    if (smtp_errno != SMTP_ERR_RETRY)
-		smtp_errno =
-		    (RETRY_AI_ERROR(aierr) ? SMTP_ERR_RETRY : SMTP_ERR_FAIL);
+	    dsb_simple(why, (SMTP_HAS_SOFT_DSN(why) || RETRY_AI_ERROR(aierr)) ?
+		       (DSN_NOHOST(aierr) ? "4.4.4" : "4.3.0") :
+		       (DSN_NOHOST(aierr) ? "5.4.4" : "5.3.0"),
+		       "unable to look up host %s: %s",
+		       host, MAI_STRERROR(aierr));
 	} else {
 	    for (found = 0, res = res0; res != 0; res = res->ai_next) {
 		if (strchr((char *) proto_info->sa_family_list, res->ai_family) == 0) {
@@ -210,9 +219,8 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRI
 	    }
 	    freeaddrinfo(res0);
 	    if (found == 0) {
-		vstring_sprintf(why, "%s: host not found", host);
-		if (smtp_errno != SMTP_ERR_RETRY)
-		    smtp_errno = SMTP_ERR_FAIL;
+		dsb_simple(why, SMTP_HAS_SOFT_DSN(why) ? "4.4.4" : "5.4.4",
+			   "%s: host not found", host);
 	    }
 	    return (addr_list);
 	}
@@ -226,7 +234,7 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRI
 
 /* smtp_addr_list - address lookup for a list of mail exchangers */
 
-static DNS_RR *smtp_addr_list(DNS_RR *mx_names, VSTRING *why)
+static DNS_RR *smtp_addr_list(DNS_RR *mx_names, DSN_BUF *why)
 {
     DNS_RR *addr_list = 0;
     DNS_RR *rr;
@@ -236,10 +244,21 @@ static DNS_RR *smtp_addr_list(DNS_RR *mx_names, VSTRING *why)
      * with DNS lookups (except if we're backup MX, and all the better MX
      * hosts can't be found).
      * 
-     * XXX 2821: update smtp_errno (0->FAIL upon unrecoverable lookup error,
-     * any->RETRY upon temporary lookup error) so that we can correctly
-     * handle the case of no resolvable MX host. Currently this is always
-     * treated as a soft error. RFC 2821 wants a more precise response.
+     * XXX 2821: update the error status (0->FAIL upon unrecoverable lookup
+     * error, any->RETRY upon temporary lookup error) so that we can
+     * correctly handle the case of no resolvable MX host. Currently this is
+     * always treated as a soft error. RFC 2821 wants a more precise
+     * response.
+     * 
+     * XXX dns_lookup() enables RES_DEFNAMES. This is wrong for names found in
+     * MX records - we should not append the local domain to dot-less names.
+     * 
+     * XXX However, this is not the only problem. If we use the native name
+     * service for host lookup, then it will usually enable RES_DNSRCH which
+     * appends local domain information to all lookups. In particular,
+     * getaddrinfo() may invoke a resolver that runs in a different process
+     * (NIS server, nscd), so we can't even reliably turn this off by
+     * tweaking the in-process resolver flags.
      */
     for (rr = mx_names; rr; rr = rr->next) {
 	if (rr->type != T_MX)
@@ -253,7 +272,7 @@ static DNS_RR *smtp_addr_list(DNS_RR *mx_names, VSTRING *why)
 
 static DNS_RR *smtp_find_self(DNS_RR *addr_list)
 {
-    char   *myname = "smtp_find_self";
+    const char *myname = "smtp_find_self";
     INET_ADDR_LIST *self;
     INET_ADDR_LIST *proxy;
     DNS_RR *addr;
@@ -317,26 +336,9 @@ static DNS_RR *smtp_truncate_self(DNS_RR *addr_list, unsigned pref)
     return (addr_list);
 }
 
-/* smtp_compare_pref - compare resource records by preference */
-
-static int smtp_compare_pref(DNS_RR *a, DNS_RR *b)
-{
-    if (a->pref != b->pref)
-	return (a->pref - b->pref);
-#ifdef HAS_IPV6
-    if (a->type == b->type)			/* 200412 */
-	return 0;
-    if (a->type == T_AAAA)
-	return (-1);
-    if (b->type == T_AAAA)
-	return (+1);
-#endif
-    return 0;
-}
-
 /* smtp_domain_addr - mail exchanger address lookup */
 
-DNS_RR *smtp_domain_addr(char *name, int misc_flags, VSTRING *why,
+DNS_RR *smtp_domain_addr(char *name, int misc_flags, DSN_BUF *why,
 			         int *found_myself)
 {
     DNS_RR *mx_names;
@@ -345,7 +347,7 @@ DNS_RR *smtp_domain_addr(char *name, int misc_flags, VSTRING *why,
     unsigned best_pref;
     unsigned best_found;
 
-    smtp_errno = SMTP_ERR_NONE;			/* Paranoia */
+    dsb_reset(why);				/* Paranoia */
 
     /*
      * Preferences from DNS use 0..32767, fall-backs use 32768+.
@@ -400,25 +402,37 @@ DNS_RR *smtp_domain_addr(char *name, int misc_flags, VSTRING *why,
      * at hostnames provides a partial solution for MX hosts behind a NAT
      * gateway.
      */
-    switch (dns_lookup(name, T_MX, 0, &mx_names, (VSTRING *) 0, why)) {
+    switch (dns_lookup(name, T_MX, 0, &mx_names, (VSTRING *) 0, why->reason)) {
     default:
-	smtp_errno = SMTP_ERR_RETRY;
+	dsb_status(why, "4.4.3");
+	if (var_ign_mx_lookup_err)
+	    addr_list = smtp_host_addr(name, misc_flags, why);
+	break;
+    case DNS_INVAL:
+	dsb_status(why, "5.4.4");
 	if (var_ign_mx_lookup_err)
 	    addr_list = smtp_host_addr(name, misc_flags, why);
 	break;
     case DNS_FAIL:
-	smtp_errno = SMTP_ERR_FAIL;
+	dsb_status(why, "5.4.3");
 	if (var_ign_mx_lookup_err)
 	    addr_list = smtp_host_addr(name, misc_flags, why);
 	break;
     case DNS_OK:
-	mx_names = dns_rr_sort(mx_names, smtp_compare_pref);
+	mx_names = dns_rr_sort(mx_names, dns_rr_compare_pref);
 	best_pref = (mx_names ? mx_names->pref : IMPOSSIBLE_PREFERENCE);
 	addr_list = smtp_addr_list(mx_names, why);
 	dns_rr_free(mx_names);
 	if (addr_list == 0) {
-	    if (var_smtp_defer_mxaddr)
-		smtp_errno = SMTP_ERR_RETRY;
+	    /* Text does not change. */
+	    if (var_smtp_defer_mxaddr) {
+		/* Don't clobber the null terminator. */
+		if (SMTP_HAS_HARD_DSN(why))
+		    SMTP_SET_SOFT_DSN(why);	/* XXX */
+		/* Require some error status. */
+		else if (!SMTP_HAS_SOFT_DSN(why))
+		    msg_panic("smtp_domain_addr: bad status");
+	    }
 	    msg_warn("no MX host for %s has a valid address record", name);
 	    break;
 	}
@@ -430,19 +444,17 @@ DNS_RR *smtp_domain_addr(char *name, int misc_flags, VSTRING *why,
 	    addr_list = smtp_truncate_self(addr_list, self->pref);
 	    if (addr_list == 0) {
 		if (best_pref != best_found) {
-		    vstring_sprintf(why, "unable to find primary relay for %s",
-				    name);
-		    smtp_errno = SMTP_ERR_RETRY;
+		    dsb_simple(why, "4.4.4",
+			       "unable to find primary relay for %s", name);
 		} else {
-		    vstring_sprintf(why, "mail for %s loops back to myself",
-				    name);
-		    smtp_errno = SMTP_ERR_LOOP;
+		    dsb_simple(why, "5.4.6", "mail for %s loops back to myself",
+			       name);
 		}
 	    }
 	}
 	if (addr_list && addr_list->next && var_smtp_rand_addr) {
 	    addr_list = dns_rr_shuffle(addr_list);
-	    addr_list = dns_rr_sort(addr_list, smtp_compare_pref);
+	    addr_list = dns_rr_sort(addr_list, dns_rr_compare_pref);
 	}
 	break;
     case DNS_NOTFOUND:
@@ -459,11 +471,11 @@ DNS_RR *smtp_domain_addr(char *name, int misc_flags, VSTRING *why,
 
 /* smtp_host_addr - direct host lookup */
 
-DNS_RR *smtp_host_addr(char *host, int misc_flags, VSTRING *why)
+DNS_RR *smtp_host_addr(char *host, int misc_flags, DSN_BUF *why)
 {
     DNS_RR *addr_list;
 
-    smtp_errno = SMTP_ERR_NONE;			/* Paranoia */
+    dsb_reset(why);				/* Paranoia */
 
     /*
      * If the host is specified by numerical address, just convert the
@@ -475,8 +487,7 @@ DNS_RR *smtp_host_addr(char *host, int misc_flags, VSTRING *why)
 	&& (misc_flags & SMTP_MISC_FLAG_LOOP_DETECT)
 	&& smtp_find_self(addr_list) != 0) {
 	dns_rr_free(addr_list);
-	vstring_sprintf(why, "mail for %s loops back to myself", host);
-	smtp_errno = SMTP_ERR_LOOP;
+	dsb_simple(why, "5.4.6", "mail for %s loops back to myself", host);
 	return (0);
     }
     if (addr_list && addr_list->next) {
@@ -484,7 +495,7 @@ DNS_RR *smtp_host_addr(char *host, int misc_flags, VSTRING *why)
 	    addr_list = dns_rr_shuffle(addr_list);
 	/* The following changes the order of equal-preference hosts. */
 	if (inet_proto_info()->ai_family_list[1] != 0)
-	    addr_list = dns_rr_sort(addr_list, smtp_compare_pref);
+	    addr_list = dns_rr_sort(addr_list, dns_rr_compare_pref);
     }
     if (msg_verbose)
 	smtp_print_addr(host, addr_list);

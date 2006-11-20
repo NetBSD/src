@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.c,v 1.1.1.4.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: argv.c,v 1.1.1.4.2.2 2006/11/20 13:30:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -9,7 +9,7 @@
 /*	#include <argv.h>
 /*
 /*	ARGV	*argv_alloc(len)
-/*	int	len;
+/*	ssize_t	len;
 /*
 /*	ARGV	*argv_free(argvp)
 /*	ARGV	*argvp;
@@ -21,14 +21,14 @@
 /*	void	argv_addn(argvp, arg, arg_len, ..., ARGV_END)
 /*	ARGV	*argvp;
 /*	char	*arg;
-/*	int	arg_len;
+/*	ssize_t	arg_len;
 /*
 /*	void	argv_terminate(argvp);
 /*	ARGV	*argvp;
 /*
 /*	void	argv_truncate(argvp, len);
 /*	ARGV	*argvp;
-/*	int	len;
+/*	ssize_t	len;
 /* DESCRIPTION
 /*	The functions in this module manipulate arrays of string
 /*	pointers. An ARGV structure contains the following members:
@@ -102,10 +102,10 @@ ARGV   *argv_free(ARGV *argvp)
 
 /* argv_alloc - initialize string array */
 
-ARGV   *argv_alloc(int len)
+ARGV   *argv_alloc(ssize_t len)
 {
     ARGV   *argvp;
-    int     sane_len;
+    ssize_t sane_len;
 
     /*
      * Make sure that always argvp->argc < argvp->len.
@@ -124,7 +124,7 @@ ARGV   *argv_alloc(int len)
 
 static void argv_extend(ARGV *argvp)
 {
-    int     new_len;
+    ssize_t new_len;
 
     new_len = argvp->len * 2;
     argvp->argv = (char **)
@@ -159,7 +159,7 @@ void    argv_add(ARGV *argvp,...)
 void    argv_addn(ARGV *argvp,...)
 {
     char   *arg;
-    int     len;
+    ssize_t len;
     va_list ap;
 
     /*
@@ -167,8 +167,8 @@ void    argv_addn(ARGV *argvp,...)
      */
     va_start(ap, argvp);
     while ((arg = va_arg(ap, char *)) != 0) {
-	if ((len = va_arg(ap, int)) < 0)
-	    msg_panic("argv_addn: bad string length %d", len);
+	if ((len = va_arg(ap, ssize_t)) < 0)
+	    msg_panic("argv_addn: bad string length %ld", (long) len);
 	if (ARGV_SPACE_LEFT(argvp) <= 0)
 	    argv_extend(argvp);
 	argvp->argv[argvp->argc++] = mystrndup(arg, len);
@@ -190,7 +190,7 @@ void    argv_terminate(ARGV *argvp)
 
 /* argv_truncate - truncate string array */
 
-void    argv_truncate(ARGV *argvp, int len)
+void    argv_truncate(ARGV *argvp, ssize_t len)
 {
     char  **cpp;
 
@@ -198,7 +198,7 @@ void    argv_truncate(ARGV *argvp, int len)
      * Sanity check.
      */
     if (len < 0)
-	msg_panic("argv_truncate: bad length %d", len);
+	msg_panic("argv_truncate: bad length %ld", (long) len);
 
     if (len < argvp->argc) {
 	for (cpp = argvp->argv + len; cpp < argvp->argv + argvp->argc; cpp++)

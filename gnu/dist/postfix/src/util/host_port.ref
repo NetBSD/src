@@ -19,4 +19,4 @@ unknown: warning: valid hostname or network address required in [hh.]
 >> hh.
 unknown: warning: valid hostname or network address required in hh.
 >> 999
-host 999 port default-service
+unknown: warning: valid hostname or network address required in 999

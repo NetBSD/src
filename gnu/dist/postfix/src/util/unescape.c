@@ -1,4 +1,4 @@
-/*	$NetBSD: unescape.c,v 1.1.1.2.2.1 2006/07/12 15:06:44 tron Exp $	*/
+/*	$NetBSD: unescape.c,v 1.1.1.2.2.2 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -11,10 +11,17 @@
 /*	VSTRING	*unescape(result, input)
 /*	VSTRING	*result;
 /*	const char *input;
+/*
+/*	VSTRING	*escape(result, input, len)
+/*	VSTRING	*result;
+/*	const char *input;
+/*	ssize_t len;
 /* DESCRIPTION
 /*	unescape() translates C-like escape sequences in the null-terminated
 /*	string \fIinput\fR and places the result in \fIresult\fR. The result
 /*	is null-terminated, and is the function result value.
+/*
+/*	escape() does the reverse transformation.
 /*
 /*	Escape sequences and their translations:
 /* .IP \ea
@@ -123,18 +130,79 @@ VSTRING *unescape(VSTRING *result, const char *data)
     return (result);
 }
 
+/* escape - reverse transformation */
+
+VSTRING *escape(VSTRING *result, const char *data, ssize_t len)
+{
+    int     ch;
+
+    VSTRING_RESET(result);
+    while (len-- > 0) {
+	ch = *UCHAR(data++);
+	if (ISASCII(ch)) {
+	    if (ISPRINT(ch)) {
+		if (ch == '\\')
+		    VSTRING_ADDCH(result, ch);
+		VSTRING_ADDCH(result, ch);
+		continue;
+	    } else if (ch == '\a') {		/* \a -> audible bell */
+		vstring_strcat(result, "\\a");
+		continue;
+	    } else if (ch == '\b') {		/* \b -> backspace */
+		vstring_strcat(result, "\\b");
+		continue;
+	    } else if (ch == '\f') {		/* \f -> formfeed */
+		vstring_strcat(result, "\\f");
+		continue;
+	    } else if (ch == '\n') {		/* \n -> newline */
+		vstring_strcat(result, "\\n");
+		continue;
+	    } else if (ch == '\r') {		/* \r -> carriagereturn */
+		vstring_strcat(result, "\\r");
+		continue;
+	    } else if (ch == '\t') {		/* \t -> horizontal tab */
+		vstring_strcat(result, "\\t");
+		continue;
+	    } else if (ch == '\v') {		/* \v -> vertical tab */
+		vstring_strcat(result, "\\v");
+		continue;
+	    }
+	}
+	if (ISDIGIT(*UCHAR(data)))
+	    vstring_sprintf_append(result, "\\%03d", ch);
+	else
+	    vstring_sprintf_append(result, "\\%d", ch);
+    }
+    VSTRING_TERMINATE(result);
+    return (result);
+}
+
 #ifdef TEST
 
+#include <stdlib.h>
+#include <string.h>
+#include <msg.h>
 #include <vstring_vstream.h>
 
-int     main(int unused_argc, char **unused_argv)
+int     main(int argc, char **argv)
 {
     VSTRING *in = vstring_alloc(10);
     VSTRING *out = vstring_alloc(10);
+    int     un_escape = 1;
 
-    while (vstring_fgets_nonl(in, VSTREAM_IN)) {
-	unescape(out, vstring_str(in));
-	vstream_fwrite(VSTREAM_OUT, vstring_str(out), VSTRING_LEN(out));
+    if (argc > 2 || (argc > 1 && (un_escape = strcmp(argv[1], "-e"))) != 0)
+	msg_fatal("usage: %s [-e (escape)]", argv[0]);
+
+    if (un_escape) {
+	while (vstring_fgets_nonl(in, VSTREAM_IN)) {
+	    unescape(out, vstring_str(in));
+	    vstream_fwrite(VSTREAM_OUT, vstring_str(out), VSTRING_LEN(out));
+	}
+    } else {
+	while (vstring_fgets(in, VSTREAM_IN)) {
+	    escape(out, vstring_str(in), VSTRING_LEN(in));
+	    vstream_fwrite(VSTREAM_OUT, vstring_str(out), VSTRING_LEN(out));
+	}
     }
     vstream_fflush(VSTREAM_OUT);
     exit(0);

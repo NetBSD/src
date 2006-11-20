@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.1,v 1.1.1.6.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: postconf.1,v 1.1.1.6.2.2 2006/11/20 13:30:17 tron Exp $
 .\"
 .TH POSTCONF 1 
 .ad
@@ -11,20 +11,62 @@ Postfix configuration utility
 .na
 .nf
 .fi
-\fBpostconf\fR [\fB-dhmlnv\fR] [\fB-c \fIconfig_dir\fR]
+\fBpostconf\fR [\fB-dhnv\fR] [\fB-c \fIconfig_dir\fR]
 [\fIparameter ...\fR]
+
+\fBpostconf\fR [\fB-aAmlv\fR] [\fB-c \fIconfig_dir\fR]
 
 \fBpostconf\fR [\fB-ev\fR] [\fB-c \fIconfig_dir\fR]
 [\fIparameter=value ...\fR]
+
+\fBpostconf\fR [\fB-btv\fR] [\fB-c \fIconfig_dir\fR] [\fItemplate_file\fR]
 .SH DESCRIPTION
 .ad
 .fi
-The \fBpostconf\fR(1) command prints the actual value of
-\fIparameter\fR (all known parameters by default) one
-parameter per line, changes its value, or prints other
-information about the Postfix mail system.
+The \fBpostconf\fR(1) command displays the actual values
+of configuration parameters, changes configuration parameter
+values, or displays other configuration information about
+the Postfix mail system.
 
 Options:
+.IP \fB-a\fR
+List the available SASL server plug-in types.  The SASL
+plug-in type is selected with the \fBsmtpd_sasl_type\fR
+configuration parameter by specifying one of the names
+listed below.
+.RS
+.IP \fBcyrus\fR
+This server plug-in is available when Postfix is built with
+Cyrus SASL support.
+.IP \fBdovecot\fR
+This server plug-in requires the Dovecot authentication
+server.
+.RE
+.IP
+This feature is available with Postfix 2.3 and later.
+.IP \fB-A\fR
+List the available SASL client plug-in types.  The SASL
+plug-in type is selected with the \fBsmtp_sasl_type\fR or
+\fBlmtp_sasl_type\fR configuration parameters by specifying
+one of the names listed below.
+.RS
+.IP \fBcyrus\fR
+This client plug-in is available when Postfix is built with
+Cyrus SASL support.
+.RE
+.IP
+This feature is available with Postfix 2.3 and later.
+.IP "\fB-b\fR [\fItemplate_file\fR]"
+Display the message text that appears at the beginning of
+delivery status notification (DSN) messages, with $\fBname\fR
+expressions replaced by actual values.  To override the
+built-in message text, specify a template file at the end
+of the command line, or specify a template file in main.cf
+with the \fBbounce_template_file\fR parameter.
+To force selection of the built-in message text templates,
+specify an empty template file name (in shell language: "").
+
+This feature is available with Postfix 2.3 and later.
 .IP "\fB-c \fIconfig_dir\fR"
 The \fBmain.cf\fR configuration file is in the named directory
 instead of the default configuration directory.
@@ -125,11 +167,21 @@ The table is the UNIX group database. The key is a group name.
 The result is a group file entry in \fBgroup\fR(5) format.
 .RE
 .RE
-.sp
+.IP
 Other table types may exist depending on how Postfix was built.
 .IP \fB-n\fR
 Print parameter settings that are not left at their built-in
 default value, because they are explicitly specified in main.cf.
+.IP "\fB-t\fR [\fItemplate_file\fR]"
+Display the templates for delivery status notification (DSN)
+messages. To override the built-in templates, specify a
+template file at the end of the command line, or specify a
+template file in main.cf with the \fBbounce_template_file\fR
+parameter.  To force selection of the built-in templates,
+specify an empty template file name (in shell language:
+"").
+
+This feature is available with Postfix 2.3 and later.
 .IP \fB-v\fR
 Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 options make the software increasingly verbose.
@@ -157,6 +209,8 @@ The text below provides only a parameter summary. See
 .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 The default location of the Postfix main.cf and master.cf
 configuration files.
+.IP "\fBbounce_template_file (empty)\fR"
+Pathname of a configuration file with bounce message templates.
 .SH "FILES"
 .na
 .nf
@@ -164,6 +218,7 @@ configuration files.
 .SH "SEE ALSO"
 .na
 .nf
+bounce(5), bounce template file format
 postconf(5), configuration parameters
 .SH "README FILES"
 .na

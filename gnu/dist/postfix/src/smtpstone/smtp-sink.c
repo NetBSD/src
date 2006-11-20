@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp-sink.c,v 1.1.1.6.2.1 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: smtp-sink.c,v 1.1.1.6.2.2 2006/11/20 13:30:55 tron Exp $	*/
 
 /*++
 /* NAME
@@ -29,17 +29,28 @@
 /* .IP \fB-6\fR
 /*	Support IPv6 only. This option is not available when
 /*	Postfix is built without IPv6 support.
+/* .IP \fB-8\fR
+/*	Do not announce 8BITMIME support.
 /* .IP \fB-a\fR
 /*	Do not announce SASL authentication support.
 /* .IP \fB-c\fR
-/*	Display a running counter that is updated whenever an SMTP
-/*	QUIT command is executed.
+/*	Display running counters that are updated whenever an SMTP
+/*	session ends, a QUIT command is executed, or when "." is
+/*	received.
 /* .IP \fB-C\fR
 /*	Disable XCLIENT support.
 /* .IP \fB-e\fR
 /*	Do not announce ESMTP support.
+/* .IP \fB-E\fR
+/*	Do not announce ENHANCEDSTATUSCODES support.
 /* .IP "\fB-f \fIcommand,command,...\fR"
 /*	Reject the specified commands with a hard (5xx) error code.
+/*	This option implies \fB-p\fR.
+/* .sp
+/*	Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT, VRFY,
+/*	DATA, ., RSET, NOOP, and QUIT. Separate command names by
+/*	white space or commas, and use quotes to protect white space
+/*	from the shell. Command names are case-insensitive.
 /* .IP \fB-F\fR
 /*	Disable XFORWARD support.
 /* .IP "\fB-h\fI hostname\fR"
@@ -57,20 +68,33 @@
 /* .IP "\fB-q \fIcommand,command,...\fR"
 /*	Disconnect (without replying) after receiving one of the
 /*	specified commands.
+/* .sp
+/*	Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT, VRFY,
+/*	DATA, ., RSET, NOOP, and QUIT. Separate command names by
+/*	white space or commas, and use quotes to protect white space
+/*	from the shell. Command names are case-insensitive.
 /* .IP "\fB-r \fIcommand,command,...\fR"
 /*	Reject the specified commands with a soft (4xx) error code.
+/*	This option implies \fB-p\fR.
+/* .sp
+/*	Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT, VRFY,
+/*	DATA, ., RSET, NOOP, and QUIT. Separate command names by
+/*	white space or commas, and use quotes to protect white space
+/*	from the shell. Command names are case-insensitive.
 /* .IP "\fB-s \fIcommand,command,...\fR"
 /*	Log the named commands to syslogd.
-/*	Examples of commands that can be logged are HELO, EHLO, LHLO, MAIL,
-/*	RCPT, VRFY, RSET, NOOP, and QUIT. Separate command names by white
-/*	space or commas, and use quotes to protect white space from the
-/*	shell. Command names are case-insensitive.
+/* .sp
+/*	Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT, VRFY,
+/*	DATA, ., RSET, NOOP, and QUIT. Separate command names by
+/*	white space or commas, and use quotes to protect white space
+/*	from the shell. Command names are case-insensitive.
+/* .IP "\fB-t \fItimeout\fR (default: 100)"
+/*	Limit the time for receiving a command or sending a response.
+/*	The time limit is specified in seconds.
 /* .IP \fB-v\fR
 /*	Show the SMTP conversations.
 /* .IP "\fB-w \fIdelay\fR"
 /*	Wait \fIdelay\fR seconds before responding to a DATA command.
-/* .IP \fB-8\fR
-/*	Do not announce 8BITMIME support.
 /* .IP [\fBinet:\fR][\fIhost\fR]:\fIport\fR
 /*	Listen on network interface \fIhost\fR (default: any interface)
 /*	TCP port \fIport\fR. Both \fIhost\fR and \fIport\fR may be
@@ -103,6 +127,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <syslog.h>
+#include <signal.h>
 
 #ifdef STRCASECMP_IN_STRINGS_H
 #include <strings.h>
@@ -136,6 +161,7 @@ typedef struct SINK_STATE {
     int     data_state;
     int     (*read_fn) (struct SINK_STATE *);
     int     rcpts;
+    char   *push_back_ptr;
 } SINK_STATE;
 
 #define ST_ANY			0
@@ -145,15 +171,21 @@ typedef struct SINK_STATE {
 #define ST_CR_LF_DOT_CR		4
 #define ST_CR_LF_DOT_CR_LF	5
 
-static int var_tmout;
+#define PUSH_BACK_PEEK(state)		(*(state)->push_back_ptr != 0)
+#define PUSH_BACK_GET(state)		(*(state)->push_back_ptr++)
+#define PUSH_BACK_SET(state, text)	((state)->push_back_ptr = (text))
+
+static int var_tmout = 100;
 static int var_max_line_length = 2048;
 static char *var_myhostname;
 static int command_read(SINK_STATE *);
 static int data_read(SINK_STATE *);
 static void disconnect(SINK_STATE *);
 static int count;
-static int counter;
-static int max_count;
+static int sess_count;
+static int quit_count;
+static int mesg_count;
+static int max_quit_count;
 static int disable_pipelining;
 static int disable_8bitmime;
 static int fixed_delay;
@@ -163,6 +195,35 @@ static int pretend_pix;
 static int disable_saslauth;
 static int disable_xclient;
 static int disable_xforward;
+static int disable_enh_status;
+
+#define SOFT_ERROR_RESP		"450 4.3.0 Error: command failed"
+#define HARD_ERROR_RESP		"500 5.3.0 Error: command failed"
+
+/* do_stats - show counters */
+
+static void do_stats(void)
+{
+    vstream_printf("sess=%d quit=%d mesg=%d\r",
+		   sess_count, quit_count, mesg_count);
+    vstream_fflush(VSTREAM_OUT);
+}
+
+/* hard_err_resp - generic hard error response */
+
+static void hard_err_resp(SINK_STATE *state)
+{
+    smtp_printf(state->stream, HARD_ERROR_RESP);
+    smtp_flush(state->stream);
+}
+
+/* soft_err_resp - generic soft error response */
+
+static void soft_err_resp(SINK_STATE *state)
+{
+    smtp_printf(state->stream, SOFT_ERROR_RESP);
+    smtp_flush(state->stream);
+}
 
 /* ehlo_response - respond to EHLO command */
 
@@ -179,6 +240,8 @@ static void ehlo_response(SINK_STATE *state)
 	smtp_printf(state->stream, "250-XCLIENT NAME HELO");
     if (!disable_xforward)
 	smtp_printf(state->stream, "250-XFORWARD NAME ADDR PROTO HELO");
+    if (!disable_enh_status)
+	smtp_printf(state->stream, "250-ENHANCEDSTATUSCODES");
     smtp_printf(state->stream, "250 ");
     smtp_flush(state->stream);
 }
@@ -195,7 +258,7 @@ static void helo_response(SINK_STATE *state)
 
 static void ok_response(SINK_STATE *state)
 {
-    smtp_printf(state->stream, "250 Ok");
+    smtp_printf(state->stream, "250 2.0.0 Ok");
     smtp_flush(state->stream);
 }
 
@@ -204,7 +267,8 @@ static void ok_response(SINK_STATE *state)
 static void mail_response(SINK_STATE *state)
 {
     state->rcpts = 0;
-    ok_response(state);
+    smtp_printf(state->stream, "250 2.1.0 Ok");
+    smtp_flush(state->stream);
 }
 
 /* rcpt_response - bump recipient count, send 250 OK */
@@ -212,13 +276,15 @@ static void mail_response(SINK_STATE *state)
 static void rcpt_response(SINK_STATE *state)
 {
     state->rcpts++;
-    ok_response(state);
+    smtp_printf(state->stream, "250 2.1.5 Ok");
+    smtp_flush(state->stream);
 }
 
 /* data_response - respond to DATA command */
 
 static void data_response(SINK_STATE *state)
 {
+    /* Not: ST_ANY. */
     state->data_state = ST_CR_LF;
     smtp_printf(state->stream, "354 End data with <CR><LF>.<CR><LF>");
     smtp_flush(state->stream);
@@ -234,16 +300,43 @@ static void data_event(int unused_event, char *context)
     data_response(state);
 }
 
+/* dot_resp_hard - hard error response to . command */
+
+static void dot_resp_hard(SINK_STATE *state)
+{
+    if (enable_lmtp) {
+	while (state->rcpts-- > 0)	/* XXX this could block */
+	    smtp_printf(state->stream, HARD_ERROR_RESP);
+    } else {
+	smtp_printf(state->stream, HARD_ERROR_RESP);
+    }
+    smtp_flush(state->stream);
+}
+
+/* dot_resp_soft - soft error response to . command */
+
+static void dot_resp_soft(SINK_STATE *state)
+{
+    if (enable_lmtp) {
+	while (state->rcpts-- > 0)	/* XXX this could block */
+	    smtp_printf(state->stream, SOFT_ERROR_RESP);
+    } else {
+	smtp_printf(state->stream, SOFT_ERROR_RESP);
+    }
+    smtp_flush(state->stream);
+}
+
 /* dot_response - response to . command */
 
 static void dot_response(SINK_STATE *state)
 {
     if (enable_lmtp) {
 	while (state->rcpts-- > 0)	/* XXX this could block */
-	    ok_response(state);		/* XXX this flushes too often */
+	    smtp_printf(state->stream, "250 2.2.0 Ok");
     } else {
-	ok_response(state);
+	smtp_printf(state->stream, "250 2.0.0 Ok");
     }
+    smtp_flush(state->stream);
 }
 
 /* quit_response - respond to QUIT command */
@@ -252,11 +345,21 @@ static void quit_response(SINK_STATE *state)
 {
     smtp_printf(state->stream, "221 Bye");
     smtp_flush(state->stream);
-    if (count) {
-	counter++;
-	vstream_printf("%d\r", counter);
-	vstream_fflush(VSTREAM_OUT);
-    }
+    if (count)
+	quit_count++;
+}
+
+/* conn_response - respond to connect command */
+
+static void conn_response(SINK_STATE *state)
+{
+    if (pretend_pix)
+	smtp_printf(state->stream, "220 ********");
+    else if (disable_esmtp)
+	smtp_printf(state->stream, "220 %s", var_myhostname);
+    else
+	smtp_printf(state->stream, "220 %s ESMTP", var_myhostname);
+    smtp_flush(state->stream);
 }
 
 /* data_read - read data from socket */
@@ -301,11 +404,13 @@ static int data_read(SINK_STATE *state)
 	else
 	    state->data_state = ST_ANY;
 	if (state->data_state == ST_CR_LF_DOT_CR_LF) {
-	    if (msg_verbose)
-		msg_info(".");
-	    dot_response(state);
+	    PUSH_BACK_SET(state, ".\r\n");
 	    state->read_fn = command_read;
 	    state->data_state = ST_ANY;
+	    if (count) {
+		mesg_count++;
+		do_stats();
+	    }
 	    break;
 	}
 
@@ -324,8 +429,10 @@ static int data_read(SINK_STATE *state)
   * The table of all SMTP commands that we can handle.
   */
 typedef struct SINK_COMMAND {
-    char   *name;
+    const char *name;
     void    (*response) (SINK_STATE *);
+    void    (*hard_response) (SINK_STATE *);
+    void    (*soft_response) (SINK_STATE *);
     int     flags;
 } SINK_COMMAND;
 
@@ -336,19 +443,21 @@ typedef struct SINK_COMMAND {
 #define FLAG_DISCONNECT	(1<<4)		/* disconnect */
 
 static SINK_COMMAND command_table[] = {
-    "helo", helo_response, 0,
-    "ehlo", ehlo_response, 0,
-    "lhlo", ehlo_response, 0,
-    "xclient", ok_response, FLAG_ENABLE,
-    "xforward", ok_response, FLAG_ENABLE,
-    "auth", ok_response, FLAG_ENABLE,
-    "mail", mail_response, FLAG_ENABLE,
-    "rcpt", rcpt_response, FLAG_ENABLE,
-    "data", data_response, FLAG_ENABLE,
-    "rset", ok_response, FLAG_ENABLE,
-    "noop", ok_response, FLAG_ENABLE,
-    "vrfy", ok_response, FLAG_ENABLE,
-    "quit", quit_response, FLAG_ENABLE,
+    "connect", conn_response, hard_err_resp, soft_err_resp, 0,
+    "helo", helo_response, hard_err_resp, soft_err_resp, 0,
+    "ehlo", ehlo_response, hard_err_resp, soft_err_resp, 0,
+    "lhlo", ehlo_response, hard_err_resp, soft_err_resp, 0,
+    "xclient", ok_response, hard_err_resp, soft_err_resp, FLAG_ENABLE,
+    "xforward", ok_response, hard_err_resp, soft_err_resp, FLAG_ENABLE,
+    "auth", ok_response, hard_err_resp, soft_err_resp, FLAG_ENABLE,
+    "mail", mail_response, hard_err_resp, soft_err_resp, FLAG_ENABLE,
+    "rcpt", rcpt_response, hard_err_resp, soft_err_resp, FLAG_ENABLE,
+    "data", data_response, hard_err_resp, soft_err_resp, FLAG_ENABLE,
+    ".", dot_response, dot_resp_hard, dot_resp_soft, FLAG_ENABLE,
+    "rset", ok_response, hard_err_resp, soft_err_resp, FLAG_ENABLE,
+    "noop", ok_response, hard_err_resp, soft_err_resp, FLAG_ENABLE,
+    "vrfy", ok_response, hard_err_resp, soft_err_resp, FLAG_ENABLE,
+    "quit", quit_response, hard_err_resp, soft_err_resp, FLAG_ENABLE,
     0,
 };
 
@@ -394,6 +503,33 @@ static void set_cmds_flags(const char *cmds, int flags)
     myfree(saved_cmds);
 }
 
+/* command_resp - respond to command */
+
+static int command_resp(SINK_STATE *state, SINK_COMMAND *cmdp, const char *command, char *args)
+{
+    /* We use raw syslog. Sanitize data content and length. */
+    if (cmdp->flags & FLAG_SYSLOG)
+	syslog(LOG_INFO, "%s %.100s", command, printable(args, '?'));
+    if (cmdp->flags & FLAG_DISCONNECT)
+	return (-1);
+    if (cmdp->flags & FLAG_HARD_ERR) {
+	cmdp->hard_response(state);
+	return (0);
+    }
+    if (cmdp->flags & FLAG_SOFT_ERR) {
+	cmdp->soft_response(state);
+	return (0);
+    }
+    if (cmdp->response == data_response && fixed_delay > 0) {
+	event_request_timer(data_event, (char *) state, fixed_delay);
+    } else {
+	cmdp->response(state);
+	if (cmdp->response == quit_response)
+	    return (-1);
+    }
+    return (0);
+}
+
 /* command_read - talk the SMTP protocol, server side */
 
 static int command_read(SINK_STATE *state)
@@ -417,8 +553,11 @@ static int command_read(SINK_STATE *state)
      * A read may result in EOF, but is never supposed to time out - a time
      * out means that we were trying to read when no data was available.
      */
+#define NEXT_CHAR(state) \
+    (PUSH_BACK_PEEK(state) ? PUSH_BACK_GET(state) : VSTREAM_GETC(state->stream))
+
     for (;;) {
-	if ((ch = VSTREAM_GETC(state->stream)) == VSTREAM_EOF)
+	if ((ch = NEXT_CHAR(state)) == VSTREAM_EOF)
 	    return (-1);
 
 	/*
@@ -456,7 +595,7 @@ static int command_read(SINK_STATE *state)
 	 * instead of peek_fd() (which uses ioctl FIONREAD). Workaround added
 	 * 20020604.
 	 */
-	if (vstream_peek(state->stream) <= 0
+	if (PUSH_BACK_PEEK(state) == 0 && vstream_peek(state->stream) <= 0
 	    && readable(vstream_fileno(state->stream)) <= 0)
 	    return (0);
     }
@@ -478,7 +617,7 @@ static int command_read(SINK_STATE *state)
     if (msg_verbose)
 	msg_info("%s", ptr);
     if ((command = mystrtok(&ptr, " \t")) == 0) {
-	smtp_printf(state->stream, "500 Error: unknown command");
+	smtp_printf(state->stream, "500 5.5.2 Error: unknown command");
 	smtp_flush(state->stream);
 	return (0);
     }
@@ -486,33 +625,26 @@ static int command_read(SINK_STATE *state)
 	if (strcasecmp(command, cmdp->name) == 0)
 	    break;
     if (cmdp->name == 0 || (cmdp->flags & FLAG_ENABLE) == 0) {
-	smtp_printf(state->stream, "500 Error: unknown command");
+	smtp_printf(state->stream, "500 5.5.1 Error: unknown command");
 	smtp_flush(state->stream);
 	return (0);
     }
-    if (cmdp->flags & FLAG_DISCONNECT)
-	return (-1);
-    if (cmdp->flags & FLAG_HARD_ERR) {
-	smtp_printf(state->stream, "500 Error: command failed");
-	smtp_flush(state->stream);
-	return (0);
-    }
-    if (cmdp->flags & FLAG_SOFT_ERR) {
-	smtp_printf(state->stream, "450 Error: command failed");
-	smtp_flush(state->stream);
-	return (0);
-    }
-    /* We use raw syslog. Sanitize data content and length. */
-    if (cmdp->flags & FLAG_SYSLOG)
-	syslog(LOG_INFO, "%s %.100s", command, printable(ptr, '?'));
-    if (cmdp->response == data_response && fixed_delay > 0) {
-	event_request_timer(data_event, (char *) state, fixed_delay);
-    } else {
-	cmdp->response(state);
-	if (cmdp->response == quit_response)
-	    return (-1);
-    }
-    return (0);
+    return (command_resp(state, cmdp, command, ptr));
+}
+
+/* read_timeout - handle timer event */
+
+static void read_timeout(int unused_event, char *context)
+{
+    SINK_STATE *state = (SINK_STATE *) context;
+
+    /*
+     * We don't send anything to the client, because we would have to set up
+     * an smtp_stream exception handler first. And that is just too much
+     * trouble.
+     */
+    msg_warn("read timeout");
+    disconnect(state);
 }
 
 /* read_event - handle command or data read events */
@@ -521,15 +653,27 @@ static void read_event(int unused_event, char *context)
 {
     SINK_STATE *state = (SINK_STATE *) context;
 
+    /*
+     * The input reading routine not only reads input (with vstream calls)
+     * but also produces output (with smtp_stream calls). Because the output
+     * routines can raise timeout or EOF exceptions with vstream_longjmp(),
+     * the input reading routine needs to set up corresponding exception
+     * handlers with vstream_setjmp(). Guarding the input operations in the
+     * same manner is not useful: we must read input in non-blocking mode, so
+     * we never get called when the socket stays unreadable too long. And EOF
+     * is already trivial to detect with the vstream calls.
+     */
     do {
 	switch (vstream_setjmp(state->stream)) {
 
 	default:
-	    msg_panic("unknown error reading input");
+	    msg_panic("unknown read/write error");
+	    /* NOTREACHED */
 
 	case SMTP_ERR_TIME:
-	    msg_panic("attempt to read non-readable socket");
-	    /* NOTREACHED */
+	    msg_warn("write timeout");
+	    disconnect(state);
+	    return;
 
 	case SMTP_ERR_EOF:
 	    msg_warn("lost connection");
@@ -544,7 +688,13 @@ static void read_event(int unused_event, char *context)
 		return;
 	    }
 	}
-    } while (vstream_peek(state->stream) > 0);
+    } while (PUSH_BACK_PEEK(state) != 0 || vstream_peek(state->stream) > 0);
+
+    /*
+     * Reset the idle timer. Wait until the next input event, or until the
+     * idle timer goes off.
+     */
+    event_request_timer(read_timeout, (char *) state, var_tmout);
 }
 
 /* disconnect - handle disconnection events */
@@ -552,10 +702,15 @@ static void read_event(int unused_event, char *context)
 static void disconnect(SINK_STATE *state)
 {
     event_disable_readwrite(vstream_fileno(state->stream));
+    event_cancel_timer(read_timeout, (char *) state);
+    if (count) {
+	sess_count++;
+	do_stats();
+    }
     vstream_fclose(state->stream);
     vstring_free(state->buffer);
     myfree((char *) state);
-    if (max_count > 0 && counter >= max_count)
+    if (max_quit_count > 0 && quit_count >= max_quit_count)
 	exit(0);
 }
 
@@ -588,15 +743,39 @@ static void connect_event(int unused_event, char *context)
 	state->buffer = vstring_alloc(1024);
 	state->read_fn = command_read;
 	state->data_state = ST_ANY;
+	PUSH_BACK_SET(state, "");
 	smtp_timeout_setup(state->stream, var_tmout);
-	if (pretend_pix)
-	    smtp_printf(state->stream, "220 ********");
-	else if (disable_esmtp)
-	    smtp_printf(state->stream, "220 %s", var_myhostname);
-	else
-	    smtp_printf(state->stream, "220 %s ESMTP", var_myhostname);
-	smtp_flush(state->stream);
-	event_enable_read(fd, read_event, (char *) state);
+
+	/*
+	 * We use the smtp_stream module to produce output. That module
+	 * throws an exception via vstream_longjmp() in case of a timeout or
+	 * lost connection error. Therefore we must prepare to handle these
+	 * exceptions with vstream_setjmp().
+	 */
+	switch (vstream_setjmp(state->stream)) {
+
+	default:
+	    msg_panic("unknown read/write error");
+	    /* NOTREACHED */
+
+	case SMTP_ERR_TIME:
+	    msg_warn("write timeout");
+	    disconnect(state);
+	    return;
+
+	case SMTP_ERR_EOF:
+	    msg_warn("lost connection");
+	    disconnect(state);
+	    return;
+
+	case 0:
+	    if (command_resp(state, command_table, "connect", "") < 0)
+		disconnect(state);
+	    else {
+		event_enable_read(fd, read_event, (char *) state);
+		event_request_timer(read_timeout, (char *) state, var_tmout);
+	    }
+	}
     }
 }
 
@@ -604,7 +783,7 @@ static void connect_event(int unused_event, char *context)
 
 static void usage(char *myname)
 {
-    msg_fatal("usage: %s [-acCeFLpPv8] [-f commands] [-h hostname] [-n count] [-q commands] [-r commands] [-s commands] [-w delay] [host]:port backlog", myname);
+    msg_fatal("usage: %s [-468acCeEFLpPv] [-f commands] [-h hostname] [-n count] [-q commands] [-r commands] [-s commands] [-w delay] [host]:port backlog", myname);
 }
 
 int     main(int argc, char **argv)
@@ -616,6 +795,11 @@ int     main(int argc, char **argv)
     INET_PROTO_INFO *proto_info;
 
     /*
+     * Fix 20051207.
+     */
+    signal(SIGPIPE, SIG_IGN);
+
+    /*
      * Initialize diagnostics.
      */
     msg_vstream_init(argv[0], VSTREAM_ERR);
@@ -623,13 +807,16 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "46acCef:Fh:Ln:pPq:r:s:vw:8")) > 0) {
+    while ((ch = GETOPT(argc, argv, "468acCeEf:Fh:Ln:pPq:r:s:t:vw:")) > 0) {
 	switch (ch) {
 	case '4':
 	    protocols = INET_PROTO_NAME_IPV4;
 	    break;
 	case '6':
 	    protocols = INET_PROTO_NAME_IPV6;
+	    break;
+	case '8':
+	    disable_8bitmime = 1;
 	    break;
 	case 'a':
 	    disable_saslauth = 1;
@@ -644,8 +831,12 @@ int     main(int argc, char **argv)
 	case 'e':
 	    disable_esmtp = 1;
 	    break;
+	case 'E':
+	    disable_enh_status = 1;
+	    break;
 	case 'f':
 	    set_cmds_flags(optarg, FLAG_HARD_ERR);
+	    disable_pipelining = 1;
 	    break;
 	case 'F':
 	    disable_xforward = 1;
@@ -658,7 +849,7 @@ int     main(int argc, char **argv)
 	    enable_lmtp = 1;
 	    break;
 	case 'n':
-	    if ((max_count = atoi(optarg)) <= 0)
+	    if ((max_quit_count = atoi(optarg)) <= 0)
 		msg_fatal("bad count: %s", optarg);
 	    break;
 	case 'p':
@@ -673,10 +864,15 @@ int     main(int argc, char **argv)
 	    break;
 	case 'r':
 	    set_cmds_flags(optarg, FLAG_SOFT_ERR);
+	    disable_pipelining = 1;
 	    break;
 	case 's':
 	    openlog(basename(argv[0]), LOG_PID, LOG_MAIL);
 	    set_cmds_flags(optarg, FLAG_SYSLOG);
+	    break;
+	case 't':
+	    if ((var_tmout = atoi(optarg)) <= 0)
+		msg_fatal("bad timeout: %s", optarg);
 	    break;
 	case 'v':
 	    msg_verbose++;
@@ -684,9 +880,6 @@ int     main(int argc, char **argv)
 	case 'w':
 	    if ((fixed_delay = atoi(optarg)) <= 0)
 		usage(argv[0]);
-	    break;
-	case '8':
-	    disable_8bitmime = 1;
 	    break;
 	default:
 	    usage(argv[0]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_addr_crunch.c,v 1.1.1.3 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: mail_addr_crunch.c,v 1.1.1.3.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -68,7 +68,7 @@ ARGV   *mail_addr_crunch(const char *string, const char *extension)
     TOK822 **addr_list;
     TOK822 **tpp;
     char   *ratsign;
-    int     extlen;
+    ssize_t extlen;
 
     if (extension)
 	extlen = strlen(extension);
@@ -115,6 +115,7 @@ ARGV   *mail_addr_crunch(const char *string, const char *extension)
  /*
   * Stand-alone test program, sort of interactive.
   */
+#include <stdlib.h>
 #include <unistd.h>
 #include <msg.h>
 #include <vstream.h>
@@ -146,6 +147,7 @@ int     main(int unused_argc, char **unused_argv)
 	    vstream_printf("	%s\n", *cpp);
 	vstream_fflush(VSTREAM_OUT);
     }
+    return (0);
 }
 
 #endif

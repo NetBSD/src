@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_prng_dev.c,v 1.1.1.1.2.2 2006/07/12 15:06:42 tron Exp $	*/
+/*	$NetBSD: tls_prng_dev.c,v 1.1.1.1.2.3 2006/11/20 13:30:55 tron Exp $	*/
 
 /*++
 /* NAME
@@ -26,7 +26,7 @@
 /*	tls_prng_dev_read() reads the requested number of bytes from
 /*	the entropy device and updates the OpenSSL PRNG.
 /*
-/*	tls_prng_dev_close() closes the specified entropy device 
+/*	tls_prng_dev_close() closes the specified entropy device
 /*	and releases memory that was allocated for the handle.
 /*
 /*	Arguments:

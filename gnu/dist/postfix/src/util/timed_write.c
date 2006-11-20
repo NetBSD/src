@@ -1,4 +1,4 @@
-/*	$NetBSD: timed_write.c,v 1.1.1.3 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: timed_write.c,v 1.1.1.3.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,10 +8,10 @@
 /* SYNOPSIS
 /*	#include <iostuff.h>
 /*
-/*	int	timed_write(fd, buf, buf_len, timeout, context)
+/*	ssize_t	timed_write(fd, buf, len, timeout, context)
 /*	int	fd;
 /*	const void *buf;
-/*	unsigned len;
+/*	size_t	len;
 /*	int	timeout;
 /*	void	*context;
 /* DESCRIPTION
@@ -23,7 +23,7 @@
 /*	File descriptor in the range 0..FD_SETSIZE.
 /* .IP buf
 /*	Write buffer pointer.
-/* .IP buf_len
+/* .IP len
 /*	Write buffer size.
 /* .IP timeout
 /*	The deadline in seconds. If this is <= 0, the deadline feature
@@ -59,10 +59,10 @@
 
 /* timed_write - write with deadline */
 
-int     timed_write(int fd, void *buf, unsigned len,
+ssize_t timed_write(int fd, void *buf, size_t len,
 		            int timeout, void *unused_context)
 {
-    int     ret;
+    ssize_t ret;
 
     /*
      * Wait for a limited amount of time for something to happen. If nothing
@@ -84,6 +84,9 @@ int     timed_write(int fd, void *buf, unsigned len,
 	    msg_warn("write() returns EAGAIN on a writable file descriptor!");
 	    msg_warn("pausing to avoid going into a tight select/write loop!");
 	    sleep(1);
+	    continue;
+	} else if (ret < 0 && errno == EINTR) {
+	    continue;
 	} else {
 	    return (ret);
 	}

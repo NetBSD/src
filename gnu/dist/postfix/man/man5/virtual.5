@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtual.5,v 1.6.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: virtual.5,v 1.6.2.2 2006/11/20 13:30:18 tron Exp $
 .\"
 .TH VIRTUAL 5 
 .ad
@@ -19,7 +19,8 @@ Postfix virtual alias table format
 .ad
 .fi
 The optional \fBvirtual\fR(5) alias table rewrites recipient
-addresses for all local, virtual and remote mail destinations.
+addresses for all local, all virtual, and all remote mail
+destinations.
 This is unlike the \fBaliases\fR(5) table which is used
 only for \fBlocal\fR(8) delivery.  Virtual aliasing is
 recursive, and is implemented by the Postfix \fBcleanup\fR(8)
@@ -39,7 +40,7 @@ can have its own mailbox.
 .PP
 Virtual aliasing is applied only to recipient
 envelope addresses, and does not affect message headers.
-Think Sendmail rule set \fBS0\fR, if you like. Use \fBcanonical\fR(5)
+Use \fBcanonical\fR(5)
 mapping to rewrite header and envelope addresses in general.
 
 Normally, the \fBvirtual\fR(5) alias table is specified as a text file
@@ -57,6 +58,15 @@ map where patterns are given as regular expressions, or lookups
 can be directed to TCP-based server. In that case, the lookups are
 done in a slightly different way as described below under
 "REGULAR EXPRESSION TABLES" and "TCP-BASED TABLES".
+.SH "CASE FOLDING"
+.na
+.nf
+.ad
+.fi
+The search string is folded to lowercase before database
+lookup. As of Postfix 2.3, the search string is not case
+folded with database types such as regexp: or pcre: whose
+lookup fields can match both upper and lower case.
 .SH "TABLE FORMAT"
 .na
 .nf
@@ -213,7 +223,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 This section describes how the table lookups change when lookups
 are directed to a TCP-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available up to and including Postfix version 2.2.
+This feature is not available up to and including Postfix version 2.3.
 
 Each lookup operation uses the entire address once.  Thus,
 \fIuser@domain\fR mail addresses are not broken up into their

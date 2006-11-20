@@ -74,7 +74,7 @@ stress then it should not waste time. </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     # Not needed with Postfix 2.1 and later.
     <a href="postconf.5.html#smtpd_error_sleep_time">smtpd_error_sleep_time</a> = 0
 </pre>
@@ -105,7 +105,8 @@ Received: from porcupine.org ...
 </blockquote>
 
 <p> Then I know that this is almost certainly forged mail (almost;
-see next section for the fly in the ointment). Mail that is really
+see <a href="#caveats">next section</a> for the fly in the ointment).
+Mail that is really
 sent by my systems looks like this: </p>
 
 <blockquote>
@@ -143,7 +144,7 @@ patterns like this: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#header_checks">header_checks</a> = <a href="regexp_table.5.html">regexp</a>:/etc/postfix/header_checks
     <a href="postconf.5.html#body_checks">body_checks</a> = <a href="regexp_table.5.html">regexp</a>:/etc/postfix/body_checks
 
@@ -182,7 +183,7 @@ and "<tt>)</tt>" would be grouping operators.  </p>
 
 </ul>
 
-<p><strong>Caveats</strong></p>
+<p><a name="caveats"><strong>Caveats</strong></a></p>
 
 <p> Netscape Messenger (and reportedly, Mozilla) sends a HELO name
 that is identical to the sender address domain part. If you have
@@ -197,7 +198,7 @@ mapping translates this temporary address into user@porcupine.org.
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#canonical_maps">canonical_maps</a> = hash:/etc/postfix/canonical
 
 /etc/postfix/canonical:
@@ -225,7 +226,7 @@ and is very easy to stop.
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#header_checks">header_checks</a> = <a href="regexp_table.5.html">regexp</a>:/etc/postfix/header_checks
     <a href="postconf.5.html#body_checks">body_checks</a> = <a href="regexp_table.5.html">regexp</a>:/etc/postfix/body_checks
 
@@ -294,11 +295,14 @@ or <a href="http://www.t29.dk/antiantivirus.txt">http://www.t29.dk/antiantivirus
 </pre>
 </blockquote>
 
+<p> Note: these documents haven't been updated since 2004, so they
+are useful only as a starting point. </p>
+
 <p> A plea to virus or spam scanner operators: please do not make
 the problem worse by sending return mail to forged sender addresses.
 You're only harassing innocent people. If you must return mail to
 the purported sender, please return the full message headers, so
-that the sender can defend against forgeries. </p>
+that the sender can filter out the obvious forgeries. </p>
 
 </body>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: header_token.c,v 1.1.1.3 2004/05/31 00:24:30 heas Exp $	*/
+/*	$NetBSD: header_token.c,v 1.1.1.3.2.1 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -16,10 +16,10 @@
 /* .in
 /*	} HEADER_TOKEN;
 /*
-/*	int	header_token(token, token_len, token_buffer, ptr,
+/*	ssize_t	header_token(token, token_len, token_buffer, ptr,
 /*				specials, terminator)
 /*	HEADER_TOKEN *token;
-/*	int	token_len;
+/*	ssize_t	token_len;
 /*	VSTRING *token_buffer;
 /*	const char **ptr;
 /*	const char *specials;
@@ -106,16 +106,16 @@
 
 /* header_token - parse out the next item in a message header */
 
-int     header_token(HEADER_TOKEN *token, int token_len,
+ssize_t header_token(HEADER_TOKEN *token, ssize_t token_len,
 		             VSTRING *token_buffer, const char **ptr,
 		             const char *user_specials, int user_terminator)
 {
-    int     comment_level;
+    ssize_t comment_level;
     const unsigned char *cp;
-    int     len;
+    ssize_t len;
     int     ch;
-    int     tok_count;
-    int     n;
+    ssize_t tok_count;
+    ssize_t n;
 
     /*
      * Initialize.

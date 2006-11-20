@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_pass.c,v 1.1.1.5.2.1 2006/07/12 15:06:38 tron Exp $	*/
+/*	$NetBSD: deliver_pass.c,v 1.1.1.5.2.2 2006/11/20 13:30:24 tron Exp $	*/
 
 /*++
 /* NAME
@@ -8,13 +8,11 @@
 /* SYNOPSIS
 /*	#include <deliver_request.h>
 /*
-/*	int	deliver_pass(class, service, request, orig_addr, address, offset)
+/*	int	deliver_pass(class, service, request, recipient)
 /*	const char *class;
 /*	const char *service;
 /*	DELIVER_REQUEST *request;
-/*	const char *orig_addr;
-/*	const char *address;
-/*	long	offset;
+/*	RECIPIENT *recipient;
 /*
 /*	int	deliver_pass_all(class, service, request)
 /*	const char *class;
@@ -37,10 +35,8 @@
 /*	or nexthop are optional. For details see the transport map manual page.
 /* .IP request
 /*	Delivery request with queue file information.
-/* .IP address
-/*	Recipient envelope address.
-/* .IP offset
-/*	Recipient offset in queue file.
+/* .IP recipient
+/*	Recipient information. See recipient_list(3).
 /* DIAGNOSTICS
 /* LICENSE
 /* .ad
@@ -73,6 +69,9 @@
 
 #include <mail_params.h>
 #include <deliver_pass.h>
+#include <dsb_scan.h>
+#include <defer.h>
+#include <rcpt_print.h>
 
 #define DELIVER_PASS_DEFER	1
 #define DELIVER_PASS_UNKNOWN	2
@@ -84,7 +83,7 @@ static int deliver_pass_initial_reply(VSTREAM *stream)
     int     stat;
 
     if (attr_scan(stream, ATTR_FLAG_STRICT,
-		  ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &stat,
+		  ATTR_TYPE_INT, MAIL_ATTR_STATUS, &stat,
 		  ATTR_TYPE_END) != 1) {
 	msg_warn("%s: malformed response", VSTREAM_PATH(stream));
 	stat = -1;
@@ -95,13 +94,13 @@ static int deliver_pass_initial_reply(VSTREAM *stream)
 /* deliver_pass_send_request - send delivery request to delivery process */
 
 static int deliver_pass_send_request(VSTREAM *stream, DELIVER_REQUEST *request,
-			             const char *nexthop, const char *orcpt,
-				             const char *addr, long offs)
+				             const char *nexthop,
+				             RECIPIENT *rcpt)
 {
     int     stat;
 
     attr_print(stream, ATTR_FLAG_NONE,
-	       ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, request->flags,
+	       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, request->flags,
 	       ATTR_TYPE_STR, MAIL_ATTR_QUEUE, request->queue_name,
 	       ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, request->queue_id,
 	       ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, request->data_offset,
@@ -109,21 +108,21 @@ static int deliver_pass_send_request(VSTREAM *stream, DELIVER_REQUEST *request,
 	       ATTR_TYPE_STR, MAIL_ATTR_NEXTHOP, nexthop,
 	       ATTR_TYPE_STR, MAIL_ATTR_ENCODING, request->encoding,
 	       ATTR_TYPE_STR, MAIL_ATTR_SENDER, request->sender,
-	       ATTR_TYPE_STR, MAIL_ATTR_ERRTO, request->errors_to,
-	       ATTR_TYPE_STR, MAIL_ATTR_RRCPT, request->return_receipt,
-	       ATTR_TYPE_LONG, MAIL_ATTR_TIME, request->arrival_time,
-	       ATTR_TYPE_STR, MAIL_ATTR_CLIENT_NAME, request->client_name,
-	       ATTR_TYPE_STR, MAIL_ATTR_CLIENT_ADDR, request->client_addr,
-	       ATTR_TYPE_STR, MAIL_ATTR_PROTO_NAME, request->client_proto,
-	       ATTR_TYPE_STR, MAIL_ATTR_HELO_NAME, request->client_helo,
+	       ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, request->dsn_envid,
+	       ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, request->dsn_ret,
+	       ATTR_TYPE_FUNC, msg_stats_print, (void *) &request->msg_stats,
+	     ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_NAME, request->client_name,
+	     ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_ADDR, request->client_addr,
+	     ATTR_TYPE_STR, MAIL_ATTR_LOG_PROTO_NAME, request->client_proto,
+	       ATTR_TYPE_STR, MAIL_ATTR_LOG_HELO_NAME, request->client_helo,
 	       ATTR_TYPE_STR, MAIL_ATTR_SASL_METHOD, request->sasl_method,
-	       ATTR_TYPE_STR, MAIL_ATTR_SASL_USERNAME, request->sasl_username,
+	     ATTR_TYPE_STR, MAIL_ATTR_SASL_USERNAME, request->sasl_username,
 	       ATTR_TYPE_STR, MAIL_ATTR_SASL_SENDER, request->sasl_sender,
-	       ATTR_TYPE_STR, MAIL_ATTR_RWR_CONTEXT, request->rewrite_context,
-	       ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, offs,
-	       ATTR_TYPE_STR, MAIL_ATTR_ORCPT, orcpt,
-	       ATTR_TYPE_STR, MAIL_ATTR_RECIP, addr,
-	       ATTR_TYPE_NUM, MAIL_ATTR_OFFSET, 0,
+	     ATTR_TYPE_STR, MAIL_ATTR_RWR_CONTEXT, request->rewrite_context,
+	       ATTR_TYPE_INT, MAIL_ATTR_RCPT_COUNT, 1,
+	       ATTR_TYPE_END);
+    attr_print(stream, ATTR_FLAG_NONE,
+	       ATTR_TYPE_FUNC, rcpt_print, (void *) rcpt,
 	       ATTR_TYPE_END);
 
     if (vstream_fflush(stream)) {
@@ -137,13 +136,13 @@ static int deliver_pass_send_request(VSTREAM *stream, DELIVER_REQUEST *request,
 
 /* deliver_pass_final_reply - retrieve final delivery status response */
 
-static int deliver_pass_final_reply(VSTREAM *stream, VSTRING *reason)
+static int deliver_pass_final_reply(VSTREAM *stream, DSN_BUF *dsb)
 {
     int     stat;
 
     if (attr_scan(stream, ATTR_FLAG_STRICT,
-		  ATTR_TYPE_STR, MAIL_ATTR_WHY, reason,
-		  ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &stat,
+		  ATTR_TYPE_FUNC, dsb_scan, (void *) dsb,
+		  ATTR_TYPE_INT, MAIL_ATTR_STATUS, &stat,
 		  ATTR_TYPE_END) != 2) {
 	msg_warn("%s: malformed response", VSTREAM_PATH(stream));
 	return (DELIVER_PASS_UNKNOWN);
@@ -155,11 +154,12 @@ static int deliver_pass_final_reply(VSTREAM *stream, VSTRING *reason)
 /* deliver_pass - deliver one per-site queue entry */
 
 int     deliver_pass(const char *class, const char *service,
-		             DELIVER_REQUEST *request, const char *orig_addr,
-		             const char *addr, long offs)
+		             DELIVER_REQUEST *request,
+		             RECIPIENT *rcpt)
 {
     VSTREAM *stream;
-    VSTRING *reason;
+    DSN_BUF *dsb;
+    DSN     dsn;
     int     status;
     char   *saved_service;
     char   *transport;
@@ -179,7 +179,7 @@ int     deliver_pass(const char *class, const char *service,
      * Initialize.
      */
     stream = mail_connect_wait(class, transport);
-    reason = vstring_alloc(1);
+    dsb = dsb_create();
 
     /*
      * Get the delivery process initial response. Send the queue file info
@@ -192,25 +192,24 @@ int     deliver_pass(const char *class, const char *service,
      * different transport.
      */
     if (deliver_pass_initial_reply(stream) != 0
-	|| deliver_pass_send_request(stream, request, nexthop,
-				     orig_addr, addr, offs) != 0) {
+	|| deliver_pass_send_request(stream, request, nexthop, rcpt) != 0) {
+	(void) DSN_SIMPLE(&dsn, "4.3.0", "mail transport unavailable");
 	status = defer_append(DEL_REQ_TRACE_FLAGS(request->flags),
-			      request->queue_id, orig_addr, addr,
-			      offs, "none", request->arrival_time,
-			      "mail transport unavailable");
-    } else if ((status = deliver_pass_final_reply(stream, reason))
+			      request->queue_id, &request->msg_stats,
+			      rcpt, "none", &dsn);
+    } else if ((status = deliver_pass_final_reply(stream, dsb))
 	       == DELIVER_PASS_UNKNOWN) {
+	(void) DSN_SIMPLE(&dsn, "4.3.0", "unknown mail transport error");
 	status = defer_append(DEL_REQ_TRACE_FLAGS(request->flags),
-			      request->queue_id, orig_addr, addr,
-			      offs, "none", request->arrival_time,
-			      "unknown mail transport error");
+			      request->queue_id, &request->msg_stats,
+			      rcpt, "none", &dsn);
     }
 
     /*
      * Clean up.
      */
     vstream_fclose(stream);
-    vstring_free(reason);
+    dsb_free(dsb);
     myfree(saved_service);
 
     return (status);
@@ -225,10 +224,13 @@ int     deliver_pass_all(const char *class, const char *service,
     RECIPIENT *rcpt;
     int     status = 0;
 
+    /*
+     * XXX We should find out if the target transport can handle
+     * multi-recipient requests. Unfortunately such code is hard to test,
+     * rarely used, and therefore will be buggy.
+     */
     list = &request->rcpt_list;
     for (rcpt = list->info; rcpt < list->info + list->len; rcpt++)
-	status |= deliver_pass(class, service, request,
-			       rcpt->orig_addr, rcpt->address,
-			       rcpt->offset);
+	status |= deliver_pass(class, service, request, rcpt);
     return (status);
 }

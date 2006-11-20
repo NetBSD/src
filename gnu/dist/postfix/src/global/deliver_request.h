@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_request.h,v 1.1.1.5.2.1 2006/07/12 15:06:38 tron Exp $	*/
+/*	$NetBSD: deliver_request.h,v 1.1.1.5.2.2 2006/11/20 13:30:24 tron Exp $	*/
 
 #ifndef _DELIVER_REQUEST_H_INCLUDED_
 #define _DELIVER_REQUEST_H_INCLUDED_
@@ -23,6 +23,8 @@
   * Global library.
   */
 #include <recipient_list.h>
+#include <dsn.h>
+#include <msg_stats.h>
 
  /*
   * Structure of a server mail delivery request.
@@ -37,11 +39,9 @@ typedef struct DELIVER_REQUEST {
     char   *nexthop;			/* next hop name */
     char   *encoding;			/* content encoding */
     char   *sender;			/* envelope sender */
-    char   *errors_to;			/* error report address */
-    char   *return_receipt;		/* confirm receipt address */
-    long    arrival_time;		/* arrival time */
+    MSG_STATS msg_stats;		/* time profile */
     RECIPIENT_LIST rcpt_list;		/* envelope recipients */
-    char   *hop_status;			/* reason if unavailable */
+    DSN    *hop_status;			/* DSN status */
     char   *client_name;		/* client hostname */
     char   *client_addr;		/* client address */
     char   *client_proto;		/* client protocol */
@@ -50,6 +50,8 @@ typedef struct DELIVER_REQUEST {
     char   *sasl_username;		/* SASL user name */
     char   *sasl_sender;		/* SASL sender */
     char   *rewrite_context;		/* address rewrite context */
+    char   *dsn_envid;			/* DSN envelope ID */
+    int     dsn_ret;			/* DSN full/header notification */
 } DELIVER_REQUEST;
 
  /*
@@ -65,17 +67,29 @@ typedef struct DELIVER_REQUEST {
 #define DEL_REQ_FLAG_SUCCESS	(1<<0)	/* delete successful recipients */
 #define DEL_REQ_FLAG_BOUNCE	(1<<1)	/* unimplemented */
 
-#define DEL_REQ_FLAG_VERIFY	(1<<8)	/* verify recipient, don't deliver */
-#define DEL_REQ_FLAG_EXPAND	(1<<9)	/* verify expansion, don't deliver */
+#define DEL_REQ_FLAG_MTA_VRFY	(1<<8)	/* MTA-requested address probe */
+#define DEL_REQ_FLAG_USR_VRFY	(1<<9)	/* user-requested address probe */
 #define DEL_REQ_FLAG_RECORD	(1<<10)	/* record and deliver */
 #define DEL_REQ_FLAG_SCACHE	(1<<11)	/* opportunistic caching */
 
+ /*
+  * For compatibility, the old confusing names.
+  */
+#define DEL_REQ_FLAG_VERIFY	DEL_REQ_FLAG_MTA_VRFY
+#define DEL_REQ_FLAG_EXPAND	DEL_REQ_FLAG_USR_VRFY
+
+ /*
+  * Mail that uses the trace(8) service, and maybe more.
+  */
 #define DEL_REQ_TRACE_FLAGS_MASK \
-	(DEL_REQ_FLAG_VERIFY | DEL_REQ_FLAG_EXPAND | DEL_REQ_FLAG_RECORD)
+	(DEL_REQ_FLAG_MTA_VRFY | DEL_REQ_FLAG_USR_VRFY | DEL_REQ_FLAG_RECORD)
 #define DEL_REQ_TRACE_FLAGS(f)	((f) & DEL_REQ_TRACE_FLAGS_MASK)
 
+ /*
+  * Mail that is not delivered (i.e. uses the trace(8) service only).
+  */
 #define DEL_REQ_TRACE_ONLY_MASK \
-	(DEL_REQ_FLAG_VERIFY | DEL_REQ_FLAG_EXPAND)
+	(DEL_REQ_FLAG_MTA_VRFY | DEL_REQ_FLAG_USR_VRFY)
 #define DEL_REQ_TRACE_ONLY(f)	((f) & DEL_REQ_TRACE_ONLY_MASK)
 
  /*
@@ -102,8 +116,6 @@ typedef struct DELIVER_REQUEST {
 typedef struct VSTREAM _deliver_vstream_;
 extern DELIVER_REQUEST *deliver_request_read(_deliver_vstream_ *);
 extern int deliver_request_done(_deliver_vstream_ *, DELIVER_REQUEST *, int);
-
-extern int deliver_pass(const char *, const char *, DELIVER_REQUEST *, const char *, const char *, long);
 
 /* LICENSE
 /* .ad

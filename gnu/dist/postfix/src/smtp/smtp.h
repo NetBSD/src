@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.h,v 1.1.1.5.2.1 2006/07/12 15:06:41 tron Exp $	*/
+/*	$NetBSD: smtp.h,v 1.1.1.5.2.2 2006/11/20 13:30:52 tron Exp $	*/
 
 /*++
 /* NAME
@@ -11,12 +11,9 @@
 /* .nf
 
  /*
-  * SASL library.
+  * System library.
   */
-#ifdef USE_SASL_AUTH
-#include <sasl.h>
-#include <saslutil.h>
-#endif
+#include <string.h>
 
  /*
   * Utility library.
@@ -34,25 +31,25 @@
 #include <string_list.h>
 #include <maps.h>
 #include <tok822.h>
+#include <dsn_buf.h>
 
  /*
   * Postfix TLS library.
   */
-#ifdef USE_TLS
 #include <tls.h>
-#endif
 
  /*
   * State information associated with each SMTP delivery request.
   * Session-specific state is stored separately.
   */
 typedef struct SMTP_STATE {
+    int     misc_flags;			/* processing flags, see below */
     VSTREAM *src;			/* queue file stream */
     const char *service;		/* transport name */
     DELIVER_REQUEST *request;		/* envelope info, offsets */
     struct SMTP_SESSION *session;	/* network connection */
     int     status;			/* delivery status */
-    int     space_left;			/* output length control */
+    ssize_t space_left;			/* output length control */
 
     /*
      * Connection cache support. The (nexthop_lookup_mx, nexthop_domain,
@@ -78,10 +75,14 @@ typedef struct SMTP_STATE {
      * There is some redundancy for sanity checking. At the end of an SMTP
      * session all recipients should be marked one way or the other.
      */
-    int     final_server;		/* final mail server */
     int     rcpt_left;			/* recipients left over */
     int     rcpt_drop;			/* recipients marked as drop */
     int     rcpt_keep;			/* recipients marked as keep */
+
+    /*
+     * DSN Support introduced major bloat in error processing.
+     */
+    DSN_BUF *why;			/* on-the-fly formatting buffer */
 } SMTP_STATE;
 
 #define SET_NEXTHOP_STATE(state, lookup_mx, domain, port) { \
@@ -116,6 +117,7 @@ typedef struct SMTP_STATE {
 #define SMTP_FEATURE_BEST_MX		(1<<12)	/* for next-hop or fall-back */
 #define SMTP_FEATURE_RSET_REJECTED	(1<<13)	/* RSET probe rejected */
 #define SMTP_FEATURE_FROM_CACHE		(1<<14)	/* cached connection */
+#define SMTP_FEATURE_DSN		(1<<15)	/* DSN supported */
 
  /*
   * Features that passivate under the endpoint.
@@ -134,18 +136,23 @@ typedef struct SMTP_STATE {
   */
 #define SMTP_MISC_FLAG_LOOP_DETECT	(1<<0)
 #define	SMTP_MISC_FLAG_IN_STARTTLS	(1<<1)
-
-#define SMTP_MISC_FLAG_DEFAULT		SMTP_MISC_FLAG_LOOP_DETECT
+#define SMTP_MISC_FLAG_USE_LMTP		(1<<2)
+#define SMTP_MISC_FLAG_FIRST_NEXTHOP	(1<<3)
+#define SMTP_MISC_FLAG_FINAL_NEXTHOP	(1<<4)
+#define SMTP_MISC_FLAG_FINAL_SERVER	(1<<5)
+#define SMTP_MISC_FLAG_CONN_CACHE	(1<<6)
 
  /*
   * smtp.c
   */
-extern int smtp_errno;			/* XXX can we get rid of this? */
+#define SMTP_HAS_DSN(why)	(STR((why)->status)[0] != 0)
+#define SMTP_HAS_SOFT_DSN(why)	(STR((why)->status)[0] == '4')
+#define SMTP_HAS_HARD_DSN(why)	(STR((why)->status)[0] == '5')
+#define SMTP_HAS_LOOP_DSN(why) \
+    (SMTP_HAS_DSN(why) && strcmp(STR((why)->status) + 1, ".4.6") == 0)
 
-#define SMTP_ERR_NONE	0		/* no error */
-#define SMTP_ERR_FAIL	1		/* permanent error */
-#define SMTP_ERR_RETRY	2		/* temporary error */
-#define SMTP_ERR_LOOP	3		/* mailer loop */
+#define SMTP_SET_SOFT_DSN(why)	(STR((why)->status)[0] = '4')
+#define SMTP_SET_HARD_DSN(why)	(STR((why)->status)[0] = '5')
 
 extern int smtp_host_lookup_mask;	/* host lookup methods to use */
 
@@ -166,12 +173,6 @@ extern SSL_CTX *smtp_tls_ctx;		/* client-side TLS engine */
 
 #endif
 
-
- /*
-  * What's in a name?
-  */
-#define SMTP_HNAME(rr) (var_smtp_cname_overr ? (rr)->rname : (rr)->qname)
-
  /*
   * smtp_session.c
   */
@@ -183,6 +184,7 @@ typedef struct SMTP_SESSION {
     char   *namaddr;			/* mail exchanger */
     char   *helo;			/* helo response */
     unsigned port;			/* network byte order */
+    char   *namaddrport;		/* mail exchanger, incl. port */
 
     VSTRING *buffer;			/* I/O buffer */
     VSTRING *scratch;			/* scratch buffer */
@@ -198,44 +200,49 @@ typedef struct SMTP_SESSION {
     int     sndbufsize;			/* PIPELINING buffer size */
     int     send_proto_helo;		/* XFORWARD support */
 
-    int     reuse_count;		/* how many uses left */
+    time_t  expire_time;		/* session reuse expiration time */
+    int     reuse_count;		/* # of times reused (for logging) */
+    int     dead;			/* No further I/O allowed */
 
 #ifdef USE_SASL_AUTH
     char   *sasl_mechanism_list;	/* server mechanism list */
     char   *sasl_username;		/* client username */
     char   *sasl_passwd;		/* client password */
-    sasl_conn_t *sasl_conn;		/* SASL internal state */
-    VSTRING *sasl_encoded;		/* encoding buffer */
-    VSTRING *sasl_decoded;		/* decoding buffer */
-    sasl_callback_t *sasl_callbacks;	/* stateful callbacks */
+    struct XSASL_CLIENT *sasl_client;	/* SASL internal state */
+    VSTRING *sasl_reply;		/* client response */
 #endif
 
     /*
-     * TLS related state.
+     * TLS related state, don't forget to initialize in session_tls_init()!
      */
 #ifdef USE_TLS
-    int     tls_use_tls;		/* can do TLS */
-    int     tls_enforce_tls;		/* must do TLS */
-    int     tls_enforce_peername;	/* cert must match */
     TLScontext_t *tls_context;		/* TLS session state */
-    tls_info_t tls_info;		/* legacy */
+    char   *tls_nexthop;		/* Nexthop domain for cert checks */
+    int     tls_level;			/* TLS enforcement level */
+    int     tls_retry_plain;		/* Try plain when TLS handshake fails */
+    int     tls_protocols;		/* Acceptable SSL protocols (mask) */
+    char   *tls_cipherlist;		/* Acceptable SSL ciphers */
+    char   *tls_certmatch;		/* Certificate match patterns */
 #endif
 
+    SMTP_STATE *state;			/* back link */
 } SMTP_SESSION;
 
-extern SMTP_SESSION *smtp_session_alloc(VSTREAM *, const char *,
-			         const char *, const char *, unsigned, int);
+extern SMTP_SESSION *smtp_session_alloc(VSTREAM *, const char *, const char *,
+			               const char *, unsigned, time_t, int);
 extern void smtp_session_free(SMTP_SESSION *);
 extern int smtp_session_passivate(SMTP_SESSION *, VSTRING *, VSTRING *);
 extern SMTP_SESSION *smtp_session_activate(int, VSTRING *, VSTRING *);
-
-#define SMTP_SESS_FLAG_NONE	0	/* no options */
-#define SMTP_SESS_FLAG_CACHE	(1<<0)	/* enable session caching */
 
 #ifdef USE_TLS
 extern void smtp_tls_list_init(void);
 
 #endif
+
+ /*
+  * What's in a name?
+  */
+#define SMTP_HNAME(rr) (var_smtp_cname_overr ? (rr)->rname : (rr)->qname)
 
  /*
   * smtp_connect.c
@@ -245,18 +252,104 @@ extern int smtp_connect(SMTP_STATE *);
  /*
   * smtp_proto.c
   */
-extern int smtp_helo(SMTP_STATE *, int);
+extern int smtp_helo(SMTP_STATE *);
 extern int smtp_xfer(SMTP_STATE *);
 extern int smtp_rset(SMTP_STATE *);
 extern int smtp_quit(SMTP_STATE *);
 
  /*
+  * A connection is re-usable if session->expire_time is > 0 and the
+  * expiration time has not been reached.  This is subtle because the timer
+  * can expire between sending a command and receiving the reply for that
+  * command.
+  * 
+  * But wait, there is more! When SMTP command pipelining is enabled, there are
+  * two protocol loops that execute at very different times: one loop that
+  * generates commands, and one loop that receives replies to those commands.
+  * These will be called "sender loop" and "receiver loop", respectively. At
+  * well-defined protocol synchronization points, the sender loop pauses to
+  * let the receiver loop catch up.
+  * 
+  * When we choose to reuse a connection, both the sender and receiver protocol
+  * loops end with "." (mail delivery) or "RSET" (address probe). When we
+  * choose not to reuse, both the sender and receiver protocol loops end with
+  * "QUIT". The problem is that we must make the same protocol choices in
+  * both the sender and receiver loops, even though those loops may execute
+  * at completely different times.
+  * 
+  * We "freeze" the choice in the sender loop, just before we generate "." or
+  * "RSET". The reader loop leaves the connection cachable even if the timer
+  * expires by the time the response arrives. The connection cleanup code
+  * will call smtp_quit() for connections with an expired cache expiration
+  * timer.
+  * 
+  * We could have made the programmer's life a lot simpler by not making a
+  * choice at all, and always leaving it up to the connection cleanup code to
+  * call smtp_quit() for connections with an expired cache expiration timer.
+  * 
+  * As a general principle, neither the sender loop nor the receiver loop must
+  * modify the connection caching state, if that can affect the receiver
+  * state machine for not-yet processed replies to already-generated
+  * commands. This restriction does not apply when we have to exit the
+  * protocol loops prematurely due to e.g., timeout or connection loss, so
+  * that those pending replies will never be received.
+  * 
+  * But wait, there is even more! Only the first good connection for a specific
+  * destination may be cached under both the next-hop destination name and
+  * the server address; connections to alternate servers must be cached under
+  * the server address alone. This means we must distinguish between bad
+  * connections and other reasons why connections cannot be cached.
+  */
+#define THIS_SESSION_IS_CACHED \
+	(!THIS_SESSION_IS_DEAD && session->expire_time > 0)
+
+#define THIS_SESSION_IS_EXPIRED \
+	(THIS_SESSION_IS_CACHED \
+	    && session->expire_time < vstream_ftime(session->stream))
+
+#define THIS_SESSION_IS_BAD \
+	(!THIS_SESSION_IS_DEAD && session->expire_time < 0)
+
+#define THIS_SESSION_IS_DEAD \
+	(session->dead != 0)
+
+ /* Bring the bad news. */
+
+#define DONT_CACHE_THIS_SESSION \
+	(session->expire_time = 0)
+
+#define DONT_CACHE_BAD_SESSION \
+	(session->expire_time = -1)
+
+#define DONT_USE_DEAD_SESSION \
+	(session->dead = 1)
+
+ /* Initialization. */
+
+#define USE_NEWBORN_SESSION \
+	(session->dead = 0)
+
+#define CACHE_THIS_SESSION_UNTIL(when) \
+	(session->expire_time = (when))
+
+ /*
+  * Encapsulate the following so that we don't expose details of of
+  * connection management and error handling to the SMTP protocol engine.
+  */
+#define RETRY_AS_PLAINTEXT do { \
+	session->tls_retry_plain = 1; \
+	state->misc_flags &= ~SMTP_MISC_FLAG_FINAL_SERVER; \
+    } while (0)
+
+ /*
   * smtp_chat.c
   */
 typedef struct SMTP_RESP {		/* server response */
-    int     code;			/* status */
-    char   *str;			/* text */
-    VSTRING *buf;			/* origin of text */
+    int     code;			/* SMTP code */
+    const char *dsn;			/* enhanced status */
+    char   *str;			/* full reply */
+    VSTRING *dsn_buf;			/* status buffer */
+    VSTRING *str_buf;			/* reply buffer */
 } SMTP_RESP;
 
 extern void PRINTFLIKE(2, 3) smtp_chat_cmd(SMTP_SESSION *, char *,...);
@@ -264,6 +357,14 @@ extern SMTP_RESP *smtp_chat_resp(SMTP_SESSION *);
 extern void smtp_chat_init(SMTP_SESSION *);
 extern void smtp_chat_reset(SMTP_SESSION *);
 extern void smtp_chat_notify(SMTP_SESSION *);
+
+#define SMTP_RESP_FAKE(resp, _dsn) \
+    ((resp)->code = 0, \
+     (resp)->dsn = (_dsn), \
+     (resp)->str = DSN_BY_LOCAL_MTA, \
+     (resp))
+
+#define DSN_BY_LOCAL_MTA	((char *) 0)	/* DSN issued by local MTA */
 
  /*
   * These operations implement a redundant mark-and-sweep algorithm that
@@ -292,28 +393,32 @@ extern void smtp_chat_notify(SMTP_SESSION *);
 	} while (0)
 
 #define SMTP_RCPT_DROP(state, rcpt) do { \
-	    (rcpt)->status = SMTP_RCPT_STATE_DROP; (state)->rcpt_drop++; \
+	    (rcpt)->u.status = SMTP_RCPT_STATE_DROP; (state)->rcpt_drop++; \
 	} while (0)
 
 #define SMTP_RCPT_KEEP(state, rcpt) do { \
-	    (rcpt)->status = SMTP_RCPT_STATE_KEEP; (state)->rcpt_keep++; \
+	    (rcpt)->u.status = SMTP_RCPT_STATE_KEEP; (state)->rcpt_keep++; \
 	} while (0)
 
-#define SMTP_RCPT_ISMARKED(rcpt) ((rcpt)->status != 0)
+#define SMTP_RCPT_ISMARKED(rcpt) ((rcpt)->u.status != 0)
 
 #define SMTP_RCPT_LEFT(state) (state)->rcpt_left
 
 extern void smtp_rcpt_cleanup(SMTP_STATE *);
-extern void smtp_rcpt_done(SMTP_STATE *, const char *, RECIPIENT *);
+extern void smtp_rcpt_done(SMTP_STATE *, SMTP_RESP *, RECIPIENT *);
 
  /*
   * smtp_trouble.c
   */
-extern int PRINTFLIKE(3, 4) smtp_conn_fail(SMTP_STATE *, int, char *,...);
-extern int PRINTFLIKE(3, 4) smtp_site_fail(SMTP_STATE *, int, char *,...);
-extern int PRINTFLIKE(3, 4) smtp_mesg_fail(SMTP_STATE *, int, char *,...);
-extern void PRINTFLIKE(4, 5) smtp_rcpt_fail(SMTP_STATE *, int, RECIPIENT *, char *,...);
-extern int smtp_stream_except(SMTP_STATE *, int, char *);
+extern int smtp_sess_fail(SMTP_STATE *);
+extern int PRINTFLIKE(4, 5) smtp_site_fail(SMTP_STATE *, const char *,
+				             SMTP_RESP *, const char *,...);
+extern int PRINTFLIKE(4, 5) smtp_mesg_fail(SMTP_STATE *, const char *,
+				             SMTP_RESP *, const char *,...);
+extern void PRINTFLIKE(5, 6) smtp_rcpt_fail(SMTP_STATE *, RECIPIENT *,
+					          const char *, SMTP_RESP *,
+					            const char *,...);
+extern int smtp_stream_except(SMTP_STATE *, int, const char *);
 
  /*
   * smtp_unalias.c
@@ -333,6 +438,12 @@ extern void smtp_state_free(SMTP_STATE *);
 extern int smtp_map11_external(VSTRING *, MAPS *, int);
 extern int smtp_map11_tree(TOK822 *, MAPS *, int);
 extern int smtp_map11_internal(VSTRING *, MAPS *, int);
+
+ /*
+  * Silly little macros.
+  */
+#define STR(s) vstring_str(s)
+#define LEN(s) VSTRING_LEN(s)
 
 /* LICENSE
 /* .ad

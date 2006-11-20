@@ -1,4 +1,4 @@
-/*	$NetBSD: include.c,v 1.1.1.3 2004/05/31 00:24:37 heas Exp $	*/
+/*	$NetBSD: include.c,v 1.1.1.3.2.1 2006/11/20 13:30:39 tron Exp $	*/
 
 /*++
 /* NAME
@@ -80,7 +80,7 @@
 
 int     deliver_include(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
 {
-    char   *myname = "deliver_include";
+    const char *myname = "deliver_include";
     struct stat st;
     struct mypasswd *file_pwd = 0;
     int     status;
@@ -108,22 +108,34 @@ int     deliver_include(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
      * inclusion of special files or of files with world write permission
      * enabled.
      */
-    if (*path != '/')
+    if (*path != '/') {
+	msg_warn(":include:%s uses a relative path", path);
+	dsb_simple(state.msg_attr.why, "5.3.5",
+		   "mail system configuration error");
 	return (bounce_append(BOUNCE_FLAGS(state.request),
-			      BOUNCE_ATTR(state.msg_attr),
-			      ":include:%s uses a relative path", path));
-    if (stat_as(path, &st, usr_attr.uid, usr_attr.gid) < 0)
+			      BOUNCE_ATTR(state.msg_attr)));
+    }
+    if (stat_as(path, &st, usr_attr.uid, usr_attr.gid) < 0) {
+	msg_warn("unable to lookup :include: file %s: %m", path);
+	dsb_simple(state.msg_attr.why, "5.3.5",
+		   "mail system configuration error");
 	return (bounce_append(BOUNCE_FLAGS(state.request),
-			      BOUNCE_ATTR(state.msg_attr),
-			      "unable to lookup include file %s: %m", path));
-    if (S_ISREG(st.st_mode) == 0)
+			      BOUNCE_ATTR(state.msg_attr)));
+    }
+    if (S_ISREG(st.st_mode) == 0) {
+	msg_warn(":include: file %s is not a regular file", path);
+	dsb_simple(state.msg_attr.why, "5.3.5",
+		   "mail system configuration error");
 	return (bounce_append(BOUNCE_FLAGS(state.request),
-			      BOUNCE_ATTR(state.msg_attr),
-			      "not a regular include file: %s", path));
-    if (st.st_mode & S_IWOTH)
+			      BOUNCE_ATTR(state.msg_attr)));
+    }
+    if (st.st_mode & S_IWOTH) {
+	msg_warn(":include: file %s is world writable", path);
+	dsb_simple(state.msg_attr.why, "5.3.5",
+		   "mail system configuration error");
 	return (bounce_append(BOUNCE_FLAGS(state.request),
-			      BOUNCE_ATTR(state.msg_attr),
-			      "world writable include file: %s", path));
+			      BOUNCE_ATTR(state.msg_attr)));
+    }
 
     /*
      * DELIVERY POLICY
@@ -148,9 +160,11 @@ int     deliver_include(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
     if (usr_attr.uid == 0) {
 	if ((file_pwd = mypwuid(st.st_uid)) == 0) {
 	    msg_warn("cannot find username for uid %ld", (long) st.st_uid);
+	    msg_warn("%s: cannot find :include: file owner username", path);
+	    dsb_simple(state.msg_attr.why, "4.3.5",
+		       "mail system configuration error");
 	    return (defer_append(BOUNCE_FLAGS(state.request),
-				 BOUNCE_ATTR(state.msg_attr),
-			     "%s: cannot find :include: file owner", path));
+				 BOUNCE_ATTR(state.msg_attr)));
 	}
 	if (file_pwd->pw_uid != 0)
 	    SET_USER_ATTR(usr_attr, file_pwd, state.level);
@@ -165,7 +179,7 @@ int     deliver_include(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
      * attribute should have been called forwarder instead.
      */
     if (state.msg_attr.owner == 0)
-	state.msg_attr.owner = state.msg_attr.recipient;
+	state.msg_attr.owner = state.msg_attr.rcpt.address;
 
     /*
      * From here on no early returns or we have a memory leak.
@@ -185,9 +199,11 @@ int     deliver_include(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
 				vstream_fdopen(fd,O_RDONLY) : 0)
 
     if ((fp = FOPEN_AS(path, usr_attr.uid, usr_attr.gid)) == 0) {
+	msg_warn("cannot open include file %s: %m", path);
+	dsb_simple(state.msg_attr.why, "5.3.5",
+		   "mail system configuration error");
 	status = bounce_append(BOUNCE_FLAGS(state.request),
-			       BOUNCE_ATTR(state.msg_attr),
-			       "cannot open include file %s: %m", path);
+			       BOUNCE_ATTR(state.msg_attr));
     } else {
 	if ((local_ext_prop_mask & EXT_PROP_INCLUDE) == 0)
 	    state.msg_attr.unmatched = 0;

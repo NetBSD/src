@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.h,v 1.6.2.1 2006/07/12 15:06:38 tron Exp $	*/
+/*	$NetBSD: cleanup.h,v 1.6.2.2 2006/11/20 13:30:20 tron Exp $	*/
 
 /*++
 /* NAME
@@ -9,6 +9,11 @@
 /*	#include "cleanup.h"
 /* DESCRIPTION
 /* .nf
+
+ /*
+  * System library.
+  */
+#include <sys/time.h>
 
  /*
   * Utility library.
@@ -30,17 +35,25 @@
 #include <string_list.h>
 
  /*
+  * Milter library.
+  */
+#include <milter.h>
+
+ /*
   * These state variables are accessed by many functions, and there is only
   * one instance of each per message.
   */
 typedef struct CLEANUP_STATE {
+    VSTRING *attr_buf;			/* storage for named attribute */
     VSTRING *temp1;			/* scratch buffer, local use only */
     VSTRING *temp2;			/* scratch buffer, local use only */
+    VSTRING *stripped_buf;		/* character stripped input */
+    VSTREAM *src;			/* current input stream */
     VSTREAM *dst;			/* current output stream */
     MAIL_STREAM *handle;		/* mail stream handle */
     char   *queue_name;			/* queue name */
     char   *queue_id;			/* queue file basename */
-    time_t  time;			/* posting time */
+    struct timeval arrival_time;	/* arrival time */
     char   *fullname;			/* envelope sender full name */
     char   *sender;			/* envelope sender address */
     char   *recip;			/* envelope recipient address */
@@ -55,10 +68,14 @@ typedef struct CLEANUP_STATE {
     int     hop_count;			/* count of received: headers */
     char   *resent;			/* any resent- header seen */
     BH_TABLE *dups;			/* recipient dup filter */
-    void    (*action) (struct CLEANUP_STATE *, int, const char *, int);
+    void    (*action) (struct CLEANUP_STATE *, int, const char *, ssize_t);
     off_t   data_offset;		/* start of message content */
     off_t   xtra_offset;		/* start of extra segment */
-    int     rcpt_count;			/* recipient count */
+    off_t   append_rcpt_pt_offset;	/* append recipient here */
+    off_t   append_rcpt_pt_target;	/* target of above record */
+    off_t   append_hdr_pt_offset;	/* append header here */
+    off_t   append_hdr_pt_target;	/* target of above record */
+    ssize_t rcpt_count;			/* recipient count */
     char   *reason;			/* failure reason */
     NVTABLE *attr;			/* queue file attribute list */
     MIME_STATE *mime_state;		/* MIME state engine */
@@ -66,6 +83,22 @@ typedef struct CLEANUP_STATE {
     char   *hdr_rewrite_context;	/* header rewrite context */
     char   *filter;			/* from header/body patterns */
     char   *redirect;			/* from header/body patterns */
+    char   *dsn_envid;			/* DSN envelope ID */
+    int     dsn_ret;			/* DSN full/hdrs */
+    int     dsn_notify;			/* DSN never/delay/fail/success */
+    char   *dsn_orcpt;			/* DSN original recipient */
+    char   *verp_delims;		/* VERP delimiters (optional) */
+#ifdef DELAY_ACTION
+    int     defer_delay;		/* deferred delivery */
+#endif
+    MILTERS *milters;			/* mail filters */
+    const char *client_name;		/* real or ersatz client */
+    const char *reverse_name;		/* real or ersatz client */
+    const char *client_addr;		/* real or ersatz client */
+    int     client_af;			/* real or ersatz client */
+    const char *client_port;		/* real or ersatz client */
+    VSTRING *milter_ext_from;		/* externalized sender */
+    VSTRING *milter_ext_rcpt;		/* externalized recipient */
 } CLEANUP_STATE;
 
  /*
@@ -96,6 +129,17 @@ extern MAPS *cleanup_send_bcc_maps;
 extern MAPS *cleanup_rcpt_bcc_maps;
 
  /*
+  * Character filters.
+  */
+extern VSTRING *cleanup_reject_chars;
+extern VSTRING *cleanup_strip_chars;
+
+ /*
+  * Milters.
+  */
+extern MILTERS *cleanup_milters;
+
+ /*
   * Address canonicalization fine control.
   */
 #define CLEANUP_CANON_FLAG_ENV_FROM	(1<<0)	/* envelope sender */
@@ -117,25 +161,28 @@ extern MAPS *cleanup_rcpt_bcc_maps;
 extern int cleanup_ext_prop_mask;
 
  /*
-  * Saved queue file name, so the file can be removed in case of a fatal
+  * Saved queue file names, so the files can be removed in case of a fatal
   * run-time error.
   */
 extern char *cleanup_path;
+extern VSTRING *cleanup_trace_path;
+extern VSTRING *cleanup_bounce_path;
 
  /*
   * cleanup_state.c
   */
-extern CLEANUP_STATE *cleanup_state_alloc(void);
+extern CLEANUP_STATE *cleanup_state_alloc(VSTREAM *);
 extern void cleanup_state_free(CLEANUP_STATE *);
 
  /*
   * cleanup_api.c
   */
-extern CLEANUP_STATE *cleanup_open(void);
+extern CLEANUP_STATE *cleanup_open(VSTREAM *);
 extern void cleanup_control(CLEANUP_STATE *, int);
 extern int cleanup_flush(CLEANUP_STATE *);
 extern void cleanup_free(CLEANUP_STATE *);
 extern void cleanup_all(void);
+extern void cleanup_sig(int);
 extern void cleanup_pre_jail(char *, char **);
 extern void cleanup_post_jail(char *, char **);
 extern CONFIG_BOOL_TABLE cleanup_bool_table[];
@@ -149,9 +196,10 @@ extern CONFIG_TIME_TABLE cleanup_time_table[];
  /*
   * cleanup_out.c
   */
-extern void cleanup_out(CLEANUP_STATE *, int, const char *, int);
+extern void cleanup_out(CLEANUP_STATE *, int, const char *, ssize_t);
 extern void cleanup_out_string(CLEANUP_STATE *, int, const char *);
 extern void PRINTFLIKE(3, 4) cleanup_out_format(CLEANUP_STATE *, int, const char *,...);
+extern void cleanup_out_header(CLEANUP_STATE *, VSTRING *);
 
 #define CLEANUP_OUT_BUF(s, t, b) \
 	cleanup_out((s), (t), vstring_str((b)), VSTRING_LEN((b)))
@@ -162,17 +210,17 @@ extern void PRINTFLIKE(3, 4) cleanup_out_format(CLEANUP_STATE *, int, const char
  /*
   * cleanup_envelope.c
   */
-extern void cleanup_envelope(CLEANUP_STATE *, int, const char *, int);
+extern void cleanup_envelope(CLEANUP_STATE *, int, const char *, ssize_t);
 
  /*
   * cleanup_message.c
   */
-extern void cleanup_message(CLEANUP_STATE *, int, const char *, int);
+extern void cleanup_message(CLEANUP_STATE *, int, const char *, ssize_t);
 
  /*
   * cleanup_extracted.c
   */
-extern void cleanup_extracted(CLEANUP_STATE *, int, const char *, int);
+extern void cleanup_extracted(CLEANUP_STATE *, int, const char *, ssize_t);
 
  /*
   * cleanup_rewrite.c
@@ -203,7 +251,7 @@ extern int cleanup_masquerade_tree(TOK822 *, ARGV *);
  /*
   * cleanup_recipient.c
   */
-extern void cleanup_out_recipient(CLEANUP_STATE *, const char *, const char *);
+extern void cleanup_out_recipient(CLEANUP_STATE *, const char *, int, const char *, const char *);
 
  /*
   * cleanup_addr.c.
@@ -211,6 +259,30 @@ extern void cleanup_out_recipient(CLEANUP_STATE *, const char *, const char *);
 extern void cleanup_addr_sender(CLEANUP_STATE *, const char *);
 extern void cleanup_addr_recipient(CLEANUP_STATE *, const char *);
 extern void cleanup_addr_bcc(CLEANUP_STATE *, const char *);
+
+ /*
+  * cleanup_bounce.c.
+  */
+extern int cleanup_bounce(CLEANUP_STATE *);
+
+ /*
+  * MSG_STATS compatibility.
+  */
+#define CLEANUP_MSG_STATS(stats, state) \
+    MSG_STATS_INIT1(stats, incoming_arrival, state->arrival_time)
+
+ /*
+  * cleanup_milter.c.
+  */
+extern void cleanup_milter_receive(CLEANUP_STATE *, int);
+extern void cleanup_milter_inspect(CLEANUP_STATE *, MILTERS *);
+extern void cleanup_milter_emul_mail(CLEANUP_STATE *, MILTERS *, const char *);
+extern void cleanup_milter_emul_rcpt(CLEANUP_STATE *, MILTERS *, const char *);
+extern void cleanup_milter_emul_data(CLEANUP_STATE *, MILTERS *);
+
+#define CLEANUP_MILTER_OK(s) \
+    (((s)->flags & CLEANUP_FLAG_MILTER) != 0 \
+	&& (s)->errs == 0 && ((s)->flags & CLEANUP_FLAG_DISCARD) == 0)
 
 /* LICENSE
 /* .ad

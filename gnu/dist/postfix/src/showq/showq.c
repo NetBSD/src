@@ -1,4 +1,4 @@
-/*	$NetBSD: showq.c,v 1.1.1.7.2.1 2006/07/12 15:06:41 tron Exp $	*/
+/*	$NetBSD: showq.c,v 1.1.1.7.2.2 2006/11/20 13:30:52 tron Exp $	*/
 
 /*++
 /* NAME
@@ -142,10 +142,11 @@ int     var_dup_filter_limit;
 char   *var_empty_addr;
 
 #define STRING_FORMAT	"%-10s %8s %-20s %s\n"
-#define SENDER_FORMAT	"%-11s%8ld %20.20s %s\n"
-#define DROP_FORMAT	"%-10s%c%8ld %20.20s (maildrop queue, sender UID %u)\n"
+#define SENDER_FORMAT	"%-11s %7ld %20.20s %s\n"
+#define DROP_FORMAT	"%-10s%c %7ld %20.20s (maildrop queue, sender UID %u)\n"
 
-static void showq_reasons(VSTREAM *, BOUNCE_LOG *, HTABLE *);
+static void showq_reasons(VSTREAM *, BOUNCE_LOG *, RCPT_BUF *, DSN_BUF *, 
+HTABLE *);
 
 #define STR(x)	vstring_str(x)
 
@@ -162,6 +163,8 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
     long    msg_size = 0;
     BOUNCE_LOG *logfile;
     HTABLE *dup_filter = 0;
+    RCPT_BUF *rcpt_buf = 0;
+    DSN_BUF *dsn_buf = 0;
     char    status = (strcmp(queue, MAIL_QUEUE_ACTIVE) == 0 ? '*' :
 		      strcmp(queue, MAIL_QUEUE_HOLD) == 0 ? '!' : ' ');
     int     msg_size_ok = 0;
@@ -238,47 +241,58 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 	    && dup_filter == 0
 	    && (logfile = bounce_log_open(MAIL_QUEUE_DEFER, id, O_RDONLY, 0)) != 0) {
 	    dup_filter = htable_create(var_dup_filter_limit);
-	    showq_reasons(client, logfile, dup_filter);
+	    if (rcpt_buf == 0)
+		rcpt_buf = rcpb_create();
+	    if (dsn_buf == 0)
+		dsn_buf = dsb_create();
+	    showq_reasons(client, logfile, rcpt_buf, dsn_buf, dup_filter);
 	    if (bounce_log_close(logfile))
 		msg_warn("close %s %s: %m", MAIL_QUEUE_DEFER, id);
 	}
     }
     vstring_free(buf);
     vstring_free(printable_quoted_addr);
+    if (rcpt_buf)
+	rcpb_free(rcpt_buf);
+    if (dsn_buf)
+	dsb_free(dsn_buf);
     if (dup_filter)
 	htable_free(dup_filter, (void (*) (char *)) 0);
 }
 
 /* showq_reasons - show deferral reasons */
 
-static void showq_reasons(VSTREAM *client, BOUNCE_LOG *bp, HTABLE *dup_filter)
+static void showq_reasons(VSTREAM *client, BOUNCE_LOG *bp, RCPT_BUF *rcpt_buf, 
+DSN_BUF *dsn_buf, HTABLE *dup_filter)
 {
     char   *saved_reason = 0;
     int     padding;
+    RECIPIENT *rcpt = &rcpt_buf->rcpt;
+    DSN    *dsn = &dsn_buf->dsn;
 
-    while (bounce_log_read(bp) != 0) {
+    while (bounce_log_read(bp, rcpt_buf, dsn_buf) != 0) {
 
 	/*
 	 * Update the duplicate filter.
 	 */
 	if (var_dup_filter_limit == 0
 	    || dup_filter->used < var_dup_filter_limit)
-	    if (htable_locate(dup_filter, bp->recipient) == 0)
-		htable_enter(dup_filter, bp->recipient, (char *) 0);
+	    if (htable_locate(dup_filter, rcpt->address) == 0)
+		htable_enter(dup_filter, rcpt->address, (char *) 0);
 
 	/*
 	 * Don't print the reason when the previous recipient had the same
 	 * problem.
 	 */
-	if (saved_reason == 0 || strcmp(saved_reason, bp->text) != 0) {
+	if (saved_reason == 0 || strcmp(saved_reason, dsn->reason) != 0) {
 	    if (saved_reason)
 		myfree(saved_reason);
-	    saved_reason = mystrdup(bp->text);
+	    saved_reason = mystrdup(dsn->reason);
 	    if ((padding = 76 - strlen(saved_reason)) < 0)
 		padding = 0;
 	    vstream_fprintf(client, "%*s(%s)\n", padding, "", saved_reason);
 	}
-	vstream_fprintf(client, STRING_FORMAT, "", "", "", bp->recipient);
+	vstream_fprintf(client, STRING_FORMAT, "", "", "", rcpt->address);
     }
     if (saved_reason)
 	myfree(saved_reason);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_link.c,v 1.1.1.3 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: sane_link.c,v 1.1.1.3.2.1 2006/11/20 13:31:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -41,7 +41,7 @@
 
 int     sane_link(const char *from, const char *to)
 {
-    char   *myname = "sane_link";
+    const char *myname = "sane_link";
     int     saved_errno;
     struct stat from_st;
     struct stat to_st;

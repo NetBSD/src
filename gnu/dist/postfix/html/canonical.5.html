@@ -43,28 +43,33 @@ CANONICAL(5)                                                      CANONICAL(5)
        By default the <a href="canonical.5.html"><b>canonical</b>(5)</a> mapping affects  both  message
        header  addresses  (i.e. addresses that appear inside mes-
        sages) and message envelope addresses  (for  example,  the
-       addresses  that are used in SMTP protocol commands). Think
-       Sendmail rule set <b>S3</b>, if you  like.   This  is  controlled
-       with the <b><a href="postconf.5.html#canonical_classes">canonical_classes</a></b> parameter.
+       addresses  that  are used in SMTP protocol commands). This
+       is controlled with the <b><a href="postconf.5.html#canonical_classes">canonical_classes</a></b> parameter.
 
        NOTE: Postfix versions 2.2 and later rewrite message head-
-       ers from remote SMTP clients only if  the  client  matches
+       ers  from  remote  SMTP clients only if the client matches
        the  <a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a>  parameter,  or  if  the
        <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> configuration parameter spec-
-       ifies  a non-empty value. To get the behavior before Post-
-       fix   2.2,   specify    "<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a>    =
+       ifies a non-empty value. To get the behavior before  Post-
+       fix    2.2,    specify   "<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a>   =
        static:all".
 
        Typically, one would use the <a href="canonical.5.html"><b>canonical</b>(5)</a> table to replace
-       login  names  by  <i>Firstname.Lastname</i>,  or  to   clean   up
+       login   names   by  <i>Firstname.Lastname</i>,  or  to  clean  up
        addresses produced by legacy mail systems.
 
-       The  <a href="canonical.5.html"><b>canonical</b>(5)</a>  mapping is not to be confused with <i>vir-</i>
-       <i>tual domain</i> support. Use the <a href="virtual.5.html"><b>virtual</b>(5)</a> map for that  pur-
+       The <a href="canonical.5.html"><b>canonical</b>(5)</a> mapping is not to be confused  with  <i>vir-</i>
+       <i>tual  domain</i> support. Use the <a href="virtual.5.html"><b>virtual</b>(5)</a> map for that pur-
        pose.
 
-       The  <a href="canonical.5.html"><b>canonical</b>(5)</a> mapping is not to be confused with local
+       The <a href="canonical.5.html"><b>canonical</b>(5)</a> mapping is not to be confused with  local
        aliasing.  Use the <a href="aliases.5.html"><b>aliases</b>(5)</a> map for that purpose.
+
+<b>CASE FOLDING</b>
+       The  search  string is folded to lowercase before database
+       lookup. As of Postfix 2.3, the search string is  not  case
+       folded  with database types such as <a href="regexp_table.5.html">regexp</a>: or <a href="pcre_table.5.html">pcre</a>: whose
+       lookup fields can match both upper and lower case.
 
 <b>TABLE FORMAT</b>
        The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
@@ -155,9 +160,9 @@ CANONICAL(5)                                                      CANONICAL(5)
 <b>TCP-BASED TABLES</b>
        This section describes how the table lookups  change  when
        lookups are directed to a TCP-based server. For a descrip-
-       tion of the TCP client/server lookup protocol, see <b>tcp_ta-</b>
-       <b>ble</b>(5).  This feature is not available up to and including
-       Postfix version 2.2.
+       tion of the TCP client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_ta-</b></a>
+       <a href="tcp_table.5.html"><b>ble</b>(5)</a>.  This feature is not available up to and including
+       Postfix version 2.3.
 
        Each lookup operation uses the entire address once.  Thus,
        <i>user@domain</i>  mail  addresses  are not broken up into their
@@ -170,7 +175,7 @@ CANONICAL(5)                                                      CANONICAL(5)
        The  table format does not understand quoting conventions.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The following <b>main.cf</b> parameters are especially  relevant.
+       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially  relevant.
        The  text  below  provides  only  a parameter summary. See
        <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 

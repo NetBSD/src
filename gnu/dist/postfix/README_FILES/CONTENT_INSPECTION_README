@@ -6,7 +6,7 @@ one-line-at-a-time scanning before mail is queued, to heavy duty machinery that
 does sophisticated content analysis after mail is queued. Each approach serves
 a different purpose.
 
-bbuuiilltt--iinn,, lliigghhtt--wweeiigghhtt,, rreeaall--ttiimmee
+bbeeffoorree qquueeuuee,, bbuuiilltt--iinn,, lliigghhtt--wweeiigghhtt
     This method inspects mail BEFORE it is stored in the queue, and uses
     Postfix's built-in message header and message body inspection. Although the
     main purpose is to stop a specific flood of mail from worms or viruses, it
@@ -17,7 +17,7 @@ bbuuiilltt--iinn,, lliigghhtt--wweeiigghhtt,, rreeaall
     below. Details are described in the BUILTIN_FILTER_README and
     BACKSCATTER_README documents.
 
-eexxtteerrnnaall,, hheeaavvyy--wweeiigghhtt,, nnoott rreeaall ttiimmee
+aafftteerr qquueeuuee,, eexxtteerrnnaall,, hheeaavvyy--wweeiigghhtt
     This method inspects mail AFTER it is stored in the queue, and uses
     standard protocols such as SMTP or "pipe to command and wait for exit
     status". After-queue inspection allows you to use content filters of
@@ -25,18 +25,26 @@ eexxtteerrnnaall,, hheeaavvyy--wweeiigghhtt,, nnoott r
     without running out of memory resources under a peak load. Details of this
     approach are in the FILTER_README document.
 
-eexxtteerrnnaall,, mmeeddiiuumm--wweeiigghhtt,, rreeaall--ttiimmee
-    This method inspects mail BEFORE it is stored in the queue, and uses the
-    SMTP protocol. Although this approach appears to be the more attractive
-    one, it really combines the worst of the other two. Because mail is
-    inspected before it is queued, content inspection software must finish in a
-    limited amount of time, and must run in a limited amount of memory. If
-    content inspection needs too much time then incoming mail deliveries will
-    time out, and if content inspection needs too much memory then software
-    will crash under a peak load. Before-queue inspection limits the peak load
-    that your system can handle, and limits the sophistication of the content
-    filter that you can use. Details are in the SMTPD_PROXY_README document.
-    This approach is available only with Postfix version 2.1 and later.
+bbeeffoorree qquueeuuee,, eexxtteerrnnaall,, mmeeddiiuumm--wweeiigghhtt
+    The following two methods inspect mail BEFORE it is stored in the queue.
+
+      * The first method uses the SMTP protocol, and is described in the
+        SMTPD_PROXY_README document. This approach is available with Postfix
+        version 2.1 and later.
+
+      * The second method uses the Sendmail 8 Milter protocol, and is described
+        in the MILTER_README document. This approach is available with Postfix
+        version 2.3 and later.
+
+    Although these approaches appear to be attractive, they have some serious
+    limitations that you need to be aware of. First, content inspection
+    software must finish in a limited amount of time; if content inspection
+    needs too much time then incoming mail deliveries will time out. Second,
+    content inspection software must run in a limited amount of memory; if
+    content inspection needs too much memory then software will crash under a
+    peak load. Before-queue inspection limits the peak load that your system
+    can handle, and limits the sophistication of the content filter that you
+    can use.
 
 The more sophisticated content filtering software is not built into Postfix for
 good reasons: writing an MTA requires different skills than writing a SPAM or

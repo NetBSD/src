@@ -1,4 +1,4 @@
-.\"	$NetBSD: cleanup.8,v 1.5.2.1 2006/07/12 15:06:34 tron Exp $
+.\"	$NetBSD: cleanup.8,v 1.5.2.2 2006/11/20 13:30:18 tron Exp $
 .\"
 .TH CLEANUP 8 
 .ad
@@ -56,6 +56,8 @@ in case of trouble.
 RFC 822 (ARPA Internet Text Messages)
 RFC 2045 (MIME: Format of Internet Message Bodies)
 RFC 2046 (MIME: Media Types)
+RFC 3463 (Enhanced Status Codes)
+RFC 3464 (Delivery status notifications)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -90,8 +92,8 @@ Available in Postfix version 2.1 only:
 .IP "\fBenable_errors_to (no)\fR"
 Report mail delivery errors to the address specified with the
 non-standard Errors-To: message header, instead of the envelope
-sender address (this feature is removed with Postfix 2.2, is
-turned off by default with Postfix 2.1, and is always turned on
+sender address (this feature is removed with Postfix version 2.2, is
+turned off by default with Postfix version 2.1, and is always turned on
 with older Postfix versions).
 .SH "BUILT-IN CONTENT FILTERING CONTROLS"
 .na
@@ -118,6 +120,67 @@ message headers, as described in the \fBheader_checks\fR(5) manual page.
 Optional lookup tables for content inspection of non-MIME message
 headers in attached messages, as described in the \fBheader_checks\fR(5)
 manual page.
+.PP
+Available in Postfix version 2.3 and later:
+.IP "\fBmessage_reject_characters (empty)\fR"
+The set of characters that Postfix will reject in message
+content.
+.IP "\fBmessage_strip_characters (empty)\fR"
+The set of characters that Postfix will remove from message
+content.
+.SH "BEFORE QUEUE MILTER CONTROLS"
+.na
+.nf
+.ad
+.fi
+As of version 2.3, Postfix supports the Sendmail version 8
+Milter (mail filter) protocol. When mail is not received via
+the smtpd(8) server, the cleanup(8) server will simulate
+SMTP events to the extent that this is possible. For details
+see the MILTER_README document.
+.IP "\fBnon_smtpd_milters (empty)\fR"
+A list of Milter (mail filter) applications for new mail that
+does not arrive via the Postfix \fBsmtpd\fR(8) server.
+.IP "\fBmilter_protocol (2)\fR"
+The mail filter protocol version and optional protocol extensions
+for communication with a Milter (mail filter) application.
+.IP "\fBmilter_default_action (tempfail)\fR"
+The default action when a Milter (mail filter) application is
+unavailable or mis-configured.
+.IP "\fBmilter_macro_daemon_name ($myhostname)\fR"
+The {daemon_name} macro value for Milter (mail filter) applications.
+.IP "\fBmilter_macro_v ($mail_name $mail_version)\fR"
+The {v} macro value for Milter (mail filter) applications.
+.IP "\fBmilter_connect_timeout (30s)\fR"
+The time limit for connecting to a Milter (mail filter)
+application, and for negotiating protocol options.
+.IP "\fBmilter_command_timeout (30s)\fR"
+The time limit for sending an SMTP command to a Milter (mail
+filter) application, and for receiving the response.
+.IP "\fBmilter_content_timeout (300s)\fR"
+The time limit for sending message content to a Milter (mail
+filter) application, and for receiving the response.
+.IP "\fBmilter_connect_macros (see postconf -n output)\fR"
+The macros that are sent to Milter (mail filter) applications
+after completion of an SMTP connection.
+.IP "\fBmilter_helo_macros (see postconf -n output)\fR"
+The macros that are sent to Milter (mail filter) applications
+after the SMTP HELO or EHLO command.
+.IP "\fBmilter_mail_macros (see postconf -n output)\fR"
+The macros that are sent to Milter (mail filter) applications
+after the SMTP MAIL FROM command.
+.IP "\fBmilter_rcpt_macros (see postconf -n output)\fR"
+The macros that are sent to Milter (mail filter) applications
+after the SMTP RCPT TO command.
+.IP "\fBmilter_data_macros (see postconf -n output)\fR"
+The macros that are sent to version 4 or higher Milter (mail
+filter) applications after the SMTP DATA command.
+.IP "\fBmilter_unknown_command_macros (see postconf -n output)\fR"
+The macros that are sent to version 3 or higher Milter (mail
+filter) applications after an unknown SMTP command.
+.IP "\fBmilter_end_of_data_macros (see postconf -n output)\fR"
+The macros that are sent to Milter (mail filter) applications
+after the message end-of-data.
 .SH "MIME PROCESSING CONTROLS"
 .na
 .nf
@@ -262,6 +325,9 @@ configuration files.
 .IP "\fBdaemon_timeout (18000s)\fR"
 How much time a Postfix daemon process may take to handle a
 request before it is terminated by a built-in watchdog timer.
+.IP "\fBdelay_logging_resolution_limit (2)\fR"
+The maximal number of digits after the decimal point when logging
+sub-second delay values.
 .IP "\fBdelay_warning_time (0h)\fR"
 The time after which the sender receives the message headers of
 mail that is still queued.
@@ -325,6 +391,7 @@ Use "\fBpostconf readme_directory\fR" or
 .na
 .nf
 ADDRESS_REWRITING_README Postfix address manipulation
+CONTENT_INSPECTION_README content inspection
 .SH "LICENSE"
 .na
 .nf
