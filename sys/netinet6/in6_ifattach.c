@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.67 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.68 2006/11/20 04:16:27 dyoung Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.67 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.68 2006/11/20 04:16:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,10 +333,7 @@ in6_get_hw_ifid(ifp, in6)
 	static u_int8_t allone[8] =
 		{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
-	for (ifa = ifp->if_addrlist.tqh_first;
-	     ifa;
-	     ifa = ifa->ifa_list.tqe_next)
-	{
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
 		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
@@ -481,8 +478,7 @@ get_ifid(ifp0, altifp, in6)
 	}
 
 	/* next, try to get it from some other hardware interface */
-	for (ifp = ifnet.tqh_first; ifp; ifp = ifp->if_list.tqe_next)
-	{
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp == ifp0)
 			continue;
 		if (in6_get_hw_ifid(ifp, in6) != 0)
@@ -871,18 +867,16 @@ in6_ifdetach(ifp)
 	nd6_purge(ifp);
 
 	/* nuke any of IPv6 addresses we have */
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = next)
-	{
-		next = ifa->ifa_list.tqe_next;
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa; ifa = next) {
+		next = TAILQ_NEXT(ifa, ifa_list);
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		in6_purgeaddr(ifa);
 	}
 
 	/* undo everything done by in6_ifattach(), just in case */
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = next)
-	{
-		next = ifa->ifa_list.tqe_next;
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa; ifa = next) {
+		next = TAILQ_NEXT(ifa, ifa_list);
 
 		if (ifa->ifa_addr->sa_family != AF_INET6
 		 || !IN6_IS_ADDR_LINKLOCAL(&satosin6(&ifa->ifa_addr)->sin6_addr)) {
@@ -894,7 +888,7 @@ in6_ifdetach(ifp)
 		/*
 		 * leave from multicast groups we have joined for the interface
 		 */
-		while ((imm = ia->ia6_memberships.lh_first) != NULL) {
+		while ((imm = LIST_FIRST(&ia->ia6_memberships)) != NULL) {
 			LIST_REMOVE(imm, i6mm_chain);
 			in6_leavegroup(imm);
 		}
@@ -911,7 +905,7 @@ in6_ifdetach(ifp)
 		}
 
 		/* remove from the linked list */
-		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+		TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
 		IFAFREE(&ia->ia_ifa);
 
 		/* also remove from the IPv6 address chain(itojun&jinmei) */
