@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.15 2006/11/20 13:47:34 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.16 2006/11/20 15:52:23 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2107,4 +2107,17 @@ gnu/usr.sbin/postfix/xsasl/Makefile		patch
 
 	Update Postfix to version 2.3.4.
 	[ghen, ticket #1589]
+
+sys/dev/ata/wd.c				1.334
+
+	Yet another broken seagate drive: ST3160811A.
+	[bouyer, ticket #1583]
+
+sys/dev/pci/pcidevs				1.849-1.850
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/pucdata.c				1.49
+
+	Add NetMos 9855 Quad UART and 1284 Printer port.
+	[bouyer, ticket #1584]
 
