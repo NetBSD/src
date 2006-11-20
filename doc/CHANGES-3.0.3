@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.5 2006/11/19 17:54:58 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.6 2006/11/20 14:57:05 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -62,4 +62,14 @@ sys/net/if_pppoe.c				1.61
 	Fix bogus uninitialized variable warning ifdef PPPOE_SERVER.
 	Noticed by Marcin Jessa on current-users.
 	[martin, ticket #1588]
+
+sys/dev/ata/wd.c				1.326
+
+	Add yet another broken 160GB seagate drive: ST3160021A.
+	[bouyer, ticket #1582]
+
+sys/dev/ata/wd.c				1.334
+
+	Yet another broken seagate drive: ST3160811A.
+	[bouyer, ticket #1583]
 
