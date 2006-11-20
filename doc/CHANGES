@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.761 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.762 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -195,3 +195,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	uucp: Removed from base; package can be found in pkgsrc
 		[christos 20061111]
 	openssl: update to 0.9.8d [christos 20061113]
+	mac68k: Add timecounter support. [hauke 20061120]
