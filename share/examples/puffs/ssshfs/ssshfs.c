@@ -1,4 +1,4 @@
-/*	$NetBSD: ssshfs.c,v 1.3 2006/11/21 12:42:15 pooka Exp $	*/
+/*	$NetBSD: ssshfs.c,v 1.4 2006/11/21 13:05:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -156,8 +156,10 @@ buildvattr(struct ssshnode *ssn, const Attrib *a)
 {
 	struct vattr *va = &ssn->va;
 
-	if (a->flags & SSH2_FILEXFER_ATTR_SIZE)
+	if (a->flags & SSH2_FILEXFER_ATTR_SIZE) {
 		va->va_size = a->size;
+		va->va_bytes = a->size;
+	}
 	if (a->flags & SSH2_FILEXFER_ATTR_UIDGID) {
 		if (a->uid == uidmangle_to && mangle)
 			va->va_uid = uidmangle_from;
@@ -239,6 +241,8 @@ makenewnode(struct ssshnode *ossn, const char *pcomp, const char *longname)
 
 	ossn->refcount++;
 	newssn->refcount = 1;
+	newssn->va.va_fileid = newssn->myid;
+	newssn->va.va_blocksize = 512;
 
 	/* XXX: only way I know how (didn't look into the protocol, though) */
 	if (longname && (sscanf(longname, "%*s%d", &links) == 1))
@@ -470,6 +474,7 @@ ssshfs_remove(struct puffs_usermount *pu, void *opc, void *targ,
 		return EIO;
 
 	dircache(ssd);
+	ssd->va.va_nlink--;
 
 	return 0;
 }
@@ -507,6 +512,7 @@ ssshfs_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 		return EIO;
 
 	dircache(ssd);
+	ssd->va.va_nlink--;
 
 	return 0;
 }
