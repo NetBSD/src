@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.159 2006/10/22 22:49:38 pooka Exp $	*/
+/*	$NetBSD: vnode.h,v 1.160 2006/11/21 02:17:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -276,7 +276,7 @@ extern const int	vttoif_tab[];
 #define	V_WAIT		0x0001		/*  sleep for suspend */
 #define	V_NOWAIT	0x0002		/*  don't sleep for suspend */
 #define	V_SLEEPONLY	0x0004		/*  just return after sleep */
-#define V_PCATCH	0x0008		/*  sleep witch PCATCH set */
+#define V_PCATCH	0x0008		/*  sleep which PCATCH set */
 #define V_LOWER		0x0010		/*  lower level operation */
 
 /*
