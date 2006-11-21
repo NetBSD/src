@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.55 2006/11/21 14:32:27 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.56 2006/11/21 15:02:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -676,7 +676,7 @@ int	coredump_netbsd32(struct lwp *, void *);
 void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
 
 vaddr_t netbsd32_vm_default_addr(struct proc *, vaddr_t, vsize_t);
-void netbsd32_adjust_limits(struct lwp *);
+void netbsd32_adjust_limits(struct proc *);
 
 void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
 void	netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
