@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.160 2006/11/21 02:17:51 simonb Exp $	*/
+/*	$NetBSD: vnode.h,v 1.161 2006/11/21 02:19:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@ struct uvm_ractx;
  */
 enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
 
-#define VNODE_TYPES \
+#define	VNODE_TYPES \
     "VNON", "VREG", "VDIR", "VBLK", "VCHR", "VLNK", "VSOCK", "VFIFO", "VBAD"
 
 /*
@@ -74,7 +74,7 @@ enum vtagtype	{
 	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS
 };
 
-#define VNODE_TAGS \
+#define	VNODE_TAGS \
     "VT_NON", "VT_UFS", "VT_NFS", "VT_MFS", "VT_MSDOSFS", "VT_LFS", "VT_LOFS", \
     "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
@@ -169,7 +169,7 @@ struct vnode {
 #define	VFREEING	0x8000	/* vnode is being freed */
 #define	VMAPPED		0x10000	/* vnode might have user mappings */
 
-#define VNODE_FLAGBITS \
+#define	VNODE_FLAGBITS \
     "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP\6WRITEMAP\7WRITEMAPDIRTY" \
     "\10LOCKSWORK\11XLOCK\12XWANT\13BWAIT\14ALIASED" \
     "\15DIROP\16LAYER\17ONWORKLIST\20FREEING\21MAPPED"
@@ -217,7 +217,7 @@ struct vattr {
  * Note: the only place where v_numoutput is decremented is in vwakeup().
  */
 extern struct simplelock global_v_numoutput_slock;
-#define V_INCR_NUMOUTPUT(vp) do {			\
+#define	V_INCR_NUMOUTPUT(vp) do {			\
 	simple_lock(&global_v_numoutput_slock);		\
 	(vp)->v_numoutput++;				\
 	simple_unlock(&global_v_numoutput_slock);	\
@@ -276,8 +276,8 @@ extern const int	vttoif_tab[];
 #define	V_WAIT		0x0001		/*  sleep for suspend */
 #define	V_NOWAIT	0x0002		/*  don't sleep for suspend */
 #define	V_SLEEPONLY	0x0004		/*  just return after sleep */
-#define V_PCATCH	0x0008		/*  sleep which PCATCH set */
-#define V_LOWER		0x0010		/*  lower level operation */
+#define	V_PCATCH	0x0008		/*  sleep which PCATCH set */
+#define	V_LOWER		0x0010		/*  lower level operation */
 
 /*
  * Flags to various vnode operations.
