@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxx,v 1.5 2005/12/11 12:17:00 christos Exp $
+#	$NetBSD: Makefile.bootxx,v 1.6 2006/11/21 18:31:44 dsl Exp $
 
 NOMAN=	# defined
 
@@ -43,9 +43,9 @@ LDADD=	${LIBSA}
 
 beforeinstall:
 	@len=`${SIZE} ${PROG} | awk 'NR==2 { print $$1+$$2 }'`;	\
-	 if [ $$len -gt 6656 ]; then				\
+	 if [ "$$len" -gt 6656 ]; then				\
 		${SIZE} ${PROG};					\
-		false;						\
+		exit 1;						\
 	 fi;							\
 	${OBJCOPY} -O binary ${PROG} ${PROG}XX
 	@${TOOL_CAT} ${PROG}XX /dev/zero | dd of=${PROG}X		\
