@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.9 2006/11/18 12:40:35 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.10 2006/11/21 23:11:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -207,6 +207,7 @@ int		puffs_gendotdent(struct dirent **, ino_t, int, size_t *);
 int		puffs_nextdent(struct dirent **, const char *, ino_t,
 			       uint8_t, size_t *);
 int		puffs_vtype2dt(enum vtype);
+enum vtype	puffs_mode2vt(mode_t);
 
 
 /*

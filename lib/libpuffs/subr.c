@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.8 2006/11/14 11:45:03 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.9 2006/11/21 23:11:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.8 2006/11/14 11:45:03 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.9 2006/11/21 23:11:09 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -202,4 +202,28 @@ puffs_vtype2dt(enum vtype vt)
 		return vdmap[vt];
 
 	return DT_UNKNOWN;
+}
+
+enum vtype
+puffs_mode2vt(mode_t mode)
+{
+
+	switch (mode & S_IFMT) {
+	case S_IFIFO:
+		return VFIFO;
+	case S_IFCHR:
+		return VCHR;
+	case S_IFDIR:
+		return VDIR;
+	case S_IFBLK:
+		return VBLK;
+	case S_IFREG:
+		return VREG;
+	case S_IFLNK:
+		return VLNK;
+	case S_IFSOCK:
+		return VSOCK;
+	default:
+		return VBAD; /* XXX: not really true, but ... */
+	}
 }
