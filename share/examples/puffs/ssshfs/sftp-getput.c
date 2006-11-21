@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-getput.c,v 1.1 2006/11/21 00:54:06 pooka Exp $	*/
+/*	$NetBSD: sftp-getput.c,v 1.2 2006/11/21 23:09:23 pooka Exp $	*/
 
 /*	NetBSD: sftp-client.c,v 1.26 2006/09/28 21:22:15 christos Exp */
 /* $OpenBSD: sftp-client.c,v 1.74 2006/08/03 03:34:42 deraadt Exp $ */
@@ -26,7 +26,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-getput.c,v 1.1 2006/11/21 00:54:06 pooka Exp $");
+__RCSID("$NetBSD: sftp-getput.c,v 1.2 2006/11/21 23:09:23 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -429,7 +429,7 @@ do_readfile(struct sftp_conn *conn, char *path, uint8_t *localbuf,
 }
 
 int
-do_writefile(struct sftp_conn *conn, const char *path, uint8_t *localbuf,
+do_writefile(struct sftp_conn *conn, char *path, uint8_t *localbuf,
     off_t putoff, size_t *putlen, int append)
 {
 	int status;
@@ -437,7 +437,8 @@ do_writefile(struct sftp_conn *conn, const char *path, uint8_t *localbuf,
 	u_int64_t offset;
 	char *handle, *data;
 	Buffer msg;
-	Attrib a;
+	Attrib a, savea;
+	Attrib *ap;
 	u_int32_t startid;
 	u_int32_t ackid;
 	struct outstanding_ack {
@@ -451,11 +452,20 @@ do_writefile(struct sftp_conn *conn, const char *path, uint8_t *localbuf,
 
 	TAILQ_INIT(&acks);
 
+	/* XXX: temporarily set file permission to allow writing */
+	ap = do_stat(conn, path, 1);
+	if (!ap)
+		return -1;
+	memcpy(&savea, ap, sizeof(Attrib));
+	savea.flags &= ~SSH2_FILEXFER_ATTR_SIZE;
+
 	memset(&a, 0, sizeof(a));
-	a.flags &= ~SSH2_FILEXFER_ATTR_SIZE;
-	a.flags &= ~SSH2_FILEXFER_ATTR_UIDGID;
-	a.flags &= ~SSH2_FILEXFER_ATTR_ACMODTIME;
-	a.perm &= 0777;
+	a.flags = SSH2_FILEXFER_ATTR_PERMISSIONS;
+	a.perm = 0777;
+	if (do_setstat(conn, path, &a)) {
+		printf("lossage\n");
+		return -1;
+	}
 
 	buffer_init(&msg);
 
@@ -473,6 +483,7 @@ do_writefile(struct sftp_conn *conn, const char *path, uint8_t *localbuf,
 
 	handle = get_handle(conn->fd_in, id, &handle_len);
 	if (handle == NULL) {
+		do_setstat(conn, path, &savea);
 		buffer_free(&msg);
 		return(-1);
 	}
@@ -559,6 +570,7 @@ do_writefile(struct sftp_conn *conn, const char *path, uint8_t *localbuf,
 	*putlen -= (offset - putoff);
 
 done:
+	do_setstat(conn, path, &savea);
 	xfree(handle);
 	buffer_free(&msg);
 	return(status);

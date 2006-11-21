@@ -1,4 +1,4 @@
-/*	$NetBSD: ssshfs.c,v 1.5 2006/11/21 15:35:58 pooka Exp $	*/
+/*	$NetBSD: ssshfs.c,v 1.6 2006/11/21 23:09:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -55,7 +55,7 @@ PUFFSVN_PROTOS(ssshfs)
 
 struct ssshnode {
 	struct ssshnode *dotdot;
-	int refcount;
+	int childcount;
 	ino_t myid;
 
 	char name[MAXPATHLEN+1];
@@ -66,16 +66,18 @@ struct ssshnode {
 
 	struct vattr va;
 };
+#define DCACHE_EXISTS	0x1
+#define DCACHE_CHANGED	0x2
 
 static struct sftp_conn *sftpc;
 int in, out;
-
-static char *basepath;
 
 static struct ssshnode rn;
 static ino_t nextid = 3;
 
 extern int sftp_main(int argc, char *argv[]);
+
+char *argpath; /* XXX: arg passing nightmare */
 
 /*
  * uberquickhack one-person uidgid-mangler in case the target
@@ -95,8 +97,8 @@ main(int argc, char *argv[])
 
 	setprogname(argv[0]);
 
-	if (argc < 4)
-		errx(1, "usage: %s mountpath hostpath user@host",getprogname());
+	if (argc < 3)
+		errx(1, "usage: %s user@host:path mountpath", getprogname());
 
 	memset(&pvfs, 0, sizeof(struct puffs_vfsops));
 	memset(&pvn, 0, sizeof(struct puffs_vnops));
@@ -121,14 +123,12 @@ main(int argc, char *argv[])
 	pvn.puffs_rename = ssshfs_rename;
 	pvn.puffs_reclaim = ssshfs_reclaim;
 
-	mountpath = argv[1];
-	basepath = estrdup(argv[2]);
-	argv += 2;
-	argc -= 2;
+	mountpath = argv[--argc]; /* urgh */
 
 	sftp_main(argc, argv);
 
-	if ((pu = puffs_mount(&pvfs, &pvn, mountpath, 0, "ssshfs", 0, 0))==NULL)
+	if ((pu = puffs_mount(&pvfs, &pvn, mountpath, 0, "ssshfs",
+	    PUFFSFLAG_NOCACHE, 0))==NULL)
 		err(1, "mount");
 
 	if (puffs_mainloop(pu) == -1)
@@ -186,24 +186,37 @@ vattrtoAttrib(const struct vattr *va)
 {
 	static Attrib a; /* XXX, but sftp isn't threadsafe either */
 
-	a.size = va->va_size;
+	memset(&a, 0, sizeof(a));
 
-	if (va->va_uid == uidmangle_from && mangle)
-		a.uid = uidmangle_to;
-	else
-		a.uid = va->va_uid;
+	if (va->va_size != PUFFS_VNOVAL) {
+		a.size = va->va_size;
+		a.flags |= SSH2_FILEXFER_ATTR_SIZE;
+	}
 
-	if (va->va_gid == gidmangle_from && mangle)
-		a.gid = gidmangle_to;
-	else
-		a.gid = va->va_gid;
+	if (va->va_uid != PUFFS_VNOVAL) {
+		if (va->va_uid == uidmangle_from && mangle)
+			a.uid = uidmangle_to;
+		else
+			a.uid = va->va_uid;
 
-	a.perm = va->va_mode;
-	a.atime = va->va_atime.tv_sec;
-	a.mtime = va->va_mtime.tv_sec;
+		if (va->va_gid == gidmangle_from && mangle)
+			a.gid = gidmangle_to;
+		else
+			a.gid = va->va_gid;
 
-	a.flags = SSH2_FILEXFER_ATTR_SIZE | SSH2_FILEXFER_ATTR_UIDGID
-	    | SSH2_FILEXFER_ATTR_PERMISSIONS | SSH2_FILEXFER_ATTR_ACMODTIME;
+		a.flags |= SSH2_FILEXFER_ATTR_UIDGID;
+	}
+
+	if (va->va_mode != PUFFS_VNOVAL) {
+		a.perm = va->va_mode & 0777;
+		a.flags |= SSH2_FILEXFER_ATTR_PERMISSIONS;
+	}
+
+	if (va->va_atime.tv_sec != PUFFS_VNOVAL) {
+		a.atime = va->va_atime.tv_sec;
+		a.mtime = va->va_mtime.tv_sec;
+		a.flags |= SSH2_FILEXFER_ATTR_ACMODTIME;
+	}
 
 	return &a;
 }
@@ -214,13 +227,19 @@ dircache(struct ssshnode *ssn)
 
 	assert(ssn->va.va_type == VDIR);
 
-	if (ssn->dcache)
+	if ((ssn->dcache & DCACHE_EXISTS)
+	    && ((ssn->dcache & DCACHE_CHANGED) == 0))
+		return 0;
+
+	if (ssn->dcache & DCACHE_EXISTS)
 		free_sftp_dirents(ssn->ents);
-	ssn->dcache = 0;
+	ssn->dcache &= ~DCACHE_EXISTS;
 
 	if (do_readdir(sftpc, ssn->name, &ssn->ents) != 0)
 		return 1;
-	ssn->dcache = 1;
+
+	ssn->dcache |= DCACHE_EXISTS;
+	ssn->dcache &= ~DCACHE_CHANGED;
 
 	return 0;
 }
@@ -239,10 +258,12 @@ makenewnode(struct ssshnode *ossn, const char *pcomp, const char *longname)
 
 	buildpath(newssn, ossn, pcomp);
 
-	ossn->refcount++;
-	newssn->refcount = 1;
+	ossn->childcount++;
+	newssn->childcount = 0;
 	newssn->va.va_fileid = newssn->myid;
 	newssn->va.va_blocksize = 512;
+	newssn->va.va_size = 0;
+	newssn->va.va_bytes = 0;
 
 	/* XXX: only way I know how (didn't look into the protocol, though) */
 	if (longname && (sscanf(longname, "%*s%d", &links) == 1))
@@ -257,21 +278,31 @@ int
 ssshfs_mount(struct puffs_usermount *pu, void **rootcookie)
 {
 
-	rn.refcount = 1;
-	rn.myid = 2;
-
-	memset(rn.name, 0, sizeof(rn.name));
-	strcpy(rn.name, basepath);
-	rn.namelen = strlen(rn.name);
-
-	rn.va.va_type = VDIR;
-	rn.va.va_mode = 0777;
-
 	sftpc = do_init(in, out, 1<<15, 1);
 	if (sftpc == NULL) {
 		printf("can't init sftpc\n");
 		return EBUSY;
 	}
+
+	rn.childcount = 1;
+	rn.myid = 2;
+
+	memset(rn.name, 0, sizeof(rn.name));
+
+	if (argpath)
+		strcpy(rn.name, argpath);
+	else {
+		char *dotpath;
+		dotpath = do_realpath(sftpc, ".");
+		if (!dotpath)
+			return ENOENT;
+		strcpy(rn.name, dotpath);
+	}
+	rn.namelen = strlen(rn.name);
+
+	rn.va.va_type = VDIR;
+	rn.va.va_mode = 0777;
+	rn.va.va_nlink = 1024; /* XXXX */
 
 	*rootcookie = &rn;
 
@@ -303,8 +334,7 @@ ssshfs_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
 		return 0;
 	}
 
-	if (!ssn->dcache)
-		dircache(ssn);
+	dircache(ssn);
 
 	for (i = 0, de = ssn->ents[0]; de; de = ssn->ents[i++])
 		if (strcmp(de->filename, pcn->pcn_name) == 0)
@@ -330,7 +360,6 @@ ssshfs_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
 	struct ssshnode *ssn = opc;
 
 	memcpy(va, &ssn->va, sizeof(struct vattr));
-	va->va_type = VREG;
 
 	return 0;
 }
@@ -344,10 +373,12 @@ ssshfs_setattr(struct puffs_usermount *pu, void *opc, const struct vattr *va,
 	int rv;
 
 	puffs_setvattr(&ssn->va, va);
-	a = vattrtoAttrib(&ssn->va);
+	a = vattrtoAttrib(va);
 
-	/* XXXXX */
-	return 0;
+	/* XXX: compensate for lack of granulatity of SSH2_FILEXFER */
+	if ((a->flags & SSH2_FILEXFER_ATTR_ACMODTIME)
+	    && (va->va_mtime.tv_sec == PUFFS_VNOVAL))
+		a->mtime = ssn->va.va_mtime.tv_sec;
 
 	rv = do_setstat(sftpc, ssn->name, a);
 	if (rv)
@@ -366,14 +397,14 @@ ssshfs_create(struct puffs_usermount *pu, void *opc, void **newnode,
 	int rv;
 
 	newssn = makenewnode(ssd, pcn->pcn_name, NULL);
-	memcpy(&newssn->va, va, sizeof(struct vattr));
+	puffs_setvattr(&newssn->va, va);
 	a = vattrtoAttrib(va);
 	if ((rv = do_creatfile(sftpc, newssn->name, a)) != 0) {
 		/* XXX: free newssn */
 		return EIO;
 	}
 
-	dircache(ssd);
+	ssd->dcache |= DCACHE_CHANGED;
 	ssd->va.va_nlink++;
 
 	*newnode = newssn;
@@ -387,8 +418,7 @@ ssshfs_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	struct ssshnode *ssn = opc;
 	struct SFTP_DIRENT *de;
 
-	if (!ssn->dcache)
-		dircache(ssn);
+	dircache(ssn);
 
 	for (de = ssn->ents[*readoff]; de; de = ssn->ents[++(*readoff)]) {
 		if (!puffs_nextdent(&dent, de->filename, nextid++,
@@ -404,17 +434,26 @@ ssshfs_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *pcr,
 	int ioflag)
 {
+	size_t x1, x2;
 	struct ssshnode *ssn = opc;
 	int rv;
 
-	if (offset + *resid > ssn->va.va_size)
-		*resid = ssn->va.va_size - offset;
-	if (*resid == 0)
+	if (offset > ssn->va.va_size)
 		return 0;
 
-	rv = do_readfile(sftpc, ssn->name, buf, offset, resid);
+	x1 = *resid;
+	if (offset + *resid > ssn->va.va_size)
+		x1 = ssn->va.va_size - offset;
+
+	if (x1 == 0)
+		return 0;
+
+	x2 = x1;
+	rv = do_readfile(sftpc, ssn->name, buf, offset, &x1);
 	if (rv)
 		return EIO;
+
+	*resid -= (x2 - x1);
 
 	return 0;
 }
@@ -441,8 +480,6 @@ ssshfs_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 
 	if (rv)
 		return EIO;
-
-	dircache(ssn->dotdot);
 
 	return 0;
 }
@@ -476,7 +513,7 @@ ssshfs_remove(struct puffs_usermount *pu, void *opc, void *targ,
 	if ((rv = do_rm(sftpc, ssn->name)) != 0)
 		return EIO;
 
-	dircache(ssd);
+	ssd->dcache |= DCACHE_CHANGED;
 	ssd->va.va_nlink--;
 
 	return 0;
@@ -491,16 +528,16 @@ ssshfs_mkdir(struct puffs_usermount *pu, void *opc, void **newnode,
 	int rv;
 
 	newssn = makenewnode(ssd, pcn->pcn_name, NULL);
-	memcpy(&newssn->va, va, sizeof(struct vattr));
+	newssn->va.va_nlink++;
+	puffs_setvattr(&newssn->va, va);
 	a = vattrtoAttrib(va);
 	if ((rv = do_mkdir(sftpc, newssn->name, a)) != 0) {
 		/* XXX: free newssn */
 		return EIO;
 	}
 
-	dircache(ssd);
+	ssd->dcache |= DCACHE_CHANGED;
 	ssd->va.va_nlink++;
-	newssn->va.va_nlink++;
 
 	*newnode = newssn;
 	return 0;
@@ -519,7 +556,7 @@ ssshfs_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 	if ((rv = do_rmdir(sftpc, ssn->name)) != 0)
 		return EIO;
 
-	dircache(ssd);
+	ssd->dcache |= DCACHE_CHANGED;
 	ssd->va.va_nlink--;
 
 	return 0;
@@ -544,12 +581,12 @@ ssshfs_symlink(struct puffs_usermount *pu, void *opc, void **newnode,
 	}
 
 	newssn = makenewnode(ssd, pcn->pcn_name, NULL);
-	memcpy(&newssn->va, va, sizeof(struct vattr));
+	puffs_setvattr(&newssn->va, va);
 	a = vattrtoAttrib(va);
 	if ((rv = do_symlink(sftpc, newssn->name, buf)) != 0)
 		return EIO;
 
-	dircache(ssd);
+	ssd->dcache |= DCACHE_CHANGED;
 	ssd->va.va_nlink++;
 
 	*newnode = newssn;
@@ -578,13 +615,13 @@ ssshfs_rename(struct puffs_usermount *pu, void *opc, void *src,
 
 	/* ok, commit */
 	ssn_file->namelen = strlen(newname);
-	ssd_src->refcount--;
+	ssd_src->childcount--;
 	ssd_src->va.va_nlink--;
-	ssd_dest->refcount++;
+	ssd_dest->childcount++;
 	ssd_dest->va.va_nlink++;
 
-	dircache(ssd_src);
-	dircache(ssd_dest);
+	ssd_src->dcache |= DCACHE_CHANGED;
+	ssd_dest->dcache |= DCACHE_CHANGED;
 
 	return 0;
 }
@@ -592,16 +629,18 @@ ssshfs_rename(struct puffs_usermount *pu, void *opc, void *src,
 int
 ssshfs_reclaim(struct puffs_usermount *pu, void *opc, pid_t pid)
 {
-	struct ssshnode *ssn = opc;
+	struct ssshnode *ssn, *ssn_next;
 
-	/* XXX */
-
-#if 0
-	if (--ssn->refcount == 0) {
-		free_sftp_dirents(ssn->ents);
-		free(ssn);
+	for (ssn = opc; ssn != &rn; ssn = ssn_next) {
+		if (ssn->childcount == 0) {
+			if (ssn->dcache & DCACHE_EXISTS)
+				free_sftp_dirents(ssn->ents);
+			ssn_next = ssn->dotdot;
+			ssn_next->childcount--;
+			free(ssn);
+		} else
+			break;
 	}
-#endif
 
 	return 0;
 }
