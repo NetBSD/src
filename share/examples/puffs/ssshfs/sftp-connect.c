@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-connect.c,v 1.1 2006/11/21 00:54:06 pooka Exp $	*/
+/*	$NetBSD: sftp-connect.c,v 1.2 2006/11/21 23:09:23 pooka Exp $	*/
 
 /*	NetBSD: sftp.c,v 1.21 2006/09/28 21:22:15 christos Exp */
 /* $OpenBSD: sftp.c,v 1.91 2006/08/03 03:34:42 deraadt Exp $ */
@@ -19,7 +19,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-connect.c,v 1.1 2006/11/21 00:54:06 pooka Exp $");
+__RCSID("$NetBSD: sftp-connect.c,v 1.2 2006/11/21 23:09:23 pooka Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
@@ -147,12 +147,13 @@ sftp_main(int argc, char **argv)
 	extern int in, out;
 	char *host, *userhost, *cp, *file2 = NULL;
 	int debug_level = 0, sshver = 2;
-	char *file1 = NULL, *sftp_server = NULL;
+	char *sftp_server = NULL;
 	char *ssh_program = _PATH_SSH_PROGRAM, *sftp_direct = NULL;
 	LogLevel ll = SYSLOG_LEVEL_INFO;
 	arglist args;
 	extern int optind;
 	extern char *optarg;
+	extern char *argpath;
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
@@ -255,7 +256,7 @@ sftp_main(int argc, char **argv)
 
 		if ((cp = colon(host)) != NULL) {
 			*cp++ = '\0';
-			file1 = cp;
+			argpath = cp;
 		}
 
 		host = cleanhostname(host);
