@@ -1,4 +1,4 @@
-/*	$NetBSD: ssshfs.c,v 1.4 2006/11/21 13:05:47 pooka Exp $	*/
+/*	$NetBSD: ssshfs.c,v 1.5 2006/11/21 15:35:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -249,7 +249,6 @@ makenewnode(struct ssshnode *ossn, const char *pcomp, const char *longname)
 		newssn->va.va_nlink = links;
 	else
 		newssn->va.va_nlink = 1;
-	ossn->va.va_nlink++;
 
 	return newssn;
 }
@@ -375,6 +374,7 @@ ssshfs_create(struct puffs_usermount *pu, void *opc, void **newnode,
 	}
 
 	dircache(ssd);
+	ssd->va.va_nlink++;
 
 	*newnode = newssn;
 	return 0;
@@ -392,7 +392,7 @@ ssshfs_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 
 	for (de = ssn->ents[*readoff]; de; de = ssn->ents[++(*readoff)]) {
 		if (!puffs_nextdent(&dent, de->filename, nextid++,
-		    VREG, reslen))
+		    puffs_vtype2dt(ssn->va.va_type), reslen))
 			return 0;
 	}
 
@@ -470,6 +470,9 @@ ssshfs_remove(struct puffs_usermount *pu, void *opc, void *targ,
 	struct ssshnode *ssn = targ, *ssd = opc;
 	int rv;
 
+	if (ssn->va.va_type == VDIR)
+		return EISDIR;
+
 	if ((rv = do_rm(sftpc, ssn->name)) != 0)
 		return EIO;
 
@@ -496,6 +499,8 @@ ssshfs_mkdir(struct puffs_usermount *pu, void *opc, void **newnode,
 	}
 
 	dircache(ssd);
+	ssd->va.va_nlink++;
+	newssn->va.va_nlink++;
 
 	*newnode = newssn;
 	return 0;
@@ -507,6 +512,9 @@ ssshfs_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 {
 	struct ssshnode *ssn = targ, *ssd = opc;
 	int rv;
+
+	if (ssn->va.va_type != VDIR)
+		return ENOTDIR;
 
 	if ((rv = do_rmdir(sftpc, ssn->name)) != 0)
 		return EIO;
@@ -542,6 +550,7 @@ ssshfs_symlink(struct puffs_usermount *pu, void *opc, void **newnode,
 		return EIO;
 
 	dircache(ssd);
+	ssd->va.va_nlink++;
 
 	*newnode = newssn;
 	return 0;
@@ -559,6 +568,10 @@ ssshfs_rename(struct puffs_usermount *pu, void *opc, void *src,
 	strcpy(newname, ssd_dest->name);
 	strcat(newname, "/");
 	strcat(newname, pcn_targ->pcn_name);
+
+	if (targ)
+		if (do_rm(sftpc, newname))
+			return EIO;
 
 	if (do_rename(sftpc, ssn_file->name, newname))
 		return EIO;
