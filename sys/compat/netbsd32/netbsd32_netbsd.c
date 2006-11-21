@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.114 2006/11/21 14:57:54 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.115 2006/11/21 18:50:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.114 2006/11/21 14:57:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.115 2006/11/21 18:50:01 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -111,6 +111,8 @@ void netbsd32_syscall_intern __P((struct proc *));
 #else
 void syscall __P((void));
 #endif
+
+#define LIMITCHECK(a, b) ((a) != RLIM_INFINITY && (a) > (b))
 
 #ifdef COMPAT_16
 extern char netbsd32_sigcode[], netbsd32_esigcode[];
@@ -1761,16 +1763,16 @@ netbsd32_setrlimit(l, v, retval)
 
 	switch (which) {
 	case RLIMIT_DATA:
-		if (alim.rlim_cur > MAXDSIZ32)
+		if (LIMITCHECK(alim.rlim_cur, MAXDSIZ32))
 			alim.rlim_cur = MAXDSIZ32;
-		if (alim.rlim_max > MAXDSIZ32)
+		if (LIMITCHECK(alim.rlim_max, MAXDSIZ32))
 			alim.rlim_max = MAXDSIZ32;
 		break;
 
 	case RLIMIT_STACK:
-		if (alim.rlim_cur > MAXSSIZ32)
+		if (LIMITCHECK(alim.rlim_cur, MAXSSIZ32))
 			alim.rlim_cur = MAXSSIZ32;
-		if (alim.rlim_max > MAXSSIZ32)
+		if (LIMITCHECK(alim.rlim_max, MAXSSIZ32))
 			alim.rlim_max = MAXSSIZ32;
 	default:
 		break;
@@ -2327,13 +2329,11 @@ netbsd32_adjust_limits(struct proc *p)
 		
 	for (i = 0; i < __arraycount(val); i++) {
 		val[i] = p->p_rlimit[lm[i].id];
-		if (val[i].rlim_cur != RLIM_INFINITY &&
-		    val[i].rlim_cur > lm[i].lim) {
+		if (LIMITCHECK(val[i].rlim_cur, lm[i].lim)) {
 			val[i].rlim_cur = lm[i].lim;
 			needcopy++;
 		}
-		if (val[i].rlim_max != RLIM_INFINITY &&
-		    val[i].rlim_max > lm[i].lim) {
+		if (LIMITCHECK(val[i].rlim_max, lm[i].lim)) {
 			val[i].rlim_max = lm[i].lim;
 			needcopy++;
 		}
