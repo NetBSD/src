@@ -1,8 +1,8 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.17 2006/09/30 10:56:31 elad Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.18 2006/11/21 00:22:04 elad Exp $	*/
 
 /*-
- * Copyright 2005 Elad Efrat <elad@bsd.org.il>
+ * Copyright 2005 Elad Efrat <elad@NetBSD.org>
  * Copyright 2005 Brett Lymn <blymn@netbsd.org> 
  *
  * All rights reserved.
