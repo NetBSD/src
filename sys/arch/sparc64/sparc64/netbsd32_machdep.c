@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.63 2006/10/22 10:50:44 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.64 2006/11/21 14:32:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.63 2006/10/22 10:50:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.64 2006/11/21 14:32:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -112,7 +112,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	/* Mark this as a 32-bit emulation */
 	p->p_flag |= P_32;
 
-	netbsd32_adjust_limits(p);
+	netbsd32_adjust_limits(l);
 
 	/* Setup the ev_out32 hook */
 #if NFIRM_EVENTS > 0

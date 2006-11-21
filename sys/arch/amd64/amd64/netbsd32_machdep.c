@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.28 2006/10/23 12:11:47 pooka Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.29 2006/11/21 14:32:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.28 2006/10/23 12:11:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.29 2006/11/21 14:32:27 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -125,7 +125,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	pmap_ldt_cleanup(p);
 #endif
 
-	netbsd32_adjust_limits(p);
+	netbsd32_adjust_limits(l);
 
 	l->l_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
@@ -134,7 +134,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
 
-	l->l_proc->p_flag |= P_32;
+	p->p_flag |= P_32;
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
