@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.6 2006/11/14 19:36:50 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.7 2006/11/21 01:51:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.6 2006/11/14 19:36:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.7 2006/11/21 01:51:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -664,6 +664,7 @@ static int
 puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
 	struct puffs_mount *pmp = FPTOPMP(fp);
+	int rv;
 
 	if (pmp == PMP_EMBRYO || pmp == PMP_DEAD) {
 		printf("puffs_fop_ioctl: puffs %p, not mounted\n", pmp);
@@ -672,28 +673,32 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 
 	switch (cmd) {
 	case PUFFSGETOP:
-		return puffsgetop(pmp, data, fp->f_flag & FNONBLOCK);
+		rv = puffsgetop(pmp, data, fp->f_flag & FNONBLOCK);
 		break;
 
 	case PUFFSPUTOP:
-		return puffsputop(pmp, data);
+		rv =  puffsputop(pmp, data);
 		break;
 
 	case PUFFSSIZEOP:
-		return puffssizeop(pmp, data);
+		rv = puffssizeop(pmp, data);
 		break;
 
 	case PUFFSSTARTOP:
-		return puffs_start2(pmp, data);
+		rv = puffs_start2(pmp, data);
+		break;
 
 	/* already done in sys_ioctl() */
 	case FIONBIO:
-		return 0;
+		rv = 0;
+		break;
 
 	default:
-		return EINVAL;
-
+		rv = EINVAL;
+		break;
 	}
+
+	return rv;
 }
 
 static void
