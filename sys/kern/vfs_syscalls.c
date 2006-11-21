@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.277 2006/11/17 17:05:18 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.278 2006/11/21 23:52:41 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.277 2006/11/17 17:05:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.278 2006/11/21 23:52:41 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.277 2006/11/17 17:05:18 hannken E
 #endif /* FILEASSOC */
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
+#include <sys/syslog.h>
 #endif /* NVERIEXEC > 0 */
 #include <sys/kauth.h>
 
@@ -552,8 +553,9 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 #if NVERIEXEC > 0
 	if (!doing_shutdown) {
 		if (veriexec_strict >= VERIEXEC_LOCKDOWN) {
-			printf("Veriexec: Lockdown mode, preventing unmount of"
-			    " \"%s\". (uid=%u)\n", mp->mnt_stat.f_mntonname,
+			log(LOG_ALERT, "Veriexec: Lockdown mode, "
+			    "preventing unmount of \"%s\". (uid=%u)\n",
+			     mp->mnt_stat.f_mntonname,
 			    kauth_cred_getuid(l->l_cred));
 			return (EPERM);
 		}
@@ -564,8 +566,8 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 			/* Check if we have fingerprints on mount. */
 			vte = fileassoc_tabledata_lookup(mp, veriexec_hook);
 			if ((vte != NULL) && (vte->vte_count > 0)) {
-				printf("Veriexec: IPS mode, preventing unmount"
-				    " of \"%s\" with monitored files. "
+				log(LOG_ALERT, "Veriexec: IPS mode, preventing" 
+				    " unmount of \"%s\" with monitored files. "
 				    "(uid=%u)\n", mp->mnt_stat.f_mntonname,
 				    kauth_cred_getuid(l->l_cred));
 				return (EPERM);
@@ -2094,7 +2096,7 @@ restart:
 	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
 	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
 #ifdef FILEASSOC
-	(void)fileassoc_file_delete(nd.ni_vp);
+	(void)fileassoc_file_delete(vp);
 #endif /* FILEASSOC */
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 	vn_finished_write(mp, 0);
