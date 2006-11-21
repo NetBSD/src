@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.4 2006/11/20 00:04:05 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.5 2006/11/21 23:19:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -31,14 +31,9 @@
 /*
  * sysctlfs: mount sysctls as a file system tree
  *
- * ro for now
- *
  * XXXX: this is a very quick hack fs.  it's not even complete,
  * please don't use it as an example.  actually, this code is so bad that
  * it's nearly a laugh, it's nearly a laugh, but it's really a cry
- *
- * more important XXX: need to implement features into puffs so that I
- * can say "please don't cache my data"
  *
  * and The Final Cut: find /sysctl doesn't traverse the directories
  * correctly, but find -H /sysctl does.  *dumbfounded*.
@@ -335,7 +330,7 @@ sysctlfs_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 		else
 			vt = VREG;
 		if (!puffs_nextdent(&dent, sn[i].sysctl_name, nextid++,
-		    vt, reslen))
+		    puffs_vtype2dt(vt), reslen))
 			return 0;
 	}
 
