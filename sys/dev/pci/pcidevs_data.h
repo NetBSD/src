@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.18 2006/09/11 21:31:30 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.19 2006/11/21 09:41:38 ghen Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.18 2006/09/11 21:30:21 tron Exp 
+ *	NetBSD
  */
 
 /*
@@ -7148,6 +7148,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Netmos",
 	    "Quad UART and 1284 Printer port",
+	},
+	{
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9855,
+	    0,
+	    "Netmos",
+	    "9855 Quad UART and 1284 Printer port",
 	},
 	{
 	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,
