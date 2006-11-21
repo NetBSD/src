@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.29 2006/11/21 14:32:27 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.30 2006/11/21 15:02:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.29 2006/11/21 14:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.30 2006/11/21 15:02:18 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -125,7 +125,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	pmap_ldt_cleanup(p);
 #endif
 
-	netbsd32_adjust_limits(l);
+	netbsd32_adjust_limits(p);
 
 	l->l_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
