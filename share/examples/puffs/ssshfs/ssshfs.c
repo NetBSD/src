@@ -1,4 +1,4 @@
-/*	$NetBSD: ssshfs.c,v 1.2 2006/11/21 02:31:48 pooka Exp $	*/
+/*	$NetBSD: ssshfs.c,v 1.3 2006/11/21 12:42:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -62,6 +62,7 @@ struct ssshnode {
 	size_t namelen;
 
 	SFTP_DIRENT **ents;
+	int dcache;
 
 	struct vattr va;
 };
@@ -211,8 +212,13 @@ dircache(struct ssshnode *ssn)
 
 	assert(ssn->va.va_type == VDIR);
 
+	if (ssn->dcache)
+		free_sftp_dirents(ssn->ents);
+	ssn->dcache = 0;
+
 	if (do_readdir(sftpc, ssn->name, &ssn->ents) != 0)
 		return 1;
+	ssn->dcache = 1;
 
 	return 0;
 }
@@ -294,7 +300,8 @@ ssshfs_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
 		return 0;
 	}
 
-	dircache(ssn);
+	if (!ssn->dcache)
+		dircache(ssn);
 
 	for (i = 0, de = ssn->ents[0]; de; de = ssn->ents[i++])
 		if (strcmp(de->filename, pcn->pcn_name) == 0)
@@ -376,7 +383,8 @@ ssshfs_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	struct ssshnode *ssn = opc;
 	struct SFTP_DIRENT *de;
 
-	dircache(ssn);
+	if (!ssn->dcache)
+		dircache(ssn);
 
 	for (de = ssn->ents[*readoff]; de; de = ssn->ents[++(*readoff)]) {
 		if (!puffs_nextdent(&dent, de->filename, nextid++,
