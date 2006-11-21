@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.92 2006/11/20 21:48:10 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.93 2006/11/21 09:43:08 ghen Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -992,4 +992,12 @@ sys/dev/ata/wd.c				1.334
 
 	Add another broken seagate drive.
 	[bouyer, ticket #10747]
+
+sys/dev/pci/pcidevs				1.849-1.850
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/pucdata.c				1.49
+
+	Add NetMos 9855 Quad UART and 1284 Printer port.
+	[bouyer, ticket #10749]
 
