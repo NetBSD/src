@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.112 2006/11/14 13:34:29 elad Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.113 2006/11/21 14:32:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.112 2006/11/14 13:34:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.113 2006/11/21 14:32:27 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2312,23 +2312,26 @@ netbsd32_ovadvise(l, v, retval)
 }
 
 void
-netbsd32_adjust_limits(struct proc *p)
+netbsd32_adjust_limits(struct lwp *l)
 {
-	rlim_t *valp;
+	struct proc *p = l->l_proc;
+	struct rlimit lim;
 
-	valp = &p->p_rlimit[RLIMIT_DATA].rlim_cur;
-	if (*valp != RLIM_INFINITY && *valp > MAXDSIZ32)
-		*valp = MAXDSIZ32;
-	valp = &p->p_rlimit[RLIMIT_DATA].rlim_max;
-	if (*valp != RLIM_INFINITY && *valp > MAXDSIZ32)
-		*valp = MAXDSIZ32;
+	lim.rlim_cur = p->p_rlimit[RLIMIT_DATA].rlim_cur;
+	if (lim.rlim_cur != RLIM_INFINITY && lim.rlim_cur > MAXDSIZ32)
+		lim.rlim_cur = MAXDSIZ32;
+	lim.rlim_max = p->p_rlimit[RLIMIT_DATA].rlim_max;
+	if (lim.rlim_max != RLIM_INFINITY && lim.rlim_max > MAXDSIZ32)
+		lim.rlim_max = MAXDSIZ32;
+	dosetrlimit(l, p, RLIMIT_DATA, &lim);
 
-	valp = &p->p_rlimit[RLIMIT_STACK].rlim_cur;
-	if (*valp != RLIM_INFINITY && *valp > MAXSSIZ32)
-		*valp = MAXSSIZ32;
-	valp = &p->p_rlimit[RLIMIT_STACK].rlim_max;
-	if (*valp != RLIM_INFINITY && *valp > MAXSSIZ32)
-		*valp = MAXSSIZ32;
+	lim.rlim_cur = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	if (lim.rlim_cur != RLIM_INFINITY && lim.rlim_cur > MAXSSIZ32)
+		lim.rlim_cur = MAXSSIZ32;
+	lim.rlim_max = p->p_rlimit[RLIMIT_STACK].rlim_max;
+	if (lim.rlim_max != RLIM_INFINITY && lim.rlim_max > MAXSSIZ32)
+		lim.rlim_max = MAXSSIZ32;
+	dosetrlimit(l, p, RLIMIT_STACK, &lim);
 }
 
 int
