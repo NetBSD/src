@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.7 2006/11/21 01:51:42 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.8 2006/11/21 01:53:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.7 2006/11/21 01:51:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.8 2006/11/21 01:53:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -631,8 +631,10 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 		wakeup(&mp->mnt_wcnt);
 	gone = mp->mnt_iflag & IMNT_GONE;
 	simple_unlock(&mp->mnt_slock);
-	if (gone)
+	if (gone) {
+		lockmgr(&syncer_lock, LK_RELEASE, NULL);
 		return 0;
+	}
 
 	/*
 	 * microscopic race condition here (although not with the current
