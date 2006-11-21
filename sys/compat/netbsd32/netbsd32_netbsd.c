@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.113 2006/11/21 14:32:27 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.114 2006/11/21 14:57:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.113 2006/11/21 14:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.114 2006/11/21 14:57:54 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2312,26 +2312,46 @@ netbsd32_ovadvise(l, v, retval)
 }
 
 void
-netbsd32_adjust_limits(struct lwp *l)
+netbsd32_adjust_limits(struct proc *p)
 {
-	struct proc *p = l->l_proc;
-	struct rlimit lim;
+	static const struct {
+		int id;
+		rlim_t lim;
+	} lm[] = {
+		{ RLIMIT_DATA,	MAXDSIZ32 },
+		{ RLIMIT_STACK, MAXSSIZ32 },
+	};
+	struct rlimit val[__arraycount(lm)];
+	size_t i;
+	int needcopy = 0;
+		
+	for (i = 0; i < __arraycount(val); i++) {
+		val[i] = p->p_rlimit[lm[i].id];
+		if (val[i].rlim_cur != RLIM_INFINITY &&
+		    val[i].rlim_cur > lm[i].lim) {
+			val[i].rlim_cur = lm[i].lim;
+			needcopy++;
+		}
+		if (val[i].rlim_max != RLIM_INFINITY &&
+		    val[i].rlim_max > lm[i].lim) {
+			val[i].rlim_max = lm[i].lim;
+			needcopy++;
+		}
+	}
 
-	lim.rlim_cur = p->p_rlimit[RLIMIT_DATA].rlim_cur;
-	if (lim.rlim_cur != RLIM_INFINITY && lim.rlim_cur > MAXDSIZ32)
-		lim.rlim_cur = MAXDSIZ32;
-	lim.rlim_max = p->p_rlimit[RLIMIT_DATA].rlim_max;
-	if (lim.rlim_max != RLIM_INFINITY && lim.rlim_max > MAXDSIZ32)
-		lim.rlim_max = MAXDSIZ32;
-	dosetrlimit(l, p, RLIMIT_DATA, &lim);
+	if (needcopy == 0)
+		return;
 
-	lim.rlim_cur = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-	if (lim.rlim_cur != RLIM_INFINITY && lim.rlim_cur > MAXSSIZ32)
-		lim.rlim_cur = MAXSSIZ32;
-	lim.rlim_max = p->p_rlimit[RLIMIT_STACK].rlim_max;
-	if (lim.rlim_max != RLIM_INFINITY && lim.rlim_max > MAXSSIZ32)
-		lim.rlim_max = MAXSSIZ32;
-	dosetrlimit(l, p, RLIMIT_STACK, &lim);
+	if (p->p_limit->p_refcnt > 1 &&
+	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
+		struct plimit *oldplim;
+		p->p_limit = limcopy(oldplim = p->p_limit);
+		limfree(oldplim);
+	}
+
+	for (i = 0; i < __arraycount(val); i++)
+		p->p_rlimit[lm[i].id] = val[i];
+
 }
 
 int
