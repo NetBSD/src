@@ -1,4 +1,4 @@
-/*	$NetBSD: ssshfs.c,v 1.1 2006/11/21 00:54:06 pooka Exp $	*/
+/*	$NetBSD: ssshfs.c,v 1.2 2006/11/21 02:31:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -569,10 +569,12 @@ ssshfs_reclaim(struct puffs_usermount *pu, void *opc, pid_t pid)
 
 	/* XXX */
 
+#if 0
 	if (--ssn->refcount == 0) {
 		free_sftp_dirents(ssn->ents);
 		free(ssn);
 	}
+#endif
 
 	return 0;
 }
