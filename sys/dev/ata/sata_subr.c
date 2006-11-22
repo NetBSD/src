@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.5 2006/11/22 17:51:02 bouyer Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.6 2006/11/22 22:14:23 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 
 #include <dev/ata/satareg.h>
 #include <dev/ata/satavar.h>
