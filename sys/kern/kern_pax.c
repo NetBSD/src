@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.6 2006/11/01 09:36:28 yamt Exp $ */
+/* $NetBSD: kern_pax.c,v 1.7 2006/11/22 00:41:38 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -38,8 +38,16 @@
 #include <sys/pax.h>
 #include <sys/sysctl.h>
 
+#ifdef PAX_MPROTECT
 static int pax_mprotect_enabled = 1;
 static int pax_mprotect_global = PAX_MPROTECT;
+
+specificdata_key_t pax_mprotect_key;
+#endif /* PAX_MPROTECT */
+
+/* PaX internal setspecific flags */
+#define	PAX_MPROTECT_EXPLICIT_ENABLE	(void *)0x01
+#define	PAX_MPROTECT_EXPLICIT_DISABLE	(void *)0x02
 
 SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 {
@@ -58,6 +66,7 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 		       NULL, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 
+#ifdef PAX_MPROTECT
 	sysctl_createv(clog, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "mprotect",
@@ -78,26 +87,47 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 				    "all processes."),
 		       NULL, 0, &pax_mprotect_global, 0,
 		       CTL_CREATE, CTL_EOL);
+#endif /* PAX_MPROTECT */
+}
+
+/*
+ * Initialize PaX.
+ */
+void
+pax_init(void)
+{
+#ifdef PAX_MPROTECT
+	proc_specific_key_create(&pax_mprotect_key, NULL);
+#endif /* PAX_MPROTECT */
 }
 
 void
-pax_mprotect_adjust(struct lwp *l, int f)
+pax_adjust(struct lwp *l, int f)
 {
-	if (!pax_mprotect_enabled)
-		return;
-
-	if (f & PF_PAXMPROTECT)
-		l->l_proc->p_flag |= P_PAXMPROTECT;
-	if (f & PF_PAXNOMPROTECT)
-		l->l_proc->p_flag |= P_PAXNOMPROTECT;
+#ifdef PAX_MPROTECT
+	if (pax_mprotect_enabled) {
+		if (f & PF_PAXMPROTECT)
+			proc_setspecific(l->l_proc, pax_mprotect_key,
+			    PAX_MPROTECT_EXPLICIT_ENABLE);
+		if (f & PF_PAXNOMPROTECT)
+			proc_setspecific(l->l_proc, pax_mprotect_key,
+			    PAX_MPROTECT_EXPLICIT_DISABLE);
+	}
+#endif /* PAX_MPROTECT */
 }
 
+#ifdef PAX_MPROTECT
 void
 pax_mprotect(struct lwp *l, vm_prot_t *prot, vm_prot_t *maxprot)
 {
-	if (!pax_mprotect_enabled ||
-	    (pax_mprotect_global && (l->l_proc->p_flag & P_PAXNOMPROTECT)) ||
-	    (!pax_mprotect_global && !(l->l_proc->p_flag & P_PAXMPROTECT)))
+	void *t;
+
+	if (!pax_mprotect_enabled)
+		return;
+
+	t = proc_getspecific(l->l_proc, pax_mprotect_key);
+	if ((pax_mprotect_global && t == PAX_MPROTECT_EXPLICIT_DISABLE) ||
+	    (!pax_mprotect_global && t != PAX_MPROTECT_EXPLICIT_ENABLE))
 		return;
 
 	if ((*prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) != VM_PROT_EXECUTE) {
@@ -108,3 +138,4 @@ pax_mprotect(struct lwp *l, vm_prot_t *prot, vm_prot_t *maxprot)
 		*maxprot &= ~VM_PROT_WRITE;
 	}
 }
+#endif /* PAX_MPROTECT */

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.117 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.118 2006/11/22 00:41:38 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.117 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.118 2006/11/22 00:41:38 elad Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -91,7 +91,7 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.117 2006/11/01 10:17:58 yamt Exp $"
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-#ifdef PAX_MPROTECT
+#if defined(PAX_MPROTECT)
 #include <sys/pax.h>
 #endif /* PAX_MPROTECT */
 
@@ -532,10 +532,7 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 			break;
 
 		case PT_NOTE:
-#ifdef PAX_MPROTECT
-			pax_mprotect_adjust(l, ph[i].p_flags);
 			break;
-#endif /* PAX_MPROTECT */
 
 		default:
 			break;
@@ -693,7 +690,11 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		case PT_INTERP:
 			/* Already did this one. */
 		case PT_DYNAMIC:
+			break;
 		case PT_NOTE:
+#if defined(PAX_MPROTECT)
+			pax_adjust(l, ph[i].p_flags);
+#endif /* PAX_MPROTECT */
 			break;
 
 		case PT_PHDR:
