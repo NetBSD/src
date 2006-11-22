@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2004/05/17 05:49:54 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2006/11/22 23:38:27 tnozaki Exp $
 
 NOLINT=		# defined
 NOPICINSTALL=	# defined
@@ -17,4 +17,4 @@ BASENAME=	${.CURDIR:T}
 LIB=		${BASENAME}
 SRCS?=		${SRCPRE:tl}${BASENAME:tl}.c
 
-.PATH:	${NETBSDSRCDIR}/lib/libc/citrus/modules
+.PATH:	${NETBSDSRCDIR}/lib/libc/citrus ${NETBSDSRCDIR}/lib/libc/citrus/modules

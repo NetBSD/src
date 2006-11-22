@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.379 2006/11/17 22:13:58 christos Exp $
+# $NetBSD: shl.mi,v 1.380 2006/11/22 23:38:26 tnozaki Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.149				base-sys-shlib
 ./lib/libcrypt.so.0.2				base-sys-shlib
@@ -19,6 +19,7 @@
 ./usr/lib/i18n/libEUC.so.4.4			base-i18n-shlib
 ./usr/lib/i18n/libEUCTW.so.4.4			base-i18n-shlib
 ./usr/lib/i18n/libGBK2K.so.4.4			base-i18n-shlib
+./usr/lib/i18n/libHZ.so.4.4			base-i18n-shlib
 ./usr/lib/i18n/libISO2022.so.4.4		base-i18n-shlib
 ./usr/lib/i18n/libJOHAB.so.4.4			base-i18n-shlib
 ./usr/lib/i18n/libMSKanji.so.4.4		base-i18n-shlib
@@ -27,6 +28,7 @@
 ./usr/lib/i18n/libUTF7.so.4.4			base-i18n-shlib
 ./usr/lib/i18n/libUTF8.so.4.4			base-i18n-shlib
 ./usr/lib/i18n/libVIQR.so.4.4			base-i18n-shlib
+./usr/lib/i18n/libZW.so.4.4			base-i18n-shlib
 ./usr/lib/i18n/libiconv_none.so.4.4		base-i18n-shlib
 ./usr/lib/i18n/libiconv_std.so.4.4		base-i18n-shlib
 ./usr/lib/i18n/libmapper_646.so.4.4		base-i18n-shlib

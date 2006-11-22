@@ -1,9 +1,10 @@
-# $NetBSD: esdb.alias.MISC.src,v 1.11 2006/11/13 15:16:30 tnozaki Exp $
+# $NetBSD: esdb.alias.MISC.src,v 1.12 2006/11/22 23:38:27 tnozaki Exp $
 
 c99				C99
 ctext				CTEXT
 gb18030				GB18030
 gbk				GBK
+HZ-GB2312			HZ
 java				JAVA
 CP1361				JOHAB
 csPTCP154			PTCP154
