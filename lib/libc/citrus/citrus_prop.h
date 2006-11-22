@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_prop.h,v 1.1 2006/11/22 23:38:27 tnozaki Exp $ */
+/* $NetBSD: citrus_prop.h,v 1.2 2006/11/22 23:44:17 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -31,11 +31,10 @@
 #define _CITRUS_PROP_H_
 
 typedef enum {
-	_CITRUS_PROP_SEC  = 0,
-	_CITRUS_PROP_BOOL = 1,
-	_CITRUS_PROP_STR  = 2,
-	_CITRUS_PROP_CHR  = 3,
-	_CITRUS_PROP_NUM  = 4,
+	_CITRUS_PROP_BOOL = 0,
+	_CITRUS_PROP_STR  = 1,
+	_CITRUS_PROP_CHR  = 2,
+	_CITRUS_PROP_NUM  = 3,
 } _citrus_prop_type_t;
 
 typedef struct _citrus_prop_hint_t _citrus_prop_hint_t;
