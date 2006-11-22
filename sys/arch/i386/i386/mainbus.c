@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.68 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.69 2006/11/22 12:31:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.68 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.69 2006/11/22 12:31:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,8 +169,7 @@ int mp_verbose = 0;
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(struct device *parent, struct cfdata *match,
-    void *aux)
+mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return 1;
@@ -180,8 +179,7 @@ mainbus_match(struct device *parent, struct cfdata *match,
  * Attach the mainbus.
  */
 void
-mainbus_attach( struct device *parent, struct device *self,
-    void *aux)
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	union mainbus_attach_args mba;
 #if NACPI > 0
