@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.17 2006/11/20 21:40:24 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.18 2006/11/22 22:24:56 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2134,4 +2134,9 @@ sbin/fsck_ffs/pass5.c				1.47
 	The progress bar will now travel from 0 to 20% during pass 1, from 20%
 	to 95% during pass 2, and from 95% to 100% during passes 3, 4, and 5.
 	[ghen, ticket #1590]
+
+gnu/dist/postfix/conf/master.cf			1.14
+
+	Postfix: change pickup(8) to fifo.
+	[tron, ticket #1592]
 
