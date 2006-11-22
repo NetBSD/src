@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2006/11/10 16:50:10 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2006/11/22 15:08:47 riz Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}paxctl
 HOST_SRCDIR=	usr.bin/paxctl
 
+.include "${.CURDIR}/../Makefile.disklabel"
 .include "${.CURDIR}/../Makefile.host"
