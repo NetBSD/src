@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.4 2006/10/31 02:06:30 elad Exp $
+.\" $NetBSD: security.8,v 1.5 2006/11/22 02:02:52 elad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 31, 2006
+.Dd November 22, 2006
 .Dt SECURITY 8
 .Os
 .Sh NAME
@@ -91,9 +91,9 @@ also requires enabling in
 veriexec=YES
 veriexec_strict=1 # IDS mode
 .Ed
-.Sh EXPLOITATION MITIGATION
+.Sh EXPLOIT MITIGATION
 .Nx
-incorporates some anti-exploitation features, mainly from the
+incorporates some exploit mitigation features, mainly from the
 .Em PaX
 project.
 .Ss PaX MPROTECT
@@ -124,6 +124,61 @@ globally:
 .Bd -literal -offset indent
 # sysctl -w security.pax.mprotect.global=1
 .Ed
+.Ss PaX Segvguard
+.Em PaX Segvguard
+monitors the number of segfaults in a program per-user, in an attempt to
+detect on-going exploitation attempts and possibly prevent them.
+One common attack
+.Em PaX Segvguard
+can help mitigate is when an attacker tries to brute-force a function
+return address, when wanting to perform a return-to-lib attack.
+.Pp
+.Em PaX Segvguard
+makes use of kernel memory, so use it wisely.
+While it provides rate-limiting protections, it works on a per-program
+basis for keeping its records, meaning that irresponsible use may result
+in keeping track of all segfaults in the system, easily wasting all kernel
+memory.
+.Pp
+For this reason, it is highly recommended to have
+.Em PaX Segvguard
+enabled explicitly only for network services etc.
+Enabling
+.Em PaX Segvguard
+explicitly works like this:
+.Bd -literal -offset indent
+# paxctl +G /usr/sbin/sshd
+.Ed
+.Pp
+However, a global knob is still provided, for use in strict environments
+with no local users (some network appliances, embedded devices, firewalls,
+etc.):
+.Bd -literal -offset indent
+# sysctl -w security.pax.segvguard.global=1
+.Ed
+.Pp
+.Em PaX Segvguard
+can be configured to work in your preferred way.
+For example, watching for 5 segfaults from the same user in a time-frame of
+60 seconds:
+.Bd -literal -offset indent
+# sysctl -w security.pax.segvguard.max_crashes=5
+# sysctl -w security.pax.segvguard.expiry_timeout=60
+.Ed
+.Pp
+The number of seconds a user will be suspended from running the culprit
+program is also configurable.
+For example, 10 minutes seem like a sane setting:
+.Bd -literal -offset indent
+# sysctl -w security.pax.segvguard.suspend_timeout=600
+.Ed
+.Pp
+Explicitly disabling
+.Em PaX Segvguard
+can be done like this:
+.Bd -literal -offset indent
+# paxctl +g /bin/ls
+.Ed
 .Ss GCC Stack Smashing Protection (SSP)
 Since
 .Nx 4.0 ,
@@ -143,6 +198,16 @@ or
 .Fl fstack-protector-all
 flags to
 .Xr gcc 1 .
+.Pp
+The system (userland, kernel) can be built with
+.Em SSP
+by using the
+.Dq USE_SSP
+flag in
+.Pa /etc/mk.conf:
+.Bd -literal -offset indent
+USE_SSP=yes
+.Ed
 .Sh INFORMATION FILTERING
 .Nx
 provides administrators with the ability to restrict information passed from

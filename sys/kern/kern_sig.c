@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.239 2006/11/08 20:18:33 drochner Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.240 2006/11/22 02:02:51 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.239 2006/11/08 20:18:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.240 2006/11/22 02:02:51 elad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.239 2006/11/08 20:18:33 drochner Exp 
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_pax.h"
 
 #define	SIGPROP		/* include signal properties table */
 #include <sys/param.h>
@@ -82,6 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.239 2006/11/08 20:18:33 drochner Exp 
 #include <machine/cpu.h>
 
 #include <sys/user.h>		/* for coredump */
+
+#ifdef PAX_SEGVGUARD
+#include <sys/pax.h>
+#endif /* PAX_SEGVGUARD */
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -2085,6 +2090,9 @@ sigexit(struct lwp *l, int signum)
 				    p->p_comm, uid, signum);
 		}
 
+#ifdef PAX_SEGVGUARD
+		pax_segvguard(l, p->p_textvp, p->p_comm, TRUE);
+#endif /* PAX_SEGVGUARD */
 	}
 
 	exit1(l, W_EXITCODE(0, exitsig));
