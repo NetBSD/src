@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.110 2006/03/21 17:48:10 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.111 2006/11/22 21:46:36 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.110 2006/03/21 17:48:10 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.111 2006/11/22 21:46:36 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -344,6 +344,9 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 			debug = 1;
 #endif
 		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
+	} else {
+		unsetenv("LD_DEBUG");
+		unsetenv("LD_LIBRARY_PATH");
 	}
 	_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
 	dbg(("dynamic linker is initialized, mapbase=%p, relocbase=%p",
@@ -411,13 +414,16 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	_rtld_sym_zero.st_info = ELF_ST_INFO(STB_GLOBAL, STT_NOTYPE);
 	_rtld_sym_zero.st_shndx = SHN_ABS;
 
-	/*
-	 * Pre-load user-specified objects after the main program but before
-	 * any shared object dependencies.
-	 */
-	dbg(("preloading objects"));
-	if (_rtld_trust && _rtld_preload(getenv("LD_PRELOAD")) == -1)
-		_rtld_die();
+	if (_rtld_trust) {
+		/*
+		 * Pre-load user-specified objects after the main program
+		 * but before any shared object dependencies.
+		 */
+		dbg(("preloading objects"));
+		if (_rtld_preload(getenv("LD_PRELOAD")) == -1)
+			_rtld_die();
+	} else
+		unsetenv("LD_PRELOAD");
 
 	dbg(("loading needed objects"));
 	if (_rtld_load_needed_objects(_rtld_objmain, RTLD_MAIN) == -1)
