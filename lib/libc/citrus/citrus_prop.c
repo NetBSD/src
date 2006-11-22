@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_prop.c,v 1.2 2006/11/22 23:44:17 tnozaki Exp $ */
+/* $NetBSD: citrus_prop.c,v 1.3 2006/11/22 23:47:21 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -26,6 +26,12 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: citrus_prop.c,v 1.3 2006/11/22 23:47:21 tnozaki Exp $");
+#endif /* LIBC_SCCS and not lint */
+
 #include <assert.h>
 #include <limits.h>
 #include <errno.h>
