@@ -1,3 +1,12 @@
+2006-11-21  Richard Guenther  <rguenther@suse.de>
+
+	Revert this change:
+	2006-10-13  Mark Mitchell  <mark@codesourcery.com>
+	PR c++/28506
+	* parser.c (function_declarator_p): New function.
+	(cp_parser_init_declarator): Use it.
+	(cp_parser_member_declaration): Likewise.
+
 2006-10-18  Mark Shinwell  <shinwell@codesourcery.com>
 
 	PR c++/26884
