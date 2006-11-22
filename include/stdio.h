@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.65 2006/10/27 20:03:21 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.66 2006/11/22 17:23:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -330,13 +330,6 @@ int	 vsnprintf(char * __restrict, size_t, const char * __restrict,
 	    _BSD_VA_LIST_)
 	    __attribute__((__format__(__printf__, 3, 0)));
 __END_DECLS
-#endif
-#ifdef _NETBSD_SOURCE
-int	 snprintf_ss(char * __restrict, size_t, const char * __restrict, ...)
-	    __attribute__((__format__(__printf__, 3, 4)));
-int	 vsnprintf_ss(char * __restrict, size_t, const char * __restrict,
-	    _BSD_VA_LIST_)
-	    __attribute__((__format__(__printf__, 3, 0)));
 #endif
 
 /*
