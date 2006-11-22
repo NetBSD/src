@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.339 2006/10/25 13:58:02 jmmv Exp $
+.\"	$NetBSD: options.4,v 1.340 2006/11/22 02:02:51 elad Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd October 25, 2006
+.Dd November 22, 2006
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2224,6 +2224,29 @@ using
 If 1, PaX MPROTECT will be enabled to all programs, and exemption can
 be done using
 .Xr paxctl 1 .
+.Pp
+See
+.Xr security 8
+for more details.
+.It Cd options PAX_SEGVGUARD=value
+Enables PaX Segvguard.
+.Pp
+The
+.Ar value
+is the default value for the
+.Em global
+knob, see
+.Xr sysctl 3 .
+If 0, PaX Segvguard will be enabled only if explicitly set on programs
+using
+.Xr paxctl 1 .
+If 1, PaX Segvguard will be enabled to all programs, and exemption can
+be done using
+.Xr paxctl 1 .
+.Pp
+See
+.Xr security 8
+for more details.
 .El
 .Ss amiga-specific Options
 .Bl -ohang

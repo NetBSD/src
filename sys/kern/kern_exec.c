@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.231 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.232 2006/11/22 02:02:51 elad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,12 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.231 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.232 2006/11/22 02:02:51 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
 #include "opt_compat_netbsd.h"
 #include "veriexec.h"
+#include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +73,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.231 2006/11/01 10:17:58 yamt Exp $")
 #ifdef SYSTRACE
 #include <sys/systrace.h>
 #endif /* SYSTRACE */
+
+#ifdef PAX_SEGVGUARD
+#include <sys/pax.h>
+#endif /* PAX_SEGVGUARD */
 
 #include <uvm/uvm_extern.h>
 
@@ -282,12 +287,16 @@ check_exec(struct lwp *l, struct exec_package *epp, int flag)
 	/* unlock vp, since we need it unlocked from here on out. */
 	VOP_UNLOCK(vp, 0);
 
-
 #if NVERIEXEC > 0
         if ((error = veriexec_verify(l, vp, epp->ep_ndp->ni_dirp, flag,
 	    NULL)) != 0)
                 goto bad2;
 #endif /* NVERIEXEC > 0 */
+
+#ifdef PAX_SEGVGUARD
+	if (pax_segvguard(l, vp, epp->ep_ndp->ni_dirp, FALSE))
+		return (EPERM);
+#endif /* PAX_SEGVGUARD */
 
 	/* now we have the file, get the exec header */
 	uvn_attach(vp, VM_PROT_READ);

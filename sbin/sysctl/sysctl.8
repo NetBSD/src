@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.154 2006/09/26 14:48:40 elad Exp $
+.\"	$NetBSD: sysctl.8,v 1.155 2006/11/22 02:02:52 elad Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd September 26, 2006
+.Dd November 22, 2006
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -555,6 +555,11 @@ privilege can change the value.
 .It security.curtain	integer	yes
 .It security.pax.mprotect.enabled	integer	yes
 .It security.pax.mprotect.global	integer	yes
+.It security.pax.segvguard.enabled	integer	yes
+.It security.pax.segvguard.global	integer	yes
+.It security.pax.segvguard.expiry_timeout	integer	yes
+.It security.pax.segvguard.suspend_timeout	integer	yes
+.It security.pax.segvguard.max_crashes	integer	yes
 .It user.bc_base_max	integer	no
 .It user.bc_dim_max	integer	no
 .It user.bc_scale_max	integer	no
