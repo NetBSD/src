@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.8 2006/11/20 16:51:44 elad Exp $ */
+/* $NetBSD: paxctl.c,v 1.9 2006/11/22 02:02:52 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: paxctl.c,v 1.8 2006/11/20 16:51:44 elad Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.9 2006/11/22 02:02:52 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,10 @@ static void pax_printflags(u_long);
 #define PF_PAXMPROTECT		0x08000000
 #define PF_PAXNOMPROTECT	0x04000000
 #endif
+#ifndef PF_PAXGUARD
+#define PF_PAXGUARD		0x02000000
+#define PF_PAXNOGUARD		0x01000000
+#endif
 #ifndef __arraycount
 #define __arraycount(a) (sizeof(a) / sizeof(a[0]))
 #endif
@@ -69,6 +73,8 @@ static const struct paxflag {
 	const char *name;
 	int bits;
 } flags[] = {
+	{ 'G', "Segvguard, explicit enable", PF_PAXGUARD },
+	{ 'g', "Segvguard, explicit disable", PF_PAXNOGUARD },
 	{ 'M', "mprotect(2) restrictions, explicit enable", PF_PAXMPROTECT },
 	{ 'm', "mprotect(2) restrictions, explicit disable", PF_PAXNOMPROTECT },
 };
@@ -76,7 +82,7 @@ static const struct paxflag {
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [ <-|+>m | <-|+>M ] <file>\n",
+	(void)fprintf(stderr, "Usage: %s [ <-|+><G|g|M|m> ] <file>\n",
 #if HAVE_NBTOOL_CONFIG_H
 	    "paxctl"
 #else
