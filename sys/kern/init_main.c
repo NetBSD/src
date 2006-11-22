@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.280 2006/11/11 02:12:53 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.281 2006/11/22 00:41:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.280 2006/11/11 02:12:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.281 2006/11/22 00:41:38 elad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.280 2006/11/11 02:12:53 christos Exp
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
 #include "opt_fileassoc.h"
+#include "opt_pax.h"
 
 #include "rnd.h"
 #include "veriexec.h"
@@ -154,6 +155,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.280 2006/11/11 02:12:53 christos Exp
 #ifdef FILEASSOC
 #include <sys/fileassoc.h>
 #endif /* FILEASSOC */
+
+#if defined(PAX_MPROTECT)
+#include <sys/pax.h>
+#endif /* PAX_MPROTECT */
 
 #include <ufs/ufs/quota.h>
 
@@ -384,6 +389,10 @@ main(void)
 	   */
 	veriexec_init_fp_ops();
 #endif /* NVERIEXEC > 0 */
+
+#if defined(PAX_MPROTECT)
+	pax_init();
+#endif /* PAX_MPROTECT */
 
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
