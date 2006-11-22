@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.49 2006/09/06 23:58:20 ad Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.50 2006/11/22 13:29:03 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.49 2006/09/06 23:58:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50 2006/11/22 13:29:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,14 +117,9 @@ db_addr_t	db_syscall_symbol_value = 0;
 db_addr_t	db_kdintr_symbol_value = 0;
 boolean_t	db_trace_symbols_found = FALSE;
 
-void db_find_trace_symbols(void);
-int db_numargs(int *);
-int db_nextframe(int **, int **, int **, db_addr_t *, int *, int,
-    void (*) (const char *, ...));
-db_sym_t db_frame_info(int *, db_addr_t, const char **, db_expr_t *, int *, int *);
-
-void
-db_find_trace_symbols()
+#if 0
+static void
+db_find_trace_symbols(void)
 {
 	db_expr_t	value;
 
@@ -136,11 +131,12 @@ db_find_trace_symbols()
 		db_syscall_symbol_value = (db_addr_t) value;
 	db_trace_symbols_found = TRUE;
 }
+#endif
 
 /*
  * Figure out how many arguments were passed into the frame at "fp".
  */
-int
+static int
 db_numargs(int *retaddrp)
 {
 	int	*argp;
@@ -163,6 +159,92 @@ db_numargs(int *retaddrp)
 	return (args);
 }
 
+static db_sym_t
+db_frame_info(int *frame, db_addr_t callpc, const char **namep, db_expr_t *offp,
+	      int *is_trap, int *nargp)
+{
+	db_expr_t	offset;
+	db_sym_t	sym;
+	int narg;
+	const char *name;
+
+	sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
+	db_symbol_values(sym, &name, NULL);
+	if (sym == (db_sym_t)0)
+		return (db_sym_t)0;
+
+	*is_trap = NONE;
+	narg = MAXNARG;
+
+	if (INKERNEL((int)frame) && name) {
+		/*
+		 * XXX traps should be based off of the Xtrap*
+		 * locations rather than on trap, since some traps
+		 * (e.g., npxdna) don't go through trap()
+		 */
+#ifdef __ELF__
+		if (!strcmp(name, "trap_tss")) {
+			*is_trap = TRAP_TSS;
+			narg = 0;
+		} else if (!strcmp(name, "trap")) {
+			*is_trap = TRAP;
+			narg = 0;
+		} else if (!strcmp(name, "syscall_plain") ||
+		           !strcmp(name, "syscall_fancy")) {
+			*is_trap = SYSCALL;
+			narg = 0;
+		} else if (name[0] == 'X') {
+			if (!strncmp(name, "Xintr", 5) ||
+			    !strncmp(name, "Xresume", 7) ||
+			    !strncmp(name, "Xstray", 6) ||
+			    !strncmp(name, "Xhold", 5) ||
+			    !strncmp(name, "Xrecurse", 8) ||
+			    !strcmp(name, "Xdoreti") ||
+			    !strncmp(name, "Xsoft", 5)) {
+				*is_trap = INTERRUPT;
+				narg = 0;
+			} else if (!strncmp(name, "Xtss_", 5)) {
+				*is_trap = INTERRUPT_TSS;
+				narg = 0;
+			}
+		}
+#else
+		if (!strcmp(name, "_trap_tss")) {
+			*is_trap = TRAP_TSS;
+			narg = 0;
+		} else if (!strcmp(name, "_trap")) {
+			*is_trap = TRAP;
+			narg = 0;
+		} else if (!strcmp(name, "_syscall")) {
+			*is_trap = SYSCALL;
+			narg = 0;
+		} else if (name[0] == '_' && name[1] == 'X') {
+			if (!strncmp(name, "_Xintr", 6) ||
+			    !strncmp(name, "_Xresume", 8) ||
+			    !strncmp(name, "_Xstray", 7) ||
+			    !strncmp(name, "_Xhold", 6) ||
+			    !strncmp(name, "_Xrecurse", 9) ||
+			    !strcmp(name, "_Xdoreti") ||
+			    !strncmp(name, "_Xsoft", 6)) {
+				*is_trap = INTERRUPT;
+				narg = 0;
+			} else if (!strncmp(name, "_Xtss_", 6)) {
+				*is_trap = INTERRUPT_TSS;
+				narg = 0;
+			}
+		}
+#endif /* __ELF__ */
+	}
+
+	if (offp != NULL)
+		*offp = offset;
+	if (nargp != NULL)
+		*nargp = narg;
+	if (namep != NULL)
+		*namep = name;
+	return sym;
+}
+
 /* 
  * Figure out the next frame up in the call stack.  
  * For trap(), we print the address of the faulting instruction and 
@@ -174,9 +256,14 @@ db_numargs(int *retaddrp)
  *   of the function that faulted, but that could get hairy.
  */
 
-int
-db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
-	     int *argp, int is_trap, void (*pr)(const char *, ...))
+static int
+db_nextframe(
+    int **nextframe,	/* IN/OUT */
+    int **retaddr,	/* IN/OUT */
+    int **arg0,		/* OUT */
+    db_addr_t *ip,	/* OUT */
+    int *argp,		/* IN */
+    int is_trap, void (*pr)(const char *, ...))
 {
 	struct trapframe *tf;
 	struct i386tss *tss;
@@ -269,93 +356,6 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 	}
 	return 1;
 }
-
-db_sym_t
-db_frame_info(int *frame, db_addr_t callpc, const char **namep, db_expr_t *offp,
-	      int *is_trap, int *nargp)
-{
-	db_expr_t	offset;
-	db_sym_t	sym;
-	int narg;
-	const char *name;
-
-	sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
-	db_symbol_values(sym, &name, NULL);
-	if (sym == (db_sym_t)0)
-		return (db_sym_t)0;
-
-	*is_trap = NONE;
-	narg = MAXNARG;
-
-	if (INKERNEL((int)frame) && name) {
-		/*
-		 * XXX traps should be based off of the Xtrap*
-		 * locations rather than on trap, since some traps
-		 * (e.g., npxdna) don't go through trap()
-		 */
-#ifdef __ELF__
-		if (!strcmp(name, "trap_tss")) {
-			*is_trap = TRAP_TSS;
-			narg = 0;
-		} else if (!strcmp(name, "trap")) {
-			*is_trap = TRAP;
-			narg = 0;
-		} else if (!strcmp(name, "syscall_plain") ||
-		           !strcmp(name, "syscall_fancy")) {
-			*is_trap = SYSCALL;
-			narg = 0;
-		} else if (name[0] == 'X') {
-			if (!strncmp(name, "Xintr", 5) ||
-			    !strncmp(name, "Xresume", 7) ||
-			    !strncmp(name, "Xstray", 6) ||
-			    !strncmp(name, "Xhold", 5) ||
-			    !strncmp(name, "Xrecurse", 8) ||
-			    !strcmp(name, "Xdoreti") ||
-			    !strncmp(name, "Xsoft", 5)) {
-				*is_trap = INTERRUPT;
-				narg = 0;
-			} else if (!strncmp(name, "Xtss_", 5)) {
-				*is_trap = INTERRUPT_TSS;
-				narg = 0;
-			}
-		}
-#else
-		if (!strcmp(name, "_trap_tss")) {
-			*is_trap = TRAP_TSS;
-			narg = 0;
-		} else if (!strcmp(name, "_trap")) {
-			*is_trap = TRAP;
-			narg = 0;
-		} else if (!strcmp(name, "_syscall")) {
-			*is_trap = SYSCALL;
-			narg = 0;
-		} else if (name[0] == '_' && name[1] == 'X') {
-			if (!strncmp(name, "_Xintr", 6) ||
-			    !strncmp(name, "_Xresume", 8) ||
-			    !strncmp(name, "_Xstray", 7) ||
-			    !strncmp(name, "_Xhold", 6) ||
-			    !strncmp(name, "_Xrecurse", 9) ||
-			    !strcmp(name, "_Xdoreti") ||
-			    !strncmp(name, "_Xsoft", 6)) {
-				*is_trap = INTERRUPT;
-				narg = 0;
-			} else if (!strncmp(name, "_Xtss_", 6)) {
-				*is_trap = INTERRUPT_TSS;
-				narg = 0;
-			}
-		}
-#endif /* __ELF__ */
-	}
-
-	if (offp != NULL)
-		*offp = offset;
-	if (nargp != NULL)
-		*nargp = narg;
-	if (namep != NULL)
-		*namep = name;
-	return sym;
-}
-
 
 void
 db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
