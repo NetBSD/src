@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.115 2006/11/16 01:33:26 christos Exp $ */
+/*	$NetBSD: ehci.c,v 1.116 2006/11/22 21:10:36 drochner Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.115 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.116 2006/11/22 21:10:36 drochner Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1399,7 +1399,7 @@ ehci_open(usbd_pipe_handle pipe)
 	naks = 8;		/* XXX */
 	sqh = ehci_alloc_sqh(sc);
 	if (sqh == NULL)
-		goto bad0;
+		return (USBD_NOMEM);
 	/* qh_link filled when the QH is added */
 	sqh->qh.qh_endp = htole32(
 		EHCI_QH_SET_ADDR(addr) |
@@ -1435,7 +1435,7 @@ ehci_open(usbd_pipe_handle pipe)
 			printf("ehci_open: usb_allocmem()=%d\n", err);
 #endif
 		if (err)
-			goto bad1;
+			goto bad;
 		pipe->methods = &ehci_device_ctrl_methods;
 		s = splusb();
 		ehci_add_qh(sqh, sc->sc_async_head);
@@ -1450,21 +1450,36 @@ ehci_open(usbd_pipe_handle pipe)
 	case UE_INTERRUPT:
 		pipe->methods = &ehci_device_intr_methods;
 		ival = pipe->interval;
-		if (ival == USBD_DEFAULT_INTERVAL)
-			ival = ed->bInterval;
-		return (ehci_device_setintr(sc, sqh, ival));
+		if (ival == USBD_DEFAULT_INTERVAL) {
+			if (speed == EHCI_QH_SPEED_HIGH) {
+				if (ed->bInterval > 16) {
+					/*
+					 * illegal with high-speed, but there
+					 * were documentation bugs in the spec,
+					 * so be generous
+					 */
+					ival = 256;
+				} else
+					ival = (1 << (ed->bInterval - 1)) / 8;
+			} else
+				ival = ed->bInterval;
+		}
+		err = ehci_device_setintr(sc, sqh, ival);
+		if (err)
+			goto bad;
+		break;
 	case UE_ISOCHRONOUS:
 		pipe->methods = &ehci_device_isoc_methods;
-		return (USBD_INVAL);
+		/* FALLTHROUGH */
 	default:
-		return (USBD_INVAL);
+		err = USBD_INVAL;
+		goto bad;
 	}
 	return (USBD_NORMAL_COMPLETION);
 
- bad1:
+ bad:
 	ehci_free_sqh(sc, sqh);
- bad0:
-	return (USBD_NOMEM);
+	return (err);
 }
 
 /*
