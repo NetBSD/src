@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.4 2006/11/22 17:49:12 bouyer Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.5 2006/11/22 17:51:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -117,23 +117,23 @@ sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
 		break;
 
 	case SStatus_DET_DEV_NE:
-		aprint_error("%s: port %d: device connected, but "
+		aprint_error("%s port %d: device connected, but "
 		    "communication not established\n",
 		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel);
 		break;
 
 	case SStatus_DET_OFFLINE:
-		aprint_error("%s: port %d: PHY offline\n",
+		aprint_error("%s port %d: PHY offline\n",
 		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel);
 		break;
 
 	case SStatus_DET_DEV:
-		aprint_normal("%s: port %d: device present, speed: %s\n",
+		aprint_normal("%s port %d: device present, speed: %s\n",
 		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
 		    sata_speed(sstatus));
 		break;
 	default:
-		aprint_error("%s: port %d: unknown SStatus: 0x%08x\n",
+		aprint_error("%s port %d: unknown SStatus: 0x%08x\n",
 		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
 		    sstatus);
 	}
