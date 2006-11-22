@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.29 2006/10/27 20:01:33 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.30 2006/11/22 17:23:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -210,10 +210,7 @@ void	openlog_r(const char *, int, int, struct syslog_data *);
 int	setlogmask_r(int, struct syslog_data *);
 void	syslog_r(int, struct syslog_data *, const char *, ...)
     __attribute__((__format__(__printf__,3,4)));
-void	syslog_ss(int, struct syslog_data *, const char *, ...)
-    __attribute__((__format__(__printf__,3,4)));
 void	vsyslog_r(int, struct syslog_data *, const char *, _BSD_VA_LIST_);
-void	vsyslog_ss(int, struct syslog_data *, const char *, _BSD_VA_LIST_);
 #endif
 __END_DECLS
 

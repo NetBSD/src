@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.38 2006/11/05 04:35:35 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.39 2006/11/22 17:23:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.38 2006/11/05 04:35:35 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.39 2006/11/22 17:23:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: syslog.c,v 1.38 2006/11/05 04:35:35 christos Exp $");
 #include <time.h>
 #include <unistd.h>
 #include "reentrant.h"
+#include "extern.h"
 
 #ifdef __weak_alias
 __weak_alias(closelog,_closelog)
