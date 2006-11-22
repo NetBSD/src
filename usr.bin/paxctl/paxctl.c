@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.9 2006/11/22 02:02:52 elad Exp $ */
+/* $NetBSD: paxctl.c,v 1.10 2006/11/22 15:08:47 riz Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -36,12 +36,16 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: paxctl.c,v 1.9 2006/11/22 02:02:52 elad Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.10 2006/11/22 15:08:47 riz Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include "../../sys/sys/exec_elf.h"
+#else
 #include <elf.h>
+#endif
 #include <stdio.h>
 #include <err.h>
 #include <fcntl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.88 2006/11/22 12:00:14 elad Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.89 2006/11/22 15:08:47 riz Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -61,7 +61,11 @@
 #define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 #endif
 
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/machine/elf_machdep.h>
+#else
 #include <machine/elf_machdep.h>
+#endif
 
 typedef	uint8_t  	Elf_Byte;
 
