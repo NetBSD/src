@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.2 2006/11/21 14:32:27 christos Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.3 2006/11/22 13:56:09 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.2 2006/11/21 14:32:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.3 2006/11/22 13:56:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	pmap_ldt_cleanup(p);
 #endif
 
-	netbsd32_adjust_limits(l);
+	netbsd32_adjust_limits(p);
 
 	l->l_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
