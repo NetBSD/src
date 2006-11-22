@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.3 2006/11/09 20:44:16 christos Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.4 2006/11/22 17:23:25 christos Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,8 +28,9 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.3 2006/11/09 20:44:16 christos Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.4 2006/11/22 17:23:25 christos Exp $");
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <ssp/ssp.h>
@@ -37,8 +38,7 @@ __RCSID("$NetBSD: stack_protector.c,v 1.3 2006/11/09 20:44:16 christos Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-
-extern int __sysctl(const int *, u_int, void *, size_t *, const void *, size_t);
+#include "extern.h"
 
 long __stack_chk_guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static void __guard_setup(void) __attribute__((__constructor__, __used__));
