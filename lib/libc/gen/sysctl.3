@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.187 2006/10/19 11:48:02 yamt Exp $
+.\"	$NetBSD: sysctl.3,v 1.188 2006/11/22 02:02:52 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd October 19, 2006
+.Dd November 22, 2006
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -2102,8 +2102,7 @@ These are
 .Xr mprotect 2
 restrictions to better enforce a W^X policy. The value of this
 knob must be non-zero for PaX MPROTECT to be enabled, even if a
-process is already marked with
-.Em P_PAXMPROTECT .
+program is set to explicit enable.
 .It Li security.pax.mprotect.global
 Specifies the default global policy for programs without an
 explicit enable/disable flag.
@@ -2114,6 +2113,34 @@ except those exempted with
 Otherwise, all programs will not get the PaX MPROTECT restrictions,
 except those specifically marked as such with
 .Xr paxctl 1 .
+.It Li security.pax.segvguard.enable
+Enable PaX Segvguard.
+.Pp
+Please see
+.Xr security 8
+for more information.
+.Pp
+PaX Segvguard can detect and prevent certain exploitation attempts, where
+an attacker may try for example to brute-force function return addresses
+of respawning daemons.
+.It Li security.pax.segvguard.global
+Specifies the default global policy for programs without an
+explicit enable/disable flag.
+.Pp
+When non-zero, all programs will get the PaX Segvguard,
+except those exempted with
+.Xr paxctl 1  .
+Otherwise, all programs will not get the PaX Segvguard restrictions,
+except those specifically marked as such with
+.Xr paxctl 1 .
+.It Li security.pax.segvguard.expiry_timeout
+If the max number was not reached within this timeout (in seconds), the entry
+will expire.
+.It Li security.pax.segvguard.suspend_timeout
+Number of seconds to suspend a user from running a faulting program when the
+limit was exceeded.
+.It Li security.pax.segvguard.max_crashes
+Max number of segfaults a program can receive before suspension.
 .El
 .El
 .Sh CTL_VENDOR

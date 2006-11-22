@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.118 2006/11/22 00:41:38 elad Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.119 2006/11/22 02:02:51 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.118 2006/11/22 00:41:38 elad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.119 2006/11/22 02:02:51 elad Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -91,9 +91,9 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.118 2006/11/22 00:41:38 elad Exp $"
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-#if defined(PAX_MPROTECT)
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
 #include <sys/pax.h>
-#endif /* PAX_MPROTECT */
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
 
 extern const struct emul emul_netbsd;
 
@@ -690,11 +690,10 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		case PT_INTERP:
 			/* Already did this one. */
 		case PT_DYNAMIC:
-			break;
 		case PT_NOTE:
-#if defined(PAX_MPROTECT)
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
 			pax_adjust(l, ph[i].p_flags);
-#endif /* PAX_MPROTECT */
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
 			break;
 
 		case PT_PHDR:
