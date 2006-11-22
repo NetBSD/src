@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.34 2006/11/19 00:11:30 elad Exp $
+.\" $NetBSD: kauth.9,v 1.35 2006/11/22 12:12:51 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 19, 2006
+.Dd November 22, 2006
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -446,11 +446,21 @@ In this scope,
 always indicates the machine for the request.
 Below is the list of available request hierarchy.
 .Bl -tag
+.It Dv KAUTH_MACHDEP_ALPHA
+The request is alpha specific.
+.Pp
+Available requests as
+.Ar req
+are:
+.Bl -tag
+.It Dv KAUTH_REQ_MACHDEP_ALPHA_UNMANAGEDMEM
+Access to unmanaged memory requested.
+.El
 .It Dv KAUTH_MACHDEP_X86
 The request is x86 specific.
 .Pp
 Available requests as
-.Ar arg1
+.Ar req
 are:
 .Bl -tag
 .It Dv KAUTH_REQ_MACHDEP_X86_IOPL
@@ -459,6 +469,8 @@ Checks if IOPL is allowed to be modified.
 Checks if IOPERM is allowed to be modified.
 .It Dv KAUTH_REQ_MACHDEP_X86_MTRR_SET
 Checks if the MTRR can be set.
+.It Dv KAUTH_REQ_MACHDEP_X86_UNMANAGEDMEM
+Access to unmanaged memory requested.
 .El
 .It Dv KAUTH_MACHDEP_X86_64
 The request is x86-64 specific.
