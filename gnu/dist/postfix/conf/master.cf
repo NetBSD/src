@@ -1,4 +1,4 @@
-#	$NetBSD: master.cf,v 1.10.2.2 2006/11/20 13:30:15 tron Exp $
+#	$NetBSD: master.cf,v 1.10.2.3 2006/11/22 22:23:51 ghen Exp $
 #
 #
 # Postfix master process configuration file.  For details on the format
@@ -18,7 +18,7 @@
 #  -o smtpd_sasl_auth_enable=yes
 #  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
 #628      inet  n       -       n       -       -       qmqpd
-pickup    unix  n       -       n       60      1       pickup
+pickup    fifo  n       -       n       60      1       pickup
 cleanup   unix  n       -       n       -       0       cleanup
 qmgr      unix  n       -       n       300     1       qmgr
 #qmgr     fifo  n       -       n       300     1       oqmgr
