@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.20 2006/11/19 00:11:30 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.21 2006/11/22 12:12:51 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -178,7 +178,8 @@ enum kauth_network_req {
  * Machdep scope - actions.
  */
 enum {
-	KAUTH_MACHDEP_X86=1,
+	KAUTH_MACHDEP_ALPHA=1,
+	KAUTH_MACHDEP_X86,
 	KAUTH_MACHDEP_X86_64
 };
 
@@ -186,10 +187,12 @@ enum {
  * Machdep scope - sub-actions.
  */
 enum kauth_machdep_req {
-	KAUTH_REQ_MACHDEP_X86_64_MTRR_GET=1, /* ridiculous. */
+	KAUTH_REQ_MACHDEP_ALPHA_UNMANAGEDMEM=1,
+	KAUTH_REQ_MACHDEP_X86_64_MTRR_GET, /* ridiculous. */
 	KAUTH_REQ_MACHDEP_X86_IOPERM,
 	KAUTH_REQ_MACHDEP_X86_IOPL,
-	KAUTH_REQ_MACHDEP_X86_MTRR_SET
+	KAUTH_REQ_MACHDEP_X86_MTRR_SET,
+	KAUTH_REQ_MACHDEP_X86_UNMANAGEDMEM
 };
 
 /*
