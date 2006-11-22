@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.978 2006/11/22 17:23:24 christos Exp $
+#	$NetBSD: mi,v 1.979 2006/11/22 23:38:26 tnozaki Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2009,6 +2009,7 @@
 ./usr/lib/i18n/libEUC.a				comp-i18n-lib
 ./usr/lib/i18n/libEUCTW.a			comp-i18n-lib
 ./usr/lib/i18n/libGBK2K.a			comp-i18n-lib
+./usr/lib/i18n/libHZ.a				comp-i18n-lib
 ./usr/lib/i18n/libISO2022.a			comp-i18n-lib
 ./usr/lib/i18n/libJOHAB.a			comp-i18n-lib
 ./usr/lib/i18n/libMSKanji.a			comp-i18n-lib
@@ -2017,6 +2018,7 @@
 ./usr/lib/i18n/libUTF7.a			comp-i18n-lib
 ./usr/lib/i18n/libUTF8.a			comp-i18n-lib
 ./usr/lib/i18n/libVIQR.a			comp-i18n-lib
+./usr/lib/i18n/libZW.a				comp-i18n-lib
 ./usr/lib/i18n/libiconv_none.a			comp-i18n-lib
 ./usr/lib/i18n/libiconv_std.a			comp-i18n-lib
 ./usr/lib/i18n/libmapper_646.a			comp-i18n-lib

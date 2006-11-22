@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2002/03/17 22:14:14 tshiozak Exp $
+# $NetBSD: Makefile,v 1.2 2006/11/22 23:38:27 tnozaki Exp $
 
-SRCPRE=citrus_
+SRCS=	citrus_big5.c citrus_prop.c
+
 .include <bsd.lib.mk>
