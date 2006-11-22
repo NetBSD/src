@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.3,v 1.23 2006/10/28 22:50:16 wiz Exp $
+.\"	$NetBSD: syslog.3,v 1.24 2006/11/22 17:23:25 christos Exp $
 .\"	$OpenBSD: syslog.3,v 1.25 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)syslog.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd October 27, 2006
+.Dd November 22, 2006
 .Dt SYSLOG 3
 .Os
 .Sh NAME
@@ -53,8 +53,8 @@
 .Fn syslog "int priority" "const char *message" "..."
 .Ft void
 .Fn syslog_r "int priority" "struct syslog_data *data" "const char *message" "..."
-.Ft void
-.Fn syslog_ss "int priority" "struct syslog_data *data" "const char *message" "..."
+.\" .Ft void
+.\" .Fn syslog_ss "int priority" "struct syslog_data *data" "const char *message" "..."
 .Ft void
 .Fn openlog "const char *ident" "int logopt" "int facility"
 .Ft void
@@ -72,8 +72,8 @@
 .Fn vsyslog "int priority" "const char *message" "va_list args"
 .Ft void
 .Fn vsyslog_r "int priority" "struct syslog_data *data" "const char *message" "va_list args"
-.Ft void
-.Fn vsyslog_ss "int priority" "struct syslog_data *data" "const char *message" "va_list args"
+.\" .Ft void
+.\" .Fn vsyslog_ss "int priority" "struct syslog_data *data" "const char *message" "va_list args"
 .Bd -literal
 
 struct syslog_data {
@@ -151,29 +151,29 @@ facility code
 .It Dv log_mask
 mask of priorities to be logged
 .El
-.Pp
-The
-.Fn syslog_ss
-is the async-signal-safe version of
-.Fn syslog_r
-and is also multithread-safe.
-It has the following limitations:
-.Bl -enum -offset indent
-.It
-The format string cannot contain multi-byte character sequences.
-.It
-Floating point formats are not supported and print
-.Dq UNK .
-.It
-The time of the event is not sent to
-.Xr syslogd 8 .
-.It
-The error string in the %m format is not printed symbolically but as
-.Dq Error %d .
-.El
-.Pp
-For more information about async-signal-safe functions and signal handlers, see
-.Xr signal 7 .
+.\" .Pp
+.\" The
+.\" .Fn syslog_ss
+.\" is the async-signal-safe version of
+.\" .Fn syslog_r
+.\" and is also multithread-safe.
+.\" It has the following limitations:
+.\" .Bl -enum -offset indent
+.\" .It
+.\" The format string cannot contain multi-byte character sequences.
+.\" .It
+.\" Floating point formats are not supported and print
+.\" .Dq UNK .
+.\" .It
+.\" The time of the event is not sent to
+.\" .Xr syslogd 8 .
+.\" .It
+.\" The error string in the %m format is not printed symbolically but as
+.\" .Dq Error %d .
+.\" .El
+.\" .Pp
+.\" For more information about async-signal-safe functions and signal handlers, see
+.\" .Xr signal 7 .
 .Pp
 The
 .Fn vsyslog
@@ -226,12 +226,12 @@ structure.
 It is a multithread-safe version of the
 .Fn vsyslog
 function described above.
-The
-.Fn vsyslog_ss
-is the async-signal-safe version of
-.Fn vsyslog_r ,
-is also multithread-safe, and has the same limitations as
-.Fn syslog_ss .
+.\" The
+.\" .Fn vsyslog_ss
+.\" is the async-signal-safe version of
+.\" .Fn vsyslog_r ,
+.\" is also multithread-safe, and has the same limitations as
+.\" .Fn syslog_ss .
 .Pp
 The
 .Fn openlog
