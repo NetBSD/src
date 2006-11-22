@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_prop.c,v 1.1 2006/11/22 23:38:27 tnozaki Exp $ */
+/* $NetBSD: citrus_prop.c,v 1.2 2006/11/22 23:44:17 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -305,7 +305,6 @@ typedef int (*_citrus_prop_read_type_t)(struct _memstream * __restrict,
 	_citrus_prop_object_t * __restrict);
 
 static const _citrus_prop_read_type_t readers[] = {
-	NULL, /*dummy*/
 	_citrus_prop_read_bool,
 	_citrus_prop_read_str,
 	_citrus_prop_read_character,
