@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_viqr.c,v 1.2 2006/11/14 02:55:34 dogcow Exp $ */
+/* $NetBSD: citrus_viqr.c,v 1.3 2006/11/22 20:11:03 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_viqr.c,v 1.2 2006/11/14 02:55:34 dogcow Exp $");
+__RCSID("$NetBSD: citrus_viqr.c,v 1.3 2006/11/22 20:11:03 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -515,8 +515,10 @@ _citrus_VIQR_encoding_module_init(_VIQREncodingInfo * __restrict ei,
 			ei->mb_cur_max = n;
 		errnum = mnemonic_append_child(ei->mroot,
 		    s, (wchar_t)i, ei->invalid);
-		if (errnum != 0)
+		if (errnum != 0) {
+			_citrus_VIQR_encoding_module_uninit(ei);
 			return errnum;
+		}
 	}
 	for (i = 0; i < mnemonic_ext_size; ++i) {
 		p = &mnemonic_ext[i];
@@ -527,8 +529,10 @@ _citrus_VIQR_encoding_module_init(_VIQREncodingInfo * __restrict ei,
 			ei->mb_cur_max = n;
 		errnum = mnemonic_append_child(ei->mroot,
 		    p->name, p->value, ei->invalid);
-		if (errnum != 0)
+		if (errnum != 0) {
+			_citrus_VIQR_encoding_module_uninit(ei);
 			return errnum;
+		}
 	}
 
 	return 0;
