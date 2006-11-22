@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.5 2006/11/22 02:02:52 elad Exp $
+.\" $NetBSD: security.8,v 1.6 2006/11/22 13:00:02 elad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -188,11 +188,9 @@ includes
 a set of compiler extensions to raise the bar on exploitation attempts via
 corruption of variables to affect program control flow or buffer overruns.
 .Pp
-The entire
-.Nx
-kernel and userland are built with these extensions, and it is recommended
-that you build additional software with them as well.
-To do so, you will need to provide one of the
+You are encouraged to use
+.Em SSP
+for software you build, by providing one of the
 .Fl fstack-protector
 or
 .Fl fstack-protector-all
