@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.36 2006/11/16 01:33:38 christos Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.37 2006/11/22 15:48:11 elad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.36 2006/11/16 01:33:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.37 2006/11/22 15:48:11 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,14 +173,6 @@ procfs_control(curl, l, op, sig)
 		    &curl->l_acflag)) != 0)
 			return (error);
 
-		/*
-		 *      (4) ...it's init, which controls the security level
-		 *          of the entire system, and the system was not
-		 *          compiled with permanently insecure mode turned
-		 *          on.
-		 */
-		if (p == initproc && securelevel > -1)
-			return (EPERM);
 		break;
 
 	/*
