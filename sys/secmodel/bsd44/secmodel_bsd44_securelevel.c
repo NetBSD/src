@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.14 2006/11/16 01:33:51 christos Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.15 2006/11/22 12:12:51 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.14 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.15 2006/11/22 12:12:51 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -310,11 +310,26 @@ secmodel_bsd44_securelevel_machdep_cb(kauth_cred_t cred,
 	req = (enum kauth_machdep_req)arg0;
 
         switch (action) {
+	case KAUTH_MACHDEP_ALPHA:
+		switch (req) {
+		case KAUTH_REQ_MACHDEP_ALPHA_UNMANAGEDMEM:
+			if (securelevel < 0)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
 	case KAUTH_MACHDEP_X86:
 		switch (req) {
 		case KAUTH_REQ_MACHDEP_X86_IOPL:
 		case KAUTH_REQ_MACHDEP_X86_IOPERM:
 			if (securelevel < 2)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+		case KAUTH_REQ_MACHDEP_X86_UNMANAGEDMEM:
+			if (securelevel < 0)
 				result = KAUTH_RESULT_ALLOW;
 			break;
 		default:
