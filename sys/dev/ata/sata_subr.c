@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.3 2006/11/20 23:42:21 bouyer Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.4 2006/11/22 17:49:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -137,5 +137,5 @@ sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
 		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
 		    sstatus);
 	}
-	return(sstatus);
+	return(sstatus & SStatus_DET_mask);
 }
