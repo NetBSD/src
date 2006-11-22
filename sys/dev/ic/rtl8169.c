@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.68 2006/11/18 17:39:44 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.69 2006/11/22 14:32:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1634,7 +1634,7 @@ re_start(struct ifnet *ifp)
 		for (seg = 0; seg < map->dm_nsegs;
 		    seg++, curdesc = RE_NEXT_TX_DESC(sc, curdesc)) {
 			d = &sc->re_ldata.re_tx_list[curdesc];
-#ifdef DIAGNISTIC
+#ifdef DIAGNOSTIC
 			RE_TXDESCSYNC(sc, curdesc,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			cmdstat = le32toh(d->re_cmdstat);
