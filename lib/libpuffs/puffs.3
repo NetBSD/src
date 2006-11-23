@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.4 2006/11/19 00:11:21 wiz Exp $
+.\"	$NetBSD: puffs.3,v 1.5 2006/11/23 17:45:11 pooka Exp $
 .\"
 .\" Copyright (c) 2006 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 13, 2006
+.Dd November 23, 2006
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -48,100 +48,115 @@
 .Ft int
 .Fn puffs_setblockingmode "struct puffs_usermount *pu" "int mode"
 .Ft int
-.Fn puffs_mount "struct puffs_usermount *pu" "void **rootcookie"
+.Fn puffs_vfs_mount "struct puffs_usermount *pu" "void **rootcookie"
 .Ft int
-.Fn puffs_start "struct puffs_usermount *pu"
+.Fn puffs_vfs_unmount "struct puffs_usermount *pu" "int flags" "pid_t pid"
 .Ft int
-.Fn puffs_unmount "struct puffs_usermount *pu" "int flags" "pid_t pid"
+.Fo puffs_vfs_statvfs
+.Fa "struct puffs_usermount *pu" "struct statvfs *sbp" "pid_t pid"
+.Fc
 .Ft int
-.Fn puffs_statvfs "struct puffs_usermount *pu" "struct statvfs *sbp" "pid_t pid"
-.Ft int
-.Fo puffs_sync
+.Fo puffs_vfs_sync
 .Fa "struct puffs_usermount *pu" "int waitfor" "const struct puffs_cred *cred"
 .Fa "pid_t pid"
 .Fc
 .Ft int
-.Fo puffs_lookup
+.Fo puffs_vn_lookup
 .Fa "struct puffs_usermount *pu" "void *opc" "void **newnode"
 .Fa "enum vtype *newtype" "voff_t *newsize" "dev_t *newrdev"
 .Fa "const struct puffs_cn *pcn"
 .Fc
 .Ft int
-.Fo puffs_getattr
+.Fo puffs_vn_getattr
 .Fa "struct puffs_usermount *pu" "void *opc" "struct vattr *va"
 .Fa "const struct puffs_cred *pcr" "pid_t pid"
 .Fc
 .Ft int
-.Fo puffs_setattr
+.Fo puffs_vn_setattr
 .Fa "struct puffs_usermount *pu" "void *opc" "const struct vattr *va"
 .Fa "const struct puffs_cred *pcr" "pid_t pid"
 .Fc
 .Ft int
-.Fo puffs_create
+.Fo puffs_vn_create
 .Fa "struct puffs_usermount *pu" "void *opc" "void **newnode"
 .Fa "const struct puffs_cn *pcn" "const struct vattr *va"
 .Fc
 .Ft int
-.Fo puffs_remove
+.Fo puffs_vn_remove
 .Fa "struct puffs_usermount *pu" "void *opc" "void *targ"
 .Fa "const struct puffs_cn *pcn"
 .Fc
 .Ft int
-.Fo puffs_mkdir
+.Fo puffs_vn_mkdir
 .Fa "struct puffs_usermount *pu" "void *opc" "void **newnode"
 .Fa "const struct puffs_cn *pcn" "const struct vattr *va"
 .Fc
 .Ft int
-.Fo puffs_rmdir
+.Fo puffs_vn_rmdir
 .Fa "struct puffs_usermount *pu" "void *opc" "void *targ"
 .Fa "const struct puffs_cn *pcn"
 .Fc
 .Ft int
-.Fo puffs_readdir
+.Fo puffs_vn_readdir
 .Fa "struct puffs_usermount *pu" "void *opc" "struct dirent *dent"
 .Fa "const struct puffs_cred *pcr" "off_t *readoff" "size_t *reslen"
 .Fc
 .Ft int
-.Fo puffs_rename
+.Fo puffs_vn_rename
 .Fa "struct puffs_usermount *pu" "void *opc" "void *src"
 .Fa "const struct puffs_cn *pcn_src" "void *targ_dir" "void *targ"
 .Fa "const struct puffs_cn *pcn_targ"
 .Fc
 .Ft int
-.Fo puffs_link
+.Fo puffs_vn_link
 .Fa "struct puffs_usermount *pu" "void *opc" "void *targ"
 .Fa "const struct puffs_cn *pcn"
 .Fc
 .Ft int
-.Fo puffs_symlink
+.Fo puffs_vn_symlink
 .Fa "struct puffs_usermount *pu" "void *opc" "void **newnode"
 .Fa "const struct puffs_cn *pcn_src" "const struct vattr *va"
 .Fa "const char *link_target"
 .Fc
 .Ft int
-.Fo puffs_readlink
+.Fo puffs_vn_readlink
 .Fa "struct puffs_usermount *pu" "void *opc" "const struct puffs_cred *cred"
 .Fa "char *link" "size_t *linklen"
 .Fc
 .Ft int
-.Fo puffs_mknod
+.Fo puffs_vn_mknod
 .Fa "struct puffs_usermount *pu" "void *opc" "void **newnode"
 .Fa "const struct puffs_cn *pcn" "const struct vattr *va"
 .Fc
 .Ft int
-.Fo puffs_read
+.Fo puffs_vn_open
+.Fa "struct puffs_usermount *pu" "void *opc" "int flags"
+.Fa "const struct puffs_cred *pcr" "pid_t pid"
+.Fc
+.Ft int
+.Fo puffs_vn_close
+.Fa "struct puffs_usermount *pu" "void *opc" "int flags"
+.Fa "const struct puffs_cred *pcr" "pid_t pid"
+.Fc
+.Ft int
+.Fo puffs_vn_access
+.Fa "struct puffs_usermount *pu" "void *opc" "int mode"
+.Fa "struct puffs_cred *pcr" "pid_t pid"
+.Fc
+.Ft int
+.Fo puffs_vn_read
 .Fa "struct puffs_usermount *pu" "void *opc" "uint8_t *buf"
 .Fa "off_t offset" "size_t *resid" "const struct puffs_cred *pcr" "int ioflag"
 .Fc
 .Ft int
-.Fo puffs_write
+.Fo puffs_vn_write
 .Fa "struct puffs_usermount *pu" "void *opc" "uint8_t *buf"
 .Fa "off_t offset" "size_t *resid" "const struct puffs_cred *pcr" "int ioflag"
 .Fc
 .Ft int
-.Fn puffs_reclaim "struct puffs_usermount *pu" "void *opc" "pid_t pid"
+.Fn puffs_vn_reclaim "struct puffs_usermount *pu" "void *opc" "pid_t pid"
 .Ft int
-.Fo puffs_inactive
+.Fo puffs_vn_inactive
 .Fa "struct puffs_usermount *pu" "void *opc" "pid_t pid" "int *refcount"
 .Fc
 .Sh DESCRIPTION
@@ -173,7 +188,7 @@ The latter is useful if implementing a single threaded server which
 requires an event loop.
 .Ss Library operation
 The file system is mounted using
-.Fn puffs_mount .
+.Fn puffs_vfs_mount .
 The callbacks are passed as the fields in the structures
 .Fa pvfs
 and
@@ -182,7 +197,7 @@ The ones intended to be used should initialized to point to the correct
 routines before calling and the rest should be set to zero.
 All of the VFS routines are mandatory, but all of the node operations
 with the exception of
-.Fn puffs_lookup
+.Fn puffs_vfs_lookup
 are optional.
 However, leaving operations blank will naturally have an effect on the
 features available from the file system implementation.
@@ -211,7 +226,7 @@ should always be consulted after the mount call returns.
 Supplying 0 as this parameter will make the kernel choose the longest
 possible buffer length.
 In case of success,
-.Fn puffs_mount
+.Fn puffs_vfs_mount
 returns the address of the user mount instance.
 Otherwise,
 .Dv NULL
@@ -255,7 +270,7 @@ A cookie should uniquely map to a file during its lifetime.
 If file instances are kept in memory, a simple strategy is to use
 the virtual address of the structure describing the file.
 The cookie can be recycled when
-.Fn puffs_reclaim
+.Fn puffs_vn_reclaim
 is called for a node.
 .Ss File system callbacks
 The callbacks do all the actual work in implementing the file system.
@@ -268,24 +283,19 @@ All callbacks can be prototyped with the file system name and operation
 name using the macro
 .Fn PUFFSVFS_PROTOS fsname .
 .Pp
-.Fn puffs_mount
+.Fn puffs_vfs_mount
 should handle all operations which are necessary to mount the file
 system, e.g. open backing storage, check magic numbers, open a network
 connection, authenticate, etc.
 It returns the file system root directory cookie in
 .Fa rootcookie .
 .Pp
-.Fn puffs_start
-can be used to extract the file system id from struct puffs_usermount
-.Va pu_fsidx .
-.Pp
-.Fn puffs_statvfs
+.Fn puffs_vfs_statvfs
 should fill in the following fields of
 .Fa sbp :
 .Bd -literal
  * unsigned long   f_bsize;         file system block size
  * unsigned long   f_frsize;        fundamental file system block size
- * unsigned long   f_iosize;        optimal file system block size
  * fsblkcnt_t      f_blocks;        number of blocks in file system,
  *                                            (in units of f_frsize)
  *
@@ -297,21 +307,19 @@ should fill in the following fields of
  * fsfilcnt_t      f_ffree;         free file nodes in file system
  * fsfilcnt_t      f_favail;        free file nodes avail to non-root
  * fsfilcnt_t      f_fresvd;        file nodes reserved for root
- *
- * fsid_t          f_fsidx;         NetBSD compatible fsid
 .Ed
 The process requiring this information is given by
 .Fa pid .
 .Pp
-The file system should be sychronized when
-.Fn puffs_sync
+The file system should be sychronized to storage when
+.Fn puffs_vfs_sync
 is called.
 The
 .Fa waitfor
 parameter should handled similarly as inside the kernel.
 .Pp
 The file system should be unmounted when
-.Fn puffs_unmount
+.Fn puffs_vfs_unmount
 is called.
 If the flag
 .Dv MNT_FORCE
@@ -336,7 +344,7 @@ using the macro
 .Fn PUFFSVN_PROTOS fsname .
 .Pp
 The
-.Fn puffs_lookup
+.Fn puffs_vn_lookup
 function is used to locate nodes.
 The implementation should match the name in
 .Fa pcn
@@ -363,11 +371,11 @@ Failure in these cases can be signalled by returning another appropriate
 error code, for example
 .Er EACCESS .
 .Pp
-.Fn puffs_getattr
+.Fn puffs_vn_getattr
 fills out a struct vattr pointed to by
 .Fa va .
 .Pp
-.Fn puffs_setattr
+.Fn puffs_vn_setattr
 sets the attributes in
 .Fa va .
 Instead of setting everything according to that file, only fields which
@@ -376,28 +384,28 @@ are not marked
 should be set.
 .Pp
 A file node is created in the directory specified by the cookie when
-.Fn puffs_create
+.Fn puffs_vn_create
 is called.
 The attributes are specified by
 .Fa va
 and the cookie for the newly created node should be returned in
 .Fa newnode .
 Similarly,
-.Fn puffs_mkdir
+.Fn puffs_vn_mkdir
 creates a directory.
 .Pp
-.Fn puffs_remove
+.Fn puffs_vn_remove
 removes the file
 .Fa targ
 from the directory indicated by the cookie.
 Similarly,
-.Fn puffs_rmdir
+.Fn puffs_vn_rmdir
 removes a directory.
 The name of the directory entry to remove is described by
 .Fa pcn .
 .Pp
 To read directory entries,
-.Fn puffs_readdir
+.Fn puffs_vn_readdir
 is called.
 It should store directories as struct dirents in the space pointed to by
 .Fa dent .
@@ -419,26 +427,26 @@ In case the directory was exhausted, the parameters should not be
 modified to signal end-of-directory.
 .Pp
 A node rename is done by calling
-.Fn puffs_rename .
+.Fn puffs_vn_rename .
 If the destination file cookie is non-null, it must be removed
 and the new entry overwritten atomically.
 The directory entry names to be used are described by the
 struct puffs_cn's (cf. create and remove).
 .Pp
 A hard link is created by
-.Fn puffs_link .
+.Fn puffs_vn_link .
 In practice this means adding a directory entry described by
 .Fa pcn
 to the cookied directory and the entry pointing to the target node.
 .Pp
 A symbolic link in turn is created by
-.Fn puffs_symlink .
+.Fn puffs_vn_symlink .
 It is similar to creating a regular file, except that
 .Fa link_target
 specifies the target of the link which should be set for the link.
 .Pp
 To read the target of a symbolic link,
-.Fa puffs_readlink
+.Fa puffs_vn_readlink
 is called.
 The path in the link target should be copied to
 .Fa link
@@ -446,12 +454,29 @@ and the length without the terminating nul set in
 .Fa linklen .
 .Pp
 A device node is created using
-.Fn puffs_mknod .
+.Fn puffs_vn_mknod .
 The only difference to creating a normal file is that the attribute
 struct contains the device identifier in
 .Fa va-\*[Gt]va_rdev .
 .Pp
-.Fn puffs_read
+Files are opened with a call to
+.Fn puffs_vn_open .
+Most of the time this can be left unimplemented, unless special
+resource allocation is required.
+.Pp
+.Fn puffs_vn_close
+releases all the resources allocated by
+.Fn puffs_vn_open .
+.Pp
+To check if access of type
+.Va mode
+to a file is allowed,
+.Fn puffs_vn_access
+is called.
+This controls file access, not e.g.
+.Fn puffs_vn_open .
+.Pp
+.Fn puffs_vn_read
 reads the contents of a file.
 It will gather the data from
 .Fa offset
@@ -467,7 +492,7 @@ The parameter
 should be set to indicate the amount of request NOT completed.
 In the normal case this should be 0.
 .Pp
-.Fn puffs_write
+.Fn puffs_vn_write
 writes data to a file at
 .Fa offset
 extending the file if necessary.
@@ -479,17 +504,17 @@ In case the flag
 .Dv PUFFS_IO_APPEND
 is specified, the data should be appended to the end of the file.
 .Pp
-.Fn puffs_reclaim
+.Fn puffs_vn_reclaim
 signals that the cookie will no longer be referenced without a further
 call to
-.Fn puffs_lookup .
+.Fn puffs_vn_lookup .
 This information can be used to free resources and specifically release
 a file for which no directory entries remain.
 .Pp
-.Fn puffs_inactive
+.Fn puffs_vn_inactive
 signals that the kernel has released its last reference to the node.
 However, the cookie must still remain valid until
-.Fn puffs_reclaim
+.Fn puffs_vn_reclaim
 is called.
 The file system should return its internal reference count on the file
 (usually number of links to the file) in
