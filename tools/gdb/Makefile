@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/07/21 11:23:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2006/11/23 22:41:10 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ INSTALL_TARGET=	install-gdb
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
-CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
+CCADDFLAGS=	-isystem ${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-gdb
@@ -33,7 +33,7 @@ native-gdb: .native/.configure_done
 			CC_FOR_BUILD=${HOST_CC:Q} \
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q} \
-			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
+			CPP=${CPP:Q}' '-isystem' '${DESTDIR}/usr/include \
 			CFLAGS= CPPFLAGS= CXXFLAGS= LDFLAGS= \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
 			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
