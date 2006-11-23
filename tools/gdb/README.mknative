@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.2 2006/10/19 08:18:45 mrg Exp $
+$NetBSD: README.mknative,v 1.3 2006/11/23 23:31:00 uwe Exp $
 
 This file describes how to use the cross-compiler to generate the
 native files for GDB on a target platform.
@@ -26,7 +26,8 @@ work.
 
 4. In src/gnu/lib/crtstuff4 do "nbmake-MACHINE depend all install"
 
-5. In src/lib/csu, src/gnu/lib/libgcc4, and src/lib, do "nbmake-MACHINE all install".
+5. In src/lib/csu, src/gnu/lib/libgcc4, and src/lib, do
+   "nbmake-MACHINE all install".
 
 6. In src/tools/gdb, do "nbmake-MACHINE obj native-gdb".
 
