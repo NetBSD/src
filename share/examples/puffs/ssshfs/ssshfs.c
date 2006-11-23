@@ -1,4 +1,4 @@
-/*	$NetBSD: ssshfs.c,v 1.6 2006/11/21 23:09:23 pooka Exp $	*/
+/*	$NetBSD: ssshfs.c,v 1.7 2006/11/23 01:51:15 hubertf Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -491,6 +491,9 @@ ssshfs_readlink(struct puffs_usermount *pu, void *opc,
 	struct ssshnode *ssn = opc;
 	char *res;
 
+	if (sftp_proto_version(sftpc) < 3)
+		return EOPNOTSUPP;
+
 	res = do_readlink(sftpc, ssn->name);
 	if (!res)
 		return EIO;
@@ -571,6 +574,9 @@ ssshfs_symlink(struct puffs_usermount *pu, void *opc, void **newnode,
 	char buf[MAXPATHLEN+1];
 	Attrib *a;
 	int rv;
+
+	if (sftp_proto_version(sftpc) < 3)
+		return EOPNOTSUPP;
 
 	if (*link_target == '/') {
 		strcpy(buf, link_target);
