@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.50 2006/07/28 17:34:13 dyoung Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.51 2006/11/23 04:07:07 rpaulo Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.50 2006/07/28 17:34:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.51 2006/11/23 04:07:07 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.50 2006/07/28 17:34:13 dyoung Exp $");
 #include <net/if_gif.h>
 
 #include "gif.h"
-#include "bridge.h"
-#include <net/if_ether.h>
 
 #include <machine/stdarg.h>
 
@@ -97,9 +95,6 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
 	struct sockaddr_in *sin_dst = (struct sockaddr_in *)sc->gif_pdst;
 	struct ip iphdr;	/* capsule IP header, host byte ordered */
-#if NBRIDGE > 0
-	struct etherip_header eiphdr;
-#endif
 	int proto, error;
 	u_int8_t tos;
 
@@ -146,24 +141,6 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	case AF_ISO:
 		proto = IPPROTO_EON;
 		tos = 0;
-		break;
-#endif
-#if NBRIDGE > 0
-	case AF_LINK:
-		proto = IPPROTO_ETHERIP;
-		eiphdr.eip_ver = ETHERIP_VERSION & ETHERIP_VER_VERS_MASK;
-		eiphdr.eip_pad = 0;
-		/* prepend Ethernet-in-IP header */
-		M_PREPEND(m, sizeof(struct etherip_header), M_DONTWAIT);
-		if (m == NULL)
-			return ENOBUFS;
-		if (M_UNWRITABLE(m, sizeof(struct etherip_header))) {
-			m = m_pullup(m, sizeof(struct etherip_header));
-			if (m == NULL)
-				return ENOBUFS;
-		}
-		bcopy(&eiphdr, mtod(m, struct etherip_header *),
-		    sizeof(struct etherip_header));
 		break;
 #endif
 	default:
@@ -313,11 +290,6 @@ in_gif_input(struct mbuf *m, ...)
 #ifdef ISO
 	case IPPROTO_EON:
 		af = AF_ISO;
-		break;
-#endif
-#if NBRIDGE > 0
-	case IPPROTO_ETHERIP:
-		af = AF_LINK;
 		break;
 #endif
 	default:

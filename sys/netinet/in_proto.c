@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.78 2006/11/13 05:13:42 dyoung Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.79 2006/11/23 04:07:07 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.78 2006/11/13 05:13:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.79 2006/11/23 04:07:07 rpaulo Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.78 2006/11/13 05:13:42 dyoung Exp $")
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <netinet/ip_encap.h>
+
 /*
  * TCP/IP protocol family: IP, ICMP, UDP, TCP.
  */
@@ -147,7 +148,10 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.78 2006/11/13 05:13:42 dyoung Exp $")
 #include <netinet/ip_carp.h>
 #endif
 
-#include "bridge.h"
+#include "etherip.h"
+#if NETHERIP > 0
+#include <netinet/ip_etherip.h>
+#endif
 
 DOMAIN_DEFINE(inetdomain);	/* forward declare and add to link set */
 
@@ -226,11 +230,11 @@ const struct protosw inetsw[] = {
   encap_init,	0,		0,		0,
 },
 #endif /* INET6 */
-#if NBRIDGE > 0
+#if NETHERIP > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_ETHERIP,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  encap4_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
+  ip_etherip_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
-  encap_init,		0,		0,		0,
+  0,		0,		0,		0,
 },
 #endif
 #if NCARP > 0

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.979 2006/11/22 23:38:26 tnozaki Exp $
+#	$NetBSD: mi,v 1.980 2006/11/23 04:07:07 rpaulo Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1285,6 +1285,7 @@
 ./usr/include/net/if_bridgevar.h		comp-c-include
 ./usr/include/net/if_dl.h			comp-c-include
 ./usr/include/net/if_ether.h			comp-c-include
+./usr/include/net/if_etherip.h			comp-c-include
 ./usr/include/net/if_fddi.h			comp-c-include
 ./usr/include/net/if_gif.h			comp-c-include
 ./usr/include/net/if_gre.h			comp-c-include
