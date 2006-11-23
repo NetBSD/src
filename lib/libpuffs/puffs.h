@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.10 2006/11/21 23:11:09 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.11 2006/11/23 16:44:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -251,9 +251,9 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 	int fsname##_open(struct puffs_usermount *,			\
 	    void *, int, const struct puffs_cred *, pid_t);		\
 	int fsname##_close(struct puffs_usermount *,			\
-	    void *, int, struct puffs_cred *, pid_t);			\
+	    void *, int, const struct puffs_cred *, pid_t);		\
 	int fsname##_access(struct puffs_usermount *,			\
-	    void *, int, struct puffs_cred *, pid_t);			\
+	    void *, int, const struct puffs_cred *, pid_t);		\
 	int fsname##_getattr(struct puffs_usermount *,			\
 	    void *, struct vattr *, const struct puffs_cred *, pid_t);	\
 	int fsname##_setattr(struct puffs_usermount *,			\
