@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.90 2006/11/01 17:10:36 skrll Exp $
+# $NetBSD: HACKS,v 1.91 2006/11/23 13:24:28 martin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -219,6 +219,7 @@ who	mrg
 file	bin/ed/Makefile			: 1.33
 file	bin/systrace/Makefile		: 1.12
 file	distrib/utils/sysinst/Makefile.inc : 1.44
+file	distrib/utils/x_dhclient/Makefile : 1.15
 file	games/bcd/Makefile		: 1.5
 file	games/dab/Makefile		: 1.5
 file	games/larn/Makefile		: 1.17
