@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.269 2006/09/18 05:15:35 dbj Exp $
+#	$NetBSD: bsd.lib.mk,v 1.270 2006/11/23 12:05:26 martin Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -187,14 +187,14 @@ FFLAGS+=	${FOPTS}
 .c.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
-.if !defined(COPTS) || empty(COPTS:M*-g*)
+.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
 	${OBJCOPY} -x ${.TARGET}
 .endif
 
 .c.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
-.if !defined(COPTS) || empty(COPTS:M*-g*)
+.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
 	${OBJCOPY} -X ${.TARGET}
 .endif
 
@@ -205,21 +205,21 @@ FFLAGS+=	${FOPTS}
 .c.so:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
-.if !defined(COPTS) || empty(COPTS:M*-g*)
+.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
 	${OBJCOPY} -x ${.TARGET}
 .endif
 
 .cc.o .cpp.o .cxx.o .C.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
-.if !defined(COPTS) || empty(COPTS:M*-g*)
+.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
 	${OBJCOPY} -x ${.TARGET}
 .endif
 
 .cc.po .cpp.po .cxx.po .C.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
-.if !defined(COPTS) || empty(COPTS:M*-g*)
+.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
 	${OBJCOPY} -X ${.TARGET}
 .endif
 
@@ -230,7 +230,7 @@ FFLAGS+=	${FOPTS}
 .cc.so .cpp.so .cxx.so .C.so:
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
-.if !defined(COPTS) || empty(COPTS:M*-g*)
+.if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
 	${OBJCOPY} -x ${.TARGET}
 .endif
 
