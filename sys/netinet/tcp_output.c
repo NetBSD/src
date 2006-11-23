@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.151 2006/11/23 19:41:58 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.152 2006/11/23 23:12:59 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.151 2006/11/23 19:41:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.152 2006/11/23 23:12:59 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -910,8 +910,10 @@ again:
 			 * sure that we send equal size transfers down the
 			 * stack (rather than big-small-big-small-...).
 			 */
+#ifdef INET6
 #if IPV6_MAXPACKET != IP_MAXPACKET
 #error IPV6_MAXPACKET != IP_MAXPACKET
+#endif
 #endif
 			len = (min(len, IP_MAXPACKET) / txsegsize) * txsegsize;
 			if (len <= txsegsize) {
