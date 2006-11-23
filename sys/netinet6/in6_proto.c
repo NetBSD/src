@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.67 2006/10/10 21:49:15 dogcow Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.68 2006/11/23 04:07:07 rpaulo Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.67 2006/10/10 21:49:15 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.68 2006/11/23 04:07:07 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -118,6 +118,11 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.67 2006/10/10 21:49:15 dogcow Exp $"
 #include "carp.h"
 #if NCARP > 0
 #include <netinet/ip_carp.h>
+#endif
+
+#include "etherip.h"
+#if NETHERIP > 1
+#include <netinet6/ip6_etherip.h>
 #endif
 
 #include <netinet6/ip6protosw.h>
@@ -210,6 +215,13 @@ const struct ip6protosw inet6sw[] = {
   rip6_usrreq,
   encap_init,	0,		0,		0,
 },
+#if NETHERIP > 1
+{ SOCK_RAW,	&inet6domain,	IPPROTO_ETHERIP,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+  ip6_etherip_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
+  rip6_usrreq,
+  0,		0,		0,		0,
+},
+#endif
 #if NCARP > 0
 { SOCK_RAW,	&inet6domain,	IPPROTO_CARP,	PR_ATOMIC|PR_ADDR,
   carp6_proto_input,	rip6_output,	0,		rip6_ctloutput,

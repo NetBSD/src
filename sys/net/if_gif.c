@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.63 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.64 2006/11/23 04:07:07 rpaulo Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.63 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.64 2006/11/23 04:07:07 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -84,12 +84,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.63 2006/11/16 01:33:40 christos Exp $")
 #endif
 
 #include <netinet/ip_encap.h>
-#include <net/if_ether.h>
-#include <net/if_bridgevar.h>
 #include <net/if_gif.h>
 
 #include "bpfilter.h"
-#include "bridge.h"
 
 #include <net/net_osdep.h>
 
@@ -98,7 +95,6 @@ void	gifattach(int);
 static void	gifnetisr(void);
 #endif
 static void	gifintr(void *);
-static void	gif_start(struct ifnet *);
 #ifdef ISO
 static struct mbuf *gif_eon_encap(struct mbuf *);
 static struct mbuf *gif_eon_decap(struct ifnet *, struct mbuf *);
@@ -165,7 +161,6 @@ gifattach0(struct gif_softc *sc)
 	sc->gif_if.if_flags  = IFF_POINTOPOINT | IFF_MULTICAST;
 	sc->gif_if.if_ioctl  = gif_ioctl;
 	sc->gif_if.if_output = gif_output;
-	sc->gif_if.if_start  = gif_start;
 	sc->gif_if.if_type   = IFT_GIF;
 	sc->gif_if.if_dlt    = DLT_NULL;
 	IFQ_SET_READY(&sc->gif_if.if_snd);
@@ -200,17 +195,6 @@ gif_clone_destroy(struct ifnet *ifp)
 	return (0);
 }
 
-static void
-gif_start(struct ifnet *ifp)
-{
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	softintr_schedule(((struct gif_softc*)ifp)->gif_si);
-#else
-	/* XXX bad spl level? */
-	gifnetisr();
-#endif
-}
-
 #ifdef GIF_ENCAPCHECK
 int
 gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
@@ -240,10 +224,6 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 #endif
 #ifdef ISO
 	case IPPROTO_EON:
-		break;
-#endif
-#if NBRIDGE > 0
-	case IPPROTO_ETHERIP:
 		break;
 #endif
 	default:
@@ -399,17 +379,6 @@ gifintr(void *arg)
 		if (m == NULL)
 			break;
 
-#if NBRIDGE > 0
-		if(m->m_flags & M_PROTO1) {
-			M_PREPEND(m, sizeof(int), M_DONTWAIT);
-			if (!m) {
-				ifp->if_oerrors++;
-				continue;
-			}
-			*mtod(m, int *) = AF_LINK;
-		}
-
-#endif
 		/* grab and chop off inner af type */
 		if (sizeof(int) > m->m_len) {
 			m = m_pullup(m, sizeof(int));
@@ -459,9 +428,6 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 {
 	int s, isr;
 	struct ifqueue *ifq = NULL;
-#if NBRIDGE > 0
-	struct ether_header *eh;
-#endif
 
 	if (ifp == NULL) {
 		/* just in case */
@@ -508,37 +474,6 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 		ifq = &clnlintrq;
 		isr = NETISR_ISO;
 		break;
-#endif
-#if NBRIDGE > 0
-	case AF_LINK:
-		m_adj(m, sizeof(struct etherip_header));
-		if (sizeof(struct ether_header) > m->m_len) {
-			m = m_pullup(m, sizeof(struct ether_header));
-			if (!m) {
-				ifp->if_ierrors++;
-				return;
-			}
-		}
-		eh = mtod(m, struct ether_header *);
-		m->m_flags &= ~(M_BCAST|M_MCAST);
-		if (eh->ether_dhost[0] & 1) {
-			if (memcmp(etherbroadcastaddr,
-			    eh->ether_dhost, sizeof(etherbroadcastaddr)) == 0)
-				m->m_flags |= M_BCAST;
-			else
-				m->m_flags |= M_MCAST;
-		}
-		m->m_pkthdr.rcvif = ifp;
-		if(ifp->if_bridge) {
-			if (m->m_flags & (M_BCAST|M_MCAST))
-				ifp->if_imcasts++;
-
-			s = splnet();
-			m = bridge_input(ifp, m);
-			splx(s);
-			if (m == NULL)
-				return;
-		}
 #endif
 	default:
 		m_freem(m);
