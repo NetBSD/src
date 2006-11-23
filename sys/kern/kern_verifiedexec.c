@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.69 2006/10/30 11:29:12 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.70 2006/11/23 13:11:29 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.69 2006/10/30 11:29:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.70 2006/11/23 13:11:29 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -705,6 +705,24 @@ veriexec_purge(struct veriexec_file_entry *vfe)
  * IDS mode: Invalidate fingerprints on a mount if it's opened for writing.
  * IPS mode: Don't allow raw writing to disks we monitor.
  * Lockdown mode: Don't allow raw writing to all disks.
+ *
+ * XXX: This is bogus. There's an obvious race condition between the time
+ * XXX: the disk is open for writing, in which an attacker can access a
+ * XXX: monitored file to get its signature cached again, and when the raw
+ * XXX: file is overwritten on disk.
+ * XXX:
+ * XXX: To solve this, we need something like the following:
+ * XXX:		open raw disk:
+ * XXX:		  - raise refcount,
+ * XXX:		  - invalidate fingerprints,
+ * XXX:		  - mark all entries for that disk with "no cache" flag
+ * XXX:
+ * XXX:		veriexec_verify:
+ * XXX:		  - if "no cache", don't cache evaluation result
+ * XXX:
+ * XXX:		close raw disk:
+ * XXX:		  - lower refcount,
+ * XXX:		  - if refcount == 0, remove "no cache" flag from all entries
  */
 int
 veriexec_rawchk(struct vnode *vp)
