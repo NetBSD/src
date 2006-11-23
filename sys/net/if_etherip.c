@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.1 2006/11/23 04:07:07 rpaulo Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.2 2006/11/23 04:20:54 rpaulo Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -149,8 +149,6 @@ void etheripattach(int);
 static int  etherip_match(struct device *, struct cfdata *, void *);
 static void etherip_attach(struct device *, struct device *, void *);
 static int  etherip_detach(struct device *, int);
-
-static int  etherip_ether_aton(u_char *, char *);
 
 CFATTACH_DECL(etherip, sizeof(struct etherip_softc),
 	      etherip_match, etherip_attach, etherip_detach, NULL);
