@@ -1,5 +1,6 @@
-# $NetBSD: mapper.dir.GB.src,v 1.5 2006/10/26 15:06:18 tnozaki Exp $
+# $NetBSD: mapper.dir.GB.src,v 1.6 2006/11/23 03:25:24 tnozaki Exp $
 
+GB12345/UCS		mapper_std	GB/GB12345%UCS.mps
 GB2312/UCS		mapper_std	GB/GB2312%UCS.mps
 GB2312EXT/UCS		mapper_std	GB/GB2312EXT%UCS.mps
 GB2312UDA1/UCS		mapper_std	GB/GB2312UDA1%UCS.mps
@@ -15,6 +16,7 @@ GBK/UCS			mapper_parallel	GBKEXT/UCS,CP936EXT/UCS
 GBK:GB18030/UCS		mapper_parallel	GBKUDA/UCS,GBK/UCS
 GBKUCS/UCS		mapper_parallel	GB18030/UCS:BMP
 ISO-IR-165/UCS		mapper_parallel	ISO-IR-165EXT/UCS,GB2312/UCS
+UCS/GB12345		mapper_std	GB/UCS%GB12345.mps
 UCS/GB2312		mapper_std	GB/UCS%GB2312.mps
 UCS/GB2312EXT		mapper_std	GB/UCS%GB2312EXT.mps
 UCS/GB2312UDA1		mapper_std	GB/UCS%GB2312UDA1.mps

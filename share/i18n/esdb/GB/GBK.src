@@ -1,4 +1,4 @@
-# $NetBSD: GBK.src,v 1.1 2006/08/19 10:58:41 tnozaki Exp $
+# $NetBSD: GBK.src,v 1.1 2006/11/23 03:25:25 tnozaki Exp $
 
 NAME		"GBK"
 ENCODING	"GBK2K"

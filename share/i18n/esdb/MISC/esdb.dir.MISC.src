@@ -1,10 +1,8 @@
-# $NetBSD: esdb.dir.MISC.src,v 1.12 2006/11/22 23:38:27 tnozaki Exp $
+# $NetBSD: esdb.dir.MISC.src,v 1.13 2006/11/23 03:25:25 tnozaki Exp $
 
 ATARIST				MISC/ATARIST.esdb
 C99				MISC/C99.esdb
 CTEXT				MISC/CTEXT.esdb
-GB18030				MISC/GB18030.esdb
-GBK				MISC/GBK.esdb
 HP-ROMAN8			MISC/HP-ROMAN8.esdb
 HZ				MISC/HZ.esdb
 HZ8				MISC/HZ8.esdb
