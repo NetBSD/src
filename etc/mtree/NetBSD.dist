@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.329 2006/11/13 22:28:47 dogcow Exp $
+#	$NetBSD: NetBSD.dist,v 1.330 2006/11/23 03:25:24 tnozaki Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -498,6 +498,7 @@
 ./usr/share/i18n/esdb/CP
 ./usr/share/i18n/esdb/EBCDIC
 ./usr/share/i18n/esdb/EUC
+./usr/share/i18n/esdb/GB
 ./usr/share/i18n/esdb/GEORGIAN
 ./usr/share/i18n/esdb/ISO-2022
 ./usr/share/i18n/esdb/ISO-8859
