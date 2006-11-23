@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.7 2005/08/11 17:13:21 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.8 2006/11/23 13:07:17 martin Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -226,11 +226,22 @@ void discover_interfaces (state)
 
 	/* Cycle through the list of interfaces looking for IP addresses. */
 	for (i = 0; i < ic.ifc_len;) {
-		struct ifreq *ifp = (struct ifreq *)((caddr_t)ic.ifc_req + i);
+		union {
+			struct ifreq ifr;
+			char buf[2000];
+		} ifcpy;
+		struct ifreq *ifp = &ifcpy.ifr;
+
+		memcpy(&ifcpy, (caddr_t)ic.ifc_req + i, sizeof(struct ifreq));
 #ifdef HAVE_SA_LEN
-		if (ifp -> ifr_addr.sa_len > sizeof (struct sockaddr))
+		if (ifp -> ifr_addr.sa_len > sizeof (struct sockaddr)) {
+			if (sizeof(struct ifreq) + ifp->ifr_addr.sa_len >
+			    sizeof(ifcpy))
+				break;
+			memcpy(&ifcpy, (caddr_t)ic.ifc_req + i, 
+			    sizeof(struct ifreq) + ifp->ifr_addr.sa_len);
 			i += (sizeof ifp -> ifr_name) + ifp -> ifr_addr.sa_len;
-		else
+		} else
 #endif
 			i += sizeof *ifp;
 
