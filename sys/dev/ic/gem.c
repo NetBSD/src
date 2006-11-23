@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.48 2006/09/24 03:53:08 jmcneill Exp $ */
+/*	$NetBSD: gem.c,v 1.49 2006/11/23 18:41:25 martin Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.48 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.49 2006/11/23 18:41:25 martin Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -626,7 +626,7 @@ gem_reset_rx(struct gem_softc *sc)
 	/* Finally, reset the ERX */
 	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_RX);
 	/* Wait till it finishes */
-	if (!gem_bitwait(sc, GEM_RESET, GEM_RESET_TX, 0)) {
+	if (!gem_bitwait(sc, GEM_RESET, GEM_RESET_RX, 0)) {
 		printf("%s: cannot reset receiver\n", sc->sc_dev.dv_xname);
 		return (1);
 	}
@@ -1025,7 +1025,7 @@ gem_start(ifp)
 	struct mbuf *m0, *m;
 	struct gem_txsoft *txs, *last_txs;
 	bus_dmamap_t dmamap;
-	int error, firsttx, nexttx, lasttx = -1, ofree, seg;
+	int error, firsttx, nexttx = -1, lasttx = -1, ofree, seg;
 	uint64_t flags = 0;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
