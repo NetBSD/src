@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.188 2006/11/22 02:02:52 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.189 2006/11/23 17:24:36 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd November 22, 2006
+.Dd November 23, 2006
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -2123,6 +2123,12 @@ for more information.
 PaX Segvguard can detect and prevent certain exploitation attempts, where
 an attacker may try for example to brute-force function return addresses
 of respawning daemons.
+.Pp
+.Em Note :
+The
+.Nx
+interface and implementation of the Segvguard is still experimental, and may
+change in future releases.
 .It Li security.pax.segvguard.global
 Specifies the default global policy for programs without an
 explicit enable/disable flag.
