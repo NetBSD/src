@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.86 2006/09/16 20:15:49 hubertf Exp $
+.\"	$NetBSD: ifconfig.8,v 1.87 2006/11/23 19:43:52 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd April 29, 2006
+.Dd November 24, 2006
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -674,6 +674,12 @@ Enable hardware-assisted TCP/IPv4 segmentation on interfaces that
 support it.
 .It Cm -tso4
 Disable hardware-assisted TCP/IPv4 segmentation on interfaces that
+support it.
+.It Cm tso6
+Enable hardware-assisted TCP/IPv6 segmentation on interfaces that
+support it.
+.It Cm -tso6
+Disable hardware-assisted TCP/IPv6 segmentation on interfaces that
 support it.
 .El
 .Pp
