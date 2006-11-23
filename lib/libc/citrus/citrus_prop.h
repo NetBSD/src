@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_prop.h,v 1.2 2006/11/22 23:44:17 tnozaki Exp $ */
+/* $NetBSD: citrus_prop.h,v 1.3 2006/11/23 13:59:03 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -73,14 +73,15 @@ struct _citrus_prop_hint_t {
 };
 
 #define _CITRUS_PROP_HINT_BOOL(name, cb) \
-{ name, _CITRUS_PROP_BOOL, { bool: { cb } } }
+	{ name, _CITRUS_PROP_BOOL, { .bool = { cb } } }
 #define _CITRUS_PROP_HINT_STR(name, cb) \
-{ name, _CITRUS_PROP_STR,  { str: { cb } } }
+	{ name, _CITRUS_PROP_STR, { .str = { cb } } }
 #define _CITRUS_PROP_HINT_CHR(name, cb) \
-{ name, _CITRUS_PROP_CHR,  { chr: { cb } } }
+	{ name, _CITRUS_PROP_CHR, { .chr = { cb } } }
 #define _CITRUS_PROP_HINT_NUM(name, cb) \
-{ name, _CITRUS_PROP_NUM,  { num: { cb } } }
-#define _CITRUS_PROP_HINT_END { NULL }
+	{ name, _CITRUS_PROP_NUM, { .num = { cb } } }
+#define _CITRUS_PROP_HINT_END \
+	{ NULL }
 
 __BEGIN_DECLS
 int _citrus_prop_parse_variable(const _citrus_prop_hint_t * __restrict,
