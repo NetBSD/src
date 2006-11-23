@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.178 2006/11/13 05:13:39 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.179 2006/11/23 19:43:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.178 2006/11/13 05:13:39 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.179 2006/11/23 19:43:52 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -329,6 +329,8 @@ const struct cmd {
 					0,		setifcaps },
 	{ "tso4",	IFCAP_TSOv4,	0,		setifcaps },
 	{ "-tso4",	-IFCAP_TSOv4,	0,		setifcaps },
+	{ "tso6",	IFCAP_TSOv6,	0,		setifcaps },
+	{ "-tso6",	-IFCAP_TSOv6,	0,		setifcaps },
 	{ "agrport",	NEXTARG,	0,		agraddport } ,
 	{ "-agrport",	NEXTARG,	0,		agrremport } ,
 	{ 0,		0,		0,		setifaddr },

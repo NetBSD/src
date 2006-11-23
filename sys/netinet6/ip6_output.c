@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.104 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.105 2006/11/23 19:41:58 yamt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.104 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.105 2006/11/23 19:41:58 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.104 2006/11/16 01:33:45 christos Ex
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet/in_offload.h>
+#include <netinet6/in6_offload.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
@@ -142,6 +143,39 @@ static int ip6_pcbopts __P((struct ip6_pktopts **, struct mbuf *,
 	(((csum_flags) & M_CSUM_UDPv6) != 0 && udp_do_loopback_cksum) || \
 	(((csum_flags) & M_CSUM_TCPv6) != 0 && tcp_do_loopback_cksum)))
 
+struct ip6_tso_output_args {
+	struct ifnet *ifp;
+	struct ifnet *origifp;
+	struct sockaddr_in6 *dst;
+	struct rtentry *rt;
+};
+
+static int ip6_tso_output_callback(void *, struct mbuf *);
+static int ip6_tso_output(struct ifnet *, struct ifnet *, struct mbuf *,
+    struct sockaddr_in6 *, struct rtentry *);
+
+static int
+ip6_tso_output_callback(void *vp, struct mbuf *m)
+{
+	struct ip6_tso_output_args *args = vp;
+
+	return nd6_output(args->ifp, args->origifp, m, args->dst, args->rt);
+}
+
+static int
+ip6_tso_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
+    struct sockaddr_in6 *dst, struct rtentry *rt)
+{
+	struct ip6_tso_output_args args;
+
+	args.ifp = ifp;
+	args.origifp = origifp;
+	args.dst = dst;
+	args.rt = rt;
+
+	return tcp6_segment(m, ip6_tso_output_callback, &args);
+}
+
 /*
  * IP6 output. The packet in mbuf chain m contains a skeletal IP6
  * header (with pri, len, nxt, hlim, src, dst).
@@ -168,6 +202,7 @@ ip6_output(
 	struct ifnet *ifp, *origifp;
 	struct mbuf *m = m0;
 	int hlen, tlen, len, off;
+	boolean_t tso;
 	struct route_in6 ip6route;
 	struct rtentry *rt = NULL;
 	struct sockaddr_in6 *dst, src_sa, dst_sa;
@@ -882,7 +917,7 @@ skip_ipsec2:;
 	 *	error, as we cannot handle this conflicting request
 	 */
 	tlen = m->m_pkthdr.len;
-
+	tso = (m->m_pkthdr.csum_flags & M_CSUM_TSOv6) != 0;
 	if (opt && (opt->ip6po_flags & IP6PO_DONTFRAG))
 		dontfrag = 1;
 	else
@@ -893,7 +928,7 @@ skip_ipsec2:;
 		error = EMSGSIZE;
 		goto bad;
 	}
-	if (dontfrag && tlen > IN6_LINKMTU(ifp)) {	/* case 2-b */
+	if (dontfrag && (!tso && tlen > IN6_LINKMTU(ifp))) {	/* case 2-b */
 		/*
 		 * Even if the DONTFRAG option is specified, we cannot send the
 		 * packet when the data length is larger than the MTU of the
@@ -918,7 +953,8 @@ skip_ipsec2:;
 	/*
 	 * transmit packet without fragmentation
 	 */
-	if (dontfrag || (!alwaysfrag && tlen <= mtu)) {	/* case 1-a and 2-a */
+	if (dontfrag || (!alwaysfrag && (tlen <= mtu || tso))) {
+		/* case 1-a and 2-a */
 		struct in6_ifaddr *ia6;
 		int sw_csum;
 
@@ -942,8 +978,18 @@ skip_ipsec2:;
 			m->m_pkthdr.csum_flags &= ~(M_CSUM_UDPv6|M_CSUM_TCPv6);
 		}
 
-		error = nd6_output(ifp, origifp, m, dst, rt);
+		if (__predict_true(!tso ||
+		    (ifp->if_capenable & IFCAP_TSOv6) != 0)) {
+			error = nd6_output(ifp, origifp, m, dst, rt);
+		} else {
+			error = ip6_tso_output(ifp, origifp, m, dst, rt);
+		}
 		goto done;
+	}
+
+	if (tso) {
+		error = EINVAL; /* XXX */
+		goto bad;
 	}
 
 	/*
