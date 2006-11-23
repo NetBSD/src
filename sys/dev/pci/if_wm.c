@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.130 2006/11/16 06:07:54 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.131 2006/11/23 19:42:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.130 2006/11/16 06:07:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131 2006/11/23 19:42:59 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.130 2006/11/16 06:07:54 yamt Exp $");
 #include <netinet/in.h>			/* XXX for struct ip */
 #include <netinet/in_systm.h>		/* XXX for struct ip */
 #include <netinet/ip.h>			/* XXX for struct ip */
+#include <netinet/ip6.h>		/* XXX for struct ip6_hdr */
 #include <netinet/tcp.h>		/* XXX for struct tcphdr */
 
 #include <machine/bus.h>
@@ -286,7 +287,8 @@ struct wm_softc {
 	struct evcnt sc_ev_txipsum;	/* IP checksums comp. out-bound */
 	struct evcnt sc_ev_txtusum;	/* TCP/UDP cksums comp. out-bound */
 	struct evcnt sc_ev_txtusum6;	/* TCP/UDP v6 cksums comp. out-bound */
-	struct evcnt sc_ev_txtso;	/* TCP seg offload out-bound */
+	struct evcnt sc_ev_txtso;	/* TCP seg offload out-bound (IPv4) */
+	struct evcnt sc_ev_txtso6;	/* TCP seg offload out-bound (IPv6) */
 	struct evcnt sc_ev_txtsopain;	/* painful header manip. for TSO */
 
 	struct evcnt sc_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
@@ -1419,8 +1421,13 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 * If we're a i82544 or greater (except i82547), we can do
 	 * TCP segmentation offload.
 	 */
-	if (sc->sc_type >= WM_T_82544 && sc->sc_type != WM_T_82547)
+	if (sc->sc_type >= WM_T_82544 && sc->sc_type != WM_T_82547) {
 		ifp->if_capabilities |= IFCAP_TSOv4;
+	}
+
+	if (sc->sc_type >= WM_T_82571) {
+		ifp->if_capabilities |= IFCAP_TSOv6;
+	}
 
 	/*
 	 * Attach the interface.
@@ -1462,6 +1469,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 
 	evcnt_attach_dynamic(&sc->sc_ev_txtso, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtso");
+	evcnt_attach_dynamic(&sc->sc_ev_txtso6, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txtso6");
 	evcnt_attach_dynamic(&sc->sc_ev_txtsopain, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtsopain");
 
@@ -1587,6 +1596,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	struct mbuf *m0 = txs->txs_mbuf;
 	struct livengood_tcpip_ctxdesc *t;
 	uint32_t ipcs, tucs, cmd, cmdlen, seg;
+	uint32_t ipcse;
 	struct ether_header *eh;
 	int offset, iphl;
 	uint8_t fields;
@@ -1622,15 +1632,17 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	} else {
 		iphl = M_CSUM_DATA_IPv6_HL(m0->m_pkthdr.csum_data);
 	}
+	ipcse = offset + iphl - 1;
 
 	cmd = WTX_CMD_DEXT | WTX_DTYP_D;
 	cmdlen = WTX_CMD_DEXT | WTX_DTYP_C | WTX_CMD_IDE;
 	seg = 0;
 	fields = 0;
 
-	if (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) {
+	if ((m0->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) != 0) {
 		int hlen = offset + iphl;
-		WM_EVCNT_INCR(&sc->sc_ev_txtso);
+		boolean_t v4 = (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
+
 		if (__predict_false(m0->m_len <
 				    (hlen + sizeof(struct tcphdr)))) {
 			/*
@@ -1638,22 +1650,32 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 			 * to do this the slow and painful way.  Let's just
 			 * hope this doesn't happen very often.
 			 */
-			struct ip ip;
 			struct tcphdr th;
 
 			WM_EVCNT_INCR(&sc->sc_ev_txtsopain);
 
-			m_copydata(m0, offset, sizeof(ip), &ip);
 			m_copydata(m0, hlen, sizeof(th), &th);
+			if (v4) {
+				struct ip ip;
 
-			ip.ip_len = 0;
+				m_copydata(m0, offset, sizeof(ip), &ip);
+				ip.ip_len = 0;
+				m_copyback(m0,
+				    offset + offsetof(struct ip, ip_len),
+				    sizeof(ip.ip_len), &ip.ip_len);
+				th.th_sum = in_cksum_phdr(ip.ip_src.s_addr,
+				    ip.ip_dst.s_addr, htons(IPPROTO_TCP));
+			} else {
+				struct ip6_hdr ip6;
 
-			m_copyback(m0, offset + offsetof(struct ip, ip_len),
-			    sizeof(ip.ip_len), &ip.ip_len);
-
-			th.th_sum = in_cksum_phdr(ip.ip_src.s_addr,
-			    ip.ip_dst.s_addr, htons(IPPROTO_TCP));
-
+				m_copydata(m0, offset, sizeof(ip6), &ip6);
+				ip6.ip6_plen = 0;
+				m_copyback(m0,
+				    offset + offsetof(struct ip6_hdr, ip6_plen),
+				    sizeof(ip6.ip6_plen), &ip6.ip6_plen);
+				th.th_sum = in6_cksum_phdr(&ip6.ip6_src,
+				    &ip6.ip6_dst, 0, htonl(IPPROTO_TCP));
+			}
 			m_copyback(m0, hlen + offsetof(struct tcphdr, th_sum),
 			    sizeof(th.th_sum), &th.th_sum);
 
@@ -1663,20 +1685,37 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 			 * TCP/IP headers are in the first mbuf; we can do
 			 * this the easy way.
 			 */
-			struct ip *ip =
-			    (struct ip *) (mtod(m0, caddr_t) + offset);
-			struct tcphdr *th =
-			    (struct tcphdr *) (mtod(m0, caddr_t) + hlen);
+			struct tcphdr *th;
 
-			ip->ip_len = 0;
-			th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
-			    ip->ip_dst.s_addr, htons(IPPROTO_TCP));
+			if (v4) {
+				struct ip *ip =
+				    (void *)(mtod(m0, caddr_t) + offset);
+				th = (void *)(mtod(m0, caddr_t) + hlen);
 
+				ip->ip_len = 0;
+				th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
+				    ip->ip_dst.s_addr, htons(IPPROTO_TCP));
+			} else {
+				struct ip6_hdr *ip6 =
+				    (void *)(mtod(m0, char *) + offset);
+				th = (void *)(mtod(m0, char *) + hlen);
+
+				ip6->ip6_plen = 0;
+				th->th_sum = in6_cksum_phdr(&ip6->ip6_src,
+				    &ip6->ip6_dst, 0, htonl(IPPROTO_TCP));
+			}
 			hlen += th->th_off << 2;
 		}
 
+		if (v4) {
+			WM_EVCNT_INCR(&sc->sc_ev_txtso);
+			cmdlen |= WTX_TCPIP_CMD_IP;
+		} else {
+			WM_EVCNT_INCR(&sc->sc_ev_txtso6);
+			ipcse = 0;
+		}
 		cmd |= WTX_TCPIP_CMD_TSE;
-		cmdlen |= WTX_TCPIP_CMD_TSE | WTX_TCPIP_CMD_IP |
+		cmdlen |= WTX_TCPIP_CMD_TSE |
 		    WTX_TCPIP_CMD_TCP | (m0->m_pkthdr.len - hlen);
 		seg = WTX_TCPIP_SEG_HDRLEN(hlen) |
 		    WTX_TCPIP_SEG_MSS(m0->m_pkthdr.segsz);
@@ -1690,7 +1729,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 
 	ipcs = WTX_TCPIP_IPCSS(offset) |
 	    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
-	    WTX_TCPIP_IPCSE(offset + iphl - 1);
+	    WTX_TCPIP_IPCSE(ipcse);
 	if (m0->m_pkthdr.csum_flags & (M_CSUM_IPv4|M_CSUM_TSOv4)) {
 		WM_EVCNT_INCR(&sc->sc_ev_txipsum);
 		fields |= WTX_IXSM;
@@ -1707,7 +1746,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		    M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data)) |
 		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
 	} else if ((m0->m_pkthdr.csum_flags &
-	    (M_CSUM_TCPv6|M_CSUM_UDPv6)) != 0) {
+	    (M_CSUM_TCPv6|M_CSUM_UDPv6|M_CSUM_TSOv6)) != 0) {
 		WM_EVCNT_INCR(&sc->sc_ev_txtusum6);
 		fields |= WTX_TXSM;
 		tucs = WTX_TCPIP_TUCSS(offset) |
@@ -1904,7 +1943,8 @@ wm_start(struct ifnet *ifp)
 		txs = &sc->sc_txsoft[sc->sc_txsnext];
 		dmamap = txs->txs_dmamap;
 
-		use_tso = (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
+		use_tso = (m0->m_pkthdr.csum_flags &
+		    (M_CSUM_TSOv4 | M_CSUM_TSOv6)) != 0;
 
 		/*
 		 * So says the Linux driver:
@@ -2024,7 +2064,8 @@ wm_start(struct ifnet *ifp)
 
 		/* Set up offload parameters for this packet. */
 		if (m0->m_pkthdr.csum_flags &
-		    (M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4|
+		    (M_CSUM_TSOv4|M_CSUM_TSOv6|
+		    M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4|
 		    M_CSUM_TCPv6|M_CSUM_UDPv6)) {
 			if (wm_tx_offload(sc, txs, &cksumcmd,
 					  &cksumfields) != 0) {
