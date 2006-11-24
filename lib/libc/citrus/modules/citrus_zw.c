@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_zw.c,v 1.1 2006/11/22 23:38:27 tnozaki Exp $ */
+/* $NetBSD: citrus_zw.c,v 1.2 2006/11/24 16:52:20 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2004, 2006 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_zw.c,v 1.1 2006/11/22 23:38:27 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_zw.c,v 1.2 2006/11/24 16:52:20 tnozaki Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <sys/types.h>
@@ -235,8 +235,6 @@ loop:
 			STORE;
 			if (psenc->ch[0] == ' ') {
 				ch = (unsigned char)psenc->ch[1];
-				if (ch == ' ')
-					goto ilseq;
 				wc = (wchar_t)ch;
 				psenc->chlen = 0;
 				break;
