@@ -1,4 +1,4 @@
-.\"	$NetBSD: ex.rm,v 1.6 2003/08/07 11:17:05 agc Exp $
+.\"	$NetBSD: ex.rm,v 1.7 2006/11/24 19:37:03 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -323,7 +323,7 @@ It is possible to use
 in
 .I "read only"
 mode to look at files that you have no intention of modifying.
-This mode protects you from accidently overwriting the file.
+This mode protects you from accidentally overwriting the file.
 Read only mode is on when the
 .I readonly
 option is set.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.116 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.117 2006/11/24 19:37:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.116 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.117 2006/11/24 19:37:03 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -403,7 +403,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		arpinit_done = 1;
 		/*
 		 * We generate expiration times from time_second
-		 * so avoid accidently creating permanent routes.
+		 * so avoid accidentally creating permanent routes.
 		 */
 		if (time_second == 0) {
 #ifdef __HAVE_TIMECOUNTER
