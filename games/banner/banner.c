@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.12 2004/01/27 20:30:28 jsm Exp $	*/
+/*	$NetBSD: banner.c,v 1.12.8.1 2006/11/24 21:20:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)banner.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: banner.c,v 1.12 2004/01/27 20:30:28 jsm Exp $");
+__RCSID("$NetBSD: banner.c,v 1.12.8.1 2006/11/24 21:20:56 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -1045,7 +1045,7 @@ main(argc, argv)
 			break;
 		case 'w':
 			width = atoi(optarg);
-			if (width <= 0)
+			if (width <= 0 || width > DWIDTH)
 				errx(1, "illegal argument for -w option");
 			break;
 		case '?':
@@ -1057,7 +1057,7 @@ main(argc, argv)
 	argv += optind;
 
 	for (i = 0; i < width; i++) {
-		j = i * 132 / width;
+		j = i * DWIDTH / width;
 		print[j] = 1;
 	}
 
