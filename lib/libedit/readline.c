@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.69 2006/08/21 12:45:30 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.70 2006/11/24 00:01:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.69 2006/08/21 12:45:30 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.70 2006/11/24 00:01:17 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: readline.c,v 1.69 2006/08/21 12:45:30 christos Exp $");
 #include <limits.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <setjmp.h>
 #ifdef HAVE_VIS_H
 #include <vis.h>
 #else
@@ -88,6 +89,9 @@ char *rl_line_buffer = NULL;
 VCPFunction *rl_linefunc = NULL;
 int rl_done = 0;
 VFunction *rl_event_hook = NULL;
+KEYMAP_ENTRY_ARRAY emacs_standard_keymap,
+    emacs_meta_keymap,
+    emacs_ctlx_keymap;
 
 int history_base = 1;		/* probably never subject to change */
 int history_length = 0;
@@ -113,6 +117,8 @@ int rl_already_prompted = 0;
 int rl_filename_completion_desired = 0;
 int rl_ignore_completion_duplicates = 0;
 int rl_catch_signals = 1;
+int readline_echoing_p = 1;
+int _rl_print_completions_horizontally = 0;
 VFunction *rl_redisplay_function = NULL;
 Function *rl_startup_hook = NULL;
 VFunction *rl_completion_display_matches_hook = NULL;
@@ -154,6 +160,7 @@ int rl_completion_append_character = ' ';
 static History *h = NULL;
 static EditLine *e = NULL;
 static Function *map[256];
+static jmp_buf topbuf;
 
 /* internal functions */
 static unsigned char	 _el_rl_complete(EditLine *, int);
@@ -322,9 +329,10 @@ rl_initialize(void)
  * trailing newline (if there is any)
  */
 char *
-readline(const char *prompt)
+readline(const char *p)
 {
 	HistEvent ev;
+	const char * volatile prompt = p;
 	int count;
 	const char *ret;
 	char *buf;
@@ -334,6 +342,8 @@ readline(const char *prompt)
 		rl_initialize();
 
 	rl_done = 0;
+
+	(void)setjmp(topbuf);
 
 	/* update prompt accordingly to what has been passed */
 	if (!prompt)
@@ -1805,3 +1815,82 @@ _rl_update_pos(void)
 	rl_point = li->cursor - li->buffer;
 	rl_end = li->lastchar - li->buffer;
 }
+
+void
+rl_get_screen_size(int *rows, int *cols)
+{
+	if (rows)
+		el_get(e, EL_GETTC, "li", rows);
+	if (cols)
+		el_get(e, EL_GETTC, "co", cols);
+}
+
+void
+rl_set_screen_size(int rows, int cols)
+{
+	char buf[64];
+	(void)snprintf(buf, sizeof(buf), "%d", rows);
+	el_set(e, EL_SETTC, "li", buf);
+	(void)snprintf(buf, sizeof(buf), "%d", cols);
+	el_set(e, EL_SETTC, "co", buf);
+}
+
+char *
+rl_filename_completion_function (const char *text, int state)
+{
+	return fn_filename_completion_function(text, state);
+}
+
+int
+_rl_abort_internal(void)
+{
+	el_beep(e);
+	longjmp(topbuf, 1);
+	/*NOTREACHED*/
+}
+
+int
+_rl_qsort_string_compare(char **s1, char **s2)
+{
+	return strcoll(*s1, *s2);
+}
+
+int
+/*ARGSUSED*/
+rl_kill_text(int from, int to)
+{
+	return 0;
+}
+
+Keymap
+rl_make_bare_keymap(void)
+{
+	return NULL;
+}
+
+Keymap
+rl_get_keymap(void)
+{
+	return NULL;
+}
+
+void
+/*ARGSUSED*/
+rl_set_keymap(Keymap k)
+{
+}
+
+int
+/*ARGSUSED*/
+rl_generic_bind(int type, const char * keyseq, const char * data, Keymap k)
+{
+	return 0;
+}
+
+int
+/*ARGSUSED*/
+rl_bind_key_in_map(int key, Function *fun, Keymap k)
+{
+	return 0;
+}
+

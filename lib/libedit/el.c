@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.41 2005/08/19 04:21:47 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.42 2006/11/24 00:01:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.41 2005/08/19 04:21:47 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.42 2006/11/24 00:01:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -174,6 +174,7 @@ el_set(EditLine *el, int op, ...)
 	case EL_BIND:
 	case EL_TELLTC:
 	case EL_SETTC:
+	case EL_GETTC:
 	case EL_ECHOTC:
 	case EL_SETTY:
 	{
@@ -291,75 +292,55 @@ el_set(EditLine *el, int op, ...)
  *	retrieve the editline parameters
  */
 public int
-el_get(EditLine *el, int op, void *ret)
+el_get(EditLine *el, int op, ...)
 {
+	va_list ap;
 	int rv;
 
-	if (el == NULL || ret == NULL)
-		return (-1);
+	if (el == NULL)
+		return -1;
+
+	va_start(ap, op);
+
 	switch (op) {
 	case EL_PROMPT:
 	case EL_RPROMPT:
-		rv = prompt_get(el, (el_pfunc_t *) ret, op);
+		rv = prompt_get(el, va_arg(ap, el_pfunc_t *), op);
 		break;
 
 	case EL_EDITOR:
-		rv = map_get_editor(el, (const char **)ret);
+		rv = map_get_editor(el, va_arg(ap, const char **));
 		break;
 
 	case EL_SIGNAL:
-		*((int *) ret) = (el->el_flags & HANDLE_SIGNALS);
+		*va_arg(ap, int *) = (el->el_flags & HANDLE_SIGNALS);
 		rv = 0;
 		break;
 
 	case EL_EDITMODE:
-		*((int *) ret) = (!(el->el_flags & EDIT_DISABLED));
+		*va_arg(ap, int *) = !(el->el_flags & EDIT_DISABLED);
 		rv = 0;
 		break;
 
 	case EL_TERMINAL:
-		term_get(el, (const char **)ret);
+		term_get(el, va_arg(ap, const char **));
 		rv = 0;
 		break;
 
-#if 0				/* XXX */
-	case EL_BIND:
-	case EL_TELLTC:
-	case EL_SETTC:
-	case EL_ECHOTC:
-	case EL_SETTY:
+	case EL_GETTC:
 	{
-		const char *argv[20];
+		static char name[] = "gettc";
+		char *argv[20];
 		int i;
 
  		for (i = 1; i < sizeof(argv) / sizeof(argv[0]); i++)
-			if ((argv[i] = va_arg(va, char *)) == NULL)
+			if ((argv[i] = va_arg(ap, char *)) == NULL)
 				break;
 
 		switch (op) {
-		case EL_BIND:
-			argv[0] = "bind";
-			rv = map_bind(el, i, argv);
-			break;
-
-		case EL_TELLTC:
-			argv[0] = "telltc";
-			rv = term_telltc(el, i, argv);
-			break;
-
-		case EL_SETTC:
-			argv[0] = "settc";
-			rv = term_settc(el, i, argv);
-			break;
-
-		case EL_ECHOTC:
-			argv[0] = "echotc";
-			rv = term_echotc(el, i, argv);
-			break;
-
-		case EL_SETTY:
-			argv[0] = "setty";
-			rv = tty_stty(el, i, argv);
+		case EL_GETTC:
+			argv[0] = name;
+			rv = term_gettc(el, i, argv);
 			break;
 
 		default:
@@ -370,6 +351,7 @@ el_get(EditLine *el, int op, void *ret)
 		break;
 	}
 
+#if 0 /* XXX */
 	case EL_ADDFN:
 	{
 		char *name = va_arg(va, char *);
@@ -390,23 +372,24 @@ el_get(EditLine *el, int op, void *ret)
 #endif /* XXX */
 
 	case EL_GETCFN:
-		*((el_rfunc_t *)ret) = el_read_getfn(el);
+		*va_arg(ap, el_rfunc_t *) = el_read_getfn(el);
 		rv = 0;
 		break;
 
 	case EL_CLIENTDATA:
-		*((void **)ret) = el->el_data;
+		*va_arg(ap, void **) = el->el_data;
 		rv = 0;
 		break;
 
 	case EL_UNBUFFERED:
-		*((int *) ret) = (!(el->el_flags & UNBUFFERED));
+		*va_arg(ap, int *) = (!(el->el_flags & UNBUFFERED));
 		rv = 0;
 		break;
 
 	default:
 		rv = -1;
 	}
+	va_end(ap);
 
 	return (rv);
 }

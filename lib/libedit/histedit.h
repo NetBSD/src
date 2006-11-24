@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.28 2005/07/14 15:00:58 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.29 2006/11/24 00:01:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -109,7 +109,7 @@ int		 el_parse(EditLine *, int, const char **);
  * Low level editline access functions
  */
 int		 el_set(EditLine *, int, ...);
-int		 el_get(EditLine *, int, void *);
+int		 el_get(EditLine *, int, ...);
 unsigned char	_el_fn_complete(EditLine *, int);
 
 /*
@@ -133,6 +133,7 @@ unsigned char	_el_fn_complete(EditLine *, int);
 #define	EL_CLIENTDATA	14	/* , void *);			*/
 #define	EL_UNBUFFERED	15	/* , int);			*/
 #define	EL_PREP_TERM    16      /* , int);                      */
+#define	EL_GETTC	17	/* , const char *, ..., NULL);	*/
 
 #define EL_BUILTIN_GETCFN	(NULL)
 
