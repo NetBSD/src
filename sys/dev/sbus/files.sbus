@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.25 2006/03/09 20:44:18 macallan Exp $
+#	$NetBSD: files.sbus,v 1.26 2006/11/24 13:23:32 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -64,6 +64,9 @@ file	dev/sbus/qe.c			qe
 
 attach	hme at sbus with hme_sbus
 file	dev/sbus/if_hme_sbus.c		hme_sbus
+
+attach	gem at sbus with gem_sbus
+file	dev/sbus/if_gem_sbus.c		gem_sbus
 
 attach	audiocs at sbus with audiocs_sbus
 file	dev/sbus/cs4231_sbus.c		audiocs_sbus
