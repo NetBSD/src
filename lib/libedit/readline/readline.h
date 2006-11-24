@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.18 2006/08/21 12:45:30 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.19 2006/11/24 00:01:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -123,6 +123,8 @@ extern VFunction	*rl_redisplay_function;
 extern VFunction	*rl_completion_display_matches_hook;
 extern VFunction	*rl_prep_term_function;
 extern VFunction	*rl_deprep_term_function;
+extern int		readline_echoing_p;
+extern int		_rl_print_completions_horizontally;
 
 /* supported functions */
 char		*readline(const char *);
@@ -176,11 +178,18 @@ int		 rl_parse_and_bind(const char *);
 int		 rl_variable_bind(const char *, const char *);
 void		 rl_stuff_char(int);
 int		 rl_add_defun(const char *, Function *, int);
+void		 rl_get_screen_size(int *, int *);
+void		 rl_set_screen_size(int, int);
+char 		*rl_filename_completion_function (const char *, int);
+int		 _rl_abort_internal(void);
+int		 _rl_qsort_string_compare(char **, char **);
 
 /*
  * The following are not implemented
  */
+int		 rl_kill_text(int, int);
 Keymap		 rl_get_keymap(void);
+void		 rl_set_keymap(Keymap);
 Keymap		 rl_make_bare_keymap(void);
 int		 rl_generic_bind(int, const char *, const char *, Keymap);
 int		 rl_bind_key_in_map(int, Function *, Keymap);
