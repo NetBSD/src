@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.25 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.26 2006/11/24 22:04:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.25 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.26 2006/11/24 22:04:25 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 
 	/*
-	 * Older CMD64X doesn't have independant channels
+	 * Older CMD64X doesn't have independent channels
 	 */
 	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_CMDTECH_649:

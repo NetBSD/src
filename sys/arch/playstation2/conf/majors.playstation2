@@ -1,4 +1,4 @@
-#	$NetBSD: majors.playstation2,v 1.17 2005/12/11 12:18:34 christos Exp $
+#	$NetBSD: majors.playstation2,v 1.18 2006/11/24 22:04:24 wiz Exp $
 #
 # Device majors for playstation2
 #
@@ -50,5 +50,5 @@ device-major	wsfont		char 42			wsfont
 device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.
