@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.118 2006/11/20 04:13:28 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.119 2006/11/24 19:47:00 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.118 2006/11/20 04:13:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.119 2006/11/24 19:47:00 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1439,7 +1439,7 @@ in6_purgeif(ifp)
  *	other values may be returned from in6_ioctl()
  *
  * NOTE: SIOCALIFADDR(with IFLR_PREFIX set) allows prefixlen less than 64.
- * this is to accomodate address naming scheme other than RFC2374,
+ * this is to accommodate address naming scheme other than RFC2374,
  * in the future.
  * RFC2373 defines interface id to be 64bit, but it allows non-RFC2374
  * address encoding scheme. (see figure on page 8)
