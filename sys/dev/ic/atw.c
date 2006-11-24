@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.124 2006/11/16 01:32:51 christos Exp $  */
+/*	$NetBSD: atw.c,v 1.125 2006/11/24 19:46:59 christos Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.124 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.125 2006/11/24 19:46:59 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -1154,7 +1154,7 @@ atw_tofs0_init(struct atw_softc *sc)
 	 * I am assuming that the role of ATW_TOFS0_USCNT is
 	 * to divide the bus clock to get a 1 MHz clock---the datasheet is not
 	 * very clear on this point. It says in the datasheet that it is
-	 * possible for the ADM8211 to accomodate bus speeds between 22 MHz
+	 * possible for the ADM8211 to accommodate bus speeds between 22 MHz
 	 * and 33 MHz; maybe this is the way? I see a binary-only driver write
 	 * these values. These values are also the power-on default.
 	 */

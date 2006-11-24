@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.12 2003/03/09 01:08:48 lukem Exp $	*/
+/*	$NetBSD: internals.c,v 1.13 2006/11/24 19:46:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.12 2003/03/09 01:08:48 lukem Exp $");
+__RCSID("$NetBSD: internals.c,v 1.13 2006/11/24 19:46:58 christos Exp $");
 
 #include <menu.h>
 #include <ctype.h>
@@ -45,7 +45,7 @@ static void _menui_redraw_menu(MENU *menu, int old_top_row, int old_cur_item);
   /*
    * Link all the menu items together to speed up navigation.  We need
    * to calculate the widest item entry, then work out how many columns
-   * of items the window will accomodate and then how many rows there will
+   * of items the window will accommodate and then how many rows there will
    * be.  Once the layout is determined the neighbours of each item is
    * calculated and the item structures updated.
    */

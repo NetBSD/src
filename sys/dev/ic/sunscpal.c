@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.20 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.21 2006/11/24 19:46:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.20 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.21 2006/11/24 19:46:59 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -1274,7 +1274,7 @@ success:
 /*
  * The message system:
  *
- * This is a revamped message system that now should easier accomodate
+ * This is a revamped message system that now should easier accommodate
  * new messages, if necessary.
  *
  * Currently we accept these messages:

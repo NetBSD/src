@@ -1,4 +1,4 @@
-/*	$NetBSD: slc.c,v 1.14 2005/02/06 05:58:20 perry Exp $	*/
+/*	$NetBSD: slc.c,v 1.15 2006/11/24 19:46:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)slc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: slc.c,v 1.14 2005/02/06 05:58:20 perry Exp $");
+__RCSID("$NetBSD: slc.c,v 1.15 2006/11/24 19:46:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,7 +291,7 @@ change_slc(int func, int flag, cc_t val)
 	/*
 	 * If client is setting a function to NOSUPPORT
 	 * or DEFAULT, then we can easily and directly
-	 * accomodate the request.
+	 * accommodate the request.
 	 */
 	if (hislevel == SLC_NOSUPPORT) {
 		slctab[func].current.flag = flag;
