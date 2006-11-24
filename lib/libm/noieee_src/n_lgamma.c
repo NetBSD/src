@@ -1,4 +1,4 @@
-/*      $NetBSD: n_lgamma.c,v 1.5 2003/08/07 16:44:51 agc Exp $ */
+/*      $NetBSD: n_lgamma.c,v 1.6 2006/11/24 21:15:54 wiz Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@ static char sccsid[] = "@(#)lgamma.c	8.2 (Berkeley) 11/30/93";
 /*
  * Coded by Peter McIlroy, Nov 1992;
  *
- * The financial support of UUNET Communications Services is greatfully
+ * The financial support of UUNET Communications Services is gratefully
  * acknowledged.
  */
 
