@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.93 2006/11/21 09:43:08 ghen Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.94 2006/11/24 21:21:35 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1000,4 +1000,12 @@ sys/dev/pci/pucdata.c				1.49
 
 	Add NetMos 9855 Quad UART and 1284 Printer port.
 	[bouyer, ticket #10749]
+
+games/banner/banner.c				1.16
+
+	Check that -w width is not above maximum. (It already checks for zero
+	or negative.) Using width above DWIDTH may cause overflow as noted by
+	Gruzicki Wlodek on bugtraq.
+	While here replace one use of 132 with DWIDTH.
+	[reed, ticket #10764]
 
