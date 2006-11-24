@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2006/11/24 01:48:57 uwe Exp $
+#	$NetBSD: Makefile,v 1.8 2006/11/24 02:09:01 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -33,6 +33,16 @@ MKNATIVE_CONFIGURE_PRESET= \
 	bash_cv_func_strcoll_broken=no \
 	bash_cv_must_reinstall_sighandlers=no
 
+# Disable sim unless it's known to work (configure's default is to
+# enable sim if supported).
+CONFIGURE_ARGS_SIM=
+.if \
+    ${MACHINE_CPU} != "mips" || \
+    ${MACHINE_CPU} != "powerpc" || \
+    ${MACHINE_CPU} != "powerpc64"
+CONFIGURE_ARGS_SIM+= --disable-sim
+.endif
+
 
 native-gdb: .native/.configure_done
 	@echo 'Extracting GDB configury for a native toolchain.'
@@ -55,6 +65,7 @@ native-gdb: .native/.configure_done
 			${HOST_SH} ${GNUHOSTDIST}/configure \
 			--prefix=/usr \
 			--with-separate-debug-dir=/usr/libdata/debug \
+			${CONFIGURE_ARGS_SIM} \
 			--build=`${GNUHOSTDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM}) && \
