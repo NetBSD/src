@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.101 2006/11/16 01:33:40 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.102 2006/11/24 21:23:07 wiz Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.101 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.102 2006/11/24 21:23:07 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -2146,7 +2146,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 		/* Sanity check option length */
 		if (p[1] > len) {
 			/*
-			 * Malicious option - drop imediately.
+			 * Malicious option - drop immediately.
 			 * XXX Maybe we should just RXJ it?
 			 */
 			addlog("%s: received malicious LCP option 0x%02x, "
@@ -2377,7 +2377,7 @@ sppp_lcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 		/* Sanity check option length */
 		if (p[1] > len) {
 			/*
-			 * Malicious option - drop imediately.
+			 * Malicious option - drop immediately.
 			 * XXX Maybe we should just RXJ it?
 			 */
 			addlog("%s: received malicious LCP option, "
@@ -2452,7 +2452,7 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 		/* Sanity check option length */
 		if (p[1] > len) {
 			/*
-			 * Malicious option - drop imediately.
+			 * Malicious option - drop immediately.
 			 * XXX Maybe we should just RXJ it?
 			 */
 			addlog("%s: received malicious LCP option, "
@@ -4802,7 +4802,7 @@ sppp_keepalive(void *dummy)
 				/* And now prepare LCP to reestablish the link, if configured to do so. */
 				sppp_cp_change_state(&lcp, sp, STATE_STOPPED);
 
-				/* Close connection imediatly, completition of this
+				/* Close connection immediately, completition of this
 				 * will summon the magic needed to reestablish it. */
 				if (sp->pp_tlf)
 					sp->pp_tlf(sp);

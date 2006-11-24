@@ -3,9 +3,9 @@
 #	example of a configuration file for the isdn daemon
 #	---------------------------------------------------
 #
-#	$Id: isdnd.rc.sample,v 1.5 2003/10/02 21:32:56 abs Exp $
+#	$Id: isdnd.rc.sample,v 1.6 2006/11/24 21:23:07 wiz Exp $
 #
-# $NetBSD: isdnd.rc.sample,v 1.5 2003/10/02 21:32:56 abs Exp $
+# $NetBSD: isdnd.rc.sample,v 1.6 2006/11/24 21:23:07 wiz Exp $
 #
 #	last edit-date: [Wed Jul 19 09:59:42 2000]
 #
@@ -98,7 +98,7 @@ usrdeviceunit		= 0		# unit number
 autoupdown		= no		# If this entry is missing (or set
 					# to "yes") isdnd will mark the
 					# interface UP on startup, which
-					# may result in an imediate connection
+					# may result in an immediate connection
 					# attempt (depending on network
 					# setup). If set to "no" this will
 					# not happen and a manual
