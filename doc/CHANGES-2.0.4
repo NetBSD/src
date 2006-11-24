@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.56 2006/11/20 21:48:16 tron Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.57 2006/11/24 21:22:11 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -460,4 +460,12 @@ sys/dev/ata/wd.c				1.334
 
 	Add another broken seagate drive.
 	[bouyer, ticket #10747]
+
+games/banner/banner.c				1.16
+
+	Check that -w width is not above maximum. (It already checks for zero
+	or negative.) Using width above DWIDTH may cause overflow as noted by
+	Gruzicki Wlodek on bugtraq.
+	While here replace one use of 132 with DWIDTH.
+	[reed, ticket #10764]
 
