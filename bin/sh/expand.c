@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.76 2006/08/22 18:11:42 dsl Exp $	*/
+/*	$NetBSD: expand.c,v 1.77 2006/11/24 22:54:47 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.76 2006/08/22 18:11:42 dsl Exp $");
+__RCSID("$NetBSD: expand.c,v 1.77 2006/11/24 22:54:47 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -701,7 +701,7 @@ again: /* jump here after setting a variable with ${var=text} */
 		        argstr(p, flag | (apply_ifs ? EXP_IFS_SPLIT : 0));
 			/*
 			 * ${x-a b c} doesn't get split, but removing the
-			 * 'apply_ifs = 0' apparantly breaks ${1+"$@"}..
+			 * 'apply_ifs = 0' apparently breaks ${1+"$@"}..
 			 * ${x-'a b' c} should generate 2 args.
 			 */
 			/* We should have marked stuff already */

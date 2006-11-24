@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.76 2006/10/04 21:27:28 christos Exp $ */
+/*	$NetBSD: mbr.c,v 1.77 2006/11/24 22:54:47 wiz Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -136,7 +136,7 @@ static void convert_mbr_chs(int, int, int, uint8_t *, uint8_t *,
  * During editing we keep the mbr sectors accurate (it might have been
  * easier to use absolute sector numbers though), and keep a copy of the
  * entire sector - to preserve any information any other OS has tried
- * to squirrel away in the (apparantly) unused space.
+ * to squirrel away in the (apparently) unused space.
  *
  * For simplicity we add entries for unused space.  These should not
  * get written to the disk.
