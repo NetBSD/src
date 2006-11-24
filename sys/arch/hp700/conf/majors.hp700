@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp700,v 1.19 2005/12/11 12:17:24 christos Exp $
+#	$NetBSD: majors.hp700,v 1.20 2006/11/24 22:04:22 wiz Exp $
 #
 # Device majors for hp700
 #
@@ -48,5 +48,5 @@ device-major	audio		char 40			audio
 device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.

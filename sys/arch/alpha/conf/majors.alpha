@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.20 2005/12/11 12:16:16 christos Exp $
+#	$NetBSD: majors.alpha,v 1.21 2006/11/24 22:04:21 wiz Exp $
 #
 # Device majors for alpha
 #
@@ -80,5 +80,5 @@ device-major	joy		char 78			joy
 device-major	twe		char 79			twe
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.

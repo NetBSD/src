@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.34 2006/06/07 23:22:52 kardel Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.35 2006/11/24 22:04:23 wiz Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.34 2006/06/07 23:22:52 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.35 2006/11/24 22:04:23 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
@@ -1458,7 +1458,7 @@ set_adb_info(ADBSetInfoBlock * info, int adbAddr)
 
 #ifndef MRG_ADB
 
-/* caller should really use machine-independant version: getPramTime */
+/* caller should really use machine-independent version: getPramTime */
 /* this version does pseudo-adb access only */
 int 
 adb_read_date_time(unsigned long *t)
@@ -1493,7 +1493,7 @@ adb_read_date_time(unsigned long *t)
 	}
 }
 
-/* caller should really use machine-independant version: setPramTime */
+/* caller should really use machine-independent version: setPramTime */
 /* this version does pseudo-adb access only */
 int 
 adb_set_date_time(unsigned long t)

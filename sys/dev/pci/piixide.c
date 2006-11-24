@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.33 2006/11/16 01:33:10 christos Exp $	*/
+/*	$NetBSD: piixide.c,v 1.34 2006/11/24 22:04:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.33 2006/11/16 01:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.34 2006/11/24 22:04:25 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -736,7 +736,7 @@ piix_setup_idetim_drvs(drvp)
 	u_int8_t drive = drvp->drive;
 
 	/*
-	 * If drive is using UDMA, timings setups are independant
+	 * If drive is using UDMA, timings setups are independent
 	 * So just check DMA and PIO here.
 	 */
 	if (drvp->drive_flags & DRIVE_DMA) {

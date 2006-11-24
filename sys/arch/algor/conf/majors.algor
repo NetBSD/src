@@ -1,4 +1,4 @@
-#	$NetBSD: majors.algor,v 1.16 2005/12/11 12:16:08 christos Exp $
+#	$NetBSD: majors.algor,v 1.17 2006/11/24 22:04:21 wiz Exp $
 #
 # Device majors for algor
 #
@@ -71,5 +71,5 @@ device-major	wsfont		char 70			wsfont
 device-major	nsmb		char 71			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.

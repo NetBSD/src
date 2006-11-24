@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 2006/10/30 16:04:10 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 2006/11/24 22:04:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2006/10/30 16:04:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2006/11/24 22:04:23 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1787,9 +1787,9 @@ pmap_test_bit(paddr_t pa, u_int tlbprot_bit)
 /*
  * pmap_clear_modify(pa)
  *	clears the hardware modified ("dirty") bit for one
- *	machine independant page starting at the given
+ *	machine independent page starting at the given
  *	physical address.  phys must be aligned on a machine
- *	independant page boundary.
+ *	independent page boundary.
  */
 boolean_t
 pmap_clear_modify(struct vm_page *pg)
@@ -1817,7 +1817,7 @@ pmap_is_modified(struct vm_page *pg)
 /*
  * pmap_clear_reference(pa)
  *	clears the hardware referenced bit in the given machine
- *	independant physical page.
+ *	independent physical page.
  *
  *	Currently, we treat a TLB miss as a reference; i.e. to clear
  *	the reference bit we flush all mappings for pa from the TLBs.

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mmeye,v 1.16 2005/12/11 12:18:16 christos Exp $
+#	$NetBSD: majors.mmeye,v 1.17 2006/11/24 22:04:23 wiz Exp $
 #
 # Device majors for mmeye
 #
@@ -48,5 +48,5 @@ device-major	ksyms		char 55			ksyms
 device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.

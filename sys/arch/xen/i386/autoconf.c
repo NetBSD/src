@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2006/10/01 21:36:11 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2006/11/24 22:04:24 wiz Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2006/10/01 21:36:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2006/11/24 22:04:24 wiz Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -530,7 +530,7 @@ device_register(struct device *dev, void *aux)
 {
 	/*
 	 * Handle network interfaces here, the attachment information is
-	 * not available driver independantly later.
+	 * not available driver independently later.
 	 * For disks, there is nothing useful available at attach time.
 	 */
 #if NXENNET_HYPERVISOR > 0 || NXENNET_XENBUS > 0

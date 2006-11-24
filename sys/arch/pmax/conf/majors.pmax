@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pmax,v 1.17 2006/07/29 19:10:57 ad Exp $
+#	$NetBSD: majors.pmax,v 1.18 2006/11/24 22:04:24 wiz Exp $
 #
 # Device majors for pmax
 #
@@ -55,5 +55,5 @@ device-major	ksyms		char 105		ksyms
 device-major	nsmb		char 106		nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.

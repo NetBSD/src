@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.5 2006/10/24 21:09:03 bjh21 Exp $	*/
+/*	$NetBSD: viper_machdep.c,v 1.6 2006/11/24 22:04:22 wiz Exp $	*/
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.5 2006/10/24 21:09:03 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.6 2006/11/24 22:04:22 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -457,7 +457,7 @@ initarm(void *arg)
 	printf("initarm: Configuring system ...\n");
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
-	/* XXX must make the memory description h/w independant */
+	/* XXX must make the memory description h/w independent */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = MEMSTART;
 	bootconfig.dram[0].pages = MEMSIZE / PAGE_SIZE;

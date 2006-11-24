@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.62 2006/06/28 18:10:13 he Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.63 2006/11/24 22:04:23 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.62 2006/06/28 18:10:13 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.63 2006/11/24 22:04:23 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -474,7 +474,7 @@ initarm(void *arg)
 	}
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
-	/* XXX must make the memory description h/w independant */
+	/* XXX must make the memory description h/w independent */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = 0;
 	bootconfig.dram[0].pages = nwbootinfo.bi_nrpages;

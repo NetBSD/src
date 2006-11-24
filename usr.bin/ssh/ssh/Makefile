@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2006/05/12 03:52:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.27 2006/11/24 22:04:25 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ MLINKS=	ssh.1 slogin.1
 
 .if (${USE_KERBEROS} != "no")
 
-# this is not entirely true, libgssapi might be independant of krb5
+# this is not entirely true, libgssapi might be independent of krb5
 SRCS +=	gss-genr.c
 LDADD+=	-lgssapi
 DPADD+=	${LIBGSSAPI}
