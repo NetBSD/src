@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.29 2006/11/24 00:01:17 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.30 2006/11/24 00:03:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #define	_HISTEDIT_H_
 
 #define	LIBEDIT_MAJOR 2
-#define	LIBEDIT_MINOR 9
+#define	LIBEDIT_MINOR 10
 
 #include <sys/types.h>
 #include <stdio.h>
