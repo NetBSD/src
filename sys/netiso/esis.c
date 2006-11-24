@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.33 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: esis.c,v 1.33.4.1 2006/11/24 21:46:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.33 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.33.4.1 2006/11/24 21:46:07 bouyer Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -1105,6 +1105,16 @@ isis_output(struct mbuf *m, ...)
 	va_start(ap, m);
 	sdl = va_arg(ap, struct sockaddr_dl *);
 	va_end(ap);
+
+	/* we assume here we have a sockaddr_dl ... check it */
+	if (sdl->sdl_family != AF_LINK) {
+		error = EINVAL;
+		goto release;
+	}
+	if (sdl->sdl_len < 8 + sdl->sdl_nlen + sdl->sdl_alen + sdl->sdl_slen) {
+		error = EINVAL;
+		goto release;
+	}
 
 	ifa = ifa_ifwithnet((struct sockaddr *) sdl);	/* get ifp from sdl */
 	if (ifa == 0) {
