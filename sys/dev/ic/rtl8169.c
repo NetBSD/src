@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.69 2006/11/22 14:32:28 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.70 2006/11/24 16:30:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1212,6 +1212,23 @@ re_rxeof(struct rtk_softc *sc)
 			rxstat >>= 1;
 
 		if ((rxstat & RE_RDESC_STAT_RXERRSUM) != 0) {
+#ifdef RE_DEBUG
+			aprint_error("%s: RX error (rxstat = 0x%08x)",
+			    sc->sc_dev.dv_xname, rxstat);
+			if (rxstat & RE_RDESC_STAT_FRALIGN)
+				aprint_error(", frame alignment error");
+			if (rxstat & RE_RDESC_STAT_BUFOFLOW)
+				aprint_error(", out of buffer space");
+			if (rxstat & RE_RDESC_STAT_FIFOOFLOW)
+				aprint_error(", FIFO overrun");
+			if (rxstat & RE_RDESC_STAT_GIANT)
+				aprint_error(", giant packet");
+			if (rxstat & RE_RDESC_STAT_RUNT)
+				aprint_error(", runt packet");
+			if (rxstat & RE_RDESC_STAT_CRCERR)
+				aprint_error(", CRC error");
+			aprint_error("\n");
+#endif
 			ifp->if_ierrors++;
 			/*
 			 * If this is part of a multi-fragment packet,
@@ -1857,16 +1874,16 @@ re_init(struct ifnet *ifp)
 	if (sc->re_testmode) {
 		if (sc->rtk_type == RTK_8169)
 			CSR_WRITE_4(sc, RTK_TXCFG,
-			    RTK_TXCFG_CONFIG | RTK_LOOPTEST_ON);
+			    RE_TXCFG_CONFIG | RTK_LOOPTEST_ON);
 		else
 			CSR_WRITE_4(sc, RTK_TXCFG,
-			    RTK_TXCFG_CONFIG | RTK_LOOPTEST_ON_CPLUS);
+			    RE_TXCFG_CONFIG | RTK_LOOPTEST_ON_CPLUS);
 	} else
-		CSR_WRITE_4(sc, RTK_TXCFG, RTK_TXCFG_CONFIG);
+		CSR_WRITE_4(sc, RTK_TXCFG, RE_TXCFG_CONFIG);
 
 	CSR_WRITE_1(sc, RTK_EARLY_TX_THRESH, 16);
 
-	CSR_WRITE_4(sc, RTK_RXCFG, RTK_RXCFG_CONFIG);
+	CSR_WRITE_4(sc, RTK_RXCFG, RE_RXCFG_CONFIG);
 
 	/* Set the individual bit to receive frames for this host only. */
 	rxcfg = CSR_READ_4(sc, RTK_RXCFG);

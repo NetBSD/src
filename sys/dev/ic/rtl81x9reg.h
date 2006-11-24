@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.24 2006/11/18 07:22:06 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.25 2006/11/24 16:30:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -432,6 +432,12 @@
 #define RTK_RXCFG_CONFIG 	(RTK_RX_FIFOTHRESH|RTK_RX_MAXDMA|RTK_RX_BUF_SZ)
 #define RTK_TXCFG_CONFIG	(RTK_TXCFG_IFG|RTK_TX_MAXDMA)
 
+#define RE_RX_FIFOTHRESH	RTK_RXFIFO_NOTHRESH
+#define RE_RX_MAXDMA		RTK_RXDMA_UNLIMITED
+#define RE_TX_MAXDMA		RTK_TXDMA_2048BYTES
+
+#define RE_RXCFG_CONFIG		(RE_RX_FIFOTHRESH|RE_RX_MAXDMA|RTK_RX_BUF_SZ)
+#define RE_TXCFG_CONFIG		(RTK_TXCFG_IFG|RE_TX_MAXDMA)
 
 /*
  * RX/TX descriptor definition. When large send mode is enabled, the
