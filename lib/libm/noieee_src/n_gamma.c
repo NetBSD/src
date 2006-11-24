@@ -1,4 +1,4 @@
-/*      $NetBSD: n_gamma.c,v 1.5 2003/08/07 16:44:51 agc Exp $ */
+/*      $NetBSD: n_gamma.c,v 1.6 2006/11/24 21:15:54 wiz Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@ static char sccsid[] = "@(#)gamma.c	8.1 (Berkeley) 6/4/93";
 /*
  * This code by P. McIlroy, Oct 1992;
  *
- * The financial support of UUNET Communications Services is greatfully
+ * The financial support of UUNET Communications Services is gratefully
  * acknowledged.
  */
 
