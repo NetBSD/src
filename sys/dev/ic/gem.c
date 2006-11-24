@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.50 2006/11/24 13:01:07 martin Exp $ */
+/*	$NetBSD: gem.c,v 1.51 2006/11/24 13:05:29 martin Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.50 2006/11/24 13:01:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.51 2006/11/24 13:05:29 martin Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -523,7 +523,7 @@ gem_reset(sc)
 	int s;
 
 	s = splnet();
-	DPRINTF(("%s: gem_reset\n", sc->sc_dev.dv_xname));
+	DPRINTF(sc, ("%s: gem_reset\n", sc->sc_dev.dv_xname));
 	gem_reset_rx(sc);
 	gem_reset_tx(sc);
 
