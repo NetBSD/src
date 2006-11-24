@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.980 2006/11/23 04:07:07 rpaulo Exp $
+#	$NetBSD: mi,v 1.981 2006/11/24 10:58:58 he Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -6187,7 +6187,7 @@
 ./usr/share/man/cat3/vswscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vsyslog.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vsyslog_r.0		comp-c-catman		.cat
-./usr/share/man/cat3/vsyslog_ss.0		comp-obsolete		obsoletec-catman		.cat
+./usr/share/man/cat3/vsyslog_ss.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/vtimes.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/vwarn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vwarnx.0			comp-c-catman		.cat
@@ -10292,7 +10292,7 @@
 ./usr/share/man/man3/sysexits.3			comp-c-man		.man
 ./usr/share/man/man3/syslog.3			comp-c-man		.man
 ./usr/share/man/man3/syslog_r.3			comp-c-man		.man
-./usr/share/man/man3/syslog_ss.3		comp-obsolete		obsoletec-man		.man
+./usr/share/man/man3/syslog_ss.3		comp-obsolete		obsolete
 ./usr/share/man/man3/system.3			comp-c-man		.man
 ./usr/share/man/man3/t_freent.3			comp-c-man		.man
 ./usr/share/man/man3/t_getent.3			comp-c-man		.man
@@ -10441,7 +10441,7 @@
 ./usr/share/man/man3/vswscanf.3			comp-c-man		.man
 ./usr/share/man/man3/vsyslog.3			comp-c-man		.man
 ./usr/share/man/man3/vsyslog_r.3		comp-c-man		.man
-./usr/share/man/man3/vsyslog_ss.3		comp-obsolete		obsoletec-man		.man
+./usr/share/man/man3/vsyslog_ss.3		comp-obsolete		obsolete
 ./usr/share/man/man3/vtimes.3			comp-obsolete		obsolete
 ./usr/share/man/man3/vwarn.3			comp-c-man		.man
 ./usr/share/man/man3/vwarnx.3			comp-c-man		.man
