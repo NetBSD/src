@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.17 2006/03/22 15:24:52 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.18 2006/11/24 21:14:55 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.17 2006/03/22 15:24:52 christos Exp $");
+__RCSID("$NetBSD: update.c,v 1.18 2006/11/24 21:14:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ update(int dummy __attribute__((__unused__)))
 		}
 		if (pp->altitude > 9)
 			/* "this is impossible" */
-			loser(pp, "exceded flight ceiling.");
+			loser(pp, "exceeded flight ceiling.");
 		if (pp->altitude <= 0) {
 			for (i = 0; i < sp->num_airports; i++)
 				if (pp->xpos == sp->airport[i].x &&
