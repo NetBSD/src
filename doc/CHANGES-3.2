@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.18 2006/11/22 22:24:56 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.19 2006/11/24 21:48:53 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2139,4 +2139,18 @@ gnu/dist/postfix/conf/master.cf			1.14
 
 	Postfix: change pickup(8) to fifo.
 	[tron, ticket #1592]
+
+games/banner/banner.c				1.16 via patch
+
+	Check that -w width is not above maximum. (It already checks for zero
+	or negative.) Using width above DWIDTH may cause overflow as noted by
+	Gruzicki Wlodek on bugtraq.
+	While here replace one use of 132 with DWIDTH.
+	[reed, ticket #1591]
+
+sys/netiso/esis.c				1.42
+
+	Check parameters to avoid potential panic root user.
+	Patch checked by chopps@.
+	[is, ticket #1593]
 
