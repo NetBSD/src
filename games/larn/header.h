@@ -1,4 +1,4 @@
-/* $NetBSD: header.h,v 1.15 2005/02/03 02:23:02 perry Exp $	 */
+/* $NetBSD: header.h,v 1.16 2006/11/24 22:52:16 wiz Exp $	 */
 
 /* header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
@@ -18,7 +18,7 @@
 #define MAXMONST 56
 /* maximum # monsters in the dungeon	 */
 #define SPNUM 38
-/* maximum number of spells in existance	 */
+/* maximum number of spells in existence	 */
 #define MAXSCROLL 28
 /* maximum number of scrolls that are possible	 */
 #define MAXPOTION 35
