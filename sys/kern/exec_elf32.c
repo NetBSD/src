@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.119 2006/11/22 02:02:51 elad Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.120 2006/11/24 01:13:11 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.119 2006/11/22 02:02:51 elad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.120 2006/11/24 01:13:11 elad Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -690,6 +690,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		case PT_INTERP:
 			/* Already did this one. */
 		case PT_DYNAMIC:
+			break;
 		case PT_NOTE:
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
 			pax_adjust(l, ph[i].p_flags);
