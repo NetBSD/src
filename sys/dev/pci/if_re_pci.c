@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.20 2006/11/18 15:58:50 tsutsui Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.21 2006/11/24 19:38:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -41,7 +41,7 @@
  * Senior Networking Software Engineer
  * Wind River Systems
  *
- * Netbsd bus-specific frontends for written by
+ * NetBSD bus-specific frontends for written by
  * Jonathan Stone <jonathan@netbsd.org>
  */
 
