@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcmips,v 1.24 2005/12/11 12:17:33 christos Exp $
+#	$NetBSD: majors.hpcmips,v 1.25 2006/11/24 22:04:22 wiz Exp $
 #
 # Device majors for hpcmips
 #
@@ -66,5 +66,5 @@ device-major	ses		char 103		ses
 device-major	nsmb		char 104		nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.
