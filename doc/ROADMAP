@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.10 2006/09/05 00:43:44 rpaulo Exp $
+#	$NetBSD: ROADMAP,v 1.11 2006/11/24 20:02:15 perry Exp $
 
 A high-level roadmap for NetBSD
 
@@ -122,7 +122,7 @@ ag. Generic device hotplug support
 	ETA: ?
 
 ah. Suspend and resume support
-    We should be able to fully utilize suspend and resume on PCs, macppc,
+    We should be able to fully use suspend and resume on PCs, macppc,
     and anyone else who supports it in hardware (sparc, hpcsh, hpcarm, etc).
 	Responsible: TBD
 	ETA: ?
@@ -135,7 +135,7 @@ ai. Complete support for LWPs
 
 aj. PTHREAD_CONCURRENCY > 1 support
     A single process that uses threads should be able to reliably
-    utilize more than one CPU.
+    use more than one CPU.
 	Responsible: TBD
 	ETA: ?
 
@@ -209,7 +209,7 @@ au. More modern drivers
 	ETA: ?
 
 av. iSCSI initiator support
-    We should be able to utilize iSCSI volumes.
+    We should be able to use iSCSI volumes.
 	Responsible: agc
 	ETA: 5.0?
 
