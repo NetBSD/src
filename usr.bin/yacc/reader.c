@@ -1,4 +1,4 @@
-/*	$NetBSD: reader.c,v 1.16 2006/05/24 18:06:58 christos Exp $	*/
+/*	$NetBSD: reader.c,v 1.17 2006/11/24 19:47:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reader.c	5.7 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: reader.c,v 1.16 2006/05/24 18:06:58 christos Exp $");
+__RCSID("$NetBSD: reader.c,v 1.17 2006/11/24 19:47:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: reader.c,v 1.16 2006/05/24 18:06:58 christos Exp $");
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
 /*  Note that if a line exceeds LINESIZE characters, the line buffer	*/
-/*  will be expanded to accomodate it.					*/
+/*  will be expanded to accommodate it.					*/
 
 #define LINESIZE 100
 

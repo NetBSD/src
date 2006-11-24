@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.20 2005/11/28 03:26:07 christos Exp $	*/
+/*	$NetBSD: pac.c,v 1.21 2006/11/24 19:47:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pac.c,v 1.20 2005/11/28 03:26:07 christos Exp $");
+__RCSID("$NetBSD: pac.c,v 1.21 2006/11/24 19:47:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,7 +196,7 @@ main(int argc, char *const argv[])
  * Read the entire accounting file, accumulating statistics
  * for the users that we have in the hash table.  If allflag
  * is set, then just gather the facts on everyone.
- * Note that we must accomodate both the active and summary file
+ * Note that we must accommodate both the active and summary file
  * formats here.
  * Format of accounting file is
  *	feet_per_page	[runs_count] [hostname:]username

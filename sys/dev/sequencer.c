@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.37 2006/11/16 01:32:45 christos Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.38 2006/11/24 19:46:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.37 2006/11/16 01:32:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.38 2006/11/24 19:46:59 christos Exp $");
 
 #include "sequencer.h"
 
@@ -1305,7 +1305,7 @@ midiseq_loadpatch(struct midi_dev *md,
 		for(i = 0; i < cc && !MIDI_IS_STATUS(bf[i]); i++)
 			;
 		/*
-		 * XXX midi(4)'s buffer might not accomodate this, and the
+		 * XXX midi(4)'s buffer might not accommodate this, and the
 		 * function will not block us (though in this case we have
 		 * a process and could in principle block).
 		 */

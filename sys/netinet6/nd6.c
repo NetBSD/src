@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.108 2006/11/20 04:34:16 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.109 2006/11/24 19:47:00 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.108 2006/11/20 04:34:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.109 2006/11/24 19:47:00 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -363,7 +363,7 @@ nd6_options(ndopts)
 		default:
 			/*
 			 * Unknown options must be silently ignored,
-			 * to accomodate future extension to the protocol.
+			 * to accommodate future extension to the protocol.
 			 */
 			nd6log((LOG_DEBUG,
 			    "nd6_options: unsupported option %d - "

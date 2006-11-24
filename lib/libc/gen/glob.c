@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.16 2006/03/26 18:11:22 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.17 2006/11/24 19:46:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.16 2006/03/26 18:11:22 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.17 2006/11/24 19:46:58 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -772,7 +772,7 @@ glob3(pathbuf, pathend, pathlim, pattern, restpattern, pglob, limit)
 
 
 /*
- * Extend the gl_pathv member of a glob_t structure to accomodate a new item,
+ * Extend the gl_pathv member of a glob_t structure to accommodate a new item,
  * add the new item, and update gl_pathc.
  *
  * This assumes the BSD realloc, which only copies the block when its size
