@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.6 2006/11/20 14:57:05 ghen Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.7 2006/11/24 21:48:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -72,4 +72,18 @@ sys/dev/ata/wd.c				1.334
 
 	Yet another broken seagate drive: ST3160811A.
 	[bouyer, ticket #1583]
+
+games/banner/banner.c				1.16 via patch
+
+	Check that -w width is not above maximum. (It already checks for zero
+	or negative.) Using width above DWIDTH may cause overflow as noted by
+	Gruzicki Wlodek on bugtraq.
+	While here replace one use of 132 with DWIDTH.
+	[reed, ticket #1591]
+
+sys/netiso/esis.c				1.42
+
+	Check parameters to avoid potential panic root user.
+	Patch checked by chopps@.
+	[is, ticket #1593]
 
