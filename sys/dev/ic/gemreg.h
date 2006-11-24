@@ -1,4 +1,4 @@
-/*	$NetBSD: gemreg.h,v 1.8 2005/12/11 12:21:26 christos Exp $ */
+/*	$NetBSD: gemreg.h,v 1.9 2006/11/24 13:01:07 martin Exp $ */
 
 /*
  *
@@ -34,6 +34,11 @@
 
 /* Register definitions for Sun GEM gigabit ethernet */
 
+/*
+ * First bank: this registers live at the start of the PCI
+ * mapping, and at the start of the second bank of the SBUS
+ * version.
+ */
 #define	GEM_SEB_STATE		0x0000	/* SEB state reg, R/O */
 #define	GEM_CONFIG		0x0004	/* config reg */
 #define	GEM_STATUS		0x000c	/* status reg */
@@ -41,18 +46,30 @@
 #define	GEM_INTMASK		0x0010
 #define	GEM_INTACK		0x0014	/* Interrupt acknowledge, W/O */
 #define	GEM_STATUS_ALIAS	0x001c
+
+/*
+ * Second bank: this registers live at offset 0x1000 of the PCI
+ * mapping, and at the start of the first bank of the SBUS
+ * version.
+ */
+#define GEM_PCI_BANK2_OFFSET	0x1000
+#define GEM_PCI_BANK2_SIZE	0x14
 /* This is the same as the GEM_STATUS reg but reading it does not clear bits. */
-#define	GEM_ERROR_STATUS	0x1000	/* PCI error status R/C */
-#define	GEM_ERROR_MASK		0x1004
-#define	GEM_BIF_CONFIG		0x1008	/* BIF config reg */
-#define	GEM_BIF_DIAG		0x100c
-#define	GEM_RESET		0x1010	/* Software reset register */
+#define	GEM_ERROR_STATUS	0x0000	/* PCI error status R/C */
+#define	GEM_ERROR_MASK		0x0004
+#define GEM_SBUS_CONFIG		0x0004
+#define	GEM_BIF_CONFIG		0x0008	/* BIF config reg */
+#define	GEM_BIF_DIAG		0x000c
+#define	GEM_RESET		0x0010	/* Software reset register */
 
 
 /* Bits in GEM_SEB register */
 #define	GEM_SEB_ARB		0x000000002	/* Arbitration status */
 #define	GEM_SEB_RXWON		0x000000004
 
+/* Bits in GEM_SBUS_CONFIG register */
+#define GEM_SBUS_CFG_BMODE64	0x00000008
+#define GEM_SBUS_CFG_PARITY	0x00000200
 
 /* Bits in GEM_CONFIG register */
 #define	GEM_CONFIG_BURST_64	0x000000000	/* 0->infinity, 1->64KB */
