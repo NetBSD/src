@@ -1,4 +1,4 @@
-#	$NetBSD: majors.shark,v 1.20 2005/12/11 12:19:02 christos Exp $
+#	$NetBSD: majors.shark,v 1.21 2006/11/24 22:04:24 wiz Exp $
 #
 # Device majors for shark
 #
@@ -65,5 +65,5 @@ device-major	ksyms		char 86			ksyms
 device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.

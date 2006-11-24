@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.9 2006/10/24 21:09:03 bjh21 Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.10 2006/11/24 22:04:22 wiz Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -530,7 +530,7 @@ initarm(void *arg)
 	printf("initarm: Configuring system ...\n");
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
-	/* XXX must make the memory description h/w independant */
+	/* XXX must make the memory description h/w independent */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = memstart;
 	bootconfig.dram[0].pages = memsize / PAGE_SIZE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.126 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: isa.c,v 1.127 2006/11/24 22:04:25 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.126 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.127 2006/11/24 22:04:25 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ isarescan(struct device *self, const char *ifattr, const int *locators)
 	memcpy(locs, locators, sizeof(locs));
 
 	/*
-	 * XXX Bus independant code calling this function does not
+	 * XXX Bus independent code calling this function does not
 	 * know the locator default values. It assumes "-1" for now.
 	 * (should be made available by "config" one day)
 	 * So fixup where the "-1" is not correct.

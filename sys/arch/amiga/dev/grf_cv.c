@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.41 2006/08/03 20:24:57 mhitch Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.42 2006/11/24 22:04:21 wiz Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.41 2006/08/03 20:24:57 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.42 2006/11/24 22:04:21 wiz Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -1233,7 +1233,7 @@ cv_load_mon(struct grf_softc *gp, struct grfcvtext_mode *md)
 	/* turn gfx off, don't mess up the display */
 	gfx_on_off(1, ba);
 
-	/* provide all needed information in grf device-independant locations */
+	/* provide all needed information in grf device-independent locations */
 	gp->g_data		= (caddr_t) gv;
 	gi = &gp->g_display;
 	gi->gd_colors		= 1 << gv->depth;
