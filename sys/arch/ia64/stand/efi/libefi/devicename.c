@@ -1,4 +1,4 @@
-/*	$NetBSD: devicename.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: devicename.c,v 1.3 2006/11/24 19:38:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -136,7 +136,7 @@ efi_parsedev(struct efi_devdesc **dev, const char *devspec, const char **path)
 				np = cp + 1;
 				slice = strtol(np, &cp, 10);
 				if (cp == np) {
-					err = EPART;   /* XXX : Netbsd calls a FreeBSD SLICE, a Partition! */
+					err = EPART;   /* XXX : NetBSD calls a FreeBSD SLICE, a Partition! */
 					goto fail;
 				}
 			}
