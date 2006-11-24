@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.30 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.31 2006/11/24 22:52:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.30 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.31 2006/11/24 22:52:16 wiz Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
@@ -409,7 +409,7 @@ ck_label(dl, cdl)
 }
 
 /*
- * Check volume for the existance of an AHDI label. Fetch
+ * Check volume for the existence of an AHDI label. Fetch
  * NetBSD label from NBD or RAW partition, or otherwise
  * create a fake NetBSD label based on the AHDI label.
  *

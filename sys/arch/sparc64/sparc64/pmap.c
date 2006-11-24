@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.183 2006/10/24 21:11:58 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.184 2006/11/24 22:52:16 wiz Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183 2006/10/24 21:11:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184 2006/11/24 22:52:16 wiz Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2246,7 +2246,7 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)
 }
 
 /*
- * Determine (non)existance of physical page
+ * Determine (non)existence of physical page
  */
 int
 pmap_pa_exists(paddr_t pa)
