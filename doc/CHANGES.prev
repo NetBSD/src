@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.47 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.48 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -1095,7 +1095,7 @@ Changes from NetBSD 0.9 to NetBSD 1.0:
 	tty subsystem VMIN/VTIME implimentation from Marc Teitelbaum
 		<marc@vangogh.cs.berkeley.edu> (deraadt)
 	multicast patches added.
-		Original code by Steve Mccanne and LBL. Netbsd patches
+		Original code by Steve Mccanne and LBL. NetBSD patches
 		from Chris Maeda <cmaeda@cs.washington.edu> (hpeyerl)
 	add files I'd forgotten earlier.  reminders from Brad Parker
 		<brad@fcr.com> and Havard Eidnes
