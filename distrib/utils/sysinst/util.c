@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.146 2006/10/23 19:45:56 he Exp $	*/
+/*	$NetBSD: util.c,v 1.147 2006/11/24 00:53:47 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -154,17 +154,21 @@ init_set_status(int minimal)
 	static const uint8_t sets_selected_full[] = {MD_SETS_SELECTED};
 	static const uint8_t sets_selected_minimal[] = {MD_SETS_SELECTED_MINIMAL};
 	static const uint8_t *sets_selected;
+	int nelem_selected;
 	unsigned int i, len;
 	const char *longest;
 
-	if (minimal)
+	if (minimal) {
 		sets_selected = sets_selected_minimal;
-	else
+		nelem_selected = nelem(sets_selected_minimal);
+	} else {
 		sets_selected = sets_selected_full;
+		nelem_selected = nelem(sets_selected_full);
+	}
 
 	for (i = 0; i < nelem(sets_valid); i++)
 		set_status[sets_valid[i]] = SET_VALID;
-	for (i = 0; i < nelem(sets_selected); i++)
+	for (i = 0; i < nelem_selected; i++)
 		set_status[sets_selected[i]] |= SET_SELECTED;
 
 	set_status[SET_GROUP] = SET_VALID;
