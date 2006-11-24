@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.83 2005/11/16 03:00:23 uwe Exp $ */
+/*	$NetBSD: iommu.c,v 1.84 2006/11/24 19:46:58 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.83 2005/11/16 03:00:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.84 2006/11/24 19:46:58 christos Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -762,7 +762,7 @@ iommu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	/*
 	 * In case the segment has already been loaded by
 	 * iommu_dmamap_load_raw(), find a region of kernel virtual
-	 * addresses that can accomodate our aligment requirements.
+	 * addresses that can accommodate our aligment requirements.
 	 */
 	va = _bus_dma_valloc_skewed(size, 0, align,
 				    segs[0].ds_addr & (align - 1));

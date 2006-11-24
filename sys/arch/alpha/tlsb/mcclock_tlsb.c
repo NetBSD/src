@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_tlsb.c,v 1.10 2002/10/02 04:06:40 thorpej Exp $ */
+/* $NetBSD: mcclock_tlsb.c,v 1.11 2006/11/24 19:46:58 christos Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.10 2002/10/02 04:06:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.11 2006/11/24 19:46:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,7 +96,7 @@ mcclock_tlsb_attach(parent, self, aux)
 	struct mcclock_tlsb_softc *sc = (struct mcclock_tlsb_softc *)self;
 	struct gbus_attach_args *ga = aux;
 
-	/* XXX Should be bus.h'd, so we can accomodate the kn7aa. */
+	/* XXX Should be bus.h'd, so we can accommodate the kn7aa. */
 	sc->regbase = TLSB_GBUS_BASE + ga->ga_offset;
 
 	mcclock_attach(&sc->sc_mcclock, &mcclock_tlsb_busfns);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.192 2006/10/22 13:59:14 pooka Exp $ */
+/*	$NetBSD: machdep.c,v 1.193 2006/11/24 19:46:59 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2006/10/22 13:59:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2006/11/24 19:46:59 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1462,7 +1462,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	size = round_page(size);
 
 	/*
-	 * Find a region of kernel virtual addresses that can accomodate
+	 * Find a region of kernel virtual addresses that can accommodate
 	 * our aligment requirements.
 	 */
 	oversize = size + align - PAGE_SIZE;

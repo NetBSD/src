@@ -145,7 +145,7 @@ PAS-16, however, the registers are mapped to two sets of ports- four
 sequential ports at the base address and four sequential ports located
 0x2000 higher. As I currently understand it, this is not supportable by
 the current bus_space() implementation nor is it possible for the driver
-to allocate a second bus_space_tag and _handle itself to accomodate the
+to allocate a second bus_space_tag and _handle itself to accommodate the
 second set of ports. Without either, it is very difficult to imagine how
 a portable linkage to the MI driver could be made.
 

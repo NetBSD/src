@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.54 2006/07/27 18:29:01 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.55 2006/11/24 19:46:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1983, 1988, 1993
@@ -182,7 +182,7 @@ struct	protoent {
  * Note: ai_addrlen used to be a size_t, per RFC 2553.
  * In XNS5.2, and subsequently in POSIX-2001 and
  * draft-ietf-ipngwg-rfc2553bis-02.txt it was changed to a socklen_t.
- * To accomodate for this while preserving binary compatibility with the
+ * To accommodate for this while preserving binary compatibility with the
  * old interface, we prepend or append 32 bits of padding, depending on
  * the (LP64) architecture's endianness.
  *

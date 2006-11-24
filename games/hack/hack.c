@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.c,v 1.6 2003/04/02 18:36:35 jsm Exp $	*/
+/*	$NetBSD: hack.c,v 1.7 2006/11/24 19:46:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.c,v 1.6 2003/04/02 18:36:35 jsm Exp $");
+__RCSID("$NetBSD: hack.c,v 1.7 2006/11/24 19:46:58 christos Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -527,7 +527,7 @@ pickup(int all)
 			}
 	lift_some:
 			if (inv_cnt() >= 52) {
-				pline("Your knapsack cannot accomodate anymore items.");
+				pline("Your knapsack cannot accommodate anymore items.");
 				break;
 			}
 			if (wt > -5)

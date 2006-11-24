@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.61 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.62 2006/11/24 19:46:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.61 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.62 2006/11/24 19:46:59 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -1520,7 +1520,7 @@ success:
 /*
  * The message system:
  *
- * This is a revamped message system that now should easier accomodate
+ * This is a revamped message system that now should easier accommodate
  * new messages, if necessary.
  *
  * Currently we accept these messages:

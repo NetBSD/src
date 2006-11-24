@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.h,v 1.1 2006/10/07 07:21:13 gdamore Exp $ */
+/* $NetBSD: spiflash.h,v 1.2 2006/11/24 19:46:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -102,7 +102,7 @@
 #define	SPIFLASH_SR_SRP			0x80	/* SR write protected */
 
 /*
- * This needs to change to accomodate boot-sectored devices.
+ * This needs to change to accommodate boot-sectored devices.
  */
 
 typedef struct spiflash_softc *spiflash_handle_t;

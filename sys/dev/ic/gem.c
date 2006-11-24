@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.51 2006/11/24 13:05:29 martin Exp $ */
+/*	$NetBSD: gem.c,v 1.52 2006/11/24 19:46:59 christos Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.51 2006/11/24 13:05:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.52 2006/11/24 19:46:59 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -329,7 +329,7 @@ gem_attach(sc, enaddr)
 			 */
 			if (child->mii_phy > 1 || child->mii_inst > 1) {
 				aprint_error(
-				    "%s: cannot accomodate MII device %s"
+				    "%s: cannot accommodate MII device %s"
 				       " at phy %d, instance %d\n",
 				       sc->sc_dev.dv_xname,
 				       child->mii_dev.dv_xname,

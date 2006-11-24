@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.16 2006/11/16 01:33:49 christos Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.17 2006/11/24 19:47:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.16 2006/11/16 01:33:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.17 2006/11/24 19:47:00 christos Exp $");
 
 /*
  * IPsec output processing.
@@ -621,7 +621,7 @@ ipsec6_encapsulate(struct mbuf *m, struct secasvar *sav)
 
 
 	/*
-	 * grow the mbuf to accomodate the new IPv6 header.
+	 * grow the mbuf to accommodate the new IPv6 header.
 	 */
 	plen = m->m_pkthdr.len;
 	if (M_LEADINGSPACE(m->m_next) < sizeof(struct ip6_hdr)) {
