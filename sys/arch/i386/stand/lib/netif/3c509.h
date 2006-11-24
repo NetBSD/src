@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.h,v 1.5 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: 3c509.h,v 1.6 2006/11/24 22:52:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1993 Herb Peyerl
@@ -86,7 +86,7 @@
 /**************************************************************************
  *									  *
  * These define the EEPROM data structure.  They are used in the probe
- * function to verify the existance of the adapter after having sent
+ * function to verify the existence of the adapter after having sent
  * the ID_Sequence.
  *
  * There are others but only the ones we use are defined here.

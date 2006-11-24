@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.32 2006/09/23 17:38:42 sketch Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.33 2006/11/24 22:52:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000\n\
 Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.32 2006/09/23 17:38:42 sketch Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.33 2006/11/24 22:52:16 wiz Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -463,7 +463,7 @@ main(int argc, char *argv[])
 
 	/*
 	 * Move the temporary master password file LAST -- chpass(1),
-	 * passwd(1), vipw(8) and friends all use its existance to block
+	 * passwd(1), vipw(8) and friends all use its existence to block
 	 * other incarnations of themselves.  The rename means that
 	 * everything is unlocked, as the original file can no longer be
 	 * accessed.
