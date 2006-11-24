@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2006/11/23 22:41:10 uwe Exp $
+#	$NetBSD: Makefile,v 1.7 2006/11/24 01:48:57 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,19 @@ CCADDFLAGS=	-isystem ${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/li
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-gdb
 
+# Some configure tests require running a test program, which is not
+# possible when cross-building.  Provide configure with "cached"
+# values in the environment.
+MKNATIVE_CONFIGURE_PRESET= \
+	ac_cv_prog_cc_cross=yes \
+	ac_cv_func_fork_works=yes \
+	ac_cv_func_strcoll_works=yes \
+	bash_cv_func_ctype_nonascii=yes \
+	bash_cv_func_sigsetjmp=present \
+	bash_cv_func_strcoll_broken=no \
+	bash_cv_must_reinstall_sighandlers=no
+
+
 native-gdb: .native/.configure_done
 	@echo 'Extracting GDB configury for a native toolchain.'
 	MAKE=${MAKE:Q} ${HOST_SH} ${MKNATIVE} gdb \
@@ -38,15 +51,16 @@ native-gdb: .native/.configure_done
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
 			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
 			LIBS=-lintl \
-			ac_cv_prog_cc_cross=yes \
-			ac_cv_func_strcoll_works=yes \
+			${MKNATIVE_CONFIGURE_PRESET} \
 			${HOST_SH} ${GNUHOSTDIST}/configure \
 			--prefix=/usr \
 			--with-separate-debug-dir=/usr/libdata/debug \
 			--build=`${GNUHOSTDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM}) && \
-		(cd ${.OBJDIR}/.native && ${MAKE} configure-host) && \
+		(cd ${.OBJDIR}/.native && \
+			/usr/bin/env ${MKNATIVE_CONFIGURE_PRESET} \
+				${MAKE} configure-host) && \
 		(cd ${.OBJDIR}/.native/bfd && ${MAKE} bfd.h bfdver.h) && \
 		(cd ${.OBJDIR}/.native/gdb && ${MAKE} init.c version.c)
 	@touch $@
