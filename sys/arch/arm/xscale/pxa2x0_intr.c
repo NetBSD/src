@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.9 2006/04/10 03:36:03 simonb Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.10 2006/11/24 21:20:05 wiz Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.9 2006/04/10 03:36:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.10 2006/11/24 21:20:05 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ pxa2x0_update_intr_masks(int irqno, int level)
 		pxa2x0_imask[i] &= ~mask; /* Disable itnerrupt at upper level */
 
 	/*
-	 * Enforce a heirarchy that gives "slow" device (or devices with
+	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
