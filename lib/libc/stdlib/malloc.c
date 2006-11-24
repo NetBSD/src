@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.47 2006/10/08 16:25:15 elad Exp $	*/
+/*	$NetBSD: malloc.c,v 1.48 2006/11/24 19:37:02 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ void utrace(struct ut *, int);
 #   define UTRACE_LABEL "malloc",
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.47 2006/10/08 16:25:15 elad Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.48 2006/11/24 19:37:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #include <sys/types.h>
 int utrace(const char *, void *, size_t);
@@ -380,7 +380,7 @@ extend_pgdir(size_t idx)
     /*
      * NOTE: we allocate new pages and copy the directory rather than tempt
      * fate by trying to "grow" the region.. There is nothing to prevent
-     * us from accidently re-mapping space that's been allocated by our caller
+     * us from accidentally re-mapping space that's been allocated by our caller
      * via dlopen() or other mmap().
      *
      * The copy problem is not too bad, as there is 4K of page index per

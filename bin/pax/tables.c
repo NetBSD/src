@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.27 2006/04/24 19:00:29 snj Exp $	*/
+/*	$NetBSD: tables.c,v 1.28 2006/11/24 19:37:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.27 2006/04/24 19:00:29 snj Exp $");
+__RCSID("$NetBSD: tables.c,v 1.28 2006/11/24 19:37:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,7 @@ chk_lnk(ARCHD *arcn)
  * purg_lnk
  *	remove reference for a file that we may have added to the data base as
  *	a potential source for hard links. We ended up not using the file, so
- *	we do not want to accidently point another file at it later on.
+ *	we do not want to accidentally point another file at it later on.
  */
 
 void

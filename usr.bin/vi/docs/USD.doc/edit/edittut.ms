@@ -1,4 +1,4 @@
-.\"	$NetBSD: edittut.ms,v 1.7 2003/08/07 11:17:05 agc Exp $
+.\"	$NetBSD: edittut.ms,v 1.8 2006/11/24 19:37:03 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -798,7 +798,7 @@ In printing lines, edit uses a special notation to
 show the existence of non-printing characters.
 Suppose you had introduced the non-printing character ``control-A''
 into the word ``illustrate''
-by accidently pressing the \s-2CTRL\s0 key while
+by accidentally pressing the \s-2CTRL\s0 key while
 typing ``a''.
 This can happen on many terminals
 because the \s-2CTRL\s+2 key and the ``A'' key
@@ -2125,14 +2125,14 @@ meanings in ex, as described in the
 Ex Reference Manual.
 .R
 Another feature of the edit environment prevents users from
-accidently entering two alternative modes of editing,
+accidentally entering two alternative modes of editing,
 .I open
 and
 .I visual,
 in which
 the editor behaves quite differently from normal command mode.
 If you are using ex and you encounter strange behavior,
-you may have accidently entered open mode by typing ``o''.
+you may have accidentally entered open mode by typing ``o''.
 Type the \s-2ESC\s0 key and then a ``Q''
 to get out of open or visual mode and back into
 the regular editor command mode.
