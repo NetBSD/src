@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.23 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.24 2006/11/24 01:04:30 rpaulo Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.23 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.24 2006/11/24 01:04:30 rpaulo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -121,10 +121,6 @@ void	tapattach(int);
 static int	tap_match(struct device *, struct cfdata *, void *);
 static void	tap_attach(struct device *, struct device *, void *);
 static int	tap_detach(struct device*, int);
-
-/* Ethernet address helper functions */
-
-static int	tap_ether_aton(u_char *, char *);
 
 CFATTACH_DECL(tap, sizeof(struct tap_softc),
     tap_match, tap_attach, tap_detach, NULL);
@@ -1295,44 +1291,7 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	/* Commit change */
-	if (tap_ether_aton(LLADDR(ifp->if_sadl), addr) != 0)
+	if (ether_nonstatic_aton(LLADDR(ifp->if_sadl), addr) != 0)
 		return (EINVAL);
 	return (error);
-}
-
-/*
- * ether_aton implementation, not using a static buffer.
- */
-static int
-tap_ether_aton(u_char *dest, char *str)
-{
-	int i;
-	char *cp = str;
-	u_char val[6];
-
-#define	set_value			\
-	if (*cp > '9' && *cp < 'a')	\
-		*cp -= 'A' - 10;	\
-	else if (*cp > '9')		\
-		*cp -= 'a' - 10;	\
-	else				\
-		*cp -= '0'
-
-	for (i = 0; i < 6; i++, cp++) {
-		if (!isxdigit(*cp))
-			return (1);
-		set_value;
-		val[i] = *cp++;
-		if (isxdigit(*cp)) {
-			set_value;
-			val[i] *= 16;
-			val[i] += *cp++;
-		}
-		if (*cp == ':' || i == 5)
-			continue;
-		else
-			return (1);
-	}
-	memcpy(dest, val, 6);
-	return (0);
 }

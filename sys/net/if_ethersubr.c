@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.137 2006/11/23 04:07:07 rpaulo Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.138 2006/11/24 01:04:30 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.137 2006/11/23 04:07:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.138 2006/11/24 01:04:30 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1226,6 +1226,45 @@ const uint8_t ether_ip6multicast_min[ETHER_ADDR_LEN] =
 const uint8_t ether_ip6multicast_max[ETHER_ADDR_LEN] =
     { 0x33, 0x33, 0xff, 0xff, 0xff, 0xff };
 #endif
+
+/*
+ * ether_aton implementation, not using a static buffer.
+ */
+int
+ether_nonstatic_aton(u_char *dest, char *str)
+{
+        int i;
+        char *cp = str;
+        u_char val[6];
+
+#define set_value                       \
+        if (*cp > '9' && *cp < 'a')     \
+                *cp -= 'A' - 10;        \
+        else if (*cp > '9')             \
+                *cp -= 'a' - 10;        \
+        else                            \
+                *cp -= '0'
+
+        for (i = 0; i < 6; i++, cp++) {
+                if (!isxdigit(*cp))
+                        return (1);
+                set_value;
+                val[i] = *cp++;
+                if (isxdigit(*cp)) {
+                        set_value;
+                        val[i] *= 16;
+                        val[i] += *cp++;
+                }
+                if (*cp == ':' || i == 5)
+                        continue;
+                else
+                        return 1;
+        }
+        memcpy(dest, val, 6);
+
+        return 0;
+}
+
 
 /*
  * Convert a sockaddr into an Ethernet address or range of Ethernet

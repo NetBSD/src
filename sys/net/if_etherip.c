@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.2 2006/11/23 04:20:54 rpaulo Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.3 2006/11/24 01:04:30 rpaulo Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -702,7 +702,7 @@ etherip_sysctl_handler(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	/* Commit change */
-	if (ether_snprintf(addr, sizeof(addr), LLADDR(ifp->if_sadl)) != 0)
+	if (ether_nonstatic_aton(LLADDR(ifp->if_sadl), addr) != 0)
 		return EINVAL;
 
 	return error;
