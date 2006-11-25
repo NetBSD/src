@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.49 2006/11/25 11:59:55 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.50 2006/11/25 18:28:18 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.49 2006/11/25 11:59:55 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.50 2006/11/25 18:28:18 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ readdisklabel(dev, strat, lp, clp)
 
 	clp->rdblock = RDBNULL;
 	/*
-	 * give some guarnteed validity to
+	 * give some guaranteed validity to
 	 * the disklabel
 	 */
 	if (lp->d_secperunit == 0)
