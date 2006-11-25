@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.11 2006/09/22 17:45:21 xtraeme Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.12 2006/11/25 12:17:30 scw Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.11 2006/09/22 17:45:21 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.12 2006/11/25 12:17:30 scw Exp $");
 
 /*
  * kernel include files.
@@ -171,7 +171,7 @@ int
 pcbmap(dep, findcn, bnp, cnp, sp)
 	struct denode *dep;
 	u_long findcn;		/* file relative cluster to get		 */
-	daddr_t *bnp;		/* returned filesys relative blk number	 */
+	daddr_t *bnp;		/* returned filesys rel sector number	 */
 	u_long *cnp;		/* returned cluster number		 */
 	int *sp;		/* returned block size			 */
 {
@@ -260,7 +260,8 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 		if (bn != bp_bn) {
 			if (bp)
 				brelse(bp);
-			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
+			    NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -394,7 +395,13 @@ updatefats(pmp, bp, fatbn)
 				+ ffs(pmp->pm_inusemap[cn / N_INUSEBITS]
 				      ^ (u_int)-1) - 1;
 		}
-		if (bread(pmp->pm_devvp, pmp->pm_fsinfo, 1024, NOCRED, &bpn) != 0) {
+		/*
+		 * XXX  If the fsinfo block is stored on media with
+		 *      2KB or larger sectors, is the fsinfo structure
+		 *      padded at the end or in the middle?
+		 */
+		if (bread(pmp->pm_devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
+		    pmp->pm_BytesPerSec, NOCRED, &bpn) != 0) {
 			/*
 			 * Ignore the error, but turn off FSInfo update for the future.
 			 */
@@ -426,7 +433,8 @@ updatefats(pmp, bp, fatbn)
 		for (i = 1; i < pmp->pm_FATs; i++) {
 			fatbn += pmp->pm_FATsecs;
 			/* getblk() never fails */
-			bpn = getblk(pmp->pm_devvp, fatbn, bp->b_bcount, 0, 0);
+			bpn = getblk(pmp->pm_devvp, de_bn2kb(pmp, fatbn),
+			    bp->b_bcount, 0, 0);
 			memcpy(bpn->b_data, bp->b_data, bp->b_bcount);
 			if (pmp->pm_flags & MSDOSFSMNT_WAITONFAT)
 				bwrite(bpn);
@@ -575,7 +583,8 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 
 	byteoffset = FATOFS(pmp, cn);
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-	if ((error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp)) != 0) {
+	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
+	    &bp)) != 0) {
 		brelse(bp);
 		return (error);
 	}
@@ -658,7 +667,8 @@ fatchain(pmp, start, count, fillwith)
 	while (count > 0) {
 		byteoffset = FATOFS(pmp, start);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-		error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
+		    &bp);
 		if (error) {
 			brelse(bp);
 			return (error);
@@ -899,7 +909,8 @@ freeclusterchain(pmp, cluster)
 		if (lbn != bn) {
 			if (bp)
 				updatefats(pmp, bp, lbn);
-			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
+			    NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -973,7 +984,8 @@ fillinusemap(pmp)
 			if (bp)
 				brelse(bp);
 			fatblock(pmp, byteoffset, &bn, &bsize, NULL);
-			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
+			    NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -1102,8 +1114,9 @@ extendfile(dep, count, bpp, ncp, flags)
 		if ((flags & DE_CLEAR) &&
 		    (dep->de_Attributes & ATTR_DIRECTORY)) {
 			while (got-- > 0) {
-				bp = getblk(pmp->pm_devvp, cntobn(pmp, cn++),
-					    pmp->pm_bpcluster, 0, 0);
+				bp = getblk(pmp->pm_devvp,
+				    de_bn2kb(pmp, cntobn(pmp, cn++)),
+				    pmp->pm_bpcluster, 0, 0);
 				clrbuf(bp);
 				if (bpp) {
 					*bpp = bp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.33 2006/11/16 01:33:35 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.34 2006/11/25 12:17:30 scw Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.33 2006/11/16 01:33:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.34 2006/11/25 12:17:30 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -516,7 +516,7 @@ msdosfs_read(v)
 		if (diff < n)
 			n = (long) diff;
 
-		/* convert cluster # to block # */
+		/* convert cluster # to sector # */
 		error = pcbmap(dep, lbn, &lbn, 0, &blsize);
 		if (error)
 			return (error);
@@ -526,7 +526,8 @@ msdosfs_read(v)
 		 * do i/o with the vnode for the filesystem instead of the
 		 * vnode for the directory.
 		 */
-		error = bread(pmp->pm_devvp, lbn, blsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, lbn), blsize,
+		    NOCRED, &bp);
 		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {
 			brelse(bp);
@@ -651,9 +652,8 @@ msdosfs_write(v)
 		error = uiomove(win, bytelen, uio);
 		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 		ubc_release(win, flags);
-		if (error) {
+		if (error)
 			break;
-		}
 
 		/*
 		 * flush what we just wrote if necessary.
@@ -1120,8 +1120,8 @@ abortit:
 			panic("msdosfs_rename: updating .. in root directory?");
 		} else
 			bn = cntobn(pmp, cn);
-		error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster,
-			      NOCRED, &bp);
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
+		    pmp->pm_bpcluster, NOCRED, &bp);
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
 			brelse(bp);
@@ -1236,7 +1236,7 @@ msdosfs_mkdir(v)
 	 */
 	bn = cntobn(pmp, newcluster);
 	/* always succeeds */
-	bp = getblk(pmp->pm_devvp, bn, pmp->pm_bpcluster, 0, 0);
+	bp = getblk(pmp->pm_devvp, de_bn2kb(pmp, bn), pmp->pm_bpcluster, 0, 0);
 	memset(bp->b_data, 0, pmp->pm_bpcluster);
 	memcpy(bp->b_data, &dosdirtemplate, sizeof dosdirtemplate);
 	denp = (struct direntry *)bp->b_data;
@@ -1479,8 +1479,8 @@ msdosfs_readdir(v)
 	if (dep->de_StartCluster == MSDOSFSROOT
 	    || (FAT32(pmp) && dep->de_StartCluster == pmp->pm_rootdirblk)) {
 #if 0
-		printf("msdosfs_readdir(): going after . or .. in root dir, offset %d\n",
-		    offset);
+		printf("msdosfs_readdir(): going after . or .. in root dir, "
+		    "offset %" PRIu64 "\n", offset);
 #endif
 		bias = 2 * sizeof(struct direntry);
 		if (offset < bias) {
@@ -1534,7 +1534,8 @@ msdosfs_readdir(v)
 		n = MIN(n, diff);
 		if ((error = pcbmap(dep, lbn, &bn, &cn, &blsize)) != 0)
 			break;
-		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
+		    NOCRED, &bp);
 		if (error) {
 			brelse(bp);
 			return (error);
@@ -1696,6 +1697,7 @@ msdosfs_bmap(v)
 		int *a_runp;
 	} */ *ap = v;
 	struct denode *dep = VTODE(ap->a_vp);
+	int status;
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = dep->de_devvp;
@@ -1707,7 +1709,12 @@ msdosfs_bmap(v)
 		 */
 		*ap->a_runp = 0;
 	}
-	return (pcbmap(dep, ap->a_bn, ap->a_bnp, 0, 0));
+	status = pcbmap(dep, ap->a_bn, ap->a_bnp, 0, 0);
+	/*
+	 * We need to scale *ap->a_bnp by sector_size/DEV_BSIZE
+	 */
+	*ap->a_bnp = de_bn2kb(dep->de_pmp, *ap->a_bnp);
+	return status;
 }
 
 int
@@ -1738,6 +1745,8 @@ msdosfs_strategy(v)
 			bp->b_blkno = -1;
 		if (bp->b_blkno == -1)
 			clrbuf(bp);
+		else
+			bp->b_blkno = de_bn2kb(dep->de_pmp, bp->b_blkno);
 	}
 	if (bp->b_blkno == -1) {
 		biodone(bp);
