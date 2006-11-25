@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.953 2006/11/23 04:07:07 rpaulo Exp $
+# $NetBSD: mi,v 1.954 2006/11/25 17:43:47 elad Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1774,6 +1774,7 @@
 ./usr/share/man/cat8/badsect.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bebox/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/bebox/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/boot.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bootparamd.0		man-bootserver-catman	.cat
 ./usr/share/man/cat8/bootpd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/bootpef.0			man-bootserver-catman	.cat
@@ -4169,6 +4170,7 @@
 ./usr/share/man/man8/badsect.8			man-sysutil-man		.man
 ./usr/share/man/man8/bebox/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/bebox/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/boot.8			man-sysutil-man		.man
 ./usr/share/man/man8/bootparamd.8		man-bootserver-man	.man
 ./usr/share/man/man8/bootpd.8			man-bootserver-man	.man
 ./usr/share/man/man8/bootpef.8			man-bootserver-man	.man
