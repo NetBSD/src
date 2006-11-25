@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.95 2006/10/16 03:04:45 christos Exp $	*/
+/*	$NetBSD: newfs.c,v 1.96 2006/11/25 18:18:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.95 2006/10/16 03:04:45 christos Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.96 2006/11/25 18:18:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,6 +173,11 @@ const char lmsg[] = "%s: can't read disk label";
  * Default sector size.
  */
 #define	DFL_SECSIZE	512
+
+/*
+ * Default file system size for "mount_mfs swap /dir" case.
+ */
+#define	DFL_FSSIZE	(8 * 1024 * 1024)
 
 /*
  * MAXBLKPG determines the maximum number of data blocks which are
@@ -430,9 +435,13 @@ main(int argc, char *argv[])
 			sectorsize = DFL_SECSIZE;
 
 		if (mfs) {
-			/* Default filesystem size to that of supplied device */
+			/*
+			 * Default filesystem size to that of supplied device,
+			 * and fall back to 8M
+			 */
 			if (fssize == 0)
-				stat(special, &sb);
+				if (stat(special, &sb) == -1)
+					fssize = DFL_FSSIZE / sectorsize;
 		} else {
 			/* creating image in a regular file */
 			int fl;
