@@ -2477,7 +2477,7 @@ elf_create_pointer_linker_section (bfd *abfd,
 #ifdef DEBUG
   fprintf (stderr,
 	   "Create pointer in linker section %s, offset = %ld, section size = %ld\n",
-	   lsect->name, (long) linker_section_ptr->offset,
+	   lsect->section->name, (long) linker_section_ptr->offset,
 	   (long) lsect->section->size);
 #endif
 
@@ -2596,7 +2596,7 @@ elf_finish_pointer_linker_section (bfd *output_bfd,
 #ifdef DEBUG
   fprintf (stderr,
 	   "Finish pointer in linker section %s, offset = %ld (0x%lx)\n",
-	   lsect->name, (long) relocation, (long) relocation);
+	   lsect->section->name, (long) relocation, (long) relocation);
 #endif
 
   /* Subtract out the addend, because it will get added back in by the normal
