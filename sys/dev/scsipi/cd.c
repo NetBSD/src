@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.258 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.259 2006/11/25 12:03:38 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.258 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.259 2006/11/25 12:03:38 scw Exp $");
 
 #include "rnd.h"
 
@@ -1643,21 +1643,11 @@ cdgetdefaultlabel(struct cd_softc *cd, struct disklabel *lp)
 		lastsession = 0;
 
 	lp->d_partitions[0].p_offset = 0;
-#ifdef notyet /* have to fix bounds_check_with_label() first */
 	lp->d_partitions[0].p_size = lp->d_secperunit;
-#else
-	lp->d_partitions[0].p_size =
-	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
-#endif
 	lp->d_partitions[0].p_cdsession = lastsession;
 	lp->d_partitions[0].p_fstype = FS_ISO9660;
 	lp->d_partitions[RAW_PART].p_offset = 0;
-#ifdef notyet
 	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-#else
-	lp->d_partitions[RAW_PART].p_size =
-	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
-#endif
 	lp->d_partitions[RAW_PART].p_fstype = FS_ISO9660;
 	lp->d_npartitions = RAW_PART + 1;
 
@@ -2011,6 +2001,7 @@ cd_get_parms(struct cd_softc *cd, int flags)
 	 */
 	if (cd_size(cd, flags) == 0)
 		return (ENXIO);
+	disk_blocksize(&cd->sc_dk, cd->params.blksize);
 	return (0);
 }
 
