@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 2006/11/05 23:00:54 elad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24 2006/11/25 11:59:57 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23 2006/11/05 23:00:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24 2006/11/25 11:59:57 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,51 +188,4 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
  done:
 	brelse(bp);
 	return error;
-}
-
-/*
- * Determine the size of the transfer, and make sure it is
- * within the boundaries of the partition. Adjust transfer
- * if needed, and signal errors or early completion.
- */
-int
-bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
-{
-	struct disklabel *lp = dk->dk_label;
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	u_int labelsector = lp->d_partitions[RAW_PART].p_offset + LABELSECTOR;
-	int maxsz = p->p_size;
-	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
-
-	/* overwriting disk label ? */
-	/* XXX should also protect bootstrap in first 8K */
-	if (kauth_authorize_device_passthru(kauth_cred_get(), NODEV, NULL) &&
-	    bp->b_blkno + p->p_offset <= labelsector &&
-	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
-		bp->b_error = EROFS;
-		goto bad;
-	}
-
-	/* beyond partition? */
-	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-		/* if exactly at end of disk, return an EOF */
-		if (bp->b_blkno == maxsz) {
-			bp->b_resid = bp->b_bcount;
-			return 0;
-		}
-		/* or truncate if part of it fits */
-		sz = maxsz - bp->b_blkno;
-		if (sz <= 0) {
-			bp->b_error = EINVAL;
-			goto bad;
-		}
-		bp->b_bcount = sz << DEV_BSHIFT;
-	}
-
-	/* calculate cylinder for disksort to order transfers with */
-	bp->b_resid = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
-	return 1;
- bad:
-	bp->b_flags |= B_ERROR;
-	return -1;
 }

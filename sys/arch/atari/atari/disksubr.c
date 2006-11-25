@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.31 2006/11/24 22:52:16 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32 2006/11/25 11:59:56 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.31 2006/11/24 22:52:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2006/11/25 11:59:56 scw Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
@@ -64,67 +64,6 @@ static int   ahdi_label __P((dev_t, void (*)(struct buf *),
 static void  ahdi_to_bsd __P((struct disklabel *, struct ahdi_ptbl *));
 static u_int ahdi_getparts __P((dev_t, void (*)(struct buf *), u_int,
 					u_int, u_int, struct ahdi_ptbl *));
-
-/*
- * Determine the size of the transfer, and make sure it is
- * within the boundaries of the partition. Adjust transfer
- * if needed, and signal errors or early completion.
- */
-int
-bounds_check_with_label(dk, bp, wlabel)
-	struct disk		*dk;
-	struct buf		*bp;
-	int			wlabel;
-{
-	struct disklabel	*lp = dk->dk_label;
-	struct partition	*pp;
-	u_int			maxsz, sz;
-
-	pp = &lp->d_partitions[DISKPART(bp->b_dev)];
-	if (bp->b_flags & B_RAW) {
-		if (bp->b_bcount & (lp->d_secsize - 1)) {
-			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
-			return(-1);
-		}
-		if (lp->d_secsize < DEV_BSIZE)
-			maxsz = pp->p_size / (DEV_BSIZE / lp->d_secsize);
-		else maxsz = pp->p_size * (lp->d_secsize / DEV_BSIZE);
-		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
-	} else {
-		maxsz = pp->p_size;
-		sz = (bp->b_bcount + lp->d_secsize - 1) / lp->d_secsize;
-	}
-
-	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-		if (bp->b_blkno == maxsz) {
-			/* 
-			 * trying to get one block beyond return EOF.
-			 */
-			bp->b_resid = bp->b_bcount;
-			return(0);
-		}
-		if (bp->b_blkno > maxsz || bp->b_blkno < 0) {
-			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
-			return(-1);
-		}
-		sz = maxsz - bp->b_blkno;
-
-		/* 
-		 * adjust count down
-		 */
-		if (bp->b_flags & B_RAW)
-			bp->b_bcount = sz << DEV_BSHIFT;
-		else bp->b_bcount = sz * lp->d_secsize;
-	}
-
-	/*
-	 * calc cylinder for disksort to order transfers with
-	 */
-	bp->b_cylinder = (bp->b_blkno + pp->p_offset) / lp->d_secpercyl;
-	return(1);
-}
 
 /*
  * Attempt to read a disk label from a device using the
