@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.24 2005/12/26 19:48:12 perry Exp $
+.\"	$NetBSD: disk.9,v 1.25 2006/11/25 12:00:25 scw Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 14, 2005
+.Dd November 25, 2006
 .Dt DISK 9
 .Os
 .Sh NAME
@@ -40,7 +40,8 @@
 .Nm disk_busy ,
 .Nm disk_unbusy ,
 .Nm disk_find ,
-.Nm disk_resetstat
+.Nm disk_resetstat ,
+.Nm disk_blocksize
 .Nd generic disk framework
 .Sh SYNOPSIS
 .In sys/types.h
@@ -58,6 +59,8 @@
 .Fn disk_resetstat "struct disk *"
 .Ft struct disk *
 .Fn disk_find "char *"
+.Ft void
+.Fn disk_blocksize "struct disk *" "int blocksize"
 .Sh DESCRIPTION
 The
 .Nx
@@ -151,6 +154,16 @@ Reset the running byte, transfer, and time totals.
 .It Fn disk_find
 Return a pointer to the disk structure corresponding to the name provided,
 or NULL if the disk does not exist.
+.It Fn disk_blocksize
+Initialize
+.Fa dk_blkshift
+and
+.Fa dk_byteshift
+members of
+.Fa struct disk
+with suitable values derived from the supplied physical blocksize.
+It is only necessary to call this function if the device's physical blocksize
+is not DEV_BSIZE.
 .El
 .Pp
 The functions typically called by device drivers are
@@ -158,8 +171,9 @@ The functions typically called by device drivers are
 .Fn disk_detach ,
 .Fn disk_busy ,
 .Fn disk_unbusy ,
+.Fn disk_resetstat ,
 and
-.Fn disk_resetstat .
+.Fn disk_blocksize .
 The function
 .Fn disk_find
 is provided as a utility function.
@@ -219,6 +233,7 @@ fooattach(parent, self, aux)
 
 	/* Read geometry and fill in pertinent parts of disklabel. */
 	[ . . . ]
+	disk_blocksize(\*[Am]sc-\*[Gt]sc_dk, bytes_per_sector);
 }
 .Ed
 .Pp
