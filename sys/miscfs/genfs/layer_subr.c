@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.19 2006/11/24 22:52:16 wiz Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.20 2006/11/25 22:14:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.19 2006/11/24 22:52:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.20 2006/11/25 22:14:38 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,6 +264,7 @@ layer_node_alloc(mp, lowervp, vpp)
 		vp->v_type = VBAD;		/* node is discarded */
 		vp->v_op = dead_vnodeop_p;	/* so ops will still work */
 		vrele(vp);			/* get rid of it. */
+		simple_unlock(&lmp->layerm_hashlock);
 		return (error);
 	}
 	/*
