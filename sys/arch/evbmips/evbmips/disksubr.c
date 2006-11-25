@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.10 2006/11/25 11:59:56 scw Exp $ */
+/* $NetBSD: disksubr.c,v 1.11 2006/11/25 13:09:14 scw Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.10 2006/11/25 11:59:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.11 2006/11/25 13:09:14 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		lp->d_secperunit = 0x1fffffff;
 	lp->d_npartitions = RAW_PART + 1;
 	if (lp->d_partitions[RAW_PART].p_size == 0)
-		lp->d_partitions[RAW_PART].p_size =
-		    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_partitions[RAW_PART].p_offset = 0;
 
 	/* obtain buffer to probe drive with */
