@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.58 2006/09/24 13:39:36 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.59 2006/11/25 15:12:02 tsutsui Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -471,6 +471,25 @@ is not found.
 .
 .El
 .
+.Ss Nx Ns Tn /macppc files
+.
+.Bl -tag -width /usr/mdec/bootxx_ustarfs
+.
+.It Pa /usr/mdec/bootxx
+.Nx Ns Tn /macppc
+primary bootstrap.
+.
+.It Pa /usr/mdec/ofwboot
+.Nx Ns Tn /macppc
+secondary bootstrap.
+.
+.It Pa /ofwboot
+Installed copy of
+.Nx Ns Tn /macppc
+secondary bootstrap.
+.
+.El
+.
 .Ss Nx Ns Tn /next68k files
 .
 .Bl -tag -width /usr/mdec/bootxx_ustarfs
@@ -606,6 +625,26 @@ disklabel on
 for the primary bootstrap to function correctly.
 .Ed
 .
+.Ss Nx Ns Tn /macppc
+Note the
+.Nm
+utility is only required for macppc machines with OpenFirmware version 2
+to boot. OpenFirmware 3 can only load bootloader from HFS partitions.
+.Pp
+Install the Berkeley Fast File System primary bootstrap on to disk
+.Sq wd0 :
+.Dl Ic installboot /dev/rwd0c /usr/mdec/bootxx /ofwboot
+.Pp
+The secondary
+.Nx Ns Tn /macppc
+bootstrap is located in
+.Pa /usr/mdec/ofwboot .
+.Pp
+The primary bootstrap requires raw
+.Pa ofwboot
+for the secondary bootstrap, not
+.Pa ofwboot.xcf ,
+which is used for the OpenFirmware to load kernels.
 .Ss Nx Ns Tn /next68k
 Install the bootstrap on to disk
 .Sq sd0 :
@@ -742,6 +781,22 @@ The size of primary bootstrap programs is restricted to 8KB, even
 though some file systems (e.g., ISO 9660) are able to accommodate larger
 ones.
 .
+.Ss Nx Ns Tn /macppc
+Due to restriction of current
+.Nm
+and secondary bootstrap implementation, file system where kernels exist
+must start at the beginning of disks.
+.Pp
+Current
+.Nm
+doesn't recognize existing Apple partition map on the disk
+and always overwrites a faked map to make disks bootable.
+.Pp
+The
+.Nx Ns Tn /macppc
+bootstrap program can't load kernels from
+.Sy FFSv2
+partitions.
 .Ss Nx Ns Tn /next68k
 The size of bootstrap programs is restricted to the free space before
 the file system at the beginning of the disk minus 8KB.
