@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.30 2006/03/09 18:07:31 wiz Exp $
+.\"	$NetBSD: install,v 1.31 2006/11/25 22:53:34 mishka Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -182,7 +182,7 @@ All three of these media types use the same initial image:
 The image can be written to a hard drive partition with a command
 like:
 .Pp
-.Dl # Ic "dd if=cdhdtape bs=16k of=/dev/rsd0c"
+.Dl # Ic "dd if=cdhdtape of=/dev/rsd0c bs=16k"
 .Pp
 To boot from a magnetic tape device such as
 .Tn DAT
@@ -192,7 +192,7 @@ it is important
 to create the tape image with 512-byte records.
 Use a command like:
 .Pp
-.Dl # Ic "dd if=cdhdtape bs=512 of=/dev/rst0"
+.Dl # Ic "dd if=cdhdtape of=/dev/rst0 bs=512 conv=osync"
 .Pp
 If the host system is not
 .Nx ,

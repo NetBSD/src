@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.50 2003/07/26 17:07:18 salo Exp $
+.\"	$NetBSD: install,v 1.51 2006/11/25 22:53:35 mishka Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,7 +94,7 @@ or SunOS the commands are:
 .Pp
 .(disp
 .No # Ic "gunzip miniroot.fs.gz"
-.No # Ic "dd if=miniroot.fs of=/dev/rsd0b bs=4k conv=sync"
+.No # Ic "dd if=miniroot.fs of=/dev/rsd0b bs=4k"
 .disp)
 .Pp
 Here,
@@ -237,7 +237,7 @@ Insert the first floppy and run the following commands:
 Insert the second floppy and run the following commands:
 .Pp
 .(disp
-.No # Ic "dd if=disk2 of=/dev/rfd0a bs=36k conv=sync"
+.No # Ic "dd if=disk2 of=/dev/rfd0a bs=36k"
 .No # Ic "eject floppy"
 .disp)
 .Pp
@@ -338,8 +338,8 @@ Run the following commands:
 .(disp
 .No # Ic "gunzip tapefile1.gz"
 .No # Ic "mt -f /dev/nrst0 rew"
-.No # Ic "dd if=tapefile1 of=/dev/nrst0 bs=4k"
-.No # Ic "dd if=tapefile2 of=/dev/nrst0 bs=4k"
+.No # Ic "dd if=tapefile1 of=/dev/nrst0 bs=4k conv=osync"
+.No # Ic "dd if=tapefile2 of=/dev/nrst0 bs=4k conv=osync"
 .disp)
 .Pp
 Now you can transfer the
@@ -348,7 +348,7 @@ distribution sets from
 .Pq Pa binary/sets
 to the tape by using a series of additional
 .(disp
-.No # Ic "dd if=\*<aset\*>.tgz of=/dev/nrst0 bs=4k"
+.No # Ic "dd if=\*<aset\*>.tgz of=/dev/nrst0 bs=4k conv=osync"
 .disp)
 commands.
 See also the section
