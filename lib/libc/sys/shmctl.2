@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmctl.2,v 1.16 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: shmctl.2,v 1.17 2006/11/25 21:40:05 christos Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -113,6 +113,15 @@ Only the super-user or a process with an effective uid equal to the
 or
 .Va shm_perm.uid
 values in the data structure associated with the queue can do this.
+.It Dv SHM_LOCK
+Lock the shared memory segment specified by
+.Fa shmid
+in memory.
+This operation can only be executed by the super-user.
+.It Dv SHM_UNLOCK
+Unlock the shared memory segment=A0specified by
+.Fa shmid .
+This operation can only be executed by the super-user.
 .El
 .Pp
 The read and write permissions on a shared memory identifier
@@ -157,6 +166,10 @@ An attempt was made to increase the value of
 through
 .Dv IPC_SET
 but the caller is not the super-user.
+.Pp
+The
+.Fa cmd
+is equal to SHM_LOCK or SHM_UNLOCK and the caller is not the super-user.
 .It Bq Er EACCES
 The command is
 .Dv IPC_STAT
@@ -170,6 +183,10 @@ is not a valid command.
 .It Bq Er EFAULT
 .Fa buf
 specifies an invalid address.
+.It Bq Er ENOMEM
+The
+.Fa cmd
+is equal to SHM_LOCK and there is not enough physical memory.
 .El
 .Sh SEE ALSO
 .Xr ipcrm 1 ,

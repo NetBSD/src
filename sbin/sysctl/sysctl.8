@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.155 2006/11/22 02:02:52 elad Exp $
+.\"	$NetBSD: sysctl.8,v 1.156 2006/11/25 21:40:05 christos Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd November 22, 2006
+.Dd November 25, 2006
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -363,10 +363,15 @@ privilege can change the value.
 .It kern.securelevel	integer	raise only
 .It kern.somaxkva	integer	yes
 .It kern.synchronized_io	integer	no
-.It kern.sysvipc_info	struct	no
-.It kern.sysvmsg	integer	no
-.It kern.sysvsem	integer	no
-.It kern.sysvshm	integer	no
+.It kern.ipc.sysvipc_info	struct	no
+.It kern.ipc.sysvmsg	integer	no
+.It kern.ipc.sysvsem	integer	no
+.It kern.ipc.sysvshm	integer	no
+.It kern.ipc.shmmax	integer	no
+.It kern.ipc.shmmni	integer	yes
+.It kern.ipc.shmseg	integer	yes
+.It kern.ipc.shmmaxpgs	integer	yes
+.It kern.ipc.shm_use_phys	integer	yes
 .It kern.timecounter.choice	string	no
 .It kern.timecounter.hardware	string	yes
 .It kern.timecounter.timestepwarnings	integer	yes
