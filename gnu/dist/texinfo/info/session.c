@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.2 2004/07/13 18:30:49 he Exp $	*/
+/*	$NetBSD: session.c,v 1.3 2006/11/25 10:02:53 jnemeth Exp $	*/
 
 /* session.c -- user windowing interface to Info.
    Id: session.c,v 1.11 2004/04/06 22:58:25 karl Exp
@@ -1961,7 +1961,7 @@ DECLARE_INFO_COMMAND (info_menu_digit, _("Select this menu item"))
 
   /* Special case.  Item "0" is the last item in this menu. */
   if (item == 0)
-    for (i = 0; menu[i + 1]; i++);
+    for (i = 0; (entry = menu[i]) && menu[i + 1]; i++);
   else
     {
       for (i = 0; (entry = menu[i]); i++)
