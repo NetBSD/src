@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.52 2006/04/20 01:10:23 uwe Exp $
+.\"	$NetBSD: xfer,v 1.53 2006/11/25 21:07:32 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@ machine available to allow net booting.
 .if \n[i386] \{\
 If you are not booting off a CD-ROM, you will need to have some floppy
 disks to boot off;
-either two 1.44 MB floppies or one 1.2 MB floppy.
+either three 1.44 MB floppies or one 1.2 MB floppy.
 .Pp
 For laptops that have cardbus slots, you should use the
 .Pa bootlap1.fs
