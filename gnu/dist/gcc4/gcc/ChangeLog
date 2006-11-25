@@ -1,3 +1,13 @@
+2006-11-23  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	* pa.c (return_addr_rtx): Change 0xe0400002 to -532676606.
+
+2006-11-19  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	PR target/29114
+	* pa.c (emit_move_sequence): Don't split constants with PLUS for modes
+	larger than BITS_PER_WORD.
+
 2006-10-19  Eric Botcazou  <ebotcazou@adacore.com>
 
 	* fold-const.c (add_double): Rename to add_double_with_sign.
