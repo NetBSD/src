@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.16 2006/11/16 01:33:35 christos Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.17 2006/11/25 12:17:30 scw Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.16 2006/11/16 01:33:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.17 2006/11/25 12:17:30 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -456,8 +456,8 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred,
 	if ((boff = length & pmp->pm_crbomask) != 0) {
 		if (isadir) {
 			bn = cntobn(pmp, eofentry);
-			error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster,
-			    NOCRED, &bp);
+			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
+			    pmp->pm_bpcluster, NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 #ifdef MSDOSFS_DEBUG
