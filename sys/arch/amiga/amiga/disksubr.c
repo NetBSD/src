@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.50 2006/11/25 18:28:18 mhitch Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.51 2006/11/25 18:45:03 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.50 2006/11/25 18:28:18 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.51 2006/11/25 18:45:03 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,17 +155,18 @@ readdisklabel(dev, strat, lp, clp)
 		lp->d_secpercyl = 0x1fffffff;
 	lp->d_npartitions = RAW_PART + 1;
 
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		clp->pbindex[i] = -1;
-		clp->pblist[i] = RDBNULL;
-		if (i == RAW_PART)
-			continue;
-		lp->d_partitions[i].p_size = 0;
-		lp->d_partitions[i].p_offset = 0;
-	}
 	if (lp->d_partitions[RAW_PART].p_size == 0)
 		lp->d_partitions[RAW_PART].p_size = 0x1fffffff;
 	lp->d_partitions[RAW_PART].p_offset = 0;
+	/* if no 'a' partition, default it to copy of 'c' as BSDFFS */
+	if (lp->d_partitions[0].p_size == 0) {
+		lp->d_partitions[0].p_size = lp->d_partitions[RAW_PART].p_size;
+		lp->d_partitions[0].p_offset = 0;
+		lp->d_partitions[0].p_fstype = FS_BSDFFS;
+		lp->d_partitions[0].p_fsize = 1024;
+		lp->d_partitions[0].p_frag = 8;
+		lp->d_partitions[0].p_cpg = 0;
+	}
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
@@ -219,6 +220,16 @@ readdisklabel(dev, strat, lp, clp)
 		msg = NULL;
 	}
 	clp->rdblock = nextb;
+
+	/* RDB present, clear disklabel partition table before doing PART blks */
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		clp->pbindex[i] = -1;
+		clp->pblist[i] = RDBNULL;
+		if (i == RAW_PART)
+			continue;
+		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
+	}
 
 	lp->d_secsize = rbp->nbytes;
 	lp->d_nsectors = rbp->nsectors;
