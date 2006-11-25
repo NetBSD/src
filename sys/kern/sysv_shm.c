@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.91 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.92 2006/11/25 21:40:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,13 +68,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.91 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.92 2006/11/25 21:40:05 christos Exp $");
 
 #define SYSVSHM
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/shm.h>
+#include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -112,7 +113,8 @@ struct shmmap_entry {
 	int shmid;
 };
 
-static int	shm_last_free, shm_committed;
+struct simplelock shm_slock;
+static int	shm_last_free, shm_committed, shm_use_phys;
 
 static POOL_INIT(shmmap_entry_pool, sizeof(struct shmmap_entry), 0, 0, 0,
     "shmmp", &pool_allocator_nointr);
@@ -133,6 +135,7 @@ static int shmget_allocate_segment(struct lwp *, struct sys_shmget_args *,
 				   int, register_t *);
 static struct shmmap_state *shmmap_getprivate(struct proc *);
 static struct shmmap_entry *shm_find_mapping(struct shmmap_state *, vaddr_t);
+static int shmrealloc(int);
 
 static int
 shm_find_segment_by_key(key_t key)
@@ -353,10 +356,20 @@ sys_shmat(struct lwp *l, void *v, register_t *retval)
 	error = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
 	    uobj, 0, 0,
 	    UVM_MAPFLAG(prot, prot, UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
-	if (error) {
-		(*uobj->pgops->pgo_detach)(uobj);
-		return error;
+	if (error)
+		goto out;
+	/* Lock the memory */
+	if (shm_use_phys || (shmseg->shm_perm.mode & SHMSEG_WIRED)) {
+		/* Wire the map */
+		error = uvm_map_pageable(&p->p_vmspace->vm_map, attach_va,
+		    attach_va + size, FALSE, 0);
+		if (error) {
+			if (error == EFAULT)
+				error = ENOMEM;
+			goto out;
+		}
 	}
+
 	shmmap_se = pool_get(&shmmap_entry_pool, PR_WAITOK);
 	shmmap_se->va = attach_va;
 	shmmap_se->shmid = SCARG(uap, shmid);
@@ -372,6 +385,9 @@ sys_shmat(struct lwp *l, void *v, register_t *retval)
 
 	retval[0] = attach_va;
 	return 0;
+out:
+	(*uobj->pgops->pgo_detach)(uobj);
+	return error;
 }
 
 int
@@ -406,12 +422,17 @@ int
 shmctl1(struct lwp *l, int shmid, int cmd, struct shmid_ds *shmbuf)
 {
 	kauth_cred_t cred = l->l_cred;
+ 	struct proc *p = l->l_proc;
 	struct shmid_ds *shmseg;
+	struct shmmap_entry *shmmap_se;
+	struct shmmap_state *shmmap_s;
 	int error = 0;
+	size_t size;
 
 	shmseg = shm_find_segment_by_shmid(shmid);
 	if (shmseg == NULL)
 		return EINVAL;
+
 	switch (cmd) {
 	case IPC_STAT:
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_R)) != 0)
@@ -440,6 +461,59 @@ shmctl1(struct lwp *l, int shmid, int cmd, struct shmid_ds *shmbuf)
 		break;
 	case SHM_LOCK:
 	case SHM_UNLOCK:
+		if ((error = kauth_authorize_generic(cred,
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+			return error;
+		shmmap_s = shmmap_getprivate(p);
+		/* Find our shared memory address by shmid */
+		SLIST_FOREACH(shmmap_se, &shmmap_s->entries, next) {
+			if (shmmap_se->shmid != shmid)
+				continue;
+
+			size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
+
+			if (cmd == SHM_LOCK &&
+			    !(shmseg->shm_perm.mode & SHMSEG_WIRED)) {
+				/* Wire the entire object */
+				error = uobj_wirepages(shmseg->_shm_internal, 0,
+					round_page(shmseg->shm_segsz));
+				if (error)
+					return EIO;
+				/* Wire the map */
+				error = uvm_map_pageable(&p->p_vmspace->vm_map,
+				    shmmap_se->va, shmmap_se->va + size, FALSE,
+				    0);
+				if (error) {
+					uobj_unwirepages(shmseg->_shm_internal,
+					    0, round_page(shmseg->shm_segsz));
+					if (error == EFAULT)
+						error = ENOMEM;
+					return error;
+				}
+				/* Tag as wired */
+				shmseg->shm_perm.mode |= SHMSEG_WIRED;
+
+			} else if (cmd == SHM_UNLOCK &&
+			    (shmseg->shm_perm.mode & SHMSEG_WIRED)) {
+				/* Unwire the object */
+				uobj_unwirepages(shmseg->_shm_internal, 0,
+				    round_page(shmseg->shm_segsz));
+				error = uvm_map_pageable(&p->p_vmspace->vm_map,
+				    shmmap_se->va, shmmap_se->va + size, TRUE,
+				    0);
+				if (error) {
+					/*
+					 * In fact, uvm_map_pageable could fail
+					 * only if arguments are invalid,
+					 * otherwise it should allways return 0.
+					 */
+					return EIO;
+				}
+				/* Tag as unwired */
+				shmseg->shm_perm.mode &= ~SHMSEG_WIRED;
+			}
+		}
+		break;
 	default:
 		return EINVAL;
 	}
@@ -539,6 +613,20 @@ shmget_allocate_segment(struct lwp *l, struct sys_shmget_args *uap, int mode,
 		shmseg->shm_perm.mode &= ~SHMSEG_WANTED;
 		wakeup((caddr_t)shmseg);
 	}
+
+	/* Lock the memory */
+	if (shm_use_phys) {
+		/* Wire the entire object */
+		error = uobj_wirepages(shmseg->_shm_internal, 0,
+		    round_page(shmseg->shm_segsz));
+		if (error) {
+			shm_deallocate_segment(shmseg);
+		} else {
+			/* Tag as wired */
+			shmseg->shm_perm.mode |= SHMSEG_WIRED;
+		}
+	}
+
 	return error;
 }
 
@@ -631,11 +719,54 @@ shmexit(struct vmspace *vm)
 	free(shmmap_s, M_SHM);
 }
 
+static int
+shmrealloc(int newshmni)
+{
+	int i, sz;
+	vaddr_t v;
+	struct shmid_ds *newshmsegs;
+
+	/* XXX: Would be good to have a upper limit */
+	if (newshmni < 1)
+		return EINVAL;
+
+	/* We can't reallocate lesser memory than we use */
+	if (shm_nused > newshmni)
+		return EPERM;
+
+	/* Allocate new memory area */
+	sz = newshmni * sizeof(struct shmid_ds);
+	v = uvm_km_alloc(kernel_map, round_page(sz), 0, UVM_KMF_WIRED);
+	if (v == 0)
+		return ENOMEM;
+
+	newshmsegs = (void *)v;
+
+	/* Copy all memory to the new area */
+	for (i = 0; i < shm_nused; i++)
+		(void)memcpy(&newshmsegs[i], &shmsegs[i],
+		    sizeof(newshmsegs[0]));
+
+	/* Mark as free all new segments, if there is any */
+	for (; i < newshmni; i++) {
+		newshmsegs[i].shm_perm.mode = SHMSEG_FREE;
+		newshmsegs[i].shm_perm._seq = 0;
+	}
+
+	sz = shminfo.shmmni * sizeof(struct shmid_ds);
+	uvm_km_free(kernel_map, (vaddr_t)shmsegs, sz, UVM_KMF_WIRED);
+	shmsegs = newshmsegs;
+
+	return 0;
+}
+
 void
 shminit(void)
 {
 	int i, sz;
 	vaddr_t v;
+
+	simple_lock_init(&shm_slock);
 
 	/* Allocate pageable memory for our structures */
 	sz = shminfo.shmmni * sizeof(struct shmid_ds);
@@ -653,4 +784,99 @@ shminit(void)
 	shm_last_free = 0;
 	shm_nused = 0;
 	shm_committed = 0;
+}
+
+static int
+sysctl_ipc_shmmni(SYSCTLFN_ARGS)
+{
+	int newsize, error;
+	struct sysctlnode node;
+	node = *rnode;
+	node.sysctl_data = &newsize;
+
+	newsize = shminfo.shmmni;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	simple_lock(&shm_slock);
+	error = shmrealloc(newsize);
+	if (error == 0)
+		shminfo.shmmni = newsize;
+	simple_unlock(&shm_slock);
+
+	return error;
+}
+
+static int
+sysctl_ipc_shmmaxpgs(SYSCTLFN_ARGS)
+{
+	int newsize, error;
+	struct sysctlnode node;
+	node = *rnode;
+	node.sysctl_data = &newsize;
+	newsize = shminfo.shmall;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	/* XXX: Would be good to have a upper limit */
+	if (newsize < 1)
+		return EINVAL;
+
+	shminfo.shmall = newsize;
+	shminfo.shmmax = shminfo.shmall * PAGE_SIZE;
+
+	return 0;
+}
+
+SYSCTL_SETUP(sysctl_ipc_shm_setup, "sysctl kern.ipc subtree setup")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "kern", NULL,
+		NULL, 0, NULL, 0,
+		CTL_KERN, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "ipc",
+		SYSCTL_DESCR("SysV IPC options"),
+		NULL, 0, NULL, 0,
+		CTL_KERN, KERN_SYSVIPC, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READONLY,
+		CTLTYPE_INT, "shmmax",
+		SYSCTL_DESCR("Max shared memory segment size in bytes"),
+		NULL, 0, &shminfo.shmmax, 0,
+		CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SHMMAX, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "shmmni",
+		SYSCTL_DESCR("Max number of shared memory identifiers"),
+		sysctl_ipc_shmmni, 0, &shminfo.shmmni, 0,
+		CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SHMMNI, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "shmseg",
+		SYSCTL_DESCR("Max shared memory segments per process"),
+		NULL, 0, &shminfo.shmseg, 0,
+		CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SHMSEG, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "shmmaxpgs",
+		SYSCTL_DESCR("Max amount of shared memory in pages"),
+		sysctl_ipc_shmmaxpgs, 0, &shminfo.shmall, 0,
+		CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SHMMAXPGS, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "shm_use_phys",
+		SYSCTL_DESCR("Enable/disable locking of shared memory in "
+		    "physical memory"), NULL, 0, &shm_use_phys, 0,
+		CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SHMUSEPHYS, CTL_EOL);
 }

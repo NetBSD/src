@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.21 2004/11/10 04:46:01 lukem Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.22 2006/11/25 21:40:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.21 2004/11/10 04:46:01 lukem Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.22 2006/11/25 21:40:04 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,7 +74,7 @@ sysconf(name)
 {
 	struct rlimit rl;
 	size_t len;
-	int mib[2], value;
+	int mib[3], value;
 	struct clockinfo tmpclock;
 	static int clk_tck;
 
@@ -282,8 +282,13 @@ sysconf(name)
 		break;
 	case _SC_XOPEN_SHM:
 		mib[0] = CTL_KERN;
-		mib[1] = KERN_SYSVSHM;
-		goto yesno;
+		mib[1] = KERN_SYSVIPC;
+		mib[2] = KERN_SYSVIPC_SHM;
+		if (sysctl(mib, 3, &value, &len, NULL, 0) == -1)
+			return (-1);
+		if (value == 0)
+			return (-1);
+		return (0);
 
 /* 1003.1-2001, XSI Option Group */
 	case _SC_ATEXIT_MAX:

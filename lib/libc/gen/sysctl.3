@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.189 2006/11/23 17:24:36 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.190 2006/11/25 21:40:05 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd November 23, 2006
+.Dd November 25, 2006
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -469,10 +469,7 @@ information.
 .It KERN\_SAVED\_IDS	integer	no
 .It KERN\_SECURELVL	integer	raise only
 .It KERN\_SYNCHRONIZED\_IO	integer	no
-.It KERN\_SYSVIPC\_INFO	node	not applicable
-.It KERN\_SYSVMSG	integer	no
-.It KERN\_SYSVSEM	integer	no
-.It KERN\_SYSVSHM	integer	no
+.It KERN\_SYSVIPC	node	not applicable
 .It KERN\_TIMEX	struct	no
 .It KERN\_TKSTAT	node	not applicable
 .It KERN\_URANDOM	integer	no
@@ -862,11 +859,39 @@ Maximum amount of kernel memory to be used for socket buffers.
 Returns 1 if the POSIX 1003.1b Synchronized I/O Option is available
 on this system,
 otherwise 0.
+.It Li KERN_SYSVIPC
+Return information about the SysV IPC parameters. The third
+level names for the ipc variables are detailed below.
+.Bl -column "KERN_SYSVIPC_MSGXXX" "integerXXX" "noXXX" -offset indent
+.It Sy Third level name		Type		Changeable
+.It KERN\_SYSVIPC\_MSG		integer		no
+.It KERN\_SYSVIPC\_SEM		integer		no
+.It KERN\_SYSVIPC\_SHM		integer		no
+.It KERN\_SYSVIPC\_INFO		struct		no
+.It KERN\_SYSVIPC\_SHMMAX		integer		no
+.It KERN\_SYSVIPC\_SHMMNI		integer		yes
+.It KERN\_SYSVIPC\_SHMSEG		integer		yes
+.It KERN\_SYSVIPC\_SHMMAXPGS		integer		yes
+.It KERN\_SYSVIPC\_SHMUSEPHYS	integer		yes
+.El
+.Bl -tag -width "123456"
+.It Li KERN_SYSVIPC_MSG
+Returns 1 if System V style message queue functionality is available
+on this system,
+otherwise 0.
+.It Li KERN_SYSVIPC_SEM
+Returns 1 if System V style semaphore functionality is available
+on this system,
+otherwise 0.
+.It Li KERN_SYSVIPC_SHM
+Returns 1 if System V style share memory functionality is available
+on this system,
+otherwise 0.
 .It Li KERN_SYSVIPC_INFO
 Return System V style IPC configuration and run-time information.
 The third level name selects the System V style IPC facility.
 .Bl -column "KERN_SYSVIPC_MSG_INFOXXX" "struct shm_sysctl_infoXXX" -offset indent
-.It Sy Third level name	Type
+.It Sy Fourth level name	Type
 .It KERN\_SYSVIPC\_MSG\_INFO	struct msg_sysctl_info
 .It KERN\_SYSVIPC\_SEM\_INFO	struct sem_sysctl_info
 .It KERN\_SYSVIPC\_SHM\_INFO	struct shm_sysctl_info
@@ -892,18 +917,18 @@ The
 structure is defined in
 .Aq Pa sys/shm.h .
 .El
-.It Li KERN_SYSVMSG
-Returns 1 if System V style message queue functionality is available
-on this system,
-otherwise 0.
-.It Li KERN_SYSVSEM
-Returns 1 if System V style semaphore functionality is available
-on this system,
-otherwise 0.
-.It Li KERN_SYSVSHM
-Returns 1 if System V style share memory functionality is available
-on this system,
-otherwise 0.
+.It Li KERN_SYSVIPC_SHMMAX
+Max shared memory segment size in bytes.
+.It Li KERN_SYSVIPC_SHMMNI
+Max number of shared memory identifiers.
+.It Li KERN_SYSVIPC_SHMSEG
+Max shared memory segments per process.
+.It Li KERN_SYSVIPC_SHMMAXPGS
+Max amount of shared memory in pages.
+.It Li KERN_SYSVIPC_SHMUSEPHYS
+Locking of shared memory in physical memory. If 0, memory can be swaped
+out, otherwise it will be locked in physical memory.
+.El
 .It Li KERN_TIMEX
 Not available.
 .It Li KERN_TKSTAT
