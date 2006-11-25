@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.171 2006/09/22 22:29:25 elad Exp $	*/
+/*	$NetBSD: fetch.c,v 1.172 2006/11/25 16:48:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.171 2006/09/22 22:29:25 elad Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.172 2006/11/25 16:48:32 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -112,7 +112,7 @@ static int	redirect_loop;
  * Determine if token is the next word in buf (case insensitive).
  * If so, advance buf past the token and any trailing LWS, and
  * return a pointer to the token (in buf).  Otherwise, return NULL.
- * token may be preceeded by LWS.
+ * token may be preceded by LWS.
  * token must be followed by LWS or NUL.  (I.e, don't partial match).
  */
 static const char *
