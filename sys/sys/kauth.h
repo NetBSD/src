@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.22 2006/11/22 13:59:27 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.23 2006/11/25 20:50:20 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -215,6 +215,9 @@ enum kauth_device_req {
 
 #define NOCRED ((kauth_cred_t)-1)	/* no credential available */
 #define FSCRED ((kauth_cred_t)-2)	/* filesystem credential */
+
+/* Macro to help passing arguments to authorization wrappers. */
+#define	KAUTH_ARG(arg)	((void *)(unsigned long)(arg))
 
 /*
  * Prototypes.
