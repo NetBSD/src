@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.41 2006/10/26 13:54:46 thorpej Exp $	*/
+/*	$NetBSD: disk.h,v 1.42 2006/11/25 11:59:58 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -490,6 +490,9 @@ struct disk_strategy {
 	size_t dks_paramlen;		/* notyet; should be 0 */
 };
 
+#define	DK_BSIZE2BLKSHIFT(b)	((ffs((b) / DEV_BSIZE)) - 1)
+#define	DK_BSIZE2BYTESHIFT(b)	(ffs((b)) - 1)
+
 #ifdef _KERNEL
 extern	int disk_count;			/* number of disks in global disklist */
 
@@ -503,6 +506,7 @@ void	pseudo_disk_attach(struct disk *);
 void	pseudo_disk_detach(struct disk *);
 void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);
+void	disk_blocksize(struct disk *, int);
 struct disk *disk_find(const char *);
 int	disk_ioctl(struct disk *, u_long, caddr_t, int, struct lwp *);
 
