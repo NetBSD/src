@@ -1,4 +1,4 @@
-/*	$NetBSD: if_indextoname.c,v 1.4 2000/11/24 08:21:12 itojun Exp $	*/
+/*	$NetBSD: if_indextoname.c,v 1.5 2006/11/25 23:09:11 elad Exp $	*/
 /*	$KAME: if_indextoname.c,v 1.7 2000/11/08 03:09:30 itojun Exp $	*/
 
 /*-
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: if_indextoname.c,v 1.4 2000/11/24 08:21:12 itojun Exp $");
+__RCSID("$NetBSD: if_indextoname.c,v 1.5 2006/11/25 23:09:11 elad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -88,7 +88,7 @@ if_indextoname(unsigned int ifindex, char *ifname)
 		ifname = NULL;
 	}
 	else
-		strncpy(ifname, ifa->ifa_name, IFNAMSIZ);
+		strlcpy(ifname, ifa->ifa_name, IFNAMSIZ);
 
 	freeifaddrs(ifaddrs);
 
