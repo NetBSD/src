@@ -83,7 +83,7 @@
 #define HAVE_STRCASECMP 1
 
 /* Define if you have the strcoll function.  */
-/* #undef HAVE_STRCOLL */
+#define HAVE_STRCOLL 1
 
 /* #undef STRCOLL_BROKEN */
 
@@ -216,9 +216,9 @@
 
 /* #undef MUST_REINSTALL_SIGHANDLERS */
 
-/* #undef HAVE_POSIX_SIGSETJMP */
+#define HAVE_POSIX_SIGSETJMP 1
 
-/* #undef CTYPE_NON_ASCII */
+#define CTYPE_NON_ASCII 1
 
 /* modify settings or make new ones based on what autoconf tells us. */
 
@@ -229,7 +229,7 @@
 #endif
 
 #if defined (STRCOLL_BROKEN)
-/* #  undef HAVE_STRCOLL */
+#  define HAVE_STRCOLL 1
 #endif
 
 #if defined (__STDC__) && defined (HAVE_STDARG_H)
