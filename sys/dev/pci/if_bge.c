@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.116 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.117 2006/11/25 13:31:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.116 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.117 2006/11/25 13:31:00 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1899,7 +1899,7 @@ static const struct bge_revision {
 	  "BCM5701 B0" },
 
 	{ BGE_CHIPID_BCM5701_B2,
-	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B2" },
 
 	{ BGE_CHIPID_BCM5701_B5,
