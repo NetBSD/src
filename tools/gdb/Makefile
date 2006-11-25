@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2006/11/24 02:09:01 uwe Exp $
+#	$NetBSD: Makefile,v 1.9 2006/11/25 16:06:04 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ INSTALL_TARGET=	install-gdb
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
-CCADDFLAGS=	-isystem ${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
+CCADDFLAGS=     ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-gdb
@@ -37,12 +37,11 @@ MKNATIVE_CONFIGURE_PRESET= \
 # enable sim if supported).
 CONFIGURE_ARGS_SIM=
 .if \
-    ${MACHINE_CPU} != "mips" || \
-    ${MACHINE_CPU} != "powerpc" || \
+    ${MACHINE_CPU} != "mips" && \
+    ${MACHINE_CPU} != "powerpc" && \
     ${MACHINE_CPU} != "powerpc64"
 CONFIGURE_ARGS_SIM+= --disable-sim
 .endif
-
 
 native-gdb: .native/.configure_done
 	@echo 'Extracting GDB configury for a native toolchain.'
