@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.41 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: amr.c,v 1.42 2006/11/25 16:48:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.41 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.42 2006/11/25 16:48:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,7 +352,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	 *
 	 * The standard mailbox structure needs to be aligned on a 16-byte
 	 * boundary.  The 64-bit mailbox has one extra field, 4 bytes in
-	 * size, which preceeds the standard mailbox.
+	 * size, which precedes the standard mailbox.
 	 */
 	size = AMR_SGL_SIZE * AMR_MAX_CMDS + 0x2000;
 	amr->amr_dmasize = size;
