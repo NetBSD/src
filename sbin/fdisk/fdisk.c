@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.101 2006/06/02 17:40:34 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.102 2006/11/25 16:10:32 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.101 2006/06/02 17:40:34 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.102 2006/11/25 16:10:32 dsl Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -640,7 +640,7 @@ print_part(struct mbr_sector *boot, int part, daddr_t offset)
 }
 
 static void
-pr_cyls(daddr_t sector)
+pr_cyls(daddr_t sector, int is_end)
 {
 	unsigned long cyl, head, sect;
 	cyl = sector / dos_cylindersectors;
@@ -649,8 +649,15 @@ pr_cyls(daddr_t sector)
 	sect -= head * dos_sectors;
 
 	printf("%lu", cyl);
-	if (head == 0 && sect == 0)
-		return;
+
+	if (is_end) {
+		if (head == dos_heads - 1 && sect == dos_sectors - 1)
+			return;
+	} else {
+		if (head == 0 && sect == 0)
+			return;
+	}
+
 	printf("/%lu/%lu", head, sect + 1);
 }
 
@@ -690,11 +697,11 @@ print_mbr_partition(struct mbr_sector *boot, int part,
 	if (size != 0) {
 		printf(" (%u MB, Cyls ", SEC_TO_MB(size));
 		if (v_flag == 0 && le32toh(partp->mbrp_start) == dos_sectors)
-			pr_cyls(start - dos_sectors);
+			pr_cyls(start - dos_sectors, 0);
 		else
-			pr_cyls(start);
+			pr_cyls(start, 0);
 		printf("-");
-		pr_cyls(start + size);
+		pr_cyls(start + size - 1, 1);
 		printf(")");
 	}
 
