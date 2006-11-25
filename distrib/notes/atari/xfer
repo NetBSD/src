@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.14 2002/06/29 09:46:39 lukem Exp $
+.\"	$NetBSD: xfer,v 1.15 2006/11/25 22:53:35 mishka Exp $
 .
 Installation is supported from several media types, including:
 .Pp
@@ -93,7 +93,7 @@ system, you can create it as follows:
 .Dl # Ic "T=\*<tape_device\*>"
 .Dl # Ic "mt -f $T rewind"
 .Dl # Ic "for f in base etc comp games man misc text"
-.Dl   Ic "\ \ \ \ dd if=$f.tgz of=$T conv=sync bs=5k"
+.Dl   Ic "\ \ \ \ dd if=$f.tgz of=$T conv=osync bs=5k"
 .Dl # Ic "done"
 .Dl # Ic "mt -f $T rewind"
 .Pp

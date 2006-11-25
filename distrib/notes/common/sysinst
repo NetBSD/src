@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.76 2006/07/20 19:38:17 bjh21 Exp $
+.\"	$NetBSD: sysinst,v 1.77 2006/11/25 22:53:35 mishka Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -481,7 +481,7 @@ or other
 .Ul
 system, you would type something like:
 .Pp
-.Dl # Ic "dd if=.../boot1.fs bs=18k of=/dev/rfd0a"
+.Dl # Ic "dd if=.../boot1.fs of=/dev/rfd0a bs=18k"
 .Pp
 .\} \" \n[alpha]:\n[i386]:\n[news68k]:\n[newsmips]
 .if \n[mac68k] \{\

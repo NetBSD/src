@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.11 2003/07/26 17:07:21 salo Exp $
+.\"	$NetBSD: xfer,v 1.12 2006/11/25 22:53:35 mishka Exp $
 .
 .so ../common/xfer
 .
@@ -16,7 +16,7 @@ this is done (for MSCP tape, with SCSI tape the name is
 via:
 .Pp
 .Dl # Ic "mt -f /dev/nrmt0 rewind"
-.Dl # Ic "dd if=boot.fs of=/dev/nrmt0"
+.Dl # Ic "dd if=boot.fs of=/dev/nrmt0 conv=osync"
 .Dl # Ic "mt -f /dev/nrmt0 rewoffl"
 .Pp
 Under
@@ -24,7 +24,7 @@ Under
 the tape name is different:
 .Pp
 .Dl # Ic "mt -f /dev/rmt0h rewind"
-.Dl # Ic "dd if=boot.fs of=/dev/rmt0h"
+.Dl # Ic "dd if=boot.fs of=/dev/rmt0h conv=osync"
 .Dl # Ic "mt -f /dev/rmt0h rewoffl"
 .Pp
 Of course, if you have a tape unit other than unit 0 you have to use

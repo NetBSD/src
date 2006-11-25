@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.19 2006/03/26 14:32:07 wiz Exp $
+.\"	$NetBSD: prep,v 1.20 2006/11/25 22:53:35 mishka Exp $
 .
 There are two installation tools available.
 The traditional miniroot
@@ -291,7 +291,7 @@ Using
 .Tn HP-UX
 to write to an HP-IB tape:
 .(disp
-.No # Ic "dd if=SYS_UBOOT of=/dev/rmt/0mnb obs=20b conv=sync"
+.No # Ic "dd if=SYS_UBOOT of=/dev/rmt/0mnb obs=20b conv=osync"
 .disp)
 .
 .Ss2 Installing the miniroot file system locally

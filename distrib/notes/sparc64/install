@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.25 2005/03/16 12:47:06 wiz Exp $
+.\"	$NetBSD: install,v 1.26 2006/11/25 22:53:35 mishka Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,14 +112,14 @@ On
 you use a command like:
 .(disp
 .No # Ic "gunzip miniroot.fs.gz"
-.No # Ic "dd if=miniroot.fs of=/dev/rdsk/c0t0d0s1 bs=4k conv=sync"
+.No # Ic "dd if=miniroot.fs of=/dev/rdsk/c0t0d0s1 bs=4k"
 .disp)
 On
 .Nx
 the command is:
 .(disp
 .No # Ic "gunzip miniroot.fs.gz"
-.No # Ic "dd if=miniroot.fs of=/dev/rsd0b bs=4k conv=sync"
+.No # Ic "dd if=miniroot.fs of=/dev/rsd0b bs=4k"
 .disp)
 Replace
 .Li /dev/rdsk/c0t0d0s1

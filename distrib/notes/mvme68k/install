@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.17 2002/06/30 00:46:49 lukem Exp $
+.\"	$NetBSD: install,v 1.18 2006/11/25 22:53:35 mishka Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,7 +96,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*>\*> BSD MVME147 tapeboot [$Revision: 1.17 $]
+\*>\*> BSD MVME147 tapeboot [$Revision: 1.18 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997, 1998, 1999, 2000
@@ -141,7 +141,7 @@ of the miniroot image to be on any of these:
 The easiest is loading from tape, which is done as follows:
         mt -f /dev/nrst0 rewind
         mt -f /dev/nrst0 fsf 3
-        dd bs=8k if=/dev/nrst0 of=/dev/rsd0b
+        dd if=/dev/nrst0 of=/dev/rsd0b bs=8k conv=sync
 (For help with other methods, please see the install notes.)
 
 To reboot using the swap partition after running installboot, first
@@ -378,7 +378,7 @@ following commands to copy the miniroot image from tape to swap (b).
 .Pp
 .Dl # Ic "mt -f /dev/nrst0 rewind"
 .Dl # Ic "mt -f /dev/nrst0 fsf 3"
-.Dl # Ic "dd bs=8k if=/dev/nrst0 of=/dev/rsd0b"
+.Dl # Ic "dd if=/dev/nrst0 of=/dev/rsd0b bs=8k conv=osync"
 .Pp
 The disk and the miniroot must now be made bootable using the
 .Xr installboot 8
@@ -504,7 +504,7 @@ For all board types, the boot messages are very similar:
 .Pp
 .(disp
 Start @ 0x8000 ...
-\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.17 $]
+\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.18 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
@@ -580,13 +580,13 @@ The procedure is simpler if you have space for an expanded (not
 compressed) copy of the miniroot image.
 In that case:
 .Pp
-.Dl # Ic "dd bs=8k if=/mnt/miniroot of=/dev/rsd0b"
+.Dl # Ic "dd if=/mnt/miniroot of=/dev/rsd0b bs=8k"
 .Pp
 Otherwise, you will need to use
 .Ic gzcat
 to expand the miniroot image while copying.
 .Pp
-.Dl # Ic gzcat miniroot.fs.gz | dd obs=8k of=/dev/rsd0b
+.Dl # Ic gzcat miniroot.fs.gz | dd of=/dev/rsd0b obs=8k conv=osync
 .Pp
 You must now make the disk bootable.
 Refer to the previous section on
