@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.254 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.255 2006/11/25 12:06:31 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.254 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.255 2006/11/25 12:06:31 scw Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -1285,8 +1285,7 @@ sdgetdefaultlabel(struct sd_softc *sd, struct disklabel *lp)
 	    D_REMOVABLE : 0;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size =
-	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 
@@ -1943,12 +1942,18 @@ sd_get_parms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	 * If offline, the SDEV_MEDIA_LOADED flag will be
 	 * cleared by the caller if necessary.
 	 */
-	if (sd->type == T_SIMPLE_DIRECT)
-		return (sd_get_simplifiedparms(sd, dp, flags));
+	if (sd->type == T_SIMPLE_DIRECT) {
+		error = sd_get_simplifiedparms(sd, dp, flags);
+		if (!error)
+			disk_blocksize(&sd->sc_dk, dp->blksize);
+		return (error);
+	}
 
 	error = sd_get_capacity(sd, dp, flags);
 	if (error)
 		return (error);
+
+	disk_blocksize(&sd->sc_dk, dp->blksize);
 
 	if (sd->type == T_OPTICAL)
 		goto page0;
