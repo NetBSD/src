@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2006/11/23 03:25:24 tnozaki Exp $
+# $NetBSD: Makefile,v 1.12 2006/11/25 10:27:23 tnozaki Exp $
 
 NOMAN=
 
@@ -13,7 +13,7 @@ BINDIR?=	/usr/share/i18n/esdb
 	${TOOL_MKESDB} -o $@ $>
 
 SUBDIR=	APPLE AST BIG5 CP EUC EBCDIC GB GEORGIAN ISO-2022 \
-	ISO-8859 ISO646 KOI MISC UTF TCVN
+	ISO-8859 ISO646 KOI MISC TCVN UTF
 
 .for i in ${SUBDIR}
 .include "${.CURDIR}/$i/Makefile.inc"
