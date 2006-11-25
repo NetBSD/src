@@ -1879,8 +1879,8 @@ emit_move_sequence (rtx *operands, enum machine_mode mode, rtx scratch_reg)
 	     because PLUS uses an 11-bit immediate and the insn sequence
 	     generated is not as efficient as the one using HIGH/LO_SUM.  */
 	  if (GET_CODE (operand1) == CONST_INT
-	      && GET_MODE_BITSIZE (mode) <=
-		 (TARGET_64BIT ? HOST_BITS_PER_WIDE_INT : 32)
+	      && GET_MODE_BITSIZE (mode) <= BITS_PER_WORD
+	      && GET_MODE_BITSIZE (mode) <= HOST_BITS_PER_WIDE_INT
 	      && !insert)
 	    {
 	      /* Directly break constant into high and low parts.  This
@@ -4323,8 +4323,10 @@ return_addr_rtx (int count, rtx frameaddr)
 		 GEN_INT (0x00011820), NE, NULL_RTX, SImode, 1);
   emit_jump_insn (gen_bne (label));
 
+  /* 0xe0400002 must be specified as -532676606 so that it won't be
+     rejected as an invalid immediate operand on 64-bit hosts.  */
   emit_cmp_insn (gen_rtx_MEM (SImode, plus_constant (ins, 12)),
-		 GEN_INT (0xe0400002), NE, NULL_RTX, SImode, 1);
+		 GEN_INT (-532676606), NE, NULL_RTX, SImode, 1);
 
   /* If there is no export stub then just use the value saved from
      the return pointer register.  */
