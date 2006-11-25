@@ -3509,7 +3509,7 @@ subdirs="$subdirs mn10300"
 	   common=yes
 	   igen=yes
 	   ;;
-       sh64-*-*)
+       sh64*-*-* | sh5*-*-*)
 
 
 subdirs="$subdirs sh64"
@@ -3517,7 +3517,7 @@ subdirs="$subdirs sh64"
 	   testsuite=yes
 	   common=yes
 	   ;;
-       sh-*-*)
+       sh*-*-*)
 
 
 subdirs="$subdirs sh"
