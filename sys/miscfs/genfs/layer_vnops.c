@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.27 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.28 2006/11/25 22:36:24 elad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,8 +67,8 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.27 2006/05/14 21:31:52 elad Exp $
- *	$Id: layer_vnops.c,v 1.27 2006/05/14 21:31:52 elad Exp $
+ *	$Id: layer_vnops.c,v 1.28 2006/11/25 22:36:24 elad Exp $
+ *	$Id: layer_vnops.c,v 1.28 2006/11/25 22:36:24 elad Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -233,7 +233,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.27 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.28 2006/11/25 22:36:24 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,7 +689,7 @@ layer_unlock(v)
 			flags &= ~LK_INTERLOCK;
 		}
 		VOP_UNLOCK(LAYERVPTOLOWERVP(vp), flags);
-		return (lockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE,
+		return (lockmgr(&vp->v_lock, flags | LK_RELEASE,
 			&vp->v_interlock));
 	}
 }
