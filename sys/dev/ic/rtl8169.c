@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.70 2006/11/24 16:30:45 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.71 2006/11/25 02:42:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -700,9 +700,9 @@ re_attach(struct rtk_softc *sc)
 	}
 
 	/* Allocate DMA'able memory for the RX ring */
+	/* XXX see also a comment about RE_RX_DMAMEM_SZ in rtl81x9var.h */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN,
-	    RE_RING_ALIGN, 0, &sc->re_ldata.re_rx_listseg, 1,
+	    RE_RX_DMAMEM_SZ, RE_RING_ALIGN, 0, &sc->re_ldata.re_rx_listseg, 1,
 	    &sc->re_ldata.re_rx_listnseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't allocate rx listseg, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -711,18 +711,17 @@ re_attach(struct rtk_softc *sc)
 
 	/* Load the map for the RX ring. */
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->re_ldata.re_rx_listseg,
-	    sc->re_ldata.re_rx_listnseg, RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN,
+	    sc->re_ldata.re_rx_listnseg, RE_RX_DMAMEM_SZ,
 	    (caddr_t *)&sc->re_ldata.re_rx_list,
 	    BUS_DMA_COHERENT | BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't map rx list, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_5;
 	}
-	memset(sc->re_ldata.re_rx_list, 0, RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN);
+	memset(sc->re_ldata.re_rx_list, 0, RE_RX_DMAMEM_SZ);
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
-	    RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN, 1,
-	    RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN, 0, 0,
+	    RE_RX_DMAMEM_SZ, 1, RE_RX_DMAMEM_SZ, 0, 0,
 	    &sc->re_ldata.re_rx_list_map)) != 0) {
 		aprint_error("%s: can't create rx list map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -731,7 +730,7 @@ re_attach(struct rtk_softc *sc)
 
 	if ((error = bus_dmamap_load(sc->sc_dmat,
 	    sc->re_ldata.re_rx_list_map, sc->re_ldata.re_rx_list,
-	    RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN, NULL, BUS_DMA_NOWAIT)) != 0) {
+	    RE_RX_DMAMEM_SZ, NULL, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't load rx list, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_7;
@@ -845,7 +844,7 @@ re_attach(struct rtk_softc *sc)
 	bus_dmamap_destroy(sc->sc_dmat, sc->re_ldata.re_rx_list_map);
  fail_6:
 	bus_dmamem_unmap(sc->sc_dmat,
-	    (caddr_t)sc->re_ldata.re_rx_list, RE_RX_LIST_SZ);
+	    (caddr_t)sc->re_ldata.re_rx_list, RE_RX_DMAMEM_SZ);
  fail_5:
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->re_ldata.re_rx_listseg, sc->re_ldata.re_rx_listnseg);
@@ -935,7 +934,7 @@ re_detach(struct rtk_softc *sc)
 	bus_dmamap_unload(sc->sc_dmat, sc->re_ldata.re_rx_list_map);
 	bus_dmamap_destroy(sc->sc_dmat, sc->re_ldata.re_rx_list_map);
 	bus_dmamem_unmap(sc->sc_dmat,
-	    (caddr_t)sc->re_ldata.re_rx_list, RE_RX_LIST_SZ);
+	    (caddr_t)sc->re_ldata.re_rx_list, RE_RX_DMAMEM_SZ);
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->re_ldata.re_rx_listseg, sc->re_ldata.re_rx_listnseg);
 
