@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.442 2006/11/22 17:57:40 drochner Exp $
+$NetBSD: usbdevs,v 1.443 2006/11/25 21:35:08 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1670,6 +1670,7 @@ product RALINK RT2570_2		0x2570	RT2570
 product RALINK RT2570_3		0x9020	RT2570
 product RALINK_2 RT2570		0x2570	RT2570
 product RALINK RT2573		0x2573	RT2573
+product RALINK_2 RT2573		0x2573	RT2573
 product RALINK RT2671		0x2671	RT2671
 
 /* RATOC Systems products */
