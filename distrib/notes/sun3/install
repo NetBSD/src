@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.12 2002/06/30 13:01:50 lukem Exp $
+.\"	$NetBSD: install,v 1.13 2006/11/25 22:53:35 mishka Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,7 +97,7 @@ the source of the miniroot image to be on any of these:
 The easiest is loading from tape, which is done as follows:
         mt -f /dev/nrst0 rewind
         mt -f /dev/nrst0 fsf 2
-        dd bs=32k if=/dev/nrst0 of=/dev/rsd0b
+        dd if=/dev/nrst0 of=/dev/rsd0b bs=32k conv=sync
 (For help with other methods, please see the install notes.)
 
 To reboot using the swap partition, first use "halt",
