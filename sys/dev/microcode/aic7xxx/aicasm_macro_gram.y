@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: aicasm_macro_gram.y,v 1.1 2003/04/19 19:26:11 fvdl Exp $	*/
+/*	$NetBSD: aicasm_macro_gram.y,v 1.2 2006/11/25 16:48:32 christos Exp $	*/
 
 /*
  * Sub-parser for macro invocation in the Aic7xxx SCSI
@@ -114,7 +114,7 @@ macro_arglist:
 |	macro_arglist ',' T_ARG
 	{
 		if ($1 == 0) {
-			stop("Comma without preceeding argument in arg list",
+			stop("Comma without preceding argument in arg list",
 			     EX_DATAERR);
 			/* NOTREACHED */
 		}

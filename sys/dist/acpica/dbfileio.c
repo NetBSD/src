@@ -117,7 +117,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbfileio.c,v 1.3 2006/11/16 01:33:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbfileio.c,v 1.4 2006/11/25 16:48:32 christos Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -265,7 +265,7 @@ AcpiDbCheckTextModeCorruption (
         {
             if (Table[i - 1] != 0x0D)
             {
-                /* The LF does not have a preceeding CR, table not corrupted */
+                /* The LF does not have a preceding CR, table not corrupted */
 
                 return (AE_OK);
             }
