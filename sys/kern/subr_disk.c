@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.82 2006/10/25 04:04:46 thorpej Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.83 2006/11/25 11:59:58 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.82 2006/10/25 04:04:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.83 2006/11/25 11:59:58 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -189,6 +189,8 @@ disk_init0(struct disk *diskp)
 	lockinit(&diskp->dk_openlock, PRIBIO, "dkoplk", 0, 0);
 	LIST_INIT(&diskp->dk_wedges);
 	diskp->dk_nwedges = 0;
+	diskp->dk_labelsector = LABELSECTOR;
+	disk_blocksize(diskp, DEV_BSIZE);
 }
 
 static void
@@ -312,6 +314,18 @@ disk_unbusy(struct disk *diskp, long bcount, int read)
 }
 
 /*
+ * Set the physical blocksize of a disk, in bytes.
+ * Only necessary if blocksize != DEV_BSIZE.
+ */
+void
+disk_blocksize(struct disk *diskp, int blocksize)
+{
+
+	diskp->dk_blkshift = DK_BSIZE2BLKSHIFT(blocksize);
+	diskp->dk_byteshift = DK_BSIZE2BYTESHIFT(blocksize);
+}
+
+/*
  * Bounds checking against the media size, used for the raw partition.
  * The sector size passed in should currently always be DEV_BSIZE,
  * and the media size the size of the device in DEV_BSIZE sectors.
@@ -345,6 +359,69 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	return 0;
+}
+
+/*
+ * Determine the size of the transfer, and make sure it is
+ * within the boundaries of the partition. Adjust transfer
+ * if needed, and signal errors or early completion.
+ */
+int
+bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
+{
+	struct disklabel *lp = dk->dk_label;
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	uint64_t p_size, p_offset, labelsector;
+	int64_t sz;
+
+	/* Protect against division by zero. XXX: Should never happen?!?! */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
+
+	p_size = p->p_size << dk->dk_blkshift;
+	p_offset = p->p_offset << dk->dk_blkshift;
+#if RAW_PART == 3
+	labelsector = lp->d_partitions[2].p_offset;
+#else
+	labelsector = lp->d_partitions[RAW_PART].p_offset;
+#endif
+	labelsector = (labelsector + dk->dk_labelsector) << dk->dk_blkshift;
+
+	sz = howmany(bp->b_bcount, DEV_BSIZE);
+	if ((bp->b_blkno + sz) > p_size) {
+		sz = p_size - bp->b_blkno;
+		if (sz == 0) {
+			/* If exactly at end of disk, return EOF. */
+			bp->b_resid = bp->b_bcount;
+			return (0);
+		}
+		if (sz < 0) {
+			/* If past end of disk, return EINVAL. */
+			bp->b_error = EINVAL;
+			goto bad;
+		}
+		/* Otherwise, truncate request. */
+		bp->b_bcount = sz << DEV_BSHIFT;
+	}
+
+	/* Overwriting disk label? */
+	if (bp->b_blkno + p_offset <= labelsector &&
+	    bp->b_blkno + p_offset + sz > labelsector &&
+	    (bp->b_flags & B_READ) == 0 && !wlabel) {
+		bp->b_error = EROFS;
+		goto bad;
+	}
+
+	/* calculate cylinder for disksort to order transfers with */
+	bp->b_cylinder = (bp->b_blkno + p->p_offset) /
+	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
+	return (1);
+
+bad:
+	bp->b_flags |= B_ERROR;
+	return (-1);
 }
 
 /*

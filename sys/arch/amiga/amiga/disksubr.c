@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.48 2006/08/03 20:29:54 mhitch Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.49 2006/11/25 11:59:55 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48 2006/08/03 20:29:54 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.49 2006/11/25 11:59:55 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,58 +538,6 @@ writedisklabel(dev, strat, lp, clp)
 
 	bmap = getrdbmap(dev, strat, lp, clp);
 	return(EINVAL);
-}
-
-int
-bounds_check_with_label(dk, bp, wlabel)
-	struct disk *dk;
-	struct buf *bp;
-	int wlabel;
-{
-	struct disklabel *lp = dk->dk_label;
-	struct partition *pp;
-	long maxsz, sz;
-
-	pp = &lp->d_partitions[DISKPART(bp->b_dev)];
-	/*
-	 * This routine is called before sd.c adjusts block numbers
-	 * and must take this into account
-	 */
-#ifdef SD_C_ADJUSTS_NR
-	maxsz = pp->p_size * (lp->d_secsize / DEV_BSIZE);
-	sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
-#else
-	maxsz = pp->p_size;
-	sz = (bp->b_bcount + lp->d_secsize - 1) / lp->d_secsize;
-#endif
-	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-		if (bp->b_blkno == maxsz) {
-			/*
-			 * trying to get one block beyond return EOF.
-			 */
-			bp->b_resid = bp->b_bcount;
-			return(0);
-		}
-		sz = maxsz - bp->b_blkno;
-		if (sz <= 0 || bp->b_blkno < 0) {
-			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
-			return(-1);
-		}
-		/*
-		 * adjust count down
-		 */
-		if (bp->b_flags & B_RAW)
-			bp->b_bcount = sz << DEV_BSHIFT;
-		else
-			bp->b_bcount = sz * lp->d_secsize;
-	}
-
-	/*
-	 * calc cylinder for disksort to order transfers with
-	 */
-	bp->b_cylinder = (bp->b_blkno + pp->p_offset) / lp->d_secpercyl;
-	return(1);
 }
 
 u_long
