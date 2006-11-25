@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.36 2006/11/18 00:21:36 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.37 2006/11/25 02:42:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -260,6 +260,7 @@ struct rtk_softc {
  * because RE_TX_LIST_SZ(sc) always occupies whole page but
  * RE_RX_LIST_SZ is less than PAGE_SIZE so there is some unused region.
  */
+#define RE_RX_DMAMEM_SZ		(RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN)
 #define RE_TXPADOFF		RE_RX_LIST_SZ
 #define RE_TXPADDADDR(sc)	\
 	((sc)->re_ldata.re_rx_list_map->dm_segs[0].ds_addr + RE_TXPADOFF)
