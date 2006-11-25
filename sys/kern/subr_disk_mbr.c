@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.21 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.22 2006/11/25 11:59:58 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.21 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.22 2006/11/25 11:59:58 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -580,58 +580,4 @@ write_netbsd_label(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 		return SCAN_CONTINUE;
 
 	return validate_label(a, ptn_base);
-}
-
-
-/*
- * Determine the size of the transfer, and make sure it is
- * within the boundaries of the partition. Adjust transfer
- * if needed, and signal errors or early completion.
- */
-int
-bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
-{
-	struct disklabel *lp = dk->dk_label;
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsector = LABELSECTOR;
-	int64_t sz;
-
-#if RAW_PART == 3
-	labelsector += lp->d_partitions[2].p_offset;
-#endif
-
-	sz = howmany(bp->b_bcount, lp->d_secsize);
-
-	if (bp->b_blkno + sz > p->p_size) {
-		sz = p->p_size - bp->b_blkno;
-		if (sz == 0) {
-			/* If exactly at end of disk, return EOF. */
-			bp->b_resid = bp->b_bcount;
-			return (0);
-		}
-		if (sz < 0) {
-			/* If past end of disk, return EINVAL. */
-			bp->b_error = EINVAL;
-			goto bad;
-		}
-		/* Otherwise, truncate request. */
-		bp->b_bcount = sz << DEV_BSHIFT;
-	}
-
-	/* Overwriting disk label? */
-	if (bp->b_blkno + p->p_offset <= labelsector &&
-	    bp->b_blkno + p->p_offset + sz > labelsector &&
-	    (bp->b_flags & B_READ) == 0 && !wlabel) {
-		bp->b_error = EROFS;
-		goto bad;
-	}
-
-	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + p->p_offset) /
-	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
-	return (1);
-
-bad:
-	bp->b_flags |= B_ERROR;
-	return (-1);
 }
