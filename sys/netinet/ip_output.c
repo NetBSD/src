@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.166 2006/11/13 05:13:42 dyoung Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.167 2006/11/25 18:41:36 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.166 2006/11/13 05:13:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.167 2006/11/25 18:41:36 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -169,38 +169,6 @@ int	ip_do_loopback_cksum = 0;
 	(((csum_flags) & M_CSUM_UDPv4) != 0 && udp_do_loopback_cksum) || \
 	(((csum_flags) & M_CSUM_TCPv4) != 0 && tcp_do_loopback_cksum) || \
 	(((csum_flags) & M_CSUM_IPv4) != 0 && ip_do_loopback_cksum)))
-
-struct ip_tso_output_args {
-	struct ifnet *ifp;
-	struct sockaddr *sa;
-	struct rtentry *rt;
-};
-
-static int ip_tso_output_callback(void *, struct mbuf *);
-static int ip_tso_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-    struct rtentry *);
-
-static int
-ip_tso_output_callback(void *vp, struct mbuf *m)
-{
-	struct ip_tso_output_args *args = vp;
-	struct ifnet *ifp = args->ifp;
-
-	return (*ifp->if_output)(ifp, m, args->sa, args->rt);
-}
-
-static int
-ip_tso_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
-    struct rtentry *rt)
-{
-	struct ip_tso_output_args args;
-
-	args.ifp = ifp;
-	args.sa = sa;
-	args.rt = rt;
-
-	return tcp4_segment(m, ip_tso_output_callback, &args);
-}
 
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
