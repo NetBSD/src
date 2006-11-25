@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.24 2006/10/27 19:39:11 drochner Exp $	*/
+/*	$NetBSD: crypt.c,v 1.25 2006/11/25 17:55:48 freza Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.24 2006/10/27 19:39:11 drochner Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.25 2006/11/25 17:55:48 freza Exp $");
 #endif
 #endif /* not lint */
 
@@ -294,7 +294,7 @@ STATIC	init_perm __P((C_block [64/CHUNKBITS][1<<CHUNKBITS],
 STATIC	permute __P((const unsigned char *, C_block *, C_block *, int));
 #endif
 #ifdef DEBUG
-STATIC	prtab __P((char *, unsigned char *, int));
+STATIC	prtab __P((const char *, unsigned char *, int));
 #endif
 
 
@@ -973,7 +973,7 @@ encrypt(block, flag)
 #ifdef DEBUG
 STATIC
 prtab(s, t, num_rows)
-	char *s;
+	const char *s;
 	unsigned char *t;
 	int num_rows;
 {
