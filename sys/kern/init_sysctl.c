@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.91 2006/11/01 22:27:43 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.92 2006/11/25 21:40:05 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.91 2006/11/01 22:27:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.92 2006/11/25 21:40:05 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -80,19 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.91 2006/11/01 22:27:43 christos Ex
 #include <sys/kauth.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-
-#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
-#include <sys/ipc.h>
-#endif
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
 #endif
 
 #ifdef COMPAT_NETBSD32
@@ -173,9 +160,6 @@ static int sysctl_kern_autonice(SYSCTLFN_PROTO);
 static int sysctl_msgbuf(SYSCTLFN_PROTO);
 static int sysctl_kern_defcorename(SYSCTLFN_PROTO);
 static int sysctl_kern_cptime(SYSCTLFN_PROTO);
-#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
-static int sysctl_kern_sysvipc(SYSCTLFN_PROTO);
-#endif /* defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM) */
 #if NPTY > 0
 static int sysctl_kern_maxptys(SYSCTLFN_PROTO);
 #endif /* NPTY > 0 */
@@ -516,6 +500,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, KERN_FSYNC, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ipc",
+		       SYSCTL_DESCR("SysV IPC options"),
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, KERN_SYSVIPC, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "sysvmsg",
 		       SYSCTL_DESCR("System V style message support available"),
@@ -525,7 +515,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 #else /* SYSVMSG */
 		       0,
 #endif /* SYSVMSG */
-		       NULL, 0, CTL_KERN, KERN_SYSVMSG, CTL_EOL);
+		       NULL, 0, CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_MSG, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "sysvsem",
@@ -536,7 +526,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 #else /* SYSVSEM */
 		       0,
 #endif /* SYSVSEM */
-		       NULL, 0, CTL_KERN, KERN_SYSVSEM, CTL_EOL);
+		       NULL, 0, CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SEM, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "sysvshm",
@@ -547,7 +537,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 #else /* SYSVSHM */
 		       0,
 #endif /* SYSVSHM */
-		       NULL, 0, CTL_KERN, KERN_SYSVSHM, CTL_EOL);
+		       NULL, 0, CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SHM, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "synchronized_io",
@@ -629,14 +619,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Clock ticks spent in different CPU states"),
 		       sysctl_kern_cptime, 0, NULL, 0,
 		       CTL_KERN, KERN_CP_TIME, CTL_EOL);
-#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "sysvipc_info",
-		       SYSCTL_DESCR("System V style IPC information"),
-		       sysctl_kern_sysvipc, 0, NULL, 0,
-		       CTL_KERN, KERN_SYSVIPC_INFO, CTL_EOL);
-#endif /* SYSVMSG || SYSVSEM || SYSVSHM */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "msgbuf",
@@ -1598,194 +1580,6 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 
 #endif /* MULTIPROCESSOR */
 }
-
-#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
-/*
- * sysctl helper routine for kern.sysvipc_info subtree.
- */
-
-#define	FILL_PERM(src, dst) do { \
-	(dst)._key = (src)._key; \
-	(dst).uid = (src).uid; \
-	(dst).gid = (src).gid; \
-	(dst).cuid = (src).cuid; \
-	(dst).cgid = (src).cgid; \
-	(dst).mode = (src).mode; \
-	(dst)._seq = (src)._seq; \
-} while (/*CONSTCOND*/ 0);
-#define	FILL_MSG(src, dst) do { \
-	FILL_PERM((src).msg_perm, (dst).msg_perm); \
-	(dst).msg_qnum = (src).msg_qnum; \
-	(dst).msg_qbytes = (src).msg_qbytes; \
-	(dst)._msg_cbytes = (src)._msg_cbytes; \
-	(dst).msg_lspid = (src).msg_lspid; \
-	(dst).msg_lrpid = (src).msg_lrpid; \
-	(dst).msg_stime = (src).msg_stime; \
-	(dst).msg_rtime = (src).msg_rtime; \
-	(dst).msg_ctime = (src).msg_ctime; \
-} while (/*CONSTCOND*/ 0)
-#define	FILL_SEM(src, dst) do { \
-	FILL_PERM((src).sem_perm, (dst).sem_perm); \
-	(dst).sem_nsems = (src).sem_nsems; \
-	(dst).sem_otime = (src).sem_otime; \
-	(dst).sem_ctime = (src).sem_ctime; \
-} while (/*CONSTCOND*/ 0)
-#define	FILL_SHM(src, dst) do { \
-	FILL_PERM((src).shm_perm, (dst).shm_perm); \
-	(dst).shm_segsz = (src).shm_segsz; \
-	(dst).shm_lpid = (src).shm_lpid; \
-	(dst).shm_cpid = (src).shm_cpid; \
-	(dst).shm_atime = (src).shm_atime; \
-	(dst).shm_dtime = (src).shm_dtime; \
-	(dst).shm_ctime = (src).shm_ctime; \
-	(dst).shm_nattch = (src).shm_nattch; \
-} while (/*CONSTCOND*/ 0)
-
-static int
-sysctl_kern_sysvipc(SYSCTLFN_ARGS)
-{
-	void *where = oldp;
-	size_t *sizep = oldlenp;
-#ifdef SYSVMSG
-	struct msg_sysctl_info *msgsi = NULL;
-#endif
-#ifdef SYSVSEM
-	struct sem_sysctl_info *semsi = NULL;
-#endif
-#ifdef SYSVSHM
-	struct shm_sysctl_info *shmsi = NULL;
-#endif
-	size_t infosize, dssize, tsize, buflen;
-	void *bf = NULL;
-	char *start;
-	int32_t nds;
-	int i, error, ret;
-
-	if (namelen != 1)
-		return (EINVAL);
-
-	start = where;
-	buflen = *sizep;
-
-	switch (*name) {
-	case KERN_SYSVIPC_MSG_INFO:
-#ifdef SYSVMSG
-		infosize = sizeof(msgsi->msginfo);
-		nds = msginfo.msgmni;
-		dssize = sizeof(msgsi->msgids[0]);
-		break;
-#else
-		return (EINVAL);
-#endif
-	case KERN_SYSVIPC_SEM_INFO:
-#ifdef SYSVSEM
-		infosize = sizeof(semsi->seminfo);
-		nds = seminfo.semmni;
-		dssize = sizeof(semsi->semids[0]);
-		break;
-#else
-		return (EINVAL);
-#endif
-	case KERN_SYSVIPC_SHM_INFO:
-#ifdef SYSVSHM
-		infosize = sizeof(shmsi->shminfo);
-		nds = shminfo.shmmni;
-		dssize = sizeof(shmsi->shmids[0]);
-		break;
-#else
-		return (EINVAL);
-#endif
-	default:
-		return (EINVAL);
-	}
-	/*
-	 * Round infosize to 64 bit boundary if requesting more than just
-	 * the info structure or getting the total data size.
-	 */
-	if (where == NULL || *sizep > infosize)
-		infosize = ((infosize + 7) / 8) * 8;
-	tsize = infosize + nds * dssize;
-
-	/* Return just the total size required. */
-	if (where == NULL) {
-		*sizep = tsize;
-		return (0);
-	}
-
-	/* Not enough room for even the info struct. */
-	if (buflen < infosize) {
-		*sizep = 0;
-		return (ENOMEM);
-	}
-	bf = malloc(min(tsize, buflen), M_TEMP, M_WAITOK);
-	memset(bf, 0, min(tsize, buflen));
-
-	switch (*name) {
-#ifdef SYSVMSG
-	case KERN_SYSVIPC_MSG_INFO:
-		msgsi = (struct msg_sysctl_info *)bf;
-		msgsi->msginfo = msginfo;
-		break;
-#endif
-#ifdef SYSVSEM
-	case KERN_SYSVIPC_SEM_INFO:
-		semsi = (struct sem_sysctl_info *)bf;
-		semsi->seminfo = seminfo;
-		break;
-#endif
-#ifdef SYSVSHM
-	case KERN_SYSVIPC_SHM_INFO:
-		shmsi = (struct shm_sysctl_info *)bf;
-		shmsi->shminfo = shminfo;
-		break;
-#endif
-	}
-	buflen -= infosize;
-
-	ret = 0;
-	if (buflen > 0) {
-		/* Fill in the IPC data structures.  */
-		for (i = 0; i < nds; i++) {
-			if (buflen < dssize) {
-				ret = ENOMEM;
-				break;
-			}
-			switch (*name) {
-#ifdef SYSVMSG
-			case KERN_SYSVIPC_MSG_INFO:
-				FILL_MSG(msqids[i], msgsi->msgids[i]);
-				break;
-#endif
-#ifdef SYSVSEM
-			case KERN_SYSVIPC_SEM_INFO:
-				FILL_SEM(sema[i], semsi->semids[i]);
-				break;
-#endif
-#ifdef SYSVSHM
-			case KERN_SYSVIPC_SHM_INFO:
-				FILL_SHM(shmsegs[i], shmsi->shmids[i]);
-				break;
-#endif
-			}
-			buflen -= dssize;
-		}
-	}
-	*sizep -= buflen;
-	error = dcopyout(l, bf, start, *sizep);
-	/* If dcopyout succeeded, use return code set earlier. */
-	if (error == 0)
-		error = ret;
-	if (bf)
-		free(bf, M_TEMP);
-	return (error);
-}
-
-#undef FILL_PERM
-#undef FILL_MSG
-#undef FILL_SEM
-#undef FILL_SHM
-
-#endif /* defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM) */
 
 #if NPTY > 0
 /*

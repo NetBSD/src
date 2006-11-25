@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.164 2006/11/16 01:33:51 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.165 2006/11/25 21:40:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -222,9 +222,9 @@ struct ctlname {
 #define	KERN_ROOT_DEVICE	30	/* string: root device */
 #define	KERN_MSGBUFSIZE		31	/* int: max # of chars in msg buffer */
 #define	KERN_FSYNC		32	/* int: file synchronization support */
-#define	KERN_SYSVMSG		33	/* int: SysV message queue suppoprt */
-#define	KERN_SYSVSEM		34	/* int: SysV semaphore support */
-#define	KERN_SYSVSHM		35	/* int: SysV shared memory support */
+#define	KERN_OLDSYSVMSG		33	/* old: SysV message queue suppoprt */
+#define	KERN_OLDSYSVSEM		34	/* old: SysV semaphore support */
+#define	KERN_OLDSYSVSHM		35	/* old: SysV shared memory support */
 #define	KERN_OLDSHORTCORENAME	36	/* old, unimplemented */
 #define	KERN_SYNCHRONIZED_IO	37	/* int: POSIX synchronized I/O */
 #define	KERN_IOV_MAX		38	/* int: max iovec's for readv(2) etc. */
@@ -241,7 +241,7 @@ struct ctlname {
 #define	KERN_FSCALE		49	/* int: fixpt FSCALE */
 #define	KERN_CCPU		50	/* int: fixpt ccpu */
 #define	KERN_CP_TIME		51	/* struct: CPU time counters */
-#define	KERN_SYSVIPC_INFO	52	/* number of valid kern ids */
+#define	KERN_OLDSYSVIPC_INFO	52	/* old: number of valid kern ids */
 #define	KERN_MSGBUF		53	/* kernel message buffer */
 #define	KERN_CONSDEV		54	/* dev_t: console terminal device */
 #define	KERN_MAXPTYS		55	/* int: maximum number of ptys */
@@ -271,7 +271,8 @@ struct ctlname {
 #define	KERN_CP_ID		79	/* struct: cpu id numbers */
 #define	KERN_HARDCLOCK_TICKS	80	/* int: number of hardclock ticks */
 #define	KERN_ARND		81	/* void *buf, size_t siz random */
-#define	KERN_MAXID		82	/* number of valid kern ids */
+#define	KERN_SYSVIPC		82	/* node: SysV IPC parameters */
+#define	KERN_MAXID		83	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -308,9 +309,9 @@ struct ctlname {
 	{ "root_device", CTLTYPE_STRING }, \
 	{ "msgbufsize", CTLTYPE_INT }, \
 	{ "fsync", CTLTYPE_INT }, \
-	{ "sysvmsg", CTLTYPE_INT }, \
-	{ "sysvsem", CTLTYPE_INT }, \
-	{ "sysvshm", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "synchronized_io", CTLTYPE_INT }, \
 	{ "iov_max", CTLTYPE_INT }, \
@@ -327,7 +328,7 @@ struct ctlname {
 	{ "fscale", CTLTYPE_INT }, \
 	{ "ccpu", CTLTYPE_INT }, \
 	{ "cp_time", CTLTYPE_STRUCT }, \
-	{ "sysvipc_info", CTLTYPE_STRUCT }, \
+	{ 0, 0 }, \
 	{ "msgbuf", CTLTYPE_STRUCT }, \
 	{ "consdev", CTLTYPE_STRUCT }, \
 	{ "maxptys", CTLTYPE_INT }, \
@@ -357,6 +358,7 @@ struct ctlname {
 	{ "cp_id", CTLTYPE_STRUCT }, \
 	{ "hardclock_ticks", CTLTYPE_INT }, \
 	{ "arandom", CTLTYPE_STRUCT }, \
+	{ "sysvipc", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -595,6 +597,19 @@ struct kinfo_lwp {
 #define	KERN_PROC_NARGV		2	/* number of strings in above */
 #define	KERN_PROC_ENV		3	/* environ */
 #define	KERN_PROC_NENV		4	/* number of strings in above */
+
+/*
+ * KERN_SYSVIPC subtypes
+ */
+#define	KERN_SYSVIPC_INFO	1	/* struct: number of valid kern ids */
+#define	KERN_SYSVIPC_MSG	2	/* int: SysV message queue suppoprt */
+#define	KERN_SYSVIPC_SEM	3	/* int: SysV semaphore support */
+#define	KERN_SYSVIPC_SHM	4	/* int: SysV shared memory support */
+#define	KERN_SYSVIPC_SHMMAX	5	/* int: max shared memory segment size (bytes) */
+#define	KERN_SYSVIPC_SHMMNI	6	/* int: max number of shared memory identifiers */
+#define	KERN_SYSVIPC_SHMSEG	7	/* int: max shared memory segments per process */
+#define	KERN_SYSVIPC_SHMMAXPGS	8	/* int: max amount of shared memory (pages) */
+#define	KERN_SYSVIPC_SHMUSEPHYS	9	/* int: physical memory usage */
 
 /*
  * KERN_SYSVIPC_INFO subtypes
