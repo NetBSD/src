@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.52 2006/10/24 20:54:10 drochner Exp $
+#	$NetBSD: files.pcmcia,v 1.53 2006/11/25 17:52:57 dsl Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -96,6 +96,8 @@ file	dev/pcmcia/if_awi_pcmcia.c		awi_pcmcia
 # Lucent & Intersil WaveLan IEEE (802.11)
 attach	wi at pcmcia with wi_pcmcia
 file	dev/pcmcia/if_wi_pcmcia.c		wi_pcmcia
+# The spectrun24t firmware for symbol LA4100 cards is 70k, allow its exclusion
+defparam	opt_if_wi_pcmcia.h	WI_PCMCIA_SPECTRUM24T_FW=1
 
 # Xircom Ethernet and Ethernet+Modem cards
 device	xirc { }

@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.72 2006/11/16 01:33:20 christos Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.73 2006/11/25 17:52:57 dsl Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.72 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.73 2006/11/25 17:52:57 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.72 2006/11/16 01:33:20 christos E
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
+#include <opt_if_wi_pcmcia.h>
+
+#if WI_PCMCIA_SPECTRUM24T_FW
 #include <dev/microcode/wi/spectrum24t_cf.h>
+#endif
 
 static int	wi_pcmcia_match(struct device *, struct cfdata *, void *);
 static int	wi_pcmcia_validate_config(struct pcmcia_config_entry *);
@@ -82,10 +86,12 @@ static void	wi_pcmcia_disable(struct wi_softc *);
 static void	wi_pcmcia_powerhook(int, void *);
 static void	wi_pcmcia_shutdown(void *);
 
+#if WI_PCMCIA_SPECTRUM24T_FW
 /* support to download firmware for symbol CF card */
 static int	wi_pcmcia_load_firm(struct wi_softc *, const void *, int, const void *, int);
 static int	wi_pcmcia_write_firm(struct wi_softc *, const void *, int, const void *, int);
 static int	wi_pcmcia_set_hcr(struct wi_softc *, int);
+#endif
 
 struct wi_pcmcia_softc {
 	struct wi_softc sc_wi;
@@ -284,6 +290,7 @@ wi_pcmcia_enable(sc)
 	}
 
 	if (psc->sc_symbol_cf) {
+#if WI_PCMCIA_SPECTRUM24T_FW
 		if (wi_pcmcia_load_firm(sc,
 		    spectrum24t_primsym, sizeof(spectrum24t_primsym),
 		    spectrum24t_secsym, sizeof(spectrum24t_secsym))) {
@@ -292,6 +299,11 @@ wi_pcmcia_enable(sc)
 			wi_pcmcia_disable(sc);
 			return (EIO);
 		}
+#else
+		printf("%s: firmware load not configured\n",
+		    sc->sc_dev.dv_xname);
+		return EIO;
+#endif
 	}
 	DELAY(1000);
 
@@ -443,6 +455,7 @@ wi_pcmcia_shutdown(arg)
 #define	GETLE32(p)	((p)[0] | ((p)[1]<<8) | ((p)[2]<<16) | ((p)[3]<<24))
 #define	GETLE16(p)	((p)[0] | ((p)[1]<<8))
 
+#if WI_PCMCIA_SPECTRUM24T_FW
 static int
 wi_pcmcia_load_firm(sc, primsym, primlen, secsym, seclen)
 	struct wi_softc *sc;
@@ -574,3 +587,4 @@ wi_pcmcia_set_hcr(sc, mode)
 	tsleep(sc, PWAIT, "wiinit", 1);
 	return 0;
 }
+#endif
