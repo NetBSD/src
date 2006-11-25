@@ -748,6 +748,7 @@ mipsnbsd_tdep_h = mipsnbsd-tdep.h
 mips_tdep_h = mips-tdep.h
 mn10300_tdep_h = mn10300-tdep.h
 monitor_h = monitor.h
+nbsd_nat_h = nbsd-nat.h
 nbsd_tdep_h = nbsd-tdep.h
 nto_tdep_h = nto-tdep.h $(defs_h) $(solist_h) $(osabi_h) $(regset_h)
 objc_lang_h = objc-lang.h
@@ -1439,7 +1440,7 @@ ALLDEPFILES = \
 	mips-tdep.c mipsv4-nat.c \
 	mipsnbsd-nat.c mipsnbsd-tdep.c \
 	mips64obsd-nat.c mips64obsd-tdep.c \
-	nbsd-tdep.c obsd-tdep.c \
+	nbsd-nat.c nbsd-tdep.c obsd-tdep.c \
 	solib-osf.c \
 	somread.c solib-som.c $(HPREAD_SOURCE) \
 	posix-hdep.c \
@@ -2356,6 +2357,7 @@ ms1-tdep.o: ms1-tdep.c $(defs_h) $(frame_h) $(frame_unwind_h) $(frame_base_h) \
 	$(gdb_string_h) $(regcache_h) $(reggroups_h) $(gdbcore_h) \
 	$(trad_frame_h) $(inferior_h) $(dwarf2_frame_h) $(infcall_h) \
 	$(gdb_assert_h)
+nbsd-nat.o: nbsd-nat.c $(defs_h) $(nbsd_nat_h)
 nbsd-tdep.o: nbsd-tdep.c $(defs_h) $(gdb_string_h) $(solib_svr4_h)
 nlmread.o: nlmread.c $(defs_h) $(bfd_h) $(symtab_h) $(symfile_h) \
 	$(objfiles_h) $(buildsym_h) $(stabsread_h) $(block_h)

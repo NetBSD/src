@@ -33,6 +33,7 @@
 #include <machine/frame.h>
 #include <machine/pcb.h>
 
+#include "nbsd-nat.h"
 #include "bsd-kvm.h"
 
 static int
@@ -79,9 +80,13 @@ void _initialize_i386nbsd_nat (void);
 void
 _initialize_i386nbsd_nat (void)
 {
-  /* We've got nothing to add to the common *BSD/i386 target.  */
-  add_target (i386bsd_target ());
+  struct target_ops *t;
 
+  /* Add some extra features to the common *BSD/i386 target.  */
+  t = i386bsd_target ();
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
+  add_target (t);
+ 
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (i386nbsd_supply_pcb);
 }
