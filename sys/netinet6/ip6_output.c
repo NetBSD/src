@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.105 2006/11/23 19:41:58 yamt Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.106 2006/11/25 18:41:36 yamt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.105 2006/11/23 19:41:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.106 2006/11/25 18:41:36 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -142,39 +142,6 @@ static int ip6_pcbopts __P((struct ip6_pktopts **, struct mbuf *,
 	(__predict_true(((ifp)->if_flags & IFF_LOOPBACK) == 0 || \
 	(((csum_flags) & M_CSUM_UDPv6) != 0 && udp_do_loopback_cksum) || \
 	(((csum_flags) & M_CSUM_TCPv6) != 0 && tcp_do_loopback_cksum)))
-
-struct ip6_tso_output_args {
-	struct ifnet *ifp;
-	struct ifnet *origifp;
-	struct sockaddr_in6 *dst;
-	struct rtentry *rt;
-};
-
-static int ip6_tso_output_callback(void *, struct mbuf *);
-static int ip6_tso_output(struct ifnet *, struct ifnet *, struct mbuf *,
-    struct sockaddr_in6 *, struct rtentry *);
-
-static int
-ip6_tso_output_callback(void *vp, struct mbuf *m)
-{
-	struct ip6_tso_output_args *args = vp;
-
-	return nd6_output(args->ifp, args->origifp, m, args->dst, args->rt);
-}
-
-static int
-ip6_tso_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
-    struct sockaddr_in6 *dst, struct rtentry *rt)
-{
-	struct ip6_tso_output_args args;
-
-	args.ifp = ifp;
-	args.origifp = origifp;
-	args.dst = dst;
-	args.rt = rt;
-
-	return tcp6_segment(m, ip6_tso_output_callback, &args);
-}
 
 /*
  * IP6 output. The packet in mbuf chain m contains a skeletal IP6

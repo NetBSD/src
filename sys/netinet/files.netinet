@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet,v 1.15 2006/11/23 09:43:56 tron Exp $
+#	$NetBSD: files.netinet,v 1.16 2006/11/25 18:41:36 yamt Exp $
 
 defflag opt_tcp_debug.h		TCP_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
@@ -19,6 +19,7 @@ defparam opt_tcp_congctl.h	TCP_CONGCTL_DEFAULT
 
 file	netinet/igmp.c		inet
 file	netinet/in.c		inet
+file	netinet/in_offload.c	inet
 file	netinet/in_pcb.c	inet
 file	netinet/in_proto.c	inet
 file	netinet/in_selsrc.c	inet & ipselsrc
