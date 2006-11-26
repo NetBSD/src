@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.35 2006/11/26 02:39:04 tsutsui Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.36 2006/11/26 03:02:04 tsutsui Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -258,6 +258,9 @@
 #define BGE_CHIPID_BCM5750_A0		0x40000000
 #define BGE_CHIPID_BCM5750_A1		0x40010000
 #define BGE_CHIPID_BCM5751_A1		0x41010000
+#define BGE_CHIPID_BCM5752_A0		0x60000000
+#define BGE_CHIPID_BCM5752_A1		0x60010000
+#define BGE_CHIPID_BCM5752_A2		0x60020000
 #define BGE_CHIPID_BCM5714_A0		0x50000000
 #define BGE_CHIPID_BCM5715_xx		0x90010000
 
@@ -1637,6 +1640,7 @@
 #define BGE_EE_CTL			0x6840
 #define BGE_MDI_CTL			0x6844
 #define BGE_EE_DELAY			0x6848
+#define BGE_FASTBOOT_PC			0x6894
 /*
  * XXX: Those names are made up as I have no documentation about it;
  *      I only know it is only used in the PCI-Express case.
