@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.107 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.108 2006/11/26 05:01:09 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -633,7 +633,6 @@ const void *scsipi_inqmatch(struct scsipi_inquiry_pattern *, const void *,
 const char *scsipi_dtype(int);
 void	scsipi_strvis(u_char *, int, const u_char *, int);
 int	scsipi_execute_xs(struct scsipi_xfer *);
-u_int64_t scsipi_size(struct scsipi_periph *, int *, int, int);
 int	scsipi_test_unit_ready(struct scsipi_periph *, int);
 int	scsipi_prevent(struct scsipi_periph *, int, int);
 int	scsipi_inquire(struct scsipi_periph *,
