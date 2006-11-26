@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.27 2006/11/16 01:33:09 christos Exp $ */
+/* $NetBSD: if_vge.c,v 1.28 2006/11/26 13:09:32 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.27 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.28 2006/11/26 13:09:32 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -134,10 +134,23 @@ __KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.27 2006/11/16 01:33:09 christos Exp $")
 #define VGE_BUFLEN(y)		((y) & 0x7FFF)
 #define ETHER_PAD_LEN		(ETHER_MIN_LEN - ETHER_CRC_LEN)
 
-#ifdef __NO_STRICT_ALIGNMENT 
-#define VGE_RX_PAD		sizeof(uint32_t)
+#define VGE_POWER_MANAGEMENT	0	/* disabled for now */
+
+/*
+ * Mbuf adjust factor to force 32-bit alignment of IP header.
+ * Drivers should pad ETHER_ALIGN bytes when setting up a
+ * RX mbuf so the upper layers get the IP header properly aligned
+ * past the 14-byte Ethernet header.
+ *
+ * See also comment in vge_encap().
+ */
+#define ETHER_ALIGN		2
+
+#ifdef __NO_STRICT_ALIGNMENT
+#define VGE_RX_BUFSIZE		MCLBYTES
 #else
-#define VGE_RX_PAD		0
+#define VGE_RX_PAD		sizeof(uint32_t)
+#define VGE_RX_BUFSIZE		(MCLBYTES - VGE_RX_PAD)
 #endif
 
 /*
@@ -240,16 +253,6 @@ struct vge_softc {
 	    VGE_CDRXOFF(idx),						\
 	    sizeof(struct vge_rxdesc),					\
 	    (ops))
-
-/*
- * Mbuf adjust factor to force 32-bit alignment of IP header.
- * Drivers should do m_adj(m, ETHER_ALIGN) when setting up a
- * receive so the upper layers get the IP header properly aligned
- * past the 14-byte Ethernet header.
- */
-#define	ETHER_ALIGN	2
-
-#define	VGE_POWER_MANAGEMENT	0	/* disabled for now */
 
 /*
  * register space access macros
@@ -1055,7 +1058,6 @@ vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 		m->m_data = m->m_ext.ext_buf;
 
 
-#ifndef __NO_STRICT_ALIGNMENT
 	/*
 	 * This is part of an evil trick to deal with non-x86 platforms.
 	 * The VIA chip requires RX buffers to be aligned on 32-bit
@@ -1066,10 +1068,9 @@ vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 	 * than allocating a new buffer, copying the contents, and
 	 * discarding the old buffer.
 	 */
-	m->m_len = m->m_pkthdr.len = MCLBYTES - VGE_RX_PAD;
+	m->m_len = m->m_pkthdr.len = VGE_RX_BUFSIZE;
+#ifndef __NO_STRICT_ALIGNMENT
 	m->m_data += VGE_RX_PAD;
-#else
-	m->m_len = m->m_pkthdr.len = MCLBYTES;
 #endif
 	rxs = &sc->sc_rxsoft[idx];
 	map = rxs->rxs_dmamap;
@@ -1194,7 +1195,7 @@ vge_rxeof(struct vge_softc *sc)
 		 * accumulate the buffers.
 		 */
 		if (rxstat & VGE_RXPKT_SOF) {
-			m->m_len = MCLBYTES - VGE_RX_PAD;
+			m->m_len = VGE_RX_BUFSIZE;
 			if (sc->sc_rx_mhead == NULL)
 				sc->sc_rx_mhead = sc->sc_rx_mtail = m;
 			else {
@@ -1246,7 +1247,7 @@ vge_rxeof(struct vge_softc *sc)
 		}
 
 		if (sc->sc_rx_mhead != NULL) {
-			m->m_len = total_len % (MCLBYTES - VGE_RX_PAD);
+			m->m_len = total_len % VGE_RX_BUFSIZE;
 			/*
 			 * Special case: if there's 4 bytes or less
 			 * in this buffer, the mbuf can be discarded:
