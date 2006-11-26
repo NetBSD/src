@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.36 2006/11/26 12:56:12 martin Exp $
+.\"	$NetBSD: install,v 1.37 2006/11/26 16:29:07 hubertf Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,8 +35,8 @@
 .(Note
 There may be updates to this procedure available from the
 .Nx*M
-web page, at
-.Lk http://www.NetBSD.org/Ports/\*M/ .
+web page at
+http://www.NetBSD.org/Ports/\*M/ .
 .Note)
 .Pp
 To install or upgrade
@@ -161,7 +161,7 @@ and
 file systems, a comfortable size for the
 .Nx
 .Pa /
-partition is about 32 MB.
+partition is about 64 MB.
 A good initial size for the swap partition is twice the
 amount of physical memory in your machine (though, unlike
 .Tn Ultrix ,
@@ -169,9 +169,9 @@ there are no restrictions on the size of the swap partition that would render
 part of your memory unusable).
 The default swap size is 64 MB, which
 is adequate for doing a full system build.
-A full binary installation, with X11R6.3 takes about 150 MB in
+A full binary installation, with X11R6 takes about 315 MB in
 .Pa /usr ;
-a 200 MB
+a 350 MB
 .Pa /usr
 should be ample.
 .
@@ -185,7 +185,7 @@ To mount the CD-ROM from a
 .Nx*M
 host, type
 .Pp
-.Dl # Ic "mount -r -t cd9660 /dev/cd" Ns Ar X Ns Ic " c /mnt"
+.Dl # Ic "mount -r -t cd9660 /dev/cd" Ns Ar X Ns Ic "c /mnt"
 .Pp
 and from an
 .Tn Ultrix
@@ -238,7 +238,7 @@ before installing
 .Nx \*V.
 New bootblocks are in the tar file:
 .Pp
-.Dl Pa \*M/installation/misc/bootblocks.tgz
+.Dl Pa \*M/binary/sets/base.tgz
 .Pp
 in the
 .Nx \*V
@@ -246,7 +246,7 @@ distribution.
 To install the new bootblocks, use the following commands:
 .Pp
 .Dl # Ic "cd /"
-.Dl # Ic "tar -zxpvf .../\*M/installation/misc/bootblocks.tgz"
+.Dl # Ic "tar -zxpvf .../\*M/binary/sets/base.tgz ./boot.pmax ./usr/mdec"
 .Dl # Ic "/usr/sbin/installboot /dev/rrz" Ns Ar X Ns Ic "c /usr/mdec/bootxx_ffs"
 .Pp
 where
@@ -298,8 +298,8 @@ The diskimage file is in
 .Pp
 .Dl Pa \*M/installation/diskimage/diskimage.gz .
 .Pp
-It is shipped compressed and is around 1150 kbytes, uncompressing to
-exactly 2 MB.
+It is shipped compressed and is around 1760 kbytes, uncompressing to
+exactly 2100 kbytes.
 .Pp
 To install the diskimage onto disk
 .Li sd Ns Ar X
