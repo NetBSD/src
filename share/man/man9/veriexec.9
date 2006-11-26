@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.9,v 1.6 2006/11/26 16:22:36 elad Exp $
+.\" $NetBSD: veriexec.9,v 1.7 2006/11/26 20:27:27 elad Exp $
 .\"
 .\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright 2006 Brett Lymn <blymn@NetBSD.org>
@@ -315,10 +315,6 @@ is responsible for garbage collection of unnecessary
 .Nm
 objects.
 It is not meant to be called directly.
-.It Ft int Fn veriexec_rawchk "struct vnode *vp"
-Enforce raw disk access policy.
-.Ar vp
-is the vnode of the mount-point for the disk, if any.
 .El
 .Sh FILES
 .Pa src/sys/dev/verified_exec.c
