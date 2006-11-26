@@ -1,4 +1,40 @@
-/*	$NetBSD: main.c,v 1.12 2006/06/25 21:32:39 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2006/11/26 16:16:31 jmmv Exp $	*/
+
+/*
+ * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Julio M. Merino Vidal.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +83,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.12 2006/06/25 21:32:39 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2006/11/26 16:16:31 jmmv Exp $");
 #endif
 #endif	/* not lint */
 
@@ -123,6 +159,7 @@ static	int	tflag;		/* Format output as disktab */
 	int	Cflag;		/* CHS format output */
 static	int	Dflag;		/* Delete old labels (use with write) */
 static	int	Iflag;		/* Read/write direct, but default if absent */
+static	int	lflag;		/* List all known file system types and exit */
 static	int	mflag;		/* Expect disk to contain an MBR */
 static int verbose;
 static int read_all;		/* set if op = READ && Aflag */
@@ -143,6 +180,7 @@ static char		*skip(char *);
 static char		*word(char *);
 static int		 getasciilabel(FILE *, struct disklabel *);
 static void		 usage(void);
+static int		 qsort_strcmp(const void *, const void *);
 static int		 getulong(const char *, char, char **,
     unsigned long *, unsigned long);
 #define GETNUM32(a, v)	getulong(a, '\0', NULL, v, UINT32_MAX)
@@ -221,7 +259,7 @@ main(int argc, char *argv[])
 #endif
 
 	error = 0;
-	while ((ch = getopt(argc, argv, "ABCDFINRWb:ef:imrs:tvw")) != -1) {
+	while ((ch = getopt(argc, argv, "ABCDFINRWb:ef:ilmrs:tvw")) != -1) {
 		old_op = op;
 		switch (ch) {
 		case 'A':	/* Action all labels */
@@ -262,6 +300,9 @@ main(int argc, char *argv[])
 		case 'i':	/* Edit using built-in editor */
 			op = INTERACT;
 			break;
+		case 'l':	/* List all known file system types and exit */
+			lflag = 1;
+			break;
 		case 'm':	/* Expect disk to have an MBR */
 			mflag ^= 1;
 			break;
@@ -286,6 +327,9 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (lflag)
+		exit(list_fs_types() ? EXIT_SUCCESS : EXIT_FAILURE);
 
 	if (op == UNSPEC)
 		op = Dflag ? DELETE : READ;
@@ -1568,8 +1612,10 @@ getasciilabel(FILE *f, struct disklabel *lp)
 		} else
 			v = FSMAXTYPES;
 		if ((unsigned)v >= FSMAXTYPES) {
-			warnx("line %d: warning, unknown filesystem type: %s",
+			warnx("line %d: warning, unknown file system type: %s",
 			    lineno, cp);
+			warnx("tip: use -l to see all valid file system "
+			    "types");
 			v = FS_UNUSED;
 		}
 		pp->p_fstype = v;
@@ -1736,6 +1782,7 @@ usage(void)
 	{ "-D [-v] disk", "(to delete existing label(s))" },
 	{ "-R [-DFrv] disk protofile", "(to restore label)" },
 	{ "[-NW] disk", "(to write disable/enable label)" },
+	{ "-l", "(to show all known file system types)" },
 	{ NULL, NULL }
 	};
 	int i;
@@ -1769,4 +1816,61 @@ getulong(const char *str, char sep, char **epp, unsigned long *ul,
 		return EFTYPE;
 
 	return 0;
+}
+
+/*
+ * This is a wrapper over the standard strcmp function to be used with
+ * qsort on an array of pointers to strings.
+ */
+static int
+qsort_strcmp(const void *v1, const void *v2)
+{
+	const char *const *sp1 = (const char *const *)v1;
+	const char *const *sp2 = (const char *const *)v2;
+
+	return strcmp(*sp1, *sp2);
+}
+
+/*
+ * Prints all know file system types for a partition.
+ * Returns 1 on success, 0 on failure.
+ */
+int
+list_fs_types(void)
+{
+	int ret;
+	size_t nelems;
+
+	nelems = 0;
+	{
+		const char *const *namep;
+	
+		namep = fstypenames;
+		while (*namep++ != NULL)
+			nelems++;
+	}
+
+	ret = 1;
+	if (nelems > 0) {
+		const char **list;
+		size_t i;
+
+		list = (const char **)malloc(sizeof(char *) * nelems);
+		if (list == NULL) {
+			warnx("sorry, could not allocate memory for list");
+			ret = 0;
+		} else {
+			for (i = 0; i < nelems; i++)
+				list[i] = fstypenames[i];
+
+			qsort(list, nelems, sizeof(char *), qsort_strcmp);
+
+			for (i = 0; i < nelems; i++)
+				(void)printf("%s\n", list[i]);
+
+			free(list);
+		}
+	}
+
+	return ret;
 }
