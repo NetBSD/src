@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.96 2006/11/04 09:30:00 elad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.97 2006/11/26 20:27:27 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -31,12 +31,8 @@
  *	@(#)spec_vnops.c	8.15 (Berkeley) 7/14/95
  */
 
-#if defined(_KERNEL_OPT)
-#include "veriexec.h"
-#endif
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.96 2006/11/04 09:30:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.97 2006/11/26 20:27:27 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -59,10 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.96 2006/11/04 09:30:00 elad Exp $")
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
-
-#if NVERIEXEC > 0
-#include <sys/verified_exec.h>
-#endif /* NVERIEXEC > 0 */
 
 /* symbolic sleep message strings for devices */
 const char	devopn[] = "devopn";
@@ -212,27 +204,6 @@ spec_open(v)
 		if (error)
 			return (error);
 
-#if NVERIEXEC > 0
-		if (ap->a_mode & FWRITE) {
-			if (iskmemdev(dev)) {
-				if (veriexec_strict >= VERIEXEC_IPS)
-					return (EPERM);
-			} else {
-				struct vnode *bvp;
-				dev_t blkdev;
-
-				blkdev = devsw_chr2blk(dev);
-				if (blkdev != NODEV) {
-					bvp = NULL;
-					vfinddev(blkdev, VBLK, &bvp);
-					error = veriexec_rawchk(bvp);
-					if (error)
-						return (error);
-				}
-			}
-		}
-#endif /* NVERIEXEC > 0 */
-
 		if (cdev->d_type == D_TTY)
 			vp->v_flag |= VISTTY;
 		VOP_UNLOCK(vp, 0);
@@ -253,12 +224,6 @@ spec_open(v)
 		error = kauth_authorize_device_spec(ap->a_cred, req, vp);
 		if (error)
 			return (error);
-
-#if NVERIEXEC > 0
-		error = veriexec_rawchk(vp);
-		if (error)
-			return (error);
-#endif /* NVERIEXEC > 0 */
 
 		error = (*bdev->d_open)(dev, ap->a_mode, S_IFBLK, l);
 		d_ioctl = bdev->d_ioctl;
