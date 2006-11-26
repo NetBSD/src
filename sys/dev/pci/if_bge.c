@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.117 2006/11/25 13:31:00 tsutsui Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.118 2006/11/26 02:40:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.117 2006/11/25 13:31:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.118 2006/11/26 02:40:10 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3429,7 +3429,7 @@ static int
 bge_encap(struct bge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 {
 	struct bge_tx_bd	*f = NULL;
-	u_int32_t		frag, cur, cnt = 0;
+	u_int32_t		frag, cur;
 	u_int16_t		csum_flags = 0;
 	u_int16_t		txbd_tso_flags = 0;
 	struct txdmamap_pool_entry *dma;
@@ -3627,6 +3627,16 @@ doit:
 	if (error) {
 		return(ENOBUFS);
 	}
+	/*
+	 * Sanity check: avoid coming within 16 descriptors
+	 * of the end of the ring.
+	 */
+	if (dmamap->dm_nsegs > (BGE_TX_RING_CNT - sc->bge_txcnt - 16)) {
+		BGE_TSO_PRINTF(("%s: "
+		    " dmamap_load_mbuf too close to ring wrap\n",
+		    sc->bge_dev.dv_xname));
+		goto fail_unload;
+	}
 
 	mtag = sc->ethercom.ec_nvlans ?
 	    m_tag_find(m_head, PACKET_TAG_VLAN, NULL) : NULL;
@@ -3667,25 +3677,14 @@ doit:
 		} else {
 			f->bge_vlan_tag = 0;
 		}
-		/*
-		 * Sanity check: avoid coming within 16 descriptors
-		 * of the end of the ring.
-		 */
-		if ((BGE_TX_RING_CNT - (sc->bge_txcnt + cnt)) < 16) {
-			BGE_TSO_PRINTF(("%s: "
-			    " dmamap_load_mbuf too close to ring wrap\n",
-			    sc->bge_dev.dv_xname));
-			return(ENOBUFS);
-		}
 		cur = frag;
 		BGE_INC(frag, BGE_TX_RING_CNT);
-		cnt++;
 	}
 
 	if (i < dmamap->dm_nsegs) {
 		BGE_TSO_PRINTF(("%s: reached %d < dm_nsegs %d\n",
 		    sc->bge_dev.dv_xname, i, dmamap->dm_nsegs));
-		return ENOBUFS;
+		goto fail_unload;
 	}
 
 	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize,
@@ -3695,18 +3694,23 @@ doit:
 		BGE_TSO_PRINTF(("%s: frag %d = wrapped id %d?\n",
 		    sc->bge_dev.dv_xname, frag, sc->bge_tx_saved_considx));
 
-		return(ENOBUFS);
+		goto fail_unload;
 	}
 
 	sc->bge_rdata->bge_tx_ring[cur].bge_flags |= BGE_TXBDFLAG_END;
 	sc->bge_cdata.bge_tx_chain[cur] = m_head;
 	SLIST_REMOVE_HEAD(&sc->txdma_list, link);
 	sc->txdma[cur] = dma;
-	sc->bge_txcnt += cnt;
+	sc->bge_txcnt += dmamap->dm_nsegs;
 
 	*txidx = frag;
 
 	return(0);
+
+ fail_unload:
+	bus_dmamap_unload(sc->bge_dmatag, dmamap);
+
+	return ENOBUFS;
 }
 
 /*
