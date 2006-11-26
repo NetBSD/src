@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.36 2006/11/26 03:02:04 tsutsui Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.37 2006/11/26 03:08:02 tsutsui Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -196,9 +196,9 @@
 #define BGE_PCI_UNKNOWN0		0xC4
 /* XXX:
  * Used in PCI-Express code for 575x chips.
- * Should be replaced with checking  for a PCI config-space
- * capability for PCI-Express, and PCI-Express standard 
- * offsets  into that capability block.
+ * Should be replaced with checking for a PCI config-space
+ * capability for PCI-Express, and PCI-Express standard
+ * offsets into that capability block.
  */
 #define BGE_PCI_CONF_DEV_CTRL		0xD8
 #define BGE_PCI_CONF_DEV_STUS		0xDA
@@ -265,25 +265,25 @@
 #define BGE_CHIPID_BCM5715_xx		0x90010000
 
 /* shorthand one */
-#define BGE_ASICREV(x)                  ((x) >> 28)
-#define BGE_ASICREV_BCM5700             0x07
-#define BGE_ASICREV_BCM5701             0x00
-#define BGE_ASICREV_BCM5703             0x01
-#define BGE_ASICREV_BCM5704             0x02
-#define BGE_ASICREV_BCM5705             0x03
-#define BGE_ASICREV_BCM5750             0x04
-#define BGE_ASICREV_BCM5714             0x05
-#define BGE_ASICREV_BCM5752             0x06
+#define BGE_ASICREV(x)			((x) >> 28)
+#define BGE_ASICREV_BCM5700		0x07
+#define BGE_ASICREV_BCM5701		0x00
+#define BGE_ASICREV_BCM5703		0x01
+#define BGE_ASICREV_BCM5704		0x02
+#define BGE_ASICREV_BCM5705		0x03
+#define BGE_ASICREV_BCM5750		0x04
+#define BGE_ASICREV_BCM5714		0x05
+#define BGE_ASICREV_BCM5752		0x06
 /* ASIC revision 0x07 is the original bcm5700 */
-#define BGE_ASICREV_BCM5780             0x08
-#define BGE_ASICREV_BCM5715             0x09	/* XXX ??? */
+#define BGE_ASICREV_BCM5780		0x08
+#define BGE_ASICREV_BCM5715		0x09	/* XXX ??? */
 
 /* chip revisions */
-#define BGE_CHIPREV(x)                  ((x) >> 24)
-#define BGE_CHIPREV_5700_AX             0x70
-#define BGE_CHIPREV_5700_BX             0x71
-#define BGE_CHIPREV_5700_CX             0x72
-#define BGE_CHIPREV_5701_AX             0x00
+#define BGE_CHIPREV(x)			((x) >> 24)
+#define BGE_CHIPREV_5700_AX		0x70
+#define BGE_CHIPREV_5700_BX		0x71
+#define BGE_CHIPREV_5700_CX		0x72
+#define BGE_CHIPREV_5701_AX		0x00
 
 /* PCI DMA Read/Write Control register */
 #define BGE_PCIDMARWCTL_MINDMA		0x000000FF
@@ -302,7 +302,7 @@
 # define  BGE_PCIDMA_RWCTL_PCI_WR_CMD_SHIFT	 28
 
 /* PCI DMA Read/Write Control register, alternate usage for PCI-Express */
-#define BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_128	0x00180000 
+#define BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_128	0x00180000
 #define BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_256	0x00380000
 
 #define BGE_PCI_READ_BNDRY_DISABLE	0x00000000
@@ -1312,7 +1312,7 @@
 
 /* Alternate encodings for PCI-Express, from Broadcom-supplied Linux driver */
 #define BGE_RDMA_MODE_FIFO_LONG_BURST	((1<<17) || (1 << 16))
-#define BGE_RDMA_MODE_FIFO_SIZE_128     (1 << 17)
+#define BGE_RDMA_MODE_FIFO_SIZE_128	(1 << 17)
 
 /* Read DMA status register */
 #define BGE_RDMASTAT_PCI_TGT_ABRT_ATTN	0x00000004
@@ -1780,7 +1780,7 @@
  * firmware mailbox at 0xB50 in order to prevent the PXE boot
  * code from running.
  */
-#define BGE_MAGIC_NUMBER                0x4B657654
+#define BGE_MAGIC_NUMBER		0x4B657654
 
 typedef struct {
 	volatile u_int32_t	bge_addr_hi;
@@ -2287,16 +2287,16 @@ struct bge_ring_data {
 #if 0	/* pre-TSO values */
 #define BGE_TXDMA_MAX	ETHER_MAX_LEN_JUMBO
 #ifdef _LP64
-#define BGE_NTXSEG      30
+#define BGE_NTXSEG	30
 #else
-#define BGE_NTXSEG      31
+#define BGE_NTXSEG	31
 #endif
 #else	/* TSO values */
 #define BGE_TXDMA_MAX	(round_page(IP_MAXPACKET))	/* for TSO */
 #ifdef _LP64
-#define BGE_NTXSEG      120	/* XXX just a guess */
+#define BGE_NTXSEG	120	/* XXX just a guess */
 #else
-#define BGE_NTXSEG      124	/* XXX just a guess */
+#define BGE_NTXSEG	124	/* XXX just a guess */
 #endif
 #endif	/* TSO values */
 
@@ -2334,7 +2334,7 @@ struct bge_type {
 #define BGE_TXCONS_UNSET		0xFFFF	/* impossible value */
 
 struct bge_jpool_entry {
-	int                             slot;
+	int				slot;
 	SLIST_ENTRY(bge_jpool_entry)	jpool_entries;
 };
 
@@ -2366,7 +2366,7 @@ struct bge_softc {
 	struct ifmedia		bge_ifmedia;	/* media info */
 	u_int8_t		bge_extram;	/* has external SSRAM */
 	u_int8_t		bge_tbi;
-    	u_int8_t		bge_rx_alignment_bug;
+	u_int8_t		bge_rx_alignment_bug;
 	u_int8_t		bge_pcie;	/* on a PCI Express port */
 	u_int32_t		bge_return_ring_cnt;
 	u_int32_t		bge_tx_prodidx;
@@ -2410,7 +2410,7 @@ struct bge_softc {
 	struct callout		bge_timeout;
 	char			*bge_vpd_prodname;
 	char			*bge_vpd_readonly;
-  	int			bge_pending_rxintr_change;
+	int			bge_pending_rxintr_change;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
 	void			*bge_powerhook;
