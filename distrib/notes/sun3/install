@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.13 2006/11/25 22:53:35 mishka Exp $
+.\"	$NetBSD: install,v 1.14 2006/11/26 15:44:07 martin Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -167,7 +167,7 @@ The procedure is simpler if you have space for an expanded
 (not compressed) copy of the miniroot image.
 In that case:
 .Pp
-.Dl ssh\*> Ic "dd if=/mnt/miniroot of=/dev/rsd0b bs=8k"
+.Dl ssh\*> Ic "dd if=/mnt/miniroot.fs of=/dev/rsd0b bs=8k"
 .Pp
 Otherwise, you will need to use
 .Ic zcat
@@ -186,14 +186,14 @@ and then run the other program in the foreground with its output to
 The result looks like this:
 .Pp
 .Dl ssh\*> Ic "run -bg dd if=/dev/pipe of=/dev/rsd0b obs=8k"
-.Dl ssh\*> Ic "run -o /dev/pipe zcat /mnt/install/miniroot.gz"
+.Dl ssh\*> Ic "run -o /dev/pipe zcat /mnt/install/miniroot.fs.gz"
 .Pp
 To load the miniroot using rsh to the server, you would use a
 pair of commands similar to the above.
 Here is another example:
 .Pp
 .Dl ssh\*> Ic "run -b dd if=/dev/pipe of=/dev/rsd0b obs=8k"
-.Dl ssh\*> Ic "run -o /dev/pipe rsh 192.233.20.195 zcat miniroot.gz"
+.Dl ssh\*> Ic "run -o /dev/pipe rsh 192.233.20.195 zcat miniroot.fs.gz"
 .
 .Ss2 Installing from SunOS
 .
@@ -202,7 +202,7 @@ To install
 onto a machine already running
 .Tn SunOS ,
 you
-will need the miniroot image (miniroot.gz) and some means to
+will need the miniroot image (miniroot.fs.gz) and some means to
 decompress it.
 .Pp
 First, boot
@@ -228,11 +228,11 @@ Now copy the miniroot image onto your swap device (here
 .Pa /dev/rsd0b )
 with the command
 .Pp
-.Dl Ic "gzip -dc miniroot.gz | dd of=/dev/rsd0b obs=32k"
+.Dl Ic "gzip -dc miniroot.fs.gz | dd of=/dev/rsd0b obs=32k"
 .Pp
 or if you have already decompressed the miniroot
 .Pp
-.Dl Ic "dd if=miniroot.gz of=/dev/rsd0b obs=32k"
+.Dl Ic "dd if=miniroot.fs of=/dev/rsd0b obs=32k"
 .Pp
 Finally, reboot the machine and instruct the ROM to boot from
 the swap device as described in the next section.
