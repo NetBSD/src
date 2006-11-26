@@ -1,4 +1,4 @@
-.\"	$NetBSD: group.5,v 1.16 2003/10/13 15:36:34 agc Exp $
+.\"	$NetBSD: group.5,v 1.17 2006/11/26 11:35:39 jmmv Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@
 .\"
 .\"     @(#)group.5	8.3 (Berkeley) 4/19/94
 .\"
-.Dd November 17, 2000
+.Dd November 26, 2006
 .Dt GROUP 5
 .Os
 .Sh NAME
@@ -79,7 +79,7 @@ The
 .Nm
 file consists of newline separated
 .Tn ASCII
-records, one per group, containing four colon
+records, usually one per group, containing four colon
 .Ql \&:
 separated fields.
 Each line has the form:
@@ -130,6 +130,22 @@ in their
 entry and does not need to be added to that group in the
 .Pa /etc/group
 file.
+.Pp
+Very large groups can be accommodated over multiple lines by specifying the
+same group name in all of them; other than this, each line has an identical
+format to that described above.
+This can be necessary to avoid the record's length limit, which is currently
+set to 1024 characters.
+Note that the limit can be queried through
+.Xr sysconf 3
+by using the
+.Li _SC_GETGR_R_SIZE_MAX
+parameter.
+For example:
+.Bd -literal -offset indent
+biggrp:*:1000:user001,user002,user003,...,user099,user100
+biggrp:*:1000:user101,user102,user103,...
+.Ed
 .Pp
 The group with the name
 .Dq wheel
