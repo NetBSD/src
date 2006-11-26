@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.5,v 1.24 2005/09/05 03:37:15 hubertf Exp $
+.\"	$NetBSD: passwd.5,v 1.25 2006/11/26 11:43:48 jmmv Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@
 .\"
 .\"     @(#)passwd.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd September 4, 2005
+.Dd November 26, 2006
 .Dt PASSWD 5
 .Os
 .Sh NAME
@@ -112,6 +112,14 @@ User's home directory.
 .It Em shell
 User's login shell.
 .El
+.Pp
+Be aware that each line is limited to 1024 characters; longer ones will be
+ignored.
+This limit can be queried through
+.Xr sysconf 3
+by using the
+.Li _SC_GETPW_R_SIZE_MAX
+parameter.
 .Pp
 The
 .Nm
