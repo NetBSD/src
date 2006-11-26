@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.7 2006/03/09 18:10:07 wiz Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.8 2006/11/26 11:26:27 martin Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -1177,7 +1177,7 @@ system to boot the installer
 Go to one of the
 .Nx
 mirror sites and download the CD-R image
-.Pa macppccd.iso
+.Pa macppccd-\*V.iso
 from the
 .Pa pub/NetBSD/iso
 directory.
@@ -1198,7 +1198,7 @@ systems should get it from the official website:
 .Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
 .Pp
 .(disp
-.No # Ic "cdrecord -v speed=4 dev=/dev/cd1c macppccd.iso"
+.No # Ic "cdrecord -v speed=4 dev=/dev/cd1c macppccd-\*V.iso"
 .disp)
 .Pp
 You will need to substitute the correct name of the disk image file,
@@ -1537,7 +1537,7 @@ CD-R image is compressed, then you will need to uncompress it first.
 .Pp
 Find a spare bootable drive (i.e. SCSI or IDE), and use some tool to write
 the disk image
-.Pa macppccd.iso
+.Pa macppccd-\*V.iso
 to your spare drive, and boot from that drive.
 For example, you could use a Zip drive, a Jaz drive,
 a Compact Flash drive, or even a spare hard drive.
@@ -1558,7 +1558,7 @@ loads the installation kernel from the ISO file system on the disk image.
 .Em From an UNIX-like machine (including MacOS X)
 .Pp
 .(disp
-.No # Ic "dd if=macppccd.iso of=/dev/rsd0c"
+.No # Ic "dd if=macppccd-\*V.iso of=/dev/rsd0c"
 .disp)
 .Pp
 where
@@ -1618,7 +1618,7 @@ Hit return (i.e. start at sector number zero)
 .Pp
 .It
 Select
-.Pa macppccd.iso
+.Pa macppccd-\*V.iso
 and click
 .Dq Open
 .Pp
