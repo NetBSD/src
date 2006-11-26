@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.29 2006/03/18 12:48:35 dsl Exp $	*/
+/*	$NetBSD: interact.c,v 1.30 2006/11/26 16:16:31 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.29 2006/03/18 12:48:35 dsl Exp $");
+__RCSID("$NetBSD: interact.c,v 1.30 2006/11/26 16:16:31 jmmv Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -66,6 +66,7 @@ static void	cmd_part(struct disklabel *, char *, int);
 static void	cmd_label(struct disklabel *, char *, int);
 static void	cmd_round(struct disklabel *, char *, int);
 static void	cmd_name(struct disklabel *, char *, int);
+static void	cmd_listfstypes(struct disklabel *, char *, int);
 static int	runcmd(struct disklabel *, char *, int);
 static int	getinput(const char *, const char *, const char *, char *);
 static int	alphacmp(const void *, const void *);
@@ -85,6 +86,7 @@ static struct cmds {
 	{ "C",	cmd_chain,	"make partitions contiguous" },
 	{ "E",	cmd_printall,	"print disk label and current partition table"},
 	{ "I",	cmd_info,	"change label information" },
+	{ "L",	cmd_listfstypes,"list all known file system types" },
 	{ "N",	cmd_name,	"name the label" },
 	{ "P",	cmd_print,	"print current partition table" },
 	{ "Q",	NULL,		"quit" },
@@ -576,6 +578,14 @@ cmd_label(struct disklabel *lp, char *s, int fd)
 		return;
 	}
 	printf("Label written\n");
+}
+
+
+static void
+cmd_listfstypes(struct disklabel *lp, char *s, int fd)
+{
+
+	(void)list_fs_types();
 }
 
 
