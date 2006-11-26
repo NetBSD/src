@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.30 2006/11/14 00:04:01 lukem Exp $
+# $NetBSD: postinstall,v 1.31 2006/11/26 12:05:21 peter Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -765,6 +765,32 @@ do_periodic()
 
 	compare_dir $1 ${SRC_DIR}/etc ${DEST_DIR}/etc 644 \
 		daily weekly monthly security
+}
+
+#
+#	pf
+#
+additem pf "pf configuration being up to date"
+do_pf()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_pf  fix|check"
+	op=$1
+	failed=0
+
+	find_file_in_dirlist pf.conf "pf.conf" \
+	    ${SRC_DIR}/dist/pf/etc ${DEST_DIR}/etc \
+	    || return 1
+
+	find_file_in_dirlist pf.os "pf.os" \
+	    ${SRC_DIR}/dist/pf/etc ${DEST_DIR}/etc \
+	    || return 1
+
+	populate_dir ${op} true \
+	    ${SRC_DIR}/dist/pf/etc ${DEST_DIR}/etc 644 \
+	    pf.conf pf.os
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
 }
 
 #
