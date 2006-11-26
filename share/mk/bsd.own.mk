@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.487 2006/11/24 12:02:55 drochner Exp $
+#	$NetBSD: bsd.own.mk,v 1.488 2006/11/26 13:59:49 drochner Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -75,7 +75,7 @@ CPPFLAG_ISYSTEMXX=	-cxx-isystem
 .endif
 
 .if empty(.MAKEFLAGS:M-V*)
-PRINTOBJDIR=	echo ".include <bsd.obj.mk>" | ${MAKE} -r -V .OBJDIR -f - xxx
+PRINTOBJDIR=	${MAKE} -V .OBJDIR
 .else
 PRINTOBJDIR=	echo # prevent infinite recursion
 .endif
