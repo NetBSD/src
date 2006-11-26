@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.122 2006/10/31 14:05:22 hubertf Exp $
+.\"	$NetBSD: contents,v 1.123 2006/11/26 19:21:55 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -328,7 +328,7 @@ Method), below.
 .if !\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[sparc]:\n[xen]:\n[amd64] \{\
 .		It Pa misc/
 .
-.if \n[alpha] \{\
+.ie \n[alpha] \{\
 contains
 .Pa GENERIC.fs ,
 a
