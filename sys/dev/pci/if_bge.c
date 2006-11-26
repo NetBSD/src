@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.119 2006/11/26 03:02:04 tsutsui Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.120 2006/11/26 04:00:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.119 2006/11/26 03:02:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.120 2006/11/26 04:00:45 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -270,9 +270,9 @@ int	bge_tso_debug = 0;
  * (defined here until the thought is done).
  */
 #define BGE_IS_5714_FAMILY(sc) \
-	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714 ||	\
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780 ||	\
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5715 )
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714 )
 
 #define BGE_IS_5750_OR_BEYOND(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 || \
@@ -1881,6 +1881,10 @@ static const struct bge_revision {
 	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
 	  "BCM5700 B2" },
 
+	{ BGE_CHIPID_BCM5700_B3,
+	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
+	  "BCM5700 B3" },
+
 	/* This is treated like a BCM5700 Bx */
 	{ BGE_CHIPID_BCM5700_ALTIMA,
 	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
@@ -1921,6 +1925,10 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5703_A3,
 	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5703 A3" },
+
+	{ BGE_CHIPID_BCM5703_B0,
+	  BGE_QUIRK_ONLY_PHY_1,
+	  "BCM5703 B0" },
 
 	{ BGE_CHIPID_BCM5704_A0,
   	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
@@ -2010,6 +2018,10 @@ static const struct bge_revision bge_majorrevs[] = {
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM575x family" },
 
+	{ BGE_ASICREV_BCM5714_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "unknown BCM5714" },
+
 	{ BGE_ASICREV_BCM5714,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM5714" },
@@ -2022,10 +2034,6 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5780,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM5780" },
-
-	{ BGE_ASICREV_BCM5715,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
-	  "unknown BCM5715" },
 
 	{ 0,
 	  0,
@@ -2110,7 +2118,7 @@ static const struct bge_product {
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5703A3,
-	  "Broadcom BCM5703A3 Gigabit Ethernet",
+	  "Broadcom BCM5703 Gigabit Ethernet",
 	  },
 
    	{ PCI_VENDOR_BROADCOM,
