@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.35 2006/07/29 19:10:56 ad Exp $
+.\"	$NetBSD: install,v 1.36 2006/11/26 12:56:12 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -260,7 +260,7 @@ bootblocks or using the
 .Tn Ultrix
 bootloader, you can boot the kernel located in:
 .Pp
-.Dl Pa \*M/binary/kernel/install.gz
+.Dl Pa \*M/binary/kernel/netbsd-INSTALL.gz
 .Pp
 On
 .Tn Ultrix
@@ -279,11 +279,11 @@ Then boot using one of:
 .Pp
 .(tag 12n -offset indent -compact
 .It "2100 or 3100:"
-.Ic "boot -f rz(0," Ns Ar X Ns Ic ",0)install"
+.Ic "boot -f rz(0," Ns Ar X Ns Ic ",0)netbsd-INSTALL"
 .It "5000/200:"
-.Ic "boot 5/rz" Ns Ar X Ns Ic "/install"
+.Ic "boot 5/rz" Ns Ar X Ns Ic "/netbsd-INSTALL"
 .It "other 5000s:"
-.Ic "boot 3/rz" Ns Ar X Ns Ic "/install"
+.Ic "boot 3/rz" Ns Ar X Ns Ic "/netbsd-INSTALL"
 .tag)
 .Pp
 where
