@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.51 2006/11/25 22:53:35 mishka Exp $
+.\"	$NetBSD: install,v 1.52 2006/11/26 11:26:27 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -143,7 +143,7 @@ below.
 .
 If you wish to burn a CD-R containing a bootable NetBSD installation,
 then you can either burn the prepared disk image in
-.Pa installation/cdrom/netbsd-sparc.iso
+.Pa installation/cdrom/sparccd-\*V.iso
 or create your own.
 If you wish to create your own, you should follow the directions on the
 .Nx
@@ -151,7 +151,7 @@ Bootable CD-ROM HOW-TO at:
 .Lk http://www.NetBSD.org/Documentation/bootcd.html#sparcimage
 .Pp
 Once you have downloaded
-.Pa netbsd-sparc.iso
+.Pa sparccd-\*V.iso
 or created your own disk image, then you need to burn it to a CD-R.
 .Pp
 The CD-ROM attached to your Sparc must support 512 byte sectors to be
