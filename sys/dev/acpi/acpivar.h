@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.27 2006/09/23 17:04:26 fvdl Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.28 2006/11/26 12:30:05 cube Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -257,6 +257,7 @@ extern int acpi_active;
 
 extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
 
+int		acpi_check(device_t, const char *);
 int		acpi_probe(void);
 ACPI_STATUS	acpi_OsGetRootPointer(UINT32, ACPI_POINTER *);
 int		acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);

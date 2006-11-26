@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.97 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: acpi.c,v 1.98 2006/11/26 12:30:05 cube Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.97 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.98 2006/11/26 12:30:05 cube Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -237,6 +237,21 @@ acpi_probe(void)
 	 */
 
 	return 1;
+}
+
+static int
+acpi_submatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
+{
+	struct cfattach *ca;
+
+	ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
+	return (ca == &acpi_ca);
+}
+
+int
+acpi_check(device_t parent, const char *ifattr)
+{
+	return (config_search_ia(acpi_submatch, parent, ifattr, NULL) != NULL);
 }
 
 ACPI_STATUS
