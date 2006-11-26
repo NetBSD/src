@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.39 2006/08/11 19:17:47 christos Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.40 2006/11/26 16:22:36 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -178,7 +178,7 @@ struct veriexec_table_entry {
 	} while (0);
 
 int veriexec_add_fp_ops(struct veriexec_fp_ops *);
-void veriexec_init_fp_ops(void);
+void veriexec_init(void);
 struct veriexec_fp_ops *veriexec_find_ops(u_char *name);
 int veriexec_fp_calc(struct lwp *, struct vnode *, struct veriexec_file_entry *,
     u_char *);

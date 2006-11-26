@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.70 2006/11/23 13:11:29 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.71 2006/11/26 16:22:36 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.70 2006/11/23 13:11:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.71 2006/11/26 16:22:36 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -142,10 +142,10 @@ int veriexec_add_fp_ops(struct veriexec_fp_ops *ops)
 }
 
 /*
- * Initialise the internal "default" fingerprint ops vector list.
+ * Initialise Veriexec.
  */
 void
-veriexec_init_fp_ops(void)
+veriexec_init(void)
 {
 	struct veriexec_fp_ops *ops;
 
