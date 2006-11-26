@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 2006/07/04 10:05:06 he Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14 2006/11/26 12:30:05 cube Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2006/07/04 10:05:06 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2006/11/26 12:30:05 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,8 @@ mainbus_attach(parent, self, aux)
 #endif
 
 #if NACPI > 0
-	acpi_present = acpi_probe();
+	if (acpi_check(self, "acpibus"))
+		acpi_present = acpi_probe();
 	/*
 	 * First, see if the MADT contains CPUs, and possibly I/O APICs.
 	 * Building the interrupt routing structures can only
