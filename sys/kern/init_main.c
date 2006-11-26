@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.282 2006/11/22 02:02:51 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.283 2006/11/26 16:22:36 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.282 2006/11/22 02:02:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.283 2006/11/26 16:22:36 elad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -382,11 +382,10 @@ main(void)
 #endif /* FILEASSOC */
 
 #if NVERIEXEC > 0
-	  /*
-	   * Initialise the fingerprint operations vectors before
-	   * fingerprints can be loaded.
-	   */
-	veriexec_init_fp_ops();
+	/*
+	 * Initialise the Veriexec subsystem.
+	 */
+	veriexec_init();
 #endif /* NVERIEXEC > 0 */
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
