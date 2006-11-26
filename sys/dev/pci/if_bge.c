@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.118 2006/11/26 02:40:10 tsutsui Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.119 2006/11/26 03:02:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.118 2006/11/26 02:40:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.119 2006/11/26 03:02:04 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1966,6 +1966,18 @@ static const struct bge_revision {
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5751 A1" },
 
+	{ BGE_CHIPID_BCM5752_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5752 A0" },
+
+	{ BGE_CHIPID_BCM5752_A1,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5752 A1" },
+
+	{ BGE_CHIPID_BCM5752_A2,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5752 A2" },
+
 	{ 0, 0, NULL }
 };
 
@@ -2164,6 +2176,11 @@ static const struct bge_product {
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5752,
 	  "Broadcom BCM5752 Gigabit Ethernet",
+	  },
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5752M,
+	  "Broadcom BCM5752M Gigabit Ethernet",
 	  },
 
    	{ PCI_VENDOR_BROADCOM,
@@ -2691,6 +2708,13 @@ bge_reset(struct bge_softc *sc)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
 	    BGE_HIF_SWAP_OPTIONS|BGE_PCIMISCCTL_PCISTATE_RW);
+
+	/*
+	 * Disable the firmware fastboot feature on 5752 ASIC
+	 * to avoid firmware timeout.
+	 */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752)
+		CSR_WRITE_4(sc, BGE_FASTBOOT_PC, 0);
 
 	val = BGE_MISCCFG_RESET_CORE_CLOCKS | (65<<1);
 	/*
