@@ -4880,7 +4880,7 @@ new_symbol (struct die_info *die, struct type *type, struct objfile *objfile,
 	  break;
 	case DW_TAG_formal_parameter:
 	  attr = dwarf_attr (die, DW_AT_location);
-	  if (attr)
+	  if (attr && attr_form_is_block (attr))
 	    {
 	      SYMBOL_VALUE (sym) =
 		decode_locdesc (DW_BLOCK (attr), objfile, cu_header);
