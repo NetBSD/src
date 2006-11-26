@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_qop.h,v 1.3 2002/03/05 04:11:53 itojun Exp $	*/
+/*	$NetBSD: altq_qop.h,v 1.4 2006/11/26 11:38:07 peter Exp $	*/
 /*	$KAME: altq_qop.h,v 1.5 2002/02/12 10:14:01 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -222,7 +222,6 @@ extern const char *qop_errlist[];	/* error string list */
 extern struct qdisc_ops nop_qdisc;
 extern char *cur_ifname(void);
 extern struct qdisc_parser qdisc_parser[];
-extern int	Debug_mode;
 
 #ifndef RSVPD
 /* rename LOG() to log_write() */
