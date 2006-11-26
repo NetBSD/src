@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.16 2006/11/22 20:57:52 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.17 2006/11/26 17:21:25 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.16 2006/11/22 20:57:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.17 2006/11/26 17:21:25 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -446,6 +446,11 @@ secmodel_bsd44_securelevel_device_cb(kauth_cred_t cred,
 				break;
 			}
 
+			/*
+			 * XXX: This is bogus. We should be failing the request
+			 * XXX: not only if this specific slice is mounted, but
+			 * XXX: if it's on a disk with any other mounted slice.
+			 */
 			if (vfs_mountedon(bvp) && (securelevel > 0))
 				break;
 
