@@ -1,4 +1,4 @@
-/*	$NetBSD: altqd.c,v 1.8 2005/06/17 12:02:00 peter Exp $	*/
+/*	$NetBSD: altqd.c,v 1.9 2006/11/26 11:38:07 peter Exp $	*/
 /*	$KAME: altqd.c,v 1.10 2002/02/20 10:42:26 kjc Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -85,7 +85,7 @@ static void sig_handler(int);
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-Ddv] [-f config]\n", getprogname());
+	fprintf(stderr, "usage: %s [-dv] [-f config]\n", getprogname());
 	exit(1);
 }
 
@@ -124,14 +124,10 @@ main(int argc, char **argv)
 	for (i = 0; i < MAX_CLIENT; i++)
 		client[i] = NULL;
 
-	while ((c = getopt(argc, argv, "f:vDdl:")) != -1) {
+	while ((c = getopt(argc, argv, "f:vdl:")) != -1) {
 		switch (c) {
 		case 'f':
 			altqconfigfile = optarg;
-			break;
-		case 'D':	/* -D => dummy mode */
-			Debug_mode = 1;
-			printf("Debug mode set.\n");
 			break;
 		case 'v':
 			l_debug = LOG_DEBUG;

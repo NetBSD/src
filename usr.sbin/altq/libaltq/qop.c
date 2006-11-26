@@ -1,4 +1,4 @@
-/*	$NetBSD: qop.c,v 1.7 2006/09/29 18:40:57 christos Exp $	*/
+/*	$NetBSD: qop.c,v 1.8 2006/11/26 11:38:07 peter Exp $	*/
 /*	$KAME: qop.c,v 1.11 2001/10/26 04:57:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -82,7 +82,6 @@ struct tbrinfo {
 LIST_HEAD(qop_iflist, ifinfo)	qop_iflist = LIST_HEAD_INITIALIZER(&iflist);
 /* a list of configured token bucket regulators */
 LIST_HEAD(tbr_list, tbrinfo)	tbr_list = LIST_HEAD_INITIALIZER(&tbr_list);
-int	Debug_mode = 0;		/* nosched (dummy mode) */
 
 /*
  * internal functions
@@ -348,7 +347,7 @@ qop_add_if(struct ifinfo **rp, const char *ifname, u_int bandwidth,
 		ifname += 1;
 	ifinfo->ifindex = get_ifindex(ifname);
 	ifinfo->ifmtu = get_ifmtu(ifname);
-	if (qdisc_ops == NULL || Debug_mode)
+	if (qdisc_ops == NULL)
 		ifinfo->qdisc = &nop_qdisc; /* replace syscalls by nops */
 	else
 		ifinfo->qdisc = qdisc_ops;
