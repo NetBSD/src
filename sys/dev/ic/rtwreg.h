@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.20 2006/08/31 19:24:38 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.21 2006/11/26 17:31:32 dyoung Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -834,12 +834,12 @@
 
 /* Tx descriptor */
 struct rtw_txdesc {
-	uint32_t	td_ctl0;
-	uint32_t	td_ctl1;
-	uint32_t	td_buf;
-	uint32_t	td_len;
-	uint32_t	td_next;
-	uint32_t	td_rsvd[3];
+	volatile uint32_t	td_ctl0;
+	volatile uint32_t	td_ctl1;
+	volatile uint32_t	td_buf;
+	volatile uint32_t	td_len;
+	volatile uint32_t	td_next;
+	volatile uint32_t	td_rsvd[3];
 };
 
 #define td_stat td_ctl0
@@ -897,10 +897,10 @@ struct rtw_txdesc {
 
 /* Rx descriptor */
 struct rtw_rxdesc {
-    uint32_t	rd_ctl;
-    uint32_t	rd_rsvd0;
-    uint32_t	rd_buf;
-    uint32_t	rd_rsvd1;
+	volatile uint32_t	rd_ctl;
+	volatile uint32_t	rd_rsvd0;
+	volatile uint32_t	rd_buf;
+	volatile uint32_t	rd_rsvd1;
 };
 
 #define rd_stat rd_ctl
