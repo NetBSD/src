@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77 2006/11/11 19:00:17 jmmv Exp $
+# $NetBSD: GENERIC,v 1.78 2006/11/26 16:14:03 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.77 $"
+#ident 		"GENERIC-$Revision: 1.78 $"
 
 maxusers	64
 
@@ -503,13 +503,14 @@ sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+vge*	at pci? dev ? function ?	# VIA VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Lucent/Intersil WaveLAN/IEEE
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
 # MII/PHY support
-# XXX: only nsphy and igphy "tested"
 acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
+ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
