@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.20 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.21 2006/11/26 20:14:41 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.20 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.21 2006/11/26 20:14:41 martin Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -337,6 +337,10 @@ USB_ATTACH(usscanner)
 #else
 	/* No SCSI bus, just ignore it */
 	usscanner_cleanup(sc);
+
+	printf("%s: no scsibus configured, see usscanner(4) for details\n",
+	    USBDEVNAME(sc->sc_dev));
+
 	USB_ATTACH_ERROR_RETURN;
 
 #endif
