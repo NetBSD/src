@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.71 2006/11/26 16:22:36 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.72 2006/11/26 20:27:27 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.71 2006/11/26 16:22:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.72 2006/11/26 20:27:27 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.71 2006/11/26 16:22:36 elad 
 #include <uvm/uvm_extern.h>
 #include <sys/fileassoc.h>
 #include <sys/kauth.h>
+#include <sys/conf.h>
+#include <miscfs/specfs/specdev.h>
 
 int veriexec_verbose;
 int veriexec_strict;
@@ -74,6 +76,9 @@ int veriexec_hook;
 
 /* Veriexecs table of hash types and their associated information. */
 LIST_HEAD(veriexec_ops_head, veriexec_fp_ops) veriexec_ops_list;
+
+static int veriexec_raw_cb(kauth_cred_t, kauth_action_t, void *,
+    void *, void *, void *, void *);
 
 /*
  * Add fingerprint names to the global list.
@@ -153,6 +158,11 @@ veriexec_init(void)
 	veriexec_hook = fileassoc_register("veriexec", veriexec_clear);
 	if (veriexec_hook == FILEASSOC_INVAL)
 		panic("Veriexec: Can't register fileassoc");
+
+	/* Register listener to handle raw disk access. */
+	if (kauth_listen_scope(KAUTH_SCOPE_DEVICE, veriexec_raw_cb, NULL) ==
+	    NULL)
+		panic("Veriexec: Can't listen on device scope");
 
 	LIST_INIT(&veriexec_ops_list);
 	veriexec_fp_names = NULL;
@@ -724,26 +734,127 @@ veriexec_purge(struct veriexec_file_entry *vfe)
  * XXX:		  - lower refcount,
  * XXX:		  - if refcount == 0, remove "no cache" flag from all entries
  */
-int
-veriexec_rawchk(struct vnode *vp)
+static int
+veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
 {
-	int monitored;
+	int result;
+	enum kauth_device_req req;
+	struct veriexec_table_entry *vte;
 
-	monitored = (vp && veriexec_tblfind(vp));
+	result = KAUTH_RESULT_DEFER;
+	req = (enum kauth_device_req)arg0;
 
-	switch (veriexec_strict) {
-	case VERIEXEC_IDS:
-		if (monitored)
-			fileassoc_table_run(vp->v_mount, veriexec_hook,
+	switch (action) {
+	case KAUTH_DEVICE_RAWIO_SPEC: {
+		struct vnode *vp, *bvp;
+		dev_t dev;
+		int d_type;
+
+		if (req == KAUTH_REQ_DEVICE_RAWIO_SPEC_READ) {
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		vp = arg1;
+
+		KASSERT(vp != NULL);
+
+		dev = vp->v_un.vu_specinfo->si_rdev;
+		d_type = D_OTHER;
+		bvp = NULL;
+
+		/* Handle /dev/mem and /dev/kmem. */
+		if ((vp->v_type == VCHR) && iskmemdev(dev)) {
+			if (veriexec_strict < VERIEXEC_IPS)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+		}
+
+		switch (vp->v_type) {
+		case VCHR: {
+			const struct cdevsw *cdev;
+
+			cdev = cdevsw_lookup(dev);
+			if (cdev != NULL) {
+				dev_t blkdev;
+
+				blkdev = devsw_chr2blk(dev);
+				if (blkdev != NODEV) {
+					vfinddev(blkdev, VBLK, &bvp);
+					if (bvp != NULL)
+						d_type = cdev->d_type;
+				}
+			}
+
+			break;
+			}
+		case VBLK: {
+			const struct bdevsw *bdev;
+
+			bdev = bdevsw_lookup(dev);
+			if (bdev != NULL)
+				d_type = bdev->d_type;
+
+			bvp = vp;
+
+			break;
+			}
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+
+		if (d_type != D_DISK) {
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		/*
+		 * XXX: See vfs_mountedon() comment in secmodel/bsd44.
+		 */
+		vte = veriexec_tblfind(bvp);
+		if (vte == NULL) {
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		switch (veriexec_strict) {
+		case VERIEXEC_LEARNING:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		case VERIEXEC_IDS:
+			result = KAUTH_RESULT_ALLOW;
+
+			fileassoc_table_run(bvp->v_mount, veriexec_hook,
 			    (fileassoc_cb_t)veriexec_purge);
+
+			break;
+		case VERIEXEC_IPS:
+			result = KAUTH_RESULT_DENY;
+			break;
+		case VERIEXEC_LOCKDOWN:
+			result = KAUTH_RESULT_DENY;
+			break;
+		}
+
 		break;
-	case VERIEXEC_IPS:
-		if (monitored)
-			return (EPERM);
+		}
+
+	case KAUTH_DEVICE_RAWIO_PASSTHRU:
+		/* XXX What can we do here? */
+		if (veriexec_strict < VERIEXEC_IPS)
+			result = KAUTH_RESULT_ALLOW;
+		else
+			result = KAUTH_RESULT_DENY;
+
 		break;
-	case VERIEXEC_LOCKDOWN:
-		return (EPERM);
+
+	default:
+		result = KAUTH_RESULT_DEFER;
+		break;
 	}
 
-	return (0);
+	return (result);
 }
