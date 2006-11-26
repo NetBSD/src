@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 2005/10/19 21:22:21 dsl Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 2006/11/26 16:16:31 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -35,6 +35,7 @@ void	showinfo(FILE *, struct disklabel *, const char *);
 void	showpartitions(FILE *, struct disklabel *, int);
 void	showpartition(FILE *, struct disklabel *, int, int);
 void	interact(struct disklabel *, int);
+int	list_fs_types(void);
 
 extern	char	specname[];
 extern	int	 Cflag;
