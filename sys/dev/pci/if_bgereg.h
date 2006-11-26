@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.34 2006/04/18 14:53:43 christos Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.35 2006/11/26 02:39:04 tsutsui Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1779,8 +1779,8 @@
 #define BGE_MAGIC_NUMBER                0x4B657654
 
 typedef struct {
-	u_int32_t		bge_addr_hi;
-	u_int32_t		bge_addr_lo;
+	volatile u_int32_t	bge_addr_hi;
+	volatile u_int32_t	bge_addr_lo;
 } bge_hostaddr;
 
 static __inline void
@@ -1796,8 +1796,8 @@ bge_set_hostaddr(volatile bge_hostaddr *x, bus_addr_t y)
 /* Ring control block structure */
 struct bge_rcb {
 	bge_hostaddr		bge_hostaddr;
-	u_int32_t		bge_maxlen_flags;	/* two 16-bit fields */
-	u_int32_t		bge_nicaddr;
+	volatile u_int32_t	bge_maxlen_flags;	/* two 16-bit fields */
+	volatile u_int32_t	bge_nicaddr;
 };
 
 #define	BGE_RCB_MAXLEN_FLAGS(maxlen, flags)	((maxlen) << 16 | (flags))
@@ -1813,15 +1813,15 @@ struct bge_rcb {
 struct bge_tx_bd {
 	bge_hostaddr		bge_addr;
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		bge_len;
-	u_int16_t		bge_flags;
-	u_int16_t		bge_rsvd;
-	u_int16_t		bge_vlan_tag;
+	volatile u_int16_t	bge_len;
+	volatile u_int16_t	bge_flags;
+	volatile u_int16_t	bge_rsvd;
+	volatile u_int16_t	bge_vlan_tag;
 #else
-	u_int16_t		bge_flags;
-	u_int16_t		bge_len;
-	u_int16_t		bge_vlan_tag;
-	u_int16_t		bge_rsvd;
+	volatile u_int16_t	bge_flags;
+	volatile u_int16_t	bge_len;
+	volatile u_int16_t	bge_vlan_tag;
+	volatile u_int16_t	bge_rsvd;
 #endif
 };
 
@@ -1845,26 +1845,26 @@ struct bge_tx_bd {
 struct bge_rx_bd {
 	bge_hostaddr		bge_addr;
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		bge_idx;
-	u_int16_t		bge_len;
-	u_int16_t		bge_type;
-	u_int16_t		bge_flags;
-	u_int16_t		bge_ip_csum;
-	u_int16_t		bge_tcp_udp_csum;
-	u_int16_t		bge_error_flag;
-	u_int16_t		bge_vlan_tag;
+	volatile u_int16_t	bge_idx;
+	volatile u_int16_t	bge_len;
+	volatile u_int16_t	bge_type;
+	volatile u_int16_t	bge_flags;
+	volatile u_int16_t	bge_ip_csum;
+	volatile u_int16_t	bge_tcp_udp_csum;
+	volatile u_int16_t	bge_error_flag;
+	volatile u_int16_t	bge_vlan_tag;
 #else
-	u_int16_t		bge_len;
-	u_int16_t		bge_idx;
-	u_int16_t		bge_flags;
-	u_int16_t		bge_type;
-	u_int16_t		bge_tcp_udp_csum;
-	u_int16_t		bge_ip_csum;
-	u_int16_t		bge_vlan_tag;
-	u_int16_t		bge_error_flag;
+	volatile u_int16_t	bge_len;
+	volatile u_int16_t	bge_idx;
+	volatile u_int16_t	bge_flags;
+	volatile u_int16_t	bge_type;
+	volatile u_int16_t	bge_tcp_udp_csum;
+	volatile u_int16_t	bge_ip_csum;
+	volatile u_int16_t	bge_vlan_tag;
+	volatile u_int16_t	bge_error_flag;
 #endif
-	u_int32_t		bge_rsvd;
-	u_int32_t		bge_opaque;
+	volatile u_int32_t	bge_rsvd;
+	volatile u_int32_t	bge_opaque;
 };
 
 #define BGE_RXBDFLAG_END		0x0004
@@ -1887,27 +1887,27 @@ struct bge_rx_bd {
 
 struct bge_sts_idx {
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		bge_tx_cons_idx;
-	u_int16_t		bge_rx_prod_idx;
+	volatile u_int16_t	bge_tx_cons_idx;
+	volatile u_int16_t	bge_rx_prod_idx;
 #else
-	u_int16_t		bge_rx_prod_idx;
-	u_int16_t		bge_tx_cons_idx;
+	volatile u_int16_t	bge_rx_prod_idx;
+	volatile u_int16_t	bge_tx_cons_idx;
 #endif
 };
 
 struct bge_status_block {
-	u_int32_t		bge_status;
-	u_int32_t		bge_rsvd0;
+	volatile u_int32_t	bge_status;
+	volatile u_int32_t	bge_rsvd0;
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		bge_rx_std_cons_idx;
-	u_int16_t		bge_rx_jumbo_cons_idx;
-	u_int16_t		bge_rsvd1;
-	u_int16_t		bge_rx_mini_cons_idx;
+	volatile u_int16_t	bge_rx_std_cons_idx;
+	volatile u_int16_t	bge_rx_jumbo_cons_idx;
+	volatile u_int16_t	bge_rsvd1;
+	volatile u_int16_t	bge_rx_mini_cons_idx;
 #else
-	u_int16_t		bge_rx_jumbo_cons_idx;
-	u_int16_t		bge_rx_std_cons_idx;
-	u_int16_t		bge_rx_mini_cons_idx;
-	u_int16_t		bge_rsvd1;
+	volatile u_int16_t	bge_rx_jumbo_cons_idx;
+	volatile u_int16_t	bge_rx_std_cons_idx;
+	volatile u_int16_t	bge_rx_mini_cons_idx;
+	volatile u_int16_t	bge_rsvd1;
 #endif
 	struct bge_sts_idx	bge_idx[16];
 };
