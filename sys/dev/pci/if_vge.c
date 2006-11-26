@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.28 2006/11/26 13:09:32 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.29 2006/11/26 15:04:15 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.28 2006/11/26 13:09:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.29 2006/11/26 15:04:15 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.28 2006/11/26 13:09:32 tsutsui Exp $");
 #define VGE_NTXDESC		256
 #define VGE_NTXDESC_MASK	(VGE_NTXDESC - 1)
 #define VGE_NEXT_TXDESC(x)	((x + 1) & VGE_NTXDESC_MASK)
+#define VGE_PREV_TXDESC(x)	((x - 1) & VGE_NTXDESC_MASK)
 
 #define VGE_NRXDESC		256	/* Must be a multiple of 4!! */
 #define VGE_NRXDESC_MASK	(VGE_NRXDESC - 1)
@@ -290,6 +291,9 @@ struct vge_softc {
 #define VGE_PCI_LOIO             0x10
 #define VGE_PCI_LOMEM            0x14
 
+static inline void vge_set_txaddr(struct vge_txfrag *, bus_addr_t);
+static inline void vge_set_rxaddr(struct vge_rxdesc *, bus_addr_t);
+
 static int vge_probe(struct device *, struct cfdata *, void *);
 static void vge_attach(struct device *, struct device *, void *);
 
@@ -332,6 +336,28 @@ static void vge_reset(struct vge_softc *);
 
 CFATTACH_DECL(vge, sizeof(struct vge_softc),
     vge_probe, vge_attach, NULL, NULL);
+
+static inline void
+vge_set_txaddr(struct vge_txfrag *f, bus_addr_t daddr)
+{
+
+	f->tf_addrlo = htole32((uint32_t)daddr);
+	if (sizeof(bus_addr_t) == sizeof(uint64_t))
+		f->tf_addrhi = htole16(((uint64_t)daddr >> 32) & 0xFFFF);
+	else
+		f->tf_addrhi = 0;
+}
+
+static inline void
+vge_set_rxaddr(struct vge_rxdesc *rxd, bus_addr_t daddr)
+{
+
+	rxd->rd_addrlo = htole32((uint32_t)daddr);
+	if (sizeof(bus_addr_t) == sizeof(uint64_t))
+		rxd->rd_addrhi = htole16(((uint64_t)daddr >> 32) & 0xFFFF);
+	else
+		rxd->rd_addrhi = 0;
+}
 
 /*
  * Defragment mbuf chain contents to be as linear as possible.
@@ -1040,6 +1066,9 @@ vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 	struct vge_rxsoft *rxs;
 	bus_dmamap_t map;
 	int i;
+#ifdef DIAGNOSTIC
+	uint32_t rd_sts;
+#endif
 
 	m_new = NULL;
 	if (m == NULL) {
@@ -1080,15 +1109,16 @@ vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 
 	rxd = &sc->sc_rxdescs[idx];
 
+#ifdef DIAGNOSTIC
 	/* If this descriptor is still owned by the chip, bail. */
-
 	VGE_RXDESCSYNC(sc, idx, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-	if (le32toh(rxd->rd_sts) & VGE_RDSTS_OWN) {
-		aprint_error("%s: tried to map busy RX descriptor\n",
+	rd_sts = le32toh(rxd->rd_sts);
+	VGE_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
+	if (rd_sts & VGE_RDSTS_OWN) {
+		panic("%s: tried to map busy RX descriptor",
 		    sc->sc_dev.dv_xname);
-		VGE_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
-		goto out;
 	}
+#endif
 
 	rxs->rxs_mbuf = m;
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
@@ -1096,8 +1126,7 @@ vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 
 	rxd->rd_buflen =
 	    htole16(VGE_BUFLEN(map->dm_segs[0].ds_len) | VGE_RXDESC_I);
-	rxd->rd_addrlo = htole32(VGE_ADDR_LO(map->dm_segs[0].ds_addr));
-	rxd->rd_addrhi = htole16(VGE_ADDR_HI(map->dm_segs[0].ds_addr) & 0xFFFF);
+	vge_set_rxaddr(rxd, map->dm_segs[0].ds_addr);
 	rxd->rd_sts = 0;
 	rxd->rd_ctl = 0;
 	VGE_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -1343,16 +1372,15 @@ vge_txeof(struct vge_softc *sc)
 	int idx;
 
 	ifp = &sc->sc_ethercom.ec_if;
-	idx = sc->sc_tx_considx;
 
 	for (idx = sc->sc_tx_considx;
-	    idx != sc->sc_tx_prodidx;
-	    idx = VGE_NEXT_TXDESC(idx)) {
+	    sc->sc_tx_free < VGE_NTXDESC;
+	    idx = VGE_NEXT_TXDESC(idx), sc->sc_tx_free++) {
 		VGE_TXDESCSYNC(sc, idx,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		txstat = le32toh(sc->sc_txdescs[idx].td_sts);
+		VGE_TXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
 		if (txstat & VGE_TDSTS_OWN) {
-			VGE_TXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
 			break;
 		}
 
@@ -1368,14 +1396,11 @@ vge_txeof(struct vge_softc *sc)
 			ifp->if_oerrors++;
 		else
 			ifp->if_opackets++;
-
-		sc->sc_tx_free++;
 	}
 
-	/* No changes made to the TX ring, so no flush needed */
+	sc->sc_tx_considx = idx;
 
-	if (idx != sc->sc_tx_considx) {
-		sc->sc_tx_considx = idx;
+	if (sc->sc_tx_free > 0) {
 		ifp->if_flags &= ~IFF_OACTIVE;
 	}
 
@@ -1385,7 +1410,7 @@ vge_txeof(struct vge_softc *sc)
 	 * interrupt that will cause us to re-enter this routine.
 	 * This is done in case the transmitter has gone idle.
 	 */
-	if (sc->sc_tx_free != VGE_NTXDESC)
+	if (sc->sc_tx_free < VGE_NTXDESC)
 		CSR_WRITE_1(sc, VGE_CRS1, VGE_CR1_TIMER0_ENABLE);
 	else
 		ifp->if_timer = 0;
@@ -1483,7 +1508,7 @@ vge_intr(void *arg)
 	/* Re-enable interrupts */
 	CSR_WRITE_1(sc, VGE_CRS3, VGE_CR3_INT_GMSK);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (claim && !IFQ_IS_EMPTY(&ifp->if_snd))
 		vge_start(ifp);
 
 	return claim;
@@ -1500,6 +1525,7 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	int m_csumflags, seg, error, flags;
 	struct m_tag *mtag;
 	size_t sz;
+	uint32_t td_sts, td_ctl;
 
 	KASSERT(sc->sc_tx_free > 0);
 
@@ -1509,8 +1535,9 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	/* If this descriptor is still owned by the chip, bail. */
 	VGE_TXDESCSYNC(sc, idx, 
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-	if (le32toh(txd->td_sts) & VGE_TDSTS_OWN) {
-		VGE_TXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
+	td_sts = le32toh(txd->td_sts);
+	VGE_TXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
+	if (td_sts & VGE_TDSTS_OWN) {
 		return ENOBUFS;
 	}
 #endif
@@ -1551,16 +1578,14 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 
 	for (seg = 0, f = &txd->td_frag[0]; seg < map->dm_nsegs; seg++, f++) {
 		f->tf_buflen = htole16(VGE_BUFLEN(map->dm_segs[seg].ds_len));
-		f->tf_addrlo = htole32(VGE_ADDR_LO(map->dm_segs[seg].ds_addr));
-		f->tf_addrhi = htole16(VGE_ADDR_HI(map->dm_segs[seg].ds_addr));
+		vge_set_txaddr(f, map->dm_segs[seg].ds_addr);
 	}
 
 	/* Argh. This chip does not autopad short frames */
 	sz = m_head->m_pkthdr.len;
 	if (sz < ETHER_PAD_LEN) {
 		f->tf_buflen = htole16(VGE_BUFLEN(ETHER_PAD_LEN - sz));
-		f->tf_addrlo = htole32(VGE_ADDR_LO(VGE_CDPADADDR(sc)));
-		f->tf_addrhi = htole16(VGE_ADDR_HI(VGE_CDPADADDR(sc)) & 0xFFFF);
+		vge_set_txaddr(f, VGE_CDPADADDR(sc));
 		sz = ETHER_PAD_LEN;
 		seg++;
 	}
@@ -1580,16 +1605,15 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 		flags |= VGE_TDCTL_TCPCSUM;
 	if (m_csumflags & M_CSUM_UDPv4)
 		flags |= VGE_TDCTL_UDPCSUM;
-	txd->td_sts = htole32(sz << 16);
-	txd->td_ctl = htole32(flags | (seg << 28) | VGE_TD_LS_NORM);
+	td_sts = sz << 16;
+	td_ctl = flags | (seg << 28) | VGE_TD_LS_NORM;
 
 	if (sz > ETHERMTU + ETHER_HDR_LEN)
-		txd->td_ctl |= htole32(VGE_TDCTL_JUMBO);
+		td_ctl |= VGE_TDCTL_JUMBO;
 
 	/*
 	 * Set up hardware VLAN tagging.
 	 */
-
 	mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m_head);
 	if (mtag != NULL) {
 		/* 
@@ -1597,10 +1621,13 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 		 * that tags are written in little endian and
 		 * we already use htole32() here.
 		 */
-		txd->td_ctl |= htole32(VLAN_TAG_VALUE(mtag) | VGE_TDCTL_VTAG);
+		td_ctl |= VLAN_TAG_VALUE(mtag) | VGE_TDCTL_VTAG;
 	}
+	txd->td_ctl = htole32(td_ctl);
+	txd->td_sts = htole32(td_sts);
+	VGE_TXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	txd->td_sts |= htole32(VGE_TDSTS_OWN);
+	txd->td_sts = htole32(VGE_TDSTS_OWN | td_sts);
 	VGE_TXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	sc->sc_tx_free--;
@@ -1618,7 +1645,7 @@ vge_start(struct ifnet *ifp)
 	struct vge_softc *sc;
 	struct vge_txsoft *txs;
 	struct mbuf *m_head;
-	int idx, pidx, error;
+	int idx, pidx, ofree, error;
 
 	sc = ifp->if_softc;
 
@@ -1629,8 +1656,8 @@ vge_start(struct ifnet *ifp)
 
 	m_head = NULL;
 	idx = sc->sc_tx_prodidx;
-
-	pidx = (idx - 1) & VGE_NTXDESC_MASK;
+	pidx = VGE_PREV_TXDESC(idx);
+	ofree = sc->sc_tx_free;
 
 	/*
 	 * Loop through the send queue, setting up transmit descriptors
@@ -1643,15 +1670,16 @@ vge_start(struct ifnet *ifp)
 		if (m_head == NULL)
 			break;
 
-		txs = &sc->sc_txsoft[idx];
-
-		if (txs->txs_mbuf != NULL) {
+		if (sc->sc_tx_free == 0) {
 			/*
-			 * Slot already used, stop for now.
+			 * All slots used, stop for now.
 			 */
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
+		txs = &sc->sc_txsoft[idx];
+		KASSERT(txs->txs_mbuf == NULL);
 
 		if ((error = vge_encap(sc, m_head, idx))) {
 			if (error == EFBIG) {
@@ -1700,30 +1728,30 @@ vge_start(struct ifnet *ifp)
 #endif
 	}
 
-	if (idx == sc->sc_tx_prodidx) {
-		return;
+	if (sc->sc_tx_free < ofree) {
+		/* TX packet queued */
+
+		sc->sc_tx_prodidx = idx;
+
+		/* Issue a transmit command. */
+		CSR_WRITE_2(sc, VGE_TXQCSRS, VGE_TXQCSR_WAK0);
+
+		/*
+		 * Use the countdown timer for interrupt moderation.
+		 * 'TX done' interrupts are disabled. Instead, we reset the
+		 * countdown timer, which will begin counting until it hits
+		 * the value in the SSTIMER register, and then trigger an
+		 * interrupt. Each time we set the TIMER0_ENABLE bit, the
+		 * the timer count is reloaded. Only when the transmitter
+		 * is idle will the timer hit 0 and an interrupt fire.
+		 */
+		CSR_WRITE_1(sc, VGE_CRS1, VGE_CR1_TIMER0_ENABLE);
+
+		/*
+		 * Set a timeout in case the chip goes out to lunch.
+		 */
+		ifp->if_timer = 5;
 	}
-
-	/* Issue a transmit command. */
-	CSR_WRITE_2(sc, VGE_TXQCSRS, VGE_TXQCSR_WAK0);
-
-	sc->sc_tx_prodidx = idx;
-
-	/*
-	 * Use the countdown timer for interrupt moderation.
-	 * 'TX done' interrupts are disabled. Instead, we reset the
-	 * countdown timer, which will begin counting until it hits
-	 * the value in the SSTIMER register, and then trigger an
-	 * interrupt. Each time we set the TIMER0_ENABLE bit, the
-	 * the timer count is reloaded. Only when the transmitter
-	 * is idle will the timer hit 0 and an interrupt fire.
-	 */
-	CSR_WRITE_1(sc, VGE_CRS1, VGE_CR1_TIMER0_ENABLE);
-
-	/*
-	 * Set a timeout in case the chip goes out to lunch.
-	 */
-	ifp->if_timer = 5;
 }
 
 static int
