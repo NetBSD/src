@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.37 2006/11/26 16:29:07 hubertf Exp $
+.\"	$NetBSD: install,v 1.38 2006/11/27 01:57:25 hubertf Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -267,13 +267,6 @@ On
 systems you will need to
 .Ic gunzip
 this kernel before booting it.
-A copy of the
-.Ic gunzip
-binary for
-.Tn Ultrix
-systems is located in:
-.Pp
-.Dl Pa \*M/installation/misc/gunzip.ultrix
 .Pp
 Then boot using one of:
 .Pp
@@ -358,14 +351,6 @@ On
 systems, do:
 .Pp
 .Dl # Ic "gunzip -c diskimage.gz | dd of=/dev/rrz" Ns Ar X Ns Ic "c bs=10240"
-.Pp
-A copy of the
-.Ic gunzip
-program is located in
-.Pp
-.Dl Pa \*M/installation/misc/gunzip.ultrix
-.Pp
-if you do not already have it.
 .Pp
 On
 .Tn MS-DOS ,
