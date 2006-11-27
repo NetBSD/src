@@ -1,4 +1,4 @@
-/* $NetBSD: netmask.c,v 1.6 2006/10/15 19:52:40 christos Exp $ */
+/* $NetBSD: netmask.c,v 1.7 2006/11/27 22:24:27 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -99,13 +99,15 @@ allow_netmask(const char *netmaskarg, const char *addr)
 	(void) memset(&a, 0x0, sizeof(a));
 	if ((cp = strchr(netmask, '/')) == NULL) {
 		(void) strlcpy(maskaddr, netmask, sizeof(maskaddr));
-		slash = 31;
+		slash = 32;
 	} else {
 		(void) strlcpy(maskaddr, netmask, MIN(sizeof(maskaddr), (int)(cp - netmask) + 1));
 		slash = atoi(cp + 1);
 	}
+
+	/* if we have a wildcard "slash" netmask, then we allow it */
 	if (slash == 0) {
-		slash = 1;
+		return 1;
 	}
 
 	/* canonicalise IPv4 address to dotted quad */
@@ -131,11 +133,11 @@ allow_netmask(const char *netmaskarg, const char *addr)
 	}
 
 #ifdef ALLOW_NETMASK_DEBUG
-	printf("addr %s %u, mask %s %u, slash %d\n", addr, (ISCSI_HTONL(a.s_addr) >> (32 - slash)), maskaddr, (ISCSI_HTONL(m.s_addr) >> (32 - slash)), slash);
+	printf("addr %s %08x, mask %s %08x, slash %d\n", addr, (ISCSI_HTONL(a.s_addr) >> (32 - slash)), maskaddr, (ISCSI_HTONL(m.s_addr) >> (32 - slash)), slash);
 #endif
 
 	/* and return 1 if address is in netmask */
-	return ((ISCSI_HTONL(a.s_addr) >> (32 - slash)) == (ISCSI_HTONL(m.s_addr) >> (32 - slash))) ? 1 : 0;
+	return (ISCSI_HTONL(a.s_addr) >> (32 - slash)) == (ISCSI_HTONL(m.s_addr) >> (32 - slash));
 }
 
 #ifdef ALLOW_NETMASK_DEBUG
