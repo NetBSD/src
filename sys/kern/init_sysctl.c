@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.92 2006/11/25 21:40:05 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.93 2006/11/27 17:45:36 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,14 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.92 2006/11/25 21:40:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.93 2006/11/27 17:45:36 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 #include "opt_posix.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_ktrace.h"
-#include "veriexec.h"
 #include "pty.h"
 #include "rnd.h"
 
@@ -72,10 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.92 2006/11/25 21:40:05 christos Ex
 #include <sys/exec.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#if NVERIEXEC > 0
-#define	VERIEXEC_NEED_NODE
-#include <sys/verified_exec.h>
-#endif /* NVERIEXEC > 0 */
 #include <sys/stat.h>
 #include <sys/kauth.h>
 #ifdef KTRACE
@@ -171,9 +166,6 @@ static int sysctl_kern_forkfsleep(SYSCTLFN_PROTO);
 static int sysctl_kern_root_partition(SYSCTLFN_PROTO);
 static int sysctl_kern_drivers(SYSCTLFN_PROTO);
 static int sysctl_kern_file2(SYSCTLFN_PROTO);
-#if NVERIEXEC > 0
-static int sysctl_kern_veriexec(SYSCTLFN_PROTO);
-#endif /* NVERIEXEC > 0 */
 static int sysctl_security_setidcore(SYSCTLFN_PROTO);
 static int sysctl_security_setidcorename(SYSCTLFN_PROTO);
 static int sysctl_kern_cpid(SYSCTLFN_PROTO);
@@ -787,47 +779,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("System open file table"),
 		       sysctl_kern_file2, 0, NULL, 0,
 		       CTL_KERN, KERN_FILE2, CTL_EOL);
-#if NVERIEXEC > 0
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "veriexec",
-		       SYSCTL_DESCR("Verified Exec"),
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, KERN_VERIEXEC, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "verbose",
-		       SYSCTL_DESCR("Verified Exec verbose level"),
-		       NULL, 0, &veriexec_verbose, 0,
-		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_VERBOSE,
-		       CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "strict",
-		       SYSCTL_DESCR("Verified Exec strict level"),
-		       sysctl_kern_veriexec, 0, NULL, 0,
-		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_STRICT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "algorithms",
-		       SYSCTL_DESCR("Verified Exec supported hashing "
-				    "algorithms"),
-		       sysctl_kern_veriexec, 0, NULL, 0,
-		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_ALGORITHMS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, &veriexec_count_node,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "count",
-		       SYSCTL_DESCR("Number of fingerprints on device(s)"),
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, KERN_VERIEXEC, VERIEXEC_COUNT, CTL_EOL);
-#endif /* NVERIEXEC > 0 */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "cp_id",
 		       SYSCTL_DESCR("Mapping of CPU number to CPU id"),
 		       sysctl_kern_cpid, 0, NULL, 0,
 		       CTL_KERN, KERN_CP_ID, CTL_EOL);
-
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "coredump",
@@ -2426,49 +2383,6 @@ out_locked:
 	proclist_unlock_read();
 	return error;
 }
-
-/*
- * Sysctl helper routine for Verified Exec.
- */
-#if NVERIEXEC > 0
-static int
-sysctl_kern_veriexec(SYSCTLFN_ARGS)
-{
-	int newval, error;
-	int *var = NULL, raise_only = 0;
-	struct sysctlnode node;
-
-	node = *rnode;
-
-	switch (rnode->sysctl_num) {
-	case VERIEXEC_STRICT:
-		raise_only = 1;
-		var = &veriexec_strict;
-		break;
-	case VERIEXEC_ALGORITHMS:
-		node.sysctl_data = veriexec_fp_names;
-		node.sysctl_size = strlen(veriexec_fp_names) + 1;
-		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-	default:
-		return (EINVAL);
-	}
-
-	newval = *var;
-
-	node.sysctl_data = &newval;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL) {
-		return (error);
-	}
-
-	if (raise_only && (newval < *var))
-		return (EPERM);
-
-	*var = newval;
-
-	return (error);
-}
-#endif /* NVERIEXEC > 0 */
 
 static int
 sysctl_security_setidcore(SYSCTLFN_ARGS)

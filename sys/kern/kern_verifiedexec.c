@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.72 2006/11/26 20:27:27 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.73 2006/11/27 17:45:36 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.72 2006/11/26 20:27:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.73 2006/11/27 17:45:36 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -79,6 +79,90 @@ LIST_HEAD(veriexec_ops_head, veriexec_fp_ops) veriexec_ops_list;
 
 static int veriexec_raw_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
+static int sysctl_kern_veriexec(SYSCTLFN_PROTO);
+
+/*
+ * Sysctl helper routine for Veriexec.
+ */
+static int
+sysctl_kern_veriexec(SYSCTLFN_ARGS)
+{
+	int newval, error;
+	int *var = NULL, raise_only = 0;
+	struct sysctlnode node;
+
+	node = *rnode;
+
+	if (strcmp(rnode->sysctl_name, "strict") == 0) {
+		raise_only = 1;
+		var = &veriexec_strict;
+	} else if (strcmp(rnode->sysctl_name, "algorithms") == 0) {
+		node.sysctl_data = veriexec_fp_names;
+		node.sysctl_size = strlen(veriexec_fp_names) + 1;
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	} else {
+		return (EINVAL);
+	}
+
+	newval = *var;
+
+	node.sysctl_data = &newval;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL) {
+		return (error);
+	}
+
+	if (raise_only && (newval < *var))
+		return (EPERM);
+
+	*var = newval;
+
+	return (error);
+}
+
+SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
+{
+	const struct sysctlnode *rnode = NULL;
+
+	sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "veriexec",
+		       SYSCTL_DESCR("Veriexec"),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "verbose",
+		       SYSCTL_DESCR("Veriexec verbose level"),
+		       NULL, 0, &veriexec_verbose, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "strict",
+		       SYSCTL_DESCR("Veriexec strict level"),
+		       sysctl_kern_veriexec, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "algorithms",
+		       SYSCTL_DESCR("Veriexec supported hashing "
+				    "algorithms"),
+		       sysctl_kern_veriexec, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, &veriexec_count_node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "count",
+		       SYSCTL_DESCR("Number of fingerprints on mount(s)"),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+}
 
 /*
  * Add fingerprint names to the global list.
