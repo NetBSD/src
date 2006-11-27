@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.c,v 1.10 2006/09/20 19:43:33 christos Exp $	*/
+/*	$NetBSD: utmpentry.c,v 1.11 2006/11/27 16:54:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utmpentry.c,v 1.10 2006/09/20 19:43:33 christos Exp $");
+__RCSID("$NetBSD: utmpentry.c,v 1.11 2006/11/27 16:54:10 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -60,11 +60,11 @@ __RCSID("$NetBSD: utmpentry.c,v 1.10 2006/09/20 19:43:33 christos Exp $");
 
 #ifdef SUPPORT_UTMP
 static void getentry(struct utmpentry *, struct utmp *);
-static time_t utmptime = 0;
+static struct timespec utmptime = {0, 0};
 #endif
 #ifdef SUPPORT_UTMPX
 static void getentryx(struct utmpentry *, struct utmpx *);
-static time_t utmpxtime = 0;
+static struct timespec utmpxtime = {0, 0};
 #endif
 #if defined(SUPPORT_UTMPX) || defined(SUPPORT_UTMP)
 static int setup(const char *);
@@ -134,8 +134,8 @@ setup(const char *fname)
 			warn("Cannot stat `%s'", sfname);
 			what &= ~1;
 		} else {
-			if (st.st_mtime > utmpxtime)
-			    utmpxtime = st.st_mtime;
+			if (timespeccmp(&st.st_mtimespec, &utmpxtime, >))
+			    utmpxtime = st.st_mtimespec;
 			else
 			    what &= ~1;
 		}
@@ -148,8 +148,8 @@ setup(const char *fname)
 			warn("Cannot stat `%s'", sfname);
 			what &= ~2;
 		} else {
-			if (st.st_mtime > utmptime)
-				utmptime = st.st_mtime;
+			if (timespeccmp(&st.st_mtimespec, &utmptime, >))
+				utmptime = st.st_mtimespec;
 			else
 				what &= ~2;
 		}
@@ -163,10 +163,10 @@ void
 freeutentries(struct utmpentry *ep)
 {
 #ifdef SUPPORT_UTMP
-	utmptime = 0;
+	timespecclear(&utmptime);
 #endif
 #ifdef SUPPORT_UTMPX
-	utmpxtime = 0;
+	timespecclear(&utmpxtime);
 #endif
 	if (ep == ehead) {
 		ehead = NULL;
