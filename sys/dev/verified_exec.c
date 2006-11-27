@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.48 2006/11/16 01:32:45 christos Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.49 2006/11/27 23:05:18 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.48 2006/11/16 01:32:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.49 2006/11/27 23:05:18 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.48 2006/11/16 01:32:45 christos Exp $\n$NetBSD: verified_exec.c,v 1.48 2006/11/16 01:32:45 christos Exp $");
+__RCSID("$Id: verified_exec.c,v 1.49 2006/11/27 23:05:18 elad Exp $\n$NetBSD: verified_exec.c,v 1.49 2006/11/27 23:05:18 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -407,7 +407,6 @@ veriexec_query(struct veriexec_query_params *params, struct lwp *l)
 	params->status = vfe->status;
 	params->hash_len = vfe->ops->hash_len;
 	strlcpy(params->fp_type, vfe->ops->type, sizeof(params->fp_type));
-	memcpy(params->fp_type, vfe->ops->type, sizeof(params->fp_type));
 	error = copyout(params, params->uaddr, sizeof(*params));
 	if (error)
 		goto out;
