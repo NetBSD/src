@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.21 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: aceride.c,v 1.22 2006/11/27 16:56:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.21 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.22 2006/11/27 16:56:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,9 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		if (rev >= 0x20) {
 			sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
-			if (rev >= 0xC4)
+			if (rev >= 0xC7)
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+			else if (rev >= 0xC4)
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 			else if (rev >= 0xC2)
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
