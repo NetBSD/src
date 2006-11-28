@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.15 2006/11/18 22:45:39 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.16 2006/11/28 13:20:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.15 2006/11/18 22:45:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.16 2006/11/28 13:20:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -79,6 +79,7 @@ int	puffs_pathconf(void *);
 int	puffs_advlock(void *);
 int	puffs_strategy(void *);
 int	puffs_bmap(void *);
+int	puffs_mmap(void *);
 
 
 /* VOP_LEASE() not included */
@@ -148,7 +149,7 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_bwrite_desc, genfs_nullop },		/* bwrite */
         { &vop_getpages_desc, genfs_getpages },		/* getpages */
         { &vop_putpages_desc, genfs_putpages },		/* putpages */
-        { &vop_mmap_desc, genfs_mmap },			/* mmap */
+        { &vop_mmap_desc, puffs_mmap },			/* mmap */
 
         { &vop_poll_desc, genfs_eopnotsupp },		/* poll XXX */
         { &vop_poll_desc, genfs_eopnotsupp },		/* kqfilter XXX */
@@ -1708,6 +1709,20 @@ puffs_islocked(void *v)
 
 	rv = lockstatus(&ap->a_vp->v_lock);
 	return rv;
+}
+
+int
+puffs_mmap(void *v)
+{
+	struct vop_mmap_args *ap = v;
+	struct puffs_mount *pmp;
+
+	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
+
+	if (pmp->pmp_flags & PUFFSFLAG_NOCACHE)
+		return genfs_eopnotsupp(v);
+
+	return genfs_mmap(v);
 }
 
 int
