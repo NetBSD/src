@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.42 2006/11/28 16:15:37 christos Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.43 2006/11/28 16:24:54 christos Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -79,7 +79,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
-makeoptions	CPUFLAGS="-Os"	# generates smaller code than -O2, -O1
+makeoptions	COPTS="-Os"	# generates smaller code than -O2, -O1
 
 # File systems
 file-system 	FFS		# UFS
