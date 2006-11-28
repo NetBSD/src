@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN2_DOMU,v 1.6 2006/11/28 16:15:37 christos Exp $
+# $NetBSD: INSTALL_XEN2_DOMU,v 1.7 2006/11/28 16:24:55 christos Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -6,7 +6,8 @@ options 	XEN
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	CPUFLAGS="-Os -march=pentiumpro -mtune=i486"
+makeoptions	CPUFLAGS="-march=pentiumpro -mtune=i486"
+makeoptions	COPTS="-Os"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
