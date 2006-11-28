@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.37 2006/03/12 20:25:26 cube Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.38 2006/11/28 17:58:10 elad Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -106,7 +106,6 @@ int	process_dofpregs(struct lwp *, struct lwp *, struct uio *);
 int	process_validfpregs(struct lwp *);
 
 int	process_domem(struct lwp *, struct lwp *, struct uio *);
-int	process_checkioperm(struct lwp *, struct proc *);
 
 void	process_stoptrace(struct lwp *);
 
