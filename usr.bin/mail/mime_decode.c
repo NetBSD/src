@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.4 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.5 2006/11/28 18:46:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.4 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.5 2006/11/28 18:46:04 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -810,7 +810,7 @@ run_mime_ficonv(struct mime_info *mip, const char *charset)
 
 	mime_run_function(mime_ficonv, fo, cd);
 	
-	iconv_close(cd);
+	(void)iconv_close(cd);
 }
 #endif /* CHARSET_SUPPORT */
 
