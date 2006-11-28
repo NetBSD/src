@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.294 2006/11/25 17:55:28 dsl Exp $
+#	$NetBSD: INSTALL,v 1.295 2006/11/28 16:15:37 christos Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -13,7 +13,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os -march=i486 -mtune=i486"	# i486 is densest code
+makeoptions	CPUFLAGS="-Os -march=i486 -mtune=i486"	# i486 is densest code
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
