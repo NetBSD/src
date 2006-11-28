@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.12 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.13 2006/11/28 13:36:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.12 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.13 2006/11/28 13:36:29 tsutsui Exp $");
 
 
 /*
@@ -140,7 +140,6 @@ rgephy_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	rgephy_mii_model = MII_MODEL(ma->mii_id2);
-	PHY_RESET(sc);
 
 	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	sc->mii_capabilities &= ~BMSR_ANEG;
@@ -171,6 +170,7 @@ rgephy_attach(struct device *parent, struct device *self, void *aux)
 #undef	ADD
 #undef	PRINT
 
+	PHY_RESET(sc);
 	aprint_normal("\n");
 }
 
@@ -181,7 +181,7 @@ rgephy_service(sc, mii, cmd)
 	int cmd;
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg, speed, gig;
+	int reg, speed, gig, anar;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -211,6 +211,10 @@ rgephy_service(sc, mii, cmd)
 
 		PHY_RESET(sc);	/* XXX hardware bug work-around */
 
+		anar = PHY_READ(sc, RGEPHY_MII_ANAR);
+		anar &= ~(RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_TX |
+		    RGEPHY_ANAR_10_FD | RGEPHY_ANAR_10);
+
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
 #ifdef foo
@@ -227,28 +231,30 @@ rgephy_service(sc, mii, cmd)
 			goto setit;
 		case IFM_100_TX:
 			speed = RGEPHY_S100;
+			anar |= RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_TX;
 			goto setit;
 		case IFM_10_T:
 			speed = RGEPHY_S10;
+			anar |= RGEPHY_ANAR_10_FD | RGEPHY_ANAR_10;
 setit:
 			rgephy_loop(sc);
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
 				speed |= RGEPHY_BMCR_FDX;
 				gig = RGEPHY_1000CTL_AFD;
+				anar &= ~(RGEPHY_ANAR_TX | RGEPHY_ANAR_10);
 			} else {
 				gig = RGEPHY_1000CTL_AHD;
+				anar &=
+				    ~(RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_10_FD);
 			}
 
-			PHY_WRITE(sc, RGEPHY_MII_1000CTL, 0);
-			PHY_WRITE(sc, RGEPHY_MII_BMCR, speed);
-			PHY_WRITE(sc, RGEPHY_MII_ANAR, RGEPHY_SEL_TYPE);
-
-			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)
+			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T) {
+				PHY_WRITE(sc, RGEPHY_MII_1000CTL, 0);
+				PHY_WRITE(sc, RGEPHY_MII_ANAR, anar);
+				PHY_WRITE(sc, RGEPHY_MII_BMCR, speed |
+				    RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
 				break;
-
-			PHY_WRITE(sc, RGEPHY_MII_1000CTL, gig);
-			PHY_WRITE(sc, RGEPHY_MII_BMCR,
-			    speed|RGEPHY_BMCR_AUTOEN|RGEPHY_BMCR_STARTNEG);
+			}
 
 			/*
 			 * When settning the link manually, one side must
@@ -265,6 +271,8 @@ setit:
 				PHY_WRITE(sc, RGEPHY_MII_1000CTL,
 				    gig|RGEPHY_1000CTL_MSE);
 			}
+			PHY_WRITE(sc, RGEPHY_MII_BMCR, speed |
+			    RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
 			break;
 #ifdef foo
 		case IFM_NONE:
@@ -371,12 +379,14 @@ rgephy_status(sc)
 	}
 
 	bmsr = PHY_READ(sc, RTK_GMEDIASTAT);
-	if (bmsr & RTK_GMEDIASTAT_10MBPS)
-		mii->mii_media_active |= IFM_10_T;
-	if (bmsr & RTK_GMEDIASTAT_100MBPS)
-		mii->mii_media_active |= IFM_100_TX;
 	if (bmsr & RTK_GMEDIASTAT_1000MBPS)
 		mii->mii_media_active |= IFM_1000_T;
+	else if (bmsr & RTK_GMEDIASTAT_100MBPS)
+		mii->mii_media_active |= IFM_100_TX;
+	else if (bmsr & RTK_GMEDIASTAT_10MBPS)
+		mii->mii_media_active |= IFM_10_T;
+	else
+		mii->mii_media_active |= IFM_NONE;
 	if (bmsr & RTK_GMEDIASTAT_FDX)
 		mii->mii_media_active |= IFM_FDX;
 
@@ -394,7 +404,8 @@ rgephy_mii_phy_auto(mii)
 	PHY_WRITE(mii, RGEPHY_MII_ANAR,
 	    BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA);
 	DELAY(1000);
-	PHY_WRITE(mii, RGEPHY_MII_1000CTL, RGEPHY_1000CTL_AFD);
+	PHY_WRITE(mii, RGEPHY_MII_1000CTL,
+	    RGEPHY_1000CTL_AHD | RGEPHY_1000CTL_AFD);
 	DELAY(1000);
 	PHY_WRITE(mii, RGEPHY_MII_BMCR,
 	    RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
@@ -432,8 +443,9 @@ rgephy_loop(struct mii_softc *sc)
 /*
  * Initialize RealTek PHY per the datasheet. The DSP in the PHYs of
  * existing revisions of the 8169S/8110S chips need to be tuned in
- * order to reliably negotiate a 1000Mbps link. Later revs of the
- * chips may not require this software tuning.
+ * order to reliably negotiate a 1000Mbps link. This is only needed
+ * for rev 0 and rev 1 of the PHY. Later versions work without
+ * any fixups.
  */
 static void
 rgephy_load_dspcode(struct mii_softc *sc)
