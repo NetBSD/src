@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.23 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.24 2006/11/28 20:29:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.23 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.24 2006/11/28 20:29:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,6 +259,9 @@ cac_pci_l0_completed(struct cac_softc *sc)
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, off, sizeof(struct cac_ccb),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	if ((off & 3) != 0 && ccb->ccb_req.error == 0)
+		ccb->ccb_req.error = CAC_RET_CMD_REJECTED;
 
 	return (ccb);
 }
