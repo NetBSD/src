@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.1 2006/10/31 22:36:37 christos Exp $	*/
+/*	$NetBSD: format.c,v 1.2 2006/11/28 18:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.1 2006/10/31 22:36:37 christos Exp $");
+__RCSID("$NetBSD: format.c,v 1.2 2006/11/28 18:45:32 christos Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: format.c,v 1.1 2006/10/31 22:36:37 christos Exp $");
 #include "extern.h"
 #include "format.h"
 #include "glob.h"
+#include "thread.h"
 
 
 #define DEBUG(a)
@@ -70,19 +71,15 @@ sfmtoff(const char **fmtbeg, const char *fmtch, off_t off)
 {
 	char *newfmt;	/* pointer to new format string */
 	size_t len;	/* space for "lld" including '\0' */
+	char *p;
+
 	len = fmtch - *fmtbeg + sizeof(PRId64);
 	newfmt = salloc(len);
 	(void)strlcpy(newfmt, *fmtbeg, len - sizeof(sizeof(PRId64)) + 1);
 	(void)strlcat(newfmt, PRId64, len);
 	*fmtbeg = fmtch + 1;
-	{
-		char *p;
-		char *q;
-		(void)easprintf(&p, newfmt, off);
-		q = savestr(p);
-		free(p);
-		return q;
-	}
+	(void)sasprintf(&p, newfmt, off);
+	return p;
 }
 
 static const char *
@@ -90,21 +87,15 @@ sfmtint(const char **fmtbeg, const char *fmtch, int num)
 {
 	char *newfmt;
 	size_t len;
+	char *p;
 
 	len = fmtch - *fmtbeg + 2;	/* space for 'd' and '\0' */
 	newfmt = salloc(len);
 	(void)strlcpy(newfmt, *fmtbeg, len);
 	newfmt[len-2] = 'd';		/* convert to printf format */
-	
 	*fmtbeg = fmtch + 1;
-	{
-		char *p;
-		char *q;
-		(void)easprintf(&p, newfmt, num);
-		q = savestr(p);
-		free(p);
-		return q;
-	}
+	(void)sasprintf(&p, newfmt, num);
+	return p;
 }
 
 static const char *
@@ -112,22 +103,32 @@ sfmtstr(const char **fmtbeg, const char *fmtch, const char *str)
 {
 	char *newfmt;
 	size_t len;
+	char *p;
 
 	len = fmtch - *fmtbeg + 2;	/* space for 's' and '\0' */
 	newfmt = salloc(len);
 	(void)strlcpy(newfmt, *fmtbeg, len);
 	newfmt[len-2] = 's';		/* convert to printf format */
-	
 	*fmtbeg = fmtch + 1;
-	{
-		char *p;
-		char *q;
-		(void)easprintf(&p, newfmt, str ? str : "");
-		q = savestr(p);
-		free(p);
-		return q;
-	}
+	(void)sasprintf(&p, newfmt, str ? str : "");
+	return p;
 }
+
+#ifdef THREAD_SUPPORT
+static char*
+sfmtdepth(char *str, int depth)
+{
+	char *p;
+	if (*str == '\0') {
+		(void)sasprintf(&p, "%d", depth);
+		return p;
+	}
+	p = __UNCONST("");
+	for (/*EMPTY*/; depth > 0; depth--)
+		(void)sasprintf(&p, "%s%s", p, str);
+	return p;
+}
+#endif
 
 static const char *
 sfmtfield(const char **fmtbeg, const char *fmtch, struct message *mp)
@@ -139,36 +140,125 @@ sfmtfield(const char **fmtbeg, const char *fmtch, struct message *mp)
 		char *p;
 		const char *str;
 		int skin_it;
-
-		skin_it = fmtch[1] == '-' ? 1 : 0;
-		len = q - fmtch - skin_it;
-		p = salloc(len + 1);
-		(void)strlcpy(p, fmtch + skin_it + 1, len);
-		str = sfmtstr(fmtbeg, fmtch, hfield(p, mp));
-		if (skin_it)
-			str = skin(__UNCONST(str));
+#ifdef THREAD_SUPPORT
+		int depth;
+#endif
+		if (mp == NULL) {
+			*fmtbeg = q + 1;
+			return NULL;
+		}
+#ifdef THREAD_SUPPORT
+		depth = mp->m_depth;
+#endif
+		skin_it = 0;
+		switch (fmtch[1]) { /* check the '?' modifier */
+#ifdef THREAD_SUPPORT
+		case '&':	/* use the relative depth */
+			depth -= thread_depth();
+			/* FALLTHROUGH */
+		case '*':	/* use the absolute depth */
+			len = q - fmtch - 1;
+			p = salloc(len);
+			(void)strlcpy(p, fmtch + 2, len);
+			p = sfmtdepth(p, depth);
+			break;
+#endif			
+		case '-':
+			skin_it = 1;
+			/* FALLTHROUGH */
+		default:
+			len = q - fmtch - skin_it;
+			p = salloc(len);
+			(void)strlcpy(p, fmtch + skin_it + 1, len);
+			p = hfield(p, mp);
+			if (skin_it)
+				p = skin(p);
+			break;
+		}
+		str = sfmtstr(fmtbeg, fmtch, p);
 		*fmtbeg = q + 1;
 		return str;
 	}
 	return NULL;
 }
 
+struct flags_s {
+	int f_and;
+	int f_or;
+	int f_new;	/* some message in the thread is new */
+	int f_unread;	/* some message in the thread is unread */
+};
+
+static void
+get_and_or_flags(struct message *mp, struct flags_s *flags)
+{
+	for (/*EMPTY*/; mp; mp = mp->m_flink) {
+		flags->f_and &= mp->m_flag;
+		flags->f_or  |= mp->m_flag;
+		flags->f_new    |= (mp->m_flag & (MREAD|MNEW)) == MNEW;
+		flags->f_unread |= (mp->m_flag & (MREAD|MNEW)) == 0;
+		get_and_or_flags(mp->m_clink, flags);
+	}
+}
+
 static const char *
-sfmtflag(const char **fmtbeg, const char *fmtch, int flags)
+sfmtflag(const char **fmtbeg, const char *fmtch, struct message *mp)
 {
 	char disp[2];
-	disp[0] = ' ';
+	struct flags_s flags;
+	int is_thread;
+
+	if (mp == NULL)
+		return NULL;
+	
+	is_thread = mp->m_clink != NULL;
+	disp[0] = is_thread ? '+' : ' ';
 	disp[1] = '\0';
-	if (flags & MSAVED)
+
+	flags.f_and = mp->m_flag;
+	flags.f_or = mp->m_flag;
+	flags.f_new = 0;
+	flags.f_unread = 0;
+#ifdef THREAD_SUPPORT
+	if (thread_hidden())
+		get_and_or_flags(mp->m_clink, &flags);
+#endif
+
+	if (flags.f_or & MTAGGED)
+		disp[0] = 't';
+	if (flags.f_and & MTAGGED)
+		disp[0] = 'T';
+
+	if (flags.f_or & MMODIFY)
+		disp[0] = 'e';
+	if (flags.f_and & MMODIFY)
+		disp[0] = 'E';
+
+	if (flags.f_or & MSAVED)
+		disp[0] = '&';
+	if (flags.f_and & MSAVED)
 		disp[0] = '*';
-	if (flags & MPRESERVE)
+
+	if (flags.f_or & MPRESERVE)
+		disp[0] = 'p';
+	if (flags.f_and & MPRESERVE)
 		disp[0] = 'P';
-	if ((flags & (MREAD|MNEW)) == MNEW)
-		disp[0] = 'N';
-	if ((flags & (MREAD|MNEW)) == 0)
+
+	if (flags.f_unread)
+		disp[0] = 'u';
+	if ((flags.f_or & (MREAD|MNEW)) == 0)
 		disp[0] = 'U';
-	if (flags & MBOX)
+
+	if (flags.f_new)
+		disp[0] = 'n';
+	if ((flags.f_and & (MREAD|MNEW)) == MNEW)
+		disp[0] = 'N';
+
+	if (flags.f_or & MBOX)
+		disp[0] = 'm';
+	if (flags.f_and & MBOX)
 		disp[0] = 'M';
+
 	return sfmtstr(fmtbeg, fmtch, disp);
 }
 
@@ -188,11 +278,26 @@ login_name(const char *addr)
 	return addr;
 }
 
+/*
+ * A simple routine to get around a lint warning.
+ */
+static inline const char *
+skip_fmt(const char **src, const char *p)
+{
+	*src = p;
+	return NULL;
+}
+
 static const char *
 subformat(const char **src, struct message *mp, const char *addr,
     const char *user, const char *subj, const char *gmtoff, const char *zone)
 {
-#define MP(a)	mp ? a : NULL
+#if 0
+/* XXX - lint doesn't like this, hence skip_fmt(). */
+#define MP(a)	mp ? a : (*src = (p + 1), NULL)
+#else
+#define MP(a)	mp ? a : skip_fmt(src, p + 1);
+#endif
 	const char *p;
 
 	p = *src;
@@ -205,9 +310,9 @@ subformat(const char **src, struct message *mp, const char *addr,
 
 	switch (*p) {
 	case '?':
-		return MP(sfmtfield(src, p, mp));
+		return sfmtfield(src, p, mp);
 	case 'J':
- 		return MP(sfmtint(src, p, (int)(mp->m_lines - mp->m_blines)));
+		return MP(sfmtint(src, p, (int)(mp->m_lines - mp->m_blines)));
 	case 'K':
  		return MP(sfmtint(src, p, (int)mp->m_blines));
 	case 'L':
@@ -219,23 +324,20 @@ subformat(const char **src, struct message *mp, const char *addr,
 	case 'P':
  		return MP(sfmtstr(src, p, mp == dot ? ">" : " "));
 	case 'Q':
- 		return MP(sfmtflag(src, p, mp->m_flag));
+ 		return MP(sfmtflag(src, p, mp));
 	case 'Z':
 		*src = p + 1;
 		return zone;
-
 	case 'f':
 		return sfmtstr(src, p, addr);
 	case 'i':
-		if (mp == NULL && (mp = dot) == NULL)
-			return NULL;
- 		return sfmtint(src, p, (mp - message) + 1);
+ 		return sfmtint(src, p, get_msgnum(mp));	/* '0' if mp == NULL */
 	case 'n':
 		return sfmtstr(src, p, login_name(addr));
 	case 'q':
 		return sfmtstr(src, p, subj);
 	case 't':
-		return sfmtint(src, p, msgCount);
+		return sfmtint(src, p, get_msgCount());
 	case 'z':
 		*src = p + 1;
 		return gmtoff;
@@ -318,20 +420,20 @@ snarf_quote(char **buf, char *bufend, const char *string)
 static char *
 get_comments(char *name)
 {
-	char nbuf[BUFSIZ];
+	char nbuf[LINESIZE];
 	const char *p;
 	char *qend;
 	char *q;
 	char *lastq;
 
 	if (name == NULL)
-		return(NULL);
+		return NULL;
 
 	p = name;
 	q = nbuf;
 	lastq = nbuf;
 	qend = nbuf + sizeof(nbuf) - 1;
-	for (p = skip_white(name); *p != '\0'; p++) {
+	for (p = skip_blank(name); *p != '\0'; p++) {
 		DEBUG(("get_comments: %s\n", p));
 		switch (*p) {
 		case '"': /* quoted-string ... skip it! */
@@ -380,7 +482,7 @@ my_strptime(const char *buf, const char *fmtstr, struct tm *tm)
  * Note: We return the gmtoff as a string as "-0000" has special
  * meaning.  See RFC 2822, sec 3.3.
  */
-static const char *
+PUBLIC const char *
 dateof(struct tm *tm, struct message *mp, int use_hl_date)
 {
 	char *tail;
@@ -410,6 +512,8 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 	 * See RFC 2822 sec 3.3 for date-time format used in
 	 * the "Date:" field.
 	 *
+	 * Date: Tue, 21 Mar 2006 20:45:30 -0500
+	 *
 	 * Notes:
 	 * 1) The 'day-of-week' and 'second' fields are optional so we
 	 *    check 4 possibilities.  This could be optimized.
@@ -430,12 +534,47 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 	     (tail = strptime(date,     " %d %b %Y %T ", tm)) != NULL ||
 	     (tail = strptime(date, " %a, %d %b %Y %R ", tm)) != NULL ||
 	     (tail = strptime(date,     " %d %b %Y %R ", tm)) != NULL)) {
+		int hour;
+		int min;
+		char sign;
 		char *cp;
+
 		if ((cp = strchr(tail, '(')) != NULL)
 			tm->tm_zone = get_comments(cp);
 		else
 			tm->tm_zone = NULL;
 		gmtoff = skin(tail);
+
+		/*
+		 * Scan the gmtoff and use it to convert the time to a
+		 * local time.
+		 *
+		 * XXX - This is painful!  Is there a better way?
+		 */
+		if (sscanf(gmtoff, " %[+-]%2d%2d ", &sign, &hour, &min) == 3) {
+			time_t otime;
+			/*
+			 * This seems like a crazy way to convert the
+			 * sent times from the Date field to local
+			 * times.
+			 */
+			tm->tm_isdst = -1;
+			if (sign == '-') {
+				tm->tm_hour += hour;
+				tm->tm_min += min;
+			}
+			else {
+				tm->tm_hour -= hour;
+				tm->tm_min -= min;
+			}
+			if ((time_t)(otime = timegm(tm)) == -1)
+				warn("timegm: %s", date);
+
+			if(localtime_r(&otime, tm) == NULL)
+				warn("localtime: %s", date);
+		}
+		else
+			tm->tm_gmtoff = 0;
 	}
 	else {
 		/*
@@ -452,11 +591,11 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 		 */
 		struct headline hl;
 		char headline[LINESIZE];
-		char pbuf[BUFSIZ];
+		char pbuf[LINESIZE];
 		
 		headline[0] = '\0';
 		date = headline;
-		(void)mail_readline(setinput(mp), headline, LINESIZE);
+		(void)mail_readline(setinput(mp), headline, sizeof(headline));
 		parse(headline, &hl, pbuf);
 		if (hl.l_date != NULL &&
 		    (tail = my_strptime(hl.l_date, " %a %b %d %T ", tm)) == NULL &&
@@ -467,9 +606,15 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 	/* tail will be NULL here if the mail file is empty, so don't
 	 * check it. */
 	
+	/*
+	 * XXX - how should we really handle the zone info?  The
+	 * problem seems to be figuring out whether to set tm_isdst to
+	 * 1 or 0.
+	 */
+
 	/* mark the zone and gmtoff info as invalid for strftime. */
 	tm->tm_isdst = -1;
-	
+
 	return gmtoff;
 }
 
@@ -538,7 +683,7 @@ addrof(struct message *mp)
 static char *
 get_display_name(char *name)
 {
-	char nbuf[BUFSIZ];
+	char nbuf[LINESIZE];
 	const char *p;
 	char *q;
 	char *qend;
@@ -546,13 +691,13 @@ get_display_name(char *name)
 	int quoted;
 
 	if (name == NULL)
-		return(NULL);
+		return NULL;
 
 	q = nbuf;
 	lastq = nbuf;
 	qend = nbuf + sizeof(nbuf) - 1;	/* reserve space for '\0' */
 	quoted = 0;
-	for (p = skip_white(name); *p != '\0'; p++) {
+	for (p = skip_blank(name); *p != '\0'; p++) {
 		DEBUG(("get_display_name: %s\n", p));
 		switch (*p) {
 		case '"':	/* quoted-string */
@@ -568,7 +713,7 @@ get_display_name(char *name)
 			if (lastq == nbuf)
 				return NULL;
 			*lastq = '\0';	/* NULL termination */
-			return(savestr(nbuf));
+			return savestr(nbuf);
 
 		case '(':	/* comment - skip it! */
 			p = snarf_comment(NULL, NULL, p);

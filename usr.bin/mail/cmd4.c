@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd4.c,v 1.1 2006/10/31 22:37:19 christos Exp $	*/
+/*	$NetBSD: cmd4.c,v 1.2 2006/11/28 18:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd4.c,v 1.1 2006/10/31 22:37:19 christos Exp $");
+__RCSID("$NetBSD: cmd4.c,v 1.2 2006/11/28 18:45:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,9 +54,8 @@ __RCSID("$NetBSD: cmd4.c,v 1.1 2006/10/31 22:37:19 christos Exp $");
  * Mail -- a mail program
  *
  * Still more user commands.
+ * XXX - should this be renamed smopts.c?
  */
-
-#ifdef SMOPTS_CMD
 
 #if 0	/* XXX - debugging stuff - to be removed */
 void showname(struct name *);
@@ -94,11 +93,14 @@ findsmopts_core(const char *name)
 
 	for (sh = smoptstbl[hashcase(name)]; sh; sh = sh->s_link)
 		if (strcasecmp(sh->s_name, name) == 0)
-			return(sh);
+			return sh;
 	return NULL;
 }
 
-struct smopts_s *
+/*
+ * The exported smopts lookup routine.
+ */
+PUBLIC struct smopts_s *
 findsmopts(const char *name, int top_only)
 {
 	const char *cp;
@@ -117,11 +119,8 @@ findsmopts(const char *name, int top_only)
 	return findsmopts_core(".");
 }
 
-/****************************************
- *
- */
 static void
-printsmopts(char *name)
+printsmopts(const char *name)
 {
 	struct smopts_s *sp;
 
@@ -136,18 +135,18 @@ static void
 printsmoptstbl(void)
 {
 	struct smopts_s *sp;
-	char **argv, **ap;
+	const char **argv, **ap;
 	int h;
 	int cnt;
 	
 	cnt = 1;
-	for (h = 0; h < sizeofarray(smoptstbl); h++ )
+	for (h = 0; h < (int)sizeofarray(smoptstbl); h++ )
 		for (sp = smoptstbl[h]; sp && sp->s_name != NULL; sp = sp->s_link)
 			cnt++;
 
 	argv = salloc(cnt * sizeof(*argv));
 	ap = argv;
-	for (h = 0; h < sizeofarray(smoptstbl); h++ )
+	for (h = 0; h < (int)sizeofarray(smoptstbl); h++ )
 		for (sp = smoptstbl[h]; sp && sp->s_name != NULL; sp = sp->s_link)
 			*ap++ = sp->s_name;
 	*ap = NULL;
@@ -181,7 +180,7 @@ ncalloc(char *str, int ntype)
 	np = ecalloc(1, sizeof *np);
 	np->n_type = ntype;
 	np->n_name = vcopy(str);
-	return(np);
+	return np;
 }
 
 static void
@@ -217,7 +216,11 @@ smopts_core(const char *sname, char **argv)
 	}
 }
 
-int
+/*
+ * Takes a list of entries, expands them, and adds the results to the
+ * smopts table.
+ */
+PUBLIC int
 smoptscmd(void *v)
 {
 	struct name *np;
@@ -266,8 +269,11 @@ delsmopts(char *name)
 	}
 }
 
-int
-unsmopts(void *v)
+/*
+ * Takes a list of entries and removes them from the smoptstbl.
+ */
+PUBLIC int
+unsmoptscmd(void *v)
 {
 	struct name *np;
 	char **argv, **ap;
@@ -278,4 +284,3 @@ unsmopts(void *v)
 			delsmopts(np->n_name);
 	return 0;
 }
-#endif /* SMOPTS_CMD */

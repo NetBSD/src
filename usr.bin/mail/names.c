@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.23 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: names.c,v 1.24 2006/11/28 18:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.23 2006/10/31 20:07:32 christos Exp $");
+__RCSID("$NetBSD: names.c,v 1.24 2006/11/28 18:45:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,13 +47,12 @@ __RCSID("$NetBSD: names.c,v 1.23 2006/10/31 20:07:32 christos Exp $");
 #include "rcv.h"
 #include "extern.h"
 
-
 /*
  * Allocate a single element of a name list,
  * initialize its name field to the passed
  * name and return it.
  */
-struct name *
+PUBLIC struct name *
 nalloc(char str[], int ntype)
 {
 	struct name *np;
@@ -63,119 +62,30 @@ nalloc(char str[], int ntype)
 	np->n_blink = NULL;
 	np->n_type = ntype;
 	np->n_name = savestr(str);
-	return(np);
+	return np;
 }
 
 /*
  * Find the tail of a list and return it.
  */
-struct name *
+static struct name *
 tailof(struct name *name)
 {
 	struct name *np;
 
 	np = name;
 	if (np == NULL)
-		return(NULL);
+		return NULL;
 	while (np->n_flink != NULL)
 		np = np->n_flink;
-	return(np);
-}
-
-/*
- * Extract a list of names from a line,
- * and make a list of names from it.
- * Return the list or NULL if none found.
- */
-struct name *
-extract(char line[], int ntype)
-{
-	char *cp;
-	struct name *begin, *np, *t;
-	char nbuf[BUFSIZ];
-
-	if (line == NULL || *line == '\0')
-		return NULL;
-	begin = NULL;
-	np = NULL;
-	cp = line;
-	while ((cp = yankword(cp, nbuf)) != NULL) {
-		t = nalloc(nbuf, ntype);
-		if (begin == NULL)
-			begin = t;
-		else
-			np->n_flink = t;
-		t->n_blink = np;
-		np = t;
-	}
-	return begin;
-}
-
-/* XXX - is this really sufficient? */
-static int need_quotes(char *str)
-{
-	return (strchr(str, ' ') || strchr(str, '\t'));
-}
-
-/*
- * Turn a list of names into a string of the same names.
- */
-char *
-detract(struct name *np, int ntype)
-{
-	size_t s;
-	char *cp, *begin;
-	struct name *p;
-	int comma;
-	int quote;
-
-	quote = ntype & GSMOPTS;
-	comma = ntype & GCOMMA;
-	if (np == NULL)
-		return(NULL);
-	ntype &= ~GCOMMA;
-	s = 0;
-	if (debug && comma)
-		(void)fprintf(stderr, "detract asked to insert commas\n");
-	for (p = np; p != NULL; p = p->n_flink) {
-		if (ntype && (p->n_type & GMASK) != ntype)
-			continue;
-		s += strlen(p->n_name) + 1;
-		if (comma)
-			s++;
-		if (quote && need_quotes(p->n_name))
-			s += 2;
-	}
-	if (s == 0)
-		return(NULL);
-	s += 2;
-	begin = salloc(s);
-	cp = begin;
-	for (p = np; p != NULL; p = p->n_flink) {
-		int do_quotes;
-		if (ntype && (p->n_type & GMASK) != ntype)
-			continue;
-		do_quotes = (quote && need_quotes(p->n_name));
-		if (do_quotes)
-			*cp++ = '"';
-		cp = copy(p->n_name, cp);
-		if (comma && p->n_flink != NULL)
-			*cp++ = ',';
-		if (do_quotes)
-			*cp++ = '"';
-		*cp++ = ' ';
-	}
-	*--cp = 0;
-	if (comma && *--cp == ',')
-		*cp = 0;
-	return(begin);
+	return np;
 }
 
 /*
  * Grab a single word (liberal word)
  * Throw away things between ()'s, and take anything between <>.
  */
-char *
+static char *
 yankword(char *ap, char wbuf[])
 {
 	char *cp, *cp2;
@@ -205,13 +115,123 @@ yankword(char *ap, char wbuf[])
 			break;
 	}
 	if (*cp ==  '<')
-		for (cp2 = wbuf; *cp && (*cp2++ = *cp++) != '>';)
-			;
+		for (cp2 = wbuf; *cp && (*cp2++ = *cp++) != '>'; /*EMPTY*/)
+			continue;
 	else
 		for (cp2 = wbuf; *cp && !strchr(" \t,(", *cp); *cp2++ = *cp++)
-			;
+			continue;
 	*cp2 = '\0';
 	return cp;
+}
+
+/*
+ * Extract a list of names from a line,
+ * and make a list of names from it.
+ * Return the list or NULL if none found.
+ */
+PUBLIC struct name *
+extract(char line[], int ntype)
+{
+	char *cp;
+	struct name *begin, *np, *t;
+	char nbuf[LINESIZE];
+
+	if (line == NULL || *line == '\0')
+		return NULL;
+	begin = NULL;
+	np = NULL;
+	cp = line;
+	while ((cp = yankword(cp, nbuf)) != NULL) {
+		t = nalloc(nbuf, ntype);
+		if (begin == NULL)
+			begin = t;
+		else
+			np->n_flink = t;
+		t->n_blink = np;
+		np = t;
+	}
+	return begin;
+}
+
+/* XXX - is this really sufficient? */
+static int need_quotes(char *str)
+{
+	return strchr(str, ' ') || strchr(str, '\t');
+}
+
+/*
+ * Turn a list of names into a string of the same names.
+ */
+PUBLIC char *
+detract(struct name *np, int ntype)
+{
+	size_t s;
+	char *cp, *begin;
+	struct name *p;
+	int comma;
+	int quote;
+
+	quote = ntype & GSMOPTS;
+	comma = ntype & GCOMMA;
+	if (np == NULL)
+		return NULL;
+	ntype &= ~GCOMMA;
+	s = 0;
+	if (debug && comma)
+		(void)fprintf(stderr, "detract asked to insert commas\n");
+	for (p = np; p != NULL; p = p->n_flink) {
+		if (ntype && (p->n_type & GMASK) != ntype)
+			continue;
+		s += strlen(p->n_name) + 1;
+		if (comma)
+			s++;
+		if (quote && need_quotes(p->n_name))
+			s += 2;
+	}
+	if (s == 0)
+		return NULL;
+	s += 2;
+	begin = salloc(s);
+	cp = begin;
+	for (p = np; p != NULL; p = p->n_flink) {
+		int do_quotes;
+		if (ntype && (p->n_type & GMASK) != ntype)
+			continue;
+		do_quotes = (quote && need_quotes(p->n_name));
+		if (do_quotes)
+			*cp++ = '"';
+		cp = copy(p->n_name, cp);
+		if (comma && p->n_flink != NULL)
+			*cp++ = ',';
+		if (do_quotes)
+			*cp++ = '"';
+		*cp++ = ' ';
+	}
+	*--cp = 0;
+	if (comma && *--cp == ',')
+		*cp = 0;
+	return begin;
+}
+
+/*
+ * Determine if the passed address is a local "send to file" address.
+ * If any of the network metacharacters precedes any slashes, it can't
+ * be a filename.  We cheat with .'s to allow path names like ./...
+ */
+static int
+isfileaddr(char *name)
+{
+	char *cp;
+
+	if (*name == '+')
+		return 1;
+	for (cp = name; *cp; cp++) {
+		if (*cp == '!' || *cp == '%' || *cp == '@')
+			return 0;
+		if (*cp == '/')
+			return 1;
+	}
+	return 0;
 }
 
 /*
@@ -222,7 +242,7 @@ yankword(char *ap, char wbuf[])
  * Recipients whose name begins with | are piped through the given
  * program and removed.
  */
-struct name *
+PUBLIC struct name *
 outof(struct name *names, FILE *fo, struct header *hp)
 {
 	int c, fd;
@@ -276,9 +296,9 @@ outof(struct name *names, FILE *fo, struct header *hp)
 			(void)fcntl(image, F_SETFD, FD_CLOEXEC);
 			(void)fprintf(fout, "From %s %s", myname, date);
 #ifdef MIME_SUPPORT
-			(void)puthead(hp, fout, GTO|GSUBJECT|GCC|GMIME|GNL);
+			(void)puthead(hp, fout, GTO|GSUBJECT|GCC|GMISC|GMIME|GNL);
 #else
-			(void)puthead(hp, fout, GTO|GSUBJECT|GCC|GNL);
+			(void)puthead(hp, fout, GTO|GSUBJECT|GCC|GMISC|GNL);
 #endif
 			while ((c = getc(fo)) != EOF)
 				(void)putc(c, fout);
@@ -312,7 +332,7 @@ outof(struct name *names, FILE *fo, struct header *hp)
 			 * share the same lseek location and trample
 			 * on one another.
 			 */
-			if ((shellcmd = value("SHELL")) == NULL)
+			if ((shellcmd = value(ENAME_SHELL)) == NULL)
 				shellcmd = _PATH_CSHELL;
 			(void)sigemptyset(&nset);
 			(void)sigaddset(&nset, SIGHUP);
@@ -369,63 +389,21 @@ cant:
 		(void)close(image);
 		image = -1;
 	}
-	return(begin);
+	return begin;
 }
 
 /*
- * Determine if the passed address is a local "send to file" address.
- * If any of the network metacharacters precedes any slashes, it can't
- * be a filename.  We cheat with .'s to allow path names like ./...
+ * Put another node onto a list of names and return
+ * the list.
  */
-int
-isfileaddr(char *name)
+static struct name *
+put(struct name *list, struct name *node)
 {
-	char *cp;
-
-	if (*name == '+')
-		return 1;
-	for (cp = name; *cp; cp++) {
-		if (*cp == '!' || *cp == '%' || *cp == '@')
-			return 0;
-		if (*cp == '/')
-			return 1;
-	}
-	return 0;
-}
-
-/*
- * Map all of the aliased users in the invoker's mailrc
- * file and insert them into the list.
- * Changed after all these months of service to recursively
- * expand names (2/14/80).
- */
-
-struct name *
-usermap(struct name *names)
-{
-	struct name *new, *np, *cp;
-	struct grouphead *gh;
-	int metoo;
-
-	new = NULL;
-	np = names;
-	metoo = (value("metoo") != NULL);
-	while (np != NULL) {
-		if (np->n_name[0] == '\\') {
-			cp = np->n_flink;
-			new = put(new, np);
-			np = cp;
-			continue;
-		}
-		gh = findgroup(np->n_name);
-		cp = np->n_flink;
-		if (gh != NULL)
-			new = gexpand(new, gh, metoo, np->n_type);
-		else
-			new = put(new, np);
-		np = cp;
-	}
-	return(new);
+	node->n_flink = list;
+	node->n_blink = NULL;
+	if (list != NULL)
+		list->n_blink = node;
+	return node;
 }
 
 /*
@@ -433,8 +411,7 @@ usermap(struct name *names)
  * fixed level to keep things from going haywire.
  * Direct recursion is not expanded for convenience.
  */
-
-struct name *
+PUBLIC struct name *
 gexpand(struct name *nlist, struct grouphead *gh, int metoo, int ntype)
 {
 	struct group *gp;
@@ -445,7 +422,7 @@ gexpand(struct name *nlist, struct grouphead *gh, int metoo, int ntype)
 
 	if (depth > MAXEXP) {
 		(void)printf("Expanding alias to depth larger than %d\n", MAXEXP);
-		return(nlist);
+		return nlist;
 	}
 	depth++;
 	for (gp = gh->g_list; gp != NULL; gp = gp->ge_link) {
@@ -472,32 +449,82 @@ skip:
 		nlist = put(nlist, np);
 	}
 	depth--;
-	return(nlist);
+	return nlist;
+}
+
+/*
+ * Map all of the aliased users in the invoker's mailrc
+ * file and insert them into the list.
+ * Changed after all these months of service to recursively
+ * expand names (2/14/80).
+ */
+
+PUBLIC struct name *
+usermap(struct name *names)
+{
+	struct name *new, *np, *cp;
+	struct grouphead *gh;
+	int metoo;
+
+	new = NULL;
+	np = names;
+	metoo = (value(ENAME_METOO) != NULL);
+	while (np != NULL) {
+		if (np->n_name[0] == '\\') {
+			cp = np->n_flink;
+			new = put(new, np);
+			np = cp;
+			continue;
+		}
+		gh = findgroup(np->n_name);
+		cp = np->n_flink;
+		if (gh != NULL)
+			new = gexpand(new, gh, metoo, np->n_type);
+		else
+			new = put(new, np);
+		np = cp;
+	}
+	return new;
 }
 
 /*
  * Concatenate the two passed name lists, return the result.
  */
-struct name *
+PUBLIC struct name *
 cat(struct name *n1, struct name *n2)
 {
 	struct name *tail;
 
 	if (n1 == NULL)
-		return(n2);
+		return n2;
 	if (n2 == NULL)
-		return(n1);
+		return n1;
 	tail = tailof(n1);
 	tail->n_flink = n2;
 	n2->n_blink = tail;
-	return(n1);
+	return n1;
+}
+
+/*
+ * Determine the number of undeleted elements in
+ * a name list and return it.
+ */
+PUBLIC int
+count(struct name *np)
+{
+	int c;
+
+	for (c = 0; np != NULL; np = np->n_flink)
+		if ((np->n_type & GDEL) == 0)
+			c++;
+	return c;
 }
 
 /*
  * Unpack the name list onto a vector of strings.
  * Return an error if the name list won't fit.
  */
-const char **
+PUBLIC const char **
 unpack(struct name *np)
 {
 	const char **ap, **begin;
@@ -515,10 +542,10 @@ unpack(struct name *np)
 	 */
 	extra = 2;
 	extra++;
-	metoo = value("metoo") != NULL;
+	metoo = value(ENAME_METOO) != NULL;
 	if (metoo)
 		extra++;
-	verbose = value("verbose") != NULL;
+	verbose = value(ENAME_VERBOSE) != NULL;
 	if (verbose)
 		extra++;
 	begin = salloc((t + extra) * sizeof *begin);
@@ -533,7 +560,7 @@ unpack(struct name *np)
 		if ((n->n_type & GDEL) == 0)
 			*ap++ = n->n_name;
 	*ap = NULL;
-	return(begin);
+	return begin;
 }
 
 /*
@@ -541,14 +568,14 @@ unpack(struct name *np)
  * insertion sorting them, then checking for dups.
  * Return the head of the new list.
  */
-struct name *
+PUBLIC struct name *
 elide(struct name *names)
 {
 	struct name *np, *t, *new;
 	struct name *x;
 
 	if (names == NULL)
-		return(NULL);
+		return NULL;
 	new = names;
 	np = names;
 	np = np->n_flink;
@@ -632,42 +659,13 @@ elide(struct name *names)
 			t->n_flink->n_blink = np;
 		np = np->n_flink;
 	}
-	return(new);
-}
-
-/*
- * Put another node onto a list of names and return
- * the list.
- */
-struct name *
-put(struct name *list, struct name *node)
-{
-	node->n_flink = list;
-	node->n_blink = NULL;
-	if (list != NULL)
-		list->n_blink = node;
-	return(node);
-}
-
-/*
- * Determine the number of undeleted elements in
- * a name list and return it.
- */
-int
-count(struct name *np)
-{
-	int c;
-
-	for (c = 0; np != NULL; np = np->n_flink)
-		if ((np->n_type & GDEL) == 0)
-			c++;
-	return c;
+	return new;
 }
 
 /*
  * Delete the given name from a namelist.
  */
-struct name *
+PUBLIC struct name *
 delname(struct name *np, char name[])
 {
 	struct name *p;
@@ -695,9 +693,8 @@ delname(struct name *np, char name[])
  * Pretty print a name list
  * Uncomment it if you need it.
  */
-
-/*
-void
+#if 0
+PUBLIC void
 prettyprint(name)
 	struct name *name;
 {
@@ -710,4 +707,4 @@ prettyprint(name)
 	}
 	(void)fprintf(stderr, "\n");
 }
-*/
+#endif

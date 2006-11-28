@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.19 2006/11/24 19:47:00 christos Exp $	*/
+/*	$NetBSD: head.c,v 1.20 2006/11/28 18:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.19 2006/11/24 19:47:00 christos Exp $");
+__RCSID("$NetBSD: head.c,v 1.20 2006/11/28 18:45:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,135 +48,10 @@ __RCSID("$NetBSD: head.c,v 1.19 2006/11/24 19:47:00 christos Exp $");
  */
 
 /*
- * See if the passed line buffer is a mail header.
- * Return true if yes.  Note the extreme pains to
- * accommodate all funny formats.
- */
-int
-ishead(const char linebuf[])
-{
-	const char *cp;
-	struct headline hl;
-	char parbuf[BUFSIZ];
-
-	cp = linebuf;
-	if (*cp++ != 'F' || *cp++ != 'r' || *cp++ != 'o' || *cp++ != 'm' ||
-	    *cp++ != ' ')
-		return (0);
-	parse(linebuf, &hl, parbuf);
-	if (hl.l_from == NULL || hl.l_date == NULL) {
-		fail(linebuf, "No from or date field");
-		return (0);
-	}
-	if (!isdate(hl.l_date)) {
-		fail(linebuf, "Date field not legal date");
-		return (0);
-	}
-	/*
-	 * I guess we got it!
-	 */
-	return (1);
-}
-
-void
-fail(const char linebuf[], const char reason[])
-{
-#ifndef FMT_PROG
-	if (value("debug") == NULL)
-		return;
-	(void)fprintf(stderr, "\"%s\"\nnot a header because %s\n", linebuf,
-	    reason);
-#endif
-}
-
-/*
- * Split a headline into its useful components.
- * Copy the line into dynamic string space, then set
- * pointers into the copied line in the passed headline
- * structure.  Actually, it scans.
- */
-void
-parse(const char line[], struct headline *hl, char pbuf[])
-{
-	const char *cp;
-	char *sp;
-	char word[LINESIZE];
-
-	hl->l_from = NULL;
-	hl->l_tty = NULL;
-	hl->l_date = NULL;
-	cp = line;
-	sp = pbuf;
-	/*
-	 * Skip over "From" first.
-	 */
-	cp = nextword(cp, word);
-	cp = nextword(cp, word);
-	if (*word)
-		hl->l_from = copyin(word, &sp);
-	if (cp != NULL && cp[0] == 't' && cp[1] == 't' && cp[2] == 'y') {
-		cp = nextword(cp, word);
-		hl->l_tty = copyin(word, &sp);
-	}
-	if (cp != NULL)
-		hl->l_date = copyin(cp, &sp);
-}
-
-/*
- * Copy the string on the left into the string on the right
- * and bump the right (reference) string pointer by the length.
- * Thus, dynamically allocate space in the right string, copying
- * the left string into it.
- */
-char *
-copyin(const char *src, char **space)
-{
-	char *cp;
-	char *begin;
-
-	begin = cp = *space;
-	while ((*cp++ = *src++) != '\0')
-		;
-	*space = cp;
-	return (begin);
-}
-
-/*
- * Test to see if the passed string is a ctime(3) generated
- * date string as documented in the manual.  The template
- * below is used as the criterion of correctness.
- * Also, we check for a possible trailing time zone using
- * the tmztype template.
- */
-
-/*
- * 'A'	An upper case char
- * 'a'	A lower case char
- * ' '	A space
- * '0'	A digit
- * 'O'	An optional digit or space
- * ':'	A colon
- * 'N'	A new line
- */
-char ctype[] = "Aaa Aaa O0 00:00:00 0000";
-char SysV_ctype[] = "Aaa Aaa O0 00:00 0000";
-char tmztype[] = "Aaa Aaa O0 00:00:00 AAA 0000";
-char SysV_tmztype[] = "Aaa Aaa O0 00:00 AAA 0000";
-
-int
-isdate(const char date[])
-{
-
-	return cmatch(date, ctype) || 
-	       cmatch(date, tmztype) || 
-	       cmatch(date, SysV_tmztype) || cmatch(date, SysV_ctype);
-}
-
-/*
  * Match the given string (cp) against the given template (tp).
  * Return 1 if they match, 0 if they don't
  */
-int
+static int
 cmatch(const char *cp, char *tp)
 {
 
@@ -214,7 +89,49 @@ cmatch(const char *cp, char *tp)
 		}
 	if (*cp || *tp)
 		return 0;
-	return (1);
+	return 1;
+}
+
+/*
+ * Test to see if the passed string is a ctime(3) generated
+ * date string as documented in the manual.  The template
+ * below is used as the criterion of correctness.
+ * Also, we check for a possible trailing time zone using
+ * the tmztype template.
+ */
+
+/*
+ * 'A'	An upper case char
+ * 'a'	A lower case char
+ * ' '	A space
+ * '0'	A digit
+ * 'O'	An optional digit or space
+ * ':'	A colon
+ * 'N'	A new line
+ */
+static char ctype[] = "Aaa Aaa O0 00:00:00 0000";
+static char SysV_ctype[] = "Aaa Aaa O0 00:00 0000";
+static char tmztype[] = "Aaa Aaa O0 00:00:00 AAA 0000";
+static char SysV_tmztype[] = "Aaa Aaa O0 00:00 AAA 0000";
+
+static int
+isdate(const char date[])
+{
+
+	return cmatch(date, ctype) || 
+	       cmatch(date, tmztype) || 
+	       cmatch(date, SysV_tmztype) || cmatch(date, SysV_ctype);
+}
+
+static void
+fail(const char linebuf[], const char reason[])
+{
+#ifndef FMT_PROG
+	if (value(ENAME_DEBUG) == NULL)
+		return;
+	(void)fprintf(stderr, "\"%s\"\nnot a header because %s\n", linebuf,
+	    reason);
+#endif
 }
 
 /*
@@ -222,14 +139,14 @@ cmatch(const char *cp, char *tp)
  * passed.  Also, return a pointer to the next word following that,
  * or NULL if none follow.
  */
-const char *
+static const char *
 nextword(const char *wp, char *wbuf)
 {
 	int c;
 
 	if (wp == NULL) {
 		*wbuf = 0;
-		return (NULL);
+		return NULL;
 	}
 	while ((c = *wp++) && c != ' ' && c != '\t') {
 		*wbuf++ = c;
@@ -244,8 +161,91 @@ nextword(const char *wp, char *wbuf)
 	}
 	*wbuf = '\0';
 	for (; c == ' ' || c == '\t'; c = *wp++)
-		;
+		continue;
 	if (c == 0)
-		return (NULL);
-	return (wp - 1);
+		return NULL;
+	return wp - 1;
+}
+
+/*
+ * Copy the string on the left into the string on the right
+ * and bump the right (reference) string pointer by the length.
+ * Thus, dynamically allocate space in the right string, copying
+ * the left string into it.
+ */
+static char *
+copyin(const char *src, char **space)
+{
+	char *cp;
+	char *begin;
+
+	begin = cp = *space;
+	while ((*cp++ = *src++) != '\0')
+		continue;
+	*space = cp;
+	return begin;
+}
+
+/*
+ * Split a headline into its useful components.
+ * Copy the line into dynamic string space, then set
+ * pointers into the copied line in the passed headline
+ * structure.  Actually, it scans.
+ */
+PUBLIC void
+parse(const char line[], struct headline *hl, char pbuf[])
+{
+	const char *cp;
+	char *sp;
+	char word[LINESIZE];
+
+	hl->l_from = NULL;
+	hl->l_tty = NULL;
+	hl->l_date = NULL;
+	cp = line;
+	sp = pbuf;
+	/*
+	 * Skip over "From" first.
+	 */
+	cp = nextword(cp, word);
+	cp = nextword(cp, word);
+	if (*word)
+		hl->l_from = copyin(word, &sp);
+	if (cp != NULL && cp[0] == 't' && cp[1] == 't' && cp[2] == 'y') {
+		cp = nextword(cp, word);
+		hl->l_tty = copyin(word, &sp);
+	}
+	if (cp != NULL)
+		hl->l_date = copyin(cp, &sp);
+}
+
+/*
+ * See if the passed line buffer is a mail header.
+ * Return true if yes.  Note the extreme pains to
+ * accomodate all funny formats.
+ */
+PUBLIC int
+ishead(const char linebuf[])
+{
+	const char *cp;
+	struct headline hl;
+	char parbuf[LINESIZE];
+
+	cp = linebuf;
+	if (*cp++ != 'F' || *cp++ != 'r' || *cp++ != 'o' || *cp++ != 'm' ||
+	    *cp++ != ' ')
+		return 0;
+	parse(linebuf, &hl, parbuf);
+	if (hl.l_from == NULL || hl.l_date == NULL) {
+		fail(linebuf, "No from or date field");
+		return 0;
+	}
+	if (!isdate(hl.l_date)) {
+		fail(linebuf, "Date field not legal date");
+		return 0;
+	}
+	/*
+	 * I guess we got it!
+	 */
+	return 1;
 }

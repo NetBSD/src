@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.20 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.21 2006/11/28 18:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.20 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: edit.c,v 1.21 2006/11/28 18:45:32 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
 #include "extern.h"
+#include "thread.h"
 
 /*
  * Mail -- a mail program
@@ -48,108 +49,12 @@ __RCSID("$NetBSD: edit.c,v 1.20 2005/07/19 23:07:10 christos Exp $");
  */
 
 /*
- * Edit a message list.
- */
-int
-editor(void *v)
-{
-	int *msgvec = v;
-
-	return edit1(msgvec, 'e');
-}
-
-/*
- * Invoke the visual editor on a message list.
- */
-int
-visual(void *v)
-{
-	int *msgvec = v;
-
-	return edit1(msgvec, 'v');
-}
-
-/*
- * Edit a message by writing the message into a funnily-named file
- * (which should not exist) and forking an editor on it.
- * We get the editor from the stuff above.
- */
-int
-edit1(int *msgvec, int editortype)
-{
-	int c;
-	int i;
-	FILE *fp;
-	struct message *mp;
-	off_t size;
-
-	/*
-	 * Deal with each message to be edited . . .
-	 */
-	for (i = 0; msgvec[i] && i < msgCount; i++) {
-		sig_t sigint;
-
-		if (i > 0) {
-			char buf[100];
-			char *p;
-
-			(void)printf("Edit message %d [ynq]? ", msgvec[i]);
-			if (fgets(buf, sizeof buf, stdin) == 0)
-				break;
-			for (p = buf; *p == ' ' || *p == '\t'; p++)
-				;
-			if (*p == 'q')
-				break;
-			if (*p == 'n')
-				continue;
-		}
-		dot = mp = &message[msgvec[i] - 1];
-		touch(mp);
-		sigint = signal(SIGINT, SIG_IGN);
-		fp = run_editor(setinput(mp), mp->m_size, editortype,
-				readonly);
-		if (fp != NULL) {
-			(void)fseek(otf, 0L, 2);
-			size = ftell(otf);
-			mp->m_block = blockof(size);
-			mp->m_offset = offsetof(size);
-			mp->m_size = fsize(fp);
-			mp->m_lines = 0;
-			mp->m_blines = 0;
-			mp->m_flag |= MODIFY;
-			rewind(fp);
-			while ((c = getc(fp)) != EOF) {
-				/*
-				 * XXX. if you edit a message, we treat
-				 * header lines as body lines in the recount.
-				 * This is because the original message copy
-				 * and the edit reread use different code to
-				 * count the lines, and this one here is
-				 * simple-minded.
-				 */
-				if (c == '\n') {
-					mp->m_lines++;
-					mp->m_blines++;
-				}
-				if (putc(c, otf) == EOF)
-					break;
-			}
-			if (ferror(otf))
-				warn("/tmp");
-			(void)Fclose(fp);
-		}
-		(void)signal(SIGINT, sigint);
-	}
-	return 0;
-}
-
-/*
  * Run an editor on the file at "fpp" of "size" bytes,
  * and return a new file pointer.
  * Signals must be handled by the caller.
  * "Editortype" is 'e' for _PATH_EX, 'v' for _PATH_VI.
  */
-FILE *
+PUBLIC FILE *
 run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 {
 	FILE *nf = NULL;
@@ -203,7 +108,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	}
 	nf = NULL;
 	if ((editcmd =
-	         value(editortype == 'e' ? "EDITOR" : "VISUAL")) == NULL)
+	         value(editortype == 'e' ? ENAME_EDITOR : ENAME_VISUAL)) == NULL)
 		editcmd = editortype == 'e' ? _PATH_EX : _PATH_VI;
 	if (run_command(editcmd, 0, 0, -1, tempname, NULL) < 0) {
 		(void)unlink(tempname);
@@ -236,4 +141,102 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	(void)unlink(tempname);
 out:
 	return nf;
+}
+
+/*
+ * Edit a message by writing the message into a funnily-named file
+ * (which should not exist) and forking an editor on it.
+ * We get the editor from the stuff above.
+ */
+static int
+edit1(int *msgvec, int editortype)
+{
+	int c;
+	int i;
+	int msgCount;
+	FILE *fp;
+	struct message *mp;
+	off_t size;
+
+	/*
+	 * Deal with each message to be edited . . .
+	 */
+	msgCount = get_msgCount();
+	for (i = 0; msgvec[i] && i < msgCount; i++) {
+		sig_t sigint;
+
+		if (i > 0) {
+			char buf[100];
+			char *p;
+
+			(void)printf("Edit message %d [ynq]? ", msgvec[i]);
+			if (fgets(buf, sizeof buf, stdin) == 0)
+				break;
+			for (p = buf; *p == ' ' || *p == '\t'; p++)
+				continue;
+			if (*p == 'q')
+				break;
+			if (*p == 'n')
+				continue;
+		}
+		dot = mp = get_message(msgvec[i]);
+		touch(mp);
+		sigint = signal(SIGINT, SIG_IGN);
+		fp = run_editor(setinput(mp), mp->m_size, editortype,
+				readonly);
+		if (fp != NULL) {
+			(void)fseek(otf, 0L, 2);
+			size = ftell(otf);
+			mp->m_block = blockof(size);
+			mp->m_offset = offsetof(size);
+			mp->m_size = fsize(fp);
+			mp->m_lines = 0;
+			mp->m_blines = 0;
+			mp->m_flag |= MMODIFY;
+			rewind(fp);
+			while ((c = getc(fp)) != EOF) {
+				/*
+				 * XXX. if you edit a message, we treat
+				 * header lines as body lines in the recount.
+				 * This is because the original message copy
+				 * and the edit reread use different code to
+				 * count the lines, and this one here is
+				 * simple-minded.
+				 */
+				if (c == '\n') {
+					mp->m_lines++;
+					mp->m_blines++;
+				}
+				if (putc(c, otf) == EOF)
+					break;
+			}
+			if (ferror(otf))
+				warn("/tmp");
+			(void)Fclose(fp);
+		}
+		(void)signal(SIGINT, sigint);
+	}
+	return 0;
+}
+
+/*
+ * Edit a message list.
+ */
+PUBLIC int
+editor(void *v)
+{
+	int *msgvec = v;
+
+	return edit1(msgvec, 'e');
+}
+
+/*
+ * Invoke the visual editor on a message list.
+ */
+PUBLIC int
+visual(void *v)
+{
+	int *msgvec = v;
+
+	return edit1(msgvec, 'v');
 }

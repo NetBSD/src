@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_codecs.h,v 1.2 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: mime_codecs.h,v 1.3 2006/11/28 18:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.

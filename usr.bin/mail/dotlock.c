@@ -1,4 +1,4 @@
-/*	$NetBSD: dotlock.c,v 1.7 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: dotlock.c,v 1.8 2006/11/28 18:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dotlock.c,v 1.7 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: dotlock.c,v 1.8 2006/11/28 18:45:32 christos Exp $");
 #endif
 
 #include "rcv.h"
@@ -134,7 +134,7 @@ bad:
  * fp -- File to print message
  * msg -- Message to print
  */
-int
+PUBLIC int
 dot_lock(const char *fname, int pollinterval, FILE *fp, const char *msg)
 {
 	char path[MAXPATHLEN];
@@ -177,7 +177,7 @@ dot_lock(const char *fname, int pollinterval, FILE *fp, const char *msg)
 	}
 }
 
-void
+PUBLIC void
 dot_unlock(const char *fname)
 {
 	char path[MAXPATHLEN];

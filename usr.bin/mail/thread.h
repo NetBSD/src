@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.h,v 1.3 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: thread.h,v 1.1 2006/11/28 18:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,23 +36,82 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef THREAD_SUPPORT
 
-#ifdef MIME_SUPPORT
+#ifndef __THREAD_H__
+#define __THREAD_H__
 
-#ifndef __MIME_DECODE_H__
-#define __MIME_DECODE_H__
+#if 0
+#define NDEBUG	/* disable the asserts */
+#endif
 
 /*
- * All routines declared here are exported via mime.h
+ * The core message control routines.  Without thread support, they
+ * live in fio.c.
  */
+struct message *next_message(struct message *);
+struct message *prev_message(struct message *);
+struct message *get_message(int);
+int	 get_msgnum(struct message *);
+int	 get_msgCount(void);
 
-FILE	*mime_decode_body(struct mime_info *);
-void	 mime_decode_close(struct mime_info *);
-FILE	*mime_decode_header(struct mime_info *);
-char	*mime_decode_hfield(char *, size_t, char *);
-struct mime_info *mime_decode_open(struct message *);
-int	mime_sendmessage(struct message *, FILE *, struct ignoretab *,
-    const char *, struct mime_info *);
+/* These give special access to the message array needed in lex.c */
+struct message *get_abs_message(int);
+struct message *next_abs_message(struct message *);
+int	 get_abs_msgCount(void);
 
-#endif /* __MIME_DECODE_H__ */
-#endif /* MIME_SUPPORT */
+/*
+ * Support hooks used by other modules.
+ */
+void	 thread_fix_old_links(struct message *, struct message *, int);
+void	 thread_fix_new_links(struct message *, int, int);
+int	 thread_hidden(void);
+int	 thread_depth(void);
+int	 do_recursion(void);
+int	 thread_recursion(struct message *, int (*)(struct message *, void *), void *);
+const char *thread_next_key_name(const void **);
+
+/*
+ * Commands.
+ */
+/* thread setup */
+int	 flattencmd(void *);
+int	 reversecmd(void *v);
+int	 sortcmd(void *);
+int	 threadcmd(void *);
+int	 unthreadcmd(void *);
+
+/* thread navigation */
+int	 downcmd(void *);
+int	 tsetcmd(void *);
+int	 upcmd(void *);
+
+/* thread display */
+int	 exposecmd(void *);
+int	 hidecmd(void *);
+
+/* tag commands */
+int	 invtagscmd(void *);
+int	 tagbelowcmd(void *);
+int	 tagcmd(void *);
+int	 untagcmd(void *);
+
+/* tag display */
+int	 hidetagscmd(void *);
+int	 showtagscmd(void *);
+
+/* something special */
+int	 deldupscmd(void *);
+
+#define ENAME_RECURSIVE_CMDS	"recursive-commands"
+
+/*
+ * Debugging stuff that should go away.
+ */
+#define THREAD_DEBUG
+#ifdef THREAD_DEBUG
+int	 thread_showcmd(void *);
+#endif /* THREAD_DEBUG */
+
+#endif /* __THREAD_H__ */
+#endif /* THREAD_SUPPORT */

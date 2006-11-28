@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.29 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.30 2006/11/28 18:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,18 +34,20 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.29 2006/10/31 20:07:32 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.30 2006/11/28 18:45:32 christos Exp $");
 #endif
 #endif /* not lint */
+
+#include <assert.h>
 
 #include "rcv.h"
 #include <util.h>
 #include "extern.h"
-#include "format.h"
-
 #ifdef USE_EDITLINE
 #include "complete.h"
 #endif
+#include "format.h"
+#include "thread.h"
 
 /*
  * Mail -- a mail program
@@ -53,7 +55,22 @@ __RCSID("$NetBSD: lex.c,v 1.29 2006/10/31 20:07:32 christos Exp $");
  * Lexical processing of commands.
  */
 
-const char	*prompt = DEFAULT_PROMPT;
+static const char *prompt = DEFAULT_PROMPT;
+static int	*msgvec;
+static int	reset_on_stop;		/* do a reset() if stopped */
+
+
+/*
+ * Set the size of the message vector used to construct argument
+ * lists to message list functions.
+ */
+static void
+setmsize(int sz)
+{
+	if (msgvec != 0)
+		free(msgvec);
+	msgvec = ecalloc((size_t) (sz + 1), sizeof *msgvec);
+}
 
 /*
  * Set up editing on the given file name.
@@ -61,13 +78,13 @@ const char	*prompt = DEFAULT_PROMPT;
  * editing the file, otherwise we are reading our mail which has
  * signficance for mbox and so forth.
  */
-int
+PUBLIC int
 setfile(const char *name)
 {
 	FILE *ibuf;
 	int i, fd;
 	struct stat stb;
-	char isedit = *name != '%' || getuserid(myname) != getuid();
+	char isedit = *name != '%' || getuserid(myname) != (int)getuid();
 	const char *who = name[1] ? name + 1 : myname;
 	static int shudclob;
 	char tempname[PATHSIZE];
@@ -79,13 +96,13 @@ setfile(const char *name)
 		if (!isedit && errno == ENOENT)
 			goto nomail;
 		warn("%s", name);
-		return(-1);
+		return -1;
 	}
 
 	if (fstat(fileno(ibuf), &stb) < 0) {
 		warn("fstat");
 		(void)Fclose(ibuf);
-		return (-1);
+		return -1;
 	}
 
 	switch (stb.st_mode & S_IFMT) {
@@ -93,7 +110,7 @@ setfile(const char *name)
 		(void)Fclose(ibuf);
 		errno = EISDIR;
 		warn("%s", name);
-		return (-1);
+		return -1;
 
 	case S_IFREG:
 		break;
@@ -102,7 +119,7 @@ setfile(const char *name)
 		(void)Fclose(ibuf);
 		errno = EINVAL;
 		warn("%s", name);
-		return (-1);
+		return -1;
 	}
 
 	/*
@@ -147,7 +164,7 @@ setfile(const char *name)
 	(void)fcntl(fileno(itf), F_SETFD, FD_CLOEXEC);
 	(void)rm(tempname);
 	setptr(ibuf, (off_t)0);
-	setmsize(msgCount);
+	setmsize(get_abs_msgCount());
 	/*
 	 * New mail may have arrived while we were reading
 	 * the mail file, so reset mailsize to be where
@@ -157,24 +174,26 @@ setfile(const char *name)
 	(void)Fclose(ibuf);
 	relsesigs();
 	sawcom = 0;
-	if (!edit && msgCount == 0) {
+	if (!edit && get_abs_msgCount() == 0) {
 nomail:
 		(void)fprintf(stderr, "No mail for %s\n", who);
 		return -1;
 	}
-	return(0);
+	return 0;
 }
 
 /*
  * Incorporate any new mail that has arrived since we first
  * started reading mail.
  */
-int
+PUBLIC int
 incfile(void)
 {
 	off_t newsize;
-	int omsgCount = msgCount;
+	int omsgCount;
 	FILE *ibuf;
+
+	omsgCount = get_abs_msgCount();
 
 	ibuf = Fopen(mailname, "r");
 	if (ibuf == NULL)
@@ -187,12 +206,12 @@ incfile(void)
 		return -1;              /* mail box has shrunk??? */
 	if (newsize == mailsize)
 		return 0;               /* no new mail */
-	setptr(ibuf, mailsize);
-	setmsize(msgCount);
+	setptr(ibuf, mailsize);		/* read in new mail */
+	setmsize(get_abs_msgCount());	/* get the new message count */
 	mailsize = ftell(ibuf);
 	(void)Fclose(ibuf);
 	relsesigs();
-	return(msgCount - omsgCount);
+	return get_abs_msgCount() - omsgCount;
 }
 
 /*
@@ -219,126 +238,227 @@ comment_char(char *line)
 	return NULL;
 }
 
+/*
+ * When we wake up after ^Z, reprint the prompt.
+ */
+static void
+stop(int s)
+{
+	sig_t old_action = signal(s, SIG_DFL);
+	sigset_t nset;
 
-int	*msgvec;
-int	reset_on_stop;			/* do a reset() if stopped */
+	(void)sigemptyset(&nset);
+	(void)sigaddset(&nset, s);
+	(void)sigprocmask(SIG_UNBLOCK, &nset, NULL);
+	(void)kill(0, s);
+	(void)sigprocmask(SIG_BLOCK, &nset, NULL);
+	(void)signal(s, old_action);
+	if (reset_on_stop) {
+		reset_on_stop = 0;
+		reset(0);
+	}
+}
+
+
 
 /*
- * Interpret user commands one by one.  If standard input is not a tty,
- * print no prompt.
+ * Signal handler is hooked by setup_piping().
+ * Respond to a broken pipe signal --
+ * probably caused by quitting more.
  */
-void
-commands(void)
+static jmp_buf	pipestop;
+
+/*ARGSUSED*/
+static void
+brokpipe(int signo __unused)
 {
-	int n;
-	char linebuf[LINESIZE];
-	int eofloop;
+	longjmp(pipestop, 1);
+}
 
-	if (!sourcing) {
-		if (signal(SIGINT, SIG_IGN) != SIG_IGN)
-			(void)signal(SIGINT, intr);
-		if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
-			(void)signal(SIGHUP, hangup);
-		(void)signal(SIGTSTP, stop);
-		(void)signal(SIGTTOU, stop);
-		(void)signal(SIGTTIN, stop);
-	}
-	setexit();	/* defined as (void)setjmp(srbuf) in def.h */
-	eofloop = 0;	/* initialize this after a possible longjmp */
-	for (;;) {
-		/*
-		 * Print the prompt, if needed.  Clear out
-		 * string space, and flush the output.
-		 */
-		if (!sourcing && value("interactive") != NULL) {
-			if ((prompt = value(ENAME_PROMPT)) == NULL)
-				prompt = DEFAULT_PROMPT;
-			prompt = smsgprintf(prompt, dot);
-			if ((value("autoinc") != NULL) && (incfile() > 0))
-				(void)printf("New mail has arrived.\n");
-			reset_on_stop = 1;
-#ifndef USE_EDITLINE
-			(void)printf("%s", prompt);
-#endif
+/*
+ * Check the command line for any requested piping or redirection,
+ * depending on the value of 'c'.  If "enable-pipes" is set, search
+ * the command line (cp) for the first occurrence of the character 'c'
+ * that is not in a quote or (parenthese) group.
+ */
+PUBLIC char *
+shellpr(char *cp)
+{
+	int quotec;
+	int level;
+
+	if (cp == NULL || value(ENAME_ENABLE_PIPES) == NULL)
+		return NULL;
+
+	level = 0;
+	quotec = 0;
+	for (/*EMPTY*/; *cp != '\0'; cp++) {
+		if (quotec) {
+			if (*cp == quotec)
+				quotec = 0;
+			if (*cp == '\\' &&
+			    (cp[1] == quotec || cp[1] == '\\'))
+				cp++;
 		}
+		else {
+			switch (*cp) {
+			case '|':
+			case '>':
+				if (level == 0)
+					return cp;
+				break;
+			case '(':
+				level++;
+				break;
+			case ')':
+				level--;
+				break;
+			case '"':
+			case '\'':
+				quotec = *cp;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	return NULL;
+}
+
+/*
+ * Setup any pipe or redirection that the command line indicates.
+ * If none, then setup the pager unless "pager-off" is defined.
+ */
+static FILE *fp_stop = NULL;
+static int oldfd1 = -1;
+static int
+setup_piping(char *cmdline, int c_pipe)
+{
+	FILE *fout;
+	FILE *last_file;
+	char *cp;
+
+	last_file = last_registered_file(0);
+
+	fout = NULL;
+	if ((cp = shellpr(cmdline)) != NULL) {
+		char c;
+		c = *cp;
+		*cp = '\0';
+		cp++;
+
+		if (c == '|') {
+			if ((fout = Popen(cp, "w")) == NULL) {
+				warn("Popen: %s", cp);
+				return -1;
+			}
+		}
+		else {
+			const char *mode;
+			assert(c == '>');
+			mode = *cp == '>' ? "a" : "w";
+			if (*cp == '>')
+				cp++;
+
+			cp = skip_blank(cp);
+			if ((fout = Fopen(cp, mode)) == NULL) {
+				warn("Fopen: %s", cp);
+				return -1;
+			}
+		}
+
+	}
+	else if (value(ENAME_PAGER_OFF) == NULL && c_pipe & C_PIPE_PAGER) {
+		const char *pager;
+		pager = value(ENAME_PAGER);
+		if (pager == NULL || *pager == '\0')
+			pager = _PATH_MORE;
+
+		if ((fout = Popen(pager, "w")) == NULL) {
+			warn("Popen: %s", pager);
+			return -1;
+		}
+	}
+
+	if (fout) {
+		(void)signal(SIGPIPE, brokpipe);
 		(void)fflush(stdout);
-		sreset();
-		/*
-		 * Read a line of commands from the current input
-		 * and handle end of file specially.
-		 */
-		n = 0;
-		for (;;) {
-#ifdef USE_EDITLINE
-			if (!sourcing) {
-				char *line;
-				if ((line = my_gets(&elm.command, prompt, NULL)) == NULL) {
-					if (n == 0)
-						n = -1;
-					break;
-				}
-				(void)strncpy(linebuf, line, LINESIZE);
-			}
-			else {
-				if (mail_readline(input, &linebuf[n], LINESIZE - n) < 0) {
-					if (n == 0)
-						n = -1;
-					break;
-				}
-			}
-#else /* USE_EDITLINE */
-			if (mail_readline(input, &linebuf[n], LINESIZE - n) < 0) {
-				if (n == 0)
-					n = -1;
-				break;
-			}
-#endif /* USE_EDITLINE */
-
-			if (sourcing) {  /* allow comments in source files */
-				char *ptr;
-				if ((ptr = comment_char(linebuf)) != NULL)
-					*ptr = '\0';
-			}
-			if ((n = strlen(linebuf)) == 0)
-				break;
-			n--;
-			if (linebuf[n] != '\\')
-				break;
-			linebuf[n++] = ' ';
-		}
-		reset_on_stop = 0;
-		if (n < 0) {
-				/* eof */
-			if (loading)
-				break;
-			if (sourcing) {
-				(void)unstack();
-				continue;
-			}
-#ifdef USE_EDITLINE
-			{
-				char *p;
-				if (value("interactive") != NULL &&
-				    (p = value("ignoreeof")) != NULL &&
-				    ++eofloop < (*p == '\0' ? 25 : atoi(p))) {
-					(void)printf("Use \"quit\" to quit.\n");
-					continue;
-				}
-			}
-#else
-			if (value("interactive") != NULL &&
-			    value("ignoreeof") != NULL &&
-			    ++eofloop < 25) {
-				(void)printf("Use \"quit\" to quit.\n");
-				continue;
-			}
-#endif
-			break;
-		}
-		eofloop = 0;
-		if (execute(linebuf, 0))
-			break;
+		if ((oldfd1 = dup(1)) == -1)
+			err(EXIT_FAILURE, "dup failed");
+		if (dup2(fileno(fout), 1) == -1)
+			err(EXIT_FAILURE, "dup2 failed");
+		fp_stop = last_file;
 	}
+	return 0;
+}
+
+/*
+ * This will close any piping started by setup_piping().
+ */
+static void
+close_piping(void)
+{
+	if (oldfd1 != -1) {
+		(void)fflush(stdout);
+		if (fileno(stdout) != oldfd1 && dup2(oldfd1, 1) == -1)
+			err(EXIT_FAILURE, "dup2 failed");
+
+		(void)signal(SIGPIPE, SIG_IGN);
+		close_top_files(fp_stop);
+		fp_stop = NULL;
+		(void)close(oldfd1);
+		oldfd1 = -1;
+		(void)signal(SIGPIPE, SIG_DFL);
+	}
+}
+
+/*
+ * Determine if as1 is a valid prefix of as2.
+ * Return true if yep.
+ */
+static int
+isprefix(char *as1, const char *as2)
+{
+	char *s1;
+	const char *s2;
+
+	s1 = as1;
+	s2 = as2;
+	while (*s1++ == *s2)
+		if (*s2++ == '\0')
+			return 1;
+	return *--s1 == '\0';
+}
+
+/*
+ * Find the correct command in the command table corresponding
+ * to the passed command "word"
+ */
+PUBLIC const struct cmd *
+lex(char word[])
+{
+	const struct cmd *cp;
+
+	for (cp = &cmdtab[0]; cp->c_name != NULL; cp++)
+		if (isprefix(word, cp->c_name))
+			return cp;
+	return NULL;
+}
+
+PUBLIC char *
+get_cmdname(char *buf)
+{
+	char *cp;
+	char *cmd;
+	size_t len;
+
+	for (cp = buf; *cp; cp++)
+		if (strchr(" \t0123456789$^.:/-+*'\">|", *cp) != NULL)
+			break;
+	len = cp - buf + 1;
+	cmd = salloc(len);
+	(void)strlcpy(cmd, buf, len);
+	return cmd;
 }
 
 /*
@@ -348,13 +468,13 @@ commands(void)
  * the interactive command loop.
  * Contxt is non-zero if called while composing mail.
  */
-int
+PUBLIC int
 execute(char linebuf[], int contxt)
 {
-	char word[LINESIZE];
+	char *word;
 	char *arglist[MAXARGC];
 	const struct cmd *com = NULL;
-	char *cp, *cp2;
+	char *volatile cp;
 	int c;
 	int muvec[2];
 	int e = 1;
@@ -368,20 +488,18 @@ execute(char linebuf[], int contxt)
 	 * lexical conventions.
 	 */
 
-	for (cp = linebuf; isspace((unsigned char)*cp); cp++)
-		;
+	cp = skip_blank(linebuf);
 	if (*cp == '!') {
 		if (sourcing) {
 			(void)printf("Can't \"!\" while sourcing\n");
 			goto out;
 		}
 		(void)shell(cp + 1);
-		return(0);
+		return 0;
 	}
-	cp2 = word;
-	while (*cp && strchr(" \t0123456789$^.:/-+*'\"", *cp) == NULL)
-		*cp2++ = *cp++;
-	*cp2 = '\0';
+
+	word = get_cmdname(cp);
+	cp += strlen(word);
 
 	/*
 	 * Look up the command; if not found, bitch.
@@ -392,7 +510,7 @@ execute(char linebuf[], int contxt)
 	 */
 
 	if (sourcing && *word == '\0')
-		return(0);
+		return 0;
 	com = lex(word);
 	if (com == NULL) {
 		(void)printf("Unknown command: \"%s\"\n", word);
@@ -404,9 +522,8 @@ execute(char linebuf[], int contxt)
 	 * we always execute it, otherwise, check the state of cond.
 	 */
 
-	if ((com->c_argtype & F) == 0)
-		if ((cond == CRCV && !rcvmode) || (cond == CSEND && rcvmode))
-			return(0);
+	if ((com->c_argtype & F) == 0 && (cond & CSKIP))
+		return 0;
 
 	/*
 	 * Process the arguments to the command, depending
@@ -415,7 +532,7 @@ execute(char linebuf[], int contxt)
 	 * an error.
 	 */
 
-	if (!rcvmode && (com->c_argtype & M) == 0) {
+	if (mailmode == mm_sending && (com->c_argtype & M) == 0) {
 		(void)printf("May not execute \"%s\" while sending\n",
 		    com->c_name);
 		goto out;
@@ -434,7 +551,15 @@ execute(char linebuf[], int contxt)
 		(void)printf("Cannot recursively invoke \"%s\"\n", com->c_name);
 		goto out;
 	}
-	switch (com->c_argtype & ~(F|P|I|M|T|W|R)) {
+
+	if (!sourcing && com->c_pipe && value(ENAME_INTERACTIVE) != NULL) {
+		if (setjmp(pipestop))
+			goto out;
+
+		if (setup_piping(cp, com->c_pipe) == -1)
+			goto out;
+	}
+	switch (com->c_argtype & ARGTYPE_MASK) {
 	case MSGLIST:
 		/*
 		 * A message list defaulting to nearest forward
@@ -447,8 +572,7 @@ execute(char linebuf[], int contxt)
 		if ((c = getmsglist(cp, msgvec, com->c_msgflag)) < 0)
 			break;
 		if (c  == 0) {
-			*msgvec = first(com->c_msgflag,
-				com->c_msgmask);
+			*msgvec = first(com->c_msgflag,	com->c_msgmask);
 			msgvec[1] = 0;
 		}
 		if (*msgvec == 0) {
@@ -515,6 +639,8 @@ execute(char linebuf[], int contxt)
 	}
 
 out:
+	close_piping();
+
 	/*
 	 * Exit the current source file on
 	 * error.
@@ -529,64 +655,18 @@ out:
 		return 0;
 	}
 	if (com == NULL)
-		return(0);
-	if (value("autoprint") != NULL && com->c_argtype & P)
+		return 0;
+	if (value(ENAME_AUTOPRINT) != NULL && com->c_argtype & P)
 		if ((dot->m_flag & MDELETED) == 0) {
-			muvec[0] = dot - &message[0] + 1;
+			muvec[0] = get_msgnum(dot);
 			muvec[1] = 0;
 			(void)type(muvec);
 		}
 	if (!sourcing && (com->c_argtype & T) == 0)
 		sawcom = 1;
-	return(0);
+	return 0;
 }
 
-/*
- * Set the size of the message vector used to construct argument
- * lists to message list functions.
- */
-void
-setmsize(int sz)
-{
-
-	if (msgvec != 0)
-		free(msgvec);
-	msgvec = ecalloc((size_t) (sz + 1), sizeof *msgvec);
-}
-
-/*
- * Find the correct command in the command table corresponding
- * to the passed command "word"
- */
-
-const struct cmd *
-lex(char word[])
-{
-	const struct cmd *cp;
-
-	for (cp = &cmdtab[0]; cp->c_name != NULL; cp++)
-		if (isprefix(word, cp->c_name))
-			return(cp);
-	return(NULL);
-}
-
-/*
- * Determine if as1 is a valid prefix of as2.
- * Return true if yep.
- */
-int
-isprefix(char *as1, const char *as2)
-{
-	char *s1;
-	const char *s2;
-
-	s1 = as1;
-	s2 = as2;
-	while (*s1++ == *s2)
-		if (*s2++ == '\0')
-			return(1);
-	return(*--s1 == '\0');
-}
 
 /*
  * The following gets called on receipt of an interrupt.  This is
@@ -595,14 +675,12 @@ isprefix(char *as1, const char *as2)
  * Close all open files except 0, 1, 2, and the temporary.
  * Also, unstack all source files.
  */
-
-int	inithdr;			/* am printing startup headers */
+static int	inithdr;	/* am printing startup headers */
 
 /*ARGSUSED*/
-void
+static void
 intr(int s __unused)
 {
-
 	noreset = 0;
 	if (!inithdr)
 		sawcom++;
@@ -610,6 +688,7 @@ intr(int s __unused)
 	while (sourcing)
 		(void)unstack();
 
+	close_piping();
 	close_all_files();
 
 	if (image >= 0) {
@@ -621,55 +700,132 @@ intr(int s __unused)
 }
 
 /*
- * When we wake up after ^Z, reprint the prompt.
- */
-void
-stop(int s)
-{
-	sig_t old_action = signal(s, SIG_DFL);
-	sigset_t nset;
-
-	(void)sigemptyset(&nset);
-	(void)sigaddset(&nset, s);
-	(void)sigprocmask(SIG_UNBLOCK, &nset, NULL);
-	(void)kill(0, s);
-	(void)sigprocmask(SIG_BLOCK, &nset, NULL);
-	(void)signal(s, old_action);
-	if (reset_on_stop) {
-		reset_on_stop = 0;
-		reset(0);
-	}
-}
-
-/*
  * Branch here on hangup signal and simulate "exit".
  */
 /*ARGSUSED*/
-void
+static void
 hangup(int s __unused)
 {
-
 	/* nothing to do? */
 	exit(1);
 }
 
 /*
- * Announce the presence of the current Mail version,
- * give the message count, and print a header listing.
+ * Interpret user commands one by one.  If standard input is not a tty,
+ * print no prompt.
  */
-void
-announce(void)
+PUBLIC void
+commands(void)
 {
-	int vec[2], mdot;
+	int n;
+	char linebuf[LINESIZE];
+	int eofloop;
 
-	mdot = newfileinfo(0);
-	vec[0] = mdot;
-	vec[1] = 0;
-	dot = &message[mdot - 1];
-	if (msgCount > 0 && value("noheader") == NULL) {
-		inithdr++;
-		(void)headers(vec);
-		inithdr = 0;
+	if (!sourcing) {
+		if (signal(SIGINT, SIG_IGN) != SIG_IGN)
+			(void)signal(SIGINT, intr);
+		if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
+			(void)signal(SIGHUP, hangup);
+		(void)signal(SIGTSTP, stop);
+		(void)signal(SIGTTOU, stop);
+		(void)signal(SIGTTIN, stop);
+	}
+	setexit();	/* defined as (void)setjmp(srbuf) in def.h */
+	eofloop = 0;	/* initialize this after a possible longjmp */
+	for (;;) {
+		(void)fflush(stdout);
+		sreset();
+		/*
+		 * Print the prompt, if needed.  Clear out
+		 * string space, and flush the output.
+		 */
+		if (!sourcing && value(ENAME_INTERACTIVE) != NULL) {
+			if ((prompt = value(ENAME_PROMPT)) == NULL)
+				prompt = DEFAULT_PROMPT;
+			prompt = smsgprintf(prompt, dot);
+			if ((value(ENAME_AUTOINC) != NULL) && (incfile() > 0))
+				(void)printf("New mail has arrived.\n");
+			reset_on_stop = 1;
+#ifndef USE_EDITLINE
+			(void)printf("%s", prompt);
+#endif
+		}
+		/*
+		 * Read a line of commands from the current input
+		 * and handle end of file specially.
+		 */
+		n = 0;
+		for (;;) {
+#ifdef USE_EDITLINE
+			if (!sourcing) {
+				char *line;
+				if ((line = my_gets(&elm.command, prompt, NULL)) == NULL) {
+					if (n == 0)
+						n = -1;
+					break;
+				}
+				(void)strlcpy(linebuf, line, sizeof(linebuf));
+				setscreensize();	/* so we can resize a window */
+			}
+			else {
+				if (mail_readline(input, &linebuf[n], LINESIZE - n) < 0) {
+					if (n == 0)
+						n = -1;
+					break;
+				}
+			}
+#else /* USE_EDITLINE */
+			if (mail_readline(input, &linebuf[n], LINESIZE - n) < 0) {
+				if (n == 0)
+					n = -1;
+				break;
+			}
+#endif /* USE_EDITLINE */
+
+			if (sourcing) {  /* allow comments in source files */
+				char *ptr;
+				if ((ptr = comment_char(linebuf)) != NULL)
+					*ptr = '\0';
+			}
+			if ((n = strlen(linebuf)) == 0)
+				break;
+			n--;
+			if (linebuf[n] != '\\')
+				break;
+			linebuf[n++] = ' ';
+		}
+		reset_on_stop = 0;
+		if (n < 0) {
+				/* eof */
+			if (loading)
+				break;
+			if (sourcing) {
+				(void)unstack();
+				continue;
+			}
+#ifdef USE_EDITLINE
+			{
+				char *p;
+				if (value(ENAME_INTERACTIVE) != NULL &&
+				    (p = value(ENAME_IGNOREEOF)) != NULL &&
+				    ++eofloop < (*p == '\0' ? 25 : atoi(p))) {
+					(void)printf("Use \"quit\" to quit.\n");
+					continue;
+				}
+			}
+#else
+			if (value(ENAME_INTERACTIVE) != NULL &&
+			    value(ENAME_IGNOREEOF) != NULL &&
+			    ++eofloop < 25) {
+				(void)printf("Use \"quit\" to quit.\n");
+				continue;
+			}
+#endif
+			break;
+		}
+		eofloop = 0;
+		if (execute(linebuf, 0))
+			break;
 	}
 }
 
@@ -677,27 +833,45 @@ announce(void)
  * Announce information about the file we are editing.
  * Return a likely place to set dot.
  */
-int
+PUBLIC int
 newfileinfo(int omsgCount)
 {
 	struct message *mp;
-	int u, n, mdot, d, s;
-	size_t l;
-	char fname[PATHSIZE], zname[PATHSIZE], *ename;
+	int d, n, s, t, u, mdot;
+	char fname[PATHSIZE];
+	char *ename;
 
-	for (mp = &message[omsgCount]; mp < &message[msgCount]; mp++)
+	/*
+	 * Figure out where to set the 'dot'.  Use the first new or
+	 * unread message.
+	 */
+	for (mp = get_abs_message(omsgCount + 1); mp;
+	     mp = next_abs_message(mp))
 		if (mp->m_flag & MNEW)
 			break;
-	if (mp >= &message[msgCount])
-		for (mp = &message[omsgCount]; mp < &message[msgCount]; mp++)
+
+	if (mp == NULL)
+		for (mp = get_abs_message(omsgCount + 1); mp;
+		     mp = next_abs_message(mp))
 			if ((mp->m_flag & MREAD) == 0)
 				break;
-	if (mp < &message[msgCount])
-		mdot = mp - &message[0] + 1;
+	if (mp != NULL)
+		mdot = get_msgnum(mp);
 	else
 		mdot = omsgCount + 1;
-	s = d = 0;
-	for (mp = &message[0], n = 0, u = 0; mp < &message[msgCount]; mp++) {
+#ifdef THREAD_SUPPORT
+	/*
+	 * See if the message is in the current thread.
+	 */
+	if (mp != NULL && get_message(1) != NULL && get_message(mdot) != mp)
+		mdot = 0;
+#endif
+	/*
+	 * Scan the message array counting the new, unread, deleted,
+	 * and saved messages.
+	 */
+	d = n = s = t = u = 0;
+	for (mp = get_abs_message(1); mp; mp = next_abs_message(mp)) {
 		if (mp->m_flag & MNEW)
 			n++;
 		if ((mp->m_flag & MREAD) == 0)
@@ -706,27 +880,36 @@ newfileinfo(int omsgCount)
 			d++;
 		if (mp->m_flag & MSAVED)
 			s++;
+		if (mp->m_flag & MTAGGED)
+			t++;
 	}
 	ename = mailname;
-	if (getfold(fname) >= 0) {
+	if (getfold(fname, sizeof(fname)) >= 0) {
+		char zname[PATHSIZE];
+		size_t l;
 		l = strlen(fname);
-		if (l < PATHSIZE - 1)
+		if (l < sizeof(fname) - 1)
 			fname[l++] = '/';
 		if (strncmp(fname, mailname, l) == 0) {
-			(void)snprintf(zname, PATHSIZE, "+%s",
+			(void)snprintf(zname, sizeof(zname), "+%s",
 			    mailname + l);
 			ename = zname;
 		}
 	}
+	/*
+	 * Display the statistics.
+	 */
 	(void)printf("\"%s\": ", ename);
-	if (msgCount == 1)
-		(void)printf("1 message");
-	else
-		(void)printf("%d messages", msgCount);
+	{
+		int cnt = get_abs_msgCount();
+		(void)printf("%d message%s", cnt, cnt == 1 ? "" : "s");
+	}
 	if (n > 0)
 		(void)printf(" %d new", n);
 	if (u-n > 0)
 		(void)printf(" %d unread", u);
+	if (t > 0)
+		(void)printf(" %d tagged", t);
 	if (d > 0)
 		(void)printf(" %d deleted", d);
 	if (s > 0)
@@ -734,7 +917,29 @@ newfileinfo(int omsgCount)
 	if (readonly)
 		(void)printf(" [Read only]");
 	(void)printf("\n");
-	return(mdot);
+
+	return mdot;
+}
+
+/*
+ * Announce the presence of the current Mail version,
+ * give the message count, and print a header listing.
+ */
+PUBLIC void
+announce(void)
+{
+	int vec[2], mdot;
+
+	mdot = newfileinfo(0);
+	vec[0] = mdot;
+	vec[1] = 0;
+	if ((dot = get_message(mdot)) == NULL)
+		dot = get_abs_message(1); /* make sure we get something! */
+	if (get_abs_msgCount() > 0 && value(ENAME_NOHEADER) == NULL) {
+		inithdr++;
+		(void)headers(vec);
+		inithdr = 0;
+	}
 }
 
 /*
@@ -742,17 +947,17 @@ newfileinfo(int omsgCount)
  */
 
 /*ARGSUSED*/
-int
+PUBLIC int
 pversion(void *v __unused)
 {
 	(void)printf("Version %s\n", version);
-	return(0);
+	return 0;
 }
 
 /*
  * Load a file of user definitions.
  */
-void
+PUBLIC void
 load(const char *name)
 {
 	FILE *in, *oldin;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_codecs.c,v 1.4 2006/10/24 19:57:05 christos Exp $	*/
+/*	$NetBSD: mime_codecs.c,v 1.5 2006/11/28 18:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_codecs.c,v 1.4 2006/10/24 19:57:05 christos Exp $");
+__RCSID("$NetBSD: mime_codecs.c,v 1.5 2006/11/28 18:45:32 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -430,19 +430,20 @@ mustquote(unsigned char *p, unsigned char *end, size_t l)
 	if (flag == Q)
 		return 1;
 	if (flag == SP)
-		return (p + 1 < end && p[1] == '\n');	/* trailing white space */
+		return p + 1 < end && p[1] == '\n'; /* trailing white space */
 
 	/* The remainder are special start-of-line cases. */
 	if (l != 0)
 		return 0;
 		
 	if (flag == XF)	/* line may start with "From" */
-		return (p + 4 < end && p[1] == 'r' && p[2] == 'o' && p[3] == 'm');
+		return p + 4 < end && p[1] == 'r' && p[2] == 'o' && p[3] == 'm';
 
 	if (flag == XD)	/* line may consist of a single dot */
-		return (p + 1 < end && p[1] == '\n');
+		return p + 1 < end && p[1] == '\n';
 
-	errx(EXIT_FAILURE, "mustquote: invalid logic: *p=0x%x (%d) flag=%d, l=%zu\n",
+	errx(EXIT_FAILURE,
+	    "mustquote: invalid logic: *p=0x%x (%d) flag=%d, l=%zu\n",
 	    *p, *p, flag, l);
 	/* NOT REACHED */
 	return 0;	/* appease GCC */
@@ -653,6 +654,5 @@ mime_next_encoding_name(const void **cookie)
 
 	return tep->name;
 }
-
 
 #endif /* MIME_SUPPORT */
