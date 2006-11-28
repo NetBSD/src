@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.5 2006/10/26 18:51:21 thorpej Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.6 2006/11/28 18:30:47 cube Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -309,7 +309,7 @@ _prop_object_copyout_ioctl(struct plistref *pref, const u_long cmd,
 	struct lwp *l = curlwp;		/* XXX */
 	struct proc *p = l->l_proc;
 	char *buf;
-	size_t len;
+	size_t len, rlen;
 	int error = 0;
 	vaddr_t uaddr;
 
@@ -330,9 +330,13 @@ _prop_object_copyout_ioctl(struct plistref *pref, const u_long cmd,
 		return (ENOMEM);
 
 	len = strlen(buf) + 1;
+	rlen = round_page(len);
+
+	uaddr = p->p_emul->e_vm_default_addr(p,
+	    (vaddr_t)p->p_vmspace->vm_daddr, rlen);
 
 	error = uvm_mmap(&p->p_vmspace->vm_map,
-			 &uaddr, round_page(len),
+			 &uaddr, rlen,
 			 VM_PROT_READ|VM_PROT_WRITE,
 			 VM_PROT_READ|VM_PROT_WRITE,
 			 MAP_PRIVATE|MAP_ANON,
