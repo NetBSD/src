@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_conf.l,v 1.8 2006/11/21 00:22:04 elad Exp $	*/
+/*	$NetBSD: veriexecctl_conf.l,v 1.9 2006/11/28 22:22:03 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -41,6 +41,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
+
+#include <prop/proplib.h>
 
 #include "veriexecctl_parse.h"
 #include "veriexecctl.h"

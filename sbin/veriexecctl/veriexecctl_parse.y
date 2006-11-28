@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.18 2006/11/21 00:22:04 elad Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.19 2006/11/28 22:22:03 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -43,10 +43,12 @@
 #include <errno.h>
 #include <err.h>
 
+#include <prop/proplib.h>
+
 #include "veriexecctl.h"
 
-struct veriexec_params params;
-static int convert(u_char *, u_char *);
+prop_dictionary_t load_params;
+static size_t convert(u_char *, u_char *);
 
 %}
 
@@ -72,25 +74,30 @@ statement	:	/* empty */
 		goto phase_2_end;
 	}
 
-	if (stat(params.file, &sb) == -1) {
+	if (stat(dict_gets(load_params, "file"), &sb) == -1) {
 		warnx("Line %lu: Can't stat `%s'",
-		    (unsigned long)line, params.file);
+		    (unsigned long)line, dict_gets(load_params, "file"));
 		goto phase_2_end;
 	}
 
 	/* Only regular files */
 	if (!S_ISREG(sb.st_mode)) {
 		warnx("Line %lu: %s is not a regular file",
-		    (unsigned long)line, params.file);
+		    (unsigned long)line, dict_gets(load_params, "file"));
 		goto phase_2_end;
 	}
 
-	if (statvfs(params.file, &sf) == -1)
-		err(1, "Cannot statvfs `%s'", params.file);
+	if (statvfs(dict_gets(load_params, "file"), &sf) == -1)
+		err(1, "Cannot statvfs `%s'", dict_gets(load_params, "file"));
 
 	if ((p = dev_lookup(sf.f_mntonname)) != NULL) {
-	    (p->vu_param.hash_size)++;
-	    goto phase_2_end;
+		uint64_t n;
+
+		prop_dictionary_get_uint64(p->vu_preload, "count", &n);
+		n++;
+		prop_dictionary_set_uint64(p->vu_preload, "count", n);
+
+		goto phase_2_end;
 	}
 
 	if (verbose) {
@@ -100,7 +107,7 @@ statement	:	/* empty */
 	dev_add(sf.f_mntonname);
 
 phase_2_end:
-	(void)memset(&params, 0, sizeof(params));
+	load_params = NULL;
 }
 		|	statement eol
 		|	statement error eol {
@@ -109,18 +116,16 @@ phase_2_end:
 		;
 
 path		:	PATH {
-	(void)strlcpy(params.file, $1, MAXPATHLEN);
+	if (load_params == NULL)
+		load_params = prop_dictionary_create();
+
+	dict_sets(load_params, "file", $1);
 }
 		;
 
 type		:	STRING {
 	if (phase == 2) {
-		if (strlen($1) >= sizeof(params.fp_type)) {
-			yyerror("Fingerprint type too long");
-			YYERROR;
-		}
-	
-		(void)strlcpy(params.fp_type, $1, sizeof(params.fp_type));
+		dict_sets(load_params, "fp-type", $1);
 	}
 }
 		;
@@ -128,15 +133,22 @@ type		:	STRING {
 
 fingerprint	:	STRING {
 	if (phase == 2) {
-		params.fingerprint = malloc(strlen($1) / 2);
-		if (params.fingerprint == NULL)
+		char *fp;
+		size_t n;
+
+		fp = malloc(strlen($1) / 2);
+		if (fp == NULL)
 			err(1, "Fingerprint mem alloc failed");
-					
-		if ((params.size = convert($1, params.fingerprint)) == -1) {
-			free(params.fingerprint);
+
+		n = convert($1, fp);
+		if (n == -1) {
+			free(fp);
 			yyerror("Bad fingerprint");
 			YYERROR;
 		}
+
+		dict_setd(load_params, "fp", fp, n);
+		free(fp);
 	}
 				
 }
@@ -152,26 +164,30 @@ flags_spec	:	flag_spec
 
 flag_spec	:	STRING {
 	if (phase == 2) {
+		uint8_t t = 0;
+
 		if (strcasecmp($1, "direct") == 0) {
-			params.type |= VERIEXEC_DIRECT;
+			t |= VERIEXEC_DIRECT;
 		} else if (strcasecmp($1, "indirect") == 0) {
-			params.type |= VERIEXEC_INDIRECT;
+			t |= VERIEXEC_INDIRECT;
 		} else if (strcasecmp($1, "file") == 0) {
-			params.type |= VERIEXEC_FILE;
+			t |= VERIEXEC_FILE;
 		} else if (strcasecmp($1, "program") == 0) {
-			params.type |= VERIEXEC_DIRECT;
+			t |= VERIEXEC_DIRECT;
 		} else if (strcasecmp($1, "interpreter") == 0) {
-			params.type |= VERIEXEC_INDIRECT;
+			t |= VERIEXEC_INDIRECT;
 		} else if (strcasecmp($1, "script") == 0) {
-			params.type |= (VERIEXEC_FILE | VERIEXEC_DIRECT);
+			t |= (VERIEXEC_FILE | VERIEXEC_DIRECT);
 		} else if (strcasecmp($1, "library") == 0) {
-			params.type |= (VERIEXEC_FILE | VERIEXEC_INDIRECT);
+			t |= (VERIEXEC_FILE | VERIEXEC_INDIRECT);
 		} else if (strcasecmp($1, "untrusted") == 0) {
-			params.type |= VERIEXEC_UNTRUSTED;
+			t |= VERIEXEC_UNTRUSTED;
 		} else {
 			yyerror("Bad flag");
 			YYERROR;
 		}
+
+		prop_dictionary_set_uint8(load_params, "entry-type", t);
 	}
 
 }
@@ -188,7 +204,7 @@ eol		:	EOL
  * by "out".  Returns the number of bytes converted or -1 if the conversion
  * fails.
  */
-static int
+static size_t
 convert(u_char *fp, u_char *out)
 {
 	size_t i, count;

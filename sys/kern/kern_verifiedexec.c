@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.73 2006/11/27 17:45:36 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.74 2006/11/28 22:22:02 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.73 2006/11/27 17:45:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.74 2006/11/28 22:22:02 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -168,7 +168,7 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
  * Add fingerprint names to the global list.
  */
 static void
-veriexec_add_fp_name(char *name)
+veriexec_add_fp_name(const char *name)
 {
 	char *newp;
 	unsigned int new_max;
@@ -182,7 +182,7 @@ veriexec_add_fp_name(char *name)
 	 * we can support at the moment)
 	 */
 	if (veriexec_fp_names == NULL) {
-		veriexec_name_max = (VERIEXEC_TYPE_MAXLEN + 1) * 6;
+		veriexec_name_max = 64;
 		veriexec_fp_names = malloc(veriexec_name_max, M_TEMP,
 		    M_WAITOK|M_ZERO);
 	}
@@ -191,11 +191,12 @@ veriexec_add_fp_name(char *name)
 	 * If we're running out of space for storing supported algorithms,
 	 * extend the buffer with space for four names.
 	 */
-	if ((veriexec_name_max - strlen(veriexec_fp_names)) <=
-	     VERIEXEC_TYPE_MAXLEN + 1) {
+	while (veriexec_name_max - (strlen(veriexec_fp_names) + 1) <
+	    strlen(name)) {
 		/* Add space for four algorithm names. */
-		new_max = veriexec_name_max + 4 * (VERIEXEC_TYPE_MAXLEN + 1);
-		newp = realloc(veriexec_fp_names, new_max, M_TEMP, M_WAITOK);
+		new_max = veriexec_name_max + 64;
+		newp = realloc(veriexec_fp_names, new_max, M_TEMP,
+		    M_WAITOK|M_ZERO);
 		veriexec_fp_names = newp;
 		veriexec_name_max = new_max;
 	}
@@ -218,8 +219,6 @@ int veriexec_add_fp_ops(struct veriexec_fp_ops *ops)
 	    (ops->update == NULL) ||
 	    (ops->final == NULL))
 		return (EFAULT);
-
-	ops->type[sizeof(ops->type) - 1] = '\0';
 
 	if (veriexec_find_ops(ops->type) != NULL)
 		return (EEXIST);
@@ -301,14 +300,12 @@ veriexec_init(void)
 }
 
 struct veriexec_fp_ops *
-veriexec_find_ops(u_char *name)
+veriexec_find_ops(const char *name)
 {
 	struct veriexec_fp_ops *ops;
 
 	if ((name == NULL) || (strlen(name) == 0))
 		return (NULL);
-
-	name[VERIEXEC_TYPE_MAXLEN - 1] = '\0';
 
 	LIST_FOREACH(ops, &veriexec_ops_list, entries) {
 		if (strncasecmp(name, ops->type, sizeof(ops->type) - 1) == 0)
