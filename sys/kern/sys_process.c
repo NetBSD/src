@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.114 2006/11/13 02:52:08 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.115 2006/11/28 17:27:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.114 2006/11/13 02:52:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.115 2006/11/28 17:27:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,20 +184,18 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		 *	(4) it's not owned by you, or is set-id on exec
 		 *	    (unless you're root), or...
 		 */
-		if ((kauth_cred_getuid(t->p_cred) !=
-		    kauth_cred_getuid(l->l_cred) ||
-		    ISSET(t->p_flag, P_SUGID)) &&
-		    (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
-			return (error);
 
 		/*
 		 *	(5) ...it's init, which controls the security level
 		 *	    of the entire system, and the system was not
 		 *	    compiled with permanently insecure mode turned on
 		 */
-		if (t == initproc && securelevel > -1)
-			return (EPERM);
+
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(SCARG(uap, req)),
+		    NULL, NULL);
+		if (error)
+			return (error);
 
 		/*
 		 * (6) the tracer is chrooted, and its root directory is
@@ -329,6 +327,16 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		uio.uio_resid = sizeof(tmp);
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		UIO_SETUP_SYSSPACE(&uio);
+
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(SCARG(uap, req)),
+		    NULL, NULL);
+		if (error)
+			return (error);
+
+		if (!proc_isunder(t, l))
+			return (EPERM);
+
 		error = process_domem(l, lt, &uio);
 		if (!write)
 			*retval = tmp;
@@ -361,6 +369,16 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		default:
 			return (EINVAL);
 		}
+
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(SCARG(uap, req)),
+		    NULL, NULL);
+		if (error)
+			return (error);
+
+		if (!proc_isunder(t, l))
+			return (EPERM);
+
 		error = process_domem(l, lt, &uio);
 		piod.piod_len -= uio.uio_resid;
 		(void) copyout(&piod, SCARG(uap, addr), sizeof(piod));
@@ -573,6 +591,16 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			uio.uio_resid = sizeof(struct reg);
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_vmspace = vm;
+
+			error = kauth_authorize_process(l->l_cred,
+			    KAUTH_PROCESS_CANPTRACE, t, 
+			    KAUTH_ARG(SCARG(uap, req)), NULL, NULL);
+			if (error)
+				return (error);
+
+			if (!proc_isunder(t, l))
+				return (EPERM);
+
 			error = process_doregs(l, lt, &uio);
 			uvmspace_free(vm);
 			return error;
@@ -611,6 +639,16 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			uio.uio_resid = sizeof(struct fpreg);
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_vmspace = vm;
+
+			error = kauth_authorize_process(l->l_cred,
+			    KAUTH_PROCESS_CANPTRACE, t,
+			    KAUTH_ARG(SCARG(uap, req)), NULL, NULL);
+			if (error)
+				return (error);
+
+			if (!proc_isunder(t, l))
+				return (EPERM);
+
 			error = process_dofpregs(l, lt, &uio);
 			uvmspace_free(vm);
 			return error;
@@ -619,6 +657,15 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(SCARG(uap, req)),
+		    NULL, NULL);
+		if (error)
+			return (error);
+
+		if (!proc_isunder(t, l))
+			return (EPERM);
+
 		return (ptrace_machdep_dorequest(l, lt,
 		    SCARG(uap, req), SCARG(uap, addr),
 		    SCARG(uap, data)));
@@ -637,7 +684,6 @@ process_doregs(struct lwp *curl /*tracer*/,
     struct uio *uio)
 {
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
-	struct proc *p = l->l_proc;
 	int error;
 	struct reg r;
 	char *kv;
@@ -646,8 +692,8 @@ process_doregs(struct lwp *curl /*tracer*/,
 	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
 		return EINVAL;
 
-	if ((error = process_checkioperm(curl, p)) != 0)
-		return error;
+	if (ISSET(l->l_proc->p_flag, P_INEXEC))
+		return (EAGAIN);
 
 	kl = sizeof(r);
 	kv = (char *)&r;
@@ -695,7 +741,6 @@ process_dofpregs(struct lwp *curl /*tracer*/,
     struct uio *uio)
 {
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
-	struct proc *p = l->l_proc;
 	int error;
 	struct fpreg r;
 	char *kv;
@@ -704,8 +749,8 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
 		return EINVAL;
 
-	if ((error = process_checkioperm(curl, p)) != 0)
-		return (error);
+	if (ISSET(l->l_proc->p_flag, P_INEXEC))
+		return (EAGAIN);
 
 	kl = sizeof(r);
 	kv = (char *)&r;
@@ -763,6 +808,7 @@ process_domem(struct lwp *curl /*tracer*/,
 	vaddr_t	addr;
 #endif
 
+	error = 0;
 	len = uio->uio_resid;
 
 	if (len == 0)
@@ -772,8 +818,8 @@ process_domem(struct lwp *curl /*tracer*/,
 	addr = uio->uio_offset;
 #endif
 
-	if ((error = process_checkioperm(curl, p)) != 0)
-		return (error);
+	if (ISSET(p->p_flag, P_INEXEC))
+		return (EAGAIN);
 
 	vm = p->p_vmspace;
 

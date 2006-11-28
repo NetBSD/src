@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.16 2006/11/16 01:33:51 christos Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.17 2006/11/28 17:27:10 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.16 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.17 2006/11/28 17:27:10 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -209,6 +209,45 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 			result = KAUTH_RESULT_ALLOW;
 		else if (isroot || kauth_cred_uidmatch(cred, p->p_cred))
 			result = KAUTH_RESULT_ALLOW;
+		break;
+
+	case KAUTH_PROCESS_CANKTRACE:
+		if (isroot) {
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		if ((p->p_traceflag & KTRFAC_ROOT) || (p->p_flag & P_SUGID)) {
+			result = KAUTH_RESULT_DENY;
+			break;
+		}
+
+		if (kauth_cred_geteuid(cred) == kauth_cred_getuid(p->p_cred) &&
+		    kauth_cred_getuid(cred) == kauth_cred_getsvuid(p->p_cred) &&
+		    kauth_cred_getgid(cred) == kauth_cred_getgid(p->p_cred) &&
+		    kauth_cred_getgid(cred) == kauth_cred_getsvgid(p->p_cred)) {
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		result = KAUTH_RESULT_DENY;
+		break;
+
+	case KAUTH_PROCESS_CANPROCFS:
+	case KAUTH_PROCESS_CANPTRACE:
+	case KAUTH_PROCESS_CANSYSTRACE:
+		if (isroot) {
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		if (kauth_cred_getuid(cred) != kauth_cred_getuid(p->p_cred) ||
+		    ISSET(p->p_flag, P_SUGID)) {
+			result = KAUTH_RESULT_DENY;
+			break;
+		}
+
+		result = KAUTH_RESULT_ALLOW;
 		break;
 
 	case KAUTH_PROCESS_RESOURCE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.61 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.62 2006/11/28 17:27:09 elad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.61 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.62 2006/11/28 17:27:09 elad Exp $");
 
 #include "opt_systrace.h"
 
@@ -1204,6 +1204,11 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	uio.uio_resid = io->strio_len;
 	uio.uio_vmspace = l->l_proc->p_vmspace;
 
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSYSTRACE,
+	    t, NULL, NULL, NULL);
+	if (error)
+		return (error);
+
 #ifdef __NetBSD__
 	error = process_domem(l, proc_representative_lwp(t), &uio);
 #else
@@ -1267,11 +1272,6 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 *	special privileges using setuid() from being
 	 *	traced. This is good security.]
 	 */
-	if ((kauth_cred_getuid(proc->p_cred) != kauth_cred_getuid(p->p_cred) ||
-		ISSET(proc->p_flag, P_SUGID)) &&
-	    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
-		goto out;
 
 	/*
 	 *	(5) ...it's init, which controls the security level
@@ -1279,10 +1279,11 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 *          compiled with permanently insecure mode turned
 	 *	    on.
 	 */
-	if ((proc->p_pid == 1) && (securelevel > -1)) {
-		error = EPERM;
+
+	error = kauth_authorize_process(kauth_cred_get(),
+	    KAUTH_PROCESS_CANSYSTRACE, proc, NULL, NULL, NULL);
+	if (error)
 		goto out;
-	}
 
 	error = systrace_insert_process(fst, proc, NULL);
 
