@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL.MP,v 1.7 2006/11/01 19:33:41 tls Exp $
+#	$NetBSD: INSTALL.MP,v 1.8 2006/11/28 16:15:37 christos Exp $
 #
 #	INSTALL.MP -- Install, plus enable Multiprocessor support.
 #	Mostly to let people test-boot MP systems.
@@ -16,7 +16,7 @@ options 	DEBUG
 options 	MPBIOS		# configure CPUs and APICs using MPBIOS
 
 no options	I486_CPU
-no makeoptions	COPTS
-makeoptions	COPTS="-Os -march=pentium -mtune=i486"
+no makeoptions	CPUFLAGS
+makeoptions	CPUFLAGS="-Os -march=pentium -mtune=i486"
 
 ioapic*		at mainbus? apid ?
