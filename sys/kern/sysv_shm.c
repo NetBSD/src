@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.92 2006/11/25 21:40:05 christos Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.93 2006/11/28 20:35:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.92 2006/11/25 21:40:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.93 2006/11/28 20:35:16 ad Exp $");
 
 #define SYSVSHM
 
@@ -113,7 +113,7 @@ struct shmmap_entry {
 	int shmid;
 };
 
-struct simplelock shm_slock;
+struct lock	shm_lock;
 static int	shm_last_free, shm_committed, shm_use_phys;
 
 static POOL_INIT(shmmap_entry_pool, sizeof(struct shmmap_entry), 0, 0, 0,
@@ -766,7 +766,7 @@ shminit(void)
 	int i, sz;
 	vaddr_t v;
 
-	simple_lock_init(&shm_slock);
+	lockinit(&shm_lock, PWAIT, "shmlk", 0, 0);
 
 	/* Allocate pageable memory for our structures */
 	sz = shminfo.shmmni * sizeof(struct shmid_ds);
@@ -799,11 +799,11 @@ sysctl_ipc_shmmni(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	simple_lock(&shm_slock);
+	lockmgr(&shm_lock, LK_EXCLUSIVE, NULL);
 	error = shmrealloc(newsize);
 	if (error == 0)
 		shminfo.shmmni = newsize;
-	simple_unlock(&shm_slock);
+	lockmgr(&shm_lock, LK_RELEASE, NULL);
 
 	return error;
 }
