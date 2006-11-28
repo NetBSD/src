@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.111 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.112 2006/11/28 17:27:10 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.111 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.112 2006/11/28 17:27:10 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -1292,16 +1292,8 @@ ktrace_thread(void *arg)
 int
 ktrcanset(struct lwp *calll, struct proc *targetp)
 {
-	kauth_cred_t caller = calll->l_cred;
-	kauth_cred_t target = targetp->p_cred;
-
-	if ((kauth_cred_geteuid(caller) == kauth_cred_getuid(target) &&
-	    kauth_cred_getuid(target) == kauth_cred_getsvuid(target) &&
-	    kauth_cred_getgid(caller) == kauth_cred_getgid(target) &&	/* XXX */
-	    kauth_cred_getgid(target) == kauth_cred_getsvgid(target) &&
-	    (targetp->p_traceflag & KTRFAC_ROOT) == 0 &&
-	    (targetp->p_flag & P_SUGID) == 0) ||
-	    kauth_cred_geteuid(caller) == 0)
+	if (kauth_authorize_process(calll->l_cred, KAUTH_PROCESS_CANKTRACE,
+	    targetp, NULL, NULL, NULL) == 0)
 		return (1);
 
 	return (0);

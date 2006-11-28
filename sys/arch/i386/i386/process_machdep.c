@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.59 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.60 2006/11/28 17:27:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.59 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.60 2006/11/28 17:27:09 elad Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -523,9 +523,6 @@ process_machdep_doxmmregs(curl, l, uio)
 	struct xmmregs r;
 	char *kv;
 	int kl;
-
-	if ((error = process_checkioperm(curl, l->l_proc)) != 0)
-		return (error);
 
 	kl = sizeof(r);
 	kv = (char *) &r;

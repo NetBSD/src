@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.17 2006/11/26 17:21:25 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.18 2006/11/28 17:27:10 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.17 2006/11/26 17:21:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.18 2006/11/28 17:27:10 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -227,11 +227,49 @@ secmodel_bsd44_securelevel_process_cb(kauth_cred_t cred,
     kauth_action_t action, void *cookie, void *arg0,
     void *arg1, void *arg2, void *arg3)
 {
+	struct proc *p;
 	int result;
 
 	result = KAUTH_RESULT_DENY;
+	p = arg0;
 
 	switch (action) {
+	case KAUTH_PROCESS_CANPROCFS: {
+		enum kauth_process_req req;
+
+		req = (enum kauth_process_req)arg2;
+		switch (req) {
+		case KAUTH_REQ_PROCESS_CANPROCFS_READ:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+
+		case KAUTH_REQ_PROCESS_CANPROCFS_RW:
+		case KAUTH_REQ_PROCESS_CANPROCFS_WRITE:
+			if ((p == initproc) && (securelevel > -1))
+				result = KAUTH_RESULT_DENY;
+			else
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+
+		break;
+		}
+
+	case KAUTH_PROCESS_CANPTRACE:
+	case KAUTH_PROCESS_CANSYSTRACE:
+		if ((p == initproc) && (securelevel >= 0)) {
+			result = KAUTH_RESULT_DENY;
+			break;
+		}
+
+		result = KAUTH_RESULT_ALLOW;
+
+		break;
+
 	case KAUTH_PROCESS_CORENAME:
 		if (securelevel < 2)
 			result = KAUTH_RESULT_ALLOW;
