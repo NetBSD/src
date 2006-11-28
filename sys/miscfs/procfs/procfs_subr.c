@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.72 2006/11/16 01:33:38 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.73 2006/11/28 17:27:09 elad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.72 2006/11/16 01:33:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.73 2006/11/28 17:27:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.72 2006/11/16 01:33:38 christos Ex
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/kauth.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -304,20 +305,30 @@ procfs_rw(v)
 	struct lwp *l;
 	struct pfsnode *pfs = VTOPFS(vp);
 	struct proc *p;
+	int error;
 
 	if (uio->uio_offset < 0)
 		return EINVAL;
 	p = PFIND(pfs->pfs_pid);
 	if (p == 0)
 		return ESRCH;
+
+	if (ISSET(p->p_flag, P_INEXEC))
+		return (EAGAIN);
+
+	curl = curlwp;
+
 	/*
 	 * Do not allow init to be modified while in secure mode; it
 	 * could be duped into changing the security level.
 	 */
-	if (uio->uio_rw == UIO_WRITE && p == initproc && securelevel > -1)
-		return EPERM;
-
-	curl = curlwp;
+#define	M2K(m)	((m) == UIO_READ ? KAUTH_REQ_PROCESS_CANPROCFS_READ : \
+		 KAUTH_REQ_PROCESS_CANPROCFS_WRITE)
+	error = kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_CANPROCFS,
+	    p, pfs, KAUTH_ARG(M2K(uio->uio_rw)), NULL);
+	if (error)
+		return (error);
+#undef	M2K
 
 	/* XXX NJWLWP
 	 * The entire procfs interface needs work to be useful to
