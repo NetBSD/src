@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.h,v 1.8 2006/11/21 00:22:04 elad Exp $	*/
+/*	$NetBSD: veriexecctl.h,v 1.9 2006/11/28 22:22:03 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -41,9 +41,21 @@
 					     "mismatch" :		\
 					     "<unknown>")
 
+#define dict_sets(d, k, v) \
+	prop_dictionary_set(d, k, prop_string_create_cstring(v))
+
+#define dict_gets(d, k) \
+	prop_string_cstring_nocopy(prop_dictionary_get(d, k))
+
+#define	dict_setd(d, k, v, n) \
+	prop_dictionary_set(d, k, prop_data_create_data(v, n))
+
+#define	dict_getd(d, k) \
+	prop_data_data_nocopy(prop_dictionary_get(d, k))
+
 CIRCLEQ_HEAD(veriexec_ups, veriexec_up) params_list;
 struct veriexec_up {
-        struct veriexec_sizing_params vu_param;
+	prop_dictionary_t vu_preload;
         CIRCLEQ_ENTRY(veriexec_up) vu_list;
 };
 

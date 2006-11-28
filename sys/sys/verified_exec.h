@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.41 2006/11/26 20:27:27 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.42 2006/11/28 22:22:02 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -39,36 +39,7 @@
 #include <uvm/uvm_pglist.h>
 #include <uvm/uvm_page.h>
 
-/* Max length of the fingerprint type string, including terminating \0 char */
-#define	VERIEXEC_TYPE_MAXLEN	9
-
-struct veriexec_params  {
-	unsigned char type;
-	unsigned char fp_type[VERIEXEC_TYPE_MAXLEN];
-	char file[MAXPATHLEN];
-	unsigned int size;  /* number of bytes in the fingerprint */
-	unsigned char *fingerprint;
-};
-
-struct veriexec_sizing_params {
-	size_t hash_size;
-	u_char file[MAXPATHLEN];
-};
-
-struct veriexec_delete_params {
-	u_char file[MAXPATHLEN];
-};
-
-struct veriexec_query_params {
-	u_char file[MAXPATHLEN];
-	unsigned char fp_type[VERIEXEC_TYPE_MAXLEN];
-	unsigned char type;
-	unsigned char status;
-	unsigned char *fp;
-	size_t fp_bufsize;
-	size_t hash_len;
-	void *uaddr;
-};
+#include <prop/proplib.h>
 
 /* Flags for a Veriexec entry. These can be OR'd together. */
 #define VERIEXEC_DIRECT		0x01 /* Direct execution (exec) */
@@ -77,10 +48,10 @@ struct veriexec_query_params {
 #define	VERIEXEC_UNTRUSTED	0x10 /* Untrusted storage */
 
 /* Operations for /dev/veriexec. */
-#define VERIEXEC_LOAD		_IOW('S', 0x1, struct veriexec_params)
-#define VERIEXEC_TABLESIZE	_IOW('S', 0x2, struct veriexec_sizing_params)
-#define VERIEXEC_DELETE		_IOW('S', 0x3, struct veriexec_delete_params)
-#define VERIEXEC_QUERY		_IOW('S', 0x4, struct veriexec_query_params)
+#define VERIEXEC_LOAD		_IOW('S', 0x1, struct plistref)
+#define VERIEXEC_TABLESIZE	_IOW('S', 0x2, struct plistref)
+#define VERIEXEC_DELETE		_IOW('S', 0x3, struct plistref)
+#define VERIEXEC_QUERY		_IOWR('S', 0x4, struct plistref)
 
 /* Verified exec sysctl objects. */
 #define	VERIEXEC_VERBOSE	1 /* Verbosity level. */
@@ -124,7 +95,7 @@ typedef void (*VERIEXEC_UPDATE_FN)(void *, u_char *, u_int);
 typedef void (*VERIEXEC_FINAL_FN)(u_char *, void *);
 
 struct veriexec_fp_ops {
-	char type[VERIEXEC_TYPE_MAXLEN];
+	const char *type;
 	size_t hash_len;
 	size_t context_size;
 	VERIEXEC_INIT_FN init;
@@ -168,18 +139,18 @@ struct veriexec_table_entry {
 /* Initialize a fingerprint ops struct. */
 #define	VERIEXEC_OPINIT(ops, fp_type, hashlen, ctx_size, init_fn, \
 	update_fn, final_fn) \
-	do {								    \
-		(void) strlcpy((ops)->type, fp_type, sizeof((ops)->type));  \
-		(ops)->hash_len = (hashlen);				    \
-		(ops)->context_size = (ctx_size);			    \
-		(ops)->init = (VERIEXEC_INIT_FN) (init_fn);		    \
-		(ops)->update = (VERIEXEC_UPDATE_FN) (update_fn);	    \
-		(ops)->final = (VERIEXEC_FINAL_FN) (final_fn);		    \
+	do {								\
+		(ops)->type = fp_type;					\
+		(ops)->hash_len = (hashlen);				\
+		(ops)->context_size = (ctx_size);			\
+		(ops)->init = (VERIEXEC_INIT_FN) (init_fn);		\
+		(ops)->update = (VERIEXEC_UPDATE_FN) (update_fn);	\
+		(ops)->final = (VERIEXEC_FINAL_FN) (final_fn);		\
 	} while (0);
 
 int veriexec_add_fp_ops(struct veriexec_fp_ops *);
 void veriexec_init(void);
-struct veriexec_fp_ops *veriexec_find_ops(u_char *name);
+struct veriexec_fp_ops *veriexec_find_ops(const char *name);
 int veriexec_fp_calc(struct lwp *, struct vnode *, struct veriexec_file_entry *,
     u_char *);
 int veriexec_fp_cmp(struct veriexec_fp_ops *, u_char *, u_char *);
@@ -194,10 +165,6 @@ int veriexec_removechk(struct vnode *, const char *, struct lwp *l);
 int veriexec_renamechk(struct vnode *, const char *, struct vnode *,
     const char *, struct lwp *);
 void veriexec_report(const u_char *, const u_char *, struct lwp *, int);
-int veriexec_newtable(struct veriexec_sizing_params *, struct lwp *);
-int veriexec_load(struct veriexec_params *, struct lwp *);
-int veriexec_delete(struct veriexec_delete_params *, struct lwp *);
-int veriexec_query(struct veriexec_query_params *, struct lwp *);
 void veriexec_clear(void *, int);
 void veriexec_purge(struct veriexec_file_entry *);
 
