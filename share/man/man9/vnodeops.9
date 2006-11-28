@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.57 2006/10/19 13:44:00 pooka Exp $
+.\"     $NetBSD: vnodeops.9,v 1.58 2006/11/28 19:26:30 pooka Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 19, 2006
+.Dd November 28, 2006
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -204,7 +204,7 @@
 .Fn VOP_GETPAGES "struct vnode *vp" "voff_t offset" "struct vm_page **m" \
 "int *count" "int centeridx" "vm_prot_t access_type" "int advice" "int flags"
 .Ft int
-.Fn VOP_PUTPAGES "struct vnode *vp" "voff_t offlo" "voff_t offlo" \
+.Fn VOP_PUTPAGES "struct vnode *vp" "voff_t offlo" "voff_t offhi" \
 "int flags"
 .Ft int
 .Fn VOP_STRATEGY "struct vnode *vp" "struct buf *bp"
@@ -1302,30 +1302,42 @@ In that case, the variable pointed to by
 will be updated.
 .Pp
 This function is primarily used by the page-fault handing mechanism.
-.It Fn VOP_PUTPAGES "vp" "offset" "len" "flags"
+.It Fn VOP_PUTPAGES "vp" "offlo" "offhi" "flags"
 Write modified (dirty) VM pages to file.
 The argument
 .Fa vp
-is the locked vnode to write the VM pages to and
-.Fa offset
+is the vnode to write the VM pages to.
+The vnode's vm object lock
+.Va ( v_uobj.vmobjlock )
+must be held by the caller and will be released upon return.
+The arguments
+.Fa offlo
 and
-.Fa len
-specifies the range of VM pages to write.
-There seems to be some confusion in the code whether
-.Fa offset
-and
-.Fa len
-specify the start and length of the VM pages for the start and end of
-the VM pages.
+.Fa offhi
+specify the range of VM pages to write.
+In case
+.Fa offhi
+is given as 0, all pages at and after the start offset
+.Fa offlo
+belonging the vnode
+.Fa vp
+will be written.
 The argument
 .Fa flags
-specifies whether the pages should be written asynchronously and also
-whether they should be marked invalid one the write back operation has
-completed.
+controls the behaviour of the routine and takes the vm pager's
+flags
+.Dv ( PGO_ -prefixed).
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Pp
-The function is primarily used by the pageout handling mechanism.
+The function is primarily used by the pageout handling mechanism and
+is commonly implemented indirectly
+by
+.Fn genfs_putpages
+with the help of
+.Fn VOP_STRATEGY
+and
+.Fn VOP_BMAP .
 .It Fn VOP_STRATEGY "vp" "bp"
 Read/write a file system buffer.
 The argument
