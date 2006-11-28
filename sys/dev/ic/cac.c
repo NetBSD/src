@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.36 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: cac.c,v 1.37 2006/11/28 20:29:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.36 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.37 2006/11/28 20:29:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,9 +304,13 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 	}
 
 	ccb->ccb_hdr.drive = drive;
+	ccb->ccb_hdr.priority = 0;
 	ccb->ccb_hdr.size = htole16((sizeof(struct cac_req) +
 	    sizeof(struct cac_sgb) * CAC_SG_SIZE) >> 2);
 
+	ccb->ccb_req.next = 0;
+	ccb->ccb_req.error = 0;
+	ccb->ccb_req.reserved = 0;
 	ccb->ccb_req.bcount = htole16(howmany(size, DEV_BSIZE));
 	ccb->ccb_req.command = command;
 	ccb->ccb_req.sgcount = nsegs;
@@ -519,6 +523,9 @@ cac_l0_completed(struct cac_softc *sc)
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, off, sizeof(struct cac_ccb),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+
+	if ((off & 3) != 0 && ccb->ccb_req.error == 0)
+		ccb->ccb_req.error = CAC_RET_CMD_REJECTED;
 
 	return (ccb);
 }
