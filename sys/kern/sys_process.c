@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.115 2006/11/28 17:27:09 elad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.116 2006/11/28 17:58:10 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.115 2006/11/28 17:27:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.116 2006/11/28 17:58:10 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,16 +181,8 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			return (EBUSY);
 
 		/*
-		 *	(4) it's not owned by you, or is set-id on exec
-		 *	    (unless you're root), or...
+		 *	(4) the security model prevents it, or
 		 */
-
-		/*
-		 *	(5) ...it's init, which controls the security level
-		 *	    of the entire system, and the system was not
-		 *	    compiled with permanently insecure mode turned on
-		 */
-
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(SCARG(uap, req)),
 		    NULL, NULL);
@@ -198,10 +190,9 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			return (error);
 
 		/*
-		 * (6) the tracer is chrooted, and its root directory is
-		 * not at or above the root directory of the tracee
+		 *	(5) the tracer is chrooted, and its root directory is
+		 *	    not at or above the root directory of the tracee
 		 */
-
 		if (!proc_isunder(t, l))
 			return EPERM;
 		break;
@@ -843,53 +834,6 @@ process_domem(struct lwp *curl /*tracer*/,
 #endif /* KTRACE || PTRACE || SYSTRACE */
 
 #if defined(KTRACE) || defined(PTRACE)
-/*
- * Ensure that a process has permission to perform I/O on another.
- * Arguments:
- *	p	The process wishing to do the I/O (the tracer).
- *	t	The process who's memory/registers will be read/written.
- */
-int
-process_checkioperm(struct lwp *l, struct proc *t)
-{
-	int error;
-
-	/*
-	 * You cannot attach to a processes mem/regs if:
-	 *
-	 *	(1) It is currently exec'ing
-	 */
-	if (ISSET(t->p_flag, P_INEXEC))
-		return (EAGAIN);
-
-	/*
-	 *	(2) it's not owned by you, or is set-id on exec
-	 *	    (unless you're root), or...
-	 */
-	if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(l->l_cred) ||
-	    ISSET(t->p_flag, P_SUGID)) &&
-	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
-		return (error);
-
-	/*
-	 *	(3) ...it's init, which controls the security level
-	 *	    of the entire system, and the system was not
-	 *	    compiled with permanetly insecure mode turned on.
-	 */
-	if (t == initproc && securelevel > -1)
-		return (EPERM);
-
-	/*
-	 *	(4) the tracer is chrooted, and its root directory is
-	 * 	    not at or above the root directory of the tracee
-	 */
-	if (!proc_isunder(t, l))
-		return (EPERM);
-
-	return (0);
-}
-
 void
 process_stoptrace(struct lwp *l)
 {
