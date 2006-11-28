@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.7 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.8 2006/11/28 18:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: pathnames.h,v 1.7 2006/10/31 20:07:32 christos Exp $
+ *	$NetBSD: pathnames.h,v 1.8 2006/11/28 18:45:32 christos Exp $
  */
 
 #ifndef __PATHNAMES_H__

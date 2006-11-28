@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.26 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.27 2006/11/28 18:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,282 +29,328 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.26 2006/10/31 20:07:32 christos Exp $
+ *	$NetBSD: extern.h,v 1.27 2006/11/28 18:45:32 christos Exp $
  */
 
 #ifndef __EXTERN_H__
 #define __EXTERN_H__
 
-struct name;
-struct name *cat(struct name *, struct name *);
-struct name *delname(struct name *, char []);
-struct name *elide(struct name *);
-struct name *extract(char [], int);
-struct grouphead;
-struct name *gexpand(struct name *, struct grouphead *, int, int);
-struct name *lexpand(char *, int);
-struct name *nalloc(char [], int);
-struct header;
-struct name *outof(struct name *, FILE *, struct header *);
-struct name *put(struct name *, struct name *);
-struct name *tailof(struct name *);
-struct name *usermap(struct name *);
-FILE	*Fdopen(int, const char *);
-FILE	*Fopen(const char *, const char *);
-FILE	*Popen(const char *, const char *);
-FILE	*collect(struct header *, int);
-char	*copy(char *, char *);
-char	*copyin(const char *, char **);
-void	*csalloc(size_t, size_t);
-char	*detract(struct name *, int);
-const char *expand(const char *);
-const char *getdeadletter(void);
-const	char *getname(uid_t);
-struct message;
-char	*hfield(const char [], const struct message *);
-FILE	*infix(struct header *, FILE *);
-char	*ishfield(const char [], char[], const char *);
-char	*name1(struct message *, int);
-char	*nameof(struct message *, int);
-const char	*nextword(const char *, char *);
-char	*readtty(const char [], char []);
-char 	*reedit(char *);
-FILE	*run_editor(FILE *, off_t, int, int);
-void	*salloc(size_t);
-char	*savestr(const char *);
-FILE	*setinput(const struct message *);
-char	*skin(char *);
-char	*skip_comment(char *);
-char	*snarf(char [], int *);
-const	char *username(void);
-char	*value(const char []);
-char	*vcopy(const char []);
-char	*yankword(char *, char []);
-int	 Fclose(FILE *);
+/*
+ * from cmd1.c
+ */
 int	 More(void *);
-int	 Pclose(FILE *);
-int	 Respond(void *);
 int	 Type(void *);
-int	 _Respond(int []);
-int	 _respond(int *);
-void	 alter(char *);
-int	 alternates(void *);
-void	 announce(void);
-int	 append(struct message *, FILE *);
-int	 argcount(char **);
-void	 assign(const char [], const char []);
-int	 bangexp(char *);
-int	 blankline(char []);
-void	 brokpipe(int);
-int	 charcount(char *, int);
-int	 check(int, int);
-void	 clob1(int);
-int	 clobber(void *);
-void	 close_all_files(void);
-int	 cmatch(const char *, char *);
-void	 collhup(int);
-void	 collint(int);
-void	 collstop(int);
-void	 commands(void);
-int	 copycmd(void *);
-int	 core(void *);
-int	 count(struct name *);
-int	 delete(void *);
-int	 delm(int []);
-int	 deltype(void *);
-void	 demail(void);
-int	 dosh(void *);
-int	 dot_lock(const char *, int, FILE *, const char *);
-void	 dot_unlock(const char *);
-int	 echo(void *);
-int	 edit1(int *, int);
-int	 editor(void *);
-void	 edstop(void);
-int	 elsecmd(void *);
-int	 endifcmd(void *);
-int	 execute(char [], int);
-int	 exwrite(const char [], FILE *, int);
-void	 fail(const char [], const char []);
-int	 file(void *);
-struct grouphead *
-	 findgroup(char []);
-void	 findmail(const char *, char *);
-int	 first(int, int);
-void	 fixhead(struct header *, struct name *);
-void	 fmt(const char *, struct name *, FILE *, int);
 int	 folders(void *);
-int	 forward(char [], FILE *, char *, int);
-void	 free_child(int);
 int	 from(void *);
-off_t	 fsize(FILE *);
-int	 getfold(char *);
-int	 getmsglist(char *, int *, int);
-int	 getrawlist(const char [], char **, int);
-int	 getuserid(char []);
-int	 grabh(struct header *, int);
-int	 group(void *);
-void	 hangup(int);
-int	 hash(const char *);
-void	 hdrstop(int);
 int	 headers(void *);
-int	 help(void *);
-void	 holdsigs(void);
-int	 ifcmd(void *);
-int	 igfield(void *);
-int	 unalias(void *);
-struct ignoretab;
-int	 ignore1(char *[], struct ignoretab *, const char *);
-int	 igshow(struct ignoretab *, const char *);
-void	 intr(int);
 int	 inc(void *);
-int	 incfile(void);
-int	 isdate(const char []);
-int	 isdir(const char []);
-int	 isfileaddr(char *);
-int	 ishead(const char []);
-int	 isign(const char *, struct ignoretab []);
-int	 isprefix(char *, const char *);
-void	 istrcpy(char *, const char *);
-const struct cmd *
-	 lex(char []);
-void	 load(const char *);
-struct var *
-	 lookup(const char []);
-#ifdef MIME_SUPPORT
-int	 mail(struct name *,
-	      struct name *, struct name *, struct name *, char *,
-	      struct attachment *);
-#else
-int	 mail(struct name *,
-	      struct name *, struct name *, struct name *, char *);
-#endif
-void	 mail1(struct header *, int);
-void	 makemessage(FILE *, int);
-void	 mark(int);
-int	 markall(char [], int);
-int	 matchsender(char *, int);
-int	 matchsubj(char *, int);
 int	 mboxit(void *);
-int	 member(char *, struct ignoretab *);
-void	 mesedit(FILE *, int);
-void	 mespipe(FILE *, char []);
-int	 messize(void *);
-int	 metamess(int, int);
 int	 more(void *);
-int	 newfileinfo(int);
-int	 next(void *);
-int	 null(void *);
-struct headline;
-void	 parse(const char [], struct headline *, char []);
 int	 pcmdlist(void *);
 int	 pdot(void *);
 int	 pipecmd(void *);
-void	 prepare_child(sigset_t *, int, int);
-int	 preserve(void *);
-void	 prettyprint(struct name *);
-void	 printgroup(char []);
-void	 printhead(int);
-int	 puthead(struct header *, FILE *, int);
-int	 putline(FILE *, const char *, int);
-int	 pversion(void *);
-void	 quit(void);
-int	 quitcmd(void *);
-int	 upcase(int);
-int	 mail_readline(FILE *, char *, int);
-void	 register_file(FILE *, int, int);
-void	 regret(int);
-void	 relsesigs(void);
-int	 respond(void *);
-int	 retfield(void *);
-int	 rexit(void *);
-int	 rm(char *);
-int	 run_command(const char *, sigset_t *, int, int, ...);
-int	 save(void *);
-int	 Save(void *);
-int	 save1(char [], int, const char *, struct ignoretab *);
-void	 savedeadletter(FILE *);
-int	 saveigfield(void *);
-int	 savemail(const char [], FILE *);
-int	 saveretfield(void *);
-int	 scan(char **);
-void	 scaninit(void);
-int	 schdir(void *);
-int	 screensize(void);
 int	 scroll(void *);
-#ifdef MIME_SUPPORT
-int	 sendmessage(struct message *, FILE *, struct ignoretab *,
-    const char *, struct mime_info *);
-#else
-int	 sendmessage(struct message *, FILE *, struct ignoretab *,
-    const char *);
-#endif
-int	 sendmail(void *);
-int	 set(void *);
-int	 setfile(const char *);
-void	 setmsize(int);
-void	 setptr(FILE *, off_t);
-void	 setscreensize(void);
-int	 shell(void *);
-int	 show(void *);
-void	 sigchild(int);
-void	 sort(char **);
-int	 source(void *);
-void	 spreserve(void);
-void	 sreset(void);
-int	 start_command(const char *, sigset_t *, int, int, ...);
-void	 statusput(struct message *, FILE *, const char *);
-void	 stop(int);
 int	 stouch(void *);
-int	 swrite(void *);
-void	 tinit(void);
 int	 top(void *);
-void	 touch(struct message *);
-void	 ttyint(int);
-void	 ttystop(int);
 int	 type(void *);
 #ifdef MIME_SUPPORT
-int	 view(void *);
-int	 View(void *);
 int	 page(void *);
 int	 Page(void *);
 int	 print(void *);
 int	 Print(void *);
-int	 type1(int *, int, int, int);
-#else
-int	 type1(int *, int, int);
+int	 view(void *);
+int	 View(void *);
 #endif
+/* XXX - should these be elsewhere? */
+void	 printhead(int);
+char	*sget_msgnum(struct message *, struct message *);
+void	 show_msgnum(FILE *, struct message *, struct message *);
+
+/*
+ * from cmd2.c
+ */
+int	 Detach(void *);
+int	 Save(void *);
+int	 clobber(void *);
+int	 copycmd(void *);
+int	 core(void *);
+int	 delete(void *);
+int	 deltype(void *);
+int	 detach(void *);
+int	 igfield(void *);
+int	 next(void *);
+int	 retfield(void *);
+int	 save(void *);
+int	 saveigfield(void *);
+int	 saveretfield(void *);
+int	 swrite(void *);
 int	 undeletecmd(void *);
-void	 unmark(int);
-const char **unpack(struct name *);
+
+/*
+ * from cmd3.c
+ */
+int	 Respond(void *);
+int	 alternates(void *);
+int	 dosh(void *);
+int	 echo(void *);
+int	 elsecmd(void *);
+int	 endifcmd(void *);
+int	 file(void *);
+int	 group(void *);
+int	 help(void *);
+int	 ifcmd(void *);
+int	 ifdefcmd(void *v);
+int	 ifndefcmd(void *v);
+int	 markread(void *);
+int	 messize(void *);
+int	 null(void *);
+int	 preserve(void *);
+int	 respond(void *);
+int	 rexit(void *);
+int	 schdir(void *);
+int	 set(void *);
+int	 shell(void *);
+int	 show(void *);
+int	 unalias(void *);
 int	 unread(void *);
-void	 unregister_file(FILE *);
 int	 unset(void *);
-int	 unstack(void);
-void	 v_free(char *);
-int	 visual(void *);
-int	 wait_child(int);
-int	 wait_command(int);
-int	 writeback(FILE *);
+/* XXX - Should this be elsewhere? */
+void	 sort(const char **);
 
-#ifdef MIME_SUPPORT
-FILE	*last_registered_file(int);
-void	close_top_files(FILE *);
-void	flush_files(FILE *, int);
-#endif
-
-#ifdef SMOPTS_CMD
-int	smoptscmd(void *);
-int	unsmopts(void *);
+/*
+ * from cmd4.c
+ */
 struct smopts_s *findsmopts(const char *, int);
+int	smoptscmd(void *);
+int	unsmoptscmd(void *);
+
+/*
+ * from cmdtab.c
+ */
+extern const struct cmd cmdtab[];
+
+/*
+ * from collect.c
+ */
+FILE	*collect(struct header *, int);
+void	 savedeadletter(FILE *);
+
+/*
+ * from dotlock.c
+ */
+int	 dot_lock(const char *, int, FILE *, const char *);
+void	 dot_unlock(const char *);
+
+/*
+ * from edit.c
+ */
+int	 editor(void *);
+int	 visual(void *);
+FILE	*run_editor(FILE *, off_t, int, int);
+
+/*
+ * from fio.c
+ */
+const char *expand(const char *);
+off_t	 fsize(FILE *);
+const char *getdeadletter(void);
+int	 getfold(char *, size_t);
+void	 holdsigs(void);
+int	 mail_readline(FILE *, char *, int);
+int	 putline(FILE *, const char *, int);
+void	 relsesigs(void);
+int	 rm(char *);
+FILE	*setinput(const struct message *);
+void	 setptr(FILE *, off_t);
+
+/*
+ * from getname.c
+ */
+const char *getname(uid_t);
+int	 getuserid(char []);
+
+/*
+ * from head.c
+ */
+int	 ishead(const char []);
+void	 parse(const char [], struct headline *, char []);
+
+/*
+ * from lex.c
+ */
+void	 announce(void);
+void	 commands(void);
+int	 execute(char [], int);
+int	 incfile(void);
+const struct cmd *lex(char []);
+void	 load(const char *);
+int	 newfileinfo(int);
+int	 pversion(void *);
+int	 setfile(const char *);
+char	*shellpr(char *);
+char	*get_cmdname(char *);
+
+/*
+ * from list.c
+ */
+int	 first(int, int);
+int	 get_Hflag(char **);
+int	 getmsglist(char *, int *, int);
+int	 getrawlist(const char [], char **, int);
+int	 show_headers_and_exit(int) __attribute__((__noreturn__));
+
+/*
+ * from main.c
+ */
+struct name *lexpand(char *, int);
+void	 setscreensize(void);
+int	 main(int, char **);
+
+/*
+ * from names.c
+ */
+struct name *cat(struct name *, struct name *);
+int	 count(struct name *);
+struct name *delname(struct name *, char []);
+char	*detract(struct name *, int);
+struct name *elide(struct name *);
+struct name *extract(char [], int);
+struct name *gexpand(struct name *, struct grouphead *, int, int);
+struct name *nalloc(char [], int);
+struct name *outof(struct name *, FILE *, struct header *);
+const char **unpack(struct name *);
+struct name *usermap(struct name *);
+#if 0
+void	 prettyprint(struct name *);	/* commented out? */
 #endif
 
-int	get_Hflag(char **);
-int	show_headers(int) __attribute__((__noreturn__));
-int	markread(void *);
+/*
+ * from popen.c
+ */
+int	 Fclose(FILE *);
+FILE	*Fdopen(int, const char *);
+FILE	*Fopen(const char *, const char *);
+int	 Pclose(FILE *);
+FILE	*Popen(const char *, const char *);
+void	 close_all_files(void);
+void	 close_top_files(FILE *);
+void	 free_child(int);
+void	 prepare_child(sigset_t *, int, int);
+FILE	*last_registered_file(int);
+void	 register_file(FILE *, int, int);
+int	 run_command(const char *, sigset_t *, int, int, ...);
+void	 sigchild(int);
+int	 start_command(const char *, sigset_t *, int, int, ...);
+int	 wait_child(int);
+#ifdef MIME_SUPPORT
+void	 flush_files(FILE *, int);
+#endif
 
+/*
+ * from quit.c
+ */
+void	 quit(void);
+int	 quitcmd(void *);
+
+/*
+ * from send.c
+ */
+#ifndef MIME_SUPPORT
+# define sendmessage(a,b,c,d,e)	legacy_sendmessage(a,b,c,d)
+# define mail(a,b,c,d,e,f)	legacy_mail(a,b,c,d,e)
+#endif
+int	 sendmessage(struct message *, FILE *, struct ignoretab *, const char *, struct mime_info *);
+int	 mail(struct name *, struct name *, struct name *, struct name *, char *, struct attachment *);
+void	 mail1(struct header *, int);
+int	 puthead(struct header *, FILE *, int);
+int	 sendmail(void *);
+
+/*
+ * from strings.c
+ */
+void	*csalloc(size_t, size_t);
+void	*salloc(size_t);
+void	 sreset(void);
+void	 spreserve(void);
+
+/*
+ * from support.c
+ */
+void	 alter(char *);
+int	 argcount(char **);
+int	 blankline(char []);
+char	*copy(char *, char *);
+char	*hfield(const char [], const struct message *);
+int	 isdir(const char []);
+int	 isign(const char *, struct ignoretab []);
+void	 istrcpy(char *, const char *);
+int	 member(char *, struct ignoretab *);
+char	*nameof(struct message *, int);
+int	 sasprintf(char **ret, const char *format, ...);
+char	*savestr(const char *);
+struct message *set_m_flag(int, int, int);
+char	*skin(char *);
+int	 source(void *);
+void	 touch(struct message *);
+int	 unstack(void);
+int	 upcase(int);
+
+/*
+ * from temp.c
+ */
+void	 tinit(void);
+
+/*
+ * from tty.c
+ */
+int	 grabh(struct header *, int);
+
+/*
+ * from vars.c
+ */
+void	 assign(const char [], const char []);
+struct grouphead *findgroup(const char []);
+int	 hash(const char *);
+struct var *lookup(const char []);
+void	 printgroup(const char []);
+void	 v_free(char *);
+char	*value(const char []);
+char	*vcopy(const char []);
+
+/*
+ * from v7.local.c
+ */
+void	 demail(void);
+void	 findmail(const char *, char *, size_t);
+const char *username(void);
+
+/*
+ * from version.c
+ */
 extern const char *version;
-extern char *tmpdir;
-extern const struct cmd cmdtab[];
-extern int wait_status;
+
+
+#ifndef	THREAD_SUPPORT
+/*
+ * Specials from fio.c (if THREAD_SUPPORT is not defined).
+ * With THREAD_SUPPORT, they live in thread.c.
+ */
+struct message *next_message(struct message *);
+struct message *prev_message(struct message *);
+struct message *get_message(int);
+int	 get_msgnum(struct message *);
+int	 get_msgCount(void);
+
+/* we remap these commands */
+# define get_abs_msgCount	get_msgCount
+# define get_abs_message(a)	get_message(a)
+# define next_abs_message(a)	next_message(a)
+
+/* we trash these commands */
+# define do_recursion()			0
+# define thread_recursion(mp,fn,args)	fn(mp,args)
+# define thread_fix_old_links(nmessage,message,omsgCount)
+# define thread_fix_new_links(message,omsgCount,msgCount)
+#endif /* THREAD_SUPPORT */
 
 #endif /* __EXTERN_H__ */

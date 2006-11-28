@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.10 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.11 2006/11/28 18:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -36,23 +36,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Most of this is derived or copied from src/usr.bin/ftp/complete.c (1.41). */
-
+/*
+ * Most of this is derived or copied from src/usr.bin/ftp/complete.c (1.41).
+ */
 
 #ifdef USE_EDITLINE
 #undef NO_EDITCOMPLETE
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.10 2006/10/31 20:07:32 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.11 2006/11/28 18:45:32 christos Exp $");
 #endif /* not lint */
 
 /*
  * FTP user program - command and file completion routines
  */
 
-#include <sys/stat.h>
-
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <dirent.h>
@@ -60,9 +60,11 @@ __RCSID("$NetBSD: complete.c,v 1.10 2006/10/31 20:07:32 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/param.h>
 #include <stringlist.h>
 #include <util.h>
+
+#include <sys/param.h>
+#include <sys/stat.h>
 
 #include "rcv.h"			/* includes "glob.h" */
 #include "extern.h"
@@ -70,6 +72,11 @@ __RCSID("$NetBSD: complete.c,v 1.10 2006/10/31 20:07:32 christos Exp $");
 #ifdef MIME_SUPPORT
 #include "mime.h"
 #endif
+#ifdef THREAD_SUPPORT
+#include "thread.h"
+#endif
+
+#define BELL 0x7
 
 /*
  * Global variables
@@ -80,12 +87,6 @@ static int doglob = 1;			/* glob local file names */
 #define ttywidth screenwidth		/* in "glob.h" */
 #define ttyheight screenheight		/* in "glob.h" */
 
-
-/* This should find the first command that matches the name given or
- * NULL if none.  Use the routine from mail in lex.c.
- */
-#define getcmd(w) lex(w)
-
 /************************************************************************/
 /* from src/usr.bin/ftp/utils.h (1.135) - begin */
 
@@ -95,7 +96,7 @@ static int doglob = 1;			/* glob local file names */
 static void
 list_vertical(StringList *sl)
 {
-	int i, j;
+	int i, j, k;
 	int columns, lines;
 	char *p;
 	size_t w, width;
@@ -113,6 +114,7 @@ list_vertical(StringList *sl)
 	if (columns == 0)
 		columns = 1;
 	lines = (sl->sl_cur + columns - 1) / columns;
+	k = 0;
 	for (i = 0; i < lines; i++) {
 		for (j = 0; j < columns; j++) {
 			p = sl->sl_str[j * lines + i];
@@ -129,6 +131,16 @@ list_vertical(StringList *sl)
 					(void)putc('\t', ttyout);
 				}
 			}
+		}
+		if (ttyheight > 2 && ++k == ttyheight - 2) {
+			int ch;
+			k = 0;
+			(void)fputs("--more--", ttyout);
+			while ((ch = getchar()) != EOF && ch != ' ' && ch != 'q')
+				(void)putc(BELL, ttyout);
+			(void)fputs("\r        \r", ttyout);
+			if (ch == 'q')
+				break;
 		}
 	}
 }
@@ -173,7 +185,7 @@ mail_sl_init(void)
 	p = sl_init();
 	if (p == NULL)
 		err(1, "Unable to allocate memory for stringlist");
-	return (p);
+	return p;
 }
 
 
@@ -211,11 +223,11 @@ globulize(const char *pattern)
 	if (glob(pattern, flags, NULL, &gl) || gl.gl_pathc == 0) {
 		warnx("%s: not found", pattern);
 		globfree(&gl);
-		return (NULL);
+		return NULL;
 	}
 	p = estrdup(gl.gl_pathv[0]);
 	globfree(&gl);
-	return (p);
+	return p;
 }
 
 /* from src/usr.bin/ftp/utils.h (1.135) - end */
@@ -224,7 +236,7 @@ globulize(const char *pattern)
 static int
 comparstr(const void *a, const void *b)
 {
-	return (strcmp(*(const char * const *)a, *(const char * const *)b));
+	return strcmp(*(const char * const *)a, *(const char * const *)b);
 }
 
 /*
@@ -248,17 +260,17 @@ complete_ambiguous(EditLine *el, char *word, int dolist, StringList *words)
 
 	wordlen = strlen(word);
 	if (words->sl_cur == 0)
-		return (CC_ERROR);	/* no choices available */
+		return CC_ERROR;	/* no choices available */
 
 	if (words->sl_cur == 1) {	/* only once choice available */
 		p = words->sl_str[0] + wordlen;
 		if (*p == '\0')		/* at end of word? */
-			return (CC_REFRESH);
+			return CC_REFRESH;
 		ftpvis(insertstr, sizeof(insertstr), p, strlen(p));
 		if (el_insertstr(el, insertstr) == -1)
-			return (CC_ERROR);
+			return CC_ERROR;
 		else
-			return (CC_REFRESH);
+			return CC_REFRESH;
 	}
 
 	if (!dolist) {
@@ -272,20 +284,21 @@ complete_ambiguous(EditLine *el, char *word, int dolist, StringList *words)
 			if (j < matchlen)
 				matchlen = j;
 		}
-		if (matchlen > wordlen) {
+		if (matchlen >= wordlen) {
 			ftpvis(insertstr, sizeof(insertstr),
 			    lastmatch + wordlen, matchlen - wordlen);
 			if (el_insertstr(el, insertstr) == -1)
-				return (CC_ERROR);
+				return CC_ERROR;
 			else
-				return (CC_REFRESH_BEEP);
+				return CC_REFRESH_BEEP;
 		}
 	}
 
 	(void)putc('\n', ttyout);
 	qsort(words->sl_str, words->sl_cur, sizeof(char *), comparstr);
+
 	list_vertical(words);
-	return (CC_REDISPLAY);
+	return CC_REDISPLAY;
 }
 
 /*
@@ -315,7 +328,7 @@ complete_command(EditLine *el, char *word, int dolist)
 			rv = CC_ERROR;
 	}
 	sl_free(words, 0);
-	return (rv);
+	return rv;
 }
 
 /*
@@ -351,13 +364,13 @@ complete_filename(EditLine *el, char *word, int dolist)
 		char *p;
 
 		if ((p = globulize(dir)) == NULL)
-			return (CC_ERROR);
+			return CC_ERROR;
 		(void)estrlcpy(dir, p, sizeof(dir));
 		free(p);
 	}
 
 	if ((dd = opendir(dir)) == NULL)
-		return (CC_ERROR);
+		return CC_ERROR;
 
 	words = mail_sl_init();
 	len = strlen(fname);
@@ -401,7 +414,7 @@ complete_filename(EditLine *el, char *word, int dolist)
 		}
 	}
 	sl_free(words, 1);
-	return (rv);
+	return rv;
 }
 
 static int
@@ -516,23 +529,22 @@ complete_executable(EditLine *el, char *word, int dolist)
 		return CC_ERROR;
 
 	rv = complete_ambiguous(el, fname, dolist, words);
-
-	if (rv == CC_REFRESH)
+	if (rv == CC_REFRESH) {
 		if (el_insertstr(el, " ") == -1)
 			rv = CC_ERROR;
-
+	}
 	sl_free(words, 1);
 
-	return (rv);
+	return rv;
 }
 
 
-static unsigned
-char complete_set(EditLine *el, char *word, int dolist)
+static unsigned char
+complete_set(EditLine *el, char *word, int dolist)
 {
 	struct var *vp;
-	char **ap;
-	char **p;
+	const char **ap;
+	const char **p;
 	int h;
 	int s;
 	size_t len = strlen(word);
@@ -546,7 +558,7 @@ char complete_set(EditLine *el, char *word, int dolist)
 	for (h = 0; h < HSHSIZE; h++)
 		for (vp = variables[h]; vp != NULL; vp = vp->v_link)
 			s++;
-	ap = (char **)salloc(s * sizeof *ap);
+	ap = salloc(s * sizeof *ap);
 
 	/* save the pointers */
 	for (h = 0, p = ap; h < HSHSIZE; h++)
@@ -562,7 +574,7 @@ char complete_set(EditLine *el, char *word, int dolist)
 
 	sl_free(words, 1);
 
-	return(rv);
+	return rv;
 }
 
 
@@ -570,8 +582,8 @@ static unsigned char
 complete_alias(EditLine *el, char *word, int dolist)
 {
 	struct grouphead *gh;
-	char **ap;
-	char **p;
+	const char **ap;
+	const char **p;
 	int h;
 	int s;
 	size_t len = strlen(word);
@@ -585,38 +597,38 @@ complete_alias(EditLine *el, char *word, int dolist)
 	for (h = 0; h < HSHSIZE; h++)
 		for (gh = groups[h]; gh != NULL; gh = gh->g_link)
 			s++;
-	ap = (char **)salloc(s * sizeof *ap);
+	ap = salloc(s * sizeof(*ap));
 	
 	/* save pointers */
 	p = ap;
 	for (h = 0; h < HSHSIZE; h++)
 		for (gh = groups[h]; gh != NULL; gh = gh->g_link)
 			*p++ = gh->g_name;
+
 	*p = NULL;
+
 	sort(ap);
 	for (p = ap; *p != NULL; p++)
 		if (len == 0 || strncmp(*p, word, len) == 0)
 			mail_sl_add(words, estrdup(*p));
 	
 	rv = complete_ambiguous(el, word, dolist, words);
-	if (rv == CC_REFRESH)
+	if (rv == CC_REFRESH) {
 		if (el_insertstr(el, " ") == -1)
 			rv = CC_ERROR;
-	
+	}
 	sl_free(words, 1);
-	
-	return(rv);
+	return rv;
 }
 
 
-#ifdef SMOPTS_CMD
-static unsigned
-char complete_smopts(EditLine *el, char *word, int dolist)
+static unsigned char
+complete_smopts(EditLine *el, char *word, int dolist)
 {
 	struct grouphead *gh;
 	struct smopts_s *sp;
-	char **ap;
-	char **p;
+	const char **ap;
+	const char **p;
 	int h;
 	int s1;
 	int s2;
@@ -638,7 +650,7 @@ char complete_smopts(EditLine *el, char *word, int dolist)
 	}
 
 	/* allocate sufficient space for the pointers */
-	ap = (char **)salloc(MAX(s1, s2) * sizeof *ap);
+	ap = salloc(MAX(s1, s2) * sizeof *ap);
 
 	/*
 	 * First do the smoptstbl pointers. (case _insensitive_)
@@ -670,226 +682,54 @@ char complete_smopts(EditLine *el, char *word, int dolist)
 
 	sl_free(words, 1);
 
-	return(rv);
+	return rv;
 }
-#endif /* SMOPTS_CMD */
 
 
-static char	*stringbase;	/* current scan point in line buffer */
-static char	*argbase;	/* current storage point in arg buffer */
-static StringList *marg_sl;	/* stringlist containing margv */
-static int	margc;		/* count of arguments on input line */
-#define margv (marg_sl->sl_str)	/* args parsed from input line */
-
-static char *cursor_pos;
-static int   cursor_argc;
-static int   cursor_argo;
-
-static void
-init_complete(void)
+#ifdef THREAD_SUPPORT
+static unsigned char
+complete_thread_key(EditLine *el, char *word, int dolist)
 {
-	marg_sl = sl_init();
-	return;
+	const char **ap;
+	const char **p;
+	const char *name;
+	size_t len;
+	StringList *words;
+	unsigned char rv;
+	int cnt;
+	const void *cookie;
+
+	len = strlen(word);
+	words = sl_init();
+
+	/* count the entries in the table */
+	/* XXX - have a function return this rather than counting? */
+	cnt = 1;	/* count the NULL terminator */
+	cookie = NULL;
+	while (thread_next_key_name(&cookie) != NULL)
+		cnt++;
+
+	/* allocate sufficient space for the pointers */
+	ap = salloc(cnt * sizeof *ap);
+
+	/* load the array */
+	p = ap;
+	cookie = NULL;
+	while ((name = thread_next_key_name(&cookie)) != NULL)
+		*p++ = name;
+	*p = NULL;
+	sort(ap);
+	for (p = ap; *p != NULL; p++)
+		if (len == 0 || strncmp(*p, word, len) == 0)
+			mail_sl_add(words, estrdup(*p));
+
+	rv = complete_ambiguous(el, word, dolist, words);
+
+	sl_free(words, 1);
+
+	return rv;
 }
-
-
-
-/************************************************************************/
-/* from /usr/src/usr.bin/ftp/main.c(1.101) - begin */
-
-static int   slrflag;
-#ifdef NEED_ALTARG
-static char *altarg;		/* argv[1] with no shell-like preprocessing  */
-#endif
-
-#ifdef NO_EDITCOMPLETE
-#define	INC_CHKCURSOR(x)	(x)++
-#else  /* !NO_EDITCOMPLETE */
-#define	INC_CHKCURSOR(x)				\
-	do {						\
-		(x)++;					\
-		if (x == cursor_pos) {			\
-			cursor_argc = margc;		\
-			cursor_argo = ap - argbase;	\
-			cursor_pos  = NULL;		\
-		}					\
-	} while(/* CONSTCOND */ 0)
-#endif /* !NO_EDITCOMPLETE */
-
-/*
- * Parse string into argbuf;
- * implemented with FSM to
- * handle quoting and strings
- */
-static char *
-slurpstring(void)
-{
-	int got_one = 0;
-	char *sb = stringbase;
-	char *ap = argbase;
-	char *tmp = argbase;		/* will return this if token found */
-
-	if (*sb == '!' || *sb == '$') {	/* recognize ! as a token for shell */
-		switch (slrflag) {	/* and $ as token for macro invoke */
-			case 0:
-				slrflag++;
-				INC_CHKCURSOR(stringbase);
-				return __UNCONST((*sb == '!') ? "!" : "$");
-				/* NOTREACHED */
-			case 1:
-				slrflag++;
-#ifdef NEED_ALTARG
-				altarg = stringbase;
-#endif
-				break;
-			default:
-				break;
-		}
-	}
-
-S0:
-	switch (*sb) {
-
-	case '\0':
-		goto OUT;
-
-	case ' ':
-	case '\t':
-		INC_CHKCURSOR(sb);
-		goto S0;
-
-	default:
-		switch (slrflag) {
-			case 0:
-				slrflag++;
-				break;
-			case 1:
-				slrflag++;
-#ifdef NEED_ALTARG
-				altarg = sb;
-#endif
-				break;
-			default:
-				break;
-		}
-		goto S1;
-	}
-
-S1:
-	switch (*sb) {
-
-	case ' ':
-	case '\t':
-	case '\0':
-		goto OUT;	/* end of token */
-
-	case '\\':
-		INC_CHKCURSOR(sb);
-		goto S2;	/* slurp next character */
-
-	case '"':
-		INC_CHKCURSOR(sb);
-		goto S3;	/* slurp quoted string */
-
-	default:
-		/* the first arg (command) is special - see execute() in lex.c */
-		if (margc == 0 && got_one &&
-		    strchr(" \t0123456789$^.:/-+*'\"", *sb))
-			goto OUT;
-
-		*ap = *sb;	/* add character to token */
-		ap++;
-		INC_CHKCURSOR(sb);
-		got_one = 1;
-		goto S1;
-	}
-
-S2:
-	switch (*sb) {
-
-	case '\0':
-		goto OUT;
-
-	default:
-		*ap = *sb;
-		ap++;
-		INC_CHKCURSOR(sb);
-		got_one = 1;
-		goto S1;
-	}
-
-S3:
-	switch (*sb) {
-
-	case '\0':
-		goto OUT;
-
-	case '"':
-		INC_CHKCURSOR(sb);
-		goto S1;
-
-	default:
-		*ap = *sb;
-		ap++;
-		INC_CHKCURSOR(sb);
-		got_one = 1;
-		goto S3;
-	}
-
-OUT:
-	if (got_one)
-		*ap++ = '\0';
-	argbase = ap;			/* update storage pointer */
-	stringbase = sb;		/* update scan pointer */
-	if (got_one) {
-		return (tmp);
-	}
-	switch (slrflag) {
-		case 0:
-			slrflag++;
-			break;
-		case 1:
-			slrflag++;
-#ifdef NEED_ALTARG
-			altarg = NULL;
-#endif
-			break;
-		default:
-			break;
-	}
-	return (NULL);
-}
-
-
-/*
- * Slice a string up into argc/argv.
- */
-static void
-makeargv(char *line)
-{
-	static char argbuf[ LINESIZE ];	/* argument storage buffer */
-	char *argp;
-
-	stringbase = line;		/* scan from first of buffer */
-	argbase = argbuf;		/* store from first of buffer */
-	slrflag = 0;
-	marg_sl->sl_cur = 0;		/* reset to start of marg_sl */
-	for (margc = 0; /* EMPTY */; margc++) {
-		argp = slurpstring();
-		mail_sl_add(marg_sl, argp);
-		if (argp == NULL)
-			break;
-	}
-#ifndef NO_EDITCOMPLETE
-	if (cursor_pos == line) {
-		cursor_argc = 0;
-		cursor_argo = 0;
-	} else if (cursor_pos != NULL) {
-		cursor_argc = margc;
-		cursor_argo = strlen(margv[margc-1]);
-	}
-#endif /* !NO_EDITCOMPLETE */
-}
+#endif /* THREAD_SUPPORT */
 
 /* from /usr/src/usr.bin/ftp/main.c(1.101) - end */
 /************************************************************************/
@@ -911,15 +751,15 @@ is_emacs_mode(EditLine *el)
 }
 
 static int
-emacs_ctrl_d(EditLine *el, const LineInfo *lf, int ch, size_t len)
+emacs_ctrl_d(EditLine *el, const LineInfo *lf, int ch)
 {
 	static char delunder[3] = { CTRL('f'), CTRL('h'), '\0' };
 	if (ch == CTRL('d') && is_emacs_mode(el)) {	/* CTRL-D is special */
-		if (len == 0) 
-			return (CC_EOF);
-		if (lf->lastchar != lf->cursor) { /* delete without using ^D */
+		if (lf->buffer == lf->lastchar) 
+			return CC_EOF;
+		if (lf->cursor != lf->lastchar) { /* delete without using ^D */
 			el_push(el, delunder); /* ^F^H */
-			return (CC_NORM);
+			return CC_NORM;
 		}
 	}
 	return -1;
@@ -927,141 +767,254 @@ emacs_ctrl_d(EditLine *el, const LineInfo *lf, int ch, size_t len)
 #endif /* EMACS_CTRL_D_BINDING_HACK */
 
 /*
- * Generic complete routine
+ * Check if this is the second request made for this line indicating
+ * the need to list all the completion possibilities.
+ */
+static int
+get_dolist(const LineInfo *lf)
+{
+	static char last_line[LINESIZE];
+	static char *last_cursor_pos;
+	char *cursor_pos;
+	int dolist;
+	size_t len;
+
+	len = lf->lastchar - lf->buffer;
+	if (len >= sizeof(last_line) - 1)
+		return -1;
+
+	cursor_pos = last_line + (lf->cursor - lf->buffer);
+	dolist =
+	    cursor_pos == last_cursor_pos &&
+	    strncmp(last_line, lf->buffer, len) == 0;
+
+	(void)strlcpy(last_line, lf->buffer, len + 1);
+	last_cursor_pos = cursor_pos;
+
+	return dolist;
+}
+
+/*
+ * Take the full line (lf) including the command and split it into a
+ * sub-line (returned) and a completion context (cmplarray).
+ */
+static LineInfo *
+split_line(const char **cmplarray, const LineInfo *lf)
+{
+	static LineInfo li;
+	const struct cmd *c;
+	char *cmdname;
+	char line[LINESIZE];
+	char *cp;
+	size_t len;
+
+	len = lf->cursor - lf->buffer;
+	if (len + 1 > sizeof(line))
+		return NULL;
+
+	(void)strlcpy(line, lf->buffer, len + 1);
+
+	li.cursor   = line + len;
+	li.lastchar = line + len;
+	
+	cp = skip_blank(line);
+	cmdname = get_cmdname(cp);
+	cp += strlen(cmdname);
+
+	if (cp == li.cursor) {
+		*cmplarray = "c";
+		li.buffer = cmdname;
+		return &li;
+	}
+
+	c = lex(cmdname);
+	if (c == NULL)
+		return NULL;
+	
+	*cmplarray = c->c_complete;
+	if (c->c_pipe) {
+		char *cp2;
+		if ((cp2 = shellpr(cp)) != NULL) {
+			cp = cp2;
+# define XX(a)  a + (a[1] == '>' ? 2 : 1)
+			while ((cp2 = shellpr(XX(cp))) != NULL)
+				cp = cp2;
+			
+			if (*cp == '|') {
+				*cmplarray = "xF";
+				cp = skip_blank(cp + 1);
+			}
+			else {
+				assert(*cp == '>');
+				cp = skip_blank(XX(cp));
+				*cmplarray = "f";
+			}
+# undef XX
+		}
+	}
+	li.buffer = cp;
+	return &li;
+}
+
+/*
+ * Split a sub-line and a completion context into a word and a
+ * completion type.  Use the editline tokenizer to handle the quoting
+ * and splitting.
+ */
+static char *
+split_word(int *cmpltype, const char *cmplarray, LineInfo *li)
+{
+	static Tokenizer *t = NULL;
+	const char **argv;
+	char *word;
+	int argc;
+	int cursorc;
+	int cursoro;
+	int arraylen;
+
+	if (t != NULL)
+		tok_reset(t);
+	else {
+		if ((t = tok_init(NULL)) == NULL)
+			err(EXIT_FAILURE, "tok_init");
+	}
+	if (tok_line(t, li, &argc, &argv, &cursorc, &cursoro) == -1)
+		err(EXIT_FAILURE, "tok_line");
+	
+	if (cursorc >= argc)
+		word = __UNCONST("");
+	else {
+		word = salloc((size_t)cursoro + 1);
+		(void)strlcpy(word, argv[cursorc], (size_t)cursoro + 1);
+	}
+
+	/* check for 'continuation' completes (which are uppercase) */
+	arraylen = strlen(cmplarray);
+	if (cursorc >= arraylen &&
+	    arraylen > 0 &&
+	    isupper((unsigned char)cmplarray[arraylen - 1]))
+		cursorc = arraylen - 1;
+	
+	if (cursorc >= arraylen)
+		return NULL;
+	
+	*cmpltype = cmplarray[cursorc];
+	return word;
+}
+
+/*
+ * A generic complete routine for the mail command line.
  */
 static unsigned char
 mail_complete(EditLine *el, int ch)
 {
-	static char line[LINESIZE];	/* input line buffer */
-	static char word[LINESIZE];
-	static int lastc_argc, lastc_argo;
-
-	const struct cmd *c;
+	LineInfo *li;
 	const LineInfo *lf;
-	int celems, dolist, cmpltype;
-	size_t len;
+	const char *cmplarray;
+	int dolist;
+	int cmpltype;
+	char *word;
 
 	lf = el_line(el);
-	len = lf->lastchar - lf->buffer;
 
 #ifdef EMACS_CTRL_D_BINDING_HACK
 	{
 		int cc_ret;
-		if ((cc_ret = emacs_ctrl_d(el, lf, ch, len)) != -1)
+		if ((cc_ret = emacs_ctrl_d(el, lf, ch)) != -1)
 			return cc_ret;
 	}
 #endif /* EMACS_CTRL_D_BINDING_HACK */
 
-	if (len >= sizeof(line) - 1)
-		return (CC_ERROR);
+	if ((dolist = get_dolist(lf)) == -1)
+		return CC_ERROR;
 
-	(void)strlcpy(line, lf->buffer, len + 1); /* do not use estrlcpy here! */
-	cursor_pos = line + (lf->cursor - lf->buffer);
-	lastc_argc = cursor_argc;	/* remember last cursor pos */
-	lastc_argo = cursor_argo;
-	makeargv(line);			/* build argc/argv of current line */
+	if ((li = split_line(&cmplarray, lf)) == NULL)
+		return CC_ERROR;
 
-	if (cursor_argo >= sizeof(word) - 1)
-		return (CC_ERROR);
+	if ((word = split_word(&cmpltype, cmplarray, li)) == NULL)
+		return CC_ERROR;
 
-	dolist = 0;
-	/* if cursor and word are the same, list alternatives */
-	if (lastc_argc == cursor_argc && lastc_argo == cursor_argo
-	    && strncmp(word, margv[cursor_argc] ? margv[cursor_argc] : "",
-		(size_t)cursor_argo) == 0)
-		dolist = 1;
-	else if (cursor_argc < margc)
-		(void)strlcpy(word, margv[cursor_argc], (size_t)cursor_argo + 1); /* do not use estrlcpy() here */
-	word[cursor_argo] = '\0';
-
-	if (cursor_argc == 0)
-		return (complete_command(el, word, dolist));
-
-	c = getcmd(margv[0]);
-	if (c == NULL)
-		return (CC_ERROR);
-	celems = strlen(c->c_complete);
-
-		/* check for 'continuation' completes (which are uppercase) */
-	if ((cursor_argc > celems) && (celems > 0)
-	    && isupper((unsigned char) c->c_complete[celems-1]))
-		cursor_argc = celems;
-
-	if (cursor_argc > celems)
-		return (CC_ERROR);
-
-	cmpltype = c->c_complete[cursor_argc - 1];
 	switch (cmpltype) {
-		case 'a':			/* alias complete */
-		case 'A':
-			return (complete_alias(el, word, dolist));
-
-		case 'c':			/* command complete */
-		case 'C':
-			return (complete_command(el, word, dolist));
-
-		case 'f':			/* filename complete */
-		case 'F':
-			return (complete_filename(el, word, dolist));
-#ifdef SMOPTS_CMD
-		case 'm':
-		case 'M':
-			return (complete_smopts(el, word, dolist));
+	case 'a':			/* alias complete */
+	case 'A':
+		return complete_alias(el, word, dolist);
+			
+	case 'c':			/* command complete */
+	case 'C':
+		return complete_command(el, word, dolist);
+		
+	case 'f':			/* filename complete */
+	case 'F':
+		return complete_filename(el, word, dolist);
+		
+	case 'm':
+	case 'M':
+		return complete_smopts(el, word, dolist);
+		
+	case 'n':			/* no complete */
+	case 'N':			/* no complete */
+		return CC_ERROR;
+		
+	case 's':
+	case 'S':
+		return complete_set(el, word, dolist);
+#ifdef THREAD_SUPPORT
+	case 't':
+	case 'T':
+		return complete_thread_key(el, word, dolist);
 #endif
-		case 'n':			/* no complete */
-		case 'N':			/* no complete */
-			return (CC_ERROR);
-
-		case 's':
-		case 'S':
-			return (complete_set(el, word, dolist));
-
 		case 'x':			/* executable complete */
-		case 'X':
-			return (complete_executable(el, word, dolist));
-
-		default:
-			errx(1, "unknown complete type `%c'", cmpltype);
-			return (CC_ERROR);
+	case 'X':
+		return complete_executable(el, word, dolist);
+		
+	default:
+		warnx("unknown complete type `%c'", cmpltype);
+#if 0
+		assert(/*CONSTCOND*/0);
+#endif
+		return CC_ERROR;
 	}
 	/* NOTREACHED */
 }
 
 
 /*
- * Generic file completion routine
+ * A generic file completion routine.
  */
 static unsigned char
 file_complete(EditLine *el, int ch)
 {
 	static char word[LINESIZE];
-
 	const LineInfo *lf;
-	size_t len, word_len;
+	size_t word_len;
+	int dolist;
 
 	lf = el_line(el);
-	len = lf->lastchar - lf->buffer;
 
 #ifdef EMACS_CTRL_D_BINDING_HACK
 	{
 		int cc_ret;
-		if ((cc_ret = emacs_ctrl_d(el, lf, ch, len)) != -1)
+		if ((cc_ret = emacs_ctrl_d(el, lf, ch)) != -1)
 			return cc_ret;
 	}
 #endif /* EMACS_CTRL_D_BINDING_HACK */
 
-	if (len >= sizeof(word) - 1)
-		return (CC_ERROR);
-
 	word_len = lf->cursor - lf->buffer;
+	if (word_len + 1 > sizeof(word))
+		return CC_ERROR;
+
 	(void)strlcpy(word, lf->buffer, word_len + 1);	/* do not use estrlcpy here! */
-	return complete_filename(el, word, len != word_len);
+
+	if ((dolist = get_dolist(lf)) == -1)
+		return CC_ERROR;
+
+	return complete_filename(el, word, dolist);
 }
 
 
 #ifdef MIME_SUPPORT
 /*
- * Complete mime_transfer_encoding type
+ * Complete mime_transfer_encoding type.
  */
 static unsigned char
 mime_enc_complete(EditLine *el, int ch)
@@ -1070,24 +1023,24 @@ mime_enc_complete(EditLine *el, int ch)
 	StringList *words;
 	unsigned char rv;
 	const LineInfo *lf;
-	size_t len, word_len;
+	size_t word_len;
+	int dolist;
 
 	lf = el_line(el);
-	len = lf->lastchar - lf->buffer;
 
 #ifdef EMACS_CTRL_D_BINDING_HACK
 	{
 		int cc_ret;
-		if ((cc_ret = emacs_ctrl_d(el, lf, ch, len)) != -1)
+		if ((cc_ret = emacs_ctrl_d(el, lf, ch)) != -1)
 			return cc_ret;
 	}
 #endif /* EMACS_CTRL_D_BINDING_HACK */
 
-	if (len >= sizeof(word) - 1)
-		return (CC_ERROR);
+	word_len = lf->cursor - lf->buffer;
+	if (word_len >= sizeof(word) - 1)
+		return CC_ERROR;
 
 	words = mail_sl_init();
-	word_len = lf->cursor - lf->buffer;
 	{
 		const char *ename;
 		const void *cookie;
@@ -1102,14 +1055,18 @@ mime_enc_complete(EditLine *el, int ch)
 				mail_sl_add(words, cp);
 			}
 	}
-	(void)strlcpy(word, lf->buffer, word_len + 1);	/* do not use estrlcpy here */
+	(void)strlcpy(word, lf->buffer, word_len + 1);
 
-	rv = complete_ambiguous(el, word, len != word_len, words);
+	if ((dolist = get_dolist(lf)) == -1)
+		return CC_ERROR;
+
+	rv = complete_ambiguous(el, word, dolist, words);
 
 	sl_free(words, 1);
-	return (rv);
+	return rv;
 }
 #endif /* MIME_SUPPORT */
+
 
 /*************************************************************************
  * Our public interface to el_gets():
@@ -1120,6 +1077,10 @@ mime_enc_complete(EditLine *el, int ch)
  * my_gets()
  *    Returns the next line of input as a NULL termnated string without
  *    the trailing newline.
+ *
+ * my_getline()
+ *    Same as my_gets(), but strips leading and trailing whitespace
+ *    and returns an empty line if it gets a SIGINT.
  */
 
 static const char *el_prompt;
@@ -1131,7 +1092,7 @@ show_prompt(EditLine *e __unused)
 	return el_prompt;
 }
 
-char *
+PUBLIC char *
 my_gets(el_mode_t *em, const char *prompt, char *string)
 {
 	int cnt;
@@ -1153,7 +1114,8 @@ my_gets(el_mode_t *em, const char *prompt, char *string)
 		return NULL;
 	}
 
-	cnt--;	/* trash the trailing LF */
+	if (buf[cnt - 1] == '\n')
+		cnt--;	/* trash the trailing LF */
 	len = MIN(sizeof(line) - 1, cnt);
 	(void)memcpy(line, buf, len);
 	line[cnt] = '\0';
@@ -1161,12 +1123,55 @@ my_gets(el_mode_t *em, const char *prompt, char *string)
 	/* enter non-empty lines into history */
 	if (em->hist) {
 		const char *p;
-		p = skip_white(line);
+		p = skip_blank(line);
 		if (*p && history(em->hist, &ev, H_ENTER, line) == 0)
 			(void)printf("Failed history entry: %s", line);
 	}
 	return line;
 }
+
+#ifdef MIME_SUPPORT
+/* XXX - do we really want this here? */
+
+static jmp_buf intjmp;
+/*ARGSUSED*/
+static void
+sigint(int signum __unused)
+{
+	siglongjmp(intjmp, 1);
+}
+
+PUBLIC char *
+my_getline(el_mode_t *em, const char *prompt, const char *str)
+{
+	sig_t saveint;
+	char *cp;
+	char *line;
+
+	saveint = signal(SIGINT, sigint);
+	if (sigsetjmp(intjmp, 1)) {
+		(void)signal(SIGINT, saveint);
+		(void)putc('\n', stdout);
+		return __UNCONST("");
+	}
+
+	line = my_gets(em, prompt, __UNCONST(str));
+	/* LINTED */
+	line = line ? savestr(line) : __UNCONST("");
+
+	(void)signal(SIGINT, saveint);
+
+	/* strip trailing white space */
+	for (cp = line + strlen(line) - 1;
+	     cp >= line && isblank((unsigned char)*cp); cp--)
+		*cp = '\0';
+
+	/* skip leading white space */
+	cp = skip_blank(line);
+
+	return cp;
+}
+#endif /* MIME_SUPPORT */
 
 static el_mode_t
 init_el_mode(
@@ -1218,7 +1223,7 @@ struct el_modes_s elm = {
 #endif
 };
 
-void
+PUBLIC void
 init_editline(void)
 {
 	const char *mode;
@@ -1240,8 +1245,6 @@ init_editline(void)
 #ifdef MIME_SUPPORT
 	elm.mime_enc = init_el_mode(mode, mime_enc_complete, keys, 0);
 #endif
-	init_complete();
-
 	return;
 }
 

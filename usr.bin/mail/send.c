@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.27 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.28 2006/11/28 18:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.27 2006/10/31 20:07:32 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.28 2006/11/28 18:45:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,9 +44,16 @@ __RCSID("$NetBSD: send.c,v 1.27 2006/10/31 20:07:32 christos Exp $");
 #include "mime.h"
 #endif
 
-#ifdef SMOPTS_CMD
-#include <db.h>
 
+/*
+ * Mail -- a mail program
+ *
+ * Mail to others.
+ */
+
+/*
+ * compare twwo name structures.  Support for get_smopts.
+ */
 static int
 namecmp(struct name *np1, struct name *np2)
 {
@@ -57,6 +64,9 @@ namecmp(struct name *np1, struct name *np2)
 	return np1 || np2;
 }
 
+/*
+ * Get the sendmail options from the smopts list.
+ */
 static struct name *
 get_smopts(struct name *to)
 {
@@ -77,13 +87,25 @@ get_smopts(struct name *to)
 		return NULL;
 	return smargs;
 }
-#endif /* SMOPTS_CMD */
 
 /*
- * Mail -- a mail program
- *
- * Mail to others.
+ * Output a reasonable looking status field.
  */
+static void
+statusput(struct message *mp, FILE *obuf, const char *prefix)
+{
+	char statout[3];
+	char *cp = statout;
+
+	if (mp->m_flag & MREAD)
+		*cp++ = 'R';
+	if ((mp->m_flag & MNEW) == 0)
+		*cp++ = 'O';
+	*cp = 0;
+	if (statout[0])
+		(void)fprintf(obuf, "%sStatus: %s\n",
+			prefix == NULL ? "" : prefix, statout);
+}
 
 /*
  * Send message described by the passed pointer to the
@@ -92,23 +114,22 @@ get_smopts(struct name *to)
  * If doign is given, suppress ignored header fields.
  * prefix is a string to prepend to each output line.
  */
-int
-#ifdef MIME_SUPPORT
+PUBLIC int
 sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
     const char *prefix, struct mime_info *mip)
-#else
-sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
-    const char *prefix)
-#endif /* MIME_SUPPORT */
 {
 	off_t len;
 	FILE *ibuf;
 	char line[LINESIZE];
-	int isheadflag, infld, ignoring = 0, dostat, firstline;
+	int isheadflag, infld, ignoring, dostat, firstline;
 	char *cp, *cp2;
-	int c = 0;
+	int c;	/* XXX - this variable is horribly abused */
 	size_t length;
-	size_t prefixlen = 0;
+	size_t prefixlen;
+
+	c = 0;
+	ignoring = 0;
+	prefixlen = 0;
 
 	/*
 	 * Compute the prefix string, without trailing whitespace
@@ -173,11 +194,11 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			/*
 			 * Pick up the header field if we have one.
 			 */
-			for (cp = line; (c = *cp++) && c != ':' && !isspace(c);)
-				;
+			for (cp = line; (c = *cp++) && c != ':' && !isspace(c); /*EMPTY*/)
+				continue;
 			cp2 = --cp;
 			while (isspace((unsigned char)*cp++))
-				;
+				continue;
 			if (cp[-1] != ':') {
 				/*
 				 * Not a header line, force out status:
@@ -246,8 +267,10 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			return 0;
 	}
 #endif
+	c = 0;	/* This is needed if len == 0.  It's used differently above. */
 	if (doign == ignoreall)
 		len--;		/* skip final blank line */
+
 	if (prefix != NULL)
 		while (len > 0) {
 			if (fgets(line, LINESIZE, ibuf) == NULL) {
@@ -271,10 +294,10 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	else
 		while (len > 0) {
 			c = (int)(len < LINESIZE ? len : LINESIZE);
-			if ((c = fread(line, sizeof *line, (size_t)c, ibuf)) <= 0)
+			if ((c = fread(line, sizeof *line, (size_t)c, ibuf)) == 0)
 				break;
 			len -= c;
-			if (fwrite(line, sizeof *line, (size_t)c, obuf) != c)
+			if (fwrite(line, sizeof *line, (size_t)c, obuf) != (size_t)c)
 				return -1;
 		}
 	if (doign == ignoreall && c > 0 && line[c - 1] != '\n')
@@ -285,80 +308,190 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 }
 
 /*
- * Output a reasonable looking status field.
+ * Fix the header by glopping all of the expanded names from
+ * the distribution list into the appropriate fields.
  */
-void
-statusput(struct message *mp, FILE *obuf, const char *prefix)
+static void
+fixhead(struct header *hp, struct name *tolist)
 {
-	char statout[3];
-	char *cp = statout;
+	struct name *np;
 
-	if (mp->m_flag & MREAD)
-		*cp++ = 'R';
-	if ((mp->m_flag & MNEW) == 0)
-		*cp++ = 'O';
-	*cp = 0;
-	if (statout[0])
-		(void)fprintf(obuf, "%sStatus: %s\n",
-			prefix == NULL ? "" : prefix, statout);
+	hp->h_to = NULL;
+	hp->h_cc = NULL;
+	hp->h_bcc = NULL;
+	for (np = tolist; np != NULL; np = np->n_flink) {
+		if (np->n_type & GDEL)
+			continue;	/* Don't copy deleted addresses to the header */
+		if ((np->n_type & GMASK) == GTO)
+			hp->h_to =
+				cat(hp->h_to, nalloc(np->n_name, np->n_type));
+		else if ((np->n_type & GMASK) == GCC)
+			hp->h_cc =
+				cat(hp->h_cc, nalloc(np->n_name, np->n_type));
+		else if ((np->n_type & GMASK) == GBCC)
+			hp->h_bcc =
+				cat(hp->h_bcc, nalloc(np->n_name, np->n_type));
+	}
 }
 
 /*
- * Interface between the argument list and the mail1 routine
- * which does all the dirty work.
+ * Format the given header line to not exceed 72 characters.
  */
+static void
+fmt(const char *str, struct name *np, FILE *fo, int comma)
+{
+	int col, len;
+
+	comma = comma ? 1 : 0;
+	col = strlen(str);
+	if (col)
+		(void)fputs(str, fo);
+	for (; np != NULL; np = np->n_flink) {
+		if (np->n_flink == NULL)
+			comma = 0;
+		len = strlen(np->n_name);
+		col++;		/* for the space */
+		if (col + len + comma > 72 && col > 4) {
+			(void)fputs("\n    ", fo);
+			col = 4;
+		} else
+			(void)putc(' ', fo);
+		(void)fputs(np->n_name, fo);
+		if (comma)
+			(void)putc(',', fo);
+		col += len + comma;
+	}
+	(void)putc('\n', fo);
+}
+
+/*
+ * Dump the to, subject, cc header on the
+ * passed file buffer.
+ */
+PUBLIC int
+puthead(struct header *hp, FILE *fo, int w)
+{
+	int gotcha;
+
+	gotcha = 0;
+	if (hp->h_to != NULL && w & GTO)
+		fmt("To:", hp->h_to, fo, w&GCOMMA), gotcha++;
+	if (hp->h_subject != NULL && w & GSUBJECT)
+		(void)fprintf(fo, "Subject: %s\n", hp->h_subject), gotcha++;
+	if (hp->h_smopts != NULL && w & GSMOPTS)
+		(void)fprintf(fo, "(sendmail options: %s)\n", detract(hp->h_smopts, GSMOPTS)), gotcha++;
+	if (hp->h_cc != NULL && w & GCC)
+		fmt("Cc:", hp->h_cc, fo, w&GCOMMA), gotcha++;
+	if (hp->h_bcc != NULL && w & GBCC)
+		fmt("Bcc:", hp->h_bcc, fo, w&GCOMMA), gotcha++;
+	if (hp->h_in_reply_to != NULL && w & GMISC)
+		(void)fprintf(fo, "In-Reply-To: %s\n", hp->h_in_reply_to), gotcha++;
+	if (hp->h_references != NULL && w & GMISC)
+		fmt("References:", hp->h_references, fo, w&GCOMMA), gotcha++;
 #ifdef MIME_SUPPORT
-int
-mail(struct name *to, struct name *cc, struct name *bcc,
-     struct name *smopts, char *subject, struct attachment *attach)
+	if (w & GMIME && (hp->h_attach || value(ENAME_MIME_ENCODE_MSG)))
+		mime_putheader(fo, hp), gotcha++;
+#endif
+	if (gotcha && w & GNL)
+		(void)putc('\n', fo);
+	return 0;
+}
+
+/*
+ * Prepend a header in front of the collected stuff
+ * and return the new file.
+ */
+static FILE *
+infix(struct header *hp, FILE *fi)
+{
+	FILE *nfo, *nfi;
+	int c, fd;
+	char tempname[PATHSIZE];
+
+	(void)snprintf(tempname, sizeof(tempname),
+	    "%s/mail.RsXXXXXXXXXX", tmpdir);
+	if ((fd = mkstemp(tempname)) == -1 ||
+	    (nfo = Fdopen(fd, "w")) == NULL) {
+		if (fd != -1)
+			(void)close(fd);
+		warn("%s", tempname);
+		return fi;
+	}
+	if ((nfi = Fopen(tempname, "r")) == NULL) {
+		warn("%s", tempname);
+		(void)Fclose(nfo);
+		(void)rm(tempname);
+		return fi;
+	}
+	(void)rm(tempname);
+#ifdef MIME_SUPPORT
+	(void)puthead(hp, nfo, GTO|GSUBJECT|GCC|GBCC|GMISC|GMIME|GNL|GCOMMA);
 #else
-int
-mail(struct name *to, struct name *cc, struct name *bcc,
-     struct name *smopts, char *subject)
+	(void)puthead(hp, nfo, GTO|GSUBJECT|GCC|GBCC|GMISC|GNL|GCOMMA);
 #endif
-{
-	struct header head;
 
-	head.h_to = to;
-	head.h_subject = subject;
-	head.h_cc = cc;
-	head.h_bcc = bcc;
-	head.h_smopts = smopts;
-#ifdef MIME_SUPPORT
-	head.h_attach = attach;
-#endif
-	mail1(&head, 0);
-	return(0);
+	c = getc(fi);
+	while (c != EOF) {
+		(void)putc(c, nfo);
+		c = getc(fi);
+	}
+	if (ferror(fi)) {
+		warn("read");
+		rewind(fi);
+		return fi;
+	}
+	(void)fflush(nfo);
+	if (ferror(nfo)) {
+		warn("%s", tempname);
+		(void)Fclose(nfo);
+		(void)Fclose(nfi);
+		rewind(fi);
+		return fi;
+	}
+	(void)Fclose(nfo);
+	(void)Fclose(fi);
+	rewind(nfi);
+	return nfi;
 }
 
-
 /*
- * Send mail to a bunch of user names.  The interface is through
- * the mail routine below.
+ * Save the outgoing mail on the passed file.
  */
-int
-sendmail(void *v)
+/*ARGSUSED*/
+static int
+savemail(const char name[], FILE *fi)
 {
-	char *str = v;
-	struct header head;
+	FILE *fo;
+	char buf[LINESIZE];
+	int i;
+	time_t now;
+	mode_t m;
 
-	head.h_to = extract(str, GTO);
-	head.h_subject = NULL;
-	head.h_cc = NULL;
-	head.h_bcc = NULL;
-	head.h_smopts = NULL;
-#ifdef MIME_SUPPORT
-	head.h_attach = NULL;
-#endif
-	mail1(&head, 0);
-	return(0);
+	m = umask(077);
+	fo = Fopen(name, "a");
+	(void)umask(m);
+	if (fo == NULL) {
+		warn("%s", name);
+		return -1;
+	}
+	(void)time(&now);
+	(void)fprintf(fo, "From %s %s", myname, ctime(&now));
+	while ((i = fread(buf, 1, sizeof buf, fi)) > 0)
+		(void)fwrite(buf, 1, (size_t)i, fo);
+	(void)putc('\n', fo);
+	(void)fflush(fo);
+	if (ferror(fo))
+		warn("%s", name);
+	(void)Fclose(fo);
+	rewind(fi);
+	return 0;
 }
 
 /*
  * Mail a message on standard input to the people indicated
  * in the passed header.  (Internal interface).
  */
-void
+PUBLIC void
 mail1(struct header *hp, int printheaders)
 {
 	const char *cp;
@@ -373,11 +506,11 @@ mail1(struct header *hp, int printheaders)
 	 */
 	if ((mtf = collect(hp, printheaders)) == NULL)
 		return;
-	if (value("interactive") != NULL) {
-		if (value("askcc") != NULL || value("askbcc") != NULL) {
-			if (value("askcc") != NULL)
+	if (value(ENAME_INTERACTIVE) != NULL) {
+		if (value(ENAME_ASKCC) != NULL || value(ENAME_ASKBCC) != NULL) {
+			if (value(ENAME_ASKCC) != NULL)
 				(void)grabh(hp, GCC);
-			if (value("askbcc") != NULL)
+			if (value(ENAME_ASKBCC) != NULL)
 				(void)grabh(hp, GBCC);
 		} else {
 			(void)printf("EOT\n");
@@ -385,7 +518,7 @@ mail1(struct header *hp, int printheaders)
 		}
 	}
 	if (fsize(mtf) == 0) {
-		if (value("dontsendempty") != NULL)
+		if (value(ENAME_DONTSENDEMPTY) != NULL)
 			goto out;
 		if (hp->h_subject == NULL)
 			(void)printf("No message, no subject; hope that's ok\n");
@@ -426,7 +559,6 @@ mail1(struct header *hp, int printheaders)
 		(void)fprintf(stderr, ". . . message lost, sorry.\n");
 		return;
 	}
-#ifdef SMOPTS_CMD
 	if (hp->h_smopts == NULL) {
 		hp->h_smopts = get_smopts(to);
 		if (hp->h_smopts != NULL &&
@@ -438,15 +570,6 @@ mail1(struct header *hp, int printheaders)
 				goto out;
 			}
 	}
-#if 0	/* XXX - for debugging - remove me!!!! */
-	printf("to: '%s'  flink: %p\n", to->n_name, to->n_flink);
-	void showname(struct name *);
-	printf("smopts:\n");
-	void showname(struct name *);
-	showname(hp->h_smopts);
-	exit(0);
-#endif
-#endif
 	namelist = unpack(cat(hp->h_smopts, to));
 	if (debug) {
 		const char **t;
@@ -480,7 +603,7 @@ mail1(struct header *hp, int printheaders)
 		(void)sigaddset(&nset, SIGTTIN);
 		(void)sigaddset(&nset, SIGTTOU);
 		prepare_child(&nset, fileno(mtf), -1);
-		if ((cp = value("sendmail")) != NULL)
+		if ((cp = value(ENAME_SENDMAIL)) != NULL)
 			cp = expand(cp);
 		else
 			cp = _PATH_SENDMAIL;
@@ -488,7 +611,7 @@ mail1(struct header *hp, int printheaders)
 		warn("%s", cp);
 		_exit(1);
 	}
-	if (value("verbose") != NULL)
+	if (value(ENAME_VERBOSE) != NULL)
 		(void)wait_child(pid);
 	else
 		free_child(pid);
@@ -497,178 +620,45 @@ out:
 }
 
 /*
- * Fix the header by glopping all of the expanded names from
- * the distribution list into the appropriate fields.
+ * Interface between the argument list and the mail1 routine
+ * which does all the dirty work.
  */
-void
-fixhead(struct header *hp, struct name *tolist)
+PUBLIC int
+mail(struct name *to, struct name *cc, struct name *bcc,
+     struct name *smopts, char *subject, struct attachment *attach)
 {
-	struct name *np;
+	struct header head;
 
-	hp->h_to = NULL;
-	hp->h_cc = NULL;
-	hp->h_bcc = NULL;
-	for (np = tolist; np != NULL; np = np->n_flink) {
-		if (np->n_type & GDEL)
-			continue;	/* Don't copy deleted addresses to the header */
-		if ((np->n_type & GMASK) == GTO)
-			hp->h_to =
-				cat(hp->h_to, nalloc(np->n_name, np->n_type));
-		else if ((np->n_type & GMASK) == GCC)
-			hp->h_cc =
-				cat(hp->h_cc, nalloc(np->n_name, np->n_type));
-		else if ((np->n_type & GMASK) == GBCC)
-			hp->h_bcc =
-				cat(hp->h_bcc, nalloc(np->n_name, np->n_type));
-	}
-}
+	/* ensure that all header fields are initially NULL */
+	(void)memset(&head, 0, sizeof(head));
 
-/*
- * Prepend a header in front of the collected stuff
- * and return the new file.
- */
-FILE *
-infix(struct header *hp, FILE *fi)
-{
-	FILE *nfo, *nfi;
-	int c, fd;
-	char tempname[PATHSIZE];
-
-	(void)snprintf(tempname, sizeof(tempname),
-	    "%s/mail.RsXXXXXXXXXX", tmpdir);
-	if ((fd = mkstemp(tempname)) == -1 ||
-	    (nfo = Fdopen(fd, "w")) == NULL) {
-		if (fd != -1)
-			(void)close(fd);
-		warn("%s", tempname);
-		return(fi);
-	}
-	if ((nfi = Fopen(tempname, "r")) == NULL) {
-		warn("%s", tempname);
-		(void)Fclose(nfo);
-		(void)rm(tempname);
-		return(fi);
-	}
-	(void)rm(tempname);
+	head.h_to = to;
+	head.h_subject = subject;
+	head.h_cc = cc;
+	head.h_bcc = bcc;
+	head.h_smopts = smopts;
 #ifdef MIME_SUPPORT
-	(void)puthead(hp, nfo, GTO|GSUBJECT|GCC|GBCC|GMIME|GNL|GCOMMA);
-#else
-	(void)puthead(hp, nfo, GTO|GSUBJECT|GCC|GBCC|GNL|GCOMMA);
+	head.h_attach = attach;
 #endif
-
-	c = getc(fi);
-	while (c != EOF) {
-		(void)putc(c, nfo);
-		c = getc(fi);
-	}
-	if (ferror(fi)) {
-		warn("read");
-		rewind(fi);
-		return(fi);
-	}
-	(void)fflush(nfo);
-	if (ferror(nfo)) {
-		warn("%s", tempname);
-		(void)Fclose(nfo);
-		(void)Fclose(nfi);
-		rewind(fi);
-		return(fi);
-	}
-	(void)Fclose(nfo);
-	(void)Fclose(fi);
-	rewind(nfi);
-	return(nfi);
+	mail1(&head, 0);
+	return 0;
 }
 
 /*
- * Dump the to, subject, cc header on the
- * passed file buffer.
+ * Send mail to a bunch of user names.  The interface is through
+ * the mail1 routine below.
  */
-int
-puthead(struct header *hp, FILE *fo, int w)
+PUBLIC int
+sendmail(void *v)
 {
-	int gotcha;
+	char *str = v;
+	struct header head;
 
-	gotcha = 0;
-	if (hp->h_to != NULL && w & GTO)
-		fmt("To:", hp->h_to, fo, w&GCOMMA), gotcha++;
-	if (hp->h_subject != NULL && w & GSUBJECT)
-		(void)fprintf(fo, "Subject: %s\n", hp->h_subject), gotcha++;
-	if (hp->h_smopts != NULL && w & GSMOPTS)
-		(void)fprintf(fo, "(sendmail options: %s)\n", detract(hp->h_smopts, GSMOPTS)), gotcha++;
-	if (hp->h_cc != NULL && w & GCC)
-		fmt("Cc:", hp->h_cc, fo, w&GCOMMA), gotcha++;
-	if (hp->h_bcc != NULL && w & GBCC)
-		fmt("Bcc:", hp->h_bcc, fo, w&GCOMMA), gotcha++;
-#ifdef MIME_SUPPORT
-	if (w & GMIME && (hp->h_attach || value(ENAME_MIME_ENCODE_MSG)))
-		mime_putheader(fo, hp), gotcha++;
-#endif
-	if (gotcha && w & GNL)
-		(void)putc('\n', fo);
-	return(0);
-}
+	/* ensure that all header fields are initially NULL */
+	(void)memset(&head, 0, sizeof(head));
 
-/*
- * Format the given header line to not exceed 72 characters.
- */
-void
-fmt(const char *str, struct name *np, FILE *fo, int comma)
-{
-	int col, len;
+	head.h_to = extract(str, GTO);
 
-	comma = comma ? 1 : 0;
-	col = strlen(str);
-	if (col)
-		(void)fputs(str, fo);
-	for (; np != NULL; np = np->n_flink) {
-		if (np->n_flink == NULL)
-			comma = 0;
-		len = strlen(np->n_name);
-		col++;		/* for the space */
-		if (col + len + comma > 72 && col > 4) {
-			(void)fputs("\n    ", fo);
-			col = 4;
-		} else
-			(void)putc(' ', fo);
-		(void)fputs(np->n_name, fo);
-		if (comma)
-			(void)putc(',', fo);
-		col += len + comma;
-	}
-	(void)putc('\n', fo);
-}
-
-/*
- * Save the outgoing mail on the passed file.
- */
-
-/*ARGSUSED*/
-int
-savemail(const char name[], FILE *fi)
-{
-	FILE *fo;
-	char buf[BUFSIZ];
-	int i;
-	time_t now;
-	mode_t m;
-
-	m = umask(077);
-	fo = Fopen(name, "a");
-	(void)umask(m);
-	if (fo == NULL) {
-		warn("%s", name);
-		return (-1);
-	}
-	(void)time(&now);
-	(void)fprintf(fo, "From %s %s", myname, ctime(&now));
-	while ((i = fread(buf, 1, sizeof buf, fi)) > 0)
-		(void)fwrite(buf, 1, (size_t)i, fo);
-	(void)putc('\n', fo);
-	(void)fflush(fo);
-	if (ferror(fo))
-		warn("%s", name);
-	(void)Fclose(fo);
-	rewind(fi);
-	return (0);
+	mail1(&head, 0);
+	return 0;
 }

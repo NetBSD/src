@@ -1,4 +1,4 @@
-/*	$NetBSD: mime.h,v 1.2 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: mime.h,v 1.3 2006/11/28 18:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -47,13 +47,15 @@
  * a non-mime module.
  */
 
-#define PUBLIC		/* make it easy to find the entry points */
-
 #include "mime_attach.h"
 #include "mime_decode.h"
 
 /* a single export from mime_codecs.c */
 const char  *mime_next_encoding_name(const void **);
+
+/* two exports from mime_detach.c */
+int	mime_detach_control(void);
+void	mime_detach_msgnum(struct mime_info *, const char *);
 
 /*
  * User knobs: environment variable names used by this module.
@@ -75,6 +77,10 @@ const char  *mime_next_encoding_name(const void **);
 #define ENAME_MIME_CHARSET_VERBOSE	"mime-charset-verbose"
 
 #define ENAME_MIME_ATTACH_LIST		"mime-attach-list"
+
+#define ENAME_MIME_DETACH_DIR		"mime-detach-dir"
+#define ENAME_MIME_DETACH_BATCH		"mime-detach-batch"
+#define ENAME_MIME_DETACH_OVERWRITE	"mime-detach-overwrite"
 
 #endif /* __MIME_H__ */
 #endif /* MIME_SUPPORT */
