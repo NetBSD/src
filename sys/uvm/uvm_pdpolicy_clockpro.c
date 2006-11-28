@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.5 2006/11/16 01:33:53 christos Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.6 2006/11/28 13:14:53 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.5 2006/11/16 01:33:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.6 2006/11/28 13:14:53 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1078,7 +1078,7 @@ uvmpdpol_pagedequeue(struct vm_page *pg)
 		return;
 	}
 	clockpro_pagedequeue(pg);
-	pg->pqflags &= ~PQ_SPECULATIVE;
+	pg->pqflags &= ~(PQ_INITIALREF|PQ_SPECULATIVE);
 }
 
 void
