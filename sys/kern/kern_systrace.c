@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.62 2006/11/28 17:27:09 elad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.63 2006/11/28 17:58:10 elad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.62 2006/11/28 17:27:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.63 2006/11/28 17:58:10 elad Exp $");
 
 #include "opt_systrace.h"
 
@@ -1262,24 +1262,8 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	}
 
 	/*
-	 *	(4) it's not owned by you, or the last exec
-	 *	    gave us setuid/setgid privs (unless
-	 *	    you're root), or...
-	 *
-	 *      [Note: once P_SUGID gets set in execve(), it stays
-	 *	set until the process does another execve(). Hence
-	 *	this prevents a setuid process which revokes its
-	 *	special privileges using setuid() from being
-	 *	traced. This is good security.]
+	 *	(4) the security model prevents it it.
 	 */
-
-	/*
-	 *	(5) ...it's init, which controls the security level
-	 *	    of the entire system, and the system was not
-	 *          compiled with permanently insecure mode turned
-	 *	    on.
-	 */
-
 	error = kauth_authorize_process(kauth_cred_get(),
 	    KAUTH_PROCESS_CANSYSTRACE, proc, NULL, NULL, NULL);
 	if (error)
