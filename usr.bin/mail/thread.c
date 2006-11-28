@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.1 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.2 2006/11/28 20:29:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: thread.c,v 1.1 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: thread.c,v 1.2 2006/11/28 20:29:25 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -101,17 +101,12 @@ show_msg(struct message *mp)
 	/*
 	 * Arg!  '%p' doesn't like the '0' modifier.
 	 */
-	(void)printf("%3d (0x%08x):"
-	    " flink=0x%08x blink=0x%08x clink=0x%08x plink=0x%08x"
+	(void)printf("%3d (%p):"
+	    " flink=%p blink=%p clink=%p plink=%p"
 	    " depth=%d flags=0x%03x\n",
-	    mp->m_index,
-	    (unsigned)mp,
-	    (unsigned)mp->m_flink,
-	    (unsigned)mp->m_blink,
-	    (unsigned)mp->m_clink,
-	    (unsigned)mp->m_plink,
-	    mp->m_depth,
-	    mp->m_flag);
+	    mp->m_index, mp,
+	    mp->m_flink, mp->m_blink, mp->m_clink, mp->m_plink,
+	    mp->m_depth, mp->m_flag);
 }
 
 #ifndef __lint__
