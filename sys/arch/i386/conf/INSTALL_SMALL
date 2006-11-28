@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.129 2006/11/28 16:15:37 christos Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.130 2006/11/28 16:24:55 christos Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -22,7 +22,7 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=3900	# size of memory disk, in blocks
 
-makeoptions	CPUFLAGS="-Os"		# generates smaller code than -O2, -O1
+makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
 maxusers	32		# estimated number of users
 
