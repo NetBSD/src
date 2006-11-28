@@ -1,4 +1,4 @@
-/*	$NetBSD: format.h,v 1.1 2006/10/31 22:36:37 christos Exp $	*/
+/*	$NetBSD: format.h,v 1.2 2006/11/28 18:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,17 +42,9 @@
 char *smsgprintf(const char *, struct message *);
 void fmsgprintf(FILE *, const char *, struct message *);
 
+const char *dateof(struct tm *, struct message *, int);
+
 #define DEFAULT_PROMPT		"& "
-#define DEFAULT_HEADER_FORMAT	"%??%P%Q%3i %-21.20f %a %b %e %R %3K/%-5O \"%q\""
-
-#define	ENAME_INDENT_PREAMBLE	"indentpreamble"
-#define	ENAME_INDENT_POSTSCRIPT	"indentpostscript"
-
-#define ENAME_HEADER_FORMAT	"header-format"
-#define ENAME_HDRONLY_FORMAT	"hdronly-format"
-#define ENAME_HDRONLY_SCRNWIDTH	"hdronly-screenwidth"
-#define ENAME_PROMPT		"prompt"
-
-#define PUBLIC		/* make it easy to find the entry points */
+#define DEFAULT_HEADER_FORMAT	"%??%P%Q%?& ?%3i %-21.20f %a %b %e %R %3K/%-5O \"%q\""
 
 #endif /* __FORMAT_H__ */

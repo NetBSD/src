@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.2 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.3 2006/11/28 18:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.2 2006/10/31 20:07:32 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.3 2006/11/28 18:45:32 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -206,8 +206,8 @@ line_limit(void)
 	return (size_t)limit;
 }
 
-static inline
-int is_text(const char *ctype)
+static inline int
+is_text(const char *ctype)
 {
 	return ctype &&
 	    strncasecmp(ctype, "text/", sizeof("text/") - 1) == 0;
@@ -404,11 +404,8 @@ content_disposition(struct attachment *ap)
 {
 	switch (ap->a_type) {
 	case ATTACH_FNAME: {
-		char *buf;
 		char *disp;
-		(void)easprintf(&buf, "attachment; filename=\"%s\"", basename(ap->a_name));
-		disp = savestr(buf);
-		free(buf);
+		(void)sasprintf(&disp, "attachment; filename=\"%s\"", basename(ap->a_name));
 		return disp;
 	}
 	case ATTACH_MSG:
@@ -434,10 +431,7 @@ content_description(struct attachment *attach, int attach_num)
 {
 	if (attach_num) {
 		char *description;
-		char *cp;
-		(void)easprintf(&cp, "attachment %d", attach_num);
-		description = savestr(cp);
-		free(cp);
+		(void)sasprintf(&description, "attachment %d", attach_num);
 		return description;
 	}
 	else
@@ -460,24 +454,6 @@ get_mime_content(struct attachment *ap, int i)
 
 	return Cp;
 }
-
-#if 0	/* XXX - dead code! */
-/*
- * A hook to complete the content part of the attachment struct.  This
- * is used when a file is attached by the '-a' to complete the process
- * after the flags have been processed.
- */
-PUBLIC void
-mime_attach_content(struct attachment *ap)
-{
-	int i;
-	i = 1;
-
-	for (/* EMPTY */; ap; ap = ap->a_flink)
-		ap->a_Content = get_mime_content(ap, i++);
-}
-#endif
-
 
 /******************
  * Output routines
@@ -642,7 +618,7 @@ mime_encode(FILE *fi, struct header *header)
 	(void)Fclose(fi);
 	(void)Fclose(nfo);
 	rewind(nfi);
-	return(nfi);
+	return nfi;
 }
 
 static char*
@@ -651,13 +627,7 @@ check_filename(char *filename, char *canon_name)
 	int fd;
 	struct stat sb;
 	char *fname = filename;
-	/*
-	 * 1) check that filename is really a file.
-	 * 2) check that filename is readable.
-	 * 3) allocate an attachment structure.
-	 * 4) save cananonical name for filename, so cd won't screw things later.
-	 * 5) add the structure to the end of the chain.
-	 */
+
 	/* We need to expand '~' if we got here from '~@'.  The shell
 	 * does this otherwise.
 	 */
@@ -702,6 +672,12 @@ attach_one_file(struct attachment *attach, char *filename, int attach_num)
 	char canon_name[MAXPATHLEN];
 	struct attachment *ap, *nap;
 
+	/*
+	 * 1) check that filename is really a readable file.
+	 * 2) allocate an attachment structure.
+	 * 3) save cananonical name for filename, so cd won't screw things later.
+	 * 4) add the structure to the end of the chain.
+	 */
 	if (check_filename(filename, canon_name) == NULL)
 		return NULL;
 	
@@ -725,48 +701,23 @@ attach_one_file(struct attachment *attach, char *filename, int attach_num)
 }
 
 
-static jmp_buf intjmp;
-/*ARGSUSED*/
-static void
-sigint(int signum __unused)
-{
-	siglongjmp(intjmp, 1);
-}
-
 static char *
 get_line(el_mode_t *em, const char *pr, const char *str, int i)
 {
-	sig_t saveint;
-	char *cp;
-	char *line;
 	char *prompt;
+	char *line;
 
-	saveint = signal(SIGINT, sigint);
-	if (sigsetjmp(intjmp, 1)) {
-		(void)signal(SIGINT, saveint);
-		(void)putc('\n', stdout);
-		return __UNCONST("");
-	}
-
-	/* Don't use a '\t' in the format string here as completion
-	 * seems to handle it badly. */
+	/*
+	 * Don't use a '\t' in the format string here as completion
+	 * seems to handle it badly.
+	 */
 	(void)easprintf(&prompt, "#%-8d%s: ", i, pr);
-	line = my_gets(em, prompt, __UNCONST(str));
+	line = my_getline(em, prompt, __UNCONST(str));
 	/* LINTED */
 	line = line ? savestr(line) : __UNCONST("");
 	free(prompt);
 
-	(void)signal(SIGINT, saveint);
-
-	/* strip trailing white space */
-	for (cp = line + strlen(line) - 1;
-	     cp >= line && isblank((unsigned char)*cp); cp--)
-		*cp = '\0';
-
-	/* skip leading white space */
-	cp = skip_white(line);
-
-	return cp;
+	return line;
 }
 
 static void

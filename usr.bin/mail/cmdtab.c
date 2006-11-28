@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.15 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.16 2006/11/28 18:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.15 2006/10/31 20:07:32 christos Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.16 2006/11/28 18:45:32 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "def.h"
 #include "extern.h"
+#include "thread.h"
 
 #ifdef USE_EDITLINE
 # define CMP(x)	#x,
@@ -50,101 +51,129 @@ __RCSID("$NetBSD: cmdtab.c,v 1.15 2006/10/31 20:07:32 christos Exp $");
 #endif
 
 
+#define A	(C_PIPE_SHELL | C_PIPE_PAGER)
+#define N	(C_PIPE_SHELL)
+
 /*
  * Mail -- a mail program
  *
  * Define all of the command names and bindings.
  */
-
+/* R - means recursive */
 const struct cmd cmdtab[] = {
-	{ "next",	next,		CMP(n)	NDMLIST,	0,		MMNDEL },
-	{ "alias",	group,		CMP(A)	M|RAWLIST,	0,		1000 },
+	{ "next",	next,		A, CMP(n)	NDMLIST,	0,		MMNDEL },
+	{ "alias",	group,		A, CMP(A)	M|RAWLIST,	0,		1000 },
+/* R */	{ "print",	type,		N, CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "Print",	Type,		N, CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "type",	type,		N, CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "Type",	Type,		N, CMP(n)	MSGLIST,	0,		MMNDEL },
+	{ "visual",	visual,		0, CMP(n)	I|MSGLIST,	0,		MMNORM },
+/* R */	{ "top",	top,		A, CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "touch",	stouch,		0, CMP(n)	W|MSGLIST,	0,		MMNDEL },
+/* R */	{ "preserve",	preserve,	0, CMP(n)	W|MSGLIST,	0,		MMNDEL },
+/* R */	{ "delete",	delete,		0, CMP(n)	W|P|MSGLIST,	0,		MMNDEL },
+/* R */	{ "dp",		deltype,	A, CMP(n)	W|MSGLIST,	0,		MMNDEL },
+/* R */	{ "dt",		deltype,	A, CMP(n)	W|MSGLIST,	0,		MMNDEL },
+/* R */	{ "undelete",	undeletecmd,	0, CMP(n)	P|MSGLIST,	MDELETED,	MMNDEL },
+	{ "unset",	unset,		0, CMP(S)	M|RAWLIST,	1,		1000 },
+	{ "mail",	sendmail,	0, CMP(A)	R|M|I|STRLIST,	0,		0 },
+/* R */	{ "mbox",	mboxit,		0, CMP(n)	W|MSGLIST,	0,		MMNDEL },
+/* R */	{ "more",	type,		A, CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "More",	Type,		A, CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "page",	type,		A, CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "Page",	Type,		A, CMP(n)	MSGLIST,	0,		MMNDEL },
 #ifdef MIME_SUPPORT
-	{ "print",	print,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "Print",	Print,		CMP(n)	MSGLIST,	0,		MMNDEL },
-#else
-	{ "print",	type,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "Print",	Type,		CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "view",	view,		A, CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "View",	View,		A, CMP(n)	MSGLIST,	0,		MMNDEL },
 #endif
-	{ "type",	type,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "Type",	Type,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "visual",	visual,		CMP(n)	I|MSGLIST,	0,		MMNORM },
-	{ "top",	top,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "touch",	stouch,		CMP(n)	W|MSGLIST,	0,		MMNDEL },
-	{ "preserve",	preserve,	CMP(n)	W|MSGLIST,	0,		MMNDEL },
-	{ "delete",	delete,		CMP(n)	W|P|MSGLIST,	0,		MMNDEL },
-	{ "dp",		deltype,	CMP(n)	W|MSGLIST,	0,		MMNDEL },
-	{ "dt",		deltype,	CMP(n)	W|MSGLIST,	0,		MMNDEL },
-	{ "undelete",	undeletecmd,	CMP(n)	P|MSGLIST,	MDELETED,	MMNDEL },
-	{ "unset",	unset,		CMP(S)	M|RAWLIST,	1,		1000 },
-	{ "mail",	sendmail,	CMP(A)	R|M|I|STRLIST,	0,		0 },
-	{ "mbox",	mboxit,		CMP(n)	W|MSGLIST,	0,		0 },
-	{ "more",	more,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "More",	More,		CMP(n)	MSGLIST,	0,		MMNDEL },
+	{ "unalias",	unalias,	0, CMP(A)	M|RAWLIST,	1,		1000 },
+/* R */	{ "unread",	unread,		0, CMP(n)	MSGLIST,	0,		MMNDEL },
+	{ "!",		shell,		0, CMP(xF)	I|STRLIST,	0,		0 },
+	{ "|",		pipecmd,	0, CMP(xF)	I|STRLIST,	0,		0 },
+/* R */	{ "copy",	copycmd,	0, CMP(F)	M|STRLIST,	0,		0 },
+	{ "chdir",	schdir,		0, CMP(F)	M|RAWLIST,	0,		1 },
+	{ "cd",		schdir,		0, CMP(F)	M|RAWLIST,	0,		1 },
+/* R */	{ "save",	save,		0, CMP(F)	STRLIST,	0,		0 },
+/* R */	{ "Save",	Save,		0, CMP(F)	STRLIST,	0,		0 },
+	{ "source",	source,		0, CMP(F)	M|RAWLIST,	1,		1 },
+	{ "set",	set,		A, CMP(sF)	M|RAWLIST,	0,		1000 },
+	{ "shell",	dosh,		0, CMP(n)	I|NOLIST,	0,		0 },
+	{ "show",	show,		A, CMP(S)	M|RAWLIST,	0,		1000 },
+	{ "version",	pversion,	A, CMP(n)	M|NOLIST,	0,		0 },
+	{ "group",	group,		A, CMP(a)	M|RAWLIST,	0,		1000 },
+/* R */	{ "write",	swrite,		0, CMP(F)	STRLIST,	0,		0 },
+	{ "from",	from,		A, CMP(n)	MSGLIST,	0,		MMNORM },
+	{ "file",	file,		0, CMP(f)	T|M|RAWLIST,	0,		1 },
+	{ "folder",	file,		0, CMP(f)	T|M|RAWLIST,	0,		1 },
+	{ "folders",	folders,	A, CMP(n)	T|M|NOLIST,	0,		0 },
+	{ "?",		help,		A, CMP(n)	M|NOLIST,	0,		0 },
+	{ "z",		scroll,		A, CMP(n)	M|STRLIST,	0,		0 },
+	{ "headers",	headers,	A, CMP(n)	MSGLIST,	0,		MMNDEL },
+	{ "help",	help,		A, CMP(n)	M|NOLIST,	0,		0 },
+	{ "=",		pdot,		A, CMP(n)	MSGLIST,	0,		MMNDEL },
+	{ "Reply",	Respond,	0, CMP(n)	R|I|MSGLIST,	0,		MMNDEL },
+	{ "Respond",	Respond,	0, CMP(n)	R|I|MSGLIST,	0,		MMNDEL },
+	{ "reply",	respond,	0, CMP(n)	R|I|MSGLIST,	0,		MMNDEL },
+	{ "respond",	respond,	0, CMP(n)	R|I|MSGLIST,	0,		MMNDEL },
+	{ "edit",	editor,		0, CMP(n)	I|MSGLIST,	0,		MMNORM },
+	{ "echo",	echo,		A, CMP(F)	M|RAWLIST,	0,		1000 },
+	{ "quit",	quitcmd,	0, CMP(n)	NOLIST,		0,		0 },
+	{ "list",	pcmdlist,	A, CMP(n)	M|NOLIST,	0,		0 },
+	{ "xit",	rexit,		0, CMP(n)	M|NOLIST,	0,		0 },
+	{ "exit",	rexit,		0, CMP(n)	M|NOLIST,	0,		0 },
+	{ "size",	messize,	A, CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "hold",	preserve,	0, CMP(n)	W|MSGLIST,	0,		MMNDEL },
+	{ "if",		ifcmd,		0, CMP(F)	F|M|RAWLIST,	1,		1 },
+	{ "ifdef",	ifdefcmd,	0, CMP(F)	F|M|RAWLIST,	1,		1 },
+	{ "ifndef",	ifndefcmd,	0, CMP(F)	F|M|RAWLIST,	1,		1 },
+	{ "else",	elsecmd,	0, CMP(F)	F|M|RAWLIST,	0,		0 },
+	{ "endif",	endifcmd,	0, CMP(F)	F|M|RAWLIST,	0,		0 },
+	{ "alternates",	alternates,	A, CMP(n)	M|RAWLIST,	0,		1000 },
+	{ "ignore",	igfield,	A, CMP(n)	M|RAWLIST,	0,		1000 },
+	{ "discard",	igfield,	A, CMP(n)	M|RAWLIST,	0,		1000 },
+	{ "retain",	retfield,	A, CMP(n)	M|RAWLIST,	0,		1000 },
+	{ "saveignore",	saveigfield,	A, CMP(n)	M|RAWLIST,	0,		1000 },
+	{ "savediscard",saveigfield,	A, CMP(n)	M|RAWLIST,	0,		1000 },
+	{ "saveretain",	saveretfield,	A, CMP(n)	M|RAWLIST,	0,		1000 },
+/*	{ "Header",	Header,		A, CMP(n)	STRLIST,	0,		1000 },	*/
+	{ "core",	core,		0, CMP(F)	M|NOLIST,	0,		0 },
+	{ "#",		null,		0, CMP(n)	M|NOLIST,	0,		0 },
+	{ "clobber",	clobber,	0, CMP(n)	M|RAWLIST,	0,		1 },
+	{ "inc",	inc,		A, CMP(n)	T|NOLIST,	0,		0 },
+	{ "smopts",	smoptscmd,	A, CMP(m)	M|RAWLIST,	0,		1000 },
+	{ "unsmopts",	unsmoptscmd,	A, CMP(M)	M|RAWLIST,	1,		1000 },
+/* R */	{ "mkread",	markread,	0, CMP(n)	MSGLIST,	0,		MMNDEL },
 #ifdef MIME_SUPPORT
-	{ "page",	page,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "Page",	Page,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "view",	view,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "View",	View,		CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "detach",	detach,		A, CMP(F)	STRLIST,	0,		0 },
+/* R */	{ "Detach",	Detach,		A, CMP(F)	STRLIST,	0,		0 },
 #endif
-	{ "page",	more,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "Page",	More,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "unalias",	unalias,	CMP(A)	M|RAWLIST,	1,		1000 },
-	{ "unread",	unread,		CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "!",		shell,		CMP(xF)	I|STRLIST,	0,		0 },
-	{ "|",		pipecmd,	CMP(xF)	I|STRLIST,	0,		0 },
-	{ "copy",	copycmd,	CMP(F)	M|STRLIST,	0,		0 },
-	{ "chdir",	schdir,		CMP(F)	M|RAWLIST,	0,		1 },
-	{ "cd",		schdir,		CMP(F)	M|RAWLIST,	0,		1 },
-	{ "save",	save,		CMP(F)	STRLIST,	0,		0 },
-	{ "Save",	Save,		CMP(F)	STRLIST,	0,		0 },
-	{ "source",	source,		CMP(F)	M|RAWLIST,	1,		1 },
-	{ "set",	set,		CMP(sF)	M|RAWLIST,	0,		1000 },
-	{ "shell",	dosh,		CMP(n)	I|NOLIST,	0,		0 },
-	{ "show",	show,		CMP(S)	M|RAWLIST,	0,		1000 },
-	{ "version",	pversion,	CMP(n)	M|NOLIST,	0,		0 },
-	{ "group",	group,		CMP(a)	M|RAWLIST,	0,		1000 },
-	{ "write",	swrite,		CMP(F)	STRLIST,	0,		0 },
-	{ "from",	from,		CMP(n)	MSGLIST,	0,		MMNORM },
-	{ "file",	file,		CMP(F)	T|M|RAWLIST,	0,		1 },
-	{ "folder",	file,		CMP(F)	T|M|RAWLIST,	0,		1 },
-	{ "folders",	folders,	CMP(F)	T|M|NOLIST,	0,		0 },
-	{ "?",		help,		CMP(n)	M|NOLIST,	0,		0 },
-	{ "z",		scroll,		CMP(n)	M|STRLIST,	0,		0 },
-	{ "headers",	headers,	CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "help",	help,		CMP(n)	M|NOLIST,	0,		0 },
-	{ "=",		pdot,		CMP(n)	NOLIST,		0,		0 },
-	{ "Reply",	Respond,	CMP(n)	R|I|MSGLIST,	0,		MMNDEL },
-	{ "Respond",	Respond,	CMP(n)	R|I|MSGLIST,	0,		MMNDEL },
-	{ "reply",	respond,	CMP(n)	R|I|MSGLIST,	0,		MMNDEL },
-	{ "respond",	respond,	CMP(n)	R|I|MSGLIST,	0,		MMNDEL },
-	{ "edit",	editor,		CMP(n)	I|MSGLIST,	0,		MMNORM },
-	{ "echo",	echo,		CMP(F)	M|RAWLIST,	0,		1000 },
-	{ "quit",	quitcmd,	CMP(n)	NOLIST,		0,		0 },
-	{ "list",	pcmdlist,	CMP(n)	M|NOLIST,	0,		0 },
-	{ "xit",	rexit,		CMP(n)	M|NOLIST,	0,		0 },
-	{ "exit",	rexit,		CMP(n)	M|NOLIST,	0,		0 },
-	{ "size",	messize,	CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ "hold",	preserve,	CMP(n)	W|MSGLIST,	0,		MMNDEL },
-	{ "if",		ifcmd,		CMP(F)	F|M|RAWLIST,	1,		1 },
-	{ "else",	elsecmd,	CMP(F)	F|M|RAWLIST,	0,		0 },
-	{ "endif",	endifcmd,	CMP(F)	F|M|RAWLIST,	0,		0 },
-	{ "alternates",	alternates,	CMP(n)	M|RAWLIST,	0,		1000 },
-	{ "ignore",	igfield,	CMP(n)	M|RAWLIST,	0,		1000 },
-	{ "discard",	igfield,	CMP(n)	M|RAWLIST,	0,		1000 },
-	{ "retain",	retfield,	CMP(n)	M|RAWLIST,	0,		1000 },
-	{ "saveignore",	saveigfield,	CMP(n)	M|RAWLIST,	0,		1000 },
-	{ "savediscard",saveigfield,	CMP(n)	M|RAWLIST,	0,		1000 },
-	{ "saveretain",	saveretfield,	CMP(n)	M|RAWLIST,	0,		1000 },
-/*	{ "Header",	Header,		CMP(n)	STRLIST,	0,		1000 },	*/
-	{ "core",	core,		CMP(F)	M|NOLIST,	0,		0 },
-	{ "#",		null,		CMP(n)	M|NOLIST,	0,		0 },
-	{ "clobber",	clobber,	CMP(n)	M|RAWLIST,	0,		1 },
-	{ "inc",	inc,		CMP(n)	T|NOLIST,	0,		0 },
-#ifdef SMOPTS_CMD
-	{ "smopts",	smoptscmd,	CMP(m)	M|RAWLIST,	0,		1000 },
-	{ "unsmopts",	unsmopts,	CMP(M)	M|RAWLIST,	1,		1000 },
+#ifdef THREAD_SUPPORT
+	{ "flatten",	flattencmd,	0, CMP(n)	T|NDMLIST,	0,		MMNDEL },
+	{ "reverse",	reversecmd,	0, CMP(n)	T|STRLIST,	0,		0 },
+	{ "sort",	sortcmd,	0, CMP(T)	T|STRLIST,	0,		0 },
+	{ "thread",	threadcmd,	0, CMP(T)	T|STRLIST,	0,		0 },
+	{ "unthread",	unthreadcmd,	0, CMP(n)	T|STRLIST,	0,		0 },
+
+	{ "down",	downcmd,	0, CMP(n)	T|MSGLIST,	0,		MMNDEL },
+	{ "tset",	tsetcmd,	0, CMP(n)	T|MSGLIST,	0,		MMNDEL },
+	{ "up",		upcmd,		0, CMP(n)	T|STRLIST,	0,		0 },
+
+	{ "expose",	exposecmd,	0, CMP(n)	T|STRLIST,	0,		0 },
+	{ "hide",	hidecmd,	0, CMP(n)	T|STRLIST,	0,		0 },
+	{ "showthreads",exposecmd,	0, CMP(n)	T|STRLIST,	0,		0 },
+	{ "hidethreads",hidecmd,	0, CMP(n)	T|STRLIST,	0,		0 },
+#ifdef THREAD_DEBUG
+	{ "debug_links",thread_showcmd,	A, CMP(n)	T|MSGLIST,	0,		MMNDEL },
 #endif
-	{ "mkread",	markread,	CMP(n)	MSGLIST,	0,		MMNDEL },
-	{ 0,		0,		CMP0		0,	0,		0 }
+/* R */	{ "tag",	tagcmd,		0, CMP(n)	T|MSGLIST,	0,		MMNDEL },
+/* R */	{ "untag",	untagcmd,	0, CMP(n)	T|MSGLIST,	0,		MMNDEL },
+/* R */	{ "invtags",	invtagscmd,	0, CMP(n)	T|MSGLIST,	0,	 	MMNDEL },
+	{ "tagbelow",	tagbelowcmd,	0, CMP(n)	T|MSGLIST,	0,		MMNDEL },
+
+	{ "hidetags",	hidetagscmd,	0, CMP(n)	T|STRLIST,	0,		0 },
+	{ "showtags",	showtagscmd,	0, CMP(n)	T|STRLIST,	0,		0 },
+
+	{ "deldups",	deldupscmd,	0, CMP(n)	T|STRLIST,	0,		0 },
+#endif /* THREAD_SUPPORT */
+	{ 0,		0,		0, CMP0		0,		0,		0 }
 };

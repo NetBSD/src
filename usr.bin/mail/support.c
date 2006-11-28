@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.16 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.17 2006/11/28 18:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,26 +34,29 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.16 2006/10/31 20:07:32 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.17 2006/11/28 18:45:32 christos Exp $");
 #endif
 #endif /* not lint */
+
+#include <stdarg.h>
+#include <util.h>
 
 #include "rcv.h"
 #include "extern.h"
 #include "mime.h"
+#include "thread.h"
 
 /*
  * Mail -- a mail program
  *
  * Auxiliary functions.
  */
-static char *save2str(char *, char *);
-static int gethfield(FILE *, char [], int, char **); /* don't call this outside hfield()
-							or decoding will not get done */
+
+
 /*
  * Return a pointer to a dynamic copy of the argument.
  */
-char *
+PUBLIC char *
 savestr(const char *str)
 {
 	char *new;
@@ -85,11 +88,55 @@ save2str(char *str, char *old)
 }
 
 /*
+ * Like asprintf(), but with result salloc-ed rather than malloc-ed.
+ */
+PUBLIC int
+sasprintf(char **ret, const char *format, ...)
+{
+	int rval;
+	char *p;
+	va_list args;
+
+	va_start(args, format);
+	rval = evasprintf(&p, format, args);
+	*ret = savestr(p);
+	free(p);
+	va_end(args);
+	return rval;
+}
+
+struct set_m_flag_args_s {
+	int and_bits;
+	int xor_bits;
+};
+static int
+set_m_flag_core(struct message *mp, void *v)
+{
+	struct set_m_flag_args_s *args;
+	args = v;
+	mp->m_flag &= args->and_bits;
+	mp->m_flag ^= args->xor_bits;
+	return 0;
+}
+
+PUBLIC struct message *
+set_m_flag(int msgnum, int and_bits, int xor_bits)
+{
+	struct message *mp;
+	struct set_m_flag_args_s args;
+	mp = get_message(msgnum);
+	args.and_bits = and_bits;
+	args.xor_bits = xor_bits;
+	(void)thread_recursion(mp, set_m_flag_core, &args);
+	return mp;
+}
+
+/*
  * Touch the named message by setting its MTOUCH flag.
  * Touched messages have the effect of not being sent
  * back to the system mailbox on exit.
  */
-void
+PUBLIC void
 touch(struct message *mp)
 {
 
@@ -102,34 +149,113 @@ touch(struct message *mp)
  * Test to see if the passed file name is a directory.
  * Return true if it is.
  */
-int
+PUBLIC int
 isdir(const char name[])
 {
 	struct stat sbuf;
 
 	if (stat(name, &sbuf) < 0)
-		return(0);
-	return (S_ISDIR(sbuf.st_mode));
+		return 0;
+	return S_ISDIR(sbuf.st_mode);
 }
 
 /*
  * Count the number of arguments in the given string raw list.
  */
-int
+PUBLIC int
 argcount(char **argv)
 {
 	char **ap;
 
 	for (ap = argv; *ap++ != NULL;)
-		;	
+		continue;
 	return ap - argv - 1;
+}
+
+/*
+ * Check whether the passed line is a header line of
+ * the desired breed.  Return the field body, or 0.
+ */
+static char*
+ishfield(const char linebuf[], char *colon, const char field[])
+{
+	char *cp = colon;
+
+	*cp = 0;
+	if (strcasecmp(linebuf, field) != 0) {
+		*cp = ':';
+		return 0;
+	}
+	*cp = ':';
+	for (cp++; *cp == ' ' || *cp == '\t'; cp++)
+		continue;
+	return cp;
+}
+
+/*
+ * Return the next header field found in the given message.
+ * Return >= 0 if something found, < 0 elsewise.
+ * "colon" is set to point to the colon in the header.
+ * Must deal with \ continuations & other such fraud.
+ *
+ * WARNING - do not call this outside hfield() or decoding will not
+ *           get done.
+ */
+static int
+gethfield(FILE *f, char linebuf[], int rem, char **colon)
+{
+	char line2[LINESIZE];
+	char *cp, *cp2;
+	int c;
+
+	for (;;) {
+		if (--rem < 0)
+			return -1;
+		if ((c = mail_readline(f, linebuf, LINESIZE)) <= 0)
+			return -1;
+		for (cp = linebuf; isprint((unsigned char)*cp) && *cp != ' ' && *cp != ':';
+		     cp++)
+			continue;
+		if (*cp != ':' || cp == linebuf)
+			continue;
+		/*
+		 * I guess we got a headline.
+		 * Handle wraparounding
+		 */
+		*colon = cp;
+		cp = linebuf + c;
+		for (;;) {
+			while (--cp >= linebuf && (*cp == ' ' || *cp == '\t'))
+				continue;
+			cp++;
+			if (rem <= 0)
+				break;
+			(void)ungetc(c = getc(f), f);
+			if (c != ' ' && c != '\t')
+				break;
+			if ((c = mail_readline(f, line2, LINESIZE)) < 0)
+				break;
+			rem--;
+			for (cp2 = line2; *cp2 == ' ' || *cp2 == '\t'; cp2++)
+				continue;
+			c -= cp2 - line2;
+			if (cp + c >= linebuf + LINESIZE - 2)
+				break;
+			*cp++ = ' ';
+			(void)memmove(cp, cp2, (size_t)c);
+			cp += c;
+		}
+		*cp = 0;
+		return rem;
+	}
+	/* NOTREACHED */
 }
 
 /*
  * Return the desired header line from the passed message
  * pointer (or NULL if the desired header field is not available).
  */
-char *
+PUBLIC char *
 hfield(const char field[], const struct message *mp)
 {
 	FILE *ibuf;
@@ -168,86 +294,9 @@ hfield(const char field[], const struct message *mp)
 }
 
 /*
- * Return the next header field found in the given message.
- * Return >= 0 if something found, < 0 elsewise.
- * "colon" is set to point to the colon in the header.
- * Must deal with \ continuations & other such fraud.
- */
-static int
-gethfield(FILE *f, char linebuf[], int rem, char **colon)
-{
-	char line2[LINESIZE];
-	char *cp, *cp2;
-	int c;
-
-	for (;;) {
-		if (--rem < 0)
-			return -1;
-		if ((c = mail_readline(f, linebuf, LINESIZE)) <= 0)
-			return -1;
-		for (cp = linebuf; isprint((unsigned char)*cp) && *cp != ' ' && *cp != ':';
-		     cp++)
-			;
-		if (*cp != ':' || cp == linebuf)
-			continue;
-		/*
-		 * I guess we got a headline.
-		 * Handle wraparounding
-		 */
-		*colon = cp;
-		cp = linebuf + c;
-		for (;;) {
-			while (--cp >= linebuf && (*cp == ' ' || *cp == '\t'))
-				;
-			cp++;
-			if (rem <= 0)
-				break;
-			(void)ungetc(c = getc(f), f);
-			if (c != ' ' && c != '\t')
-				break;
-			if ((c = mail_readline(f, line2, LINESIZE)) < 0)
-				break;
-			rem--;
-			for (cp2 = line2; *cp2 == ' ' || *cp2 == '\t'; cp2++)
-				;
-			c -= cp2 - line2;
-			if (cp + c >= linebuf + LINESIZE - 2)
-				break;
-			*cp++ = ' ';
-			(void)memmove(cp, cp2, (size_t)c);
-			cp += c;
-		}
-		*cp = 0;
-		return rem;
-	}
-	/* NOTREACHED */
-}
-
-/*
- * Check whether the passed line is a header line of
- * the desired breed.  Return the field body, or 0.
- */
-
-char*
-ishfield(const char linebuf[], char *colon, const char field[])
-{
-	char *cp = colon;
-
-	*cp = 0;
-	if (strcasecmp(linebuf, field) != 0) {
-		*cp = ':';
-		return 0;
-	}
-	*cp = ':';
-	for (cp++; *cp == ' ' || *cp == '\t'; cp++)
-		;
-	return cp;
-}
-
-/*
  * Copy a string, lowercasing it as we go.
  */
-void
+PUBLIC void
 istrcpy(char *dest, const char *src)
 {
 
@@ -263,9 +312,12 @@ istrcpy(char *dest, const char *src)
  */
 
 static	int	ssp;			/* Top of file stack */
-struct sstack {
+static struct sstack {
 	FILE	*s_file;		/* File we were in. */
 	int	s_cond;			/* Saved state of conditionals */
+#ifdef NEW_CONDITIONAL
+	struct cond_stack_s *s_cond_stack; /* Saved conditional stack */
+#endif
 	int	s_loading;		/* Loading .mailrc, etc. */
 } sstack[NOFILE];
 
@@ -274,7 +326,7 @@ struct sstack {
  * Set the global flag "sourcing" so that others will realize
  * that they are no longer reading from a tty (in all probability).
  */
-int
+PUBLIC int
 source(void *v)
 {
 	char **arglist = v;
@@ -282,56 +334,62 @@ source(void *v)
 	const char *cp;
 
 	if ((cp = expand(*arglist)) == NULL)
-		return(1);
+		return 1;
 	if ((fi = Fopen(cp, "r")) == NULL) {
 		warn("%s", cp);
-		return(1);
+		return 1;
 	}
 	if (ssp >= NOFILE - 1) {
 		(void)printf("Too much \"sourcing\" going on.\n");
 		(void)Fclose(fi);
-		return(1);
+		return 1;
 	}
 	sstack[ssp].s_file = input;
 	sstack[ssp].s_cond = cond;
+#ifdef NEW_CONDITIONAL
+	sstack[ssp].s_cond_stack = cond_stack;
+#endif
 	sstack[ssp].s_loading = loading;
 	ssp++;
 	loading = 0;
-	cond = CANY;
+	cond = CNONE;
 	input = fi;
 	sourcing++;
-	return(0);
+	return 0;
 }
 
 /*
  * Pop the current input back to the previous level.
  * Update the "sourcing" flag as appropriate.
  */
-int
+PUBLIC int
 unstack(void)
 {
 	if (ssp <= 0) {
 		(void)printf("\"Source\" stack over-pop.\n");
 		sourcing = 0;
-		return(1);
+		return 1;
 	}
 	(void)Fclose(input);
-	if (cond != CANY)
+	if (cond != CNONE || cond_stack != NULL)
 		(void)printf("Unmatched \"if\"\n");
 	ssp--;
-	cond = sstack[ssp].s_cond;
-	loading = sstack[ssp].s_loading;
 	input = sstack[ssp].s_file;
+	cond = sstack[ssp].s_cond;
+#ifdef NEW_CONDITIONAL
+	cond_stack = sstack[ssp].s_cond_stack;
+#endif
+	loading = sstack[ssp].s_loading;
 	if (ssp == 0)
 		sourcing = loading;
-	return(0);
+	return 0;
 }
 
 /*
  * Touch the indicated file.
  * This is nifty for the shell.
  */
-void
+PUBLIC void
 alter(char *name)
 {
 	struct stat sb;
@@ -349,49 +407,27 @@ alter(char *name)
  * Examine the passed line buffer and
  * return true if it is all blanks and tabs.
  */
-int
+PUBLIC int
 blankline(char linebuf[])
 {
 	char *cp;
 
 	for (cp = linebuf; *cp; cp++)
 		if (*cp != ' ' && *cp != '\t')
-			return(0);
-	return(1);
-}
-
-/*
- * Get sender's name from this message.  If the message has
- * a bunch of arpanet stuff in it, we may have to skin the name
- * before returning it.
- */
-char *
-nameof(struct message *mp, int reptype)
-{
-	char *cp, *cp2;
-
-	cp = skin(name1(mp, reptype));
-	if (reptype != 0 || charcount(cp, '!') < 2)
-		return(cp);
-	cp2 = strrchr(cp, '!');
-	cp2--;
-	while (cp2 > cp && *cp2 != '!')
-		cp2--;
-	if (*cp2 == '!')
-		return(cp2 + 1);
-	return(cp);
+			return 0;
+	return 1;
 }
 
 /*
  * Start of a "comment".
  * Ignore it.
  */
-char *
+static char *
 skip_comment(char *cp)
 {
 	int nesting = 1;
 
-	for (; nesting > 0 && *cp; cp++) {
+	for (/*EMPTY*/; nesting > 0 && *cp; cp++) {
 		switch (*cp) {
 		case '\\':
 			if (cp[1])
@@ -412,20 +448,20 @@ skip_comment(char *cp)
  * Skin an arpa net address according to the RFC 822 interpretation
  * of "host-phrase."
  */
-char *
+PUBLIC char *
 skin(char *name)
 {
 	int c;
 	char *cp, *cp2;
 	char *bufend;
 	int gotlt, lastsp;
-	char nbuf[BUFSIZ];
+	char nbuf[LINESIZE];
 
 	if (name == NULL)
-		return(NULL);
+		return NULL;
 	if (strchr(name, '(') == NULL && strchr(name, '<') == NULL
 	    && strchr(name, ' ') == NULL)
-		return(name);
+		return name;
 	gotlt = 0;
 	lastsp = 0;
 	bufend = nbuf;
@@ -500,8 +536,8 @@ skin(char *name)
 			*cp2++ = c;
 			if (c == ',' && !gotlt) {
 				*cp2++ = ' ';
-				for (; *cp == ' '; cp++)
-					;
+				for (/*EMPTY*/; *cp == ' '; cp++)
+					continue;
 				lastsp = 0;
 				bufend = cp2;
 			}
@@ -509,7 +545,7 @@ skin(char *name)
 	}
 	*cp2 = 0;
 
-	return(savestr(nbuf));
+	return savestr(nbuf);
 }
 
 /*
@@ -519,7 +555,7 @@ skin(char *name)
  *	1 -- get sender's name for reply
  *	2 -- get sender's name for Reply
  */
-char *
+static char *
 name1(struct message *mp, int reptype)
 {
 	char namebuf[LINESIZE];
@@ -535,22 +571,22 @@ name1(struct message *mp, int reptype)
 	ibuf = setinput(mp);
 	namebuf[0] = '\0';
 	if (mail_readline(ibuf, linebuf, LINESIZE) < 0)
-		return(savestr(namebuf));
-newname:
+		return savestr(namebuf);
+ newname:
 	for (cp = linebuf; *cp && *cp != ' '; cp++)
-		;
-	for (; *cp == ' ' || *cp == '\t'; cp++)
-		;
+		continue;
+	for (/*EMPTY*/; *cp == ' ' || *cp == '\t'; cp++)
+		continue;
 	for (cp2 = &namebuf[strlen(namebuf)];
 	     *cp && *cp != ' ' && *cp != '\t' && cp2 < namebuf + LINESIZE - 1;)
 		*cp2++ = *cp++;
 	*cp2 = '\0';
 	if (mail_readline(ibuf, linebuf, LINESIZE) < 0)
-		return(savestr(namebuf));
+		return savestr(namebuf);
 	if ((cp = strchr(linebuf, 'F')) == NULL)
-		return(savestr(namebuf));
+		return savestr(namebuf);
 	if (strncmp(cp, "From", 4) != 0)
-		return(savestr(namebuf));
+		return savestr(namebuf);
 	while ((cp = strchr(cp, 'r')) != NULL) {
 		if (strncmp(cp, "remote", 6) == 0) {
 			if ((cp = strchr(cp, 'f')) == NULL)
@@ -577,13 +613,13 @@ newname:
 		}
 		cp++;
 	}
-	return(savestr(namebuf));
+	return savestr(namebuf);
 }
 
 /*
  * Count the occurrences of c in str
  */
-int
+static int
 charcount(char *str, int c)
 {
 	char *cp;
@@ -592,37 +628,63 @@ charcount(char *str, int c)
 	for (i = 0, cp = str; *cp; cp++)
 		if (*cp == c)
 			i++;
-	return(i);
+	return i;
 }
 
 /*
- * Convert c to upper case
+ * Get sender's name from this message.  If the message has
+ * a bunch of arpanet stuff in it, we may have to skin the name
+ * before returning it.
  */
-int
-upcase(int c)
+PUBLIC char *
+nameof(struct message *mp, int reptype)
 {
+	char *cp, *cp2;
 
-	if (islower(c))
-		return toupper(c);
-	return c;
+	cp = skin(name1(mp, reptype));
+	if (reptype != 0 || charcount(cp, '!') < 2)
+		return cp;
+	cp2 = strrchr(cp, '!');
+	cp2--;
+	while (cp2 > cp && *cp2 != '!')
+		cp2--;
+	if (*cp2 == '!')
+		return cp2 + 1;
+	return cp;
 }
 
 /*
  * Copy s1 to s2, return pointer to null in s2.
  */
-char *
+PUBLIC char *
 copy(char *s1, char *s2)
 {
 
 	while ((*s2++ = *s1++) != '\0')
-		;
+		continue;
 	return s2 - 1;
+}
+
+/*
+ * The core routine to check the ignore table for a field.
+ * Note: realfield should be lower-cased!
+ */
+PUBLIC int
+member(char *realfield, struct ignoretab *table)
+{
+	struct ignore *igp;
+
+	for (igp = table->i_head[hash(realfield)]; igp != 0; igp = igp->i_link)
+		if (*igp->i_field == *realfield &&
+		    equal(igp->i_field, realfield))
+			return 1;
+	return 0;
 }
 
 /*
  * See if the given header field is supposed to be ignored.
  */
-int
+PUBLIC int
 isign(const char *field, struct ignoretab ignoretabs[2])
 {
 	char realfld[LINESIZE];
@@ -635,19 +697,7 @@ isign(const char *field, struct ignoretab ignoretabs[2])
 	 */
 	istrcpy(realfld, field);
 	if (ignoretabs[1].i_count > 0)
-		return (!member(realfld, ignoretabs + 1));
+		return !member(realfld, ignoretabs + 1);
 	else
-		return (member(realfld, ignoretabs));
-}
-
-int
-member(char *realfield, struct ignoretab *table)
-{
-	struct ignore *igp;
-
-	for (igp = table->i_head[hash(realfield)]; igp != 0; igp = igp->i_link)
-		if (*igp->i_field == *realfield &&
-		    equal(igp->i_field, realfield))
-			return (1);
-	return (0);
+		return member(realfld, ignoretabs);
 }

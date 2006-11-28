@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.21 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: def.h,v 1.22 2006/11/28 18:45:32 christos Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.21 2006/10/31 20:07:32 christos Exp $
+ *	$NetBSD: def.h,v 1.22 2006/11/28 18:45:32 christos Exp $
  */
 
 /*
@@ -71,23 +71,68 @@
 #define	PATHSIZE	MAXPATHLEN	/* Size of pathnames throughout */
 #define	HSHSIZE		59		/* Hash size for aliases and vars */
 #define	LINESIZE	BUFSIZ		/* max readable line width */
-#define	STRINGSIZE	((unsigned) 128)/* Dynamic allocation units */
 #define	MAXARGC		1024		/* Maximum list of raw strings */
 #define	MAXEXP		25		/* Maximum expansion of aliases */
 
+#define PUBLIC			/* make it easy to find the entry points */
+
 /*
  * User environment variable names.
- * (See complete.h and mime.h for names specific to those modules.)
+ * See complete.h, mime.h, and thread.h for names specific to those modules.
  */
-#ifdef SMOPTS_CMD
-#define	ENAME_SMOPTS_VERIFY	"smopts-verify"
-#endif
+#define	ENAME_INDENT_POSTSCRIPT	"indentpostscript"
+#define	ENAME_INDENT_PREAMBLE	"indentpreamble"
+#define ENAME_APPEND		"append"
+#define ENAME_ASK		"ask"
+#define ENAME_ASKBCC		"askbcc"
+#define ENAME_ASKCC		"askcc"
+#define ENAME_ASKSUB		"asksub"
+#define ENAME_AUTOINC		"autoinc"
+#define ENAME_AUTOPRINT		"autoprint"
+#define ENAME_CRT		"crt"
+#define ENAME_DEAD		"DEAD"
+#define ENAME_DEBUG		"debug"
+#define ENAME_DONTSENDEMPTY	"dontsendempty"
+#define ENAME_DOT		"dot"
+#define ENAME_EDITOR		"EDITOR"
+#define ENAME_ENABLE_PIPES	"enable-pipes"
+#define ENAME_ESCAPE		"escape"
+#define ENAME_FOLDER		"folder"
+#define ENAME_HEADER_FORMAT	"header-format"
+#define ENAME_HOLD		"hold"
+#define ENAME_IGNORE		"ignore"
+#define ENAME_IGNOREEOF		"ignoreeof"
+#define ENAME_INDENTPREFIX	"indentprefix"
+#define ENAME_INTERACTIVE	"interactive"
+#define ENAME_KEEP		"keep"
+#define ENAME_KEEPSAVE		"keepsave"
+#define ENAME_LISTER		"LISTER"
+#define ENAME_MBOX		"MBOX"
+#define ENAME_METOO		"metoo"
+#define ENAME_NOHEADER		"noheader"
+#define ENAME_NOSAVE		"nosave"
+#define ENAME_PAGER		"PAGER"
+#define ENAME_PAGER_OFF		"pager-off"
+#define ENAME_PROMPT		"prompt"
+#define ENAME_QUIET		"quiet"
 #define ENAME_RECORD		"record"
+#define ENAME_REGEX_SEARCH	"regex-search"
+#define ENAME_REPLYALL		"Replyall"
+#define ENAME_REPLYASRECIPIENT	"ReplyAsRecipient"
+#define ENAME_SCREEN		"screen"
+#define ENAME_SCREENHEIGHT	"screenheight"
+#define ENAME_SCREENWIDTH	"screenwidth"
+#define ENAME_SEARCHHEADERS	"searchheaders"
+#define ENAME_SENDMAIL		"sendmail"
+#define ENAME_SHELL		"SHELL"
+#define ENAME_SHOW_RCPT		"show-rcpt"
+#define ENAME_SMOPTS_VERIFY	"smopts-verify"
+#define ENAME_TOPLINES		"toplines"
+#define ENAME_VERBOSE		"verbose"
+#define ENAME_VISUAL		"VISUAL"
 
 #define sizeofarray(a)	(sizeof(a)/sizeof(*a))
 #define	equal(a, b)	(strcmp(a,b)==0)/* A nice function to string compare */
-
-#define readline mail_readline
 
 struct message {
 	short	m_flag;			/* flags, see below */
@@ -96,6 +141,16 @@ struct message {
 	long	m_lines;		/* Lines in the message */
 	off_t	m_size;			/* Bytes in the message */
 	long	m_blines;		/* Body (non-header) lines */
+
+	/*
+	 * threading fields
+	 */
+	int		m_index;	/* message index in this thread */
+	int		m_depth;	/* depth in thread */
+	struct message *m_flink;	/* link to next message */
+	struct message *m_blink;	/* link to previous message */
+	struct message *m_clink;	/* link to child of this message */
+	struct message *m_plink;	/* link to parent of thread */
 };
 typedef struct mime_info mime_info_t;	/* phantom structure only to attach.c */
 
@@ -109,11 +164,12 @@ typedef struct mime_info mime_info_t;	/* phantom structure only to attach.c */
 #define	MTOUCH		(1<<3)		/* entry has been noticed */
 #define	MPRESERVE	(1<<4)		/* keep entry in sys mailbox */
 #define	MMARK		(1<<5)		/* message is marked! */
-#define	MODIFY		(1<<6)		/* message has been modified */
+#define	MMODIFY		(1<<6)		/* message has been modified */
 #define	MNEW		(1<<7)		/* message has never been seen */
 #define	MREAD		(1<<8)		/* message has been read sometime. */
 #define	MSTATUS		(1<<9)		/* message status has changed */
 #define	MBOX		(1<<10)		/* Send this to mbox, regardless */
+#define MTAGGED		(1<<11)		/* message has been tagged */
 
 /*
  * Given a file address, determine the block number it represents.
@@ -130,6 +186,9 @@ typedef struct mime_info mime_info_t;	/* phantom structure only to attach.c */
 struct cmd {
 	const char *c_name;		/* Name of command */
 	int	(*c_func)(void *);	/* Implementor of the command */
+	int	c_pipe;			/* Pipe output through the pager */
+# define C_PIPE_PAGER	1		/* enable use of pager */
+# define C_PIPE_SHELL	2		/* enable shell pipes */
 #ifdef USE_EDITLINE
 	const char *c_complete;		/* String describing completion */
 #endif
@@ -153,13 +212,14 @@ struct cmd {
 #define	NOLIST	 3		/* Just plain 0 */
 #define	NDMLIST	 4		/* Message list, no defaults */
 
-#define	P	040		/* Autoprint dot after command */
-#define	I	0100		/* Interactive command bit */
-#define	M	0200		/* Legal from send mode bit */
-#define	W	0400		/* Illegal when read only bit */
-#define	F	01000		/* Is a conditional command */
-#define	T	02000		/* Is a transparent command */
-#define	R	04000		/* Cannot be called from collect */
+#define	P	0x010		/* Autoprint dot after command */
+#define	I	0x020		/* Interactive command bit */
+#define	M	0x040		/* Legal from send mode bit */
+#define	W	0x080		/* Illegal when read only bit */
+#define	F	0x100		/* Is a conditional command */
+#define	T	0x200		/* Is a transparent command */
+#define	R	0x400		/* Cannot be called from collect */
+#define ARGTYPE_MASK	~(P|I|M|W|F|T|R)
 
 /*
  * Oft-used mask values
@@ -184,8 +244,9 @@ struct headline {
 #define	GCC	 0x004		/* And the Cc: line */
 #define	GBCC	 0x008		/* And also the Bcc: line */
 #define GSMOPTS  0x010		/* Grab the sendmail options */
+#define GMISC	 0x020		/* miscellaneous extra fields for sending */
 #ifdef MIME_SUPPORT
-#define GMIME    0x020		/* mime flag */
+#define GMIME    0x040		/* mime flag */
 #endif
 #define	GMASK	(GTO|GSUBJECT|GCC|GBCC|GSMOPTS)
 				/* Mask of places from whence */
@@ -261,6 +322,8 @@ struct header {
 	struct name *h_cc;		/* Carbon copies string */
 	struct name *h_bcc;		/* Blind carbon copies */
 	struct name *h_smopts;		/* Sendmail options */
+	char *h_in_reply_to;
+	struct name *h_references;
 #ifdef MIME_SUPPORT
 	char *h_mime_boundary;		/* MIME multipart boundary string */
 	struct Content h_Content;	/* MIME content for message */
@@ -304,14 +367,11 @@ struct grouphead {
 	struct	group *g_list;		/* Users in group. */
 };
 
-#ifdef SMOPTS_CMD
 struct smopts_s {
 	struct smopts_s *s_link;	/* Link to next smopts_s in list */
 	char *s_name;			/* Name of this smopts_s */
 	struct name *s_smopts;		/* sendmail options name list */
 };
-#endif /* SMOPTS_CMD */
-
 
 /*
  * Structure of the hash table of ignored header fields
@@ -325,34 +385,24 @@ struct ignoretab {
 };
 
 /*
- * Token values returned by the scanner used for argument lists.
- * Also, sizes of scanner-related things.
+ * Constants for conditional commands.  These control whether we
+ * should be executing commands or not.
  */
+struct cond_stack_s {
+	struct cond_stack_s *c_next;
+	int c_cond;
+};
+#define	CNONE		0x00		/* Execute everything */
+#define	CSKIP		0x01		/* Do not execute commands */
+#define	CIF		0x02		/* Inside if/endif block */
+#define	CELSE		0x04		/* The last conditional was else */
+#define	CIGN		0x08		/* Conditional in a skipped block */
 
-#define	TEOL	0			/* End of the command line */
-#define	TNUMBER	1			/* A message number */
-#define	TDASH	2			/* A simple dash */
-#define	TSTRING	3			/* A string (possibly containing -) */
-#define	TDOT	4			/* A "." */
-#define	TUP	5			/* An "^" */
-#define	TDOLLAR	6			/* A "$" */
-#define	TSTAR	7			/* A "*" */
-#define	TOPEN	8			/* An '(' */
-#define	TCLOSE	9			/* A ')' */
-#define TPLUS	10			/* A '+' */
-#define TERROR	11			/* A lexical error */
-
-#define	REGDEP	2			/* Maximum regret depth. */
-#define	STRINGLEN	1024		/* Maximum length of string token */
-
-/*
- * Constants for conditional commands.  These describe whether
- * we should be executing stuff or not.
- */
-
-#define	CANY		0		/* Execute in send or receive mode */
-#define	CRCV		1		/* Execute in receive mode only */
-#define	CSEND		2		/* Execute in send mode only */
+enum mailmode_e {
+	mm_receiving,			/* receiving mail mode */
+	mm_sending,			/* sending mail mode */
+	mm_hdrsonly			/* headers only mode */
+};
 
 /*
  * Kludges to handle the change from setexit / reset to setjmp / longjmp
@@ -375,7 +425,7 @@ struct ignoretab {
  * Make this static inline available everywhere.
  */
 static inline char*
-skip_white(char *cp)
+skip_blank(char *cp)
 {
 	while (isblank((unsigned char)*cp))
 		cp++;

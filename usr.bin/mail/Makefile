@@ -1,28 +1,25 @@
-#	$NetBSD: Makefile,v 1.27 2006/10/31 20:07:32 christos Exp $
+#	$NetBSD: Makefile,v 1.28 2006/11/28 18:45:32 christos Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
 
 USE_EDITLINE=yes
 MIME_SUPPORT=yes	# currently requires USE_EDITLINE
-CHARSET_SUPPORT=yes	# only used with MIME_SUPPORT
-SMOPTS_CMD=yes		# build the sendas command
+CHARSET_SUPPORT=yes	# requires MIME_SUPPORT
+THREAD_SUPPORT=yes	# EXPERIMENTAL
 
 PROG=	mail
-SRCS=	version.c support.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c dotlock.c \
-	edit.c fio.c getname.c head.c v7.local.c lex.c list.c main.c names.c \
-	popen.c quit.c send.c strings.c temp.c tty.c vars.c
-SRCS+=	format.c
+SRCS=	version.c support.c cmd1.c cmd2.c cmd3.c cmd4.c cmdtab.c collect.c \
+	dotlock.c edit.c fio.c format.c getname.c head.c v7.local.c lex.c \
+	list.c main.c names.c popen.c quit.c send.c strings.c temp.c tty.c \
+	vars.c
 LINKS=	${BINDIR}/mail ${BINDIR}/Mail ${BINDIR}/mail ${BINDIR}/mailx
 MLINKS=	mail.1 Mail.1 mail.1 mailx.1
 
 LDADD+=		-lutil
 DPADD+=		${LIBUTIL}
 
-.if ${SMOPTS_CMD:Uno} == "yes"
-SRCS+=	cmd4.c
-CPPFLAGS+=	-DSMOPTS_CMD
-.endif
+SRCS+=	
 
 .if ${USE_EDITLINE:Uno} == "yes"
 SRCS+=	complete.c
@@ -36,6 +33,7 @@ SRCS+=	mime_attach.c
 SRCS+=	mime_child.c
 SRCS+=	mime_codecs.c
 SRCS+=	mime_decode.c
+SRCS+=	mime_detach.c
 SRCS+=	mime_header.c
 
 CPPFLAGS+=	-DMIME_SUPPORT
@@ -46,6 +44,11 @@ CPPFLAGS+=	-DCHARSET_SUPPORT
 LDADD+=		-lmagic -lz
 DPADD+=		${LIBMAGIC} ${LIBZ}
 .endif
+.endif
+
+.if ${THREAD_SUPPORT:Uno} == "yes"
+SRCS+=	thread.c
+CPPFLAGS+=	-DTHREAD_SUPPORT
 .endif
 
 WARNS=	4

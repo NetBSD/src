@@ -1,4 +1,4 @@
-/*	$NetBSD: temp.c,v 1.20 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: temp.c,v 1.21 2006/11/28 18:45:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: temp.c,v 1.20 2006/10/31 20:07:32 christos Exp $");
+__RCSID("$NetBSD: temp.c,v 1.21 2006/11/28 18:45:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,9 +48,7 @@ __RCSID("$NetBSD: temp.c,v 1.20 2006/10/31 20:07:32 christos Exp $");
  * Give names to all the temporary files that we will need.
  */
 
-char	*tmpdir;
-
-void
+PUBLIC void
 tinit(void)
 {
 	char pathbuf[MAXPATHLEN];
@@ -76,11 +74,12 @@ tinit(void)
 	if (myname != NULL) {
 		if (getuserid(myname) < 0)
 			errx(1, "\"%s\" is not a user of this system", myname);
-	} else {
+	}
+	else {
 		if ((cp = username()) == NULL) {
 			myname = savestr("nobody");
-			if (rcvmode)
-				exit(1);
+			if (mailmode == mm_receiving)
+				errx(EXIT_FAILURE, "who am I receiving for?");
 		} else
 			myname = savestr(cp);
 	}
