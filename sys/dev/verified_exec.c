@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.49 2006/11/27 23:05:18 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.50 2006/11/28 22:22:02 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.49 2006/11/27 23:05:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.50 2006/11/28 22:22:02 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.49 2006/11/27 23:05:18 elad Exp $\n$NetBSD: verified_exec.c,v 1.49 2006/11/27 23:05:18 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.50 2006/11/28 22:22:02 elad Exp $\n$NetBSD: verified_exec.c,v 1.50 2006/11/28 22:22:02 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -66,6 +66,8 @@ __RCSID("$Id: verified_exec.c,v 1.49 2006/11/27 23:05:18 elad Exp $\n$NetBSD: ve
 
 #include <sys/fileassoc.h>
 #include <sys/syslog.h>
+
+#include <prop/proplib.h>
 
 /* count of number of times device is open (we really only allow one open) */
 static unsigned int veriexec_dev_usage;
@@ -113,6 +115,11 @@ int     veriexecopen(dev_t dev, int flags, int fmt, struct lwp *l);
 int     veriexecclose(dev_t dev, int flags, int fmt, struct lwp *l);
 int     veriexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 		       struct lwp *l);
+
+static int veriexec_newtable(prop_dictionary_t, struct lwp *);
+static int veriexec_load(prop_dictionary_t, struct lwp *);
+static int veriexec_delete(prop_dictionary_t, struct lwp *);
+static int veriexec_query(prop_dictionary_t, prop_dictionary_t, struct lwp *);
 
 void
 veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self,
@@ -164,6 +171,8 @@ int
 veriexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
     struct lwp *l)
 {
+	struct plistref *plistref;
+	prop_dictionary_t dict;
 	int error = 0;
 
 	if (veriexec_strict > VERIEXEC_LEARNING) {
@@ -173,24 +182,60 @@ veriexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 		return (EPERM);
 	}
 
+	plistref = (struct plistref *)data;
+
 	switch (cmd) {
 	case VERIEXEC_TABLESIZE:
-		error = veriexec_newtable((struct veriexec_sizing_params *)
-		    data, l);
+		error = prop_dictionary_copyin_ioctl(plistref, cmd, &dict);
+		if (error)
+			break;
+
+		error = veriexec_newtable(dict, l);
+		prop_object_release(dict);
 		break;
 
 	case VERIEXEC_LOAD:
-		error = veriexec_load((struct veriexec_params *)data, l);
+		error = prop_dictionary_copyin_ioctl(plistref, cmd, &dict);
+		if (error)
+			break;
+
+		error = veriexec_load(dict, l);
+		prop_object_release(dict);
 		break;
 
 	case VERIEXEC_DELETE:
-		error = veriexec_delete((struct veriexec_delete_params *)data,
-		    l);
+		error = prop_dictionary_copyin_ioctl(plistref, cmd, &dict);
+		if (error)
+			break;
+
+		error = veriexec_delete(dict, l);
+		prop_object_release(dict);
 		break;
 
-	case VERIEXEC_QUERY:
-		error = veriexec_query((struct veriexec_query_params *)data, l);
+	case VERIEXEC_QUERY: {
+		prop_dictionary_t rdict;
+
+		error = prop_dictionary_copyin_ioctl(plistref, cmd, &dict);
+		if (error)
+			return (error);
+
+		rdict = prop_dictionary_create();
+		if (rdict == NULL) {
+			error = ENOMEM;
+			break;
+		}
+
+		error = veriexec_query(dict, rdict, l);
+		if (error == 0) {
+			error = prop_dictionary_copyout_ioctl(plistref, cmd,
+			    rdict);
+		}
+
+		prop_object_release(rdict);
+		prop_object_release(dict);
+
 		break;
+		}
 
 	default:
 		/* Invalid operation. */
@@ -216,20 +261,22 @@ SYSINIT(veriexec, SI_SUB_PSEUDO, SI_ORDER_ANY, veriexec_drvinit, NULL);
 /*
  * Create a new Veriexec table.
  */
-int
-veriexec_newtable(struct veriexec_sizing_params *params, struct lwp *l)
+static int
+veriexec_newtable(prop_dictionary_t dict, struct lwp *l)
 {
 	struct veriexec_table_entry *vte;
 	struct nameidata nid;
 	u_char buf[16];
 	int error;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, params->file, l);
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE,
+	    prop_string_cstring_nocopy(prop_dictionary_get(dict, "mount")), l);
 	error = namei(&nid);
 	if (error)
 		return (error);
 
-	error = fileassoc_table_add(nid.ni_vp->v_mount, params->hash_size);
+	error = fileassoc_table_add(nid.ni_vp->v_mount,
+	    prop_number_integer_value(prop_dictionary_get(dict, "count")));
 	if (error && (error != EEXIST))
 		goto out;
 
@@ -262,14 +309,16 @@ veriexec_newtable(struct veriexec_sizing_params *params, struct lwp *l)
 	return (error);
 }
 
-int
-veriexec_load(struct veriexec_params *params, struct lwp *l)
+static int
+veriexec_load(prop_dictionary_t dict, struct lwp *l)
 {
 	struct veriexec_file_entry *hh, *e;
 	struct nameidata nid;
+	const char *file, *fp_type;
 	int error;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, params->file, l);
+	file = prop_string_cstring_nocopy(prop_dictionary_get(dict, "file"));
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, file, l);
 	error = namei(&nid);
 	if (error)
 		return (error);
@@ -277,25 +326,25 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 	/* Add only regular files. */
 	if (nid.ni_vp->v_type != VREG) {
 		log(LOG_ERR, "Veriexec: Not adding `%s': Not a regular file.\n",
-		    params->file);
+		    file);
 		error = EINVAL;
 		goto out;
 	}
 
 	e = malloc(sizeof(*e), M_TEMP, M_WAITOK);
 
-	if ((e->ops = veriexec_find_ops(params->fp_type)) == NULL) {
+	fp_type = prop_string_cstring_nocopy(prop_dictionary_get(dict,
+	    "fp-type"));
+	if ((e->ops = veriexec_find_ops(__UNCONST(fp_type))) == NULL) {
 		free(e, M_TEMP);
 		log(LOG_ERR, "Veriexec: Invalid or unknown fingerprint type "
-		    "`%s' for file `%s'.\n", params->fp_type, params->file);
+		    "`%s' for file `%s'.\n", fp_type, file);
 		error = EINVAL;
 		goto out;
 	}
 
-	e->fp = malloc(e->ops->hash_len, M_TEMP, M_WAITOK|M_ZERO);
-	error = copyin(params->fingerprint, e->fp, e->ops->hash_len);
-	if (error) {
-		free(e->fp, M_TEMP);
+	e->fp = prop_data_data(prop_dictionary_get(dict, "fp"));
+	if (e->fp == NULL) {
 		free(e, M_TEMP);
 		goto out;
 	}
@@ -304,7 +353,7 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 	if (hh != NULL) {
 		boolean_t fp_mismatch;
 
-		if (strcmp(e->ops->type, params->fp_type) ||
+		if (strcmp(e->ops->type, fp_type) ||
 		    memcmp(hh->fp, e->fp, hh->ops->hash_len))
 			fp_mismatch = TRUE;
 		else
@@ -312,7 +361,7 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 
 		if ((veriexec_verbose >= 1) || fp_mismatch)
 			log(LOG_NOTICE, "Veriexec: Duplicate entry for `%s' "
-			    "ignored. (%s fingerprint)\n", params->file, 
+			    "ignored. (%s fingerprint)\n", file, 
 			    fp_mismatch ? "different" : "same");
 
 		free(e->fp, M_TEMP);
@@ -322,8 +371,11 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 		goto out;
 	}
 
-	e->type = params->type;
+	e->type = prop_number_integer_value(prop_dictionary_get(dict,
+	    "entry-type"));
+
 	e->status = FINGERPRINT_NOTEVAL;
+
 	e->page_fp = NULL;
 	e->page_fp_status = PAGE_FP_NONE;
 	e->npages = 0;
@@ -336,21 +388,22 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 		goto out;
 	}
 
-	veriexec_report("New entry.", params->file, NULL, REPORT_DEBUG);
+	veriexec_report("New entry.", file, NULL, REPORT_DEBUG);
 
  out:
 	vrele(nid.ni_vp);
 	return (error);
 }
 
-int
-veriexec_delete(struct veriexec_delete_params *params, struct lwp *l)
+static int
+veriexec_delete(prop_dictionary_t dict, struct lwp *l)
 {
 	struct veriexec_table_entry *vte;
 	struct nameidata nid;
 	int error;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, params->file, l);
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE,
+	    prop_string_cstring_nocopy(prop_dictionary_get(dict, "file")), l);
 	error = namei(&nid);
 	if (error)
 		return (error);
@@ -385,14 +438,15 @@ veriexec_delete(struct veriexec_delete_params *params, struct lwp *l)
 	return (error);
 }
 
-int
-veriexec_query(struct veriexec_query_params *params, struct lwp *l)
+static int
+veriexec_query(prop_dictionary_t dict, prop_dictionary_t rdict, struct lwp *l)
 {
 	struct veriexec_file_entry *vfe;
 	struct nameidata nid;
 	int error;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, params->file, l);
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE,
+	    prop_string_cstring_nocopy(prop_dictionary_get(dict, "file")), l);
 	error = namei(&nid);
 	if (error)
 		return (error);
@@ -403,19 +457,12 @@ veriexec_query(struct veriexec_query_params *params, struct lwp *l)
 		goto out;
 	}
 
-	params->type = vfe->type;
-	params->status = vfe->status;
-	params->hash_len = vfe->ops->hash_len;
-	strlcpy(params->fp_type, vfe->ops->type, sizeof(params->fp_type));
-	error = copyout(params, params->uaddr, sizeof(*params));
-	if (error)
-		goto out;
-	if (params->fp_bufsize >= vfe->ops->hash_len) {
-		error = copyout(vfe->fp, params->fp, vfe->ops->hash_len);
-		if (error)
-			goto out;
-	} else
-		error = ENOMEM;
+	prop_dictionary_set_uint8(rdict, "entry-type", vfe->type);
+	prop_dictionary_set_uint8(rdict, "status", vfe->status);
+	prop_dictionary_set(rdict, "fp-type",
+	    prop_string_create_cstring(vfe->ops->type));
+	prop_dictionary_set(rdict, "fp",
+	    prop_data_create_data(vfe->fp, vfe->ops->hash_len));
 
  out:
 	vrele(nid.ni_vp);
