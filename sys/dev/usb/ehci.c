@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.116 2006/11/22 21:10:36 drochner Exp $ */
+/*	$NetBSD: ehci.c,v 1.117 2006/11/28 20:58:12 drochner Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.116 2006/11/22 21:10:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.117 2006/11/28 20:58:12 drochner Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -773,7 +773,6 @@ ehci_idone(struct ehci_xfer *ex)
 	ehci_soft_qtd_t *sqtd, *lsqtd;
 	u_int32_t status = 0, nstatus = 0;
 	int actlen;
-	uint pkts_left;
 
 	DPRINTFN(/*12*/2, ("ehci_idone: ex=%p\n", ex));
 #ifdef DIAGNOSTIC
@@ -823,24 +822,19 @@ ehci_idone(struct ehci_xfer *ex)
 	 * If there are left over TDs we need to update the toggle.
 	 * The default pipe doesn't need it since control transfers
 	 * start the toggle at 0 every time.
+	 * For a short transfer we need to update the toggle for the missing
+	 * packets within the qTD.
 	 */
-	if (sqtd != lsqtd->nextqtd &&
+	if ((sqtd != lsqtd->nextqtd || EHCI_QTD_GET_BYTES(status)) &&
 	    xfer->pipe->device->default_pipe != xfer->pipe) {
-		printf("ehci_idone: need toggle update status=%08x nstatus=%08x\n", status, nstatus);
+		DPRINTFN(2, ("ehci_idone: need toggle update "
+			     "status=%08x nstatus=%08x\n", status, nstatus));
 #if 0
 		ehci_dump_sqh(epipe->sqh);
 		ehci_dump_sqtds(ex->sqtdstart);
 #endif
 		epipe->nexttoggle = EHCI_QTD_GET_TOGGLE(nstatus);
 	}
-
-	/*
-	 * For a short transfer we need to update the toggle for the missing
-	 * packets within the qTD.
-	 */
-	pkts_left = EHCI_QTD_GET_BYTES(status) /
-	    UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
-	epipe->nexttoggle ^= pkts_left % 2;
 
 	DPRINTFN(/*10*/2, ("ehci_idone: len=%d, actlen=%d, status=0x%x\n",
 			   xfer->length, actlen, status));
