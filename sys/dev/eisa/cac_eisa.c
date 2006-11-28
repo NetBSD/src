@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.15 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.16 2006/11/28 20:29:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.15 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.16 2006/11/28 20:29:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,6 +269,10 @@ cac_eisa_l0_completed(struct cac_softc *sc)
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 	ccb->ccb_req.error = status;
+
+	if ((off & 3) != 0 && ccb->ccb_req.error == 0)
+		ccb->ccb_req.error = CAC_RET_CMD_REJECTED;
+
 	return (ccb);
 }
 
