@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.6 2006/11/28 18:30:47 cube Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.7 2006/11/28 18:36:26 cube Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -332,6 +332,10 @@ _prop_object_copyout_ioctl(struct plistref *pref, const u_long cmd,
 	len = strlen(buf) + 1;
 	rlen = round_page(len);
 
+	/*
+	 * See sys_mmap() in sys/uvm/uvm_mmap.c.
+	 * Let's act as if we were calling mmap(0, ...)
+	 */
 	uaddr = p->p_emul->e_vm_default_addr(p,
 	    (vaddr_t)p->p_vmspace->vm_daddr, rlen);
 
