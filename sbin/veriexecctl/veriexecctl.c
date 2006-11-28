@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.24 2006/11/21 00:22:04 elad Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.25 2006/11/28 22:22:03 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -44,12 +44,14 @@
 #include <err.h>
 #include <errno.h>
 
+#include <prop/proplib.h>
+
 #include "veriexecctl.h"
 
 #define	VERIEXEC_DEVICE	"/dev/veriexec"
 
-extern struct veriexec_params params; /* in veriexecctl_parse.y */
-extern char *filename; /* in veriexecctl_conf.l */
+extern prop_dictionary_t load_params;
+extern char *filename;
 extern int yynerrs;
 int gfd, verbose = 0, phase;
 size_t line;
@@ -79,7 +81,7 @@ dev_lookup(char *vfs)
 	struct veriexec_up *p;
 
 	CIRCLEQ_FOREACH(p, &params_list, vu_list)
-		if (strcmp(p->vu_param.file, vfs) == 0)
+		if (strcmp(dict_gets(p->vu_preload, "mount"), vfs) == 0)
 			return (p);
 
 	return NULL;
@@ -93,8 +95,10 @@ dev_add(char *vfs)
 	if ((up = calloc((size_t)1, sizeof(*up))) == NULL)
 		err(1, "No memory");
 
-	up->vu_param.hash_size = 1;
-	strlcpy(up->vu_param.file, vfs, sizeof(up->vu_param.file));
+	up->vu_preload = prop_dictionary_create();
+
+	dict_sets(up->vu_preload, "mount", vfs);
+	prop_dictionary_set_uint64(up->vu_preload, "count", 1);
 
 	CIRCLEQ_INSERT_TAIL(&params_list, up, vu_list);
 
@@ -114,10 +118,12 @@ phase1_preload(void)
 
 		vup = CIRCLEQ_FIRST(&params_list);
 
-		if (statvfs(vup->vu_param.file, &sv) != 0)
-			err(1, "Can't statvfs() `%s'", vup->vu_param.file);
+		if (statvfs(dict_gets(vup->vu_preload, "mount"), &sv) != 0)
+			err(1, "Can't statvfs() `%s'",
+			    dict_gets(vup->vu_preload, "mount"));
 
-		if (ioctl(gfd, VERIEXEC_TABLESIZE, &(vup->vu_param)) == -1) {
+		if (prop_dictionary_send_ioctl(vup->vu_preload, gfd,
+		    VERIEXEC_TABLESIZE) == -1) {
 			if (errno != EEXIST)
 				err(1, "Error in phase 1: Can't "
 				    "set hash table size for mount `%s'",
@@ -125,12 +131,18 @@ phase1_preload(void)
 		}
 
 		if (verbose) {
+			uint64_t count;
+
+			prop_dictionary_get_uint64(vup->vu_preload, "count",
+			    &count);
 			printf(" => Hash table sizing successful for mount "
-			    "`%s'. (%zu entries)\n", sv.f_mntonname,
-			    vup->vu_param.hash_size);
+			    "`%s'. (%zu entries)\n", sv.f_mntonname, count);
 		}
 
 		CIRCLEQ_REMOVE(&params_list, vup, vu_list);
+
+		prop_object_release(vup->vu_preload);
+
 		free(vup);
 	}
 }
@@ -142,14 +154,24 @@ phase1_preload(void)
 void
 phase2_load(void)
 {
+	uint8_t t;
+
 	/*
 	 * If there's no access type specified, use the default.
 	 */
-	if (!(params.type & (VERIEXEC_DIRECT|VERIEXEC_INDIRECT|VERIEXEC_FILE)))
-		params.type |= VERIEXEC_DIRECT;
-	if (ioctl(gfd, VERIEXEC_LOAD, &params) == -1)
-		warn("Cannot load params from `%s'", params.file);
-	free(params.fingerprint);
+	prop_dictionary_get_uint8(load_params, "entry-type", &t);
+	if (!(t & (VERIEXEC_DIRECT|VERIEXEC_INDIRECT|VERIEXEC_FILE))) {
+		t |= VERIEXEC_DIRECT;
+		prop_dictionary_set_uint8(load_params, "entry-type", t);
+	}
+
+	if (prop_dictionary_send_ioctl(load_params, gfd, VERIEXEC_LOAD) == -1)
+		warn("Cannot load params from `%s'",
+		    dict_gets(load_params, "file"));
+
+	prop_object_release(load_params);
+
+	load_params = NULL;
 }
 
 /*
@@ -159,7 +181,6 @@ static int
 fingerprint_load(char *ifile)
 {
 	CIRCLEQ_INIT(&params_list);
-	memset(&params, 0, sizeof(params));
 
 	if ((yyin = openlock(ifile)) == NULL)
 		err(1, "Cannot open `%s'", ifile);
@@ -254,10 +275,12 @@ print_flags(unsigned char flags)
 }
 
 static void
-print_query(struct veriexec_query_params *qp, char *file)
+print_query(prop_dictionary_t qp, char *file)
 {
 	struct statvfs sv;
+	const char *v;
 	int i;
+	uint8_t u8;
 
 	if (statvfs(file, &sv) != 0)
 		err(1, "Can't statvfs() `%s'\n", file);
@@ -265,12 +288,15 @@ print_query(struct veriexec_query_params *qp, char *file)
 	printf("Filename: %s\n", file);
 	printf("Mount: %s\n", sv.f_mntonname);
 	printf("Entry flags: ");
-	print_flags(qp->type);
-	printf("Entry status: %s\n", STATUS_STRING(qp->status));
-	printf("Hashing algorithm: %s\n", qp->fp_type);
+	prop_dictionary_get_uint8(qp, "entry-type", &u8);
+	print_flags(u8);
+	prop_dictionary_get_uint8(qp, "status", &u8);
+	printf("Entry status: %s\n", STATUS_STRING(u8));
+	printf("Fingerprint algorithm: %s\n", dict_gets(qp, "fp-type"));
 	printf("Fingerprint: ");
-	for (i = 0; i < qp->hash_len; i++)
-		printf("%02x", qp->fp[i]);
+	v = dict_getd(qp, "fp");
+	for (i = 0; i < prop_data_size(prop_dictionary_get(qp, "fp")); i++)
+		printf("%02x", v[i] & 0xff);
 	printf("\n");	
 }
 
@@ -301,16 +327,18 @@ main(int argc, char **argv)
 	 * Handle the different commands we can do.
 	 */
 	if (argc == 2 && strcasecmp(argv[0], "load") == 0) {
+		load_params = NULL;
 		filename = argv[1];
 		fingerprint_load(argv[1]);
 	} else if (argc == 2 && strcasecmp(argv[0], "delete") == 0) {
-		struct veriexec_delete_params dp;
+		prop_dictionary_t dp;
 		struct stat sb;
 
 		if (stat(argv[1], &sb) == -1)
 			err(1, "Can't stat `%s'", argv[1]);
 
-		strlcpy(dp.file, argv[1], sizeof(dp.file));
+		dp = prop_dictionary_create();
+		dict_sets(dp, "file", argv[1]);
 
 		/*
 		 * If it's a regular file, remove it. If it's a directory,
@@ -319,31 +347,33 @@ main(int argc, char **argv)
 		if (!S_ISDIR(sb.st_mode) && !S_ISREG(sb.st_mode))
 			errx(1, "`%s' is not a regular file or directory.", argv[1]);
 
-		if (ioctl(gfd, VERIEXEC_DELETE, &dp) == -1)
+		if (prop_dictionary_send_ioctl(dp, gfd, VERIEXEC_DELETE) == -1)
 			err(1, "Error deleting `%s'", argv[1]);
-	} else if (argc == 2 && strcasecmp(argv[0], "query") == 0) {
-		struct veriexec_query_params qp;
-		struct stat sb;
-		char fp[512]; /* XXX */
 
-		memset(&qp, 0, sizeof(qp));
-		qp.uaddr = &qp;
+		prop_object_release(dp);
+	} else if (argc == 2 && strcasecmp(argv[0], "query") == 0) {
+		prop_dictionary_t qp, rqp;
+		struct stat sb;
 
 		if (stat(argv[1], &sb) == -1)
 			err(1, "Can't stat `%s'", argv[1]);
 		if (!S_ISREG(sb.st_mode))
 			errx(1, "`%s' is not a regular file.", argv[1]);
 
-		strlcpy(qp.file, argv[1], sizeof(qp.file));
+		qp = prop_dictionary_create();
 
-		memset(fp, 0, sizeof(fp));
-		qp.fp = &fp[0];
-		qp.fp_bufsize = sizeof(fp);
+		dict_sets(qp, "file", argv[1]);
 
-		if (ioctl(gfd, VERIEXEC_QUERY, &qp) == -1)
+		if (prop_dictionary_sendrecv_ioctl(qp, gfd, VERIEXEC_QUERY,
+		    &rqp) == -1)
 			err(1, "Error querying `%s'", argv[1]);
 
-		print_query(&qp, argv[1]);
+		if (rqp != NULL) {
+			print_query(rqp, argv[1]);
+			prop_object_release(rqp);
+		}
+
+		prop_object_release(qp);
 	} else
 		usage();
 
