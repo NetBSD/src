@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.114 2006/10/12 10:14:20 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.115 2006/11/28 13:16:37 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.114 2006/10/12 10:14:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.115 2006/11/28 13:16:37 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1284,8 +1284,7 @@ ReFault:
 				uvm_pagecopy(anon->an_page, pg);
 
 				/* force reload */
-				pmap_page_protect(anon->an_page,
-						  VM_PROT_NONE);
+				pmap_page_protect(anon->an_page, VM_PROT_NONE);
 				uvm_lock_pageq();	  /* KILL loan */
 
 				anon->an_page->uanon = NULL;
