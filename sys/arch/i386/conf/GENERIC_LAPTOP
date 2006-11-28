@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.215 2006/11/17 22:18:22 tsutsui Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.216 2006/11/28 16:15:37 christos Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.215 $"
+#ident 		"GENERIC-$Revision: 1.216 $"
 
 maxusers	32		# estimated number of users
 
@@ -18,7 +18,7 @@ options 	I486_CPU
 options 	I586_CPU
 options 	I686_CPU
 
-makeoptions	COPTS="-O2 -march=i486 -mtune=pentiumpro" # Assume at least 486,
+makeoptions	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
 							# tune for more modern
 
 # CPU-related options.
