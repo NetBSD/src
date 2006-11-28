@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.h,v 1.3 2006/10/31 20:07:32 christos Exp $	*/
+/*	$NetBSD: complete.h,v 1.4 2006/11/28 18:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -56,7 +56,8 @@ struct el_modes_s {
 
 extern struct el_modes_s elm;
 
-char * my_gets(el_mode_t *, const char *, char *);
+char *my_gets(el_mode_t *, const char *, char *);
+char *my_getline(el_mode_t *, const char *, const char *);
 void init_editline(void);
 
 /*

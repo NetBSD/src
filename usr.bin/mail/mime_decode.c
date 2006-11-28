@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.3 2006/11/01 16:42:27 christos Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.4 2006/11/28 18:45:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.3 2006/11/01 16:42:27 christos Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.4 2006/11/28 18:45:32 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -66,41 +66,10 @@ __RCSID("$NetBSD: mime_decode.c,v 1.3 2006/11/01 16:42:27 christos Exp $");
 #include "mime_child.h"
 #include "mime_codecs.h"
 #include "mime_header.h"
+#include "mime_detach.h"
 #endif
 #include "glob.h"
-
-
-/************************************************
- * The fundametal data structure for this module!
- */
-struct mime_info {
-	struct mime_info *mi_blink;
-	struct mime_info *mi_flink;
-
-	/* sendmessage -> decoder -> filter -> pager */
-
-	FILE *mi_fo;		/* output file handle pointing to PAGER */
-	FILE *mi_pipe_end;	/* initial end of pipe */
-	FILE *mi_head_end;	/* close to here at start of body */
-
-	int mi_partnum;		/* part number displayed (if nonzero) */
-
-	const char *mi_version;
-	const char *mi_type;
-	const char *mi_subtype;
-	const char *mi_boundary;
-	const char *mi_charset;
-	const char *mi_encoding;
-
-	struct message *mp;		/* MP for this message regarded as a part. */
-	struct {
-		struct mime_info *mip;	/* parent of part of multipart message */
-		struct message *mp;
-	} mi_parent;
-
-	const char *mi_command_hook;	/* alternate command used to process this message */
-};
-
+#include "thread.h"
 
 #if 0
 #ifndef __lint__
@@ -117,9 +86,11 @@ show_one_mime_info(FILE *fp, struct mime_info *mip)
 	(void)fprintf(fp, "** Version: %s\n",  XX(mip->mi_version));
 	(void)fprintf(fp, "** type: %s\n",     XX(mip->mi_type));
 	(void)fprintf(fp, "** subtype: %s\n",  XX(mip->mi_subtype));
+	(void)fprintf(fp, "** boundary: %s\n", XX(mip->mi_boundary));
 	(void)fprintf(fp, "** charset: %s\n",  XX(mip->mi_charset));
 	(void)fprintf(fp, "** encoding: %s\n", XX(mip->mi_encoding));
-	(void)fprintf(fp, "** boundary: %s\n", XX(mip->mi_boundary));
+	(void)fprintf(fp, "** disposition: %s\n", XX(mip->mi_disposition));
+	(void)fprintf(fp, "** filename: %s\n", XX(mip->mi_filename));
 	(void)fprintf(fp, "** %p: flag: 0x%x, block: %ld, offset: %d, size: %lld, lines: %ld:%ld\n",
 	    mip->mp,
 	    mip->mp->m_flag,
@@ -134,7 +105,10 @@ show_one_mime_info(FILE *fp, struct mime_info *mip)
 	(void)fprintf(fp, "** mi_fo %p, mi_head_end %p, mi_pipe_end %p\n",
 	    mip->mi_fo, mip->mi_head_end, mip->mi_pipe_end);
 
+	(void)fprintf(fp, "** mi_ignore_body: %d\n", mip->mi_ignore_body);
 	(void)fprintf(fp, "** mi_partnum: %d\n", mip->mi_partnum);
+	(void)fprintf(fp, "** mi_partstr: %s\n", mip->mi_partstr);
+	(void)fprintf(fp, "** mi_msgstr: %d\n", mip->mi_msgstr);
 
 	(void)fflush(fp);
 	    
@@ -158,11 +132,11 @@ show_mime_info(FILE *fp, struct mime_info *mip, struct mime_info *end_mip)
 /*
  * Our interface to the file registry in popen.c
  */
-static FILE *
+PUBLIC FILE *
 pipe_end(struct mime_info *mip)
 {
 	FILE *fp;
-	fp = last_registered_file(1);	/* get last registered pipe */
+	fp = last_registered_file(mip->mi_detachdir ? 0 : 1);	/* get last registered pipe */
 	if (fp == NULL)
 		fp = mip->mi_fo;
 	return fp;
@@ -219,7 +193,7 @@ get_param(char *dst, char *src)
 	*cp2 = '\0';
 	if (*cp == ';')
 		cp++;
-	cp = skip_white(cp);
+	cp = skip_blank(cp);
 	return cp;
 }
 
@@ -237,7 +211,7 @@ cparam(const char field[], char *src, int downcase)
 		return NULL;
 
 	dst = salloc(strlen(src) + 1); /* large enough for any param in src */
-	cp = skip_white(src);
+	cp = skip_blank(src);
 	cp = get_param(dst, cp);
 	
 	if (field == NULL)
@@ -261,12 +235,14 @@ cparam(const char field[], char *src, int downcase)
 static void
 get_content(struct mime_info *mip)
 {
+	char *mime_disposition_field;
 	char *mime_type_field;
+	char *filename;
 	struct message *mp;
 	char *cp;
 
 	mp = mip->mp;
-	mip->mi_version  = cparam(NULL, hfield(MIME_HDR_VERSION, mp), 0);
+	mip->mi_version  = cparam(NULL, hfield(MIME_HDR_VERSION,  mp), 0);
 	mip->mi_encoding = cparam(NULL, hfield(MIME_HDR_ENCODING, mp), 1);
 
 	mime_type_field = hfield(MIME_HDR_TYPE, mp);
@@ -277,8 +253,27 @@ get_content(struct mime_info *mip)
 			*cp++ = '\0';
 		mip->mi_subtype = cp;
 	}
-	mip->mi_charset = cparam("charset", mime_type_field, 1);
 	mip->mi_boundary = cparam("boundary", mime_type_field, 0);
+	mip->mi_charset  = cparam("charset",  mime_type_field, 1);
+
+	mime_disposition_field = hfield(MIME_HDR_DISPOSITION, mp);
+	mip->mi_disposition = cparam(NULL, mime_disposition_field, 1);
+	/*
+	 * The type field typically has a "name" parameter for "image"
+	 * and "video" types, and I assume for other types as well.
+	 * We grab it, but override it if the disposition field has a
+	 * filename parameter as it often does for "attachments".
+	 * More careful analysis could be done, but this seems to work
+	 * pretty well.
+	 */
+	filename = cparam("name", mime_type_field, 0);
+	if ((cp = cparam("filename", mime_disposition_field, 0)) != NULL)
+		filename = cp;
+	if (filename) {
+		filename = basename(filename);	/* avoid absolute pathnames */
+		filename = savestr(filename);	/* save it! */
+	}
+	mip->mi_filename = filename;
 }
 
 
@@ -300,14 +295,23 @@ salloc_message(int flag, long block, short offset)
 }
 
 static struct mime_info *
-insert_new_mip(struct mime_info *this_mip)
+insert_new_mip(struct mime_info *this_mip, struct mime_info *top_mip,
+    struct message *top_mp, off_t end_pos, int partnum)
 {
 	struct mime_info *new_mip;
+
 	new_mip = csalloc(1, sizeof(*new_mip));
 	new_mip->mi_blink = this_mip;
 	new_mip->mi_flink = this_mip->mi_flink;
 	this_mip->mi_flink = new_mip;
-	this_mip = new_mip;
+
+	new_mip->mp = salloc_message(this_mip->mp->m_flag,
+	    (long)blockof(end_pos), offsetof(end_pos));
+
+	new_mip->mi_parent.mip = top_mip;
+	new_mip->mi_parent.mp = top_mp;
+	new_mip->mi_partnum = partnum;
+
 	return new_mip;
 }
 
@@ -338,7 +342,10 @@ split_multipart(struct mime_info *top_mip)
 
 	fp = setinput(top_mp);
 	beg_pos = ftello(fp);
-
+#if 0
+	warnx("beg_pos: %lld,  m_lines: %ld,  m_blines: %ld",
+	    beg_pos, top_mp->m_lines, top_mp->m_blines);
+#endif
 	for (lines_left = top_mp->m_lines - 1; lines_left >= 0; lines_left--) {
 		char *line;
 		size_t line_len;
@@ -366,11 +373,14 @@ split_multipart(struct mime_info *top_mip)
 			this_mp->m_blines -= 1;
 
 			this_mp->m_size = end_pos - beg_pos;
-
+#if 0
+			warnx("end_pos: %lld,  m_lines: %ld,  m_blines: %ld",
+			    end_pos, this_mp->m_lines, this_mp->m_blines);
+#endif
 			if (line[boundary_len + 2] == '-' &&
 			    line[boundary_len + 3] == '-') {/* end of multipart */
 				/* do a sanity check on the EOM */
-				if (lines_left) {
+				if (lines_left != 1) {
 					/*
 					 * XXX - this can happen!
 					 * Should we display the
@@ -378,19 +388,15 @@ split_multipart(struct mime_info *top_mip)
 					 * that it is blank or just
 					 * ignore it?
 					 */
-/*					(void)printf("EOM: lines left: %ld\n", lines_left); */
+#if 0
+					(void)printf("EOM: lines left: %ld\n", lines_left);
+#endif
 				}
 				break;	/* XXX - stop at this point or grab the rest? */
 			}
-
-			this_mip = insert_new_mip(this_mip);
-			this_mp = salloc_message(top_mp->m_flag,
-			    (long)blockof(end_pos), offsetof(end_pos));
-			this_mip->mp = this_mp;
-			this_mip->mi_parent.mip = top_mip;
-			this_mip->mi_parent.mp = top_mp;
-			this_mip->mi_partnum = partnum++;
-			
+			this_mip = insert_new_mip(this_mip, top_mip, top_mp, end_pos, partnum++);
+			this_mp = this_mip->mp;
+			this_mp->m_lines = 1; /* already read the first line in the header! */
 			beg_pos = end_pos;
 			in_header = 1;
 		}
@@ -434,15 +440,9 @@ split_message(struct mime_info *top_mip)
 			off_t end_pos;
 			end_pos = ftello(fp);
 			this_mp->m_size = end_pos - beg_pos;
-
-			this_mip = insert_new_mip(this_mip);
-			this_mp = salloc_message(top_mp->m_flag,
-			    (long)blockof(end_pos), offsetof(end_pos));
-			this_mip->mp = this_mp;
-			this_mip->mi_parent.mip = top_mip;
-			this_mip->mi_parent.mp = top_mp;
-			this_mip->mi_partnum = 0;  /* no partnum displayed */
-			
+			this_mip = insert_new_mip(this_mip, top_mip,top_mp, end_pos, 0);
+			this_mp = this_mip->mp;
+			this_mp->m_lines = 1; /* we already counted one line in the header! */
 			beg_pos = end_pos;
 			in_header = 0;	/* never in header again */
 		}
@@ -565,9 +565,23 @@ expand_mip(struct mime_info *top_mip)
 	struct mime_info *this_mip;
 	struct mime_info *next_mip;
 
+	if (top_mip->mi_partnum == 0) {
+		if (top_mip->mi_blink)
+			top_mip->mi_partstr = top_mip->mi_blink->mi_partstr;
+	}
+	else if (top_mip->mi_parent.mip) {
+		const char *prefix;
+		char *cp;
+		prefix = top_mip->mi_parent.mip->mi_partstr;
+		(void)sasprintf(&cp, "%s%s%d", prefix,
+		    *prefix ? "." : "", top_mip->mi_partnum);
+		top_mip->mi_partstr = cp;
+	}
+
 	next_mip = top_mip->mi_flink;
 
 	if (is_multipart(top_mip)) {
+		top_mip->mi_ignore_body = 1; /* the first body is ignored */
 		split_multipart(top_mip);
 
 		for (this_mip = top_mip->mi_flink;
@@ -591,6 +605,7 @@ expand_mip(struct mime_info *top_mip)
 			continue;
 	}
 	else if (is_message(top_mip)) {
+		top_mip->mi_ignore_body = 1; /* the first body is ignored */
 		split_message(top_mip);
 
 		this_mip = top_mip->mi_flink;
@@ -608,11 +623,11 @@ expand_mip(struct mime_info *top_mip)
 			}
 		}
 	}
-
 	return next_mip;
 }
 
 
+#if 0
 static int
 show_partnum(FILE *fp, struct mime_info *mip)
 {
@@ -627,16 +642,18 @@ show_partnum(FILE *fp, struct mime_info *mip)
 	}
 	return need_dot;
 }
+#endif
 
 
 PUBLIC struct mime_info *
 mime_decode_open(struct message *mp)
 {
 	struct mime_info *mip;
+	struct mime_info *p;
 
 	mip = csalloc(1, sizeof(*mip));
 	mip->mp = salloc(sizeof(*mip->mp));
-	*mip->mp = *mp;		/* copy this so we can change its m_lines */
+	*mip->mp = *mp;		/* copy this so we don't trash the master mp */
 
 	get_content(mip);
 
@@ -645,8 +662,16 @@ mime_decode_open(struct message *mp)
 	    !equal(mip->mi_version, MIME_VERSION))
 		return NULL;
 
+	mip->mi_partstr = "";
 	if (mip->mi_type)
 		(void)expand_mip(mip);
+
+	/*
+	 * Get the pipe_end and propagate it down the chain.
+	 */
+	mip->mi_pipe_end = last_registered_file(0); /* for mime_decode_close() */
+	for (p = mip->mi_flink; p; p = p->mi_flink)
+		p->mi_pipe_end = mip->mi_pipe_end;
 
 /*	show_mime_info(stderr, mip, NULL); */
 
@@ -692,25 +717,35 @@ prefix_line(FILE *fi, FILE *fo, void *cookie)
 }
 
 PUBLIC int
-mime_sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
+mime_sendmessage(struct message *mp, FILE *obuf, struct ignoretab *igntab,
     const char *prefix, struct mime_info *mip)
 {
 	int error;
-	FILE *end_of_pipe;
+	int detachall_flag;
+	const char *detachdir;
 	FILE *end_of_prefix;
 
 	if (mip == NULL)
-		return sendmessage(mp, obuf, doign ? ignore : 0, prefix, NULL);
-
+		return obuf ?	/* were we trying to detach? */
+		    sendmessage(mp, obuf, igntab, prefix, NULL) : 0;
 	/*
-	 * Set these early so pipe_end() and mime_decode_close() work!
-	 * XXX - Do this before anything that can block, like
-	 *       fflush()!  Shouldn't we move these settings to
-	 *       mime_decode_open() to avoid a race condition?
-	 *       Especially, mip->mi_pipe_end?
+	 * The prefix has two meanigs which we handle here:
+	 * 1) If obuf == NULL, then we are detaching to the 'prefix' director.
+	 * 2) If obuf != NULL, then the prefix is prepended to each line.
+	 */
+	detachdir = NULL;
+	detachall_flag = igntab == detachall;
+	if (obuf == NULL) {
+		assert(prefix != NULL);		/* coding error! */
+		obuf = stdout;
+		detachdir = prefix;
+		prefix = NULL;
+		igntab = ignoreall;	/* always ignore the headers */
+	}
+	/*
+	 * Set this early so pipe_end() will work!
 	 */
 	mip->mi_fo = obuf;
-	mip->mi_pipe_end = last_registered_file(0);
 
 	(void)fflush(obuf);  /* Be safe and flush!  XXX - necessary? */
 
@@ -729,13 +764,13 @@ mime_sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 		mime_run_function(prefix_line, pipe_end(mip), (void*)&prefix_line_args);
 	}
 
-	end_of_pipe   = mip->mi_pipe_end;
 	end_of_prefix = last_registered_file(0);
 	error = 0;
 	for (/* EMPTY */; mip; mip = mip->mi_flink) {
 		mip->mi_fo = obuf;
-		mip->mi_pipe_end = end_of_pipe;
-		error |= sendmessage(mip->mp, pipe_end(mip), doign ? ignore : 0, NULL, mip);
+		mip->mi_detachdir = detachdir;
+		mip->mi_detachall = detachall_flag;
+		error |= sendmessage(mip->mp, pipe_end(mip), igntab, NULL, mip);
 		close_top_files(end_of_prefix);	/* don't close the prefixer! */
 	}
 	return error;
@@ -745,7 +780,6 @@ mime_sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 #ifdef CHARSET_SUPPORT
 /**********************************************
  * higher level interface to run mime_ficonv().
- *
  */
 static void
 run_mime_ficonv(struct mime_info *mip, const char *charset)
@@ -769,8 +803,10 @@ run_mime_ficonv(struct mime_info *mip, const char *charset)
 		return;
 	}
 	
-	if (value(ENAME_MIME_CHARSET_VERBOSE))
-		(void)fprintf(fo, "\t[ converting %s -> %s ]\n\n", mip->mi_charset, charset);
+	if (mip->mi_detachdir == NULL && /* don't contaminate the detach! */
+	    value(ENAME_MIME_CHARSET_VERBOSE))
+		(void)fprintf(fo, "\t[ converting %s -> %s ]\n\n",
+		    mip->mi_charset, charset);
 
 	mime_run_function(mime_ficonv, fo, cd);
 	
@@ -779,7 +815,7 @@ run_mime_ficonv(struct mime_info *mip, const char *charset)
 #endif /* CHARSET_SUPPORT */
 
 
-static void
+PUBLIC void
 run_decoder(struct mime_info *mip, void(*fn)(FILE*, FILE*, void *))
 {
 #ifdef CHARSET_SUPPORT
@@ -790,10 +826,12 @@ run_decoder(struct mime_info *mip, void(*fn)(FILE*, FILE*, void *))
 		run_mime_ficonv(mip, charset);
 #endif /* CHARSET_SUPPORT */
 
-	if (fn == mime_fio_copy)/* XXX - avoid an extra unnecessary pipe stage */
+	if (mip->mi_detachdir == NULL &&
+	    fn == mime_fio_copy)/* XXX - avoid an extra unnecessary pipe stage */
 		return;
 
-	mime_run_function(fn, pipe_end(mip), (void*)1);
+	mime_run_function(fn, pipe_end(mip),
+	    mip->mi_detachdir ? NULL : __UNCONST("add_lf"));
 }
 
 
@@ -894,7 +932,7 @@ get_display_mode(struct mime_info *mip, mime_codec_t dec)
 	 *    contains a message for non-mime enabled mail readers.
 	 * 2) In the case of "message" type, there should be no body.
 	 */
-	if (is_multipart(mip) || is_message(mip))
+	if (mip->mi_ignore_body)	/*is_multipart(mip) || is_message(mip))*/
 		return DM_IGNORE;
 
 	/*
@@ -945,11 +983,15 @@ mime_decode_body(struct mime_info *mip)
 	 */
 	(void)fflush(pipe_end(mip));
 
+	if (mip->mi_detachdir)	/* We are detaching!  Ignore the hooks. */
+		return mime_detach_parts(mip);
+
 	cmd = NULL;
 	if (mip->mi_command_hook == NULL)
 		cmd = get_command_hook(mip, "-body");
 
 	dec = mime_fio_decoder(mip->mi_encoding);
+
 	/*
 	 * If there is a filter running, we need to send the message
 	 * to it.  Otherwise, get the default display mode for this body.
@@ -997,7 +1039,6 @@ mime_decode_body(struct mime_info *mip)
 		return NULL;
 	}
 }
-
 
 
 
@@ -1092,17 +1133,16 @@ mime_decode_header(struct mime_info *mip)
 	FILE *fo;
 
 	fo = pipe_end(mip);
-	/*
-	 * Make sure we flush everything down the pipe so children
-	 * don't see it.
-	 */
 
-	if (mip->mi_partnum) {
-		(void)fprintf(fo, "----- Part ");
-		(void)show_partnum(fo, mip);
-		(void)fprintf(fo, " -----\n");
+	if (mip->mi_detachdir) { /* We are detaching.  Don't run anything! */
+		(void)fflush(fo);
+		return pipe_end(mip);
 	}
-	(void)fflush(fo);
+
+	if (mip->mi_partnum)
+		(void)fprintf(fo, "----- Part %s -----\n", mip->mi_partstr);
+
+	(void)fflush(fo);	/* Flush so the childern don't see it. */
 	
 	/*
 	 * install the message hook before the head hook.
