@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.25 2006/11/28 22:22:03 elad Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.26 2006/11/29 01:12:00 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -43,6 +43,7 @@
 #include <unistd.h>
 #include <err.h>
 #include <errno.h>
+#include <inttypes.h>
 
 #include <prop/proplib.h>
 
@@ -136,7 +137,8 @@ phase1_preload(void)
 			prop_dictionary_get_uint64(vup->vu_preload, "count",
 			    &count);
 			printf(" => Hash table sizing successful for mount "
-			    "`%s'. (%zu entries)\n", sv.f_mntonname, count);
+			    "`%s'. (%" PRIu64 " entries)\n", sv.f_mntonname,
+			    count);
 		}
 
 		CIRCLEQ_REMOVE(&params_list, vup, vu_list);
