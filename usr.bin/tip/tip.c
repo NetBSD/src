@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.43 2006/04/03 16:13:34 tls Exp $	*/
+/*	$NetBSD: tip.c,v 1.44 2006/11/29 14:46:27 jdc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -30,6 +30,8 @@
  */
 
 #include <sys/cdefs.h>
+#include <getopt.h>
+
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
@@ -39,17 +41,19 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.43 2006/04/03 16:13:34 tls Exp $");
+__RCSID("$NetBSD: tip.c,v 1.44 2006/11/29 14:46:27 jdc Exp $");
 #endif /* not lint */
 
 /*
  * tip - UNIX link to other systems
  *  tip [-v] [-speed] system-name
  * or
- *  cu phone-number [-s speed] [-l line] [-a acu]
+ *  cu [options] [phone-number|"dir"]
  */
 #include "tip.h"
 #include "pathnames.h"
+
+static void	tipusage(void);
 
 int	escape(void);
 int	main(int, char **);
@@ -64,10 +68,11 @@ int
 main(int argc, char *argv[])
 {
 	char *System = NULL;
-	int i;
+	int c, i;
 	char *p;
 	const char *q;
 	char sbuf[12];
+	static char brbuf[16];
 	int fcarg;
 
 	gid = getgid();
@@ -81,19 +86,15 @@ main(int argc, char *argv[])
 	}
 
 	if (argc > 4) {
-		fprintf(stderr, "usage: %s [-v] [-speed] [system-name]\n",
-		    getprogname());
-		exit(1);
+		tipusage();
 	}
 	if (!isatty(0)) {
 		fprintf(stderr, "%s: must be interactive\n", getprogname());
 		exit(1);
 	}
 
-	for (; argc > 1; argv++, argc--) {
-		if (argv[1][0] != '-')
-			System = argv[1];
-		else switch (argv[1][1]) {
+	while((c = getopt(argc, argv, "v0123456789")) != -1) {
+		switch(c) {
 
 		case 'v':
 			vflag++;
@@ -101,7 +102,8 @@ main(int argc, char *argv[])
 
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			BR = atoi(&argv[1][1]);
+			snprintf(brbuf, sizeof(brbuf) -1, "%s%c", brbuf, c);
+			BR = atoi(brbuf);
 			break;
 
 		default:
@@ -109,6 +111,15 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
+		tipusage();
+	else
+		System = argv[0];
+
 
 	if (System == NULL)
 		goto notnumber;
@@ -229,6 +240,16 @@ cucommon:
 	}
 	/*NOTREACHED*/
 	exit(0);	/* XXX: pacify gcc */
+}
+
+void
+tipusage(void)
+{
+	fprintf(stderr, "usage: %s [-v] [-speed] system-name\n",
+	    getprogname());
+	fprintf(stderr, "       %s [-v] [-speed] phone-number\n",
+	    getprogname());
+	exit(1);
 }
 
 void
