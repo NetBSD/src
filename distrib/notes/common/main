@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.319 2006/11/26 11:26:27 martin Exp $
+.\"	$NetBSD: main,v 1.320 2006/11/29 04:34:37 alc Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1444,6 +1444,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Nathan Williams Ta Mt nathanw@NetBSD.org
 .It Ta Rob Windsor Ta Mt windsor@NetBSD.org
 .It Ta Dan Winship Ta Mt danw@NetBSD.org
+.It Ta Arnaud Lacombe Ta Mt alc@NetBSD.org
 .It Ta Jim Wise Ta Mt jwise@NetBSD.org
 .It Ta Michael Wolfson Ta Mt mbw@NetBSD.org
 .It Ta Steve Woodford Ta Mt scw@NetBSD.org
