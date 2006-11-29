@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/05/29 19:15:30 nathanw Exp $
+#	$NetBSD: Makefile,v 1.3 2006/11/29 15:18:10 he Exp $
 
 .include "Makefile.inc"
 
@@ -7,9 +7,7 @@ SUBDIR=		bfd libiberty opcodes libgdb
 SUBDIR+=	readline
 .endif
 
-SUBDIR+= .WAIT
-
-SUBDIR+= sim
+SUBDIR+= sim .WAIT
 
 SUBDIR+=  gdb
 .if ${USE_TUI} == yes
