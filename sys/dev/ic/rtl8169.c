@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.71 2006/11/25 02:42:18 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.72 2006/11/29 14:13:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1954,8 +1954,6 @@ re_init(struct ifnet *ifp)
 
 	if (sc->re_testmode)
 		return 0;
-
-	mii_mediachg(&sc->mii);
 
 	CSR_WRITE_1(sc, RTK_CFG1, RTK_CFG1_DRVLOAD | RTK_CFG1_FULLDUPLEX);
 
