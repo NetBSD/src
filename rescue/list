@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.27 2006/11/01 17:36:13 apb Exp $
+#	$NetBSD: list,v 1.28 2006/11/29 08:41:49 dogcow Exp $
 
 SRCDIRS	bin
 
@@ -144,4 +144,4 @@ SRCDIRS	games
 PROG	tetris
 
 LIBS	liboverride.o
-LIBS	-lbz2 -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -lcurses -ltermcap -lutil -lz -levent
+LIBS	-lbz2 -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -lcurses -ltermcap -lutil -lz -levent -lprop
