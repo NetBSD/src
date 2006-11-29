@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.488 2006/11/26 13:59:49 drochner Exp $
+#	$NetBSD: bsd.own.mk,v 1.489 2006/11/29 21:49:39 dsl Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -75,7 +75,11 @@ CPPFLAG_ISYSTEMXX=	-cxx-isystem
 .endif
 
 .if empty(.MAKEFLAGS:M-V*)
+.if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
+PRINTOBJDIR=	${MAKE} -r -V .OBJDIR -f /dev/null xxx
+.else
 PRINTOBJDIR=	${MAKE} -V .OBJDIR
+.endif
 .else
 PRINTOBJDIR=	echo # prevent infinite recursion
 .endif
