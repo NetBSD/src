@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.50 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.51 2006/11/29 16:15:38 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.50 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51 2006/11/29 16:15:38 drochner Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -80,6 +80,7 @@ intel_cpuid_cache_info[] = {
 	{ CAI_L2CACHE,  0x43,  4,      512 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x44,  4, 1 * 1024 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x45,  4, 2 * 1024 * 1024, 32, NULL },
+	{ CAI_L2CACHE,  0x49, 16, 4 * 1024 * 1024, 64, NULL },
 	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64, NULL },
 	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64, NULL },
 	{ CAI_DCACHE,   0x2c,  8,       32 * 1024, 64, NULL },
@@ -973,7 +974,13 @@ p3_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 13333;
 			break;
 		case 3:
-			bus_clock = 16666;
+			bus_clock = 16667;
+			break;
+		case 2:
+			bus_clock = 20000;
+			break;
+		case 0:
+			bus_clock = 26667;
 			break;
 		case 4:
 			bus_clock = 33333;
