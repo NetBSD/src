@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.72 2006/11/23 04:22:02 rpaulo Exp $
+# $NetBSD: ALL,v 1.73 2006/11/29 13:41:28 xtraeme Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.72 $"
+#ident 		"ALL-$Revision: 1.73 $"
 
 maxusers	32		# estimated number of users
 
@@ -1382,6 +1382,9 @@ options 	FILEASSOC_NHOOKS=4	# Default number of storage slots
 # Veriexec
 pseudo-device	veriexec
 #
+# drvctl - needed to show device dictionary via drvctl(8)
+pseudo-device	drvctl
+
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
