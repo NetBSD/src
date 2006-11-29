@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.13 2006/11/28 13:36:29 tsutsui Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.14 2006/11/29 13:49:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.13 2006/11/28 13:36:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.14 2006/11/29 13:49:24 tsutsui Exp $");
 
 
 /*
@@ -562,11 +562,16 @@ rgephy_reset(struct mii_softc *sc)
 
 	/* Reset capabilities */
 	/* Step1: write our capability */
-	PHY_WRITE(sc, 0x04,0x01e1); /* 10/100 capability */
-	PHY_WRITE(sc, 0x09,0x0200); /* 1000 capability */
+	/* 10/100 capability */
+	PHY_WRITE(sc, RGEPHY_MII_ANAR,
+	    RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_TX |
+	    RGEPHY_ANAR_10_FD | RGEPHY_ANAR_10 | ANAR_CSMA);
+	/* 1000 capability */
+	PHY_WRITE(sc, RGEPHY_MII_1000CTL,
+	    RGEPHY_1000CTL_AFD | RGEPHY_1000CTL_AHD);
 
-#ifdef jrs_notyet
 	/* Step2: Restart NWay */
-	PHY_WRITE(sc, 0x00, 0x1200); // NWay enable and Restart NWay
-#endif
+	/* NWay enable and Restart NWay */
+	PHY_WRITE(sc, RGEPHY_MII_BMCR,
+	    RGEPHY_BMCR_RESET | RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
 }
