@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_child.c,v 1.4 2006/11/29 01:25:28 christos Exp $	*/
+/*	$NetBSD: mime_child.c,v 1.5 2006/11/29 01:29:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_child.c,v 1.4 2006/11/29 01:25:28 christos Exp $");
+__RCSID("$NetBSD: mime_child.c,v 1.5 2006/11/29 01:29:46 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -114,6 +114,11 @@ prepare_pipe(sigset_t *nset, int p[2])
 	(void)sigemptyset(nset);
 	(void)sigaddset(nset, SIGINT);
 	(void)sigaddset(nset, SIGPIPE);
+	(void)sigaddset(nset, SIGHUP);
+	(void)sigaddset(nset, SIGTSTP);
+	(void)sigaddset(nset, SIGTTOU);
+	(void)sigaddset(nset, SIGTTIN);
+
 	return 0;
 }
 
