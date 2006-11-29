@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.28 2006/09/30 10:56:31 elad Exp $
+.\" $NetBSD: veriexecctl.8,v 1.29 2006/11/29 14:28:30 elad Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.28 2006/09/30 10:56:31 elad Exp $
+.\"	$Id: veriexecctl.8,v 1.29 2006/11/29 14:28:30 elad Exp $
 .\"
-.Dd September 30, 2006
+.Dd November 29, 2006
 .Dt VERIEXECCTL 8
 .Os
 .Sh NAME
@@ -81,7 +81,8 @@ characters) of the form:
 .Pp
 Where
 .Em path
-is the full path to the file and
+is the full path to the file (spaces, tabs, etc. can be escaped if prefixed
+with a backslash) and
 .Em type
 is the type of fingerprint used, see above for the default list.
 Other fingerprints may be available depending on kernel configuration.
@@ -164,6 +165,6 @@ first appeared in
 .Nx 2.0 .
 .Sh NOTES
 .Nm
-requires the kernel to have been configured with the veriexec pseudo-device.
-.Sh BUGS
-There must be no whitespace in the path field of a fingerprint entry.
+requires the kernel to have been configured with the
+.Dq veriexec
+pseudo-device.
