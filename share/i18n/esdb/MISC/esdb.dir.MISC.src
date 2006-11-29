@@ -1,4 +1,4 @@
-# $NetBSD: esdb.dir.MISC.src,v 1.14 2006/11/25 10:27:23 tnozaki Exp $
+# $NetBSD: esdb.dir.MISC.src,v 1.15 2006/11/29 15:45:26 tnozaki Exp $
 
 ATARIST				MISC/ATARIST.esdb
 C99				MISC/C99.esdb
@@ -12,4 +12,5 @@ MULELAO-1			MISC/MULELAO-1.esdb
 NEXTSTEP			MISC/NEXTSTEP.esdb
 PTCP154				MISC/PTCP154.esdb
 Shift_JIS			MISC/Shift_JIS.esdb
+TDS565				MISC/TDS565.esdb
 ZW				MISC/ZW.esdb

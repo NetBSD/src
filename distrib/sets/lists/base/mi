@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.677 2006/11/25 10:27:22 tnozaki Exp $
+# $NetBSD: mi,v 1.678 2006/11/29 15:45:26 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1566,6 +1566,7 @@
 ./usr/share/i18n/csmapper/CP/CP855%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP856%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP857%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP858%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP860%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP861%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP862%UCS.mps	base-sysutil-share	nls
@@ -1637,6 +1638,7 @@
 ./usr/share/i18n/csmapper/CP/UCS%CP855.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP856.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP857.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP858.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP860.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP861.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP862.mps	base-sysutil-share	nls
@@ -1778,6 +1780,7 @@
 ./usr/share/i18n/csmapper/ISO646/ISO646-YU%UCS.646	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS			base-sysutil-share
 ./usr/share/i18n/csmapper/JIS/JISX0201-KANA%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/JISX0208@1978%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/JISX0208@1990%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/JISX0208@MS%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/JISX0208UDC%UCS.mps	base-sysutil-share	nls
@@ -1787,6 +1790,7 @@
 ./usr/share/i18n/csmapper/JIS/JISX0212UDC%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/JISX0212VDC@IBM%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0201-KANA.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS%JISX0208@1978.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0208@1990.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0208@MS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0208UDC.mps	base-sysutil-share	nls
@@ -1836,6 +1840,7 @@
 ./usr/share/i18n/csmapper/MISC/MULELAO-1%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/NEXTSTEP%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/PTCP154%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/MISC/TDS565%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%ATARIST.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%Big5.mps	base-obsolete		obsolete
 ./usr/share/i18n/csmapper/MISC/UCS%HP-ROMAN8.mps	base-sysutil-share	nls
@@ -1844,6 +1849,7 @@
 ./usr/share/i18n/csmapper/MISC/UCS%MULELAO-1.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%NEXTSTEP.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%PTCP154.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/MISC/UCS%TDS565.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/TCVN			base-sysutil-share
 ./usr/share/i18n/csmapper/TCVN/TCVN5712-1%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/TCVN/VISCII%UCS.mps	base-sysutil-share	nls
@@ -1928,6 +1934,7 @@
 ./usr/share/i18n/esdb/CP/CP855.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP856.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP857.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP858.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP860.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP861.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP862.esdb		base-sysutil-share	nls
@@ -1949,6 +1956,10 @@
 ./usr/share/i18n/esdb/CP/CP918.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP932.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP936.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP942.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP942C.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP943.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP943C.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP949.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP950.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/EBCDIC			base-sysutil-share
@@ -2059,6 +2070,7 @@
 ./usr/share/i18n/esdb/MISC/NEXTSTEP.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/PTCP154.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/Shift_JIS.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/MISC/TDS565.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/ZW.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/TCVN			base-sysutil-share
 ./usr/share/i18n/esdb/TCVN/TCVN5712-1.esdb	base-sysutil-share	nls
