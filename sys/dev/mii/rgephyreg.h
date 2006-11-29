@@ -139,4 +139,4 @@
 
 
 
-#endif /* _DEV_RGEPHY_MIIREG_H_ */
+#endif /* _DEV_MII_RGEPHYREG_H_ */
