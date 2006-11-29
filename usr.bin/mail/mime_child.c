@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_child.c,v 1.3 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: mime_child.c,v 1.4 2006/11/29 01:25:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_child.c,v 1.3 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: mime_child.c,v 1.4 2006/11/29 01:25:28 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -111,7 +111,9 @@ prepare_pipe(sigset_t *nset, int p[2])
 	 * We _must_ ignore SIGINT and SIGPIPE or the child
 	 * will end up in our earlier handlers.
 	 */
-	(void)sigfillset(nset);	/* XXX - ignore all of em? */
+	(void)sigemptyset(nset);
+	(void)sigaddset(nset, SIGINT);
+	(void)sigaddset(nset, SIGPIPE);
 	return 0;
 }
 
