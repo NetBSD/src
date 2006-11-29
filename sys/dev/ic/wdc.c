@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.242 2006/11/20 23:42:21 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.243 2006/11/29 21:37:42 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.242 2006/11/20 23:42:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.243 2006/11/29 21:37:42 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1552,7 +1552,7 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		if ((ata_c->flags & AT_POLL) == 0) {
 			chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
 			callout_reset(&chp->ch_callout,
-			    ata_c->timeout / 1000 * hz, wdctimeout, chp);
+			    mstohz(ata_c->timeout), wdctimeout, chp);
 			return 1;
 		} else {
 			goto again;
