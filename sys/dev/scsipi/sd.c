@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.256 2006/11/26 05:01:09 itohy Exp $	*/
+/*	$NetBSD: sd.c,v 1.257 2006/11/29 21:06:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.256 2006/11/26 05:01:09 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.257 2006/11/29 21:06:49 drochner Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -227,6 +227,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
 
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
+	strncpy(sd->name, sa->sa_inqbuf.product, sizeof(sd->name));
 	if (sd->type == T_SIMPLE_DIRECT)
 		periph->periph_quirks |= PQUIRK_ONLYBIG | PQUIRK_NOBIGMODESENSE;
 
@@ -1280,7 +1281,7 @@ sdgetdefaultlabel(struct sd_softc *sd, struct disklabel *lp)
 	 * We could probe the mode pages to figure out what kind of disc it is.
 	 * Is this worthwhile?
 	 */
-	strncpy(lp->d_typename, "mydisk", 16);
+	strncpy(lp->d_typename, sd->name, 16);
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = sd->params.disksize;
 	lp->d_rpm = sd->params.rot_rate;
