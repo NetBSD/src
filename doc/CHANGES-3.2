@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.19 2006/11/24 21:48:53 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.20 2006/11/29 21:26:01 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2153,4 +2153,11 @@ sys/netiso/esis.c				1.42
 	Check parameters to avoid potential panic root user.
 	Patch checked by chopps@.
 	[is, ticket #1593]
+
+usr.sbin/postinstall/postinstall		1.31
+
+	Check if /etc/pf.conf and /etc/pf.os exist and copy them if they don't.
+
+	Suggested by lukem@.
+	[peter, ticket #1594]
 
