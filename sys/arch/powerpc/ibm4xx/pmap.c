@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 2006/10/16 18:14:38 kiyohara Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 2006/11/29 19:56:46 freza Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2006/10/16 18:14:38 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2006/11/29 19:56:46 freza Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1478,9 +1478,12 @@ pmap_tlbmiss(vaddr_t va, int ctx)
 	tlbmiss_ev.ev_count++;
 
 	/*
-	 * XXXX We will reserve 0-0x80000000 for va==pa mappings.
+	 * We will reserve 0 upto VM_MIN_KERNEL_ADDRESS for va == pa mappings.
+	 * Physical RAM is expected to live in this range, care must be taken
+	 * to not clobber 0 upto ${physmem} with device mappings in machdep
+	 * code.
 	 */
-	if (ctx != KERNEL_PID || (va & 0x80000000)) {
+	if (ctx != KERNEL_PID || va >= VM_MIN_KERNEL_ADDRESS) {
 		pte = pte_find((struct pmap *)__UNVOLATILE(ctxbusy[ctx]), va);
 		if (pte == NULL) {
 			/* Map unmanaged addresses directly for kernel access */
@@ -1493,7 +1496,7 @@ pmap_tlbmiss(vaddr_t va, int ctx)
 	} else {
 		/* Create a 16MB writable mapping. */
 #ifdef PPC_4XX_NOCACHE
-		tte = TTE_PA(va) | TTE_ZONE(ZONE_PRIV) | TTE_SZ_16M | TTE_I | TTE_WR;
+		tte = TTE_PA(va) | TTE_ZONE(ZONE_PRIV) | TTE_SZ_16M | TTE_I |TTE_WR;
 #else
 		tte = TTE_PA(va) | TTE_ZONE(ZONE_PRIV) | TTE_SZ_16M | TTE_WR;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2006/10/23 06:49:17 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2006/11/29 19:56:46 freza Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2006/10/23 06:49:17 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2006/11/29 19:56:46 freza Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -188,15 +188,14 @@ bootstrap(u_int startkernel, u_int endkernel)
 
 	/*
 	 * Setup initial tlbs.
-	 * Physical memory and  console device are
+	 * Kernel memory and console device are
 	 * mapped into the first (reserved) tlbs.
 	 */
 
-	t = 0;
-	for (maddr = 0; maddr < phys_mem[0].size; maddr += TLB_PG_SIZE)
+	for (maddr = 0; maddr < endkernel; maddr += TLB_PG_SIZE)
 		ppc4xx_tlb_reserve(maddr, maddr, TLB_PG_SIZE, TLB_EX);
 
-	/* Map PCKBC, PCKBC2, COM, LPT. */
+	/* Map PCKBC, PCKBC2, COM, LPT. This is far beyond physmem. */
 	ppc4xx_tlb_reserve(BASE_ISA, BASE_ISA, TLB_PG_SIZE, TLB_I | TLB_G);
 
 #ifndef COM_IS_CONSOLE
