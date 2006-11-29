@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.18 2006/04/05 23:30:57 yamt Exp $	*/
+/*	$NetBSD: cu.c,v 1.19 2006/11/29 14:44:45 jdc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.18 2006/04/05 23:30:57 yamt Exp $");
+__RCSID("$NetBSD: cu.c,v 1.19 2006/11/29 14:44:45 jdc Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -82,7 +82,7 @@ cumain(int argc, char *argv[])
 	BR = DEFBR;
 
 	while((c = getopt_long(argc, argv,
-	    "E:F:P:a:p:c:l:s:heot0123456789", longopts, NULL)) != -1) {
+	    "E:F:P:a:p:c:l:s:hefot0123456789", longopts, NULL)) != -1) {
 
 		if (helpme == 1) cuhelp();
 
@@ -145,6 +145,10 @@ cumain(int argc, char *argv[])
 				errx(3, "more than one parity specified");
 			parity = -1; /* even */
 			break;
+			/* Compatibility with Taylor cu */
+		case 'f':
+			flow = 0;
+			break;
 		case 'o':
 			if (parity != 0)
 				errx(3, "more than one parity specified");
@@ -174,7 +178,11 @@ cumain(int argc, char *argv[])
 		if (phonearg)
 			errx(3, "more than one phone number specified");
 		else
-			PN = argv[0];
+			/* Compatibility with Taylor cu */
+			if(!strcmp(argv[0], "dir")) {
+				HW = 1; DU = -1; DC = 1;
+			} else
+				PN = argv[0];
 		break;
 	case 0:
 		/*
@@ -265,7 +273,7 @@ cumain(int argc, char *argv[])
 static void
 cuusage(void)
 {
-	fprintf(stderr, "Usage: cu [options] [phone-number]\n"
+	fprintf(stderr, "Usage: cu [options] [phone-number|\"dir\"]\n"
 	    "Use cu --help for help\n");
 	exit(8);
 }
@@ -275,9 +283,10 @@ cuhelp(void)
 {
 	fprintf(stderr,
 	    "BSD tip/cu\n"
-	    "Usage: cu [options] [phone-number]\n"
+	    "Usage: cu [options] [phone-number|\"dir\"]\n"
 	    " -E,--escape char: Use this escape character\n"
 	    " -F,--flow {hard,soft,none}: Use RTS/CTS, ^S/^Q, no flow control\n"
+	    " -f: Use no flow control\n"
 	    " --nostop: Do not use software flow control\n"
 	    " -a, -p,--port port: Use this port as ACU/Dialer\n"
 	    " -c,--phone number: Call this number\n"
