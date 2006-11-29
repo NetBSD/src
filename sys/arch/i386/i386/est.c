@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.30 2006/11/01 08:49:50 xtraeme Exp $	*/
+/*	$NetBSD: est.c,v 1.31 2006/11/29 15:53:42 drochner Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.30 2006/11/01 08:49:50 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.31 2006/11/29 15:53:42 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -943,7 +943,7 @@ est_init(struct cpu_info *ci, int vendor)
                 fake_table[0] = idhi;
                 if (cur == idhi || cur == idlo) {
                         aprint_normal("%s: using only highest and lowest "
-                            " power states.\n", cpuname);
+                            "power states.\n", cpuname);
 
                         fake_table[1] = idlo;
                         fake_fqlist.n = 2;
