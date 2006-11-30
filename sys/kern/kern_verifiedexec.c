@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.75 2006/11/30 01:09:47 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.76 2006/11/30 01:42:21 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.75 2006/11/30 01:09:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.76 2006/11/30 01:42:21 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -987,11 +987,18 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 		goto out;
 	}
 
-	vfe->fp = prop_data_data(prop_dictionary_get(dict, "fp"));
-	if (vfe->fp == NULL) {
+	if (prop_data_size(prop_dictionary_get(dict, "fp")) !=
+	    vfe->ops->hash_len) {
 		free(vfe, M_VERIEXEC);
+		log(LOG_ERR, "Veriexec: Bad fingerprint length for `%s'.\n",
+		    file);
+		error = EINVAL;
 		goto out;
 	}
+
+	vfe->fp = malloc(vfe->ops->hash_len, M_VERIEXEC, M_WAITOK);
+	memcpy(vfe->fp, prop_data_data_nocopy(prop_dictionary_get(dict, "fp")),
+	    vfe->ops->hash_len);
 
 	/*
 	 * See if we already have an entry for this file. If we do, then
