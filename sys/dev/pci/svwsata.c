@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.6 2006/11/16 01:33:10 christos Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.7 2006/11/30 19:32:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.6 2006/11/16 01:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.7 2006/11/30 19:32:37 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,8 @@ svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	aprint_normal(": DMA");
 	svwsata_mapreg_dma(sc, pa);
 	aprint_normal("\n");
+
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_WIDEREGS;
 
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
