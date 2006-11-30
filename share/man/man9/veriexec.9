@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.9,v 1.7 2006/11/26 20:27:27 elad Exp $
+.\" $NetBSD: veriexec.9,v 1.8 2006/11/30 16:55:00 elad Exp $
 .\"
 .\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright 2006 Brett Lymn <blymn@NetBSD.org>
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 26, 2006
+.Dd November 30, 2006
 .Dt VERIEXEC 9
 .Os
 .Sh NAME
@@ -44,89 +44,11 @@ in-kernel file integrity subsystem.
 It is responsible for managing the supported hashing algorithms, fingerprint
 calculation and comparison, file monitoring tables, and relevant hooks to
 enforce the Veriexec policy.
-.Pp
-This manual divides the
-.Nm
-KPI to four main areas: core, fingerprint related, table management, and hook
-handlers.
-.Ss Data-structures
-.Nm
-uses several data-structures to manage its data:
-.Bl -tag -width "123456"
-.It Ft "struct veriexec_fp_ops"
-Describes a hashing algorithm, for example MD5, SHA1, RMD160.
-Contains the following members:
-.Bl -tag -width "123456"
-.It Ft "char type[VERIEXEC_TYPE_MAXLEN]"
-Name of the hashing algorithm.
-.It Ft size_t hash_len
-Length, in bytes,
-.It Ft size_t context_size
-Size, in bytes, of the calculation context.
-.It Ft VERIEXEC_INIT_FN Ar init
-.It Ft VERIEXEC_UPDATE_FN Ar update
-.It Ft VERIEXEC_FINAL_FN Ar final
-Routines used to calculate the fingerprint.
-.El
-.Pp
-.Nm
-provides a macro,
-.Fn VERIEXEC_OPINIT ,
-to ease initialization of a
-.Ft "struct veriexec_fp_ops"
-(see below).
-.It Ft "struct veriexec_file_entry"
-Describes Veriexec data associated with a single file.
-Contains the following members:
-.Bl -tag -width "123456"
-.It Ft u_char Ar type
-The entry type, indicating what valid access types are allowed for this file.
-Can be a binary-OR'd combination of the following:
-.Bl -tag -width "123456"
-.It Dv VERIEXEC_DIRECT
-The file can be executed directly.
-.It Dv VERIEXEC_INDIRECT
-The file can be executed indirectly, for example, as a script interpreter.
-.It Dv VERIEXEC_FILE
-The file can be opened, for example for reading and/or writing.
-.El
-.It Ft u_char Ar status
-The evaluation status.
-Can be one of the following:
-.Bl -tag -width "123456"
-.It Dv FINGERPRINT_NOTEVAL
-Fingerprint hasn't been evaluated yet.
-.It Dv FINGERPRINT_VALID
-The fingerprint was found to be valid.
-.It Dv FINGERPRINT_NOMATCH
-There was a fingerprint mismatch.
-.El
-.It Ft u_char Ar page_fp_status
-Unused.
-.It Ft "u_char *" Ar fp
-The fingerprint for the file.
-.It Ft "void *" Ar page_fp
-.It Ft size_t Ar npages
-.It Ft size_t Ar last_page_size
-Unused.
-.It Ft "struct veriexec_fp_ops *" Ar ops
-Algorithm used to calculate the fingerprint for this file.
-.El
-.It Ft "struct veriexec_table_entry"
-Describes Veriexec data associated with a mount.
-Contains the following members:
-.Bl -tag -width "123456"
-.It Ft uint64_t Ar vte_count
-Number of Veriexec entries (monitored files) on the mount.
-.It Ft "const struct sysctlnode *" Ar vte_node
-The
-.Xr sysctl 9
-node for the mount, with information about the number of monitored files,
-file-system type, and mount point.
-.El
-.El
 .Ss Core Routines
-.Bl -tag -width "123456"
+.Bl -tag
+.It Ft void Fn veriexec_init "void"
+Initialize the Veriexec subsystem.
+Should be called only once during system startup.
 .It Ft "struct veriexec_file_entry *vfe" Fn veriexec_lookup "struct vnode *vp"
 Lookup private Veriexec data associated with
 .Ar vp .
@@ -134,7 +56,7 @@ Returns
 .Dv NULL
 if file is not monitored by Veriexec.
 .It Ft int Fn veriexec_verify "struct lwp *l" "struct vnode *vp" \
-"u_char *name" "int flag" "struct veriexec_file_entry **vfep"
+"const u_char *name" "int flag" "boolean_t *found"
 Verifies the digital fingerprint of
 .Ar vp .
 .Ar name
@@ -142,23 +64,32 @@ is the filename, and
 .Ar flag
 is the access flag.
 The access flag can be one of:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv VERIEXEC_DIRECT
 The file was executed directly via
 .Xr execve 2 .
 .It Dv VERIEXEC_INDIRECT
-The file was executed indirectly, most likely as an interpreter for a script.
+The file was executed indirectly, either as an interpreter for a script or
+mapped to an executable memory region.
 .It Dv VERIEXEC_FILE
-The file was opened, most chances are by
-.Xr open 2 .
+The file was opened for reading/writing.
 .El
 .Pp
 .Ar l
 is the LWP for the request context.
 .Pp
 An optional argument,
-.Ar vfep ,
-is a pointer to return the Veriexec file entry, if one was found.
+.Ar found ,
+is a pointer to a boolean indicating whether an entry for the file was found
+in the
+.Em Veriexec
+tables.
+.It Ft void Fn veriexec_purge "struct vnode *vp"
+Purge the file entry for
+.Ar vp .
+This invalidates the fingerprint so it will be evaluated next time the file
+is accessed.
+.\" veriexec_page_verify() intentionally not documented.
 .It Ft void Fn veriexec_report "const u_char *msg" "u_char *name" \
 "struct lwp *l" "int flags"
 Log a Veriexec message in
@@ -173,7 +104,7 @@ control how the message will be formatted, where will it be logged to, and
 whether the system should panic after posting it.
 Flags can be binary-OR'd together.
 Available flags include:
-.Bl -tag -width "123456"
+.Bl -tag
 .It Dv REPORT_ALWAYS
 The message should always be printed.
 This is a synonym for 0.
@@ -198,81 +129,66 @@ after posting the message.
 .El
 .El
 .Ss Fingerprint Related Routines
-These routines manage the supported fingerprinting algorithms, as well as
-fingerprint calculation and comparison.
-.Bl -tag -width "123456"
-.It Ft void Fn veriexec_init "void"
-Initialize the Veriexec subsystem.
-Should be called only once during system startup.
-.It Ft Fn veriexec_add_fp_ops "struct veriexec_fp_ops *ops"
-Add fingerprinting ops
-.Ar ops .
-.Pp
-.Nm
-provides a macro to initialize
-.Ar ops ,
-called
-.Fn VERIEXEC_OPINIT .
-It takes seven parameters: a pointer to a
-.Ft "struct veriexec_fp_ops" ,
-a
-.Ft "const char *"
-describing the algorithm name (will be copied), the byte length of a binary
-representation of a fingerprint as a
-.Ft size_t ,
-the size of the fingerprint calculation context (usually the
-.Em _CTX
-types),
-and pointers to the initialization, update, and final routines, used to
-calculate the fingerprint.
-.It Ft "struct veriexec_fp_ops *" Fn veriexec_find_ops "u_char *name"
-Lookup fingerprinting ops for algorithm
-.Ar name .
-.It Ft int Fn veriexec_fp_calc "struct lwp *l" "struct vnode *vp" \
-"u_char *name" "struct veriexec_file_entry *vfe"
-Calculate fingerprint and store evaluation for
-.Ar vp .
-.Ar name
-is the filename,
-.Ar vfe
-is the Veriexec-private data for the file.
-.It Ft int Fn veriexec_fp_cmp "struct veriexec_fp_ops *ops" "u_char *fp1" \
-"u_char *fp2"
-Compare two fingerprints in
-.Ar fp1
+.Bl -tag
+.It Ft Fn veriexec_fpops_add "const char *fp_type" "size_t hash_len" \
+"size_t ctx_size" "veriexec_fpop_init_t init" "veriexec_fpop_update_t update" \
+"veriexec_fpop_final_t final"
+Add support for fingerprinting algorithm
+.Ar fp_type
+with binary hash length
+.Ar hash_len
+and calculation context size
+.Ar ctx_size
+to
+.Em Veriexec .
+.Ar init ,
+.Ar update ,
 and
-.Ar fp2
-using the common fingerprint ops in
-.Ar ops .
-.Pp
-Two fingerprints must have been generated by the same algorithm.
-.It Ft void Fn veriexec_purge "struct veriexec_file_entry *vfe"
-Purge the file entry
-.Ar vfe .
-This invalidates the fingerprint so it will be evaluated next time the file
-is accessed.
+.Ar final
+are the routines used to initialize, update, and finalize a calculation
+context.
 .El
 .Ss Table Management Routines
-.Bl -tag -width "123456"
-.It Ft int Fn veriexec_hashadd "struct vnode *vp" \
-"struct veriexec_file_entry *vfe"
-Add a Veriexec entry for
-.Ar vp
-with data in
-.Ar vfe .
-.It Ft "struct veriexec_table_entry *vte" Fn veriexec_tblfind "struct vnode *vp"
-Lookup table data for the mount
-.Ar vp
-is on.
-.\" .It Ft Fn veriexec_newtable
-.\" .It Ft Fn veriexec_load
-.\" .It Ft Fn veriexec_delete
-.\" .It Ft Fn veriexec_query
+.Bl -tag
+.It Ft int Fn veriexec_table_add "struct lwp *l" "prop_dictionary_t dict"
+Prepare storage for a
+.Em Veriexec
+table, to optimize the lookup time.
+.Pp
+.Ar dict
+holds the following elements:
+.Bl -column mount
+.Sy Name	Type	Purpose
+.It mount	string	mount-point
+.It count	uint64	estimated number of entries
+.El
+.It Ft int Fn veriexec_file_add "struct lwp *l" \
+"prop_dictionary_t dict"
+Add a Veriexec entry for the file described by
+.Ar dict .
+.Pp
+.Ar dict
+is expected to have the following:
+.Bl -column entryxtype string
+.Sy Name	Type	Purpose
+.It file	string	filename
+.It entry-type	uint8	entry type flags ( see access flags above )
+.It fp-type	string	fingerprint hashing algorithm
+.It fp	data	the fingerprint
+.El
+.It Ft int Fn veriexec_table_delete "struct mount *mp"
+Remove
+.Em Veriexec
+table for mount-point
+.Ar mp .
+.It Ft int Fn veriexec_file_delete "struct vnode *vp"
+Remove
+.Em Veriexec
+entry for
+.Ar vp .
 .El
 .Ss Hook Handlers
-Below are the routines called from code where Veriexec policy enforcement is
-required.
-.Bl -tag -width "123456"
+.Bl -tag
 .It Ft int Fn veriexec_renamechk "struct vnode *fromvp" \
 "const char *fromname" "struct vnode *tovp" "const char *toname" \
 "struct lwp *l"
@@ -306,21 +222,57 @@ is the LWP removing the file,
 Depending on the strict level,
 .Nm
 will either clean-up after the file or prevent its removal.
-.It Ft int Fn veriexec_clear "void *data" "int what"
-Passed as the
-.Xr fileassoc 9
-clean-up callback routine,
-.Fn veriexec_clear
-is responsible for garbage collection of unnecessary
-.Nm
-objects.
-It is not meant to be called directly.
+.It Ft int veriexec_unmountchk "struct mount *mp"
+Checks if the current strict level allows
+.Ar mp
+to be unmounted.
+.El
+.Ss Misc. Routines
+.Bl -tag
+.It Ft int Fn veriexec_convert "struct vnode *vp" "prop_dictionary_t rdict"
+Convert 
+.Em Veriexec
+entry for
+.Ar vp
+to human-readable
+.Xr proplib 3
+dictionary,
+.Ar rdict ,
+with the following elements:
+.Bl -column entryxtype string
+.Sy Name	Type	Purpose
+.It entry-type	uint8	entry type ( see above )
+.It status	uint8	entry status ( see below )
+.It fp-type	string	fingerprint hashing algorithm
+.It fp	data	the fingerprint
+.El
+.Pp
+The
+.Dq status
+can be one of the following:
+.Bl -column fingerprintxmismatch effect
+.It Sy Status	Meaning
+.It FINGERPRINT_NOTEVAL	not evaluated
+.It FINGERPRINT_VALID	fingerprint match
+.It FINGERPRINT_MISMATCH	fingerprint mismatch
+.El
+.Pp
+If no entry was found,
+.Er ENOENT
+is returned.
+Otherwise, zero.
 .El
 .Sh FILES
-.Pa src/sys/dev/verified_exec.c
-.Pa src/sys/kern/kern_verifiedexec.c
-.Pa src/sys/sys/verified_exec.h
+.Bl -column srcxsysxkernxkernxverifiedexecxc foo
+.Sy Path	Purpose
+.It src/sys/dev/verified_exec.c	driver for userland communication
+.It src/sys/sys/verified_exec.h	shared (userland/kernel) header file
+.It src/sys/kern/kern_verifiedexec.c	subsystem code
+.It src/sys/kern/vfs_syscalls.c	rename, remove, and unmount policies
+.It src/sys/kern/vfs_vnops.c	regular file access policy
+.El
 .Sh SEE ALSO
+.Xr proplib 3 ,
 .Xr sysctl 3 ,
 .Xr veriexec 4 ,
 .Xr sysctl 8 ,
