@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.76 2006/11/30 01:42:21 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.77 2006/11/30 13:42:46 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.76 2006/11/30 01:42:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.77 2006/11/30 13:42:46 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -281,7 +281,7 @@ veriexec_init(void)
 
 #define	FPOPS_ADD(a, b, c, d, e, f)	\
 	veriexec_fpops_add(a, b, c, (veriexec_fpop_init_t)d, \
-	(veriexec_fpop_update_t)e, (veriexec_fpop_final_t)f)
+	 (veriexec_fpop_update_t)e, (veriexec_fpop_final_t)f)
 
 #ifdef VERIFIED_EXEC_FP_RMD160
 	FPOPS_ADD("RMD160", RMD160_DIGEST_LENGTH, sizeof(RMD160_CTX),
@@ -294,7 +294,7 @@ veriexec_init(void)
 #endif /* VERIFIED_EXEC_FP_SHA256 */
 
 #ifdef VERIFIED_EXEC_FP_SHA384
-	FPOPS_ADD( "SHA384", SHA384_DIGEST_LENGTH, sizeof(SHA384_CTX),
+	FPOPS_ADD("SHA384", SHA384_DIGEST_LENGTH, sizeof(SHA384_CTX),
 	    SHA384_Init, SHA384_Update, SHA384_Final);
 #endif /* VERIFIED_EXEC_FP_SHA384 */
 
@@ -1207,5 +1207,5 @@ veriexec_unmountchk(struct mount *mp)
 		break;
 	}
 
-	return (0);
+	return (error);
 }
