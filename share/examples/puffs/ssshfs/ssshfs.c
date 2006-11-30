@@ -1,4 +1,4 @@
-/*	$NetBSD: ssshfs.c,v 1.7 2006/11/23 01:51:15 hubertf Exp $	*/
+/*	$NetBSD: ssshfs.c,v 1.8 2006/11/30 05:38:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 	    PUFFSFLAG_NOCACHE, 0))==NULL)
 		err(1, "mount");
 
-	if (puffs_mainloop(pu) == -1)
+	if (puffs_mainloop(pu, 0) == -1)
 		err(1, "mainloop");
 
 	return 0;
