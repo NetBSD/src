@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.94 2006/02/25 20:21:00 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.95 2006/11/30 20:48:13 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -443,7 +443,7 @@ make_fstab(void)
 			continue;
 		case FS_BSDLFS:
 			/* If there is no LFS, just comment it out. */
-			if (check_lfs_progs())
+			if (!check_lfs_progs())
 				s = "# ";
 			fstype = "lfs";
 			/* FALLTHROUGH */
