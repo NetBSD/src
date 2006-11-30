@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.11 2006/11/23 16:44:28 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.12 2006/11/30 05:37:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -175,20 +175,26 @@ struct puffs_usermount {
 	void	*pu_privdata;
 };
 
-#define PUFFSFLAG_KERN(a)	((a) & 0xffff)
-#define PUFFSFLAG_OPDUMP	0x10000		/* dump all operations */
+#define PUFFSFLAG_KERN(a)	((a) & 0x0000ffff)
+#define PUFFSFLAG_LIB(a)	((a) & 0xffff0000)
+
+#define PUFFSFLAG_OPDUMP	0x80000000	/* dump all operations */
 
 struct puffs_usermount *puffs_mount(struct puffs_vfsops *, struct puffs_vnops *,
 		    		    const char *, int, const char *,
 				    uint32_t, size_t);
-int		puffs_mainloop(struct puffs_usermount *);
+int		puffs_mainloop(struct puffs_usermount *, int);
 int		puffs_oneop(struct puffs_usermount *, uint8_t *, size_t);
 int		puffs_getselectable(struct puffs_usermount *);
 int		puffs_setblockingmode(struct puffs_usermount *, int);
 void		puffs_dummyops(struct puffs_vnops *);
 
+/* blocking mode argument */
 #define PUFFSDEV_BLOCK 0
 #define PUFFSDEV_NONBLOCK 1
+
+/* mainloop flags */
+#define PUFFSLOOP_NODAEMON 0x01
 
 struct puffs_node *	puffs_newpnode(struct puffs_usermount *, void *,
 				       enum vtype);
