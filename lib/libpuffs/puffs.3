@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.5 2006/11/23 17:45:11 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.6 2006/11/30 05:53:34 pooka Exp $
 .\"
 .\" Copyright (c) 2006 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 23, 2006
+.Dd November 30, 2006
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Fa "uint32_t pflags" "size_t maxreqlen"
 .Fc
 .Ft int
-.Fn puffs_mainloop "struct puffs_usermount *pu"
+.Fn puffs_mainloop "struct puffs_usermount *pu" "int flags"
 .Ft int
 .Fn puffs_oneop "struct puffs_usermount *pu" "uint8_t *buf" "size_t buflen"
 .Ft int
@@ -179,13 +179,15 @@ where they are processed and results are sent back to the kernel.
 It is possible to use
 .Nm
 in two different ways.
-Either it can handle all the details via callbacks supplied to it in
-.Fn puffs_mount
-by calling
-.Fn puffs_mainloop ,
-or it can be used to handle a single operation whenever one is available.
-The latter is useful if implementing a single threaded server which
-requires an event loop.
+Calling
+.Fn puffs_mainloop
+takes execution context away from the caller and automatically handles
+all requests by using the callbacks.
+Alternatively, control can be kept with the caller and operations
+handled manually.
+In the latter case the function
+.Fn puffs_oneop
+can be helpful.
 .Ss Library operation
 The file system is mounted using
 .Fn puffs_vfs_mount .
@@ -238,6 +240,12 @@ unmounted,
 should be used.
 It returns 0 if the file system was succesfully unmounted or \-1 if it
 was killed in action.
+Unless
+.Fa flags
+is used to pass
+.Dv PUFFSLOOP_NODAEMON ,
+.Fn puffs_mainloop
+will also detach from the terminal.
 .Pp
 To handle a single operation,
 .Fn puffs_oneop
@@ -523,6 +531,7 @@ If this is zero, the kernel will call reclaim immediately.
 .Sh SEE ALSO
 .Xr puffs 4
 .Sh HISTORY
+An unsupported experimental version of
 .Nm
 first appeared in
 .Nx 4.0 .
@@ -534,8 +543,5 @@ Especially the use of
 .Va pn_va
 should be avoided.
 .Pp
-.Nm
-is lacking support for
-.Fn joulutorttu
-and
-.Fn tarte_flambee .
+Operations which require arbitrary blocking periods are not well handled
+by the library in this version.
