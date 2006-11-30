@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.7 2006/11/18 12:41:06 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.8 2006/11/30 05:38:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -55,15 +55,18 @@ main(int argc, char *argv[])
 	struct puffs_usermount *pu;
 	struct puffs_vfsops pvfs;
 	struct puffs_vnops pvn;
-	uint32_t flags = 0;
+	int pflags, lflags;
 
 	setprogname(argv[0]);
 
 	if (argc < 2)
 		errx(1, "usage: %s mountpath\n", getprogname());
 
-	if (argc == 3 && *argv[2] == 'd') /* nice */
-		flags |= PUFFSFLAG_OPDUMP;
+	pflags = lflags = 0;
+	if (argc == 3 && *argv[2] == 'd') { /* nice */
+		pflags = PUFFSFLAG_OPDUMP;
+		lflags = PUFFSLOOP_NODAEMON;
+	}
 
 	memset(&pvfs, 0, sizeof(struct puffs_vfsops));
 	memset(&pvn, 0, sizeof(struct puffs_vnops));
@@ -91,11 +94,11 @@ main(int argc, char *argv[])
 	pvn.puffs_inactive = dtfs_inactive;
 	pvn.puffs_mknod = dtfs_mknod;
 
-	if ((pu = puffs_mount(&pvfs, &pvn, argv[1], 0, FSNAME, flags, 0))
+	if ((pu = puffs_mount(&pvfs, &pvn, argv[1], 0, FSNAME, pflags, 0))
 	    == NULL)
 		err(1, "mount");
 
-	if (puffs_mainloop(pu) == -1)
+	if (puffs_mainloop(pu, lflags) == -1)
 		err(1, "mainloop");
 
 	return 0;
