@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.139 2006/11/25 21:15:01 christos Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.140 2006/11/30 06:11:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.139 2006/11/25 21:15:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.140 2006/11/30 06:11:03 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -999,15 +999,12 @@ out:
  * Write the given range of pages to backing store.
  *
  * => "offhi == 0" means flush all pages at or after "offlo".
- * => object should be locked by caller.   we may _unlock_ the object
- *	if (and only if) we need to clean a page (PGO_CLEANIT), or
- *	if PGO_SYNCIO is set and there are pages busy.
- *	we return with the object locked.
+ * => object should be locked by caller.  we return with the
+ *      object unlocked.
  * => if PGO_CLEANIT or PGO_SYNCIO is set, we may block (due to I/O).
  *	thus, a caller might want to unlock higher level resources
  *	(e.g. vm_map) before calling flush.
- * => if neither PGO_CLEANIT nor PGO_SYNCIO is set, then we will neither
- *	unlock the object nor block.
+ * => if neither PGO_CLEANIT nor PGO_SYNCIO is set, we will not block
  * => if PGO_ALLPAGES is set, then all pages in the object will be processed.
  * => NOTE: we rely on the fact that the object's memq is a TAILQ and
  *	that new pages are inserted on the tail end of the list.   thus,
@@ -1457,7 +1454,7 @@ skip_scan:
 		}
 		splx(s);
 	}
-	simple_unlock(&uobj->vmobjlock);
+	simple_unlock(slock);
 	return (error);
 }
 
