@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.81 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: uhub.c,v 1.82 2006/11/30 16:30:33 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.81 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.82 2006/11/30 16:30:33 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.81 2006/11/16 01:33:26 christos Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
-
-#define UHUB_INTR_INTERVAL 255	/* ms */
 
 #ifdef UHUB_DEBUG
 #define DPRINTF(x)	if (uhubdebug) logprintf x
@@ -253,7 +251,7 @@ USB_ATTACH(uhub)
 
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
 		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_status,
-		  sizeof(sc->sc_status), uhub_intr, UHUB_INTR_INTERVAL);
+		  sizeof(sc->sc_status), uhub_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		printf("%s: cannot open interrupt pipe\n",
 		       USBDEVNAME(sc->sc_dev));
