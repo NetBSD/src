@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.222 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.223 2006/11/30 15:12:17 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.222 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.223 2006/11/30 15:12:17 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -488,6 +488,12 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		rf_cleanup_config_set(cset);
 		cset = next_cset;
 	}
+
+	/* if the user has specified what the root device should be
+	   then we don't touch booted_device or boothowto... */
+
+	if (rootspec != NULL)
+		return;
 
 	/* we found something bootable... */
 
