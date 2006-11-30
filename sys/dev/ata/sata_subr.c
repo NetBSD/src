@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.7 2006/11/27 20:29:12 dogcow Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.8 2006/11/30 23:07:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ sata_speed(uint32_t sstatus)
 	static const char *sata_speedtab[] = {
 		"no negotiated speed",
 		"1.5Gb/s",
-		"3.0GB/s",
+		"3.0Gb/s",
 		"<unknown 3>",
 		"<unknown 4>",
 		"<unknown 5>",
