@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.272 2006/10/31 14:04:29 thorpej Exp $
+#	$NetBSD: files.pci,v 1.273 2006/11/30 21:01:16 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -210,6 +210,11 @@ file dev/pci/pciide_common.c pciide_common
 device	pciide: ata, pciide_common, wdc_common
 attach	pciide at pci
 file	dev/pci/pciide.c		pciide
+
+# AHCI SATA controllers
+device	ahcisata: ata, ata_dma, ata_udma, sata
+attach	ahcisata at pci
+file	dev/pci/ahcisata.c		ahcisata
 
 # Acard IDE controllers
 device	acardide: ata, ata_dma, ata_udma, pciide_common, wdc_common

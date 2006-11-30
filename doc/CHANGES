@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.763 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -199,3 +199,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	mac68k: Add timecounter support. [hauke 20061120]
 	tcp(4), ifconfig(8), wm(4): Add TCPv6 hardware transmit segment
 		offload support. [yamt 20061124]
+	ahcisata(4): Added driver for AHCI 1.0 and 1.1 compliant SATA
+		controllers. [bouyer 20061130]

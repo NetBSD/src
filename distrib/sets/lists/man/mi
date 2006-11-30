@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.954 2006/11/25 17:43:47 elad Exp $
+# $NetBSD: mi,v 1.955 2006/11/30 21:01:15 bouyer Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -581,6 +581,7 @@
 ./usr/share/man/cat4/aha.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ahb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ahc.0			man-sys-catman		.cat
+./usr/share/man/cat4/ahcisata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ahd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ai.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aic.0			man-sys-catman		.cat
@@ -2978,6 +2979,7 @@
 ./usr/share/man/man4/aha.4			man-sys-man		.man
 ./usr/share/man/man4/ahb.4			man-sys-man		.man
 ./usr/share/man/man4/ahc.4			man-sys-man		.man
+./usr/share/man/man4/ahcisata.4			man-sys-man		.man
 ./usr/share/man/man4/ahd.4			man-sys-man		.man
 ./usr/share/man/man4/ai.4			man-sys-man		.man
 ./usr/share/man/man4/aic.4			man-sys-man		.man

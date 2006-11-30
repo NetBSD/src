@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.17 2006/11/28 16:15:37 christos Exp $
+# $NetBSD: XEN2_DOM0,v 1.18 2006/11/30 21:01:16 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -346,6 +346,7 @@ dpti*	at iop? tid 0			# DPT/Adaptec control interface
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
 aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+ahcisata* 	at pci? dev ? function ?	# AHCI SATA controllers
 artsata* 	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
