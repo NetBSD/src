@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.77 2006/11/30 13:42:46 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.78 2006/11/30 16:53:48 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.77 2006/11/30 13:42:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78 2006/11/30 16:53:48 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -109,6 +109,8 @@ LIST_HEAD(, veriexec_fpops) veriexec_fpops_list;
 static int veriexec_raw_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 static int sysctl_kern_veriexec(SYSCTLFN_PROTO);
+static struct veriexec_fpops *veriexec_fpops_lookup(const char *);
+static void veriexec_clear(void *, int);
 
 static unsigned int veriexec_tablecount = 0;
 
@@ -316,7 +318,7 @@ veriexec_init(void)
 #undef FPOPS_ADD
 }
 
-struct veriexec_fpops *
+static struct veriexec_fpops *
 veriexec_fpops_lookup(const char *name)
 {
 	struct veriexec_fpops *ops;
@@ -465,9 +467,9 @@ veriexec_fp_cmp(struct veriexec_fpops *ops, u_char *fp1, u_char *fp2)
 }
 
 static struct veriexec_table_entry *
-veriexec_table_lookup(struct vnode *vp)
+veriexec_table_lookup(struct mount *mp)
 {
-	return (fileassoc_tabledata_lookup(vp->v_mount, veriexec_hook));
+	return (fileassoc_tabledata_lookup(mp, veriexec_hook));
 }
 
 struct veriexec_file_entry *
@@ -686,7 +688,7 @@ veriexec_removechk(struct vnode *vp, const char *pathbuf, struct lwp *l)
 
 	fileassoc_clear(vp, veriexec_hook);
 
-	vte = veriexec_table_lookup(vp);
+	vte = veriexec_table_lookup(vp->v_mount);
 	KASSERT(vte != NULL);
 
 	vte->vte_count--;
@@ -758,7 +760,7 @@ veriexec_report(const u_char *msg, const u_char *filename, struct lwp *l, int f)
 		panic("Veriexec: Unrecoverable error.");
 }
 
-void
+static void
 veriexec_clear(void *data, int file_specific)
 {
 	if (file_specific) {
@@ -901,7 +903,7 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		/*
 		 * XXX: See vfs_mountedon() comment in secmodel/bsd44.
 		 */
-		vte = veriexec_table_lookup(bvp);
+		vte = veriexec_table_lookup(bvp->v_mount);
 		if (vte == NULL) {
 			result = KAUTH_RESULT_ALLOW;
 			break;
@@ -1043,7 +1045,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 		goto out;
 	}
 
-	vte = veriexec_table_lookup(nid.ni_vp);
+	vte = veriexec_table_lookup(nid.ni_vp->v_mount);
 	vte->vte_count++;
 
 	veriexec_report("New entry.", file, NULL, REPORT_DEBUG);
@@ -1107,51 +1109,32 @@ veriexec_table_add(struct lwp *l, prop_dictionary_t dict)
 	return (error);
 }
 
-/*
- * Remove either a single file from being monitored by Veriexec or an entire
- * mount, depending on whether the vnode is for a VREG or a VDIR.
- *
- * Expects dict to have file.
- */
 int
-veriexec_delete(struct lwp *l, prop_dictionary_t dict)
-{
+veriexec_table_delete(struct mount *mp) {
 	struct veriexec_table_entry *vte;
-	struct nameidata nid;
+
+	vte = veriexec_table_lookup(mp);
+	if (vte == NULL)
+		return (ENOENT);
+
+	sysctl_free(__UNCONST(vte->vte_node));
+	veriexec_tablecount--;
+
+	return (fileassoc_table_clear(mp, veriexec_hook));
+}
+
+int
+veriexec_file_delete(struct vnode *vp) {
+	struct veriexec_table_entry *vte;
 	int error;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE,
-	    prop_string_cstring_nocopy(prop_dictionary_get(dict, "file")), l);
-	error = namei(&nid);
-	if (error)
-		return (error);
+	vte = veriexec_table_lookup(vp->v_mount);
+	if (vte == NULL)
+		return (ENOENT);
 
-	vte = veriexec_table_lookup(nid.ni_vp);
-	if (vte == NULL) {
-		error = ENOENT;
-		goto out;
-	}
-
-	/* XXX this should either receive the filename to remove OR a mount point! */
-	/* Delete an entire table */
-	if (nid.ni_vp->v_type == VDIR) {
-		sysctl_free(__UNCONST(vte->vte_node));
-
-		veriexec_tablecount--;
-
-		error = fileassoc_table_clear(nid.ni_vp->v_mount, veriexec_hook);
-		if (error)
-			goto out;
-	} else if (nid.ni_vp->v_type == VREG) {
-		error = fileassoc_clear(nid.ni_vp, veriexec_hook);
-		if (error)
-			goto out;
-
+	error = fileassoc_clear(vp, veriexec_hook);
+	if (!error)
 		vte->vte_count--;
-	}
-
- out:
-	vrele(nid.ni_vp);
 
 	return (error);
 }
@@ -1159,15 +1142,23 @@ veriexec_delete(struct lwp *l, prop_dictionary_t dict)
 /*
  * Convert Veriexec entry data to a dictionary readable by userland tools.
  */
-void
-veriexec_convert(struct veriexec_file_entry *vfe, prop_dictionary_t rdict)
+int
+veriexec_convert(struct vnode *vp, prop_dictionary_t rdict)
 {
+	struct veriexec_file_entry *vfe;
+
+	vfe = veriexec_lookup(vp);
+	if (vfe == NULL)
+		return (ENOENT);
+
 	prop_dictionary_set_uint8(rdict, "entry-type", vfe->type);
 	prop_dictionary_set_uint8(rdict, "status", vfe->status);
 	prop_dictionary_set(rdict, "fp-type",
 	    prop_string_create_cstring(vfe->ops->type));
 	prop_dictionary_set(rdict, "fp",
 	    prop_data_create_data(vfe->fp, vfe->ops->hash_len));
+
+	return (0);
 }
 
 int
