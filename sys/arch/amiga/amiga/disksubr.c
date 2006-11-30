@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.51 2006/11/25 18:45:03 mhitch Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.52 2006/11/30 05:14:24 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.51 2006/11/25 18:45:03 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.52 2006/11/30 05:14:24 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,7 @@ readdisklabel(dev, strat, lp, clp)
 	char *bcpls, *s, bcpli;
 	int cindex, i, nopname;
 	u_long nextb;
+	struct disklabel *dlp;
 
 	clp->rdblock = RDBNULL;
 	/*
@@ -206,6 +207,18 @@ readdisklabel(dev, strat, lp, clp)
 				break;
 			else
 				msg = "rdb bad checksum";
+		}
+		/* Check for native NetBSD label? */
+		dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+		if (dlp->d_magic == DISKMAGIC) {
+			if (dkcksum(dlp))
+				msg = "NetBSD disk label corrupted";
+			else {
+				/* remember block and continue searching? */
+				*lp = *dlp;
+				brelse(bp);
+				return(msg);
+			}
 		}
 	}
 	if (nextb == RDB_MAXBLOCKS) {
@@ -537,9 +550,36 @@ writedisklabel(dev, strat, lp, clp)
 {
 	struct rdbmap *bmap;
 	struct buf *bp;
-	bp = NULL;	/* XXX */
+	struct disklabel *dlp;
+	int error = 0;
 
-	return(EINVAL);
+	/* If RDB was present, we don't support writing them yet. */
+	if (clp->rdblock != RDBNULL)
+		return(EINVAL);
+
+	/* RDB was not present, write out native NetBSD label */
+	bp = geteblk((int)lp->d_secsize);
+	bp->b_dev = dev;
+	bp->b_blkno = LABELSECTOR;
+	bp->b_cylinder = 0;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags |= B_READ;           /* get current label */
+	(*strat)(bp);
+	if ((error = biowait(bp)) != 0)
+		goto done;
+
+	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	*dlp = *lp;     /* struct assignment */
+
+	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_flags |= B_WRITE;
+	(*strat)(bp);
+	error = biowait(bp);
+
+done:
+	brelse(bp);
+	return (error); 
+
 	/*
 	 * get write out partition list iff cpu_label is valid.
 	 */
