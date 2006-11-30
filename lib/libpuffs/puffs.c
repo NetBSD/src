@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.8 2006/11/18 12:40:35 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.9 2006/11/30 05:37:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,12 +34,13 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.8 2006/11/18 12:40:35 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.9 2006/11/30 05:37:48 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <puffs.h>
@@ -70,6 +71,7 @@ puffs_mount(struct puffs_vfsops *pvfs, struct puffs_vnops *pvn,
 	fd = open("/dev/puffs", O_RDONLY);
 	if (fd == -1)
 		return NULL;
+	assert(fd > 2);
 
 	pargs.pa_vers = 0; /* XXX: for now */
 	pargs.pa_flags = PUFFSFLAG_KERN(pflags);
@@ -118,7 +120,7 @@ puffs_mount(struct puffs_vfsops *pvfs, struct puffs_vnops *pvn,
 }
 
 int
-puffs_mainloop(struct puffs_usermount *pu)
+puffs_mainloop(struct puffs_usermount *pu, int flags)
 {
 	uint8_t *buf;
 	int rv;
@@ -126,6 +128,10 @@ puffs_mainloop(struct puffs_usermount *pu)
 	buf = malloc(pu->pu_maxreqlen);
 	if (!buf)
 		return -1;
+
+	if ((flags & PUFFSLOOP_NODAEMON) == 0)
+		if (daemon(0, 0) == -1)
+			return -1;
 
 	for (;;)
 		if ((rv = puffs_oneop(pu, buf, pu->pu_maxreqlen)) != 0)
