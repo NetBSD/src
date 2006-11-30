@@ -1,4 +1,4 @@
-/*	$NetBSD: bpb.h,v 1.4 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: bpb.h,v 1.5 2006/11/30 15:59:23 christos Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -127,13 +127,15 @@ struct bpb_a {
 #define	putushort(p, v)	(void)(*__ICAST(,16,p) = (v))
 #define	putulong(p, v)	(void)(*__ICAST(,32,p) = (v))
 #else
-#define getushort(x)	(__ICAST(const,8,x)[0] + (__ICAST(const,8,x)[1] << 8))
-#define getulong(x)	(__ICAST(const,8,x)[0] + (__ICAST(const,8,x)[1] << 8) \
-			 + (__ICAST(const,8,x)[2] << 16)	\
-			 + (__ICAST(const,8,x)[3] << 24))
-#define putushort(p, v)	(__ICAST(,8,p)[0] = (v),	\
+#define getushort(x)	((u_int16_t)(__ICAST(const,8,x)[0] \
+			 | (__ICAST(const,8,x)[1] << 8)))
+#define getulong(x)	((u_int32_t)(__ICAST(const,8,x)[0] \
+			 | (__ICAST(const,8,x)[1] << 8) \
+			 | (__ICAST(const,8,x)[2] << 16) \
+			 | (__ICAST(const,8,x)[3] << 24)))
+#define putushort(p, v)	(void)(__ICAST(,8,p)[0] = (v),	\
 			 __ICAST(,8,p)[1] = (v) >> 8)
-#define putulong(p, v)	(__ICAST(,8,p)[0] = (v),	\
+#define putulong(p, v)	(void)(__ICAST(,8,p)[0] = (v),	\
 			 __ICAST(,8,p)[1] = (v) >> 8, \
 			 __ICAST(,8,p)[2] = (v) >> 16,\
 			 __ICAST(,8,p)[3] = (v) >> 24)
