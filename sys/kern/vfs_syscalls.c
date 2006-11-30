@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.278 2006/11/21 23:52:41 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.279 2006/11/30 01:09:48 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.278 2006/11/21 23:52:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.279 2006/11/30 01:09:48 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -551,29 +551,9 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	int used_syncer;
 
 #if NVERIEXEC > 0
-	if (!doing_shutdown) {
-		if (veriexec_strict >= VERIEXEC_LOCKDOWN) {
-			log(LOG_ALERT, "Veriexec: Lockdown mode, "
-			    "preventing unmount of \"%s\". (uid=%u)\n",
-			     mp->mnt_stat.f_mntonname,
-			    kauth_cred_getuid(l->l_cred));
-			return (EPERM);
-		}
-
-		if (veriexec_strict == VERIEXEC_IPS) {
-			struct veriexec_table_entry *vte;
-
-			/* Check if we have fingerprints on mount. */
-			vte = fileassoc_tabledata_lookup(mp, veriexec_hook);
-			if ((vte != NULL) && (vte->vte_count > 0)) {
-				log(LOG_ALERT, "Veriexec: IPS mode, preventing" 
-				    " unmount of \"%s\" with monitored files. "
-				    "(uid=%u)\n", mp->mnt_stat.f_mntonname,
-				    kauth_cred_getuid(l->l_cred));
-				return (EPERM);
-			}
-		}
-	}
+	error = veriexec_unmountchk(mp);
+	if (error)
+		return (error);
 #endif /* NVERIEXEC > 0 */
 
 #ifdef FILEASSOC

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.128 2006/11/01 22:45:14 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.129 2006/11/30 01:09:47 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.128 2006/11/01 22:45:14 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.129 2006/11/30 01:09:47 elad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -105,9 +105,9 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	struct vattr va;
 	int error;
 #if NVERIEXEC > 0
-	struct veriexec_file_entry *vfe = NULL;
 	const char *pathbuf;
 	char *tmppathbuf;
+	boolean_t veriexec_monitored = FALSE;
 #endif /* NVERIEXEC > 0 */
 
 #if NVERIEXEC > 0
@@ -208,7 +208,7 @@ restart:
 	if ((fmode & O_CREAT) == 0) {
 #if NVERIEXEC > 0
 		if ((error = veriexec_verify(l, vp, pathbuf, VERIEXEC_FILE,
-		    &vfe)) != 0)
+		    &veriexec_monitored)) != 0)
 			goto bad;
 #endif /* NVERIEXEC > 0 */
 
@@ -226,7 +226,7 @@ restart:
 			    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0)
 				goto bad;
 #if NVERIEXEC > 0
-			if (vfe != NULL) {
+			if (veriexec_monitored) {
 				veriexec_report("Write access request.",
 				    pathbuf, l, REPORT_ALWAYS|REPORT_ALARM);
 
@@ -235,7 +235,7 @@ restart:
 					error = EPERM;
 					goto bad;
 				} else {
-					veriexec_purge(vfe);
+					veriexec_purge(vp);
 				}
 			}
 #endif /* NVERIEXEC > 0 */
@@ -245,22 +245,21 @@ restart:
 	if (fmode & O_TRUNC) {
 #if NVERIEXEC > 0 
 		if ((error = veriexec_verify(l, vp, pathbuf, VERIEXEC_FILE,
-					     &vfe)) != 0) {
+		    &veriexec_monitored)) != 0) {
 			/*VOP_UNLOCK(vp, 0);*/
 			goto bad;
 		}
 
-		if (vfe != NULL) {
-			veriexec_report("truncate access request.",
-					pathbuf, l,
-					REPORT_VERBOSE | REPORT_ALARM);
+		if (veriexec_monitored) {
+			veriexec_report("Truncate access request.", pathbuf, l,
+			    REPORT_VERBOSE | REPORT_ALARM);
 
 			/* IPS mode: Deny truncating monitored files. */
 			if (veriexec_strict >= 2) {
 				error = EPERM;
 				goto bad;
 			} else {
-				veriexec_purge(vfe);
+				veriexec_purge(vp);
 			}
 		}
 #endif /* NVERIEXEC > 0 */
