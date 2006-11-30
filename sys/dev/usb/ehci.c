@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.117 2006/11/28 20:58:12 drochner Exp $ */
+/*	$NetBSD: ehci.c,v 1.118 2006/11/30 16:25:28 drochner Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.117 2006/11/28 20:58:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.118 2006/11/30 16:25:28 drochner Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1635,7 +1635,7 @@ Static usb_endpoint_descriptor_t ehci_endpd = {
 	UE_DIR_IN | EHCI_INTR_ENDPT,
 	UE_INTERRUPT,
 	{8, 0},			/* max packet */
-	255
+	12
 };
 
 Static usb_hub_descriptor_t ehci_hubd = {
