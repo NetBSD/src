@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.62 2006/09/23 00:56:20 jmcneill Exp $
+$NetBSD: isapnpdevs,v 1.63 2006/11/30 22:34:01 christos Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -203,6 +203,7 @@ devlogic	pcic	AEI0218		0	Actiontec PnP PCMCIA Adapter
  */
 devlogic	sb	ADS7150		0	AD1815
 devlogic	sb	ADS7180		0	AD1816
+devlogic	sb	AZT1002		0	Aztech 1002 Audio
 devlogic	sb	AZT1003		0	Aztech 1003 Audio
 devlogic	sb	AZT1008		0	Aztech 1008
 devlogic	sb	AZT1016		0	Aztech 1020
