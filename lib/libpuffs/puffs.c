@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.10 2006/12/01 12:38:11 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.11 2006/12/01 12:50:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.10 2006/12/01 12:38:11 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.11 2006/12/01 12:50:06 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -122,7 +122,7 @@ puffs_mount(struct puffs_vfsops *pvfs, struct puffs_vnops *pvn,
 	assert(fd > 2);
 
 	pargs.pa_vers = 0; /* XXX: for now */
-	pargs.pa_flags = PUFFSFLAG_KERN(pflags);
+	pargs.pa_flags = PUFFS_FLAG_KERN(pflags);
 	pargs.pa_fd = fd;
 	pargs.pa_maxreqlen = maxreqlen;
 	fillvnopmask(pvn, pargs.pa_vnopmask);
@@ -236,7 +236,7 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq)
 
 	rv = 0;
 
-	if (pu->pu_flags & PUFFSFLAG_OPDUMP)
+	if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
 		puffsdump_req(preq);
 
 	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.12 2006/11/30 05:37:48 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.13 2006/12/01 12:50:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -175,10 +175,10 @@ struct puffs_usermount {
 	void	*pu_privdata;
 };
 
-#define PUFFSFLAG_KERN(a)	((a) & 0x0000ffff)
-#define PUFFSFLAG_LIB(a)	((a) & 0xffff0000)
+#define PUFFS_FLAG_KERN(a)	((a) & 0x0000ffff)
+#define PUFFS_FLAG_LIB(a)	((a) & 0xffff0000)
 
-#define PUFFSFLAG_OPDUMP	0x80000000	/* dump all operations */
+#define PUFFS_FLAG_OPDUMP	0x80000000	/* dump all operations */
 
 struct puffs_usermount *puffs_mount(struct puffs_vfsops *, struct puffs_vnops *,
 		    		    const char *, int, const char *,
