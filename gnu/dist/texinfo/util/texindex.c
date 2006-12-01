@@ -1,4 +1,4 @@
-/*	$NetBSD: texindex.c,v 1.8 2004/07/12 23:41:54 wiz Exp $	*/
+/*	$NetBSD: texindex.c,v 1.9 2006/12/01 16:54:22 drochner Exp $	*/
 
 /* texindex -- sort TeX index dribble output into an actual index.
    Id: texindex.c,v 1.3 2004/03/18 22:26:53 karl Exp
@@ -101,6 +101,9 @@ long nlines;
 /* Directory to use for temporary files.  On Unix, it ends with a slash.  */
 char *tempdir;
 
+/* Start of filename to use for temporary files.  */
+char *tempbase;
+
 /* Number of last temporary file.  */
 int tempcount;
 
@@ -146,7 +149,7 @@ void pfatal_with_name (const char *name);
 void fatal (const char *format, const char *arg);
 void error (const char *format, const char *arg);
 void *xmalloc (), *xrealloc ();
-char *concat (char *s1, char *s2);
+static char *concat3 (const char *, const char *, const char *);
 void flush_tempfiles (int to_count);
 
 #define MAX_IN_CORE_SORT 500000
@@ -192,6 +195,11 @@ main (int argc, char **argv)
 
   decode_command (argc, argv);
 
+  /* XXX mkstemp not appropriate, as we need to have somewhat predictable
+   * names. But race condition was fixed, see maketempname.
+   */
+  tempbase = mktemp (concat3 ("txiXXXXXX", "", ""));
+
   /* Process input files completely, one by one.  */
 
   for (i = 0; i < num_infiles; i++)
@@ -222,7 +230,7 @@ main (int argc, char **argv)
 
       outfile = outfiles[i];
       if (!outfile)
-        outfile = concat (infiles[i], "s");
+        outfile = concat3 (infiles[i], "s", "");
 
       need_initials = 0;
       first_initial = '\0';
@@ -320,7 +328,7 @@ decode_command (int argc, char **argv)
   if (tempdir == NULL)
     tempdir = DEFAULT_TMPDIR;
   else
-    tempdir = concat (tempdir, "/");
+    tempdir = concat3 (tempdir, "/", "");
 
   keep_tempfiles = 0;
 
@@ -386,26 +394,34 @@ For more information about these matters, see the files named COPYING.\n"));
     usage (1);
 }
 
-/* Return a name for temporary file COUNT. */
+/* Return a name for temporary file COUNT.  It is INSECURE to use this name to
+   create files without O_EXCL. */
+static char *
+gettempname (int count)
+{
+  char tempsuffix[10];
+
+  sprintf (tempsuffix, ".%d", count);
+  return concat3 (tempdir, tempbase, tempsuffix);
+}
+
+/* Return a name for temporary file COUNT, or NULL if failure. */
 
 static char *
 maketempname (int count)
 {
-  static char *tempbase = NULL;
-  char tempsuffix[10];
+  char *name;
+  int fd;
 
-  if (!tempbase)
+  name = gettempname (count);
+  fd = open (name, O_CREAT|O_EXCL|O_WRONLY, 0600);
+  if (fd == -1)
+    return NULL;
+  else
     {
-      int fd;
-      tempbase = concat (tempdir, "txidxXXXXXX");
-
-      fd = mkstemp (tempbase);
-      if (fd == -1)
-        pfatal_with_name (tempbase);
+      close(fd);
+      return(name);
     }
-
-  sprintf (tempsuffix, ".%d", count);
-  return concat (tempbase, tempsuffix);
 }
 
 
@@ -417,7 +433,7 @@ flush_tempfiles (int to_count)
   if (keep_tempfiles)
     return;
   while (last_deleted_tempcount < to_count)
-    unlink (maketempname (++last_deleted_tempcount));
+    unlink (gettempname (++last_deleted_tempcount));
 }
 
 
@@ -839,7 +855,7 @@ readline (struct linebuffer *linebuffer, FILE *stream)
         {
           buffer = (char *) xrealloc (buffer, linebuffer->size *= 2);
           p += buffer - linebuffer->buffer;
-          end += buffer - linebuffer->buffer;
+          end = buffer + linebuffer->size;
           linebuffer->buffer = buffer;
         }
       if (c < 0 || c == '\n')
@@ -884,10 +900,13 @@ sort_offline (char *infile, off_t total, char *outfile)
 
   for (i = 0; i < ntemps; i++)
     {
+      FILE *ostream;
       char *outname = maketempname (++tempcount);
-      FILE *ostream = fopen (outname, "w");
       long tempsize = 0;
 
+      if (!outname)
+        pfatal_with_name("temp file");
+      ostream = fopen (outname, "w");
       if (!ostream)
         pfatal_with_name (outname);
       tempfiles[i] = outname;
@@ -933,6 +952,8 @@ fail:
   for (i = 0; i < ntemps; i++)
     {
       char *newtemp = maketempname (++tempcount);
+      if (!newtemp)
+        pfatal_with_name("temp file");
       sort_in_core (tempfiles[i], MAX_IN_CORE_SORT, newtemp);
       if (!keep_tempfiles)
         unlink (tempfiles[i]);
@@ -1403,6 +1424,8 @@ merge_files (char **infiles, int nfiles, char *outfile)
       if (i + 1 == ntemps)
         nf = nfiles - i * MAX_DIRECT_MERGE;
       tempfiles[i] = maketempname (++tempcount);
+      if (!tempfiles[i])
+	pfatal_with_name("temp file");
       value |= merge_direct (&infiles[i * MAX_DIRECT_MERGE], nf, tempfiles[i]);
     }
 
@@ -1614,17 +1637,18 @@ pfatal_with_name (const char *name)
 }
 
 
-/* Return a newly-allocated string concatenating S1 and S2.  */
+/* Return a newly-allocated string concatenating S1, S2, and S3.  */
 
-char *
-concat (char *s1, char *s2)
+static char *
+concat3 (const char *s1, const char *s2, const char *s3)
 {
-  int len1 = strlen (s1), len2 = strlen (s2);
-  char *result = (char *) xmalloc (len1 + len2 + 1);
+  int len1 = strlen (s1), len2 = strlen (s2), len3 = strlen (s3);
+  char *result = (char *) xmalloc (len1 + len2 + len3 + 1);
 
   strcpy (result, s1);
   strcpy (result + len1, s2);
-  *(result + len1 + len2) = 0;
+  strcpy (result + len1 + len2, s3);
+  *(result + len1 + len2 + len3) = 0;
 
   return result;
 }
