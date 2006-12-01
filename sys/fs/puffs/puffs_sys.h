@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.10 2006/12/01 12:37:41 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.11 2006/12/01 12:48:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -114,7 +114,7 @@ struct puffs_sizepark {
 #define FPTOPI(fp) ((struct puffs_instance *)fp->f_data)
 
 #define EXISTSOP(pmp, op) \
-(((pmp)->pmp_flags & PUFFSFLAG_ALLOPS) || ((pmp)->pmp_vnopmask[PUFFS_VN_##op]))
+ (((pmp)->pmp_flags&PUFFS_KFLAG_ALLOPS) || ((pmp)->pmp_vnopmask[PUFFS_VN_##op]))
 
 TAILQ_HEAD(puffs_wq, puffs_park);
 struct puffs_mount {

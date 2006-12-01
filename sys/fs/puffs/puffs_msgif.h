@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.9 2006/12/01 12:37:41 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.10 2006/12/01 12:48:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -94,10 +94,10 @@ struct puffs_args {
 	char		pa_name[PUFFSNAMESIZE];	/* name for puffs type	*/
 	uint8_t		pa_vnopmask[PUFFS_VN_MAX];
 };
-#define PUFFSFLAG_ALLOWCTL	0x01	/* ioctl/fcntl commands allowed */
-#define PUFFSFLAG_NOCACHE	0x02	/* flush page cache immediately	*/
-#define PUFFSFLAG_ALLOPS	0x04	/* ignore pa_vnopmask, send all */
-#define PUFFSFLAG_MASK		0x07
+#define PUFFS_KFLAG_ALLOWCTL	0x01	/* ioctl/fcntl commands allowed */
+#define PUFFS_KFLAG_NOCACHE	0x02	/* flush page cache immediately	*/
+#define PUFFS_KFLAG_ALLOPS	0x04	/* ignore pa_vnopmask, send all */
+#define PUFFS_KFLAG_MASK	0x07
 
 /*
  * This is the device minor number for the cloning device.  Make it

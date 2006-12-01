@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.17 2006/12/01 12:37:41 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.18 2006/12/01 12:48:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.17 2006/12/01 12:37:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.18 2006/12/01 12:48:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -365,7 +365,7 @@ puffs_checkop(void *v)
 	vp = *VOPARG_OFFSETTO(struct vnode **, offset, ap);
 	pmp = MPTOPUFFSMP(vp->v_mount);
 
-	if ((pmp->pmp_flags & PUFFSFLAG_ALLOPS) == 0) {
+	if ((pmp->pmp_flags & PUFFS_KFLAG_ALLOPS) == 0) {
 		switch (desc->vdesc_offset) {
 			CHECKOP_NOTSUPP(CREATE);
 			CHECKOP_NOTSUPP(MKNOD);
@@ -1312,7 +1312,7 @@ puffs_read(void *v)
 	if (uio->uio_offset < 0)
 		return EINVAL;
 
-	if (vp->v_type == VREG && (pmp->pmp_flags & PUFFSFLAG_NOCACHE) == 0) {
+	if (vp->v_type == VREG && (pmp->pmp_flags & PUFFS_KFLAG_NOCACHE) == 0) {
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
 		ubcflags = 0;
@@ -1414,7 +1414,7 @@ puffs_write(void *v)
 	write_argp = NULL;
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 
-	if (vp->v_type == VREG && (pmp->pmp_flags & PUFFSFLAG_NOCACHE) == 0) {
+	if (vp->v_type == VREG && (pmp->pmp_flags & PUFFS_KFLAG_NOCACHE) == 0) {
 		ubcflags = 0;
 		if (UBC_WANT_UNMAP(vp))
 			ubcflags = UBC_UNMAP;
@@ -1562,7 +1562,7 @@ puffs_fcnioctl(struct vop_ioctl_args *ap, int puffsop)
 	 * be a whopping security hole.
 	 */
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
-	if ((pmp->pmp_flags & PUFFSFLAG_ALLOWCTL) == 0)
+	if ((pmp->pmp_flags & PUFFS_KFLAG_ALLOWCTL) == 0)
 		return EINVAL; /* only shoe that fits */
 
 	/* fill in sizereq and store it */
@@ -1889,7 +1889,7 @@ puffs_mmap(void *v)
 
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 
-	if (pmp->pmp_flags & PUFFSFLAG_NOCACHE)
+	if (pmp->pmp_flags & PUFFS_KFLAG_NOCACHE)
 		return genfs_eopnotsupp(v);
 
 	return genfs_mmap(v);
