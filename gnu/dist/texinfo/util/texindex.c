@@ -1,4 +1,4 @@
-/*	$NetBSD: texindex.c,v 1.9 2006/12/01 16:54:22 drochner Exp $	*/
+/*	$NetBSD: texindex.c,v 1.10 2006/12/01 18:21:04 drochner Exp $	*/
 
 /* texindex -- sort TeX index dribble output into an actual index.
    Id: texindex.c,v 1.3 2004/03/18 22:26:53 karl Exp
@@ -39,15 +39,11 @@ static char *program_name = "texindex";
 #define memset(ptr, ignore, count) bzero (ptr, count)
 #endif
 
-char *mktemp (char *);
-
 #if !defined (SEEK_SET)
 #  define SEEK_SET 0
 #  define SEEK_CUR 1
 #  define SEEK_END 2
 #endif /* !SEEK_SET */
-
-struct linebuffer;
 
 /* When sorting in core, this structure describes one line
    and the position and length of its first keyfield.  */
@@ -98,19 +94,6 @@ char **linearray;
 /* The allocated length of `linearray'. */
 long nlines;
 
-/* Directory to use for temporary files.  On Unix, it ends with a slash.  */
-char *tempdir;
-
-/* Start of filename to use for temporary files.  */
-char *tempbase;
-
-/* Number of last temporary file.  */
-int tempcount;
-
-/* Number of last temporary file already deleted.
-   Temporary files are deleted by `flush_tempfiles' in order of creation.  */
-int last_deleted_tempcount;
-
 /* During in-core sort, this points to the base of the data block
    which contains all the lines of data.  */
 char *text_base;
@@ -122,15 +105,9 @@ int need_initials;
    determine whether we need initials in the sorted form.  */
 char first_initial;
 
-/* Additional command switches .*/
-
-/* Nonzero means do not delete tempfiles -- for debugging. */
-int keep_tempfiles;
-
 /* Forward declarations of functions in this file. */
 void decode_command (int argc, char **argv);
 void sort_in_core (char *infile, int total, char *outfile);
-void sort_offline (char *infile, off_t total, char *outfile);
 char **parsefile (char *filename, char **nextline, char *data, long int size);
 char *find_field (struct keyfield *keyfield, char *str, long int *lengthptr);
 char *find_pos (char *str, int words, int chars, int ignore_blanks);
@@ -142,25 +119,16 @@ int compare_field (struct keyfield *keyfield, char *start1,
                    long int length1, long int pos1, char *start2,
                    long int length2, long int pos2);
 int compare_full (const void *, const void *);
-long readline (struct linebuffer *linebuffer, FILE *stream);
-int merge_files (char **infiles, int nfiles, char *outfile);
-int merge_direct (char **infiles, int nfiles, char *outfile);
 void pfatal_with_name (const char *name);
 void fatal (const char *format, const char *arg);
 void error (const char *format, const char *arg);
 void *xmalloc (), *xrealloc ();
 static char *concat3 (const char *, const char *, const char *);
-void flush_tempfiles (int to_count);
 
-#define MAX_IN_CORE_SORT 500000
-
 int
 main (int argc, char **argv)
 {
   int i;
-
-  tempcount = 0;
-  last_deleted_tempcount = 0;
 
 #ifdef HAVE_SETLOCALE
   /* Set locale via LC_ALL.  */
@@ -194,11 +162,6 @@ main (int argc, char **argv)
   keyfields[2].endchars = -1;
 
   decode_command (argc, argv);
-
-  /* XXX mkstemp not appropriate, as we need to have somewhat predictable
-   * names. But race condition was fixed, see maketempname.
-   */
-  tempbase = mktemp (concat3 ("txiXXXXXX", "", ""));
 
   /* Process input files completely, one by one.  */
 
@@ -235,14 +198,15 @@ main (int argc, char **argv)
       need_initials = 0;
       first_initial = '\0';
 
-      if (ptr < MAX_IN_CORE_SORT)
-        /* Sort a small amount of data. */
-        sort_in_core (infiles[i], (int)ptr, outfile);
-      else
-        sort_offline (infiles[i], ptr, outfile);
+      if (ptr != (int)ptr)
+	{
+	  fprintf (stderr, "%s: %s: file too large\n", program_name,
+		   infiles[i]);
+	  xexit (1);
+	}
+      sort_in_core (infiles[i], (int)ptr, outfile);
     }
 
-  flush_tempfiles (tempcount);
   xexit (0);
   return 0; /* Avoid bogus warnings.  */
 }
@@ -260,10 +224,6 @@ typedef struct
 TEXINDEX_OPTION texindex_options[] = {
   { "--help", "-h", (int *)NULL, 0, (char *)NULL,
       N_("display this help and exit") },
-  { "--keep", "-k", &keep_tempfiles, 1, (char *)NULL,
-      N_("keep temporary files around after processing") },
-  { "--no-keep", 0, &keep_tempfiles, 0, (char *)NULL,
-      N_("do not keep temporary files around after processing (default)") },
   { "--output", "-o", (int *)NULL, 0, "FILE",
       N_("send output to FILE") },
   { "--version", (char *)NULL, (int *)NULL, 0, (char *)NULL,
@@ -318,20 +278,6 @@ decode_command (int argc, char **argv)
   char **ip;
   char **op;
 
-  /* Store default values into parameter variables. */
-
-  tempdir = getenv ("TMPDIR");
-  if (tempdir == NULL)
-    tempdir = getenv ("TEMP");
-  if (tempdir == NULL)
-    tempdir = getenv ("TMP");
-  if (tempdir == NULL)
-    tempdir = DEFAULT_TMPDIR;
-  else
-    tempdir = concat3 (tempdir, "/", "");
-
-  keep_tempfiles = 0;
-
   /* Allocate ARGC input files, which must be enough.  */
 
   infiles = (char **) xmalloc (argc * sizeof (char *));
@@ -358,7 +304,7 @@ For more information about these matters, see the files named COPYING.\n"));
           else if ((strcmp (arg, "--keep") == 0) ||
                    (strcmp (arg, "-k") == 0))
             {
-              keep_tempfiles = 1;
+	      /* Ignore, for backward compatibility */
             }
           else if ((strcmp (arg, "--help") == 0) ||
                    (strcmp (arg, "-h") == 0))
@@ -393,49 +339,6 @@ For more information about these matters, see the files named COPYING.\n"));
   if (num_infiles == 0)
     usage (1);
 }
-
-/* Return a name for temporary file COUNT.  It is INSECURE to use this name to
-   create files without O_EXCL. */
-static char *
-gettempname (int count)
-{
-  char tempsuffix[10];
-
-  sprintf (tempsuffix, ".%d", count);
-  return concat3 (tempdir, tempbase, tempsuffix);
-}
-
-/* Return a name for temporary file COUNT, or NULL if failure. */
-
-static char *
-maketempname (int count)
-{
-  char *name;
-  int fd;
-
-  name = gettempname (count);
-  fd = open (name, O_CREAT|O_EXCL|O_WRONLY, 0600);
-  if (fd == -1)
-    return NULL;
-  else
-    {
-      close(fd);
-      return(name);
-    }
-}
-
-
-/* Delete all temporary files up to TO_COUNT. */
-
-void
-flush_tempfiles (int to_count)
-{
-  if (keep_tempfiles)
-    return;
-  while (last_deleted_tempcount < to_count)
-    unlink (gettempname (++last_deleted_tempcount));
-}
-
 
 /* Compare LINE1 and LINE2 according to the specified set of keyfields. */
 
@@ -817,155 +720,6 @@ compare_field (struct keyfield *keyfield, char *start1, long int length1,
 
       return 0;
     }
-}
-
-/* A `struct linebuffer' is a structure which holds a line of text.
-   `readline' reads a line from a stream into a linebuffer
-   and works regardless of the length of the line.  */
-
-struct linebuffer
-{
-  long size;
-  char *buffer;
-};
-
-/* Initialize LINEBUFFER for use. */
-
-void
-initbuffer (struct linebuffer *linebuffer)
-{
-  linebuffer->size = 200;
-  linebuffer->buffer = (char *) xmalloc (200);
-}
-
-/* Read a line of text from STREAM into LINEBUFFER.
-   Return the length of the line.  */
-
-long
-readline (struct linebuffer *linebuffer, FILE *stream)
-{
-  char *buffer = linebuffer->buffer;
-  char *p = linebuffer->buffer;
-  char *end = p + linebuffer->size;
-
-  while (1)
-    {
-      int c = getc (stream);
-      if (p == end)
-        {
-          buffer = (char *) xrealloc (buffer, linebuffer->size *= 2);
-          p += buffer - linebuffer->buffer;
-          end = buffer + linebuffer->size;
-          linebuffer->buffer = buffer;
-        }
-      if (c < 0 || c == '\n')
-        {
-          *p = 0;
-          break;
-        }
-      *p++ = c;
-    }
-
-  return p - buffer;
-}
-
-/* Sort an input file too big to sort in core.  */
-
-void
-sort_offline (char *infile, off_t total, char *outfile)
-{
-  /* More than enough. */
-  int ntemps = 2 * (total + MAX_IN_CORE_SORT - 1) / MAX_IN_CORE_SORT;
-  char **tempfiles = (char **) xmalloc (ntemps * sizeof (char *));
-  FILE *istream = fopen (infile, "r");
-  int i;
-  struct linebuffer lb;
-  long linelength;
-  int failure = 0;
-
-  initbuffer (&lb);
-
-  /* Read in one line of input data.  */
-
-  linelength = readline (&lb, istream);
-
-  if (lb.buffer[0] != '\\' && lb.buffer[0] != '@')
-    {
-      error (_("%s: not a texinfo index file"), infile);
-      return;
-    }
-
-  /* Split up the input into `ntemps' temporary files, or maybe fewer,
-     and put the new files' names into `tempfiles' */
-
-  for (i = 0; i < ntemps; i++)
-    {
-      FILE *ostream;
-      char *outname = maketempname (++tempcount);
-      long tempsize = 0;
-
-      if (!outname)
-        pfatal_with_name("temp file");
-      ostream = fopen (outname, "w");
-      if (!ostream)
-        pfatal_with_name (outname);
-      tempfiles[i] = outname;
-
-      /* Copy lines into this temp file as long as it does not make file
-         "too big" or until there are no more lines.  */
-
-      while (tempsize + linelength + 1 <= MAX_IN_CORE_SORT)
-        {
-          tempsize += linelength + 1;
-          fputs (lb.buffer, ostream);
-          putc ('\n', ostream);
-
-          /* Read another line of input data.  */
-
-          linelength = readline (&lb, istream);
-          if (!linelength && feof (istream))
-            break;
-
-          if (lb.buffer[0] != '\\' && lb.buffer[0] != '@')
-            {
-              error (_("%s: not a texinfo index file"), infile);
-              failure = 1;
-              goto fail;
-            }
-        }
-      fclose (ostream);
-      if (feof (istream))
-        break;
-    }
-
-  free (lb.buffer);
-
-fail:
-  /* Record number of temp files we actually needed.  */
-
-  ntemps = i;
-
-  /* Sort each tempfile into another tempfile.
-    Delete the first set of tempfiles and put the names of the second
-    into `tempfiles'. */
-
-  for (i = 0; i < ntemps; i++)
-    {
-      char *newtemp = maketempname (++tempcount);
-      if (!newtemp)
-        pfatal_with_name("temp file");
-      sort_in_core (tempfiles[i], MAX_IN_CORE_SORT, newtemp);
-      if (!keep_tempfiles)
-        unlink (tempfiles[i]);
-      tempfiles[i] = newtemp;
-    }
-
-  if (failure)
-    return;
-
-  /* Merge the tempfiles together and indexify. */
-
-  merge_files (tempfiles, ntemps, outfile);
 }
 
 /* Sort INFILE, whose size is TOTAL,
@@ -1371,8 +1125,7 @@ writelines (char **linearray, int nlines, FILE *ostream)
 
   for (next_line = linearray; next_line != stop_line; next_line++)
     {
-      /* If -u was specified, output the line only if distinct from
-         previous one.  */
+      /* Output the line only if distinct from previous one.  */
       if (next_line == linearray
       /* Compare previous line with this one, using only the
          explicitly specd keyfields. */
@@ -1390,217 +1143,6 @@ writelines (char **linearray, int nlines, FILE *ostream)
     }
 
   finish_index (ostream);
-}
-
-/* Assume (and optionally verify) that each input file is sorted;
-   merge them and output the result.
-   Returns nonzero if any input file fails to be sorted.
-
-   This is the high-level interface that can handle an unlimited
-   number of files.  */
-
-#define MAX_DIRECT_MERGE 10
-
-int
-merge_files (char **infiles, int nfiles, char *outfile)
-{
-  char **tempfiles;
-  int ntemps;
-  int i;
-  int value = 0;
-  int start_tempcount = tempcount;
-
-  if (nfiles <= MAX_DIRECT_MERGE)
-    return merge_direct (infiles, nfiles, outfile);
-
-  /* Merge groups of MAX_DIRECT_MERGE input files at a time,
-     making a temporary file to hold each group's result.  */
-
-  ntemps = (nfiles + MAX_DIRECT_MERGE - 1) / MAX_DIRECT_MERGE;
-  tempfiles = (char **) xmalloc (ntemps * sizeof (char *));
-  for (i = 0; i < ntemps; i++)
-    {
-      int nf = MAX_DIRECT_MERGE;
-      if (i + 1 == ntemps)
-        nf = nfiles - i * MAX_DIRECT_MERGE;
-      tempfiles[i] = maketempname (++tempcount);
-      if (!tempfiles[i])
-	pfatal_with_name("temp file");
-      value |= merge_direct (&infiles[i * MAX_DIRECT_MERGE], nf, tempfiles[i]);
-    }
-
-  /* All temporary files that existed before are no longer needed
-     since their contents have been merged into our new tempfiles.
-     So delete them.  */
-  flush_tempfiles (start_tempcount);
-
-  /* Now merge the temporary files we created.  */
-
-  merge_files (tempfiles, ntemps, outfile);
-
-  free (tempfiles);
-
-  return value;
-}
-
-/* Assume (and optionally verify) that each input file is sorted;
-   merge them and output the result.
-   Returns nonzero if any input file fails to be sorted.
-
-   This version of merging will not work if the number of
-   input files gets too high.  Higher level functions
-   use it only with a bounded number of input files.  */
-
-int
-merge_direct (char **infiles, int nfiles, char *outfile)
-{
-  struct linebuffer *lb1, *lb2;
-  struct linebuffer **thisline, **prevline;
-  FILE **streams;
-  int i;
-  int nleft;
-  int lossage = 0;
-  int *file_lossage;
-  struct linebuffer *prev_out = 0;
-  FILE *ostream = stdout;
-
-  if (outfile)
-    {
-      ostream = fopen (outfile, "w");
-    }
-  if (!ostream)
-    pfatal_with_name (outfile);
-
-  init_index ();
-
-  if (nfiles == 0)
-    {
-      if (outfile)
-        fclose (ostream);
-      return 0;
-    }
-
-  /* For each file, make two line buffers.  Also, for each file, there
-     is an element of `thisline' which points at any time to one of the
-     file's two buffers, and an element of `prevline' which points to
-     the other buffer.  `thisline' is supposed to point to the next
-     available line from the file, while `prevline' holds the last file
-     line used, which is remembered so that we can verify that the file
-     is properly sorted. */
-
-  /* lb1 and lb2 contain one buffer each per file. */
-  lb1 = (struct linebuffer *) xmalloc (nfiles * sizeof (struct linebuffer));
-  lb2 = (struct linebuffer *) xmalloc (nfiles * sizeof (struct linebuffer));
-
-  /* thisline[i] points to the linebuffer holding the next available
-     line in file i, or is zero if there are no lines left in that file.  */
-  thisline = (struct linebuffer **)
-    xmalloc (nfiles * sizeof (struct linebuffer *));
-  /* prevline[i] points to the linebuffer holding the last used line
-     from file i.  This is just for verifying that file i is properly
-     sorted.  */
-  prevline = (struct linebuffer **)
-    xmalloc (nfiles * sizeof (struct linebuffer *));
-  /* streams[i] holds the input stream for file i.  */
-  streams = (FILE **) xmalloc (nfiles * sizeof (FILE *));
-  /* file_lossage[i] is nonzero if we already know file i is not
-     properly sorted.  */
-  file_lossage = (int *) xmalloc (nfiles * sizeof (int));
-
-  /* Allocate and initialize all that storage. */
-
-  for (i = 0; i < nfiles; i++)
-    {
-      initbuffer (&lb1[i]);
-      initbuffer (&lb2[i]);
-      thisline[i] = &lb1[i];
-      prevline[i] = &lb2[i];
-      file_lossage[i] = 0;
-      streams[i] = fopen (infiles[i], "r");
-      if (!streams[i])
-        pfatal_with_name (infiles[i]);
-
-      readline (thisline[i], streams[i]);
-    }
-
-  /* Keep count of number of files not at eof. */
-  nleft = nfiles;
-
-  while (nleft)
-    {
-      struct linebuffer *best = 0;
-      struct linebuffer *exch;
-      int bestfile = -1;
-      int i;
-
-      /* Look at the next avail line of each file; choose the least one.  */
-
-      for (i = 0; i < nfiles; i++)
-        {
-          if (thisline[i] &&
-              (!best ||
-               0 < compare_general (best->buffer, thisline[i]->buffer,
-                                 (long) bestfile, (long) i, num_keyfields)))
-            {
-              best = thisline[i];
-              bestfile = i;
-            }
-        }
-
-      /* Output that line, unless it matches the previous one and we
-         don't want duplicates. */
-
-      if (!(prev_out &&
-            !compare_general (prev_out->buffer,
-                              best->buffer, 0L, 1L, num_keyfields - 1)))
-        indexify (best->buffer, ostream);
-      prev_out = best;
-
-      /* Now make the line the previous of its file, and fetch a new
-         line from that file.  */
-
-      exch = prevline[bestfile];
-      prevline[bestfile] = thisline[bestfile];
-      thisline[bestfile] = exch;
-
-      while (1)
-        {
-          /* If the file has no more, mark it empty. */
-
-          if (feof (streams[bestfile]))
-            {
-              thisline[bestfile] = 0;
-              /* Update the number of files still not empty. */
-              nleft--;
-              break;
-            }
-          readline (thisline[bestfile], streams[bestfile]);
-          if (thisline[bestfile]->buffer[0] || !feof (streams[bestfile]))
-            break;
-        }
-    }
-
-  finish_index (ostream);
-
-  /* Free all storage and close all input streams. */
-
-  for (i = 0; i < nfiles; i++)
-    {
-      fclose (streams[i]);
-      free (lb1[i].buffer);
-      free (lb2[i].buffer);
-    }
-  free (file_lossage);
-  free (lb1);
-  free (lb2);
-  free (thisline);
-  free (prevline);
-  free (streams);
-
-  if (outfile)
-    fclose (ostream);
-
-  return lossage;
 }
 
 /* Print error message and exit.  */
