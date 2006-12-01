@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.23 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: if_url.c,v 1.24 2006/12/01 20:56:42 drochner Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.23 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.24 2006/12/01 20:56:42 drochner Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -729,7 +729,7 @@ url_openpipes(struct url_softc *sc)
 	err = usbd_open_pipe_intr(sc->sc_ctl_iface, sc->sc_intrin_no,
 				  USBD_EXCLUSIVE_USE, &sc->sc_pipe_intr, sc,
 				  &sc->sc_cdata.url_ibuf, URL_INTR_PKGLEN,
-				  url_intr, URL_INTR_INTERVAL);
+				  url_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		printf("%s: open intr pipe failed: %s\n",
 		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
