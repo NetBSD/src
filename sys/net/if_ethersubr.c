@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.138 2006/11/24 01:04:30 rpaulo Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.139 2006/12/01 18:43:40 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.138 2006/11/24 01:04:30 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.139 2006/12/01 18:43:40 is Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -859,62 +859,65 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		}
 	}
 
-	/* Strip off the Ethernet header. */
-	m_adj(m, sizeof(struct ether_header));
-
 	/* If the CRC is still on the packet, trim it off. */
 	if (m->m_flags & M_HASFCS) {
 		m_adj(m, -ETHER_CRC_LEN);
 		m->m_flags &= ~M_HASFCS;
 	}
 
-	switch (etype) {
+	if (etype > ETHERMTU + sizeof (struct ether_header)) {
+		/* Strip off the Ethernet header. */
+		m_adj(m, sizeof(struct ether_header));
+
+		switch (etype) {
 #ifdef INET
-	case ETHERTYPE_IP:
+		case ETHERTYPE_IP:
 #ifdef GATEWAY
-		if (ipflow_fastforward(m))
+			if (ipflow_fastforward(m))
+				return;
+#endif
+			schednetisr(NETISR_IP);
+			inq = &ipintrq;
+			break;
+
+		case ETHERTYPE_ARP:
+			schednetisr(NETISR_ARP);
+			inq = &arpintrq;
+			break;
+
+		case ETHERTYPE_REVARP:
+			revarpinput(m);	/* XXX queue? */
 			return;
 #endif
-		schednetisr(NETISR_IP);
-		inq = &ipintrq;
-		break;
-
-	case ETHERTYPE_ARP:
-		schednetisr(NETISR_ARP);
-		inq = &arpintrq;
-		break;
-
-	case ETHERTYPE_REVARP:
-		revarpinput(m);	/* XXX queue? */
-		return;
-#endif
 #ifdef INET6
-	case ETHERTYPE_IPV6:
-		schednetisr(NETISR_IPV6);
-		inq = &ip6intrq;
-		break;
+		case ETHERTYPE_IPV6:
+			schednetisr(NETISR_IPV6);
+			inq = &ip6intrq;
+			break;
 #endif
 #ifdef IPX
-	case ETHERTYPE_IPX:
-		schednetisr(NETISR_IPX);
-		inq = &ipxintrq;
-		break;
+		case ETHERTYPE_IPX:
+			schednetisr(NETISR_IPX);
+			inq = &ipxintrq;
+			break;
 #endif
 #ifdef NETATALK
-        case ETHERTYPE_ATALK:
-                schednetisr(NETISR_ATALK);
-                inq = &atintrq1;
-                break;
-        case ETHERTYPE_AARP:
-		/* probably this should be done with a NETISR as well */
-                aarpinput(ifp, m); /* XXX */
-                return;
+        	case ETHERTYPE_ATALK:
+                	schednetisr(NETISR_ATALK);
+                	inq = &atintrq1;
+                	break;
+        	case ETHERTYPE_AARP:
+			/* probably this should be done with a NETISR as well */
+                	aarpinput(ifp, m); /* XXX */
+                	return;
 #endif /* NETATALK */
-	default:
+		default:
+			m_freem(m);
+			return;
+		}
+	} else {
 #if defined (ISO) || defined (LLC) || defined (NETATALK)
-		if (etype > ETHERMTU)
-			goto dropanyway;
-		l = mtod(m, struct llc *);
+		l = (struct llc *)(eh+1);
 		switch (l->llc_dsap) {
 #ifdef NETATALK
 		case LLC_SNAP_LSAP:
@@ -929,7 +932,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 				    ntohs(l->llc_snap_ether_type) ==
 				    ETHERTYPE_ATALK) {
 					inq = &atintrq2;
-					m_adj(m, sizeof(struct llc));
+					m_adj(m, sizeof(struct ether_header)
+					    + sizeof(struct llc));
 					schednetisr(NETISR_ATALK);
 					break;
 				}
@@ -939,7 +943,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 				    sizeof(aarp_org_code)) == 0 &&
 				    ntohs(l->llc_snap_ether_type) ==
 				    ETHERTYPE_AARP) {
-					m_adj( m, sizeof(struct llc));
+					m_adj( m, sizeof(struct ether_header)
+					    + sizeof(struct llc));
 					aarpinput(ifp, m); /* XXX */
 				    return;
 				}
@@ -954,18 +959,13 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			switch (l->llc_control) {
 			case LLC_UI:
 				/* LLC_UI_P forbidden in class 1 service */
-				if ((l->llc_dsap == LLC_ISO_LSAP) &&
+				if ((l->llc_dsap == LLC_ISO_LSAP) &&	/* XXX? case tested */
 				    (l->llc_ssap == LLC_ISO_LSAP)) {
 					/* LSAP for ISO */
-					if (m->m_pkthdr.len > etype)
+					/* XXX length computation?? */
+					if (m->m_pkthdr.len > etype + sizeof(struct ether_header))
 						m_adj(m, etype - m->m_pkthdr.len);
-					m->m_data += 3;		/* XXX */
-					m->m_len -= 3;		/* XXX */
-					m->m_pkthdr.len -= 3;	/* XXX */
-					M_PREPEND(m, sizeof *eh, M_DONTWAIT);
-					if (m == 0)
-						return;
-					*mtod(m, struct ether_header *) = *eh;
+					
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_ETHER])
 						printf("clnp packet");
@@ -978,7 +978,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 			case LLC_XID:
 			case LLC_XID_P:
-				if(m->m_len < 6)
+				if(m->m_len < 6 + sizeof(struct ether_header))
+					/* XXX m_pullup? */
 					goto dropanyway;
 				l->llc_window = 0;
 				l->llc_fid = 9;
@@ -995,6 +996,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 				l->llc_dsap = l->llc_ssap;
 				l->llc_ssap = c;
+				m_adj(m, sizeof(struct ether_header));
+				/* XXX we can optimize here? */
 				if (m->m_flags & (M_BCAST | M_MCAST))
 					bcopy(LLADDR(ifp->if_sadl),
 					      (caddr_t)eh->ether_dhost, 6);
@@ -1023,9 +1026,9 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			m_freem(m);
 			return;
 		}
-#else /* ISO || LLC  || NETATALK*/
-	    m_freem(m);
-	    return;
+#else /* ISO || LLC || NETATALK*/
+		m_freem(m);
+		return;
 #endif /* ISO || LLC || NETATALK*/
 	}
 
