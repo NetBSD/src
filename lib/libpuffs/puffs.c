@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.9 2006/11/30 05:37:48 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.10 2006/12/01 12:38:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.9 2006/11/30 05:37:48 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.10 2006/12/01 12:38:11 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -52,6 +52,54 @@ __RCSID("$NetBSD: puffs.c,v 1.9 2006/11/30 05:37:48 pooka Exp $");
 #include <unistd.h>
 
 static int puffcall(struct puffs_usermount *, struct puffs_req *);
+
+#define FILLOP(lower, upper)						\
+do {									\
+	if (pvn->puffs_##lower)						\
+		opmask[PUFFS_VN_##upper] = 1;				\
+} while (/*CONSTCOND*/0)
+static void
+fillvnopmask(struct puffs_vnops *pvn, uint8_t *opmask)
+{
+
+	memset(opmask, 0, PUFFS_VN_MAX);
+
+	FILLOP(create,   CREATE);
+	FILLOP(mknod,    MKNOD);
+	FILLOP(open,     OPEN);
+	FILLOP(close,    CLOSE);
+	FILLOP(access,   ACCESS);
+	FILLOP(getattr,  GETATTR);
+	FILLOP(setattr,  SETATTR);
+	FILLOP(poll,     POLL); /* XXX: not ready in kernel */
+	FILLOP(revoke,   REVOKE);
+	FILLOP(mmap,     MMAP); /* XXX: not called currently */
+	FILLOP(fsync,    FSYNC);
+	FILLOP(seek,     SEEK);
+	FILLOP(remove,   REMOVE);
+	FILLOP(link,     LINK);
+	FILLOP(rename,   RENAME);
+	FILLOP(mkdir,    MKDIR);
+	FILLOP(rmdir,    RMDIR);
+	FILLOP(symlink,  SYMLINK);
+	FILLOP(readdir,  READDIR);
+	FILLOP(readlink, READLINK);
+	FILLOP(reclaim,  RECLAIM);
+	FILLOP(inactive, INACTIVE);
+	FILLOP(print,    PRINT);
+	FILLOP(read,     READ);
+	FILLOP(write,    WRITE);
+
+	/* XXX: not implemented in the kernel */
+	FILLOP(getextattr, GETEXTATTR);
+	FILLOP(setextattr, SETEXTATTR);
+	FILLOP(listextattr, LISTEXTATTR);
+
+	/* XXX */
+	FILLOP(ioctl1, IOCTL);
+	FILLOP(fcntl1, FCNTL);
+}
+#undef FILLOP
 
 struct puffs_usermount *
 puffs_mount(struct puffs_vfsops *pvfs, struct puffs_vnops *pvn,
@@ -77,6 +125,7 @@ puffs_mount(struct puffs_vfsops *pvfs, struct puffs_vnops *pvn,
 	pargs.pa_flags = PUFFSFLAG_KERN(pflags);
 	pargs.pa_fd = fd;
 	pargs.pa_maxreqlen = maxreqlen;
+	fillvnopmask(pvn, pargs.pa_vnopmask);
 	(void)strlcpy(pargs.pa_name, puffsname, sizeof(pargs.pa_name));
 
 	pu = malloc(sizeof(struct puffs_usermount));
@@ -227,6 +276,7 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq)
 		}
 
 	/* XXX: audit return values */
+	/* XXX: sync with kernel */
 	} else if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN) {
 		switch (preq->preq_optype) {
 		case PUFFS_VN_LOOKUP:
