@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23.16.1 2006/12/01 20:03:53 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.23.16.2 2006/12/01 20:09:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #define	IPL_VM		3	/* memory allocation */
 #define	IPL_AUDIO	2	/* audio */
 #define	IPL_CLOCK	1	/* clock */
-#deinfe	IPL_STATCLOCK	IPL_CLOCK
+#define	IPL_STATCLOCK	IPL_CLOCK
 #define	IPL_HIGH	1	/* everything */
 #define	IPL_SCHED	IPL_HIGH
 #define	IPL_LOCK	IPL_HIGH
