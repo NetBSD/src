@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2006/09/04 20:05:45 scw Exp $	*/
+/*	$NetBSD: intr.h,v 1.6.4.1 2006/12/01 20:27:59 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -62,22 +62,12 @@
 #define	IPL_VM		11	/* memory allocation */
 #define	IPL_SERIAL	12	/* tty subsystem */
 #define	IPL_CLOCK	14	/* Hard clock */
+#define	IPL_STATCLOCK	IPL_CLOCK
+#define	IPL_SCHED	IPL_CLOCK
 #define	IPL_HIGH	15
+#define	IPL_LOCK	IPL_HIGH
 
 #define	spl0()			splx(IPL_NONE)
-#define	splsoftclock()		splraise(IPL_SOFTCLOCK)
-#define	splsoftnet()		splraise(IPL_SOFTNET)
-#define	splbio()		splraise(IPL_BIO)
-#define	splnet()		splraise(IPL_NET)
-#define	splsoftserial()		splraise(IPL_SOFTSERIAL)
-#define	spltty()		splraise(IPL_TTY)
-#define	splvm()			splraise(IPL_VM)
-#define	splserial()		splraise(IPL_SERIAL)
-#define	splclock()		splraise(IPL_CLOCK)
-#define	splstatclock()		splclock()
-#define	splsched()		splclock()
-#define	splhigh()		splraise(IPL_HIGH)
-#define	spllock()		splhigh()
 
 #define	spllowersoftclock()	splx(IPL_SOFTCLOCK);
 
@@ -112,6 +102,27 @@ extern void	_cpu_intr_resume(u_int);
 
 /* Supplied by board-specific code to clear down an NMI source */
 extern void	sh5_nmi_clear(void);
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return splraise(icookie._ipl);
+}
+
+#include <sys/spl.h>
 
 #endif /* !_LOCORE */
 
