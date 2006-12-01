@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.259 2006/11/25 12:03:38 scw Exp $	*/
+/*	$NetBSD: cd.c,v 1.260 2006/12/01 21:23:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.259 2006/11/25 12:03:38 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.260 2006/12/01 21:23:57 martin Exp $");
 
 #include "rnd.h"
 
@@ -1703,12 +1703,12 @@ cdgetdisklabel(struct cd_softc *cd)
 static int
 read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
 {
-	struct scsipi_read_cd_capacity    cap_cmd;
-	struct scsipi_read_cd_cap_data    cap;
-	struct scsipi_read_discinfo       di_cmd;
-	struct scsipi_read_discinfo_data  di;
-	struct scsipi_read_trackinfo      ti_cmd;
-	struct scsipi_read_trackinfo_data ti;
+	union { uint32_t a; struct scsipi_read_cd_capacity c; }		cap_cmd;
+	union { uint32_t a; struct scsipi_read_cd_cap_data c; }		cap;
+	union { uint32_t a; struct scsipi_read_discinfo c; }		di_cmd;
+	union { uint32_t a; struct scsipi_read_discinfo_data c; }	di;
+	union { uint32_t a; struct scsipi_read_trackinfo c; }		ti_cmd;
+	union { uint32_t a; struct scsipi_read_trackinfo_data c; }	ti;
 	uint32_t track_start, track_size;
 	int error, flags, msb, lsb, last_track;
 
@@ -1720,18 +1720,18 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
 	/* issue the cd capacity request */
 	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
 	memset(&cap_cmd, 0, sizeof(cap_cmd));
-	cap_cmd.opcode = READ_CD_CAPACITY;
+	cap_cmd.c.opcode = READ_CD_CAPACITY;
 
 	error = scsipi_command(periph,
-	    (void *) &cap_cmd, sizeof(cap_cmd),
-	    (void *) &cap,     sizeof(cap),
+	    (void *) &cap_cmd.c, sizeof(cap_cmd),
+	    (void *) &cap.c,     sizeof(cap),
 	    CDRETRIES, 30000, NULL, flags);
 	if (error)
 		return error;
 
 	/* retrieve values and sanity check them */
-	*blksize = _4btol(cap.length);
-	*size    = _4btol(cap.addr);
+	*blksize = _4btol(cap.c.length);
+	*size    = _4btol(cap.c.addr);
 
 	/* blksize is 2048 for CD, but some drives give gibberish */
 	if ((*blksize < 512) || ((*blksize & 511) != 0))
@@ -1740,32 +1740,32 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
 	/* recordables have READ_DISCINFO implemented */
 	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
 	memset(&di_cmd, 0, sizeof(di_cmd));
-	di_cmd.opcode = READ_DISCINFO;
-	_lto2b(READ_DISCINFO_BIGSIZE, di_cmd.data_len);
+	di_cmd.c.opcode = READ_DISCINFO;
+	_lto2b(READ_DISCINFO_BIGSIZE, di_cmd.c.data_len);
 
 	error = scsipi_command(periph,
-	    (void *) &di_cmd,  sizeof(di_cmd),
-	    (void *) &di,      READ_DISCINFO_BIGSIZE,
+	    (void *) &di_cmd.c,  sizeof(di_cmd),
+	    (void *) &di.c,      READ_DISCINFO_BIGSIZE,
 	    CDRETRIES, 30000, NULL, flags);
 	if (error == 0) {
-		msb = di.last_track_last_session_msb;
-		lsb = di.last_track_last_session_lsb;
+		msb = di.c.last_track_last_session_msb;
+		lsb = di.c.last_track_last_session_lsb;
 		last_track = (msb << 8) | lsb;
 
 		/* request info on last track */
 		memset(&ti_cmd, 0, sizeof(ti_cmd));
-		ti_cmd.opcode = READ_TRACKINFO;
-		ti_cmd.addr_type = 1;			/* on tracknr */
-		_lto4b(last_track, ti_cmd.address);	/* tracknr    */
-		_lto2b(sizeof(ti), ti_cmd.data_len);
+		ti_cmd.c.opcode = READ_TRACKINFO;
+		ti_cmd.c.addr_type = 1;			/* on tracknr */
+		_lto4b(last_track, ti_cmd.c.address);	/* tracknr    */
+		_lto2b(sizeof(ti), ti_cmd.c.data_len);
 
 		error = scsipi_command(periph,
-		    (void *) &ti_cmd,  sizeof(ti_cmd),
-		    (void *) &ti,      sizeof(ti),
+		    (void *) &ti_cmd.c,  sizeof(ti_cmd),
+		    (void *) &ti.c,      sizeof(ti),
 		    CDRETRIES, 30000, NULL, flags);
 		if (error == 0) {
-			track_start = _4btol(ti.track_start);
-			track_size  = _4btol(ti.track_size);
+			track_start = _4btol(ti.c.track_start);
+			track_size  = _4btol(ti.c.track_size);
 
 			/* overwrite only with a sane value */
 			if (track_start + track_size >= 100)
