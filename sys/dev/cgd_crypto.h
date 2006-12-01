@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.h,v 1.3 2005/12/11 12:20:53 christos Exp $ */
+/* $NetBSD: cgd_crypto.h,v 1.4 2006/12/01 15:52:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,10 +43,9 @@
 #define CGD_CIPHER_DECRYPT	1
 #define CGD_CIPHER_ENCRYPT	2
 
-typedef caddr_t	(cfunc_init)(int, caddr_t, int *);
-typedef void	(cfunc_destroy)(caddr_t);
-typedef void	(cfunc_cipher)(caddr_t, struct uio *, struct uio *,
-				caddr_t, int);
+typedef void *(cfunc_init)(size_t, void *, size_t *);
+typedef void  (cfunc_destroy)(void *);
+typedef void  (cfunc_cipher)(void *, struct uio *, struct uio *, void *, int);
 
 struct cryptfuncs {
 	cfunc_init	 *cf_init;	/* Initialisation function */
@@ -54,7 +53,7 @@ struct cryptfuncs {
 	cfunc_cipher	 *cf_cipher;	/* the cipher itself */
 };
 
-struct cryptfuncs	*cryptfuncs_find(char *);
+struct cryptfuncs	*cryptfuncs_find(const char *);
 #endif /* _KERNEL */
 
 #endif /* _DEV_CGD_CRYPTO_H_ */
