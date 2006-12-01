@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.31 2006/11/09 19:36:36 christos Exp $	 */
+/* $NetBSD: main.c,v 1.32 2006/12/01 06:38:39 tls Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -258,9 +258,15 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	}
 
 	if (!rerun) {
-		if (!preen)
-			printf("** Phase 6 - Roll Forward\n");
-		pass6();
+		if (!preen) {
+			if (reply("ROLL FILESYSTEM FORWARD") == 1) {
+				printf("** Phase 6 - Roll Forward\n");
+				pass6();
+			}
+		}
+		else {
+			pass6();
+		}
 	}
 	zlnhead = (struct zlncnt *) 0;
 	orphead = (struct zlncnt *) 0;
