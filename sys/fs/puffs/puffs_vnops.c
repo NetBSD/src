@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.16 2006/11/28 13:20:03 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.17 2006/12/01 12:37:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.16 2006/11/28 13:20:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.17 2006/12/01 12:37:41 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -81,6 +81,8 @@ int	puffs_strategy(void *);
 int	puffs_bmap(void *);
 int	puffs_mmap(void *);
 
+int	puffs_checkop(void *);
+
 
 /* VOP_LEASE() not included */
 
@@ -112,44 +114,44 @@ int puffs_islocked(void *);
 int (**puffs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, puffs_lookup },		/* lookup */
-	{ &vop_create_desc, puffs_create },		/* create */
-        { &vop_mknod_desc, puffs_mknod },		/* mknod */
-        { &vop_open_desc, puffs_open },			/* open */
-        { &vop_close_desc, puffs_close },		/* close */
-        { &vop_access_desc, puffs_access },		/* access */
-        { &vop_getattr_desc, puffs_getattr },		/* getattr */
-        { &vop_setattr_desc, puffs_setattr },		/* setattr */
-        { &vop_read_desc, puffs_read },			/* read */
-        { &vop_write_desc, puffs_write },		/* write */
-        { &vop_fcntl_desc, puffs_fcntl },		/* fcntl */
-        { &vop_ioctl_desc, puffs_ioctl },		/* ioctl */
-        { &vop_revoke_desc, puffs_revoke },		/* revoke */
-        { &vop_fsync_desc, puffs_fsync },		/* fsync */
-        { &vop_seek_desc, puffs_seek },			/* seek */
-        { &vop_remove_desc, puffs_remove },		/* remove */
-        { &vop_link_desc, puffs_link },			/* link */
-        { &vop_rename_desc, puffs_rename },		/* rename */
-        { &vop_mkdir_desc, puffs_mkdir },		/* mkdir */
-        { &vop_rmdir_desc, puffs_rmdir },		/* rmdir */
-        { &vop_symlink_desc, puffs_symlink },		/* symlink */
-        { &vop_readdir_desc, puffs_readdir },		/* readdir */
-        { &vop_readlink_desc, puffs_readlink },		/* readlink */
-        { &vop_abortop_desc, genfs_abortop },		/* abortop */
-        { &vop_inactive_desc, puffs_inactive },		/* inactive */
-        { &vop_reclaim_desc, puffs_reclaim },		/* reclaim */
-        { &vop_lock_desc, puffs_lock },			/* lock */
-        { &vop_unlock_desc, puffs_unlock },		/* unlock */
-        { &vop_bmap_desc, puffs_bmap },			/* bmap */
-        { &vop_strategy_desc, puffs_strategy },		/* strategy */
-        { &vop_print_desc, puffs_print },		/* print */
-        { &vop_islocked_desc, puffs_islocked },		/* islocked */
-        { &vop_pathconf_desc, puffs_pathconf },		/* pathconf */
-        { &vop_advlock_desc, puffs_advlock },		/* advlock */
-        { &vop_bwrite_desc, genfs_nullop },		/* bwrite */
-        { &vop_getpages_desc, genfs_getpages },		/* getpages */
-        { &vop_putpages_desc, genfs_putpages },		/* putpages */
-        { &vop_mmap_desc, puffs_mmap },			/* mmap */
+	{ &vop_lookup_desc, puffs_lookup },		/* REAL lookup */
+	{ &vop_create_desc, puffs_checkop },		/* create */
+        { &vop_mknod_desc, puffs_checkop },		/* mknod */
+        { &vop_open_desc, puffs_checkop },		/* open */
+        { &vop_close_desc, puffs_checkop },		/* close */
+        { &vop_access_desc, puffs_checkop },		/* access */
+        { &vop_getattr_desc, puffs_checkop },		/* getattr */
+        { &vop_setattr_desc, puffs_checkop },		/* setattr */
+        { &vop_read_desc, puffs_checkop },		/* read */
+        { &vop_write_desc, puffs_checkop },		/* write */
+        { &vop_fcntl_desc, puffs_checkop },		/* fcntl */
+        { &vop_ioctl_desc, puffs_checkop },		/* ioctl */
+        { &vop_fsync_desc, puffs_checkop },		/* fsync */
+        { &vop_seek_desc, puffs_checkop },		/* seek */
+        { &vop_remove_desc, puffs_checkop },		/* remove */
+        { &vop_link_desc, puffs_checkop },		/* link */
+        { &vop_rename_desc, puffs_checkop },		/* rename */
+        { &vop_mkdir_desc, puffs_checkop },		/* mkdir */
+        { &vop_rmdir_desc, puffs_checkop },		/* rmdir */
+        { &vop_symlink_desc, puffs_checkop },		/* symlink */
+        { &vop_readdir_desc, puffs_checkop },		/* readdir */
+        { &vop_readlink_desc, puffs_checkop },		/* readlink */
+        { &vop_getpages_desc, puffs_checkop },		/* getpages */
+        { &vop_putpages_desc, puffs_checkop },		/* putpages */
+        { &vop_pathconf_desc, puffs_checkop },		/* pathconf */
+        { &vop_advlock_desc, puffs_checkop },		/* advlock */
+        { &vop_strategy_desc, puffs_strategy },		/* REAL strategy */
+        { &vop_revoke_desc, puffs_revoke },		/* REAL revoke */
+        { &vop_abortop_desc, genfs_abortop },		/* REAL abortop */
+        { &vop_inactive_desc, puffs_inactive },		/* REAL inactive */
+        { &vop_reclaim_desc, puffs_reclaim },		/* REAL reclaim */
+        { &vop_lock_desc, puffs_lock },			/* REAL lock */
+        { &vop_unlock_desc, puffs_unlock },		/* REAL unlock */
+        { &vop_bmap_desc, puffs_bmap },			/* REAL bmap */
+        { &vop_print_desc, puffs_print },		/* REAL print */
+        { &vop_islocked_desc, puffs_islocked },		/* REAL islocked */
+        { &vop_bwrite_desc, genfs_nullop },		/* REAL bwrite */
+        { &vop_mmap_desc, puffs_mmap },			/* REAL mmap */
 
         { &vop_poll_desc, genfs_eopnotsupp },		/* poll XXX */
         { &vop_poll_desc, genfs_eopnotsupp },		/* kqfilter XXX */
@@ -273,17 +275,157 @@ const struct vnodeopv_desc puffs_fifoop_opv_desc =
 	{ &puffs_fifoop_p, puffs_fifoop_entries };
 
 
+/* "real" vnode operations */
+int (**puffs_msgop_p)(void *);
+const struct vnodeopv_entry_desc puffs_msgop_entries[] = {
+	{ &vop_default_desc, vn_default_error },
+	{ &vop_create_desc, puffs_create },		/* create */
+        { &vop_mknod_desc, puffs_mknod },		/* mknod */
+        { &vop_open_desc, puffs_open },			/* open */
+        { &vop_close_desc, puffs_close },		/* close */
+        { &vop_access_desc, puffs_access },		/* access */
+        { &vop_getattr_desc, puffs_getattr },		/* getattr */
+        { &vop_setattr_desc, puffs_setattr },		/* setattr */
+        { &vop_read_desc, puffs_read },			/* read */
+        { &vop_write_desc, puffs_write },		/* write */
+        { &vop_fcntl_desc, puffs_fcntl },		/* fcntl */
+        { &vop_ioctl_desc, puffs_ioctl },		/* ioctl */
+        { &vop_fsync_desc, puffs_fsync },		/* fsync */
+        { &vop_seek_desc, puffs_seek },			/* seek */
+        { &vop_remove_desc, puffs_remove },		/* remove */
+        { &vop_link_desc, puffs_link },			/* link */
+        { &vop_rename_desc, puffs_rename },		/* rename */
+        { &vop_mkdir_desc, puffs_mkdir },		/* mkdir */
+        { &vop_rmdir_desc, puffs_rmdir },		/* rmdir */
+        { &vop_symlink_desc, puffs_symlink },		/* symlink */
+        { &vop_readdir_desc, puffs_readdir },		/* readdir */
+        { &vop_readlink_desc, puffs_readlink },		/* readlink */
+        { &vop_print_desc, puffs_print },		/* print */
+        { &vop_islocked_desc, puffs_islocked },		/* islocked */
+        { &vop_pathconf_desc, puffs_pathconf },		/* pathconf */
+        { &vop_advlock_desc, puffs_advlock },		/* advlock */
+        { &vop_getpages_desc, genfs_getpages },		/* getpages */
+        { &vop_putpages_desc, genfs_putpages },		/* putpages */
+	{ NULL, NULL }
+};
+const struct vnodeopv_desc puffs_msgop_opv_desc =
+	{ &puffs_msgop_p, puffs_msgop_entries };
+
 
 #define LOCKEDVP(a) (VOP_ISLOCKED(a) ? (a) : NULL)
+
+
+/*
+ * This is a generic vnode operation handler.  It checks if the necessary
+ * operations for the called vnode operation are implemented by userspace
+ * and either returns a dummy return value or proceeds to call the real
+ * vnode operation from puffs_msgop_v.
+ *
+ * XXX: this should described elsewhere and autogenerated, the complexity
+ * of the vnode operations vectors and their interrelationships is also
+ * getting a bit out of hand.  Another problem is that we need this same
+ * information in the fs server code, so keeping the two in sync manually
+ * is not a viable (long term) plan.
+ */
+
+/* not supported, handle locking protocol */
+#define CHECKOP_NOTSUPP(op)						\
+case VOP_##op##_DESCOFFSET:						\
+	if (pmp->pmp_vnopmask[PUFFS_VN_##op] == 0)			\
+		return genfs_eopnotsupp(v);				\
+	break
+
+/* always succeed, no locking */
+#define CHECKOP_SUCCESS(op)						\
+case VOP_##op##_DESCOFFSET:						\
+	if (pmp->pmp_vnopmask[PUFFS_VN_##op] == 0)			\
+		return 0;						\
+	break
+
+int
+puffs_checkop(void *v)
+{
+	struct vop_generic_args /* {
+		struct vnodeop_desc *a_desc;
+		spooky mystery contents;
+	} */ *ap = v;
+	struct vnodeop_desc *desc = ap->a_desc;
+	struct puffs_mount *pmp;
+	struct vnode *vp;
+	int offset;
+
+	DPRINTF_VERBOSE(("checkop call %s (%d)\n",
+	    ap->a_desc->vdesc_name, ap->a_desc->vdesc_offset));
+
+	offset = ap->a_desc->vdesc_vp_offsets[0];
+#ifdef DIAGNOSTIC
+	if (offset == VDESC_NO_OFFSET)
+		panic("puffs_checkop: no vnode, why did you call me?");
+#endif
+	vp = *VOPARG_OFFSETTO(struct vnode **, offset, ap);
+	pmp = MPTOPUFFSMP(vp->v_mount);
+
+	if ((pmp->pmp_flags & PUFFSFLAG_ALLOPS) == 0) {
+		switch (desc->vdesc_offset) {
+			CHECKOP_NOTSUPP(CREATE);
+			CHECKOP_NOTSUPP(MKNOD);
+			CHECKOP_NOTSUPP(GETATTR);
+			CHECKOP_NOTSUPP(SETATTR);
+			CHECKOP_NOTSUPP(READ);
+			CHECKOP_NOTSUPP(WRITE);
+			CHECKOP_NOTSUPP(FCNTL);
+			CHECKOP_NOTSUPP(IOCTL);
+			CHECKOP_NOTSUPP(REMOVE);
+			CHECKOP_NOTSUPP(LINK);
+			CHECKOP_NOTSUPP(RENAME);
+			CHECKOP_NOTSUPP(MKDIR);
+			CHECKOP_NOTSUPP(RMDIR);
+			CHECKOP_NOTSUPP(SYMLINK);
+			CHECKOP_NOTSUPP(READDIR);
+			CHECKOP_NOTSUPP(READLINK);
+			CHECKOP_NOTSUPP(PRINT);
+			CHECKOP_NOTSUPP(PATHCONF);
+			CHECKOP_NOTSUPP(ADVLOCK);
+
+			CHECKOP_SUCCESS(OPEN);
+			CHECKOP_SUCCESS(CLOSE);
+			CHECKOP_SUCCESS(ACCESS);
+			CHECKOP_SUCCESS(SEEK);
+
+		/* putpages & fsync doesn't make sense if there's no write */
+		case VOP_FSYNC_DESCOFFSET:
+			if (!EXISTSOP(pmp, WRITE))
+				return genfs_eopnotsupp(v);
+			break;
+
+		case VOP_GETPAGES_DESCOFFSET:
+			if (!EXISTSOP(pmp, READ))
+				return genfs_eopnotsupp(v);
+			break;
+
+		case VOP_PUTPAGES_DESCOFFSET:
+			if (!EXISTSOP(pmp, WRITE))
+				return genfs_null_putpages(v);
+			break;
+
+		default:
+			panic("puffs_checkop: unhandled vnop %d",
+			    desc->vdesc_offset);
+		}
+	}
+
+	return VOCALL(puffs_msgop_p, ap->a_desc->vdesc_offset, v);
+}
 
 
 int
 puffs_lookup(void *v)
 {
         struct vop_lookup_args /* {
-                struct vnode * a_dvp;
-                struct vnode ** a_vpp;
-                struct componentname * a_cnp;
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
         } */ *ap = v;
 	struct puffs_mount *pmp;
 	struct componentname *cnp;
@@ -615,13 +757,19 @@ puffs_revoke(void *v)
 		struct vnode *a_vp;
 		int a_flags;
 	} */ *ap = v;
+	struct puffs_mount *pmp;
+
 	PUFFS_VNREQ(revoke);
+
+	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 
 	revoke_arg.pvnr_flags = ap->a_flags;
 
 	/* don't really care if userspace doesn't want to play along */
-	puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_REVOKE,
-	    &revoke_arg, sizeof(revoke_arg), VPTOPNC(ap->a_vp), NULL, NULL);
+	if (EXISTSOP(pmp, REVOKE))
+		puffs_vntouser(pmp, PUFFS_VN_REVOKE,
+		    &revoke_arg, sizeof(revoke_arg), VPTOPNC(ap->a_vp),
+		    NULL, NULL);
 
 	return genfs_revoke(v);
 }
@@ -639,6 +787,7 @@ puffs_inactive(void *v)
 		struct vnode *a_vp;
 		struct lwp *a_l;
 	} */ *ap = v;
+	struct puffs_mount *pmp;
 	struct puffs_node *pnode;
 	int rv, vnrefs;
 
@@ -651,11 +800,16 @@ puffs_inactive(void *v)
 	pnode = ap->a_vp->v_data;
 	pnode->pn_stat |= PNODE_INACTIVE;
 
+	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
+
 	inactive_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
 
-	rv = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_INACTIVE,
-	    &inactive_arg, sizeof(inactive_arg), VPTOPNC(ap->a_vp),
-	    ap->a_vp, NULL);
+	if (EXISTSOP(pmp, INACTIVE))
+		rv = puffs_vntouser(pmp, PUFFS_VN_INACTIVE,
+		    &inactive_arg, sizeof(inactive_arg), VPTOPNC(ap->a_vp),
+		    ap->a_vp, NULL);
+	else
+		rv = 1; /* see below */
 
 	/* can't trust userspace return value?  simulate safe answer */
 	if (rv)
@@ -688,6 +842,8 @@ puffs_reclaim(void *v)
 
 	PUFFS_VNREQ(reclaim);
 
+	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
+
 	/*
 	 * first things first: check if someone is trying to reclaim the
 	 * root vnode.  do not allow that to travel to userspace.
@@ -695,7 +851,6 @@ puffs_reclaim(void *v)
 	 * puffs_root(), since there is only one of us.
 	 */
 	if (ap->a_vp->v_flag & VROOT) {
-		pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 #ifdef DIAGNOSTIC
 		simple_lock(&pmp->pmp_lock);
 		if (pmp->pmp_root == NULL)
@@ -710,8 +865,12 @@ puffs_reclaim(void *v)
 
 	reclaim_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
 
-	error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_RECLAIM,
-	    &reclaim_arg, sizeof(reclaim_arg), VPTOPNC(ap->a_vp), NULL, NULL);
+	if (EXISTSOP(pmp, RECLAIM))
+		error = puffs_vntouser(pmp, PUFFS_VN_RECLAIM,
+		    &reclaim_arg, sizeof(reclaim_arg), VPTOPNC(ap->a_vp),
+		    NULL, NULL);
+	else
+		error = 0;
 #if 0
 	/*
 	 * XXX: if reclaim fails for any other reason than the userspace
@@ -1459,10 +1618,13 @@ puffs_print(void *v)
 	struct vop_print_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
+	struct puffs_mount *pmp;
 	struct vnode *vp = ap->a_vp;
 	struct puffs_node *pn = vp->v_data;
 
 	PUFFS_VNREQ(print);
+
+	pmp = MPTOPUFFSMP(vp->v_mount);
 
 	/* kernel portion */
 	printf("tag VT_PUFFS, vnode %p, puffs node: %p,\n"
@@ -1472,9 +1634,12 @@ puffs_print(void *v)
 	lockmgr_printinfo(&vp->v_lock);
 
 	/* userspace portion */
-	return puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_PRINT,
-	    &print_arg, sizeof(print_arg), VPTOPNC(ap->a_vp),
-	    LOCKEDVP(ap->a_vp), NULL);
+	if (EXISTSOP(pmp, PRINT))
+		puffs_vntouser(pmp, PUFFS_VN_PRINT,
+		    &print_arg, sizeof(print_arg), VPTOPNC(ap->a_vp),
+		    LOCKEDVP(ap->a_vp), NULL);
+	
+	return 0;
 }
 
 int
@@ -1549,6 +1714,11 @@ puffs_strategy(void *v)
 
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 	bp = ap->a_bp;
+
+	if ((bp->b_flags & B_READ) && !EXISTSOP(pmp, READ))
+		return EOPNOTSUPP;
+	if ((bp->b_flags & B_WRITE) && !EXISTSOP(pmp, WRITE))
+		return EOPNOTSUPP;
 
 #ifdef DIAGNOSTIC
 	if (bp->b_resid > pmp->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX)
