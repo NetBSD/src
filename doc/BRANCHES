@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.136 2006/11/20 15:55:17 tsutsui Exp $
+#	$NetBSD: BRANCHES,v 1.137 2006/12/01 20:33:10 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -431,6 +431,7 @@ Notes:
 			amiga
 			arc
 			atari
+			bebox
 			cats
 			cesfic
 			evbarm
@@ -466,10 +467,18 @@ Notes:
 		not tested:
 			pdp10 (i don't know how to build)
 			sparc64 (GENERIC.MP seems to have an unrelated problem)
+			sh5 (not buildable with an unrelated problem.)
+
+    compile  CAYMAN64/netbsd32_sa.o
+    cc1: warnings being treated as errors
+    /exports/nbsd/src/sys/compat/netbsd32/netbsd32_sa.c: In function 'netbsd32_sa_ucsp':
+    /exports/nbsd/src/sys/compat/netbsd32/netbsd32_sa.c:126: warning: implicit declaration of function '_UC_MACHINE32_SP'
+    --- netbsd32_sa.o ---
+    *** [netbsd32_sa.o] Error code 1
+    1 error
 
 		notyet:
 			amigappc
-			bebox
 			dreamcast
 			mipsco
 			mmeye
@@ -478,7 +487,6 @@ Notes:
 			ofppc
 			playstation2
 			pmppc
-			sh5
 
 
 ########################################################################
