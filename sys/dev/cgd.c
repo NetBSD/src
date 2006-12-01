@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.41 2006/11/25 21:13:23 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.42 2006/12/01 15:52:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.41 2006/11/25 21:13:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.42 2006/12/01 15:52:55 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -542,12 +542,6 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	if (ret)
 		goto bail;
 
-	if (ci->ci_blocksize > 4096) {
-		printf("cgd: large blocksize %zu\n", ci->ci_blocksize);
-		ret = ENOMEM;
-		goto bail;
-	}
-
 	cs->sc_cdata.cf_blocksize = ci->ci_blocksize;
 	cs->sc_cdata.cf_mode = CGD_CIPHER_CBC_ENCBLKNO;
 	cs->sc_cdata.cf_priv = cs->sc_cfuncs->cf_init(ci->ci_keylen, inbuf,
@@ -732,7 +726,7 @@ cgd_cipher(struct cgd_softc *cs, caddr_t dst, caddr_t src,
 	struct uio	srcuio;
 	struct iovec	dstiov[2];
 	struct iovec	srciov[2];
-	int		blocksize = cs->sc_cdata.cf_blocksize;
+	size_t		blocksize = cs->sc_cdata.cf_blocksize;
 	char		sink[blocksize];
 	char		zero_iv[blocksize];
 	char		blkno_buf[blocksize];
