@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.115 2006/11/28 13:16:37 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.116 2006/12/01 19:15:22 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.115 2006/11/28 13:16:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.116 2006/12/01 19:15:22 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -797,8 +797,8 @@ ReFault:
 	 */
 
 	if (UVM_ET_ISNEEDSCOPY(ufi.entry)) {
-		KASSERT(fault_flag != UVM_FAULT_WIREMAX);
 		if (cow_now || (ufi.entry->object.uvm_obj == NULL)) {
+			KASSERT(fault_flag != UVM_FAULT_WIREMAX);
 			/* need to clear */
 			UVMHIST_LOG(maphist,
 			    "  need to clear needs_copy and refault",0,0,0,0);
