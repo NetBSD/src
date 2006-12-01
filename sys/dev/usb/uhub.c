@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.82 2006/11/30 16:30:33 drochner Exp $	*/
+/*	$NetBSD: uhub.c,v 1.83 2006/12/01 20:48:50 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.82 2006/11/30 16:30:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.83 2006/12/01 20:48:50 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,9 @@ USB_ATTACH(uhub)
 	int p, port, nports, nremov, pwrdly;
 	usbd_interface_handle iface;
 	usb_endpoint_descriptor_t *ed;
+#if 0 /* notyet */
 	struct usbd_tt *tts = NULL;
+#endif
 
 	DPRINTFN(1,("uhub_attach\n"));
 	sc->sc_hub = dev;
@@ -239,6 +241,14 @@ USB_ATTACH(uhub)
 		printf("%s: no interface handle\n", USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
+
+	if (UHUB_IS_HIGH_SPEED(sc) && !UHUB_IS_SINGLE_TT(sc)) {
+		err = usbd_set_interface(iface, 1);
+		if (err)
+			printf("%s: can't enable multiple TTs\n",
+			       USBDEVNAME(sc->sc_dev));
+	}
+
 	ed = usbd_interface2endpoint_descriptor(iface, 0);
 	if (ed == NULL) {
 		printf("%s: no endpoint descriptor\n", USBDEVNAME(sc->sc_dev));
@@ -288,12 +298,14 @@ USB_ATTACH(uhub)
 	 *        proceed with device attachment
 	 */
 
+#if 0
 	if (UHUB_IS_HIGH_SPEED(sc) && nports > 0) {
 		tts = malloc((UHUB_IS_SINGLE_TT(sc) ? 1 : nports) *
 			     sizeof (struct usbd_tt), M_USBDEV, M_NOWAIT);
 		if (!tts)
 			goto bad;
 	}
+#endif
 	/* Set up data structures */
 	for (p = 0; p < nports; p++) {
 		struct usbd_port *up = &hub->ports[p];
@@ -307,12 +319,14 @@ USB_ATTACH(uhub)
 			up->power = USB_MIN_POWER;
 		up->restartcnt = 0;
 		up->reattach = 0;
+#if 0
 		if (UHUB_IS_HIGH_SPEED(sc)) {
 			up->tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p];
 			up->tt->hub = hub;
 		} else {
 			up->tt = NULL;
 		}
+#endif
 	}
 
 	/* XXX should check for none, individual, or ganged power? */
@@ -587,8 +601,10 @@ USB_DETACH(uhub)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_hub,
 			   USBDEV(sc->sc_dev));
 
+#if 0
 	if (hub->ports[0].tt)
 		free(hub->ports[0].tt, M_USBDEV);
+#endif
 	free(hub, M_USBDEV);
 	sc->sc_hub->hub = NULL;
 
