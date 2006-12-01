@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.34 2006/11/24 22:04:25 wiz Exp $	*/
+/*	$NetBSD: piixide.c,v 1.35 2006/12/01 10:31:30 cube Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.34 2006/11/24 22:04:25 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.35 2006/12/01 10:31:30 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,19 +189,9 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	  "Intel 82801H Serial ATA Controller (ICH8)",
 	  piixsata_chip_map,
 	},
-	{ PCI_PRODUCT_INTEL_82801H_SATA_AHCI6,
-	  0,
-	  "Intel 82801H AHCI Controller (ICH8)",
-	  piixsata_chip_map,
-	},
 	{ PCI_PRODUCT_INTEL_82801H_SATA_RAID,
 	  0,
 	  "Intel 82801H Serial ATA RAID Controller (ICH8)",
-	  piixsata_chip_map,
-	},
-	{ PCI_PRODUCT_INTEL_82801H_SATA_AHCI4,
-	  0,
-	  "Intel 82801H Serial ATA Controller (ICH8)",
 	  piixsata_chip_map,
 	},
 	{ PCI_PRODUCT_INTEL_82801H_SATA_2,
@@ -802,8 +792,7 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_channel *cp;
 	bus_size_t cmdsize, ctlsize;
 	pcireg_t interface, cmdsts;
-	int channel, ich = 0;
-	uint8_t reg;
+	int channel;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -835,86 +824,6 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_RAID;
 
 	interface = PCI_INTERFACE(pa->pa_class);
-
-	switch (sc->sc_pp->ide_product) {
-	case PCI_PRODUCT_INTEL_6300ESB_SATA:
-	case PCI_PRODUCT_INTEL_6300ESB_RAID:
-	case PCI_PRODUCT_INTEL_63XXESB_SATA:
-	case PCI_PRODUCT_INTEL_82801EB_SATA:
-	case PCI_PRODUCT_INTEL_82801ER_SATA:
-		ich = 5;
-		break;
-	case PCI_PRODUCT_INTEL_82801FB_SATA:
-	case PCI_PRODUCT_INTEL_82801FR_SATA:
-	case PCI_PRODUCT_INTEL_82801FBM_SATA:
-		ich = 6;
-		break;
-	case PCI_PRODUCT_INTEL_82801G_SATA:
-	case PCI_PRODUCT_INTEL_82801G_SATA_AHCI:
-	case PCI_PRODUCT_INTEL_82801G_SATA_RAID:
-	case PCI_PRODUCT_INTEL_82801GBM_SATA:
-	case PCI_PRODUCT_INTEL_82801GBM_AHCI:
-	case PCI_PRODUCT_INTEL_82801GHM_RAID:
-		ich = 7;
-		break;
-	case PCI_PRODUCT_INTEL_82801H_SATA_1:
-	case PCI_PRODUCT_INTEL_82801H_SATA_AHCI6:
-	case PCI_PRODUCT_INTEL_82801H_SATA_RAID:
-	case PCI_PRODUCT_INTEL_82801H_SATA_AHCI4:
-	case PCI_PRODUCT_INTEL_82801H_SATA_2:
-	case PCI_PRODUCT_INTEL_82801HBM_SATA_1:
-	case PCI_PRODUCT_INTEL_82801HBM_SATA_2:
-		ich = 8;
-		break;
-	}
-
-	/*
-	 * Put the SATA portion of controllers that don't operate in combined
-	 * mode into native PCI modes so the maximum number of devices can be
-	 * used.  Intel calls this "enhanced mode".
-	 */
-
-	if (ich == 5) {
-		reg = pciide_pci_read(sc->sc_pc, sc->sc_tag, ICH5_SATA_MAP);
-		if ((reg & ICH5_SATA_MAP_COMBINED) == 0) {
-			reg = pciide_pci_read(pa->pa_pc, pa->pa_tag,
-			    ICH5_SATA_PI);
-			reg |= ICH5_SATA_PI_PRI_NATIVE |
-			    ICH5_SATA_PI_SEC_NATIVE;
-			pciide_pci_write(pa->pa_pc, pa->pa_tag,
-			    ICH5_SATA_PI, reg);
-			interface |= PCIIDE_INTERFACE_PCI(0) |
-			    PCIIDE_INTERFACE_PCI(1);
-		}
-	} else {
-		reg = pciide_pci_read(sc->sc_pc, sc->sc_tag, ICH5_SATA_MAP) &
-		    ICH6_SATA_MAP_CMB_MASK;
-		if (reg != ICH6_SATA_MAP_CMB_PRI &&
-		    reg != ICH6_SATA_MAP_CMB_SEC) {
-			reg = pciide_pci_read(pa->pa_pc, pa->pa_tag,
-			    ICH5_SATA_PI);
-			reg |= ICH5_SATA_PI_PRI_NATIVE |
-			    ICH5_SATA_PI_SEC_NATIVE;
-
-			pciide_pci_write(pa->pa_pc, pa->pa_tag,
-			   ICH5_SATA_PI, reg);
-			interface |= PCIIDE_INTERFACE_PCI(0) |
-			   PCIIDE_INTERFACE_PCI(1);
-
-			/*
-			 * Ask for SATA IDE Mode, we don't need to do this
-			 * for the combined mode case as combined mode is
-			 * only allowed in IDE Mode.
-			 */
-
-			if (ich >= 7) {
-				reg = pciide_pci_read(sc->sc_pc, sc->sc_tag,
-				    ICH5_SATA_MAP) & ~ICH7_SATA_MAP_SMS_MASK;
-				pciide_pci_write(pa->pa_pc, pa->pa_tag,
-				    ICH5_SATA_MAP, reg);
-			}
-		}
-	}
 	
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
