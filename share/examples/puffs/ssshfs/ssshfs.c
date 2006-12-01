@@ -1,4 +1,4 @@
-/*	$NetBSD: ssshfs.c,v 1.8 2006/11/30 05:38:54 pooka Exp $	*/
+/*	$NetBSD: ssshfs.c,v 1.9 2006/12/01 12:50:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 	sftp_main(argc, argv);
 
 	if ((pu = puffs_mount(&pvfs, &pvn, mountpath, 0, "ssshfs",
-	    PUFFSFLAG_NOCACHE, 0))==NULL)
+	    PUFFS_KFLAG_NOCACHE, 0))==NULL)
 		err(1, "mount");
 
 	if (puffs_mainloop(pu, 0) == -1)
