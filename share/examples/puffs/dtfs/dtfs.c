@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.8 2006/11/30 05:38:54 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.9 2006/12/01 12:50:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -64,7 +64,7 @@ main(int argc, char *argv[])
 
 	pflags = lflags = 0;
 	if (argc == 3 && *argv[2] == 'd') { /* nice */
-		pflags = PUFFSFLAG_OPDUMP;
+		pflags = PUFFS_FLAG_OPDUMP;
 		lflags = PUFFSLOOP_NODAEMON;
 	}
 
