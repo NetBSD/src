@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.20 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: ubt.c,v 1.21 2006/12/01 20:41:23 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.20 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.21 2006/12/01 20:41:23 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -152,9 +152,6 @@ SYSCTL_SETUP(sysctl_hw_ubt_debug_setup, "sysctl hw.ubt_debug setup")
 #define UBT_BUFSIZ_CMD		(HCI_CMD_PKT_SIZE - 1)
 #define UBT_BUFSIZ_ACL		(2048 - 1)
 #define UBT_BUFSIZ_EVENT	(HCI_EVENT_PKT_SIZE - 1)
-
-/* Interrupt Interval from (Bluetooth spec) */
-#define UBT_EVENT_INTERVAL	1	/* 1ms */
 
 /* Transmit timeouts */
 #define UBT_CMD_TIMEOUT		USBD_DEFAULT_TIMEOUT
@@ -834,7 +831,7 @@ ubt_enable(struct hci_unit *unit)
 				  sc->sc_evt_buf,
 				  UBT_BUFSIZ_EVENT,
 				  ubt_recv_event,
-				  UBT_EVENT_INTERVAL);
+				  USBD_DEFAULT_INTERVAL);
 	if (err != USBD_NORMAL_COMPLETION) {
 		error = EIO;
 		goto bad;
