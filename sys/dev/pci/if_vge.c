@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.32 2006/12/01 11:06:59 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.33 2006/12/01 11:30:55 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.32 2006/12/01 11:06:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.33 2006/12/01 11:30:55 tsutsui Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -839,7 +839,7 @@ vge_allocmem(struct vge_softc *sc)
 	if (error) {
 		aprint_error("%s: could not allocate control data dma memory\n",
 		    sc->sc_dev.dv_xname);
-		return ENOMEM;
+		goto fail_1;
 	}
 
 	/* Map the memory to kernel VA space */
@@ -850,7 +850,7 @@ vge_allocmem(struct vge_softc *sc)
 	if (error) {
 		aprint_error("%s: could not map control data dma memory\n",
 		    sc->sc_dev.dv_xname);
-		return ENOMEM;
+		goto fail_2;
 	}
 	memset(sc->sc_control_data, 0, sizeof(struct vge_control_data));
 
@@ -864,7 +864,7 @@ vge_allocmem(struct vge_softc *sc)
 	if (error) {
 		aprint_error("%s: could not create control data dmamap\n",
 		    sc->sc_dev.dv_xname);
-		return ENOMEM;
+		goto fail_3;
 	}
 
 	/* Load the map for the control data. */
@@ -874,7 +874,7 @@ vge_allocmem(struct vge_softc *sc)
 	if (error) {
 		aprint_error("%s: could not load control data dma memory\n",
 		    sc->sc_dev.dv_xname);
-		return ENOMEM;
+		goto fail_4;
 	}
 
 	/* Create DMA maps for TX buffers */
@@ -886,7 +886,7 @@ vge_allocmem(struct vge_softc *sc)
 		if (error) {
 			aprint_error("%s: can't create DMA map for TX descs\n",
 			    sc->sc_dev.dv_xname);
-			return ENOMEM;
+			goto fail_5;
 		}
 	}
 
@@ -899,12 +899,35 @@ vge_allocmem(struct vge_softc *sc)
 		if (error) {
 			aprint_error("%s: can't create DMA map for RX descs\n",
 			    sc->sc_dev.dv_xname);
-			return ENOMEM;
+			goto fail_6;
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
 
 	return 0;
+
+ fail_6:
+	for (i = 0; i < VGE_NRXDESC; i++) {
+		if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->sc_rxsoft[i].rxs_dmamap);
+	}
+ fail_5:
+	for (i = 0; i < VGE_NTXDESC; i++) {
+		if (sc->sc_txsoft[i].txs_dmamap != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->sc_txsoft[i].txs_dmamap);
+	}
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
+ fail_4:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
+ fail_3:
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	    sizeof(struct vge_control_data));
+ fail_2:
+	bus_dmamem_free(sc->sc_dmat, &seg, nseg);
+ fail_1:
+	return ENOMEM;
 }
 
 /*
