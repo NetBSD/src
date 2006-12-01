@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.9 2006/11/18 08:18:24 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.10 2006/12/01 12:37:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -54,6 +54,7 @@ extern int (**puffs_fifoop_p)(void *);
 extern const struct vnodeopv_desc puffs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc puffs_specop_opv_desc;
 extern const struct vnodeopv_desc puffs_fifoop_opv_desc;
+extern const struct vnodeopv_desc puffs_msgop_opv_desc;
 
 extern struct pool puffs_pnpool;
 
@@ -102,6 +103,7 @@ struct puffs_sizepark {
 };
 
 #define DPRINTF(x)
+#define DPRINTF_VERBOSE(x)
 
 #define MPTOPUFFSMP(mp) ((struct puffs_mount *)((mp)->mnt_data))
 #define PMPTOMP(pmp) (pmp->pmp_mp)
@@ -111,11 +113,16 @@ struct puffs_sizepark {
 #define FPTOPMP(fp) (((struct puffs_instance *)fp->f_data)->pi_pmp)
 #define FPTOPI(fp) ((struct puffs_instance *)fp->f_data)
 
+#define EXISTSOP(pmp, op) \
+(((pmp)->pmp_flags & PUFFSFLAG_ALLOPS) || ((pmp)->pmp_vnopmask[PUFFS_VN_##op]))
+
 TAILQ_HEAD(puffs_wq, puffs_park);
 struct puffs_mount {
 	struct simplelock		pmp_lock;
 
 	struct puffs_args		pmp_args;
+#define pmp_flags pmp_args.pa_flags
+#define pmp_vnopmask pmp_args.pa_vnopmask
 
 	struct puffs_wq			pmp_req_touser;
 	size_t				pmp_req_touser_waiters;
@@ -134,7 +141,6 @@ struct puffs_mount {
 	unsigned int			pmp_nextreq;
 	uint8_t				pmp_status;
 };
-#define pmp_flags pmp_args.pa_flags
 
 #define PUFFSTAT_BEFOREINIT	0
 #define PUFFSTAT_MOUNTING	1

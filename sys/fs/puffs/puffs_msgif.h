@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.8 2006/11/18 12:39:48 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.9 2006/12/01 12:37:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -53,6 +53,7 @@
 #define PUFFSOP_OPCLASS(a)	((a) & PUFFSOP_OPCMASK)
 #define PUFFSOP_WANTREPLY(a)	(((a) & PUFFSOPFLAG_FAF) == 0)
 
+/* XXX: we don't need everything */
 enum {
 	PUFFS_VFS_MOUNT,	PUFFS_VFS_START,	PUFFS_VFS_UNMOUNT,
 	PUFFS_VFS_ROOT,		PUFFS_VFS_STATVFS,	PUFFS_VFS_SYNC,
@@ -62,6 +63,7 @@ enum {
 };
 #define PUFFS_VFS_MAX PUFFS_VFS_EXTATTCTL
 
+/* moreXXX: we don't need everything here either */
 enum {
 	PUFFS_VN_LOOKUP,	PUFFS_VN_CREATE,	PUFFS_VN_MKNOD,
 	PUFFS_VN_OPEN,		PUFFS_VN_CLOSE,		PUFFS_VN_ACCESS,
@@ -87,13 +89,15 @@ enum {
 struct puffs_args {
 	int		pa_vers;
 	int		pa_fd;
-	unsigned int	pa_flags;
+	uint32_t	pa_flags;
 	size_t		pa_maxreqlen;
 	char		pa_name[PUFFSNAMESIZE];	/* name for puffs type	*/
+	uint8_t		pa_vnopmask[PUFFS_VN_MAX];
 };
 #define PUFFSFLAG_ALLOWCTL	0x01	/* ioctl/fcntl commands allowed */
 #define PUFFSFLAG_NOCACHE	0x02	/* flush page cache immediately	*/
-#define PUFFSFLAG_MASK		0x03
+#define PUFFSFLAG_ALLOPS	0x04	/* ignore pa_vnopmask, send all */
+#define PUFFSFLAG_MASK		0x07
 
 /*
  * This is the device minor number for the cloning device.  Make it
