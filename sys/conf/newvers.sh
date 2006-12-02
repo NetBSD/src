@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.42 2005/12/11 12:20:30 christos Exp $
+#	$NetBSD: newvers.sh,v 1.43 2006/12/02 04:48:34 christos Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -80,7 +80,7 @@ const char copyright[] =
 ${copyright}
 "\n";
 
-#ifdef notyet
+#ifdef __i386__
 /*
  * NetBSD identity note.
  */
