@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.49 2006/06/29 16:56:31 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.50 2006/12/02 18:59:17 dyoung Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.49 2006/06/29 16:56:31 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.50 2006/12/02 18:59:17 dyoung Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -338,7 +338,7 @@ ip6_forward(m, srcrt)
 		/*
 		 * ip6_forward_rt.ro_dst.sin6_addr is equal to ip6->ip6_dst
 		 */
-		if (ip6_forward_rt.ro_rt == 0 ||
+		if (ip6_forward_rt.ro_rt == NULL ||
 		    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) == 0) {
 			if (ip6_forward_rt.ro_rt) {
 				RTFREE(ip6_forward_rt.ro_rt);
@@ -348,7 +348,7 @@ ip6_forward(m, srcrt)
 			rtalloc((struct route *)&ip6_forward_rt);
 		}
 
-		if (ip6_forward_rt.ro_rt == 0) {
+		if (ip6_forward_rt.ro_rt == NULL) {
 			ip6stat.ip6s_noroute++;
 			/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */
 			if (mcopy) {
@@ -358,7 +358,7 @@ ip6_forward(m, srcrt)
 			m_freem(m);
 			return;
 		}
-	} else if ((rt = ip6_forward_rt.ro_rt) == 0 ||
+	} else if ((rt = ip6_forward_rt.ro_rt) == NULL ||
 		 !IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst->sin6_addr)) {
 		if (ip6_forward_rt.ro_rt) {
 			RTFREE(ip6_forward_rt.ro_rt);
@@ -370,7 +370,7 @@ ip6_forward(m, srcrt)
 		dst->sin6_addr = ip6->ip6_dst;
 
 		rtalloc((struct route *)&ip6_forward_rt);
-		if (ip6_forward_rt.ro_rt == 0) {
+		if (ip6_forward_rt.ro_rt == NULL) {
 			ip6stat.ip6s_noroute++;
 			/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */
 			if (mcopy) {

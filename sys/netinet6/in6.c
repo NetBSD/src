@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.119 2006/11/24 19:47:00 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.120 2006/12/02 18:59:17 dyoung Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.119 2006/11/24 19:47:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.120 2006/12/02 18:59:17 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -294,7 +294,7 @@ in6_mask2len(mask, lim0)
 	}
 	y = 0;
 	if (p < lim) {
-		for (y = 0; y < 8; y++) {
+		for (y = 0; y < NBBY; y++) {
 			if ((*p & (0x80 >> y)) == 0)
 				break;
 		}
@@ -573,7 +573,7 @@ in6_control(so, cmd, data, ifp, l)
 			 * signed.
 			 */
 			maxexpire = ((time_t)~0) &
-			    ~((time_t)1 << ((sizeof(maxexpire) * 8) - 1));
+			    ~((time_t)1 << ((sizeof(maxexpire) * NBBY) - 1));
 			if (ia->ia6_lifetime.ia6t_vltime <
 			    maxexpire - ia->ia6_updatetime) {
 				retlt->ia6t_expire = ia->ia6_updatetime +
@@ -591,7 +591,7 @@ in6_control(so, cmd, data, ifp, l)
 			 * signed.
 			 */
 			maxexpire = ((time_t)~0) &
-			    ~((time_t)1 << ((sizeof(maxexpire) * 8) - 1));
+			    ~((time_t)1 << ((sizeof(maxexpire) * NBBY) - 1));
 			if (ia->ia6_lifetime.ia6t_pltime <
 			    maxexpire - ia->ia6_updatetime) {
 				retlt->ia6t_preferred = ia->ia6_updatetime +
@@ -1109,8 +1109,7 @@ in6_update_ifa(ifp, ifra, ia, flags)
 		mltaddr.sin6_len = sizeof(struct sockaddr_in6);
 		mltaddr.sin6_family = AF_INET6;
 		mltaddr.sin6_addr = in6addr_linklocal_allnodes;
-		if ((error = in6_setscope(&mltaddr.sin6_addr, ifp, NULL)) !=
-		    0)
+		if ((error = in6_setscope(&mltaddr.sin6_addr, ifp, NULL)) != 0)
 			goto cleanup; /* XXX: should not fail */
 
 		/*
@@ -1170,19 +1169,17 @@ in6_update_ifa(ifp, ifra, ia, flags)
 			dad_delay = arc4random() %
 			    (MAX_RTR_SOLICITATION_DELAY * hz);
 		}
-		if (in6_nigroup(ifp, hostname, hostnamelen, &mltaddr) == 0) {
-			imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error,
-			    dad_delay); /* XXX jinmei */
-			if (!imm) {
-				nd6log((LOG_WARNING, "in6_update_ifa: "
-				    "addmulti failed for %s on %s (errno=%d)\n",
-				    ip6_sprintf(&mltaddr.sin6_addr),
-				    if_name(ifp), error));
-				/* XXX not very fatal, go on... */
-			} else {
-				LIST_INSERT_HEAD(&ia->ia6_memberships,
-				    imm, i6mm_chain);
-			}
+		if (in6_nigroup(ifp, hostname, hostnamelen, &mltaddr) != 0)
+			;
+		else if ((imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error,
+		          dad_delay)) == NULL) { /* XXX jinmei */
+			nd6log((LOG_WARNING, "in6_update_ifa: "
+			    "addmulti failed for %s on %s (errno=%d)\n",
+			    ip6_sprintf(&mltaddr.sin6_addr),
+			    if_name(ifp), error));
+			/* XXX not very fatal, go on... */
+		} else {
+			LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
 		}
 
 
@@ -1191,8 +1188,7 @@ in6_update_ifa(ifp, ifra, ia, flags)
 		 * (ff01::1%ifN, and ff01::%ifN/32)
 		 */
 		mltaddr.sin6_addr = in6addr_nodelocal_allnodes;
-		if ((error = in6_setscope(&mltaddr.sin6_addr, ifp, NULL))
-		    != 0) 
+		if ((error = in6_setscope(&mltaddr.sin6_addr, ifp, NULL)) != 0) 
 			goto cleanup; /* XXX: should not fail */
 
 		/* XXX: again, do we really need the route? */
@@ -1491,7 +1487,7 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, l)
 		return EOPNOTSUPP;
 #endif
 	}
-	if (sizeof(struct in6_addr) * 8 < iflr->prefixlen)
+	if (sizeof(struct in6_addr) * NBBY < iflr->prefixlen)
 		return EINVAL;
 
 	switch (cmd) {
@@ -1911,7 +1907,7 @@ struct in6_addr *src, *dst;
 			}
 			break;
 		} else
-			match += 8;
+			match += NBBY;
 	return match;
 }
 
@@ -1930,14 +1926,14 @@ in6_are_prefix_equal(p1, p2, len)
 		return 0;
 	}
 
-	bytelen = len / 8;
-	bitlen = len % 8;
+	bytelen = len / NBBY;
+	bitlen = len % NBBY;
 
 	if (bcmp(&p1->s6_addr, &p2->s6_addr, bytelen))
 		return 0;
 	if (bitlen != 0 &&
-	    p1->s6_addr[bytelen] >> (8 - bitlen) !=
-	    p2->s6_addr[bytelen] >> (8 - bitlen))
+	    p1->s6_addr[bytelen] >> (NBBY - bitlen) !=
+	    p2->s6_addr[bytelen] >> (NBBY - bitlen))
 		return 0;
 
 	return 1;
@@ -1948,7 +1944,7 @@ in6_prefixlen2mask(maskp, len)
 	struct in6_addr *maskp;
 	int len;
 {
-	static const u_char maskarray[8] = {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+	static const u_char maskarray[NBBY] = {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
 	int bytelen, bitlen, i;
 
 	/* sanity check */
@@ -1959,8 +1955,8 @@ in6_prefixlen2mask(maskp, len)
 	}
 
 	bzero(maskp, sizeof(*maskp));
-	bytelen = len / 8;
-	bitlen = len % 8;
+	bytelen = len / NBBY;
+	bitlen = len % NBBY;
 	for (i = 0; i < bytelen; i++)
 		maskp->s6_addr[i] = 0xff;
 	if (bitlen)

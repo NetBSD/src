@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.30 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.31 2006/12/02 18:59:17 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -667,7 +667,7 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		 * by that address must be a neighbor of the sending host.
 		 */
 		ron = &opts->ip6po_nextroute;
-		if ((ron->ro_rt &&
+		if ((ron->ro_rt != NULL &&
 		    (ron->ro_rt->rt_flags & (RTF_UP | RTF_GATEWAY)) !=
 		    RTF_UP) ||
 		    !IN6_ARE_ADDR_EQUAL(&satosin6(&ron->ro_dst)->sin6_addr,
@@ -713,8 +713,8 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 	 * a new one.  Note that we should check the address family of the
 	 * cached destination, in case of sharing the cache with IPv4.
 	 */
-	if (ro) {
-		if (ro->ro_rt &&
+	if (ro != NULL) {
+		if (ro->ro_rt != NULL &&
 		    (!(ro->ro_rt->rt_flags & RTF_UP) ||
 		     ((struct sockaddr *)(&ro->ro_dst))->sa_family != AF_INET6 ||
 		     !IN6_ARE_ADDR_EQUAL(&satosin6(&ro->ro_dst)->sin6_addr,
@@ -722,7 +722,7 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)NULL;
 		}
-		if (ro->ro_rt == (struct rtentry *)NULL) {
+		if (ro->ro_rt == NULL) {
 			struct sockaddr_in6 *sa6;
 
 			/* No route yet, so try to acquire one */

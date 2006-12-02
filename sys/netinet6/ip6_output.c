@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.106 2006/11/25 18:41:36 yamt Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.107 2006/12/02 18:59:17 dyoung Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.106 2006/11/25 18:41:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.107 2006/12/02 18:59:17 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -701,7 +701,7 @@ skip_ipsec2:;
 
   routefound:
 	if (rt && !IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
-		if (opt && opt->ip6po_nextroute.ro_rt) {
+		if (opt && opt->ip6po_nextroute.ro_rt != NULL) {
 			/*
 			 * The nexthop is explicitly specified by the
 			 * application.  We assume the next hop is an IPv6
@@ -1377,7 +1377,7 @@ ip6_getpmtu(ro_pmtu, ro, ifp, dst, mtup, alwaysfragp)
 		/* The first hop and the final destination may differ. */
 		struct sockaddr_in6 *sa6_dst =
 		    (struct sockaddr_in6 *)&ro_pmtu->ro_dst;
-		if (ro_pmtu->ro_rt &&
+		if (ro_pmtu->ro_rt != NULL &&
 		    ((ro_pmtu->ro_rt->rt_flags & RTF_UP) == 0 ||
 		      !IN6_ARE_ADDR_EQUAL(&sa6_dst->sin6_addr, dst))) {
 			RTFREE(ro_pmtu->ro_rt);
@@ -1392,7 +1392,7 @@ ip6_getpmtu(ro_pmtu, ro, ifp, dst, mtup, alwaysfragp)
 			rtalloc((struct route *)ro_pmtu);
 		}
 	}
-	if (ro_pmtu->ro_rt) {
+	if (ro_pmtu->ro_rt != NULL) {
 		u_int32_t ifmtu;
 
 		if (ifp == NULL)
@@ -2584,9 +2584,8 @@ ip6_setmoptions(optname, im6op, m)
 			 * address, and choose the outgoing interface.
 			 *   XXX: is it a good approach?
 			 */
-			ro.ro_rt = NULL;
+			bzero(&ro, sizeof(ro));
 			dst = (struct sockaddr_in6 *)&ro.ro_dst;
-			bzero(dst, sizeof(*dst));
 			dst->sin6_family = AF_INET6;
 			dst->sin6_len = sizeof(*dst);
 			dst->sin6_addr = mreq->ipv6mr_multiaddr;
