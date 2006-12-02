@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.29 2004/04/22 01:01:41 matt Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.29.10.1 2006/12/02 13:07:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.29 2004/04/22 01:01:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.29.10.1 2006/12/02 13:07:43 bouyer Exp $");
 
 #include "opt_iso.h"
 
@@ -199,9 +199,7 @@ next:
 	case IFT_ETHER:
 		bcopy((caddr_t) (mtod(m, struct ether_header *)->ether_dhost),
 		  (caddr_t) sh.snh_dhost, 2 * sizeof(sh.snh_dhost));
-		m->m_data += sizeof(struct ether_header);
-		m->m_len -= sizeof(struct ether_header);
-		m->m_pkthdr.len -= sizeof(struct ether_header);
+		m_adj(m, sizeof(struct ether_header) + 3);
 		break;
 	case IFT_FDDI:
 		bcopy((caddr_t) (mtod(m, struct fddi_header *)->fddi_dhost),
