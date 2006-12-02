@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata.c,v 1.1 2006/11/30 21:01:16 bouyer Exp $	*/
+/*	$NetBSD: ahcisata.c,v 1.2 2006/12/02 13:35:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata.c,v 1.1 2006/11/30 21:01:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata.c,v 1.2 2006/12/02 13:35:52 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1076,7 +1076,9 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 		ahci_bio_kill_xfer(chp, xfer, KILL_GONE);
 		chp->ch_drive[xfer->c_drive].drive_flags &= ~DRIVE_WAITDRAIN;
 		wakeup(&chp->ch_queue->active_xfer);
+		return 0;
 	}
+	ata_free_xfer(chp, xfer);
 	ata_bio->flags |= ATA_ITSDONE;
 	if (chp->ch_status & WDCS_DWF) { 
 		ata_bio->error = ERR_DF;
