@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.3.22.2 2006/12/02 22:15:45 yamt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3.22.3 2006/12/02 22:17:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.3.22.2 2006/12/02 22:15:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.3.22.3 2006/12/02 22:17:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -221,7 +221,7 @@ static const int ipl_sr_bits[] = {
 };
 
 ipl_cookie_t
-makeiplcookie(ipl_t ipl);
+makeiplcookie(ipl_t ipl)
 {
 
 	return (ipl_cookie_t){._sr = ipl_sr_bits[ipl]};
