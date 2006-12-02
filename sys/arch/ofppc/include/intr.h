@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2005/11/23 13:00:51 nonaka Exp $	*/
+/*	$NetBSD: intr.h,v 1.6.22.1 2006/12/02 21:26:54 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -81,7 +81,10 @@
 #define	IPL_VM		8	/* memory allocation */
 #define	IPL_AUDIO	9	/* audio device */
 #define	IPL_CLOCK	10	/* clock interrupt */
+#define	IPL_STATCLOCK	IPL_CLOCK
 #define	IPL_HIGH	11	/* everything */
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
 #define	IPL_SERIAL	12	/* serial device */
 
 #define	NIPL		13
@@ -125,28 +128,10 @@ extern struct machvec machine_interface;
 #define	intr_disestablish(cookie)					\
 	((*machine_interface.mvec_intr_disestablish)((cookie)))
 
-#define	splhigh()	_splraise(imask[IPL_HIGH])
 #define	splsoft()	_splraise(imask[IPL_SOFT])
-#define	splsoftclock()	_splraise(imask[IPL_SOFTCLOCK])
-#define	splsoftnet()	_splraise(imask[IPL_SOFTNET])
-#define	splbio()	_splraise(imask[IPL_BIO])
-#define	splnet()	_splraise(imask[IPL_NET])
-#define	spltty()	_splraise(imask[IPL_TTY])
-#define	splvm()		_splraise(imask[IPL_VM])
-#define	splaudio()	_splraise(imask[IPL_AUDIO])
-#define	splclock()	_splraise(imask[IPL_CLOCK])
-#define	splserial()	_splraise(imask[IPL_SERIAL])
-
-#define	splstatclock()	splclock()
 
 #define	spl0()		_spllower(imask[IPL_NONE])
 #define	spllowersoftclock() _spllower(imask[IPL_SOFTCLOCK])
-
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
-
-#define	setsoftnet()	setsoftintr(IPL_SOFTNET)
-#define	setsoftclock()	setsoftintr(IPL_SOFTCLOCK)
 
 /*
  * Software interrupt support.
@@ -167,6 +152,28 @@ extern struct machvec machine_interface;
 }
 
 #endif /* _LOCORE */
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(imask[icookie._ipl]);
+}
+
+#include <sys/spl.h>
+
 #endif /* _KERNEL */
 
 #endif	/* _MACHINE_INTR_H_ */
