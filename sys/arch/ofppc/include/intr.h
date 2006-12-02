@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6.22.1 2006/12/02 21:26:54 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.6.22.2 2006/12/02 21:36:35 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -133,6 +133,9 @@ extern struct machvec machine_interface;
 #define	spl0()		_spllower(imask[IPL_NONE])
 #define	spllowersoftclock() _spllower(imask[IPL_SOFTCLOCK])
 
+#define	setsoftnet()	setsoftintr(IPL_SOFTNET)
+#define	setsoftclock()	setsoftintr(IPL_SOFTCLOCK)
+
 /*
  * Software interrupt support.
  */
@@ -150,8 +153,6 @@ extern struct machvec machine_interface;
 	"net",								\
 	"serial",							\
 }
-
-#endif /* _LOCORE */
 
 typedef int ipl_t;
 typedef struct {
@@ -173,6 +174,8 @@ splraiseipl(ipl_cookie_t icookie)
 }
 
 #include <sys/spl.h>
+
+#endif /* _LOCORE */
 
 #endif /* _KERNEL */
 
