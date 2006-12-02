@@ -1,4 +1,4 @@
-#	$NetBSD: protocols,v 1.13 2004/06/10 10:06:51 kleink Exp $
+#	$NetBSD: protocols,v 1.13.2.1 2006/12/02 12:56:02 bouyer Exp $
 #
 # Internet (IP) protocols
 #
@@ -41,7 +41,7 @@ merit-inp	32	MERIT-INP	# MERIT Internodal Protocol
 sep	33	SEP		# Sequential Exchange Protocol
 3pc	34	3PC		# Third Party Connect Protocol
 idpr	35	IDPR		# Inter-Domain Policy Routing Protocol
-xtp	36	XTP		# Xpress Tranfer Protocol
+xtp	36	XTP		# Xpress Transfer Protocol
 ddp	37	DDP		# Datagram Delivery Protocol
 idpr-cmtp	38	IDPR-CMTP	# IDPR Control Message Transport
 tp++	39	TP++		# TP++ Transport Protocol
@@ -117,7 +117,7 @@ ipcomp	108	IPCOMP		# IP Payload Compression Protocol
 snp	109	SNP		# Sitara Networks Protocol
 compaq-peer	110	Compaq-Peer	# Compaq Peer Protocol
 ipx-in-ip	111	IPX-in-IP	# IPX in IP
-vrrp	112	VRRP		# Virtual Router Redundancy Protocol
+carp	112	CARP	vrrp	# Virtual Router Redundancy Protocol
 pgm	113	PGM		# PGM Reliable Transport Protocol
 #	114			# any 0-hop protocol
 l2tp	115	L2TP		# Layer Two Tunneling Protocol
@@ -139,5 +139,9 @@ sps	130	SPS		# Secure Packet Shield
 pipe	131	PIPE		# Private IP Encapsulation within IP
 sctp	132	SCTP		# Stream Control Transmission Protocol
 fc	133	FC		# Fibre Channel
-#	134-254			# Unassigned
+rsvp-e2e-ignore	134	RSVP-E2E-IGNORE
+mobility-header	135	MOBILITY-HEADER	# Mobility Header
+udplite		136	UDPLite
+mpls-in-ip	137     MPLS-in-IP	# MPLS in IP
+#	138-254			# Unassigned
 #	255			# Reserved
