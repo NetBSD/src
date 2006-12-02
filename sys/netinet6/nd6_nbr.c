@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.65 2006/06/28 16:43:43 drochner Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.66 2006/12/02 18:59:17 dyoung Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.65 2006/06/28 16:43:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.66 2006/12/02 18:59:17 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1185,7 +1185,7 @@ nd6_dad_stop(ifa)
 
 	nd6_dad_stoptimer(dp);
 
-	TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
+	TAILQ_REMOVE(&dadq, dp, dad_list);
 	free(dp, M_IP6NDP);
 	dp = NULL;
 	IFAFREE(ifa);
@@ -1231,7 +1231,7 @@ nd6_dad_timer(ifa)
 		nd6log((LOG_INFO, "%s: could not run DAD, driver problem?\n",
 			if_name(ifa->ifa_ifp)));
 
-		TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
+		TAILQ_REMOVE(&dadq, dp, dad_list);
 		free(dp, M_IP6NDP);
 		dp = NULL;
 		IFAFREE(ifa);
@@ -1284,7 +1284,7 @@ nd6_dad_timer(ifa)
 			    if_name(ifa->ifa_ifp),
 			    ip6_sprintf(&ia->ia_addr.sin6_addr)));
 
-			TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
+			TAILQ_REMOVE(&dadq, dp, dad_list);
 			free(dp, M_IP6NDP);
 			dp = NULL;
 			IFAFREE(ifa);
@@ -1360,7 +1360,7 @@ nd6_dad_duplicated(ifa)
 		}
 	}
 
-	TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
+	TAILQ_REMOVE(&dadq, dp, dad_list);
 	free(dp, M_IP6NDP);
 	dp = NULL;
 	IFAFREE(ifa);
