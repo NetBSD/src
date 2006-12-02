@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.22.1 2006/12/02 22:06:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -33,15 +33,24 @@
 #ifndef _MACHINE_INTR_H_
 #define _MACHINE_INTR_H_
 
-#define IPL_NONE	0	/* disable only this interrupt */
-#define IPL_BIO		1	/* disable block I/O interrupts */
-#define IPL_NET		2	/* disable network interrupts */
-#define IPL_TTY		3	/* disable terminal interrupts */
-#define IPL_CLOCK	4	/* disable clock interrupts */
-#define IPL_STATCLOCK	5	/* disable profiling interrupts */
-#define IPL_SERIAL	6	/* disable serial hardware interrupts */
-#define IPL_HIGH	7	/* disable all interrupts */
-#define NIPL		8
+#define	IPL_NONE	0	/* disable only this interrupt */
+#define	IPL_SOFT	1	/* generic software interrupts (SI 0) */
+#define	IPL_SOFTCLOCK	2	/* clock software interrupts (SI 0) */
+#define	IPL_SOFTNET	3	/* network software interrupts (SI 1) */
+#define	IPL_SOFTSERIAL	4	/* serial software interrupts (SI 1) */
+#define	IPL_BIO		5	/* disable block I/O interrupts */
+#define	IPL_NET		6	/* disable network interrupts */
+#define	IPL_TTY		7	/* disable terminal interrupts */
+#define	IPL_SERIAL	IPL_TTY
+#define	IPL_LPT		IPL_TTY
+#define	IPL_VM		IPL_TTY
+#define	IPL_CLOCK	8	/* disable clock interrupts */
+#define	IPL_STATCLOCK	9	/* disable profiling interrupts */
+#define	IPL_SCHED	IPL_CLOCK
+#define	IPL_HIGH	10	/* disable all interrupts */
+#define	IPL_LOCK	IPL_HIGH
+
+#define	IPL_N		11
 
 /* Interrupt sharing types. */
 #define IST_NONE	0	/* none */
@@ -49,15 +58,18 @@
 #define IST_EDGE	2	/* edge-triggered */
 #define IST_LEVEL	3	/* level-triggered */
 
-#define	IPL_SOFTSERIAL	0	/* serial software interrupts */
-#define	IPL_SOFTNET	1	/* network software interrupts */
-#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
-#define	IPL_NSOFT	3
+#define	SI_SOFT		0
+#define	SI_SOFTCLOCK	1
+#define	SI_SOFTNET	2
+#define	SI_SOFTSERIAL	3
 
-#define	IPL_SOFTNAMES {							\
-	"serial",							\
-	"net",								\
+#define	SI_NQUEUES	4
+
+#define	SI_QUEUENAMES {							\
+	"misc",								\
 	"clock",							\
+	"net",								\
+	"serial",							\
 }
 
 #ifdef _KERNEL
@@ -91,7 +103,7 @@ extern void _clrsoftintr __P((int));
 do {									\
 	struct mipsco_intrhand *__ih = (arg);				\
 	__ih->ih_pending = 1;						\
-	setsoft(__ih->ih_intrhead->intr_ipl);				\
+	setsoft(__ih->ih_intrhead->intr_siq);				\
 } while (0)
 
 extern struct mipsco_intrhand *softnet_intrhand;
@@ -124,10 +136,24 @@ extern struct mipsco_intrhand *softnet_intrhand;
 #define splserial()	spltty()
 #define spllpt()	spltty()
 
-#define splsoftclock()	_splraise(MIPS_INT_MASK_SPL_SOFT0)
 #define splsoft()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
+#define splsoftclock()	_splraise(MIPS_INT_MASK_SPL_SOFT0)
+#define	splsoftnet()	splsoft()
 #define spllowersoftclock() _spllower(MIPS_INT_MASK_SPL_SOFT0)
-#define splsoftnet()	splsoft()
+
+typedef int ipl_t;
+typedef struct {
+	int _sr;
+} ipl_cookie_t;
+
+ipl_cookie_t makeiplcookie(ipl_t ipl);
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._sr);
+}
 
 struct mipsco_intrhand {
 	LIST_ENTRY(mipsco_intrhand)
@@ -142,7 +168,7 @@ struct mipsco_intr {
 	LIST_HEAD(,mipsco_intrhand)
 		intr_q;
 	struct	evcnt ih_evcnt;
-	unsigned long intr_ipl;
+	unsigned long intr_siq;
 };
 
 

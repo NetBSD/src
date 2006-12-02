@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.3 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3.22.1 2006/12/02 22:06:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.3 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.3.22.1 2006/12/02 22:06:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.3 2005/12/11 12:18:13 christos Exp $
 #include <machine/intr.h>
 #include <machine/sysconf.h>
 
-struct mipsco_intr softintr_tab[IPL_NSOFT];
+struct mipsco_intr softintr_tab[SI_NQUEUES];
 
 /* XXX For legacy software interrupts. */
 struct mipsco_intrhand *softnet_intrhand;
@@ -68,9 +68,9 @@ softintr_init()
 	struct mipsco_intr *sip;
 	int i;
 
-	for (i = 0; i < IPL_NSOFT; i++) {
+	for (i = 0; i < SI_NQUEUES; i++) {
 		sip = &softintr_tab[i];
-		sip->intr_ipl = i;
+		sip->intr_siq = i;
 		LIST_INIT(&sip->intr_q);
 		evcnt_attach_dynamic(&sip->ih_evcnt, EVCNT_TYPE_INTR,
 		    NULL, "soft", softintr_names[i]);
@@ -101,7 +101,7 @@ softintr_dispatch()
 	n = ssir; ssir = 0;
 	splx(s);
 	sip = softintr_tab;
-  	for (i = 0; i < IPL_NSOFT; sip++, i++) {
+  	for (i = 0; i < SI_NQUEUES; sip++, i++) {
 	    if ((n & (1 << i)) == 0)
 		continue;
 	    sip->ih_evcnt.ev_count++;
@@ -116,6 +116,30 @@ softintr_dispatch()
 	}
 }
 
+static int
+ipl2si(ipl_t ipl)
+{
+	int si;
+
+	switch (ipl) {
+	case IPL_SOFT:
+		si = SI_SOFT;
+		break;
+	case IPL_SOFTCLOCK:
+		si = SI_SOFTCLOCK;
+		break;
+	case IPL_SOFTNET:
+		si = SI_SOFTNET;
+		break;
+	case IPL_SOFTSERIAL:
+		si = SI_SOFTSERIAL;
+		break;
+	default:
+		panic("ipl2si: %d", ipl);
+	}
+	return si;
+}
+
 /*
  * softintr_establish:		[interface]
  *
@@ -126,12 +150,11 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 {
 	struct mipsco_intr *sip;
 	struct mipsco_intrhand *sih;
+	int si;
 	int s;
 
-	if (__predict_false(ipl >= IPL_NSOFT || ipl < 0))
-		panic("softintr_establish");
-
-	sip = &softintr_tab[ipl];
+	si = ipl2si(ipl);
+	sip = &softintr_tab[si];
 
 	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
 	if (__predict_true(sih != NULL)) {
@@ -182,4 +205,24 @@ cpu_intr(status, cause, pc, ipending)
 	    _clrsoftintr(MIPS_SOFT_INT_MASK_1);
 	    softintr_dispatch();
 	}
+}
+
+static const int ipl_sr_bits[NIPL] = {
+	[IPL_NONE] = 0,
+	[IPL_SOFTCLOCK] = MIPS_INT_MASK_SPL_SOFT0,
+	[IPL_SOFTNET] = MIPS_INT_MASK_SPL_SOFT1,
+	[IPL_BIO] = MIPS_INT_MASK_SPL1,
+	[IPL_NET] = MIPS_INT_MASK_SPL0,
+	[IPL_TTY] = MIPS_INT_MASK_SPL0,
+	[IPL_VM] = MIPS_INT_MASK_SPL2,
+	[IPL_CLOCK] = MIPS_INT_MASK_SPL2,
+	[IPL_STATCLOCK] = MIPS_INT_MASK_SPL2,
+	[IPL_HIGH] = MIPS_INT_MASK_SPL2,
+};
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl);
+{
+
+	return (ipl_cookie_t){._sr = ipl_sr_bits[ipl]};
 }
