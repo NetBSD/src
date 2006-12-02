@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.7 2006/11/24 21:48:27 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.8 2006/12/02 12:51:23 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -86,4 +86,10 @@ sys/netiso/esis.c				1.42
 	Check parameters to avoid potential panic root user.
 	Patch checked by chopps@.
 	[is, ticket #1593]
+
+lib/libc/gen/glob.c				1.13 via patch
+
+	Don't overflow when DEBUG is defined.
+	PR/30833, from Tomas Skare.
+	[joerg, ticket #1596]
 
