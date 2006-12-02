@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.Xen,v 1.1 2006/05/28 14:00:13 pavel Exp $	*/
+/*	$NetBSD: kern.ldscript.Xen,v 1.2 2006/12/02 04:49:38 christos Exp $	*/
 
 OUTPUT_FORMAT("elf32-i386", "elf32-i386",
 	      "elf32-i386")
@@ -37,4 +37,8 @@ SECTIONS
    . = ALIGN(32 / 8);
   _end = . ;
   PROVIDE (end = .) ;
+  .note.netbsd.ident :
+  {
+    KEEP(*(.note.netbsd.ident));
+  }
 }
