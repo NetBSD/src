@@ -1,4 +1,4 @@
-/* $NetBSD: cgdvar.h,v 1.5 2005/12/11 12:20:53 christos Exp $ */
+/* $NetBSD: cgdvar.h,v 1.6 2006/12/02 05:16:01 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ struct cgd_ioctl {
  */
 
 struct cryptdata {
-	int		 cf_blocksize;	/* block size (in bytes) */
+	size_t		 cf_blocksize;	/* block size (in bytes) */
 	int		 cf_mode;	/* Cipher Mode and IV Gen method */
 #define CGD_CIPHER_CBC_ENCBLKNO 1	/* CBC Mode w/ Enc Block Number */
 	void		*cf_priv;	/* enc alg private data */
