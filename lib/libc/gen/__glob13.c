@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.25.6.3 2005/07/09 22:50:21 tron Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.25.6.3.4.1 2006/12/02 12:38:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.25.6.3 2005/07/09 22:50:21 tron Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.25.6.3.4.1 2006/12/02 12:38:25 bouyer Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -601,7 +601,9 @@ glob1(pattern, pglob, limit)
 	 * we save one character so that we can use ptr >= limit,
 	 * in the general case when we are appending non nul chars only.
 	 */
-	return(glob2(pathbuf, pathbuf, pathbuf + sizeof(pathbuf) - 1, pattern,
+	return(glob2(pathbuf, pathbuf,
+		     pathbuf + (sizeof(pathbuf) / sizeof(*pathbuf)) - 1,
+		     pattern,
 	    pglob, limit));
 }
 
