@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.678 2006/11/29 15:45:26 tnozaki Exp $
+# $NetBSD: mi,v 1.679 2006/12/02 14:36:13 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1563,6 +1563,7 @@
 ./usr/share/i18n/csmapper/CP/CP850%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP851%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP852%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP853%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP855%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP856%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP857%UCS.mps	base-sysutil-share	nls
@@ -1591,6 +1592,7 @@
 ./usr/share/i18n/csmapper/CP/CP932VDC@IBM%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP932VDC@NEC_IBM%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP936EXT%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP942VDC@IBM%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP949EXT%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP950%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP037.mps	base-sysutil-share	nls
@@ -1635,6 +1637,7 @@
 ./usr/share/i18n/csmapper/CP/UCS%CP850.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP851.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP852.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP853.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP855.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP856.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP857.mps	base-sysutil-share	nls
@@ -1663,6 +1666,7 @@
 ./usr/share/i18n/csmapper/CP/UCS%CP932VDC@IBM.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP932VDC@NEC_IBM.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP936EXT.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP942VDC@IBM.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP949EXT.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP950.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/EBCDIC		base-sysutil-share
@@ -1931,6 +1935,7 @@
 ./usr/share/i18n/esdb/CP/CP850.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP851.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP852.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP853.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP855.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP856.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP857.esdb		base-sysutil-share	nls
