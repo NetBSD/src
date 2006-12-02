@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11.22.1 2006/12/02 22:06:29 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.22.2 2006/12/02 22:12:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -34,10 +34,10 @@
 #define _MACHINE_INTR_H_
 
 #define	IPL_NONE	0	/* disable only this interrupt */
-#define	IPL_SOFT	1	/* generic software interrupts (SI 0) */
-#define	IPL_SOFTCLOCK	2	/* clock software interrupts (SI 0) */
-#define	IPL_SOFTNET	3	/* network software interrupts (SI 1) */
-#define	IPL_SOFTSERIAL	4	/* serial software interrupts (SI 1) */
+#define	IPL_SOFT	1	/* generic software interrupts */
+#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
+#define	IPL_SOFTNET	3	/* network software interrupts */
+#define	IPL_SOFTSERIAL	4	/* serial software interrupts */
 #define	IPL_BIO		5	/* disable block I/O interrupts */
 #define	IPL_NET		6	/* disable network interrupts */
 #define	IPL_TTY		7	/* disable terminal interrupts */
@@ -139,6 +139,7 @@ extern struct mipsco_intrhand *softnet_intrhand;
 #define splsoft()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
 #define splsoftclock()	_splraise(MIPS_INT_MASK_SPL_SOFT0)
 #define	splsoftnet()	splsoft()
+#define	splsoftserial()	splsoft()
 #define spllowersoftclock() _spllower(MIPS_INT_MASK_SPL_SOFT0)
 
 typedef int ipl_t;
