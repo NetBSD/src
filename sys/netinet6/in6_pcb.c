@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.75 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.76 2006/12/02 18:59:17 dyoung Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.75 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.76 2006/12/02 18:59:17 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -445,7 +445,7 @@ in6_pcbconnect(v, nam, l)
 			return (error);
 		}
 	}
-	if (ifp == NULL && in6p->in6p_route.ro_rt)
+	if (ifp == NULL && in6p->in6p_route.ro_rt != NULL)
 		ifp = in6p->in6p_route.ro_rt->rt_ifp;
 
 	in6p->in6p_ip6.ip6_hlim = (u_int8_t)in6_selecthlim(in6p, ifp);
@@ -675,7 +675,7 @@ in6_pcbnotify(table, dst, fport_arg, src, lport_arg, cmd, cmdarg, notify)
 		 */
 		if ((PRC_IS_REDIRECT(cmd) || cmd == PRC_HOSTDEAD) &&
 		    IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
-		    in6p->in6p_route.ro_rt &&
+		    in6p->in6p_route.ro_rt != NULL &&
 		    !(in6p->in6p_route.ro_rt->rt_flags & RTF_HOST)) {
 			struct sockaddr_in6 *dst6;
 
@@ -971,15 +971,14 @@ in6_pcbrtentry(in6p)
 		rtalloc((struct route *)ro);
 	} else
 #endif
-	if (ro->ro_rt == (struct rtentry *)NULL &&
-	    !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
+	if (ro->ro_rt == NULL && !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
 		bzero(dst6, sizeof(*dst6));
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(struct sockaddr_in6);
 		dst6->sin6_addr = in6p->in6p_faddr;
 		rtalloc((struct route *)ro);
 	}
-	return (ro->ro_rt);
+	return ro->ro_rt;
 }
 
 struct in6pcb *
