@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.10 2006/01/25 18:27:23 christos Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.10.22.1 2006/12/02 15:22:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -228,8 +228,18 @@ dosfs_open(const char *path, struct open_file *fd)
 		err = EINVAL;
 		goto out;
 	}
+
 	f = alloc(sizeof(DOS_FILE));
+#ifdef BOOTXX
+	/* due to __internal_memset_ causing all sorts of register spillage
+	   (and being completely unoptimized for zeroing small amounts of
+	   memory), if we hand-initialize the remaining members of f to zero,
+	   the code size drops 68 bytes. This makes no sense, admittedly. */
+	f->offset = 0;
+	f->c = 0;
+#else
 	bzero(f, sizeof(DOS_FILE));
+#endif
 	f->fs = fs;
 	fs->links++;
 	f->de = *de;
