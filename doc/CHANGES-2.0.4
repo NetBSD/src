@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.58 2006/11/24 21:26:34 bouyer Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.59 2006/12/02 12:50:43 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -468,4 +468,10 @@ games/banner/banner.c				1.16 via patch
 	Gruzicki Wlodek on bugtraq.
 	While here replace one use of 132 with DWIDTH.
 	[reed, ticket #10764]
+
+lib/libc/gen/glob.c				1.13 via patch
+
+	Don't overflow when DEBUG is defined.
+	PR/30833, from Tomas Skare.
+	[joerg, ticket #10789]
 
