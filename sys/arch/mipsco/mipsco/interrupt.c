@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.3.22.1 2006/12/02 22:06:29 yamt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3.22.2 2006/12/02 22:15:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.3.22.1 2006/12/02 22:06:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.3.22.2 2006/12/02 22:15:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -64,7 +64,7 @@ u_int32_t ssir;
 void
 softintr_init()
 {
-	static const char *softintr_names[] = IPL_SOFTNAMES;
+	static const char *softintr_names[] = SI_QUEUENAMES;
 	struct mipsco_intr *sip;
 	int i;
 
@@ -207,7 +207,7 @@ cpu_intr(status, cause, pc, ipending)
 	}
 }
 
-static const int ipl_sr_bits[NIPL] = {
+static const int ipl_sr_bits[] = {
 	[IPL_NONE] = 0,
 	[IPL_SOFTCLOCK] = MIPS_INT_MASK_SPL_SOFT0,
 	[IPL_SOFTNET] = MIPS_INT_MASK_SPL_SOFT1,
