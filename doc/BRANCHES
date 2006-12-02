@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.137 2006/12/01 20:33:10 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.138 2006/12/02 22:31:05 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -449,9 +449,12 @@ Notes:
 			landisk
 			luna68k
 			mac68k
+			mvmeppc
+			mipsco
 			netwinder
 			newsmips
 			next68k
+			ofppc
 			pc532
 			pmax
 			prep
@@ -480,11 +483,8 @@ Notes:
 		notyet:
 			amigappc
 			dreamcast
-			mipsco
 			mmeye
 			mvme68k
-			mvmeppc
-			ofppc
 			playstation2
 			pmppc
 
