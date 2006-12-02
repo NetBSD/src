@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.20 2006/11/29 21:26:01 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.21 2006/12/02 13:09:36 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2160,4 +2160,38 @@ usr.sbin/postinstall/postinstall		1.31
 
 	Suggested by lukem@.
 	[peter, ticket #1594]
+
+lib/libc/gen/glob.c				1.13 via patch
+
+	Don't overflow when DEBUG is defined.
+	PR/30833, from Tomas Skare.
+	[joerg, ticket #1596]
+
+etc/protocols					1.13
+etc/protocols					1.14
+etc/protocols					1.15
+etc/protocols					1.16
+
+	Update with the iana.org URL, as has been done with services.
+	Add 4 new protocols: rsvp-e2e-ignore, mobility-header, udplite and
+	mpls-in-ip.
+
+	Integrate Common Address Redundancy Procotol (CARP) from OpenBSD
+	'pseudo-device  carp'
+	Thanks to: joerg@ christos@ riz@ and others who tested
+	Ok: core@
+
+	Fix typo in xtp comment.
+	[martti, ticket #1595]
+
+sys/net/if_ethersubr.c				1.139 via patch
+sys/netiso/clnp_input.c				1.31
+
+	Remove an overlapping struct copy from ether_input, which caused
+	address corruption for incoming netiso packets with recent (at least
+	NetBSD-3 and later) compilers. This is done in a way that the copy is
+	avoided totally.
+	Code path tested with tcp+udp/ipv4+ipv6, arp and ISO cltp/clnp.
+	Visually ok'd by Christos@.
+	[is, ticket #1597]
 
