@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.48 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.49 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8362,3 +8362,196 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		etc sets. [hubertf 20060904]
 	scan_ffs(8): Add -F file support. Useful to search for partitions
 		on disk images. [xtraeme 20060907]
+	iwi(4): Use firmload(9) to load firmware images. You no longer need to
+		use iwictl(8) to load the firmware. [skrll 20060809]
+	acorn32: Remove the old, pre-wscons, console code.  Kernel
+		configurations using the old console (kbd, vt, and vidcconsole)
+		will need to be updated to use wscons. [bjh21 20060814]
+	wpi(4): Driver for Intel PRO/Wireless 3945ABG.  OpenBSD wpi driver
+		ported by Jean-Baptiste Campesato. [simonb 20060818]
+	acorn32: Correctly detect the display refresh rate being used under
+		RISC OS and look for a matching mode in a list of standard
+		video modes.  This removes the requirement for compiling
+		RISC OS monitor definitions into the kernel. [bjh21 20060820]
+	netns: Support for XNS in the kernel and userspace has been
+		removed. [matt 20060825]
+	netccit: Support for CCITT/X.26 in the kernel and userspace has
+		been removed. [matt 20060825]
+	mips64: Preliminary support for a MIPS64 toolchain using the N64
+		ABI. [matt 20060825]
+	postfix: Updated to 2.3.3 [rpaulo 20060827]
+	landisk: Initial import of landisk port for SuperH based
+		network storage appliances by I-O DATA.  The port was
+		done by NONAKA Kimihiro <nonaka@NetBSD.org>.
+		[uwe 20060901]
+	evbmips: Add timecounter support. [gdamore 20060901]
+	todr(9): New machine independent time-of-day chip framework for
+		drivers, which provides uniform handling across all ports.
+		Not all ports have adopted it yet.  [gdamore 20060902]
+	sun2: Add timecounter support. [gdamore 20060903]
+	gcc(1): Switch sh5 to GCC4. [scw 20060904]
+	tcp: Add support for Explicit Congestion Notification as defined
+		in RFC 3168. Sponsored by Google SoC. [rpaulo 20060905]
+	prep: Convert prep to MI todr(9) driver. [garbled 20060905]
+	sun3: Add timecounter support. [gdamore 20060905]
+	cesfic: Add timecounter support. [gdamore 20060906]
+	prep: Add support for the IBM 7025-F40. [garbled 20060907]
+	lockstat(8): Add the lockstat command: displays a summary of kernel
+		locking events recorded over the lifetime of a called program.
+		[ad 20060907]
+	cobalt: Add timecounter support. [gdamore 20060907]
+	njata(4): Add driver for Workbit NinjaATA-32 busmastering PIO IDE
+		controller. [itohy 20060907]
+	ews4800mips: Add timecounter support. [gdamore 20060909]
+	arc: Add timecounter support. [gdamore 20060909]
+	news68k: Add timecounter support. From gdamore. [tsutsui 20060909]
+	msk(4): Driver for Marvell Yukon 2 Gigabit Ethernet. [riz 20060909]
+	evbsh5: Add timecounter support.  [gdamore 20060909]
+	hp300: Add timecounter support.  [tsutsui 20060909]
+	ipsec-tools: ipsec-tools CVS is now part of NetBSD. [manu 20060909]
+	iyonix: Add timecounter support.  [gdamore 20060910]
+	next68k: Add timecounter support.  [gdamore 20060911]
+	cats: Add timecounter support.  [gdamore 20060911]
+	netwinder: Add timecounter support.  [gdamore 20060911]
+	shark: Add timecounter support.  [gdamore 20060913]
+	newsmips: Add timecounter support. From gdamore. [tsutsui 20060913]
+	luna68k: Add timecounter support.  [gdamore 20060914]
+	mipsco: Add timecounter support.  [gdamore 20060915]
+	hpcmips: Add timecounter support.  [gdamore 20060915]
+	sgimips: Add timecounter support.  [gdamore 20060916]
+	veriexec: Add veriexecgen(8), a tool for easy and fast generation
+		  of Veriexec fingerprint files. [elad 20060916]
+	gcc(1): Switch m68k to GCC4 [tsutsui 20060917]
+	gcc(1): Switch mips to GCC4 [simonb 20060919]
+	x68k: Add timecounter support.  [gdamore 20060919]
+	who(1): Change -u behaviour to also print PID of process on 
+		terminal, and add -d to print more information from
+		utmpx. [hubertf 20060919]
+	init(8): Add system boot, login process, runlevel, system down
+		utmpx records [christos 20060919]
+	gcc(1): Switch hppa to GCC4. [skrll 20060922]
+	cdplay(1): Add digital transfer mode support, not enabled by
+		default. Thanks to Sergey Svishchev for the patch.
+		[xtraeme 20060922]
+	wscons: Add fr_CA.iso8859-1 keyboard mapping support. Thanks to
+		Matthew Mondor for the patch. [jmcneill 20060922]
+	sh3: Add timecounter support to all sh3 ports. From gdamore with
+		some fixes by me. [tsutsui 20060924]
+	kernel: Modify powerhook_establish(9) API to accept a name
+		argument. [jmcneill 20060924]
+	twa(4): 3ware's tw_cli management tools now works [manu 20060924]
+	csplit(1): Added from FreeBSD/OpenBSD [christos 20060925]
+	evbmips: Add AR5315/2315 support, specifically the Meraki Mini,
+		which can be found at http://www.meraki.net/
+		[gdamore 20060925]
+	ssh: Import openssh-4.4 [christos 20060928]
+	macppc: add timecounter support [macallan 20060929]
+	ofctl(8): initial import, formerly known as ofdump2. For macppc,
+		shark, sparc64.
+		Written by Matt Thomas. [macallan 20060929]
+	build: Improved support for using shells other than /bin/sh
+		during a cross build.  [apb 20060929]
+	pcictl(8): Add "list -n" to print ID and class numerical, instead
+		of resolving to strings [hubertf 20061001]
+	sun3: Add initial bus_space(9) support. [tsutsui 20061001]
+	sec(4): New driver for Acorn SCSI Expansion Card, intended to replace
+		acorn32 asc(4).  [bjh21 20061001]
+	ipmi(4): added driver from OpenBSD [bouyer 20061001]
+	spi(4): initial import of new machine-independent SPI bus framework,
+		including a sample driver for the TI TMP121 sensor.
+		[gdamore 20061002]
+	ps(1): Improved support for customised headers via -o and -O options.
+		[apb 20061002]
+	sun3: Add MI softintr(9) support by shared sources with sun2 port.
+		[tsutsui 20061005]
+	sparc64: Add floppy support based on sparc driver and hints from
+		from OpenBSD for sbus/ebus attachment.  [jnemeth 20061006]
+	find(1): Add support for "find ... -exec ... +".  Written by
+		John Hawkinson.  [apb 20061007]
+	tcp_congctl(9): API for TCP congestion control algorithms.
+		net.inet.tcp.newreno was removed, please use
+		net.inet.tcp.congctl.selected instead. [rpaulo 20061009]
+	proplib(3): prop_number_t can now handle both signed and unsigned
+		integers.  [thorpej 20061011]
+	pf(4): Added support for ALTQ. [peter 20061012]
+	vge(4): Make this driver work on big endian machines
+		(at least on macppc). [tsutsui 20061014]
+	gpt(8): Added from FreeBSD [christos 20061015]
+	tcp(4): Added RFC 3465 Appropriate Byte Counting (ABC) [yamt 20061019]
+	wm(4): Added support for the Intel 80003 gigabit ethernet controller.
+		[bouyer 20061021]
+	gcc(1): Update to GCC 4.1.2-20061021 snapshot.  [mrg 20061021]
+	mail(1): Mime and multi-character set handling; command line editing
+		and completion. Thanks to Anon Ymous [christos 20061021]
+	acorn32: Standard kernels now use the machine-independent sec(4)
+		and ei(4) drivers for Acorn SCSI Expansion Cards and
+		Ethernet 1 cards respectively, in place of asc(4) and ie(4).
+		[bjh21 20061022]
+	puffs: Integrate Pass-to-Userspace Framework File System, which
+		can be used to build userspace file system servers
+		[pooka 20061022]
+	hpcarm: Add timecounter support and convert to MI todr(9).
+		[peter 20061023]
+	less: Updated to version 394.  [mrg 20061025]
+	i386: The support for the Multiboot Specification no longer relies
+		on the a.out kludge which means that a stock GRUB (without
+		custom patches) can be used to successfully boot the kernel.
+		[jmmv 20061025]
+	file(1): update to 4.18.  [pooka 20061031]
+	puc(4): Add support for Perle PCI-RAS 4 port multimodem [manu 20061101]
+	rum(4): Added driver for Ralink 2501/2601 USB 802.11a/b/g
+		devices from OpenBSD. [joerg 20061101]
+	gkermit(1): Add gkermit, which is a program for transferring
+		files using the Kermit protocol.  gkermit has no
+		interactive commands, no scripting, and no ability to
+		make connections.  [apb 20061101]
+	i386: Change GENERIC, GENERIC.MP, GENERIC.MPACPI, GENERIC_LAPTOP,
+		INSTALL, INSTALL.MP, INSTALL_LAPTOP, and DISKLESS kernels
+		so that they are smaller and faster by removing support
+		for actual i386 CPUs (which lack write protection in
+		supervisor mode, which requires a costly workaround) and
+		math coprocessor emulation.  Coprocessor emulation is
+		retained in the LAPTOP kernels, but not in the others.
+		Where it is known that a configuration cannot be run
+		with particular CPUs (i486 in *MP kernels) remove that
+		support as well.  Compile all kernels with appropriate
+		architecture and tuning flags (reduces size, makes things
+		faster).  Those requiring support for machines with i386
+		CPU or lacking coprocessor can use the *SMALL or *TINY
+		kernels. [tls 20061101]
+	useradd(8): Change the default shell for newly added users to
+		/bin/sh. [pavel 20061102]
+	tmpfs: NFS support is now complete.  At the very least, all the
+		relevant tmpfs regression tests pass successfully when
+		executed over a remote tmpfs mounted through NFS.
+		[jmmv 20061105]
+	tmpfs: Add a LKM for this file system. [jmmv 20061105]
+	postfix: Updated to 2.3.4 [rpaulo 20061107]
+	macppc: use accelerated wsdisplay drivers [macallan 20061107]
+	evbarm: Add support for Certance CP-3100 [scw 20061108]
+	tmpfs: Audit kqueue notifications and add several regression
+		tests for them.  [jmmv 20061109]
+	vnd: Make this work with files stored on file systems without
+		the bmap and strategy operations.  This includes tmpfs
+		and smbfs.  [jmmv 20061109]
+	paxctl: Enable as a tool, and add make rules to run paxctl on
+		binaries to what PROG_PAX is set. [christos 20061110]
+	lfs_cleanerd: Move from /usr/libexec to /libexec so that the
+		root file system can be safely placed on a LFS volume.
+		[jmmv 20061110]
+	tmpfs: Drop experimental status and enable it by default in the
+		GENERIC kernels of amd64, i386, macppc and sparc64.
+		[jmmv 20061110]
+	ssp: New library modelled after the gcc libssp. Stack protector
+		code from OpenBSD. Enable stack protection both in
+		the kernel and userland code by using USE_SSP=yes in
+		/etc/mk.conf [christos 20061111]
+	uucp: Removed from base; package can be found in pkgsrc
+		[christos 20061111]
+	openssl: update to 0.9.8d [christos 20061113]
+	wm(4): Add IPv6 Rx tcp/udp checksum offloading. [yamt 20061116]
+	mac68k: Add timecounter support. [hauke 20061120]
+	tcp(4), ifconfig(8), wm(4): Add TCPv6 hardware transmit segment
+		offload support. [yamt 20061124]
+	ahcisata(4): Added driver for AHCI 1.0 and 1.1 compliant SATA
+		controllers. [bouyer 20061130]
