@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.2 2006/12/02 01:05:37 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.3 2006/12/02 15:24:31 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on 1 December 2006
 until the 4.0 release:
@@ -7,4 +7,15 @@ gnu/usr.bin/groff/tmac/mdoc.local		patched by hand
 sys/sys/param.h					patched by hand
 
 	Welcome to 4.0_BETA2
+
+sys/lib/libsa/dosfs.c				1.11
+
+	make bootxx_msdos fit in 8k again; thanks, __internal_memset_, for
+	spilling registers all over the place.
+	[dogcow, ticket #240]
+
+sys/uvm/uvm_swap.c				1.114
+
+	We are required to hold uvm.swap_data_lock here too.
+	[elad, ticket #241]
 
