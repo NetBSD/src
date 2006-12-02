@@ -1,4 +1,4 @@
-/* $NetBSD: cgdvar.h,v 1.7 2006/12/02 05:27:27 christos Exp $ */
+/* $NetBSD: cgdvar.h,v 1.8 2006/12/02 06:22:09 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct cgd_ioctl {
 	const char	*ci_ivmethod;
 	size_t		 ci_keylen;
 	const char	*ci_key;
-	int		 ci_blocksize;	/* XXX: should be size_t */
+	size_t		 ci_blocksize;
 };
 
 #ifdef _KERNEL
