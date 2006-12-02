@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.32 2006/11/19 00:11:29 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.33 2006/12/02 03:10:43 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.32 2006/11/19 00:11:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.33 2006/12/02 03:10:43 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -835,9 +835,10 @@ kauth_authorize_device_spec(kauth_cred_t cred, enum kauth_device_req req,
 }
 
 int
-kauth_authorize_device_passthru(kauth_cred_t cred, dev_t dev, void *data)
+kauth_authorize_device_passthru(kauth_cred_t cred, dev_t dev, u_long bits,
+    void *data)
 {
 	return (kauth_authorize_action(kauth_builtin_scope_device, cred,
-	    KAUTH_DEVICE_RAWIO_PASSTHRU, 0, (void *)(u_long)dev, data,
-	    NULL));
+	    KAUTH_DEVICE_RAWIO_PASSTHRU, (void *)bits, (void *)(u_long)dev,
+	    data, NULL));
 }

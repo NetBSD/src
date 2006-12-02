@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.42 2006/11/25 16:48:32 christos Exp $	*/
+/*	$NetBSD: amr.c,v 1.43 2006/12/02 03:10:43 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.42 2006/11/25 16:48:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.43 2006/12/02 03:10:43 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1377,7 +1377,8 @@ amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
 		*(int *)data = AMR_IO_VERSION_NUMBER;
 		return 0;
 	case AMR_IO_COMMAND:
-		error = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		error = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
 		if (error)
 			return (error);
 
