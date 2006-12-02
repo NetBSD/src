@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.24 2006/11/28 17:27:10 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.25 2006/12/02 03:10:44 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -220,6 +220,15 @@ enum kauth_device_req {
 	KAUTH_REQ_DEVICE_RAWIO_SPEC_RW,
 };
 
+/*
+ * Device scope, passthru request - identifiers.
+ */
+#define	KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READ		0x00000001
+#define	KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITE		0x00000002
+#define	KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READCONF	0x00000004
+#define	KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITECONF	0x00000008
+#define	KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL		0x0000000F
+
 #define NOCRED ((kauth_cred_t)-1)	/* no credential available */
 #define FSCRED ((kauth_cred_t)-2)	/* filesystem credential */
 
@@ -252,7 +261,7 @@ int kauth_authorize_device(kauth_cred_t, kauth_action_t,
 int kauth_authorize_device_tty(kauth_cred_t, kauth_action_t, struct tty *);
 int kauth_authorize_device_spec(kauth_cred_t, enum kauth_device_req,
     struct vnode *);
-int kauth_authorize_device_passthru(kauth_cred_t, dev_t, void *);
+int kauth_authorize_device_passthru(kauth_cred_t, dev_t, u_long, void *);
 
 /* Kauth credentials management routines. */
 kauth_cred_t kauth_cred_alloc(void);
