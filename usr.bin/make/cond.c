@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.35 2006/10/27 21:00:18 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.36 2006/12/02 15:50:45 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.35 2006/10/27 21:00:18 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.36 2006/12/02 15:50:45 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.35 2006/10/27 21:00:18 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.36 2006/12/02 15:50:45 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -152,17 +152,17 @@ static Token CondT(Boolean);
 static Token CondF(Boolean);
 static Token CondE(Boolean);
 
-static struct If {
+static const struct If {
     const char	*form;	      /* Form of if */
     int		formlen;      /* Length of form */
     Boolean	doNot;	      /* TRUE if default function should be negated */
     Boolean	(*defProc)(int, char *); /* Default function to apply */
 } ifs[] = {
-    { "ifdef",	  5,	  FALSE,  CondDoDefined },
-    { "ifndef",	  6,	  TRUE,	  CondDoDefined },
-    { "ifmake",	  6,	  FALSE,  CondDoMake },
-    { "ifnmake",  7,	  TRUE,	  CondDoMake },
-    { "if",	  2,	  FALSE,  CondDoDefined },
+    { "def",	  3,	  FALSE,  CondDoDefined },
+    { "ndef",	  4,	  TRUE,	  CondDoDefined },
+    { "make",	  4,	  FALSE,  CondDoMake },
+    { "nmake",	  5,	  TRUE,	  CondDoMake },
+    { "",	  0,	  FALSE,  CondDoDefined },
     { NULL,	  0,	  FALSE,  NULL }
 };
 
@@ -172,14 +172,7 @@ static char 	  *condExpr;	    	/* The expression to parse */
 static Token	  condPushBack=None;	/* Single push-back token used in
 					 * parsing */
 
-#define	MAXIF		64	  /* greatest depth of #if'ing */
-
-static Boolean	  finalElse[MAXIF+1][MAXIF+1]; /* Seen final else (stack) */
-static Boolean	  condStack[MAXIF]; 	/* Stack of conditionals's values */
-static int  	  condTop = MAXIF;  	/* Top-most conditional */
-static int  	  skipIfLevel=0;    	/* Depth of skipped conditionals */
-static Boolean	  skipLine = FALSE; 	/* Whether the parse module is skipping
-					 * lines */
+static int  	  cond_depth = 0;  	/* current .if nesting level */
 
 static int
 istoken(const char *str, const char *tok, size_t len)
@@ -1217,7 +1210,7 @@ err:
  * Cond_Eval --
  *	Evaluate the conditional in the passed line. The line
  *	looks like this:
- *	    #<cond-type> <expr>
+ *	    .<cond-type> <expr>
  *	where <cond-type> is any of if, ifmake, ifnmake, ifdef,
  *	ifndef, elif, elifmake, elifnmake, elifdef, elifndef
  *	and <expr> consists of &&, ||, !, make(target), defined(variable)
@@ -1234,156 +1227,147 @@ err:
  * Side Effects:
  *	None.
  *
+ * Note that the states IF_ACTIVE and ELSE_ACTIVE are only different in order
+ * to detect splurious .else lines (as are SKIP_TO_ELSE and SKIP_TO_ENDIF)
+ * otherwise .else could be treated as '.elif 1'.
+ *
  *-----------------------------------------------------------------------
  */
 int
 Cond_Eval(char *line)
 {
-    struct If	    *ifp;
-    Boolean 	    isElse;
-    Boolean 	    value = FALSE;
+    #define	    MAXIF	64	/* maximum depth of .if'ing */
+    enum if_states {
+	IF_ACTIVE,		/* .if or .elif part active */
+	ELSE_ACTIVE,		/* .else part active */
+	SEARCH_FOR_ELIF,	/* searching for .elif/else to execute */
+	SKIP_TO_ELSE,           /* has been true, but not seen '.else' */
+	SKIP_TO_ENDIF		/* nothing else to execute */
+    };
+    static enum if_states cond_state[MAXIF + 1] = { IF_ACTIVE };
+
+    const struct If *ifp;
+    Boolean 	    isElif;
+    Boolean 	    value;
     int	    	    level;  	/* Level at which to report errors. */
+    enum if_states  state;
 
     level = PARSE_FATAL;
 
-    for (line++; *line == ' ' || *line == '\t'; line++) {
+    /* skip leading character (the '.') and any whitespace */
+    for (line++; *line == ' ' || *line == '\t'; line++)
 	continue;
-    }
 
-    /*
-     * Find what type of if we're dealing with. The result is left
-     * in ifp and isElse is set TRUE if it's an elif line.
-     */
-    if (line[0] == 'e' && line[1] == 'l') {
-	line += 2;
-	isElse = TRUE;
-    } else if (istoken(line, "endif", 5)) {
-	/*
-	 * End of a conditional section. If skipIfLevel is non-zero, that
-	 * conditional was skipped, so lines following it should also be
-	 * skipped. Hence, we return COND_SKIP. Otherwise, the conditional
-	 * was read so succeeding lines should be parsed (think about it...)
-	 * so we return COND_PARSE, unless this endif isn't paired with
-	 * a decent if.
-	 */
-	finalElse[condTop][skipIfLevel] = FALSE;
-	if (skipIfLevel != 0) {
-	    skipIfLevel -= 1;
-	    return (COND_SKIP);
-	} else {
-	    if (condTop == MAXIF) {
+    /* Find what type of if we're dealing with.  */
+    if (line[0] == 'e') {
+	if (line[1] != 'l') {
+	    if (!istoken(line + 1, "ndif", 4))
+		return COND_INVALID;
+	    /* End of conditional section */
+	    if (cond_depth == 0) {
 		Parse_Error(level, "if-less endif");
-		return (COND_INVALID);
-	    } else {
-		skipLine = FALSE;
-		condTop += 1;
-		return (COND_PARSE);
+		return COND_PARSE;
 	    }
+	    /* Return state for previous conditional */
+	    cond_depth--;
+	    return cond_state[cond_depth] <= ELSE_ACTIVE ? COND_PARSE : COND_SKIP;
 	}
-    } else {
-	isElse = FALSE;
-    }
+
+	/* Quite likely this is 'else' or 'elif' */
+	line += 2;
+	if (istoken(line, "se", 2)) {
+	    /* It is else... */
+	    if (cond_depth == 0) {
+		Parse_Error(level, "if-less else");
+		return COND_INVALID;
+	    }
+
+	    state = cond_state[cond_depth];
+	    switch (state) {
+	    case SEARCH_FOR_ELIF:
+		state = ELSE_ACTIVE;
+		break;
+	    case ELSE_ACTIVE:
+	    case SKIP_TO_ENDIF:
+		Parse_Error(PARSE_WARNING, "extra else");
+		/* FALLTHROUGH */
+	    default:
+	    case IF_ACTIVE:
+	    case SKIP_TO_ELSE:
+		state = SKIP_TO_ENDIF;
+		break;
+	    }
+	    cond_state[cond_depth] = state;
+	    return state <= ELSE_ACTIVE ? COND_PARSE : COND_SKIP;
+	}
+	/* Assume for now it is an elif */
+	isElif = TRUE;
+    } else
+	isElif = FALSE;
+
+    if (line[0] != 'i' || line[1] != 'f')
+	/* Not an ifxxx or elifxxx line */
+	return COND_INVALID;
 
     /*
      * Figure out what sort of conditional it is -- what its default
      * function is, etc. -- by looking in the table of valid "ifs"
      */
-    for (ifp = ifs; ifp->form != NULL; ifp++) {
+    line += 2;
+    for (ifp = ifs; ; ifp++) {
+	if (ifp->form == NULL)
+	    return COND_INVALID;
 	if (istoken(ifp->form, line, ifp->formlen)) {
+	    line += ifp->formlen;
 	    break;
 	}
     }
 
-    if (ifp->form == NULL) {
-	/*
-	 * Nothing fit. If the first word on the line is actually
-	 * "else", it's a valid conditional whose value is the inverse
-	 * of the previous if we parsed.
-	 */
-	if (isElse && istoken(line, "se", 2)) {
-	    if (finalElse[condTop][skipIfLevel]) {
-		Parse_Error(PARSE_WARNING, "extra else");
-	    } else {
-		finalElse[condTop][skipIfLevel] = TRUE;
-	    }
-	    if (condTop == MAXIF) {
-		Parse_Error(level, "if-less else");
-		return (COND_INVALID);
-	    } else if (skipIfLevel == 0) {
-		value = !condStack[condTop];
-	    } else {
-		return (COND_SKIP);
-	    }
-	} else {
-	    /*
-	     * Not a valid conditional type. No error...
-	     */
-	    return (COND_INVALID);
+    /* Now we know what sort of 'if' it is... */
+    state = cond_state[cond_depth];
+
+    if (isElif) {
+	if (cond_depth == 0) {
+	    Parse_Error(level, "if-less elif");
+	    return COND_INVALID;
+	}
+	if (state == SKIP_TO_ENDIF || state == ELSE_ACTIVE)
+	    Parse_Error(PARSE_WARNING, "extra elif");
+	if (state != SEARCH_FOR_ELIF) {
+	    /* Either just finished the 'true' block, or already SKIP_TO_ELSE */
+	    cond_state[cond_depth] = SKIP_TO_ELSE;
+	    return COND_SKIP;
 	}
     } else {
-	if (isElse) {
-	    if (condTop == MAXIF) {
-		Parse_Error(level, "if-less elif");
-		return (COND_INVALID);
-	    } else if (skipIfLevel != 0) {
-		/*
-		 * If skipping this conditional, just ignore the whole thing.
-		 * If we don't, the user might be employing a variable that's
-		 * undefined, for which there's an enclosing ifdef that
-		 * we're skipping...
-		 */
-		return(COND_SKIP);
-	    }
-	} else if (skipLine) {
-	    /*
-	     * Don't even try to evaluate a conditional that's not an else if
-	     * we're skipping things...
-	     */
-	    skipIfLevel += 1;
-	    if (skipIfLevel >= MAXIF) {
-		Parse_Error(PARSE_FATAL, "Too many nested if's. %d max.", MAXIF);
-		return (COND_INVALID);
-	    }
-	    finalElse[condTop][skipIfLevel] = FALSE;
-	    return(COND_SKIP);
-	}
-
-	/*
-	 * Initialize file-global variables for parsing
-	 */
-	condDefProc = ifp->defProc;
-	condInvert = ifp->doNot;
-
-	line += ifp->formlen;
-	if (Cond_EvalExpression(0, line, &value, 1) == COND_INVALID)
-		return COND_INVALID;
-    }
-    if (!isElse) {
-	condTop -= 1;
-	if (condTop < 0) {
-	    /*
-	     * This is the one case where we can definitely proclaim a fatal
-	     * error. If we don't, we're hosed.
-	     */
+	if (cond_depth >= MAXIF) {
 	    Parse_Error(PARSE_FATAL, "Too many nested if's. %d max.", MAXIF);
-	    return (COND_INVALID);
+	    return COND_INVALID;
 	}
-	finalElse[condTop][skipIfLevel] = FALSE;
-    } else if ((skipIfLevel != 0) || condStack[condTop]) {
-	/*
-	 * If this is an else-type conditional, it should only take effect
-	 * if its corresponding if was evaluated and FALSE. If its if was
-	 * TRUE or skipped, we return COND_SKIP (and start skipping in case
-	 * we weren't already), leaving the stack unmolested so later elif's
-	 * don't screw up...
-	 */
-	skipLine = TRUE;
-	return (COND_SKIP);
+	cond_depth++;
+	if (state > ELSE_ACTIVE) {
+	    /* If we aren't parsing the data, treat as always false */
+	    cond_state[cond_depth] = SKIP_TO_ELSE;
+	    return COND_SKIP;
+	}
     }
 
-    condStack[condTop] = value;
-    skipLine = !value;
-    return (value ? COND_PARSE : COND_SKIP);
+    /* Initialize file-global variables for parsing the expression */
+    condDefProc = ifp->defProc;
+    condInvert = ifp->doNot;
+
+    /* And evaluate the conditional expresssion */
+    if (Cond_EvalExpression(0, line, &value, 1) == COND_INVALID) {
+	/* Although we get make to reprocess the line, set a state */
+	cond_state[cond_depth] = SEARCH_FOR_ELIF;
+	return COND_INVALID;
+    }
+
+    if (!value) {
+	cond_state[cond_depth] = SEARCH_FOR_ELIF;
+	return COND_SKIP;
+    }
+    cond_state[cond_depth] = IF_ACTIVE;
+    return COND_PARSE;
 }
 
 
@@ -1404,9 +1388,9 @@ Cond_Eval(char *line)
 void
 Cond_End(void)
 {
-    if (condTop != MAXIF) {
-	Parse_Error(PARSE_FATAL, "%d open conditional%s", MAXIF-condTop,
-		    MAXIF-condTop == 1 ? "" : "s");
+    if (cond_depth != 0) {
+	Parse_Error(PARSE_FATAL, "%d open conditional%s", cond_depth,
+		    cond_depth == 1 ? "" : "s");
     }
-    condTop = MAXIF;
+    cond_depth = 0;
 }
