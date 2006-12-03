@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.137 2006/11/17 22:07:39 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.138 2006/12/03 20:37:39 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.137 2006/11/17 22:07:39 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.138 2006/12/03 20:37:39 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.137 2006/11/17 22:07:39 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.138 2006/12/03 20:37:39 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -978,7 +978,9 @@ main(int argc, char **argv)
 	} else if (ReadMakefile(UNCONST("makefile"), NULL) != 0)
 		(void)ReadMakefile(UNCONST("Makefile"), NULL);
 
-	(void)ReadMakefile(UNCONST(".depend"), NULL);
+	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
+	if (!noBuiltins || !printVars)
+		(void)ReadMakefile(UNCONST(".depend"), NULL);
 
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
 	if (p1)
@@ -1060,38 +1062,40 @@ main(int argc, char **argv)
 			if (p1)
 				free(p1);
 		}
-	}
-
-	/*
-	 * Have now read the entire graph and need to make a list of targets
-	 * to create. If none was given on the command line, we consult the
-	 * parsing module to find the main target(s) to create.
-	 */
-	if (Lst_IsEmpty(create))
-		targs = Parse_MainName();
-	else
-		targs = Targ_FindList(create, TARG_CREATE);
-
-	if (!compatMake && !printVars) {
+	} else {
 		/*
-		 * Initialize job module before traversing the graph, now that
-		 * any .BEGIN and .END targets have been read.  This is done
-		 * only if the -q flag wasn't given (to prevent the .BEGIN from
-		 * being executed should it exist).
+		 * Have now read the entire graph and need to make a list of
+		 * targets to create. If none was given on the command line,
+		 * we consult the parsing module to find the main target(s)
+		 * to create.
 		 */
-		if (!queryFlag) {
-			Job_Init();
-			jobsRunning = TRUE;
+		if (Lst_IsEmpty(create))
+			targs = Parse_MainName();
+		else
+			targs = Targ_FindList(create, TARG_CREATE);
+
+		if (!compatMake) {
+			/*
+			 * Initialize job module before traversing the graph
+			 * now that any .BEGIN and .END targets have been read.
+			 * This is done only if the -q flag wasn't given
+			 * (to prevent the .BEGIN from being executed should
+			 * it exist).
+			 */
+			if (!queryFlag) {
+				Job_Init();
+				jobsRunning = TRUE;
+			}
+
+			/* Traverse the graph, checking on all the targets */
+			outOfDate = Make_Run(targs);
+		} else {
+			/*
+			 * Compat_Init will take care of creating all the
+			 * targets as well as initializing the module.
+			 */
+			Compat_Run(targs);
 		}
-
-		/* Traverse the graph, checking on all the targets */
-		outOfDate = Make_Run(targs);
-	} else if (!printVars) {
-		/*
-		 * Compat_Init will take care of creating all the targets as
-		 * well as initializing the module.
-		 */
-		Compat_Run(targs);
 	}
 
 #ifdef CLEANUP
@@ -1470,7 +1474,7 @@ Cmd_Exec(const char *cmd, const char **errnum)
 	/*
 	 * Wait for the process to exit.
 	 */
-	while(((pid = wait(&status)) != cpid) && (pid >= 0))
+	while(((pid = waitpid(cpid, &status, 0)) != cpid) && (pid >= 0))
 	    continue;
 
 	res = (char *)Buf_GetAll(buf, &cc);
