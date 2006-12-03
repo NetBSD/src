@@ -1,4 +1,4 @@
-# $NetBSD: CP.part,v 1.8 2006/12/02 14:36:13 tnozaki Exp $
+# $NetBSD: CP.part,v 1.9 2006/12/03 14:28:46 tnozaki Exp $
 
 037
 038
@@ -51,7 +51,7 @@
 932VDC:IBM
 932VDC:NEC_IBM
 936EXT
-942VDC:IBM
+942EXT
 949EXT
 950
 1006
