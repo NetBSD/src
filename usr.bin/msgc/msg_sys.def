@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.36 2006/09/06 19:24:15 dsl Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.37 2006/12/03 01:18:34 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -327,7 +327,7 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 		val_buf_len = 1;
 	}
 
-	ibuf = alloca(val_buf_len);
+	ibuf = malloc(val_buf_len);
 
 	keypad(msg_win, TRUE);
 	_msg_vprintf(0, fmt, ap);
@@ -455,6 +455,7 @@ _msg_vprompt(const char *fmt, int flags, const char *def, char *val,
 			strlcpy(val, def, val_buf_len);
 		}
 	}
+	free(ibuf);
 }
 
 void
