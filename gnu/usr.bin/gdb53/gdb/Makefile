@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/04/02 13:36:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2006/12/03 18:17:36 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -84,6 +84,7 @@ DPADD+= ${LIBOPCODESDIR}/libopcodes.a \
 	${LIBTERMCAP} \
 	${LIBIBERTYDIR}/libiberty.a \
 
+COPTS += -Wno-stack-protector
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
     ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${MACHINE_ARCH}
