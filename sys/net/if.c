@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.179 2006/12/02 20:48:13 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.180 2006/12/03 19:17:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.179 2006/12/02 20:48:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.180 2006/12/03 19:17:41 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -653,7 +653,7 @@ again:
 
 	if_free_sadl(ifp);
 
-	/* Walk the routing table looking for straglers. */
+	/* Walk the routing table looking for stragglers. */
 	for (i = 0; i <= AF_MAX; i++) {
 		if ((rnh = rt_tables[i]) != NULL)
 			(void) (*rnh->rnh_walktree)(rnh, if_rt_walktree, ifp);
