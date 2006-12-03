@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.15 2006/11/29 13:57:59 tsutsui Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.16 2006/12/03 03:16:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.15 2006/11/29 13:57:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.16 2006/12/03 03:16:48 tsutsui Exp $");
 
 
 /*
@@ -71,8 +71,6 @@ static int	rgephy_mii_phy_auto(struct mii_softc *);
 static void	rgephy_reset(struct mii_softc *);
 static void	rgephy_loop(struct mii_softc *);
 static void	rgephy_load_dspcode(struct mii_softc *);
-
-static int	rgephy_mii_model;
 
 static const struct mii_phy_funcs rgephy_funcs = {
 	rgephy_service, rgephy_status, rgephy_reset,
@@ -124,22 +122,13 @@ rgephy_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_funcs = &rgephy_funcs;
 
-	/* Don't do isolate on this PHY. */
-	sc->mii_flags |= MIIF_NOISOLATE;
-
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 #define	PRINT(n)	aprint_normal("%s%s", sep, (n)); sep = ", "
 
-#if 0
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
-	    BMCR_ISO);
-#endif
 #ifdef __FreeBSD__
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
 	    BMCR_LOOP|BMCR_S100);
 #endif
-
-	rgephy_mii_model = MII_MODEL(ma->mii_id2);
 
 	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	sc->mii_capabilities &= ~BMSR_ANEG;
@@ -149,19 +138,11 @@ rgephy_attach(struct device *parent, struct device *self, void *aux)
 	 * media explicitly. Why?
 	 */
 	aprint_normal("%s: ", sc->mii_dev.dv_xname);
-#ifdef __FreeBSD__
-	mii_phy_add_media(sc);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0, sc->mii_inst),
-	    RGEPHY_BMCR_FDX);
-	PRINT(", 1000baseTX");
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX, sc->mii_inst), 0);
-	PRINT("1000baseTX-FDX");
-#else
 	if (sc->mii_capabilities & BMSR_EXTSTAT) {
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 	}
 	mii_phy_add_media(sc);
-#endif
+
 	/* rtl8169S does not report auto-sense; add manually.  */
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst), MII_NMEDIA);
 	sep =", ";
@@ -254,7 +235,7 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			}
 
 			/*
-			 * When settning the link manually, one side must
+			 * When setting the link manually, one side must
 			 * be the master and the other the slave. However
 			 * ifmedia doesn't give us a good way to specify
 			 * this, so we fake it by using one of the LINK
@@ -271,11 +252,9 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			PHY_WRITE(sc, RGEPHY_MII_BMCR, speed |
 			    RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
 			break;
-#ifdef foo
 		case IFM_NONE:
 			PHY_WRITE(sc, MII_BMCR, BMCR_ISO|BMCR_PDOWN);
 			break;
-#endif
 		case IFM_100_T4:
 		default:
 			return EINVAL;
@@ -349,12 +328,10 @@ rgephy_status(struct mii_softc *sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	bmsr = PHY_READ(sc, RTK_GMEDIASTAT);
-
-	if ((bmsr & RTK_GMEDIASTAT_LINK) != 0)
+	if ((PHY_READ(sc, RTK_GMEDIASTAT) & RTK_GMEDIASTAT_LINK) != 0)
 		mii->mii_media_status |= IFM_ACTIVE;
-	bmsr = PHY_READ(sc, RGEPHY_MII_BMSR);
 
+	bmsr = PHY_READ(sc, RGEPHY_MII_BMSR);
 	bmcr = PHY_READ(sc, RGEPHY_MII_BMCR);
 
 	if ((bmcr & RGEPHY_BMCR_ISO) != 0) {
@@ -385,8 +362,6 @@ rgephy_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_NONE;
 	if ((bmsr & RTK_GMEDIASTAT_FDX) != 0)
 		mii->mii_media_active |= IFM_FDX;
-
-	return;
 }
 
 
