@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.31 2006/11/16 01:33:51 christos Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.32 2006/12/03 21:56:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.31 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.32 2006/12/03 21:56:30 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -331,8 +331,8 @@ tpip_mtu(void *v)
 		printf("tpip_mtu routing to addr 0x%x\n", inp->inp_faddr.s_addr);
 	}
 #endif
-	tpcb->tp_routep = &(inp->inp_route.ro_rt);
-	return (sizeof(struct ip));
+	tpcb->tp_routep = &inp->inp_route.ro_rt;
+	return sizeof(struct ip);
 
 }
 
