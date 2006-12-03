@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.138 2006/12/02 22:31:05 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.139 2006/12/03 02:24:33 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -434,6 +434,7 @@ Notes:
 			bebox
 			cats
 			cesfic
+			dreamcast
 			evbarm
 			evbmips
 			evbppc(marvell)
@@ -457,6 +458,7 @@ Notes:
 			ofppc
 			pc532
 			pmax
+			pmppc
 			prep
 			sandpoint
 			sbmips
@@ -482,11 +484,9 @@ Notes:
 
 		notyet:
 			amigappc
-			dreamcast
 			mmeye
 			mvme68k
 			playstation2
-			pmppc
 
 
 ########################################################################
