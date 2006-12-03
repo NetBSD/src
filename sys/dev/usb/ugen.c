@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.88 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.89 2006/12/03 22:34:58 pavel Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,9 +44,10 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.88 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.89 2006/12/03 22:34:58 pavel Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1805,6 +1806,13 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		usbd_fill_deviceinfo(sc->sc_udev,
 				     (struct usb_device_info *)addr, 1);
 		break;
+#ifdef COMPAT_30
+	case USB_GET_DEVICEINFO_OLD:
+		usbd_fill_deviceinfo_old(sc->sc_udev,
+					 (struct usb_device_info_old *)addr, 1);
+
+		break;
+#endif
 	default:
 		return (EINVAL);
 	}
