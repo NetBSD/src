@@ -1,7 +1,7 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.3 2006/12/02 15:24:31 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.4 2006/12/03 20:37:51 tron Exp $
 
-A complete list of changes from the initial NetBSD 4.0 branch on 1 December 2006
-until the 4.0 release:
+A complete list of changes from the initial NetBSD 4.0 branch on
+1 December 2006 until the 4.0 release:
 
 gnu/usr.bin/groff/tmac/mdoc.local		patched by hand
 sys/sys/param.h					patched by hand
@@ -18,4 +18,10 @@ sys/uvm/uvm_swap.c				1.114
 
 	We are required to hold uvm.swap_data_lock here too.
 	[elad, ticket #241]
+
+sys/dev/pci/ahcisata.c				1.2
+
+	Don't call the done callback twice if a special action is waiting on
+	the queue. Don't forget to free the xfer in the normal bio path.
+	[bouyer, ticket #242]
 
