@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.120 2006/11/17 22:07:39 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.121 2006/12/03 20:40:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.120 2006/11/17 22:07:39 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.121 2006/12/03 20:40:44 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.120 2006/11/17 22:07:39 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.121 2006/12/03 20:40:44 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -843,12 +843,10 @@ ParseDoDependency(char *line)
     curTargs = Lst_Init(FALSE);
 
     do {
-	for (cp = line;
-	     *cp && (ParseIsEscaped(lstart, cp) ||
-	     (!isspace ((unsigned char)*cp) &&
-	     (*cp != '!') && (*cp != ':') && (*cp != LPAREN)));
-	     cp++)
-	{
+	for (cp = line; *cp && (ParseIsEscaped(lstart, cp) ||
+		     !(isspace((unsigned char)*cp) ||
+			 *cp == '!' || *cp == ':' || *cp == LPAREN));
+		 cp++) {
 	    if (*cp == '$') {
 		/*
 		 * Must be a dynamic source (would have been expanded
@@ -866,8 +864,8 @@ ParseDoDependency(char *line)
 		    free(freeIt);
 		cp += length-1;
 	    }
-	    continue;
 	}
+
 	if (!ParseIsEscaped(lstart, cp) && *cp == LPAREN) {
 	    /*
 	     * Archives must be handled specially to make sure the OP_ARCHV
@@ -2317,238 +2315,217 @@ ParseReadLine(void)
     ignComment = FALSE;
 
     /*
-     * Handle special-characters at the beginning of the line. Either a
-     * leading tab (shell command) or pound-sign (possible conditional)
-     * forces us to ignore comments and dependency operators and treat
-     * semi-colons as semi-colons (by leaving semiNL FALSE). This also
-     * discards completely blank lines.
+     * Handle special-characters at the beginning of the line.
+     * A leading tab (shell command) forces us to ignore comments and
+     * dependency operators and treat semi-colons as semi-colons
+     * (by leaving semiNL FALSE).
+     * This also discards completely blank lines.
      */
     for (;;) {
 	c = ParseReadc();
-
-	if (c == '\t') {
-	    ignComment = ignDepOp = TRUE;
-	    break;
-	} else if (c == '\n') {
+	if (c == '\n') {
 	    curFile.lineno++;
-	} else if (c == '#') {
-	    ParseUnreadc(c);
-	    break;
-	} else {
-	    /*
-	     * Anything else breaks out without doing anything
-	     */
-	    break;
+	    continue;
 	}
+
+	if (c == '\t')
+	    ignComment = ignDepOp = TRUE;
+	else if (c == '#')
+	    ParseUnreadc(c);
+	break;
     }
 
-    if (c != EOF) {
-	lastc = c;
-	buf = Buf_Init(MAKE_BSIZE);
-
-	while (((c = ParseReadc()) != '\n' || (lastc == '\\')) &&
-	       (c != EOF))
-	{
-test_char:
-	    switch(c) {
-	    case '\n':
-		/*
-		 * Escaped newline: read characters until a non-space or an
-		 * unescaped newline and replace them all by a single space.
-		 * This is done by storing the space over the backslash and
-		 * dropping through with the next nonspace. If it is a
-		 * semi-colon and semiNL is TRUE, it will be recognized as a
-		 * newline in the code below this...
-		 */
-		curFile.lineno++;
-		lastc = ' ';
-		while ((c = ParseReadc()) == ' ' || c == '\t') {
-		    continue;
-		}
-		if (c == EOF || c == '\n') {
-		    goto line_read;
-		} else {
-		    /*
-		     * Check for comments, semiNL's, etc. -- easier than
-		     * ParseUnreadc(c); continue;
-		     */
-		    goto test_char;
-		}
-		/*NOTREACHED*/
-		break;
-
-	    case ';':
-		/*
-		 * Semi-colon: Need to see if it should be interpreted as a
-		 * newline
-		 */
-		if (semiNL) {
-		    /*
-		     * To make sure the command that may be following this
-		     * semi-colon begins with a tab, we push one back into the
-		     * input stream. This will overwrite the semi-colon in the
-		     * buffer. If there is no command following, this does no
-		     * harm, since the newline remains in the buffer and the
-		     * whole line is ignored.
-		     */
-		    ParseUnreadc('\t');
-		    goto line_read;
-		}
-		break;
-	    case '=':
-		if (!semiNL) {
-		    /*
-		     * Haven't seen a dependency operator before this, so this
-		     * must be a variable assignment -- don't pay attention to
-		     * dependency operators after this.
-		     */
-		    ignDepOp = TRUE;
-		} else if (lastc == ':' || lastc == '!') {
-		    /*
-		     * Well, we've seen a dependency operator already, but it
-		     * was the previous character, so this is really just an
-		     * expanded variable assignment. Revert semi-colons to
-		     * being just semi-colons again and ignore any more
-		     * dependency operators.
-		     *
-		     * XXX: Note that a line like "foo : a:=b" will blow up,
-		     * but who'd write a line like that anyway?
-		     */
-		    ignDepOp = TRUE; semiNL = FALSE;
-		}
-		break;
-	    case '#':
-		if (!ignComment) {
-		    if (
-#if 0
-		    compatMake &&
-#endif
-		    (lastc != '\\')) {
-			/*
-			 * If the character is a hash mark and it isn't escaped
-			 * (or we're being compatible), the thing is a comment.
-			 * Skip to the end of the line.
-			 */
-			do {
-			    c = ParseReadc();
-			    /*
-			     * If we found a backslash not escaped
-			     * itself it means that the comment is
-			     * going to continue in the next line.
-			     */
-			    if (c == '\\')
-				ParseReadc();
-			} while ((c != '\n') && (c != EOF));
-			goto line_read;
-		    } else {
-			/*
-			 * Don't add the backslash. Just let the # get copied
-			 * over.
-			 */
-			lastc = c;
-			continue;
-		    }
-		}
-		break;
-	    case ':':
-	    case '!':
-		if (!ignDepOp && (c == ':' || c == '!')) {
-		    /*
-		     * A semi-colon is recognized as a newline only on
-		     * dependency lines. Dependency lines are lines with a
-		     * colon or an exclamation point. Ergo...
-		     */
-		    semiNL = TRUE;
-		}
-		break;
-	    }
-	    /*
-	     * Copy in the previous character and save this one in lastc.
-	     */
-	    Buf_AddByte(buf, (Byte)lastc);
-	    lastc = c;
-
-	}
-    line_read:
-	curFile.lineno++;
-
-	if (lastc != '\0') {
-	    Buf_AddByte(buf, (Byte)lastc);
-	}
-	Buf_AddByte(buf, (Byte)'\0');
-	line = (char *)Buf_GetAll(buf, &lineLength);
-	Buf_Destroy(buf, FALSE);
-
-	/*
-	 * Strip trailing blanks and tabs from the line.
-	 * Do not strip a blank or tab that is preceded by
-	 * a '\'
-	 */
-	ep = line;
-	while (*ep)
-	    ++ep;
-	while (ep > line + 1 && (ep[-1] == ' ' || ep[-1] == '\t')) {
-	    if (ep > line + 1 && ep[-2] == '\\')
-		break;
-	    --ep;
-	}
-	*ep = 0;
-
-	if (line[0] == '.') {
-	    /*
-	     * The line might be a conditional. Ask the conditional module
-	     * about it and act accordingly
-	     */
-	    switch (Cond_Eval(line)) {
-	    case COND_SKIP:
-		/*
-		 * Skip to next conditional that evaluates to COND_PARSE.
-		 */
-		do {
-		    free(line);
-		    line = ParseSkipLine(1, 0);
-		} while (line && Cond_Eval(line) != COND_PARSE);
-		if (line == NULL)
-		    break;
-		/*FALLTHRU*/
-	    case COND_PARSE:
-		free(line);
-		line = ParseReadLine();
-		break;
-	    case COND_INVALID:
-		lineno = curFile.lineno;
-		if (For_Eval(line)) {
-		    int ok;
-		    free(line);
-		    do {
-			/*
-			 * Skip after the matching end
-			 */
-			line = ParseSkipLine(0, 1);
-			if (line == NULL) {
-			    Parse_Error(PARSE_FATAL,
-				     "Unexpected end of file in for loop.\n");
-			    break;
-			}
-			ok = For_Eval(line);
-			free(line);
-		    }
-		    while (ok);
-		    if (line != NULL)
-			For_Run(lineno);
-		    line = ParseReadLine();
-		}
-		break;
-	    }
-	}
-	return (line);
-
-    } else {
+    if (c == EOF)
 	/*
 	 * Hit end-of-file, so return a NULL line to indicate this.
 	 */
 	return(NULL);
+
+    lastc = c;
+    buf = Buf_Init(MAKE_BSIZE);
+
+    while (((c = ParseReadc()) != '\n' || (lastc == '\\')) && (c != EOF)) {
+test_char:
+	switch (c) {
+	case '\n':
+	    /*
+	     * Escaped newline: read characters until a non-space or an
+	     * unescaped newline and replace them all by a single space.
+	     * This is done by storing the space over the backslash and
+	     * dropping through with the next nonspace. If it is a
+	     * semi-colon and semiNL is TRUE, it will be recognized as a
+	     * newline in the code below this...
+	     */
+	    curFile.lineno++;
+	    lastc = ' ';
+	    while ((c = ParseReadc()) == ' ' || c == '\t')
+		continue;
+	    if (c == EOF || c == '\n')
+		goto line_read;
+	    /*
+	     * Check for comments, semiNL's, etc. -- easier than
+	     * ParseUnreadc(c); continue;
+	     */
+	    goto test_char;
+
+	case ';':
+	    /*
+	     * Semi-colon: Need to see if it should be interpreted as a
+	     * newline
+	     */
+	    if (!semiNL)
+		break;
+	    /*
+	     * To make sure the command that may be following this
+	     * semi-colon begins with a tab, we push one back into the
+	     * input stream. This will overwrite the semi-colon in the
+	     * buffer. If there is no command following, this does no
+	     * harm, since the newline remains in the buffer and the
+	     * whole line is ignored.
+	     */
+	    ParseUnreadc('\t');
+	    goto line_read;
+
+	case '=':
+	    if (!semiNL) {
+		/*
+		 * Haven't seen a dependency operator before this, so this
+		 * must be a variable assignment -- don't pay attention to
+		 * dependency operators after this.
+		 */
+		ignDepOp = TRUE;
+	    } else if (lastc == ':' || lastc == '!') {
+		/*
+		 * Well, we've seen a dependency operator already, but it
+		 * was the previous character, so this is really just an
+		 * expanded variable assignment. Revert semi-colons to
+		 * being just semi-colons again and ignore any more
+		 * dependency operators.
+		 *
+		 * XXX: Note that a line like "foo : a:=b" will blow up,
+		 * but who'd write a line like that anyway?
+		 */
+		ignDepOp = TRUE;
+		semiNL = FALSE;
+	    }
+	    break;
+
+	case '#':
+	    if (ignComment)
+		break;
+	    if (
+#if 0
+		    !compatMake ||
+#endif
+		    (lastc == '\\')) {
+		/* Don't add the backslash. Just let the # get copied over. */
+		lastc = c;
+		continue;
+	    }
+	    /*
+	     * If the character is a hash mark and it isn't escaped
+	     * (or we're being compatible), the thing is a comment.
+	     * Skip to the end of the line.
+	     */
+	    do {
+		c = ParseReadc();
+		/*
+		 * If we found a backslash not escaped itself it means
+		 * that the comment is going to continue in the next line.
+		 */
+		if (c == '\\')
+		    /* Discard the (escaped) character after the '\\' */
+		    ParseReadc();
+	    } while ((c != '\n') && (c != EOF));
+	    goto line_read;
+
+	case ':':
+	case '!':
+	    if (!ignDepOp) {
+		/*
+		 * A semi-colon is recognized as a newline only on
+		 * dependency lines. Dependency lines are lines with a
+		 * colon or an exclamation point. Ergo...
+		 */
+		semiNL = TRUE;
+	    }
+	    break;
+	}
+
+	/* Copy in the previous character and save this one in lastc. */
+	Buf_AddByte(buf, (Byte)lastc);
+	lastc = c;
     }
+
+line_read:
+    curFile.lineno++;
+
+    if (lastc != '\0') {
+	Buf_AddByte(buf, (Byte)lastc);
+    }
+    Buf_AddByte(buf, (Byte)'\0');
+    line = (char *)Buf_GetAll(buf, &lineLength);
+    Buf_Destroy(buf, FALSE);
+
+    /*
+     * Strip trailing blanks and tabs from the line.
+     * Do not strip a blank or tab that is preceded by a '\'
+     */
+    ep = line + lineLength - 1;
+    while (ep > line + 1 && (ep[-1] == ' ' || ep[-1] == '\t')) {
+	if (ep > line + 1 && ep[-2] == '\\')
+	    break;
+	--ep;
+    }
+    *ep = 0;
+
+    if (line[0] != '.')
+	return line;
+
+    /*
+     * The line might be a conditional. Ask the conditional module
+     * about it and act accordingly
+     */
+    switch (Cond_Eval(line)) {
+    case COND_SKIP:
+	/*
+	 * Skip to next conditional that evaluates to COND_PARSE.
+	 */
+	do {
+	    free(line);
+	    line = ParseSkipLine(1, 0);
+	} while (line && Cond_Eval(line) != COND_PARSE);
+	if (line == NULL)
+	    break;
+	/*FALLTHRU*/
+    case COND_PARSE:
+	free(line);
+	line = ParseReadLine();
+	break;
+    case COND_INVALID:
+	lineno = curFile.lineno;
+	if (For_Eval(line)) {
+	    int ok;
+	    free(line);
+	    do {
+		/* Skip after the matching end */
+		line = ParseSkipLine(0, 1);
+		if (line == NULL) {
+		    Parse_Error(PARSE_FATAL,
+			     "Unexpected end of file in for loop.\n");
+		    break;
+		}
+		ok = For_Eval(line);
+		free(line);
+	    }
+	    while (ok);
+	    if (line != NULL)
+		For_Run(lineno);
+	    line = ParseReadLine();
+	}
+	break;
+    }
+    return (line);
 }
 
 /*-
