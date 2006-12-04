@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.955 2006/11/30 21:01:15 bouyer Exp $
+# $NetBSD: mi,v 1.956 2006/12/04 08:59:13 pavel Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1713,6 +1713,7 @@
 ./usr/share/man/cat7/signal.0			man-reference-catman	.cat
 ./usr/share/man/cat7/sticky.0			man-reference-catman	.cat
 ./usr/share/man/cat7/symlink.0			man-reference-catman	.cat
+./usr/share/man/cat7/sysctl.0			man-reference-catman	.cat
 ./usr/share/man/cat8/MAKEDEV.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/ac.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/accton.0			man-sysutil-catman	.cat
@@ -4110,6 +4111,7 @@
 ./usr/share/man/man7/signal.7			man-reference-man	.man
 ./usr/share/man/man7/sticky.7			man-reference-man	.man
 ./usr/share/man/man7/symlink.7			man-reference-man	.man
+./usr/share/man/man7/sysctl.7			man-reference-man	.man
 ./usr/share/man/man8/MAKEDEV.8			man-sysutil-man		.man
 ./usr/share/man/man8/ac.8			man-sysutil-man		.man
 ./usr/share/man/man8/accton.8			man-sysutil-man		.man
