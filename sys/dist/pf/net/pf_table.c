@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_table.c,v 1.9 2006/05/23 22:24:32 peter Exp $	*/
+/*	$NetBSD: pf_table.c,v 1.10 2006/12/04 03:02:48 dyoung Exp $	*/
 /*	$OpenBSD: pf_table.c,v 1.62 2004/12/07 18:02:04 mcbride Exp $	*/
 
 /*
@@ -1020,17 +1020,9 @@ pfr_unroute_kentry(struct pfr_ktable *kt, struct pfr_kentry *ke)
 	s = splsoftnet();
 	if (KENTRY_NETWORK(ke)) {
 		pfr_prepare_network(&mask, ke->pfrke_af, ke->pfrke_net);
-#ifdef __OpenBSD__
-		rn = rn_delete(&ke->pfrke_sa, &mask, head, NULL);
-#else
 		rn = rn_delete(&ke->pfrke_sa, &mask, head);
-#endif
 	} else
-#ifdef __OpenBSD__
-		rn = rn_delete(&ke->pfrke_sa, NULL, head, NULL);
-#else
 		rn = rn_delete(&ke->pfrke_sa, NULL, head);
-#endif
 	splx(s);
 
 	if (rn == NULL) {
