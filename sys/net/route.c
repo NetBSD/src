@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.77 2006/12/04 00:48:59 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.78 2006/12/04 00:52:47 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.77 2006/12/04 00:48:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.78 2006/12/04 00:52:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,9 @@ rtfree(struct rtentry *rt)
 		}
 		rt_timer_remove_all(rt, 0);
 		ifa = rt->rt_ifa;
+		rt->rt_ifa = NULL;
 		IFAFREE(ifa);
+		rt->rt_ifp = NULL;
 		Free(rt_key(rt));
 		pool_put(&rtentry_pool, rt);
 	}
