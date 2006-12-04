@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.78 2006/11/26 16:14:03 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.79 2006/12/04 01:30:56 dyoung Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.78 $"
+#ident 		"GENERIC-$Revision: 1.79 $"
 
 maxusers	64
 
@@ -672,7 +672,7 @@ pseudo-device	tun
 pseudo-device	tap			# virtual Ethernet
 
 ## Generic L3 over IP tunnel
-#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gre			# generic L3 over IP tunnel
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
