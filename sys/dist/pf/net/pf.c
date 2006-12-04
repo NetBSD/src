@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.29 2006/12/04 02:28:12 dyoung Exp $	*/
+/*	$NetBSD: pf.c,v 1.30 2006/12/04 02:58:06 dyoung Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -207,10 +207,10 @@ int			 pf_test_state_other(struct pf_state **, int,
 struct pf_tag		*pf_get_tag(struct mbuf *);
 int			 pf_match_tag(struct mbuf *, struct pf_rule *,
 			     struct pf_tag **, int *);
-void			 pf_hash(struct pf_addr *, struct pf_addr *,
+void			 pf_hash(const struct pf_addr *, struct pf_addr *,
 			    struct pf_poolhashkey *, sa_family_t);
 int			 pf_map_addr(u_int8_t, struct pf_rule *,
-			    struct pf_addr *, struct pf_addr *,
+			    const struct pf_addr *, struct pf_addr *,
 			    struct pf_addr *, struct pf_src_node **);
 int			 pf_get_sport(sa_family_t, u_int8_t, struct pf_rule *,
 			    struct pf_addr *, struct pf_addr *, u_int16_t,
@@ -525,7 +525,7 @@ pf_anchor_compare(struct pf_anchor *a, struct pf_anchor *b)
 
 #ifdef INET6
 void
-pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, sa_family_t af)
+pf_addrcpy(struct pf_addr *dst, const struct pf_addr *src, sa_family_t af)
 {
 	switch (af) {
 #ifdef INET
@@ -1908,7 +1908,7 @@ pf_step_out_of_anchor(int *depth, struct pf_ruleset **rs, int n,
 #ifdef INET6
 void
 pf_poolmask(struct pf_addr *naddr, struct pf_addr *raddr,
-    struct pf_addr *rmask, struct pf_addr *saddr, sa_family_t af)
+    struct pf_addr *rmask, const struct pf_addr *saddr, sa_family_t af)
 {
 	switch (af) {
 #ifdef INET
@@ -1979,7 +1979,7 @@ pf_addr_inc(struct pf_addr *addr, sa_family_t af)
  * hash function based on bridge_hash in if_bridge.c
  */
 void
-pf_hash(struct pf_addr *inaddr, struct pf_addr *hash,
+pf_hash(const struct pf_addr *inaddr, struct pf_addr *hash,
     struct pf_poolhashkey *key, sa_family_t af)
 {
 	u_int32_t	a = 0x9e3779b9, b = 0x9e3779b9, c = key->key32[0];
@@ -2020,7 +2020,7 @@ pf_hash(struct pf_addr *inaddr, struct pf_addr *hash,
 }
 
 int
-pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
+pf_map_addr(sa_family_t af, struct pf_rule *r, const struct pf_addr *saddr,
     struct pf_addr *naddr, struct pf_addr *init_addr, struct pf_src_node **sn)
 {
 	unsigned char		 hash[16];
