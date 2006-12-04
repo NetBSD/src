@@ -1,9 +1,9 @@
-/*	$NetBSD: zdump.c,v 1.15 2006/11/03 20:23:19 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.16 2006/12/04 17:24:40 kleink Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
-__RCSID("$NetBSD: zdump.c,v 1.15 2006/11/03 20:23:19 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.16 2006/12/04 17:24:40 kleink Exp $");
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -269,7 +269,7 @@ _("%s: usage is %s [ --version ] [ -v ] [ -c cutoff ] zonename ...\n"),
 		show(argv[i], t, TRUE);
 	}
 	if (fflush(stdout) || ferror(stdout)) {
-		err(EXIT_FAILURE, "Error writing standard output");
+		err(EXIT_FAILURE, _("Error writing standard output"));
 	}
 	exit(EXIT_SUCCESS);
 
