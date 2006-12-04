@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.28 2006/11/16 01:33:34 christos Exp $	*/
+/*	$NetBSD: pf.c,v 1.29 2006/12/04 02:28:12 dyoung Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -2693,6 +2693,7 @@ pf_get_mss(struct mbuf *m, int off, u_int16_t th_off, sa_family_t af)
 u_int16_t
 pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 {
+	struct route *rop = NULL;
 #ifdef INET
 	struct sockaddr_in	*dst;
 	struct route		 ro;
@@ -2716,12 +2717,7 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = addr->v4;
-#ifdef __OpenBSD__
-		rtalloc_noclone(&ro, NO_CLONING);
-#else
-		rtalloc(&ro);
-#endif
-		rt = ro.ro_rt;
+		rop = &ro;
 		break;
 #endif /* INET */
 #ifdef INET6
@@ -2732,15 +2728,17 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(*dst6);
 		dst6->sin6_addr = addr->v6;
-#ifdef __OpenBSD__
-		rtalloc_noclone((struct route *)&ro6, NO_CLONING);
-#else
-		rtalloc((struct route *)&ro6);
-#endif
-		rt = ro6.ro_rt;
+		rop = (struct route *)&ro6;
 		break;
 #endif /* INET6 */
 	}
+
+#ifdef __OpenBSD__
+	rtalloc_noclone(rop, NO_CLONING);
+#else
+	rtalloc(rop);
+#endif
+	rt = rop->ro_rt;
 
 	if (rt && rt->rt_ifp) {
 		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
@@ -5593,9 +5591,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 {
 	struct mbuf		*m0;
 	struct m_tag		*mtag;
-	struct route_in6	 ip6route;
-	struct route_in6	*ro;
-	struct sockaddr_in6	*dst;
+	struct sockaddr_in6	dst;
 	struct ip6_hdr		*ip6;
 	struct ifnet		*ifp = NULL;
 	struct pf_addr		 naddr;
@@ -5640,12 +5636,9 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 	ip6 = mtod(m0, struct ip6_hdr *);
 
-	ro = &ip6route;
-	bzero((caddr_t)ro, sizeof(*ro));
-	dst = (struct sockaddr_in6 *)&ro->ro_dst;
-	dst->sin6_family = AF_INET6;
-	dst->sin6_len = sizeof(*dst);
-	dst->sin6_addr = ip6->ip6_dst;
+	dst.sin6_family = AF_INET6;
+	dst.sin6_len = sizeof(dst);
+	dst.sin6_addr = ip6->ip6_dst;
 
 	/* Cheat. */
 	if (r->rt == PF_FASTROUTE) {
@@ -5670,12 +5663,12 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		pf_map_addr(AF_INET6, r, (struct pf_addr *)&ip6->ip6_src,
 		    &naddr, NULL, &sn);
 		if (!PF_AZERO(&naddr, AF_INET6))
-			PF_ACPY((struct pf_addr *)&dst->sin6_addr,
+			PF_ACPY((struct pf_addr *)&dst.sin6_addr,
 			    &naddr, AF_INET6);
 		ifp = r->rpool.cur->kif ? r->rpool.cur->kif->pfik_ifp : NULL;
 	} else {
 		if (!PF_AZERO(&s->rt_addr, AF_INET6))
-			PF_ACPY((struct pf_addr *)&dst->sin6_addr,
+			PF_ACPY((struct pf_addr *)&dst.sin6_addr,
 			    &s->rt_addr, AF_INET6);
 		ifp = s->rt_kif ? s->rt_kif->pfik_ifp : NULL;
 	}
@@ -5699,10 +5692,10 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	 * If the packet is too large for the outgoing interface,
 	 * send back an icmp6 error.
 	 */
-	if (IN6_IS_ADDR_LINKLOCAL(&dst->sin6_addr))
-		dst->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+	if (IN6_IS_ADDR_LINKLOCAL(&dst.sin6_addr))
+		dst.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 	if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
-		error = nd6_output(ifp, ifp, m0, dst, NULL);
+		error = nd6_output(ifp, ifp, m0, &dst, NULL);
 	} else {
 		in6_ifstat_inc(ifp, ifs6_in_toobig);
 		if (r->rt != PF_DUPTO)
