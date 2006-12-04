@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.30 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: dpti.c,v 1.30.2.1 2006/12/04 18:34:16 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.30 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.30.2.1 2006/12/04 18:34:16 tron Exp $");
 
 #include "opt_i2o.h"
 
@@ -277,7 +277,8 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case DPT_I2OUSRCMD:
-		rv = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		rv = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
 		if (rv)
 			break;
 
