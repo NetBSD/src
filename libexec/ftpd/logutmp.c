@@ -69,6 +69,7 @@
 
 #include "extern.h"
 
+#ifdef SUPPORT_UTMP
 typedef struct utmp UTMP;
 
 static int fd = -1;
@@ -144,6 +145,7 @@ ftpd_logout(const char *line)
 	}
 	return(rval);
 }
+#endif /* SUPPORT_UTMP */
 
 #ifdef SUPPORT_UTMPX
 /*
