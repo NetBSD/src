@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.2 2006/11/13 18:28:15 ad Exp $
+.\"	$NetBSD: condvar.9,v 1.3 2006/12/04 13:16:59 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,7 +90,7 @@ argument specifies a string of no more than 8 characters that describes
 the resource or condition associated with the CV.
 The kernel does not use this argument directly but makes it available for
 utilities such as
-.Xr ps 1 
+.Xr ps 1
 to display.
 .It Fn cv_destroy "cv"
 .Pp
@@ -114,7 +114,7 @@ before
 .Fn cv_wait
 returns.
 .Pp
-A small window exists between testing for availability of a resource and 
+A small window exists between testing for availability of a resource and
 waiting for the resource with
 .Fn cv_wait ,
 in which the resource may become available again.
@@ -134,9 +134,15 @@ code returned.
 .Pp
 If
 .Fn cv_wait_sig
-returns as a result of a signal, the return value is ERESTART if the signal
-has the SA_RESTART property.
-If awoken normally, the value is zero, and EINTR under all other conditions.
+returns as a result of a signal, the return value is
+.Er ERESTART
+if the signal
+has the
+.Dv SA_RESTART
+property.
+If awoken normally, the value is zero, and
+.Er EINTR
+under all other conditions.
 .It Fn cv_timedwait "cv" "mtx" "ticks"
 .Pp
 As per
@@ -158,14 +164,15 @@ one suitable for
 .Fn cv_timedwait .
 .Pp
 If the timeout expires before the LWP is awoken, the return value is
-EWOULDBLOCK.
+.Er EWOULDBLOCK .
 If awoken normally, the return value is zero.
 .It Fn cv_timedwait_sig "cv" "mtx" "ticks"
 .Pp
 As per
 .Fn cv_wait_sig ,
-but also accepts a timeout value and will return EWOULDBLOCK if the
-timeout expires.
+but also accepts a timeout value and will return
+.Er EWOULDBLOCK
+if the timeout expires.
 .It Fn cv_signal "cv"
 .Pp
 Awaken one LWP (potentially among many) that is waiting on the specified
@@ -187,28 +194,28 @@ Consuming a resource:
 	 * Lock the resource.  Its mutex will also serve as the
 	 * interlock.
 	 */
-	mutex_enter(&res->mutex);
+	mutex_enter(\*[Am]res-\*[Gt]mutex);
 
 	/*
 	 * Wait for the resource to become available, and take
 	 * ownership of it.
 	 */
-	while (res->state == BUSY)
-		cv_wait(&res->condvar, &res->mutex);
-	res->state = BUSY;
+	while (res-\*[Gt]state == BUSY)
+		cv_wait(\*[Am]res-\*[Gt]condvar, \*[Am]res-\*[Gt]mutex);
+	res-\*[Gt]state = BUSY;
 
 	/*
 	 * It's now available to us.
 	 */
-	mutex_exit(&res->mutex);
+	mutex_exit(\*[Am]res-\*[Gt]mutex);
 	consume(res);
 
 Releasing a resource for the next consumer to use:
 
-	mutex_enter(&res->mutex);
-	res->state = IDLE;
-	cv_signal(&res->condvar);
-	mutex_exit(&res->mutex);
+	mutex_enter(\*[Am]res-\*[Gt]mutex);
+	res-\*[Gt]state = IDLE;
+	cv_signal(\*[Am]res-\*[Gt]condvar);
+	mutex_exit(\*[Am]res-\*[Gt]mutex);
 .Ed
 .Sh CODE REFERENCES
 This section describes places within the
@@ -217,26 +224,30 @@ source tree where code implementing condition variables can be found.
 All pathnames are relative to
 .Pa /usr/src .
 .Pp
-The core of the CV implementation is in 
+The core of the CV implementation is in
 .Pa sys/kern/kern_condvar.c .
 .Pp
 The header file
 .Pa sys/sys/condvar.h
 describes the public interface.
 .Sh SEE ALSO
-.Xr condvar 9 ,
+.Xr sigaction 2 ,
 .Xr errno 9 ,
 .Xr mstohz 9 ,
 .Xr mutex 9 ,
-.Xr sigaction 2 ,
-.Xr rwlock 9 .
+.Xr rwlock 9
 .Pp
-Jim Mauro and Richard McDougall,
-.Em Solaris Internals: Core Kernel Architecture ,
-Prentice Hall, 2001.
-ISBN 0-13-022496-0
+.Rs
+.%A Jim Mauro
+.%A Richard McDougall
+.%T Solaris Internals: Core Kernel Architecture
+.%I Prentice Hall
+.%D 2001
+.%O ISBN 0-13-022496-0
+.Re
 .Sh HISTORY
 The CV primatives first appeared in
 .Nx 5.0 .
 They are modelled after similar primatives implemented in
-Sun Solaris, and have been extended for NetBSD.
+Sun Solaris, and have been extended for
+.Nx .
