@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.78 2006/12/04 00:52:47 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.79 2006/12/04 00:56:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.78 2006/12/04 00:52:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.79 2006/12/04 00:56:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,7 +544,6 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 	struct radix_node *rn;
 	struct radix_node_head *rnh;
 	struct ifaddr *ifa;
-	struct sockaddr *ndst;
 	struct sockaddr_storage deldst;
 	const struct sockaddr *dst = info->rti_info[RTAX_DST];
 	const struct sockaddr *gateway = info->rti_info[RTAX_GATEWAY];
@@ -623,11 +622,10 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			pool_put(&rtentry_pool, rt);
 			senderr(ENOBUFS);
 		}
-		ndst = rt_key(rt);
 		if (netmask) {
-			rt_maskedcopy(dst, ndst, netmask);
+			rt_maskedcopy(dst, rt_key(rt), netmask);
 		} else
-			Bcopy(dst, ndst, dst->sa_len);
+			Bcopy(dst, rt_key(rt), dst->sa_len);
 		rt_set_ifa(rt, ifa);
 		rt->rt_ifp = ifa->ifa_ifp;
 		if (req == RTM_RESOLVE) {
@@ -635,12 +633,12 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			rt->rt_parent = *ret_nrt;
 			rt->rt_parent->rt_refcnt++;
 		}
-		rn = rnh->rnh_addaddr(ndst, netmask, rnh, rt->rt_nodes);
-		if (rn == NULL && (crt = rtalloc1(ndst, 0)) != NULL) {
+		rn = rnh->rnh_addaddr(rt_key(rt), netmask, rnh, rt->rt_nodes);
+		if (rn == NULL && (crt = rtalloc1(rt_key(rt), 0)) != NULL) {
 			/* overwrite cloned route */
 			if ((crt->rt_flags & RTF_CLONED) != 0) {
 				rtdeletemsg(crt);
-				rn = rnh->rnh_addaddr(ndst,
+				rn = rnh->rnh_addaddr(rt_key(rt),
 				    netmask, rnh, rt->rt_nodes);
 			}
 			RTFREE(crt);
