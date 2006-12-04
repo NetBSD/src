@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.76 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.77 2006/12/04 00:48:59 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,8 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.76 2006/11/16 01:33:40 christos Exp $");
-
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.77 2006/12/04 00:48:59 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
