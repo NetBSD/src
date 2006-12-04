@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.5 2006/12/03 21:10:53 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.6 2006/12/04 18:41:10 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -38,4 +38,28 @@ sys/conf/Makefile.kern.inc			1.95
 	large -- I am not sure how to best fix that.
 	Fixes USE_SSP i386 build.sh failure.
 	[tls, ticket #244]
+
+share/man/man9/kauth.9				1.37
+sys/dev/i2o/dpti.c				1.31
+sys/dev/i2o/iop.c				1.62
+sys/dev/ic/dpt.c				1.55
+sys/dev/ic/icp_ioctl.c				1.14
+sys/dev/ic/mlx.c				1.49
+sys/dev/pci/amr.c				1.43
+sys/dev/pci/mly.c				1.33
+sys/dev/pci/twe.c				1.82
+sys/dev/tc/stic.c				1.37
+sys/kern/kern_auth.c				1.33
+sys/secmodel/bsd44/secmodel_bsd44_securelevel.c	1.19
+sys/sys/kauth.h					1.25
+
+	Change kauth(9) KPI for kauth_authorize_device_passthru() to add
+	another argument, u_long, serving as a bit-mask of generic requests
+	for the passthru request.
+	[elad, ticket #247]
+
+doc/CHANGES					patch
+
+	Add entry for etherip(4).
+	[rpaulo, ticket #249]
 
