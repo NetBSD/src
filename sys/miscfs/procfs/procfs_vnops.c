@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.141 2006/12/03 13:24:10 elad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.142 2006/12/04 18:27:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.141 2006/12/03 13:24:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.142 2006/12/04 18:27:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1090,7 +1090,8 @@ procfs_validfile_linux(l, mp)
 	int flags;
 
 	flags = VFSTOPROC(mp)->pmnt_flags;
-	return (flags & PROCFSMNT_LINUXCOMPAT) && procfs_validfile(l, mp);
+	return (flags & PROCFSMNT_LINUXCOMPAT) &&
+	    (l == NULL || l->l_proc == NULL || procfs_validfile(l, mp));
 }
 
 struct procfs_root_readdir_ctx {
