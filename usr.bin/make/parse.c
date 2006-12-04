@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.121 2006/12/03 20:40:44 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.122 2006/12/04 21:34:47 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.121 2006/12/03 20:40:44 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.122 2006/12/04 21:34:47 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.121 2006/12/03 20:40:44 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.122 2006/12/04 21:34:47 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -159,8 +159,8 @@ static GNode	    *mainNode;	/* The main target to create. This is the
 				 * first target on the first dependency
 				 * line in the first makefile */
 typedef struct IFile {
-    char           *fname;	    /* name of previous file */
-    int             lineno;	    /* saved line number */
+    const char      *fname;	    /* name of file */
+    int             lineno;	    /* line number in file */
     FILE *          F;		    /* the open stream */
     PTR *	    P;	    	    /* the char pointer */
 } IFile;
@@ -280,9 +280,9 @@ static struct {
 };
 
 static int ParseIsEscaped(const char *, const char *);
-static void ParseErrorInternal(char *, size_t, int, const char *, ...)
+static void ParseErrorInternal(const char *, size_t, int, const char *, ...)
      __attribute__((__format__(__printf__, 4, 5)));
-static void ParseVErrorInternal(char *, size_t, int, const char *, va_list)
+static void ParseVErrorInternal(const char *, size_t, int, const char *, va_list)
      __attribute__((__format__(__printf__, 4, 0)));
 static int ParseFindKeyword(const char *);
 static int ParseLinkSrc(ClientData, ClientData);
@@ -297,7 +297,7 @@ static inline int ParseReadc(void);
 static void ParseUnreadc(int);
 static void ParseHasCommands(ClientData);
 static void ParseDoInclude(char *);
-static void ParseSetParseFile(char *);
+static void ParseSetParseFile(const char *);
 #ifdef SYSVINCLUDE
 static void ParseTraditionalInclude(char *);
 #endif
@@ -388,8 +388,8 @@ ParseFindKeyword(const char *str)
  */
 /* VARARGS */
 static void
-ParseVErrorInternal(char *cfname, size_t clineno, int type, const char *fmt,
-    va_list ap)
+ParseVErrorInternal(const char *cfname, size_t clineno, int type,
+    const char *fmt, va_list ap)
 {
 	static Boolean fatal_warning_error_printed = FALSE;
 
@@ -440,7 +440,8 @@ ParseVErrorInternal(char *cfname, size_t clineno, int type, const char *fmt,
  */
 /* VARARGS */
 static void
-ParseErrorInternal(char *cfname, size_t clineno, int type, const char *fmt, ...)
+ParseErrorInternal(const char *cfname, size_t clineno, int type,
+    const char *fmt, ...)
 {
 	va_list ap;
 
@@ -1913,19 +1914,24 @@ ParseDoInclude(char *line)
  *---------------------------------------------------------------------
  */
 static void
-ParseSetParseFile(char *filename)
+ParseSetParseFile(const char *filename)
 {
     char *slash;
+    char *dirname;
+    int len;
 
     slash = strrchr(filename, '/');
-    if (slash == 0) {
+    if (slash == NULL) {
 	Var_Set(".PARSEDIR", ".", VAR_GLOBAL, 0);
 	Var_Set(".PARSEFILE", filename, VAR_GLOBAL, 0);
     } else {
-	*slash = '\0';
-	Var_Set(".PARSEDIR", filename, VAR_GLOBAL, 0);
+	len = slash - filename;
+	dirname = emalloc(len + 1);
+	memcpy(dirname, filename, len);
+	dirname[len] = 0;
+	Var_Set(".PARSEDIR", dirname, VAR_GLOBAL, 0);
 	Var_Set(".PARSEFILE", slash+1, VAR_GLOBAL, 0);
-	*slash = '/';
+	free(dirname);
     }
 }
 
@@ -1960,7 +1966,7 @@ Parse_FromString(char *str, int lineno)
     curFile.P = emalloc(sizeof(PTR));
     curFile.P->str = curFile.P->ptr = str;
     curFile.lineno = lineno;
-    curFile.fname = estrdup(curFile.fname);
+    curFile.fname = curFile.fname;
 }
 
 
@@ -1991,7 +1997,7 @@ ParseTraditionalInclude(char *line)
     int		   done = 0;
     int		   silent = (line[0] != 'i') ? 1 : 0;
     char	  *file = &line[silent + 7];
-    char	  *cfname;
+    const char	  *cfname;
     size_t	   clineno;
 
     cfname  = curFile.fname;
@@ -2156,7 +2162,7 @@ ParseEOF(int opened)
     ifile = (IFile *)Lst_DeQueue(includes);
 
     /* XXX dispose of curFile info */
-    free( curFile.fname);
+    /* Leak curFile.fname because all the gnodes have pointers to it */
     if (opened && curFile.F)
 	(void)fclose(curFile.F);
     if (curFile.P) {
@@ -2584,7 +2590,7 @@ Parse_File(const char *name, FILE *stream)
     inLine = FALSE;
     fatals = 0;
 
-    curFile.fname = UNCONST(name);
+    curFile.fname = name;
     curFile.F = stream;
     curFile.lineno = 0;
 
@@ -2848,6 +2854,6 @@ Parse_MainName(void)
 static void
 ParseMark(GNode *gn)
 {
-    gn->fname = strdup(curFile.fname);
+    gn->fname = curFile.fname;
     gn->lineno = curFile.lineno;
 }
