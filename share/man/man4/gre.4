@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.32 2006/08/31 17:46:16 dyoung Exp $
+.\" $NetBSD: gre.4,v 1.33 2006/12/04 02:40:15 dyoung Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -136,11 +136,6 @@ IPPROTO_MOBILE
 .Pp
 to
 .Xr ifconfig 8 .
-.Pp
-The link1 flag is not used to choose encapsulation, but to modify the
-internal route search for the remote tunnel endpoint, see the
-.Sx BUGS
-section below.
 .It GREGPROTO :
 Query operation mode.
 .It GRESSOCK :
@@ -219,7 +214,7 @@ Assuming router A has the (external) IP address A and the internal address
 On router A:
 .Bd -literal
    # ifconfig greN create
-   # ifconfig greN 192.168.1.1 192.168.2.1 link1
+   # ifconfig greN 192.168.1.1 192.168.2.1
    # ifconfig greN tunnel A B
    # route add -net 192.168.2 -netmask 255.255.255.0 192.168.2.1
 .Ed
@@ -227,14 +222,10 @@ On router A:
 On router B:
 .Bd -literal
    # ifconfig greN create
-   # ifconfig greN 192.168.2.1 192.168.1.1 link1
+   # ifconfig greN 192.168.2.1 192.168.1.1
    # ifconfig greN tunnel B A
    # route add -net 192.168.1 -netmask 255.255.255.0 192.168.1.1
 .Ed
-.Pp
-Note that this is a safe situation where the link1 flag (as discussed in the
-.Sx BUGS
-section below) may (and probably should) be set.
 .Pp
 To setup the same tunnel as above, but using GRE in UDP encapsulation
 instead of GRE encapsulation, set flags
@@ -303,10 +294,6 @@ On router B (Cisco):
      tunnel destination A               ! where the tunnel is connected to
    ipv6 route 2001:db8::/64 TunnelX     ! route this network through tunnel
 .Ed
-.Pp
-Note that this is a safe situation where the link1 flag (as discussed in the
-.Sx BUGS
-section below) may be set.
 .Ed
 .Sh NOTES
 The MTU of
@@ -362,20 +349,6 @@ A description of MOBILE encapsulation can be found in RFC 2004.
 .An David Young Aq dyoung@NetBSD.org
 .Pq GRE in UDP encapsulation, bug fixes
 .Sh BUGS
-The compute_route() code in if_gre.c toggles the last bit of the
-IP-address to provoke the search for a less specific route than the
-one directly over the tunnel to prevent loops.
-This is possibly not the best solution.
-.Pp
-To avoid the address munging described above, turn on the link1 flag
-on the
-.Xr ifconfig 8
-command line.
-This implies that the GRE packet destination and the ifconfig remote host
-are not the same IP addresses, and that the GRE destination does not route
-over the
-.Sy gre Ns Ar X
-interface itself.
 .Pp
 The GRE RFCs are not yet fully implemented (no GRE options).
 .Pp
