@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.24 2006/11/16 01:33:51 christos Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.25 2006/12/04 02:53:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.24 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.25 2006/12/04 02:53:17 dyoung Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -340,7 +340,7 @@ tpclnp_mtu(void *v)
 		printf("tpclnp_mtu(tpcb %p)\n", tpcb);
 	}
 #endif
-	tpcb->tp_routep = &(isop->isop_route.ro_rt);
+	tpcb->tp_routep = &isop->isop_route.ro_rt;
 	if (tpcb->tp_netservice == ISO_CONS)
 		return 0;
 	else
