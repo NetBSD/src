@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.301 $"
+#ident 		"GENERIC-$Revision: 1.302 $"
 
 maxusers 32
 
@@ -363,6 +363,7 @@ uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
 wi*	at	pci? dev ? function ?		# Lucent/Intersil WaveLAN/IEEE
+wm*	at	pci? dev ? function ?		# Intel 8254x Ethernet
 yds*	at	pci? dev ? function ?		# Yamaha DS-1 PCI Audio
 
 opl*	at	cmpci? flags 1
@@ -380,9 +381,12 @@ icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
+makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+rgephy*	at mii? phy ?			# Realtek 8169S internal PHYs
+rlphy*	at mii? phy ?			# Realtek 8139 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
