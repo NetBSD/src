@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.23 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.24 2006/12/04 15:14:45 is Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.23 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.24 2006/12/04 15:14:45 is Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -91,7 +91,7 @@ struct sockproto rclnp_proto = {PF_ISO, 0};
 /*
  * FUNCTION:		rclnp_input
  *
- * PURPOSE:		Setup generic address an protocol structures for
+ * PURPOSE:		Setup generic address and protocol structures for
  *			raw input routine, then pass them along with the
  *			mbuf chain.
  *
