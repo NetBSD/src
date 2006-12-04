@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.116 2006/11/28 17:58:10 elad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.117 2006/12/04 18:50:19 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.116 2006/11/28 17:58:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.117 2006/12/04 18:50:19 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,6 +337,28 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		error = copyin(SCARG(uap, addr), &piod, sizeof(piod));
 		if (error)
 			return (error);
+		uio.uio_vmspace = vm;
+		switch (piod.piod_op) {
+		case PIOD_READ_D:
+		case PIOD_READ_I:
+			uio.uio_rw = UIO_READ;
+			break;
+		case PIOD_WRITE_D:
+		case PIOD_WRITE_I:
+#if defined(__HAVE_RAS)
+			/*
+			 * Can't write to a RAS
+			 */
+			if (!LIST_EMPTY(&t->p_raslist) &&
+			    (ras_lookup(t, SCARG(uap, addr)) != (caddr_t)-1)) {
+				return (EACCES);
+			}
+#endif
+			uio.uio_rw = UIO_WRITE;
+			break;
+		default:
+			return (EINVAL);
+		}
 		iov.iov_base = piod.piod_addr;
 		iov.iov_len = piod.piod_len;
 		uio.uio_iov = &iov;
@@ -346,19 +368,6 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		error = proc_vmspace_getref(l->l_proc, &vm);
 		if (error) {
 			return error;
-		}
-		uio.uio_vmspace = vm;
-		switch (piod.piod_op) {
-		case PIOD_READ_D:
-		case PIOD_READ_I:
-			uio.uio_rw = UIO_READ;
-			break;
-		case PIOD_WRITE_D:
-		case PIOD_WRITE_I:
-			uio.uio_rw = UIO_WRITE;
-			break;
-		default:
-			return (EINVAL);
 		}
 
 		error = kauth_authorize_process(l->l_cred,
