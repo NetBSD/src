@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.12 2006/06/07 22:33:38 kardel Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.13 2006/12/04 02:58:06 dyoung Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.213 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -1459,8 +1459,8 @@ extern u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t,
 
 extern struct ifnet		*sync_ifp;
 extern struct pf_rule		 pf_default_rule;
-extern void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
-				    u_int8_t);
+extern void			 pf_addrcpy(struct pf_addr *,
+				    const struct pf_addr *, u_int8_t);
 void				 pf_rm_rule(struct pf_rulequeue *,
 				    struct pf_rule *);
 
@@ -1471,7 +1471,7 @@ int	pf_test(int, struct ifnet *, struct mbuf **, struct ether_header *);
 #ifdef INET6
 int	pf_test6(int, struct ifnet *, struct mbuf **, struct ether_header *);
 void	pf_poolmask(struct pf_addr *, struct pf_addr*,
-	    struct pf_addr *, struct pf_addr *, u_int8_t);
+	    struct pf_addr *, const struct pf_addr *, u_int8_t);
 void	pf_addr_inc(struct pf_addr *, sa_family_t);
 #endif /* INET6 */
 
