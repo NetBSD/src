@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.30 2006/12/04 02:58:06 dyoung Exp $	*/
+/*	$NetBSD: pf.c,v 1.31 2006/12/04 02:59:35 dyoung Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -258,9 +258,9 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 			return (PF_DROP);				\
 		if (direction == PF_OUT &&				\
 		    (((*state)->rule.ptr->rt == PF_ROUTETO &&		\
-		    (*state)->rule.ptr->direction == PF_OUT) ||		\
-		    ((*state)->rule.ptr->rt == PF_REPLYTO &&		\
-		    (*state)->rule.ptr->direction == PF_IN)) &&		\
+		      (*state)->rule.ptr->direction == PF_OUT) ||	\
+		     ((*state)->rule.ptr->rt == PF_REPLYTO &&		\
+		      (*state)->rule.ptr->direction == PF_IN)) &&	\
 		    (*state)->rt_kif != NULL &&				\
 		    (*state)->rt_kif != kif)				\
 			return (PF_PASS);				\
@@ -269,9 +269,9 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 #define	STATE_TRANSLATE(s) \
 	(s)->lan.addr.addr32[0] != (s)->gwy.addr.addr32[0] || \
 	((s)->af == AF_INET6 && \
-	((s)->lan.addr.addr32[1] != (s)->gwy.addr.addr32[1] || \
-	(s)->lan.addr.addr32[2] != (s)->gwy.addr.addr32[2] || \
-	(s)->lan.addr.addr32[3] != (s)->gwy.addr.addr32[3])) || \
+	 ((s)->lan.addr.addr32[1] != (s)->gwy.addr.addr32[1] || \
+	  (s)->lan.addr.addr32[2] != (s)->gwy.addr.addr32[2] || \
+	  (s)->lan.addr.addr32[3] != (s)->gwy.addr.addr32[3])) || \
 	(s)->lan.port != (s)->gwy.port
 
 #define BOUND_IFACE(r, k) (((r)->rule_flag & PFRULE_IFBOUND) ? (k) :   \
