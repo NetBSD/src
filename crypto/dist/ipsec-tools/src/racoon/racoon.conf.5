@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.32 2006/10/06 12:02:27 manu Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.33 2006/12/05 13:38:40 vanhu Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -667,7 +667,7 @@ The default value is
 It is useful for a server.
 .\"
 .It Ic proposal_check Ar level ;
-specifies the action of lifetime length and PFS of the phase 2
+specifies the action of lifetime length, key length and PFS of the phase 2
 selection on the responder side, and the action of lifetime check in
 phase 1.
 The default level is
@@ -679,14 +679,16 @@ is:
 .It Ic obey
 the responder will obey the initiator anytime.
 .It Ic strict
-If the responder's length is longer than the initiator's one, the
+If the responder's lifetime length is longer than the initiator's one,
+or if responder's key length is shorter than the initiator's one, the
 responder uses the initiator's one.
 Otherwise it rejects the proposal.
 If PFS is not required by the responder, the responder will obey the proposal.
 If PFS is required by both sides and if the responder's group is not equal to
 the initiator's one, then the responder will reject the proposal.
 .It Ic claim
-If the responder's length is longer than the initiator's one, the
+If the responder's length is longer than the initiator's one,
+or if responder's key length is shorter than the initiator's one, the
 responder will use the initiator's one.
 If the responder's length is
 shorter than the initiator's one, the responder uses its own length
@@ -695,8 +697,8 @@ case of lifetime (phase 2 only).
 For PFS, this directive behaves the same as
 .Ic strict .
 .It Ic exact
-If the initiator's length is not equal to the responder's one, the
-responder will reject the proposal.
+If the initiator's lifetime or key length is not equal to the responder's one,
+the responder will reject the proposal.
 If PFS is required by both sides and if the responder's group is not equal to
 the initiator's one, then the responder will reject the proposal.
 .El
