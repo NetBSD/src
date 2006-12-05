@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.31 2006/11/26 12:05:21 peter Exp $
+# $NetBSD: postinstall,v 1.32 2006/12/05 10:18:41 lukem Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -777,16 +777,12 @@ do_pf()
 	op=$1
 	failed=0
 
-	find_file_in_dirlist pf.conf "pf.conf" \
-	    ${SRC_DIR}/dist/pf/etc ${DEST_DIR}/etc \
-	    || return 1
-
 	find_file_in_dirlist pf.os "pf.os" \
-	    ${SRC_DIR}/dist/pf/etc ${DEST_DIR}/etc \
+	    ${SRC_DIR}/dist/pf/etc ${SRC_DIR}/etc \
 	    || return 1
 
 	populate_dir ${op} true \
-	    ${SRC_DIR}/dist/pf/etc ${DEST_DIR}/etc 644 \
+	    ${dir} ${DEST_DIR}/etc 644 \
 	    pf.conf pf.os
 	failed=$(( ${failed} + $? ))
 
