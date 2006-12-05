@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.113 2006/10/23 22:42:33 he Exp $	*/
+/*	$NetBSD: net.c,v 1.114 2006/12/05 10:21:09 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1050,6 +1050,8 @@ mnt_net_config(void)
 		scripting_fprintf(NULL, "cat <<EOF >>%s%s\n",
 		    target_prefix(), ifconfig_fn);
 		scripting_fprintf(ifconf, "up\n");
+		if (*net_media != '\0')
+			scripting_fprintf(ifconf, "media %s\n", net_media);
 		scripting_fprintf(NULL, "EOF\n");
 	}
 
