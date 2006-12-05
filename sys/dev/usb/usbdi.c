@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.115 2006/12/03 22:34:58 pavel Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.116 2006/12/05 20:45:36 macallan Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.115 2006/12/03 22:34:58 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.116 2006/12/05 20:45:36 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -1191,7 +1191,7 @@ usbd_get_string0(usbd_device_handle dev, int si, char *buf, int unicode)
 	int swap = dev->quirks->uq_flags & UQ_SWAP_UNICODE;
 	usb_string_descriptor_t us;
 	char *s;
-	int i, j, n;
+	int i, n;
 	u_int16_t c;
 	usbd_status err;
 	int size;
@@ -1238,6 +1238,7 @@ usbd_get_string0(usbd_device_handle dev, int si, char *buf, int unicode)
 	}
 #ifdef COMPAT_30
 	else {
+		int j;
 		for (i = j = 0; i < n && j < USB_MAX_STRING_LEN - 1; i++) {
 			c = UGETW(us.bString[i]);
 			if (swap)
