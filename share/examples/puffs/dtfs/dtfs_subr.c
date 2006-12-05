@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.7 2006/11/18 12:41:06 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.8 2006/12/05 14:32:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -261,15 +261,16 @@ dtfs_adddent(struct puffs_node *pn_dir, struct dtfs_dirent *dent)
 
 	assert(pn_dir->pn_type == VDIR);
 	LIST_INSERT_HEAD(&dir->df_dirents, dent, dfd_entries);
-	pn_dir->pn_va.va_nlink++;
 	pn_file->pn_va.va_nlink++;
 
 	dtm = pn_file->pn_mnt->pu_privdata;
 	dtm->dtm_nfiles++;
 
 	dent->dfd_parent = pn_dir;
-	if (dent->dfd_node->pn_type == VDIR)
+	if (dent->dfd_node->pn_type == VDIR) {
 		file->df_dotdot = pn_dir;
+		pn_dir->pn_va.va_nlink++;
+	}
 
 	dtfs_updatetimes(pn_dir, 0, 1, 1);
 }
@@ -282,7 +283,8 @@ dtfs_removedent(struct puffs_node *pn_dir, struct dtfs_dirent *dent)
 
 	assert(pn_dir->pn_type == VDIR);
 	LIST_REMOVE(dent, dfd_entries);
-	pn_dir->pn_va.va_nlink--;
+	if (pn_file->pn_type == VDIR)
+		pn_dir->pn_va.va_nlink--;
 	pn_file->pn_va.va_nlink--;
 	assert(pn_dir->pn_va.va_nlink >= 2);
 
