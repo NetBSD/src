@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.32 2006/12/05 10:18:41 lukem Exp $
+# $NetBSD: postinstall,v 1.33 2006/12/05 10:26:28 lukem Exp $
 #
-# Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
+# Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -304,7 +304,7 @@ rcconf_is_set()
 			    -o \"\${${_rcis_var}-UNSET}\" != \"UNSET\" ]"; then
 			if [ -n "${_rcis_verbose}" ]; then
 				msg \
-	"Obsolete rc.conf(5) variable '\$${_rcis_var}' found.${_rcis_notfixed}"
+    "Obsolete rc.conf(5) variable '\$${_rcis_var}' found.${_rcis_notfixed}"
 			fi
 			exit 0
 		else
@@ -332,7 +332,7 @@ find_file_in_dirlist()
 		if [ -f "${dir}/${_file}" ]; then
 			if [ "${_dir1st}" != "${dir}" ]; then
 				msg \
-		  "(Checking for ${_msg} from ${dir} instead of ${_dir1st})"
+    "(Checking for ${_msg} from ${dir} instead of ${_dir1st})"
 			fi
 			return 0
 		fi
@@ -356,7 +356,8 @@ stat()
 	_stval=$4
 
 	if [ ! -x /usr/bin/stat ]; then
-		msg "(/usr/bin/stat not available; skipping ${_stop} on ${_sttgt})"
+		msg \
+    "(/usr/bin/stat not available; skipping ${_stop} on ${_sttgt})"
 		return 0
 	fi
 
@@ -539,9 +540,9 @@ contents_owner()
 
 	if [ "${_op}" = "check" ]; then
 		if [ ! -z "`find ${_dir} \( ! -user ${_user} \) -o \
-		\( ! -group ${_grp} \)`" ]
-		then
-			msg "${_dir} and contents not all owned by ${_user}:${_grp}"
+		    \( ! -group ${_grp} \)`" ]; then
+			msg \
+    "${_dir} and contents not all owned by ${_user}:${_grp}"
 			return 1
 		else
 			return 0
@@ -598,7 +599,7 @@ do_defaults()
 	find_file_in_dirlist pf.boot.conf "pf.boot.conf" \
 	    ${SRC_DIR}/usr.sbin/pf/etc/defaults ${SRC_DIR}/etc/defaults \
 	    || return 1
-
+			# ${dir} is set by find_file_in_dirlist()
 	compare_dir $op ${dir} ${DEST_DIR}/etc/defaults 444 pf.boot.conf
 	failed=$(( ${failed} + $? ))
 
@@ -643,8 +644,10 @@ do_iscsi()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_iscsi  fix|check"
 
-	populate_dir ${op} true ${SRC_DIR}/etc/iscsi ${DEST_DIR}/etc/iscsi 600 auths
-	populate_dir ${op} true ${SRC_DIR}/etc/iscsi ${DEST_DIR}/etc/iscsi 644 targets
+	populate_dir ${op} true \
+	    ${SRC_DIR}/etc/iscsi ${DEST_DIR}/etc/iscsi 600 auths
+	populate_dir ${op} true \
+	    ${SRC_DIR}/etc/iscsi ${DEST_DIR}/etc/iscsi 644 targets
 	return $?
 }
 
@@ -668,7 +671,7 @@ do_makedev()
 	find_file_in_dirlist MAKEDEV "MAKEDEV" \
 	    ${SCRATCHDIR} ${SRC_DIR}/dev \
 	    || return 1
-
+			# ${dir} is set by find_file_in_dirlist()
 	compare_dir $1 ${dir} ${DEST_DIR}/dev 555 MAKEDEV
 }
 
@@ -681,8 +684,7 @@ do_motd()
 	[ -n "$1" ] || err 2 "USAGE: do_motd  fix|check"
 
 	if grep 'http://www.NetBSD.org/Misc/send-pr.html' ${DEST_DIR}/etc/motd \
-	    >/dev/null 2>&1
-	then
+	    >/dev/null 2>&1; then
 		tmp1=$(mktemp /tmp/postinstall.motd.XXXXXXXX)
 		tmp2=$(mktemp /tmp/postinstall.motd.XXXXXXXX)
 		sed '1,2d' <${SRC_DIR}/etc/motd >${tmp1}
@@ -692,8 +694,8 @@ do_motd()
 			cmp -s ${tmp1} ${tmp2}
 			result=$?
 			if [ ${result} -ne 0 ]; then
-				msg "bug reporting messages do not seem to" \
-				    "match the installed release"
+				msg \
+    "Bug reporting messages do not seem to match the installed release"
 			fi
 		else
 			head -n 2 ${DEST_DIR}/etc/motd >${tmp1}
@@ -780,7 +782,7 @@ do_pf()
 	find_file_in_dirlist pf.os "pf.os" \
 	    ${SRC_DIR}/dist/pf/etc ${SRC_DIR}/etc \
 	    || return 1
-
+			# ${dir} is set by find_file_in_dirlist()
 	populate_dir ${op} true \
 	    ${dir} ${DEST_DIR}/etc 644 \
 	    pf.conf pf.os
@@ -803,7 +805,7 @@ do_postfix()
 	    ${SRC_DIR}/gnu/dist/postfix/conf \
 	    ${DEST_DIR}/usr/share/examples/postfix \
 	    || return 1
-
+			# ${dir} is set by find_file_in_dirlist()
 	compare_dir ${op} ${dir} ${DEST_DIR}/etc/postfix 555 \
 	    post-install postfix-script
 	failed=$(( ${failed} + $? ))
@@ -893,8 +895,7 @@ do_sendmail()
 
 	# Don't complain if the "sendmail" package is installed because the
 	# files might still be in use.
-	if /usr/sbin/pkg_info -qe sendmail >/dev/null 2>&1
-	then
+	if /usr/sbin/pkg_info -qe sendmail >/dev/null 2>&1; then
 		return 0
 	fi
 
@@ -931,8 +932,7 @@ do_ssh()
 			    ssh_host_key ssh_host_key.pub \
 		    ; do
 			if ! move_file ${op} \
-			    ${DEST_DIR}/etc/${f} ${_etcssh}/${f} ;
-			then
+			    ${DEST_DIR}/etc/${f} ${_etcssh}/${f} ; then
 				failed=1
 			fi
 		done
@@ -940,8 +940,7 @@ do_ssh()
 				# /etc/ssh/ssh{,d}.conf -> ssh{,d}_config
 				#
 			if ! move_file ${op} \
-			    ${_etcssh}/${f} ${_etcssh}/${f%.conf}_config ;
-			then
+			    ${_etcssh}/${f} ${_etcssh}/${f%.conf}_config ; then
 				failed=1
 			fi
 				# /etc/ssh{,d}.conf -> /etc/ssh/ssh{,d}_config
@@ -986,6 +985,7 @@ do_ssh()
 	if ! find_file_in_dirlist moduli "moduli" \
 	    ${SRC_DIR}/crypto/dist/ssh ${SRC_DIR}/etc ; then
 		failed=1
+			# ${dir} is set by find_file_in_dirlist()
 	elif ! compare_dir ${op} ${dir} ${DEST_DIR}/etc 444 moduli; then
 		failed=1
 	fi
