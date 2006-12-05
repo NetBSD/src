@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.11 2006/12/01 12:48:31 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.12 2006/12/05 23:03:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -63,22 +63,14 @@ extern struct pool puffs_pnpool;
  * kernel.  This is the kernel counterpart of "struct puffs_req".
  */
 struct puffs_park {
-	struct puffs_req park_preq;	/* the relevant preq		*/
+	struct puffs_req	*park_preq;	/* req followed by buf	*/
+	size_t			park_copylen;	/* userspace copylength	*/
 
-	void		*park_kernbuf;	/* kernel buffer address	*/
-	size_t		park_buflen;	/* buffer length		*/
-	size_t		park_copylen;	/* length to copy to userspace  */
-
-	uint32_t 	park_flags;
+	size_t 			park_maxlen;	/* max size, only for "adj" */
+						/* ^ XXX: overloaded */
 
 	TAILQ_ENTRY(puffs_park) park_entries;
 };
-#define park_id		park_preq.preq_id
-#define park_opclass	park_preq.preq_opclass
-#define park_optype	park_preq.preq_optype
-#define park_cookie	park_preq.preq_cookie
-#define park_rv		park_preq.preq_rv
-
 
 #define PUFFS_SIZEOPREQ_UIO_IN 1
 #define PUFFS_SIZEOPREQ_UIO_OUT 2
@@ -102,8 +94,14 @@ struct puffs_sizepark {
 	TAILQ_ENTRY(puffs_sizepark) pkso_entries;
 };
 
+#ifdef DEBUG
+extern int puffsdebug; /* puffs_subr.c */
+#define DPRINTF(x) if (puffsdebug > 0) printf x
+#define DPRINTF_VERBOSE(x) if (puffsdebug > 1) printf x
+#else
 #define DPRINTF(x)
 #define DPRINTF_VERBOSE(x)
+#endif
 
 #define MPTOPUFFSMP(mp) ((struct puffs_mount *)((mp)->mnt_data))
 #define PMPTOMP(pmp) (pmp->pmp_mp)
