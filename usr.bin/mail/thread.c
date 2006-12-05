@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.2 2006/11/28 20:29:25 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.3 2006/12/05 03:47:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: thread.c,v 1.2 2006/11/28 20:29:25 christos Exp $");
+__RCSID("$NetBSD: thread.c,v 1.3 2006/12/05 03:47:41 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -343,9 +343,11 @@ reindex_core(struct message *mp)
 	assert(mp->m_blink == NULL);
 
 	i = 0;
-	for (mp = mp; mp; mp = mp->m_flink) {
+	for (mp = first_message(mp); mp; mp = mp->m_flink) {
 		assert(mp->m_flink == NULL || mp == mp->m_flink->m_blink);
 		assert(mp->m_blink == NULL || mp == mp->m_blink->m_flink);
+
+		assert(mp->m_size != 0);
 
 		if (S_IS_RESTRICT(state) == 0 || !is_tagged(mp))
 			mp->m_index = ++i;
@@ -363,7 +365,12 @@ reindex(struct thread_s *tp)
 	struct message *mp;
 	int i;
 
-	assert(tp->t_head->m_blink == NULL);
+	assert(tp != NULL);
+
+	if ((mp = tp->t_head) == NULL || mp->m_size == 0)
+		return;
+
+	assert(mp->m_blink == NULL);
 
 	if (S_IS_EXPOSE(state) == 0) {
 		/*
@@ -397,6 +404,7 @@ redepth_core(struct message *mp, int depth, struct message *parent)
 		assert(mp->m_plink == parent);
 		assert(mp->m_flink == NULL || mp == mp->m_flink->m_blink);
 		assert(mp->m_blink == NULL || mp == mp->m_blink->m_flink);
+		assert(mp->m_size != 0);
 
 		mp->m_depth = depth;
 		if (mp->m_clink)
@@ -412,7 +420,7 @@ redepth(struct thread_s *thread)
 
 	assert(thread != NULL);
 
-	if ((mp = thread->t_head) == NULL)
+	if ((mp = thread->t_head) == NULL || mp->m_size == 0)
 		return;
 
 	depth = mp->m_plink ? mp->m_plink->m_depth + 1 : 0;
