@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.19 2006/12/05 23:03:28 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.20 2006/12/05 23:07:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.19 2006/12/05 23:03:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.20 2006/12/05 23:07:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1513,7 +1513,8 @@ puffs_write(void *v)
 			}
 
 			/* adjust file size */
-			uvm_vnp_setsize(vp, uio->uio_offset);
+			if (vp->v_size < uio->uio_offset)
+				uvm_vnp_setsize(vp, uio->uio_offset);
 
 			/* didn't move everything?  bad userspace.  bail */
 			if (write_argp->pvnr_resid != 0) {
