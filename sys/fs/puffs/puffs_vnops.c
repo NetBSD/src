@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.18 2006/12/01 12:48:31 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.19 2006/12/05 23:03:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.18 2006/12/01 12:48:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.19 2006/12/05 23:03:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -918,8 +918,7 @@ puffs_readdir(void *v)
 
 	error = puffs_vntouser_adjbuf(MPTOPUFFSMP(ap->a_vp->v_mount),
 	    PUFFS_VN_READDIR, (void **)&readdir_argp, &argsize,
-	    sizeof(struct puffs_vnreq_readdir),
-	    VPTOPNC(ap->a_vp), ap->a_vp, NULL);
+	    readdir_argp->pvnr_resid, VPTOPNC(ap->a_vp), ap->a_vp, NULL);
 	if (error)
 		goto out;
 
@@ -1356,7 +1355,7 @@ puffs_read(void *v)
 			argsize = sizeof(struct puffs_vnreq_read);
 			error = puffs_vntouser_adjbuf(pmp, PUFFS_VN_READ,
 			    (void **)&read_argp, &argsize,
-			    sizeof(struct puffs_vnreq_read), VPTOPNC(ap->a_vp),
+			    read_argp->pvnr_resid, VPTOPNC(ap->a_vp),
 			    ap->a_vp, NULL);
 			if (error)
 				break;
@@ -1481,6 +1480,7 @@ puffs_write(void *v)
 
 		puffs_updatenode(vp, uflags);
 	} else {
+		/* tomove is non-increasing */
 		tomove = PUFFS_TOMOVE(uio->uio_resid, pmp);
 		argsize = sizeof(struct puffs_vnreq_write) + tomove;
 		write_argp = malloc(argsize, M_PUFFS, M_WAITOK | M_ZERO);
@@ -1742,8 +1742,9 @@ puffs_strategy(void *v)
 		puffs_credcvt(&read_argp->pvnr_cred, FSCRED);
 
 		error = puffs_vntouser_adjbuf(pmp, PUFFS_VN_READ,
-		    (void **)&read_argp, &argsize, argsize,
-		    VPTOPNC(ap->a_vp), LOCKEDVP(ap->a_vp), NULL);
+		    (void **)&read_argp, &argsize,
+		    read_argp->pvnr_resid, VPTOPNC(ap->a_vp),
+		    LOCKEDVP(ap->a_vp), NULL);
 
 		if (error)
 			goto out;

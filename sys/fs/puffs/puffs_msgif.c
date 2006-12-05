@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.8 2006/11/21 01:53:33 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.9 2006/12/05 23:03:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.8 2006/11/21 01:53:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.9 2006/12/05 23:03:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -77,15 +77,12 @@ puffs_vfstouser(struct puffs_mount *pmp, int optype, void *kbuf, size_t buflen)
 {
 	struct puffs_park park;
 
-	memset(&park.park_preq, 0, sizeof(struct puffs_req));
+	park.park_preq = kbuf;
 
-	park.park_opclass = PUFFSOP_VFS; 
-	park.park_optype = optype;
+	park.park_preq->preq_opclass = PUFFSOP_VFS; 
+	park.park_preq->preq_optype = optype;
 
-	park.park_kernbuf = kbuf;
-	park.park_buflen = buflen;
-	park.park_copylen = buflen;
-	park.park_flags = 0;
+	park.park_maxlen = park.park_copylen = buflen;
 
 	return touser(pmp, &park, puffs_getreqid(pmp), NULL, NULL);
 }
@@ -100,16 +97,13 @@ puffs_vntouser(struct puffs_mount *pmp, int optype,
 {
 	struct puffs_park park;
 
-	memset(&park.park_preq, 0, sizeof(struct puffs_req));
+	park.park_preq = kbuf;
 
-	park.park_opclass = PUFFSOP_VN; 
-	park.park_optype = optype;
-	park.park_cookie = cookie;
+	park.park_preq->preq_opclass = PUFFSOP_VN; 
+	park.park_preq->preq_optype = optype;
+	park.park_preq->preq_cookie = cookie;
 
-	park.park_kernbuf = kbuf;
-	park.park_buflen = buflen;
-	park.park_copylen = buflen;
-	park.park_flags = 0;
+	park.park_maxlen = park.park_copylen = buflen;
 
 	return touser(pmp, &park, puffs_getreqid(pmp), vp1, vp2);
 }
@@ -124,45 +118,43 @@ puffs_vntouser_req(struct puffs_mount *pmp, int optype,
 {
 	struct puffs_park park;
 
-	memset(&park.park_preq, 0, sizeof(struct puffs_req));
+	park.park_preq = kbuf;
 
-	park.park_opclass = PUFFSOP_VN; 
-	park.park_optype = optype;
-	park.park_cookie = cookie;
+	park.park_preq->preq_opclass = PUFFSOP_VN; 
+	park.park_preq->preq_optype = optype;
+	park.park_preq->preq_cookie = cookie;
 
-	park.park_kernbuf = kbuf;
-	park.park_buflen = buflen;
-	park.park_copylen = buflen;
-	park.park_flags = 0;
+	park.park_maxlen = park.park_copylen = buflen;
 
 	return touser(pmp, &park, reqid, vp1, vp2);
 }
 
 /*
- * vnode level request, copy routines can adjust "kernbuf"
+ * vnode level request, copy routines can adjust "kernbuf".
+ * We overload park_copylen != park_maxlen to signal that the park
+ * in question is of adjusting type.
  */
 int
 puffs_vntouser_adjbuf(struct puffs_mount *pmp, int optype,
-	void **kbuf, size_t *buflen, size_t copylen, void *cookie,
-	struct vnode *vp1, struct vnode *vp2)
+	void **kbuf, size_t *buflen, size_t maxdelta,
+	void *cookie, struct vnode *vp1, struct vnode *vp2)
 {
 	struct puffs_park park;
 	int error;
 
-	memset(&park.park_preq, 0, sizeof(struct puffs_req));
+	park.park_preq = *kbuf;
 
-	park.park_opclass = PUFFSOP_VN; 
-	park.park_optype = optype;
-	park.park_cookie = cookie;
+	park.park_preq->preq_opclass = PUFFSOP_VN; 
+	park.park_preq->preq_optype = optype;
+	park.park_preq->preq_cookie = cookie;
 
-	park.park_kernbuf = *kbuf;
-	park.park_buflen = *buflen;
-	park.park_copylen = copylen;
-	park.park_flags = PUFFS_REQFLAG_ADJBUF;
+	park.park_copylen = *buflen;
+	park.park_maxlen = maxdelta + *buflen;
 
 	error = touser(pmp, &park, puffs_getreqid(pmp), vp1, vp2);
-	*kbuf = park.park_kernbuf;
-	*buflen = park.park_buflen;
+
+	*kbuf = park.park_preq;
+	*buflen = park.park_copylen;
 
 	return error;
 }
@@ -183,13 +175,13 @@ puffs_vntouser_faf(struct puffs_mount *pmp, int optype,
 	if (ppark == NULL)
 		return; /* 2bad */
 
-	ppark->park_opclass = PUFFSOP_VN | PUFFSOPFLAG_FAF;
-	ppark->park_optype = optype;
-	ppark->park_cookie = cookie;
+	ppark->park_preq = kbuf;
 
-	ppark->park_kernbuf = kbuf;
-	ppark->park_buflen = buflen;
-	ppark->park_copylen = buflen;
+	ppark->park_preq->preq_opclass = PUFFSOP_VN | PUFFSOPFLAG_FAF;
+	ppark->park_preq->preq_optype = optype;
+	ppark->park_preq->preq_cookie = cookie;
+
+	ppark->park_maxlen = ppark->park_copylen = buflen;
 
 	(void)touser(pmp, ppark, 0, NULL, NULL);
 }
@@ -208,6 +200,7 @@ static int
 touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 	struct vnode *vp1, struct vnode *vp2)
 {
+	struct puffs_req *preq;
 
 	simple_lock(&pmp->pmp_lock);
 	if (pmp->pmp_status != PUFFSTAT_RUNNING
@@ -216,7 +209,9 @@ touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 		return ENXIO;
 	}
 
-	ppark->park_id = reqid;
+	preq = ppark->park_preq;
+	preq->preq_id = reqid;
+	preq->preq_buflen = ALIGN(ppark->park_maxlen);
 
 	TAILQ_INSERT_TAIL(&pmp->pmp_req_touser, ppark, park_entries);
 	pmp->pmp_req_touser_waiters++;
@@ -248,7 +243,7 @@ touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 	wakeup(&pmp->pmp_req_touser);
 	selnotify(pmp->pmp_sel, 0);
 
-	if (PUFFSOP_WANTREPLY(ppark->park_opclass))
+	if (PUFFSOP_WANTREPLY(ppark->park_preq->preq_opclass))
 		ltsleep(ppark, PUSER, "puffs1", 0, NULL);
 
 #if 0
@@ -259,7 +254,7 @@ touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 		KASSERT(vn_lock(vp2, LK_EXCLUSIVE | LK_RETRY) == 0);
 #endif
 
-	return ppark->park_rv;
+	return ppark->park_preq->preq_rv;
 }
 
 /*
@@ -282,14 +277,14 @@ puffs_userdead(struct puffs_mount *pmp)
 
 	/* and wakeup processes waiting for a reply from userspace */
 	TAILQ_FOREACH(park, &pmp->pmp_req_replywait, park_entries) {
-		park->park_rv = ENXIO;
+		park->park_preq->preq_rv = ENXIO;
 		TAILQ_REMOVE(&pmp->pmp_req_replywait, park, park_entries);
 		wakeup(park);
 	}
 
 	/* wakeup waiters for completion of vfs/vnode requests */
 	TAILQ_FOREACH(park, &pmp->pmp_req_touser, park_entries) {
-		park->park_rv = ENXIO;
+		park->park_preq->preq_rv = ENXIO;
 		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
 		wakeup(park);
 	}
@@ -658,9 +653,11 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	return 0;
 }
 
-static int puffsgetop(struct puffs_mount *, struct puffs_req *, int);
-static int puffsputop(struct puffs_mount *, struct puffs_req *);
+static int puffsgetop(struct puffs_mount *, struct puffs_reqh_get *, int);
+static int puffsputop(struct puffs_mount *, struct puffs_reqh_put *);
+#if 0
 static int puffssizeop(struct puffs_mount *, struct puffs_sizeop *);
+#endif
 
 static int
 puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
@@ -682,9 +679,11 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		rv =  puffsputop(pmp, data);
 		break;
 
+#if 0 /* bitrot */
 	case PUFFSSIZEOP:
 		rv = puffssizeop(pmp, data);
 		break;
+#endif
 
 	case PUFFSSTARTOP:
 		rv = puffs_start2(pmp, data);
@@ -763,128 +762,206 @@ puffs_fop_kqfilter(struct file *fp, struct knote *kn)
  * ioctl handlers
  */
 
+/*
+ * getop: scan through queued requests until:
+ *  1) max number of requests satisfied
+ *     OR
+ *  2) buffer runs out of space
+ *     OR
+ *  3) nonblocking is set AND there are no operations available
+ *     OR
+ *  4) at least one operation was transferred AND there are no more waiting
+ */
 static int
-puffsgetop(struct puffs_mount *pmp, struct puffs_req *preq, int nonblock)
+puffsgetop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 {
 	struct puffs_park *park;
-	int error;
+	struct puffs_req *preq;
+	uint8_t *bufpos;
+	int error, donesome;
+
+	donesome = error = 0;
+	bufpos = phg->phg_buf;
 
 	simple_lock(&pmp->pmp_lock);
+	while (phg->phg_nops == 0 || donesome != phg->phg_nops) {
  again:
-	if (pmp->pmp_status != PUFFSTAT_RUNNING) {
-		simple_unlock(&pmp->pmp_lock);
-		return ENXIO;
-	}
-	if (TAILQ_EMPTY(&pmp->pmp_req_touser)) {
-		if (nonblock) {
-			simple_unlock(&pmp->pmp_lock);
-			return EWOULDBLOCK;
+		if (pmp->pmp_status != PUFFSTAT_RUNNING) {
+			/* if we got some, they don't really matter anymore */
+			error = ENXIO;
+			goto out;
 		}
-		ltsleep(&pmp->pmp_req_touser, PUSER, "puffs2", 0,
-		    &pmp->pmp_lock);
-		goto again;
+		if (TAILQ_EMPTY(&pmp->pmp_req_touser)) {
+			if (nonblock || donesome) {
+				if (nonblock)
+					error = EWOULDBLOCK;
+				goto out;
+			}
+
+			ltsleep(&pmp->pmp_req_touser, PUSER, "puffs2", 0,
+			    &pmp->pmp_lock);
+			goto again;
+		}
+
+		park = TAILQ_FIRST(&pmp->pmp_req_touser);
+		preq = park->park_preq;
+
+		if (phg->phg_buflen < preq->preq_buflen) {
+			if (!donesome)
+				error = E2BIG;
+			goto out;
+		}
+		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
+
+		simple_unlock(&pmp->pmp_lock);
+		DPRINTF(("puffsgetop: get op %" PRIu64 " (%d.), from %p "
+		    "len %zu (buflen %zu), target %p\n", preq->preq_id,
+		    donesome, preq, park->park_copylen, preq->preq_buflen,
+		    bufpos));
+
+		if ((error = copyout(preq, bufpos, park->park_copylen)) != 0) {
+			DPRINTF(("    FAILED %d\n", error));
+			/*
+			 * ok, user server is probably trying to cheat.
+			 * stuff op back & return error to user
+			 */
+			 simple_lock(&pmp->pmp_lock);
+			 TAILQ_INSERT_HEAD(&pmp->pmp_req_touser, park,
+			     park_entries);
+
+			 if (donesome)
+				error = 0;
+			 goto out;
+		}
+		bufpos += preq->preq_buflen;
+		phg->phg_buflen -= preq->preq_buflen;
+		donesome++;
+
+		simple_lock(&pmp->pmp_lock);
+		pmp->pmp_req_touser_waiters--;
+
+		if (PUFFSOP_WANTREPLY(preq->preq_opclass)) {
+			TAILQ_INSERT_TAIL(&pmp->pmp_req_replywait, park,
+			    park_entries);
+		} else {
+			simple_unlock(&pmp->pmp_lock);
+			free(preq, M_PUFFS);
+			free(park, M_PUFFS);
+			simple_lock(&pmp->pmp_lock);
+		}
 	}
 
-	park = TAILQ_FIRST(&pmp->pmp_req_touser);
-	if (preq->preq_auxlen < park->park_copylen) {
-		simple_unlock(&pmp->pmp_lock);
-		return E2BIG;
-	}
-	TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
-	pmp->pmp_req_touser_waiters--;
+ out:
+	phg->phg_more = pmp->pmp_req_touser_waiters;
 	simple_unlock(&pmp->pmp_lock);
 
-	preq->preq_id = park->park_id;
-	preq->preq_opclass = park->park_opclass;
-	preq->preq_optype = park->park_optype;
-	preq->preq_cookie = park->park_cookie;
-	preq->preq_auxlen = park->park_copylen;
+	phg->phg_nops = donesome;
 
-	if ((error = copyout(park->park_kernbuf, preq->preq_aux,
-	    park->park_copylen)) != 0) {
-		/*
-		 * ok, user server is probably trying to cheat.
-		 * stuff op back & return error to user
-		 */
-		 simple_lock(&pmp->pmp_lock);
-		 TAILQ_INSERT_HEAD(&pmp->pmp_req_touser, park, park_entries);
-		 simple_unlock(&pmp->pmp_lock);
-		 return error;
-	}
-
-	if (PUFFSOP_WANTREPLY(park->park_opclass)) {
-		simple_lock(&pmp->pmp_lock);
-		TAILQ_INSERT_TAIL(&pmp->pmp_req_replywait, park, park_entries);
-		simple_unlock(&pmp->pmp_lock);
-	} else {
-		free(park->park_kernbuf, M_PUFFS);
-		free(park, M_PUFFS);
-	}
-
-	return 0;
+	return error;
 }
 
 static int
-puffsputop(struct puffs_mount *pmp, struct puffs_req *preq)
+puffsputop(struct puffs_mount *pmp, struct puffs_reqh_put *php)
 {
 	struct puffs_park *park;
-	size_t copylen;
+	void *userbuf;
+	uint64_t id;
+	size_t reqlen;
 	int error;
+	int donesome;
+
+	donesome = error = 0;
+
+	id = php->php_id;
+	userbuf = php->php_buf;
+	reqlen = php->php_buflen;
 
 	simple_lock(&pmp->pmp_lock);
-	TAILQ_FOREACH(park, &pmp->pmp_req_replywait, park_entries) {
-		if (park->park_id == preq->preq_id) {
-			TAILQ_REMOVE(&pmp->pmp_req_replywait, park,
-			    park_entries);
+	while (donesome != php->php_nops) {
+#ifdef DEBUG
+		simple_unlock(&pmp->pmp_lock);
+		DPRINTF(("puffsputop: searching for %" PRIu64 ", ubuf: %p, "
+		    "len %zu\n", id, userbuf, reqlen));
+		simple_lock(&pmp->pmp_lock);
+#endif
+		TAILQ_FOREACH(park, &pmp->pmp_req_replywait, park_entries) {
+			if (park->park_preq->preq_id == id)
+				break;
+		}
+
+		if (park == NULL) {
+			error = EINVAL;
 			break;
 		}
+		TAILQ_REMOVE(&pmp->pmp_req_replywait, park, park_entries);
+		simple_unlock(&pmp->pmp_lock);
+
+		if (park->park_maxlen != park->park_copylen) {
+			/* sanitycheck size of incoming transmission. */
+			if (reqlen > pmp->pmp_req_maxsize) {
+				DPRINTF(("puffsputop: outrageous user buf "
+				    "size: %zu\n", reqlen));
+				error = EINVAL;
+				goto loopout;
+			}
+
+			if (reqlen > park->park_copylen) {
+				if (reqlen > park->park_maxlen) {
+					DPRINTF(("puffsputop: adj copysize "
+					    "> max size, %zu vs %zu\n",
+					    reqlen, park->park_maxlen));
+					error = EINVAL;
+					goto loopout;
+				}
+				free(park->park_preq, M_PUFFS);
+				park->park_preq = malloc(reqlen,
+				    M_PUFFS, M_WAITOK);
+
+				park->park_copylen = reqlen;
+				DPRINTF(("puffsputop: adjbuf, new addr %p, "
+				    "len %zu\n", park->park_preq, reqlen));
+			}
+		} else {
+			if (reqlen == 0 || reqlen > park->park_copylen) {
+				reqlen = park->park_copylen;
+				DPRINTF(("puffsputop: kernel bufsize override: "
+				    "%zu\n", reqlen));
+			}
+		}
+
+		DPRINTF(("puffsputpop: copyin from %p to %p, len %zu\n",
+		    userbuf, park->park_preq, reqlen));
+		error = copyin(userbuf, park->park_preq, reqlen);
+		if (error)
+			goto loopout;
+
+		/* all's well, prepare for next op */
+		id = park->park_preq->preq_id;
+		reqlen = park->park_preq->preq_buflen;
+		userbuf = park->park_preq->preq_nextbuf;
+		donesome++;
+
+ loopout:
+		if (error)
+			park->park_preq->preq_rv = error;
+		wakeup(park);
+
+		simple_lock(&pmp->pmp_lock);
+		if (error)
+			break;
 	}
+
 	simple_unlock(&pmp->pmp_lock);
-
-	if (park == NULL)
-		return EINVAL;
-
-	/*
-	 * check size of incoming transmission.  allow to allocate a
-	 * larger kernel buffer only if it was specified by the caller
-	 * by setting preq->preq_auxadj.  Else, just copy whatever the
-	 * kernel buffer size is unless.
-	 *
-	 * However, don't allow ludicrously large buffers
-	 */
-	copylen = preq->preq_auxlen;
-	if (copylen > pmp->pmp_req_maxsize) {
-#ifdef DIAGNOSTIC
-		printf("puffsputop: outrageous user buf size: %zu\n", copylen);
-#endif
-		error = EFAULT;
-		goto out;
-	}
-
-	if (park->park_buflen < copylen &&
-	    park->park_flags & PUFFS_REQFLAG_ADJBUF) {
-		free(park->park_kernbuf, M_PUFFS);
-		park->park_kernbuf = malloc(copylen, M_PUFFS, M_WAITOK);
-		park->park_buflen = copylen;
-	}
-
-	error = copyin(preq->preq_aux, park->park_kernbuf, copylen);
-
-	/*
-	 * if copyin botched, inform both userspace and the vnodeop
-	 * desperately waiting for information
-	 */
- out:
-	if (error)
-		park->park_rv = error;
-	else
-		park->park_rv = preq->preq_rv;
-	wakeup(park);
+	php->php_nops -= donesome;
 
 	return error;
 }
 
 /* this is probably going to die away at some point? */
+/*
+ * XXX: currently bitrotted
+ */
+#if 0
 static int
 puffssizeop(struct puffs_mount *pmp, struct puffs_sizeop *psop_user)
 {
@@ -958,3 +1035,4 @@ puffssizeop(struct puffs_mount *pmp, struct puffs_sizeop *psop_user)
 
 	return error;
 }
+#endif
