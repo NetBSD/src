@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.92 2006/12/03 22:34:58 pavel Exp $	*/
+/*	$NetBSD: usb.c,v 1.93 2006/12/05 17:35:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.92 2006/12/03 22:34:58 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.93 2006/12/05 17:35:35 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -437,7 +437,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 {
 	struct usb_event *ue;
 #ifdef COMPAT_30
-	struct usb_event_old *ueo;
+	struct usb_event_old *ueo = NULL;	/* XXXGCC */
 #endif
 	int s, error, n, useold;
 
@@ -445,8 +445,6 @@ usbread(dev_t dev, struct uio *uio, int flag)
 		return (ENXIO);
 
 	useold = 0;
-	/* XXXGCC */
-	ueo = NULL;
 	switch (uio->uio_resid) {
 #ifdef COMPAT_30
 	case sizeof(struct usb_event_old):
@@ -635,34 +633,34 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	}
 
 	case USB_DEVICEINFO:
-#ifdef COMPAT_30
-	case USB_DEVICEINFO_OLD:
-#endif
 	{
-		struct usb_device_info *di = (void *)data;
-#ifdef COMPAT_30
-		struct usb_device_info_old *dio = (void *)data;
-#endif
-		int addr;
 		usbd_device_handle dev;
+		struct usb_device_info *di = (void *)data;
+		int addr = di->udi_addr;
 
-		if (cmd == USB_DEVICEINFO)
-			addr=di->udi_addr;
-		else
-			addr=dio->udi_addr;
 		if (addr < 1 || addr >= USB_MAX_DEVICES)
-			return (EINVAL);
-		dev = sc->sc_bus->devices[addr];
-		if (dev == NULL)
-			return (ENXIO);
-		if (cmd == USB_DEVICEINFO)
-			usbd_fill_deviceinfo(dev, di, 1);
-#ifdef COMPAT_30
-		else
-			usbd_fill_deviceinfo_old(dev, dio, 1);
-#endif
+			return EINVAL;
+		if ((dev = sc->sc_bus->devices[addr]) == NULL)
+			return ENXIO;
+		usbd_fill_deviceinfo(dev, di, 1);
 		break;
 	}
+
+#ifdef COMPAT_30
+	case USB_DEVICEINFO_OLD:
+	{
+		usbd_device_handle dev;
+		struct usb_device_info_old *di = (void *)data;
+		int addr = di->udi_addr;
+
+		if (addr < 1 || addr >= USB_MAX_DEVICES)
+			return EINVAL;
+		if ((dev = sc->sc_bus->devices[addr]) == NULL)
+			return ENXIO;
+		usbd_fill_deviceinfo_old(dev, di, 1);
+		break;
+	}
+#endif
 
 	case USB_DEVICESTATS:
 		*(struct usb_device_stats *)data = sc->sc_bus->stats;
