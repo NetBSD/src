@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.script,v 1.9 2006/08/25 06:49:16 skrll Exp $	*/
+/*	$NetBSD: ld.script,v 1.10 2006/12/05 16:58:11 skrll Exp $	*/
 
 /* 	$OpenBSD: ld.script,v 1.7 1999/12/17 07:02:38 mickey Exp $	*/
 
@@ -61,4 +61,8 @@ SECTIONS
 		. = ALIGN(4096);
 	}
 	end = ABSOLUTE(.);
+	.note.netbsd.ident :
+	{
+		KEEP(*(.note.netbsd.ident));
+	}
 }
