@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.5 2006/11/07 22:10:53 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.6 2006/12/05 23:04:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.5 2006/11/07 22:10:53 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.6 2006/12/05 23:04:21 pooka Exp $");
 #endif /* !lint */
 
 #include <puffs.h>
@@ -122,7 +122,7 @@ puffsdump_req(struct puffs_req *preq)
 	    preq->preq_id, PUFFSOP_OPCLASS(preq->preq_opclass),
 	    PUFFSOP_WANTREPLY(preq->preq_opclass) ? "" : " (FAF)",
 	    map[preq->preq_optype], preq->preq_cookie,
-	    preq->preq_aux, preq->preq_auxlen);
+	    preq->preq_buf, preq->preq_buflen);
 }
 
 void
