@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.10 2006/12/05 23:03:28 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.11 2006/12/05 23:41:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.10 2006/12/05 23:03:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.11 2006/12/05 23:41:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -388,4 +388,39 @@ puffs_updatevpsize(struct vnode *vp)
 
 	if (va.va_size != VNOVAL)
 		vp->v_size = va.va_size;
+}
+
+/*
+ * We're dead, kaput, RIP, slightly more than merely pining for the
+ * fjords, belly-up, fallen, lifeless, finished, expired, gone to meet
+ * our maker, ceased to be, etcetc.  YASD.  It's a dead FS!
+ */
+void
+puffs_userdead(struct puffs_mount *pmp)
+{
+	struct puffs_park *park;
+
+	simple_lock(&pmp->pmp_lock);
+
+	/*
+	 * Mark filesystem status as dying so that operations don't
+	 * attempt to march to userspace any longer.
+	 */
+	pmp->pmp_status = PUFFSTAT_DYING;
+
+	/* and wakeup processes waiting for a reply from userspace */
+	TAILQ_FOREACH(park, &pmp->pmp_req_replywait, park_entries) {
+		park->park_preq->preq_rv = ENXIO;
+		TAILQ_REMOVE(&pmp->pmp_req_replywait, park, park_entries);
+		wakeup(park);
+	}
+
+	/* wakeup waiters for completion of vfs/vnode requests */
+	TAILQ_FOREACH(park, &pmp->pmp_req_touser, park_entries) {
+		park->park_preq->preq_rv = ENXIO;
+		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
+		wakeup(park);
+	}
+
+	simple_unlock(&pmp->pmp_lock);
 }
