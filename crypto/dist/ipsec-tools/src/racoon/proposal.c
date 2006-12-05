@@ -1,6 +1,6 @@
-/*	$NetBSD: proposal.c,v 1.11 2006/10/09 06:32:59 manu Exp $	*/
+/*	$NetBSD: proposal.c,v 1.12 2006/12/05 13:38:40 vanhu Exp $	*/
 
-/* $Id: proposal.c,v 1.11 2006/10/09 06:32:59 manu Exp $ */
+/* $Id: proposal.c,v 1.12 2006/12/05 13:38:40 vanhu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -427,7 +427,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 
 		for (tr1 = pr1->head; tr1; tr1 = tr1->next) {
 			for (tr2 = pr2->head; tr2; tr2 = tr2->next) {
-				if (cmpsatrns(pr1->proto_id, tr1, tr2) == 0)
+				if (cmpsatrns(pr1->proto_id, tr1, tr2, ph1->rmconf->pcheck_level) == 0)
 					goto found;
 			}
 		}
@@ -529,9 +529,10 @@ cmpsaprop(pp1, pp2)
  * tr2: my satrns
  */
 int
-cmpsatrns(proto_id, tr1, tr2)
+cmpsatrns(proto_id, tr1, tr2, check_level)
 	int proto_id;
 	const struct satrns *tr1, *tr2;
+	int check_level;
 {
 	if (tr1->trns_id != tr2->trns_id) {
 		plog(LLV_WARNING, LOCATION, NULL,
@@ -551,16 +552,34 @@ cmpsatrns(proto_id, tr1, tr2)
 		return 1;
 	}
 
-	/* XXX
-	 * At this moment for interoperability, the responder obey
-	 * the initiator.  It should be defined a notify message.
+	/* Check key length regarding checkmode
+	 * XXX Shall we send some kind of notify message when key length rejected ?
 	 */
-	if (tr1->encklen > tr2->encklen) {
+	switch(check_level){
+	case PROP_CHECK_OBEY:
+		return 0;
+		break;
+
+	case PROP_CHECK_STRICT:
+		/* FALLTHROUGH */
+	case PROP_CHECK_CLAIM:
+		if (tr1->encklen < tr2->encklen) {
 		plog(LLV_WARNING, LOCATION, NULL,
-			"less key length proposed, "
-			"mine:%d peer:%d.  Use initiaotr's one.\n",
+				 "low key length proposed, "
+				 "mine:%d peer:%d.\n",
 			tr2->encklen, tr1->encklen);
-		/* FALLTHRU */
+			return 1;
+		}
+		break;
+	case PROP_CHECK_EXACT:
+		if (tr1->encklen != tr2->encklen) {
+			plog(LLV_WARNING, LOCATION, NULL,
+				 "key length mismatched, "
+				 "mine:%d peer:%d.\n",
+				 tr2->encklen, tr1->encklen);
+			return 1;
+		}
+		break;
 	}
 
 	return 0;
