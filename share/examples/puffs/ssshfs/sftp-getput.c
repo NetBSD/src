@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-getput.c,v 1.2 2006/11/21 23:09:23 pooka Exp $	*/
+/*	$NetBSD: sftp-getput.c,v 1.3 2006/12/05 23:14:13 pooka Exp $	*/
 
 /*	NetBSD: sftp-client.c,v 1.26 2006/09/28 21:22:15 christos Exp */
 /* $OpenBSD: sftp-client.c,v 1.74 2006/08/03 03:34:42 deraadt Exp $ */
@@ -26,7 +26,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-getput.c,v 1.2 2006/11/21 23:09:23 pooka Exp $");
+__RCSID("$NetBSD: sftp-getput.c,v 1.3 2006/12/05 23:14:13 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -456,6 +456,10 @@ do_writefile(struct sftp_conn *conn, char *path, uint8_t *localbuf,
 	ap = do_stat(conn, path, 1);
 	if (!ap)
 		return -1;
+
+	if (append)
+		putoff = ap->size;
+
 	memcpy(&savea, ap, sizeof(Attrib));
 	savea.flags &= ~SSH2_FILEXFER_ATTR_SIZE;
 
@@ -491,7 +495,6 @@ do_writefile(struct sftp_conn *conn, char *path, uint8_t *localbuf,
 	startid = ackid = id + 1;
 	data = xmalloc(conn->transfer_buflen);
 
-	/* Read from local and write to remote */
 	offset = putoff;
 
 	for (;;) {
