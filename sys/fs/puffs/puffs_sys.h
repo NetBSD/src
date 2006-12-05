@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.12 2006/12/05 23:03:28 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.13 2006/12/05 23:41:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -191,6 +191,10 @@ void	puffs_nukebypmp(struct puffs_mount *);
 
 uint64_t	puffs_getreqid(struct puffs_mount *);
 void		puffs_userdead(struct puffs_mount *);
+
+/* get/put called by ioctl handler */
+int	puffs_getop(struct puffs_mount *, struct puffs_reqh_get *, int);
+int	puffs_putop(struct puffs_mount *, struct puffs_reqh_put *);
 
 extern int (**puffs_vnodeop_p)(void *);
 
