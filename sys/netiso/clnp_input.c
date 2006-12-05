@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.32 2006/12/05 16:33:56 is Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.33 2006/12/05 16:36:14 is Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.32 2006/12/05 16:33:56 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.33 2006/12/05 16:36:14 is Exp $");
 
 #include "opt_iso.h"
 
@@ -194,9 +194,7 @@ next:
 		      (caddr_t) sh.snh_shost, sizeof(u_long));
 		sh.snh_dhost[4] = mtod(m, u_char *)[sizeof(struct ip) +
 				     offsetof(struct eon_hdr, eonh_class)];
-		m->m_data += EONIPLEN;
-		m->m_len -= EONIPLEN;
-		m->m_pkthdr.len -= EONIPLEN;
+		m_adj(m, EONIPLEN);
 		break;
 	case IFT_ETHER:
 		bcopy((caddr_t) (mtod(m, struct ether_header *)->ether_dhost),
