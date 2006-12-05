@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.49 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.50 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8555,3 +8555,8 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		offload support. [yamt 20061124]
 	ahcisata(4): Added driver for AHCI 1.0 and 1.1 compliant SATA
 		controllers. [bouyer 20061130]
+	mail(1): Many new features including command line editing, MIME
+		support, threading and sorting of messages, improved message
+		selection, and redirection of command output; from Anon Ymous.
+		[christos 20061201]
+
