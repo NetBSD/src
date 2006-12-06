@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.237 2006/12/06 00:38:16 dyoung Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.238 2006/12/06 00:39:56 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.237 2006/12/06 00:38:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.238 2006/12/06 00:39:56 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1935,7 +1935,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		}
 	}
 
-	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
+	error = ip_output(m, NULL, &ipforward_rt,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
 	    (struct ip_moptions *)NULL, (struct socket *)NULL);
 
@@ -1978,7 +1978,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
 #if !defined(IPSEC) && !defined(FAST_IPSEC)
-		if (ipforward_rt.ro_rt)
+		if (ipforward_rt.ro_rt != NULL)
 			destmtu = ipforward_rt.ro_rt->rt_ifp->if_mtu;
 #else
 		/*
@@ -1987,7 +1987,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		 *	tunnel MTU = if MTU - sizeof(IP) - ESP/AH hdrsiz
 		 * XXX quickhack!!!
 		 */
-		if (ipforward_rt.ro_rt) {
+		if (ipforward_rt.ro_rt != NULL) {
 			struct secpolicy *sp;
 			int ipsecerror;
 			size_t ipsechdr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.17 2006/08/29 23:40:14 christos Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.18 2006/12/06 00:48:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.17 2006/08/29 23:40:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.18 2006/12/06 00:48:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -242,7 +242,7 @@ clnp_output(struct mbuf *m0, ...)
 			printf("\tclc_dst %s\n", clnp_iso_addrp(&clcp->clc_dst));
 			printf("\tisop_opts %p, clc_opts %p\n",
 			    isop->isop_options, clcp->clc_options);
-			if (isop->isop_route.ro_rt)
+			if (isop->isop_route.ro_rt != NULL)
 				printf("\tro_rt %p, rt_flags x%x\n",
 				    isop->isop_route.ro_rt,
 				    isop->isop_route.ro_rt->rt_flags);
