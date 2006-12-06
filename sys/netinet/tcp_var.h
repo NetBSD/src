@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.141 2006/10/21 10:08:54 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.142 2006/12/06 09:08:27 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -867,7 +867,6 @@ void	 tcp_mtudisc(struct inpcb *, int);
 struct ipqent *tcpipqent_alloc(void);
 void	 tcpipqent_free(struct ipqent *);
 
-int	 tcp_reass(struct tcpcb *, struct tcphdr *, struct mbuf *, int *);
 int	 tcp_respond(struct tcpcb *, struct mbuf *, struct mbuf *,
 	    struct tcphdr *, tcp_seq, tcp_seq, int);
 void	 tcp_rmx_rtt(struct tcpcb *);
