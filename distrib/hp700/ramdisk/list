@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.3 2005/09/10 13:09:01 dsl Exp $
+#	$NetBSD: list,v 1.4 2006/12/06 10:27:00 skrll Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -29,6 +29,7 @@ PROG	sbin/init
 PROG	sbin/mknod
 PROG	sbin/mount
 PROG	sbin/mount_ffs
+PROG	sbin/mount_kernfs
 PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
