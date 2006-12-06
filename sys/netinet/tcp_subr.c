@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.208 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.209 2006/12/06 09:10:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.208 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.209 2006/12/06 09:10:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -365,6 +365,9 @@ EVCNT_ATTACH_STATIC(tcp_reass_fragdup);
 struct mowner tcp_mowner = MOWNER_INIT("tcp", "");
 struct mowner tcp_rx_mowner = MOWNER_INIT("tcp", "rx");
 struct mowner tcp_tx_mowner = MOWNER_INIT("tcp", "tx");
+struct mowner tcp_sock_mowner = MOWNER_INIT("tcp", "sock");
+struct mowner tcp_sock_rx_mowner = MOWNER_INIT("tcp", "sock rx");
+struct mowner tcp_sock_tx_mowner = MOWNER_INIT("tcp", "sock tx");
 #endif
 
 /*
@@ -408,6 +411,10 @@ tcp_init(void)
 
 	MOWNER_ATTACH(&tcp_tx_mowner);
 	MOWNER_ATTACH(&tcp_rx_mowner);
+	MOWNER_ATTACH(&tcp_reass_mowner);
+	MOWNER_ATTACH(&tcp_sock_mowner);
+	MOWNER_ATTACH(&tcp_sock_tx_mowner);
+	MOWNER_ATTACH(&tcp_sock_rx_mowner);
 	MOWNER_ATTACH(&tcp_mowner);
 }
 
