@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.236 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.237 2006/12/06 00:38:16 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.236 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.237 2006/12/06 00:38:16 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1728,10 +1728,10 @@ ip_srcroute(void)
 	struct mbuf *m;
 
 	if (ip_nhops == 0)
-		return ((struct mbuf *)0);
+		return NULL;
 	m = m_get(M_DONTWAIT, MT_SOOPTS);
 	if (m == 0)
-		return ((struct mbuf *)0);
+		return NULL;
 
 	MCLAIM(m, &inetdomain.dom_mowner);
 #define OPTSIZ	(sizeof(ip_srcrt.nop) + sizeof(ip_srcrt.srcopt))
