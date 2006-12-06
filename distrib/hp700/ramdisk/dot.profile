@@ -1,6 +1,6 @@
-# $NetBSD: dot.profile,v 1.1 2005/05/18 14:04:26 chs Exp $
+# $NetBSD: dot.profile,v 1.2 2006/12/06 10:27:00 skrll Exp $
 #
-# Copyright (c) 1995 Jason R. Thorpe
+# Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
 # 
@@ -39,53 +39,42 @@ TERM=vt100
 export TERM
 HOME=/
 export HOME
+BLOCKSIZE=1k
+export BLOCKSIZE
+EDITOR=ed
+export EDITOR
 
 umask 022
+
+ROOTDEV=/dev/md0a
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 	export DONEPROFILE
 
 	# set up some sane defaults
-	echo 'erase ^H, werase ^W, kill ^U, intr ^C, status ^T'
-	stty newcrt werase ^W intr ^C kill ^U erase ^H status ^T 9600
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T 9600
+	echo ''
 
-	# mount root read-write
-	mount -u /dev/md0a /
+	# mount the ramdisk read write
+	mount -u $ROOTDEV /
 
-	# mount a /tmp on mfs, to avoid filling the md
-	mount -t mfs swap /tmp
+	# mount the kern_fs so that we can examine the dmesg state
+	mount -t kernfs /kern /kern
 
-	# get the terminal type
-	_forceloop=""
-	while [ "X${_forceloop}" = X"" ]; do
-		eval `tset -s -m ":?$TERM"`
-		if [ "X${TERM}" != X"unknown" ]; then
-			_forceloop="done"
-		fi
-	done
+	# pull in the functions that people will use from the shell prompt.
+	# . /.commonutils
+	# . /.instutils
+	dmesg() cat /kern/msgbuf
+	grep() sed -n "/$1/p"
 
-	# Installing or upgrading?
-	_forceloop=""
-	while [ "X${_forceloop}" = X"" ]; do
-		echo -n '(I)nstall, (S)hell or (H)alt ? '
-		read _forceloop
-		case "$_forceloop" in
-			i*|I*)
-				/sysinst
-				;;
-
-			s*|S*)
-				/bin/sh
-				;;
-
-			h*|H*)
-				/sbin/halt
-				;;
-
-			*)
-				_forceloop=""
-				;;
-		esac
-	done
+	# run the installation or upgrade script.
+	if [ -x /sysinst ]; then
+		# run the installation or upgrade script.
+		sysinst
+	else
+		echo "This image contains utilities which may be needed"
+		echo "to get you out of a pinch."
+	fi
 fi
