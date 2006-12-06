@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.117 2006/12/04 18:50:19 elad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.118 2006/12/06 18:54:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.117 2006/12/04 18:50:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.118 2006/12/06 18:54:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,7 +337,6 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		error = copyin(SCARG(uap, addr), &piod, sizeof(piod));
 		if (error)
 			return (error);
-		uio.uio_vmspace = vm;
 		switch (piod.piod_op) {
 		case PIOD_READ_D:
 		case PIOD_READ_I:
@@ -359,16 +358,17 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		default:
 			return (EINVAL);
 		}
+		error = proc_vmspace_getref(l->l_proc, &vm);
+		if (error) {
+			return error;
+		}
 		iov.iov_base = piod.piod_addr;
 		iov.iov_len = piod.piod_len;
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
 		uio.uio_offset = (off_t)(unsigned long)piod.piod_offs;
 		uio.uio_resid = piod.piod_len;
-		error = proc_vmspace_getref(l->l_proc, &vm);
-		if (error) {
-			return error;
-		}
+		uio.uio_vmspace = vm;
 
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(SCARG(uap, req)),
