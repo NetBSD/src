@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.72 2006/11/29 14:13:15 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.73 2006/12/06 13:52:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -142,10 +142,6 @@
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/rtl81x9var.h>
