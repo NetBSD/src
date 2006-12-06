@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.30 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.31 2006/12/06 16:26:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.30 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.31 2006/12/06 16:26:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -368,7 +368,8 @@ setup_piping(char *cmdline, int c_pipe)
 		}
 
 	}
-	else if (value(ENAME_PAGER_OFF) == NULL && c_pipe & C_PIPE_PAGER) {
+	else if (value(ENAME_PAGER_OFF) == NULL && (c_pipe & C_PIPE_PAGER ||
+		(c_pipe & C_PIPE_CRT && value(ENAME_CRT) != NULL))) {
 		const char *pager;
 		pager = value(ENAME_PAGER);
 		if (pager == NULL || *pager == '\0')
