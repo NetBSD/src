@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.7 2006/12/06 13:41:35 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.8 2006/12/06 22:08:49 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -65,7 +65,7 @@ doc/CHANGES					patch
 
 sys/miscfs/procfs/procfs_vnops.c		1.141
 
-	Fix problems in procfs caused by integration of kauth(9) support.
+	Make procfs work again for non-root users.
 	[elad, ticket #248]
 
 gnu/usr.bin/gdb53/libiberty/Makefile		1.5
