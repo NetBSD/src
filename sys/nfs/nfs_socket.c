@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.141 2006/11/09 09:53:57 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.142 2006/12/06 08:55:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.141 2006/11/09 09:53:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.142 2006/12/06 08:55:52 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2312,6 +2312,7 @@ nfsrv_rcv(so, arg, waitflag)
 			goto dorecs;
 		}
 		m = mp;
+		m_claimm(m, &nfs_mowner);
 		if (slp->ns_rawend) {
 			slp->ns_rawend->m_next = m;
 			slp->ns_cc += 1000000000 - auio.uio_resid;
@@ -2346,6 +2347,7 @@ nfsrv_rcv(so, arg, waitflag)
 					m->m_next = mp;
 				} else
 					m = mp;
+				m_claimm(m, &nfs_mowner);
 				if (slp->ns_recend)
 					slp->ns_recend->m_nextpkt = m;
 				else
