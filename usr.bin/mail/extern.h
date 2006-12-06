@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.27 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.28 2006/12/06 17:55:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.27 2006/11/28 18:45:32 christos Exp $
+ *	$NetBSD: extern.h,v 1.28 2006/12/06 17:55:00 christos Exp $
  */
 
 #ifndef __EXTERN_H__
@@ -180,7 +180,8 @@ void	 parse(const char [], struct headline *, char []);
  */
 void	 announce(void);
 void	 commands(void);
-int	 execute(char [], int);
+enum execute_contxt_e { ec_normal, ec_composing, ec_autoprint };
+int	 execute(char [], enum execute_contxt_e);
 int	 incfile(void);
 const struct cmd *lex(char []);
 void	 load(const char *);
