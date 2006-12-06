@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.168 2006/12/06 00:41:59 dyoung Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.169 2006/12/06 04:29:09 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.168 2006/12/06 00:41:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.169 2006/12/06 04:29:09 dyoung Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -331,7 +331,7 @@ ip_output(struct mbuf *m0, ...)
 		mtu = ifp->if_mtu;
 		IFP_TO_IA(ifp, ia);
 	} else {
-		if (ro->ro_rt == NULL) {
+		if (ro->ro_rt == NULL)
 			rtalloc(ro);
 		if (ro->ro_rt == NULL) {
 			ipstat.ips_noroute++;
