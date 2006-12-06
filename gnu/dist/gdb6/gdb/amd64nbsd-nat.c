@@ -24,6 +24,7 @@
 
 #include "gdb_assert.h"
 
+#include "nbsd-nat.h"
 #include "amd64-tdep.h"
 #include "amd64-nat.h"
 
@@ -63,10 +64,14 @@ void _initialize_amd64nbsd_nat (void);
 void
 _initialize_amd64nbsd_nat (void)
 {
+  struct target_ops *t;
+
   amd64_native_gregset32_reg_offset = amd64nbsd32_r_reg_offset;
   amd64_native_gregset32_num_regs = ARRAY_SIZE (amd64nbsd32_r_reg_offset);
   amd64_native_gregset64_reg_offset = amd64nbsd_r_reg_offset;
 
-  /* We've got nothing to add to the common *BSD/amd64 target.  */
-  add_target (amd64bsd_target ());
+  /* Add some extra features to the common *BSD/i386 target.  */
+  t = amd64bsd_target ();
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
+  add_target (t);
 }
