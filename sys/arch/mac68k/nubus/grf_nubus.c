@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.70 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.71 2006/12/06 21:21:12 hauke Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.70 2005/12/24 20:07:15 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.71 2006/12/06 21:21:12 hauke Exp $");
 
 #include <sys/param.h>
 
@@ -69,6 +69,9 @@ static void	grfmv_intr_vimage(void *);
 static void	grfmv_intr_gvimage(void *);
 static void	grfmv_intr_radius_gsc(void *);
 static void	grfmv_intr_radius_gx(void *);
+static void	grfmv_intr_relax_200(void *);
+static void	grfmv_intr_mvc(void *);
+static void	grfmv_intr_viltro_340(void *);
 
 static int	grfmv_mode(struct grf_softc *, int, void *);
 static int	grfmv_match(struct device *, struct cfdata *, void *);
@@ -301,6 +304,10 @@ bad:
 	case NUBUS_DRHW_LAPIS:
 		add_nubus_intr(na->slot, grfmv_intr_lapis, sc);
 		break;
+	case NUBUS_DRHW_RELAX200:
+		add_nubus_intr(na->slot, grfmv_intr_relax_200, sc);
+		break;
+	case NUBUS_DRHW_BAER:
 	case NUBUS_DRHW_FORMAC:
 		add_nubus_intr(na->slot, grfmv_intr_formac, sc);
 		break;
@@ -331,6 +338,12 @@ bad:
 		sc->cli_offset = 0xa00014;
 		sc->cli_value = 0;
 		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc);
+		break;
+	case NUBUS_DRHW_MVC:
+		add_nubus_intr(na->slot, grfmv_intr_mvc, sc);
+		break;
+	case NUBUS_DRHW_VILTRO340:
+		add_nubus_intr(na->slot, grfmv_intr_viltro_340, sc);
 		break;
 	default:
 		printf("%s: Unknown video card ID 0x%x --",
@@ -647,7 +660,8 @@ grfmv_intr_lapis(void *vsc)
 }
 
 /*
- * Routine to clear interrupts for the Formac Color Card II
+ * Routine to clear interrupts for the Formac ProNitron 80.IVb
+ * and Color Card II
  */
 /*ARGSUSED*/
 static void
@@ -711,4 +725,46 @@ grfmv_intr_radius_gx(void *vsc)
 
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x600000, 0x00);
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x600000, 0x20);
+}
+
+/*
+ * Routine to clear interrupts for the Relax 19" model 200.
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_relax_200(void *vsc)
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	unsigned long	scratch;
+
+	/* The board ROM driver code has a tst.l here. */
+	scratch = bus_space_read_4(sc->sc_tag, sc->sc_handle, 0x000D0040);
+}
+
+/*
+ * Routine to clear interrupts for the Apple Mac II Monochrome Video Card.
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_mvc(void *vsc)
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+
+	bus_space_write_4(sc->sc_tag, sc->sc_handle, 0x00040000, 0);
+	bus_space_write_4(sc->sc_tag, sc->sc_handle, 0x00020000, 0);	
+}
+
+/*
+ * Routine to clear interrupts for the VillageTronic Mac Picasso 340.
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_viltro_340(void *vsc)
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t scratch;
+
+	/* Yes, two read accesses to the same spot. */
+	scratch = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0x0500);
+	scratch = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0x0500);
 }
