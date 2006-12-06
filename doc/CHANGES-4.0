@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.6 2006/12/04 18:41:10 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.7 2006/12/06 13:41:35 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -62,4 +62,25 @@ doc/CHANGES					patch
 
 	Add entry for etherip(4).
 	[rpaulo, ticket #249]
+
+sys/miscfs/procfs/procfs_vnops.c		1.141
+
+	Fix problems in procfs caused by integration of kauth(9) support.
+	[elad, ticket #248]
+
+gnu/usr.bin/gdb53/libiberty/Makefile		1.5
+
+	Fix SSP build for the poor archs that have not converted yet.
+	[tls, ticket #250]
+
+gnu/usr.bin/gdb53/gdb/Makefile			1.8
+
+	Allow to build NetBSD-amd64 with USE_SSP set.
+	[tls, ticket #251]
+
+sys/ufs/ffs/ffs_snapshot.c			1.38
+
+	Prevent kernel panics when creating snapshots on filesystems which
+	uses quotas. This fixes PR kern/35121.
+	[hannken, ticket #252]
 
