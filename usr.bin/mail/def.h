@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.22 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: def.h,v 1.23 2006/12/06 16:26:24 christos Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.22 2006/11/28 18:45:32 christos Exp $
+ *	$NetBSD: def.h,v 1.23 2006/12/06 16:26:24 christos Exp $
  */
 
 /*
@@ -188,7 +188,8 @@ struct cmd {
 	int	(*c_func)(void *);	/* Implementor of the command */
 	int	c_pipe;			/* Pipe output through the pager */
 # define C_PIPE_PAGER	1		/* enable use of pager */
-# define C_PIPE_SHELL	2		/* enable shell pipes */
+# define C_PIPE_CRT	2		/* use the pager if CRT is defined */
+# define C_PIPE_SHELL	4		/* enable shell pipes */
 #ifdef USE_EDITLINE
 	const char *c_complete;		/* String describing completion */
 #endif
