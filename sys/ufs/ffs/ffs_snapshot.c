@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.37 2006/11/16 21:21:34 christos Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.37.2.1 2006/12/06 13:31:48 tron Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,10 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.37 2006/11/16 21:21:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.37.2.1 2006/12/06 13:31:48 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
+#include "opt_quota.h"
 #endif
 
 #include <sys/param.h>
@@ -186,6 +187,10 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	    VTOI(vp)->i_uid != kauth_cred_geteuid(l->l_cred))
 		return EACCES;
 
+#ifdef QUOTA
+	if ((error = getinoquota(VTOI(vp))) != 0)
+		return error;
+#endif
 	if (vp->v_size != 0) {
 		error = ffs_truncate(vp, 0, 0, NOCRED, l);
 		if (error)
