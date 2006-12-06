@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.11.2.7 2005/05/28 12:47:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.11.2.8 2006/12/06 13:22:24 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
+#include "opt_quota.h"
 #endif
 
 #include <sys/param.h>
@@ -184,6 +185,10 @@ ffs_snapshot(mp, vp, ctime)
 	    VTOI(vp)->i_uid != p->p_ucred->cr_uid)
 		return EACCES;
 
+#ifdef QUOTA
+	if ((error = getinoquota(VTOI(vp))) != 0)
+		return error;
+#endif
 	if (vp->v_size != 0) {
 		error = VOP_TRUNCATE(vp, 0, 0, NOCRED, p);
 		if (error)
