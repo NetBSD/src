@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.31 2006/12/06 16:26:24 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.32 2006/12/06 17:55:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.31 2006/12/06 16:26:24 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.32 2006/12/06 17:55:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -467,17 +467,16 @@ get_cmdname(char *buf)
  * Command functions return 0 for success, 1 for error, and -1
  * for abort.  A 1 or -1 aborts a load or source.  A -1 aborts
  * the interactive command loop.
- * Contxt is non-zero if called while composing mail.
+ * execute_contxt_e is in extern.h.
  */
 PUBLIC int
-execute(char linebuf[], int contxt)
+execute(char linebuf[], enum execute_contxt_e contxt)
 {
 	char *word;
 	char *arglist[MAXARGC];
 	const struct cmd *com = NULL;
 	char *volatile cp;
 	int c;
-	int muvec[2];
 	int e = 1;
 
 	/*
@@ -548,7 +547,7 @@ execute(char linebuf[], int contxt)
 		   com->c_name);
 		goto out;
 	}
-	if (contxt && com->c_argtype & R) {
+	if (contxt == ec_composing && com->c_argtype & R) {
 		(void)printf("Cannot recursively invoke \"%s\"\n", com->c_name);
 		goto out;
 	}
@@ -657,12 +656,9 @@ out:
 	}
 	if (com == NULL)
 		return 0;
-	if (value(ENAME_AUTOPRINT) != NULL && com->c_argtype & P)
-		if ((dot->m_flag & MDELETED) == 0) {
-			muvec[0] = get_msgnum(dot);
-			muvec[1] = 0;
-			(void)type(muvec);
-		}
+	if (contxt != ec_autoprint && com->c_argtype & P &&
+	    value(ENAME_AUTOPRINT) != NULL && (dot->m_flag & MDELETED) == 0)
+		(void)execute(__UNCONST("print ."), ec_autoprint);
 	if (!sourcing && (com->c_argtype & T) == 0)
 		sawcom = 1;
 	return 0;
@@ -825,7 +821,7 @@ commands(void)
 			break;
 		}
 		eofloop = 0;
-		if (execute(linebuf, 0))
+		if (execute(linebuf, ec_normal))
 			break;
 	}
 }
