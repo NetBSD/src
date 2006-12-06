@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.110 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.111 2006/12/06 10:02:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.110 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.111 2006/12/06 10:02:22 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1461,7 +1461,7 @@ itimerfire(struct ptimer *pt)
 			pt->pt_overruns++;
 		else {
 			ksiginfo_t ksi;
-			(void)memset(&ksi, 0, sizeof(ksi));
+			KSI_INIT(&ksi);
 			ksi.ksi_signo = pt->pt_ev.sigev_signo;
 			ksi.ksi_code = SI_TIMER;
 			ksi.ksi_sigval = pt->pt_ev.sigev_value;

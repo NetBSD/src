@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.162 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.163 2006/12/06 10:02:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.162 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.163 2006/12/06 10:02:22 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -136,7 +136,7 @@ static void
 exit_psignal(struct proc *p, struct proc *pp, ksiginfo_t *ksi)
 {
 
-	(void)memset(ksi, 0, sizeof(ksiginfo_t));
+	KSI_INIT(ksi);
 	if ((ksi->ksi_signo = P_EXITSIG(p)) == SIGCHLD) {
 		if (WIFSIGNALED(p->p_xstat)) {
 			if (WCOREDUMP(p->p_xstat))
