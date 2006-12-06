@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.256 2006/12/06 09:08:27 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.257 2006/12/06 09:10:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.256 2006/12/06 09:08:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.257 2006/12/06 09:10:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -388,6 +388,10 @@ static void tcp6_log_refused(const struct ip6_hdr *, const struct tcphdr *);
 
 #define	TRAVERSE(x) while ((x)->m_next) (x) = (x)->m_next
 
+#if defined(MBUFTRACE)
+struct mowner tcp_reass_mowner = MOWNER_INIT("tcp", "reass");
+#endif /* defined(MBUFTRACE) */
+
 static POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl",
     NULL);
 
@@ -443,6 +447,8 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int *tlen)
 	 */
 	if (th == 0)
 		goto present;
+
+	m_claimm(m, &tcp_reass_mowner);
 
 	rcvoobyte = *tlen;
 	/*

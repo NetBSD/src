@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.129 2006/11/10 13:19:16 yamt Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.130 2006/12/06 09:10:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.129 2006/11/10 13:19:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.130 2006/12/06 09:10:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -796,9 +796,9 @@ tcp_attach(struct socket *so)
 	family = so->so_proto->pr_domain->dom_family;
 
 #ifdef MBUFTRACE
-	so->so_mowner = &tcp_mowner;
-	so->so_rcv.sb_mowner = &tcp_rx_mowner;
-	so->so_snd.sb_mowner = &tcp_tx_mowner;
+	so->so_mowner = &tcp_sock_mowner;
+	so->so_rcv.sb_mowner = &tcp_sock_rx_mowner;
+	so->so_snd.sb_mowner = &tcp_sock_tx_mowner;
 #endif
 	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
 		error = soreserve(so, tcp_sendspace, tcp_recvspace);

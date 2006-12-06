@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.142 2006/12/06 09:08:27 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.143 2006/12/06 09:10:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -774,6 +774,10 @@ extern	u_long syn_cache_count;
 #ifdef MBUFTRACE
 extern	struct mowner tcp_rx_mowner;
 extern	struct mowner tcp_tx_mowner;
+extern	struct mowner tcp_reass_mowner;
+extern	struct mowner tcp_sock_mowner;
+extern	struct mowner tcp_sock_rx_mowner;
+extern	struct mowner tcp_sock_tx_mowner;
 extern	struct mowner tcp_mowner;
 #endif
 
