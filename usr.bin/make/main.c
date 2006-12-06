@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.138 2006/12/03 20:37:39 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.139 2006/12/06 20:38:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.138 2006/12/03 20:37:39 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.139 2006/12/06 20:38:21 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.138 2006/12/03 20:37:39 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.139 2006/12/06 20:38:21 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -277,7 +277,7 @@ parse_debug_options(const char *argvalue)
 				snprintf(fname + len - 2, 20, "%d", getpid());
 			debug_file = fopen(fname, mode);
 			if (!debug_file) {
-				fprintf(stderr, "Cannot open debug file %s",
+				fprintf(stderr, "Cannot open debug file %s\n",
 				    fname);
 				usage();
 			}
