@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.16 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.17 2006/12/06 16:26:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.16 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.17 2006/12/06 16:26:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: cmdtab.c,v 1.16 2006/11/28 18:45:32 christos Exp $");
 
 
 #define A	(C_PIPE_SHELL | C_PIPE_PAGER)
+#define C	(C_PIPE_SHELL | C_PIPE_CRT)
 #define N	(C_PIPE_SHELL)
 
 /*
@@ -63,10 +64,10 @@ __RCSID("$NetBSD: cmdtab.c,v 1.16 2006/11/28 18:45:32 christos Exp $");
 const struct cmd cmdtab[] = {
 	{ "next",	next,		A, CMP(n)	NDMLIST,	0,		MMNDEL },
 	{ "alias",	group,		A, CMP(A)	M|RAWLIST,	0,		1000 },
-/* R */	{ "print",	type,		N, CMP(n)	MSGLIST,	0,		MMNDEL },
-/* R */	{ "Print",	Type,		N, CMP(n)	MSGLIST,	0,		MMNDEL },
-/* R */	{ "type",	type,		N, CMP(n)	MSGLIST,	0,		MMNDEL },
-/* R */	{ "Type",	Type,		N, CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "print",	type,		C, CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "Print",	Type,		C, CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "type",	type,		C, CMP(n)	MSGLIST,	0,		MMNDEL },
+/* R */	{ "Type",	Type,		C, CMP(n)	MSGLIST,	0,		MMNDEL },
 	{ "visual",	visual,		0, CMP(n)	I|MSGLIST,	0,		MMNORM },
 /* R */	{ "top",	top,		A, CMP(n)	MSGLIST,	0,		MMNDEL },
 /* R */	{ "touch",	stouch,		0, CMP(n)	W|MSGLIST,	0,		MMNDEL },
