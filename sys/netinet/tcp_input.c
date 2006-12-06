@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.255 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.256 2006/12/06 09:08:27 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.255 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.256 2006/12/06 09:08:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -374,6 +374,8 @@ extern struct evcnt tcp_reass_fragdup;
 
 #endif /* TCP_REASS_COUNTERS */
 
+static int tcp_reass(struct tcpcb *, const struct tcphdr *, struct mbuf *,
+    int *);
 static int tcp_dooptions(struct tcpcb *, const u_char *, int,
     const struct tcphdr *, struct mbuf *, int, struct tcp_opt_info *);
 
@@ -412,8 +414,8 @@ tcpipqent_free(struct ipqent *ipqe)
 	splx(s);
 }
 
-int
-tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
+static int
+tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int *tlen)
 {
 	struct ipqent *p, *q, *nq, *tiqe = NULL;
 	struct socket *so = NULL;
