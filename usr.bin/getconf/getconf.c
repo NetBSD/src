@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.24 2006/11/10 15:36:04 christos Exp $	*/
+/*	$NetBSD: getconf.c,v 1.25 2006/12/06 11:05:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.24 2006/11/10 15:36:04 christos Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.25 2006/12/06 11:05:32 mjf Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -266,13 +266,13 @@ printvar(const struct conf_variable *cp, const char *pathname)
 
 	case CONFSTR:
 		slen = confstr((int)cp->value, NULL, 0);
-		if (slen == (size_t)-1)
+		if (slen == 0)
 out:			 err(EXIT_FAILURE, "confstr(%ld)", cp->value);
 
 		if ((sval = malloc(slen)) == NULL)
 			err(EXIT_FAILURE, "Can't allocate %zu bytes", slen);
 
-		if (confstr((int)cp->value, sval, slen) == (size_t)-1)
+		if (confstr((int)cp->value, sval, slen) == 0)
 			goto out;
 		print_strvar(cp->name, sval);
 		free(sval);
