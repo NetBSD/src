@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.142 2006/12/06 08:55:52 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.143 2006/12/06 09:13:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.142 2006/12/06 08:55:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.143 2006/12/06 09:13:46 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -404,7 +404,7 @@ nfs_disconnect(nmp)
 	if (nmp->nm_so) {
 		so = nmp->nm_so;
 		nmp->nm_so = (struct socket *)0;
-		soshutdown(so, 2);
+		soshutdown(so, SHUT_RDWR);
 		drain = (nmp->nm_iflag & NFSMNT_DISMNT) != 0;
 		if (drain) {
 			/*
