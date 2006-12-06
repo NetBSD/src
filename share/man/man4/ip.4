@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.19 2005/12/12 22:47:36 wiz Exp $
+.\"	$NetBSD: ip.4,v 1.20 2006/12/06 05:27:32 dyoung Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -99,6 +99,15 @@ setsockopt(s, IPPROTO_IP, IP_TOS, \*[Am]tos, sizeof(tos));
 
 int ttl = 60;                   /* max = 255 */
 setsockopt(s, IPPROTO_IP, IP_TTL, \*[Am]ttl, sizeof(ttl));
+.Ed
+.Pp
+.Dv IP_IPSEC_POLICY
+controls IPSec policy for sockets.
+For example,
+.Bd -literal
+const char *policy = "in ipsec ah/transport//require";
+char *buf = ipsec_set_policy(policy, strlen(policy));
+setsockopt(s, IPPROTO_IP, IP_IPSEC_POLICY, buf, ipsec_get_policylen(buf));
 .Ed
 .Pp
 .Dv IP_PORTRANGE
@@ -389,6 +398,7 @@ shorter than the minimum value or longer than the option buffer provided.
 .El
 .Sh SEE ALSO
 .Xr getsockopt 2 ,
+.Xr ipsec_set_policy 3 ,
 .Xr recv 2 ,
 .Xr send 2 ,
 .Xr icmp 4 ,
