@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.129 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.130 2006/12/06 20:49:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.129 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.130 2006/12/06 20:49:02 christos Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1422,6 +1422,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 {
 	int		error;
 	struct mbuf	*m;
+	struct linger	*l;
 
 	error = 0;
 	m = m0;
@@ -1438,13 +1439,17 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				error = EINVAL;
 				goto bad;
 			}
-			if (mtod(m, struct linger *)->l_linger < 0 ||
-			    mtod(m, struct linger *)->l_linger > (INT_MAX / hz)) {
+			l = mtod(m, struct linger *);
+			if (l->l_linger < 0 || l->l_linger > (INT_MAX / hz)) {
 				error = EDOM;
 				goto bad;
 			}
-			so->so_linger = mtod(m, struct linger *)->l_linger;
-			/* fall thru... */
+			so->so_linger = l->l_linger;
+			if (l->l_onoff)
+				so->so_options |= SO_LINGER;
+			else
+				so->so_options &= ~SO_LINGER;
+			break;
 
 		case SO_DEBUG:
 		case SO_KEEPALIVE:
