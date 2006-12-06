@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.21 2006/12/02 13:09:36 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.22 2006/12/06 13:26:38 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2194,4 +2194,10 @@ sys/netiso/clnp_input.c				1.31
 	Code path tested with tcp+udp/ipv4+ipv6, arp and ISO cltp/clnp.
 	Visually ok'd by Christos@.
 	[is, ticket #1597]
+
+sys/ufs/ffs/ffs_snapshot.c			1.38
+
+	Prevent kernel panics when creating snapshots on filesystems which
+	uses quotas. This fixes PR kern/35121.
+	[hannken, ticket #1598]
 
