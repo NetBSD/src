@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.10 2006/12/07 10:54:29 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.11 2006/12/07 22:49:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -40,6 +40,7 @@
 #include <puffs.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "dtfs.h"
 
@@ -49,23 +50,52 @@
 #define FSNAME "dt"
 #endif
 
+static void usage(void);
+
+static void
+usage()
+{
+
+	errx(1, "usage: %s [-acds] mountpath", getprogname());
+}
+
 int
 main(int argc, char *argv[])
 {
+	extern char *optarg;
+	extern int optind;
 	struct puffs_usermount *pu;
 	struct puffs_ops pops;
 	int pflags, lflags;
+	int ch;
 
 	setprogname(argv[0]);
 
-	if (argc < 2)
-		errx(1, "usage: %s mountpath\n", getprogname());
-
 	pflags = lflags = 0;
-	if (argc == 3 && *argv[2] == 'd') { /* nice */
-		pflags = PUFFS_FLAG_OPDUMP;
-		lflags = PUFFSLOOP_NODAEMON;
+	while ((ch = getopt(argc, argv, "acds")) != -1) {
+		switch (ch) {
+		case 'a': /* all ops */
+			pflags |= PUFFS_KFLAG_ALLOPS;
+			break;
+		case 'c': /* no cache */
+			pflags |= PUFFS_KFLAG_NOCACHE;
+			break;
+		case 'd': /* dump ops */
+			pflags |= PUFFS_FLAG_OPDUMP;
+			break;
+		case 's': /* stay on top */
+			lflags |= PUFFSLOOP_NODAEMON;
+			break;
+		default:
+			usage();
+			/*NOTREACHED*/
+		}
 	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
+		usage();
 
 	PUFFSOP_INIT(&pops);
 
@@ -92,7 +122,7 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(&pops, dtfs, node, inactive);
 	PUFFSOP_SET(&pops, dtfs, node, reclaim);
 
-	if ((pu = puffs_mount(&pops, argv[1], 0, FSNAME, pflags, 0)) == NULL)
+	if ((pu = puffs_mount(&pops, argv[0], 0, FSNAME, pflags, 0)) == NULL)
 		err(1, "mount");
 
 	if (puffs_mainloop(pu, lflags) == -1)
