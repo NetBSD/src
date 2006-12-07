@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.14 2006/12/07 10:53:21 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.15 2006/12/07 16:59:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -101,7 +101,7 @@ struct puffs_ops {
 	    void *, struct puffs_vnreq_poll *);
 	int (*puffs_node_revoke)(struct puffs_usermount *, void *, int);
 	int (*puffs_node_mmap)(struct puffs_usermount *,
-	    void *, struct puffs_vnreq_mmap *);
+	    void *, int, const struct puffs_cred *, pid_t);
 	int (*puffs_node_fsync)(struct puffs_usermount *,
 	    void *, const struct puffs_cred *, int, off_t, off_t, pid_t);
 	int (*puffs_node_seek)(struct puffs_usermount *,
@@ -264,7 +264,7 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 	    void *, struct puffs_vnreq_poll *);				\
 	int fsname##_node_revoke(struct puffs_usermount *, void *, int);\
 	int fsname##_node_mmap(struct puffs_usermount *,		\
-	    void *, struct puffs_vnreq_mmap *);				\
+	    void *, int, const struct puffs_cred *, pid_t);		\
 	int fsname##_node_fsync(struct puffs_usermount *,		\
 	    void *, const struct puffs_cred *, int, off_t, off_t,	\
 	    pid_t);							\
