@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.20 2006/12/05 23:07:42 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.21 2006/12/07 16:58:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.20 2006/12/05 23:07:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.21 2006/12/07 16:58:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1804,6 +1804,42 @@ puffs_strategy(void *v)
 	return error;
 }
 
+int
+puffs_mmap(void *v)
+{
+	struct vop_mmap_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		int a_fflags;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
+	} */ *ap = v;
+	struct puffs_mount *pmp;
+	int error;
+
+	PUFFS_VNREQ(mmap);
+
+	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
+
+	if (pmp->pmp_flags & PUFFS_KFLAG_NOCACHE)
+		return genfs_eopnotsupp(v);
+
+	if (EXISTSOP(pmp, MMAP)) {
+		mmap_arg.pvnr_fflags = ap->a_fflags;
+		puffs_credcvt(&mmap_arg.pvnr_cred, ap->a_cred);
+		mmap_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
+
+		error = puffs_vntouser(pmp, PUFFS_VN_MMAP,
+		    &mmap_arg, sizeof(mmap_arg),
+		    VPTOPNC(ap->a_vp), NULL, NULL);
+	} else {
+		error = genfs_mmap(v);
+	}
+
+	return error;
+}
+
+
 /*
  * The rest don't get a free trip to userspace and back, they
  * have to stay within the kernel.
@@ -1881,20 +1917,6 @@ puffs_islocked(void *v)
 
 	rv = lockstatus(&ap->a_vp->v_lock);
 	return rv;
-}
-
-int
-puffs_mmap(void *v)
-{
-	struct vop_mmap_args *ap = v;
-	struct puffs_mount *pmp;
-
-	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
-
-	if (pmp->pmp_flags & PUFFS_KFLAG_NOCACHE)
-		return genfs_eopnotsupp(v);
-
-	return genfs_mmap(v);
 }
 
 int
