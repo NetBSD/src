@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.h,v 1.6 2006/11/18 12:41:06 pooka Exp $	*/
+/*	$NetBSD: dtfs.h,v 1.7 2006/12/07 10:54:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -35,8 +35,7 @@
 
 #include <puffs.h>
 
-PUFFSVFS_PROTOS(dtfs);
-PUFFSVN_PROTOS(dtfs);
+PUFFSOP_PROTOS(dtfs);
 
 struct dtfs_mount {
 	ino_t		dtm_nextfileid;	/* running number for file id	*/
