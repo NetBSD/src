@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.4 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: consinit.c,v 1.5 2006/12/07 03:10:14 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.4 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5 2006/12/07 03:10:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,9 @@ cons_decl(ofcons_)
 static struct consdev ofcons = cons_init(ofcons_);
 #endif
 
+#include "igsfb_ofbus.h"
+#include <shark/ofw/igsfb_ofbusvar.h>
+
 #if (NCOM > 0)
 #ifndef CONADDR
 #define CONADDR 0x3f8
@@ -111,7 +114,16 @@ consinit()
 	cp = NULL;
 
 	if (!comconsole) {
-#if (NPC > 0) || (NVGA > 0)
+#if (NPC > 0) || (NVGA > 0) || (NIGSFB_OFBUS > 0)
+#if (NIGSFB_OFBUS > 0)
+		if (!igsfb_ofbus_cnattach(&isa_io_bs_tag, &isa_mem_bs_tag)) {
+#if (NPCKBC > 0)
+			pckbc_cnattach(&isa_io_bs_tag, IO_KBD, KBCMDP,
+			    PCKBC_KBD_SLOT);
+#endif /* NPCKBC */
+			return;
+		}
+#endif /* NIGSFB_OFBUS */
 #if (NVGA_OFBUS > 0)
 		if (!vga_ofbus_cnattach(&isa_io_bs_tag, &isa_mem_bs_tag)) {
 #if (NPCKBC > 0)
