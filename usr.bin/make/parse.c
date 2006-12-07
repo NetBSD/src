@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.123 2006/12/07 21:07:01 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.124 2006/12/07 21:34:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.123 2006/12/07 21:07:01 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.124 2006/12/07 21:34:16 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.123 2006/12/07 21:07:01 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.124 2006/12/07 21:34:16 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2046,18 +2046,19 @@ ParseEOF(void)
 {
     IFile     *ifile;	/* the state on the top of the includes stack */
 
-    /* XXX dispose of curFile info */
-    /* Leak curFile.fname because all the gnodes have pointers to it */
-    if (curFile.F)
-	(void)fclose(curFile.F);
-    free(curFile.P_str);
-
     if (Lst_IsEmpty(includes)) {
+	/* Don't close original file */
 	Var_Delete(".PARSEDIR", VAR_GLOBAL);
 	Var_Delete(".PARSEFILE", VAR_GLOBAL);
 	memset(&curFile, 0, sizeof curFile);
 	return (DONE);
     }
+
+    /* XXX dispose of curFile info */
+    /* Leak curFile.fname because all the gnodes have pointers to it */
+    if (curFile.F)
+	(void)fclose(curFile.F);
+    free(curFile.P_str);
 
     ifile = (IFile *)Lst_DeQueue(includes);
 
