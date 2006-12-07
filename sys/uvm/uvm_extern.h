@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.122 2006/12/01 16:06:09 elad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.123 2006/12/07 14:06:51 elad Exp $	*/
 
 /*
  *
@@ -691,7 +691,6 @@ void			uvm_pglistfree(struct pglist *);
 
 /* uvm_swap.c */
 void			uvm_swap_init(void);
-boolean_t		uvm_is_swap_device(struct vnode *);
 
 /* uvm_unix.c */
 int			uvm_grow(struct proc *, vaddr_t);

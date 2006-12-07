@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.114 2006/12/02 03:23:38 elad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.115 2006/12/07 14:06:51 elad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.114 2006/12/02 03:23:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.115 2006/12/07 14:06:51 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -370,24 +370,6 @@ swaplist_find(struct vnode *vp, boolean_t remove)
 		}
 	}
 	return (NULL);
-}
-
-/*
- * provide an external function to check if a given vnode is used as a
- * swap device.
- */
-boolean_t
-uvm_is_swap_device(struct vnode *vp)
-{
-	boolean_t r;
-
-	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
-	simple_lock(&uvm.swap_data_lock);
-	r = (swaplist_find(vp, 0) != NULL) ? TRUE : FALSE;
-	simple_unlock(&uvm.swap_data_lock);
-	lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
-
-	return (r);
 }
 
 /*
