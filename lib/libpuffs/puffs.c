@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.14 2006/12/07 16:13:51 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.15 2006/12/07 16:59:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.14 2006/12/07 16:13:51 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.15 2006/12/07 16:59:14 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -444,8 +444,6 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 			break;
 		}
 
-/* notyet */
-#if 0
 		case PUFFS_VN_MMAP:
 		{
 			struct puffs_vnreq_mmap *auxt = auxbuf;
@@ -455,10 +453,10 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 			}
 
 			error = pops->puffs_node_mmap(pu,
-			    preq->preq_cookie, );
+			    preq->preq_cookie, auxt->pvnr_fflags,
+			    &auxt->pvnr_cred, auxt->pvnr_pid);
 			break;
 		}
-#endif
 
 		case PUFFS_VN_REVOKE:
 		{
