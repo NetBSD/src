@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.11 2006/12/05 23:03:28 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.12 2006/12/07 16:58:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -555,6 +555,14 @@ struct puffs_vnreq_advlock {
 	int			pvnr_flags;		/* OUT	*/
 };
 
+struct puffs_vnreq_mmap {
+	struct puffs_req	pvn_pr;
+
+	int			pvnr_fflags;		/* OUT	*/
+	struct puffs_cred	pvnr_cred;		/* OUT	*/
+	pid_t			pvnr_pid;		/* OUT	*/
+};
+
 /* notyet */
 #if 0
 struct puffs_vnreq_kqfilter { };
@@ -563,7 +571,6 @@ struct puffs_vnreq_lease { };
 #endif
 struct puffs_vnreq_getpages { };
 struct puffs_vnreq_putpages { };
-struct puffs_vnreq_mmap { };
 struct puffs_vnreq_getextattr { };
 struct puffs_vnreq_setextattr { };
 struct puffs_vnreq_listextattr { };
