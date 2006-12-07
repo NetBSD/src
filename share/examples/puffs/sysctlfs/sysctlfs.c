@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.8 2006/12/07 10:54:29 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.9 2006/12/07 10:59:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -90,6 +90,7 @@ main(int argc, char *argv[])
 
 	PUFFSOP_SET(&pops, sysctlfs, node, lookup);
 	PUFFSOP_SET(&pops, sysctlfs, node, getattr);
+	PUFFSOP_SET(&pops, sysctlfs, node, setattr);
 	PUFFSOP_SET(&pops, sysctlfs, node, readdir);
 	PUFFSOP_SET(&pops, sysctlfs, node, read);
 	PUFFSOP_SET(&pops, sysctlfs, node, write);
@@ -289,6 +290,15 @@ sysctlfs_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
 
 	va->va_atime = va->va_mtime = va->va_ctime = va->va_birthtime = fstime;
 
+	return 0;
+}
+
+int
+sysctlfs_node_setattr(struct puffs_usermount *pu, void *opc,
+	const struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
+{
+
+	/* dummy, but required for write */
 	return 0;
 }
 
