@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.15 2006/12/07 16:59:14 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.16 2006/12/07 23:15:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -230,6 +230,25 @@ int	puffs_cred_iskernel(const struct puffs_cred *pcr);
 int	puffs_cred_isfs(const struct puffs_cred *pcr);
 /* root || NOCRED || FSCRED */
 int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
+
+
+/*
+ * Requests
+ */
+
+struct puffs_getreq;
+struct puffs_putreq;
+
+struct puffs_getreq	*puffs_makegetreq(struct puffs_usermount *,
+					  uint8_t *, size_t, int);
+struct puffs_req	*puffs_getreq(struct puffs_getreq *);
+int			puffs_remaininggetreq(struct puffs_getreq *);
+void			puffs_destroygetreq(struct puffs_getreq *);
+
+struct puffs_putreq	*puffs_makeputreq(struct puffs_usermount *);
+void			puffs_putreq(struct puffs_putreq *, struct puffs_req *);
+int			puffs_putputreq(struct puffs_putreq *);
+void			puffs_destroyputreq(struct puffs_putreq *);
 
 
 #define PUFFSOP_PROTOS(fsname)						\

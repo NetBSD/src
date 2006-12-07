@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.16 2006/12/07 17:39:54 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.17 2006/12/07 23:15:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.16 2006/12/07 17:39:54 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.17 2006/12/07 23:15:20 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -192,71 +192,50 @@ enum {PUFFCALL_ANSWER, PUFFCALL_IGNORE, PUFFCALL_UNMOUNT};
 int
 puffs_oneop(struct puffs_usermount *pu, uint8_t *buf, size_t buflen)
 {
-	struct puffs_reqh_get phg;
-	struct puffs_reqh_put php;
+	struct puffs_getreq *pgr;
+	struct puffs_putreq *ppr;
 	struct puffs_req *preq;
-	uint64_t *resp_idp;
-	void **resp_bufp;
-	size_t handler_blen, *resp_blenp;
-	int rv, unmounting = 0;
+	int rv, unmounting, pval;
+
+	rv = unmounting = 0;
 
 	/* setup fetch */
-	phg.phg_buf = buf;
-	phg.phg_buflen = buflen;
-	phg.phg_nops = 0;
+	pgr = puffs_makegetreq(pu, buf, buflen, 0);
+	if (!pgr)
+		return -1;
 
 	/* setup reply essentials */
-	php.php_nops = 0;
-	resp_bufp = &php.php_buf;
-	resp_blenp = &php.php_buflen;
-	resp_idp = &php.php_id;
-
-	/* get op from kernel */
-	if (ioctl(pu->pu_fd, PUFFSGETOP, &phg) == -1)
+	ppr = puffs_makeputreq(pu);
+	if (!ppr) {
+		puffs_destroygetreq(pgr);
 		return -1;
-	preq = phg.phg_buf;
+	}
 
-	while (phg.phg_nops-- && unmounting == 0) {
-		/* deal with it */
-		handler_blen = preq->preq_buflen;
-		rv = puffcall(pu, preq, &handler_blen);
+	while ((preq = puffs_getreq(pgr)) != NULL && unmounting == 0) {
+		pval = puffcall(pu, preq, &preq->preq_buflen);
 
 		/* check if we need to store this reply */
-		switch (rv) {
+		switch (pval) {
 		case PUFFCALL_UNMOUNT:
 			unmounting = 1;
 			/* FALLTHROUGH */
 		case PUFFCALL_ANSWER:
-			php.php_nops++;
-
-			/* store data */
-			*resp_bufp = preq;
-			*resp_blenp = handler_blen;
-			*resp_idp = preq->preq_id;
-
-			/* and roll pointers forward */
-			resp_bufp = &preq->preq_nextbuf;
-			resp_blenp = &preq->preq_buflen;
-			resp_idp = &preq->preq_id;
-
+			puffs_putreq(ppr, preq);
 			break;
 		case PUFFCALL_IGNORE:
 			break;
 
 		default:
-			return -1;
+			assert(/*CONSTCOND*/0);
 		}
-
-		/* roll buffer forward */
-		/* LINTED */
-		preq = (struct puffs_req *)((uint8_t *)preq+preq->preq_buflen);
 	}
+	puffs_destroygetreq(pgr);
 
-	if (php.php_nops)
-		if (ioctl(pu->pu_fd, PUFFSPUTOP, &php) == -1)
-			return -1;
+	if (puffs_putputreq(ppr) == -1)
+		rv = -1;
+	puffs_destroyputreq(ppr);
 
-	return 0;
+	return rv;
 }
 
 int
