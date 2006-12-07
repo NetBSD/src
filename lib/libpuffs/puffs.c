@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.13 2006/12/07 10:53:21 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.14 2006/12/07 16:13:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.13 2006/12/07 10:53:21 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.14 2006/12/07 16:13:51 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -446,32 +446,6 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 
 /* notyet */
 #if 0
-		case PUFFS_VN_POLL:
-		{
-			struct puffs_vnreq_poll *auxt = auxbuf;
-			if (pops->puffs_node_poll == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_node_poll(pu,
-			    preq->preq_cookie, preq-);
-			break;
-		}
-
-		case PUFFS_VN_KQFILTER:
-		{
-			struct puffs_vnreq_kqfilter *auxt = auxbuf;
-			if (pops->puffs_node_kqfilter == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_node_kqfilter(pu,
-			    preq->preq_cookie, );
-			break;
-		}
-
 		case PUFFS_VN_MMAP:
 		{
 			struct puffs_vnreq_mmap *auxt = auxbuf;
@@ -811,107 +785,28 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 
 
 #if 0
-		case PUFFS_VN_IOCTL:
+		case PUFFS_VN_POLL:
 		{
-			struct puffs_vnreq_ioctl *auxt = auxbuf;
-			if (pops->puffs_ioctl == NULL) {
+			struct puffs_vnreq_poll *auxt = auxbuf;
+			if (pops->puffs_node_poll == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pops->puffs_ioctl(pu,
-			    preq->preq_cookie, );
+			error = pops->puffs_node_poll(pu,
+			    preq->preq_cookie, preq-);
 			break;
 		}
 
-		case PUFFS_VN_FCNTL:
+		case PUFFS_VN_KQFILTER:
 		{
-			struct puffs_vnreq_fcntl *auxt = auxbuf;
-			if (pops->puffs_fcntl == NULL) {
+			struct puffs_vnreq_kqfilter *auxt = auxbuf;
+			if (pops->puffs_node_kqfilter == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pops->puffs_fcntl(pu,
-			    preq->preq_cookie, );
-			break;
-		}
-
-
-		case PUFFS_VN_ABORTOP:
-		{
-			struct puffs_vnreq_abortop *auxt = auxbuf;
-			if (pops->puffs_abortop == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_abortop(pu,
-			    preq->preq_cookie, );
-			break;
-		}
-
-		case PUFFS_VN_LOCK:
-		{
-			struct puffs_vnreq_lock *auxt = auxbuf;
-			if (pops->puffs_lock == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_lock(pu,
-			    preq->preq_cookie, );
-			break;
-		}
-
-		case PUFFS_VN_UNLOCK:
-		{
-			struct puffs_vnreq_unlock *auxt = auxbuf;
-			if (pops->puffs_unlock == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_unlock(pu,
-			    preq->preq_cookie, );
-			break;
-		}
-
-		case PUFFS_VN_ISLOCKED:
-		{
-			struct puffs_vnreq_islocked *auxt = auxbuf;
-			if (pops->puffs_islocked == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_islocked(pu,
-			    preq->preq_cookie, );
-			break;
-		}
-
-		case PUFFS_VN_LEASE:
-		{
-			struct puffs_vnreq_lease *auxt = auxbuf;
-			if (pops->puffs_lease == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_lease(pu,
-			    preq->preq_cookie, );
-			break;
-		}
-
-		case PUFFS_VN_WHITEOUT:
-		{
-			struct puffs_vnreq_whiteout *auxt = auxbuf;
-			if (pops->puffs_whiteout == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_whiteout(pu,
+			error = pops->puffs_node_kqfilter(pu,
 			    preq->preq_cookie, );
 			break;
 		}
