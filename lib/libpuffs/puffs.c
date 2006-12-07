@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.12 2006/12/05 23:04:21 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.13 2006/12/07 10:53:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.12 2006/12/05 23:04:21 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.13 2006/12/07 10:53:21 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -56,11 +56,11 @@ static int puffcall(struct puffs_usermount *, struct puffs_req *, size_t *);
 
 #define FILLOP(lower, upper)						\
 do {									\
-	if (pvn->puffs_##lower)						\
+	if (pops->puffs_node_##lower)					\
 		opmask[PUFFS_VN_##upper] = 1;				\
 } while (/*CONSTCOND*/0)
 static void
-fillvnopmask(struct puffs_vnops *pvn, uint8_t *opmask)
+fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
 {
 
 	memset(opmask, 0, PUFFS_VN_MAX);
@@ -103,16 +103,15 @@ fillvnopmask(struct puffs_vnops *pvn, uint8_t *opmask)
 #undef FILLOP
 
 struct puffs_usermount *
-puffs_mount(struct puffs_vfsops *pvfs, struct puffs_vnops *pvn,
-	const char *dir, int mntflags, const char *puffsname,
-	uint32_t pflags, size_t maxreqlen)
+puffs_mount(struct puffs_ops *pops, const char *dir, int mntflags,
+	const char *puffsname, uint32_t pflags, size_t maxreqlen)
 {
 	struct puffs_startreq sreq;
 	struct puffs_args pargs;
 	struct puffs_usermount *pu;
 	int fd = 0, rv;
 
-	if (pvfs->puffs_mount == NULL) {
+	if (pops->puffs_fs_mount == NULL) {
 		errno = EINVAL;
 		return NULL;
 	}
@@ -128,7 +127,7 @@ puffs_mount(struct puffs_vfsops *pvfs, struct puffs_vnops *pvn,
 	pargs.pa_flags = PUFFS_FLAG_KERN(pflags);
 	pargs.pa_fd = fd;
 	pargs.pa_maxreqlen = maxreqlen;
-	fillvnopmask(pvn, pargs.pa_vnopmask);
+	fillvnopmask(pops, pargs.pa_vnopmask);
 	(void)strlcpy(pargs.pa_name, puffsname, sizeof(pargs.pa_name));
 
 	pu = malloc(sizeof(struct puffs_usermount));
@@ -136,8 +135,7 @@ puffs_mount(struct puffs_vfsops *pvfs, struct puffs_vnops *pvn,
 		return NULL;
 
 	pu->pu_flags = pflags;
-	pu->pu_pvfs = *pvfs;
-	pu->pu_pvn = *pvn;
+	pu->pu_ops = *pops;
 	pu->pu_fd = fd;
 	if ((pu->pu_rootpath = strdup(dir)) == NULL)
 		goto failfree;
@@ -147,12 +145,12 @@ puffs_mount(struct puffs_vfsops *pvfs, struct puffs_vnops *pvn,
 		goto failfree;
 	pu->pu_maxreqlen = pargs.pa_maxreqlen;
 
-	if ((rv = pu->pu_pvfs.puffs_mount(pu, &sreq.psr_cookie)) != 0) {
+	if ((rv = pops->puffs_fs_mount(pu, &sreq.psr_cookie)) != 0) {
 		errno = rv;
 		goto failfree;
 	}
 
-	if ((rv = pu->pu_pvfs.puffs_statvfs(pu, &sreq.psr_sb, 0)) != 0) {
+	if ((rv = pops->puffs_fs_statvfs(pu, &sreq.psr_sb, 0)) != 0) {
 		errno = rv;
 		goto failfree;
 	}
@@ -280,6 +278,7 @@ puffs_setblockingmode(struct puffs_usermount *pu, int mode)
 static int
 puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 {
+	struct puffs_ops *pops = &pu->pu_ops;
 	struct puffs_sizeop pop;
 	void *auxbuf;
 	int error, rv;
@@ -301,7 +300,7 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		{
 			struct puffs_vfsreq_unmount *auxt = auxbuf;
 
-			error = pu->pu_pvfs.puffs_unmount(pu,
+			error = pops->puffs_fs_unmount(pu,
 			    auxt->pvfsr_flags, auxt->pvfsr_pid);
 			rv = PUFFCALL_UNMOUNT;
 			break;
@@ -310,7 +309,7 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		{
 			struct puffs_vfsreq_statvfs *auxt = auxbuf;
 
-			error = pu->pu_pvfs.puffs_statvfs(pu,
+			error = pops->puffs_fs_statvfs(pu,
 			    &auxt->pvfsr_sb, auxt->pvfsr_pid);
 			break;
 		}
@@ -318,7 +317,7 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		{
 			struct puffs_vfsreq_sync *auxt = auxbuf;
 
-			error = pu->pu_pvfs.puffs_sync(pu,
+			error = pops->puffs_fs_sync(pu,
 			    auxt->pvfsr_waitfor, &auxt->pvfsr_cred,
 			    auxt->pvfsr_pid);
 			break;
@@ -340,7 +339,7 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 			struct puffs_vnreq_lookup *auxt = auxbuf;
 
 			/* lookup *must* be present */
-			error = pu->pu_pvn.puffs_lookup(pu, preq->preq_cookie,
+			error = pops->puffs_node_lookup(pu, preq->preq_cookie,
 			    &auxt->pvnr_newnode, &auxt->pvnr_vtype,
 			    &auxt->pvnr_size, &auxt->pvnr_rdev,
 			    &auxt->pvnr_cn);
@@ -350,12 +349,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_CREATE:
 		{
 			struct puffs_vnreq_create *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_create == NULL) {
+			if (pops->puffs_node_create == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_create(pu,
+			error = pops->puffs_node_create(pu,
 			    preq->preq_cookie, &auxt->pvnr_newnode,
 			    &auxt->pvnr_cn, &auxt->pvnr_va);
 			break;
@@ -364,12 +363,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_MKNOD:
 		{
 			struct puffs_vnreq_mknod *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_mknod == NULL) {
+			if (pops->puffs_node_mknod == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_mknod(pu,
+			error = pops->puffs_node_mknod(pu,
 			    preq->preq_cookie, &auxt->pvnr_newnode,
 			    &auxt->pvnr_cn, &auxt->pvnr_va);
 			break;
@@ -378,12 +377,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_OPEN:
 		{
 			struct puffs_vnreq_open *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_open == NULL) {
+			if (pops->puffs_node_open == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_open(pu,
+			error = pops->puffs_node_open(pu,
 			    preq->preq_cookie, auxt->pvnr_mode,
 			    &auxt->pvnr_cred, auxt->pvnr_pid);
 			break;
@@ -392,12 +391,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_CLOSE:
 		{
 			struct puffs_vnreq_close *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_close == NULL) {
+			if (pops->puffs_node_close == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_close(pu,
+			error = pops->puffs_node_close(pu,
 			    preq->preq_cookie, auxt->pvnr_fflag,
 			    &auxt->pvnr_cred, auxt->pvnr_pid);
 			break;
@@ -406,12 +405,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_ACCESS:
 		{
 			struct puffs_vnreq_access *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_access == NULL) {
+			if (pops->puffs_node_access == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_access(pu,
+			error = pops->puffs_node_access(pu,
 			    preq->preq_cookie, auxt->pvnr_mode,
 			    &auxt->pvnr_cred, auxt->pvnr_pid);
 			break;
@@ -420,12 +419,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_GETATTR:
 		{
 			struct puffs_vnreq_getattr *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_getattr == NULL) {
+			if (pops->puffs_node_getattr == NULL) {
 				error = EOPNOTSUPP;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_getattr(pu,
+			error = pops->puffs_node_getattr(pu,
 			    preq->preq_cookie, &auxt->pvnr_va,
 			    &auxt->pvnr_cred, auxt->pvnr_pid);
 			break;
@@ -434,12 +433,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_SETATTR:
 		{
 			struct puffs_vnreq_setattr *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_setattr == NULL) {
+			if (pops->puffs_node_setattr == NULL) {
 				error = EOPNOTSUPP;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_setattr(pu,
+			error = pops->puffs_node_setattr(pu,
 			    preq->preq_cookie, &auxt->pvnr_va,
 			    &auxt->pvnr_cred, auxt->pvnr_pid);
 			break;
@@ -450,12 +449,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_POLL:
 		{
 			struct puffs_vnreq_poll *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_poll == NULL) {
+			if (pops->puffs_node_poll == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_poll(pu,
+			error = pops->puffs_node_poll(pu,
 			    preq->preq_cookie, preq-);
 			break;
 		}
@@ -463,12 +462,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_KQFILTER:
 		{
 			struct puffs_vnreq_kqfilter *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_kqfilter == NULL) {
+			if (pops->puffs_node_kqfilter == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_kqfilter(pu,
+			error = pops->puffs_node_kqfilter(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -476,12 +475,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_MMAP:
 		{
 			struct puffs_vnreq_mmap *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_mmap == NULL) {
+			if (pops->puffs_node_mmap == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_mmap(pu,
+			error = pops->puffs_node_mmap(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -490,12 +489,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_REVOKE:
 		{
 			struct puffs_vnreq_revoke *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_revoke == NULL) {
+			if (pops->puffs_node_revoke == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_revoke(pu,
+			error = pops->puffs_node_revoke(pu,
 			    preq->preq_cookie, auxt->pvnr_flags);
 			break;
 		}
@@ -503,12 +502,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_FSYNC:
 		{
 			struct puffs_vnreq_fsync *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_fsync == NULL) {
+			if (pops->puffs_node_fsync == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_fsync(pu,
+			error = pops->puffs_node_fsync(pu,
 			    preq->preq_cookie, &auxt->pvnr_cred,
 			    auxt->pvnr_flags, auxt->pvnr_offlo,
 			    auxt->pvnr_offhi, auxt->pvnr_pid);
@@ -518,12 +517,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_SEEK:
 		{
 			struct puffs_vnreq_seek *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_seek == NULL) {
+			if (pops->puffs_node_seek == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_seek(pu,
+			error = pops->puffs_node_seek(pu,
 			    preq->preq_cookie, auxt->pvnr_oldoff,
 			    auxt->pvnr_newoff, &auxt->pvnr_cred);
 			break;
@@ -532,12 +531,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_REMOVE:
 		{
 			struct puffs_vnreq_remove *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_remove == NULL) {
+			if (pops->puffs_node_remove == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_remove(pu,
+			error = pops->puffs_node_remove(pu,
 			    preq->preq_cookie, auxt->pvnr_cookie_targ,
 			    &auxt->pvnr_cn);
 			break;
@@ -546,12 +545,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_LINK:
 		{
 			struct puffs_vnreq_link *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_link == NULL) {
+			if (pops->puffs_node_link == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_link(pu,
+			error = pops->puffs_node_link(pu,
 			    preq->preq_cookie, auxt->pvnr_cookie_targ,
 			    &auxt->pvnr_cn);
 			break;
@@ -560,12 +559,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_RENAME:
 		{
 			struct puffs_vnreq_rename *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_rename == NULL) {
+			if (pops->puffs_node_rename == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_rename(pu,
+			error = pops->puffs_node_rename(pu,
 			    preq->preq_cookie, auxt->pvnr_cookie_src,
 			    &auxt->pvnr_cn_src, auxt->pvnr_cookie_targdir,
 			    auxt->pvnr_cookie_targ, &auxt->pvnr_cn_targ);
@@ -575,12 +574,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_MKDIR:
 		{
 			struct puffs_vnreq_mkdir *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_mkdir == NULL) {
+			if (pops->puffs_node_mkdir == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_mkdir(pu,
+			error = pops->puffs_node_mkdir(pu,
 			    preq->preq_cookie, &auxt->pvnr_newnode,
 			    &auxt->pvnr_cn, &auxt->pvnr_va);
 			break;
@@ -589,12 +588,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_RMDIR:
 		{
 			struct puffs_vnreq_rmdir *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_rmdir == NULL) {
+			if (pops->puffs_node_rmdir == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_rmdir(pu,
+			error = pops->puffs_node_rmdir(pu,
 			    preq->preq_cookie, auxt->pvnr_cookie_targ,
 			    &auxt->pvnr_cn);
 			break;
@@ -603,12 +602,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_SYMLINK:
 		{
 			struct puffs_vnreq_symlink *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_symlink == NULL) {
+			if (pops->puffs_node_symlink == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_symlink(pu,
+			error = pops->puffs_node_symlink(pu,
 			    preq->preq_cookie, &auxt->pvnr_newnode,
 			    &auxt->pvnr_cn, &auxt->pvnr_va, auxt->pvnr_link);
 			break;
@@ -619,13 +618,13 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 			struct puffs_vnreq_readdir *auxt = auxbuf;
 			size_t res;
 
-			if (pu->pu_pvn.puffs_readdir == NULL) {
+			if (pops->puffs_node_readdir == NULL) {
 				error = 0;
 				break;
 			}
 
 			res = auxt->pvnr_resid;
-			error = pu->pu_pvn.puffs_readdir(pu,
+			error = pops->puffs_node_readdir(pu,
 			    preq->preq_cookie, auxt->pvnr_dent,
 			    &auxt->pvnr_cred, &auxt->pvnr_offset,
 			    &auxt->pvnr_resid);
@@ -639,12 +638,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_READLINK:
 		{
 			struct puffs_vnreq_readlink *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_readlink == NULL) {
+			if (pops->puffs_node_readlink == NULL) {
 				error = EOPNOTSUPP;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_readlink(pu,
+			error = pops->puffs_node_readlink(pu,
 			    preq->preq_cookie, &auxt->pvnr_cred,
 			    auxt->pvnr_link, &auxt->pvnr_linklen);
 			break;
@@ -653,12 +652,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_RECLAIM:
 		{
 			struct puffs_vnreq_reclaim *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_reclaim == NULL) {
+			if (pops->puffs_node_reclaim == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_reclaim(pu,
+			error = pops->puffs_node_reclaim(pu,
 			    preq->preq_cookie, auxt->pvnr_pid);
 			break;
 		}
@@ -666,12 +665,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_INACTIVE:
 		{
 			struct puffs_vnreq_inactive *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_inactive == NULL) {
+			if (pops->puffs_node_inactive == NULL) {
 				error = EOPNOTSUPP;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_inactive(pu,
+			error = pops->puffs_node_inactive(pu,
 			    preq->preq_cookie, auxt->pvnr_pid,
 			    &auxt->pvnr_backendrefs);
 			break;
@@ -680,12 +679,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_PATHCONF:
 		{
 			struct puffs_vnreq_pathconf *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_pathconf == NULL) {
+			if (pops->puffs_node_pathconf == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_pathconf(pu,
+			error = pops->puffs_node_pathconf(pu,
 			    preq->preq_cookie, auxt->pvnr_name,
 			    &auxt->pvnr_retval);
 			break;
@@ -694,12 +693,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_ADVLOCK:
 		{
 			struct puffs_vnreq_advlock *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_advlock == NULL) {
+			if (pops->puffs_node_advlock == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_advlock(pu,
+			error = pops->puffs_node_advlock(pu,
 			    preq->preq_cookie, auxt->pvnr_id, auxt->pvnr_op,
 			    &auxt->pvnr_fl, auxt->pvnr_flags);
 			break;
@@ -707,12 +706,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 
 		case PUFFS_VN_PRINT:
 		{
-			if (pu->pu_pvn.puffs_print == NULL) {
+			if (pops->puffs_node_print == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_print(pu,
+			error = pops->puffs_node_print(pu,
 			    preq->preq_cookie);
 			break;
 		}
@@ -722,13 +721,13 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 			struct puffs_vnreq_read *auxt = auxbuf;
 			size_t res;
 
-			if (pu->pu_pvn.puffs_read == NULL) {
+			if (pops->puffs_node_read == NULL) {
 				error = EIO;
 				break;
 			}
 
 			res = auxt->pvnr_resid;
-			error = pu->pu_pvn.puffs_read(pu,
+			error = pops->puffs_node_read(pu,
 			    preq->preq_cookie, auxt->pvnr_data,
 			    auxt->pvnr_offset, &auxt->pvnr_resid,
 			    &auxt->pvnr_cred, auxt->pvnr_ioflag);
@@ -743,12 +742,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		{
 			struct puffs_vnreq_write *auxt = auxbuf;
 
-			if (pu->pu_pvn.puffs_write == NULL) {
+			if (pops->puffs_node_write == NULL) {
 				error = EIO;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_write(pu,
+			error = pops->puffs_node_write(pu,
 			    preq->preq_cookie, auxt->pvnr_data,
 			    auxt->pvnr_offset, &auxt->pvnr_resid,
 			    &auxt->pvnr_cred, auxt->pvnr_ioflag);
@@ -759,7 +758,7 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		}
 
 		case PUFFS_VN_IOCTL:
-			error = pu->pu_pvn.puffs_ioctl1(pu, preq->preq_cookie,
+			error = pops->puffs_node_ioctl1(pu, preq->preq_cookie,
 			     (struct puffs_vnreq_ioctl *)auxbuf, &pop);
 			if (error != 0)
 				break;
@@ -772,12 +771,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 			 * thing to do in case of an error is, so I'll
 			 * just ignore it for the time being.
 			 */
-			error = pu->pu_pvn.puffs_ioctl2(pu, preq->preq_cookie,
+			error = pops->puffs_node_ioctl2(pu, preq->preq_cookie,
 			    (struct puffs_vnreq_ioctl *)auxbuf, &pop);
 			break;
 
 		case PUFFS_VN_FCNTL:
-			error = pu->pu_pvn.puffs_fcntl1(pu, preq->preq_cookie,
+			error = pops->puffs_node_fcntl1(pu, preq->preq_cookie,
 			     (struct puffs_vnreq_fcntl *)auxbuf, &pop);
 			if (error != 0)
 				break;
@@ -790,7 +789,7 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 			 * thing to do in case of an error is, so I'll
 			 * just ignore it for the time being.
 			 */
-			error = pu->pu_pvn.puffs_fcntl2(pu, preq->preq_cookie,
+			error = pops->puffs_node_fcntl2(pu, preq->preq_cookie,
 			    (struct puffs_vnreq_fcntl *)auxbuf, &pop);
 			break;
 
@@ -815,12 +814,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_IOCTL:
 		{
 			struct puffs_vnreq_ioctl *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_ioctl == NULL) {
+			if (pops->puffs_ioctl == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_ioctl(pu,
+			error = pops->puffs_ioctl(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -828,12 +827,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_FCNTL:
 		{
 			struct puffs_vnreq_fcntl *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_fcntl == NULL) {
+			if (pops->puffs_fcntl == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_fcntl(pu,
+			error = pops->puffs_fcntl(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -842,12 +841,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_ABORTOP:
 		{
 			struct puffs_vnreq_abortop *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_abortop == NULL) {
+			if (pops->puffs_abortop == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_abortop(pu,
+			error = pops->puffs_abortop(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -855,12 +854,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_LOCK:
 		{
 			struct puffs_vnreq_lock *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_lock == NULL) {
+			if (pops->puffs_lock == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_lock(pu,
+			error = pops->puffs_lock(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -868,12 +867,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_UNLOCK:
 		{
 			struct puffs_vnreq_unlock *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_unlock == NULL) {
+			if (pops->puffs_unlock == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_unlock(pu,
+			error = pops->puffs_unlock(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -881,12 +880,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_ISLOCKED:
 		{
 			struct puffs_vnreq_islocked *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_islocked == NULL) {
+			if (pops->puffs_islocked == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_islocked(pu,
+			error = pops->puffs_islocked(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -894,12 +893,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_LEASE:
 		{
 			struct puffs_vnreq_lease *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_lease == NULL) {
+			if (pops->puffs_lease == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_lease(pu,
+			error = pops->puffs_lease(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -907,12 +906,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_WHITEOUT:
 		{
 			struct puffs_vnreq_whiteout *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_whiteout == NULL) {
+			if (pops->puffs_whiteout == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_whiteout(pu,
+			error = pops->puffs_whiteout(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -920,12 +919,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_CLOSEEXTATTR:
 		{
 			struct puffs_vnreq_closeextattr *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_closeextattr == NULL) {
+			if (pops->puffs_closeextattr == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_closeextattr(pu,
+			error = pops->puffs_closeextattr(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -933,12 +932,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_GETEXTATTR:
 		{
 			struct puffs_vnreq_getextattr *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_getextattr == NULL) {
+			if (pops->puffs_getextattr == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_getextattr(pu,
+			error = pops->puffs_getextattr(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -946,12 +945,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_LISTEXTATTR:
 		{
 			struct puffs_vnreq_listextattr *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_listextattr == NULL) {
+			if (pops->puffs_listextattr == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_listextattr(pu,
+			error = pops->puffs_listextattr(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -959,12 +958,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_OPENEXTATTR:
 		{
 			struct puffs_vnreq_openextattr *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_openextattr == NULL) {
+			if (pops->puffs_openextattr == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_openextattr(pu,
+			error = pops->puffs_openextattr(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -972,12 +971,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_DELETEEXTATTR:
 		{
 			struct puffs_vnreq_deleteextattr *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_deleteextattr == NULL) {
+			if (pops->puffs_deleteextattr == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_deleteextattr(pu,
+			error = pops->puffs_deleteextattr(pu,
 			    preq->preq_cookie, );
 			break;
 		}
@@ -985,12 +984,12 @@ puffcall(struct puffs_usermount *pu, struct puffs_req *preq, size_t *blenp)
 		case PUFFS_VN_SETEXTATTR:
 		{
 			struct puffs_vnreq_setextattr *auxt = auxbuf;
-			if (pu->pu_pvn.puffs_setextattr == NULL) {
+			if (pops->puffs_setextattr == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pu->pu_pvn.puffs_setextattr(pu,
+			error = pops->puffs_setextattr(pu,
 			    preq->preq_cookie, );
 			break;
 		}
