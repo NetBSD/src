@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.283 2006/11/26 16:22:36 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.284 2006/12/07 20:23:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.283 2006/11/26 16:22:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.284 2006/12/07 20:23:38 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.283 2006/11/26 16:22:36 elad Exp $")
 #include <sys/sysctl.h>
 #include <sys/event.h>
 #include <sys/mbuf.h>
+#include <sys/iostat.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -300,6 +301,9 @@ main(void)
 	(void)chgproccnt(0, 1);
 
 	rqinit();
+
+	/* Initialize I/O statistics. */
+	iostat_init();
 
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
