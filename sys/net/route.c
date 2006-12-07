@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.80 2006/12/07 19:20:14 joerg Exp $	*/
+/*	$NetBSD: route.c,v 1.81 2006/12/07 19:37:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.80 2006/12/07 19:20:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.81 2006/12/07 19:37:08 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,26 @@ struct callout rt_timer_ch; /* callout for rt_timer_timer() */
 static int rtdeletemsg(struct rtentry *);
 static int rtflushclone1(struct radix_node *, void *);
 static void rtflushclone(struct radix_node_head *, struct rtentry *);
+
+struct ifaddr *
+rt_get_ifa(struct rtentry *rt)
+{
+	struct ifaddr *ifa;
+
+	if ((ifa = rt->rt_ifa) == NULL)
+		return ifa;
+	else if (ifa->ifa_getifa == NULL)
+		return ifa;
+#if 0
+	else if (ifa->ifa_seqno != NULL && *ifa->ifa_seqno == rt->rt_ifa_seqno)
+		return ifa;
+#endif
+	else {
+		ifa = (*ifa->ifa_getifa)(ifa, rt_key(rt));
+		rt_replace_ifa(rt, ifa);
+		return ifa;
+	}
+}
 
 static void
 rt_set_ifa1(struct rtentry *rt, struct ifaddr *ifa)
