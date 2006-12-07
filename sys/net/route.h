@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.46 2006/12/07 19:20:14 joerg Exp $	*/
+/*	$NetBSD: route.h,v 1.47 2006/12/07 19:37:08 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -326,27 +326,8 @@ int	 rtrequest(int, const struct sockaddr *,
 	    struct rtentry **);
 int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
 
+struct ifaddr	*rt_get_ifa(struct rtentry *);
 void	rt_replace_ifa(struct rtentry *, struct ifaddr *);
-
-static inline struct ifaddr *
-rt_get_ifa(struct rtentry *rt)
-{
-	struct ifaddr *ifa;
-
-	if ((ifa = rt->rt_ifa) == NULL)
-		return ifa;
-	else if (ifa->ifa_getifa == NULL)
-		return ifa;
-#if 0
-	else if (ifa->ifa_seqno != NULL && *ifa->ifa_seqno == rt->rt_ifa_seqno)
-		return ifa;
-#endif
-	else {
-		ifa = (*ifa->ifa_getifa)(ifa, rt_key(rt));
-		rt_replace_ifa(rt, ifa);
-		return ifa;
-	}
-}
 
 #endif /* _KERNEL */
 #endif /* !_NET_ROUTE_H_ */
