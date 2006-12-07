@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.7 2006/12/01 12:50:52 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.8 2006/12/07 10:54:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -50,8 +50,7 @@
 #include <string.h>
 #include <util.h>
 
-PUFFSVFS_PROTOS(sysctlfs)
-PUFFSVN_PROTOS(sysctlfs)
+PUFFSOP_PROTOS(sysctlfs)
 
 #define N_HIERARCHY 16
 struct sfsnode {
@@ -75,30 +74,28 @@ int
 main(int argc, char *argv[])
 {
 	struct puffs_usermount *pu;
-	struct puffs_vfsops pvfs;
-	struct puffs_vnops pvn;
+	struct puffs_ops pops;
 
 	setprogname(argv[0]);
 
 	if (argc < 2)
 		errx(1, "usage: %s mountpath\n", getprogname());
 
-	memset(&pvfs, 0, sizeof(struct puffs_vfsops));
-	memset(&pvn, 0, sizeof(struct puffs_vnops));
+	PUFFSOP_INIT(&pops);
 
-	pvfs.puffs_mount = sysctlfs_mount;
-	pvfs.puffs_unmount = puffs_vfsnop_unmount;
-	pvfs.puffs_sync = puffs_vfsnop_sync;
-	pvfs.puffs_statvfs = puffs_vfsnop_statvfs;
+	PUFFSOP_SET(&pops, sysctlfs, fs, mount);
+	PUFFSOP_SETFSNOP(&pops, unmount);
+	PUFFSOP_SETFSNOP(&pops, sync);
+	PUFFSOP_SETFSNOP(&pops, statvfs);
 
-	pvn.puffs_lookup = sysctlfs_lookup;
-	pvn.puffs_getattr = sysctlfs_getattr;
-	pvn.puffs_readdir = sysctlfs_readdir;
-	pvn.puffs_read = sysctlfs_read;
-	pvn.puffs_write = sysctlfs_write;
-	pvn.puffs_reclaim = sysctlfs_reclaim;
+	PUFFSOP_SET(&pops, sysctlfs, node, lookup);
+	PUFFSOP_SET(&pops, sysctlfs, node, getattr);
+	PUFFSOP_SET(&pops, sysctlfs, node, readdir);
+	PUFFSOP_SET(&pops, sysctlfs, node, read);
+	PUFFSOP_SET(&pops, sysctlfs, node, write);
+	PUFFSOP_SET(&pops, sysctlfs, node, reclaim);
 
-	if ((pu = puffs_mount(&pvfs, &pvn, argv[1], 0, "sysctlfs",
+	if ((pu = puffs_mount(&pops, argv[1], 0, "sysctlfs",
 	    PUFFS_KFLAG_NOCACHE, 0)) == NULL)
 		err(1, "mount");
 
@@ -109,7 +106,7 @@ main(int argc, char *argv[])
 }
 
 int
-sysctlfs_mount(struct puffs_usermount *pu, void **rootcookie)
+sysctlfs_fs_mount(struct puffs_usermount *pu, void **rootcookie)
 {
 	struct timeval tv_now;
 
@@ -207,7 +204,7 @@ getsize(struct sfsnode *sfs)
 
 /* fast & loose */
 int
-sysctlfs_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
+sysctlfs_node_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
 	enum vtype *newtype, voff_t *newsize, dev_t *newrdev,
 	const struct puffs_cn *pcn)
 {
@@ -267,7 +264,7 @@ sysctlfs_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
 }
 
 int
-sysctlfs_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
+sysctlfs_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
 	const struct puffs_cred *pcr, pid_t pid)
 {
 	struct sfsnode *sfs = opc;
@@ -296,8 +293,9 @@ sysctlfs_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
 }
 
 int
-sysctlfs_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
-	const struct puffs_cred *pcr, off_t *readoff, size_t *reslen)
+sysctlfs_node_readdir(struct puffs_usermount *pu, void *opc,
+	struct dirent *dent, const struct puffs_cred *pcr,
+	off_t *readoff, size_t *reslen)
 {
 	struct sysctlnode sn[128];
 	struct sysctlnode qnode;
@@ -338,7 +336,7 @@ sysctlfs_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 }
 
 int
-sysctlfs_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
+sysctlfs_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *pcr,
 	int ioflag)
 {
@@ -362,7 +360,7 @@ sysctlfs_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 }
 
 int
-sysctlfs_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
+sysctlfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *cred,
 	int ioflag)
 {
@@ -408,7 +406,7 @@ sysctlfs_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 }
 
 int
-sysctlfs_reclaim(struct puffs_usermount *pu, void *opc, pid_t pid)
+sysctlfs_node_reclaim(struct puffs_usermount *pu, void *opc, pid_t pid)
 {
 	struct sfsnode *sfs = opc;
 

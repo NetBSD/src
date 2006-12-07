@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.6 2006/11/18 12:41:06 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.7 2006/12/07 10:54:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@
 #include "dtfs.h"
 
 int
-dtfs_mount(struct puffs_usermount *pu, void **rootcookie)
+dtfs_fs_mount(struct puffs_usermount *pu, void **rootcookie)
 {
 	struct dtfs_mount *dtm;
 	struct dtfs_file *dff;
@@ -97,7 +97,7 @@ dtfs_mount(struct puffs_usermount *pu, void **rootcookie)
 #define ROUND(a,b) (((a) + ((b)-1)) & ~((b)-1))
 #define NFILES 1024*1024
 int
-dtfs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp, pid_t pid)
+dtfs_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp, pid_t pid)
 {
 	struct rlimit rlim;
 	struct dtfs_mount *dtm;

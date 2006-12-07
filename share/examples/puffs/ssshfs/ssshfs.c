@@ -1,4 +1,4 @@
-/*	$NetBSD: ssshfs.c,v 1.9 2006/12/01 12:50:52 pooka Exp $	*/
+/*	$NetBSD: ssshfs.c,v 1.10 2006/12/07 10:54:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -50,8 +50,7 @@
 #include "sftp-common.h"
 #include "sftp-client.h"
 
-PUFFSVFS_PROTOS(ssshfs)
-PUFFSVN_PROTOS(ssshfs)
+PUFFSOP_PROTOS(ssshfs)
 
 struct ssshnode {
 	struct ssshnode *dotdot;
@@ -91,8 +90,7 @@ int
 main(int argc, char *argv[])
 {
 	struct puffs_usermount *pu;
-	struct puffs_vfsops pvfs;
-	struct puffs_vnops pvn;
+	struct puffs_ops pops;
 	char *mountpath;
 
 	setprogname(argv[0]);
@@ -100,34 +98,33 @@ main(int argc, char *argv[])
 	if (argc < 3)
 		errx(1, "usage: %s user@host:path mountpath", getprogname());
 
-	memset(&pvfs, 0, sizeof(struct puffs_vfsops));
-	memset(&pvn, 0, sizeof(struct puffs_vnops));
+	PUFFSOP_INIT(&pops);
 
-	pvfs.puffs_mount = ssshfs_mount;
-	pvfs.puffs_unmount = ssshfs_unmount;
-	pvfs.puffs_sync = puffs_vfsnop_sync; /* XXX! */
-	pvfs.puffs_statvfs = puffs_vfsnop_statvfs;
+	PUFFSOP_SET(&pops, ssshfs, fs, mount);
+	PUFFSOP_SET(&pops, ssshfs, fs, unmount);
+	PUFFSOP_SETFSNOP(&pops, sync); /* XXX */
+	PUFFSOP_SETFSNOP(&pops, statvfs);
 
-	pvn.puffs_lookup = ssshfs_lookup;
-	pvn.puffs_getattr = ssshfs_getattr;
-	pvn.puffs_setattr = ssshfs_setattr;
-	pvn.puffs_readdir = ssshfs_readdir;
-	pvn.puffs_symlink = ssshfs_symlink;
-	pvn.puffs_readlink = ssshfs_readlink;
-	pvn.puffs_remove = ssshfs_remove;
-	pvn.puffs_mkdir = ssshfs_mkdir;
-	pvn.puffs_rmdir = ssshfs_rmdir;
-	pvn.puffs_read = ssshfs_read;
-	pvn.puffs_create = ssshfs_create;
-	pvn.puffs_write = ssshfs_write;
-	pvn.puffs_rename = ssshfs_rename;
-	pvn.puffs_reclaim = ssshfs_reclaim;
+	PUFFSOP_SET(&pops, ssshfs, node, lookup);
+	PUFFSOP_SET(&pops, ssshfs, node, getattr);
+	PUFFSOP_SET(&pops, ssshfs, node, setattr);
+	PUFFSOP_SET(&pops, ssshfs, node, readdir);
+	PUFFSOP_SET(&pops, ssshfs, node, symlink);
+	PUFFSOP_SET(&pops, ssshfs, node, readlink);
+	PUFFSOP_SET(&pops, ssshfs, node, remove);
+	PUFFSOP_SET(&pops, ssshfs, node, create);
+	PUFFSOP_SET(&pops, ssshfs, node, mkdir);
+	PUFFSOP_SET(&pops, ssshfs, node, rmdir);
+	PUFFSOP_SET(&pops, ssshfs, node, read);
+	PUFFSOP_SET(&pops, ssshfs, node, write);
+	PUFFSOP_SET(&pops, ssshfs, node, rename);
+	PUFFSOP_SET(&pops, ssshfs, node, reclaim);
 
 	mountpath = argv[--argc]; /* urgh */
 
 	sftp_main(argc, argv);
 
-	if ((pu = puffs_mount(&pvfs, &pvn, mountpath, 0, "ssshfs",
+	if ((pu = puffs_mount(&pops, mountpath, 0, "ssshfs",
 	    PUFFS_KFLAG_NOCACHE, 0))==NULL)
 		err(1, "mount");
 
@@ -275,7 +272,7 @@ makenewnode(struct ssshnode *ossn, const char *pcomp, const char *longname)
 }
 
 int
-ssshfs_mount(struct puffs_usermount *pu, void **rootcookie)
+ssshfs_fs_mount(struct puffs_usermount *pu, void **rootcookie)
 {
 
 	sftpc = do_init(in, out, 1<<15, 1);
@@ -310,7 +307,7 @@ ssshfs_mount(struct puffs_usermount *pu, void **rootcookie)
 }
 
 int
-ssshfs_unmount(struct puffs_usermount *pu, int flags, pid_t pid)
+ssshfs_fs_unmount(struct puffs_usermount *pu, int flags, pid_t pid)
 {
 
 	close(in);
@@ -319,7 +316,7 @@ ssshfs_unmount(struct puffs_usermount *pu, int flags, pid_t pid)
 }
 
 int
-ssshfs_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
+ssshfs_node_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
 	enum vtype *newtype, voff_t *newsize, dev_t *newrdev,
 	const struct puffs_cn *pcn)
 {
@@ -354,7 +351,7 @@ ssshfs_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
 }
 
 int
-ssshfs_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
+ssshfs_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
 	const struct puffs_cred *pcr, pid_t pid)
 {
 	struct ssshnode *ssn = opc;
@@ -365,8 +362,8 @@ ssshfs_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
 }
 
 int
-ssshfs_setattr(struct puffs_usermount *pu, void *opc, const struct vattr *va,
-	const struct puffs_cred *pcr, pid_t pid)
+ssshfs_node_setattr(struct puffs_usermount *pu, void *opc,
+	const struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
 {
 	struct ssshnode *ssn = opc;
 	Attrib *a;
@@ -389,7 +386,7 @@ ssshfs_setattr(struct puffs_usermount *pu, void *opc, const struct vattr *va,
 
 int do_creatfile(struct sftp_conn *conn, char *path, Attrib *a); /* XXX */
 int
-ssshfs_create(struct puffs_usermount *pu, void *opc, void **newnode,
+ssshfs_node_create(struct puffs_usermount *pu, void *opc, void **newnode,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
 	struct ssshnode *ssd = opc, *newssn;
@@ -412,7 +409,7 @@ ssshfs_create(struct puffs_usermount *pu, void *opc, void **newnode,
 }
 
 int
-ssshfs_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
+ssshfs_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	const struct puffs_cred *pcr, off_t *readoff, size_t *reslen)
 {
 	struct ssshnode *ssn = opc;
@@ -430,7 +427,7 @@ ssshfs_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 }
 
 int
-ssshfs_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
+ssshfs_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *pcr,
 	int ioflag)
 {
@@ -459,7 +456,7 @@ ssshfs_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 }
 
 int
-ssshfs_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
+ssshfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *cred,
 	int ioflag)
 {
@@ -485,7 +482,7 @@ ssshfs_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 }
 
 int
-ssshfs_readlink(struct puffs_usermount *pu, void *opc,
+ssshfs_node_readlink(struct puffs_usermount *pu, void *opc,
 	const struct puffs_cred *cred, char *linkvalue, size_t *linklen)
 {
 	struct ssshnode *ssn = opc;
@@ -504,7 +501,7 @@ ssshfs_readlink(struct puffs_usermount *pu, void *opc,
 }
 
 int
-ssshfs_remove(struct puffs_usermount *pu, void *opc, void *targ,
+ssshfs_node_remove(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct ssshnode *ssn = targ, *ssd = opc;
@@ -523,7 +520,7 @@ ssshfs_remove(struct puffs_usermount *pu, void *opc, void *targ,
 }
 
 int
-ssshfs_mkdir(struct puffs_usermount *pu, void *opc, void **newnode,
+ssshfs_node_mkdir(struct puffs_usermount *pu, void *opc, void **newnode,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
 	struct ssshnode *ssd = opc, *newssn;
@@ -547,7 +544,7 @@ ssshfs_mkdir(struct puffs_usermount *pu, void *opc, void **newnode,
 }
 
 int
-ssshfs_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
+ssshfs_node_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct ssshnode *ssn = targ, *ssd = opc;
@@ -566,7 +563,7 @@ ssshfs_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 }
 
 int
-ssshfs_symlink(struct puffs_usermount *pu, void *opc, void **newnode,
+ssshfs_node_symlink(struct puffs_usermount *pu, void *opc, void **newnode,
 	const struct puffs_cn *pcn, const struct vattr *va,
 	const char *link_target)
 {
@@ -600,7 +597,7 @@ ssshfs_symlink(struct puffs_usermount *pu, void *opc, void **newnode,
 }
 
 int
-ssshfs_rename(struct puffs_usermount *pu, void *opc, void *src,
+ssshfs_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 	const struct puffs_cn *pcn_src, void *targ_dir, void *targ,
 	const struct puffs_cn *pcn_targ)
 {
@@ -633,7 +630,7 @@ ssshfs_rename(struct puffs_usermount *pu, void *opc, void *src,
 }
 
 int
-ssshfs_reclaim(struct puffs_usermount *pu, void *opc, pid_t pid)
+ssshfs_node_reclaim(struct puffs_usermount *pu, void *opc, pid_t pid)
 {
 	struct ssshnode *ssn, *ssn_next;
 
