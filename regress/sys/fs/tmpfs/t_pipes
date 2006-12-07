@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: t_pipes,v 1.4 2006/11/09 16:20:06 jmmv Exp $
+# $NetBSD: t_pipes,v 1.5 2006/12/07 10:00:39 pooka Exp $
 #
 # Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -51,8 +51,8 @@ test_run() {
 	mknod pipe p || die
 
 	test_name "Writing to pipe and waiting for response"
-	echo -n foo >p &
-	[ "$(cat p)" = foo ] || die
+	echo -n foo >pipe &
+	[ "$(cat pipe)" = foo ] || die
 
 	test_unmount
 }
