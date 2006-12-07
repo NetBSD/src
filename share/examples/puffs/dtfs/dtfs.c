@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.9 2006/12/01 12:50:52 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.10 2006/12/07 10:54:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -53,8 +53,7 @@ int
 main(int argc, char *argv[])
 {
 	struct puffs_usermount *pu;
-	struct puffs_vfsops pvfs;
-	struct puffs_vnops pvn;
+	struct puffs_ops pops;
 	int pflags, lflags;
 
 	setprogname(argv[0]);
@@ -68,34 +67,32 @@ main(int argc, char *argv[])
 		lflags = PUFFSLOOP_NODAEMON;
 	}
 
-	memset(&pvfs, 0, sizeof(struct puffs_vfsops));
-	memset(&pvn, 0, sizeof(struct puffs_vnops));
+	PUFFSOP_INIT(&pops);
 
-	pvfs.puffs_mount = dtfs_mount;
-	pvfs.puffs_unmount = puffs_vfsnop_unmount;
-	pvfs.puffs_sync = puffs_vfsnop_sync;
-	pvfs.puffs_statvfs = dtfs_statvfs;
+	PUFFSOP_SET(&pops, dtfs, fs, mount);
+	PUFFSOP_SET(&pops, dtfs, fs, statvfs);
+	PUFFSOP_SETFSNOP(&pops, unmount);
+	PUFFSOP_SETFSNOP(&pops, sync);
 
-	pvn.puffs_lookup = dtfs_lookup;
-	pvn.puffs_getattr = dtfs_getattr;
-	pvn.puffs_setattr = dtfs_setattr;
-	pvn.puffs_create = dtfs_create;
-	pvn.puffs_remove = dtfs_remove;
-	pvn.puffs_readdir = dtfs_readdir;
-	pvn.puffs_mkdir = dtfs_mkdir;
-	pvn.puffs_rmdir = dtfs_rmdir;
-	pvn.puffs_rename = dtfs_rename;
-	pvn.puffs_read = dtfs_read;
-	pvn.puffs_write = dtfs_write;
-	pvn.puffs_link = dtfs_link;
-	pvn.puffs_symlink = dtfs_symlink;
-	pvn.puffs_readlink = dtfs_readlink;
-	pvn.puffs_reclaim = dtfs_reclaim;
-	pvn.puffs_inactive = dtfs_inactive;
-	pvn.puffs_mknod = dtfs_mknod;
+	PUFFSOP_SET(&pops, dtfs, node, lookup);
+	PUFFSOP_SET(&pops, dtfs, node, getattr);
+	PUFFSOP_SET(&pops, dtfs, node, setattr);
+	PUFFSOP_SET(&pops, dtfs, node, create);
+	PUFFSOP_SET(&pops, dtfs, node, remove);
+	PUFFSOP_SET(&pops, dtfs, node, readdir);
+	PUFFSOP_SET(&pops, dtfs, node, mkdir);
+	PUFFSOP_SET(&pops, dtfs, node, rmdir);
+	PUFFSOP_SET(&pops, dtfs, node, rename);
+	PUFFSOP_SET(&pops, dtfs, node, read);
+	PUFFSOP_SET(&pops, dtfs, node, write);
+	PUFFSOP_SET(&pops, dtfs, node, link);
+	PUFFSOP_SET(&pops, dtfs, node, symlink);
+	PUFFSOP_SET(&pops, dtfs, node, readlink);
+	PUFFSOP_SET(&pops, dtfs, node, mknod);
+	PUFFSOP_SET(&pops, dtfs, node, inactive);
+	PUFFSOP_SET(&pops, dtfs, node, reclaim);
 
-	if ((pu = puffs_mount(&pvfs, &pvn, argv[1], 0, FSNAME, pflags, 0))
-	    == NULL)
+	if ((pu = puffs_mount(&pops, argv[1], 0, FSNAME, pflags, 0)) == NULL)
 		err(1, "mount");
 
 	if (puffs_mainloop(pu, lflags) == -1)
