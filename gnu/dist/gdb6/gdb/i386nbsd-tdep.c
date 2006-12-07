@@ -102,10 +102,9 @@ i386nbsd_aout_regset_from_core_section (struct gdbarch *gdbarch,
    In particular, the return address of a signal handler points to the
    following code sequence:
 
-	leal	0x10(%esp), %eax
-	pushl	%eax
-	pushl	%eax
-	movl	$0x127, %eax		# __sigreturn14
+	leal	0x8c(%esp), %eax
+	movl	%eax, 0x4(%esp)
+	movl	$0x134, %eax		# setcontext
 	int	$0x80
 
    Each instruction has a unique encoding, so we simply attempt to match
@@ -115,23 +114,20 @@ i386nbsd_aout_regset_from_core_section (struct gdbarch *gdbarch,
    signal trampoline.  If not, -1 is returned, otherwise the offset from the
    start of the return sequence is returned.  */
 #define RETCODE_INSN1		0x8d
-#define RETCODE_INSN2		0x50
-#define RETCODE_INSN3		0x50
-#define RETCODE_INSN4		0xb8
-#define RETCODE_INSN5		0xcd
+#define RETCODE_INSN2		0x89
+#define RETCODE_INSN3		0xb8
+#define RETCODE_INSN4		0xcd
 
-#define RETCODE_INSN2_OFF	4
-#define RETCODE_INSN3_OFF	5
-#define RETCODE_INSN4_OFF	6
-#define RETCODE_INSN5_OFF	11
+#define RETCODE_INSN2_OFF	7
+#define RETCODE_INSN3_OFF	11
+#define RETCODE_INSN4_OFF	16
 
 static const unsigned char sigtramp_retcode[] =
 {
-  RETCODE_INSN1, 0x44, 0x24, 0x10,
-  RETCODE_INSN2,
-  RETCODE_INSN3,
-  RETCODE_INSN4, 0x27, 0x01, 0x00, 0x00,
-  RETCODE_INSN5, 0x80,
+  RETCODE_INSN1, 0x84, 0x24, 0x8c, 0x00, 0x00, 0x00,
+  RETCODE_INSN2, 0x44, 0x24, 0x04,
+  RETCODE_INSN3, 0x34, 0x01, 0x00, 0x00,
+  RETCODE_INSN4, 0x80,
 };
 
 static LONGEST
@@ -152,23 +148,15 @@ i386nbsd_sigtramp_offset (struct frame_info *next_frame)
       break;
 
     case RETCODE_INSN2:
-      /* INSN2 and INSN3 are the same.  Read at the location of PC+1
-	 to determine if we're actually looking at INSN2 or INSN3.  */
-      if (!safe_frame_unwind_memory (next_frame, pc + 1, &insn, 1))
-	return -1;
+      off = RETCODE_INSN2_OFF;
+      break;
 
-      if (insn == RETCODE_INSN3)
-	off = RETCODE_INSN2_OFF;
-      else
-	off = RETCODE_INSN3_OFF;
+    case RETCODE_INSN3:
+      off = RETCODE_INSN3_OFF;
       break;
 
     case RETCODE_INSN4:
       off = RETCODE_INSN4_OFF;
-      break;
-
-    case RETCODE_INSN5:
-      off = RETCODE_INSN5_OFF;
       break;
 
     default:
@@ -200,25 +188,45 @@ i386nbsd_sigtramp_p (struct frame_info *next_frame)
 	  || i386nbsd_sigtramp_offset (next_frame) >= 0);
 }
 
-/* From <machine/signal.h>.  */
+/* From <sys/ucontext.h> and <machine/mcontext.h>. */
+#define MCOFF 36 /* mcontext in ucontext */
+#define _REG_GS         0
+#define _REG_FS         1
+#define _REG_ES         2
+#define _REG_DS         3
+#define _REG_EDI        4
+#define _REG_ESI        5
+#define _REG_EBP        6
+#define _REG_ESP        7
+#define _REG_EBX        8
+#define _REG_EDX        9
+#define _REG_ECX        10
+#define _REG_EAX        11
+#define _REG_TRAPNO     12
+#define _REG_ERR        13
+#define _REG_EIP        14
+#define _REG_CS         15
+#define _REG_EFL        16
+#define _REG_UESP       17
+#define _REG_SS         18
 int i386nbsd_sc_reg_offset[] =
 {
-  10 * 4,			/* %eax */
-  9 * 4,			/* %ecx */
-  8 * 4,			/* %edx */
-  7 * 4,			/* %ebx */
-  14 * 4,			/* %esp */
-  6 * 4,			/* %ebp */
-  5 * 4,			/* %esi */
-  4 * 4,			/* %edi */
-  11 * 4,			/* %eip */
-  13 * 4,			/* %eflags */
-  12 * 4,			/* %cs */
-  15 * 4,			/* %ss */
-  3 * 4,			/* %ds */
-  2 * 4,			/* %es */
-  1 * 4,			/* %fs */
-  0 * 4				/* %gs */
+  MCOFF + _REG_EAX * 4,		/* %eax */
+  MCOFF + _REG_ECX * 4,		/* %ecx */
+  MCOFF + _REG_EDX * 4,		/* %edx */
+  MCOFF + _REG_EBX * 4,		/* %ebx */
+  MCOFF + _REG_ESP * 4,		/* %esp */
+  MCOFF + _REG_EBP * 4,		/* %ebp */
+  MCOFF + _REG_ESI * 4,		/* %esi */
+  MCOFF + _REG_EDI * 4,		/* %edi */
+  MCOFF + _REG_EIP * 4,		/* %eip */
+  MCOFF + _REG_EFL * 4,		/* %eflags */
+  MCOFF + _REG_CS * 4,		/* %cs */
+  MCOFF + _REG_SS * 4,		/* %ss */
+  MCOFF + _REG_DS * 4,		/* %ds */
+  MCOFF + _REG_ES * 4,		/* %es */
+  MCOFF + _REG_FS * 4,		/* %fs */
+  MCOFF + _REG_GS * 4		/* %gs */
 };
 
 /* Kernel debugging support */
