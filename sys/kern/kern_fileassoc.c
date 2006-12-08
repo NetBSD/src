@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.12 2006/11/20 21:50:51 elad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.13 2006/12/08 13:23:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,7 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.12 2006/11/20 21:50:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.13 2006/12/08 13:23:22 yamt Exp $");
+
+#include "opt_fileassoc.h"
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -46,6 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.12 2006/11/20 21:50:51 elad Exp
 #include <sys/fileassoc.h>
 #include <sys/hash.h>
 #include <sys/fstypes.h>
+
+/* Max. number of hooks. */
+#ifndef FILEASSOC_NHOOKS
+#define	FILEASSOC_NHOOKS	4
+#endif /* !FILEASSOC_NHOOKS */
 
 static struct fileassoc_hash_entry *
 fileassoc_file_lookup(struct vnode *, fhandle_t *);
