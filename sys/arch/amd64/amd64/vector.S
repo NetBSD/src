@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.8 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: vector.S,v 1.9 2006/12/08 15:05:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -360,6 +360,7 @@ IDTVEC(resume_lapic_ltimer)
 	movl	$IPL_CLOCK,CPUVAR(ILEVEL)
 	sti
 	pushq	%rbx
+	movq	%rsp,%rsi
 	xorq	%rdi,%rdi
 	call	_C_LABEL(lapic_clockintr)
 	jmp	_C_LABEL(Xdoreti)
@@ -415,6 +416,7 @@ IDTVEC(intr_/**/name/**/num)						;\
 	movl	IH_LEVEL(%rbx),%r12d					;\
 	cmpl	%r13d,%r12d						;\
 	jle	7f							;\
+	movq	%rsp,%rsi						;\
 	movq	IH_ARG(%rbx),%rdi					;\
 	movl	%r12d,CPUVAR(ILEVEL)					;\
 	call	*IH_FUN(%rbx)		/* call it */			;\

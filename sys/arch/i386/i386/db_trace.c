@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.50 2006/11/22 13:29:03 yamt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.51 2006/12/08 15:05:18 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50 2006/11/22 13:29:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.51 2006/12/08 15:05:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,6 +357,26 @@ db_nextframe(
 	return 1;
 }
 
+static boolean_t
+db_intrstack_p(const void *vp)
+{
+	const struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		const char *cp = ci->ci_intrstack;
+
+		if (cp == NULL) {
+			continue;
+		}
+		if ((cp - INTRSTACKSIZE + 4) <= (const char *)vp &&
+		    (const char *)vp <= cp) {
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 void
 db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		     const char *modif, void (*pr)(const char *, ...))
@@ -504,7 +524,10 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 
 		if (INKERNEL((int)frame)) {
 			/* staying in kernel */
-			if (frame < lastframe ||
+			if (!db_intrstack_p(frame) &&
+			    db_intrstack_p(lastframe)) {
+				(*pr)("--- switch to interrupt stack ---\n");
+			} else if (frame < lastframe ||
 			    (frame == lastframe && callpc == lastcallpc)) {
 				(*pr)("Bad frame pointer: %p\n", frame);
 				break;

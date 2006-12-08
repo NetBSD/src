@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.24 2006/07/08 21:23:38 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.25 2006/12/08 15:05:18 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2006/07/08 21:23:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2006/12/08 15:05:18 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -118,6 +118,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2006/07/08 21:23:38 christos Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/atomic.h>
 #include <machine/i8259.h>
@@ -818,6 +820,9 @@ cpu_intr_init(struct cpu_info *ci)
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
 	int i;
 #endif
+#if defined(INTRSTACKSIZE)
+	char *cp;
+#endif /* defined(INTRSTACKSIZE) */
 
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
@@ -892,6 +897,11 @@ cpu_intr_init(struct cpu_info *ci)
 
 	intr_calculatemasks(ci);
 
+#if defined(INTRSTACKSIZE)
+	cp = (char *)uvm_km_alloc(kernel_map, INTRSTACKSIZE, 0, UVM_KMF_WIRED);
+	ci->ci_intrstack = cp + INTRSTACKSIZE - sizeof(register_t);
+	ci->ci_idepth = -1;
+#endif /* defined(INTRSTACKSIZE) */
 }
 
 #ifdef MULTIPROCESSOR

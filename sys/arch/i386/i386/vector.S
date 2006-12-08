@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.22 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: vector.S,v 1.23 2006/12/08 15:05:18 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -165,11 +165,12 @@ IDTVEC(intr_lapic_ipi)
 	jae	2f
 IDTVEC(resume_lapic_ipi)
 1:
-	incl	CPUVAR(IDEPTH)
-	movl	$IPL_IPI,CPUVAR(ILEVEL)
-        sti
 	pushl	%ebx
+	IDEPTH_INCR
+	movl	$IPL_IPI,CPUVAR(ILEVEL)
+	sti
 	call	_C_LABEL(x86_ipi_handler)
+	cli
 	jmp	_C_LABEL(Xdoreti)
 2:
 	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
@@ -215,13 +216,14 @@ IDTVEC(intr_lapic_ltimer)
 	jae	2f
 IDTVEC(resume_lapic_ltimer)
 1:
-	incl	CPUVAR(IDEPTH)
+	pushl	%ebx
+	IDEPTH_INCR
 	movl	$IPL_CLOCK,CPUVAR(ILEVEL)
 	sti
-	pushl	%ebx
 	pushl	$0
 	call	_C_LABEL(lapic_clockintr)
 	addl	$4,%esp		
+	cli
 	jmp	_C_LABEL(Xdoreti)
 2:
 	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
@@ -270,8 +272,8 @@ IDTVEC(intr_/**/name/**/num)						;\
 1:									\
 	pushl	%esi							;\
 	movl	%ebx,CPUVAR(ILEVEL)					;\
+	IDEPTH_INCR							;\
 	sti								;\
-	incl	CPUVAR(IDEPTH)						;\
 	movl	IS_HANDLERS(%ebp),%ebx					;\
 6:									\
 	movl	IH_LEVEL(%ebx),%edi					;\
@@ -285,29 +287,26 @@ IDTVEC(intr_/**/name/**/num)						;\
 	addl	$4,%esp			/* toss the arg */		;\
 	testl	%ebx,%ebx						;\
 	jnz	6b							;\
-5:									\
 	cli								;\
 	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
-	sti								;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 7:									\
 	cli								;\
 	orl     $(1 << num),CPUVAR(IPENDING)				;\
 	level_mask(num)							;\
 	late_ack(num)							;\
-	sti								;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 10:									\
-	cli								;\
 	orl     $(1 << num),CPUVAR(IPENDING)				;\
 	level_mask(num)							;\
 	late_ack(num)							;\
-	sti								;\
 	INTRFASTEXIT							;\
 9:									\
+	pushl	%esp			/* for unmask */		;\
 	unmask(num)							;\
 	late_ack(num)							;\
+	addl	$4,%esp							;\
 	INTRFASTEXIT
 
 #define ICUADDR IO_ICU1
@@ -595,8 +594,8 @@ _C_LABEL(ioapic_level_stubs):
 
 IDTVEC(softserial)
 	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
+	IDEPTH_INCR
 	sti
-	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
 #endif
@@ -609,13 +608,14 @@ IDTVEC(softserial)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintunlock)
 #endif
-	decl	CPUVAR(IDEPTH)
+	cli
+	IDEPTH_DECR
 	jmp	*%esi
 
 IDTVEC(softnet)
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
+	IDEPTH_INCR
 	sti
-	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintlock)
 #endif
@@ -641,13 +641,14 @@ IDTVEC(softnet)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintunlock)	
 #endif
-	decl	CPUVAR(IDEPTH)
+	cli
+	IDEPTH_DECR
 	jmp	*%esi
 
 IDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
+	IDEPTH_INCR
 	sti
-	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintlock)
 #endif
@@ -661,7 +662,8 @@ IDTVEC(softclock)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintunlock)		
 #endif
-	decl	CPUVAR(IDEPTH)
+	cli
+	IDEPTH_DECR
 	jmp	*%esi
 
 /*
@@ -766,9 +768,10 @@ IDTVEC(trap10)
 	INTRENTRY
 	pushl	CPUVAR(ILEVEL)
 	pushl	%esp
+	pushl	$0			# dummy arg
 	incl	_C_LABEL(uvmexp)+V_TRAP
 	call	_C_LABEL(npxintr)
-	addl	$8,%esp
+	addl	$12,%esp
 	INTRFASTEXIT
 #else
 	ZTRAP(T_ARITHTRAP)
