@@ -1,4 +1,4 @@
-/*	$NetBSD: npxvar.h,v 1.5 2006/10/28 21:24:45 christos Exp $	*/
+/*	$NetBSD: npxvar.h,v 1.6 2006/12/08 15:05:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -87,4 +87,4 @@ struct npx_softc {
 
 enum npx_type npxprobe1(bus_space_tag_t, bus_space_handle_t, int);
 void npxattach(struct npx_softc *);
-int npxintr(void *, struct intrframe);
+int npxintr(void *, struct intrframe *);

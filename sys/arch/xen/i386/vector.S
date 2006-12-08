@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.15 2006/01/15 22:09:51 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.16 2006/12/08 15:05:18 yamt Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -202,15 +202,14 @@ IDTVEC(resume_/**/name/**/num)						\
 1:									\
 	pushl	%esi							;\
 	movl	$num,CPUVAR(ILEVEL)					;\
+	IDEPTH_INCR /* leaves old %esp on stack	*/			;\
 	STI(%eax)							;\
-	incl	CPUVAR(IDEPTH)						;\
 	movl	IS_HANDLERS(%ebp),%ebx					;\
 	LOCK_KERNEL							;\
 6:									\
-	pushl	%esp							;\
 	pushl	IH_ARG(%ebx)						;\
 	call	*IH_FUN(%ebx)		/* call it */			;\
-	addl	$8,%esp			/* toss the arg */		;\
+	addl	$4,%esp			/* toss the arg */		;\
 	movl	IH_IPL_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	6b							;\
@@ -219,7 +218,6 @@ IDTVEC(resume_/**/name/**/num)						\
 	CLI(%eax)							;\
 	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
-	STI(%eax)							;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 
 # Just unmasking the event isn't enouth, we also need to
@@ -306,8 +304,8 @@ _C_LABEL(xenev_stubs):
 #define EVCNTHI(x) _C_LABEL(x) + EV_EVCNTHI
 IDTVEC(softserial)
 	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
+	IDEPTH_INCR
 	STI(%eax)
-	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
 #endif
@@ -319,13 +317,14 @@ IDTVEC(softserial)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintunlock)
 #endif
-	decl	CPUVAR(IDEPTH)
+	CLI(%eax)
+	IDEPTH_DECR
 	jmp	*%esi
 
 IDTVEC(softnet)
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
+	IDEPTH_INCR
 	STI(%eax)
-	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
 #endif
@@ -349,13 +348,14 @@ IDTVEC(softnet)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintunlock)
 #endif
-	decl	CPUVAR(IDEPTH)
+	CLI(%eax)
+	IDEPTH_DECR
 	jmp	*%esi
 
 IDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
+	IDEPTH_INCR
 	STI(%eax)
-	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
 #endif
@@ -368,14 +368,15 @@ IDTVEC(softclock)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintunlock)
 #endif
-	decl	CPUVAR(IDEPTH)
+	CLI(%eax)
+	IDEPTH_DECR
 	jmp	*%esi
 
 #if defined(DOM0OPS)
 IDTVEC(softxenevt)
 	movl	$IPL_SOFTXENEVT, CPUVAR(ILEVEL)
+	IDEPTH_INCR
 	STI(%eax)
-	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
 #endif
@@ -385,7 +386,8 @@ IDTVEC(softxenevt)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintunlock)
 #endif
-	decl	CPUVAR(IDEPTH)
+	CLI(%eax)
+	IDEPTH_DECR
 	jmp	*%esi
 #endif /* defined(DOM0OPS) */
 
@@ -486,9 +488,10 @@ IDTVEC(trap10)
 	INTRENTRY
 	pushl	CPUVAR(ILEVEL)
 	pushl	%esp
+	pushl	$0			# dummy arg
 	incl	_C_LABEL(uvmexp)+V_TRAP
 	call	_C_LABEL(npxintr)
-	addl	$8,%esp
+	addl	$12,%esp
 	INTRFASTEXIT
 #else
 	ZTRAP(T_ARITHTRAP)

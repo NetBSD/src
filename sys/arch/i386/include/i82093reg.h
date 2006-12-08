@@ -1,4 +1,4 @@
-/*	 $NetBSD: i82093reg.h,v 1.6 2003/05/11 14:02:17 fvdl Exp $ */
+/*	 $NetBSD: i82093reg.h,v 1.7 2006/12/08 15:05:18 yamt Exp $ */
 
 #include <x86/i82093reg.h>
 
@@ -50,7 +50,8 @@
  * XXX this is not obvious
  */
 #define ioapic_unmask(num) \
-	cmpl    $IREENT_MAGIC,(TF_ERR+4)(%esp)			;\
+	movl    (%esp),%eax					;\
+	cmpl    $IREENT_MAGIC,(TF_ERR+4)(%eax)			;\
 	jne     79f						;\
 	movl	IS_PIC(%ebp),%edi				;\
 	ioapic_asm_lock(num)					;\
