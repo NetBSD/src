@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2006/12/08 15:05:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2006/12/08 15:05:18 yamt Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -192,7 +192,7 @@ int		gettick(void);
 void		sysbeep(int, int);
 static void     tickle_tc(void);
 
-static int	clockintr(void *, struct intrframe);
+static int	clockintr(void *, struct intrframe *);
 static void	rtcinit(void);
 static int	rtcget(mc_todregs *);
 static void	rtcput(mc_todregs *);
@@ -404,11 +404,11 @@ tickle_tc(void)
 }
 
 static int
-clockintr(void *arg, struct intrframe frame)
+clockintr(void *arg, struct intrframe *frame)
 {
 	tickle_tc();
 
-	hardclock((struct clockframe *)&frame);
+	hardclock((struct clockframe *)frame);
 
 #if NMCA > 0
 	if (MCA_system) {
