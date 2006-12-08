@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.109 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.110 2006/12/08 16:06:22 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.109 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.110 2006/12/08 16:06:22 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -685,12 +685,11 @@ in_losing(struct inpcb *inp)
 			(void) rtrequest(RTM_DELETE, rt_key(rt),
 				rt->rt_gateway, rt_mask(rt), rt->rt_flags,
 				(struct rtentry **)0);
-		else
+		rtfree(rt);
 		/*
 		 * A new route can be allocated
 		 * the next time output is attempted.
 		 */
-			rtfree(rt);
 	}
 }
 
