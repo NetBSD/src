@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.52 2006/12/06 00:50:34 dyoung Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.53 2006/12/09 05:33:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.52 2006/12/06 00:50:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.53 2006/12/09 05:33:09 dyoung Exp $");
 
 #include "opt_eon.h"
 
@@ -226,16 +226,14 @@ eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro,
 	 * check that it is to the same destination
 	 * and is still up.  If not, free it and try again.
 	 */
-	if (ro->ro_rt) {
+	if (ro->ro_rt != NULL) {
 		struct sockaddr_in *dst = satosin(rt_key(ro->ro_rt));
 		if ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-		    sin->sin_addr.s_addr != dst->sin_addr.s_addr) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *) 0;
-		}
+		    sin->sin_addr.s_addr != dst->sin_addr.s_addr)
+			rtflush(ro);
 	}
 	rtalloc(ro);
-	if (ro->ro_rt)
+	if (ro->ro_rt != NULL)
 		ro->ro_rt->rt_use++;
 	hdr->ei_ip.ip_dst = sin->sin_addr;
 	hdr->ei_ip.ip_p = IPPROTO_EON;
@@ -279,8 +277,8 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	case RTM_DELETE:
 		if (el) {
 			remque(&(el->el_qhdr));
-			if (el->el_iproute.ro_rt)
-				RTFREE(el->el_iproute.ro_rt);
+			if (el->el_iproute.ro_rt != NULL)
+				rtflush(&el->el_iproute);
 			Free(el);
 			rt->rt_llinfo = 0;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.31 2006/12/04 02:59:35 dyoung Exp $	*/
+/*	$NetBSD: pf.c,v 1.32 2006/12/09 05:33:06 dyoung Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -5307,7 +5307,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af)
 #endif
 
 	if (ro.ro_rt != NULL) {
-		RTFREE(ro.ro_rt);
+		rtflush((struct route *)&ro);
 		return (1);
 	}
 
@@ -5358,7 +5358,7 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af,
 		if (ro.ro_rt->rt_labelid == aw->v.rtlabel)
 			ret = 1;
 #endif
-		RTFREE(ro.ro_rt);
+		rtflush((struct route *)&ro);
 	}
 
 	return (ret);
@@ -5445,7 +5445,8 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 			goto bad;
 		}
 		if (s == NULL) {
-			pf_map_addr(AF_INET, r, (struct pf_addr *)&ip->ip_src,
+			pf_map_addr(AF_INET, r,
+			    (const struct pf_addr *)&ip->ip_src,
 			    &naddr, NULL, &sn);
 			if (!PF_AZERO(&naddr, AF_INET))
 				dst->sin_addr.s_addr = naddr.v4.s_addr;
@@ -5575,7 +5576,7 @@ done:
 	if (r->rt != PF_DUPTO)
 		*m = NULL;
 	if (ro == &iproute && ro->ro_rt)
-		RTFREE(ro->ro_rt);
+		rtflush(ro);
 	return;
 
 bad:

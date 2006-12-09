@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.31 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: frag6.c,v 1.32 2006/12/09 05:33:07 dyoung Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.31 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.32 2006/12/09 05:33:07 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,12 +200,10 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 #ifdef IN6_IFSTAT_STRICT
 	/* find the destination interface of the packet. */
 	dst = (struct sockaddr_in6 *)&ro.ro_dst;
-	if (ro.ro_rt
-	 && ((ro.ro_rt->rt_flags & RTF_UP) == 0
-	  || !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &ip6->ip6_dst))) {
-		RTFREE(ro.ro_rt);
-		ro.ro_rt = (struct rtentry *)0;
-	}
+	if (ro.ro_rt != NULL &&
+	    ((ro.ro_rt->rt_flags & RTF_UP) == 0 ||
+	     !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &ip6->ip6_dst)))
+		rtflush((struct route *)&ro);
 	if (ro.ro_rt == NULL) {
 		bzero(dst, sizeof(*dst));
 		dst->sin6_family = AF_INET6;
@@ -740,14 +738,10 @@ frag6_slowtimo()
 	 * make sure we notice eventually, even if forwarding only for one
 	 * destination and the cache is never replaced.
 	 */
-	if (ip6_forward_rt.ro_rt) {
-		RTFREE(ip6_forward_rt.ro_rt);
-		ip6_forward_rt.ro_rt = 0;
-	}
-	if (ipsrcchk_rt.ro_rt) {
-		RTFREE(ipsrcchk_rt.ro_rt);
-		ipsrcchk_rt.ro_rt = 0;
-	}
+	if (ip6_forward_rt.ro_rt != NULL)
+		rtflush(&ip6_forward_rt);
+	if (ipsrcchk_rt.ro_rt != NULL)
+		rtflush(&ipsrcchk_rt);
 #endif
 
 	splx(s);

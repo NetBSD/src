@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.91 2006/12/02 18:59:17 dyoung Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.92 2006/12/09 05:33:08 dyoung Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.91 2006/12/02 18:59:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.92 2006/12/09 05:33:08 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -461,8 +461,7 @@ ip6_input(m)
 		if (ip6_forward_rt.ro_rt != NULL) {
 			/* route is down or destination is different */
 			ip6stat.ip6s_forward_cachemiss++;
-			RTFREE(ip6_forward_rt.ro_rt);
-			ip6_forward_rt.ro_rt = 0;
+			rtflush((struct route *)&ip6_forward_rt);
 		}
 
 		bzero(&ip6_forward_rt.ro_dst, sizeof(struct sockaddr_in6));
