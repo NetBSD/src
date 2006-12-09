@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.20 2006/11/25 22:14:38 elad Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.21 2006/12/09 16:11:52 chs Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.20 2006/11/25 22:14:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.21 2006/12/09 16:11:52 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,9 @@ layerfs_done()
 }
 
 /*
- * Return a locked, VREF'ed alias for lower vnode if already exists, else 0.
+ * Return a locked, VREF'ed alias for lower vnode if already exists, else NULL.
+ * The layermp's hashlock must be held on entry.
+ * It will be held upon return iff we return NULL.
  */
 struct vnode *
 layer_node_find(mp, lowervp)
@@ -132,6 +134,7 @@ layer_node_find(mp, lowervp)
 	struct layer_node_hashhead *hd;
 	struct layer_node *a;
 	struct vnode *vp;
+	int error;
 
 	/*
 	 * Find hash base, and then search the (two-way) linked
@@ -142,36 +145,28 @@ layer_node_find(mp, lowervp)
 	 */
 	hd = LAYER_NHASH(lmp, lowervp);
 loop:
-	simple_lock(&lmp->layerm_hashlock);
-	for (a = hd->lh_first; a != 0; a = a->layer_hash.le_next) {
+	LIST_FOREACH(a, hd, layer_hash) {
 		if (a->layer_lowervp == lowervp && LAYERTOV(a)->v_mount == mp) {
 			vp = LAYERTOV(a);
-			simple_unlock(&lmp->layerm_hashlock);
+
 			/*
-			 * We must be careful here as the fact the lower
-			 * vnode is locked will imply vp is locked unless
-			 * someone has decided to start vclean'ing either
-			 * vp or lowervp.
-			 *
-			 * So we try for an exclusive, recursive lock
-			 * on the upper vnode. If it fails, vcleaning
-			 * is in progress (so when we try again, we'll
-			 * fail). If it succeeds, we now have double
-			 * locked the bottom node. So we do an explicit
-			 * VOP_UNLOCK on it to keep the counts right. Note
-			 * that we will end up with the upper node and
-			 * the lower node locked once.
+			 * We must not let vget() try to lock the layer vp,
+			 * since the lower vp is already locked and locking the
+			 * layer vp will involve locking the lower vp (whether
+			 * or not they actually share a lock).  Instead, take
+			 * the layer vp's lock separately afterward, but only
+			 * if it does not share the lower vp's lock.
 			 */
-			if (vget(vp, LK_EXCLUSIVE | LK_CANRECURSE)) {
-				printf ("layer_node_find: vget failed.\n");
+			simple_unlock(&lmp->layerm_hashlock);
+			error = vget(vp, 0);
+			if (error) {
+				simple_lock(&lmp->layerm_hashlock);
 				goto loop;
-			};
-			VOP_UNLOCK(lowervp, 0);
+			}
+			LAYERFS_UPPERLOCK(vp, LK_EXCLUSIVE, error);
 			return (vp);
 		}
 	}
-
-	simple_unlock(&lmp->layerm_hashlock);
 	return NULL;
 }
 
@@ -212,11 +207,13 @@ layer_node_alloc(mp, lowervp, vpp)
 	xp->layer_vnode = vp;
 	xp->layer_lowervp = lowervp;
 	xp->layer_flags = 0;
+
 	/*
 	 * Before we insert our new node onto the hash chains,
 	 * check to see if someone else has beaten us to it.
 	 * (We could have slept in MALLOC.)
 	 */
+	simple_lock(&lmp->layerm_hashlock);
 	if ((nvp = layer_node_find(mp, lowervp)) != NULL) {
 		*vpp = nvp;
 
@@ -231,8 +228,6 @@ layer_node_alloc(mp, lowervp, vpp)
 		return (0);
 	}
 
-	simple_lock(&lmp->layerm_hashlock);
-
 	/*
 	 * Now lock the new node. We rely on the fact that we were passed
 	 * a locked vnode. If the lower node is exporting a struct lock
@@ -246,35 +241,15 @@ layer_node_alloc(mp, lowervp, vpp)
 
 	vp->v_vnlock = lowervp->v_vnlock;
 	LAYERFS_UPPERLOCK(vp, LK_EXCLUSIVE, error);
+	KASSERT(error == 0);
 
-	if (error) {
-		/*
-		 * How did we get a locking error? The node just came off
-		 * of the free list, and we're the only routine which
-		 * knows it's there...
-		 */
-		vp->v_vnlock = &vp->v_lock;
-		*vpp = NULL;
-
-		/* free the substructures we've allocated. */
-		FREE(xp, M_TEMP);
-		if (vp->v_type == VBLK || vp->v_type == VCHR)
-			FREE(vp->v_specinfo, M_VNODE);
-
-		vp->v_type = VBAD;		/* node is discarded */
-		vp->v_op = dead_vnodeop_p;	/* so ops will still work */
-		vrele(vp);			/* get rid of it. */
-		simple_unlock(&lmp->layerm_hashlock);
-		return (error);
-	}
 	/*
-	 * NetBSD used to do an inlined checkalias here. We do not, as
-	 * we never flag device nodes as being aliased. The lowervp
-	 * node will, when appropriate, be flaged as an alias.
+	 * Insert the new node into the hash.
+	 * Add a reference to the lower node.
 	 */
 
 	*vpp = vp;
-	VREF(lowervp);	/* Take into account reference held in layer_node */
+	VREF(lowervp);
 	hd = LAYER_NHASH(lmp, lowervp);
 	LIST_INSERT_HEAD(hd, xp, layer_hash);
 	uvm_vnp_setsize(vp, 0);
@@ -300,7 +275,9 @@ layer_node_create(mp, lowervp, newvpp)
 	struct vnode *aliasvp;
 	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(mp);
 
-	if ((aliasvp = layer_node_find(mp, lowervp)) != NULL) {
+	simple_lock(&lmp->layerm_hashlock);
+	aliasvp = layer_node_find(mp, lowervp);
+	if (aliasvp != NULL) {
 		/*
 		 * layer_node_find has taken another reference
 		 * to the alias vnode and moved the lock holding to
@@ -312,6 +289,8 @@ layer_node_create(mp, lowervp, newvpp)
 #endif
 	} else {
 		int error;
+
+		simple_unlock(&lmp->layerm_hashlock);
 
 		/*
 		 * Get new vnode.
@@ -345,7 +324,7 @@ layer_node_create(mp, lowervp, newvpp)
 		vprint("layer_node_create: alias", aliasvp);
 		vprint("layer_node_create: lower", lowervp);
 		panic("layer_node_create: lower has 0 usecount.");
-	};
+	}
 #endif
 
 #ifdef LAYERFS_DIAGNOSTIC

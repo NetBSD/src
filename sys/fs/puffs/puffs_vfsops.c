@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.14 2006/12/07 22:06:02 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.15 2006/12/09 16:11:51 chs Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.14 2006/12/07 22:06:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.15 2006/12/09 16:11:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -462,8 +462,8 @@ struct vfsops puffs_vfsops = {
 	puffs_statvfs,		/* statvfs	*/
 	puffs_sync,		/* sync		*/
 	puffs_vget,		/* vget		*/
-	NULL,			/* fhtovp	*/
-	NULL,			/* vptofh	*/
+	(void *)eopnotsupp,	/* fhtovp	*/
+	(void *)eopnotsupp,	/* vptofh	*/
 	puffs_init,		/* init		*/
 	NULL,			/* reinit	*/
 	puffs_done,		/* done		*/

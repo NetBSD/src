@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.128 2006/11/16 01:33:38 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.129 2006/12/09 16:11:52 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.128 2006/11/16 01:33:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.129 2006/12/09 16:11:52 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -585,14 +585,13 @@ kernfs_lookup(v)
 	const struct kern_target *kt;
 	const struct dyn_kern_target *dkt;
 	const struct kernfs_subdir *ks;
-	int error, i, wantpunlock;
+	int error, i;
 #ifdef IPSEC
 	char *ep;
 	u_int32_t id;
 #endif
 
 	*vpp = NULLVP;
-	cnp->cn_flags &= ~PDIRUNLOCK;
 
 	if (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)
 		return (EROFS);
@@ -603,7 +602,6 @@ kernfs_lookup(v)
 		return (0);
 	}
 
-	wantpunlock = (~cnp->cn_flags & (LOCKPARENT | ISLASTCN));
 	kfs = VTOKERN(dvp);
 	switch (kfs->kfs_type) {
 	case KFSkern:
@@ -630,10 +628,6 @@ kernfs_lookup(v)
 
 	found:
 		error = kernfs_allocvp(dvp->v_mount, vpp, kt->kt_tag, kt, 0);
-		if ((error == 0) && wantpunlock) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return (error);
 
 	case KFSsubdir:
@@ -672,10 +666,6 @@ kernfs_lookup(v)
 			break;
 
 		error = kernfs_allocvp(dvp->v_mount, vpp, KFSipsecsa, &ipsecsa_kt, id);
-		if ((error == 0) && wantpunlock) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return (error);
 
 	case KFSipsecspdir:
@@ -697,10 +687,6 @@ kernfs_lookup(v)
 			break;
 
 		error = kernfs_allocvp(dvp->v_mount, vpp, KFSipsecsp, &ipsecsp_kt, id);
-		if ((error == 0) && wantpunlock) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return (error);
 #endif
 
