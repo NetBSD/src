@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2005/06/12 19:46:17 dyoung Exp $
+#	$NetBSD: Makefile,v 1.2 2006/12/09 20:13:13 dyoung Exp $
 
-HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-disklabel
+HOSTPROGNAME=	nbdisklabel-${MAKEWRAPPERMACHINE}
 HOST_SRCDIR=	sbin/disklabel
 HOST_SRCS=	getcap.c disklabel.c
 
