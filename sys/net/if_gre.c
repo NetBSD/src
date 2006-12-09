@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.78 2006/12/04 02:40:15 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.79 2006/12/09 06:32:58 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.78 2006/12/04 02:40:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.79 2006/12/09 06:32:58 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -1023,10 +1023,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				closef(sc->sc_fp, l);
 				sc->sc_fp = NULL;
 			}
-			if (sc->route.ro_rt != NULL) {
-				RTFREE(sc->route.ro_rt);
-				sc->route.ro_rt = NULL;
-			}
+			if (sc->route.ro_rt != NULL)
+				rtflush(&sc->route);
 			if (sc->sc_proto == IPPROTO_UDP)
 				error = gre_kick(sc);
 			else if (gre_compute_route(sc) == 0)
