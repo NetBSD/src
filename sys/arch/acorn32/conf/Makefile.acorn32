@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn32,v 1.19 2006/08/19 13:34:15 bjh21 Exp $
+#	$NetBSD: Makefile.acorn32,v 1.20 2006/12/09 22:01:01 chs Exp $
 
 # Makefile for NetBSD
 #
@@ -61,7 +61,7 @@ modedefs.c: ${ARM}/iomd/makemodes.awk ${ACORN32}/conf/monitors/${MONITOR} Makefi
 .else
 modedefs.c: ${ARM}/iomd/makemodes.awk Makefile
 	${_MKTARGET_CREATE}
-	awk -f ${ARM}/iomd/makemodes.awk >modedefs.c
+	awk -f ${ARM}/iomd/makemodes.awk </dev/null >modedefs.c
 .endif
 
 modedefs.o: modedefs.c
