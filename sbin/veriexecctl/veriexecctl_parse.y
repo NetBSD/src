@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.19 2006/11/28 22:22:03 elad Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.19.2.1 2006/12/09 12:02:45 bouyer Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -165,6 +165,8 @@ flags_spec	:	flag_spec
 flag_spec	:	STRING {
 	if (phase == 2) {
 		uint8_t t = 0;
+
+		prop_dictionary_get_uint8(load_params, "entry-type", &t);
 
 		if (strcasecmp($1, "direct") == 0) {
 			t |= VERIEXEC_DIRECT;
