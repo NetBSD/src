@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.853 2006/11/26 06:07:48 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.854 2006/12/09 21:06:06 manu Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -10040,6 +10040,10 @@ static const struct pci_product pci_products[] = {
 	    "9030 Modem 4 port",
 	},
 	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,
+	    "9030 Modem 4 port V92",
+	},
+	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9054,
 	    "9054 I/O Accelerator",
 	},
@@ -12604,4 +12608,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2557;
+const int pci_nproducts = 2558;

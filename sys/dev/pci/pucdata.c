@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.49 2006/11/13 20:11:10 bouyer Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.50 2006/12/09 21:06:07 manu Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.49 2006/11/13 20:11:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.50 2006/12/09 21:06:07 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1047,7 +1047,6 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-
 	/*
 	 * Perle PCI-RAS 4 Modem ports
 	 */
@@ -1059,6 +1058,56 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
+	    },
+	},
+
+	/*
+	 * Perle PCI-RASV92 4 Modem ports
+	 */
+	{   "Perle Systems PCI-RASV92 4 modem ports",
+	    {	0x10b5, 0x9050, 0x155f, 0xf001	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
+	    },
+	},
+
+	/*
+	 * Perle PCI-RAS 8 Modem ports
+	 */
+	{   "Perle Systems PCI-RAS 8 modem ports",
+	    {	0x10b5, 0x9030, 0x155f, 0xf010	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 4 },
+	    },
+	},
+
+	/*
+	 * Perle PCI-RASV92 8 Modem ports
+	 */
+	{   "Perle Systems PCI-RASV92 8 modem ports",
+	    {	0x10b5, 0x9050, 0x155f, 0xf010	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 4 },
 	    },
 	},
 
