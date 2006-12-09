@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.66 2006/11/22 17:23:24 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.67 2006/12/09 19:33:42 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -316,9 +316,7 @@ __END_DECLS
 /*
  * Functions defined in ISO XPG4.2, ISO C99, POSIX 1003.1-2001 or later.
  */
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE) || \
-    ((__STDC_VERSION__ - 0) >= 199901L) || \
+#if ((__STDC_VERSION__ - 0) >= 199901L) || \
     ((_POSIX_C_SOURCE - 0) >= 200112L) || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     ((_XOPEN_SOURCE - 0) >= 500) || \
