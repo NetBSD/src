@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.94 2006/11/16 01:33:38 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.95 2006/12/09 16:11:52 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.94 2006/11/16 01:33:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.95 2006/12/09 16:11:52 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,17 +362,10 @@ fdesc_lookup(v)
 	case Fdevfd:
 		if (cnp->cn_namelen == 2 && memcmp(pname, "..", 2) == 0) {
 			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
 			error = fdesc_root(dvp->v_mount, vpp);
+			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			if (error)
 				goto bad;
-			/*
-			 * If we're at the last component and need the
-			 * parent locked, undo the unlock above.
-			 */
-			if (((~cnp->cn_flags & (ISLASTCN | LOCKPARENT)) == 0) &&
-				   ((error = vn_lock(dvp, LK_EXCLUSIVE)) == 0))
-				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 
@@ -402,21 +395,11 @@ fdesc_lookup(v)
 		goto good;
 	}
 
-bad:;
+bad:
 	*vpp = NULL;
 	return (error);
 
-good:;
-	/*
-	 * As "." was special cased above, we now unlock the parent if we're
-	 * suppoed to. We're only supposed to not unlock if this is the
-	 * last component, and the caller requested LOCKPARENT. So if either
-	 * condition is false, unlock.
-	 */
-	if (((~cnp->cn_flags) & (ISLASTCN | LOCKPARENT)) != 0) {
-		VOP_UNLOCK(dvp, 0);
-		cnp->cn_flags |= PDIRUNLOCK;
-	}
+good:
 	return (0);
 }
 

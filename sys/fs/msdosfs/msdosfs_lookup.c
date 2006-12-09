@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.10 2006/11/25 12:17:30 scw Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.11 2006/12/09 16:11:51 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.10 2006/11/25 12:17:30 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.11 2006/12/09 16:11:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,6 @@ msdosfs_lookup(v)
 	struct componentname *cnp = ap->a_cnp;
 	daddr_t bn;
 	int error;
-	int lockparent;
-	int wantparent;
 	int slotcount;
 	int slotoffset = 0;
 	int frcn;
@@ -118,7 +116,6 @@ msdosfs_lookup(v)
 	int chksum = -1, chksum_ok;
 	int olddos = 1;
 
-	cnp->cn_flags &= ~PDIRUNLOCK; /* XXX why this ?? */
 	flags = cnp->cn_flags;
 
 #ifdef MSDOSFS_DEBUG
@@ -128,8 +125,6 @@ msdosfs_lookup(v)
 	dp = VTODE(vdp);
 	pmp = dp->de_pmp;
 	*vpp = NULL;
-	lockparent = flags & LOCKPARENT;
-	wantparent = flags & (LOCKPARENT | WANTPARENT);
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_lookup(): vdp %p, dp %p, Attr %02x\n",
 	    vdp, dp, dp->de_Attributes);
@@ -394,8 +389,6 @@ notfound:
 		 * information cannot be used.
 		 */
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent)
-			VOP_UNLOCK(vdp, 0);
 		return (EJUSTRETURN);
 	}
 
@@ -462,9 +455,7 @@ foundroot:
 	/*
 	 * If deleting, and at end of pathname, return
 	 * parameters which can be used to remove file.
-	 * If the wantparent flag isn't set, we return only
-	 * the directory (in ndp->ni_dvp), otherwise we go
-	 * on and lock the inode, being careful with ".".
+	 * Lock the inode, being careful with ".".
 	 */
 	if (nameiop == DELETE && (flags & ISLASTCN)) {
 		/*
@@ -492,10 +483,6 @@ foundroot:
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		*vpp = DETOV(tdp);
-		if (!lockparent) {
-			VOP_UNLOCK(vdp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return (0);
 	}
 
@@ -505,8 +492,7 @@ foundroot:
 	 * Must get inode of directory entry to verify it's a
 	 * regular file, or empty directory.
 	 */
-	if (nameiop == RENAME && wantparent &&
-	    (flags & ISLASTCN)) {
+	if (nameiop == RENAME && (flags & ISLASTCN)) {
 
 		if (vdp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
@@ -529,10 +515,6 @@ foundroot:
 			return (error);
 		*vpp = DETOV(tdp);
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent) {
-			VOP_UNLOCK(vdp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return (0);
 	}
 
@@ -558,18 +540,10 @@ foundroot:
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
-		cnp->cn_flags |= PDIRUNLOCK;
-		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0) {
-			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
-				cnp->cn_flags &= ~PDIRUNLOCK;
-			return (error);
-		}
-		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(pdp, LK_EXCLUSIVE))) {
-				vput(DETOV(tdp));
-				return (error);
-			}
-			cnp->cn_flags &= ~PDIRUNLOCK;
+		error = deget(pmp, cluster, blkoff, &tdp);
+		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
+		if (error) {
+			return error;
 		}
 		*vpp = DETOV(tdp);
 	} else if (dp->de_StartCluster == scn && isadir) {
@@ -578,10 +552,6 @@ foundroot:
 	} else {
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
-		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(pdp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		*vpp = DETOV(tdp);
 	}
 

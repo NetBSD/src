@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.69 2006/10/03 19:01:29 christos Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.70 2006/12/09 16:11:52 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.69 2006/10/03 19:01:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.70 2006/12/09 16:11:52 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -699,14 +699,15 @@ abortit:
 		vput(tvp);
 
 		/* Delete source. */
-		vrele(fdvp);
 		vrele(fvp);
-		fcnp->cn_flags &= ~MODMASK;
+		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-		if ((fcnp->cn_flags & SAVESTART) == 0)
-			panic("ext2fs_rename: lost from startdir");
 		fcnp->cn_nameiop = DELETE;
-		(void) relookup(fdvp, &fvp, fcnp);
+		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+		if ((error = relookup(fdvp, &fvp, fcnp))) {
+			vput(fdvp);
+			return (error);
+		}
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
 	if ((error = vn_lock(fvp, LK_EXCLUSIVE)) != 0)
@@ -739,7 +740,7 @@ abortit:
 		 */
 		if ((fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
 		    dp == ip ||
-		    (fcnp->cn_flags&ISDOTDOT) ||
+		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
 			VOP_UNLOCK(fvp, 0);
@@ -748,10 +749,9 @@ abortit:
 		}
 		ip->i_flag |= IN_RENAME;
 		oldparent = dp->i_number;
-		doingdirectory++;
+		doingdirectory = 1;
 	}
 	VN_KNOTE(fdvp, NOTE_WRITE);		/* XXXLUKEM/XXX: right place? */
-	vrele(fdvp);
 
 	/*
 	 * When the target exists, both the directory
@@ -794,13 +794,18 @@ abortit:
 			goto bad;
 		if (xp != NULL)
 			vput(tvp);
+		vref(tdvp);     /* compensate for the ref checkpath loses */
 		error = ext2fs_checkpath(ip, dp, tcnp->cn_cred);
-		if (error != 0)
+		if (error != 0) {
+			vrele(tdvp);
 			goto out;
-		if ((tcnp->cn_flags & SAVESTART) == 0)
-			panic("ext2fs_rename: lost to startdir");
-		if ((error = relookup(tdvp, &tvp, tcnp)) != 0)
+		}
+		tcnp->cn_flags &= ~SAVESTART;
+		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
+		if ((error = relookup(tdvp, &tvp, tcnp)) != 0) {
+			vput(tdvp);
 			goto out;
+		}
 		dp = VTOI(tdvp);
 		xp = NULL;
 		if (tvp)
@@ -897,8 +902,6 @@ abortit:
 			dp->i_e2fs_nlink--;
 			dp->i_flag |= IN_CHANGE;
 		}
-		VN_KNOTE(tdvp, NOTE_WRITE);
-		vput(tdvp);
 		/*
 		 * Adjust the link count of the target to
 		 * reflect the dirrewrite above.  If this is
@@ -917,6 +920,8 @@ abortit:
 			    tcnp->cn_cred, tcnp->cn_lwp->l_proc);
 		}
 		xp->i_flag |= IN_CHANGE;
+		VN_KNOTE(tdvp, NOTE_WRITE);
+		vput(tdvp);
 		VN_KNOTE(tvp, NOTE_DELETE);
 		vput(tvp);
 		xp = NULL;
@@ -925,11 +930,14 @@ abortit:
 	/*
 	 * 3) Unlink the source.
 	 */
-	fcnp->cn_flags &= ~MODMASK;
+	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-	if ((fcnp->cn_flags & SAVESTART) == 0)
-		panic("ext2fs_rename: lost from startdir");
-	(void) relookup(fdvp, &fvp, fcnp);
+	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+	if ((error = relookup(fdvp, &fvp, fcnp))) {
+		vput(fdvp);
+		vrele(ap->a_fvp);
+		return (error);
+	}
 	if (fvp != NULL) {
 		xp = VTOI(fvp);
 		dp = VTOI(fdvp);
@@ -998,11 +1006,11 @@ abortit:
 		xp->i_flag &= ~IN_RENAME;
 	}
 	VN_KNOTE(fvp, NOTE_RENAME);
-	vput(fdvp);
+	if (dp)
+		vput(fdvp);
 	if (xp)
 		vput(fvp);
-	if (dp)
-		vrele(ap->a_fvp);
+	vrele(ap->a_fvp);
 	return (error);
 
 bad:
@@ -1018,6 +1026,7 @@ out:
 		vput(fvp);
 	} else
 		vrele(fvp);
+	vrele(fdvp);
 	return (error);
 }
 

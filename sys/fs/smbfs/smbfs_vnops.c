@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.56 2006/11/16 01:33:37 christos Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.57 2006/12/09 16:11:51 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.56 2006/11/16 01:33:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.57 2006/12/09 16:11:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1194,7 +1194,7 @@ smbfs_lookup(v)
 	int flags = cnp->cn_flags;
 	int nameiop = cnp->cn_nameiop;
 	int nmlen = cnp->cn_namelen;
-	int lockparent, wantparent, error, islastcn, isdot;
+	int error, islastcn, isdot;
 
 	/*
 	 * Check accessiblity of directory.
@@ -1212,7 +1212,6 @@ smbfs_lookup(v)
 	    (int) VTOSMB(dvp)->n_nmlen, VTOSMB(dvp)->n_name);
 
 	islastcn = flags & ISLASTCN;
-	lockparent = flags & LOCKPARENT;
 
 	/*
 	 * Before tediously performing a linear scan of the directory,
@@ -1231,15 +1230,6 @@ smbfs_lookup(v)
 		if (error && error != ENOENT) {
 			*vpp = NULLVP;
 			return error;
-		}
-
-		if (cnp->cn_flags & PDIRUNLOCK) {
-			err2 = vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-			if (err2 != 0) {
-				*vpp = NULLVP;
-				return err2;
-			}
-			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 
 		err2 = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_lwp);
@@ -1272,12 +1262,6 @@ smbfs_lookup(v)
 			if (cnp->cn_nameiop != LOOKUP && islastcn)
 				cnp->cn_flags |= SAVENAME;
 
-			if ((!lockparent || !islastcn) &&
-			     newvp != dvp) {
-				VOP_UNLOCK(dvp, 0);
-				cnp->cn_flags |= PDIRUNLOCK;
-			}
-
 			return (0);
 		}
 
@@ -1299,7 +1283,6 @@ smbfs_lookup(v)
 			return (error);
 	}
 
-	wantparent = flags & (LOCKPARENT|WANTPARENT);
 	dnp = VTOSMB(dvp);
 	isdot = (nmlen == 1 && name[0] == '.');
 
@@ -1332,10 +1315,6 @@ smbfs_lookup(v)
 				return (error);
 
 			cnp->cn_flags |= SAVENAME;
-			if (!lockparent) {
-				VOP_UNLOCK(dvp, 0);
-				cnp->cn_flags |= PDIRUNLOCK;
-			}
 			return (EJUSTRETURN);
 		}
 
@@ -1351,7 +1330,7 @@ smbfs_lookup(v)
 	/* Found */
 
 	/* Handle RENAME case... */
-	if (nameiop == RENAME && islastcn && wantparent) {
+	if (nameiop == RENAME && islastcn) {
 		error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred, cnp->cn_lwp);
 		if (error)
 			return (error);
@@ -1366,40 +1345,26 @@ smbfs_lookup(v)
 		if (error)
 			return (error);
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return (0);
 	}
 
 	if (isdot) {
+
 		/*
 		 * "." lookup
 		 */
 		VREF(dvp);
 		*vpp = dvp;
 	} else if (flags & ISDOTDOT) {
+
 		/*
 		 * ".." lookup
 		 */
 		VOP_UNLOCK(dvp, 0);
-		cnp->cn_flags |= PDIRUNLOCK;
-
 		error = smbfs_nget(mp, dvp, name, nmlen, NULL, vpp);
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {
-			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
-				cnp->cn_flags &= ~PDIRUNLOCK;
 			return error;
-		}
-
-		if (lockparent && islastcn) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE))) {
-				vput(*vpp);
-				*vpp = NULLVP;
-				return error;
-			}
-			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 	} else {
 		/*
@@ -1408,10 +1373,6 @@ smbfs_lookup(v)
 		error = smbfs_nget(mp, dvp, name, nmlen, &fattr, vpp);
 		if (error)
 			return error;
-		if (!lockparent || !islastcn) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 	}
 
 	if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
