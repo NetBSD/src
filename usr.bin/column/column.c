@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.15 2006/08/26 18:17:41 christos Exp $	*/
+/*	$NetBSD: column.c,v 1.16 2006/12/09 21:42:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: column.c,v 1.15 2006/08/26 18:17:41 christos Exp $");
+__RCSID("$NetBSD: column.c,v 1.16 2006/12/09 21:42:40 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: column.c,v 1.15 2006/08/26 18:17:41 christos Exp $");
 #include <util.h>
 
 #define	TAB	8
+#define TABROUND(l) 	(((l) + TAB) & ~(TAB - 1))
 
 static void  c_columnate(void);
 static void  input(FILE *);
@@ -124,7 +125,7 @@ main(int argc, char **argv)
 	if (!entries)
 		return eval;
 
-	maxlength = (maxlength + TAB) & ~(TAB - 1);
+	maxlength = TABROUND(maxlength);
 	if (tflag)
 		maketbl();
 	else if (maxlength >= termwidth)
@@ -153,7 +154,7 @@ c_columnate(void)
 			endcol = maxlength;
 			(void)putchar('\n');
 		} else {
-			while ((cnt = ((chcnt + TAB) & ~(TAB - 1))) <= endcol) {
+			while ((cnt = TABROUND(chcnt)) <= endcol) {
 				(void)putchar('\t');
 				chcnt = cnt;
 			}
@@ -180,7 +181,7 @@ r_columnate(void)
 			chcnt += printf("%s", list[base]);
 			if ((base += numrows) >= entries)
 				break;
-			while ((cnt = ((chcnt + TAB) & ~(TAB - 1))) <= endcol) {
+			while ((cnt = TABROUND(chcnt)) <= endcol) {
 				(void)putchar('\t');
 				chcnt = cnt;
 			}
@@ -216,9 +217,9 @@ maketbl(void)
 	TBL *tbl;
 	char **cols, **ncols;
 
-	t = tbl = emalloc(entries * sizeof(TBL));
-	cols = emalloc((maxcols = DEFCOLS) * sizeof(char *));
-	lens = emalloc(maxcols * sizeof(int));
+	t = tbl = ecalloc(entries, sizeof(TBL));
+	cols = ecalloc((maxcols = DEFCOLS), sizeof(char *));
+	lens = ecalloc(maxcols, sizeof(int));
 	for (cnt = 0, lp = list; cnt < entries; ++cnt, ++lp, ++t) {
 		for (coloff = 0, p = *lp;
 		    (cols[coloff] = strtok(p, separator)) != NULL;
@@ -230,12 +231,12 @@ maketbl(void)
 				    DEFCOLS * sizeof(int));
 				cols = ncols;
 				lens = nlens;
-				(void)memset((char *)(void *)lens + maxcols *
-				    sizeof(int), 0, DEFCOLS * sizeof(int));
+				(void)memset(lens + maxcols, 0,
+				    DEFCOLS * sizeof(int));
 				maxcols += DEFCOLS;
 			}
-		t->list = emalloc(coloff * sizeof(char *));
-		t->len = emalloc(coloff * sizeof(int));
+		t->list = ecalloc(coloff, sizeof(char *));
+		t->len = ecalloc(coloff, sizeof(int));
 		for (t->cols = coloff; --coloff >= 0;) {
 			t->list[coloff] = cols[coloff];
 			t->len[coloff] = strlen(cols[coloff]);
@@ -266,7 +267,7 @@ input(FILE *fp)
 	char **n;
 
 	if (!list)
-		list = emalloc((maxentry = DEFNUM) * sizeof(char *));
+		list = ecalloc((maxentry = DEFNUM), sizeof(char *));
 	while (fgets(buf, MAXLINELEN, fp)) {
 		for (p = buf; *p && isspace((unsigned char)*p); ++p);
 		if (!*p)
