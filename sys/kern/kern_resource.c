@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.108 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.108.2.1 2006/12/09 11:47:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.108 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.108.2.1 2006/12/09 11:47:32 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -575,7 +575,7 @@ sysctl_proc_findproc(struct lwp *l, struct proc **p2, pid_t pid)
 		error = ESRCH;
 	else {
 		boolean_t isroot = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
+		    KAUTH_GENERIC_ISSUSER, NULL) == 0;
 		/*
 		 * suid proc of ours or proc not ours
 		 */
