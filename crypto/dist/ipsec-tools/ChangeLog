@@ -1,3 +1,7 @@
+2006-12-09 Emmanuel Dreyfus  <manu@netbsd.org>
+	From Simon Chang <simonychang@gmail.com>
+	* src/racoon/racoon.conf.5: More hints about plain RSA authentication
+
 2006-12-05  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/proposal.[ch]: Check keys length regarding
 	  pcheck_level in cmpsatrns().
