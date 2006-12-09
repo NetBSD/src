@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.8 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.9 2006/12/09 16:11:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.8 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.9 2006/12/09 16:11:50 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,11 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.8 2006/05/14 21:31:52 elad Exp $");
  * pvp (parent vnode) referenced and locked.
  * exit with:
  *	target vp referenced and locked.
- *	unlock pvp unless LOCKPARENT and at end of search.
+ *	parent pvp locked.
  * special cases:
  *	pvp == vp, just ref pvp, pvp already holds a ref and lock from
  *	    caller, this will not occur with RENAME or CREATE.
- *	LOOKUP always unlocks parent if last element. (not now!?!?)
  */
 int
 adosfs_lookup(v)
@@ -71,7 +70,7 @@ adosfs_lookup(v)
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 	} */ *sp = v;
-	int nameiop, last, lockp, wantp, flags, error, nocache, i;
+	int nameiop, last, flags, error, nocache, i;
 	struct componentname *cnp;
 	struct vnode **vpp;	/* place to store result */
 	struct anode *ap;	/* anode to find */
@@ -91,11 +90,8 @@ adosfs_lookup(v)
 	*vpp = NULL;
 	ucp = cnp->cn_cred;
 	nameiop = cnp->cn_nameiop;
-	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
 	last = flags & ISLASTCN;
-	lockp = flags & LOCKPARENT;
-	wantp = flags & (LOCKPARENT | WANTPARENT);
 	pelt = (const u_char *)cnp->cn_nameptr;
 	plen = cnp->cn_namelen;
 	nocache = 0;
@@ -142,25 +138,14 @@ adosfs_lookup(v)
 		 *
 		 * basically unlock the parent, try and lock the child (..)
 		 * if that fails relock the parent (ignoring error) and
-		 * fail.  Otherwise we have the child (..) if this is the
-		 * last and the caller requested LOCKPARENT, attempt to
+		 * fail.  Otherwise we have the child (..), attempt to
 		 * relock the parent.  If that fails unlock the child (..)
 		 * and fail. Otherwise we have succeded.
 		 *
 		 */
 		VOP_UNLOCK(vdp, 0); /* race */
-		cnp->cn_flags |= PDIRUNLOCK;
-		if ((error = VFS_VGET(vdp->v_mount,
-				      (ino_t)adp->pblock, vpp)) != 0) {
-			if (vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY) == 0)
-				cnp->cn_flags &= ~PDIRUNLOCK;
-		} else if (last && lockp ) {
-		    if ((error = vn_lock(vdp, LK_EXCLUSIVE))) {
-			vput(*vpp);
-		    } else {
-			cnp->cn_flags &= ~PDIRUNLOCK;
-		    }
-		}
+		error = VFS_VGET(vdp->v_mount, (ino_t)adp->pblock, vpp);
+		vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {
 			*vpp = NULL;
 			return (error);
@@ -182,7 +167,6 @@ adosfs_lookup(v)
 #ifdef ADOSFS_DIAGNOSTIC
 			printf("[aget] %d)", error);
 #endif
-			/* XXX check to unlock parent possibly? */
 			return(error);
 		}
 		ap = VTOA(*vpp);
@@ -222,10 +206,6 @@ adosfs_lookup(v)
 #endif
 			return (error);
 		}
-		if (lockp == 0) {
-			VOP_UNLOCK(vdp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		cnp->cn_nameiop |= SAVENAME;
 #ifdef ADOSFS_DIAGNOSTIC
 		printf("EJUSTRETURN)");
@@ -249,7 +229,7 @@ found:
 		}
 		nocache = 1;
 	}
-	if (nameiop == RENAME && wantp && last) {
+	if (nameiop == RENAME && last) {
 		if (vdp == *vpp)
 			return(EISDIR);
 		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_lwp)) != 0) {
@@ -262,10 +242,6 @@ found:
 	}
 	if (vdp == *vpp)
 		VREF(vdp);
-	else if (lockp == 0 || last == 0) {
-		VOP_UNLOCK(vdp, 0);
-		cnp->cn_flags |= PDIRUNLOCK;
-	}
 found_lockdone:
 	if ((cnp->cn_flags & MAKEENTRY) && nocache == 0)
 		cache_enter(vdp, *vpp, cnp);

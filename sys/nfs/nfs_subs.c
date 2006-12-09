@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.177 2006/11/09 09:53:57 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.178 2006/12/09 16:11:52 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.177 2006/11/09 09:53:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.178 2006/12/09 16:11:52 chs Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2104,7 +2104,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	int error, rdonly, linklen;
 	struct componentname *cnp = &ndp->ni_cnd;
 
-	*retdirp = (struct vnode *)0;
+	*retdirp = NULL;
 
 	if ((len + 1) > MAXPATHLEN)
 		return (ENAMETOOLONG);
@@ -2189,6 +2189,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 			 */
 			default:
 				error = EIO;
+				vrele(dp);
 				PNBUF_PUT(cp);
 				goto out;
 			}
@@ -2205,6 +2206,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 					continue;
 				} else {
 					error = ENOENT;
+					vrele(dp);
 					PNBUF_PUT(cp);
 					goto out;
 				}
@@ -2230,35 +2232,45 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 
 	cnp->cn_lwp = l;
 	VREF(dp);
+	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 
     for (;;) {
 	cnp->cn_nameptr = cnp->cn_pnbuf;
 	ndp->ni_startdir = dp;
+
 	/*
 	 * And call lookup() to do the real work
 	 */
 	error = lookup(ndp);
 	if (error) {
+		if (ndp->ni_dvp) {
+			vput(ndp->ni_dvp);
+		}
 		PNBUF_PUT(cnp->cn_pnbuf);
 		return (error);
 	}
+
 	/*
 	 * Check for encountering a symbolic link
 	 */
 	if ((cnp->cn_flags & ISSYMLINK) == 0) {
+		if ((cnp->cn_flags & LOCKPARENT) == 0 && ndp->ni_dvp) {
+			if (ndp->ni_dvp == ndp->ni_vp) {
+				vrele(ndp->ni_dvp);
+			} else {
+				vput(ndp->ni_dvp);
+			}
+		}
 		if (cnp->cn_flags & (SAVENAME | SAVESTART))
 			cnp->cn_flags |= HASBUF;
 		else
 			PNBUF_PUT(cnp->cn_pnbuf);
 		return (0);
 	} else {
-		if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
-			VOP_UNLOCK(ndp->ni_dvp, 0);
 		if (!pubflag) {
 			error = EINVAL;
 			break;
 		}
-
 		if (ndp->ni_loopcnt++ >= MAXSYMLINKS) {
 			error = ELOOP;
 			break;
@@ -2283,7 +2295,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 		UIO_SETUP_SYSSPACE(&auio);
 		error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
 		if (error) {
-		badlink:
+badlink:
 			if (ndp->ni_pathlen > 1)
 				PNBUF_PUT(cp);
 			break;
@@ -2306,17 +2318,19 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 		ndp->ni_pathlen += linklen;
 		vput(ndp->ni_vp);
 		dp = ndp->ni_dvp;
+
 		/*
 		 * Check if root directory should replace current directory.
 		 */
 		if (cnp->cn_pnbuf[0] == '/') {
-			vrele(dp);
+			vput(dp);
 			dp = ndp->ni_rootdir;
 			VREF(dp);
+			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
    }
-	vrele(ndp->ni_dvp);
+	vput(ndp->ni_dvp);
 	vput(ndp->ni_vp);
 	ndp->ni_vp = NULL;
 out:

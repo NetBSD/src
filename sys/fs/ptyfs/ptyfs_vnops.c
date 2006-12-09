@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.18 2006/11/16 01:33:37 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.19 2006/12/09 16:11:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.18 2006/11/16 01:33:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.19 2006/12/09 16:11:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -553,13 +553,9 @@ ptyfs_access(void *v)
  * If we're looking up ".", just vref the parent & return it.
  *
  * If we're looking up "..", unlock the parent, and lock "..". If everything
- * went ok, and we're on the last component and the caller requested the
- * parent locked, try to re-lock the parent. We do this to prevent lock
- * races.
+ * went ok, try to re-lock the parent. We do this to prevent lock races.
  *
- * For anything else, get the needed node. Then unlock the parent if not
- * the last component or not LOCKPARENT (i.e. if we wouldn't re-lock the
- * parent in the .. case).
+ * For anything else, get the needed node.
  *
  * We try to exit with the parent locked in error cases.
  */
@@ -576,10 +572,9 @@ ptyfs_lookup(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	const char *pname = cnp->cn_nameptr;
 	struct ptyfsnode *ptyfs;
-	int pty, error, wantpunlock;
+	int pty, error;
 
 	*vpp = NULL;
-	cnp->cn_flags &= ~PDIRUNLOCK;
 
 	if (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)
 		return EROFS;
@@ -590,7 +585,6 @@ ptyfs_lookup(void *v)
 		return 0;
 	}
 
-	wantpunlock = ~cnp->cn_flags & (LOCKPARENT | ISLASTCN);
 	ptyfs = VTOPTYFS(dvp);
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSroot:
@@ -607,10 +601,6 @@ ptyfs_lookup(void *v)
 
 		error = ptyfs_allocvp(dvp->v_mount, vpp, PTYFSpts, pty,
 		    curlwp);
-		if (error == 0 && wantpunlock) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return error;
 
 	default:

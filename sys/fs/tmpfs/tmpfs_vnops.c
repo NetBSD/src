@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.32 2006/11/09 15:36:30 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.33 2006/12/09 16:11:51 chs Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.32 2006/11/09 15:36:30 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.33 2006/12/09 16:11:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -168,11 +168,7 @@ tmpfs_lookup(void *v)
 		error = tmpfs_alloc_vp(dvp->v_mount,
 		    dnode->tn_spec.tn_dir.tn_parent, vpp);
 
-		if (cnp->cn_flags & LOCKPARENT &&
-		    cnp->cn_flags & ISLASTCN) {
-			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) != 0)
-				cnp->cn_flags |= PDIRUNLOCK;
-		}
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		dnode->tn_spec.tn_dir.tn_parent->tn_lookup_dirent = NULL;
 	} else if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 		VREF(dvp);
@@ -239,10 +235,6 @@ tmpfs_lookup(void *v)
 
 			/* Allocate a new vnode on the matching entry. */
 			error = tmpfs_alloc_vp(dvp->v_mount, tnode, vpp);
-
-			if (error == 0 && (!(cnp->cn_flags & LOCKPARENT) ||
-			    !(cnp->cn_flags & ISLASTCN)))
-				VOP_UNLOCK(dvp, 0);
 		}
 	}
 
@@ -257,18 +249,8 @@ out:
 	 * locked. */
 	KASSERT(IFF(error == 0, *vpp != NULL && VOP_ISLOCKED(*vpp)));
 
-	/* dvp has to be locked if:
-	 * - There were errors and relocking of dvp did not fail.
-	 * - We are doing a '..' lookup, relocking of dvp did not fail
-	 *   (PDIRUNLOCK is unset) and LOCKPARENT or ISLASTCN are not set.
-	 * - LOCKPARENT and ISLASTCN are set. */
-	KASSERT(IMPLIES(
-	    (error != 0 && !(cnp->cn_flags & PDIRUNLOCK)) ||
-	    (cnp->cn_flags & ISDOTDOT && !(cnp->cn_flags & PDIRUNLOCK) &&
-	     ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))) ||
-	    (cnp->cn_flags & LOCKPARENT && cnp->cn_flags & ISLASTCN)
-	    ,
-	    VOP_ISLOCKED(dvp)));
+	/* dvp must always be locked. */
+	KASSERT(VOP_ISLOCKED(dvp));
 
 	return error;
 }

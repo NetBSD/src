@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.193 2006/11/16 01:33:53 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.194 2006/12/09 16:11:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.193 2006/11/16 01:33:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.194 2006/12/09 16:11:52 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -746,9 +746,10 @@ lfs_rmdir(void *v)
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	if ((error = SET_DIROP_REMOVE(ap->a_dvp, ap->a_vp)) != 0) {
-		vrele(ap->a_dvp);
-		if (ap->a_vp != ap->a_dvp)
-			VOP_UNLOCK(ap->a_dvp, 0);
+		if (ap->a_dvp == vp)
+			vrele(ap->a_dvp);
+		else
+			vput(ap->a_dvp);
 		vput(vp);
 		return error;
 	}
@@ -847,8 +848,9 @@ lfs_rename(void *v)
 		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
-		if ((error = relookup(fdvp, &fvp, fcnp))){
-			/* relookup blew away fdvp */
+		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+		if ((error = relookup(fdvp, &fvp, fcnp))) {
+			vput(fdvp);
 			return (error);
 		}
 		return (VOP_REMOVE(fdvp, fvp, fcnp));

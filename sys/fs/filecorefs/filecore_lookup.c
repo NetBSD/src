@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.7 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.8 2006/12/09 16:11:51 chs Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.7 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.8 2006/12/09 16:11:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -134,8 +134,6 @@ filecore_lookup(v)
 	int numdirpasses;		/* strategy for directory search */
 	struct vnode *pdp;		/* saved dp during symlink work */
 	struct vnode *tdp;		/* returned by filecore_vget_internal */
-	int lockparent;			/* 1 => lockparent flag is set */
-	int wantparent;			/* 1 => wantparent or lockparent flag */
 	int error;
 	u_short namelen;
 	int res;
@@ -147,7 +145,6 @@ filecore_lookup(v)
 	int nameiop = cnp->cn_nameiop;
 	int i, endsearch;
 
-	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
 
 	bp = NULL;
@@ -155,8 +152,6 @@ filecore_lookup(v)
 	vdp = ap->a_dvp;
 	dp = VTOI(vdp);
 	fcmp = dp->i_mnt;
-	lockparent = flags & LOCKPARENT;
-	wantparent = flags & (LOCKPARENT|WANTPARENT);
 
 	/*
 	 * Check accessiblity of directory.
@@ -290,26 +285,19 @@ found:
 	 * that point backwards in the directory structure.
 	 */
 	pdp = vdp;
+
 	/*
 	 * If ino is different from dp->i_ino,
 	 * it's a relocated directory.
 	 */
 	if (flags & ISDOTDOT) {
 		ino_t pin = filecore_getparent(dp);
+
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
-		cnp->cn_flags |= PDIRUNLOCK;
 		error = VFS_VGET(vdp->v_mount, pin, &tdp);
+		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {
-			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
-				cnp->cn_flags &= ~PDIRUNLOCK;
-			return (error);
-		}
-		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(pdp, LK_EXCLUSIVE))) {
-				vput(tdp);
-				return (error);
-			}
-			cnp->cn_flags &= ~PDIRUNLOCK;
+			return error;
 		}
 		*vpp = tdp;
 	} else if (name[0] == '.' && namelen == 1) {
@@ -324,10 +312,6 @@ found:
 		    (i << FILECORE_INO_INDEX), &tdp);
 		if (error)
 			return (error);
-		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(pdp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		*vpp = tdp;
 	}
 

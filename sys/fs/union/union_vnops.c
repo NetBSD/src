@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.17 2006/09/29 19:41:16 christos Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.18 2006/12/09 16:11:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.17 2006/09/29 19:41:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.18 2006/12/09 16:11:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,8 +237,7 @@ union_lookup1(udvp, dvpp, vpp, cnp)
 			 */
 			tdvp = dvp;
 			*dvpp = dvp = dvp->v_mount->mnt_vnodecovered;
-			vput(tdvp);
-			VREF(dvp);
+			VOP_UNLOCK(tdvp, 0);
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
@@ -246,14 +245,6 @@ union_lookup1(udvp, dvpp, vpp, cnp)
         error = VOP_LOOKUP(dvp, &tdvp, cnp);
 	if (error)
 		return (error);
-
-	/*
-	 * The parent directory will have been unlocked, unless lookup
-	 * found the last component.  In which case, re-lock the node
-	 * here to allow it to be unlocked again (phew) in union_lookup.
-	 */
-	if (dvp != tdvp && !(cnp->cn_flags & ISLASTCN))
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 
 	dvp = tdvp;
 
@@ -270,12 +261,10 @@ union_lookup1(udvp, dvpp, vpp, cnp)
 
 		error = VFS_ROOT(mp, &tdvp);
 		vfs_unbusy(mp);
+		vput(dvp);
 		if (error) {
-			vput(dvp);
 			return (error);
 		}
-
-		vput(dvp);
 		dvp = tdvp;
 	}
 
@@ -300,7 +289,6 @@ union_lookup(v)
 	struct vnode *dvp = ap->a_dvp;
 	struct union_node *dun = VTOUNION(dvp);
 	struct componentname *cnp = ap->a_cnp;
-	int lockparent = cnp->cn_flags & LOCKPARENT;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(dvp->v_mount);
 	kauth_cred_t saved_cred = NULL;
 	int iswhiteout;
@@ -316,8 +304,6 @@ union_lookup(v)
 			return (ENOENT);
 		VREF(dvp);
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-		if (!lockparent || !(cnp->cn_flags & ISLASTCN))
-			VOP_UNLOCK(ap->a_dvp, 0);
 		return (0);
 	}
 #endif
@@ -326,8 +312,6 @@ union_lookup(v)
 	    (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
-
-	cnp->cn_flags |= LOCKPARENT;
 
 	upperdvp = dun->un_uppervp;
 	lowerdvp = dun->un_lowervp;
@@ -379,8 +363,6 @@ union_lookup(v)
 		}
 		if (cnp->cn_consume != 0) {
 			*ap->a_vpp = uppervp;
-			if (!lockparent)
-				cnp->cn_flags &= ~LOCKPARENT;
 			return (uerror);
 		}
 		if (uerror == ENOENT || uerror == EJUSTRETURN) {
@@ -419,6 +401,7 @@ union_lookup(v)
 			saved_cred = cnp->cn_cred;
 			cnp->cn_cred = um->um_cred;
 		}
+
 		/*
 		 * we shouldn't have to worry about locking interactions
 		 * between the lower layer and our union layer (w.r.t.
@@ -443,8 +426,6 @@ union_lookup(v)
 				uppervp = NULLVP;
 			}
 			*ap->a_vpp = lowervp;
-			if (!lockparent)
-				cnp->cn_flags &= ~LOCKPARENT;
 			return (lerror);
 		}
 	} else {
@@ -458,9 +439,6 @@ union_lookup(v)
 			}
 		}
 	}
-
-	if (!lockparent)
-		cnp->cn_flags &= ~LOCKPARENT;
 
 	/*
 	 * EJUSTRETURN is used by underlying filesystems to indicate that
@@ -544,16 +522,6 @@ union_lookup(v)
 			vput(uppervp);
 		if (lowervp != NULLVP)
 			vrele(lowervp);
-	} else {
-		if (*ap->a_vpp != dvp)
-			if (!lockparent || !(cnp->cn_flags & ISLASTCN))
-				VOP_UNLOCK(dvp, 0);
-		if (cnp->cn_namelen == 1 &&
-		    cnp->cn_nameptr[0] == '.' &&
-		    *ap->a_vpp != dvp) {
-			panic("union_lookup -> . (%p) != startdir (%p)",
-			    ap->a_vpp, dvp);
-		}
 	}
 
 	return (error);
@@ -1316,15 +1284,8 @@ union_link(v)
 				vp  = NULLVP;
 				if (dun->un_uppervp == NULLVP)
 					 panic("union: null upperdvp?");
-				/*
-				 * relookup starts with an unlocked node,
-				 * and since LOCKPARENT is set returns
-				 * the starting directory locked.
-				 */
-				VOP_UNLOCK(ap->a_dvp, 0);
 				error = relookup(ap->a_dvp, &vp, ap->a_cnp);
 				if (error) {
-					vrele(ap->a_dvp);
 					VOP_UNLOCK(ap->a_vp, 0);
 					return EROFS;	/* ? */
 				}
@@ -1335,7 +1296,9 @@ union_link(v)
 					 */
 					error = EEXIST;
 					VOP_UNLOCK(ap->a_vp, 0);
-					goto croak;
+					vput(ap->a_dvp);
+					vput(vp);
+					return (error);
 				}
 			}
 			VOP_UNLOCK(ap->a_vp, 0);
@@ -1348,7 +1311,6 @@ union_link(v)
 		error = EROFS;
 
 	if (error) {
-croak:
 		vput(ap->a_dvp);
 		return (error);
 	}
@@ -1395,7 +1357,6 @@ union_rename(v)
 
 		fdvp = un->un_uppervp;
 		VREF(fdvp);
-		vrele(ap->a_fdvp);
 	}
 
 	if (fvp->v_op == union_vnodeop_p) {	/* always true */
@@ -1411,7 +1372,6 @@ union_rename(v)
 
 		fvp = un->un_uppervp;
 		VREF(fvp);
-		vrele(ap->a_fvp);
 	}
 
 	if (tdvp->v_op == union_vnodeop_p) {
@@ -1444,15 +1404,23 @@ union_rename(v)
 		vput(ap->a_tvp);
 	}
 
-	return (VOP_RENAME(fdvp, fvp, ap->a_fcnp, tdvp, tvp, ap->a_tcnp));
+	error = VOP_RENAME(fdvp, fvp, ap->a_fcnp, tdvp, tvp, ap->a_tcnp);
+	goto out;
 
 bad:
-	vrele(fdvp);
-	vrele(fvp);
 	vput(tdvp);
 	if (tvp != NULLVP)
 		vput(tvp);
+	vrele(fdvp);
+	vrele(fvp);
 
+out:
+	if (fdvp != ap->a_fdvp) {
+		vrele(ap->a_fdvp);
+	}
+	if (fvp != ap->a_fvp) {
+		vrele(ap->a_fvp);
+	}
 	return (error);
 }
 
@@ -1486,9 +1454,9 @@ union_mkdir(v)
 
 		error = union_allocvp(ap->a_vpp, ap->a_dvp->v_mount, ap->a_dvp,
 				NULLVP, cnp, vp, NULLVP, 1);
-		vrele(ap->a_dvp);
 		if (error)
 			vput(vp);
+		vrele(ap->a_dvp);
 		return (error);
 	}
 

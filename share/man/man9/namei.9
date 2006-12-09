@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.12 2006/03/03 16:15:11 rumble Exp $
+.\"     $NetBSD: namei.9,v 1.13 2006/12/09 16:11:50 chs Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -164,8 +164,8 @@ found whiteout
 do whiteouts
 .It REQUIREDIR
 must be a directory
-.It PDIRUNLOCK
-vfs_lookup() unlocked parent dir
+.It CREATEDIR
+trailing slashes are ok
 .It PARAMASK
 mask of parameter descriptors
 .El
@@ -239,12 +239,8 @@ are altered by the operation specified by
 When CREATE, RENAME, or DELETE is specified, information usable in
 creating, renaming, or deleting a directory entry may be calculated.
 .Pp
-If
-.Em ndp-\*[Gt]ci_cnd.cn_flags
-has LOCKPARENT set, the parent directory is returned locked in
+The parent directory is returned locked in
 .Em ndp-\*[Gt]ni_dvp .
-If WANTPARENT is set, the parent directory is returned unlocked.
-Otherwise the parent directory is not returned.
 If the target of the pathname exists and LOCKLEAF is set, the target
 is returned locked in
 .Em ndp-\*[Gt]ni_vp ,
@@ -253,7 +249,7 @@ otherwise it is returned unlocked.
 Reacquire a path name component is a directory.
 This is a quicker way to lookup a pathname component when the parent
 directory is known.
-The unlocked parent directory vnode is specified by
+The locked parent directory vnode is specified by
 .Fa dvp
 and the pathname component by
 .Fa cnp .

@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.58 2006/11/28 19:26:30 pooka Exp $
+.\"     $NetBSD: vnodeops.9,v 1.59 2006/12/09 16:11:50 chs Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -357,8 +357,6 @@ are:
 lock inode on return
 .It LOCKPARENT
 want parent vnode returned locked
-.It WANTPARENT
-want parent vnode returned unlocked
 .It NOCACHE
 name must not be left in name cache (see
 .Xr namecache 9 )
@@ -409,11 +407,7 @@ If the pathname component being search for is ".." (ISDOTDOT),
 .Fa dvp
 is unlocked, the ".." node is locked and then
 .Fa dvp
-is relocked if and only if LOCKPARENT and ISLASTCN is set in
-.Em cnp-\*[Gt]cn_flags .
-If LOCKPARENT or ISLASTCN is not set,
-.Fa dvp
-is returned unlocked on a successful lookup.
+is relocked.
 This process preserves the protocol of always locking nodes from root
 downward and prevents deadlock.
 For other pathname components,
@@ -426,9 +420,8 @@ If the pathname is not found in the name cache, the directory is
 searched for the pathname.
 The resulting locked vnode is returned in
 .Fa vpp .
-If LOCKPARENT or ISLASTCN is not set,
 .Fa dvp
-is returned unlocked on a successful lookup.
+is always returned locked.
 .Pp
 On failure
 .Fa *vpp
@@ -437,14 +430,6 @@ is
 and
 .Fa *dvp
 is left locked.
-If there was an error relocking
-.Fa dvp
-(for instance in the ISDOTDOT case) the error is returned with
-PDIRUNLOCK set in
-.Em cnp-\*[Gt]cn_flags .
-This flag signals to the caller that
-.Fa dvp ' s
-lock state has changed.
 If the operation is successful
 .Fa *vpp
 is locked and zero is returned.
@@ -885,7 +870,7 @@ renamed and
 is the vnode of the file to be renamed.
 The argument
 .Fa fcnp
-is the pathname component about the file to be remained.
+is the pathname component about the file to be renamed.
 The argument
 .Fa tdvp
 is the vnode of the new directory of the target file and

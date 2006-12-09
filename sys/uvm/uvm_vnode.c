@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.77 2006/11/01 10:18:27 yamt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.78 2006/12/09 16:11:52 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.77 2006/11/01 10:18:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.78 2006/12/09 16:11:52 chs Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -311,6 +311,10 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
 			     access_type, advice, flags);
 
+	LOCK_ASSERT(((flags & PGO_LOCKED) != 0 &&
+		     simple_lock_held(&vp->v_interlock)) ||
+		    ((flags & PGO_LOCKED) == 0 &&
+		     !simple_lock_held(&vp->v_interlock)));
 	return error;
 }
 

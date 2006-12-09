@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.10 2006/07/23 22:06:15 ad Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.11 2006/12/09 16:11:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ufs_extattr.c,v 1.10 2006/07/23 22:06:15 ad Exp $");
+__RCSID("$NetBSD: ufs_extattr.c,v 1.11 2006/12/09 16:11:52 chs Exp $");
 
 #include "opt_ffs.h"
 
@@ -279,23 +279,7 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 	error = ufs_lookup(&vargs);
 	PNBUF_PUT(cnp.cn_pnbuf);
 	if (error) {
-		/*
-		 * Error condition, may have to release the lock on the parent
-		 * if ufs_lookup() didn't.
-		 */
-		if ((cnp.cn_flags & PDIRUNLOCK) == 0) {
-			KASSERT(VOP_ISLOCKED(start_dvp) == LK_EXCLUSIVE);
-			if (lockparent == 0)
-				VOP_UNLOCK(start_dvp, 0);
-		}
-
-		/*
-		 * Check that ufs_lookup() didn't release the lock when we
-		 * didn't want it to.
-		 */
-		if ((cnp.cn_flags & PDIRUNLOCK) && lockparent)
-			panic("ufs_extattr_lookup: lockparent but PDIRUNLOCK");
-
+		VOP_UNLOCK(start_dvp, 0);
 		return (error);
 	}
 #if 0
@@ -304,14 +288,6 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 #endif
 
 	KASSERT(VOP_ISLOCKED(target_vp) == LK_EXCLUSIVE);
-
-	if (target_vp != start_dvp &&
-	    (cnp.cn_flags & PDIRUNLOCK) == 0 && lockparent == 0)
-		panic("ufs_extattr_lookup: !lockparent but !PDIRUNLOCK");
-
-	if ((cnp.cn_flags & PDIRUNLOCK) && lockparent)
-		panic("ufs_extattr_lookup: lockparent but PDIRUNLOCK");
-
 	*vp = target_vp;
 	return (0);
 }

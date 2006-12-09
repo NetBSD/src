@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.34 2006/11/25 12:17:30 scw Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.35 2006/12/09 16:11:51 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.34 2006/11/25 12:17:30 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.35 2006/12/09 16:11:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1022,16 +1022,21 @@ abortit:
 		panic("msdosfs_rename: lost from startdir");
 	if (!newparent)
 		VOP_UNLOCK(tdvp, 0);
-	(void) relookup(fdvp, &fvp, fcnp);
+	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+	if ((error = relookup(fdvp, &fvp, fcnp))) {
+		vput(fdvp);
+		vrele(ap->a_fvp);
+		vrele(tdvp);
+		return (error);
+	}
 	if (fvp == NULL) {
 		/*
 		 * From name has disappeared.
 		 */
 		if (doingdirectory)
 			panic("rename: lost dir entry");
+		vput(fdvp);
 		vrele(ap->a_fvp);
-		if (newparent)
-			VOP_UNLOCK(tdvp, 0);
 		vrele(tdvp);
 		return 0;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.21 2006/12/07 16:58:39 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.22 2006/12/09 16:11:51 chs Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.21 2006/12/07 16:58:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.22 2006/12/09 16:11:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -430,7 +430,7 @@ puffs_lookup(void *v)
 	struct puffs_mount *pmp;
 	struct componentname *cnp;
 	struct vnode *vp, *dvp;
-	int wantpunlock, isdot;
+	int isdot;
 	int error;
 
 	PUFFS_VNREQ(lookup);
@@ -445,7 +445,6 @@ puffs_lookup(void *v)
 	if (error)
 		return error;
 
-	wantpunlock = ~cnp->cn_flags & (LOCKPARENT | ISLASTCN);
 	isdot = cnp->cn_namelen == 1 && *cnp->cn_nameptr == '.';
 
 	DPRINTF(("puffs_lookup: \"%s\", parent vnode %p, op: %lx\n",
@@ -505,10 +504,7 @@ puffs_lookup(void *v)
 			}
 		}
 		*ap->a_vpp = NULL;
-		if (cnp->cn_flags & ISDOTDOT)
-			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) != 0)
-				cnp->cn_flags |= PDIRUNLOCK;
-		return error;
+		goto errout;
 	}
 
 	vp = puffs_pnode2vnode(pmp, lookup_arg.pvnr_newnode);
@@ -517,33 +513,20 @@ puffs_lookup(void *v)
 		    lookup_arg.pvnr_newnode, lookup_arg.pvnr_vtype,
 		    lookup_arg.pvnr_size, lookup_arg.pvnr_rdev, &vp);
 		if (error) {
-			if (cnp->cn_flags & ISDOTDOT)
-				if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) != 0)
-					cnp->cn_flags |= PDIRUNLOCK;
-			return error;
+			goto errout;
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	}
-
-	if (cnp->cn_flags & ISDOTDOT) {
-		if (cnp->cn_flags & LOCKPARENT &&
-		    cnp->cn_flags & ISLASTCN) {
-			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) != 0) {
-				cnp->cn_flags |= PDIRUNLOCK;
-			}
-		}
-	} else  {
-		if (wantpunlock) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 	}
 
 	if (cnp->cn_flags & MAKEENTRY)
 		cache_enter(dvp, vp, cnp);
 	*ap->a_vpp = vp;
 
-	return 0;
+errout:
+	if (cnp->cn_flags & ISDOTDOT)
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+	
+	return error;
 }
 
 int

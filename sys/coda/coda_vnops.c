@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.50 2006/07/21 16:48:47 ad Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.51 2006/12/09 16:11:50 chs Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.50 2006/07/21 16:48:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.51 2006/12/09 16:11:50 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -905,8 +905,6 @@ coda_lookup(void *v)
     int	vtype;
     int error = 0;
 
-    cnp->cn_flags &= ~PDIRUNLOCK;
-
     MARK_ENTRY(CODA_LOOKUP_STATS);
 
     CODADEBUG(CODA_LOOKUP, myprintf(("lookup: %s in %s\n",
@@ -999,42 +997,13 @@ coda_lookup(void *v)
     }
 
     /*
-     * If the lookup went well, we need to (potentially?) unlock the
-     * parent, and lock the child.  We are only responsible for
-     * checking to see if the parent is supposed to be unlocked before
-     * we return.  We must always lock the child (provided there is
-     * one, and (the parent isn't locked or it isn't the same as the
-     * parent.)  Simple, huh?  We can never leave the parent locked unless
-     * we are ISLASTCN
+     * If the lookup went well, we need to lock the child.
      */
     if (!error || (error == EJUSTRETURN)) {
-	/* XXX ISDOTDOT changes locking rules - not handled. */
-	if (!(cnp->cn_flags & LOCKPARENT) || !(cnp->cn_flags & ISLASTCN)) {
-	    /*
-	     * XXX Lock child before unlocking parent?
-	     * XXX Why is it ok to fail to unlock, but a panic to fail to lock?
-	     */
-	    if ((error = VOP_UNLOCK(dvp, 0))) {
-		return error;
-	    }
-	    cnp->cn_flags |= PDIRUNLOCK;
-	    /*
-	     * The parent is unlocked.  As long as there is a child,
-	     * lock it without bothering to check anything else.
-	     */
-	    if (*ap->a_vpp) {
-		if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE|LK_RETRY))) {
-		    panic("unlocked parent but couldn't lock child");
-		}
-	    }
-	} else {
-	    /* The parent is locked, and may be the same as the child */
-	    if (*ap->a_vpp && (*ap->a_vpp != dvp)) {
-		/* Different, go ahead and lock it. */
-		if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE|LK_RETRY))) {
-		    panic("kept parent locked but couldn't lock child");
-		}
-	    }
+	/* The parent is locked, and may be the same as the child */
+	if (*ap->a_vpp && (*ap->a_vpp != dvp)) {
+	    /* Different, go ahead and lock it. */
+	    vn_lock(*ap->a_vpp, LK_EXCLUSIVE|LK_RETRY);
 	}
     } else {
 	/* If the lookup failed, we need to ensure that the leaf is NULL */
@@ -1626,10 +1595,9 @@ coda_symlink(void *v)
 	error = VOP_LOOKUP(tdvp, ap->a_vpp, cnp);
 	cnp->cn_flags = saved_cn_flags;
 	/* Either an error occurs, or ap->a_vpp is locked. */
-    } else {
-	/* error, so unlock and deference parent */
-        vput(tdvp);
     }
+    /* unlock and deference parent */
+    vput(tdvp);
 
  exit:
     CODADEBUG(CODA_SYMLINK, myprintf(("in symlink result %d\n",error)); )
