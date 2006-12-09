@@ -1,6 +1,10 @@
-# $NetBSD: files.pnpbios,v 1.16 2005/12/11 12:17:47 christos Exp $
+# $NetBSD: files.pnpbios,v 1.17 2006/12/09 22:45:26 uwe Exp $
 
-defflag	PNPBIOSVERBOSE
+defflag  opt_pnpbios.h	PNPBIOSVERBOSE
+defflag  opt_pnpbios.h	PNPBIOSDEBUG
+defparam opt_pnpbios.h	PNPBIOSDEBUG_VALUE
+defflag  opt_pnpbios.h	PNPBIOSEVENTS
+defflag  opt_pnpbios.h	PNPBIOSEVENTSDEBUG
 
 device	pnpbios { [index = -1] }
 attach	pnpbios at pnpbiosbus
