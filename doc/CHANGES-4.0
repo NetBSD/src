@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.9 2006/12/09 12:04:21 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.10 2006/12/09 12:47:46 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -174,4 +174,11 @@ sbin/veriexecctl/veriexecctl_parse.y		1.20
 	fixes a bug where entries with multiple flags only counted the
 	last flag.
 	[elad, ticket #265]
+
+doc/3RDPARTY					1.489
+share/zoneinfo/zone.tab				1.1.1.27 via patch
+share/zoneinfo/australasia			1.12
+
+	tz{code,data}2006p out; tzdata2006p imported.
+	[kleink, ticket #260]
 
