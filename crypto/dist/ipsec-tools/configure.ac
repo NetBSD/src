@@ -768,6 +768,7 @@ if test "$enable_security_context" = "yes"; then
 		AC_DEFINE([HAVE_SECCTX], [], [Enable Security Context])
 		SECCTX_OBJS="security.o"
 		AC_SUBST(SECCTX_OBJS)
+		LIBS="$LIBS -lselinux"
 	fi
 fi
 
