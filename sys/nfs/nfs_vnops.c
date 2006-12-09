@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.245 2006/11/09 09:53:57 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.246 2006/12/09 16:11:52 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.245 2006/11/09 09:53:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.246 2006/12/09 16:11:52 chs Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -826,10 +826,9 @@ nfs_lookup(v)
 	long len;
 	nfsfh_t *fhp;
 	struct nfsnode *np;
-	int lockparent, wantparent, error = 0, attrflag, fhsize;
+	int error = 0, attrflag, fhsize;
 	const int v3 = NFS_ISV3(dvp);
 
-	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
 
 	*vpp = NULLVP;
@@ -856,8 +855,6 @@ nfs_lookup(v)
 		return 0;
 	}
 
-	lockparent = flags & LOCKPARENT;
-	wantparent = flags & (LOCKPARENT|WANTPARENT);
 	np = VTONFS(dvp);
 
 	/*
@@ -908,28 +905,18 @@ nfs_lookup(v)
 		if (!VOP_GETATTR(newvp, &vattr, cnp->cn_cred, cnp->cn_lwp)
 		    && vattr.va_ctime.tv_sec == VTONFS(newvp)->n_ctime) {
 			nfsstats.lookupcache_hits++;
-			if ((flags & ISDOTDOT) != 0 ||
-			    (~flags & (LOCKPARENT|ISLASTCN)) != 0) {
+			if ((flags & ISDOTDOT) != 0) {
 				VOP_UNLOCK(dvp, 0);
-				cnp->cn_flags |= PDIRUNLOCK;
 			}
 			error = vn_lock(newvp, LK_EXCLUSIVE);
+			if ((flags & ISDOTDOT) != 0) {
+				vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+			}
 			if (error) {
 				/* newvp has been revoked. */
 				vrele(newvp);
 				*vpp = NULL;
 				return error;
-			}
-			if ((~flags & (LOCKPARENT|ISLASTCN)) == 0
-			    && (cnp->cn_flags & PDIRUNLOCK)) {
-				KASSERT(flags & ISDOTDOT);
-				error = vn_lock(dvp, LK_EXCLUSIVE);
-				if (error) {
-					vput(newvp);
-					*vpp = NULL;
-					return error;
-				}
-				cnp->cn_flags &= ~PDIRUNLOCK;
 			}
 			if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 				cnp->cn_flags |= SAVENAME;
@@ -953,7 +940,6 @@ dorpc:
 	if (v3 && cnp->cn_nameiop == CREATE &&
 	    (flags & (ISLASTCN|ISDOTDOT)) == ISLASTCN &&
 	    (dvp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		KASSERT(lockparent);
 		cnp->cn_flags |= SAVENAME;
 		return (EJUSTRETURN);
 	}
@@ -979,7 +965,7 @@ dorpc:
 	/*
 	 * Handle RENAME case...
 	 */
-	if (cnp->cn_nameiop == RENAME && wantparent && (flags & ISLASTCN)) {
+	if (cnp->cn_nameiop == RENAME && (flags & ISLASTCN)) {
 		if (NFS_CMPFH(np, fhp, fhsize)) {
 			m_freem(mrep);
 			return (EISDIR);
@@ -1000,10 +986,6 @@ dorpc:
 		*vpp = newvp;
 		m_freem(mrep);
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		goto validate;
 	}
 
@@ -1031,12 +1013,9 @@ dorpc:
 		 * ".." lookup
 		 */
 		VOP_UNLOCK(dvp, 0);
-		cnp->cn_flags |= PDIRUNLOCK;
-
 		error = nfs_nget(dvp->v_mount, fhp, fhsize, &np);
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {
-			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
-				cnp->cn_flags &= ~PDIRUNLOCK;
 			m_freem(mrep);
 			return error;
 		}
@@ -1049,15 +1028,6 @@ dorpc:
 		} else
 #endif
 			nfsm_loadattr(newvp, (struct vattr *)0, 0);
-
-		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE))) {
-				m_freem(mrep);
-				vput(newvp);
-				return error;
-			}
-			cnp->cn_flags &= ~PDIRUNLOCK;
-		}
 	} else {
 		/*
 		 * Other lookups.
@@ -1075,10 +1045,6 @@ dorpc:
 		} else
 #endif
 			nfsm_loadattr(newvp, (struct vattr *)0, 0);
-		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 	}
 	if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 		cnp->cn_flags |= SAVENAME;
@@ -1100,9 +1066,11 @@ dorpc:
 			nfs_cache_enter(dvp, NULL, cnp);
 		}
 		if (newvp != NULLVP) {
-			vrele(newvp);
-			if (newvp != dvp)
-				VOP_UNLOCK(newvp, 0);
+			if (newvp == dvp) {
+				vrele(newvp);
+			} else {
+				vput(newvp);
+			}
 		}
 noentry:
 		if ((cnp->cn_nameiop == CREATE || cnp->cn_nameiop == RENAME) &&

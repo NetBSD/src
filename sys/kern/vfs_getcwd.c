@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.33 2006/10/25 18:55:49 christos Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.34 2006/12/09 16:11:51 chs Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.33 2006/10/25 18:55:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.34 2006/12/09 16:11:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,12 +144,12 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	cn.cn_consume = 0;
 
 	/*
-	 * At this point, lvp is locked and will be unlocked by the lookup.
+	 * At this point, lvp is locked.
 	 * On successful return, *uvpp will be locked
 	 */
 	error = VOP_LOOKUP(lvp, uvpp, &cn);
+	vput(lvp);
 	if (error) {
-		vput(lvp);
 		*lvpp = NULL;
 		*uvpp = NULL;
 		return error;
@@ -158,7 +158,6 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 
 	/* If we don't care about the pathname, we're done */
 	if (bufp == NULL) {
-		vrele(lvp);
 		*lvpp = NULL;
 		return 0;
 	}
@@ -260,19 +259,13 @@ unionread:
 		vput(tvp);
 		VREF(uvp);
 		*uvpp = uvp;
-		error = vn_lock(uvp, LK_EXCLUSIVE | LK_RETRY);
-		if (error != 0) {
-			vrele(uvp);
-			*uvpp = uvp = NULL;
-			goto out;
-		}
+		vn_lock(uvp, LK_EXCLUSIVE | LK_RETRY);
 		goto unionread;
 	}
 #endif
 	error = ENOENT;
 
 out:
-	vrele(lvp);
 	*lvpp = NULL;
 	free(dirbuf, M_TEMP);
 	return error;
@@ -323,25 +316,23 @@ getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	 */
 
 	VOP_UNLOCK(lvp, 0);
-
 	error = vget(uvp, LK_EXCLUSIVE | LK_RETRY);
+
 	/*
 	 * Verify that vget succeeded while we were waiting for the
 	 * lock.
 	 */
 	if (error) {
+
 		/*
-		 * Oops, we missed.  If the vget failed try to get our
-		 * lock back; if that works, rewind the `bp' and tell
-		 * caller to try things the hard way, otherwise give
-		 * up.
+		 * Oops, we missed.  If the vget failed, get our lock back
+		 * then rewind the `bp' and tell the caller to try things
+		 * the hard way.
 		 */
 		*uvpp = NULL;
-		error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
-		if (error == 0) {
-			*bpp = obp;
-			return -1;
-		}
+		vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
+		*bpp = obp;
+		return -1;
 	}
 	vrele(lvp);
 	*lvpp = NULL;
@@ -364,6 +355,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 	int error;
 	int perms = VEXEC;
 
+	error = 0;
 	if (rvp == NULL) {
 		rvp = cwdi->cwdi_rdir;
 		if (rvp == NULL)
@@ -380,14 +372,10 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 	 *	uvp is either NULL, or locked and held.
 	 */
 
-	error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
-	if (error) {
-		vrele(lvp);
-		lvp = NULL;
-		goto out;
-	}
+	vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
 	if (bufp)
 		bp = *bpp;
+
 	/*
 	 * this loop will terminate when one of the following happens:
 	 *	- we hit the root

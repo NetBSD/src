@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.66 2006/10/25 18:56:38 christos Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.67 2006/12/09 16:11:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.66 2006/10/25 18:56:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.67 2006/12/09 16:11:51 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -261,29 +261,10 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		error = 0;
 	} else if (cnp->cn_flags & ISDOTDOT) {
 		VOP_UNLOCK(dvp, 0);
-		cnp->cn_flags |= PDIRUNLOCK;
 		error = vn_lock(vp, LK_EXCLUSIVE);
-		/*
-		 * If the above vn_lock() succeeded and both LOCKPARENT and
-		 * ISLASTCN is set, lock the directory vnode as well.
-		 */
-		if (!error && (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) == 0) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE)) != 0) {
-				vput(vp);
-				return (error);
-			}
-			cnp->cn_flags &= ~PDIRUNLOCK;
-		}
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	} else {
 		error = vn_lock(vp, LK_EXCLUSIVE);
-		/*
-		 * If the above vn_lock() failed or either of LOCKPARENT or
-		 * ISLASTCN is not set, unlock the directory vnode.
-		 */
-		if (error || (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) != 0) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 	}
 
 	/*
@@ -292,15 +273,6 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	if (error) {
 		/* XXXSMP - updating stats without lock; do we care? */
 		nchstats.ncs_badhits++;
-
-		/*
-		 * The parent needs to be locked when we return to VOP_LOOKUP().
-		 * The `.' case here should be extremely rare (if it can happen
-		 * at all), so we don't bother optimizing out the unlock/relock.
-		 */
-		if ((error = vn_lock(dvp, LK_EXCLUSIVE)) != 0)
-			return (error);
-		cnp->cn_flags &= ~PDIRUNLOCK;
 		*vpp = NULL;
 		return (-1);
 	}
