@@ -1,4 +1,4 @@
-/*      $NetBSD: ip_etherip.c,v 1.1 2006/11/23 04:07:07 rpaulo Exp $        */
+/*      $NetBSD: ip_etherip.c,v 1.1.2.1 2006/12/09 11:51:47 bouyer Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -66,6 +66,7 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
+#include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
