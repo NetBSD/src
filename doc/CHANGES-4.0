@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.10 2006/12/09 12:47:46 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.11 2006/12/09 20:53:11 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -181,4 +181,10 @@ share/zoneinfo/australasia			1.12
 
 	tz{code,data}2006p out; tzdata2006p imported.
 	[kleink, ticket #260]
+
+sys/arch/xen/x86/consinit.c			1.7
+
+	Remove extra ) causing compile failure when CONS_OVERRIDE is defined.
+	From Hideo Masuda in PR port-xen/35217.
+	[bouyer, ticket #266]
 
