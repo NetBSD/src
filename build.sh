@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.153 2006/09/29 19:53:54 apb Exp $
+#	$NetBSD: build.sh,v 1.154 2006/12/09 20:13:13 dyoung Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -968,7 +968,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.153 2006/09/29 19:53:54 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.154 2006/12/09 20:13:13 dyoung Exp $
 # with these arguments: ${_args}
 #
 EOF
@@ -979,9 +979,10 @@ EOF
 			eval echo "${f}=\'\$$(echo ${f})\'\;\ export\ ${f}" ${makewrapout}
 		fi
 	done
-	eval echo "USETOOLS=yes\; export USETOOLS" ${makewrapout}
 
 	eval cat <<EOF ${makewrapout}
+MAKEWRAPPERMACHINE=${makewrappermachine:-${MACHINE}}; export MAKEWRAPPERMACHINE
+USETOOLS=yes; export USETOOLS
 
 exec "\${TOOLDIR}/bin/${toolprefix}make" \${1+"\$@"}
 EOF
