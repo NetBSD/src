@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.22 2006/10/19 09:35:44 vanhu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.23 2006/12/09 05:52:57 manu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -2439,6 +2439,16 @@ ahmismatch:
 			}
 			break;
 
+#ifdef HAVE_SECCTX
+		case IPSECDOI_ATTR_SECCTX:
+			if (flag) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"SECCTX must be in TLV.\n");
+				return -1;
+			}
+		break;
+#endif
+
 		case IPSECDOI_ATTR_KEY_ROUNDS:
 		case IPSECDOI_ATTR_COMP_DICT_SIZE:
 		case IPSECDOI_ATTR_COMP_PRIVALG:
@@ -2942,6 +2952,9 @@ setph2proposal0(iph2, pp, pr)
 	caddr_t x0, x;
 	u_int8_t *np_t; /* pointer next trns type in previous header */
 	const u_int8_t *spi;
+#ifdef HAVE_SECCTX
+	int truectxlen = 0;
+#endif
 
 	p = vmalloc(sizeof(*prop) + sizeof(pr->spi));
 	if (p == NULL)
@@ -3044,6 +3057,17 @@ setph2proposal0(iph2, pp, pr)
 		if (alg_oakley_dhdef_ok(iph2->sainfo->pfs_group))
 			attrlen += sizeof(struct isakmp_data);
 
+#ifdef HAVE_SECCTX
+		/* ctx_str is defined as char ctx_str[MAX_CTXSTR_SIZ].
+		 * The string may be smaller than MAX_CTXSTR_SIZ.
+		 */
+		if (*pp->sctx.ctx_str) {
+			truectxlen = sizeof(struct security_ctx) -
+				     (MAX_CTXSTR_SIZE - pp->sctx.ctx_strlen);
+			attrlen += sizeof(struct isakmp_data) + truectxlen;
+		}
+#endif /* HAVE_SECCTX */
+
 		p = vrealloc(p, p->l + sizeof(*trns) + attrlen);
 		if (p == NULL)
 			return NULL;
@@ -3098,6 +3122,11 @@ setph2proposal0(iph2, pp, pr)
 			x = isakmp_set_attr_l(x, IPSECDOI_ATTR_GRP_DESC,
 				iph2->sainfo->pfs_group);
 
+#ifdef HAVE_SECCTX
+		if (*pp->sctx.ctx_str) 
+			x = isakmp_set_attr_v(x, IPSECDOI_ATTR_SECCTX,
+					     (caddr_t)&pp->sctx, truectxlen);
+#endif
 		/* update length of this transform. */
 		trns = (struct isakmp_pl_t *)(p->v + trnsoff);
 		trns->h.len = htons(sizeof(*trns) + attrlen);
@@ -4645,7 +4674,14 @@ ipsecdoi_t2satrns(t, pp, pr, tr)
 			}
 			tr->encklen = ntohs(d->lorv);
 			break;
-
+#ifdef HAVE_SECCTX
+		case IPSECDOI_ATTR_SECCTX:
+		{
+			int len = ntohs(d->lorv);
+			memcpy(&pp->sctx, d + 1, len);
+			break;
+		}
+#endif /* HAVE_SECCTX */
 		case IPSECDOI_ATTR_KEY_ROUNDS:
 		case IPSECDOI_ATTR_COMP_DICT_SIZE:
 		case IPSECDOI_ATTR_COMP_PRIVALG:

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.13 2006/10/02 21:47:32 manu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.14 2006/12/09 05:52:57 manu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -78,6 +78,7 @@
 #include "remoteconf.h"
 #include "sockmisc.h"
 #include "handler.h"
+#include "policy.h"
 #include "proposal.h"
 #include "isakmp_var.h"
 #include "evt.h"

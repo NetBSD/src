@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.8 2006/09/18 20:32:40 manu Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.9 2006/12/09 05:52:57 manu Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -71,6 +71,7 @@
 #include "remoteconf.h"
 #include "localconf.h"
 #include "grabmyaddr.h"
+#include "policy.h"
 #include "proposal.h"
 #include "vendorid.h"
 #include "gcmalloc.h"

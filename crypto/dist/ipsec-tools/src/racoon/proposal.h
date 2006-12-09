@@ -1,4 +1,4 @@
-/*	$NetBSD: proposal.h,v 1.5 2006/12/05 13:38:40 vanhu Exp $	*/
+/*	$NetBSD: proposal.h,v 1.6 2006/12/09 05:52:57 manu Exp $	*/
 
 /* Id: proposal.h,v 1.5 2004/06/11 16:00:17 ludvigm Exp */
 
@@ -62,7 +62,9 @@ struct saprop {
 	int pfs_group;			/* pfs group */
 	int claim;			/* flag to send RESPONDER-LIFETIME. */
 					/* XXX assumed DOI values are 1 or 2. */
-
+#ifdef HAVE_SECCTX
+	struct security_ctx sctx;       /* security context structure */
+#endif
 	struct saproto *head;
 	struct saprop *next;
 };
