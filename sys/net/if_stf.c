@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.54 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.55 2006/12/09 05:33:06 dyoung Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.54 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.55 2006/12/09 05:33:06 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -423,10 +423,8 @@ stf_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		dst4->sin_family = AF_INET;
 		dst4->sin_len = sizeof(struct sockaddr_in);
 		bcopy(&ip->ip_dst, &dst4->sin_addr, sizeof(dst4->sin_addr));
-		if (sc->sc_ro.ro_rt) {
-			RTFREE(sc->sc_ro.ro_rt);
-			sc->sc_ro.ro_rt = NULL;
-		}
+		if (sc->sc_ro.ro_rt != NULL)
+			rtflush(&sc->sc_ro);
 	}
 
 	if (sc->sc_ro.ro_rt == NULL) {

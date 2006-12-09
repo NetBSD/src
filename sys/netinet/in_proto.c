@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.79 2006/11/23 04:07:07 rpaulo Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.80 2006/12/09 05:33:04 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.79 2006/11/23 04:07:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.80 2006/12/09 05:33:04 dyoung Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.79 2006/11/23 04:07:07 rpaulo Exp $")
 #include <netinet/in_ifattach.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_proto.h>
+#include <netinet/in_route.h>
 
 #ifdef INET6
 #ifndef INET
@@ -302,19 +303,25 @@ const struct protosw inetsw[] = {
 extern struct ifqueue ipintrq;
 
 struct domain inetdomain = {
-    PF_INET, "internet", 0, 0, 0,
-    inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])],
-    rn_inithead, 32, sizeof(struct sockaddr_in),
+	.dom_family = PF_INET, .dom_name = "internet", .dom_init = NULL,
+	.dom_externalize = NULL, .dom_dispose = NULL,
+	.dom_protosw = inetsw,
+	.dom_protoswNPROTOSW = &inetsw[sizeof(inetsw)/sizeof(inetsw[0])],
+	.dom_rtattach = rn_inithead,
+	.dom_rtoffset = 32, .dom_maxrtkey = sizeof(struct sockaddr_in),
 #ifdef IPSELSRC
-      in_domifattach,
-      in_domifdetach,
+	.dom_ifattach = in_domifattach,
+	.dom_ifdetach = in_domifdetach,
 #else
-      NULL,
-      NULL,
+	.dom_ifattach = NULL,
+	.dom_ifdetach = NULL,
 #endif
-    { &ipintrq, NULL },
-    { NULL },
-    MOWNER_INIT("",""),
+	.dom_ifqueues = { &ipintrq, NULL },
+	.dom_link = { NULL },
+	.dom_mowner = MOWNER_INIT("",""),
+	.dom_rtcache = in_rtcache,
+	.dom_rtflush = in_rtflush,
+	.dom_rtflushall = in_rtflushall
 };
 
 u_char	ip_protox[IPPROTO_MAX];

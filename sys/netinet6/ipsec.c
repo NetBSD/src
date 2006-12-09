@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.111 2006/12/02 18:59:17 dyoung Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.112 2006/12/09 05:33:08 dyoung Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.111 2006/12/02 18:59:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.112 2006/12/09 05:33:08 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2734,10 +2734,8 @@ ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp,
 			dst4 = (struct sockaddr_in *)state->dst;
 			if (state->ro->ro_rt != NULL &&
 			    ((state->ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-			     dst4->sin_addr.s_addr != ip->ip_dst.s_addr)) {
-				RTFREE(state->ro->ro_rt);
-				bzero((caddr_t)state->ro, sizeof (*state->ro));
-			}
+			     dst4->sin_addr.s_addr != ip->ip_dst.s_addr))
+				rtflush((struct route *)state->ro);
 			if (state->ro->ro_rt == NULL) {
 				dst4->sin_family = AF_INET;
 				dst4->sin_len = sizeof(*dst4);
@@ -3125,10 +3123,8 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 			if (state->ro->ro_rt != NULL &&
 			    ((state->ro->ro_rt->rt_flags & RTF_UP) == 0 ||
 			     !IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr,
-			                         &ip6->ip6_dst))) {
-				RTFREE(state->ro->ro_rt);
-				bzero((caddr_t)state->ro, sizeof (*state->ro));
-			}
+			                         &ip6->ip6_dst)))
+				rtflush((struct route *)state->ro);
 			if (state->ro->ro_rt == NULL) {
 				bzero(dst6, sizeof(*dst6));
 				dst6->sin6_family = AF_INET6;

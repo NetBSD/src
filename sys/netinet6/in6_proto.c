@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.68 2006/11/23 04:07:07 rpaulo Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.69 2006/12/09 05:33:07 dyoung Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.68 2006/11/23 04:07:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.69 2006/12/09 05:33:07 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -250,16 +250,17 @@ const struct ip6protosw inet6sw[] = {
 };
 
 struct domain inet6domain = {
-	AF_INET6, "internet6", NULL, NULL, NULL,
-	(const struct protosw *)inet6sw,
-	(const struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])],
-	rn_inithead,
-	offsetof(struct sockaddr_in6, sin6_addr) << 3,
-	sizeof(struct sockaddr_in6),
-	in6_domifattach, in6_domifdetach,
-	{ &ip6intrq, NULL },
-	{ NULL },
-	MOWNER_INIT("","")
+	.dom_family = AF_INET6, .dom_name = "internet6",
+	.dom_init = NULL, .dom_externalize = NULL, .dom_dispose = NULL,
+	.dom_protosw = (const struct protosw *)inet6sw,
+	.dom_protoswNPROTOSW = (const struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])],
+	.dom_rtattach = rn_inithead,
+	.dom_rtoffset = offsetof(struct sockaddr_in6, sin6_addr) << 3,
+	.dom_maxrtkey = sizeof(struct sockaddr_in6),
+	.dom_ifattach = in6_domifattach, .dom_ifdetach = in6_domifdetach,
+	.dom_ifqueues = { &ip6intrq, NULL },
+	.dom_link = { NULL },
+	.dom_mowner = MOWNER_INIT("","")
 };
 
 /*

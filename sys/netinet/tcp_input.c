@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.257 2006/12/06 09:10:45 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.258 2006/12/09 05:33:04 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.257 2006/12/06 09:10:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.258 2006/12/09 05:33:04 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3209,7 +3209,7 @@ do {									\
 	if ((sc)->sc_ipopts)						\
 		(void) m_free((sc)->sc_ipopts);				\
 	if ((sc)->sc_route4.ro_rt != NULL)				\
-		RTFREE((sc)->sc_route4.ro_rt);				\
+		rtflush(&(sc)->sc_route4);				\
 	if (callout_invoking(&(sc)->sc_timer))				\
 		(sc)->sc_flags |= SCF_DEAD;				\
 	else								\
@@ -3624,13 +3624,26 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	/*
 	 * Give the new socket our cached route reference.
 	 */
-	if (inp)
+	if (inp) {
 		inp->inp_route = sc->sc_route4;		/* struct assignment */
+		/* XXX the following is gross */
+		if (inp->inp_route.ro_rt != NULL) {
+			inp->inp_route.ro_rt->rt_refcnt++;
+			rtcache(&inp->inp_route);
+			rtflush(&sc->sc_route4);
+		}
+	}
 #ifdef INET6
-	else
+	else {
 		in6p->in6p_route = sc->sc_route6;
+		/* XXX the following is gross */
+		if (in6p->in6p_route.ro_rt != NULL) {
+			in6p->in6p_route.ro_rt->rt_refcnt++;
+			rtcache((struct route *)&in6p->in6p_route);
+			rtflush((struct route *)&sc->sc_route6);
+		}
+	}
 #endif
-	sc->sc_route4.ro_rt = NULL;
 
 	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
 	if (am == NULL)

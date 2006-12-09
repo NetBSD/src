@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.81 2006/12/07 19:37:08 joerg Exp $	*/
+/*	$NetBSD: route.c,v 1.82 2006/12/09 05:33:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.81 2006/12/07 19:37:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.82 2006/12/09 05:33:06 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,6 +198,42 @@ route_init(void)
 	rtable_init((void **)rt_tables);
 }
 
+void
+rtflushall(int family)
+{
+	struct domain *dom;
+
+	if ((dom = pffinddomain(family)) != NULL && dom->dom_rtflushall != NULL)
+		(*dom->dom_rtflushall)();
+}
+
+void
+rtflush(struct route *ro)
+{
+	struct domain *dom;
+
+	KASSERT(ro->ro_rt != NULL);
+
+	RTFREE(ro->ro_rt);
+	ro->ro_rt = NULL;
+
+	if ((dom = pffinddomain(ro->ro_dst.sa_family)) != NULL &&
+	    dom->dom_rtflush != NULL)
+		(*dom->dom_rtflush)(ro);
+}
+
+void
+rtcache(struct route *ro)
+{
+	struct domain *dom;
+
+	KASSERT(ro->ro_rt != NULL);
+
+	if ((dom = pffinddomain(ro->ro_dst.sa_family)) != NULL &&
+	    dom->dom_rtcache != NULL)
+		(*dom->dom_rtcache)(ro);
+}
+
 /*
  * Packet routing routines.
  */
@@ -208,9 +244,11 @@ rtalloc(struct route *ro)
 		if (ro->ro_rt->rt_ifp != NULL &&
 		    (ro->ro_rt->rt_flags & RTF_UP) != 0)
 			return;
-		RTFREE(ro->ro_rt);
+		rtflush(ro);
 	}
-	ro->ro_rt = rtalloc1(&ro->ro_dst, 1);
+	if ((ro->ro_rt = rtalloc1(&ro->ro_dst, 1)) == NULL)
+		return;
+	rtcache(ro);
 }
 
 struct rtentry *
@@ -706,6 +744,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			/* clean up any cloned children */
 			rtflushclone(rnh, rt);
 		}
+		rtflushall(dst->sa_family);
 		break;
 	}
 bad:

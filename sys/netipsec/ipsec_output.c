@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.17 2006/11/24 19:47:00 christos Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.18 2006/12/09 05:33:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.17 2006/11/24 19:47:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.18 2006/12/09 05:33:09 dyoung Exp $");
 
 /*
  * IPsec output processing.
@@ -741,20 +741,18 @@ ipsec6_output_tunnel(
 		state->ro = &isr->sav->sah->sa_route;
 		state->dst = (struct sockaddr *)&state->ro->ro_dst;
 		dst6 = (struct sockaddr_in6 *)state->dst;
-		if (state->ro->ro_rt
-		 && ((state->ro->ro_rt->rt_flags & RTF_UP) == 0
-		  || !IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ip6->ip6_dst))) {
-			RTFREE(state->ro->ro_rt);
-			state->ro->ro_rt = NULL;
-		}
-		if (state->ro->ro_rt == 0) {
+		if (state->ro->ro_rt != NULL &&
+		    ((state->ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+		     !IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ip6->ip6_dst)))
+			rtflush(state->ro);
+		if (state->ro->ro_rt == NULL) {
 			bzero(dst6, sizeof(*dst6));
 			dst6->sin6_family = AF_INET6;
 			dst6->sin6_len = sizeof(*dst6);
 			dst6->sin6_addr = ip6->ip6_dst;
 			rtalloc(state->ro);
 		}
-		if (state->ro->ro_rt == 0) {
+		if (state->ro->ro_rt == NULL) {
 			ip6stat.ip6s_noroute++;
 			newipsecstat.ips_out_noroute++;
 			error = EHOSTUNREACH;

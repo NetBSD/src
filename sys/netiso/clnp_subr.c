@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.22 2006/12/04 02:53:17 dyoung Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.23 2006/12/09 05:33:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.22 2006/12/04 02:53:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.23 2006/12/09 05:33:09 dyoung Exp $");
 
 #include "opt_iso.h"
 
@@ -402,9 +402,8 @@ done:
 	/*
 	 *	Free route
 	 */
-	if (route.ro_rt != NULL) {
-		RTFREE(route.ro_rt);
-	}
+	if (route.ro_rt != NULL)
+		rtflush((struct route *)&route);
 }
 
 #ifdef	notdef
@@ -469,10 +468,8 @@ clnp_route(
 	if (flags & SO_DONTROUTE) {
 		struct iso_ifaddr *ia;
 
-		if (ro->ro_rt) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = 0;
-		}
+		if (ro->ro_rt != NULL)
+			rtflush((struct route *)ro);
 		bzero((caddr_t) & ro->ro_dst, sizeof(ro->ro_dst));
 		bcopy((caddr_t) dst, (caddr_t) & ro->ro_dst.siso_addr,
 		      1 + (unsigned) dst->isoa_len);
@@ -503,8 +500,7 @@ clnp_route(
 #endif
 
 		/* free old route entry */
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = (struct rtentry *) 0;
+		rtflush((struct route *)ro);
 	} else {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {

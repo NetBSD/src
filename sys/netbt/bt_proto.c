@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.5 2006/10/10 21:49:14 dogcow Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.6 2006/12/09 05:33:07 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.5 2006/10/10 21:49:14 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.6 2006/12/09 05:33:07 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -98,19 +98,22 @@ const struct protosw btsw[] = {
 };
 
 struct domain btdomain = {
-	AF_BLUETOOTH,			/* family */
-	"bluetooth",			/* name */
-	NULL,				/* init routine */
-	NULL,				/* externalise access rights */
-	NULL,				/* dispose of internalised rights */
-	btsw,				/* protosw */
-	&btsw[sizeof(btsw)/sizeof(btsw[0])],	/* NPROTOSW */
-	NULL,				/* attach to routing table */
-	32,				/* rtoffset */
-	sizeof(struct sockaddr_bt),	/* maxrtkey */
-	NULL,				/* attach af-data */
-	NULL,				/* detach af-data */
-	{ NULL, NULL },			/* queues */
-	{ NULL },			/* link */
-	MOWNER_INIT("","")		/* owner */
+	.dom_family = AF_BLUETOOTH,
+	.dom_name = "bluetooth",
+	.dom_init = NULL,
+	.dom_externalize = NULL,
+	.dom_dispose = NULL,
+	.dom_protosw = btsw,
+	.dom_protoswNPROTOSW = &btsw[sizeof(btsw)/sizeof(btsw[0])],
+	.dom_rtattach = NULL,
+	.dom_rtoffset = 32,
+	.dom_maxrtkey = sizeof(struct sockaddr_bt),
+	.dom_ifattach = NULL,
+	.dom_ifdetach = NULL,
+	.dom_ifqueues = { NULL, NULL },
+	.dom_link = { NULL },
+	.dom_mowner = MOWNER_INIT("",""),
+	.dom_rtcache = NULL,
+	.dom_rtflush = NULL,
+	.dom_rtflushall = NULL
 };
