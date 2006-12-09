@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.854 2006/11/26 06:07:48 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.855 2006/12/09 21:06:06 manu Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2913,6 +2913,7 @@
 
 /* PLX Technology products */
 #define	PCI_PRODUCT_PLX_9030	0x9030		/* 9030 Modem 4 port */
+#define	PCI_PRODUCT_PLX_9050	0x9030		/* 9030 Modem 4 port V92 */
 #define	PCI_PRODUCT_PLX_9054	0x9054		/* 9054 I/O Accelerator */
 #define	PCI_PRODUCT_PLX_9060ES	0x906e		/* 9060ES PCI bus controller */
 #define	PCI_PRODUCT_PLX_9656	0x9656		/* 9656 I/O Accelerator */
