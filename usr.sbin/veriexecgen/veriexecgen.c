@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.8 2006/10/30 20:22:54 christos Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.8.2.1 2006/12/09 11:43:22 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -87,7 +87,20 @@ struct hash {
 	{ NULL, NULL },
 };
 
-int Aflag, aflag, Dflag, Fflag, rflag, Sflag, vflag;
+static int Aflag, aflag, Dflag, Fflag, rflag, Sflag, vflag;
+
+static int	exit_on_error;
+
+/* warn about a problem - exit if exit_on_error is set */
+static void
+gripe(const char *fmt, const char *filename)
+{
+	warn(fmt, filename);
+	if (exit_on_error) {
+		/* error out on problematic files */
+		exit(EXIT_FAILURE);
+	}
+}
 
 static void
 usage(void)
@@ -167,8 +180,10 @@ add_new_entry(FTSENT *file, struct hash *hash)
 	struct stat sb;
 
 	if (file->fts_info == FTS_SL) {
-		if (stat(file->fts_path, &sb) == -1)
-			err(1, "Cannot stat symlink");
+		if (stat(file->fts_path, &sb) == -1) {
+			gripe("Cannot stat symlink `%s'", file->fts_path);
+			return;
+		}
 	} else
 		sb = *file->fts_statp;
 
@@ -177,14 +192,18 @@ add_new_entry(FTSENT *file, struct hash *hash)
 
 	e = ecalloc(1UL, sizeof(*e));
 
-	if (realpath(file->fts_accpath, e->filename) == NULL)
-		err(1, "Cannot find absolute path");
+	if (realpath(file->fts_accpath, e->filename) == NULL) {
+		gripe("Cannot find absolute path `%s'", file->fts_accpath);
+		return;
+	}
 	if (check_dup(e->filename)) {
 		free(e);
 		return;
 	}
-	if ((e->hash_val = do_hash(e->filename, hash)) == NULL)
-		errx(1, "Cannot calculate hash");
+	if ((e->hash_val = do_hash(e->filename, hash)) == NULL) {
+		gripe("Cannot calculate hash `%s'", e->filename);
+		return;
+	}
 	e->flags = figure_flags(e->filename, sb.st_mode);
 
 	TAILQ_INSERT_TAIL(&fehead, e, f);
@@ -196,8 +215,10 @@ walk_dir(char **search_path, struct hash *hash)
 	FTS *fh;
 	FTSENT *file;
 
-	if ((fh = fts_open(search_path, FTS_PHYSICAL, NULL)) == NULL)
-		err(1, "fts_open");
+	if ((fh = fts_open(search_path, FTS_PHYSICAL, NULL)) == NULL) {
+		gripe("fts_open `%s'", (const char *)search_path);
+		return;
+	}
 
 	while ((file = fts_read(fh)) != NULL) {
 		if (!rflag && file->fts_level > 1) {
@@ -300,7 +321,10 @@ main(int argc, char **argv)
 
 	Aflag = aflag = Dflag = Fflag = rflag = Sflag = vflag = 0;
 
-	while ((ch = getopt(argc, argv, "AaDd:ho:rSt:v")) != -1) {
+	/* error out if we have a dangling symlink or other fs problem */
+	exit_on_error = 1;
+
+	while ((ch = getopt(argc, argv, "AaDd:ho:rSt:vW")) != -1) {
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -339,6 +363,9 @@ main(int argc, char **argv)
 			break;
 		case 'v':
 			vflag = 1;
+			break;
+		case 'W':
+			exit_on_error = 0;
 			break;
 		default:
 			usage();
