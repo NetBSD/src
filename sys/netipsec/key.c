@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.30 2006/11/16 01:33:49 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.31 2006/12/09 05:33:09 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.30 2006/11/16 01:33:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.31 2006/12/09 05:33:09 dyoung Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -2818,10 +2818,8 @@ key_delsah(sah)
 		return;
 	}
 
-	if (sah->sa_route.ro_rt) {
-		RTFREE(sah->sa_route.ro_rt);
-		sah->sa_route.ro_rt = (struct rtentry *)NULL;
-	}
+	if (sah->sa_route.ro_rt != NULL)
+		rtflush(&sah->sa_route);
 
 	/* remove from tree of SA index */
 	if (__LIST_CHAINED(sah))
@@ -7539,11 +7537,9 @@ key_sa_routechange(dst)
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		ro = &sah->sa_route;
-		if (ro->ro_rt && dst->sa_len == ro->ro_dst.sa_len
-		 && bcmp(dst, &ro->ro_dst, dst->sa_len) == 0) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)NULL;
-		}
+		if (ro->ro_rt != NULL && dst->sa_len == ro->ro_dst.sa_len
+		 && bcmp(dst, &ro->ro_dst, dst->sa_len) == 0)
+			rtflush(ro);
 	}
 
 	return;

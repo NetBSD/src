@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.66 2006/12/02 18:59:17 dyoung Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.67 2006/12/09 05:33:08 dyoung Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.66 2006/12/02 18:59:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.67 2006/12/09 05:33:08 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -527,15 +527,13 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	icmp6_ifstat_inc(ifp, ifs6_out_neighborsolicit);
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_SOLICIT]++;
 
-	if (ro.ro_rt) {		/* we don't cache this route. */
-		RTFREE(ro.ro_rt);
-	}
+	if (ro.ro_rt != NULL)		/* we don't cache this route. */
+		rtflush((struct route *)&ro);
 	return;
 
   bad:
-	if (ro.ro_rt) {
-		RTFREE(ro.ro_rt);
-	}
+	if (ro.ro_rt != NULL)
+		rtflush((struct route *)&ro);
 	m_freem(m);
 	return;
 }
@@ -1007,15 +1005,13 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 	icmp6_ifstat_inc(ifp, ifs6_out_neighboradvert);
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_ADVERT]++;
 
-	if (ro.ro_rt) {		/* we don't cache this route. */
-		RTFREE(ro.ro_rt);
-	}
+	if (ro.ro_rt != NULL)		/* we don't cache this route. */
+		rtflush((struct route *)&ro);
 	return;
 
   bad:
-	if (ro.ro_rt) {
-		RTFREE(ro.ro_rt);
-	}
+	if (ro.ro_rt != NULL)
+		rtflush((struct route *)&ro);
 	m_freem(m);
 	return;
 }

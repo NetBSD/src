@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.24 2006/12/04 15:14:45 is Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.25 2006/12/09 05:33:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.24 2006/12/04 15:14:45 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.25 2006/12/09 05:33:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -313,8 +313,8 @@ clnp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_DETACH:
 		if (rp->risop_isop.isop_options)
 			m_freem(rp->risop_isop.isop_options);
-		if (rp->risop_isop.isop_route.ro_rt)
-			RTFREE(rp->risop_isop.isop_route.ro_rt);
+		if (rp->risop_isop.isop_route.ro_rt != NULL)
+			rtflush((struct route *)&rp->risop_isop.isop_route);
 		if (rp->risop_rcb.rcb_laddr)
 			rp->risop_rcb.rcb_laddr = 0;
 		/* free clnp cached hdr if necessary */

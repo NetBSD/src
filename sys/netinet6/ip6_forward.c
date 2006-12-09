@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.50 2006/12/02 18:59:17 dyoung Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.51 2006/12/09 05:33:08 dyoung Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.50 2006/12/02 18:59:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.51 2006/12/09 05:33:08 dyoung Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -340,10 +340,8 @@ ip6_forward(m, srcrt)
 		 */
 		if (ip6_forward_rt.ro_rt == NULL ||
 		    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) == 0) {
-			if (ip6_forward_rt.ro_rt) {
-				RTFREE(ip6_forward_rt.ro_rt);
-				ip6_forward_rt.ro_rt = 0;
-			}
+			if (ip6_forward_rt.ro_rt != NULL)
+				rtflush((struct route *)&ip6_forward_rt);
 			/* this probably fails but give it a try again */
 			rtalloc((struct route *)&ip6_forward_rt);
 		}
@@ -360,10 +358,8 @@ ip6_forward(m, srcrt)
 		}
 	} else if ((rt = ip6_forward_rt.ro_rt) == NULL ||
 		 !IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst->sin6_addr)) {
-		if (ip6_forward_rt.ro_rt) {
-			RTFREE(ip6_forward_rt.ro_rt);
-			ip6_forward_rt.ro_rt = 0;
-		}
+		if (ip6_forward_rt.ro_rt != NULL)
+			rtflush((struct route *)&ip6_forward_rt);
 		bzero(dst, sizeof(*dst));
 		dst->sin6_len = sizeof(struct sockaddr_in6);
 		dst->sin6_family = AF_INET6;
