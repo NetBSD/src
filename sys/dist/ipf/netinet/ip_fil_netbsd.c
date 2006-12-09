@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.28 2006/11/16 01:33:34 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.29 2006/12/09 05:33:06 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -1424,8 +1424,8 @@ done:
 	else
 		fr_frouteok[1]++;
 
-	if (ro->ro_rt) {
-		RTFREE(ro->ro_rt);
+	if (ro->ro_rt != NULL) {
+		rtflush(ro);
 	}
 	*mpp = NULL;
 	return error;
@@ -1522,7 +1522,7 @@ frdest_t *fdp;
 	}
 bad:
 	if (ro->ro_rt != NULL) {
-		RTFREE(ro->ro_rt);
+		rtflush((struct route *)ro);
 	}
 	return error;
 }
@@ -1532,6 +1532,7 @@ bad:
 int fr_verifysrc(fin)
 fr_info_t *fin;
 {
+	int rc;
 	struct sockaddr_in *dst;
 	struct route iproute;
 
@@ -1543,7 +1544,9 @@ fr_info_t *fin;
 	rtalloc(&iproute);
 	if (iproute.ro_rt == NULL)
 		return 0;
-	return (fin->fin_ifp == iproute.ro_rt->rt_ifp);
+	rc = (fin->fin_ifp == iproute.ro_rt->rt_ifp);
+	rtflush(&iproute);
+	return rc;
 }
 
 

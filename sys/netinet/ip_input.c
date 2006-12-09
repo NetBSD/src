@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.238 2006/12/06 00:39:56 dyoung Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.239 2006/12/09 05:33:04 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.238 2006/12/06 00:39:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.239 2006/12/09 05:33:04 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1679,20 +1679,18 @@ ip_rtaddr(struct in_addr dst)
 
 	sin = satosin(&ipforward_rt.ro_dst);
 
-	if (ipforward_rt.ro_rt == 0 || !in_hosteq(dst, sin->sin_addr)) {
-		if (ipforward_rt.ro_rt) {
-			RTFREE(ipforward_rt.ro_rt);
-			ipforward_rt.ro_rt = 0;
-		}
+	if (ipforward_rt.ro_rt == NULL || !in_hosteq(dst, sin->sin_addr)) {
+		if (ipforward_rt.ro_rt != NULL)
+			rtflush(&ipforward_rt);
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(*sin);
 		sin->sin_addr = dst;
 
 		rtalloc(&ipforward_rt);
 	}
-	if (ipforward_rt.ro_rt == 0)
-		return ((struct in_ifaddr *)0);
-	return (ifatoia(ipforward_rt.ro_rt->rt_ifa));
+	if (ipforward_rt.ro_rt == NULL)
+		return NULL;
+	return ifatoia(ipforward_rt.ro_rt->rt_ifa);
 }
 
 /*
@@ -1873,18 +1871,16 @@ ip_forward(struct mbuf *m, int srcrt)
 	}
 
 	sin = satosin(&ipforward_rt.ro_dst);
-	if ((rt = ipforward_rt.ro_rt) == 0 ||
+	if ((rt = ipforward_rt.ro_rt) == NULL ||
 	    !in_hosteq(ip->ip_dst, sin->sin_addr)) {
-		if (ipforward_rt.ro_rt) {
-			RTFREE(ipforward_rt.ro_rt);
-			ipforward_rt.ro_rt = 0;
-		}
+		if (ipforward_rt.ro_rt != NULL)
+			rtflush(&ipforward_rt);
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(struct sockaddr_in);
 		sin->sin_addr = ip->ip_dst;
 
 		rtalloc(&ipforward_rt);
-		if (ipforward_rt.ro_rt == 0) {
+		if (ipforward_rt.ro_rt == NULL) {
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
 			return;
 		}

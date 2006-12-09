@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.47 2006/12/07 19:37:08 joerg Exp $	*/
+/*	$NetBSD: route.h,v 1.48 2006/12/09 05:33:06 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -52,8 +52,9 @@
  * in their control blocks, e.g. inpcb.
  */
 struct route {
-	struct	rtentry *ro_rt;
-	struct	sockaddr ro_dst;
+	struct	rtentry		*ro_rt;
+	struct	sockaddr	ro_dst;
+	LIST_ENTRY(route)	ro_rtcache_next;
 };
 
 /*
@@ -270,14 +271,6 @@ struct rttimer_queue {
 
 
 #ifdef _KERNEL
-#define	RTFREE(rt) \
-do { \
-	if ((rt)->rt_refcnt <= 1) \
-		rtfree(rt); \
-	else \
-		(rt)->rt_refcnt--; \
-} while (/*CONSTCOND*/ 0)
-
 extern	struct	route_cb route_cb;
 extern	struct	rtstat	rtstat;
 extern	struct	radix_node_head *rt_tables[AF_MAX+1];
@@ -312,6 +305,9 @@ unsigned long	rt_timer_count(struct rttimer_queue *);
 void	 rt_timer_timer(void *);
 void	 rtable_init(void **);
 void	 rtalloc(struct route *);
+void	 rtcache(struct route *);
+void	 rtflushall(int);
+void	 rtflush(struct route *);
 struct rtentry *
 	 rtalloc1(const struct sockaddr *, int);
 void	 rtfree(struct rtentry *);
@@ -325,6 +321,15 @@ int	 rtrequest(int, const struct sockaddr *,
 	    const struct sockaddr *, const struct sockaddr *, int,
 	    struct rtentry **);
 int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
+
+static inline void
+RTFREE(struct rtentry *rt)
+{
+	if (rt->rt_refcnt <= 1)
+		rtfree(rt);
+	else
+		rt->rt_refcnt--;
+}
 
 struct ifaddr	*rt_get_ifa(struct rtentry *);
 void	rt_replace_ifa(struct rtentry *, struct ifaddr *);
