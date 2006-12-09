@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.55 2006/11/16 01:32:39 christos Exp $ */
+/* $NetBSD: pnpbios.c,v 1.56 2006/12/09 22:45:26 uwe Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.55 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.56 2006/12/09 22:45:26 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.55 2006/11/16 01:32:39 christos Exp $"
 #include <arch/i386/pnpbios/pnpbiosvar.h>
 #include <arch/i386/pnpbios/pnpbiosreg.h>
 
-#include "opt_pnpbiosverbose.h"
+#include "opt_pnpbios.h"
 #include "locators.h"
 
 #ifdef PNPBIOSVERBOSE
