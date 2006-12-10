@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.21 2006/12/10 03:24:29 uwe Exp $ */
+/* $NetBSD: pcppi.c,v 1.22 2006/12/10 22:10:57 cube Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.21 2006/12/10 03:24:29 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.22 2006/12/10 22:10:57 cube Exp $");
 
 #include "attimer.h"
 
@@ -191,10 +191,6 @@ pcppi_attach(struct pcppi_softc *sc)
 static int
 pcppisearch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 {
-
-	if (cf->cf_fstate == FSTATE_STAR)
-		aprint_error("%s: WARNING: %s* must have an explicit unit\n",
-		    device_xname(parent), cf->cf_name);
 
 	if (config_match(parent, cf, aux))
 		config_attach_loc(parent, cf, locs, aux, NULL);
