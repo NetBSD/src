@@ -1,4 +1,4 @@
-/*	$NetBSD: ofhandlers.c,v 1.1 2006/08/16 03:24:57 macallan Exp $	*/
+/*	$NetBSD: ofhandlers.c,v 1.2 2006/12/10 03:06:25 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@ extern	int verbose;
 static	char err_str[BUFSIZE];
 
 static	void of_notsupp (struct extabent *, struct ofiocdesc *, char *);
+static	void of_uint32h (struct extabent *, struct ofiocdesc *, char *);
+static	void of_uint32d (struct extabent *, struct ofiocdesc *, char *);
 
 /*
  * There are several known fields that I either don't know how to
@@ -66,6 +68,15 @@ static	struct extabent ofextab[] = {
 	{ "security-password",		of_notsupp },
 	{ "security-mode",		of_notsupp },
 	{ "oem-logo",			of_notsupp },
+	{ "oem-banner",			of_notsupp },
+	{ "real-base",			of_uint32h },
+	{ "real-size",			of_uint32h },
+	{ "load-base",			of_uint32h },
+	{ "virt-base",			of_uint32h },
+	{ "virt-size",			of_uint32h },
+	{ "screen-#columns",		of_uint32d },
+	{ "screen-#rows",		of_uint32d },
+	{ "selftest-#megs",		of_uint32d },
 	{ NULL,				of_notsupp },
 };
 
@@ -180,6 +191,26 @@ of_notsupp(exent, ofiop, arg)
 {
 
 	warnx("property `%s' not yet supported", exent->ex_keyword);
+}
+
+static void
+of_uint32h(exent, ofiop, arg)
+	struct extabent *exent;
+	struct ofiocdesc *ofiop;
+	char *arg;
+{
+
+	printf("%s=0x%08x\n", exent->ex_keyword, *(uint32_t *)ofiop->of_buf);
+}
+
+static void
+of_uint32d(exent, ofiop, arg)
+	struct extabent *exent;
+	struct ofiocdesc *ofiop;
+	char *arg;
+{
+
+	printf("%s=%d\n", exent->ex_keyword, *(uint32_t *)ofiop->of_buf);
 }
 
 /*
