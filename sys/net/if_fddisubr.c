@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.64 2006/12/10 12:34:42 is Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.65 2006/12/10 14:21:32 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.64 2006/12/10 12:34:42 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.65 2006/12/10 14:21:32 is Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -698,8 +698,8 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			    LLC_XID_BASIC_MINLEN + sizeof(struct fddi_header))
 				goto dropanyway;
 			l->llc_window = 0;
-			l->llc_fid = 9;
-			l->llc_class = 1;
+			l->llc_fid = LLC_XID_FORMAT_BASIC;
+			l->llc_class = LLC_XID_CLASS_I;
 			l->llc_dsap = l->llc_ssap = 0;
 			/* Fall through to */
 		case LLC_TEST:
