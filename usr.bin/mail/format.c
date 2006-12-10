@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.2 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: format.c,v 1.3 2006/12/10 06:06:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.2 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: format.c,v 1.3 2006/12/10 06:06:47 christos Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -475,6 +475,26 @@ my_strptime(const char *buf, const char *fmtstr, struct tm *tm)
 	return tail;
 }
 
+static char *
+mk_gmtoff(struct tm *tm)
+{
+	char *gmtoff;
+	char sign;
+	int offset;
+	int hour;
+	int min;
+
+	offset = tm->tm_gmtoff / 60;
+	sign = offset < 0 ? '-' : '+';
+	if (offset < 0)
+		offset = -offset;
+	offset %= 24 * 60;
+	min = offset % 60;
+	hour = offset / 60;
+	(void)sasprintf(&gmtoff, "%c%02d%02d", sign, hour, min);
+	return gmtoff;
+}
+
 /*
  * Get the date and time info from the "Date:" line, parse it into a
  * tm structure as much as possible.
@@ -485,26 +505,24 @@ my_strptime(const char *buf, const char *fmtstr, struct tm *tm)
 PUBLIC const char *
 dateof(struct tm *tm, struct message *mp, int use_hl_date)
 {
+	static int tzinit = 0;
 	char *tail;
 	char *gmtoff;
 	const char *date;
 
 	(void)memset(tm, 0, sizeof(*tm));
+	tm->tm_isdst = -1;
 
-	if (mp == NULL) {	/* use local time */
-		char buf[6];	/* space for "+0000" */
-		int hour;
-		int min;
-		time_t now;
+	/* Make sure the time zone info is initialized. */
+	if (!tzinit) {
+		tzinit = 1;
 		tzset();
+	}
+	if (mp == NULL) {	/* use local time */
+		time_t now;
 		(void)time(&now);
 		(void)localtime_r(&now, tm);
-		min = (tm->tm_gmtoff / 60) % 60;
-		hour = tm->tm_gmtoff / 3600;
-		if (hour > 12)
-			hour = 24 - hour;
-		(void)snprintf(buf, sizeof(buf), "%+03d%02d", hour, min);
-		return savestr(buf);
+		return mk_gmtoff(tm);
 	}
 	gmtoff = NULL; 
 	tail = NULL;
@@ -549,16 +567,14 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 		 * Scan the gmtoff and use it to convert the time to a
 		 * local time.
 		 *
+		 * Note: "-0000" means no valid zone info.  See
+		 *       RFC 2822, sec 3.3.
+		 *
 		 * XXX - This is painful!  Is there a better way?
 		 */
-		if (sscanf(gmtoff, " %[+-]%2d%2d ", &sign, &hour, &min) == 3) {
+		if (strcmp(gmtoff, "-0000") != 0 &&
+		    sscanf(gmtoff, " %[+-]%2d%2d ", &sign, &hour, &min) == 3) {
 			time_t otime;
-			/*
-			 * This seems like a crazy way to convert the
-			 * sent times from the Date field to local
-			 * times.
-			 */
-			tm->tm_isdst = -1;
 			if (sign == '-') {
 				tm->tm_hour += hour;
 				tm->tm_min += min;
@@ -567,11 +583,15 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 				tm->tm_hour -= hour;
 				tm->tm_min -= min;
 			}
+			tm->tm_isdst = -1;
 			if ((time_t)(otime = timegm(tm)) == -1)
 				warn("timegm: %s", date);
-
+			
 			if(localtime_r(&otime, tm) == NULL)
 				warn("localtime: %s", date);
+			
+			/* extract the new gmtoff string */
+			gmtoff = mk_gmtoff(tm);
 		}
 		else
 			tm->tm_gmtoff = 0;
@@ -597,23 +617,22 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 		date = headline;
 		(void)mail_readline(setinput(mp), headline, sizeof(headline));
 		parse(headline, &hl, pbuf);
-		if (hl.l_date != NULL &&
-		    (tail = my_strptime(hl.l_date, " %a %b %d %T ", tm)) == NULL &&
-		    (tail = my_strptime(hl.l_date, " %a %b %d %R ", tm)) == NULL) {
-			warnx("dateof: cannot determine date: %s", hl.l_date);
+		if (hl.l_date != NULL) {
+			if ((tail = my_strptime(hl.l_date, " %a %b %d %T ", tm)) == NULL &&
+			    (tail = my_strptime(hl.l_date, " %a %b %d %R ", tm)) == NULL)
+				warnx("dateof: cannot determine date: %s", hl.l_date);
+			else {
+				tm->tm_isdst = -1;
+				if(mktime(tm) == -1)
+					warn("mktime: %s", date);
+
+				/* extract the gmtoff string */
+				gmtoff = mk_gmtoff(tm);
+			}
 		}
 	}
-	/* tail will be NULL here if the mail file is empty, so don't
-	 * check it. */
-	
-	/*
-	 * XXX - how should we really handle the zone info?  The
-	 * problem seems to be figuring out whether to set tm_isdst to
-	 * 1 or 0.
-	 */
-
-	/* mark the zone and gmtoff info as invalid for strftime. */
-	tm->tm_isdst = -1;
+	/* 'tail' will be NULL here if the mail file is empty, so
+	 * don't check it with an assert(). */
 
 	return gmtoff;
 }
