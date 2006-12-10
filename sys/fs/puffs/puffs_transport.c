@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_transport.c,v 1.1 2006/12/05 23:41:24 pooka Exp $	*/
+/*	$NetBSD: puffs_transport.c,v 1.2 2006/12/10 22:33:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -159,10 +159,11 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	struct puffs_instance *pi;
 	struct puffs_mount *pmp;
 	struct mount *mp;
-	int gone;
+	int gone, rv;
 
 	DPRINTF(("puffs_fop_close: device closed, force filesystem unmount\n"));
 
+ restart:
 	simple_lock(&pi_lock);
 	pmp = FPTOPMP(fp);
 	/*
@@ -175,6 +176,10 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 		TAILQ_REMOVE(&puffs_ilist, pi, pi_entries);
 		simple_unlock(&pi_lock);
 		FREE(pi, M_PUFFS);
+
+		DPRINTF(("puffs_fop_close: pmp associated with fp %p was "
+		    "embryonic\n", fp));
+
 		return 0;
 	}
 
@@ -189,6 +194,10 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 		simple_unlock(&pi_lock);
 		pi = FPTOPI(fp);
 		FREE(pi, M_PUFFS);
+
+		DPRINTF(("puffs_fop_close: pmp associated with fp %p was "
+		    "dead\n", fp));
+
 		return 0;
 	}
 
@@ -207,6 +216,28 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 * lockmgr: You're not fooling anyone, you know.
 	 */
 	puffs_userdead(pmp);
+
+	/*
+	 * Make sure someone from puffs_unmount() isn't currently in
+	 * userspace.  If we don't take this precautionary step,
+	 * they might notice that the mountpoint has disappeared
+	 * from under them once they return.  Especially note that we
+	 * cannot simply test for an unmounter before calling
+	 * dounmount(), since it might be possible that that particular
+	 * invocation of unmount was called without MNT_FORCE.  Here we
+	 * *must* make sure unmount succeeds.  Also, restart is necessary
+	 * since pmp isn't locked.  We might end up with PMP_DEAD after
+	 * restart and exit from there.
+	 */
+	simple_lock(&pmp->pmp_lock);
+	if (pmp->pmp_unmounting) {
+		ltsleep(&pmp->pmp_unmounting, PNORELOCK | PVFS, "puffsum",
+		    0, &pmp->pmp_lock);
+		DPRINTF(("puffs_fop_close: unmount was in progress for pmp %p, "
+		    "restart\n", pmp));
+		goto restart;
+	}
+	simple_unlock(&pmp->pmp_lock);
 
 	/*
 	 * Detach from VFS.  First do necessary XXX-dance (from
@@ -253,7 +284,7 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	}
 
 	/* Once we have the mount point, unmount() can't interfere */
-	dounmount(mp, MNT_FORCE, l);
+	rv = dounmount(mp, MNT_FORCE, l);
 
 	return 0;
 }

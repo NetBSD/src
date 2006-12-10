@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.13 2006/12/05 23:41:24 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.14 2006/12/10 22:33:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -138,12 +138,13 @@ struct puffs_mount {
 
 	unsigned int			pmp_nextreq;
 	uint8_t				pmp_status;
+	uint8_t				pmp_unmounting;
 };
 
 #define PUFFSTAT_BEFOREINIT	0
 #define PUFFSTAT_MOUNTING	1
 #define PUFFSTAT_RUNNING	2
-#define PUFFSTAT_DYING		3
+#define PUFFSTAT_DYING		3 /* Do you want your possessions identified? */
 
 #define PNODE_INACTIVE	0x01
 #define PNODE_LOCKED	0x02
