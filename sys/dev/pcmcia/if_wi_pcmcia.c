@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.74 2006/11/25 18:06:55 dsl Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.75 2006/12/10 03:44:28 uwe Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.74 2006/11/25 18:06:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.75 2006/12/10 03:44:28 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,6 +347,8 @@ wi_pcmcia_attach(struct device  *parent, struct device *self,
 	struct pcmcia_config_entry *cfe;
 	int haveaddr;
 	int error;
+
+	aprint_naive("\n");
 
 	psc->sc_pf = pa->pf;
 
