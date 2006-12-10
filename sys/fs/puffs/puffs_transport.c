@@ -1,11 +1,10 @@
-/*	$NetBSD: puffs_transport.c,v 1.2 2006/12/10 22:33:31 pooka Exp $	*/
+/* $NetBSD: puffs_transport.c,v 1.3 2006/12/10 23:43:55 pooka Exp $ */
 
 /*
- * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
- * Google Summer of Code program and the Ulla Tuominen Foundation.
- * The Google SoC project was mentored by Bill Studenmund.
+ * Ulla Tuominen Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,6 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.3 2006/12/10 23:43:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -145,13 +147,6 @@ puffs_fop_poll(struct file *fp, int events, struct lwp *l)
  * device close = forced unmount.
  *
  * unmounting is a frightfully complex operation to avoid races
- *
- * XXX: if userspace is terminated by a signal, this will be
- * called only after the signal is delivered (i.e. after someone tries
- * to access the file system).  Also, the first one for a delivery
- * will get a free bounce-bounce ride before it can be notified
- * that the fs is dead.  I'm not terribly concerned about optimizing
- * this for speed ...
  */
 static int
 puffs_fop_close(struct file *fp, struct lwp *l)
@@ -192,13 +187,11 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 		/* would be nice, but don't have a reference to it ... */
 		/* KASSERT(pmp_status == PUFFSTAT_DYING); */
 		simple_unlock(&pi_lock);
-		pi = FPTOPI(fp);
-		FREE(pi, M_PUFFS);
 
 		DPRINTF(("puffs_fop_close: pmp associated with fp %p was "
 		    "dead\n", fp));
 
-		return 0;
+		goto out;
 	}
 
 	/*
@@ -264,7 +257,7 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	simple_unlock(&mp->mnt_slock);
 	if (gone) {
 		lockmgr(&syncer_lock, LK_RELEASE, NULL);
-		return 0;
+		goto out;
 	}
 
 	/*
@@ -280,11 +273,25 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 */
 	if (vfs_busy(mp, 0, 0)) {
 		lockmgr(&syncer_lock, LK_RELEASE, NULL);
-		return 0;
+		goto out;
 	}
 
-	/* Once we have the mount point, unmount() can't interfere */
+	/*
+	 * Once we have the mount point, unmount() can't interfere..
+	 * or at least in theory it shouldn't.  dounmount() reentracy
+	 * might require some visiting at some point.
+	 */
 	rv = dounmount(mp, MNT_FORCE, l);
+	KASSERT(rv == 0);
+
+ out:
+	/*
+	 * Finally, release the instance information.  It was already
+	 * removed from the list by puffs_nukebypmp() and we know it's
+	 * dead, so no need to lock.
+	 */
+	pi = FPTOPI(fp);
+	FREE(pi, M_PUFFS);
 
 	return 0;
 }
