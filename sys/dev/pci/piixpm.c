@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.7.6.1 2006/10/22 06:06:19 yamt Exp $ */
+/* $NetBSD: piixpm.c,v 1.7.6.2 2006/12/10 07:17:47 yamt Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ CFATTACH_DECL(piixpm, sizeof(struct piixpm_softc),
     piixpm_match, piixpm_attach, NULL, NULL);
 
 int
-piixpm_match(struct device *parent __unused, struct cfdata *match __unused,
+piixpm_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa;
@@ -113,6 +113,8 @@ piixpm_match(struct device *parent __unused, struct cfdata *match __unused,
 	case PCI_VENDOR_ATI:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_ATI_SB200_SMB:
+		case PCI_PRODUCT_ATI_SB300_SMB:
+		case PCI_PRODUCT_ATI_SB400_SMB:
 			return 1;
 		}
 		break;
@@ -122,7 +124,7 @@ piixpm_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-piixpm_attach(struct device *parent __unused, struct device *self, void *aux)
+piixpm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct piixpm_softc *sc = (struct piixpm_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -132,13 +134,17 @@ piixpm_attach(struct device *parent __unused, struct device *self, void *aux)
 	pcireg_t pmmisc;
 #endif
 	pci_intr_handle_t ih;
+	char devinfo[256];
 	const char *intrstr = NULL;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
 	aprint_naive("\n");
-	aprint_normal(": Power Management Controller\n");
+
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	aprint_normal("\n%s: %s (rev. 0x%02x)\n",
+		      device_xname(self), devinfo, PCI_REVISION(pa->pa_class));
 
 	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
 	    piixpm_powerhook, sc);

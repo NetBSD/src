@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.15.6.1 2006/10/22 06:05:21 yamt Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.15.6.2 2006/12/10 07:16:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.15.6.1 2006/10/22 06:05:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.15.6.2 2006/12/10 07:16:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.15.6.1 2006/10/22 06:05:21 ya
 
 /* ARGSUSED */
 int
-compat_43_sys_getrlimit(struct lwp *l, void *v, register_t *retval __unused)
+compat_43_sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_getrlimit_args /* {
 		syscallarg(int) which;
@@ -76,7 +76,7 @@ compat_43_sys_getrlimit(struct lwp *l, void *v, register_t *retval __unused)
 
 /* ARGSUSED */
 int
-compat_43_sys_setrlimit(struct lwp *l, void *v, register_t *retval __unused)
+compat_43_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_setrlimit_args /* {
 		syscallarg(int) which;

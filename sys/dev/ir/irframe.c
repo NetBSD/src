@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.34.4.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: irframe.c,v 1.34.4.2 2006/12/10 07:17:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.34.4.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.34.4.2 2006/12/10 07:17:26 yamt Exp $");
 
 #include "irframe.h"
 
@@ -99,7 +99,7 @@ extern struct cfdriver irframe_cd;
 #define IRFRAMEUNIT(dev) (minor(dev))
 
 int
-irframe_match(struct device *parent __unused, struct cfdata *match __unused,
+irframe_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct ir_attach_args *ia = aux;
@@ -108,7 +108,7 @@ irframe_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-irframe_attach(struct device *parent __unused, struct device *self, void *aux)
+irframe_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct irframe_softc *sc = device_private(self);
 	struct ir_attach_args *ia = aux;
@@ -152,7 +152,7 @@ irframe_attach(struct device *parent __unused, struct device *self, void *aux)
 }
 
 int
-irframe_activate(struct device *self __unused, enum devact act)
+irframe_activate(struct device *self, enum devact act)
 {
 	/*struct irframe_softc *sc = device_private(self);*/
 
@@ -167,7 +167,7 @@ irframe_activate(struct device *self __unused, enum devact act)
 }
 
 int
-irframe_detach(struct device *self, int flags __unused)
+irframe_detach(struct device *self, int flags)
 {
 	/*struct irframe_softc *sc = device_private(self);*/
 	int maj, mn;
@@ -339,8 +339,8 @@ irf_reset_params(struct irframe_softc *sc)
 }
 
 int
-irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag __unused,
-    struct lwp *l __unused)
+irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+    struct lwp *l)
 {
 	struct irframe_softc *sc;
 	void *vaddr = addr;

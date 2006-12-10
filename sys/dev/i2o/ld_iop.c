@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.21.10.1 2006/10/22 06:05:43 yamt Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.21.10.2 2006/12/10 07:17:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.21.10.1 2006/10/22 06:05:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.21.10.2 2006/12/10 07:17:04 yamt Exp $");
 
 #include "opt_i2o.h"
 #include "rnd.h"
@@ -117,7 +117,7 @@ static const char * const ld_iop_errors[] = {
 #endif
 
 static int
-ld_iop_match(struct device *parent __unused, struct cfdata *match __unused,
+ld_iop_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct iop_attach_args *ia;
@@ -527,7 +527,7 @@ ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
 }
 
 static void
-ld_iop_intr_event(struct device *dv, struct iop_msg *im __unused, void *reply)
+ld_iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 {
 	struct i2o_util_event_register_reply *rb;
 	struct ld_iop_softc *sc;

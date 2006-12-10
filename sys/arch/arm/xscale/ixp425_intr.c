@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.14 2006/05/17 05:15:26 mrg Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.14.10.1 2006/12/10 07:15:48 yamt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.14 2006/05/17 05:15:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.14.10.1 2006/12/10 07:15:48 yamt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -249,7 +249,7 @@ ixp425_intr_calculate_masks(void)
 	ixp425_imask[IPL_SOFTNET] |= ixp425_imask[IPL_SOFTCLOCK];
 
 	/*
-	 * Enforce a heirarchy that gives "slow" device (or devices with
+	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */

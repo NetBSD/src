@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.89.4.1 2006/10/22 06:05:27 yamt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.89.4.2 2006/12/10 07:16:52 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.89.4.1 2006/10/22 06:05:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.89.4.2 2006/12/10 07:16:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -527,7 +527,7 @@ db_command(const struct db_command **last_cmdp,
 
 /*ARGSUSED*/
 static void
-db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count __unused,
+db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     const char *modif)
 {
 	boolean_t full = FALSE;
@@ -543,8 +543,8 @@ db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count __unused,
 
 /*ARGSUSED*/
 static void
-db_malloc_print_cmd(db_expr_t addr __unused, int have_addr __unused,
-    db_expr_t count __unused, const char *modif __unused)
+db_malloc_print_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 
 #ifdef MALLOC_DEBUG
@@ -559,8 +559,8 @@ db_malloc_print_cmd(db_expr_t addr __unused, int have_addr __unused,
 
 /*ARGSUSED*/
 static void
-db_object_print_cmd(db_expr_t addr, int have_addr __unused,
-    db_expr_t count __unused, const char *modif)
+db_object_print_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	boolean_t full = FALSE;
 
@@ -573,8 +573,8 @@ db_object_print_cmd(db_expr_t addr, int have_addr __unused,
 
 /*ARGSUSED*/
 static void
-db_page_print_cmd(db_expr_t addr, int have_addr __unused,
-    db_expr_t count __unused, const char *modif)
+db_page_print_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	boolean_t full = FALSE;
 
@@ -586,8 +586,8 @@ db_page_print_cmd(db_expr_t addr, int have_addr __unused,
 
 /*ARGSUSED*/
 static void
-db_show_all_pages(db_expr_t addr __unused, int have_addr __unused,
-    db_expr_t count __unused, const char *modif __unused)
+db_show_all_pages(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 
 	uvm_page_printall(db_printf);
@@ -595,8 +595,8 @@ db_show_all_pages(db_expr_t addr __unused, int have_addr __unused,
 
 /*ARGSUSED*/
 static void
-db_buf_print_cmd(db_expr_t addr, int have_addr __unused,
-    db_expr_t count __unused, const char *modif)
+db_buf_print_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	boolean_t full = FALSE;
 
@@ -608,8 +608,8 @@ db_buf_print_cmd(db_expr_t addr, int have_addr __unused,
 
 /*ARGSUSED*/
 static void
-db_event_print_cmd(db_expr_t addr __unused, int have_addr __unused,
-    db_expr_t count __unused, const char *modif)
+db_event_print_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	boolean_t full = FALSE;
 
@@ -621,8 +621,8 @@ db_event_print_cmd(db_expr_t addr __unused, int have_addr __unused,
 
 /*ARGSUSED*/
 static void
-db_vnode_print_cmd(db_expr_t addr, int have_addr __unused,
-    db_expr_t count __unused, const char *modif)
+db_vnode_print_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	boolean_t full = FALSE;
 
@@ -633,8 +633,8 @@ db_vnode_print_cmd(db_expr_t addr, int have_addr __unused,
 }
 
 static void
-db_mount_print_cmd(db_expr_t addr, int have_addr __unused,
-    db_expr_t count __unused, const char *modif)
+db_mount_print_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	boolean_t full = FALSE;
 
@@ -646,8 +646,8 @@ db_mount_print_cmd(db_expr_t addr, int have_addr __unused,
 
 /*ARGSUSED*/
 static void
-db_mbuf_print_cmd(db_expr_t addr, int have_addr __unused,
-    db_expr_t count __unused, const char *modif)
+db_mbuf_print_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 
 	m_print((const struct mbuf *)(intptr_t) addr, modif, db_printf);
@@ -655,8 +655,8 @@ db_mbuf_print_cmd(db_expr_t addr, int have_addr __unused,
 
 /*ARGSUSED*/
 static void
-db_pool_print_cmd(db_expr_t addr, int have_addr __unused,
-    db_expr_t count __unused, const char *modif)
+db_pool_print_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 
 	pool_printit((struct pool *)(intptr_t) addr, modif, db_printf);
@@ -664,8 +664,8 @@ db_pool_print_cmd(db_expr_t addr, int have_addr __unused,
 
 /*ARGSUSED*/
 static void
-db_namecache_print_cmd(db_expr_t addr, int have_addr __unused,
-    db_expr_t count __unused, const char *modif __unused)
+db_namecache_print_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 
 	namecache_print((struct vnode *)(intptr_t) addr, db_printf);
@@ -673,8 +673,8 @@ db_namecache_print_cmd(db_expr_t addr, int have_addr __unused,
 
 /*ARGSUSED*/
 static void
-db_uvmexp_print_cmd(db_expr_t addr __unused, int have_addr __unused,
-    db_expr_t count __unused, const char *modif __unused)
+db_uvmexp_print_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 
 	uvmexp_print(db_printf);
@@ -686,8 +686,8 @@ db_uvmexp_print_cmd(db_expr_t addr __unused, int have_addr __unused,
  */
 /*ARGSUSED*/
 static void
-db_fncall(db_expr_t addr __unused, int have_addr __unused,
-    db_expr_t count __unused, const char *modif __unused)
+db_fncall(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	db_expr_t	fn_addr;
 #define	MAXARGS		11
@@ -741,8 +741,8 @@ db_fncall(db_expr_t addr __unused, int have_addr __unused,
 }
 
 static void
-db_reboot_cmd(db_expr_t addr __unused, int have_addr __unused,
-    db_expr_t count __unused, const char *modif __unused)
+db_reboot_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	db_expr_t bootflags;
 
@@ -763,8 +763,8 @@ db_reboot_cmd(db_expr_t addr __unused, int have_addr __unused,
 }
 
 static void
-db_sifting_cmd(db_expr_t addr __unused, int have_addr __unused,
-    db_expr_t count __unused, const char *modif __unused)
+db_sifting_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	int	mode, t;
 
@@ -812,8 +812,8 @@ db_stack_trace_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *m
 }
 
 static void
-db_sync_cmd(db_expr_t addr __unused, int have_addr __unused,
-    db_expr_t count __unused, const char *modif __unused)
+db_sync_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 
 	/*

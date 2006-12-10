@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.17.22.1 2006/10/22 06:04:48 yamt Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.17.22.2 2006/12/10 07:16:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.17.22.1 2006/10/22 06:04:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.17.22.2 2006/12/10 07:16:12 yamt Exp $");
 
 #include "opt_pcibios.h"
 
@@ -151,7 +151,7 @@ pci_addr_fixup(pci_chipset_tag_t pc, int maxbus)
 
 void
 pciaddr_resource_reserve(pci_chipset_tag_t pc, pcitag_t tag,
-    void *context __unused)
+    void *context)
 {
 	if (pciaddrverbose)
 		pciaddr_print_devid(pc, tag);
@@ -162,7 +162,7 @@ pciaddr_resource_reserve(pci_chipset_tag_t pc, pcitag_t tag,
 
 void
 pciaddr_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag,
-    void *context __unused)
+    void *context)
 {
 	if (pciaddrverbose)
 		pciaddr_print_devid(pc, tag);

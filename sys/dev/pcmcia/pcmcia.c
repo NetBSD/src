@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.79.10.1 2006/10/22 06:06:39 yamt Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.79.10.2 2006/12/10 07:18:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.79.10.1 2006/10/22 06:06:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.79.10.2 2006/12/10 07:18:06 yamt Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -112,7 +112,7 @@ pcmcia_ccr_write(pf, ccr, val)
 }
 
 int
-pcmcia_match(struct device *parent __unused, struct cfdata *match, void *aux)
+pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
 
@@ -124,7 +124,7 @@ pcmcia_match(struct device *parent __unused, struct cfdata *match, void *aux)
 }
 
 void
-pcmcia_attach(struct device *parent __unused, struct device *self, void *aux)
+pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) self;
@@ -147,7 +147,7 @@ pcmcia_card_attach(dev)
 	struct pcmcia_function *pf;
 	int error;
 	static const int wildcard[PCMCIACF_NLOCS] = {
-		PCMCIACF_FUNCTION_DEFAULT, PCMCIACF_IRQ_DEFAULT
+		PCMCIACF_FUNCTION_DEFAULT
 	};
 
 	/*
@@ -202,7 +202,7 @@ done:
 }
 
 int
-pcmcia_rescan(struct device *self, const char *ifattr __unused,
+pcmcia_rescan(struct device *self, const char *ifattr,
     const int *locators)
 {
 	struct pcmcia_softc *sc = (struct pcmcia_softc *)self;
@@ -228,7 +228,6 @@ pcmcia_rescan(struct device *self, const char *ifattr __unused,
 			continue;
 
 		locs[PCMCIACF_FUNCTION] = pf->number;
-		locs[PCMCIACF_IRQ] = PCMCIACF_IRQ_DEFAULT;
 
 		paa.manufacturer = sc->card.manufacturer;
 		paa.product = sc->card.product;

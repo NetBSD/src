@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.8.22.1 2006/10/22 06:06:18 yamt Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.8.22.2 2006/12/10 07:17:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.8.22.1 2006/10/22 06:06:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.8.22.2 2006/12/10 07:17:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -211,8 +211,8 @@ iwic_find_card(const struct pci_attach_args * pa)
  *	iwic PCI probe
  *---------------------------------------------------------------------------*/
 static int
-iwic_pci_probe(struct device * dev __unused,
-	struct cfdata * match __unused, void *aux)
+iwic_pci_probe(struct device * dev,
+	struct cfdata * match, void *aux)
 {
 	if (iwic_find_card(aux))
 		return 1;
@@ -223,7 +223,7 @@ iwic_pci_probe(struct device * dev __unused,
  *	PCI attach
  *---------------------------------------------------------------------------*/
 static void
-iwic_pci_attach(struct device * parent __unused, struct device * dev, void *aux)
+iwic_pci_attach(struct device * parent, struct device * dev, void *aux)
 {
 	struct iwic_softc *sc = (void *) dev;
 	struct iwic_bchan *bchan;
@@ -316,7 +316,7 @@ iwic_pci_intr(void *p)
 }
 
 static int
-iwic_pci_activate(struct device * dev __unused, enum devact act __unused)
+iwic_pci_activate(struct device * dev, enum devact act)
 {
 	int error = EOPNOTSUPP;
 

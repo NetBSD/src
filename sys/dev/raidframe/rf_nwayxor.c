@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_nwayxor.c,v 1.9.22.1 2006/10/22 06:06:43 yamt Exp $	*/
+/*	$NetBSD: rf_nwayxor.c,v 1.9.22.2 2006/12/10 07:18:11 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_nwayxor.c,v 1.9.22.1 2006/10/22 06:06:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_nwayxor.c,v 1.9.22.2 2006/12/10 07:18:11 yamt Exp $");
 
 #include "rf_nwayxor.h"
 #include "rf_shutdown.h"
@@ -45,7 +45,7 @@ static int callcount[10];
 static void rf_ShutdownNWayXor(void *);
 
 static void
-rf_ShutdownNWayXor(void *ignored __unused)
+rf_ShutdownNWayXor(void *ignored)
 {
 	int     i;
 

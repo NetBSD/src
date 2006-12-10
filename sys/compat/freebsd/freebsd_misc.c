@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.24.22.1 2006/10/22 06:05:23 yamt Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.24.22.2 2006/12/10 07:16:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.24.22.1 2006/10/22 06:05:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.24.22.2 2006/12/10 07:16:44 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -145,8 +145,8 @@ freebsd_sys_mmap(l, v, retval)
 /* just a place holder */
 
 int
-freebsd_sys_rtprio(struct lwp *l __unused, void *v __unused,
-    register_t *retval __unused)
+freebsd_sys_rtprio(struct lwp *l, void *v,
+    register_t *retval)
 {
 #ifdef notyet
 	struct freebsd_sys_rtprio_args /* {
@@ -161,8 +161,8 @@ freebsd_sys_rtprio(struct lwp *l __unused, void *v __unused,
 
 #ifdef NTP
 int
-freebsd_ntp_adjtime(struct lwp *l __unused, void *v __unused,
-    register_t *retval __unused)
+freebsd_ntp_adjtime(struct lwp *l, void *v,
+    register_t *retval)
 {
 #ifdef notyet
 	struct freebsd_ntp_adjtime_args /* {
@@ -175,7 +175,7 @@ freebsd_ntp_adjtime(struct lwp *l __unused, void *v __unused,
 #endif
 
 int
-freebsd_sys_sigaction4(struct lwp *l, void *v, register_t *retval __unused)
+freebsd_sys_sigaction4(struct lwp *l, void *v, register_t *retval)
 {
 	struct freebsd_sys_sigaction4_args /* {
 		syscallarg(int) signum;
@@ -212,7 +212,7 @@ freebsd_sys_sigaction4(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-freebsd_sys_utrace(struct lwp *l, void *v, register_t *retval __unused)
+freebsd_sys_utrace(struct lwp *l, void *v, register_t *retval)
 {
 #ifdef KTRACE
 	struct freebsd_sys_utrace_args /* {
@@ -224,12 +224,8 @@ freebsd_sys_utrace(struct lwp *l, void *v, register_t *retval __unused)
 	if (!KTRPOINT(p, KTR_USER))
 		return 0;
 
-	if (SCARG(uap, len) > KTR_USER_MAXLEN)
-		return EINVAL;
-
-	ktruser(l, "FreeBSD utrace", SCARG(uap, addr), SCARG(uap, len), 0);
-
-	return 0;
+	return ktruser(l, "FreeBSD utrace", SCARG(uap, addr), SCARG(uap, len),
+	    0);
 #else
 	return ENOSYS;
 #endif

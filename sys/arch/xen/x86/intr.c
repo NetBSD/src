@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8.10.1 2006/10/22 06:05:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8.10.2 2006/12/10 07:16:43 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -119,6 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8.10.1 2006/10/22 06:05:20 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/atomic.h>
 #include <machine/i8259.h>
@@ -206,6 +208,7 @@ void
 cpu_intr_init(struct cpu_info *ci)
 {
 	struct iplsource *ipl;
+	char *cp;
 	int i;
 
 	ci->ci_iunmask[0] = 0xfffffffe;
@@ -261,6 +264,10 @@ cpu_intr_init(struct cpu_info *ci)
 	evcnt_attach_dynamic(&softxenevt_evtcnt, EVCNT_TYPE_INTR, NULL,
 	    ci->ci_dev->dv_xname, "xenevt");
 #endif /* defined(DOM0OPS) */
+
+	cp = (char *)uvm_km_alloc(kernel_map, INTRSTACKSIZE, 0, UVM_KMF_WIRED);
+	ci->ci_intrstack = cp + INTRSTACKSIZE - sizeof(register_t);
+	ci->ci_idepth = -1;
 }
 
 #if NPCI > 0 || NISA > 0

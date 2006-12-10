@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.34 2006/04/18 14:53:43 christos Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.34.10.1 2006/12/10 07:17:43 yamt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -196,9 +196,9 @@
 #define BGE_PCI_UNKNOWN0		0xC4
 /* XXX:
  * Used in PCI-Express code for 575x chips.
- * Should be replaced with checking  for a PCI config-space
- * capability for PCI-Express, and PCI-Express standard 
- * offsets  into that capability block.
+ * Should be replaced with checking for a PCI config-space
+ * capability for PCI-Express, and PCI-Express standard
+ * offsets into that capability block.
  */
 #define BGE_PCI_CONF_DEV_CTRL		0xD8
 #define BGE_PCI_CONF_DEV_STUS		0xDA
@@ -235,8 +235,9 @@
 #define BGE_CHIPID_BCM5700_A0		0x70000000
 #define BGE_CHIPID_BCM5700_A1		0x70010000
 #define BGE_CHIPID_BCM5700_B0		0x71000000
-#define BGE_CHIPID_BCM5700_B1		0x71020000
-#define BGE_CHIPID_BCM5700_B2		0x71030000
+#define BGE_CHIPID_BCM5700_B1		0x71010000
+#define BGE_CHIPID_BCM5700_B2		0x71020000
+#define BGE_CHIPID_BCM5700_B3		0x71030000
 #define BGE_CHIPID_BCM5700_ALTIMA	0x71040000
 #define BGE_CHIPID_BCM5700_C0		0x72000000
 #define BGE_CHIPID_BCM5701_A0		0x00000000	/* grrrr */
@@ -246,41 +247,65 @@
 #define BGE_CHIPID_BCM5703_A0		0x10000000
 #define BGE_CHIPID_BCM5703_A1		0x10010000
 #define BGE_CHIPID_BCM5703_A2		0x10020000
-#define BGE_CHIPID_BCM5703_A3		0x11000000
+#define BGE_CHIPID_BCM5703_A3		0x10030000
+#define BGE_CHIPID_BCM5703_B0		0x11000000
 #define BGE_CHIPID_BCM5704_A0		0x20000000
 #define BGE_CHIPID_BCM5704_A1		0x20010000
 #define BGE_CHIPID_BCM5704_A2		0x20020000
 #define BGE_CHIPID_BCM5704_A3		0x20030000
+#define BGE_CHIPID_BCM5704_B0		0x21000000
 #define BGE_CHIPID_BCM5705_A0		0x30000000
 #define BGE_CHIPID_BCM5705_A1		0x30010000
 #define BGE_CHIPID_BCM5705_A2		0x30020000
 #define BGE_CHIPID_BCM5705_A3		0x30030000
 #define BGE_CHIPID_BCM5750_A0		0x40000000
 #define BGE_CHIPID_BCM5750_A1		0x40010000
+#define BGE_CHIPID_BCM5750_A3		0x40030000
+#define BGE_CHIPID_BCM5750_B0		0x40100000
 #define BGE_CHIPID_BCM5751_A1		0x41010000
+#define BGE_CHIPID_BCM5750_C0		0x42000000
+#define BGE_CHIPID_BCM5750_C1		0x42010000
+#define BGE_CHIPID_BCM5750_C2		0x42020000
 #define BGE_CHIPID_BCM5714_A0		0x50000000
-#define BGE_CHIPID_BCM5715_xx		0x90010000
+#define BGE_CHIPID_BCM5752_A0		0x60000000
+#define BGE_CHIPID_BCM5752_A1		0x60010000
+#define BGE_CHIPID_BCM5752_A2		0x60020000
+#define BGE_CHIPID_BCM5714_B0		0x80000000
+#define BGE_CHIPID_BCM5714_B3		0x80030000
+#define BGE_CHIPID_BCM5715_A0		0x90000000
+#define BGE_CHIPID_BCM5715_A1		0x90010000
+#define BGE_CHIPID_BCM5715_A3		0x90030000
+#define BGE_CHIPID_BCM5787_A2		0xb0020000
+#define BGE_CHIPID_BCM5906_A1		0xc0010000
 
 /* shorthand one */
-#define BGE_ASICREV(x)                  ((x) >> 28)
-#define BGE_ASICREV_BCM5700             0x07
-#define BGE_ASICREV_BCM5701             0x00
-#define BGE_ASICREV_BCM5703             0x01
-#define BGE_ASICREV_BCM5704             0x02
-#define BGE_ASICREV_BCM5705             0x03
-#define BGE_ASICREV_BCM5750             0x04
-#define BGE_ASICREV_BCM5714             0x05
-#define BGE_ASICREV_BCM5752             0x06
+#define BGE_ASICREV(x)			((x) >> 28)
+#define BGE_ASICREV_BCM5700		0x07
+#define BGE_ASICREV_BCM5701		0x00
+#define BGE_ASICREV_BCM5703		0x01
+#define BGE_ASICREV_BCM5704		0x02
+#define BGE_ASICREV_BCM5705		0x03
+#define BGE_ASICREV_BCM5750		0x04
+#define BGE_ASICREV_BCM5714_A0		0x05
+#define BGE_ASICREV_BCM5752		0x06
 /* ASIC revision 0x07 is the original bcm5700 */
-#define BGE_ASICREV_BCM5780             0x08
-#define BGE_ASICREV_BCM5715             0x09	/* XXX ??? */
+#define BGE_ASICREV_BCM5780		0x08
+#define BGE_ASICREV_BCM5714		0x09
+#define BGE_ASICREV_BCM5755		0x0a
+#define BGE_ASICREV_BCM5787		0x0b
+#define BGE_ASICREV_BCM5706		0x0c
 
 /* chip revisions */
-#define BGE_CHIPREV(x)                  ((x) >> 24)
-#define BGE_CHIPREV_5700_AX             0x70
-#define BGE_CHIPREV_5700_BX             0x71
-#define BGE_CHIPREV_5700_CX             0x72
-#define BGE_CHIPREV_5701_AX             0x00
+#define BGE_CHIPREV(x)			((x) >> 24)
+#define BGE_CHIPREV_5700_AX		0x70
+#define BGE_CHIPREV_5700_BX		0x71
+#define BGE_CHIPREV_5700_CX		0x72
+#define BGE_CHIPREV_5701_AX		0x00
+#define BGE_CHIPREV_5703_AX		0x10
+#define BGE_CHIPREV_5704_AX		0x20
+#define BGE_CHIPREV_5704_BX		0x21
+#define BGE_CHIPREV_5750_AX		0x40
+#define BGE_CHIPREV_5750_BX		0x41
 
 /* PCI DMA Read/Write Control register */
 #define BGE_PCIDMARWCTL_MINDMA		0x000000FF
@@ -299,7 +324,7 @@
 # define  BGE_PCIDMA_RWCTL_PCI_WR_CMD_SHIFT	 28
 
 /* PCI DMA Read/Write Control register, alternate usage for PCI-Express */
-#define BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_128	0x00180000 
+#define BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_128	0x00180000
 #define BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_256	0x00380000
 
 #define BGE_PCI_READ_BNDRY_DISABLE	0x00000000
@@ -1309,7 +1334,7 @@
 
 /* Alternate encodings for PCI-Express, from Broadcom-supplied Linux driver */
 #define BGE_RDMA_MODE_FIFO_LONG_BURST	((1<<17) || (1 << 16))
-#define BGE_RDMA_MODE_FIFO_SIZE_128     (1 << 17)
+#define BGE_RDMA_MODE_FIFO_SIZE_128	(1 << 17)
 
 /* Read DMA status register */
 #define BGE_RDMASTAT_PCI_TGT_ABRT_ATTN	0x00000004
@@ -1637,6 +1662,7 @@
 #define BGE_EE_CTL			0x6840
 #define BGE_MDI_CTL			0x6844
 #define BGE_EE_DELAY			0x6848
+#define BGE_FASTBOOT_PC			0x6894
 /*
  * XXX: Those names are made up as I have no documentation about it;
  *      I only know it is only used in the PCI-Express case.
@@ -1776,11 +1802,11 @@
  * firmware mailbox at 0xB50 in order to prevent the PXE boot
  * code from running.
  */
-#define BGE_MAGIC_NUMBER                0x4B657654
+#define BGE_MAGIC_NUMBER		0x4B657654
 
 typedef struct {
-	u_int32_t		bge_addr_hi;
-	u_int32_t		bge_addr_lo;
+	volatile u_int32_t	bge_addr_hi;
+	volatile u_int32_t	bge_addr_lo;
 } bge_hostaddr;
 
 static __inline void
@@ -1796,8 +1822,8 @@ bge_set_hostaddr(volatile bge_hostaddr *x, bus_addr_t y)
 /* Ring control block structure */
 struct bge_rcb {
 	bge_hostaddr		bge_hostaddr;
-	u_int32_t		bge_maxlen_flags;	/* two 16-bit fields */
-	u_int32_t		bge_nicaddr;
+	volatile u_int32_t	bge_maxlen_flags;	/* two 16-bit fields */
+	volatile u_int32_t	bge_nicaddr;
 };
 
 #define	BGE_RCB_MAXLEN_FLAGS(maxlen, flags)	((maxlen) << 16 | (flags))
@@ -1813,15 +1839,15 @@ struct bge_rcb {
 struct bge_tx_bd {
 	bge_hostaddr		bge_addr;
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		bge_len;
-	u_int16_t		bge_flags;
-	u_int16_t		bge_rsvd;
-	u_int16_t		bge_vlan_tag;
+	volatile u_int16_t	bge_len;
+	volatile u_int16_t	bge_flags;
+	volatile u_int16_t	bge_rsvd;
+	volatile u_int16_t	bge_vlan_tag;
 #else
-	u_int16_t		bge_flags;
-	u_int16_t		bge_len;
-	u_int16_t		bge_vlan_tag;
-	u_int16_t		bge_rsvd;
+	volatile u_int16_t	bge_flags;
+	volatile u_int16_t	bge_len;
+	volatile u_int16_t	bge_vlan_tag;
+	volatile u_int16_t	bge_rsvd;
 #endif
 };
 
@@ -1845,26 +1871,26 @@ struct bge_tx_bd {
 struct bge_rx_bd {
 	bge_hostaddr		bge_addr;
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		bge_idx;
-	u_int16_t		bge_len;
-	u_int16_t		bge_type;
-	u_int16_t		bge_flags;
-	u_int16_t		bge_ip_csum;
-	u_int16_t		bge_tcp_udp_csum;
-	u_int16_t		bge_error_flag;
-	u_int16_t		bge_vlan_tag;
+	volatile u_int16_t	bge_idx;
+	volatile u_int16_t	bge_len;
+	volatile u_int16_t	bge_type;
+	volatile u_int16_t	bge_flags;
+	volatile u_int16_t	bge_ip_csum;
+	volatile u_int16_t	bge_tcp_udp_csum;
+	volatile u_int16_t	bge_error_flag;
+	volatile u_int16_t	bge_vlan_tag;
 #else
-	u_int16_t		bge_len;
-	u_int16_t		bge_idx;
-	u_int16_t		bge_flags;
-	u_int16_t		bge_type;
-	u_int16_t		bge_tcp_udp_csum;
-	u_int16_t		bge_ip_csum;
-	u_int16_t		bge_vlan_tag;
-	u_int16_t		bge_error_flag;
+	volatile u_int16_t	bge_len;
+	volatile u_int16_t	bge_idx;
+	volatile u_int16_t	bge_flags;
+	volatile u_int16_t	bge_type;
+	volatile u_int16_t	bge_tcp_udp_csum;
+	volatile u_int16_t	bge_ip_csum;
+	volatile u_int16_t	bge_vlan_tag;
+	volatile u_int16_t	bge_error_flag;
 #endif
-	u_int32_t		bge_rsvd;
-	u_int32_t		bge_opaque;
+	volatile u_int32_t	bge_rsvd;
+	volatile u_int32_t	bge_opaque;
 };
 
 #define BGE_RXBDFLAG_END		0x0004
@@ -1887,27 +1913,27 @@ struct bge_rx_bd {
 
 struct bge_sts_idx {
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		bge_tx_cons_idx;
-	u_int16_t		bge_rx_prod_idx;
+	volatile u_int16_t	bge_tx_cons_idx;
+	volatile u_int16_t	bge_rx_prod_idx;
 #else
-	u_int16_t		bge_rx_prod_idx;
-	u_int16_t		bge_tx_cons_idx;
+	volatile u_int16_t	bge_rx_prod_idx;
+	volatile u_int16_t	bge_tx_cons_idx;
 #endif
 };
 
 struct bge_status_block {
-	u_int32_t		bge_status;
-	u_int32_t		bge_rsvd0;
+	volatile u_int32_t	bge_status;
+	volatile u_int32_t	bge_rsvd0;
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		bge_rx_std_cons_idx;
-	u_int16_t		bge_rx_jumbo_cons_idx;
-	u_int16_t		bge_rsvd1;
-	u_int16_t		bge_rx_mini_cons_idx;
+	volatile u_int16_t	bge_rx_std_cons_idx;
+	volatile u_int16_t	bge_rx_jumbo_cons_idx;
+	volatile u_int16_t	bge_rsvd1;
+	volatile u_int16_t	bge_rx_mini_cons_idx;
 #else
-	u_int16_t		bge_rx_jumbo_cons_idx;
-	u_int16_t		bge_rx_std_cons_idx;
-	u_int16_t		bge_rx_mini_cons_idx;
-	u_int16_t		bge_rsvd1;
+	volatile u_int16_t	bge_rx_jumbo_cons_idx;
+	volatile u_int16_t	bge_rx_std_cons_idx;
+	volatile u_int16_t	bge_rx_mini_cons_idx;
+	volatile u_int16_t	bge_rsvd1;
 #endif
 	struct bge_sts_idx	bge_idx[16];
 };
@@ -2283,16 +2309,16 @@ struct bge_ring_data {
 #if 0	/* pre-TSO values */
 #define BGE_TXDMA_MAX	ETHER_MAX_LEN_JUMBO
 #ifdef _LP64
-#define BGE_NTXSEG      30
+#define BGE_NTXSEG	30
 #else
-#define BGE_NTXSEG      31
+#define BGE_NTXSEG	31
 #endif
 #else	/* TSO values */
 #define BGE_TXDMA_MAX	(round_page(IP_MAXPACKET))	/* for TSO */
 #ifdef _LP64
-#define BGE_NTXSEG      120	/* XXX just a guess */
+#define BGE_NTXSEG	120	/* XXX just a guess */
 #else
-#define BGE_NTXSEG      124	/* XXX just a guess */
+#define BGE_NTXSEG	124	/* XXX just a guess */
 #endif
 #endif	/* TSO values */
 
@@ -2330,7 +2356,7 @@ struct bge_type {
 #define BGE_TXCONS_UNSET		0xFFFF	/* impossible value */
 
 struct bge_jpool_entry {
-	int                             slot;
+	int				slot;
 	SLIST_ENTRY(bge_jpool_entry)	jpool_entries;
 };
 
@@ -2362,7 +2388,7 @@ struct bge_softc {
 	struct ifmedia		bge_ifmedia;	/* media info */
 	u_int8_t		bge_extram;	/* has external SSRAM */
 	u_int8_t		bge_tbi;
-    	u_int8_t		bge_rx_alignment_bug;
+	u_int8_t		bge_rx_alignment_bug;
 	u_int8_t		bge_pcie;	/* on a PCI Express port */
 	u_int32_t		bge_return_ring_cnt;
 	u_int32_t		bge_tx_prodidx;
@@ -2406,7 +2432,7 @@ struct bge_softc {
 	struct callout		bge_timeout;
 	char			*bge_vpd_prodname;
 	char			*bge_vpd_readonly;
-  	int			bge_pending_rxintr_change;
+	int			bge_pending_rxintr_change;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
 	void			*bge_powerhook;

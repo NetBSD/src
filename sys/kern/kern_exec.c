@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.227.6.1 2006/10/22 06:07:10 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.227.6.2 2006/12/10 07:18:44 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,12 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.6.1 2006/10/22 06:07:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.6.2 2006/12/10 07:18:44 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
 #include "opt_compat_netbsd.h"
 #include "veriexec.h"
+#include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +73,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.6.1 2006/10/22 06:07:10 yamt Exp
 #ifdef SYSTRACE
 #include <sys/systrace.h>
 #endif /* SYSTRACE */
+
+#ifdef PAX_SEGVGUARD
+#include <sys/pax.h>
+#endif /* PAX_SEGVGUARD */
 
 #include <uvm/uvm_extern.h>
 
@@ -240,7 +245,7 @@ static void link_es(struct execsw_entry **, const struct execsw *);
  */
 int
 /*ARGSUSED*/
-check_exec(struct lwp *l, struct exec_package *epp, int flag __unused)
+check_exec(struct lwp *l, struct exec_package *epp, int flag)
 {
 	int		error, i;
 	struct vnode	*vp;
@@ -282,12 +287,16 @@ check_exec(struct lwp *l, struct exec_package *epp, int flag __unused)
 	/* unlock vp, since we need it unlocked from here on out. */
 	VOP_UNLOCK(vp, 0);
 
-
 #if NVERIEXEC > 0
         if ((error = veriexec_verify(l, vp, epp->ep_ndp->ni_dirp, flag,
 	    NULL)) != 0)
                 goto bad2;
 #endif /* NVERIEXEC > 0 */
+
+#ifdef PAX_SEGVGUARD
+	if (pax_segvguard(l, vp, epp->ep_ndp->ni_dirp, FALSE))
+		return (EPERM);
+#endif /* PAX_SEGVGUARD */
 
 	/* now we have the file, get the exec header */
 	uvn_attach(vp, VM_PROT_READ);
@@ -385,7 +394,7 @@ execve_fetch_element(char * const *array, size_t index, char **value)
  */
 /* ARGSUSED */
 int
-sys_execve(struct lwp *l, void *v, register_t *retval __unused)
+sys_execve(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_execve_args /* {
 		syscallarg(const char *)	path;
@@ -992,8 +1001,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 
 int
-copyargs(struct lwp *l __unused, struct exec_package *pack,
-    struct ps_strings *arginfo, char **stackp, void *argp)
+copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
+    char **stackp, void *argp)
 {
 	char	**cpp, *dp, *sp;
 	size_t	len;

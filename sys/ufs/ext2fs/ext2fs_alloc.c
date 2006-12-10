@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.30.8.1 2006/10/22 06:07:47 yamt Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.30.8.2 2006/12/10 07:19:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.30.8.1 2006/10/22 06:07:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.30.8.2 2006/12/10 07:19:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ static daddr_t	ext2fs_mapsearch(struct m_ext2fs *, char *, daddr_t);
  *	  available block is located.
  */
 int
-ext2fs_alloc(struct inode *ip, daddr_t lbn __unused, daddr_t bpref,
+ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref,
     kauth_cred_t cred, daddr_t *bnp)
 {
 	struct m_ext2fs *fs;
@@ -348,7 +348,7 @@ ext2fs_hashalloc(struct inode *ip, int cg, long pref, int size,
  */
 
 static daddr_t
-ext2fs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size __unused)
+ext2fs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 {
 	struct m_ext2fs *fs;
 	char *bbp;
@@ -441,6 +441,8 @@ ext2fs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 	int error, start, len, loc, map, i;
 
 	ipref--; /* to avoid a lot of (ipref -1) */
+	if (ipref == -1)
+		ipref = 0;
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nifree == 0)
 		return (0);
@@ -554,7 +556,7 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 
 	pip = VTOI(pvp);
 	fs = pip->i_e2fs;
-	if ((u_int)ino >= fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
+	if ((u_int)ino > fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
 		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
 			pip->i_dev, (unsigned long long)ino, fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);

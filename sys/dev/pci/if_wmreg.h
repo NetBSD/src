@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.19.8.1 2006/10/22 06:06:17 yamt Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.19.8.2 2006/12/10 07:17:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -605,6 +605,7 @@ struct livengood_tcpip_ctxdesc {
 #define	RXCSUM_PCSS	0x000000ff	/* Packet Checksum Start */
 #define	RXCSUM_IPOFL	(1U << 8)	/* IP checksum offload */
 #define	RXCSUM_TUOFL	(1U << 9)	/* TCP/UDP checksum offload */
+#define	RXCSUM_IPV6OFL	(1U << 10)	/* IPv6 checksum offload */
 
 #define	WMREG_RXERRC	0x400C	/* receive error Count - R/clr */
 #define	WMREG_COLC	0x4028	/* collision Count - R/clr */

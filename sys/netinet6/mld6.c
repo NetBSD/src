@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.32.14.1 2006/10/22 06:07:35 yamt Exp $	*/
+/*	$NetBSD: mld6.c,v 1.32.14.2 2006/12/10 07:19:16 yamt Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.32.14.1 2006/10/22 06:07:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.32.14.2 2006/12/10 07:19:16 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -428,10 +428,7 @@ mld_input(m, off)
 		if (ia == NULL)
 			break;
 
-		for (in6m = ia->ia6_multiaddrs.lh_first;
-		     in6m;
-		     in6m = in6m->in6m_entry.le_next)
-		{
+		LIST_FOREACH(in6m, &ia->ia6_multiaddrs, in6m_entry) {
 			if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, &all_in6) ||
 			    IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) <
 			    IPV6_ADDR_SCOPE_LINKLOCAL)
@@ -571,7 +568,7 @@ mld_sendpkt(in6m, type, dst)
 }
 
 static struct mld_hdr *
-mld_allocbuf(struct mbuf **mh, int len, struct in6_multi *in6m __unused,
+mld_allocbuf(struct mbuf **mh, int len, struct in6_multi *in6m,
     int type)
 {
 	struct mbuf *md;
@@ -671,6 +668,7 @@ in6_addmulti(maddr6, ifp, errorp, timer)
 		}
 		IFP_TO_IA6(ifp, ia);
 		if (ia == NULL) {
+			/* leaks in6m_timer_ch */
 			free(in6m, M_IPMADDR);
 			splx(s);
 			*errorp = EADDRNOTAVAIL; /* appropriate? */
@@ -695,6 +693,7 @@ in6_addmulti(maddr6, ifp, errorp, timer)
 			    (caddr_t)&ifr);
 		if (*errorp) {
 			LIST_REMOVE(in6m, in6m_entry);
+			/* leaks in6m_timer_ch */
 			free(in6m, M_IPMADDR);
 			IFAFREE(&ia->ia_ifa);
 			splx(s);
@@ -745,8 +744,9 @@ in6_delmulti(in6m)
 		 * Unlink from list.
 		 */
 		LIST_REMOVE(in6m, in6m_entry);
-		if (in6m->in6m_ia) {
+		if (in6m->in6m_ia != NULL) {
 			IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
+			in6m->in6m_ia = NULL;
 		}
 
 		/*
@@ -755,8 +755,7 @@ in6_delmulti(in6m)
 		 */
 		for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
 			struct in6_multi_mship *imm;
-			LIST_FOREACH(imm, &ia->ia6_memberships,
-			    i6mm_chain) {
+			LIST_FOREACH(imm, &ia->ia6_memberships, i6mm_chain) {
 				if (imm->i6mm_maddr == in6m)
 					imm->i6mm_maddr = NULL;
 			}
@@ -796,7 +795,7 @@ in6_joingroup(ifp, addr, errorp, timer)
 	memset(imm, 0, sizeof(*imm));
 	imm->i6mm_maddr = in6_addmulti(addr, ifp, errorp, timer);
 	if (!imm->i6mm_maddr) {
-		/* *errorp is alrady set */
+		/* *errorp is already set */
 		free(imm, M_IPMADDR);
 		return NULL;
 	}
@@ -827,29 +826,30 @@ in6_savemkludge(oia)
 	struct in6_ifaddr *oia;
 {
 	struct in6_ifaddr *ia;
-	struct in6_multi *in6m, *next;
+	struct in6_multi *in6m;
 
 	IFP_TO_IA6(oia->ia_ifp, ia);
 	if (ia) {	/* there is another address */
-		for (in6m = oia->ia6_multiaddrs.lh_first; in6m; in6m = next) {
-			next = in6m->in6m_entry.le_next;
-			IFAFREE(&in6m->in6m_ia->ia_ifa);
+		KASSERT(ia != oia);
+		while ((in6m = LIST_FIRST(&oia->ia6_multiaddrs)) != NULL) {
+			LIST_REMOVE(in6m, in6m_entry);
 			IFAREF(&ia->ia_ifa);
+			IFAFREE(&in6m->in6m_ia->ia_ifa);
 			in6m->in6m_ia = ia;
 			LIST_INSERT_HEAD(&ia->ia6_multiaddrs, in6m, in6m_entry);
 		}
 	} else {	/* last address on this if deleted, save */
 		struct multi6_kludge *mk;
 
-		for (mk = in6_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
+		LIST_FOREACH(mk, &in6_mk, mk_entry) {
 			if (mk->mk_ifp == oia->ia_ifp)
 				break;
 		}
 		if (mk == NULL) /* this should not happen! */
 			panic("in6_savemkludge: no kludge space");
 
-		for (in6m = oia->ia6_multiaddrs.lh_first; in6m; in6m = next) {
-			next = in6m->in6m_entry.le_next;
+		while ((in6m = LIST_FIRST(&oia->ia6_multiaddrs)) != NULL) {
+			LIST_REMOVE(in6m, in6m_entry);
 			IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
 			in6m->in6m_ia = NULL;
 			LIST_INSERT_HEAD(&mk->mk_head, in6m, in6m_entry);
@@ -868,21 +868,19 @@ in6_restoremkludge(ia, ifp)
 	struct ifnet *ifp;
 {
 	struct multi6_kludge *mk;
+	struct in6_multi *in6m;
 
-	for (mk = in6_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
-		if (mk->mk_ifp == ifp) {
-			struct in6_multi *in6m, *next;
-
-			for (in6m = mk->mk_head.lh_first; in6m; in6m = next) {
-				next = in6m->in6m_entry.le_next;
-				in6m->in6m_ia = ia;
-				IFAREF(&ia->ia_ifa);
-				LIST_INSERT_HEAD(&ia->ia6_multiaddrs,
-						 in6m, in6m_entry);
-			}
-			LIST_INIT(&mk->mk_head);
+	LIST_FOREACH(mk, &in6_mk, mk_entry) {
+		if (mk->mk_ifp == ifp)
 			break;
-		}
+	}
+	if (mk == NULL)
+		return;
+	while ((in6m = LIST_FIRST(&mk->mk_head)) != NULL) {
+		LIST_REMOVE(in6m, in6m_entry);
+		in6m->in6m_ia = ia;
+		IFAREF(&ia->ia_ifa);
+		LIST_INSERT_HEAD(&ia->ia6_multiaddrs, in6m, in6m_entry);
 	}
 }
 
@@ -903,7 +901,7 @@ in6_createmkludge(ifp)
 {
 	struct multi6_kludge *mk;
 
-	for (mk = in6_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
+	LIST_FOREACH(mk, &in6_mk, mk_entry) {
 		/* If we've already had one, do not allocate. */
 		if (mk->mk_ifp == ifp)
 			return;
@@ -922,18 +920,20 @@ in6_purgemkludge(ifp)
 	struct ifnet *ifp;
 {
 	struct multi6_kludge *mk;
-	struct in6_multi *in6m;
+	struct in6_multi *in6m, *next;
 
-	for (mk = in6_mk.lh_first; mk; mk = mk->mk_entry.le_next) {
-		if (mk->mk_ifp != ifp)
-			continue;
-
-		/* leave from all multicast groups joined */
-		while ((in6m = LIST_FIRST(&mk->mk_head)) != NULL) {
-			in6_delmulti(in6m);
-		}
-		LIST_REMOVE(mk, mk_entry);
-		free(mk, M_IPMADDR);
-		break;
+	LIST_FOREACH(mk, &in6_mk, mk_entry) {
+		if (mk->mk_ifp == ifp)
+			break;
 	}
+	if (mk == NULL)
+		return;
+
+	/* leave from all multicast groups joined */
+	for (in6m = LIST_FIRST(&mk->mk_head); in6m != NULL; in6m = next) {
+		next = LIST_NEXT(in6m, in6m_entry);
+		in6_delmulti(in6m);
+	}
+	LIST_REMOVE(mk, mk_entry);
+	free(mk, M_IPMADDR);
 }

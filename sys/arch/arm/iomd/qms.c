@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.9 2006/08/05 18:22:57 bjh21 Exp $	*/
+/*	$NetBSD: qms.c,v 1.9.6.1 2006/12/10 07:15:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.9 2006/08/05 18:22:57 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.9.6.1 2006/12/10 07:15:48 yamt Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -199,8 +199,10 @@ qms_intr(void *arg)
 		/* This assumes that int16_t is two's complement. */
 		dx = x - sc->lastx;
 		dy = y - sc->lasty;
-		wsmouse_input(sc->sc_wsmousedev, b, dx, dy, 0,
-		    WSMOUSE_INPUT_DELTA);
+		wsmouse_input(sc->sc_wsmousedev,
+				b,
+				dx, dy, 0, 0,
+				WSMOUSE_INPUT_DELTA);
 
 		/* save old values */
 		sc->lastx = x;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.13.22.1 2006/10/22 06:07:25 yamt Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.13.22.2 2006/12/10 07:19:00 yamt Exp $	*/
 /*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.13.22.1 2006/10/22 06:07:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.13.22.2 2006/12/10 07:19:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ struct compressor ppp_deflate_draft = {
  * Space allocation and freeing routines for use by zlib routines.
  */
 void *
-zalloc(void *notused __unused, u_int items, u_int size)
+zalloc(void *notused, u_int items, u_int size)
 {
     void *ptr;
 
@@ -138,7 +138,7 @@ zalloc(void *notused __unused, u_int items, u_int size)
 }
 
 void
-zfree(void *notused __unused, void *ptr)
+zfree(void *notused, void *ptr)
 {
     free(ptr, M_DEVBUF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.170.4.1 2006/10/22 06:07:43 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.170.4.2 2006/12/10 07:19:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.170.4.1 2006/10/22 06:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.170.4.2 2006/12/10 07:19:24 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -589,12 +589,7 @@ int nfs_webnamei __P((struct nameidata *, struct vnode *, struct proc *));
  * (just used to decide if a cluster is a good idea)
  */
 struct mbuf *
-nfsm_reqh(
-    struct nfsnode *np __unused,
-    u_long procid __unused,
-    int hsiz,
-    caddr_t *bposp
-)
+nfsm_reqh(struct nfsnode *np, u_long procid, int hsiz, caddr_t *bposp)
 {
 	struct mbuf *mb;
 	caddr_t bpos;
@@ -1300,7 +1295,7 @@ nfs_putdircache(np, ndp)
 }
 
 static void
-nfs_putdircache_unlocked(struct nfsnode *np __unused, struct nfsdircache *ndp)
+nfs_putdircache_unlocked(struct nfsnode *np, struct nfsdircache *ndp)
 {
 	int ref;
 
@@ -1385,7 +1380,7 @@ nfs_searchdircache(vp, off, do32, hashent)
 
 struct nfsdircache *
 nfs_enterdircache(struct vnode *vp, off_t off, off_t blkoff, int en,
-    daddr_t blkno __unused)
+    daddr_t blkno)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdirhashhead *ndhp;
@@ -1929,12 +1924,8 @@ nfs_delayedtruncate(vp)
  */
 
 int
-nfs_check_wccdata(
-    struct nfsnode *np __unused,
-    const struct timespec *ctime __unused,
-    struct timespec *mtime __unused,
-    boolean_t docheck __unused
-)
+nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
+    struct timespec *mtime, boolean_t docheck)
 {
 	int error = 0;
 
@@ -2113,7 +2104,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	int error, rdonly, linklen;
 	struct componentname *cnp = &ndp->ni_cnd;
 
-	*retdirp = (struct vnode *)0;
+	*retdirp = NULL;
 
 	if ((len + 1) > MAXPATHLEN)
 		return (ENAMETOOLONG);
@@ -2198,6 +2189,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 			 */
 			default:
 				error = EIO;
+				vrele(dp);
 				PNBUF_PUT(cp);
 				goto out;
 			}
@@ -2214,6 +2206,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 					continue;
 				} else {
 					error = ENOENT;
+					vrele(dp);
 					PNBUF_PUT(cp);
 					goto out;
 				}
@@ -2239,35 +2232,45 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 
 	cnp->cn_lwp = l;
 	VREF(dp);
+	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 
     for (;;) {
 	cnp->cn_nameptr = cnp->cn_pnbuf;
 	ndp->ni_startdir = dp;
+
 	/*
 	 * And call lookup() to do the real work
 	 */
 	error = lookup(ndp);
 	if (error) {
+		if (ndp->ni_dvp) {
+			vput(ndp->ni_dvp);
+		}
 		PNBUF_PUT(cnp->cn_pnbuf);
 		return (error);
 	}
+
 	/*
 	 * Check for encountering a symbolic link
 	 */
 	if ((cnp->cn_flags & ISSYMLINK) == 0) {
+		if ((cnp->cn_flags & LOCKPARENT) == 0 && ndp->ni_dvp) {
+			if (ndp->ni_dvp == ndp->ni_vp) {
+				vrele(ndp->ni_dvp);
+			} else {
+				vput(ndp->ni_dvp);
+			}
+		}
 		if (cnp->cn_flags & (SAVENAME | SAVESTART))
 			cnp->cn_flags |= HASBUF;
 		else
 			PNBUF_PUT(cnp->cn_pnbuf);
 		return (0);
 	} else {
-		if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
-			VOP_UNLOCK(ndp->ni_dvp, 0);
 		if (!pubflag) {
 			error = EINVAL;
 			break;
 		}
-
 		if (ndp->ni_loopcnt++ >= MAXSYMLINKS) {
 			error = ELOOP;
 			break;
@@ -2292,7 +2295,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 		UIO_SETUP_SYSSPACE(&auio);
 		error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
 		if (error) {
-		badlink:
+badlink:
 			if (ndp->ni_pathlen > 1)
 				PNBUF_PUT(cp);
 			break;
@@ -2315,17 +2318,19 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 		ndp->ni_pathlen += linklen;
 		vput(ndp->ni_vp);
 		dp = ndp->ni_dvp;
+
 		/*
 		 * Check if root directory should replace current directory.
 		 */
 		if (cnp->cn_pnbuf[0] == '/') {
-			vrele(dp);
+			vput(dp);
 			dp = ndp->ni_rootdir;
 			VREF(dp);
+			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
    }
-	vrele(ndp->ni_dvp);
+	vput(ndp->ni_dvp);
 	vput(ndp->ni_vp);
 	ndp->ni_vp = NULL;
 out:
@@ -2529,17 +2534,9 @@ nfsm_srvfattr(nfsd, vap, fp)
  *	- if not lockflag unlock it with VOP_UNLOCK()
  */
 int
-nfsrv_fhtovp(
-    nfsrvfh_t *nsfh,
-    int lockflag,
-    struct vnode **vpp,
-    kauth_cred_t cred,
-    struct nfssvc_sock *slp __unused,
-    struct mbuf *nam,
-    int *rdonlyp,
-    int kerbflag,
-    int pubflag
-)
+nfsrv_fhtovp(nfsrvfh_t *nsfh, int lockflag, struct vnode **vpp,
+    kauth_cred_t cred, struct nfssvc_sock *slp, struct mbuf *nam, int *rdonlyp,
+    int kerbflag, int pubflag)
 {
 	struct mount *mp;
 	kauth_cred_t credanon;

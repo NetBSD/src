@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.18.20.1 2006/10/22 06:05:20 yamt Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.18.20.2 2006/12/10 07:16:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.18.20.1 2006/10/22 06:05:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.18.20.2 2006/12/10 07:16:43 yamt Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -234,7 +234,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
 	iplmask = evtsource[evtch]->ev_imask;
 	sti();
-	ci->ci_idepth++;
 #ifdef MULTIPROCESSOR
 	x86_intlock(regs);
 #endif
@@ -252,7 +251,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 			hypervisor_set_ipending(iplmask,
 			    evtch / 32, evtch % 32);
 			/* leave masked */
-			ci->ci_idepth--;
 			splx(ilevel);
 			return 0;
 		}
@@ -267,7 +265,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	x86_intunlock(regs);
 #endif
 	hypervisor_enable_event(evtch);
-	ci->ci_idepth--;
 	splx(ilevel);
 
 	return 0;

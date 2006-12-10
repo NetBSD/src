@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_mca.c,v 1.10.10.1 2006/10/22 06:06:12 yamt Exp $	*/
+/*	$NetBSD: if_ne_mca.c,v 1.10.10.2 2006/12/10 07:17:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.10.10.1 2006/10/22 06:06:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.10.10.2 2006/12/10 07:17:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ ne_mca_lookup(int id)
 }
 
 int
-ne_mca_match(struct device *parent __unused, struct cfdata *cf __unused,
+ne_mca_match(struct device *parent, struct cfdata *cf,
     void *aux)
 {
 	struct mca_attach_args *ma = aux;
@@ -134,7 +134,7 @@ static const int ne_mca_iobase[] = {
 };
 
 void
-ne_mca_attach(struct device *parent __unused, struct device *self, void *aux)
+ne_mca_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ne_mca_softc *psc = device_private(self);
 	struct ne2000_softc *nsc = &psc->sc_ne2000;

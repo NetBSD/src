@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.105.2.1 2006/10/22 06:07:10 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.105.2.2 2006/12/10 07:18:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.105.2.1 2006/10/22 06:07:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.105.2.2 2006/12/10 07:18:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ sys_getpriority(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_setpriority(struct lwp *l, void *v, register_t *retval __unused)
+sys_setpriority(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_setpriority_args /* {
 		syscallarg(int) which;
@@ -219,7 +219,7 @@ donice(struct lwp *l, struct proc *chgp, int n)
 
 /* ARGSUSED */
 int
-sys_setrlimit(struct lwp *l, void *v, register_t *retval __unused)
+sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_setrlimit_args /* {
 		syscallarg(int) which;
@@ -352,7 +352,7 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 
 /* ARGSUSED */
 int
-sys_getrlimit(struct lwp *l, void *v, register_t *retval __unused)
+sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getrlimit_args /* {
 		syscallarg(int) which;
@@ -434,7 +434,7 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 
 /* ARGSUSED */
 int
-sys_getrusage(struct lwp *l, void *v, register_t *retval __unused)
+sys_getrusage(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getrusage_args /* {
 		syscallarg(int) who;
@@ -575,7 +575,7 @@ sysctl_proc_findproc(struct lwp *l, struct proc **p2, pid_t pid)
 		error = ESRCH;
 	else {
 		boolean_t isroot = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
+		    KAUTH_GENERIC_ISSUSER, NULL) == 0;
 		/*
 		 * suid proc of ours or proc not ours
 		 */
@@ -660,7 +660,7 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	}
 
 	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CORENAME,
-	    l->l_proc, NULL, NULL, NULL) != 0)
+	    ptmp, NULL, NULL, NULL) != 0)
 		return (EPERM);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.94.4.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: mcd.c,v 1.94.4.2 2006/12/10 07:17:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.94.4.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.94.4.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ struct dkdriver mcddkdriver = { mcdstrategy, NULL, };
 #define DELAY_GETREPLY		100000	/* 100000 * 25us */
 
 void
-mcdattach(struct device *parent __unused, struct device *self, void *aux)
+mcdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mcd_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -288,7 +288,7 @@ mcdattach(struct device *parent __unused, struct device *self, void *aux)
 }
 
 int
-mcdopen(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
+mcdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int error, part;
 	struct mcd_softc *sc;
@@ -387,7 +387,7 @@ bad3:
 }
 
 int
-mcdclose(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
+mcdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int part = MCDPART(dev);
@@ -538,21 +538,21 @@ loop:
 }
 
 int
-mcdread(dev_t dev, struct uio *uio, int flags __unused)
+mcdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(mcdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-mcdwrite(dev_t dev, struct uio *uio, int flags __unused)
+mcdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(mcdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 int
-mcdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l __unused)
+mcdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int error;
@@ -792,7 +792,7 @@ mcd_get_parms(sc)
 }
 
 int
-mcdsize(dev_t dev __unused)
+mcdsize(dev_t dev)
 {
 
 	/* CD-ROMs are read-only. */
@@ -800,8 +800,8 @@ mcdsize(dev_t dev __unused)
 }
 
 int
-mcddump(dev_t dev __unused, daddr_t blkno __unused, caddr_t va __unused,
-    size_t size __unused)
+mcddump(dev_t dev, daddr_t blkno, caddr_t va,
+    size_t size)
 {
 
 	/* Not implemented. */
@@ -893,7 +893,7 @@ mcd_find(iot, ioh, sc)
 }
 
 int
-mcdprobe(struct device *parent __unused, struct cfdata *match __unused,
+mcdprobe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;

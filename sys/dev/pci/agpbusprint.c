@@ -1,6 +1,6 @@
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agpbusprint.c,v 1.3.22.1 2006/10/22 06:06:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agpbusprint.c,v 1.3.22.2 2006/12/10 07:17:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -9,7 +9,7 @@ __KERNEL_RCSID(0, "$NetBSD: agpbusprint.c,v 1.3.22.1 2006/10/22 06:06:15 yamt Ex
 #include <dev/pci/agpvar.h>
 
 int
-agpbusprint(void *vaa __unused, const char *pnp)
+agpbusprint(void *vaa, const char *pnp)
 {
 #if 0
 	struct agpbus_attach_args *aa = vaa;

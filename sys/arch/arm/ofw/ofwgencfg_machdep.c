@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.8 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.8.22.1 2006/12/10 07:15:48 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.8 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.8.22.1 2006/12/10 07:15:48 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.8 2005/12/11 12:16:51 christ
 #include <machine/bootconfig.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <arm/arm32/machdep.h>
 #include <arm/undefined.h>
 
 #include "opt_ipkdb.h"
@@ -85,7 +86,6 @@ extern u_int undefined_handler_address;
 /*
  *  Imported routines
  */
-extern void parse_mi_bootargs		__P((char *args));
 extern void data_abort_handler		__P((trapframe_t *frame));
 extern void prefetch_abort_handler	__P((trapframe_t *frame));
 extern void undefinedinstruction_bounce	__P((trapframe_t *frame));
@@ -134,7 +134,7 @@ cpu_reboot(howto, bootstr)
 
 
 /*
- * vaddr_t initarm(ofw_handle_t handle)
+ * u_int initarm(ofw_handle_t handle)
  *
  * Initial entry point on startup for a GENERIC OFW
  * system.  Called with MMU on, running in the OFW
@@ -149,10 +149,11 @@ cpu_reboot(howto, bootstr)
  * Return the new stackptr (va) for the SVC frame.
  *
  */
-vaddr_t
-initarm(ofw_handle)
-	ofw_handle_t ofw_handle;
+u_int
+initarm(void *cookie)
 {
+	ofw_handle_t ofw_handle = cookie;
+
 	set_cpufuncs();
 
 	/* XXX - set this somewhere else? -JJK */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.11.10.1 2006/10/22 06:07:05 yamt Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.11.10.2 2006/12/10 07:18:34 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -110,7 +110,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.11.10.1 2006/10/22 06:07:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.11.10.2 2006/12/10 07:18:34 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.41 2006/04/01 10:16:28 darrenr Exp";
@@ -3739,7 +3739,7 @@ ipftq_t *tqp;
 /* Do whatever is necessary to "destroy" each of the entries in the array   */
 /* of timeout queues for TCP.                                               */
 /* ------------------------------------------------------------------------ */
-void fr_sttab_destroy(ipftq_t *tqp __unused)
+void fr_sttab_destroy(ipftq_t *tqp)
 {
 	int i;
 

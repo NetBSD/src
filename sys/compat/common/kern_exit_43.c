@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit_43.c,v 1.13.22.1 2006/10/22 06:05:21 yamt Exp $	*/
+/*	$NetBSD: kern_exit_43.c,v 1.13.22.2 2006/12/10 07:16:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.13.22.1 2006/10/22 06:05:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.13.22.2 2006/12/10 07:16:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit_43.c,v 1.13.22.1 2006/10/22 06:05:21 yamt 
 #endif
 
 int
-compat_43_sys_wait(struct lwp *l, void *v __unused, register_t *retval)
+compat_43_sys_wait(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);

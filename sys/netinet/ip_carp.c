@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.5.8.1 2006/10/22 06:07:28 yamt Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.5.8.2 2006/12/10 07:19:10 yamt Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -513,7 +513,7 @@ carp_proto_input(struct mbuf *m, ...)
 
 #ifdef INET6
 int
-carp6_proto_input(struct mbuf **mp, int *offp, int proto __unused)
+carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 	struct carp_softc *sc = NULL;
@@ -729,7 +729,7 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 
 /* ARGSUSED */
 void
-carpattach(int n __unused)
+carpattach(int n)
 {
 	if_clone_attach(&carp_cloner);
 }
@@ -854,7 +854,7 @@ carp_ifdetach(struct ifnet *ifp)
 }
 
 int
-carp_prepare_ad(struct mbuf *m __unused, struct carp_softc *sc,
+carp_prepare_ad(struct mbuf *m, struct carp_softc *sc,
     struct carp_header *ch)
 {
 	if (sc->sc_init_counter) {
@@ -1892,8 +1892,12 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		break;
 
 	case SIOCSVH:
-		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
+		if (l == NULL)
+			break;
+		if ((error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL)) != 0)
 			break;
 		if ((error = copyin(ifr->ifr_data, &carpr, sizeof carpr)))
 			break;
@@ -1968,8 +1972,10 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		carpr.carpr_advbase = sc->sc_advbase;
 		carpr.carpr_advskew = sc->sc_advskew;
 
-		if (l != 0 || !(error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
+		if ((l == NULL) || (error = kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL)) != 0)
 			bcopy(sc->sc_key, carpr.carpr_key,
 			    sizeof(carpr.carpr_key));
 		error = copyout(&carpr, ifr->ifr_data, sizeof(carpr));

@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.23 2006/08/25 19:33:50 matt Exp $	*/
+/*	$NetBSD: domain.h,v 1.23.4.1 2006/12/10 07:19:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,6 +46,7 @@ struct	lwp;
 struct	mbuf;
 struct	ifnet;
 struct	ifqueue;
+struct	route;
 
 struct	domain {
 	int	dom_family;		/* AF_xxx */
@@ -68,6 +69,9 @@ struct	domain {
 	struct ifqueue *dom_ifqueues[2]; /* ifqueue for domain */
 	STAILQ_ENTRY(domain) dom_link;
 	struct	mowner dom_mowner;
+	void	(*dom_rtcache)(struct route *);
+	void	(*dom_rtflush)(struct route *);
+	void	(*dom_rtflushall)(void);
 };
 
 STAILQ_HEAD(domainhead,domain);

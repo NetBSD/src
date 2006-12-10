@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.24.10.1 2006/10/22 06:05:35 yamt Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.24.10.2 2006/12/10 07:17:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.24.10.1 2006/10/22 06:05:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.24.10.2 2006/12/10 07:17:03 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -87,7 +87,7 @@ static void	u24_init(struct uha_softc *);
  * the actual probe routine to check it out.
  */
 static int
-uha_eisa_match(struct device *parent __unused, struct cfdata *match __unused,
+uha_eisa_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct eisa_attach_args *ea = aux;
@@ -114,7 +114,7 @@ uha_eisa_match(struct device *parent __unused, struct cfdata *match __unused,
  * Attach all the sub-devices we can find
  */
 static void
-uha_eisa_attach(struct device *parent __unused, struct device *self, void *aux)
+uha_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct uha_softc *sc = device_private(self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.55.4.1 2006/10/22 06:06:16 yamt Exp $	*/
+/*	$NetBSD: auvia.c,v 1.55.4.2 2006/12/10 07:17:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.55.4.1 2006/10/22 06:06:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.55.4.2 2006/12/10 07:17:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ static const struct audio_format auvia_spdif_formats[AUVIA_SPDIF_NFORMATS] = {
 
 
 static int
-auvia_match(struct device *parent __unused, struct cfdata *match __unused,
+auvia_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa;
@@ -290,7 +290,7 @@ auvia_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-auvia_attach(struct device *parent __unused, struct device *self, void *aux)
+auvia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct auvia_softc *sc;
@@ -584,7 +584,7 @@ auvia_spdif_event(void *addr, boolean_t flag)
 }
 
 static int
-auvia_open(void *addr, int flags __unused)
+auvia_open(void *addr, int flags)
 {
 	struct auvia_softc *sc;
 
@@ -653,7 +653,7 @@ auvia_set_params_sub(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 }
 
 static int
-auvia_set_params(void *addr, int setmode, int usemode __unused,
+auvia_set_params(void *addr, int setmode, int usemode,
     audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
     stream_filter_list_t *rfil)
 {
@@ -720,7 +720,7 @@ auvia_set_params(void *addr, int setmode, int usemode __unused,
 
 static int
 auvia_round_blocksize(void *addr, int blk,
-    int mode __unused, const audio_params_t *param __unused)
+    int mode, const audio_params_t *param)
 {
 	struct auvia_softc *sc;
 
@@ -807,7 +807,7 @@ auvia_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 static void *
-auvia_malloc(void *addr, int direction __unused, size_t size,
+auvia_malloc(void *addr, int direction, size_t size,
     struct malloc_type * pool, int flags)
 {
 	struct auvia_softc *sc;
@@ -888,7 +888,7 @@ auvia_free(void *addr, void *ptr, struct malloc_type *pool)
 }
 
 static size_t
-auvia_round_buffersize(void *addr __unused, int direction __unused, size_t size)
+auvia_round_buffersize(void *addr, int direction, size_t size)
 {
 
 	return size;
@@ -995,7 +995,7 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 
 static int
 auvia_trigger_output(void *addr, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, const audio_params_t *param __unused)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	struct auvia_softc *sc;
 	struct auvia_softc_chan *ch;
@@ -1038,7 +1038,7 @@ auvia_trigger_output(void *addr, void *start, void *end, int blksize,
 
 static int
 auvia_trigger_input(void *addr, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, const audio_params_t *param __unused)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	struct auvia_softc *sc;
 	struct auvia_softc_chan *ch;

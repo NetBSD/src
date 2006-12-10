@@ -1,4 +1,4 @@
-/*	$NetBSD: optpoint.c,v 1.4 2006/04/16 00:03:57 nakayama Exp $ */
+/*	$NetBSD: optpoint.c,v 1.4.10.1 2006/12/10 07:16:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: optpoint.c,v 1.4 2006/04/16 00:03:57 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: optpoint.c,v 1.4.10.1 2006/12/10 07:16:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,8 +176,10 @@ optpoint_intr(void *self)
 		if (dx || dy || changed){
 			DPRINTF(("%s: buttons=0x%x, dx=%d, dy=%d\n",
 				 sc->sc_dev.dv_xname, newbuttons, dx, dy));
-			wsmouse_input(sc->sc_wsmousedev, newbuttons, dx, dy, 0,
-				      WSMOUSE_INPUT_DELTA);
+			wsmouse_input(sc->sc_wsmousedev,
+					newbuttons,
+					dx, dy, 0, 0,
+					WSMOUSE_INPUT_DELTA);
 		}
 		sc->buttons = newbuttons;
 		sc->index = 0;

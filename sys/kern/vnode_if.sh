@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.42 2006/05/14 21:15:12 elad Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.42.10.1 2006/12/10 07:18:46 yamt Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -182,7 +182,8 @@ extern const struct vnodeop_desc vop_default_desc;
 sed -e "$sed_prep" $src | $awk "$toupper"'
 function doit() {
 	# Declare arg struct, descriptor.
-	printf("\nstruct %s_args {\n", name);
+	printf("\n#define %s_DESCOFFSET %d\n", toupper(name), vop_offset++);
+	printf("struct %s_args {\n", name);
 	printf("\tconst struct vnodeop_desc * a_desc;\n");
 	for (i=0; i<argc; i++) {
 		printf("\t%s a_%s;\n", argtype[i], argname[i]);
@@ -206,13 +207,11 @@ function doit() {
 		protolen += arglen;
 	}
 	printf(");\n");
-	vops++;
 }
 BEGIN	{
 	arg0special="";
-	vops = 1; # start at 1, to count the 'default' op
-}
-END	{
+	vop_offset = 1; # start at 1, to count the 'default' op
+
 	printf("\n/* Special cases: */\n#include <sys/buf.h>\n");
 	argc=1;
 	argtype[0]="struct buf *";
@@ -221,8 +220,10 @@ END	{
 	arg0special="->b_vp";
 	name="vop_bwrite";
 	doit();
-
-	printf("\n#define VNODE_OPS_COUNT\t%d\n", vops);
+	printf("/* End of special cases */\n");
+}
+END	{
+	printf("\n#define VNODE_OPS_COUNT\t%d\n", vop_offset);
 }
 '"$awk_parser" | sed -e "$anal_retentive"
 
@@ -300,7 +301,7 @@ function doit() {
 	# Define F_desc
 	printf("const struct vnodeop_desc %s_desc = {\n", name);
 	# offset
-	printf ("\t%d,\n", vop_offset++);
+	printf ("\t%s_DESCOFFSET,\n", toupper(name));
 	# printable name
 	printf ("\t\"%s\",\n", name);
 	# flags
@@ -370,7 +371,6 @@ function doit() {
 BEGIN	{
 	printf("\n/* Special cases: */\n");
 	# start from 1 (vop_default is at 0)
-	vop_offset=1;
 	argc=1;
 	argdir[0]="IN";
 	argtype[0]="struct buf *";

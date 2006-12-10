@@ -1,4 +1,4 @@
-/*	$NetBSD: db_print.c,v 1.22.22.1 2006/10/22 06:05:27 yamt Exp $	*/
+/*	$NetBSD: db_print.c,v 1.22.22.2 2006/12/10 07:16:52 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.22.22.1 2006/10/22 06:05:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.22.22.2 2006/12/10 07:16:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.22.22.1 2006/10/22 06:05:27 yamt Exp 
 
 /*ARGSUSED*/
 void
-db_show_regs(db_expr_t addr __unused, int have_addr __unused,
-    db_expr_t count __unused, const char *modif)
+db_show_regs(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	const struct db_variable *regp;
 	struct db_variable vs;

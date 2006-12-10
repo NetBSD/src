@@ -1,4 +1,4 @@
-/* $NetBSD: fileassoc.h,v 1.5 2006/09/06 13:37:49 blymn Exp $ */
+/* $NetBSD: fileassoc.h,v 1.5.6.1 2006/12/10 07:19:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -33,15 +33,8 @@
 #ifndef _SYS_FILEASSOC_H_
 #define _SYS_FILEASSOC_H_
 
-#include "opt_fileassoc.h"
-
 #include <sys/cdefs.h>
 #include <sys/param.h>
-
-/* Max. number of hooks. */
-#ifndef FILEASSOC_NHOOKS
-#define	FILEASSOC_NHOOKS	4
-#endif /* !FILEASSOC_NHOOKS */
 
 #define	FILEASSOC_INVAL		-1
 

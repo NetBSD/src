@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.4.24.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.4.24.2 2006/12/10 07:17:26 yamt Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -254,7 +254,7 @@ fwip_probe(device_t dev)
 }
 #elif defined(__NetBSD__)
 int
-fwipmatch(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
+fwipmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct fw_attach_args *fwa = aux;
 

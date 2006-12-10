@@ -1,4 +1,4 @@
-/*	$NetBSD: moxa_isa.c,v 1.12.22.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: moxa_isa.c,v 1.12.22.2 2006/12/10 07:17:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.12.22.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.12.22.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ CFATTACH_DECL(moxa_isa, sizeof(struct moxa_isa_softc),
     moxa_isaprobe, moxa_isaattach, NULL, NULL);
 
 int
-moxa_isaprobe(struct device *parent __unused, struct cfdata *self __unused,
+moxa_isaprobe(struct device *parent, struct cfdata *self,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -142,7 +142,7 @@ out:
 }
 
 void
-moxa_isaattach(struct device *parent __unused, struct device *self, void *aux)
+moxa_isaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct moxa_isa_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

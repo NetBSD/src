@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.113.4.1 2006/10/22 06:07:11 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.113.4.2 2006/12/10 07:18:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.113.4.1 2006/10/22 06:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.113.4.2 2006/12/10 07:18:45 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -345,7 +345,7 @@ SYSCTL_SETUP(sysctl_kern_mbuf_setup, "sysctl kern.mbuf subtree setup")
 }
 
 static void *
-mclpool_alloc(struct pool *pp __unused, int flags)
+mclpool_alloc(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
@@ -353,7 +353,7 @@ mclpool_alloc(struct pool *pp __unused, int flags)
 }
 
 static void
-mclpool_release(struct pool *pp __unused, void *v)
+mclpool_release(struct pool *pp, void *v)
 {
 
 	uvm_km_free_poolpage(mb_map, (vaddr_t)v);
@@ -361,7 +361,7 @@ mclpool_release(struct pool *pp __unused, void *v)
 
 /*ARGSUSED*/
 static int
-mb_ctor(void *arg __unused, void *object, int flags __unused)
+mb_ctor(void *arg, void *object, int flags)
 {
 	struct mbuf *m = object;
 
@@ -374,7 +374,7 @@ mb_ctor(void *arg __unused, void *object, int flags __unused)
 }
 
 void
-m_reclaim(void *arg __unused, int flags __unused)
+m_reclaim(void *arg, int flags)
 {
 	struct domain *dp;
 	const struct protosw *pr;

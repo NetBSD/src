@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.5 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.5.22.1 2006/12/10 07:16:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.5 2005/12/11 12:17:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.5.22.1 2006/12/10 07:16:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	struct trapframe *tf = l->l_md.md_regs;
 	struct proc *p = l->l_proc;
 	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
-        __greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 
 	if ((flags & _UC_CPU) != 0) {
 
@@ -228,28 +228,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 			return EINVAL;
 		}
 
-#if 1
-
+#if 0
 		/*
 		 * XXX
 		 * Force the space regs and priviledge bits to
-		 * the right values for now.
+		 * the right values in the trapframe for now.
 		 */
-
-		gr[_REG_PCSQH] = pmap_sid(pmap, gr[_REG_PCOQH]);
-		gr[_REG_PCSQT] = pmap_sid(pmap, gr[_REG_PCOQT]);
-		if (gr[_REG_PCOQH] >= 0xc0000020) {
-			gr[_REG_PCOQH] &= ~HPPA_PC_PRIV_MASK;
-		} else {
-			gr[_REG_PCOQH] |= HPPA_PC_PRIV_USER;
-		}
-		if (gr[_REG_PCOQT] >= 0xc0000020) {
-			gr[_REG_PCOQT] &= ~HPPA_PC_PRIV_MASK;
-		} else {
-			gr[_REG_PCOQT] |= HPPA_PC_PRIV_USER;
-		}
-
-#else
 
 		if (gr[_REG_PCSQH] != pmap_sid(pmap, gr[_REG_PCOQH])) {
 			return EINVAL;
@@ -303,10 +287,23 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_sp	= gr[30];
 		tf->tf_r31	= gr[31];
 		tf->tf_sar	= gr[_REG_SAR];
-		tf->tf_iisq_head = gr[_REG_PCSQH];
-		tf->tf_iisq_tail = gr[_REG_PCSQT];
+		tf->tf_iisq_head = pmap_sid(pmap, gr[_REG_PCOQH]);
+		tf->tf_iisq_tail = pmap_sid(pmap, gr[_REG_PCOQT]);
+
 		tf->tf_iioq_head = gr[_REG_PCOQH];
 		tf->tf_iioq_tail = gr[_REG_PCOQT];
+
+		if (tf->tf_iioq_head >= 0xc0000020) {
+			tf->tf_iioq_head &= ~HPPA_PC_PRIV_MASK;
+		} else {
+			tf->tf_iioq_head |= HPPA_PC_PRIV_USER;
+		}
+		if (tf->tf_iioq_tail >= 0xc0000020) {
+			tf->tf_iioq_tail &= ~HPPA_PC_PRIV_MASK;
+		} else {
+			tf->tf_iioq_tail |= HPPA_PC_PRIV_USER;
+		}
+
 #if 0
 		tf->tf_sr0	= gr[_REG_SR0];
 		tf->tf_sr1	= gr[_REG_SR1];

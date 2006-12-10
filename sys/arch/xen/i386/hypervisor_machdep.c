@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.15 2006/01/15 22:09:51 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.15.20.1 2006/12/10 07:16:43 yamt Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.15 2006/01/15 22:09:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.15.20.1 2006/12/10 07:16:43 yamt Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -215,7 +215,7 @@ do_hypervisor_callback(struct intrframe *regs)
 					printf("do_hypervisor_callback event %d\n", port);
 #endif
 				if (evtsource[port])
-					evtchn_do_event(port, regs);
+					call_evtchn_do_event(port, regs);
 #ifdef DOM0OPS
 				else
 					xenevt_event(port);

@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.18.4.1 2006/10/22 06:06:39 yamt Exp $	*/
+/*	$NetBSD: xirc.c,v 1.18.4.2 2006/12/10 07:18:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.18.4.1 2006/10/22 06:06:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.18.4.2 2006/12/10 07:18:07 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -152,7 +152,7 @@ void	xirc_disable(struct xirc_softc *, int, int);
 int	xirc_intr(void *);
 
 int
-xirc_match(struct device *parent __unused, struct cfdata *match __unused,
+xirc_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -587,7 +587,7 @@ int	com_xirc_enable(struct com_softc *);
 void	com_xirc_disable(struct com_softc *);
 
 int
-com_xirc_match(struct device *parent __unused, struct cfdata *match __unused,
+com_xirc_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	extern struct cfdriver com_cd;
@@ -600,7 +600,7 @@ com_xirc_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-com_xirc_attach(struct device *parent, struct device *self, void *aux __unused)
+com_xirc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (void *)self;
 	struct xirc_softc *msc = (void *)parent;
@@ -663,7 +663,7 @@ void	xi_xirc_disable(struct xi_softc *);
 int	xi_xirc_lan_nid_ciscallback(struct pcmcia_tuple *, void *);
 
 int
-xi_xirc_match(struct device *parent __unused, struct cfdata *match __unused,
+xi_xirc_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	extern struct cfdriver xi_cd;
@@ -676,7 +676,7 @@ xi_xirc_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-xi_xirc_attach(struct device *parent, struct device *self, void *aux __unused)
+xi_xirc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xi_softc *sc = (void *)self;
 	struct xirc_softc *msc = (void *)parent;

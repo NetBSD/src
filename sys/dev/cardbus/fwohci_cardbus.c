@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.16.10.1 2006/10/22 06:05:35 yamt Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.16.10.2 2006/12/10 07:16:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.16.10.1 2006/10/22 06:05:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.16.10.2 2006/12/10 07:16:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,8 @@ CFATTACH_DECL(fwohci_cardbus, sizeof(struct fwohci_cardbus_softc),
 #define cardbus_devinfo pci_devinfo
 
 static int
-fwohci_cardbus_match(struct device *parent __unused,
-    struct cfdata *match __unused, void *aux)
+fwohci_cardbus_match(struct device *parent,
+    struct cfdata *match, void *aux)
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
@@ -97,7 +97,7 @@ fwohci_cardbus_match(struct device *parent __unused,
 }
 
 static void
-fwohci_cardbus_attach(struct device *parent __unused, struct device *self,
+fwohci_cardbus_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct cardbus_attach_args *ca = aux;

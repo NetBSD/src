@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.6.22.1 2006/10/22 06:07:11 yamt Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.6.22.2 2006/12/10 07:18:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.6.22.1 2006/10/22 06:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.6.22.2 2006/12/10 07:18:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -176,7 +176,7 @@ uuid_generate(struct uuid_private *uuid, uint64_t *timep, int count)
 }
 
 int
-sys_uuidgen(struct lwp *l __unused, void *v, register_t *retval __unused)
+sys_uuidgen(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_uuidgen_args *uap = v;
 	struct uuid_private uuid;

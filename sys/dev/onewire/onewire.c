@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.2.6.1 2006/10/22 06:06:15 yamt Exp $ */
+/* $NetBSD: onewire.c,v 1.2.6.2 2006/12/10 07:17:39 yamt Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.2.6.1 2006/10/22 06:06:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.2.6.2 2006/12/10 07:17:39 yamt Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -87,14 +87,14 @@ const struct cdevsw onewire_cdevsw = {
 extern struct cfdriver onewire_cd;
 
 int
-onewire_match(struct device *parent __unused, struct cfdata *cf __unused,
-    void *aux __unused)
+onewire_match(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 	return 1;
 }
 
 void
-onewire_attach(struct device *parent __unused, struct device *self, void *aux)
+onewire_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct onewire_softc *sc = device_private(self);
 	struct onewirebus_attach_args *oba = aux;
@@ -109,7 +109,7 @@ onewire_attach(struct device *parent __unused, struct device *self, void *aux)
 }
 
 int
-onewire_detach(struct device *self, int flags __unused)
+onewire_detach(struct device *self, int flags)
 {
 	struct onewire_softc *sc = device_private(self);
 	int rv;
@@ -170,7 +170,7 @@ onewire_print(void *aux, const char *pnp)
 }
 
 int
-onewirebus_print(void *aux __unused, const char *pnp)
+onewirebus_print(void *aux, const char *pnp)
 {
 	if (pnp != NULL)
 		printf("onewire at %s", pnp);

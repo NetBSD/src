@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.30.4.1 2006/10/22 06:06:17 yamt Exp $ */
+/* $NetBSD: if_lmc.c,v 1.30.4.2 2006/12/10 07:17:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -989,7 +989,7 @@ static struct card hssi_card =
   };
 
 static void
-hssi_ident(softc_t *sc __unused)
+hssi_ident(softc_t *sc)
   {
   printf(", EIA-613");
   }
@@ -1184,7 +1184,7 @@ static struct card t3_card =
   };
 
 static void
-t3_ident(softc_t *sc __unused)
+t3_ident(softc_t *sc)
   {
   printf(", TXC03401 rev B");
   }
@@ -1654,7 +1654,7 @@ static struct card ssi_card =
   };
 
 static void
-ssi_ident(softc_t *sc __unused)
+ssi_ident(softc_t *sc)
   {
   printf(", LTC1343/44");
   }
@@ -3636,7 +3636,7 @@ rawip_watchdog(softc_t *sc)
   }
 
 static int
-rawip_open(softc_t *sc, struct config *config __unused)
+rawip_open(softc_t *sc, struct config *config)
   {
   sc->config.proto = PROTO_IP_HDLC;
 
@@ -3644,7 +3644,7 @@ rawip_open(softc_t *sc, struct config *config __unused)
   }
 
 static int
-rawip_attach(softc_t *sc, struct config *config __unused)
+rawip_attach(softc_t *sc, struct config *config)
   {
 #if IFNET
   LMC_BPF_ATTACH(sc, DLT_RAW, 0);
@@ -3745,7 +3745,7 @@ ifnet_input(struct ifnet *ifp, struct mbuf *mbuf)
  */
 static int  /* context: process */
 ifnet_output(struct ifnet *ifp, struct mbuf *m,
- struct sockaddr *dst __unused, struct rtentry *rt __unused)
+ struct sockaddr *dst, struct rtentry *rt)
   {
   softc_t *sc = IFP2SC(ifp);
   int error = 0;
@@ -7062,7 +7062,7 @@ MODULE_DEPEND(if_lmc, sppp, 1, 1, 1);
 /* Looking for a DEC 21140A chip on any Lan Media Corp card. */
 /* context: kernel (boot) or process (syscall) */
 static int
-nbsd_match(struct device *parent __unused, struct cfdata *match __unused,
+nbsd_match(struct device *parent, struct cfdata *match,
     void *aux)
   {
   struct pci_attach_args *pa = aux;
@@ -7087,7 +7087,7 @@ nbsd_match(struct device *parent __unused, struct cfdata *match __unused,
 /* NetBSD bottom-half initialization. */
 /* context: kernel (boot) or process (syscall) */
 static void
-nbsd_attach(struct device *parent __unused, struct device *self, void *aux)
+nbsd_attach(struct device *parent, struct device *self, void *aux)
   {
   softc_t *sc = (softc_t *)self; /* device is first in softc */
   struct pci_attach_args *pa = aux;
@@ -7175,7 +7175,7 @@ nbsd_attach(struct device *parent __unused, struct device *self, void *aux)
 
 /* context: kernel (boot) or process (syscall) */
 static int
-nbsd_detach(struct device *self, int flags __unused)
+nbsd_detach(struct device *self, int flags)
   {
   softc_t *sc = (softc_t *)self; /* device is first in softc */
 
@@ -7214,7 +7214,7 @@ static struct cfdata cfdatas[] =
 
 MOD_DRV("if_"DEVICE_NAME, cfdrivers, cfattachs, cfdatas);
 
-int if_lmc_lkmentry(struct lkm_table *lkmtp, int cmd, int ver __unused)
+int if_lmc_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
   { LKM_DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc); }
 
 # endif /* LKM */

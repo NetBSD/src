@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.59.22.1 2006/10/22 06:07:23 yamt Exp $	*/
+/*	$NetBSD: procfs.h,v 1.59.22.2 2006/12/10 07:18:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -84,6 +84,7 @@ typedef enum {
 	PFSself,	/* like curproc, but this is the Linux name */
 	PFSproc,	/* a process-specific sub-directory */
 	PFSfile,	/* the executable file */
+	PFSexe,		/* symlink to the executable file */
 	PFSmem,		/* the process's memory image */
 	PFSregs,	/* the process's register set */
 	PFSfpregs,	/* the process's FP register set */
@@ -102,6 +103,7 @@ typedef enum {
 	PFSmounts,	/* mounted filesystems (if -o linux) */
 	PFScwd,		/* the process's current working directory */
 	PFSchroot,	/* the process's current root directory */
+	PFSemul,	/* the process's emulation */
 	PFSdevices,	/* major/device name mappings (if -o linux) */
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODE_TYPES
@@ -153,6 +155,7 @@ struct procfs_args {
     (((type) < PFSproc) ? ((type) + 2) : \
 	(((fd) == -1) ? ((((pid)+1) << 5) + ((int) (type))) : \
 	((((pid)+1) << 16) | ((fd) << 5) | ((int) (type)))))
+#define PROCFS_TYPE(type)	((type) & 0x1f)
 
 struct procfsmount {
 	void *pmnt_exechook;
@@ -208,6 +211,8 @@ int procfs_dofd(struct lwp *, struct proc *, struct pfsnode *,
 int procfs_douptime(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 int procfs_domounts(struct lwp *, struct proc *, struct pfsnode *,
+    struct uio *);
+int procfs_doemul(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 
 void procfs_revoke_vnodes(struct proc *, void *);

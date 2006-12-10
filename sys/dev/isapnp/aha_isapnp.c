@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isapnp.c,v 1.10.10.1 2006/10/22 06:06:11 yamt Exp $	*/
+/*	$NetBSD: aha_isapnp.c,v 1.10.10.2 2006/12/10 07:17:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.10.10.1 2006/10/22 06:06:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.10.10.2 2006/12/10 07:17:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ CFATTACH_DECL(aha_isapnp, sizeof(struct aha_softc),
     aha_isapnp_probe, aha_isapnp_attach, NULL, NULL);
 
 int
-aha_isapnp_probe(struct device *parent __unused, struct cfdata *match __unused,
+aha_isapnp_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	int pri, variant;
@@ -79,7 +79,7 @@ aha_isapnp_probe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-aha_isapnp_attach(struct device *parent __unused, struct device *self, 
+aha_isapnp_attach(struct device *parent, struct device *self, 
     void *aux)
 {
 	struct aha_softc *sc = device_private(self);

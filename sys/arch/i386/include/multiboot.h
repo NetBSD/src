@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.h,v 1.3 2006/02/04 11:24:42 jmmv Exp $	*/
+/*	$NetBSD: multiboot.h,v 1.3.22.1 2006/12/10 07:16:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,17 +41,6 @@
 #include "opt_multiboot.h"
 
 #if defined(MULTIBOOT)
-
-/* --------------------------------------------------------------------- */
-
-/*
- * Space reserved after the kernel image to stick the symbol table.
- * The boot loader will leave this memory untouched (it will be treated
- * as if it was part of the BSS section).
- */
-#if !defined(MULTIBOOT_SYMTAB_SPACE)
-#  define MULTIBOOT_SYMTAB_SPACE 1048576
-#endif
 
 /* --------------------------------------------------------------------- */
 
@@ -209,6 +198,7 @@ struct multiboot_mmap {
 void		multiboot_pre_reloc(struct multiboot_info *);
 void		multiboot_post_reloc(void);
 void		multiboot_print_info(void);
+boolean_t	multiboot_ksyms_init(void);
 #endif /* !defined(_LOCORE) */
 
 /* --------------------------------------------------------------------- */

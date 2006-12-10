@@ -1,4 +1,4 @@
-/*	$NetBSD: geode.c,v 1.6.10.1 2006/10/22 06:04:48 yamt Exp $	*/
+/*	$NetBSD: geode.c,v 1.6.10.2 2006/12/10 07:16:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.6.10.1 2006/10/22 06:04:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.6.10.2 2006/12/10 07:16:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.6.10.1 2006/10/22 06:04:48 yamt Exp $");
 #endif
 
 static int
-geode_gcb_match(struct device *parent __unused, struct cfdata *match __unused,
+geode_gcb_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -111,7 +111,7 @@ geode_gcb_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-geode_gcb_attach(struct device *parent __unused, struct device *self, void *aux)
+geode_gcb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct geode_gcb_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;

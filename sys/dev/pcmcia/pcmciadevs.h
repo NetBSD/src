@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.220.6.1 2006/10/22 06:06:39 yamt Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.220.6.2 2006/12/10 07:18:06 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.219 2006/09/23 15:39:51 jmcneill Exp
+ *	NetBSD: pcmciadevs,v 1.220 2006/11/16 00:52:48 christos Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -542,6 +542,8 @@
 #define	PCMCIA_PRODUCT_SOCKET_LP_ETHER	0x000d
 #define	PCMCIA_CIS_SOCKET_LP_ETHER_CF	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF	0x0075
+#define	PCMCIA_CIS_SOCKET_DUAL_RS232_A	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SOCKET_DUAL_RS232_A	0x00a1
 #define	PCMCIA_CIS_SOCKET_LP_ETH_10_100_CF	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_LP_ETH_10_100_CF	0x0145
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.116.4.1 2006/10/22 06:07:51 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.116.4.2 2006/12/10 07:19:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.116.4.1 2006/10/22 06:07:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.116.4.2 2006/12/10 07:19:33 yamt Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -154,7 +154,7 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 }
 #else
 int
-sys_lfs_markv(struct lwp *l, void *v, register_t *retval __unused)
+sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lfs_markv_args /* {
 		syscallarg(fsid_t *) fsidp;
@@ -222,7 +222,7 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval __unused)
 #define	LFS_MARKV_MAX_BLOCKS	(LFS_MAX_BUFS)
 
 int
-lfs_markv(struct proc *p __unused, fsid_t *fsidp, BLOCK_INFO *blkiov,
+lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
     int blkcnt)
 {
 	BLOCK_INFO *blkp;
@@ -592,7 +592,7 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 }
 #else
 int
-sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval __unused)
+sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lfs_bmapv_args /* {
 		syscallarg(fsid_t *) fsidp;
@@ -828,7 +828,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
  * -1/errno is return on error.
  */
 int
-sys_lfs_segclean(struct lwp *l, void *v, register_t *retval __unused)
+sys_lfs_segclean(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lfs_segclean_args /* {
 		syscallarg(fsid_t *) fsidp;
@@ -968,7 +968,7 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
  * -1/errno is return on error.
  */
 int
-sys_lfs_segwait(struct lwp *l, void *v, register_t *retval __unused)
+sys_lfs_segwait(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lfs_segwait_args /* {
 		syscallarg(fsid_t *) fsidp;

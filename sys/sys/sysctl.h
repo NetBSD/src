@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.157.2.1 2006/10/22 06:07:47 yamt Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.157.2.2 2006/12/10 07:19:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -222,9 +222,9 @@ struct ctlname {
 #define	KERN_ROOT_DEVICE	30	/* string: root device */
 #define	KERN_MSGBUFSIZE		31	/* int: max # of chars in msg buffer */
 #define	KERN_FSYNC		32	/* int: file synchronization support */
-#define	KERN_SYSVMSG		33	/* int: SysV message queue suppoprt */
-#define	KERN_SYSVSEM		34	/* int: SysV semaphore support */
-#define	KERN_SYSVSHM		35	/* int: SysV shared memory support */
+#define	KERN_OLDSYSVMSG		33	/* old: SysV message queue suppoprt */
+#define	KERN_OLDSYSVSEM		34	/* old: SysV semaphore support */
+#define	KERN_OLDSYSVSHM		35	/* old: SysV shared memory support */
 #define	KERN_OLDSHORTCORENAME	36	/* old, unimplemented */
 #define	KERN_SYNCHRONIZED_IO	37	/* int: POSIX synchronized I/O */
 #define	KERN_IOV_MAX		38	/* int: max iovec's for readv(2) etc. */
@@ -241,7 +241,7 @@ struct ctlname {
 #define	KERN_FSCALE		49	/* int: fixpt FSCALE */
 #define	KERN_CCPU		50	/* int: fixpt ccpu */
 #define	KERN_CP_TIME		51	/* struct: CPU time counters */
-#define	KERN_SYSVIPC_INFO	52	/* number of valid kern ids */
+#define	KERN_OLDSYSVIPC_INFO	52	/* old: number of valid kern ids */
 #define	KERN_MSGBUF		53	/* kernel message buffer */
 #define	KERN_CONSDEV		54	/* dev_t: console terminal device */
 #define	KERN_MAXPTYS		55	/* int: maximum number of ptys */
@@ -251,9 +251,6 @@ struct ctlname {
 #define	KERN_TKSTAT		59	/* tty in/out counters */
 #define	KERN_MONOTONIC_CLOCK	60	/* int: POSIX monotonic clock */
 #define	KERN_URND		61	/* int: random integer from urandom */
-#ifndef _KERNEL
-#define	KERN_ARND		KERN_URND	/* compat w/ openbsd */
-#endif
 #define	KERN_LABELSECTOR	62	/* int: disklabel sector */
 #define	KERN_LABELOFFSET	63	/* int: offset of label within sector */
 #define	KERN_LWP		64	/* struct: lwp entries */
@@ -273,7 +270,9 @@ struct ctlname {
 #define	KERN_VERIEXEC		78	/* node: verified exec */
 #define	KERN_CP_ID		79	/* struct: cpu id numbers */
 #define	KERN_HARDCLOCK_TICKS	80	/* int: number of hardclock ticks */
-#define	KERN_MAXID		81	/* number of valid kern ids */
+#define	KERN_ARND		81	/* void *buf, size_t siz random */
+#define	KERN_SYSVIPC		82	/* node: SysV IPC parameters */
+#define	KERN_MAXID		83	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -310,9 +309,9 @@ struct ctlname {
 	{ "root_device", CTLTYPE_STRING }, \
 	{ "msgbufsize", CTLTYPE_INT }, \
 	{ "fsync", CTLTYPE_INT }, \
-	{ "sysvmsg", CTLTYPE_INT }, \
-	{ "sysvsem", CTLTYPE_INT }, \
-	{ "sysvshm", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "synchronized_io", CTLTYPE_INT }, \
 	{ "iov_max", CTLTYPE_INT }, \
@@ -329,7 +328,7 @@ struct ctlname {
 	{ "fscale", CTLTYPE_INT }, \
 	{ "ccpu", CTLTYPE_INT }, \
 	{ "cp_time", CTLTYPE_STRUCT }, \
-	{ "sysvipc_info", CTLTYPE_STRUCT }, \
+	{ 0, 0 }, \
 	{ "msgbuf", CTLTYPE_STRUCT }, \
 	{ "consdev", CTLTYPE_STRUCT }, \
 	{ "maxptys", CTLTYPE_INT }, \
@@ -358,6 +357,8 @@ struct ctlname {
 	{ "veriexec", CTLTYPE_NODE }, \
 	{ "cp_id", CTLTYPE_STRUCT }, \
 	{ "hardclock_ticks", CTLTYPE_INT }, \
+	{ "arandom", CTLTYPE_STRUCT }, \
+	{ "sysvipc", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -439,6 +440,7 @@ struct kinfo_proc {
 #define	KI_MAXCOMLEN	24	/* extra for 8 byte alignment */
 #define	KI_WMESGLEN	8
 #define	KI_MAXLOGNAME	24	/* extra for 8 byte alignment */
+#define	KI_MAXEMULLEN	16
 
 #define KI_NOCPU	(~(uint64_t)0)
 
@@ -561,6 +563,7 @@ struct kinfo_proc2 {
 	uint64_t p_realstat;		/* LONG: non-LWP process status */
 	uint32_t p_svuid;		/* UID_T: saved user id */
 	uint32_t p_svgid;		/* GID_T: saved group id */
+	char p_ename[KI_MAXEMULLEN];	/* emulation name */
 };
 
 /*
@@ -594,6 +597,19 @@ struct kinfo_lwp {
 #define	KERN_PROC_NARGV		2	/* number of strings in above */
 #define	KERN_PROC_ENV		3	/* environ */
 #define	KERN_PROC_NENV		4	/* number of strings in above */
+
+/*
+ * KERN_SYSVIPC subtypes
+ */
+#define	KERN_SYSVIPC_INFO	1	/* struct: number of valid kern ids */
+#define	KERN_SYSVIPC_MSG	2	/* int: SysV message queue suppoprt */
+#define	KERN_SYSVIPC_SEM	3	/* int: SysV semaphore support */
+#define	KERN_SYSVIPC_SHM	4	/* int: SysV shared memory support */
+#define	KERN_SYSVIPC_SHMMAX	5	/* int: max shared memory segment size (bytes) */
+#define	KERN_SYSVIPC_SHMMNI	6	/* int: max number of shared memory identifiers */
+#define	KERN_SYSVIPC_SHMSEG	7	/* int: max shared memory segments per process */
+#define	KERN_SYSVIPC_SHMMAXPGS	8	/* int: max amount of shared memory (pages) */
+#define	KERN_SYSVIPC_SHMUSEPHYS	9	/* int: physical memory usage */
 
 /*
  * KERN_SYSVIPC_INFO subtypes
@@ -959,11 +975,11 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 #define SYSCTLFN_PROTO const int *, u_int, void *, \
 	size_t *, const void *, size_t, \
 	const int *, struct lwp *, const struct sysctlnode *
-#define SYSCTLFN_ARGS const int *name __unused, u_int namelen __unused, \
-	void *oldp __unused, size_t *oldlenp __unused, \
-	const void *newp __unused, size_t newlen __unused, \
-	const int *oname __unused, struct lwp *l __unused, \
-	const struct sysctlnode *rnode __unused
+#define SYSCTLFN_ARGS const int *name, u_int namelen, \
+	void *oldp, size_t *oldlenp, \
+	const void *newp, size_t newlen, \
+	const int *oname, struct lwp *l, \
+	const struct sysctlnode *rnode
 #define SYSCTLFN_CALL(node) name, namelen, oldp, \
 	oldlenp, newp, newlen, \
 	oname, l, node
@@ -979,11 +995,11 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 		printf("%s\n", desc);				\
 		__CONCAT(___,name)(clog); }			\
 	__link_set_add_text(sysctl_funcs, name);		\
-	static void __CONCAT(___,name)(struct sysctllog **clog __unused)
+	static void __CONCAT(___,name)(struct sysctllog **clog)
 #else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
 	__link_set_add_text(sysctl_funcs, name);		\
-	void name(struct sysctllog **clog __unused)
+	void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */
 
 #else /* !_LKM */
@@ -996,12 +1012,12 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 		printf("%s\n", desc);				\
 		__CONCAT(___,name)(clog); }			\
 	__link_set_add_text(sysctl_funcs, name);		\
-	static void __CONCAT(___,name)(struct sysctllog **clog __unused)
+	static void __CONCAT(___,name)(struct sysctllog **clog)
 #else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
 	static void name(struct sysctllog **);			\
 	__link_set_add_text(sysctl_funcs, name);		\
-	static void name(struct sysctllog **clog __unused)
+	static void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */
 typedef void (*sysctl_setup_func)(struct sysctllog **);
 

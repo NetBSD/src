@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.22.20.1 2006/10/22 06:04:48 yamt Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.22.20.2 2006/12/10 07:16:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.22.20.1 2006/10/22 06:04:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.22.20.2 2006/12/10 07:16:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ CFATTACH_DECL(pciide_pnpbios, sizeof(struct pciide_softc),
     pciide_pnpbios_match, pciide_pnpbios_attach, NULL, NULL);
 
 int
-pciide_pnpbios_match(struct device *parent __unused,
-    struct cfdata *match __unused, void *aux)
+pciide_pnpbios_match(struct device *parent,
+    struct cfdata *match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
@@ -77,7 +77,7 @@ pciide_pnpbios_match(struct device *parent __unused,
 }
 
 void
-pciide_pnpbios_attach(struct device *parent __unused, struct device *self,
+pciide_pnpbios_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct pciide_softc *sc = (void *)self;

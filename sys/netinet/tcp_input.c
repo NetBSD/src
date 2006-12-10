@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.244.4.1 2006/10/22 06:07:28 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.244.4.2 2006/12/10 07:19:11 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.244.4.1 2006/10/22 06:07:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.244.4.2 2006/12/10 07:19:11 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -374,6 +374,8 @@ extern struct evcnt tcp_reass_fragdup;
 
 #endif /* TCP_REASS_COUNTERS */
 
+static int tcp_reass(struct tcpcb *, const struct tcphdr *, struct mbuf *,
+    int *);
 static int tcp_dooptions(struct tcpcb *, const u_char *, int,
     const struct tcphdr *, struct mbuf *, int, struct tcp_opt_info *);
 
@@ -385,6 +387,10 @@ static void tcp6_log_refused(const struct ip6_hdr *, const struct tcphdr *);
 #endif
 
 #define	TRAVERSE(x) while ((x)->m_next) (x) = (x)->m_next
+
+#if defined(MBUFTRACE)
+struct mowner tcp_reass_mowner = MOWNER_INIT("tcp", "reass");
+#endif /* defined(MBUFTRACE) */
 
 static POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl",
     NULL);
@@ -412,8 +418,8 @@ tcpipqent_free(struct ipqent *ipqe)
 	splx(s);
 }
 
-int
-tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
+static int
+tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int *tlen)
 {
 	struct ipqent *p, *q, *nq, *tiqe = NULL;
 	struct socket *so = NULL;
@@ -441,6 +447,8 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 	 */
 	if (th == 0)
 		goto present;
+
+	m_claimm(m, &tcp_reass_mowner);
 
 	rcvoobyte = *tlen;
 	/*
@@ -853,7 +861,7 @@ tcp6_log_refused(const struct ip6_hdr *ip6, const struct tcphdr *th)
  * Checksum extended TCP header and data.
  */
 int
-tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th __unused,
+tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th,
     int toff, int off, int tlen)
 {
 
@@ -2848,7 +2856,7 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 static int
 tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
     const struct tcphdr *th,
-    struct mbuf *m __unused, int toff __unused, struct tcp_opt_info *oi)
+    struct mbuf *m, int toff, struct tcp_opt_info *oi)
 {
 	u_int16_t mss;
 	int opt, optlen = 0;
@@ -3201,7 +3209,7 @@ do {									\
 	if ((sc)->sc_ipopts)						\
 		(void) m_free((sc)->sc_ipopts);				\
 	if ((sc)->sc_route4.ro_rt != NULL)				\
-		RTFREE((sc)->sc_route4.ro_rt);				\
+		rtflush(&(sc)->sc_route4);				\
 	if (callout_invoking(&(sc)->sc_timer))				\
 		(sc)->sc_flags |= SCF_DEAD;				\
 	else								\
@@ -3469,7 +3477,7 @@ syn_cache_lookup(const struct sockaddr *src, const struct sockaddr *dst,
  */
 struct socket *
 syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
-    struct tcphdr *th, unsigned int hlen __unused, unsigned int tlen __unused,
+    struct tcphdr *th, unsigned int hlen, unsigned int tlen,
     struct socket *so, struct mbuf *m)
 {
 	struct syn_cache *sc;
@@ -3616,13 +3624,26 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	/*
 	 * Give the new socket our cached route reference.
 	 */
-	if (inp)
+	if (inp) {
 		inp->inp_route = sc->sc_route4;		/* struct assignment */
+		/* XXX the following is gross */
+		if (inp->inp_route.ro_rt != NULL) {
+			inp->inp_route.ro_rt->rt_refcnt++;
+			rtcache(&inp->inp_route);
+			rtflush(&sc->sc_route4);
+		}
+	}
 #ifdef INET6
-	else
+	else {
 		in6p->in6p_route = sc->sc_route6;
+		/* XXX the following is gross */
+		if (in6p->in6p_route.ro_rt != NULL) {
+			in6p->in6p_route.ro_rt->rt_refcnt++;
+			rtcache((struct route *)&in6p->in6p_route);
+			rtflush((struct route *)&sc->sc_route6);
+		}
+	}
 #endif
-	sc->sc_route4.ro_rt = NULL;
 
 	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
 	if (am == NULL)

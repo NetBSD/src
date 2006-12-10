@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.31.4.1 2006/10/22 06:07:42 yamt Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.31.4.2 2006/12/10 07:19:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.31.4.1 2006/10/22 06:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.31.4.2 2006/12/10 07:19:23 yamt Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -401,7 +401,7 @@ tp_quench(struct inpcb  *ipcb, int cmd)
  * NOTES:
  */
 void
-tp_netcmd(struct tp_pcb *tpcb __unused, int cmd __unused)
+tp_netcmd(struct tp_pcb *tpcb, int cmd)
 {
 #ifdef TPCONS
 	struct isopcb  *isop;

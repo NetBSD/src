@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.88.8.1 2006/10/22 06:05:44 yamt Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.88.8.2 2006/12/10 07:17:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.88.8.1 2006/10/22 06:05:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.88.8.2 2006/12/10 07:17:05 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -111,6 +111,7 @@ static int ex_eeprom_busy(struct ex_softc *);
 static int ex_add_rxbuf(struct ex_softc *, struct ex_rxdesc *);
 static void ex_init_txdescs(struct ex_softc *);
 
+static void ex_setup_tx(struct ex_softc *);
 static void ex_shutdown(void *);
 static void ex_start(struct ifnet *);
 static void ex_txstat(struct ex_softc *);
@@ -278,7 +279,7 @@ ex_config(sc)
 	 * map for them.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    EX_NDPD * sizeof (struct ex_dpd), PAGE_SIZE, 0, &sc->sc_dseg, 1,
+	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, PAGE_SIZE, 0, &sc->sc_dseg, 1,
 	    &sc->sc_drseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error(
 		    "%s: can't allocate download descriptors, error = %d\n",
@@ -289,19 +290,19 @@ ex_config(sc)
 	attach_stage = 5;
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dseg, sc->sc_drseg,
-	    EX_NDPD * sizeof (struct ex_dpd), (caddr_t *)&sc->sc_dpd,
+	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, (caddr_t *)&sc->sc_dpd,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: can't map download descriptors, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
-	memset(sc->sc_dpd, 0, EX_NDPD * sizeof (struct ex_dpd));
+	memset(sc->sc_dpd, 0, DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN);
 
 	attach_stage = 6;
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
-	    EX_NDPD * sizeof (struct ex_dpd), 1,
-	    EX_NDPD * sizeof (struct ex_dpd), 0, BUS_DMA_NOWAIT,
+	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, 1,
+	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, 0, BUS_DMA_NOWAIT,
 	    &sc->sc_dpd_dmamap)) != 0) {
 		aprint_error(
 		    "%s: can't create download desc. DMA map, error = %d\n",
@@ -312,13 +313,15 @@ ex_config(sc)
 	attach_stage = 7;
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dpd_dmamap,
-	    sc->sc_dpd, EX_NDPD * sizeof (struct ex_dpd), NULL,
+	    sc->sc_dpd, DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
 		aprint_error(
 		    "%s: can't load download desc. DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
+	    DPDMEMPAD_OFF, EX_IP4CSUMTX_PADLEN, BUS_DMASYNC_PREWRITE);
 
 	attach_stage = 8;
 
@@ -612,6 +615,31 @@ ex_probemedia(sc)
 }
 
 /*
+ * Setup transmitter parameters.
+ */
+static void
+ex_setup_tx(sc)
+	struct ex_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+
+	/*
+	 * Disable reclaim threshold for 90xB, set free threshold to
+	 * 6 * 256 = 1536 for 90x.
+	 */
+	if (sc->ex_conf & EX_CONF_90XB)
+		bus_space_write_2(iot, ioh, ELINK_COMMAND,
+		    ELINK_TXRECLTHRESH | 255);
+	else
+		bus_space_write_1(iot, ioh, ELINK_TXFREETHRESH, 6);
+
+	/* Setup early transmission start threshold. */
+	bus_space_write_2(iot, ioh, ELINK_COMMAND,
+	    ELINK_TXSTARTTHRESH | sc->tx_start_thresh);
+}
+
+/*
  * Bring device up.
  */
 int
@@ -622,6 +650,7 @@ ex_init(ifp)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
+	u_int16_t val;
 	int error = 0;
 
 	if ((error = ex_enable(sc)) != 0)
@@ -630,11 +659,22 @@ ex_init(ifp)
 	ex_waitcmd(sc);
 	ex_stop(ifp, 0);
 
+	GO_WINDOW(2);
+
+	/* Turn on PHY power. */
+	if (sc->ex_conf & (EX_CONF_PHY_POWER | EX_CONF_INV_LED_POLARITY)) {
+		val = bus_space_read_2(iot, ioh, ELINK_W2_RESET_OPTIONS);
+		if (sc->ex_conf & EX_CONF_PHY_POWER)
+			val |= ELINK_RESET_OPT_PHYPOWER; /* turn on PHY power */
+		if (sc->ex_conf & EX_CONF_INV_LED_POLARITY)
+			val |= ELINK_RESET_OPT_LEDPOLAR; /* invert LED polarity */
+		bus_space_write_2(iot, ioh, ELINK_W2_RESET_OPTIONS, val);
+	}
+
 	/*
 	 * Set the station address and clear the station mask. The latter
 	 * is needed for 90x cards, 0 is the default for 90xB cards.
 	 */
-	GO_WINDOW(2);
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		bus_space_write_1(iot, ioh, ELINK_W2_ADDR_0 + i,
 		    LLADDR(ifp->if_sadl)[i]);
@@ -648,15 +688,8 @@ ex_init(ifp)
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_RESET);
 	ex_waitcmd(sc);
 
-	/*
-	 * Disable reclaim threshold for 90xB, set free threshold to
-	 * 6 * 256 = 1536 for 90x.
-	 */
-	if (sc->ex_conf & EX_CONF_90XB)
-		bus_space_write_2(iot, ioh, ELINK_COMMAND,
-		    ELINK_TXRECLTHRESH | 255);
-	else
-		bus_space_write_1(iot, ioh, ELINK_TXFREETHRESH, 6);
+	/* Load Tx parameters. */
+	ex_setup_tx(sc);
 
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
 	    SET_RX_EARLY_THRESH | ELINK_THRESH_DISABLE);
@@ -681,22 +714,6 @@ ex_init(ifp)
 	bus_space_write_4(iot, ioh, ELINK_UPLISTPTR, sc->sc_upddma);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, RX_ENABLE);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, ELINK_UPUNSTALL);
-
-	if (sc->ex_conf & (EX_CONF_PHY_POWER | EX_CONF_INV_LED_POLARITY)) {
-		u_int16_t cbcard_config;
-
-		GO_WINDOW(2);
-		cbcard_config = bus_space_read_2(sc->sc_iot, sc->sc_ioh, 0x0c);
-		if (sc->ex_conf & EX_CONF_PHY_POWER) {
-			cbcard_config |= 0x4000; /* turn on PHY power */
-		}
-		if (sc->ex_conf & EX_CONF_INV_LED_POLARITY) {
-			cbcard_config |= 0x0010; /* invert LED polarity */
-		}
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh, 0x0c, cbcard_config);
-
-		GO_WINDOW(3);
-	}
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -778,6 +795,10 @@ allmulti:
 }
 
 
+/*
+ * The Tx Complete interrupts occur only on errors,
+ * and this is the error handler.
+ */
 static void
 ex_txstat(sc)
 	struct ex_softc *sc;
@@ -785,44 +806,87 @@ ex_txstat(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int i;
+	int i, err = 0;
 
 	/*
 	 * We need to read+write TX_STATUS until we get a 0 status
 	 * in order to turn off the interrupt flag.
-	 * ELINK_TXSTATUS is in the upper byte of 2 with ELINK_TIMER
-	 * XXX: Big Endian? Can we assume that TXSTATUS will be the
-	 * upper byte?
+	 * ELINK_TXSTATUS is in the upper byte of 2 with ELINK_TIMER.
 	 */
-	while ((i = bus_space_read_2(iot, ioh, ELINK_TIMER)) & TXS_COMPLETE) {
+	for (;;) {
+		i = bus_space_read_2(iot, ioh, ELINK_TIMER);
+		if ((i & TXS_COMPLETE) == 0)
+			break;
 		bus_space_write_2(iot, ioh, ELINK_TIMER, 0x0);
+		err |= i;
+	}
+	err &= ~TXS_TIMER;
 
-		if (i & TXS_JABBER) {
-			++sc->sc_ethercom.ec_if.if_oerrors;
-			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-				printf("%s: jabber (%x)\n",
-				       sc->sc_dev.dv_xname, i);
-			ex_init(ifp);
-			/* TODO: be more subtle here */
-		} else if (i & TXS_UNDERRUN) {
-			++sc->sc_ethercom.ec_if.if_oerrors;
-			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-				printf("%s: fifo underrun (%x) @%d\n",
-				       sc->sc_dev.dv_xname, i,
-				       sc->tx_start_thresh);
-			if (sc->tx_succ_ok < 100)
-				    sc->tx_start_thresh = min(ETHER_MAX_LEN,
-					    sc->tx_start_thresh + 20);
+	if ((err & (TXS_UNDERRUN | TXS_JABBER | TXS_RECLAIM))
+	    || err == 0 /* should not happen, just in case */) {
+		/*
+		 * Make sure the transmission is stopped.
+		 */
+		bus_space_write_2(iot, ioh, ELINK_COMMAND, ELINK_DNSTALL);
+		for (i = 1000; i > 0; i--)
+			if ((bus_space_read_4(iot, ioh, ELINK_DMACTRL) &
+			    ELINK_DMAC_DNINPROG) == 0)
+				break;
+
+		/*
+		 * Reset the transmitter.
+		 */
+		bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_RESET);
+
+		/* Resetting takes a while and we will do more than wait. */
+
+		ifp->if_flags &= ~IFF_OACTIVE;
+		++sc->sc_ethercom.ec_if.if_oerrors;
+		printf("%s:%s%s%s", sc->sc_dev.dv_xname,
+		    (err & TXS_UNDERRUN) ? " transmit underrun" : "",
+		    (err & TXS_JABBER) ? " jabber" : "",
+		    (err & TXS_RECLAIM) ? " reclaim" : "");
+		if (err == 0)
+			printf(" unknown Tx error");
+		printf(" (%x)", err);
+		if (err & TXS_UNDERRUN) {
+			printf(" @%d", sc->tx_start_thresh);
+			if (sc->tx_succ_ok < 256 &&
+			    (i = min(ETHER_MAX_LEN, sc->tx_start_thresh + 20))
+			    > sc->tx_start_thresh) {
+				printf(", new threshold is %d", i);
+				sc->tx_start_thresh = i;
+			}
 			sc->tx_succ_ok = 0;
-			ex_init(ifp);
-			/* TODO: be more subtle here */
-		} else if (i & TXS_MAX_COLLISION) {
-			++sc->sc_ethercom.ec_if.if_oerrors;
+		}
+		printf("\n");
+		if (err & TXS_MAX_COLLISION)
 			++sc->sc_ethercom.ec_if.if_collisions;
-			bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
-			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
-		} else if (sc->tx_succ_ok < 100)
-			sc->tx_succ_ok++;
+
+		/* Wait for TX_RESET to finish. */
+		ex_waitcmd(sc);
+
+		/* Reload Tx parameters. */
+		ex_setup_tx(sc);
+	} else {
+		if (err & TXS_MAX_COLLISION)
+			++sc->sc_ethercom.ec_if.if_collisions;
+		sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
+	}
+
+	bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
+
+	/* Retransmit current packet if any. */
+	if (sc->tx_head) {
+		ifp->if_flags |= IFF_OACTIVE;
+		bus_space_write_2(iot, ioh, ELINK_COMMAND,
+		    ELINK_DNUNSTALL);
+		bus_space_write_4(iot, ioh, ELINK_DNLISTPTR,
+		    DPD_DMADDR(sc, sc->tx_head));
+
+		/* Retrigger watchdog if stopped. */
+		if (ifp->if_timer == 0)
+			ifp->if_timer = 1;
 	}
 }
 
@@ -992,7 +1056,7 @@ ex_start(ifp)
 	struct ex_txdesc *txp;
 	struct mbuf *mb_head;
 	bus_dmamap_t dmamap;
-	int offset, totlen, segment, error;
+	int m_csumflags, offset, seglen, totlen, segment, error;
 	u_int32_t csum_flags;
 
 	if (sc->tx_head || sc->tx_free == NULL)
@@ -1011,6 +1075,12 @@ ex_start(ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, mb_head);
 		if (mb_head == NULL)
 			break;
+
+		/*
+		 * mb_head might be updated later,
+		 * so preserve csum_flags here.
+		 */
+		m_csumflags = mb_head->m_pkthdr.csum_flags;
 
 		/*
 		 * Get pointer to next available tx desc.
@@ -1086,11 +1156,28 @@ ex_start(ifp)
 		totlen = 0;
 		for (segment = 0; segment < dmamap->dm_nsegs; segment++, fr++) {
 			fr->fr_addr = htole32(dmamap->dm_segs[segment].ds_addr);
-			fr->fr_len = htole32(dmamap->dm_segs[segment].ds_len);
-			totlen += dmamap->dm_segs[segment].ds_len;
+			seglen = dmamap->dm_segs[segment].ds_len;
+			fr->fr_len = htole32(seglen);
+			totlen += seglen;
 		}
-		fr--;
-		fr->fr_len |= htole32(EX_FR_LAST);
+		if (__predict_false(totlen <= EX_IP4CSUMTX_PADLEN &&
+		    (m_csumflags & M_CSUM_IPv4) != 0)) {
+			/*
+			 * Pad short packets to avoid ip4csum-tx bug.
+			 *
+			 * XXX Should we still consider if such short
+			 *     (36 bytes or less) packets might already
+			 *     occupy EX_NTFRAG (== 32) fragements here?
+			 */
+			KASSERT(segment < EX_NTFRAGS);
+			fr->fr_addr = htole32(DPDMEMPAD_DMADDR(sc));
+			seglen = EX_IP4CSUMTX_PADLEN + 1 - totlen;
+			fr->fr_len = htole32(EX_FR_LAST | seglen);
+			totlen += seglen;
+		} else {
+			fr--;
+			fr->fr_len |= htole32(EX_FR_LAST);
+		}
 		txp->tx_mbhead = mb_head;
 
 		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
@@ -1105,12 +1192,12 @@ ex_start(ifp)
 		if (sc->ex_conf & EX_CONF_90XB) {
 			csum_flags = 0;
 
-			if (mb_head->m_pkthdr.csum_flags & M_CSUM_IPv4)
+			if (m_csumflags & M_CSUM_IPv4)
 				csum_flags |= htole32(EX_DPD_IPCKSUM);
 
-			if (mb_head->m_pkthdr.csum_flags & M_CSUM_TCPv4)
+			if (m_csumflags & M_CSUM_TCPv4)
 				csum_flags |= htole32(EX_DPD_TCPCKSUM);
-			else if (mb_head->m_pkthdr.csum_flags & M_CSUM_UDPv4)
+			else if (m_csumflags & M_CSUM_UDPv4)
 				csum_flags |= htole32(EX_DPD_UDPCKSUM);
 
 			dpd->dpd_fsh |= csum_flags;
@@ -1218,13 +1305,24 @@ ex_intr(arg)
 			ex_init(ifp);
 			return 1;
 		}
-		if (stat & TX_COMPLETE) {
-			ex_txstat(sc);
-		}
 		if (stat & UPD_STATS) {
 			ex_getstats(sc);
 		}
-		if (stat & DN_COMPLETE) {
+		if (stat & TX_COMPLETE) {
+			ex_txstat(sc);
+#if 0
+			if (stat & DN_COMPLETE)
+				printf("%s: Ignoring Dn interrupt (%x)\n",
+				    sc->sc_dev.dv_xname, stat);
+#endif
+			/*
+			 * In some rare cases, both Tx Complete and
+			 * Dn Complete bits are set.  However, the packet
+			 * has been reloaded in ex_txstat() and should not
+			 * handle the Dn Complete event here.
+			 * Hence the "else" below.
+			 */
+		} else if (stat & DN_COMPLETE) {
 			struct ex_txdesc *txp, *ptxp = NULL;
 			bus_dmamap_t txmap;
 
@@ -1261,6 +1359,9 @@ ex_intr(arg)
 
 			sc->tx_head = sc->tx_tail = NULL;
 			ifp->if_flags &= ~IFF_OACTIVE;
+
+			if (sc->tx_succ_ok < 256)
+				sc->tx_succ_ok++;
 		}
 
 		if (stat & UP_COMPLETE) {

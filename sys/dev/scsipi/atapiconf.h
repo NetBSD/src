@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.20 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.20.22.1 2006/12/10 07:18:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -32,6 +32,7 @@
 #ifndef _DEV_SCSIPI_ATAPICONF_H
 #define _DEV_SCSIPI_ATAPICONF_H
 
+#include <sys/device.h>
 #include <dev/scsipi/scsipiconf.h>
 
 struct atapibus_softc {

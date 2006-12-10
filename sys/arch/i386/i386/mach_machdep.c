@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.18.2.1 2006/10/22 06:04:43 yamt Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.18.2.2 2006/12/10 07:16:09 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.18.2.1 2006/10/22 06:04:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.18.2.2 2006/12/10 07:16:09 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -254,24 +254,24 @@ mach_create_thread_child(arg)
 }
 
 int
-mach_thread_get_state_machdep(struct lwp *l __unused, int flavor,
-    void *state __unused, int *size __unused)
+mach_thread_get_state_machdep(struct lwp *l, int flavor,
+    void *state, int *size)
 {
 	printf("Unimplemented thread state flavor %d\n", flavor);
 	return EINVAL;
 }
 
 int
-mach_thread_set_state_machdep(struct lwp *l __unused, int flavor,
-    void *state __unused)
+mach_thread_set_state_machdep(struct lwp *l, int flavor,
+    void *state)
 {
 	printf("Unimplemented thread state flavor %d\n", flavor);
 	return EINVAL;
 }
 
 int
-mach_vm_machine_attribute_machdep(struct lwp *l __unused, vaddr_t v __unused,
-    size_t s __unused, int *ip __unused)
+mach_vm_machine_attribute_machdep(struct lwp *l, vaddr_t v,
+    size_t s, int *ip)
 {
 	return 0;
 }

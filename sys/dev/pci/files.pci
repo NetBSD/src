@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.268.2.1 2006/10/22 06:06:16 yamt Exp $
+#	$NetBSD: files.pci,v 1.268.2.2 2006/12/10 07:17:42 yamt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -14,8 +14,6 @@ defparam opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
 
 defflag	opt_pciide.h	PCIIDE_CMD064x_DISABLE PCIIDE_AMD756_ENABLEDMA
 			PCIIDE_CMD0646U_ENABLEUDMA PCIIDE_I31244_DISABLEDMA
-
-defflag	opt_pcn.h	PCN_NO_PROM
 
 device	pci {[dev = -1], [function = -1]}
 attach	pci at pcibus
@@ -213,6 +211,11 @@ device	pciide: ata, pciide_common, wdc_common
 attach	pciide at pci
 file	dev/pci/pciide.c		pciide
 
+# AHCI SATA controllers
+device	ahcisata: ata, ata_dma, ata_udma, sata
+attach	ahcisata at pci
+file	dev/pci/ahcisata.c		ahcisata
+
 # Acard IDE controllers
 device	acardide: ata, ata_dma, ata_udma, pciide_common, wdc_common
 attach	acardide at pci
@@ -264,7 +267,7 @@ attach	piixide at pci
 file	dev/pci/piixide.c		piixide
 
 # Promise Serial ATA controllers
-device	pdcsata: ata, ata_dma, ata_udma, pciide_common, wdc_common
+device	pdcsata: ata, ata_dma, ata_udma, pciide_common, wdc_common, sata
 attach	pdcsata at pci
 file	dev/pci/pdcsata.c		pdcsata
 
@@ -304,7 +307,7 @@ file	dev/pci/slide.c		slide
 #file	dev/pci/swide.c		swide
 
 # VIA/AMD/Nvidia IDE controllers
-device	viaide: ata, ata_dma, ata_udma, pciide_common, wdc_common
+device	viaide: ata, ata_dma, ata_udma, pciide_common, wdc_common, sata
 attach	viaide at pci
 file	dev/pci/viaide.c	viaide
 

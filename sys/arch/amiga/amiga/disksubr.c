@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.48 2006/08/03 20:29:54 mhitch Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.48.6.1 2006/12/10 07:15:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48 2006/08/03 20:29:54 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48.6.1 2006/12/10 07:15:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,10 +143,11 @@ readdisklabel(dev, strat, lp, clp)
 	char *bcpls, *s, bcpli;
 	int cindex, i, nopname;
 	u_long nextb;
+	struct disklabel *dlp;
 
 	clp->rdblock = RDBNULL;
 	/*
-	 * give some guarnteed validity to
+	 * give some guaranteed validity to
 	 * the disklabel
 	 */
 	if (lp->d_secperunit == 0)
@@ -155,17 +156,18 @@ readdisklabel(dev, strat, lp, clp)
 		lp->d_secpercyl = 0x1fffffff;
 	lp->d_npartitions = RAW_PART + 1;
 
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		clp->pbindex[i] = -1;
-		clp->pblist[i] = RDBNULL;
-		if (i == RAW_PART)
-			continue;
-		lp->d_partitions[i].p_size = 0;
-		lp->d_partitions[i].p_offset = 0;
-	}
 	if (lp->d_partitions[RAW_PART].p_size == 0)
 		lp->d_partitions[RAW_PART].p_size = 0x1fffffff;
 	lp->d_partitions[RAW_PART].p_offset = 0;
+	/* if no 'a' partition, default it to copy of 'c' as BSDFFS */
+	if (lp->d_partitions[0].p_size == 0) {
+		lp->d_partitions[0].p_size = lp->d_partitions[RAW_PART].p_size;
+		lp->d_partitions[0].p_offset = 0;
+		lp->d_partitions[0].p_fstype = FS_BSDFFS;
+		lp->d_partitions[0].p_fsize = 1024;
+		lp->d_partitions[0].p_frag = 8;
+		lp->d_partitions[0].p_cpg = 0;
+	}
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
@@ -206,6 +208,18 @@ readdisklabel(dev, strat, lp, clp)
 			else
 				msg = "rdb bad checksum";
 		}
+		/* Check for native NetBSD label? */
+		dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+		if (dlp->d_magic == DISKMAGIC) {
+			if (dkcksum(dlp))
+				msg = "NetBSD disk label corrupted";
+			else {
+				/* remember block and continue searching? */
+				*lp = *dlp;
+				brelse(bp);
+				return(msg);
+			}
+		}
 	}
 	if (nextb == RDB_MAXBLOCKS) {
 		if (msg == NULL)
@@ -219,6 +233,16 @@ readdisklabel(dev, strat, lp, clp)
 		msg = NULL;
 	}
 	clp->rdblock = nextb;
+
+	/* RDB present, clear disklabel partition table before doing PART blks */
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		clp->pbindex[i] = -1;
+		clp->pblist[i] = RDBNULL;
+		if (i == RAW_PART)
+			continue;
+		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
+	}
 
 	lp->d_secsize = rbp->nbytes;
 	lp->d_nsectors = rbp->nsectors;
@@ -526,9 +550,36 @@ writedisklabel(dev, strat, lp, clp)
 {
 	struct rdbmap *bmap;
 	struct buf *bp;
-	bp = NULL;	/* XXX */
+	struct disklabel *dlp;
+	int error = 0;
 
-	return(EINVAL);
+	/* If RDB was present, we don't support writing them yet. */
+	if (clp->rdblock != RDBNULL)
+		return(EINVAL);
+
+	/* RDB was not present, write out native NetBSD label */
+	bp = geteblk((int)lp->d_secsize);
+	bp->b_dev = dev;
+	bp->b_blkno = LABELSECTOR;
+	bp->b_cylinder = 0;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags |= B_READ;           /* get current label */
+	(*strat)(bp);
+	if ((error = biowait(bp)) != 0)
+		goto done;
+
+	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	*dlp = *lp;     /* struct assignment */
+
+	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_flags |= B_WRITE;
+	(*strat)(bp);
+	error = biowait(bp);
+
+done:
+	brelse(bp);
+	return (error); 
+
 	/*
 	 * get write out partition list iff cpu_label is valid.
 	 */
@@ -538,58 +589,6 @@ writedisklabel(dev, strat, lp, clp)
 
 	bmap = getrdbmap(dev, strat, lp, clp);
 	return(EINVAL);
-}
-
-int
-bounds_check_with_label(dk, bp, wlabel)
-	struct disk *dk;
-	struct buf *bp;
-	int wlabel;
-{
-	struct disklabel *lp = dk->dk_label;
-	struct partition *pp;
-	long maxsz, sz;
-
-	pp = &lp->d_partitions[DISKPART(bp->b_dev)];
-	/*
-	 * This routine is called before sd.c adjusts block numbers
-	 * and must take this into account
-	 */
-#ifdef SD_C_ADJUSTS_NR
-	maxsz = pp->p_size * (lp->d_secsize / DEV_BSIZE);
-	sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
-#else
-	maxsz = pp->p_size;
-	sz = (bp->b_bcount + lp->d_secsize - 1) / lp->d_secsize;
-#endif
-	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-		if (bp->b_blkno == maxsz) {
-			/*
-			 * trying to get one block beyond return EOF.
-			 */
-			bp->b_resid = bp->b_bcount;
-			return(0);
-		}
-		sz = maxsz - bp->b_blkno;
-		if (sz <= 0 || bp->b_blkno < 0) {
-			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
-			return(-1);
-		}
-		/*
-		 * adjust count down
-		 */
-		if (bp->b_flags & B_RAW)
-			bp->b_bcount = sz << DEV_BSHIFT;
-		else
-			bp->b_bcount = sz * lp->d_secsize;
-	}
-
-	/*
-	 * calc cylinder for disksort to order transfers with
-	 */
-	bp->b_cylinder = (bp->b_blkno + pp->p_offset) / lp->d_secpercyl;
-	return(1);
 }
 
 u_long

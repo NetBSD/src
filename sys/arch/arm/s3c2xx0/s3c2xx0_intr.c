@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0_intr.c,v 1.10 2005/12/24 20:06:52 perry Exp $ */
+/* $NetBSD: s3c2xx0_intr.c,v 1.10.22.1 2006/12/10 07:15:48 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.10 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.10.22.1 2006/12/10 07:15:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ s3c2xx0_update_intr_masks(int irqno, int level)
 						 * level */
 
 	/*
-	 * Enforce a heirarchy that gives "slow" device (or devices with
+	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */

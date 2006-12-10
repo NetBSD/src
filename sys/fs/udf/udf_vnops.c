@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.6.12.1 2006/10/22 06:07:09 yamt Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.6.12.2 2006/12/10 07:18:43 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.6.12.1 2006/10/22 06:07:09 yamt Exp $");
+__RCSID("$NetBSD: udf_vnops.c,v 1.6.12.2 2006/12/10 07:18:43 yamt Exp $");
 #endif /* not lint */
 
 
@@ -473,7 +473,7 @@ udf_lookup(void *v)
 	struct udf_mount *ump;
 	struct long_ad    icb_loc;
 	const char *name;
-	int namelen, nameiop, islastcn, lock_parent, mounted_ro;
+	int namelen, nameiop, islastcn, mounted_ro;
 	int vnodetp;
 	int error, found;
 
@@ -486,7 +486,6 @@ udf_lookup(void *v)
 	/* simplify/clarification flags */
 	nameiop     = cnp->cn_nameiop;
 	islastcn    = cnp->cn_flags & ISLASTCN;
-	lock_parent = cnp->cn_flags & LOCKPARENT;
 	mounted_ro  = dvp->v_mount->mnt_flag & MNT_RDONLY;
 
 	/* check exec/dirread permissions first */
@@ -531,7 +530,6 @@ udf_lookup(void *v)
 
 		/* first unlock parent */
 		VOP_UNLOCK(dvp, 0);
-		cnp->cn_flags |= PDIRUNLOCK;
 
 		/* get our node */
 		name    = "..";
@@ -551,12 +549,8 @@ udf_lookup(void *v)
 			}
 		}
 
-		/* see if we're requested to lock the parent */
-		if (lock_parent && islastcn) {
-			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
-				cnp->cn_flags &= ~PDIRUNLOCK;
-		}
-		/* done */
+		/* try to relock parent */
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	} else {
 		DPRINTF(LOOKUP, ("\tlookup file\n"));
 		/* all other files */
@@ -603,18 +597,9 @@ udf_lookup(void *v)
 
 			}
 			if (!error) {
-				/*
-				 * If LOCKPARENT or ISLASTCN is not set, dvp
-				 * is returned unlocked on a successful
-				 * lookup.
-				 */
 				*vpp = res_node->vnode;
-				if (!lock_parent || !islastcn)
-					VOP_UNLOCK(dvp, 0);
 			}
-			/* done */
 		}
-		/* done */
 	}	
 
 	/*

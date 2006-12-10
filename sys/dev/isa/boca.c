@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.45.22.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: boca.c,v 1.45.22.2 2006/12/10 07:17:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.45.22.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.45.22.2 2006/12/10 07:17:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ CFATTACH_DECL(boca, sizeof(struct boca_softc),
     bocaprobe, bocaattach, NULL, NULL);
 
 int
-bocaprobe(struct device *parent __unused, struct cfdata *self __unused,
+bocaprobe(struct device *parent, struct cfdata *self,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -148,7 +148,7 @@ out:
 }
 
 void
-bocaattach(struct device *parent __unused, struct device *self, void *aux)
+bocaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct boca_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

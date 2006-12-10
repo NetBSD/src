@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.28.4.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: satlink.c,v 1.28.4.2 2006/12/10 07:17:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.28.4.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.28.4.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ const struct cdevsw satlink_cdevsw = {
 };
 
 int
-satlinkprobe(struct device *parent __unused, struct cfdata *match __unused,
+satlinkprobe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -166,7 +166,7 @@ satlinkprobe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-satlinkattach(struct device *parent __unused, struct device *self, void *aux)
+satlinkattach(struct device *parent, struct device *self, void *aux)
 {
 	struct satlink_softc *sc = (struct satlink_softc *)self;
 	struct isa_attach_args *ia = aux;
@@ -251,8 +251,8 @@ satlinkattach(struct device *parent __unused, struct device *self, void *aux)
 }
 
 int
-satlinkopen(dev_t dev, int flags __unused, int fmt __unused,
-    struct lwp *l __unused)
+satlinkopen(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	struct satlink_softc *sc;
 	int error;
@@ -285,8 +285,8 @@ satlinkopen(dev_t dev, int flags __unused, int fmt __unused,
 }
 
 int
-satlinkclose(dev_t dev, int flags __unused, int fmt __unused,
-    struct lwp *l __unused)
+satlinkclose(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 	int s;
@@ -375,8 +375,8 @@ satlinkread(dev, uio, flags)
 }
 
 int
-satlinkioctl(dev_t dev, u_long cmd, caddr_t data, int flags __unused,
-    struct lwp *l __unused)
+satlinkioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
+    struct lwp *l)
 {
 	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 
@@ -437,7 +437,7 @@ filt_satlinkrdetach(struct knote *kn)
 }
 
 static int
-filt_satlinkread(struct knote *kn, long hint __unused)
+filt_satlinkread(struct knote *kn, long hint)
 {
 	struct satlink_softc *sc = kn->kn_hook;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.7.6.1 2006/10/22 06:07:12 yamt Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.7.6.2 2006/12/10 07:18:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.7.6.1 2006/10/22 06:07:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.7.6.2 2006/12/10 07:18:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,9 +131,8 @@ extattr_check_cred(struct vnode *vp, int attrnamespace,
  */
 /*ARGSUSED*/
 int
-vfs_stdextattrctl(struct mount *mp __unused, int cmt __unused, struct vnode *vp,
-    int attrnamespace __unused, const char *attrname __unused,
-    struct lwp *l __unused)
+vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
+    int attrnamespace, const char *attrname, struct lwp *l)
 {
 
 	if (vp != NULL)
@@ -149,7 +148,7 @@ vfs_stdextattrctl(struct mount *mp __unused, int cmt __unused, struct vnode *vp,
  * require the use of this system call.
  */
 int
-sys_extattrctl(struct lwp *l, void *v, register_t *retval __unused)
+sys_extattrctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_extattrctl_args /* {
 		syscallarg(const char *) path;
@@ -595,7 +594,7 @@ sys_extattr_get_link(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_extattr_delete_fd(struct lwp *l, void *v, register_t *retval __unused)
+sys_extattr_delete_fd(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_extattr_delete_fd_args /* {
 		syscallarg(int) fd;
@@ -624,7 +623,7 @@ sys_extattr_delete_fd(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-sys_extattr_delete_file(struct lwp *l, void *v, register_t *retval __unused)
+sys_extattr_delete_file(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_extattr_delete_file_args /* {
 		syscallarg(const char *) path;
@@ -653,7 +652,7 @@ sys_extattr_delete_file(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-sys_extattr_delete_link(struct lwp *l, void *v, register_t *retval __unused)
+sys_extattr_delete_link(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_extattr_delete_link_args /* {
 		syscallarg(const char *) path;
@@ -1020,7 +1019,7 @@ sys_flistxattr(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_removexattr(struct lwp *l, void *v, register_t *retval __unused)
+sys_removexattr(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_removexattr_args /* {
 		syscallarg(const char *) path;
@@ -1048,7 +1047,7 @@ sys_removexattr(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-sys_lremovexattr(struct lwp *l, void *v, register_t *retval __unused)
+sys_lremovexattr(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lremovexattr_args /* {
 		syscallarg(const char *) path;
@@ -1076,7 +1075,7 @@ sys_lremovexattr(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-sys_fremovexattr(struct lwp *l, void *v, register_t *retval __unused)
+sys_fremovexattr(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fremovexattr_args /* {
 		syscallarg(int) fd;

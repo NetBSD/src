@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.19.6.1 2006/10/22 06:04:39 yamt Exp $
+#	$NetBSD: majors.evbmips,v 1.19.6.2 2006/12/10 07:15:53 yamt Exp $
 #
 # Device majors for evbmips
 #
@@ -84,5 +84,5 @@ device-major	athflash	char 99			athflash
 device-major	spiflash	char 100 block 19	spiflash
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.

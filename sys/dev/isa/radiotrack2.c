@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack2.c,v 1.11.22.1 2006/10/22 06:06:04 yamt Exp $ */
+/* $NetBSD: radiotrack2.c,v 1.11.22.2 2006/12/10 07:17:29 yamt Exp $ */
 /* $OpenBSD: radiotrack2.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack2.c,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radiotrack2.c,v 1.11.22.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radiotrack2.c,v 1.11.22.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ void	rtii_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 void	rtii_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
 
 int
-rtii_probe(struct device *parent __unused, struct cfdata *cf __unused,
+rtii_probe(struct device *parent, struct cfdata *cf,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -165,7 +165,7 @@ rtii_probe(struct device *parent __unused, struct cfdata *cf __unused,
 }
 
 void
-rtii_attach(struct device *parent __unused, struct device *self, void *aux)
+rtii_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rtii_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;
@@ -213,7 +213,7 @@ rtii_set_mute(struct rtii_softc *sc)
 
 void
 rtii_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
-    u_int32_t d __unused)
+    u_int32_t d)
 {
 	bus_space_write_1(iot, ioh, off, RTII_RESET | RTII_WREN_OFF);
 	bus_space_write_1(iot, ioh, off, RTII_RESET | RTII_WREN_ON);
@@ -222,7 +222,7 @@ rtii_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
 
 void
 rtii_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
-    u_int32_t d __unused)
+    u_int32_t d)
 {
 	bus_space_write_1(iot, ioh, off, RTII_RESET | RTII_WREN_OFF);
 }

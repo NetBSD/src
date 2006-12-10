@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.80.2.1 2006/10/22 06:07:52 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.80.2.2 2006/12/10 07:19:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.80.2.1 2006/10/22 06:07:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.80.2.2 2006/12/10 07:19:33 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -911,8 +911,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 
 static int
 uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
-    int *npagesp, int centeridx, vm_prot_t access_type, int advice __unused,
-    int flags)
+    int *npagesp, int centeridx, vm_prot_t access_type, int advice, int flags)
 {
 #if defined(VMSWAP)
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;

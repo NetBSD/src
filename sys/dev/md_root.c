@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.10.50.1 2006/10/22 06:05:28 yamt Exp $	*/
+/*	$NetBSD: md_root.c,v 1.10.50.2 2006/12/10 07:16:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.10.50.1 2006/10/22 06:05:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.10.50.2 2006/12/10 07:16:53 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -117,7 +117,7 @@ md_attach_hook(int unit, struct md_conf *md)
  * This is called during open (i.e. mountroot)
  */
 void
-md_open_hook(int unit, struct md_conf *md __unused)
+md_open_hook(int unit, struct md_conf *md)
 {
 
 	if (unit == 0) {

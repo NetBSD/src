@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.4.8.1 2006/10/22 06:06:15 yamt Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.4.8.2 2006/12/10 07:17:41 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,7 +32,7 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.4.8.1 2006/10/22 06:06:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.4.8.2 2006/12/10 07:17:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 }
 
 static int
-amdpm_smbus_acquire_bus(void *cookie, int flags __unused)
+amdpm_smbus_acquire_bus(void *cookie, int flags)
 {
 	struct amdpm_softc *sc = cookie;
 	int err;
@@ -99,7 +99,7 @@ amdpm_smbus_acquire_bus(void *cookie, int flags __unused)
 }
 
 static void
-amdpm_smbus_release_bus(void *cookie, int flags __unused)
+amdpm_smbus_release_bus(void *cookie, int flags)
 {
 	struct amdpm_softc *sc = cookie;
 
@@ -110,7 +110,7 @@ amdpm_smbus_release_bus(void *cookie, int flags __unused)
 
 static int
 amdpm_smbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
-    size_t cmdlen, void *vbuf, size_t buflen, int flags __unused)
+    size_t cmdlen, void *vbuf, size_t buflen, int flags)
 {
         struct amdpm_softc *sc  = (struct amdpm_softc *) cookie;
 	sc->sc_smbus_slaveaddr  = addr;

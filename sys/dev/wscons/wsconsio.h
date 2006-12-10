@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.80 2006/06/19 15:44:45 gdamore Exp $ */
+/* $NetBSD: wsconsio.h,v 1.80.6.1 2006/12/10 07:18:27 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -303,6 +303,7 @@ struct wsmouse_repeat {
 #define	WSDISPLAY_TYPE_STI	40	/* HP STI framebuffers */
 #define	WSDISPLAY_TYPE_HDLCD	41	/* Hitachi HD44780 based LCDs */
 #define	WSDISPLAY_TYPE_VESA	42	/* VESA BIOS framebuffer */
+#define	WSDISPLAY_TYPE_XILFB 	43 	/* Xilinx TFT cores */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

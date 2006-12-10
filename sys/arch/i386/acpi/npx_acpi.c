@@ -1,4 +1,4 @@
-/* $NetBSD: npx_acpi.c,v 1.11.16.1 2006/10/22 06:04:42 yamt Exp $ */
+/* $NetBSD: npx_acpi.c,v 1.11.16.2 2006/12/10 07:16:01 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.11.16.1 2006/10/22 06:04:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.11.16.2 2006/12/10 07:16:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ static const char * const npx_acpi_ids[] = {
  * npx_acpi_match: autoconf(9) match routine
  */
 static int
-npx_acpi_match(struct device *parent __unused, struct cfdata *match __unused,
+npx_acpi_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -80,7 +80,7 @@ npx_acpi_match(struct device *parent __unused, struct cfdata *match __unused,
  * npx_acpi_attach: autoconf(9) attach routine
  */
 static void
-npx_acpi_attach(struct device *parent __unused, struct device *self, void *aux)
+npx_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct npx_softc *sc = (struct npx_softc *)self;
 	struct acpi_attach_args *aa = aux;
@@ -131,7 +131,12 @@ npx_acpi_attach(struct device *parent __unused, struct device *self, void *aux)
 		    IPL_NONE, (int (*)(void *))npxintr, NULL);
 		break;
 	case NPX_EXCEPTION:
-		aprint_verbose("%s: using exception 16\n", sc->sc_dev.dv_xname);
+		/*FALLTHROUGH*/
+	case NPX_CPUID:
+		aprint_verbose("%s:%s using exception 16\n",
+		    sc->sc_dev.dv_xname,
+		    sc->sc_type == NPX_CPUID ? " reported by CPUID;" : "");
+		sc->sc_type = NPX_EXCEPTION;
 		break;
 	case NPX_BROKEN:
 		aprint_error("%s: error reporting broken; not using\n",

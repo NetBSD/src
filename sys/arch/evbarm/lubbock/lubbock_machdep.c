@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.12 2006/05/17 04:22:46 mrg Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.12.10.1 2006/12/10 07:15:53 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.12 2006/05/17 04:22:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.12.10.1 2006/12/10 07:15:53 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -242,7 +242,6 @@ struct user *proc0paddr;
 
 #if 0
 void	process_kernel_args(char *);
-void	parse_mi_bootargs(char *args);
 #endif
 
 void	consinit(void);
@@ -599,7 +598,7 @@ initarm(void *arg)
 	printf("initarm: Configuring system ...\n");
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
-	/* XXX must make the memory description h/w independant */
+	/* XXX must make the memory description h/w independent */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = memstart;
 	bootconfig.dram[0].pages = memsize / PAGE_SIZE;

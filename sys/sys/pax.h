@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.2.18.1 2006/10/22 06:07:47 yamt Exp $ */
+/* $NetBSD: pax.h,v 1.2.18.2 2006/12/10 07:19:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -37,8 +37,13 @@
 
 struct lwp;
 
+void pax_init(void);
+void pax_adjust(struct lwp *, int);
+
 void pax_mprotect(struct lwp *, vm_prot_t *, vm_prot_t *);
-void pax_mprotect_adjust(struct lwp *, int);
+
+int pax_segvguard(struct lwp *, struct vnode *, const char *, boolean_t);
+void pax_segvguard_cb(void *, int);
 
 #endif /* !__SYS_PAX_H__ */
 

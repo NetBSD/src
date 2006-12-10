@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.19.4.1 2006/10/22 06:06:43 yamt Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.19.4.2 2006/12/10 07:18:11 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.19.4.1 2006/10/22 06:06:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.19.4.2 2006/12/10 07:18:11 yamt Exp $");
 
 #include "rf_archs.h"
 
@@ -376,7 +376,7 @@ static void
 ReintegrateRegion(
     RF_Raid_t * raidPtr,
     RF_RegionId_t regionID,
-    RF_ParityLog_t * coreLog __unused)
+    RF_ParityLog_t * coreLog)
 {
 	RF_MCPair_t *rrd_mcpair = NULL, *prd_mcpair, *pwr_mcpair;
 	RF_DagHeader_t *rrd_dag_h = NULL, *prd_dag_h, *pwr_dag_h;

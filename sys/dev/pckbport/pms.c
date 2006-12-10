@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.12.2.1 2006/10/22 06:06:38 yamt Exp $ */
+/* $NetBSD: pms.c,v 1.12.2.2 2006/12/10 07:18:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.12.2.1 2006/10/22 06:06:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.12.2.2 2006/12/10 07:18:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ pms_protocol(pckbport_tag_t tag, pckbport_slot_t slot)
 }
 
 int
-pmsprobe(struct device *parent __unused, struct cfdata *match __unused,
+pmsprobe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
@@ -169,7 +169,7 @@ pmsprobe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-pmsattach(struct device *parent __unused, struct device *self, void *aux)
+pmsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pms_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;
@@ -372,8 +372,8 @@ pms_power(int why, void *v)
 #endif /* !PMS_DISABLE_POWERHOOK */
 
 int
-pms_ioctl(void *v, u_long cmd, caddr_t data, int flag __unused,
-    struct lwp *l __unused)
+pms_ioctl(void *v, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct pms_softc *sc = v;
 	u_char kbcmd[2];
@@ -640,7 +640,7 @@ pmsinput(void *vsc, int data)
 			    "buttons 0x%02x\n",	dx, dy, dz, sc->buttons));
 #endif
 			wsmouse_input(sc->sc_wsmousedev,
-			    sc->buttons, dx, dy, dz,
+			    sc->buttons, dx, dy, dz, 0,
 			    WSMOUSE_INPUT_DELTA);
 		}
 		memset(sc->packet, 0, 4);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ali1543.c,v 1.7.22.1 2006/10/22 06:04:48 yamt Exp $	*/
+/*	$NetBSD: ali1543.c,v 1.7.22.2 2006/12/10 07:16:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -94,7 +94,7 @@
 /* HAYAKAWA Koichi wrote ALi 1543 PCI ICU code basing on VIA82C586 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ali1543.c,v 1.7.22.1 2006/10/22 06:04:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ali1543.c,v 1.7.22.2 2006/12/10 07:16:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ ali1543_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
 }
 
 int
-ali1543_getclink(pciintr_icu_handle_t v __unused, int link, int *clinkp)
+ali1543_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 
 	if (ALI1543_LEGAL_LINK(link - 1)) {

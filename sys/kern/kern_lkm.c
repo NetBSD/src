@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.93.2.1 2006/10/22 06:07:10 yamt Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.93.2.2 2006/12/10 07:18:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.93.2.1 2006/10/22 06:07:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.93.2.2 2006/12/10 07:18:44 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -149,7 +149,7 @@ lkm_init(void)
 
 /*ARGSUSED*/
 int
-lkmopen(dev_t dev, int flag, int devtype __unused, struct lwp *l __unused)
+lkmopen(dev_t dev, int flag, int devtype, struct lwp *l)
 {
 	int error;
 
@@ -304,8 +304,7 @@ lkmunreserve(int delsymtab)
 }
 
 int
-lkmclose(dev_t dev __unused, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+lkmclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	if (!(lkm_v & LKM_ALLOC)) {
@@ -335,7 +334,7 @@ lkmclose(dev_t dev __unused, int flag __unused, int mode __unused,
 
 /*ARGSUSED*/
 int
-lkmioctl(dev_t dev __unused, u_long cmd, caddr_t data, int flag, struct lwp *l)
+lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int i, error = 0;
 	struct lmc_resrv *resrvp;
@@ -669,7 +668,7 @@ sys_lkmnosys(struct lwp *l, void *v, register_t *retval)
  * Used where people don't want to specify a special function.
  */
 int
-lkm_nofunc(struct lkm_table *lkmtp __unused, int cmd __unused)
+lkm_nofunc(struct lkm_table *lkmtp, int cmd)
 {
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.22.6.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.22.6.2 2006/12/10 07:17:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.22.6.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.22.6.2 2006/12/10 07:17:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ CFATTACH_DECL(com_multi, sizeof(struct com_softc),
     com_multi_probe, com_multi_attach, NULL, NULL);
 
 int
-com_multi_probe(struct device *parent __unused, struct cfdata *match, void *aux)
+com_multi_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	int iobase;
 	struct cfdata *cf = match;
@@ -126,7 +126,7 @@ com_multi_probe(struct device *parent __unused, struct cfdata *match, void *aux)
 }
 
 void
-com_multi_attach(struct device *parent __unused, struct device *self, void *aux)
+com_multi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (void *)self;
 	struct commulti_attach_args *ca = aux;

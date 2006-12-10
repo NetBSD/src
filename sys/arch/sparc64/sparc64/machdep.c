@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.190.2.1 2006/10/22 06:05:12 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.190.2.2 2006/12/10 07:16:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190.2.1 2006/10/22 06:05:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190.2.2 2006/12/10 07:16:38 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1462,7 +1462,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	size = round_page(size);
 
 	/*
-	 * Find a region of kernel virtual addresses that can accomodate
+	 * Find a region of kernel virtual addresses that can accommodate
 	 * our aligment requirements.
 	 */
 	oversize = size + align - PAGE_SIZE;
@@ -1882,7 +1882,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 	struct trapframe64 *tf = l->l_md.md_tf;
 
 	/* First ensure consistent stack state (see sendsig). */

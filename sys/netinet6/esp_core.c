@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.36.4.1 2006/10/22 06:07:34 yamt Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.36.4.2 2006/12/10 07:19:14 yamt Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.36.4.1 2006/10/22 06:07:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.36.4.2 2006/12/10 07:19:14 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -252,7 +252,7 @@ esp_schedule(algo, sav)
 }
 
 static int
-esp_null_mature(struct secasvar *sav __unused)
+esp_null_mature(struct secasvar *sav)
 {
 
 	/* anything is okay */
@@ -261,11 +261,11 @@ esp_null_mature(struct secasvar *sav __unused)
 
 static int
 esp_null_decrypt(
-    struct mbuf *m __unused,
-    size_t off __unused,		/* offset to ESP header */
-    struct secasvar *sav __unused,
-    const struct esp_algorithm *algo __unused,
-    int ivlen __unused
+    struct mbuf *m,
+    size_t off,		/* offset to ESP header */
+    struct secasvar *sav,
+    const struct esp_algorithm *algo,
+    int ivlen
 )
 {
 
@@ -274,12 +274,12 @@ esp_null_decrypt(
 
 static int
 esp_null_encrypt(
-    struct mbuf *m __unused,
-    size_t off __unused,	/* offset to ESP header */
-    size_t plen __unused,	/* payload length (to be encrypted) */
-    struct secasvar *sav __unused,
-    const struct esp_algorithm *algo __unused,
-    int ivlen __unused
+    struct mbuf *m,
+    size_t off,	/* offset to ESP header */
+    size_t plen,	/* payload length (to be encrypted) */
+    struct secasvar *sav,
+    const struct esp_algorithm *algo,
+    int ivlen
 )
 {
 
@@ -329,7 +329,7 @@ esp_descbc_mature(sav)
 }
 
 static int
-esp_descbc_ivlen(const struct esp_algorithm *algo __unused,
+esp_descbc_ivlen(const struct esp_algorithm *algo,
     struct secasvar *sav)
 {
 
@@ -343,14 +343,14 @@ esp_descbc_ivlen(const struct esp_algorithm *algo __unused,
 }
 
 static size_t
-esp_des_schedlen(const struct esp_algorithm *algo __unused)
+esp_des_schedlen(const struct esp_algorithm *algo)
 {
 
 	return sizeof(des_key_schedule);
 }
 
 static int
-esp_des_schedule(const struct esp_algorithm *algo __unused,
+esp_des_schedule(const struct esp_algorithm *algo,
     struct secasvar *sav)
 {
 
@@ -362,7 +362,7 @@ esp_des_schedule(const struct esp_algorithm *algo __unused,
 }
 
 static int
-esp_des_blockdecrypt( const struct esp_algorithm *algo __unused,
+esp_des_blockdecrypt( const struct esp_algorithm *algo,
     struct secasvar *sav, u_int8_t *s, u_int8_t *d)
 {
 
@@ -374,7 +374,7 @@ esp_des_blockdecrypt( const struct esp_algorithm *algo __unused,
 }
 
 static int
-esp_des_blockencrypt(const struct esp_algorithm *algo __unused,
+esp_des_blockencrypt(const struct esp_algorithm *algo,
     struct secasvar *sav, u_int8_t *s, u_int8_t *d)
 {
 
@@ -452,14 +452,14 @@ esp_cbc_mature(sav)
 }
 
 static size_t
-esp_blowfish_schedlen(const struct esp_algorithm *algo __unused)
+esp_blowfish_schedlen(const struct esp_algorithm *algo)
 {
 
 	return sizeof(BF_KEY);
 }
 
 static int
-esp_blowfish_schedule(const struct esp_algorithm *algo __unused,
+esp_blowfish_schedule(const struct esp_algorithm *algo,
     struct secasvar *sav)
 {
 
@@ -469,7 +469,7 @@ esp_blowfish_schedule(const struct esp_algorithm *algo __unused,
 }
 
 static int
-esp_blowfish_blockdecrypt(const struct esp_algorithm *algo __unused,
+esp_blowfish_blockdecrypt(const struct esp_algorithm *algo,
     struct secasvar *sav, u_int8_t *s, u_int8_t *d)
 {
 
@@ -478,7 +478,7 @@ esp_blowfish_blockdecrypt(const struct esp_algorithm *algo __unused,
 }
 
 static int
-esp_blowfish_blockencrypt(const struct esp_algorithm *algo __unused,
+esp_blowfish_blockencrypt(const struct esp_algorithm *algo,
     struct secasvar *sav, u_int8_t *s, u_int8_t *d)
 {
 
@@ -487,14 +487,14 @@ esp_blowfish_blockencrypt(const struct esp_algorithm *algo __unused,
 }
 
 static size_t
-esp_cast128_schedlen(const struct esp_algorithm *algo __unused)
+esp_cast128_schedlen(const struct esp_algorithm *algo)
 {
 
 	return sizeof(cast128_key);
 }
 
 static int
-esp_cast128_schedule(const struct esp_algorithm *algo __unused,
+esp_cast128_schedule(const struct esp_algorithm *algo,
     struct secasvar *sav)
 {
 
@@ -504,7 +504,7 @@ esp_cast128_schedule(const struct esp_algorithm *algo __unused,
 }
 
 static int
-esp_cast128_blockdecrypt(const struct esp_algorithm *algo __unused,
+esp_cast128_blockdecrypt(const struct esp_algorithm *algo,
     struct secasvar *sav, u_int8_t *s, u_int8_t *d)
 {
 
@@ -513,7 +513,7 @@ esp_cast128_blockdecrypt(const struct esp_algorithm *algo __unused,
 }
 
 static int
-esp_cast128_blockencrypt(const struct esp_algorithm *algo __unused,
+esp_cast128_blockencrypt(const struct esp_algorithm *algo,
     struct secasvar *sav, u_int8_t *s, u_int8_t *d)
 {
 
@@ -522,14 +522,14 @@ esp_cast128_blockencrypt(const struct esp_algorithm *algo __unused,
 }
 
 static size_t
-esp_3des_schedlen(const struct esp_algorithm *algo __unused)
+esp_3des_schedlen(const struct esp_algorithm *algo)
 {
 
 	return sizeof(des_key_schedule) * 3;
 }
 
 static int
-esp_3des_schedule(const struct esp_algorithm *algo __unused,
+esp_3des_schedule(const struct esp_algorithm *algo,
     struct secasvar *sav)
 {
 	int error;
@@ -548,7 +548,7 @@ esp_3des_schedule(const struct esp_algorithm *algo __unused,
 }
 
 static int
-esp_3des_blockdecrypt(const struct esp_algorithm *algo __unused,
+esp_3des_blockdecrypt(const struct esp_algorithm *algo,
     struct secasvar *sav, u_int8_t *s, u_int8_t *d)
 {
 	des_key_schedule *p;
@@ -562,7 +562,7 @@ esp_3des_blockdecrypt(const struct esp_algorithm *algo __unused,
 }
 
 static int
-esp_3des_blockencrypt(const struct esp_algorithm *algo __unused,
+esp_3des_blockencrypt(const struct esp_algorithm *algo,
     struct secasvar *sav, u_int8_t *s, u_int8_t *d)
 {
 	des_key_schedule *p;
@@ -577,7 +577,7 @@ esp_3des_blockencrypt(const struct esp_algorithm *algo __unused,
 
 static int
 esp_common_ivlen(const struct esp_algorithm *algo,
-    struct secasvar *sav __unused)
+    struct secasvar *sav)
 {
 
 	if (!algo)
@@ -788,7 +788,7 @@ static int
 esp_cbc_encrypt(
     struct mbuf *m,
     size_t off,
-    size_t plen __unused,
+    size_t plen,
     struct secasvar *sav,
     const struct esp_algorithm *algo,
     int ivlen

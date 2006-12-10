@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.10.6.1 2006/10/22 06:06:18 yamt Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.10.6.2 2006/12/10 07:17:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.10.6.1 2006/10/22 06:06:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.10.6.2 2006/12/10 07:17:45 yamt Exp $");
 
 #include "rnd.h"
 
@@ -81,8 +81,8 @@ static void	ld_amr_handler(struct amr_ccb *);
 static int	ld_amr_start(struct ld_softc *, struct buf *);
 
 static int
-ld_amr_match(struct device *parent __unused, struct cfdata *match __unused,
-    void *aux __unused)
+ld_amr_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	return (1);

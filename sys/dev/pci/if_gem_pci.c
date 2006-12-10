@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.21 2006/08/05 21:26:49 sanjayl Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.21.6.1 2006/12/10 07:17:43 yamt Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.21 2006/08/05 21:26:49 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.21.6.1 2006/12/10 07:17:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,9 +156,15 @@ gem_attach_pci(parent, self, aux)
 	/* XXX Need to check for a 64-bit mem BAR? */
 	if (pci_mapreg_map(pa, PCI_GEM_BASEADDR,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->sc_bustag, &sc->sc_h, NULL, NULL) != 0)
+	    &sc->sc_bustag, &sc->sc_h1, NULL, NULL) != 0)
 	{
 		aprint_error("%s: unable to map device registers\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+	if (bus_space_subregion(sc->sc_bustag, sc->sc_h1,
+	    GEM_PCI_BANK2_OFFSET, GEM_PCI_BANK2_SIZE, &sc->sc_h2)) {
+		aprint_error("%s: unable to create bank 2 subregion\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}

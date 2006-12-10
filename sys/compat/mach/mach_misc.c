@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.22.22.1 2006/10/22 06:05:24 yamt Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.22.22.2 2006/12/10 07:16:48 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.22.22.1 2006/10/22 06:05:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.22.22.2 2006/12/10 07:16:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.22.22.1 2006/10/22 06:05:24 yamt Exp
 
 
 int
-mach_sys_semaphore_timedwait_trap(struct lwp *l __unused, void *v,
+mach_sys_semaphore_timedwait_trap(struct lwp *l, void *v,
     register_t *r)
 {
 #ifdef DEBUG_MACH
@@ -102,7 +102,7 @@ mach_sys_semaphore_timedwait_trap(struct lwp *l __unused, void *v,
 
 
 int
-mach_sys_semaphore_timedwait_signal_trap(struct lwp *l __unused, void *v,
+mach_sys_semaphore_timedwait_signal_trap(struct lwp *l, void *v,
     register_t *r)
 {
 #ifdef DEBUG_MACH
@@ -118,7 +118,7 @@ mach_sys_semaphore_timedwait_signal_trap(struct lwp *l __unused, void *v,
 
 
 int
-mach_sys_init_process(struct lwp *l __unused, void *v __unused, register_t *r)
+mach_sys_init_process(struct lwp *l, void *v, register_t *r)
 {
 	*r = 0;
 	DPRINTF(("mach_sys_init_process();\n"));
@@ -127,7 +127,7 @@ mach_sys_init_process(struct lwp *l __unused, void *v __unused, register_t *r)
 
 
 int
-mach_sys_pid_for_task(struct lwp *l __unused, void *v, register_t *r)
+mach_sys_pid_for_task(struct lwp *l, void *v, register_t *r)
 {
 #ifdef DEBUG_MACH
 	struct mach_sys_pid_for_task_args *ap = v;
@@ -140,7 +140,7 @@ mach_sys_pid_for_task(struct lwp *l __unused, void *v, register_t *r)
 
 
 int
-mach_sys_macx_swapon(struct lwp *l __unused, void *v, register_t *r)
+mach_sys_macx_swapon(struct lwp *l, void *v, register_t *r)
 {
 #ifdef DEBUG_MACH
 	struct mach_sys_macx_swapon_args *ap = v;
@@ -153,7 +153,7 @@ mach_sys_macx_swapon(struct lwp *l __unused, void *v, register_t *r)
 }
 
 int
-mach_sys_macx_swapoff(struct lwp *l __unused, void *v, register_t *r)
+mach_sys_macx_swapoff(struct lwp *l, void *v, register_t *r)
 {
 #ifdef DEBUG_MACH
 	struct mach_sys_macx_swapoff_args *ap = v;
@@ -165,7 +165,7 @@ mach_sys_macx_swapoff(struct lwp *l __unused, void *v, register_t *r)
 }
 
 int
-mach_sys_macx_triggers(struct lwp *l __unused, void *v, register_t *r)
+mach_sys_macx_triggers(struct lwp *l, void *v, register_t *r)
 {
 #ifdef DEBUG_MACH
 	struct mach_sys_macx_triggers_args *ap = v;
@@ -179,7 +179,7 @@ mach_sys_macx_triggers(struct lwp *l __unused, void *v, register_t *r)
 
 
 int
-mach_sys_wait_until(struct lwp *l __unused, void *v, register_t *r)
+mach_sys_wait_until(struct lwp *l, void *v, register_t *r)
 {
 #ifdef DEBUG_MACH
 	struct mach_sys_wait_until_args *ap = v;
@@ -192,7 +192,7 @@ mach_sys_wait_until(struct lwp *l __unused, void *v, register_t *r)
 
 
 int
-mach_sys_timer_create(struct lwp *l __unused, void *v __unused, register_t *r)
+mach_sys_timer_create(struct lwp *l, void *v, register_t *r)
 {
 	*r = 0;
 	DPRINTF(("mach_sys_timer_create();\n"));
@@ -201,7 +201,7 @@ mach_sys_timer_create(struct lwp *l __unused, void *v __unused, register_t *r)
 
 
 int
-mach_sys_timer_destroy(struct lwp *l __unused, void *v, register_t *r)
+mach_sys_timer_destroy(struct lwp *l, void *v, register_t *r)
 {
 #ifdef DEBUG_MACH
 	struct mach_sys_timer_destroy_args *ap = v;
@@ -213,7 +213,7 @@ mach_sys_timer_destroy(struct lwp *l __unused, void *v, register_t *r)
 
 
 int
-mach_sys_timer_arm(struct lwp *l __unused, void *v, register_t *r)
+mach_sys_timer_arm(struct lwp *l, void *v, register_t *r)
 {
 #ifdef DEBUG_MACH
 	struct mach_sys_timer_arm_args *ap = v;
@@ -226,7 +226,7 @@ mach_sys_timer_arm(struct lwp *l __unused, void *v, register_t *r)
 
 
 int
-mach_sys_timer_cancel(struct lwp *l __unused, void *v, register_t *r)
+mach_sys_timer_cancel(struct lwp *l, void *v, register_t *r)
 {
 #ifdef DEBUG_MACH
 	struct mach_sys_timer_cancel_args *ap = v;
@@ -239,7 +239,7 @@ mach_sys_timer_cancel(struct lwp *l __unused, void *v, register_t *r)
 
 
 int
-mach_sys_get_time_base_info(struct lwp *l __unused, void *v __unused,
+mach_sys_get_time_base_info(struct lwp *l, void *v,
     register_t *r)
 {
 	*r = 0;

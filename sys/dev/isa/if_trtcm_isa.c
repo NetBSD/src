@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.11.10.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.11.10.2 2006/12/10 07:17:27 yamt Exp $	*/
 
 /* XXXJRT verify doens't change isa_attach_args too early */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.11.10.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.11.10.2 2006/12/10 07:17:27 yamt Exp $");
 
 #undef TRTCMISADEBUG
 
@@ -189,7 +189,7 @@ tcmdumpeeprom(iot, ioh)
 #endif
 
 int
-trtcm_isa_mediachange(struct tr_softc *sc __unused)
+trtcm_isa_mediachange(struct tr_softc *sc)
 {
 	return EINVAL;
 }
@@ -207,7 +207,7 @@ trtcm_isa_mediastatus(sc, ifmr)
 /* XXX hard coded constants in readeeprom elink_idseq */
 
 int
-trtcm_isa_probe(struct device *parent, struct cfdata *match __unused,
+trtcm_isa_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args	*ia = aux;

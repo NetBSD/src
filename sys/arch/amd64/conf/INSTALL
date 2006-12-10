@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.56.2.1 2006/10/22 06:04:31 yamt Exp $
+# $NetBSD: INSTALL,v 1.56.2.2 2006/12/10 07:15:46 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.56.2.1 $"
+#ident 		"INSTALL-$Revision: 1.56.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -337,6 +337,7 @@ icpsp*	at icp? unit ?			# SCSI pass-through
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide* 	at pci? dev ? function ?	# Acard IDE controllers
 aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+ahcisata*	at pci? dev ? function ?	# AHCI SATA controllers
 artsata* 	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers

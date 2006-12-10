@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.53.22.1 2006/10/22 06:04:48 yamt Exp $ */
+/* $NetBSD: pnpbios.c,v 1.53.22.2 2006/12/10 07:16:12 yamt Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.53.22.1 2006/10/22 06:04:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.53.22.2 2006/12/10 07:16:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.53.22.1 2006/10/22 06:04:48 yamt Exp $
 #include <arch/i386/pnpbios/pnpbiosvar.h>
 #include <arch/i386/pnpbios/pnpbiosreg.h>
 
-#include "opt_pnpbiosverbose.h"
+#include "opt_pnpbios.h"
 #include "locators.h"
 
 #ifdef PNPBIOSVERBOSE
@@ -76,13 +76,13 @@ int	pnpbiosdebug = PNPBIOSDEBUG_VALUE;
 #else
 int	pnpbiosdebug = 1;
 #endif
-#define	DPRINTF(x) if (pnpbiosdebug) printf x
+#define	DPRINTF(x) if (pnpbiosdebug) aprint_normal x
 #else
 #define	DPRINTF(x)
 #endif
 
 #ifdef PNPBIOSEVENTSDEBUG
-#define	EDPRINTF(x) printf x
+#define	EDPRINTF(x) aprint_normal x
 #else
 #define	EDPRINTF(x)
 #endif
@@ -245,8 +245,8 @@ pnpbios_probe(void)
 }
 
 static int
-pnpbios_match(struct device *parent __unused, struct cfdata *match __unused,
-    void *aux __unused)
+pnpbios_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	/* There can be only one! */
@@ -277,7 +277,7 @@ pnpbios_mapit(u_long addr, u_long len, int prot)
 }
 
 static void
-pnpbios_attach(struct device *parent __unused, struct device *self, void *aux)
+pnpbios_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pnpbios_softc *sc = (struct pnpbios_softc *)self;
 	struct pnpbios_attach_args *paa = aux;
@@ -289,6 +289,8 @@ pnpbios_attach(struct device *parent __unused, struct device *self, void *aux)
 #ifdef PNPBIOSEVENTS
 	int evtype;
 #endif
+
+	aprint_naive("\n");
 
 	pnpbios_softc = sc;
 	sc->sc_ic = paa->paa_ic;
@@ -305,9 +307,10 @@ pnpbios_attach(struct device *parent __unused, struct device *self, void *aux)
 	pnpbios_entry = *(uint16_t *)(p + 0x11);
 
 	if (pnpbiosverbose) {
-		printf(": code %x, data %x, entry %x, control %x eventp %x\n%s",
+		aprint_normal(": code %x, data %x, entry %x, control %x,"
+			      " eventp %x\n%s",
 		    codepbase, datapbase, pnpbios_entry, sc->sc_control,
-		    (int)evaddrp, self->dv_xname);
+		    (unsigned int)evaddrp, self->dv_xname);
 	}
 
 #ifdef PNPBIOSEVENTS
@@ -317,7 +320,7 @@ pnpbios_attach(struct device *parent __unused, struct device *self, void *aux)
 		sc->sc_evaddr = pnpbios_mapit(evaddrp, PAGE_SIZE,
 			VM_PROT_READ | VM_PROT_WRITE);
 		if (!sc->sc_evaddr)
-			printf("%s: couldn't map event flag 0x%08x\n",
+			aprint_error("%s: couldn't map event flag 0x%08x\n",
 			    sc->sc_dev.dv_xname, evaddrp);
 	}
 #endif
@@ -327,7 +330,7 @@ pnpbios_attach(struct device *parent __unused, struct device *self, void *aux)
 	datava = pnpbios_mapit(datapbase, 0x10000,
 		VM_PROT_READ | VM_PROT_WRITE);
 	if (codeva == 0 || datava == 0) {
-		printf("no vm for mapping\n");
+		aprint_error(": no vm for mapping\n");
 		return;
 	}
 	pnpbios_scratchbuf = malloc(PNPBIOS_BUFSIZE, M_DEVBUF, M_NOWAIT);
@@ -345,11 +348,11 @@ pnpbios_attach(struct device *parent __unused, struct device *self, void *aux)
 
 	res = pnpbios_getnumnodes(&num, &size);
 	if (res) {
-		printf("pnpbios_getnumnodes: error %d\n", res);
+		aprint_error(": pnpbios_getnumnodes: error %d\n", res);
 		return;
 	}
 
-	printf(": nodes %d, max len %d\n", num, size);
+	aprint_normal(": nodes %d, max len %d\n", num, size);
 
 #ifdef PNPBIOSEVENTS
 	EDPRINTF(("%s: event flag vaddr 0x%08x\n", sc->sc_dev.dv_xname,
@@ -385,14 +388,14 @@ pnpbios_enumerate(struct pnpbios_softc *sc)
 
 	res = pnpbios_getnumnodes(&num, &size);
 	if (res) {
-		printf("%s: pnpbios_getnumnodes: error %d\n",
+		aprint_error("%s: pnpbios_getnumnodes: error %d\n",
 		    sc->sc_dev.dv_xname, res);
 		return;
 	}
 
 	buf = malloc(size, M_DEVBUF, M_NOWAIT);
 	if (buf == NULL) {
-		printf("%s: unable to allocate node buffer\n",
+		aprint_error("%s: unable to allocate node buffer\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -423,7 +426,7 @@ pnpbios_enumerate(struct pnpbios_softc *sc)
 
 		res = pnpbios_getnode(PNP_CF_DEVCONF_STATIC, &idx, buf, size);
 		if (res) {
-			printf("%s: index %d error %d "
+			aprint_error("%s: index %d error %d "
 			    "getting static configuration\n",
 			    sc->sc_dev.dv_xname, idx, res);
 			continue;
@@ -437,7 +440,7 @@ pnpbios_enumerate(struct pnpbios_softc *sc)
 
 		res = pnpbios_getnode(PNP_CF_DEVCONF_DYNAMIC, &dynidx, buf, size);
 		if (res) {
-			printf("%s: index %d error %d "
+			aprint_error("%s: index %d error %d "
 			    "getting dynamic configuration\n",
 			    sc->sc_dev.dv_xname, dynidx, res);
 			continue;
@@ -450,9 +453,10 @@ pnpbios_enumerate(struct pnpbios_softc *sc)
 		}
 	}
 	if (i != num)
-		printf("%s: got only %d nodes\n", sc->sc_dev.dv_xname, i);
+		aprint_error("%s: got only %d nodes\n",
+		    sc->sc_dev.dv_xname, i);
 	if (idx != 0xff)
-		printf("%s: last index %d\n", sc->sc_dev.dv_xname, idx);
+		aprint_error("%s: last index %d\n", sc->sc_dev.dv_xname, idx);
 
 	free(buf, M_DEVBUF);
 }
@@ -699,41 +703,43 @@ pnpbios_printres(struct pnpresources *r)
 
 	mem = SIMPLEQ_FIRST(&r->mem);
 	if (mem) {
-		printf("mem");
+		aprint_normal("mem");
 		do {
-			printf(" %x", mem->minbase);
+			aprint_normal(" %x", mem->minbase);
 			if (mem->len > 1)
-				printf("-%x", mem->minbase + mem->len - 1);
+				aprint_normal("-%x",
+					      mem->minbase + mem->len - 1);
 		} while ((mem = SIMPLEQ_NEXT(mem, next)));
 		p++;
 	}
 	io = SIMPLEQ_FIRST(&r->io);
 	if (io) {
 		if (p++)
-			printf(", ");
-		printf("io");
+			aprint_normal(", ");
+		aprint_normal("io");
 		do {
-			printf(" %x", io->minbase);
+			aprint_normal(" %x", io->minbase);
 			if (io->len > 1)
-				printf("-%x", io->minbase + io->len - 1);
+				aprint_normal("-%x",
+					      io->minbase + io->len - 1);
 		} while ((io = SIMPLEQ_NEXT(io, next)));
 	}
 	irq = SIMPLEQ_FIRST(&r->irq);
 	if (irq) {
 		if (p++)
-			printf(", ");
-		printf("irq");
+			aprint_normal(", ");
+		aprint_normal("irq");
 		do {
-			printf(" %d", ffs(irq->mask) - 1);
+			aprint_normal(" %d", ffs(irq->mask) - 1);
 		} while ((irq = SIMPLEQ_NEXT(irq, next)));
 	}
 	dma = SIMPLEQ_FIRST(&r->dma);
 	if (dma) {
 		if (p)
-			printf(", ");
-		printf("DMA");
+			aprint_normal(", ");
+		aprint_normal("DMA");
 		do {
-			printf(" %d", ffs(dma->mask) - 1);
+			aprint_normal(" %d", ffs(dma->mask) - 1);
 		} while ((dma = SIMPLEQ_NEXT(dma, next)));
 	}
 }
@@ -760,9 +766,9 @@ void
 pnpbios_print_devres(struct device *dev, struct pnpbiosdev_attach_args *aa)
 {
 
-	printf("%s: ", dev->dv_xname);
+	aprint_normal("%s: ", dev->dv_xname);
 	pnpbios_printres(aa->resc);
-	printf("\n");
+	aprint_normal("\n");
 }
 
 static int
@@ -805,7 +811,7 @@ pnpbios_attachnode(struct pnpbios_softc *sc, int idx, const uint8_t *buf,
 	DPRINTF(("%s: allocated config scan:\n", idstr));
 	res = pnp_scan(&p, len - 12, &r, 0);
 	if (res < 0) {
-		printf("error in config data\n");
+		aprint_error("error in config data\n");
 		goto dump;
 	}
 
@@ -815,19 +821,20 @@ pnpbios_attachnode(struct pnpbios_softc *sc, int idx, const uint8_t *buf,
 	DPRINTF(("\tpossible config scan:\n"));
 	res = pnp_scan(&p, len - (p - buf), &s, 0);
 	if (res < 0) {
-		printf("error in possible configuration\n");
+		aprint_error("error in possible configuration\n");
 		goto dump;
 	}
 
 	DPRINTF(("\tcompat id scan:\n"));
 	res = pnp_scan(&p, len - (p - buf), &s, 0);
 	if (res < 0) {
-		printf("error in compatible ID\n");
+		aprint_error("error in compatible ID\n");
 		goto dump;
 	}
 
 	if (p != buf + len) {
-		printf("%s: length mismatch in node %d: used %d of %d Bytes\n",
+		aprint_error("%s: length mismatch in node %d:"
+			     " used %d of %d Bytes\n",
 		       sc->sc_dev.dv_xname, idx, p - buf, len);
 		if (p > buf + len) {
 			/* XXX shouldn't happen - pnp_scan should catch it */
@@ -838,15 +845,15 @@ pnpbios_attachnode(struct pnpbios_softc *sc, int idx, const uint8_t *buf,
 
 	if (r.nummem + r.numio + r.numirq + r.numdma == 0) {
 		if (pnpbiosverbose) {
-			printf("%s", idstr);
+			aprint_normal("%s", idstr);
 			if (r.longname)
-				printf(", %s", r.longname);
+				aprint_normal(", %s", r.longname);
 			compatid = s.compatids;
 			while (compatid) {
-				printf(", %s", compatid->idstr);
+				aprint_normal(", %s", compatid->idstr);
 				compatid = compatid->next;
 			}
-			printf(" at %s index %d disabled\n",
+			aprint_normal(" at %s index %d disabled\n",
 			    sc->sc_dev.dv_xname, idx);
 		}
 		return 0;
@@ -873,17 +880,18 @@ pnpbios_attachnode(struct pnpbios_softc *sc, int idx, const uint8_t *buf,
 	}
 
 	if (pnpbiosverbose) {
-		printf("%s", idstr);
+		aprint_normal("%s", idstr);
 		if (r.longname)
-			printf(", %s", r.longname);
+			aprint_normal(", %s", r.longname);
 		compatid = s.compatids;
 		while (compatid) {
-			printf(", %s", compatid->idstr);
+			aprint_normal(", %s", compatid->idstr);
 			compatid = compatid->next;
 		}
-		printf(" (");
+		aprint_normal(" (");
 		pnpbios_printres(&r);
-		printf(") at %s index %d ignored\n", sc->sc_dev.dv_xname, idx);
+		aprint_normal(") at %s index %d ignored\n",
+			      sc->sc_dev.dv_xname, idx);
 	}
 
 	return 0;
@@ -895,15 +903,15 @@ dump:
 #ifdef PNPBIOSDEBUG
 	/* print some useful info */
 	if (len >= sizeof(*dn)) {
-		printf("%s idx %d size %d type 0x%x:0x%x:0x%x attr 0x%x\n",
+		aprint_normal("%s idx %d size %d type 0x%x:0x%x:0x%x attr 0x%x\n",
 		    idstr, dn->dn_handle, dn->dn_size, dn->dn_type,
 		    dn->dn_subtype, dn->dn_dpi, dn->dn_attr);
 		i += sizeof(*dn);
 	}
 #endif
 	for (; i < len; i++)
-		printf(" %02x", buf[i]);
-	printf("\n");
+		aprint_normal(" %02x", buf[i]);
+	aprint_normal("\n");
 	return 0;
 }
 
@@ -928,7 +936,7 @@ pnp_scan(const uint8_t **bufp, size_t maxlen,
 
 	for (;;) {
 		if (p >= *bufp + maxlen) {
-			printf("pnp_scanresources: end of buffer\n");
+			aprint_normal("pnp_scanresources: end of buffer\n");
 			return (-1);
 		}
 		start = p;
@@ -941,7 +949,7 @@ pnp_scan(const uint8_t **bufp, size_t maxlen,
 			case ISAPNP_TAG_MEM_RANGE_DESC: {
 				const struct pnpmem16rangeres *res = start;
 				if (len != sizeof(*res) - 3) {
-					printf("pnp_scan: bad mem desc\n");
+					aprint_normal("pnp_scan: bad mem desc\n");
 					return (-1);
 				}
 
@@ -960,7 +968,7 @@ pnp_scan(const uint8_t **bufp, size_t maxlen,
 			case ISAPNP_TAG_ANSI_IDENT_STRING: {
 				const struct pnpansiidentres *res = start;
 				if (in_depends)
-					printf("ID in dep?\n");
+					aprint_normal("ID in dep?\n");
 				idstr = malloc(len + 1, M_DEVBUF, M_NOWAIT);
 				for (i = 0; i < len; i++)
 					idstr[i] = res->r_id[i];
@@ -979,7 +987,7 @@ pnp_scan(const uint8_t **bufp, size_t maxlen,
 			case ISAPNP_TAG_MEM32_RANGE_DESC: {
 				const struct pnpmem32rangeres *res = start;
 				if (len != sizeof(*res) - 3) {
-					printf("pnp_scan: bad mem32 desc\n");
+					aprint_normal("pnp_scan: bad mem32 desc\n");
 					return (-1);
 				}
 
@@ -996,7 +1004,7 @@ pnp_scan(const uint8_t **bufp, size_t maxlen,
 			case ISAPNP_TAG_FIXED_MEM32_RANGE_DESC: {
 				const struct pnpfixedmem32rangeres *res = start;
 				if (len != sizeof(*res) - 3) {
-					printf("pnp_scan: bad mem32 desc\n");
+					aprint_normal("pnp_scan: bad mem32 desc\n");
 					return (-1);
 				}
 
@@ -1008,7 +1016,7 @@ pnp_scan(const uint8_t **bufp, size_t maxlen,
 				mem->align = 0;
 				mem->len = res->r_len;
 				DPRINTF(("\ttag fixedmem32range "));
-gotmem:
+			gotmem:
 				if (mem->len == 0) { /* disabled */
 					DPRINTF(("zeroed\n"));
 					free(mem, M_DEVBUF);
@@ -1040,7 +1048,7 @@ gotmem:
 			if (type == 0 ||
 			    len < smallrescs[type - 1].minlen ||
 			    len > smallrescs[type - 1].maxlen) {
-				printf("pnp_scan: bad small resource\n");
+				aprint_normal("pnp_scan: bad small resource\n");
 				return (-1);
 			}
 			if (type == ISAPNP_TAG_END) {
@@ -1071,7 +1079,7 @@ gotmem:
 				    len ? res->r_pri : ISAPNP_DEP_ACCEPTABLE));
 
 				if (r->dependant_link) {
-					printf("second dep?\n");
+					aprint_normal("second dep?\n");
 					return (-1);
 				}
 				/* XXX not sure about this */
@@ -1087,8 +1095,8 @@ gotmem:
 					rv = pnp_scan(&p, maxlen - (p - *bufp),
 						       new, 1);
 					if (rv < 0) {
-						printf("error in dependant "
-						    "function\n");
+						aprint_normal("error in"
+						    " dependant function\n");
 						free(new, M_DEVBUF);
 						return (-1);
 					}
@@ -1100,7 +1108,7 @@ gotmem:
 			if (type == ISAPNP_TAG_DEP_END) {
 				DPRINTF(("\ttag enddep\n"));
 				if (!in_depends) {
-					printf("tag %d end dep?\n", tag);
+					aprint_normal("tag %d end dep?\n", tag);
 					return (-1);
 				}
 				break;
@@ -1144,7 +1152,7 @@ pnp_newirq(struct pnpresources *r, const void *vres, size_t len)
 }
 
 static int
-pnp_newdma(struct pnpresources *r, const void *vres, size_t len __unused)
+pnp_newdma(struct pnpresources *r, const void *vres, size_t len)
 {
 	const struct pnpdmares *res;
 	struct pnp_dma *dma;
@@ -1166,7 +1174,7 @@ pnp_newdma(struct pnpresources *r, const void *vres, size_t len __unused)
 }
 
 static int
-pnp_newioport(struct pnpresources *r, const void *vres, size_t len __unused)
+pnp_newioport(struct pnpresources *r, const void *vres, size_t len)
 {
 	const struct pnpportres *res;
 	struct pnp_io *io;
@@ -1194,7 +1202,7 @@ pnp_newioport(struct pnpresources *r, const void *vres, size_t len __unused)
 
 static int
 pnp_newfixedioport(struct pnpresources *r, const void *vres,
-    size_t len __unused)
+    size_t len)
 {
 	const struct pnpfixedportres *res;
 	struct pnp_io *io;
@@ -1219,7 +1227,7 @@ pnp_newfixedioport(struct pnpresources *r, const void *vres,
 }
 
 static int
-pnp_compatid(struct pnpresources *r, const void *vres, size_t len __unused)
+pnp_compatid(struct pnpresources *r, const void *vres, size_t len)
 {
 	const struct pnpcompatres *res;
 	struct pnp_compatid *id;
@@ -1237,30 +1245,32 @@ pnp_compatid(struct pnpresources *r, const void *vres, size_t len __unused)
 
 #ifdef PNPBIOSDEBUG
 static int
-pnp_debugdump(struct pnpresources *r __unused, const void *vres, size_t len)
+pnp_debugdump(struct pnpresources *r, const void *vres, size_t len)
 {
 	const uint8_t *res = vres;
 	int type, i;
 
 	if (res[0] & ISAPNP_LARGE_TAG) {
 		type = res[0] & 0x7f;
-		printf("\tTAG %02x len %04x %s", type, len, len ? "data" : "");
+		aprint_normal("\tTAG %02x len %04x %s",
+			      type, len, len ? "data" : "");
 		i = 3;
 	} else {
 		type = (res[0] >> 3) & 0x0f;
-		printf("\tTAG %02x len %02x %s", type, len, len ? "data" : "");
+		aprint_normal("\tTAG %02x len %02x %s",
+			      type, len, len ? "data" : "");
 		i = 1;
 	}
 	for (; i < len; i++)
-		printf(" %02x", res[i]);
-	printf("\n");
+		aprint_normal(" %02x", res[i]);
+	aprint_normal("\n");
 
 	return (0);
 }
 #endif
 
 int
-pnpbios_io_map(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
+pnpbios_io_map(pnpbios_tag_t pbt, struct pnpresources *resc,
     int idx, bus_space_tag_t *tagp, bus_space_handle_t *hdlp)
 {
 	struct pnp_io *io;
@@ -1278,7 +1288,7 @@ pnpbios_io_map(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
 }
 
 void
-pnpbios_io_unmap(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
+pnpbios_io_unmap(pnpbios_tag_t pbt, struct pnpresources *resc,
     int idx, bus_space_tag_t tag, bus_space_handle_t hdl)
 {
 	struct pnp_io *io;
@@ -1294,7 +1304,7 @@ pnpbios_io_unmap(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
 }
 
 int
-pnpbios_getiobase(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
+pnpbios_getiobase(pnpbios_tag_t pbt, struct pnpresources *resc,
     int idx, bus_space_tag_t *tagp, int *basep)
 {
 	struct pnp_io *io;
@@ -1314,7 +1324,7 @@ pnpbios_getiobase(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
 }
 
 int
-pnpbios_getiosize(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
+pnpbios_getiosize(pnpbios_tag_t pbt, struct pnpresources *resc,
     int idx, int *sizep)
 {
         struct pnp_io *io;
@@ -1331,7 +1341,7 @@ pnpbios_getiosize(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
 }
 
 void *
-pnpbios_intr_establish(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
+pnpbios_intr_establish(pnpbios_tag_t pbt, struct pnpresources *resc,
     int idx, int level, int (*fcn)(void *), void *arg)
 {
 	struct pnp_irq *irq;
@@ -1351,7 +1361,7 @@ pnpbios_intr_establish(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
 }
 
 int
-pnpbios_getirqnum(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
+pnpbios_getirqnum(pnpbios_tag_t pbt, struct pnpresources *resc,
     int idx, int *irqp, int *istp)
 {
 	struct pnp_irq *irq;
@@ -1371,7 +1381,7 @@ pnpbios_getirqnum(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
 }
 
 int
-pnpbios_getdmachan(pnpbios_tag_t pbt __unused, struct pnpresources *resc,
+pnpbios_getdmachan(pnpbios_tag_t pbt, struct pnpresources *resc,
     int idx, int *chanp)
 {
 	struct pnp_dma *dma;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.122.6.1 2006/10/22 06:07:11 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.122.6.2 2006/12/10 07:18:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.122.6.1 2006/10/22 06:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.122.6.2 2006/12/10 07:18:46 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -151,7 +151,7 @@ static size_t sodopendfree(void);
 static size_t sodopendfreel(void);
 
 static vsize_t
-sokvareserve(struct socket *so __unused, vsize_t len)
+sokvareserve(struct socket *so, vsize_t len)
 {
 	int s;
 	int error;
@@ -342,7 +342,7 @@ sodopendfreel()
 }
 
 void
-soloanfree(struct mbuf *m, caddr_t buf, size_t size, void *arg __unused)
+soloanfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 {
 	int s;
 
@@ -432,8 +432,7 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 }
 
 static int
-sokva_reclaim_callback(struct callback_entry *ce __unused, void *obj __unused,
-    void *arg __unused)
+sokva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
 {
 
 	KASSERT(ce == &sokva_reclaimerentry);
@@ -473,6 +472,11 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 	struct socket	*so;
 	uid_t		uid;
 	int		error, s;
+
+	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
+	    KAUTH_REQ_NETWORK_SOCKET_OPEN, (void *)(u_long)dom,
+	    (void *)(u_long)type, (void *)(u_long)proto) != 0)
+		return (EPERM);
 
 	if (proto)
 		prp = pffindproto(dom, proto, type);
@@ -1418,6 +1422,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 {
 	int		error;
 	struct mbuf	*m;
+	struct linger	*l;
 
 	error = 0;
 	m = m0;
@@ -1434,13 +1439,18 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				error = EINVAL;
 				goto bad;
 			}
-			if (mtod(m, struct linger *)->l_linger < 0 ||
-			    mtod(m, struct linger *)->l_linger > (INT_MAX / hz)) {
+			l = mtod(m, struct linger *);
+			if (l->l_linger < 0 || l->l_linger > USHRT_MAX ||
+			    l->l_linger > (INT_MAX / hz)) {
 				error = EDOM;
 				goto bad;
 			}
-			so->so_linger = mtod(m, struct linger *)->l_linger;
-			/* fall thru... */
+			so->so_linger = l->l_linger;
+			if (l->l_onoff)
+				so->so_options |= SO_LINGER;
+			else
+				so->so_options &= ~SO_LINGER;
+			break;
 
 		case SO_DEBUG:
 		case SO_KEEPALIVE:
@@ -1580,7 +1590,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		case SO_LINGER:
 			m->m_len = sizeof(struct linger);
 			mtod(m, struct linger *)->l_onoff =
-				so->so_options & SO_LINGER;
+			    (so->so_options & SO_LINGER) ? 1 : 0;
 			mtod(m, struct linger *)->l_linger = so->so_linger;
 			break;
 
@@ -1593,7 +1603,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		case SO_BROADCAST:
 		case SO_OOBINLINE:
 		case SO_TIMESTAMP:
-			*mtod(m, int *) = so->so_options & optname;
+			*mtod(m, int *) = (so->so_options & optname) ? 1 : 0;
 			break;
 
 		case SO_TYPE:
@@ -1667,7 +1677,7 @@ filt_sordetach(struct knote *kn)
 
 /*ARGSUSED*/
 static int
-filt_soread(struct knote *kn, long hint __unused)
+filt_soread(struct knote *kn, long hint)
 {
 	struct socket	*so;
 
@@ -1698,7 +1708,7 @@ filt_sowdetach(struct knote *kn)
 
 /*ARGSUSED*/
 static int
-filt_sowrite(struct knote *kn, long hint __unused)
+filt_sowrite(struct knote *kn, long hint)
 {
 	struct socket	*so;
 
@@ -1721,7 +1731,7 @@ filt_sowrite(struct knote *kn, long hint __unused)
 
 /*ARGSUSED*/
 static int
-filt_solisten(struct knote *kn, long hint __unused)
+filt_solisten(struct knote *kn, long hint)
 {
 	struct socket	*so;
 
@@ -1743,7 +1753,7 @@ static const struct filterops sowrite_filtops =
 	{ 1, NULL, filt_sowdetach, filt_sowrite };
 
 int
-soo_kqfilter(struct file *fp __unused, struct knote *kn)
+soo_kqfilter(struct file *fp, struct knote *kn)
 {
 	struct socket	*so;
 	struct sockbuf	*sb;

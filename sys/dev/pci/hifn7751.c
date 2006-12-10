@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.31.4.1 2006/10/22 06:06:16 yamt Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.31.4.2 2006/12/10 07:17:42 yamt Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.31.4.1 2006/10/22 06:06:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.31.4.2 2006/12/10 07:17:42 yamt Exp $");
 
 #include "rnd.h"
 
@@ -227,7 +227,7 @@ hifn_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-hifn_probe(struct device *parent __unused, struct cfdata *match __unused,
+hifn_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
@@ -239,7 +239,7 @@ hifn_probe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-hifn_attach(struct device *parent __unused, struct device *self, void *aux)
+hifn_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hifn_softc *sc = (struct hifn_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -1607,7 +1607,7 @@ hifn_dmamap_load_src(struct hifn_softc *sc, struct hifn_command *cmd)
 
 static int
 hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
-    struct cryptop *crp, int hint __unused)
+    struct cryptop *crp, int hint)
 {
 	struct	hifn_dma *dma = sc->sc_dma;
 	u_int32_t cmdlen;

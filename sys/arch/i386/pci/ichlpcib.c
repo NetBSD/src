@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.15.6.1 2006/10/22 06:04:48 yamt Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.15.6.2 2006/12/10 07:16:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.15.6.1 2006/10/22 06:04:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.15.6.2 2006/12/10 07:16:12 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,7 +106,7 @@ CFATTACH_DECL(ichlpcib, sizeof(struct lpcib_softc),
  * Autoconf callbacks.
  */
 static int
-lpcibmatch(struct device *parent __unused, struct cfdata *match __unused,
+lpcibmatch(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -132,6 +132,8 @@ lpcibmatch(struct device *parent __unused, struct cfdata *match __unused,
 		case PCI_PRODUCT_INTEL_82801FB_LPC:	/* ICH6 */
 		case PCI_PRODUCT_INTEL_82801FBM_LPC:	/* ICH6-M */
 		case PCI_PRODUCT_INTEL_82801G_LPC:	/* ICH7 */
+		case PCI_PRODUCT_INTEL_82801GBM_LPC:	/* ICH7-M */
+		case PCI_PRODUCT_INTEL_82801GHM_LPC:	/* ICH7-M DH */
 			return 10;	/* prior to pcib */
 		}
 	}
@@ -247,7 +249,7 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 		       "TCO timer disabled\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	
+
 	/* Explicitly stop the TCO timer. */
 	ioreg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_CNT);
 	if ((ioreg & LPCIB_TCO1_CNT_TCO_TMR_HLT) == 0)

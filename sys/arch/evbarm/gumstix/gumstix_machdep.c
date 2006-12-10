@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.1.2.2 2006/10/22 06:04:38 yamt Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.1.2.3 2006/12/10 07:15:52 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -508,7 +508,7 @@ initarm(void *arg)
 	printf("initarm: Configuring system ...\n");
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
-	/* XXX must make the memory description h/w independant */
+	/* XXX must make the memory description h/w independent */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = memstart;
 	bootconfig.dram[0].pages = memsize / PAGE_SIZE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.7.10.1 2006/10/22 06:06:12 yamt Exp $	*/
+/*	$NetBSD: igphy.c,v 1.7.10.2 2006/12/10 07:17:36 yamt Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.7.10.1 2006/10/22 06:06:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.7.10.2 2006/12/10 07:17:36 yamt Exp $");
 
 #include "opt_mii.h"
 
@@ -128,7 +128,7 @@ static const struct mii_phydesc igphys[] = {
 };
 
 static int
-igphymatch(struct device *parent __unused, struct cfdata *match __unused,
+igphymatch(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -140,7 +140,7 @@ igphymatch(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-igphyattach(struct device *parent __unused, struct device *self, void *aux)
+igphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
@@ -156,7 +156,7 @@ igphyattach(struct device *parent __unused, struct device *self, void *aux)
 	sc->mii_funcs = &igphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 10;
+	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	PHY_RESET(sc);
 

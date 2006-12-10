@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.61 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: nubus.h,v 1.61.22.1 2006/12/10 07:16:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -55,17 +55,20 @@
 #define  NUBUS_TYPE_LCD		0x0002
 #define   NUBUS_DRSW_APPLE	0x0001
 #define    NUBUS_DRHW_TFB	0x0001	/* Apple Toby Frame Buffer */
-#define    NUBUS_DRHW_BAER	0x0002  /* Formac Baers color card */
+#define    NUBUS_DRHW_BAER	0x0002  /* Formac ProNitron 80.IVb */
 #define    NUBUS_DRHW_WVC	0x0006	/* Apple Workstation Video Card */
 #define	   NUBUS_DRHW_COLORMAX	0x0007	/* Sigma Designs ColorMax */
 #define    NUBUS_DRHW_SE30	0x0009	/* Apple SE/30 pseudo-slot video */
 #define    NUBUS_DRHW_M2HRVC	0x0013	/* Apple Mac II High-Res Video Card */
+#define    NUBUS_DRHW_MVC	0x0014	/* Apple Mac II Monochrome Video Card */
 #define    NUBUS_DRHW_PVC	0x0017	/* Apple Mac II Portrait Video Card */
 #define    NUBUS_DRHW_MDC	0x0019	/* Apple Macintosh Display Card */
 #define    NUBUS_DRHW_VSC	0x0020	/* Apple Macintosh Duo MiniDock */
 #define    NUBUS_DRHW_JET	0x0029	/* Apple Macintosh DuoDock II */
 #define    NUBUS_DRHW_BOOGIE	0x002b	/* Apple Macintosh 24AC Video Card */
+#define    NUBUS_DRHW_VILTRO340	0x0102	/* VillageTronic Mac Picasso 340 */
 #define    NUBUS_DRHW_SUPRGFX	0x0105	/* SuperMac GFX */
+#define    NUBUS_DRHW_RELAX200	0x0131  /* Relax 19" Model 200 */
 #define    NUBUS_DRHW_FORMAC	0x013A	/* Formac color card II */
 #define    NUBUS_DRHW_CB264	0x013B	/* RasterOps ColorBoard 264 */
 #define    NUBUS_DRHW_MICRON	0x0146	/* Micron Exceed color */
@@ -122,10 +125,16 @@
 #define NUBUS_CATEGORY_COMMUNICATIONS	0x0006
 #define  NUBUS_TYPE_RS232	0x0002
 #define  NUBUS_TYPE_IEEE488	0x0004
+#define  NUBUS_TYPE_CENTRONICS	0x000B
+#define  NUBUS_TYPE_BECTDIC	0x002E
+#define   NUBUS_DRSW_BECTDIC	0x0100
+#define   NUBUS_DRSW_CPI	0x0100
 #define   NUBUS_DRSW_HDS	0x0102
 #define   NUBUS_DRSW_NI488	0x0104
-#define    NUBUS_DRHW_HDS	0x0102	/* Creative Solutions Hustler serial */
-#define    NUBUS_DRHW_NB_GPIB_TNT	0x0102	/* NatInst NB-GPIB/TNT */
+#define    NUBUS_DRHW_BECTDIC	0x0100	/* Becton Dickinson Acquisition Card */
+#define    NUBUS_DRHW_CPI	0x0100	/* Creative Solutions parallel */
+#define    NUBUS_DRHW_HDS	0x0102	/* Creative Solutions 2x serial */
+#define    NUBUS_DRHW_NBGPIBTNT	0x0102	/* National Instruments NB-GPIB/TNT */
 
 #define NUBUS_CATEGORY_MEMORY	0x0009	/* Also KanjiTalk Font Card? */
 #define  NUBUS_TYPE_RAMCACHE	0x010C	/* From Apple PDS card */

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.99 2006/08/26 20:26:45 christos Exp $
+#	$NetBSD: GENERIC_TINY,v 1.99.4.1 2006/12/10 07:16:03 yamt Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -112,7 +112,7 @@ file-system 	KERNFS		# /kern
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas

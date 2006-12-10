@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.28.22.1 2006/10/22 06:06:16 yamt Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.28.22.2 2006/12/10 07:17:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.28.22.1 2006/10/22 06:06:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.28.22.2 2006/12/10 07:17:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.28.22.1 2006/10/22 06:06:16 yamt Exp $
  * the actual probe routine to check it out.
  */
 static int
-bha_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+bha_pci_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -94,7 +94,7 @@ bha_pci_match(struct device *parent __unused, struct cfdata *match __unused,
  * Attach all the sub-devices we can find
  */
 static void
-bha_pci_attach(struct device *parent __unused, struct device *self, void *aux)
+bha_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct bha_softc *sc = (void *)self;

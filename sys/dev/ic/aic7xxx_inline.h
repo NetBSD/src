@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_inline.h,v 1.10.12.1 2006/10/22 06:05:43 yamt Exp $	*/
+/*	$NetBSD: aic7xxx_inline.h,v 1.10.12.2 2006/12/10 07:17:04 yamt Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -287,7 +287,7 @@ ahc_update_residual(struct ahc_softc *ahc, struct scb *scb)
  * for the specified our_id/remote_id pair.
  */
 static __inline struct ahc_initiator_tinfo *
-ahc_fetch_transinfo(struct ahc_softc *ahc, char channel __unused, u_int our_id,
+ahc_fetch_transinfo(struct ahc_softc *ahc, char channel, u_int our_id,
 		    u_int remote_id, struct ahc_tmode_tstate **tstate)
 {
 	/*
@@ -530,7 +530,7 @@ ahc_sync_qoutfifo(struct ahc_softc *ahc, int op)
 }
 
 static __inline void
-ahc_sync_tqinfifo(struct ahc_softc *ahc __unused, int op __unused)
+ahc_sync_tqinfifo(struct ahc_softc *ahc, int op)
 {
 #ifdef AHC_TARGET_MODE
 	if ((ahc->flags & AHC_TARGETROLE) != 0) {

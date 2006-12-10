@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.811.2.1 2006/10/22 06:05:27 yamt Exp $
+#	$NetBSD: files,v 1.811.2.2 2006/12/10 07:16:52 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -90,6 +90,7 @@ defflag opt_syscall_stats.h	SYSCALL_TIMES_HASCOUNTER: SYSCALL_TIMES
 file kern/subr_syscall_stats.c	syscall_stats
 
 defparam opt_pax.h		PAX_MPROTECT
+				PAX_SEGVGUARD
 
 defflag	opt_fileassoc.h		FILEASSOC
 defparam opt_fileassoc.h	FILEASSOC_NHOOKS
@@ -139,8 +140,6 @@ include "crypto/des/files.des"
 include "crypto/blowfish/files.blowfish"
 include "crypto/cast128/files.cast128"
 include "crypto/rijndael/files.rijndael"
-include "crypto/ripemd160/files.ripemd160"
-include "crypto/sha2/files.sha2"
 include "crypto/skipjack/files.skipjack"
 
 # General-purpose crypto processing framework.
@@ -238,7 +237,7 @@ defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_ROOT_SIZE
 #
 defflag	opt_perfctrs.h		PERFCTRS
 
-# Machine-independant device majors assignements
+# Machine-independent device majors assignements
 include "conf/majors"
 
 # generic attributes
@@ -1149,6 +1148,7 @@ defpseudo faith:	ifnet
 defpseudo stf:		ifnet
 defpseudo tap { }:	ifnet, ether, arp, bpf_filter
 defpseudo carp:		ifnet, ether, arp, bpf_filter
+defpseudo etherip { }:	ifnet, ether, arp, bpf_filter
 
 defpseudo sequencer
 defpseudo clockctl
@@ -1194,6 +1194,7 @@ include "fs/filecorefs/files.filecorefs"
 include "fs/msdosfs/files.msdosfs"
 include "fs/ntfs/files.ntfs"
 include "fs/ptyfs/files.ptyfs"
+include "fs/puffs/files.puffs"
 include "fs/udf/files.udf"
 include "fs/smbfs/files.smbfs"
 include "fs/sysvbfs/files.sysvbfs"
@@ -1290,7 +1291,7 @@ file	kern/kern_malloc.c
 file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_fileassoc.c		fileassoc
 file	kern/kern_ntptime.c
-file	kern/kern_pax.c			pax_mprotect
+file	kern/kern_pax.c			pax_mprotect | pax_segvguard
 file	kern/kern_physio.c
 file	kern/kern_proc.c
 file	kern/kern_prot.c
@@ -1386,6 +1387,7 @@ file	net/if_atmsubr.c		atm
 file	net/if_bridge.c			bridge			needs-flag
 file	net/bridgestp.c			bridge
 file	net/if_ecosubr.c		eco
+file	net/if_etherip.c		etherip			needs-flag
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
 					    wlan
 file	net/if_faith.c			faith & inet & inet6	needs-flag
@@ -1422,7 +1424,9 @@ file	netinet/in_gif.c		gif & inet
 file	netinet/ip_carp.c		carp & (inet | inet6)	needs-flag
 file	netinet/ip_ecn.c		ipsec | fast_ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
+file	netinet/ip_etherip.c		etherip & inet
 file	netinet/ip_gre.c		inet & gre
+file	netinet6/ip6_etherip.c		etherip & inet6
 file	netinet6/in6_gif.c		gif & inet6
 
 file	netisdn/i4b_ctl.c		isdnctl			needs-flag

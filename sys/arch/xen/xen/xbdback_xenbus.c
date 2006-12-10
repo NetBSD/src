@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.1.12.1 2006/10/22 06:05:20 yamt Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.1.12.2 2006/12/10 07:16:43 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -591,6 +591,13 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	if (err) {
 		printf("xbdback %s: can't open device 0x%x: %d\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
+		return;
+	}
+	err = vn_lock(xbdi->xbdi_vp, LK_EXCLUSIVE | LK_RETRY);
+	if (err) {
+		printf("xbdback %s: can't vn_lock device 0x%x: %d\n",
+		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
+		vrele(xbdi->xbdi_vp);
 		return;
 	}
 	err  = VOP_OPEN(xbdi->xbdi_vp, FREAD, NOCRED, 0);

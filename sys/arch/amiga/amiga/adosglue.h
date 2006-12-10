@@ -1,4 +1,4 @@
-/*	$NetBSD: adosglue.h,v 1.7 2006/08/03 20:29:54 mhitch Exp $	*/
+/*	$NetBSD: adosglue.h,v 1.7.6.1 2006/12/10 07:15:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,9 +38,9 @@
  * disklabel.h (for DOST_DOS it will be the version number)
  */
 #define DOST_XXXBSD	0x42534400	/* Old type back compat*/
-#define DOST_NBR	0x4e425200	/* 'NBRx' Netbsd root partition */
-#define DOST_NBS	0x4e425300	/* 'NBS0' Netbsd swap partition */
-#define DOST_NBU	0x4e425500	/* 'NBUx' Netbsd user partition */
+#define DOST_NBR	0x4e425200	/* 'NBRx' NetBSD root partition */
+#define DOST_NBS	0x4e425300	/* 'NBS0' NetBSD swap partition */
+#define DOST_NBU	0x4e425500	/* 'NBUx' NetBSD user partition */
 #define DOST_DOS	0x444f5300	/* 'DOSx' AmigaDos partition */
 #define DOST_AMIX	0x554e4900	/* 'UNIx' AmigaDos partition */
 #define DOST_MUFS	0x6d754600	/* 'muFx' AmigaDos partition (muFS) */

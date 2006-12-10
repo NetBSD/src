@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.28.22.1 2006/10/22 06:07:00 yamt Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.28.22.2 2006/12/10 07:18:28 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.28.22.1 2006/10/22 06:07:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.28.22.2 2006/12/10 07:18:28 yamt Exp $");
 
 #include "opt_wsmsgattrs.h"
 
@@ -726,7 +726,7 @@ wsemul_vt100_output_scs96_percent(struct wsemul_vt100_emuldata *edp, u_char c)
 }
 
 static u_int
-wsemul_vt100_output_esc_spc(struct wsemul_vt100_emuldata *edp __unused,
+wsemul_vt100_output_esc_spc(struct wsemul_vt100_emuldata *edp,
     u_char c)
 {
 	switch (c) {

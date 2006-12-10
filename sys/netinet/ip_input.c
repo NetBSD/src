@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.231.2.1 2006/10/22 06:07:28 yamt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.231.2.2 2006/12/10 07:19:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.231.2.1 2006/10/22 06:07:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.231.2.2 2006/12/10 07:19:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1679,20 +1679,18 @@ ip_rtaddr(struct in_addr dst)
 
 	sin = satosin(&ipforward_rt.ro_dst);
 
-	if (ipforward_rt.ro_rt == 0 || !in_hosteq(dst, sin->sin_addr)) {
-		if (ipforward_rt.ro_rt) {
-			RTFREE(ipforward_rt.ro_rt);
-			ipforward_rt.ro_rt = 0;
-		}
+	if (ipforward_rt.ro_rt == NULL || !in_hosteq(dst, sin->sin_addr)) {
+		if (ipforward_rt.ro_rt != NULL)
+			rtflush(&ipforward_rt);
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(*sin);
 		sin->sin_addr = dst;
 
 		rtalloc(&ipforward_rt);
 	}
-	if (ipforward_rt.ro_rt == 0)
-		return ((struct in_ifaddr *)0);
-	return (ifatoia(ipforward_rt.ro_rt->rt_ifa));
+	if (ipforward_rt.ro_rt == NULL)
+		return NULL;
+	return ifatoia(ipforward_rt.ro_rt->rt_ifa);
 }
 
 /*
@@ -1728,10 +1726,10 @@ ip_srcroute(void)
 	struct mbuf *m;
 
 	if (ip_nhops == 0)
-		return ((struct mbuf *)0);
+		return NULL;
 	m = m_get(M_DONTWAIT, MT_SOOPTS);
 	if (m == 0)
-		return ((struct mbuf *)0);
+		return NULL;
 
 	MCLAIM(m, &inetdomain.dom_mowner);
 #define OPTSIZ	(sizeof(ip_srcrt.nop) + sizeof(ip_srcrt.srcopt))
@@ -1794,7 +1792,7 @@ ip_srcroute(void)
  * XXX should be deleted; last arg currently ignored.
  */
 void
-ip_stripoptions(struct mbuf *m, struct mbuf *mopt __unused)
+ip_stripoptions(struct mbuf *m, struct mbuf *mopt)
 {
 	int i;
 	struct ip *ip = mtod(m, struct ip *);
@@ -1873,18 +1871,16 @@ ip_forward(struct mbuf *m, int srcrt)
 	}
 
 	sin = satosin(&ipforward_rt.ro_dst);
-	if ((rt = ipforward_rt.ro_rt) == 0 ||
+	if ((rt = ipforward_rt.ro_rt) == NULL ||
 	    !in_hosteq(ip->ip_dst, sin->sin_addr)) {
-		if (ipforward_rt.ro_rt) {
-			RTFREE(ipforward_rt.ro_rt);
-			ipforward_rt.ro_rt = 0;
-		}
+		if (ipforward_rt.ro_rt != NULL)
+			rtflush(&ipforward_rt);
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(struct sockaddr_in);
 		sin->sin_addr = ip->ip_dst;
 
 		rtalloc(&ipforward_rt);
-		if (ipforward_rt.ro_rt == 0) {
+		if (ipforward_rt.ro_rt == NULL) {
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
 			return;
 		}
@@ -1935,7 +1931,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		}
 	}
 
-	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
+	error = ip_output(m, NULL, &ipforward_rt,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
 	    (struct ip_moptions *)NULL, (struct socket *)NULL);
 
@@ -1978,7 +1974,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
 #if !defined(IPSEC) && !defined(FAST_IPSEC)
-		if (ipforward_rt.ro_rt)
+		if (ipforward_rt.ro_rt != NULL)
 			destmtu = ipforward_rt.ro_rt->rt_ifp->if_mtu;
 #else
 		/*
@@ -1987,7 +1983,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		 *	tunnel MTU = if MTU - sizeof(IP) - ESP/AH hdrsiz
 		 * XXX quickhack!!!
 		 */
-		if (ipforward_rt.ro_rt) {
+		if (ipforward_rt.ro_rt != NULL) {
 			struct secpolicy *sp;
 			int ipsecerror;
 			size_t ipsechdr;

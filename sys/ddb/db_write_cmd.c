@@ -1,4 +1,4 @@
-/*	$NetBSD: db_write_cmd.c,v 1.18.22.1 2006/10/22 06:05:27 yamt Exp $	*/
+/*	$NetBSD: db_write_cmd.c,v 1.18.22.2 2006/12/10 07:16:52 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_write_cmd.c,v 1.18.22.1 2006/10/22 06:05:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_write_cmd.c,v 1.18.22.2 2006/12/10 07:16:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_write_cmd.c,v 1.18.22.1 2006/10/22 06:05:27 yamt 
  */
 /*ARGSUSED*/
 void
-db_write_cmd(db_expr_t address, boolean_t have_addr __unused,
-    db_expr_t count __unused, const char *modif)
+db_write_cmd(db_expr_t address, boolean_t have_addr,
+    db_expr_t count, const char *modif)
 {
 	db_addr_t	addr;
 	db_expr_t	old_value;

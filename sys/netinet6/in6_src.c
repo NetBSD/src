@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.28.4.1 2006/10/22 06:07:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.28.4.2 2006/12/10 07:19:15 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -667,32 +667,27 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		 * by that address must be a neighbor of the sending host.
 		 */
 		ron = &opts->ip6po_nextroute;
-		if ((ron->ro_rt &&
+		if ((ron->ro_rt != NULL &&
 		    (ron->ro_rt->rt_flags & (RTF_UP | RTF_GATEWAY)) !=
 		    RTF_UP) ||
 		    !IN6_ARE_ADDR_EQUAL(&satosin6(&ron->ro_dst)->sin6_addr,
 		    &sin6_next->sin6_addr)) {
-			if (ron->ro_rt) {
-				RTFREE(ron->ro_rt);
-				ron->ro_rt = NULL;
-			}
+			if (ron->ro_rt != NULL)
+				rtflush((struct route *)ron);
 			*satosin6(&ron->ro_dst) = *sin6_next;
 		}
 		if (ron->ro_rt == NULL) {
 			rtalloc((struct route *)ron); /* multi path case? */
 			if (ron->ro_rt == NULL ||
 			    (ron->ro_rt->rt_flags & RTF_GATEWAY)) {
-				if (ron->ro_rt) {
-					RTFREE(ron->ro_rt);
-					ron->ro_rt = NULL;
-				}
+				if (ron->ro_rt != NULL)
+					rtflush((struct route *)ron);
 				error = EHOSTUNREACH;
 				goto done;
 			}
 		}
 		if (!nd6_is_addr_neighbor(sin6_next, ron->ro_rt->rt_ifp)) {
-			RTFREE(ron->ro_rt);
-			ron->ro_rt = NULL;
+			rtflush((struct route *)ron);
 			error = EHOSTUNREACH;
 			goto done;
 		}
@@ -713,16 +708,14 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 	 * a new one.  Note that we should check the address family of the
 	 * cached destination, in case of sharing the cache with IPv4.
 	 */
-	if (ro) {
-		if (ro->ro_rt &&
+	if (ro != NULL) {
+		if (ro->ro_rt != NULL &&
 		    (!(ro->ro_rt->rt_flags & RTF_UP) ||
 		     ((struct sockaddr *)(&ro->ro_dst))->sa_family != AF_INET6 ||
 		     !IN6_ARE_ADDR_EQUAL(&satosin6(&ro->ro_dst)->sin6_addr,
-		     dst))) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)NULL;
-		}
-		if (ro->ro_rt == (struct rtentry *)NULL) {
+		     dst)))
+			rtflush((struct route *)ro);
+		if (ro->ro_rt == NULL) {
 			struct sockaddr_in6 *sa6;
 
 			/* No route yet, so try to acquire one */
@@ -739,11 +732,14 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 #endif /* RADIX_MPATH */
 			} else {
 #ifdef RADIX_MPATH
+				/* XXX rtalloc_mpath1(, 0) */
 				rtalloc_mpath((struct route *)ro,
 				    ntohl(sa6->sin6_addr.s6_addr32[3]));
 #else
-				ro->ro_rt = rtalloc1(&((struct route *)ro)
-						     ->ro_dst, 0);
+				ro->ro_rt =
+				    rtalloc1(&((struct route *)ro)->ro_dst, 0);
+				if (ro->ro_rt != NULL)
+					rtcache((struct route *)ro);
 #endif /* RADIX_MPATH */
 			}
 		}
@@ -755,13 +751,11 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		if (opts && opts->ip6po_nexthop)
 			goto done;
 
-		if (ro->ro_rt) {
+		if (ro->ro_rt != NULL) {
 			ifp = ro->ro_rt->rt_ifp;
 
-			if (ifp == NULL) { /* can this really happen? */
-				RTFREE(ro->ro_rt);
-				ro->ro_rt = NULL;
-			}
+			if (ifp == NULL) /* can this really happen? */
+				rtflush((struct route *)ro);
 		}
 		if (ro->ro_rt == NULL)
 			error = EHOSTUNREACH;
@@ -999,7 +993,7 @@ struct walkarg {
 };
 
 int
-in6_src_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen __unused)
+in6_src_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
 	int error = 0;
 	int s;

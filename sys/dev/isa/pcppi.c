@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.17.22.1 2006/10/22 06:06:04 yamt Exp $ */
+/* $NetBSD: pcppi.c,v 1.17.22.2 2006/12/10 07:17:29 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.17.22.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.17.22.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include "attimer.h"
 
@@ -62,6 +62,7 @@ void	pcppi_isa_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(pcppi, sizeof(struct pcppi_softc),
     pcppi_match, pcppi_isa_attach, NULL, NULL);
 
+static int pcppisearch(device_t, cfdata_t, const int *, void *);
 static void pcppi_bell_stop(void*);
 
 #if NATTIMER > 0
@@ -71,7 +72,7 @@ static void pcppi_attach_speaker(struct device *);
 #define PCPPIPRI (PZERO - 1)
 
 int
-pcppi_match(struct device *parent __unused, struct cfdata *match __unused,
+pcppi_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -150,7 +151,7 @@ lose:
 }
 
 void
-pcppi_isa_attach(struct device *parent __unused, struct device *self, void *aux)
+pcppi_isa_attach(struct device *parent, struct device *self, void *aux)
 {
         struct pcppi_softc *sc = (struct pcppi_softc *)self;
         struct isa_attach_args *ia = aux;
@@ -184,7 +185,21 @@ pcppi_attach(struct pcppi_softc *sc)
 #endif
 
 	pa.pa_cookie = sc;
-	while (config_found((struct device *)sc, &pa, 0));
+	config_search_loc(pcppisearch, &sc->sc_dv, "pcppi", NULL, &pa);
+}
+
+static int
+pcppisearch(device_t parent, cfdata_t cf, const int *locs, void *aux)
+{
+
+	if (cf->cf_fstate == FSTATE_STAR)
+		aprint_error("%s: WARNING: %s* must have an explicit unit\n",
+		    device_xname(parent), cf->cf_name);
+
+	if (config_match(parent, cf, aux))
+		config_attach_loc(parent, cf, locs, aux, NULL);
+
+	return 0;
 }
 
 #if NATTIMER > 0
@@ -272,7 +287,7 @@ pcppi_bell_stop(void *arg)
 
 #if NPCKBD > 0
 void
-pcppi_pckbd_bell(void *arg, u_int pitch, u_int period, u_int volume __unused,
+pcppi_pckbd_bell(void *arg, u_int pitch, u_int period, u_int volume,
     int poll)
 {
 

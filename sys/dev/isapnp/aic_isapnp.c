@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isapnp.c,v 1.12.10.1 2006/10/22 06:06:11 yamt Exp $	*/
+/*	$NetBSD: aic_isapnp.c,v 1.12.10.2 2006/12/10 07:17:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isapnp.c,v 1.12.10.1 2006/10/22 06:06:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isapnp.c,v 1.12.10.2 2006/12/10 07:17:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ CFATTACH_DECL(aic_isapnp, sizeof(struct aic_isapnp_softc),
     aic_isapnp_match, aic_isapnp_attach, NULL, NULL);
 
 int
-aic_isapnp_match(struct device *parent __unused, struct cfdata *match __unused,
+aic_isapnp_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	int pri, variant;
@@ -83,7 +83,7 @@ aic_isapnp_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-aic_isapnp_attach(struct device *parent __unused, struct device *self,
+aic_isapnp_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct aic_isapnp_softc *isc = device_private(self);

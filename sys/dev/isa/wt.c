@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.72.10.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: wt.c,v 1.72.10.2 2006/12/10 07:17:29 yamt Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.72.10.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.72.10.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ extern struct cfdriver wt_cd;
  * Probe for the presence of the device.
  */
 int
-wtprobe(struct device *parent __unused, struct cfdata *match __unused,
+wtprobe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -258,7 +258,7 @@ done:
  * Device is found, configure it.
  */
 void
-wtattach(struct device *parent __unused, struct device *self, void *aux)
+wtattach(struct device *parent, struct device *self, void *aux)
 {
 	struct wt_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -330,8 +330,8 @@ ok:
 }
 
 static int
-wtdump(dev_t dev __unused, daddr_t blkno __unused, caddr_t va __unused,
-    size_t size __unused)
+wtdump(dev_t dev, daddr_t blkno, caddr_t va,
+    size_t size)
 {
 
 	/* Not implemented. */
@@ -339,7 +339,7 @@ wtdump(dev_t dev __unused, daddr_t blkno __unused, caddr_t va __unused,
 }
 
 static int
-wtsize(dev_t dev __unused)
+wtsize(dev_t dev)
 {
 
 	/* Not implemented. */
@@ -350,7 +350,7 @@ wtsize(dev_t dev __unused)
  * Open routine, called on every device open.
  */
 static int
-wtopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+wtopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = minor(dev) & T_UNIT;
 	struct wt_softc *sc;
@@ -435,8 +435,8 @@ wtopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
  * Close routine, called on last device close.
  */
 static int
-wtclose(dev_t dev, int flags __unused, int mode __unused,
-    struct lwp *l __unused)
+wtclose(dev_t dev, int flags, int mode,
+    struct lwp *l)
 {
 	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
 
@@ -485,8 +485,8 @@ done:
  * ioctl(int fd, WTQICMD, int qicop)		-- do QIC op
  */
 static int
-wtioctl(dev_t dev, unsigned long cmd, caddr_t addr, int flag __unused,
-    struct lwp *l __unused)
+wtioctl(dev_t dev, unsigned long cmd, caddr_t addr, int flag,
+    struct lwp *l)
 {
 	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
 	int error, count, op;
@@ -657,14 +657,14 @@ xit:
 }
 
 static int
-wtread(dev_t dev, struct uio *uio, int flags __unused)
+wtread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(wtstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 static int
-wtwrite(dev_t dev, struct uio *uio, int flags __unused)
+wtwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(wtstrategy, NULL, dev, B_WRITE, minphys, uio));

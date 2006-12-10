@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.10.4.1 2006/10/22 06:05:44 yamt Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.10.4.2 2006/12/10 07:17:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.10.4.1 2006/10/22 06:05:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.10.4.2 2006/12/10 07:17:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.10.4.1 2006/10/22 06:05:44 yamt Exp 
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
@@ -109,7 +110,7 @@ static struct lock icp_ioctl_mutex =
     LOCK_INITIALIZER(PRIBIO|PCATCH, "icplk", 0, 0);
 
 static int
-icpopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
+icpopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	if (device_lookup(&icp_cd, minor(dev)) == NULL)
@@ -119,8 +120,8 @@ icpopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 }
 
 static int
-icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
-    struct lwp *l __unused)
+icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	int error;
 
@@ -133,8 +134,10 @@ icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
 		struct icp_softc *icp;
 		gdt_ucmd_t *ucmd = (void *) data;
 
-		if (securelevel > 1)
-			return (EPERM);
+		error = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
+		if (error)
+			break;
 
 		icp = device_lookup(&icp_cd, ucmd->io_node);
 		if (icp == NULL) {

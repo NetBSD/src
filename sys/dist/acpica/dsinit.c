@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsinit.c,v 1.1.22.1 2006/10/22 06:07:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsinit.c,v 1.1.22.2 2006/12/10 07:18:28 yamt Exp $");
 
 #define __DSINIT_C__
 
@@ -159,9 +159,9 @@ AcpiDsInitOneObject (
 static ACPI_STATUS
 AcpiDsInitOneObject (
     ACPI_HANDLE             ObjHandle,
-    UINT32                  Level __unused,
+    UINT32                  Level,
     void                    *Context,
-    void                    **ReturnValue __unused)
+    void                    **ReturnValue)
 {
     ACPI_INIT_WALK_INFO     *Info = (ACPI_INIT_WALK_INFO *) Context;
     ACPI_NAMESPACE_NODE     *Node = (ACPI_NAMESPACE_NODE *) ObjHandle;

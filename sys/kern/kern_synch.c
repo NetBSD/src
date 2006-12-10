@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.167.2.1 2006/10/22 06:07:10 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.167.2.2 2006/12/10 07:18:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.167.2.1 2006/10/22 06:07:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.167.2.2 2006/12/10 07:18:45 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -111,6 +111,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.167.2.1 2006/10/22 06:07:10 yamt Ex
 
 int	lbolt;			/* once a second sleep address */
 int	rrticks;		/* number of hardclock ticks per roundrobin() */
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#define	XXX_SCHED_LOCK		simple_lock(&sched_lock)
+#define	XXX_SCHED_UNLOCK	simple_unlock(&sched_lock)
+#else
+#define	XXX_SCHED_LOCK		/* nothing */
+#define	XXX_SCHED_UNLOCK	/* nothing */
+#endif
 
 /*
  * Sleep queues.
@@ -308,7 +316,7 @@ fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
  */
 /* ARGSUSED */
 void
-schedcpu(void *arg __unused)
+schedcpu(void *arg)
 {
 	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 	struct lwp *l;
@@ -535,18 +543,21 @@ ltsleep(volatile const void *ident, int priority, const char *wmesg, int timo,
 	 * stopped, p->p_wchan will be 0 upon return from CURSIG.
 	 */
 	if (catch) {
+		XXX_SCHED_UNLOCK;
 		l->l_flag |= L_SINTR;
 		if (((sig = CURSIG(l)) != 0) ||
 		    ((p->p_flag & P_WEXIT) && p->p_nlwps > 1)) {
+			XXX_SCHED_LOCK;
 			if (l->l_wchan != NULL)
 				unsleep(l);
 			l->l_stat = LSONPROC;
 			SCHED_UNLOCK(s);
 			goto resume;
 		}
+		XXX_SCHED_LOCK;
 		if (l->l_wchan == NULL) {
-			catch = 0;
 			SCHED_UNLOCK(s);
+			catch = 0;
 			goto resume;
 		}
 	} else
@@ -959,31 +970,6 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	p->p_rtime.tv_sec = s;
 
 	/*
-	 * Check if the process exceeds its CPU resource allocation.
-	 * If over max, kill it.  In any case, if it has run for more
-	 * than 10 minutes, reduce priority to give others a chance.
-	 */
-	rlim = &p->p_rlimit[RLIMIT_CPU];
-	if (s >= rlim->rlim_cur) {
-		/*
-		 * XXXSMP: we're inside the scheduler lock perimeter;
-		 * use sched_psignal.
-		 */
-		if (s >= rlim->rlim_max)
-			sched_psignal(p, SIGKILL);
-		else {
-			sched_psignal(p, SIGXCPU);
-			if (rlim->rlim_cur < rlim->rlim_max)
-				rlim->rlim_cur += 5;
-		}
-	}
-	if (autonicetime && s > autonicetime &&
-	    kauth_cred_geteuid(p->p_cred) && p->p_nice == NZERO) {
-		p->p_nice = autoniceval + NZERO;
-		resetpriority(l);
-	}
-
-	/*
 	 * Process is about to yield the CPU; clear the appropriate
 	 * scheduling flags.
 	 */
@@ -1045,6 +1031,29 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * we reacquire the interlock.
 	 */
 	KERNEL_LOCK_ACQUIRE_COUNT(hold_count);
+
+	/*
+	 * Check if the process exceeds its CPU resource allocation.
+	 * If over max, kill it.  In any case, if it has run for more
+	 * than 10 minutes, reduce priority to give others a chance.
+	 */
+	rlim = &p->p_rlimit[RLIMIT_CPU];
+	if (s >= rlim->rlim_cur) {
+		if (s >= rlim->rlim_max) {
+			psignal(p, SIGKILL);
+		} else {
+			psignal(p, SIGXCPU);
+			if (rlim->rlim_cur < rlim->rlim_max)
+				rlim->rlim_cur += 5;
+		}
+	}
+	if (autonicetime && s > autonicetime &&
+	    kauth_cred_geteuid(p->p_cred) && p->p_nice == NZERO) {
+		SCHED_LOCK(s);
+		p->p_nice = autoniceval + NZERO;
+		resetpriority(l);
+		SCHED_UNLOCK(s);
+	}
 
 	return retval;
 }

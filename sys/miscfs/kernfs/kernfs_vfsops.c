@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.72.4.1 2006/10/22 06:07:23 yamt Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.72.4.2 2006/12/10 07:18:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.72.4.1 2006/10/22 06:07:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.72.4.2 2006/12/10 07:18:59 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -127,8 +127,8 @@ kernfs_get_rrootdev()
  * Mount the Kernel params filesystem
  */
 int
-kernfs_mount(struct mount *mp, const char *path, void *data __unused,
-    struct nameidata *ndp __unused, struct lwp *l)
+kernfs_mount(struct mount *mp, const char *path, void *data,
+    struct nameidata *ndp, struct lwp *l)
 {
 	int error = 0;
 	struct kernfs_mount *fmp;
@@ -167,15 +167,15 @@ kernfs_mount(struct mount *mp, const char *path, void *data __unused,
 }
 
 int
-kernfs_start(struct mount *mp __unused, int flags __unused,
-    struct lwp *l __unused)
+kernfs_start(struct mount *mp, int flags,
+    struct lwp *l)
 {
 
 	return (0);
 }
 
 int
-kernfs_unmount(struct mount *mp, int mntflags, struct lwp *l __unused)
+kernfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 {
 	int error;
 	int flags = 0;
@@ -205,15 +205,15 @@ kernfs_root(mp, vpp)
 }
 
 int
-kernfs_quotactl(struct mount *mp __unused, int cmd __unused, uid_t uid __unused,
-    void *arg __unused, struct lwp *l __unused)
+kernfs_quotactl(struct mount *mp, int cmd, uid_t uid,
+    void *arg, struct lwp *l)
 {
 
 	return (EOPNOTSUPP);
 }
 
 int
-kernfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
+kernfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 
 	sbp->f_bsize = DEV_BSIZE;
@@ -233,8 +233,8 @@ kernfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
 
 /*ARGSUSED*/
 int
-kernfs_sync(struct mount *mp __unused, int waitfor __unused,
-    kauth_cred_t uc __unused, struct lwp *l __unused)
+kernfs_sync(struct mount *mp, int waitfor,
+    kauth_cred_t uc, struct lwp *l)
 {
 
 	return (0);
@@ -245,8 +245,8 @@ kernfs_sync(struct mount *mp __unused, int waitfor __unused,
  * Currently unsupported.
  */
 int
-kernfs_vget(struct mount *mp __unused, ino_t ino __unused,
-    struct vnode **vpp __unused)
+kernfs_vget(struct mount *mp, ino_t ino,
+    struct vnode **vpp)
 {
 
 	return (EOPNOTSUPP);
@@ -290,8 +290,8 @@ struct vfsops kernfs_vfsops = {
 	kernfs_statvfs,
 	kernfs_sync,
 	kernfs_vget,
-	NULL,				/* vfs_fhtovp */
-	NULL,				/* vfs_vptofh */
+	(void *)eopnotsupp,		/* vfs_fhtovp */
+	(void *)eopnotsupp,		/* vfs_vptofh */
 	kernfs_init,
 	kernfs_reinit,
 	kernfs_done,

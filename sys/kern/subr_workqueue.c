@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.5.2.3 2006/10/22 06:07:11 yamt Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.5.2.4 2006/12/10 07:18:45 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.5.2.3 2006/10/22 06:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.5.2.4 2006/12/10 07:18:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ struct workqueue {
 #define	POISON	0xaabbccdd
 
 static void
-workqueue_lock(struct workqueue *wq __unused, struct workqueue_queue *q)
+workqueue_lock(struct workqueue *wq, struct workqueue_queue *q)
 {
 	int s;
 
@@ -68,7 +68,7 @@ workqueue_lock(struct workqueue *wq __unused, struct workqueue_queue *q)
 }
 
 static void
-workqueue_unlock(struct workqueue *wq __unused, struct workqueue_queue *q)
+workqueue_unlock(struct workqueue *wq, struct workqueue_queue *q)
 {
 	int s = q->q_savedipl;
 
@@ -167,7 +167,7 @@ struct workqueue_exitargs {
 };
 
 static void
-workqueue_exit(struct work *wk, void *arg __unused)
+workqueue_exit(struct work *wk, void *arg)
 {
 	struct workqueue_exitargs *wqe = (void *)wk;
 	struct workqueue_queue *q = wqe->wqe_q;
@@ -216,7 +216,7 @@ workqueue_finiqueue(struct workqueue *wq)
 int
 workqueue_create(struct workqueue **wqp, const char *name,
     void (*callback_func)(struct work *, void *), void *callback_arg,
-    int prio, int ipl, int flags __unused)
+    int prio, int ipl, int flags)
 {
 	struct workqueue *wq;
 	int error;

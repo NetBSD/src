@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.435.4.1 2006/10/22 06:06:52 yamt Exp $
+$NetBSD: usbdevs,v 1.435.4.2 2006/12/10 07:18:17 yamt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -381,6 +381,7 @@ vendor ATI2		0x0b6f	ATI
 vendor ZEEVO		0x0b7a	Zeevo, Inc.
 vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
 vendor ASIX		0x0b95	ASIX Electronics
+vendor O2MICRO		0x0b97	O2 Micro
 vendor USR		0x0baf	U.S. Robotics
 vendor REALTEK		0x0bda	Realtek
 vendor ADDONICS2	0x0bf6	Addonics Technology
@@ -1669,6 +1670,7 @@ product RALINK RT2570_2		0x2570	RT2570
 product RALINK RT2570_3		0x9020	RT2570
 product RALINK_2 RT2570		0x2570	RT2570
 product RALINK RT2573		0x2573	RT2573
+product RALINK_2 RT2573		0x2573	RT2573
 product RALINK RT2671		0x2671	RT2671
 
 /* RATOC Systems products */

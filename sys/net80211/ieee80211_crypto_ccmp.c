@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.7 2005/07/11 03:06:23 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.5.12.1 2006/10/22 06:07:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.5.12.2 2006/12/10 07:19:06 yamt Exp $");
 #endif
 
 /*
@@ -98,7 +98,7 @@ static	int ccmp_decrypt(struct ieee80211_key *, u_int64_t pn,
 		struct mbuf *, int hdrlen);
 
 static void *
-ccmp_attach(struct ieee80211com *ic, struct ieee80211_key *k __unused)
+ccmp_attach(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	struct ccmp_ctx *ctx;
 
@@ -183,8 +183,8 @@ ccmp_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
  * Add MIC to the frame as needed.
  */
 static int
-ccmp_enmic(struct ieee80211_key *k __unused, struct mbuf *m __unused,
-    int force __unused)
+ccmp_enmic(struct ieee80211_key *k, struct mbuf *m,
+    int force)
 {
 
 	return 1;
@@ -267,8 +267,8 @@ ccmp_decap(struct ieee80211_key *k, struct mbuf *m, int hdrlen)
  * Verify and strip MIC from the frame.
  */
 static int
-ccmp_demic(struct ieee80211_key *k __unused, struct mbuf *m __unused,
-    int force __unused)
+ccmp_demic(struct ieee80211_key *k, struct mbuf *m,
+    int force)
 {
 	return 1;
 }

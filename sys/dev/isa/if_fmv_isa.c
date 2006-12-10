@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isa.c,v 1.7.4.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: if_fmv_isa.c,v 1.7.4.2 2006/12/10 07:17:27 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.7.4.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.7.4.2 2006/12/10 07:17:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ static int const fmv_iomap[8] = {
  * Determine if the device is present.
  */
 int
-fmv_isa_match(struct device *parent __unused, struct cfdata *match __unused,
+fmv_isa_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -261,7 +261,7 @@ fmv_find(bus_space_tag_t iot, bus_space_handle_t ioh, int *iobase, int *irq)
 }
 
 void
-fmv_isa_attach(struct device *parent __unused, struct device *self __unused,
+fmv_isa_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct fmv_isa_softc *isc = (struct fmv_isa_softc *)self;

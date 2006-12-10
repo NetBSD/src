@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.55.10.1 2006/10/22 06:07:22 yamt Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.55.10.2 2006/12/10 07:18:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.55.10.1 2006/10/22 06:07:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.55.10.2 2006/12/10 07:18:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -526,7 +526,7 @@ filt_fifordetach(struct knote *kn)
 }
 
 static int
-filt_fiforead(struct knote *kn, long hint __unused)
+filt_fiforead(struct knote *kn, long hint)
 {
 	struct socket *so;
 
@@ -552,7 +552,7 @@ filt_fifowdetach(struct knote *kn)
 }
 
 static int
-filt_fifowrite(struct knote *kn, long hint __unused)
+filt_fifowrite(struct knote *kn, long hint)
 {
 	struct socket *so;
 

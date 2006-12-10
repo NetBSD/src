@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.14.22.1 2006/10/22 06:06:52 yamt Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.14.22.2 2006/12/10 07:18:17 yamt Exp $	*/
 
 /*
  * TODO:
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.14.22.1 2006/10/22 06:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.14.22.2 2006/12/10 07:18:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,22 +379,22 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 }
 
 void
-uisdata_reset_drive(struct ata_drive_datas *drv __unused, int flags __unused)
+uisdata_reset_drive(struct ata_drive_datas *drv, int flags)
 {
 	DPRINTFN(-1,("%s\n", __func__));
 	/* XXX what? */
 }
 
 void
-uisdata_reset_channel(struct ata_channel *chp __unused, int flags __unused)
+uisdata_reset_channel(struct ata_channel *chp, int flags)
 {
 	DPRINTFN(-1,("%s\n", __func__));
 	/* XXX what? */
 }
 
 void
-uisdata_exec_cb(struct umass_softc *sc __unused, void *priv,
-    int residue __unused, int status)
+uisdata_exec_cb(struct umass_softc *sc, void *priv,
+    int residue, int status)
 {
 	struct ata_command *cmd = priv;
 
@@ -476,7 +476,7 @@ done:
 }
 
 int
-uisdata_addref(struct ata_drive_datas *drv __unused)
+uisdata_addref(struct ata_drive_datas *drv)
 {
 	DPRINTF(("%s\n", __func__));
 	/* Nothing to do */
@@ -484,7 +484,7 @@ uisdata_addref(struct ata_drive_datas *drv __unused)
 }
 
 void
-uisdata_delref(struct ata_drive_datas *drv __unused)
+uisdata_delref(struct ata_drive_datas *drv)
 {
 	DPRINTF(("%s\n", __func__));
 	/* Nothing to do */
@@ -575,7 +575,7 @@ uisdata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 
 /* XXX join with wdc.c routine? */
 int
-uwdprint(void *aux __unused, const char *pnp)
+uwdprint(void *aux, const char *pnp)
 {
 	//struct ata_device *adev = aux;
 	if (pnp)

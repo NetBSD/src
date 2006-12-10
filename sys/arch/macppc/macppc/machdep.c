@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138.4.1 2006/10/22 06:04:50 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.138.4.2 2006/12/10 07:16:26 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138.4.1 2006/10/22 06:04:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138.4.2 2006/12/10 07:16:26 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -183,6 +183,14 @@ initppc(startkernel, endkernel, args)
 	 * but I really think the console should be initialized
 	 * as early as possible.
 	 */
+#if NKSYMS || defined(DDB) || defined(LKM)
+	/* get info of kernel symbol table from bootloader */
+	memcpy(&startsym, args + strlen(args) + 1, sizeof(startsym));
+	memcpy(&endsym, args + strlen(args) + 1 + sizeof(startsym),
+	    sizeof(endsym));
+	if (startsym == NULL || endsym == NULL)
+		startsym = endsym = NULL;
+#endif
 	consinit();
 
 	oea_init(ext_intr);
@@ -203,13 +211,6 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Parse arg string.
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
-	memcpy(&startsym, args + strlen(args) + 1, sizeof(startsym));
-	memcpy(&endsym, args + strlen(args) + 5, sizeof(endsym));
-	if (startsym == NULL || endsym == NULL)
-		startsym = endsym = NULL;
-#endif
-	
 	if (args) {
 	strcpy(bootpath, args);
 		args = bootpath;
@@ -778,8 +779,8 @@ cninit_kd()
 	printf("no console keyboard\n");
 	return;
 
+kbd_found:;
 #if NAKBD + NUKBD > 0
-kbd_found:
 	/*
 	 * XXX This is a little gross, but we don't get to call
 	 * XXX wskbd_cnattach() twice.

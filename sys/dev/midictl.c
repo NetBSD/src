@@ -1,4 +1,4 @@
-/* $NetBSD: midictl.c,v 1.2.10.1 2006/10/22 06:05:28 yamt Exp $ */
+/* $NetBSD: midictl.c,v 1.2.10.2 2006/12/10 07:16:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.2.10.1 2006/10/22 06:05:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.2.10.2 2006/12/10 07:16:53 yamt Exp $");
 
 /*
  * See midictl.h for an overview of the purpose and use of this module.
@@ -475,8 +475,8 @@ classify(uint_fast16_t *key, _Bool *islsb) {
 }
 
 static void
-notify_no_one(void *cookie __unused, midictl_evt evt __unused,
-    uint_fast8_t chan __unused, uint_fast16_t k __unused)
+notify_no_one(void *cookie, midictl_evt evt,
+    uint_fast8_t chan, uint_fast16_t k)
 {
 }
 
@@ -591,7 +591,7 @@ store_locate(midictl_store *s, class c, uint_fast8_t chan, uint_fast16_t key)
 
 static uint16_t
 store_extract(midictl_store *s, class c, uint_fast8_t chan,
-    uint_fast16_t key __unused)
+    uint_fast16_t key)
 {
 	chan %= packing[c];
 	switch ( c ) {
@@ -609,7 +609,7 @@ store_extract(midictl_store *s, class c, uint_fast8_t chan,
 
 static void
 store_update(midictl_store *s, class c, uint_fast8_t chan,
-    uint_fast16_t key __unused, uint16_t value)
+    uint_fast16_t key, uint16_t value)
 {
 	uint64_t orig;
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.54 2006/06/21 00:02:26 rjs Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.54.6.1 2006/12/10 07:16:23 yamt Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.54 2006/06/21 00:02:26 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.54.6.1 2006/12/10 07:16:23 yamt Exp $");
 
 #include "opt_adb.h"
 
@@ -2703,7 +2703,7 @@ mrg_pmintr(void)
 	return 1;	/* mimic mrg_pmintr in macrom.h just in case */
 }
 
-/* caller should really use machine-independant version: getPramTime */
+/* caller should really use machine-independent version: getPramTime */
 /* this version does pseudo-adb access only */
 int 
 adb_read_date_time(unsigned long *curtime)
@@ -2758,7 +2758,7 @@ adb_read_date_time(unsigned long *curtime)
 	}
 }
 
-/* caller should really use machine-independant version: setPramTime */
+/* caller should really use machine-independent version: setPramTime */
 /* this version does pseudo-adb access only */
 int 
 adb_set_date_time(unsigned long curtime)

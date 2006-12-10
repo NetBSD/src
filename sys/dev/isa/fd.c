@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.68.4.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.68.4.2 2006/12/10 07:17:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.68.4.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.68.4.2 2006/12/10 07:17:27 yamt Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -697,14 +697,14 @@ fdfinish(fd, bp)
 }
 
 int
-fdread(dev_t dev, struct uio *uio, int flags __unused)
+fdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-fdwrite(dev_t dev, struct uio *uio, int flags __unused)
+fdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -810,7 +810,7 @@ out_fdc(iot, ioh, x)
 }
 
 int
-fdopen(dev_t dev, int flags __unused, int mode __unused, struct lwp *l __unused)
+fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct fd_softc *fd;
 	const struct fd_type *type;
@@ -836,7 +836,7 @@ fdopen(dev_t dev, int flags __unused, int mode __unused, struct lwp *l __unused)
 }
 
 int
-fdclose(dev_t dev, int flags __unused, int mode __unused, struct lwp *l __unused)
+fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
 
@@ -1553,7 +1553,7 @@ fdformat(dev, finfo, l)
  * floppy.
  */
 void
-fd_mountroot_hook(struct device *dev __unused)
+fd_mountroot_hook(struct device *dev)
 {
 	int c;
 

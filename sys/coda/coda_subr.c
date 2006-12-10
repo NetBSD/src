@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.19.22.1 2006/10/22 06:05:21 yamt Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.19.22.2 2006/12/10 07:16:43 yamt Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.19.22.1 2006/10/22 06:05:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.19.22.2 2006/12/10 07:16:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -516,7 +516,7 @@ int handleDownCall(int opcode, union outputArgs *out)
 /* coda_grab_vnode: lives in either cfs_mach.c or cfs_nbsd.c */
 
 int
-coda_vmflush(struct cnode *cp __unused)
+coda_vmflush(struct cnode *cp)
 {
     return 0;
 }

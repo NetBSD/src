@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.37.2.1 2006/10/22 06:07:10 yamt Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.37.2.2 2006/12/10 07:18:44 yamt Exp $	*/
 #include <sys/types.h> 	/* XXX to get __HAVE_TIMECOUNTER, remove
 			   after all ports are converted. */
 #ifdef __HAVE_TIMECOUNTER
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.37.2.1 2006/10/22 06:07:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.37.2.2 2006/12/10 07:18:44 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -904,7 +904,7 @@ hardpps(struct timespec *tsp,		/* time at PPS */
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.37.2.1 2006/10/22 06:07:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.37.2.2 2006/12/10 07:18:44 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -1145,7 +1145,7 @@ ntp_timestatus()
  * ntp_gettime() - NTP user application interface
  */
 int
-sys___ntp_gettime30(struct lwp *l __unused, void *v, register_t *retval)
+sys___ntp_gettime30(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___ntp_gettime30_args /* {
 		syscallarg(struct ntptimeval *) ntvp;
@@ -1167,7 +1167,7 @@ sys___ntp_gettime30(struct lwp *l __unused, void *v, register_t *retval)
 
 #ifdef COMPAT_30
 int
-compat_30_sys_ntp_gettime(struct lwp *l __unused, void *v, register_t *retval)
+compat_30_sys_ntp_gettime(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_sys_ntp_gettime_args /* {
 		syscallarg(struct ntptimeval30 *) ontvp;
@@ -1230,10 +1230,7 @@ SYSCTL_SETUP(sysctl_kern_ntptime_setup, "sysctl kern.ntptime node setup")
 /* For some reason, raising SIGSYS (as sys_nosys would) is problematic. */
 
 int
-sys___ntp_gettime30(l, v, retval)
-	struct lwp *l __unused;
-	void *v __unused;
-	register_t *retval __unused;
+sys___ntp_gettime30(struct lwp *l, void *v, register_t *retval)
 {
 
 	return(ENOSYS);
@@ -1241,10 +1238,7 @@ sys___ntp_gettime30(l, v, retval)
 
 #ifdef COMPAT_30
 int
-compat_30_sys_ntp_gettime(l, v, retval)
- 	struct lwp *l __unused;
- 	void *v __unused;
- 	register_t *retval __unused;
+compat_30_sys_ntp_gettime(struct lwp *l, void *v, register_t *retval)
 {
 
  	return(ENOSYS);

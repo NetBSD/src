@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.5.6.1 2006/10/22 06:05:32 yamt Exp $ */
+/*	$NetBSD: apm.c,v 1.5.6.2 2006/12/10 07:16:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.5.6.1 2006/10/22 06:05:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.5.6.2 2006/12/10 07:16:57 yamt Exp $");
 
 #include "opt_apm.h"
 
@@ -359,7 +359,7 @@ apm_standby(struct apm_softc *sc)
 }
 
 static void
-apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info __unused)
+apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info)
 {
 
 	if (sc->sc_power_state == PWR_RESUME) {
@@ -613,21 +613,21 @@ apm_set_ver(struct apm_softc *sc)
 		apm_minver = 0;
 	}
 ok:
-	printf("Power Management spec V%d.%d", apm_majver, apm_minver);
+	aprint_normal("Power Management spec V%d.%d", apm_majver, apm_minver);
 	apm_inited = 1;
 	if (sc->sc_detail & APM_IDLE_SLOWS) {
 #ifdef DIAGNOSTIC
 		/* not relevant often */
-		printf(" (slowidle)");
+		aprint_normal(" (slowidle)");
 #endif
 		/* leave apm_do_idle at its user-configured setting */
 	} else
 		apm_do_idle = 0;
 #ifdef DIAGNOSTIC
 	if (sc->sc_detail & APM_BIOS_PM_DISABLED)
-		printf(" (BIOS mgmt disabled)");
+		aprint_normal(" (BIOS mgmt disabled)");
 	if (sc->sc_detail & APM_BIOS_PM_DISENGAGED)
-		printf(" (BIOS managing devices)");
+		aprint_normal(" (BIOS managing devices)");
 #endif
 }
 
@@ -645,7 +645,7 @@ apm_attach(struct apm_softc *sc)
 	u_int numbatts, capflags;
 	int error;
 
-	printf(": ");
+	aprint_normal(": ");
 
 	switch ((APM_MAJOR_VERS(sc->sc_vers) << 8) + APM_MINOR_VERS(sc->sc_vers)) {
 	case 0x0100:
@@ -661,7 +661,7 @@ apm_attach(struct apm_softc *sc)
 	}
 
 	apm_set_ver(sc);	/* prints version info */
-	printf("\n");
+	aprint_normal("\n");
 	if (apm_minver >= 2)
 		(*sc->sc_ops->aa_get_capabilities)(sc->sc_cookie, &numbatts,
 		    &capflags);
@@ -733,7 +733,7 @@ apm_thread(void *arg)
 }
 
 int
-apmopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+apmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = APMUNIT(dev);
 	int ctl = APM(dev);
@@ -782,8 +782,8 @@ apmopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 }
 
 int
-apmclose(dev_t dev, int flag __unused, int mode __unused,
-	struct lwp *l __unused)
+apmclose(dev_t dev, int flag, int mode,
+	struct lwp *l)
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	int ctl = APM(dev);
@@ -810,7 +810,7 @@ apmclose(dev_t dev, int flag __unused, int mode __unused,
 
 int
 apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
-	struct lwp *l __unused)
+	struct lwp *l)
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	struct apm_power_info *powerp;
@@ -937,7 +937,7 @@ filt_apmrdetach(struct knote *kn)
 }
 
 static int
-filt_apmread(struct knote *kn, long hint __unused)
+filt_apmread(struct knote *kn, long hint)
 {
 	struct apm_softc *sc = kn->kn_hook;
 

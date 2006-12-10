@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 2006/02/23 05:37:49 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47.16.1 2006/12/10 07:16:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2006/02/23 05:37:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47.16.1 2006/12/10 07:16:42 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -199,7 +199,7 @@ device_register(struct device *dev, void *aux)
 
 	/*
 	 * Handle network interfaces here, the attachment information is
-	 * not available driver independantly later.
+	 * not available driver independently later.
 	 * For disks, there is nothing useful available at attach time.
 	 */
 	if (device_class(dev) == DV_IFNET) {
@@ -238,8 +238,7 @@ scsi_find(dev_t bdev)
 	ifid = B_X68K_SCSI_IF(bdev);
 	if (ifid >= sizeof name_scsiif/sizeof name_scsiif[0] ||
 					!name_scsiif[ifid]) {
-#if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) ||	\
-    defined(COMPAT_12) || defined(COMPAT_13)
+#ifdef COMPAT_13
 		/*
 		 * old boot didn't pass interface type
 		 * try "scsibus0"

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.238.4.1 2006/10/22 06:06:47 yamt Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.238.4.2 2006/12/10 07:18:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.238.4.1 2006/10/22 06:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.238.4.2 2006/12/10 07:18:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ scsiprint(void *aux, const char *pnp)
 }
 
 static int
-scsibusmatch(struct device *parent __unused, struct cfdata *cf, void *aux)
+scsibusmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct scsipi_channel *chan = aux;
 
@@ -160,7 +160,7 @@ scsibusmatch(struct device *parent __unused, struct cfdata *cf, void *aux)
 }
 
 static void
-scsibusattach(struct device *parent __unused, struct device *self, void *aux)
+scsibusattach(struct device *parent, struct device *self, void *aux)
 {
 	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = aux;
@@ -381,7 +381,7 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 }
 
 static int
-scsibusrescan(struct device *sc, const char *ifattr __unused,
+scsibusrescan(struct device *sc, const char *ifattr,
     const int *locators)
 {
 
@@ -572,6 +572,8 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* Broken IBM disk */
 	{{T_DIRECT, T_FIXED,
 	 ""	   , "DFRSS2F",		 ""},	  PQUIRK_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
+	 "Initio  ", "",		 ""},	  PQUIRK_NOBIGMODESENSE},
 	{{T_DIRECT, T_REMOV,
 	 "MPL     ", "MC-DISK-        ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
@@ -968,8 +970,8 @@ bad:
 /****** Entry points for user control of the SCSI bus. ******/
 
 static int
-scsibusopen(dev_t dev, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+scsibusopen(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	struct scsibus_softc *sc;
 	int error, unit = minor(dev);
@@ -990,8 +992,8 @@ scsibusopen(dev_t dev, int flag __unused, int fmt __unused,
 }
 
 static int
-scsibusclose(dev_t dev, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+scsibusclose(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
 

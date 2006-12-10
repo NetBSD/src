@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.3.10.1 2006/10/22 06:07:05 yamt Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.3.10.2 2006/12/10 07:18:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -103,7 +103,7 @@ extern struct timeout fr_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.3.10.1 2006/10/22 06:07:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.3.10.2 2006/12/10 07:18:33 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.77.2.5 2006/02/26 08:26:54 darrenr Exp";
@@ -825,7 +825,7 @@ void fr_fragexpire()
 #if !defined(_KERNEL) || (!SOLARIS && !defined(__hpux) && !defined(__sgi) && \
 			  !defined(__osf__) && !defined(linux))
 # if defined(_KERNEL) && ((BSD >= 199103) || defined(__sgi))
-void fr_slowtimer __P((void *ptr __unused))
+void fr_slowtimer __P((void *ptr))
 # else
 int fr_slowtimer()
 # endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.17.22.1 2006/10/22 06:07:11 yamt Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.17.22.2 2006/12/10 07:18:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.17.22.1 2006/10/22 06:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.17.22.2 2006/12/10 07:18:45 yamt Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -355,7 +355,7 @@ callout_hardclock(void)
 
 /* ARGSUSED */
 void
-softclock(void *v __unused)
+softclock(void *v)
 {
 	struct callout *c;
 	void (*func)(void *);
@@ -424,8 +424,7 @@ db_show_callout_bucket(struct callout_circq *bucket)
 }
 
 void
-db_show_callout(db_expr_t addr __unused, int haddr __unused,
-    db_expr_t count __unused, const char *modif __unused)
+db_show_callout(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 {
 	int b;
 

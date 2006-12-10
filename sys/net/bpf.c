@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.122.4.1 2006/10/22 06:07:24 yamt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.122.4.2 2006/12/10 07:19:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.122.4.1 2006/10/22 06:07:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.122.4.2 2006/12/10 07:19:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,7 +366,7 @@ bpf_detachd(struct bpf_d *d)
  */
 /* ARGSUSED */
 void
-bpfilterattach(int n __unused)
+bpfilterattach(int n)
 {
 	simple_lock_init(&bpf_slock);
 
@@ -384,7 +384,7 @@ bpfilterattach(int n __unused)
  */
 /* ARGSUSED */
 int
-bpfopen(dev_t dev __unused, int flag __unused, int mode __unused, struct lwp *l)
+bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct bpf_d *d;
 	struct file *fp;
@@ -456,8 +456,8 @@ bpf_close(struct file *fp, struct lwp *l)
  *  bpfread - read next chunk of packets from buffers
  */
 static int
-bpf_read(struct file *fp, off_t *offp __unused, struct uio *uio,
-    kauth_cred_t cred __unused, int flags __unused)
+bpf_read(struct file *fp, off_t *offp, struct uio *uio,
+    kauth_cred_t cred, int flags)
 {
 	struct bpf_d *d = fp->f_data;
 	int timed_out;
@@ -585,8 +585,8 @@ bpf_timed_out(void *arg)
 
 
 static int
-bpf_write(struct file *fp, off_t *offp __unused, struct uio *uio,
-    kauth_cred_t cred __unused, int flags __unused)
+bpf_write(struct file *fp, off_t *offp, struct uio *uio,
+    kauth_cred_t cred, int flags)
 {
 	struct bpf_d *d = fp->f_data;
 	struct ifnet *ifp;
@@ -1110,7 +1110,7 @@ filt_bpfrdetach(struct knote *kn)
 }
 
 static int
-filt_bpfread(struct knote *kn, long hint __unused)
+filt_bpfread(struct knote *kn, long hint)
 {
 	struct bpf_d *d = kn->kn_hook;
 
@@ -1719,9 +1719,11 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 	if (namelen != 2)
 		return (EINVAL);
 
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
-		return (error);
+	/* BPF peers is privileged information. */
+	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+	    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, NULL, NULL, NULL);
+	if (error)
+		return (EPERM);
 
 	len = (oldp != NULL) ? *oldlenp : 0;
 	sp = oldp;

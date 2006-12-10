@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.9.10.1 2006/10/22 06:06:19 yamt Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.9.10.2 2006/12/10 07:17:47 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -284,7 +284,7 @@ ubsec_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-ubsec_probe(struct device *parent __unused, struct cfdata *match __unused,
+ubsec_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -296,7 +296,7 @@ ubsec_probe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-ubsec_attach(struct device *parent __unused, struct device *self, void *aux)
+ubsec_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ubsec_softc *sc = (struct ubsec_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -2100,7 +2100,7 @@ ubsec_kprocess(void *arg, struct cryptkop *krp, int hint)
  */
 static int
 ubsec_kprocess_modexp_sw(struct ubsec_softc *sc, struct cryptkop *krp,
-			 int hint __unused)
+			 int hint)
 {
 	struct ubsec_q2_modexp *me;
 	struct ubsec_mcr *mcr;
@@ -2305,7 +2305,7 @@ errout:
  */
 static int
 ubsec_kprocess_modexp_hw(struct ubsec_softc *sc, struct cryptkop *krp,
-			 int hint __unused)
+			 int hint)
 {
 	struct ubsec_q2_modexp *me;
 	struct ubsec_mcr *mcr;
@@ -2506,7 +2506,7 @@ errout:
 
 static int
 ubsec_kprocess_rsapriv(struct ubsec_softc *sc, struct cryptkop *krp,
-		       int hint __unused)
+		       int hint)
 {
 	struct ubsec_q2_rsapriv *rp = NULL;
 	struct ubsec_mcr *mcr;

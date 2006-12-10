@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.38.4.1 2006/10/22 06:05:16 yamt Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.38.4.2 2006/12/10 07:16:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.38.4.1 2006/10/22 06:05:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.38.4.2 2006/12/10 07:16:43 yamt Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -149,7 +149,7 @@ mpacpi_print(void *aux, const char *pnp)
 
 static int
 mpacpi_submatch(struct device *parent, struct cfdata *cf,
-	const int *ldesc __unused, void *aux)
+	const int *ldesc, void *aux)
 {
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
 	if (strcmp(caa->caa_name, cf->cf_name))
@@ -292,7 +292,7 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
  * This is a callback function for acpi_madt_walk().
  */
 static ACPI_STATUS
-mpacpi_count(APIC_HEADER *hdrp, void *aux __unused)
+mpacpi_count(APIC_HEADER *hdrp, void *aux)
 {
 	MADT_ADDRESS_OVERRIDE *lop;
 
@@ -546,7 +546,7 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
  */
 static ACPI_STATUS
 mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
-    void **status __unused)
+    void **status)
 {
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
@@ -775,7 +775,7 @@ mpacpi_pcircount(struct mpacpi_pcibus *mpr)
  * Set up the interrupt config lists, in the same format as the mpbios does.
  */
 static void
-mpacpi_config_irouting(struct acpi_softc *acpi __unused)
+mpacpi_config_irouting(struct acpi_softc *acpi)
 {
 #if NPCI > 0
 	struct mpacpi_pcibus *mpr;
@@ -1013,7 +1013,7 @@ mpacpi_find_interrupts(void *self)
 #if NPCI > 0
 
 int
-mpacpi_pci_attach_hook(struct device *parent, struct device *self __unused,
+mpacpi_pci_attach_hook(struct device *parent, struct device *self,
 		       struct pcibus_attach_args *pba)
 {
 	struct mp_bus *mpb;

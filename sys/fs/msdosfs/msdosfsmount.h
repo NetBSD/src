@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.11 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.11.22.1 2006/12/10 07:18:38 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -110,16 +110,16 @@ struct msdosfsmount {
 	struct vnode *pm_devvp;	/* vnode for block device mntd */
 	struct bpb50 pm_bpb;	/* BIOS parameter blk for this fs */
 	u_long pm_FATsecs;	/* actual number of fat sectors */
-	u_long pm_fatblk;	/* block # of first FAT */
-	u_long pm_rootdirblk;	/* block # (cluster # for FAT32) of root directory number */
-	u_long pm_rootdirsize;	/* size in blocks (not clusters) */
-	u_long pm_firstcluster;	/* block number of first cluster */
+	u_long pm_fatblk;	/* sector # of first FAT */
+	u_long pm_rootdirblk;	/* sector # (cluster # for FAT32) of root directory number */
+	u_long pm_rootdirsize;	/* size in sectors (not clusters) */
+	u_long pm_firstcluster;	/* sector number of first cluster */
 	u_long pm_nmbrofclusters;	/* # of clusters in filesystem */
 	u_long pm_maxcluster;	/* maximum cluster number */
 	u_long pm_freeclustercount;	/* number of free clusters */
 	u_long pm_cnshift;	/* shift file offset right this amount to get a cluster number */
 	u_long pm_crbomask;	/* and a file offset with this mask to get cluster rel offset */
-	u_long pm_bnshift;	/* shift file offset right this amount to get a block number */
+	u_long pm_bnshift;	/* shift file offset right this amount to get a sector number */
 	u_long pm_bpcluster;	/* bytes per cluster */
 	u_long pm_fmod;		/* ~0 if fs is modified, this can rollover to 0	*/
 	u_long pm_fatblocksize;	/* size of fat blocks in bytes */
@@ -164,16 +164,28 @@ struct msdosfsmount {
 	 + ((dirofs) & (pmp)->pm_crbomask)))
 
 /*
- * Convert block number to cluster number
+ * Convert sector number to cluster number
  */
 #define	de_bn2cn(pmp, bn) \
 	((bn) >> ((pmp)->pm_cnshift - (pmp)->pm_bnshift))
 
 /*
- * Convert cluster number to block number
+ * Convert cluster number to sector number
  */
 #define	de_cn2bn(pmp, cn) \
 	((cn) << ((pmp)->pm_cnshift - (pmp)->pm_bnshift))
+
+/*
+ * Convert sector number to kernel block number
+ */
+#define de_bn2kb(pmp, bn) \
+	((bn) << ((pmp)->pm_bnshift - DEV_BSHIFT))
+
+/*
+ * Convert kernel block number to sector number
+ */
+#define de_kb2bn(pmp, kb) \
+	((kb) >> ((pmp)->pm_bnshift - DEV_BSHIFT))
 
 /*
  * Convert file offset to cluster number
@@ -188,7 +200,7 @@ struct msdosfsmount {
 	(((size) + (pmp)->pm_bpcluster - 1) >> (pmp)->pm_cnshift)
 
 /*
- * Convert file offset to block number
+ * Convert file offset to sector number
  */
 #define de_blk(pmp, off) \
 	(de_cn2bn(pmp, de_cluster((pmp), (off))))
@@ -200,24 +212,24 @@ struct msdosfsmount {
 	((cn) << (pmp)->pm_cnshift)
 
 /*
- * Convert block number to file offset
+ * Convert sector number to file offset
  */
 #define	de_bn2off(pmp, bn) \
 	((bn) << (pmp)->pm_bnshift)
 /*
- * Map a cluster number into a filesystem relative block number.
+ * Map a cluster number into a filesystem relative sector number.
  */
 #define	cntobn(pmp, cn) \
 	(de_cn2bn((pmp), (cn)-CLUST_FIRST) + (pmp)->pm_firstcluster)
 
 /*
- * Calculate block number for directory entry in root dir, offset dirofs
+ * Calculate sector number for directory entry in root dir, offset dirofs
  */
 #define	roottobn(pmp, dirofs) \
 	(de_blk((pmp), (dirofs)) + (pmp)->pm_rootdirblk)
 
 /*
- * Calculate block number for directory entry at cluster dirclu, offset
+ * Calculate sector number for directory entry at cluster dirclu, offset
  * dirofs
  */
 #define	detobn(pmp, dirclu, dirofs) \

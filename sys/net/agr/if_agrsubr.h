@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsubr.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
+/*	$NetBSD: if_agrsubr.h,v 1.2.22.1 2006/12/10 07:19:06 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,6 +28,8 @@
 
 #ifndef _NET_AGR_IF_AGRSUBR_H_
 #define	_NET_AGR_IF_AGRSUBR_H_
+
+#include <sys/queue.h>
 
 struct agr_mc_entry;
 

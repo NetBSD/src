@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_impl.h,v 1.3 2005/12/10 23:21:39 elad Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_impl.h,v 1.3.22.1 2006/12/10 07:19:06 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -34,6 +34,8 @@
  *
  * implementation details.
  */
+
+#include <sys/queue.h>
 
 #define	LACP_TIMER_CURRENT_WHILE	0
 #define	LACP_TIMER_PERIODIC		1

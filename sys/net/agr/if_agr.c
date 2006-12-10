@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.6 2006/07/08 05:56:48 yamt Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.6.6.1 2006/12/10 07:19:06 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.6 2006/07/08 05:56:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.6.6.1 2006/12/10 07:19:06 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -362,7 +362,9 @@ agr_setconfig(struct ifnet *ifp, const struct agrreq *ar)
 	int error = 0;
 	char ifname[IFNAMSIZ];
 
-	error = copyin(ar->ar_buf, ifname, MIN(ar->ar_buflen, sizeof(ifname)));
+	memset(ifname, 0, sizeof(ifname));
+	error = copyin(ar->ar_buf, ifname,
+	    MIN(ar->ar_buflen, sizeof(ifname) - 1));
 	if (error) {
 		return error;
 	}
@@ -859,8 +861,10 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSETAGR:
 		splx(s);
 		p = curproc; /* XXX */
-		error = kauth_authorize_generic(p->p_cred,
-		    KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		error = kauth_authorize_network(p->p_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL);
 		if (!error) {
 			error = agrreq_copyin(ifr->ifr_data, &ar);
 		}

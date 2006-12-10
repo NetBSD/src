@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.4.8.1 2006/10/22 06:06:15 yamt Exp $ */
+/*	$NetBSD: owtemp.c,v 1.4.8.2 2006/12/10 07:17:39 yamt Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.4.8.1 2006/10/22 06:06:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.4.8.2 2006/12/10 07:17:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ static uint32_t	owtemp_decode_ds18b20(const uint8_t *);
 static uint32_t	owtemp_decode_ds1920(const uint8_t *);
 
 int
-owtemp_match(struct device *parent __unused, struct cfdata *cf __unused,
+owtemp_match(struct device *parent, struct cfdata *cf,
     void *aux)
 {
 	return (onewire_matchbyfam(aux, owtemp_fams,
@@ -95,7 +95,7 @@ owtemp_match(struct device *parent __unused, struct cfdata *cf __unused,
 }
 
 void
-owtemp_attach(struct device *parent __unused, struct device *self, void *aux)
+owtemp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct owtemp_softc *sc = device_private(self);
 	struct onewire_attach_args *oa = aux;
@@ -163,7 +163,7 @@ owtemp_attach(struct device *parent __unused, struct device *self, void *aux)
 }
 
 int
-owtemp_detach(struct device *self, int flags __unused)
+owtemp_detach(struct device *self, int flags)
 {
 	struct owtemp_softc *sc = device_private(self);
 

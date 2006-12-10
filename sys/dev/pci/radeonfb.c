@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.5.8.1 2006/10/22 06:06:19 yamt Exp $ */
+/* $NetBSD: radeonfb.c,v 1.5.8.2 2006/12/10 07:17:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.5.8.1 2006/10/22 06:06:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.5.8.2 2006/12/10 07:17:47 yamt Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -204,7 +204,7 @@ static struct {
 	{ 32,	2048, 1536, 32, 2 },
 	{ 16,	1600, 1200, 32, 2 },
 	{ 8,	1600, 1200, 32, 1 },
-	{ 0,	0, 0, 0 },
+	{ 0,	0, 0, 0, 0 },
 };
 
 static struct wsscreen_descr radeonfb_stdscreen = {
@@ -212,7 +212,8 @@ static struct wsscreen_descr radeonfb_stdscreen = {
 	0, 0,		/* ncols, nrows */
 	NULL,		/* textops */
 	8, 16,		/* fontwidth, fontheight */
-	WSSCREEN_WSCOLORS,
+	WSSCREEN_WSCOLORS, /* capabilities */
+	0,		/* modecookie */
 };
 
 struct wsdisplay_accessops radeonfb_accessops = {
@@ -221,7 +222,9 @@ struct wsdisplay_accessops radeonfb_accessops = {
 	NULL,		/* vcons_alloc_screen */
 	NULL,		/* vcons_free_screen */
 	NULL,		/* vcons_show_screen */
-	NULL		/* load_font */
+	NULL,		/* load_font */
+	NULL,		/* pollc */
+	NULL,		/* scroll */
 };
 
 static struct {
@@ -2823,12 +2826,16 @@ radeonfb_set_cursor(struct radeonfb_display *dp, struct wsdisplay_cursor *wc)
 		nc.rc_pos = wc->pos;
 		if (nc.rc_pos.x >= dp->rd_virtx)
 			nc.rc_pos.x = dp->rd_virtx - 1;
+#if 0
 		if (nc.rc_pos.x < 0)
 			nc.rc_pos.x = 0;
+#endif
 		if (nc.rc_pos.y >= dp->rd_virty)
 			nc.rc_pos.y = dp->rd_virty - 1;
+#if 0
 		if (nc.rc_pos.y < 0)
 			nc.rc_pos.y = 0;
+#endif
 	}
 	if (flags & WSDISPLAY_CURSOR_DOCUR) {
 		nc.rc_visible = wc->enable;

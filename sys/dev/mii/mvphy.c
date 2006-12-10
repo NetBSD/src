@@ -1,4 +1,4 @@
-/*	$NetBSD: mvphy.c,v 1.1 2006/07/21 23:55:27 gdamore Exp $	*/
+/*	$NetBSD: mvphy.c,v 1.1.10.1 2006/12/10 07:17:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.1 2006/07/21 23:55:27 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.1.10.1 2006/12/10 07:17:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ mvphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &mvphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	if (MV_PORT(sc) == 0) {		/* NB: only when attaching first PHY */
 		/*

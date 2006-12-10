@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.12.10.1 2006/10/22 06:06:12 yamt Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.12.10.2 2006/12/10 07:17:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.12.10.1 2006/10/22 06:06:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.12.10.2 2006/12/10 07:17:36 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -127,10 +127,11 @@ static struct ncr53c9x_glue esp_glue = {
 };
 
 static int
-esp_mca_match(parent, cf, aux)
-	struct device *parent __unused;
-	struct cfdata *cf __unused;
-	void *aux;
+esp_mca_match(
+	struct device *parent,
+	struct cfdata *cf,
+	void *aux
+)
 {
 	struct mca_attach_args *ma = aux;
 
@@ -143,10 +144,11 @@ esp_mca_match(parent, cf, aux)
 }
 
 static void
-esp_mca_attach(parent, self, aux)
-	struct device *parent __unused;
-	struct device *self;
-	void *aux;
+esp_mca_attach(
+	struct device *parent,
+	struct device *self,
+	void *aux
+)
 {
 	struct mca_attach_args *ma = aux;
 	struct esp_softc *esc = device_private(self);
@@ -370,12 +372,13 @@ esp_dma_intr(sc)
  * Setup DMA transfer.
  */
 static int
-esp_dma_setup(sc, addr, len, datain, dmasize)
-	struct ncr53c9x_softc *sc;
-	caddr_t *addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize __unused;
+esp_dma_setup(
+	struct ncr53c9x_softc *sc,
+	caddr_t *addr,
+	size_t *len,
+	int datain,
+	size_t *dmasize
+)
 {
 	struct esp_softc *esc = (struct esp_softc *) sc;
 	int error;

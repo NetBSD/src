@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.36 2006/07/22 06:58:17 tsutsui Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.36.6.1 2006/12/10 07:16:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.36 2006/07/22 06:58:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.36.6.1 2006/12/10 07:16:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2382,7 +2382,7 @@ get_modregstr_moto(dis_buffer_t *dbuf, int bit, int mod, int sz, int dd)
 			addstr(dbuf,"(pc)");
 			break;
 		} else if (reg == 4) {
-			/* uses ``sz'' to figure imediate data. */
+			/* uses ``sz'' to figure immediate data. */
 			if (sz == SIZE_BYTE) {
 				addchar('#');
 				prints(dbuf,
@@ -2586,7 +2586,7 @@ get_modregstr_mit(dis_buffer_t *dbuf, int bit, int mod, int sz, int dd)
 			addchar(')');
 			break;
 		} else if (reg == 4) {
-			/* uses ``sz'' to figure imediate data. */
+			/* uses ``sz'' to figure immediate data. */
 			if (sz == SIZE_BYTE) {
 				addchar('#');
 				prints(dbuf,

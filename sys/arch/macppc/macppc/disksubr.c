@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.37 2006/01/29 21:42:41 dsl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.37.20.1 2006/12/10 07:16:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.37 2006/01/29 21:42:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.37.20.1 2006/12/10 07:16:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -704,48 +704,4 @@ done:
 	brelse(bp);
 
 	return error;
-}
-
-/*
- * Determine the size of the transfer, and make sure it is
- * within the boundaris of the partition.  Adjust transfer
- * if needed, and signal errors or early completion.
- */
-int
-bounds_check_with_label(dk, bp, wlabel)
-	struct disk *dk;
-	struct buf *bp;
-	int wlabel;
-{
-	struct disklabel *lp = dk->dk_label;
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int sz;
-
-	sz = howmany(bp->b_bcount, lp->d_secsize);
-
-	if (bp->b_blkno + sz > p->p_size) {
-		sz = p->p_size - bp->b_blkno;
-		if (sz == 0) {
-			/* If axactly at end of disk, return EOF. */
-			bp->b_resid = bp->b_bcount;
-			return 0;
-		}
-		if (sz < 0) {
-			/* If past end of disk, return EINVAL. */
-			bp->b_error = EINVAL;
-			goto bad;
-		}
-		/* Otherwise truncate request. */
-		bp->b_bcount = sz * lp->d_secsize;
-	}
-
-	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + p->p_offset)
-			 / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
-
-	return 1;
-
-bad:
-	bp->b_flags |= B_ERROR;
-	return -1;
 }

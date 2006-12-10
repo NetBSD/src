@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.3 2006/08/26 20:26:45 christos Exp $
+# $NetBSD: XEN2_DOMU,v 1.3.6.1 2006/12/10 07:16:04 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -15,7 +15,7 @@ options 	XEN
 #options 	DOM0OPS
 
 options 	I686_CPU
-makeoptions	COPTS="-O2 -march=i686"
+makeoptions	CPUFLAGS="-march=i686"
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
@@ -106,7 +106,7 @@ file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	QUOTA		# UFS quotas

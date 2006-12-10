@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.12.22.1 2006/10/22 06:07:39 yamt Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.12.22.2 2006/12/10 07:19:20 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.12.22.1 2006/10/22 06:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.12.22.2 2006/12/10 07:19:20 yamt Exp $");
 
 /*
  * IP-inside-IP processing
@@ -138,7 +138,7 @@ static void _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp);
  * Really only a wrapper for ipip_input(), for use with IPv6.
  */
 int
-ip4_input6(struct mbuf **m, int *offp, int proto __unused)
+ip4_input6(struct mbuf **m, int *offp, int proto)
 {
 #if 0
 	/* If we do not accept IP-in-IP explicitly, drop.  */
@@ -189,7 +189,7 @@ ip4_input(struct mbuf *m, ...)
  */
 
 static void
-_ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp __unused)
+_ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 {
 	register struct sockaddr_in *sin;
 	register struct ifnet *ifp;
@@ -425,8 +425,8 @@ ipip_output(
     struct mbuf *m,
     struct ipsecrequest *isr,
     struct mbuf **mp,
-    int skip __unused,
-    int protoff __unused
+    int skip,
+    int protoff
 )
 {
 	struct secasvar *sav;
@@ -668,9 +668,9 @@ ipe4_zeroize(struct secasvar *sav)
 static int
 ipe4_input(
     struct mbuf *m,
-    struct secasvar *sav __unused,
-    int skip __unused,
-    int protoff __unused
+    struct secasvar *sav,
+    int skip,
+    int protoff
 )
 {
 	/* This is a rather serious mistake, so no conditional printing. */
@@ -707,9 +707,9 @@ static struct ipprotosw ipe4_protosw[] = {
  */
 static int
 ipe4_encapcheck(struct mbuf *m,
-    int off __unused,
-    int proto __unused,
-    void *arg __unused
+    int off,
+    int proto,
+    void *arg
 )
 {
 	/*

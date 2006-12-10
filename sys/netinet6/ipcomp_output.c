@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.19 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.19.22.1 2006/12/10 07:19:16 yamt Exp $	*/
 /*	$KAME: ipcomp_output.c,v 1.24 2001/07/26 06:53:18 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.19 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.19.22.1 2006/12/10 07:19:16 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -271,7 +271,7 @@ ipcomp_output(m, nexthdrp, md, isr, af)
 	compoff = m->m_pkthdr.len - plen;
 
 	/*
-	 * grow the mbuf to accomodate ipcomp header.
+	 * grow the mbuf to accommodate ipcomp header.
 	 * before: IP ... payload
 	 * after:  IP ... ipcomp payload
 	 */

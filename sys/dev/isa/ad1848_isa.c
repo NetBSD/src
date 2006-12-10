@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.30.22.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.30.22.2 2006/12/10 07:17:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.30.22.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.30.22.2 2006/12/10 07:17:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -754,7 +754,7 @@ ad1848_isa_malloc(
 }
 
 void
-ad1848_isa_free(void *addr __unused, void *ptr, struct malloc_type *pool)
+ad1848_isa_free(void *addr, void *ptr, struct malloc_type *pool)
 {
 
 	isa_free(ptr, pool);
@@ -780,7 +780,7 @@ ad1848_isa_round_buffersize(void *addr, int direction, size_t size)
 }
 
 paddr_t
-ad1848_isa_mappage(void *addr __unused, void *mem, off_t off, int prot)
+ad1848_isa_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	return isa_mappage(mem, off, prot);
 }

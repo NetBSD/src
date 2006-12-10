@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.33.22.1 2006/10/22 06:05:23 yamt Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.33.22.2 2006/12/10 07:16:47 yamt Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.33.22.1 2006/10/22 06:05:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.33.22.2 2006/12/10 07:16:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ cvt_statvfs(sp, tbuf, len)
 }
 
 int
-ibcs2_sys_statfs(struct lwp *l, void *v, register_t *retval __unused)
+ibcs2_sys_statfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_statfs_args /* {
 		syscallarg(const char *) path;
@@ -165,7 +165,7 @@ ibcs2_sys_statfs(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-ibcs2_sys_fstatfs(struct lwp *l, void *v, register_t *retval __unused)
+ibcs2_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_fstatfs_args /* {
 		syscallarg(int) fd;
@@ -194,7 +194,7 @@ ibcs2_sys_fstatfs(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-ibcs2_sys_statvfs(struct lwp *l, void *v, register_t *retval __unused)
+ibcs2_sys_statvfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_statvfs_args /* {
 		syscallarg(const char *) path;
@@ -222,7 +222,7 @@ ibcs2_sys_statvfs(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-ibcs2_sys_fstatvfs(struct lwp *l, void *v, register_t *retval __unused)
+ibcs2_sys_fstatvfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_fstatvfs_args /* {
 		syscallarg(int) fd;
@@ -337,7 +337,7 @@ ibcs2_sys_fstat(l, v, retval)
 }
 
 int
-ibcs2_sys_utssys(struct lwp *l __unused, void *v, register_t *retval __unused)
+ibcs2_sys_utssys(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_utssys_args /* {
 		syscallarg(int) a1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.4.2.2 2006/10/22 06:06:16 yamt Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.4.2.3 2006/12/10 07:17:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.4.2.2 2006/10/22 06:06:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.4.2.3 2006/12/10 07:17:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.4.2.2 2006/10/22 06:06:16 yamt Exp $")
 #include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
+#include <machine/autoconf.h>
 
 #if defined(macppc) || defined (sparc64) || defined(ofppc)
 #define HAVE_OPENFIRMWARE
@@ -69,11 +70,12 @@ __KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.4.2.2 2006/10/22 06:06:16 yamt Exp $")
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include <dev/i2c/i2cvar.h>
-#include <dev/i2c/i2c_bitbang.h>
-#include <dev/i2c/edidvar.h>
 
 #include "opt_wsemul.h"
 
+/*
+#define CHIPSFB_WAIT
+*/
 struct chipsfb_softc {
 	struct device sc_dev;
 	pci_chipset_tag_t sc_pc;
@@ -660,8 +662,8 @@ chipsfb_bitblt(struct chipsfb_softc *sc, int xs, int ys, int xd, int yd,
 	if (xs < xd) {
 		/* right-to-left operation */
 		cmd |= BLT_START_RIGHT;
-		src += sc->linebytes - 1;
-		dst += sc->linebytes - 1;
+		src += width - 1;
+		dst += width - 1;
 	}
 
 	if (ys < yd) {
@@ -768,7 +770,6 @@ chipsfb_setup_mono(struct chipsfb_softc *sc, int xd, int yd, int width,
 	chipsfb_write32(sc, CT_BLT_BG, bg);
 	chipsfb_write32(sc, CT_BLT_FG, fg);
 	chipsfb_write32(sc, CT_BLT_SIZE, size);
-
 }
 
 static void 

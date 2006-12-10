@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16.6.1 2006/10/22 06:05:16 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.16.6.2 2006/12/10 07:16:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.6.1 2006/10/22 06:05:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.6.2 2006/12/10 07:16:42 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -233,7 +233,7 @@ struct x86_bus_dma_tag pci_bus_dma64_tag = {
 #endif
 
 void
-pci_attach_hook(struct device *parent __unused, struct device *self __unused,
+pci_attach_hook(struct device *parent, struct device *self,
     struct pcibus_attach_args *pba)
 {
 
@@ -248,7 +248,7 @@ pci_attach_hook(struct device *parent __unused, struct device *self __unused,
 }
 
 int
-pci_bus_maxdevs(pci_chipset_tag_t pc __unused, int busno __unused)
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
 
 	/*
@@ -264,7 +264,7 @@ pci_bus_maxdevs(pci_chipset_tag_t pc __unused, int busno __unused)
 }
 
 pcitag_t
-pci_make_tag(pci_chipset_tag_t pc __unused, int bus, int device, int function)
+pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	pcitag_t tag;
 
@@ -306,7 +306,7 @@ mode2:
 }
 
 void
-pci_decompose_tag(pci_chipset_tag_t pc __unused, pcitag_t tag,
+pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
     int *bp, int *dp, int *fp)
 {
 
@@ -348,8 +348,8 @@ mode2:
 }
 
 pcireg_t
-pci_conf_read( pci_chipset_tag_t pc __unused, pcitag_t tag __unused,
-    int reg __unused)
+pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
+    int reg)
 {
 	pcireg_t data;
 	int s;
@@ -392,7 +392,7 @@ mode2:
 }
 
 void
-pci_conf_write(pci_chipset_tag_t pc __unused, pcitag_t tag, int reg,
+pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
     pcireg_t data)
 {
 	int s;

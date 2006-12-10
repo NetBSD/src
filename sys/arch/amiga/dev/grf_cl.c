@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.36 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.36.22.1 2006/12/10 07:15:46 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.36 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.36.22.1 2006/12/10 07:15:46 yamt Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0
@@ -1398,7 +1398,7 @@ cl_load_mon(gp, md)
 	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
 
-	/* provide all needed information in grf device-independant locations */
+	/* provide all needed information in grf device-independent locations */
 	gp->g_data = (caddr_t) gv;
 	gi = &gp->g_display;
 	gi->gd_regaddr = (caddr_t) kvtop(ba);

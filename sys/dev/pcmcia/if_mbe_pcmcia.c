@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.39.4.1 2006/10/22 06:06:39 yamt Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.39.4.2 2006/12/10 07:18:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.39.4.1 2006/10/22 06:06:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.39.4.2 2006/12/10 07:18:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ static const size_t mbe_pcmcia_nproducts =
     sizeof(mbe_pcmcia_products) / sizeof(mbe_pcmcia_products[0]);
 
 int
-mbe_pcmcia_match(struct device *parent __unused, struct cfdata *match __unused,
+mbe_pcmcia_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -167,7 +167,7 @@ mbe_pcmcia_validate_config(cfe)
 }
 
 void
-mbe_pcmcia_attach(struct device *parent __unused, struct device *self,
+mbe_pcmcia_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct mbe_pcmcia_softc *psc = (void *)self;
@@ -244,7 +244,7 @@ fail:
 }
 
 int
-mbe_pcmcia_detach(struct device *self, int flags __unused)
+mbe_pcmcia_detach(struct device *self, int flags)
 {
 	struct mbe_pcmcia_softc *psc = (void *)self;
 	int error;

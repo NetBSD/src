@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.105.6.1 2006/10/22 06:07:10 yamt Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.105.6.2 2006/12/10 07:18:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.6.1 2006/10/22 06:07:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.6.2 2006/12/10 07:18:44 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -658,7 +658,7 @@ out:
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
-void
+int
 ktruser(struct lwp *l, const char *id, void *addr, size_t len, int ustr)
 {
 	struct proc *p = l->l_proc;
@@ -666,6 +666,10 @@ ktruser(struct lwp *l, const char *id, void *addr, size_t len, int ustr)
 	struct ktr_header *kth;
 	struct ktr_user *ktp;
 	caddr_t user_dta;
+	int error;
+
+	if (len > KTR_USER_MAXLEN)
+		return ENOSPC;
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	kte = pool_get(&kte_pool, PR_WAITOK);
@@ -681,7 +685,7 @@ ktruser(struct lwp *l, const char *id, void *addr, size_t len, int ustr)
 	ktp->ktr_id[KTR_USER_MAXIDLEN-1] = '\0';
 
 	user_dta = (caddr_t)(ktp + 1);
-	if (copyin(addr, (void *)user_dta, len) != 0)
+	if ((error = copyin(addr, (void *)user_dta, len)) != 0)
 		len = 0;
 
 	kth->ktr_len = sizeof(struct ktr_user) + len;
@@ -689,6 +693,7 @@ ktruser(struct lwp *l, const char *id, void *addr, size_t len, int ustr)
 
 	ktraddentry(l, kte, KTA_WAITOK);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
+	return error;
 }
 
 void
@@ -947,7 +952,7 @@ done:
  */
 /* ARGSUSED */
 int
-sys_fktrace(struct lwp *l, void *v, register_t *retval __unused)
+sys_fktrace(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fktrace_args /* {
 		syscallarg(int) fd;
@@ -981,7 +986,7 @@ sys_fktrace(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_ktrace(struct lwp *l, void *v, register_t *retval __unused)
+sys_ktrace(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_ktrace_args /* {
 		syscallarg(const char *) fname;
@@ -1287,16 +1292,8 @@ ktrace_thread(void *arg)
 int
 ktrcanset(struct lwp *calll, struct proc *targetp)
 {
-	kauth_cred_t caller = calll->l_cred;
-	kauth_cred_t target = targetp->p_cred;
-
-	if ((kauth_cred_geteuid(caller) == kauth_cred_getuid(target) &&
-	    kauth_cred_getuid(target) == kauth_cred_getsvuid(target) &&
-	    kauth_cred_getgid(caller) == kauth_cred_getgid(target) &&	/* XXX */
-	    kauth_cred_getgid(target) == kauth_cred_getsvgid(target) &&
-	    (targetp->p_traceflag & KTRFAC_ROOT) == 0 &&
-	    (targetp->p_flag & P_SUGID) == 0) ||
-	    kauth_cred_geteuid(caller) == 0)
+	if (kauth_authorize_process(calll->l_cred, KAUTH_PROCESS_CANKTRACE,
+	    targetp, NULL, NULL, NULL) == 0)
 		return (1);
 
 	return (0);
@@ -1307,7 +1304,7 @@ ktrcanset(struct lwp *calll, struct proc *targetp)
  * Put user defined entry to ktrace records.
  */
 int
-sys_utrace(struct lwp *l, void *v, register_t *retval __unused)
+sys_utrace(struct lwp *l, void *v, register_t *retval)
 {
 #ifdef KTRACE
 	struct sys_utrace_args /* {
@@ -1320,12 +1317,8 @@ sys_utrace(struct lwp *l, void *v, register_t *retval __unused)
 	if (!KTRPOINT(p, KTR_USER))
 		return (0);
 
-	if (SCARG(uap, len) > KTR_USER_MAXLEN)
-		return (EINVAL);
-
-	ktruser(l, SCARG(uap, label), SCARG(uap, addr), SCARG(uap, len), 1);
-
-	return (0);
+	return ktruser(l, SCARG(uap, label), SCARG(uap, addr),
+	    SCARG(uap, len), 1);
 #else /* !KTRACE */
 	return ENOSYS;
 #endif /* KTRACE */

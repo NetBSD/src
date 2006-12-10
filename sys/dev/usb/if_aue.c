@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.96.2.1 2006/10/22 06:06:52 yamt Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.96.2.2 2006/12/10 07:18:16 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.96.2.1 2006/10/22 06:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.96.2.2 2006/12/10 07:18:16 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1048,7 +1048,7 @@ aue_tx_list_init(struct aue_softc *sc)
 }
 
 Static void
-aue_intr(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+aue_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct aue_softc	*sc = priv;
@@ -1194,7 +1194,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  */
 
 Static void
-aue_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+aue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct aue_chain	*c = priv;
@@ -1252,7 +1252,7 @@ aue_tick(void *xsc)
 		return;
 
 	/* Perform periodic stuff in process context. */
-	usb_add_task(sc->aue_udev, &sc->aue_tick_task);
+	usb_add_task(sc->aue_udev, &sc->aue_tick_task, USB_TASKQ_DRIVER);
 }
 
 Static void
@@ -1331,7 +1331,8 @@ aue_send(struct aue_softc *sc, struct mbuf *m, int idx)
 		printf("%s: aue_send error=%s\n", USBDEVNAME(sc->aue_dev),
 		       usbd_errstr(err));
 		/* Stop the interface from process context. */
-		usb_add_task(sc->aue_udev, &sc->aue_stop_task);
+		usb_add_task(sc->aue_udev, &sc->aue_stop_task,
+		    USB_TASKQ_DRIVER);
 		return (EIO);
 	}
 	DPRINTFN(5,("%s: %s: send %d bytes\n", USBDEVNAME(sc->aue_dev),

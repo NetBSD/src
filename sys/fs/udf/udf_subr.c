@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.15.6.1 2006/10/22 06:07:09 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.15.6.2 2006/12/10 07:18:43 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.15.6.1 2006/10/22 06:07:09 yamt Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.15.6.2 2006/12/10 07:18:43 yamt Exp $");
 #endif /* not lint */
 
 
@@ -304,7 +304,7 @@ udf_tagsize(union dscrptr *dscr, uint32_t udf_sector_size)
 
 
 static int
-udf_fidsize(struct fileid_desc *fid, uint32_t udf_sector_size __unused)
+udf_fidsize(struct fileid_desc *fid, uint32_t udf_sector_size)
 {
 	uint32_t size;
 
@@ -946,7 +946,7 @@ udf_retrieve_lvint(struct udf_mount *ump, struct logvol_int_desc **lvintp)
  */
 
 int
-udf_process_vds(struct udf_mount *ump, struct udf_args *args __unused)
+udf_process_vds(struct udf_mount *ump, struct udf_args *args)
 {
 	union udf_pmap *mapping;
 	struct logvol_int_desc *lvint;
@@ -1339,7 +1339,7 @@ udf_read_sparables(struct udf_mount *ump, union udf_pmap *mapping)
 /* --------------------------------------------------------------------- */
 
 int
-udf_read_vds_tables(struct udf_mount *ump, struct udf_args *args __unused)
+udf_read_vds_tables(struct udf_mount *ump, struct udf_args *args)
 {
 	union udf_pmap *mapping;
 	uint32_t n_pm, mt_l;
@@ -1387,7 +1387,7 @@ udf_read_vds_tables(struct udf_mount *ump, struct udf_args *args __unused)
 /* --------------------------------------------------------------------- */
 
 int
-udf_read_rootdirs(struct udf_mount *ump, struct udf_args *args __unused)
+udf_read_rootdirs(struct udf_mount *ump, struct udf_args *args)
 {
 	struct udf_node *rootdir_node, *streamdir_node;
 	union dscrptr *dscr;
@@ -1738,15 +1738,15 @@ udf_dispose_node(struct udf_node *node)
  */
 
 static int
-udf_gop_alloc(struct vnode *vp __unused, off_t off __unused,
-    off_t len __unused, int flags __unused, kauth_cred_t cred __unused)
+udf_gop_alloc(struct vnode *vp, off_t off,
+    off_t len, int flags, kauth_cred_t cred)
 {
 	return 0;
 }
 
 
 static void
-udf_gop_markupdate(struct vnode *vp, int flags __unused)
+udf_gop_markupdate(struct vnode *vp, int flags)
 {
 	struct udf_node *udf_node = VTOI(vp);
 	u_long mask;

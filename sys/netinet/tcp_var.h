@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.137.4.1 2006/10/22 06:07:29 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.137.4.2 2006/12/10 07:19:11 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -774,6 +774,10 @@ extern	u_long syn_cache_count;
 #ifdef MBUFTRACE
 extern	struct mowner tcp_rx_mowner;
 extern	struct mowner tcp_tx_mowner;
+extern	struct mowner tcp_reass_mowner;
+extern	struct mowner tcp_sock_mowner;
+extern	struct mowner tcp_sock_rx_mowner;
+extern	struct mowner tcp_sock_tx_mowner;
 extern	struct mowner tcp_mowner;
 #endif
 
@@ -867,7 +871,6 @@ void	 tcp_mtudisc(struct inpcb *, int);
 struct ipqent *tcpipqent_alloc(void);
 void	 tcpipqent_free(struct ipqent *);
 
-int	 tcp_reass(struct tcpcb *, struct tcphdr *, struct mbuf *, int *);
 int	 tcp_respond(struct tcpcb *, struct mbuf *, struct mbuf *,
 	    struct tcphdr *, tcp_seq, tcp_seq, int);
 void	 tcp_rmx_rtt(struct tcpcb *);

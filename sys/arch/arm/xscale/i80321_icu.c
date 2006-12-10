@@ -1,10 +1,10 @@
-/*	$NetBSD: i80321_icu.c,v 1.12 2006/05/17 05:15:26 mrg Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.12.10.1 2006/12/10 07:15:48 yamt Exp $	*/
 
 /*
- * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
  * All rights reserved.
  *
- * Written by Jason R. Thorpe for Wasabi Systems, Inc.
+ * Written by Jason R. Thorpe and Steve C. Woodford for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.12 2006/05/17 05:15:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.12.10.1 2006/12/10 07:15:48 yamt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -239,7 +239,7 @@ i80321_intr_calculate_masks(void)
 	i80321_imask[IPL_SOFTNET] |= i80321_imask[IPL_SOFTCLOCK];
 
 	/*
-	 * Enforce a heirarchy that gives "slow" device (or devices with
+	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
@@ -462,12 +462,46 @@ i80321_intr_disestablish(void *cookie)
 	restore_interrupts(oldirqstate);
 }
 
+/*
+ * Hardware interrupt handler.
+ *
+ * If I80321_HPI_ENABLED is defined, this code attempts to deal with
+ * HPI interrupts as best it can.
+ *
+ * The problem is that HPIs cannot be masked at the interrupt controller;
+ * they can only be masked by disabling IRQs in the XScale core.
+ *
+ * So, if an HPI comes in and we determine that it should be masked at
+ * the current IPL then we mark it pending in the usual way and set
+ * I32_bit in the interrupt frame. This ensures that when we return from
+ * i80321_intr_dispatch(), IRQs will be disabled in the XScale core. (To
+ * ensure IRQs are enabled later, i80321_splx() has been modified to do
+ * just that when a pending HPI interrupt is unmasked.) Additionally,
+ * because HPIs are level-triggered, the registered handler for the HPI
+ * interrupt will also be invoked with IRQs disabled. If a masked HPI
+ * occurs at the same time as another unmasked higher priority interrupt,
+ * the higher priority handler will also be invoked with IRQs disabled.
+ * As a result, the system could end up executing a lot of code with IRQs
+ * completely disabled if the HPI's IPL is relatively low.
+ *
+ * At the present time, the only known use of HPI is for the console UART
+ * on a couple of boards. This is probably the least intrusive use of HPI
+ * as IPL_SERIAL is the highest priority IPL in the system anyway. The
+ * code has not been tested with HPI hooked up to a class of device which
+ * interrupts below IPL_SERIAL. Indeed, such a configuration is likely to
+ * perform very poorly if at all, even though the following code has been
+ * designed (hopefully) to cope with it.
+ */
+
 void
 i80321_intr_dispatch(struct clockframe *frame)
 {
 	struct intrq *iq;
 	struct intrhand *ih;
 	int oldirqstate, pcpl, irq, ibit, hwpend;
+#ifdef I80321_HPI_ENABLED
+	int oldpending;
+#endif
 
 	pcpl = current_spl_level;
 
@@ -480,7 +514,17 @@ i80321_intr_dispatch(struct clockframe *frame)
 	intr_enabled &= ~hwpend;
 	i80321_set_intrmask();
 
+#ifdef I80321_HPI_ENABLED
+	oldirqstate = 0;	/* XXX: quell gcc warning */
+#endif
+
 	while (hwpend != 0) {
+#ifdef I80321_HPI_ENABLED
+		/* Deal with HPI interrupt first */
+		if (__predict_false(hwpend & INT_HPIMASK))
+			irq = ICU_INT_HPI;
+		else
+#endif
 		irq = ffs(hwpend) - 1;
 		ibit = (1U << irq);
 
@@ -491,23 +535,58 @@ i80321_intr_dispatch(struct clockframe *frame)
 			 * IRQ is masked; mark it as pending and check
 			 * the next one.  Note: the IRQ is already disabled.
 			 */
+#ifdef I80321_HPI_ENABLED
+			if (__predict_false(irq == ICU_INT_HPI)) {
+				/*
+				 * This is an HPI. We *must* disable
+				 * IRQs in the interrupt frame until
+				 * INT_HPIMASK is cleared by a later
+				 * call to splx(). Otherwise the level-
+				 * triggered interrupt will just keep
+				 * coming back.
+				 */
+				frame->cf_if.if_spsr |= I32_bit;
+			}
+#endif
 			i80321_ipending |= ibit;
 			continue;
 		}
 
+#ifdef I80321_HPI_ENABLED
+		oldpending = i80321_ipending | ibit;
+#endif
 		i80321_ipending &= ~ibit;
 
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
 		current_spl_level |= iq->iq_mask;
+#ifdef I80321_HPI_ENABLED
+		/*
+		 * Re-enable interrupts iff an HPI is not pending
+		 */
+		if (__predict_true((oldpending & INT_HPIMASK) == 0))
+#endif
 		oldirqstate = enable_interrupts(I32_bit);
 		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
 		     ih = TAILQ_NEXT(ih, ih_list)) {
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 		}
+#ifdef I80321_HPI_ENABLED
+		if (__predict_true((oldpending & INT_HPIMASK) == 0))
+#endif
 		restore_interrupts(oldirqstate);
-
+#ifdef I80321_HPI_ENABLED
+		else if (irq == ICU_INT_HPI) {
+			/*
+			 * We've just handled the HPI. Make sure IRQs
+			 * are enabled in the interrupt frame.
+			 * Here's hoping the handler really did clear
+			 * down the source...
+			 */
+			frame->cf_if.if_spsr &= ~I32_bit;
+		}
+#endif
 		current_spl_level = pcpl;
 
 		/* Re-enable this interrupt now that's it's cleared. */
@@ -523,8 +602,16 @@ i80321_intr_dispatch(struct clockframe *frame)
 
 	/* Check for pendings soft intrs. */
 	if ((i80321_ipending & INT_SWMASK) & ~current_spl_level) {
+#ifdef I80321_HPI_ENABLED
+		/* XXX: This is only necessary if HPI is < IPL_SOFT* */
+		if (__predict_true((i80321_ipending & INT_HPIMASK) == 0))
+#endif
 		oldirqstate = enable_interrupts(I32_bit);
 		i80321_do_pending();
+#ifdef I80321_HPI_ENABLED
+		/* XXX: This is only necessary if HPI is < IPL_NET* */
+		if (__predict_true((i80321_ipending & INT_HPIMASK) == 0))
+#endif
 		restore_interrupts(oldirqstate);
 	}
 }

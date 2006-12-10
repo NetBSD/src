@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.11.22.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: tcom.c,v 1.11.22.2 2006/12/10 07:17:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.11.22.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.11.22.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ CFATTACH_DECL(tcom, sizeof(struct tcom_softc),
     tcomprobe, tcomattach, NULL, NULL);
 
 int
-tcomprobe(struct device *parent __unused, struct cfdata *self __unused,
+tcomprobe(struct device *parent, struct cfdata *self,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -188,7 +188,7 @@ out:
 }
 
 void
-tcomattach(struct device *parent __unused, struct device *self, void *aux)
+tcomattach(struct device *parent, struct device *self, void *aux)
 {
 	struct tcom_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

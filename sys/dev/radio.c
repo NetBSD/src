@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.17.4.1 2006/10/22 06:05:28 yamt Exp $ */
+/* $NetBSD: radio.c,v 1.17.4.2 2006/12/10 07:16:53 yamt Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.17.4.1 2006/10/22 06:05:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.17.4.2 2006/12/10 07:16:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,8 @@ const struct cdevsw radio_cdevsw = {
 extern struct cfdriver radio_cd;
 
 int
-radioprobe(struct device *parent __unused, struct cfdata *match __unused,
-    void *aux __unused)
+radioprobe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	return (1);
 }
@@ -118,8 +118,8 @@ radioclose(dev_t dev, int flags, int fmt, struct lwp *l)
 }
 
 int
-radioioctl(dev_t dev, u_long cmd, caddr_t data, int flags __unused,
-    struct lwp *l __unused)
+radioioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
+    struct lwp *l)
 {
 	struct radio_softc *sc;
 	int unit, error;
@@ -168,7 +168,7 @@ radio_attach_mi(const struct radio_hw_if *rhwp, void *hdlp, struct device *dev)
 }
 
 int
-radioprint(void *aux __unused, const char *pnp)
+radioprint(void *aux, const char *pnp)
 {
 	if (pnp != NULL)
 		aprint_normal("radio at %s", pnp);
@@ -176,7 +176,7 @@ radioprint(void *aux __unused, const char *pnp)
 }
 
 int
-radiodetach(struct device *self, int flags __unused)
+radiodetach(struct device *self, int flags)
 {
 	/*struct radio_softc *sc = (struct radio_softc *)self;*/
 	int maj, mn;

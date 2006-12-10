@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.68.16.1 2006/10/22 06:07:23 yamt Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.68.16.2 2006/12/10 07:18:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68.16.1 2006/10/22 06:07:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68.16.2 2006/12/10 07:18:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68.16.1 2006/10/22 06:07:23 yamt E
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/kauth.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -171,6 +172,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	case PFSself:	/* /proc/self    = lr-xr-xr-x */
 	case PFScwd:	/* /proc/N/cwd = lr-xr-xr-x */
 	case PFSchroot:	/* /proc/N/chroot = lr-xr-xr-x */
+	case PFSexe:	/* /proc/N/exe = lr-xr-xr-x */
 		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		vp->v_type = VLNK;
 		break;
@@ -245,6 +247,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	case PFSstatus:	/* /proc/N/status = -r--r--r-- */
 	case PFSstat:	/* /proc/N/stat = -r--r--r-- */
 	case PFScmdline:	/* /proc/N/cmdline = -r--r--r-- */
+	case PFSemul:	/* /proc/N/emul = -r--r--r-- */
 	case PFSmeminfo:	/* /proc/meminfo = -r--r--r-- */
 	case PFSdevices:	/* /proc/devices = -r--r--r-- */
 	case PFScpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
@@ -302,20 +305,30 @@ procfs_rw(v)
 	struct lwp *l;
 	struct pfsnode *pfs = VTOPFS(vp);
 	struct proc *p;
+	int error;
 
 	if (uio->uio_offset < 0)
 		return EINVAL;
 	p = PFIND(pfs->pfs_pid);
 	if (p == 0)
 		return ESRCH;
+
+	if (ISSET(p->p_flag, P_INEXEC))
+		return (EAGAIN);
+
+	curl = curlwp;
+
 	/*
 	 * Do not allow init to be modified while in secure mode; it
 	 * could be duped into changing the security level.
 	 */
-	if (uio->uio_rw == UIO_WRITE && p == initproc && securelevel > -1)
-		return EPERM;
-
-	curl = curlwp;
+#define	M2K(m)	((m) == UIO_READ ? KAUTH_REQ_PROCESS_CANPROCFS_READ : \
+		 KAUTH_REQ_PROCESS_CANPROCFS_WRITE)
+	error = kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_CANPROCFS,
+	    p, pfs, KAUTH_ARG(M2K(uio->uio_rw)), NULL);
+	if (error)
+		return (error);
+#undef	M2K
 
 	/* XXX NJWLWP
 	 * The entire procfs interface needs work to be useful to
@@ -373,6 +386,9 @@ procfs_rw(v)
 
 	case PFSmounts:
 		return (procfs_domounts(curl, p, pfs, uio));
+
+	case PFSemul:
+		return procfs_doemul(curl, p, pfs, uio);
 
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
@@ -593,4 +609,12 @@ procfs_getfp(pfs, pown, fp)
 
 	*pown = p;
 	return 0;
+}
+
+int
+procfs_doemul(struct lwp *curl, struct proc *p,
+    struct pfsnode *pfs, struct uio *uio)
+{
+	const char *ename = p->p_emul->e_name;
+	return uiomove_frombuf(__UNCONST(ename), strlen(ename), uio);
 }

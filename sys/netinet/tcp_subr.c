@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.199.4.1 2006/10/22 06:07:29 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.199.4.2 2006/12/10 07:19:11 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.199.4.1 2006/10/22 06:07:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.199.4.2 2006/12/10 07:19:11 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -365,6 +365,9 @@ EVCNT_ATTACH_STATIC(tcp_reass_fragdup);
 struct mowner tcp_mowner = MOWNER_INIT("tcp", "");
 struct mowner tcp_rx_mowner = MOWNER_INIT("tcp", "rx");
 struct mowner tcp_tx_mowner = MOWNER_INIT("tcp", "tx");
+struct mowner tcp_sock_mowner = MOWNER_INIT("tcp", "sock");
+struct mowner tcp_sock_rx_mowner = MOWNER_INIT("tcp", "sock rx");
+struct mowner tcp_sock_tx_mowner = MOWNER_INIT("tcp", "sock tx");
 #endif
 
 /*
@@ -408,6 +411,10 @@ tcp_init(void)
 
 	MOWNER_ATTACH(&tcp_tx_mowner);
 	MOWNER_ATTACH(&tcp_rx_mowner);
+	MOWNER_ATTACH(&tcp_reass_mowner);
+	MOWNER_ATTACH(&tcp_sock_mowner);
+	MOWNER_ATTACH(&tcp_sock_tx_mowner);
+	MOWNER_ATTACH(&tcp_sock_rx_mowner);
 	MOWNER_ATTACH(&tcp_mowner);
 }
 
@@ -1646,7 +1653,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, void *v)
  * We will gradually open it again as we proceed.
  */
 void
-tcp_quench(struct inpcb *inp, int errno __unused)
+tcp_quench(struct inpcb *inp, int errno)
 {
 	struct tcpcb *tp = intotcpcb(inp);
 
@@ -1659,7 +1666,7 @@ tcp_quench(struct inpcb *inp, int errno __unused)
 
 #ifdef INET6
 void
-tcp6_quench(struct in6pcb *in6p, int errno __unused)
+tcp6_quench(struct in6pcb *in6p, int errno)
 {
 	struct tcpcb *tp = in6totcpcb(in6p);
 

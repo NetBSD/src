@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.111 2006/09/01 21:20:47 matt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.111.4.1 2006/12/10 07:16:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.111 2006/09/01 21:20:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.111.4.1 2006/12/10 07:16:48 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -111,6 +111,8 @@ void netbsd32_syscall_intern __P((struct proc *));
 #else
 void syscall __P((void));
 #endif
+
+#define LIMITCHECK(a, b) ((a) != RLIM_INFINITY && (a) > (b))
 
 #ifdef COMPAT_16
 extern char netbsd32_sigcode[], netbsd32_esigcode[];
@@ -1505,8 +1507,8 @@ netbsd32___getfh30(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag);
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
+	    0, NULL, NULL, NULL);
 	if (error)
 		return (error);
 	fh = NULL;
@@ -1761,16 +1763,16 @@ netbsd32_setrlimit(l, v, retval)
 
 	switch (which) {
 	case RLIMIT_DATA:
-		if (alim.rlim_cur > MAXDSIZ32)
+		if (LIMITCHECK(alim.rlim_cur, MAXDSIZ32))
 			alim.rlim_cur = MAXDSIZ32;
-		if (alim.rlim_max > MAXDSIZ32)
+		if (LIMITCHECK(alim.rlim_max, MAXDSIZ32))
 			alim.rlim_max = MAXDSIZ32;
 		break;
 
 	case RLIMIT_STACK:
-		if (alim.rlim_cur > MAXSSIZ32)
+		if (LIMITCHECK(alim.rlim_cur, MAXSSIZ32))
 			alim.rlim_cur = MAXSSIZ32;
-		if (alim.rlim_max > MAXSSIZ32)
+		if (LIMITCHECK(alim.rlim_max, MAXSSIZ32))
 			alim.rlim_max = MAXSSIZ32;
 	default:
 		break;
@@ -2314,21 +2316,42 @@ netbsd32_ovadvise(l, v, retval)
 void
 netbsd32_adjust_limits(struct proc *p)
 {
-	rlim_t *valp;
+	static const struct {
+		int id;
+		rlim_t lim;
+	} lm[] = {
+		{ RLIMIT_DATA,	MAXDSIZ32 },
+		{ RLIMIT_STACK, MAXSSIZ32 },
+	};
+	struct rlimit val[__arraycount(lm)];
+	size_t i;
+	int needcopy = 0;
+		
+	for (i = 0; i < __arraycount(val); i++) {
+		val[i] = p->p_rlimit[lm[i].id];
+		if (LIMITCHECK(val[i].rlim_cur, lm[i].lim)) {
+			val[i].rlim_cur = lm[i].lim;
+			needcopy++;
+		}
+		if (LIMITCHECK(val[i].rlim_max, lm[i].lim)) {
+			val[i].rlim_max = lm[i].lim;
+			needcopy++;
+		}
+	}
 
-	valp = &p->p_rlimit[RLIMIT_DATA].rlim_cur;
-	if (*valp != RLIM_INFINITY && *valp > MAXDSIZ32)
-		*valp = MAXDSIZ32;
-	valp = &p->p_rlimit[RLIMIT_DATA].rlim_max;
-	if (*valp != RLIM_INFINITY && *valp > MAXDSIZ32)
-		*valp = MAXDSIZ32;
+	if (needcopy == 0)
+		return;
 
-	valp = &p->p_rlimit[RLIMIT_STACK].rlim_cur;
-	if (*valp != RLIM_INFINITY && *valp > MAXSSIZ32)
-		*valp = MAXSSIZ32;
-	valp = &p->p_rlimit[RLIMIT_STACK].rlim_max;
-	if (*valp != RLIM_INFINITY && *valp > MAXSSIZ32)
-		*valp = MAXSSIZ32;
+	if (p->p_limit->p_refcnt > 1 &&
+	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
+		struct plimit *oldplim;
+		p->p_limit = limcopy(oldplim = p->p_limit);
+		limfree(oldplim);
+	}
+
+	for (i = 0; i < __arraycount(val); i++)
+		p->p_rlimit[lm[i].id] = val[i];
+
 }
 
 int

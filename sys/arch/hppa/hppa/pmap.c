@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 2006/09/03 13:40:08 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24.4.1 2006/12/10 07:16:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2006/09/03 13:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24.4.1 2006/12/10 07:16:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,6 @@ struct simplelock pmap_freelock;	/* and lock */
 struct simplelock pmap_lock;	/* XXX this is all broken */
 struct simplelock sid_pid_lock;	/* pids */
 
-u_int	pages_per_vm_page;
 u_int	pid_counter;
 
 #ifdef PMAPDEBUG
@@ -305,12 +304,25 @@ vsize_t	hpt_mask;
 /* Prototypes. */
 void __pmap_pv_update(paddr_t, struct pv_entry *, u_int, u_int);
 static inline void pmap_pv_remove(struct pv_entry *);
+static inline void pmap_pv_add(vaddr_t, vaddr_t);
+static inline struct pv_entry *pmap_pv_alloc(void);
+static inline void pmap_pv_free(struct pv_entry *);
+static inline struct hpt_entry *pmap_hpt_hash(pa_space_t, vaddr_t);
+static inline int pmap_table_find_pa(paddr_t);
+static inline struct pv_entry *pmap_pv_find_pa(paddr_t);
+static inline struct pv_entry *pmap_pv_find_va(pa_space_t, vaddr_t);
+static int pmap_pv_check_alias(paddr_t);
+static inline void _pmap_pv_update(paddr_t, struct pv_entry *, u_int, u_int);
+static inline struct pv_entry *pmap_pv_enter(pmap_t, pa_space_t, vaddr_t,
+    paddr_t, u_int);
+static void pmap_pinit(pmap_t);
+static inline boolean_t pmap_clear_bit(paddr_t, u_int);
+static inline boolean_t pmap_test_bit(paddr_t, u_int);
 
 /*
  * Given a directly-mapped region, this makes pv_entries out of it and
  * adds them to the free list.
  */
-static inline void pmap_pv_add(vaddr_t, vaddr_t);
 static inline void
 pmap_pv_add(vaddr_t pv_start, vaddr_t pv_end)
 {
@@ -342,7 +354,6 @@ pmap_pv_add(vaddr_t pv_start, vaddr_t pv_end)
  * in physical mode and thus require that all pv_entries be directly
  * mapped, a quality unlikely for malloc()-returned memory.
  */
-static inline struct pv_entry *pmap_pv_alloc(void);
 static inline struct pv_entry *
 pmap_pv_alloc(void)
 {
@@ -406,7 +417,6 @@ pmap_pv_alloc(void)
 /*
  * Given a struct pv_entry allocated by pmap_pv_alloc, this frees it.
  */
-static inline void pmap_pv_free(struct pv_entry *);
 static inline void
 pmap_pv_free(struct pv_entry *pv)
 {
@@ -429,7 +439,6 @@ pmap_pv_free(struct pv_entry *pv)
  * This HPT is also used as a general VA->PA mapping store, with
  * struct pv_entry chains hanging off of the HPT entries.
  */
-static inline struct hpt_entry *pmap_hpt_hash(pa_space_t, vaddr_t);
 static inline struct hpt_entry *
 pmap_hpt_hash(pa_space_t sp, vaddr_t va)
 {
@@ -450,7 +459,6 @@ pmap_hpt_hash(pa_space_t sp, vaddr_t va)
 /*
  * Given a PA, returns the table offset for it.
  */
-static inline int pmap_table_find_pa(paddr_t);
 static inline int
 pmap_table_find_pa(paddr_t pa)
 {
@@ -463,7 +471,6 @@ pmap_table_find_pa(paddr_t pa)
 /*
  * Given a PA, returns the first mapping for it.
  */
-static inline struct pv_entry *pmap_pv_find_pa(paddr_t);
 static inline struct pv_entry *
 pmap_pv_find_pa(paddr_t pa)
 {
@@ -477,7 +484,6 @@ pmap_pv_find_pa(paddr_t pa)
 /*
  * Given a VA, this finds any mapping for it.
  */
-static inline struct pv_entry *pmap_pv_find_va(pa_space_t, vaddr_t);
 static inline struct pv_entry *
 pmap_pv_find_va(pa_space_t space, vaddr_t va)
 {
@@ -495,7 +501,6 @@ pmap_pv_find_va(pa_space_t space, vaddr_t va)
  * Given a page's PA, checks for non-equivalent aliasing, 
  * and stores and returns the result.
  */
-static int pmap_pv_check_alias(paddr_t);
 static int
 pmap_pv_check_alias(paddr_t pa)
 {
@@ -559,7 +564,6 @@ pmap_pv_check_alias(paddr_t pa)
  * the protection accordingly.  This is used when a mapping is
  * changing.
  */
-static inline void _pmap_pv_update(paddr_t, struct pv_entry *, u_int, u_int);
 static inline void
 _pmap_pv_update(paddr_t pa, struct pv_entry *pv, u_int tlbprot_clear,
     u_int tlbprot_set)
@@ -623,8 +627,6 @@ _pmap_pv_update(paddr_t pa, struct pv_entry *pv, u_int tlbprot_clear,
  * Given a pmap, a VA, a PA, and a TLB protection, this enters
  * a new mapping and returns the new struct pv_entry.
  */
-static inline struct pv_entry *pmap_pv_enter(pmap_t, pa_space_t, vaddr_t,
-    paddr_t, u_int);
 static inline struct pv_entry *
 pmap_pv_enter(pmap_t pmap, pa_space_t space, vaddr_t va, paddr_t pa,
     u_int tlbprot)
@@ -766,7 +768,7 @@ pmap_pv_remove(struct pv_entry *pv)
 
 /*
  * Bootstrap the system enough to run with virtual memory.
- * Map the kernel's code and data, and allocate the system page table.
+ * Map the kernel's code, data and bss, and allocate the system page table.
  * Called with mapping OFF.
  *
  * Parameters:
@@ -776,7 +778,7 @@ pmap_pv_remove(struct pv_entry *pv)
 void
 pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 {
-	vaddr_t addr;
+	vaddr_t addr, va;
 	vsize_t size;
 	vaddr_t pv_region;
 	struct hpt_entry *hptp;
@@ -786,18 +788,16 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	int btlb_entry_vm_prot[BTLB_SET_SIZE];
 	int btlb_i, btlb_j;
 	vsize_t btlb_entry_min, btlb_entry_max, btlb_entry_got;
-	extern int kernel_text;
-	extern int __data_start;
-	extern int __rodata_end;
-	vaddr_t kernel_data;
+	paddr_t ksro, kero, ksrw, kerw;
 	paddr_t phys_start, phys_end;
 
-        PMAP_PRINTF(PDB_INIT, (": phys addresses %p - %p\n",
+	/* Provided by the linker script */
+	extern int kernel_text, __data_start, __rodata_end;
+
+	PMAP_PRINTF(PDB_INIT, (": phys addresses %p - %p\n",
 	    (void *)*vstart, (void *)*vend));
 
 	uvm_setpagesize();
-
-	pages_per_vm_page = 1;	/* XXX This should die */
 
 	kern_prot[VM_PROT_NONE | VM_PROT_NONE  | VM_PROT_NONE]    =TLB_AR_NA;
 	kern_prot[VM_PROT_READ | VM_PROT_NONE  | VM_PROT_NONE]    =TLB_AR_KR;
@@ -832,6 +832,9 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	kernel_pmap->pmap_space = HPPA_SID_KERNEL;
 	kernel_pmap->pmap_pid = HPPA_PID_KERNEL;
 
+	ksro = (paddr_t) &kernel_text;
+	kero = ksrw = (paddr_t) &__data_start;
+
 	/*
 	 * Allocate various tables and structures.
 	 */
@@ -860,7 +863,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 		hptp->hpt_tlbprot = 0;
 		hptp->hpt_entry   = NULL;
 	}
-        PMAP_PRINTF(PDB_INIT, (": hpt_table 0x%lx @ %p\n", size + 1,
+	PMAP_PRINTF(PDB_INIT, (": hpt_table 0x%lx @ %p\n", size + 1,
 	    (caddr_t)addr));
 	/*
 	 * load cr25 with the address of the HPT table
@@ -879,11 +882,17 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	memset(pv_head_tbl, 0, sizeof(*pv_head_tbl) * totalphysmem);
 	addr = (vaddr_t) (pv_head_tbl + totalphysmem);
 
+	PMAP_PRINTF(PDB_INIT, (": pv_head array 0x%lx @ %p\n",
+	    sizeof(*pv_head_tbl) * totalphysmem, pv_head_tbl));
+
 	/* Allocate the page aliased bitmap. */
 	addr = ALIGN(addr);
 	page_aliased_bitmap = (u_int *) addr;
 	addr = (vaddr_t) (&_PAGE_ALIASED_WORD(totalphysmem) + 1);
 	memset(page_aliased_bitmap, 0, addr - (vaddr_t) page_aliased_bitmap);
+
+	PMAP_PRINTF(PDB_INIT, (": page_aliased_bitmap 0x%lx @ %p\n",
+	    addr - (vaddr_t) page_aliased_bitmap, page_aliased_bitmap));
 
 	/*
 	 * Allocate the largest struct pv_entry region.   The
@@ -974,8 +983,10 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * BTLB entry for the kernel text may also cover some of
 	 * the data segment, meaning it will have to allow writing.
 	 */
-	kernel_data = (vaddr_t) &__data_start;
-	addr = (vaddr_t) &kernel_text;
+	addr = ksro;
+
+	PMAP_PRINTF(PDB_INIT, (": mapping text and rodata @ %p - %p\n",
+	    (void *)addr, (void *)&__rodata_end));
 
 	btlb_j = 0;
 	while (addr < (vaddr_t) &__rodata_end) {
@@ -985,7 +996,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 		btlb_entry_start[btlb_j] = addr;
 		btlb_entry_size[btlb_j] = btlb_entry_min;
 		btlb_entry_vm_prot[btlb_j] = VM_PROT_READ | VM_PROT_EXECUTE;
-		if (addr + btlb_entry_min > kernel_data)
+		if (addr + btlb_entry_min > kero)
 			btlb_entry_vm_prot[btlb_j] |= VM_PROT_WRITE;
 
 		/* Coalesce BTLB entries whenever possible. */
@@ -1017,6 +1028,10 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * The only thing this wastes is kernel virtual space,
 	 * which is plentiful.
 	 */
+
+	PMAP_PRINTF(PDB_INIT, (": mapping data, bss, etc @ %p - %p\n",
+	    (void *)addr, (void *)*vstart));
+
 	while (addr < *vstart) {
 
 		/* Make the next BTLB entry. */
@@ -1056,6 +1071,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 */
 	*vstart = btlb_entry_start[btlb_j - 1] + btlb_entry_size[btlb_j - 1];
 	virtual_start = *vstart;
+	kerw = *vstart;
 
 	/*
 	 * Finally, load physical pages into UVM.  There are
@@ -1067,7 +1083,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	phys_start = resvmem;
 	phys_end = atop(hppa_trunc_page(&kernel_text));
 
-        PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
+	PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
 	if (phys_end > phys_start) {
 		uvm_page_physload(phys_start, phys_end,
@@ -1079,7 +1095,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	phys_start = atop(&__rodata_end);
 	phys_end = atop(&__data_start);
 
-        PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
+	PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
 	if (phys_end > phys_start) {
 		uvm_page_physload(phys_start, phys_end,
@@ -1091,13 +1107,19 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	phys_start = atop(virtual_steal);
 	phys_end = totalphysmem;
 
-        PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
+	PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
 	if (phys_end > phys_start) {
 		uvm_page_physload(phys_start, phys_end,
 			phys_start, phys_end, VM_FREELIST_DEFAULT);
 		physmem += phys_end - phys_start;
 	}
+
+	for (va = ksro; va < kero; va += PAGE_SIZE)
+		pmap_kenter_pa(va, va, UVM_PROT_RX);
+	for (va = ksrw; va < kerw; va += PAGE_SIZE)
+		pmap_kenter_pa(va, va, UVM_PROT_RW);
+
 }
 
 /*
@@ -1186,7 +1208,6 @@ pmap_init(void)
  * Initialize a preallocated and zeroed pmap structure,
  * such as one in a vmspace structure.
  */
-static void pmap_pinit(pmap_t);
 static void
 pmap_pinit(pmap_t pmap)
 {
@@ -1706,7 +1727,6 @@ pmap_copy_page(paddr_t spa, paddr_t dpa)
  * Given a PA and a bit, this tests and clears that bit in 
  * the modref information for the PA.
  */
-static inline boolean_t pmap_clear_bit(paddr_t, u_int);
 static inline boolean_t
 pmap_clear_bit(paddr_t pa, u_int tlbprot_bit)
 {
@@ -1732,7 +1752,6 @@ pmap_clear_bit(paddr_t pa, u_int tlbprot_bit)
  * Given a PA and a bit, this tests that bit in the modref
  * information for the PA.
  */
-static inline boolean_t pmap_test_bit(paddr_t, u_int);
 static inline boolean_t
 pmap_test_bit(paddr_t pa, u_int tlbprot_bit)
 {
@@ -1768,9 +1787,9 @@ pmap_test_bit(paddr_t pa, u_int tlbprot_bit)
 /*
  * pmap_clear_modify(pa)
  *	clears the hardware modified ("dirty") bit for one
- *	machine independant page starting at the given
+ *	machine independent page starting at the given
  *	physical address.  phys must be aligned on a machine
- *	independant page boundary.
+ *	independent page boundary.
  */
 boolean_t
 pmap_clear_modify(struct vm_page *pg)
@@ -1798,7 +1817,7 @@ pmap_is_modified(struct vm_page *pg)
 /*
  * pmap_clear_reference(pa)
  *	clears the hardware referenced bit in the given machine
- *	independant physical page.
+ *	independent physical page.
  *
  *	Currently, we treat a TLB miss as a reference; i.e. to clear
  *	the reference bit we flush all mappings for pa from the TLBs.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.27 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.27.6.1 2006/12/10 07:16:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.27 2006/08/05 21:26:49 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.27.6.1 2006/12/10 07:16:31 yamt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -83,7 +83,7 @@ static const struct fmttab cpu_7450_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 256KB L2 cache" },
-	{ 0 }
+	{ 0, 0, NULL }
 };
 
 static const struct fmttab cpu_7448_l2cr_formats[] = {
@@ -92,7 +92,7 @@ static const struct fmttab cpu_7448_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 1MB L2 cache" },
-	{ 0 }
+	{ 0, 0, NULL }
 };
 
 static const struct fmttab cpu_7457_l2cr_formats[] = {
@@ -101,7 +101,7 @@ static const struct fmttab cpu_7457_l2cr_formats[] = {
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
 	{ L2CR_L2E, ~0, " 512KB L2 cache" },
-	{ 0 }
+	{ 0, 0, NULL }
 };
 
 static const struct fmttab cpu_7450_l3cr_formats[] = {
@@ -127,7 +127,7 @@ static const struct fmttab cpu_7450_l3cr_formats[] = {
 	{ L3CR_L3CLK, L3CLK_50, " 5:1" },
 	{ L3CR_L3CLK, L3CLK_60, " 6:1" },
 	{ L3CR_L3CLK, ~0, " ratio" },
-	{ 0, 0 },
+	{ 0, 0, NULL },
 };
 
 static const struct fmttab cpu_ibm750_l2cr_formats[] = {
@@ -140,7 +140,7 @@ static const struct fmttab cpu_ibm750_l2cr_formats[] = {
 	{ L2CR_L2WT, 0, " WB" },
 	{ L2CR_L2PE, L2CR_L2PE, " with ECC" },
 	{ 0, ~0, " L2 cache" },
-	{ 0 }
+	{ 0, 0, NULL }
 };
 
 static const struct fmttab cpu_l2cr_formats[] = {
@@ -169,7 +169,7 @@ static const struct fmttab cpu_l2cr_formats[] = {
 	{ L2CR_L2CLK, L2CLK_35, " 3.5:1" },
 	{ L2CR_L2CLK, L2CLK_40, " 4:1" },
 	{ L2CR_L2CLK, ~0, " ratio" },
-	{ 0 }
+	{ 0, 0, NULL }
 };
 
 static void cpu_fmttab_print(const struct fmttab *, register_t);

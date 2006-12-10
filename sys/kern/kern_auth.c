@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.22.2.1 2006/10/22 06:07:10 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.22.2.2 2006/12/10 07:18:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -30,13 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Todo:
- *   - Garbage collection to pool_put() unused scopes/listeners.
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.22.2.1 2006/10/22 06:07:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.22.2.2 2006/12/10 07:18:43 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -354,8 +349,7 @@ kauth_cred_group(kauth_cred_t cred, u_int idx)
 
 /* XXX elad: gmuid is unused for now. */
 int
-kauth_cred_setgroups(kauth_cred_t cred, gid_t *grbuf, size_t len,
-    uid_t gmuid __unused)
+kauth_cred_setgroups(kauth_cred_t cred, gid_t *grbuf, size_t len, uid_t gmuid)
 {
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt == 1);
@@ -411,14 +405,14 @@ kauth_cred_getrefcnt(kauth_cred_t cred)
 
 /*
  * Convert userland credentials (struct uucred) to kauth_cred_t.
- * XXX: For NFS code.
+ * XXX: For NFS & puffs
  */
-void
-kauth_cred_uucvt(kauth_cred_t cred, const struct uucred *uuc)
-{
+void    
+kauth_uucred_to_cred(kauth_cred_t cred, const struct uucred *uuc)
+{       
 	KASSERT(cred != NULL);
 	KASSERT(uuc != NULL);
-
+ 
 	cred->cr_refcnt = 1;
 	cred->cr_uid = uuc->cr_uid;
 	cred->cr_euid = uuc->cr_uid;
@@ -429,6 +423,24 @@ kauth_cred_uucvt(kauth_cred_t cred, const struct uucred *uuc)
 	cred->cr_ngroups = min(uuc->cr_ngroups, NGROUPS);
 	kauth_cred_setgroups(cred, __UNCONST(uuc->cr_groups),
 	    cred->cr_ngroups, -1);
+}
+
+/*
+ * Convert kauth_cred_t to userland credentials (struct uucred).
+ * XXX: For NFS & puffs
+ */
+void    
+kauth_cred_to_uucred(struct uucred *uuc, const kauth_cred_t cred)
+{       
+	KASSERT(cred != NULL);
+	KASSERT(uuc != NULL);
+	int ng;
+
+	ng = min(cred->cr_ngroups, NGROUPS);
+	uuc->cr_uid = cred->cr_euid;  
+	uuc->cr_gid = cred->cr_egid;  
+	uuc->cr_ngroups = ng;
+	kauth_cred_getgroups(cred, uuc->cr_groups, ng);
 }
 
 /*
@@ -649,7 +661,7 @@ kauth_deregister_scope(kauth_scope_t scope)
  */
 kauth_listener_t
 kauth_listen_scope(const char *id, kauth_scope_callback_t callback,
-    void *cookie __unused)
+   void *cookie)
 {
 	kauth_scope_t scope;
 	kauth_listener_t listener;
@@ -799,9 +811,34 @@ kauth_authorize_machdep(kauth_cred_t cred, kauth_action_t action,
 }
 
 int
+kauth_authorize_device(kauth_cred_t cred, kauth_action_t action,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	return (kauth_authorize_action(kauth_builtin_scope_device, cred,
+	    action, arg0, arg1, arg2, arg3));
+}
+
+int
 kauth_authorize_device_tty(kauth_cred_t cred, kauth_action_t action,
     struct tty *tty)
 {
 	return (kauth_authorize_action(kauth_builtin_scope_device, cred,
 	    action, tty, NULL, NULL, NULL));
+}
+
+int
+kauth_authorize_device_spec(kauth_cred_t cred, enum kauth_device_req req,
+    struct vnode *vp)
+{
+	return (kauth_authorize_action(kauth_builtin_scope_device, cred,
+	    KAUTH_DEVICE_RAWIO_SPEC, (void *)req, vp, NULL, NULL));
+}
+
+int
+kauth_authorize_device_passthru(kauth_cred_t cred, dev_t dev, u_long bits,
+    void *data)
+{
+	return (kauth_authorize_action(kauth_builtin_scope_device, cred,
+	    KAUTH_DEVICE_RAWIO_PASSTHRU, (void *)bits, (void *)(u_long)dev,
+	    data, NULL));
 }

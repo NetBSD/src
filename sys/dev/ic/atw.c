@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.119.4.1 2006/10/22 06:05:43 yamt Exp $  */
+/*	$NetBSD: atw.c,v 1.119.4.2 2006/12/10 07:17:04 yamt Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.119.4.1 2006/10/22 06:05:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.119.4.2 2006/12/10 07:17:04 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -414,7 +414,7 @@ atw_read_srom(struct atw_softc *sc)
 		sd.sd_chip = C46;
 		break;
 	default:
-		printf("%s: unknown SROM type %d\n",
+		printf("%s: unknown SROM type %" __PRIuBITS "\n",
 		    sc->sc_dev.dv_xname,
 		    __SHIFTOUT(test0, ATW_TEST0_EPTYP_MASK));
 		return -1;
@@ -1154,7 +1154,7 @@ atw_tofs0_init(struct atw_softc *sc)
 	 * I am assuming that the role of ATW_TOFS0_USCNT is
 	 * to divide the bus clock to get a 1 MHz clock---the datasheet is not
 	 * very clear on this point. It says in the datasheet that it is
-	 * possible for the ADM8211 to accomodate bus speeds between 22 MHz
+	 * possible for the ADM8211 to accommodate bus speeds between 22 MHz
 	 * and 33 MHz; maybe this is the way? I see a binary-only driver write
 	 * these values. These values are also the power-on default.
 	 */
@@ -2167,7 +2167,7 @@ atw_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
 
 static int
 atw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
-	const u_int8_t mac[IEEE80211_ADDR_LEN] __unused)
+	const u_int8_t mac[IEEE80211_ADDR_LEN])
 {
 	struct atw_softc *sc = ic->ic_ifp->if_softc;
 
@@ -2182,7 +2182,7 @@ atw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
 }
 
 static void
-atw_key_update_begin(struct ieee80211com *ic __unused)
+atw_key_update_begin(struct ieee80211com *ic)
 {
 #ifdef ATW_DEBUG
 	struct ifnet *ifp = ic->ic_ifp;
@@ -3301,8 +3301,8 @@ atw_txintr(struct atw_softc *sc)
 		    (txstat & TXSTAT_ERRMASK) != 0) {
 			bitmask_snprintf(txstat & TXSTAT_ERRMASK, TXSTAT_FMT,
 			    txstat_buf, sizeof(txstat_buf));
-			printf("%s: txstat %s %d\n", sc->sc_dev.dv_xname,
-			    txstat_buf,
+			printf("%s: txstat %s %" __PRIuBITS "\n",
+			    sc->sc_dev.dv_xname, txstat_buf,
 			    __SHIFTOUT(txstat, ATW_TXSTAT_ARC_MASK));
 		}
 

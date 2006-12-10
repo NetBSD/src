@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.19.22.1 2006/10/22 06:06:15 yamt Exp $	*/
+/*	$NetBSD: aceride.c,v 1.19.22.2 2006/12/10 07:17:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.19.22.1 2006/10/22 06:06:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.19.22.2 2006/12/10 07:17:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static const struct pciide_product_desc pciide_acer_products[] =  {
 };
 
 static int
-aceride_match(struct device *parent __unused, struct cfdata *match __unused,
+aceride_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -87,7 +87,7 @@ aceride_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-aceride_attach(struct device *parent __unused, struct device *self, void *aux)
+aceride_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -134,7 +134,9 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		if (rev >= 0x20) {
 			sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
-			if (rev >= 0xC4)
+			if (rev >= 0xC7)
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+			else if (rev >= 0xC4)
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 			else if (rev >= 0xC2)
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_k6.c,v 1.8.4.1 2006/10/22 06:04:44 yamt Exp $	*/
+/*	$NetBSD: mtrr_k6.c,v 1.8.4.2 2006/12/10 07:16:10 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.8.4.1 2006/10/22 06:04:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.8.4.2 2006/12/10 07:16:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ k6_mtrr_reload(void)
 }
 
 static void
-k6_mtrr_reload_cpu(struct cpu_info *ci __unused)
+k6_mtrr_reload_cpu(struct cpu_info *ci)
 {
 
 	k6_mtrr_reload();
@@ -211,7 +211,7 @@ k6_soft2raw(void)
 }
 
 static void
-k6_mtrr_init_cpu(struct cpu_info *ci __unused)
+k6_mtrr_init_cpu(struct cpu_info *ci)
 {
 
 	k6_mtrr_reload();
@@ -221,7 +221,7 @@ k6_mtrr_init_cpu(struct cpu_info *ci __unused)
 }
 
 static int
-k6_mtrr_validate(struct mtrr *mtrrp, struct proc *p __unused)
+k6_mtrr_validate(struct mtrr *mtrrp, struct proc *p)
 {
 
 	/*
@@ -348,7 +348,7 @@ k6_mtrr_set(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
 }
 
 static int
-k6_mtrr_get(struct mtrr *mtrrp, int *n, struct proc *p __unused, int flags)
+k6_mtrr_get(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
 {
 	int i, error;
 

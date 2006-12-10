@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8.10.3 2006/09/22 17:45:37 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.10.4 2006/12/10 07:15:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -94,13 +94,13 @@
 
 extern const uint32_t ipl_sr_bits[_IPL_N];
 
-extern int		_splraise(int);
-extern int		_spllower(int);
-extern int		_splset(int);
-extern int		_splget(int);
-extern int		_splnone(int);
-extern int		_setsoftintr(int);
-extern int		_clrsoftintr(int);
+int _splraise(int);
+int _spllower(int);
+int _splset(int);
+int _splget(void);
+void _splnone(void);
+void _setsoftintr(int);
+void _clrsoftintr(int);
 
 #define	spl0()		(void) _spllower(0)
 #define	splx(s)		(void) _splset(s)

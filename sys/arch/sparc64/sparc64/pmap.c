@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.173.2.1 2006/10/22 06:05:12 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.173.2.2 2006/12/10 07:16:41 yamt Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.173.2.1 2006/10/22 06:05:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.173.2.2 2006/12/10 07:16:41 yamt Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2059,10 +2059,16 @@ pmap_extract(pm, va, pap)
 		pa = (paddr_t)(curcpu()->ci_paddr - INTSTACK + va);
 		DPRINTF(PDB_EXTRACT, ("pmap_extract (intstack): va=%lx pa=%llx\n",
 		    (u_long)va, (unsigned long long)pa));
+		if (pap != NULL)
+			*pap = pa;
+		return TRUE;
 	} else if (pm == pmap_kernel() && va >= KSTACK_VA && va < (KSTACK_VA + 64*KB)) {
 		pa = (paddr_t)(curcpu()->ci_paddr - KSTACK_VA + va);
 		DPRINTF(PDB_EXTRACT, ("pmap_extract (kstack): va=%lx pa=%llx\n",
 		    (u_long)va, (unsigned long long)pa));
+		if (pap != NULL)
+			*pap = pa;
+		return TRUE;
 	} else {
 		if (pm != pmap_kernel()) {
 			simple_lock(&pm->pm_lock);
@@ -2240,7 +2246,7 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)
 }
 
 /*
- * Determine (non)existance of physical page
+ * Determine (non)existence of physical page
  */
 int
 pmap_pa_exists(paddr_t pa)

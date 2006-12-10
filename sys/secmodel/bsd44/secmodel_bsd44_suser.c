@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.2.4.1 2006/10/22 06:07:47 yamt Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.2.4.2 2006/12/10 07:19:28 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -16,8 +16,6 @@
  *      This product includes software developed by Elad Efrat.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 5. Use of the code by Wasabi Systems Inc. is hereby prohibited without
- *    written approval from the author.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -43,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.2.4.1 2006/10/22 06:07:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.2.4.2 2006/12/10 07:19:28 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,8 +83,8 @@ secmodel_bsd44_suser_start(void)
  */
 int
 secmodel_bsd44_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie __unused, void *arg0 __unused, void *arg1 __unused,
-    void *arg2 __unused, void *arg3 __unused)
+    void *cookie, void *arg0, void *arg1,
+    void *arg2, void *arg3)
 {
 	boolean_t isroot;
 	int result;
@@ -125,8 +123,8 @@ secmodel_bsd44_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie __unused, void *arg0 __unused, void *arg1 __unused,
-    void *arg2 __unused, void *arg3 __unused)
+    void *cookie, void *arg0, void *arg1,
+    void *arg2, void *arg3)
 {
 	boolean_t isroot;
 	int result;
@@ -184,7 +182,7 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie __unused, void *arg0, void *arg1, void *arg2, void *arg3)
+    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	struct proc *p;
 	boolean_t isroot;
@@ -211,6 +209,45 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 			result = KAUTH_RESULT_ALLOW;
 		else if (isroot || kauth_cred_uidmatch(cred, p->p_cred))
 			result = KAUTH_RESULT_ALLOW;
+		break;
+
+	case KAUTH_PROCESS_CANKTRACE:
+		if (isroot) {
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		if ((p->p_traceflag & KTRFAC_ROOT) || (p->p_flag & P_SUGID)) {
+			result = KAUTH_RESULT_DENY;
+			break;
+		}
+
+		if (kauth_cred_geteuid(cred) == kauth_cred_getuid(p->p_cred) &&
+		    kauth_cred_getuid(cred) == kauth_cred_getsvuid(p->p_cred) &&
+		    kauth_cred_getgid(cred) == kauth_cred_getgid(p->p_cred) &&
+		    kauth_cred_getgid(cred) == kauth_cred_getsvgid(p->p_cred)) {
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		result = KAUTH_RESULT_DENY;
+		break;
+
+	case KAUTH_PROCESS_CANPROCFS:
+	case KAUTH_PROCESS_CANPTRACE:
+	case KAUTH_PROCESS_CANSYSTRACE:
+		if (isroot) {
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		if (kauth_cred_getuid(cred) != kauth_cred_getuid(p->p_cred) ||
+		    ISSET(p->p_flag, P_SUGID)) {
+			result = KAUTH_RESULT_DENY;
+			break;
+		}
+
+		result = KAUTH_RESULT_ALLOW;
 		break;
 
 	case KAUTH_PROCESS_RESOURCE:
@@ -266,8 +303,8 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie __unused, void *arg0, void *arg1, void *arg2 __unused,
-    void *arg3 __unused)
+    void *cookie, void *arg0, void *arg1, void *arg2,
+    void *arg3)
 {
 	boolean_t isroot;
 	int result;
@@ -349,6 +386,16 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 
 	case KAUTH_NETWORK_SOCKET:
 		switch (req) {
+		case KAUTH_REQ_NETWORK_SOCKET_OPEN:
+			if ((u_long)arg1 == PF_ROUTE)
+				result = KAUTH_RESULT_ALLOW;
+			else if ((u_long)arg2 == SOCK_RAW) {
+				if (isroot)
+					result = KAUTH_RESULT_ALLOW;
+			} else
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
 		case KAUTH_REQ_NETWORK_SOCKET_RAWSOCK:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
@@ -391,8 +438,8 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie __unused, void *arg0, void *arg1 __unused, void *arg2 __unused,
-    void *arg3 __unused)
+    void *cookie, void *arg0, void *arg1, void *arg2,
+    void *arg3)
 {
         boolean_t isroot;
         int result;
@@ -448,8 +495,8 @@ secmodel_bsd44_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
  */
 int
 secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie __unused, void *arg0, void *arg1 __unused, void *arg2 __unused,
-    void *arg3 __unused)
+    void *cookie, void *arg0, void *arg1, void *arg2,
+    void *arg3)
 {
 	struct tty *tty;
         boolean_t isroot;

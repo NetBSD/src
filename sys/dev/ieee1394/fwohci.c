@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.100.8.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.100.8.2 2006/12/10 07:17:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.100.8.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.100.8.2 2006/12/10 07:17:26 yamt Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -918,7 +918,7 @@ fwohci_execute_db(void *arg, bus_dma_segment_t *segs, int nseg, int error)
 
 static void
 fwohci_execute_db2(void *arg, bus_dma_segment_t *segs, int nseg,
-    bus_size_t size __unused, int error)
+    bus_size_t size, int error)
 {
 	fwohci_execute_db(arg, segs, nseg, error);
 }
@@ -1546,7 +1546,7 @@ fwohci_rx_enable(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 }
 
 static int
-fwohci_next_cycle(struct firewire_comm *fc __unused, int cycle_now)
+fwohci_next_cycle(struct firewire_comm *fc, int cycle_now)
 {
 	int sec, cycle, cycle_match;
 
@@ -2221,7 +2221,7 @@ again:
 }
 
 void
-fwohci_poll(struct firewire_comm *fc, int quick __unused, int count)
+fwohci_poll(struct firewire_comm *fc, int quick, int count)
 {
 	int s;
 	uint32_t stat;

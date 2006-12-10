@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.26.4.1 2006/10/22 06:05:43 yamt Exp $	*/
+/*	$NetBSD: dpti.c,v 1.26.4.2 2006/12/10 07:17:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.26.4.1 2006/10/22 06:05:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.26.4.2 2006/12/10 07:17:03 yamt Exp $");
 
 #include "opt_i2o.h"
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.26.4.1 2006/10/22 06:05:43 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -156,7 +157,7 @@ CFATTACH_DECL(dpti, sizeof(struct dpti_softc),
     dpti_match, dpti_attach, NULL, NULL);
 
 int
-dpti_match(struct device *parent, struct cfdata *match __unused, void *aux)
+dpti_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct iop_attach_args *ia;
 	struct iop_softc *iop;
@@ -174,7 +175,7 @@ dpti_match(struct device *parent, struct cfdata *match __unused, void *aux)
 }
 
 void
-dpti_attach(struct device *parent, struct device *self, void *aux __unused)
+dpti_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct iop_softc *iop;
 	struct dpti_softc *sc;
@@ -206,8 +207,8 @@ dpti_attach(struct device *parent, struct device *self, void *aux __unused)
 }
 
 int
-dptiopen(dev_t dev, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+dptiopen(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 
 	if (device_lookup(&dpti_cd, minor(dev)) == NULL)
@@ -217,7 +218,7 @@ dptiopen(dev_t dev, int flag __unused, int mode __unused,
 }
 
 int
-dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
+dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct iop_softc *iop;
 	struct dpti_softc *sc;
@@ -276,10 +277,10 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
 		break;
 
 	case DPT_I2OUSRCMD:
-		if (securelevel > 1) {
-			rv = EPERM;
+		rv = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
+		if (rv)
 			break;
-		}
 
 		if (sc->sc_nactive++ >= 2)
 			tsleep(&sc->sc_nactive, PRIBIO, "dptislp", 0);
@@ -364,7 +365,7 @@ dpti_ctlrinfo(struct dpti_softc *sc, int size, caddr_t data)
 }
 
 int
-dpti_sysinfo(struct dpti_softc *sc __unused, int size, caddr_t data)
+dpti_sysinfo(struct dpti_softc *sc, int size, caddr_t data)
 {
 	struct dpt_sysinfo info;
 	int rv;

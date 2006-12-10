@@ -1,10 +1,10 @@
-/*	$NetBSD: i80321_intr.h,v 1.8 2006/04/10 03:36:03 simonb Exp $	*/
+/*	$NetBSD: i80321_intr.h,v 1.8.10.1 2006/12/10 07:15:48 yamt Exp $	*/
 
 /*
- * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
  * All rights reserved.
  *
- * Written by Jason R. Thorpe for Wasabi Systems, Inc.
+ * Written by Jason R. Thorpe and Steve C. Woodford for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,6 +63,8 @@ i80321_set_intrmask(void)
 	((1U << ICU_INT_bit26) | (1U << ICU_INT_bit22) |		\
 	 (1U << ICU_INT_bit5)  | (1U << ICU_INT_bit4))
 
+#define INT_HPIMASK	(1u << ICU_INT_HPI)
+
 static inline void __attribute__((__unused__))
 i80321_splx(int new)
 {
@@ -82,6 +84,10 @@ i80321_splx(int new)
 		oldirqstate = disable_interrupts(I32_bit);
 		intr_enabled |= hwpend;
 		i80321_set_intrmask();
+#ifdef I80321_HPI_ENABLED
+		if (__predict_false(hwpend & INT_HPIMASK))
+			oldirqstate &= ~I32_bit;
+#endif
 		restore_interrupts(oldirqstate);
 	}
 

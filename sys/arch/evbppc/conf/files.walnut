@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.10.6.1 2006/10/22 06:04:39 yamt Exp $
+#	$NetBSD: files.walnut,v 1.10.6.2 2006/12/10 07:15:53 yamt Exp $
 #
 # walnut-specific configuration info
 
@@ -34,7 +34,7 @@ include	"dev/pci/files.pci"
 # On-chip PCI bridge
 #
 # XXX: Move these to a 405gp-specific file and re-think the
-# layout of the powerpc/ibm4xx hierarchy to accomodate SoCs.
+# layout of the powerpc/ibm4xx hierarchy to accommodate SoCs.
 #
 device	pchb : pcibus
 attach	pchb at plb

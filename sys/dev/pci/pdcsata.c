@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.11.4.1 2006/10/22 06:06:19 yamt Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.11.4.2 2006/12/10 07:17:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.11.4.1 2006/10/22 06:06:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.11.4.2 2006/12/10 07:17:46 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -45,14 +45,21 @@ __KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.11.4.1 2006/10/22 06:06:19 yamt Exp $"
 #include <dev/ata/satavar.h>
 #include <dev/ata/satareg.h>
 
-#define PDC203xx_NCHANNELS 4
-#define PDC40718_NCHANNELS 4
-#define PDC20575_NCHANNELS 3
+#define PDC203xx_SATA_NCHANNELS 4
+#define PDC203xx_COMBO_NCHANNELS 3
+#define PDC40718_SATA_NCHANNELS 4
+#define PDC20575_COMBO_NCHANNELS 3
 
 #define PDC203xx_BAR_IDEREGS 0x1c /* BAR where the IDE registers are mapped */
 
 #define PDC_CHANNELBASE(ch) 0x200 + ((ch) * 0x80)
 #define PDC_ERRMASK 0x00780700
+
+#define	PDC205_REGADDR(base,ch)	((base)+((ch)<<8))
+#define	PDC205_SSTATUS(ch)	PDC205_REGADDR(0x400,ch)
+#define	PDC205_SERROR(ch)	PDC205_REGADDR(0x404,ch)
+#define	PDC205_SCONTROL(ch)	PDC205_REGADDR(0x408,ch)
+#define	PDC205_MULTIPLIER(ch)	PDC205_REGADDR(0x4e8,ch)
 
 static void pdcsata_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void pdc203xx_setup_channel(struct ata_channel *);
@@ -60,11 +67,9 @@ static void pdc203xx_irqack(struct ata_channel *);
 static int  pdc203xx_dma_init(void *, int, int, void *, size_t, int);
 static void pdc203xx_dma_start(void *,int ,int);
 static int  pdc203xx_dma_finish(void *, int, int, int);
+static void pdc203xx_combo_probe(struct ata_channel *);
 static int  pdcsata_pci_intr(void *);
 static void pdcsata_do_reset(struct ata_channel *, int);
-
-/* PDC205xx, PDC405xx and PDC407xx. but tested only pdc40718 */
-static void pdc205xx_drv_probe(struct ata_channel *);
 
 static int  pdcsata_match(struct device *, struct cfdata *, void *);
 static void pdcsata_attach(struct device *, struct device *, void *);
@@ -163,6 +168,31 @@ static const struct pciide_product_desc pciide_pdcsata_products[] =  {
 	  "Promise PDC20775 SATA300 controller",
 	  pdcsata_chip_map,
 	},
+	{ PCI_PRODUCT_PROMISE_PDC20617,
+	  0,
+	  "Promise PDC2020617 Ultra/133 controller",
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20618,
+	  0,
+	  "Promise PDC20618 Ultra/133 controller",
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20619,
+	  0,
+	  "Promise PDC20619 Ultra/133 controller",
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20620,
+	  0,
+	  "Promise PDC20620 Ultra/133 controller",
+	  pdcsata_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20621,
+	  0,
+	  "Promise PDC20621 Ultra/133 controller",
+	  pdcsata_chip_map,
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -171,7 +201,7 @@ static const struct pciide_product_desc pciide_pdcsata_products[] =  {
 };
 
 static int
-pdcsata_match(struct device *parent __unused, struct cfdata *match __unused,
+pdcsata_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -184,7 +214,7 @@ pdcsata_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-pdcsata_attach(struct device *parent __unused, struct device *self, void *aux)
+pdcsata_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -272,18 +302,21 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_PROMISE_PDC20318:
 	case PCI_PRODUCT_PROMISE_PDC20319:
+		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x6c,
+		    0x00ff0033);
+		sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
+		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC203xx_SATA_NCHANNELS;
+		break;
 	case PCI_PRODUCT_PROMISE_PDC20371:
 	case PCI_PRODUCT_PROMISE_PDC20375:
 	case PCI_PRODUCT_PROMISE_PDC20376:
 	case PCI_PRODUCT_PROMISE_PDC20377:
 	case PCI_PRODUCT_PROMISE_PDC20378:
 	case PCI_PRODUCT_PROMISE_PDC20379:
-	default:
-		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x6c, 0x00ff0033);
-		sc->sc_wdcdev.sc_atac.atac_nchannels =
-		    (bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x48) & 0x02) ?
-		    PDC203xx_NCHANNELS : 3;
-
+		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x6c,
+		    0x00ff0033);
+		sc->sc_wdcdev.sc_atac.atac_probe = pdc203xx_combo_probe;
+		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC203xx_COMBO_NCHANNELS;
 		break;
 
 	case PCI_PRODUCT_PROMISE_PDC40518:
@@ -291,23 +324,39 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_PROMISE_PDC40718:
 	case PCI_PRODUCT_PROMISE_PDC40719:
 	case PCI_PRODUCT_PROMISE_PDC40779:
-	case PCI_PRODUCT_PROMISE_PDC20571:
-		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x60, 0x00ff00ff);
-		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC40718_NCHANNELS;
-
-		sc->sc_wdcdev.sc_atac.atac_probe = pdc205xx_drv_probe;
-
+		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x60,
+		    0x00ff00ff);
+		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC40718_SATA_NCHANNELS;
+		sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
 		break;
+
+	case PCI_PRODUCT_PROMISE_PDC20571:
 	case PCI_PRODUCT_PROMISE_PDC20575:
 	case PCI_PRODUCT_PROMISE_PDC20579:
 	case PCI_PRODUCT_PROMISE_PDC20771:
 	case PCI_PRODUCT_PROMISE_PDC20775:
-		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x60, 0x00ff00ff);
-		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC20575_NCHANNELS;
-
-		sc->sc_wdcdev.sc_atac.atac_probe = pdc205xx_drv_probe;
-
+		bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x60,
+		    0x00ff00ff);
+		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC20575_COMBO_NCHANNELS;
+		sc->sc_wdcdev.sc_atac.atac_probe = pdc203xx_combo_probe;
 		break;
+
+	case PCI_PRODUCT_PROMISE_PDC20617:
+	case PCI_PRODUCT_PROMISE_PDC20618:
+	case PCI_PRODUCT_PROMISE_PDC20619:
+	case PCI_PRODUCT_PROMISE_PDC20620:
+	case PCI_PRODUCT_PROMISE_PDC20621:
+		sc->sc_wdcdev.sc_atac.atac_nchannels = 
+		    ((bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh,
+			0x48) & 0x01) ? 1 : 0) +
+		    ((bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh,
+			0x48) & 0x02) ? 1 : 0) +
+		    2;
+		sc->sc_wdcdev.sc_atac.atac_probe = wdc_drvprobe;
+
+	default:
+		aprint_error("unknown promise product 0x%x\n",
+		    sc->sc_pp->ide_product);
 	}
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
@@ -384,6 +433,40 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			goto next_channel;
 		}
 
+		/* subregion the SATA registers */
+		if (sc->sc_wdcdev.sc_atac.atac_probe == wdc_sataprobe ||
+		    (sc->sc_wdcdev.sc_atac.atac_probe == pdc203xx_combo_probe
+		    && channel < 2)) {
+			wdr->sata_iot = sc->sc_ba5_st;
+			wdr->sata_baseioh = sc->sc_ba5_sh;
+			if (bus_space_subregion(sc->sc_ba5_st, sc->sc_ba5_sh,
+			    PDC205_SSTATUS(channel), 1,
+			    &wdr->sata_status) != 0) {
+				aprint_error("%s: couldn't map channel %d "
+				    "sata_status regs\n",
+				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+				    channel);
+				goto next_channel;
+			}
+			if (bus_space_subregion(sc->sc_ba5_st, sc->sc_ba5_sh,
+			    PDC205_SERROR(channel), 1, &wdr->sata_error) != 0) {
+				aprint_error("%s: couldn't map channel %d "
+				    "sata_error regs\n",
+				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+				    channel);
+				goto next_channel;
+			}
+			if (bus_space_subregion(sc->sc_ba5_st, sc->sc_ba5_sh,
+			    PDC205_SCONTROL(channel), 1,
+			    &wdr->sata_control) != 0) {
+				aprint_error("%s: couldn't map channel %d "
+				    "sata_control regs\n",
+				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+				    channel);
+				goto next_channel;
+			}
+		}
+
 		wdcattach(wdc_cp);
 		bus_space_write_4(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CMD], 0,
 		    (bus_space_read_4(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CMD],
@@ -394,6 +477,15 @@ next_channel:
 	continue;
 	}
 	return;
+}
+
+static void
+pdc203xx_combo_probe(struct ata_channel *chp)
+{
+	if (chp->ch_channel < 2)
+		wdc_sataprobe(chp);
+	else
+		wdc_drvprobe(chp);
 }
 
 static void
@@ -501,7 +593,7 @@ pdc203xx_dma_start(void *v, int channel, int drive)
 }
 
 static int
-pdc203xx_dma_finish(void *v, int channel, int drive, int force __unused)
+pdc203xx_dma_finish(void *v, int channel, int drive, int force)
 {
 	struct pciide_softc *sc = v;
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
@@ -521,22 +613,6 @@ pdc203xx_dma_finish(void *v, int channel, int drive, int force __unused)
 
 	return 0;
 }
-
-#define	PDC205_REGADDR(base,ch)	((base)+((ch)<<8))
-#define	PDC205_SSTATUS(ch)	PDC205_REGADDR(0x400,ch)
-#define	PDC205_SERROR(ch)	PDC205_REGADDR(0x404,ch)
-#define	PDC205_SCONTROL(ch)	PDC205_REGADDR(0x408,ch)
-#define	PDC205_MULTIPLIER(ch)	PDC205_REGADDR(0x4e8,ch)
-
-
-#define	SCONTROL_WRITE(sc,channel,scontrol)	\
-	bus_space_write_4((sc)->sc_ba5_st, (sc)->sc_ba5_sh,	\
-	PDC205_SCONTROL(channel), scontrol)
-
-#define	SSTATUS_READ(sc,channel)	\
-	bus_space_read_4((sc)->sc_ba5_st, (sc)->sc_ba5_sh,	\
-	PDC205_SSTATUS(channel))
-
 
 
 static void
@@ -562,89 +638,4 @@ pdcsata_do_reset(struct ata_channel *chp, int poll)
 
 	wdc_do_reset(chp, poll);
 
-}
-
-static void
-pdc205xx_drv_probe(struct ata_channel *chp)
-{
-	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
-	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
-	u_int32_t scontrol, sstatus;
-	u_int16_t scnt, sn, cl, ch;
-	int i, s;
-
-	/* XXX This should be done by other code. */
-	for (i = 0; i < 2; i++) {
-		chp->ch_drive[i].chnl_softc = chp;
-		chp->ch_drive[i].drive = i;
-	}
-
-	SCONTROL_WRITE(sc, chp->ch_channel, 0);
-	delay(50*1000);
-
-	scontrol = SControl_DET_INIT | SControl_SPD_ANY | SControl_IPM_NONE;
-	SCONTROL_WRITE(sc,chp->ch_channel,scontrol);
-	delay(50*1000);
-
-	scontrol &= ~SControl_DET_INIT;
-	SCONTROL_WRITE(sc,chp->ch_channel,scontrol);
-	delay(50*1000);
-
-	sstatus = SSTATUS_READ(sc,chp->ch_channel);
-
-	switch (sstatus & SStatus_DET_mask) {
-	case SStatus_DET_NODEV:
-		/* No Device; be silent.  */
-		break;
-
-	case SStatus_DET_DEV_NE:
-		aprint_error("%s: port %d: device connected, but "
-		    "communication not established\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel);
-		break;
-
-	case SStatus_DET_OFFLINE:
-		aprint_error("%s: port %d: PHY offline\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel);
-		break;
-
-	case SStatus_DET_DEV:
-		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
-		    WDSD_IBM);
-		delay(10);	/* 400ns delay */
-		scnt = bus_space_read_2(wdr->cmd_iot,
-		    wdr->cmd_iohs[wd_seccnt], 0);
-		sn = bus_space_read_2(wdr->cmd_iot,
-		    wdr->cmd_iohs[wd_sector], 0);
-		cl = bus_space_read_2(wdr->cmd_iot,
-		    wdr->cmd_iohs[wd_cyl_lo], 0);
-		ch = bus_space_read_2(wdr->cmd_iot,
-		    wdr->cmd_iohs[wd_cyl_hi], 0);
-#if 0
-		printf("%s: port %d: scnt=0x%x sn=0x%x cl=0x%x ch=0x%x\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel,
-		    scnt, sn, cl, ch);
-#endif
-		/*
-		 * scnt and sn are supposed to be 0x1 for ATAPI, but in some
-		 * cases we get wrong values here, so ignore it.
-		 */
-		s = splbio();
-		if (cl == 0x14 && ch == 0xeb)
-			chp->ch_drive[0].drive_flags |= DRIVE_ATAPI;
-		else
-			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
-		splx(s);
-#if 0
-		aprint_normal("%s: port %d: device present, speed: %s\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel,
-		    sata_speed(sstatus));
-#endif
-		break;
-
-	default:
-		aprint_error("%s: port %d: unknown SStatus: 0x%08x\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel,
-		    sstatus);
-	}
 }

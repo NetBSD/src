@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.13.6.1 2006/10/22 06:06:17 yamt Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.13.6.2 2006/12/10 07:17:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -41,7 +41,7 @@
  * Senior Networking Software Engineer
  * Wind River Systems
  *
- * Netbsd bus-specific frontends for written by
+ * NetBSD bus-specific frontends for written by
  * Jonathan Stone <jonathan@netbsd.org>
  */
 
@@ -93,33 +93,55 @@ struct re_pci_softc {
 	pcitag_t sc_pcitag;
 };
 
-static int	re_pci_probe(struct device *, struct cfdata *, void *);
+static int	re_pci_match(struct device *, struct cfdata *, void *);
 static void	re_pci_attach(struct device *, struct device *, void *);
 
 /*
  * Various supported device vendors/types and their names.
  */
 static const struct rtk_type re_devs[] = {
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139, RTK_HWREV_8139CPLUS,
-		"RealTek 8139C+ 10/100BaseTX" },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168, RTK_HWREV_8168,
-		"RealTek 8168B/8111B Gigabit Ethernet" },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8169,
-		"RealTek 8169 Gigabit Ethernet" },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8169S,
-		"RealTek 8169S Single-chip Gigabit Ethernet" },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8169SB,
-		"RealTek 8169SB Single-chip Gigabit Ethernet" },
-	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_LAPCIGT, RTK_HWREV_8169S,
-		"Corega CG-LAPCIGT Gigabit Ethernet" },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, RTK_HWREV_8110S,
-		"RealTek 8110S Single-chip Gigabit Ethernet" },
-	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T, RTK_HWREV_8169S,
-		"D-Link DGE-528T Gigabit Ethernet" },
-	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902, RTK_HWREV_8169S,
-		"US Robotics (3Com) USR997902 Gigabit Ethernet" },
-	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1032, RTK_HWREV_8169S,
-		"Linksys EG1032 rev. 3 Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
+	    RTK_HWREV_8139CPLUS,
+	    "RealTek 8139C+ 10/100BaseTX" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8101E,
+	    RTK_HWREV_8100E,
+	    "RealTek 8100E PCIe 10/100BaseTX" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8101E,
+	    RTK_HWREV_8101E,
+	    "RealTek 8101E PCIe 10/100BaseTX" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168,
+	    RTK_HWREV_8168_SPIN1,
+	    "RealTek 8168B/8111B PCIe Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168,
+	    RTK_HWREV_8168_SPIN2,
+	    "RealTek 8168B/8111B PCIe Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
+	    RTK_HWREV_8169,
+	    "RealTek 8169 Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
+	    RTK_HWREV_8169S,
+	    "RealTek 8169S Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
+	    RTK_HWREV_8110S,
+	    "RealTek 8110S Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
+	    RTK_HWREV_8169_8110SB,
+	    "RealTek 8169SB/8110SB Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169SC,
+	    RTK_HWREV_8169_8110SC,
+	    "RealTek 8169SC/8110SC Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_LAPCIGT,
+	    RTK_HWREV_8169S,
+	    "Corega CG-LAPCIGT Gigabit Ethernet" },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T,
+	    RTK_HWREV_8169S,
+	    "D-Link DGE-528T Gigabit Ethernet" },
+	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902,
+	    RTK_HWREV_8169S,
+	    "US Robotics (3Com) USR997902 Gigabit Ethernet" },
+	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1032,
+	    RTK_HWREV_8169S,
+	    "Linksys EG1032 rev. 3 Gigabit Ethernet" },
 	{ 0, 0, 0, NULL }
 };
 
@@ -132,11 +154,15 @@ static const struct rtk_hwrev re_hwrevs[] = {
 	{ RTK_HWREV_8139C, RTK_8139, "C" },
 	{ RTK_HWREV_8139D, RTK_8139, "8139D/8100B/8100C" },
 	{ RTK_HWREV_8139CPLUS, RTK_8139CPLUS, "C+"},
-	{ RTK_HWREV_8168, RTK_8169, "8168B/8111B"},
+	{ RTK_HWREV_8168_SPIN1, RTK_8169, "8168B/8111B"},
+	{ RTK_HWREV_8168_SPIN2, RTK_8169, "8168B/8111B"},
 	{ RTK_HWREV_8169, RTK_8169, "8169"},
 	{ RTK_HWREV_8169S, RTK_8169, "8169S"},
-	{ RTK_HWREV_8169SB, RTK_8169, "8169SB"},
 	{ RTK_HWREV_8110S, RTK_8169, "8110S"},
+	{ RTK_HWREV_8169_8110SB, RTK_8169, "8169SB"},
+	{ RTK_HWREV_8169_8110SC, RTK_8169, "8169SC"},
+	{ RTK_HWREV_8100E, RTK_8169, "8100E"},
+	{ RTK_HWREV_8101E, RTK_8169, "8101E"},
 	{ RTK_HWREV_8100, RTK_8139, "8100"},
 	{ RTK_HWREV_8101, RTK_8139, "8101"},
 	{ 0, 0, NULL }
@@ -144,7 +170,7 @@ static const struct rtk_hwrev re_hwrevs[] = {
 
 #define RE_LINKSYS_EG1032_SUBID	0x00241737
 
-CFATTACH_DECL(re_pci, sizeof(struct re_pci_softc), re_pci_probe, re_pci_attach,
+CFATTACH_DECL(re_pci, sizeof(struct re_pci_softc), re_pci_match, re_pci_attach,
 	      NULL, NULL);
 
 /*
@@ -152,8 +178,7 @@ CFATTACH_DECL(re_pci, sizeof(struct re_pci_softc), re_pci_probe, re_pci_attach,
  * IDs against our list and return a device name if we find a match.
  */
 static int
-re_pci_probe(struct device *parent __unused, struct cfdata *match __unused,
-    void *aux)
+re_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	const struct rtk_type		*t;
 	struct pci_attach_args	*pa = aux;
@@ -209,7 +234,7 @@ re_pci_probe(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-re_pci_attach(struct device *parent __unused, struct device *self, void *aux)
+re_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct re_pci_softc	*psc = (void *)self;
 	struct rtk_softc	*sc = &psc->sc_rtk;
@@ -231,7 +256,7 @@ re_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 	 */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		command = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
-		if (command & RTK_PSTATE_MASK) {
+		if (command & PCI_PMCSR_STATE_MASK) {
 			u_int32_t		iobase, membase, irq;
 
 			/* Save important PCI config data. */
@@ -242,9 +267,9 @@ re_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 			/* Reset the power state. */
 			aprint_normal("%s: chip is is in D%d power mode "
 		    	    "-- setting to D0\n", sc->sc_dev.dv_xname,
-		    	    command & RTK_PSTATE_MASK);
+		    	    command & PCI_PMCSR_STATE_MASK);
 
-			command &= ~RTK_PSTATE_MASK;
+			command &= ~PCI_PMCSR_STATE_MASK;
 			pci_conf_write(pc, pa->pa_tag,
 			    pmreg + PCI_PMCSR, command);
 
@@ -329,24 +354,27 @@ re_pci_attach(struct device *parent __unused, struct device *self, void *aux)
 	re_attach(sc);
 
 	/*
-	 * Perform hardware diagnostic.
-	 * XXX: this diagnostic only makes sense for attachemnts with 64-bit
-	 * busses: PCI, but not CardBus.
+	 * Perform hardware diagnostic on the original RTL8169.
+	 * Some 32-bit cards were incorrectly wired and would
+	 * malfunction if plugged into a 64-bit slot.
 	 */
-	error = re_diag(sc);
-	if (error) {
-		aprint_error(
-		    "%s: attach aborted due to hardware diag failure\n",
-		    sc->sc_dev.dv_xname);
+	if (hwrev == RTK_HWREV_8169) {
+		error = re_diag(sc);
+		if (error) {
+			aprint_error(
+			    "%s: attach aborted due to hardware diag failure\n",
+			    sc->sc_dev.dv_xname);
 
-		re_detach(sc);
+			re_detach(sc);
 
-		if (psc->sc_ih != NULL) {
-			pci_intr_disestablish(pc, psc->sc_ih);
-			psc->sc_ih = NULL;
+			if (psc->sc_ih != NULL) {
+				pci_intr_disestablish(pc, psc->sc_ih);
+				psc->sc_ih = NULL;
+			}
+
+			if (bsize)
+				bus_space_unmap(sc->rtk_btag, sc->rtk_bhandle,
+				    bsize);
 		}
-
-		if (bsize)
-			bus_space_unmap(sc->rtk_btag, sc->rtk_bhandle, bsize);
 	}
 }

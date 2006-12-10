@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.73.4.1 2006/10/22 06:07:51 yamt Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.73.4.2 2006/12/10 07:19:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.73.4.1 2006/10/22 06:07:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.73.4.2 2006/12/10 07:19:33 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -243,7 +243,7 @@ mfs_initminiroot(caddr_t base)
 /* ARGSUSED */
 int
 mfs_mount(struct mount *mp, const char *path, void *data,
-    struct nameidata *ndp __unused, struct lwp *l)
+    struct nameidata *ndp, struct lwp *l)
 {
 	struct vnode *devvp;
 	struct mfs_args args;
@@ -355,7 +355,7 @@ int	mfs_pri = PWAIT | PCATCH;		/* XXX prob. temp */
  */
 /* ARGSUSED */
 int
-mfs_start(struct mount *mp, int flags __unused, struct lwp *l)
+mfs_start(struct mount *mp, int flags, struct lwp *l)
 {
 	struct vnode *vp = VFSTOUFS(mp)->um_devvp;
 	struct mfsnode *mfsp = VTOMFS(vp);

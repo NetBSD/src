@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.25.4.1 2006/10/22 06:04:36 yamt Exp $
+# $NetBSD: INSTALL,v 1.25.4.2 2006/12/10 07:15:52 yamt Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.25.4.1 $"
+#ident 		"INSTALL-$Revision: 1.25.4.2 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -136,13 +136,6 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	MIIVERBOSE	# verbose PHY autoconfig messages
 
 options 	NFS_BOOT_DHCP
-
-# XXX Disable zero-copy page loaning in sosend() temporarily:
-#     PV mappings created by sosend_loan() in sys/kern/uipc_socket.c may
-#     produce virtual cache aliases and it seems to cause TLB MISS panic
-#     in cache flush code called from bus_dmamap_sync(9) PREWRITE ops
-#     during heavy TX packet traffic on tlp(4).
-options 	SOSEND_NO_LOAN
 
 config		netbsd	root on ? type nfs
 

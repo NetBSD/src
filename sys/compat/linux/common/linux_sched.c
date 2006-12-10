@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.35.4.1 2006/10/22 06:05:24 yamt Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.35.4.2 2006/12/10 07:16:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.35.4.1 2006/10/22 06:05:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.35.4.2 2006/12/10 07:16:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -144,7 +144,7 @@ linux_sys_clone(l, v, retval)
 }
 
 int
-linux_sys_sched_setparam(struct lwp *cl, void *v, register_t *retval __unused)
+linux_sys_sched_setparam(struct lwp *cl, void *v, register_t *retval)
 {
 	struct linux_sys_sched_setparam_args /* {
 		syscallarg(linux_pid_t) pid;
@@ -183,7 +183,7 @@ linux_sys_sched_setparam(struct lwp *cl, void *v, register_t *retval __unused)
 }
 
 int
-linux_sys_sched_getparam(struct lwp *cl, void *v, register_t *retval __unused)
+linux_sys_sched_getparam(struct lwp *cl, void *v, register_t *retval)
 {
 	struct linux_sys_sched_getparam_args /* {
 		syscallarg(linux_pid_t) pid;
@@ -218,7 +218,7 @@ linux_sys_sched_getparam(struct lwp *cl, void *v, register_t *retval __unused)
 
 int
 linux_sys_sched_setscheduler(struct lwp *cl, void *v,
-    register_t *retval __unused)
+    register_t *retval)
 {
 	struct linux_sys_sched_setscheduler_args /* {
 		syscallarg(linux_pid_t) pid;
@@ -302,8 +302,8 @@ linux_sys_sched_getscheduler(cl, v, retval)
 }
 
 int
-linux_sys_sched_yield(struct lwp *cl __unused, void *v __unused,
-    register_t *retval __unused)
+linux_sys_sched_yield(struct lwp *cl, void *v,
+    register_t *retval)
 {
 
 	yield();
@@ -311,7 +311,7 @@ linux_sys_sched_yield(struct lwp *cl __unused, void *v __unused,
 }
 
 int
-linux_sys_sched_get_priority_max(struct lwp *cl __unused, void *v,
+linux_sys_sched_get_priority_max(struct lwp *cl, void *v,
     register_t *retval)
 {
 	struct linux_sys_sched_get_priority_max_args /* {
@@ -331,7 +331,7 @@ linux_sys_sched_get_priority_max(struct lwp *cl __unused, void *v,
 }
 
 int
-linux_sys_sched_get_priority_min(struct lwp *cl __unused, void *v,
+linux_sys_sched_get_priority_min(struct lwp *cl, void *v,
     register_t *retval)
 {
 	struct linux_sys_sched_get_priority_min_args /* {

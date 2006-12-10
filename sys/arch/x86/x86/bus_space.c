@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4.22.1 2006/10/22 06:05:16 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4.22.2 2006/12/10 07:16:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4.22.1 2006/10/22 06:05:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4.22.2 2006/12/10 07:16:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,8 +453,8 @@ x86_memio_free(t, bsh, size)
 }
 
 int
-x86_memio_subregion(bus_space_tag_t t __unused, bus_space_handle_t bsh,
-    bus_size_t offset, bus_size_t size __unused, bus_space_handle_t *nbshp)
+x86_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset;
@@ -462,8 +462,8 @@ x86_memio_subregion(bus_space_tag_t t __unused, bus_space_handle_t bsh,
 }
 
 paddr_t
-x86_memio_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot __unused,
-    int flags __unused)
+x86_memio_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
+    int flags)
 {
 
 	/* Can't mmap I/O space. */

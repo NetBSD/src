@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_intr.c,v 1.8 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: firepower_intr.c,v 1.8.22.1 2006/12/10 07:16:30 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firepower_intr.c,v 1.8 2005/12/24 20:07:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firepower_intr.c,v 1.8.22.1 2006/12/10 07:16:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ firepower_intr_calculate_masks(void)
 	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
 
 	/*
-	 * Enfore a heirarchy that gives "slow" devices (or devices with
+	 * Enfore a hierarchy that gives "slow" devices (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */

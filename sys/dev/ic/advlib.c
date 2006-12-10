@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.23.22.1 2006/10/22 06:05:43 yamt Exp $        */
+/*      $NetBSD: advlib.c,v 1.23.22.2 2006/12/10 07:17:04 yamt Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.23.22.1 2006/10/22 06:05:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.23.22.2 2006/12/10 07:17:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2624,7 +2624,7 @@ AscSgListToQueue(int sg_list)
 
 
 static u_int
-AscGetNumOfFreeQueue(ASC_SOFTC *sc, u_int8_t target_ix __unused, u_int8_t n_qs)
+AscGetNumOfFreeQueue(ASC_SOFTC *sc, u_int8_t target_ix, u_int8_t n_qs)
 {
 	u_int           cur_used_qs;
 	u_int           cur_free_qs;

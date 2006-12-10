@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.31 2006/02/25 00:58:35 wiz Exp $	*/
+/*	$NetBSD: radix.c,v 1.31.16.1 2006/12/10 07:19:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.31 2006/02/25 00:58:35 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.31.16.1 2006/12/10 07:19:00 yamt Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -51,9 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.31 2006/02/25 00:58:35 wiz Exp $");
 #else
 #include <stdlib.h>
 #endif
+#include <machine/stdarg.h>
 #include <sys/syslog.h>
 #include <net/radix.h>
 #endif
+
+typedef void (*rn_printer_t)(void *, const char *fmt, ...);
 
 int	max_keylen;
 struct radix_mask *rn_mkfreelist;
@@ -69,6 +72,19 @@ static int rn_satisfies_leaf(const char *, struct radix_node *, int);
 static int rn_lexobetter(const void *, const void *);
 static struct radix_mask *rn_new_radix_mask(struct radix_node *,
     struct radix_mask *);
+static struct radix_node *rn_walknext(struct radix_node *, rn_printer_t,
+    void *);
+static struct radix_node *rn_walkfirst(struct radix_node *, rn_printer_t,
+    void *);
+static void rn_nodeprint(struct radix_node *, rn_printer_t, void *,
+    const char *);
+
+#define	SUBTREE_OPEN	"[ "
+#define	SUBTREE_CLOSE	" ]"
+
+#ifdef RN_DEBUG
+static void rn_treeprint(struct radix_node_head *, rn_printer_t, void *);
+#endif /* RN_DEBUG */
 
 /*
  * The data structure for the keys is a radix tree with one way
@@ -323,12 +339,59 @@ on1:
 	return 0;
 }
 
+static void
+rn_nodeprint(struct radix_node *rn, rn_printer_t printer, void *arg,
+    const char *delim)
+{
+	(*printer)(arg, "%s(%s%p: p<%p> l<%p> r<%p>)",
+	    delim, ((void *)rn == arg) ? "*" : "", rn, rn->rn_p,
+	    rn->rn_l, rn->rn_r);
+}
+
 #ifdef RN_DEBUG
 int	rn_nodenum;
 struct	radix_node *rn_clist;
 int	rn_saveinfo;
 int	rn_debug =  1;
-#endif
+
+static void
+rn_dbg_print(void *arg, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vlog(LOG_DEBUG, fmt, ap);
+	va_end(ap);
+}
+
+static void
+rn_treeprint(struct radix_node_head *h, rn_printer_t printer, void *arg)
+{
+	struct radix_node *dup, *rn;
+	const char *delim;
+
+	if (printer == NULL)
+		return;
+
+	rn = rn_walkfirst(h->rnh_treetop, printer, arg);
+	for (;;) {
+		/* Process leaves */
+		delim = "";
+		for (dup = rn; dup != NULL; dup = dup->rn_dupedkey) {
+			if ((dup->rn_flags & RNF_ROOT) != 0)
+				continue;
+			rn_nodeprint(dup, printer, arg, delim);
+			delim = ", ";
+		}
+		rn = rn_walknext(rn, printer, arg);
+		if (rn->rn_flags & RNF_ROOT)
+			return;
+	}
+	/* NOTREACHED */
+}
+
+#define	traverse(__head, __rn)	rn_treeprint((__head), rn_dbg_print, (__rn))
+#endif /* RN_DEBUG */
 
 struct radix_node *
 rn_newpair(
@@ -394,7 +457,7 @@ on1:
 	} while (b > (unsigned) x->rn_b); /* x->rn_b < b && x->rn_b >= 0 */
 #ifdef RN_DEBUG
 	if (rn_debug)
-		log(LOG_DEBUG, "rn_insert: Going In:\n"), traverse(p);
+		log(LOG_DEBUG, "%s: Going In:\n", __func__), traverse(head, p);
 #endif
 	t = rn_newpair(v_arg, b, nodes); tt = t->rn_l;
 	if ((cp[p->rn_off] & p->rn_bmask) == 0)
@@ -408,9 +471,11 @@ on1:
 		t->rn_r = tt; t->rn_l = x;
 	}
 #ifdef RN_DEBUG
-	if (rn_debug)
-		log(LOG_DEBUG, "rn_insert: Coming Out:\n"), traverse(p);
-#endif
+	if (rn_debug) {
+		log(LOG_DEBUG, "%s: Coming Out:\n", __func__),
+		    traverse(head, p);
+	}
+#endif /* RN_DEBUG */
     }
 	return (tt);
 }
@@ -772,6 +837,8 @@ on1:
 	/* Get us out of the creation list */
 	for (t = rn_clist; t && t->rn_ybro != tt; t = t->rn_ybro) {}
 	if (t) t->rn_ybro = tt->rn_ybro;
+	if (rn_debug)
+		log(LOG_DEBUG, "%s: Going In:\n", __func__), traverse(head, tt);
 #endif
 	t = tt->rn_p;
 	dupedkey = saved_tt->rn_dupedkey;
@@ -849,9 +916,47 @@ on1:
 		if (p->rn_l == x) p->rn_l = t; else p->rn_r = t;
 	}
 out:
+#ifdef RN_DEBUG
+	if (rn_debug) {
+		log(LOG_DEBUG, "%s: Coming Out:\n", __func__),
+		    traverse(head, tt);
+	}
+#endif /* RN_DEBUG */
 	tt->rn_flags &= ~RNF_ACTIVE;
 	tt[1].rn_flags &= ~RNF_ACTIVE;
 	return (tt);
+}
+
+static struct radix_node *
+rn_walknext(struct radix_node *rn, rn_printer_t printer, void *arg)
+{
+	/* If at right child go back up, otherwise, go right */
+	while (rn->rn_p->rn_r == rn && (rn->rn_flags & RNF_ROOT) == 0) {
+		if (printer != NULL)
+			(*printer)(arg, SUBTREE_CLOSE);
+		rn = rn->rn_p;
+	}
+	if (printer)
+		rn_nodeprint(rn->rn_p, printer, arg, "");
+	/* Find the next *leaf* since next node might vanish, too */
+	for (rn = rn->rn_p->rn_r; rn->rn_b >= 0;) {
+		if (printer != NULL)
+			(*printer)(arg, SUBTREE_OPEN);
+		rn = rn->rn_l;
+	}
+	return rn;
+}
+
+static struct radix_node *
+rn_walkfirst(struct radix_node *rn, rn_printer_t printer, void *arg)
+{
+	/* First time through node, go left */
+	while (rn->rn_b >= 0) {
+		if (printer != NULL)
+			(*printer)(arg, SUBTREE_OPEN);
+		rn = rn->rn_l;
+	}
+	return rn;
 }
 
 int
@@ -861,26 +966,16 @@ rn_walktree(
 	void *w)
 {
 	int error;
-	struct radix_node *base;
-	struct radix_node *next;
-	struct radix_node *rn = h->rnh_treetop;
+	struct radix_node *base, *next, *rn;
 	/*
 	 * This gets complicated because we may delete the node
 	 * while applying the function f to it, so we need to calculate
 	 * the successor node in advance.
 	 */
-	/* First time through node, go left */
-	while (rn->rn_b >= 0)
-		rn = rn->rn_l;
+	rn = rn_walkfirst(h->rnh_treetop, NULL, NULL);
 	for (;;) {
 		base = rn;
-		/* If at right child go back up, otherwise, go right */
-		while (rn->rn_p->rn_r == rn && (rn->rn_flags & RNF_ROOT) == 0)
-			rn = rn->rn_p;
-		/* Find the next *leaf* since next node might vanish, too */
-		for (rn = rn->rn_p->rn_r; rn->rn_b >= 0;)
-			rn = rn->rn_l;
-		next = rn;
+		next = rn_walknext(rn, NULL, NULL);
 		/* Process leaves */
 		while ((rn = base) != NULL) {
 			base = rn->rn_dupedkey;

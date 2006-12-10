@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.32.8.1 2006/10/22 06:05:44 yamt Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.32.8.2 2006/12/10 07:17:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.32.8.1 2006/10/22 06:05:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.32.8.2 2006/12/10 07:17:05 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -801,7 +801,7 @@ sca_output(
     struct ifnet *ifp,
     struct mbuf *m,
     struct sockaddr *dst,
-    struct rtentry *rt0 __unused)
+    struct rtentry *rt0)
 {
 #ifdef ISO
 	struct hdlc_llc_header *llc;
@@ -1194,7 +1194,7 @@ X
 }
 
 static void
-sca_watchdog(struct ifnet *ifp __unused)
+sca_watchdog(struct ifnet *ifp)
 {
 }
 
@@ -1400,7 +1400,7 @@ sca_dmac_intr(sca_port_t *scp, u_int8_t isr)
 }
 
 static int
-sca_msci_intr(sca_port_t *scp, u_int8_t isr __unused)
+sca_msci_intr(sca_port_t *scp, u_int8_t isr)
 {
 	u_int8_t st1, trc0;
 

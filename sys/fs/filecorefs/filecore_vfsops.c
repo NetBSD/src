@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.27.6.1 2006/10/22 06:07:06 yamt Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.27.6.2 2006/12/10 07:18:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.27.6.1 2006/10/22 06:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.27.6.2 2006/12/10 07:18:37 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -122,6 +122,8 @@ struct vfsops filecore_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	filecore_vnodeopv_descs,
+	0,
+	{ NULL, NULL }
 };
 VFS_ATTACH(filecore_vfsops);
 

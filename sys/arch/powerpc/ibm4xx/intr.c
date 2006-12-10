@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13.6.1 2006/10/22 06:04:54 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.13.6.2 2006/12/10 07:16:31 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.6.1 2006/10/22 06:04:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.6.2 2006/12/10 07:16:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -80,15 +80,42 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.6.1 2006/10/22 06:04:54 yamt Exp $");
  * Platform specific code may override any of the above.
  */
 #ifdef PPC_IBM403
+
 #include <powerpc/ibm4xx/dcr403cgx.h>
 #define	INTR_STATUS	DCR_EXISR
 #define	INTR_ACK	DCR_EXISR
 #define	INTR_ENABLE	DCR_EXIER
-#else
+
+#elif defined(__virtex__)
+
+#include <evbppc/virtex/dev/xintcreg.h>
+#define	INTR_STATUS 	XINTC_ISR
+#define	INTR_ACK 	XINTC_IAR
+#define	INTR_ENABLE 	XINTC_IER
+#define	INTR_MASTER 	XINTC_MER
+#define	INTR_MASTER_EN 	(MER_HIE|MER_ME)
+#undef	IRQ_TO_MASK
+#undef	IRQ_OF_MASK
+#undef	IRQ_SOFTNET
+#undef	IRQ_SOFTCLOCK
+#undef	IRQ_SOFTSERIAL
+#undef	IRQ_CLOCK
+#undef	IRQ_STATCLOCK
+#define	IRQ_TO_MASK(i) 	(1 << (i)) 		/* Redefine mappings */
+#define	IRQ_OF_MASK(m) 	(31 - cntlzw(m))
+#define	IRQ_SOFTNET	31 			/* Redefine "unused" pins */
+#define	IRQ_SOFTCLOCK	30
+#define	IRQ_SOFTSERIAL	29
+#define	IRQ_CLOCK       28
+#define	IRQ_STATCLOCK	27
+
+#else /* Generic 405 Universal Interrupt Controller */
+
 #include <powerpc/ibm4xx/dcr405gp.h>
 #define	INTR_STATUS	DCR_UIC0_MSR
 #define	INTR_ACK	DCR_UIC0_SR
 #define	INTR_ENABLE	DCR_UIC0_ER
+
 #endif
 
 #define	MASK_SOFTNET	IRQ_TO_MASK(IRQ_SOFTNET)
@@ -131,7 +158,7 @@ const int 			mask_clock = MASK_CLOCK;
 const int 			mask_statclock = MASK_STATCLOCK;
 
 static struct intrsrc 		intrs[ICU_LEN] = {
-#define DEFINTR(name) 		\
+#define	DEFINTR(name) 		\
 	{ EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "uic", name), NULL, 0, 0 }
 
 	DEFINTR("pin0"), 	DEFINTR("pin1"), 	DEFINTR("pin2"),
@@ -193,7 +220,7 @@ intr_init(void)
 	mtdcr(INTR_ENABLE, 0x00000000); 	/* mask all */
 	mtdcr(INTR_ACK, 0xffffffff); 		/* acknowledge all */
 #ifdef INTR_MASTER
-	mtdcr(INTR_MASTER, 0xffffffff); 	/* enable controller */
+	mtdcr(INTR_MASTER, INTR_MASTER_EN); 	/* enable controller */
 #endif
 }
 

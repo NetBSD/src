@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.10 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: shb.c,v 1.10.22.1 2006/12/10 07:16:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shb.c,v 1.10 2005/12/11 12:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shb.c,v 1.10.22.1 2006/12/10 07:16:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,18 +42,20 @@ __KERNEL_RCSID(0, "$NetBSD: shb.c,v 1.10 2005/12/11 12:18:58 christos Exp $");
 
 #include <machine/autoconf.h>
 
-int shb_match(struct device *, struct cfdata *, void *);
-void shb_attach(struct device *, struct device *, void *);
-int shb_print(void *, const char *);
-int shb_search(struct device *, struct cfdata *, const int *, void *);
+extern struct cfdriver shb_cd;
+
+static int shb_match(struct device *, struct cfdata *, void *);
+static void shb_attach(struct device *, struct device *, void *);
+static int shb_print(void *, const char *);
+static int shb_search(struct device *, struct cfdata *, const int *, void *);
 
 CFATTACH_DECL(shb, sizeof(struct device),
     shb_match, shb_attach, NULL, NULL);
 
-int
+
+static int
 shb_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	extern struct cfdriver shb_cd;
 	struct mainbus_attach_args *ma = aux;
 
 	if (strcmp(ma->ma_name, shb_cd.cd_name) != 0)
@@ -62,7 +64,7 @@ shb_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-void
+static void
 shb_attach(struct device *parent, struct device *self, void *aux)
 {
 
@@ -71,7 +73,7 @@ shb_attach(struct device *parent, struct device *self, void *aux)
 	config_search_ia(shb_search, self, "shb", NULL);
 }
 
-int
+static int
 shb_search(struct device *parent, struct cfdata *cf,
 	   const int *ldesc, void *aux)
 {
@@ -82,7 +84,7 @@ shb_search(struct device *parent, struct cfdata *cf,
 	return (0);
 }
 
-int
+static int
 shb_print(void *aux, const char *pnp)
 {
 

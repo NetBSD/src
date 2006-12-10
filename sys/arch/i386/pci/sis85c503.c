@@ -1,4 +1,4 @@
-/*	$NetBSD: sis85c503.c,v 1.6.22.1 2006/10/22 06:04:48 yamt Exp $	*/
+/*	$NetBSD: sis85c503.c,v 1.6.22.2 2006/12/10 07:16:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sis85c503.c,v 1.6.22.1 2006/10/22 06:04:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sis85c503.c,v 1.6.22.2 2006/12/10 07:16:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ sis85c503_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
 }
 
 int
-sis85c503_getclink(pciintr_icu_handle_t v __unused, int link, int *clinkp)
+sis85c503_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 
 	/* Pattern 1: simple. */

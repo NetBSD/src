@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.27.6.1 2006/10/22 06:06:39 yamt Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.27.6.2 2006/12/10 07:18:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.27.6.1 2006/10/22 06:06:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.27.6.2 2006/12/10 07:18:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,10 @@ CFATTACH_DECL(pcmcom, sizeof(struct pcmcom_softc),
 const struct pcmcia_product pcmcom_products[] = {
 	{ PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_DUAL_RS232,
 	  PCMCIA_CIS_INVALID },
+#if 0	/* does not work */
+	{ PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_DUAL_RS232_A,
+	  PCMCIA_CIS_INVALID },
+#endif
 };
 const size_t pcmcom_nproducts =
     sizeof(pcmcom_products) / sizeof(pcmcom_products[0]);
@@ -119,7 +123,7 @@ void	pcmcom_disable(struct pcmcom_softc *);
 int	pcmcom_intr(void *);
 
 int
-pcmcom_match(struct device *parent __unused, struct cfdata *cf __unused,
+pcmcom_match(struct device *parent, struct cfdata *cf,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -141,7 +145,7 @@ pcmcom_validate_config(cfe)
 }
 
 void
-pcmcom_attach(struct device *parent __unused, struct device *self, void *aux)
+pcmcom_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcmcom_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -339,8 +343,8 @@ int	com_pcmcom_enable(struct com_softc *);
 void	com_pcmcom_disable(struct com_softc *);
 
 int
-com_pcmcom_match(struct device *parent __unused, struct cfdata *cf __unused,
-    void *aux __unused)
+com_pcmcom_match(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 
 	/* Device is always present. */
@@ -348,7 +352,7 @@ com_pcmcom_match(struct device *parent __unused, struct cfdata *cf __unused,
 }
 
 void
-com_pcmcom_attach(struct device *parent __unused, struct device *self,
+com_pcmcom_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct com_softc *sc = (struct com_softc *)self;

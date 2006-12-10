@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.5 2006/08/24 15:17:02 manu Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.5.4.1 2006/12/10 07:15:46 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.5 2006/08/24 15:17:02 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.5.4.1 2006/12/10 07:15:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,70 +231,3 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 
 	return 1;
 }
-
-#ifdef __HAVE_PROCFS_MACHDEP
-void
-procfs_machdep_allocvp(struct vnode *vp)
-{
-	struct pfsnode *pfs = vp->v_data;
-
-	switch (pfs->pfs_type) {
-	case Pmachdep_xmmregs:	/* /proc/N/xmmregs = -rw------- */
-		pfs->pfs_mode = S_IRUSR|S_IWUSR;
-		vp->v_type = VREG;
-		break;
-
-	default:
-		panic("procfs_machdep_allocvp");
-	}
-}
-
-int
-procfs_machdep_rw(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
-    struct uio *uio)
-{
-
-	switch (pfs->pfs_type) {
-	case Pmachdep_xmmregs:
-		return (procfs_machdep_doxmmregs(curl, l, pfs, uio));
-
-	default:
-		panic("procfs_machdep_rw");
-	}
-
-	/* NOTREACHED */
-	return (EINVAL);
-}
-
-int
-procfs_machdep_getattr(struct vnode *vp, struct vattr *vap, struct proc *procp)
-{
-	struct pfsnode *pfs = VTOPFS(vp);
-
-	switch (pfs->pfs_type) {
-	case Pmachdep_xmmregs:
-		vap->va_bytes = vap->va_size = sizeof(struct xmmregs);
-		break;
-
-	default:
-		panic("procfs_machdep_getattr");
-	}
-
-	return (0);
-}
-
-int
-procfs_machdep_doxmmregs(struct lwp *curl, struct lwp *l,
-    struct pfsnode *pfs, struct uio *uio)
-{
-
-	return (process_machdep_doxmmregs(curl, l, uio));
-}
-
-int
-procfs_machdep_validxmmregs(struct lwp *l, struct mount *mp)
-{
-
-	return (process_machdep_validxmmregs(l->l_proc));
-}
-#endif

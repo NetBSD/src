@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.96.4.1 2006/10/22 06:06:18 yamt Exp $ */
+/* $NetBSD: isp_pci.c,v 1.96.4.2 2006/12/10 07:17:45 yamt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.96.4.1 2006/10/22 06:06:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.96.4.2 2006/12/10 07:17:45 yamt Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -340,7 +340,7 @@ const char vstring[] =
 #endif
 
 static int
-isp_pci_probe(struct device *parent __unused, struct cfdata *match __unused,
+isp_pci_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -380,7 +380,7 @@ isp_pci_probe(struct device *parent __unused, struct cfdata *match __unused,
 
 
 static void
-isp_pci_attach(struct device *parent __unused, struct device *self, void *aux)
+isp_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 #ifdef	DEBUG
 	static char oneshot = 1;

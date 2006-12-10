@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.6.22.1 2006/10/22 06:07:00 yamt Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.6.22.2 2006/12/10 07:18:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.6.22.1 2006/10/22 06:07:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.6.22.2 2006/12/10 07:18:27 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_tpcalib.h"
@@ -90,7 +90,7 @@ tpcalib_trans(struct tpcalib_softc *sc, int rawx, int rawy, int *x, int *y)
 
 int
 tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data,
-    int flag __unused, struct lwp *l __unused)
+    int flag, struct lwp *l)
 {
 	const struct wsmouse_calibcoords *d;
 	int s;

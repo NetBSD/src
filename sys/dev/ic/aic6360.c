@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.90.4.1 2006/10/22 06:05:43 yamt Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.90.4.2 2006/12/10 07:17:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.90.4.1 2006/10/22 06:05:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.90.4.2 2006/12/10 07:17:04 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -702,7 +702,7 @@ aic_sched_msgout(struct aic_softc *sc, u_char m)
 /* ARGSUSED */
 #endif
 static inline void
-aic_setsync(struct aic_softc *sc __unused, struct aic_tinfo *ti __unused)
+aic_setsync(struct aic_softc *sc, struct aic_tinfo *ti)
 {
 #if AIC_USE_SYNCHRONOUS
 	bus_space_tag_t iot = sc->sc_iot;

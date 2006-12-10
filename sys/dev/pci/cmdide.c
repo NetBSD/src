@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.23.16.1 2006/10/22 06:06:16 yamt Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.23.16.2 2006/12/10 07:17:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.23.16.1 2006/10/22 06:06:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.23.16.2 2006/12/10 07:17:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ static const struct pciide_product_desc pciide_cmd_products[] =  {
 };
 
 static int
-cmdide_match(struct device *parent __unused, struct cfdata *match __unused,
+cmdide_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -113,7 +113,7 @@ cmdide_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-cmdide_attach(struct device *parent __unused, struct device *self, void *aux)
+cmdide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
@@ -153,7 +153,7 @@ cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 
 	/*
-	 * Older CMD64X doesn't have independant channels
+	 * Older CMD64X doesn't have independent channels
 	 */
 	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_CMDTECH_649:

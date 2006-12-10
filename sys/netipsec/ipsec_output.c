@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.14.22.1 2006/10/22 06:07:38 yamt Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.14.22.2 2006/12/10 07:19:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.14.22.1 2006/10/22 06:07:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.14.22.2 2006/12/10 07:19:19 yamt Exp $");
 
 /*
  * IPsec output processing.
@@ -349,7 +349,7 @@ int
 ipsec4_process_packet(
     struct mbuf *m,
     struct ipsecrequest *isr,
-    int flags __unused,
+    int flags,
     int tunalready
 )
 {
@@ -541,10 +541,10 @@ ipsec6_splithdr(struct mbuf *m)
 int
 ipsec6_output_trans(
     struct ipsec_output_state *state,
-    u_char *nexthdrp __unused,
-    struct mbuf *mprev __unused,
+    u_char *nexthdrp,
+    struct mbuf *mprev,
     struct secpolicy *sp,
-    int flags __unused,
+    int flags,
     int *tun
 )
 {
@@ -621,7 +621,7 @@ ipsec6_encapsulate(struct mbuf *m, struct secasvar *sav)
 
 
 	/*
-	 * grow the mbuf to accomodate the new IPv6 header.
+	 * grow the mbuf to accommodate the new IPv6 header.
 	 */
 	plen = m->m_pkthdr.len;
 	if (M_LEADINGSPACE(m->m_next) < sizeof(struct ip6_hdr)) {
@@ -676,7 +676,7 @@ int
 ipsec6_output_tunnel(
     struct ipsec_output_state *state,
     struct secpolicy *sp,
-    int flags __unused
+    int flags
 )
 {
 	struct ip6_hdr *ip6;
@@ -741,20 +741,18 @@ ipsec6_output_tunnel(
 		state->ro = &isr->sav->sah->sa_route;
 		state->dst = (struct sockaddr *)&state->ro->ro_dst;
 		dst6 = (struct sockaddr_in6 *)state->dst;
-		if (state->ro->ro_rt
-		 && ((state->ro->ro_rt->rt_flags & RTF_UP) == 0
-		  || !IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ip6->ip6_dst))) {
-			RTFREE(state->ro->ro_rt);
-			state->ro->ro_rt = NULL;
-		}
-		if (state->ro->ro_rt == 0) {
+		if (state->ro->ro_rt != NULL &&
+		    ((state->ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+		     !IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ip6->ip6_dst)))
+			rtflush(state->ro);
+		if (state->ro->ro_rt == NULL) {
 			bzero(dst6, sizeof(*dst6));
 			dst6->sin6_family = AF_INET6;
 			dst6->sin6_len = sizeof(*dst6);
 			dst6->sin6_addr = ip6->ip6_dst;
 			rtalloc(state->ro);
 		}
-		if (state->ro->ro_rt == 0) {
+		if (state->ro->ro_rt == NULL) {
 			ip6stat.ip6s_noroute++;
 			newipsecstat.ips_out_noroute++;
 			error = EHOSTUNREACH;

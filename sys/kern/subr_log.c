@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.37.4.1 2006/10/22 06:07:11 yamt Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.37.4.2 2006/12/10 07:18:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.37.4.1 2006/10/22 06:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.37.4.2 2006/12/10 07:18:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,7 @@ initmsgbuf(void *bf, size_t bufsize)
 
 /*ARGSUSED*/
 static int
-logopen(dev_t dev __unused, int flags __unused, int mode __unused,
-    struct lwp *l)
+logopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct kern_msgbuf *mbp = msgbufp;
 
@@ -125,8 +124,7 @@ logopen(dev_t dev __unused, int flags __unused, int mode __unused,
 
 /*ARGSUSED*/
 static int
-logclose(dev_t dev __unused, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+logclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	log_open = 0;
@@ -136,7 +134,7 @@ logclose(dev_t dev __unused, int flag __unused, int mode __unused,
 
 /*ARGSUSED*/
 static int
-logread(dev_t dev __unused, struct uio *uio, int flag)
+logread(dev_t dev, struct uio *uio, int flag)
 {
 	struct kern_msgbuf *mbp = msgbufp;
 	long l;
@@ -180,7 +178,7 @@ logread(dev_t dev __unused, struct uio *uio, int flag)
 
 /*ARGSUSED*/
 static int
-logpoll(dev_t dev __unused, int events, struct lwp *l)
+logpoll(dev_t dev, int events, struct lwp *l)
 {
 	int revents = 0;
 	int s = splhigh();
@@ -207,7 +205,7 @@ filt_logrdetach(struct knote *kn)
 }
 
 static int
-filt_logread(struct knote *kn, long hint __unused)
+filt_logread(struct knote *kn, long hint)
 {
 
 	if (msgbufp->msg_bufr == msgbufp->msg_bufx)
@@ -226,7 +224,7 @@ static const struct filterops logread_filtops =
 	{ 1, NULL, filt_logrdetach, filt_logread };
 
 static int
-logkqfilter(dev_t dev __unused, struct knote *kn)
+logkqfilter(dev_t dev, struct knote *kn)
 {
 	struct klist *klist;
 	int s;
@@ -266,8 +264,7 @@ logwakeup(void)
 
 /*ARGSUSED*/
 static int
-logioctl(dev_t dev __unused, u_long com, caddr_t data, int flag __unused,
-    struct lwp *lwp)
+logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct lwp *lwp)
 {
 	struct proc *p = lwp->l_proc;
 	long l;

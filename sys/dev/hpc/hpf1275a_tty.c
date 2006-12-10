@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.15.6.1 2006/10/22 06:05:35 yamt Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.15.6.2 2006/12/10 07:17:03 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.15.6.1 2006/10/22 06:05:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.15.6.2 2006/12/10 07:17:03 yamt Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -41,9 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.15.6.1 2006/10/22 06:05:35 yamt E
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
-#ifdef GPROF
-#include <sys/gmon.h>
-#endif
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -220,7 +217,7 @@ static const uint8_t hpf1275a_to_xtscan[128] = {
  * Pseudo-device initialization routine called from main().
  */
 void
-hpf1275aattach(int n __unused)
+hpf1275aattach(int n)
 {
 	int error;
 
@@ -247,8 +244,8 @@ hpf1275aattach(int n __unused)
  * XXX: unused: config_attach_pseudo(9) does not call ca_match.
  */
 static int
-hpf1275a_match(struct device *self __unused,
-	       struct cfdata *cfdata __unused, void *arg __unused)
+hpf1275a_match(struct device *self,
+	       struct cfdata *cfdata, void *arg)
 {
 
 	/* pseudo-device; always present */
@@ -261,8 +258,8 @@ hpf1275a_match(struct device *self __unused,
  * open the line discipline.
  */
 static void
-hpf1275a_attach(struct device *parent __unused,
-		struct device *self, void *aux __unused)
+hpf1275a_attach(struct device *parent,
+		struct device *self, void *aux)
 {
 	struct hpf1275a_softc *sc = device_private(self);
 	struct wskbddev_attach_args wska;
@@ -284,7 +281,7 @@ hpf1275a_attach(struct device *parent __unused,
  * Autoconf detach routine.  Called when we close the line discipline.
  */
 static int
-hpf1275a_detach(struct device *self, int flags __unused)
+hpf1275a_detach(struct device *self, int flags)
 {
 	struct hpf1275a_softc *sc = device_private(self);
 	int error;
@@ -302,7 +299,7 @@ hpf1275a_detach(struct device *self, int flags __unused)
  * Line discipline open routine.
  */
 static int
-hpf1275a_open(dev_t dev __unused, struct tty *tp)
+hpf1275a_open(dev_t dev, struct tty *tp)
 {
 	static struct cfdata hpf1275a_cfdata = {
 		.cf_name = "hpf1275a",
@@ -343,7 +340,7 @@ hpf1275a_open(dev_t dev __unused, struct tty *tp)
  * Line discipline close routine.
  */
 static int
-hpf1275a_close(struct tty *tp, int flag __unused)
+hpf1275a_close(struct tty *tp, int flag)
 {
 	struct hpf1275a_softc *sc = tp->t_sc;
 	int s;
@@ -421,7 +418,7 @@ hpf1275a_wskbd_enable(void *self, int on)
 
 /* ARGSUSED */
 static void
-hpf1275a_wskbd_set_leds(void *self __unused, int leds __unused)
+hpf1275a_wskbd_set_leds(void *self, int leds)
 {
 
 	/* this keyboard has no leds; nothing to do */
@@ -430,8 +427,8 @@ hpf1275a_wskbd_set_leds(void *self __unused, int leds __unused)
 
 
 static int
-hpf1275a_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag __unused,
-		     struct lwp *l __unused)
+hpf1275a_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag,
+		     struct lwp *l)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct hpf1275a_softc *sc = self;

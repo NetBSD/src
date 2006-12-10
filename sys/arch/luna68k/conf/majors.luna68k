@@ -1,4 +1,4 @@
-#	$NetBSD: majors.luna68k,v 1.16 2005/12/11 12:17:52 christos Exp $
+#	$NetBSD: majors.luna68k,v 1.16.22.1 2006/12/10 07:16:22 yamt Exp $
 #
 # Device majors for luna68k
 #
@@ -42,5 +42,5 @@ device-major	wsfont		char 39			wsfont
 device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.

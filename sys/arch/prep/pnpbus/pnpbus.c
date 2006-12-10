@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.5 2006/06/23 03:08:41 garbled Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.5.8.1 2006/12/10 07:16:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.5 2006/06/23 03:08:41 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.5.8.1 2006/12/10 07:16:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.5 2006/06/23 03:08:41 garbled Exp $");
 #include <dev/isa/isareg.h>
 
 #include <prep/pnpbus/pnpbusvar.h>
+
+#include "isadma.h"
 
 static int	pnpbus_match(struct device *, struct cfdata *, void *);
 static void	pnpbus_attach(struct device *, struct device *, void *);
@@ -88,6 +90,11 @@ pnpbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic = paa->paa_ic;
 	sc->sc_iot = paa->paa_iot;
 	sc->sc_memt = paa->paa_memt;
+	sc->sc_dmat = paa->paa_dmat;
+
+#if NISADMA > 0
+	isa_dmainit(sc->sc_ic, sc->sc_iot, sc->sc_dmat, self);
+#endif
 
 	(void)config_search_ia(pnpbus_search, self, "pnpbus", aux);
 }
@@ -347,6 +354,7 @@ pnp_getpna(struct pnpbus_dev_attach_args *pna, struct pnpbus_attach_args *paa,
 	pna->pna_iot = paa->paa_iot;
 	pna->pna_memt = paa->paa_memt;
 	pna->pna_ic = paa->paa_ic;
+	pna->pna_dmat = paa->paa_dmat;
 	pnp_devid_to_string(id->DevId, pna->pna_devid);
 	pna->basetype = id->BaseType;
 	pna->subtype = id->SubType;

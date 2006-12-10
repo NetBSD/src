@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.19.4.1 2006/10/22 06:06:39 yamt Exp $	*/
+/*	$NetBSD: esl.c,v 1.19.4.2 2006/12/10 07:18:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.19.4.1 2006/10/22 06:06:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.19.4.2 2006/12/10 07:18:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ static const char *eslmodel[] = {
 };
 
 int
-esl_open(void *hdl, int flags __unused)
+esl_open(void *hdl, int flags)
 {
 	struct esl_pcmcia_softc *sc;
 	int i;
@@ -186,7 +186,7 @@ esl_close(void *hdl)
 }
 
 int
-esl_query_encoding(void *hdl __unused, struct audio_encoding *ae)
+esl_query_encoding(void *hdl, struct audio_encoding *ae)
 {
 
 	switch (ae->index) {
@@ -245,9 +245,9 @@ esl_query_encoding(void *hdl __unused, struct audio_encoding *ae)
 }
 
 int
-esl_set_params(void *hdl, int setmode __unused, int usemode __unused,
-    audio_params_t *play, audio_params_t *rec __unused,
-    stream_filter_list_t *pfil, stream_filter_list_t *rfil __unused)
+esl_set_params(void *hdl, int setmode, int usemode,
+    audio_params_t *play, audio_params_t *rec,
+    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
 	struct esl_pcmcia_softc *sc;
@@ -298,8 +298,8 @@ esl_set_params(void *hdl, int setmode __unused, int usemode __unused,
 }
 
 int
-esl_round_blocksize(void *hdl __unused, int bs, int mode __unused,
-    const audio_params_t *param __unused)
+esl_round_blocksize(void *hdl, int bs, int mode,
+    const audio_params_t *param)
 {
 
 	return (bs / 128) * 128;
@@ -322,21 +322,21 @@ esl_halt_output(void *hdl)
 }
 
 int
-esl_halt_input(void *hdl __unused)
+esl_halt_input(void *hdl)
 {
 
 	return 0;
 }
 
 int
-esl_speaker_ctl(void *hdl __unused, int on __unused)
+esl_speaker_ctl(void *hdl, int on)
 {
 
 	return 0;
 }
 
 int
-esl_getdev(void *hdl __unused, struct audio_device *ret)
+esl_getdev(void *hdl, struct audio_device *ret)
 {
 
 	*ret = esl_device;
@@ -415,7 +415,7 @@ esl_get_port(void *hdl, mixer_ctrl_t *mc)
 }
 
 int
-esl_query_devinfo(void *hdl __unused, mixer_devinfo_t *di)
+esl_query_devinfo(void *hdl, mixer_devinfo_t *di)
 {
 
 	switch(di->index) {
@@ -463,7 +463,7 @@ esl_query_devinfo(void *hdl __unused, mixer_devinfo_t *di)
 }
 
 int
-esl_get_props(void *hdl __unused)
+esl_get_props(void *hdl)
 {
 
 	return AUDIO_PROP_MMAP;

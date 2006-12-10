@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.15.22.1 2006/10/22 06:06:39 yamt Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.15.22.2 2006/12/10 07:18:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.15.22.1 2006/10/22 06:06:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.15.22.2 2006/12/10 07:18:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ CFATTACH_DECL(esl_pcmcia, sizeof(struct esl_pcmcia_softc),
     esl_pcmcia_match, esl_pcmcia_attach, esl_pcmcia_detach, NULL);
 
 int
-esl_pcmcia_match(struct device *parent __unused, struct cfdata *match __unused,
+esl_pcmcia_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa;
@@ -97,7 +97,7 @@ esl_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 }
 
 void
-esl_pcmcia_attach(struct device *parent __unused, struct device *self,
+esl_pcmcia_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct esl_pcmcia_softc *esc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.11 2002/11/09 11:45:19 enami Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.11.54.1 2006/12/10 07:17:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -267,6 +267,18 @@ struct ex_txdesc {
 	bus_dmamap_t tx_dmamap;
 	struct ex_dpd *tx_dpd;
 };
+
+/*
+ * hardware ip4csum-tx on ex(4) sometimes seems to set wrong IP checksums
+ * if the TX IP packet length is 21 or 22 bytes which requires autopadding.
+ * To avoid this bug, we have to pad such very short packets manually.
+ */
+#define EX_IP4CSUMTX_MINLEN	22
+#define EX_IP4CSUMTX_PADLEN	(ETHER_HDR_LEN + EX_IP4CSUMTX_MINLEN)
+
+#define DPDMEM_SIZE		(sizeof(struct ex_dpd) * EX_NDPD)
+#define DPDMEMPAD_OFF		DPDMEM_SIZE
+#define DPDMEMPAD_DMADDR(sc)	((sc)->sc_dpddma + DPDMEMPAD_OFF)
 
 #define DPD_DMADDR(s,t) \
 	((s)->sc_dpddma + ((caddr_t)((t)->tx_dpd) - (caddr_t)((s)->sc_dpd)))

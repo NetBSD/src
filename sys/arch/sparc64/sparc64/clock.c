@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.80.4.1 2006/10/22 06:05:11 yamt Exp $ */
+/*	$NetBSD: clock.c,v 1.80.4.2 2006/12/10 07:16:36 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.80.4.1 2006/10/22 06:05:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.80.4.2 2006/12/10 07:16:36 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -87,10 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.80.4.1 2006/10/22 06:05:11 yamt Exp $");
 #include <machine/cpu.h>
 #include <machine/cpu_counter.h>
 
-#include <dev/clock_subr.h>
-#include <dev/ic/mk48txxreg.h>
-#include <dev/ic/mk48txxvar.h>
-
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
 #include <sparc64/dev/iommureg.h>
@@ -121,24 +117,6 @@ static struct intrhand level0 = { .ih_fun = tickintr };
 static struct intrhand level14 = { .ih_fun = statintr };
 static struct intrhand schedint = { .ih_fun = schedintr };
 
-/*
- * clock (eeprom) attaches at the sbus or the ebus (PCI)
- */
-static int	clockmatch_sbus(struct device *, struct cfdata *, void *);
-static void	clockattach_sbus(struct device *, struct device *, void *);
-static int	clockmatch_ebus(struct device *, struct cfdata *, void *);
-static void	clockattach_ebus(struct device *, struct device *, void *);
-static void	clockattach(struct mk48txx_softc *, int);
-
-
-CFATTACH_DECL(clock_sbus, sizeof(struct mk48txx_softc),
-    clockmatch_sbus, clockattach_sbus, NULL, NULL);
-
-CFATTACH_DECL(clock_ebus, sizeof(struct mk48txx_softc),
-    clockmatch_ebus, clockattach_ebus, NULL, NULL);
-
-extern struct cfdriver clock_cd;
-
 static int	timermatch(struct device *, struct cfdata *, void *);
 static void	timerattach(struct device *, struct device *, void *);
 
@@ -147,165 +125,10 @@ struct timerreg_4u	timerreg_4u;	/* XXX - need more cleanup */
 CFATTACH_DECL(timer, sizeof(struct device),
     timermatch, timerattach, NULL, NULL);
 
-int clock_wenable(struct todr_chip_handle *, int);
 struct chiptime;
 void stopcounter(struct timer_4u *);
 
 int timerblurb = 10; /* Guess a value; used before clock is attached */
-
-/*
- * The OPENPROM calls the clock the "eeprom", so we have to have our
- * own special match function to call it the "clock".
- */
-static int
-clockmatch_sbus(struct device *parent, struct cfdata *cf, void *aux)
-{
-	struct sbus_attach_args *sa = aux;
-
-	return (strcmp("eeprom", sa->sa_name) == 0);
-}
-
-static int
-clockmatch_ebus(struct device *parent, struct cfdata *cf, void *aux)
-{
-	struct ebus_attach_args *ea = aux;
-
-	return (strcmp("eeprom", ea->ea_name) == 0);
-}
-
-/*
- * Attach a clock (really `eeprom') to the sbus or ebus.
- *
- * We ignore any existing virtual address as we need to map
- * this read-only and make it read-write only temporarily,
- * whenever we read or write the clock chip.  The clock also
- * contains the ID ``PROM'', and I have already had the pleasure
- * of reloading the CPU type, Ethernet address, etc, by hand from
- * the console FORTH interpreter.  I intend not to enjoy it again.
- *
- * the MK48T02 is 2K.  the MK48T08 is 8K, and the MK48T59 is
- * supposed to be identical to it.
- *
- * This is *UGLY*!  We probably have multiple mappings.  But I do
- * know that this all fits inside an 8K page, so I'll just map in
- * once.
- *
- * What we really need is some way to record the bus attach args
- * so we can call *_bus_map() later with BUS_SPACE_MAP_READONLY
- * or not to write enable/disable the device registers.  This is
- * a non-trivial operation.  
- */
-
-/* ARGSUSED */
-static void
-clockattach_sbus(struct device *parent, struct device *self, void *aux)
-{
-	struct mk48txx_softc *sc = (void *)self;
-	struct sbus_attach_args *sa = aux;
-	int sz;
-
-	sc->sc_bst = sa->sa_bustag;
-
-	/* use sa->sa_regs[0].size? */
-	sz = 8192;
-
-	if (sbus_bus_map(sc->sc_bst,
-			 sa->sa_slot,
-			 (sa->sa_offset & ~(PAGE_SIZE - 1)),
-			 sz,
-			 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_READONLY,
-			 &sc->sc_bsh) != 0) {
-		printf("%s: can't map register\n", self->dv_xname);
-		return;
-	}
-	clockattach(sc, sa->sa_node);
-
-	/* Save info for the clock wenable call. */
-	sc->sc_handle.todr_setwen = clock_wenable;
-
-	todr_attach(&sc->sc_handle);
-}
-
-/*
- * Write en/dis-able clock registers.  We coordinate so that several
- * writers can run simultaneously.
- */
-int
-clock_wenable(struct todr_chip_handle *handle, int onoff)
-{
-	struct mk48txx_softc *sc;
-	vm_prot_t prot;
-	vaddr_t va;
-	int s, err = 0;
-	static int writers;
-
-	s = splhigh();
-	if (onoff)
-		prot = writers++ == 0 ? VM_PROT_READ|VM_PROT_WRITE : 0;
-	else
-		prot = --writers == 0 ? VM_PROT_READ : 0;
-	splx(s);
-	if (prot == VM_PROT_NONE) {
-		return 0;
-	}
-	sc = handle->cookie;
-	va = (vaddr_t)bus_space_vaddr(sc->sc_bst, sc->sc_bsh);
-	if (va == 0UL) {
-		printf("clock_wenable: WARNING -- cannot get va\n");
-		return EIO;
-	}
-	pmap_kprotect(va, prot);
-	return (err);
-}
-
-
-/* ARGSUSED */
-static void
-clockattach_ebus(struct device *parent, struct device *self, void *aux)
-{
-	struct mk48txx_softc *sc = (void *)self;
-	struct ebus_attach_args *ea = aux;
-	int sz;
-
-	sc->sc_bst = ea->ea_bustag;
-
-	/* hard code to 8K? */
-	sz = ea->ea_reg[0].size;
-
-	if (bus_space_map(sc->sc_bst,
-			 EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
-			 sz,
-			 BUS_SPACE_MAP_LINEAR,
-			 &sc->sc_bsh) != 0) {
-		printf("%s: can't map register\n", self->dv_xname);
-		return;
-	}
-	clockattach(sc, ea->ea_node);
-
-	/* Save info for the clock wenable call. */
-	sc->sc_handle.todr_setwen = clock_wenable;
-
-	todr_attach(&sc->sc_handle);
-}
-
-
-static void
-clockattach(struct mk48txx_softc *sc, int node)
-{
-
-	sc->sc_model = prom_getpropstring(node, "model");
-
-#ifdef DIAGNOSTIC
-	if (sc->sc_model == NULL)
-		panic("clockattach: no model property");
-#endif
-
-	/* Our TOD clock year 0 is 1968 */
-	sc->sc_year0 = 1968;
-	mk48txx_attach(sc);
-
-	printf("\n");
-}
 
 static u_int timer_get_timecount(struct timecounter *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.104.2.1 2006/10/22 06:07:28 yamt Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.104.2.2 2006/12/10 07:19:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.104.2.1 2006/10/22 06:07:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.104.2.2 2006/12/10 07:19:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -495,8 +495,8 @@ in_pcbdetach(void *v)
 	sofree(so);
 	if (inp->inp_options)
 		(void)m_free(inp->inp_options);
-	if (inp->inp_route.ro_rt)
-		rtfree(inp->inp_route.ro_rt);
+	if (inp->inp_route.ro_rt != NULL)
+		rtflush(&inp->inp_route);
 	ip_freemoptions(inp->inp_moptions);
 	s = splnet();
 	in_pcbstate(inp, INP_ATTACHED);
@@ -674,8 +674,7 @@ in_losing(struct inpcb *inp)
 	if (inp->inp_af != AF_INET)
 		return;
 
-	if ((rt = inp->inp_route.ro_rt)) {
-		inp->inp_route.ro_rt = 0;
+	if ((rt = inp->inp_route.ro_rt) != NULL) {
 		bzero((caddr_t)&info, sizeof(info));
 		info.rti_info[RTAX_DST] = &inp->inp_route.ro_dst;
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
@@ -684,35 +683,28 @@ in_losing(struct inpcb *inp)
 		if (rt->rt_flags & RTF_DYNAMIC)
 			(void) rtrequest(RTM_DELETE, rt_key(rt),
 				rt->rt_gateway, rt_mask(rt), rt->rt_flags,
-				(struct rtentry **)0);
-		else
+				NULL);
 		/*
 		 * A new route can be allocated
 		 * the next time output is attempted.
 		 */
-			rtfree(rt);
+		rtflush(&inp->inp_route);
 	}
 }
 
 /*
- * After a routing change, flush old routing
- * and allocate a (hopefully) better one.
+ * After a routing change, flush old routing.  A new route can be
+ * allocated the next time output is attempted.
  */
 void
-in_rtchange(struct inpcb *inp, int errno __unused)
+in_rtchange(struct inpcb *inp, int errno)
 {
 
 	if (inp->inp_af != AF_INET)
 		return;
 
-	if (inp->inp_route.ro_rt) {
-		rtfree(inp->inp_route.ro_rt);
-		inp->inp_route.ro_rt = 0;
-		/*
-		 * A new route can be allocated the next time
-		 * output is attempted.
-		 */
-	}
+	if (inp->inp_route.ro_rt != NULL)
+		rtflush(&inp->inp_route);
 	/* XXX SHOULD NOTIFY HIGHER-LEVEL PROTOCOLS */
 }
 
@@ -889,20 +881,17 @@ in_pcbrtentry(struct inpcb *inp)
 
 	ro = &inp->inp_route;
 
-	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	    !in_hosteq(satosin(&ro->ro_dst)->sin_addr, inp->inp_faddr))) {
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = (struct rtentry *)NULL;
-	}
-	if (ro->ro_rt == (struct rtentry *)NULL &&
-	    !in_nullhost(inp->inp_faddr)) {
+	if (ro->ro_rt != NULL && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+	    !in_hosteq(satosin(&ro->ro_dst)->sin_addr, inp->inp_faddr)))
+		rtflush(ro);
+	if (ro->ro_rt == NULL && !in_nullhost(inp->inp_faddr)) {
 		bzero(&ro->ro_dst, sizeof(struct sockaddr_in));
 		ro->ro_dst.sa_family = AF_INET;
 		ro->ro_dst.sa_len = sizeof(ro->ro_dst);
 		satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
 		rtalloc(ro);
 	}
-	return (ro->ro_rt);
+	return ro->ro_rt;
 }
 
 struct sockaddr_in *
@@ -918,16 +907,13 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	 * Note that we should check the address family of the cached
 	 * destination, in case of sharing the cache with IPv6.
 	 */
-	if (ro->ro_rt &&
+	if (ro->ro_rt != NULL &&
 	    (ro->ro_dst.sa_family != AF_INET ||
 	    !in_hosteq(satosin(&ro->ro_dst)->sin_addr, sin->sin_addr) ||
-	    soopts & SO_DONTROUTE)) {
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = (struct rtentry *)0;
-	}
+	    soopts & SO_DONTROUTE))
+		rtflush(ro);
 	if ((soopts & SO_DONTROUTE) == 0 && /*XXX*/
-	    (ro->ro_rt == (struct rtentry *)0 ||
-	     ro->ro_rt->rt_ifp == (struct ifnet *)0)) {
+	    (ro->ro_rt == NULL || ro->ro_rt->rt_ifp == NULL)) {
 		/* No route yet, so try to acquire one */
 		bzero(&ro->ro_dst, sizeof(struct sockaddr_in));
 		ro->ro_dst.sa_family = AF_INET;
@@ -943,7 +929,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	 *
 	 * XXX Is this still true?  Do we care?
 	 */
-	if (ro->ro_rt && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
+	if (ro->ro_rt != NULL && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
 		ia = ifatoia(ro->ro_rt->rt_ifa);
 	if (ia == NULL) {
 		u_int16_t fport = sin->sin_port;
@@ -982,5 +968,13 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 			}
 		}
 	}
+	if (ia->ia_ifa.ifa_getifa != NULL) {
+		ia = ifatoia((*ia->ia_ifa.ifa_getifa)(&ia->ia_ifa,
+		                                      sintosa(sin)));
+	}
+#ifdef GETIFA_DEBUG
+	else
+		printf("%s: missing ifa_getifa\n", __func__);
+#endif
 	return satosin(&ia->ia_addr);
 }

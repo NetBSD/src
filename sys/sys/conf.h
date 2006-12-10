@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.123.4.1 2006/10/22 06:07:47 yamt Exp $	*/
+/*	$NetBSD: conf.h,v 1.123.4.2 2006/12/10 07:19:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -192,6 +192,8 @@ void	       ttyldisc_release(struct linesw *);
 
 int	ttyerrpoll (struct tty *, int, struct lwp *);
 int	ttynullioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
+
+int	iskmemdev(dev_t);
 #endif
 
 #ifdef _KERNEL

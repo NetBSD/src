@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.329.4.1 2006/10/22 06:05:32 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.329.4.2 2006/12/10 07:16:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.329.4.1 2006/10/22 06:05:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.329.4.2 2006/12/10 07:16:58 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -245,6 +245,8 @@ static const struct wd_quirk {
 	 */
 	{ "ST3160021A*",
 	  WD_QUIRK_FORCE_LBA48 },
+	{ "ST3160811A*",
+	  WD_QUIRK_FORCE_LBA48 },
 	{ "ST3160812A*",
 	  WD_QUIRK_FORCE_LBA48 },
 	{ "ST3160023A*",
@@ -276,7 +278,7 @@ wd_lookup_quirks(const char *name)
 }
 
 int
-wdprobe(struct device *parent __unused, struct cfdata *match, void *aux)
+wdprobe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ata_device *adev = aux;
 
@@ -292,7 +294,7 @@ wdprobe(struct device *parent __unused, struct cfdata *match, void *aux)
 }
 
 void
-wdattach(struct device *parent __unused, struct device *self, void *aux)
+wdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct wd_softc *wd = (void *)self;
 	struct ata_device *adev= aux;
@@ -410,6 +412,7 @@ wdattach(struct device *parent __unused, struct device *self, void *aux)
 	 */
 	wd->sc_dk.dk_driver = &wddkdriver;
 	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
+	/* we fill in dk_info later */
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
 	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);
@@ -426,7 +429,7 @@ wdattach(struct device *parent __unused, struct device *self, void *aux)
 }
 
 int
-wdactivate(struct device *self __unused, enum devact act)
+wdactivate(struct device *self, enum devact act)
 {
 	int rv = 0;
 
@@ -445,7 +448,7 @@ wdactivate(struct device *self __unused, enum devact act)
 }
 
 int
-wddetach(struct device *self, int flags __unused)
+wddetach(struct device *self, int flags)
 {
 	struct wd_softc *sc = (struct wd_softc *)self;
 	int s, bmaj, cmaj, i, mn;
@@ -872,7 +875,7 @@ wdrestart(void *v)
 }
 
 int
-wdread(dev_t dev, struct uio *uio, int flags __unused)
+wdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	ATADEBUG_PRINT(("wdread\n"), DEBUG_XFERS);
@@ -880,7 +883,7 @@ wdread(dev_t dev, struct uio *uio, int flags __unused)
 }
 
 int
-wdwrite(dev_t dev, struct uio *uio, int flags __unused)
+wdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	ATADEBUG_PRINT(("wdwrite\n"), DEBUG_XFERS);
@@ -888,7 +891,7 @@ wdwrite(dev_t dev, struct uio *uio, int flags __unused)
 }
 
 int
-wdopen(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
+wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct wd_softc *wd;
 	int part, error;
@@ -976,7 +979,7 @@ wdopen(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
 }
 
 int
-wdclose(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
+wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
 	int part = WDPART(dev);
@@ -1161,6 +1164,10 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct lwp *l)
 
 	if ((wd->sc_flags & WDF_LOADED) == 0)
 		return EIO;
+
+	error = disk_ioctl(&wd->sc_dk, xfer, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return (error);
 
 	switch (xfer) {
 #ifdef HAS_BAD144_HANDLING
@@ -1677,56 +1684,58 @@ bad144intern(struct wd_softc *wd)
 #endif
 
 static void
-wd_params_to_properties(struct wd_softc *wd, struct ataparams *params __unused)
+wd_params_to_properties(struct wd_softc *wd, struct ataparams *params)
 {
-	prop_dictionary_t disk_info, geom;
-	prop_string_t string;
-	prop_number_t number;
+	prop_dictionary_t disk_info, odisk_info, geom;
+	const char *cp;
 
 	disk_info = prop_dictionary_create();
 
 	if (strcmp(wd->sc_params.atap_model, "ST506") == 0)
-		string = prop_string_create_cstring_nocopy("ST506");
+		cp = "ST506";
 	else {
 		/* XXX Should have a case for ATA here, too. */
-		string = prop_string_create_cstring_nocopy("ESDI");
+		cp = "ESDI";
 	}
-	prop_dictionary_set(disk_info, "type", string);
-	prop_object_release(string);
+	prop_dictionary_set_cstring_nocopy(disk_info, "type", cp);
 
 	geom = prop_dictionary_create();
 
-	number = prop_number_create_integer(wd->sc_capacity);
-	prop_dictionary_set(geom, "sectors-per-unit", number);
-	prop_object_release(number);
+	prop_dictionary_set_uint64(geom, "sectors-per-unit", wd->sc_capacity);
 
-	number = prop_number_create_integer(DEV_BSIZE /* XXX 512? */);
-	prop_dictionary_set(geom, "sector-size", number);
-	prop_object_release(number);
+	prop_dictionary_set_uint32(geom, "sector-size",
+				   DEV_BSIZE /* XXX 512? */);
 
-	number = prop_number_create_integer(wd->sc_params.atap_sectors);
-	prop_dictionary_set(geom, "sectors-per-track", number);
-	prop_object_release(number);
+	prop_dictionary_set_uint16(geom, "sectors-per-track",
+				   wd->sc_params.atap_sectors);
 
-	number = prop_number_create_integer(wd->sc_params.atap_heads);
-	prop_dictionary_set(geom, "tracks-per-cylinder", number);
-	prop_object_release(number);
+	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+				   wd->sc_params.atap_heads);
 
-	number = prop_number_create_integer(
-	    (wd->sc_flags & WDF_LBA) ?
-	        wd->sc_capacity / (wd->sc_params.atap_heads *
-				   wd->sc_params.atap_sectors)
-				     :
-		wd->sc_params.atap_cylinders);
-	prop_dictionary_set(geom, "cylinders-per-unit", number);
-	prop_object_release(number);
+	if (wd->sc_flags & WDF_LBA)
+		prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+					   wd->sc_capacity /
+					       (wd->sc_params.atap_heads *
+					        wd->sc_params.atap_sectors));
+	else
+		prop_dictionary_set_uint16(geom, "cylinders-per-unit",
+					   wd->sc_params.atap_cylinders);
 
 	prop_dictionary_set(disk_info, "geometry", geom);
 	prop_object_release(geom);
 
 	prop_dictionary_set(device_properties(&wd->sc_dev),
 			    "disk-info", disk_info);
-	prop_object_release(disk_info);
+
+	/*
+	 * Don't release disk_info here; we keep a reference to it.
+	 * disk_detach() will release it when we go away.
+	 */
+
+	odisk_info = wd->sc_dk.dk_info;
+	wd->sc_dk.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
 }
 
 int

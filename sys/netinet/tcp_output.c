@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.143.4.1 2006/10/22 06:07:29 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.143.4.2 2006/12/10 07:19:11 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.143.4.1 2006/10/22 06:07:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.143.4.2 2006/12/10 07:19:11 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -200,6 +200,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.143.4.1 2006/10/22 06:07:29 yamt Ex
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 #include <netinet/in_offload.h>
+#include <netinet6/in6_offload.h>
 
 #ifdef IPSEC
 #include <netkey/key.h>
@@ -239,7 +240,8 @@ static
 inline
 #endif
 int
-tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
+tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
+    boolean_t *alwaysfragp)
 {
 #ifdef INET
 	struct inpcb *inp = tp->t_inpcb;
@@ -253,6 +255,8 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	int size;
 	int hdrlen;
 	int optlen;
+
+	*alwaysfragp = FALSE;
 
 #ifdef DIAGNOSTIC
 	if (tp->t_inpcb && tp->t_in6pcb)
@@ -304,6 +308,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 			 * attach fragment header.
 			 */
 			size = IPV6_MMTU - hdrlen - sizeof(struct ip6_frag);
+			*alwaysfragp = TRUE;
 		} else
 			size = rt->rt_rmx.rmx_mtu - hdrlen;
 #else
@@ -558,7 +563,9 @@ tcp_output(struct tcpcb *tp)
 	int maxburst = TCP_MAXBURST;
 	int af;		/* address family on the wire */
 	int iphdrlen;
+	int has_tso4, has_tso6;
 	int has_tso, use_tso;
+	boolean_t alwaysfrag;
 	int sack_rxmit;
 	int sack_bytes_rxmt;
 	struct sackhole *p;
@@ -605,7 +612,7 @@ tcp_output(struct tcpcb *tp)
 		return (EAFNOSUPPORT);
 	}
 
-	if (tcp_segsize(tp, &txsegsize, &rxsegsize))
+	if (tcp_segsize(tp, &txsegsize, &rxsegsize, &alwaysfrag))
 		return (EMSGSIZE);
 
 	idle = (tp->snd_max == tp->snd_una);
@@ -616,7 +623,9 @@ tcp_output(struct tcpcb *tp)
 	 * - If there is not an IPsec policy that prevents it
 	 * - If the interface can do it
 	 */
-	has_tso = tp->t_inpcb != NULL &&
+	has_tso4 = has_tso6 = FALSE;
+#if defined(INET)
+	has_tso4 = tp->t_inpcb != NULL &&
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		  IPSEC_PCB_SKIP_IPSEC(tp->t_inpcb->inp_sp,
 		  		       IPSEC_DIR_OUTBOUND) &&
@@ -624,6 +633,18 @@ tcp_output(struct tcpcb *tp)
 		  tp->t_inpcb->inp_route.ro_rt != NULL &&
 		  (tp->t_inpcb->inp_route.ro_rt->rt_ifp->if_capenable &
 		   IFCAP_TSOv4) != 0;
+#endif /* defined(INET) */
+#if defined(INET6)
+	has_tso6 = tp->t_in6pcb != NULL &&
+#if defined(IPSEC) || defined(FAST_IPSEC)
+		  IPSEC_PCB_SKIP_IPSEC(tp->t_in6pcb->in6p_sp,
+		  		       IPSEC_DIR_OUTBOUND) &&
+#endif
+		  tp->t_in6pcb->in6p_route.ro_rt != NULL &&
+		  (tp->t_in6pcb->in6p_route.ro_rt->rt_ifp->if_capenable &
+		   IFCAP_TSOv6) != 0;
+#endif /* defined(INET6) */
+	has_tso = (has_tso4 || has_tso6) && !alwaysfrag;
 
 	/*
 	 * Restart Window computation.  From draft-floyd-incr-init-win-03:
@@ -889,6 +910,11 @@ again:
 			 * sure that we send equal size transfers down the
 			 * stack (rather than big-small-big-small-...).
 			 */
+#ifdef INET6
+#if IPV6_MAXPACKET != IP_MAXPACKET
+#error IPV6_MAXPACKET != IP_MAXPACKET
+#endif
+#endif
 			len = (min(len, IP_MAXPACKET) / txsegsize) * txsegsize;
 			if (len <= txsegsize) {
 				use_tso = 0;
@@ -1405,12 +1431,17 @@ send:
 #ifdef INET6
 	case AF_INET6:
 		m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
-		m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
-		if (len + optlen) {
-			/* Fixup the pseudo-header checksum. */
-			/* XXXJRT: Not IPv6 Jumbogram safe. */
-			th->th_sum = in_cksum_addword(th->th_sum,
-			    htons((u_int16_t) (len + optlen)));
+		if (use_tso) {
+			m->m_pkthdr.segsz = txsegsize;
+			m->m_pkthdr.csum_flags = M_CSUM_TSOv6;
+		} else {
+			m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
+			if (len + optlen) {
+				/* Fixup the pseudo-header checksum. */
+				/* XXXJRT: Not IPv6 Jumbogram safe. */
+				th->th_sum = in_cksum_addword(th->th_sum,
+				    htons((u_int16_t) (len + optlen)));
+			}
 		}
 		break;
 #endif
@@ -1636,131 +1667,3 @@ tcp_setpersist(struct tcpcb *tp)
 	if (tp->t_rxtshift < TCP_MAXRXTSHIFT)
 		tp->t_rxtshift++;
 }
-
-#if defined(INET)
-/*
- * tcp4_segment: handle M_CSUM_TSOv4 by software.
- *
- * => always consume m.
- * => call output_func with output_arg for each segments.
- */
-
-int
-tcp4_segment(struct mbuf *m, int (*output_func)(void *, struct mbuf *),
-    void *output_arg)
-{
-	int mss;
-	int iphlen;
-	int thlen;
-	int hlen;
-	int len;
-	struct ip *iph;
-	struct tcphdr *th;
-	uint16_t ipid;
-	uint32_t tcpseq;
-	struct mbuf *hdr = NULL;
-	struct mbuf *t;
-	int error = 0;
-
-	KASSERT((m->m_flags & M_PKTHDR) != 0);
-	KASSERT((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0);
-
-	m->m_pkthdr.csum_flags = 0;
-
-	len = m->m_pkthdr.len;
-	KASSERT(len >= sizeof(*iph) + sizeof(*th));
-
-	if (m->m_len < sizeof(*iph)) {
-		m = m_pullup(m, sizeof(*iph));
-		if (m == NULL) {
-			error = ENOMEM;
-			goto quit;
-		}
-	}
-	iph = mtod(m, struct ip *);
-	iphlen = iph->ip_hl * 4;
-	KASSERT(iph->ip_v == IPVERSION);
-	KASSERT(iphlen >= sizeof(*iph));
-	KASSERT(iph->ip_p == IPPROTO_TCP);
-	ipid = ntohs(iph->ip_id);
-
-	hlen = iphlen + sizeof(*th);
-	if (m->m_len < hlen) {
-		m = m_pullup(m, hlen);
-		if (m == NULL) {
-			error = ENOMEM;
-			goto quit;
-		}
-	}
-	th = (void *)(mtod(m, char *) + iphlen);
-	tcpseq = ntohl(th->th_seq);
-	thlen = th->th_off * 4;
-	hlen = iphlen + thlen;
-
-	mss = m->m_pkthdr.segsz;
-	KASSERT(mss != 0);
-	KASSERT(len > hlen);
-
-	t = m_split(m, hlen, M_NOWAIT);
-	if (t == NULL) {
-		error = ENOMEM;
-		goto quit;
-	}
-	hdr = m;
-	m = t;
-	len -= hlen;
-	KASSERT(len % mss == 0);
-	while (len > 0) {
-		struct mbuf *n;
-
-		n = m_dup(hdr, 0, hlen, M_NOWAIT);
-		if (n == NULL) {
-			error = ENOMEM;
-			goto quit;
-		}
-		KASSERT(n->m_len == hlen); /* XXX */
-
-		t = m_split(m, mss, M_NOWAIT);
-		if (t == NULL) {
-			m_freem(n);
-			error = ENOMEM;
-			goto quit;
-		}
-		m_cat(n, m);
-		m = t;
-
-		KASSERT(n->m_len >= hlen); /* XXX */
-
-		n->m_pkthdr.len = hlen + mss;
-		iph = mtod(n, struct ip *);
-		KASSERT(iph->ip_v == IPVERSION);
-		iph->ip_len = htons(n->m_pkthdr.len);
-		iph->ip_id = htons(ipid);
-		th = (void *)(mtod(n, char *) + iphlen);
-		th->th_seq = htonl(tcpseq);
-		iph->ip_sum = 0;
-		iph->ip_sum = in_cksum(n, iphlen);
-		th->th_sum = 0;
-		th->th_sum = in4_cksum(n, IPPROTO_TCP, iphlen, thlen + mss);
-
-		error = (*output_func)(output_arg, n);
-		if (error) {
-			goto quit;
-		}
-
-		tcpseq += mss;
-		ipid++;
-		len -= mss;
-	}
-
-quit:
-	if (hdr != NULL) {
-		m_freem(hdr);
-	}
-	if (m != NULL) {
-		m_freem(m);
-	}
-
-	return error;
-}
-#endif /* defined(INET) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.38.4.1 2006/10/22 06:07:42 yamt Exp $	*/
+/*	$NetBSD: esis.c,v 1.38.4.2 2006/12/10 07:19:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.38.4.1 2006/10/22 06:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.38.4.2 2006/12/10 07:19:23 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -196,11 +196,14 @@ esis_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			break;
 		}
-		if (l == 0 || (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))) {
+
+		if (l == NULL) {
 			error = EACCES;
 			break;
 		}
+
+		/* XXX: raw socket permission is checked in socreate() */
+
 		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
 			error = soreserve(so, esis_sendspace, esis_recvspace);
 			if (error)
@@ -827,7 +830,7 @@ bad:	;	/* Needed by ESIS_NEXT_OPTION */
  */
 /*ARGSUSED*/
 void
-esis_config(void *v __unused)
+esis_config(void *v)
 {
 	struct ifnet *ifp;
 
@@ -1111,6 +1114,16 @@ isis_output(struct mbuf *m, ...)
 	sdl = va_arg(ap, struct sockaddr_dl *);
 	va_end(ap);
 
+	/* we assume here we have a sockaddr_dl ... check it */
+	if (sdl->sdl_family != AF_LINK) {
+		error = EINVAL;
+		goto release;
+	}
+	if (sdl->sdl_len < 8 + sdl->sdl_nlen + sdl->sdl_alen + sdl->sdl_slen) {
+		error = EINVAL;
+		goto release;
+	}
+
 	ifa = ifa_ifwithnet((struct sockaddr *) sdl);	/* get ifp from sdl */
 	if (ifa == 0) {
 #ifdef ARGO_DEBUG
@@ -1180,7 +1193,7 @@ void *
 esis_ctlinput(
     int    req,			/* request: we handle only PRC_IFDOWN */
     struct sockaddr *siso,	/* address of ifp */
-    void *dummy __unused)
+    void *dummy)
 {
 	struct iso_ifaddr *ia;	/* scan through interface addresses */
 

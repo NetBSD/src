@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.15.6.1 2006/10/22 06:07:11 yamt Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.15.6.2 2006/12/10 07:18:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.15.6.1 2006/10/22 06:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.15.6.2 2006/12/10 07:18:46 yamt Exp $");
 
 #include "opt_posix.h"
 
@@ -362,7 +362,7 @@ ksem_create(struct lwp *l, const char *name, struct ksem **ksret,
 }
 
 int
-sys__ksem_init(struct lwp *l, void *v, register_t *retval __unused)
+sys__ksem_init(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__ksem_init_args /* {
 		unsigned int value;
@@ -398,7 +398,7 @@ do_ksem_init(struct lwp *l, unsigned int value, semid_t *idp,
 }
 
 int
-sys__ksem_open(struct lwp *l, void *v, register_t *retval __unused)
+sys__ksem_open(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__ksem_open_args /* {
 		const char *name;
@@ -537,7 +537,7 @@ ksem_lookup_proc(struct ksem_proc *kp, semid_t id)
 }
 
 int
-sys__ksem_unlink(struct lwp *l __unused, void *v, register_t *retval __unused)
+sys__ksem_unlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__ksem_unlink_args /* {
 		const char *name;
@@ -577,7 +577,7 @@ sys__ksem_unlink(struct lwp *l __unused, void *v, register_t *retval __unused)
 }
 
 int
-sys__ksem_close(struct lwp *l, void *v, register_t *retval __unused)
+sys__ksem_close(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__ksem_close_args /* {
 		semid_t id;
@@ -613,7 +613,7 @@ sys__ksem_close(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-sys__ksem_post(struct lwp *l, void *v, register_t *retval __unused)
+sys__ksem_post(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__ksem_post_args /* {
 		semid_t id;
@@ -681,7 +681,7 @@ ksem_wait(struct lwp *l, semid_t id, int tryflag)
 }
 
 int
-sys__ksem_wait(struct lwp *l, void *v, register_t *retval __unused)
+sys__ksem_wait(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__ksem_wait_args /* {
 		semid_t id;
@@ -691,7 +691,7 @@ sys__ksem_wait(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-sys__ksem_trywait(struct lwp *l, void *v, register_t *retval __unused)
+sys__ksem_trywait(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__ksem_trywait_args /* {
 		semid_t id;
@@ -701,7 +701,7 @@ sys__ksem_trywait(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-sys__ksem_getvalue(struct lwp *l, void *v, register_t *retval __unused)
+sys__ksem_getvalue(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__ksem_getvalue_args /* {
 		semid_t id;
@@ -729,7 +729,7 @@ sys__ksem_getvalue(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-sys__ksem_destroy(struct lwp *l, void *v, register_t *retval __unused)
+sys__ksem_destroy(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__ksem_destroy_args /*{
 		semid_t id;
@@ -807,7 +807,7 @@ ksem_forkhook(struct proc *p2, struct proc *p1)
 }
 
 static void
-ksem_exechook(struct proc *p, void *arg __unused)
+ksem_exechook(struct proc *p, void *arg)
 {
 	struct ksem_proc *kp;
 

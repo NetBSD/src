@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.32.4.1 2006/10/22 06:05:20 yamt Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.32.4.2 2006/12/10 07:16:43 yamt Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.32.4.1 2006/10/22 06:05:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.32.4.2 2006/12/10 07:16:43 yamt Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -128,7 +128,7 @@ struct vmsg {
 
 /* vcodaattach: do nothing */
 void
-vcodaattach(int n __unused)
+vcodaattach(int n)
 {
 }
 
@@ -136,8 +136,8 @@ vcodaattach(int n __unused)
  * These functions are written for NetBSD.
  */
 int
-vc_nb_open(dev_t dev, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+vc_nb_open(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
     struct vcomm *vcp;
 
@@ -165,7 +165,7 @@ vc_nb_open(dev_t dev, int flag __unused, int mode __unused,
 }
 
 int
-vc_nb_close(dev_t dev, int flag, int mode __unused, struct lwp *l)
+vc_nb_close(dev_t dev, int flag, int mode, struct lwp *l)
 {
     struct vcomm *vcp;
     struct vmsg *vmp, *nvmp = NULL;
@@ -253,7 +253,7 @@ vc_nb_close(dev_t dev, int flag, int mode __unused, struct lwp *l)
 }
 
 int
-vc_nb_read(dev_t dev, struct uio *uiop, int flag __unused)
+vc_nb_read(dev_t dev, struct uio *uiop, int flag)
 {
     struct vcomm *	vcp;
     struct vmsg *vmp;
@@ -304,7 +304,7 @@ vc_nb_read(dev_t dev, struct uio *uiop, int flag __unused)
 }
 
 int
-vc_nb_write(dev_t dev, struct uio *uiop, int flag __unused)
+vc_nb_write(dev_t dev, struct uio *uiop, int flag)
 {
     struct vcomm *	vcp;
     struct vmsg *vmp;
@@ -401,8 +401,8 @@ vc_nb_write(dev_t dev, struct uio *uiop, int flag __unused)
 }
 
 int
-vc_nb_ioctl(dev_t dev __unused, u_long cmd, caddr_t addr, int flag __unused,
-    struct lwp *l __unused)
+vc_nb_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+    struct lwp *l)
 {
     ENTRY;
 
@@ -484,7 +484,7 @@ filt_vc_nb_detach(struct knote *kn)
 }
 
 static int
-filt_vc_nb_read(struct knote *kn, long hint __unused)
+filt_vc_nb_read(struct knote *kn, long hint)
 {
 	struct vcomm *vcp = kn->kn_hook;
 	struct vmsg *vmp;

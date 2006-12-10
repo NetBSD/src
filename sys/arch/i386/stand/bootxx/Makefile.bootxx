@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.24 2006/06/25 15:01:00 lukem Exp $
+# $NetBSD: Makefile.bootxx,v 1.24.6.1 2006/12/10 07:16:19 yamt Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -46,6 +46,7 @@ CPPFLAGS+= -DFS=${FS}
 
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
+DBG=
 
 CPPFLAGS+= -DNO_LBA_CHECK
 
@@ -68,6 +69,8 @@ COPTS+=    -ffreestanding
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
+
+CPPFLAGS+= -DUNALIGNED_ACCESS
 
 CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
 		-DLIBSA_NO_TWIDDLE \

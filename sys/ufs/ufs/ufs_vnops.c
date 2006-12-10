@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.142.6.1 2006/10/22 06:07:51 yamt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.142.6.2 2006/12/10 07:19:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.142.6.1 2006/10/22 06:07:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.142.6.2 2006/12/10 07:19:33 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -910,8 +910,9 @@ ufs_rename(void *v)
 		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
-		if ((error = relookup(fdvp, &fvp, fcnp))){
-			/* relookup blew away fdvp */
+		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+		if ((error = relookup(fdvp, &fvp, fcnp))) {
+			vput(fdvp);
 			return (error);
 		}
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
@@ -949,7 +950,6 @@ ufs_rename(void *v)
 		doingdirectory = 1;
 	}
 	VN_KNOTE(fdvp, NOTE_WRITE);		/* XXXLUKEM/XXX: right place? */
-	/* vrele(fdvp); */
 
 	/*
 	 * When the target exists, both the directory
@@ -996,14 +996,18 @@ ufs_rename(void *v)
 			goto bad;
 		if (xp != NULL)
 			vput(tvp);
-		vref(tdvp);	/* compensate for the ref checkpath looses */
+		vref(tdvp);	/* compensate for the ref checkpath loses */
 		if ((error = ufs_checkpath(ip, dp, tcnp->cn_cred)) != 0) {
 			vrele(tdvp);
 			goto out;
 		}
 		tcnp->cn_flags &= ~SAVESTART;
-		if ((error = relookup(tdvp, &tvp, tcnp)) != 0)
+		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
+		error = relookup(tdvp, &tvp, tcnp);
+		if (error != 0) {
+			vput(tdvp);
 			goto out;
+		}
 		dp = VTOI(tdvp);
 		xp = NULL;
 		if (tvp)
@@ -1155,7 +1159,9 @@ ufs_rename(void *v)
 	 */
 	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
+	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 	if ((error = relookup(fdvp, &fvp, fcnp))) {
+		vput(fdvp);
 		vrele(ap->a_fvp);
 		return (error);
 	}
@@ -1439,9 +1445,10 @@ ufs_rmdir(void *v)
 	 * No rmdir "." or of mounted directories please.
 	 */
 	if (dp == ip || vp->v_mountedhere != NULL) {
-		vrele(dvp);
-		if (vp->v_mountedhere != NULL)
-			VOP_UNLOCK(dvp, 0);
+		if (dp == ip)
+			vrele(vp);
+		else
+			vput(vp);
 		vput(vp);
 		return (EINVAL);
 	}

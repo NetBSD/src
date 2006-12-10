@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.12.6.1 2006/10/22 06:04:30 yamt Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.12.6.2 2006/12/10 07:15:44 yamt Exp $	*/
 /*	$KAME: altq_rio.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.12.6.1 2006/10/22 06:04:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.12.6.2 2006/12/10 07:15:44 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -476,16 +476,16 @@ rio_getq(rio_t *rp, class_queue_t *q)
 
 #ifdef ALTQ3_COMPAT
 int
-rioopen(dev_t dev __unused, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+rioopen(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
 }
 
 int
-rioclose(dev_t dev __unused, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+rioclose(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	rio_queue_t *rqp;
 	int err, error = 0;
@@ -501,7 +501,7 @@ rioclose(dev_t dev __unused, int flag __unused, int fmt __unused,
 }
 
 int
-rioioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+rioioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
     struct lwp *l)
 {
 	rio_queue_t *rqp;
@@ -743,7 +743,7 @@ rio_detach(rio_queue_t *rqp)
  * rio support routines
  */
 static int
-rio_request(struct ifaltq *ifq, int req, void *arg __unused)
+rio_request(struct ifaltq *ifq, int req, void *arg)
 {
 	rio_queue_t *rqp = (rio_queue_t *)ifq->altq_disc;
 

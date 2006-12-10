@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.28.20.1 2006/12/10 07:16:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.28.20.1 2006/12/10 07:16:34 yamt Exp $")
 
 
 /*
@@ -659,6 +659,8 @@ ENTRY(copyoutstr)
 	mov.l	.L_copyoutstr_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov.l	.L_copyoutstr_VM_MAXUSER_ADDRESS, r1
+	cmp/hi	r1,	r5		/* bomb if udst isn't in user space */
+	bt	4f
 	mov	r1,	r0
 	sub	r5,	r0
 	cmp/hi	r6,	r0		/* don't beyond user space */
@@ -717,7 +719,7 @@ ENTRY(copyoutstr)
 
 
 /*
- * LINTSTUB: Func: int copyinstr(const void *src, void *dst, size_t maxlen, size_t *lencopied)
+ * LINTSTUB: Func: int copyinstr(const void *usrc, void *kdst, size_t maxlen, size_t *lencopied)
  *	Copy a NUL-terminated string, at most maxlen characters long,
  *	from the user address space.  Return the number of characters
  *	copied (including the NUL) in *lencopied.  If the string is
@@ -733,8 +735,10 @@ ENTRY(copyinstr)
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 
 	mov.l	.L_copyinstr_VM_MAXUSER_ADDRESS, r1
+	cmp/hi	r1,	r4		/* bomb if usrc isn't in user space */
+	bt	4f
 	mov	r1,	r0
-	sub	r5,	r0
+	sub	r4,	r0
 	cmp/hi	r6,	r0		/* don't beyond user space */
 	bf	2f
 	bra	2f
@@ -842,7 +846,7 @@ ENTRY(fusword)
 	mov.l	.L_fusword_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov.w	@r4,	r1		/* fetch the value */
-	exts.w	r1,	r0
+	extu.w	r1,	r0
 1:
 	mov.l	.L_fusword_curpcb, r1	/* clear fault handler */
 	mov.l	@r1,	r2
@@ -883,7 +887,7 @@ ENTRY(fuswintr)
 	mov	#1,	r1		/* set faultbail */
 	mov.l	r1,	@(PCB_FAULTBAIL,r2)
 	mov.w	@r4,	r1		/* fetch the value */
-	exts.w	r1,	r0
+	extu.w	r1,	r0
 1:
 	mov.l	.L_fuswintr_curpcb, r1	/* clear fault handler and faultbail */
 	mov.l	@r1,	r2
@@ -922,7 +926,7 @@ ENTRY(fubyte)
 	mov.l	.L_fubyte_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 	mov.b	@r4,	r1		/* fetch the value */
-	exts.b	r1,	r0
+	extu.b	r1,	r0
 1:
 	mov.l	.L_fubyte_curpcb, r1		/* clear fault handler */
 	mov.l	@r1,	r2

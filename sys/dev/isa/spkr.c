@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.21.2.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: spkr.c,v 1.21.2.2 2006/12/10 07:17:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.21.2.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.21.2.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,14 +407,14 @@ static void *spkr_inbuf;
 static int spkr_attached = 0;
 
 int
-spkrprobe(struct device *parent __unused, struct cfdata *match __unused,
-    void *aux __unused)
+spkrprobe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	return (!spkr_attached);
 }
 
 void
-spkrattach(struct device *parent __unused, struct device *self __unused,
+spkrattach(struct device *parent, struct device *self,
     void *aux)
 {
 	printf("\n");
@@ -423,8 +423,8 @@ spkrattach(struct device *parent __unused, struct device *self __unused,
 }
 
 int
-spkropen(dev_t dev, int	flags __unused, int mode __unused,
-    struct lwp *l __unused)
+spkropen(dev_t dev, int	flags, int mode,
+    struct lwp *l)
 {
 #ifdef SPKRDEBUG
     printf("spkropen: entering with dev = %x\n", dev);
@@ -444,7 +444,7 @@ spkropen(dev_t dev, int	flags __unused, int mode __unused,
 }
 
 int
-spkrwrite(dev_t dev, struct uio *uio, int flags __unused)
+spkrwrite(dev_t dev, struct uio *uio, int flags)
 {
     int n;
     int error;
@@ -465,8 +465,8 @@ spkrwrite(dev_t dev, struct uio *uio, int flags __unused)
     }
 }
 
-int spkrclose(dev_t dev, int flags __unused, int mode __unused,
-    struct lwp *l __unused)
+int spkrclose(dev_t dev, int flags, int mode,
+    struct lwp *l)
 {
 #ifdef SPKRDEBUG
     printf("spkrclose: entering with dev = %x\n", dev);
@@ -483,8 +483,8 @@ int spkrclose(dev_t dev, int flags __unused, int mode __unused,
     return(0);
 }
 
-int spkrioctl(dev_t dev, u_long cmd, caddr_t data, int	flag __unused,
-    struct lwp *l __unused)
+int spkrioctl(dev_t dev, u_long cmd, caddr_t data, int	flag,
+    struct lwp *l)
 {
 #ifdef SPKRDEBUG
     printf("spkrioctl: entering with dev = %x, cmd = %lx\n", dev, cmd);

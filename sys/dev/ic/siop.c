@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.80 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: siop.c,v 1.80.22.1 2006/12/10 07:17:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.80 2005/12/24 23:41:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.80.22.1 2006/12/10 07:17:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,11 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.80 2005/12/24 23:41:33 perry Exp $");
 #ifndef DEBUG
 #undef DEBUG
 #endif
-#undef SIOP_DEBUG
-#undef SIOP_DEBUG_DR
-#undef SIOP_DEBUG_INTR
-#undef SIOP_DEBUG_SCHED
-#undef DUMP_SCRIPT
+/*
+#define SIOP_DEBUG
+#define SIOP_DEBUG_DR
+#define SIOP_DEBUG_INTR
+#define SIOP_DEBUG_SCHED
+#define DUMP_SCRIPT
+*/
 
 #define SIOP_STATS
 
@@ -1740,12 +1742,10 @@ siop_morecbd(sc)
 		TAILQ_INSERT_TAIL(&sc->free_list, &newcbd->cmds[i], next);
 		splx(s);
 #ifdef SIOP_DEBUG
-		printf("tables[%d]: in=0x%x out=0x%x status=0x%x "
-		    "offset=0x%x\n", i,
+		printf("tables[%d]: in=0x%x out=0x%x status=0x%x\n", i
 		    le32toh(newcbd->cmds[i].cmd_tables->t_msgin.addr),
 		    le32toh(newcbd->cmds[i].cmd_tables->t_msgout.addr),
-		    le32toh(newcbd->cmds[i].cmd_tables->t_status.addr),
-		    le32toh(newcbd->cmds[i].cmd_tables->t_offset.addr));
+		    le32toh(newcbd->cmds[i].cmd_tables->t_status.addr));
 #endif
 	}
 	s = splbio();

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.118.2.1 2006/10/22 06:05:27 yamt Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.118.2.2 2006/12/10 07:16:52 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.118.2.1 2006/10/22 06:05:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.118.2.2 2006/12/10 07:16:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ svr4_sys_execve(l, v, retval)
 
 
 int
-svr4_sys_time(struct lwp *l __unused, void *v, register_t *retval)
+svr4_sys_time(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_time_args *uap = v;
 	int error = 0;
@@ -633,15 +633,15 @@ svr4_sys_xmknod(l, v, retval)
 
 
 int
-svr4_sys_vhangup(struct lwp *l __unused, void *v __unused,
-    register_t *retval __unused)
+svr4_sys_vhangup(struct lwp *l, void *v,
+    register_t *retval)
 {
 	return 0;
 }
 
 
 int
-svr4_sys_sysconfig(struct lwp *l __unused, void *v, register_t *retval)
+svr4_sys_sysconfig(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sysconfig_args *uap = v;
 	extern int	maxfiles;
@@ -777,7 +777,7 @@ svr4_sys_sysconfig(struct lwp *l __unused, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-svr4_sys_break(struct lwp *l, void *v, register_t *retval __unused)
+svr4_sys_break(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_break_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -1015,7 +1015,7 @@ struct svr4_hrtcntl_args {
 
 
 static int
-svr4_hrtcntl(struct lwp *l __unused, struct svr4_hrtcntl_args *uap,
+svr4_hrtcntl(struct lwp *l, struct svr4_hrtcntl_args *uap,
     register_t *retval)
 {
 	switch (SCARG(uap, fun)) {
@@ -1449,8 +1449,8 @@ svr4_sys_alarm(l, v, retval)
 
 
 int
-svr4_sys_gettimeofday(struct lwp *l __unused, void *v,
-    register_t *retval __unused)
+svr4_sys_gettimeofday(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct svr4_sys_gettimeofday_args *uap = v;
 
@@ -1466,7 +1466,7 @@ svr4_sys_gettimeofday(struct lwp *l __unused, void *v,
 
 
 int
-svr4_sys_facl(struct lwp *l __unused, void *v, register_t *retval)
+svr4_sys_facl(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_facl_args *uap = v;
 
@@ -1501,8 +1501,8 @@ svr4_sys_acl(l, v, retval)
 
 
 int
-svr4_sys_auditsys(struct lwp *l __unused, void *v __unused,
-    register_t *retval __unused)
+svr4_sys_auditsys(struct lwp *l, void *v,
+    register_t *retval)
 {
 	/*
 	 * XXX: Big brother is *not* watching.

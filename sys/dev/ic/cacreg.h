@@ -1,4 +1,4 @@
-/*	$NetBSD: cacreg.h,v 1.7 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: cacreg.h,v 1.7.22.1 2006/12/10 07:17:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@
 /* Return status codes */
 #define	CAC_RET_SOFT_ERROR		0x02
 #define	CAC_RET_HARD_ERROR		0x04
+#define	CAC_RET_INVAL_BLOCK		0x10
 #define	CAC_RET_CMD_REJECTED		0x14
 
 struct cac_drive_info {

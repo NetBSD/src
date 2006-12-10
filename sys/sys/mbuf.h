@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.130.4.1 2006/10/22 06:07:47 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.130.4.2 2006/12/10 07:19:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -176,6 +176,7 @@ struct	pkthdr {
 #define	M_CSUM_IPv4		0x00000040	/* IPv4 header */
 #define	M_CSUM_IPv4_BAD		0x00000080	/* IPv4 header checksum bad */
 #define	M_CSUM_TSOv4		0x00000100	/* TCPv4 segmentation offload */
+#define	M_CSUM_TSOv6		0x00000200	/* TCPv6 segmentation offload */
 
 /* Checksum-assist quirks: keep separate from jump-table bits. */
 #define	M_CSUM_NO_PSEUDOHDR	0x80000000	/* Rx csum_data does not include
@@ -185,7 +186,7 @@ struct	pkthdr {
 
 #define M_CSUM_BITS \
     "\20\1TCPv4\2UDPv4\3TCP_UDP_BAD\4DATA\5TCPv6\6UDPv6\7IPv4\10IPv4_BAD" \
-    "\11TSOv4\38NO_PSEUDOHDR"
+    "\11TSOv4\12TSOv6\40NO_PSEUDOHDR"
 
 /*
  * Macros for manipulating csum_data on outgoing packets.  These are

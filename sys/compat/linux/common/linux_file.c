@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.73.6.1 2006/10/22 06:05:24 yamt Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.73.6.2 2006/12/10 07:16:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.73.6.1 2006/10/22 06:05:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.73.6.2 2006/12/10 07:16:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1097,7 +1097,7 @@ linux_sys_pwrite(l, v, retval)
 
 #define LINUX_NOT_SUPPORTED(fun) \
 int \
-fun(struct lwp *l __unused, void *v __unused, register_t *retval __unused) \
+fun(struct lwp *l, void *v, register_t *retval) \
 { \
 	return EOPNOTSUPP; \
 }

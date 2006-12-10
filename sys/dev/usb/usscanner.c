@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.18.22.1 2006/10/22 06:06:53 yamt Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.18.22.2 2006/12/10 07:18:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.18.22.1 2006/10/22 06:06:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.18.22.2 2006/12/10 07:18:18 yamt Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -337,6 +337,10 @@ USB_ATTACH(usscanner)
 #else
 	/* No SCSI bus, just ignore it */
 	usscanner_cleanup(sc);
+
+	printf("%s: no scsibus configured, see usscanner(4) for details\n",
+	    USBDEVNAME(sc->sc_dev));
+
 	USB_ATTACH_ERROR_RETURN;
 
 #endif
@@ -453,8 +457,8 @@ usscanner_sense(struct usscanner_softc *sc)
 }
 
 Static void
-usscanner_intr_cb(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
-		 usbd_status status __unused)
+usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+		 usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
 	int s;
@@ -576,8 +580,8 @@ usscanner_done(struct usscanner_softc *sc)
 }
 
 Static void
-usscanner_sensecmd_cb(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
-		      usbd_status status __unused)
+usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+		      usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
 	struct scsipi_xfer *xs = sc->sc_xs;
@@ -621,7 +625,7 @@ usscanner_sensecmd_cb(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
 }
 
 Static void
-usscanner_cmd_cb(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+usscanner_cmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		 usbd_status status)
 {
 	struct usscanner_softc *sc = priv;

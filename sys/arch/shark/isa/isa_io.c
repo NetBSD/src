@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.6 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.6.22.1 2006/12/10 07:16:34 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,13 +38,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.6 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.6.22.1 2006/12/10 07:16:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/isa_machdep.h>
+#include <machine/ofw.h>
+#include "igsfb_ofbus.h"
+
+#if NIGSFB_OFBUS > 0
+extern vaddr_t igsfb_mem_vaddr, igsfb_mmio_vaddr;
+extern paddr_t igsfb_mem_paddr;
+#endif
 
 /* Proto types for all the bus_space structure functions */
 
@@ -63,7 +70,7 @@ bs_protos(bs_notimpl);
  */
 struct bus_space isa_io_bs_tag = {
 	/* cookie */
-	NULL, /* initialized below */
+	NULL,	/* initialized below */
 
 	/* mapping/unmapping */
 	isa_bs_map,
@@ -78,7 +85,7 @@ struct bus_space isa_io_bs_tag = {
 	isa_bs_vaddr,
 
 	/* mmap bus space for userland */
-	bs_notimpl_bs_mmap,		/* XXX possible even? XXX */
+	isa_bs_mmap,
 
 	/* barrier */
 	isa_bs_barrier,
@@ -144,7 +151,7 @@ struct bus_space isa_io_bs_tag = {
  */
 struct bus_space isa_mem_bs_tag = {
 	/* cookie */
-        NULL, /* initialized below */
+        NULL,	/* initialized below */
 
 	/* mapping/unmapping */
 	isa_bs_map,
@@ -159,7 +166,7 @@ struct bus_space isa_mem_bs_tag = {
 	isa_bs_vaddr,
 
 	/* mmap bus space for userland */
-	bs_notimpl_bs_mmap,		/* XXX open for now ... XXX */
+	isa_bs_mmap,
 
 	/* barrier */
 	isa_bs_barrier,
@@ -266,6 +273,35 @@ isa_bs_unmap(t, bsh, size)
 	bus_size_t size;
 {
 	/* Nothing to do. */
+}
+
+paddr_t
+isa_bs_mmap(void *cookie, bus_addr_t addr, off_t off, int prot,
+    int flags)
+{
+	paddr_t paddr, ret;
+
+#ifdef OFISA_DEBUG
+	printf("mmap %08x %08x %08x", (uint32_t)cookie, (uint32_t)addr, (uint32_t)off);
+#endif
+#if NIGSFB_OFBUS > 0
+	if ((vaddr_t)cookie == igsfb_mem_vaddr) {
+		paddr = igsfb_mem_paddr;
+	} else
+#endif
+	paddr = ofw_gettranslation((vaddr_t)cookie);
+	
+	if (paddr == -1) {
+#ifdef OFISA_DEBUG
+		printf(" no translation\n");
+#endif
+		return -1;
+	}
+	ret = paddr + addr + off;
+#ifdef OFISA_DEBUG
+	printf(" -> %08x %08x\n", (uint32_t)paddr, (uint32_t)ret);
+#endif
+	return arm_btop(ret);
 }
 
 int

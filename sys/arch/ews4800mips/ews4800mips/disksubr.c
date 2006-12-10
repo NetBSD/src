@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.1.24.1 2006/12/10 07:15:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.1.24.1 2006/12/10 07:15:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,20 +158,4 @@ writedisklabel(dev_t dev, void (*strategy)(struct buf *), struct disklabel *d,
 	sector_fini(rwops);
 
 	return err;
-}
-
-int
-bounds_check_with_label(struct disk *dk, struct buf *b, int wlabel)
-{
-	struct disklabel *d = dk->dk_label;
-	struct partition *p = d->d_partitions + DISKPART(b->b_dev);
-
-	if (!bounds_check_with_mediasize(b, DEV_BSIZE, p->p_size)) {
-		DPRINTF("bounds_check_with_mediasize failed.\n");
-		return FALSE;
-	}
-
-	b->b_resid = (b->b_blkno + p->p_offset) / d->d_secpercyl;
-
-	return TRUE;
 }

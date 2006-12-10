@@ -1,4 +1,4 @@
-/* $NetBSD: opl_esl.c,v 1.12.8.1 2006/10/22 06:06:39 yamt Exp $ */
+/* $NetBSD: opl_esl.c,v 1.12.8.2 2006/12/10 07:18:06 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.12.8.1 2006/10/22 06:06:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.12.8.2 2006/12/10 07:18:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ CFATTACH_DECL(opl_esl, sizeof(struct opl_softc),
     opl_esl_match, opl_esl_attach, opl_esl_detach, NULL);
 
 int
-opl_esl_match(struct device *parent, struct cfdata *match __unused, void *aux)
+opl_esl_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct esl_pcmcia_softc *ssc = (struct esl_pcmcia_softc *)parent;
@@ -79,7 +79,7 @@ opl_esl_match(struct device *parent, struct cfdata *match __unused, void *aux)
 }
 
 void
-opl_esl_attach(struct device *parent, struct device *self, void *aux __unused)
+opl_esl_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct esl_pcmcia_softc *ssc = (struct esl_pcmcia_softc *)parent;
 	struct opl_softc *sc = (struct opl_softc *)self;
