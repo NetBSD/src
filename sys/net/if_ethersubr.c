@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.140 2006/12/10 10:51:11 is Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.141 2006/12/10 11:39:43 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.140 2006/12/10 10:51:11 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.141 2006/12/10 11:39:43 is Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -978,12 +978,12 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 			case LLC_XID:
 			case LLC_XID_P:
-				if(m->m_len < 6 + sizeof(struct ether_header))
+				if(m->m_len < LLC_XID_BASIC_MINLEN + sizeof(struct ether_header))
 					/* XXX m_pullup? */
 					goto dropanyway;
 				l->llc_window = 0;
-				l->llc_fid = 9;
-				l->llc_class = 1; /* unconnected mode only */
+				l->llc_fid = LLC_XID_FORMAT_BASIC;
+				l->llc_class = LLC_XID_CLASS_I;
 				l->llc_dsap = l->llc_ssap = 0;
 				/* Fall through to */
 			case LLC_TEST:
