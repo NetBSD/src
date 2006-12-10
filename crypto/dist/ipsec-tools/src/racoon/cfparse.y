@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.17 2006/10/22 15:10:31 vanhu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.18 2006/12/10 18:46:39 manu Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1111,7 +1111,10 @@ timer_stmt
 	|	NATT_KA NUMBER unittype_time
 		{
 #ifdef ENABLE_NATT
-			lcconf->natt_ka_interval = $2 * $3;
+        		if (libipsec_opt & LIBIPSEC_OPT_NATT)
+				lcconf->natt_ka_interval = $2 * $3;
+			else
+                		yyerror("libipsec lacks NAT-T support");
 #else
 			yyerror("NAT-T support not compiled in.");
 #endif
@@ -1812,7 +1815,10 @@ remote_spec
 	|	IKE_FRAG REMOTE_FORCE_LEVEL { cur_rmconf->ike_frag = ISAKMP_FRAG_FORCE; } EOS
 	|	ESP_FRAG NUMBER { 
 #ifdef SADB_X_EXT_NAT_T_FRAG
-			cur_rmconf->esp_frag = $2; 
+        		if (libipsec_opt & LIBIPSEC_OPT_FRAG)
+				cur_rmconf->esp_frag = $2; 
+			else
+                		yywarn("libipsec lacks IKE frag support");
 #else
 			yywarn("Your kernel does not support esp_frag");
 #endif
@@ -1842,7 +1848,10 @@ remote_spec
 	|	NAT_TRAVERSAL SWITCH
 		{
 #ifdef ENABLE_NATT
-			cur_rmconf->nat_traversal = $2;
+        		if (libipsec_opt & LIBIPSEC_OPT_FRAG)
+				cur_rmconf->nat_traversal = $2;
+			else
+                		yyerror("libipsec lacks NAT-T support");
 #else
 			yyerror("NAT-T support not compiled in.");
 #endif
@@ -1850,7 +1859,10 @@ remote_spec
 	|	NAT_TRAVERSAL REMOTE_FORCE_LEVEL
 		{
 #ifdef ENABLE_NATT
-			cur_rmconf->nat_traversal = NATT_FORCE;
+			if (libipsec_opt & LIBIPSEC_OPT_NATT)
+				cur_rmconf->nat_traversal = NATT_FORCE;
+			else
+                		yyerror("libipsec lacks NAT-T support");
 #else
 			yyerror("NAT-T support not compiled in.");
 #endif

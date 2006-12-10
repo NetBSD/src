@@ -23,7 +23,7 @@ libipsec_la_SOURCES = \
 
 # version is current:revision:age.
 # See: http://www.gnu.org/manual/libtool-1.4.2/html_chapter/libtool_6.html#SEC32
-libipsec_la_LDFLAGS = -version-info 0:0:0
+libipsec_la_LDFLAGS = -version-info 0:1:0
 libipsec_la_LIBADD = $(LEXLIB)
 
 noinst_HEADERS = ipsec_strerror.h policy_parse.h

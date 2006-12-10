@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.12 2006/12/09 05:52:57 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.13 2006/12/10 18:46:39 manu Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -92,6 +92,18 @@ static caddr_t pfkey_set_natt_frag __P((caddr_t, caddr_t, u_int, u_int16_t));
 static caddr_t pfkey_setsecctx __P((caddr_t, caddr_t, u_int, u_int8_t, u_int8_t,
 				    caddr_t, u_int16_t));
 #endif
+
+int libipsec_opt = 0
+#ifdef SADB_X_EXT_NAT_T_TYPE
+	| LIBIPSEC_OPT_NATT
+#endif
+#ifdef SADB_X_EXT_NAT_T_FRAG
+	| LIBIPSEC_OPT_FRAG
+#endif
+#ifdef SADB_X_EXT_NAT_T_SEC_CTX
+	| LIBIPSEC_OPT_SEC_CTX
+#endif
+	;
 
 /*
  * make and search supported algorithm structure.
@@ -495,7 +507,7 @@ pfkey_send_getspi(so, satype, mode, src, dst, min, max, reqid, seq)
  *	-1	: error occured, and set errno.
  */
 int
-pfkey_send_update(sa_parms)
+pfkey_send_update2(sa_parms)
 	struct pfkey_send_sa_args *sa_parms;
 {
 	int len;
@@ -516,7 +528,7 @@ pfkey_send_update(sa_parms)
  *	-1	: error occured, and set errno.
  */
 int
-pfkey_send_add(sa_parms)
+pfkey_send_add2(sa_parms)
 	struct pfkey_send_sa_args *sa_parms;
 {
 	int len;
@@ -2458,3 +2470,193 @@ pfkey_setsecctx(buf, lim, type, ctx_doi, ctx_alg, sec_ctx, sec_ctxlen)
 	return buf + len;
 }
 #endif
+
+/* 
+ * Deprecated, available for backward compatibility with third party 
+ * libipsec users. Please use pfkey_send_update2 and pfkey_send_add2 instead 
+ */
+int
+pfkey_send_update(so, satype, mode, src, dst, spi, reqid, wsize,
+		keymat, e_type, e_keylen, a_type, a_keylen, flags,
+		l_alloc, l_bytes, l_addtime, l_usetime, seq)
+	int so;
+	u_int satype, mode, wsize;
+	struct sockaddr *src, *dst;
+	u_int32_t spi, reqid;
+	caddr_t keymat;
+	u_int e_type, e_keylen, a_type, a_keylen, flags;
+	u_int32_t l_alloc;
+	u_int64_t l_bytes, l_addtime, l_usetime;
+	u_int32_t seq;
+{
+	struct pfkey_send_sa_args psaa;
+
+	memset(&psaa, 0, sizeof(psaa));
+	psaa.so = so;
+	psaa.type = SADB_UPDATE;
+	psaa.satype = satype;
+	psaa.mode = mode;
+	psaa.wsize = wsize;
+	psaa.src = src;
+	psaa.dst = dst;
+	psaa.spi = spi;
+	psaa.reqid = reqid;
+	psaa.keymat = keymat;
+	psaa.e_type = e_type;
+	psaa.e_keylen = e_keylen;
+	psaa.a_type = a_type;
+	psaa.a_keylen = a_keylen;
+	psaa.flags = flags;
+	psaa.l_alloc = l_alloc;
+	psaa.l_bytes = l_bytes;
+	psaa.l_addtime = l_addtime;
+	psaa.l_usetime = l_usetime;
+	psaa.seq = seq;
+
+	return pfkey_send_update2(&psaa);
+}
+
+int
+pfkey_send_update_nat(so, satype, mode, src, dst, spi, reqid, wsize,
+		      keymat, e_type, e_keylen, a_type, a_keylen, flags,
+		      l_alloc, l_bytes, l_addtime, l_usetime, seq,
+		      l_natt_type, l_natt_sport, l_natt_dport, l_natt_oa,
+		      l_natt_frag)
+	int so;
+	u_int satype, mode, wsize;
+	struct sockaddr *src, *dst;
+	u_int32_t spi, reqid;
+	caddr_t keymat;
+	u_int e_type, e_keylen, a_type, a_keylen, flags;
+	u_int32_t l_alloc;
+	u_int64_t l_bytes, l_addtime, l_usetime;
+	u_int32_t seq;
+	u_int8_t l_natt_type;
+	u_int16_t l_natt_sport, l_natt_dport;
+	struct sockaddr *l_natt_oa;
+	u_int16_t l_natt_frag;
+{
+	struct pfkey_send_sa_args psaa;
+
+	memset(&psaa, 0, sizeof(psaa));
+	psaa.so = so;
+	psaa.type = SADB_UPDATE;
+	psaa.satype = satype;
+	psaa.mode = mode;
+	psaa.wsize = wsize;
+	psaa.src = src;
+	psaa.dst = dst;
+	psaa.spi = spi;
+	psaa.reqid = reqid;
+	psaa.keymat = keymat;
+	psaa.e_type = e_type;
+	psaa.e_keylen = e_keylen;
+	psaa.a_type = a_type;
+	psaa.a_keylen = a_keylen;
+	psaa.flags = flags;
+	psaa.l_alloc = l_alloc;
+	psaa.l_bytes = l_bytes;
+	psaa.l_addtime = l_addtime;
+	psaa.l_usetime = l_usetime;
+	psaa.seq = seq;
+	psaa.l_natt_type = l_natt_type;
+	psaa.l_natt_sport = l_natt_sport;
+	psaa.l_natt_dport = l_natt_dport;
+	psaa.l_natt_oa = l_natt_oa;
+	psaa.l_natt_frag = l_natt_frag;
+
+	return pfkey_send_update2(&psaa);
+}
+
+int
+pfkey_send_add(so, satype, mode, src, dst, spi, reqid, wsize,
+		keymat, e_type, e_keylen, a_type, a_keylen, flags,
+		l_alloc, l_bytes, l_addtime, l_usetime, seq)
+	int so;
+	u_int satype, mode, wsize;
+	struct sockaddr *src, *dst;
+	u_int32_t spi, reqid;
+	caddr_t keymat;
+	u_int e_type, e_keylen, a_type, a_keylen, flags;
+	u_int32_t l_alloc;
+	u_int64_t l_bytes, l_addtime, l_usetime;
+	u_int32_t seq;
+{
+	struct pfkey_send_sa_args psaa;
+
+	memset(&psaa, 0, sizeof(psaa));
+	psaa.so = so;
+	psaa.type = SADB_ADD;
+	psaa.satype = satype;
+	psaa.mode = mode;
+	psaa.wsize = wsize;
+	psaa.src = src;
+	psaa.dst = dst;
+	psaa.spi = spi;
+	psaa.reqid = reqid;
+	psaa.keymat = keymat;
+	psaa.e_type = e_type;
+	psaa.e_keylen = e_keylen;
+	psaa.a_type = a_type;
+	psaa.a_keylen = a_keylen;
+	psaa.flags = flags;
+	psaa.l_alloc = l_alloc;
+	psaa.l_bytes = l_bytes;
+	psaa.l_addtime = l_addtime;
+	psaa.l_usetime = l_usetime;
+	psaa.seq = seq;
+
+	return pfkey_send_add2(&psaa);
+}
+
+int
+pfkey_send_add_nat(so, satype, mode, src, dst, spi, reqid, wsize,
+		      keymat, e_type, e_keylen, a_type, a_keylen, flags,
+		      l_alloc, l_bytes, l_addtime, l_usetime, seq,
+		      l_natt_type, l_natt_sport, l_natt_dport, l_natt_oa,
+		      l_natt_frag)
+	int so;
+	u_int satype, mode, wsize;
+	struct sockaddr *src, *dst;
+	u_int32_t spi, reqid;
+	caddr_t keymat;
+	u_int e_type, e_keylen, a_type, a_keylen, flags;
+	u_int32_t l_alloc;
+	u_int64_t l_bytes, l_addtime, l_usetime;
+	u_int32_t seq;
+	u_int8_t l_natt_type;
+	u_int16_t l_natt_sport, l_natt_dport;
+	struct sockaddr *l_natt_oa;
+	u_int16_t l_natt_frag;
+{
+	struct pfkey_send_sa_args psaa;
+
+	memset(&psaa, 0, sizeof(psaa));
+	psaa.so = so;
+	psaa.type = SADB_ADD;
+	psaa.satype = satype;
+	psaa.mode = mode;
+	psaa.wsize = wsize;
+	psaa.src = src;
+	psaa.dst = dst;
+	psaa.spi = spi;
+	psaa.reqid = reqid;
+	psaa.keymat = keymat;
+	psaa.e_type = e_type;
+	psaa.e_keylen = e_keylen;
+	psaa.a_type = a_type;
+	psaa.a_keylen = a_keylen;
+	psaa.flags = flags;
+	psaa.l_alloc = l_alloc;
+	psaa.l_bytes = l_bytes;
+	psaa.l_addtime = l_addtime;
+	psaa.l_usetime = l_usetime;
+	psaa.seq = seq;
+	psaa.l_natt_type = l_natt_type;
+	psaa.l_natt_sport = l_natt_sport;
+	psaa.l_natt_dport = l_natt_dport;
+	psaa.l_natt_oa = l_natt_oa;
+	psaa.l_natt_frag = l_natt_frag;
+
+	return pfkey_send_add2(&psaa);
+}

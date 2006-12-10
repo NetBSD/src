@@ -1,4 +1,4 @@
-/*	$NetBSD: backupsa.c,v 1.7 2006/12/09 05:52:57 manu Exp $	*/
+/*	$NetBSD: backupsa.c,v 1.8 2006/12/10 18:46:39 manu Exp $	*/
 
 /*	$KAME: backupsa.c,v 1.16 2001/12/31 20:13:40 thorpej Exp $	*/
 
@@ -304,7 +304,7 @@ do { 								\
 		}
 		sa_args.l_addtime -= current - created;
 
-		if (pfkey_send_add(&sa_args) < 0) {
+		if (pfkey_send_add2(&sa_args) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"restore SA failed line#%d in %s: %s\n",
 				line, lcconf->pathinfo[LC_PATHTYPE_BACKUPSA], 
