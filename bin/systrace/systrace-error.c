@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-error.c,v 1.3 2005/06/24 23:21:09 christos Exp $	*/
+/*	$NetBSD: systrace-error.c,v 1.4 2006/12/10 01:22:02 christos Exp $	*/
 /*	$OpenBSD: systrace-error.c,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: systrace-error.c,v 1.3 2005/06/24 23:21:09 christos Exp $");
+__RCSID("$NetBSD: systrace-error.c,v 1.4 2006/12/10 01:22:02 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: systrace-error.c,v 1.3 2005/06/24 23:21:09 christos Exp $");
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "intercept.h"
 #include "systrace.h"
