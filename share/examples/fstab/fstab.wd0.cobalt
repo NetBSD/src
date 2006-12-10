@@ -1,9 +1,0 @@
-#	$NetBSD: fstab.wd0.cobalt,v 1.3 2005/05/04 18:26:14 hubertf Exp $
-/dev/wd0a	/	ffs	rw	1 1
-/dev/wd0e	/stand	ext2fs	rw	1 2
-/dev/wd0f	none	swap	sw	0 0
-#
-# Possibly include data from the following files here:
-# fstab.cdrom
-# fstab.pseudo
-# fstab.ramdisk
