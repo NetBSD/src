@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.45 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.46 2006/12/10 04:16:46 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.45 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.46 2006/12/10 04:16:46 uwe Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -717,14 +717,14 @@ pciintr_do_header_fixup(pci_chipset_tag_t pc, pcitag_t tag,
 
 #ifdef PCIBIOSVERBOSE
 	if (pcibiosverbose) {
-		printf("%03d:%02d:%d 0x%04x 0x%04x   %c  0x%02x",
+		PCIBIOS_PRINTV(("%03d:%02d:%d 0x%04x 0x%04x   %c  0x%02x",
 		    bus, device, function, PCI_VENDOR(id), PCI_PRODUCT(id),
-		    '@' + pin, l->clink);
+		    '@' + pin, l->clink));
 		if (l->irq == X86_PCI_INTERRUPT_LINE_NO_CONNECTION)
-			printf("   -");
+			PCIBIOS_PRINTV(("   -"));
 		else
-			printf(" %3d", l->irq);
-		printf("  %d   ", l->fixup_stage);
+			PCIBIOS_PRINTV((" %3d", l->irq));
+		PCIBIOS_PRINTV(("  %d   ", l->fixup_stage));
 	}
 #endif
 	
