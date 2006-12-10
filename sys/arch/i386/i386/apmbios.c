@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.6 2006/11/16 01:32:38 christos Exp $ */
+/*	$NetBSD: apmbios.c,v 1.7 2006/12/10 04:38:55 uwe Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.6 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.7 2006/12/10 04:38:55 uwe Exp $");
 
 #include "opt_apm.h"
 #include "opt_compat_mach.h"	/* Needed to get the right segment def */
@@ -516,7 +516,7 @@ apmbiosattach(struct device *parent, struct device *self,
 #ifdef APM_USE_KVM86
 	res = kvm86_bioscall_simple(APM_SYSTEM_BIOS, &regs);
 	if (res) {
-		printf("%s: kvm86 error (APM_DISCONNECT)\n",
+		aprint_error("%s: kvm86 error (APM_DISCONNECT)\n",
 		    apmsc->sc_dev.dv_xname);
 		goto bail_disconnected;
 	}
