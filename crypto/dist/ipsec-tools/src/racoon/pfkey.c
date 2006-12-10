@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.17 2006/12/09 05:52:57 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.18 2006/12/10 18:46:39 manu Exp $	*/
 
-/* $Id: pfkey.c,v 1.17 2006/12/09 05:52:57 manu Exp $ */
+/* $Id: pfkey.c,v 1.18 2006/12/10 18:46:39 manu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1043,7 +1043,7 @@ pk_sendupdate(iph2)
 	else if (iph2->sainfo && iph2->sainfo->id_i)
 		proxy = 1;
 
-	/* fill in some needed for pfkey_send_update */
+	/* fill in some needed for pfkey_send_update2 */
 	memset (&sa_args, 0, sizeof (sa_args));
 	sa_args.so = lcconf->sock_pfkey;
 	sa_args.l_addtime = iph2->approval->lifetime;
@@ -1129,8 +1129,8 @@ pk_sendupdate(iph2)
 		sa_args.reqid = pr->reqid_in;
 		sa_args.keymat = pr->keymat->v;
 
-		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_update\n");
-		if (pfkey_send_update(&sa_args) < 0) {
+		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_update2\n");
+		if (pfkey_send_update2(&sa_args) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"libipsec failed send update (%s)\n",
 				ipsec_strerror());
@@ -1320,7 +1320,7 @@ pk_sendadd(iph2)
 	else if (iph2->sainfo && iph2->sainfo->id_i)
 		proxy = 1;
 
-	/* fill in some needed for pfkey_send_update */
+	/* fill in some needed for pfkey_send_update2 */
 	memset (&sa_args, 0, sizeof (sa_args));
 	sa_args.so = lcconf->sock_pfkey;
 	sa_args.l_addtime = iph2->approval->lifetime;
@@ -1387,7 +1387,8 @@ pk_sendadd(iph2)
 #endif /* HAVE_SECCTX */
 
 #ifdef ENABLE_NATT
-		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_add_nat\n");
+		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_add2 "
+		    "(NAT flavor)\n");
 
 		if (pr->udp_encap) {
 			sa_args.l_natt_type = UDP_ENCAP_ESPINUDP;
@@ -1414,8 +1415,8 @@ pk_sendadd(iph2)
 		sa_args.reqid = pr->reqid_out;
 		sa_args.keymat = pr->keymat_p->v;
 
-		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_add\n");
-		if (pfkey_send_add(&sa_args) < 0) {
+		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_add2\n");
+		if (pfkey_send_add2(&sa_args) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"libipsec failed send add (%s)\n",
 				ipsec_strerror());
