@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.67 2006/10/22 23:02:08 pooka Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.68 2006/12/10 08:14:32 dyoung Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -292,6 +292,11 @@
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue
 
+get_opts() {
+	opts="$*"
+	shift $((${OPTIND}-1))
+	opts="${opts%$*}"
+}
 
 usage()
 {
@@ -349,6 +354,9 @@ while getopts fm:s ch; do
 	*)	usage ;;
 	esac
 done
+
+opts=
+get_opts "$@"
 shift $((${OPTIND} - 1))
 [ $# -gt 0 ] || usage
 
@@ -1619,7 +1627,7 @@ midevend)
 local)
 	if [ -f "$0.local" ]; then
 		umask 0
-		sh $0.local all
+		sh $0.local $opts all
 		umask 077
 	fi
 	;;
