@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.256 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.257 2006/12/10 00:33:11 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.256 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.257 2006/12/10 00:33:11 uwe Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -398,6 +398,8 @@ com_attach_subr(struct com_softc *sc)
 #endif
 	const char *fifo_msg = NULL;
 
+	aprint_naive("\n");
+
 	callout_init(&sc->sc_diag_callout);
 	simple_lock_init(&sc->sc_lock);
 
@@ -571,7 +573,7 @@ fifodone:
 	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
 	    com_power, sc);
 	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
+		aprint_error("%s: WARNING: unable to establish power hook\n",
 			sc->sc_dev.dv_xname);
 
 	SET(sc->sc_hwflags, COM_HW_DEV_OK);
