@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.768 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.769 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -12,3 +12,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	mac68k: add support for four more Nubus video cards, including the 
 		VillageTronic MacPicasso 340. [hauke 20061206]
 	shark: add support for igsfb at ofbus. [macallan 20061207]
+	ixp425: add support for NPE Ethernet. [scw 20061210]
