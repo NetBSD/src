@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.8 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: softintr.c,v 1.8.22.1 2006/12/10 05:16:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.8 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.8.22.1 2006/12/10 05:16:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.8 2005/12/24 20:07:19 perry Exp $");
 void (*_softintr_chipset_assert)(void);
 struct mvme68k_soft_intrhand	*softnet_intrhand;
 
-static struct mvme68k_soft_intr mvme68k_soft_intrs[IPL_NSOFT];
+static struct mvme68k_soft_intr mvme68k_soft_intrs[SI_NQUEUES];
 
 #ifdef DEBUG
 static void dummy_softintr_assert(void);
@@ -103,7 +103,7 @@ dummy_softintr_assert(void)
 void
 softintr_init()
 {
-	static const char *softintr_names[] = IPL_SOFTNAMES;
+	static const char *softintr_names[] = SI_QUEUENAMES;
 	struct mvme68k_soft_intr *msi;
 	int i;
 
@@ -111,7 +111,7 @@ softintr_init()
 	_softintr_chipset_assert = dummy_softintr_assert;
 #endif
 
-	for (i = 0; i < IPL_NSOFT; i++) {
+	for (i = 0; i < SI_NQUEUES; i++) {
 		msi = &mvme68k_soft_intrs[i];
 		LIST_INIT(&msi->msi_q);
 		msi->msi_ssir = 1;
@@ -142,7 +142,7 @@ softintr_dispatch()
 
 	do {
 		for (msi = mvme68k_soft_intrs, handled = 0;
-		    msi < &mvme68k_soft_intrs[IPL_NSOFT];
+		    msi < &mvme68k_soft_intrs[SI_NQUEUES];
 		    msi++) {
 
 			if (ssir_pending(&msi->msi_ssir) == 0)
@@ -164,6 +164,30 @@ softintr_dispatch()
 	} while (handled);
 }
 
+static int
+ipl2si(int ipl)
+{
+	int si;
+
+	switch (ipl) {
+	case IPL_SOFTSERIAL:
+		si = SI_SOFTSERIAL;
+		break;
+	case IPL_SOFTNET:
+		si = SI_SOFTNET;
+		break;
+	case IPL_SOFTCLOCK:
+		si = SI_SOFTCLOCK;
+		break;
+	case IPL_SOFT:
+		si = SI_SOFT;
+		break;
+	default:
+		panic("ipl2si: %d", ipl);
+	}
+	return si;
+}
+
 /*
  * softintr_establish()		[interface]
  *
@@ -174,12 +198,11 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 {
 	struct mvme68k_soft_intr *msi;
 	struct mvme68k_soft_intrhand *sih;
+	int si;
 	int s;
 
-	if (__predict_false(ipl >= IPL_NSOFT || ipl < 0 || func == NULL))
-		panic("softintr_establish");
-
-	msi = &mvme68k_soft_intrs[ipl];
+	si = ipl2si(ipl);
+	msi = &mvme68k_soft_intrs[si];
 
 	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
 	if (__predict_true(sih != NULL)) {
