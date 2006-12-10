@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.h,v 1.19 2006/04/16 05:19:02 provos Exp $	*/
+/*	$NetBSD: intercept.h,v 1.20 2006/12/10 01:22:02 christos Exp $	*/
 /*	$OpenBSD: intercept.h,v 1.11 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -111,6 +111,7 @@ struct intercept_pid {
 	struct elevate *elevate;	/* privilege elevation request */
 };
 
+#define	INTERCEPT_MAXSYSCALLNR		512
 #define INTERCEPT_MAXSYSCALLARGS	10
 
 struct intercept_translate {
@@ -126,6 +127,7 @@ struct intercept_translate {
 	size_t trans_size;
 	char *trans_print;
 	u_int trans_flags;
+	void *user;
 	TAILQ_ENTRY(intercept_translate) next;
 };
 
@@ -149,6 +151,7 @@ int intercept_read(int);
 int intercept_newpolicy(int);
 int intercept_assignpolicy(int, pid_t, int);
 int intercept_modifypolicy(int, int, const char *, const char *, short);
+int intercept_modifypolicy_nr(int, int, int, short);
 void intercept_child_info(pid_t, pid_t);
 void intercept_policy_free(int);
 
@@ -197,12 +200,13 @@ void intercept_syscall(int, pid_t, u_int16_t, int, const char *, int,
     const char *, void *, int);
 void intercept_syscall_result(int, pid_t, u_int16_t, int, const char *, int,
     const char *, void *, int, int, void *);
-void intercept_ugid(struct intercept_pid *, uid_t, gid_t);
-void intercept_setpid(struct intercept_pid *, uid_t, gid_t);
 void intercept_newimage(int, pid_t, int, const char *, char *,
     struct intercept_pid *);
+void intercept_ugid(struct intercept_pid *, uid_t, gid_t);
+void intercept_setpid(struct intercept_pid *, uid_t, gid_t);
 
-int intercept_isvalidsystemcall(char *, char *);
+int intercept_getsyscallnumber(const char *, const char *);
+int intercept_isvalidsystemcall(const char *, const char *);
 
 char *intercept_realpath(const char *, char *);
 
