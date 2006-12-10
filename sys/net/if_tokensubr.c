@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.41 2006/12/10 14:45:09 is Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.42 2006/12/10 14:47:40 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.41 2006/12/10 14:45:09 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.42 2006/12/10 14:47:40 is Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -615,6 +615,7 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 				eh->ether_shost[i] = c;
 			}
 			eh->ether_type = 0;
+			m_adj(m, lan_hdr_len);
 			ifp->if_output(ifp, m, &sa, NULL);
 			return;
 		}
