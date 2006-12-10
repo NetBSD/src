@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.70.4.1 2006/10/22 06:04:42 yamt Exp $
+# $NetBSD: GENERIC,v 1.70.4.2 2006/12/10 07:16:01 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -131,7 +131,7 @@ file-system 	PROCFS		# /proc
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 #file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options

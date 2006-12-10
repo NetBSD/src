@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.15.16.1 2006/10/22 06:05:31 yamt Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.15.16.2 2006/12/10 07:16:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.15.16.1 2006/10/22 06:05:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.15.16.2 2006/12/10 07:16:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -193,7 +193,7 @@ acpi_madt_print(void)
 }
 
 static ACPI_STATUS
-acpi_madt_print_entry(APIC_HEADER *hdrp, void *aux __unused)
+acpi_madt_print_entry(APIC_HEADER *hdrp, void *aux)
 {
 	switch (hdrp->Type) {
 	case APIC_PROCESSOR:

@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.5 2004/05/12 20:03:06 yamt Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.5.42.1 2006/12/10 07:16:11 yamt Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -99,5 +99,33 @@
 				cmpl	$0, P_MD_ASTPENDING(reg); \
 				1:
 #define	CLEAR_ASTPENDING(reg)	movl	$0, P_MD_ASTPENDING(reg)
+
+/*
+ * IDEPTH_INCR:
+ * increase ci_idepth and switch to the interrupt stack if necessary.
+ * note that the initial value of ci_idepth is -1.
+ *
+ * => should be called with interrupt disabled.
+ * => save the old value of %esp in %eax.
+ */
+
+#define	IDEPTH_INCR \
+	incl	CPUVAR(IDEPTH); \
+	movl	%esp, %eax; \
+	jne	999f; \
+	movl	CPUVAR(INTRSTACK), %esp; \
+999:	pushl	%eax; \
+
+/*
+ * IDEPTH_DECR:
+ * decrement ci_idepth and switch back to
+ * the original stack saved by IDEPTH_INCR.
+ *
+ * => should be called with interrupt disabled.
+ */
+
+#define	IDEPTH_DECR \
+	popl	%esp; \
+	decl	CPUVAR(IDEPTH)
 
 #endif /* _I386_FRAMEASM_H_ */

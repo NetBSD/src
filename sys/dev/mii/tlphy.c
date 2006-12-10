@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.47.10.1 2006/10/22 06:06:12 yamt Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.47.10.2 2006/12/10 07:17:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.47.10.1 2006/10/22 06:06:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.47.10.2 2006/12/10 07:17:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ static const struct mii_phydesc tlphys[] = {
 };
 
 static int
-tlphymatch(struct device *parent __unused, struct cfdata *match __unused,
+tlphymatch(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -139,7 +139,7 @@ tlphymatch(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-tlphyattach(struct device *parent __unused, struct device *self, void *aux)
+tlphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct tlphy_softc *sc = device_private(self);
 	struct tl_softc *tlsc = device_private(device_parent(self));
@@ -157,7 +157,7 @@ tlphyattach(struct device *parent __unused, struct device *self, void *aux)
 	sc->sc_mii.mii_funcs = &tlphy_funcs;
 	sc->sc_mii.mii_pdata = mii;
 	sc->sc_mii.mii_flags = ma->mii_flags;
-	sc->sc_mii.mii_anegticks = 5;
+	sc->sc_mii.mii_anegticks = MII_ANEGTICKS;
 
 	PHY_RESET(&sc->sc_mii);
 

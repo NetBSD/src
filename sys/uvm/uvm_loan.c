@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.59.10.1 2006/10/22 06:07:52 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.59.10.2 2006/12/10 07:19:33 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.59.10.1 2006/10/22 06:07:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.59.10.2 2006/12/10 07:19:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1051,8 +1051,7 @@ uvm_unloan(void *v, int npages, int flags)
  */
 
 static int
-ulz_put(struct uvm_object *uobj, voff_t start __unused, voff_t stop __unused,
-    int flags)
+ulz_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 {
 	struct vm_page *pg;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.15.22.1 2006/10/22 06:05:21 yamt Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.15.22.2 2006/12/10 07:16:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.15.22.1 2006/10/22 06:05:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.15.22.2 2006/12/10 07:16:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.15.22.1 2006/10/22 06:05:21 yamt 
 
 /* ARGSUSED */
 int
-compat_09_sys_getdomainname(struct lwp *l, void *v, register_t *retval __unused)
+compat_09_sys_getdomainname(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_09_sys_getdomainname_args /* {
 		syscallarg(char *) domainname;
@@ -68,7 +68,7 @@ compat_09_sys_getdomainname(struct lwp *l, void *v, register_t *retval __unused)
 
 /* ARGSUSED */
 int
-compat_09_sys_setdomainname(struct lwp *l, void *v, register_t *retval __unused)
+compat_09_sys_setdomainname(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_09_sys_setdomainname_args /* {
 		syscallarg(char *) domainname;
@@ -92,8 +92,8 @@ struct outsname {
 
 /* ARGSUSED */
 int
-compat_09_sys_uname(struct lwp *l __unused, void *v,
-    register_t *retval __unused)
+compat_09_sys_uname(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct compat_09_sys_uname_args /* {
 		syscallarg(struct outsname *) name;

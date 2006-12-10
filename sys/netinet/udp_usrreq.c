@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.148.6.1 2006/10/22 06:07:29 yamt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.148.6.2 2006/12/10 07:19:11 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.148.6.1 2006/10/22 06:07:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.148.6.2 2006/12/10 07:19:11 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -139,11 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.148.6.1 2006/10/22 06:07:29 yamt Ex
  * UDP protocol implementation.
  * Per RFC 768, August, 1980.
  */
-#ifndef	COMPAT_42
 int	udpcksum = 1;
-#else
-int	udpcksum = 0;		/* XXX */
-#endif
 int	udp_do_loopback_cksum = 0;
 
 struct	inpcbtable udbtable;
@@ -511,7 +507,7 @@ bad:
 }
 
 int
-udp6_input(struct mbuf **mp, int *offp, int proto __unused)
+udp6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 	int off = *offp;
@@ -999,11 +995,8 @@ udp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 }
 
 int
-udp_ctloutput(op, so, level, optname, mp)
-	int op;
-	struct socket *so;
-	int level, optname;
-	struct mbuf **mp;
+udp_ctloutput(int op, struct socket *so, int level, int optname,
+    struct mbuf **mp)
 {
 	int s;
 	int error = 0;
@@ -1034,7 +1027,6 @@ udp_ctloutput(op, so, level, optname, mp)
 	default:
 		error = EAFNOSUPPORT;
 		goto end;
-		break;
 	}
 
 
@@ -1047,7 +1039,7 @@ udp_ctloutput(op, so, level, optname, mp)
 		case UDP_ENCAP:
 			if (m == NULL || m->m_len < sizeof (int)) {
 				error = EINVAL;
-				goto end;
+				break;
 			}
 
 			switch(*mtod(m, int *)) {
@@ -1068,21 +1060,21 @@ udp_ctloutput(op, so, level, optname, mp)
 #endif
 			default:
 				error = EINVAL;
-				goto end;
 				break;
 			}
 			break;
 
 		default:
 			error = ENOPROTOOPT;
-			goto end;
 			break;
+		}
+		if (m != NULL) {
+			m_free(m);
 		}
 		break;
 
 	default:
 		error = EINVAL;
-		goto end;
 		break;
 	}
 
@@ -1421,7 +1413,7 @@ SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
  * -1 if an error occurent and m was freed
  */
 static int
-udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src __unused,
+udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
     struct socket *so)
 {
 	size_t len;

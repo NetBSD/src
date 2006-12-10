@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.72.4.1 2006/10/22 06:07:24 yamt Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.72.4.2 2006/12/10 07:19:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.72.4.1 2006/10/22 06:07:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.72.4.2 2006/12/10 07:19:00 yamt Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -215,7 +215,7 @@ static struct if_clone pppoe_cloner =
 
 /* ARGSUSED */
 void
-pppoeattach(int count __unused)
+pppoeattach(int count)
 {
 	LIST_INIT(&pppoe_softc_list);
 	if_clone_attach(&pppoe_cloner);
@@ -226,7 +226,7 @@ pppoeattach(int count __unused)
 }
 
 static int
-pppoe_clone_create(struct if_clone *ifc __unused, int unit)
+pppoe_clone_create(struct if_clone *ifc, int unit)
 {
 	struct pppoe_softc *sc;
 
@@ -366,7 +366,7 @@ pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif)
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 static void
-pppoe_softintr_handler(void *dummy __unused)
+pppoe_softintr_handler(void *dummy)
 {
 	/* called at splsoftnet() */
 	pppoe_input();
@@ -555,7 +555,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				if (n && error) {
 					strncpy(error, 
 					    mtod(n, caddr_t) + noff, len);
-					error[len-1] = '\0';
+					error[len] = '\0';
 				}
 			}
 			if (error) {
@@ -857,9 +857,10 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 	case PPPOESETPARMS:
 	{
 		struct pppoediscparms *parms = (struct pppoediscparms*)data;
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
-			return error;
+		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL) != 0)
+			return (EPERM);
 		if (parms->eth_ifname[0] != 0) {
 			struct ifnet	*eth_if;
 
@@ -1447,8 +1448,8 @@ pppoe_start(struct ifnet *ifp)
 
 #ifdef PFIL_HOOKS
 static int
-pppoe_ifattach_hook(void *arg __unused, struct mbuf **mp, struct ifnet *ifp,
-    int dir __unused)
+pppoe_ifattach_hook(void *arg, struct mbuf **mp, struct ifnet *ifp,
+    int dir)
 {
 	struct pppoe_softc *sc;
 	int s;

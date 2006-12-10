@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.2.8.1 2006/10/22 06:06:17 yamt Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.2.8.2 2006/12/10 07:17:45 yamt Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.2.8.1 2006/10/22 06:06:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.2.8.2 2006/12/10 07:17:45 yamt Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.2.8.1 2006/10/22 06:06:17 yamt Exp $");
 #include <net/if_types.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <netinet/in.h>
@@ -152,15 +153,16 @@ static int  wpi_init(struct ifnet *);
 static void wpi_stop(struct ifnet *, int);
 
 /* rate control algorithm: should be moved to net80211 */
-static void wpi_amrr_init(struct wpi_amrr *);
+static void wpi_iter_func(void *, struct ieee80211_node *);
 static void wpi_amrr_timeout(void *);
-static void wpi_amrr_ratectl(void *, struct ieee80211_node *);
+static void wpi_newassoc(struct ieee80211_node *,
+	int);
 
 CFATTACH_DECL(wpi, sizeof (struct wpi_softc), wpi_match, wpi_attach,
 	wpi_detach, NULL);
 
 static int
-wpi_match(struct device *parent __unused, struct cfdata *match __unused,
+wpi_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -179,7 +181,7 @@ wpi_match(struct device *parent __unused, struct cfdata *match __unused,
 #define WPI_PCI_BAR0	0x10
 
 static void
-wpi_attach(struct device *parent __unused, struct device *self, void *aux)
+wpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wpi_softc *sc = (struct wpi_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -357,12 +359,16 @@ wpi_attach(struct device *parent __unused, struct device *self, void *aux)
 	ieee80211_ifattach(ic);
 	/* override default methods */
 	ic->ic_node_alloc = wpi_node_alloc;
+	ic->ic_newassoc = wpi_newassoc;
 	ic->ic_wme.wme_update = wpi_wme_update;
 
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = wpi_newstate;
 	ieee80211_media_init(ic, wpi_media_change, ieee80211_media_status);
+
+	sc->amrr.amrr_min_success_threshold = 1;
+	sc->amrr.amrr_max_success_threshold = 15;
 
 	/* set powerhook */
 	sc->powerhook = powerhook_establish(sc->sc_dev.dv_xname, wpi_power, sc);
@@ -393,7 +399,7 @@ fail1:  while (--ac >= 0)
 }
 
 static int
-wpi_detach(struct device* self, int flags __unused)
+wpi_detach(struct device* self, int flags)
 {
 	struct wpi_softc *sc = (struct wpi_softc *)self;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
@@ -773,16 +779,15 @@ wpi_free_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 
 /*ARGUSED*/
 static struct ieee80211_node *
-wpi_node_alloc(struct ieee80211_node_table *ic __unused)
+wpi_node_alloc(struct ieee80211_node_table *ic)
 {
-	struct wpi_amrr *amrr;
+	struct wpi_node *wn;
 
-	amrr = malloc(sizeof (struct wpi_amrr), M_80211_NODE, M_NOWAIT);
-	if (amrr != NULL) {
-		memset(amrr, 0, sizeof (struct wpi_amrr));
-		wpi_amrr_init(amrr);
-	}
-	return (struct ieee80211_node *)amrr;
+	wn = malloc(sizeof (struct wpi_node), M_DEVBUF, M_NOWAIT);
+
+	if (wn != NULL)
+		memset(wn, 0, sizeof (struct wpi_node));
+	return (struct ieee80211_node *)wn;
 }
 
 static int
@@ -874,6 +879,11 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			aprint_error("%s: could not update configuration\n",
 				sc->sc_dev.dv_xname);
 			return error;
+		}
+
+		if (ic->ic_opmode == IEEE80211_M_STA) {
+			/* fake a join to init the tx rate */
+			wpi_newassoc(ic->ic_bss, 1);
 		}
 
 		/* enable automatic rate adaptation in STA mode */
@@ -1250,7 +1260,7 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 	struct wpi_tx_ring *ring = &sc->txq[desc->qid & 0x3];
 	struct wpi_tx_data *txdata = &ring->data[desc->idx];
 	struct wpi_tx_stat *stat = (struct wpi_tx_stat *)(desc + 1);
-	struct wpi_amrr *amrr = (struct wpi_amrr *)txdata->ni;
+	struct wpi_node *wn = (struct wpi_node *)txdata->ni;
 
 	DPRINTFN(4, ("tx done: qid=%d idx=%d retries=%d nkill=%d rate=%x "
 		"duration=%d status=%x\n", desc->qid, desc->idx, stat->ntries,
@@ -1262,10 +1272,10 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 	 * XXX we should not count mgmt frames since they're always sent at
 	 * the lowest available bit-rate.
 	 */
-	amrr->txcnt++;
+	wn->amn.amn_txcnt++;
 	if (stat->ntries > 0) {
 		DPRINTFN(3, ("tx intr ntries %d\n", stat->ntries));
-		amrr->retrycnt++;
+		wn->amn.amn_retrycnt++;
 	}
 
 	if ((le32toh(stat->status) & 0xff) != 1)
@@ -2115,7 +2125,7 @@ wpi_auth(struct wpi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
-	struct wpi_node node;
+	struct wpi_node_info node;
 	int error;
 
 	/* update adapter's configuration */
@@ -2350,7 +2360,7 @@ wpi_config(struct wpi_softc *sc)
 	struct wpi_txpower txpower;
 	struct wpi_power power;
 	struct wpi_bluetooth bluetooth;
-	struct wpi_node node;
+	struct wpi_node_info node;
 	int error;
 
 	/* set Tx power for 2.4GHz channels (values read from EEPROM) */
@@ -2759,7 +2769,7 @@ fail1:	wpi_stop(ifp, 1);
 
 
 static void
-wpi_stop(struct ifnet *ifp, int disable __unused)
+wpi_stop(struct ifnet *ifp, int disable)
 {
 	struct wpi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2802,52 +2812,13 @@ wpi_stop(struct ifnet *ifp, int disable __unused)
 	WPI_WRITE(sc, WPI_RESET, tmp | WPI_SW_RESET);
 }
 
-/*-
- * Naive implementation of the Adaptive Multi Rate Retry algorithm:
- *	 "IEEE 802.11 Rate Adaptation: A Practical Approach"
- *	 Mathieu Lacage, Hossein Manshaei, Thierry Turletti
- *	 INRIA Sophia - Projet Planete
- *	 http://www-sop.inria.fr/rapports/sophia/RR-5208.html
- */
-#define is_success(amrr)	\
-	((amrr)->retrycnt < (amrr)->txcnt / 10)
-#define is_failure(amrr)	\
-	((amrr)->retrycnt > (amrr)->txcnt / 3)
-#define is_enough(amrr)		\
-	((amrr)->txcnt > 10)
-#define is_min_rate(ni)		\
-	((ni)->ni_txrate == 0)
-#define is_max_rate(ni)		\
-	((ni)->ni_txrate == (ni)->ni_rates.rs_nrates - 1)
-#define increase_rate(ni)	\
-	((ni)->ni_txrate++)
-#define decrease_rate(ni)	\
-	((ni)->ni_txrate--)
-#define reset_cnt(amrr)		\
-	do { (amrr)->txcnt = (amrr)->retrycnt = 0; } while (0)
-
-#define WPI_AMRR_MIN_SUCCESS_THRESHOLD	 1
-#define WPI_AMRR_MAX_SUCCESS_THRESHOLD	15
-
-/* XXX should reset all nodes on S_INIT */
 static void
-wpi_amrr_init(struct wpi_amrr *amrr)
+wpi_iter_func(void *arg, struct ieee80211_node *ni)
 {
-	struct ieee80211_node *ni = &amrr->ni;
-	int i;
+	struct wpi_softc *sc = arg;
+	struct wpi_node *wn = (struct wpi_node *)ni;
 
-	amrr->success = 0;
-	amrr->recovery = 0;
-	amrr->txcnt = amrr->retrycnt = 0;
-	amrr->success_threshold = WPI_AMRR_MIN_SUCCESS_THRESHOLD;
-
-	/* set rate to some reasonable initial value */
-	ni = &amrr->ni;
-	for (i = ni->ni_rates.rs_nrates - 1;
-		 i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72;
-		 i--);
-
-	ni->ni_txrate = i;
+	ieee80211_amrr_choose(&sc->amrr, ni, &wn->amn);
 }
 
 static void
@@ -2857,56 +2828,23 @@ wpi_amrr_timeout(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 
 	if (ic->ic_opmode == IEEE80211_M_STA)
-		wpi_amrr_ratectl(NULL, ic->ic_bss);
+		wpi_iter_func(sc, ic->ic_bss);
 	else
-		ieee80211_iterate_nodes(&ic->ic_sta, wpi_amrr_ratectl, NULL);
+		ieee80211_iterate_nodes(&ic->ic_sta, wpi_iter_func, sc);
 
 	callout_reset(&sc->amrr_ch, hz, wpi_amrr_timeout, sc);
 }
 
-/* ARGSUSED */
 static void
-wpi_amrr_ratectl(void *arg __unused, struct ieee80211_node *ni)
+wpi_newassoc(struct ieee80211_node *ni, int isnew)
 {
-	struct wpi_amrr *amrr = (struct wpi_amrr *)ni;
-	int need_change = 0;
+	struct wpi_softc *sc = ni->ni_ic->ic_ifp->if_softc;
+	int i;
 
-	if (is_success(amrr) && is_enough(amrr)) {
-		amrr->success++;
-		if (amrr->success >= amrr->success_threshold &&
-			!is_max_rate(ni)) {
-			amrr->recovery = 1;
-			amrr->success = 0;
-			increase_rate(ni);
-			DPRINTFN(2, ("AMRR increasing rate %d (txcnt=%d "
-				"retrycnt=%d)\n", ni->ni_txrate, amrr->txcnt,
-				amrr->retrycnt));
-			need_change = 1;
-		} else {
-			amrr->recovery = 0;
-		}
-	} else if (is_failure(amrr)) {
-		amrr->success = 0;
-		if (!is_min_rate(ni)) {
-			if (amrr->recovery) {
-				amrr->success_threshold *= 2;
-				if (amrr->success_threshold >
-					WPI_AMRR_MAX_SUCCESS_THRESHOLD)
-					amrr->success_threshold =
-						WPI_AMRR_MAX_SUCCESS_THRESHOLD;
-			} else {
-				amrr->success_threshold =
-					WPI_AMRR_MIN_SUCCESS_THRESHOLD;
-			}
-			decrease_rate(ni);
-			DPRINTFN(2, ("AMRR decreasing rate %d (txcnt=%d "
-				"retrycnt=%d)\n", ni->ni_txrate, amrr->txcnt,
-				amrr->retrycnt));
-			need_change = 1;
-		}
-		amrr->recovery = 0;	/* paper is incorrect */
-	}
-
-	if (is_enough(amrr) || need_change)
-		reset_cnt(amrr);
+	ieee80211_amrr_node_init(&sc->amrr, &((struct wpi_node *)ni)->amn);
+	/* set rate to some reasonable initial value */
+	for (i = ni->ni_rates.rs_nrates - 1;
+	     i > 0 && (ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL) > 72;
+	     i--);
+	ni->ni_txrate = i;
 }

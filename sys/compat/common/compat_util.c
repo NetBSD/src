@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.32 2006/07/23 22:06:08 ad Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.32.6.1 2006/12/10 07:16:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.32 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.32.6.1 2006/12/10 07:16:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.32 2006/07/23 22:06:08 ad Exp $");
  * Search an alternate path before passing pathname arguments on
  * to system calls. Useful for keeping a separate 'emulation tree'.
  *
- * According to sflag, we either check for existance of the file or if
+ * According to sflag, we either check for existence of the file or if
  * it can be created or if the file is symlink.
  *
  * In case of success, emul_find returns 0:

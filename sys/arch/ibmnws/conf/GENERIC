@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.26.4.1 2006/10/22 06:04:49 yamt Exp $
+#	$NetBSD: GENERIC,v 1.26.4.2 2006/12/10 07:16:22 yamt Exp $
 #
 #
 
@@ -38,7 +38,7 @@ file-system 	NFS		# Network File System client
 #file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system 	MSDOSFS		# MS-DOS file system
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -230,7 +230,6 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
 # PCI network interfaces
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
-options 	PCN_NO_PROM		# PROM not used for ethernet addr
 
 # PCMCIA network interfaces
 # ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet

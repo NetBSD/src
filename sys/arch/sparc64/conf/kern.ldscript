@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.7 2005/12/11 12:19:08 christos Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.7.22.1 2006/12/10 07:16:36 yamt Exp $	*/
 
 /*
  * Kernel linker script for NetBSD/sparc64.  This script is based on
@@ -135,4 +135,8 @@ SECTIONS
   .debug_typenames 0 : { *(.debug_typenames) }
   .debug_varnames  0 : { *(.debug_varnames) }
   /* These must appear regardless of  .  */
+  .note.netbsd.ident :
+  {
+    KEEP(*(.note.netbsd.ident));
+  }
 }

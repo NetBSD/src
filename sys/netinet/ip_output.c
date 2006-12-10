@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.165 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.165.6.1 2006/12/10 07:19:11 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.165 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.165.6.1 2006/12/10 07:19:11 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -170,38 +170,6 @@ int	ip_do_loopback_cksum = 0;
 	(((csum_flags) & M_CSUM_TCPv4) != 0 && tcp_do_loopback_cksum) || \
 	(((csum_flags) & M_CSUM_IPv4) != 0 && ip_do_loopback_cksum)))
 
-struct ip_tso_output_args {
-	struct ifnet *ifp;
-	struct sockaddr *sa;
-	struct rtentry *rt;
-};
-
-static int ip_tso_output_callback(void *, struct mbuf *);
-static int ip_tso_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-    struct rtentry *);
-
-static int
-ip_tso_output_callback(void *vp, struct mbuf *m)
-{
-	struct ip_tso_output_args *args = vp;
-	struct ifnet *ifp = args->ifp;
-
-	return (*ifp->if_output)(ifp, m, args->sa, args->rt);
-}
-
-static int
-ip_tso_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
-    struct rtentry *rt)
-{
-	struct ip_tso_output_args args;
-
-	args.ifp = ifp;
-	args.sa = sa;
-	args.rt = rt;
-
-	return tcp4_segment(m, ip_tso_output_callback, &args);
-}
-
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
  * header (with len, off, ttl, proto, tos, src, dst).
@@ -219,6 +187,7 @@ ip_output(struct mbuf *m0, ...)
 	struct route iproute;
 	struct sockaddr_in *dst;
 	struct in_ifaddr *ia;
+	struct ifaddr *xifa;
 	struct mbuf *opt;
 	struct route *ro;
 	int flags, sw_csum;
@@ -318,7 +287,7 @@ ip_output(struct mbuf *m0, ...)
 	/*
 	 * Route packet.
 	 */
-	if (ro == 0) {
+	if (ro == NULL) {
 		ro = &iproute;
 		bzero((caddr_t)ro, sizeof (*ro));
 	}
@@ -330,13 +299,11 @@ ip_output(struct mbuf *m0, ...)
 	 * The address family should also be checked in case of sharing the
 	 * cache with IPv6.
 	 */
-	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+	if (ro->ro_rt != NULL && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
 	    dst->sin_family != AF_INET ||
-	    !in_hosteq(dst->sin_addr, ip->ip_dst))) {
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = (struct rtentry *)0;
-	}
-	if (ro->ro_rt == 0) {
+	    !in_hosteq(dst->sin_addr, ip->ip_dst)))
+		rtflush(ro);
+	if (ro->ro_rt == NULL) {
 		bzero(dst, sizeof(*dst));
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
@@ -362,9 +329,9 @@ ip_output(struct mbuf *m0, ...)
 		mtu = ifp->if_mtu;
 		IFP_TO_IA(ifp, ia);
 	} else {
-		if (ro->ro_rt == 0)
+		if (ro->ro_rt == NULL)
 			rtalloc(ro);
-		if (ro->ro_rt == 0) {
+		if (ro->ro_rt == NULL) {
 			ipstat.ips_noroute++;
 			error = EHOSTUNREACH;
 			goto bad;
@@ -431,6 +398,11 @@ ip_output(struct mbuf *m0, ...)
 				error = EADDRNOTAVAIL;
 				goto bad;
 			}
+			xifa = &xia->ia_ifa;
+			if (xifa->ifa_getifa != NULL) {
+				xia = ifatoia((*xifa->ifa_getifa)(xifa,
+				    &ro->ro_dst));
+			}
 			ip->ip_src = xia->ia_addr.sin_addr;
 		}
 
@@ -487,8 +459,12 @@ ip_output(struct mbuf *m0, ...)
 	 * If source address not specified yet, use address
 	 * of outgoing interface.
 	 */
-	if (in_nullhost(ip->ip_src))
+	if (in_nullhost(ip->ip_src)) {
+		xifa = &ia->ia_ifa;
+		if (xifa->ifa_getifa != NULL)
+			ia = ifatoia((*xifa->ifa_getifa)(xifa, &ro->ro_dst));
 		ip->ip_src = ia->ia_addr.sin_addr;
+	}
 
 	/*
 	 * packets with Class-D address as source are not valid per
@@ -987,10 +963,8 @@ spd_done:
 	if (error == 0)
 		ipstat.ips_fragmented++;
 done:
-	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0 && ro->ro_rt) {
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = 0;
-	}
+	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0 && ro->ro_rt != NULL)
+		rtflush(ro);
 
 #ifdef IPSEC
 	if (sp != NULL) {
@@ -1786,7 +1760,6 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 */
 		if (in_nullhost(mreq->imr_interface)) {
 			bzero((caddr_t)&ro, sizeof(ro));
-			ro.ro_rt = NULL;
 			dst = satosin(&ro.ro_dst);
 			dst->sin_len = sizeof(*dst);
 			dst->sin_family = AF_INET;
@@ -1797,7 +1770,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 				break;
 			}
 			ifp = ro.ro_rt->rt_ifp;
-			rtfree(ro.ro_rt);
+			rtflush(&ro);
 		} else {
 			ifp = ip_multicast_if(&mreq->imr_interface, NULL);
 		}

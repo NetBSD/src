@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29.6.1 2006/10/22 06:04:39 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29.6.2 2006/12/10 07:15:56 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29.6.1 2006/10/22 06:04:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29.6.2 2006/12/10 07:15:56 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -195,12 +195,13 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	availmemr[0].start = startkernel; 
 	availmemr[0].size = board_data.mem_size - availmemr[0].start;
 
-	/* Linear map whole physmem */
-	for (va = 0; va < board_data.mem_size; va += TLB_PG_SIZE)
+	/* Linear map kernel memory */
+	for (va = 0; va < endkernel; va += TLB_PG_SIZE)
 		ppc4xx_tlb_reserve(va, va, TLB_PG_SIZE, TLB_EX);
 
-	/* Map console just after RAM */
-	ppc4xx_tlb_reserve(0xef000000, va, TLB_PG_SIZE, TLB_I | TLB_G);
+	/* Map console after physmem (see pmap_tlbmiss()) */
+	ppc4xx_tlb_reserve(0xef000000, roundup(physmemr[0].size, TLB_PG_SIZE),
+	    TLB_PG_SIZE, TLB_I | TLB_G);
 
 	/*
 	 * Initialize lwp0 and current pcb and pmap pointers.

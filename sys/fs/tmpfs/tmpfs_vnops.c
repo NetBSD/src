@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.25 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.25.6.1 2006/12/10 07:18:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.25 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.25.6.1 2006/12/10 07:18:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -168,11 +168,7 @@ tmpfs_lookup(void *v)
 		error = tmpfs_alloc_vp(dvp->v_mount,
 		    dnode->tn_spec.tn_dir.tn_parent, vpp);
 
-		if (cnp->cn_flags & LOCKPARENT &&
-		    cnp->cn_flags & ISLASTCN) {
-			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) != 0)
-				cnp->cn_flags |= PDIRUNLOCK;
-		}
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		dnode->tn_spec.tn_dir.tn_parent->tn_lookup_dirent = NULL;
 	} else if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 		VREF(dvp);
@@ -239,10 +235,6 @@ tmpfs_lookup(void *v)
 
 			/* Allocate a new vnode on the matching entry. */
 			error = tmpfs_alloc_vp(dvp->v_mount, tnode, vpp);
-
-			if (error == 0 && (!(cnp->cn_flags & LOCKPARENT) ||
-			    !(cnp->cn_flags & ISLASTCN)))
-				VOP_UNLOCK(dvp, 0);
 		}
 	}
 
@@ -257,18 +249,8 @@ out:
 	 * locked. */
 	KASSERT(IFF(error == 0, *vpp != NULL && VOP_ISLOCKED(*vpp)));
 
-	/* dvp has to be locked if:
-	 * - There were errors and relocking of dvp did not fail.
-	 * - We are doing a '..' lookup, relocking of dvp did not fail
-	 *   (PDIRUNLOCK is unset) and LOCKPARENT or ISLASTCN are not set.
-	 * - LOCKPARENT and ISLASTCN are set. */
-	KASSERT(IMPLIES(
-	    (error != 0 && !(cnp->cn_flags & PDIRUNLOCK)) ||
-	    (cnp->cn_flags & ISDOTDOT && !(cnp->cn_flags & PDIRUNLOCK) &&
-	     ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))) ||
-	    (cnp->cn_flags & LOCKPARENT && cnp->cn_flags & ISLASTCN)
-	    ,
-	    VOP_ISLOCKED(dvp)));
+	/* dvp must always be locked. */
+	KASSERT(VOP_ISLOCKED(dvp));
 
 	return error;
 }
@@ -318,7 +300,14 @@ tmpfs_open(void *v)
 	KASSERT(VOP_ISLOCKED(vp));
 
 	node = VP_TO_TMPFS_NODE(vp);
-	KASSERT(node->tn_links > 0);
+
+	/* The file is still active but all its names have been removed
+	 * (e.g. by a "rmdir $(pwd)").  It cannot be opened any more as
+	 * it is about to die. */
+	if (node->tn_links < 1) {
+		error = ENOENT;
+		goto out;
+	}
 
 	/* If the file is marked append-only, deny write requests. */
 	if (node->tn_flags & APPEND && (mode & (FWRITE | O_APPEND)) == FWRITE)
@@ -326,6 +315,7 @@ tmpfs_open(void *v)
 	else
 		error = 0;
 
+out:
 	KASSERT(VOP_ISLOCKED(vp));
 
 	return error;
@@ -631,6 +621,8 @@ tmpfs_write(void *v)
 	if (error != 0)
 		(void)tmpfs_reg_resize(vp, oldsize);
 
+	VN_KNOTE(vp, NOTE_WRITE);
+
 out:
 	KASSERT(VOP_ISLOCKED(vp));
 	KASSERT(IMPLIES(error == 0, uio->uio_resid == 0));
@@ -691,10 +683,6 @@ tmpfs_remove(void *v)
 	/* Remove the entry from the directory; as it is a file, we do not
 	 * have to change the number of hard links of the directory. */
 	tmpfs_dir_detach(dvp, de);
-
-	/* Notify interested parties about the modification of dvp.
-	 * The removal of vp is notified when it is reclaimed. */
-	VN_KNOTE(dvp, NOTE_WRITE);
 
 	/* Free the directory entry we just deleted.  Note that the node
 	 * referred by it will not be removed until the vnode is really
@@ -776,7 +764,6 @@ tmpfs_link(void *v)
 
 	/* Insert the new directory entry into the appropriate directory. */
 	tmpfs_dir_attach(dvp, de);
-	VN_KNOTE(dvp, NOTE_WRITE);
 
 	/* vp link count has changed, so update node times. */
 	node->tn_status |= TMPFS_NODE_CHANGED;
@@ -928,7 +915,8 @@ tmpfs_rename(void *v)
 		memcpy(newname, tcnp->cn_nameptr, tcnp->cn_namelen);
 		de->td_name = newname;
 
-		fnode->tn_status |= TMPFS_NODE_MODIFIED;
+		fnode->tn_status |= TMPFS_NODE_CHANGED;
+		tdnode->tn_status |= TMPFS_NODE_MODIFIED;
 	}
 
 	/* If we are overwriting an entry, we have to remove the old one
@@ -952,8 +940,10 @@ tmpfs_rename(void *v)
 	}
 
 	/* Notify listeners of tdvp about the change in the directory (either
-	 * because a new entry was added or because one was removed). */
+	 * because a new entry was added or because one was removed) and
+	 * listeners of fvp about the rename. */
 	VN_KNOTE(tdvp, NOTE_WRITE);
+	VN_KNOTE(fvp, NOTE_RENAME);
 
 	error = 0;
 
@@ -1046,8 +1036,7 @@ tmpfs_rmdir(void *v)
 	node->tn_spec.tn_dir.tn_parent->tn_status |= TMPFS_NODE_ACCESSED | \
 	    TMPFS_NODE_CHANGED | TMPFS_NODE_MODIFIED;
 
-	/* Notify modification of parent directory and release it. */
-	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
+	/* Release the parent. */
 	cache_purge(dvp); /* XXX Is this needed? */
 	vput(dvp);
 
@@ -1178,7 +1167,7 @@ outok:
 				if (de == NULL) {
 					off = TMPFS_DIRCOOKIE_EOF;
 				} else {
-					off = TMPFS_DIRCOOKIE(de);
+					off = tmpfs_dircookie(de);
 				}
 			}
 
@@ -1255,9 +1244,6 @@ tmpfs_reclaim(void *v)
 
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
-
-	if (node->tn_links == 0)
-		VN_KNOTE(vp, NOTE_DELETE);
 
 	cache_purge(vp);
 	tmpfs_free_vp(vp);
@@ -1382,6 +1368,7 @@ tmpfs_getpages(void *v)
 	int flags = ((struct vop_getpages_args *)v)->a_flags;
 
 	int error;
+	int i;
 	struct tmpfs_node *node;
 	struct uvm_object *uobj;
 	int npages = *count;
@@ -1417,9 +1404,31 @@ tmpfs_getpages(void *v)
 
 	simple_unlock(&vp->v_interlock);
 
+	/*
+	 * Make sure that the array on which we will store the
+	 * gotten pages is clean.  Otherwise uao_get (pointed to by
+	 * the pgo_get below) gets confused and does not return the
+	 * appropriate pages.
+	 * 
+	 * XXX This shall be revisited when kern/32166 is addressed
+	 * because the loop to clean m[i] will most likely be redundant
+	 * as well as the PGO_ALLPAGES flag.
+	 */
+	if (m != NULL)
+		for (i = 0; i < npages; i++)
+			m[i] = NULL;
 	simple_lock(&uobj->vmobjlock);
 	error = (*uobj->pgops->pgo_get)(uobj, offset, m, &npages, centeridx,
-	    access_type, advice, flags);
+	    access_type, advice, flags | PGO_ALLPAGES);
+#if defined(DEBUG)
+	{
+		/* Make sure that all the pages we return are valid. */
+		int dbgi;
+		if (error == 0 && m != NULL)
+			for (dbgi = 0; dbgi < npages; dbgi++)
+				KASSERT(m[dbgi] != NULL);
+	}
+#endif
 
 	return error;
 }

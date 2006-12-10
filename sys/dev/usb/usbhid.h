@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.h,v 1.11 2001/12/28 00:20:24 augustss Exp $	*/
+/*	$NetBSD: usbhid.h,v 1.11.64.1 2006/12/10 07:18:18 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
 /*
@@ -170,6 +170,9 @@ typedef struct usb_hid_descriptor {
 #define HUD_LED_SCROLL_LOCK	0x0003
 #define HUD_LED_COMPOSE		0x0004
 #define HUD_LED_KANA		0x0005
+
+/* Usages, Consumer */
+#define HUC_AC_PAN		0x0238
 
 #define HID_USAGE2(p, u) (((p) << 16) | u)
 #define HID_GET_USAGE(u) ((u) & 0xffff)

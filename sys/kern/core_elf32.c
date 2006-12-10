@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.26.6.1 2006/10/22 06:07:09 yamt Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.26.6.2 2006/12/10 07:18:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.26.6.1 2006/10/22 06:07:09 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.26.6.2 2006/12/10 07:18:43 yamt Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -242,7 +242,7 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 }
 
 static int
-ELFNAMEEND(coredump_countsegs)(struct proc *p __unused, void *iocookie __unused,
+ELFNAMEEND(coredump_countsegs)(struct proc *p, void *iocookie,
     struct uvm_coredump_state *us)
 {
 	struct countsegs_state *cs = us->cookie;
@@ -252,7 +252,7 @@ ELFNAMEEND(coredump_countsegs)(struct proc *p __unused, void *iocookie __unused,
 }
 
 static int
-ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie __unused,
+ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie,
     struct uvm_coredump_state *us)
 {
 	struct writesegs_state *ws = us->cookie;
@@ -460,8 +460,8 @@ ELFNAMEEND(coredump_note)(struct proc *p, struct lwp *l, void *iocookie,
 }
 
 int
-ELFNAMEEND(coredump_writenote)(struct proc *p __unused, void *cookie,
-    Elf_Nhdr *nhdr, const char *name, void *data)
+ELFNAMEEND(coredump_writenote)(struct proc *p, void *cookie, Elf_Nhdr *nhdr,
+    const char *name, void *data)
 {
 	int error;
 

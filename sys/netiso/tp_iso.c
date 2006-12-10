@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.22.4.1 2006/10/22 06:07:42 yamt Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.22.4.2 2006/12/10 07:19:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.22.4.1 2006/10/22 06:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.22.4.2 2006/12/10 07:19:23 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -340,7 +340,7 @@ tpclnp_mtu(void *v)
 		printf("tpclnp_mtu(tpcb %p)\n", tpcb);
 	}
 #endif
-	tpcb->tp_routep = &(isop->isop_route.ro_rt);
+	tpcb->tp_routep = &isop->isop_route.ro_rt;
 	if (tpcb->tp_netservice == ISO_CONS)
 		return 0;
 	else
@@ -467,8 +467,8 @@ tpclnp_output_dg(struct mbuf *m0, ...)
 	/*
 	 *	Free route allocated by clnp (if the route was indeed allocated)
 	 */
-	if (tmppcb.isop_route.ro_rt)
-		RTFREE(tmppcb.isop_route.ro_rt);
+	if (tmppcb.isop_route.ro_rt != NULL)
+		rtflush((struct route *)&tmppcb.isop_route);
 
 	return (err);
 }
@@ -570,7 +570,7 @@ tpclnp_input(struct mbuf *m, ...)
 
 /*ARGSUSED*/
 void
-iso_rtchange(struct isopcb *pcb __unused)
+iso_rtchange(struct isopcb *pcb)
 {
 
 }
@@ -610,7 +610,7 @@ tpiso_quench(struct isopcb *isop)
  * 	(siso) is the address of the guy who sent the ER CLNPDU
  */
 void *
-tpclnp_ctlinput(int cmd, struct sockaddr *saddr, void *dummy __unused)
+tpclnp_ctlinput(int cmd, struct sockaddr *saddr, void *dummy)
 {
 	struct sockaddr_iso *siso = (struct sockaddr_iso *) saddr;
 

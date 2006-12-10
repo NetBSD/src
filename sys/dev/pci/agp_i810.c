@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.32.6.1 2006/10/22 06:06:15 yamt Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.32.6.2 2006/12/10 07:17:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.32.6.1 2006/10/22 06:06:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.32.6.2 2006/12/10 07:17:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -598,12 +598,12 @@ agp_i810_unbind_page(struct agp_softc *sc, off_t offset)
  * Writing via memory mapped registers already flushes all TLBs.
  */
 static void
-agp_i810_flush_tlb(struct agp_softc *sc __unused)
+agp_i810_flush_tlb(struct agp_softc *sc)
 {
 }
 
 static int
-agp_i810_enable(struct agp_softc *sc __unused, u_int32_t mode __unused)
+agp_i810_enable(struct agp_softc *sc, u_int32_t mode)
 {
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.27.4.1 2006/10/22 06:06:11 yamt Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.27.4.2 2006/12/10 07:17:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.27.4.1 2006/10/22 06:06:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.27.4.2 2006/12/10 07:17:35 yamt Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -126,7 +126,7 @@ extern struct cfdriver guspnp_cd;
 static int gus_0 = 1;		/* XXX what's this */
 
 int
-gus_isapnp_match(struct device *parent __unused, struct cfdata *match __unused,
+gus_isapnp_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	int pri, variant;
@@ -142,7 +142,7 @@ gus_isapnp_match(struct device *parent __unused, struct cfdata *match __unused,
  * pseudo-device driver.
  */
 void
-gus_isapnp_attach(struct device *parent __unused, struct device *self,
+gus_isapnp_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct iw_softc *sc;

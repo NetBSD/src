@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpireg.h,v 1.1 2006/08/13 02:21:45 simonb Exp $    */
+/*  $NetBSD: if_wpireg.h,v 1.1.8.1 2006/12/10 07:17:45 yamt Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -331,7 +331,7 @@ struct wpi_cmd_tsf {
 } __attribute__((__packed__));
 
 /* structure for WPI_CMD_ADD_NODE */
-struct wpi_node {
+struct wpi_node_info {
 	uint8_t		control;
 #define WPI_NODE_UPDATE	(1 << 0)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.70.4.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: ess.c,v 1.70.4.2 2006/12/10 07:17:26 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.70.4.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.70.4.2 2006/12/10 07:17:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -808,7 +808,7 @@ ess_identify(struct ess_softc *sc)
 
 
 int
-ess_setup_sc(struct ess_softc *sc, int doinit __unused)
+ess_setup_sc(struct ess_softc *sc, int doinit)
 {
 
 	callout_init(&sc->sc_poll1_ch);
@@ -911,7 +911,7 @@ irq_not1888:
  * pseudo-device driver.
  */
 void
-essattach(struct ess_softc *sc, int enablejoy __unused)
+essattach(struct ess_softc *sc, int enablejoy)
 {
 	struct audio_attach_args arg;
 	int i;
@@ -1076,7 +1076,7 @@ essattach(struct ess_softc *sc, int enablejoy __unused)
  */
 
 int
-ess_open(void *addr __unused, int flags __unused)
+ess_open(void *addr, int flags)
 {
 	return 0;
 }
@@ -1126,7 +1126,7 @@ ess_speaker_ctl(void *addr, int newstate)
 }
 
 int
-ess_getdev(void *addr __unused, struct audio_device *retp)
+ess_getdev(void *addr, struct audio_device *retp)
 {
 
 	*retp = ess_device;
@@ -1134,7 +1134,7 @@ ess_getdev(void *addr __unused, struct audio_device *retp)
 }
 
 int
-ess_query_encoding(void *addr __unused, struct audio_encoding *fp)
+ess_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	/*struct ess_softc *sc = addr;*/
 
@@ -1635,8 +1635,8 @@ ess_audio2_poll(void *addr)
 }
 
 int
-ess_round_blocksize(void *addr __unused, int blk, int mode __unused,
-    const audio_params_t *param __unused)
+ess_round_blocksize(void *addr, int blk, int mode,
+    const audio_params_t *param)
 {
 
 	return blk & -8;	/* round for max DMA size */
@@ -2149,7 +2149,7 @@ ess_malloc(void *addr, int direction, size_t size,
 }
 
 void
-ess_free(void *addr __unused, void *ptr, struct malloc_type *pool)
+ess_free(void *addr, void *ptr, struct malloc_type *pool)
 {
 
 	isa_free(ptr, pool);
@@ -2173,21 +2173,21 @@ ess_round_buffersize(void *addr, int direction, size_t size)
 }
 
 paddr_t
-ess_mappage(void *addr __unused, void *mem, off_t off, int prot)
+ess_mappage(void *addr, void *mem, off_t off, int prot)
 {
 
 	return isa_mappage(mem, off, prot);
 }
 
 int
-ess_1788_get_props(void *addr __unused)
+ess_1788_get_props(void *addr)
 {
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT;
 }
 
 int
-ess_1888_get_props(void *addr __unused)
+ess_1888_get_props(void *addr)
 {
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;

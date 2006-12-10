@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.69 2005/11/28 13:14:48 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.69.22.1 2006/12/10 07:18:18 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -150,6 +150,10 @@ usbd_status usbd_set_interface(usbd_interface_handle, int);
 int usbd_get_no_alts(usb_config_descriptor_t *, int);
 usbd_status  usbd_get_interface(usbd_interface_handle, u_int8_t *);
 void usbd_fill_deviceinfo(usbd_device_handle, struct usb_device_info *, int);
+#ifdef COMPAT_30
+void usbd_fill_deviceinfo_old(usbd_device_handle, struct usb_device_info_old *,
+    int);
+#endif
 int usbd_get_interface_altindex(usbd_interface_handle);
 
 usb_interface_descriptor_t *usbd_find_idesc(usb_config_descriptor_t *,
@@ -177,6 +181,7 @@ usbd_status usbd_reload_device_desc(usbd_device_handle);
 int usbd_ratecheck(struct timeval *);
 
 usbd_status usbd_get_string(usbd_device_handle, int, char *);
+usbd_status usbd_get_string0(usbd_device_handle, int, char *, int);
 
 /* An iterator for descriptors. */
 typedef struct {
@@ -196,12 +201,16 @@ struct usb_task {
 	TAILQ_ENTRY(usb_task) next;
 	void (*fun)(void *);
 	void *arg;
-	char onqueue;
+	int queue;
 };
+#define	USB_TASKQ_HC		0
+#define	USB_TASKQ_DRIVER	1
+#define	USB_NUM_TASKQS		2
+#define	USB_TASKQ_NAMES		{"usbtask-hc", "usbtask-dr"}
 
-void usb_add_task(usbd_device_handle, struct usb_task *);
+void usb_add_task(usbd_device_handle, struct usb_task *, int);
 void usb_rem_task(usbd_device_handle, struct usb_task *);
-#define usb_init_task(t, f, a) ((t)->fun = (f), (t)->arg = (a), (t)->onqueue = 0)
+#define usb_init_task(t, f, a) ((t)->fun = (f), (t)->arg = (a), (t)->queue = -1)
 
 struct usb_devno {
 	u_int16_t ud_vendor;

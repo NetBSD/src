@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.35.4.1 2006/10/22 06:07:06 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.35.4.2 2006/12/10 07:18:38 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.35.4.1 2006/10/22 06:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.35.4.2 2006/12/10 07:18:38 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -438,20 +438,20 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	bp  = NULL; /* both used in error_exit */
 	pmp = NULL;
 
+	/*
+ 	 * We need the disklabel to calculate the size of a FAT entry
+	 * later on. Also make sure the partition contains a filesystem
+	 * of type FS_MSDOS. This doesn't work for floppies, so we have
+	 * to check for them too.
+ 	 *
+ 	 * There might still be parts of the msdos fs driver which assume
+	 * that the size of a disk block will always be 512 bytes.
+	 * Let's root them out...
+	 */
+	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, l);
+	if (error)
+		goto error_exit;
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
-		/*
-	 	 * We need the disklabel to calculate the size of a FAT entry
-		 * later on. Also make sure the partition contains a filesystem
-		 * of type FS_MSDOS. This doesn't work for floppies, so we have
-		 * to check for them too.
-	 	 *
-	 	 * At least some parts of the msdos fs driver seem to assume
-		 * that the size of a disk block will always be 512 bytes.
-		 * Let's check it...
-		 */
-		error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, l);
-		if (error)
-			goto error_exit;
 		tmp   = dpart.part->p_fstype;
 		dtype = dpart.disklab->d_type;
 		bsize = dpart.disklab->d_secsize;
@@ -465,7 +465,8 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	 * Read the boot sector of the filesystem, and then check the
 	 * boot signature.  If not a dos boot sector then error out.
 	 */
-	if ((error = bread(devvp, 0, 512, NOCRED, &bp)) != 0)
+	if ((error = bread(devvp, 0, dpart.disklab->d_secsize, NOCRED,
+	    &bp)) != 0)
 		goto error_exit;
 	bp->b_flags |= B_AGE;
 	bsp = (union bootsector *)bp->b_data;
@@ -672,7 +673,13 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	if (pmp->pm_fsinfo) {
 		struct fsinfo *fp;
 
-		if ((error = bread(devvp, pmp->pm_fsinfo, 1024, NOCRED, &bp)) != 0)
+		/*
+		 * XXX	If the fsinfo block is stored on media with
+		 *	2KB or larger sectors, is the fsinfo structure
+		 *	padded at the end or in the middle?
+		 */
+		if ((error = bread(devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
+		    pmp->pm_BytesPerSec, NOCRED, &bp)) != 0)
 			goto error_exit;
 		fp = (struct fsinfo *)bp->b_data;
 		if (!memcmp(fp->fsisig1, "RRaA", 4)
@@ -767,8 +774,8 @@ error_exit:;
 }
 
 int
-msdosfs_start(struct mount *mp __unused, int flags __unused,
-    struct lwp *l __unused)
+msdosfs_start(struct mount *mp, int flags,
+    struct lwp *l)
 {
 
 	return (0);
@@ -848,15 +855,15 @@ msdosfs_root(mp, vpp)
 }
 
 int
-msdosfs_quotactl(struct mount *mp __unused, int cmds __unused,
-    uid_t uid __unused, void *arg __unused, struct lwp *l __unused)
+msdosfs_quotactl(struct mount *mp, int cmds,
+    uid_t uid, void *arg, struct lwp *l)
 {
 
 	return (EOPNOTSUPP);
 }
 
 int
-msdosfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
+msdosfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 	struct msdosfsmount *pmp;
 
@@ -883,7 +890,7 @@ msdosfs_sync(mp, waitfor, cred, l)
 	kauth_cred_t cred;
 	struct lwp *l;
 {
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	struct denode *dep;
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	int error, allerror = 0;
@@ -904,7 +911,7 @@ msdosfs_sync(mp, waitfor, cred, l)
 	 */
 	simple_lock(&mntvnode_slock);
 loop:
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * assoicated with this mount point, start over.
@@ -912,6 +919,7 @@ loop:
 		if (vp->v_mount != mp)
 			goto loop;
 		simple_lock(&vp->v_interlock);
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		dep = VTODE(vp);
 		if (waitfor == MNT_LAZY || vp->v_type == VNON ||
 		    (((dep->de_flag &
@@ -997,8 +1005,8 @@ msdosfs_vptofh(vp, fhp, fh_size)
 }
 
 int
-msdosfs_vget(struct mount *mp __unused, ino_t ino __unused,
-    struct vnode **vpp __unused)
+msdosfs_vget(struct mount *mp, ino_t ino,
+    struct vnode **vpp)
 {
 
 	return (EOPNOTSUPP);

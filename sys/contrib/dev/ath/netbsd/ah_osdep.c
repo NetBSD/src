@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.7.6.1 2006/10/22 06:05:27 yamt Exp $
+ * $Id: ah_osdep.c,v 1.7.6.2 2006/12/10 07:16:52 yamt Exp $
  */
 #include "opt_athhal.h"
 #include "athhal_options.h"
@@ -153,7 +153,7 @@ ath_hal_free(void* p)
 }
 
 void
-ath_hal_vprintf(struct ath_hal *ah __unused, const char* fmt, va_list ap)
+ath_hal_vprintf(struct ath_hal *ah, const char* fmt, va_list ap)
 {
 	vprintf(fmt, ap);
 }
@@ -416,7 +416,7 @@ ath_hal_delay(int n)
 }
 
 u_int32_t
-ath_hal_getuptime(struct ath_hal *ah __unused)
+ath_hal_getuptime(struct ath_hal *ah)
 {
 	struct bintime bt;
 	getbinuptime(&bt);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.45.4.1 2006/10/22 06:05:45 yamt Exp $	*/
+/*	$NetBSD: mlx.c,v 1.45.4.2 2006/12/10 07:17:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.45.4.1 2006/10/22 06:05:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.45.4.2 2006/12/10 07:17:06 yamt Exp $");
 
 #include "ld.h"
 
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.45.4.1 2006/10/22 06:05:45 yamt Exp $");
 #include <sys/conf.h>
 #include <sys/kthread.h>
 #include <sys/disk.h>
+#include <sys/kauth.h>
 
 #include <machine/vmparam.h>
 #include <machine/bus.h>
@@ -657,7 +658,7 @@ mlx_print(void *aux, const char *pnp)
  * Shut down all configured `mlx' devices.
  */
 static void
-mlx_shutdown(void *cookie __unused)
+mlx_shutdown(void *cookie)
 {
 	struct mlx_softc *mlx;
 	int i;
@@ -692,7 +693,7 @@ mlx_adjqparam(struct mlx_softc *mlx, int mpu, int slop)
  * Accept an open operation on the control device.
  */
 int
-mlxopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
+mlxopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct mlx_softc *mlx;
 
@@ -711,8 +712,8 @@ mlxopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
  * Accept the last close on the control device.
  */
 int
-mlxclose(dev_t dev, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+mlxclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct mlx_softc *mlx;
 
@@ -725,8 +726,8 @@ mlxclose(dev_t dev, int flag __unused, int mode __unused,
  * Handle control operations.
  */
 int
-mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
-    struct lwp *l __unused)
+mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct mlx_softc *mlx;
 	struct mlx_rebuild_request *rb;
@@ -797,8 +798,10 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
 		return (0);
 
 	case MLX_COMMAND:
-		if (securelevel >= 2)
-			return (EPERM);
+		rv = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
+		if (rv)
+			return (rv);
 
 		/*
 		 * Accept a command passthrough-style.
@@ -949,7 +952,7 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
  * Check for commands that have timed out.
  */
 static void
-mlx_periodic_create(void *cookie __unused)
+mlx_periodic_create(void *cookie)
 {
 	int rv;
 
@@ -962,7 +965,7 @@ mlx_periodic_create(void *cookie __unused)
 }
 
 static void
-mlx_periodic_thread(void *cookie __unused)
+mlx_periodic_thread(void *cookie)
 {
 	struct mlx_softc *mlx;
 	int i;

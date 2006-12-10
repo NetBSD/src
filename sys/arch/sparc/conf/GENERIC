@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.192.4.1 2006/10/22 06:05:10 yamt Exp $
+# $NetBSD: GENERIC,v 1.192.4.2 2006/12/10 07:16:35 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.192.4.1 $"
+#ident 		"GENERIC-$Revision: 1.192.4.2 $"
 
 maxusers	32
 
@@ -190,7 +190,7 @@ file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 ## File system options.
@@ -693,6 +693,8 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 pseudo-device	fss		4	# file system snapshot device
 
+#options	FILEASSOC		# fileassoc(9)
+
 # Veriexec
 #
 # a pseudo device needed for veriexec
@@ -710,3 +712,4 @@ pseudo-device	fss		4	# file system snapshot device
 #options VERIFIED_EXEC_FP_MD5
 
 #options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+					# (for static binaries only for now)

@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.41.4.1 2006/10/22 06:04:53 yamt Exp $
+# 	$NetBSD: LIBERO,v 1.41.4.2 2006/12/10 07:16:28 yamt Exp $
 
 #	NEWS1750 config file;
 #
@@ -72,7 +72,7 @@ file-system	PTYFS		# /dev/pts/N support
 
 options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# ffs quotas
-#options 	FFS_EI		# ffs endian independant support
+#options 	FFS_EI		# ffs endian independent support
 options 	SOFTDEP		# ffs soft updates support
 options 	FFS_NO_SNAPSHOT	# FFS snapshot support
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: it.c,v 1.4.12.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: it.c,v 1.4.12.2 2006/12/10 07:17:29 yamt Exp $	*/
 /*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.4.12.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.4.12.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ static int it_streinfo(struct sysmon_envsys *, envsys_basic_info_t *);
 
 
 static int
-it_isa_match(struct device *parent __unused, struct cfdata *match __unused,
+it_isa_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -117,7 +117,7 @@ it_isa_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-it_isa_attach(struct device *parent __unused, struct device *self, void *aux)
+it_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct it_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

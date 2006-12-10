@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.45.4.1 2006/10/22 06:05:23 yamt Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.45.4.2 2006/12/10 07:16:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.45.4.1 2006/10/22 06:05:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.45.4.2 2006/12/10 07:16:44 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -255,7 +255,7 @@ darwin_e_proc_exec(p, epp)
 }
 
 static void
-darwin_e_proc_fork(struct proc *p, struct proc *parent, int forkflags __unused)
+darwin_e_proc_fork(struct proc *p, struct proc *parent, int forkflags)
 {
 	struct darwin_emuldata *ded1;
 	struct darwin_emuldata *ded2;

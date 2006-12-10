@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.7 2005/12/24 20:06:52 perry Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.7.22.1 2006/12/10 07:15:47 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.7 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.7.22.1 2006/12/10 07:15:47 yamt Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -212,7 +212,7 @@ ep93xx_intr_calculate_masks(void)
 	vic2_imask[IPL_SOFTNET] |= vic2_imask[IPL_SOFTCLOCK];
 
 	/*
-	 * Enforce a heirarchy that gives "slow" device (or devices with
+	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */

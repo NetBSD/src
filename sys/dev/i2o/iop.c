@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.57.4.1 2006/10/22 06:05:43 yamt Exp $	*/
+/*	$NetBSD: iop.c,v 1.57.4.2 2006/12/10 07:17:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.57.4.1 2006/10/22 06:05:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.57.4.2 2006/12/10 07:17:03 yamt Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.57.4.1 2006/10/22 06:05:43 yamt Exp $");
 #include <sys/endian.h>
 #include <sys/conf.h>
 #include <sys/kthread.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -904,7 +905,7 @@ iop_print(void *aux, const char *pnp)
  * Shut down all configured IOPs.
  */
 static void
-iop_shutdown(void *junk __unused)
+iop_shutdown(void *junk)
 {
 	struct iop_softc *sc;
 	int i;
@@ -1822,7 +1823,7 @@ iop_intr(void *arg)
  * Handle an event signalled by the executive.
  */
 static void
-iop_intr_event(struct device *dv, struct iop_msg *im __unused, void *reply)
+iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 {
 	struct i2o_util_event_register_reply *rb;
 	u_int event;
@@ -2256,7 +2257,7 @@ iop_msg_poll(struct iop_softc *sc, struct iop_msg *im, int timo)
  * Sleep until the specified message is replied to.
  */
 static void
-iop_msg_wait(struct iop_softc *sc __unused, struct iop_msg *im, int timo)
+iop_msg_wait(struct iop_softc *sc, struct iop_msg *im, int timo)
 {
 	int s, rv;
 
@@ -2487,7 +2488,7 @@ int iop_util_eventreg(struct iop_softc *sc, struct iop_initiator *ii, int mask)
 }
 
 int
-iopopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
+iopopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct iop_softc *sc;
 
@@ -2503,8 +2504,8 @@ iopopen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 }
 
 int
-iopclose(dev_t dev, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+iopclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct iop_softc *sc;
 
@@ -2515,7 +2516,7 @@ iopclose(dev_t dev, int flag __unused, int mode __unused,
 }
 
 int
-iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
+iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct iop_softc *sc;
 	struct iovec *iov;
@@ -2525,8 +2526,10 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused, struct lwp *l)
 
 	switch (cmd) {
 	case IOPIOCPT:
-		if (securelevel >= 2)
-			return (EPERM);
+		rv = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
+		if (rv)
+			return (rv);
 
 		return (iop_passthrough(sc, (struct ioppt *)data, l->l_proc));
 

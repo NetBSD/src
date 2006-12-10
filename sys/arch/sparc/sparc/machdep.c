@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.264 2006/09/03 22:27:45 gdamore Exp $ */
+/*	$NetBSD: machdep.c,v 1.264.4.1 2006/12/10 07:16:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.264 2006/09/03 22:27:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.264.4.1 2006/12/10 07:16:35 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -939,7 +939,7 @@ int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf;
-	__greg_t *r = mcp->__gregs;
+	const __greg_t *r = mcp->__gregs;
 #ifdef FPU_CONTEXT
 	__fpregset_t *f = &mcp->__fpregs;
 	struct fpstate *fps = l->l_md.md_fpstate;

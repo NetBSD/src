@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.16.6.1 2006/10/22 06:07:43 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.16.6.2 2006/12/10 07:19:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.16.6.1 2006/10/22 06:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.16.6.2 2006/12/10 07:19:24 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -193,9 +193,6 @@ nfs_export_unmount(struct mount *mp)
 		netexport_wrunlock();
 		return;
 	}
-
-	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
-	    mp->mnt_op->vfs_fhtovp != NULL);
 	netexport_clear(ne);
 	netexport_remove(ne);
 	netexport_wrunlock();
@@ -238,12 +235,6 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	vp = nd.ni_vp;
 	mp = vp->v_mount;
 
-	/* The selected file system may not support NFS exports, so ensure
-	 * it does. */
-	if (mp->mnt_op->vfs_vptofh == NULL || mp->mnt_op->vfs_fhtovp == NULL) {
-		error = EOPNOTSUPP;
-		goto out_locked;
-	}
 	fid_size = 0;
 	if ((error = VFS_VPTOFH(vp, NULL, &fid_size)) == E2BIG) {
 		fid = malloc(fid_size, M_TEMP, M_NOWAIT);
@@ -256,8 +247,6 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 		error = EOPNOTSUPP;
 		goto out_locked;
 	}
-	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
-	    mp->mnt_op->vfs_fhtovp != NULL);
 
 	/* Mark the file system busy. */
 	error = vfs_busy(mp, LK_NOWAIT, NULL);
@@ -308,7 +297,6 @@ out_locked2:
 
 out_locked:
 	vput(vp);
-
 	return error;
 }
 
@@ -406,7 +394,7 @@ netexport_check(const fsid_t *fsid, struct mbuf *mb, struct mount **mpp,
  * Otherwise, returns 0 on success or an appropriate error code otherwise.
  */
 int
-nfs_update_exports_30(struct mount *mp __unused, const char *path, void *data,
+nfs_update_exports_30(struct mount *mp, const char *path, void *data,
     struct lwp *l)
 {
 	int error;
@@ -454,7 +442,7 @@ nfs_update_exports_30(struct mount *mp __unused, const char *path, void *data,
  * vfs_fhtovp operations are NULL or not.
  *
  * If successful, returns 0 and sets *mnpp to the address of the new
- * mount_netexport_pair item; otherwise returns and appropriate error code
+ * mount_netexport_pair item; otherwise returns an appropriate error code
  * and *mnpp remains unmodified.
  */
 static int
@@ -465,8 +453,6 @@ init_exports(struct mount *mp, struct netexport **nep)
 	struct netexport *ne;
 
 	KASSERT(mp != NULL);
-	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
-	    mp->mnt_op->vfs_fhtovp != NULL);
 
 	/* Ensure that we do not already have this mount point. */
 	KASSERT(netexport_lookup(mp) == NULL);
@@ -515,7 +501,7 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 		KASSERT(np->netc_anon == NULL);
 		np->netc_anon = kauth_cred_alloc();
 		np->netc_exflags = argp->ex_flags;
-		kauth_cred_uucvt(np->netc_anon, &argp->ex_anon);
+		kauth_uucred_to_cred(np->netc_anon, &argp->ex_anon);
 		mp->mnt_flag |= MNT_DEFEXPORTED;
 		return 0;
 	}
@@ -583,7 +569,7 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 		enp->netc_refcnt = 1;
 
 	np->netc_exflags = argp->ex_flags;
-	kauth_cred_uucvt(np->netc_anon, &argp->ex_anon);
+	kauth_uucred_to_cred(np->netc_anon, &argp->ex_anon);
 	return 0;
 check:
 	if (enp->netc_exflags != argp->ex_flags ||
@@ -722,7 +708,7 @@ export(struct netexport *nep, const struct export_args *argp)
  * one public filesystem is possible in the spec (RFC 2054 and 2055)
  */
 static int
-setpublicfs(struct mount *mp, struct netexport *nep __unused,
+setpublicfs(struct mount *mp, struct netexport *nep,
     const struct export_args *argp)
 {
 	char *cp;

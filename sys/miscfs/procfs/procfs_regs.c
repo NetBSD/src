@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_regs.c,v 1.21.22.1 2006/10/22 06:07:23 yamt Exp $	*/
+/*	$NetBSD: procfs_regs.c,v 1.21.22.2 2006/12/10 07:18:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.21.22.1 2006/10/22 06:07:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_regs.c,v 1.21.22.2 2006/12/10 07:18:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -85,7 +85,7 @@ int
 procfs_doregs(
     struct lwp *curl,		/* tracer */
     struct lwp *l,		/* traced */
-    struct pfsnode *pfs __unused,
+    struct pfsnode *pfs,
     struct uio *uio
 )
 {
@@ -94,7 +94,7 @@ procfs_doregs(
 }
 
 int
-procfs_validregs(struct lwp *l, struct mount *mp __unused)
+procfs_validregs(struct lwp *l, struct mount *mp)
 {
 
 	return (process_validregs(l));

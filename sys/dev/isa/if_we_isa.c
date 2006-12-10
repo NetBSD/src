@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.15.4.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.15.4.2 2006/12/10 07:17:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.15.4.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.15.4.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ do { \
 } while (0)
 
 int
-we_isa_probe(struct device *parent __unused, struct cfdata *cf, void *aux)
+we_isa_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t asict, memt;
@@ -297,7 +297,7 @@ we_isa_probe(struct device *parent __unused, struct cfdata *cf, void *aux)
 }
 
 void
-we_isa_attach(struct device *parent __unused, struct device *self, void *aux)
+we_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct we_softc *wsc = (struct we_softc *)self;
 	struct dp8390_softc *sc = &wsc->sc_dp8390;

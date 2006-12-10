@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.63.4.1 2006/10/22 06:04:44 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.63.4.2 2006/12/10 07:16:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.63.4.1 2006/10/22 06:04:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.63.4.2 2006/12/10 07:16:09 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -109,11 +109,11 @@ const struct cdevsw mem_cdevsw = {
 	nostop, notty, nopoll, mmmmap, nokqfilter, D_OTHER,
 };
 
-static int check_pa_acc(paddr_t, vm_prot_t);
+int check_pa_acc(paddr_t, vm_prot_t);
 
 /*ARGSUSED*/
 int
-mmopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	switch (minor(dev)) {
@@ -138,7 +138,7 @@ mmopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 
 /*ARGSUSED*/
 int
-mmrw(dev_t dev, struct uio *uio, int flags __unused)
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	register vaddr_t o, v;
 	register int c;
@@ -247,35 +247,4 @@ mmmmap(dev_t dev, off_t off, int prot)
 	}
 
 	return x86_btop(off);
-}
-
-/* ---------------------------------------- */
-
-#include <sys/kcore.h>
-
-/*
- * check_pa_acc: check if given pa is accessible.
- */
-
-static int
-check_pa_acc(paddr_t pa, vm_prot_t prot __unused)
-{
-	extern phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-	extern int mem_cluster_cnt;
-	int i;
-
-	if (securelevel <= 0) {
-		return 0;
-	}
-
-	for (i = 0; i < mem_cluster_cnt; i++) {
-		const phys_ram_seg_t *seg = &mem_clusters[i];
-		paddr_t start = seg->start;
-
-		if (start <= pa && pa - start <= seg->size) {
-			return 0;
-		}
-	}
-
-	return EPERM;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.288.22.1 2006/10/22 06:04:31 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.288.22.2 2006/12/10 07:15:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.288.22.1 2006/10/22 06:04:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.288.22.2 2006/12/10 07:15:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.288.22.1 2006/10/22 06:04:31 yamt Exp 
 #include <sys/ucontext.h>
 #include <sys/conf.h>
 #include <sys/ksyms.h>
+#include <sys/kauth.h>
 #include <machine/kcore.h>
 #include <machine/fpu.h>
 
@@ -1891,7 +1892,8 @@ alpha_pa_access(pa)
 	 * Address is not a memory address.  If we're secure, disallow
 	 * access.  Otherwise, grant read/write.
 	 */
-	if (securelevel > 0)
+	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_ALPHA,
+	    KAUTH_REQ_MACHDEP_ALPHA_UNMANAGEDMEM, NULL, NULL, NULL) != 0)
 		return (PROT_NONE);
 	else
 		return (PROT_READ | PROT_WRITE);

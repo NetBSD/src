@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.51.4.1 2006/10/22 06:05:35 yamt Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.51.4.2 2006/12/10 07:16:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.51.4.1 2006/10/22 06:05:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.51.4.2 2006/12/10 07:16:58 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -229,7 +229,7 @@ tlp_cardbus_get_quirks(csc, enaddr, tpq)
 }
 
 int
-tlp_cardbus_match(struct device *parent __unused, struct cfdata *match __unused,
+tlp_cardbus_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
@@ -241,7 +241,7 @@ tlp_cardbus_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-tlp_cardbus_attach(struct device *parent __unused, struct device *self,
+tlp_cardbus_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct tulip_cardbus_softc *csc = device_private(self);
@@ -479,7 +479,7 @@ tlp_cardbus_attach(struct device *parent __unused, struct device *self,
 }
 
 int
-tlp_cardbus_detach(struct device *self, int flags __unused)
+tlp_cardbus_detach(struct device *self, int flags)
 {
 	struct tulip_cardbus_softc *csc = device_private(self);
 	struct tulip_softc *sc = &csc->sc_tulip;
@@ -657,7 +657,7 @@ tlp_cardbus_x3201_reset(sc)
 
 void
 tlp_cardbus_lxt_quirks(struct tulip_cardbus_softc *csc,
-    const u_int8_t *enaddr __unused)
+    const u_int8_t *enaddr)
 {
 	struct tulip_softc *sc = &csc->sc_tulip;
 

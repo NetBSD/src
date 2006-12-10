@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_fms.c,v 1.10.22.1 2006/10/22 06:06:18 yamt Exp $	*/
+/*	$NetBSD: opl_fms.c,v 1.10.22.2 2006/12/10 07:17:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_fms.c,v 1.10.22.1 2006/10/22 06:06:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_fms.c,v 1.10.22.2 2006/12/10 07:17:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: opl_fms.c,v 1.10.22.1 2006/10/22 06:06:18 yamt Exp $
 #include <dev/pci/fmsvar.h>
 
 static int
-opl_fms_match(struct device *parent __unused, struct cfdata *match __unused,
+opl_fms_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
@@ -76,7 +76,7 @@ opl_fms_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-opl_fms_attach(struct device *parent, struct device *self, void *aux __unused)
+opl_fms_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fms_softc *ssc = (struct fms_softc *)parent;
 	struct opl_softc *sc = (struct opl_softc *)self;

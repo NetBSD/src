@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.14.10.1 2006/10/22 06:07:24 yamt Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.14.10.2 2006/12/10 07:19:00 yamt Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.14.10.1 2006/10/22 06:07:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.14.10.2 2006/12/10 07:19:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -189,7 +189,7 @@ sync_inactive(v)
 }
 
 int
-sync_reclaim(void *v __unused)
+sync_reclaim(void *v)
 {
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.24.4.1 2006/10/22 06:06:52 yamt Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.24.4.2 2006/12/10 07:18:16 yamt Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.24.4.1 2006/10/22 06:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.24.4.2 2006/12/10 07:18:16 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -592,7 +592,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  * the list buffers.
  */
 Static void
-upl_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+upl_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct upl_chain	*c = priv;
@@ -810,7 +810,7 @@ upl_openpipes(struct upl_softc *sc)
 }
 
 Static void
-upl_intr(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+upl_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct upl_softc	*sc = priv;
@@ -1014,8 +1014,8 @@ upl_stop(struct upl_softc *sc)
 }
 
 Static int
-upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst __unused,
-    struct rtentry *rt0 __unused)
+upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt0)
 {
 	int s, len, error;
 	ALTQ_DECL(struct altq_pktattr pktattr;)

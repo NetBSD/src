@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.27.6.1 2006/10/22 06:05:28 yamt Exp $	*/
+/*	$NetBSD: fss.c,v 1.27.6.2 2006/12/10 07:16:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.27.6.1 2006/10/22 06:05:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.27.6.2 2006/12/10 07:16:53 yamt Exp $");
 
 #include "fss.h"
 
@@ -152,7 +152,7 @@ const struct cdevsw fss_cdevsw = {
 };
 
 void
-fssattach(int num __unused)
+fssattach(int num)
 {
 	int i;
 	struct fss_softc *sc;
@@ -168,7 +168,7 @@ fssattach(int num __unused)
 }
 
 int
-fss_open(dev_t dev, int flags __unused, int mode, struct lwp *l __unused)
+fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int s, mflag;
 	struct fss_softc *sc;
@@ -188,7 +188,7 @@ fss_open(dev_t dev, int flags __unused, int mode, struct lwp *l __unused)
 }
 
 int
-fss_close(dev_t dev, int flags __unused, int mode, struct lwp *l)
+fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int s, mflag, error;
 	struct fss_softc *sc;
@@ -249,13 +249,13 @@ fss_strategy(struct buf *bp)
 }
 
 int
-fss_read(dev_t dev, struct uio *uio, int flags __unused)
+fss_read(dev_t dev, struct uio *uio, int flags)
 {
 	return physio(fss_strategy, NULL, dev, B_READ, minphys, uio);
 }
 
 int
-fss_write(dev_t dev, struct uio *uio, int flags __unused)
+fss_write(dev_t dev, struct uio *uio, int flags)
 {
 	return physio(fss_strategy, NULL, dev, B_WRITE, minphys, uio);
 }
@@ -339,14 +339,14 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 int
-fss_size(dev_t dev __unused)
+fss_size(dev_t dev)
 {
 	return -1;
 }
 
 int
-fss_dump(dev_t dev __unused, daddr_t blkno __unused, caddr_t va __unused,
-    size_t size __unused)
+fss_dump(dev_t dev, daddr_t blkno, caddr_t va,
+    size_t size)
 {
 	return EROFS;
 }

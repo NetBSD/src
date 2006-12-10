@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.85.4.1 2006/10/22 06:05:45 yamt Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.85.4.2 2006/12/10 07:17:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -61,6 +61,14 @@ struct wdc_regs {
 	/* data32{iot,ioh} are only used for 32-bit data xfers */
 	bus_space_tag_t       data32iot;
 	bus_space_handle_t    data32ioh;
+
+	/* SATA native registers */
+	bus_space_tag_t       sata_iot;
+	bus_space_handle_t    sata_baseioh;
+	bus_space_handle_t    sata_control;
+	bus_space_handle_t    sata_status;
+	bus_space_handle_t    sata_error;
+
 };
 
 /*
@@ -141,6 +149,9 @@ void	wdcattach(struct ata_channel *);
 int	wdcdetach(struct device *, int);
 int	wdcactivate(struct device *, enum devact);
 int	wdcintr(void *);
+
+void	wdc_sataprobe(struct ata_channel *);
+void	wdc_drvprobe(struct ata_channel *);
 
 void	wdcrestart(void*);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.21.4.1 2006/10/22 06:06:16 yamt Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.21.4.2 2006/12/10 07:17:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.21.4.1 2006/10/22 06:06:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.21.4.2 2006/12/10 07:17:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ cac_pci_findtype(struct pci_attach_args *pa)
 }
 
 static int
-cac_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+cac_pci_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 
@@ -145,7 +145,7 @@ cac_pci_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-cac_pci_attach(struct device *parent __unused, struct device *self, void *aux)
+cac_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	const struct cac_pci_type *ct;
@@ -259,6 +259,9 @@ cac_pci_l0_completed(struct cac_softc *sc)
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, off, sizeof(struct cac_ccb),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	if ((off & 3) != 0 && ccb->ccb_req.error == 0)
+		ccb->ccb_req.error = CAC_RET_CMD_REJECTED;
 
 	return (ccb);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.60.6.1 2006/10/22 06:07:11 yamt Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.60.6.2 2006/12/10 07:18:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.60.6.1 2006/10/22 06:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.60.6.2 2006/12/10 07:18:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -394,7 +394,7 @@ pfctlinput2(int cmd, struct sockaddr *sa, void *ctlparam)
 }
 
 void
-pfslowtimo(void *arg __unused)
+pfslowtimo(void *arg)
 {
 	struct domain *dp;
 	const struct protosw *pr;
@@ -410,7 +410,7 @@ pfslowtimo(void *arg __unused)
 }
 
 void
-pffasttimo(void *arg __unused)
+pffasttimo(void *arg)
 {
 	struct domain *dp;
 	const struct protosw *pr;

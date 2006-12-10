@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.54 2006/09/07 02:40:32 dogcow Exp $	*/
+/*	$NetBSD: hme.c,v 1.54.4.1 2006/12/10 07:17:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.54 2006/09/07 02:40:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.54.4.1 2006/12/10 07:17:05 yamt Exp $");
 
 /* #define HMEDEBUG */
 
@@ -290,7 +290,7 @@ hme_config(sc)
 			 * connector.
 			 */
 			if (child->mii_phy > 1 || child->mii_inst > 1) {
-				printf("%s: cannot accomodate MII device %s"
+				printf("%s: cannot accommodate MII device %s"
 				       " at phy %d, instance %d\n",
 				       sc->sc_dev.dv_xname,
 				       child->mii_dev.dv_xname,

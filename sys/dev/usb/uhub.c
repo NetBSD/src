@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.78.10.1 2006/10/22 06:06:52 yamt Exp $	*/
+/*	$NetBSD: uhub.c,v 1.78.10.2 2006/12/10 07:18:17 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.78.10.1 2006/10/22 06:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.78.10.2 2006/12/10 07:18:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.78.10.1 2006/10/22 06:06:52 yamt Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
-
-#define UHUB_INTR_INTERVAL 255	/* ms */
 
 #ifdef UHUB_DEBUG
 #define DPRINTF(x)	if (uhubdebug) logprintf x
@@ -103,10 +101,6 @@ Static bus_child_detached_t uhub_child_detached;
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 USB_DECLARE_DRIVER(uhub);
-
-/* Create the driver instance for the hub connected to hub case */
-CFATTACH_DECL(uhub_uhub, sizeof(struct uhub_softc),
-    uhub_match, uhub_attach, uhub_detach, uhub_activate);
 #elif defined(__FreeBSD__)
 USB_DECLARE_DRIVER_INIT(uhub,
 			DEVMETHOD(bus_child_detached, uhub_child_detached));
@@ -156,7 +150,9 @@ USB_ATTACH(uhub)
 	int p, port, nports, nremov, pwrdly;
 	usbd_interface_handle iface;
 	usb_endpoint_descriptor_t *ed;
+#if 0 /* notyet */
 	struct usbd_tt *tts = NULL;
+#endif
 
 	DPRINTFN(1,("uhub_attach\n"));
 	sc->sc_hub = dev;
@@ -245,6 +241,14 @@ USB_ATTACH(uhub)
 		printf("%s: no interface handle\n", USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
+
+	if (UHUB_IS_HIGH_SPEED(sc) && !UHUB_IS_SINGLE_TT(sc)) {
+		err = usbd_set_interface(iface, 1);
+		if (err)
+			printf("%s: can't enable multiple TTs\n",
+			       USBDEVNAME(sc->sc_dev));
+	}
+
 	ed = usbd_interface2endpoint_descriptor(iface, 0);
 	if (ed == NULL) {
 		printf("%s: no endpoint descriptor\n", USBDEVNAME(sc->sc_dev));
@@ -257,7 +261,7 @@ USB_ATTACH(uhub)
 
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
 		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_status,
-		  sizeof(sc->sc_status), uhub_intr, UHUB_INTR_INTERVAL);
+		  sizeof(sc->sc_status), uhub_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		printf("%s: cannot open interrupt pipe\n",
 		       USBDEVNAME(sc->sc_dev));
@@ -294,12 +298,14 @@ USB_ATTACH(uhub)
 	 *        proceed with device attachment
 	 */
 
+#if 0
 	if (UHUB_IS_HIGH_SPEED(sc) && nports > 0) {
 		tts = malloc((UHUB_IS_SINGLE_TT(sc) ? 1 : nports) *
 			     sizeof (struct usbd_tt), M_USBDEV, M_NOWAIT);
 		if (!tts)
 			goto bad;
 	}
+#endif
 	/* Set up data structures */
 	for (p = 0; p < nports; p++) {
 		struct usbd_port *up = &hub->ports[p];
@@ -313,12 +319,14 @@ USB_ATTACH(uhub)
 			up->power = USB_MIN_POWER;
 		up->restartcnt = 0;
 		up->reattach = 0;
+#if 0
 		if (UHUB_IS_HIGH_SPEED(sc)) {
 			up->tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p];
 			up->tt->hub = hub;
 		} else {
 			up->tt = NULL;
 		}
+#endif
 	}
 
 	/* XXX should check for none, individual, or ganged power? */
@@ -593,8 +601,10 @@ USB_DETACH(uhub)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_hub,
 			   USBDEV(sc->sc_dev));
 
+#if 0
 	if (hub->ports[0].tt)
 		free(hub->ports[0].tt, M_USBDEV);
+#endif
 	free(hub, M_USBDEV);
 	sc->sc_hub->hub = NULL;
 
@@ -640,7 +650,7 @@ uhub_child_detached(device_t self, device_t child)
  * to be explored again.
  */
 void
-uhub_intr(usbd_xfer_handle xfer __unused, usbd_private_handle addr,
+uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
     usbd_status status)
 {
 	struct uhub_softc *sc = addr;

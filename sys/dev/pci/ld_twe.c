@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.24.10.1 2006/10/22 06:06:18 yamt Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.24.10.2 2006/12/10 07:17:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.24.10.1 2006/10/22 06:06:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.24.10.2 2006/12/10 07:17:45 yamt Exp $");
 
 #include "rnd.h"
 
@@ -92,8 +92,8 @@ static const struct twe_callbacks ld_twe_callbacks = {
 };
 
 static int
-ld_twe_match(struct device *parent __unused, struct cfdata *match __unused,
-    void *aux __unused)
+ld_twe_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	return (1);

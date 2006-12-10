@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.70.10.1 2006/10/22 06:06:47 yamt Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.70.10.2 2006/12/10 07:18:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.70.10.1 2006/10/22 06:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.70.10.2 2006/12/10 07:18:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ static const struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 };
 
 int
-atapiprint(void *aux __unused, const char *pnp)
+atapiprint(void *aux, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("atapibus at %s", pnp);
@@ -115,7 +115,7 @@ atapiprint(void *aux __unused, const char *pnp)
 }
 
 static int
-atapibusmatch(struct device *parent __unused, struct cfdata *cf __unused,
+atapibusmatch(struct device *parent, struct cfdata *cf,
     void *aux)
 {
 	struct scsipi_channel *chan = aux;
@@ -131,7 +131,7 @@ atapibusmatch(struct device *parent __unused, struct cfdata *cf __unused,
 
 static int
 atapibussubmatch(struct device *parent, struct cfdata *cf,
-    const int *ldesc __unused, void *aux)
+    const int *ldesc, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
@@ -143,7 +143,7 @@ atapibussubmatch(struct device *parent, struct cfdata *cf,
 }
 
 static void
-atapibusattach(struct device *parent __unused, struct device *self, void *aux)
+atapibusattach(struct device *parent, struct device *self, void *aux)
 {
 	struct atapibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = aux;
@@ -252,7 +252,7 @@ atapi_probe_bus(struct atapibus_softc *sc, int target)
 }
 
 void *
-atapi_probe_device(struct atapibus_softc *sc, int target __unused,
+atapi_probe_device(struct atapibus_softc *sc, int target,
     struct scsipi_periph *periph, struct scsipibus_attach_args *sa)
 {
 	struct scsipi_channel *chan = sc->sc_channel;

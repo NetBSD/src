@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.1.6.1 2006/10/22 06:06:17 yamt Exp $ */
+/* $NetBSD: if_msk.c,v 1.1.6.2 2006/12/10 07:17:44 yamt Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.11 2006/08/17 22:07:40 brad Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ msk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
 }
 
 void
-msk_marv_miibus_statchg(struct device *dev __unused)
+msk_marv_miibus_statchg(struct device *dev)
 {
 	DPRINTFN(9, ("msk_marv_miibus_statchg: gpcr=%x\n",
 		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
@@ -618,7 +618,7 @@ msk_jalloc(struct sk_if_softc *sc_if)
  * Release a jumbo buffer.
  */
 void
-msk_jfree(struct mbuf *m, caddr_t buf, size_t size __unused, void *arg)
+msk_jfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 {
 	struct sk_jpool_entry *entry;
 	struct sk_if_softc *sc;
@@ -763,7 +763,7 @@ msk_lookup(const struct pci_attach_args *pa)
  * IDs against our list and return a device name if we find a match.
  */
 int
-mskc_probe(struct device *parent __unused, struct cfdata *match __unused,
+mskc_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -873,7 +873,7 @@ void msk_reset(struct sk_softc *sc)
 }
 
 int
-msk_probe(struct device *parent __unused, struct cfdata *match __unused,
+msk_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct skc_attach_args *sa = aux;
@@ -1092,7 +1092,7 @@ mskcprint(void *aux, const char *pnp)
  * setup and ethernet/BPF attach.
  */
 void
-mskc_attach(struct device *parent __unused, struct device *self, void *aux)
+mskc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sk_softc *sc = (struct sk_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -1568,7 +1568,7 @@ mskc_shutdown(void *v)
 }
 
 __inline int
-msk_rxvalid(struct sk_softc *sc __unused, u_int32_t stat, u_int32_t len)
+msk_rxvalid(struct sk_softc *sc, u_int32_t stat, u_int32_t len)
 {
 	if ((stat & (YU_RXSTAT_CRCERR | YU_RXSTAT_LONGERR |
 	    YU_RXSTAT_MIIERR | YU_RXSTAT_BADFC | YU_RXSTAT_GOODFC |
@@ -2092,7 +2092,7 @@ msk_init(struct ifnet *ifp)
 }
 
 void
-msk_stop(struct ifnet *ifp, int disable __unused)
+msk_stop(struct ifnet *ifp, int disable)
 {
 	struct sk_if_softc	*sc_if = ifp->if_softc;
 	struct sk_softc		*sc = sc_if->sk_softc;

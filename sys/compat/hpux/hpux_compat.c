@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.80 2006/09/09 11:27:19 tsutsui Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.80.2.1 2006/12/10 07:16:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.80 2006/09/09 11:27:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.80.2.1 2006/12/10 07:16:44 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1205,8 +1205,8 @@ hpux_sys_stime_6x(l, v, retval)
 
 	tv.tv_sec = SCARG(uap, time);
 	tv.tv_usec = 0;
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
+	if ((error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL)))
 		return (error);
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */

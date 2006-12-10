@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.16.8.1 2006/10/22 06:05:16 yamt Exp $ */
+/* $NetBSD: lapic.c,v 1.16.8.2 2006/12/10 07:16:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.16.8.1 2006/10/22 06:05:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.16.8.2 2006/12/10 07:16:43 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.16.8.1 2006/10/22 06:05:16 yamt Exp $");
 void		lapic_delay(int);
 void		lapic_microtime(struct timeval *);
 static u_int32_t lapic_gettick(void);
-void		lapic_clockintr(void *, struct intrframe);
+void		lapic_clockintr(void *, struct intrframe *);
 static void 	lapic_map(paddr_t);
 
 static void lapic_hwmask(struct pic *, int);
@@ -238,7 +238,7 @@ u_int64_t lapic_frac_cycle_per_usec;
 u_int32_t lapic_delaytab[26];
 
 void
-lapic_clockintr(void *arg __unused, struct intrframe frame)
+lapic_clockintr(void *arg, struct intrframe *frame)
 {
 #if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 #ifndef __HAVE_TIMECOUNTER
@@ -333,7 +333,7 @@ lapic_clockintr(void *arg __unused, struct intrframe frame)
 #endif /* !__HAVE_TIMECOUNTER */
 #endif /* I586_CPU || I686_CPU || __x86_64__ */
 
-	hardclock((struct clockframe *)&frame);
+	hardclock((struct clockframe *)frame);
 }
 
 #if !defined(__HAVE_TIMECOUNTER) && defined(NTP)
@@ -596,7 +596,7 @@ x86_ipi(vec,target,dl)
  */
 
 static void
-lapic_hwmask(struct pic *pic __unused, int pin)
+lapic_hwmask(struct pic *pic, int pin)
 {
 	int reg;
 	u_int32_t val;
@@ -608,7 +608,7 @@ lapic_hwmask(struct pic *pic __unused, int pin)
 }
 
 static void
-lapic_hwunmask(struct pic *pic __unused, int pin)
+lapic_hwunmask(struct pic *pic, int pin)
 {
 	int reg;
 	u_int32_t val;
@@ -620,7 +620,7 @@ lapic_hwunmask(struct pic *pic __unused, int pin)
 }
 
 static void
-lapic_setup(struct pic *pic __unused, struct cpu_info *ci __unused,
-    int pin __unused, int idtvec __unused, int type __unused)
+lapic_setup(struct pic *pic, struct cpu_info *ci,
+    int pin, int idtvec, int type)
 {
 }

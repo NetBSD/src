@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.19.10.1 2006/10/22 06:05:35 yamt Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.19.10.2 2006/12/10 07:16:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.19.10.1 2006/10/22 06:05:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.19.10.2 2006/12/10 07:16:58 yamt Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -101,7 +101,7 @@ CFATTACH_DECL(ahc_cardbus, sizeof(struct ahc_cardbus_softc),
     ahc_cardbus_match, ahc_cardbus_attach, ahc_cardbus_detach, ahc_activate);
 
 int
-ahc_cardbus_match(struct device *parent __unused, struct cfdata *match __unused,
+ahc_cardbus_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
@@ -114,7 +114,7 @@ ahc_cardbus_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-ahc_cardbus_attach(struct device *parent __unused, struct device *self,
+ahc_cardbus_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct cardbus_attach_args *ca = aux;

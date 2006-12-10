@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.59.6.1 2006/10/22 06:05:24 yamt Exp $ */
+/*	$NetBSD: mach_task.c,v 1.59.6.2 2006/12/10 07:16:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.59.6.1 2006/10/22 06:05:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.59.6.2 2006/12/10 07:16:48 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -651,7 +651,7 @@ mach_task_terminate(args)
 }
 
 int
-mach_sys_task_for_pid(struct lwp *l, void *v, register_t *retval __unused)
+mach_sys_task_for_pid(struct lwp *l, void *v, register_t *retval)
 {
 	struct mach_sys_task_for_pid_args /* {
 		syscallarg(mach_port_t) target_tport;

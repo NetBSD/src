@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.8.10.1 2006/10/22 06:06:18 yamt Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.8.10.2 2006/12/10 07:17:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.8.10.1 2006/10/22 06:06:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.8.10.2 2006/12/10 07:17:45 yamt Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -132,7 +132,7 @@ mpt_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-mpt_pci_match(struct device *parent __unused, struct cfdata *cf __unused,
+mpt_pci_match(struct device *parent, struct cfdata *cf,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -144,7 +144,7 @@ mpt_pci_match(struct device *parent __unused, struct cfdata *cf __unused,
 }
 
 static void
-mpt_pci_attach(struct device *parent __unused, struct device *self, void *aux)
+mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mpt_pci_softc *psc = (void *) self;
 	mpt_softc_t *mpt = &psc->sc_mpt;

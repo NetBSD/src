@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_pnpbios.c,v 1.11 2005/12/26 19:24:00 perry Exp $ */
+/*	$NetBSD: lm_pnpbios.c,v 1.11.22.1 2006/12/10 07:16:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.11 2005/12/26 19:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.11.22.1 2006/12/10 07:16:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ lm_pnpbios_attach(parent, self, aux)
 
 	printf("%s", self->dv_xname);
 
-	/* Bus-independant attach */
+	/* Bus-independent attach */
 	sc->lm_writereg = lm_pnpbios_writereg;
 	sc->lm_readreg = lm_pnpbios_readreg;
 

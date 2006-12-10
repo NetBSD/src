@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_aesctr.c,v 1.3.22.1 2006/10/22 06:07:34 yamt Exp $	*/
+/*	$NetBSD: esp_aesctr.c,v 1.3.22.2 2006/12/10 07:19:14 yamt Exp $	*/
 /*	$KAME: esp_aesctr.c,v 1.2 2003/07/20 00:29:37 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.3.22.1 2006/10/22 06:07:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.3.22.2 2006/12/10 07:19:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,14 +107,14 @@ esp_aesctr_mature(sav)
 }
 
 size_t
-esp_aesctr_schedlen(const struct esp_algorithm *algo __unused)
+esp_aesctr_schedlen(const struct esp_algorithm *algo)
 {
 
 	return sizeof(aesctr_ctx);
 }
 
 int
-esp_aesctr_schedule(const struct esp_algorithm *algo __unused,
+esp_aesctr_schedule(const struct esp_algorithm *algo,
     struct secasvar *sav)
 {
 	aesctr_ctx *ctx;
@@ -300,7 +300,7 @@ int
 esp_aesctr_encrypt(
     struct mbuf *m,
     size_t off,
-    size_t plen __unused,
+    size_t plen,
     struct secasvar *sav,
     const struct esp_algorithm *algo,
     int ivlen

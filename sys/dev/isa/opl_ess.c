@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ess.c,v 1.11.8.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: opl_ess.c,v 1.11.8.2 2006/12/10 07:17:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_ess.c,v 1.11.8.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_ess.c,v 1.11.8.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ CFATTACH_DECL(opl_ess, sizeof(struct opl_softc),
     opl_ess_match, opl_ess_attach, NULL, NULL);
 
 int
-opl_ess_match(struct device *parent, struct cfdata *match __unused, void *aux)
+opl_ess_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct ess_softc *ssc = (struct ess_softc *)parent;
@@ -81,7 +81,7 @@ opl_ess_match(struct device *parent, struct cfdata *match __unused, void *aux)
 }
 
 void
-opl_ess_attach(struct device *parent, struct device *self, void *aux __unused)
+opl_ess_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ess_softc *ssc = (struct ess_softc *)parent;
 	struct opl_softc *sc = (struct opl_softc *)self;

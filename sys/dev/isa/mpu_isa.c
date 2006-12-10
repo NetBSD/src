@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_isa.c,v 1.14.22.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.14.22.2 2006/12/10 07:17:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.14.22.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.14.22.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ CFATTACH_DECL(mpu_isa, sizeof(struct mpu_isa_softc),
     mpu_isa_match, mpu_isa_attach, NULL, NULL);
 
 int
-mpu_isa_match(struct device *parent __unused, struct cfdata *match __unused,
+mpu_isa_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -107,7 +107,7 @@ mpu_isa_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-mpu_isa_attach(struct device *parent __unused, struct device *self, void *aux)
+mpu_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mpu_isa_softc *sc = (struct mpu_isa_softc *)self;
 	struct isa_attach_args *ia = aux;

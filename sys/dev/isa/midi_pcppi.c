@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.13.6.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.13.6.2 2006/12/10 07:17:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.13.6.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.13.6.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,8 @@ struct midisyn_methods midi_pcppi_hw = {
 int midi_pcppi_attached = 0;	/* Not very nice */
 
 int
-midi_pcppi_match(struct device *parent __unused, struct cfdata *match __unused,
-    void *aux __unused)
+midi_pcppi_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	return (!midi_pcppi_attached);
 }
@@ -118,7 +118,7 @@ midi_pcppi_attach(parent, self, aux)
 
 void
 midi_pcppi_on(midisyn *ms,
-    uint_fast16_t voice __unused, midipitch_t mp, int16_t level __unused)
+    uint_fast16_t voice, midipitch_t mp, int16_t level)
 {
 	pcppi_tag_t t = ms->data;
 
@@ -128,8 +128,7 @@ midi_pcppi_on(midisyn *ms,
 }
 
 void
-midi_pcppi_off(midisyn *ms, uint_fast16_t  __unused voice,
-    uint_fast8_t vel __unused)
+midi_pcppi_off(midisyn *ms, uint_fast16_t voice, uint_fast8_t vel)
 {
 	pcppi_tag_t t = ms->data;
 

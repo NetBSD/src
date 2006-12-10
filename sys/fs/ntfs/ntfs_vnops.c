@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.29.10.1 2006/10/22 06:07:09 yamt Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.29.10.2 2006/12/10 07:18:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.29.10.1 2006/10/22 06:07:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.29.10.2 2006/12/10 07:18:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -746,13 +746,10 @@ ntfs_lookup(void *v)
 	struct componentname *cnp = ap->a_cnp;
 	kauth_cred_t cred = cnp->cn_cred;
 	int error;
-	int lockparent = cnp->cn_flags & LOCKPARENT;
-#ifdef NTFS_DEBUG
-	int wantparent = cnp->cn_flags & (LOCKPARENT|WANTPARENT);
-#endif
-	dprintf(("ntfs_lookup: \"%.*s\" (%ld bytes) in %llu, lp: %d, wp: %d \n",
+
+	dprintf(("ntfs_lookup: \"%.*s\" (%ld bytes) in %llu\n",
 	    (int)cnp->cn_namelen, cnp->cn_nameptr, cnp->cn_namelen,
-	    (unsigned long long)dip->i_number, lockparent, wantparent));
+	    (unsigned long long)dip->i_number));
 
 	error = VOP_ACCESS(dvp, VEXEC, cred, cnp->cn_lwp);
 	if(error)
@@ -790,30 +787,20 @@ ntfs_lookup(void *v)
 		    (unsigned long long)dip->i_number));
 
 		VOP_UNLOCK(dvp, 0);
-		cnp->cn_flags |= PDIRUNLOCK;
-
 		error = ntfs_ntvattrget(ntmp, dip, NTFS_A_NAME, NULL, 0, &vap);
-		if(error)
+		if (error) {
+			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
+		}
 
 		dprintf(("ntfs_lookup: parentdir: %d\n",
 			 vap->va_a_name->n_pnumber));
 		error = VFS_VGET(ntmp->ntm_mountp,
 				 vap->va_a_name->n_pnumber,ap->a_vpp);
 		ntfs_ntvattrrele(vap);
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {
-			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
-				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
-		}
-
-		if (lockparent && (cnp->cn_flags & ISLASTCN)) {
-			error = vn_lock(dvp, LK_EXCLUSIVE);
-			if (error) {
-				vput( *(ap->a_vpp) );
-				return (error);
-			}
-			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 	} else {
 		error = ntfs_ntlookupfile(ntmp, dvp, cnp, ap->a_vpp);
@@ -824,11 +811,6 @@ ntfs_lookup(void *v)
 
 		dprintf(("ntfs_lookup: found ino: %llu\n",
 		    (unsigned long long)VTONT(*ap->a_vpp)->i_number));
-
-		if(!lockparent || (cnp->cn_flags & ISLASTCN) == 0) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 	}
 
 	if (cnp->cn_flags & MAKEENTRY)

@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.21.6.1 2006/10/22 06:07:39 yamt Exp $
+ *	$Id: i4b_ipr.c,v 1.21.6.2 2006/12/10 07:19:20 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.21.6.1 2006/10/22 06:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.21.6.2 2006/12/10 07:19:20 yamt Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -415,7 +415,7 @@ iripattach()
  *---------------------------------------------------------------------------*/
 static int
 iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-	 struct rtentry *rtp __unused)
+	 struct rtentry *rtp)
 {
 	struct ipr_softc *sc;
 	int s, rv;
@@ -643,8 +643,10 @@ iripioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #else
 			struct lwp *l = curlwp;		/* XXX */
 
-			if((error = kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+			if((error = kauth_authorize_network(l->l_cred,
+			    KAUTH_NETWORK_INTERFACE,
+			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
+			    (void *)cmd, NULL)) != 0)
 #endif
 				break;
 		        sl_compress_setup(sc->sc_compr, *(int *)data);
@@ -889,7 +891,7 @@ ipr_disconnect(void *softc, void *cdp)
  *	in case of dial problems
  *---------------------------------------------------------------------------*/
 static void
-ipr_dialresponse(void *softc, int status, cause_t cause __unused)
+ipr_dialresponse(void *softc, int status, cause_t cause)
 {
 	struct ipr_softc *sc = softc;
 	sc->sc_dialresp = status;
@@ -1197,7 +1199,7 @@ ipr_tx_queue_empty(void *softc)
  *	be used to implement an activity timeout mechanism.
  *---------------------------------------------------------------------------*/
 static void
-ipr_activity(void *softc, int rxtx __unused)
+ipr_activity(void *softc, int rxtx)
 {
 	struct ipr_softc *sc = softc;
 	sc->sc_cdp->last_active_time = SECOND;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.65.4.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: wss.c,v 1.65.4.2 2006/12/10 07:17:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.65.4.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.65.4.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ wssattach(struct wss_softc *sc)
 }
 
 int
-wss_getdev(void *addr __unused, struct audio_device *retp)
+wss_getdev(void *addr, struct audio_device *retp)
 {
 
 	*retp = wss_device;
@@ -214,7 +214,7 @@ wss_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 }
 
 int
-wss_query_devinfo(void *addr __unused, mixer_devinfo_t *dip)
+wss_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 
 	DPRINTF(("wss_query_devinfo: index=%d\n", dip->index));

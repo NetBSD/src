@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_acpi.c,v 1.12.16.1 2006/10/22 06:05:31 yamt Exp $ */
+/* $NetBSD: lpt_acpi.c,v 1.12.16.2 2006/12/10 07:16:57 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.12.16.1 2006/10/22 06:05:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.12.16.2 2006/12/10 07:16:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ static const char * const lpt_acpi_ids[] = {
  * lpt_acpi_match: autoconf(9) match routine
  */
 static int
-lpt_acpi_match(struct device *parent __unused, struct cfdata *match __unused,
+lpt_acpi_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -86,7 +86,7 @@ lpt_acpi_match(struct device *parent __unused, struct cfdata *match __unused,
  * lpt_acpi_attach: autoconf(9) attach routine
  */
 static void
-lpt_acpi_attach(struct device *parent __unused, struct device *self, void *aux)
+lpt_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lpt_acpi_softc *asc = (struct lpt_acpi_softc *)self;
 	struct lpt_softc *sc = &asc->sc_lpt;

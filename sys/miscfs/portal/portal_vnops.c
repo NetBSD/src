@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.66.8.1 2006/10/22 06:07:23 yamt Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.66.8.2 2006/12/10 07:18:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.66.8.1 2006/10/22 06:07:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.66.8.2 2006/12/10 07:18:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,6 +218,7 @@ portal_lookup(v)
 	    M_WAITOK);
 
 	pt = VTOPORTAL(fvp);
+
 	/*
 	 * Save all of the remaining pathname and
 	 * advance the namei next pointer to the end
@@ -234,15 +235,7 @@ portal_lookup(v)
 	pt->pt_fileid = portal_fileid++;
 
 	*vpp = fvp;
-	VOP_LOCK(fvp, LK_EXCLUSIVE);
-	/*
-	 * As we are the last component of the path name, fix up
-	 * the locking on the directory node.
-	 */
-	if ((cnp->cn_flags & LOCKPARENT) == 0) {
-		VOP_UNLOCK(dvp, 0);
-		cnp->cn_flags |= PDIRUNLOCK;
-	}
+	VOP_LOCK(fvp, LK_EXCLUSIVE | LK_RETRY);
 	return (0);
 
 bad:;
@@ -595,7 +588,7 @@ portal_setattr(v)
  */
 /*ARGSUSED*/
 int
-portal_readdir(void *v __unused)
+portal_readdir(void *v)
 {
 
 	return (0);
@@ -680,7 +673,7 @@ portal_pathconf(v)
  */
 /* ARGSUSED */
 int
-portal_print(void *v __unused)
+portal_print(void *v)
 {
 	printf("tag VT_PORTAL, portal vnode\n");
 	return (0);

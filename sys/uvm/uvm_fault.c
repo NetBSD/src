@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.112.2.1 2006/10/22 06:07:52 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.112.2.2 2006/12/10 07:19:33 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.112.2.1 2006/10/22 06:07:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.112.2.2 2006/12/10 07:19:33 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -797,8 +797,8 @@ ReFault:
 	 */
 
 	if (UVM_ET_ISNEEDSCOPY(ufi.entry)) {
-		KASSERT(fault_flag != UVM_FAULT_WIREMAX);
 		if (cow_now || (ufi.entry->object.uvm_obj == NULL)) {
+			KASSERT(fault_flag != UVM_FAULT_WIREMAX);
 			/* need to clear */
 			UVMHIST_LOG(maphist,
 			    "  need to clear needs_copy and refault",0,0,0,0);
@@ -1284,8 +1284,7 @@ ReFault:
 				uvm_pagecopy(anon->an_page, pg);
 
 				/* force reload */
-				pmap_page_protect(anon->an_page,
-						  VM_PROT_NONE);
+				pmap_page_protect(anon->an_page, VM_PROT_NONE);
 				uvm_lock_pageq();	  /* KILL loan */
 
 				anon->an_page->uanon = NULL;

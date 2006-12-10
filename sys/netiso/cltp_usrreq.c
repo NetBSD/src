@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.28.6.1 2006/10/22 06:07:42 yamt Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.28.6.2 2006/12/10 07:19:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.28.6.1 2006/10/22 06:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.28.6.2 2006/12/10 07:19:23 yamt Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -186,7 +186,7 @@ void
 cltp_ctlinput(
     int cmd,
     struct sockaddr *sa,
-    void *dummy __unused)
+    void *dummy)
 {
 	struct sockaddr_iso *siso;
 

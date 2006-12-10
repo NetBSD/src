@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.57 2006/06/27 23:02:04 he Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.57.6.1 2006/12/10 07:15:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.57 2006/06/27 23:02:04 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.57.6.1 2006/12/10 07:15:49 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -368,7 +368,7 @@ initarm(void *arm_bootargs)
 		dc21285_fclk = ebsabootinfo.bt_fclk;
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
-	/* XXX must make the memory description h/w independant */
+	/* XXX must make the memory description h/w independent */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = ebsabootinfo.bt_memstart;
 	bootconfig.dram[0].pages = (ebsabootinfo.bt_memend

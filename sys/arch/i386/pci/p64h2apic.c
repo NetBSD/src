@@ -1,4 +1,4 @@
-/* $NetBSD: p64h2apic.c,v 1.9.16.1 2006/10/22 06:04:48 yamt Exp $ */
+/* $NetBSD: p64h2apic.c,v 1.9.16.2 2006/12/10 07:16:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.9.16.1 2006/10/22 06:04:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.9.16.2 2006/12/10 07:16:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ int	p64h2print(void *, const char *pnp);
 
 
 static int
-p64h2match(struct device *parent __unused, struct cfdata *match __unused,
+p64h2match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -84,7 +84,7 @@ p64h2match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-p64h2attach(struct device *parent __unused, struct device *self, void *aux)
+p64h2attach(struct device *parent, struct device *self, void *aux)
 {
 	struct p64h2apic_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;

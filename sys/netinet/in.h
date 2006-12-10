@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.76 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: in.h,v 1.76.10.1 2006/12/10 07:19:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -202,8 +202,20 @@ struct in_addr {
 #define	IN_BADCLASS(i)		(((uint32_t)(i) & __IPADDR(0xf0000000)) == \
 				 __IPADDR(0xf0000000))
 
+#define IN_LINKLOCAL(i)	(((uint32_t)(i) & __IPADDR(0xffff0000)) == \
+			 __IPADDR(0xa9fe0000))
+
+#define	IN_PRIVATE(i)	((((uint32_t)(i) & __IPADDR(0xff000000)) ==	\
+			  __IPADDR(0x0a000000))	||			\
+			 (((uint32_t)(i) & __IPADDR(0xfff00000)) ==	\
+			  __IPADDR(0xac100000))	||			\
+			 (((uint32_t)(i) & __IPADDR(0xffff0000)) ==	\
+			  __IPADDR(0xc0a80000)))
+
 #define	IN_LOCAL_GROUP(i)	(((uint32_t)(i) & __IPADDR(0xffffff00)) == \
 				 __IPADDR(0xe0000000))
+
+#define	IN_ANY_LOCAL(i)		(IN_LINKLOCAL(i) || IN_LOCAL_GROUP(i))
 
 #define	INADDR_ANY		__IPADDR(0x00000000)
 #define	INADDR_LOOPBACK		__IPADDR(0x7f000001)

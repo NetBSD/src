@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.25.22.1 2006/10/22 06:06:52 yamt Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.25.22.2 2006/12/10 07:18:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.25.22.1 2006/10/22 06:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.25.22.2 2006/12/10 07:18:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ uftdi_open(void *vsc, int portno)
 }
 
 Static void
-uftdi_read(void *vsc, int portno __unused, u_char **ptr, u_int32_t *count)
+uftdi_read(void *vsc, int portno, u_char **ptr, u_int32_t *count)
 {
 	struct uftdi_softc *sc = vsc;
 	u_char msr, lsr;
@@ -581,7 +581,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 }
 
 void
-uftdi_get_status(void *vsc, int portno __unused, u_char *lsr, u_char *msr)
+uftdi_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 {
 	struct uftdi_softc *sc = vsc;
 

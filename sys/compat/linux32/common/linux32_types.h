@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.2 2006/09/13 19:55:49 manu Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.2.2.1 2006/12/10 07:16:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -63,7 +63,7 @@ struct linux32_sysctl {
 	netbsd32_size_tp oldlenp;
 	netbsd32_voidp newval;
 	netbsd32_size_t newlen;
-	unsigned int __unused0[4];
+	unsigned int0[4];
 };
 
 struct linux32_tms {

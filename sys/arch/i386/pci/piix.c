@@ -1,4 +1,4 @@
-/*	$NetBSD: piix.c,v 1.11.6.1 2006/10/22 06:04:48 yamt Exp $	*/
+/*	$NetBSD: piix.c,v 1.11.6.2 2006/12/10 07:16:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.11.6.1 2006/10/22 06:04:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.11.6.2 2006/12/10 07:16:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ ich_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
 }
 
 int
-piix_getclink(pciintr_icu_handle_t v __unused, int link, int *clinkp)
+piix_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 	DPRINTF(("PIIX link value 0x%x: ", link));
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ym_pnpbios.c,v 1.11.22.1 2006/10/22 06:04:49 yamt Exp $ */
+/* $NetBSD: ym_pnpbios.c,v 1.11.22.2 2006/12/10 07:16:12 yamt Exp $ */
 /*
  * Copyright (c) 1999
  *	Matthias Drochner.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.11.22.1 2006/10/22 06:04:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.11.22.2 2006/12/10 07:16:12 yamt Exp $");
 
 #include "mpu_ym.h"
 
@@ -68,8 +68,8 @@ CFATTACH_DECL(ym_pnpbios, sizeof(struct ym_softc),
     ym_pnpbios_match, ym_pnpbios_attach, NULL, NULL);
 
 int
-ym_pnpbios_match(struct device *parent __unused,
-    struct cfdata *match __unused, void *aux)
+ym_pnpbios_match(struct device *parent,
+    struct cfdata *match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
@@ -80,7 +80,7 @@ ym_pnpbios_match(struct device *parent __unused,
 }
 
 void
-ym_pnpbios_attach(struct device *parent __unused, struct device *self,
+ym_pnpbios_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct ym_softc *sc = (void *)self;

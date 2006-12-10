@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.94.6.1 2006/10/22 06:05:31 yamt Exp $	*/
+/*	$NetBSD: acpi.c,v 1.94.6.2 2006/12/10 07:16:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.94.6.1 2006/10/22 06:05:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.94.6.2 2006/12/10 07:16:57 yamt Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -239,6 +239,21 @@ acpi_probe(void)
 	return 1;
 }
 
+static int
+acpi_submatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
+{
+	struct cfattach *ca;
+
+	ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
+	return (ca == &acpi_ca);
+}
+
+int
+acpi_check(device_t parent, const char *ifattr)
+{
+	return (config_search_ia(acpi_submatch, parent, ifattr, NULL) != NULL);
+}
+
 ACPI_STATUS
 acpi_OsGetRootPointer(UINT32 Flags, ACPI_POINTER *PhysicalAddress)
 {
@@ -268,8 +283,8 @@ acpi_OsGetRootPointer(UINT32 Flags, ACPI_POINTER *PhysicalAddress)
  *	Autoconfiguration `match' routine.
  */
 static int
-acpi_match(struct device *parent __unused, struct cfdata *match __unused,
-    void *aux __unused)
+acpi_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	/*
 	 * XXX Check other locators?  Hard to know -- machine
@@ -289,7 +304,7 @@ acpi_match(struct device *parent __unused, struct cfdata *match __unused,
  *	and enable the ACPI subsystem.
  */
 static void
-acpi_attach(struct device *parent __unused, struct device *self, void *aux)
+acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpi_softc *sc = (void *) self;
 	struct acpibus_attach_args *aa = aux;
@@ -405,7 +420,7 @@ acpi_attach(struct device *parent __unused, struct device *self, void *aux)
  *	might confuse us.
  */
 static void
-acpi_shutdown(void *arg __unused)
+acpi_shutdown(void *arg)
 {
 	/* nothing */
 }
@@ -568,7 +583,7 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
  */
 static ACPI_STATUS
 acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
-    void **status __unused)
+    void **status)
 {
 	struct acpi_make_devnode_state *state = context;
 #if defined(ACPI_DEBUG) || defined(ACPI_EXTRA_DEBUG)
@@ -1031,7 +1046,7 @@ acpi_set_wake_gpe(ACPI_HANDLE handle)
  *****************************************************************************/
 
 static int
-is_available_state(struct acpi_softc *sc __unused, int state)
+is_available_state(struct acpi_softc *sc, int state)
 {
 	UINT8 type_a, type_b;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.59.4.1 2006/10/22 06:05:44 yamt Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.59.4.2 2006/12/10 07:17:05 yamt Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.59.4.1 2006/10/22 06:05:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.59.4.2 2006/12/10 07:17:05 yamt Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -1302,7 +1302,7 @@ dp8390_activate(self, act)
 }
 
 int
-dp8390_detach(struct dp8390_softc *sc, int flags __unused)
+dp8390_detach(struct dp8390_softc *sc, int flags)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.38.4.1 2006/10/22 06:06:15 yamt Exp $	*/
+/*	$NetBSD: amr.c,v 1.38.4.2 2006/12/10 07:17:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.38.4.1 2006/10/22 06:06:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.38.4.2 2006/12/10 07:17:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.38.4.1 2006/10/22 06:06:15 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/kthread.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -228,7 +229,7 @@ amr_outl(struct amr_softc *amr, int off, u_int32_t val)
  * Match a supported device.
  */
 static int
-amr_match(struct device *parent __unused, struct cfdata *match __unused,
+amr_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa;
@@ -263,7 +264,7 @@ amr_match(struct device *parent __unused, struct cfdata *match __unused,
  * Attach a supported device.
  */
 static void
-amr_attach(struct device *parent __unused, struct device *self, void *aux)
+amr_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct amr_attach_args amra;
@@ -351,7 +352,7 @@ amr_attach(struct device *parent __unused, struct device *self, void *aux)
 	 *
 	 * The standard mailbox structure needs to be aligned on a 16-byte
 	 * boundary.  The 64-bit mailbox has one extra field, 4 bytes in
-	 * size, which preceeds the standard mailbox.
+	 * size, which precedes the standard mailbox.
 	 */
 	size = AMR_SGL_SIZE * AMR_MAX_CMDS + 0x2000;
 	amr->amr_dmasize = size;
@@ -731,7 +732,7 @@ amr_init(struct amr_softc *amr, const char *intrstr,
  * shutdown time.
  */
 static void
-amr_shutdown(void *cookie __unused)
+amr_shutdown(void *cookie)
 {
 	extern struct cfdriver amr_cd;
 	struct amr_softc *amr;
@@ -1331,7 +1332,7 @@ amr_ccb_dump(struct amr_softc *amr, struct amr_ccb *ac)
 }
 
 static int
-amropen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
+amropen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct amr_softc *amr;
 	 
@@ -1345,7 +1346,7 @@ amropen(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
 }
 
 static int
-amrclose(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused)
+amrclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct amr_softc *amr;
 
@@ -1355,8 +1356,8 @@ amrclose(dev_t dev, int flag __unused, int mode __unused, struct lwp *l __unused
 }
 
 static int
-amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
-    struct lwp *l __unused)
+amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct amr_softc *amr;
 	struct amr_user_ioctl *au;
@@ -1376,8 +1377,10 @@ amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag __unused,
 		*(int *)data = AMR_IO_VERSION_NUMBER;
 		return 0;
 	case AMR_IO_COMMAND:
-		if (securelevel >= 2)
-			return (EPERM);
+		error = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
+		if (error)
+			return (error);
 
 		au = (struct amr_user_ioctl *)data;
 		au_cmd = au->au_cmd;

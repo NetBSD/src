@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.66.4.1 2006/10/22 06:05:24 yamt Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.66.4.2 2006/12/10 07:16:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.66.4.1 2006/10/22 06:05:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.66.4.2 2006/12/10 07:16:48 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1081,7 +1081,7 @@ linux_sys_getsockopt(l, v, retval)
 #define IF_NAME_LEN 16
 
 int
-linux_getifhwaddr(struct lwp *l, register_t *retval __unused, u_int fd,
+linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
     void *data)
 {
 	/* Not the full structure, just enough to map what we do here */

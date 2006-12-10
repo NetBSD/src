@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.14.4.1 2006/10/22 06:06:52 yamt Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.14.4.2 2006/12/10 07:18:17 yamt Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.14.4.1 2006/10/22 06:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.14.4.2 2006/12/10 07:18:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -484,7 +484,7 @@ ubsa_break(struct ubsa_softc *sc, int onoff)
 }
 
 Static void
-ubsa_set(void *addr, int portno __unused, int reg, int onoff)
+ubsa_set(void *addr, int portno, int reg, int onoff)
 {
 	struct ubsa_softc *sc;
 
@@ -609,7 +609,7 @@ ubsa_flow(struct ubsa_softc *sc, tcflag_t cflag, tcflag_t iflag)
 }
 
 Static int
-ubsa_param(void *addr, int portno __unused, struct termios *ti)
+ubsa_param(void *addr, int portno, struct termios *ti)
 {
 	struct ubsa_softc *sc = addr;
 
@@ -625,7 +625,7 @@ ubsa_param(void *addr, int portno __unused, struct termios *ti)
 }
 
 Static int
-ubsa_open(void *addr, int portno __unused)
+ubsa_open(void *addr, int portno)
 {
 	struct ubsa_softc *sc = addr;
 	int err;
@@ -658,7 +658,7 @@ ubsa_open(void *addr, int portno __unused)
 }
 
 Static void
-ubsa_close(void *addr, int portno __unused)
+ubsa_close(void *addr, int portno)
 {
 	struct ubsa_softc *sc = addr;
 	int err;
@@ -685,7 +685,7 @@ ubsa_close(void *addr, int portno __unused)
 }
 
 Static void
-ubsa_intr(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct ubsa_softc *sc = priv;
@@ -716,7 +716,7 @@ ubsa_intr(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
 }
 
 Static void
-ubsa_get_status(void *addr, int portno __unused, u_char *lsr, u_char *msr)
+ubsa_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 {
 	struct ubsa_softc *sc = addr;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.31.6.1 2006/10/22 06:07:50 yamt Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.31.6.2 2006/12/10 07:19:32 yamt Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,10 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.31.6.1 2006/10/22 06:07:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.31.6.2 2006/12/10 07:19:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
+#include "opt_quota.h"
 #endif
 
 #include <sys/param.h>
@@ -110,11 +111,11 @@ static int snapacct_ufs2(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
     struct fs *, ufs_lbn_t, int);
 static int mapacct_ufs2(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
     struct fs *, ufs_lbn_t, int);
+static int readvnblk(struct vnode *, caddr_t, ufs2_daddr_t);
 #endif /* !defined(FFS_NO_SNAPSHOT) */
 
 static int ffs_copyonwrite(void *, struct buf *);
 static int readfsblk(struct vnode *, caddr_t, ufs2_daddr_t);
-static int __unused readvnblk(struct vnode *, caddr_t, ufs2_daddr_t);
 static int writevnblk(struct vnode *, caddr_t, ufs2_daddr_t);
 static inline int cow_enter(void);
 static inline void cow_leave(int);
@@ -132,8 +133,8 @@ static int snapdebug = 0;
  * Vnode is locked on entry and return.
  */
 int
-ffs_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
-    struct timespec *ctime __unused)
+ffs_snapshot(struct mount *mp, struct vnode *vp,
+    struct timespec *ctime)
 {
 #if defined(FFS_NO_SNAPSHOT)
 	return EOPNOTSUPP;
@@ -158,7 +159,7 @@ ffs_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
 	struct inode *ip, *xp;
 	struct buf *bp, *ibp, *nbp;
 	struct vattr vat;
-	struct vnode *xvp, *devvp;
+	struct vnode *xvp, *nvp, *devvp;
 
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
@@ -186,6 +187,10 @@ ffs_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
 	    VTOI(vp)->i_uid != kauth_cred_geteuid(l->l_cred))
 		return EACCES;
 
+#ifdef QUOTA
+	if ((error = getinoquota(VTOI(vp))) != 0)
+		return error;
+#endif
 	if (vp->v_size != 0) {
 		error = ffs_truncate(vp, 0, 0, NOCRED, l);
 		if (error)
@@ -363,7 +368,11 @@ ffs_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
 	    FSMAXSNAP + 1 /* superblock */ + 1 /* last block */ + 1 /* size */;
 	MNT_ILOCK(mp);
 loop:
-	TAILQ_FOREACH(xvp, &mp->mnt_vnodelist, v_mntvnodes) {
+	/*
+	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
+	 * and vclean() can be called indirectly
+	 */
+	for (xvp = TAILQ_FIRST(&mp->mnt_vnodelist); xvp; xvp = nvp) {
 		/*
 		 * Make sure this vnode wasn't reclaimed in getnewvnode().
 		 * Start over if it has (it won't be on the list anymore).
@@ -371,6 +380,7 @@ loop:
 		if (xvp->v_mount != mp)
 			goto loop;
 		VI_LOCK(xvp);
+		nvp = TAILQ_NEXT(xvp, v_mntvnodes);
 		MNT_IUNLOCK(mp);
 		if ((xvp->v_flag & VXLOCK) ||
 		    xvp->v_usecount == 0 || xvp->v_type == VNON ||
@@ -957,7 +967,7 @@ fullacct_ufs1(struct vnode *vp, ufs1_daddr_t *oldblkp, ufs1_daddr_t *lastblkp,
  */
 static int
 snapacct_ufs1(struct vnode *vp, ufs1_daddr_t *oldblkp, ufs1_daddr_t *lastblkp,
-    struct fs *fs, ufs_lbn_t lblkno __unused,
+    struct fs *fs, ufs_lbn_t lblkno,
     int expungetype /* BLK_SNAP or BLK_NOCOPY */)
 {
 	struct inode *ip = VTOI(vp);
@@ -1225,7 +1235,7 @@ fullacct_ufs2(struct vnode *vp, ufs2_daddr_t *oldblkp, ufs2_daddr_t *lastblkp,
  */
 static int
 snapacct_ufs2(struct vnode *vp, ufs2_daddr_t *oldblkp, ufs2_daddr_t *lastblkp,
-    struct fs *fs, ufs_lbn_t lblkno __unused,
+    struct fs *fs, ufs_lbn_t lblkno,
     int expungetype /* BLK_SNAP or BLK_NOCOPY */)
 {
 	struct inode *ip = VTOI(vp);
@@ -1462,7 +1472,7 @@ ffs_snapremove(struct vnode *vp)
  */
 int
 ffs_snapblkfree(struct fs *fs, struct vnode *devvp, ufs2_daddr_t bno,
-    long size, ino_t inum __unused)
+    long size, ino_t inum)
 {
 	struct ufsmount *ump = VFSTOUFS(devvp->v_specmountpoint);
 	struct buf *ibp;
@@ -2010,6 +2020,7 @@ readfsblk(struct vnode *vp, caddr_t data, ufs2_daddr_t lbn)
 	return error;
 }
 
+#if !defined(FFS_NO_SNAPSHOT)
 /*
  * Read the specified block. Bypass UBC to prevent deadlocks.
  */
@@ -2042,6 +2053,7 @@ readvnblk(struct vnode *vp, caddr_t data, ufs2_daddr_t lbn)
 
 	return 0;
 }
+#endif /* !defined(FFS_NO_SNAPSHOT) */
 
 /*
  * Write the specified block. Bypass UBC to prevent deadlocks.

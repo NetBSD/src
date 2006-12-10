@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfield.c,v 1.1.22.1 2006/10/22 06:07:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfield.c,v 1.1.22.2 2006/12/10 07:18:28 yamt Exp $");
 
 #define __EXFIELD_C__
 
@@ -146,7 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: exfield.c,v 1.1.22.1 2006/10/22 06:07:00 yamt Exp $"
 
 ACPI_STATUS
 AcpiExReadDataFromField (
-    ACPI_WALK_STATE         *WalkState __unused,
+    ACPI_WALK_STATE         *WalkState,
     ACPI_OPERAND_OBJECT     *ObjDesc,
     ACPI_OPERAND_OBJECT     **RetBufferDesc)
 {

@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.4.22.1 2006/10/22 06:07:10 yamt Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.4.22.2 2006/12/10 07:18:44 yamt Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.4.22.1 2006/10/22 06:07:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.4.22.2 2006/12/10 07:18:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,7 @@ rescanbus(const char *busname, const char *ifattr,
 }
 
 int
-drvctlioctl(dev_t dev __unused, u_long cmd, caddr_t data, int flag,
-	    struct lwp *p)
+drvctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *p)
 {
 	int res;
 	char *ifattr;
@@ -177,7 +176,7 @@ drvctlioctl(dev_t dev __unused, u_long cmd, caddr_t data, int flag,
 }
 
 void
-drvctlattach(int arg __unused)
+drvctlattach(int arg)
 {
 }
 
@@ -186,7 +185,7 @@ drvctlattach(int arg __unused)
  *****************************************************************************/
 
 static int
-drvctl_command_get_properties(struct lwp *l __unused,
+drvctl_command_get_properties(struct lwp *l,
 			      prop_dictionary_t command_dict,
 			      prop_dictionary_t results_dict)
 {
@@ -240,7 +239,6 @@ drvctl_command(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
 {
 	prop_dictionary_t command_dict, results_dict;
 	prop_string_t command_string;
-	prop_number_t error_number;
 	const struct drvctl_command_desc *dcd;
 	int error;
 
@@ -278,9 +276,7 @@ drvctl_command(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
 
 	error = (*dcd->dcd_func)(l, command_dict, results_dict);
 
-	error_number = prop_number_create_integer(error);
-	prop_dictionary_set(results_dict, "drvctl-error", error_number);
-	prop_object_release(error_number);
+	prop_dictionary_set_int32(results_dict, "drvctl-error", error);
 
 	error = prop_dictionary_copyout_ioctl(pref, ioctl_cmd, results_dict);
  out:

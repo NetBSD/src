@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.10.4.1 2006/10/22 06:06:52 yamt Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.10.4.2 2006/12/10 07:18:16 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.10.4.1 2006/10/22 06:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.10.4.2 2006/12/10 07:18:16 yamt Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -727,7 +727,7 @@ done:
 }
 
 Static void
-cdce_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+cdce_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct cdce_chain	*c = priv;

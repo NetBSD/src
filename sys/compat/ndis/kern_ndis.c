@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.5.8.1 2006/10/22 06:05:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.5.8.2 2006/12/10 07:16:48 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -271,14 +271,14 @@ void call_ndis_create_kthreads(void *arg);
 /* Just to schedule ndis_create_kthreads() to be called after init
  * has been created.
  */
-void call_ndis_create_kthreads(void *arg __unused)
+void call_ndis_create_kthreads(void *arg)
 {
 	ndis_create_kthreads();
 }
 #endif
 
 /*static*/ int
-ndis_lkm_handle(struct lkm_table *lkmtp __unused, int cmd)
+ndis_lkm_handle(struct lkm_table *lkmtp, int cmd)
 {
 	int			error = 0;
 	image_patch_table	*patch;
@@ -342,7 +342,7 @@ ndis_lkm_handle(struct lkm_table *lkmtp __unused, int cmd)
 }
 
 int
-ndis_lkmentry(struct lkm_table *lkmtp, int cmd, int ver __unused)
+ndis_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
 {
 	DISPATCH(lkmtp, cmd, ver, 
 		 ndis_lkm_handle, ndis_lkm_handle, ndis_lkm_handle);
@@ -962,14 +962,14 @@ ndis_thresume(p)
 }
 
 __stdcall static void
-ndis_sendrsrcavail_func(ndis_handle adapter __unused)
+ndis_sendrsrcavail_func(ndis_handle adapter)
 {
 	return;
 }
 
 __stdcall static void
-ndis_status_func(ndis_handle adapter, ndis_status status, void *sbuf __unused,
-    uint32_t slen __unused)
+ndis_status_func(ndis_handle adapter, ndis_status status, void *sbuf,
+    uint32_t slen)
 {
 	ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
@@ -1046,8 +1046,8 @@ ndis_getdone_func(adapter, status)
 }
 
 __stdcall static void
-ndis_resetdone_func(ndis_handle adapter, ndis_status status __unused,
-    uint8_t addressingreset __unused)
+ndis_resetdone_func(ndis_handle adapter, ndis_status status,
+    uint8_t addressingreset)
 {
 	ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
@@ -1410,8 +1410,8 @@ ndis_return_packet(buf, arg)
 	void			*buf;	/* not used */
 	void			*arg;
 #else
-ndis_return_packet(struct mbuf *m __unused, caddr_t buf __unused,
-    size_t size __unused, void *arg)
+ndis_return_packet(struct mbuf *m, caddr_t buf,
+    size_t size, void *arg)
 #endif
 
 {
@@ -2233,8 +2233,8 @@ ndis_isr(arg, ourintr, callhandler)
 }
 
 __stdcall static void
-ndis_intrhand(kdpc *dpc __unused, device_object *dobj __unused,
-    irp *ip __unused, struct ndis_softc *sc)
+ndis_intrhand(kdpc *dpc, device_object *dobj,
+    irp *ip, struct ndis_softc *sc)
 {
 	ndis_handle		adapter;
 	__stdcall ndis_interrupt_handler	intrfunc;

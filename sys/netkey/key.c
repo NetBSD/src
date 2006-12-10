@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.142.4.1 2006/10/22 06:07:42 yamt Exp $	*/
+/*	$NetBSD: key.c,v 1.142.4.2 2006/12/10 07:19:23 yamt Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.142.4.1 2006/10/22 06:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.142.4.2 2006/12/10 07:19:23 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -753,8 +753,8 @@ key_allocsa(
     caddr_t dst,
     u_int proto,
     u_int32_t spi,
-    u_int16_t sport __unused,
-    u_int16_t dport __unused
+    u_int16_t sport,
+    u_int16_t dport
 )
 {
 	struct secasvar *sav, *match;
@@ -2829,10 +2829,8 @@ key_delsah(sah)
 		return;
 	}
 
-	if (sah->sa_route.ro_rt) {
-		RTFREE(sah->sa_route.ro_rt);
-		sah->sa_route.ro_rt = (struct rtentry *)NULL;
-	}
+	if (sah->sa_route.ro_rt != NULL)
+		rtflush((struct route *)&sah->sa_route);
 
 	/* remove from tree of SA index */
 	if (__LIST_CHAINED(sah))
@@ -4652,7 +4650,7 @@ key_bbcmp(p1, p2, bits)
  * XXX: year 2038 problem may remain.
  */
 void
-key_timehandler(void *arg __unused)
+key_timehandler(void *arg)
 {
 	u_int dir;
 	int s;
@@ -8103,8 +8101,8 @@ key_init()
  * xxx more checks to be provided
  */
 int
-key_checktunnelsanity(struct secasvar *sav, u_int family __unused,
-    caddr_t src __unused, caddr_t dst __unused)
+key_checktunnelsanity(struct secasvar *sav, u_int family,
+    caddr_t src, caddr_t dst)
 {
 	/* sanity check */
 	if (sav->sah == NULL)
@@ -8234,11 +8232,9 @@ key_sa_routechange(dst)
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		ro = &sah->sa_route;
-		if (ro->ro_rt && dst->sa_len == ro->ro_dst.sa_len &&
-		    bcmp(dst, &ro->ro_dst, dst->sa_len) == 0) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)NULL;
-		}
+		if (ro->ro_rt != NULL && dst->sa_len == ro->ro_dst.sa_len &&
+		    bcmp(dst, &ro->ro_dst, dst->sa_len) == 0)
+			rtflush(ro);
 	}
 
 	return;

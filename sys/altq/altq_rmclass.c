@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.13.10.1 2006/10/22 06:04:30 yamt Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.13.10.2 2006/12/10 07:15:44 yamt Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.13.10.1 2006/10/22 06:04:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.13.10.2 2006/12/10 07:15:44 yamt Exp $");
 
 #ident "@(#)rm_class.c  1.48     97/12/05 SMI"
 
@@ -345,7 +345,7 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 
 int
 rmc_modclass(struct rm_class *cl, u_int nsecPerByte, int maxq, u_int maxidle,
-    int minidle, u_int offtime, int pktsize __unused)
+    int minidle, u_int offtime, int pktsize)
 {
 	struct rm_ifdat	*ifd;
 	u_int		 old_allotment;
@@ -642,7 +642,7 @@ rmc_delete_class(struct rm_ifdat *ifd, struct rm_class *cl)
 
 
 /*
- * void
+ * int
  * rmc_init(...) - Initialize the resource management data structures
  *	associated with the output portion of interface 'ifp'.  'ifd' is
  *	where the structures will be built (for backwards compatibility, the
@@ -654,23 +654,29 @@ rmc_delete_class(struct rm_ifdat *ifd, struct rm_class *cl)
  *	is the maximum number of packets that the resource management
  *	code will allow to be queued 'downstream' (this is typically 1).
  *
- *	Returns:	NONE
+ *	Returns:	0 on success
  */
 
-void
+int
 rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
     void (*restart)(struct ifaltq *), int maxq, int maxqueued, u_int maxidle,
     int minidle, u_int offtime, int flags)
 {
-	int		i, mtu;
+	int i, mtu;
 
 	/*
 	 * Initialize the CBQ tracing/debug facility.
 	 */
 	CBQTRACEINIT();
 
-	(void)memset((char *)ifd, 0, sizeof (*ifd));
 	mtu = ifq->altq_ifp->if_mtu;
+	if (mtu < 1) {
+		printf("altq: %s: invalid MTU (interface not initialized?)\n",
+		    ifq->altq_ifp->if_xname);
+		return (EINVAL);
+	}
+
+	(void)memset((char *)ifd, 0, sizeof (*ifd));
 	ifd->ifq_ = ifq;
 	ifd->restart = restart;
 	ifd->maxqueued_ = maxqueued;
@@ -718,9 +724,11 @@ rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
 				       maxidle, minidle, offtime,
 				       0, 0)) == NULL) {
 		printf("rmc_init: root class not allocated\n");
-		return ;
+		return (ENOMEM);
 	}
 	ifd->root_->depth_ = 0;
+
+	return (0);
 }
 
 /*
@@ -1470,12 +1478,12 @@ hzto(struct timeval *tv)
 void
 rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 {
-	int	delay, t, extradelay;
+	int	ndelay, t, extradelay;
 
 	cl->stats_.overactions++;
-	TV_DELTA(&cl->undertime_, &cl->overtime_, delay);
+	TV_DELTA(&cl->undertime_, &cl->overtime_, ndelay);
 #ifndef BORROW_OFFTIME
-	delay += cl->offtime_;
+	ndelay += cl->offtime_;
 #endif
 
 	if (!cl->sleeping_) {
@@ -1500,7 +1508,7 @@ rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 #endif
 		if (extradelay > 0) {
 			TV_ADD_DELTA(&cl->undertime_, extradelay, &cl->undertime_);
-			delay += extradelay;
+			ndelay += extradelay;
 		}
 
 		cl->sleeping_ = 1;
@@ -1513,7 +1521,7 @@ rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 		 * NOTE:  If there's no other traffic, we need the timer as
 		 * a 'backstop' to restart this class.
 		 */
-		if (delay > tick * 2) {
+		if (ndelay > tick * 2) {
 #ifdef __FreeBSD__
 			/* FreeBSD rounds up the tick */
 			t = hzto(&cl->undertime_);
@@ -1573,8 +1581,8 @@ rmc_restart(struct rm_class *cl)
  */
 
 static void
-rmc_root_overlimit(struct rm_class *cl __unused,
-    struct rm_class *borrow __unused)
+rmc_root_overlimit(struct rm_class *cl,
+    struct rm_class *borrow)
 {
 	panic("rmc_root_overlimit");
 }

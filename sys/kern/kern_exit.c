@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.158.4.1 2006/10/22 06:07:10 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.158.4.2 2006/12/10 07:18:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.4.1 2006/10/22 06:07:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.4.2 2006/12/10 07:18:44 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -133,10 +133,10 @@ static void lwp_exit_hook(struct lwp *, void *);
  * Fill in the appropriate signal information, and signal the parent.
  */
 static void
-exit_psignal(struct proc *p, struct proc *pp __unused, ksiginfo_t *ksi)
+exit_psignal(struct proc *p, struct proc *pp, ksiginfo_t *ksi)
 {
 
-	(void)memset(ksi, 0, sizeof(ksiginfo_t));
+	KSI_INIT(ksi);
 	if ((ksi->ksi_signo = P_EXITSIG(p)) == SIGCHLD) {
 		if (WIFSIGNALED(p->p_xstat)) {
 			if (WCOREDUMP(p->p_xstat))
@@ -163,7 +163,7 @@ exit_psignal(struct proc *p, struct proc *pp __unused, ksiginfo_t *ksi)
  *	Death of process.
  */
 int
-sys_exit(struct lwp *l, void *v, register_t *retval __unused)
+sys_exit(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_exit_args /* {
 		syscallarg(int)	rval;
@@ -652,8 +652,9 @@ retry:
 
 /* Wrapper function for use in p_userret */
 static void
-lwp_exit_hook(struct lwp *l, void *arg __unused)
+lwp_exit_hook(struct lwp *l, void *arg)
 {
+
 	KERNEL_PROC_LOCK(l);
 	lwp_exit(l);
 }

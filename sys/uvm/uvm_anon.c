@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.39.2.1 2006/10/22 06:07:52 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.39.2.2 2006/12/10 07:19:33 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.39.2.1 2006/10/22 06:07:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.39.2.2 2006/12/10 07:19:33 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -70,7 +70,7 @@ uvm_anon_init(void)
 }
 
 static int
-uvm_anon_ctor(void *arg __unused, void *object, int flags __unused)
+uvm_anon_ctor(void *arg, void *object, int flags)
 {
 	struct vm_anon *anon = object;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.11.22.1 2006/10/22 06:05:21 yamt Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.11.22.2 2006/12/10 07:16:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.11.22.1 2006/10/22 06:05:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.11.22.2 2006/12/10 07:16:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -121,7 +121,7 @@ native_sigaltstack_to_sigaltstack13(sa, osa)
 }
 
 int
-compat_13_sys_sigaltstack(struct lwp *l, void *v, register_t *retval __unused)
+compat_13_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_13_sys_sigaltstack_args /* {
 		syscallarg(const struct sigaltstack13 *) nss;
@@ -152,7 +152,7 @@ compat_13_sys_sigaltstack(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-compat_13_sys_sigaction(struct lwp *l, void *v, register_t *retval __unused)
+compat_13_sys_sigaction(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_13_sys_sigaction_args /* {
 		syscallarg(int) signum;
@@ -207,7 +207,7 @@ compat_13_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-compat_13_sys_sigpending(struct lwp *l, void *v __unused, register_t *retval)
+compat_13_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	sigset13_t ess;
@@ -220,7 +220,7 @@ compat_13_sys_sigpending(struct lwp *l, void *v __unused, register_t *retval)
 }
 
 int
-compat_13_sys_sigsuspend(struct lwp *l, void *v, register_t *retval __unused)
+compat_13_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_13_sys_sigsuspend_args /* {
 		syscallarg(sigset13_t) mask;

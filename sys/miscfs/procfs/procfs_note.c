@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_note.c,v 1.13.22.1 2006/10/22 06:07:23 yamt Exp $	*/
+/*	$NetBSD: procfs_note.c,v 1.13.22.2 2006/12/10 07:18:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_note.c,v 1.13.22.1 2006/10/22 06:07:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_note.c,v 1.13.22.2 2006/12/10 07:18:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_note.c,v 1.13.22.1 2006/10/22 06:07:23 yamt E
 
 int
 procfs_donote(
-    struct lwp *curl __unused,
-    struct proc *p __unused,
-    struct pfsnode *pfs __unused,
+    struct lwp *curl,
+    struct proc *p,
+    struct pfsnode *pfs,
     struct uio *uio
 )
 {

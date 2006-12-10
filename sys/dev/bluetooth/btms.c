@@ -1,4 +1,4 @@
-/*	$NetBSD: btms.c,v 1.1.16.1 2006/10/22 06:05:32 yamt Exp $	*/
+/*	$NetBSD: btms.c,v 1.1.16.2 2006/12/10 07:16:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.1.16.1 2006/10/22 06:05:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.1.16.2 2006/12/10 07:16:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -81,6 +81,7 @@ struct btms_softc {
 /* sc_flags */
 #define BTMS_REVZ		(1 << 0)	/* reverse Z direction */
 #define BTMS_HASZ		(1 << 1)	/* has Z direction */
+#define BTMS_HASW		(1 << 2)	/* has W direction */
 
 /* autoconf(9) methods */
 static int	btms_match(struct device *, struct cfdata *, void *);
@@ -110,7 +111,7 @@ static void btms_input(struct bthidev *, uint8_t *, int);
  */
 
 static int
-btms_match(struct device *parent __unused, struct cfdata *match __unused,
+btms_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct bthidev_attach_args *ba = aux;
@@ -123,7 +124,7 @@ btms_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-btms_attach(struct device *parent __unused, struct device *self, void *aux)
+btms_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct btms_softc *sc = (struct btms_softc *)self;
 	struct bthidev_attach_args *ba = aux;
@@ -200,11 +201,30 @@ btms_attach(struct device *parent __unused, struct device *self, void *aux)
 			zloc,
 			&flags);
 
+	/*
+	 * The horizontal component of the scrollball can also be given by
+	 * Application Control Pan in the Consumer page, so if we didnt see
+	 * any Z then check that.
+	 */
+	if (!hl) {
+		hl = hid_locate(ba->ba_desc,
+				ba->ba_dlen,
+				HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN),
+				ba->ba_id,
+				hid_input,
+				zloc,
+				&flags);
+	}
+
 	if (hl) {
 		if (NOTMOUSE(flags))
 			zloc->size = 0;	/* ignore Z */
-		else
-			sc->sc_flags |= BTMS_HASZ;
+		else {
+			if (sc->sc_flags & BTMS_HASZ)
+				sc->sc_flags |= BTMS_HASW;
+			else
+				sc->sc_flags |= BTMS_HASZ;
+		}
 	}
 
 	for (i = 1 ; i <= MAX_BUTTONS ; i++) {
@@ -221,10 +241,12 @@ btms_attach(struct device *parent __unused, struct device *self, void *aux)
 	}
 	sc->sc_num_buttons = i - 1;
 
-	aprint_normal(": %d button%s%s.\n",
+	aprint_normal(": %d button%s%s%s%s.\n",
 			sc->sc_num_buttons,
 			sc->sc_num_buttons == 1 ? "" : "s",
-			sc->sc_flags & BTMS_HASZ ? " and Z dir" : "");
+			sc->sc_flags & BTMS_HASW ? ", W" : "",
+			sc->sc_flags & BTMS_HASZ ? " and Z dir" : "",
+			sc->sc_flags & BTMS_HASW ? "s" : "");
 
 	wsma.accessops = &btms_wsmouse_accessops;
 	wsma.accesscookie = sc;
@@ -264,8 +286,8 @@ btms_wsmouse_enable(void *self)
 }
 
 static int
-btms_wsmouse_ioctl(void *self __unused, unsigned long cmd, caddr_t data,
-    int flag __unused, struct lwp *l __unused)
+btms_wsmouse_ioctl(void *self, unsigned long cmd, caddr_t data,
+    int flag, struct lwp *l)
 {
 	/* struct btms_softc *sc = (struct btms_softc *)self; */
 
@@ -295,7 +317,7 @@ btms_wsmouse_disable(void *self)
  */
 
 static void
-btms_input(struct bthidev *self, uint8_t *data, int len __unused)
+btms_input(struct bthidev *self, uint8_t *data, int len)
 {
 	struct btms_softc *sc = (struct btms_softc *)self;
 	int dx, dy, dz, dw;
@@ -322,9 +344,10 @@ btms_input(struct bthidev *self, uint8_t *data, int len __unused)
 		sc->sc_buttons = buttons;
 
 		s = spltty();
-		wsmouse_input_xyzw(sc->sc_wsmouse, buttons,
-				   dx, dy, dz, dw,
-				   WSMOUSE_INPUT_DELTA);
+		wsmouse_input(sc->sc_wsmouse,
+				buttons,
+				dx, dy, dz, dw,
+				WSMOUSE_INPUT_DELTA);
 		splx(s);
 	}
 }

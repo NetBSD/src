@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.229.2.1 2006/10/22 06:07:52 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.229.2.2 2006/12/10 07:19:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.229.2.1 2006/10/22 06:07:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.229.2.2 2006/12/10 07:19:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -325,8 +325,7 @@ RB_PROTOTYPE(uvm_tree, vm_map_entry, rb_entry, uvm_compare);
 RB_GENERATE(uvm_tree, vm_map_entry, rb_entry, uvm_compare);
 
 static inline vsize_t
-uvm_rb_space(const struct vm_map *map __unused,
-    const struct vm_map_entry *entry)
+uvm_rb_space(const struct vm_map *map, const struct vm_map_entry *entry)
 {
 	/* XXX map is not used */
 
@@ -542,7 +541,7 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 static struct vm_map_entry *
 uvm_mapent_alloc_split(struct vm_map *map,
     const struct vm_map_entry *old_entry, int flags,
-    struct uvm_mapent_reservation *umr __unused)
+    struct uvm_mapent_reservation *umr)
 {
 	struct vm_map_entry *me;
 
@@ -1547,7 +1546,7 @@ failed:
  * fit, and -1 address wraps around.
  */
 static int
-uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset __unused,
+uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
     vsize_t align, int topdown, struct vm_map_entry *entry)
 {
 	vaddr_t end;
@@ -1605,7 +1604,7 @@ uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset __unused,
 
 struct vm_map_entry *
 uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
-    vaddr_t *result /* OUT */, struct uvm_object *uobj __unused, voff_t uoffset,
+    vaddr_t *result /* OUT */, struct uvm_object *uobj, voff_t uoffset,
     vsize_t align, int flags)
 {
 	struct vm_map_entry *entry;
@@ -2218,7 +2217,7 @@ uvm_unmap_detach(struct vm_map_entry *first_entry, int flags)
 int
 uvm_map_reserve(struct vm_map *map, vsize_t size,
     vaddr_t offset	/* hint for pmap_prefer */,
-    vsize_t align	/* alignment hint */ __unused,
+    vsize_t align	/* alignment hint */,
     vaddr_t *raddr	/* IN:hint, OUT: reserved VA */,
     uvm_flag_t flags	/* UVM_FLAG_FIXED or 0 */)
 {
@@ -4507,8 +4506,7 @@ uvm_mapent_reserve(struct vm_map *map, struct uvm_mapent_reservation *umr,
  * => never fail or sleep.
  */
 void
-uvm_mapent_unreserve(struct vm_map *map __unused,
-    struct uvm_mapent_reservation *umr)
+uvm_mapent_unreserve(struct vm_map *map, struct uvm_mapent_reservation *umr)
 {
 
 	while (!UMR_EMPTY(umr))
@@ -4803,14 +4801,14 @@ uvm_page_printall(void (*pr)(const char *, ...))
 	unsigned i;
 	struct vm_page *pg;
 
-	(*pr)("%18s %4s %2s %18s %18s"
+	(*pr)("%18s %4s %4s %18s %18s"
 #ifdef UVM_PAGE_TRKOWN
 	    " OWNER"
 #endif
 	    "\n", "PAGE", "FLAG", "PQ", "UOBJECT", "UANON");
 	for (i = 0; i < vm_nphysseg; i++) {
 		for (pg = vm_physmem[i].pgs; pg <= vm_physmem[i].lastpg; pg++) {
-			(*pr)("%18p %04x %02x %18p %18p",
+			(*pr)("%18p %04x %04x %18p %18p",
 			    pg, pg->flags, pg->pqflags, pg->uobject,
 			    pg->uanon);
 #ifdef UVM_PAGE_TRKOWN

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.33 2006/08/26 06:07:28 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.33.4.1 2006/12/10 07:15:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.33 2006/08/26 06:07:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.33.4.1 2006/12/10 07:15:57 yamt Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -844,7 +844,6 @@ mbus_dmamap_create(void *v, bus_size_t size, int nsegments, bus_size_t maxsegsz,
     bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	struct hppa_bus_dmamap *map;
-	void *mapstore;
 	size_t mapsize;
 
 	/*
@@ -861,12 +860,12 @@ mbus_dmamap_create(void *v, bus_size_t size, int nsegments, bus_size_t maxsegsz,
 	 */
 	mapsize = sizeof(struct hppa_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	if ((mapstore = malloc(mapsize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+	map = malloc(mapsize, M_DMAMAP,
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
+	if (!map)
 		return (ENOMEM);
 
-	memset(mapstore, 0, mapsize);
-	map = (struct hppa_bus_dmamap *)mapstore;
+	memset(map, 0, mapsize);
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
@@ -1130,23 +1129,25 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
 	if (ops == 0)
 		return;
 
-	for (i = 0; i < map->dm_nsegs; i++) {
-		if (offset >= map->dm_segs[i].ds_len) {
+	for (i = 0; len != 0 && i < map->dm_nsegs; i++) {
+		if (offset >= map->dm_segs[i].ds_len)
 			offset -= map->dm_segs[i].ds_len;
-			continue;
+		else {
+			bus_size_t l = map->dm_segs[i].ds_len - offset;
+
+			if (l > len)
+				l = len;
+
+			fdcache(HPPA_SID_KERNEL, map->dm_segs[i]._ds_va +
+			    offset, l);
+			len -= l;
+			offset = 0;
 		}
-		if (len <= map->dm_segs[i].ds_len - offset) {
-			fdcache(HPPA_SID_KERNEL, map->dm_segs[i]._ds_va + 
-			    offset, len);
-			break;
-		} else
-			fdcache(HPPA_SID_KERNEL, map->dm_segs[i]._ds_va + 
-			    offset, map->dm_segs[i].ds_len - offset);
-		len -= map->dm_segs[i].ds_len - offset;
-		offset = 0;
 	}
-	sync_caches();
-	return;
+
+ 	/* for either operation sync the shit away */
+	__asm __volatile ("sync\n\tsyncdma\n\tsync\n\t"
+	    "nop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop" ::: "memory");
 }
 
 /*
@@ -1394,10 +1395,12 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bmask  = ~(map->_dm_boundary - 1);
 
 	for (seg = *segp; buflen > 0; ) {
+		boolean_t ok;
 		/*
 		 * Get the physical address for this segment.
 		 */
-		(void) pmap_extract(pmap, vaddr, &curaddr);
+		ok = pmap_extract(pmap, vaddr, &curaddr);
+		KASSERT(ok == TRUE);
 
 		/*
 		 * Compute the segment size, and adjust counts.

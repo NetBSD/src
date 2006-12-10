@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.50.4.1 2006/10/22 06:06:12 yamt Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.50.4.2 2006/12/10 07:17:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.50.4.1 2006/10/22 06:06:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.50.4.2 2006/12/10 07:17:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -310,7 +310,7 @@ mii_phy_tick(struct mii_softc *sc)
 	 * Only retry autonegotiation every N seconds.
 	 */
 	KASSERT(sc->mii_anegticks != 0);
-	if (++sc->mii_ticks != sc->mii_anegticks)
+	if (++sc->mii_ticks <= sc->mii_anegticks)
 		return (EJUSTRETURN);
 
 	sc->mii_ticks = 0;
@@ -483,14 +483,14 @@ mii_phy_add_media(struct mii_softc *sc)
 		 * all the gigabit media types.
 		 */
 		if (sc->mii_extcapabilities & EXTSR_1000XHDX) {
-			sc->mii_anegticks = 10;
+			sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 			sc->mii_flags |= MIIF_IS_1000X;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, 0,
 			    sc->mii_inst), MII_MEDIA_1000_X);
 			PRINT("1000baseSX");
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000XFDX) {
-			sc->mii_anegticks = 10;
+			sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 			sc->mii_flags |= MIIF_IS_1000X;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, IFM_FDX,
 			    sc->mii_inst), MII_MEDIA_1000_X_FDX);
@@ -507,7 +507,7 @@ mii_phy_add_media(struct mii_softc *sc)
 		 * All 1000baseT PHYs have a 1000baseT control register.
 		 */
 		if (sc->mii_extcapabilities & EXTSR_1000THDX) {
-			sc->mii_anegticks = 10;
+			sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 			sc->mii_flags |= MIIF_HAVE_GTCR;
 			mii->mii_media.ifm_mask |= IFM_ETH_MASTER;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0,
@@ -515,7 +515,7 @@ mii_phy_add_media(struct mii_softc *sc)
 			PRINT("1000baseT");
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000TFDX) {
-			sc->mii_anegticks = 10;
+			sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 			sc->mii_flags |= MIIF_HAVE_GTCR;
 			mii->mii_media.ifm_mask |= IFM_ETH_MASTER;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX,
@@ -545,7 +545,7 @@ mii_phy_delete_media(struct mii_softc *sc)
 }
 
 int
-mii_phy_activate(struct device *self __unused, enum devact act)
+mii_phy_activate(struct device *self, enum devact act)
 {
 	int rv = 0;
 
@@ -564,7 +564,7 @@ mii_phy_activate(struct device *self __unused, enum devact act)
 
 /* ARGSUSED1 */
 int
-mii_phy_detach(struct device *self, int flags __unused)
+mii_phy_detach(struct device *self, int flags)
 {
 	struct mii_softc *sc = device_private(self);
 

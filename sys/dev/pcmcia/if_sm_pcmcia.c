@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.46.22.1 2006/10/22 06:06:39 yamt Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.46.22.2 2006/12/10 07:18:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.46.22.1 2006/10/22 06:06:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.46.22.2 2006/12/10 07:18:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ const size_t sm_pcmcia_nproducts =
     sizeof(sm_pcmcia_products) / sizeof(sm_pcmcia_products[0]);
 
 int
-sm_pcmcia_match(struct device *parent __unused, struct cfdata *match __unused,
+sm_pcmcia_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -140,7 +140,7 @@ sm_pcmcia_validate_config(cfe)
 }
 
 void
-sm_pcmcia_attach(struct device *parent __unused, struct device *self, void *aux)
+sm_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)self;
 	struct smc91cxx_softc *sc = &psc->sc_smc;

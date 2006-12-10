@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.35.4.1 2006/10/22 06:07:06 yamt Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.35.4.2 2006/12/10 07:18:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.35.4.1 2006/10/22 06:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.35.4.2 2006/12/10 07:18:37 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -423,8 +423,6 @@ iso_mountfs(devvp, mp, l, argp)
 	isomp->im_dev = dev;
 	isomp->im_devvp = devvp;
 
-	devvp->v_specmountpoint = mp;
-
 	/* Check the Rock Ridge Extension support */
 	if (!(argp->flags & ISOFSMNT_NORRIP)) {
 		struct iso_directory_record *rootp;
@@ -493,6 +491,8 @@ iso_mountfs(devvp, mp, l, argp)
 		supbp = NULL;
 	}
 
+	devvp->v_specmountpoint = mp;
+
 	return 0;
 out:
 	if (bp)
@@ -514,8 +514,8 @@ out:
  */
 /* ARGSUSED */
 int
-cd9660_start(struct mount *mp __unused, int flags __unused,
-    struct lwp *l __unused)
+cd9660_start(struct mount *mp, int flags,
+    struct lwp *l)
 {
 	return 0;
 }
@@ -588,11 +588,11 @@ cd9660_root(mp, vpp)
 /* ARGSUSED */
 int
 cd9660_quotactl(
-    struct mount *mp __unused,
-    int cmd __unused,
-    uid_t uid __unused,
-    void *arg __unused,
-    struct lwp *l __unused)
+    struct mount *mp,
+    int cmd,
+    uid_t uid,
+    void *arg,
+    struct lwp *l)
 {
 
 	return (EOPNOTSUPP);
@@ -605,7 +605,7 @@ int
 cd9660_statvfs(
     struct mount *mp,
     struct statvfs *sbp,
-    struct lwp *l __unused)
+    struct lwp *l)
 {
 	struct iso_mnt *isomp;
 
@@ -631,10 +631,10 @@ cd9660_statvfs(
 /* ARGSUSED */
 int
 cd9660_sync(
-    struct mount *mp __unused,
-    int waitfor __unused,
-    kauth_cred_t cred __unused,
-    struct lwp *l __unused)
+    struct mount *mp,
+    int waitfor,
+    kauth_cred_t cred,
+    struct lwp *l)
 {
 	return (0);
 }

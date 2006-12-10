@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.15.6.1 2006/10/22 06:06:19 yamt Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.15.6.2 2006/12/10 07:17:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -35,7 +35,7 @@
 /* driver for the hardware monitoring part of the VIA VT82C686A */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.15.6.1 2006/10/22 06:06:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.15.6.2 2006/12/10 07:17:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ static int 	viaenv_streinfo(struct sysmon_envsys *,
 				struct envsys_basic_info *);
 
 static int
-viaenv_match(struct device *parent __unused, struct cfdata *match __unused,
+viaenv_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct viapm_attach_args *va = aux;
@@ -265,7 +265,7 @@ viaenv_refresh_sensor_data(struct viaenv_softc *sc)
 }
 
 static void
-viaenv_attach(struct device *parent __unused, struct device *self, void *aux)
+viaenv_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct viapm_attach_args *va = aux;
 	struct viaenv_softc *sc = (struct viaenv_softc *) self;
@@ -365,7 +365,7 @@ viaenv_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 }
 
 static int
-viaenv_streinfo(struct sysmon_envsys *sme __unused,
+viaenv_streinfo(struct sysmon_envsys *sme,
     struct envsys_basic_info *binfo)
 {
 

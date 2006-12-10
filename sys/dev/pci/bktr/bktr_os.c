@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.43.4.1 2006/10/22 06:06:38 yamt Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.43.4.2 2006/12/10 07:18:06 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.43.4.1 2006/10/22 06:06:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.43.4.2 2006/12/10 07:18:06 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1359,7 +1359,7 @@ static struct radio_hw_if bktr_hw_if = {
 #endif
 
 int
-bktr_probe(struct device *parent __unused, struct cfdata *match __unused,
+bktr_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
         struct pci_attach_args *pa = aux;
@@ -1379,7 +1379,7 @@ bktr_probe(struct device *parent __unused, struct cfdata *match __unused,
  * the attach routine.
  */
 static void
-bktr_attach(struct device *parent __unused, struct device *self, void *aux)
+bktr_attach(struct device *parent, struct device *self, void *aux)
 {
 	bktr_ptr_t	bktr;
 	u_long		latency;
@@ -1649,8 +1649,8 @@ free_bktr_mem(bktr, dmap, kva)
  *
  */
 int
-bktr_open(dev_t dev, int flags __unused, int fmt __unused,
-    struct lwp *l __unused)
+bktr_open(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1683,8 +1683,8 @@ bktr_open(dev_t dev, int flags __unused, int fmt __unused,
  *
  */
 int
-bktr_close(dev_t dev, int flags __unused, int fmt __unused,
-    struct lwp *l __unused)
+bktr_close(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1733,7 +1733,7 @@ bktr_read(dev_t dev, struct uio *uio, int ioflag)
  *
  */
 int
-bktr_write(dev_t dev __unused, struct uio *uio __unused, int ioflag __unused)
+bktr_write(dev_t dev, struct uio *uio, int ioflag)
 {
 	/* operation not supported */
 	return(EOPNOTSUPP);
@@ -1743,7 +1743,7 @@ bktr_write(dev_t dev __unused, struct uio *uio __unused, int ioflag __unused)
  *
  */
 int
-bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag __unused,
+bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag,
     struct lwp *l)
 {
 	bktr_ptr_t	bktr;

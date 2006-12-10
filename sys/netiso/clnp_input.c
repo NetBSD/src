@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.30 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.30.22.1 2006/12/10 07:19:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.30 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.30.22.1 2006/12/10 07:19:23 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -79,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.30 2005/12/11 12:25:12 christos Exp
 
 #include <net/if_ether.h>
 #include <net/if_fddi.h>
+
+#include <net/if_llc.h>
 
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
@@ -192,16 +194,12 @@ next:
 		      (caddr_t) sh.snh_shost, sizeof(u_long));
 		sh.snh_dhost[4] = mtod(m, u_char *)[sizeof(struct ip) +
 				     offsetof(struct eon_hdr, eonh_class)];
-		m->m_data += EONIPLEN;
-		m->m_len -= EONIPLEN;
-		m->m_pkthdr.len -= EONIPLEN;
+		m_adj(m, EONIPLEN);
 		break;
 	case IFT_ETHER:
 		bcopy((caddr_t) (mtod(m, struct ether_header *)->ether_dhost),
 		  (caddr_t) sh.snh_dhost, 2 * sizeof(sh.snh_dhost));
-		m->m_data += sizeof(struct ether_header);
-		m->m_len -= sizeof(struct ether_header);
-		m->m_pkthdr.len -= sizeof(struct ether_header);
+		m_adj(m, sizeof(struct ether_header) + LLC_UFRAMELEN);
 		break;
 	case IFT_FDDI:
 		bcopy((caddr_t) (mtod(m, struct fddi_header *)->fddi_dhost),

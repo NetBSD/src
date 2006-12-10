@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.25.10.1 2006/10/22 06:06:03 yamt Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.25.10.2 2006/12/10 07:17:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.25.10.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.25.10.2 2006/12/10 07:17:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ outio:
 }
 
 static int
-lemac_isa_probe(struct device *parent __unused, struct cfdata *match, void *aux)
+lemac_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct cfdata *cf = match;
@@ -196,7 +196,7 @@ lemac_isa_probe(struct device *parent __unused, struct cfdata *match, void *aux)
 }
 
 static void
-lemac_isa_attach(struct device *parent __unused, struct device *self, void *aux)
+lemac_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	lemac_softc_t *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

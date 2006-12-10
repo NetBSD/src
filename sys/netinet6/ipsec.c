@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.108.8.1 2006/10/22 06:07:35 yamt Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.108.8.2 2006/12/10 07:19:16 yamt Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.108.8.1 2006/10/22 06:07:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.108.8.2 2006/12/10 07:19:16 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -842,7 +842,7 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
  *	other:	failure, and set errno.
  */
 int
-ipsec_setspidx_mbuf(struct secpolicyindex *spidx, int family __unused,
+ipsec_setspidx_mbuf(struct secpolicyindex *spidx, int family,
     struct mbuf *m, int needport)
 {
 	int error;
@@ -1350,7 +1350,7 @@ fail:
 
 /* set policy and ipsec request if present. */
 static int
-ipsec_set_policy(struct secpolicy **spp, int optname __unused, caddr_t request,
+ipsec_set_policy(struct secpolicy **spp, int optname, caddr_t request,
     size_t len, int priv)
 {
 	struct sadb_x_policy *xpl;
@@ -2620,7 +2620,7 @@ ipsec4_checksa(isr, state)
  */
 int
 ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp,
-    int flags __unused)
+    int flags)
 {
 	struct ip *ip = NULL;
 	struct ipsecrequest *isr = NULL;
@@ -2732,19 +2732,17 @@ ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp,
 			state->ro = &isr->sav->sah->sa_route;
 			state->dst = (struct sockaddr *)&state->ro->ro_dst;
 			dst4 = (struct sockaddr_in *)state->dst;
-			if (state->ro->ro_rt
-			 && ((state->ro->ro_rt->rt_flags & RTF_UP) == 0
-			  || dst4->sin_addr.s_addr != ip->ip_dst.s_addr)) {
-				RTFREE(state->ro->ro_rt);
-				bzero((caddr_t)state->ro, sizeof (*state->ro));
-			}
-			if (state->ro->ro_rt == 0) {
+			if (state->ro->ro_rt != NULL &&
+			    ((state->ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+			     dst4->sin_addr.s_addr != ip->ip_dst.s_addr))
+				rtflush((struct route *)state->ro);
+			if (state->ro->ro_rt == NULL) {
 				dst4->sin_family = AF_INET;
 				dst4->sin_len = sizeof(*dst4);
 				dst4->sin_addr = ip->ip_dst;
 				rtalloc(state->ro);
 			}
-			if (state->ro->ro_rt == 0) {
+			if (state->ro->ro_rt == NULL) {
 				ipstat.ips_noroute++;
 				error = EHOSTUNREACH;
 				goto bad;
@@ -2878,7 +2876,7 @@ ipsec6_checksa(isr, state, tunnel)
  */
 int
 ipsec6_output_trans(struct ipsec_output_state *state, u_char *nexthdrp,
-    struct mbuf *mprev, struct secpolicy *sp, int flags __unused, int *tun)
+    struct mbuf *mprev, struct secpolicy *sp, int flags, int *tun)
 {
 	struct ip6_hdr *ip6;
 	struct ipsecrequest *isr = NULL;
@@ -3017,7 +3015,7 @@ bad:
  */
 int
 ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
-    int flags __unused)
+    int flags)
 {
 	struct ip6_hdr *ip6;
 	struct ipsecrequest *isr = NULL;
@@ -3122,20 +3120,19 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 			state->ro = &isr->sav->sah->sa_route;
 			state->dst = (struct sockaddr *)&state->ro->ro_dst;
 			dst6 = (struct sockaddr_in6 *)state->dst;
-			if (state->ro->ro_rt
-			 && ((state->ro->ro_rt->rt_flags & RTF_UP) == 0
-			  || !IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ip6->ip6_dst))) {
-				RTFREE(state->ro->ro_rt);
-				bzero((caddr_t)state->ro, sizeof (*state->ro));
-			}
-			if (state->ro->ro_rt == 0) {
+			if (state->ro->ro_rt != NULL &&
+			    ((state->ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+			     !IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr,
+			                         &ip6->ip6_dst)))
+				rtflush((struct route *)state->ro);
+			if (state->ro->ro_rt == NULL) {
 				bzero(dst6, sizeof(*dst6));
 				dst6->sin6_family = AF_INET6;
 				dst6->sin6_len = sizeof(*dst6);
 				dst6->sin6_addr = ip6->ip6_dst;
 				rtalloc(state->ro);
 			}
-			if (state->ro->ro_rt == 0) {
+			if (state->ro->ro_rt == NULL) {
 				ip6stat.ip6s_noroute++;
 				ipsec6stat.out_noroute++;
 				error = EHOSTUNREACH;
@@ -3519,7 +3516,7 @@ ipsec_optaux(m, mtag)
 }
 
 int
-ipsec_addhist(struct mbuf *m, int proto __unused, u_int32_t spi __unused)
+ipsec_addhist(struct mbuf *m, int proto, u_int32_t spi)
 {
 	struct m_tag *mtag;
 	struct ipsecaux *aux;
@@ -3547,7 +3544,7 @@ ipsec_getnhist(m)
 }
 
 struct ipsec_history *
-ipsec_gethist(struct mbuf *m __unused, int *lenp __unused)
+ipsec_gethist(struct mbuf *m, int *lenp)
 {
 
 	panic("ipsec_gethist: obsolete API");

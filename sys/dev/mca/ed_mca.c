@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.32.10.1 2006/10/22 06:06:12 yamt Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.32.10.2 2006/12/10 07:17:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.32.10.1 2006/10/22 06:06:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.32.10.2 2006/12/10 07:17:36 yamt Exp $");
 
 #include "rnd.h"
 
@@ -119,7 +119,7 @@ static struct dkdriver eddkdriver = { edmcastrategy, minphys };
  * Just check if it's possible to identify the disk.
  */
 static int
-ed_mca_probe(struct device *parent, struct cfdata *cf __unused,
+ed_mca_probe(struct device *parent, struct cfdata *cf,
     void *aux)
 {
 	u_int16_t cmd_args[2];
@@ -271,21 +271,21 @@ done:
 }
 
 int
-edmcaread(dev_t dev, struct uio *uio, int flags __unused)
+edmcaread(dev_t dev, struct uio *uio, int flags)
 {
 	ATADEBUG_PRINT(("edread\n"), DEBUG_XFERS);
 	return (physio(edmcastrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-edmcawrite(dev_t dev, struct uio *uio, int flags __unused)
+edmcawrite(dev_t dev, struct uio *uio, int flags)
 {
 	ATADEBUG_PRINT(("edwrite\n"), DEBUG_XFERS);
 	return (physio(edmcastrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 int
-edmcaopen(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
+edmcaopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct ed_softc *wd;
 	int part, error;
@@ -363,7 +363,7 @@ edmcaopen(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
 }
 
 int
-edmcaclose(dev_t dev, int flag __unused, int fmt, struct lwp *l __unused)
+edmcaclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct ed_softc *wd = device_lookup(&ed_cd, DISKUNIT(dev));
 	int part = DISKPART(dev);

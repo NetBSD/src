@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.16.4.1 2006/10/22 06:05:35 yamt Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.16.4.2 2006/12/10 07:17:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.16.4.1 2006/10/22 06:05:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.16.4.2 2006/12/10 07:17:03 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -146,7 +146,7 @@ tlp_eisa_lookup(const struct eisa_attach_args *ea)
 }
 
 static int
-tlp_eisa_match(struct device *parent __unused, struct cfdata *match __unused,
+tlp_eisa_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct eisa_attach_args *ea = aux;
@@ -158,7 +158,7 @@ tlp_eisa_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-tlp_eisa_attach(struct device *parent __unused, struct device *self, void *aux)
+tlp_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	static const u_int8_t testpat[] =
 	    { 0xff, 0, 0x55, 0xaa, 0xff, 0, 0x55, 0xaa };

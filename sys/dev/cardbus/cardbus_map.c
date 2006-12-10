@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.22.8.1 2006/10/22 06:05:35 yamt Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.22.8.2 2006/12/10 07:16:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.22.8.1 2006/10/22 06:05:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.22.8.2 2006/12/10 07:16:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ cardbus_io_find(
     cardbus_function_tag_t cf,
     cardbustag_t tag,
     int reg,
-    cardbusreg_t type __unused,
+    cardbusreg_t type,
     bus_addr_t *basep,
     bus_size_t *sizep,
     int *flagsp)

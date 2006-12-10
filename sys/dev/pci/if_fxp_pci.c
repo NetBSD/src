@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.47.6.1 2006/10/22 06:06:16 yamt Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.47.6.2 2006/12/10 07:17:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.47.6.1 2006/10/22 06:06:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.47.6.2 2006/12/10 07:17:43 yamt Exp $");
 
 #include "rnd.h"
 
@@ -137,6 +137,8 @@ static const struct fxp_pci_product {
 	  "Intel PRO/100 VE Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_7,
 	  "Intel PRO/100 VE Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_8,
+	  "Intel PRO/100 VE Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VM_0,
 	  "Intel PRO/100 VM Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VM_1,
@@ -179,7 +181,7 @@ fxp_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-fxp_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+fxp_pci_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -263,7 +265,7 @@ fxp_pci_powerhook(int why, void *arg)
 }
 
 static void
-fxp_pci_attach(struct device *parent __unused, struct device *self, void *aux)
+fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fxp_pci_softc *psc = (struct fxp_pci_softc *)self;
 	struct fxp_softc *sc = (struct fxp_softc *)self;

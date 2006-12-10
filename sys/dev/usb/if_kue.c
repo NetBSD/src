@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.56.4.1 2006/10/22 06:06:52 yamt Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.56.4.2 2006/12/10 07:18:16 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.56.4.1 2006/10/22 06:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.56.4.2 2006/12/10 07:18:16 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -815,7 +815,7 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  */
 
 Static void
-kue_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+kue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct kue_chain	*c = priv;

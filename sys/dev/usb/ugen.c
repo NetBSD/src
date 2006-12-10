@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.85.4.1 2006/10/22 06:06:52 yamt Exp $	*/
+/*	$NetBSD: ugen.c,v 1.85.4.2 2006/12/10 07:18:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,9 +44,10 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.85.4.1 2006/10/22 06:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.85.4.2 2006/12/10 07:18:17 yamt Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,7 +339,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 }
 
 int
-ugenopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ugen_softc *sc;
 	int unit = UGENUNIT(dev);
@@ -487,7 +488,7 @@ ugenopen(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
 }
 
 int
-ugenclose(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int endpt = UGENENDPOINT(dev);
 	struct ugen_softc *sc;
@@ -789,7 +790,7 @@ ugenread(dev_t dev, struct uio *uio, int flag)
 
 Static int
 ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
-	int flag __unused)
+	int flag)
 {
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][OUT];
 	u_int32_t n;
@@ -1805,6 +1806,13 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		usbd_fill_deviceinfo(sc->sc_udev,
 				     (struct usb_device_info *)addr, 1);
 		break;
+#ifdef COMPAT_30
+	case USB_GET_DEVICEINFO_OLD:
+		usbd_fill_deviceinfo_old(sc->sc_udev,
+					 (struct usb_device_info_old *)addr, 1);
+
+		break;
+#endif
 	default:
 		return (EINVAL);
 	}
@@ -1937,7 +1945,7 @@ filt_ugenrdetach(struct knote *kn)
 }
 
 static int
-filt_ugenread_intr(struct knote *kn, long hint __unused)
+filt_ugenread_intr(struct knote *kn, long hint)
 {
 	struct ugen_endpoint *sce = kn->kn_hook;
 
@@ -1946,7 +1954,7 @@ filt_ugenread_intr(struct knote *kn, long hint __unused)
 }
 
 static int
-filt_ugenread_isoc(struct knote *kn, long hint __unused)
+filt_ugenread_isoc(struct knote *kn, long hint)
 {
 	struct ugen_endpoint *sce = kn->kn_hook;
 

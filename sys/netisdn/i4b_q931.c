@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.19.12.1 2006/10/22 06:07:39 yamt Exp $
+ *	$Id: i4b_q931.c,v 1.19.12.2 2006/12/10 07:19:20 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.19.12.1 2006/10/22 06:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.19.12.2 2006/12/10 07:19:20 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -269,7 +269,7 @@ i4b_decode_q931(int isdnif, int msg_len, u_char *msg_ptr)
  *	decode and process one Q.931 codeset 0 information element
  *---------------------------------------------------------------------------*/
 int
-i4b_decode_q931_cs0_ie(call_desc_t *cd, int msg_len __unused, u_char *msg_ptr)
+i4b_decode_q931_cs0_ie(call_desc_t *cd, int msg_len, u_char *msg_ptr)
 {
 	int i, j;
 	char *p;

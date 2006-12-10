@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.57.4.1 2006/10/22 06:06:39 yamt Exp $ */
+/*	$NetBSD: if_xi.c,v 1.57.4.2 2006/12/10 07:18:06 yamt Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.57.4.1 2006/10/22 06:06:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.57.4.2 2006/12/10 07:18:06 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -259,7 +259,7 @@ xi_attach(sc, myea)
 }
 
 int
-xi_detach(struct device *self, int flags __unused)
+xi_detach(struct device *self, int flags)
 {
 	struct xi_softc *sc = (void *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -665,7 +665,7 @@ xi_mdi_write(self, phy, reg, value)
 }
 
 STATIC void
-xi_statchg(struct device *self __unused)
+xi_statchg(struct device *self)
 {
 	/* XXX Update ifp->if_baudrate */
 }

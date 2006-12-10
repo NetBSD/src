@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.11.8.1 2006/10/22 06:05:45 yamt Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.11.8.2 2006/12/10 07:17:06 yamt Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.11.8.1 2006/10/22 06:05:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.11.8.2 2006/12/10 07:17:06 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -147,7 +147,9 @@ static void	rt2661_set_chan(struct rt2661_softc *,
 static void	rt2661_set_bssid(struct rt2661_softc *, const uint8_t *);
 static void	rt2661_set_macaddr(struct rt2661_softc *, const uint8_t *);
 static void	rt2661_update_promisc(struct rt2661_softc *);
-static int	rt2661_wme_update(struct ieee80211com *) __unused;
+#if 0
+static int	rt2661_wme_update(struct ieee80211com *);
+#endif
 
 static void	rt2661_update_slot(struct ifnet *);
 static const char *
@@ -842,7 +844,7 @@ rt2661_free_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring)
 }
 
 static struct ieee80211_node *
-rt2661_node_alloc(struct ieee80211_node_table *nt __unused)
+rt2661_node_alloc(struct ieee80211_node_table *nt)
 {
 	struct rt2661_node *rn;
 
@@ -885,7 +887,7 @@ rt2661_next_scan(void *arg)
  * This function is called for each neighbor node.
  */
 static void
-rt2661_iter_func(void *arg __unused, struct ieee80211_node *ni)
+rt2661_iter_func(void *arg, struct ieee80211_node *ni)
 {
 	struct rt2661_node *rn = (struct rt2661_node *)ni;
 
@@ -1294,7 +1296,7 @@ skip:		desc->flags |= htole32(RT2661_RX_BUSY);
 
 /* ARGSUSED */
 static void
-rt2661_mcu_beacon_expire(struct rt2661_softc *sc __unused)
+rt2661_mcu_beacon_expire(struct rt2661_softc *sc)
 {
 	/* do nothing */
 }
@@ -2427,6 +2429,7 @@ rt2661_update_promisc(struct rt2661_softc *sc)
 	    "entering" : "leaving"));
 }
 
+#if 0
 /*
  * Update QoS (802.11e) settings for each h/w Tx ring.
  */
@@ -2472,6 +2475,7 @@ rt2661_wme_update(struct ieee80211com *ic)
 
 	return 0;
 }
+#endif
 
 static void
 rt2661_update_slot(struct ifnet *ifp)

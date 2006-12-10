@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.36.4.1 2006/10/22 06:06:39 yamt Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.36.4.2 2006/12/10 07:18:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.36.4.1 2006/10/22 06:06:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.36.4.2 2006/12/10 07:18:06 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -479,7 +479,7 @@ cnw_disable(sc)
  * Match the hardware we handle.
  */
 int
-cnw_match(struct device *parent __unused, struct cfdata *match __unused,
+cnw_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
@@ -498,7 +498,7 @@ cnw_match(struct device *parent __unused, struct cfdata *match __unused,
  * Attach the card.
  */
 void
-cnw_attach(struct device  *parent __unused, struct device *self, void *aux)
+cnw_attach(struct device  *parent, struct device *self, void *aux)
 {
 	struct cnw_softc *sc = (void *) self;
 	struct pcmcia_attach_args *pa = aux;
@@ -1210,7 +1210,7 @@ cnw_activate(self, act)
 }
 
 int
-cnw_detach(struct device *self, int flags __unused)
+cnw_detach(struct device *self, int flags)
 {
 	struct cnw_softc *sc = (struct cnw_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;

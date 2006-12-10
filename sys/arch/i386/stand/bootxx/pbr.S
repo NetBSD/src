@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.13 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: pbr.S,v 1.13.22.1 2006/12/10 07:16:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ ENTRY(start)
 	/*
 	 * The PC BIOS architecture defines a Boot Parameter Block (BPB) here.
 	 * The actual format varies between different MS-DOS versions, but
-	 * apparantly some system BIOS insist on patching this area
+	 * apparently some system BIOS insist on patching this area
 	 * (especially on LS120 drives - which I thought had an MBR...).
 	 * The initial jmp and nop are part of the standard and may be
 	 * tested for by the system BIOS.

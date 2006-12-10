@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.c,v 1.2 2006/07/01 08:42:39 martin Exp $	*/
+/*	$NetBSD: sysvbfs.c,v 1.2.6.1 2006/12/10 07:18:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.2 2006/07/01 08:42:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.2.6.1 2006/12/10 07:18:42 yamt Exp $");
 
 #include <sys/resource.h>
 #include <sys/param.h>
@@ -133,5 +133,7 @@ struct vfsops sysvbfs_vfsops = {
 	    eopnotsupp,		/* snapshot */
 	vfs_stdextattrctl,
 	sysvbfs_vnodeopv_descs,
+	0,
+	{ NULL, NULL }
 };
 VFS_ATTACH(sysvbfs_vfsops);

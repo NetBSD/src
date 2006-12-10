@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.28 2006/09/07 19:13:11 garbled Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.28.2.1 2006/12/10 07:16:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.28 2006/09/07 19:13:11 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.28.2.1 2006/12/10 07:16:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags, lastaddrp, segp, first)
 			     map->dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
-			     (curaddr & bmask)))
+			     (PHYS_TO_BUS_MEM(t, curaddr) & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
 				if (++seg >= map->_dm_segcnt)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.16.22.1 2006/10/22 06:06:43 yamt Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.16.22.2 2006/12/10 07:18:11 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.16.22.1 2006/10/22 06:06:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.16.22.2 2006/12/10 07:18:11 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -115,7 +115,7 @@ rf_print_unfreed()
 #endif /* RF_DEBUG_MEM */
 
 int
-rf_ConfigureDebugMem(RF_ShutdownList_t **listp __unused)
+rf_ConfigureDebugMem(RF_ShutdownList_t **listp)
 {
 #if RF_DEBUG_MEM
 	int     i, rc;

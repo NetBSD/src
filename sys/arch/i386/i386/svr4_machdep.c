@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.79.4.1 2006/10/22 06:04:44 yamt Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.79.4.2 2006/12/10 07:16:10 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.79.4.1 2006/10/22 06:04:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.79.4.2 2006/12/10 07:16:10 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -371,7 +371,7 @@ svr4_getsiginfo(si, sig, code, addr)
  * will return to the user pc, psl.
  */
 void
-svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask __unused)
+svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	u_long code = KSI_TRAPCODE(ksi);
 	int sig = ksi->ksi_signo;

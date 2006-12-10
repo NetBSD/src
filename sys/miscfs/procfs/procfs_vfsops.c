@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.65.4.1 2006/10/22 06:07:23 yamt Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.65.4.2 2006/12/10 07:18:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.65.4.1 2006/10/22 06:07:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.65.4.2 2006/12/10 07:18:59 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -125,7 +125,7 @@ procfs_mount(
     struct mount *mp,
     const char *path,
     void *data,
-    struct nameidata *ndp __unused,
+    struct nameidata *ndp,
     struct lwp *l
 )
 {
@@ -180,7 +180,7 @@ procfs_mount(
  * unmount system call
  */
 int
-procfs_unmount(struct mount *mp, int mntflags, struct lwp *l __unused)
+procfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 {
 	int error;
 	int flags = 0;
@@ -210,8 +210,8 @@ procfs_root(mp, vpp)
 
 /* ARGSUSED */
 int
-procfs_start(struct mount *mp __unused, int flags __unused,
-    struct lwp *l __unused)
+procfs_start(struct mount *mp, int flags,
+    struct lwp *l)
 {
 
 	return (0);
@@ -221,7 +221,7 @@ procfs_start(struct mount *mp __unused, int flags __unused,
  * Get file system statistics.
  */
 int
-procfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
+procfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 
 	sbp->f_bsize = PAGE_SIZE;
@@ -242,11 +242,11 @@ procfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
 /*ARGSUSED*/
 int
 procfs_quotactl(
-    struct mount *mp __unused,
-    int cmds __unused,
-    uid_t uid __unused,
-    void *arg __unused,
-    struct lwp *l __unused
+    struct mount *mp,
+    int cmds,
+    uid_t uid,
+    void *arg,
+    struct lwp *l
 )
 {
 
@@ -256,10 +256,10 @@ procfs_quotactl(
 /*ARGSUSED*/
 int
 procfs_sync(
-    struct mount *mp __unused,
-    int waitfor __unused,
-    kauth_cred_t uc __unused,
-    struct lwp *l __unused
+    struct mount *mp,
+    int waitfor,
+    kauth_cred_t uc,
+    struct lwp *l
 )
 {
 
@@ -268,8 +268,8 @@ procfs_sync(
 
 /*ARGSUSED*/
 int
-procfs_vget(struct mount *mp __unused, ino_t ino __unused,
-    struct vnode **vpp __unused)
+procfs_vget(struct mount *mp, ino_t ino,
+    struct vnode **vpp)
 {
 	return (EOPNOTSUPP);
 }
@@ -330,8 +330,8 @@ struct vfsops procfs_vfsops = {
 	procfs_statvfs,
 	procfs_sync,
 	procfs_vget,
-	NULL,				/* vfs_fhtovp */
-	NULL,				/* vfs_vptofh */
+	(void *)eopnotsupp,		/* vfs_fhtovp */
+	(void *)eopnotsupp,		/* vfs_vptofh */
 	procfs_init,
 	procfs_reinit,
 	procfs_done,

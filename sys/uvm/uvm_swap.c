@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.106.2.1 2006/10/22 06:07:54 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.106.2.2 2006/12/10 07:19:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.106.2.1 2006/10/22 06:07:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.106.2.2 2006/12/10 07:19:34 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.106.2.1 2006/10/22 06:07:54 yamt Exp 
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
-#include <sys/extent.h>
+#include <sys/vmem.h>
 #include <sys/blist.h>
 #include <sys/mount.h>
 #include <sys/pool.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.106.2.1 2006/10/22 06:07:54 yamt Exp 
  *    while we are in the middle of a system call (e.g. SWAP_STATS).
  *  - uvm.swap_data_lock (simple_lock): this lock protects all swap data
  *    structures including the priority list, the swapdev structures,
- *    and the swapmap extent.
+ *    and the swapmap arena.
  *
  * each swap device has the following info:
  *  - swap device in use (could be disabled, preventing future use)
@@ -208,9 +208,8 @@ POOL_INIT(vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd", NULL);
 /*
  * local variables
  */
-static struct extent *swapmap;		/* controls the mapping of /dev/drum */
-
 MALLOC_DEFINE(M_VMSWAP, "VM swap", "VM swap structures");
+static vmem_t *swapmap;	/* controls the mapping of /dev/drum */
 
 /* list of all active swap devices [by priority] */
 LIST_HEAD(swap_priority, swappri);
@@ -272,8 +271,8 @@ uvm_swap_init(void)
 	 * that block 0 is reserved (used to indicate an allocation
 	 * failure, or no allocation).
 	 */
-	swapmap = extent_create("swapmap", 1, INT_MAX,
-				M_VMSWAP, 0, 0, EX_NOWAIT);
+	swapmap = vmem_create("swapmap", 1, INT_MAX - 1, 1, NULL, NULL, NULL, 0,
+	    VM_NOSLEEP);
 	if (swapmap == 0)
 		panic("uvm_swap_init: extent_create failed");
 
@@ -372,7 +371,6 @@ swaplist_find(struct vnode *vp, boolean_t remove)
 	}
 	return (NULL);
 }
-
 
 /*
  * swaplist_trim: scan priority list for empty priority entries and kill
@@ -942,8 +940,8 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	/*
 	 * now add the new swapdev to the drum and enable.
 	 */
-	if (extent_alloc(swapmap, npages, EX_NOALIGN, EX_NOBOUNDARY,
-	    EX_WAITOK, &result))
+	result = vmem_alloc(swapmap, npages, VM_BESTFIT | VM_SLEEP);
+	if (result == 0)
 		panic("swapdrum_add");
 
 	sdp->swd_drumoffset = (int)result;
@@ -1037,8 +1035,7 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	/*
 	 * free all resources!
 	 */
-	extent_free(swapmap, sdp->swd_drumoffset, sdp->swd_drumsize,
-		    EX_WAITOK);
+	vmem_free(swapmap, sdp->swd_drumoffset, sdp->swd_drumsize);
 	blist_destroy(sdp->swd_blist);
 	bufq_free(sdp->swd_tab);
 	free(sdp, M_VMSWAP);
@@ -1143,7 +1140,7 @@ swstrategy(struct buf *bp)
  */
 /*ARGSUSED*/
 static int
-swread(dev_t dev, struct uio *uio, int ioflag __unused)
+swread(dev_t dev, struct uio *uio, int ioflag)
 {
 	UVMHIST_FUNC("swread"); UVMHIST_CALLED(pdhist);
 
@@ -1156,7 +1153,7 @@ swread(dev_t dev, struct uio *uio, int ioflag __unused)
  */
 /*ARGSUSED*/
 static int
-swwrite(dev_t dev, struct uio *uio, int ioflag __unused)
+swwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	UVMHIST_FUNC("swwrite"); UVMHIST_CALLED(pdhist);
 

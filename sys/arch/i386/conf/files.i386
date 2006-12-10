@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.292.4.1 2006/10/22 06:04:43 yamt Exp $
+#	$NetBSD: files.i386,v 1.292.4.2 2006/12/10 07:16:04 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -59,7 +59,7 @@ defflag			ENHANCED_SPEEDSTEP
 
 # Multiboot support
 defflag opt_multiboot.h		MULTIBOOT
-defparam opt_multiboot.h	MULTIBOOT_SYMTAB_SPACE
+obsolete defparam		MULTIBOOT_SYMTAB_SPACE
 file	arch/i386/i386/multiboot.c	multiboot
 
 # PowerNow K7

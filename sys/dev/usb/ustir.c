@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.15.22.1 2006/10/22 06:06:53 yamt Exp $	*/
+/*	$NetBSD: ustir.c,v 1.15.22.2 2006/12/10 07:18:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.15.22.1 2006/10/22 06:06:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.15.22.2 2006/12/10 07:18:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -857,8 +857,8 @@ ustir_activate(device_ptr_t self, enum devact act)
 
 /* ARGSUSED */
 Static int
-ustir_open(void *h, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+ustir_open(void *h, int flag, int mode,
+    struct lwp *l)
 {
 	struct ustir_softc *sc = h;
 	int error;
@@ -947,8 +947,8 @@ ustir_open(void *h, int flag __unused, int mode __unused,
 
 /* ARGSUSED */
 Static int
-ustir_close(void *h, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+ustir_close(void *h, int flag, int mode,
+    struct lwp *l)
 {
 	struct ustir_softc *sc = h;
 
@@ -997,7 +997,7 @@ ustir_close(void *h, int flag __unused, int mode __unused,
 
 /* ARGSUSED */
 Static int
-ustir_read(void *h, struct uio *uio, int flag __unused)
+ustir_read(void *h, struct uio *uio, int flag)
 {
 	struct ustir_softc *sc = h;
 	int s;
@@ -1067,7 +1067,7 @@ ustir_read(void *h, struct uio *uio, int flag __unused)
 
 /* ARGSUSED */
 Static int
-ustir_write(void *h, struct uio *uio, int flag __unused)
+ustir_write(void *h, struct uio *uio, int flag)
 {
 	struct ustir_softc *sc = h;
 	usbd_status err;
@@ -1232,7 +1232,7 @@ filt_ustirrdetach(struct knote *kn)
 
 /* ARGSUSED */
 static int
-filt_ustirread(struct knote *kn, long hint __unused)
+filt_ustirread(struct knote *kn, long hint)
 {
 	struct ustir_softc *sc = kn->kn_hook;
 
@@ -1253,7 +1253,7 @@ filt_ustirwdetach(struct knote *kn)
 
 /* ARGSUSED */
 static int
-filt_ustirwrite(struct knote *kn, long hint __unused)
+filt_ustirwrite(struct knote *kn, long hint)
 {
 	struct ustir_softc *sc = kn->kn_hook;
 

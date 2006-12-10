@@ -1,4 +1,4 @@
-/*	$NetBSD: iha_pci.c,v 1.11.22.1 2006/10/22 06:06:18 yamt Exp $ */
+/*	$NetBSD: iha_pci.c,v 1.11.22.2 2006/12/10 07:17:45 yamt Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.11.22.1 2006/10/22 06:06:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.11.22.2 2006/12/10 07:17:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ CFATTACH_DECL(iha_pci, sizeof(struct iha_softc),
     iha_pci_match, iha_pci_attach, NULL, NULL);
 
 static int
-iha_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+iha_pci_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -81,7 +81,7 @@ iha_pci_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 static void
-iha_pci_attach(struct device *parent __unused, struct device *self, void *aux)
+iha_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	bus_space_tag_t iot;
