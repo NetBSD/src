@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.10 2006/11/25 16:48:31 christos Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.11 2006/12/10 12:46:48 kiyohara Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -111,6 +111,7 @@
 #define PXA2X0_MMC_SIZE		0x48
 #define PXA2X0_CLKMAN_BASE  	0x41300000 /* Clock Manager */
 #define PXA2X0_CLKMAN_SIZE	12
+#define PXA2X0_HWUART_BASE	0x41600000 /* Hardware UART */
 #define PXA2X0_LCDC_BASE	0x44000000 /* LCD Controller */
 #define PXA2X0_LCDC_SIZE	0x220
 #define PXA2X0_MEMCTL_BASE	0x48000000 /* Memory Controller */
@@ -129,12 +130,13 @@
 /* width of interrupt controller */
 #define ICU_LEN			32   /* but [0..7,15,16] is not used */
 #define ICU_INT_HWMASK		0xffffff00
-#define PXA250_IRQ_MIN 8	/* 0..7 are not used by integrated 
+#define PXA250_IRQ_MIN 7	/* 0..6 are not used by integrated 
 				   peripherals */
 #define PXA270_IRQ_MIN 0
 
 #define PXA2X0_INT_USBH1	3	/* USB host (OHCI) */
 
+#define PXA2X0_INT_HWUART  	7
 #define PXA2X0_INT_GPIO0	8
 #define PXA2X0_INT_GPIO1	9
 #define PXA2X0_INT_GPION	10	/* irq from GPIO[2..80] */
@@ -142,6 +144,7 @@
 #define PXA2X0_INT_PMU  	12
 #define PXA2X0_INT_I2S  	13
 #define PXA2X0_INT_AC97  	14
+#define PXA2X0_INT_NSSP  	16
 #define PXA2X0_INT_LCD  	17
 #define PXA2X0_INT_I2C  	18
 #define PXA2X0_INT_ICP  	19
@@ -255,10 +258,12 @@ struct pxa2x0_dma_desc {
 #define CKEN_PWM1	(1<<1)
 #define CKEN_AC97	(1<<2)
 #define CKEN_SSP	(1<<3)
+#define CKEN_HWUART	(1<<4)
 #define CKEN_STUART	(1<<5)
 #define CKEN_FFUART	(1<<6)
 #define CKEN_BTUART	(1<<7)
 #define CKEN_I2S	(1<<8)
+#define CKEN_NSSP	(1<<9)
 #define CKEN_USBH	(1<<10)
 #define CKEN_USB	(1<<11)
 #define CKEN_MMC	(1<<12)

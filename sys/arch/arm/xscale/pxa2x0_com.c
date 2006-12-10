@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_com.c,v 1.6 2006/07/13 22:56:00 gdamore Exp $	*/
+/*	$NetBSD: pxa2x0_com.c,v 1.7 2006/12/10 12:46:48 kiyohara Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.6 2006/07/13 22:56:00 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.7 2006/12/10 12:46:48 kiyohara Exp $");
 
 #include "opt_com.h"
 
@@ -87,6 +87,11 @@ pxauart_match(struct device *parent, struct cfdata *cf, void *aux)
 
 	case PXA2X0_BTUART_BASE:	/* XXX: Config file option ... */
 		if (pxa->pxa_intr != PXA2X0_INT_BTUART)
+			return (0);
+		break;
+
+	case PXA2X0_HWUART_BASE:
+		if (pxa->pxa_intr != PXA2X0_INT_HWUART)
 			return (0);
 		break;
 
