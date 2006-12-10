@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.141 2006/12/10 07:58:51 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.142 2006/12/10 13:46:00 pavel Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -411,6 +411,7 @@ Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
 		tested (by who):
 			alpha		(yamt)
+			alpha		(pavel)
 			cobalt		(tsutsui)
 			ews4800mips	(tsutsui)
 			hp300		(tsutsui)
