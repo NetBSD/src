@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.115.6.1 2006/10/22 06:04:53 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115.6.2 2006/12/10 05:16:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115.6.1 2006/10/22 06:04:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115.6.2 2006/12/10 05:16:28 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -1189,4 +1189,29 @@ cpu_exec_aout_makecmds(l, epp)
     struct exec_package *epp;
 {
     return ENOEXEC;
+}
+
+const static int ipl2psl_table[] = {
+	[IPL_NONE] = PSL_IPL0,
+	[IPL_SOFT] = PSL_IPL1,
+	[IPL_SOFTCLOCK] = PSL_IPL1,
+	[IPL_SOFTNET] = PSL_IPL1,
+	[IPL_SOFTSERIAL] = PSL_IPL1,
+	[IPL_BIO] = PSL_IPL2,
+	[IPL_NET] = PSL_IPL3,
+	[IPL_TTY] = PSL_IPL3,
+	/* IPL_LPT == IPL_TTY */
+	[IPL_VM] = PSL_IPL3,
+	[IPL_SERIAL] = PSL_IPL4,
+	[IPL_CLOCK] = PSL_IPL5,
+	[IPL_HIGH] = PSL_IPL7,
+	/* IPL_SCHED == IPL_HIGH */
+	/* IPL_LOCK == IPL_HIGH */
+};
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl] | PSL_S};
 }
