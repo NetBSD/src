@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.26 2005/12/31 12:33:41 elad Exp $	*/
+/*	$NetBSD: intercept.c,v 1.27 2006/12/10 01:22:02 christos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.26 2005/12/31 12:33:41 elad Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.27 2006/12/10 01:22:02 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -555,6 +555,9 @@ intercept_get_string(int fd, pid_t pid, void *addr)
 	static char name[8192];
 	int off = 0, done = 0, stride;
 
+	if (addr == NULL)
+		return (NULL);
+
 	stride = 32;
 	do {
 		if (intercept.io(fd, pid, INTERCEPT_READ, (char *)addr + off,
@@ -642,7 +645,6 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 		havecwd = 1;
 	}
 
-	/* Need concatenated path for simplifypath */
 	if (havecwd && name[0] != '/') {
 		if (strlcat(cwd, "/", sizeof(cwd)) >= sizeof(cwd))
 			return (NULL);
@@ -707,7 +709,7 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 			 */
 			if (userp != ICLINK_NOLAST) {
 				if (lstat(rcwd, &st) == -1 ||
-				    !(st.st_mode & S_IFDIR))
+				    !S_ISDIR(st.st_mode))
 					failed = 1;
 			}
 		}
@@ -892,6 +894,12 @@ intercept_assignpolicy(int fd, pid_t pid, int policynr)
 }
 
 int
+intercept_modifypolicy_nr(int fd, int policynr, int code, short policy)
+{
+	return (intercept.policy(fd, policynr, code, policy));
+}
+
+int
 intercept_modifypolicy(int fd, int policynr, const char *emulation,
     const char *name, short policy)
 {
@@ -965,12 +973,27 @@ intercept_ugid(struct intercept_pid *icpid, uid_t uid, gid_t gid)
 }
 
 /*
+ 	  * Returns the number of a system call
+ 	  */
+ 	 
+int
+intercept_getsyscallnumber(const char *emulation, const char *name)
+{
+         int nr = intercept.getsyscallnumber(emulation, name);
+
+	if (nr >= INTERCEPT_MAXSYSCALLNR)
+		err(1, "%s: system call number too high: %d", __func__, nr);
+
+	return (nr);
+}
+
+/*
  * Checks if the given emulation has a certain system call.
  * This is a very slow function.
  */
 
 int
-intercept_isvalidsystemcall(char *emulation, char *name)
+intercept_isvalidsystemcall(const char *emulation, const char *name)
 {
 	int res;
 
