@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.43 2006/12/10 14:49:43 is Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.44 2006/12/10 14:52:29 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.43 2006/12/10 14:49:43 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.44 2006/12/10 14:52:29 is Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -587,8 +587,8 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 			if(m->m_len < LLC_XID_BASIC_MINLEN + lan_hdr_len)
 				goto dropanyway;
 			l->llc_window = 0;
-			l->llc_fid = 9;
-			l->llc_class = 1;
+			l->llc_fid = LLC_XID_FORMAT_BASIC;
+			l->llc_class = LLC_XID_CLASS_I;
 			l->llc_dsap = l->llc_ssap = 0;
 			/* Fall through to */
 		case LLC_TEST:
