@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.10 2006/12/05 23:41:24 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.11 2006/12/10 22:37:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.10 2006/12/05 23:41:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.11 2006/12/10 22:37:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -287,9 +287,12 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 				goto out;
 			}
 
-			ltsleep(&pmp->pmp_req_touser, PUSER, "puffs2", 0,
-			    &pmp->pmp_lock);
-			goto again;
+			error = ltsleep(&pmp->pmp_req_touser, PUSER | PCATCH,
+			    "puffs2", 0, &pmp->pmp_lock);
+			if (error)
+				goto out;
+			else
+				goto again;
 		}
 
 		park = TAILQ_FIRST(&pmp->pmp_req_touser);
