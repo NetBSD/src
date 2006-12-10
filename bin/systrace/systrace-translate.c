@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.19 2006/12/10 01:22:02 christos Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.20 2006/12/10 17:33:01 he Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -659,6 +659,7 @@ struct intercept_translate ic_memprot = {
 };
 
 struct intercept_translate ic_linux_memprot = {
-	"prot",
-	get_linux_memprot, print_memprot,
+	.name = "prot",
+	.translate = get_linux_memprot,
+	.print =  print_memprot,
 };
