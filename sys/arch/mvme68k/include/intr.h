@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13.16.2 2006/12/10 05:21:53 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.16.3 2006/12/10 05:25:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,10 +53,11 @@
 #define	IPL_TTY		7	/* disable terminal interrupts */
 #define	IPL_LPT		IPL_TTY
 #define	IPL_TTYNOBUF	8	/* IPL_TTY + higher ISR priority */
-#define	IPL_SERIAL	8	/* disable serial interrupts */
-#define	IPL_CLOCK	9	/* disable clock interrupts */
+#define	IPL_VM		9
+#define	IPL_SERIAL	10	/* disable serial interrupts */
+#define	IPL_CLOCK	11	/* disable clock interrupts */
 #define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_HIGH	10	/* disable all interrupts */
+#define	IPL_HIGH	12	/* disable all interrupts */
 #define	IPL_SCHED	IPL_HIGH
 #define	IPL_LOCK	IPL_HIGH
 
