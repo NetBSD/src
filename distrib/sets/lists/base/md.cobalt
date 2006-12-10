@@ -1,3 +1,0 @@
-# $NetBSD: md.cobalt,v 1.8 2005/05/22 03:45:30 lukem Exp $
-./usr/mdec/installkernel			base-sysutil-bin
-./usr/mdec/boot					base-sysutil-bin
