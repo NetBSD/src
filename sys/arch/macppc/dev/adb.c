@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.20 2006/09/13 03:37:20 gdamore Exp $	*/
+/*	$NetBSD: adb.c,v 1.21 2006/12/10 19:28:12 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.20 2006/09/13 03:37:20 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.21 2006/12/10 19:28:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.20 2006/09/13 03:37:20 gdamore Exp $");
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 
 #include <macppc/dev/adbvar.h>
@@ -113,7 +114,7 @@ adbattach(parent, self, aux)
 	ADBDataBlock adbdata;
 	struct adb_attach_args aa_args;
 	int totaladbs;
-	int adbindex, adbaddr;
+	int adbindex, adbaddr, adb_node;
 
 	extern volatile u_char *Via1Base;
 
@@ -134,7 +135,9 @@ adbattach(parent, self, aux)
 	printf(" irq %d: ", irq);
 
 	adb_polling = 1;
-	ADBReInit();
+	adb_node = getnodebyname(ca->ca_node, "adb");
+	if (adb_node)
+		ADBReInit();
 
 	switch (adbHardware) {
 	case ADB_HW_CUDA:
@@ -145,6 +148,25 @@ adbattach(parent, self, aux)
 		pm_init();
 		break;
 	}
+
+	adb_todr_init();
+
+#if NAPM > 0
+	/* Magic for signalling the apm driver to match. */
+	aa_args.origaddr = ADBADDR_APM;
+	aa_args.adbaddr = ADBADDR_APM;
+	aa_args.handler_id = ADBADDR_APM;
+
+	(void)config_found(self, &aa_args, NULL);
+#endif
+
+	/* 
+	 * see if we're supposed to have an ADB bus
+	 * since some PowerBooks don't have one and their PMUs barf on ADB
+	 * commands we bail here if there's no adb node
+	 */
+	if (!adb_node)
+		return;
 
 #ifdef ADB_DEBUG
 	if (adb_debug)
@@ -174,20 +196,10 @@ adbattach(parent, self, aux)
 		(void)config_found(self, &aa_args, adbprint);
 	}
 
-#if NAPM > 0
-	/* Magic for signalling the apm driver to match. */
-	aa_args.origaddr = ADBADDR_APM;
-	aa_args.adbaddr = ADBADDR_APM;
-	aa_args.handler_id = ADBADDR_APM;
-
-	(void)config_found(self, &aa_args, NULL);
-#endif
-
 	if (adbHardware == ADB_HW_CUDA)
 		adb_cuda_autopoll();
 	adb_polling = 0;
 
-	adb_todr_init();
 }
 
 int
