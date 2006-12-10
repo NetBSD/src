@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.1 2006/12/10 10:01:49 scw Exp $	*/
+/*	$NetBSD: ixp425_if_npe.c,v 1.2 2006/12/10 10:30:55 scw Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.1 2006/12/10 10:01:49 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.2 2006/12/10 10:30:55 scw Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -1423,7 +1423,7 @@ npe_miibus_readreg(struct device *self, int phy, int reg)
 	v = (phy << NPE_MII_ADDR_SHL) | (reg << NPE_MII_REG_SHL)
 	  | NPE_MII_GO;
 	npe_mii_mdio_write(sc, NPE_MAC_MDIO_CMD, v);
-	if (npe_mii_mdio_wait(sc)) {
+	if (npe_mii_mdio_wait(sc))
 		v = npe_mii_mdio_read(sc, NPE_MAC_MDIO_STS);
 	else
 		v = 0xffff | NPE_MII_READ_FAIL;
