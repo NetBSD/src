@@ -83,7 +83,7 @@ man8_MANS = racoon.8 racoonctl.8 plainrsa-gen.8
 EXTRA_DIST = \
    ${man5_MANS} ${man8_MANS} \
    missing/crypto/rijndael/boxes-fst.dat \
-   doc/FAQ doc/README.certificate doc/README.gssapi \
+   doc/FAQ doc/README.certificate doc/README.gssapi doc/README.plainrsa \
    contrib/sp.pl stats.pl \
    samples/psk.txt.sample  samples/racoon.conf.sample \
    samples/psk.txt.in samples/racoon.conf.in \
