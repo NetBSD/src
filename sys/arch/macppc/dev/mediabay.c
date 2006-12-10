@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.11 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.12 2006/12/10 02:41:30 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.11 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.12 2006/12/10 02:41:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -142,17 +142,28 @@ mediabay_attach_content(sc)
 	char name[32];
 
 	fcr = in32rb(sc->sc_fcr);
-	fcr |= FCR_MEDIABAY_ENABLE | FCR_MEDIABAY_RESET;
-	out32rb(sc->sc_fcr, fcr);
-	delay(50000);
 
-	fcr &= ~FCR_MEDIABAY_RESET;
-	out32rb(sc->sc_fcr, fcr);
-	delay(50000);
+	/*
+	 * if the mediabay isn't powered up we need to wait a few seconds
+	 * before probing devices
+	 */
+	if ((fcr & (FCR_MEDIABAY_ENABLE | FCR_MEDIABAY_IDE_ENABLE
+	    | FCR_MEDIABAY_CD_POWER)) != (FCR_MEDIABAY_ENABLE
+	    | FCR_MEDIABAY_IDE_ENABLE | FCR_MEDIABAY_CD_POWER)) {
+		fcr |= FCR_MEDIABAY_ENABLE | FCR_MEDIABAY_RESET;
+		out32rb(sc->sc_fcr, fcr);
+		delay(50000);
 
-	fcr |= FCR_MEDIABAY_IDE_ENABLE | FCR_MEDIABAY_CD_POWER;
-	out32rb(sc->sc_fcr, fcr);
-	delay(50000);
+		fcr &= ~FCR_MEDIABAY_RESET;
+		out32rb(sc->sc_fcr, fcr);
+		delay(50000);
+
+		fcr |= FCR_MEDIABAY_IDE_ENABLE | FCR_MEDIABAY_CD_POWER;
+		out32rb(sc->sc_fcr, fcr);
+		delay(50000);
+		printf("%s: powering up...\n", sc->sc_dev.dv_xname);
+		delay(2000000);
+	}
 
 	for (child = OF_child(sc->sc_node); child; child = OF_peer(child)) {
 		memset(name, 0, sizeof(name));
