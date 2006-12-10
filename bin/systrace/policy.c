@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.21 2006/03/18 00:35:02 peter Exp $	*/
+/*	$NetBSD: policy.c,v 1.22 2006/12/10 01:22:02 christos Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.21 2006/03/18 00:35:02 peter Exp $");
+__RCSID("$NetBSD: policy.c,v 1.22 2006/12/10 01:22:02 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: policy.c,v 1.21 2006/03/18 00:35:02 peter Exp $");
 #include <fcntl.h>
 #include <ctype.h>
 #include <err.h>
+#include <libgen.h>
 
 #include "intercept.h"
 #include "systrace.h"
@@ -132,7 +133,7 @@ systrace_setupdir(char *path)
 		
 
 	if (stat(policydir, &sb) != -1) {
-		if (!(sb.st_mode & S_IFDIR))
+		if (!S_ISDIR(sb.st_mode))
 			errx(1, "Not a directory: \"%s\"", policydir);
 	} else if (mkdir(policydir, 0700) == -1)
 		err(1, "mkdir(%s)", policydir);
@@ -150,9 +151,37 @@ systrace_initpolicy(char *file, char *path)
 	}
 
 	if (file != NULL)
-		return (systrace_readpolicy(file));
+		return (systrace_readpolicy(file) != NULL ? 0 : -1);
 
 	return (0);
+}
+
+struct policy *
+systrace_findpolicy_wildcard(const char *name)
+{
+	struct policy tmp, *res;
+	static char path[MAXPATHLEN], lookup[MAXPATHLEN];
+
+	if (strlcpy(path, name, sizeof(path)) >= sizeof(path))
+		errx(1, "%s: path name overflow", __func__);
+
+	strlcpy(lookup, "*/", sizeof(lookup));
+	strlcat(lookup, basename(path), sizeof(lookup));
+
+	tmp.name = lookup;
+	res = SPLAY_FIND(policytree, &policyroot, &tmp);
+	if (res == NULL)
+		return (NULL);
+
+	/* we found the wildcarded policy; now remove it and bind it */
+	SPLAY_REMOVE(policytree, &policyroot, res);
+
+	free(__UNCONST(res->name));
+	if ((res->name = strdup(name)) == NULL)
+		err(1, "%s: strdup", __func__);
+
+	SPLAY_INSERT(policytree, &policyroot, res);
+	return (res);
 }
 
 struct policy *
@@ -195,8 +224,12 @@ struct policy *
 systrace_newpolicy(const char *emulation, const char *name)
 {
 	struct policy *tmp;
+	int i;
 
 	if ((tmp = systrace_findpolicy(name)) != NULL)
+		return (tmp);
+
+	if ((tmp = systrace_findpolicy_wildcard(name)) != NULL)
 		return (tmp);
 
 	tmp = calloc(1, sizeof(struct policy));
@@ -215,20 +248,23 @@ systrace_newpolicy(const char *emulation, const char *name)
 	TAILQ_INIT(&tmp->filters);
 	TAILQ_INIT(&tmp->prefilters);
 
+	/* Set the default policy to ask */
+	for (i = 0; i < INTERCEPT_MAXSYSCALLNR; i++)
+		tmp->kerneltable[i] = ICPOLICY_ASK;
+
 	return (tmp);
 }
 
 void
-systrace_freepolicy(struct policy *policy)
+systrace_cleanpolicy(struct policy *policy)
 {
 	struct filter *filter;
 	struct policy_syscall *pflq;
+	int i;
 
-	if (policy->flags & POLICY_CHANGED) {
-		if (systrace_writepolicy(policy) == -1)
-			fprintf(stderr, "Failed to write policy for %s\n",
-			    policy->name);
-	}
+	/* Set the default policy to ask */
+	for (i = 0; i < INTERCEPT_MAXSYSCALLNR; i++)
+		policy->kerneltable[i] = ICPOLICY_ASK;
 
 	while ((filter = TAILQ_FIRST(&policy->prefilters)) != NULL) {
 		TAILQ_REMOVE(&policy->prefilters, filter, policy_next);
@@ -250,6 +286,18 @@ systrace_freepolicy(struct policy *policy)
 
 		free(pflq);
 	}
+}
+
+void
+systrace_freepolicy(struct policy *policy)
+{
+	if (policy->flags & POLICY_CHANGED) {
+		if (systrace_writepolicy(policy) == -1)
+			fprintf(stderr, "Failed to write policy for %s\n",
+			    policy->name);
+	}
+
+	systrace_cleanpolicy(policy);
 
 	SPLAY_REMOVE(policytree, &policyroot, policy);
 	if (policy->policynr != -1)
@@ -289,7 +337,7 @@ int
 systrace_modifypolicy(int fd, int policynr, const char *name, short action)
 {
 	struct policy *policy;
-	int res;
+	int res, nr;
 
 	if ((policy = systrace_findpolnr(policynr)) == NULL)
 		return (-1);
@@ -297,20 +345,29 @@ systrace_modifypolicy(int fd, int policynr, const char *name, short action)
 	res = intercept_modifypolicy(fd, policynr, policy->emulation,
 	    name, action);
 
+	/* Remember the kernel policy */
+	if (res != -1 &&
+	    (nr = intercept_getsyscallnumber(policy->emulation, name)) != -1)
+		policy->kerneltable[nr] = action;
+
 	return (res);
 }
 
+/*
+ * Converts an executable name into the corresponding filename that contains
+ * the policy.
+ */
 char *
-systrace_policyfilename(const char *dirname, const char *name)
+systrace_policyfilename(const char *pdirname, const char *name)
 {
 	static char file[2*MAXPATHLEN];
 	const char *p;
 	int i, plen;
 
-	if (strlen(name) + strlen(dirname) + 1 >= sizeof(file))
+	if (strlen(name) + strlen(pdirname) + 1 >= sizeof(file))
 		return (NULL);
 
-	strlcpy(file, dirname, sizeof(file));
+	strlcpy(file, pdirname, sizeof(file));
 	i = strlen(file);
 	file[i++] = '/';
 	plen = i;
@@ -331,7 +388,7 @@ systrace_policyfilename(const char *dirname, const char *name)
 }
 
 char *
-systrace_getpolicyfilename(const char *name)
+systrace_getpolicyname(const char *name)
 {
 	char *file = NULL;
 
@@ -354,10 +411,10 @@ systrace_addpolicy(const char *name)
 {
 	char *file = NULL;
 
-	if ((file = systrace_getpolicyfilename(name)) == NULL)
+	if ((file = systrace_getpolicyname(name)) == NULL)
 		return (-1);
 
-	return (systrace_readpolicy(file));
+	return (systrace_readpolicy(file) != NULL ? 0 : -1);
 }
 
 /* 
@@ -387,7 +444,7 @@ systrace_templatedir(void)
 			goto error;
 
 		/* Check if template directory exists */
-		if (stat(filename, &sb) != -1 && (sb.st_mode & S_IFDIR))
+		if (stat(filename, &sb) != -1 && S_ISDIR(sb.st_mode))
 			dir = opendir(filename);
 	}
 
@@ -395,7 +452,7 @@ systrace_templatedir(void)
 	if (dir == NULL) {
 		strlcpy(filename, POLICY_PATH, sizeof(filename));
 		strlcat(filename, "/templates", sizeof(filename));
-		if (stat(filename, &sb) != -1 && (sb.st_mode & S_IFDIR))
+		if (stat(filename, &sb) != -1 && S_ISDIR(sb.st_mode))
 			dir = opendir(filename);
 		if (dir == NULL)
 			return (-1);
@@ -411,7 +468,7 @@ systrace_templatedir(void)
 		    sizeof(filename))
 			goto error;
 
-		if (stat(filename, &sb) == -1 || !(sb.st_mode & S_IFREG))
+		if (stat(filename, &sb) == -1 || !S_ISREG(sb.st_mode))
 			continue;
 
 		template = systrace_readtemplate(filename, NULL, NULL);
@@ -426,6 +483,8 @@ systrace_templatedir(void)
 
  error:
 	errx(1, "%s: template name too long", __func__);
+
+	/*NOTREACHED*/
 }
 
 struct template *
@@ -507,8 +566,9 @@ systrace_readtemplate(char *filename, struct policy *policy,
 	goto out;
 }
 
-/* Removes trailing whitespace and comments from the input line */
-
+/*
+ * Removes trailing whitespace and comments from the input line.
+ */
 static char *
 systrace_policyline(char *line)
 {
@@ -594,7 +654,8 @@ systrace_policyprocess(struct policy *policy, char *p)
 	} else if (filter_parse_simple(rule, &action, &future) == 0)
 		resolved = 1;
 
-	/* For now, everything that does not seem to be a valid syscall
+	/*
+	 * For now, everything that does not seem to be a valid syscall
 	 * does not get fast kernel policies even though the aliasing
 	 * system supports it.
 	 */
@@ -628,8 +689,13 @@ systrace_policyprocess(struct policy *policy, char *p)
 	return (0);
 }
 
-int
-systrace_readpolicy(char *filename)
+/*
+ * Reads policy from specified file.
+ * If policy exists already, this function appends new statements from the
+ * file to the existing policy.
+ */
+struct policy *
+systrace_readpolicy(const char *filename)
 {
 	FILE *fp;
 	struct policy *policy;
@@ -639,7 +705,7 @@ systrace_readpolicy(char *filename)
 	int res = -1;
 
 	if ((fp = fopen(filename, "r")) == NULL)
-		return (-1);
+		return (NULL);
 
 	policy = NULL;
 	while (fgets(line, sizeof(line), fp)) {
@@ -655,6 +721,8 @@ systrace_readpolicy(char *filename)
 			continue;
 
 		if (!strncasecmp(p, "Policy: ", 8)) {
+			struct timeval now;
+
 			p += 8;
 			name = strsep(&p, ",");
 			if (p == NULL)
@@ -667,6 +735,10 @@ systrace_readpolicy(char *filename)
 			policy = systrace_newpolicy(emulation, name);
 			if (policy == NULL)
 				goto error;
+
+			/* Update access time */
+			gettimeofday(&now, NULL);
+			TIMEVAL_TO_TIMESPEC(&now, &policy->ts_last);
 			continue;
 		}
 
@@ -686,11 +758,62 @@ systrace_readpolicy(char *filename)
 
  out:
 	fclose(fp);
-	return (res);
+	return (res == -1 ? NULL : policy);
 
  error:
 	fprintf(stderr, "%s:%d: syntax error.\n", filename, linenumber);
 	goto out;
+}
+
+/*
+ * Appends new policy statements if the policy has been updated by
+ * another process. Assumes that policies are append-only.
+ *
+ * Returns:
+ *	-1	if the policy could not be updated.
+ *	 0	if the policy has been updated.
+ */
+int
+systrace_updatepolicy(int fd, struct policy *policy)
+{
+	struct stat sb;
+	struct timespec mtimespec;
+	int i, policynr = policy->policynr;
+	char *file;
+
+	if ((file = systrace_getpolicyname(policy->name)) == NULL)
+		return (-1);
+
+	if (stat(file, &sb) == -1)
+		return (-1);
+
+	mtimespec = sb.st_mtimespec;
+
+	/* Policy does not need updating */
+	if (timespeccmp(&mtimespec, &policy->ts_last, <=))
+		return (-1);
+
+	/* Reset the existing policy */
+	for (i = 0; i < INTERCEPT_MAXSYSCALLNR; i++) {
+		if (policy->kerneltable[i] == ICPOLICY_ASK)
+			continue;
+		if (intercept_modifypolicy_nr(fd, policynr, i,
+		    ICPOLICY_ASK) == -1)
+			errx(1, "%s: failed to modify policy for %d",
+			    __func__, i);
+	}
+
+	/* Now clean up all filter structures in this policy */
+	systrace_cleanpolicy(policy);
+
+	/* XXX - This does not deal with Detached and Automatic */
+	if (systrace_readpolicy(file) == NULL)
+		return (-1);
+
+	/* Resets the changed flag */
+	filter_prepolicy(fd, policy);
+
+	return (0);
 }
 
 int
@@ -702,6 +825,7 @@ systrace_writepolicy(struct policy *policy)
 	char tmpname[2*MAXPATHLEN];
 	char finalname[2*MAXPATHLEN];
 	struct filter *filter;
+	struct timeval now;
 
 	if ((p = systrace_policyfilename(policydir, policy->name)) == NULL)
 		return (-1);
@@ -741,11 +865,33 @@ systrace_writepolicy(struct policy *policy)
 		return (-1);
 	}
 
+	/* Update access time */
+	gettimeofday(&now, NULL);
+	TIMEVAL_TO_TIMESPEC(&now, &policy->ts_last);
+
 	return (0);
 }
 
 int
-systrace_dumppolicy(void)
+systrace_updatepolicies(int fd)
+{
+	struct policy *policy;
+
+	SPLAY_FOREACH(policy, policytree, &policyroot) {
+		/* Check if the policy has been updated */
+		systrace_updatepolicy(fd, policy);
+	}
+
+	return (0);
+}
+
+/*
+ * Write policy to disk if it has been changed.  We need to
+ * call systrace_updatepolicies() before this, so that we
+ * don't clobber changes.
+ */
+int
+systrace_dumppolicies(int fd)
 {
 	struct policy *policy;
 

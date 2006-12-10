@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.31 2005/08/24 19:09:03 elad Exp $	*/
+/*	$NetBSD: filter.c,v 1.32 2006/12/10 01:22:02 christos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.31 2005/08/24 19:09:03 elad Exp $");
+__RCSID("$NetBSD: filter.c,v 1.32 2006/12/10 01:22:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -400,6 +400,10 @@ filter_modifypolicy(int fd, int policynr, const char *emulation,
 {
 	struct systrace_revalias *reverse = NULL;
 
+	/*
+	 * Check if we are dealing with a system call that really
+	 * is an alias for something else.
+	 */
 	if (!noalias)
 		reverse = systrace_find_reverse(emulation, name);
 	if (reverse == NULL) {
@@ -444,6 +448,11 @@ filter_quickpredicate(struct filter *filter)
 	return (1);
 }
 
+/*
+ * Processes the filters for a policy that have not been applied yet.
+ * Pre-filters get installed when reading a policy.  This function
+ * installs a fast-path in the kernel.
+ */
 int
 filter_prepolicy(int fd, struct policy *policy)
 {

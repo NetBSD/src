@@ -1,4 +1,4 @@
-/*	$NetBSD: register.c,v 1.19 2006/08/21 01:35:11 christos Exp $	*/
+/*	$NetBSD: register.c,v 1.20 2006/12/10 01:22:02 christos Exp $	*/
 /*	$OpenBSD: register.c,v 1.11 2002/08/05 14:49:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -37,9 +37,13 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <err.h>
+#include <time.h>
 
 #include "intercept.h"
 #include "systrace.h"
+#ifdef notyet /* XXX we don't have the required headers for this */
+#include "linux_socketcall.h"
+#endif
 
 #define X(x)	if ((x) == -1) \
 	err(1, "%s:%d: intercept failed", __func__, __LINE__)
@@ -425,7 +429,7 @@ systrace_initcb(void)
 	intercept_register_translation("native", "seteuid", 0, &ic_uname);
 #endif
 
-#if !(defined(__NetBSD__) && !defined(HAVE_LINUX_FCNTL_H))
+#if !(defined(__NetBSD__) || !defined(HAVE_LINUX_FCNTL_H))
 	/* 5: open [fswrite] */
 	X(intercept_register_sccb("linux", "open", trans_cb, NULL));
 	tl = intercept_register_translink("linux", "open", 0);
@@ -459,6 +463,11 @@ systrace_initcb(void)
 	alias = systrace_new_alias("linux", "access", "linux", "fsread");
 	systrace_alias_add_trans(alias, tl);
 
+	/* 37: kill */
+	X(intercept_register_sccb("linux", "kill", trans_cb, NULL));
+	intercept_register_translation("linux", "kill", 0, &ic_pidname);
+	intercept_register_translation("linux", "kill", 1, &ic_signame);
+
 	/* 38: rename */
 	X(intercept_register_sccb("linux", "rename", trans_cb, NULL));
 	intercept_register_translink("linux", "rename", 0);
@@ -485,6 +494,20 @@ systrace_initcb(void)
 	X(intercept_register_sccb("linux", "readlink", trans_cb, NULL));
 	tl = intercept_register_translink("linux", "readlink", 0);
 	alias = systrace_new_alias("linux", "readlink", "linux", "fsread");
+	systrace_alias_add_trans(alias, tl);
+
+	/* 102: socketcall */
+	X(intercept_register_sccb("linux", "socketcall", trans_cb, NULL));
+	alias = systrace_new_alias("linux", "socketcall", "linux", "_socketcall");
+	tl = intercept_register_translation("linux", "socketcall", 1, &ic_linux_socket_sockdom);
+	systrace_alias_add_trans(alias, tl);
+	tl = intercept_register_translation("linux", "socketcall", 1, &ic_linux_socket_socktype);
+	systrace_alias_add_trans(alias, tl);
+	tl = intercept_register_translation("linux", "socketcall", 1, &ic_linux_connect_sockaddr);
+	systrace_alias_add_trans(alias, tl);
+	tl = intercept_register_translation("linux", "socketcall", 1, &ic_linux_bind_sockaddr);
+	systrace_alias_add_trans(alias, tl);
+	tl = intercept_register_translation("linux", "socketcall", 0, &ic_linux_socketcall_catchall);
 	systrace_alias_add_trans(alias, tl);
 
 	/* 106: stat [fsread] */

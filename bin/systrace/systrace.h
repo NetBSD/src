@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.21 2005/08/10 18:19:21 elad Exp $	*/
+/*	$NetBSD: systrace.h,v 1.22 2006/12/10 01:22:02 christos Exp $	*/
 /*	$OpenBSD: systrace.h,v 1.14 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -99,9 +99,12 @@ struct policy {
 	const char *name;
 	char emulation[16];
 
+	struct timespec ts_last;
+
 	SPLAY_HEAD(syscalltree, policy_syscall) pflqs;
 
 	int policynr;
+	short kerneltable[INTERCEPT_MAXSYSCALLNR];
 	int flags;
 
 	struct filterq filters;
@@ -132,6 +135,8 @@ TAILQ_HEAD(tmplqueue, template);
 #define SYSCALL_LOG		0x04	/* Log this system call */
 #define PROCESS_PROMPT		0x08	/* Prompt but nothing else */
 
+#define	SYSTRACE_UPDATETIME	30	/* update policies every 30 seconds */
+
 void systrace_parameters(void);
 int systrace_initpolicy(char *, char *);
 void systrace_setupdir(char *);
@@ -139,20 +144,25 @@ struct template *systrace_readtemplate(char *, struct policy *,
     struct template *);
 void systrace_initcb(void);
 struct policy *systrace_newpolicy(const char *, const char *);
+void systrace_cleanpolicy(struct policy *);
 void systrace_freepolicy(struct policy *);
 int systrace_newpolicynr(int, struct policy *);
 int systrace_modifypolicy(int, int, const char *, short);
 struct policy *systrace_findpolicy(const char *);
+struct policy *systrace_findpolicy_wildcard(const char *);
 struct policy *systrace_findpolnr(int);
-int systrace_dumppolicy(void);
-int systrace_readpolicy(char *);
+int systrace_dumppolicies(int);
+int systrace_updatepolicies(int);
+struct policy *systrace_readpolicy(const char *);
 char *systrace_getpolicyfilename(const char *);
 int systrace_addpolicy(const char *);
+int systrace_updatepolicy(int, struct policy *);
 struct filterq *systrace_policyflq(struct policy *, const char *, const char *);
+char *systrace_getpolicyname(const char *);
 
 int systrace_error_translate(char *);
 
-#define SYSTRACE_MAXALIAS	5
+#define SYSTRACE_MAXALIAS	10
 
 struct systrace_alias {
 	SPLAY_ENTRY(systrace_alias) node;
@@ -235,8 +245,10 @@ extern struct intercept_translate ic_pidname;
 extern struct intercept_translate ic_signame;
 extern struct intercept_translate ic_fcntlcmd;
 extern struct intercept_translate ic_memprot;
-
+#ifdef notyet
+extern struct intercept_translate ic_linux_memprot;
 extern struct intercept_translate ic_linux_oflags;
+#endif
 
 int requestor_start(const char *, int);
 

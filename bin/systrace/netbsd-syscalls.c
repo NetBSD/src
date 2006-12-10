@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.19 2005/06/27 17:11:20 elad Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.20 2006/12/10 01:22:02 christos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.19 2005/06/27 17:11:20 elad Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.20 2006/12/10 01:22:02 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -465,6 +465,8 @@ nbsd_replace(int fd, pid_t pid, u_int16_t seqnr,
 	struct systrace_replace replace;
 	size_t len, off;
 	int i, ret;
+
+	memset(&replace, 0, sizeof(replace));
 
 	for (i = 0, len = 0; i < repl->num; i++) {
 		len += repl->len[i];

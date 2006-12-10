@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.18 2006/11/12 23:29:37 cbiere Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.19 2006/12/10 01:22:02 christos Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -211,14 +211,14 @@ print_sockdom(char *buf, size_t buflen, struct intercept_translate *tl)
 	case AF_INET6:
 		what = "AF_INET6";
 		break;
+	case AF_IPX:
+		what = "AF_IPX";
+		break;
 	case AF_ISO:
 		what = "AF_ISO";
 		break;
 	case AF_NS:
 		what = "AF_NS";
-		break;
-	case AF_IPX:
-		what = "AF_IPX";
 		break;
 	case AF_IMPLINK:
 		what = "AF_IMPLINK";
@@ -287,12 +287,18 @@ print_pidname(char *buf, size_t buflen, struct intercept_translate *tl)
 
 	if (pid != 0) {
 		icpid = intercept_getpid(pid);
-		strlcpy(buf, icpid->name != NULL ? icpid->name
-						 : "<unknown>", buflen);
-		if (icpid->name == NULL)
-			intercept_freepid(pid);
-	} else
+		strlcpy(buf, icpid != NULL ? icpid->name : "<unknown>", buflen);
+	} else if (pid == 0) {
 		strlcpy(buf, "<own process group>", buflen);
+	} else if (pid == -1) {
+		strlcpy(buf, "<every process: -1>", buflen);
+	} else {
+		/* pid is negative but not -1 - trying to signal pgroup */
+		pid = -pid;
+		icpid = intercept_findpid(pid);
+		strlcpy(buf, "pg:", buflen);
+		strlcat(buf, icpid != NULL ? icpid->name : "unknown", buflen);
+	}
 
 	return (0);
 }
@@ -440,6 +446,32 @@ print_fcntlcmd(char *buf, size_t buflen, struct intercept_translate *tl)
 	}
 
 	strlcpy(buf, name, buflen);
+	return (0);
+}
+
+struct linux_i386_mmap_arg_struct {
+        unsigned long addr;
+        unsigned long len;
+        unsigned long prot;
+        unsigned long flags;
+        unsigned long fd;
+        unsigned long offset;
+};
+
+static int
+get_linux_memprot(struct intercept_translate *trans, int fd, pid_t pid,
+    void *addr)
+{
+	struct linux_i386_mmap_arg_struct arg;
+	size_t len = sizeof(arg);
+	extern struct intercept_system intercept;
+
+	if (intercept.io(fd, pid, INTERCEPT_READ, addr,
+	    (void *)&arg, len) == -1)
+		return (-1);
+
+	trans->trans_addr = (void *)arg.prot;
+
 	return (0);
 }
 
@@ -624,4 +656,9 @@ struct intercept_translate ic_memprot = {
 	.name = "prot",
 	.translate = NULL,
 	.print = print_memprot,
+};
+
+struct intercept_translate ic_linux_memprot = {
+	"prot",
+	get_linux_memprot, print_memprot,
 };
