@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13.16.1 2006/12/10 05:16:28 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.16.2 2006/12/10 05:21:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -107,8 +107,6 @@ splraiseipl(ipl_cookie_t icookie)
 
 	return _splraise(icookie._psl);
 }
-
-#include <sys/spl.h>
 
 static __inline void
 splx(int sr)
