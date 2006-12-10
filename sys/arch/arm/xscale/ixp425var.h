@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425var.h,v 1.10 2006/04/10 03:36:03 simonb Exp $ */
+/*	$NetBSD: ixp425var.h,v 1.11 2006/12/10 10:01:49 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -58,6 +58,12 @@
 #define	GPIO_CONF_READ_4(sc, reg) \
 	bus_space_read_4(sc->sc_iot, sc->sc_gpio_ioh, reg)
 
+#define	EXP_BUS_WRITE_4(sc, reg, data)	\
+	bus_space_write_4(sc->sc_iot, sc->sc_exp_ioh, reg, data)
+
+#define	EXP_BUS_READ_4(sc, reg) \
+	bus_space_read_4(sc->sc_iot, sc->sc_exp_ioh, reg)
+
 #define PCI_CONF_LOCK(s)	(s) = disable_interrupts(I32_bit)
 #define PCI_CONF_UNLOCK(s)	restore_interrupts((s))
 
@@ -71,6 +77,7 @@ struct ixp425_softc {
 	/* Handles for the various subregions. */
 	bus_space_handle_t sc_pci_ioh;		/* PCI mem handler */
 	bus_space_handle_t sc_gpio_ioh;		/* GPIOs handler */
+	bus_space_handle_t sc_exp_ioh;		/* Expansion bus handle */
 
 	/* Bus space, DMA, and PCI tags for the PCI bus */
 	struct bus_space sc_pci_iot;
