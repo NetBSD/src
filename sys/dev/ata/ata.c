@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.76.4.1 2006/10/22 06:05:32 yamt Exp $	*/
+/*	$NetBSD: ata.c,v 1.76.4.2 2006/12/10 07:16:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.76.4.1 2006/10/22 06:05:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.76.4.2 2006/12/10 07:16:57 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -176,6 +176,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	struct atabus_initq *atabus_initq = NULL;
 
 	/* Probe for the drives. */
+	/* XXX for SATA devices we will power up all drives at once */
 	(*atac->atac_probe)(chp);
 
 	ATADEBUG_PRINT(("atabusattach: ch_drive_flags 0x%x 0x%x\n",
@@ -389,7 +390,7 @@ atabus_create_thread(void *arg)
  *	Autoconfiguration match routine.
  */
 static int
-atabus_match(struct device *parent __unused, struct cfdata *cf, void *aux)
+atabus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ata_channel *chp = aux;
 
@@ -409,7 +410,7 @@ atabus_match(struct device *parent __unused, struct cfdata *cf, void *aux)
  *	Autoconfiguration attach routine.
  */
 static void
-atabus_attach(struct device *parent __unused, struct device *self, void *aux)
+atabus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct atabus_softc *sc = (void *) self;
 	struct ata_channel *chp = aux;
@@ -1375,8 +1376,8 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 
 /* management of the /dev/atabus* devices */
 int
-atabusopen(dev_t dev, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+atabusopen(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	struct atabus_softc *sc;
 	int error, unit = minor(dev);
@@ -1398,8 +1399,8 @@ atabusopen(dev_t dev, int flag __unused, int fmt __unused,
 
 
 int
-atabusclose(dev_t dev, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+atabusclose(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
 
@@ -1412,7 +1413,7 @@ atabusclose(dev_t dev, int flag __unused, int fmt __unused,
 
 int
 atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
-    struct lwp *l __unused)
+    struct lwp *l)
 {
 	struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
 	struct ata_channel *chp = sc->sc_chan;

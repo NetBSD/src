@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.9 2005/12/28 19:09:29 perry Exp $	*/
+/*	$NetBSD: lock.h,v 1.9.22.1 2006/12/10 07:16:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,14 +43,14 @@
 #ifndef _M68K_LOCK_H_
 #define	_M68K_LOCK_H_
 
-static __inline void __unused
+static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
-static __inline void __unused
+static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 
@@ -60,7 +60,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 		: "=m" (*alp));
 }
 
-static __inline int __unused
+static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int __rv;
@@ -76,7 +76,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	return (__rv);
 }
 
-static __inline void __unused
+static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 

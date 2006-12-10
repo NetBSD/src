@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.1.22.1 2006/10/22 06:07:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.1.22.2 2006/12/10 07:18:28 yamt Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -934,7 +934,7 @@ AcpiDbCommandDispatch (
 
 void ACPI_SYSTEM_XFACE
 AcpiDbExecuteThread (
-    void                    *Context __unused)
+    void                    *Context)
 {
     ACPI_STATUS             Status = AE_OK;
     ACPI_STATUS             MStatus;
@@ -1003,8 +1003,8 @@ AcpiDbSingleThread (
 
 ACPI_STATUS
 AcpiDbUserCommands (
-    char                    Prompt __unused,
-    ACPI_PARSE_OBJECT       *Op __unused)
+    char                    Prompt,
+    ACPI_PARSE_OBJECT       *Op)
 {
     ACPI_STATUS             Status = AE_OK;
 

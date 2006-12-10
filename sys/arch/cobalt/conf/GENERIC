@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.104.4.1 2006/10/22 06:04:36 yamt Exp $
+# $NetBSD: GENERIC,v 1.104.4.2 2006/12/10 07:15:52 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.104.4.1 $"
+#ident 		"GENERIC-$Revision: 1.104.4.2 $"
 
 maxusers	32
 
@@ -93,7 +93,7 @@ file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -149,13 +149,6 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 
 options 	NFS_BOOT_DHCP
-
-# XXX Disable zero-copy page loaning in sosend() temporarily:
-#     PV mappings created by sosend_loan() in sys/kern/uipc_socket.c may
-#     produce virtual cache aliases and it seems to cause TLB MISS panic
-#     in cache flush code called from bus_dmamap_sync(9) PREWRITE ops
-#     during heavy TX packet traffic on tlp(4).
-options 	SOSEND_NO_LOAN
 
 config		netbsd	root on ? type ?
 

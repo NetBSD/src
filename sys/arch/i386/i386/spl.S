@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.13 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: spl.S,v 1.13.22.1 2006/12/10 07:16:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,10 +102,17 @@ IDTVEC(spllower)
 #else /* defined(DDB) || defined(GPROF) */
 	movl	16(%esp),%ebx
 #endif /* defined(DDB) || defined(GPROF) */
-	movl	$1f,%esi		# address to resume loop at
-1:	movl	%ebx,%eax		# get cpl
-	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
+	movl	$.Lspllower_resume,%esi		# address to resume loop at
 	cli
+.Lspllower_resume:
+#if defined(DEBUG)
+	pushf
+	popl	%eax
+	testl	$PSL_I,%eax
+	jnz	.Lspllower_panic
+#endif /* defined(DEBUG) */
+	movl	%ebx,%eax		# get cpl
+	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
 	andl	CPUVAR(IPENDING),%eax		# any non-masked bits left?
 	jz	2f
 	bsrl	%eax,%eax
@@ -122,6 +129,12 @@ IDTVEC(spllower)
 	leave
 #endif /* defined(DDB) || defined(GPROF) */
 	ret
+#if defined(DEBUG)
+.Lspllower_panic:
+	pushl	$1f
+	call	_C_LABEL(panic)
+1:	.asciz	"SPLLOWER: INTERRUPT ENABLED"
+#endif /* defined(DEBUG) */
 
 /*
  * Handle return from interrupt after device handler finishes.
@@ -130,14 +143,22 @@ IDTVEC(spllower)
  *   ebx - cpl to restore
  *   esi - address to resume loop at
  *   edi - scratch for Xsoftnet
+ *
+ * called with interrupt disabled.
  */
 IDTVEC(doreti)
+	IDEPTH_DECR
 	popl	%ebx			# get previous priority
-	decl	CPUVAR(IDEPTH)
-	movl	$1f,%esi		# address to resume loop at
-1:	movl	%ebx,%eax
+	movl	$.Ldoreti_resume,%esi	# address to resume loop at
+.Ldoreti_resume:
+#if defined(DEBUG)
+	pushf
+	popl	%eax
+	testl	$PSL_I,%eax
+	jnz	.Ldoreti_panic
+#endif /* defined(DEBUG) */
+	movl	%ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
-	cli
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
 	bsrl    %eax,%eax               # slow, but not worth optimizing
@@ -177,3 +198,9 @@ IDTVEC(doreti)
 	call	_C_LABEL(pmap_load)
 	cli
 	jmp	.Ldoreti_checkast	/* recheck ASTs */
+#if defined(DEBUG)
+.Ldoreti_panic:
+	pushl	$1f
+	call	_C_LABEL(panic)
+1:	.asciz	"DORETI: INTERRUPT ENABLED"
+#endif /* defined(DEBUG) */

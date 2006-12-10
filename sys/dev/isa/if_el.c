@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.74.4.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: if_el.c,v 1.74.4.2 2006/12/10 07:17:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.74.4.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.74.4.2 2006/12/10 07:17:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -115,7 +115,7 @@ CFATTACH_DECL(el, sizeof(struct el_softc),
  * (XXX - cgd -- needs help)
  */
 int
-elprobe(struct device *parent __unused, struct cfdata *match __unused,
+elprobe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -203,7 +203,7 @@ elprobe(struct device *parent __unused, struct cfdata *match __unused,
  * assume that the IRQ given is correct.
  */
 void
-elattach(struct device *parent __unused, struct device *self, void *aux)
+elattach(struct device *parent, struct device *self, void *aux)
 {
 	struct el_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

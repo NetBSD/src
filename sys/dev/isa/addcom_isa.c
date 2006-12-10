@@ -1,4 +1,4 @@
-/*	$NetBSD: addcom_isa.c,v 1.13.22.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: addcom_isa.c,v 1.13.22.2 2006/12/10 07:17:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Graff.  All rights reserved.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.13.22.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.13.22.2 2006/12/10 07:17:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ CFATTACH_DECL(addcom_isa, sizeof(struct addcom_softc),
     addcomprobe, addcomattach, NULL, NULL);
 
 int
-addcomprobe(struct device *parent __unused, struct cfdata *self __unused,
+addcomprobe(struct device *parent, struct cfdata *self,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -185,7 +185,7 @@ out:
 }
 
 void
-addcomattach(struct device *parent __unused, struct device *self, void *aux)
+addcomattach(struct device *parent, struct device *self, void *aux)
 {
 	struct addcom_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

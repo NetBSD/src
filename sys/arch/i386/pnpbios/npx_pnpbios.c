@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_pnpbios.c,v 1.6.54.1 2006/10/22 06:04:48 yamt Exp $	*/
+/*	$NetBSD: npx_pnpbios.c,v 1.6.54.2 2006/12/10 07:16:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_pnpbios.c,v 1.6.54.1 2006/10/22 06:04:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_pnpbios.c,v 1.6.54.2 2006/12/10 07:16:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ CFATTACH_DECL(npx_pnpbios, sizeof(struct npx_softc),
     npx_pnpbios_match, npx_pnpbios_attach, NULL, NULL);
 
 int
-npx_pnpbios_match(struct device *parent __unused, struct cfdata *match __unused,
+npx_pnpbios_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
@@ -74,7 +74,7 @@ npx_pnpbios_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-npx_pnpbios_attach(struct device *parent __unused, struct device *self,
+npx_pnpbios_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct npx_softc *sc = (void *)self;
@@ -82,15 +82,16 @@ npx_pnpbios_attach(struct device *parent __unused, struct device *self,
 	int irq, ist;
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) { 	
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 	pnpbios_print_devres(self, aa);
 
 	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &irq, &ist) != 0) {
-		printf("%s: unable to get IRQ number or type\n",
+		aprint_error("%s: unable to get IRQ number or type\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -99,17 +100,22 @@ npx_pnpbios_attach(struct device *parent __unused, struct device *self,
 
 	switch (sc->sc_type) {
 	case NPX_INTERRUPT:
-		printf("%s: interrupting at irq %d\n", sc->sc_dev.dv_xname,
-		    irq);
+		aprint_normal("%s: interrupting at irq %d\n",
+		    sc->sc_dev.dv_xname, irq);
 		lcr0(rcr0() & ~CR0_NE);
 		sc->sc_ih = isa_intr_establish(0/*XXX*/, irq, ist, IPL_NONE,
 		     (int (*)(void *))npxintr, NULL);
 		break;
 	case NPX_EXCEPTION:
-		printf("%s: using exception 16\n", sc->sc_dev.dv_xname);
+		/*FALLTHROUGH*/
+	case NPX_CPUID:
+		aprint_verbose("%s:%s using exception 16\n",
+		    sc->sc_dev.dv_xname,
+		    sc->sc_type == NPX_CPUID ? " reported by CPUID;" : "");
+		sc->sc_type = NPX_EXCEPTION;
 		break;
 	case NPX_BROKEN:
-		printf("%s: error reporting broken; not using\n",
+		aprint_error("%s: error reporting broken; not using\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_type = NPX_NONE;
 		return;

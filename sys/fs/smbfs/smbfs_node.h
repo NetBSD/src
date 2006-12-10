@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.11 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.11.10.1 2006/12/10 07:18:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -56,7 +56,7 @@ struct smbfs_fctx;
 struct smbnode {
 	struct genfs_node	n_gnode;
 	int			n_flag;
-	struct smbnode *	n_parent;
+	struct vnode *		n_parent;
 	struct vnode *		n_vnode;
 	struct smbmount *	n_mount;
 	time_t			n_attrage;	/* attributes cache time */

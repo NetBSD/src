@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.37.22.1 2006/10/22 06:05:27 yamt Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.37.22.2 2006/12/10 07:16:52 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.37.22.1 2006/10/22 06:05:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.37.22.2 2006/12/10 07:16:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ db_aout_search_symbol(db_symtab_t *symtab, db_addr_t off,
  * Return the name and value for a symbol.
  */
 static void
-db_aout_symbol_values(db_symtab_t *symtab __unused, db_sym_t sym,
+db_aout_symbol_values(db_symtab_t *symtab, db_sym_t sym,
     const char **namep, db_expr_t *valuep)
 {
 	struct nlist *sp;
@@ -248,7 +248,7 @@ db_aout_symbol_values(db_symtab_t *symtab __unused, db_sym_t sym,
 
 
 static boolean_t
-db_aout_line_at_pc(db_symtab_t *symtab, db_sym_t cursym __unused,
+db_aout_line_at_pc(db_symtab_t *symtab, db_sym_t cursym,
     char **filename, int *linenum, db_expr_t off)
 {
 	struct nlist	*sp, *ep;

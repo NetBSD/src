@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.11.6.1 2006/10/22 06:06:52 yamt Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.11.6.2 2006/12/10 07:18:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.11.6.1 2006/10/22 06:06:52 yamt Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.11.6.2 2006/12/10 07:18:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ Static const struct usb_devno ucycom_devs[] = {
 USB_DECLARE_DRIVER(ucycom);
 
 int
-ucycom_match(struct device *parent __unused, struct cfdata *match __unused,
+ucycom_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
@@ -191,7 +191,7 @@ ucycom_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-ucycom_attach(struct device *parent __unused, struct device *self, void *aux)
+ucycom_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ucycom_softc *sc = (struct ucycom_softc *)self;
 	struct uhidev_attach_arg *uha = aux;
@@ -225,7 +225,7 @@ ucycom_attach(struct device *parent __unused, struct device *self, void *aux)
 
 
 int
-ucycom_detach(struct device *self, int flags __unused)
+ucycom_detach(struct device *self, int flags)
 {
 	struct ucycom_softc *sc = (struct ucycom_softc *)self;
 	struct tty *tp = sc->sc_tty;
@@ -305,7 +305,7 @@ ucycom_shutdown(struct ucycom_softc *sc)
 #endif
 
 int
-ucycomopen(dev_t dev, int flag, int mode __unused, struct lwp *l)
+ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = UCYCOMUNIT(dev);
 	struct ucycom_softc *sc;
@@ -424,7 +424,7 @@ bad:
 
 
 int
-ucycomclose(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+ucycomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ucycom_softc *sc = ucycom_cd.cd_devs[UCYCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -675,7 +675,7 @@ ucycomparam(struct tty *tp, struct termios *t)
 }
 
 void
-ucycomstop(struct tty *tp __unused, int flag __unused)
+ucycomstop(struct tty *tp, int flag)
 {
 	DPRINTF(("ucycomstop: flag=%d\n", flag));
 }

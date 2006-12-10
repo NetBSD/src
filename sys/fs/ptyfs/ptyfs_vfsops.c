@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.19.4.1 2006/10/22 06:07:09 yamt Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.19.4.2 2006/12/10 07:18:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.19.4.1 2006/10/22 06:07:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.19.4.2 2006/12/10 07:18:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ ptyfs_done(void)
  */
 int
 ptyfs_mount(struct mount *mp, const char *path, void *data,
-    struct nameidata *ndp __unused, struct lwp *l)
+    struct nameidata *ndp, struct lwp *l)
 {
 	int error = 0;
 	struct ptyfsmount *pmnt;
@@ -280,15 +280,15 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 
 /*ARGSUSED*/
 int
-ptyfs_start(struct mount *mp __unused, int flags __unused,
-    struct lwp *p __unused)
+ptyfs_start(struct mount *mp, int flags,
+    struct lwp *p)
 {
 	return 0;
 }
 
 /*ARGSUSED*/
 int
-ptyfs_unmount(struct mount *mp, int mntflags, struct lwp *p __unused)
+ptyfs_unmount(struct mount *mp, int mntflags, struct lwp *p)
 {
 	int error;
 	int flags = 0;
@@ -323,15 +323,15 @@ ptyfs_root(struct mount *mp, struct vnode **vpp)
 
 /*ARGSUSED*/
 int
-ptyfs_quotactl(struct mount *mp __unused, int cmd __unused, uid_t uid __unused,
-    void *arg __unused, struct lwp *p __unused)
+ptyfs_quotactl(struct mount *mp, int cmd, uid_t uid,
+    void *arg, struct lwp *p)
 {
 	return EOPNOTSUPP;
 }
 
 /*ARGSUSED*/
 int
-ptyfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *p __unused)
+ptyfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *p)
 {
 	sbp->f_bsize = DEV_BSIZE;
 	sbp->f_frsize = DEV_BSIZE;
@@ -351,8 +351,8 @@ ptyfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *p __unused)
 
 /*ARGSUSED*/
 int
-ptyfs_sync(struct mount *mp __unused, int waitfor __unused,
-    kauth_cred_t uc __unused, struct lwp *p __unused)
+ptyfs_sync(struct mount *mp, int waitfor,
+    kauth_cred_t uc, struct lwp *p)
 {
 	return 0;
 }
@@ -363,8 +363,8 @@ ptyfs_sync(struct mount *mp __unused, int waitfor __unused,
  */
 /*ARGSUSED*/
 int
-ptyfs_vget(struct mount *mp __unused, ino_t ino __unused,
-    struct vnode **vpp __unused)
+ptyfs_vget(struct mount *mp, ino_t ino,
+    struct vnode **vpp)
 {
 	return EOPNOTSUPP;
 }
@@ -408,8 +408,8 @@ struct vfsops ptyfs_vfsops = {
 	ptyfs_statvfs,
 	ptyfs_sync,
 	ptyfs_vget,
-	NULL,				/* vfs_fhtovp */
-	NULL,				/* vfs_vptofp */
+	(void *)eopnotsupp,		/* vfs_fhtovp */
+	(void *)eopnotsupp,		/* vfs_vptofp */
 	ptyfs_init,
 	ptyfs_reinit,
 	ptyfs_done,

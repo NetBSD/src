@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.103.2.1 2006/10/22 06:05:11 yamt Exp $
+#	$NetBSD: files.sparc64,v 1.103.2.2 2006/12/10 07:16:35 yamt Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -41,8 +41,9 @@ attach ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
 
 device clock: mk48txx
-attach clock at sbus with clock_sbus
-attach clock at ebus with clock_ebus
+attach clock at sbus with mkclock_sbus
+attach clock at ebus with mkclock_ebus
+file	arch/sparc64/dev/mkclock.c		clock
 
 device rtc: mc146818
 attach rtc at ebus with rtc_ebus

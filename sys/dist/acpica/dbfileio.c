@@ -117,7 +117,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbfileio.c,v 1.1.22.1 2006/10/22 06:07:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbfileio.c,v 1.1.22.2 2006/12/10 07:18:28 yamt Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -200,7 +200,7 @@ AcpiDbCloseDebugFile (
 
 void
 AcpiDbOpenDebugFile (
-    char                    *Name __unused)
+    char                    *Name)
 {
 
 #ifdef ACPI_APPLICATION
@@ -265,7 +265,7 @@ AcpiDbCheckTextModeCorruption (
         {
             if (Table[i - 1] != 0x0D)
             {
-                /* The LF does not have a preceeding CR, table not corrupted */
+                /* The LF does not have a preceding CR, table not corrupted */
 
                 return (AE_OK);
             }
@@ -548,8 +548,8 @@ AcpiDbReadTableFromFile (
 
 ACPI_STATUS
 AcpiDbGetTableFromFile (
-    char                    *Filename __unused,
-    ACPI_TABLE_HEADER       **ReturnTable __unused)
+    char                    *Filename,
+    ACPI_TABLE_HEADER       **ReturnTable)
 {
 #ifdef ACPI_APPLICATION
     ACPI_STATUS             Status;

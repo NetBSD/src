@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.22.22.1 2006/10/22 06:05:23 yamt Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.22.22.2 2006/12/10 07:16:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.22.22.1 2006/10/22 06:05:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.22.22.2 2006/12/10 07:16:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ native_to_ibcs2_sigaltstack(bss, sss)
 }
 
 int
-ibcs2_sys_sigaction(struct lwp *l, void *v, register_t *retval __unused)
+ibcs2_sys_sigaction(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_sigaction_args /* {
 		syscallarg(int) signum;
@@ -214,7 +214,7 @@ ibcs2_sys_sigaction(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-ibcs2_sys_sigaltstack(struct lwp *l, void *v, register_t *retval __unused)
+ibcs2_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_sigaltstack_args /* {
 		syscallarg(const struct ibcs2_sigaltstack *) nss;
@@ -307,7 +307,7 @@ ibcs2_sys_sigsys(l, v, retval)
 }
 
 int
-ibcs2_sys_sigprocmask(struct lwp *l, void *v, register_t *retval __unused)
+ibcs2_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_sigprocmask_args /* {
 		syscallarg(int) how;
@@ -354,7 +354,7 @@ ibcs2_sys_sigprocmask(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-ibcs2_sys_sigpending(struct lwp *l, void *v, register_t *retval __unused)
+ibcs2_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_sigpending_args /* {
 		syscallarg(ibcs2_sigset_t *) set;
@@ -369,7 +369,7 @@ ibcs2_sys_sigpending(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-ibcs2_sys_sigsuspend(struct lwp *l, void *v, register_t *retval __unused)
+ibcs2_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_sigsuspend_args /* {
 		syscallarg(const ibcs2_sigset_t *) set;
@@ -390,7 +390,7 @@ ibcs2_sys_sigsuspend(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-ibcs2_sys_pause(struct lwp *l, void *v __unused, register_t *retval __unused)
+ibcs2_sys_pause(struct lwp *l, void *v, register_t *retval)
 {
 
 	return (sigsuspend1(l->l_proc, 0));

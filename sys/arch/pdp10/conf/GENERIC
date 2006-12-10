@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28 2006/08/26 20:26:56 christos Exp $
+# $NetBSD: GENERIC,v 1.28.4.1 2006/12/10 07:16:30 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pdp10/conf/std.pdp10"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.28.4.1 $"
 
 # Here are all different supported CPU types listed.
 options 	KL10
@@ -90,7 +90,7 @@ file-system 	NULLFS
 #file-system 	UNION
 #file-system 	CD9660
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 #options 	QUOTA

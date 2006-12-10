@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.6.4.1 2006/10/22 06:05:44 yamt Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.6.4.2 2006/12/10 07:17:06 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.6.4.1 2006/10/22 06:05:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.6.4.2 2006/12/10 07:17:06 yamt Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -270,8 +270,8 @@ mb86950_drain_fifo(sc)
  * Install interface into kernel networking data structures
  */
 void
-mb86950_config(struct mb86950_softc *sc, int *media __unused,
-    int nmedia __unused, int defmedia __unused)
+mb86950_config(struct mb86950_softc *sc, int *media,
+    int nmedia, int defmedia)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;

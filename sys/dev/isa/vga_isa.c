@@ -1,4 +1,4 @@
-/* $NetBSD: vga_isa.c,v 1.18.22.1 2006/10/22 06:06:04 yamt Exp $ */
+/* $NetBSD: vga_isa.c,v 1.18.22.2 2006/12/10 07:17:29 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.18.22.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.18.22.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ CFATTACH_DECL(vga_isa, sizeof(struct vga_softc),
     vga_isa_match, vga_isa_attach, NULL, NULL);
 
 int
-vga_isa_match(struct device *parent __unused, struct cfdata *match __unused,
+vga_isa_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -103,7 +103,7 @@ vga_isa_match(struct device *parent __unused, struct cfdata *match __unused,
 }
 
 void
-vga_isa_attach(struct device *parent __unused, struct device *self, void *aux)
+vga_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vga_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;

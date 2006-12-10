@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 2006/09/10 06:41:09 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23.2.1 2006/12/10 07:15:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2006/09/10 06:41:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23.2.1 2006/12/10 07:15:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,12 @@ cpu_configure(void)
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
-	/* enable all interrupts */
-	_splnone();
+	/*
+	 * Hardware interrupts will be enabled in
+	 * sys/arch/mips/mips/mips3_clockintr.c:mips3_initclocks()
+	 * to avoid hardclock(9) by CPU INT5 before softclockintr is
+	 * initialized in initclocks().
+	 */
 }
 
 void

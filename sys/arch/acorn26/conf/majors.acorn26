@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn26,v 1.17 2005/12/11 12:16:04 christos Exp $
+#	$NetBSD: majors.acorn26,v 1.17.22.1 2006/12/10 07:15:44 yamt Exp $
 #
 # Device majors for acorn26
 #
@@ -40,5 +40,5 @@ device-major	wsfont		char 32			wsfont
 device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.

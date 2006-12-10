@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbvar.h,v 1.9 2006/02/12 21:00:46 macallan Exp $	*/
+/*	$NetBSD: ofbvar.h,v 1.9.16.1 2006/12/10 07:16:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,23 +30,8 @@
 #ifndef _OFBVAR_H_
 #define _OFBVAR_H_
 
-struct ofb_softc {
-	struct	device sc_dev;
-
-	pci_chipset_tag_t sc_pc;
-	pcitag_t sc_pcitag;
-	bus_space_tag_t sc_memt;
-	bus_space_tag_t sc_iot;
-
-	u_int32_t sc_addrs[30];		/* "assigned-addresses" storage */
-	u_char sc_cmap_red[256];
-	u_char sc_cmap_green[256];
-	u_char sc_cmap_blue[256];
-	
-	int sc_node, sc_ih, sc_mode;
-	paddr_t sc_fbaddr;
-	
-	struct vcons_data vd;
-};
+extern struct vcons_screen ofb_console_screen;
+extern struct wsscreen_descr ofb_stdscreen;
+int ofb_init_rasops(int, struct rasops_info *);
 
 #endif /* _OFBVAR_H_ */

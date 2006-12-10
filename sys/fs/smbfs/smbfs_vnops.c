@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.53.6.1 2006/10/22 06:07:09 yamt Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.53.6.2 2006/12/10 07:18:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.53.6.1 2006/10/22 06:07:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.53.6.2 2006/12/10 07:18:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -882,7 +882,7 @@ smbfs_readdir(v)
 
 /* ARGSUSED */
 int
-smbfs_fsync(void *v __unused)
+smbfs_fsync(void *v)
 {
 	/*return (smb_flush(ap->a_vp, ap->a_cred, ap->a_waitfor, ap->a_l, 1));*/
     return (0);
@@ -900,7 +900,7 @@ smbfs_print(v)
 
 	printf("tag VT_SMBFS, name = %.*s, parent = %p, open = %d\n",
 	    (int)np->n_nmlen, np->n_name,
-	    np->n_parent ? SMBTOV(np->n_parent) : NULL,
+	    np->n_parent ? np->n_parent : NULL,
 	    (np->n_flag & NOPEN) != 0);
 	printf("       ");
 	lockmgr_printinfo(vp->v_vnlock);
@@ -1194,7 +1194,7 @@ smbfs_lookup(v)
 	int flags = cnp->cn_flags;
 	int nameiop = cnp->cn_nameiop;
 	int nmlen = cnp->cn_namelen;
-	int lockparent, wantparent, error, islastcn, isdot;
+	int error, islastcn, isdot;
 
 	/*
 	 * Check accessiblity of directory.
@@ -1212,7 +1212,6 @@ smbfs_lookup(v)
 	    (int) VTOSMB(dvp)->n_nmlen, VTOSMB(dvp)->n_name);
 
 	islastcn = flags & ISLASTCN;
-	lockparent = flags & LOCKPARENT;
 
 	/*
 	 * Before tediously performing a linear scan of the directory,
@@ -1231,15 +1230,6 @@ smbfs_lookup(v)
 		if (error && error != ENOENT) {
 			*vpp = NULLVP;
 			return error;
-		}
-
-		if (cnp->cn_flags & PDIRUNLOCK) {
-			err2 = vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-			if (err2 != 0) {
-				*vpp = NULLVP;
-				return err2;
-			}
-			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 
 		err2 = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_lwp);
@@ -1272,12 +1262,6 @@ smbfs_lookup(v)
 			if (cnp->cn_nameiop != LOOKUP && islastcn)
 				cnp->cn_flags |= SAVENAME;
 
-			if ((!lockparent || !islastcn) &&
-			     newvp != dvp) {
-				VOP_UNLOCK(dvp, 0);
-				cnp->cn_flags |= PDIRUNLOCK;
-			}
-
 			return (0);
 		}
 
@@ -1299,7 +1283,6 @@ smbfs_lookup(v)
 			return (error);
 	}
 
-	wantparent = flags & (LOCKPARENT|WANTPARENT);
 	dnp = VTOSMB(dvp);
 	isdot = (nmlen == 1 && name[0] == '.');
 
@@ -1308,7 +1291,8 @@ smbfs_lookup(v)
 	 */
 	smb_makescred(&scred, cnp->cn_lwp, cnp->cn_cred);
 	if (flags & ISDOTDOT)
-		error = smbfs_smb_lookup(dnp->n_parent, NULL, 0, &fattr, &scred);
+		error = smbfs_smb_lookup(VTOSMB(dnp->n_parent), NULL, 0,
+		    &fattr, &scred);
 	else
 		error = smbfs_smb_lookup(dnp, name, nmlen, &fattr, &scred);
 
@@ -1331,10 +1315,6 @@ smbfs_lookup(v)
 				return (error);
 
 			cnp->cn_flags |= SAVENAME;
-			if (!lockparent) {
-				VOP_UNLOCK(dvp, 0);
-				cnp->cn_flags |= PDIRUNLOCK;
-			}
 			return (EJUSTRETURN);
 		}
 
@@ -1350,7 +1330,7 @@ smbfs_lookup(v)
 	/* Found */
 
 	/* Handle RENAME case... */
-	if (nameiop == RENAME && islastcn && wantparent) {
+	if (nameiop == RENAME && islastcn) {
 		error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred, cnp->cn_lwp);
 		if (error)
 			return (error);
@@ -1365,40 +1345,26 @@ smbfs_lookup(v)
 		if (error)
 			return (error);
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return (0);
 	}
 
 	if (isdot) {
+
 		/*
 		 * "." lookup
 		 */
 		VREF(dvp);
 		*vpp = dvp;
 	} else if (flags & ISDOTDOT) {
+
 		/*
 		 * ".." lookup
 		 */
 		VOP_UNLOCK(dvp, 0);
-		cnp->cn_flags |= PDIRUNLOCK;
-
 		error = smbfs_nget(mp, dvp, name, nmlen, NULL, vpp);
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {
-			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
-				cnp->cn_flags &= ~PDIRUNLOCK;
 			return error;
-		}
-
-		if (lockparent && islastcn) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE))) {
-				vput(*vpp);
-				*vpp = NULLVP;
-				return error;
-			}
-			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 	} else {
 		/*
@@ -1407,10 +1373,6 @@ smbfs_lookup(v)
 		error = smbfs_nget(mp, dvp, name, nmlen, &fattr, vpp);
 		if (error)
 			return error;
-		if (!lockparent || !islastcn) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 	}
 
 	if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.11.6.1 2006/10/22 06:07:43 yamt Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.11.6.2 2006/12/10 07:19:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.11.6.1 2006/10/22 06:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.11.6.2 2006/12/10 07:19:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ nfs_kqinit(void)
  */
 /* ARGSUSED */
 static void
-nfs_kqpoll(void *arg __unused)
+nfs_kqpoll(void *arg)
 {
 	struct kevq *ke;
 	struct vattr attr;

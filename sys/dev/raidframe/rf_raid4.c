@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid4.c,v 1.10.22.1 2006/10/22 06:06:44 yamt Exp $	*/
+/*	$NetBSD: rf_raid4.c,v 1.10.22.2 2006/12/10 07:18:11 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid4.c,v 1.10.22.1 2006/10/22 06:06:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid4.c,v 1.10.22.2 2006/12/10 07:18:11 yamt Exp $");
 
 #include "rf_raid.h"
 #include "rf_dag.h"
@@ -54,8 +54,8 @@ typedef struct RF_Raid4ConfigInfo_s {
 
 
 int
-rf_ConfigureRAID4(RF_ShutdownList_t **listp __unused, RF_Raid_t *raidPtr,
-		  RF_Config_t *cfgPtr __unused)
+rf_ConfigureRAID4(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		  RF_Config_t *cfgPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_Raid4ConfigInfo_t *info;
@@ -85,13 +85,13 @@ rf_ConfigureRAID4(RF_ShutdownList_t **listp __unused, RF_Raid_t *raidPtr,
 }
 
 int
-rf_GetDefaultNumFloatingReconBuffersRAID4(RF_Raid_t *raidPtr __unused)
+rf_GetDefaultNumFloatingReconBuffersRAID4(RF_Raid_t *raidPtr)
 {
 	return (20);
 }
 
 RF_HeadSepLimit_t
-rf_GetDefaultHeadSepLimitRAID4(RF_Raid_t *raidPtr __unused)
+rf_GetDefaultHeadSepLimitRAID4(RF_Raid_t *raidPtr)
 {
 	return (20);
 }
@@ -99,7 +99,7 @@ rf_GetDefaultHeadSepLimitRAID4(RF_Raid_t *raidPtr __unused)
 void
 rf_MapSectorRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		  RF_RowCol_t *col, RF_SectorNum_t *diskSector,
-		  int remap __unused)
+		  int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	*col = SUID % raidPtr->Layout.numDataCol;
@@ -110,7 +110,7 @@ rf_MapSectorRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 void
 rf_MapParityRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		  RF_RowCol_t *col, RF_SectorNum_t *diskSector,
-		  int remap __unused)
+		  int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 
@@ -120,7 +120,7 @@ rf_MapParityRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 }
 
 void
-rf_IdentifyStripeRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t addr __unused,
+rf_IdentifyStripeRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 		       RF_RowCol_t **diskids)
 {
 	RF_Raid4ConfigInfo_t *info = raidPtr->Layout.layoutSpecificInfo;
@@ -129,7 +129,7 @@ rf_IdentifyStripeRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t addr __unused,
 }
 
 void
-rf_MapSIDToPSIDRAID4(RF_RaidLayout_t *layoutPtr __unused,
+rf_MapSIDToPSIDRAID4(RF_RaidLayout_t *layoutPtr,
 		     RF_StripeNum_t stripeID,
 		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {

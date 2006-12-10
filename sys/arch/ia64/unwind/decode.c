@@ -1,9 +1,9 @@
-/*	$NetBSD: decode.c,v 1.1 2006/04/07 14:21:37 cherry Exp $	*/
+/*	$NetBSD: decode.c,v 1.1.22.1 2006/12/10 07:16:21 yamt Exp $	*/
 
 /* Contributed to the NetBSD foundation by Cherry G. Mathew
  * This file contains routines to decode unwind descriptors into
  * easily an readable data structure ( unwind_desc )
- * This is the lowest layer of the unwind stack heirarchy.
+ * This is the lowest layer of the unwind stack hierarchy.
  */
 
 #include <sys/cdefs.h>

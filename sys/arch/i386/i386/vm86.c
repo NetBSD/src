@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.41.22.1 2006/10/22 06:04:44 yamt Exp $	*/
+/*	$NetBSD: vm86.c,v 1.41.22.2 2006/12/10 07:16:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.41.22.1 2006/10/22 06:04:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.41.22.2 2006/12/10 07:16:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ vm86_return(l, retval)
  * handler code and then having it restart VM86 mode).
  */
 void
-vm86_gpfault(struct lwp *l, int type __unused)
+vm86_gpfault(struct lwp *l, int type)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	struct proc *p = l->l_proc;
@@ -374,7 +374,7 @@ bad:
 }
 
 int
-i386_vm86(struct lwp *l, char *args, register_t *retval __unused)
+i386_vm86(struct lwp *l, char *args, register_t *retval)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = &l->l_addr->u_pcb;

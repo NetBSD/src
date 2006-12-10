@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.93.6.1 2006/10/22 06:07:11 yamt Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.93.6.2 2006/12/10 07:18:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93.6.1 2006/10/22 06:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93.6.2 2006/12/10 07:18:45 yamt Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -306,7 +306,7 @@ ptyattach(n)
 
 /*ARGSUSED*/
 int
-ptsopen(dev_t dev, int flag, int devtype __unused, struct lwp *l)
+ptsopen(dev_t dev, int flag, int devtype, struct lwp *l)
 {
 	struct pt_softc *pti;
 	struct tty *tp;
@@ -357,7 +357,7 @@ ptsopen(dev_t dev, int flag, int devtype __unused, struct lwp *l)
 }
 
 int
-ptsclose(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+ptsclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -548,8 +548,7 @@ ptcwakeup(tp, flag)
 
 /*ARGSUSED*/
 int
-ptcopen(dev_t dev, int flag __unused, int devtype __unused,
-    struct lwp *l __unused)
+ptcopen(dev_t dev, int flag, int devtype, struct lwp *l)
 {
 	struct pt_softc *pti;
 	struct tty *tp;
@@ -583,8 +582,7 @@ ptcopen(dev_t dev, int flag __unused, int devtype __unused,
 
 /*ARGSUSED*/
 int
-ptcclose(dev_t dev, int flag __unused, int devtype __unused,
-    struct lwp *l __unused)
+ptcclose(dev_t dev, int flag, int devtype, struct lwp *l)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -890,7 +888,7 @@ filt_ptcrdetach(struct knote *kn)
 }
 
 static int
-filt_ptcread(struct knote *kn, long hint __unused)
+filt_ptcread(struct knote *kn, long hint)
 {
 	struct pt_softc *pti;
 	struct tty	*tp;
@@ -932,7 +930,7 @@ filt_ptcwdetach(struct knote *kn)
 }
 
 static int
-filt_ptcwrite(struct knote *kn, long hint __unused)
+filt_ptcwrite(struct knote *kn, long hint)
 {
 	struct pt_softc *pti;
 	struct tty	*tp;

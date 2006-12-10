@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.145.4.1 2006/10/22 06:07:10 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.145.4.2 2006/12/10 07:18:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.145.4.1 2006/10/22 06:07:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.145.4.2 2006/12/10 07:18:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -693,7 +693,7 @@ badf:
  */
 /* ARGSUSED */
 int
-sys_close(struct lwp *l, void *v, register_t *retval __unused)
+sys_close(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_close_args /* {
 		syscallarg(int)	fd;
@@ -719,7 +719,7 @@ sys_close(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys___fstat30(struct lwp *l, void *v, register_t *retval __unused)
+sys___fstat30(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___fstat30_args /* {
 		syscallarg(int)			fd;
@@ -1113,7 +1113,7 @@ cwdfree(struct cwdinfo *cwdi)
  * directories as p.
  */
 struct filedesc *
-fdinit(struct proc *p __unused)
+fdinit(struct proc *p)
 {
 	struct filedesc0 *newfdp;
 
@@ -1483,7 +1483,7 @@ closef(struct file *fp, struct lwp *l)
  */
 /* ARGSUSED */
 int
-sys_flock(struct lwp *l, void *v, register_t *retval __unused)
+sys_flock(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_flock_args /* {
 		syscallarg(int)	fd;
@@ -1619,7 +1619,7 @@ out:
  */
 /* ARGSUSED */
 static int
-filedescopen(dev_t dev, int mode __unused, int type __unused, struct lwp *l)
+filedescopen(dev_t dev, int mode, int type, struct lwp *l)
 {
 
 	/*
@@ -1864,7 +1864,7 @@ fsetown(struct proc *p, pid_t *pgid, int cmd, const void *data)
  * needs the sign removed before use.
  */
 int
-fgetown(struct proc *p __unused, pid_t pgid, int cmd, void *data)
+fgetown(struct proc *p, pid_t pgid, int cmd, void *data)
 {
 	switch (cmd) {
 	case TIOCGPGRP:
@@ -1886,7 +1886,7 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 	struct proc *p1;
 	ksiginfo_t ksi;
 
-	memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT(&ksi);
 	ksi.ksi_signo = signo;
 	ksi.ksi_code = code;
 	ksi.ksi_band = band;
@@ -1915,9 +1915,9 @@ fdclone(struct lwp *l, struct file *fp, int fd, int flag,
 
 /* ARGSUSED */
 int
-fnullop_fcntl(struct file *fp __unused, u_int cmd, void *data __unused,
-    struct lwp *l __unused)
+fnullop_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
 {
+
 	if (cmd == F_SETFL)
 		return 0;
 
@@ -1926,16 +1926,16 @@ fnullop_fcntl(struct file *fp __unused, u_int cmd, void *data __unused,
 
 /* ARGSUSED */
 int
-fnullop_poll(struct file *fp __unused, int which __unused,
-    struct lwp *l __unused)
+fnullop_poll(struct file *fp, int which, struct lwp *l)
 {
+
 	return 0;
 }
 
 
 /* ARGSUSED */
 int
-fnullop_kqfilter(struct file *fp __unused, struct knote *kn __unused)
+fnullop_kqfilter(struct file *fp, struct knote *kn)
 {
 
 	return 0;
@@ -1943,8 +1943,8 @@ fnullop_kqfilter(struct file *fp __unused, struct knote *kn __unused)
 
 /* ARGSUSED */
 int
-fbadop_stat(struct file *fp __unused, struct stat *sb __unused,
-    struct lwp *l __unused)
+fbadop_stat(struct file *fp, struct stat *sb, struct lwp *l)
 {
+
 	return EOPNOTSUPP;
 }

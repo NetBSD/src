@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.h,v 1.1 2001/02/23 21:23:48 reinoud Exp $	*/
+/*	$NetBSD: ofw.h,v 1.1.76.1 2006/12/10 07:15:48 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -64,7 +64,6 @@ vm_offset_t ofw_getcleaninfo __P((void));
 /* Implemented in <ofw/ofwgencfg_machdep.c> */
 extern int ofw_handleticks;
 extern void cpu_reboot		__P((int, char *));
-extern vm_offset_t initarm	__P((ofw_handle_t));
 extern void ofrootfound		__P((void));
 #endif
 

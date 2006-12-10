@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.14.2.1 2006/10/22 06:07:05 yamt Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.14.2.2 2006/12/10 07:18:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -2414,7 +2414,7 @@ static int nat_finalise(
     fr_info_t *fin,
     nat_t *nat,
     natinfo_t *ni,
-    tcphdr_t *tcp __unused,
+    tcphdr_t *tcp,
     nat_t **natsave,
     int direction
 )

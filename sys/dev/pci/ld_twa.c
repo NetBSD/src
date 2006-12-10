@@ -1,5 +1,5 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$NetBSD: ld_twa.c,v 1.2.20.1 2006/10/22 06:06:18 yamt Exp $ */
+/*	$NetBSD: ld_twa.c,v 1.2.20.2 2006/12/10 07:17:45 yamt Exp $ */
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.2.20.1 2006/10/22 06:06:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.2.20.2 2006/12/10 07:17:45 yamt Exp $");
 
 #include "rnd.h"
 
@@ -103,8 +103,8 @@ static const struct twa_callbacks ld_twa_callbacks = {
 };
 
 static int
-ld_twa_match(struct device *parent __unused, struct cfdata *match __unused,
-    void *aux __unused)
+ld_twa_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	return (1);
@@ -151,7 +151,7 @@ ld_twa_detach(struct device *self, int flags)
 
 static int
 ld_twa_dobio(struct ld_twa_softc *sc, void *data, int datasize,
-    int blkno __unused, struct buf *bp)
+    int blkno, struct buf *bp)
 {
 	int rv;
 	struct twa_request	*tr;

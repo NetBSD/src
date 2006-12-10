@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.29.4.1 2006/10/22 06:05:45 yamt Exp $	*/
+/*	$NetBSD: opl.c,v 1.29.4.2 2006/12/10 07:17:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.29.4.1 2006/10/22 06:05:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.29.4.2 2006/12/10 07:17:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,7 +399,7 @@ opl_reset(sc)
 }
 
 int
-oplsyn_open(midisyn *ms, int flags __unused)
+oplsyn_open(midisyn *ms, int flags)
 {
 	struct opl_softc *sc = ms->data;
 
@@ -610,7 +610,7 @@ oplsyn_setv(midisyn *ms,
 }
 
 void
-oplsyn_releasev(midisyn *ms, uint_fast16_t voice, uint_fast8_t vel __unused)
+oplsyn_releasev(midisyn *ms, uint_fast16_t voice, uint_fast8_t vel)
 {
 	struct opl_softc *sc = ms->data;
 	struct opl_voice *v;
@@ -663,8 +663,8 @@ oplsyn_programchange(midisyn *ms, uint_fast8_t chan, uint_fast8_t prog)
 }
 
 void
-oplsyn_loadpatch(midisyn *ms __unused, struct sysex_info *sysex __unused,
-    struct uio *uio __unused)
+oplsyn_loadpatch(midisyn *ms, struct sysex_info *sysex,
+    struct uio *uio)
 {
 #if 0
 	struct opl_softc *sc = ms->data;

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.69.4.1 2006/10/22 06:05:44 yamt Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.69.4.2 2006/12/10 07:17:06 yamt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.69.4.1 2006/10/22 06:05:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.69.4.2 2006/12/10 07:17:06 yamt Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -234,7 +234,7 @@ ispminphys(struct buf *bp)
 
 static int
 ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr,
-    int flag __unused, struct proc *p __unused)
+    int flag, struct proc *p)
 {
 	struct ispsoftc *isp = (void *)chan->chan_adapter->adapt_dev;
 	int retval = ENOTTY;

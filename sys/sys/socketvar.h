@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.89 2006/08/16 18:17:23 plunky Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.89.4.1 2006/12/10 07:19:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -91,7 +91,7 @@ struct sockbuf {
 struct socket {
 	short		so_type;	/* generic type, see socket.h */
 	short		so_options;	/* from socket call, see socket.h */
-	short		so_linger;	/* time to linger while closing */
+	u_short		so_linger;	/* time to linger while closing */
 	short		so_state;	/* internal state flags SS_*, below */
 	void		*so_pcb;	/* protocol control block */
 	const struct protosw *so_proto;	/* protocol handle */

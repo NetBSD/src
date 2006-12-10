@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.15.10.1 2006/10/22 06:07:38 yamt Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.15.10.2 2006/12/10 07:19:19 yamt Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -260,10 +260,10 @@ extern struct secpolicy * ipsec_getpolicybyaddr(struct mbuf *, u_int,
 
 static __inline struct secpolicy*
 ipsec4_getpolicybysock(
-    struct mbuf *m __unused,
-    u_int dir __unused,
-    const struct socket *so __unused,
-    int *err __unused
+    struct mbuf *m,
+    u_int dir,
+    const struct socket *so,
+    int *err
 )
 {
   panic("ipsec4_getpolicybysock");
@@ -271,8 +271,8 @@ ipsec4_getpolicybysock(
 
 static __inline int
 ipsec_copy_pcbpolicy(
-    struct inpcbpolicy *old __unused,
-    struct inpcbpolicy *new __unused
+    struct inpcbpolicy *old,
+    struct inpcbpolicy *new
 )
 {
   /*XXX do nothing */
@@ -344,7 +344,7 @@ extern	int m_striphdr(struct mbuf *m, int skip, int hlen);
 
 /* Per-socket caching of IPsec output policy */
 static __inline
-int ipsec_clear_socket_cache(struct mbuf *m __unused)
+int ipsec_clear_socket_cache(struct mbuf *m)
 {
   return 0;
 }

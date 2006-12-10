@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evgpeblk.c,v 1.1.22.1 2006/10/22 06:07:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evgpeblk.c,v 1.1.22.2 2006/12/10 07:18:28 yamt Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -285,7 +285,7 @@ UnlockAndExit:
 
 ACPI_STATUS
 AcpiEvDeleteGpeHandlers (
-    ACPI_GPE_XRUPT_INFO     *GpeXruptInfo __unused,
+    ACPI_GPE_XRUPT_INFO     *GpeXruptInfo,
     ACPI_GPE_BLOCK_INFO     *GpeBlock)
 {
     ACPI_GPE_EVENT_INFO     *GpeEventInfo;
@@ -345,9 +345,9 @@ AcpiEvDeleteGpeHandlers (
 static ACPI_STATUS
 AcpiEvSaveMethodInfo (
     ACPI_HANDLE             ObjHandle,
-    UINT32                  Level __unused,
+    UINT32                  Level,
     void                    *ObjDesc,
-    void                    **ReturnValue __unused)
+    void                    **ReturnValue)
 {
     ACPI_GPE_BLOCK_INFO     *GpeBlock = (void *) ObjDesc;
     ACPI_GPE_EVENT_INFO     *GpeEventInfo;
@@ -462,9 +462,9 @@ AcpiEvSaveMethodInfo (
 static ACPI_STATUS
 AcpiEvMatchPrwAndGpe (
     ACPI_HANDLE             ObjHandle,
-    UINT32                  Level __unused,
+    UINT32                  Level,
     void                    *Info,
-    void                    **ReturnValue __unused)
+    void                    **ReturnValue)
 {
     ACPI_GPE_WALK_INFO      *GpeInfo = (void *) Info;
     ACPI_NAMESPACE_NODE     *GpeDevice;

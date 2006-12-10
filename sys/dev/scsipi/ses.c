@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.35.4.1 2006/10/22 06:06:47 yamt Exp $ */
+/*	$NetBSD: ses.c,v 1.35.4.2 2006/12/10 07:18:16 yamt Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.35.4.1 2006/10/22 06:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.35.4.2 2006/12/10 07:18:16 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -184,7 +184,7 @@ static const struct scsipi_periphsw ses_switch = {
 };
 
 static int
-ses_match(struct device *parent __unused, struct cfdata *match __unused,
+ses_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
@@ -213,7 +213,7 @@ ses_match(struct device *parent __unused, struct cfdata *match __unused,
  * the softc available to set stuff in.
  */
 static void
-ses_attach(struct device *parent __unused, struct device *self, void *aux)
+ses_attach(struct device *parent, struct device *self, void *aux)
 {
 	const char *tname;
 	struct ses_softc *softc = device_private(self);
@@ -290,7 +290,7 @@ ses_device_type(struct scsipibus_attach_args *sa)
 }
 
 static int
-sesopen(dev_t dev, int flags __unused, int fmt __unused, struct lwp *l __unused)
+sesopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ses_softc *softc;
 	int error, unit;
@@ -334,8 +334,8 @@ out:
 }
 
 static int
-sesclose(dev_t dev, int flags __unused, int fmt __unused,
-    struct lwp *l __unused)
+sesclose(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	struct ses_softc *softc;
 	int unit;
@@ -816,7 +816,7 @@ ses_softc_init(ses_softc_t *ssc, int doinit)
 }
 
 static int
-ses_init_enc(ses_softc_t *ssc __unused)
+ses_init_enc(ses_softc_t *ssc)
 {
 	return (0);
 }
@@ -1040,7 +1040,7 @@ ses_getconfig(ses_softc_t *ssc)
 }
 
 static int
-ses_getputstat(ses_softc_t *ssc, int objid, SesComStat *sp, int slp __unused,
+ses_getputstat(ses_softc_t *ssc, int objid, SesComStat *sp, int slp,
     int in)
 {
 	struct sscfg *cc;
@@ -1805,7 +1805,7 @@ safte_getconfig(ses_softc_t *ssc)
 }
 
 static int
-safte_rdstat(ses_softc_t *ssc, int slpflg __unused)
+safte_rdstat(ses_softc_t *ssc, int slpflg)
 {
 	int err, oid, r, i, hiwater, nitems, amt;
 	uint16_t tempflags;
@@ -2276,7 +2276,7 @@ set_objstat_sel(ses_softc_t *ssc, ses_objstat *obp, int slp)
  */
 static int
 wrbuf16(ses_softc_t *ssc, uint8_t op, uint8_t b1, uint8_t b2,
-    uint8_t b3, int slp __unused)
+    uint8_t b3, int slp)
 {
 	int err, amt;
 	char *sdata;
@@ -2310,7 +2310,7 @@ wrbuf16(ses_softc_t *ssc, uint8_t op, uint8_t b1, uint8_t b2,
  * returning an error.
  */
 static void
-wrslot_stat(ses_softc_t *ssc, int slp __unused)
+wrslot_stat(ses_softc_t *ssc, int slp)
 {
 	int i, amt;
 	encobj *ep;
@@ -2352,7 +2352,7 @@ wrslot_stat(ses_softc_t *ssc, int slp __unused)
  * This function issues the "PERFORM SLOT OPERATION" command.
  */
 static int
-perf_slotop(ses_softc_t *ssc, uint8_t slot, uint8_t opflag, int slp __unused)
+perf_slotop(ses_softc_t *ssc, uint8_t slot, uint8_t opflag, int slp)
 {
 	int err, amt;
 	char *sdata;

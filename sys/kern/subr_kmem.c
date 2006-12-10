@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.9.6.1 2006/10/22 06:07:11 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.9.6.2 2006/12/10 07:18:45 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.9.6.1 2006/10/22 06:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.9.6.2 2006/12/10 07:18:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -157,8 +157,8 @@ kmem_roundup_size(size_t size)
 #include <uvm/uvm_extern.h>
 
 static vmem_addr_t
-kmem_backend_alloc(vmem_t *dummy __unused, vmem_size_t size,
-    vmem_size_t *resultsize, vm_flag_t vmflags)
+kmem_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
+    vm_flag_t vmflags)
 {
 	uvm_flag_t uflags;
 	vaddr_t va;
@@ -181,7 +181,7 @@ kmem_backend_alloc(vmem_t *dummy __unused, vmem_size_t size,
 }
 
 static void
-kmem_backend_free(vmem_t *dummy __unused, vmem_addr_t addr, vmem_size_t size)
+kmem_backend_free(vmem_t *dummy, vmem_addr_t addr, vmem_size_t size)
 {
 
 	KASSERT(dummy == NULL);
@@ -194,8 +194,7 @@ kmem_backend_free(vmem_t *dummy __unused, vmem_addr_t addr, vmem_size_t size)
 }
 
 static int
-kmem_kva_reclaim_callback(struct callback_entry *ce __unused, void *obj,
-    void *arg __unused)
+kmem_kva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
 {
 	vmem_t *vm = obj;
 

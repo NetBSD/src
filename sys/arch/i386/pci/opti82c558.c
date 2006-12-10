@@ -1,4 +1,4 @@
-/*	$NetBSD: opti82c558.c,v 1.6.22.1 2006/10/22 06:04:48 yamt Exp $	*/
+/*	$NetBSD: opti82c558.c,v 1.6.22.2 2006/12/10 07:16:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opti82c558.c,v 1.6.22.1 2006/10/22 06:04:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opti82c558.c,v 1.6.22.2 2006/12/10 07:16:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ static const int viper_pirq_encode[] = {
 };
 
 int
-opti82c558_init(pci_chipset_tag_t pc, bus_space_tag_t iot __unused,
+opti82c558_init(pci_chipset_tag_t pc, bus_space_tag_t iot,
     pcitag_t tag, pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 	struct opti82c558_handle *ph;
@@ -145,7 +145,7 @@ opti82c558_init(pci_chipset_tag_t pc, bus_space_tag_t iot __unused,
 }
 
 int
-opti82c558_getclink(pciintr_icu_handle_t v __unused, int link, int *clinkp)
+opti82c558_getclink(pciintr_icu_handle_t v, int link, int *clinkp)
 {
 
 	if (VIPER_LEGAL_LINK(link - 1)) {

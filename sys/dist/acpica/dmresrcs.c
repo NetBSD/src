@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmresrcs.c,v 1.1.22.1 2006/10/22 06:07:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmresrcs.c,v 1.1.22.2 2006/12/10 07:18:28 yamt Exp $");
 
 #include "acpi.h"
 #include "acdisasm.h"
@@ -186,7 +186,7 @@ AcpiDmIrqDescriptor (
 void
 AcpiDmDmaDescriptor (
     AML_RESOURCE            *Resource,
-    UINT32                  Length __unused,
+    UINT32                  Length,
     UINT32                  Level)
 {
 
@@ -218,7 +218,7 @@ AcpiDmDmaDescriptor (
 void
 AcpiDmIoDescriptor (
     AML_RESOURCE            *Resource,
-    UINT32                  Length __unused,
+    UINT32                  Length,
     UINT32                  Level)
 {
 
@@ -260,7 +260,7 @@ AcpiDmIoDescriptor (
 void
 AcpiDmFixedIoDescriptor (
     AML_RESOURCE            *Resource,
-    UINT32                  Length __unused,
+    UINT32                  Length,
     UINT32                  Level)
 {
 
@@ -333,8 +333,8 @@ AcpiDmStartDependentDescriptor (
 
 void
 AcpiDmEndDependentDescriptor (
-    AML_RESOURCE            *Resource __unused,
-    UINT32                  Length __unused,
+    AML_RESOURCE            *Resource,
+    UINT32                  Length,
     UINT32                  Level)
 {
 

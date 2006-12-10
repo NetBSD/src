@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.c,v 1.8.22.1 2006/10/22 06:05:35 yamt Exp $	*/
+/*	$NetBSD: video_subr.c,v 1.8.22.2 2006/12/10 07:17:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.8.22.1 2006/10/22 06:05:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.8.22.2 2006/12/10 07:17:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,16 +244,16 @@ video_calibration_pattern(struct video_chip *vc)
 }
 
 static void
-linebpp_unimpl(struct video_chip *vc __unused,
-	       int x0 __unused, int y0 __unused,
-	       int x1 __unused, int y1 __unused)
+linebpp_unimpl(struct video_chip *vc,
+	       int x0, int y0,
+	       int x1, int y1)
 {
 
 	return;
 }
 
 static void
-dotbpp_unimpl(struct video_chip *vc __unused, int x __unused, int y __unused)
+dotbpp_unimpl(struct video_chip *vc, int x, int y)
 {
 
 	return;

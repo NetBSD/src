@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.36.8.1 2006/10/22 06:04:42 yamt Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.36.8.2 2006/12/10 07:16:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.36.8.1 2006/10/22 06:04:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.36.8.2 2006/12/10 07:16:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -702,6 +702,7 @@ vrpiu_tp_intr(struct vrpiu_softc *sc)
 					    x, /* x */
 					    y, /* y */
 					    0, /* z */
+					    0, /* w */
 					    WSMOUSE_INPUT_ABSOLUTE_X |
 					    WSMOUSE_INPUT_ABSOLUTE_Y);
 					DPRINTF(("\n"));
@@ -752,7 +753,7 @@ vrpiu_tp_up(struct vrpiu_softc *sc)
 		callout_stop(&sc->sc_tptimeout);
 
 		/* button 0 UP */
-		wsmouse_input(sc->sc_wsmousedev, 0, 0, 0, 0, 0);
+		wsmouse_input(sc->sc_wsmousedev, 0, 0, 0, 0, 0, 0);
 	}
 }
 

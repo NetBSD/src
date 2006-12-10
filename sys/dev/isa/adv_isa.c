@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_isa.c,v 1.11.22.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: adv_isa.c,v 1.11.22.2 2006/12/10 07:17:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.11.22.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.11.22.2 2006/12/10 07:17:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ CFATTACH_DECL(adv_isa, sizeof(ASC_SOFTC),
 /******************************************************************************/
 
 int
-adv_isa_probe( struct device *parent __unused, struct cfdata *match __unused,
+adv_isa_probe( struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -207,7 +207,7 @@ adv_isa_probe( struct device *parent __unused, struct cfdata *match __unused,
 
 
 void
-adv_isa_attach(struct device *parent __unused, struct device *self, void *aux)
+adv_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	ASC_SOFTC *sc = (void *) self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.24.6.1 2006/10/22 06:07:23 yamt Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.24.6.2 2006/12/10 07:18:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.24.6.1 2006/10/22 06:07:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.24.6.2 2006/12/10 07:18:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -95,8 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.24.6.1 2006/10/22 06:07:23 yamt E
  * when that filesystem was mounted.
  */
 int
-layerfs_start(struct mount *mp __unused, int flags __unused,
-    struct lwp *l __unused)
+layerfs_start(struct mount *mp, int flags,
+    struct lwp *l)
 {
 
 #ifdef notyet
@@ -190,8 +190,8 @@ done:
 }
 
 int
-layerfs_sync(struct mount *mp __unused, int waitfor __unused,
-    kauth_cred_t cred __unused, struct lwp *l __unused)
+layerfs_sync(struct mount *mp, int waitfor,
+    kauth_cred_t cred, struct lwp *l)
 {
 
 	/*
@@ -269,8 +269,8 @@ layerfs_vptofh(vp, fhp, fh_size)
  * things get fixed, all layers get the benefit.
  */
 int
-layerfs_snapshot(struct mount *mp __unused, struct vnode *vp __unused,
-    struct timespec *ts __unused)
+layerfs_snapshot(struct mount *mp, struct vnode *vp,
+    struct timespec *ts)
 {
 	return (EOPNOTSUPP);
 }

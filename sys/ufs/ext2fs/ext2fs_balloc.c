@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.29.10.1 2006/10/22 06:07:47 yamt Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.29.10.2 2006/12/10 07:19:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.29.10.1 2006/10/22 06:07:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.29.10.2 2006/12/10 07:19:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.29.10.1 2006/10/22 06:07:47 yamt
  * the inode and the logical block number in a file.
  */
 int
-ext2fs_balloc(struct inode *ip, daddr_t bn, int size __unused,
+ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
     kauth_cred_t cred, struct buf **bpp, int flags)
 {
 	struct m_ext2fs *fs;

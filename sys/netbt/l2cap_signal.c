@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.2 2006/09/11 22:12:39 plunky Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.2.2.1 2006/12/10 07:19:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.2 2006/09/11 22:12:39 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.2.2.1 2006/12/10 07:19:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -383,9 +383,9 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 	uint8_t buf[L2CAP_MTU_MINIMUM];
 	l2cap_cmd_hdr_t cmd;
 	l2cap_cfg_req_cp cp;
-	l2cap_cfg_opt_t *opt;
-	l2cap_cfg_opt_val_t *val;
-	l2cap_cfg_rsp_cp *rp;
+	l2cap_cfg_opt_t opt;
+	l2cap_cfg_opt_val_t val;
+	l2cap_cfg_rsp_cp rp;
 	struct l2cap_channel *chan;
 	int left, len;
 
@@ -411,11 +411,10 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 	}
 
 	/* ready our response packet */
-	rp = (l2cap_cfg_rsp_cp *)buf;
-	rp->scid = htole16(chan->lc_rcid);
-	rp->flags = 0;	/* "No Continuation" */
-	rp->result = L2CAP_SUCCESS;
-	len = sizeof(*rp);
+	rp.scid = htole16(chan->lc_rcid);
+	rp.flags = 0;	/* "No Continuation" */
+	rp.result = L2CAP_SUCCESS;
+	len = sizeof(rp);
 
 	/*
 	 * Process the packet. We build the return packet on the fly adding any
@@ -425,37 +424,33 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 	 *
 	 * Since we do not support enough options to make overflowing the min
 	 * MTU size an issue in normal use, we just reject config requests that
-	 * would make that happen. This could be if:
+	 * make that happen. This could be because options are repeated or the
+	 * packet is corrupted in some way.
 	 *
-	 *	1. too many unknown option types (>40!)
-	 *	2. repeated options we found unacceptable
-	 *	3. corrupted packet looks like above
+	 * If unknown option types threaten to overflow the packet, we just
+	 * ignore them. We can deny them next time.
 	 */
 	while (left > 0) {
-		if (left < sizeof(*opt) || len + sizeof(*opt) > sizeof(buf))
+		if (left < sizeof(opt))
 			goto reject;
 
-		opt = (l2cap_cfg_opt_t *)&buf[len];
-		m_copydata(m, 0, sizeof(*opt), opt);
-		m_adj(m, sizeof(*opt));
-		left -= sizeof(*opt);
+		m_copydata(m, 0, sizeof(opt), &opt);
+		m_adj(m, sizeof(opt));
+		left -= sizeof(opt);
 
-		if (left < opt->length)
+		if (left < opt.length)
 			goto reject;
 
-		val = (l2cap_cfg_opt_val_t *)&buf[len + sizeof(*opt)];
-
-		switch(opt->type & L2CAP_OPT_HINT_MASK) {
+		switch(opt.type & L2CAP_OPT_HINT_MASK) {
 		case L2CAP_OPT_MTU:
-			if (rp->result == L2CAP_UNKNOWN_OPTION)
+			if (rp.result == L2CAP_UNKNOWN_OPTION)
 				break;
 
-			if (opt->length != L2CAP_OPT_MTU_SIZE
-			    || len + sizeof(*opt) + L2CAP_OPT_MTU_SIZE > sizeof(buf))
+			if (opt.length != L2CAP_OPT_MTU_SIZE)
 				goto reject;
 
-			m_copydata(m, 0, L2CAP_OPT_MTU_SIZE, val);
-			val->mtu = le16toh(val->mtu);
+			m_copydata(m, 0, L2CAP_OPT_MTU_SIZE, &val);
+			val.mtu = le16toh(val.mtu);
 
 			/*
 			 * XXX how do we know what the minimum acceptable MTU is
@@ -463,21 +458,26 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 			 * minimum but I have no way to find that out at this
 			 * juncture..
 			 */
-			if (val->mtu < L2CAP_MTU_MINIMUM) {
-				rp->result = L2CAP_UNACCEPTABLE_PARAMS;
-				val->mtu = htole16(L2CAP_MTU_MINIMUM);
-				len += sizeof(*opt) + L2CAP_OPT_MTU_SIZE;
+			if (val.mtu < L2CAP_MTU_MINIMUM) {
+				if (len + sizeof(opt) + L2CAP_OPT_MTU_SIZE > sizeof(buf))
+					goto reject;
+
+				rp.result = L2CAP_UNACCEPTABLE_PARAMS;
+				memcpy(buf + len, &opt, sizeof(opt));
+				len += sizeof(opt);
+				val.mtu = htole16(L2CAP_MTU_MINIMUM);
+				memcpy(buf + len, &val, L2CAP_OPT_MTU_SIZE);
+				len += L2CAP_OPT_MTU_SIZE;
 			} else
-				chan->lc_omtu = val->mtu;
+				chan->lc_omtu = val.mtu;
 
 			break;
 
 		case L2CAP_OPT_FLUSH_TIMO:
-			if (rp->result == L2CAP_UNKNOWN_OPTION)
+			if (rp.result == L2CAP_UNKNOWN_OPTION)
 				break;
 
-			if (opt->length != L2CAP_OPT_FLUSH_TIMO_SIZE
-			    || len + sizeof(*opt) + L2CAP_OPT_FLUSH_TIMO_SIZE > sizeof(buf))
+			if (opt.length != L2CAP_OPT_FLUSH_TIMO_SIZE)
 				goto reject;
 
 			/*
@@ -491,29 +491,35 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 		case L2CAP_OPT_QOS:
 		default:
 			/* ignore hints */
-			if (opt->type & L2CAP_OPT_HINT_BIT)
+			if (opt.type & L2CAP_OPT_HINT_BIT)
 				break;
 
 			/* unknown options supercede all else */
-			if (rp->result != L2CAP_UNKNOWN_OPTION) {
-				rp->result = L2CAP_UNKNOWN_OPTION;
-				len = sizeof(*rp);
+			if (rp.result != L2CAP_UNKNOWN_OPTION) {
+				rp.result = L2CAP_UNKNOWN_OPTION;
+				len = sizeof(rp);
 			}
 
-			buf[len++] = opt->type;
-			buf[len++] = 0;	// no need to return his data
+			/* ignore if it don't fit */
+			if (len + sizeof(opt) > sizeof(buf))
+				break;
+
+			/* return unknown option type, but no data */
+			buf[len++] = opt.type;
+			buf[len++] = 0;
 			break;
 		}
 
-		m_adj(m, opt->length);
-		left -= opt->length;
+		m_adj(m, opt.length);
+		left -= opt.length;
 	}
 
-	rp->result = htole16(rp->result);
+	rp.result = htole16(rp.result);
+	memcpy(buf, &rp, sizeof(rp));
 	l2cap_send_signal(link, L2CAP_CONFIG_RSP, cmd.ident, len, buf);
 
 	if ((cp.flags & L2CAP_OPT_CFLAG_BIT) == 0
-	    && rp->result == L2CAP_SUCCESS) {
+	    && rp.result == le16toh(L2CAP_SUCCESS)) {
 
 		chan->lc_state &= ~L2CAP_WAIT_CONFIG_REQ;
 

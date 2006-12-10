@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_ap.c,v 1.7 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: ms_ap.c,v 1.7.22.1 2006/12/10 07:16:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_ap.c,v 1.7 2005/12/11 12:18:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_ap.c,v 1.7.22.1 2006/12/10 07:16:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -163,8 +163,10 @@ ms_ap_intr(void *v)
 			else
 				dy = byte2;
 
-			wsmouse_input(sc->sc_wsmousedev, button, dx, -dy, 0,
-			    WSMOUSE_INPUT_DELTA);
+			wsmouse_input(sc->sc_wsmousedev,
+					button,
+					dx, -dy, 0, 0,
+					WSMOUSE_INPUT_DELTA);
 		}
 	}
 

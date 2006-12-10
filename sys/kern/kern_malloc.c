@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.102.6.1 2006/10/22 06:07:10 yamt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.102.6.2 2006/12/10 07:18:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.102.6.1 2006/10/22 06:07:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.102.6.2 2006/12/10 07:18:44 yamt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -304,11 +304,11 @@ struct simplelock malloc_slock = SIMPLELOCK_INITIALIZER;
  */
 #ifdef MALLOCLOG
 void *
-_malloc(unsigned long size, struct malloc_type *ksp __unused, int flags,
+_malloc(unsigned long size, struct malloc_type *ksp, int flags,
     const char *file, long line)
 #else
 void *
-malloc(unsigned long size, struct malloc_type *ksp __unused, int flags)
+malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #endif /* MALLOCLOG */
 {
 	struct kmembuckets *kbp;
@@ -515,10 +515,10 @@ out:
  */
 #ifdef MALLOCLOG
 void
-_free(void *addr, struct malloc_type *ksp __unused, const char *file, long line)
+_free(void *addr, struct malloc_type *ksp, const char *file, long line)
 #else
 void
-free(void *addr, struct malloc_type *ksp __unused)
+free(void *addr, struct malloc_type *ksp)
 #endif /* MALLOCLOG */
 {
 	struct kmembuckets *kbp;
@@ -825,7 +825,7 @@ malloc_type_detach(struct malloc_type *type)
  * Set the limit on a malloc type.
  */
 void
-malloc_type_setlimit(struct malloc_type *type __unused, u_long limit __unused)
+malloc_type_setlimit(struct malloc_type *type, u_long limit)
 {
 #ifdef KMEMSTATS
 	int s;

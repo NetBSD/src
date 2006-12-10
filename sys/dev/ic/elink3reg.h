@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.30 2006/02/25 02:28:58 wiz Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.30.16.1 2006/12/10 07:17:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -383,6 +383,7 @@
 #define TXS_UNDERRUN		0x1000
 #define TXS_MAX_COLLISION	0x0800
 #define TXS_STATUS_OVERFLOW	0x0400
+#define TXS_RECLAIM		0x0200
 #define	TXS_TIMER		0x00ff
 
 /*

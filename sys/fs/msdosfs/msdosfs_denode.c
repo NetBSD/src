@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.14.10.1 2006/10/22 06:07:06 yamt Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.14.10.2 2006/12/10 07:18:38 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.14.10.1 2006/10/22 06:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.14.10.2 2006/12/10 07:18:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,7 +387,7 @@ deupdat(dep, waitfor)
  */
 int
 detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred,
-    struct lwp *l __unused)
+    struct lwp *l)
 {
 	int error;
 	int allerror;
@@ -456,8 +456,8 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred,
 	if ((boff = length & pmp->pm_crbomask) != 0) {
 		if (isadir) {
 			bn = cntobn(pmp, eofentry);
-			error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster,
-			    NOCRED, &bp);
+			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
+			    pmp->pm_bpcluster, NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 #ifdef MSDOSFS_DEBUG
@@ -687,8 +687,8 @@ out:
 }
 
 int
-msdosfs_gop_alloc(struct vnode *vp __unused, off_t off __unused,
-    off_t len __unused, int flags __unused, kauth_cred_t cred __unused)
+msdosfs_gop_alloc(struct vnode *vp, off_t off,
+    off_t len, int flags, kauth_cred_t cred)
 {
 	return 0;
 }

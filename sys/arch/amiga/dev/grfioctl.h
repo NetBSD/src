@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.17 2005/12/11 12:16:28 christos Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.17.22.1 2006/12/10 07:15:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -113,8 +113,8 @@ struct	grfinfo {
 };
 
 
-/* video mode, should be display-independant, but it might need
-   modifications in the future to really become hardware-independant. */
+/* video mode, should be display-independent, but it might need
+   modifications in the future to really become hardware-independent. */
 
 struct grfvideo_mode {
 	u_char	mode_num;		/* index in mode table */

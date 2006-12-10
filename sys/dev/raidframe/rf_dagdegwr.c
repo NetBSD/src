@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.28.10.1 2006/10/22 06:06:43 yamt Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.28.10.2 2006/12/10 07:18:11 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.28.10.1 2006/10/22 06:06:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.28.10.2 2006/12/10 07:18:11 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -154,8 +154,8 @@ rf_CreateDegradedWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 void
 rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 				      RF_AccessStripeMap_t *asmap,
-				      RF_DagHeader_t *dag_h, void *bp __unused,
-				      RF_RaidAccessFlags_t flags __unused,
+				      RF_DagHeader_t *dag_h, void *bp,
+				      RF_RaidAccessFlags_t flags,
 				      RF_AllocListElem_t *allocList,
 				      int nfaults,
 				      int (*redFunc) (RF_DagNode_t *),
@@ -711,11 +711,11 @@ rf_WriteGenerateFailedAccessASMs(
 
 void
 rf_DoubleDegSmallWrite(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
-		       RF_DagHeader_t *dag_h, void *bp __unused,
-		       RF_RaidAccessFlags_t flags __unused,
+		       RF_DagHeader_t *dag_h, void *bp,
+		       RF_RaidAccessFlags_t flags,
 		       RF_AllocListElem_t *allocList,
 		       const char *redundantReadNodeName,
-		       const char *redundantWriteNodeName __unused,
+		       const char *redundantWriteNodeName,
 		       const char *recoveryNodeName,
 		       int (*recovFunc) (RF_DagNode_t *))
 {

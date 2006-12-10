@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.4.8.1 2006/10/22 06:05:16 yamt Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.4.8.2 2006/12/10 07:16:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.4.8.1 2006/10/22 06:05:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.4.8.2 2006/12/10 07:16:42 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -214,14 +214,14 @@ bad:
 }
 
 const char *
-pci_intr_string(pci_chipset_tag_t pc __unused, pci_intr_handle_t ih)
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	return intr_string(ih);
 }
 
 
 const struct evcnt *
-pci_intr_evcnt(pci_chipset_tag_t pc __unused, pci_intr_handle_t ih __unused)
+pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -229,7 +229,7 @@ pci_intr_evcnt(pci_chipset_tag_t pc __unused, pci_intr_handle_t ih __unused)
 }
 
 void *
-pci_intr_establish(pci_chipset_tag_t pc __unused, pci_intr_handle_t ih,
+pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
     int level, int (*func)(void *), void *arg)
 {
 	int pin, irq;
@@ -257,7 +257,7 @@ pci_intr_establish(pci_chipset_tag_t pc __unused, pci_intr_handle_t ih,
 }
 
 void
-pci_intr_disestablish(pci_chipset_tag_t pc __unused, void *cookie)
+pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 
 	intr_disestablish(cookie);

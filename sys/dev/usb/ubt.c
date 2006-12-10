@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.16.4.2 2006/10/22 06:06:52 yamt Exp $	*/
+/*	$NetBSD: ubt.c,v 1.16.4.3 2006/12/10 07:18:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.16.4.2 2006/10/22 06:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.16.4.3 2006/12/10 07:18:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -152,9 +152,6 @@ SYSCTL_SETUP(sysctl_hw_ubt_debug_setup, "sysctl hw.ubt_debug setup")
 #define UBT_BUFSIZ_CMD		(HCI_CMD_PKT_SIZE - 1)
 #define UBT_BUFSIZ_ACL		(2048 - 1)
 #define UBT_BUFSIZ_EVENT	(HCI_EVENT_PKT_SIZE - 1)
-
-/* Interrupt Interval from (Bluetooth spec) */
-#define UBT_EVENT_INTERVAL	1	/* 1ms */
 
 /* Transmit timeouts */
 #define UBT_CMD_TIMEOUT		USBD_DEFAULT_TIMEOUT
@@ -834,7 +831,7 @@ ubt_enable(struct hci_unit *unit)
 				  sc->sc_evt_buf,
 				  UBT_BUFSIZ_EVENT,
 				  ubt_recv_event,
-				  UBT_EVENT_INTERVAL);
+				  USBD_DEFAULT_INTERVAL);
 	if (err != USBD_NORMAL_COMPLETION) {
 		error = EIO;
 		goto bad;
@@ -1121,7 +1118,7 @@ ubt_xmit_acl_start(struct hci_unit *unit)
 }
 
 static void
-ubt_xmit_acl_complete(usbd_xfer_handle xfer __unused,
+ubt_xmit_acl_complete(usbd_xfer_handle xfer,
 		usbd_private_handle h, usbd_status status)
 {
 	struct hci_unit *unit = h;
@@ -1254,7 +1251,7 @@ ubt_xmit_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 }
 
 static void
-ubt_xmit_sco_complete(usbd_xfer_handle xfer __unused,
+ubt_xmit_sco_complete(usbd_xfer_handle xfer,
 		usbd_private_handle h, usbd_status status)
 {
 	struct ubt_isoc_xfer *isoc = h;

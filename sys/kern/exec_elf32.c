@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.115.6.1 2006/10/22 06:07:09 yamt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.115.6.2 2006/12/10 07:18:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.115.6.1 2006/10/22 06:07:09 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.115.6.2 2006/12/10 07:18:43 yamt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -91,9 +91,9 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.115.6.1 2006/10/22 06:07:09 yamt Ex
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-#ifdef PAX_MPROTECT
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
 #include <sys/pax.h>
-#endif /* PAX_MPROTECT */
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
 
 extern const struct emul emul_netbsd;
 
@@ -337,8 +337,8 @@ elf_load_psection(struct exec_vmcmd_set *vcset, struct vnode *vp,
  */
 int
 elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
-    struct exec_vmcmd_set *vcset, u_long *entryoff,
-    struct elf_args *ap __unused, Elf_Addr *last)
+    struct exec_vmcmd_set *vcset, u_long *entryoff, struct elf_args *ap,
+    Elf_Addr *last)
 {
 	int error, i;
 	struct nameidata nd;
@@ -532,10 +532,7 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 			break;
 
 		case PT_NOTE:
-#ifdef PAX_MPROTECT
-			pax_mprotect_adjust(l, ph[i].p_flags);
 			break;
-#endif /* PAX_MPROTECT */
 
 		default:
 			break;
@@ -693,7 +690,11 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		case PT_INTERP:
 			/* Already did this one. */
 		case PT_DYNAMIC:
+			break;
 		case PT_NOTE:
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
+			pax_adjust(l, ph[i].p_flags);
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
 			break;
 
 		case PT_PHDR:
@@ -811,8 +812,8 @@ out:
 }
 
 int
-netbsd_elf_probe(struct lwp *l, struct exec_package *epp,
-    void *eh, char *itp __unused, vaddr_t *pos __unused)
+netbsd_elf_probe(struct lwp *l, struct exec_package *epp, void *eh, char *itp,
+    vaddr_t *pos)
 {
 	int error;
 

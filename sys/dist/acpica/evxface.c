@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evxface.c,v 1.1.22.1 2006/10/22 06:07:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evxface.c,v 1.1.22.2 2006/12/10 07:18:28 yamt Exp $");
 
 #define __EVXFACE_C__
 
@@ -269,7 +269,7 @@ Cleanup:
 ACPI_STATUS
 AcpiRemoveFixedEventHandler (
     UINT32                  Event,
-    ACPI_EVENT_HANDLER      Handler __unused)
+    ACPI_EVENT_HANDLER      Handler)
 {
     ACPI_STATUS             Status = AE_OK;
 

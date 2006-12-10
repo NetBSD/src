@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.15.22.1 2006/10/22 06:05:28 yamt Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.15.22.2 2006/12/10 07:16:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.15.22.1 2006/10/22 06:05:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.15.22.2 2006/12/10 07:16:52 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -100,7 +100,7 @@ static int32_t int32_mask[33] = {
 };
 
 stream_filter_t *
-aurateconv(struct audio_softc *sc __unused, const audio_params_t *from,
+aurateconv(struct audio_softc *sc, const audio_params_t *from,
 	   const audio_params_t *to)
 {
 	aurateconv_t *this;
@@ -335,7 +335,7 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 #define AURATECONV_SLINEAR(BITS, EN)	\
 static int \
 aurateconv_slinear##BITS##_##EN (aurateconv_t *this, audio_stream_t *dst, \
-				 int m, int frame_src, int frame_dst __unused) \
+				 int m, int frame_src, int frame_dst) \
 { \
 	uint8_t *w; \
 	const uint8_t *r; \

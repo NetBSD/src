@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.21 2006/03/01 12:38:12 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.21.16.1 2006/12/10 07:16:32 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21 2006/03/01 12:38:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21.16.1 2006/12/10 07:16:32 yamt Exp $");
 
 #include "opt_altivec.h"
 
@@ -224,9 +224,6 @@ process_machdep_dovecregs(struct lwp *curl, struct lwp *l, struct uio *uio)
 	int error;
 	char *kv;
 	int kl;
-
-	if ((error = process_checkioperm(curl, l->l_proc)) != 0)
-		return (error);
 
 	kl = sizeof(r);
 	kv = (char *) &r;

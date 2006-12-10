@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.19 2006/03/29 04:16:47 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.19.10.1 2006/12/10 07:16:35 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.19 2006/03/29 04:16:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.19.10.1 2006/12/10 07:16:35 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -2417,7 +2417,7 @@ static void ATRSM (struct scr_softc * sc,int cmd)
                     sc->ATRS = atrsTS;
                     sc->pIoctlOn->atrLen = 0;
                     sc->t0ByteParent = ATRSM;
-                    scrTimeout(ATRSM,sc,atrcT3,T_t3 *2);  /* by 2 to accomodate 1/2 freq cards */
+                    scrTimeout(ATRSM,sc,atrcT3,T_t3 *2);  /* by 2 to accommodate 1/2 freq cards */
                     t0RecvByteSM(sc,t0rbcStart);
                     break;
 

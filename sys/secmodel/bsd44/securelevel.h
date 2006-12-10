@@ -1,4 +1,4 @@
-/* $NetBSD: securelevel.h,v 1.1 2006/09/08 20:58:57 elad Exp $ */
+/* $NetBSD: securelevel.h,v 1.1.4.1 2006/12/10 07:19:28 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -44,6 +44,8 @@ int secmodel_bsd44_securelevel_process_cb(kauth_cred_t, kauth_action_t, void *,
 int secmodel_bsd44_securelevel_network_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 int secmodel_bsd44_securelevel_machdep_cb(kauth_cred_t, kauth_action_t, void *,
+    void *, void *, void *, void *);
+int secmodel_bsd44_securelevel_device_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 
 #endif /* !_SECMODEL_BSD44_SECURELEVEL_H_ */

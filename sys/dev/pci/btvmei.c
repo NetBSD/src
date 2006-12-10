@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.14 2005/12/11 12:22:48 christos Exp $ */
+/* $NetBSD: btvmei.c,v 1.14.22.1 2006/12/10 07:17:42 yamt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.14 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.14.22.1 2006/12/10 07:17:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,7 +389,7 @@ b3_617_vmeintr(sc, lstat)
 				/*
 				 * We should raise the interrupt level
 				 * to ih->ih_prior here. How to do this
-				 * machine-independantly?
+				 * machine-independently?
 				 * To be safe, raise to the maximum.
 				 */
 				s = splhigh();

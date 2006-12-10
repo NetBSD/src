@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.192.4.1 2006/10/22 06:06:48 yamt Exp $ */
+/*	$NetBSD: st.c,v 1.192.4.2 2006/12/10 07:18:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.192.4.1 2006/10/22 06:06:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.192.4.2 2006/12/10 07:18:16 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -421,7 +421,7 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 }
 
 int
-stactivate(struct device *self __unused, enum devact act)
+stactivate(struct device *self, enum devact act)
 {
 	int rv = 0;
 
@@ -440,7 +440,7 @@ stactivate(struct device *self __unused, enum devact act)
 }
 
 int
-stdetach(struct device *self, int flags __unused)
+stdetach(struct device *self, int flags)
 {
 	struct st_softc *st = device_private(self);
 	int s, bmaj, cmaj, mn;
@@ -539,7 +539,7 @@ st_loadquirks(struct st_softc *st)
  * open the device.
  */
 static int
-stopen(dev_t dev, int flags, int mode __unused, struct lwp *l __unused)
+stopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	u_int stmode, dsty;
 	int error, sflags, unit, tries, ntries;
@@ -726,7 +726,7 @@ bad:
  * occurence of an open device
  */
 static int
-stclose(dev_t dev, int flags, int mode __unused, struct lwp *l __unused)
+stclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int stxx, error = 0;
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
@@ -821,7 +821,7 @@ stclose(dev_t dev, int flags, int mode __unused, struct lwp *l __unused)
  * and try guess any that seem to be defaulted.
  */
 static int
-st_mount_tape(dev_t dev, int flags __unused)
+st_mount_tape(dev_t dev, int flags)
 {
 	int unit;
 	u_int dsty;
@@ -1368,7 +1368,7 @@ stdone(struct scsipi_xfer *xs, int error)
 }
 
 static int
-stread(dev_t dev, struct uio *uio, int iomode __unused)
+stread(dev_t dev, struct uio *uio, int iomode)
 {
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
@@ -1377,7 +1377,7 @@ stread(dev_t dev, struct uio *uio, int iomode __unused)
 }
 
 static int
-stwrite(dev_t dev, struct uio *uio, int iomode __unused)
+stwrite(dev_t dev, struct uio *uio, int iomode)
 {
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
@@ -2398,8 +2398,8 @@ bad:			free(bf, M_TEMP);
 }
 
 static int
-stdump(dev_t dev __unused, daddr_t blkno __unused, caddr_t va __unused,
-    size_t size __unused)
+stdump(dev_t dev, daddr_t blkno, caddr_t va,
+    size_t size)
 {
 
 	/* Not implemented. */

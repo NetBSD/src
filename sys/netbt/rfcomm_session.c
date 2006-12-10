@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.2.2.1 2006/10/22 06:07:28 yamt Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.2.2.2 2006/12/10 07:19:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.2.2.1 2006/10/22 06:07:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.2.2.2 2006/12/10 07:19:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -321,7 +321,7 @@ rfcomm_session_timeout(void *arg)
  */
 
 static void
-rfcomm_session_connecting(void *arg __unused)
+rfcomm_session_connecting(void *arg)
 {
 	//struct rfcomm_session *rs = arg;
 
@@ -1297,7 +1297,7 @@ close:
  */
 static void
 rfcomm_session_recv_mcc_nsc(struct rfcomm_session *rs,
-    int cr __unused, struct mbuf *m __unused)
+    int cr, struct mbuf *m)
 {
 	struct rfcomm_dlc *dlc, *next;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.138.4.1 2006/10/22 06:07:43 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.138.4.2 2006/12/10 07:19:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.138.4.1 2006/10/22 06:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.138.4.2 2006/12/10 07:19:24 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -404,7 +404,7 @@ nfs_disconnect(nmp)
 	if (nmp->nm_so) {
 		so = nmp->nm_so;
 		nmp->nm_so = (struct socket *)0;
-		soshutdown(so, 2);
+		soshutdown(so, SHUT_RDWR);
 		drain = (nmp->nm_iflag & NFSMNT_DISMNT) != 0;
 		if (drain) {
 			/*
@@ -1621,7 +1621,7 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
  * sure to set the r_retry field to 0 (implies nm_retry == 0).
  */
 void
-nfs_timer(void *arg __unused)
+nfs_timer(void *arg)
 {
 	struct nfsreq *rep;
 	struct mbuf *m;
@@ -1757,7 +1757,7 @@ nfs_timer(void *arg __unused)
 
 /*ARGSUSED*/
 void
-nfs_exit(struct proc *p, void *v __unused)
+nfs_exit(struct proc *p, void *v)
 {
 	struct nfsreq *rp;
 	int s = splsoftnet();
@@ -2312,6 +2312,7 @@ nfsrv_rcv(so, arg, waitflag)
 			goto dorecs;
 		}
 		m = mp;
+		m_claimm(m, &nfs_mowner);
 		if (slp->ns_rawend) {
 			slp->ns_rawend->m_next = m;
 			slp->ns_cc += 1000000000 - auio.uio_resid;
@@ -2346,6 +2347,7 @@ nfsrv_rcv(so, arg, waitflag)
 					m->m_next = mp;
 				} else
 					m = mp;
+				m_claimm(m, &nfs_mowner);
 				if (slp->ns_recend)
 					slp->ns_recend->m_nextpkt = m;
 				else

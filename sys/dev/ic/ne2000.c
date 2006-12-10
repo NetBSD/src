@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.50.6.1 2006/10/22 06:05:45 yamt Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.50.6.2 2006/12/10 07:17:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.50.6.1 2006/10/22 06:05:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.50.6.2 2006/12/10 07:17:06 yamt Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -705,7 +705,7 @@ ne2000_read_hdr(sc, buf, hdr)
 }
 
 int
-ne2000_test_mem(struct dp8390_softc *sc __unused)
+ne2000_test_mem(struct dp8390_softc *sc)
 {
 
 	/* Noop. */

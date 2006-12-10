@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.270.2.1 2006/10/22 06:07:12 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.270.2.2 2006/12/10 07:18:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.270.2.1 2006/10/22 06:07:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.270.2.2 2006/12/10 07:18:46 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.270.2.1 2006/10/22 06:07:12 yamt 
 #endif /* FILEASSOC */
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
+#include <sys/syslog.h>
 #endif /* NVERIEXEC > 0 */
 #include <sys/kauth.h>
 
@@ -139,7 +140,7 @@ const int nmountcompatnames = sizeof(mountcompatnames) /
 
 /* ARGSUSED */
 int
-sys_mount(struct lwp *l, void *v, register_t *retval __unused)
+sys_mount(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mount_args /* {
 		syscallarg(const char *) type;
@@ -332,6 +333,7 @@ sys_mount(struct lwp *l, void *v, register_t *retval __unused)
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
 	mp->mnt_unmounter = NULL;
 	mp->mnt_leaf = mp;
+	mount_initspecific(mp);
 
 	/*
 	 * The underlying file system may refuse the mount for
@@ -362,6 +364,7 @@ sys_mount(struct lwp *l, void *v, register_t *retval __unused)
 	 */
 	error = VFS_MOUNT(mp, SCARG(uap, path), SCARG(uap, data), &nd, l);
 	if (mp->mnt_flag & (MNT_UPDATE | MNT_GETARGS)) {
+		VOP_UNLOCK(vp, 0);
 #if defined(COMPAT_30) && defined(NFSSERVER)
 		if (mp->mnt_flag & MNT_UPDATE && error != 0) {
 			int error2;
@@ -393,7 +396,6 @@ sys_mount(struct lwp *l, void *v, register_t *retval __unused)
 				vfs_deallocate_syncvnode(mp);
 		}
 		vfs_unbusy(mp);
-		VOP_UNLOCK(vp, 0);
 		vrele(vp);
 		return (error);
 	}
@@ -476,7 +478,7 @@ checkdirs(struct vnode *olddp)
  */
 /* ARGSUSED */
 int
-sys_unmount(struct lwp *l, void *v, register_t *retval __unused)
+sys_unmount(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_unmount_args /* {
 		syscallarg(const char *) path;
@@ -549,28 +551,9 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	int used_syncer;
 
 #if NVERIEXEC > 0
-	if (!doing_shutdown) {
-		if (veriexec_strict >= VERIEXEC_LOCKDOWN) {
-			printf("Veriexec: Lockdown mode, preventing unmount of"
-			    " \"%s\". (uid=%u)\n", mp->mnt_stat.f_mntonname,
-			    kauth_cred_getuid(l->l_cred));
-			return (EPERM);
-		}
-
-		if (veriexec_strict == VERIEXEC_IPS) {
-			struct veriexec_table_entry *vte;
-
-			/* Check if we have fingerprints on mount. */
-			vte = fileassoc_tabledata_lookup(mp, veriexec_hook);
-			if ((vte != NULL) && (vte->vte_count > 0)) {
-				printf("Veriexec: IPS mode, preventing unmount"
-				    " of \"%s\" with monitored files. "
-				    "(uid=%u)\n", mp->mnt_stat.f_mntonname,
-				    kauth_cred_getuid(l->l_cred));
-				return (EPERM);
-			}
-		}
-	}
+	error = veriexec_unmountchk(mp);
+	if (error)
+		return (error);
 #endif /* NVERIEXEC > 0 */
 
 #ifdef FILEASSOC
@@ -649,6 +632,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		panic("unmount: dangling vnode");
 	mp->mnt_iflag |= IMNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
+	mount_finispecific(mp);
 	if (used_syncer)
 		lockmgr(&syncer_lock, LK_RELEASE, NULL);
 	simple_lock(&mp->mnt_slock);
@@ -672,7 +656,7 @@ struct ctldebug debug0 = { "syncprt", &syncprt };
 
 /* ARGSUSED */
 int
-sys_sync(struct lwp *l, void *v __unused, register_t *retval __unused)
+sys_sync(struct lwp *l, void *v, register_t *retval)
 {
 	struct mount *mp, *nmp;
 	int asyncflag;
@@ -713,7 +697,7 @@ sys_sync(struct lwp *l, void *v __unused, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_quotactl(struct lwp *l, void *v, register_t *retval __unused)
+sys_quotactl(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_quotactl_args /* {
 		syscallarg(const char *) path;
@@ -811,7 +795,7 @@ done:
  */
 /* ARGSUSED */
 int
-sys_statvfs1(struct lwp *l, void *v, register_t *retval __unused)
+sys_statvfs1(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_statvfs1_args /* {
 		syscallarg(const char *) path;
@@ -842,7 +826,7 @@ sys_statvfs1(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_fstatvfs1(struct lwp *l, void *v, register_t *retval __unused)
+sys_fstatvfs1(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fstatvfs1_args /* {
 		syscallarg(int) fd;
@@ -947,7 +931,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_fchdir(struct lwp *l, void *v, register_t *retval __unused)
+sys_fchdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fchdir_args /* {
 		syscallarg(int) fd;
@@ -1009,7 +993,7 @@ sys_fchdir(struct lwp *l, void *v, register_t *retval __unused)
  * descriptor.
  */
 int
-sys_fchroot(struct lwp *l, void *v, register_t *retval __unused)
+sys_fchroot(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fchroot_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -1064,7 +1048,7 @@ sys_fchroot(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_chdir(struct lwp *l, void *v, register_t *retval __unused)
+sys_chdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chdir_args /* {
 		syscallarg(const char *) path;
@@ -1088,7 +1072,7 @@ sys_chdir(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_chroot(struct lwp *l, void *v, register_t *retval __unused)
+sys_chroot(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chroot_args /* {
 		syscallarg(const char *) path;
@@ -1262,9 +1246,6 @@ vfs_composefh(struct vnode *vp, fhandle_t *fhp, size_t *fh_size)
 	size_t fidsize;
 
 	mp = vp->v_mount;
-	if (mp->mnt_op->vfs_vptofh == NULL) {
-		return EOPNOTSUPP;
-	}
 	fidp = NULL;
 	if (*fh_size < FHANDLE_SIZE_MIN) {
 		fidsize = 0;
@@ -1296,10 +1277,6 @@ vfs_composefh_alloc(struct vnode *vp, fhandle_t **fhpp)
 
 	*fhpp = NULL;
 	mp = vp->v_mount;
-	if (mp->mnt_op->vfs_vptofh == NULL) {
-		error = EOPNOTSUPP;
-		goto out;
-	}
 	fidsize = 0;
 	error = VFS_VPTOFH(vp, NULL, &fidsize);
 	KASSERT(error != 0);
@@ -1418,7 +1395,7 @@ vfs_copyinfh_free(fhandle_t *fhp)
  * Get file handle system call
  */
 int
-sys___getfh30(struct lwp *l, void *v, register_t *retval __unused)
+sys___getfh30(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___getfh30_args /* {
 		syscallarg(char *) fname;
@@ -1620,7 +1597,7 @@ sys___fhopen40(struct lwp *l, void *v, register_t *retval)
 
 int
 dofhstat(struct lwp *l, const void *ufhp, size_t fhsize, struct stat *sbp,
-    register_t *retval __unused)
+    register_t *retval)
 {
 	struct stat sb;
 	int error;
@@ -1670,7 +1647,7 @@ sys___fhstat40(struct lwp *l, void *v, register_t *retval)
 
 int
 dofhstatvfs(struct lwp *l, const void *ufhp, size_t fhsize, struct statvfs *buf,
-    int flags, register_t *retval __unused)
+    int flags, register_t *retval)
 {
 	struct statvfs *sb = NULL;
 	fhandle_t *fh;
@@ -1729,7 +1706,7 @@ sys___fhstatvfs140(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_mknod(struct lwp *l, void *v, register_t *retval __unused)
+sys_mknod(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mknod_args /* {
 		syscallarg(const char *) path;
@@ -1823,7 +1800,7 @@ restart:
  */
 /* ARGSUSED */
 int
-sys_mkfifo(struct lwp *l, void *v, register_t *retval __unused)
+sys_mkfifo(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mkfifo_args /* {
 		syscallarg(const char *) path;
@@ -1877,7 +1854,7 @@ restart:
  */
 /* ARGSUSED */
 int
-sys_link(struct lwp *l, void *v, register_t *retval __unused)
+sys_link(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_link_args /* {
 		syscallarg(const char *) path;
@@ -1923,7 +1900,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_symlink(struct lwp *l, void *v, register_t *retval __unused)
+sys_symlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_symlink_args /* {
 		syscallarg(const char *) path;
@@ -1983,7 +1960,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_undelete(struct lwp *l, void *v, register_t *retval __unused)
+sys_undelete(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_undelete_args /* {
 		syscallarg(const char *) path;
@@ -2033,7 +2010,7 @@ restart:
  */
 /* ARGSUSED */
 int
-sys_unlink(struct lwp *l, void *v, register_t *retval __unused)
+sys_unlink(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_unlink_args /* {
 		syscallarg(const char *) path;
@@ -2092,7 +2069,7 @@ restart:
 	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
 	VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
 #ifdef FILEASSOC
-	(void)fileassoc_file_delete(nd.ni_vp);
+	(void)fileassoc_file_delete(vp);
 #endif /* FILEASSOC */
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 	vn_finished_write(mp, 0);
@@ -2374,7 +2351,7 @@ sys_pwritev(struct lwp *l, void *v, register_t *retval)
  * Check access permissions.
  */
 int
-sys_access(struct lwp *l, void *v, register_t *retval __unused)
+sys_access(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_access_args /* {
 		syscallarg(const char *) path;
@@ -2421,7 +2398,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys___stat30(struct lwp *l, void *v, register_t *retval __unused)
+sys___stat30(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___stat30_args /* {
 		syscallarg(const char *) path;
@@ -2448,7 +2425,7 @@ sys___stat30(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys___lstat30(struct lwp *l, void *v, register_t *retval __unused)
+sys___lstat30(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___lstat30_args /* {
 		syscallarg(const char *) path;
@@ -2541,7 +2518,7 @@ sys_readlink(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_chflags(struct lwp *l, void *v, register_t *retval __unused)
+sys_chflags(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chflags_args /* {
 		syscallarg(const char *) path;
@@ -2565,7 +2542,7 @@ sys_chflags(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_fchflags(struct lwp *l, void *v, register_t *retval __unused)
+sys_fchflags(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fchflags_args /* {
 		syscallarg(int) fd;
@@ -2591,7 +2568,7 @@ sys_fchflags(struct lwp *l, void *v, register_t *retval __unused)
  * not follow links.
  */
 int
-sys_lchflags(struct lwp *l, void *v, register_t *retval __unused)
+sys_lchflags(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lchflags_args /* {
 		syscallarg(const char *) path;
@@ -2650,7 +2627,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_chmod(struct lwp *l, void *v, register_t *retval __unused)
+sys_chmod(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chmod_args /* {
 		syscallarg(const char *) path;
@@ -2674,7 +2651,7 @@ sys_chmod(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_fchmod(struct lwp *l, void *v, register_t *retval __unused)
+sys_fchmod(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fchmod_args /* {
 		syscallarg(int) fd;
@@ -2698,7 +2675,7 @@ sys_fchmod(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_lchmod(struct lwp *l, void *v, register_t *retval __unused)
+sys_lchmod(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lchmod_args /* {
 		syscallarg(const char *) path;
@@ -2744,7 +2721,7 @@ change_mode(struct vnode *vp, int mode, struct lwp *l)
  */
 /* ARGSUSED */
 int
-sys_chown(struct lwp *l, void *v, register_t *retval __unused)
+sys_chown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chown_args /* {
 		syscallarg(const char *) path;
@@ -2770,7 +2747,7 @@ sys_chown(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys___posix_chown(struct lwp *l, void *v, register_t *retval __unused)
+sys___posix_chown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_chown_args /* {
 		syscallarg(const char *) path;
@@ -2795,7 +2772,7 @@ sys___posix_chown(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_fchown(struct lwp *l, void *v, register_t *retval __unused)
+sys_fchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fchown_args /* {
 		syscallarg(int) fd;
@@ -2821,7 +2798,7 @@ sys_fchown(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys___posix_fchown(struct lwp *l, void *v, register_t *retval __unused)
+sys___posix_fchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fchown_args /* {
 		syscallarg(int) fd;
@@ -2847,7 +2824,7 @@ sys___posix_fchown(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_lchown(struct lwp *l, void *v, register_t *retval __unused)
+sys_lchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lchown_args /* {
 		syscallarg(const char *) path;
@@ -2873,7 +2850,7 @@ sys_lchown(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys___posix_lchown(struct lwp *l, void *v, register_t *retval __unused)
+sys___posix_lchown(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lchown_args /* {
 		syscallarg(const char *) path;
@@ -2958,7 +2935,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_utimes(struct lwp *l, void *v, register_t *retval __unused)
+sys_utimes(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_utimes_args /* {
 		syscallarg(const char *) path;
@@ -2982,7 +2959,7 @@ sys_utimes(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_futimes(struct lwp *l, void *v, register_t *retval __unused)
+sys_futimes(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_futimes_args /* {
 		syscallarg(int) fd;
@@ -3007,7 +2984,7 @@ sys_futimes(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_lutimes(struct lwp *l, void *v, register_t *retval __unused)
+sys_lutimes(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_lutimes_args /* {
 		syscallarg(const char *) path;
@@ -3066,7 +3043,7 @@ out:
  */
 /* ARGSUSED */
 int
-sys_truncate(struct lwp *l, void *v, register_t *retval __unused)
+sys_truncate(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_truncate_args /* {
 		syscallarg(const char *) path;
@@ -3107,7 +3084,7 @@ sys_truncate(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_ftruncate(struct lwp *l, void *v, register_t *retval __unused)
+sys_ftruncate(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_ftruncate_args /* {
 		syscallarg(int) fd;
@@ -3154,7 +3131,7 @@ sys_ftruncate(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_fsync(struct lwp *l, void *v, register_t *retval __unused)
+sys_fsync(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fsync_args /* {
 		syscallarg(int) fd;
@@ -3193,7 +3170,7 @@ sys_fsync(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_fsync_range(struct lwp *l, void *v, register_t *retval __unused)
+sys_fsync_range(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fsync_range_args /* {
 		syscallarg(int) fd;
@@ -3262,7 +3239,7 @@ sys_fsync_range(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_fdatasync(struct lwp *l, void *v, register_t *retval __unused)
+sys_fdatasync(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_fdatasync_args /* {
 		syscallarg(int) fd;
@@ -3292,7 +3269,7 @@ sys_fdatasync(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys_rename(struct lwp *l, void *v, register_t *retval __unused)
+sys_rename(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_rename_args /* {
 		syscallarg(const char *) from;
@@ -3307,7 +3284,7 @@ sys_rename(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-sys___posix_rename(struct lwp *l, void *v, register_t *retval __unused)
+sys___posix_rename(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___posix_rename_args /* {
 		syscallarg(const char *) from;
@@ -3336,10 +3313,11 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 	struct proc *p;
 	int error;
 
-	NDINIT(&fromnd, DELETE, WANTPARENT | SAVESTART, UIO_USERSPACE,
+	NDINIT(&fromnd, DELETE, LOCKPARENT | SAVESTART, UIO_USERSPACE,
 	    from, l);
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
+	VOP_UNLOCK(fromnd.ni_dvp, 0);
 	fvp = fromnd.ni_vp;
 	error = vn_start_write(fvp, &mp, V_WAIT | V_PCATCH);
 	if (error != 0) {
@@ -3433,7 +3411,7 @@ out1:
  */
 /* ARGSUSED */
 int
-sys_mkdir(struct lwp *l, void *v, register_t *retval __unused)
+sys_mkdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mkdir_args /* {
 		syscallarg(const char *) path;
@@ -3489,7 +3467,7 @@ restart:
  */
 /* ARGSUSED */
 int
-sys_rmdir(struct lwp *l, void *v, register_t *retval __unused)
+sys_rmdir(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_rmdir_args /* {
 		syscallarg(const char *) path;
@@ -3613,7 +3591,7 @@ sys_umask(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_revoke(struct lwp *l, void *v, register_t *retval __unused)
+sys_revoke(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_revoke_args /* {
 		syscallarg(const char *) path;

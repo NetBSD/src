@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_timer.c,v 1.6.6.1 2006/10/22 06:05:31 yamt Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.6.6.2 2006/12/10 07:16:57 yamt Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.6.6.1 2006/10/22 06:05:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.6.6.2 2006/12/10 07:16:57 yamt Exp $");
 
 #include <sys/types.h>
 #include <dev/acpi/acpi_timer.h>
@@ -60,7 +60,7 @@ acpitimer_init()
 }
 
 static u_int
-acpitimer_read_fast(struct timecounter *tc __unused)
+acpitimer_read_fast(struct timecounter *tc)
 {
 	uint32_t t;
 
@@ -73,7 +73,7 @@ acpitimer_read_fast(struct timecounter *tc __unused)
  * is a chance that a transition is hit.
  */
 static u_int
-acpitimer_read_safe(struct timecounter *tc __unused)
+acpitimer_read_safe(struct timecounter *tc)
 {
 	uint32_t t1, t2, t3;
 

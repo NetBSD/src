@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.32.6.1 2006/10/22 06:05:27 yamt Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.32.6.2 2006/12/10 07:16:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.32.6.1 2006/10/22 06:05:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.32.6.2 2006/12/10 07:16:51 yamt Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -416,9 +416,9 @@ exec_pecoff_coff_makecmds(l, epp, fp, peofs)
 /*
  */
 int
-exec_pecoff_prep_omagic(struct proc *p __unused,
-    struct exec_package *epp __unused, struct coff_filehdr *fp __unused,
-    struct coff_aouthdr *ap __unused, int peofs __unused)
+exec_pecoff_prep_omagic(struct proc *p,
+    struct exec_package *epp, struct coff_filehdr *fp,
+    struct coff_aouthdr *ap, int peofs)
 {
 	return ENOEXEC;
 }
@@ -426,9 +426,9 @@ exec_pecoff_prep_omagic(struct proc *p __unused,
 /*
  */
 int
-exec_pecoff_prep_nmagic(struct proc *p __unused,
-    struct exec_package *epp __unused, struct coff_filehdr *fp __unused,
-    struct coff_aouthdr *ap __unused, int peofs __unused)
+exec_pecoff_prep_nmagic(struct proc *p,
+    struct exec_package *epp, struct coff_filehdr *fp,
+    struct coff_aouthdr *ap, int peofs)
 {
 	return ENOEXEC;
 }

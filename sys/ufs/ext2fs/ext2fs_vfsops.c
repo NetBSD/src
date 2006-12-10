@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.101.4.1 2006/10/22 06:07:47 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.101.4.2 2006/12/10 07:19:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.101.4.1 2006/10/22 06:07:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.101.4.2 2006/12/10 07:19:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -463,7 +463,7 @@ fail:
 int
 ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 {
-	struct vnode *vp, *devvp;
+	struct vnode *vp, *nvp, *devvp;
 	struct inode *ip;
 	struct buf *bp;
 	struct m_ext2fs *fs;
@@ -540,8 +540,12 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 	}
 
 loop:
+	/*
+	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
+	 * and vclean() can be called indirectly
+	 */
 	simple_lock(&mntvnode_slock);
-	TAILQ_FOREACH(vp, &mountp->mnt_vnodelist, v_mntvnodes) {
+	for (vp = TAILQ_FIRST(&mountp->mnt_vnodelist); vp; vp = nvp) {
 		if (vp->v_mount != mountp) {
 			simple_unlock(&mntvnode_slock);
 			goto loop;
@@ -555,6 +559,7 @@ loop:
 		 * Step 5: invalidate all cached file data.
 		 */
 		simple_lock(&vp->v_interlock);
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		simple_unlock(&mntvnode_slock);
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 			goto loop;
@@ -755,7 +760,7 @@ ext2fs_unmount(struct mount *mp, int mntflags, struct lwp *l)
  * Flush out all the files in a filesystem.
  */
 int
-ext2fs_flushfiles(struct mount *mp, int flags, struct lwp *l __unused)
+ext2fs_flushfiles(struct mount *mp, int flags, struct lwp *l)
 {
 	extern int doforce;
 	int error;
@@ -770,7 +775,7 @@ ext2fs_flushfiles(struct mount *mp, int flags, struct lwp *l __unused)
  * Get file system statistics.
  */
 int
-ext2fs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
+ext2fs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 	struct ufsmount *ump;
 	struct m_ext2fs *fs;
@@ -829,7 +834,7 @@ ext2fs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l __unused)
 int
 ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 {
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	struct inode *ip;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct m_ext2fs *fs;
@@ -845,7 +850,11 @@ ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 	 */
 	simple_lock(&mntvnode_slock);
 loop:
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	/*
+	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
+	 * and vclean() can be called indirectly
+	 */
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
@@ -853,6 +862,7 @@ loop:
 		if (vp->v_mount != mp)
 			goto loop;
 		simple_lock(&vp->v_interlock);
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
 		if (vp->v_type == VNON ||
 		    ((ip->i_flag &

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.9 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.9.10.1 2006/12/10 07:18:38 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.9 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.9.10.1 2006/12/10 07:18:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,6 @@ msdosfs_lookup(v)
 	struct componentname *cnp = ap->a_cnp;
 	daddr_t bn;
 	int error;
-	int lockparent;
-	int wantparent;
 	int slotcount;
 	int slotoffset = 0;
 	int frcn;
@@ -118,7 +116,6 @@ msdosfs_lookup(v)
 	int chksum = -1, chksum_ok;
 	int olddos = 1;
 
-	cnp->cn_flags &= ~PDIRUNLOCK; /* XXX why this ?? */
 	flags = cnp->cn_flags;
 
 #ifdef MSDOSFS_DEBUG
@@ -128,8 +125,6 @@ msdosfs_lookup(v)
 	dp = VTODE(vdp);
 	pmp = dp->de_pmp;
 	*vpp = NULL;
-	lockparent = flags & LOCKPARENT;
-	wantparent = flags & (LOCKPARENT | WANTPARENT);
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_lookup(): vdp %p, dp %p, Attr %02x\n",
 	    vdp, dp, dp->de_Attributes);
@@ -225,7 +220,8 @@ msdosfs_lookup(v)
 				break;
 			return (error);
 		}
-		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+		    &bp);
 		if (error) {
 			brelse(bp);
 			return (error);
@@ -393,8 +389,6 @@ notfound:
 		 * information cannot be used.
 		 */
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent)
-			VOP_UNLOCK(vdp, 0);
 		return (EJUSTRETURN);
 	}
 
@@ -461,9 +455,7 @@ foundroot:
 	/*
 	 * If deleting, and at end of pathname, return
 	 * parameters which can be used to remove file.
-	 * If the wantparent flag isn't set, we return only
-	 * the directory (in ndp->ni_dvp), otherwise we go
-	 * on and lock the inode, being careful with ".".
+	 * Lock the inode, being careful with ".".
 	 */
 	if (nameiop == DELETE && (flags & ISLASTCN)) {
 		/*
@@ -491,10 +483,6 @@ foundroot:
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		*vpp = DETOV(tdp);
-		if (!lockparent) {
-			VOP_UNLOCK(vdp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return (0);
 	}
 
@@ -504,8 +492,7 @@ foundroot:
 	 * Must get inode of directory entry to verify it's a
 	 * regular file, or empty directory.
 	 */
-	if (nameiop == RENAME && wantparent &&
-	    (flags & ISLASTCN)) {
+	if (nameiop == RENAME && (flags & ISLASTCN)) {
 
 		if (vdp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
@@ -528,10 +515,6 @@ foundroot:
 			return (error);
 		*vpp = DETOV(tdp);
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent) {
-			VOP_UNLOCK(vdp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return (0);
 	}
 
@@ -557,18 +540,10 @@ foundroot:
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
-		cnp->cn_flags |= PDIRUNLOCK;
-		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0) {
-			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
-				cnp->cn_flags &= ~PDIRUNLOCK;
-			return (error);
-		}
-		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(pdp, LK_EXCLUSIVE))) {
-				vput(DETOV(tdp));
-				return (error);
-			}
-			cnp->cn_flags &= ~PDIRUNLOCK;
+		error = deget(pmp, cluster, blkoff, &tdp);
+		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
+		if (error) {
+			return error;
 		}
 		*vpp = DETOV(tdp);
 	} else if (dp->de_StartCluster == scn && isadir) {
@@ -577,10 +552,6 @@ foundroot:
 	} else {
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
-		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(pdp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		*vpp = DETOV(tdp);
 	}
 
@@ -657,7 +628,8 @@ createde(dep, ddep, depp, cnp)
 	clusoffset = ddep->de_fndoffset;
 	if (dirclust != MSDOSFSROOT)
 		clusoffset &= pmp->pm_crbomask;
-	if ((error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) != 0) {
+	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+	    &bp)) != 0) {
 		brelse(bp);
 		goto err_norollback;
 	}
@@ -694,8 +666,8 @@ createde(dep, ddep, depp, cnp)
 				if (error)
 					goto rollback;
 
-				error = bread(pmp->pm_devvp, bn, blsize,
-					      NOCRED, &bp);
+				error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
+				    blsize, NOCRED, &bp);
 				if (error) {
 					brelse(bp);
 					goto rollback;
@@ -747,7 +719,8 @@ createde(dep, ddep, depp, cnp)
 	       &bn, NULL, &blsize);
 	if (rberror)
 		goto err_norollback;
-	if ((rberror = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) != 0) {
+	if ((rberror = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+	    &bp)) != 0) {
 		brelse(bp);
 		goto err_norollback;
 	}
@@ -774,8 +747,8 @@ createde(dep, ddep, depp, cnp)
 			if (rberror)
 				goto err_norollback;
 
-			rberror = bread(pmp->pm_devvp, bn, blsize,
-				      NOCRED, &bp);
+			rberror = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
+			    blsize, NOCRED, &bp);
 			if (rberror) {
 				brelse(bp);
 				goto err_norollback;
@@ -824,7 +797,8 @@ dosdirempty(dep)
 				return (1);	/* it's empty */
 			return (0);
 		}
-		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+		    &bp);
 		if (error) {
 			brelse(bp);
 			return (0);
@@ -917,7 +891,7 @@ doscheckpath(source, target)
 			break;
 		}
 		scn = dep->de_StartCluster;
-		error = bread(pmp->pm_devvp, cntobn(pmp, scn),
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, cntobn(pmp, scn)),
 			      pmp->pm_bpcluster, NOCRED, &bp);
 		if (error)
 			break;
@@ -984,7 +958,8 @@ readep(pmp, dirclust, diroffset, bpp, epp)
 	    && de_blk(pmp, diroffset + blsize) > pmp->pm_rootdirsize)
 		blsize = de_bn2off(pmp, pmp->pm_rootdirsize) & pmp->pm_crbomask;
 	bn = detobn(pmp, dirclust, diroffset);
-	if ((error = bread(pmp->pm_devvp, bn, blsize, NOCRED, bpp)) != 0) {
+	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+	    bpp)) != 0) {
 		brelse(*bpp);
 		*bpp = NULL;
 		return (error);
@@ -1043,7 +1018,8 @@ removede(pdep, dep)
 		error = pcbmap(pdep, de_cluster(pmp, offset), &bn, 0, &blsize);
 		if (error)
 			return error;
-		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+		    &bp);
 		if (error) {
 			brelse(bp);
 			return error;
@@ -1119,7 +1095,8 @@ uniqdosname(dep, cnp, cp)
 					return 0;
 				return error;
 			}
-			error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
+			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
+			    NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 				return error;
@@ -1170,7 +1147,8 @@ findwin95(dep)
 	for (cn = 0;; cn++) {
 		if (pcbmap(dep, cn, &bn, 0, &blsize))
 			return 0;
-		if (bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp)) {
+		if (bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
+		    &bp)) {
 			brelse(bp);
 			return 0;
 		}

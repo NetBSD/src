@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.29.6.1 2006/10/22 06:07:42 yamt Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.29.6.2 2006/12/10 07:19:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.29.6.1 2006/10/22 06:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.29.6.2 2006/12/10 07:19:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ dump_mbuf(struct mbuf *n, const char *str)
  */
 int
 tp_rcvoob(struct tp_pcb *tpcb, struct socket *so, struct mbuf *m,
-    int *outflags __unused, int inflags)
+    int *outflags, int inflags)
 {
 	struct mbuf *n;
 	struct sockbuf *sb = &so->so_rcv;
@@ -273,7 +273,7 @@ restart:
  */
 int
 tp_sendoob(struct tp_pcb *tpcb, struct socket *so, struct mbuf *xdata,
-    int *outflags __unused)
+    int *outflags)
 {
 	/*
 	 * Each mbuf chain represents a sequence # in the XPD seq space.
@@ -761,7 +761,7 @@ release:
 }
 
 void
-tp_ltrace(struct socket *so __unused, struct uio *uio __unused)
+tp_ltrace(struct socket *so, struct uio *uio)
 {
 #ifdef TPPT
 	if (tp_traceflags[D_DATA]) {

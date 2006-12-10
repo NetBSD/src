@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.27.22.1 2006/10/22 06:06:52 yamt Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.27.22.2 2006/12/10 07:18:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.27.22.1 2006/10/22 06:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.27.22.2 2006/12/10 07:18:17 yamt Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -344,8 +344,8 @@ umass_scsipi_minphys(struct buf *bp)
 }
 
 int
-umass_scsipi_ioctl(struct scsipi_channel *chan __unused, u_long cmd,
-    caddr_t arg __unused, int flag __unused, usb_proc_ptr p __unused)
+umass_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd,
+    caddr_t arg, int flag, usb_proc_ptr p)
 {
 	/*struct umass_softc *sc = link->adapter_softc;*/
 	/*struct umass_scsipi_softc *scbus = sc->bus;*/

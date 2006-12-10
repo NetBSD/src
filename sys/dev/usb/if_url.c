@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.20.4.1 2006/10/22 06:06:52 yamt Exp $	*/
+/*	$NetBSD: if_url.c,v 1.20.4.2 2006/12/10 07:18:17 yamt Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.20.4.1 2006/10/22 06:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.20.4.2 2006/12/10 07:18:17 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -729,7 +729,7 @@ url_openpipes(struct url_softc *sc)
 	err = usbd_open_pipe_intr(sc->sc_ctl_iface, sc->sc_intrin_no,
 				  USBD_EXCLUSIVE_USE, &sc->sc_pipe_intr, sc,
 				  &sc->sc_cdata.url_ibuf, URL_INTR_PKGLEN,
-				  url_intr, URL_INTR_INTERVAL);
+				  url_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		printf("%s: open intr pipe failed: %s\n",
 		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
@@ -928,7 +928,8 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 		printf("%s: url_send error=%s\n", USBDEVNAME(sc->sc_dev),
 		       usbd_errstr(err));
 		/* Stop the interface */
-		usb_add_task(sc->sc_udev, &sc->sc_stop_task);
+		usb_add_task(sc->sc_udev, &sc->sc_stop_task,
+		    USB_TASKQ_DRIVER);
 		return (EIO);
 	}
 
@@ -941,7 +942,7 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 }
 
 Static void
-url_txeof(usbd_xfer_handle xfer __unused, usbd_private_handle priv,
+url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
 	struct url_chain *c = priv;
@@ -1160,7 +1161,7 @@ url_stop_task(struct url_softc *sc)
 
 /* Stop the adapter and free any mbufs allocated to the RX and TX lists. */
 Static void
-url_stop(struct ifnet *ifp, int disable __unused)
+url_stop(struct ifnet *ifp, int disable)
 {
 	struct url_softc *sc = ifp->if_softc;
 	usbd_status err;
@@ -1306,7 +1307,7 @@ url_tick(void *xsc)
 		return;
 
 	/* Perform periodic stuff in process context */
-	usb_add_task(sc->sc_udev, &sc->sc_tick_task);
+	usb_add_task(sc->sc_udev, &sc->sc_tick_task, USB_TASKQ_DRIVER);
 }
 
 Static void
@@ -1515,7 +1516,7 @@ url_int_miibus_writereg(device_ptr_t dev, int phy, int reg, int data)
 }
 
 Static void
-url_miibus_statchg(device_ptr_t dev __unused)
+url_miibus_statchg(device_ptr_t dev)
 {
 #ifdef URL_DEBUG
 	struct url_softc *sc;

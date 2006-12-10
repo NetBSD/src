@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.25.16.1 2006/10/22 06:05:24 yamt Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.25.16.2 2006/12/10 07:16:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.25.16.1 2006/10/22 06:05:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.25.16.2 2006/12/10 07:16:48 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -95,12 +95,12 @@ linux_ioctl_termios(l, uap, retval)
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
+	FILE_USE(fp);
+
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
 		error = EBADF;
 		goto out;
 	}
-
-	FILE_USE(fp);
 
 	bsdioctl = fp->f_ops->fo_ioctl;
 	com = SCARG(uap, com);

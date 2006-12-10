@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.23.2.1 2006/10/22 06:07:05 yamt Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.23.2.2 2006/12/10 07:18:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -141,7 +141,7 @@ const struct cdevsw ipl_cdevsw = {
 static int fr_check_wrapper(void *, struct mbuf **, struct ifnet *, int );
 
 static int
-fr_check_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp,
+fr_check_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp,
     int dir)
 {
 	struct ip *ip;
@@ -210,7 +210,7 @@ fr_check_wrapper(void *arg __unused, struct mbuf **mp, struct ifnet *ifp,
 static int fr_check_wrapper6(void *, struct mbuf **, struct ifnet *, int );
 
 static int
-fr_check_wrapper6(void *arg __unused, struct mbuf **mp, struct ifnet *ifp,
+fr_check_wrapper6(void *arg, struct mbuf **mp, struct ifnet *ifp,
     int dir)
 {
 #if defined(INET6)
@@ -239,8 +239,8 @@ fr_check_wrapper6(void *arg __unused, struct mbuf **mp, struct ifnet *ifp,
 # if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
 static int ipf_pfilsync(void *, struct mbuf **, struct ifnet *, int);
 
-static int ipf_pfilsync(void *hdr __unused, struct mbuf **mp __unused,
-    struct ifnet *ifp __unused, int dir __unused)
+static int ipf_pfilsync(void *hdr, struct mbuf **mp,
+    struct ifnet *ifp, int dir)
 {
 	/*
 	 * The interface pointer is useless for create (we have nothing to
@@ -273,7 +273,7 @@ char *s;
  */
 #if defined(PFIL_HOOKS)
 void
-ipfilterattach(int count __unused)
+ipfilterattach(int count)
 {
 # if 0
 	if (iplattach() != 0)
@@ -727,15 +727,15 @@ void *ifp;
  * routines below for saving IP headers to buffer
  */
 int iplopen(
-    dev_t dev __unused,
-    int flags __unused,
+    dev_t dev,
+    int flags,
 #if (NetBSD >= 199511)
-    int devtype __unused,
+    int devtype,
 #endif
 # if  (__NetBSD_Version__ >= 399001400)
-    struct lwp *p __unused
+    struct lwp *p
 # else
-    struct proc *p __unused
+    struct proc *p
 # endif
 )
 {
@@ -750,15 +750,15 @@ int iplopen(
 
 
 int iplclose(
-    dev_t dev __unused,
-    int flags __unused,
+    dev_t dev,
+    int flags,
 #if (NetBSD >= 199511)
-    int devtype __unused,
+    int devtype,
 #endif
 # if  (__NetBSD_Version__ >= 399001400)
-    struct lwp *p __unused
+    struct lwp *p
 # else
-    struct proc *p __unused
+    struct proc *p
 # endif
 )
 {
@@ -781,7 +781,7 @@ int iplread(
     dev_t dev,
     struct uio *uio,
 #if (BSD >= 199306)
-    int ioflag __unused
+    int ioflag
 #endif
 )
 {
@@ -806,10 +806,10 @@ int iplread(
  * the filter lists.
  */
 int iplwrite(
-    dev_t dev __unused,
-    struct uio *uio __unused,
+    dev_t dev,
+    struct uio *uio,
 #if (BSD >= 199306)
-    int ioflag __unused
+    int ioflag
 #endif
 )
 {
@@ -1424,8 +1424,8 @@ done:
 	else
 		fr_frouteok[1]++;
 
-	if (ro->ro_rt) {
-		RTFREE(ro->ro_rt);
+	if (ro->ro_rt != NULL) {
+		rtflush(ro);
 	}
 	*mpp = NULL;
 	return error;
@@ -1522,7 +1522,7 @@ frdest_t *fdp;
 	}
 bad:
 	if (ro->ro_rt != NULL) {
-		RTFREE(ro->ro_rt);
+		rtflush((struct route *)ro);
 	}
 	return error;
 }
@@ -1532,6 +1532,7 @@ bad:
 int fr_verifysrc(fin)
 fr_info_t *fin;
 {
+	int rc;
 	struct sockaddr_in *dst;
 	struct route iproute;
 
@@ -1543,7 +1544,9 @@ fr_info_t *fin;
 	rtalloc(&iproute);
 	if (iproute.ro_rt == NULL)
 		return 0;
-	return (fin->fin_ifp == iproute.ro_rt->rt_ifp);
+	rc = (fin->fin_ifp == iproute.ro_rt->rt_ifp);
+	rtflush(&iproute);
+	return rc;
 }
 
 
@@ -1677,7 +1680,7 @@ fr_info_t *fin;
 /*                                                                          */
 /* Returns the next IPv4 ID to use for this packet.                         */
 /* ------------------------------------------------------------------------ */
-u_short fr_nextipid(fr_info_t *fin __unused)
+u_short fr_nextipid(fr_info_t *fin)
 {
 	static u_short ipid = 0;
 	u_short id;

@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.15.10.1 2006/10/22 06:06:12 yamt Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.15.10.2 2006/12/10 07:17:36 yamt Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.15.10.1 2006/10/22 06:06:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.15.10.2 2006/12/10 07:17:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ static const struct mii_phy_funcs urlphy_funcs = {
 };
 
 static int
-urlphy_match(struct device *parent, struct cfdata *match __unused, void *aux)
+urlphy_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -94,7 +94,7 @@ urlphy_match(struct device *parent, struct cfdata *match __unused, void *aux)
 }
 
 static void
-urlphy_attach(struct device *parent __unused, struct device *self, void *aux)
+urlphy_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
@@ -110,7 +110,7 @@ urlphy_attach(struct device *parent __unused, struct device *self, void *aux)
 	sc->mii_funcs = &urlphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
-	sc->mii_anegticks = 10;
+	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	/* Don't do loopback on this PHY. */
 	sc->mii_flags |= MIIF_NOLOOP;
@@ -196,7 +196,7 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * Only retry autonegotiation every N seconds.
 		 */
 		KASSERT(sc->mii_anegticks != 0);
-		if (++sc->mii_ticks != sc->mii_anegticks)
+		if (++sc->mii_ticks <= sc->mii_anegticks)
 			return (0);
 
 		sc->mii_ticks = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.11.2.2 2006/10/22 06:07:28 yamt Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.11.2.3 2006/12/10 07:19:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.11.2.2 2006/10/22 06:07:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.11.2.3 2006/12/10 07:19:11 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -497,7 +497,7 @@ tcp_reno_slow_retransmit(struct tcpcb *tp)
 
 static void
 tcp_reno_fast_retransmit_newack(struct tcpcb *tp,
-    const struct tcphdr *th __unused)
+    const struct tcphdr *th)
 {
 	if (tp->t_partialacks < 0) {
 		/*

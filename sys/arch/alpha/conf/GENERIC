@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.297.2.1 $"
+#ident 		"GENERIC-$Revision: 1.297.2.2 $"
 
 maxusers 32
 
@@ -80,14 +80,14 @@ file-system	KERNFS		# Kernel variable file system (/kern)
 file-system	PROCFS		# Process file system (/proc)
 file-system	NULLFS		# Null file system layer
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -137,8 +137,8 @@ options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_15
-options		COMPAT_16
-options		COMPAT_20
+options 	COMPAT_16
+options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
@@ -146,7 +146,7 @@ options 	COMPAT_OSF1
 # Linux binary compatibility
 options 	COMPAT_LINUX
 
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # System V-like message queues
 options 	SYSVMSG
@@ -177,7 +177,7 @@ options 	PCIVERBOSE		# recognize "unknown" PCI devices
 options 	MIIVERBOSE		# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE		# Verbose SCSI errors
-options		USBVERBOSE		# verbose USB device autoconfig messages
+options 	USBVERBOSE		# verbose USB device autoconfig messages
 options 	TCVERBOSE		# recognize "unknown" TC devices
 #options 	PCMCIAVERBOSE
 options 	USERCONF		# userconf(4) support
@@ -347,6 +347,7 @@ satalink* at	pci? dev ? function ?		# SiI SATALink controllers
 siside* at	pci? dev ? function ?		# SiS IDE controllers
 slide*  at	pci? dev ? function ?		# Symphony Labs IDE controllers
 viaide* at	pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
+pcn*	at	pci? dev ? function ?		# AMD PCnet-PCI Ethernet
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 re*	at	pci? dev ? function ?		# Realtek 8169 Ethernet
@@ -363,6 +364,7 @@ uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
 wi*	at	pci? dev ? function ?		# Lucent/Intersil WaveLAN/IEEE
+wm*	at	pci? dev ? function ?		# Intel 8254x Ethernet
 yds*	at	pci? dev ? function ?		# Yamaha DS-1 PCI Audio
 
 opl*	at	cmpci? flags 1
@@ -380,9 +382,12 @@ icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
+makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+rgephy*	at mii? phy ?			# Realtek 8169S internal PHYs
+rlphy*	at mii? phy ?			# Realtek 8139 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
@@ -649,13 +654,13 @@ pseudo-device	ccd		4
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
-# options 	RF_INCLUDE_EVENODD=1
-# options 	RF_INCLUDE_RAID5_RS=1
-# options 	RF_INCLUDE_PARITYLOGGING=1
-# options 	RF_INCLUDE_CHAINDECLUSTER=1
-# options 	RF_INCLUDE_INTERDECLUSTER=1
-# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
-# options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
@@ -672,7 +677,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
@@ -692,11 +697,11 @@ pseudo-device	ksyms			# /dev/ksyms
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
+#options 	VERIFIED_EXEC_FP_RMD160
+#options 	VERIFIED_EXEC_FP_SHA256
+#options 	VERIFIED_EXEC_FP_SHA384
+#options 	VERIFIED_EXEC_FP_SHA512
+#options 	VERIFIED_EXEC_FP_SHA1
+#options 	VERIFIED_EXEC_FP_MD5
 
-options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions

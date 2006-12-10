@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.18.4.1 2006/10/22 06:05:28 yamt Exp $ */
+/*      $NetBSD: clockctl.c,v 1.18.4.2 2006/12/10 07:16:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.18.4.1 2006/10/22 06:05:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.18.4.2 2006/12/10 07:16:53 yamt Exp $");
 
 #include "opt_ntp.h"
 
@@ -62,7 +62,7 @@ const struct cdevsw clockctl_cdevsw = {
 
 /*ARGSUSED*/
 void
-clockctlattach(int num __unused)
+clockctlattach(int num)
 {
 	/* Nothing to set up before open is called */
 	return;
@@ -70,10 +70,10 @@ clockctlattach(int num __unused)
 
 int
 clockctlioctl(
-    dev_t dev __unused,
+    dev_t dev,
     u_long cmd,
     caddr_t data,
-    int flags __unused,
+    int flags,
     struct lwp *l)
 {
 	int error = 0;

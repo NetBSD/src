@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_isa.c,v 1.12.22.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: fdc_isa.c,v 1.12.22.2 2006/12/10 07:17:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.12.22.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.12.22.2 2006/12/10 07:17:27 yamt Exp $");
 
 #include "rnd.h"
 
@@ -111,8 +111,8 @@ void	fdc_isa_forceintr(void *);
 #endif
 
 int
-fdc_isa_probe(struct device *parent __unused,
-    struct cfdata *match __unused,
+fdc_isa_probe(struct device *parent,
+    struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -188,7 +188,7 @@ fdc_isa_probe(struct device *parent __unused,
 }
 
 void
-fdc_isa_attach(struct device *parent __unused,
+fdc_isa_attach(struct device *parent,
     struct device *self,
     void *aux)
 {

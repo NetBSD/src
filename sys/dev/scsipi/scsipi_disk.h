@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_disk.h,v 1.16 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.16.22.1 2006/12/10 07:18:15 yamt Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
@@ -70,7 +70,7 @@ struct scsipi_rw_10 {
 	u_int8_t reserved;
 	u_int8_t length[2];
 	u_int8_t control;
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 #define	READ_12			0xa8
 #define	WRITE_12		0xaa
@@ -101,14 +101,14 @@ struct scsipi_read_capacity_10 {
 	u_int8_t addr[4];
 	u_int8_t unused[3];
 	u_int8_t control;
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 /* DATAs definitions for the above commands */
 
 struct scsipi_read_capacity_10_data {
 	u_int8_t addr[4];
 	u_int8_t length[4];
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 #define	READ_CAPACITY_16	0x9e	/* really SERVICE ACTION IN */
 struct scsipi_read_capacity_16 {
@@ -139,18 +139,18 @@ struct scsipi_read_format_capacities {
 	u_int8_t reserved1[5];
 	u_int8_t length[2];
 	u_int8_t reserved2[3];
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 struct scsipi_capacity_list_header {
 	u_int8_t reserved[3];
 	u_int8_t length;
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 struct scsipi_capacity_descriptor {
 	u_int8_t nblks[4];
 	u_int8_t byte5;
 	u_int8_t blklen[3];
-} __attribute__((packed));
+} __attribute__((__packed__));
 
 /* codes only valid in the current/maximum capacity descriptor */
 #define	SCSIPI_CAP_DESC_CODE_MASK		0x3

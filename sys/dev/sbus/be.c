@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.49 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: be.c,v 1.49.4.1 2006/12/10 07:18:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.49 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.49.4.1 2006/12/10 07:18:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -406,7 +406,7 @@ beattach(parent, self, aux)
 #endif
 			if (child->mii_phy != BE_PHY_EXTERNAL ||
 			    child->mii_inst > 0) {
-				printf("%s: cannot accomodate MII device %s"
+				printf("%s: cannot accommodate MII device %s"
 				       " at phy %d, instance %d\n",
 				       sc->sc_dev.dv_xname,
 				       child->mii_dev.dv_xname,

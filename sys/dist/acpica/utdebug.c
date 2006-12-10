@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.1.22.1 2006/10/22 06:07:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.1.22.2 2006/12/10 07:18:28 yamt Exp $");
 
 #define __UTDEBUG_C__
 
@@ -333,9 +333,9 @@ AcpiUtDebugPrint (
 void  ACPI_INTERNAL_VAR_XFACE
 AcpiUtDebugPrintRaw (
     UINT32                  RequestedDebugLevel,
-    UINT32                  LineNumber __unused,
-    const char              *FunctionName __unused,
-    const char              *ModuleName __unused,
+    UINT32                  LineNumber,
+    const char              *FunctionName,
+    const char              *ModuleName,
     UINT32                  ComponentId,
     const char              *Format,
     ...)

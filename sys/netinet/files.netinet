@@ -1,9 +1,10 @@
-#	$NetBSD: files.netinet,v 1.11.22.1 2006/10/22 06:07:28 yamt Exp $
+#	$NetBSD: files.netinet,v 1.11.22.2 2006/12/10 07:19:10 yamt Exp $
 
 defflag opt_tcp_debug.h		TCP_DEBUG
+defflag opt_in_route.h		IN_RTFLUSH_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
 defflag opt_inet.h		INET INET6 INET6_MD_CKSUM TCP_SIGNATURE
-				TCP_OUTPUT_COUNTERS TCP_REASS_COUNTERS
+				TCP_OUTPUT_COUNTERS TCP_REASS_COUNTERS IPSELSRC
 defparam opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
 
 defflag				MROUTING
@@ -19,8 +20,11 @@ defparam opt_tcp_congctl.h	TCP_CONGCTL_DEFAULT
 
 file	netinet/igmp.c		inet
 file	netinet/in.c		inet
+file	netinet/in_offload.c	inet
 file	netinet/in_pcb.c	inet
 file	netinet/in_proto.c	inet
+file	netinet/in_route.c	inet
+file	netinet/in_selsrc.c	inet & ipselsrc
 file	netinet/ip_flow.c	inet & gateway
 file	netinet/ip_icmp.c	inet
 file	netinet/ip_id.c		inet

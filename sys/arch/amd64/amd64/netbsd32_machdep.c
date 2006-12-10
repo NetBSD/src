@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.26.2.1 2006/10/22 06:04:31 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.26.2.2 2006/12/10 07:15:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.26.2.1 2006/10/22 06:04:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.26.2.2 2006/12/10 07:15:46 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -134,7 +134,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
 
-	l->l_proc->p_flag |= P_32;
+	p->p_flag |= P_32;
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
@@ -796,7 +796,7 @@ int
 cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	__greg32_t *gr = mcp->__gregs;
+	const __greg32_t *gr = mcp->__gregs;
 	int error;
 
 	/* Restore register context, if any. */

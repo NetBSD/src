@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_vnops.h,v 1.7 2005/12/03 17:34:44 christos Exp $	*/
+/*	$NetBSD: tmpfs_vnops.h,v 1.7.24.1 2006/12/10 07:18:43 yamt Exp $	*/
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@ int	tmpfs_write		(void *);
 #define	tmpfs_fcntl		genfs_fcntl
 #define	tmpfs_ioctl		genfs_enoioctl
 #define	tmpfs_poll		genfs_poll
-#define	tmpfs_kqfilter		genfs_eopnotsupp
+#define	tmpfs_kqfilter		genfs_kqfilter
 #define	tmpfs_revoke		genfs_revoke
 #define	tmpfs_mmap		genfs_mmap
 int	tmpfs_fsync		(void *);

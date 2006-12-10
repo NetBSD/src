@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.44.6.1 2006/10/22 06:05:44 yamt Exp $	*/
+/*	$NetBSD: cy.c,v 1.44.6.2 2006/12/10 07:17:05 yamt Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.44.6.1 2006/10/22 06:05:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.44.6.2 2006/12/10 07:17:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -265,7 +265,7 @@ cy_getport(dev_t dev)
  * open routine. returns zero if successful, else error code
  */
 int
-cyopen(dev_t dev, int flag, int mode __unused, struct lwp *l)
+cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
@@ -395,7 +395,7 @@ cyopen(dev_t dev, int flag, int mode __unused, struct lwp *l)
  * close routine. returns zero if successful, else error code
  */
 int
-cyclose(dev_t dev, int flag, int mode __unused, struct lwp *l __unused)
+cyclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
@@ -612,7 +612,7 @@ out:
  * stop output
  */
 void
-cystop(struct tty *tp, int flag __unused)
+cystop(struct tty *tp, int flag)
 {
 	struct cy_port *cy;
 	int s;
@@ -876,7 +876,7 @@ cy_modem_control(struct cy_softc *sc, struct cy_port *cy, int bits, int howto)
  * This routine is common for multiple cards
  */
 void
-cy_poll(void *arg __unused)
+cy_poll(void *arg)
 {
 	int card, port;
 	struct cy_softc *sc;

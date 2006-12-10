@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.11.6.1 2006/10/22 06:07:09 yamt Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.11.6.2 2006/12/10 07:18:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.11.6.1 2006/10/22 06:07:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.11.6.2 2006/12/10 07:18:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ static void smbfskq_dirnotify(void *);
  */
 /* ARGSUSED */
 static void
-smbfs_kqpoll(void *arg __unused)
+smbfs_kqpoll(void *arg)
 {
 	struct kevq *ke;
 	struct vattr attr;

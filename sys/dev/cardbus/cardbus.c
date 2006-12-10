@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.72.8.1 2006/10/22 06:05:35 yamt Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.72.8.2 2006/12/10 07:16:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.72.8.1 2006/10/22 06:05:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.72.8.2 2006/12/10 07:16:58 yamt Exp $");
 
 #include "opt_cardbus.h"
 
@@ -100,7 +100,7 @@ struct cfdriver cardbus_cd = {
 
 
 STATIC int
-cardbusmatch(struct device *parent __unused, struct cfdata *cf, void *aux)
+cardbusmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct cbslot_attach_args *cba = aux;
 
@@ -114,7 +114,7 @@ cardbusmatch(struct device *parent __unused, struct cfdata *cf, void *aux)
 }
 
 STATIC void
-cardbusattach(struct device *parent __unused, struct device *self, void *aux)
+cardbusattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cardbus_softc *sc = device_private(self);
 	struct cbslot_attach_args *cba = aux;
@@ -282,7 +282,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 }
 
 static void
-parse_tuple(u_int8_t *tuple, int len __unused, void *data)
+parse_tuple(u_int8_t *tuple, int len, void *data)
 {
 	struct cardbus_cis_info *cis = data;
 	char *p;
@@ -407,7 +407,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 }
 
 int
-cardbus_rescan(struct device *self, const char *ifattr __unused,
+cardbus_rescan(struct device *self, const char *ifattr,
     const int *locators)
 {
 	struct cardbus_softc *sc = device_private(self);
@@ -1054,7 +1054,7 @@ tuple_name(int type)
 }
 
 static void
-print_tuple(u_int8_t *tuple, int len, void *data __unused)
+print_tuple(u_int8_t *tuple, int len, void *data)
 {
 	int i;
 

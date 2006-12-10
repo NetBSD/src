@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.15.6.1 2006/10/22 06:05:21 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.15.6.2 2006/12/10 07:16:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.15.6.1 2006/10/22 06:05:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.15.6.2 2006/12/10 07:16:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ cvtstat(struct stat13 *ost, const struct stat *st)
  */
 /* ARGSUSED */
 int
-compat_30_sys___stat13(struct lwp *l, void *v, register_t *retval __unused)
+compat_30_sys___stat13(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_sys___stat13_args /* {
 		syscallarg(const char *) path;
@@ -124,7 +124,7 @@ compat_30_sys___stat13(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-compat_30_sys___lstat13(struct lwp *l, void *v, register_t *retval __unused)
+compat_30_sys___lstat13(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_sys___lstat13_args /* {
 		syscallarg(const char *) path;
@@ -150,7 +150,7 @@ compat_30_sys___lstat13(struct lwp *l, void *v, register_t *retval __unused)
 
 /* ARGSUSED */
 int
-compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval __unused)
+compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_sys_fhstat_args /* {
 		syscallarg(const struct compat_30_fhandle *) fhp;
@@ -166,8 +166,8 @@ compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval __unused)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
+	    0, NULL, NULL, NULL)))
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fh))) != 0)
@@ -193,7 +193,7 @@ compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval __unused)
  */
 /* ARGSUSED */
 int
-compat_30_sys___fstat13(struct lwp *l, void *v, register_t *retval __unused)
+compat_30_sys___fstat13(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_sys___fstat13_args /* {
 		syscallarg(int) fd;
@@ -355,7 +355,7 @@ out1:
  * Get file handle system call
  */
 int
-compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval __unused)
+compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_sys_getfh_args /* {
 		syscallarg(char *) fname;
@@ -370,8 +370,8 @@ compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval __unused)
 	/*
 	 * Must be super user
 	 */
-	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag);
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
+	    0, NULL, NULL, NULL);
 	if (error)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,

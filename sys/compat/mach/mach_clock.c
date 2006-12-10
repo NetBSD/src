@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_clock.c,v 1.14.24.1 2006/10/22 06:05:24 yamt Exp $ */
+/*	$NetBSD: mach_clock.c,v 1.14.24.2 2006/12/10 07:16:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.14.24.1 2006/10/22 06:05:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.14.24.2 2006/12/10 07:16:48 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_clock.c,v 1.14.24.1 2006/10/22 06:05:24 yamt Ex
 #include <compat/mach/mach_syscallargs.h>
 
 int
-mach_sys_clock_sleep_trap(struct lwp *l __unused, void *v,
-    register_t *retval __unused)
+mach_sys_clock_sleep_trap(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct mach_sys_clock_sleep_trap_args /* {
 		syscallarg(mach_clock_port_t) clock_name;
@@ -100,8 +100,8 @@ mach_sys_clock_sleep_trap(struct lwp *l __unused, void *v,
 }
 
 int
-mach_sys_timebase_info(struct lwp *l __unused, void *v,
-    register_t *retval __unused)
+mach_sys_timebase_info(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct mach_sys_timebase_info_args /*
 		syscallarg(mach_timebase_info_t) info;

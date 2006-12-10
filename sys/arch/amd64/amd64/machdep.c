@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40.4.1 2006/10/22 06:04:31 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.4.2 2006/12/10 07:15:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.4.1 2006/10/22 06:04:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.4.2 2006/12/10 07:15:45 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1628,7 +1628,7 @@ int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 	int error;
 	int err, trapno;
 	int64_t rflags;

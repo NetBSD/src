@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.20.6.1 2006/10/22 06:04:59 yamt Exp $	*/
+/*	$NetBSD: scif.c,v 1.20.6.2 2006/12/10 07:16:34 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.20.6.1 2006/10/22 06:04:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.20.6.2 2006/12/10 07:16:34 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -779,9 +779,7 @@ scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_cred_geteuid(l->l_cred) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();

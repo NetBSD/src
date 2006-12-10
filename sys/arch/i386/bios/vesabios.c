@@ -1,4 +1,4 @@
-/* $NetBSD: vesabios.c,v 1.20.6.1 2006/10/22 06:04:43 yamt Exp $ */
+/* $NetBSD: vesabios.c,v 1.20.6.2 2006/12/10 07:16:01 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.20.6.1 2006/10/22 06:04:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.20.6.2 2006/12/10 07:16:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,8 @@ CFATTACH_DECL(vesabios, sizeof(struct device),
     vesabios_match, vesabios_attach, NULL, NULL);
 
 static int
-vesabios_match( struct device *parent __unused, struct cfdata *match __unused,
-    void *aux __unused)
+vesabios_match( struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	return (1);
@@ -163,8 +163,8 @@ mm2txt(mm)
 #endif
 
 static void
-vesabios_attach(struct device *parent __unused, struct device *dev,
-    void *aux __unused)
+vesabios_attach(struct device *parent, struct device *dev,
+    void *aux)
 {
 	struct vbeinfoblock *vi;
 	unsigned char *buf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.129.2.1 2006/10/22 06:07:22 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.129.2.2 2006/12/10 07:18:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.129.2.1 2006/10/22 06:07:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.129.2.2 2006/12/10 07:18:59 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -142,7 +142,7 @@ genfs_fcntl(void *v)
 
 /*ARGSUSED*/
 int
-genfs_badop(void *v __unused)
+genfs_badop(void *v)
 {
 
 	panic("genfs: bad op");
@@ -150,7 +150,7 @@ genfs_badop(void *v __unused)
 
 /*ARGSUSED*/
 int
-genfs_nullop(void *v __unused)
+genfs_nullop(void *v)
 {
 
 	return (0);
@@ -158,7 +158,7 @@ genfs_nullop(void *v __unused)
 
 /*ARGSUSED*/
 int
-genfs_einval(void *v __unused)
+genfs_einval(void *v)
 {
 
 	return (EINVAL);
@@ -215,7 +215,7 @@ genfs_eopnotsupp(void *v)
 
 /*ARGSUSED*/
 int
-genfs_ebadf(void *v __unused)
+genfs_ebadf(void *v)
 {
 
 	return (EBADF);
@@ -223,7 +223,7 @@ genfs_ebadf(void *v __unused)
 
 /* ARGSUSED */
 int
-genfs_enoioctl(void *v __unused)
+genfs_enoioctl(void *v)
 {
 
 	return (EPASSTHROUGH);
@@ -361,14 +361,14 @@ genfs_nolock(void *v)
 }
 
 int
-genfs_nounlock(void *v __unused)
+genfs_nounlock(void *v)
 {
 
 	return (0);
 }
 
 int
-genfs_noislocked(void *v __unused)
+genfs_noislocked(void *v)
 {
 
 	return (0);
@@ -403,7 +403,7 @@ genfs_lease_check(void *v)
 }
 
 int
-genfs_mmap(void *v __unused)
+genfs_mmap(void *v)
 {
 
 	return (0);
@@ -999,15 +999,12 @@ out:
  * Write the given range of pages to backing store.
  *
  * => "offhi == 0" means flush all pages at or after "offlo".
- * => object should be locked by caller.   we may _unlock_ the object
- *	if (and only if) we need to clean a page (PGO_CLEANIT), or
- *	if PGO_SYNCIO is set and there are pages busy.
- *	we return with the object locked.
+ * => object should be locked by caller.  we return with the
+ *      object unlocked.
  * => if PGO_CLEANIT or PGO_SYNCIO is set, we may block (due to I/O).
  *	thus, a caller might want to unlock higher level resources
  *	(e.g. vm_map) before calling flush.
- * => if neither PGO_CLEANIT nor PGO_SYNCIO is set, then we will neither
- *	unlock the object nor block.
+ * => if neither PGO_CLEANIT nor PGO_SYNCIO is set, we will not block
  * => if PGO_ALLPAGES is set, then all pages in the object will be processed.
  * => NOTE: we rely on the fact that the object's memq is a TAILQ and
  *	that new pages are inserted on the tail end of the list.   thus,
@@ -1062,7 +1059,7 @@ genfs_putpages(void *v)
 	off_t off;
 	int flags = ap->a_flags;
 	/* Even for strange MAXPHYS, the shift rounds down to a page */
-	const int maxpages = MAXPHYS >> PAGE_SHIFT;
+#define maxpages (MAXPHYS >> PAGE_SHIFT)
 	int i, s, error, npages, nback;
 	int freeflag;
 	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
@@ -1457,7 +1454,7 @@ skip_scan:
 		}
 		splx(s);
 	}
-	simple_unlock(&uobj->vmobjlock);
+	simple_unlock(slock);
 	return (error);
 }
 
@@ -1637,7 +1634,7 @@ genfs_node_init(struct vnode *vp, const struct genfs_ops *ops)
 }
 
 void
-genfs_size(struct vnode *vp, off_t size, off_t *eobp, int flags __unused)
+genfs_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 {
 	int bsize;
 
@@ -1741,7 +1738,7 @@ genfs_compat_getpages(void *v)
 
 int
 genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
-    int flags __unused)
+    int flags)
 {
 	off_t offset;
 	struct iovec iov;
@@ -1794,7 +1791,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
  */
 
 void
-genfs_directio(struct vnode *vp, struct uio *uio, int ioflag __unused)
+genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 {
 	struct vmspace *vs;
 	struct iovec *iov;

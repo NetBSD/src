@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_options.c,v 1.15.22.1 2006/10/22 06:07:42 yamt Exp $	*/
+/*	$NetBSD: clnp_options.c,v 1.15.22.2 2006/12/10 07:19:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_options.c,v 1.15.22.1 2006/10/22 06:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_options.c,v 1.15.22.2 2006/12/10 07:19:23 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -151,7 +151,7 @@ void
 clnp_dooptions(
     struct mbuf *options,		/* ptr to options mbuf */
     struct clnp_optidx *oidx,		/* ptr to option index */
-    struct ifnet *ifp __unused,		/* ptr to interface pkt is leaving on */
+    struct ifnet *ifp,		/* ptr to interface pkt is leaving on */
     struct iso_addr *isoa)		/* ptr to our address for this ifp */
 {
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.25.4.1 2006/10/22 06:06:16 yamt Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.25.4.2 2006/12/10 07:17:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.25.4.1 2006/10/22 06:06:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.25.4.2 2006/12/10 07:17:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1535,8 +1535,8 @@ generic_mixer_to_device_value(const codec_t *this, nid_t nid, int target,
 }
 
 static uint32_t
-generic_mixer_max(const codec_t *this __unused, nid_t nid __unused,
-    int target __unused)
+generic_mixer_max(const codec_t *this, nid_t nid,
+    int target)
 {
 #ifdef MAX_VOLUME_255
 	return AUDIO_MAX_GAIN;
@@ -1554,8 +1554,8 @@ generic_mixer_max(const codec_t *this __unused, nid_t nid __unused,
 }
 
 static boolean_t
-generic_mixer_validate_value(const codec_t *this __unused, nid_t nid __unused,
-    int target __unused, u_char uv __unused)
+generic_mixer_validate_value(const codec_t *this, nid_t nid,
+    int target, u_char uv)
 {
 #ifdef MAX_VOLUME_255
 	return TRUE;
@@ -2366,7 +2366,7 @@ alc882_get_port(codec_t *this, mixer_ctrl_t *mc)
 #define AD1981HD_THINKPAD	0x201017aa
 
 static int
-ad1981hd_init_widget(const codec_t *this __unused, widget_t *w, nid_t nid)
+ad1981hd_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
 	switch (nid) {
 	case 0x05:

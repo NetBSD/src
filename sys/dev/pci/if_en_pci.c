@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.24.10.1 2006/10/22 06:06:16 yamt Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.24.10.2 2006/12/10 07:17:43 yamt Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.24.10.1 2006/10/22 06:06:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.24.10.2 2006/12/10 07:17:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ void *v;
  */
 
 static int
-en_pci_match(struct device *parent __unused, struct cfdata *match __unused,
+en_pci_match(struct device *parent, struct cfdata *match,
     void *aux)
 {
   struct pci_attach_args *pa = (struct pci_attach_args *) aux;
@@ -189,7 +189,7 @@ en_pci_match(struct device *parent __unused, struct cfdata *match __unused,
 
 
 static void
-en_pci_attach(struct device *parent __unused, struct device *self, void *aux)
+en_pci_attach(struct device *parent, struct device *self, void *aux)
 {
   struct en_softc *sc = (void *)self;
   struct en_pci_softc *scp = (void *)self;
@@ -293,7 +293,7 @@ en_pci_shutdown(
 #endif
 
 static void
-adp_get_macaddr(struct en_pci_softc *scp, struct pci_attach_args *pa __unused)
+adp_get_macaddr(struct en_pci_softc *scp, struct pci_attach_args *pa)
 {
   struct en_softc * sc = (struct en_softc *)scp;
   int lcv;

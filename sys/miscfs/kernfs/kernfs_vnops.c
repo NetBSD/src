@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.125.6.1 2006/10/22 06:07:23 yamt Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.125.6.2 2006/12/10 07:18:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.125.6.1 2006/10/22 06:07:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.125.6.2 2006/12/10 07:18:59 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -454,7 +454,7 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 
 	case KFShostname: {
 		char *cp = hostname;
-		int xlen = hostnamelen;
+		size_t xlen = hostnamelen;
 
 		if (xlen >= (len - 2))
 			return (EINVAL);
@@ -585,14 +585,13 @@ kernfs_lookup(v)
 	const struct kern_target *kt;
 	const struct dyn_kern_target *dkt;
 	const struct kernfs_subdir *ks;
-	int error, i, wantpunlock;
+	int error, i;
 #ifdef IPSEC
 	char *ep;
 	u_int32_t id;
 #endif
 
 	*vpp = NULLVP;
-	cnp->cn_flags &= ~PDIRUNLOCK;
 
 	if (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)
 		return (EROFS);
@@ -603,7 +602,6 @@ kernfs_lookup(v)
 		return (0);
 	}
 
-	wantpunlock = (~cnp->cn_flags & (LOCKPARENT | ISLASTCN));
 	kfs = VTOKERN(dvp);
 	switch (kfs->kfs_type) {
 	case KFSkern:
@@ -630,10 +628,6 @@ kernfs_lookup(v)
 
 	found:
 		error = kernfs_allocvp(dvp->v_mount, vpp, kt->kt_tag, kt, 0);
-		if ((error == 0) && wantpunlock) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return (error);
 
 	case KFSsubdir:
@@ -672,10 +666,6 @@ kernfs_lookup(v)
 			break;
 
 		error = kernfs_allocvp(dvp->v_mount, vpp, KFSipsecsa, &ipsecsa_kt, id);
-		if ((error == 0) && wantpunlock) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return (error);
 
 	case KFSipsecspdir:
@@ -697,10 +687,6 @@ kernfs_lookup(v)
 			break;
 
 		error = kernfs_allocvp(dvp->v_mount, vpp, KFSipsecsp, &ipsecsp_kt, id);
-		if ((error == 0) && wantpunlock) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return (error);
 #endif
 
@@ -915,7 +901,7 @@ kernfs_getattr(v)
 
 /*ARGSUSED*/
 int
-kernfs_setattr(void *v __unused)
+kernfs_setattr(void *v)
 {
 
 	/*
@@ -990,7 +976,8 @@ kernfs_default_xwrite(v)
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 	struct uio *uio = ap->a_uio;
-	int error, xlen;
+	int error;
+	size_t xlen;
 	char strbuf[KSTRING];
 
 	if (uio->uio_offset != 0)
@@ -1518,7 +1505,7 @@ kernfs_pathconf(v)
  */
 /* ARGSUSED */
 int
-kernfs_print(void *v __unused)
+kernfs_print(void *v)
 {
 
 	printf("tag VT_KERNFS, kernfs vnode\n");

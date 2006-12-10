@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.28.2.1 2006/10/22 06:04:43 yamt Exp $	*/
+/*	$NetBSD: est.c,v 1.28.2.2 2006/12/10 07:16:06 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.28.2.1 2006/10/22 06:04:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.28.2.2 2006/12/10 07:16:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -757,10 +757,8 @@ struct fqlist {
 	const uint16_t *table;
 };
 
-#define NELEM(x) (sizeof(x) / sizeof((x)[0]))
-
 #define ENTRY(ven, bus_clk, tab) \
-	{ CPUVENDOR_##ven, bus_clk == BUS133 ? 1 : 0, NELEM(tab), tab }
+	{ CPUVENDOR_##ven, bus_clk == BUS133 ? 1 : 0, __arraycount(tab), tab }
 
 #define BUS_CLK(fqp) ((fqp)->bus_clk ? BUS133 : BUS100)
 
@@ -927,7 +925,7 @@ est_init(struct cpu_info *ci, int vendor)
 	 * Find an entry which matches (vendor, bus_clock, idhi, idlo)
 	 */
 	est_fqlist = NULL;
-	for (i = 0; i < NELEM(est_cpus); i++) {
+	for (i = 0; i < __arraycount(est_cpus); i++) {
 		fql = &est_cpus[i];
 		if (vendor == fql->vendor && bus_clock == BUS_CLK(fql) &&
 		    idhi == fql->table[0] && idlo == fql->table[fql->n - 1]) {
@@ -945,7 +943,7 @@ est_init(struct cpu_info *ci, int vendor)
                 fake_table[0] = idhi;
                 if (cur == idhi || cur == idlo) {
                         aprint_normal("%s: using only highest and lowest "
-                            " power states.\n", cpuname);
+                            "power states.\n", cpuname);
 
                         fake_table[1] = idlo;
                         fake_fqlist.n = 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.64.6.1 2006/10/22 06:04:43 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.64.6.2 2006/12/10 07:16:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.64.6.1 2006/10/22 06:04:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.64.6.2 2006/12/10 07:16:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,8 +169,7 @@ int mp_verbose = 0;
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(struct device *parent __unused, struct cfdata *match __unused,
-    void *aux __unused)
+mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return 1;
@@ -180,8 +179,7 @@ mainbus_match(struct device *parent __unused, struct cfdata *match __unused,
  * Attach the mainbus.
  */
 void
-mainbus_attach( struct device *parent __unused, struct device *self __unused,
-    void *aux __unused)
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	union mainbus_attach_args mba;
 #if NACPI > 0
@@ -225,7 +223,8 @@ mainbus_attach( struct device *parent __unused, struct device *self __unused,
 #endif
 
 #if NACPI > 0
-	acpi_present = acpi_probe();
+	if (acpi_check(self, "acpibus"))
+		acpi_present = acpi_probe();
 	/*
 	 * First, see if the MADT contains CPUs, and possibly I/O APICs.
 	 * Building the interrupt routing structures can only

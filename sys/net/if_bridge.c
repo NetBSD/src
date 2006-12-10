@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.40.6.1 2006/10/22 06:07:24 yamt Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.40.6.2 2006/12/10 07:19:00 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,13 +80,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.40.6.1 2006/10/22 06:07:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.40.6.2 2006/12/10 07:19:00 yamt Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
 #include "bpfilter.h"
-#include "gif.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -341,7 +340,7 @@ static struct if_clone bridge_cloner =
  *	Pseudo-device attach routine.
  */
 void
-bridgeattach(int n __unused)
+bridgeattach(int n)
 {
 
 	pool_init(&bridge_rtnode_pool, sizeof(struct bridge_rtnode),
@@ -595,10 +594,6 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 		 */
 		(void) ifpromisc(ifs, 0);
 		break;
-#if NGIF > 0
-	case IFT_GIF:
-		break;
-#endif
 	default:
 #ifdef DIAGNOSTIC
 		panic("bridge_delete_member: impossible");
@@ -651,10 +646,6 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		if (error)
 			goto out;
 		break;
-#if NGIF > 0
-	case IFT_GIF:
-		break;
-#endif
 	default:
 		error = EINVAL;
 		goto out;
@@ -1116,7 +1107,7 @@ bridge_init(struct ifnet *ifp)
  *	Stop the bridge interface.
  */
 static void
-bridge_stop(struct ifnet *ifp, int disable __unused)
+bridge_stop(struct ifnet *ifp, int disable)
 {
 	struct bridge_softc *sc = ifp->if_softc;
 
@@ -1214,8 +1205,8 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
  *	enqueue or free the mbuf before returning.
  */
 int
-bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa __unused,
-    struct rtentry *rt __unused)
+bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
+    struct rtentry *rt)
 {
 	struct ether_header *eh;
 	struct ifnet *dst_if;
@@ -1504,20 +1495,6 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			return (m);
 
 		/* Perform the bridge forwarding function with the copy. */
-#if NGIF > 0
-		if (ifp->if_type == IFT_GIF) {
-			LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
-				if (bif->bif_ifp->if_type == IFT_ETHER)
-				break;
-			}
-			if (bif != NULL) {
-				m->m_flags |= M_PROTO1;
-				m->m_pkthdr.rcvif = bif->bif_ifp;
-				(*bif->bif_ifp->if_input)(bif->bif_ifp, m);
-				m = NULL;
-			}
-		}
-#endif
 		bridge_forward(sc, mc);
 
 		/* Return the original packet for local processing. */
@@ -1537,8 +1514,6 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	 * Unicast.  Make sure it's not for us.
 	 */
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
-		if(bif->bif_ifp->if_type != IFT_ETHER)
-			continue;
 		/* It is destined for us. */
 		if (memcmp(LLADDR(bif->bif_ifp->if_sadl), eh->ether_dhost,
 		    ETHER_ADDR_LEN) == 0
@@ -1551,14 +1526,6 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 				(void) bridge_rtupdate(sc,
 				    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
 			m->m_pkthdr.rcvif = bif->bif_ifp;
-#if NGIF > 0
-			if (ifp->if_type == IFT_GIF) {
-				m->m_flags |= M_PROTO1;
-				m->m_pkthdr.rcvif = bif->bif_ifp;
-				(*bif->bif_ifp->if_input)(bif->bif_ifp, m);
-				m = NULL;
-			}
-#endif
 			return (m);
 		}
 
@@ -2000,7 +1967,7 @@ extern struct pfil_head inet6_pfil_hook;                /* XXX */
  * question.)
  */
 static int
-bridge_ipf(void *arg __unused, struct mbuf **mp, struct ifnet *ifp, int dir)
+bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
 	int snap, error;
 	struct ether_header *eh1, eh2;

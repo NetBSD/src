@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.86.16.1 2006/10/22 06:04:48 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.86.16.2 2006/12/10 07:16:11 yamt Exp $	*/
 
 /*
  *
@@ -371,7 +371,7 @@ boolean_t			pmap_pageidlezero(paddr_t);
 
 /*ARGSUSED*/
 static __inline void
-pmap_remove_all(struct pmap *pmap __unused)
+pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
 }

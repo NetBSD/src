@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.52.6.1 2006/10/22 06:07:24 yamt Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.52.6.2 2006/12/10 07:19:00 yamt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.52.6.1 2006/10/22 06:07:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.52.6.2 2006/12/10 07:19:00 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -182,7 +182,7 @@ static int stf_ioctl(struct ifnet *, u_long, caddr_t);
 
 /* ARGSUSED */
 void
-stfattach(int count __unused)
+stfattach(int count)
 {
 
 	LIST_INIT(&stf_softc_list);
@@ -245,7 +245,7 @@ stf_clone_destroy(struct ifnet *ifp)
 }
 
 static int
-stf_encapcheck(struct mbuf *m, int off __unused, int proto, void *arg)
+stf_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 {
 	struct ip ip;
 	struct in6_ifaddr *ia6;
@@ -333,7 +333,7 @@ stf_getsrcifa6(struct ifnet *ifp)
 
 static int
 stf_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-    struct rtentry *rt __unused)
+    struct rtentry *rt)
 {
 	struct stf_softc *sc;
 	struct sockaddr_in6 *dst6;
@@ -423,10 +423,8 @@ stf_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		dst4->sin_family = AF_INET;
 		dst4->sin_len = sizeof(struct sockaddr_in);
 		bcopy(&ip->ip_dst, &dst4->sin_addr, sizeof(dst4->sin_addr));
-		if (sc->sc_ro.ro_rt) {
-			RTFREE(sc->sc_ro.ro_rt);
-			sc->sc_ro.ro_rt = NULL;
-		}
+		if (sc->sc_ro.ro_rt != NULL)
+			rtflush(&sc->sc_ro);
 	}
 
 	if (sc->sc_ro.ro_rt == NULL) {
@@ -670,8 +668,8 @@ in_stf_input(struct mbuf *m, ...)
 
 /* ARGSUSED */
 static void
-stf_rtrequest(int cmd __unused, struct rtentry *rt,
-    struct rt_addrinfo *info __unused)
+stf_rtrequest(int cmd, struct rtentry *rt,
+    struct rt_addrinfo *info)
 {
 	if (rt != NULL) {
 		struct stf_softc *sc;

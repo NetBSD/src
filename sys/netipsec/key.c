@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.28.6.1 2006/10/22 06:07:38 yamt Exp $	*/
+/*	$NetBSD: key.c,v 1.28.6.2 2006/12/10 07:19:19 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.28.6.1 2006/10/22 06:07:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.28.6.2 2006/12/10 07:19:19 yamt Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -2818,10 +2818,8 @@ key_delsah(sah)
 		return;
 	}
 
-	if (sah->sa_route.ro_rt) {
-		RTFREE(sah->sa_route.ro_rt);
-		sah->sa_route.ro_rt = (struct rtentry *)NULL;
-	}
+	if (sah->sa_route.ro_rt != NULL)
+		rtflush(&sah->sa_route);
 
 	/* remove from tree of SA index */
 	if (__LIST_CHAINED(sah))
@@ -4232,7 +4230,7 @@ key_bbcmp(const void *a1, const void *a2, u_int bits)
  * XXX: year 2038 problem may remain.
  */
 void
-key_timehandler(void* arg __unused)
+key_timehandler(void* arg)
 {
 	u_int dir;
 	int s;
@@ -4491,7 +4489,7 @@ key_timehandler(void* arg __unused)
 
 #ifdef __NetBSD__
 void srandom(int);
-void srandom(int arg __unused) {return;}
+void srandom(int arg) {return;}
 #endif
 
 /*
@@ -7408,9 +7406,9 @@ key_init()
 int
 key_checktunnelsanity(
     struct secasvar *sav,
-    u_int family __unused,
-    caddr_t src __unused,
-    caddr_t dst __unused
+    u_int family,
+    caddr_t src,
+    caddr_t dst
 )
 {
 	/* sanity check */
@@ -7539,11 +7537,9 @@ key_sa_routechange(dst)
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		ro = &sah->sa_route;
-		if (ro->ro_rt && dst->sa_len == ro->ro_dst.sa_len
-		 && bcmp(dst, &ro->ro_dst, dst->sa_len) == 0) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)NULL;
-		}
+		if (ro->ro_rt != NULL && dst->sa_len == ro->ro_dst.sa_len
+		 && bcmp(dst, &ro->ro_dst, dst->sa_len) == 0)
+			rtflush(ro);
 	}
 
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.167 2006/03/30 05:57:01 gdamore Exp $	*/
+/*	$NetBSD: pmap.c,v 1.167.10.1 2006/12/10 07:16:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167 2006/03/30 05:57:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167.10.1 2006/12/10 07:16:27 yamt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -132,6 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167 2006/03/30 05:57:01 gdamore Exp $");
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
+#include <sys/socketvar.h>	/* XXX: for sock_loan_thresh */
 
 #include <uvm/uvm.h>
 
@@ -518,6 +519,27 @@ pmap_init(void)
 	 * Now it is safe to enable pv entry recording.
 	 */
 	pmap_initialized = TRUE;
+
+#ifdef MIPS3
+	if (MIPS_HAS_R4K_MMU) {
+		/*
+		 * XXX
+		 * Disable sosend_loan() in src/sys/kern/uipc_socket.c
+		 * on MIPS3 CPUs to avoid possible virtual cache aliases
+		 * and uncached mappings in pmap_enter_pv().
+		 * 
+		 * Ideally, read only shared mapping won't cause aliases
+		 * so pmap_enter_pv() should handle any shared read only
+		 * mappings without uncached ops like ARM pmap.
+		 * 
+		 * On the other hand, R4000 and R4400 have the virtual
+		 * coherency exceptions which will happen even on read only
+		 * mappings, so we always have to disable sosend_loan()
+		 * on such CPUs.
+		 */
+		sock_loan_thresh = -1;
+	}
+#endif
 }
 
 /*

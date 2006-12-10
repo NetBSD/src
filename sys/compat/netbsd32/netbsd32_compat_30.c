@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.13 2006/08/04 16:29:51 yamt Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.13.6.1 2006/12/10 07:16:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.13 2006/08/04 16:29:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.13.6.1 2006/12/10 07:16:48 yamt Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -61,12 +61,12 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.13 2006/08/04 16:29:51 yamt
 
 
 int
-netbsd32_getdents(l, v, retval)
+compat_30_netbsd32_getdents(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_getdents_args /* {
+	struct compat_30_netbsd32_getdents_args /* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_charp) buf;
 		syscallarg(netbsd32_size_t) count;
@@ -100,12 +100,12 @@ netbsd32_getdents(l, v, retval)
 }
 
 int
-netbsd32___stat13(l, v, retval)
+compat_30_netbsd32___stat13(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32___stat13_args /* {
+	struct compat_30_netbsd32___stat13_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat13p_t) ub;
 	} */ *uap = v;
@@ -135,12 +135,12 @@ netbsd32___stat13(l, v, retval)
 }
 
 int
-netbsd32___fstat13(l, v, retval)
+compat_30_netbsd32___fstat13(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32___fstat13_args /* {
+	struct compat_30_netbsd32___fstat13_args /* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_stat13p_t) sb;
 	} */ *uap = v;
@@ -168,12 +168,12 @@ netbsd32___fstat13(l, v, retval)
 }
 
 int
-netbsd32___lstat13(l, v, retval)
+compat_30_netbsd32___lstat13(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32___lstat13_args /* {
+	struct compat_30_netbsd32___lstat13_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat13p_t) ub;
 	} */ *uap = v;
@@ -222,8 +222,8 @@ compat_30_netbsd32_fhstat(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
+	if ((error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_FILEHANDLE, 0, NULL, NULL, NULL)))
 		return (error);
 
 	if ((error = copyin(NETBSD32PTR64(SCARG(uap, fhp)), &fh,
@@ -265,8 +265,8 @@ compat_30_netbsd32_fhstatvfs1(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_FILEHANDLE, 0, NULL, NULL, NULL)) != 0)
 		return error;
 
 	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)), 
@@ -352,8 +352,8 @@ int compat_30_netbsd32_sys___fhstat30(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
+	    0, NULL, NULL, NULL)))
 		return error;
 
 	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)),

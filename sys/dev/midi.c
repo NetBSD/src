@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.47.4.1 2006/10/22 06:05:28 yamt Exp $	*/
+/*	$NetBSD: midi.c,v 1.47.4.2 2006/12/10 07:16:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.47.4.1 2006/10/22 06:05:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.47.4.2 2006/12/10 07:16:53 yamt Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -130,7 +130,7 @@ CFATTACH_DECL(midi, sizeof(struct midi_softc),
 extern struct cfdriver midi_cd;
 
 int
-midiprobe(struct device *parent __unused, struct cfdata *match __unused,
+midiprobe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct audio_attach_args *sa = aux;
@@ -183,7 +183,7 @@ midiactivate(struct device *self, enum devact act)
 }
 
 int
-mididetach(struct device *self, int flags __unused)
+mididetach(struct device *self, int flags)
 {
 	struct midi_softc *sc = (struct midi_softc *)self;
 	int maj, mn;
@@ -762,7 +762,7 @@ midi_out(void *addr)
 }
 
 int
-midiopen(dev_t dev, int flags, int ifmt __unused, struct lwp *l __unused)
+midiopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	struct midi_softc *sc;
 	const struct midi_hw_if *hw;
@@ -827,8 +827,8 @@ midiopen(dev_t dev, int flags, int ifmt __unused, struct lwp *l __unused)
 }
 
 int
-midiclose(dev_t dev, int flags __unused, int ifmt __unused,
-    struct lwp *l __unused)
+midiclose(dev_t dev, int flags, int ifmt,
+    struct lwp *l)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
@@ -1652,7 +1652,7 @@ filt_midirdetach(struct knote *kn)
 }
 
 static int
-filt_midiread(struct knote *kn, long hint __unused)
+filt_midiread(struct knote *kn, long hint)
 {
 	struct midi_softc *sc = kn->kn_hook;
 	int s;
@@ -1682,7 +1682,7 @@ filt_midiwdetach(struct knote *kn)
 }
 
 static int
-filt_midiwrite(struct knote *kn, long hint __unused)
+filt_midiwrite(struct knote *kn, long hint)
 {
 	struct midi_softc *sc = kn->kn_hook;
 	int s;
@@ -1752,7 +1752,7 @@ midi_getinfo(dev_t dev, struct midi_info *mi)
 
 #elif NMIDIBUS > 0 /* but NMIDI == 0 */
 
-void midi_register_hw_if_ext(struct midi_hw_if_ext *exthw __unused) { /* stub */
+void midi_register_hw_if_ext(struct midi_hw_if_ext *exthw) { /* stub */
 }
 
 #endif /* NMIDI > 0 */

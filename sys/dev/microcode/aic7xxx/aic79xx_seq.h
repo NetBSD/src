@@ -973,7 +973,7 @@ ahd_patch1_func(struct ahd_softc *ahd)
 static ahd_patch_func_t ahd_patch0_func;
 
 static int
-ahd_patch0_func(struct ahd_softc *ahd __unused)
+ahd_patch0_func(struct ahd_softc *ahd)
 {
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.29.6.1 2006/10/22 06:07:11 yamt Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.29.6.2 2006/12/10 07:18:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.29.6.1 2006/10/22 06:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.29.6.2 2006/12/10 07:18:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.29.6.1 2006/10/22 06:07:11 yamt Exp $"
 
 /*ARGSUSED*/
 static int
-cttyopen(dev_t dev __unused, int flag, int mode __unused, struct lwp *l)
+cttyopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct vnode *ttyvp = cttyvp(l->l_proc);
 	int error;
@@ -80,7 +80,7 @@ cttyopen(dev_t dev __unused, int flag, int mode __unused, struct lwp *l)
 
 /*ARGSUSED*/
 static int
-cttyread(dev_t dev __unused, struct uio *uio, int flag)
+cttyread(dev_t dev, struct uio *uio, int flag)
 {
 	struct vnode *ttyvp = cttyvp(curproc);
 	int error;
@@ -95,7 +95,7 @@ cttyread(dev_t dev __unused, struct uio *uio, int flag)
 
 /*ARGSUSED*/
 static int
-cttywrite(dev_t dev __unused, struct uio *uio, int flag)
+cttywrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct vnode *ttyvp = cttyvp(curproc);
 	struct mount *mp;
@@ -116,7 +116,7 @@ cttywrite(dev_t dev __unused, struct uio *uio, int flag)
 
 /*ARGSUSED*/
 static int
-cttyioctl(dev_t dev __unused, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct vnode *ttyvp = cttyvp(l->l_proc);
 
@@ -146,7 +146,7 @@ cttypoll(dev_t dev, int events, struct lwp *l)
 }
 
 static int
-cttykqfilter(dev_t dev __unused, struct knote *kn)
+cttykqfilter(dev_t dev, struct knote *kn)
 {
 	/* This is called from filt_fileattach() by the attaching process. */
 	struct proc *p = curproc;

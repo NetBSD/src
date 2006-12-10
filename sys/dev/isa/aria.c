@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.25.4.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: aria.c,v 1.25.4.2 2006/12/10 07:17:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.25.4.1 2006/10/22 06:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.25.4.2 2006/12/10 07:17:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ const struct audio_hw_if aria_hw_if = {
  * Probe for the aria hardware.
  */
 int
-ariaprobe(struct device *parent __unused, struct cfdata *cf, void *aux)
+ariaprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	bus_space_handle_t ioh;
 	struct isa_attach_args *ia;
@@ -395,7 +395,7 @@ aria_do_kludge(
  * pseudo-device driver.
  */
 void
-ariaattach(struct device *parent __unused, struct device *self, void *aux)
+ariaattach(struct device *parent, struct device *self, void *aux)
 {
 	bus_space_handle_t ioh;
 	struct aria_softc *sc;
@@ -495,7 +495,7 @@ ariaopen(void *addr, int flags)
 }
 
 int
-aria_getdev(void *addr __unused, struct audio_device *retp)
+aria_getdev(void *addr, struct audio_device *retp)
 {
 
 	*retp = aria_device;
@@ -576,8 +576,8 @@ aria_query_encoding(void *addr, struct audio_encoding *fp)
  */
 
 int
-aria_round_blocksize(void *addr __unused, int blk __unused, int mode __unused,
-    const audio_params_t *param __unused)
+aria_round_blocksize(void *addr, int blk, int mode,
+    const audio_params_t *param)
 {
 	int i;
 
@@ -592,7 +592,7 @@ aria_round_blocksize(void *addr __unused, int blk __unused, int mode __unused,
 }
 
 int
-aria_get_props(void *addr __unused)
+aria_get_props(void *addr)
 {
 
 	return AUDIO_PROP_FULLDUPLEX;
@@ -601,10 +601,10 @@ aria_get_props(void *addr __unused)
 int
 aria_set_params(
     void *addr,
-    int setmode __unused,
-    int usemode __unused,
+    int setmode,
+    int usemode,
     audio_params_t *p,
-    audio_params_t *r __unused,
+    audio_params_t *r,
     stream_filter_list_t *pfil,
     stream_filter_list_t *rfil
 )

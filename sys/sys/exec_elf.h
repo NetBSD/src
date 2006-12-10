@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.87 2006/08/30 11:35:21 matt Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.87.4.1 2006/12/10 07:19:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -61,7 +61,11 @@
 #define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 #endif
 
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/machine/elf_machdep.h>
+#else
 #include <machine/elf_machdep.h>
+#endif
 
 typedef	uint8_t  	Elf_Byte;
 
@@ -344,6 +348,8 @@ typedef struct {
 
 #define	PF_PAXMPROTECT		0x08000000	/* Explicitly enable PaX MPROTECT */
 #define	PF_PAXNOMPROTECT	0x04000000	/* Explicitly disable PaX MPROTECT */
+#define	PF_PAXGUARD		0x02000000	/* Explicitly enable PaX Segvguard */
+#define	PF_PAXNOGUARD		0x01000000	/* Explicitly disable PaX Segvguard */
 
 #define	PF_MASKOS	0x0ff00000	/* Operating system specific values */
 #define	PF_MASKPROC	0xf0000000	/* Processor-specific values */

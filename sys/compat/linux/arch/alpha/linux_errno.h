@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_errno.h,v 1.5 2005/12/11 12:20:12 christos Exp $	*/
+/* 	$NetBSD: linux_errno.h,v 1.5.22.1 2006/12/10 07:16:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #define LINUX_EDESTADDRREQ	39	/* Destination address required */
 #define LINUX_EMSGSIZE		40	/* Message too long */
 #define LINUX_EPROTOTYPE	41	/* Protocol wrong type for socket */
-#define LINUX_ENOPROTOOPT	42	/* Protocol not available */
+#define LINUX_ENOPROTOOPT	42	/* Protocol option not available */
 #define LINUX_EPROTONOSUPPORT	43	/* Protocol not supported */
 #define LINUX_ESOCKTNOSUPPORT	44	/* Socket type not supported */
 #define LINUX_EOPNOTSUPP	45	/* Operation not supported on transport endpoint */

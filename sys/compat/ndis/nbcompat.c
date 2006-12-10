@@ -31,7 +31,7 @@ struct ndis_resource{
 };
 
 int
-bus_release_resource(device_t dev __unused, int type, int rid __unused,
+bus_release_resource(device_t dev, int type, int rid,
     struct ndis_resource *r)
 {
 	switch(type) {
@@ -49,7 +49,7 @@ bus_release_resource(device_t dev __unused, int type, int rid __unused,
 }
 
 void
-mtx_lock(struct mtx *mutex __unused)
+mtx_lock(struct mtx *mutex)
 {
 	/* I'm not sure if this is needed or not.  NetBSD kernel
 	 * threads aren't preempted, but there still may be a need
@@ -59,13 +59,13 @@ mtx_lock(struct mtx *mutex __unused)
 }
 
 void
-mtx_unlock(struct mtx *mutex __unused)
+mtx_unlock(struct mtx *mutex)
 {
 	//lockmgr(mutex, LK_RELEASE, NULL);
 }
 
 int
-device_is_attached(device_t dev __unused)
+device_is_attached(device_t dev)
 {
 	/* Sure, it's attached? */
 	return TRUE;

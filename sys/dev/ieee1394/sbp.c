@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.11.12.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: sbp.c,v 1.11.12.2 2006/12/10 07:17:26 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -573,7 +573,7 @@ END_DEBUG
 }
 #elif defined(__NetBSD__)
 int
-sbpmatch(struct device *parent __unused, struct cfdata *cf __unused, void *aux)
+sbpmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct fw_attach_args *fwa = aux;
 

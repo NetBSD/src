@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.17.6.1 2006/10/22 06:04:30 yamt Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.17.6.2 2006/12/10 07:15:44 yamt Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.17.6.1 2006/10/22 06:04:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.17.6.2 2006/12/10 07:15:44 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -198,7 +198,7 @@ cbq_clear_interface(cbq_state_t *cbqp)
 }
 
 static int
-cbq_request(struct ifaltq *ifq, int req, void *arg __unused)
+cbq_request(struct ifaltq *ifq, int req, void *arg)
 {
 	cbq_state_t	*cbqp = (cbq_state_t *)ifq->altq_disc;
 
@@ -314,7 +314,7 @@ cbq_add_queue(struct pf_altq *a)
 	cbq_state_t	*cbqp;
 	struct rm_class	*cl;
 	struct cbq_opts	*opts;
-	int		i;
+	int		i, error;
 
 	if ((cbqp = a->altq_disc) == NULL)
 		return (EINVAL);
@@ -389,10 +389,12 @@ cbq_add_queue(struct pf_altq *a)
 	 * interface.
 	 */
 	if ((opts->flags & CBQCLF_CLASSMASK) == CBQCLF_ROOTCLASS) {
-		rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp, opts->ns_per_byte,
-		    cbqrestart, a->qlimit, RM_MAXQUEUED,
+		error = rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp,
+		    opts->ns_per_byte, cbqrestart, a->qlimit, RM_MAXQUEUED,
 		    opts->maxidle, opts->minidle, opts->offtime,
 		    opts->flags);
+		if (error != 0)
+			return (error);
 		cl = cbqp->ifnp.root_;
 	} else {
 		cl = rmc_newclass(a->priority,
@@ -704,7 +706,7 @@ cbq_class_create(cbq_state_t *cbqp, struct cbq_add_class *acp,
 	struct rm_class	*cl;
 	cbq_class_spec_t *spec = &acp->cbq_class;
 	u_int32_t	chandle;
-	int		i;
+	int		i, error;
 
 	/*
 	 * allocate class handle
@@ -721,10 +723,12 @@ cbq_class_create(cbq_state_t *cbqp, struct cbq_add_class *acp,
 	 * interface.
 	 */
 	if ((spec->flags & CBQCLF_CLASSMASK) == CBQCLF_ROOTCLASS) {
-		rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp, spec->nano_sec_per_byte,
-			 cbqrestart, spec->maxq, RM_MAXQUEUED,
-			 spec->maxidle, spec->minidle, spec->offtime,
-			 spec->flags);
+		error = rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp,
+		    spec->nano_sec_per_byte, cbqrestart, spec->maxq,
+		    RM_MAXQUEUED, spec->maxidle, spec->minidle, spec->offtime,
+		    spec->flags);
+		if (error)
+			return (error);
 		cl = cbqp->ifnp.root_;
 	} else {
 		cl = rmc_newclass(spec->priority,
@@ -970,15 +974,15 @@ cbq_ifdetach(struct cbq_interface *ifacep)
 altqdev_decl(cbq);
 
 int
-cbqopen(dev_t dev __unused, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+cbqopen(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	return (0);
 }
 
 int
-cbqclose(dev_t dev __unused, int flag __unused, int fmt __unused,
-    struct lwp *l __unused)
+cbqclose(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	struct ifnet *ifp;
 	struct cbq_interface iface;
@@ -996,7 +1000,7 @@ cbqclose(dev_t dev __unused, int flag __unused, int fmt __unused,
 }
 
 int
-cbqioctl(dev_t dev __unused, ioctlcmd_t cmd, caddr_t addr, int flag __unused,
+cbqioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
     struct lwp *l)
 {
 	int	error = 0;

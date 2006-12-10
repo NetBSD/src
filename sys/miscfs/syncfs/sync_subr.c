@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.23.6.1 2006/10/22 06:07:24 yamt Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.23.6.2 2006/12/10 07:19:00 yamt Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.23.6.1 2006/10/22 06:07:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.23.6.2 2006/12/10 07:19:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ vn_syncer_add_to_worklist(vp, delayx)
 }
 
 /*
- * Remove an item fromthe syncer work queue.
+ * Remove an item from the syncer work queue.
  */
 void
 vn_syncer_remove_from_worklist(vp)
@@ -163,7 +163,7 @@ vn_syncer_remove_from_worklist(vp)
  * System filesystem synchronizer daemon.
  */
 void
-sched_sync(void *v __unused)
+sched_sync(void *v)
 {
 	struct synclist *slp;
 	struct vnode *vp;

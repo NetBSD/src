@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.8.10.1 2006/10/22 06:06:03 yamt Exp $	*/
+/*	$NetBSD: firewire.c,v 1.8.10.2 2006/12/10 07:17:26 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -297,7 +297,7 @@ fw_noderesolve_eui64(struct firewire_comm *fc, struct fw_eui64 *eui)
  * Async. request procedure for userland application.
  */
 int
-fw_asyreq(struct firewire_comm *fc, int sub __unused, struct fw_xfer *xfer)
+fw_asyreq(struct firewire_comm *fc, int sub, struct fw_xfer *xfer)
 {
 	int err = 0;
 	struct fw_xferq *xferq;
@@ -417,7 +417,7 @@ firewire_probe(device_t dev)
 }
 #elif defined(__NetBSD__)
 int
-firewirematch(struct device *parent __unused, struct cfdata *cf __unused,
+firewirematch(struct device *parent, struct cfdata *cf,
     void *aux)
 {
 	struct fwbus_attach_args *faa = (struct fwbus_attach_args *)aux;

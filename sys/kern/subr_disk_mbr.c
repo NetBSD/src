@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.18.8.1 2006/10/22 06:07:11 yamt Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.18.8.2 2006/12/10 07:18:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.18.8.1 2006/10/22 06:07:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.18.8.2 2006/12/10 07:18:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,7 +489,7 @@ validate_label(mbr_args_t *a, uint label_sector)
  */
 int
 setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
-    struct cpu_disklabel *osdep __unused)
+    struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -572,8 +572,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 }
 
 static int
-write_netbsd_label(mbr_args_t *a, mbr_partition_t *dp, int slot __unused,
-    uint ext_base)
+write_netbsd_label(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 {
 	int ptn_base = ext_base + le32toh(dp->mbrp_start);
 
@@ -581,58 +580,4 @@ write_netbsd_label(mbr_args_t *a, mbr_partition_t *dp, int slot __unused,
 		return SCAN_CONTINUE;
 
 	return validate_label(a, ptn_base);
-}
-
-
-/*
- * Determine the size of the transfer, and make sure it is
- * within the boundaries of the partition. Adjust transfer
- * if needed, and signal errors or early completion.
- */
-int
-bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
-{
-	struct disklabel *lp = dk->dk_label;
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsector = LABELSECTOR;
-	int64_t sz;
-
-#if RAW_PART == 3
-	labelsector += lp->d_partitions[2].p_offset;
-#endif
-
-	sz = howmany(bp->b_bcount, lp->d_secsize);
-
-	if (bp->b_blkno + sz > p->p_size) {
-		sz = p->p_size - bp->b_blkno;
-		if (sz == 0) {
-			/* If exactly at end of disk, return EOF. */
-			bp->b_resid = bp->b_bcount;
-			return (0);
-		}
-		if (sz < 0) {
-			/* If past end of disk, return EINVAL. */
-			bp->b_error = EINVAL;
-			goto bad;
-		}
-		/* Otherwise, truncate request. */
-		bp->b_bcount = sz << DEV_BSHIFT;
-	}
-
-	/* Overwriting disk label? */
-	if (bp->b_blkno + p->p_offset <= labelsector &&
-	    bp->b_blkno + p->p_offset + sz > labelsector &&
-	    (bp->b_flags & B_READ) == 0 && !wlabel) {
-		bp->b_error = EROFS;
-		goto bad;
-	}
-
-	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + p->p_offset) /
-	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
-	return (1);
-
-bad:
-	bp->b_flags |= B_ERROR;
-	return (-1);
 }

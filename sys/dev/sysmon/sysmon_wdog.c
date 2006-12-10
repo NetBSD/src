@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.12.22.1 2006/10/22 06:06:51 yamt Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.12.22.2 2006/12/10 07:18:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.12.22.1 2006/10/22 06:06:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.12.22.2 2006/12/10 07:18:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -89,8 +89,8 @@ void	sysmon_wdog_shutdown(void *);
  *	Open the system monitor device.
  */
 int
-sysmonopen_wdog(dev_t dev __unused, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+sysmonopen_wdog(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 
 	simple_lock(&sysmon_wdog_list_slock);
@@ -112,8 +112,8 @@ sysmonopen_wdog(dev_t dev __unused, int flag __unused, int mode __unused,
  *	Close the system monitor device.
  */
 int
-sysmonclose_wdog(dev_t dev __unused, int flag __unused, int mode __unused,
-    struct lwp *l __unused)
+sysmonclose_wdog(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct sysmon_wdog *smw;
 	int s, error = 0;
@@ -151,7 +151,7 @@ sysmonclose_wdog(dev_t dev __unused, int flag __unused, int mode __unused,
  *	Perform a watchdog control request.
  */
 int
-sysmonioctl_wdog(dev_t dev __unused, u_long cmd, caddr_t data, int flag,
+sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag,
     struct lwp *l)
 {
 	struct sysmon_wdog *smw;
@@ -429,7 +429,7 @@ sysmon_wdog_setmode(struct sysmon_wdog *smw, int mode, u_int period)
  *	Kernel watchdog tickle routine.
  */
 void
-sysmon_wdog_ktickle(void *arg __unused)
+sysmon_wdog_ktickle(void *arg)
 {
 	struct sysmon_wdog *smw;
 	int s;
@@ -456,7 +456,7 @@ sysmon_wdog_ktickle(void *arg __unused)
  *	Perform shutdown-time operations.
  */
 void
-sysmon_wdog_shutdown(void *arg __unused)
+sysmon_wdog_shutdown(void *arg)
 {
 	struct sysmon_wdog *smw;
 

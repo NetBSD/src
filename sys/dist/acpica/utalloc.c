@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utalloc.c,v 1.2.14.1 2006/10/22 06:07:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utalloc.c,v 1.2.14.2 2006/12/10 07:18:28 yamt Exp $");
 
 #define __UTALLOC_C__
 
@@ -404,7 +404,7 @@ AcpiUtInitializeBuffer (
 void *
 AcpiUtAllocate (
     ACPI_SIZE               Size,
-    UINT32                  Component __unused,
+    UINT32                  Component,
     const char              *Module,
     UINT32                  Line)
 {
@@ -456,7 +456,7 @@ AcpiUtAllocate (
 void *
 AcpiUtCallocate (
     ACPI_SIZE               Size,
-    UINT32                  Component __unused,
+    UINT32                  Component,
     const char              *Module,
     UINT32                  Line)
 {
@@ -844,7 +844,7 @@ UnlockAndExit:
 static ACPI_STATUS
 AcpiUtRemoveAllocation (
     ACPI_DEBUG_MEM_BLOCK    *Allocation,
-    UINT32                  Component __unused,
+    UINT32                  Component,
     const char              *Module,
     UINT32                  Line)
 {

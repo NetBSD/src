@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.29.22.1 2006/10/22 06:06:04 yamt Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.29.22.2 2006/12/10 07:17:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.29.22.1 2006/10/22 06:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.29.22.2 2006/12/10 07:17:29 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -85,7 +85,7 @@ void	u14_init(struct uha_softc *);
  * the actual probe routine to check it out.
  */
 int
-uha_isa_probe(struct device *parent __unused, struct cfdata *match __unused,
+uha_isa_probe(struct device *parent, struct cfdata *match,
     void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -141,7 +141,7 @@ uha_isa_probe(struct device *parent __unused, struct cfdata *match __unused,
  * Attach all the sub-devices we can find
  */
 void
-uha_isa_attach(struct device *parent __unused, struct device *self, void *aux)
+uha_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct uha_softc *sc = (void *)self;

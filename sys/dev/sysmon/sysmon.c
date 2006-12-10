@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.12.4.1 2006/10/22 06:06:51 yamt Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.12.4.2 2006/12/10 07:18:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.12.4.1 2006/10/22 06:06:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.12.4.2 2006/12/10 07:18:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -171,7 +171,7 @@ sysmonioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
  *	Perform a read request.
  */
 int
-sysmonread(dev_t dev, struct uio *uio __unused, int flags __unused)
+sysmonread(dev_t dev, struct uio *uio, int flags)
 {
 	int error;
 
@@ -194,7 +194,7 @@ sysmonread(dev_t dev, struct uio *uio __unused, int flags __unused)
  *	Poll the system monitor device.
  */
 int
-sysmonpoll(dev_t dev, int events, struct lwp *l __unused)
+sysmonpoll(dev_t dev, int events, struct lwp *l)
 {
 	int rv;
 
@@ -217,7 +217,7 @@ sysmonpoll(dev_t dev, int events, struct lwp *l __unused)
  *	Kqueue filter for the system monitor device.
  */
 int
-sysmonkqfilter(dev_t dev, struct knote *kn __unused)
+sysmonkqfilter(dev_t dev, struct knote *kn)
 {
 	int error;
 

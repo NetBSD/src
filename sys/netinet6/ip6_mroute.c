@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.74.4.1 2006/10/22 06:07:35 yamt Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.74.4.2 2006/12/10 07:19:15 yamt Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.74.4.1 2006/10/22 06:07:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.74.4.2 2006/12/10 07:19:15 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1311,7 +1311,7 @@ ip6_mforward(ip6, ifp, m)
  * Call from the Slow Timeout mechanism, every 0.25 seconds.
  */
 static void
-expire_upcalls(void *unused __unused)
+expire_upcalls(void *unused)
 {
 	struct rtdetq *rte;
 	struct mf6c *mfc, **nptr;

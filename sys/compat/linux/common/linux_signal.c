@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.50.2.1 2006/10/22 06:05:24 yamt Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.50.2.2 2006/12/10 07:16:48 yamt Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.50.2.1 2006/10/22 06:05:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.50.2.2 2006/12/10 07:16:48 yamt Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -280,7 +280,7 @@ native_to_linux_sigaction(lsa, bsa)
  * ignored (see above).
  */
 int
-linux_sys_rt_sigaction(struct lwp *l, void *v, register_t *retval __unused)
+linux_sys_rt_sigaction(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_rt_sigaction_args /* {
 		syscallarg(int) signum;
@@ -393,7 +393,7 @@ linux_sigprocmask1(p, how, set, oset)
 }
 
 int
-linux_sys_rt_sigprocmask(struct lwp *l, void *v, register_t *retval __unused)
+linux_sys_rt_sigprocmask(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_rt_sigprocmask_args /* {
 		syscallarg(int) how;
@@ -443,7 +443,7 @@ linux_sys_rt_sigprocmask(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-linux_sys_rt_sigpending(struct lwp *l, void *v, register_t *retval __unused)
+linux_sys_rt_sigpending(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_rt_sigpending_args /* {
 		syscallarg(linux_sigset_t *) set;
@@ -463,7 +463,7 @@ linux_sys_rt_sigpending(struct lwp *l, void *v, register_t *retval __unused)
 
 #ifndef __amd64__
 int
-linux_sys_sigpending(struct lwp *l, void *v, register_t *retval __unused)
+linux_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_sigpending_args /* {
 		syscallarg(linux_old_sigset_t *) mask;
@@ -478,7 +478,7 @@ linux_sys_sigpending(struct lwp *l, void *v, register_t *retval __unused)
 }
 
 int
-linux_sys_sigsuspend(struct lwp *l, void *v, register_t *retval __unused)
+linux_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_sigsuspend_args /* {
 		syscallarg(caddr_t) restart;
@@ -496,7 +496,7 @@ linux_sys_sigsuspend(struct lwp *l, void *v, register_t *retval __unused)
 #endif /* __amd64__ */
 
 int
-linux_sys_rt_sigsuspend(struct lwp *l, void *v, register_t *retval __unused)
+linux_sys_rt_sigsuspend(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_rt_sigsuspend_args /* {
 		syscallarg(linux_sigset_t *) unewset;
@@ -600,7 +600,7 @@ native_to_linux_sigaltstack(lss, bss)
 }
 
 int
-linux_sys_sigaltstack(struct lwp *l, void *v, register_t *retval __unused)
+linux_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_sigaltstack_args /* {
 		syscallarg(const struct linux_sigaltstack *) ss;
