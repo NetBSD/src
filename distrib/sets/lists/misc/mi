@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.140 2006/09/22 15:38:43 christos Exp $
+# $NetBSD: mi,v 1.141 2006/12/10 05:52:10 manu Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -673,6 +673,7 @@
 ./usr/share/examples/racoon/FAQ			misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/README.certificate	misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/README.gssapi	misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/README.plainrsa	misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/psk.txt.sample	misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/racoon.conf.sample	misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-netutil-examples	crypto,share
