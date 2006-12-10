@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.148 2006/12/09 19:29:18 dyoung Exp $	*/
+/*	$NetBSD: key.c,v 1.149 2006/12/10 11:19:15 he Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.148 2006/12/09 19:29:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.149 2006/12/10 11:19:15 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2830,7 +2830,7 @@ key_delsah(sah)
 	}
 
 	if (sah->sa_route.ro_rt != NULL)
-		rtflush((struct route *)&sah->sa_route);
+		rtflush(&sah->sa_route);
 
 	/* remove from tree of SA index */
 	if (__LIST_CHAINED(sah))
