@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.13 2006/12/11 15:27:46 yamt Exp $
+.\" $NetBSD: fileassoc.9,v 1.14 2006/12/11 15:30:23 yamt Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -41,10 +41,6 @@ The
 .Nm
 KPI allows association of meta-data with files independent of file-system
 support for such elaborate meta-data.
-.Pp
-A system can have a maximum number of
-.Dv FILEASSOC_NHOOKS
-fileassocs associated with each file.
 .Pp
 When plugging a new fileassoc to the system, a developer can specify private
 data to be associated with every file, as well as (potentially different)
