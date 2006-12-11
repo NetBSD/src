@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.12 2006/10/31 21:16:23 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.13 2006/12/11 22:05:38 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -51,7 +51,7 @@
 #if 0
 FILE_RCSID("@(#)Id: apprentice.c,v 1.98 2006/10/31 19:37:17 christos Exp")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.12 2006/10/31 21:16:23 pooka Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.13 2006/12/11 22:05:38 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -1475,14 +1475,14 @@ swap8(uint64_t sv)
 	uint32_t rv;
 	uint8_t *s = (uint8_t *)(void *)&sv; 
 	uint8_t *d = (uint8_t *)(void *)&rv; 
-	d[0] = s[7];
-	d[1] = s[6];
-	d[2] = s[5];
-	d[3] = s[4];
-	d[4] = s[3];
-	d[5] = s[2];
-	d[6] = s[1];
-	d[7] = s[0];
+	d[0] = s[3];
+	d[1] = s[2];
+	d[2] = s[1];
+	d[3] = s[0];
+	d[4] = s[7];
+	d[5] = s[6];
+	d[6] = s[5];
+	d[7] = s[4];
 	return rv;
 }
 
