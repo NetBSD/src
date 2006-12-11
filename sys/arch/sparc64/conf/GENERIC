@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.80 2006/12/04 23:43:35 elad Exp $
+# $NetBSD: GENERIC,v 1.81 2006/12/11 15:24:28 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.80 $"
+#ident 		"GENERIC-$Revision: 1.81 $"
 
 maxusers	64
 
@@ -884,7 +884,6 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	fss		4	# file system snapshot device
 
 options		FILEASSOC		# fileassoc(9) - required for Veriexec 
-#options	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
 #
