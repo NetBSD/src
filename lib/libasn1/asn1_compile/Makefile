@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2006/08/26 18:12:50 christos Exp $
+# $NetBSD: Makefile,v 1.21 2006/12/11 00:55:02 christos Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -27,6 +27,7 @@ asn1_compile_SRCS = 				\
 	symbol.c
 
 roken_SRCS =					\
+	emalloc.c				\
 	getarg.c				\
 	print_version.c				\
 	warnerr.c				\
