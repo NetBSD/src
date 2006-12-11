@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.48 2006/03/29 04:16:50 thorpej Exp $ */
+/*	$NetBSD: stp4020.c,v 1.49 2006/12/11 11:42:48 jdc Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.48 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.49 2006/12/11 11:42:48 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,6 +204,7 @@ static struct pcmcia_chip_functions stp4020_functions = {
 	stp4020_chip_socket_enable,
 	stp4020_chip_socket_disable,
 	stp4020_chip_socket_settype,
+	NULL
 };
 
 
