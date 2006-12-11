@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.12 2006/12/06 13:30:23 tron Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.13 2006/12/11 13:25:02 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -103,4 +103,9 @@ sys/ufs/ffs/ffs_snapshot.c			1.38
 	Prevent kernel panics when creating snapshots on filesystems which
 	use quotas. This fixes PR kern/35121.
 	[hannken, ticket #1598]
+
+sys/arch/xen/x86/consinit.c			1.7
+
+	PR port-xen/35217: Fix compile failure if CONS_OVERRIDE is defined.
+	[bouyer, ticket #1600]
 
