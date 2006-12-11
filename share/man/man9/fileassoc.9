@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.14 2006/12/11 15:30:23 yamt Exp $
+.\" $NetBSD: fileassoc.9,v 1.15 2006/12/11 15:33:01 yamt Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -253,9 +253,10 @@ We need to do that to save a slot for private data storage with each mount
 and/or file:
 .Bd -literal -offset indent
 fileassoc_t myhook_id;
+int error;
 
-myhook_id = fileassoc_register("my_hook", myhook_cleanup);
-if (myhook_id == -1)
+error = fileassoc_register("my_hook", myhook_cleanup, &myhook_id);
+if (error != 0)
 	...handle error...
 .Ed
 .Pp
