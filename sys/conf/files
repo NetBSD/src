@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.819 2006/11/24 22:04:25 wiz Exp $
+#	$NetBSD: files,v 1.820 2006/12/11 15:24:28 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -93,7 +93,6 @@ defparam opt_pax.h		PAX_MPROTECT
 				PAX_SEGVGUARD
 
 defflag	opt_fileassoc.h		FILEASSOC
-defparam opt_fileassoc.h	FILEASSOC_NHOOKS
 
 defflag	opt_gre.h		GRE_DEBUG
 

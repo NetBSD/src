@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.78 2006/11/30 16:53:48 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.79 2006/12/11 15:24:28 yamt Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78 2006/11/30 16:53:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.79 2006/12/11 15:24:28 yamt Exp $");
 
 #include "opt_veriexec.h"
 
@@ -102,7 +102,7 @@ size_t veriexec_name_max;
 
 const struct sysctlnode *veriexec_count_node;
 
-int veriexec_hook;
+static fileassoc_t veriexec_hook;
 
 LIST_HEAD(, veriexec_fpops) veriexec_fpops_list;
 
@@ -267,10 +267,12 @@ veriexec_fpops_add(const char *fp_type, size_t hash_len, size_t ctx_size,
 void
 veriexec_init(void)
 {
+	int error;
+
 	/* Register a fileassoc for Veriexec. */
-	veriexec_hook = fileassoc_register("veriexec", veriexec_clear);
-	if (veriexec_hook == FILEASSOC_INVAL)
-		panic("Veriexec: Can't register fileassoc");
+	error = fileassoc_register("veriexec", veriexec_clear, &veriexec_hook);
+	if (error != 0)
+		panic("Veriexec: Can't register fileassoc: error=%d", error);
 
 	/* Register listener to handle raw disk access. */
 	if (kauth_listen_scope(KAUTH_SCOPE_DEVICE, veriexec_raw_cb, NULL) ==

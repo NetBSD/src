@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.8 2006/11/22 02:02:51 elad Exp $ */
+/* $NetBSD: kern_pax.c,v 1.9 2006/12/11 15:24:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -182,12 +182,20 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 void
 pax_init(void)
 {
+#ifdef PAX_SEGVGUARD
+	int error;
+#endif /* PAX_SEGVGUARD */
+
 #ifdef PAX_MPROTECT
 	proc_specific_key_create(&pax_mprotect_key, NULL);
 #endif /* PAX_MPROTECT */
 
 #ifdef PAX_SEGVGUARD
-	segvguard_id = fileassoc_register("segvguard", pax_segvguard_cb);
+	error = fileassoc_register("segvguard", pax_segvguard_cb,
+	    &segvguard_id);
+	if (error) {
+		panic("pax_init: segvguard_id: error=%d\n", error);
+	}
 	proc_specific_key_create(&pax_segvguard_key, NULL);
 #endif /* PAX_SEGVGUARD */
 }
@@ -286,7 +294,7 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 	    (!pax_segvguard_global && t != PAX_SEGVGUARD_EXPLICIT_ENABLE))
 		return (0);
 
-	if (segvguard_id == FILEASSOC_INVAL || vp == NULL)
+	if (vp == NULL)
 		return (EFAULT);	
 
 	/* Check if we already monitor the file. */

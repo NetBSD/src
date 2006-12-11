@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.284 2006/12/07 20:23:38 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.285 2006/12/11 15:24:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.284 2006/12/07 20:23:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.285 2006/12/11 15:24:28 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.284 2006/12/07 20:23:38 ad Exp $");
 #include "opt_posix.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
-#include "opt_fileassoc.h"
 #include "opt_pax.h"
 
 #include "rnd.h"
@@ -152,10 +151,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.284 2006/12/07 20:23:38 ad Exp $");
 #include <sys/syscall.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
-
-#ifdef FILEASSOC
-#include <sys/fileassoc.h>
-#endif /* FILEASSOC */
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
 #include <sys/pax.h>
@@ -380,10 +375,6 @@ main(void)
 
 	/* Initialize default security model. */
 	secmodel_start();
-
-#ifdef FILEASSOC
-	fileassoc_init();
-#endif /* FILEASSOC */
 
 #if NVERIEXEC > 0
 	/*
