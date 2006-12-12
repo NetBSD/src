@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.19 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.20 2006/12/12 08:44:18 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -471,7 +471,7 @@ _VECTOR_END(MIPSX(exception))
  * slowfault --
  *
  * Alternate entry point into the mips3_UserGenException or
- * or mips3_user_Kern_exception, when the ULTB miss handler couldn't
+ * or mips3_KernGenException, when the ULTB miss handler couldn't
  * find a TLB entry.
  *
  * Find out what mode we came from and call the appropriate handler.
