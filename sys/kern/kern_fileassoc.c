@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.14 2006/12/11 15:24:28 yamt Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.15 2006/12/12 14:22:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.14 2006/12/11 15:24:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.15 2006/12/12 14:22:07 yamt Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -91,7 +91,7 @@ struct fileassoc_table {
 };
 
 /* Global list of hash tables, one per device. */
-LIST_HEAD(, fileassoc_table) fileassoc_tables;
+static LIST_HEAD(, fileassoc_table) fileassoc_tables;
 
 /*
  * Hashing function: Takes a number modulus the mask to give back an
