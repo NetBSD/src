@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.41 2006/11/16 01:33:38 christos Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.41.2.1 2006/12/12 12:58:39 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.41 2006/11/16 01:33:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.41.2.1 2006/12/12 12:58:39 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ int	dead_print(void *);
 #define dead_advlock	genfs_ebadf
 #define dead_bwrite	genfs_nullop
 #define dead_revoke	genfs_nullop
+int	dead_getpages(void *);
 #define dead_putpages	genfs_null_putpages
 
 int	chkvnlock(struct vnode *);
@@ -132,6 +133,7 @@ const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, dead_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, dead_advlock },		/* advlock */
 	{ &vop_bwrite_desc, dead_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, dead_getpages },		/* getpages */
 	{ &vop_putpages_desc, dead_putpages },		/* putpages */
 	{ NULL, NULL }
 };
@@ -322,6 +324,26 @@ dead_print(void *v)
 {
 	printf("tag VT_NON, dead vnode\n");
 	return 0;
+}
+
+int
+dead_getpages(void *v)
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		struct vm_page **a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+
+	if ((ap->a_flags & PGO_LOCKED) == 0)
+		simple_unlock(&ap->a_vp->v_interlock);
+
+	return (EFAULT);
 }
 
 /*
