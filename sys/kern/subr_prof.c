@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.36 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.37 2006/12/13 16:51:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.36 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.37 2006/12/13 16:51:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ MALLOC_DEFINE(M_GPROF, "gprof", "kernel profiling buffer");
 /*
  * Froms is actually a bunch of unsigned shorts indexing tos
  */
-struct gmonparam _gmonparam = { GMON_PROF_OFF };
+struct gmonparam _gmonparam = { .state = GMON_PROF_OFF };
 
 /* Actual start of the kernel text segment. */
 extern char kernel_text[];
