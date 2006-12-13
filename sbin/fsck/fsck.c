@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.44 2006/10/16 02:44:46 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.45 2006/12/13 16:08:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.44 2006/10/16 02:44:46 christos Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.45 2006/12/13 16:08:26 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -236,7 +236,7 @@ isok(struct fstab *fs)
 
 
 static int
-checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
+checkfs(const char *vfst, const char *spec, const char *mntpt, void *auxarg,
     pid_t *pidp)
 {
 	/* List of directories containing fsck_xxx subcommands. */
@@ -249,25 +249,23 @@ checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
 		NULL
 	};
 	const char ** volatile argv, **edir;
+	const char * volatile vfstype = vfst;
 	pid_t pid;
 	int argc, i, status, maxargc;
-	char *optbuf, execname[MAXPATHLEN + 1], execbase[MAXPATHLEN];
+	char *optb;
+	char *volatile optbuf;
+	char execname[MAXPATHLEN + 1], execbase[MAXPATHLEN];
 	const char *extra = getoptions(vfstype);
-
-#ifdef __GNUC__
-	/* Avoid vfork clobbering */
-	(void) &optbuf;
-	(void) &vfstype;
-#endif
 
 	if (!strcmp(vfstype, "ufs"))
 		vfstype = MOUNT_UFS;
 
-	optbuf = NULL;
+	optb = NULL;
 	if (options)
-		catopt(&optbuf, options);
+		catopt(&optb, options);
 	if (extra)
-		catopt(&optbuf, extra);
+		catopt(&optb, extra);
+	optbuf = optb;
 
 	maxargc = 64;
 	argv = emalloc(sizeof(char *) * maxargc);
