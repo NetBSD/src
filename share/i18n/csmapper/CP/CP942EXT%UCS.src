@@ -1,4 +1,4 @@
-# $NetBSD: CP942EXT%UCS.src,v 1.1 2006/12/03 14:28:46 tnozaki Exp $
+# $NetBSD: CP942EXT%UCS.src,v 1.2 2006/12/13 15:40:42 tnozaki Exp $
 
 TYPE		ROWCOL
 NAME		"CP942EXT/UCS"
@@ -11,8 +11,8 @@ BEGIN_MAP
 # This mapping data is made from :
 #
 # JISX0208@1990%UCS.src, CP932VDC@IBM%UCS.src
-# JIS X 0208:1978 - http://www.itscj.ipsj.or.jp/ISO-IR/042.pdf   
-# JIS X 0208:1997 Appendix7 - http://www.jisc.go.jp/app/pager?id=20616   
+# JIS X 0208:1978 - http://www.itscj.ipsj.or.jp/ISO-IR/042.pdf
+# JIS X 0208:1997 Appendix7 - http://www.jisc.go.jp/
 #
 0x2121 = 0x3000
 0x2122 = 0x3001
