@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.142 2006/10/23 19:53:24 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.143 2006/12/13 18:04:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.142 2006/10/23 19:53:24 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.143 2006/12/13 18:04:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -600,24 +600,17 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 {
 	struct stat st;
 	int c, d;
-	FILE *fin, *dout;
-	int (*closefunc)(FILE *);
-	sigfunc oldintr, oldintp;
-	volatile off_t hashbytes;
-	char *lmode, *bufp;
+	FILE *volatile fin;
+	FILE *volatile dout;
+	int (*volatile closefunc)(FILE *);
+	sigfunc volatile oldintr;
+	sigfunc volatile oldintp;
+	off_t volatile hashbytes;
+	char *volatile lmode;
+	char *bufp;
 	static size_t bufsize;
 	static char *buf;
 	int oprogress;
-
-#ifdef __GNUC__			/* to shut up gcc warnings */
-	(void)&fin;
-	(void)&dout;
-	(void)&closefunc;
-	(void)&oldintr;
-	(void)&oldintp;
-	(void)&lmode;
-	fin = NULL;	/* XXX gcc4 */
-#endif
 
 	hashbytes = mark;
 	direction = "sent";
@@ -895,31 +888,26 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 }
 
 void
-recvrequest(const char *cmd, const char *local, const char *remote,
+recvrequest(const char *cmd, const char *volatile local, const char *remote,
 	    const char *lmode, int printnames, int ignorespecial)
 {
-	FILE *fout, *din;
-	int (*closefunc)(FILE *);
-	sigfunc oldintr, oldintp;
+	FILE *volatile fout;
+	FILE *volatile din;
+	int (*volatile closefunc)(FILE *);
+	sigfunc volatile oldintr;
+	sigfunc volatile oldintp;
 	int c, d;
-	volatile int is_retr, tcrflag, bare_lfs;
+	int volatile is_retr;
+	int volatile tcrflag;
+	int volatile bare_lfs;
 	static size_t bufsize;
 	static char *buf;
-	volatile off_t hashbytes;
+	off_t volatile hashbytes;
 	struct stat st;
 	time_t mtime;
 	struct timeval tval[2];
 	int oprogress;
 	int opreserve;
-
-#ifdef __GNUC__			/* to shut up gcc warnings */
-	(void)&local;
-	(void)&fout;
-	(void)&din;
-	(void)&closefunc;
-	(void)&oldintr;
-	(void)&oldintp;
-#endif
 
 	fout = NULL;
 	din = NULL;
@@ -1872,15 +1860,10 @@ abortpt(int notused)
 void
 proxtrans(const char *cmd, const char *local, const char *remote)
 {
-	sigfunc oldintr;
+	sigfunc volatile oldintr;
 	int prox_type, nfnd;
-	volatile int secndflag;
-	char *cmd2;
-
-#ifdef __GNUC__			/* to shut up gcc warnings */
-	(void)&oldintr;
-	(void)&cmd2;
-#endif
+	int volatile secndflag;
+	char *volatile cmd2;
 
 	oldintr = NULL;
 	secndflag = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.101 2006/01/31 20:05:36 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.102 2006/12/13 18:04:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.101 2006/01/31 20:05:36 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.102 2006/12/13 18:04:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ static void	setupoption(char *, char *, char *);
 int		main(int, char *[]);
 
 int
-main(int argc, char *argv[])
+main(int volatile argc, char **volatile argv)
 {
 	int ch, rval;
 	struct passwd *pw;
@@ -502,11 +502,6 @@ main(int argc, char *argv[])
 	(void)xsignal(SIGUSR1, crankrate);
 	(void)xsignal(SIGUSR2, crankrate);
 	(void)xsignal(SIGWINCH, setttywidth);
-
-#ifdef __GNUC__			/* to shut up gcc warnings */
-	(void)&argc;
-	(void)&argv;
-#endif
 
 	if (argc > 0) {
 		if (isupload) {
