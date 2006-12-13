@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.172 2006/11/25 16:48:32 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.173 2006/12/13 18:04:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.172 2006/11/25 16:48:32 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.173 2006/12/13 18:04:08 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -467,21 +467,31 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	struct addrinfo		hints, *res, *res0 = NULL;
 	int			error;
 	char			hbuf[NI_MAXHOST];
-	volatile sigfunc	oldintr, oldintp;
-	volatile int		s;
+	sigfunc volatile	oldintr;
+	sigfunc volatile	oldintp;
+	int volatile		s;
 	struct stat		sb;
-	int			ischunked, isproxy, rval, hcode;
+	int volatile		ischunked;
+	int volatile		isproxy;
+	int volatile		rval;
+	int volatile		hcode;
 	size_t			len;
 	static size_t		bufsize;
 	static char		*xferbuf;
 	const char		*cp, *token;
-	char			*ep, *buf, *savefile;
-	char			*auth, *location, *message;
-	char			*user, *pass, *host, *port, *path, *decodedpath;
+	char			*ep;
+	char			*volatile buf;
+	char			*volatile savefile;
+	char			*volatile auth;
+	char			*volatile location;
+	char			*volatile message;
+	char			*user, *pass, *host, *port, *path;
+	char			*volatile decodedpath;
 	char			*puser, *ppass, *useragent;
 	off_t			hashbytes, rangestart, rangeend, entitylen;
-	int			 (*closefunc)(FILE *);
-	FILE			*fin, *fout;
+	int			(*volatile closefunc)(FILE *);
+	FILE			*volatile fin;
+	FILE			*volatile fout;
 	time_t			mtime;
 	url_t			urltype;
 	in_port_t		portnum;
@@ -495,22 +505,6 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	ischunked = isproxy = hcode = 0;
 	rval = 1;
 	user = pass = host = path = decodedpath = puser = ppass = NULL;
-
-#ifdef __GNUC__			/* shut up gcc warnings */
-	(void)&closefunc;
-	(void)&fin;
-	(void)&fout;
-	(void)&buf;
-	(void)&savefile;
-	(void)&rval;
-	(void)&isproxy;
-	(void)&hcode;
-	(void)&ischunked;
-	(void)&message;
-	(void)&location;
-	(void)&auth;
-	(void)&decodedpath;
-#endif
 
 	if (parse_url(url, "URL", &urltype, &user, &pass, &host, &port,
 	    &portnum, &path) == -1)
