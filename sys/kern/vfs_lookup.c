@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.74 2006/12/13 06:36:35 chs Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.75 2006/12/13 13:36:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.74 2006/12/13 06:36:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.75 2006/12/13 13:36:19 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -498,6 +498,7 @@ lookup(struct nameidata *ndp)
 
 		if (dp->v_type != VDIR) {
 			error = ENOTDIR;
+			vput(dp);
 			goto bad;
 		}
 
@@ -546,6 +547,7 @@ dirloop:
 	cnp->cn_hash = namei_hash(cnp->cn_nameptr, &cp);
 	cnp->cn_namelen = cp - cnp->cn_nameptr;
 	if (cnp->cn_namelen > NAME_MAX) {
+		vput(dp);
 		error = ENAMETOOLONG;
 		goto bad;
 	}
