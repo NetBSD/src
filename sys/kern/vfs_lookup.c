@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.73 2006/12/09 16:11:51 chs Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.74 2006/12/13 06:36:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.73 2006/12/09 16:11:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.74 2006/12/13 06:36:35 chs Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -520,6 +520,7 @@ lookup(struct nameidata *ndp)
 				default:
 					KASSERT(0);
 				}
+				vput(dp);
 				goto bad;
 			}
 			ndp->ni_vp = dp;
