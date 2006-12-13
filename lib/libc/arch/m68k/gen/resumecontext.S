@@ -1,4 +1,4 @@
-/*	$NetBSD: resumecontext.S,v 1.3 2003/01/26 17:58:55 kleink Exp $	*/
+/*	$NetBSD: resumecontext.S,v 1.4 2006/12/13 10:48:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: resumecontext.S,v 1.3 2003/01/26 17:58:55 kleink Exp $")
+	RCSID("$NetBSD: resumecontext.S,v 1.4 2006/12/13 10:48:02 martin Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -53,6 +53,14 @@ ENTRY(_resumecontext)
 	lea	%sp@,%a0
 	movl	%a0,%sp@-
 	jbsr	PIC_PLT(_C_LABEL(_getcontext))
-	movl	%sp@(4 + 4),%sp@
-	jbsr	PIC_PLT(_C_LABEL(setcontext))
+	movl	%sp@(4 + 4),%sp@	/* uc_link */
+	tstl	%sp@			/* check for NULL */
+	jne	1f
+	jbsr	PIC_PLT(_C_LABEL(exit))	/* cleanly exit(0) */
+	jmp	2f
+1:	jbsr	PIC_PLT(_C_LABEL(setcontext))
+	/* NOTREACHED */
+	/* But just in case... */
+2:	movl	#-1,%sp@
+	jbsr	PIC_PLT(_C_LABEL(_exit))
 	/* NOTREACHED */
