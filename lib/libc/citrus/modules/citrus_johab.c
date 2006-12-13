@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_johab.c,v 1.1 2006/10/18 17:54:55 tnozaki Exp $ */
+/* $NetBSD: citrus_johab.c,v 1.2 2006/12/13 16:16:56 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -27,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_johab.c,v 1.1 2006/10/18 17:54:55 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_johab.c,v 1.2 2006/12/13 16:16:56 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -191,7 +191,7 @@ _citrus_JOHAB_mbrtowc_priv(_JOHABEncodingInfo * __restrict ei,
 		if (n-- < 1)
 			goto restart;
 		l = *s0++ & 0xFF;
-		if (l <= 0x7E) {
+		if (l <= 0x7F) {
 			if (pwc != NULL)
 				*pwc = (wchar_t)l;
 			*nresult = (l == 0) ? 0 : 1;
@@ -243,7 +243,7 @@ _citrus_JOHAB_wcrtomb_priv(_JOHABEncodingInfo * __restrict ei,
 		return EINVAL;
 
 	/* XXX assume wchar_t as int */
-	if ((uint32_t)wc <= 0x7E) {
+	if ((uint32_t)wc <= 0x7F) {
 		if (n < 1)
 			goto e2big;
 		*s = wc & 0xFF;
@@ -282,10 +282,10 @@ _citrus_JOHAB_stdenc_wctocs(_JOHABEncodingInfo * __restrict ei,
 	_DIAGASSERT(idx != NULL);
 
 	/* XXX assume wchar_t as int */
-	if ((uint32_t)wc <= 0xFE) {
+	if ((uint32_t)wc <= 0x7F) {
 		*idx = (_index_t)wc;
 		*csid = 0;
-	} else {
+	} else if ((uint32_t)wc <= 0xFFFF) {
 		l = (wc >> 8) & 0xFF;
 		t = wc & 0xFF;
 		if (ishangul(l, t) || isuda(l, t)) {
@@ -314,6 +314,8 @@ _citrus_JOHAB_stdenc_wctocs(_JOHABEncodingInfo * __restrict ei,
 			*idx = (_index_t)((l << 8) | t);
 			*csid = 2;
 		}
+	} else {
+		return EILSEQ;
 	}
 	return 0;
 }
@@ -331,6 +333,8 @@ _citrus_JOHAB_stdenc_cstowc(_JOHABEncodingInfo * __restrict ei,
 	switch (csid) {
 	case 0:
 	case 1:
+		if (idx > 0x7F)
+			return EILSEQ;
 		*wc = (wchar_t)idx;
 		break;
 	case 2:
