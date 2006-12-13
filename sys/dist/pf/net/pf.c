@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.32 2006/12/09 05:33:06 dyoung Exp $	*/
+/*	$NetBSD: pf.c,v 1.33 2006/12/13 03:45:48 matt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -3053,14 +3053,13 @@ cleanup:
 			rewrite = 1;
 		} else
 			s->src.seqdiff = 0;
+		s->src.max_win = MAX(ntohs(th->th_win), 1);
 		if (th->th_flags & TH_SYN) {
 			s->src.seqhi++;
 			s->src.wscale = pf_get_wscale(m, off, th->th_off, af);
-		}
-		s->src.max_win = MAX(ntohs(th->th_win), 1);
-		if (s->src.wscale & PF_WSCALE_MASK) {
+		} else if (s->src.wscale & PF_WSCALE_MASK) {
 			/* Remove scale factor from initial window */
-			int win = s->src.max_win;
+			u_int win = s->src.max_win;
 			win += 1 << (s->src.wscale & PF_WSCALE_MASK);
 			s->src.max_win = (win - 1) >>
 			    (s->src.wscale & PF_WSCALE_MASK);
