@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.491 2006/12/13 13:21:07 perry Exp $
+#	$NetBSD: 3RDPARTY,v 1.492 2006/12/13 13:22:29 perry Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -770,7 +770,7 @@ original.
 
 Package:	tcpdump
 Version:	3.8.3
-Current Vers:	3.9.4
+Current Vers:	3.9.5
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
