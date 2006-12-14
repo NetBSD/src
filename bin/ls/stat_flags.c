@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.20 2006/12/14 14:15:26 christos Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.21 2006/12/14 17:54:19 he Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.20 2006/12/14 14:15:26 christos Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.21 2006/12/14 17:54:19 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ flags_to_string(u_long flags, const char *def)
 	}								\
 }
 
-#ifdef UNUSED_BLOCK
+#ifdef MTREE
 /*
  * string_to_flags --
  *	Take string of arguments and return stat flags.  Return 0 on
@@ -184,4 +184,4 @@ string_to_flags(char **stringp, u_long *setp, u_long *clrp)
 
 	return (0);
 }
-#endif /* UNUSED_BLOCK */
+#endif /* MTREE */
