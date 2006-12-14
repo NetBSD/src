@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.30 2006/10/22 16:46:49 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.31 2006/12/14 14:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.30 2006/10/22 16:46:49 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.31 2006/12/14 14:18:03 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -130,16 +130,13 @@ transfer(char *buf, int fd, const char *eofchars)
 {
 	int ct;
 	char c, buffer[BUFSIZ];
-	char *p = buffer;
+	char * volatile p;
 	int cnt, eof;
 	time_t start;
 	sig_t f;
 	char r;
 
-#if __GNUC__		/* XXX pacify gcc */
-	(void)&p;
-#endif
-
+	p = buffer;
 	xpwrite(FD, buf, strlen(buf));
 	quit = 0;
 	write(attndes[1], "W", 1);	/* Put TIPOUT into a wait state */
@@ -853,13 +850,14 @@ char *
 expand(char aname[])
 {
 	static char xname[BUFSIZ];
-	char * volatile name = aname;
+	char * volatile name;
 	char cmdbuf[BUFSIZ];
 	int mypid, l;
 	char *cp;
 	const char *Shell;
 	int s, pivec[2];
 
+	name = aname;
 	if (!anyof(name, "~{[*?$`'\"\\"))
 		return(name);
 	if (pipe(pivec) < 0) {
