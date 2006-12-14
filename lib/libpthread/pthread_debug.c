@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.8 2004/03/14 01:19:41 cl Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.9 2006/12/14 20:40:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_debug.c,v 1.8 2004/03/14 01:19:41 cl Exp $");
+__RCSID("$NetBSD: pthread_debug.c,v 1.9 2006/12/14 20:40:57 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -158,7 +158,7 @@ pthread__debuglog_printf(const char *fmt, ...)
 	int vpid;
 	va_list ap;
 
-	if (debugbuf == NULL) 
+	if (debugbuf == NULL || linebuf == NULL) 
 		return;
 
 	if (pthread__maxconcurrency > 1) {
