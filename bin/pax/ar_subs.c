@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.50 2006/10/07 09:53:20 elad Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.51 2006/12/14 23:18:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.50 2006/10/07 09:53:20 elad Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.51 2006/12/14 23:18:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -578,6 +578,10 @@ wr_archive(ARCHD *arcn, int is_app)
 		 * check if this file meets user specified options match.
 		 */
 		if (sel_chk(arcn) != 0)
+			continue;
+		if ((res = mod_name(arcn)) < 0)
+			break;
+		if (res == 1)
 			continue;
 		fd = -1;
 		if (uflag) {
