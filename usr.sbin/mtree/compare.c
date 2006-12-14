@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.49 2006/10/30 20:22:54 christos Exp $	*/
+/*	$NetBSD: compare.c,v 1.50 2006/12/14 20:21:47 he Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.49 2006/10/30 20:22:54 christos Exp $");
+__RCSID("$NetBSD: compare.c,v 1.50 2006/12/14 20:21:47 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: compare.c,v 1.49 2006/10/30 20:22:54 christos Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -85,18 +86,22 @@ do {									\
 
 #define CHANGEFLAGS							\
 	if (flags != p->fts_statp->st_flags) {				\
+		char *sf;						\
 		if (!label) {						\
 			MARK;						\
-			printf("%sflags (\"%s\"", tab,			\
-			    flags_to_string(p->fts_statp->st_flags, "none")); \
+			sf = flags_to_string(p->fts_statp->st_flags, "none"); \
+			printf("%sflags (\"%s\"", tab, sf);		\
+			free(sf);					\
 		}							\
 		if (lchflags(p->fts_accpath, flags)) {			\
 			label++;					\
 			printf(", not modified: %s)\n",			\
 			    strerror(errno));				\
-		} else							\
-			printf(", modified to \"%s\")\n",		\
-			     flags_to_string(flags, "none"));		\
+		} else {						\
+			sf = flags_to_string(flags, "none");		\
+			printf(", modified to \"%s\")\n", sf);		\
+			free(sf);					\
+		}							\
 	}
 
 /* SETFLAGS:
@@ -336,11 +341,14 @@ typeerr:		LABEL;
         if ((s->flags & F_FLAGS) && ((s->st_flags != p->fts_statp->st_flags)
 	    || mflag || iflag)) {
 		if (s->st_flags != p->fts_statp->st_flags) {
+			char *f_s;
 			LABEL;
-			printf("%sflags (\"%s\" is not ", tab,
-			    flags_to_string(s->st_flags, "none"));
-			printf("\"%s\"",
-			    flags_to_string(p->fts_statp->st_flags, "none"));
+			f_s = flags_to_string(s->st_flags, "none");
+			printf("%sflags (\"%s\" is not ", tab, f_s);
+			free(f_s);
+			f_s = flags_to_string(p->fts_statp->st_flags, "none");
+			printf("\"%s\"", f_s);
+			free(f_s);
 		}
 		if (uflag) {
 			if (iflag)
