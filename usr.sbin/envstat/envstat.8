@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.7 2004/04/25 03:13:00 kochi Exp $
+.\"	$NetBSD: envstat.8,v 1.8 2006/12/14 02:33:18 reed Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -101,6 +101,11 @@ Each column is additionally separated by a single space.
 The default is either the length of the longest sensor
 name or spread evenly to fill 80 columns, whichever is greater.
 .El
+.Sh EXAMPLES
+Display the 
+.Do acpibat0 charge
+.Dc sensor on one line (row format) every ten seconds:
+.Dl envstat -s \*qacpibat0 charge\*q -r -i 10 
 .Sh SEE ALSO
 .Xr acpiacad 4 ,
 .Xr acpibat 4 ,
