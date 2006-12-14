@@ -1,4 +1,4 @@
-/*	$NetBSD: ventel.c,v 1.15 2006/12/14 14:18:04 christos Exp $	*/
+/*	$NetBSD: ventel.c,v 1.16 2006/12/14 17:09:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ventel.c,v 1.15 2006/12/14 14:18:04 christos Exp $");
+__RCSID("$NetBSD: ventel.c,v 1.16 2006/12/14 17:09:43 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -61,7 +61,8 @@ static	int	vensync(int);
 #define	DELAYUS		100000		/* delay in microseconds */
 
 int
-ven_dialer(char *num, char *acu)
+/*ARGSUSED*/
+ven_dialer(char *num, char *acu __unused)
 {
 	char *cp;
 	int connected = 0;
@@ -72,26 +73,26 @@ ven_dialer(char *num, char *acu)
 	 * Get in synch with a couple of carriage returns
 	 */
 	if (!vensync(FD)) {
-		printf("can't synchronize with ventel\n");
+		(void)printf("can't synchronize with ventel\n");
 		return (0);
 	}
 	if (boolean(value(VERBOSE)))
-		printf("\ndialing...");
-	fflush(stdout);
-	tcgetattr(FD, &cntrl);
+		(void)printf("\ndialing...");
+	(void)fflush(stdout);
+	(void)tcgetattr(FD, &cntrl);
 	cntrl.c_cflag |= HUPCL;
-	tcsetattr(FD, TCSANOW, &cntrl);
+	(void)tcsetattr(FD, TCSANOW, &cntrl);
 	echo("#k$\r$\n$D$I$A$L$:$ ");
 	for (cp = num; *cp; cp++) {
-		usleep(DELAYUS);
-		write(FD, cp, 1);
+		(void)usleep(DELAYUS);
+		(void)write(FD, cp, 1);
 	}
-	usleep(DELAYUS);
-	write(FD, "\r", 1);
-	gobble('\n', line);
+	(void)usleep(DELAYUS);
+	(void)write(FD, "\r", 1);
+	(void)gobble('\n', line);
 	if (gobble('\n', line))
 		connected = gobble('!', line);
-	tcflush(FD, TCIOFLUSH);
+	(void)tcflush(FD, TCIOFLUSH);
 	if (timeout)
 		ven_disconnect();	/* insurance */
 	if (connected || timeout || !boolean(value(VERBOSE)))
@@ -112,7 +113,7 @@ ven_dialer(char *num, char *acu)
 				*cp = tolower((unsigned char)*cp);
 			cp++;
 		}
-		printf("%s...", msg);
+		(void)printf("%s...", msg);
 	}
 	return (connected);
 }
@@ -121,15 +122,15 @@ void
 ven_disconnect(void)
 {
 
-	close(FD);
+	(void)close(FD);
 }
 
 void
 ven_abort(void)
 {
 
-	write(FD, "\03", 1);
-	close(FD);
+	(void)write(FD, "\03", 1);
+	(void)close(FD);
 }
 
 static void
@@ -140,26 +141,27 @@ echo(const char *s)
 	while ((c = *s++) != 0) switch (c) {
 
 	case '$':
-		read(FD, &c, 1);
+		(void)read(FD, &c, 1);
 		s++;
 		break;
 
 	case '#':
 		c = *s++;
-		write(FD, &c, 1);
+		(void)write(FD, &c, 1);
 		break;
 
 	default:
-		write(FD, &c, 1);
-		read(FD, &c, 1);
+		(void)write(FD, &c, 1);
+		(void)read(FD, &c, 1);
 	}
 }
 
 static void
-sigALRM(int dummy)
+/*ARGSUSED*/
+sigALRM(int dummy __unused)
 {
 
-	printf("\07timeout waiting for reply\n");
+	(void)printf("\07timeout waiting for reply\n");
 	timeout = 1;
 	longjmp(timeoutbuf, 1);
 }
@@ -176,20 +178,20 @@ gobble(char match, char response[])
 	timeout = 0;
 	do {
 		if (setjmp(timeoutbuf)) {
-			signal(SIGALRM, f);
+			(void)signal(SIGALRM, f);
 			*cp = '\0';
 			return (0);
 		}
-		alarm(number(value(DIALTIMEOUT)));
-		read(FD, cp, 1);
-		alarm(0);
+		(void)alarm((unsigned)number(value(DIALTIMEOUT)));
+		(void)read(FD, cp, 1);
+		(void)alarm(0);
 		c = (*cp++ &= 0177);
 #ifdef notdef
 		if (boolean(value(VERBOSE)))
-			putchar(c);
+			(void)putchar(c);
 #endif
 	} while (c != '\n' && c != match);
-	signal(SIGALRM, SIG_DFL);
+	(void)signal(SIGALRM, SIG_DFL);
 	*cp = '\0';
 	return (c == match);
 }
@@ -214,30 +216,30 @@ vensync(int fd)
 	 * If you don't have the ioctl calls to diddle directly
 	 * with DTR, you can always try setting the baud rate to 0.
 	 */
-	ioctl(FD, TIOCCDTR, 0);
-	sleep(1);
-	ioctl(FD, TIOCSDTR, 0);
+	(void)ioctl(FD, TIOCCDTR, 0);
+	(void)sleep(1);
+	(void)ioctl(FD, TIOCSDTR, 0);
 	while (already < MAXRETRY) {
 		/*
 		 * After reseting the modem, send it two \r's to
 		 * autobaud on. Make sure to delay between them
 		 * so the modem can frame the incoming characters.
 		 */
-		write(fd, "\r", 1);
-		usleep(DELAYUS);
-		write(fd, "\r", 1);
-		sleep(2);
-		if (ioctl(fd, FIONREAD, (caddr_t)&nread) < 0) {
+		(void)write(fd, "\r", 1);
+		(void)usleep(DELAYUS);
+		(void)write(fd, "\r", 1);
+		(void)sleep(2);
+		if (ioctl(fd, FIONREAD, &nread) < 0) {
 			perror("tip: ioctl");
 			continue;
 		}
 		while (nread > 0) {
-			read(fd, buf, min(nread, sizeof buf));
+			(void)read(fd, buf, min(nread, sizeof buf));
 			if ((buf[min(nread, sizeof buf) - 1] & 0177) == '$')
 				return (1);
 			nread -= min(nread, 60);
 		}
-		sleep(1);
+		(void)sleep(1);
 		already++;
 	}
 	return (0);
