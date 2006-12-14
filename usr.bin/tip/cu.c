@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.19 2006/11/29 14:44:45 jdc Exp $	*/
+/*	$NetBSD: cu.c,v 1.20 2006/12/14 17:09:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.19 2006/11/29 14:44:45 jdc Exp $");
+__RCSID("$NetBSD: cu.c,v 1.20 2006/12/14 17:09:43 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -130,9 +130,9 @@ cumain(int argc, char *argv[])
 			if (DV != NULL)
 				errx(3,"more than one line specified");
 			if(strchr(optarg, '/'))
-				DV=optarg;
+				DV = optarg;
 			else
-				asprintf(&DV, "/dev/%s", optarg);
+				(void)asprintf(&DV, "/dev/%s", optarg);
 			break;
 		case 's':
 			BR = atoi(optarg);
@@ -159,7 +159,7 @@ cumain(int argc, char *argv[])
 			break;
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			snprintf(brbuf, sizeof(brbuf) -1, "%s%c",
+			(void)snprintf(brbuf, sizeof(brbuf) -1, "%s%c",
 				 brbuf, c);
 			BR = atoi(brbuf);
 			break;
@@ -196,11 +196,11 @@ cumain(int argc, char *argv[])
 		break;
 	}
 
-	signal(SIGINT, cleanup);
-	signal(SIGQUIT, cleanup);
-	signal(SIGHUP, cleanup);
-	signal(SIGTERM, cleanup);
-	/* signal(SIGCHLD, SIG_DFL) */	/* XXX seems wrong */
+	(void)signal(SIGINT, cleanup);
+	(void)signal(SIGQUIT, cleanup);
+	(void)signal(SIGHUP, cleanup);
+	(void)signal(SIGTERM, cleanup);
+	/* (void)signal(SIGCHLD, SIG_DFL) */	/* XXX seems wrong */
 
 	/*
 	 * The "cu" host name is used to define the
@@ -260,7 +260,7 @@ cumain(int argc, char *argv[])
 			errx(3, "unsupported speed %ld", BR);
 		}
 	}
-	if (connect()) {
+	if (tip_connect()) {
 		errx(1, "Connect failed");
 	}
 	if (!HW) {
@@ -273,7 +273,7 @@ cumain(int argc, char *argv[])
 static void
 cuusage(void)
 {
-	fprintf(stderr, "Usage: cu [options] [phone-number|\"dir\"]\n"
+	(void)fprintf(stderr, "Usage: cu [options] [phone-number|\"dir\"]\n"
 	    "Use cu --help for help\n");
 	exit(8);
 }
@@ -281,7 +281,7 @@ cuusage(void)
 static void
 cuhelp(void)
 {
-	fprintf(stderr,
+	(void)fprintf(stderr,
 	    "BSD tip/cu\n"
 	    "Usage: cu [options] [phone-number|\"dir\"]\n"
 	    " -E,--escape char: Use this escape character\n"
