@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.79 2006/12/11 15:24:28 yamt Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.80 2006/12/14 05:15:33 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.79 2006/12/11 15:24:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.80 2006/12/14 05:15:33 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1031,8 +1031,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	}
 
 	/* Continue entry initialization. */
-	vfe->type = prop_number_integer_value(prop_dictionary_get(dict,
-	    "entry-type"));
+	prop_dictionary_get_uint8(dict, "entry-type", &vfe->type);
 	vfe->status = FINGERPRINT_NOTEVAL;
 
 	vfe->page_fp = NULL;
