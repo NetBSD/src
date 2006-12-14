@@ -1,4 +1,4 @@
-/*	$NetBSD: debuglog.c,v 1.5 2003/08/20 09:50:16 martin Exp $	*/
+/*	$NetBSD: debuglog.c,v 1.6 2006/12/14 20:39:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,6 +64,8 @@ main(int argc, char *argv[])
 	extern char *optarg;
 
 	int follow, initialize, raw, keep;
+
+	setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
 
 	follow = 0;
 	initialize = 0;
