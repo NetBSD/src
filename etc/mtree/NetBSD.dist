@@ -1,5 +1,9 @@
-#	$NetBSD: NetBSD.dist,v 1.330 2006/11/23 03:25:24 tnozaki Exp $
+#	$NetBSD: NetBSD.dist,v 1.331 2006/12/14 02:24:21 reed Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
+
+# Do not customize this file as it may be overwritten on upgrades.
+# Put your custom specifications in /etc/mtree/special.local.
+# See security.conf(5) for details.
 
 /set type=dir uname=root gname=wheel mode=0755
 
