@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.46 2006/12/14 22:27:12 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.47 2006/12/14 22:35:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.46 2006/12/14 22:27:12 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.47 2006/12/14 22:35:20 christos Exp $");
 
 #include "mpu.h"
 
@@ -724,7 +724,7 @@ eso_set_params(void *hdl, int setmode, int usemode,
 	struct eso_softc *sc;
 	struct audio_params *p;
 	stream_filter_list_t *fil;
-	int mode, r[2], rd[2], clk;
+	int mode, r[2], rd[2], ar[2], clk;
 	unsigned int srg, fltdiv;
 	int i;
 
@@ -752,8 +752,9 @@ eso_set_params(void *hdl, int setmode, int usemode,
 		r[1] = ESO_CLK1 /
 		    (128 - (rd[1] = 128 - ESO_CLK1 / p->sample_rate));
 
-		clk = ABS((int)p->sample_rate - r[0])
-		      > ABS((int)p->sample_rate - r[1]);
+		ar[0] = p->sample_rate - r[0];
+		ar[1] = p->sample_rate - r[1];
+		clk = ABS(ar[0]) > ABS(ar[1]) ? 1 : 0;
 		srg = rd[clk] | (clk == 1 ? ESO_CLK1_SELECT : 0x00);
 
 		/* Roll-off frequency of 87%, as in the ES1888 driver. */
