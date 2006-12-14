@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.17 2006/12/07 23:15:20 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.18 2006/12/14 18:15:59 alc Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.17 2006/12/07 23:15:20 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.18 2006/12/14 18:15:59 alc Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -175,17 +175,25 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 	uint8_t *buf;
 	int rv;
 
+	rv = 0;
+
 	buf = malloc(pu->pu_maxreqlen);
 	if (!buf)
 		return -1;
 
-	if ((flags & PUFFSLOOP_NODAEMON) == 0)
-		if (daemon(0, 0) == -1)
-			return -1;
+	if ((flags & PUFFSLOOP_NODAEMON) == 0) {
+		rv = daemon(0, 0);
+		if (rv != 0)
+			goto fail;
+	}
 
-	for (;;)
-		if ((rv = puffs_oneop(pu, buf, pu->pu_maxreqlen)) != 0)
-			return rv;
+	do {
+		rv = puffs_oneop(pu, buf, pu->pu_maxreqlen);
+	} while (rv == 0);
+
+fail:
+	free(buf);
+	return rv;
 }
 
 enum {PUFFCALL_ANSWER, PUFFCALL_IGNORE, PUFFCALL_UNMOUNT};
