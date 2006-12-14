@@ -1,4 +1,4 @@
-/*	$NetBSD: ventel.c,v 1.14 2006/04/03 02:25:27 perry Exp $	*/
+/*	$NetBSD: ventel.c,v 1.15 2006/12/14 14:18:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ventel.c,v 1.14 2006/04/03 02:25:27 perry Exp $");
+__RCSID("$NetBSD: ventel.c,v 1.15 2006/12/14 14:18:04 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -167,14 +167,11 @@ sigALRM(int dummy)
 static int
 gobble(char match, char response[])
 {
-	char *cp = response;
+	char * volatile cp;
 	sig_t f;
 	char c;
 
-#if __GNUC__	/* XXX pacify gcc */
-	(void)&cp;
-#endif
-
+	cp = response;
 	f = signal(SIGALRM, sigALRM);
 	timeout = 0;
 	do {

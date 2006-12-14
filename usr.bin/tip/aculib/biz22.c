@@ -1,4 +1,4 @@
-/*	$NetBSD: biz22.c,v 1.11 2006/04/03 02:25:27 perry Exp $	*/
+/*	$NetBSD: biz22.c,v 1.12 2006/12/14 14:18:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: biz22.c,v 1.11 2006/04/03 02:25:27 perry Exp $");
+__RCSID("$NetBSD: biz22.c,v 1.12 2006/12/14 14:18:04 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -155,14 +155,10 @@ cmd(const char *s)
 }
 
 static int
-detect(const char *s)
+detect(const char * volatile s)
 {
 	sig_t f;
 	char c;
-
-#if __GNUC__	/* XXX pacify gcc */
-	(void)&s;
-#endif
 
 	f = signal(SIGALRM, sigALRM);
 	btimeout = 0;

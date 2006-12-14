@@ -1,4 +1,4 @@
-/*	$NetBSD: v3451.c,v 1.12 2006/04/03 02:25:27 perry Exp $	*/
+/*	$NetBSD: v3451.c,v 1.13 2006/12/14 14:18:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)v3451.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: v3451.c,v 1.12 2006/04/03 02:25:27 perry Exp $");
+__RCSID("$NetBSD: v3451.c,v 1.13 2006/12/14 14:18:04 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -135,14 +135,13 @@ static int
 expect(const char *cp)
 {
 	char buf[300];
-	char *rp = buf;
-	int timeout = 30, online = 0;
+	char * volatile rp;
+	int volatile timeout;
+	int volatile online;
 
-#if __GNUC__	/* XXX pacify gcc */
-	(void)&online;
-	(void)&rp;
-	(void)&timeout;
-#endif
+	rp = buf;
+	timeout = 30;
+	online = 0;
 
 	if (strcmp(cp, "\"\"") == 0)
 		return (1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: acu.c,v 1.13 2006/10/24 08:29:47 gson Exp $	*/
+/*	$NetBSD: acu.c,v 1.14 2006/12/14 14:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: acu.c,v 1.13 2006/10/24 08:29:47 gson Exp $");
+__RCSID("$NetBSD: acu.c,v 1.14 2006/12/14 14:18:03 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -65,15 +65,13 @@ static acu_t   *acutype(char *);
 const char *
 connect(void)
 {
-	char * volatile cp = PN;
+	char * volatile cp;
 	char *phnum, string[256];
 	FILE *fd;
-	int tried = 0;
+	int volatile tried;
 
-#if __GNUC__		/* XXX pacify gcc */
-	(void)&cp;
-	(void)&tried;
-#endif
+	cp = PN;
+	tried = 0;
 
 	if (!DU) {		/* regular connect message */
 		if (CM != NULL)
