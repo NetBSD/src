@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.15 2006/04/30 23:34:50 christos Exp $	*/
+/*	$NetBSD: hunt.c,v 1.16 2006/12/14 17:09:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: hunt.c,v 1.15 2006/04/30 23:34:50 christos Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.16 2006/12/14 17:09:43 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -46,9 +46,8 @@ void	dead(int);
 
 void
 /*ARGSUSED*/
-dead(int dummy)
+dead(int dummy __unused)
 {
-
 	deadfl = 1;
 	longjmp(deadline, 1);
 }
@@ -72,10 +71,10 @@ hunt(char *name)
 		if (!HW)
 			break;
 		if (setjmp(deadline) == 0) {
-			alarm(10);
+			(void)alarm(10);
 			FD = open(cp, (O_RDWR | (DC ? O_NONBLOCK : 0)));
 		}
-		alarm(0);
+		(void)alarm(0);
 		if (FD < 0) {
 			warn(cp);
 			deadfl = 1;
@@ -83,20 +82,20 @@ hunt(char *name)
 			struct termios cntrl;
 
 			if (flock(FD, (LOCK_EX|LOCK_NB)) != 0) {
-				close(FD);
+				(void)close(FD);
 				FD = -1;
 				continue;
 			}
 
-			tcgetattr(FD, &cntrl);
+			(void)tcgetattr(FD, &cntrl);
 			if (!DC)
 				cntrl.c_cflag |= HUPCL;
-			tcsetattr(FD, TCSAFLUSH, &cntrl);
-			ioctl(FD, TIOCEXCL, 0);
-			signal(SIGALRM, SIG_DFL);
+			(void)tcsetattr(FD, TCSAFLUSH, &cntrl);
+			(void)ioctl(FD, TIOCEXCL, 0);
+			(void)signal(SIGALRM, SIG_DFL);
 			return (cp != NULL);
 		}
 	}
-	signal(SIGALRM, f);
+	(void)signal(SIGALRM, f);
 	return (deadfl ? -1 : cp != NULL);
 }

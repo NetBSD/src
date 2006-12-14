@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.27 2006/04/03 16:13:34 tls Exp $	*/
+/*	$NetBSD: tip.h,v 1.28 2006/12/14 17:09:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -237,7 +237,9 @@ int	attndes[2];		/* coprocess wakeup channel */
 int	fildes[2];		/* file transfer synchronization channel */
 int	repdes[2];		/* read process synchronization channel */
 int	FD;			/* open file descriptor to remote host */
+#ifndef __lint__  /* not used by hayes.c, but used by some other dialers */
 int	AC;			/* open file descriptor to dialer (v831 only) */
+#endif /*__lint__*/
 int	vflag;			/* print .tiprc initialization sequence */
 int	sfd;			/* for ~< operation */
 int	pid;			/* pid of tipout */
@@ -245,7 +247,6 @@ uid_t	uid, euid;		/* real and effective user id's */
 gid_t	gid, egid;		/* real and effective group id's */
 int	stop;			/* stop transfer session flag */
 int	quit;			/* same; but on other end */
-int	intflag;		/* recognized interrupt */
 int	stoprompt;		/* for interrupting a prompt session */
 int	timedout;		/* ~> transfer timedout */
 int	cumode;			/* simulating the "cu" program */
@@ -255,10 +256,8 @@ int	bits8;			/* terminal is is 8-bit mode */
 char	fname[80];		/* file name buffer for ~< */
 char	copyname[80];		/* file name buffer for ~> */
 char	ccc;			/* synchronization character */
-char	ch;			/* for tipout */
 
-int	odisc;				/* initial tty line discipline */
-extern	int disc;			/* current tty discpline */
+int	odisc;			/* initial tty line discipline */
 
 extern acu_t		acutable[];
 extern esctable_t	etable[];
@@ -268,7 +267,7 @@ void	alrmtimeout(int);
 int	any(char, const char *);
 void	chdirectory(char);
 void	cleanup(int);
-const char   *connect(void);
+const char   *tip_connect(void);
 void	consh(char);
 char   *ctrl(char);
 void	cumain(int, char **);

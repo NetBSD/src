@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.45 2006/12/14 14:18:03 christos Exp $	*/
+/*	$NetBSD: tip.c,v 1.46 2006/12/14 17:09:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.45 2006/12/14 14:18:03 christos Exp $");
+__RCSID("$NetBSD: tip.c,v 1.46 2006/12/14 17:09:43 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 		tipusage();
 	}
 	if (!isatty(0)) {
-		fprintf(stderr, "%s: must be interactive\n", getprogname());
+		(void)fprintf(stderr, "%s: must be interactive\n", getprogname());
 		exit(1);
 	}
 
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			snprintf(brbuf, sizeof(brbuf) -1, "%s%c", brbuf, c);
+			(void)snprintf(brbuf, sizeof(brbuf) -1, "%s%c", brbuf, c);
 			BR = atoi(brbuf);
 			break;
 
@@ -148,7 +148,7 @@ notnumber:
 	(void)signal(SIGTERM, cleanup);
 
 	if ((i = hunt(System)) == 0) {
-		printf("all ports busy\n");
+		(void)printf("all ports busy\n");
 		exit(3);
 	}
 	if (i == -1) {
@@ -176,7 +176,7 @@ notnumber:
 			    (int)number(value(BAUDRATE)));
 		}
 	}
-	if ((q = connect()) != NULL) {
+	if ((q = tip_connect()) != NULL) {
 		errx(1, "\07%s\n[EOT]\n", q);
 	}
 	if (!HW) {
@@ -204,7 +204,7 @@ cucommon:
 		err(1, "can't clear O_NONBLOCK");
 	}
 
-	tcgetattr(0, &defterm);
+	(void)tcgetattr(0, &defterm);
 	term = defterm;
 	term.c_lflag &= ~(ICANON|IEXTEN|ECHO);
 	term.c_iflag &= ~(INPCK|ICRNL);
@@ -217,7 +217,9 @@ cucommon:
 	 	term.c_cc[VLNEXT] = _POSIX_VDISABLE;
 	raw();
 
-	pipe(attndes); pipe(fildes); pipe(repdes);
+	(void)pipe(attndes);
+	(void)pipe(fildes);
+	(void)pipe(repdes);
 	(void)signal(SIGALRM, alrmtimeout);
 
 	/*
@@ -227,7 +229,7 @@ cucommon:
 	 *	internal data structures (variables)
 	 * so, fork one process for local side and one for remote.
 	 */
-	printf("%s", cumode ? "Connected\r\n" : "\07connected\r\n");
+	(void)printf("%s", cumode ? "Connected\r\n" : "\07connected\r\n");
 	switch (pid = fork()) {
 	default:
 		tipin();
@@ -245,20 +247,20 @@ cucommon:
 void
 tipusage(void)
 {
-	fprintf(stderr, "usage: %s [-v] [-speed] system-name\n",
+	(void)fprintf(stderr, "usage: %s [-v] [-speed] system-name\n",
 	    getprogname());
-	fprintf(stderr, "       %s [-v] [-speed] phone-number\n",
+	(void)fprintf(stderr, "       %s [-v] [-speed] phone-number\n",
 	    getprogname());
 	exit(1);
 }
 
 void
 /*ARGSUSED*/
-cleanup(int dummy)
+cleanup(int dummy __unused)
 {
 
 	if (odisc)
-		ioctl(0, TIOCSETD, &odisc);
+		(void)ioctl(0, TIOCSETD, &odisc);
 	exit(0);
 }
 
@@ -269,7 +271,7 @@ void
 raw(void)
 {
 
-	tcsetattr(0, TCSADRAIN, &term);
+	(void)tcsetattr(0, TCSADRAIN, &term);
 }
 
 
@@ -280,7 +282,7 @@ void
 unraw(void)
 {
 
-	tcsetattr(0, TCSADRAIN, &defterm);
+	(void)tcsetattr(0, TCSADRAIN, &defterm);
 }
 
 static	jmp_buf promptbuf;
@@ -301,7 +303,7 @@ prompt(const char *s, char *volatile p, size_t l)
 	oint = signal(SIGINT, intprompt);
 	oquit = signal(SIGQUIT, SIG_IGN);
 	unraw();
-	printf("%s", s);
+	(void)printf("%s", s);
 	if (setjmp(promptbuf) == 0)
 		while ((c = getchar()) != -1 && (*p = c) != '\n' &&
 		    b + l > p)
@@ -319,12 +321,12 @@ prompt(const char *s, char *volatile p, size_t l)
  */
 void
 /*ARGSUSED*/
-intprompt(int dummy)
+intprompt(int dummy __unused)
 {
 
 	(void)signal(SIGINT, SIG_IGN);
 	stoprompt = 1;
-	printf("\r\n");
+	(void)printf("\r\n");
 	longjmp(promptbuf, 1);
 }
 
@@ -344,7 +346,7 @@ tipin(void)
 	 *   it; so wait a second, then setscript()
 	 */
 	if (boolean(value(SCRIPT))) {
-		sleep(1);
+		(void)sleep(1);
 		setscript();
 	}
 
@@ -361,7 +363,7 @@ tipin(void)
 			bol = 1;
 			xpwrite(FD, &gch, 1);
 			if (boolean(value(HALFDUPLEX)))
-				printf("\r\n");
+				(void)printf("\r\n");
 			continue;
 		} else if (!cumode && gch && gch == character(value(FORCE)))
 			gch = getchar()&STRIP_PAR;
@@ -370,7 +372,7 @@ tipin(void)
 			gch = toupper((unsigned char)gch);
 		xpwrite(FD, &gch, 1);
 		if (boolean(value(HALFDUPLEX)))
-			printf("%c", gch);
+			(void)printf("%c", gch);
 	}
 }
 
@@ -390,7 +392,7 @@ escape(void)
 		if (p->e_char == gch) {
 			if ((p->e_flags&PRIV) && uid)
 				continue;
-			printf("%s", ctrl(c));
+			(void)printf("%s", ctrl(c));
 			(*p->e_func)(gch);
 			return (0);
 		}
@@ -460,12 +462,12 @@ help(char c)
 {
 	esctable_t *p;
 
-	printf("%c\r\n", c);
+	(void)printf("%c\r\n", c);
 	for (p = etable; p->e_char; p++) {
 		if ((p->e_flags&PRIV) && uid)
 			continue;
-		printf("%2s", ctrl(character(value(ESCAPE))));
-		printf("%-2s %c   %s\r\n", ctrl(p->e_char),
+		(void)printf("%2s", ctrl(character(value(ESCAPE))));
+		(void)printf("%-2s %c   %s\r\n", ctrl(p->e_char),
 			p->e_flags&EXP ? '*': ' ', p->e_help);
 	}
 }
@@ -478,9 +480,9 @@ ttysetup(speed_t spd)
 {
 	struct termios	cntrl;
 
-	tcgetattr(FD, &cntrl);
-	cfsetospeed(&cntrl, spd);
-	cfsetispeed(&cntrl, spd);
+	(void)tcgetattr(FD, &cntrl);
+	(void)cfsetospeed(&cntrl, spd);
+	(void)cfsetispeed(&cntrl, spd);
 	cntrl.c_cflag &= ~(CSIZE|PARENB);
 	cntrl.c_cflag |= CS8;
 	if (DC)
@@ -494,7 +496,7 @@ ttysetup(speed_t spd)
 	cntrl.c_cc[VTIME] = 0;
 	if (boolean(value(TAND)))
 		cntrl.c_iflag |= IXOFF;
-	return(tcsetattr(FD, TCSAFLUSH, &cntrl));
+	return tcsetattr(FD, TCSAFLUSH, &cntrl);
 }
 
 static char partab[0200];
@@ -555,8 +557,8 @@ setparity(const char *defparity)
 	else if (equal(parity, "one"))
 		set = 0200;			/* turn on bit 7 */
 	else if (!equal(parity, "even")) {
-		(void) fprintf(stderr, "%s: unknown parity value\r\n", parity);
-		(void) fflush(stderr);
+		(void)fprintf(stderr, "%s: unknown parity value\r\n", parity);
+		(void)fflush(stderr);
 	}
 	for (i = 0; i < 0200; i++)
 		partab[i] = ((evenpartab[i] ^ flip) | set) & clr;

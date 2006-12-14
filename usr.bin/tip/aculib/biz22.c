@@ -1,4 +1,4 @@
-/*	$NetBSD: biz22.c,v 1.12 2006/12/14 14:18:04 christos Exp $	*/
+/*	$NetBSD: biz22.c,v 1.13 2006/12/14 17:09:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: biz22.c,v 1.12 2006/12/14 14:18:04 christos Exp $");
+__RCSID("$NetBSD: biz22.c,v 1.13 2006/12/14 17:09:43 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -61,29 +61,29 @@ biz_dialer(char *num, const char *mod)
 	char cbuf[40];
 
 	if (boolean(value(VERBOSE)))
-		printf("\nstarting call...");
+		(void)printf("\nstarting call...");
 	/*
 	 * Disable auto-answer and configure for tone/pulse
 	 *  dialing
 	 */
 	if (cmd("\02K\r")) {
-		printf("can't initialize bizcomp...");
+		(void)printf("can't initialize bizcomp...");
 		return (0);
 	}
 	(void)strncpy(cbuf, "\02.\r", sizeof(cbuf) - 1);
 	cbuf[1] = *mod;
 	if (cmd(cbuf)) {
-		printf("can't set dialing mode...");
+		(void)printf("can't set dialing mode...");
 		return (0);
 	}
 	(void)snprintf(cbuf, sizeof cbuf, "\02D%s\r", num);
-	write(FD, cbuf, strlen(cbuf));
+	(void)write(FD, cbuf, strlen(cbuf));
 	if (!detect("7\r")) {
-		printf("can't get dial tone...");
+		(void)printf("can't get dial tone...");
 		return (0);
 	}
 	if (boolean(value(VERBOSE)))
-		printf("ringing...");
+		(void)printf("ringing...");
 	/*
 	 * The reply from the BIZCOMP should be:
 	 *	2 \r or 7 \r	failure
@@ -96,14 +96,16 @@ biz_dialer(char *num, const char *mod)
 }
 
 int
-biz22w_dialer(char *num, char *acu)
+/*ARGSUSED*/
+biz22w_dialer(char *num, char *acu __unused)
 {
 
 	return (biz_dialer(num, "W"));
 }
 
 int
-biz22f_dialer(char *num, char *acu)
+/*ARGSUSED*/
+biz22f_dialer(char *num, char *acu __unused)
 {
 
 	return (biz_dialer(num, "V"));
@@ -113,20 +115,21 @@ void
 biz22_disconnect(void)
 {
 
-	write(FD, DISCONNECT_CMD, 4);
-	sleep(2);
-	tcflush(FD, TCIOFLUSH);
+	(void)write(FD, DISCONNECT_CMD, 4);
+	(void)sleep(2);
+	(void)tcflush(FD, TCIOFLUSH);
 }
 
 void
 biz22_abort(void)
 {
 
-	write(FD, "\02", 1);
+	(void)write(FD, "\02", 1);
 }
 
 static void
-sigALRM(int dummy)
+/*ARGSUSED*/
+sigALRM(int dummy __unused)
 {
 
 	btimeout = 1;
@@ -139,17 +142,17 @@ cmd(const char *s)
 	sig_t f;
 	char c;
 
-	write(FD, s, strlen(s));
+	(void)write(FD, s, strlen(s));
 	f = signal(SIGALRM, sigALRM);
 	if (setjmp(timeoutbuf)) {
 		biz22_abort();
-		signal(SIGALRM, f);
+		(void)signal(SIGALRM, f);
 		return (1);
 	}
-	alarm(number(value(DIALTIMEOUT)));
-	read(FD, &c, 1);
-	alarm(0);
-	signal(SIGALRM, f);
+	(void)alarm((unsigned)number(value(DIALTIMEOUT)));
+	(void)read(FD, &c, 1);
+	(void)alarm(0);
+	(void)signal(SIGALRM, f);
 	c &= 0177;
 	return (c != '\r');
 }
@@ -167,13 +170,13 @@ detect(const char * volatile s)
 			biz22_abort();
 			break;
 		}
-		alarm(number(value(DIALTIMEOUT)));
-		read(FD, &c, 1);
-		alarm(0);
+		(void)alarm((unsigned)number(value(DIALTIMEOUT)));
+		(void)read(FD, &c, 1);
+		(void)alarm(0);
 		c &= 0177;
 		if (c != *s++)
 			return (0);
 	}
-	signal(SIGALRM, f);
+	(void)signal(SIGALRM, f);
 	return (btimeout == 0);
 }
