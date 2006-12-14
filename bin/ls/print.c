@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.41 2005/10/31 14:13:33 jschauma Exp $	*/
+/*	$NetBSD: print.c,v 1.42 2006/12/14 14:15:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.41 2005/10/31 14:13:33 jschauma Exp $");
+__RCSID("$NetBSD: print.c,v 1.42 2006/12/14 14:15:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ printlong(DISPLAY *dp)
 
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size)) {
 		if (f_humanize) {
-			if ((humanize_number(szbuf, sizeof(szbuf), dp->stotal,
+			if ((humanize_number(szbuf, sizeof(szbuf), (int64_t)dp->stotal,
 			    "", HN_AUTOSCALE,
 			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 				err(1, "humanize_number");
@@ -226,7 +226,7 @@ printcol(DISPLAY *dp)
 
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size)) {
 		if (f_humanize) {
-			if ((humanize_number(szbuf, sizeof(szbuf), dp->stotal,
+			if ((humanize_number(szbuf, sizeof(szbuf), (int64_t)dp->stotal,
 			    "", HN_AUTOSCALE,
 			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 				err(1, "humanize_number");
@@ -281,7 +281,7 @@ printacol(DISPLAY *dp)
 
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size)) {
 		if (f_humanize) {
-			if ((humanize_number(szbuf, sizeof(szbuf), dp->stotal,
+			if ((humanize_number(szbuf, sizeof(szbuf), (int64_t)dp->stotal,
 			    "", HN_AUTOSCALE,
 			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 				err(1, "humanize_number");
