@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.63 2006/10/08 18:09:47 martin Exp $	*/
+/*	$NetBSD: spec.c,v 1.64 2006/12/14 20:09:36 he Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.63 2006/10/08 18:09:47 martin Exp $");
+__RCSID("$NetBSD: spec.c,v 1.64 2006/12/14 20:09:36 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -313,6 +313,7 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 	NODE	*cur;
 	char	path[MAXPATHLEN];
 	const char *name;
+	char	*str;
 
 	for (cur = root; cur != NULL; cur = cur->next) {
 		if (cur->type != F_DIR && !matchtags(cur))
@@ -371,9 +372,11 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 			printf("sha384=%s ", cur->sha384digest);
 		if (MATCHFLAG(F_SHA512))
 			printf("sha512=%s ", cur->sha512digest);
-		if (MATCHFLAG(F_FLAGS))
-			printf("flags=%s ",
-			    flags_to_string(cur->st_flags, "none"));
+		if (MATCHFLAG(F_FLAGS)) {
+			str = flags_to_string(cur->st_flags, "none");
+			printf("flags=%s ", str);
+			free(str);
+		}
 		if (MATCHFLAG(F_IGN))
 			printf("ignore ");
 		if (MATCHFLAG(F_OPT))

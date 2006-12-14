@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2006/05/12 01:18:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2006/12/14 20:09:36 he Exp $
 #
 
 .include <bsd.own.mk>
@@ -11,22 +11,24 @@ SRCS=	buf.c \
 	getid.c \
 	makefs.c misc.c mkfs.c \
 	pack_dev.c \
-	spec.c stat_flags.c \
+	spec.c \
 	ufs_bmap.c \
 	walk.c
 MAN=	makefs.8
 
-LSSRC=		${NETBSDSRCDIR}/bin/ls
 MKNODSRC=	${NETBSDSRCDIR}/sbin/mknod
 MTREESRC=	${NETBSDSRCDIR}/usr.sbin/mtree
 UFSSRC=		${NETBSDSRCDIR}/sys/ufs
 CD9660SRC=	${NETBSDSRCDIR}/sys/fs/cd9660
 
 CPPFLAGS+=	-I${.CURDIR} \
-		-I${LSSRC} -I${MKNODSRC} -I${MTREESRC} -I${CD9660SRC}
+		-I${MKNODSRC} -I${MTREESRC} -I${CD9660SRC}
 .PATH:		${.CURDIR}/ffs ${UFSSRC}/ffs \
 		${.CURDIR}/cd9660 ${CD9660SRC} \
-		${LSSRC} ${MKNODSRC} ${MTREESRC}
+		${MKNODSRC} ${MTREESRC}
+
+LDADD+= -lutil
+DPADD+= ${LIBUTIL}
 
 WARNS?=	3
 

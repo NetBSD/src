@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.983 2006/12/13 23:22:29 dbj Exp $
+#	$NetBSD: mi,v 1.984 2006/12/14 20:09:35 he Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4418,6 +4418,7 @@
 ./usr/share/man/cat3/fileno.0			comp-c-catman		.cat
 ./usr/share/man/cat3/finite.0			comp-c-catman		.cat
 ./usr/share/man/cat3/finitef.0			comp-c-catman		.cat
+./usr/share/man/cat3/flags_to_string.0		comp-c-catman		.cat
 ./usr/share/man/cat3/flash.0			comp-c-catman		.cat
 ./usr/share/man/cat3/flockfile.0		comp-c-catman		.cat
 ./usr/share/man/cat3/floor.0			comp-c-catman		.cat
@@ -5938,6 +5939,7 @@
 ./usr/share/man/cat3/strfmon.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strftime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/string.0			comp-c-catman		.cat
+./usr/share/man/cat3/string_to_flags.3		comp-c-catman		.cat
 ./usr/share/man/cat3/stringlist.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strlcat.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strlcpy.0			comp-c-catman		.cat
@@ -8676,6 +8678,7 @@
 ./usr/share/man/man3/fileno.3			comp-c-man		.man
 ./usr/share/man/man3/finite.3			comp-c-man		.man
 ./usr/share/man/man3/finitef.3			comp-c-man		.man
+./usr/share/man/man3/flags_to_string.3		comp-c-man		.man
 ./usr/share/man/man3/flash.3			comp-c-man		.man
 ./usr/share/man/man3/flockfile.3		comp-c-man		.man
 ./usr/share/man/man3/floor.3			comp-c-man		.man
@@ -10192,6 +10195,7 @@
 ./usr/share/man/man3/strfmon.3			comp-c-man		.man
 ./usr/share/man/man3/strftime.3			comp-c-man		.man
 ./usr/share/man/man3/string.3			comp-c-man		.man
+./usr/share/man/man3/string_to_flags.3		comp-c-man		.man
 ./usr/share/man/man3/stringlist.3		comp-c-man		.man
 ./usr/share/man/man3/strlcat.3			comp-c-man		.man
 ./usr/share/man/man3/strlcpy.3			comp-c-man		.man

@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.62 2006/12/14 14:15:26 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.63 2006/12/14 20:09:36 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.62 2006/12/14 14:15:26 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.63 2006/12/14 20:09:36 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: ls.c,v 1.62 2006/12/14 14:15:26 christos Exp $");
 #include <termios.h>
 #include <pwd.h>
 #include <grp.h>
+#include <util.h>
 
 #include "ls.h"
 #include "extern.h"
@@ -572,6 +573,7 @@ display(FTSENT *p, FTSENT *list)
 				if (f_flags) {
 					np->flags = &np->data[ulen + glen + 2];
 				  	(void)strcpy(np->flags, flags);
+					free(flags);
 				}
 				cur->fts_pointer = np;
 			}
