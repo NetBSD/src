@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2003/09/14 19:16:05 jschauma Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 2006/12/14 20:09:36 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -52,5 +52,3 @@ void	 printscol(DISPLAY *);
 void	 printstream(DISPLAY *);
 int	 safe_print(const char *);
 void	 usage(void);
-
-#include "stat_flags.h"
