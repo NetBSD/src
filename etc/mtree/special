@@ -1,7 +1,10 @@
-#	$NetBSD: special,v 1.107 2006/11/12 01:22:57 christos Exp $
+#	$NetBSD: special,v 1.108 2006/12/14 02:28:30 reed Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
-# Hand-crafted mtree specification for the dangerous files.
+# This file may be overwritten on upgrades.
+# Put your custom specifications in /etc/mtree/special.local instead.
+# See security.conf(5) for details.
+
 #
 # /etc/security checks:
 #	- All of these are checked if $check_mtree is enabled.
