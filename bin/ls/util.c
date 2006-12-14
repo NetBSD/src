@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.29 2006/04/08 22:28:06 jschauma Exp $	*/
+/*	$NetBSD: util.c,v 1.30 2006/12/14 14:15:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.29 2006/04/08 22:28:06 jschauma Exp $");
+__RCSID("$NetBSD: util.c,v 1.30 2006/12/14 14:15:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ safe_print(const char *src)
 	name = (char *)malloc(4*len+1);
 	if (name != NULL) {
 		len = strvis(name, src, flags);
-		printf("%s", name);
+		(void)printf("%s", name);
 		free(name);
 		return len;
 	} else

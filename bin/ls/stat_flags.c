@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.19 2004/05/25 14:54:55 hannken Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.20 2006/12/14 14:15:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.19 2004/05/25 14:54:55 hannken Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.20 2006/12/14 14:15:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ flags_to_string(u_long flags, const char *def)
 #endif
 #endif
 	if (prefix == NULL)
-		strlcpy(string, def, sizeof(string));
+		(void)strlcpy(string, def, sizeof(string));
 	return (string);
 }
 
@@ -114,6 +114,7 @@ flags_to_string(u_long flags, const char *def)
 	}								\
 }
 
+#ifdef UNUSED_BLOCK
 /*
  * string_to_flags --
  *	Take string of arguments and return stat flags.  Return 0 on
@@ -183,3 +184,4 @@ string_to_flags(char **stringp, u_long *setp, u_long *clrp)
 
 	return (0);
 }
+#endif /* UNUSED_BLOCK */
