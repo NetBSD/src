@@ -1,4 +1,4 @@
-/*	$NetBSD: value.c,v 1.13 2006/04/03 04:53:58 christos Exp $	*/
+/*	$NetBSD: value.c,v 1.14 2006/12/14 17:09:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: value.c,v 1.13 2006/04/03 04:53:58 christos Exp $");
+__RCSID("$NetBSD: value.c,v 1.14 2006/12/14 17:09:43 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -71,18 +71,18 @@ vinit(void)
 	 * Read the .tiprc file in the HOME directory
 	 *  for sets
 	 */
-	snprintf(file, sizeof(file), "%s/.tiprc", (char *)value(HOME));
+	(void)snprintf(file, sizeof(file), "%s/.tiprc", (char *)value(HOME));
 	if ((f = fopen(file, "r")) != NULL) {
 		char *tp;
 
 		while (fgets(file, sizeof(file)-1, f) != NULL) {
 			if (vflag)
-				printf("set %s", file);
+				(void)printf("set %s", file);
 			if ((tp = strrchr(file, '\n')) != NULL)
 				*tp = '\0';
 			vlex(file);
 		}
-		fclose(f);
+		(void)fclose(f);
 	}
 	/*
 	 * To allow definition of exception prior to fork
@@ -95,7 +95,7 @@ vassign(value_t *p, char *v)
 {
 
 	if (!vaccess(p->v_access, (unsigned int)WRITE)) {
-		printf("access denied\r\n");
+		(void)printf("access denied\r\n");
 		return;
 	}
 	switch (p->v_type&TMASK) {
@@ -106,7 +106,7 @@ vassign(value_t *p, char *v)
 		if (!(p->v_type&(ENVIRON|INIT)))
 			free(p->v_value);
 		if ((p->v_value = strdup(v)) == NULL) {
-			printf("out of core\r\n");
+			(void)printf("out of core\r\n");
 			return;
 		}
 		p->v_type &= ~(ENVIRON|INIT);
@@ -152,7 +152,7 @@ vlex(char *s)
 		} while (s);
 	}
 	if (col > 0) {
-		printf("\r\n");
+		(void)printf("\r\n");
 		col = 0;
 	}
 }
@@ -192,7 +192,7 @@ vtoken(char *s)
 			return;
 		}
 	}
-	printf("%s: unknown variable\r\n", s);
+	(void)printf("%s: unknown variable\r\n", s);
 }
 
 static void
@@ -202,46 +202,46 @@ vprint(value_t *p)
 
 	if (col > 0 && col < MIDDLE)
 		while (col++ < MIDDLE)
-			putchar(' ');
+			(void)putchar(' ');
 	col += strlen(p->v_name);
 	switch (p->v_type&TMASK) {
 
 	case BOOL:
 		if (boolean(p->v_value) == FALSE) {
 			col++;
-			putchar('!');
+			(void)putchar('!');
 		}
-		printf("%s", p->v_name);
+		(void)printf("%s", p->v_name);
 		break;
 
 	case STRING:
-		printf("%s=", p->v_name);
+		(void)printf("%s=", p->v_name);
 		col++;
 		if (p->v_value) {
 			cp = interp(p->v_value);
 			col += strlen(cp);
-			printf("%s", cp);
+			(void)printf("%s", cp);
 		}
 		break;
 
 	case NUMBER:
 		col += 6;
-		printf("%s=%-5d", p->v_name, (int)number(p->v_value));
+		(void)printf("%s=%-5d", p->v_name, (int)number(p->v_value));
 		break;
 
 	case CHAR:
-		printf("%s=", p->v_name);
+		(void)printf("%s=", p->v_name);
 		col++;
 		if (p->v_value) {
 			cp = ctrl(character(p->v_value));
 			col += strlen(cp);
-			printf("%s", cp);
+			(void)printf("%s", cp);
 		}
 		break;
 	}
 	if (col >= MIDDLE) {
 		col = 0;
-		printf("\r\n");
+		(void)printf("\r\n");
 		return;
 	}
 }

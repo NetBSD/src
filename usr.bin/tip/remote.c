@@ -1,4 +1,4 @@
-/*	$NetBSD: remote.c,v 1.16 2006/04/03 00:51:13 perry Exp $	*/
+/*	$NetBSD: remote.c,v 1.17 2006/12/14 17:09:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: remote.c,v 1.16 2006/04/03 00:51:13 perry Exp $");
+__RCSID("$NetBSD: remote.c,v 1.17 2006/12/14 17:09:43 christos Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
@@ -82,7 +82,7 @@ getremcap(char *host)
 	if (rempath != NULL) {
 		if (*rempath != '/')
 			/* we have an entry */
-			cgetset(rempath);
+			(void)cgetset(rempath);
 		else {	/* we have a path */
 			db_array[1] = rempath;
 			db_array[2] = _PATH_REMOTE;
@@ -118,7 +118,7 @@ getremcap(char *host)
 
 	for (p = capstrings, q = caps; *p != NULL; p++, q++)
 		if (**q == NULL)
-			cgetstr(bp, *p, *q);
+			(void)cgetstr(bp, *p, *q);
 	if (!BR && (cgetnum(bp, "br", &BR) == -1))
 		BR = DEFBR;
 	if (cgetnum(bp, "fs", &FS) == -1)
@@ -181,13 +181,13 @@ getremcap(char *host)
 	if (EX == NULL)
 		EX = wspace;
 	if (ES != NULL)
-		vstring("es", ES);
+		(void)vstring("es", ES);
 	if (FO != NULL)
-		vstring("fo", FO);
+		(void)vstring("fo", FO);
 	if (PR != NULL)
-		vstring("pr", PR);
+		(void)vstring("pr", PR);
 	if (RC != NULL)
-		vstring("rc", RC);
+		(void)vstring("rc", RC);
 	if (cgetnum(bp, "dl", &DL) == -1)
 		DL = 0;
 	if (cgetnum(bp, "cl", &CL) == -1)

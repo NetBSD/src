@@ -1,4 +1,4 @@
-/*	$NetBSD: dn11.c,v 1.9 2006/04/03 00:51:14 perry Exp $	*/
+/*	$NetBSD: dn11.c,v 1.10 2006/12/14 17:09:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dn11.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: dn11.c,v 1.9 2006/04/03 00:51:14 perry Exp $");
+__RCSID("$NetBSD: dn11.c,v 1.10 2006/12/14 17:09:43 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -55,31 +55,31 @@ dn_dialer(char *num, char *acu)
 	struct termios cntrl;
 
 	if (boolean(value(VERBOSE)))
-		printf("\nstarting call...");
+		(void)printf("\nstarting call...");
 	if ((dn = open(acu, O_WRONLY)) < 0) {
 		if (errno == EBUSY)
-			printf("line busy...");
+			(void)printf("line busy...");
 		else
-			printf("acu open error...");
+			(void)printf("acu open error...");
 		return (0);
 	}
 	if (setjmp(jmpbuf)) {
-		kill(child, SIGKILL);
-		close(dn);
+		(void)kill(child, SIGKILL);
+		(void)close(dn);
 		return (0);
 	}
-	signal(SIGALRM, alarmtr);
+	(void)signal(SIGALRM, alarmtr);
 	timelim = 5 * strlen(num);
-	alarm(timelim < 30 ? 30 : timelim);
+	(void)alarm((unsigned)(timelim < 30 ? 30 : timelim));
 	if ((child = fork()) == 0) {
 		/*
 		 * ignore this stuff for aborts
 		 */
-		signal(SIGALRM, SIG_IGN);
-		signal(SIGINT, SIG_IGN);
-		signal(SIGQUIT, SIG_IGN);
-		sleep(2);
-		nw = write(dn, num, lt = strlen(num));
+		(void)signal(SIGALRM, SIG_IGN);
+		(void)signal(SIGINT, SIG_IGN);
+		(void)signal(SIGQUIT, SIG_IGN);
+		(void)sleep(2);
+		nw = write(dn, num, (size_t)(lt = strlen(num)));
 		exit(nw != lt);
 	}
 	/*
@@ -87,35 +87,36 @@ dn_dialer(char *num, char *acu)
 	 */
 	if ((FD = open(DV, O_RDWR)) < 0) {
 		if (errno == EIO)
-			printf("lost carrier...");
+			(void)printf("lost carrier...");
 		else
-			printf("dialup line open failed...");
-		alarm(0);
-		kill(child, SIGKILL);
-		close(dn);
+			(void)printf("dialup line open failed...");
+		(void)alarm(0);
+		(void)kill(child, SIGKILL);
+		(void)close(dn);
 		return (0);
 	}
-	alarm(0);
-	tcgetattr(dn, &cntrl);
+	(void)alarm(0);
+	(void)tcgetattr(dn, &cntrl);
 	cntrl.c_cflag |= HUPCL;
-	tcsetattr(dn, TCSANOW, &cntrl);
-	signal(SIGALRM, SIG_DFL);
+	(void)tcsetattr(dn, TCSANOW, &cntrl);
+	(void)signal(SIGALRM, SIG_DFL);
 	while ((nw = wait(&lt)) != child && nw != -1)
 		;
-	fflush(stdout);
-	close(dn);
+	(void)fflush(stdout);
+	(void)close(dn);
 	if (lt != 0) {
-		close(FD);
+		(void)close(FD);
 		return (0);
 	}
 	return (1);
 }
 
 static void
-alarmtr(int dummy)
+/*ARGSUSED*/
+alarmtr(int dummy __unused)
 {
 
-	alarm(0);
+	(void)alarm(0);
 	longjmp(jmpbuf, 1);
 }
 
@@ -127,22 +128,22 @@ void
 dn_disconnect(void)
 {
 
-	sleep(2);
+	(void)sleep(2);
 	if (FD > 0)
-		ioctl(FD, TIOCCDTR, 0);
-	close(FD);
+		(void)ioctl(FD, TIOCCDTR, 0);
+	(void)close(FD);
 }
 
 void
 dn_abort(void)
 {
 
-	sleep(2);
+	(void)sleep(2);
 	if (child > 0)
-		kill(child, SIGKILL);
+		(void)kill(child, SIGKILL);
 	if (dn > 0)
-		close(dn);
+		(void)close(dn);
 	if (FD > 0)
-		ioctl(FD, TIOCCDTR, 0);
-	close(FD);
+		(void)ioctl(FD, TIOCCDTR, 0);
+	(void)close(FD);
 }
