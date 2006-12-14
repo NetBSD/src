@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.44 2006/11/29 14:46:27 jdc Exp $	*/
+/*	$NetBSD: tip.c,v 1.45 2006/12/14 14:18:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.44 2006/11/29 14:46:27 jdc Exp $");
+__RCSID("$NetBSD: tip.c,v 1.45 2006/12/14 14:18:03 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -291,15 +291,11 @@ static	jmp_buf promptbuf;
  *  normal erase and kill characters.
  */
 int
-prompt(const char *s, char *p, size_t l)
+prompt(const char *s, char *volatile p, size_t l)
 {
 	int c;
 	char *b = p;
 	sig_t oint, oquit;
-
-#if __GNUC__		/* XXX: pacify gcc */
-	(void)&p;
-#endif
 
 	stoprompt = 0;
 	oint = signal(SIGINT, intprompt);
