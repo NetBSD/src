@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.154 2006/12/14 20:15:32 he Exp $
+$NetBSD: UPDATING,v 1.155 2006/12/14 23:49:03 he Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -22,7 +22,7 @@ Recent changes:
 	will need to do a "make cleandir" in
 		tools/mtree/, tools/makefs/, tools/binstall/, tools/pax/,
 		bin/pax/, bin/ls/, usr.sbin/mtree/, usr.sbin/makefs/,
-		usr.bin/xinstall/, and libexec/ftpd/
+		usr.bin/xinstall/, libexec/ftpd/, and rescue/
 	in order to excise stale references to the old stat_flags.h header
 	file in the ls sources -- stat_flags.h has been removed.
 
