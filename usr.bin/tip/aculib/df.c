@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.8 2006/04/03 00:51:14 perry Exp $	*/
+/*	$NetBSD: df.c,v 1.9 2006/12/14 14:18:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)df.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: df.c,v 1.8 2006/04/03 00:51:14 perry Exp $");
+__RCSID("$NetBSD: df.c,v 1.9 2006/12/14 14:18:04 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -67,13 +67,11 @@ df_dialer(char *num, char *acu, int df03)
 {
 	int f = FD;
 	struct termios cntrl;
-	int spd = 0;
-	char c = '\0';
+	int volatile spd;
+	char c;
 
-#if __GNUC__	/* XXX pacify gcc */
-	(void)&spd;
-#endif
-
+	spd = 0;
+	c = '\0';
 	tcgetattr(f, &cntrl);
 	cntrl.c_cflag |= HUPCL;
 	tcsetattr(f, TCSANOW, &cntrl);

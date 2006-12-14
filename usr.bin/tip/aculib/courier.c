@@ -1,4 +1,4 @@
-/*	$NetBSD: courier.c,v 1.15 2006/04/03 02:25:27 perry Exp $	*/
+/*	$NetBSD: courier.c,v 1.16 2006/12/14 14:18:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: courier.c,v 1.15 2006/04/03 02:25:27 perry Exp $");
+__RCSID("$NetBSD: courier.c,v 1.16 2006/12/14 14:18:04 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -133,14 +133,10 @@ sigALRM(int dummy)
 }
 
 static int
-cour_swallow(const char *match)
+cour_swallow(const char * volatile match)
 {
 	sig_t f;
 	char c;
-
-#if __GNUC__	/* XXX pacify gcc */
-	(void)&match;
-#endif
 
 	f = signal(SIGALRM, sigALRM);
 	timeout = 0;
@@ -186,15 +182,12 @@ static int
 cour_connect(void)
 {
 	char c;
-	int nc, nl, n;
+	int volatile nc;
+	int volatile nl;
+	int n;
 	char dialer_buf[64];
 	struct baud_msg *bm;
 	sig_t f;
-
-#if __GNUC__	/* XXX pacify gcc */
-	(void)&nc;
-	(void)&nl;
-#endif
 
 	if (cour_swallow("\r\n") == 0)
 		return (0);
