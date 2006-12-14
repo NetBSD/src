@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.45 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: eso.c,v 1.46 2006/12/14 22:27:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.45 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.46 2006/12/14 22:27:12 kleink Exp $");
 
 #include "mpu.h"
 
@@ -752,10 +752,8 @@ eso_set_params(void *hdl, int setmode, int usemode,
 		r[1] = ESO_CLK1 /
 		    (128 - (rd[1] = 128 - ESO_CLK1 / p->sample_rate));
 
-		if (r[0] > r[1])
-			clk = p->sample_rate - r[1];
-		else
-			clk = p->sample_rate - r[0];
+		clk = ABS((int)p->sample_rate - r[0])
+		      > ABS((int)p->sample_rate - r[1]);
 		srg = rd[clk] | (clk == 1 ? ESO_CLK1_SELECT : 0x00);
 
 		/* Roll-off frequency of 87%, as in the ES1888 driver. */
