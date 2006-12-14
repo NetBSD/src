@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.110 2006/12/07 20:04:31 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.111 2006/12/14 11:45:08 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.110 2006/12/07 20:04:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.111 2006/12/14 11:45:08 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,18 +197,13 @@ donice(struct lwp *l, struct proc *chgp, int n)
 	kauth_cred_t cred = l->l_cred;
 	int s;
 
-	if (kauth_cred_geteuid(cred) && kauth_cred_getuid(cred) &&
-	    kauth_cred_geteuid(cred) != kauth_cred_geteuid(chgp->p_cred) &&
-	    kauth_cred_getuid(cred) != kauth_cred_geteuid(chgp->p_cred))
-		return (EPERM);
 	if (n > PRIO_MAX)
 		n = PRIO_MAX;
 	if (n < PRIO_MIN)
 		n = PRIO_MIN;
 	n += NZERO;
-	if (n < chgp->p_nice && kauth_authorize_process(cred,
-	    KAUTH_PROCESS_RESOURCE, chgp, (void *)KAUTH_REQ_PROCESS_RESOURCE_NICE,
-	    (void *)(u_long)n, NULL))
+	if (kauth_authorize_process(cred, KAUTH_PROCESS_RESOURCE, chgp,
+	    (void *)KAUTH_REQ_PROCESS_RESOURCE_NICE, KAUTH_ARG(n), NULL))
 		return (EACCES);
 	chgp->p_nice = n;
 	SCHED_LOCK(s);
@@ -261,10 +256,10 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 		 */
 		return (EINVAL);
 	}
-	if (limp->rlim_max > alimp->rlim_max && (error =
-	    kauth_authorize_process(l->l_cred, KAUTH_PROCESS_RESOURCE,
-	    p, (void *)KAUTH_REQ_PROCESS_RESOURCE_RLIMIT, limp,
-	    (void *)(u_long)which)))
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_RESOURCE,
+	    p, KAUTH_ARG(KAUTH_REQ_PROCESS_RESOURCE_RLIMIT), limp,
+	    KAUTH_ARG(which));
+	if (error)
 			return (error);
 
 	if (p->p_limit->p_refcnt > 1 &&
@@ -573,39 +568,6 @@ sysctl_proc_findproc(struct lwp *l, struct proc **p2, pid_t pid)
 		ptmp = l->l_proc;
 	else if ((ptmp = pfind(pid)) == NULL)
 		error = ESRCH;
-	else {
-		boolean_t isroot = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL) == 0;
-		/*
-		 * suid proc of ours or proc not ours
-		 */
-		if (kauth_cred_getuid(l->l_cred) !=
-		    kauth_cred_getuid(ptmp->p_cred) ||
-		    kauth_cred_getuid(l->l_cred) !=
-		    kauth_cred_getsvuid(ptmp->p_cred))
-			error = isroot ? 0 : EPERM;
-
-		/*
-		 * sgid proc has sgid back to us temporarily
-		 */
-		else if (kauth_cred_getgid(ptmp->p_cred) !=
-		    kauth_cred_getsvgid(ptmp->p_cred))
-			error = isroot ? 0 : EPERM;
-
-		/*
-		 * our rgid must be in target's group list (ie,
-		 * sub-processes started by a sgid process)
-		 */
-		else {
-			int ismember = 0;
-
-			if (kauth_cred_ismember_gid(l->l_cred,
-			    kauth_cred_getgid(ptmp->p_cred), &ismember) != 0 ||
-			    !ismember) {
-				error = isroot ? 0 : EPERM;
-			}
-		}
-	}
 
 	*p2 = ptmp;
 	return (error);
@@ -641,6 +603,12 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	if (error)
 		return (error);
 
+	/* XXX this should be in p_find() */
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
+	    ptmp, NULL, NULL, NULL);
+	if (error)
+		return (error);
+
 	cname = PNBUF_GET();
 	/*
 	 * let them modify a temporary copy of the core name
@@ -659,9 +627,10 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 		goto done;
 	}
 
-	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CORENAME,
-	    ptmp, NULL, NULL, NULL) != 0)
-		return (EPERM);
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CORENAME,
+	    ptmp, cname, NULL, NULL);
+	if (error)
+		return (error);
 
 	/*
 	 * no error yet and cname now has the new core name in it.
@@ -722,6 +691,12 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 	if (error)
 		return (error);
 
+	/* XXX this should be in p_find() */
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
+	    ptmp, NULL, NULL, NULL);
+	if (error)
+		return (error);
+
 	switch (rnode->sysctl_num) {
 	case PROC_PID_STOPFORK:
 		f = P_STOPFORK;
@@ -741,6 +716,11 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 	node.sysctl_data = &i;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
+		return (error);
+
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_STOPFLAG,
+	    ptmp, KAUTH_ARG(f), NULL, NULL);
+	if (error)
 		return (error);
 
 	if (i)
@@ -779,6 +759,12 @@ sysctl_proc_plimit(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	error = sysctl_proc_findproc(l, &ptmp, (pid_t)name[-4]);
+	if (error)
+		return (error);
+
+	/* XXX this should be in p_find() */
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
+	    ptmp, NULL, NULL, NULL);
 	if (error)
 		return (error);
 
