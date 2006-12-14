@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.59 2006/11/09 20:50:53 christos Exp $	*/
+/*	$NetBSD: function.c,v 1.60 2006/12/14 20:55:56 he Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.59 2006/11/09 20:50:53 christos Exp $");
+__RCSID("$NetBSD: function.c,v 1.60 2006/12/14 20:55:56 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,6 @@ __RCSID("$NetBSD: function.c,v 1.59 2006/11/09 20:50:53 christos Exp $");
 #include <util.h>
 
 #include "find.h"
-#include "stat_flags.h"
 
 #define	COMPARE(a, b) {							\
 	switch (plan->flags) {						\
