@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.152 2006/11/09 18:20:59 christos Exp $
+$NetBSD: UPDATING,v 1.153 2006/12/14 02:11:52 reed Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -293,7 +293,7 @@ Recent changes:
 	the dependencies will be rebuilt correctly.
 
 20031007:
-	A sign exension bug was fixed which set all the high bits
+	A sign extension bug was fixed which set all the high bits
 	of our newly expanded ffs fs_flags.  This should only
 	affect users who installed or upgraded in September of 2003.
 	A small utility program was posted to tech-kern which
@@ -413,7 +413,7 @@ Recent changes:
 
 	An out-of-date libtool will result in shared libraries
 	which lack _init() and _fini() routines, which means that
-	their global contructors/destructors will not be invoked.
+	their global constructors/destructors will not be invoked.
 
 20021121:
 	A bug related to how ARM ELF objects were tagged has been
@@ -526,7 +526,7 @@ Recent changes:
 
 20020515:
 	sshd user/group has been added.  Need to hand add this in, or sshd
-	will not let you log in (with default, or UsePrivlegeSeparation=yes)
+	will not let you log in (with default, or UsePrivilegeSeparation=yes)
 
 	Add the following into /etc/group:
 
