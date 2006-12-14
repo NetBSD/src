@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2000/07/29 03:46:15 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2006/12/14 14:15:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.2 2000/07/29 03:46:15 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2006/12/14 14:15:26 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,6 +54,6 @@ int
 main(int argc, char *argv[])
 {
 
-	return (ls_main(argc, argv));
+	return ls_main(argc, argv);
 	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.61 2006/09/23 19:54:53 elad Exp $	*/
+/*	$NetBSD: ls.c,v 1.62 2006/12/14 14:15:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.61 2006/09/23 19:54:53 elad Exp $");
+__RCSID("$NetBSD: ls.c,v 1.62 2006/12/14 14:15:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ ls_main(int argc, char *argv[])
 	const char *p;
 
 	setprogname(argv[0]);
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	/* Terminal defaults to -Cq, non-terminal defaults to -1. */
 	if (isatty(STDOUT_FILENO)) {
@@ -370,7 +370,7 @@ ls_main(int argc, char *argv[])
 		traverse(argc, argv, fts_options);
 	else
 		traverse(1, dotav, fts_options);
-	exit(rval);
+	return rval;
 	/* NOTREACHED */
 }
 
@@ -395,7 +395,7 @@ traverse(int argc, char *argv[], int options)
 
 	display(NULL, fts_children(ftsp, 0));
 	if (f_listdir) {
-		fts_close(ftsp);
+		(void)fts_close(ftsp);
 		return;
 	}
 
@@ -440,7 +440,7 @@ traverse(int argc, char *argv[], int options)
 			break;
 		}
 	error = errno;
-	fts_close(ftsp);
+	(void)fts_close(ftsp);
 	errno = error;
 	if (errno)
 		err(EXIT_FAILURE, "fts_read");
@@ -459,18 +459,14 @@ display(FTSENT *p, FTSENT *list)
 	FTSENT *cur;
 	NAMES *np;
 	u_int64_t btotal, stotal, maxblock, maxsize;
-	int maxinode, maxnlink, maxmajor, maxminor;
+	ino_t maxinode;
+	int maxnlink, maxmajor, maxminor;
 	int bcfile, entries, flen, glen, ulen, maxflags, maxgroup, maxlen;
 	int maxuser, needstats;
 	const char *user, *group;
 	char buf[21];		/* 64 bits == 20 digits, +1 for NUL */
 	char nuser[12], ngroup[12];
 	char *flags = NULL;
-
-#ifdef __GNUC__
-	/* This outrageous construct just to shut up a GCC warning. */
-	(void) &maxsize;
-#endif
 
 	/*
 	 * If list is NULL there are two possibilities: that the parent
@@ -558,7 +554,7 @@ display(FTSENT *p, FTSENT *list)
 					maxgroup = glen;
 				if (f_flags) {
 					flags =
-					    flags_to_string(sp->st_flags, "-");
+					    flags_to_string((u_long)sp->st_flags, "-");
 					if ((flen = strlen(flags)) > maxflags)
 						maxflags = flen;
 				} else
@@ -601,7 +597,8 @@ display(FTSENT *p, FTSENT *list)
 		}
 		d.s_flags = maxflags;
 		d.s_group = maxgroup;
-		(void)snprintf(buf, sizeof(buf), "%u", maxinode);
+		(void)snprintf(buf, sizeof(buf), "%llu",
+		    (unsigned long long)maxinode);
 		d.s_inode = strlen(buf);
 		(void)snprintf(buf, sizeof(buf), "%u", maxnlink);
 		d.s_nlink = strlen(buf);
