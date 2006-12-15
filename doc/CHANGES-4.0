@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.12 2006/12/12 13:02:30 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.13 2006/12/15 13:28:08 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -211,4 +211,22 @@ sys/dev/sbus/stp4020.c				1.49
 
 	Fix build of STP4020 SBus/PCMCIA driver.
 	[jdc, ticket #270]
+
+gnu/dist/gcc4/gcc/config/pa/pa.md		1.2
+
+	Fix PA code generatation on 64bit hosts.
+	[skrll, ticket #271]
+
+sys/arch/mac68k/dev/if_mc.c			1.28
+sys/arch/mac68k/dev/if_mcvar.h			1.12
+sys/arch/mac68k/obio/if_mc_obio.c		1.16
+
+	Convert DMA memory allocation to bus_dmamem_alloc.
+	[martin, ticket #272]
+
+lib/libc/arch/m68k/gen/resumecontext.S		1.4
+
+	Fix regression tests in "regress/lib/libc/context" for m68k based
+	NetBSD ports.
+	[martin, ticket #273]
 
