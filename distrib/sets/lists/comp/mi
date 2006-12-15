@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.984 2006/12/14 20:09:35 he Exp $
+#	$NetBSD: mi,v 1.985 2006/12/15 00:28:53 he Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5922,6 +5922,7 @@
 ./usr/share/man/cat3/standend.0			comp-c-catman		.cat
 ./usr/share/man/cat3/standout.0			comp-c-catman		.cat
 ./usr/share/man/cat3/start_color.0		comp-c-catman		.cat
+./usr/share/man/cat3/stat_flags.0		comp-c-catman		.cat
 ./usr/share/man/cat3/stdarg.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stdio.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strcasecmp.0		comp-c-catman		.cat
@@ -5939,7 +5940,7 @@
 ./usr/share/man/cat3/strfmon.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strftime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/string.0			comp-c-catman		.cat
-./usr/share/man/cat3/string_to_flags.3		comp-c-catman		.cat
+./usr/share/man/cat3/string_to_flags.0		comp-c-catman		.cat
 ./usr/share/man/cat3/stringlist.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strlcat.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strlcpy.0			comp-c-catman		.cat
@@ -10178,6 +10179,7 @@
 ./usr/share/man/man3/standend.3			comp-c-man		.man
 ./usr/share/man/man3/standout.3			comp-c-man		.man
 ./usr/share/man/man3/start_color.3		comp-c-man		.man
+./usr/share/man/man3/stat_flags.3		comp-c-man		.man
 ./usr/share/man/man3/stdarg.3			comp-c-man		.man
 ./usr/share/man/man3/stdio.3			comp-c-man		.man
 ./usr/share/man/man3/strcasecmp.3		comp-c-man		.man
