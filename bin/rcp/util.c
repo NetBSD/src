@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.9 2005/03/11 02:55:23 ginsbach Exp $	*/
+/*	$NetBSD: util.c,v 1.10 2006/12/15 20:22:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: util.c,v 1.9 2005/03/11 02:55:23 ginsbach Exp $");
+__RCSID("$NetBSD: util.c,v 1.10 2006/12/15 20:22:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,8 @@ allocbuf(BUF *bp, int fd, int blksize)
 }
 
 void
-lostconn(int signo)
+/*ARGSUSED*/
+lostconn(int signo __unused)
 {
 	if (!iamremote)
 		warnx("lost connection");
