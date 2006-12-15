@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.48 2006/12/09 05:33:06 dyoung Exp $	*/
+/*	$NetBSD: route.h,v 1.49 2006/12/15 21:18:53 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -322,6 +322,28 @@ int	 rtrequest(int, const struct sockaddr *,
 	    struct rtentry **);
 int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
 
+struct ifaddr	*rt_get_ifa(struct rtentry *);
+void	rt_replace_ifa(struct rtentry *, struct ifaddr *);
+
+struct rtentry *rtfindparent(struct radix_node_head *, struct route *);
+
+void	rtcache_init(struct route *);
+void	rtcache_init_noclone(struct route *);
+void	rtcache_copy(struct route *, const struct route *, size_t);
+void	rtcache_update(struct route *);
+void	rtcache_free(struct route *);
+
+static inline void
+rtcache_check(struct route *ro)
+{
+	/* XXX The rt_ifp check should be asserted. */
+	if (ro->ro_rt != NULL &&
+	    ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+	     ro->ro_rt->rt_ifp == NULL))
+		rtcache_update(ro);
+	KASSERT(ro->ro_rt == NULL || ro->ro_rt->rt_ifp != NULL);
+}
+
 static inline void
 RTFREE(struct rtentry *rt)
 {
@@ -330,9 +352,6 @@ RTFREE(struct rtentry *rt)
 	else
 		rt->rt_refcnt--;
 }
-
-struct ifaddr	*rt_get_ifa(struct rtentry *);
-void	rt_replace_ifa(struct rtentry *, struct ifaddr *);
 
 #endif /* _KERNEL */
 #endif /* !_NET_ROUTE_H_ */
