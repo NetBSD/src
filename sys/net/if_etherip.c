@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.3 2006/11/24 01:04:30 rpaulo Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.4 2006/12/15 21:18:52 joerg Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -216,7 +216,6 @@ etherip_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	sc->sc_src = NULL;
 	sc->sc_dst = NULL;
-	sc->sc_route_expire = 0;
 
 	/*
 	 * In order to obtain unique initial Ethernet address on a host,

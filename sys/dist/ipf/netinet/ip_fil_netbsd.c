@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.29 2006/12/09 05:33:06 dyoung Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.30 2006/12/15 21:18:52 joerg Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -1242,7 +1242,7 @@ frdest_t *fdp;
 		dst->sin_addr = fdp->fd_ip;
 
 	dst->sin_len = sizeof(*dst);
-	rtalloc(ro);
+	rtcache_init(ro);
 
 	if ((ifp == NULL) && (ro->ro_rt != NULL))
 		ifp = ro->ro_rt->rt_ifp;
@@ -1424,9 +1424,7 @@ done:
 	else
 		fr_frouteok[1]++;
 
-	if (ro->ro_rt != NULL) {
-		rtflush(ro);
-	}
+	rtcache_free(ro);
 	*mpp = NULL;
 	return error;
 bad:
@@ -1488,7 +1486,7 @@ frdest_t *fdp;
 			dst6->sin6_addr = fdp->fd_ip6.in6;
 	}
 
-	rtalloc((struct route *)ro);
+	rtcache_init((struct route *)ro);
 
 	if ((ifp == NULL) && (ro->ro_rt != NULL))
 		ifp = ro->ro_rt->rt_ifp;
@@ -1521,9 +1519,7 @@ frdest_t *fdp;
 		}
 	}
 bad:
-	if (ro->ro_rt != NULL) {
-		rtflush((struct route *)ro);
-	}
+	rtcache_free((struct route *)ro);
 	return error;
 }
 #endif
@@ -1541,11 +1537,11 @@ fr_info_t *fin;
 	dst->sin_len = sizeof(*dst);
 	dst->sin_family = AF_INET;
 	dst->sin_addr = fin->fin_src;
-	rtalloc(&iproute);
+	rtcache_init(&iproute);
 	if (iproute.ro_rt == NULL)
 		return 0;
 	rc = (fin->fin_ifp == iproute.ro_rt->rt_ifp);
-	rtflush(&iproute);
+	rtcache_free(&iproute);
 	return rc;
 }
 

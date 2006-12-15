@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.108 2006/12/09 05:33:08 dyoung Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.109 2006/12/15 21:18:55 joerg Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.108 2006/12/09 05:33:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.109 2006/12/15 21:18:55 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1137,10 +1137,11 @@ sendorfree:
 		ip6stat.ip6s_fragmented++;
 
 done:
-	if (ro == &ip6route && ro->ro_rt != NULL)
-		rtflush((struct route *)ro);
-	else if (ro_pmtu == &ip6route && ro_pmtu->ro_rt != NULL)
-		rtflush((struct route *)ro_pmtu);
+	/* XXX Second if is invariant? */
+	if (ro == &ip6route)
+		rtcache_free((struct route *)ro);
+	else if (ro_pmtu == &ip6route)
+		rtcache_free((struct route *)ro_pmtu);
 
 #ifdef IPSEC
 	if (sp != NULL)
@@ -1376,17 +1377,16 @@ ip6_getpmtu(ro_pmtu, ro, ifp, dst, mtup, alwaysfragp)
 		/* The first hop and the final destination may differ. */
 		struct sockaddr_in6 *sa6_dst =
 		    (struct sockaddr_in6 *)&ro_pmtu->ro_dst;
-		if (ro_pmtu->ro_rt != NULL &&
-		    ((ro_pmtu->ro_rt->rt_flags & RTF_UP) == 0 ||
-		      !IN6_ARE_ADDR_EQUAL(&sa6_dst->sin6_addr, dst)))
-			rtflush((struct route *)ro_pmtu);
+		if (!IN6_ARE_ADDR_EQUAL(&sa6_dst->sin6_addr, dst))
+			rtcache_free((struct route *)ro_pmtu);
+		else
+			rtcache_check((struct route *)ro_pmtu);
 		if (ro_pmtu->ro_rt == NULL) {
 			bzero(sa6_dst, sizeof(*sa6_dst)); /* for safety */
 			sa6_dst->sin6_family = AF_INET6;
 			sa6_dst->sin6_len = sizeof(struct sockaddr_in6);
 			sa6_dst->sin6_addr = *dst;
-
-			rtalloc((struct route *)ro_pmtu);
+			rtcache_init((struct route *)ro_pmtu);
 		}
 	}
 	if (ro_pmtu->ro_rt != NULL) {
@@ -2330,8 +2330,7 @@ ip6_clearpktopts(struct ip6_pktopts *pktopt, int optname)
 	if (optname == -1 || optname == IPV6_TCLASS)
 		pktopt->ip6po_tclass = -1;
 	if (optname == -1 || optname == IPV6_NEXTHOP) {
-		if (pktopt->ip6po_nextroute.ro_rt != NULL)
-			rtflush((struct route *)&pktopt->ip6po_nextroute);
+		rtcache_free((struct route *)&pktopt->ip6po_nextroute);
 		if (pktopt->ip6po_nexthop)
 			free(pktopt->ip6po_nexthop, M_IP6OPT);
 		pktopt->ip6po_nexthop = NULL;
@@ -2350,8 +2349,7 @@ ip6_clearpktopts(struct ip6_pktopts *pktopt, int optname)
 		if (pktopt->ip6po_rhinfo.ip6po_rhi_rthdr)
 			free(pktopt->ip6po_rhinfo.ip6po_rhi_rthdr, M_IP6OPT);
 		pktopt->ip6po_rhinfo.ip6po_rhi_rthdr = NULL;
-		if (pktopt->ip6po_route.ro_rt != NULL)
-			rtflush((struct route *)&pktopt->ip6po_route);
+		rtcache_free((struct route *)&pktopt->ip6po_route);
 	}
 	if (optname == -1 || optname == IPV6_DSTOPTS) {
 		if (pktopt->ip6po_dest2)
@@ -2582,13 +2580,13 @@ ip6_setmoptions(optname, im6op, m)
 			dst->sin6_family = AF_INET6;
 			dst->sin6_len = sizeof(*dst);
 			dst->sin6_addr = mreq->ipv6mr_multiaddr;
-			rtalloc((struct route *)&ro);
+			rtcache_init((struct route *)&ro);
 			if (ro.ro_rt == NULL) {
 				error = EADDRNOTAVAIL;
 				break;
 			}
 			ifp = ro.ro_rt->rt_ifp;
-			rtflush((struct route *)&ro);
+			rtcache_free((struct route *)&ro);
 		} else {
 			/*
 			 * If the interface is specified, validate it.

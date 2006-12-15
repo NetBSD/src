@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.51 2006/12/09 05:33:08 dyoung Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.52 2006/12/15 21:18:55 joerg Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.51 2006/12/09 05:33:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.52 2006/12/15 21:18:55 joerg Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -338,34 +338,33 @@ ip6_forward(m, srcrt)
 		/*
 		 * ip6_forward_rt.ro_dst.sin6_addr is equal to ip6->ip6_dst
 		 */
-		if (ip6_forward_rt.ro_rt == NULL ||
-		    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) == 0) {
-			if (ip6_forward_rt.ro_rt != NULL)
-				rtflush((struct route *)&ip6_forward_rt);
-			/* this probably fails but give it a try again */
-			rtalloc((struct route *)&ip6_forward_rt);
-		}
-
+		rtcache_check((struct route *)&ip6_forward_rt);
 		if (ip6_forward_rt.ro_rt == NULL) {
-			ip6stat.ip6s_noroute++;
-			/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */
-			if (mcopy) {
-				icmp6_error(mcopy, ICMP6_DST_UNREACH,
-					    ICMP6_DST_UNREACH_NOROUTE, 0);
-			}
-			m_freem(m);
-			return;
-		}
-	} else if ((rt = ip6_forward_rt.ro_rt) == NULL ||
-		 !IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst->sin6_addr)) {
-		if (ip6_forward_rt.ro_rt != NULL)
-			rtflush((struct route *)&ip6_forward_rt);
-		bzero(dst, sizeof(*dst));
-		dst->sin6_len = sizeof(struct sockaddr_in6);
-		dst->sin6_family = AF_INET6;
-		dst->sin6_addr = ip6->ip6_dst;
+			rtcache_init((struct route *)&ip6_forward_rt);
 
-		rtalloc((struct route *)&ip6_forward_rt);
+			if (ip6_forward_rt.ro_rt == NULL) {
+				ip6stat.ip6s_noroute++;
+				/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */
+				if (mcopy) {
+					icmp6_error(mcopy, ICMP6_DST_UNREACH,
+					    ICMP6_DST_UNREACH_NOROUTE, 0);
+				}
+				m_freem(m);
+				return;
+			}
+		}
+	} else {
+		if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst->sin6_addr))
+			rtcache_free((struct route *)&ip6_forward_rt);
+		else
+			rtcache_check((struct route *)&ip6_forward_rt);
+		if (ip6_forward_rt.ro_rt == NULL) {
+			bzero(dst, sizeof(*dst));
+			dst->sin6_len = sizeof(struct sockaddr_in6);
+			dst->sin6_family = AF_INET6;
+			dst->sin6_addr = ip6->ip6_dst;
+			rtcache_init((struct route *)&ip6_forward_rt);
+		}
 		if (ip6_forward_rt.ro_rt == NULL) {
 			ip6stat.ip6s_noroute++;
 			/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */

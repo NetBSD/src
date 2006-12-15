@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.170 2006/12/09 05:33:04 dyoung Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.171 2006/12/15 21:18:54 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.170 2006/12/09 05:33:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.171 2006/12/15 21:18:54 joerg Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -299,10 +299,11 @@ ip_output(struct mbuf *m0, ...)
 	 * The address family should also be checked in case of sharing the
 	 * cache with IPv6.
 	 */
-	if (ro->ro_rt != NULL && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	    dst->sin_family != AF_INET ||
-	    !in_hosteq(dst->sin_addr, ip->ip_dst)))
-		rtflush(ro);
+	if (dst->sin_family != AF_INET ||
+	    !in_hosteq(dst->sin_addr, ip->ip_dst))
+		rtcache_free(ro);
+	else
+		rtcache_check(ro);
 	if (ro->ro_rt == NULL) {
 		bzero(dst, sizeof(*dst));
 		dst->sin_family = AF_INET;
@@ -330,7 +331,7 @@ ip_output(struct mbuf *m0, ...)
 		IFP_TO_IA(ifp, ia);
 	} else {
 		if (ro->ro_rt == NULL)
-			rtalloc(ro);
+			rtcache_init(ro);
 		if (ro->ro_rt == NULL) {
 			ipstat.ips_noroute++;
 			error = EHOSTUNREACH;
@@ -963,8 +964,8 @@ spd_done:
 	if (error == 0)
 		ipstat.ips_fragmented++;
 done:
-	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0 && ro->ro_rt != NULL)
-		rtflush(ro);
+	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0)
+		rtcache_free(ro);
 
 #ifdef IPSEC
 	if (sp != NULL) {
@@ -1764,13 +1765,13 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 			dst->sin_len = sizeof(*dst);
 			dst->sin_family = AF_INET;
 			dst->sin_addr = mreq->imr_multiaddr;
-			rtalloc(&ro);
+			rtcache_init(&ro);
 			if (ro.ro_rt == NULL) {
 				error = EADDRNOTAVAIL;
 				break;
 			}
 			ifp = ro.ro_rt->rt_ifp;
-			rtflush(&ro);
+			rtcache_free(&ro);
 		} else {
 			ifp = ip_multicast_if(&mreq->imr_interface, NULL);
 		}
