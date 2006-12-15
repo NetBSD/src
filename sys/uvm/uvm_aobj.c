@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.82 2006/11/01 10:18:27 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.83 2006/12/15 13:51:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.82 2006/11/01 10:18:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.83 2006/12/15 13:51:30 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -825,8 +825,8 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		case PGO_CLEANIT|PGO_DEACTIVATE:
 		case PGO_DEACTIVATE:
  deactivate_it:
-			/* skip the page if it's loaned or wired */
-			if (pg->loan_count != 0 || pg->wire_count != 0)
+			/* skip the page if it's wired */
+			if (pg->wire_count != 0)
 				continue;
 
 			/* ...and deactivate the page. */
