@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.10 2006/12/15 20:22:33 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.11 2006/12/15 22:45:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: util.c,v 1.10 2006/12/15 20:22:33 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.11 2006/12/15 22:45:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,7 @@ susystem(char *s)
 		return (127);
 	
 	case 0:
-		execl(_PATH_BSHELL, "sh", "-c", s, NULL);
+		(void)execl(_PATH_BSHELL, "sh", "-c", s, NULL);
 		_exit(127);
 		/* NOTREACHED */
 	}

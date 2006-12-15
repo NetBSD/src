@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.43 2006/12/15 20:22:06 christos Exp $	*/
+/*	$NetBSD: rcp.c,v 1.44 2006/12/15 22:45:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.43 2006/12/15 20:22:06 christos Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.44 2006/12/15 22:45:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,8 @@ main(int argc, char *argv[])
 void
 toremote(char *targ, int argc, char *argv[])
 {
-	int i, len;
+	int i;
+	size_t len;
 	char *bp, *host, *src, *suser, *thost, *tuser;
 
 	*targ++ = 0;
@@ -266,7 +267,8 @@ toremote(char *targ, int argc, char *argv[])
 void
 tolocal(int argc, char *argv[])
 {
-	int i, len;
+	int i;
+	size_t len;
 	char *bp, *host, *src, *suser;
 
 	for (i = 0; i < argc - 1; i++) {
@@ -322,7 +324,8 @@ source(int argc, char *argv[])
 	static BUF buffer;
 	BUF *bp;
 	off_t i;
-	int amt, fd, haderr, indx, result;
+	off_t amt;
+	int fd, haderr, indx, result;
 	char *last, *name, buf[BUFSIZ];
 
 	for (indx = 0; indx < argc; ++indx) {
@@ -376,19 +379,20 @@ next:			(void)close(fd);
 		}
 
 		/* Keep writing after an error so that we stay sync'd up. */
-		for (haderr = i = 0; i < stb.st_size; i += bp->cnt) {
+		haderr = 0;
+		for (i = 0; i < stb.st_size; i += bp->cnt) {
 			amt = bp->cnt;
 			if (i + amt > stb.st_size)
 				amt = stb.st_size - i;
 			if (!haderr) {
-				result = read(fd, bp->buf, amt);
+				result = read(fd, bp->buf, (size_t)amt);
 				if (result != amt)
 					haderr = result >= 0 ? EIO : errno;
 			}
 			if (haderr)
-				(void)write(rem, bp->buf, amt);
+				(void)write(rem, bp->buf, (size_t)amt);
 			else {
-				result = write(rem, bp->buf, amt);
+				result = write(rem, bp->buf, (size_t)amt);
 				if (result != amt)
 					haderr = result >= 0 ? EIO : errno;
 			}
@@ -427,7 +431,7 @@ rsource(char *name, struct stat *statp)
 		    (long)statp->st_atimespec.tv_nsec / 1000);
 		(void)write(rem, path, strlen(path));
 		if (response() < 0) {
-			closedir(dirp);
+			(void)closedir(dirp);
 			return;
 		}
 	}
@@ -435,7 +439,7 @@ rsource(char *name, struct stat *statp)
 	    "D%04o %d %s\n", statp->st_mode & RCPMODEMASK, 0, last);
 	(void)write(rem, path, strlen(path));
 	if (response() < 0) {
-		closedir(dirp);
+		(void)closedir(dirp);
 		return;
 	}
 	while ((dp = readdir(dirp)) != NULL) {
@@ -464,8 +468,14 @@ sink(int argc, char *argv[])
 	struct timeval tv[2];
 	enum { YES, NO, DISPLAYED } wrerr;
 	BUF *bp;
-	off_t i, j;
-	int amt, count, exists, first, mask, mode, ofd, omode;
+	ssize_t j;
+	off_t i;
+	off_t amt;
+	off_t count;
+	int exists, first, ofd;
+	mode_t mask;
+	mode_t mode;
+	mode_t omode;
 	int setimes, targisdir;
 	int wrerrno = 0;	/* pacify gcc */
 	char ch, *cp, *np, *targ, *vect[1], buf[BUFSIZ];
@@ -623,14 +633,15 @@ bad:			run_err("%s: %s", np, strerror(errno));
 		}
 		cp = bp->buf;
 		wrerr = NO;
-		for (count = i = 0; i < size; i += BUFSIZ) {
+		count = 0;
+		for (i = 0; i < size; i += BUFSIZ) {
 			amt = BUFSIZ;
 			if (i + amt > size)
 				amt = size - i;
 			count += amt;
 			do {
-				j = read(rem, cp, amt);
-				if (j <= 0) {
+				j = read(rem, cp, (size_t)amt);
+				if (j == -1) {
 					run_err("%s", j ? strerror(errno) :
 					    "dropped connection");
 					exit(1);
@@ -641,7 +652,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			if (count == bp->cnt) {
 				/* Keep reading so we stay sync'd up. */
 				if (wrerr == NO) {
-					j = write(ofd, bp->buf, count);
+					j = write(ofd, bp->buf, (size_t)count);
 					if (j != count) {
 						wrerr = YES;
 						wrerrno = j >= 0 ? EIO : errno; 
@@ -652,7 +663,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			}
 		}
 		if (count != 0 && wrerr == NO &&
-		    (j = write(ofd, bp->buf, count)) != count) {
+		    (j = write(ofd, bp->buf, (size_t)count)) != count) {
 			wrerr = YES;
 			wrerrno = j >= 0 ? EIO : errno; 
 		}
@@ -735,7 +746,7 @@ response(void)
 		} while (cp < &rbuf[BUFSIZ] && ch != '\n');
 
 		if (!iamremote)
-			(void)write(STDERR_FILENO, rbuf, cp - rbuf);
+			(void)write(STDERR_FILENO, rbuf, (size_t)(cp - rbuf));
 		++errs;
 		if (resp == 1)
 			return (-1);
