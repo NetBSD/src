@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.42 2006/03/20 04:03:10 christos Exp $	*/
+/*	$NetBSD: rcp.c,v 1.43 2006/12/15 20:22:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.42 2006/03/20 04:03:10 christos Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.43 2006/12/15 20:22:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -325,11 +325,6 @@ source(int argc, char *argv[])
 	int amt, fd, haderr, indx, result;
 	char *last, *name, buf[BUFSIZ];
 
-#ifdef __GNUC__
-	/* This outrageous construct just to shut up a GCC warning. */
-	(void) &i;
-#endif
-
 	for (indx = 0; indx < argc; ++indx) {
 		name = argv[indx];
 		if ((fd = open(name, O_RDONLY, 0)) < 0)
@@ -480,11 +475,6 @@ sink(int argc, char *argv[])
 #define	atime	tv[0]
 #define	mtime	tv[1]
 #define	SCREWUP(str)	{ why = str; goto screwup; }
-
-#ifdef __GNUC__
-	/* This outrageous construct just to shut up a GCC warning. */
-	(void) &i;
-#endif
 
 	setimes = targisdir = 0;
 	mask = umask(0);
