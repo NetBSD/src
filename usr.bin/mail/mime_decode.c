@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.5 2006/11/28 18:46:04 christos Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.6 2006/12/15 20:26:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.5 2006/11/28 18:46:04 christos Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.6 2006/12/15 20:26:03 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -737,7 +737,8 @@ mime_sendmessage(struct message *mp, FILE *obuf, struct ignoretab *igntab,
 	detachall_flag = igntab == detachall;
 	if (obuf == NULL) {
 		assert(prefix != NULL);		/* coding error! */
-		obuf = stdout;
+		if ((obuf = last_registered_file(0)) == NULL)
+			obuf = stdout;
 		detachdir = prefix;
 		prefix = NULL;
 		igntab = ignoreall;	/* always ignore the headers */
@@ -768,6 +769,7 @@ mime_sendmessage(struct message *mp, FILE *obuf, struct ignoretab *igntab,
 	error = 0;
 	for (/* EMPTY */; mip; mip = mip->mi_flink) {
 		mip->mi_fo = obuf;
+		mip->mi_head_end = obuf;
 		mip->mi_detachdir = detachdir;
 		mip->mi_detachall = detachall_flag;
 		error |= sendmessage(mip->mp, pipe_end(mip), igntab, NULL, mip);
