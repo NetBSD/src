@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.53 2006/12/09 05:33:09 dyoung Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.54 2006/12/15 21:18:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.53 2006/12/09 05:33:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.54 2006/12/15 21:18:57 joerg Exp $");
 
 #include "opt_eon.h"
 
@@ -221,18 +221,15 @@ eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro,
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(*sin);
 	(void)memcpy(&sin->sin_addr, loc, sizeof(struct in_addr));
-	/*
-	 * If there is a cached route,
-	 * check that it is to the same destination
-	 * and is still up.  If not, free it and try again.
-	 */
+	/* XXX Does this check make any sense? */
+	rtcache_check(ro);
 	if (ro->ro_rt != NULL) {
 		struct sockaddr_in *dst = satosin(rt_key(ro->ro_rt));
-		if ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-		    sin->sin_addr.s_addr != dst->sin_addr.s_addr)
-			rtflush(ro);
+		if (sin->sin_addr.s_addr != dst->sin_addr.s_addr)
+			rtcache_free(ro);
 	}
-	rtalloc(ro);
+	if (ro->ro_rt == NULL)
+		rtcache_init(ro);
 	if (ro->ro_rt != NULL)
 		ro->ro_rt->rt_use++;
 	hdr->ei_ip.ip_dst = sin->sin_addr;
@@ -277,8 +274,7 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	case RTM_DELETE:
 		if (el) {
 			remque(&(el->el_qhdr));
-			if (el->el_iproute.ro_rt != NULL)
-				rtflush(&el->el_iproute);
+			rtcache_free(&el->el_iproute);
 			Free(el);
 			rt->rt_llinfo = 0;
 		}

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.h,v 1.1 2006/11/23 04:07:07 rpaulo Exp $        */
+/*      $NetBSD: if_etherip.h,v 1.2 2006/12/15 21:18:52 joerg Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -56,7 +56,6 @@ struct etherip_softc {
                 struct route_in6 scr_ro6;       /* cached inet6 route         */
 #endif
         } sc_scr;
-        long sc_route_expire;
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
         void *sc_si;                            /* softintr handle            */
 #endif
