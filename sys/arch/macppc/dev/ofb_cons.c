@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb_cons.c,v 1.1 2006/11/08 01:25:10 macallan Exp $	*/
+/*	$NetBSD: ofb_cons.c,v 1.2 2006/12/16 03:31:46 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.1 2006/11/08 01:25:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.2 2006/12/16 03:31:46 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -66,7 +66,7 @@ int ofb_enable_cache = 0;
 
 static int copy_rom_font(void);
 static struct wsdisplay_font openfirm6x11;
-int    console_node, console_instance;
+int    console_node = 0, console_instance = 0;
 static vaddr_t fbaddr;
 static int romfont_loaded = 0;
 
