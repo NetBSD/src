@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb_cons.c,v 1.2 2006/12/16 03:31:46 macallan Exp $	*/
+/*	$NetBSD: ofb_cons.c,v 1.3 2006/12/16 05:05:50 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.2 2006/12/16 03:31:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.3 2006/12/16 05:05:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -53,12 +53,16 @@ __KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.2 2006/12/16 03:31:46 macallan Exp $"
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include <macppc/dev/ofbvar.h>
+#include "wsdisplay.h"
+
+/* we need a wsdisplay to do anything halfway useful */
+#if NWSDISPLAY > 0
 
 #if defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 int ofb_enable_cache = 0;
 #else
 #ifdef OFB_ENABLE_CACHE
-int ofb_enable_cache = 0;
+int ofb_enable_cache = 1;
 #else
 int ofb_enable_cache = 0;
 #endif
@@ -135,17 +139,8 @@ ofb_cnattach()
 	ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
 	wsdisplay_preattach(&ofb_stdscreen, ri, 0, crow, defattr);
 	
-	//ofb_init_cmap(NULL);
-	
-#ifdef SPLASHSCREEN
-	si.si_depth = ri->ri_depth;
-	si.si_bits = (char *)fbaddr;
-	si.si_hwbits = (char *)fbaddr;
-	si.si_width = ri->ri_width;
-	si.si_height = ri->ri_height;
-	si.si_stride = ri->ri_stride;
-	si.si_fillrect = NULL;
-	splash_render(&si, SPLASH_F_CENTER|SPLASH_F_FILL);
+#if notyet
+	ofb_init_cmap(NULL);
 #endif
 
 	return 0;
@@ -271,3 +266,10 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 
 	return TRUE;
 }
+#else	/* NWSDISPLAY > 0 */
+int
+ofb_cnattach()
+{
+	return -1;
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.142 2006/11/29 16:31:19 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.143 2006/12/16 05:05:50 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 2006/11/29 16:31:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 2006/12/16 05:05:50 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 2006/11/29 16:31:19 tsutsui Exp $"
 #endif
 
 #include "ksyms.h"
+#include "wsdisplay.h"
 
 extern int ofmsr;
 extern struct consdev consdev_ofcons;
@@ -786,7 +787,9 @@ kbd_found:;
 	 * XXX wskbd_cnattach() twice.
 	 */
 	ofkbd_ihandle = stdin;
+#if NWSDISPLAY > 0
 	wsdisplay_set_cons_kbd(ofkbd_cngetc, NULL, NULL);
+#endif
 #endif
 }
 #endif
