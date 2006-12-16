@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.139 2006/12/06 20:38:21 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.140 2006/12/16 08:59:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.139 2006/12/06 20:38:21 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.140 2006/12/16 08:59:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.139 2006/12/06 20:38:21 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.140 2006/12/16 08:59:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1137,13 +1137,13 @@ static int
 ReadMakefile(ClientData p, ClientData q __unused)
 {
 	char *fname = p;		/* makefile to read */
-	FILE *stream;
+	int fd;
 	size_t len = MAXPATHLEN;
 	char *name, *path = emalloc(len);
 	int setMAKEFILE;
 
 	if (!strcmp(fname, "-")) {
-		Parse_File("(stdin)", stdin);
+		Parse_File("(stdin)", dup(fileno(stdin)));
 		Var_Set("MAKEFILE", "", VAR_GLOBAL, 0);
 	} else {
 		setMAKEFILE = strcmp(fname, ".depend");
@@ -1155,7 +1155,8 @@ ReadMakefile(ClientData p, ClientData q __unused)
 				path = erealloc(path, len = 2 * plen);
 			
 			(void)snprintf(path, len, "%s/%s", curdir, fname);
-			if ((stream = fopen(path, "r")) != NULL) {
+			fd = open(path, O_RDONLY);
+			if (fd != -1) {
 				fname = path;
 				goto found;
 			}
@@ -1165,18 +1166,22 @@ ReadMakefile(ClientData p, ClientData q __unused)
 			if (len < plen)
 				path = erealloc(path, len = 2 * plen);
 			(void)snprintf(path, len, "%s/%s", objdir, fname);
-			if ((stream = fopen(path, "r")) != NULL) {
+			fd = open(path, O_RDONLY);
+			if (fd != -1) {
 				fname = path;
 				goto found;
 			}
-		} else if ((stream = fopen(fname, "r")) != NULL)
-			goto found;
+		} else {
+			fd = open(fname, O_RDONLY);
+			if (fd != -1)
+				goto found;
+		}
 		/* look in -I and system include directories. */
 		name = Dir_FindFile(fname, parseIncPath);
 		if (!name)
 			name = Dir_FindFile(fname,
 				Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath);
-		if (!name || (stream = fopen(name, "r")) == NULL) {
+		if (!name || (fd = open(name, O_RDONLY)) == -1) {
 			if (name)
 				free(name);
 			free(path);
@@ -1191,8 +1196,7 @@ ReadMakefile(ClientData p, ClientData q __unused)
 found:
 		if (setMAKEFILE)
 			Var_Set("MAKEFILE", fname, VAR_GLOBAL, 0);
-		Parse_File(fname, stream);
-		(void)fclose(stream);
+		Parse_File(fname, fd);
 	}
 	free(path);
 	return(0);
