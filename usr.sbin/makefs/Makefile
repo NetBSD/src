@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2006/12/14 20:09:36 he Exp $
+#	$NetBSD: Makefile,v 1.21 2006/12/16 12:59:17 bouyer Exp $
 #
 
 .include <bsd.own.mk>
@@ -27,8 +27,10 @@ CPPFLAGS+=	-I${.CURDIR} \
 		${.CURDIR}/cd9660 ${CD9660SRC} \
 		${MKNODSRC} ${MTREESRC}
 
-LDADD+= -lutil
+.if (${HOSTPROG:U} == "")
 DPADD+= ${LIBUTIL}
+LDADD+= -lutil
+.endif
 
 WARNS?=	3
 
