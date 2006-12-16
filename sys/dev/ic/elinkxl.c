@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.72.2.1.2.2 2005/10/28 19:35:21 jmc Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.72.2.1.2.3 2006/12/16 11:04:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.72.2.1.2.2 2005/10/28 19:35:21 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.72.2.1.2.3 2006/12/16 11:04:25 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -786,8 +786,8 @@ ex_txstat(sc)
 	 * We need to read+write TX_STATUS until we get a 0 status
 	 * in order to turn off the interrupt flag.
 	 */
-	while ((i = bus_space_read_2(iot, ioh, ELINK_TIMER)) & TXS_COMPLETE) {
-		bus_space_write_2(iot, ioh, ELINK_TIMER, 0x0);
+	while ((i = bus_space_read_1(iot, ioh, ELINK_TXSTATUS)) & TXS_COMPLETE) {
+		bus_space_write_1(iot, ioh, ELINK_TXSTATUS, 0x0);
 
 		if (i & TXS_JABBER) {
 			++sc->sc_ethercom.ec_if.if_oerrors;
