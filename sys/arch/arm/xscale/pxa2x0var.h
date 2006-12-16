@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0var.h,v 1.2 2003/06/05 13:48:28 scw Exp $ */
+/* $NetBSD: pxa2x0var.h,v 1.3 2006/12/16 03:40:33 ober Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -80,5 +80,6 @@ extern void pxa2x0_probe_sdram(vaddr_t, paddr_t *, psize_t *);
  * CKEN register.
  */
 extern void pxa2x0_clkman_config(u_int, boolean_t);
+extern void pxa2x0_clkman_bootstrap(vaddr_t);
 
 #endif /* _ARM_XSCALE_PXA2X0VAR_H_ */

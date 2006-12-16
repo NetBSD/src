@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.5 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.6 2006/12/16 03:37:35 ober Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.5 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.6 2006/12/16 03:37:35 ober Exp $");
 
 #include "opt_pxa2x0_gpio.h"
 
@@ -56,10 +56,12 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.5 2005/12/24 20:06:52 perry Exp $"
 #include "locators.h"
 
 struct gpio_irq_handler {
+	struct gpio_irq_handler *gh_next;
 	int (*gh_func)(void *);
 	void *gh_arg;
 	int gh_spl;
 	u_int gh_gpio;
+	int gh_level;
 };
 
 struct pxagpio_softc {
@@ -234,6 +236,8 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	gh->gh_arg = arg;
 	gh->gh_spl = spl;
 	gh->gh_gpio = gpio;
+	gh->gh_level = level;
+	gh->gh_next = sc->sc_handlers[gpio];
 	sc->sc_handlers[gpio] = gh;
 
 	if (gpio == 0) {
@@ -358,7 +362,7 @@ static int
 gpio_dispatch(struct pxagpio_softc *sc, int gpio_base)
 {
 	struct gpio_irq_handler **ghp, *gh;
-	int i, s, handled, pins;
+	int i, s, nhandled, handled, pins;
 	u_int32_t gedr, mask;
 	int bank;
 
@@ -410,7 +414,11 @@ gpio_dispatch(struct pxagpio_softc *sc, int gpio_base)
 		}
 
 		s = _splraise(gh->gh_spl);
-		handled |= (gh->gh_func)(gh->gh_arg);
+		do {
+			nhandled = (gh->gh_func)(gh->gh_arg);
+			handled |= nhandled;
+			gh = gh->gh_next;
+		} while (gh != NULL);
 		splx(s);
 	}
 
@@ -516,4 +524,149 @@ pxa2x0_gpio_set_function(u_int gpio, u_int fn)
 	pxagpio_reg_write(sc, GPIO_FN_REG(gpio), rv | fn);
 
 	return (oldfn);
+}
+
+/* 
+ * Quick function to read pin value
+ */
+int
+pxa2x0_gpio_get_bit(u_int gpio)
+{
+	struct pxagpio_softc *sc = pxagpio_softc;
+	int bit;
+
+	bit = GPIO_BIT(gpio);
+	if (pxagpio_reg_read(sc, GPIO_REG(GPIO_GPLR0, gpio)) & bit)
+		return 1;
+	else 
+		return 0;
+}
+
+/* 
+ * Quick function to set pin to 1
+ */
+void
+pxa2x0_gpio_set_bit(u_int gpio)
+{
+	struct pxagpio_softc *sc = pxagpio_softc;
+	int bit;
+
+	bit = GPIO_BIT(gpio);
+	pxagpio_reg_write(sc, GPIO_REG(GPIO_GPSR0, gpio), bit);
+}
+
+/* 
+ * Quick function to set pin to 0
+ */
+void
+pxa2x0_gpio_clear_bit(u_int gpio)
+{
+	struct pxagpio_softc *sc = pxagpio_softc;
+	int bit;
+
+	bit = GPIO_BIT(gpio);
+	pxagpio_reg_write(sc, GPIO_REG(GPIO_GPCR0, gpio), bit);
+}
+
+/* 
+ * Quick function to change pin direction
+ */
+void
+pxa2x0_gpio_set_dir(u_int gpio, int dir)
+{
+	struct pxagpio_softc *sc = pxagpio_softc;
+	int bit;
+	u_int32_t reg;
+
+	bit = GPIO_BIT(gpio);
+
+	reg = pxagpio_reg_read(sc, GPIO_REG(GPIO_GPDR0, gpio)) & ~bit;
+	if (GPIO_FN_IS_OUT(dir))
+		reg |= bit;
+	pxagpio_reg_write(sc, GPIO_REG(GPIO_GPDR0, gpio), reg);
+}
+
+/* 
+ * Quick function to clear interrupt status on a pin
+ * GPIO pins may be toggle in an interrupt and we dont want
+ * extra spurious interrupts to occur.
+ * Suppose this causes a slight race if a key is pressed while
+ * the interrupt handler is running. (yes this is for the keyboard driver)
+ */
+void
+pxa2x0_gpio_clear_intr(u_int gpio)
+{
+	struct pxagpio_softc *sc = pxagpio_softc;
+	int bit;
+
+	bit = GPIO_BIT(gpio);
+	pxagpio_reg_write(sc, GPIO_REG(GPIO_GEDR0, gpio), bit);
+}
+
+/*
+ * Quick function to mask (disable) a GPIO interrupt
+ */
+void
+pxa2x0_gpio_intr_mask(void *v)
+{
+	struct gpio_irq_handler *gh = (struct gpio_irq_handler *)v;
+
+	pxa2x0_gpio_set_intr_level(gh->gh_gpio, IPL_NONE);
+}
+
+/*
+ * Quick function to unmask (enable) a GPIO interrupt
+ */
+void
+pxa2x0_gpio_intr_unmask(void *v)
+{
+	struct gpio_irq_handler *gh = (struct gpio_irq_handler *)v;
+
+	pxa2x0_gpio_set_intr_level(gh->gh_gpio, gh->gh_level);
+}
+
+/*
+ * Configure the edge sensitivity of interrupt pins
+ */
+void
+pxa2x0_gpio_set_intr_level(u_int gpio, int level)
+{
+	struct pxagpio_softc *sc = pxagpio_softc;
+	u_int32_t bit;
+	u_int32_t gfer;
+	u_int32_t grer;
+	int s;
+
+	s = splhigh();
+
+	bit = GPIO_BIT(gpio);
+	gfer = pxagpio_reg_read(sc, GPIO_REG(GPIO_GFER0, gpio));
+	grer = pxagpio_reg_read(sc, GPIO_REG(GPIO_GRER0, gpio));
+
+	switch (level) {
+	case IST_NONE:
+		gfer &= ~bit;
+		grer &= ~bit;
+		break;
+	case IST_EDGE_FALLING:
+		gfer |= bit;
+		grer &= ~bit;
+		break;
+	case IST_EDGE_RISING:
+		gfer &= ~bit;
+		grer |= bit;
+		break;
+	case IST_EDGE_BOTH:
+		gfer |= bit;
+		grer |= bit;
+		break;
+	default:
+		panic("pxa2x0_gpio_set_intr_level: bad level: %d", level);
+		break;
+	}
+
+	pxagpio_reg_write(sc, GPIO_REG(GPIO_GFER0, gpio), gfer);
+	pxagpio_reg_write(sc, GPIO_REG(GPIO_GRER0, gpio), grer);
+
+	splx(s);
 }

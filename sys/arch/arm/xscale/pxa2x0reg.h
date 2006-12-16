@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.11 2006/12/10 12:46:48 kiyohara Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.12 2006/12/16 03:39:59 ober Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -85,28 +85,33 @@
 #define PXA2X0_DMAC_SIZE	0x300
 #define PXA2X0_FFUART_BASE	0x40100000 /* Full Function UART */
 #define PXA2X0_BTUART_BASE	0x40200000 /* Bluetooth UART */
-#define PXA2X0_I2C_BASE		0x40300000
+#define PXA2X0_I2C_BASE		0x40300000 /* I2C Bus Interface Unit */
 #define PXA2X0_I2C_SIZE		0x000016a4
-#define PXA2X0_I2S_BASE 	0x40400000
-#define PXA2X0_AC97_BASE	0x40500000
+#define PXA2X0_I2S_BASE 	0x40400000 /* Inter-IC Sound Controller */
+#define PXA2X0_I2S_SIZE		0x0084
+#define PXA2X0_AC97_BASE	0x40500000 /* AC '97 Controller */
 #define PXA2X0_AC97_SIZE	0x600
-#define PXA2X0_USBDC_BASE 	0x40600000 /* USB Client */
+#define PXA2X0_USBDC_BASE 	0x40600000 /* USB Client Contoller */
 #define PXA2X0_USBDC_SIZE 	0x0e04
 #define PXA2X0_STUART_BASE	0x40700000 /* Standard UART */
 #define PXA2X0_ICP_BASE 	0x40800000
 #define PXA2X0_RTC_BASE 	0x40900000
 #define PXA2X0_RTC_SIZE 	0x10
 #define PXA2X0_OST_BASE 	0x40a00000 /* OS Timer */
+#define PXA2X0_OST_SIZE		0x24
 #define PXA2X0_PWM0_BASE	0x40b00000
 #define PXA2X0_PWM1_BASE	0x40c00000
 #define PXA2X0_INTCTL_BASE	0x40d00000 /* Interrupt controller */
 #define	PXA2X0_INTCTL_SIZE	0x20
 #define PXA2X0_GPIO_BASE	0x40e00000
-
 #define PXA270_GPIO_SIZE  	0x150
 #define PXA250_GPIO_SIZE  	0x70
 #define PXA2X0_POWMAN_BASE  	0x40f00000 /* Power management */
-#define PXA2X0_SSP_BASE 	0x41000000
+#define PXA2X0_POWMAN_SIZE	0x1a4      /* incl. PI2C unit */
+#define PXA2X0_SSP_BASE 	0x41000000 /* SSP serial port */
+#define	PXA2X0_SSP1_BASE	0x41700000 /* PXA270 */
+#define	PXA2X0_SSP2_BASE	0x41900000 /* PXA270 */
+#define	PXA2X0_SSP_SIZE		0x40
 #define PXA2X0_MMC_BASE 	0x41100000 /* MultiMediaCard */
 #define PXA2X0_MMC_SIZE		0x48
 #define PXA2X0_CLKMAN_BASE  	0x41300000 /* Clock Manager */
@@ -225,7 +230,14 @@ struct pxa2x0_dma_desc {
 #define  ICR_ACKNAK	(1<<2)
 #define  ICR_TB  	(1<<3)
 #define  ICR_MA  	(1<<4)
+#define  ICR_SCLE	(1<<5)		/* PXA270? */
+#define  ICR_IUE	(1<<6)		/* PXA270? */
+#define  ICR_UR		(1<<14)		/* PXA270? */
+#define  ICR_FM		(1<<15)		/* PXA270? */
 #define I2C_ISR  	0x1698		/* Status register */
+#define  ISR_ACKNAK	(1<<1)
+#define  ISR_ITE	(1<<6)
+#define  ISR_IRF	(1<<7)
 #define I2C_ISAR	0x16a0		/* Slave address */
 
 /* Clock Manager */
@@ -592,6 +604,57 @@ struct pxa2x0_dma_desc {
 #define MMC_TXFIFO	0x44 	/* transmit FIFO */
 
 /*
+ * Inter-IC Sound (I2S) Controller
+ */
+#define I2S_SACR0	0x0000	/* Serial Audio Global Control */
+#define  SACR0_ENB		(1<<0)	/* Enable I2S Function */
+#define  SACR0_BCKD		(1<<2)	/* I/O Direction of I2S_BITCLK */
+#define  SACR0_RST		(1<<3)	/* FIFO Reset */
+#define  SACR0_EFWR		(1<<4)	/* Special-Purpose FIFO W/R Func */
+#define  SACR0_STRF		(1<<5)	/* Select TX or RX FIFO */
+#define  SACR0_TFTH_MASK	(0xf<<8) /* Trans FIFO Intr/DMA Trig Thresh */
+#define  SACR0_RFTH_MASK	(0xf<<12) /* Recv FIFO Intr/DMA Trig Thresh */
+#define  SACR0_SET_TFTH(x)	(((x) & 0xf)<<8)
+#define  SACR0_SET_RFTH(x)	(((x) & 0xf)<<12)
+#define I2S_SACR1	0x0004	/* Serial Audio I2S/MSB-Justified Control */
+#define  SACR1_AMSL		(1<<0)	/* Specify Alt Mode (I2S or MSB) */
+#define  SACR1_DREC		(1<<3)	/* Disable Recording Func */
+#define  SACR1_DRPL		(1<<4)	/* Disable Replay Func */
+#define  SACR1_ENLBF		(1<<5)	/* Enable Interface Loopback Func */
+#define I2S_SASR0	0x000c	/* Serial Audio I2S/MSB-Justified Status */
+#define  SASR0_TNF		(1<<0)	/* Transmit FIFO Not Full */
+#define  SASR0_RNE		(1<<1)	/* Recv FIFO Not Empty */
+#define  SASR0_BSY		(1<<2)	/* I2S Busy */
+#define  SASR0_TFS		(1<<3)	/* Trans FIFO Service Request */
+#define  SASR0_RFS		(1<<4)	/* Recv FIFO Service Request */
+#define  SASR0_TUR		(1<<5)	/* Trans FIFO Underrun */
+#define  SASR0_ROR		(1<<6)	/* Recv FIFO Overrun */
+#define  SASR0_I2SOFF		(1<<7)	/* I2S Controller Off */
+#define  SASR0_TFL_MASK		(0xf<<8) /* Trans FIFO Level */
+#define  SASR0_RFL_MASK		(0xf<<12) /* Recv FIFO Level */
+#define  SASR0_GET_TFL(x)	(((x) & 0xf) >> 8)
+#define  SASR0_GET_RFL(x)	(((x) & 0xf) >> 12)
+#define I2S_SAIMR	0x0014	/* Serial Audio Interrupt Mask */
+#define  SAIMR_TFS		(1<<3)	/* Enable TX FIFO Service Req Intr */
+#define  SAIMR_RFS		(1<<4)	/* Enable RX FIFO Service Req Intr */
+#define  SAIMR_TUR		(1<<5)	/* Enable TX FIFO Underrun Intr */
+#define  SAIMR_ROR		(1<<6)	/* Enable RX FIFO Overrun Intr */
+#define I2S_SAICR	0x0018	/* Serial Audio Interrupt Clear */
+#define  SAICR_TUR		(1<<5)	/* Clear Intr and SASR0_TUR */
+#define  SAICR_ROR		(1<<6)	/* Clear Intr and SASR0_ROR */
+#define I2S_SADIV	0x0060	/* Audio Clock Divider */
+#define  SADIV_MASK		0x7f
+#define  SADIV_3_058MHz		0x0c	/* 3.058 MHz */
+#define  SADIV_2_836MHz		0x0d	/* 2.836 MHz */
+#define  SADIV_1_405MHz		0x1a	/* 1.405 MHz */
+#define  SADIV_1_026MHz		0x24	/* 1.026 MHz */
+#define  SADIV_702_75kHz	0x34	/* 702.75 kHz */
+#define  SADIV_513_25kHz	0x48	/* 513.25 kHz */
+#define I2S_SADR	0x0080	/* Serial Audio Data Register */
+#define  SADR_DTL		(0xffff<<0) /* Left Data Sample */
+#define  SADR_DTH		(0xffff<<16) /* Right Data Sample */
+
+/*
  * AC97
  */
 #define	AC97_N_CODECS	2
@@ -717,5 +780,13 @@ struct pxa2x0_dma_desc {
 #define PWM_PWMDCR	0x0004	/* Duty cycle register */
 #define  PWM_FD		(1<<10)	/* Full duty */
 #define PWM_PWMPCR	0x0008	/* Period register */
+
+/* Synchronous Serial Protocol (SSP) serial ports */
+#define SSP_SSCR0	0x00
+#define SSP_SSCR1	0x04
+#define SSP_SSSR	0x08
+#define  SSSR_TNF	(1<<2)
+#define  SSSR_RNE	(1<<3)
+#define SSP_SSDR	0x10
 
 #endif /* _ARM_XSCALE_PXA2X0REG_H_ */

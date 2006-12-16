@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.13 2006/05/14 21:55:10 elad Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.14 2006/12/16 03:37:03 ober Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.13 2006/05/14 21:55:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.14 2006/12/16 03:37:03 ober Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -152,6 +152,9 @@ CFATTACH_DECL(pxaip, sizeof(struct pxaip_softc),
     pxaip_match, pxaip_attach, NULL, NULL);
 
 static struct pxaip_softc *pxaip_sc;
+static vaddr_t pxaclkman_regs;
+#define CLKMAN_BOOTSTRAP_REG(reg) \
+	(*((volatile uint32_t *)(pxaclkman_regs + (reg))))
 
 static int
 pxaip_match(struct device *parent, struct cfdata *match, void *aux)
@@ -417,19 +420,41 @@ pxa2x0_probe_sdram(vaddr_t memctl_va, paddr_t *start, paddr_t *size)
 }
 
 void
+pxa2x0_clkman_bootstrap(vaddr_t va)
+{
+
+	pxaclkman_regs = va;
+}
+
+void
 pxa2x0_clkman_config(u_int clk, boolean_t enable)
 {
 	struct pxaip_softc *sc;
-	u_int32_t rv;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	uint32_t rv;
 
-	KDASSERT(pxaip_sc != NULL);
-	sc = pxaip_sc;
+	if (__predict_true(pxaip_sc != NULL)) {
+		sc = pxaip_sc;
+		iot = sc->sc_bust;
+		ioh = sc->sc_bush_clk;
 
-	rv = bus_space_read_4(sc->sc_bust, sc->sc_bush_clk, CLKMAN_CKEN);
-	rv &= ~clk;
+		rv = bus_space_read_4(iot, ioh, CLKMAN_CKEN);
+		rv &= ~clk;
+		if (enable)
+			rv |= clk;
+		bus_space_write_4(iot, ioh, CLKMAN_CKEN, rv);
+		return;
+	}
 
-	if (enable)
-		rv |= clk;
+	if (__predict_true(pxaclkman_regs != 0)) {
+		rv = CLKMAN_BOOTSTRAP_REG(CLKMAN_CKEN);
+		rv &= ~clk;
+		if (enable)
+			rv |= clk;
+		CLKMAN_BOOTSTRAP_REG(CLKMAN_CKEN) = rv;
+		return;
+	}
 
-	bus_space_write_4(sc->sc_bust, sc->sc_bush_clk, CLKMAN_CKEN, rv);
+	panic("pxa2x0_clkman_config: not bootstrapped");
 }
