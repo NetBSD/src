@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.h,v 1.4 2006/04/12 19:38:22 jmmv Exp $ */
+/* $NetBSD: pxa2x0_lcd.h,v 1.5 2006/12/16 03:39:34 ober Exp $ */
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -87,10 +87,6 @@ struct pxa2x0_lcd_softc {
 	void *ih;			/* interrupt handler */
 };
 
-void pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *, struct pxaip_attach_args *,
-			   const struct lcd_panel_geometry *);
-void pxa2x0_lcd_start_dma(struct pxa2x0_lcd_softc *, struct pxa2x0_lcd_screen *);
-
 struct lcd_panel_geometry {
 	short panel_width;
 	short panel_height;
@@ -121,28 +117,41 @@ struct lcd_panel_geometry {
 	short end_frame_wait;		/* end of frame wait (EFW) */
 };
 
-void pxa2x0_lcd_geometry(struct pxa2x0_lcd_softc *,
-		          const struct lcd_panel_geometry *);
-struct pxa2x0_lcd_screen *pxa2x0_lcd_new_screen( 
-	struct pxa2x0_lcd_softc *, int depth);
-
 /*
  * we need bits-per-pixel value to configure wsdisplay screen
  */
 struct pxa2x0_wsscreen_descr {
 	struct wsscreen_descr  c;	/* standard descriptor */
 	int depth;			/* bits per pixel */
+	int flags;			/* rasops flags */
 };
 
-int pxa2x0_lcd_setup_wsscreen(struct pxa2x0_wsscreen_descr *,
-    const struct lcd_panel_geometry *, const char * );
+void	pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *,
+	    struct pxaip_attach_args *, struct pxa2x0_wsscreen_descr *,
+	    const struct lcd_panel_geometry *, int);
+int	pxa2x0_lcd_cnattach(struct pxa2x0_wsscreen_descr *,
+	    const struct lcd_panel_geometry *);
+void	pxa2x0_lcd_start_dma(struct pxa2x0_lcd_softc *,
+	    struct pxa2x0_lcd_screen *);
 
-int pxa2x0_lcd_show_screen(void *, void *, int, void (*)(void *, int, int), void *);
-int pxa2x0_lcd_ioctl(void *v, void *, u_long cmd, caddr_t data, int flag, struct lwp *l);
-paddr_t	pxa2x0_lcd_mmap(void *, void *, off_t, int);
-int pxa2x0_lcd_alloc_screen(void *, const struct wsscreen_descr *,
+void	pxa2x0_lcd_geometry(struct pxa2x0_lcd_softc *,
+	    const struct lcd_panel_geometry *);
+int	pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc,
+	    struct pxa2x0_lcd_screen *scr, int depth);
+
+int	pxa2x0_lcd_setup_wsscreen(struct pxa2x0_wsscreen_descr *,
+	    const struct lcd_panel_geometry *, const char * );
+
+int	pxa2x0_lcd_alloc_screen(void *, const struct wsscreen_descr *,
 	    void **, int *, int *, long *);
-void pxa2x0_lcd_free_screen(void *, void *);
+void	pxa2x0_lcd_free_screen(void *, void *);
+int	pxa2x0_lcd_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+paddr_t	pxa2x0_lcd_mmap(void *, void *, off_t, int);
+int	pxa2x0_lcd_show_screen(void *, void *, int, void (*)(void *, int, int),
+	    void *);
+void	pxa2x0_lcd_power(int, void *);
+void	pxa2x0_lcd_suspend(struct pxa2x0_lcd_softc *);
+void	pxa2x0_lcd_resume(struct pxa2x0_lcd_softc *);
 
 extern const struct wsdisplay_emulops pxa2x0_lcd_emulops;
     
