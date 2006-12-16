@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.24 2006/10/27 21:00:19 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.25 2006/12/16 08:59:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.24 2006/10/27 21:00:19 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.25 2006/12/16 08:59:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.24 2006/10/27 21:00:19 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.25 2006/12/16 08:59:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -372,7 +372,7 @@ For_Run(int lineno)
 	    if (old_guy != orig_guy)
 		free(old_guy);
 	}
-	Parse_FromString(guy, lineno);
+	Parse_SetInput(NULL, lineno, -1, guy);
 
 	for (i = 0; i < arg.nvars; i++)
 	    Var_Delete(arg.vars[i], VAR_GLOBAL);

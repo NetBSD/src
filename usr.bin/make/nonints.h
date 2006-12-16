@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.41 2006/11/17 22:07:39 dsl Exp $	*/
+/*	$NetBSD: nonints.h,v 1.42 2006/12/16 08:59:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -133,10 +133,10 @@ Boolean Parse_AnyExport(void);
 Boolean Parse_IsVar(char *);
 void Parse_DoVar(char *, GNode *);
 void Parse_AddIncludeDir(char *);
-void Parse_File(const char *, FILE *);
+void Parse_File(const char *, int);
 void Parse_Init(void);
 void Parse_End(void);
-void Parse_FromString(char *, int);
+void Parse_SetInput(const char *, int, int, char *);
 Lst Parse_MainName(void);
 
 /* str.c */

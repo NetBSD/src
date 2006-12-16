@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.124 2006/12/07 21:34:16 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.125 2006/12/16 08:59:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.124 2006/12/07 21:34:16 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.125 2006/12/16 08:59:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.124 2006/12/07 21:34:16 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.125 2006/12/16 08:59:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -125,6 +125,7 @@ __RCSID("$NetBSD: parse.c,v 1.124 2006/12/07 21:34:16 dsl Exp $");
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -156,12 +157,14 @@ static GNode	    *mainNode;	/* The main target to create. This is the
 typedef struct IFile {
     const char      *fname;	    /* name of file */
     int             lineno;	    /* line number in file */
-    FILE            *F;		    /* the open stream */
+    int             fd;		    /* the open file */
     char            *P_str;         /* point to base of string buffer */
     char            *P_ptr;         /* point to next char of string buffer */
+    char            *P_end;         /* point to the end of string buffer */
 } IFile;
 
-static IFile	    curFile;
+#define IFILE_BUFLEN (0x8000-64)    /* We malloc a spare byte... */
+static IFile	    *curFile;
 
 
 /*
@@ -463,7 +466,7 @@ Parse_Error(int type, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	ParseVErrorInternal(curFile.fname, curFile.lineno, type, fmt, ap);
+	ParseVErrorInternal(curFile->fname, curFile->lineno, type, fmt, ap);
 	va_end(ap);
 }
 
@@ -1733,7 +1736,7 @@ static void
 Parse_include_file(char *file, Boolean isSystem, int silent)
 {
     char          *fullname;	/* full pathname of file */
-    IFile         *oldFile;	/* state associated with current file */
+    int           fd;
 
     /*
      * Now we know the file's name and its search path, we attempt to
@@ -1753,7 +1756,7 @@ Parse_include_file(char *file, Boolean isSystem, int silent)
 	char	  *prefEnd, *Fname;
 
 	/* Make a temporary copy of this, to be safe. */
-	Fname = estrdup(curFile.fname);
+	Fname = estrdup(curFile->fname);
 
 	prefEnd = strrchr(Fname, '/');
 	if (prefEnd != NULL) {
@@ -1803,41 +1806,16 @@ Parse_include_file(char *file, Boolean isSystem, int silent)
 	return;
     }
 
-    /*
-     * Once we find the absolute path to the file, we get to save all the
-     * state from the current file before we can start reading this
-     * include file. The state is stored in an IFile structure which
-     * is placed on a list with other IFile structures. The list makes
-     * a very nice stack to track how we got here...
-     */
-    oldFile = emalloc(sizeof(IFile));
-
-    memcpy(oldFile, &curFile, sizeof(IFile));
-
-    (void)Lst_AtFront(includes, oldFile);
-
-    /*
-     * Once the previous state has been saved, we can get down to reading
-     * the new file. We set up the name of the file to be the absolute
-     * name of the include file so error messages refer to the right
-     * place. Naturally enough, we start reading at line number 0.
-     */
-    curFile.fname = fullname;
-    curFile.lineno = 0;
-
-    ParseSetParseFile(curFile.fname);
-
-    curFile.F = fopen(fullname, "r");
-    curFile.P_str = curFile.P_ptr = NULL;
-
-    if (curFile.F == (FILE * ) NULL) {
+    /* Actually open the file... */
+    fd = open(fullname, O_RDONLY);
+    if (fd == -1) {
 	if (!silent)
 	    Parse_Error(PARSE_FATAL, "Cannot open %s", fullname);
-	/*
-	 * Pop to previous file
-	 */
-	(void)ParseEOF();
+	return;
     }
+
+    /* Start reading from this file next */
+    Parse_SetInput(fullname, 0, fd, NULL);
 }
 
 static void
@@ -1931,36 +1909,63 @@ ParseSetParseFile(const char *filename)
 
 /*-
  *---------------------------------------------------------------------
- * Parse_FromString  --
- *	Start Parsing from the given string
+ * Parse_setInput  --
+ *	Start Parsing from the given source
  *
  * Results:
  *	None
  *
  * Side Effects:
  *	A structure is added to the includes Lst and readProc, lineno,
- *	fname and curFILE are altered for the new file
+ *	fname and curFile are altered for the new file
  *---------------------------------------------------------------------
  */
 void
-Parse_FromString(char *str, int lineno)
+Parse_SetInput(const char *name, int line, int fd, char *buf)
 {
-    IFile         *oldFile;	/* state associated with this file */
+    if (fd == -1 && buf == NULL)
+	/* sanity */
+	return;
 
-    if (DEBUG(FOR))
-	(void)fprintf(debug_file, "%s\n---- at line %d\n", str, lineno);
+    if (name == NULL)
+	name = curFile->fname;
 
-    oldFile = emalloc(sizeof(IFile));
-    memcpy(oldFile, &curFile, sizeof(IFile));
+    /* Save exiting file info */
+    Lst_AtFront(includes, curFile);
 
-    (void)Lst_AtFront(includes, oldFile);
+    /* Allocate and fill in new structure */
+    curFile = emalloc(sizeof *curFile);
 
-    curFile.F = NULL;
-    curFile.P_str = curFile.P_ptr = str;
-    curFile.lineno = lineno;
-    curFile.fname = curFile.fname;
+    /*
+     * Once the previous state has been saved, we can get down to reading
+     * the new file. We set up the name of the file to be the absolute
+     * name of the include file so error messages refer to the right
+     * place.
+     */
+    curFile->fname = name;
+    curFile->lineno = line;
+    curFile->fd = fd;
+
+    ParseSetParseFile(name);
+
+    if (buf == NULL) {
+	/*
+	 * Allocate a 32k data buffer (as stdio seems to).
+	 * Set pointers so that first ParseReadc has to do a file read.
+	 */
+	buf = emalloc(IFILE_BUFLEN + 1);
+	buf[0] = 0;
+	curFile->P_str = buf;
+	curFile->P_ptr = buf;
+	curFile->P_end = buf;
+    } else {
+	/* Start reading from the start of the buffer */
+	curFile->P_str = buf;
+	curFile->P_ptr = buf;
+	curFile->P_end = NULL;
+    }
+
 }
-
 
 #ifdef SYSVINCLUDE
 /*-
@@ -2044,30 +2049,24 @@ ParseTraditionalInclude(char *line)
 static int
 ParseEOF(void)
 {
-    IFile     *ifile;	/* the state on the top of the includes stack */
+    /* Dispose of curFile info */
+    /* Leak curFile->fname because all the gnodes have pointers to it */
+    if (curFile->fd != -1)
+	close(curFile->fd);
+    free(curFile->P_str);
+    free(curFile);
 
-    if (Lst_IsEmpty(includes)) {
-	/* Don't close original file */
+    curFile = Lst_DeQueue(includes);
+
+    if (curFile == NULL) {
+	/* We've run out of input */
 	Var_Delete(".PARSEDIR", VAR_GLOBAL);
 	Var_Delete(".PARSEFILE", VAR_GLOBAL);
-	memset(&curFile, 0, sizeof curFile);
-	return (DONE);
+	return DONE;
     }
 
-    /* XXX dispose of curFile info */
-    /* Leak curFile.fname because all the gnodes have pointers to it */
-    if (curFile.F)
-	(void)fclose(curFile.F);
-    free(curFile.P_str);
-
-    ifile = (IFile *)Lst_DeQueue(includes);
-
-    memcpy(&curFile, ifile, sizeof(IFile));
-
-    free(ifile);
-
-    /* pop the PARSEDIR/PARSEFILE variables */
-    ParseSetParseFile(curFile.fname);
+    /* Restore the PARSEDIR/PARSEFILE variables */
+    ParseSetParseFile(curFile->fname);
     return (CONTINUE);
 }
 
@@ -2082,14 +2081,39 @@ ParseEOF(void)
  * Side Effects:
  *---------------------------------------------------------------------
  */
-static inline int 
+static int 
 ParseReadc(void)
 {
-    if (curFile.F)
-	return fgetc(curFile.F);
+    IFile *cf = curFile;
+    char *ptr = cf->P_ptr;
+    int len;
+    char ch;
 
-    if (*curFile.P_ptr)
-	return *curFile.P_ptr++;
+    for (;;) {
+	ch = *ptr++;
+	if (ch != 0) {
+	    if (ch == '\n')
+		cf->lineno++;
+	    cf->P_ptr = ptr;
+	    return ch;
+	}
+	if (cf->P_end == NULL)
+	    /* Zero byte read from string (ie for loop data) */
+	    return EOF;
+
+	if (ptr < cf->P_end)
+	    /* ignore 0 bytes read from files */
+	    continue;
+
+	/* End of data block from file - read in another chunk. */
+	ptr = cf->P_str;
+	len = read(cf->fd, ptr, IFILE_BUFLEN);
+	if (len <= 0)
+	    return EOF;
+	cf->P_end = ptr + len;
+	ptr[len] = 0;
+    }
+
     return EOF;
 }
 
@@ -2108,14 +2132,9 @@ ParseReadc(void)
 static void
 ParseUnreadc(int c)
 {
-    if (curFile.F) {
-	ungetc(c, curFile.F);
-	return;
-    }
-    if (curFile.P_ptr) {
-	*--curFile.P_ptr = c;
-	return;
-    }
+    if (c == '\n')
+	curFile->lineno--;
+    *--curFile->P_ptr = c;
 }
 
 
@@ -2147,7 +2166,6 @@ ParseSkipLine(int skip, int keep_newline)
                     Buf_AddByte(buf, (Byte)c);
                 else
                     Buf_ReplaceLastByte(buf, (Byte)' ');
-                curFile.lineno++;
 
                 while ((c = ParseReadc()) == ' ' || c == '\t');
 
@@ -2165,7 +2183,6 @@ ParseSkipLine(int skip, int keep_newline)
             return(NULL);
         }
 
-        curFile.lineno++;
         Buf_AddByte(buf, (Byte)'\0');
         line = (char *)Buf_GetAll(buf, &lineLength);
     } while (skip == 1 && line[0] != '.');
@@ -2221,10 +2238,8 @@ ParseReadLine(void)
      */
     for (;;) {
 	c = ParseReadc();
-	if (c == '\n') {
-	    curFile.lineno++;
+	if (c == '\n')
 	    continue;
-	}
 
 	if (c == '\t')
 	    ignComment = ignDepOp = TRUE;
@@ -2254,7 +2269,6 @@ test_char:
 	     * semi-colon and semiNL is TRUE, it will be recognized as a
 	     * newline in the code below this...
 	     */
-	    curFile.lineno++;
 	    lastc = ' ';
 	    while ((c = ParseReadc()) == ' ' || c == '\t')
 		continue;
@@ -2356,8 +2370,6 @@ test_char:
     }
 
 line_read:
-    curFile.lineno++;
-
     if (lastc != '\0') {
 	Buf_AddByte(buf, (Byte)lastc);
     }
@@ -2401,7 +2413,7 @@ line_read:
 	line = ParseReadLine();
 	break;
     case COND_INVALID:
-	lineno = curFile.lineno;
+	lineno = curFile->lineno;
 	if (For_Eval(line)) {
 	    int ok;
 	    free(line);
@@ -2460,18 +2472,19 @@ ParseFinishLine(void)
  *
  * Input:
  *	name		the name of the file being read
- *	stream		Stream open to makefile to parse
+ *	fd		Open file to makefile to parse
  *
  * Results:
  *	None
  *
  * Side Effects:
+ *	closes fd.
  *	Loads. Nodes are added to the list of all targets, nodes and links
  *	are added to the dependency graph. etc. etc. etc.
  *---------------------------------------------------------------------
  */
 void
-Parse_File(const char *name, FILE *stream)
+Parse_File(const char *name, int fd)
 {
     char	  *cp;		/* pointer into the line */
     char          *line;	/* the line we're working on */
@@ -2482,11 +2495,7 @@ Parse_File(const char *name, FILE *stream)
     inLine = FALSE;
     fatals = 0;
 
-    curFile.fname = name;
-    curFile.F = stream;
-    curFile.lineno = 0;
-
-    ParseSetParseFile(curFile.fname);
+    Parse_SetInput(name, 0, fd, NULL);
 
     do {
 	for (; (line = ParseReadLine()) != NULL; free(line)) {
@@ -2746,6 +2755,6 @@ Parse_MainName(void)
 static void
 ParseMark(GNode *gn)
 {
-    gn->fname = curFile.fname;
-    gn->lineno = curFile.lineno;
+    gn->fname = curFile->fname;
+    gn->lineno = curFile->lineno;
 }
