@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.96 2006/12/02 13:10:07 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.97 2006/12/16 11:08:16 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1031,4 +1031,11 @@ etc/protocols					1.16
 
 	Fix typo in xtp comment.
 	[martti, ticket #10786]
+
+sys/dev/ic/elinkxl.c				backout of  1.72.2.1.2.2
+
+	Fix kern/31455 (ex (905[BC]) cards can hang), caused on the netbsd-2
+	branch by pullup of elinkxl.c 1.85 without the appropriate pullup
+	of elink3reg.h
+	[itohy, ticket #10825]
 
