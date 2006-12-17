@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.14 2006/12/16 03:37:03 ober Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.15 2006/12/17 16:03:33 peter Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.14 2006/12/16 03:37:03 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.15 2006/12/17 16:03:33 peter Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -125,6 +125,7 @@ struct pxaip_softc {
 	bus_space_tag_t sc_bust;
 	bus_dma_tag_t sc_dmat;
 	bus_space_handle_t sc_bush_clk;
+	bus_space_handle_t sc_bush_mem;
 };
 
 /* prototypes */
@@ -152,6 +153,9 @@ CFATTACH_DECL(pxaip, sizeof(struct pxaip_softc),
     pxaip_match, pxaip_attach, NULL, NULL);
 
 static struct pxaip_softc *pxaip_sc;
+static vaddr_t pxamemctl_regs;
+#define MEMCTL_BOOTSTRAP_REG(reg) \
+	(*((volatile uint32_t *)(pxamemctl_regs + (reg))))
 static vaddr_t pxaclkman_regs;
 #define CLKMAN_BOOTSTRAP_REG(reg) \
 	(*((volatile uint32_t *)(pxaclkman_regs + (reg))))
@@ -195,6 +199,10 @@ pxaip_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_bust, PXA2X0_CLKMAN_BASE, PXA2X0_CLKMAN_SIZE,
 	    0, &sc->sc_bush_clk))
 		panic("pxaip_attach: failed to map CLKMAN");
+
+	if (bus_space_map(sc->sc_bust, PXA2X0_MEMCTL_BASE, PXA2X0_MEMCTL_SIZE,
+	    0, &sc->sc_bush_mem))
+		panic("pxaip_attach: failed to map MEMCTL");
 
 	/*
 	 * Calculate clock speed
@@ -420,6 +428,52 @@ pxa2x0_probe_sdram(vaddr_t memctl_va, paddr_t *start, paddr_t *size)
 }
 
 void
+pxa2x0_memctl_bootstrap(vaddr_t va)
+{
+
+	pxamemctl_regs = va;
+}
+
+uint32_t
+pxa2x0_memctl_read(int reg)
+{
+	struct pxaip_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+
+	if (__predict_true(pxaip_sc != NULL)) {
+		sc = pxaip_sc;
+		iot = sc->sc_bust;
+		ioh = sc->sc_bush_mem;
+		return (bus_space_read_4(iot, ioh, reg));
+	} else if (__predict_true(pxamemctl_regs != 0)) {
+		return (MEMCTL_BOOTSTRAP_REG(reg));
+	}
+	panic("pxa2x0_memctl_read: not bootstrapped");
+	/*NOTREACHED*/
+}
+
+void
+pxa2x0_memctl_write(int reg, uint32_t val)
+{
+	struct pxaip_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+
+	if (__predict_true(pxaip_sc != NULL)) {
+		sc = pxaip_sc;
+		iot = sc->sc_bust;
+		ioh = sc->sc_bush_mem;
+		bus_space_write_4(iot, ioh, reg, val);
+	} else if (__predict_true(pxamemctl_regs != 0)) {
+		MEMCTL_BOOTSTRAP_REG(reg) = val;
+	} else {
+		panic("pxa2x0_memctl_write: not bootstrapped");
+	}
+	return;
+}
+
+void
 pxa2x0_clkman_bootstrap(vaddr_t va)
 {
 
@@ -445,9 +499,7 @@ pxa2x0_clkman_config(u_int clk, boolean_t enable)
 			rv |= clk;
 		bus_space_write_4(iot, ioh, CLKMAN_CKEN, rv);
 		return;
-	}
-
-	if (__predict_true(pxaclkman_regs != 0)) {
+	} else if (__predict_true(pxaclkman_regs != 0)) {
 		rv = CLKMAN_BOOTSTRAP_REG(CLKMAN_CKEN);
 		rv &= ~clk;
 		if (enable)
@@ -455,6 +507,5 @@ pxa2x0_clkman_config(u_int clk, boolean_t enable)
 		CLKMAN_BOOTSTRAP_REG(CLKMAN_CKEN) = rv;
 		return;
 	}
-
 	panic("pxa2x0_clkman_config: not bootstrapped");
 }
