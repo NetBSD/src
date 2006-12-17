@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.78.2.1 2006/12/17 21:34:01 riz Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.78.2.2 2006/12/17 21:41:13 riz Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78.2.1 2006/12/17 21:34:01 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78.2.2 2006/12/17 21:41:13 riz Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1171,6 +1171,11 @@ veriexec_unmountchk(struct mount *mp)
 	switch (veriexec_strict) {
 	case VERIEXEC_LEARNING:
 	case VERIEXEC_IDS:
+		if (veriexec_table_delete(mp) == 0) {
+			log(LOG_INFO, "Veriexec: IDS mode, allowing  unmount "
+			    "of \"%s\".\n", mp->mnt_stat.f_mntonname);
+		}
+
 		error = 0;
 		break;
 
@@ -1180,7 +1185,7 @@ veriexec_unmountchk(struct mount *mp)
 		vte = fileassoc_tabledata_lookup(mp, veriexec_hook);
 		if ((vte != NULL) && (vte->vte_count > 0)) {
 			log(LOG_ALERT, "Veriexec: IPS mode, preventing"
-			    " unmount of \"%s\" with monitored files.",
+			    " unmount of \"%s\" with monitored files.\n",
 			    mp->mnt_stat.f_mntonname);
 
 			error = EPERM;
