@@ -1,4 +1,4 @@
-/*	$NetBSD: zaurus_reg.h,v 1.1 2006/12/16 05:57:48 ober Exp $	*/
+/*	$NetBSD: zaurus_reg.h,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
 /*	$OpenBSD: zaurus_reg.h,v 1.7 2005/12/14 14:39:38 uwe Exp $	*/
 /*	NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp */
 
@@ -43,41 +43,41 @@
 #define ZAURUS_GPIO_VBASE	0xfd000000
 #define ZAURUS_CLKMAN_VBASE 	0xfd100000
 #define ZAURUS_INTCTL_VBASE 	0xfd200000
-#define ZAURUS_SCOOP0_VBASE	0xfd300000
-#define ZAURUS_SCOOP1_VBASE	0xfd400000
-#define ZAURUS_FFUART_VBASE	0xfd500000
-#define ZAURUS_BTUART_VBASE	0xfd600000
-#define ZAURUS_STUART_VBASE	0xfd700000
-#define ZAURUS_VBASE_FREE	0xfd800000
-/* FFUART, BTUART and/or STUART are mapped to this area when
-   used for console or kgdb port */
+#define ZAURUS_MEMCTL_VBASE 	0xfd300000
+#define ZAURUS_SCOOP0_VBASE	0xfd400000
+#define ZAURUS_SCOOP1_VBASE	0xfd500000
+#define ZAURUS_FFUART_VBASE	0xfd600000
+#define ZAURUS_BTUART_VBASE	0xfd700000
+#define ZAURUS_STUART_VBASE	0xfd800000
+#define ZAURUS_VBASE_FREE	0xfd900000
 
-#define ioreg_read(a)  (*(volatile unsigned *)(a))
-#define ioreg_write(a,v)  (*(volatile unsigned *)(a)=(v))
-
-#define ioreg16_read(a)  (*(volatile uint16_t *)(a))
-#define ioreg16_write(a,v)  (*(volatile uint16_t *)(a)=(v))
-
-#define ioreg8_read(a)  (*(volatile uint8_t *)(a))
-#define ioreg8_write(a,v)  (*(volatile uint8_t *)(a)=(v))
+#define ioreg_read(a)		(*(volatile uint32_t *)(a))
+#define ioreg_write(a,v)	(*(volatile uint32_t *)(a)=(v))
+#define ioreg16_read(a)		(*(volatile uint16_t *)(a))
+#define ioreg16_write(a,v)	(*(volatile uint16_t *)(a)=(v))
+#define ioreg8_read(a)		(*(volatile uint8_t *)(a))
+#define ioreg8_write(a,v)	(*(volatile uint8_t *)(a)=(v))
 
 /*
  * Magic numbers for the C860 (PXA255) and C3000 (PXA27x).
  */
 
 /* physical adresses of companion chips */
-#define C3000_SCOOP0_BASE	0x10800000 /* XXX same as C860 */
-#define C3000_SCOOP1_BASE	0x08800040
+#define C860_SCOOP0_BASE		0x10800000
+#define C3000_SCOOP0_BASE		0x10800000
+#define C3000_SCOOP1_BASE		0x08800040
 
 /* processor IRQ numbers */
-#define C860_CF0_IRQ		17
-#define C3000_CF0_IRQ		105
-#define C3000_CF1_IRQ		106
+#define C860_CF0_IRQ			17
+#define C3000_CF0_IRQ			105
+#define C3000_CF1_IRQ			106
 
 /* processor GPIO pins */
-#define C860_CF0_IRQ_PIN	14
-#define C3000_RC_IRQ_PIN	13	/* remote control */
-#define C3000_CF0_IRQ_PIN	94
-#define C3000_CF1_IRQ_PIN	93
+#define C860_CF0_IRQ_PIN		14
+#define	C3000_GPIO_SD_DETECT_PIN	9
+#define C3000_RC_IRQ_PIN		13	/* remote control */
+#define	C3000_GPIO_SD_WP_PIN		81
+#define C3000_CF1_IRQ_PIN		93
+#define C3000_CF0_IRQ_PIN		94
 
 #endif /* _ZAURUS_REG_H */
