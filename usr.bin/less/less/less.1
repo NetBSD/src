@@ -1,4 +1,4 @@
-.\"	$NetBSD: less.1,v 1.16 2006/10/26 01:33:08 mrg Exp $
+.\"	$NetBSD: less.1,v 1.17 2006/12/17 16:16:53 jmmv Exp $
 .\"
 .TH LESS 1 "Version 394: 03 Dec 2005"
 .SH NAME
@@ -32,14 +32,33 @@ less \- opposite of more (a filter for browsing text files)
 .I Less
 is a program similar to
 .I more
-(1), but which allows backward movement
-in the file as well as forward movement.
-Also,
+(1), a filter that shows text one page at a time.
+In NetBSD the two utilities are implemented by the same binary but they
+expose slightly different behavior.
+Their differences are detailed below:
+.IP \(bu 4
+.I less
+allows backward movement in the file as well as forward movement.
+.IP \(bu 4
 .I less
 does not have to read the entire input file before starting,
 so with large input files it starts up faster than text editors like
 .I vi
 (1).
+.IP \(bu 4
+.I more
+ignores * and @ in search commands.
+.IP \(bu 4
+.I less
+does not clear the screen or squish it to the bottom, for the first
+page, or when exiting.
+.IP \(bu 4
+.I more
+sets the -E -m -G -f flags automatically.
+.IP \(bu 4
+.I more
+uses $MORE instead of $LESS for extra options.
+.PP
 .I Less
 uses termcap (or terminfo on some systems),
 so it can run on a variety of terminals.
