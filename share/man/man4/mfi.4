@@ -1,4 +1,4 @@
-.\"	$NetBSD: mfi.4,v 1.1 2006/12/17 22:57:14 bouyer Exp $
+.\"	$NetBSD: mfi.4,v 1.2 2006/12/17 23:51:26 wiz Exp $
 .\"	$OpenBSD: mfi.4,v 1.7 2006/09/01 09:58:09 jmc Exp $
 .\"
 .\" Written by Marco Peereboom <marco@peereboom.us>
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm mfi
-.Nd LSI Logic & Dell MegaRAID SAS RAID controller
+.Nd LSI Logic \*[Am] Dell MegaRAID SAS RAID controller
 .Sh SYNOPSIS
 .Cd "mfi* at pci? dev ? function ?"
 .Cd "scsibus* at mfi?"
@@ -56,7 +56,7 @@ MegaRAID SAS 8408E,
 MegaRAID SAS 8480E
 .El
 .Pp
-These controllers support RAID 0, RAID 1, RAID 5, RAID 10 and RAID 50
+These controllers support RAID 0, RAID 1, RAID 5, RAID 10, and RAID 50
 using either SAS or SATA II drives.
 .Pp
 Although the controllers are actual RAID controllers,
@@ -66,7 +66,7 @@ All RAID configuration is done through the controllers' BIOSes.
 .Xr intro 4 ,
 .Xr pci 4 ,
 .Xr scsi 4 ,
-.Xr sd 4 ,
+.Xr sd 4
 .Sh HISTORY
 The
 .Nm
