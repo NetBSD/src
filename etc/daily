@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.68 2006/11/12 01:22:57 christos Exp $
+#	$NetBSD: daily,v 1.69 2006/12/17 23:24:09 hubertf Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -268,7 +268,7 @@ if checkyesno run_skeyaudit; then
 fi
 
 if [ -f /etc/daily.local ]; then
-	. /etc/daily.local > $TMP 2>&1
+	( . /etc/daily.local ) > $TMP 2>&1
 	if [ -s $TMP ] ; then
 		printf "\nRunning /etc/daily.local:\n"
 		cat $TMP
