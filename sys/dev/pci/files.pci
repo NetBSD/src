@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.273 2006/11/30 21:01:16 bouyer Exp $
+#	$NetBSD: files.pci,v 1.274 2006/12/17 22:57:16 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -131,6 +131,11 @@ file	dev/pci/bha_pci.c		bha_pci
 # device declaration in sys/conf/files
 attach	isp at pci with isp_pci
 file	dev/pci/isp_pci.c		isp_pci
+
+# LSILogic MegaRAID SAS
+# device declaration in sys/conf/files
+attach	mfi at pci with mfi_pci
+file	dev/pci/mfi_pci.c		mfi_pci
 
 # LSILogic Fusion-MPT I/O Processor family
 # device declaration in sys/conf/files
