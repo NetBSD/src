@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.1 2006/12/16 05:23:06 ober Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.1 2006/12/16 05:23:06 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.2 2006/12/17 16:07:11 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,38 +68,42 @@ __KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.1 2006/12/16 05:23:06 ober Exp $");
 /*
  * wsdisplay glue
  */
-struct pxa2x0_wsscreen_descr lcd_bpp16_screen = {
-	{
-		"std"
+static struct pxa2x0_wsscreen_descr lcd_std_screen = {
+	.c = {
+		.name = "std",
+		.textops = &pxa2x0_lcd_emulops,
+		.fontwidth = 8,
+		.fontheight = 16,
+		.capabilities = WSSCREEN_WSCOLORS,
 	},
-	16,				/* bits per pixel */
-	0/*RI_ROTATE_CW*/		/* quarter clockwise rotation */
+	.depth = 16,			/* bits per pixel */
+	.flags = 0/*RI_ROTATE_CW*/,	/* quarter clockwise rotation */
 };
 
 static const struct wsscreen_descr *lcd_scr_descr[] = {
-	&lcd_bpp16_screen.c
+	&lcd_std_screen.c
 };
 
-const struct wsscreen_list lcd_screen_list = {
-	sizeof lcd_scr_descr / sizeof lcd_scr_descr[0], lcd_scr_descr
+static const struct wsscreen_list lcd_screen_list = {
+	.nscreens = __arraycount(lcd_scr_descr),
+	.screens = lcd_scr_descr,
 };
 
-int	lcd_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
-int	lcd_param(struct pxa2x0_lcd_softc *, u_long,
-	    struct wsdisplay_param *);
-int	lcd_show_screen(void *, void *, int,
-	    void (*)(void *, int, int), void *);
-void	lcd_burner(void *, u_int, u_int);
+static int	lcd_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	lcd_param(struct pxa2x0_lcd_softc *, u_long,
+		    struct wsdisplay_param *);
+static int	lcd_show_screen(void *, void *, int,
+		    void (*)(void *, int, int), void *);
 
-const struct wsdisplay_accessops lcd_accessops = {
+struct wsdisplay_accessops lcd_accessops = {
 	lcd_ioctl,
 	pxa2x0_lcd_mmap,
 	pxa2x0_lcd_alloc_screen,
 	pxa2x0_lcd_free_screen,
 	lcd_show_screen,
-	NULL,	/* load_font */
-	NULL,	/* pollc */
-	NULL,	/* scroll */
+	NULL,
+	NULL,
+	NULL,
 };
 
 #define CURRENT_DISPLAY &sharp_zaurus_C3000
@@ -132,19 +136,18 @@ struct sharp_lcd_backlight {
 #define CURRENT_BACKLIGHT sharp_zaurus_C3000_bl
 
 const struct sharp_lcd_backlight sharp_zaurus_C3000_bl[] = {
-	{ 0x00, 0, 0 },		/* 0:     Off */
-	{ 0x00, 0, 1 },		/* 1:      0% */
-	{ 0x01, 0, 1 },		/* 2:     20% */
-	{ 0x07, 0, 1 },		/* 3:     40% */
-	{ 0x01, 1, 1 },		/* 4:     60% */
-	{ 0x07, 1, 1 },		/* 5:     80% */
-	{ 0x11, 1, 1 },		/* 6:    100% */
-	{ -1, -1, -1 }		/* 7: Invalid */
+	{ 0x00, 0,  0 },	/* 0:     Off */
+	{ 0x00, 0,  1 },	/* 1:      0% */
+	{ 0x01, 0,  1 },	/* 2:     20% */
+	{ 0x07, 0,  1 },	/* 3:     40% */
+	{ 0x01, 1,  1 },	/* 4:     60% */
+	{ 0x07, 1,  1 },	/* 5:     80% */
+	{ 0x11, 1,  1 },	/* 6:    100% */
+	{  -1, -1, -1 },	/* 7: Invalid */
 };
 
 static int	lcd_match(struct device *, struct cfdata *, void *);
 static void	lcd_attach(struct device *, struct device *, void *);
-int		lcd_cnattach(void);
 
 CFATTACH_DECL(zlcd, sizeof(struct pxa2x0_lcd_softc),
 	lcd_match, lcd_attach, NULL, NULL);
@@ -171,9 +174,7 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)self;
 	struct wsemuldisplaydev_attach_args aa;
 
-	printf("\n");
-
-	pxa2x0_lcd_attach_sub(sc, aux, &lcd_bpp16_screen, CURRENT_DISPLAY,
+	pxa2x0_lcd_attach_sub(sc, aux, &lcd_std_screen, CURRENT_DISPLAY,
 	    glass_console);
 
 	aa.console = glass_console;
@@ -181,25 +182,18 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	aa.accessops = &lcd_accessops;
 	aa.accesscookie = sc;
 
-	(void)config_found(self, &aa, wsemuldisplaydevprint);
+	(void) config_found(self, &aa, wsemuldisplaydevprint);
 
 	/* Start with approximately 40% of full brightness. */
 	lcd_set_brightness(3);
 
-	(void)powerhook_establish(sc->dev.dv_xname, lcd_power, sc);
-}
-
-int
-lcd_cnattach(void)
-{
-
-	return pxa2x0_lcd_cnattach(&lcd_bpp16_screen, CURRENT_DISPLAY);
+	(void) powerhook_establish(sc->dev.dv_xname, lcd_power, sc);
 }
 
 /*
  * wsdisplay accessops overrides
  */
-int
+static int
 lcd_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)v;
@@ -217,25 +211,18 @@ lcd_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	return res;
 }
 
-void
-lcd_burner(void *v, u_int on, u_int flags)
-{
-
-	lcd_set_brightness(on ? lcd_get_brightness() : 0);
-}
-
-int
+static int
 lcd_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
+    void (*cb_func)(void *, int, int), void *cb_arg)
 {
 	int error;
 
-	error = pxa2x0_lcd_show_screen(v, cookie, waitok, cb, cbarg);
+	error = pxa2x0_lcd_show_screen(v, cookie, waitok, cb_func, cb_arg);
 	if (error)
 		return (error);
 
 	/* Turn on LCD */
-	lcd_burner(v, 1, 0);
+	lcd_set_brightness(lcd_get_brightness());
 
 	return 0;
 }
@@ -243,7 +230,7 @@ lcd_show_screen(void *v, void *cookie, int waitok,
 /*
  * wsdisplay I/O controls
  */
-int
+static int
 lcd_param(struct pxa2x0_lcd_softc *sc, u_long cmd,
     struct wsdisplay_param *dp)
 {
@@ -363,10 +350,10 @@ lcd_get_backlight(void)
 }
 
 void
-lcd_set_backlight(int on)
+lcd_set_backlight(int onoff)
 {
 
-	if (!on) {
+	if (!onoff) {
 		lcd_set_brightness(0);
 		lcdislit = 0;
 	} else {

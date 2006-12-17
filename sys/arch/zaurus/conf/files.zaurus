@@ -1,13 +1,10 @@
-#	$NetBSD: files.zaurus,v 1.1 2006/12/16 05:09:31 ober Exp $
+#	$NetBSD: files.zaurus,v 1.2 2006/12/17 16:07:11 peter Exp $
 #
-# zaurus specific configuration info
+# Sharp Zaurus specific configuration info
 #
 
 maxpartitions	16
 maxusers	2 8 64
-
-# Maintain Interrupt statistics
-defflag	IRQSTATS
 
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"
@@ -22,6 +19,13 @@ include "dev/ata/files.ata"
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
+
+# Machine-independent SD/MMC drivers
+#include "dev/sdmmc/files.sdmmc"
+
+# HPC
+include "arch/hpc/conf/files.hpc"
+include "dev/hpc/files.hpctp"
 
 # Memory disk driver
 file	dev/md_root.c				memory_disk_hooks
@@ -39,9 +43,6 @@ file	arch/arm32/fpe-arm/armfpe.s		armfpe
 
 # Include Intel XScale PXA2x0 config definitions.
 include "arch/arm/xscale/files.pxa2x0"
-
-# USB drivers
-#include "dev/usb/files.usb"
 
 # 16-bit GPIO controller
 device scoop
@@ -67,24 +68,28 @@ attach zkbd at pxaip
 file arch/zaurus/dev/zkbd.c		zkbd
 
 # Zaurus touchpad
-device zts: wsmousedev
-attach zts at pxaip
-file arch/zaurus/dev/zts.c		zts needs-flag
+device ztp: wsmousedev, hpctpanel
+attach ztp at pxaip
+file arch/zaurus/dev/ztp.c		ztp
 
 # Zaurus sound
-device	zaudio: audiobus, auconv, mulaw, aurateconv, pxaiis, pxaiic
-attach	zaudio at pxaip
-file	arch/zaurus/dev/zaudio.c	zaudio
+device zaudio: audiobus, auconv, mulaw, aurateconv, pxaiis, pxaiic
+attach zaudio at pxaip
+file arch/zaurus/dev/zaudio.c		zaudio
 
 # Zaurus remote control
-device	zrc: wskbddev
-attach	zrc at pxaip
-file	arch/zaurus/dev/zrc.c		zrc
+device zrc: wskbddev
+attach zrc at pxaip
+file arch/zaurus/dev/zrc.c		zrc
 
-# Power manager and APM emulation
-#attach apm at pxaip with zapm
-#file arch/zaurus/dev/zapm.c		zapm
+# MMC/SD controller
+#attach pxamci at pxaip with zmci
+#file arch/zaurus/dev/zmci.c		zmci
 
+# PCMCIA drivers
 include "dev/pcmcia/files.pcmcia"
+
+# USB drivers
+#include "dev/usb/files.usb"
 
 include "arch/zaurus/conf/majors.zaurus"
