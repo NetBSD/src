@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.958 2006/12/17 22:57:14 bouyer Exp $
+# $NetBSD: mi,v 1.959 2006/12/17 23:02:06 bouyer Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -721,6 +721,7 @@
 ./usr/share/man/cat4/bktr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bluetooth.0		man-sys-catman		.cat
 ./usr/share/man/cat4/bmtphy.0			man-sys-catman		.cat
+./usr/share/man/cat4/bnx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/boca.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bpf.0			man-sys-catman		.cat
 ./usr/share/man/cat4/brgphy.0			man-sys-catman		.cat
@@ -3122,6 +3123,7 @@
 ./usr/share/man/man4/bktr.4			man-sys-man		.man
 ./usr/share/man/man4/bluetooth.4		man-sys-man		.man
 ./usr/share/man/man4/bmtphy.4			man-sys-man		.man
+./usr/share/man/man4/bnx.4			man-sys-man		.man
 ./usr/share/man/man4/boca.4			man-sys-man		.man
 ./usr/share/man/man4/bpf.4			man-sys-man		.man
 ./usr/share/man/man4/brgphy.4			man-sys-man		.man

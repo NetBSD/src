@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.111 2006/11/30 21:01:16 bouyer Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.112 2006/12/17 23:02:06 bouyer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -432,6 +432,7 @@ fd*	at fdc? drive ?			# the drives themselves
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
+bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
