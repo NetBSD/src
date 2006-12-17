@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2006/12/16 05:57:48 ober Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,19 +34,38 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2006/12/16 05:57:48 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2006/12/17 16:07:11 peter Exp $");
+
+#include "opt_md.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/reboot.h>
+#include <sys/disklabel.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+
+#include <machine/intr.h>
+#include <machine/bootconfig.h>
+
+void
+cpu_rootconf(void)
+{
+
+	aprint_normal("boot device: %s\n",
+	    (booted_device != NULL) ? booted_device->dv_xname : "<unknown>");
+	setroot(booted_device, booted_partition);
+}
 
 void
 cpu_configure(void)
 {
 
-	/* Start configuration */
 	splhigh();
+	splserial();
+
 	softintr_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
@@ -54,14 +73,6 @@ cpu_configure(void)
 
 	/* Configuration is finished, turn on interrupts. */
 	spl0();
-}
-
-void
-cpu_rootconf(void)
-{
-
-	/* No boot information */
-	setroot(0, 0);
 }
 
 void

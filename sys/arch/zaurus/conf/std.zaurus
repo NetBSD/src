@@ -1,4 +1,4 @@
-#	$NetBSD: std.zaurus,v 1.1 2006/12/16 05:10:42 ober Exp $
+#	$NetBSD: std.zaurus,v 1.2 2006/12/17 16:07:11 peter Exp $
 #
 # standard NetBSD/zaurus options
 
@@ -17,4 +17,4 @@ options 	ARM32
 options 	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
 
 # OS Timer
-saost*	at pxaip? addr 0x40a00000 size 0x20
+saost* at pxaip? addr 0x40a00000 size 0x20

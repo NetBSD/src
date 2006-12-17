@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2006/12/16 05:57:48 ober Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
  * Intel DBPXA250 evaluation board (a.k.a. Lubbock).
  * Based on iq80310_machhdep.c
  */
+
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
@@ -106,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2006/12/16 05:57:48 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2006/12/17 16:07:11 peter Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -164,12 +165,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2006/12/16 05:57:48 ober Exp $");
 
 #if 0	/* XXX */
 #include "apm.h"
-#if NAPM > 0
-#include <zaurus/dev/zapm.h>
-#endif
-
-#include "wsdisplay.h"
 #endif	/* XXX */
+#if NAPM > 0
+#include <zaurus/dev/zapmvar.h>
+#endif
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
@@ -197,11 +196,11 @@ u_int cpu_reset_address = 0;
 #define UND_STACK_SIZE	1
 #endif
 
-int zaurusmod;
+int zaurusmod;			/* Zaurus model */
 
 BootConfig bootconfig;		/* Boot config storage */
-char *boot_args = NULL;
 char *boot_file = NULL;
+char *boot_args = NULL;
 
 paddr_t physical_start;
 paddr_t physical_freestart;
@@ -244,6 +243,9 @@ pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
 struct user *proc0paddr;
 
+const char *console = "glass";
+int glass_console = 0;
+
 char	bootargs[MAX_BOOT_STRING];
 void	process_kernel_args(char *);
 
@@ -273,11 +275,9 @@ cpu_reboot(int howto, char *bootstr)
 		cngetc();
 
 		printf("rebooting...\n");
-		delay(6000000);
-#if NAPM > 0
-		zapm_restart();
-#endif
-		printf("reboot failed; spinning\n");
+		delay(6 * 1000 * 1000);	/* wait 6s */
+		zaurus_restart();
+		printf("REBOOT FAILED: spinning\n");
 		for (;;)
 			continue;
 		/*NOTREACHED*/
@@ -309,33 +309,49 @@ cpu_reboot(int howto, char *bootstr)
 	if (howto & RB_HALT) {
 #if NAPM > 0
 		if (howto & RB_POWERDOWN) {
-
 			printf("\nAttempting to power down...\n");
-			delay(6000000);
+			delay(1 * 1000 * 1000);
 			zapm_poweroff();
 		}
 #endif
-
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
 	}
 
 	printf("rebooting...\n");
-	delay(6000000);
-#if NAPM > 0
-	zapm_restart();
-#endif
+	delay(1 * 1000 * 1000);
+	zaurus_restart();
 	printf("REBOOT FAILED!!!\n");
 	for (;;)
 		continue;
 	/*NOTREACHED*/
 }
 
+/*
+ * Do a GPIO reset, immediately causing the processor to begin the normal
+ * boot sequence.  See 2.7 Reset in the PXA27x Developer's Manual for the
+ * summary of effects of this kind of reset.
+ */
+void
+zaurus_restart(void)
+{
+	uint32_t rv;
+
+	rv = pxa2x0_memctl_read(MEMCTL_MSC0);
+	if ((rv & 0xffff0000) == 0x7ff00000) {
+		pxa2x0_memctl_write(MEMCTL_MSC0, (rv & 0xffff) | 0x7ee00000);
+	}
+
+	/* External reset circuit presumably asserts nRESET_GPIO. */
+	pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
+	delay(1 * 1000* 1000);	/* wait 1s */
+}
+
 static __inline pd_entry_t *
 read_ttb(void)
 {
-	long ttb;
+	u_long ttb;
 
 	__asm volatile("mrc p15, 0, %0, c2, c0, 0" : "=r" (ttb));
 
@@ -376,6 +392,12 @@ static const struct pmap_devmap zaurus_devmap[] = {
 	    ZAURUS_INTCTL_VBASE,
 	    _A(PXA2X0_INTCTL_BASE),
 	    _S(PXA2X0_INTCTL_SIZE),
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+    },
+    {
+	    ZAURUS_MEMCTL_VBASE,
+	    _A(PXA2X0_MEMCTL_BASE),
+	    _S(PXA2X0_MEMCTL_SIZE),
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
     },
     {
@@ -476,6 +498,9 @@ initarm(void *arg)
 	paddr_t memstart;
 	psize_t memsize;
 
+	/* Get ready for zaurus_restart() */
+	pxa2x0_memctl_bootstrap(PXA2X0_MEMCTL_BASE);
+
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
@@ -487,6 +512,10 @@ initarm(void *arg)
 
 	/* map some peripheral registers at static I/O area */
 	pmap_devmap_bootstrap((vaddr_t)read_ttb(), zaurus_devmap);
+
+	/* set new memctl register address so that zaurus_restart() doesn't
+	   touch illegal address. */
+	pxa2x0_memctl_bootstrap(ZAURUS_MEMCTL_VBASE);
 
 	/* set new intc register address so that splfoo() doesn't
 	   touch illegal address.  */
@@ -512,13 +541,11 @@ initarm(void *arg)
 	else
 		zaurusmod = ZAURUS_C860;
 
-	/* setup GPIO for BTUART, in case bootloader doesn't take care of it */
-	pxa2x0_gpio_bootstrap(ZAURUS_GPIO_VBASE);
-
 	/* setup a serial console for very early boot */
 	pxa2x0_gpio_bootstrap(ZAURUS_GPIO_VBASE);
 	pxa2x0_clkman_bootstrap(ZAURUS_CLKMAN_VBASE);
-	consinit();
+	if (strcmp(console, "glass") != 0)
+		consinit();
 #ifdef KGDB
 	kgdb_port_init();
 #endif
@@ -749,7 +776,7 @@ initarm(void *arg)
 	    minidataclean.pv_pa);
 
 	/* Map the vector page. */
-#if 1
+#if 0
 	/* MULTI-ICE requires that page 0 is NC/NB so that it can download the
 	 * cache-clean code there.  */
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
@@ -906,9 +933,6 @@ initarm(void *arg)
 	return (kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
-const char *console = "ffuart";	// XXX "glass"
-int glass_console = 0;
-
 void
 process_kernel_args(char *args)
 {
@@ -920,69 +944,74 @@ process_kernel_args(char *args)
 	}
 
 	/* Eat the cookie */
-	*(int *)cp = 0;
-	cp += sizeof(int);
+	*(u_int *)cp = 0;
+	cp += sizeof(u_int);
 
 	boothowto = 0;
 
 	/* Make a local copy of the bootargs */
-	strncpy(bootargs, cp, MAX_BOOT_STRING - sizeof(int));
+	strncpy(bootargs, cp, MAX_BOOT_STRING - sizeof(u_int));
 
 	cp = bootargs;
 	boot_file = bootargs;
 
-	/* Skip the kernel image filename */
-	while (*cp != ' ' && *cp != 0)
-		++cp;
+	for (;;) {
+		/* Skip white-space */
+		while (*cp == ' ')
+			++cp;
 
-	if (*cp != 0)
-		*cp++ = 0;
+		if (*cp == '\0')
+			break;
 
-	while (*cp == ' ')
-		++cp;
+		if (*cp != '-') {
+			/* kernel image filename */
+			if (boot_file == NULL)
+				boot_file = cp;
 
-	boot_args = cp;
+			/* Skip the kernel image filename */
+			while (*cp != ' ' && *cp != '\0')
+				++cp;
+			if (*cp == '\0')
+				break;
 
-	printf("bootfile: %s\n", boot_file);
-	printf("bootargs: %s\n", boot_args);
-
-	/* Setup pointer to boot flags */
-	while (*cp != '-')
-		if (*cp++ == '\0')
-			return;
-
-	for (;*++cp;) {
-		int fl;
-
-		fl = 0;
-		switch(*cp) {
-		case 'a':
-			fl |= RB_ASKNAME;
-			break;
-		case 'c':
-			fl |= RB_USERCONF;
-			break;
-		case 'd':
-			fl |= RB_KDB;
-			break;
-		case 's':
-			fl |= RB_SINGLE;
-			break;
-		/* XXX undocumented console switching flags */
-		case '0':
-			console = "ffuart";
-			break;
-		case '1':
-			console = "btuart";
-			break;
-		case '2':
-			console = "stuart";
-			break;
-		default:
-			printf("unknown option `%c'\n", *cp);
-			break;
+			*cp++ = '\0';
+			continue;
 		}
-		boothowto |= fl;
+
+		/* options */
+		if (*++cp != '\0') {
+			int fl = 0;
+
+			switch (*cp) {
+			case 'a':
+				fl |= RB_ASKNAME;
+				break;
+			case 'c':
+				fl |= RB_USERCONF;
+				break;
+			case 'd':
+				fl |= RB_KDB;
+				break;
+			case 's':
+				fl |= RB_SINGLE;
+				break;
+			/* XXX undocumented console switching flags */
+			case '0':
+				console = "ffuart";
+				break;
+			case '1':
+				console = "btuart";
+				break;
+			case '2':
+				console = "stuart";
+				break;
+			default:
+				printf("unknown option `%c'\n", *cp);
+				break;
+			}
+			boothowto |= fl;
+		}
+		++cp;
 	}
 }
 
@@ -990,12 +1019,16 @@ process_kernel_args(char *args)
  * Console
  */
 #include "com.h"
-#if NCOM > 0
+#if (NCOM > 0)
+#include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #endif
 
+#include "lcd.h"
+#include "wsdisplay.h"
+
 #ifndef CONSPEED
-#define CONSPEED B9600	/* What RedBoot uses */
+#define CONSPEED B9600
 #endif
 #ifndef CONMODE
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
@@ -1061,8 +1094,11 @@ consinit(void)
 	} else
 #endif
 	if (strcmp(console, "glass") == 0) {
+#if (NLCD > 0) && (NWSDISPLAY > 0)
 		glass_console = 1;
+#endif
 	}
+
 #if (NCOM > 0) && defined(COM_PXA2X0)
 	if (cken != 0 && comcnattach(&pxa2x0_a4x_bs_tag, paddr, comcnspeed,
 	    PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode) == 0) {

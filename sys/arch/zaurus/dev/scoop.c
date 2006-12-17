@@ -1,4 +1,4 @@
-/*	$NetBSD: scoop.c,v 1.1 2006/12/16 05:15:16 ober Exp $	*/
+/*	$NetBSD: scoop.c,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
 /*	$OpenBSD: zaurus_scoop.c,v 1.12 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.1 2006/12/16 05:15:16 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.2 2006/12/17 16:07:11 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,10 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.1 2006/12/16 05:15:16 ober Exp $");
 #include "ioconf.h"
 
 struct scoop_softc {
-	struct device sc_dev;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	uint16_t sc_gpwr;	/* GPIO state before suspend */
+	struct device		sc_dev;
+
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+
+	uint16_t		sc_gpwr;	/* GPIO state before suspend */
 };
 
 static int	scoopmatch(struct device *, struct cfdata *, void *);
@@ -51,9 +53,11 @@ static void	scoopattach(struct device *, struct device *, void *);
 CFATTACH_DECL(scoop, sizeof(struct scoop_softc),
 	scoopmatch, scoopattach, NULL, NULL);
 
-int	scoop_gpio_pin_read(struct scoop_softc *sc, int);
-void	scoop_gpio_pin_write(struct scoop_softc *sc, int, int);
-void	scoop_gpio_pin_ctl(struct scoop_softc *sc, int, int);
+#if 0
+static int	scoop_gpio_pin_read(struct scoop_softc *sc, int);
+#endif
+static void	scoop_gpio_pin_write(struct scoop_softc *sc, int, int);
+static void	scoop_gpio_pin_ctl(struct scoop_softc *sc, int, int);
 
 static int
 scoopmatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -102,17 +106,19 @@ scoopattach(struct device *parent, struct device *self, void *aux)
 	printf(": PCMCIA/GPIO controller\n");
 }
 
-int
+#if 0
+static int
 scoop_gpio_pin_read(struct scoop_softc *sc, int pin)
 {
 	uint16_t bit = (1 << pin);
 	uint16_t rv;
 
 	rv = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR);
-	return (rv & bit) != 0 ? 1 : 0;
+	return (rv & bit) ? 1 : 0;
 }
+#endif
 
-void
+static void
 scoop_gpio_pin_write(struct scoop_softc *sc, int pin, int level)
 {
 	uint16_t bit = (1 << pin);
@@ -120,10 +126,10 @@ scoop_gpio_pin_write(struct scoop_softc *sc, int pin, int level)
 
 	rv = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
-	    level == GPIO_PIN_LOW ? (rv & ~bit) : (rv | bit));
+	    (level == GPIO_PIN_LOW) ? (rv & ~bit) : (rv | bit));
 }
 
-void
+static void
 scoop_gpio_pin_ctl(struct scoop_softc *sc, int pin, int flags)
 {
 	uint16_t bit = (1 << pin);
@@ -169,10 +175,12 @@ scoop_set_backlight(int on, int cont)
 void
 scoop_set_irled(int on)
 {
-	if (scoop_cd.cd_ndevs > 1 && scoop_cd.cd_devs[1] != NULL)
+
+	if (scoop_cd.cd_ndevs > 1 && scoop_cd.cd_devs[1] != NULL) {
 		/* IR_ON is inverted */
 		scoop_gpio_pin_write(scoop_cd.cd_devs[1],
 		    SCOOP1_IR_ON, !on);
+	}
 }
 
 /*
@@ -272,8 +280,40 @@ scoop_discharge_battery(int enable)
 	}
 }
 
-/* XXX */
-void scoop_check_mcr(void);
+void
+scoop_set_sd_power(int enable)
+{
+	struct scoop_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	uint16_t v;
+
+	if (scoop_cd.cd_ndevs > 1 && scoop_cd.cd_devs[1] != NULL) {
+		sc = scoop_cd.cd_devs[0];
+		iot = sc->sc_iot;
+		ioh = sc->sc_ioh;
+
+		if (enable) {
+			v = bus_space_read_2(iot, ioh, SCOOP_GPWR);
+			v |= (1 << SCOOP0_CF_POWER_C3000);
+			bus_space_write_2(iot, ioh, SCOOP_GPWR, v);
+
+			v = bus_space_read_2(iot, ioh, SCOOP_CPR);
+			v |= (1 << SCP_CPR_SD);
+			bus_space_write_2(iot, ioh, SCOOP_CPR, v);
+		} else {
+			v = bus_space_read_2(iot, ioh, SCOOP_CPR);
+			v &= ~(1 << SCP_CPR_SD);
+			bus_space_write_2(iot, ioh, SCOOP_CPR, v);
+#if 0	/* XXX */
+			v = bus_space_read_2(iot, ioh, SCOOP_GPWR);
+			v &= ~(1 << SCOOP0_CF_POWER_C3000);
+			bus_space_write_2(iot, ioh, SCOOP_GPWR, v);
+#endif	/* XXX */
+		}
+	}
+}
+
 void
 scoop_check_mcr(void)
 {

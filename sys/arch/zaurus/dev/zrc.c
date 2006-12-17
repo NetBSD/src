@@ -1,3 +1,4 @@
+/*	$NetBSD: zrc.c,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
 /*	$OpenBSD: zaurus_remote.c,v 1.1 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -17,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.1 2006/12/16 05:23:24 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.2 2006/12/17 16:07:11 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,7 +115,7 @@ struct wskbd_accessops zrc_accessops = {
 	zrc_ioctl,
 };
 
-#define KC(n) KS_KEYCODE(n)
+#define	KC(n) KS_KEYCODE(n)
 
 /* XXX what keys should be generated in translated mode? */
 static const keysym_t zrc_keydesc[] = {
@@ -153,7 +154,9 @@ struct wskbd_mapdata zrc_keymapdata = {
 	zrc_keydesctab, KB_US
 };
 
-int
+#undef	KC
+
+static int
 zrc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
@@ -162,7 +165,7 @@ zrc_match(struct device *parent, struct cfdata *cf, void *aux)
 	return 0;
 }
 
-void
+static void
 zrc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zrc_softc *sc = (struct zrc_softc *)self;
@@ -174,7 +177,7 @@ zrc_attach(struct device *parent, struct device *self, void *aux)
 	pxa2x0_gpio_set_function(C3000_RC_IRQ_PIN, GPIO_IN);
 	sc->sc_ih = pxa2x0_gpio_intr_establish(C3000_RC_IRQ_PIN,
 	    IST_EDGE_BOTH, IPL_BIO, zrc_intr, sc);
-	
+
 	/* Enable the pullup while waiting for an interrupt. */
 	scoop_akin_pullup(1);
 
@@ -190,7 +193,7 @@ zrc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 }
 
-int
+static int
 zrc_intr(void *v)
 {
 	struct zrc_softc *sc = v;
@@ -203,10 +206,11 @@ zrc_intr(void *v)
 	sc->sc_scans = 0;
 	sc->sc_noise = 0;
 	callout_schedule(&sc->sc_to, RESCAN_INTERVAL);
+
 	return 1;
 }
 
-void
+static void
 zrc_timeout(void *v)
 {
 	struct zrc_softc *sc = v;
@@ -282,7 +286,7 @@ zrc_timeout(void *v)
 	}
 }
 
-int
+static int
 zrc_scan(void)
 {
 	int val;
@@ -306,7 +310,7 @@ zrc_scan(void)
 	return zrc_akeytab[i].key;
 }
 
-void
+static void
 zrc_input(struct zrc_softc *sc, int key, int down)
 {
 	u_int type = down ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
@@ -337,21 +341,21 @@ zrc_input(struct zrc_softc *sc, int key, int down)
 	splx(s);
 }
 
-int
+static int
 zrc_enable(void *v, int on)
 {
 
 	return 0;
 }
 
-void
+static void
 zrc_set_leds(void *v, int on)
 {
 
 	/* Nothing to do */
 }
 
-int
+static int
 zrc_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -373,5 +377,5 @@ zrc_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return 0;
 #endif
 	}
-	return -1;
+	return EPASSTHROUGH;
 }

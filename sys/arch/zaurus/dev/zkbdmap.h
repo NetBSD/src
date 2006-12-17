@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbdmap.h,v 1.1 2006/12/16 05:22:41 ober Exp $	*/
+/*	$NetBSD: zkbdmap.h,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
 /* $OpenBSD: zaurus_kbdmap.h,v 1.19 2005/05/10 08:26:12 espie Exp $ */
 
 /*
@@ -186,11 +186,12 @@ static const char xt_keymap[] = {
 #endif
 
 #define KBD_MAP(name, base, map) \
-			{ name, base, sizeof(map)/sizeof(keysym_t), map }
+			{ (name), (base), __arraycount(map), (map) }
 
 static const struct wscons_keydesc zkbd_keydesctab[] = {
-        KBD_MAP(KB_US,                  0,      zkbd_keydesc_us),
-        {0, 0, 0, 0}
+	KBD_MAP(KB_US,			0,	zkbd_keydesc_us),
+
+	{0, 0, 0, 0}
 };
 
 #undef KBD_MAP

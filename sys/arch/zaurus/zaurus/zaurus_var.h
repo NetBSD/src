@@ -1,4 +1,4 @@
-/*	$NetBSD: zaurus_var.h,v 1.1 2006/12/16 05:57:48 ober Exp $ */
+/*	$NetBSD: zaurus_var.h,v 1.2 2006/12/17 16:07:11 peter Exp $ */
 /*	$OpenBSD: zaurus_var.h,v 1.4 2005/07/01 23:56:47 uwe Exp $	*/
 /*	NetBSD: lubbock_var.h,v 1.1 2003/06/18 10:51:15 bsh Exp */
 
@@ -44,6 +44,8 @@
 
 extern int zaurusmod;
 extern int glass_console;
+
+void zaurus_restart(void);
 
 #endif	/* _KERNEL */
 
