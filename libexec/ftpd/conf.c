@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.57 2006/02/01 14:20:12 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.58 2006/12/17 20:04:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.57 2006/02/01 14:20:12 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.58 2006/12/17 20:04:09 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -910,7 +910,7 @@ count_users(void)
 	if ((pids = malloc(sb.st_size + sizeof(pid_t))) == NULL)
 		goto cleanup_count;
 	count = read(fd, pids, sb.st_size);
-	if (count < 0 || count != sb.st_size)
+	if ((ssize_t)count == -1 || count != sb.st_size)
 		goto cleanup_count;
 	count /= sizeof(pid_t);
 	mypid = getpid();

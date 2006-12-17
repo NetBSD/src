@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.177 2006/09/26 06:47:20 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.178 2006/12/17 20:04:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.177 2006/09/26 06:47:20 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.178 2006/12/17 20:04:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,8 +178,8 @@ __RCSID("$NetBSD: ftpd.c,v 1.177 2006/09/26 06:47:20 lukem Exp $");
 #include "pathnames.h"
 #include "version.h"
 
-volatile sig_atomic_t	transflag;
-volatile sig_atomic_t	urgflag;
+static sig_atomic_t	transflag;
+static sig_atomic_t	urgflag;
 
 int	data;
 int	Dflag;
@@ -751,7 +751,7 @@ main(int argc, char *argv[])
 }
 
 static void
-lostconn(int signo)
+lostconn(int signo __unused)
 {
 
 	if (ftpd_debug)
@@ -760,7 +760,7 @@ lostconn(int signo)
 }
 
 static void
-toolong(int signo)
+toolong(int signo __unused)
 {
 
 		/* XXXSIGRACE */
@@ -783,7 +783,7 @@ sigquit(int signo)
 }
 
 static void
-sigurg(int signo)
+sigurg(int signo __unused)
 {
 	
 	urgflag = 1;
@@ -2286,15 +2286,13 @@ send_data(FILE *instr, FILE *outstr, const struct stat *st, int isdata)
 static int
 receive_data(FILE *instr, FILE *outstr)
 {
-	int	c, bare_lfs, netfd, filefd, rval;
+	int	c, netfd, filefd, rval;
+	int	volatile bare_lfs;
 	off_t	byteswritten;
 	char	*buf;
 	size_t	readsize;
 	struct sigaction sa, sa_saved;
 	struct stat st;
-#ifdef __GNUC__
-	(void) &bare_lfs;
-#endif
 
 	memset(&sa, 0, sizeof(sa));
 	sigfillset(&sa.sa_mask);
@@ -3305,21 +3303,21 @@ void
 send_file_list(const char *whichf)
 {
 	struct stat st;
-	DIR *dirp = NULL;
+	DIR *dirp;
 	struct dirent *dir;
-	FILE *dout = NULL;
-	char **dirlist, *dirname, *p;
-	char *notglob = NULL;
-	int simple = 0;
-	int freeglob = 0;
+	FILE *volatile dout;
+	char **volatile dirlist;
+	char *dirname, *p;
+	char *notglob;
+	int volatile simple;
+	int volatile freeglob;
 	glob_t gl;
 
-#ifdef __GNUC__
-	(void) &dout;
-	(void) &dirlist;
-	(void) &simple;
-	(void) &freeglob;
-#endif
+	dirp = NULL;
+	dout = NULL;
+	notglob = NULL;
+	simple = 0;
+	freeglob = 0;
 	urgflag = 0;
 
 	p = NULL;
