@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.6 2006/12/16 03:37:35 ober Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.7 2006/12/17 16:03:33 peter Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.6 2006/12/16 03:37:35 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.7 2006/12/17 16:03:33 peter Exp $");
 
 #include "opt_pxa2x0_gpio.h"
 
@@ -132,7 +132,7 @@ pxagpio_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-void
+static void
 pxagpio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pxagpio_softc *sc = (struct pxagpio_softc *)self;

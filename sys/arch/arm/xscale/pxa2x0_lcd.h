@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.h,v 1.5 2006/12/16 03:39:34 ober Exp $ */
+/* $NetBSD: pxa2x0_lcd.h,v 1.6 2006/12/17 16:03:33 peter Exp $ */
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -136,8 +136,8 @@ void	pxa2x0_lcd_start_dma(struct pxa2x0_lcd_softc *,
 
 void	pxa2x0_lcd_geometry(struct pxa2x0_lcd_softc *,
 	    const struct lcd_panel_geometry *);
-int	pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc,
-	    struct pxa2x0_lcd_screen *scr, int depth);
+int	pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *, int,
+	    struct pxa2x0_lcd_screen **);
 
 int	pxa2x0_lcd_setup_wsscreen(struct pxa2x0_wsscreen_descr *,
 	    const struct lcd_panel_geometry *, const char * );
