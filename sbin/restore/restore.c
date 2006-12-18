@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.c,v 1.19 2005/08/19 02:07:19 christos Exp $	*/
+/*	$NetBSD: restore.c,v 1.20 2006/12/18 20:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-__RCSID("$NetBSD: restore.c,v 1.19 2005/08/19 02:07:19 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.20 2006/12/18 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ addfile(const char *name, ino_t ino, int type)
  */
 /* ARGSUSED */
 long
-deletefile(const char *name, ino_t ino, int type)
+deletefile(const char *name, ino_t ino, int type __unused)
 {
 	long descend = hflag ? GOOD : FAIL;
 	struct entry *ep;

@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.35 2006/06/24 05:28:54 perseant Exp $	*/
+/*	$NetBSD: optr.c,v 1.36 2006/12/18 20:07:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.35 2006/06/24 05:28:54 perseant Exp $");
+__RCSID("$NetBSD: optr.c,v 1.36 2006/12/18 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ char lastmsg[200];
  *	sleep for 2 minutes in case nobody comes to satisfy dump
  */
 void
-alarmcatch(int dummy)
+alarmcatch(int dummy __unused)
 {
 
 	if (notify == 0) {
@@ -171,7 +171,7 @@ alarmcatch(int dummy)
  *	Here if an inquisitive operator interrupts the dump program
  */
 void
-interrupt(int signo)
+interrupt(int signo __unused)
 {
 	int errno_save;
 
