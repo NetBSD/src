@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.13 2006/12/11 13:25:02 tron Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.14 2006/12/18 20:28:38 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -108,4 +108,10 @@ sys/arch/xen/x86/consinit.c			1.7
 
 	PR port-xen/35217: Fix compile failure if CONS_OVERRIDE is defined.
 	[bouyer, ticket #1600]
+
+sys/dev/vnd.c					1.153
+
+	Don't accept a compressed vnd(4) image with block size 0 to avoid a
+	kernel panic.
+	[cube, ticket #1530]
 
