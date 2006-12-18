@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.57 2006/10/30 01:21:53 christos Exp $	*/
+/*	$NetBSD: tape.c,v 1.58 2006/12/18 20:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.57 2006/10/30 01:21:53 christos Exp $");
+__RCSID("$NetBSD: tape.c,v 1.58 2006/12/18 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -815,16 +815,14 @@ getfile(void (*fill)(char *buf, long size),
 	void (*skip)(char *buf, long size))
 {
 	int i;
-	int curblk = 0;
-	quad_t size = spcl.c_size;
+	int volatile curblk;
+	quad_t volatile size;
 	static char clearedbuf[MAXBSIZE];
 	char buf[MAXBSIZE / TP_BSIZE][TP_BSIZE];
 	char junk[TP_BSIZE];
 
-#ifdef __GNUC__			/* XXX: to shut up gcc warnings */
-	(void)&curblk;
-	(void)&size;
-#endif
+	curblk = 0;
+	size = spcl.c_size;
 
 	if (spcl.c_type == TS_END)
 		panic("ran off end of tape\n");
@@ -947,7 +945,7 @@ xtrlnkfile(char *buf, long size)
  */
 /* ARGSUSED */
 static void
-xtrlnkskip(char *buf, long size)
+xtrlnkskip(char *buf __unused, long size __unused)
 {
 
 	fprintf(stderr, "unallocated block in symbolic link %s\n",
@@ -971,7 +969,7 @@ xtrmap(char *buf, long size)
  */
 /* ARGSUSED */
 static void
-xtrmapskip(char *buf, long size)
+xtrmapskip(char *buf __unused, long size)
 {
 
 	panic("hole in map\n");
@@ -983,7 +981,7 @@ xtrmapskip(char *buf, long size)
  */
 /* ARGSUSED */
 void
-xtrnull(char *buf, long size)
+xtrnull(char *buf __unused, long size __unused)
 {
 
 	return;

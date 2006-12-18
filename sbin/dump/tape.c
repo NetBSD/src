@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.47 2006/10/26 20:02:30 hannken Exp $	*/
+/*	$NetBSD: tape.c,v 1.48 2006/12/18 20:07:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.47 2006/10/26 20:02:30 hannken Exp $");
+__RCSID("$NetBSD: tape.c,v 1.48 2006/12/18 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ dumpblock(daddr_t blkno, int size)
 int	nogripe = 0;
 
 static void
-tperror(int signo)
+tperror(int signo __unused)
 {
 
 	if (pipeout) {
@@ -215,7 +215,7 @@ tperror(int signo)
 }
 
 static void
-sigpipe(int signo)
+sigpipe(int signo __unused)
 {
 
 	quit("Broken pipe\n");
@@ -252,7 +252,7 @@ do_stats(void)
  *	(derived from optr.c::timeest())
  */
 void
-statussig(int notused)
+statussig(int notused __unused)
 {
 	time_t	tnow, deltat;
 	char	msgbuf[128];
@@ -710,7 +710,7 @@ restore_check_point:
 }
 
 void
-dumpabort(int signo)
+dumpabort(int signo __unused)
 {
 
 	if (master != 0 && master != getpid())
@@ -743,7 +743,7 @@ Exit(int status)
  * proceed - handler for SIGUSR2, used to synchronize IO between the slaves.
  */
 static void
-proceed(int signo)
+proceed(int signo __unused)
 {
 	caught++;
 }
@@ -813,7 +813,7 @@ killall(void)
  * get the lock back for the next cycle by swapping descriptors.
  */
 static void
-doslave(int cmd, int slave_number)
+doslave(int cmd, int slave_number __unused)
 {
 	int nread, nextslave, size, wrote, eot_count, werror;
 	sigset_t nsigset, osigset;

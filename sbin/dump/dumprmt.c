@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.31 2005/06/27 01:37:32 christos Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.32 2006/12/18 20:07:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.31 2005/06/27 01:37:32 christos Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.32 2006/12/18 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ rmthost(const char *host)
 }
 
 static void
-rmtconnaborted(int dummy)
+rmtconnaborted(int dummy __unused)
 {
 
 	errx(X_ABORT, "Lost connection to remote host.");

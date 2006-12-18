@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.24 2005/08/19 06:44:06 christos Exp $	*/
+/*	$NetBSD: interactive.c,v 1.25 2006/12/18 20:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.24 2005/08/19 06:44:06 christos Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.25 2006/12/18 20:07:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -772,7 +772,8 @@ fcmp(const void *f1, const void *f2)
  * respond to interrupts
  */
 void
-onintr(int signo)
+/*ARGSUSED*/
+onintr(int signo __unused)
 {
 	if (command == 'i' && runshell)
 		longjmp(reset, 1);
