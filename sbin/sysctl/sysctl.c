@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.120 2006/11/02 14:54:21 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.121 2006/12/18 12:50:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.120 2006/11/02 14:54:21 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.121 2006/12/18 12:50:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -248,7 +248,7 @@ struct sysctlnode my_root = {
 int	Aflag, aflag, dflag, Mflag, nflag, qflag, rflag, wflag, xflag;
 size_t	nr;
 char	*fn;
-int	req, stale;
+int	req, stale, errs;
 FILE	*warnfp = stderr;
 
 /*
@@ -357,7 +357,7 @@ main(int argc, char *argv[])
 			}
 			fclose(fp);
 		}
-		return (0);
+		return errs ? 1 : 0;
 	}
 
 	if (argc == 0)
@@ -366,7 +366,7 @@ main(int argc, char *argv[])
 	while (argc-- > 0)
 		parse(*argv++);
 
-	return (0);
+	return errs ? 1 : 0;
 }
 
 /*
@@ -1646,6 +1646,7 @@ sysctlperror(const char *fmt, ...)
 	va_start(ap, fmt);
 	(void)vfprintf(warnfp, fmt, ap);
 	va_end(ap);
+	errs++;
 }
 
 
