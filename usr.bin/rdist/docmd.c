@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.26 2004/08/04 02:05:28 ginsbach Exp $	*/
+/*	$NetBSD: docmd.c,v 1.27 2006/12/18 15:14:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.26 2004/08/04 02:05:28 ginsbach Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.27 2006/12/18 15:14:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,13 +128,11 @@ doarrow(char **filev, struct namelist *files, char *rhost, struct subcmd *cmds)
 	struct namelist *f;
 	struct subcmd *sc;
 	char **cpp;
-	int n, ddir, opts = options;
+	int n;
+	int volatile ddir;
+	int volatile opts;
 
-#if __GNUC__		/* XXX borken compiler alert! */
-	(void)&ddir;
-	(void)&opts;
-#endif
-
+	opts = options;
 	if (debug)
 		printf("doarrow(%lx, %s, %lx)\n",
 		    (long)files, rhost, (long)cmds);
@@ -314,7 +312,8 @@ closeconn(void)
 }
 
 void
-lostconn(int signo)
+/*ARGSUSED*/
+lostconn(int signo __unused)
 {
 	char buf[BUFSIZ];
 	int nr = -1;

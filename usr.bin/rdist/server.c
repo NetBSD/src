@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.29 2006/05/11 00:22:52 mrg Exp $	*/
+/*	$NetBSD: server.c,v 1.30 2006/12/18 15:14:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.29 2006/05/11 00:22:52 mrg Exp $");
+__RCSID("$NetBSD: server.c,v 1.30 2006/12/18 15:14:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1115,7 +1115,7 @@ fchtogm(int fd, char *file, time_t mtime, char *owner, char *group, __mode_t mod
 			gid = gr->gr_gid;
 	} else
 		gid = gr->gr_gid;
-	if (userid && gid >= 0) {
+	if (userid && gid != (gid_t)-1) {
 		if (gr) for (i = 0; gr->gr_mem[i] != NULL; i++)
 			if (!(strcmp(user, gr->gr_mem[i])))
 				goto ok;
@@ -1565,7 +1565,8 @@ response(void)
  * Remove temporary files and do any cleanup operations before exiting.
  */
 void
-cleanup(int signo)
+/*ARGSUSED*/
+cleanup(int signo __unused)
 {
 	(void) unlink(tempfile);
 	exit(1);
