@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.53 2006/12/15 22:13:33 christos Exp $
+.\"	$NetBSD: editline.3,v 1.54 2006/12/18 00:03:43 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -404,17 +404,17 @@ Set the current
 file pointer for
 .Dq input
 .Fa fd
-= 
+=
 .Dv 0 ,
 .Dq output
-.Fa fd 
-= 
+.Fa fd
+=
 .Dv 1 ,
 or
 .Dq error
 .Fa fd
-= 
-.Dv 2 
+=
+.Dv 2
 from
 .Fa fp .
 .El
@@ -445,7 +445,7 @@ or
 Return non-zero if
 .Fa name
 is a valid
-.Xr termcap 7
+.Xr termcap 5
 capability
 and set
 .Fa value
@@ -456,9 +456,9 @@ Return non-zero if
 has installed private signal handlers (see
 .Fn el_get
 above).
-.It Dv EL_EDITMODE, Fa "int *"
+.It Dv EL_EDITMODE , Fa "int *"
 Return non-zero if editing is enabled.
-.It Dv EL_GETCFN, Fa "int (**f)(EditLine *, char *)"
+.It Dv EL_GETCFN , Fa "int (**f)(EditLine *, char *)"
 Return a pointer to the function that read characters, which is equal to
 ``EL_BUILTIN_GETCFN'' in the case of the default builtin function.
 .It Dv EL_CLIENTDATA , Fa "void **data"
@@ -467,31 +467,31 @@ Retrieve
 previously registered with the corresponding
 .Fn el_set
 call.
-.It Dv EL_UNBUFFERED, Fa "int"
+.It Dv EL_UNBUFFERED , Fa "int"
 Sets or clears unbuffered mode.
 In this mode,
 .Fn el_gets
 will return immediately after processing a single character.
-.It Dv EL_PREP_TERM, Fa "int"
+.It Dv EL_PREP_TERM , Fa "int"
 Sets or clears terminal editing mode.
-.It Dv EL_GETFP, Fa "int fd", Fa "FILE **fp"
-Return in 
+.It Dv EL_GETFP , Fa "int fd", Fa "FILE **fp"
+Return in
 .Fa fp
-the current 
+the current
 .Nm editline
 file pointer for
 .Dq input
 .Fa fd
-= 
+=
 .Dv 0 ,
 .Dq output
-.Fa fd 
-= 
+.Fa fd
+=
 .Dv 1 ,
 or
 .Dq error
 .Fa fd
-= 
+=
 .Dv 2 .
 .El
 .It Fn el_source
@@ -774,7 +774,8 @@ is a NUL terminated string to tokenize.
 .Xr sh 1 ,
 .Xr signal 3 ,
 .Xr termcap 3 ,
-.Xr editrc 5
+.Xr editrc 5 ,
+.Xr termcap 5
 .Sh HISTORY
 The
 .Nm
