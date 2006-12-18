@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.3 2006/12/18 15:30:56 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.2 2006/12/17 16:07:11 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.3 2006/12/18 15:30:56 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,6 +152,7 @@ static void	lcd_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(zlcd, sizeof(struct pxa2x0_lcd_softc),
 	lcd_match, lcd_attach, NULL, NULL);
 
+void	lcd_cnattach(void);
 int	lcd_max_brightness(void);
 int	lcd_get_brightness(void);
 void	lcd_set_brightness(int);
@@ -174,8 +175,7 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)self;
 	struct wsemuldisplaydev_attach_args aa;
 
-	pxa2x0_lcd_attach_sub(sc, aux, &lcd_std_screen, CURRENT_DISPLAY,
-	    glass_console);
+	pxa2x0_lcd_attach_sub(sc, aux, CURRENT_DISPLAY);
 
 	aa.console = glass_console;
 	aa.scrdata = &lcd_screen_list;
@@ -188,6 +188,13 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	lcd_set_brightness(3);
 
 	(void) powerhook_establish(sc->dev.dv_xname, lcd_power, sc);
+}
+
+void
+lcd_cnattach(void)
+{
+
+	pxa2x0_lcd_cnattach(&lcd_std_screen, CURRENT_DISPLAY);
 }
 
 /*
