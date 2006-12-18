@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.4 2005/12/11 12:17:08 christos Exp $ */
+/*	$NetBSD: obio.c,v 1.5 2006/12/18 15:32:10 nonaka Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec corp.  All rights reserved.
@@ -42,6 +42,7 @@
 #include <arm/cpufunc.h>
 
 #include <arm/mainbus/mainbus.h>
+#include <arm/xscale/pxa2x0cpu.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
