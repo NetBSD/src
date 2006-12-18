@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.15 2005/10/27 01:43:48 simonb Exp $	*/
+/*	$NetBSD: time.c,v 1.16 2006/12/18 15:17:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: time.c,v 1.15 2005/10/27 01:43:48 simonb Exp $");
+__RCSID("$NetBSD: time.c,v 1.16 2006/12/18 15:17:38 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,19 +61,16 @@ static void	prtv(const char *, const char *, const struct timeval *,
     const char *);
 
 int
-main(int argc, char **argv)
+main(int argc, char ** volatile argv)
 {
 	int pid;
 	int ch, status;
-	int lflag, portableflag;
+	int volatile portableflag;
+	int volatile lflag;
 	const char *decpt;
 	const struct lconv *lconv;
 	struct timeval before, after;
 	struct rusage ru;
-
-#ifdef __GNUC__		/* XXX: borken gcc */
-	(void)&argv;
-#endif
 
 	(void)setlocale(LC_ALL, "");
 
