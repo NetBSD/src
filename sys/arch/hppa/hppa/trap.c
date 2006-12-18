@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 2006/10/09 21:32:29 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.39 2006/12/18 09:39:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.38 2006/10/09 21:32:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39 2006/12/18 09:39:14 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -840,12 +840,10 @@ do_onfault:
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if (va >= (vaddr_t)vm->vm_maxsaddr + vm->vm_ssize) {
-			if (ret == 0) {
-				vsize_t nss = btoc(va - USRSTACK + PAGE_SIZE);
-				if (nss > vm->vm_ssize)
-					vm->vm_ssize = nss;
-			} else if (ret == EACCES)
+		if (map != kernel_map && va >= (vaddr_t)vm->vm_minsaddr) {
+			if (ret == 0)
+				uvm_grow(l->l_proc, va);
+			else if (ret == EACCES)
 				ret = EFAULT;
 		}
 
