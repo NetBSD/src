@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.811.2.2 2006/12/10 07:16:52 yamt Exp $
+#	$NetBSD: files,v 1.811.2.3 2006/12/18 11:42:13 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -93,7 +93,6 @@ defparam opt_pax.h		PAX_MPROTECT
 				PAX_SEGVGUARD
 
 defflag	opt_fileassoc.h		FILEASSOC
-defparam opt_fileassoc.h	FILEASSOC_NHOOKS
 
 defflag	opt_gre.h		GRE_DEBUG
 
@@ -478,6 +477,11 @@ device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
 file	dev/ic/isp_target.c		isp & isp_target_mode
+
+# LSILogic MegaRAID SAS
+#
+device	mfi: scsi
+file	dev/ic/mfi.c			mfi
 
 # LSILogic Fusion-MPT I/O Processor SCSI/FC Controllers
 #

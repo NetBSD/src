@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc_obio.c,v 1.15 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: if_mc_obio.c,v 1.15.22.1 2006/12/18 11:42:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc_obio.c,v 1.15 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc_obio.c,v 1.15.22.1 2006/12/18 11:42:05 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -111,7 +111,7 @@ mc_obio_attach(struct device *parent, struct device *self, void *aux)
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	struct mc_softc *sc = (void *)self;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-	int i, noncontig = 0;
+	int rsegs;
 
 	sc->sc_regt = oa->oa_tag;
 	sc->sc_biucc = XMTSP_64;
@@ -130,38 +130,59 @@ mc_obio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* allocate memory for transmit buffer and mark it non-cacheable */
-	sc->sc_txbuf = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK);
-	sc->sc_txbuf_phys = kvtop(sc->sc_txbuf);
-	physaccess (sc->sc_txbuf, (caddr_t)sc->sc_txbuf_phys, PAGE_SIZE,
-	    PG_V | PG_RW | PG_CI);
-
-	/*
-	 * allocate memory for receive buffer and mark it non-cacheable
-	 * XXX This should use the bus_dma interface, since the buffer
-	 * needs to be physically contiguous. However, it seems that
-	 * at least on my system, malloc() does allocate contiguous
-	 * memory. If it's not, suggest reducing the number of buffers
-	 * to 2, which will fit in one 4K page.
-	 */
-	sc->sc_rxbuf = malloc(MC_NPAGES * PAGE_SIZE, M_DEVBUF, M_WAITOK);
-	sc->sc_rxbuf_phys = kvtop(sc->sc_rxbuf);
-	for (i = 0; i < MC_NPAGES; i++) {
-		int pa;
-
-		pa = kvtop(sc->sc_rxbuf + PAGE_SIZE*i);
-		physaccess (sc->sc_rxbuf + PAGE_SIZE*i, (caddr_t)pa, PAGE_SIZE,
-		    PG_V | PG_RW | PG_CI);
-		if (pa != sc->sc_rxbuf_phys + PAGE_SIZE*i)
-			noncontig = 1;
-	}
-
-	if (noncontig) {
-		printf("%s: receive DMA buffer not contiguous! "
-		    "Try compiling with \"options MC_RXDMABUFS=2\"\n",
-		    sc->sc_dev.dv_xname);
+	/* allocate memory for transmit and receive DMA buffers */
+	sc->sc_dmat = oa->oa_dmat;
+	if (bus_dmamem_alloc(sc->sc_dmat, 2 * 0x800, 0, 0, &sc->sc_dmasegs_tx,
+		1, &rsegs, BUS_DMA_NOWAIT) != 0) {
+		printf(": failed to allocate TX DMA buffers.\n");
 		return;
 	}
+
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dmasegs_tx, rsegs, 2 * 0x800,
+		&sc->sc_txbuf, BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
+		printf(": failed to map TX DMA buffers.\n");
+		return;
+	}
+
+	if (bus_dmamem_alloc(sc->sc_dmat, MC_RXDMABUFS * 0x800, 0, 0,
+		&sc->sc_dmasegs_rx, 1, &rsegs, BUS_DMA_NOWAIT) != 0) {
+		printf(": failed to allocate RX DMA buffers.\n");
+		return;
+	}
+
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dmasegs_rx, rsegs,
+		MC_RXDMABUFS * 0x800, &sc->sc_rxbuf,
+		BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
+		printf(": failed to map RX DMA buffers.\n");
+		return;
+	}
+
+	if (bus_dmamap_create(sc->sc_dmat, 2 * 0x800, 1, 2 * 0x800, 0,
+	    BUS_DMA_NOWAIT, &sc->sc_dmam_tx) != 0) {
+		printf(": failed to allocate TX DMA map.\n");
+		return;
+	}
+	
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmam_tx, sc->sc_txbuf,
+		2 * 0x800, NULL, BUS_DMA_NOWAIT) != 0) {
+		printf(": failed to map TX DMA mapping.\n");
+		return;
+	}
+
+	if (bus_dmamap_create(sc->sc_dmat, MC_RXDMABUFS * 0x800, 1,
+		MC_RXDMABUFS * 0x800, 0, BUS_DMA_NOWAIT, &sc->sc_dmam_rx) != 0) {
+		printf(": failed to allocate RX DMA map.\n");
+		return;
+	}
+	
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmam_rx, sc->sc_rxbuf,
+		MC_RXDMABUFS * 0x800, NULL, BUS_DMA_NOWAIT) != 0) {
+		printf(": failed to map RX DMA mapping.\n");
+		return;
+	}
+
+	sc->sc_txbuf_phys = sc->sc_dmasegs_tx.ds_addr;
+	sc->sc_rxbuf_phys = sc->sc_dmasegs_rx.ds_addr;
 
 	sc->sc_bus_init = mc_obio_init;
 	sc->sc_putpacket = mc_obio_put;
@@ -219,9 +240,15 @@ mc_obio_init(struct mc_softc *sc)
 hide void
 mc_obio_put(struct mc_softc *sc, u_int len)
 {
-	psc_reg4(PSC_ENETWR_ADDR + sc->sc_txset) = sc->sc_txbuf_phys;
+	int offset = sc->sc_txset == 0 ? 0 : 0x800;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmam_tx, offset, 0x800,
+	    BUS_DMASYNC_PREWRITE);
+	psc_reg4(PSC_ENETWR_ADDR + sc->sc_txset) = sc->sc_txbuf_phys + offset;
 	psc_reg4(PSC_ENETWR_LEN + sc->sc_txset) = len;
 	psc_reg2(PSC_ENETWR_CMD + sc->sc_txset) = 0x9800;
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmam_tx, offset, 0x800,
+	    BUS_DMASYNC_POSTWRITE);
 
 	sc->sc_txset ^= 0x10;
 }
@@ -279,6 +306,11 @@ mc_dmaintr(void *arg)
 		/* Loop through, processing each of the packets */
 		for (; sc->sc_tail < head; sc->sc_tail++) {
 			offset = sc->sc_tail * 0x800;
+
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmam_rx,
+					PAGE_SIZE + offset, 0x800,
+					BUS_DMASYNC_PREREAD);
+
 			sc->sc_rxframe.rx_rcvcnt = sc->sc_rxbuf[offset];
 			sc->sc_rxframe.rx_rcvsts = sc->sc_rxbuf[offset+2];
 			sc->sc_rxframe.rx_rntpc = sc->sc_rxbuf[offset+4];
@@ -286,6 +318,10 @@ mc_dmaintr(void *arg)
 			sc->sc_rxframe.rx_frame = sc->sc_rxbuf + offset + 16;
 
 			mc_rint(sc);
+
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmam_rx,
+					PAGE_SIZE + offset, 0x800,
+					BUS_DMASYNC_POSTREAD);
 		}
 
 		/*

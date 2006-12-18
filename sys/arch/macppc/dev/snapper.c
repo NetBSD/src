@@ -1,8 +1,8 @@
-/*	$NetBSD: snapper.c,v 1.12.4.1 2006/10/22 06:04:50 yamt Exp $	*/
+/*	$NetBSD: snapper.c,v 1.12.4.2 2006/12/18 11:42:05 yamt Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
-
+/*     Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp         */
 /*-
- * Copyright (c) 2002 Tsubai Masanari.  All rights reserved.
+ * Copyright (c) 2002, 2003 Tsubai Masanari.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -77,6 +77,9 @@ struct snapper_softc {
 	i2c_addr_t sc_deqaddr;
 	i2c_tag_t sc_i2c;
 
+	int sc_rate;                    /* current sampling rate */
+	int sc_bitspersample;
+
 	u_int sc_vol_l;
 	u_int sc_vol_r;
 	u_int sc_treble;
@@ -113,7 +116,7 @@ int snapper_trigger_output(void *, void *, void *, int, void (*)(void *),
 int snapper_trigger_input(void *, void *, void *, int, void (*)(void *),
     void *, const audio_params_t *);
 void snapper_set_volume(struct snapper_softc *, int, int);
-int snapper_set_rate(struct snapper_softc *, u_int);
+int snapper_set_rate(struct snapper_softc *);
 void snapper_set_treble(struct snapper_softc *, int);
 void snapper_set_bass(struct snapper_softc *, int);
 void snapper_write_mixers(struct snapper_softc *);
@@ -389,10 +392,12 @@ const uint8_t snapper_mixer_gain[178][3] = {
 	{ 0x00, 0x00, 0x00 }  /* Mute */
 };
 
-#define SNAPPER_NFORMATS	1
+#define SNAPPER_NFORMATS	2
 static const struct audio_format snapper_formats[SNAPPER_NFORMATS] = {
 	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	 2, AUFMT_STEREO, 3, {8000, 44100, 48000}},
+	 2, AUFMT_STEREO, 4, {32000, 44100, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 24, 24,
+	 2, AUFMT_STEREO, 4, {32000, 44100, 48000}},
 };
 
 static u_char *amp_mute;
@@ -408,6 +413,16 @@ static int headphone_detect_active;
 #define I2S_FRAMECOUNT	0x40
 #define I2S_FRAMEMATCH	0x50
 #define I2S_WORDSIZE	0x60
+
+/* I2S_INT register definitions */
+#define I2S_INT_CLKSTOPPEND 0x01000000  /* clock-stop interrupt pending */
+
+/* FCR(0x3c) bits */
+#define I2S0CLKEN      0x1000
+#define I2S0EN         0x2000
+#define I2S1CLKEN      0x080000
+#define I2S1EN         0x100000
+#define FCR3C_BITMASK "\020\25I2S1EN\24I2S1CLKEN\16I2S0EN\15I2S0CLKEN"
 
 /* TAS3004 registers */
 #define DEQ_MCR1	0x01	/* Main control register 1 (1byte) */
@@ -450,6 +465,7 @@ static int headphone_detect_active;
 #define  DEQ_MCR1_W_16	0x00	/*  16 bit */
 #define  DEQ_MCR1_W_18	0x01	/*  18 bit */
 #define  DEQ_MCR1_W_20	0x02	/*  20 bit */
+#define  DEQ_MCR1_W_24	0x03	/*  20 bit */
 
 #define DEQ_MCR2_DL	0x80	/* Download */
 #define DEQ_MCR2_AP	0x02	/* All pass mode */
@@ -782,9 +798,10 @@ snapper_set_params(void *h, int setmode, int usemode,
 	}
 
 	/* Set the speed. p points HW encoding. */
-	if (snapper_set_rate(sc, p->sample_rate))
-		return EINVAL;
-
+	if (p) {
+		sc->sc_rate = p->sample_rate;
+		sc->sc_bitspersample = p->precision;
+	}
 	return 0;
 }
 
@@ -1120,9 +1137,14 @@ snapper_trigger_output(void *h, void *start, void *end, int bsize,
 	struct dbdma_command *cmd;
 	vaddr_t va;
 	int i, len, intmode;
+	int res;
 
 	DPRINTF("trigger_output %p %p 0x%x\n", start, end, bsize);
 	sc = h;
+
+	if ((res = snapper_set_rate(sc)) != 0)
+		return res;
+
 	cmd = sc->sc_odmacmd;
 	sc->sc_ointr = intr;
 	sc->sc_oarg = arg;
@@ -1170,9 +1192,14 @@ snapper_trigger_input(void *h, void *start, void *end, int bsize,
 	struct dbdma_command *cmd;
 	vaddr_t va;
 	int i, len, intmode;
+	int res;
 
 	DPRINTF("trigger_input %p %p 0x%x\n", start, end, bsize);
 	sc = h;
+
+	if ((res = snapper_set_rate(sc)) != 0)
+		return res;
+
 	cmd = sc->sc_idmacmd;
 	sc->sc_iintr = intr;
 	sc->sc_iarg = arg;
@@ -1343,27 +1370,25 @@ void snapper_write_mixers(struct snapper_softc *sc)
  */
 
 int
-snapper_set_rate(struct snapper_softc *sc, u_int rate)
+snapper_set_rate(struct snapper_softc *sc)
 {
-	u_int reg;
+	u_int reg = 0, x;
+	u_int rate = sc->sc_rate;
+	uint32_t wordsize, ows;
 	int MCLK;
 	int clksrc, mdiv, sdiv;
 	int mclk_fs;
+	int timo;
+	uint8_t mcr1;
 
-	reg = 0;
 	switch (rate) {
-	case 8000:
-		clksrc = 18432000;		/* 18MHz */
-		reg = CLKSRC_18MHz;
-		mclk_fs = 256;
-		break;
-
 	case 44100:
 		clksrc = 45158400;		/* 45MHz */
 		reg = CLKSRC_45MHz;
 		mclk_fs = 256;
 		break;
 
+	case 32000:
 	case 48000:
 		clksrc = 49152000;		/* 49MHz */
 		reg = CLKSRC_49MHz;
@@ -1411,21 +1436,64 @@ snapper_set_rate(struct snapper_softc *sc, u_int rate)
 	reg |= SERIAL_64x;
 
 	/* stereo input and output */
+	
+	DPRINTF("precision: %d\n", sc->sc_bitspersample);
+	switch(sc->sc_bitspersample) {
+		case 16:
+			wordsize = 0x02000200;
+			mcr1 = DEQ_MCR1_SC_64 | DEQ_MCR1_SM_I2S | DEQ_MCR1_W_16;
+			break;
+		case 24:
+			wordsize = 0x03000300;
+			mcr1 = DEQ_MCR1_SC_64 | DEQ_MCR1_SM_I2S | DEQ_MCR1_W_24;
+			break;
+		default:
+			printf("%s: unsupported sample size %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_bitspersample);
+			return EINVAL;
+	}
+
+	ows = in32rb(sc->sc_reg + I2S_WORDSIZE);
 	DPRINTF("I2SSetDataWordSizeReg 0x%08x -> 0x%08x\n",
-	    in32rb(sc->sc_reg + I2S_WORDSIZE), 0x02000200);
-	out32rb(sc->sc_reg + I2S_WORDSIZE, 0x02000200);
+	    ows, wordsize);
+	if (ows != wordsize) {
+		out32rb(sc->sc_reg + I2S_WORDSIZE, wordsize);
+		tas3004_write(sc, DEQ_MCR1, &mcr1);
+	}
+
+	x = in32rb(sc->sc_reg + I2S_FORMAT);
+	if (x == reg)
+		return 0;        /* No change; do nothing. */
 
 	DPRINTF("I2SSetSerialFormatReg 0x%x -> 0x%x\n",
 	    in32rb(sc->sc_reg + I2S_FORMAT), reg);
+
+	/* Clear CLKSTOPPEND. */
+	out32rb(sc->sc_reg + I2S_INT, I2S_INT_CLKSTOPPEND);
+
+	x = in32rb(0x8000003c);                /* FCR */
+	x &= ~I2S0CLKEN;                /* XXX I2S0 */
+	out32rb(0x8000003c, x);
+
+	/* Wait until clock is stopped. */
+	for (timo = 1000; timo > 0; timo--) {
+		if (in32rb(sc->sc_reg + I2S_INT) & I2S_INT_CLKSTOPPEND)
+			goto done;
+		delay(1);
+	}
+	DPRINTF("snapper_set_rate: timeout\n");
+done:
 	out32rb(sc->sc_reg + I2S_FORMAT, reg);
+
+	x = in32rb(0x8000003c);
+	x |= I2S0CLKEN;
+	out32rb(0x8000003c, x);
 
 	return 0;
 }
 
-/*#define DEQaddr 0x6a*/
-
 const struct tas3004_reg tas3004_initdata = {
-	{ DEQ_MCR1_SC_64 | DEQ_MCR1_SM_I2S | DEQ_MCR1_W_20 },	/* MCR1 */
+	{ DEQ_MCR1_SC_64 | DEQ_MCR1_SM_I2S | DEQ_MCR1_W_16 },	/* MCR1 */
 	{ 1, 0, 0, 0, 0, 0 },					/* DRC */
 	{ 0, 0, 0, 0, 0, 0 },					/* VOLUME */
 	{ 0x72 },						/* TREBLE */
@@ -1505,16 +1573,8 @@ tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 	size = tas3004_regsize[reg];
 	KASSERT(size > 0);
 
-#ifdef SNAPPER_DEBUG
-	printf("reg: %x, %d %d\n", reg, size, ((const char*)data)[0]);
-#endif
-#if 0
-	ki2c_setmode(sc->sc_i2c, 8); /* std+sub mode */
-	
-	if (ki2c_write(sc->sc_i2c, DEQaddr, reg, data, size))
-		return -1;
-#endif
-	/* ugly, but for now... */
+	DPRINTF("reg: %x, %d %d\n", reg, size, ((const char*)data)[0]);
+
 	regblock[0] = reg;
 	memcpy(&regblock[1], data, size);
 	iic_acquire_bus(sc->sc_i2c, 0);
@@ -1666,14 +1726,6 @@ err:
 	return -1;
 }
 
-/* FCR(0x3c) bits */
-#define I2S0CLKEN	0x1000
-#define I2S0EN		0x2000
-#define I2S1CLKEN	0x080000
-#define I2S1EN		0x100000
-
-#define FCR3C_BITMASK "\020\25I2S1EN\24I2S1CLKEN\16I2S0EN\15I2S0CLKEN"
-
 void
 snapper_init(struct snapper_softc *sc, int node)
 {
@@ -1734,8 +1786,8 @@ snapper_init(struct snapper_softc *sc, int node)
 		intr_establish(headphone_detect_intr, IST_EDGE, IPL_AUDIO,
 		    snapper_cint, sc);
 
-	/* "sample-rates" (44100, 48000) */
-	snapper_set_rate(sc, 44100);
+	sc->sc_rate = 44100;	/* default rate */
+	sc->sc_bitspersample = 16;
 
 	/* Enable headphone interrupt? */
 	*headphone_detect |= 0x80;
@@ -1743,22 +1795,13 @@ snapper_init(struct snapper_softc *sc, int node)
 
 	/* i2c_set_port(port); */
 
-#if 0
-	/* Enable I2C interrupts. */
-#define IER 4
-#define I2C_INT_DATA 0x01
-#define I2C_INT_ADDR 0x02
-#define I2C_INT_STOP 0x04
-	ki2c_writereg(sc->sc_i2c, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
-#endif
-
 	if (tas3004_init(sc))
 		return;
 
 	/* Update headphone status. */
 	snapper_cint(sc);
 
-	snapper_set_volume(sc, 80, 80);
+	snapper_set_volume(sc, 128, 128);
 	
 	sc->sc_bass = 128;
 	sc->sc_treble = 128;

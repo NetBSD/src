@@ -1,4 +1,4 @@
-#	$NetBSD: IXDP425,v 1.19 2006/08/26 20:26:44 christos Exp $
+#	$NetBSD: IXDP425,v 1.19.4.1 2006/12/18 11:42:04 yamt Exp $
 #
 #	IXDP425 -- Intel IXDP425/IXCDP1100 Development Platform
 #
@@ -164,6 +164,19 @@ ixdpled*	at ixpsip? addr 0x52000000 size 0x1000
 # On-board device support
 com0		at ixpsip? addr 0xc8000000 size 0x1000 index 0
 com1		at ixpsip? addr 0xc8001000 size 0x1000 index 1
+
+# Watchdog
+ixpdog0 	at ixpsip? addr 0xc8005014
+
+# IXP425 NPE Micro-engine support
+ixme0 		at mainbus?		# Includes QMGR
+ixpnpe0 	at ixme0 npe 1		# NPE-B
+ixpnpe1 	at ixme0 npe 2		# NPE-C
+
+# IXP425 NPE Ethernet
+npe0 		at ixpnpe0 phy 0
+npe1 		at ixpnpe1 phy 1
+
 
 # IXP425 fast bus
 ixpio0		at mainbus?

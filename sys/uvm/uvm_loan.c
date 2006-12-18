@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.59.10.2 2006/12/10 07:19:33 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.59.10.3 2006/12/18 11:42:27 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.59.10.2 2006/12/10 07:19:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.59.10.3 2006/12/18 11:42:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,7 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 		pmap_page_protect(pg, VM_PROT_READ);
 	}
 	pg->loan_count++;
-	uvm_pagedequeue(pg);
+	uvm_pageactivate(pg);
 	uvm_unlock_pageq();
 	**output = pg;
 	(*output)++;
@@ -479,7 +479,7 @@ uvm_loanpage(struct vm_page **pgpp, int npages)
 			pmap_page_protect(pg, VM_PROT_READ);
 		}
 		pg->loan_count++;
-		uvm_pagedequeue(pg);
+		uvm_pageactivate(pg);
 		uvm_unlock_pageq();
 	}
 
@@ -880,7 +880,6 @@ again:
 	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loaning to kernel-page */
 		uvm_lock_pageq();
 		pg->loan_count++;
-		uvm_pagedequeue(pg);
 		uvm_unlock_pageq();
 		simple_unlock(&uvm_loanzero_object.vmobjlock);
 		**output = pg;
@@ -1011,16 +1010,10 @@ uvm_unloanpage(struct vm_page **ploans, int npages)
 			pg->loan_count--;
 			pg->pqflags |= PQ_ANON;
 		}
-		if (pg->loan_count == 0) {
-			if (pg->uobject == NULL && pg->uanon == NULL) {
-				KASSERT((pg->flags & PG_BUSY) == 0);
-				uvm_pagefree(pg);
-			} else {
-				uvm_pageactivate(pg);
-			}
-		} else if (pg->loan_count == 1 && pg->uobject != NULL &&
-			   pg->uanon != NULL) {
-			uvm_pageactivate(pg);
+		if (pg->loan_count == 0 && pg->uobject == NULL &&
+		    pg->uanon == NULL) {
+			KASSERT((pg->flags & PG_BUSY) == 0);
+			uvm_pagefree(pg);
 		}
 		if (slock != NULL) {
 			simple_unlock(slock);

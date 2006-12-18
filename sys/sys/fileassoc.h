@@ -1,4 +1,4 @@
-/* $NetBSD: fileassoc.h,v 1.5.6.1 2006/12/10 07:19:28 yamt Exp $ */
+/* $NetBSD: fileassoc.h,v 1.5.6.2 2006/12/18 11:42:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -36,17 +36,14 @@
 #include <sys/cdefs.h>
 #include <sys/param.h>
 
-#define	FILEASSOC_INVAL		-1
-
-typedef int fileassoc_t;
+typedef struct fileassoc *fileassoc_t;
 typedef void (*fileassoc_cleanup_cb_t)(void *, int);
 typedef void (*fileassoc_cb_t)(void *);
 
 #define	FILEASSOC_CLEANUP_TABLE	0
 #define	FILEASSOC_CLEANUP_FILE	1
 
-void fileassoc_init(void);
-fileassoc_t fileassoc_register(const char *, fileassoc_cleanup_cb_t);
+int fileassoc_register(const char *, fileassoc_cleanup_cb_t, fileassoc_t *);
 int fileassoc_deregister(fileassoc_t);
 void *fileassoc_tabledata_lookup(struct mount *, fileassoc_t);
 void *fileassoc_lookup(struct vnode *, fileassoc_t);

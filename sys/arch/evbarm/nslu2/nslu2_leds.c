@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_leds.c,v 1.3 2006/04/22 09:11:45 yamt Exp $	*/
+/*	$NetBSD: nslu2_leds.c,v 1.3.16.1 2006/12/18 11:42:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,29 +37,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.3 2006/04/22 09:11:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.3.16.1 2006/12/18 11:42:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/iostat.h>
+#include <sys/proc.h>
+
+#include <machine/intr.h>
+
+#include <dev/usb/usb.h>
+#include <dev/usb/usbcdc.h>
+#include <dev/usb/usbdi.h>		/* XXX: For IPL_USB */
 
 #include <arm/xscale/ixp425var.h>
 
 #include <evbarm/nslu2/nslu2reg.h>
 
-#define	SLUGLED_NLEDS		2
-#define	SLUGLED_DISKNAMES	"sd%d"	/* XXX: Make this configurable! */
+#define	SLUGLED_FLASH_LEN	(hz/8)	/* How many ticks an LED stays lit */
 
-#define	SLUGLED_POLL		(hz/10)	/* Poll disks 10 times per second */
-#define	SLUGLED_FLASH_LEN	2	/* How long, in terms of SLUGLED_POLL,
-					   to light up an LED */
-#define	SLUGLED_READY_FLASH	3	/* Ditto for flashing Ready LED */
-
-#define	LEDBITS_DISK0		(1u << GPIO_LED_DISK1)
-#define	LEDBITS_DISK1		(1u << GPIO_LED_DISK2)
+#define	LEDBITS_USB0		(1u << GPIO_LED_DISK1)
+#define	LEDBITS_USB1		(1u << GPIO_LED_DISK2)
 
 /*
  * The Ready/Status bits control a tricolour LED.
@@ -70,14 +70,13 @@ __KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.3 2006/04/22 09:11:45 yamt Exp $");
 
 struct slugled_softc {
 	struct device sc_dev;
-	struct callout sc_co;
-	struct {
-		char sc_iostat_name[IOSTATNAMELEN];
-		struct timeval sc_iostat_time;
-		int sc_iostat_flash;	/* Countdown to LED clear */
-	} sc_iostat[SLUGLED_NLEDS];
-	uint32_t sc_state;
-	int sc_count;
+	void *sc_tmr_ih;
+	struct callout sc_usb0;
+	void *sc_usb0_ih;
+	struct callout sc_usb1;
+	void *sc_usb1_ih;
+	struct callout sc_usb2;
+	void *sc_usb2_ih;
 };
 
 static int slugled_attached;
@@ -85,60 +84,90 @@ static int slugled_attached;
 static void
 slugled_callout(void *arg)
 {
+	uint32_t reg, bit;
+	int is;
+
+	bit = (uint32_t)(uintptr_t)arg;
+
+	is = disable_interrupts(I32_bit);
+	reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOUTR);
+	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOUTR, reg | bit);
+	restore_interrupts(is);
+}
+
+static int
+slugled_intr0(void *arg)
+{
 	struct slugled_softc *sc = arg;
-	uint32_t reg, bit, new_state;
-	int s, i;
+	uint32_t reg;
+	int is;
 
-	new_state = sc->sc_state;
+	is = disable_interrupts(I32_bit);
+	reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOUTR);
+	reg &= ~LEDBITS_USB0;
+	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOUTR, reg);
+	restore_interrupts(is);
 
-	for (i = 0; i < SLUGLED_NLEDS; i++) {
-		struct io_stats *io;
-		struct timeval t;
-		int iobusy;
+	callout_schedule(&sc->sc_usb0, SLUGLED_FLASH_LEN);
 
-		bit = i ? LEDBITS_DISK1 : LEDBITS_DISK0;
+	return (1);
+}
 
-		s = splbio();
-		if ((io = iostat_find(sc->sc_iostat[i].sc_iostat_name)) == NULL) {
-			splx(s);
-			if (sc->sc_iostat[i].sc_iostat_flash > 0) {
-				new_state |= bit;
-				sc->sc_iostat[i].sc_iostat_flash = 0;
-				sc->sc_iostat[i].sc_iostat_time = mono_time;
-			}
+static int
+slugled_intr1(void *arg)
+{
+	struct slugled_softc *sc = arg;
+	uint32_t reg;
+	int is;
 
-			continue;
-		}
+	is = disable_interrupts(I32_bit);
+	reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOUTR);
+	reg &= ~LEDBITS_USB1;
+	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOUTR, reg);
+	restore_interrupts(is);
 
-		iobusy = io->io_busy;
-		t = io->io_timestamp;
-		splx(s);
+	callout_schedule(&sc->sc_usb1, SLUGLED_FLASH_LEN);
 
-		if (iobusy || t.tv_sec != sc->sc_iostat[i].sc_iostat_time.tv_sec ||
-		    t.tv_usec != sc->sc_iostat[i].sc_iostat_time.tv_usec) {
-			sc->sc_iostat[i].sc_iostat_flash = SLUGLED_FLASH_LEN;
-			sc->sc_iostat[i].sc_iostat_time = t;
-			new_state &= ~bit;
-		} else
-		if (sc->sc_iostat[i].sc_iostat_flash > 0 &&
-		    --(sc->sc_iostat[i].sc_iostat_flash) == 0)
-			new_state |= bit;
-	}
+	return (1);
+}
 
-	if ((++(sc->sc_count) % SLUGLED_READY_FLASH) == 0)
-		new_state ^= LEDBITS_READY;
+static int
+slugled_intr2(void *arg)
+{
+	struct slugled_softc *sc = arg;
+	uint32_t reg;
+	int is;
 
-	if (sc->sc_state != new_state) {
-		sc->sc_state = new_state;
-		s = splhigh();
-		reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOUTR);
-		reg &= ~(LEDBITS_DISK0 | LEDBITS_DISK1 | LEDBITS_READY);
-		reg |= new_state;
-		GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOUTR, reg);
-		splx(s);
-	}
+	is = disable_interrupts(I32_bit);
+	reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOUTR);
+	reg &= ~(LEDBITS_USB0 | LEDBITS_USB1);
+	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOUTR, reg);
+	restore_interrupts(is);
 
-	callout_schedule(&sc->sc_co, SLUGLED_POLL);
+	callout_schedule(&sc->sc_usb2, SLUGLED_FLASH_LEN);
+
+	return (1);
+}
+
+static int
+slugled_tmr(void *arg)
+{
+	struct clockframe *frame = arg;
+	uint32_t reg, bit;
+	int is;
+
+	if (CLKF_INTR(frame) || sched_whichqs || curlwp)
+		bit = LEDBITS_STATUS;
+	else
+		bit = 0;
+
+	is = disable_interrupts(I32_bit);
+	reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOUTR);
+	reg &= ~LEDBITS_STATUS;
+	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOUTR, reg | bit);
+	restore_interrupts(is);
+
+	return (1);
 }
 
 static void
@@ -148,16 +177,20 @@ slugled_shutdown(void *arg)
 	uint32_t reg;
 	int s;
 
-	/* Cancel the disk activity callout */
+	ixp425_intr_disestablish(sc->sc_usb0_ih);
+	ixp425_intr_disestablish(sc->sc_usb1_ih);
+	ixp425_intr_disestablish(sc->sc_tmr_ih);
+
+	/* Cancel the callouts */
 	s = splsoftclock();
-	callout_stop(&sc->sc_co);
+	callout_stop(&sc->sc_usb0);
+	callout_stop(&sc->sc_usb1);
 	splx(s);
 
-	/* Turn off the disk LEDs, and set Ready/Status to red */
+	/* Turn off the disk LEDs, and set Ready/Status to amber */
 	s = splhigh();
 	reg = GPIO_CONF_READ_4(ixp425_softc,IXP425_GPIO_GPOUTR);
-	reg &= ~LEDBITS_READY;
-	reg |= LEDBITS_DISK0 | LEDBITS_DISK1 | LEDBITS_STATUS;
+	reg |= LEDBITS_USB0 | LEDBITS_USB1 | LEDBITS_STATUS | LEDBITS_READY;
 	GPIO_CONF_WRITE_4(ixp425_softc,IXP425_GPIO_GPOUTR, reg);
 	splx(s);
 }
@@ -168,40 +201,53 @@ slugled_defer(struct device *self)
 	struct slugled_softc *sc = (struct slugled_softc *) self;
 	struct ixp425_softc *ixsc = ixp425_softc;
 	uint32_t reg;
-	int i, s;
+	int s;
 
 	s = splhigh();
 
 	/* Configure LED GPIO pins as output */
 	reg = GPIO_CONF_READ_4(ixsc, IXP425_GPIO_GPOER);
-	reg &= ~(LEDBITS_DISK0 | LEDBITS_DISK1);
+	reg &= ~(LEDBITS_USB0 | LEDBITS_USB1);
 	reg &= ~(LEDBITS_READY | LEDBITS_STATUS);
 	GPIO_CONF_WRITE_4(ixsc, IXP425_GPIO_GPOER, reg);
 
-	/* All LEDs off, except Ready LED */
+	/* All LEDs off */
 	reg = GPIO_CONF_READ_4(ixsc, IXP425_GPIO_GPOUTR);
-	reg |= LEDBITS_DISK0 | LEDBITS_DISK1 | LEDBITS_READY;
-	reg &= ~LEDBITS_STATUS;
+	reg |= LEDBITS_USB0 | LEDBITS_USB1;
+	reg &= ~(LEDBITS_STATUS | LEDBITS_READY);
 	GPIO_CONF_WRITE_4(ixsc, IXP425_GPIO_GPOUTR, reg);
 
 	splx(s);
-
-	for (i = 0; i < SLUGLED_NLEDS; i++) {
-		sprintf(sc->sc_iostat[i].sc_iostat_name, SLUGLED_DISKNAMES, i);
-		sc->sc_iostat[i].sc_iostat_flash = 0;
-		sc->sc_iostat[i].sc_iostat_time = mono_time;
-	}
-
-	sc->sc_state = LEDBITS_DISK0 | LEDBITS_DISK1 | LEDBITS_READY;
-	sc->sc_count = 0;
 
 	if (shutdownhook_establish(slugled_shutdown, sc) == NULL)
 		aprint_error("%s: WARNING - Failed to register shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 
-	callout_init(&sc->sc_co);
-	callout_setfunc(&sc->sc_co, slugled_callout, sc);
-	callout_schedule(&sc->sc_co, SLUGLED_POLL);
+	callout_init(&sc->sc_usb0);
+	callout_setfunc(&sc->sc_usb0, slugled_callout,
+	    (void *)(uintptr_t)LEDBITS_USB0);
+
+	callout_init(&sc->sc_usb1);
+	callout_setfunc(&sc->sc_usb1, slugled_callout,
+	    (void *)(uintptr_t)LEDBITS_USB1);
+
+	callout_init(&sc->sc_usb2);
+	callout_setfunc(&sc->sc_usb2, slugled_callout,
+	    (void *)(uintptr_t)(LEDBITS_USB0 | LEDBITS_USB1));
+
+	sc->sc_usb0_ih = ixp425_intr_establish(PCI_INT_A, IPL_USB,
+	    slugled_intr0, sc);
+	KDASSERT(sc->sc_usb0_ih != NULL);
+	sc->sc_usb1_ih = ixp425_intr_establish(PCI_INT_B, IPL_USB,
+	    slugled_intr1, sc);
+	KDASSERT(sc->sc_usb1_ih != NULL);
+	sc->sc_usb2_ih = ixp425_intr_establish(PCI_INT_C, IPL_USB,
+	    slugled_intr2, sc);
+	KDASSERT(sc->sc_usb2_ih != NULL);
+
+	sc->sc_tmr_ih = ixp425_intr_establish(IXP425_INT_TMR0, IPL_CLOCK,
+	    slugled_tmr, NULL);
+	KDASSERT(sc->sc_tmr_ih != NULL);
 }
 
 static int
