@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.46 2006/12/04 21:34:47 dsl Exp $	*/
+/*	$NetBSD: targ.c,v 1.47 2006/12/18 15:06:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.46 2006/12/04 21:34:47 dsl Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.47 2006/12/18 15:06:16 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.46 2006/12/04 21:34:47 dsl Exp $");
+__RCSID("$NetBSD: targ.c,v 1.47 2006/12/18 15:06:16 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -508,7 +508,7 @@ Targ_SetMain(GNode *gn)
 }
 
 static int
-TargPrintName(ClientData gnp, ClientData pflags)
+TargPrintName(ClientData gnp, ClientData pflags __unused)
 {
     GNode *gn = (GNode *)gnp;
 
@@ -714,7 +714,7 @@ Targ_PrintNode(ClientData gnp, ClientData passp)
  *-----------------------------------------------------------------------
  */
 static int
-TargPrintOnlySrc(ClientData gnp, ClientData dummy)
+TargPrintOnlySrc(ClientData gnp, ClientData dummy __unused)
 {
     GNode   	  *gn = (GNode *)gnp;
     if (!OP_NOP(gn->type))

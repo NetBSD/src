@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.125 2006/12/16 08:59:29 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.126 2006/12/18 15:06:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.125 2006/12/16 08:59:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.126 2006/12/18 15:06:16 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.125 2006/12/16 08:59:29 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.126 2006/12/18 15:06:16 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1466,14 +1466,6 @@ Parse_DoVar(char *line, GNode *ctxt)
     Boolean	   freeCp = FALSE; /* TRUE if cp needs to be freed,
 				    * i.e. if any variable expansion was
 				    * performed */
-    /*
-     * Avoid clobbered variable warnings by forcing the compiler
-     * to ``unregister'' variables
-     */
-#if __GNUC__
-    (void) &cp;
-    (void) &line;
-#endif
 
     /*
      * Skip to variable name
