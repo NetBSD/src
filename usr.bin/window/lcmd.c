@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd.c,v 1.7 2003/08/07 11:17:25 agc Exp $	*/
+/*	$NetBSD: lcmd.c,v 1.8 2006/12/18 20:04:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lcmd.c,v 1.7 2003/08/07 11:17:25 agc Exp $");
+__RCSID("$NetBSD: lcmd.c,v 1.8 2006/12/18 20:04:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ extern struct lcmd_arg arg_unalias[];
 extern struct lcmd_arg arg_unset[];
 extern struct lcmd_arg arg_window[];
 extern struct lcmd_arg arg_write[];
-struct lcmd_arg arg_null[1] = { { 0 } };
+struct lcmd_arg arg_null[1] = { { NULL, 0, 0 } };
 
 struct lcmd_tab lcmd_tab[] = {
 	{ "alias",		1,	l_alias,	arg_alias },
