@@ -1,4 +1,4 @@
-/*	$NetBSD: sacc_obio.c,v 1.5 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: sacc_obio.c,v 1.6 2006/12/18 15:32:10 nonaka Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.5 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.6 2006/12/18 15:32:10 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.5 2005/12/11 12:17:09 christos Exp $
 
 #include <arm/sa11x0/sa1111_reg.h>
 #include <arm/sa11x0/sa1111_var.h>
+#include <arm/xscale/pxa2x0cpu.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
