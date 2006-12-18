@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.16 2004/03/27 12:59:18 dsl Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.17 2006/12/18 20:07:32 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ffs_inode.c,v 1.16 2004/03/27 12:59:18 dsl Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.17 2006/12/18 20:07:32 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -162,7 +162,7 @@ fs_maxino(void)
 }
 
 void
-fs_mapinodes(ino_t maxino, u_int64_t *tape_size, int *anydirskipped)
+fs_mapinodes(ino_t maxino __unused, u_int64_t *tape_size, int *anydirskipped)
 {
 	int i, cg, inosused;
 	struct cg *cgp;
