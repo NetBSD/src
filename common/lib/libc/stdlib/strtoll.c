@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoll.c,v 1.1 2006/10/08 03:14:55 thorpej Exp $	*/
+/*	$NetBSD: strtoll.c,v 1.2 2006/12/18 00:41:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "from: @(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoll.c,v 1.1 2006/10/08 03:14:55 thorpej Exp $");
+__RCSID("$NetBSD: strtoll.c,v 1.2 2006/12/18 00:41:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,11 +94,6 @@ strtoll(nptr, endptr, base)
 
 	_DIAGASSERT(nptr != NULL);
 	/* endptr may be NULL */
-
-#ifdef __GNUC__
-	/* This outrageous construct just to shut up a GCC warning. */
-	(void) &acc; (void) &cutoff;
-#endif
 
 	/*
 	 * Skip white space and pick up leading +/- sign if any.
