@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.15 2006/12/17 16:03:33 peter Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.16 2006/12/18 15:30:56 nonaka Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.15 2006/12/17 16:03:33 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.16 2006/12/18 15:30:56 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,16 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.15 2006/12/17 16:03:33 peter Exp $"
 #include <arm/xscale/pxa2x0_gpio.h>
 
 #include "wsdisplay.h"
+
+/*
+ * Console variables. These are necessary since console is setup very early,
+ * before devices get attached.
+ */
+struct {
+	int				 is_console;
+	struct pxa2x0_wsscreen_descr	*descr;
+	const struct lcd_panel_geometry *geom;
+} pxa2x0_lcd_console;
 
 int		lcdintr(void *);
 
@@ -202,8 +212,7 @@ pxa2x0_lcd_initialize(struct pxa2x0_lcd_softc *sc,
  */
 void
 pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc, 
-    struct pxaip_attach_args *pxa, struct pxa2x0_wsscreen_descr *descr,
-    const struct lcd_panel_geometry *geom, int console)
+    struct pxaip_attach_args *pxa, const struct lcd_panel_geometry *geom)
 {
 	bus_space_tag_t iot = pxa->pxa_iot;
 	bus_space_handle_t ioh;
@@ -235,7 +244,8 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 
 	pxa2x0_lcd_initialize(sc, geom);
 
-	if (console) {
+	if (pxa2x0_lcd_console.is_console) {
+		struct pxa2x0_wsscreen_descr *descr = pxa2x0_lcd_console.descr;
 		struct pxa2x0_lcd_screen *scr;
 		struct rasops_info *ri;
 		long defattr;
@@ -262,16 +272,19 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 		    defattr);
 
 		printf("%s: console\n", sc->dev.dv_xname);
-	} else {
-		struct rasops_info dummy;
-
-		/*
-		 * Initialize a dummy rasops_info to compute fontsize and
-		 * the screen size in chars.
-		 */
-		memset(&dummy, 0, sizeof(dummy));
-		pxa2x0_lcd_setup_rasops(sc, &dummy, descr, geom);
 	}
+}
+
+int
+pxa2x0_lcd_cnattach(struct pxa2x0_wsscreen_descr *descr,
+    const struct lcd_panel_geometry *geom)
+{
+
+	pxa2x0_lcd_console.descr = descr;
+	pxa2x0_lcd_console.geom = geom;
+	pxa2x0_lcd_console.is_console = 1;
+
+	return 0;
 }
 
 /*
