@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.24 2006/10/22 21:00:21 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.25 2006/12/18 20:11:10 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.24 2006/10/22 21:00:21 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.25 2006/12/18 20:11:10 christos Exp $");
 #endif
 #endif
 
@@ -523,7 +523,11 @@ child_process(entry *e, user *u)
 
 
 static void
-do_univ(user *u)
+do_univ(user *u
+#ifndef sequent
+    __unused
+#endif
+)
 {
 #if defined(sequent)
 /* Dynix (Sequent) hack to put the user associated with
