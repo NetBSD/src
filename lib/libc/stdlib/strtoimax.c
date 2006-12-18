@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoimax.c,v 1.4 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: strtoimax.c,v 1.5 2006/12/18 00:40:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoimax.c,v 1.4 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: strtoimax.c,v 1.5 2006/12/18 00:40:14 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,11 +69,6 @@ _strtoimax(nptr, endptr, base)
 
 	_DIAGASSERT(nptr != NULL);
 	/* endptr may be NULL */
-
-#ifdef __GNUC__
-	/* This outrageous construct just to shut up a GCC warning. */
-	(void) &acc; (void) &cutoff;
-#endif
 
 	/*
 	 * Skip white space and pick up leading +/- sign if any.

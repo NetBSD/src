@@ -1,4 +1,4 @@
-/*	$NetBSD: fseeko.c,v 1.5 2005/03/04 16:04:58 dsl Exp $	*/
+/*	$NetBSD: fseeko.c,v 1.6 2006/12/18 00:40:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fseeko.c,v 1.5 2005/03/04 16:04:58 dsl Exp $");
+__RCSID("$NetBSD: fseeko.c,v 1.6 2006/12/18 00:40:14 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -69,11 +69,6 @@ fseeko(FILE *fp, off_t offset, int whence)
 	int havepos;
 
 	_DIAGASSERT(fp != NULL);
-
-#ifdef __GNUC__
-	/* This outrageous construct just to shut up a GCC warning. */
-	(void) &curoff;
-#endif
 
 	/* make sure stdio is set up */
 	if (!__sdidinit)
