@@ -1,4 +1,4 @@
-/*	$NetBSD: wwflush.c,v 1.9 2003/08/07 11:17:39 agc Exp $	*/
+/*	$NetBSD: wwflush.c,v 1.10 2006/12/18 20:04:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wwflush.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwflush.c,v 1.9 2003/08/07 11:17:39 agc Exp $");
+__RCSID("$NetBSD: wwflush.c,v 1.10 2006/12/18 20:04:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ wwcopyscreen(union ww_char **s1, union ww_char **s2)
 }
 
 void
-wwalarm(int dummy)
+wwalarm(int dummy __unused)
 {
 	wwdocheckpoint = 1;
 }
