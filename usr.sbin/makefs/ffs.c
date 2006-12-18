@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.41 2006/10/22 21:11:56 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.42 2006/12/18 21:03:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.41 2006/10/22 21:11:56 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.42 2006/12/18 21:03:29 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -217,7 +217,6 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 	assert(option != NULL);
 	assert(fsopts != NULL);
 	assert(ffs_opts != NULL);
-	(void)&ffs_options;
 
 	if (debug & DEBUG_FS_PARSE_OPTS)
 		printf("ffs_parse_opts: got `%s'\n", option);
