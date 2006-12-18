@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.c,v 1.3 2005/10/30 03:10:28 dyoung Exp $	*/
+/*	$NetBSD: iso9660_rrip.c,v 1.4 2006/12/18 21:03:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: iso9660_rrip.c,v 1.3 2005/10/30 03:10:28 dyoung Exp $");
+__RCSID("$NetBSD: iso9660_rrip.c,v 1.4 2006/12/18 21:03:29 christos Exp $");
 #endif  /* !__lint */
 
 static void cd9660_rrip_initialize_inode(cd9660node *);
@@ -449,7 +449,7 @@ cd9660node_susp_create_node(int susp_type, int entry_type, const char *type_id,
 }
 
 int
-cd9660_rrip_PL(struct ISO_SUSP_ATTRIBUTES* p, cd9660node *node)
+cd9660_rrip_PL(struct ISO_SUSP_ATTRIBUTES* p, cd9660node *node __unused)
 {
 	p->attr.rr_entry.PL.h.length[0] = 12;
 	p->attr.rr_entry.PL.h.version[0] = 1;
@@ -457,7 +457,7 @@ cd9660_rrip_PL(struct ISO_SUSP_ATTRIBUTES* p, cd9660node *node)
 }
 
 int
-cd9660_rrip_CL(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *node)
+cd9660_rrip_CL(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *node __unused)
 {
 	p->attr.rr_entry.CL.h.length[0] = 12;
 	p->attr.rr_entry.CL.h.version[0] = 1;
@@ -465,7 +465,7 @@ cd9660_rrip_CL(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *node)
 }
 
 int
-cd9660_rrip_RE(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *node)
+cd9660_rrip_RE(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *node __unused)
 {
 	p->attr.rr_entry.RE.h.length[0] = 0;
 	p->attr.rr_entry.RE.h.version[0] = 1;
@@ -679,7 +679,7 @@ cd9660node_rrip_tf(struct ISO_SUSP_ATTRIBUTES *p, fsnode *_node)
 }
 
 int
-cd9660_susp_sp(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *spinfo)
+cd9660_susp_sp(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *spinfo __unused)
 {
 	p->attr.su_entry.SP.h.length[0] = 7;
 	p->attr.su_entry.SP.h.version[0] = 1;
@@ -690,7 +690,7 @@ cd9660_susp_sp(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *spinfo)
 }
 
 int
-cd9660_susp_st(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *stinfo)
+cd9660_susp_st(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *stinfo __unused)
 {
 	p->attr.su_entry.ST.h.type[0] = 'S';
 	p->attr.su_entry.ST.h.type[1] = 'T';
@@ -700,7 +700,7 @@ cd9660_susp_st(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *stinfo)
 }
 
 int
-cd9660_susp_ce(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *spinfo)
+cd9660_susp_ce(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *spinfo __unused)
 {
 	p->attr.su_entry.CE.h.length[0] = 28;
 	p->attr.su_entry.CE.h.version[0] = 1;
@@ -709,7 +709,7 @@ cd9660_susp_ce(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *spinfo)
 }
 
 int
-cd9660_susp_pd(struct ISO_SUSP_ATTRIBUTES *p, int length)
+cd9660_susp_pd(struct ISO_SUSP_ATTRIBUTES *p __unused, int length __unused)
 {
 	return 1;
 }
@@ -801,7 +801,7 @@ cd9660_susp_ER(cd9660node *node,
 }
 
 struct ISO_SUSP_ATTRIBUTES*
-cd9660_susp_ES(struct ISO_SUSP_ATTRIBUTES *last, cd9660node *node)
+cd9660_susp_ES(struct ISO_SUSP_ATTRIBUTES *last __unused, cd9660node *node __unused)
 {
 	return NULL;
 }
