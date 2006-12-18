@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_inst.c,v 1.9 2006/09/27 21:33:07 christos Exp $	*/
+/*	$NetBSD: gsp_inst.c,v 1.10 2006/12/18 20:12:21 christos Exp $	*/
 /*
  * TMS34010 GSP assembler - Instruction encoding
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_inst.c,v 1.9 2006/09/27 21:33:07 christos Exp $");
+__RCSID("$NetBSD: gsp_inst.c,v 1.10 2006/12/18 20:12:21 christos Exp $");
 #endif
 
 #include <string.h>
@@ -251,7 +251,7 @@ struct inst instructions[] = {
 	{"XOR",	0x5600,	OR,	{EXREG,	REG,	0,	0}},
 	{"XORI",0x0BC0,	LIMREG,	{EXPR,	REG,	0,	0}},
 	{"ZEXT",0x0520,	EXGF,	{REG,	OPTSPEC,0,	0}},
-	{NULL}
+	{NULL,	0,	0,	{0,	0,	0,	0}}
 };
 
 int check_spec(int spec, char *valid, char *what);
