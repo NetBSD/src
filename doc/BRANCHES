@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.144 2006/12/17 15:38:35 tsutsui Exp $
+#	$NetBSD: BRANCHES,v 1.145 2006/12/18 12:12:36 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -487,6 +487,7 @@ Notes:
 		notyet:
 			amigappc
 			playstation2
+			zaurus
 
 
 ########################################################################
