@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.43 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: agp.c,v 1.44 2006/12/18 12:01:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.43 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.44 2006/12/18 12:01:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -675,25 +675,12 @@ agp_acquire_helper(struct agp_softc *sc, enum agp_acquire_state state)
 static int
 agp_release_helper(struct agp_softc *sc, enum agp_acquire_state state)
 {
-	struct agp_memory *mem;
 
 	if (sc->as_state == AGP_ACQUIRE_FREE)
 		return 0;
 
 	if (sc->as_state != state)
 		return EBUSY;
-
-	/*
-	 * Clear out outstanding aperture mappings.
-	 * (should not be necessary, done by caller)
-	 */
-	TAILQ_FOREACH(mem, &sc->as_memory, am_link) {
-		if (mem->am_is_bound) {
-			printf("agp_release_helper: mem %d is bound\n",
-			       mem->am_id);
-			AGP_UNBIND_MEMORY(sc, mem);
-		}
-	}
 
 	sc->as_state = AGP_ACQUIRE_FREE;
 	return 0;
