@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.6 2006/02/12 18:16:01 tron Exp $	*/
+/*	$NetBSD: pchb.c,v 1.7 2006/12/18 12:07:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6 2006/02/12 18:16:01 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.7 2006/12/18 12:07:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6 2006/02/12 18:16:01 tron Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <arch/x86/pci/pchbvar.h>
+
+#include <dev/pci/agpreg.h>
+#include <dev/pci/agpvar.h>
 
 #include "rnd.h"
 
@@ -102,8 +105,16 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 #endif
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
+	struct pcibus_attach_args pba;
+	struct agpbus_attach_args apa;
+	u_char pbnum = 0; /* XXX: gcc */
+	int doattach, attachflags, has_agp;
 
 	printf("\n");
+
+	doattach = 0;
+	has_agp = 0;
+	attachflags = pa->pa_flags;
 
 	/*
 	 * Print out a description, and configure certain chipsets which
@@ -114,9 +125,33 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 	switch (PCI_VENDOR(pa->pa_id)) {
-		/* Nothing yet */
-		default:
+	case PCI_VENDOR_INTEL:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INTEL_82810_MCH:
+		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
+		case PCI_PRODUCT_INTEL_82810E_MCH:
+		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
+		case PCI_PRODUCT_INTEL_82830MP_IO_1:
+		case PCI_PRODUCT_INTEL_82845G_DRAM:
+		case PCI_PRODUCT_INTEL_82855GM_MCH:
+		case PCI_PRODUCT_INTEL_82865_HB:
+		case PCI_PRODUCT_INTEL_82915G_HB:
+		case PCI_PRODUCT_INTEL_82915GM_HB:
+		case PCI_PRODUCT_INTEL_82945P_MCH:
+		case PCI_PRODUCT_INTEL_82945GM_HB:
+			/*
+			 * The host bridge is either in GFX mode (internal
+			 * graphics) or in AGP mode. In GFX mode, we pretend
+			 * to have AGP because the graphics memory access
+			 * is very similar and the AGP GATT code will
+			 * deal with this. In the latter case, the
+			 * pci_get_capability(PCI_CAP_AGP) test below will
+			 * fire, so we do no harm by already setting the flag.
+			 */
+			has_agp = 1;
 			break;
+		}
+		break;
 	}
 
 #if NRND > 0
@@ -125,4 +160,30 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	 */
 	pchb_attach_rnd(sc, pa);
 #endif
+
+	/*
+	 * If we haven't detected AGP yet (via a product ID),
+	 * then check for AGP capability on the device.
+	 */
+	if (has_agp ||
+	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+			       NULL, NULL) != 0) {
+		apa.apa_pci_args = *pa;
+		config_found_ia(self, "agpbus", &apa, agpbusprint);
+	}
+
+	if (doattach) {
+		pba.pba_iot = pa->pa_iot;
+		pba.pba_memt = pa->pa_memt;
+		pba.pba_dmat = pa->pa_dmat;
+		pba.pba_dmat64 = pa->pa_dmat64;
+		pba.pba_pc = pa->pa_pc;
+		pba.pba_flags = attachflags;
+		pba.pba_bus = pbnum;
+		pba.pba_bridgetag = NULL;
+		pba.pba_pc = pa->pa_pc;
+		pba.pba_intrswiz = 0;
+		memset(&pba.pba_intrtag, 0, sizeof(pba.pba_intrtag));
+		config_found_ia(self, "pcibus", &pba, pcibusprint);
+	}
 }
