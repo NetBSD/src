@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.14 2006/12/17 22:28:05 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.15 2006/12/18 14:50:02 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -260,4 +260,24 @@ sys/dev/pci/eso.c				1.46-1.47
 	Un-break clock selection after -Wsign-compare cleanup in rev. 1.43;
 	from Stephen Ma in PR kern/35220.
 	[kleink, ticket #278]
+
+share/dict/web2					1.15
+
+	Remove an accidentally duplicated word. This also fixes regression
+	tests in "regress/lib/libc/db regression".
+	[martin, ticket #279]
+
+sys/net/if_fddisubr.c				1.64
+sys/net/if_llc.h				1.17
+sys/netiso/clnp_input.c				1.34
+
+	Fix iso(4) over FDDI.
+	[is, ticket #280]
+
+usr.bin/column/column.c				1.16
+
+	Stop column(1) from generating an infinite stream of NUL characters.
+	This could cause "/etc/security" to fill up "/tmp" during the
+	nightly security check.
+	[jdc, ticket #281]
 
