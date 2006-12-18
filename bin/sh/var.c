@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.37 2006/04/24 19:00:30 snj Exp $	*/
+/*	$NetBSD: var.c,v 1.38 2006/12/18 00:37:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.37 2006/04/24 19:00:30 snj Exp $");
+__RCSID("$NetBSD: var.c,v 1.38 2006/12/18 00:37:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,10 +201,7 @@ setvarsafe(const char *name, const char *val, int flags)
 {
 	struct jmploc jmploc;
 	struct jmploc *volatile savehandler = handler;
-	int err = 0;
-#ifdef __GNUC__
-	(void) &err;
-#endif
+	int volatile err = 0;
 
 	if (setjmp(jmploc.loc))
 		err = 1;
