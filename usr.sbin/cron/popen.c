@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.10 2005/07/31 17:52:01 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.11 2006/12/18 20:11:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -36,7 +36,7 @@
 static char rcsid[] = "Id: popen.c,v 1.5 1994/01/15 20:43:43 vixie Exp";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
 #else
-__RCSID("$NetBSD: popen.c,v 1.10 2005/07/31 17:52:01 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.11 2006/12/18 20:11:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,10 +61,6 @@ cron_popen(char *program, const char *type)
 	int argc, pdes[2];
 	PID_T pid;
 	char *argv[MAX_ARGS];
-
-#ifdef __GNUC__
-	(void) &iop;	/* Avoid vfork clobbering */
-#endif
 
 	if ((*type != 'r' && *type != 'w') || type[1])
 		return(NULL);
