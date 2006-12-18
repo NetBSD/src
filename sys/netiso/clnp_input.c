@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.31 2006/12/01 18:43:40 is Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.31.2.1 2006/12/18 14:43:31 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.31 2006/12/01 18:43:40 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.31.2.1 2006/12/18 14:43:31 tron Exp $");
 
 #include "opt_iso.h"
 
@@ -204,9 +204,7 @@ next:
 	case IFT_FDDI:
 		bcopy((caddr_t) (mtod(m, struct fddi_header *)->fddi_dhost),
 		  (caddr_t) sh.snh_dhost, 2 * sizeof(sh.snh_dhost));
-		m->m_data += sizeof(struct fddi_header);
-		m->m_len -= sizeof(struct fddi_header);
-		m->m_pkthdr.len -= sizeof(struct fddi_header);
+		m_adj(m, sizeof(struct fddi_header) + LLC_UFRAMELEN);
 		break;
 	case IFT_PTPSERIAL:
 	case IFT_GIF:
