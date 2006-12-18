@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_debug.c,v 1.4 2005/12/24 20:56:41 perry Exp $	*/
+/*	$NetBSD: cd9660_debug.c,v 1.5 2006/12/18 21:03:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_debug.c,v 1.4 2005/12/24 20:56:41 perry Exp $");
+__RCSID("$NetBSD: cd9660_debug.c,v 1.5 2006/12/18 21:03:29 christos Exp $");
 #endif  /* !__lint */
 
 #if !HAVE_NBTOOL_CONFIG_H
@@ -335,7 +335,7 @@ debug_dump_integer(const char *element, char* buf, int mode)
 }
 
 void
-debug_dump_string(const char *element, unsigned char *buf, int len)
+debug_dump_string(const char *element __unused, unsigned char *buf __unused, int len __unused)
 {
 
 }

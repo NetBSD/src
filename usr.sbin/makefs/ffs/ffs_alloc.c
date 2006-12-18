@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.16 2005/08/19 02:09:50 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.17 2006/12/18 21:03:29 christos Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.16 2005/08/19 02:09:50 christos Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.17 2006/12/18 21:03:29 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -98,7 +98,7 @@ extern const u_char * const fragtbl[];
  *      available block is located.
  */
 int
-ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
+ffs_alloc(struct inode *ip, daddr_t lbn __unused, daddr_t bpref, int size,
     daddr_t *bnp)
 {
 	struct fs *fs = ip->i_fs;
