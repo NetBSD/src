@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.50 2006/12/18 06:15:56 christos Exp $	*/
+/*	$NetBSD: termcap.c,v 1.51 2006/12/18 12:59:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.50 2006/12/18 06:15:56 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.51 2006/12/18 12:59:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -444,7 +444,7 @@ tgetstr(const char *id, char **area)
 	} else
 		ti = fbuf;
 
-	if (area == NULL) {
+	if (area == NULL || *area == NULL) {
 		static char capability[256], *ptr;
 		size_t limit = 255;
 
