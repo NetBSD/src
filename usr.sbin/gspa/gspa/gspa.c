@@ -1,4 +1,4 @@
-/*	$NetBSD: gspa.c,v 1.12 2006/08/26 18:15:37 christos Exp $	*/
+/*	$NetBSD: gspa.c,v 1.13 2006/12/18 20:12:21 christos Exp $	*/
 /*
  * GSP assembler main program
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gspa.c,v 1.12 2006/08/26 18:15:37 christos Exp $");
+__RCSID("$NetBSD: gspa.c,v 1.13 2006/12/18 20:12:21 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -91,13 +91,9 @@ void	c_dumpbuf(void);
 int
 main(int argc, char **argv)
 {
-	char *hex_name, *list_name;
+	char * volatile hex_name;
+	char * volatile list_name;
 	int c;
-
-#if __GNUC__		/* XXX: borken compilers... */
-	(void)&hex_name;
-	(void)&list_name;
-#endif
 
 	hex_name = list_name = 0;
 
