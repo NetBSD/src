@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10.22.4 2006/10/09 11:44:56 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.10.22.5 2006/12/18 14:14:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10.22.4 2006/10/09 11:44:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10.22.5 2006/12/18 14:14:33 yamt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -216,7 +216,7 @@ ipl_to_spl(int ipl)
 	case IPL_SERIAL:
 		return _SPL_SERIAL;
 	default:
-		panic("bogus ipl");
+		panic("bogus ipl %d", ipl);
 	}
 }
 
