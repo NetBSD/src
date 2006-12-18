@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.29 2006/09/10 19:50:48 plunky Exp $
+#	$NetBSD: files.amd64,v 1.30 2006/12/18 12:08:05 christos Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -104,11 +104,13 @@ file	arch/amd64/amd64/cpu.c		cpu
 
 include	"dev/pci/files.pci"
 defparam			PCI_CONF_MODE
+include "dev/pci/files.agp"
+file	arch/x86/pci/agp_machdep.c	agp
 
 # PCI-Host bridge chipsets
-device	pchb: pcibus
+device	pchb: pcibus, agpbus, agp_i810, agp_intel, agp_sis, agp_via, agp_amd, agp_ali 
 attach	pchb at pci
-file	arch/amd64/pci/pchb.c			pchb
+file	arch/amd64/pci/pchb.c			pchb		needs-flag
 file	arch/x86/pci/pchb_rnd.c			pchb & rnd
 
 # PCI-ISA bridges
