@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.52.6.2 2006/12/10 07:19:00 yamt Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.52.6.3 2006/12/18 11:42:16 yamt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.52.6.2 2006/12/10 07:19:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.52.6.3 2006/12/18 11:42:16 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -418,22 +418,28 @@ stf_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	dst4 = (struct sockaddr_in *)&sc->sc_ro.ro_dst;
 	if (dst4->sin_family != AF_INET ||
-	    bcmp(&dst4->sin_addr, &ip->ip_dst, sizeof(ip->ip_dst)) != 0) {
-		/* cache route doesn't match */
+	    bcmp(&dst4->sin_addr, &ip->ip_dst, sizeof(ip->ip_dst)) != 0)
+		rtcache_free(&sc->sc_ro);
+	else
+		rtcache_check(&sc->sc_ro);
+	if (sc->sc_ro.ro_rt == NULL) {
 		dst4->sin_family = AF_INET;
 		dst4->sin_len = sizeof(struct sockaddr_in);
 		bcopy(&ip->ip_dst, &dst4->sin_addr, sizeof(dst4->sin_addr));
-		if (sc->sc_ro.ro_rt != NULL)
-			rtflush(&sc->sc_ro);
-	}
-
-	if (sc->sc_ro.ro_rt == NULL) {
-		rtalloc(&sc->sc_ro);
+		rtcache_init(&sc->sc_ro);
 		if (sc->sc_ro.ro_rt == NULL) {
 			m_freem(m);
 			ifp->if_oerrors++;
 			return ENETUNREACH;
 		}
+	}
+
+	/* If the route constitutes infinite encapsulation, punt. */
+	if (sc->sc_ro.ro_rt->rt_ifp == ifp) {
+		rtcache_free(&sc->sc_ro);
+		m_freem(m);
+		ifp->if_oerrors++;
+		return ENETUNREACH;
 	}
 
 	ifp->if_opackets++;

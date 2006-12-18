@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.9.10.1 2006/12/10 07:15:48 yamt Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.9.10.2 2006/12/18 11:42:04 yamt Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -62,8 +62,11 @@
 #define PXA2X0_CS4_START 0x10000000
 #define PXA2X0_CS5_START 0x14000000
 
-#define PXA2X0_PCMCIA_SLOT0  0x20000000
-#define PXA2X0_PCMCIA_SLOT1  0x30000000
+#define	PXA2X0_PCIC_SOCKET_BASE   0x20000000
+#define	PXA2X0_PCIC_SOCKET_OFFSET 0x10000000
+#define PXA2X0_PCMCIA_SLOT0       PXA2X0_PCIC_SOCKET_BASE
+#define PXA2X0_PCMCIA_SLOT1 \
+		(PXA2X0_PCIC_PCMCIA_SLOT0 + PXA2X0_PCIC_SOCKET_OFFSET)
 
 #define PXA2X0_PERIPH_START 0x40000000
 /* #define PXA2X0_MEMCTL_START 0x48000000 */
@@ -85,38 +88,46 @@
 #define PXA2X0_DMAC_SIZE	0x300
 #define PXA2X0_FFUART_BASE	0x40100000 /* Full Function UART */
 #define PXA2X0_BTUART_BASE	0x40200000 /* Bluetooth UART */
-#define PXA2X0_I2C_BASE		0x40300000
-#define PXA2X0_I2C_SIZE		0x000016a4
-#define PXA2X0_I2S_BASE 	0x40400000
-#define PXA2X0_AC97_BASE	0x40500000
+#define PXA2X0_I2C_BASE		0x40300000 /* I2C Bus Interface Unit */
+#define PXA2X0_I2C_SIZE		0x16a4
+#define PXA2X0_I2S_BASE 	0x40400000 /* Inter-IC Sound Controller */
+#define PXA2X0_I2S_SIZE		0x84
+#define PXA2X0_AC97_BASE	0x40500000 /* AC '97 Controller */
 #define PXA2X0_AC97_SIZE	0x600
-#define PXA2X0_USBDC_BASE 	0x40600000 /* USB Client */
-#define PXA2X0_USBDC_SIZE 	0x0e04
+#define PXA2X0_USBDC_BASE 	0x40600000 /* USB Client Contoller */
+#define PXA250_USBDC_SIZE 	0xe04
+#define PXA270_USBDC_SIZE 	0x460
 #define PXA2X0_STUART_BASE	0x40700000 /* Standard UART */
 #define PXA2X0_ICP_BASE 	0x40800000
 #define PXA2X0_RTC_BASE 	0x40900000
 #define PXA2X0_RTC_SIZE 	0x10
 #define PXA2X0_OST_BASE 	0x40a00000 /* OS Timer */
+#define PXA2X0_OST_SIZE		0x24
 #define PXA2X0_PWM0_BASE	0x40b00000
 #define PXA2X0_PWM1_BASE	0x40c00000
 #define PXA2X0_INTCTL_BASE	0x40d00000 /* Interrupt controller */
 #define	PXA2X0_INTCTL_SIZE	0x20
 #define PXA2X0_GPIO_BASE	0x40e00000
-
 #define PXA270_GPIO_SIZE  	0x150
 #define PXA250_GPIO_SIZE  	0x70
 #define PXA2X0_POWMAN_BASE  	0x40f00000 /* Power management */
-#define PXA2X0_SSP_BASE 	0x41000000
+#define PXA2X0_POWMAN_SIZE	0x1a4      /* incl. PI2C unit */
+#define PXA2X0_SSP_BASE 	0x41000000 /* SSP serial port */
+#define	PXA2X0_SSP1_BASE	0x41700000 /* PXA270 */
+#define	PXA2X0_SSP2_BASE	0x41900000 /* PXA270 */
+#define	PXA2X0_SSP_SIZE		0x40
 #define PXA2X0_MMC_BASE 	0x41100000 /* MultiMediaCard */
-#define PXA2X0_MMC_SIZE		0x48
+#define PXA2X0_MMC_SIZE		0x50
 #define PXA2X0_CLKMAN_BASE  	0x41300000 /* Clock Manager */
 #define PXA2X0_CLKMAN_SIZE	12
+#define PXA2X0_HWUART_BASE	0x41600000 /* Hardware UART */
 #define PXA2X0_LCDC_BASE	0x44000000 /* LCD Controller */
 #define PXA2X0_LCDC_SIZE	0x220
 #define PXA2X0_MEMCTL_BASE	0x48000000 /* Memory Controller */
-#define PXA2X0_MEMCTL_SIZE	0x48
-#define PXA2X0_USBH_BASE	0x4c000000 /* USB Host controller */
-#define PXA2X0_USBH_SIZE	0x70
+#define PXA250_MEMCTL_SIZE	0x48
+#define PXA270_MEMCTL_SIZE	0x84
+#define PXA2X0_USBHC_BASE	0x4c000000 /* USB Host controller */
+#define PXA2X0_USBHC_SIZE	0x70
 
 /* Internal SRAM storage. PXA27x only */
 #define PXA270_SRAM0_START 0x5c000000
@@ -129,12 +140,14 @@
 /* width of interrupt controller */
 #define ICU_LEN			32   /* but [0..7,15,16] is not used */
 #define ICU_INT_HWMASK		0xffffff00
-#define PXA250_IRQ_MIN 8	/* 0..7 are not used by integrated 
+#define PXA250_IRQ_MIN 7	/* 0..6 are not used by integrated 
 				   peripherals */
 #define PXA270_IRQ_MIN 0
 
+#define	PXA2X0_INT_USBH2	2	/* USB host (all other events) */
 #define PXA2X0_INT_USBH1	3	/* USB host (OHCI) */
 
+#define PXA2X0_INT_HWUART  	7
 #define PXA2X0_INT_GPIO0	8
 #define PXA2X0_INT_GPIO1	9
 #define PXA2X0_INT_GPION	10	/* irq from GPIO[2..80] */
@@ -142,6 +155,7 @@
 #define PXA2X0_INT_PMU  	12
 #define PXA2X0_INT_I2S  	13
 #define PXA2X0_INT_AC97  	14
+#define PXA2X0_INT_NSSP  	16
 #define PXA2X0_INT_LCD  	17
 #define PXA2X0_INT_I2C  	18
 #define PXA2X0_INT_ICP  	19
@@ -222,7 +236,14 @@ struct pxa2x0_dma_desc {
 #define  ICR_ACKNAK	(1<<2)
 #define  ICR_TB  	(1<<3)
 #define  ICR_MA  	(1<<4)
+#define  ICR_SCLE	(1<<5)		/* PXA270? */
+#define  ICR_IUE	(1<<6)		/* PXA270? */
+#define  ICR_UR		(1<<14)		/* PXA270? */
+#define  ICR_FM		(1<<15)		/* PXA270? */
 #define I2C_ISR  	0x1698		/* Status register */
+#define  ISR_ACKNAK	(1<<1)
+#define  ISR_ITE	(1<<6)
+#define  ISR_IRF	(1<<7)
 #define I2C_ISAR	0x16a0		/* Slave address */
 
 /* Clock Manager */
@@ -255,12 +276,14 @@ struct pxa2x0_dma_desc {
 #define CKEN_PWM1	(1<<1)
 #define CKEN_AC97	(1<<2)
 #define CKEN_SSP	(1<<3)
+#define CKEN_HWUART	(1<<4)
 #define CKEN_STUART	(1<<5)
 #define CKEN_FFUART	(1<<6)
 #define CKEN_BTUART	(1<<7)
 #define CKEN_I2S	(1<<8)
-#define CKEN_USBH	(1<<10)
-#define CKEN_USB	(1<<11)
+#define CKEN_NSSP	(1<<9)
+#define CKEN_USBHC	(1<<10)
+#define CKEN_USBDC	(1<<11)
 #define CKEN_MMC	(1<<12)
 #define CKEN_FICP	(1<<13)
 #define CKEN_I2C	(1<<14)
@@ -536,17 +559,30 @@ struct pxa2x0_dma_desc {
 #define  STAT_XMIT_FIFO_EMPTY		(1<<6)
 #define  STAT_RECV_FIFO_FULL		(1<<7)
 #define  STAT_CLK_EN			(1<<8)
+#define  STAT_FLASH_ERR			(1<<9)
+#define  STAT_SPI_WR_ERR		(1<<10)
 #define  STAT_DATA_TRAN_DONE		(1<<11)
 #define  STAT_PRG_DONE			(1<<12)
 #define  STAT_END_CMD_RES		(1<<13)
+#define  STAT_RD_STALLED		(1<<14)
+#define  STAT_SDIO_INT			(1<<15)
+#define  STAT_SDIO_SUSPEND_ACK		(1<<16)
+#define  STAT_ERR_MASK			(STAT_READ_TIME_OUT \
+					 | STAT_TIMEOUT_RESPONSE \
+					 | STAT_CRC_WRITE_ERROR \
+					 | STAT_CRC_READ_ERROR \
+					 | STAT_SPI_READ_ERROR_TOKEN \
+					 | STAT_RES_CRC_ERR \
+					 | STAT_FLASH_ERR \
+					 | STAT_SPI_WR_ERR)
 #define MMC_CLKRT	0x08	/* MMC clock rate */
-#define  CLKRT_20M	0
-#define  CLKRT_10M	1
-#define  CLKRT_5M	2
-#define  CLKRT_2_5M	3
-#define  CLKRT_1_25M	4
-#define  CLKRT_625K	5
-#define  CLKRT_312K	6
+#define  CLKRT_DIV1	0
+#define  CLKRT_DIV2	1
+#define  CLKRT_DIV4	2
+#define  CLKRT_DIV8	3
+#define  CLKRT_DIV16	4
+#define  CLKRT_DIV32	5
+#define  CLKRT_DIV64	6
 #define MMC_SPI  	0x0c	/* SPI mode control */
 #define  SPI_EN  	(1<<0)	/* enable SPI mode */
 #define  SPI_CRC_ON	(1<<1)	/* enable CRC generation */
@@ -559,15 +595,25 @@ struct pxa2x0_dma_desc {
 #define  CMDAT_RESPONSE_FORMAT_R2 2
 #define  CMDAT_RESPONSE_FORMAT_R3 3
 #define  CMDAT_DATA_EN		(1<<2)
-#define  CMDAT_WRITE		(1<<3) /* 1=write 0=read operation */
-#define  CMDAT_STREAM_BLOCK	(1<<4) /* stream mode */
-#define  CMDAT_BUSY		(1<<5) /* busy signal is expected */
-#define  CMDAT_INIT		(1<<6) /* precede command with 80 clocks */
-#define  CMDAT_MMC_DMA_EN	(1<<7) /* DMA enable */
+#define  CMDAT_WRITE		(1<<3)	/* 1=write 0=read operation */
+#define  CMDAT_STREAM_BLOCK	(1<<4)	/* stream mode */
+#define  CMDAT_BUSY		(1<<5)	/* busy signal is expected */
+#define  CMDAT_INIT		(1<<6)	/* precede command with 80 clocks */
+#define  CMDAT_MMC_DMA_EN	(1<<7)	/* DMA enable */
+#define  CMDAT_SD_4DAT		(1<<8)	/* enable 4bit data transfers */
+#define  CMDAT_STOP_TRAN	(1<<10)	/* 1=Stop data transmission */
+#define  CMDAT_SDIO_INT_EN	(1<<11)
+#define  CMDAT_SDIO_SUSPEND	(1<<12)
+#define  CMDAT_SDIO_RESUME	(1<<13)
 #define MMC_RESTO	0x14	/* expected response time out */
+#define  RESTO_MASK		0x7f
 #define MMC_RDTO 	0x18	/* expected data read time out */
+#define  RDTO_MASK		0xffff
+#define  RDTO_UNIT		13128	/* (ns) */
 #define MMC_BLKLEN	0x1c	/* block length of data transaction */
+#define  BLKLEN_MASK		0xfff
 #define MMC_NOB  	0x20	/* number of blocks (block mode) */
+#define  NOB_MASK		0xffff
 #define MMC_PRTBUF	0x24	/* partial MMC_TXFIFO written */
 #define  PRTBUF_BUF_PART_FULL (1<<0) /* buffer partially full */
 #define MMC_I_MASK	0x28	/* interrupt mask */
@@ -579,12 +625,84 @@ struct pxa2x0_dma_desc {
 #define  MMC_I_CLK_IS_OFF	(1<<4)
 #define  MMC_I_RXFIFO_RD_REQ	(1<<5)
 #define  MMC_I_TXFIFO_WR_REQ	(1<<6)
+#define  MMC_I_TINT		(1<<7)
+#define  MMC_I_DAT_ERR		(1<<8)
+#define  MMC_I_RES_ERR		(1<<9)
+#define  MMC_I_RD_STALLED	(1<<10)
+#define  MMC_I_SDIO_INT		(1<<11)
+#define  MMC_I_SDIO_SUSPEND_ACK	(1<<12)
+#define  MMC_I_ALL		(0x1fff)
 #define MMC_CMD  	0x30	/* index of current command */
+#define  CMD_MASK		0x3f
 #define MMC_ARGH 	0x34	/* MSW part of the current command arg */
+#define  ARGH_MASK		0xffff
 #define MMC_ARGL 	0x38	/* LSW part of the current command arg */
+#define  ARGL_MASK		0xffff
 #define MMC_RES  	0x3c	/* response FIFO */
+#define  RES_MASK		0xffff
 #define MMC_RXFIFO	0x40	/* receive FIFO */
 #define MMC_TXFIFO	0x44 	/* transmit FIFO */
+#define	MMC_RDWAIT	0x48	/* MMC RD_WAIT register */
+#define  RDWAIT_RD_WAIT_EN	(1<<0)
+#define  RDWAIT_WAIT_START	(1<<1)
+#define	MMC_BLKS_REM	0x4c	/* MMC Blocks Remaining register */
+#define  CLKS_REM_MASK		0xffff
+
+#define	PXA250_MMC_CLKRT_MIN	312500
+#define	PXA250_MMC_CLKRT_MAX	20000000
+#define	PXA270_MMC_CLKRT_MIN	304688
+#define	PXA270_MMC_CLKRT_MAX	19500000
+
+/*
+ * Inter-IC Sound (I2S) Controller
+ */
+#define I2S_SACR0	0x0000	/* Serial Audio Global Control */
+#define  SACR0_ENB		(1<<0)	/* Enable I2S Function */
+#define  SACR0_BCKD		(1<<2)	/* I/O Direction of I2S_BITCLK */
+#define  SACR0_RST		(1<<3)	/* FIFO Reset */
+#define  SACR0_EFWR		(1<<4)	/* Special-Purpose FIFO W/R Func */
+#define  SACR0_STRF		(1<<5)	/* Select TX or RX FIFO */
+#define  SACR0_TFTH_MASK	(0xf<<8) /* Trans FIFO Intr/DMA Trig Thresh */
+#define  SACR0_RFTH_MASK	(0xf<<12) /* Recv FIFO Intr/DMA Trig Thresh */
+#define  SACR0_SET_TFTH(x)	(((x) & 0xf)<<8)
+#define  SACR0_SET_RFTH(x)	(((x) & 0xf)<<12)
+#define I2S_SACR1	0x0004	/* Serial Audio I2S/MSB-Justified Control */
+#define  SACR1_AMSL		(1<<0)	/* Specify Alt Mode (I2S or MSB) */
+#define  SACR1_DREC		(1<<3)	/* Disable Recording Func */
+#define  SACR1_DRPL		(1<<4)	/* Disable Replay Func */
+#define  SACR1_ENLBF		(1<<5)	/* Enable Interface Loopback Func */
+#define I2S_SASR0	0x000c	/* Serial Audio I2S/MSB-Justified Status */
+#define  SASR0_TNF		(1<<0)	/* Transmit FIFO Not Full */
+#define  SASR0_RNE		(1<<1)	/* Recv FIFO Not Empty */
+#define  SASR0_BSY		(1<<2)	/* I2S Busy */
+#define  SASR0_TFS		(1<<3)	/* Trans FIFO Service Request */
+#define  SASR0_RFS		(1<<4)	/* Recv FIFO Service Request */
+#define  SASR0_TUR		(1<<5)	/* Trans FIFO Underrun */
+#define  SASR0_ROR		(1<<6)	/* Recv FIFO Overrun */
+#define  SASR0_I2SOFF		(1<<7)	/* I2S Controller Off */
+#define  SASR0_TFL_MASK		(0xf<<8) /* Trans FIFO Level */
+#define  SASR0_RFL_MASK		(0xf<<12) /* Recv FIFO Level */
+#define  SASR0_GET_TFL(x)	(((x) & 0xf) >> 8)
+#define  SASR0_GET_RFL(x)	(((x) & 0xf) >> 12)
+#define I2S_SAIMR	0x0014	/* Serial Audio Interrupt Mask */
+#define  SAIMR_TFS		(1<<3)	/* Enable TX FIFO Service Req Intr */
+#define  SAIMR_RFS		(1<<4)	/* Enable RX FIFO Service Req Intr */
+#define  SAIMR_TUR		(1<<5)	/* Enable TX FIFO Underrun Intr */
+#define  SAIMR_ROR		(1<<6)	/* Enable RX FIFO Overrun Intr */
+#define I2S_SAICR	0x0018	/* Serial Audio Interrupt Clear */
+#define  SAICR_TUR		(1<<5)	/* Clear Intr and SASR0_TUR */
+#define  SAICR_ROR		(1<<6)	/* Clear Intr and SASR0_ROR */
+#define I2S_SADIV	0x0060	/* Audio Clock Divider */
+#define  SADIV_MASK		0x7f
+#define  SADIV_3_058MHz		0x0c	/* 3.058 MHz */
+#define  SADIV_2_836MHz		0x0d	/* 2.836 MHz */
+#define  SADIV_1_405MHz		0x1a	/* 1.405 MHz */
+#define  SADIV_1_026MHz		0x24	/* 1.026 MHz */
+#define  SADIV_702_75kHz	0x34	/* 702.75 kHz */
+#define  SADIV_513_25kHz	0x48	/* 513.25 kHz */
+#define I2S_SADR	0x0080	/* Serial Audio Data Register */
+#define  SADR_DTL		(0xffff<<0) /* Left Data Sample */
+#define  SADR_DTH		(0xffff<<16) /* Right Data Sample */
 
 /*
  * AC97
@@ -648,7 +766,7 @@ struct pxa2x0_dma_desc {
 #define	AC97_CODEC_BASE(c)	(AC97_PRIAUDIO + ((c) * 0x100))
 
 /*
- * USB device controller
+ * USB device controller (PXA250)
  */
 #define USBDC_UDCCR	0x0000  /* UDC control register    */
 #define USBDC_UDCCS(n)	(0x0010+4*(n))  /* Endpoint Control/Status Registers */
@@ -681,6 +799,133 @@ struct pxa2x0_dma_desc {
 #define USBDC_UDDR14	0x0E00  /* UDC Endpoint 14 Data Register  */
 #define USBDC_UDDR15	0x00E0  /* UDC Endpoint 15 Data Register  */
 
+/*
+ * USB device controller (PXA270)
+ */
+#define USBDC_UDCCR	0x0000  /* UDC Control Register */
+#define  USBDC_UDCCR_UDE	(1<<0)	/* UDC Enable */
+#define  USBDC_UDCCR_UDA	(1<<1)	/* UDC Active */
+#define  USBDC_UDCCR_UDR	(1<<2)	/* UDC Resume */
+#define  USBDC_UDCCR_EMCE	(1<<3)	/* Endpoint Mem Config Error */
+#define  USBDC_UDCCR_SMAC	(1<<4)	/* Switch EndPt Mem to Active Config */
+#define  USBDC_UDCCR_AAISN	(7<<5)	/* Active UDC Alt Iface Setting */
+#define  USBDC_UDCCR_AIN	(7<<8)	/* Active UDC Iface */
+#define  USBDC_UDCCR_ACN	(7<<11)	/* Active UDC Config */
+#define  USBDC_UDCCR_DWRE	(1<<16)	/* Device Remote Wake-Up Feature */
+#define  USBDC_UDCCR_BHNP	(1<<28)	/* B-Device Host Neg Proto Enable */
+#define  USBDC_UDCCR_AHNP	(1<<29)	/* A-Device Host NEg Proto Support */
+#define  USBDC_UDCCR_AALTHNP	(1<<30) /* A-Dev Alt Host Neg Proto Port Sup */
+#define  USBDC_UDCCR_OEN	(1<<31)	/* On-The-Go Enable */
+#define USBDC_UDCICR0	0x0004	/* UDC Interrupt Control Register 0 */
+#define  USBDC_UDCICR0_IE(n)	(3<<(n)) /* Interrupt Enables */
+#define USBDC_UDCICR1	0x0008	/* UDC Interrupt Control Register 1 */
+#define  USBDC_UDCICR1_IE(n)	(3<<(n)) /* Interrupt Enables */
+#define  USBDC_UDCICR1_IERS	(1<<27)	/* Interrupt Enable Reset */
+#define  USBDC_UDCICR1_IESU	(1<<28)	/* Interrupt Enable Suspend */
+#define  USBDC_UDCICR1_IERU	(1<<29)	/* Interrupt Enable Resume */
+#define  USBDC_UDCICR1_IESOF	(1<<30)	/* Interrupt Enable Start of Frame */
+#define  USBDC_UDCICR1_IECC	(1<<31)	/* Interrupt Enable Config Change */
+#define USBDC_UDCISR0	0x000c	/* UDC Interrupt Status Register 0 */
+#define  USBDC_UDCISR0_IR(n)	(3<<(n)) /* Interrupt Requests */
+#define USBDC_UDCISR1	0x0010	/* UDC Interrupt Status Register 1 */
+#define  USBDC_UDCISR1_IR(n)	(3<<(n)) /* Interrupt Requests */
+#define  USBDC_UDCISR1_IRRS	(1<<27)	/* Interrupt Enable Reset */
+#define  USBDC_UDCISR1_IRSU	(1<<28)	/* Interrupt Enable Suspend */
+#define  USBDC_UDCISR1_IRRU	(1<<29)	/* Interrupt Enable Resume */
+#define  USBDC_UDCISR1_IRSOF	(1<<30)	/* Interrupt Enable Start of Frame */
+#define  USBDC_UDCISR1_IRCC	(1<<31)	/* Interrupt Enable Config Change */
+#define USBDC_UDCFNR	0x0014	/* UDC Frame Number Register */
+#define  USBDC_UDCFNR_FN	(1023<<0) /* Frame Number */
+#define USBDC_UDCOTGICR	0x0018	/* UDC OTG Interrupt Control Register */
+#define  USBDC_UDCOTGICR_IEIDF	(1<<0)	/* OTG ID Change Fall Intr En */
+#define  USBDC_UDCOTGICR_IEIDR	(1<<1)	/* OTG ID Change Ris Intr En */
+#define  USBDC_UDCOTGICR_IESDF	(1<<2)	/* OTG A-Dev SRP Detect Fall Intr En */
+#define  USBDC_UDCOTGICR_IESDR	(1<<3)	/* OTG A-Dev SRP Detect Ris Intr En */
+#define  USBDC_UDCOTGICR_IESVF	(1<<4)	/* OTG Session Valid Fall Intr En */
+#define  USBDC_UDCOTGICR_IESVR	(1<<5)	/* OTG Session Valid Ris Intr En */
+#define  USBDC_UDCOTGICR_IEVV44F (1<<6)	/* OTG Vbus Valid 4.4V Fall Intr En */
+#define  USBDC_UDCOTGICR_IEVV44R (1<<7)	/* OTG Vbus Valid 4.4V Ris Intr En */
+#define  USBDC_UDCOTGICR_IEVV40F (1<<8)	/* OTG Vbus Valid 4.0V Fall Intr En */
+#define  USBDC_UDCOTGICR_IEVV40R (1<<9)	/* OTG Vbus Valid 4.0V Ris Intr En */
+#define  USBDC_UDCOTGICR_IEXF	(1<<16)	/* Extern Transceiver Intr Fall En */
+#define  USBDC_UDCOTGICR_IEXR	(1<<17)	/* Extern Transceiver Intr Ris En */
+#define  USBDC_UDCOTGICR_IESF	(1<<24)	/* OTG SET_FEATURE Command Recvd */
+#define USBDC_UDCOTGISR	0x001c	/* UDC OTG Interrupt Status Register */
+#define  USBDC_UDCOTGISR_IRIDF	(1<<0)	/* OTG ID Change Fall Intr Req */
+#define  USBDC_UDCOTGISR_IRIDR	(1<<1)	/* OTG ID Change Ris Intr Req */
+#define  USBDC_UDCOTGISR_IRSDF	(1<<2)	/* OTG A-Dev SRP Detect Fall Intr Req */
+#define  USBDC_UDCOTGISR_IRSDR	(1<<3)	/* OTG A-Dev SRP Detect Ris Intr Req */
+#define  USBDC_UDCOTGISR_IRSVF	(1<<4)	/* OTG Session Valid Fall Intr Req */
+#define  USBDC_UDCOTGISR_IRSVR	(1<<5)	/* OTG Session Valid Ris Intr Req */
+#define  USBDC_UDCOTGISR_IRVV44F (1<<6)	/* OTG Vbus Valid 4.4V Fall Intr Req */
+#define  USBDC_UDCOTGISR_IRVV44R (1<<7)	/* OTG Vbus Valid 4.4V Ris Intr Req */
+#define  USBDC_UDCOTGISR_IRVV40F (1<<8)	/* OTG Vbus Valid 4.0V Fall Intr Req */
+#define  USBDC_UDCOTGISR_IRVV40R (1<<9)	/* OTG Vbus Valid 4.0V Ris Intr Req */
+#define  USBDC_UDCOTGISR_IRXF	(1<<16)	/* Extern Transceiver Intr Fall Req */
+#define  USBDC_UDCOTGISR_IRXR	(1<<17)	/* Extern Transceiver Intr Ris Req */
+#define  USBDC_UDCOTGISR_IRSF	(1<<24)	/* OTG SET_FEATURE Command Recvd */
+#define USBDC_UP2OCR	0x0020	/* USB Port 2 Output Control Register */
+#define  USBDC_UP2OCR_CPVEN	(1<<0)	/* Charge Pump Vbus Enable */
+#define  USBDC_UP2OCR_CPVPE	(1<<1)	/* Charge Pump Vbus Pulse Enable */
+#define  USBDC_UP2OCR_DPPDE	(1<<2)	/* Host Transc D+ Pull Down En */
+#define  USBDC_UP2OCR_DMPDE	(1<<3)	/* Host Transc D- Pull Down En */
+#define  USBDC_UP2OCR_DPPUE	(1<<4)	/* Host Transc D+ Pull Up En */
+#define  USBDC_UP2OCR_DMPUE	(1<<5)	/* Host Transc D- Pull Up En */
+#define  USBDC_UP2OCR_DPPUBE	(1<<6)	/* Host Transc D+ Pull Up Bypass En */
+#define  USBDC_UP2OCR_DMPUBE	(1<<7)	/* Host Transc D- Pull Up Bypass En */
+#define  USBDC_UP2OCR_EXSP	(1<<8)	/* External Transc Speed Control */
+#define  USBDC_UP2OCR_EXSUS	(1<<9)	/* External Transc Suspend Control */
+#define  USBDC_UP2OCR_IDON	(1<<10)	/* OTG ID Read Enable */
+#define  USBDC_UP2OCR_HXS	(1<<16)	/* Host Transc Output Select */
+#define  USBDC_UP2OCR_HXOE	(1<<17)	/* Host Transc Output Enable */
+#define  USBDC_UP2OCR_SEOS	(7<<24)	/* Single-Ended Output Select */
+#define USBDC_UP3OCR	0x0024	/* USB Port 3 Output Control Register */
+#define  USBDC_UP3OCR_CFG	(3<<0)	/* Host Port Configuration */
+/* 0x0028 to 0x00fc is reserved */
+#define USBDC_UDCCSR0	0x0100	/* UDC Endpoint 0 Control/Status Registers */
+#define  USBDC_UDCCSR0_OPC	(1<<0)	/* OUT Packet Complete */
+#define  USBDC_UDCCSR0_IPR	(1<<1)	/* IN Packet Ready */
+#define  USBDC_UDCCSR0_FTF	(1<<2)	/* Flush Transmit FIFO */
+#define  USBDC_UDCCSR0_DME	(1<<3)	/* DMA Enable */
+#define  USBDC_UDCCSR0_SST	(1<<4)	/* Sent Stall */
+#define  USBDC_UDCCSR0_FST	(1<<5)	/* Force Stall */
+#define  USBDC_UDCCSR0_RNE	(1<<6)	/* Receive FIFO Not Empty */
+#define  USBDC_UDCCSR0_SA	(1<<7)	/* Setup Active */
+#define  USBDC_UDCCSR0_AREN	(1<<8)	/* ACK Response Enable */
+#define  USBDC_UDCCSR0_ACM	(1<<9)	/* ACK Control Mode */
+#define USBDC_UDCCSR(n)	(0x0100+4*(n)) /* UDC Control/Status Registers */
+#define  USBDC_UDCCSR_FS	(1<<0)	/* FIFO Needs Service */
+#define  USBDC_UDCCSR_PC	(1<<1)	/* Packet Complete */
+#define  USBDC_UDCCSR_TRN	(1<<2)	/* Tx/Rx NAK */
+#define  USBDC_UDCCSR_DME	(1<<3)	/* DMA Enable */
+#define  USBDC_UDCCSR_SST	(1<<4)	/* Sent STALL */
+#define  USBDC_UDCCSR_FST	(1<<5)	/* Force STALL */
+#define  USBDC_UDCCSR_BNE	(1<<6)	/* OUT: Buffer Not Empty */
+#define  USBDC_UDCCSR_BNF	(1<<6)	/* IN: Buffer Not Full */
+#define  USBDC_UDCCSR_SP	(1<<7)	/* Short Packet Control/Status */
+#define  USBDC_UDCCSR_FEF	(1<<8)	/* Flush Endpoint FIFO */
+#define  USBDC_UDCCSR_DPE	(1<<9)	/* Data Packet Empty (async EP only) */
+/* 0x0160 to 0x01fc is reserved */
+#define USBDC_UDCBCR(n)	(0x0200+4*(n)) /* UDC Byte Count Registers */
+#define  USBDC_UDCBCR_BC	(1023<<0) /* Byte Count */
+/* 0x0260 to 0x02fc is reserved */
+#define USBDC_UDCDR(n)	(0x0300+4*(n))	/* UDC Data Registers */
+/* 0x0360 to 0x03fc is reserved */
+/* 0x0400 is reserved */
+#define USBDC_UDCECR(n)	(0x0400+4*(n)) /* UDC Configuration Registers */
+#define  USBDC_UDCECR_EE	(1<<0)	/* Endpoint Enable */
+#define  USBDC_UDCECR_DE	(1<<1)	/* Double-Buffering Enable */
+#define  USBDC_UDCECR_MPE	(1023<<2) /* Maximum Packet Size */
+#define  USBDC_UDCECR_ED	(1<<12)	/* USB Endpoint Direction */
+#define  USBDC_UDCECR_ET	(3<<13)	/* USB Enpoint Type */
+#define  USBDC_UDCECR_EN	(15<<15) /* Endpoint Number */
+#define  USBDC_UDCECR_AISN	(7<<19)	/* Alternate Interface Number */
+#define  USBDC_UDCECR_IN	(7<<22)	/* Interface Number */
+#define  USBDC_UDCECR_CN	(3<<25)	/* Configuration Number */
+
+/*
+ * USB Host Controller
+ */
 #define USBHC_UHCRHDA	0x0048	/* UHC Root Hub Descriptor A */
 #define  UHCRHDA_POTPGT_SHIFT	24	/* Power on to power good time */
 #define  UHCRHDA_NOCP	(1<<12)	/* No over current protection */
@@ -704,6 +949,61 @@ struct pxa2x0_dma_desc {
 #define  UHCHR_FHR	(1<<1)	/* Force host controller reset */
 #define  UHCHR_FSBIR	(1<<0)	/* Force system bus interface reset */
 #define  UHCHR_MASK	0xeff
+#define USBHC_STAT	0x0060	/* UHC Status Register */
+#define  USBHC_STAT_RWUE	(1<<7)	/* HCI Remote Wake-Up Event */
+#define  USBHC_STAT_HBA		(1<<8)	/* HCI Buffer Active */
+#define  USBHC_STAT_HTA		(1<<10)	/* HCI Transfer Abort */
+#define  USBHC_STAT_UPS1	(1<<11)	/* USB Power Sense Port 1 */
+#define  USBHC_STAT_UPS2	(1<<12)	/* USB Power Sense Port 2 */
+#define  USBHC_STAT_UPRI	(1<<13)	/* USB Port Resume Interrupt */
+#define  USBHC_STAT_SBTAI	(1<<14)	/* System Bus Target Abort Interrupt */
+#define  USBHC_STAT_SBMAI	(1<<15)	/* System Bus Master Abort Interrupt */
+#define  USBHC_STAT_UPS3	(1<<16)	/* USB Power Sense Port 3 */
+#define  USBHC_STAT_MASK	(USBHC_STAT_RWUE | USBHC_STAT_HBA | \
+    USBHC_STAT_HTA | USBHC_STAT_UPS1 | USBHC_STAT_UPS2 | USBHC_STAT_UPRI | \
+    USBHC_STAT_SBTAI | USBHC_STAT_SBMAI | USBHC_STAT_UPS3)
+#define USBHC_HR	0x0064	/* UHC Reset Register */
+#define  USBHC_HR_FSBIR		(1<<0)	/* Force System Bus Interface Reset */
+#define  USBHC_HR_FHR		(1<<1)	/* Force Host Controller Reset */
+#define  USBHC_HR_CGR		(1<<2)	/* Clock Generation Reset */
+#define  USBHC_HR_SSDC		(1<<3)	/* Simulation Scale Down Clock */
+#define  USBHC_HR_UIT		(1<<4)	/* USB Interrupt Test */
+#define  USBHC_HR_SSE		(1<<5)	/* Sleep Standby Enable */
+#define  USBHC_HR_PSPL		(1<<6)	/* Power Sense Polarity Low */
+#define  USBHC_HR_PCPL		(1<<7)	/* Power Control Polarity Low */
+#define  USBHC_HR_SSEP1		(1<<9)	/* Sleep Standby Enable for Port 1 */
+#define  USBHC_HR_SSEP2		(1<<10)	/* Sleep Standby Enable for Port 2 */
+#define  USBHC_HR_SSEP3		(1<<11)	/* Sleep Standby Enable for Port 3 */
+#define  USBHC_HR_MASK		(USBHC_HR_FSBIR | USBHC_HR_FHR | \
+    USBHC_HR_CGR | USBHC_HR_SSDC | USBHC_HR_UIT | USBHC_HR_SSE | \
+    USBHC_HR_PSPL | USBHC_HR_PCPL | USBHC_HR_SSEP1 | USBHC_HR_SSEP2 | \
+    USBHC_HR_SSEP3)
+#define USBHC_HIE	0x0068	/* UHC Interrupt Enable Register */
+#define  USBHC_HIE_RWIE		(1<<7)	/* HCI Remote Wake-Up */
+#define  USBHC_HIE_HBAIE	(1<<8)	/* HCI Buffer Active */
+#define  USBHC_HIE_TAIE		(1<<10)	/* HCI Interface Transfer Abort */
+#define  USBHC_HIE_UPS1IE	(1<<11)	/* USB Power Sense Port 1 */
+#define  USBHC_HIE_UPS2IE	(1<<12)	/* USB Power Sense Port 2 */
+#define  USBHC_HIE_UPRIE	(1<<13)	/* USB Port Resume */
+#define  USBHC_HIE_UPS3IE	(1<<14)	/* USB Power Sense Port 3 */
+#define  USBHC_HIE_MASK		(USBHC_HIE_RWIE | USBHC_HIE_HBAIE | \
+    USBHC_HIE_TAIE | USBHC_HIE_UPS1IE | USBHC_HIE_UPS2IE | USBHC_HIE_UPRIE | \
+    USBHC_HIE_UPS3IE)
+#define USBHC_HIT	0x006C	/* UHC Interrupt Test Register */
+#define  USBHC_HIT_RWUT		(1<<7)	/* HCI Remote Wake-Up */
+#define  USBHC_HIT_BAT		(1<<8)	/* HCI Buffer Active */
+#define  USBHC_HIT_IRQT		(1<<9)	/* Normal OHC */
+#define  USBHC_HIT_TAT		(1<<10)	/* HCI Interface Transfer Abort */
+#define  USBHC_HIT_UPS1T	(1<<11)	/* USB Power Sense Port 1 */
+#define  USBHC_HIT_UPS2T	(1<<12)	/* USB Power Sense Port 2 */
+#define  USBHC_HIT_UPRT		(1<<13)	/* USB Port Resume */
+#define  USBHC_HIT_STAT		(1<<14)	/* System Bus Target Abort */
+#define  USBHC_HIT_SMAT		(1<<15)	/* System Bus Master Abort */
+#define  USBHC_HIT_UPS3T	(1<<16)	/* USB Power Sense Port 3 */
+#define  USBHC_HIT_MASK		(USBHC_HIT_RWUT | USBHC_HIT_BAT | \
+    USBHC_HIT_IRQT | USBHC_HIT_TAT | USBHC_HIT_UPS1T | USBHC_HIT_UPS2T | \
+    USBHC_HIT_UPRT | USBHC_HIT_STAT | USBHC_HIT_SMAT | USBHC_HIT_UPS3T)
+#define USBHC_RST_WAIT	10000	/* usecs to wait for reset */
 
 /*
  * PWM controller
@@ -712,5 +1012,13 @@ struct pxa2x0_dma_desc {
 #define PWM_PWMDCR	0x0004	/* Duty cycle register */
 #define  PWM_FD		(1<<10)	/* Full duty */
 #define PWM_PWMPCR	0x0008	/* Period register */
+
+/* Synchronous Serial Protocol (SSP) serial ports */
+#define SSP_SSCR0	0x00
+#define SSP_SSCR1	0x04
+#define SSP_SSSR	0x08
+#define  SSSR_TNF	(1<<2)
+#define  SSSR_RNE	(1<<3)
+#define SSP_SSDR	0x10
 
 #endif /* _ARM_XSCALE_PXA2X0REG_H_ */

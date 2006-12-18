@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0var.h,v 1.2 2003/06/05 13:48:28 scw Exp $ */
+/* $NetBSD: pxa2x0var.h,v 1.2.50.1 2006/12/18 11:42:04 yamt Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -76,9 +76,17 @@ extern int pxa2x0_i2c_master_tx( int, uint8_t *, int );
 extern void pxa2x0_probe_sdram(vaddr_t, paddr_t *, psize_t *);
 
 /*
+ * MEMCTL registers quick access functions.
+ */
+extern void pxa2x0_memctl_bootstrap(vaddr_t);
+extern uint32_t pxa2x0_memctl_read(int);
+extern void pxa2x0_memctl_write(int, uint32_t);
+
+/*
  * Configure one or more clock enables in the Clock Manager's
  * CKEN register.
  */
+extern void pxa2x0_clkman_bootstrap(vaddr_t);
 extern void pxa2x0_clkman_config(u_int, boolean_t);
 
 #endif /* _ARM_XSCALE_PXA2X0VAR_H_ */

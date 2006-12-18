@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.63 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.63.4.1 2006/12/18 11:42:16 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.63 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.63.4.1 2006/12/18 11:42:16 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -580,10 +580,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		m->m_flags |= M_LINK0;
 #endif
 
-	/* Strip off the FDDI header. */
-	m_adj(m, sizeof(struct fddi_header));
-
-	l = mtod(m, struct llc *);
+	l = (struct llc *)(fh+1);
 	switch (l->llc_dsap) {
 #if defined(INET) || defined(INET6) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
 	case LLC_SNAP_LSAP:
@@ -591,6 +588,10 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		u_int16_t etype;
 		if (l->llc_control != LLC_UI || l->llc_ssap != LLC_SNAP_LSAP)
 			goto dropanyway;
+
+		/* Strip off the FDDI header. */
+		m_adj(m, sizeof(struct fddi_header));
+
 #ifdef NETATALK
 		if (Bcmp(&(l->llc_snap_org_code)[0], at_org_code,
 			 sizeof(at_org_code)) == 0 &&
@@ -684,14 +685,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			/* LLC_UI_P forbidden in class 1 service */
 			if ((l->llc_dsap == LLC_ISO_LSAP) &&
 			    (l->llc_ssap == LLC_ISO_LSAP)) {
-				/* LSAP for ISO */
-				m->m_data += 3;		/* XXX */
-				m->m_len -= 3;		/* XXX */
-				m->m_pkthdr.len -= 3;	/* XXX */
-				M_PREPEND(m, sizeof *fh, M_DONTWAIT);
-				if (m == 0)
-					return;
-				*mtod(m, struct fddi_header *) = *fh;
+
 				schednetisr(NETISR_ISO);
 				inq = &clnlintrq;
 				break;
@@ -700,11 +694,12 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 
 		case LLC_XID:
 		case LLC_XID_P:
-			if(m->m_len < 6)
+			if(m->m_len <
+			    LLC_XID_BASIC_MINLEN + sizeof(struct fddi_header))
 				goto dropanyway;
 			l->llc_window = 0;
-			l->llc_fid = 9;
-			l->llc_class = 1;
+			l->llc_fid = LLC_XID_FORMAT_BASIC;
+			l->llc_class = LLC_XID_CLASS_I;
 			l->llc_dsap = l->llc_ssap = 0;
 			/* Fall through to */
 		case LLC_TEST:
@@ -727,6 +722,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 				eh->ether_dhost[i] = fh->fddi_shost[i];
 			}
 			eh->ether_type = 0;
+			m_adj(m, sizeof(struct fddi_header));
 			ifp->if_output(ifp, m, &sa, NULL);
 			return;
 		}

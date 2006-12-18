@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.33.8.2 2006/12/10 07:19:34 yamt Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.33.8.3 2006/12/18 11:42:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.33.8.2 2006/12/10 07:19:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.33.8.3 2006/12/18 11:42:27 yamt Exp $");
 
 #include "opt_pax.h"
 
@@ -138,19 +138,31 @@ uvm_grow(struct proc *p, vaddr_t sp)
 	/*
 	 * For user defined stacks (from sendsig).
 	 */
+#ifdef __MACHINE_STACK_GROWS_UP
+	if (sp < (vaddr_t)vm->vm_minsaddr)
+#else
 	if (sp < (vaddr_t)vm->vm_maxsaddr)
+#endif
 		return (0);
 
 	/*
 	 * For common case of already allocated (from trap).
 	 */
+#ifdef __MACHINE_STACK_GROWS_UP
+	if (sp < USRSTACK + ctob(vm->vm_ssize))
+#else
 	if (sp >= USRSTACK - ctob(vm->vm_ssize))
+#endif
 		return (1);
 
 	/*
 	 * Really need to check vs limit and increment stack size if ok.
 	 */
+#ifdef __MACHINE_STACK_GROWS_UP
+	nss = btoc(sp - USRSTACK);
+#else
 	nss = btoc(USRSTACK - sp);
+#endif
 	if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 		return (0);
 	vm->vm_ssize = nss;
