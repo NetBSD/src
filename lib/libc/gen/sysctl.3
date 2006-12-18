@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.192 2006/12/04 08:59:13 pavel Exp $
+.\"	$NetBSD: sysctl.3,v 1.193 2006/12/18 00:09:59 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -679,18 +679,10 @@ is given and its specified length in
 .Fa newlen
 is too large or too small, or the given value is not acceptable for
 the given node.
-.It Bq Er ENOMEM
-The length pointed to by
-.Fa oldlenp
-is too short to hold the requested value.
 .It Bq Er EISDIR
 The
 .Fa name
 array specifies an intermediate rather than terminal name.
-.It Bq Er ENOTDIR
-The
-.Fa name
-array specifies a node below a node that addresses data.
 .It Bq Er ENOENT
 The
 .Fa name
@@ -698,6 +690,14 @@ array specifies a node that does not exist in the tree.
 .It Bq Er ENOENT
 An attempt was made to destroy a node that does not exist, or to
 create or destroy a node below a node that does not exist.
+.It Bq Er ENOMEM
+The length pointed to by
+.Fa oldlenp
+is too short to hold the requested value.
+.It Bq Er ENOTDIR
+The
+.Fa name
+array specifies a node below a node that addresses data.
 .It Bq Er ENOTEMPTY
 An attempt was made to destroy a node that still has children.
 .It Bq Er EOPNOTSUPP
