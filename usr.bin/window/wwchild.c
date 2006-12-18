@@ -1,4 +1,4 @@
-/*	$NetBSD: wwchild.c,v 1.7 2003/08/07 11:17:36 agc Exp $	*/
+/*	$NetBSD: wwchild.c,v 1.8 2006/12/18 20:04:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wwchild.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwchild.c,v 1.7 2003/08/07 11:17:36 agc Exp $");
+__RCSID("$NetBSD: wwchild.c,v 1.8 2006/12/18 20:04:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: wwchild.c,v 1.7 2003/08/07 11:17:36 agc Exp $");
 #include "ww.h"
 
 void
-wwchild(int dummy)
+wwchild(int dummy __unused)
 {
 	int olderrno;
 	struct ww **wp;

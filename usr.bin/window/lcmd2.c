@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd2.c,v 1.13 2003/08/07 11:17:26 agc Exp $	*/
+/*	$NetBSD: lcmd2.c,v 1.14 2006/12/18 20:04:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lcmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lcmd2.c,v 1.13 2003/08/07 11:17:26 agc Exp $");
+__RCSID("$NetBSD: lcmd2.c,v 1.14 2006/12/18 20:04:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ int	printvar(void *, struct var *);
 char	*strtime(struct timeval *t);
 
 void
-l_iostat(struct value *v, struct value *a)
+l_iostat(struct value *v __unused, struct value *a __unused)
 {
 	struct ww *w;
 
@@ -104,11 +104,11 @@ l_iostat(struct value *v, struct value *a)
 
 struct lcmd_arg arg_time[] = {
 	{ "who",	1,	ARG_STR },
-	{ 0 }
+	{ NULL,		0,	0 }
 };
 
 void
-l_time(struct value *v, struct value *a)
+l_time(struct value *v __unused, struct value *a)
 {
 	struct ww *w;
 	struct rusage rusage;
@@ -177,7 +177,7 @@ strtime(struct timeval *t)
 }
 
 void
-l_list(struct value *v, struct value *a)
+l_list(struct value *v __unused, struct value *a __unused)
 {
 	struct ww *w, *wp;
 	int i;
@@ -209,7 +209,7 @@ l_list(struct value *v, struct value *a)
 }
 
 void
-l_variable(struct value *v, struct value *a)
+l_variable(struct value *v __unused, struct value *a __unused)
 {
 	struct ww *w;
 
@@ -245,7 +245,7 @@ printvar(void *vw, struct var *r)
 
 struct lcmd_arg arg_def_shell[] = {
 	{ "",	0,		ARG_ANY|ARG_LIST },
-	{ 0 }
+	{ NULL,	0,		0 }
 };
 
 void
@@ -287,7 +287,7 @@ l_def_shell(struct value *v, struct value *a)
 struct lcmd_arg arg_alias[] = {
 	{ "",	0,		ARG_STR },
 	{ "",	0,		ARG_STR|ARG_LIST },
-	{ 0 }
+	{ NULL,	0,		0 }
 };
 
 void
@@ -353,7 +353,7 @@ printalias(void *vw, struct var *a)
 
 struct lcmd_arg arg_unalias[] = {
 	{ "alias",	1,	ARG_STR },
-	{ 0 }
+	{ NULL,		0,	0 }
 };
 
 void
@@ -367,11 +367,11 @@ l_unalias(struct value *v, struct value *a)
 struct lcmd_arg arg_echo[] = {
 	{ "window",	1,	ARG_NUM },
 	{ "",		0,	ARG_ANY|ARG_LIST },
-	{ 0 }
+	{ NULL,		0,	0 }
 };
 
 void
-l_echo(struct value *v, struct value *a)
+l_echo(struct value *v __unused, struct value *a)
 {
 	char buf[20];
 	struct ww *w;
