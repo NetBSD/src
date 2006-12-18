@@ -1,4 +1,4 @@
-/*	$NetBSD: ttzapple.c,v 1.7 2003/08/07 11:17:33 agc Exp $	*/
+/*	$NetBSD: ttzapple.c,v 1.8 2006/12/18 20:04:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ttzapple.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttzapple.c,v 1.7 2003/08/07 11:17:33 agc Exp $");
+__RCSID("$NetBSD: ttzapple.c,v 1.8 2006/12/18 20:04:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -380,7 +380,7 @@ zz_set_token(int t, char *s, int n)
 }
 
 void
-zz_put_token(int t, char *s, int n)
+zz_put_token(int t, char *s __unused, int n __unused)
 {
 	if (tt.tt_nmodes != tt.tt_modes)
 		zz_setmodes(tt.tt_nmodes);
