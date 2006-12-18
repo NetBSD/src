@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.49 2006/03/18 12:18:15 blymn Exp $	*/
+/*	$NetBSD: termcap.c,v 1.50 2006/12/18 06:15:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.49 2006/03/18 12:18:15 blymn Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.50 2006/12/18 06:15:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -421,7 +421,7 @@ t_getstr(struct tinfo *info, const char *id, char **area, size_t *limit)
 char *
 tgetstr(const char *id, char **area)
 {
-	struct tinfo dummy;
+	struct tinfo dummy, *ti;
 	char ids[3];
 
 	_DIAGASSERT(id != NULL);
@@ -439,11 +439,19 @@ tgetstr(const char *id, char **area)
 	ids[2] = '\0';
 
 	if ((id[0] == 'Z') && (id[1] == 'Z')) {
+		ti = &dummy;
 		dummy.info = tbuf;
-		return t_getstr(&dummy, ids, area, NULL);
-	}
-	else
-		return t_getstr(fbuf, ids, area, NULL);
+	} else
+		ti = fbuf;
+
+	if (area == NULL) {
+		static char capability[256], *ptr;
+		size_t limit = 255;
+
+		ptr = capability;
+		return t_getstr(ti, ids, &ptr, &limit);
+	} else
+		return t_getstr(ti, ids, area, NULL);
 }
 
 /*
