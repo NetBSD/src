@@ -1,3 +1,7 @@
+2006-12-18  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Joy Latten <latten@austin.ibm.com>
+	* src/racoon/crypto_openssl.c: fixed a memory leak
+	
 ---------------------------------------------
 
 	Branch for 0.7 created (ipsec-tools-0_7-branch)
