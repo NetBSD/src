@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.22.4.2 2006/12/10 07:19:23 yamt Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.22.4.3 2006/12/18 11:42:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.22.4.2 2006/12/10 07:19:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.22.4.3 2006/12/18 11:42:23 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -467,8 +467,7 @@ tpclnp_output_dg(struct mbuf *m0, ...)
 	/*
 	 *	Free route allocated by clnp (if the route was indeed allocated)
 	 */
-	if (tmppcb.isop_route.ro_rt != NULL)
-		rtflush((struct route *)&tmppcb.isop_route);
+	rtcache_free((struct route *)&tmppcb.isop_route);
 
 	return (err);
 }

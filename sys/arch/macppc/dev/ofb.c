@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.51.6.1 2006/12/10 07:16:25 yamt Exp $	*/
+/*	$NetBSD: ofb.c,v 1.51.6.2 2006/12/18 11:42:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.51.6.1 2006/12/10 07:16:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.51.6.2 2006/12/18 11:42:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -149,6 +149,12 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 	int console, node, sub;
 	char devinfo[256];
 
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	printf(": %s\n", devinfo);
+
+	if (console_node == 0)
+		return;
+
 	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 	console = (node == console_node);
 	if (!console) {
@@ -167,9 +173,6 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
-	
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s\n", devinfo);
 
 	if (!console)
 		return;

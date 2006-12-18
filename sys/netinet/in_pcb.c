@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.104.2.2 2006/12/10 07:19:10 yamt Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.104.2.3 2006/12/18 11:42:21 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.104.2.2 2006/12/10 07:19:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.104.2.3 2006/12/18 11:42:21 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -495,8 +495,7 @@ in_pcbdetach(void *v)
 	sofree(so);
 	if (inp->inp_options)
 		(void)m_free(inp->inp_options);
-	if (inp->inp_route.ro_rt != NULL)
-		rtflush(&inp->inp_route);
+	rtcache_free(&inp->inp_route);
 	ip_freemoptions(inp->inp_moptions);
 	s = splnet();
 	in_pcbstate(inp, INP_ATTACHED);
@@ -688,7 +687,7 @@ in_losing(struct inpcb *inp)
 		 * A new route can be allocated
 		 * the next time output is attempted.
 		 */
-		rtflush(&inp->inp_route);
+		rtcache_free(&inp->inp_route);
 	}
 }
 
@@ -703,8 +702,8 @@ in_rtchange(struct inpcb *inp, int errno)
 	if (inp->inp_af != AF_INET)
 		return;
 
-	if (inp->inp_route.ro_rt != NULL)
-		rtflush(&inp->inp_route);
+	rtcache_free(&inp->inp_route);
+
 	/* XXX SHOULD NOTIFY HIGHER-LEVEL PROTOCOLS */
 }
 
@@ -881,15 +880,16 @@ in_pcbrtentry(struct inpcb *inp)
 
 	ro = &inp->inp_route;
 
-	if (ro->ro_rt != NULL && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	    !in_hosteq(satosin(&ro->ro_dst)->sin_addr, inp->inp_faddr)))
-		rtflush(ro);
+	if (!in_hosteq(satosin(&ro->ro_dst)->sin_addr, inp->inp_faddr))
+		rtcache_free(ro);
+	else
+		rtcache_check(ro);
 	if (ro->ro_rt == NULL && !in_nullhost(inp->inp_faddr)) {
 		bzero(&ro->ro_dst, sizeof(struct sockaddr_in));
 		ro->ro_dst.sa_family = AF_INET;
 		ro->ro_dst.sa_len = sizeof(ro->ro_dst);
 		satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
-		rtalloc(ro);
+		rtcache_init(ro);
 	}
 	return ro->ro_rt;
 }
@@ -907,19 +907,20 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	 * Note that we should check the address family of the cached
 	 * destination, in case of sharing the cache with IPv6.
 	 */
-	if (ro->ro_rt != NULL &&
-	    (ro->ro_dst.sa_family != AF_INET ||
+	if (ro->ro_dst.sa_family != AF_INET ||
 	    !in_hosteq(satosin(&ro->ro_dst)->sin_addr, sin->sin_addr) ||
-	    soopts & SO_DONTROUTE))
-		rtflush(ro);
+	    (soopts & SO_DONTROUTE) != 0)
+		rtcache_free(ro);
+	else
+		rtcache_check(ro);
 	if ((soopts & SO_DONTROUTE) == 0 && /*XXX*/
-	    (ro->ro_rt == NULL || ro->ro_rt->rt_ifp == NULL)) {
+	    ro->ro_rt == NULL) {
 		/* No route yet, so try to acquire one */
 		bzero(&ro->ro_dst, sizeof(struct sockaddr_in));
 		ro->ro_dst.sa_family = AF_INET;
 		ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
 		satosin(&ro->ro_dst)->sin_addr = sin->sin_addr;
-		rtalloc(ro);
+		rtcache_init(ro);
 	}
 	/*
 	 * If we found a route, use the address

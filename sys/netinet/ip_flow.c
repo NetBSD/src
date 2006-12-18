@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.34.4.2 2006/12/10 07:19:10 yamt Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.34.4.3 2006/12/18 11:42:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.34.4.2 2006/12/10 07:19:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.34.4.3 2006/12/18 11:42:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,9 +196,9 @@ ipflow_fastforward(struct mbuf *m)
 	/*
 	 * Route and interface still up?
 	 */
+	rtcache_check(&ipf->ipf_ro);
 	rt = ipf->ipf_ro.ro_rt;
-	if (rt == NULL || (rt->rt_flags & RTF_UP) == 0 ||
-	    (rt->rt_ifp->if_flags & IFF_UP) == 0)
+	if (rt == NULL || (rt->rt_ifp->if_flags & IFF_UP) == 0)
 		return 0;
 
 	/*
@@ -269,6 +269,7 @@ ipflow_fastforward(struct mbuf *m)
 static void
 ipflow_addstats(struct ipflow *ipf)
 {
+	rtcache_check(&ipf->ipf_ro);
 	if (ipf->ipf_ro.ro_rt != NULL)
 		ipf->ipf_ro.ro_rt->rt_use += ipf->ipf_uses;
 	ipstat.ips_cantforward += ipf->ipf_errors + ipf->ipf_dropped;
@@ -290,8 +291,7 @@ ipflow_free(struct ipflow *ipf)
 	IPFLOW_REMOVE(ipf);
 	splx(s);
 	ipflow_addstats(ipf);
-	if (ipf->ipf_ro.ro_rt != NULL)
-		rtflush(&ipf->ipf_ro);
+	rtcache_free(&ipf->ipf_ro);
 	ipflow_inuse--;
 	s = splnet();
 	pool_put(&ipflow_pool, ipf);
@@ -307,14 +307,12 @@ ipflow_reap(int just_one)
 
 		ipf = LIST_FIRST(&ipflowlist);
 		while (ipf != NULL) {
-			struct route *ro = &ipf->ipf_ro;
-
 			/*
 			 * If this no longer points to a valid route
 			 * reclaim it.
 			 */
-			if (ro->ro_rt == NULL ||
-			    (ro->ro_rt->rt_flags & RTF_UP) == 0)
+			rtcache_check(&ipf->ipf_ro);
+			if (ipf->ipf_ro.ro_rt == NULL)
 				goto done;
 			/*
 			 * choose the one that's been least recently
@@ -339,8 +337,7 @@ ipflow_reap(int just_one)
 		IPFLOW_REMOVE(ipf);
 		splx(s);
 		ipflow_addstats(ipf);
-		if (ipf->ipf_ro.ro_rt != NULL)
-			rtflush(&ipf->ipf_ro);
+		rtcache_free(&ipf->ipf_ro);
 		if (just_one)
 			return ipf;
 		pool_put(&ipflow_pool, ipf);
@@ -356,6 +353,7 @@ ipflow_slowtimo(void)
 
 	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = LIST_NEXT(ipf, ipf_list);
+		rtcache_check(&ipf->ipf_ro);
 		if (PRT_SLOW_ISEXPIRED(ipf->ipf_timer) ||
 		    ipf->ipf_ro.ro_rt == NULL) {
 			ipflow_free(ipf);
@@ -406,8 +404,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 		IPFLOW_REMOVE(ipf);
 		splx(s);
 		ipflow_addstats(ipf);
-		if (ipf->ipf_ro.ro_rt != NULL)
-			rtflush(&ipf->ipf_ro);
+		rtcache_free(&ipf->ipf_ro);
 		ipf->ipf_uses = ipf->ipf_last_uses = 0;
 		ipf->ipf_errors = ipf->ipf_dropped = 0;
 	}
@@ -415,11 +412,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	/*
 	 * Fill in the updated information.
 	 */
-	/* XXX Copying routes this way is gross. */
-	ipf->ipf_ro = *ro;
-	KASSERT(ro->ro_rt != NULL);
-	ro->ro_rt->rt_refcnt++;
-	rtcache(&ipf->ipf_ro);
+	rtcache_copy(&ipf->ipf_ro, ro, sizeof(ipf->ipf_ro));
 	ipf->ipf_dst = ip->ip_dst;
 	ipf->ipf_src = ip->ip_src;
 	ipf->ipf_tos = ip->ip_tos;

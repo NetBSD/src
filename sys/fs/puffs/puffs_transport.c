@@ -1,11 +1,10 @@
-/*	$NetBSD: puffs_transport.c,v 1.1.2.2 2006/12/10 07:18:38 yamt Exp $	*/
+/* $NetBSD: puffs_transport.c,v 1.1.2.3 2006/12/18 11:42:15 yamt Exp $ */
 
 /*
- * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
- * Google Summer of Code program and the Ulla Tuominen Foundation.
- * The Google SoC project was mentored by Bill Studenmund.
+ * Ulla Tuominen Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,6 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.1.2.3 2006/12/18 11:42:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -145,13 +147,6 @@ puffs_fop_poll(struct file *fp, int events, struct lwp *l)
  * device close = forced unmount.
  *
  * unmounting is a frightfully complex operation to avoid races
- *
- * XXX: if userspace is terminated by a signal, this will be
- * called only after the signal is delivered (i.e. after someone tries
- * to access the file system).  Also, the first one for a delivery
- * will get a free bounce-bounce ride before it can be notified
- * that the fs is dead.  I'm not terribly concerned about optimizing
- * this for speed ...
  */
 static int
 puffs_fop_close(struct file *fp, struct lwp *l)
@@ -159,10 +154,11 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	struct puffs_instance *pi;
 	struct puffs_mount *pmp;
 	struct mount *mp;
-	int gone;
+	int gone, rv;
 
 	DPRINTF(("puffs_fop_close: device closed, force filesystem unmount\n"));
 
+ restart:
 	simple_lock(&pi_lock);
 	pmp = FPTOPMP(fp);
 	/*
@@ -175,6 +171,10 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 		TAILQ_REMOVE(&puffs_ilist, pi, pi_entries);
 		simple_unlock(&pi_lock);
 		FREE(pi, M_PUFFS);
+
+		DPRINTF(("puffs_fop_close: pmp associated with fp %p was "
+		    "embryonic\n", fp));
+
 		return 0;
 	}
 
@@ -187,9 +187,11 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 		/* would be nice, but don't have a reference to it ... */
 		/* KASSERT(pmp_status == PUFFSTAT_DYING); */
 		simple_unlock(&pi_lock);
-		pi = FPTOPI(fp);
-		FREE(pi, M_PUFFS);
-		return 0;
+
+		DPRINTF(("puffs_fop_close: pmp associated with fp %p was "
+		    "dead\n", fp));
+
+		goto out;
 	}
 
 	/*
@@ -207,6 +209,28 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 * lockmgr: You're not fooling anyone, you know.
 	 */
 	puffs_userdead(pmp);
+
+	/*
+	 * Make sure someone from puffs_unmount() isn't currently in
+	 * userspace.  If we don't take this precautionary step,
+	 * they might notice that the mountpoint has disappeared
+	 * from under them once they return.  Especially note that we
+	 * cannot simply test for an unmounter before calling
+	 * dounmount(), since it might be possible that that particular
+	 * invocation of unmount was called without MNT_FORCE.  Here we
+	 * *must* make sure unmount succeeds.  Also, restart is necessary
+	 * since pmp isn't locked.  We might end up with PMP_DEAD after
+	 * restart and exit from there.
+	 */
+	simple_lock(&pmp->pmp_lock);
+	if (pmp->pmp_unmounting) {
+		ltsleep(&pmp->pmp_unmounting, PNORELOCK | PVFS, "puffsum",
+		    0, &pmp->pmp_lock);
+		DPRINTF(("puffs_fop_close: unmount was in progress for pmp %p, "
+		    "restart\n", pmp));
+		goto restart;
+	}
+	simple_unlock(&pmp->pmp_lock);
 
 	/*
 	 * Detach from VFS.  First do necessary XXX-dance (from
@@ -233,7 +257,7 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	simple_unlock(&mp->mnt_slock);
 	if (gone) {
 		lockmgr(&syncer_lock, LK_RELEASE, NULL);
-		return 0;
+		goto out;
 	}
 
 	/*
@@ -249,11 +273,25 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 */
 	if (vfs_busy(mp, 0, 0)) {
 		lockmgr(&syncer_lock, LK_RELEASE, NULL);
-		return 0;
+		goto out;
 	}
 
-	/* Once we have the mount point, unmount() can't interfere */
-	dounmount(mp, MNT_FORCE, l);
+	/*
+	 * Once we have the mount point, unmount() can't interfere..
+	 * or at least in theory it shouldn't.  dounmount() reentracy
+	 * might require some visiting at some point.
+	 */
+	rv = dounmount(mp, MNT_FORCE, l);
+	KASSERT(rv == 0);
+
+ out:
+	/*
+	 * Finally, release the instance information.  It was already
+	 * removed from the list by puffs_nukebypmp() and we know it's
+	 * dead, so no need to lock.
+	 */
+	pi = FPTOPI(fp);
+	FREE(pi, M_PUFFS);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: ip6_etherip.c,v 1.2.2.2 2006/12/10 07:19:15 yamt Exp $        */
+/*      $NetBSD: ip6_etherip.c,v 1.2.2.3 2006/12/18 11:42:22 yamt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -158,34 +158,28 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 		return ENETUNREACH;
 	}
 
-	if (sc->sc_route_expire - time_second <= 0 ||
-	    dst->sin6_family != sin6_dst->sin6_family ||
-	    !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &sin6_dst->sin6_addr)) {
-		/* cache route doesn't match */
+	if (dst->sin6_family != sin6_dst->sin6_family ||
+	    !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &sin6_dst->sin6_addr))
+		rtcache_free((struct route *)&sc->sc_ro6);
+	else
+		rtcache_check((struct route *)&sc->sc_ro6);
+
+	if (sc->sc_ro6.ro_rt == NULL) {
 		memset(dst, 0, sizeof(*dst));
 		dst->sin6_family = sin6_dst->sin6_family;
 		dst->sin6_len    = sizeof(struct sockaddr_in6);
 		dst->sin6_addr   = sin6_dst->sin6_addr;
-		if (sc->sc_ro6.ro_rt) {
-			RTFREE(sc->sc_ro6.ro_rt);
-			sc->sc_ro6.ro_rt = NULL;
-		}
-	}
-
-	if (sc->sc_ro6.ro_rt == NULL) {
-		rtalloc((struct route *)&sc->sc_ro6);
+		rtcache_init((struct route *)&sc->sc_ro6);
 		if (sc->sc_ro6.ro_rt == NULL) {
 			m_freem(m);
 			return ENETUNREACH;
 		}
-
-		/* if it constitutes infinite encapsulation, punt. */
-		if (sc->sc_ro.ro_rt->rt_ifp == ifp) {
-			m_freem(m);
-			return ENETUNREACH;     /* XXX */
-		}
-
-		sc->sc_route_expire = time_second + ETHERIP_ROUTE_TTL;
+	}
+	/* if it constitutes infinite encapsulation, punt. */
+	if (sc->sc_ro.ro_rt->rt_ifp == ifp) {
+		rtcache_free((struct route *)&sc->sc_ro6);
+		m_freem(m);
+		return ENETUNREACH;     /* XXX */
 	}
 
 	/*

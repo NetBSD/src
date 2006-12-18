@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.66.4.1 2006/12/10 07:18:45 yamt Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.66.4.2 2006/12/18 11:42:15 yamt Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.66.4.1 2006/12/10 07:18:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.66.4.2 2006/12/18 11:42:15 yamt Exp $");
 
 #include "opt_veriexec.h"
 
@@ -102,7 +102,7 @@ size_t veriexec_name_max;
 
 const struct sysctlnode *veriexec_count_node;
 
-int veriexec_hook;
+static fileassoc_t veriexec_hook;
 
 LIST_HEAD(, veriexec_fpops) veriexec_fpops_list;
 
@@ -267,10 +267,12 @@ veriexec_fpops_add(const char *fp_type, size_t hash_len, size_t ctx_size,
 void
 veriexec_init(void)
 {
+	int error;
+
 	/* Register a fileassoc for Veriexec. */
-	veriexec_hook = fileassoc_register("veriexec", veriexec_clear);
-	if (veriexec_hook == FILEASSOC_INVAL)
-		panic("Veriexec: Can't register fileassoc");
+	error = fileassoc_register("veriexec", veriexec_clear, &veriexec_hook);
+	if (error != 0)
+		panic("Veriexec: Can't register fileassoc: error=%d", error);
 
 	/* Register listener to handle raw disk access. */
 	if (kauth_listen_scope(KAUTH_SCOPE_DEVICE, veriexec_raw_cb, NULL) ==
@@ -776,8 +778,11 @@ veriexec_clear(void *data, int file_specific)
 	} else {
 		struct veriexec_table_entry *vte = data;
 
-		if (vte != NULL)
+		if (vte != NULL) {
+			sysctl_free(__UNCONST(vte->vte_node));
+			veriexec_tablecount--;
 			free(vte, M_VERIEXEC);
+		}
 	}
 }
 
@@ -1029,8 +1034,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	}
 
 	/* Continue entry initialization. */
-	vfe->type = prop_number_integer_value(prop_dictionary_get(dict,
-	    "entry-type"));
+	prop_dictionary_get_uint8(dict, "entry-type", &vfe->type);
 	vfe->status = FINGERPRINT_NOTEVAL;
 
 	vfe->page_fp = NULL;
@@ -1117,9 +1121,6 @@ veriexec_table_delete(struct mount *mp) {
 	if (vte == NULL)
 		return (ENOENT);
 
-	sysctl_free(__UNCONST(vte->vte_node));
-	veriexec_tablecount--;
-
 	return (fileassoc_table_clear(mp, veriexec_hook));
 }
 
@@ -1172,16 +1173,21 @@ veriexec_unmountchk(struct mount *mp)
 	switch (veriexec_strict) {
 	case VERIEXEC_LEARNING:
 	case VERIEXEC_IDS:
+		if (veriexec_table_lookup(mp) != NULL) {
+			log(LOG_INFO, "Veriexec: IDS mode, allowing unmount "
+			    "of \"%s\".\n", mp->mnt_stat.f_mntonname);
+		}
+
 		error = 0;
 		break;
 
 	case VERIEXEC_IPS: {
 		struct veriexec_table_entry *vte;
 
-		vte = fileassoc_tabledata_lookup(mp, veriexec_hook);
+		vte = veriexec_table_lookup(mp);
 		if ((vte != NULL) && (vte->vte_count > 0)) {
 			log(LOG_ALERT, "Veriexec: IPS mode, preventing"
-			    " unmount of \"%s\" with monitored files.",
+			    " unmount of \"%s\" with monitored files.\n",
 			    mp->mnt_stat.f_mntonname);
 
 			error = EPERM;

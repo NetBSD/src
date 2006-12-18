@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.6.4.2 2006/12/10 07:19:28 yamt Exp $ */
+/* $NetBSD: kauth.h,v 1.6.4.3 2006/12/18 11:42:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -124,7 +124,8 @@ enum {
 	KAUTH_PROCESS_CANSYSTRACE,
 	KAUTH_PROCESS_CORENAME,
 	KAUTH_PROCESS_RESOURCE,
-	KAUTH_PROCESS_SETID
+	KAUTH_PROCESS_SETID,
+	KAUTH_PROCESS_STOPFLAG
 };
 
 /*

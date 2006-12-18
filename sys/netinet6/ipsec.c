@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.108.8.2 2006/12/10 07:19:16 yamt Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.108.8.3 2006/12/18 11:42:23 yamt Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.108.8.2 2006/12/10 07:19:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.108.8.3 2006/12/18 11:42:23 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2732,20 +2732,20 @@ ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp,
 			state->ro = &isr->sav->sah->sa_route;
 			state->dst = (struct sockaddr *)&state->ro->ro_dst;
 			dst4 = (struct sockaddr_in *)state->dst;
-			if (state->ro->ro_rt != NULL &&
-			    ((state->ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-			     dst4->sin_addr.s_addr != ip->ip_dst.s_addr))
-				rtflush((struct route *)state->ro);
+			if (dst4->sin_addr.s_addr != ip->ip_dst.s_addr)
+				rtcache_free(state->ro);
+			else
+				rtcache_check(state->ro);
 			if (state->ro->ro_rt == NULL) {
 				dst4->sin_family = AF_INET;
 				dst4->sin_len = sizeof(*dst4);
 				dst4->sin_addr = ip->ip_dst;
-				rtalloc(state->ro);
-			}
-			if (state->ro->ro_rt == NULL) {
-				ipstat.ips_noroute++;
-				error = EHOSTUNREACH;
-				goto bad;
+				rtcache_init(state->ro);
+				if (state->ro->ro_rt == NULL) {
+					ipstat.ips_noroute++;
+					error = EHOSTUNREACH;
+					goto bad;
+				}
 			}
 
 			/* adjust state->dst if tunnel endpoint is offlink */
@@ -3120,23 +3120,22 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 			state->ro = &isr->sav->sah->sa_route;
 			state->dst = (struct sockaddr *)&state->ro->ro_dst;
 			dst6 = (struct sockaddr_in6 *)state->dst;
-			if (state->ro->ro_rt != NULL &&
-			    ((state->ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-			     !IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr,
-			                         &ip6->ip6_dst)))
-				rtflush((struct route *)state->ro);
+			if (!IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ip6->ip6_dst))
+				rtcache_free(state->ro);
+			else
+				rtcache_check(state->ro);
 			if (state->ro->ro_rt == NULL) {
 				bzero(dst6, sizeof(*dst6));
 				dst6->sin6_family = AF_INET6;
 				dst6->sin6_len = sizeof(*dst6);
 				dst6->sin6_addr = ip6->ip6_dst;
-				rtalloc(state->ro);
-			}
-			if (state->ro->ro_rt == NULL) {
-				ip6stat.ip6s_noroute++;
-				ipsec6stat.out_noroute++;
-				error = EHOSTUNREACH;
-				goto bad;
+				rtcache_init(state->ro);
+				if (state->ro->ro_rt == NULL) {
+					ip6stat.ip6s_noroute++;
+					ipsec6stat.out_noroute++;
+					error = EHOSTUNREACH;
+					goto bad;
+				}
 			}
 
 			/* adjust state->dst if tunnel endpoint is offlink */

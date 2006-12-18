@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.45.8.1 2006/12/10 07:19:15 yamt Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.45.8.2 2006/12/18 11:42:21 yamt Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.45.8.1 2006/12/10 07:19:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.45.8.2 2006/12/18 11:42:21 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -184,28 +184,27 @@ in6_gif_output(ifp, family, m)
 	ip6->ip6_flow |= htonl((u_int32_t)otos << 20);
 
 	if (dst->sin6_family != sin6_dst->sin6_family ||
-	     !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &sin6_dst->sin6_addr)) {
-		/* cache route doesn't match */
+	    !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &sin6_dst->sin6_addr))
+		rtcache_free((struct route *)&sc->gif_ro6);
+	else
+		rtcache_check((struct route *)&sc->gif_ro6);
+
+	if (sc->gif_ro6.ro_rt == NULL) {
 		bzero(dst, sizeof(*dst));
 		dst->sin6_family = sin6_dst->sin6_family;
 		dst->sin6_len = sizeof(struct sockaddr_in6);
 		dst->sin6_addr = sin6_dst->sin6_addr;
-		if (sc->gif_ro6.ro_rt != NULL)
-			rtflush((struct route *)&sc->gif_ro6);
-	}
-
-	if (sc->gif_ro6.ro_rt == NULL) {
-		rtalloc((struct route *)&sc->gif_ro6);
+		rtcache_init((struct route *)&sc->gif_ro6);
 		if (sc->gif_ro6.ro_rt == NULL) {
 			m_freem(m);
 			return ENETUNREACH;
 		}
+	}
 
-		/* if it constitutes infinite encapsulation, punt. */
-		if (sc->gif_ro.ro_rt->rt_ifp == ifp) {
-			m_freem(m);
-			return ENETUNREACH;	/* XXX */
-		}
+	/* If the route constitutes infinite encapsulation, punt. */
+	if (sc->gif_ro.ro_rt->rt_ifp == ifp) {
+		m_freem(m);
+		return ENETUNREACH;	/* XXX */
 	}
 
 #ifdef IPV6_MINMTU
@@ -418,8 +417,7 @@ in6_gif_detach(sc)
 	if (error == 0)
 		sc->encap_cookie6 = NULL;
 
-	if (sc->gif_ro6.ro_rt != NULL)
-		rtflush((struct route *)&sc->gif_ro6);
+	rtcache_free((struct route *)&sc->gif_ro6);
 
 	return error;
 }
@@ -474,6 +472,6 @@ in6_gif_ctlinput(cmd, sa, d)
 		dst6 = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
 		/* XXX scope */
 		if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst6->sin6_addr))
-			rtflush((struct route *)&sc->gif_ro6);
+			rtcache_free((struct route *)&sc->gif_ro6);
 	}
 }

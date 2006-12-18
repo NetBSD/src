@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.5.8.2 2006/12/10 07:17:47 yamt Exp $ */
+/* $NetBSD: radeonfb.c,v 1.5.8.3 2006/12/18 11:42:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.5.8.2 2006/12/10 07:17:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.5.8.3 2006/12/18 11:42:14 yamt Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -422,7 +422,7 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 	struct pci_attach_args	*pa = aux;
 	bus_size_t		bsz;
 	pcireg_t		screg;
-	int			i, j;
+	int			i, j, fg, bg, ul;
 	uint32_t		v;
 
 	sc->sc_id = pa->pa_id;
@@ -721,7 +721,7 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 		radeonfb_pickres(dp, &dp->rd_virtx, &dp->rd_virty, 0);
 
 		aprint_normal("%s: display %d: "
-		    "virtual resolution %dx%d at %d bpp\n",
+		    "initial virtual resolution %dx%d at %d bpp\n",
 		    XNAME(sc), i, dp->rd_virtx, dp->rd_virty, dp->rd_bpp);
 
 		/* now select the *video mode* that we will use */
@@ -729,6 +729,17 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 			const struct videomode *vmp;
 			vmp = radeonfb_port_mode(dp->rd_crtcs[j].rc_port,
 			    dp->rd_virtx, dp->rd_virty);
+
+			/*
+			 * virtual resolution should be at least as high as
+			 * physical
+			 */
+			if (dp->rd_virtx < vmp->hdisplay ||
+			    dp->rd_virty < vmp->vdisplay) {
+				dp->rd_virtx = vmp->hdisplay;
+				dp->rd_virty = vmp->vdisplay;
+			}
+
 			dp->rd_crtcs[j].rc_videomode = *vmp;
 			printf("%s: port %d: physical %dx%d %dHz\n",
 			    XNAME(sc), j, vmp->hdisplay, vmp->vdisplay,
@@ -738,7 +749,6 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 
 		/* N.B.: radeon wants 64-byte aligned stride */
 		dp->rd_stride = dp->rd_virtx * dp->rd_bpp / 8;
-		//dp->rd_stride = sc->sc_maxx * sc->sc_maxbpp / 8;
 		dp->rd_stride = ROUNDUP(dp->rd_stride, RADEON_STRIDEALIGN);
 
 		dp->rd_offset = sc->sc_fboffset * i;
@@ -775,7 +785,7 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 		dp->rd_wsscreenlist.nscreens = 1;
 		dp->rd_wsscreenlist.screens =
 		    (const struct wsscreen_descr **)&dp->rd_wsscreens;
-		
+
 		vcons_init(&dp->rd_vd, dp, dp->rd_wsscreens,
 		    &radeonfb_accessops);
 
@@ -785,10 +795,17 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 
 		dp->rd_vscreen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
+
 		vcons_init_screen(&dp->rd_vd, &dp->rd_vscreen,
 		    dp->rd_console, &defattr);
 
 		ri = &dp->rd_vscreen.scr_ri;
+
+		/* clear the screen */
+		rasops_unpack_attr(defattr, &fg, &bg, &ul);
+		radeonfb_rectfill(dp, 0, 0, ri->ri_width, ri->ri_height,
+		    ri->ri_devcmap[bg & 0xf]);
+
 		dp->rd_wsscreens->textops = &ri->ri_ops;
 		dp->rd_wsscreens->capabilities = ri->ri_caps;
 		dp->rd_wsscreens->nrows = ri->ri_rows;
@@ -2073,7 +2090,9 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_ops.eraserows = radeonfb_eraserows;
 	ri->ri_ops.erasecols = radeonfb_erasecols;
 	ri->ri_ops.allocattr = radeonfb_allocattr;
-	ri->ri_ops.putchar = radeonfb_putchar;
+	if (!IS_R300(dp->rd_softc)) {
+		ri->ri_ops.putchar = radeonfb_putchar;
+	}
 	ri->ri_ops.cursor = radeonfb_cursor;
 }
 

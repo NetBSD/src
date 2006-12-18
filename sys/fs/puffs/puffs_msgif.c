@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.10.2.2 2006/12/10 07:18:38 yamt Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.10.2.3 2006/12/18 11:42:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.10.2.2 2006/12/10 07:18:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.10.2.3 2006/12/18 11:42:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -281,15 +281,20 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 			goto out;
 		}
 		if (TAILQ_EMPTY(&pmp->pmp_req_touser)) {
-			if (nonblock || donesome) {
-				if (nonblock)
-					error = EWOULDBLOCK;
+			if (donesome)
+				goto out;
+
+			if (nonblock) {
+				error = EWOULDBLOCK;
 				goto out;
 			}
 
-			ltsleep(&pmp->pmp_req_touser, PUSER, "puffs2", 0,
-			    &pmp->pmp_lock);
-			goto again;
+			error = ltsleep(&pmp->pmp_req_touser, PUSER | PCATCH,
+			    "puffs2", 0, &pmp->pmp_lock);
+			if (error)
+				goto out;
+			else
+				goto again;
 		}
 
 		park = TAILQ_FIRST(&pmp->pmp_req_touser);

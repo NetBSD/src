@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.39 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.39.4.1 2006/12/18 11:42:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.39 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.39.4.1 2006/12/18 11:42:16 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -512,9 +512,9 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 		trrif = TOKEN_RIF(trh);
 		lan_hdr_len += (ntohs(trrif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
 	}
-	m_adj(m, lan_hdr_len);
 
-	l = mtod(m, struct llc *);
+	l = (struct llc *)(mtod(m, u_int8_t *) + lan_hdr_len);
+
 	switch (l->llc_dsap) {
 #if defined(INET) || defined(NS) || defined(DECNET)
 	case LLC_SNAP_LSAP:
@@ -527,7 +527,7 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 		    l->llc_snap.org_code[2] != 0)
 			goto dropanyway;
 		etype = ntohs(l->llc_snap.ether_type);
-		m_adj(m, LLC_SNAPFRAMELEN);
+		m_adj(m, lan_hdr_len + LLC_SNAPFRAMELEN);
 #if NCARP > 0
 		if (ifp->if_carp && ifp->if_type != IFT_CARP &&
 		    (carp_input(m, (u_int8_t *)&trh->token_shost,
@@ -570,14 +570,7 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 			/* LLC_UI_P forbidden in class 1 service */
 			if ((l->llc_dsap == LLC_ISO_LSAP) &&
 			    (l->llc_ssap == LLC_ISO_LSAP)) {
-				/* LSAP for ISO */
-				m->m_data += 3;		/* XXX */
-				m->m_len -= 3;		/* XXX */
-				m->m_pkthdr.len -= 3;	/* XXX */
-				M_PREPEND(m, sizeof *trh, M_DONTWAIT);
-				if (m == 0)
-					return;
-				*mtod(m, struct token_header *) = *trh;
+
 #if defined(__FreeBSD__)
 				IFDEBUG(D_ETHER)
 					printf("clnp packet");
@@ -591,11 +584,11 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 
 		case LLC_XID:
 		case LLC_XID_P:
-			if(m->m_len < ISO88025_ADDR_LEN)
+			if(m->m_len < LLC_XID_BASIC_MINLEN + lan_hdr_len)
 				goto dropanyway;
 			l->llc_window = 0;
-			l->llc_fid = 9;
-			l->llc_class = 1;
+			l->llc_fid = LLC_XID_FORMAT_BASIC;
+			l->llc_class = LLC_XID_CLASS_I;
 			l->llc_dsap = l->llc_ssap = 0;
 			/* Fall through to */
 		case LLC_TEST:
@@ -622,6 +615,7 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 				eh->ether_shost[i] = c;
 			}
 			eh->ether_type = 0;
+			m_adj(m, lan_hdr_len);
 			ifp->if_output(ifp, m, &sa, NULL);
 			return;
 		}

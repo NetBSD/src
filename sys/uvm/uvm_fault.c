@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.112.2.2 2006/12/10 07:19:33 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.112.2.3 2006/12/18 11:42:27 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.112.2.2 2006/12/10 07:19:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.112.2.3 2006/12/18 11:42:27 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -200,7 +200,7 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
 			continue;
 		simple_lock(&anons[lcv]->an_lock);
 		pg = anons[lcv]->an_page;
-		if (pg && (pg->flags & PG_BUSY) == 0 && pg->loan_count == 0) {
+		if (pg && (pg->flags & PG_BUSY) == 0) {
 			uvm_lock_pageq();
 			if (pg->wire_count == 0) {
 				pmap_clear_reference(pg);

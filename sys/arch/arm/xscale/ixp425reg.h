@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.19 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.19.22.1 2006/12/18 11:42:04 yamt Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -105,9 +105,9 @@
 #define	IXP425_INTR_OFFSET	0x00003000UL
 #define	IXP425_GPIO_OFFSET	0x00004000UL
 #define	IXP425_TIMER_OFFSET	0x00005000UL
-#define	IXP425_HSS_OFFSET	0x00006000UL	/* Not User Programmable */
-#define	IXP425_NPE_A_OFFSET	0x00007000UL	/* Not User Programmable */
-#define	IXP425_NPE_B_OFFSET	0x00008000UL	/* Not User Programmable */
+#define	IXP425_NPE_A_OFFSET	0x00006000UL	/* Not User Programmable */
+#define	IXP425_NPE_B_OFFSET	0x00007000UL	/* Not User Programmable */
+#define	IXP425_NPE_C_OFFSET	0x00008000UL	/* Not User Programmable */
 #define	IXP425_MAC_A_OFFSET	0x00009000UL
 #define	IXP425_MAC_B_OFFSET	0x0000a000UL
 #define	IXP425_USB_OFFSET	0x0000b000UL
@@ -157,9 +157,12 @@
 #define	OST_TIM1_INT		(1U << 1)
 #define	OST_TIM0_INT		(1U << 0)
 
-#define	IXP425_OST_WDOG		0x0014
-#define	IXP425_OST_WDOG_ENAB	0x0018
-#define	IXP425_OST_WDOG_KEY	0x001c
+#define	IXP425_OST_WDOG_HWBASE	(IXP425_TIMER_HWBASE + 0x14)
+#define	IXP425_OST_WDOG_VBASE	(IXP425_TIMER_VBASE + 0x14)
+#define	IXP425_OST_WDOG_SIZE	0x0c
+#define	IXP425_OST_WDOG		0x0000
+#define	IXP425_OST_WDOG_ENAB	0x0004
+#define	IXP425_OST_WDOG_KEY	0x0008
 #define	OST_WDOG_KEY_MAJICK	0x482e
 #define	OST_WDOG_ENAB_RST_ENA	(1u << 0)
 #define	OST_WDOG_ENAB_INT_ENA	(1u << 1)
@@ -213,9 +216,9 @@
 #define	IXP425_INT_TMR0		 5	/* General-Purpose Timer0 */
 #define	IXP425_INT_QUE33_64	 4	/* Queue Manager 33-64 */
 #define	IXP425_INT_QUE1_32	 3	/* Queue Manager  1-32 */
-#define	IXP425_INT_NPE_B	 2	/* Ethernet NPE B */
-#define	IXP425_INT_NPE_A	 1	/* Ethernet NPE A */
-#define	IXP425_INT_HSS		 0	/* WAN/HSS NPE */
+#define	IXP425_INT_NPE_C	 2	/* Ethernet NPE C */
+#define	IXP425_INT_NPE_B	 1	/* Ethernet NPE B */
+#define	IXP425_INT_NPE_A	 0	/* NPE A */
 
 /*
  * software interrupt
@@ -288,6 +291,7 @@
 #define	EXP_TIMING_CS7_OFFSET		0x001c
 #define EXP_CNFG0_OFFSET		0x0020
 #define EXP_CNFG1_OFFSET		0x0024
+#define EXP_FCTRL_OFFSET		0x0028
 
 #define IXP425_EXP_RECOVERY_SHIFT	16
 #define IXP425_EXP_HOLD_SHIFT		20
@@ -491,5 +495,36 @@
 #define PMNC_EVCNT1_SHIFT 8
 #define PMNC_EVCNT2_SHIFT 16
 #define PMNC_EVCNT3_SHIFT 24
+
+
+/* 
+ * Queue Manager
+ */
+#define	IXP425_QMGR_HWBASE	0x60000000UL
+#define IXP425_QMGR_VBASE	(IXP425_PCI_VBASE + IXP425_PCI_SIZE)
+#define IXP425_QMGR_SIZE	0x4000
+
+/*
+ * Network Processing Engines (NPE's) and associated Ethernet MAC's.
+ */
+#define IXP425_NPE_A_HWBASE	(IXP425_IO_HWBASE + IXP425_NPE_A_OFFSET)
+#define IXP425_NPE_A_VBASE	(IXP425_IO_VBASE + IXP425_NPE_A_OFFSET)
+#define IXP425_NPE_A_SIZE	0x1000		/* Actually only 256 bytes */
+
+#define IXP425_NPE_B_HWBASE	(IXP425_IO_HWBASE + IXP425_NPE_B_OFFSET)
+#define IXP425_NPE_B_VBASE	(IXP425_IO_VBASE + IXP425_NPE_B_OFFSET)
+#define IXP425_NPE_B_SIZE	0x1000		/* Actually only 256 bytes */
+
+#define IXP425_NPE_C_HWBASE	(IXP425_IO_HWBASE + IXP425_NPE_C_OFFSET)
+#define IXP425_NPE_C_VBASE	(IXP425_IO_VBASE + IXP425_NPE_C_OFFSET)
+#define IXP425_NPE_C_SIZE	0x1000		/* Actually only 256 bytes */
+
+#define IXP425_MAC_A_HWBASE	(IXP425_IO_HWBASE + IXP425_MAC_A_OFFSET)
+#define IXP425_MAC_A_VBASE	(IXP425_IO_VBASE + IXP425_MAC_A_OFFSET)
+#define IXP425_MAC_A_SIZE	0x1000		/* Actually only 256 bytes */
+
+#define IXP425_MAC_B_HWBASE	(IXP425_IO_HWBASE + IXP425_MAC_B_OFFSET)
+#define IXP425_MAC_B_VBASE	(IXP425_IO_VBASE + IXP425_MAC_B_OFFSET)
+#define IXP425_MAC_B_SIZE	0x1000 		/* Actually only 256 bytes */
 
 #endif /* _IXP425REG_H_ */

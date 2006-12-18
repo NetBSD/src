@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.65.4.2 2006/12/10 07:19:00 yamt Exp $ */
+/*	$NetBSD: if_gre.c,v 1.65.4.3 2006/12/18 11:42:16 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.65.4.2 2006/12/10 07:19:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.65.4.3 2006/12/18 11:42:16 yamt Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -137,7 +137,6 @@ static int	gre_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 static int	gre_ioctl(struct ifnet *, u_long, caddr_t);
 
 static int	gre_compute_route(struct gre_softc *sc);
-static int	gre_update_route(struct gre_softc *sc);
 
 static int gre_getsockname(struct socket *, struct mbuf *, struct lwp *);
 static int gre_getpeername(struct socket *, struct mbuf *, struct lwp *);
@@ -783,10 +782,16 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			gre_wakeup(sc);
 			error = 0;
 		}
-	} else if ((error = gre_update_route(sc)) == 0) {
+		goto end;
+	}
+	rtcache_check(&sc->route);
+	if (sc->route.ro_rt == NULL)
+		goto end;
+	if (sc->route.ro_rt->rt_ifp->if_softc != sc)
+		rtcache_free(&sc->route);
+	else
 		error = ip_output(m, NULL, &sc->route, 0,
 		    (struct ip_moptions *)NULL, (struct socket *)NULL);
-	}
   end:
 	if (error)
 		ifp->if_oerrors++;
@@ -890,7 +895,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int s;
 	struct sockaddr_in si;
 	struct sockaddr *sa = NULL;
-	int error;
+	int error = 0;
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
@@ -908,7 +913,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			return (EPERM);
 		break;
 	default:
-		error = 0;
 		break;
 	}
 
@@ -1023,8 +1027,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				closef(sc->sc_fp, l);
 				sc->sc_fp = NULL;
 			}
-			if (sc->route.ro_rt != NULL)
-				rtflush(&sc->route);
+			rtcache_free(&sc->route);
 			if (sc->sc_proto == IPPROTO_UDP)
 				error = gre_kick(sc);
 			else if (gre_compute_route(sc) == 0)
@@ -1146,7 +1149,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 static int
 gre_compute_route(struct gre_softc *sc)
 {
-	int rc;
 	struct route *ro;
 
 	ro = &sc->route;
@@ -1161,37 +1163,18 @@ gre_compute_route(struct gre_softc *sc)
 	    inet_ntoa(satosin(&ro->ro_dst)->sin_addr));
 #endif
 
-	if ((rc = gre_update_route(sc)) != 0) {
+	rtcache_init(ro);
+
+	if (ro->ro_rt == NULL || ro->ro_rt->rt_ifp->if_softc == sc) {
 #ifdef DIAGNOSTIC
 		if (ro->ro_rt == NULL)
 			printf(" - no route found!\n");
 		else
 			printf(" - route loops back to ourself!\n");
 #endif
-	}
-
-#ifdef DIAGNOSTIC
-	printf(", choosing %s with gateway %s\n", ro->ro_rt->rt_ifp->if_xname,
-	    inet_ntoa(satosin(ro->ro_rt->rt_gateway)->sin_addr));
-#endif
-	return rc;
-}
-
-static int
-gre_update_route(struct gre_softc *sc)
-{
-	struct route *ro;
-
-	ro = &sc->route;
-
-	rtalloc(ro);
-
-	/*
-	 * check if this returned a route at all and this route is no
-	 * recursion to ourself
-	 */
-	if (ro->ro_rt == NULL || ro->ro_rt->rt_ifp->if_softc == sc)
+		rtcache_free(ro);
 		return EADDRNOTAVAIL;
+	}
 
 	return 0;
 }

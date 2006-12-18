@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.80.6.1 2006/12/10 07:18:27 yamt Exp $ */
+/* $NetBSD: wsconsio.h,v 1.80.6.2 2006/12/18 11:42:15 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -103,6 +103,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_MATRIXKP	19	/* Matrix keypads/buttons */
 #define	WSKBD_TYPE_EWS4800	20	/* NEC EWS4800 */
 #define	WSKBD_TYPE_BLUETOOTH	21	/* Bluetooth keyboard */
+#define	WSKBD_TYPE_ZAURUS	22	/* Sharp Zaurus keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {

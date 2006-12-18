@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.23.10.2 2006/12/10 07:18:34 yamt Exp $	*/
+/*	$NetBSD: pf.c,v 1.23.10.3 2006/12/18 11:42:15 yamt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -2702,7 +2702,6 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 	struct sockaddr_in6	*dst6;
 	struct route_in6	 ro6;
 #endif /* INET6 */
-	struct rtentry		*rt = NULL;
 	int			 hlen;
 	u_int16_t		 mss = tcp_mssdflt;
 
@@ -2736,15 +2735,13 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 #ifdef __OpenBSD__
 	rtalloc_noclone(rop, NO_CLONING);
 #else
-	rtalloc(rop);
+	rtcache_init_noclone(rop);
 #endif
-	rt = rop->ro_rt;
-
-	if (rt && rt->rt_ifp) {
-		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
+	if (rop->ro_rt != NULL) {
+		mss = rop->ro_rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
 		mss = max(tcp_mssdflt, mss);
-		RTFREE(rt);
 	}
+	rtcache_free(rop);
 	mss = min(mss, offer);
 	mss = max(mss, 64);		/* sanity - at least max opt space */
 	return (mss);
@@ -3053,14 +3050,13 @@ cleanup:
 			rewrite = 1;
 		} else
 			s->src.seqdiff = 0;
+		s->src.max_win = MAX(ntohs(th->th_win), 1);
 		if (th->th_flags & TH_SYN) {
 			s->src.seqhi++;
 			s->src.wscale = pf_get_wscale(m, off, th->th_off, af);
-		}
-		s->src.max_win = MAX(ntohs(th->th_win), 1);
-		if (s->src.wscale & PF_WSCALE_MASK) {
+		} else if (s->src.wscale & PF_WSCALE_MASK) {
 			/* Remove scale factor from initial window */
-			int win = s->src.max_win;
+			u_int win = s->src.max_win;
 			win += 1 << (s->src.wscale & PF_WSCALE_MASK);
 			s->src.max_win = (win - 1) >>
 			    (s->src.wscale & PF_WSCALE_MASK);
@@ -5302,14 +5298,17 @@ pf_routable(struct pf_addr *addr, sa_family_t af)
 
 #ifdef __OpenBSD__
 	rtalloc_noclone((struct route *)&ro, NO_CLONING);
-#else
-	rtalloc((struct route *)&ro);
-#endif
-
 	if (ro.ro_rt != NULL) {
-		rtflush((struct route *)&ro);
+		RTFREE(ro.ro_rt);
 		return (1);
 	}
+#else
+	rtcache_init((struct route *)&ro);
+	if (ro.ro_rt != NULL) {
+		rtcache_free((struct route *)&ro);
+		return (1);
+	}
+#endif
 
 	return (0);
 }
@@ -5318,6 +5317,7 @@ int
 pf_rtlabel_match(struct pf_addr *addr, sa_family_t af,
     struct pf_addr_wrap *aw)
 {
+#if 0
 	struct sockaddr_in	*dst;
 #ifdef INET6
 	struct sockaddr_in6	*dst6;
@@ -5358,10 +5358,13 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af,
 		if (ro.ro_rt->rt_labelid == aw->v.rtlabel)
 			ret = 1;
 #endif
-		rtflush((struct route *)&ro);
+		RTFREE(ro.ro_rt);
 	}
 
 	return (ret);
+#else
+	return 0;
+#endif
 }
 
 #ifdef INET
@@ -5427,8 +5430,8 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	dst->sin_addr = ip->ip_dst;
 
 	if (r->rt == PF_FASTROUTE) {
-		rtalloc(ro);
-		if (ro->ro_rt == 0) {
+		rtcache_init(ro);
+		if (ro->ro_rt == NULL) {
 			ipstat.ips_noroute++;
 			goto bad;
 		}
@@ -5575,8 +5578,8 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 done:
 	if (r->rt != PF_DUPTO)
 		*m = NULL;
-	if (ro == &iproute && ro->ro_rt)
-		rtflush(ro);
+	if (ro == &iproute)
+		rtcache_free(ro);
 	return;
 
 bad:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.88.8.2 2006/12/10 07:19:15 yamt Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.88.8.3 2006/12/18 11:42:23 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.88.8.2 2006/12/10 07:19:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.88.8.3 2006/12/18 11:42:23 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -450,19 +450,18 @@ ip6_input(m)
 	/*
 	 *  Unicast check
 	 */
-	if (ip6_forward_rt.ro_rt != NULL &&
-	    (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) != 0 &&
-	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
+	if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
 	    &((struct sockaddr_in6 *)(&ip6_forward_rt.ro_dst))->sin6_addr))
+		rtcache_free((struct route *)&ip6_forward_rt);
+	else
+		rtcache_check((struct route *)&ip6_forward_rt);
+	if (ip6_forward_rt.ro_rt != NULL) {
+		/* XXX Revalidated route is accounted wrongly. */
 		ip6stat.ip6s_forward_cachehit++;
-	else {
+	} else {
 		struct sockaddr_in6 *dst6;
 
-		if (ip6_forward_rt.ro_rt != NULL) {
-			/* route is down or destination is different */
-			ip6stat.ip6s_forward_cachemiss++;
-			rtflush((struct route *)&ip6_forward_rt);
-		}
+		ip6stat.ip6s_forward_cachemiss++;
 
 		bzero(&ip6_forward_rt.ro_dst, sizeof(struct sockaddr_in6));
 		dst6 = (struct sockaddr_in6 *)&ip6_forward_rt.ro_dst;
@@ -470,7 +469,7 @@ ip6_input(m)
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_addr = ip6->ip6_dst;
 
-		rtalloc((struct route *)&ip6_forward_rt);
+		rtcache_init((struct route *)&ip6_forward_rt);
 	}
 
 #define rt6_key(r) ((struct sockaddr_in6 *)((r)->rt_nodes->rn_key))

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.86.2.2 2006/12/10 07:16:52 yamt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.86.2.3 2006/12/18 11:42:13 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -90,8 +90,8 @@ CFLAGS+=	-fno-strict-aliasing
 .endif
 
 .if ${USE_SSP:Uno} == "yes"
-CFLAGS+=-fstack-protector-all -Wstack-protector
-LDFLAGS+=-fstack-protector-all -Wstack-protector
+CFLAGS+=-fstack-protector -Wstack-protector
+LDFLAGS+=-fstack-protector -Wstack-protector
 .endif
 
 # If we want the bpendtsleep: label in kern_synch.c, we need to use
@@ -449,9 +449,11 @@ VARSTACK=dev/cgd.c kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
     nfs/nfs_bio.c ufs/ufs/ufs_inode.c ufs/ufs/ufs_lookup.c uvm/uvm_bio.c \
     uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c
 
+. if ${HAVE_GCC} > 3
 .for __varstack in ${VARSTACK}
 COPTS.${__varstack:T} += -Wno-stack-protector
 .endfor
+.endif
 
 AFLAGS+=	${AOPTS.${.IMPSRC:T}}
 CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}

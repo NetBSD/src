@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.2.4.2 2006/12/10 07:19:28 yamt Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.2.4.3 2006/12/18 11:42:27 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.2.4.2 2006/12/10 07:19:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.2.4.3 2006/12/18 11:42:27 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,6 +174,43 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 }
 
 /*
+ * common code for corename, rlimit, and stopflag.
+ */
+static int
+proc_uidmatch(kauth_cred_t cred, kauth_cred_t target)
+{
+	int r = 0;
+
+	/*
+	 * suid proc of ours or proc not ours
+	 */
+	if (kauth_cred_getuid(cred) != kauth_cred_getuid(target) ||
+	    kauth_cred_getuid(cred) != kauth_cred_getsvuid(target))
+		r = EPERM;
+
+	/*
+	 * sgid proc has sgid back to us temporarily
+	 */
+	else if (kauth_cred_getgid(target) != kauth_cred_getsvgid(target))
+		r = EPERM;
+
+	/*
+	 * our rgid must be in target's group list (ie,
+	 * sub-processes started by a sgid process)
+	 */
+	else {
+		int ismember = 0;
+
+		if (kauth_cred_ismember_gid(cred,
+		    kauth_cred_getgid(target), &ismember) != 0 ||
+		    !ismember)
+			r = EPERM;
+	}
+
+	return (r);
+}
+
+/*
  * kauth(9) listener
  *
  * Security model: Traditional NetBSD
@@ -250,30 +287,62 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		result = KAUTH_RESULT_ALLOW;
 		break;
 
+	case KAUTH_PROCESS_CORENAME:
+		result = KAUTH_RESULT_ALLOW;
+
+		if (isroot)
+			break;
+
+		if (proc_uidmatch(cred, p->p_cred) != 0) {
+			result = KAUTH_RESULT_DENY;
+			break;
+		}
+
+		break;
+
 	case KAUTH_PROCESS_RESOURCE:
 		switch ((u_long)arg1) {
 		case KAUTH_REQ_PROCESS_RESOURCE_NICE:
-			if (isroot)
+			if (isroot) {
 				result = KAUTH_RESULT_ALLOW;
-			else if ((u_long)arg2 >= p->p_nice)
-				result = KAUTH_RESULT_ALLOW; 
-			break;
-
-		case KAUTH_REQ_PROCESS_RESOURCE_RLIMIT:
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
-			else {
-				struct rlimit *new_rlimit;
-				u_long which;
-
-				new_rlimit = arg2;
-				which = (u_long)arg3;
-
-				if (new_rlimit->rlim_max <=
-				    p->p_rlimit[which].rlim_max)
-					result = KAUTH_RESULT_ALLOW;
+				break;
 			}
+
+			if (kauth_cred_geteuid(cred) !=
+			    kauth_cred_geteuid(p->p_cred) &&
+			    kauth_cred_getuid(cred) !=
+			    kauth_cred_geteuid(p->p_cred)) {
+				result = KAUTH_RESULT_DENY;
+				break;
+			}
+
+			if ((u_long)arg2 >= p->p_nice)
+				result = KAUTH_RESULT_ALLOW;
+
 			break;
+
+		case KAUTH_REQ_PROCESS_RESOURCE_RLIMIT: {
+			struct rlimit *new_rlimit;
+			u_long which;
+
+			if (isroot) {
+				result = KAUTH_RESULT_ALLOW;
+				break;
+			}
+
+			if (proc_uidmatch(cred, p->p_cred) != 0) {
+				result = KAUTH_RESULT_DENY;
+				break;
+			}
+
+			new_rlimit = arg2;
+			which = (u_long)arg3;
+
+			if (new_rlimit->rlim_max <=
+			    p->p_rlimit[which].rlim_max)
+				result = KAUTH_RESULT_ALLOW;
+			break;
+			}
 
 		default:
 			result = KAUTH_RESULT_DEFER;
@@ -284,6 +353,18 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_PROCESS_SETID:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
+		break;
+
+	case KAUTH_PROCESS_STOPFLAG:
+		result = KAUTH_RESULT_ALLOW;
+
+		if (isroot)
+			break;
+
+		if (proc_uidmatch(cred, p->p_cred) != 0) {
+			result = KAUTH_RESULT_DENY;
+			break;
+		}
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.15.2.2 2006/12/10 07:18:38 yamt Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.15.2.3 2006/12/18 11:42:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.15.2.2 2006/12/10 07:18:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.15.2.3 2006/12/18 11:42:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -226,23 +226,35 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	 * If we are not DYING, we should ask userspace's opinion
 	 * about the situation
 	 */
+	simple_lock(&pmp->pmp_lock);
 	if (pmp->pmp_status != PUFFSTAT_DYING) {
+		pmp->pmp_unmounting = 1;
+		simple_unlock(&pmp->pmp_lock);
+
 		unmount_arg.pvfsr_flags = mntflags;
 		unmount_arg.pvfsr_pid = puffs_lwp2pid(l);
+
 		error = puffs_vfstouser(pmp, PUFFS_VFS_UNMOUNT,
 		     &unmount_arg, sizeof(unmount_arg));
+		DPRINTF(("puffs_unmount: error %d force %d\n", error, force));
+
+		simple_lock(&pmp->pmp_lock);
+		pmp->pmp_unmounting = 0;
+		wakeup(&pmp->pmp_unmounting);
 	}
 
 	/*
 	 * if userspace cooperated or we really need to die,
 	 * screw what userland thinks and just die.
 	 */
-	DPRINTF(("puffs_unmount: error %d force %d\n", error, force));
 	if (error == 0 || force) {
 		pmp->pmp_status = PUFFSTAT_DYING;
 		puffs_nukebypmp(pmp);
+		simple_unlock(&pmp->pmp_lock);
 		FREE(pmp, M_PUFFS);
 		error = 0;
+	} else {
+		simple_unlock(&pmp->pmp_lock);
 	}
 
  out:

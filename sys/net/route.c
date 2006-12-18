@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.71.4.2 2006/12/10 07:19:00 yamt Exp $	*/
+/*	$NetBSD: route.c,v 1.71.4.3 2006/12/18 11:42:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.71.4.2 2006/12/10 07:19:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.71.4.3 2006/12/18 11:42:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1083,4 +1083,54 @@ rt_timer_timer(void *arg)
 	splx(s);
 
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
+}
+
+void
+rtcache_init(struct route *ro)
+{
+	ro->ro_rt = rtalloc1(&ro->ro_dst, 1);
+	if (ro->ro_rt != NULL)
+		rtcache(ro);
+}
+
+void
+rtcache_init_noclone(struct route *ro)
+{
+	ro->ro_rt = rtalloc1(&ro->ro_dst, 0);
+	if (ro->ro_rt != NULL)
+		rtcache(ro);
+}
+
+void
+rtcache_copy(struct route *new, const struct route *old, size_t new_len)
+{
+	bzero(new, new_len);
+	if (old->ro_dst.sa_len + offsetof(struct route, ro_dst) > new_len)
+		panic("rtcache_copy: dst address will overflow new route");
+	bcopy(&old->ro_dst, &new->ro_dst, old->ro_dst.sa_len);
+	new->ro_rt = old->ro_rt;
+	if (new->ro_rt != NULL) {
+		rtcache(new);
+		++new->ro_rt->rt_refcnt;
+	}
+}
+
+void
+rtcache_free(struct route *ro)
+{
+	if (ro->ro_rt != NULL) {
+#if 0
+		rtfree(ro->ro_rt);
+#else
+		rtflush(ro);
+#endif
+	}
+	ro->ro_rt = NULL;
+}
+
+void
+rtcache_update(struct route *ro)
+{
+	rtcache_free(ro);
+	rtcache_init(ro);
 }

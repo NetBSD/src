@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.9 2005/12/11 12:16:51 christos Exp $
+#	$NetBSD: files.pxa2x0,v 1.9.22.1 2006/12/18 11:42:04 yamt Exp $
 #
 # Configuration info for Intel PXA2[751]0 CPU support
 #
@@ -13,7 +13,6 @@ file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/xscale/pxa2x0_space.c
 #file	arch/arm/xscale/pxa2x0_freqchg.S
 file	arch/arm/xscale/pxa2x0_dma.c
-#file	arch/arm/xscale/pxa2x0_i2c.c
 
 # Cotulla integrated peripherals.
 
@@ -33,7 +32,8 @@ attach com at pxaip with pxauart
 file arch/arm/xscale/pxa2x0_com.c		pxauart
 file arch/arm/xscale/pxa2x0_a4x_space.c		pxauart | obio
 file arch/arm/xscale/pxa2x0_a4x_io.S		pxauart | obio
-defflag	opt_com.h	FFUARTCONSOLE STUARTCONSOLE BTUARTCONSOLE
+defflag	opt_com.h			FFUARTCONSOLE STUARTCONSOLE
+					BTUARTCONSOLE HWUARTCONSOLE
 
 # clock device
 # PXA2x0's built-in timer is compatible to SA-1110.
@@ -65,6 +65,27 @@ device	pwmpxa
 attach	pwmpxa at pxaip
 file	arch/arm/xscale/pxa2x0_pwm.c		pwmpxa
 
-# OHCI USB controller on PXA270
-attach	ohci at pxaip with ohci_pxa
-file	arch/arm/xscale/ohci_pxa27x.c		ohci_pxa
+# USB Device Controller
+device	pxaudc
+attach	pxaudc at pxaip
+file	arch/arm/xscale/pxa2x0_udc.c		pxaudc
+
+# OHCI USB controller
+attach	ohci at pxaip with pxaohci
+file	arch/arm/xscale/pxa2x0_ohci.c		pxaohci
+
+# PCMCIA controller
+device	pxapcic: pcmciabus
+file	arch/arm/xscale/pxa2x0_pcic.c		pxapcic
+
+# Inter-Integrated Circuit controller
+device	pxaiic {}
+file	arch/arm/xscale/pxa2x0_i2c.c		pxaiic
+
+# Inter-IC Sound controller
+device	pxaiis {}
+file	arch/arm/xscale/pxa2x0_i2s.c		pxaiis
+
+# MMC controller
+#device	pxamci: sdmmcbus
+#file	arch/arm/xscale/pxa2x0_mci.c		pxamci
