@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.52 2006/12/18 13:13:20 kleink Exp $	*/
+/*	$NetBSD: termcap.c,v 1.53 2006/12/18 22:27:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.52 2006/12/18 13:13:20 kleink Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.53 2006/12/18 22:27:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: termcap.c,v 1.52 2006/12/18 13:13:20 kleink Exp $");
 
 #define	PBUFSIZ		MAXPATHLEN	/* max length of filename path */
 #define	PVECSIZ		32		/* max number of names in path */
+#define CAPSIZ		256		/* max capability size */
 
 /*
  * termcap - routines for dealing with the terminal capability data base
@@ -79,7 +80,7 @@ static struct tinfo *fbuf = NULL;	/* untruncated termcap buffer */
 int
 t_setinfo(struct tinfo **bp, const char *entry)
 {
-	char capability[256], *cap_ptr;
+	char capability[CAPSIZ], *cap_ptr;
 	size_t limit;
 
 	_DIAGASSERT(bp != NULL);
@@ -94,12 +95,12 @@ t_setinfo(struct tinfo **bp, const char *entry)
 	strcpy((*bp)->info, entry);
 
 	cap_ptr = capability;
-	limit = 255;
+	limit = sizeof(capability) - 1;
 	(*bp)->up = t_getstr(*bp, "up", &cap_ptr, &limit);
 	if ((*bp)->up)
 		(*bp)->up = strdup((*bp)->up);
 	cap_ptr = capability;
-	limit = 255;
+	limit = sizeof(capability) - 1;
 	(*bp)->bc = t_getstr(*bp, "bc", &cap_ptr, &limit);
 	if ((*bp)->bc)
 		(*bp)->bc = strdup((*bp)->bc);
@@ -126,7 +127,7 @@ t_getent(struct tinfo **bp, const char *name)
 	char   pathbuf[PBUFSIZ];	/* holds raw path of filenames */
 	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
 	char  *termpath;
-	char  capability[256], *cap_ptr;
+	char  capability[CAPSIZ], *cap_ptr;
 	int error;
 
 
@@ -245,12 +246,12 @@ t_getent(struct tinfo **bp, const char *name)
 	 */
 	if (i >= 0) {
 		cap_ptr = capability;
-		limit = 255;
+		limit = sizeof(capability) - 1;
 		(*bp)->up = t_getstr(*bp, "up", &cap_ptr, &limit);
 		if ((*bp)->up)
 			(*bp)->up = strdup((*bp)->up);
 		cap_ptr = capability;
-		limit = 255;
+		limit = sizeof(capability) - 1;
 		(*bp)->bc = t_getstr(*bp, "bc", &cap_ptr, &limit);
 		if ((*bp)->bc)
 			(*bp)->bc = strdup((*bp)->bc);
@@ -445,7 +446,7 @@ tgetstr(const char *id, char **area)
 		ti = fbuf;
 
 	if (area == NULL || *area == NULL) {
-		static char capability[256];
+		static char capability[CAPSIZ];
 		size_t limit = sizeof(capability) - 1;
 		char *ptr;
 
@@ -463,7 +464,6 @@ tgetstr(const char *id, char **area)
  * If the string is not found or memory allocation fails then NULL
  * is returned.
  */
-#define BSIZE 256
 char *
 t_agetstr(struct tinfo *info, const char *id)
 {
@@ -481,8 +481,8 @@ t_agetstr(struct tinfo *info, const char *id)
 
 	if ((tb = info->tbuf) == NULL ||
 	    (size_t) (tb->eptr - tb->ptr) < (new_size + 1)) {
-		if (new_size < BSIZE)
-			new_size = BSIZE;
+		if (new_size < CAPSIZ)
+			new_size = CAPSIZ;
 		else
 			new_size++;
 
