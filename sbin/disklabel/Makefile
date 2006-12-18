@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59 2006/09/01 21:44:02 uwe Exp $
+#	$NetBSD: Makefile,v 1.60 2006/12/18 13:39:10 nonaka Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -33,6 +33,7 @@ CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
 	|| ${MACHINE} == "playstation2" \
 	|| ${MACHINE} == "prep" \
 	|| ${MACHINE} == "shark" \
+	|| ${MACHINE} == "zaurus" \
     )
 # use MBR partition info
 CPPFLAGS+= -DUSE_MBR
