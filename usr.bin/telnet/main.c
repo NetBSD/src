@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2006/03/20 04:03:23 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2006/12/18 14:18:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.25 2006/03/20 04:03:23 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2006/12/18 14:18:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -325,11 +325,10 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (argc) {
-		char *args[7], **argp = args;
-#ifdef __GNUC__
-		(void) &argp;	/* avoid longjmp clobbering */
-#endif
+		char *args[7];
+		char ** volatile argp;	/* avoid longjmp clobbering */
 
+		argp = args;
 		if (argc > 2)
 			usage();
 		*argp++ = prompt;
