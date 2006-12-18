@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.16 2006/10/22 21:11:56 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.17 2006/12/18 21:03:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.16 2006/10/22 21:11:56 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.17 2006/12/18 21:03:29 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -250,13 +250,13 @@ cd9660_set_defaults(void)
 }
 
 void
-cd9660_prep_opts(fsinfo_t *fsopts)
+cd9660_prep_opts(fsinfo_t *fsopts __unused)
 {
 	cd9660_set_defaults();
 }
 
 void
-cd9660_cleanup_opts(fsinfo_t *fsopts)
+cd9660_cleanup_opts(fsinfo_t *fsopts __unused)
 {
 
 }
