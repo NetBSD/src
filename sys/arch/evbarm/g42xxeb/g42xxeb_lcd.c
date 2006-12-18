@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_lcd.c,v 1.6 2006/04/17 15:59:47 jmmv Exp $ */
+/* $NetBSD: g42xxeb_lcd.c,v 1.7 2006/12/18 15:30:56 nonaka Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2005 Genetec corp.
@@ -222,9 +222,11 @@ void lcd_attach( struct device *parent, struct device *self, void *aux )
 	}
 #else
 	{
-		struct pxa2x0_lcd_screen *screen = pxa2x0_lcd_new_screen( sc, 16 );
+		struct pxa2x0_lcd_screen *screen;
+		int error;
 
-		if (screen) {
+		error = pxa2x0_lcd_new_screen( sc, 16, &screen );
+		if (error == 0) {
 			sc->active = screen;
 			pxa2x0_lcd_start_dma(sc, screen);
 		}
