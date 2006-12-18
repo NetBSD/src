@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.168 2006/11/18 14:25:39 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.169 2006/12/18 00:40:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.168 2006/11/18 14:25:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.169 2006/12/18 00:40:26 simonb Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1491,26 +1491,44 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_extract(%p, %lx) -> ", pmap, va);
+		printf("pmap_extract(%p, 0x%lx) -> ", pmap, va);
 #endif
 	if (pmap == pmap_kernel()) {
-		pte = kvtopte(va);
+		if (va >= MIPS_KSEG0_START && va < MIPS_KSEG1_START) {
+			pa = MIPS_KSEG0_TO_PHYS(va);
+			goto done;
+		}
+#ifdef DIAGNOSTIC
+		else if (va >= MIPS_KSEG1_START && va < MIPS_KSEG2_START)
+			panic("pmap_extract: kseg1 address 0x%lx", va);
+#endif
+		else
+			pte = kvtopte(va);
 	} else {
 		if (!(pte = pmap_segmap(pmap, va))) {
+#ifdef DEBUG
+			if (pmapdebug & PDB_FOLLOW)
+				printf("not in segmap\n");
+#endif
 			return FALSE;
 		}
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 	}
 	if (!mips_pg_v(pte->pt_entry)) {
+#ifdef DEBUG
+		if (pmapdebug & PDB_FOLLOW)
+			printf("PTE not valid\n");
+#endif
 		return FALSE;
 	}
 	pa = mips_tlbpfn_to_paddr(pte->pt_entry) | (va & PGOFSET);
+done:
 	if (pap != NULL) {
 		*pap = pa;
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_extract: pa %lx\n", (u_long)pa);
+		printf("pa 0x%lx\n", (u_long)pa);
 #endif
 	return TRUE;
 }
