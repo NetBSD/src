@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2006/12/18 15:30:56 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2006/12/17 16:07:11 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2006/12/18 15:30:56 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1095,7 +1095,10 @@ consinit(void)
 #endif
 	if (strcmp(console, "glass") == 0) {
 #if (NLCD > 0) && (NWSDISPLAY > 0)
+		extern void lcd_cnattach(void);
+
 		glass_console = 1;
+		lcd_cnattach();
 #endif
 	}
 
