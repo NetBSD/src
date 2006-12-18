@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.66 2006/05/11 00:25:46 mrg Exp $	*/
+/*	$NetBSD: commands.c,v 1.67 2006/12/18 14:18:40 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.66 2006/05/11 00:25:46 mrg Exp $");
+__RCSID("$NetBSD: commands.c,v 1.67 2006/12/18 14:18:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1359,11 +1359,8 @@ suspend(int argc, char *argv[])
 int
 shell(int argc, char *argv[])
 {
-    long oldrows, oldcols, newrows, newcols, err;
-
-#ifdef __GNUC__
-    (void) &err;	/* XXX avoid GCC warning */
-#endif
+    long oldrows, oldcols, newrows, newcols;
+    long volatile err;	/* Avoid vfork clobbering */
 
     setcommandmode();
 
@@ -2201,9 +2198,6 @@ tn(int argc, char *argv[])
 #endif
     char *cmd, *hostp = 0, *portp = 0;
     const char *user = 0;
-#ifdef __GNUC__	/* Avoid vfork clobbering */
-    (void) &user;
-#endif
 
     if (connected) {
 	printf("?Already connected to %s\n", hostname);
