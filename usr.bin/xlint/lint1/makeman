@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: makeman,v 1.1 2000/07/06 01:08:10 christos Exp $
+#	$NetBSD: makeman,v 1.2 2006/12/19 19:02:49 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,7 @@
 
 
 cat << \__EOF
-.\"	$NetBSD: makeman,v 1.1 2000/07/06 01:08:10 christos Exp $
+.\"	$NetBSD: makeman,v 1.2 2006/12/19 19:02:49 christos Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,7 +87,7 @@ flag of
 .Xr lint 1 .
 .Pp
 .Bd -ragged -offset indent -compact
-.Bl -column "Id# Message"
+.Bl -column "XXXX"
 __EOF
 "$@" | sed -e 's/^/.It /' -e 's/\\/\\e/g' -e "s/'/\\'/"
 echo ".El"
