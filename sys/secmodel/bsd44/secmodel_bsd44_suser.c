@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.18 2006/12/14 11:45:08 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.19 2006/12/19 10:07:00 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.18 2006/12/14 11:45:08 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.19 2006/12/19 10:07:00 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -271,6 +271,10 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_PROCESS_CANPROCFS:
+		if (((u_long)arg1 == KAUTH_REQ_PROCESS_CANPROCFS_CTL) &&
+		    !isroot)
+			break;
+		/*FALLTHROUGH*/
 	case KAUTH_PROCESS_CANPTRACE:
 	case KAUTH_PROCESS_CANSYSTRACE:
 		if (isroot) {
