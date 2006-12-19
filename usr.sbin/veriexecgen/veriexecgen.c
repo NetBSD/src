@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.10 2006/12/04 21:22:40 agc Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.11 2006/12/19 21:21:28 agc Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,6 +35,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
+#include <sys/cdefs.h>
+
+#ifndef lint
+#ifdef __RCSID
+__RCSID("$NetBSD: veriexecgen.c,v 1.11 2006/12/19 21:21:28 agc Exp $");
+#endif
+#endif /* not lint */
+
+#include <sys/types.h>
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -66,6 +79,24 @@
 			   "/lib", "/usr/lib", "/libexec", "/usr/libexec", \
 			   NULL }
 
+/* this struct defines a hash algorithm */
+typedef struct hash_t {
+	const char	*hashname;	/* algorithm name */
+	char		*(*filefunc)(const char *, char *); /* function */
+} hash_t;
+
+/* this struct encapsulates various diverse options and arguments */
+typedef struct veriexecgen_t {
+	int	 all_files;	/* scan also for non-executable files */
+	int	 append_output;	/* append output to existing sigs file */
+	char	*dbfile;	/* name of signatures database file */
+	int	 exit_on_error;	/* exit if we can't create a hash */
+	char	*prefix;	/* any prefix to be discarded on output */
+	int	 recursive_scan;/* perform scan for files recursively */
+	int	 scan_system_dirs;	/* just scan system directories */
+	int	 verbose;	/* verbosity level */
+} veriexecgen_t;
+
 /* this struct describes a directory entry to generate a hash for */
 struct fentry {
 	char filename[MAXPATHLEN];	/* name of entry */
@@ -75,11 +106,8 @@ struct fentry {
 };
 TAILQ_HEAD(, fentry) fehead;
 
-/* this struct defines the possible hash algorithms */
-struct hash {
-	const char     *hashname;
-	char           *(*filefunc) (const char *, char *);
-} hashes[] = {
+/* define the possible hash algorithms */
+static hash_t	 hashes[] = {
 	{ "MD5", MD5File },
 	{ "SHA1", SHA1File },
 	{ "SHA256", SHA256_File },
@@ -91,20 +119,14 @@ struct hash {
 
 static int Fflag;
 
-static int	exit_on_error;	/* exit if we can't create a hash */
-static int	append_output;	/* append output to signatures file */
-static int	all_files;	/* scan for non-executable files as well */
-static int	scan_system_dirs;	/* scan system directories */
-static int	recursive_scan;	/* perform the scan recursively */
 static int	make_immutable;	/* set immutable flag on signatures file */
-static int	verbose;	/* verbose execution */
 
 /* warn about a problem - exit if exit_on_error is set */
 static void
-gripe(const char *fmt, const char *filename)
+gripe(veriexecgen_t *vp, const char *fmt, const char *filename)
 {
 	warn(fmt, filename);
-	if (exit_on_error) {
+	if (vp->exit_on_error) {
 		/* error out on problematic files */
 		exit(EXIT_FAILURE);
 	}
@@ -121,7 +143,7 @@ usage(void)
 
 /* tell people what we're doing - scan dirs, fingerprint etc */
 static void
-banner(struct hash *hash_type, char **search_path)
+banner(veriexecgen_t *vp, hash_t *hash_type, char **search_path)
 {
 	int j;
 
@@ -131,16 +153,16 @@ banner(struct hash *hash_type, char **search_path)
 		(void)printf("%s ", search_path[j]);
 
 	(void)printf("(%s) (%s) using %s\n",
-	    all_files ? "all files" : "executables only",
-	    recursive_scan ? "recursive" : "non-recursive",
+	    vp->all_files ? "all files" : "executables only",
+	    vp->recursive_scan ? "recursive" : "non-recursive",
 	    hash_type->hashname);
 }
 
 /* find a hash algorithm, given its name */
-static struct hash *
+static hash_t *
 find_hash(char *hash_type)
 {
-	struct hash *hash;
+	hash_t *hash;
 
 	for (hash = hashes; hash->hashname != NULL; hash++)
 		if (strcasecmp(hash_type, hash->hashname) == 0)
@@ -150,7 +172,7 @@ find_hash(char *hash_type)
 
 /* perform the hashing operation on `filename' */
 static char *
-do_hash(char *filename, struct hash * h)
+do_hash(char *filename, hash_t * h)
 {
 	return h->filefunc(filename, NULL);
 }
@@ -186,7 +208,7 @@ check_dup(char *filename)
 
 /* add a new entry to the list for `file' */
 static void
-add_new_entry(FTSENT *file, struct hash *hash)
+add_new_entry(veriexecgen_t *vp, FTSENT *file, hash_t *hash)
 {
 	struct fentry *e;
 	struct stat sb;
@@ -194,19 +216,19 @@ add_new_entry(FTSENT *file, struct hash *hash)
 	if (file->fts_info == FTS_SL) {
 		/* we have a symbolic link */
 		if (stat(file->fts_path, &sb) == -1) {
-			gripe("Cannot stat symlink `%s'", file->fts_path);
+			gripe(vp, "Cannot stat symlink `%s'", file->fts_path);
 			return;
 		}
 	} else
 		sb = *file->fts_statp;
 
-	if (!all_files && !scan_system_dirs && !IS_EXEC(sb.st_mode))
+	if (!vp->all_files && !vp->scan_system_dirs && !IS_EXEC(sb.st_mode))
 		return;
 
 	e = ecalloc(1UL, sizeof(*e));
 
 	if (realpath(file->fts_accpath, e->filename) == NULL) {
-		gripe("Cannot find absolute path `%s'", file->fts_accpath);
+		gripe(vp, "Cannot find absolute path `%s'", file->fts_accpath);
 		return;
 	}
 	if (check_dup(e->filename)) {
@@ -214,7 +236,7 @@ add_new_entry(FTSENT *file, struct hash *hash)
 		return;
 	}
 	if ((e->hash_val = do_hash(e->filename, hash)) == NULL) {
-		gripe("Cannot calculate hash `%s'", e->filename);
+		gripe(vp, "Cannot calculate hash `%s'", e->filename);
 		return;
 	}
 	e->flags = figure_flags(e->filename, sb.st_mode);
@@ -224,18 +246,18 @@ add_new_entry(FTSENT *file, struct hash *hash)
 
 /* walk through a directory */
 static void
-walk_dir(char **search_path, struct hash *hash)
+walk_dir(veriexecgen_t *vp, char **search_path, hash_t *hash)
 {
 	FTS *fh;
 	FTSENT *file;
 
 	if ((fh = fts_open(search_path, FTS_PHYSICAL, NULL)) == NULL) {
-		gripe("fts_open `%s'", (const char *)search_path);
+		gripe(vp, "fts_open `%s'", (const char *)search_path);
 		return;
 	}
 
 	while ((file = fts_read(fh)) != NULL) {
-		if (!recursive_scan && file->fts_level > 1) {
+		if (!vp->recursive_scan && file->fts_level > 1) {
 			fts_set(fh, file, FTS_SKIP);
 			continue;
 		}
@@ -250,12 +272,12 @@ walk_dir(char **search_path, struct hash *hash)
 		}
 
 		if (file->fts_errno) {
-			if (exit_on_error) {
+			if (vp->exit_on_error) {
 				errx(EXIT_FAILURE, "%s: %s", file->fts_path,
 				    strerror(file->fts_errno));
 			}
 		} else {
-			add_new_entry(file, hash);
+			add_new_entry(vp, file, hash);
 		}
 	}
 
@@ -271,7 +293,7 @@ flags2str(int flags)
 
 /* store the list in the signatures file */
 static void
-store_entries(char *dbfile, struct hash *hash)
+store_entries(veriexecgen_t *vp, hash_t *hash)
 {
 	FILE *fp;
 	int move = 1;
@@ -279,49 +301,54 @@ store_entries(char *dbfile, struct hash *hash)
 	time_t ct;
 	struct stat sb;
 	struct fentry  *e;
+	int	prefixc;
 
-	if (stat(dbfile, &sb) != 0) {
+	if (stat(vp->dbfile, &sb) != 0) {
 		if (errno == ENOENT)
 			move = 0;
 		else
-			err(EXIT_FAILURE, "could not stat %s", dbfile);
+			err(EXIT_FAILURE, "could not stat %s", vp->dbfile);
 	}
-	if (move && !append_output) {
-		if (verbose)
+	if (move && !vp->append_output) {
+		if (vp->verbose)
 			(void)printf("\nBacking up existing fingerprint file "
-			    "to \"%s.old\"\n\n", dbfile);
+			    "to \"%s.old\"\n\n", vp->dbfile);
 
-		if (snprintf(old_dbfile, MAXPATHLEN, "%s.old", dbfile) <
-		    strlen(dbfile) + 4) {
+		if (snprintf(old_dbfile, MAXPATHLEN, "%s.old", vp->dbfile) <
+		    strlen(vp->dbfile) + 4) {
 			err(EXIT_FAILURE, "%s", old_dbfile);
 		}
-		if (rename(dbfile, old_dbfile) == -1)
+		if (rename(vp->dbfile, old_dbfile) == -1)
 			err(EXIT_FAILURE, "could not rename file");
 	}
 
-	fp = efopen(dbfile, append_output ? "a" : "w+");
+	prefixc = (vp->prefix == NULL) ? -1 : strlen(vp->prefix);
+
+	fp = efopen(vp->dbfile, vp->append_output ? "a" : "w+");
 
 	time(&ct);
 	(void)fprintf(fp, "# Generated by %s, %.24s\n",
 		getlogin(), ctime(&ct));
 
 	TAILQ_FOREACH(e, &fehead, f) {
-		if (verbose)
+		if (vp->verbose)
 			(void)printf("Adding %s.\n", e->filename);
 
-		(void)fprintf(fp, "%s %s %s %s\n", e->filename,
+
+		(void)fprintf(fp, "%s %s %s %s\n",
+			(prefixc < 0) ? e->filename : &e->filename[prefixc],
 			hash->hashname, e->hash_val, flags2str(e->flags));
 	}
 
 	(void)fclose(fp);
 
-	if (verbose) {
+	if (vp->verbose) {
 		(void)printf("\n\n"
 "#############################################################\n"
 "  PLEASE VERIFY CONTENTS OF %s AND FINE-TUNE THE\n"
 "  FLAGS WHERE APPROPRIATE AFTER READING veriexecctl(8)\n"
 "#############################################################\n",
-			dbfile);
+			vp->dbfile);
 	}
 }
 
@@ -329,31 +356,27 @@ int
 main(int argc, char **argv)
 {
 	int ch, total = 0;
-	char *dbfile = NULL;
 	char **search_path = NULL;
-	struct hash *hash = NULL;
+	hash_t *hash = NULL;
+	veriexecgen_t	v;
 
-	append_output = 0;
-	all_files = 0;
-	scan_system_dirs = 0;
-	recursive_scan = 0;
+	(void) memset(&v, 0x0, sizeof(v));
 	make_immutable = 0;
-	verbose = 0;
 	Fflag = 0;
 
 	/* error out if we have a dangling symlink or other fs problem */
-	exit_on_error = 1;
+	v.exit_on_error = 1;
 
-	while ((ch = getopt(argc, argv, "AaDd:ho:rSt:vW")) != -1) {
+	while ((ch = getopt(argc, argv, "AaDd:ho:p:rSt:vW")) != -1) {
 		switch (ch) {
 		case 'A':
-			append_output = 1;
+			v.append_output = 1;
 			break;
 		case 'a':
-			all_files = 1;
+			v.all_files = 1;
 			break;
 		case 'D':
-			scan_system_dirs = 1;
+			v.scan_system_dirs = 1;
 			break;
 		case 'd':
 			search_path = erealloc(search_path, sizeof(char *) *
@@ -370,10 +393,13 @@ main(int argc, char **argv)
 			usage();
 			return EXIT_SUCCESS;
 		case 'o':
-			dbfile = optarg;
+			v.dbfile = optarg;
+			break;
+		case 'p':
+			v.prefix = optarg;
 			break;
 		case 'r':
-			recursive_scan = 1;
+			v.recursive_scan = 1;
 			break;
 		case 'S':
 			make_immutable = 1;
@@ -386,10 +412,10 @@ main(int argc, char **argv)
 			}
 			break;
 		case 'v':
-			verbose = 1;
+			v.verbose = 1;
 			break;
 		case 'W':
-			exit_on_error = 0;
+			v.exit_on_error = 0;
 			break;
 		default:
 			usage();
@@ -397,8 +423,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (dbfile == NULL)
-		dbfile = DEFAULT_DBFILE;
+	if (v.dbfile == NULL)
+		v.dbfile = DEFAULT_DBFILE;
 
 	if (hash == NULL) {
 		if ((hash = find_hash(DEFAULT_HASH)) == NULL)
@@ -408,25 +434,25 @@ main(int argc, char **argv)
 	TAILQ_INIT(&fehead);
 
 	if (search_path == NULL)
-		scan_system_dirs = 1;
+		v.scan_system_dirs = 1;
 
-	if (scan_system_dirs) {
+	if (v.scan_system_dirs) {
 		char *sys_paths[] = DEFAULT_SYSPATHS;
 
-		if (verbose)
-			banner(hash, sys_paths);
-		walk_dir(sys_paths, hash);
+		if (v.verbose)
+			banner(&v, hash, sys_paths);
+		walk_dir(&v, sys_paths, hash);
 	}
 
 	if (search_path != NULL) {
-		if (verbose)
-			banner(hash, search_path);
-		walk_dir(search_path, hash);
+		if (v.verbose)
+			banner(&v, hash, search_path);
+		walk_dir(&v, search_path, hash);
 	}
 
-	store_entries(dbfile, hash);
+	store_entries(&v, hash);
 
-	if (make_immutable && chflags(dbfile, SF_IMMUTABLE) != 0)
+	if (make_immutable && chflags(v.dbfile, SF_IMMUTABLE) != 0)
 		err(EXIT_FAILURE, "Can't set immutable flag");
 
 	return EXIT_SUCCESS;
