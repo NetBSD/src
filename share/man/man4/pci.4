@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.86 2006/12/19 11:06:44 kleink Exp $
+.\"	$NetBSD: pci.4,v 1.87 2006/12/19 17:52:16 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -169,6 +169,8 @@ QLogic ISP-1020, ISP-1040, and ISP-2100
 and
 .Tn FibreChannel
 interfaces.
+.It mfi
+LSI Logic \*[Am] Dell MegaRAID SAS RAID controllers.
 .It mly
 Mylex AcceleRAID and eXtremeRAID controllers with v6 firmware.
 .It pcscp
@@ -208,6 +210,8 @@ IDE disk controllers.
 4500/4800 and
 .Tn Cisco
 340 series 802.11 interfaces.
+.It bnx
+Broadcom NetXtreme II 10/100/1000 Ethernet interfaces.
 .It de
 .Tn DEC
 DC21x4x (Tulip) based
@@ -465,6 +469,7 @@ VGA graphics boards.
 .Xr mlx 4 ,
 .Xr mly 4 ,
 .Xr mpt 4 ,
+.Xr msk 4 ,
 .Xr ne 4 ,
 .Xr neo 4 ,
 .Xr nfe 4 ,
