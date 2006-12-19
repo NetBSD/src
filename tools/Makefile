@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.110 2006/11/22 15:08:47 riz Exp $
+#	$NetBSD: Makefile,v 1.111 2006/12/19 21:23:18 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -41,6 +41,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		paxctl .WAIT \
 		fdisk .WAIT \
 		installboot .WAIT \
+		veriexecgen .WAIT \
 		pwd_mkdb stat sunlabel zic
 
 .if ${MKMAN} != "no"
