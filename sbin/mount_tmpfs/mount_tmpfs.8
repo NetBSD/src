@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_tmpfs.8,v 1.10 2006/12/19 14:50:49 jmmv Exp $
+.\"	$NetBSD: mount_tmpfs.8,v 1.11 2006/12/19 20:33:35 wiz Exp $
 .\"
 .\" Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -141,6 +141,6 @@ required memory.
 A malicious user could trigger this condition if he could create tons of
 files inside a size-unbounded tmpfs file system.
 Limiting the number of nodes per file system
-.Fl ( n )
+.Pq Fl n
 will prevent this; the default value for this setting is also often adjusted
 to an adequate value to resolve this.
