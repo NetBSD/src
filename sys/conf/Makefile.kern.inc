@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.94.2.1 2006/12/03 21:08:53 tron Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.94.2.2 2006/12/20 22:51:39 bouyer Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -90,8 +90,8 @@ CFLAGS+=	-fno-strict-aliasing
 .endif
 
 .if ${USE_SSP:Uno} == "yes"
-CFLAGS+=-fstack-protector-all -Wstack-protector
-LDFLAGS+=-fstack-protector-all -Wstack-protector
+CFLAGS+=-fstack-protector -Wstack-protector
+LDFLAGS+=-fstack-protector -Wstack-protector
 .endif
 
 # If we want the bpendtsleep: label in kern_synch.c, we need to use
