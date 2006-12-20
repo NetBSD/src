@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.17 2006/12/20 22:42:49 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.18 2006/12/20 23:03:52 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -325,4 +325,32 @@ usr.bin/make/targ.c				1.46
 
 	performance improvements and bug fixes for make(1)
 	[dsl, ticket #285]
+
+sys/arch/mips/mips/pmap.c			1.169
+
+	Fixes panic running regress/sys/kern/umount on MIPS platforms
+	reported by Martin Husemann.
+	[simonb, ticket #289]
+
+sys/conf/Makefile.kern.inc			1.97
+
+	use -fstack-protector instead of -fstack-protector-all since this breaks
+	on amd64 (it works on sparc64).
+	[tls, ticket #290]
+
+sys/conf/Makefile.kern.inc			1.98
+
+	Fix for SSP enabled Xen kernels
+	[tls, ticket #291]
+
+share/man/man9/veriexec.9			1.10
+
+	Markup fix - forgot 'Fn'.
+	[elad, ticket #292]
+
+sys/netinet6/ipsec.c				1.114
+
+	do not compare ipv6 ipsec tunnel addresses against uninitialized data.
+	Fixes PR kern/34734
+	[mlelstv, ticket #293]
 
