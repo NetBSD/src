@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.21 2006/04/02 01:39:48 christos Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.22 2006/12/20 16:33:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -725,7 +725,7 @@ init(int argc, char **argv)
 }
 
 static int
-checkcoll(TREE * t, void *dummy)
+checkcoll(TREE * t, void *dummy __unused)
 {
 	if (!t->Twant)
 		return (SCMOK);

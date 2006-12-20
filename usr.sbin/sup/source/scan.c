@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.22 2006/04/02 01:39:48 christos Exp $	*/
+/*	$NetBSD: scan.c,v 1.23 2006/12/20 16:33:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -381,7 +381,7 @@ makescanlists(void)
 }
 
 static int
-scanone(TREE * t, void *v)
+scanone(TREE * t, void *v __unused)
 {
 	TREE *newt;
 
@@ -584,7 +584,7 @@ expTinsert(char *p, TREE ** t, int flags, char *exec)
 }
 
 static int
-listone(TREE * t, void *v)
+listone(TREE * t, void *v __unused)
 {				/* expand and add one name from upgrade list */
 	listentry(t->Tname, t->Tname, (char *) NULL, (t->Tflags & FALWAYS) != 0);
 	return (SCMOK);

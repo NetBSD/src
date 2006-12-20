@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.14 2006/04/02 01:39:48 christos Exp $	*/
+/*	$NetBSD: supscan.c,v 1.15 2006/12/20 16:33:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -170,7 +170,7 @@ int main(int, char **);
 int
 main(int argc, char **argv)
 {
-	SCAN_COLLECTION *c;
+	SCAN_COLLECTION * volatile c;	/* Avoid longjmp clobbering */
 #ifdef RLIMIT_DATA
 	struct rlimit dlim;
 
@@ -183,11 +183,6 @@ main(int argc, char **argv)
 			goaway("Error setting resource limit (%s)",
 			    strerror(errno));
 	}
-#endif
-
-#if __GNUC__
-	/* Avoid longjmp clobbering */
-	(void) &c;
 #endif
 
 	init(argc, argv);	/* process arguments */
