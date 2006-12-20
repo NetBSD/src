@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.65 2006/12/04 21:34:47 dsl Exp $	*/
+/*	$NetBSD: make.h,v 1.66 2006/12/20 20:46:35 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -163,9 +163,7 @@ typedef struct GNode {
 #define DONE_WAIT	0x8	/* Set by Make_ProcessWait() */
 #define DONE_ORDER	0x10	/* Build requested by .ORDER processing */
 #define CYCLE		0x1000  /* Used by MakePrintStatus */
-#define ENDCYCLE	0x2000  /* Used by MakePrintStatus */
-#define ONCYCLE		0x4000  /* Used by MakePrintStatus */
-#define DONECYCLE	0x8000  /* Used by MakePrintStatus */
+#define DONECYCLE	0x2000  /* Used by MakePrintStatus */
     enum enum_made {
 	UNMADE, DEFERRED, REQUESTED, BEINGMADE,
 	MADE, UPTODATE, ERROR, ABORTED
@@ -202,6 +200,7 @@ typedef struct GNode {
 				      cohorts list */
     struct GNode    *centurion;	/* Pointer to the first instance of a ::
 				   node; only set when on a cohorts list */
+    unsigned int    checked;    /* Last time we tried to makle this node */
 
     Hash_Table      context;	/* The local variables */
     Lst             commands;  	/* Creation commands */
