@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.45 2006/11/30 16:53:47 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.46 2006/12/20 22:03:20 agc Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -36,7 +36,7 @@
 #include <sys/param.h>
 #include <sys/ioctl.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(HAVE_NBTOOL_CONFIG_H)
 #include <sys/malloc.h>
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pglist.h>
@@ -81,7 +81,7 @@ typedef void (*veriexec_fpop_init_t)(void *);
 typedef void (*veriexec_fpop_update_t)(void *, u_char *, u_int);
 typedef void (*veriexec_fpop_final_t)(u_char *, void *);
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(HAVE_NBTOOL_CONFIG_H)
 MALLOC_DECLARE(M_VERIEXEC);
 
 struct veriexec_file_entry;
