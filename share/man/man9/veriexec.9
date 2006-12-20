@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.9,v 1.9 2006/12/01 16:13:36 elad Exp $
+.\" $NetBSD: veriexec.9,v 1.10 2006/12/20 12:29:09 elad Exp $
 .\"
 .\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright 2006 Brett Lymn <blymn@NetBSD.org>
@@ -222,7 +222,7 @@ is the LWP removing the file,
 Depending on the strict level,
 .Nm
 will either clean-up after the file or prevent its removal.
-.It Ft int veriexec_unmountchk "struct mount *mp"
+.It Ft int Fn veriexec_unmountchk "struct mount *mp"
 Checks if the current strict level allows
 .Ar mp
 to be unmounted.
