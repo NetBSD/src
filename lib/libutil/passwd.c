@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.44 2006/10/15 19:33:52 christos Exp $	*/
+/*	$NetBSD: passwd.c,v 1.45 2006/12/20 16:47:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.44 2006/10/15 19:33:52 christos Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.45 2006/12/20 16:47:13 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -228,10 +228,6 @@ pw_edit(int notsetuid, const char *filename)
 	char *p;
 	const char * volatile editor;
 	const char *argp[] = { "sh", "-c", NULL, NULL };
-
-#ifdef __GNUC__
-	(void) &editor;
-#endif
 
 	if (filename == NULL)
 		filename = _PATH_MASTERPASSWD_LOCK;

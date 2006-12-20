@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.25 2006/10/15 19:33:03 christos Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.26 2006/12/20 16:47:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.25 2006/10/15 19:33:03 christos Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.26 2006/12/20 16:47:13 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -483,7 +483,7 @@ gsetrl(login_cap_t *lc, int what, const char *name, int type)
 
 static int
 /*ARGSUSED*/
-envset(void *envp, const char *name, const char *value, int overwrite)
+envset(void *envp __unused, const char *name, const char *value, int overwrite)
 {
 	return setenv(name, value, overwrite);	
 }

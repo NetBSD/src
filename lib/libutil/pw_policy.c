@@ -1,4 +1,4 @@
-/* $NetBSD: pw_policy.c,v 1.11 2006/04/01 14:51:17 elad Exp $ */
+/* $NetBSD: pw_policy.c,v 1.12 2006/12/20 16:47:13 christos Exp $ */
 
 /*-
  * Copyright 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -163,7 +163,7 @@ pw_policy_parse_range(char *range, int32_t *n, int32_t *m)
 
 /*ARGSUSED*/
 static int
-pw_policy_handle_len(HANDLER_ARGS)
+pw_policy_handle_len(HANDLER_ARGS __unused)
 {
 	size_t len;
 
@@ -235,7 +235,7 @@ pw_policy_handle_charclass(HANDLER_ARGS)
 
 /*ARGSUSED*/
 static int
-pw_policy_handle_nclasses(HANDLER_ARGS)
+pw_policy_handle_nclasses(HANDLER_ARGS __unused)
 {
 	switch (flag) {
 	case LOAD_POLICY:
@@ -278,7 +278,7 @@ pw_policy_handle_nclasses(HANDLER_ARGS)
 
 /*ARGSUSED*/
 static int
-pw_policy_handle_ntoggles(HANDLER_ARGS)
+pw_policy_handle_ntoggles(HANDLER_ARGS __unused)
 {
 	switch (flag) {
 	case LOAD_POLICY:
