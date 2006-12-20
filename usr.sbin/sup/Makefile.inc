@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2006/08/26 18:15:39 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2006/12/20 16:33:34 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,8 @@ CPPFLAGS+=-UCMUCS -UCMU -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR \
     -DLIBWRAP -DHAS_FPARSELN -DHAS_VIS -DHAS_FGETLN
 CPPFLAGS+=-I${.CURDIR}/../source -I${.CURDIR}/../lib -I${.CURDIR}/../sys
 CPPFLAGS+=-DEE_XXX
+
+CWARNFLAGS+=-Wextra
 
 LIBSUPDIR != cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
 LIBSUP=	${LIBSUPDIR}/libsup.a
