@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.47 2006/12/18 15:06:16 christos Exp $	*/
+/*	$NetBSD: targ.c,v 1.48 2006/12/20 20:46:35 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.47 2006/12/18 15:06:16 christos Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.48 2006/12/20 20:46:35 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.47 2006/12/18 15:06:16 christos Exp $");
+__RCSID("$NetBSD: targ.c,v 1.48 2006/12/20 20:46:35 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -609,7 +609,6 @@ made_name(enum enum_made made)
     case UPTODATE:   return "up-to-date";
     case ERROR:      return "error when made";
     case ABORTED:    return "aborted";
-    case ENDCYCLE:   return "end cycle";
     default:         return "unknown enum_made value";
     }
 }
