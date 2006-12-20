@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.52 2006/07/26 09:33:57 dogcow Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.53 2006/12/20 11:35:29 elad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.52 2006/07/26 09:33:57 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.53 2006/12/20 11:35:29 elad Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -55,10 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.52 2006/07/26 09:33:57 dogcow Exp 
 
 #include <sys/exec_script.h>
 #include <sys/exec_elf.h>
-
-#if NVERIEXEC > 0
-#include <sys/verified_exec.h>
-#endif /* NVERIEXEC > 0 */
 
 #ifdef SYSTRACE
 #include <sys/systrace.h>
@@ -276,11 +272,7 @@ check_shell:
 	scriptvp = epp->ep_vp;
 	oldpnbuf = epp->ep_ndp->ni_cnd.cn_pnbuf;
 
-#if NVERIEXEC > 0
-	if ((error = check_exec(l, epp, VERIEXEC_INDIRECT)) == 0) {
-#else
-	if ((error = check_exec(l, epp, 0)) == 0) {
-#endif /* NVERIEXEC > 0 */
+	if ((error = check_exec(l, epp)) == 0) {
 		/* note that we've clobbered the header */
 		epp->ep_flags |= EXEC_DESTR|EXEC_HASES;
 
