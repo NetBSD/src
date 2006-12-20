@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.30 2006/04/02 01:39:48 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.31 2006/12/20 16:33:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -540,7 +540,7 @@ listfiles(void)
 }
 
 static int 
-needone(TREE * t, void *dummy)
+needone(TREE * t, void *dummy __unused)
 {
 	TREE *newt;
 	int exists, fetch;
@@ -592,14 +592,14 @@ needone(TREE * t, void *dummy)
 }
 
 static int 
-denyone(TREE * t, void *v)
+denyone(TREE * t, void *v __unused)
 {
 	vnotify("SUP: Access denied to %s\n", t->Tname);
 	return (SCMOK);
 }
 
 static int 
-deleteone(TREE * t, void *v)
+deleteone(TREE * t, void *v __unused)
 {
 	struct stat sbuf, pbuf;
 	int x;
@@ -1074,7 +1074,7 @@ linkone(TREE * t, void *fv)
 }
 
 static int 
-execone(TREE * t, void *v)
+execone(TREE * t, void *v __unused)
 {				/* execute command for file */
 	int w;
 

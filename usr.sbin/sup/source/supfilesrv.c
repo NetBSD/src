@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.36 2006/05/10 21:45:40 mrg Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.37 2006/12/20 16:33:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -478,7 +478,7 @@ main(int argc, char **argv)
  */
 
 void
-chldsig(int snum)
+chldsig(int snum __unused)
 {
 	int w;
 
@@ -1159,7 +1159,7 @@ listfiles(void)
 
 
 int
-denyone(TREE * t, void *v)
+denyone(TREE * t, void *v __unused)
 {
 	TREELIST *tl;
 	char *name = t->Tname;
@@ -1261,7 +1261,7 @@ sendfiles(void)
 }
 
 int
-sendone(TREE * t, void *v)
+sendone(TREE * t, void *v __unused)
 {
 	int x, fd;
 	char temp_file[STRINGLENGTH];
@@ -1393,7 +1393,7 @@ sendone(TREE * t, void *v)
 }
 
 int
-senddir(TREE * t, void *v)
+senddir(TREE * t, void *v __unused)
 {
 	int x;
 
@@ -1991,7 +1991,7 @@ link_nofollow(int on)
 #else				/* MACH */
 /*ARGSUSED*/
 int
-link_nofollow(int on)
+link_nofollow(int on __unused)
 {
 	return (0);
 }
