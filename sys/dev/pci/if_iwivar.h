@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.12 2006/08/19 06:32:52 skrll Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.13 2006/12/20 16:30:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -83,8 +83,8 @@ struct iwi_tx_data {
 struct iwi_tx_ring {
 	bus_dmamap_t		desc_map;
 	bus_dma_segment_t	desc_seg;
-	bus_addr_t		csr_ridx;
-	bus_addr_t		csr_widx;
+	bus_size_t		csr_ridx;
+	bus_size_t		csr_widx;
 	struct iwi_tx_desc	*desc;
 	struct iwi_tx_data	*data;
 	int			count;
@@ -122,7 +122,7 @@ struct iwi_softc {
 
 	struct iwi_firmware	fw;
 	const char		*sc_fwname;
-	const char		*sc_ucname;
+	char			*sc_blob;
 
 	uint32_t		flags;
 #define IWI_FLAG_FW_CACHED	(1 << 0)
