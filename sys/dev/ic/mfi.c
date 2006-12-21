@@ -1,3 +1,4 @@
+/* $NetBSD: mfi.c,v 1.2.2.3 2006/12/21 14:21:24 tron Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -14,6 +15,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.2.2.3 2006/12/21 14:21:24 tron Exp $");
 
 /* #include "bio.h" XXX */
 

@@ -1,3 +1,4 @@
+/* $NetBSD: mfi_pci.c,v 1.2.2.3 2006/12/21 14:21:24 tron Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -14,6 +15,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.2.2.3 2006/12/21 14:21:24 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
