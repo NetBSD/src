@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.17 2006/11/07 03:09:19 rpaulo Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.18 2006/12/21 02:56:37 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -381,7 +381,11 @@ static void smtp_cleanup_session(SMTP_STATE *state)
     bad_session = THIS_SESSION_IS_BAD;		/* smtp_quit() may fail */
     if (THIS_SESSION_IS_EXPIRED)
 	smtp_quit(state);			/* also disables caching */
-    if (THIS_SESSION_IS_CACHED) {
+    if (THIS_SESSION_IS_CACHED
+	/* Redundant tests for safety... */
+	&& vstream_ferror(session->stream) == 0
+	&& vstream_ftimeout(session->stream) == 0
+	&& vstream_feof(session->stream) == 0) {
 	smtp_save_session(state);
     } else {
 	smtp_session_free(session);
@@ -495,6 +499,7 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
 	    && smtp_helo(state) != 0) {
 	    if (!THIS_SESSION_IS_DEAD
 		&& vstream_ferror(session->stream) == 0
+		&& vstream_ftimeout(session->stream) == 0
 		&& vstream_feof(session->stream) == 0)
 		smtp_quit(state);
 	} else {
@@ -873,6 +878,7 @@ static void smtp_connect_remote(SMTP_STATE *state, const char *nexthop,
 		     */
 		    if (!THIS_SESSION_IS_DEAD
 			&& vstream_ferror(session->stream) == 0
+			&& vstream_ftimeout(session->stream) == 0
 			&& vstream_feof(session->stream) == 0)
 			smtp_quit(state);
 		} else {
