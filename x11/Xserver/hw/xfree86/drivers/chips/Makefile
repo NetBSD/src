@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2006/12/21 00:24:04 macallan Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -41,6 +41,10 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/chips \
 		-I${XSERVERINCDIR}
 
 CPPFLAGS+=	-DPSZ=8
+
+.if ${MACHINE} == "macppc"
+CPPFLAGS+=	-DNO_VBE
+.endif
 
 BUILDSYMLINKS=	ct_accel.c ct_accelmm.c \
 		ct_accel.c ct_accelhi.c
