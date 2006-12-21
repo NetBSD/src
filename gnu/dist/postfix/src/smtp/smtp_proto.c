@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_proto.c,v 1.1.1.13 2006/11/07 02:58:41 rpaulo Exp $	*/
+/*	$NetBSD: smtp_proto.c,v 1.1.1.14 2006/12/21 02:33:38 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -1016,6 +1016,8 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
     } while (0)
 
 #define RETURN(x) do { \
+	if (recv_state != SMTP_STATE_LAST) \
+	    DONT_CACHE_THIS_SESSION; \
 	vstring_free(next_command); \
 	if (survivors) \
 	    myfree((char *) survivors); \
@@ -1634,7 +1636,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		session->mime_state = mime_state_alloc(downgrading ?
 						       MIME_OPT_DOWNGRADE
 						 | MIME_OPT_REPORT_NESTING :
-						    MIME_OPT_REPORT_NESTING,
+						       MIME_OPT_DISABLE_MIME,
 						       smtp_generic_maps ?
 						       smtp_header_rewrite :
 						       smtp_header_out,

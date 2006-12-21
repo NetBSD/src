@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_entry.c,v 1.1.1.4 2006/07/19 01:17:34 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_entry.c,v 1.1.1.5 2006/12/21 02:33:00 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -239,7 +239,7 @@ void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
 #define FUDGE(x)	((x) * (var_qmgr_fudge / 100.0))
     message->refcount--;
     if (message->rcpt_offset > 0
-	&& qmgr_recipient_count < FUDGE(var_qmgr_rcpt_limit))
+	&& qmgr_recipient_count < FUDGE(var_qmgr_rcpt_limit) - 100)
 	qmgr_message_realloc(message);
     if (message->refcount == 0)
 	qmgr_active_done(message);
