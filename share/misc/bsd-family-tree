@@ -198,12 +198,16 @@ FreeBSD 5.2           |      |                 |                       |
  |     |     |        |      | NetBSD 2.1      |                       |
  |     |     |        |      |                 |                       |
  |     |     |        |   NetBSD 3.0           |                       |
- |     |     |        |      |    |            |                 DragonFly 1.4.0
- |     |     |        |      |    |        OpenBSD 3.9                 |
- |  FreeBSD  |        |      |    |            |                       |
- |    6.1    |        |      |    |            |                       |
- |     |  FreeBSD 5.5 |      |    |            |                       |
- |     V              |      |   NetBSD 3.0.1  |                 DragonFly 1.6.0
+ |     |     |        |      | |  |            |                 DragonFly 1.4.0
+ |     |     |        |      | |  |        OpenBSD 3.9                 |
+ |  FreeBSD  |        |      | |  |            |                       |
+ |    6.1    |        |      | |  |            |                       |
+ |     |  FreeBSD 5.5 |      | |  |            |                       |
+ |     |              |      | | NetBSD 3.0.1  |                 DragonFly 1.6.0
+ |     |              |      | |  |            |                       |
+ |     V              |      | |  |        OpenBSD 4.0                 |
+ |                    |      | | NetBSD 3.0.2  |                       |
+ |                    |      | NetBSD 3.1      |                       |
  |                    |      |                 |                       |
 FreeBSD 7 -current    |  NetBSD -current  OpenBSD -current             |
  |                    |      |                 |                       |
@@ -451,6 +455,9 @@ FreeBSD 6.1		2006-05-08 [FBD]
 FreeBSD 5.5		2006-05-25 [FBD]
 NetBSD 3.0.1		2006-07-24 [NBD] (security/critical release)
 DragonFly 1.6.0		2006-07-24 [DFB]
+OpenBSD 4.0		2006-11-01 [OBD]
+NetBSD 3.0.2		2006-11-04 [NBD] (security/critical release)
+NetBSD 3.1		2006-11-04 [NBD]
 
 Bibliography
 ------------------------
@@ -511,4 +518,4 @@ Steven M. Schultz for providing 2.8BSD, 2.10BSD, 2.11BSD manual pages.
 Copyright (c) 1997-2004 Wolfram Schneider <wosch@FreeBSD.ORG>
 URL: http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
 
-$FreeBSD: src/share/misc/bsd-family-tree,v 1.107 2006/08/01 15:26:09 maxim Exp $
+$FreeBSD: src/share/misc/bsd-family-tree,v 1.109 2006/11/05 15:56:45 maxim Exp $
