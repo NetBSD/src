@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2006/11/18 16:40:21 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2006/12/21 15:55:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -44,12 +44,10 @@
 #include <sys/queue.h>
 
 #define	IPL_NONE	0	/* disable only this interrupt */
-
 #define	IPL_SOFT	1	/* generic software interrupts */
 #define	IPL_SOFTCLOCK	2	/* clock software interrupts */
 #define	IPL_SOFTNET	3	/* network software interrupts */
 #define	IPL_SOFTSERIAL	4	/* serial software interrupts */
-
 #define	IPL_BIO		5	/* disable block I/O interrupts */
 #define	IPL_NET		6	/* disable network interrupts */
 #define	IPL_TTY		7	/* disable terminal interrupts */
@@ -62,7 +60,6 @@
 #define	IPL_HIGH	8	/* disable all interrupts */
 #define	IPL_LOCK	IPL_HIGH
 
-#define	_IPL_NSOFT	4	/* max soft IPL + 1 */
 #define	_IPL_N		9	/* max IPL + 1 */
 
 #define	_IPL_SI0_FIRST	IPL_SOFT
@@ -71,7 +68,14 @@
 #define	_IPL_SI1_FIRST	IPL_SOFTNET
 #define	_IPL_SI1_LAST	IPL_SOFTSERIAL
 
-#define	IPL_SOFTNAMES {							\
+#define	SI_SOFT		0
+#define	SI_SOFTCLOCK	1
+#define	SI_SOFTNET	2
+#define	SI_SOFTSERIAL	3
+
+#define	SI_NQUEUES	4
+
+#define	SI_QUEUENAMES {							\
 	"misc",								\
 	"clock",							\
 	"net",								\
@@ -89,7 +93,6 @@
 #ifdef	_KERNEL
 
 extern const uint32_t ipl_sr_bits[_IPL_N];
-extern const uint32_t ipl_si_to_sr[_IPL_NSOFT];
 
 int _splraise(int);
 int _spllower(int);
@@ -106,7 +109,24 @@ void _clrsoftintr(int);
 
 #define	spllowersoftclock() _spllower(ipl_sr_bits[IPL_SOFTCLOCK])
 
-#define	splraiseipl(x)	_splraise(ipl_sr_bits[x])
+typedef int ipl_t;
+typedef struct {
+	ipl_t _sr;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._sr = ipl_sr_bits[ipl]};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._sr);
+}
 
 #include <sys/spl.h>
 

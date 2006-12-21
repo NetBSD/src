@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.21 2006/12/01 20:41:23 drochner Exp $	*/
+/*	$NetBSD: ubt.c,v 1.22 2006/12/21 15:55:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.21 2006/12/01 20:41:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.22 2006/12/21 15:55:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -456,7 +456,7 @@ USB_ATTACH(ubt)
 	sc->sc_unit.hci_start_cmd = ubt_xmit_cmd_start;
 	sc->sc_unit.hci_start_acl = ubt_xmit_acl_start;
 	sc->sc_unit.hci_start_sco = ubt_xmit_sco_start;
-	sc->sc_unit.hci_ipl = IPL_USB;	/* XXX: IPL_SOFTUSB ?? */
+	sc->sc_unit.hci_ipl = makeiplcookie(IPL_USB); /* XXX: IPL_SOFTUSB ?? */
 	hci_attach(&sc->sc_unit);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,

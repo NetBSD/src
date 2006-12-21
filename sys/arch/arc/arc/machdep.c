@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2006/09/09 00:47:54 gdamore Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99 2006/12/21 15:55:22 yamt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2006/09/09 00:47:54 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2006/12/21 15:55:22 yamt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -218,11 +218,11 @@ void arc_sysreset(bus_addr_t, bus_size_t);
 int	safepri = MIPS3_PSL_LOWIPL;
 
 const uint32_t *ipl_sr_bits;
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 extern char kernel_text[], edata[], end[];

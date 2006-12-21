@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.7 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: hci.h,v 1.8 2006/12/21 15:55:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.7 2006/11/16 01:33:45 christos Exp $
+ * $Id: hci.h,v 1.8 2006/12/21 15:55:25 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2122,7 +2122,7 @@ struct hci_unit {
 		(struct hci_unit *);
 	void	(*hci_start_sco)	/* initiate sco output routine */
 		(struct hci_unit *);
-	int	hci_ipl;		/* to block queue operations */
+	ipl_cookie_t hci_ipl;		/* to block queue operations */
 
 	/* input queues */
 	void			*hci_rxint;	/* receive interrupt cookie */

@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.7 2005/11/11 23:45:56 simonb Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.8 2006/12/21 15:55:24 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.7 2005/11/11 23:45:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.8 2006/12/21 15:55:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,11 +64,11 @@ static struct sb1250_ihand sb1250_ihands[64];		/* XXX */
  * This is a mask of bits to clear in the SR when we go to a
  * given software interrupt priority level.
  */
-const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 #define	SB1250_I_IMR_ADDR	(MIPS_PHYS_TO_KSEG1(0x10020000 + 0x0028))
@@ -209,4 +209,29 @@ sb1250_intr_establish(u_int num, u_int ipl,
 	splx(s);
 
 	return (&sb1250_ihands[num]);
+}
+
+static const int ipl2spl_table[] = {
+	[IPL_NONE] = 0,
+	[IPL_SOFT] = _IMR_SOFT,
+	[IPL_SOFTCLOCK] = _IMR_SOFT,
+	[IPL_SOFTNET] = _IMR_SOFT,
+	[IPL_SOFTSERIAL] = _IMR_SOFT,
+	[IPL_BIO] = _IMR_VM,
+	[IPL_NET] = _IMR_VM,
+	[IPL_TTY] = _IMR_VM,
+	[IPL_VM] = _IMR_VM,
+	[IPL_CLOCK] = _IMR_SCHED,
+	[IPL_STATCLOCK] = _IMR_SCHED,
+	[IPL_SCHED] = _IMR_SCHED,
+	[IPL_SERIAL] = _IMR_SERIAL,
+	[IPL_HIGH] = _IMR_HIGH,
+	[IPL_LOCK] = _IMR_HIGH,
+};
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
 }

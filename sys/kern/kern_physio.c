@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.76 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.77 2006/12/21 15:55:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.76 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.77 2006/12/21 15:55:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ physio_init(void)
 	KASSERT(physio_workqueue == NULL);
 
 	error = workqueue_create(&physio_workqueue, "physiod",
-	    physio_done, NULL, PRIBIO, 0/* IPL_BIO notyet */, 0);
+	    physio_done, NULL, PRIBIO, IPL_BIO, 0);
 
 	return error;
 }

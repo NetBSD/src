@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.9 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.10 2006/12/21 15:55:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10 2006/12/21 15:55:23 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -52,16 +52,16 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9 2005/12/11 12:17:33 christos Exp $
 extern const u_int32_t __ipl_sr_bits_vr[];
 extern const u_int32_t __ipl_sr_bits_tx[];
 
-const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+const u_int32_t ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 const u_int32_t *ipl_sr_bits;
 struct hpcmips_soft_intrhand *softnet_intrhand;
-struct hpcmips_soft_intr hpcmips_soft_intrs[_IPL_NSOFT];
+struct hpcmips_soft_intr hpcmips_soft_intrs[SI_NQUEUES];
 
 void
 intr_init()
@@ -105,7 +105,7 @@ softintr(u_int32_t ipending)
 
 	_clrsoftintr(ipending);
 
-	for (i = _IPL_NSOFT - 1; i >= 0; i--) {
+	for (i = SI_NQUEUES - 1; i >= 0; i--) {
 		if ((ipending & ipl_si_to_sr[i]) == 0)
 			continue;
 
@@ -142,14 +142,14 @@ softintr(u_int32_t ipending)
 void
 softintr_init(void)
 {
-	static const char *softintr_names[] = IPL_SOFTNAMES;
+	static const char *softintr_names[] = SI_QUEUENAMES;
 	struct hpcmips_soft_intr *asi;
 	int i;
 
-	for (i = 0; i < _IPL_NSOFT; i++) {
+	for (i = 0; i < SI_NQUEUES; i++) {
 		asi = &hpcmips_soft_intrs[i];
 		TAILQ_INIT(&asi->softintr_q);
-		asi->softintr_ipl = IPL_SOFT + i;
+		asi->softintr_siq = i;
 		simple_lock_init(&asi->softintr_slock);
 		evcnt_attach_dynamic(&asi->softintr_evcnt, EVCNT_TYPE_INTR,
 		    NULL, "soft", softintr_names[i]);
@@ -162,6 +162,30 @@ softintr_init(void)
 	assert(softnet_intrhand != NULL);
 }
 
+static int
+ipl2si(ipl_t ipl)
+{
+	int si;
+
+	switch (ipl) {
+	case IPL_SOFT:
+		si = SI_SOFT;
+		break;
+	case IPL_SOFTCLOCK:
+		si = SI_SOFTCLOCK;
+		break;
+	case IPL_SOFTNET:
+		si = SI_SOFTNET;
+		break;
+	case IPL_SOFTSERIAL:
+		si = SI_SOFTSERIAL;
+		break;
+	default:
+		panic("ipl2si: %d", ipl);
+	}
+	return si;
+}
+
 /*
  * softintr_establish:		[interface]
  *
@@ -172,12 +196,10 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 {
 	struct hpcmips_soft_intr *asi;
 	struct hpcmips_soft_intrhand *sih;
+	int si;
 
-	if (__predict_false(ipl >= (IPL_SOFT + _IPL_NSOFT) ||
-			    ipl < IPL_SOFT))
-		panic("softintr_establish");
-
-	asi = &hpcmips_soft_intrs[ipl - IPL_SOFT];
+	si = ipl2si(ipl);
+	asi = &hpcmips_soft_intrs[si];
 
 	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
 	if (__predict_true(sih != NULL)) {

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4 2002/05/05 22:07:59 jdolecek Exp $ */
+/* $NetBSD: intr.h,v 1.5 2006/12/21 15:55:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,6 +65,40 @@
 
 int spl0 __P((void));
 
+#define	IPL_NONE	0
+#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTNET	2
+#define	IPL_BIO		3
+#define	IPL_NET		4
+#define	IPL_CLOCK	5
+#define	IPL_STATCLOCK	6
+#define	IPL_TTY		7
+#define	IPL_VM		8
+#define	IPL_SCHED	9
+#define	IPL_HIGH	10
+#define	IPL_LOCK	11
+#define	NIPLS		12
+
+extern const int ipl2spl_table[NIPLS];
+
+typedef int ipl_t;
+typedef struct {
+	int _spl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._spl);
+}
 #endif /* _KERNEL */
 
 #endif	/* _MACHINE_INTR_H */

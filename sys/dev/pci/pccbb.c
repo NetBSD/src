@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.137 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.138 2006/12/21 15:55:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.137 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.138 2006/12/21 15:55:25 yamt Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1116,45 +1116,13 @@ pccbbintr_function(sc)
 {
 	int retval = 0, val;
 	struct pccbb_intrhand_list *pil;
-	int s, splchanged;
+	int s;
 
 	for (pil = LIST_FIRST(&sc->sc_pil); pil != NULL;
 	     pil = LIST_NEXT(pil, pil_next)) {
-		/*
-		 * XXX priority change.  gross.  I use if-else
-		 * sentense instead of switch-case sentense because of
-		 * avoiding duplicate case value error.  More than one
-		 * IPL_XXX use same value.  It depends on
-		 * implimentation.
-		 */
-		splchanged = 1;
-		if (pil->pil_level == IPL_SERIAL) {
-			s = splserial();
-		} else if (pil->pil_level == IPL_HIGH) {
-			s = splhigh();
-		} else if (pil->pil_level == IPL_CLOCK) {
-			s = splclock();
-		} else if (pil->pil_level == IPL_AUDIO) {
-			s = splaudio();
-		} else if (pil->pil_level == IPL_VM) {
-			s = splvm();
-		} else if (pil->pil_level == IPL_TTY) {
-			s = spltty();
-		} else if (pil->pil_level == IPL_SOFTSERIAL) {
-			s = splsoftserial();
-		} else if (pil->pil_level == IPL_NET) {
-			s = splnet();
-		} else {
-			s = 0; /* XXX: gcc */
-			splchanged = 0;
-			/* XXX: ih lower than IPL_BIO runs w/ IPL_BIO. */
-		}
-
+		s = splraiseipl(pil->pil_icookie);
 		val = (*pil->pil_func)(pil->pil_arg);
-
-		if (splchanged != 0) {
-			splx(s);
-		}
+		splx(s);
 
 		retval = retval == 1 ? 1 :
 		    retval == 0 ? val : val != 0 ? val : retval;
@@ -1851,7 +1819,7 @@ pccbb_intr_establish(struct pccbb_softc *sc, int irq, int level,
 
 	newpil->pil_func = func;
 	newpil->pil_arg = arg;
-	newpil->pil_level = level;
+	newpil->pil_icookie = makeiplcookie(level);
 
 	if (LIST_EMPTY(&sc->sc_pil)) {
 		LIST_INSERT_HEAD(&sc->sc_pil, newpil, pil_next);

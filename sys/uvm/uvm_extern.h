@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.123 2006/12/07 14:06:51 elad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.124 2006/12/21 15:55:26 yamt Exp $	*/
 
 /*
  *
@@ -681,7 +681,8 @@ void			uvm_aio_aiodone(struct buf *);
 
 /* uvm_pdaemon.c */
 void			uvm_pageout(void *);
-void			uvm_aiodone_daemon(void *);
+struct work;
+void			uvm_aiodone_worker(struct work *, void *);
 void			uvm_estimatepageable(int *, int *);
 
 /* uvm_pglist.c */

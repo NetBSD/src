@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.33 2006/05/04 12:18:54 yamt Exp $ */
+/*	$NetBSD: psl.h,v 1.34 2006/12/21 15:55:25 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -366,9 +366,22 @@ static __inline int name(void) \
 }
 #endif
 
-static __inline int __attribute__((__unused__))
-splraiseipl(int newpil)
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
 {
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static __inline int __attribute__((__unused__))
+splraiseipl(ipl_cookie_t icookie)
+{
+	int newpil = icookie._ipl;
 	int oldpil;
 
 	/*

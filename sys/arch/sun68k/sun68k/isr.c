@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.10 2006/10/10 13:26:47 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.11 2006/12/21 15:55:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.10 2006/10/10 13:26:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.11 2006/12/21 15:55:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,6 +297,29 @@ softintr_init(void)
 					    (void (*)(void *)) netintr, NULL);
 }
 
+static int
+ipl2si(ipl_t ipl)
+{
+	int si;
+
+	switch (ipl) {
+	case IPL_SOFTNET:
+	case IPL_SOFTCLOCK:
+		si = _IPL_SOFT_LEVEL1;
+		break;
+	case IPL_BIO:	/* used by fd(4), which uses ipl 6 for hwintr */
+		si = _IPL_SOFT_LEVEL2;
+		break;
+	case IPL_SOFTSERIAL:
+		si = _IPL_SOFT_LEVEL3;
+		break;
+	default:
+		panic("ipl2si: %d\n", ipl);
+	}
+
+	return si;
+}
+
 /*
  * This establishes a soft interrupt handler.
  */
@@ -305,18 +328,11 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 {
 	struct softintr_handler *sh;
 	struct softintr_head *shd;
-	int level;
+	int si;
 
-	if (ipl == IPL_SOFT_LEVEL1)
-		level = _IPL_SOFT_LEVEL1;
-	else if (ipl == IPL_SOFT_LEVEL2)
-		level = _IPL_SOFT_LEVEL2;
-	else if (ipl == IPL_SOFT_LEVEL3)
-		level = _IPL_SOFT_LEVEL3;
-	else
-		panic("softintr_establish: unsupported soft IPL");
+	si = ipl2si(ipl);
+	shd = &soft_level_heads[si - _IPL_SOFT_LEVEL_MIN];
 
-	shd = &soft_level_heads[level - _IPL_SOFT_LEVEL_MIN];
 	sh = malloc(sizeof(*sh), M_SOFTINTR, M_NOWAIT);
 	if (sh == NULL)
 		return NULL;
@@ -359,4 +375,35 @@ get_vector_entry(int entry)
 	if ((entry <0) || (entry >= NVECTORS))
 	panic("get_vector_entry: setting vector too high or low");
 	return ((void *) vector_table[entry]);
+}
+
+static const int ipl2psl_table[] = {
+	[IPL_NONE] = PSL_IPL0,
+	[IPL_SOFTCLOCK] = PSL_IPL1,
+	[IPL_SOFTNET] = PSL_IPL1,
+	[IPL_BIO] = PSL_IPL2,
+	[IPL_NET] = PSL_IPL3,
+	[IPL_SOFTSERIAL] = PSL_IPL3,
+	[IPL_TTY] = PSL_IPL4,
+	[IPL_LPT] = PSL_IPL4,
+	[IPL_VM] = PSL_IPL4,
+#if 0
+	[IPL_AUDIO] =
+#endif
+	[IPL_CLOCK] = PSL_IPL5,
+	[IPL_STATCLOCK] = PSL_IPL5,
+	[IPL_SERIAL] = PSL_IPL6,
+	[IPL_SCHED] = PSL_IPL7,
+	[IPL_HIGH] = PSL_IPL7,
+	[IPL_LOCK] = PSL_IPL7,
+#if 0
+	[IPL_IPI] =
+#endif
+};
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl] | PSL_S};
 }

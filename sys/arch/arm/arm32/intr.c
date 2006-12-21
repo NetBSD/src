@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.14 2006/12/21 15:55:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.14 2006/12/21 15:55:22 yamt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -230,6 +230,48 @@ set_spl_masks()
 		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_NET);
 	for (loop = 0; loop < _SPL_SOFTCLOCK; ++loop)
 		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_CLOCK);
+}
+
+int
+ipl_to_spl(int ipl)
+{
+
+	switch (ipl) {
+	case IPL_NONE:
+		return _SPL_0;
+#if defined(IPL_SOFTCLOCK)
+	case IPL_SOFTCLOCK:
+		return _SPL_SOFTCLOCK;
+#endif /* defined(IPL_SOFTCLOCK) */
+#if defined(IPL_SOFTNET)
+	case IPL_SOFTNET:
+		return _SPL_SOFTNET;
+#endif /* defined(IPL_SOFTNET) */
+	case IPL_BIO:
+		return _SPL_BIO;
+	case IPL_NET:
+		return _SPL_NET;
+#if defined(IPL_SOFTSERIAL)
+	case IPL_SOFTSERIAL:
+		return _SPL_SOFTSERIAL;
+#endif /* defined(IPL_SOFTSERIAL) */
+	case IPL_TTY:
+		return _SPL_TTY;
+	case IPL_VM:
+		return _SPL_VM;
+	case IPL_AUDIO:
+		return _SPL_AUDIO;
+	case IPL_CLOCK:
+		return _SPL_CLOCK;
+	case IPL_STATCLOCK:
+		return _SPL_STATCLOCK;
+	case IPL_HIGH:
+		return _SPL_HIGH;
+	case IPL_SERIAL:
+		return _SPL_SERIAL;
+	default:
+		panic("bogus ipl %d", ipl);
+	}
 }
 
 #ifdef DIAGNOSTIC

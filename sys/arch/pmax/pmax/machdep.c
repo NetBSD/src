@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.214 2006/04/15 17:51:34 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.215 2006/12/21 15:55:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2006/04/15 17:51:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215 2006/12/21 15:55:24 yamt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -157,8 +157,6 @@ phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
  * disables mips1 FPU interrupts.
  */
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
-
-struct splvec	splvec;			/* XXX will go XXX */
 
 void	mach_init __P((int, char *[], int, int, u_int, char *)); /* XXX */
 

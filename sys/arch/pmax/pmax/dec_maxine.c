@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.49 2006/07/29 19:10:58 ad Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.50 2006/12/21 15:55:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.49 2006/07/29 19:10:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.50 2006/12/21 15:55:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,6 +146,24 @@ static unsigned	kn02ca_clkread __P((void));
 static u_int32_t xine_tc3_imask;
 static unsigned latched_cycle_cnt;
 
+static const int dec_maxine_ipl2spl_table[] = {
+	[IPL_NONE] = 0,
+	[IPL_SOFT] = _SPL_SOFT,
+	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
+	[IPL_SOFTNET] = _SPL_SOFTNET,
+	[IPL_SOFTSERIAL] = _SPL_SOFTSERIAL,
+	/*
+	 * MAXINE IOASIC interrupts come through INT 3, while
+	 * clock interrupt does via INT 1.  splclock and splstatclock
+	 * should block IOASIC activities.
+	 */
+	[IPL_BIO] = MIPS_SPL3,
+	[IPL_NET] = MIPS_SPL3,
+	[IPL_TTY] = MIPS_SPL3,
+	[IPL_VM] = MIPS_SPL3,
+	[IPL_CLOCK] = MIPS_SPL_0_1_3,
+	[IPL_STATCLOCK] = MIPS_SPL_0_1_3,
+};
 
 void
 dec_maxine_init()
@@ -165,17 +183,7 @@ dec_maxine_init()
  
 	ioasic_base = MIPS_PHYS_TO_KSEG1(XINE_SYS_ASIC);
 
-	/*
-	 * MAXINE IOASIC interrupts come through INT 3, while
-	 * clock interrupt does via INT 1.  splclock and splstatclock
-	 * should block IOASIC activities.
-	 */
-	splvec.splbio = MIPS_SPL3; 
-	splvec.splnet = MIPS_SPL3;
-	splvec.spltty = MIPS_SPL3;
-	splvec.splvm = MIPS_SPL3;
-	splvec.splclock = MIPS_SPL_0_1_3;
-	splvec.splstatclock = MIPS_SPL_0_1_3;
+	ipl2spl_table = dec_maxine_ipl2spl_table;
  
 	/* calibrate cpu_mhz value */  
 	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_1);
