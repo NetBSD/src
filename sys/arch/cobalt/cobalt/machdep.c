@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 2006/09/16 13:31:44 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76 2006/12/21 15:55:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2006/09/16 13:31:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2006/12/21 15:55:22 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -437,11 +437,11 @@ cpu_reboot(int howto, char *bootstr)
 #define ELCR_WRITE(reg, val)	\
     bus_space_write_1(icu_bst, elcr_bsh, (reg), (val))
 
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 u_int icu_imen;
@@ -905,4 +905,25 @@ read_board_id(void)
 	*pcicfg_addr = 0;
 
 	return COBALT_BOARD_ID(reg); 
+}
+
+static const int ipl2spl_table[] = {
+	[IPL_NONE] = 0,
+	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] = MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1,
+	[IPL_SOFTSERIAL] = MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1,
+	[IPL_BIO] = SPLBIO,
+	[IPL_NET] = SPLNET,
+	[IPL_TTY] = SPLTTY,
+	[IPL_VM] = SPLCLOCK,
+	[IPL_CLOCK] = SPLCLOCK,
+	[IPL_STATCLOCK] = SPLCLOCK,
+	[IPL_HIGH] = MIPS_INT_MASK,
+};
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
 }

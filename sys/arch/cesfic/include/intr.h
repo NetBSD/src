@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2005/12/11 12:17:05 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 2006/12/21 15:55:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -94,24 +94,15 @@
 #define spl6()  _spl(PSL_S|PSL_IPL6)
 #define spl7()  _spl(PSL_S|PSL_IPL7)
 
-/*
- * These four globals contain the appropriate PSL_S|PSL_IPL? values
- * to raise interrupt priority to the requested level.
- */
-extern	unsigned short cesfic_bioipl;
-extern	unsigned short cesfic_netipl;
-extern	unsigned short cesfic_ttyipl;
-extern	unsigned short cesfic_impipl;
-
 /* These spl calls are used by machine-independent code. */
 #define	spllowersoftclock() spl1()
 #define	splsoft()	splraise1()
 #define splsoftclock()	splsoft()
 #define splsoftnet()	splsoft()
-#define splbio()	_splraise(cesfic_bioipl)
-#define splnet()	_splraise(cesfic_netipl)
-#define spltty()	_splraise(cesfic_ttyipl)
-#define splvm()		_splraise(cesfic_impipl)
+#define splbio()	_splraise(ipl2spl_table[IPL_BIO])
+#define splnet()	_splraise(ipl2spl_table[IPL_NET])
+#define spltty()	_splraise(ipl2spl_table[IPL_TTY])
+#define splvm()		_splraise(ipl2spl_table[IPL_VM])
 #define splclock()	spl6()
 #define splstatclock()	spl6()
 #define splhigh()	spl7()
@@ -122,6 +113,41 @@ extern	unsigned short cesfic_impipl;
 #define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
 
 int	spl0 __P((void));
+
+#define	IPL_NONE	0
+#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTNET	2
+#define	IPL_BIO		3
+#define	IPL_NET		4
+#define	IPL_TTY		5
+#define	IPL_VM		6
+#define	IPL_CLOCK	7
+#define	IPL_STATCLOCK	8
+#define	IPL_SCHED	9
+#define	IPL_HIGH	10
+#define	IPL_LOCK	11
+#define	NIPLS		12
+
+extern int ipl2spl_table[NIPLS];
+
+typedef int ipl_t;
+typedef struct {
+	int _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(ipl2spl_table[icookie._ipl]);
+}
 #endif /* _KERNEL && !_LOCORE */
 
 #endif /* !_CESFIC_INTR_H_ */

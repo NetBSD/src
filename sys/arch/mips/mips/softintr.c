@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.4 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: softintr.c,v 1.5 2006/12/21 15:55:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.4 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.5 2006/12/21 15:55:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.4 2005/12/11 12:18:09 christos Exp $"
 /* XXX For legacy software interrupts. */
 struct mips_soft_intrhand *softnet_intrhand;
 
-struct mips_soft_intr mips_soft_intrs[_IPL_NSOFT];
+struct mips_soft_intr mips_soft_intrs[SI_NQUEUES];
 
 /*
  * softintr_init:
@@ -63,15 +63,15 @@ struct mips_soft_intr mips_soft_intrs[_IPL_NSOFT];
 void
 softintr_init(void)
 {
-	static const char *softintr_names[] = IPL_SOFTNAMES;
+	static const char *softintr_names[] = SI_QUEUENAMES;
 	struct mips_soft_intr *msi;
 	int i;
 
-	for (i = 0; i < _IPL_NSOFT; i++) {
+	for (i = 0; i < SI_NQUEUES; i++) {
 		msi = &mips_soft_intrs[i];
 		TAILQ_INIT(&msi->softintr_q);
 		simple_lock_init(&msi->softintr_slock);
-		msi->softintr_ipl = IPL_SOFT + i;
+		msi->softintr_siq = i;
 		evcnt_attach_dynamic(&msi->softintr_evcnt, EVCNT_TYPE_INTR,
 		    NULL, "soft", softintr_names[i]);
 	}
@@ -81,6 +81,30 @@ softintr_init(void)
 	    (void (*)(void *))netintr, NULL);
 
 	KASSERT(softnet_intrhand != NULL);
+}
+
+static int
+ipl2si(ipl_t ipl)
+{
+	int si;
+
+	switch (ipl) {
+	case IPL_SOFT:
+		si = SI_SOFT;
+		break;
+	case IPL_SOFTCLOCK:
+		si = SI_SOFTCLOCK;
+		break;
+	case IPL_SOFTNET:
+		si = SI_SOFTNET;
+		break;
+	case IPL_SOFTSERIAL:
+		si = SI_SOFTSERIAL;
+		break;
+	default:
+		panic("ipl2si: %d", ipl);
+	}
+	return si;
 }
 
 /*
@@ -93,12 +117,10 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 {
 	struct mips_soft_intr *msi;
 	struct mips_soft_intrhand *sih;
+	int si;
 
-	if (__predict_false(ipl >= (IPL_SOFT + _IPL_NSOFT) ||
-			    ipl < IPL_SOFT))
-		panic("softintr_establish");
-
-	msi = &mips_soft_intrs[ipl - IPL_SOFT];
+	si = ipl2si(ipl);
+	msi = &mips_soft_intrs[si];
 
 	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
 	if (__predict_true(sih != NULL)) {
@@ -149,7 +171,7 @@ softintr_dispatch(ipending)
 	struct mips_soft_intrhand *sih;
 	int i, s;
 
-	for (i = _IPL_NSOFT - 1; i >= 0; i--) {
+	for (i = SI_NQUEUES - 1; i >= 0; i--) {
 		if ((ipending & mips_ipl_si_to_sr[i]) == 0)
 			continue;
 

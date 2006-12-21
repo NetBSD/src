@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2006/02/16 20:17:14 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2006/12/21 15:55:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,10 @@
 #define	IPL_VM		3	/* memory allocation */
 #define	IPL_AUDIO	2	/* audio */
 #define	IPL_CLOCK	1	/* clock */
+#define	IPL_STATCLOCK	IPL_CLOCK
 #define	IPL_HIGH	1	/* everything */
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
 #define	IPL_SERIAL	0	/* serial */
 #define	NIPL		10
 
@@ -222,6 +225,25 @@ set_sint(pending)
 
 #define splsched()	splhigh()
 #define spllock()	splhigh()
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return splraise(imask[icookie._ipl]);
+}
 
 #endif /* !_LOCORE */
 

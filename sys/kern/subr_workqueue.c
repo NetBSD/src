@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.7 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.8 2006/12/21 15:55:25 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.7 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.8 2006/12/21 15:55:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ struct workqueue {
 	void *wq_arg;
 	const char *wq_name;
 	int wq_prio;
-	int wq_ipl;
+	ipl_cookie_t wq_ipl;
 };
 
 #define	POISON	0xaabbccdd
@@ -62,11 +62,7 @@ workqueue_lock(struct workqueue *wq, struct workqueue_queue *q)
 {
 	int s;
 
-#if 0 /* notyet */
 	s = splraiseipl(wq->wq_ipl);
-#else
-	s = splhigh(); /* XXX */
-#endif
 	simple_lock(&q->q_lock);
 	q->q_savedipl = s;
 }
@@ -144,7 +140,7 @@ workqueue_init(struct workqueue *wq, const char *name,
     int prio, int ipl)
 {
 
-	wq->wq_ipl = ipl;
+	wq->wq_ipl = makeiplcookie(ipl);
 	wq->wq_prio = prio;
 	wq->wq_name = name;
 	wq->wq_func = callback_func;

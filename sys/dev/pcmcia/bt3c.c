@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.6 2006/11/16 01:33:20 christos Exp $ */
+/* $NetBSD: bt3c.c,v 1.7 2006/12/21 15:55:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.6 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.7 2006/12/21 15:55:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -880,7 +880,7 @@ bt3c_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_unit.hci_start_cmd = bt3c_start;
 	sc->sc_unit.hci_start_acl = bt3c_start;
 	sc->sc_unit.hci_start_sco = bt3c_start;
-	sc->sc_unit.hci_ipl = IPL_TTY;
+	sc->sc_unit.hci_ipl = makeiplcookie(IPL_TTY);
 	hci_attach(&sc->sc_unit);
 
 	/* establish a power change hook */
@@ -968,7 +968,7 @@ bt3c_power(int why, void *arg)
 			sc->sc_unit.hci_start_cmd = bt3c_start;
 			sc->sc_unit.hci_start_acl = bt3c_start;
 			sc->sc_unit.hci_start_sco = bt3c_start;
-			sc->sc_unit.hci_ipl = IPL_TTY;
+			sc->sc_unit.hci_ipl = makeiplcookie(IPL_TTY);
 			hci_attach(&sc->sc_unit);
 		}
 		break;

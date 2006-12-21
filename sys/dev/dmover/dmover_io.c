@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.23 2006/07/28 08:51:05 ad Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.24 2006/12/21 15:55:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.23 2006/07/28 08:51:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.24 2006/12/21 15:55:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -152,7 +152,7 @@ dmio_cleaner_init(void)
 {
 
 	return workqueue_create(&dmio_cleaner, "dmioclean", dmio_usrreq_fini1,
-	    NULL, PWAIT, 0 /* IPL_SOFTCLOCK */, 0);
+	    NULL, PWAIT, IPL_SOFTCLOCK, 0);
 }
 
 /*

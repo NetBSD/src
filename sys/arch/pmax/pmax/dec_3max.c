@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.43 2006/07/29 19:10:58 ad Exp $ */
+/* $NetBSD: dec_3max.c,v 1.44 2006/12/21 15:55:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.43 2006/07/29 19:10:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.44 2006/12/21 15:55:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,20 @@ static void	dec_3max_intr_establish __P((struct device *, void *,
 
 #define	kn02_wbflush()	mips1_wbflush()	/* XXX to be corrected XXX */
 
+static const int dec_3max_ipl2spl_table[] = {
+	[IPL_NONE] = 0,
+	[IPL_SOFT] = _SPL_SOFT,
+	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
+	[IPL_SOFTNET] = _SPL_SOFTNET,
+	[IPL_SOFTSERIAL] = _SPL_SOFTSERIAL,
+	[IPL_BIO] = MIPS_SPL0,
+	[IPL_NET] = MIPS_SPL0,
+	[IPL_TTY] = MIPS_SPL0,
+	[IPL_VM] = MIPS_SPL0,
+	[IPL_CLOCK] = MIPS_SPL_0_1,
+	[IPL_STATCLOCK] = MIPS_SPL_0_1,
+};
+
 void
 dec_3max_init()
 {
@@ -161,12 +175,7 @@ dec_3max_init()
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
 
-	splvec.splbio = MIPS_SPL0;
-	splvec.splnet = MIPS_SPL0;
-	splvec.spltty = MIPS_SPL0;
-	splvec.splvm = MIPS_SPL0;
-	splvec.splclock = MIPS_SPL_0_1;
-	splvec.splstatclock = MIPS_SPL_0_1;
+	ipl2spl_table = dec_3max_ipl2spl_table;
 
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK), MIPS_INT_MASK_1);

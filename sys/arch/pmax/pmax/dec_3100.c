@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.42 2006/07/29 19:10:58 ad Exp $ */
+/* $NetBSD: dec_3100.c,v 1.43 2006/12/21 15:55:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.42 2006/07/29 19:10:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.43 2006/12/21 15:55:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,20 @@ static void	dec_3100_intr_establish __P((struct device *, void *,
 
 #define	kn01_wbflush()	mips1_wbflush() /* XXX to be corrected XXX */
 
+static const int dec_3100_ipl2spl_table[] = {
+	[IPL_NONE] = 0,
+	[IPL_SOFT] = _SPL_SOFT,
+	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
+	[IPL_SOFTNET] = _SPL_SOFTNET,
+	[IPL_SOFTSERIAL] = _SPL_SOFTSERIAL,
+	[IPL_BIO] = MIPS_SPL0,
+	[IPL_NET] = MIPS_SPL_0_1,
+	[IPL_TTY] = MIPS_SPL_0_1_2,
+	[IPL_VM] = MIPS_SPLHIGH,	/* ??? */
+	[IPL_CLOCK] = MIPS_SPL_0_1_2_3,
+	[IPL_STATCLOCK] = MIPS_SPL_0_1_2_3,
+};
+
 void
 dec_3100_init()
 {
@@ -155,12 +169,7 @@ dec_3100_init()
 	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
-	splvec.splbio = MIPS_SPL0;
-	splvec.splnet = MIPS_SPL_0_1;
-	splvec.spltty = MIPS_SPL_0_1_2;
-	splvec.splvm = MIPS_SPLHIGH;				/* ??? */
-	splvec.splclock = MIPS_SPL_0_1_2_3;
-	splvec.splstatclock = MIPS_SPL_0_1_2_3;
+	ipl2spl_table = dec_3100_ipl2spl_table;
 
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_3);

@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.h,v 1.1 2003/05/25 13:48:01 tsutsui Exp $	*/
+/*	$NetBSD: softintr.h,v 1.2 2006/12/21 15:55:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -44,11 +44,11 @@
 #include <sys/device.h>
 #include <sys/lock.h>
 
-extern const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT];
+extern const u_int32_t mips_ipl_si_to_sr[SI_NQUEUES];
 
 #define setsoft(x)							\
 do {									\
-	_setsoftintr(mips_ipl_si_to_sr[(x) - IPL_SOFT]);		\
+	_setsoftintr(mips_ipl_si_to_sr[x]);			\
 } while (/*CONSTCOND*/0)
 
 struct mips_soft_intrhand {
@@ -63,7 +63,7 @@ struct mips_soft_intr {
 	TAILQ_HEAD(,mips_soft_intrhand) softintr_q;
 	struct evcnt softintr_evcnt;
 	struct simplelock softintr_slock;
-	unsigned long softintr_ipl;
+	unsigned long softintr_siq;
 };
 
 void softintr_init(void);
@@ -82,7 +82,7 @@ do {									\
 	if (__sih->sih_pending == 0) {					\
 		TAILQ_INSERT_TAIL(&__msi->softintr_q, __sih, sih_q);	\
 		__sih->sih_pending = 1;					\
-		setsoft(__msi->softintr_ipl);				\
+		setsoft(__msi->softintr_siq);				\
 	}								\
 	simple_unlock(&__msi->softintr_slock);				\
 	splx(__s);							\
