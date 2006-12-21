@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.121 2006/12/18 12:50:08 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.122 2006/12/21 22:25:39 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.121 2006/12/18 12:50:08 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.122 2006/12/21 22:25:39 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -2493,7 +2493,7 @@ machdep_diskinfo(HANDLER_ARGS)
 static void
 mode_bits(HANDLER_ARGS)
 {
-	char buf[11], outbuf[100];
+	char buf[12], outbuf[100];
 	int o, m, *newp, rc;
 	size_t osz, nsz;
 	mode_t om, mm;
@@ -2558,7 +2558,6 @@ mode_bits(HANDLER_ARGS)
 	else {
 		memset(buf, 0, sizeof(buf));
 		strmode(om, buf);
-		buf[10] = '\0';
 		rc = snprintf(outbuf, sizeof(outbuf), "%04o (%s)", om, buf + 1);
 		display_string(pnode, sname, outbuf, rc, newp ? DISPLAY_OLD : DISPLAY_VALUE);
 	}
@@ -2570,7 +2569,6 @@ mode_bits(HANDLER_ARGS)
 		else {
 			memset(buf, 0, sizeof(buf));
 			strmode(mm, buf);
-			buf[10] = '\0';
 			rc = snprintf(outbuf, sizeof(outbuf), "%04o (%s)", mm, buf + 1);
 			display_string(pnode, sname, outbuf, rc, DISPLAY_NEW);
 		}
