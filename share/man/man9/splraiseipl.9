@@ -1,4 +1,4 @@
-.\"	$NetBSD: splraiseipl.9,v 1.1 2006/12/21 16:01:13 yamt Exp $
+.\"	$NetBSD: splraiseipl.9,v 1.2 2006/12/21 16:11:00 yamt Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -62,7 +62,7 @@ The following two lines are functional equivalents.
 	s = splbio();
 .Ed
 .Pp
-Becuase
+Because
 .Fn makeiplcookie
 can be slow and is not expected to be used in a perfomance critical path,
 it's better to do it beforehand.
