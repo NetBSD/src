@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_out.c,v 1.1.1.5 2006/07/19 01:17:20 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_out.c,v 1.1.1.6 2006/12/21 02:31:37 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -177,9 +177,22 @@ void    cleanup_out_header(CLEANUP_STATE *state, VSTRING *header_buf)
      * of such header lines. NB: This code destroys the header. We could try
      * to avoid clobbering it, but we're not going to use the data any
      * further.
+     * 
+     * XXX We prefer to truncate a header at the last line boundary before the
+     * header size limit. If this would undershoot the limit by more than
+     * 10%, we truncate between line boundaries to avoid losing too much
+     * text. This "unkind cut" may result in syntax errors and may trigger
+     * warnings from down-stream MTAs.
      */
     for (line = start; line; line = next_line) {
 	next_line = split_at(line, '\n');
+	if ((next_line ? next_line - 1 : line + strlen(line))
+	    > start + var_header_limit) {
+	    if (line - start > 0.9 * var_header_limit)	/* nice cut */
+		break;
+	    start[var_header_limit] = 0;	/* unkind cut */
+	    next_line = 0;
+	}
 	if (line == start || IS_SPACE_TAB(*line)) {
 	    cleanup_out_string(state, REC_TYPE_NORM, line);
 	} else {

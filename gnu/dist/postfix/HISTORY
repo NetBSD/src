@@ -12769,3 +12769,96 @@ Apologies for any names omitted.
 	Bugfix: null pointer bug when receiving a non-protocol
 	response on a cached SMTP/LMTP connection.  Report by Brian
 	Kantor.  Fix by Victor Duchovni.  File: smtp/smtp_reuse.c.
+
+20061113
+
+	Bugfix: the Postfix install/upgrade procedure broke with
+	non-default config_directory. File: conf/post-install.
+
+20061115
+
+	Bugfix: null pointer bug in end-of-header Milter action
+	when the last header line is too large.  Reported by Mark
+	Martinec. The root of the problem is that the MIME state
+	engine may execute up to three call-back functions when it
+	reaches the end of the headers, before it returns to the
+	caller; as long as call-backs return no result, each call-back
+	has to check for itself if a previous call-back ran into a
+	problem.  File: milter/milter8.c.
+
+	Workaround: reduce effective header_size_limit to 60000
+	when Milter inspection is enabled, to avoid breaking the
+	Milter protocol request length limit. File:
+	cleanup/cleanup_message.c.
+
+20061123
+
+	Workaround: more agressive early refill of in-memory
+	recipients to prevent a worst-case scenario where the queue
+	manager became starved until after the last batch of slow
+	in-memory recipients of jumbo multi-recipient mail. Files:
+	qmgr/qmgr_job.c.
+
+	Safety: don't read more than 5000 recipients at a time, to
+	avoid spending too much time away from interrupts.  File:
+	qmgr/qmgr_message.c.
+
+20061201
+
+	Workaround: don't complain with "Error 0" in the trivial-rewrite,
+	verify, proxymap or connection cache client when the server
+	exits after the client sends its request. We still complain,
+	however, when the problem persists.  Files: global/rewrite_clnt.c,
+	global/resolve_clnt.c, global/verify_clnt.c, global/scache_clnt.c,
+	global/dict_proxy.c.
+
+
+	Safety: the header_size_limit is now enforced more strictly,
+	to avoid inter-operability problems with the Milter protocol.
+	Long headers are truncated at a line boundary if possible,
+	otherwise they are cut between line boundaries. File:
+	cleanup/cleanup_out.c.
+
+20061203
+
+	Bugfix (introduced with Postfix 2.2): with SMTP server
+	tarpit delays of smtp_rset_timeout or larger, the SMTP
+	client could get out of sync with the server while reusing
+	a connection.  The symptoms were "recipient rejected .. in
+	reply to DATA".  Fix by Victor Duchovni and Wietse.  File:
+	smtp/smtp_proto.c.
+
+20061207
+
+	Compatibility with Postfix < 2.3: undo the change to bounce
+	instead of defer after pipe-to-command delivery fails with
+	a signal. File: global/pipe_command.c.
+
+20061208
+
+	Workaround: apparently, some mail software removes or hides
+	"<postmaster>" in the Postfix bounce text, because it
+	processes the text as if it were HTML. This confuses users.
+	The bounce template has been updated to remove the < and
+	>. File: bounce/bounce_templates.c.
+
+	Cleanup: when smtp_generic_maps is turned on, don't parse
+	MIME structures in the message body. Victor Duchovni. File:
+	smtp/smtp_proto.c.
+
+20061210
+
+	Robustness: low-cost re-entrancy guard that allows daemons
+	to call msg_fatal() etc. from a signal handler, without
+	risking memory corruption, or deadlock on Redhat Linux.
+	This works provided that the signal handler never returns.
+	In that special case we need not guarantee after-the-fact
+	consistency of the interrupted process.  File: util/msg_output.c.
+
+	Robustness: replace exit() calls by _exit(). File: util/msg.c,
+	bounce/bounce_cleanup.c.
+
+	Cleanup: document under what conditions these protections
+	work, with REENTRANCY sections in the relevant man pages.
+	Files: util/vbuf.c.  util/msg.c, util/msg_output.c.
+

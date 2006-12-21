@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.1.1.4 2006/11/07 02:57:14 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.1.1.5 2006/12/21 02:31:36 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -1699,6 +1699,8 @@ static void usage(void)
     msg_warn("    del_rcpt addr");
 }
 
+/* flatten_args - unparse partial command line */
+
 static void flatten_args(VSTRING *buf, char **argv)
 {
     char  **cpp;
@@ -1712,6 +1714,8 @@ static void flatten_args(VSTRING *buf, char **argv)
     VSTRING_TERMINATE(buf);
 }
 
+/* open_queue_file - open an unedited queue file (all-zero dummy PTRs) */
+
 static void open_queue_file(CLEANUP_STATE *state, const char *path)
 {
     VSTRING *buf = vstring_alloc(100);
@@ -1722,6 +1726,13 @@ static void open_queue_file(CLEANUP_STATE *state, const char *path)
     long    rcpt_count;
     long    qmgr_opts;
 
+    if (state->dst != 0) {
+	msg_warn("closing %s", cleanup_path);
+	vstream_fclose(state->dst);
+	state->dst = 0;
+	myfree(cleanup_path);
+	cleanup_path = 0;
+    }
     if ((state->dst = vstream_fopen(path, O_RDWR, 0)) == 0) {
 	msg_warn("open %s: %m", path);
     } else {
@@ -1796,6 +1807,7 @@ int     main(int unused_argc, char **argv)
 
     msg_vstream_init(argv[0], VSTREAM_ERR);
     var_line_limit = DEF_LINE_LIMIT;
+    var_header_limit = DEF_HEADER_LIMIT;
 
     for (;;) {
 	ARGV   *argv;
