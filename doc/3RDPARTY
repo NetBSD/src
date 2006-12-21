@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.495 2006/12/21 19:50:38 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.496 2006/12/21 20:58:27 rpaulo Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -112,8 +112,8 @@ License:	GPLv2, LGPLv2, BSD
 Notes:
 
 Package:	bsd-family-tree
-Version:	1.107
-Current Vers:	1.107
+Version:	1.109
+Current Vers:	1.109
 Maintainer:	n/a
 Archive Site:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
 Home Page:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
