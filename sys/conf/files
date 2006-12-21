@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.819 2006/11/24 22:04:25 wiz Exp $
+#	$NetBSD: files,v 1.819.2.1 2006/12/21 12:46:22 tron Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -478,6 +478,11 @@ device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
 file	dev/ic/isp_target.c		isp & isp_target_mode
+
+# LSILogic MegaRAID SAS
+#
+device	mfi: scsi
+file	dev/ic/mfi.c			mfi
 
 # LSILogic Fusion-MPT I/O Processor SCSI/FC Controllers
 #
