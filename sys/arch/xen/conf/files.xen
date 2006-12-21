@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.46.4.1 2006/10/22 06:05:20 yamt Exp $
+#	$NetBSD: files.xen,v 1.46.4.2 2006/12/21 15:07:58 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -190,7 +190,7 @@ include	"dev/pckbport/files.pckbport"
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
 include "dev/pci/files.agp"
-file 	arch/i386/pci/agp_machdep.c	agp
+file 	arch/x86/pci/agp_machdep.c	agp
 file	arch/xen/xen/pciide_machdep.c	pciide_common
 
 #

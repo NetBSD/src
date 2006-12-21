@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.66.4.2 2006/12/18 11:42:15 yamt Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.66.4.3 2006/12/21 15:07:59 yamt Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.66.4.2 2006/12/18 11:42:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.66.4.3 2006/12/21 15:07:59 yamt Exp $");
 
 #include "opt_veriexec.h"
 
@@ -471,6 +471,9 @@ veriexec_fp_cmp(struct veriexec_fpops *ops, u_char *fp1, u_char *fp2)
 static struct veriexec_table_entry *
 veriexec_table_lookup(struct mount *mp)
 {
+	/* XXX: From raidframe init */
+	if (mp == NULL)
+		return NULL;
 	return (fileassoc_tabledata_lookup(mp, veriexec_hook));
 }
 

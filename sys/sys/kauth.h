@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.6.4.3 2006/12/18 11:42:27 yamt Exp $ */
+/* $NetBSD: kauth.h,v 1.6.4.4 2006/12/21 15:07:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -132,7 +132,8 @@ enum {
  * Process scope - sub-actions.
  */
 enum kauth_process_req {
-	KAUTH_REQ_PROCESS_CANPROCFS_READ=1,
+	KAUTH_REQ_PROCESS_CANPROCFS_CTL=1,
+	KAUTH_REQ_PROCESS_CANPROCFS_READ,
 	KAUTH_REQ_PROCESS_CANPROCFS_RW,
 	KAUTH_REQ_PROCESS_CANPROCFS_WRITE,
 	KAUTH_REQ_PROCESS_RESOURCE_NICE,

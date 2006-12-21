@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.100.8.2 2006/12/10 07:17:26 yamt Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.100.8.3 2006/12/21 15:07:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.100.8.2 2006/12/10 07:17:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.100.8.3 2006/12/21 15:07:58 yamt Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -2722,9 +2722,11 @@ fwohci_add_rx_buf(struct fwohci_dbch *dbch, struct fwohcidb_tr *db_tr,
 	int dsiz[2];
 
 	ir = &dbch->xferq;
-	if (db_tr->buf == NULL && (dbch->xferq.flag & FWXFERQ_EXTBUF) == 0) {
-		db_tr->buf = fwdma_malloc_size(dbch->dmat, &db_tr->dma_map,
-			ir->psize, &dbuf[0], BUS_DMA_NOWAIT);
+	if (ir->buf == NULL && (dbch->xferq.flag & FWXFERQ_EXTBUF) == 0) {
+		if (db_tr->buf == NULL)
+			db_tr->buf = fwdma_malloc_size(
+			    dbch->dmat, &db_tr->dma_map,
+			    ir->psize, &dbuf[0], BUS_DMA_NOWAIT);
 		if (db_tr->buf == NULL)
 			return(ENOMEM);
 		db_tr->dbcnt = 1;
@@ -2738,7 +2740,7 @@ fwohci_add_rx_buf(struct fwohci_dbch *dbch, struct fwohcidb_tr *db_tr,
 			dbuf[db_tr->dbcnt++] = dummy_dma->bus_addr;
 		}
 		dsiz[db_tr->dbcnt] = ir->psize;
-		if (db_tr->buf != NULL) {
+		if (ir->buf != NULL) {
 			db_tr->buf = fwdma_v_addr(ir->buf, poffset);
 			dbuf[db_tr->dbcnt] = fwdma_bus_addr( ir->buf, poffset);
 		}
