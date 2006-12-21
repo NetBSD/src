@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.221 2006/11/13 05:13:39 dyoung Exp $
+#       $NetBSD: Makefile,v 1.222 2006/12/21 16:01:13 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -27,6 +27,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	kmem_alloc.9 kmem_free.9 kmem_zalloc.9 \
 	kfilter_register.9 knote.9 \
 	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 ltsleep.9 \
+	makeiplcookie.9 \
 	malloc.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memmove.9 memset.9 \
 	microtime.9 microuptime.9 mstohz.9 m_tag.9 namecache.9 namei.9 \
 	need_resched.9 opencrypto.9 optstr.9 \
@@ -39,7 +40,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	SCHED_LOCK.9 scheduler.9 scsipi.9 \
 	secmodel.9 secmodel_bsd44.9 secmodel_overlay.9 \
 	setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
-	signal.9 softintr.9 spl.9 store.9 suspendsched.9 \
+	signal.9 softintr.9 spl.9 splraiseipl.9 store.9 suspendsched.9 \
 	sysctl.9 tc.9 tcp_congctl.9 timecounter.9 time_second.9 \
 	todr.9 uiomove.9 ucom.9 userret.9 \
 	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 vme.9 \
