@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2006/02/16 20:17:14 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.14 2006/12/21 15:55:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,27 +43,32 @@
 #include <sys/queue.h>
 #include <machine/psl.h>
 
-/*
- * These are identical to the values used by hp300, but are not meaningful
- * to mvme68k code at this time.
- */
 #define	IPL_NONE	0	/* disable only this interrupt */
-#define	IPL_BIO		1	/* disable block I/O interrupts */
-#define	IPL_NET		2	/* disable network interrupts */
-#define	IPL_TTY		3	/* disable terminal interrupts */
-#define	IPL_TTYNOBUF	4	/* IPL_TTY + higher ISR priority */
-#define	IPL_SERIAL	4	/* disable serial interrupts */
-#define	IPL_CLOCK	5	/* disable clock interrupts */
-#define	IPL_HIGH	6	/* disable all interrupts */
-
-/* Copied from alpha/include/intr.h */
-#define	IPL_SOFTSERIAL	0	/* serial software interrupts */
-#define	IPL_SOFTNET	1	/* network software interrupts */
+#define	IPL_SOFT	1	/* other software interrupts */
 #define	IPL_SOFTCLOCK	2	/* clock software interrupts */
-#define	IPL_SOFT	3	/* other software interrupts */
-#define	IPL_NSOFT	4
+#define	IPL_SOFTNET	3	/* network software interrupts */
+#define	IPL_SOFTSERIAL	4	/* serial software interrupts */
+#define	IPL_BIO		5	/* disable block I/O interrupts */
+#define	IPL_NET		6	/* disable network interrupts */
+#define	IPL_TTY		7	/* disable terminal interrupts */
+#define	IPL_LPT		IPL_TTY
+#define	IPL_TTYNOBUF	8	/* IPL_TTY + higher ISR priority */
+#define	IPL_VM		9
+#define	IPL_SERIAL	10	/* disable serial interrupts */
+#define	IPL_CLOCK	11	/* disable clock interrupts */
+#define	IPL_STATCLOCK	IPL_CLOCK
+#define	IPL_HIGH	12	/* disable all interrupts */
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
 
-#define	IPL_SOFTNAMES {							\
+#define	SI_SOFTSERIAL	0
+#define	SI_SOFTNET	1
+#define	SI_SOFTCLOCK	2
+#define	SI_SOFT		3
+
+#define	SI_NQUEUES	4
+
+#define	SI_QUEUENAMES {							\
 	"serial",							\
 	"net",								\
 	"clock",							\
@@ -89,6 +94,20 @@
 #define spllock()		spl7()
 
 #ifndef _LOCORE
+
+typedef int ipl_t;
+typedef struct {
+	int _psl;
+} ipl_cookie_t;
+
+ipl_cookie_t makeiplcookie(ipl_t);
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._psl);
+}
 
 static __inline void
 splx(int sr)

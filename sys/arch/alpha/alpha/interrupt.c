@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.69 2005/12/24 20:06:46 perry Exp $ */
+/* $NetBSD: interrupt.c,v 1.70 2006/12/21 15:55:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.69 2005/12/24 20:06:46 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.70 2006/12/21 15:55:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -614,6 +614,30 @@ softintr_dispatch()
 	KERNEL_UNLOCK();
 }
 
+static int
+ipl2si(int ipl)
+{
+	int si;
+
+	switch (ipl) {
+	case IPL_SOFTSERIAL:
+		si = SI_SOFTSERIAL;
+		break;
+	case IPL_SOFTNET:
+		si = SI_SOFTNET;
+		break;
+	case IPL_SOFTCLOCK:
+		si = SI_SOFTCLOCK;
+		break;
+	case IPL_SOFT:
+		si = SI_SOFT;
+		break;
+	default:
+		panic("ipl2si: %d", ipl);
+	}
+	return si;
+}
+
 /*
  * softintr_establish:		[interface]
  *
@@ -624,11 +648,10 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 {
 	struct alpha_soft_intr *asi;
 	struct alpha_soft_intrhand *sih;
+	int si;
 
-	if (__predict_false(ipl >= SI_NQUEUES || ipl < 0))
-		panic("softintr_establish");
-
-	asi = &alpha_soft_intrs[ipl];
+	si = ipl2si(ipl);
+	asi = &alpha_soft_intrs[si];
 
 	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
 	if (__predict_true(sih != NULL)) {
@@ -675,4 +698,31 @@ rlprintf(struct timeval *t, const char *fmt, ...)
 
 	if (ratecheck(t, msgperiod))
 		vprintf(fmt, ap);
+}
+
+const static int ipl2psl_table[] = {
+	[IPL_NONE] = ALPHA_PSL_IPL_0,
+	[IPL_SOFT] = ALPHA_PSL_IPL_SOFT,
+	[IPL_SOFTCLOCK] = IPL_SOFT,
+	[IPL_SOFTNET] = IPL_SOFT,
+	[IPL_SOFTSERIAL] = IPL_SOFT,
+	[IPL_BIO] = ALPHA_PSL_IPL_IO,
+	[IPL_NET] = ALPHA_PSL_IPL_IO,
+	[IPL_TTY] = ALPHA_PSL_IPL_IO,
+	/* IPL_LPT == IPL_TTY */
+	[IPL_VM] = ALPHA_PSL_IPL_IO,
+	[IPL_CLOCK] = ALPHA_PSL_IPL_CLOCK,
+	/* IPL_STATCLOCK == IPL_CLOCK */
+	/* IPL_IPI == IPL_CLOCK */
+	[IPL_HIGH] = ALPHA_PSL_IPL_HIGH,
+	/* IPL_SCHED == IPL_HIGH */
+	/* IPL_LOCK == IPL_HIGH */
+	[IPL_SERIAL] = ALPHA_PSL_IPL_IO,
+};
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
 }

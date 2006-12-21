@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.24 2006/12/21 15:55:23 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -86,7 +86,24 @@ extern unsigned short mac68k_ipls[];
 #define	IPL_LOCK	MAC68K_IPL_HIGH
 #define	IPL_SERIAL	MAC68K_IPL_SERIAL
 
-#define	splraiseipl(x)	_splraise(mac68k_ipls[x])
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(mac68k_ipls[icookie._ipl]);
+}
 
 #include <sys/spl.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4 2005/11/11 23:45:56 simonb Exp $ */
+/* $NetBSD: intr.h,v 1.5 2006/12/21 15:55:24 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -38,21 +38,31 @@
 #include <machine/systemsw.h>
 
 /* Interrupt levels */
+#define	IPL_NONE	0
 #define	IPL_SOFT	1	/* generic software interrupts */
 #define	IPL_SOFTCLOCK	2	/* clock software interrupts */
 #define	IPL_SOFTNET	3	/* network software interrupts */
 #define	IPL_SOFTSERIAL	4	/* serial software interrupts */
-#define	_IPL_NSOFT	4	/* max soft IPL - IPL_SOFT + 1 */
+#define	IPL_BIO		5
+#define	IPL_NET		6
+#define	IPL_TTY		7
+#define	IPL_VM		8
+#define	IPL_CLOCK	9
+#define	IPL_STATCLOCK	10
+#define	IPL_SCHED	11
+#define	IPL_SERIAL	12
+#define	IPL_HIGH	13
+#define	IPL_LOCK	14
+#define	_NIPL		15
 
-#define	IPL_SERIAL	5
-#define	IPL_STATCLOCK	6
-#define	IPL_CLOCK	7
-#define	IPL_BIO		8
-#define	IPL_NET		9
-#define	IPL_TTY		10
-#define	_NIPL		11
+#define	SI_SOFT		0
+#define	SI_SOFTCLOCK	1
+#define	SI_SOFTNET	2
+#define	SI_SOFTSERIAL	3
 
-#define	IPL_SOFTNAMES {							\
+#define	SI_NQUEUES	4
+
+#define	SI_QUEUENAMES {							\
 	"misc",								\
 	"clock",							\
 	"net",								\
@@ -65,19 +75,19 @@
 #define	_IMR_SERIAL	(_IMR_SCHED | MIPS_INT_MASK_2)
 #define	_IMR_HIGH	(MIPS_INT_MASK)
 
-#define	splbio()		_splraise(_IMR_VM)
-#define	splclock()		_splraise(_IMR_SCHED)
-#define	splhigh()		_splraise(_IMR_HIGH)
-#define	spllock()		splhigh()
-#define	splvm()			_splraise(_IMR_VM)
-#define	splnet()		_splraise(_IMR_VM)
-#define	splsched()		_splraise(_IMR_SCHED)
-#define	splserial()		_splraise(_IMR_SERIAL)
 #define	splsoftclock()		_splraise(_IMR_SOFT)
 #define	splsoftnet()		_splraise(_IMR_SOFT)
 #define	splsoftserial()		_splraise(_IMR_SOFT)
-#define	splstatclock()		_splraise(_IMR_SCHED)
+#define	splbio()		_splraise(_IMR_VM)
+#define	splnet()		_splraise(_IMR_VM)
 #define	spltty()		_splraise(_IMR_VM)
+#define	splvm()			_splraise(_IMR_VM)
+#define	splclock()		_splraise(_IMR_SCHED)
+#define	splstatclock()		_splraise(_IMR_SCHED)
+#define	splsched()		_splraise(_IMR_SCHED)
+#define	splserial()		_splraise(_IMR_SERIAL)
+#define	splhigh()		_splraise(_IMR_HIGH)
+#define	spllock()		splhigh()
 
 #define	spl0()			_spllower(0)
 #define	spllowersoftclock()	_spllower(_IMR_SOFT)
@@ -90,6 +100,20 @@ int	_splget(void);
 int	_splnone(void);
 int	_setsoftintr(int);
 int	_clrsoftintr(int);
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _spl;
+} ipl_cookie_t;
+
+ipl_cookie_t makeiplcookie(ipl_t);
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._spl);
+}
 
 #include <mips/softintr.h>
 

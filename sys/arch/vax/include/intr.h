@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.20 2006/02/16 20:17:15 perry Exp $	*/
+/* 	$NetBSD: intr.h,v 1.21 2006/12/21 15:55:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -93,17 +93,30 @@
 				: "g" (reg));			\
 }))
 
-#define splraiseipl(reg)						\
-({								\
-	register int __val;					\
-	__asm volatile ("mfpr $0x12,%0"			\
-				: "=&g" (__val)			\
-				: );				\
-	if ((reg) > __val) {					\
-		_splset(reg);					\
-	}							\
-	__val;							\
-})
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+	register int __val;
+	int newipl = icookie._ipl;
+
+	__asm volatile ("mfpr $0x12,%0" : "=&g" (__val) : );
+	if (newipl > __val) {
+		_splset(newipl);
+	}
+	return __val;
+}
 
 #define _setsirr(reg)						\
 do {								\
@@ -115,13 +128,13 @@ do {								\
 
 #define spl0()		_splset(IPL_NONE)		/* IPL00 */
 #define spllowersoftclock() _splset(IPL_SOFTCLOCK)	/* IPL08 */
-#define splddb()	splraiseipl(IPL_SOFTDDB)	/* IPL0F */
-#define splconsmedia()	splraiseipl(IPL_CONSMEDIA)	/* IPL14 */
+#define splddb()	splraiseipl(makeiplcookie(IPL_SOFTDDB)) /* IPL0F */
+#define splconsmedia()	splraiseipl(makeiplcookie(IPL_CONSMEDIA)) /* IPL14 */
 
 #include <sys/spl.h>
 
 /* These are better to use when playing with VAX buses */
-#define	spluba()	splraiseipl(IPL_UBA)		/* IPL17 */
+#define	spluba()	splraiseipl(makeiplcookie(IPL_UBA)) /* IPL17 */
 #define spl4()		splx(0x14)
 #define spl5()		splx(0x15)
 #define spl6()		splx(0x16)
