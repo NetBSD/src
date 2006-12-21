@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.770 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.771 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -14,3 +14,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	shark: add support for igsfb at ofbus. [macallan 20061207]
 	ixp425: add support for NPE Ethernet. [scw 20061210]
 	shark: add support for XFree86 with wsfb. [macallan 20061220]
+	postfix(1): Updated to 2.3.5. [rpaulo 20061220]
