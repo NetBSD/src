@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.70 2006/12/20 20:46:35 dsl Exp $	*/
+/*	$NetBSD: make.c,v 1.71 2006/12/21 20:05:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.70 2006/12/20 20:46:35 dsl Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.71 2006/12/21 20:05:37 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.70 2006/12/20 20:46:35 dsl Exp $");
+__RCSID("$NetBSD: make.c,v 1.71 2006/12/21 20:05:37 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1085,8 +1085,9 @@ MakeStartJobs(void)
 	if (gn->checked == checked) {
 	    /* We've already looked at this node since a job finished... */
 	    if (DEBUG(MAKE))
-		fprintf(debug_file, "alreadey checked %s%s\n",
+		fprintf(debug_file, "already checked %s%s\n",
 			gn->name, gn->cohort_num);
+	    gn->made = DEFERRED;
 	    continue;
 	}
 	gn->checked = checked;
