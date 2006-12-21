@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2006/04/03 11:15:17 uwe Exp $
+#	$NetBSD: Makefile,v 1.14 2006/12/21 01:45:33 macallan Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -66,6 +66,13 @@ CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
+.if ${MACHINE} == "shark"
+SRCS.bsd+=      arm_video.c bsdResource.c pm_noop.c agp_noop.c ioperm_noop.c
+.for _FN in ${SRCS.bsd}
+CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
+.endfor
+.endif
+
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/bus
 SRCS.bus=	Pci.c
 
@@ -75,8 +82,8 @@ SRCS.bus+=	ix86Pci.c
 
 .if ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
     ${MACHINE} == "sgimips" || ${MACHINE} == "sparc64" || \
-    ${MACHINE} == "sparc" || \
-    ${MACHINE} == "netwinder"
+    ${MACHINE} == "sparc" || ${MACHINE} == "netwinder" || \
+    ${MACHINE} == "shark"
 SRCS.bus+=	netbsdPci.c
 .endif
 
@@ -94,7 +101,7 @@ CPPFLAGS.SlowBcopy.S=	-DUSE_GAS
 .if 	${MACHINE} == "amd64" || ${MACHINE} == "macppc" || \
 	${MACHINE} == "cats" || ${MACHINE} == "sgimips" || \
 	${MACHINE} == "sparc64" || ${MACHINE} == "sparc" || \
-	${MACHINE} == "netwinder"
+	${MACHINE} == "netwinder" || ${MACHINE} == "shark"
 SRCS.misc+=	CBUSmemcpy.c CIODelay.c CSlowBcopy.c
 .endif
 
