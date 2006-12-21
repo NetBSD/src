@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.114 2006/08/30 11:35:21 matt Exp $	*/
+/*	$NetBSD: exec.h,v 1.114.6.1 2006/12/21 14:25:45 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -247,7 +247,7 @@ int	copyargs		(struct lwp *, struct exec_package *,
 void	setregs			(struct lwp *, struct exec_package *, u_long);
 int	check_veriexec		(struct lwp *, struct vnode *,
 				     struct exec_package *, int);
-int	check_exec		(struct lwp *, struct exec_package *, int);
+int	check_exec		(struct lwp *, struct exec_package *);
 int	exec_init		(int);
 int	exec_read_from		(struct lwp *, struct vnode *, u_long off,
 				    void *, size_t);
