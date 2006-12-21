@@ -1,3 +1,4 @@
+/*	$NetBSD: bnxfw.h,v 1.2.4.3 2006/12/21 14:04:36 tron Exp $	*/
 /*	$OpenBSD: bnxfw.h,v 1.2 2006/08/10 04:01:52 brad Exp $	*/
 
 /*-
