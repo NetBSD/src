@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.19 2006/12/21 14:26:59 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.20 2006/12/21 15:58:49 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -396,7 +396,7 @@ sys/dev/pci/if_bnxreg.h				1.1
 
 share/man/man4/pci.4				1.85
 
-	Add refences to bnx(4) and mfi(4).
+	Add references to bnx(4) and mfi(4).
 	[bouyer, ticket #288]
 
 sys/kern/exec_script.c				1.53
