@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.4 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.4.22.1 2006/12/21 15:07:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.4 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.4.22.1 2006/12/21 15:07:59 yamt Exp $");
 
 /*
  *
@@ -74,7 +74,7 @@ int swwdog_reboot = 0;		/* set for panic instead of reboot */
 #define	SWDOG_DEFAULT	60		/* 60-second default period */
 
 void
-swwdogattach(int count)
+swwdogattach(int count __unused)
 {
 	int i;
 
