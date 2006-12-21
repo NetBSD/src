@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.48 2006/12/20 20:46:35 dsl Exp $	*/
+/*	$NetBSD: targ.c,v 1.49 2006/12/21 20:05:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.48 2006/12/20 20:46:35 dsl Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.49 2006/12/21 20:05:37 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.48 2006/12/20 20:46:35 dsl Exp $");
+__RCSID("$NetBSD: targ.c,v 1.49 2006/12/21 20:05:37 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -248,6 +248,7 @@ Targ_NewGN(const char *name)
     gn->centurion =    	NULL;
     gn->made = 	    	UNMADE;
     gn->flags = 	0;
+    gn->checked = 0;
     gn->mtime = gn->cmtime = 0;
     gn->iParents =  	Lst_Init(FALSE);
     gn->cohorts =   	Lst_Init(FALSE);
