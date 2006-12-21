@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.55 2006/02/16 20:17:13 perry Exp $ */
+/* $NetBSD: intr.h,v 1.56 2006/12/21 15:55:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -113,24 +113,30 @@ struct scbvec {
  * whittle it down to 3.
  */
 
-#define	IPL_NONE	ALPHA_PSL_IPL_0	   /* no interrupt level */
-#define	IPL_SOFT	ALPHA_PSL_IPL_SOFT /* generic software interrupts */
-#define	IPL_SOFTCLOCK	IPL_SOFT	   /* clock software interrupts */
-#define	IPL_SOFTNET	IPL_SOFT	   /* network software interrupts */
-#define	IPL_SOFTSERIAL	IPL_SOFT	   /* serial software interrupts */
-#define	IPL_BIO		ALPHA_PSL_IPL_IO   /* block I/O interrupts */
-#define	IPL_NET		ALPHA_PSL_IPL_IO   /* network interrupts */
-#define	IPL_TTY		ALPHA_PSL_IPL_IO   /* terminal interrupts */
+#define	IPL_NONE	0	/* no interrupt level */
+#define	IPL_SOFT	1	/* generic software interrupts */
+#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
+#define	IPL_SOFTNET	3	/* network software interrupts */
+#define	IPL_SOFTSERIAL	4	/* serial software interrupts */
+#define	IPL_BIO		5	/* block I/O interrupts */
+#define	IPL_NET		6	/* network interrupts */
+#define	IPL_TTY		7	/* terminal interrupts */
 #define	IPL_LPT		IPL_TTY
-#define	IPL_VM		ALPHA_PSL_IPL_IO   /* interrupts that can alloc mem */
-#define	IPL_CLOCK	ALPHA_PSL_IPL_CLOCK/* clock interrupts */
+#define	IPL_VM		8	/* interrupts that can alloc mem */
+#define	IPL_CLOCK	9	/* clock interrupts */
+#define	IPL_IPI		IPL_CLOCK /* AARM, 5-2, II-B */
 #define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_HIGH	ALPHA_PSL_IPL_HIGH /* all interrupts */
-#define	IPL_SERIAL	ALPHA_PSL_IPL_IO   /* serial interrupts */
-
+#define	IPL_HIGH	10	/* all interrupts */
 #define	IPL_SCHED	IPL_HIGH
 #define	IPL_LOCK	IPL_HIGH
-#define	IPL_IPI		IPL_CLOCK	/* AARM, 5-2, II-B */
+#define	IPL_SERIAL	11	/* serial interrupts */
+
+typedef int ipl_t;
+typedef struct {
+	int _psl;
+} ipl_cookie_t;
+
+ipl_cookie_t makeiplcookie(ipl_t);
 
 #define	SI_SOFTSERIAL	0
 #define	SI_SOFTNET	1
@@ -178,7 +184,7 @@ _splraise(int s)
 	return (s > cur ? alpha_pal_swpipl(s) : cur);
 }
 
-#define	splraiseipl(ipl)	_splraise((ipl))
+#define	splraiseipl(icookie)	_splraise((icookie)._psl)
 
 #include <sys/spl.h>
 

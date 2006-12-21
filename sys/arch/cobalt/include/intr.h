@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23 2006/09/07 03:38:55 gdamore Exp $	*/
+/*	$NetBSD: intr.h,v 1.24 2006/12/21 15:55:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -29,15 +29,21 @@
 #define	_COBALT_INTR_H_
 
 #define	IPL_NONE	0	/* Disable only this interrupt. */
-#define	IPL_BIO		1	/* Disable block I/O interrupts. */
-#define	IPL_NET		2	/* Disable network interrupts. */
-#define	IPL_TTY		3	/* Disable terminal interrupts. */
-#define	IPL_SERIAL	3	/* Disable serial hardware interrupts. */
-#define	IPL_VM		4	/* Memory allocation */
-#define	IPL_CLOCK	5	/* Disable clock interrupts. */
-#define	IPL_STATCLOCK	6	/* Disable profiling interrupts. */
-#define	IPL_HIGH	7	/* Disable all interrupts. */
-#define NIPL		8
+#define	IPL_SOFT	1	/* generic software interrupts */
+#define	IPL_SOFTSERIAL	2	/* serial software interrupts */
+#define	IPL_SOFTNET	3	/* network software interrupts */
+#define	IPL_SOFTCLOCK	4	/* clock software interrupts */
+#define	IPL_BIO		5	/* Disable block I/O interrupts. */
+#define	IPL_NET		6	/* Disable network interrupts. */
+#define	IPL_TTY		7	/* Disable terminal interrupts. */
+#define	IPL_SERIAL	IPL_TTY	/* Disable serial hardware interrupts. */
+#define	IPL_VM		8	/* Memory allocation */
+#define	IPL_CLOCK	9	/* Disable clock interrupts. */
+#define	IPL_STATCLOCK	10	/* Disable profiling interrupts. */
+#define	IPL_HIGH	11	/* Disable all interrupts. */
+#define	IPL_SCHED	IPL_HIGH
+#define	IPL_LOCK	IPL_HIGH
+#define NIPL		12
 
 /* Interrupt sharing types. */
 #define IST_NONE	0	/* none */
@@ -46,13 +52,14 @@
 #define IST_LEVEL	3	/* level-triggered */
 
 /* Soft interrupt numbers. */
-#define	IPL_SOFT	0	/* generic software interrupts */
-#define	IPL_SOFTSERIAL	1	/* serial software interrupts */
-#define	IPL_SOFTNET	2	/* network software interrupts */
-#define	IPL_SOFTCLOCK	3	/* clock software interrupts */
-#define	_IPL_NSOFT	4
+#define	SI_SOFT		0	/* generic software interrupts */
+#define	SI_SOFTSERIAL	1	/* serial software interrupts */
+#define	SI_SOFTNET	2	/* network software interrupts */
+#define	SI_SOFTCLOCK	3	/* clock software interrupts */
 
-#define	IPL_SOFTNAMES {							\
+#define	SI_NQUEUES	4
+
+#define	SI_QUEUENAMES {							\
 	"misc",								\
 	"serial",							\
 	"net",								\
@@ -98,6 +105,20 @@ void _clrsoftintr(int);
 #define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
 #define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 #define splsoftserial()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+
+typedef int ipl_t;
+typedef struct {
+	int _spl;
+} ipl_cookie_t;
+
+ipl_cookie_t makeiplcookie(ipl_t);
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._spl);
+}
 
 struct cobalt_intrhand {
 	LIST_ENTRY(cobalt_intrhand) ih_q;

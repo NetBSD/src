@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.10 2006/09/10 14:27:38 tsutsui Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.11 2006/12/21 15:55:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10 2006/09/10 14:27:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11 2006/12/21 15:55:21 yamt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -118,13 +118,6 @@ const u_int32_t ipl_sr_bits[_IPL_N] = {
 		MIPS_INT_MASK_3|
 		MIPS_INT_MASK_4|
 		MIPS_INT_MASK_5,		/* IPL_{CLOCK,HIGH} */
-};
-
-const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
 };
 
 void

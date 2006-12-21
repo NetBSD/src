@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 2006/09/13 14:50:42 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 2006/12/21 15:55:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2006/09/13 14:50:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2006/12/21 15:55:24 yamt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -225,11 +225,11 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
 		MIPS_INT_MASK_2,		/* IPL_{CLOCK,HIGH} */
 };
 
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 extern struct user *proc0paddr;

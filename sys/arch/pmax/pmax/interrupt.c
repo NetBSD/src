@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.11 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.12 2006/12/21 15:55:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11 2005/12/11 12:18:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12 2006/12/21 15:55:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,11 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11 2005/12/11 12:18:39 christos Exp 
 #include <machine/sysconf.h>
 #include <machine/intr.h>
 
-const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 struct evcnt pmax_clock_evcnt =
@@ -125,4 +125,13 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	return;
 kerneltouchedFPU:
 	panic("kernel used FPU: PC %x, CR %x, SR %x", pc, cause, status);
+}
+
+const int *ipl2spl_table;
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
 }

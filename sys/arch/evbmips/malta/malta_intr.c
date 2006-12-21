@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.12 2006/09/02 22:33:06 gdamore Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.13 2006/12/21 15:55:22 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.12 2006/09/02 22:33:06 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.13 2006/12/21 15:55:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,11 +102,11 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
  * given software interrupt priority level.
  * Hardware ipls are port/board specific.
  */
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 struct malta_cpuintr {

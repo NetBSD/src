@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2006/09/28 18:53:15 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 2006/12/21 15:55:25 yamt Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -178,8 +178,26 @@ spllower(int nlevel)
  * Miscellaneous
  */
 #define	spl0()		spllower(IPL_NONE)
-#define splraiseipl(x) 	splraise(x)
 #define	splx(x)		spllower(x)
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return splraise(icookie._ipl);
+}
 
 #include <sys/spl.h>
 
