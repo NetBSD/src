@@ -1,7 +1,7 @@
-/*	$NetBSD: agp_machdep.c,v 1.4 2002/11/22 15:23:52 fvdl Exp $	*/
+/*	$NetBSD: agp_machdep.c,v 1.1.2.2 2006/12/21 15:07:58 yamt Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_machdep.c,v 1.4 2002/11/22 15:23:52 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_machdep.c,v 1.1.2.2 2006/12/21 15:07:58 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>

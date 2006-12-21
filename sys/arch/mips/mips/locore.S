@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.162 2006/09/07 02:40:31 dogcow Exp $	*/
+/*	$NetBSD: locore.S,v 1.162.4.1 2006/12/21 15:07:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -298,11 +298,11 @@ cpu_switch_queuescan:
 #endif
 
 	/*
-	 * regardless of whether a context switch is required, we need
+	 * Regardless of whether a context switch is required, we need
 	 * to update curlwp and other globals.  We must do this even
 	 * if switching to ourselves because we might have re-entered
-	 * cpu_switch() from idle() - in which case curlwp would be NULL
-	 * This needs to be set before conext switch on MIPS
+	 * cpu_switch() from idle() - in which case curlwp would be NULL.
+	 * This needs to be set before context switch on MIPS.
 	 */
 	li	v1, LSONPROC
 	sw	v1, L_STAT(s7)			# l->l_stat = SONPROC
@@ -449,11 +449,11 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	move	a0, s7				# restore proc
 #endif
 	/*
-	 * regardless of whether a context switch is required, we need
+	 * Regardless of whether a context switch is required, we need
 	 * to update curlwp and other globals.  We must do this even
 	 * if switching to ourselves because we might have re-entered
-	 * cpu_switch() from idle() - in which case curlwp would be NULL
-	 * This needs to be set before conext switch on MIPS
+	 * cpu_switch() from idle() - in which case curlwp would be NULL.
+	 * This needs to be set before context switch on MIPS.
 	 */
 	li	v1, LSONPROC
 	sw	v1, L_STAT(s7)			# l->l_stat = SONPROC
@@ -469,7 +469,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	 * saved it.  Also note that switch_exit() ensures that
 	 * s0 is clear before jumping here to find a new process.
 	 */
-	beq	s0, s7, 4f			# oldproc == newproc ??
+	beq	s0, s7, 4f			# oldlwp == newlwp ??
 	li	s5, 0				# BDslot: didn't switch
 
 /*

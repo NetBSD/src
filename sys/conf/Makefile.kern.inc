@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.86.2.3 2006/12/18 11:42:13 yamt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.86.2.4 2006/12/21 15:07:58 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -90,8 +90,8 @@ CFLAGS+=	-fno-strict-aliasing
 .endif
 
 .if ${USE_SSP:Uno} == "yes"
-CFLAGS+=-fstack-protector -Wstack-protector
-LDFLAGS+=-fstack-protector -Wstack-protector
+CFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
+LDFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 .endif
 
 # If we want the bpendtsleep: label in kern_synch.c, we need to use
@@ -443,11 +443,13 @@ EXTRA_CLEAN+= .gdbinit
 .endfor
 .endif
 
-# The following files use alloca(3) or variable array allocations.
+# The following files use alloca(3) or variable array allocations,
+# or, in the case of kern_exit_43.c, an array of size 0 on the stack.
 # Their full name is noted as documentation.
 VARSTACK=dev/cgd.c kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
     nfs/nfs_bio.c ufs/ufs/ufs_inode.c ufs/ufs/ufs_lookup.c uvm/uvm_bio.c \
-    uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c
+    uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c \
+    compat/common/kern_exit_43.c
 
 . if ${HAVE_GCC} > 3
 .for __varstack in ${VARSTACK}

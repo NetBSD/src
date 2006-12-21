@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlg_machdep.c,v 1.2.18.1 2006/12/10 07:15:52 yamt Exp $	*/
+/*	$NetBSD: hdlg_machdep.c,v 1.2.18.2 2006/12/21 15:07:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.2.18.1 2006/12/10 07:15:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.2.18.2 2006/12/21 15:07:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -288,7 +288,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
-	printf("\nNetBSD/hdlg booting ...\n");
+	printf("\nNetBSD/evbarm (HDL-G) booting ...\n");
 #endif
 
 	/*

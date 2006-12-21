@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.34.4.2 2006/12/10 07:18:59 yamt Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.34.4.3 2006/12/21 15:07:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.34.4.2 2006/12/10 07:18:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.34.4.3 2006/12/21 15:07:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,13 +126,15 @@ static const vfs_namemap_t signames[] = {
 	{ NULL,		0 },
 };
 
-int procfs_control(struct lwp *, struct lwp *, int, int);
+static int procfs_control(struct lwp *, struct lwp *, int, int,
+    struct pfsnode *);
 
 int
-procfs_control(curl, l, op, sig)
+procfs_control(curl, l, op, sig, pfs)
 	struct lwp *curl;
 	struct lwp *l;
 	int op, sig;
+	struct pfsnode *pfs;
 {
 	struct proc *curp = curl->l_proc;
 	struct proc *p = l->l_proc;
@@ -164,13 +166,11 @@ procfs_control(curl, l, op, sig)
 			return (EBUSY);
 
 		/*
-		 *      (3) it's not owned by you, or is set-id on exec
-		 *          (unless you're root), or...
+		 *      (3) the security model prevents it.
 		 */
-		if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curl->l_cred) ||
-		    ISSET(p->p_flag, P_SUGID)) &&
-		    (error = kauth_authorize_generic(curl->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &curl->l_acflag)) != 0)
+		if ((error = kauth_authorize_process(curl->l_cred,
+		    KAUTH_PROCESS_CANPROCFS, p, pfs,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANPROCFS_CTL), NULL)) != 0)
 			return (error);
 
 		break;
@@ -349,14 +349,14 @@ procfs_doctl(
 
 	nm = vfs_findname(ctlnames, msg, xlen);
 	if (nm) {
-		error = procfs_control(curl, l, nm->nm_val, 0);
+		error = procfs_control(curl, l, nm->nm_val, 0, pfs);
 	} else {
 		nm = vfs_findname(signames, msg, xlen);
 		if (nm) {
 			if (ISSET(p->p_flag, P_TRACED) &&
 			    p->p_pptr == p)
 				error = procfs_control(curl, l, PROCFS_CTL_RUN,
-				    nm->nm_val);
+				    nm->nm_val, pfs);
 			else {
 				psignal(p, nm->nm_val);
 				error = 0;
