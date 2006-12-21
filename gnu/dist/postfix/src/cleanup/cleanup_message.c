@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_message.c,v 1.1.1.12 2006/08/27 00:39:32 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_message.c,v 1.1.1.13 2006/12/21 02:31:34 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -599,6 +599,16 @@ static void cleanup_header_done_callback(void *context)
     time_t  tv;
 
     /*
+     * XXX Workaround: when we reach the end of headers, mime_state_update()
+     * may execute up to three call-backs before returning to the caller:
+     * head_out(), head_end(), and body_out() or body_end(). As long as
+     * call-backs don't return a result, each call-back has to check for
+     * itself if the previous call-back experienced a problem.
+     */
+    if (CLEANUP_OUT_OK(state) == 0)
+	return;
+
+    /*
      * Add a missing (Resent-)Message-Id: header. The message ID gives the
      * time in GMT units, plus the local queue ID.
      * 
@@ -707,6 +717,16 @@ static void cleanup_body_callback(void *context, int type,
 				          off_t offset)
 {
     CLEANUP_STATE *state = (CLEANUP_STATE *) context;
+
+    /*
+     * XXX Workaround: when we reach the end of headers, mime_state_update()
+     * may execute up to three call-backs before returning to the caller:
+     * head_out(), head_end(), and body_out() or body_end(). As long as
+     * call-backs don't return a result, each call-back has to check for
+     * itself if the previous call-back experienced a problem.
+     */
+    if (CLEANUP_OUT_OK(state) == 0)
+	return;
 
     /*
      * Crude message body content filter for emergencies. This code has
@@ -893,6 +913,15 @@ void    cleanup_message(CLEANUP_STATE *state, int type, const char *buf, ssize_t
 					 (MIME_STATE_ANY_END) 0,
 					 cleanup_mime_error_callback,
 					 (void *) state);
+
+    /*
+     * XXX Workaround: truncate a long message header so that we don't exceed
+     * the Milter request size limit of 65535.
+     */
+#define KLUDGE_HEADER_LIMIT	60000
+    if ((cleanup_milters || state->milters)
+	&& var_header_limit > KLUDGE_HEADER_LIMIT)
+	var_header_limit = KLUDGE_HEADER_LIMIT;
 
     /*
      * Pass control to the header processing routine.

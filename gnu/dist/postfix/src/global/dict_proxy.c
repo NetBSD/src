@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_proxy.c,v 1.1.1.5 2006/07/19 01:17:23 rpaulo Exp $	*/
+/*	$NetBSD: dict_proxy.c,v 1.1.1.6 2006/12/21 02:31:53 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -92,6 +92,7 @@ static const char *dict_proxy_lookup(DICT *dict, const char *key)
     DICT_PROXY *dict_proxy = (DICT_PROXY *) dict;
     VSTREAM *stream;
     int     status;
+    int     count = 0;
 
     /*
      * The client and server live in separate processes that may start and
@@ -105,6 +106,7 @@ static const char *dict_proxy_lookup(DICT *dict, const char *key)
     for (;;) {
 	stream = clnt_stream_access(proxy_stream);
 	errno = 0;
+	count += 1;
 	if (attr_print(stream, ATTR_FLAG_NONE,
 		       ATTR_TYPE_STR, MAIL_ATTR_REQ, PROXY_REQ_LOOKUP,
 		       ATTR_TYPE_STR, MAIL_ATTR_TABLE, dict->name,
@@ -116,7 +118,7 @@ static const char *dict_proxy_lookup(DICT *dict, const char *key)
 			 ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
 			 ATTR_TYPE_STR, MAIL_ATTR_VALUE, dict_proxy->result,
 			 ATTR_TYPE_END) != 2) {
-	    if (msg_verbose || (errno != EPIPE && errno != ENOENT))
+	    if (msg_verbose || count > 1 || (errno && errno != EPIPE && errno != ENOENT))
 		msg_warn("%s: service %s: %m", myname, VSTREAM_PATH(stream));
 	} else {
 	    if (msg_verbose)

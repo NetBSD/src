@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: post-install,v 1.1.1.10 2006/08/27 00:37:59 rpaulo Exp $
+#	$NetBSD: post-install,v 1.1.1.11 2006/12/21 02:27:53 rpaulo Exp $
 #
 
 # To view the formatted manual page of this file, type:
@@ -591,14 +591,14 @@ EOF
     # This safety net is also documented in LOCAL_RECIPIENT_README.
 
     unknown_local=unknown_local_recipient_reject_code
-    has_lrm=`$POSTCONF -n local_recipient_maps`
-    has_lrjc=`$POSTCONF -n $unknown_local`
+    has_lrm=`$POSTCONF -c $config_directory -n local_recipient_maps`
+    has_lrjc=`$POSTCONF -c $config_directory -n $unknown_local`
 
     if [ -z "$has_lrm" -a -z "$has_lrjc" ]
     then
 	echo SAFETY: editing main.cf, setting $unknown_local=450.
 	echo See the LOCAL_RECIPIENT_README file for details.
-	$POSTCONF -e "$unknown_local = 450" || exit 1
+	$POSTCONF -c $config_directory -e "$unknown_local = 450" || exit 1
     fi
 
     # Add missing proxymap service to master.cf.
@@ -680,8 +680,8 @@ EOF
 
 test -n "$first_install_reminder" && {
 
-    ALIASES=`$POSTCONF -h alias_database | sed 's/^[^:]*://'`
-    NEWALIASES_PATH=`$POSTCONF -h newaliases_path`
+    ALIASES=`$POSTCONF -c $config_directory -h alias_database | sed 's/^[^:]*://'`
+    NEWALIASES_PATH=`$POSTCONF -c $config_directory -h newaliases_path`
     cat <<EOF | ${FMT}
 
     Warning: you still need to edit myorigin/mydestination/mynetworks
