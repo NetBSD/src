@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.2 2006/09/07 18:24:05 rumble Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.3 2006/12/22 22:42:47 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.2 2006/09/07 18:24:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.3 2006/12/22 22:42:47 rumble Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -112,8 +112,9 @@ giopci_match(struct device *parent, struct cfdata *match, void *aux)
 	int gprid;
 
 	/*
-	 * I think that these cards are all GIO32-bis. Thus they work
-	 * in Indy/Challenge-S and perhaps Indigo R4k as well, though
+	 * I think that these cards are all GIO32-bis or GIO64. Thus
+	 * they work in either Indigo2/Challenge M or
+	 * Indy/Challenge S/Indigo R4k, according to form factor. However,
 	 * there are some exceptions (e.g. my Indigo R4k won't power 
 	 * on with the Set Engineering card installed).
 	 */
