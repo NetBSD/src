@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.45 2006/12/22 22:38:42 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.46 2006/12/22 23:08:22 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.45 2006/12/22 22:38:42 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.46 2006/12/22 23:08:22 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,6 +384,8 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	struct hpc_attach_args ha;
 	const struct hpc_device *hd;
 	uint32_t hpctype;
+	int isonboard;
+	int isioplus;
 	int sysmask;
 
 	switch (mach_type) {
@@ -412,9 +414,32 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	/* force big-endian mode */
 	if (hpctype == 15)
 		*(uint32_t *)MIPS_PHYS_TO_KSEG1(ga->ga_addr+HPC1_BIGENDIAN) = 0;
+
+	/*
+	 * All machines have only one HPC on the mainboard itself. ''Extra''
+	 * HPCs require bus arbiter and other magic to run happily.
+	 */
+	isonboard = (ga->ga_addr == HPC_BASE_ADDRESS_0);
+	isioplus = (ga->ga_addr == HPC_BASE_ADDRESS_1 && hpctype == 3 &&
+	    sysmask == HPCDEV_IP24);
 	
-	printf(": SGI HPC%d%s\n", (hpctype ==  3) ? 3 : 1,
-				  (hpctype == 15) ? ".5" : "");
+	printf(": SGI HPC%d%s (%s)\n", (hpctype ==  3) ? 3 : 1,
+	    (hpctype == 15) ? ".5" : "", (isonboard) ? "onboard" :
+	    (isioplus) ? "IOPLUS mezzanine" : "GIO slot");
+
+	/* configure the bus arbiter appropriately (never happens on Indigo2) */
+	if (!isonboard) {
+		int arb_slot;
+
+		arb_slot = (ga->ga_addr == HPC_BASE_ADDRESS_1) ?
+		    GIO_SLOT_EXP0 : GIO_SLOT_EXP1;
+
+		if (gio_arb_config(arb_slot, GIO_ARB_RT | GIO_ARB_MST)) {
+			printf("%s: failed to configure GIO bus arbiter\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	}
 
 	sc->sc_ct = 1;
 	sc->sc_ch = ga->ga_ioh;
