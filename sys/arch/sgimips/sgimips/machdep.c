@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 2006/12/21 15:55:24 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100 2006/12/22 01:33:57 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2006/12/21 15:55:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2006/12/22 01:33:57 rumble Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -121,7 +121,7 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int mach_type;		/* IPxx type */
-int mach_subtype;	/* subtype: eg., Guiness/Fullhouse for IP22 */
+int mach_subtype;	/* subtype: eg., Guinness/Fullhouse for IP22 */
 int mach_boardrev;	/* machine board revision, in case it matters */
 
 int physmem;		/* Total physical memory */
