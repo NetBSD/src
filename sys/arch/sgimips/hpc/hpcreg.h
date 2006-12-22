@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.14 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.15 2006/12/22 05:08:56 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -37,7 +37,7 @@
 #define HPC_BASE_ADDRESS_0	0x1fb80000	/* Primary onboard */
 #define HPC_BASE_ADDRESS_1	0x1fb00000
 #define HPC_BASE_ADDRESS_2	0x1f980000
-#define HPC_BASE_ADDRESS_3	0x1f900000
+#define HPC_BASE_ADDRESS_3	0x1f900000	/* NB: Never supported in h/w */
 
 /*
  * HPC3 descriptor layout.

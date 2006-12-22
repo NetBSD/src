@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.39 2006/12/22 01:36:24 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.40 2006/12/22 05:08:56 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.39 2006/12/22 01:36:24 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.40 2006/12/22 05:08:56 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,11 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.39 2006/12/22 01:36:24 rumble Exp $");
 #include <sgimips/ioc/iocreg.h>
 
 #include "locators.h"
-
-#define HPC_REVISION_MASK	0x3
-#define HPC_REVISION_1		0x1
-#define HPC_REVISION_15		0x2
-#define HPC_REVISION_3		0x3
 
 const struct hpc_device {
 	const char *hd_name;
@@ -446,48 +441,42 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
+/*
+ * HPC revision detection isn't as simple as it should be. Devices probe
+ * differently depending on their slots, but luckily there is only one
+ * instance in which we have to decide the major revision (HPC1 vs HPC3).
+ *
+ * The HPC is found in the following configurations:
+ *	o Personal Iris 4D/3x:
+ *		One on-board HPC1 or HPC1.5.
+ *
+ *	o Indigo R3k/R4k:
+ * 		One on-board HPC1 or HPC1.5.
+ * 		Up to two additional HPC1.5's in GIO slots 0 and 1.
+ *
+ *	o Indy:
+ * 		One on-board HPC3.
+ *		Up to two additional HPC1.5's in GIO slots 0 and 1.
+ *
+ *	o Challenge S
+ * 		One on-board HPC3.
+ * 		Up to one additional HPC3 on the IOPLUS board (if installed).
+ *		Up to one additional HPC1.5 in slot 1 of the IOPLUS board.
+ *
+ *	o Indigo2, Challenge M
+ *		One on-board HPC3.
+ *
+ * All we really have to worry about is the IP22 case.
+ */
 int
 hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 {
-	int hpctype;
 
-	/* Allow forcing of our hpc revision. */ 
-	switch (device_cfdata(&sc->sc_dev)->cf_flags & HPC_REVISION_MASK) {
-	case HPC_REVISION_1:
-		return (1);
-
-	case HPC_REVISION_15:
-		return (15);
-
-	case HPC_REVISION_3:
-		return (3);
-	}
-
-	/* XXX We should really come up with an autodetect mechanism */	
-	switch (mach_type) {
-	case MACH_SGI_IP12:
-		hpctype = 1;
-		break;
-
-	case MACH_SGI_IP20:
-		hpctype = 15;
-		break;
-
-	case MACH_SGI_IP22:
-		hpctype = 3;
-		break;
-
-	default:
+	/* No hardware ever supported the last hpc base address. */
+	if (ga->ga_addr == HPC_BASE_ADDRESS_3)
 		return (0);
-	}
 
-	/*
-	 * Verify HPC1 or HPC1.5
-	 *
-	 * For some reason the endian register isn't mapped on all
-	 * machines (HPC1 machines?).
-	 */
-	if (hpctype == 1 || hpctype == 15) {
+	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20) {
 		u_int32_t reg;
 
 		if (!badaddr((void *)MIPS_PHYS_TO_KSEG1(ga->ga_addr +
@@ -497,14 +486,41 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 
 			if (((reg >> HPC1_REVSHIFT) & HPC1_REVMASK) ==
 			    HPC1_REV15)
-				hpctype = 15;
+				return (15);
 			else
-				hpctype = 1;
-		} else
-			hpctype = 1;
+				return (1);
+		}
+
+		return (1);
 	}
 
-	return (hpctype);
+	/*
+	 * If IP22, probe slot 0 to determine if HPC1.5 or HPC3. Slot 1 must
+	 * be HPC1.5.
+	 *
+	 * XXX - If Challenge S is Fullhouse, but without the eisa presence bit,
+	 *       we could just conditionalise on that, no? Or is it Guinness?
+	 */
+	if (mach_type == MACH_SGI_IP22) {
+		if (ga->ga_addr == HPC_BASE_ADDRESS_0)
+			return (3);
+
+		if (ga->ga_addr == HPC_BASE_ADDRESS_2)
+			return (15);
+
+		/*
+		 * Probe for it. We use one of the PBUS registers. Note
+		 * that this probe succeeds with my E++ adapter in slot 1,
+		 * but it appears to do the right thing in slot 0!
+		 */
+		if (badaddr((void *)MIPS_PHYS_TO_KSEG1(ga->ga_addr +
+		    HPC3_PBUS_CH7_BP), 4))
+			return (15);
+		else
+			return (3);
+	}
+
+	return (0);
 }
 
 int
