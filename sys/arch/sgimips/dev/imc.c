@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.26 2006/08/30 23:44:52 rumble Exp $	*/
+/*	$NetBSD: imc.c,v 1.27 2006/12/22 01:32:37 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.26 2006/08/30 23:44:52 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.27 2006/12/22 01:32:37 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -159,7 +159,7 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 	 * for now.
 	 */
 	if (mach_type == MACH_SGI_IP20 || (mach_type == MACH_SGI_IP22 &&
-	    mach_subtype == MACH_SGI_IP22_GUINESS)) {
+	    mach_subtype == MACH_SGI_IP22_GUINNESS)) {
 		reg |=  IMC_CPUCTRL1_HPCFX;
 		reg |=  IMC_CPUCTRL1_EXP0FX;
 		reg |=  IMC_CPUCTRL1_EXP1FX;
@@ -200,7 +200,7 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 		reg |= IMC_GIO64ARB_ONEGIO | IMC_GIO64ARB_HPC64;
 
 		switch (mach_subtype) {
-		case MACH_SGI_IP22_GUINESS:
+		case MACH_SGI_IP22_GUINNESS:
 			/* XXX is MST mutually exclusive? */
 	        	reg |=  (IMC_GIO64ARB_EXP0RT	| IMC_GIO64ARB_EXP1RT);
 			reg |=  (IMC_GIO64ARB_EXP0MST	| IMC_GIO64ARB_EXP1MST);

@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.4 2005/12/11 12:18:53 christos Exp $	 */
+/* $NetBSD: ioc.c,v 1.5 2006/12/22 01:32:37 rumble Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.4 2005/12/11 12:18:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.5 2006/12/22 01:32:37 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,11 +113,12 @@ ioc_attach(struct device * parent, struct device * self, void *aux)
 	if (sysid)
 		mach_subtype = MACH_SGI_IP22_FULLHOUSE;
 	else
-		mach_subtype = MACH_SGI_IP22_GUINESS;
+		mach_subtype = MACH_SGI_IP22_GUINNESS;
 
 	aprint_normal(": rev %d, machine %s, board rev %d\n",
 		   ((sysid & IOC_SYSID_CHIPREV) >> IOC_SYSID_CHIPREV_SHIFT),
-		    (sysid & IOC_SYSID_SYSTYPE) ? "Indigo2 (Fullhouse)" : "Indy (Guiness)",
+		    (sysid & IOC_SYSID_SYSTYPE) ? "Indigo2 (Fullhouse)" :
+		    "Indy (Guinness)",
 		   ((sysid & IOC_SYSID_BOARDREV) >> IOC_SYSID_BOARDREV_SHIFT));
 
 	/* Reset IOC */
@@ -135,7 +136,7 @@ ioc_attach(struct device * parent, struct device * self, void *aux)
 			  IOC_WRITE_ENET_AUTO | IOC_WRITE_ENET_UTP |
 			  IOC_WRITE_PC_UART2 | IOC_WRITE_PC_UART1);
 
-	if (mach_subtype == MACH_SGI_IP22_GUINESS) {
+	if (mach_subtype == MACH_SGI_IP22_GUINNESS) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOC_GCSEL, 0xff);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IOC_GCREG, 0xff);
 	}
