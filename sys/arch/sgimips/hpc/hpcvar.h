@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcvar.h,v 1.8 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: hpcvar.h,v 1.9 2006/12/22 08:17:14 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -114,6 +114,8 @@ struct hpc_attach_args {
 	bus_dma_tag_t		ha_dmat;	/* HPC DMA tag */
 
 	struct hpc_values	*hpc_regs;	/* HPC register definitions */
+
+	uint8_t			hpc_eeprom[256];/* HPC eeprom contents */
 };
 
 #endif	/* _ARCH_SGIMIPS_HPC_HPCVAR_H_ */

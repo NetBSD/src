@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.41 2006/12/22 05:26:01 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.42 2006/12/22 08:17:14 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.41 2006/12/22 05:26:01 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.42 2006/12/22 08:17:14 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.41 2006/12/22 05:26:01 rumble Exp $");
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/hpc/hpcreg.h>
 #include <sgimips/ioc/iocreg.h>
+
+#include <dev/ic/smc93cx6var.h>
 
 #include "locators.h"
 
@@ -339,6 +341,9 @@ static struct callout hpc_blink_ch = CALLOUT_INITIALIZER;
 static void	hpc_blink(void *);
 #endif
 
+static int	hpc_read_eeprom(int, bus_space_tag_t, bus_space_handle_t,
+		    uint8_t *, size_t);
+
 CFATTACH_DECL(hpc, sizeof(struct hpc_softc),
     hpc_match, hpc_attach, NULL, NULL);
 
@@ -417,6 +422,8 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		else
 			ha.hpc_regs = &hpc1_values;
 		ha.hpc_regs->revision = hpctype;
+		hpc_read_eeprom(hpctype, ha.ha_st, ha.ha_sh, ha.hpc_eeprom,
+		    sizeof(ha.hpc_eeprom));
 
 		(void) config_found_sm_loc(self, "hpc", NULL, &ha, hpc_print,
 					   hpc_submatch);
@@ -592,3 +599,49 @@ hpc_blink(void *self)
 }
 #endif
 
+/*
+ * Read the eeprom associated with one of the HPC's.
+ *
+ * NB: An eeprom is not always present, but the HPC should be able to
+ *     handle this gracefully. Any consumers should validate the data to
+ *     ensure it's reasonable.
+ */
+static int
+hpc_read_eeprom(int hpctype, bus_space_tag_t t, bus_space_handle_t h,
+    uint8_t *buf, size_t len)
+{
+	struct seeprom_descriptor sd;
+	bus_space_handle_t bsh;
+	bus_space_tag_t tag;
+	bus_size_t offset;
+
+	if (!len || len & 0x1)
+		return (1);
+
+	offset = (hpctype == 3) ? HPC3_EEPROM_DATA : HPC1_AUX_EEPROM;
+
+	tag = SGIMIPS_BUS_SPACE_NORMAL;
+	if (bus_space_subregion(t, h, offset, 1, &bsh) != 0)
+		return (1);
+
+	sd.sd_chip = C56_66;
+	sd.sd_tag = tag;
+	sd.sd_bsh = bsh;
+	sd.sd_regsize = 1;
+	sd.sd_control_offset = 0;
+	sd.sd_status_offset = 0;
+	sd.sd_dataout_offset = 0;
+	sd.sd_DI = 0x10;	/* EEPROM -> CPU */
+	sd.sd_DO = 0x08;	/* CPU -> EEPROM */
+	sd.sd_CK = 0x04;
+	sd.sd_CS = 0x02;
+	sd.sd_MS = 0;
+	sd.sd_RDY = 0;
+
+	if (read_seeprom(&sd, (uint16_t *)buf, 0, len / 2) != 1)
+		return (1);
+
+	bus_space_unmap(t, bsh, 1);
+
+	return (0);
+}
