@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcvar.h,v 1.9 2006/12/22 08:17:14 rumble Exp $	*/
+/*	$NetBSD: hpcvar.h,v 1.10 2006/12/22 23:25:28 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -59,10 +59,6 @@ struct hpc_values {
         u_int32_t       scsi1_dev;
         u_int32_t       scsi1_dmacfg;
         u_int32_t       scsi1_piocfg;
-        u_int32_t       dmactl_dir;
-        u_int32_t       dmactl_flush;
-        u_int32_t       dmactl_active;
-        u_int32_t       dmactl_reset;
         u_int32_t       enet_regs;
         u_int32_t       enet_regs_size;
         u_int32_t       enet_intdelay;
