@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.240 2006/12/15 21:18:53 joerg Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.241 2006/12/22 05:34:02 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.240 2006/12/15 21:18:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.241 2006/12/22 05:34:02 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -461,7 +461,7 @@ ipintr(void)
 	int s;
 	struct mbuf *m;
 
-	while (1) {
+	while (!IF_IS_EMPTY(&ipintrq)) {
 		s = splnet();
 		IF_DEQUEUE(&ipintrq, m);
 		splx(s);
