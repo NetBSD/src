@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.38 2006/12/22 01:34:20 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.39 2006/12/22 01:36:24 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.38 2006/12/22 01:34:20 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.39 2006/12/22 01:36:24 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.38 2006/12/22 01:34:20 rumble Exp $");
 #include <sys/reboot.h>
 #include <sys/callout.h>
 
+#define _SGIMIPS_BUS_DMA_PRIVATE
+#include <machine/bus.h>
 #include <machine/machtype.h>
 
 #include <sgimips/gio/gioreg.h>
