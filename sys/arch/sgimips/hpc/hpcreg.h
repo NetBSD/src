@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.16 2006/12/22 08:17:14 rumble Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.17 2006/12/22 08:35:46 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -456,8 +456,7 @@ struct hpc_dma_desc {
 #define HPC1_LPT_DMACFG		0x00000014	/* DMA Configuration */
 #define HPC1_LPT_DEVREGS	0x00000132	/* Ext. Parallel Registers */
 #define	HPC1_LPT_DEVREGS_SIZE	0x00000001	/* Size of External Registers */
-#define HPC1_AUX_LED		0x000001bc	/* LED Control (byte) */
+#define HPC1_AUX_REGS		0x000001bf	/* EEPROM/LED Control (byte) */
 #define HPC1_AUX_CONSLED	0x01		/* Console LED */
-#define HPC1_AUX_EEPROM		0x000001bf	/* Serial EEPROM Control(byte)*/
 
 #endif	/* _ARCH_SGIMIPS_HPC_HPCREG_H_ */

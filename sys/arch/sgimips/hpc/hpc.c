@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.42 2006/12/22 08:17:14 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.43 2006/12/22 08:35:46 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.42 2006/12/22 08:17:14 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.43 2006/12/22 08:35:46 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -582,9 +582,11 @@ hpc_blink(void *self)
 
 	s = splhigh();
 
-	value = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(HPC1_AUX_REGS);
+	value = *(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(HPC_BASE_ADDRESS_0 +
+	    HPC1_AUX_REGS);
 	value ^= HPC1_AUX_CONSLED;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(HPC1_AUX_REGS) = value;
+	*(volatile u_int8_t *)MIPS_PHYS_TO_KSEG1(HPC_BASE_ADDRESS_0 +
+	    HPC1_AUX_REGS) = value;
 	splx(s);
 
 	/*
@@ -618,7 +620,7 @@ hpc_read_eeprom(int hpctype, bus_space_tag_t t, bus_space_handle_t h,
 	if (!len || len & 0x1)
 		return (1);
 
-	offset = (hpctype == 3) ? HPC3_EEPROM_DATA : HPC1_AUX_EEPROM;
+	offset = (hpctype == 3) ? HPC3_EEPROM_DATA : HPC1_AUX_REGS;
 
 	tag = SGIMIPS_BUS_SPACE_NORMAL;
 	if (bus_space_subregion(t, h, offset, 1, &bsh) != 0)
