@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.43 2006/12/22 08:35:46 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.44 2006/12/22 20:29:18 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.43 2006/12/22 08:35:46 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.44 2006/12/22 20:29:18 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ static const struct hpc_device {
 	{ "sq",
 	  HPC_BASE_ADDRESS_2,
 	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
-	  15,
+	  6,
 	  HPCDEV_IP12 | HPCDEV_IP20 },
 
 	{ "sq",
