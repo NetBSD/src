@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.104 2006/12/21 00:31:51 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.105 2006/12/22 03:26:51 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.104 2006/12/21 00:31:51 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.105 2006/12/22 03:26:51 kiyohara Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -103,6 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.104 2006/12/21 00:31:51 kiyohara Exp $"
 #include <dev/ieee1394/fwohcireg.h>
 #include <dev/ieee1394/fwohcivar.h>
 #include <dev/ieee1394/firewire_phy.h>
+
+#include "ioconf.h"
 #endif
 
 #undef OHCI_DEBUG
@@ -336,7 +338,6 @@ int fwohci_print(void *, const char *);
 #if defined(__FreeBSD__)
 d_ioctl_t fwohci_ioctl;
 #elif defined(__NetBSD__)
-extern struct cfdriver fwohci_cd;
 dev_type_ioctl(fwohci_ioctl);
 #endif
 
