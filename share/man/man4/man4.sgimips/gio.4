@@ -1,4 +1,4 @@
-.\"	$NetBSD: gio.4,v 1.13 2006/11/24 19:46:58 christos Exp $
+.\"	$NetBSD: gio.4,v 1.14 2006/12/22 00:51:00 rumble Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,12 +34,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 20, 2006
+.Dd December 21, 2006
 .Dt GIO 4 sgimips
 .Os
 .Sh NAME
 .Nm gio
-.Nd SGI's early PCI-like bus
+.Nd SGI's Graphics I/O (GIO) bus - an early PCI-like bus
 .Sh SYNOPSIS
 .Cd "gio0 at imc0"
 .Cd "gio0 at pic0"
@@ -57,8 +57,9 @@ peripheral controller, and memory and CPU are accessed through the
 (Processor Interface Controller).
 The
 .Nm
-bus is found on the Personal Iris 4D/3x, Indigo, Indy, Challenge-S, and
-Indigo2 machines and exists in three incarnations: GIO32, GIO32-bis, and GIO64.
+bus is found on the Personal Iris 4D/3x, Indigo, Indy, Challenge S, Challenge M
+and Indigo2 machines and exists in three incarnations: GIO32, GIO32-bis, and
+GIO64.
 .Sh SEE ALSO
 .Xr grtwo 4 ,
 .Xr hpc 4 ,
@@ -71,7 +72,7 @@ The
 driver first appeared in
 .Nx 1.5 .
 .Sh CAVEATS
-On Challenge-S systems only one
+On Challenge S systems only one
 .Nm
 expansion slot may be used with a DMA-capable device.
 This is due to the fact that the IOPLUS board uses one of the slots'
@@ -81,7 +82,20 @@ Ethernet.
 Which slot to use with a DMA-capable card depends on the card in
 question.
 HPC1.5-based cards, such as the E++ Ethernet Adapter and GIO32 SCSI
-Adapter, must be placed in slot #1 (next to the memory banks).
-All other DMA-capable boards must be placed in slot #0 (closest to
+Adapter, must be placed in slot 1 (next to the memory banks).
+All other DMA-capable boards must be placed in slot 0 (closest to
 the edge of the case).
 In either case the other slot may only accommodate a PIO card.
+.Pp
+Indigo2 and Challenge M systems contain either three or four GIO64 connectors,
+depending on the model. However, in both cases only two electrically
+distinct slots are present. Therefore, distinct expansion cards may not
+share physical connectors associated with the same slot. Refer to the PCB
+stencils to determine the association between physical connectors and slots.
+.Sh BUGS
+Systems employing the
+.Xr imc 4
+may experience spurious SysAD bus parity errors when using expansion cards,
+which do not drive all data lines during a CPU PIO read.
+The only workaround is to disable SysAD parity checking when using such
+cards.
