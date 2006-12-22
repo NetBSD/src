@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.163 2006/12/06 10:02:22 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.164 2006/12/22 08:04:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.163 2006/12/06 10:02:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.164 2006/12/22 08:04:01 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -316,10 +316,8 @@ exit1(struct lwp *l, int rv)
 	fixjobc(p, p->p_pgrp, 0);
 
 	/*
-	 * Collect accounting flags from the last remaining LWP (this one),
-	 * and write out accounting data.
+	 * Write out accounting data.
 	 */
-	p->p_acflag |= l->l_acflag;
 	(void)acct_process(l);
 
 #ifdef KTRACE
