@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcvar.h,v 1.10 2006/12/22 23:25:28 rumble Exp $	*/
+/*	$NetBSD: hpcvar.h,v 1.11 2006/12/22 23:36:42 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -91,9 +91,8 @@ struct hpc_values {
         u_int32_t       scsi_max_xfer;
 	u_int32_t       scsi_dma_segs;
         u_int32_t       scsi_dma_segs_size;
-        u_int32_t       clk_freq;
-        u_int32_t       dma_datain_cmd;
-        u_int32_t       dma_dataout_cmd;
+        u_int32_t       scsi_dma_datain_cmd;
+        u_int32_t       scsi_dma_dataout_cmd;
         u_int32_t       scsi_dmactl_flush;
         u_int32_t       scsi_dmactl_active;
         u_int32_t       scsi_dmactl_reset;

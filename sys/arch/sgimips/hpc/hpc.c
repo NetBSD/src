@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.48 2006/12/22 23:25:28 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.49 2006/12/22 23:36:42 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.48 2006/12/22 23:25:28 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.49 2006/12/22 23:36:42 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,9 +261,8 @@ static struct hpc_values hpc1_values = {
 	.scsi_max_xfer =	MAX_SCSI_XFER,
 	.scsi_dma_segs =       (MAX_SCSI_XFER / 4096),
 	.scsi_dma_segs_size =	4096,
-	.clk_freq =		100,
-	.dma_datain_cmd =      (HPC1_SCSI_DMACTL_ACTIVE | HPC1_SCSI_DMACTL_DIR),
-	.dma_dataout_cmd =	HPC1_SCSI_DMACTL_ACTIVE,
+	.scsi_dma_datain_cmd = (HPC1_SCSI_DMACTL_ACTIVE | HPC1_SCSI_DMACTL_DIR),
+	.scsi_dma_dataout_cmd =	HPC1_SCSI_DMACTL_ACTIVE,
 	.scsi_dmactl_flush =	HPC1_SCSI_DMACTL_FLUSH,
 	.scsi_dmactl_active =	HPC1_SCSI_DMACTL_ACTIVE,
 	.scsi_dmactl_reset =	HPC1_SCSI_DMACTL_RESET
@@ -323,9 +322,8 @@ static struct hpc_values hpc3_values = {
 	.scsi_max_xfer =	MAX_SCSI_XFER,
 	.scsi_dma_segs =       (MAX_SCSI_XFER / 8192),
 	.scsi_dma_segs_size =	8192,
-	.clk_freq =		100,
-	.dma_datain_cmd =	HPC3_SCSI_DMACTL_ACTIVE,
-	.dma_dataout_cmd =     (HPC3_SCSI_DMACTL_ACTIVE | HPC3_SCSI_DMACTL_DIR),
+	.scsi_dma_datain_cmd =	HPC3_SCSI_DMACTL_ACTIVE,
+	.scsi_dma_dataout_cmd =(HPC3_SCSI_DMACTL_ACTIVE | HPC3_SCSI_DMACTL_DIR),
 	.scsi_dmactl_flush =	HPC3_SCSI_DMACTL_FLUSH,
 	.scsi_dmactl_active =	HPC3_SCSI_DMACTL_ACTIVE,
 	.scsi_dmactl_reset =	HPC3_SCSI_DMACTL_RESET
