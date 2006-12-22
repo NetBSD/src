@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.40 2006/12/22 05:08:56 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.41 2006/12/22 05:26:01 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.40 2006/12/22 05:08:56 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.41 2006/12/22 05:26:01 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.40 2006/12/22 05:08:56 rumble Exp $");
 
 #include "locators.h"
 
-const struct hpc_device {
+static const struct hpc_device {
 	const char *hd_name;
 	bus_addr_t hd_base;
 	bus_addr_t hd_devoff;
@@ -323,16 +323,16 @@ static struct hpc_values hpc3_values = {
 
 static int powerintr_established;
 
-int	hpc_match(struct device *, struct cfdata *, void *);
-void	hpc_attach(struct device *, struct device *, void *);
-int	hpc_print(void *, const char *);
+static int	hpc_match(struct device *, struct cfdata *, void *);
+static void	hpc_attach(struct device *, struct device *, void *);
+static int	hpc_print(void *, const char *);
 
-int	hpc_revision(struct hpc_softc *, struct gio_attach_args *);
+static int	hpc_revision(struct hpc_softc *, struct gio_attach_args *);
 
-int	hpc_submatch(struct device *, struct cfdata *,
+static int	hpc_submatch(struct device *, struct cfdata *,
 		     const int *, void *);
 
-int	hpc_power_intr(void *);
+static int	hpc_power_intr(void *);
 
 #if defined(BLINK)
 static struct callout hpc_blink_ch = CALLOUT_INITIALIZER;
@@ -342,7 +342,7 @@ static void	hpc_blink(void *);
 CFATTACH_DECL(hpc, sizeof(struct hpc_softc),
     hpc_match, hpc_attach, NULL, NULL);
 
-int
+static int
 hpc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct gio_attach_args* ga = aux;
@@ -354,7 +354,7 @@ hpc_match(struct device *parent, struct cfdata *cf, void *aux)
 	return 1;
 }
 
-void
+static void
 hpc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpc_softc *sc = (struct hpc_softc *)self;
@@ -468,7 +468,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
  *
  * All we really have to worry about is the IP22 case.
  */
-int
+static int
 hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 {
 
@@ -523,7 +523,7 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 	return (0);
 }
 
-int
+static int
 hpc_submatch(struct device *parent, struct cfdata *cf,
 	     const int *ldesc, void *aux)
 {
@@ -536,7 +536,7 @@ hpc_submatch(struct device *parent, struct cfdata *cf,
 	return (config_match(parent, cf, aux));
 }
 
-int
+static int
 hpc_print(void *aux, const char *pnp)
 {
 	struct hpc_attach_args *ha = aux;
@@ -549,7 +549,7 @@ hpc_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-int
+static int
 hpc_power_intr(void *arg)
 {
 	u_int32_t pwr_reg;
