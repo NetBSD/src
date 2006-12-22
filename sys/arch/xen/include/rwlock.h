@@ -1,0 +1,3 @@
+/*	$NetBSD: rwlock.h,v 1.1.2.1 2006/12/22 09:59:47 ad Exp $	*/
+
+#include <x86/rwlock.h>
