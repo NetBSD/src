@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.39 2006/12/19 09:58:34 elad Exp $
+.\" $NetBSD: kauth.9,v 1.40 2006/12/22 11:13:21 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 19, 2006
+.Dd December 22, 2006
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -510,7 +510,9 @@ always indicates the machine for the request.
 Below is the list of available request hierarchy.
 .Bl -tag
 .It Dv KAUTH_MACHDEP_ALPHA
-The request is alpha specific.
+The request is
+.Em alpha
+specific.
 .Pp
 Available requests as
 .Ar req
@@ -519,8 +521,82 @@ are:
 .It Dv KAUTH_REQ_MACHDEP_ALPHA_UNMANAGEDMEM
 Access to unmanaged memory requested.
 .El
+.It Dv KAUTH_MACHDEP_ARM
+The request is
+.Em arm
+specific.
+.Pp
+Available requests as
+.Ar req
+are:
+.Bl -tag
+.It Dv KAUTH_REQ_MACHDEP_ARM_UNMANAGEDMEM
+Access to unmanaged memory requested.
+.El
+.It Dv KAUTH_MACHDEP_PC532
+The request is
+.Em pc532
+specific.
+.Pp
+Available requests as
+.Ar req
+are:
+.Bl -tag
+.It Dv KAUTH_REQ_MACHDEP_PC532_UNMANAGEDMEM
+Access to unmanaged memory requested.
+.El
+.It Dv KAUTH_MACHDEP_POWERPC
+The request is
+.Em powerpc
+specific.
+.Pp
+Available requests as
+.Ar req
+are:
+.Bl -tag
+.It Dv KAUTH_REQ_MACHDEP_POWERPC_UNMANAGEDMEM
+Access to unmanaged memory requested.
+.El
+.It Dv KAUTH_MACHDEP_SH3
+The request is
+.Em sh3
+specific.
+.Pp
+Available requests as
+.Ar req
+are:
+.Bl -tag
+.It Dv KAUTH_REQ_MACHDEP_SH3_UNMANAGEDMEM
+Access to unmanaged memory requested.
+.El
+.It Dv KAUTH_MACHDEP_SH5
+The request is
+.Em sh5
+specific.
+.Pp
+Available requests as
+.Ar req
+are:
+.Bl -tag
+.It Dv KAUTH_REQ_MACHDEP_SH5_UNMANAGEDMEM
+Access to unmanaged memory requested.
+.El
+.It Dv KAUTH_MACHDEP_VAX
+The request is
+.Em vax
+specific.
+.Pp
+Available requests as
+.Ar req
+are:
+.Bl -tag
+.It Dv KAUTH_REQ_MACHDEP_VAX_UNMANAGEDMEM
+Access to unmanaged memory requested.
+.El
 .It Dv KAUTH_MACHDEP_X86
-The request is x86 specific.
+The request is
+.Em x86
+specific.
 .Pp
 Available requests as
 .Ar req
@@ -536,7 +612,9 @@ Checks if the MTRR can be set.
 Access to unmanaged memory requested.
 .El
 .It Dv KAUTH_MACHDEP_X86_64
-The request is x86-64 specific.
+The request is
+.Em x86-64
+specific.
 .Pp
 Available requests as
 .Ar arg1
