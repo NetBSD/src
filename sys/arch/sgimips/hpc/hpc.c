@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.44 2006/12/22 20:29:18 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.45 2006/12/22 22:38:42 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.44 2006/12/22 20:29:18 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.45 2006/12/22 22:38:42 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,114 +59,131 @@ __KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.44 2006/12/22 20:29:18 rumble Exp $");
 
 #include "locators.h"
 
-static const struct hpc_device {
+struct hpc_device {
 	const char *hd_name;
 	bus_addr_t hd_base;
 	bus_addr_t hd_devoff;
 	bus_addr_t hd_dmaoff;
 	int hd_irq;
 	int hd_sysmask;
-} hpc_devices[] = {
-	{ "zsc",
+};
+
+static const struct hpc_device hpc1_devices[] = {
+	/* probe order is important for IP20 zsc */
+
+	{ "zsc",        /* Personal Iris/Indigo serial 0/1 duart 1 */
+	  HPC_BASE_ADDRESS_0,
+	  0x0d10, 0,
+	  5,
+	  HPCDEV_IP12 | HPCDEV_IP20 },
+
+	{ "zsc",        /* Personal Iris/Indigo kbd/ms duart 0 */
+	  HPC_BASE_ADDRESS_0,
+	  0x0d00, 0,
+	  5,
+	  HPCDEV_IP12 | HPCDEV_IP20 },
+
+	{ "sq",		/* Personal Iris/Indigo onboard ethernet */
+	  HPC_BASE_ADDRESS_0,
+	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
+	  3,
+	  HPCDEV_IP12 | HPCDEV_IP20 },
+	
+	{ "sq",		/* E++ GIO adapter slot 0 (Indigo) */
+	  HPC_BASE_ADDRESS_1,
+	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
+	  6,
+	  HPCDEV_IP12 | HPCDEV_IP20 },
+
+	{ "sq",		/* E++ GIO adapter slot 0 (Indy) */
+	  HPC_BASE_ADDRESS_1,
+	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
+	  22,
+	  HPCDEV_IP24 }, 
+
+	{ "sq",		/* E++ GIO adapter slot 1 (Indigo) */
+	  HPC_BASE_ADDRESS_2,
+	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
+	  6,
+	  HPCDEV_IP12 | HPCDEV_IP20 },
+
+	{ "sq",		/* E++ GIO adapter slot 1 (Indy/Challenge S) */
+	  HPC_BASE_ADDRESS_2,
+	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
+	  23,
+	  HPCDEV_IP24 },
+
+	{ "wdsc",	/* Personal Iris/Indigo onboard SCSI */
+	  HPC_BASE_ADDRESS_0,
+	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
+	  2,    /* XXX 1 = IRQ_LOCAL0 + 2 */    
+	  HPCDEV_IP12 | HPCDEV_IP20 },
+
+	{ "dpclock",	/* Personal Iris/Indigo clock */
+	  HPC_BASE_ADDRESS_0,
+	  HPC1_PBUS_BBRAM, 0,
+	  -1,
+	  HPCDEV_IP12 | HPCDEV_IP20 },
+
+	{ NULL,
+	  0,
+	  0, 0,
+	  0,
+	  0
+	}
+};
+
+static const struct hpc_device hpc3_devices[] = {
+	{ "zsc",	/* serial 0/1 duart 0 */
 	  HPC_BASE_ADDRESS_0,
 	  /* XXX Magic numbers */
 	  HPC3_PBUS_CH6_DEVREGS + IOC_SERIAL_REGS, 0,
 	  29,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
-	/* probe order is important for IP20 zsc */
-
-	{ "zsc",        /* serial 0/1 duart 1 */
-	  HPC_BASE_ADDRESS_0,
-	  0x0d10, 0,
-	  5,
-	  HPCDEV_IP12 | HPCDEV_IP20 },
-
-	{ "zsc",        /* kbd/ms duart 0 */
-	  HPC_BASE_ADDRESS_0,
-	  0x0d00, 0,
-	  5,
-	  HPCDEV_IP12 | HPCDEV_IP20 },
-
-	{ "pckbc",
+	{ "pckbc",	/* Indigo2/Indy ps2 keyboard/mouse controller */
 	  HPC_BASE_ADDRESS_0,
 	  HPC3_PBUS_CH6_DEVREGS + IOC_KB_REGS, 0,
 	  28,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
-	{ "sq",
+	{ "sq",		/* Indigo2/Indy/Challenge S/Challenge M onboard enet */
 	  HPC_BASE_ADDRESS_0,
 	  HPC3_ENET_DEVREGS, HPC3_ENET_REGS,
 	  3,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
-	{ "sq",
-	  HPC_BASE_ADDRESS_0,
-	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
-	  3,
-	  HPCDEV_IP12 | HPCDEV_IP20 },
-
-	{ "sq",
+	{ "sq",		/* Challenge S IOPLUS secondary ethernet */
 	  HPC_BASE_ADDRESS_1,
-	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
-	  6,
-	  HPCDEV_IP12 | HPCDEV_IP20 },
-
-	{ "sq",
-	  HPC_BASE_ADDRESS_1,
-	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
+	  HPC3_ENET_DEVREGS, HPC3_ENET_REGS,
 	  22,
-	  HPCDEV_IP24 }, 
-
-	{ "sq",
-	  HPC_BASE_ADDRESS_2,
-	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
-	  6,
-	  HPCDEV_IP12 | HPCDEV_IP20 },
-
-	{ "sq",
-	  HPC_BASE_ADDRESS_2,
-	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
-	  23,
 	  HPCDEV_IP24 },
 
-	{ "wdsc",
+	{ "wdsc",	/* Indigo2/Indy/Challenge S/Challenge M onboard SCSI */
 	  HPC_BASE_ADDRESS_0,
 	  HPC3_SCSI0_DEVREGS, HPC3_SCSI0_REGS,
 	  1,	/* XXX 1 = IRQ_LOCAL0 + 1 */
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
-	{ "wdsc",
+	{ "wdsc",	/* Indigo2/Challenge M secondary onboard SCSI */
 	  HPC_BASE_ADDRESS_0,
 	  HPC3_SCSI1_DEVREGS, HPC3_SCSI1_REGS,
 	  2,	/* XXX 2 = IRQ_LOCAL0 + 2 */
 	  HPCDEV_IP22 },
 
-	{ "wdsc",
-	  HPC_BASE_ADDRESS_0,
-	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
-	  2,    /* XXX 1 = IRQ_LOCAL0 + 2 */    
-	  HPCDEV_IP12 | HPCDEV_IP20 },
-
-	{ "dpclock",
-	  HPC_BASE_ADDRESS_0,
-	  HPC1_PBUS_BBRAM, 0,
-	  -1,
-	  HPCDEV_IP12 | HPCDEV_IP20 },
-
-	{ "dsclock",
+	{ "dsclock",	/* Indigo2/Indy/Challenge S/Challenge M clock */
 	  HPC_BASE_ADDRESS_0,
 	  HPC3_PBUS_BBRAM, 0,
 	  -1,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
-	{ "haltwo",
+	{ "haltwo",	/* Indigo2/Indy onboard audio */
 	  HPC_BASE_ADDRESS_0,
 	  HPC3_PBUS_CH0_DEVREGS, HPC3_PBUS_DMAREGS,
 	  8 + 4, /* XXX IRQ_LOCAL1 + 4 */
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
-	{ "pi1ppc",
+	{ "pi1ppc",	/* Indigo2/Indy/Challenge S/Challenge M onboard pport */
 	  HPC_BASE_ADDRESS_0,
 	  HPC3_PBUS_CH6_DEVREGS + IOC_PLP_REGS, 0,
 	  -1,
@@ -404,7 +421,8 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_base = ga->ga_addr;
 
-	for (hd = hpc_devices; hd->hd_name != NULL; hd++) {
+	hd = (hpctype == 3) ? hpc3_devices : hpc1_devices;
+	for (; hd->hd_name != NULL; hd++) {
 		if (!(hd->hd_sysmask & sysmask) || hd->hd_base != sc->sc_base)
 			continue;
 
