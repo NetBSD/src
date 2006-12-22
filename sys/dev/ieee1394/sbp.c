@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.13 2006/11/16 01:32:59 christos Exp $	*/
+/*	$NetBSD: sbp.c,v 1.14 2006/12/22 03:27:49 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -2167,7 +2167,7 @@ END_DEBUG
 	sbp->fd.post_busreset = sbp_post_busreset;
 	sbp->fd.post_explore = sbp_post_explore;
 
-	if (sbp->fd.fc->status != -1) {
+	if (sbp->fd.fc->status != FWBUSNOTREADY) {
 		s = splfw();
 		sbp_post_busreset((void *)sbp);
 		sbp_post_explore((void *)sbp);
