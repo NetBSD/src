@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.22 2006/08/30 23:48:55 rumble Exp $	*/
+/*	$NetBSD: gio.c,v 1.23 2006/12/22 20:29:18 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.22 2006/08/30 23:48:55 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.23 2006/12/22 20:29:18 rumble Exp $");
 
 #include "opt_ddb.h"
 
@@ -293,6 +293,9 @@ gio_arb_config(int slot, uint32_t flags)
 
 /*
  * Establish an interrupt handler for the specified slot.
+ *
+ * Indy and Challenge S have an interrupt per GIO slot. Indigo and Indigo2
+ * share a single interrupt, however.
  */
 void *
 gio_intr_establish(int slot, int level, int (*func)(void *), void *arg)
@@ -304,14 +307,14 @@ gio_intr_establish(int slot, int level, int (*func)(void *), void *arg)
 	case MACH_SGI_IP20:
 		if (slot == GIO_SLOT_GFX)
 			panic("gio_intr_establish: slot %d", slot);
-		intr = (slot == GIO_SLOT_EXP0) ? 0 : 6;
+		intr = 6;
 		break;
 
 	case MACH_SGI_IP22:
 		if (mach_subtype == MACH_SGI_IP22_FULLHOUSE) {
 			if (slot == GIO_SLOT_EXP1)
 				panic("gio_intr_establish: slot %d", slot);
-			intr = (slot == GIO_SLOT_EXP0) ? 0 : 6;
+			intr = 6;
 		} else {
 			if (slot == GIO_SLOT_GFX)
 				panic("gio_intr_establish: slot %d", slot);
