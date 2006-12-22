@@ -1,4 +1,4 @@
-.\"	$NetBSD: acct.5,v 1.8 2003/08/07 10:31:16 agc Exp $
+.\"	$NetBSD: acct.5,v 1.9 2006/12/22 08:00:20 ad Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)acct.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 5, 1993
+.Dd December 22, 2006
 .Dt ACCT 5
 .Os
 .Sh NAME
@@ -92,11 +92,16 @@ is saved in the field
 and its status is saved by setting one of more of the following flags in
 .Fa ac_flag :
 .Dv AFORK ,
-.Dv ASU ,
-.Dv ACOMPAT ,
 .Dv ACORE
 and
 .Dv ASIG .
+.Pp
+The
+.Dv ASU
+and
+.Dv ACOMPAT
+flags are no longer recorded by the system, but are retained for source
+compatibility.
 .Sh SEE ALSO
 .Xr lastcomm 1 ,
 .Xr acct 2 ,
