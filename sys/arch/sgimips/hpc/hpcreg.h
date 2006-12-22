@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.15 2006/12/22 05:08:56 rumble Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.16 2006/12/22 08:17:14 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -253,7 +253,8 @@ struct hpc_dma_desc {
 
 #define HPC3_GIO_MISC		0x00030004	/* GIO64 misc register */
 
-#define HPC3_EEPROM_DATA	0x00030008	/* Serial EEPROM data reg. */
+#define HPC3_EEPROM_DATA	0x0003000b	/* Serial EEPROM data reg. */
+						/* (byte) */
 
 #define HPC3_GIO_BUSERR		0x00030010	/* GIO64 bus error intr stat */
 
@@ -455,8 +456,8 @@ struct hpc_dma_desc {
 #define HPC1_LPT_DMACFG		0x00000014	/* DMA Configuration */
 #define HPC1_LPT_DEVREGS	0x00000132	/* Ext. Parallel Registers */
 #define	HPC1_LPT_DEVREGS_SIZE	0x00000001	/* Size of External Registers */
-#define HPC1_AUX_REGS		0x1fb801bc	/* Serial EEPROM/LED Control */
-#define HPC1_AUX_REGS_SIZE	0x00000001	/* One Byte */
+#define HPC1_AUX_LED		0x000001bc	/* LED Control (byte) */
 #define HPC1_AUX_CONSLED	0x01		/* Console LED */
+#define HPC1_AUX_EEPROM		0x000001bf	/* Serial EEPROM Control(byte)*/
 
 #endif	/* _ARCH_SGIMIPS_HPC_HPCREG_H_ */

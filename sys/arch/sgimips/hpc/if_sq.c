@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.29 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.30 2006/12/22 08:17:14 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.29 2005/12/11 12:18:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.30 2006/12/22 08:17:14 rumble Exp $");
 
 #include "bpfilter.h"
 
@@ -136,6 +136,13 @@ CFATTACH_DECL(sq, sizeof(struct sq_softc),
 	bus_space_read_4(sc->sc_hpct, sc->sc_hpch, off)	
 #define sq_hpc_write(sc, off, val) \
 	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, off, val)	
+
+/* MAC address offset for non-onboard implementations */
+#define SQ_HPC_EEPROM_ENADDR	250
+
+#define SGI_OUI_0		0x08
+#define SGI_OUI_1		0x00
+#define SGI_OUI_2		0x69
 
 static int
 sq_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -243,9 +250,22 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	if ((macaddr = ARCBIOS->GetEnvironmentVariable("eaddr")) == NULL) {
-		printf(": unable to get MAC address!\n");
-		goto fail_6;
+	memcpy(sc->sc_enaddr, &haa->hpc_eeprom[SQ_HPC_EEPROM_ENADDR],
+	    ETHER_ADDR_LEN);
+
+	/*
+	 * If our mac address is bogus, obtain it from ARCBIOS. This will
+	 * be true of the onboard HPC3 on IP22, since there is no eeprom,
+	 * but rather the DS1386 RTC's battery-backed ram is used.
+	 */
+	if (sc->sc_enaddr[0] != SGI_OUI_0 || sc->sc_enaddr[1] != SGI_OUI_1 ||
+	    sc->sc_enaddr[2] != SGI_OUI_2) {
+		macaddr = ARCBIOS->GetEnvironmentVariable("eaddr");
+		if (macaddr == NULL) {
+			printf(": unable to get MAC address!\n");
+			goto fail_6;
+		}
+		enaddr_aton(macaddr, sc->sc_enaddr);
 	}
 
 	evcnt_attach_dynamic(&sc->sq_intrcnt, EVCNT_TYPE_INTR, NULL,
@@ -274,8 +294,6 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": SGI Seeq %s\n",
 	    sc->sc_type == SQ_TYPE_80C03 ? "80c03" : "8003");
-
-	enaddr_aton(macaddr, sc->sc_enaddr);
 
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 					   ether_sprintf(sc->sc_enaddr));
