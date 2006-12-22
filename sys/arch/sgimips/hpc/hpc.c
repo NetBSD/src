@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.46 2006/12/22 23:08:22 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.47 2006/12/22 23:09:14 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.46 2006/12/22 23:08:22 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.47 2006/12/22 23:09:14 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,7 +441,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	sc->sc_ct = 1;
+	sc->sc_ct = SGIMIPS_BUS_SPACE_HPC;
 	sc->sc_ch = ga->ga_ioh;
 
 	sc->sc_base = ga->ga_addr;
@@ -457,7 +457,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		ha.ha_irq = hd->hd_irq;
 
 		/* XXX This is disgusting. */
-		ha.ha_st = 1;
+		ha.ha_st = SGIMIPS_BUS_SPACE_HPC;
 		ha.ha_sh = MIPS_PHYS_TO_KSEG1(sc->sc_base);
 		ha.ha_dmat = &sgimips_default_bus_dma_tag;
 		if (hpctype == 3)
