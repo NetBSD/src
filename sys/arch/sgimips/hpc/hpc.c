@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.37 2006/09/01 04:47:44 sekiya Exp $	*/
+/*	$NetBSD: hpc.c,v 1.38 2006/12/22 01:34:20 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.37 2006/09/01 04:47:44 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.38 2006/12/22 01:34:20 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,12 +323,6 @@ static struct hpc_values hpc3_values = {
 	.scsi_dmactl_reset =	HPC3_DMACTL_RESET
 };
 
-
-extern int mach_type;		/* IPxx type */
-extern int mach_subtype;	/* subtype: eg., Guiness/Fullhouse for IP22 */
-extern int mach_boardrev;	/* machine board revision, in case it matters */
-
-extern struct sgimips_bus_dma_tag sgimips_default_bus_dma_tag;
 
 static int powerintr_established;
 
