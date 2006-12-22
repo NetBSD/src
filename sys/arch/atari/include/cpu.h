@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47 2005/12/11 12:16:59 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.48 2006/12/22 18:00:19 jdc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -269,7 +269,6 @@ void	switch_lwp_exit __P((struct lwp *));
 typedef void (*si_farg)(void *, void *);	/* XXX */
 void	add_sicallback __P((si_farg, void *, void *));
 void	rem_sicallback __P((si_farg));
-void	cpu_startup __P((void));
 void	dumpsys __P((void));
 vaddr_t reserve_dumppages __P((vaddr_t));
 void	softint __P((void));
