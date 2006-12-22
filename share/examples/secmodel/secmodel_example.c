@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.8 2006/12/14 11:45:08 elad Exp $ */
+/* $NetBSD: secmodel_example.c,v 1.9 2006/12/22 11:13:21 elad Exp $ */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.8 2006/12/14 11:45:08 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.9 2006/12/22 11:13:21 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -341,19 +341,78 @@ secmodel_example_machdep_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
         int result;
+	enum kauth_machdep_req req;
 
         result = KAUTH_RESULT_DENY;
+	req = (enum kauth_machdep_req)arg0;
 
         switch (action) {
 	case KAUTH_MACHDEP_ALPHA:
-		switch ((u_long)arg0) {
+		switch (req) {
 		case KAUTH_REQ_MACHDEP_ALPHA_UNMANAGEDMEM:
 		default:
 			result = KAUTH_RESULT_DEFER;
 			break;
 		}
+
+		break;
+
+	case KAUTH_MACHDEP_ARM:
+		switch (req) {
+		case KAUTH_REQ_MACHDEP_ARM_UNMANAGEDMEM:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
+	case KAUTH_MACHDEP_PC532:
+		switch (req) {
+		case KAUTH_REQ_MACHDEP_PC532_UNMANAGEDMEM:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
+	case KAUTH_MACHDEP_POWERPC:
+		switch (req) {
+		case KAUTH_REQ_MACHDEP_POWERPC_UNMANAGEDMEM:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
+	case KAUTH_MACHDEP_SH3:
+		switch (req) {
+		case KAUTH_REQ_MACHDEP_SH3_UNMANAGEDMEM:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
+	case KAUTH_MACHDEP_SH5:
+		switch (req) {
+		case KAUTH_REQ_MACHDEP_SH5_UNMANAGEDMEM:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
+	case KAUTH_MACHDEP_VAX:
+		switch (req) {
+		case KAUTH_REQ_MACHDEP_VAX_UNMANAGEDMEM:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
         case KAUTH_MACHDEP_X86:
-                switch ((u_long)arg0) {
+                switch (req) {
                 case KAUTH_REQ_MACHDEP_X86_IOPL:
                 case KAUTH_REQ_MACHDEP_X86_IOPERM:
                 case KAUTH_REQ_MACHDEP_X86_MTRR_SET:
@@ -366,7 +425,7 @@ secmodel_example_machdep_cb(kauth_cred_t cred, kauth_action_t action,
                 break;
 
         case KAUTH_MACHDEP_X86_64:
-                switch ((u_long)arg0) {
+                switch (req) {
                 case KAUTH_REQ_MACHDPE_X86_64_MTRR_GET:
                 default:
                         result = KAUTH_RESULT_DEFER;
