@@ -53,7 +53,7 @@
 .\"           *  PLEASE DO NOT "UN-IFDEF" THIS FILE!  *
 .\"           * * * * * * * * * * * * * * * * * * * * *
 .\"
-.\" $NetBSD: lmc.4,v 1.12 2006/04/20 16:54:11 christos Exp $
+.\" $NetBSD: lmc.4,v 1.13 2006/12/23 06:52:49 wiz Exp $
 .\"
 .Dd April 11, 2006
 .Dt LMC 4
@@ -257,7 +257,7 @@ otherwise.
 The driver accepts two optional parameters:
 .Bl -tag -width "verbose" -offset indent
 .It Va debug
-Sets the driver's 
+Sets the driver's
 .Sy debug
 flag at initialization time\[em]earlier
 than it can be set using
@@ -521,36 +521,36 @@ can swamp the console and bring a machine to its knees.
 .\"
 .ie \n[allos] .Ss FreeBSD Operation
 .el .Ss Operation
-.\}	
+.\}
 .if \n[fbsd] \{\
 Configure a PPP link using SPPP and Netgraph with
-.Bd -unfilled -offset indent -compact 
+.Bd -unfilled -offset indent -compact
 .Ic lmcconfig lmc0 -X 6
 .Ic ngctl mkpeer lmc0: sppp rawdata downstream
 .Ic ifconfig sppp0 10.0.0.1 10.0.0.2
 .Ed
 .Pp
 Configure a PPP link using only SPPP with
-.Bd -unfilled -offset indent -compact 
+.Bd -unfilled -offset indent -compact
 .Ic lmcconfig lmc0 -X 2 -x 2
 .Ic ifconfig lmc0 10.0.0.1 10.0.0.2
 .Ed
 .Pp
 Configure a Cisco-HDLC link using SPPP and Netgraph with
-.Bd -unfilled -offset indent -compact 
+.Bd -unfilled -offset indent -compact
 .Ic lmcconfig lmc0 -X 6
 .Ic ngctl mkpeer lmc0: sppp rawdata downstream
 .Ic ifconfig sppp0 10.0.0.1 10.0.0.2 link2
 .Ed
 .Pp
 Configure a Cisco-HDLC link using only SPPP with
-.Bd -unfilled -offset indent -compact 
+.Bd -unfilled -offset indent -compact
 .Ic lmcconfig lmc0 -X 2 -x 3
 .Ic ifconfig lmc0 10.0.0.1 10.0.0.2
 .Ed
 .Pp
 Configure a Cisco-HDLC link using only Netgraph with
-.Bd -unfilled -offset indent -compact 
+.Bd -unfilled -offset indent -compact
 .Ic lmcconfig lmc0 -X 6
 .Ic ngctl mkpeer lmc0: cisco rawdata downstream
 .Ic ngctl mkpeer lmc0:rawdata iface inet inet
@@ -558,7 +558,7 @@ Configure a Cisco-HDLC link using only Netgraph with
 .Ed
 .Pp
 Configure a Frame-Relay DTE link using SPPP with
-.Bd -unfilled -offset indent -compact 
+.Bd -unfilled -offset indent -compact
 .Ic lmcconfig lmc0 -X 2 -x 4
 .Ic ifconfig lmc0 10.0.0.1 10.0.0.2
 .Ed
@@ -589,7 +589,7 @@ Configure a RAWIP link using Netgraph with
 .Ic lmcconfig lmc0 -X 6
 .Ic ngctl mkpeer lmc0: iface rawdata inet
 .Ic ifconfig ng0 10.0.0.1 10.0.0.2
-.Ed 
+.Ed
 .\} \" FreeBSD operation
 .if \n[allos] .Ss NetBSD & OpenBSD Operation
 .if (\n[nbsd] : \n[obsd]) \{\
@@ -633,12 +633,12 @@ Add
 to watch protocol events happen.
 .Pp
 Configure a Cisco-HDLC link by setting LINKTYPE with
-.Bd -unfilled -offset indent -compact 
+.Bd -unfilled -offset indent -compact
 .Ic ifconfig lmc0 10.0.0.1 10.0.0.2 linktype chdlc
 .Ed
 .Pp
 Configure a Fame-Relay link with
-.Bd -unfilled -offset indent -compact 
+.Bd -unfilled -offset indent -compact
 .Ic ifconfig lmc0 linktype fr
 .Ic frconfig lmc0 lmi ansi [type dce]
 .Ic frconfig lmc0 dlci 500 10.0.0.2
@@ -653,7 +653,7 @@ P2P implements ANSI, ITU and FRIF
 link management interfaces (LMIs).
 .Pp
 Configure a RAWIP link with
-.Bd -unfilled -offset indent -compact 
+.Bd -unfilled -offset indent -compact
 .Ic lmcconfig lmc0 -X 1
 .Ic ifconfig lmc0 10.0.0.1 10.0.0.2
 .Ed
@@ -714,7 +714,7 @@ Configure a Frame-Relay DTE link using GenericHDLC with
 .Ic ifconfig hdlc0 up
 .Ic ifconfig pvc0 10.0.0.1 pointopoint 10.0.0.2
 .Ed
-Adding 
+Adding
 .Dq dce
 after
 .Dq ansi
@@ -1020,7 +1020,7 @@ and add the following lines to
 The example above requires
 .ie \n[fbsd] \{\
 the Packet Filter
-.Xr pf 4 
+.Xr pf 4
 and \}
 the
 .Xr altq 4
@@ -1064,8 +1064,8 @@ The output from tcpdump should look like this:
 .Ic 03:54:35.979965 10.0.0.2 > 10.0.0.1: icmp: echo request
 .Ic 03:54:35.981423 10.0.0.1 > 10.0.0.2: icmp: echo reply
 .Ed
-Line protocol control packets may appear among the 
-ping packets occasionally. 
+Line protocol control packets may appear among the
+ping packets occasionally.
 .Pp
 The kernel must be configured with
 .Bd -unfilled -offset indent -compact
