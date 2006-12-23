@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.33 2006/12/02 03:10:43 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.34 2006/12/23 08:38:00 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.33 2006/12/02 03:10:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.34 2006/12/23 08:38:00 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.33 2006/12/02 03:10:43 elad Exp $");
 #include <sys/kauth.h>
 #include <sys/acct.h>
 #include <sys/sysctl.h>
+#include <sys/kmem.h>
 
 /* 
  * Credentials.
@@ -81,12 +82,8 @@ struct kauth_scope {
 	SIMPLEQ_ENTRY(kauth_scope)	next_scope;	/* scope list */
 };
 
-static POOL_INIT(kauth_scope_pool, sizeof(struct kauth_scope), 0, 0, 0,
-	  "kauth_scopepl", &pool_allocator_nointr);
-static POOL_INIT(kauth_listener_pool, sizeof(struct kauth_listener), 0, 0, 0,
-	  "kauth_listenerpl", &pool_allocator_nointr);
 static POOL_INIT(kauth_cred_pool, sizeof(struct kauth_cred), 0, 0, 0,
-	  "kauth_credpl", &pool_allocator_nointr);
+    "kauthcredpl", &pool_allocator_nointr);
 
 /* List of scopes and its lock. */
 static SIMPLEQ_HEAD(, kauth_scope) scope_list;
@@ -557,22 +554,31 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
 		return (NULL);
 
 	/* Allocate space for a new scope and listener. */
-	scope = pool_get(&kauth_scope_pool, PR_WAITOK);
+	scope = kmem_alloc(sizeof(*scope), KM_SLEEP);
+	if (scope == NULL)
+		return NULL;
 	if (callback != NULL) {
-		listener = pool_get(&kauth_listener_pool, PR_WAITOK);
+		listener = kmem_alloc(sizeof(*listener), KM_SLEEP);
+		if (listener == NULL) {
+			kmem_free(scope, sizeof(*scope));
+			return (NULL);
+		}
 	}
 
-	/* Acquire scope list lock. */
+	/*
+	 * Acquire scope list lock.
+	 *
+	 * XXXSMP insufficient locking.
+	 */
 	simple_lock(&scopes_lock);
 
 	/* Check we don't already have a scope with the same id */
 	if (kauth_ifindscope(id) != NULL) {
 		simple_unlock(&scopes_lock);
 
-		pool_put(&kauth_scope_pool, scope);
-		if (callback != NULL) {
-			pool_put(&kauth_listener_pool, listener);
-		}
+		kmem_free(scope, sizeof(*scope));
+		if (callback != NULL)
+			kmem_free(listener, sizeof(*listener));
 
 		return (NULL);
 	}
@@ -666,7 +672,11 @@ kauth_listen_scope(const char *id, kauth_scope_callback_t callback,
 	kauth_scope_t scope;
 	kauth_listener_t listener;
 
-	/* Find scope struct */
+	/*
+	 * Find scope struct.
+	 *
+	 * XXXSMP insufficient locking.
+	 */
 	simple_lock(&scopes_lock);
 	scope = kauth_ifindscope(id);
 	simple_unlock(&scopes_lock);
@@ -674,7 +684,9 @@ kauth_listen_scope(const char *id, kauth_scope_callback_t callback,
 		return (NULL);
 
 	/* Allocate listener */
-	listener = pool_get(&kauth_listener_pool, PR_WAITOK);
+	listener = kmem_alloc(sizeof(*listener), KM_SLEEP);
+	if (listener == NULL)
+		return (NULL);
 
 	/* Initialize listener with parameters */
 	listener->func = callback;
