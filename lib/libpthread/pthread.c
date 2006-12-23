@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.50 2006/12/23 05:18:56 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.51 2006/12/23 09:48:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.50 2006/12/23 05:18:56 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.51 2006/12/23 09:48:18 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -1304,6 +1304,13 @@ pthread__errorfunc(const char *file, int line, const char *function,
 }
 
 #ifndef PTHREAD_SA
+
+/*
+ * Thread park/unpark operations, based upon a description from
+ * "Multithreading in the Solaris Operating Environment":
+ *
+ * http://www.sun.com/software/whitepapers/solaris9/multithread.pdf
+ */
 
 #define	OOPS(msg)			\
     pthread__errorfunc(__FILE__, __LINE__, __FUNCTION__, msg)
