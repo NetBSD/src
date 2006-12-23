@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.1 2006/11/25 17:43:47 elad Exp $
+.\"	$NetBSD: boot.8,v 1.2 2006/12/23 08:04:32 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,12 +105,12 @@ Prompt for the root file system device, the system crash dump
 device, and the path to
 .Xr init 8 .
 .It Fl c
-Bring the system up into the device configuration manager.  From here
-the device locators can be tuned to the hardware; see
+Bring the system up into the device configuration manager.
+From here the device locators can be tuned to the hardware; see
 .Xr userconf 4 .
 .It Fl d
-Bring the system up in debug mode.  Here it waits for a kernel
-debugger connect; see
+Bring the system up in debug mode.
+Here it waits for a kernel debugger connect; see
 .Xr ddb 4 .
 .It Fl q
 Boot the system in quiet mode.
@@ -137,7 +137,8 @@ in
 .Xr boot_console 8 .
 .It Ic dev Op Va device
 Set the default drive and partition for subsequent filesystem
-operations. Without an argument, print the current setting.
+operations.
+Without an argument, print the current setting.
 .Va device
 is of the form specified in
 .Cm boot .
@@ -146,7 +147,7 @@ Print an overview about commands and arguments.
 .It Ic ls Op Pa path
 Print a directory listing of
 .Pa path ,
-containing inode number, filename and file type.
+containing inode number, filename, and file type.
 .Pa path
 can contain a device specification.
 .It Ic quit
@@ -169,7 +170,9 @@ gzip-compressed system code
 master copy of the boot program (copy to /boot)
 .It Pa /usr/mdec/bootxx_fstype
 primary bootstrap for filesystem type fstype, copied to the start of
-the netbsd partition by
+the
+.Nx
+partition by
 .Xr installboot 8 .
 .El
 .Sh SEE ALSO
