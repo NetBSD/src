@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.37 2006/11/20 15:51:12 ghen Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.38 2006/12/23 14:49:30 ghen Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -4144,8 +4144,24 @@ const struct pci_product pci_products[] = {
 	    "BCM5704C 1000baseT Ethernet",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5706,
+	    "BCM5706 NetXtreme II 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708,
+	    "BCM5708 NetXtreme II 1000baseT Ethernet",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5704S,
 	    "BCM5704S 1000baseX Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5706S,
+	    "BCM5706 NetXtreme II 1000baseSX",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708S,
+	    "BCM5708 NetXtreme II 1000baseSX",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705,
@@ -10904,4 +10920,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2143;
+const int pci_nproducts = 2147;
