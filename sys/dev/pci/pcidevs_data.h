@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.38 2006/12/23 14:49:30 ghen Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.39 2006/12/23 16:44:12 ghen Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -4992,6 +4992,10 @@ const struct pci_product pci_products[] = {
 	    "PERC 4e/Si",
 	},
 	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_5,
+	    "PERC 5",
+	},
+	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2_SUB,
 	    "PERC 3/Di",
 	},
@@ -5018,6 +5022,14 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB3,
 	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_5_1,
+	    "PERC 5/e",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_5_2,
+	    "PERC 5/i",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_CERC_1_5,
@@ -7682,6 +7694,14 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_300X,
 	    "LSI Megaraid SATA (300-6X/300-8X)",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_SAS,
+	    "MegaRAID SAS",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_VERDE_ZCR,
+	    "MegaRAID Verde ZCR",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
@@ -10920,4 +10940,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2147;
+const int pci_nproducts = 2152;
