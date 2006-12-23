@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.16 2006/12/14 09:24:54 yamt Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.17 2006/12/23 08:35:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.16 2006/12/14 09:24:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.17 2006/12/23 08:35:43 yamt Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -98,37 +98,6 @@ struct fileassoc_table {
 	 & ((tbl)->hash_mask))
 
 static void *
-table_getdata(struct fileassoc_table *tbl, const struct fileassoc *assoc)
-{
-
-	return specificdata_getspecific(fileassoc_domain, &tbl->data,
-	    assoc->key);
-}
-
-static void
-table_setdata(struct fileassoc_table *tbl, const struct fileassoc *assoc,
-    void *data)
-{
-
-	specificdata_setspecific(fileassoc_domain, &tbl->data, assoc->key,
-	    data);
-}
-
-static void
-table_cleanup(struct fileassoc_table *tbl, const struct fileassoc *assoc)
-{
-	fileassoc_cleanup_cb_t cb;
-	void *data;
-
-	cb = assoc->cleanup_cb;
-	if (cb == NULL) {
-		return;
-	}
-	data = table_getdata(tbl, assoc);
-	(*cb)(data, FILEASSOC_CLEANUP_TABLE);
-}
-
-static void *
 file_getdata(struct fileassoc_hash_entry *e, const struct fileassoc *assoc)
 {
 
@@ -156,7 +125,7 @@ file_cleanup(struct fileassoc_hash_entry *e, const struct fileassoc *assoc)
 		return;
 	}
 	data = file_getdata(e, assoc);
-	(*cb)(data, FILEASSOC_CLEANUP_FILE);
+	(*cb)(data);
 }
 
 static void
@@ -178,7 +147,6 @@ static void
 table_dtor(void *vp)
 {
 	struct fileassoc_table *tbl = vp;
-	const struct fileassoc *assoc;
 	struct fileassoc_hashhead *hh;
 	u_long i;
 
@@ -190,10 +158,6 @@ table_dtor(void *vp)
 		while ((mhe = LIST_FIRST(&hh[i])) != NULL) {
 			file_free(mhe);
 		}
-	}
-
-	LIST_FOREACH(assoc, &fileassoc_list, list) {
-		table_cleanup(tbl, assoc);
 	}
 
 	/* Remove hash table and sysctl node */
@@ -430,52 +394,7 @@ fileassoc_table_clear(struct mount *mp, fileassoc_t assoc)
 		}
 	}
 
-	table_cleanup(tbl, assoc);
-	table_setdata(tbl, assoc, NULL);
-
 	return (0);
-}
-
-/*
- * Add hook-specific data on a fileassoc table.
- */
-int
-fileassoc_tabledata_add(struct mount *mp, fileassoc_t assoc, void *data)
-{
-	struct fileassoc_table *tbl;
-
-	tbl = fileassoc_table_lookup(mp);
-	if (tbl == NULL)
-		return (EFAULT);
-
-	table_setdata(tbl, assoc, data);
-
-	return (0);
-}
-
-/*
- * Clear hook-specific data on a fileassoc table.
- */
-int
-fileassoc_tabledata_clear(struct mount *mp, fileassoc_t assoc)
-{
-
-	return fileassoc_tabledata_add(mp, assoc, NULL);
-}
-
-/*
- * Retrieve hook-specific data from a fileassoc table.
- */
-void *
-fileassoc_tabledata_lookup(struct mount *mp, fileassoc_t assoc)
-{
-	struct fileassoc_table *tbl;
-
-	tbl = fileassoc_table_lookup(mp);
-	if (tbl == NULL)
-		return (NULL);
-
-	return table_getdata(tbl, assoc);
 }
 
 /*

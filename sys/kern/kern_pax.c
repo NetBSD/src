@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.9 2006/12/11 15:24:28 yamt Exp $ */
+/* $NetBSD: kern_pax.c,v 1.10 2006/12/23 08:35:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -84,6 +84,8 @@ struct pax_segvguard_uid_entry {
 struct pax_segvguard_entry {
 	LIST_HEAD(, pax_segvguard_uid_entry) segv_uids;
 };
+
+static void pax_segvguard_cb(void *);
 #endif /* PAX_SEGVGUARD */
 
 /* PaX internal setspecific flags */
@@ -252,8 +254,8 @@ pax_mprotect(struct lwp *l, vm_prot_t *prot, vm_prot_t *maxprot)
 #endif /* PAX_MPROTECT */
 
 #ifdef PAX_SEGVGUARD
-void
-pax_segvguard_cb(void *v, int what)
+static void
+pax_segvguard_cb(void *v)
 {
 	struct pax_segvguard_entry *p;
 	struct pax_segvguard_uid_entry *up;
@@ -261,12 +263,10 @@ pax_segvguard_cb(void *v, int what)
 	if (v == NULL)
 		return;
 
-	if (what == FILEASSOC_CLEANUP_FILE) {
-		p = v;
-		while ((up = LIST_FIRST(&p->segv_uids)) != NULL) {
-			LIST_REMOVE(up, sue_list);
-			free(up, M_TEMP);
-		}
+	p = v;
+	while ((up = LIST_FIRST(&p->segv_uids)) != NULL) {
+		LIST_REMOVE(up, sue_list);
+		free(up, M_TEMP);
 	}
 
 	free(v, M_TEMP);
