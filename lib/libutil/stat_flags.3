@@ -1,4 +1,4 @@
-.\" $NetBSD: stat_flags.3,v 1.1 2006/12/14 19:18:01 christos Exp $
+.\" $NetBSD: stat_flags.3,v 1.2 2006/12/23 07:26:09 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,14 +52,14 @@
 .Sh DESCRIPTION
 The
 .Fn flags_to_string
-and 
+and
 .Fn string_to_flags
 functions are used by
 programs such as
 .Xr ls 1 ,
 .Xr mtree 1 ,
 .Xr makefs 8 ,
-etc., to parse and/or print the 
+etc., to parse and/or print the
 .Dv st_flags field in the
 .Xr stat 2
 structure.
@@ -120,7 +120,7 @@ or
 if allocation failed.
 .Pp
 .Fn string_to_flags
-returns 
+returns
 .Dv 0
 on success and
 .Dv 1
