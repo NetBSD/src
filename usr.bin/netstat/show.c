@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.5 2006/10/03 08:30:12 mlelstv Exp $	*/
+/*	$NetBSD: show.c,v 1.6 2006/12/23 11:05:14 jdc Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -499,9 +499,9 @@ netname4(in_addr_t in, in_addr_t mask)
 		if ((np = getnetbyaddr(in, AF_INET)) != NULL)
 			cp = np->n_name;
 	}
-	if (in == INADDR_ANY)
-		cp = "default";
 	mbits = mask ? 33 - ffs(mask) : 0;
+	if (in == INADDR_ANY && !mbits)
+			cp = "default";
 	if (cp)
 		strlcpy(line, cp, sizeof(line));
 #define C(x)	((x) & 0xff)
