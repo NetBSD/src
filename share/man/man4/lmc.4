@@ -53,7 +53,7 @@
 .\"           *  PLEASE DO NOT "UN-IFDEF" THIS FILE!  *
 .\"           * * * * * * * * * * * * * * * * * * * * *
 .\"
-.\" $NetBSD: lmc.4,v 1.13 2006/12/23 06:52:49 wiz Exp $
+.\" $NetBSD: lmc.4,v 1.14 2006/12/23 06:58:20 wiz Exp $
 .\"
 .Dd April 11, 2006
 .Dt LMC 4
@@ -1288,36 +1288,35 @@ to the distant input signal.
 .if \n[fbsd] .Xr sppp 4 ,
 .if \n[nbsd] .Xr sppp 4 ,
 .if \n[obsd] .Xr sppp 4 ,
-.if \n[fbsd] .Xr loader.conf 5 ,
-.if \n[fbsd] .Xr pf.conf 5 ,
 .if \n[nbsd] .Xr altq.conf 5 ,
 .if \n[obsd] .Xr altq.conf 5 ,
+.if \n[fbsd] .Xr loader.conf 5 ,
+.if \n[fbsd] .Xr pf.conf 5 ,
+.if \n[obsd] .Xr altqd 8 ,
+.if \n[nbsd] .Xr altqd 8 ,
 .if \n[bsdi] .Xr frconfig 8 ,
 .Xr ifconfig 8 ,
 .if \n[fbsd] .Xr init 8 ,
 .if \n[nbsd] .Xr init 8 ,
 .if \n[obsd] .Xr init 8 ,
-.Xr lmcconfig 8 ,
-.if \n[obsd] .Xr altqd 8 ,
-.if \n[nbsd] .Xr altqd 8 ,
 .if \n[fbsd] .Xr kldload 8 ,
 .if \n[nbsd] .Xr lkm 8 ,
 .if \n[obsd] .Xr lkm 8 ,
+.Xr lmcconfig 8 ,
 .if \n[nbsd] .Xr modload 8 ,
 .if \n[obsd] .Xr modload 8 ,
-.if \n[fbsd] .Xr kldload 8 ,
-.if \n[fbsd] .Xr ngctl 8 ,
 .if \n[linux] .Xr modprobe 8 ,
+.if \n[fbsd] .Xr ngctl 8 ,
 .Xr ping 8 ,
 .if \n[bsdi] .Xr ppp 8 ,
 .Xr tcpdump 8 ,
 .if \n[fbsd] .Xr altq 9 ,
 .if \n[nbsd] .Xr altq 9 ,
 .if \n[obsd] .Xr altq 9 ,
-.if \n[fbsd] .Xr ifnet 9 .
-.if \n[nbsd] .Xr ifnet 9 .
-.if \n[obsd] .Xr ifnet 9 .
-.if \n[bsdi] .Xr ifnet 9 .
+.if \n[fbsd] .Xr ifnet 9
+.if \n[nbsd] .Xr ifnet 9
+.if \n[obsd] .Xr ifnet 9
+.if \n[bsdi] .Xr ifnet 9
 .Pp
 .Bd -unfilled
 .Pa http://www.sbei.net/
