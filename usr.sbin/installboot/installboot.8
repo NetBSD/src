@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.59 2006/11/25 15:12:02 tsutsui Exp $
+.\"	$NetBSD: installboot.8,v 1.60 2006/12/23 07:47:15 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -629,7 +629,8 @@ for the primary bootstrap to function correctly.
 Note the
 .Nm
 utility is only required for macppc machines with OpenFirmware version 2
-to boot. OpenFirmware 3 can only load bootloader from HFS partitions.
+to boot.
+OpenFirmware 3 can only load use bootloaders from HFS partitions.
 .Pp
 Install the Berkeley Fast File System primary bootstrap on to disk
 .Sq wd0 :
@@ -640,7 +641,7 @@ The secondary
 bootstrap is located in
 .Pa /usr/mdec/ofwboot .
 .Pp
-The primary bootstrap requires raw
+The primary bootstrap requires the raw
 .Pa ofwboot
 for the secondary bootstrap, not
 .Pa ofwboot.xcf ,
@@ -747,7 +748,8 @@ without the contents of the disk erased, then the original
 .Sy FFS
 installation may be auto-detected instead of the
 .Sy RAID
-installation.  In this case, the
+installation.
+In this case, the
 .Fl t Ar raid
 option must be provided.
 .
@@ -782,15 +784,15 @@ though some file systems (e.g., ISO 9660) are able to accommodate larger
 ones.
 .
 .Ss Nx Ns Tn /macppc
-Due to restriction of current
+Due to restrictions in
 .Nm
-and secondary bootstrap implementation, file system where kernels exist
+and the secondary bootstrap implementation, file systems where kernels exist
 must start at the beginning of disks.
 .Pp
-Current
+Currently,
 .Nm
-doesn't recognize existing Apple partition map on the disk
-and always overwrites a faked map to make disks bootable.
+doesn't recognize an existing Apple partition map on the disk
+and always writes a faked map to make disks bootable.
 .Pp
 The
 .Nx Ns Tn /macppc
