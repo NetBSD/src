@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.49 2006/12/23 05:14:46 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.50 2006/12/23 05:18:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.49 2006/12/23 05:14:46 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.50 2006/12/23 05:18:56 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -689,6 +689,7 @@ pthread_exit(void *retval)
 		SDPRINTF(("(pthread_exit %p) walking dead\n", self));
 #else
 		pthread_spinunlock(self, &pthread__allqueue_lock);
+		/* XXXLWP recycle stack */
 		_lwp_exit();
 #endif
 	} else {
@@ -713,6 +714,7 @@ pthread_exit(void *retval)
 		SDPRINTF(("(pthread_exit %p) walking zombie\n", self));
 #else
 		pthread_spinunlock(self, &self->pt_join_lock);
+		/* XXXLWP recycle stack */
 		_lwp_exit();
 #endif
 	}
