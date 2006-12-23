@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.41 2006/12/23 07:17:50 wiz Exp $
+.\" $NetBSD: kauth.9,v 1.42 2006/12/23 09:02:45 wiz Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -279,11 +279,11 @@ is the
 for the target element in the target process, and
 .Ar arg2
 is the access type, which can be either
-.Dq KAUTH_REQ_PROCESS_CANPROCFS_CTL ,
-.Dq KAUTH_REQ_PROCESS_CANPROCFS_READ ,
-.Dq KAUTH_REQ_PROCESS_CANPROCFS_RW ,
+.Dv KAUTH_REQ_PROCESS_CANPROCFS_CTL ,
+.Dv KAUTH_REQ_PROCESS_CANPROCFS_READ ,
+.Dv KAUTH_REQ_PROCESS_CANPROCFS_RW ,
 or
-.Dq KAUTH_REQ_PROCESS_CANPROCFS_WRITE ,
+.Dv KAUTH_REQ_PROCESS_CANPROCFS_WRITE ,
 indicating
 .Em control ,
 .Em read ,
@@ -361,10 +361,10 @@ is allowed.
 .Pp
 .Ar arg1
 indicates the flag, and can be either
-.Dq P_STOPEXEC ,
-.Dq P_STOPEXIT ,
+.Dv P_STOPEXEC ,
+.Dv P_STOPEXIT ,
 or
-.Dq P_STOPFORK
+.Dv P_STOPFORK
 respectively.
 .El
 .Ss Network Scope
@@ -671,16 +671,16 @@ Authorizes requests for
 usually disk devices, but also direct memory access, on the system.
 .Pp
 It passes
-.Dq KAUTH_DEVICE_RAWIO_SPEC
+.Dv KAUTH_DEVICE_RAWIO_SPEC
 as the action to the listener, and accepts two arguments.
 .Ar req ,
 passed to the listener as
 .Ar arg0 ,
 is access requested, and can be one of
-.Dq KAUTH_REQ_DEVICE_RAWIO_SPEC_READ ,
-.Dq KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE ,
+.Dv KAUTH_REQ_DEVICE_RAWIO_SPEC_READ ,
+.Dv KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE ,
 or
-.Dq KAUTH_REQ_DEVICE_RAWIO_SPEC_RW ,
+.Dv KAUTH_REQ_DEVICE_RAWIO_SPEC_RW ,
 representing read, write, or both read/write access respectively.
 .Ar vp
 is the vnode of the special file in question, and is passed to the listener as
@@ -704,7 +704,7 @@ requests, or user commands passed directly to the hardware.
 These have the potential of resulting in direct disk and/or memory access.
 .Pp
 It passes
-.Dq KAUTH_DEVICE_RAWIO_PASSTHRU
+.Dv KAUTH_DEVICE_RAWIO_PASSTHRU
 as the action to the listener, and accepts three arguments.
 .Ar dev ,
 passed as
