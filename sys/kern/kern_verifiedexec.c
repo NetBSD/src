@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.83 2006/12/20 01:51:48 christos Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.84 2006/12/23 08:35:43 yamt Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.83 2006/12/20 01:51:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.84 2006/12/23 08:35:43 yamt Exp $");
 
 #include "opt_veriexec.h"
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.83 2006/12/20 01:51:48 chris
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/exec.h>
+#include <sys/once.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
@@ -103,6 +104,7 @@ size_t veriexec_name_max;
 const struct sysctlnode *veriexec_count_node;
 
 static fileassoc_t veriexec_hook;
+static specificdata_key_t veriexec_mountspecific_key;
 
 LIST_HEAD(, veriexec_fpops) veriexec_fpops_list;
 
@@ -110,7 +112,7 @@ static int veriexec_raw_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 static int sysctl_kern_veriexec(SYSCTLFN_PROTO);
 static struct veriexec_fpops *veriexec_fpops_lookup(const char *);
-static void veriexec_clear(void *, int);
+static void veriexec_clear(void *);
 
 static unsigned int veriexec_tablecount = 0;
 
@@ -320,6 +322,30 @@ veriexec_init(void)
 #undef FPOPS_ADD
 }
 
+static void
+veriexec_mountspecific_dtor(void *vp)
+{
+	struct veriexec_table_entry *vte = vp;
+
+	if (vte == NULL) {
+		return;
+	}
+	sysctl_free(__UNCONST(vte->vte_node));
+	veriexec_tablecount--;
+	free(vte, M_VERIEXEC);
+}
+
+static int
+veriexec_mountspecific_init(void)
+{
+	int error;
+
+	error = mount_specific_key_create(&veriexec_mountspecific_key,
+	    veriexec_mountspecific_dtor);
+
+	return error;
+}
+
 static struct veriexec_fpops *
 veriexec_fpops_lookup(const char *name)
 {
@@ -474,7 +500,8 @@ veriexec_table_lookup(struct mount *mp)
 	/* XXX: From raidframe init */
 	if (mp == NULL)
 		return NULL;
-	return (fileassoc_tabledata_lookup(mp, veriexec_hook));
+
+	return mount_getspecific(mp, veriexec_mountspecific_key);
 }
 
 struct veriexec_file_entry *
@@ -766,26 +793,16 @@ veriexec_report(const u_char *msg, const u_char *filename, struct lwp *l, int f)
 }
 
 static void
-veriexec_clear(void *data, int file_specific)
+veriexec_clear(void *data)
 {
-	if (file_specific) {
-		struct veriexec_file_entry *vfe = data;
+	struct veriexec_file_entry *vfe = data;
 
-		if (vfe != NULL) {
-			if (vfe->fp != NULL)
-				free(vfe->fp, M_VERIEXEC);
-			if (vfe->page_fp != NULL)
-				free(vfe->page_fp, M_VERIEXEC);
-			free(vfe, M_VERIEXEC);
-		}
-	} else {
-		struct veriexec_table_entry *vte = data;
-
-		if (vte != NULL) {
-			sysctl_free(__UNCONST(vte->vte_node));
-			veriexec_tablecount--;
-			free(vte, M_VERIEXEC);
-		}
+	if (vfe != NULL) {
+		if (vfe->fp != NULL)
+			free(vfe->fp, M_VERIEXEC);
+		if (vfe->page_fp != NULL)
+			free(vfe->page_fp, M_VERIEXEC);
+		free(vfe, M_VERIEXEC);
 	}
 }
 
@@ -1075,6 +1092,12 @@ veriexec_table_add(struct lwp *l, prop_dictionary_t dict)
 	struct nameidata nid;
 	u_char buf[16];
 	int error;
+	static ONCE_DECL(control);
+
+	error = RUN_ONCE(&control, veriexec_mountspecific_init);
+	if (error) {
+		return error;
+	}
 
 	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE,
 	    prop_string_cstring_nocopy(prop_dictionary_get(dict, "mount")), l);
@@ -1088,11 +1111,7 @@ veriexec_table_add(struct lwp *l, prop_dictionary_t dict)
 		goto out;
 
 	vte = malloc(sizeof(*vte), M_VERIEXEC, M_WAITOK | M_ZERO);
-	error = fileassoc_tabledata_add(nid.ni_vp->v_mount, veriexec_hook, vte);
-#ifdef DIAGNOSTIC
-	if (error)
-		panic("Fileassoc: Inconsistency after adding table");
-#endif /* DIAGNOSTIC */
+	mount_setspecific(nid.ni_vp->v_mount, veriexec_mountspecific_key, vte);
 
 	snprintf(buf, sizeof(buf), "table%u", veriexec_tablecount++);
 	sysctl_createv(NULL, 0, &veriexec_count_node, &vte->vte_node,
