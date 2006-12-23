@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.4 2006/12/23 06:36:19 wiz Exp $
+.\"	$NetBSD: mutex.9,v 1.5 2006/12/23 06:39:35 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Nm mutex_destroy ,
 .Nm mutex_enter ,
 .Nm mutex_exit ,
-.Nm mutex_tryenter
+.Nm mutex_tryenter ,
 .Nm mutex_owned
 .Nd mutual exclusion primitives
 .Sh SYNOPSIS
@@ -73,7 +73,9 @@ same interface:
 .It Dv MUTEX_ADAPTIVE
 Adaptive mutexes provide mutual exclusion between LWPs.
 .Pp
-When initializing an adaptive mutex, IPL_NONE must be specified as the
+When initializing an adaptive mutex,
+.Dv IPL_NONE
+must be specified as the
 .Ar ipl
 argument.
 Adaptive mutexes can not be acquired from an interrupt handler.
@@ -188,14 +190,19 @@ describes the public interface, and interfaces that machine-dependent
 code must provide to support mutexes.
 .Sh SEE ALSO
 .Xr condvar 9 ,
-.Xr rwlock 9 .
+.Xr rwlock 9
 .Pp
-Jim Mauro and Richard McDougall,
-.Em Solaris Internals: Core Kernel Architecture ,
-Prentice Hall, 2001.
-ISBN 0-13-022496-0
+.Rs
+.%A Jim Mauro
+.%A Richard McDougall
+.%T Solaris Internals: Core Kernel Architecture ,
+.%I Prentice Hall
+.%D 2001
+.%O ISBN 0-13-022496-0
+.Re
 .Sh HISTORY
 The mutex primatives first appeared in
 .Nx 5.0 .
 They are modelled after the mutual exclusion primatives implemented in
-Sun Solaris, and have been extended for NetBSD.
+Sun Solaris, and have been extended for
+.Nx .
