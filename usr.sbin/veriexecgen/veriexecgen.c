@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.11 2006/12/19 21:21:28 agc Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.12 2006/12/23 09:16:38 wiz Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: veriexecgen.c,v 1.11 2006/12/19 21:21:28 agc Exp $");
+__RCSID("$NetBSD: veriexecgen.c,v 1.12 2006/12/23 09:16:38 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,8 +137,9 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-AaDrSvW] [-d dir] [-o fingerprintdb]"
-	    " [-t algorithm]\n", getprogname());
+	    "usage:  %s [-AaDrSvW] [-d dir] [-o fingerprintdb] [-p prefix]\n"
+	    "\t\t    [-t algorithm]\n"
+	    "\t%s [-h]\n", getprogname(), getprogname());
 }
 
 /* tell people what we're doing - scan dirs, fingerprint etc */
