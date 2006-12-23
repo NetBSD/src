@@ -1,4 +1,4 @@
-.\"	$NetBSD: edid.9,v 1.1 2006/05/11 21:00:20 gdamore Exp $
+.\"	$NetBSD: edid.9,v 1.2 2006/12/23 06:36:19 wiz Exp $
 .\"
 .\" Copyright 2006 Itronix Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ which describes a display device such as a monitor or flat panel display.
 .Pp
 The
 .Fn edid_is_valid
-function simply tests if the EDID block in 
+function simply tests if the EDID block in
 .Fa data
 contains valid data.  This test includes a verification of the checksum,
 and that valid vendor and product idenfication data is present.  The data
@@ -74,7 +74,7 @@ data into the structure pointed to by
 .Pp
 The
 .Fn edid_print
-function prints the data in the given 
+function prints the data in the given
 .Fa info
 structure to the console device.
 .Pp
@@ -105,9 +105,9 @@ All pathnames are relative to
 The EDID subsystem is implemented within the file
 .Pa sys/dev/videomode/edid.c .
 .Pp
-The EDID subsystem also makes use of VESA Generalized Timing Formula located 
-located in 
-.Pa sys/dev/videomode/vesagtf.c 
+The EDID subsystem also makes use of VESA Generalized Timing Formula located
+located in
+.Pa sys/dev/videomode/vesagtf.c
 and the generic videomode database located in
 .Pa sys/dev/videomode/videomode.c .
 .Sh EXAMPLES
