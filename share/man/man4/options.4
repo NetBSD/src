@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.340 2006/11/22 02:02:51 elad Exp $
+.\"	$NetBSD: options.4,v 1.341 2006/12/23 07:35:28 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2221,8 +2221,8 @@ knob, see
 If 0, PaX MPROTECT will be enabled only if explicitly set on programs
 using
 .Xr paxctl 1 .
-If 1, PaX MPROTECT will be enabled to all programs, and exemption can
-be done using
+If 1, PaX MPROTECT will be enabled for all programs.
+Programs can be exempted using
 .Xr paxctl 1 .
 .Pp
 See
