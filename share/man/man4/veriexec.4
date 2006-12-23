@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.4,v 1.15 2006/11/28 22:22:03 elad Exp $
+.\" $NetBSD: veriexec.4,v 1.16 2006/12/23 08:45:55 wiz Exp $
 .\"
 .\" Copyright 2005 Elad Efrat <elad@bsd.org.il>
 .\" Copyright 2005 Brett Lymn <blymn@netbsd.org>
@@ -82,10 +82,10 @@ The dictionary passed contains the following elements:
 can be one or more (binary-OR'd) of the following:
 .Bl -column veriexecxuntrusted effect
 .It Sy Type	Effect
-.It VERIEXEC_DIRECT	can execute directly
-.It VERIEXEC_INDIRECT	can execute indirectly (interpreter, Xr mmap 2 )
-.It VERIEXEC_FILE	can be opened
-.It VERIEXEC_UNTRUSTED	located on untrusted storage
+.It Dv VERIEXEC_DIRECT	can execute directly
+.It Dv VERIEXEC_INDIRECT	can execute indirectly (interpreter, Xr mmap 2 )
+.It Dv VERIEXEC_FILE	can be opened
+.It Dv VERIEXEC_UNTRUSTED	located on untrusted storage
 .El
 .It Dv VERIEXEC_DELETE
 Removes either an entry for a single file or entries for an entire mount from
