@@ -1,4 +1,4 @@
-.\"     $NetBSD: intro.4,v 1.14 2006/12/23 03:40:11 rumble Exp $
+.\"     $NetBSD: intro.4,v 1.15 2006/12/23 10:10:55 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -119,9 +119,9 @@ Not all supported devices are listed.
 .Bl -tag -width macepci -offset indent -compact
 .It crime
 found on the O2
-.It dsclock
-real-time clock
 .It dpclock
+real-time clock
+.It dsclock
 real-time clock
 .It gio
 PCI-like bus
@@ -164,11 +164,19 @@ bus and associated device drivers.
 .Xr config 1 ,
 .Xr autoconf 4 ,
 .Xr crime 4 ,
+.Xr dpclock 4 ,
+.Xr dsclock 4 ,
 .Xr gio 4 ,
 .Xr hpc 4 ,
 .Xr imc 4 ,
 .Xr mace 4 ,
-.Xr pic 4
+.Xr mec 4 ,
+.Xr newport 4 ,
+.Xr pic 4 ,
+.\" XXX: .Xr sbic 4 ,
+.Xr sq 4 ,
+.Xr tlp 4 ,
+.Xr wdsc 4
 .Sh HISTORY
 This
 .Tn sgimips
