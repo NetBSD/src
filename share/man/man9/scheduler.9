@@ -1,4 +1,4 @@
-.\"     $NetBSD: scheduler.9,v 1.6 2006/12/23 06:36:33 wiz Exp $
+.\"     $NetBSD: scheduler.9,v 1.7 2006/12/23 09:21:10 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,6 @@
 .Ft void
 .Fn updatepri "struct lwp *l"
 .Sh DESCRIPTION
-.Pp
 The
 .Nx
 thread scheduling sub-system employs a
@@ -73,8 +72,8 @@ algorithm, favouring interactive, short-running threads to
 CPU-bound ones.
 .Pp
 .Fn resetpriority
-recomputes the priority of a thread running in
-user mode. If the resulting priority is higher than that of the
+recomputes the priority of a thread running in user mode.
+If the resulting priority is higher than that of the
 current thread, a reschedule is arranged.
 .Pp
 .Fn roundrobin
@@ -94,14 +93,14 @@ The priority of a thread gets worse as it accumulates CPU time.
 .Pp
 The
 .Fn schedcpu
-function recomputes the priorities of all threads every Hz
-ticks.
+function recomputes the priorities of all threads every Hz ticks.
 .Pp
 The
 .Fn setrunnable
-function changes a thread's state to be runnable. If the thread is in
-memory, it is placed on the proper runqueue, according to its
-priority. Otherwise the swapper is awaked.
+function changes a thread's state to be runnable.
+If the thread is in memory, it is placed on the proper runqueue,
+according to its priority.
+Otherwise the swapper is awakened.
 .Pp
 The
 .Fn updatepri
