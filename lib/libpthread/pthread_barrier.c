@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.6 2003/03/08 08:03:35 lukem Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.7 2006/12/23 05:14:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.6 2003/03/08 08:03:35 lukem Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.7 2006/12/23 05:14:46 ad Exp $");
 
 #include <errno.h>
 #include <sys/cdefs.h>
@@ -174,10 +174,14 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		barrier->ptb_curcount = 0;
 		barrier->ptb_generation++;
 
+#ifdef PTHREAD_SA
 		pthread__sched_sleepers(self, &blockedq);
 
 		pthread_spinunlock(self, &barrier->ptb_lock);
-
+#else
+		pthread__unpark_all(self, &barrier->ptb_lock, barrier,
+		    &blockedq);
+#endif
 		return PTHREAD_BARRIER_SERIAL_THREAD;
 	}
 
@@ -187,22 +191,27 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		SDPRINTF(("(barrier wait %p) Waiting on %p\n",
 		    self, barrier));
 
+#ifdef PTHREAD_SA
 		pthread_spinlock(self, &self->pt_statelock);
 
 		self->pt_state = PT_STATE_BLOCKED_QUEUE;
 		self->pt_sleepobj = barrier;
 		self->pt_sleepq = &barrier->ptb_waiters;
 		self->pt_sleeplock = &barrier->ptb_lock;
-		
+
 		pthread_spinunlock(self, &self->pt_statelock);
 
 		PTQ_INSERT_TAIL(&barrier->ptb_waiters, self, pt_sleep);
 
 		pthread__block(self, &barrier->ptb_lock);
-		SDPRINTF(("(barrier wait %p) Woke up on %p\n",
-		    self, barrier));
 		/* Spinlock is unlocked on return */
 		pthread_spinlock(self, &barrier->ptb_lock);
+#else	/* PTHREAD_SA */
+		(void)pthread__park(self, &barrier->ptb_lock, barrier,
+		    &barrier->ptb_waiters, NULL, 1);
+#endif	/* PTHREAD_SA */
+		SDPRINTF(("(barrier wait %p) Woke up on %p\n",
+		    self, barrier));
 	}
 	pthread_spinunlock(self, &barrier->ptb_lock);
 
