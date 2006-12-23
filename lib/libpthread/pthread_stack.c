@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.17 2006/02/12 11:41:53 yamt Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.18 2006/12/23 05:14:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_stack.c,v 1.17 2006/02/12 11:41:53 yamt Exp $");
+__RCSID("$NetBSD: pthread_stack.c,v 1.18 2006/12/23 05:14:47 ad Exp $");
 
 #define __EXPOSE_STACK 1
 #include <sys/param.h>
@@ -218,6 +218,7 @@ pthread__stackid_setup(void *base, size_t size, pthread_t *tp)
 }
 
 
+#ifdef PTHREAD_SA
 ssize_t
 pthread__stackinfo_offset()
 {
@@ -231,3 +232,4 @@ pthread__stackinfo_offset()
 	return (-(2 * pagesize) + offsetof(struct __pthread_st, pt_stackinfo));
 #endif
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.13 2006/03/19 23:01:03 christos Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.14 2006/12/23 05:14:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef PTHREAD_SA
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_alarms.c,v 1.13 2006/03/19 23:01:03 christos Exp $");
+__RCSID("$NetBSD: pthread_alarms.c,v 1.14 2006/12/23 05:14:46 ad Exp $");
 
 #include <err.h>
 #include <sys/time.h>
@@ -227,3 +229,5 @@ pthread__alarm_process(pthread_t self, void *arg)
 	}
 	SDPRINTF(("(pro %p) done\n", self, iterator));
 }
+
+#endif

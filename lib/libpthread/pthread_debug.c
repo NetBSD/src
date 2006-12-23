@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.9 2006/12/14 20:40:57 ad Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.10 2006/12/23 05:14:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_debug.c,v 1.9 2006/12/14 20:40:57 ad Exp $");
+__RCSID("$NetBSD: pthread_debug.c,v 1.10 2006/12/23 05:14:47 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -75,7 +75,7 @@ extern int pthread__maxconcurrency, pthread__started;
 void pthread__debug_init(int ncpu)
 {
 	time_t t;
-	int i;
+	int i, nbuf;
 
 	if (getenv("PTHREAD_DEBUGCOUNTERS") != NULL)
 		atexit(pthread__debug_printcounters);
@@ -83,6 +83,11 @@ void pthread__debug_init(int ncpu)
 	if (getenv("PTHREAD_DEBUGLOG") != NULL) {
 		t = time(NULL);
 		debugbuf = pthread__debuglog_init(0);
+#ifdef PTHREAD_SA
+		nbuf = ncpu;
+#else
+		nbuf = 1000;	/* XXXLWP */
+#endif
 		linebuf = (struct linebuf *)
 			malloc(ncpu * sizeof(struct linebuf));
 		if (linebuf == NULL)
@@ -161,10 +166,14 @@ pthread__debuglog_printf(const char *fmt, ...)
 	if (debugbuf == NULL || linebuf == NULL) 
 		return;
 
+#ifdef PTHREAD_SA
 	if (pthread__maxconcurrency > 1) {
 		vpid = pthread_self()->pt_vpid;
 	} else
 		vpid = 0;
+#else
+	vpid = (int)_lwp_self();
+#endif
 
 	tmpbuf = linebuf[vpid].buf;
 	len = linebuf[vpid].len;
@@ -233,10 +242,14 @@ pthread__debuglog_newline(void)
 	if (debugbuf == NULL) 
 		return 1;
 
+#ifdef PTHREAD_SA
 	if (pthread__maxconcurrency > 1)
 		vpid = pthread_self()->pt_vpid;
 	else
 		vpid = 0;
+#else
+	vpid = (int)_lwp_self();
+#endif
 	
 	return (linebuf[vpid].len == 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.37 2005/03/17 17:23:21 jwise Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.38 2006/12/23 05:14:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.37 2005/03/17 17:23:21 jwise Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.38 2006/12/23 05:14:47 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -59,6 +59,8 @@ __RCSID("$NetBSD: pthread_sa.c,v 1.37 2005/03/17 17:23:21 jwise Exp $");
 #else
 #define SDPRINTF(x)
 #endif
+
+#ifdef PTHREAD_SA
 
 #define UC(t) ((t)->pt_trapuc ? (t)->pt_trapuc : (t)->pt_uc)
 
@@ -827,3 +829,22 @@ pthread__setconcurrency(int concurrency)
 	SDPRINTF(("(set %p concurrency) now %d\n",
 		     self, pthread__concurrency));
 }
+
+
+#else	/* PTHREAD_SA */
+
+int
+pthread_getrrtimer_np(void)
+{
+
+	return (100);
+}
+
+int
+pthread_setrrtimer_np(int msec)
+{
+
+	return (EOPNOTSUPP);
+}
+
+#endif	/* PTHREAD_SA */

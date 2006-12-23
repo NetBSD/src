@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.13 2005/10/19 02:15:03 chs Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.14 2006/12/23 05:14:47 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,14 +37,16 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.13 2005/10/19 02:15:03 chs Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.14 2006/12/23 05:14:47 ad Exp $");
 
 #include <errno.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
 
+#ifdef PTHREAD_SA
 static void pthread_rwlock__callback(void *);
+#endif
 
 __strong_alias(__libc_rwlock_init,pthread_rwlock_init)
 __strong_alias(__libc_rwlock_rdlock,pthread_rwlock_rdlock)
@@ -116,6 +118,7 @@ pthread_rwlock_rdlock(pthread_rwlock_t *rwlock)
 	 */
 	while ((rwlock->ptr_writer != NULL) ||
 	    (!PTQ_EMPTY(&rwlock->ptr_wblocked))) {
+#ifdef PTHREAD_SA
 		PTQ_INSERT_TAIL(&rwlock->ptr_rblocked, self, pt_sleep);
 		/* Locking a rwlock is not a cancellation point; don't check */
 		pthread_spinlock(self, &self->pt_statelock);
@@ -127,6 +130,10 @@ pthread_rwlock_rdlock(pthread_rwlock_t *rwlock)
 		pthread__block(self, &rwlock->ptr_interlock);
 		/* interlock is not held when we return */
 		pthread_spinlock(self, &rwlock->ptr_interlock);
+#else	/* PTHREAD_SA */
+		(void)pthread__park(self, &rwlock->ptr_interlock, rwlock,
+		    &rwlock->ptr_rblocked, NULL, 1);
+#endif	/* PTHREAD_SA */
 	}
 	
 	rwlock->ptr_nreaders++;
@@ -195,6 +202,7 @@ pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 			return EDEADLK;
 		}
 #endif
+#ifdef PTHREAD_SA
 		PTQ_INSERT_TAIL(&rwlock->ptr_wblocked, self, pt_sleep);
 		/* Locking a rwlock is not a cancellation point; don't check */
 		pthread_spinlock(self, &self->pt_statelock);
@@ -206,6 +214,10 @@ pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 		pthread__block(self, &rwlock->ptr_interlock);
 		/* interlock is not held when we return */
 		pthread_spinlock(self, &rwlock->ptr_interlock);
+#else
+		(void)pthread__park(self, &rwlock->ptr_interlock, rwlock,
+		    &rwlock->ptr_wblocked, NULL, 1);
+#endif
 	}
 
 	rwlock->ptr_writer = self;
@@ -253,8 +265,10 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 	    const struct timespec *abs_timeout)
 {
 	pthread_t self;
+#ifdef PTHREAD_SA
 	struct pthread_rwlock__waitarg wait;
 	struct pt_alarm_t alarm;
+#endif
 	int retval;
 
 #ifdef ERRORCHECK
@@ -284,6 +298,7 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 	retval = 0;
 	while ((retval == 0) && ((rwlock->ptr_writer != NULL) ||
 	    (!PTQ_EMPTY(&rwlock->ptr_wblocked)))) {
+#ifdef PTHREAD_SA
 		wait.ptw_thread = self;
 		wait.ptw_rwlock = rwlock;
 		wait.ptw_queue = &rwlock->ptr_rblocked;
@@ -303,6 +318,10 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 		if (pthread__alarm_fired(&alarm))
 			retval = ETIMEDOUT;
 		pthread_spinlock(self, &rwlock->ptr_interlock);
+#else
+		retval = pthread__park(self, &rwlock->ptr_interlock, rwlock,
+		    &rwlock->ptr_rblocked, abs_timeout, 1);
+#endif
 	}
 
 	/* One last chance to get the lock, in case it was released between
@@ -323,8 +342,10 @@ int
 pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 	    const struct timespec *abs_timeout)
 {
+#ifdef PTHREAD_SA
 	struct pthread_rwlock__waitarg wait;
 	struct pt_alarm_t alarm;
+#endif
 	pthread_t self;
 	int retval;
 	extern int pthread__started;
@@ -361,6 +382,7 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 			return EDEADLK;
 		}
 #endif
+#ifdef PTHREAD_SA
 		wait.ptw_thread = self;
 		wait.ptw_rwlock = rwlock;
 		wait.ptw_queue = &rwlock->ptr_wblocked;
@@ -380,6 +402,10 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 		if (pthread__alarm_fired(&alarm))
 			retval = ETIMEDOUT;
 		pthread_spinlock(self, &rwlock->ptr_interlock);
+#else
+		retval = pthread__park(self, &rwlock->ptr_interlock, rwlock,
+		    &rwlock->ptr_wblocked, abs_timeout, 1);
+#endif
 	}
 
 	if ((rwlock->ptr_nreaders == 0) && (rwlock->ptr_writer == NULL)) {
@@ -392,6 +418,7 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 }
 
 
+#ifdef PTHREAD_SA
 static void
 pthread_rwlock__callback(void *arg)
 {
@@ -415,6 +442,7 @@ pthread_rwlock__callback(void *arg)
 	pthread_spinunlock(self, &a->ptw_rwlock->ptr_interlock);
 
 }
+#endif
 
 
 int
@@ -467,12 +495,20 @@ pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 #endif	
 	}
 
+#ifdef PTHREAD_SA
 	if (writer != NULL)
 		pthread__sched(self, writer);
 	else
 		pthread__sched_sleepers(self, &blockedq);
-	
+
 	pthread_spinunlock(self, &rwlock->ptr_interlock);
+#else	/* PTHREAD_SA */
+	if (writer != NULL)
+		pthread__unpark(self, &rwlock->ptr_interlock, rwlock, writer);
+	else
+		pthread__unpark_all(self, &rwlock->ptr_interlock, rwlock,
+		    &blockedq);
+#endif	/* PTHREAD_SA */
 
 	return 0;
 }
