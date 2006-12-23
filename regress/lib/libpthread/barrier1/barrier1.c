@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier1.c,v 1.1 2003/01/30 18:23:09 thorpej Exp $	*/
+/*	$NetBSD: barrier1.c,v 1.2 2006/12/23 17:44:12 ad Exp $	*/
 
 #include <assert.h>
 #include <err.h>
@@ -30,6 +30,9 @@ main(int argc, char *argv[])
 		err(1, "pthread_barrier_init");
 
 	for (i = 0; i < COUNT; i++) {
+		pthread_mutex_lock(&mutex);
+		assert(after_barrier_count == 0);
+		pthread_mutex_unlock(&mutex);
 		ret = pthread_create(&new[i], NULL, threadfunc,
 		    (void *)(long)i);
 		if (ret != 0)
@@ -38,15 +41,18 @@ main(int argc, char *argv[])
 	}
 
 	for (i = 0; i < COUNT; i++) {
-		pthread_mutex_lock(&mutex);
-		assert(after_barrier_count >= (COUNT - i));
-		pthread_mutex_unlock(&mutex);
 		ret = pthread_join(new[i], &joinval);
 		if (ret != 0)
 			err(1, "pthread_join");
+		pthread_mutex_lock(&mutex);
+		assert(after_barrier_count > i);
+		pthread_mutex_unlock(&mutex);
 		printf("main joined with thread %d\n", i);
 	}
 
+	pthread_mutex_lock(&mutex);
+	assert(after_barrier_count == COUNT);
+	pthread_mutex_unlock(&mutex);
 	assert(serial_count == 1);
 
 	return 0;
