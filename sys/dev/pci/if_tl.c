@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.77 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.78 2006/12/23 21:24:32 rumble Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.77 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.78 2006/12/23 21:24:32 rumble Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1270,7 +1270,7 @@ tl_ifstart(ifp)
 	tl_softc_t *sc = ifp->if_softc;
 	struct mbuf *mb_head;
 	struct Tx_list *Tx;
-	int segment, size;
+	int swsegment, hwsegment, size;
 	int again, error;
 
 	if ((sc->tl_if.if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
@@ -1347,11 +1347,60 @@ tbdinit:
 		mb_head = mn;
 		goto tbdinit;
 	}
-	for (segment = 0; segment < Tx->m_dmamap->dm_nsegs; segment++) {
-		Tx->hw_list->seg[segment].data_addr =
-		    htole32(Tx->m_dmamap->dm_segs[segment].ds_addr);
-		Tx->hw_list->seg[segment].data_count =
-		    htole32(Tx->m_dmamap->dm_segs[segment].ds_len);
+
+	hwsegment = 0;
+	for (swsegment = 0; swsegment < Tx->m_dmamap->dm_nsegs; swsegment++) {
+#ifdef TL_SETENG_GFE
+		/*
+		 * The Set Engineering GFE board (sgimips IP22 only) sits
+		 * behind a special bridge, which does not permit DMA segments
+		 * to cross page boundaries.
+		 */
+		if ((Tx->m_dmamap->dm_segs[swsegment].ds_addr +
+		     Tx->m_dmamap->dm_segs[swsegment].ds_len -
+		    (Tx->m_dmamap->dm_segs[swsegment].ds_addr & ~PAGE_MASK)) >
+		    PAGE_SIZE) {
+			uint32_t len1, len2;
+
+			if (hwsegment >= (TL_NSEG - 1)) {
+				/* XXX - copy? */
+				m_freem(mb_head);
+				goto bad;
+			}
+
+			len1 =
+			    (Tx->m_dmamap->dm_segs[swsegment].ds_addr|PAGE_MASK)
+			    - Tx->m_dmamap->dm_segs[swsegment].ds_addr + 1;
+			len2 = Tx->m_dmamap->dm_segs[swsegment].ds_len - len1;
+
+			Tx->hw_list->seg[hwsegment].data_addr =
+			    htole32(Tx->m_dmamap->dm_segs[swsegment].ds_addr);
+			Tx->hw_list->seg[hwsegment].data_count =
+			    htole32(len1);
+
+			hwsegment++;
+
+			Tx->hw_list->seg[hwsegment].data_addr =
+			    htole32(Tx->m_dmamap->dm_segs[swsegment].ds_addr +
+				len1);
+			Tx->hw_list->seg[hwsegment].data_count =
+			    htole32(len2);
+
+			hwsegment++;
+			continue;
+		}
+#endif
+
+		if (hwsegment >= TL_NSEG) {
+			m_freem(mb_head);
+			goto bad;
+		}
+
+		Tx->hw_list->seg[hwsegment].data_addr =
+		    htole32(Tx->m_dmamap->dm_segs[swsegment].ds_addr);
+		Tx->hw_list->seg[hwsegment].data_count =
+		    htole32(Tx->m_dmamap->dm_segs[swsegment].ds_len);
+		hwsegment++;
 	}
 	bus_dmamap_sync(sc->tl_dmatag, Tx->m_dmamap, 0,
 	    Tx->m_dmamap->dm_mapsize,
@@ -1361,33 +1410,33 @@ tbdinit:
 	 */
 	if (size < ETHER_MIN_TX) {
 #ifdef DIAGNOSTIC
-		if (segment >= TL_NSEG) {
-			panic("tl_ifstart: to much segmets (%d)", segment);
+		if (hwsegment >= TL_NSEG) {
+			panic("tl_ifstart: too many segments (%d)", swsegment);
 		}
 #endif
 		/*
 	 	 * add the nullbuf in the seg
 	 	 */
-		Tx->hw_list->seg[segment].data_count =
+		Tx->hw_list->seg[hwsegment].data_count =
 		    htole32(ETHER_MIN_TX - size);
-		Tx->hw_list->seg[segment].data_addr =
+		Tx->hw_list->seg[hwsegment].data_addr =
 		    htole32(sc->null_dmamap->dm_segs[0].ds_addr);
 		size = ETHER_MIN_TX;
-		segment++;
+		hwsegment++;
 	}
 	/* The list is done, finish the list init */
-	Tx->hw_list->seg[segment - 1].data_count |=
+	Tx->hw_list->seg[hwsegment - 1].data_count |=
 	    htole32(TL_LAST_SEG);
 	Tx->hw_list->stat = htole32((size << 16) | 0x3000);
 #ifdef TLDEBUG_TX
 	printf("%s: sending, Tx : stat = 0x%x\n", sc->sc_dev.dv_xname,
 	    le32toh(Tx->hw_list->stat));
 #if 0
-	for(segment = 0; segment < TL_NSEG; segment++) {
+	for(hwsegment = 0; hwsegment < TL_NSEG; hwsegment++) {
 		printf("    seg %d addr 0x%x len 0x%x\n",
-		    segment,
-		    le32toh(Tx->hw_list->seg[segment].data_addr),
-		    le32toh(Tx->hw_list->seg[segment].data_count));
+		    hwsegment,
+		    le32toh(Tx->hw_list->seg[hwsegment].data_addr),
+		    le32toh(Tx->hw_list->seg[hwsegment].data_count));
 	}
 #endif
 #endif
