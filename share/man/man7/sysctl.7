@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.1 2006/12/04 08:59:13 pavel Exp $
+.\"	$NetBSD: sysctl.7,v 1.2 2006/12/23 07:33:16 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -702,8 +702,8 @@ Returns 1 if the POSIX 1003.1b Synchronized I/O Option is available
 on this system,
 otherwise 0.
 .It Li kern.ipc ( KERN_SYSVIPC )
-Return information about the SysV IPC parameters. The third
-level names for the ipc variables are detailed below.
+Return information about the SysV IPC parameters.
+The third level names for the ipc variables are detailed below.
 .Bl -column "KERN_SYSVIPC_MSGXXX" "integerXXX" "noXXX" -offset indent
 .It Sy Third level name	Type		Changeable
 .It kern.ipc.sysvmsg	integer		no
@@ -768,7 +768,8 @@ Max shared memory segments per process.
 .It Li kern.ipc.shmmaxpgs ( KERN_SYSVIPC_SHMMAXPGS )
 Max amount of shared memory in pages.
 .It Li kern.ipc.shm_use_phys ( KERN_SYSVIPC_SHMUSEPHYS )
-Locking of shared memory in physical memory. If 0, memory can be swaped
+Locking of shared memory in physical memory.
+If 0, memory can be swaped
 out, otherwise it will be locked in physical memory.
 .El
 .It Li kern.timex ( KERN_TIMEX )
@@ -1915,7 +1916,8 @@ for more details.
 The
 .Li security
 level contains various security-related settings for
-the system. Available settings are detailed below.
+the system.
+Available settings are detailed below.
 .Pp
 .Bl -tag -width "123456"
 .It Li security.curtain
@@ -1942,7 +1944,8 @@ Enable PaX MPROTECT restrictions.
 .Pp
 These are
 .Xr mprotect 2
-restrictions to better enforce a W^X policy. The value of this
+restrictions to better enforce a W^X policy.
+The value of this
 knob must be non-zero for PaX MPROTECT to be enabled, even if a
 program is set to explicit enable.
 .It Li security.pax.mprotect.global
@@ -1978,7 +1981,7 @@ explicit enable/disable flag.
 When non-zero, all programs will get the PaX Segvguard,
 except those exempted with
 .Xr paxctl 1  .
-Otherwise, all programs will not get the PaX Segvguard restrictions,
+Otherwise, no program will get the PaX Segvguard restrictions,
 except those specifically marked as such with
 .Xr paxctl 1 .
 .It Li security.pax.segvguard.expiry_timeout
