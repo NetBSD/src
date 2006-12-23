@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.47 2006/11/24 19:46:58 christos Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.48 2006/12/23 05:14:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.47 2006/11/24 19:46:58 christos Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.48 2006/12/23 05:14:47 ad Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -66,6 +66,13 @@ __RCSID("$NetBSD: pthread_sig.c,v 1.47 2006/11/24 19:46:58 christos Exp $");
 #else
 #define SDPRINTF(x)
 #endif
+
+int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
+
+__strong_alias(__libc_thr_sigsetmask,pthread_sigmask)
+__strong_alias(__sigprocmask14,pthread_sigmask)
+
+#ifdef PTHREAD_SA
 
 extern int pthread__started;
 
@@ -112,10 +119,7 @@ pthread__signal_tramp(void (*)(int, siginfo_t *, void *),
 static int firstsig(const sigset_t *);
 
 int _sys_execve(const char *, char *const [], char *const []);
-int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
 
-__strong_alias(__libc_thr_sigsetmask,pthread_sigmask)
-__strong_alias(__sigprocmask14,pthread_sigmask)
 __strong_alias(__exeve,execve)
 
 void
@@ -1096,3 +1100,31 @@ execve(const char *path, char *const argv[], char *const envp[])
 
 	return ret;
 }
+
+#else	/* PTHREAD_SA */
+
+int
+pthread_kill(pthread_t thread, int sig)
+{
+	pthread_t self;
+
+	self = pthread__self();
+
+	SDPRINTF(("(pthread_kill %p) kill %p sig %d\n", self, thread, sig));
+
+	if ((sig < 0) || (sig >= _NSIG))
+		return EINVAL;
+	if (pthread__find(self, thread) != 0)
+		return ESRCH;
+
+	return _lwp_kill(thread->pt_lid, sig);
+}
+
+int
+pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
+{
+
+	return _sys___sigprocmask14(how, set, oset);
+}
+
+#endif	/* PTHREAD_SA */

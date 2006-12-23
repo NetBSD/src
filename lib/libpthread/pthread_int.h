@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.34 2006/10/03 09:37:07 yamt Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.35 2006/12/23 05:14:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -47,6 +47,10 @@
 #include "pthread_debug.h"
 #include "pthread_md.h"
 
+#ifndef PTHREAD_SA
+#include <lwp.h>
+#endif
+
 #include <sa.h>
 #include <signal.h>
 
@@ -84,7 +88,11 @@ struct	__pthread_st {
 	/* Identifier, for debugging and for preventing recycling. */
 	int		pt_num;
 
+#ifdef PTHREAD_SA
 	int	pt_type;	/* normal, upcall, or idle */
+#else
+	lwpid_t	pt_lid;		/* LWP ID */
+#endif
 	int	pt_state;	/* running, blocked, etc. */
 	pthread_spin_t pt_statelock;	/* lock on pt_state */
 	int	pt_flags;	/* see PT_FLAG_* below */
@@ -104,7 +112,11 @@ struct	__pthread_st {
 	PTQ_ENTRY(__pthread_st)	pt_allq;
 	/* Entry on the sleep queue (xxx should be same as run queue?) */
 	PTQ_ENTRY(__pthread_st)	pt_sleep;
-	/* Object we're sleeping on */
+	/*
+	 * Object we're sleeping on.  For 1:1 threads (!SA), this is
+	 * protected by the interlock on the object that the thread is
+	 * sleeping on.
+	 */
 	void			*pt_sleepobj;
 	/* Queue we're sleeping on */
 	struct pthread_queue_t	*pt_sleepq;
@@ -180,6 +192,8 @@ struct pthread_lock_ops {
 	void	(*plo_unlock)(__cpu_simple_lock_t *);
 };
 
+#ifdef PTHREAD_SA
+
 /* Thread types */
 #define PT_THREAD_NORMAL	1
 #define PT_THREAD_UPCALL	2
@@ -193,6 +207,15 @@ struct pthread_lock_ops {
 #define PT_STATE_ZOMBIE		5
 #define PT_STATE_DEAD		6
 #define PT_STATE_SUSPENDED	7
+
+#else	/* PTHREAD_SA */
+
+/* Thread states */
+#define PT_STATE_RUNNING	1
+#define PT_STATE_ZOMBIE		5
+#define PT_STATE_DEAD		6
+
+#endif	/* PTHREAD_SA */
 
 /* Flag values */
 
@@ -270,6 +293,16 @@ void	pthread__idle(void);
 
 /* Get the next thread */
 pthread_t pthread__next(pthread_t self);
+
+#ifndef PTHREAD_SA
+void	pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
+			    void *obj, struct pthread_queue_t *threadq);
+void	pthread__unpark(pthread_t self, pthread_spin_t *lock,
+			void *obj, pthread_t target);
+int	pthread__park(pthread_t self, pthread_spin_t *lock,
+		      void *obj, struct pthread_queue_t *threadq,
+		      const struct timespec *abs_timeout, int tail);
+#endif
 
 int	pthread__stackalloc(pthread_t *t);
 void	pthread__initmain(pthread_t *t);

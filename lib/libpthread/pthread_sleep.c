@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sleep.c,v 1.7 2005/04/19 16:38:57 nathanw Exp $ */
+/*	$NetBSD: pthread_sleep.c,v 1.8 2006/12/23 05:14:47 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sleep.c,v 1.7 2005/04/19 16:38:57 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sleep.c,v 1.8 2006/12/23 05:14:47 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: pthread_sleep.c,v 1.7 2005/04/19 16:38:57 nathanw Exp $");
 #include "pthread_int.h"
 
 int	_sys_nanosleep(const struct timespec *, struct timespec *);
+
+#ifdef PTHREAD_SA
 
 extern int pthread__started;
 
@@ -169,5 +171,21 @@ pthread__nanosleep_callback(void *arg)
 	}
 	pthread_spinunlock(self, &pt_nanosleep_lock);
 }
+
+#else	/* PTHREAD_SA */
+
+int
+nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
+{
+
+	/*
+	 * XXXLWP For now, just nanosleep.  In the future, maybe pass
+	 * a ucontext_t to _lwp_nanosleep() and allow it to recycle our
+	 * kernel stack.
+	 */
+	return  _sys_nanosleep(rqtp, rmtp);
+}
+
+#endif	/* PTHREAD_SA */
 
 __strong_alias(_nanosleep, nanosleep)
