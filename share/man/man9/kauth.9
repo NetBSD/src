@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.40 2006/12/22 11:13:21 elad Exp $
+.\" $NetBSD: kauth.9,v 1.41 2006/12/23 07:17:50 wiz Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -353,8 +353,8 @@ Check if changing the user- or group-ids, groups, or login-name for
 is allowed.
 .It Dv KAUTH_PROCESS_STOPFLAG
 Check if setting the stop flags for
-.Xr exec 2 ,
-.Xr exit 2 ,
+.Xr exec 3 ,
+.Xr exit 3 ,
 and
 .Xr fork 2
 is allowed.
