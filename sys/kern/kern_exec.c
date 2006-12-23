@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.233 2006/12/20 11:35:29 elad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.234 2006/12/23 17:23:51 elad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.233 2006/12/20 11:35:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.234 2006/12/23 17:23:51 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -286,15 +286,16 @@ check_exec(struct lwp *l, struct exec_package *epp)
 	VOP_UNLOCK(vp, 0);
 
 #if NVERIEXEC > 0
-        if ((error = veriexec_verify(l, vp, epp->ep_ndp->ni_dirp,
+	if ((error = veriexec_verify(l, vp, ndp->ni_cnd.cn_pnbuf,
 	    epp->ep_flags & EXEC_INDIR ? VERIEXEC_INDIRECT : VERIEXEC_DIRECT,
 	    NULL)) != 0)
-                goto bad2;
+		goto bad2;
 #endif /* NVERIEXEC > 0 */
 
 #ifdef PAX_SEGVGUARD
-	if (pax_segvguard(l, vp, epp->ep_ndp->ni_dirp, FALSE))
-		return (EPERM);
+	error = pax_segvguard(l, vp, ndp->ni_cnd.cn_pnbuf, FALSE);
+	if (error)
+		goto bad2;
 #endif /* PAX_SEGVGUARD */
 
 	/* now we have the file, get the exec header */
