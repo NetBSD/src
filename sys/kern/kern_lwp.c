@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.50 2006/12/22 08:04:01 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.51 2006/12/23 08:39:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.50 2006/12/22 08:04:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.51 2006/12/23 08:39:47 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -755,12 +755,14 @@ lwp_update_creds(struct lwp *l)
 	p = l->l_proc;
 	oc = l->l_cred;
 
+	KERNEL_PROC_LOCK(l);
 	simple_lock(&p->p_lock);
 	kauth_cred_hold(p->p_cred);
 	l->l_cred = p->p_cred;
 	simple_unlock(&p->p_lock);
 	if (oc != NULL)
 		kauth_cred_free(oc);
+	KERNEL_PROC_UNLOCK(l);
 }
 
 /*
