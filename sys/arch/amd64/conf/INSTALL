@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.27.2.13 2006/07/31 12:35:22 tron Exp $
+# $NetBSD: INSTALL,v 1.27.2.14 2006/12/23 14:43:47 ghen Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.27.2.13 $"
+#ident 		"INSTALL-$Revision: 1.27.2.14 $"
 
 maxusers	32		# estimated number of users
 
@@ -408,6 +408,7 @@ fd*	at fdc? drive ?			# the drives themselves
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
+bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet

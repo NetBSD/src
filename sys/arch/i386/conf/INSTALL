@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.262.2.5 2006/11/11 20:25:19 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.262.2.6 2006/12/23 14:43:45 ghen Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -509,6 +509,7 @@ ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x Gigabit Ethernet
+bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
