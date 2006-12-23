@@ -1,4 +1,4 @@
-.\"	$NetBSD: altqd.8,v 1.10 2006/11/26 11:38:07 peter Exp $
+.\"	$NetBSD: altqd.8,v 1.11 2006/12/23 08:25:44 wiz Exp $
 .\"	$KAME: altqd.8,v 1.9 2002/01/23 06:56:27 itojun Exp $
 .\"
 .\" Copyright (C) 2000
@@ -43,10 +43,16 @@ After configuring the ALTQ state,
 .Nm
 will detach and become a daemon.
 .Pp
-The signal SIGINT or SIGTERM will shutdown
-.Nm Ns ,
-and the signal SIGHUP will restart
-.Nm Ns .
+The signals
+.Dv SIGINT
+or
+.Dv SIGTERM
+will shutdown
+.Nm ,
+and the signal
+.Dv SIGHUP
+will restart
+.Nm .
 .Pp
 The following options are available:
 .Bl -tag -width Fl
