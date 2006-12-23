@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.88 2006/12/03 11:35:07 wiz Exp $
+.\"	$NetBSD: ifconfig.8,v 1.89 2006/12/23 07:41:26 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -189,7 +189,7 @@ The default broadcast address is the address with a host part of all 1's.
 If the driver is a
 .Xr carp 4
 pseudo-device, attach it to
-.Ar iface.
+.Ar iface .
 If not specified, the kernel will attempt to select an interface with
 a subnet matching that of the carp interface.
 .It Cm debug
@@ -779,9 +779,9 @@ tried to alter an interface's configuration.
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr agr 4 ,
+.Xr carp 4 ,
 .Xr ifmedia 4 ,
 .Xr netintro 4 ,
-.Xr carp 4 ,
 .Xr vlan 4 ,
 .Xr ifconfig.if 5 ,
 .\" .Xr eon 5 ,
