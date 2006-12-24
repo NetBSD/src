@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.50 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.51 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8480,6 +8480,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	tcp(4): Added RFC 3465 Appropriate Byte Counting (ABC) [yamt 20061019]
 	wm(4): Added support for the Intel 80003 gigabit ethernet controller.
 		[bouyer 20061021]
+	vge(4): Fix hardware VLAN tagging support. [tsutsui 20061021]
 	gcc(1): Update to GCC 4.1.2-20061021 snapshot.  [mrg 20061021]
 	mail(1): Mime and multi-character set handling; command line editing
 		and completion. Thanks to Anon Ymous [christos 20061021]
@@ -8521,6 +8522,8 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		kernels. [tls 20061101]
 	useradd(8): Change the default shell for newly added users to
 		/bin/sh. [pavel 20061102]
+	re(4): Fix RTL8139C+ support. From FreeBSD and Brian A. Seklecki.
+		[tsutsui 20061103]
 	tmpfs: NFS support is now complete.  At the very least, all the
 		relevant tmpfs regression tests pass successfully when
 		executed over a remote tmpfs mounted through NFS.
@@ -8548,8 +8551,13 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		/etc/mk.conf [christos 20061111]
 	uucp: Removed from base; package can be found in pkgsrc
 		[christos 20061111]
+	ex(4): Add a workaround for a hardware ip4csum-tx bug which would
+		sometimes put wrong IPv4 checksum on sending 21 or 22 byte
+		IP packets. [tsutsui 20061112]
 	openssl: update to 0.9.8d [christos 20061113]
 	wm(4): Add IPv6 Rx tcp/udp checksum offloading. [yamt 20061116]
+	re(4): Add a workaround for a hardware ip4csum-tx bug on sending
+		28 byte or less IP packets. [tsutsui 20061117]
 	mac68k: Add timecounter support. [hauke 20061120]
 	tcp(4), ifconfig(8), wm(4): Add TCPv6 hardware transmit segment
 		offload support. [yamt 20061124]
@@ -8559,4 +8567,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		support, threading and sorting of messages, improved message
 		selection, and redirection of command output; from Anon Ymous.
 		[christos 20061201]
-
+	re(4): Fix hardware VLAN tagging support. [tsutsui 20061216]
