@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.7 2006/11/23 13:23:22 elad Exp $
+.\" $NetBSD: security.8,v 1.8 2006/12/24 21:50:09 rumble Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -42,12 +42,13 @@ Below is a brief description of them with some quick usage examples
 that will help you get started.
 .Sh VERIEXEC
 .Em Veriexec
-is an in-kernel, real-time, file-system idenependent, file integrity
+is an in-kernel, real-time, file-system independent, file integrity
 subsystem.
-It can be used for a variety of purposes, including defense against trojanned
+It can be used for a variety of purposes, including defense against trojaned
 binaries, indirect attacks via third-party remote file-systems, and
-config file corruption.
-It can operate in four modes, also referred to as strict levels:
+configuration file corruption.
+.Em Veriexec
+can operate in four modes, also referred to as strict levels:
 .Bl -tag -width flag
 .It Learning mode ( strict level 0 )
 The only level at which the fingerprint tables can be modified, this level is
@@ -158,7 +159,7 @@ incorporates some exploit mitigation features, mainly from the
 project.
 .Ss PaX MPROTECT
 .Em PaX MPROTECT
-are memory protection restrictions, meant to compliment non-executable
+implements memory protection restrictions, meant to complement non-executable
 mappings.
 Their purpose is to prevent situations where malicious code attempts to mark
 writable memory regions as executable, often by trashing arguments to an
@@ -186,23 +187,24 @@ globally:
 .Ed
 .Ss PaX Segvguard
 .Em PaX Segvguard
-monitors the number of segfaults in a program per-user, in an attempt to
-detect on-going exploitation attempts and possibly prevent them.
-One common attack
+monitors the number of segmentation faults in a program on a per-user basis,
+in an attempt to detect on-going exploitation attempts and possibly prevent
+them.
+For instance,
 .Em PaX Segvguard
-can help mitigate is when an attacker tries to brute-force a function
-return address, when wanting to perform a return-to-lib attack.
+can help detect when an attacker tries to brute-force a function
+return address, when attempting to perform a return-to-lib attack.
 .Pp
 .Em PaX Segvguard
-makes use of kernel memory, so use it wisely.
-While it provides rate-limiting protections, it works on a per-program
-basis for keeping its records, meaning that irresponsible use may result
-in keeping track of all segfaults in the system, easily wasting all kernel
+consumes kernel memory, so use it wisely.
+While it provides rate-limiting protections, records are tracked for all
+users on a per-program basis, meaning that irresponsible use may result in
+tracking all segmentation faults in the system, possibly consuming all kernel
 memory.
 .Pp
 For this reason, it is highly recommended to have
 .Em PaX Segvguard
-enabled explicitly only for network services etc.
+enabled explicitly only for network services, etc.
 Enabling
 .Em PaX Segvguard
 explicitly works like this:
@@ -217,10 +219,18 @@ etc.):
 # sysctl -w security.pax.segvguard.global=1
 .Ed
 .Pp
+Explicitly disabling
 .Em PaX Segvguard
-can be configured to work in your preferred way.
-For example, watching for 5 segfaults from the same user in a time-frame of
-60 seconds:
+is also possible:
+.Bd -literal -offset indent
+# paxctl +g /bin/ls
+.Ed
+.Pp
+In addition,
+.Em PaX Segvguard
+provides several tunable options.
+For example, to limit a program to 5 segmentation faults from the same user in
+a 60 second timeframe:
 .Bd -literal -offset indent
 # sysctl -w security.pax.segvguard.max_crashes=5
 # sysctl -w security.pax.segvguard.expiry_timeout=60
@@ -232,21 +242,15 @@ For example, 10 minutes seem like a sane setting:
 .Bd -literal -offset indent
 # sysctl -w security.pax.segvguard.suspend_timeout=600
 .Ed
-.Pp
-Explicitly disabling
-.Em PaX Segvguard
-can be done like this:
-.Bd -literal -offset indent
-# paxctl +g /bin/ls
-.Ed
 .Ss GCC Stack Smashing Protection ( SSP )
-Since
+As of
 .Nx 4.0 ,
 .Xr gcc 1
 includes
 .Em SSP ,
-a set of compiler extensions to raise the bar on exploitation attempts via
-corruption of variables to affect program control flow or buffer overruns.
+a set of compiler extensions to raise the bar on exploitation attempts by
+detecting corruption of variables and buffer overruns, which may be used to
+affect program control flow.
 .Pp
 You are encouraged to use
 .Em SSP
@@ -257,7 +261,7 @@ or
 flags to
 .Xr gcc 1 .
 .Pp
-The system (userland, kernel) can be built with
+The system (userland and kernel) can be built with
 .Em SSP
 by using the
 .Dq USE_SSP
@@ -268,17 +272,17 @@ USE_SSP=yes
 .Ed
 .Sh INFORMATION FILTERING
 .Nx
-provides administrators with the ability to restrict information passed from
+provides administrators the ability to restrict information passed from
 the kernel to userland so that users can only view information they
 .Dq own .
 .Pp
-The hooks that manage that are located in various parts of the system and
-effectively affect programs like
+The hooks that manage this restriction are located in various parts of the
+system and affect programs such as
 .Xr ps 1 ,
 .Xr fstat 1 ,
 and
 .Xr netstat 1 .
-To enable:
+Information filtering is enabled as follows:
 .Bd -literal -offset indent
 # sysctl -w security.curtain=1
 .Ed
