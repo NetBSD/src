@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.51 2006/12/23 09:48:18 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.52 2006/12/24 18:39:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.51 2006/12/23 09:48:18 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.52 2006/12/24 18:39:45 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -64,6 +64,12 @@ __RCSID("$NetBSD: pthread.c,v 1.51 2006/12/23 09:48:18 ad Exp $");
 #else
 #define SDPRINTF(x)
 #endif
+
+/* Maximum number of LWPs to unpark in one operation. */
+#define	PTHREAD__UNPARK_MAX	128
+
+/* How many times to try acquiring spin locks on MP systems. */
+#define	PTHREAD__NSPINS		1000
 
 static void	pthread__create_tramp(void *(*start)(void *), void *arg);
 static void	pthread__dead(pthread_t, pthread_t);
@@ -95,11 +101,12 @@ pthread_spin_t pthread__runqueue_lock = __SIMPLELOCK_UNLOCKED;
 struct pthread_queue_t pthread__runqueue;
 struct pthread_queue_t pthread__idlequeue;
 struct pthread_queue_t pthread__suspqueue;
+#endif
 
-int pthread__concurrency, pthread__maxconcurrency;
+int pthread__concurrency, pthread__maxconcurrency, pthread__nspins;
+int pthread__unpark_max = PTHREAD__UNPARK_MAX;
 
 int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
-#endif
 
 __strong_alias(__libc_thr_self,pthread_self)
 __strong_alias(__libc_thr_create,pthread_create)
@@ -142,14 +149,11 @@ pthread_init(void)
 {
 	pthread_t first;
 	char *p;
-	int mib[2], ncpu;
+	int i, mib[2], ncpu;
 	size_t len;
 	extern int __isthreaded;
 #ifdef PTHREAD_MLOCK_KLUDGE
 	int ret;
-#endif
-#ifdef PTHREAD_SA
-	int i;
 #endif
 
 	mib[0] = CTL_HW;
@@ -176,6 +180,20 @@ pthread_init(void)
 		(pthread__maxconcurrency * sizeof(struct pthread_queue_t));
 	if (pthread__reidlequeue == NULL)
 		err(1, "Couldn't allocate memory for pthread__reidlequeue");
+
+	pthread__nspins = PTHREAD__NSPINS;
+#else
+	/*
+	 * Get number of CPUs, and maximum number of LWPs that can be
+	 * unparked at once.
+	 */
+	if ((pthread__concurrency = ncpu) > 1)
+		pthread__nspins = PTHREAD__NSPINS;
+	else
+		pthread__nspins = 1;
+	i = _lwp_unpark_all(NULL, 0);
+	if (i < pthread__unpark_max)
+		pthread__unpark_max = i;
 #endif
 
 	/* Basic data structure setup */
@@ -191,8 +209,8 @@ pthread_init(void)
 	PTQ_INIT(&pthread__idlequeue);
 	for (i = 0; i < pthread__maxconcurrency; i++)
 		PTQ_INIT(&pthread__reidlequeue[i]);
-	nthreads = 1;
 #endif
+	nthreads = 1;
 	/* Create the thread structure corresponding to main() */
 	pthread__initmain(&first);
 	pthread__initthread(first, first);
@@ -440,7 +458,11 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 #ifndef PTHREAD_SA
 	/* 4a. Create the new LWP. */
-	flag = (newthread->pt_flags & PT_FLAG_SUSPENDED) ? LWP_SUSPENDED : 0;
+	flag = 0;
+	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0)
+		flag |= LWP_SUSPENDED;
+	if ((newthread->pt_flags & PT_FLAG_DETACHED) != 0)
+		flag |= LWP_DETACHED;
 	ret = _lwp_create(newthread->pt_uc, (u_long)flag, &newthread->pt_lid);
 	if (ret != 0) {
 		SDPRINTF(("(pthread_create %p) _lwp_create: %s\n",
@@ -449,6 +471,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		free(name);
 		return ret;
 	}
+	newthread->pt_sleeponq = 0;
 #endif
 
 	/* 5. Add to list of all threads. */
@@ -630,9 +653,7 @@ pthread_exit(void *retval)
 	pthread_t self;
 	struct pt_clean_t *cleanup;
 	char *name;
-#ifdef PTHREAD_SA
 	int nt;
-#endif
 
 	self = pthread__self();
 	SDPRINTF(("(pthread_exit %p) status %p, flags %x, cancel %d\n",
@@ -672,7 +693,6 @@ pthread_exit(void *retval)
 
 		pthread_spinlock(self, &pthread__allqueue_lock);
 		PTQ_REMOVE(&pthread__allqueue, self, pt_allq);
-#ifdef PTHREAD_SA
 		nthreads--;
 		nt = nthreads;
 		pthread_spinunlock(self, &pthread__allqueue_lock);
@@ -685,17 +705,18 @@ pthread_exit(void *retval)
 		/* Yeah, yeah, doing work while we're dead is tacky. */
 		pthread_spinlock(self, &pthread__deadqueue_lock);
 		PTQ_INSERT_HEAD(&pthread__deadqueue, self, pt_allq);
+
+#ifdef PTHREAD_SA
 		pthread__block(self, &pthread__deadqueue_lock);
 		SDPRINTF(("(pthread_exit %p) walking dead\n", self));
-#else
 		pthread_spinunlock(self, &pthread__allqueue_lock);
-		/* XXXLWP recycle stack */
+#else
+		pthread_spinunlock(self, &pthread__deadqueue_lock);
 		_lwp_exit();
 #endif
 	} else {
 		self->pt_state = PT_STATE_ZOMBIE;
 
-#ifdef PTHREAD_SA
 		/* Note: name will be freed by the joiner. */
 		pthread_spinlock(self, &pthread__allqueue_lock);
 		nthreads--;
@@ -705,6 +726,8 @@ pthread_exit(void *retval)
 			/* Whoah, we're the last one. Time to go. */
 			exit(0);
 		}
+
+#ifdef PTHREAD_SA
 		/*
 		 * Wake up all the potential joiners. Only one can win.
 		 * (Can you say "Thundering Herd"? I knew you could.)
@@ -714,7 +737,6 @@ pthread_exit(void *retval)
 		SDPRINTF(("(pthread_exit %p) walking zombie\n", self));
 #else
 		pthread_spinunlock(self, &self->pt_join_lock);
-		/* XXXLWP recycle stack */
 		_lwp_exit();
 #endif
 	}
@@ -810,13 +832,19 @@ pthread_join(pthread_t thread, void **valptr)
 	switch (thread->pt_state) {
 	case PT_STATE_RUNNING:
 		pthread_spinunlock(self, &thread->pt_join_lock);
-		retval = _lwp_wait(thread->pt_lid, &num);
-		if (retval != 0)
-			return retval;
+
+		/*
+		 * IEEE Std 1003.1, 2004 Edition:
+		 *
+		 * "The pthread_join() function shall not
+		 * return an error code of [EINTR]."
+		 */
+		if (_lwp_wait(thread->pt_lid, &num) != 0 && errno != EINTR)
+			return errno;
 		goto again;
 	case PT_STATE_ZOMBIE:
 		if (valptr != NULL)
-			*valptr = thread->pt_exitval;	/* XXXLWP search for LWP */
+			*valptr = thread->pt_exitval;
 		if (retval == 0) {
 			name = thread->pt_name;
 			thread->pt_name = NULL;
@@ -910,7 +938,9 @@ pthread__dead(pthread_t self, pthread_t thread)
 {
 
 	SDPRINTF(("(pthread__dead %p) Reclaimed %p.\n", self, thread));
+#ifdef PTHREAD_SA
 	pthread__assert(thread != self);
+#endif
 	pthread__assert(thread->pt_state == PT_STATE_DEAD);
 	pthread__assert(thread->pt_name == NULL);
 
@@ -1306,8 +1336,9 @@ pthread__errorfunc(const char *file, int line, const char *function,
 #ifndef PTHREAD_SA
 
 /*
- * Thread park/unpark operations, based upon a description from
- * "Multithreading in the Solaris Operating Environment":
+ * Thread park/unpark operations.  The kernel operations are
+ * modelled after a brief description from "Multithreading in
+ * the Solaris Operating Environment":
  *
  * http://www.sun.com/software/whitepapers/solaris9/multithread.pdf
  */
@@ -1318,48 +1349,63 @@ pthread__errorfunc(const char *file, int line, const char *function,
 int
 pthread__park(pthread_t self, pthread_spin_t *lock,
 	      void *obj, struct pthread_queue_t *queue,
-	      const struct timespec *abstime, int tail)
+	      const struct timespec *abstime, int tail,
+	      int cancelpt)
 {
 	int rv;
 
 	SDPRINTF(("(pthread__park %p) obj %p enter\n", self, obj));
 
+	/*
+	 * Enter the object's queue.
+	 */
 	if (queue != NULL) {
 		if (tail) 
 			PTQ_INSERT_TAIL(queue, self, pt_sleep);
 		else
 			PTQ_INSERT_HEAD(queue, self, pt_sleep);
+		self->pt_sleeponq = 1;
 	}
 	self->pt_sleepobj = obj;
 
+	/*
+	 * Wait until we are awoken by a pending unpark operation,
+	 * a signal, an unpark posted after we have gone asleep,
+	 * or an expired timeout.
+	 */
+	rv = 0;
 	do {
 		pthread_spinunlock(self, lock);
-
-		if ((rv = _lwp_park((const void *)abstime, NULL)) != 0)
-			rv = errno;
-		else
-			rv = 0;
-
-		switch (rv) {
-		case 0:
-		case EINTR:
-		case ETIMEDOUT:
-		case EALREADY:
-			break;
-		default:
-			OOPS("_lwp_park failed");
-			SDPRINTF(("(pthread__park %p) syscall rv=%d\n",
-			    self, rv));
-			break;
+		if (_lwp_park((const void *)abstime, NULL) != 0) {
+			switch (rv = errno) {
+			case EINTR:
+				/* Check for cancellation. */
+				if (cancelpt && self->pt_cancel)
+					break;
+				/* FALLTHROUGH */
+			case EALREADY:
+				rv = 0;
+				break;
+			case ETIMEDOUT:
+				break;
+			default:
+				OOPS("_lwp_park failed");
+				SDPRINTF(("(pthread__park %p) syscall rv=%d\n",
+				    self, rv));	
+				break;
+			}
 		}
-
 		pthread_spinlock(self, lock);
-	} while (self->pt_sleepobj != NULL && rv != ETIMEDOUT);
+	} while (self->pt_sleepobj != NULL && rv == 0);
 
-	if (rv == ETIMEDOUT && queue != NULL && self->pt_sleepobj != NULL) {
+	/*
+	 * If we have been awoken early but are still on the queue,
+	 * then remove ourself.
+	 */
+	if (queue != NULL && self->pt_sleeponq)
 		PTQ_REMOVE(queue, self, pt_sleep);
-		self->pt_sleepobj = NULL;
-	}
+	self->pt_sleepobj = NULL;
+	self->pt_sleeponq = 0;
 
 	SDPRINTF(("(pthread__park %p) obj %p exit\n", self, obj));
 
@@ -1376,7 +1422,12 @@ pthread__unpark(pthread_t self, pthread_spin_t *lock, void *obj,
 		SDPRINTF(("(pthread__unpark %p) obj %p target %p\n", self, obj,
 		    target));
 
+		/*
+		 * Easy: the thread has already been removed from
+		 * the queue, so just awaken it.
+		 */
 		target->pt_sleepobj = NULL;
+		target->pt_sleeponq = 0;
 		pthread_spinunlock(self, lock);
 		rv = _lwp_unpark(target->pt_lid);
 
@@ -1393,22 +1444,57 @@ void
 pthread__unpark_all(pthread_t self, pthread_spin_t *lock, void *obj,
 		    struct pthread_queue_t *queue)
 {
-	pthread_t thread;
-	lwpid_t waiters[32];	/* XXXLWP get value from kernel */
-	int nwaiters, rv;
+	lwpid_t waiters[PTHREAD__UNPARK_MAX];
+	int n, rv;
+	pthread_t thread, next;
+
+	if (PTQ_EMPTY(queue)) {
+		pthread_spinunlock(self, lock);
+		return;
+	}
+
+	/*
+	 * First, clear all sleepobj pointers, since we can release the
+	 * spin lock before awkening everybody, and must synchronise with
+	 * pthread__park().
+	 */
+	PTQ_FOREACH(thread, queue, pt_sleep) {	
+		thread->pt_sleepobj = NULL;
+	}
 
 	for (;;) {
-		nwaiters = 0;
-		while (nwaiters < sizeof(waiters) / sizeof(waiters[0]) &&
-		    (thread = PTQ_FIRST(queue)) != NULL) {
+		thread = PTQ_FIRST(queue);
+		for (n = 0; n < pthread__unpark_max && thread != NULL;
+		    thread = next) {
+			/*
+			 * If the sleepobj pointer is non-NULL, it
+			 * means one of two things:
+			 *
+			 * o The thread has awoken early, spun
+			 *   through application code and is
+			 *   once more asleep on this object.
+			 *
+			 * o This is a new thread that has blocked
+			 *   on the object after we have released
+			 *   the interlock in this loop.
+			 *
+			 * In both cases we shouldn't remove the
+			 * thread from the queue.
+			 *
+			 * XXXLWP basic fairness issues here.
+			 */
+			next = PTQ_NEXT(thread, pt_sleep);
+			if (thread->pt_sleepobj != NULL)
+			    	continue;
+			thread->pt_sleeponq = 0;
+			waiters[n++] = thread->pt_lid;
 			PTQ_REMOVE(queue, thread, pt_sleep);
-			thread->pt_sleepobj = NULL;
-			waiters[nwaiters++] = thread->pt_lid;
 			SDPRINTF(("(pthread__unpark_all %p) obj %p "
 			    "unpark %p\n", self, obj, thread));
 		}
+
 		pthread_spinunlock(self, lock);
-		switch (nwaiters) {
+		switch (n) {
 		case 0:
 			return;
 		case 1:
@@ -1420,7 +1506,7 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock, void *obj,
 			}
 			return;
 		default:
-			rv = _lwp_unpark_all(waiters, nwaiters);
+			rv = _lwp_unpark_all(waiters, n);
 			if (rv != 0 && errno != EINTR) {
 				OOPS("_lwp_unpark_all failed");
 				SDPRINTF(("(pthread__unpark_all %p) "
@@ -1428,8 +1514,6 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock, void *obj,
 			}
 			break;
 		}
-		if (PTQ_EMPTY(queue))
-			return;
 		pthread_spinlock(self, lock);
 	}
 }

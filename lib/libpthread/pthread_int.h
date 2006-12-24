@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.35 2006/12/23 05:14:47 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.36 2006/12/24 18:39:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -102,7 +102,11 @@ struct	__pthread_st {
 	int	pt_blockedlwp;	/* LWP/SA number when blocked */
 	int	pt_vpid;	/* VP number */
 	int	pt_blockgen;	/* SA_UPCALL_BLOCKED counter */
+#ifdef PTHREAD_SA
 	int	pt_unblockgen;	/* SA_UPCALL_UNBLOCKED counter */
+#else
+	int	pt_sleeponq;	/* on a sleep queue */
+#endif
 
 	int	pt_errno;	/* Thread-specific errno. */
 
@@ -301,7 +305,8 @@ void	pthread__unpark(pthread_t self, pthread_spin_t *lock,
 			void *obj, pthread_t target);
 int	pthread__park(pthread_t self, pthread_spin_t *lock,
 		      void *obj, struct pthread_queue_t *threadq,
-		      const struct timespec *abs_timeout, int tail);
+		      const struct timespec *abs_timeout, int tail,
+		      int cancelpt);
 #endif
 
 int	pthread__stackalloc(pthread_t *t);
