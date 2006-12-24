@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.78 2006/12/23 21:24:32 rumble Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.79 2006/12/24 01:49:45 rumble Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.78 2006/12/23 21:24:32 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.79 2006/12/24 01:49:45 rumble Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -605,6 +605,8 @@ static int tl_init(ifp)
 {
 	tl_softc_t *sc = ifp->if_softc;
 	int i, s, error;
+	bus_size_t boundary;
+	prop_number_t prop_boundary;
 	const char *errstring;
 	char *nullbuf;
 
@@ -647,6 +649,20 @@ static int tl_init(ifp)
 		error = ENOMEM;
 		goto bad;
 	}
+
+	/*
+	 * Some boards (Set Engineering GFE) do not permit DMA transfers
+	 * across page boundaries.
+	 */
+	prop_boundary = prop_dictionary_get(device_properties(&sc->sc_dev),
+	    "tl-dma-page-boundary");
+	if (prop_boundary != NULL) {
+		KASSERT(prop_object_type(usetd) == PROP_TYPE_INTEGER);
+		boundary = (bus_size_t)prop_number_integer_value(prop_boundary);
+	} else {
+		boundary = 0;
+	}
+
 	error = bus_dmamap_create(sc->tl_dmatag,
 	    sizeof(struct tl_Rx_list) * TL_NBUF, 1,
 	    sizeof(struct tl_Rx_list) * TL_NBUF, 0, BUS_DMA_WAITOK,
@@ -654,11 +670,11 @@ static int tl_init(ifp)
 	if (error == 0)
 		error = bus_dmamap_create(sc->tl_dmatag,
 		    sizeof(struct tl_Tx_list) * TL_NBUF, 1,
-		    sizeof(struct tl_Tx_list) * TL_NBUF, 0, BUS_DMA_WAITOK,
-		    &sc->Tx_dmamap);
+		    sizeof(struct tl_Tx_list) * TL_NBUF, boundary,
+		    BUS_DMA_WAITOK, &sc->Tx_dmamap);
 	if (error == 0)
 		error = bus_dmamap_create(sc->tl_dmatag, ETHER_MIN_TX, 1,
-		    ETHER_MIN_TX, 0, BUS_DMA_WAITOK,
+		    ETHER_MIN_TX, boundary, BUS_DMA_WAITOK,
 		    &sc->null_dmamap);
 	if (error) {
 		errstring = "can't allocate DMA maps for lists";
@@ -686,11 +702,11 @@ static int tl_init(ifp)
 	}
 	for (i=0; i< TL_NBUF; i++) {
 		error = bus_dmamap_create(sc->tl_dmatag, MCLBYTES,
-		    1, MCLBYTES, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    1, MCLBYTES, boundary, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &sc->Rx_list[i].m_dmamap);
 		if (error == 0) {
 			error = bus_dmamap_create(sc->tl_dmatag, MCLBYTES,
-			    TL_NSEG, MCLBYTES, 0,
+			    TL_NSEG, MCLBYTES, boundary,
 			    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 			    &sc->Tx_list[i].m_dmamap);
 		}
@@ -1270,7 +1286,7 @@ tl_ifstart(ifp)
 	tl_softc_t *sc = ifp->if_softc;
 	struct mbuf *mb_head;
 	struct Tx_list *Tx;
-	int swsegment, hwsegment, size;
+	int segment, size;
 	int again, error;
 
 	if ((sc->tl_if.if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
@@ -1347,60 +1363,11 @@ tbdinit:
 		mb_head = mn;
 		goto tbdinit;
 	}
-
-	hwsegment = 0;
-	for (swsegment = 0; swsegment < Tx->m_dmamap->dm_nsegs; swsegment++) {
-#ifdef TL_SETENG_GFE
-		/*
-		 * The Set Engineering GFE board (sgimips IP22 only) sits
-		 * behind a special bridge, which does not permit DMA segments
-		 * to cross page boundaries.
-		 */
-		if ((Tx->m_dmamap->dm_segs[swsegment].ds_addr +
-		     Tx->m_dmamap->dm_segs[swsegment].ds_len -
-		    (Tx->m_dmamap->dm_segs[swsegment].ds_addr & ~PAGE_MASK)) >
-		    PAGE_SIZE) {
-			uint32_t len1, len2;
-
-			if (hwsegment >= (TL_NSEG - 1)) {
-				/* XXX - copy? */
-				m_freem(mb_head);
-				goto bad;
-			}
-
-			len1 =
-			    (Tx->m_dmamap->dm_segs[swsegment].ds_addr|PAGE_MASK)
-			    - Tx->m_dmamap->dm_segs[swsegment].ds_addr + 1;
-			len2 = Tx->m_dmamap->dm_segs[swsegment].ds_len - len1;
-
-			Tx->hw_list->seg[hwsegment].data_addr =
-			    htole32(Tx->m_dmamap->dm_segs[swsegment].ds_addr);
-			Tx->hw_list->seg[hwsegment].data_count =
-			    htole32(len1);
-
-			hwsegment++;
-
-			Tx->hw_list->seg[hwsegment].data_addr =
-			    htole32(Tx->m_dmamap->dm_segs[swsegment].ds_addr +
-				len1);
-			Tx->hw_list->seg[hwsegment].data_count =
-			    htole32(len2);
-
-			hwsegment++;
-			continue;
-		}
-#endif
-
-		if (hwsegment >= TL_NSEG) {
-			m_freem(mb_head);
-			goto bad;
-		}
-
-		Tx->hw_list->seg[hwsegment].data_addr =
-		    htole32(Tx->m_dmamap->dm_segs[swsegment].ds_addr);
-		Tx->hw_list->seg[hwsegment].data_count =
-		    htole32(Tx->m_dmamap->dm_segs[swsegment].ds_len);
-		hwsegment++;
+	for (segment = 0; segment < Tx->m_dmamap->dm_nsegs; segment++) {
+		Tx->hw_list->seg[segment].data_addr =
+		    htole32(Tx->m_dmamap->dm_segs[segment].ds_addr);
+		Tx->hw_list->seg[segment].data_count =
+		    htole32(Tx->m_dmamap->dm_segs[segment].ds_len);
 	}
 	bus_dmamap_sync(sc->tl_dmatag, Tx->m_dmamap, 0,
 	    Tx->m_dmamap->dm_mapsize,
@@ -1410,33 +1377,33 @@ tbdinit:
 	 */
 	if (size < ETHER_MIN_TX) {
 #ifdef DIAGNOSTIC
-		if (hwsegment >= TL_NSEG) {
-			panic("tl_ifstart: too many segments (%d)", swsegment);
+		if (segment >= TL_NSEG) {
+			panic("tl_ifstart: to much segmets (%d)", segment);
 		}
 #endif
 		/*
 	 	 * add the nullbuf in the seg
 	 	 */
-		Tx->hw_list->seg[hwsegment].data_count =
+		Tx->hw_list->seg[segment].data_count =
 		    htole32(ETHER_MIN_TX - size);
-		Tx->hw_list->seg[hwsegment].data_addr =
+		Tx->hw_list->seg[segment].data_addr =
 		    htole32(sc->null_dmamap->dm_segs[0].ds_addr);
 		size = ETHER_MIN_TX;
-		hwsegment++;
+		segment++;
 	}
 	/* The list is done, finish the list init */
-	Tx->hw_list->seg[hwsegment - 1].data_count |=
+	Tx->hw_list->seg[segment - 1].data_count |=
 	    htole32(TL_LAST_SEG);
 	Tx->hw_list->stat = htole32((size << 16) | 0x3000);
 #ifdef TLDEBUG_TX
 	printf("%s: sending, Tx : stat = 0x%x\n", sc->sc_dev.dv_xname,
 	    le32toh(Tx->hw_list->stat));
 #if 0
-	for(hwsegment = 0; hwsegment < TL_NSEG; hwsegment++) {
+	for(segment = 0; segment < TL_NSEG; segment++) {
 		printf("    seg %d addr 0x%x len 0x%x\n",
-		    hwsegment,
-		    le32toh(Tx->hw_list->seg[hwsegment].data_addr),
-		    le32toh(Tx->hw_list->seg[hwsegment].data_count));
+		    segment,
+		    le32toh(Tx->hw_list->seg[segment].data_addr),
+		    le32toh(Tx->hw_list->seg[segment].data_count));
 	}
 #endif
 #endif
