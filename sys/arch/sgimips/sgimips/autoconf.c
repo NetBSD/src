@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 2006/12/21 15:55:24 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34 2006/12/24 02:05:55 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.33 2006/12/21 15:55:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34 2006/12/24 02:05:55 rumble Exp $");
 
 #include "opt_ddb.h"
 
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.33 2006/12/21 15:55:24 yamt Exp $");
 #include <machine/sysconf.h>
 #include <machine/machtype.h>
 #include <machine/autoconf.h>
+#include <machine/vmparam.h>	/* for PAGE_SIZE */
 
 #include <dev/pci/pcivar.h>
 
@@ -173,7 +174,7 @@ cpu_rootconf()
 
 /*
  * Try to determine the boot device and set up some device properties
- * to handle machine depedent quirks.
+ * to handle machine dependent quirks.
  */
 
 #define BUILTIN_AHC_P(pa)	\
@@ -202,6 +203,30 @@ device_register(struct device *dev, void *aux)
 				    "for %s\n", dev->dv_xname);
 			}
 			prop_object_release(usetd);
+		}
+	}
+
+	/*
+	 * The Set Engineering GIO Fast Ethernet controller has restrictions
+	 * on DMA boundaries.
+	 */
+	if (device_is_a(dev, "tl")) {
+		struct device *grandparent;
+		prop_number_t gfe_boundary;
+
+		grandparent = device_parent(parent);
+		if (grandparent != NULL && device_is_a(grandparent, "giopci")) {
+			gfe_boundary = prop_number_create_integer(PAGE_SIZE);
+			KASSERT(gfe_boundary != NULL);
+
+			if (prop_dictionary_set(device_properties(dev),
+			    "tl-dma-page-boundary", gfe_boundary) == FALSE) {
+				printf("WARNING: unable to set "
+				    "tl-dma-page-boundary property "
+				    "for %s\n", dev->dv_xname);
+			}
+			prop_object_release(gfe_boundary);
+			return;
 		}
 	}
 		
