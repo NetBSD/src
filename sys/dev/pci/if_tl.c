@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.79 2006/12/24 01:49:45 rumble Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.80 2006/12/24 19:15:15 rumble Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.79 2006/12/24 01:49:45 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.80 2006/12/24 19:15:15 rumble Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -657,7 +657,7 @@ static int tl_init(ifp)
 	prop_boundary = prop_dictionary_get(device_properties(&sc->sc_dev),
 	    "tl-dma-page-boundary");
 	if (prop_boundary != NULL) {
-		KASSERT(prop_object_type(usetd) == PROP_TYPE_INTEGER);
+		KASSERT(prop_object_type(prop_boundary) == PROP_TYPE_NUMBER);
 		boundary = (bus_size_t)prop_number_integer_value(prop_boundary);
 	} else {
 		boundary = 0;
