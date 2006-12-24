@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.281 2006/12/14 09:24:54 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.282 2006/12/24 08:54:55 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.281 2006/12/14 09:24:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.282 2006/12/24 08:54:55 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -2015,6 +2015,9 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 	struct vnode *vp;
 	int error;
 	struct nameidata nd;
+#if NVERIEXEC > 0
+	pathname_t pathbuf;
+#endif /* NVERIEXEC > 0 */
 
 restart:
 	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_USERSPACE,
@@ -2038,8 +2041,15 @@ restart:
 	}
 
 #if NVERIEXEC > 0
+	error = pathname_get(nd.ni_dirp, nd.ni_segflg, &pathbuf);
+
 	/* Handle remove requests for veriexec entries. */
-	if ((error = veriexec_removechk(vp, nd.ni_dirp, l)) != 0) {
+	if (!error) {
+		error = veriexec_removechk(vp, pathname_path(pathbuf), l);
+		pathname_put(pathbuf);
+	}
+
+	if (error) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
@@ -3364,9 +3374,21 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 	}
 
 #if NVERIEXEC > 0
-	if (!error)
-		error = veriexec_renamechk(fvp, fromnd.ni_dirp, tvp,
-		    tond.ni_dirp, l);
+	if (!error) {
+		pathname_t frompath, topath;
+
+		error = pathname_get(fromnd.ni_dirp, fromnd.ni_segflg,
+		    &frompath);
+		if (!error)
+			error = pathname_get(tond.ni_dirp, tond.ni_segflg,
+			    &topath);
+		if (!error)
+			error = veriexec_renamechk(fvp, pathname_path(frompath),
+			    tvp, pathname_path(topath), l);
+
+		pathname_put(frompath);
+		pathname_put(topath);
+	}
 #endif /* NVERIEXEC > 0 */
 
 out:
