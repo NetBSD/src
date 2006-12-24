@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.23 2006/12/23 05:14:47 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.24 2006/12/24 18:39:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.23 2006/12/23 05:14:47 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.24 2006/12/24 18:39:46 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -279,7 +279,7 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 			/* interlock is not held when we return */
 #else	/* PTHREAD_SA */
 			(void)pthread__park(self, &mutex->ptm_interlock,
-			    mutex, NULL, NULL, 0);
+			    mutex, NULL, NULL, 0, 0);
 			pthread_spinunlock(self, &mutex->ptm_interlock);
 #endif	/* PTHREAD_SA */
 		} else {

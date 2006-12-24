@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.7 2006/12/23 05:14:46 ad Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.8 2006/12/24 18:39:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.7 2006/12/23 05:14:46 ad Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.8 2006/12/24 18:39:46 ad Exp $");
 
 #include <errno.h>
 #include <sys/cdefs.h>
@@ -164,6 +164,7 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	 * but instead is responsible for waking everyone else up.
 	 */
 	if (barrier->ptb_curcount + 1 == barrier->ptb_initcount) {
+#ifdef PTHREAD_SA
 		struct pthread_queue_t blockedq;
 
 		SDPRINTF(("(barrier wait %p) Satisfied %p\n",
@@ -174,13 +175,16 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		barrier->ptb_curcount = 0;
 		barrier->ptb_generation++;
 
-#ifdef PTHREAD_SA
 		pthread__sched_sleepers(self, &blockedq);
 
 		pthread_spinunlock(self, &barrier->ptb_lock);
 #else
+		SDPRINTF(("(barrier wait %p) Satisfied %p\n",
+		    self, barrier));
+
+		barrier->ptb_generation++;
 		pthread__unpark_all(self, &barrier->ptb_lock, barrier,
-		    &blockedq);
+		    &barrier->ptb_waiters);
 #endif
 		return PTHREAD_BARRIER_SERIAL_THREAD;
 	}
@@ -208,7 +212,7 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		pthread_spinlock(self, &barrier->ptb_lock);
 #else	/* PTHREAD_SA */
 		(void)pthread__park(self, &barrier->ptb_lock, barrier,
-		    &barrier->ptb_waiters, NULL, 1);
+		    &barrier->ptb_waiters, NULL, 1, 0);
 #endif	/* PTHREAD_SA */
 		SDPRINTF(("(barrier wait %p) Woke up on %p\n",
 		    self, barrier));

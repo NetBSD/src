@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2006/12/23 05:14:46 ad Exp $
+#	$NetBSD: Makefile,v 1.37 2006/12/24 18:39:45 ad Exp $
 #
 
 PTHREAD_SA=1
@@ -27,10 +27,10 @@ ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 .PATH:	${ARCHDIR}
 
 CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC
-CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__ -DPTHREAD_MLOCK_KLUDGE
+CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__
 
 .if defined(PTHREAD_SA)
-CPPFLAGS+=	-DPTHREAD_SA
+CPPFLAGS+=	-DPTHREAD_SA -DPTHREAD_MLOCK_KLUDGE
 .endif
 
 # XXX: This crappy poke at libc's internals needs to be fixed.
