@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.15 2006/12/23 05:14:47 ad Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.16 2006/12/24 18:39:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.15 2006/12/23 05:14:47 ad Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.16 2006/12/24 18:39:46 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -55,10 +55,7 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.15 2006/12/23 05:14:47 ad Exp $");
 #define SDPRINTF(x)
 #endif
 
-/* How many times to try before checking whether we've been continued. */
-#define NSPINS 1000	/* no point in actually spinning until MP works */
-
-static int nspins = NSPINS;
+extern int pthread__nspins;
 
 RAS_DECL(pthread__lock);
 
@@ -160,7 +157,7 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 {
 	int count, ret;
 
-	count = nspins;
+	count = pthread__nspins;
 	SDPRINTF(("(pthread_spinlock %p) incrementing spinlock %p (count %d)\n",
 		thread, lock, thread->pt_spinlocks));
 #ifdef PTHREAD_SPIN_DEBUG
@@ -170,7 +167,7 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 
 	do {
 		while (((ret = pthread__simple_lock_try(lock)) == 0) && --count)
-			;
+			/* XXX For at least x86, issue 'pause' instruction */;
 
 		if (ret == 1)
 			break;
@@ -197,11 +194,11 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 			pthread__switch(thread, thread->pt_next);
 		}
 #else
-		/* XXXLWP */
+		/* XXXLWP far from ideal */
 		sched_yield();
 #endif
 		/* try again */
-		count = nspins;
+		count = pthread__nspins;
 	SDPRINTF(("(pthread_spinlock %p) incrementing spinlock from %d\n",
 		thread, thread->pt_spinlocks));
 		++thread->pt_spinlocks;
