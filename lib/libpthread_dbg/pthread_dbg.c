@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.31 2006/05/14 02:16:36 christos Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.32 2006/12/24 03:47:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.31 2006/05/14 02:16:36 christos Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.32 2006/12/24 03:47:53 christos Exp $");
 
 #define __EXPOSE_STACK 1
 #include <sys/param.h>
@@ -276,8 +276,10 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
 	    &tmp1, sizeof(tmp1))) != 0)
 		return val;
+#ifdef PTHREAD_SA
 	if (tmp != tmp1)
 		tmp = _PT_STATE_BLOCKED_SYS;
+#endif
 	else if ((val = READ(thread->proc, 
 		      thread->addr + offsetof(struct __pthread_st, pt_state), 
 		      &tmp, sizeof(tmp))) != 0)
@@ -286,6 +288,7 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	case PT_STATE_RUNNING:
 		info->thread_state = TD_STATE_RUNNING;
 		break;
+#ifdef PTHREAD_SA
 	case PT_STATE_RUNNABLE:
 		info->thread_state = TD_STATE_RUNNABLE;
 		break;
@@ -298,6 +301,7 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	case PT_STATE_SUSPENDED:
 		info->thread_state = TD_STATE_SUSPENDED;
 		break;
+#endif
 	case PT_STATE_ZOMBIE:
 		info->thread_state = TD_STATE_ZOMBIE;
 		break;
@@ -305,6 +309,7 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 		info->thread_state = TD_STATE_UNKNOWN;
 	}
 
+#ifdef PTHREAD_SA
 	if ((val = READ(thread->proc, 
 	    thread->addr + offsetof(struct __pthread_st, pt_type), 
 	    &tmp, sizeof(tmp))) != 0)
@@ -320,6 +325,7 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	default:
 		info->thread_type = TD_TYPE_UNKNOWN;
 	}
+#endif
 
 	if ((val = READ(thread->proc, 
 	    thread->addr + offsetof(struct __pthread_st, pt_stack),
@@ -393,8 +399,10 @@ int
 td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 {
 	int tmp, tmp1, val;
+#ifdef PTHREAD_SA
 	caddr_t addr;
 	ucontext_t uc;
+#endif
 
 	if ((val = READ(thread->proc, 
 	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
@@ -404,9 +412,12 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
 	    &tmp1, sizeof(tmp1))) != 0)
 		return val;
+#ifdef PTHREAD_SA
 	if (tmp != tmp1)
 		tmp = _PT_STATE_BLOCKED_SYS;
-	else if ((val = READ(thread->proc, 
+	else
+#endif
+	if ((val = READ(thread->proc, 
 		      thread->addr + offsetof(struct __pthread_st, pt_state), 
 		      &tmp, sizeof(tmp))) != 0)
 		return val;
@@ -421,6 +432,7 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 		if (val != 0)
 			return val;
 		break;
+#ifdef PTHREAD_SA
 	case PT_STATE_RUNNABLE:
 	case PT_STATE_SUSPENDED:
 	case PT_STATE_BLOCKED_QUEUE:
@@ -470,6 +482,7 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 		}
 		break;
 	case _PT_STATE_BLOCKED_SYS:
+#endif
 	case PT_STATE_ZOMBIE:
 	default:
 		return TD_ERR_BADTHREAD;
@@ -482,8 +495,10 @@ int
 td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 {
 	int val, tmp, tmp1;
+#ifdef PTHREAD_SA
 	caddr_t addr;
 	ucontext_t uc;
+#endif
 
 	if ((val = READ(thread->proc, 
 	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
@@ -493,9 +508,12 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
 	    &tmp1, sizeof(tmp1))) != 0)
 		return val;
+#ifdef PTHREAD_SA
 	if (tmp != tmp1)
 		tmp = _PT_STATE_BLOCKED_SYS;
-	else if ((val = READ(thread->proc, 
+	else
+#endif
+	if ((val = READ(thread->proc, 
 		      thread->addr + offsetof(struct __pthread_st, pt_state), 
 		      &tmp, sizeof(tmp))) != 0)
 		return val;
@@ -510,6 +528,7 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 		if (val != 0)
 			return val;
 		break;
+#ifdef PTHREAD_SA
 	case PT_STATE_RUNNABLE:
 	case PT_STATE_SUSPENDED:
 	case PT_STATE_BLOCKED_QUEUE:
@@ -565,6 +584,7 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 
 		break;
 	case _PT_STATE_BLOCKED_SYS:
+#endif
 	case PT_STATE_ZOMBIE:
 	default:
 		return TD_ERR_BADTHREAD;
@@ -1087,6 +1107,7 @@ td_thr_suspend(td_thread_t *thread)
 	if (tmp != PT_MAGIC)
 		return TD_ERR_BADTHREAD;
 
+#ifdef PTHREAD_SA
 	val = READ(thread->proc, 
 	    thread->addr + offsetof(struct __pthread_st, pt_type), 
 	    &tmp, sizeof(tmp));
@@ -1094,6 +1115,7 @@ td_thr_suspend(td_thread_t *thread)
 		return val;
 	if (tmp != PT_THREAD_NORMAL)
 		return TD_ERR_BADTHREAD;
+#endif
 
 	/* find the thread's current state */
 	if ((val = READ(thread->proc, 
@@ -1104,9 +1126,12 @@ td_thr_suspend(td_thread_t *thread)
 	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
 	    &tmp1, sizeof(tmp1))) != 0)
 		return val;
+#ifdef PTHREAD_SA
 	if (tmp != tmp1)
 		tmp = _PT_STATE_BLOCKED_SYS;
-	else if ((val = READ(thread->proc, 
+	else
+#endif
+	if ((val = READ(thread->proc, 
 		      thread->addr + offsetof(struct __pthread_st, pt_state), 
 		      &tmp, sizeof(tmp))) != 0)
 		return val;
@@ -1208,6 +1233,7 @@ td_thr_suspend(td_thread_t *thread)
 		nthread->lwp = thread->lwp;
 		thread->lwp = -1;
 		break;
+#ifdef PTHREAD_SA
 	case PT_STATE_RUNNABLE:
 		/* remove from runq */
 		DPTQ_REMOVE(thread->proc->runqaddr, thread->addr, pt_runq);
@@ -1235,6 +1261,7 @@ td_thr_suspend(td_thread_t *thread)
 	case PT_STATE_SUSPENDED: 
 		/* don't do anything */
 		return 0;
+#endif
 	case PT_STATE_ZOMBIE:
 	case PT_STATE_DEAD:
 		/* suspending these isn't meaningful */
@@ -1244,12 +1271,14 @@ td_thr_suspend(td_thread_t *thread)
 	}
 
 	DPTQ_INSERT_TAIL(thread->proc->suspqaddr, thread->addr, pt_runq);
+#ifdef PTHREAD_SA
 	tmp = PT_STATE_SUSPENDED;
 	val = WRITE(thread->proc, thread->addr +
 	    offsetof(struct __pthread_st, pt_state),
 	    &tmp, sizeof(tmp));
 	if (val != 0)
 		return val;
+#endif
 		    
 	return 0;
 }
@@ -1287,13 +1316,17 @@ td_thr_resume(td_thread_t *thread)
 	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
 	    &tmp1, sizeof(tmp1))) != 0)
 		return val;
+#ifdef PTHREAD_SA
 	if (tmp != tmp1)
 		tmp = _PT_STATE_BLOCKED_SYS;
-	else if ((val = READ(thread->proc, 
+	else
+#endif
+	if ((val = READ(thread->proc, 
 		      thread->addr + offsetof(struct __pthread_st, pt_state), 
 		      &tmp, sizeof(tmp))) != 0)
 		return val;
 	
+#ifdef PTHREAD_SA
 	if (tmp == PT_STATE_SUSPENDED) {
 		DPTQ_REMOVE(thread->proc->suspqaddr, thread->addr, pt_runq);
 		/* emulate pthread__sched */
@@ -1303,7 +1336,7 @@ td_thr_resume(td_thread_t *thread)
 		    &tmp, sizeof(tmp));
 		DPTQ_INSERT_TAIL(thread->proc->runqaddr, thread->addr, pt_runq);
 	}
-	
+#endif	
 		
 	return 0;
 }
