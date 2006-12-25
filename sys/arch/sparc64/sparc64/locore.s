@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.232 2006/10/25 11:56:56 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.233 2006/12/25 18:31:18 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -2979,7 +2979,7 @@ text_error:
  * This whole idea was stolen from Sprite.
  */
 /*
- * XXX I don't think this is at all revelent for V9.
+ * XXX I don't think this is at all relevant for V9.
  */
 fp_exception:
 	rdpr	%tpc, %g1
