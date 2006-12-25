@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.283 2006/12/24 12:43:17 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.284 2006/12/25 08:11:52 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.283 2006/12/24 12:43:17 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.284 2006/12/25 08:11:52 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -387,6 +387,23 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 	 * various reasons.  Allow the user to force it to happen.
 	 */
 	mp->mnt_flag |= flags & MNT_FORCE;
+
+	/*
+	 * Set the mount level flags.
+	 */
+	if (flags & MNT_RDONLY)
+		mp->mnt_flag |= MNT_RDONLY;
+	else if (mp->mnt_flag & MNT_RDONLY)
+		mp->mnt_iflag |= IMNT_WANTRDWR;
+	mp->mnt_flag &=
+	  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
+	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
+	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP);
+	mp->mnt_flag |= flags &
+	   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
+	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
+	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
+	    MNT_IGNORE);
 
 	error = VFS_MOUNT(mp, path, data, ndp, l);
 
