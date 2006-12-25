@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.284 2006/12/25 08:11:52 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.285 2006/12/25 22:03:42 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.284 2006/12/25 08:11:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.285 2006/12/25 22:03:42 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -145,7 +145,7 @@ const int nmountcompatnames = sizeof(mountcompatnames) /
     sizeof(mountcompatnames[0]);
 #endif /* COMPAT_09 || COMPAT_43 */
 
-int
+static int
 mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
     void *data, struct nameidata *ndp)
 {
@@ -267,7 +267,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	return (error);
 }
 
-int
+static int
 mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
     const char *path, int flags, void *data, struct nameidata *ndp)
 {
@@ -343,6 +343,12 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 #endif
 	}
 
+#ifdef	COMPAT_10
+	/* Accept `ufs' as an alias for `ffs'. */
+	if (strncmp(fstypename, "ufs", MFSNAMELEN) == 0)
+		strlcpy(fstypename, "ffs", sizeof(fstypename));
+#endif
+
 	if ((error = vinvalbuf(vp, V_SAVE, l->l_cred, l, 0, 0)) != 0) {
 		vput(vp);
 		goto out;
@@ -357,14 +363,9 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 		goto out;
 	}
 
-#ifdef	COMPAT_10
-	/* Accept `ufs' as an alias for `ffs'. */
-	if (strncmp(fstype, "ufs", MFSNAMELEN) == 0)
-		fstype = "ffs";
-#endif
 	mp = malloc(sizeof(*mp), M_MOUNT, M_WAITOK|M_ZERO);
 
-	if ((mp->mnt_op = vfs_getopsbyname(fstype)) == NULL) {
+	if ((mp->mnt_op = vfs_getopsbyname(fstypename)) == NULL) {
 		free(mp, M_MOUNT);
 		error = ENODEV;
 		vput(vp);
