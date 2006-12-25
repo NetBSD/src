@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.20 2006/12/22 11:13:22 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.21 2006/12/25 12:13:54 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.20 2006/12/22 11:13:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.21 2006/12/25 12:13:54 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.20 2006/12/22 11:13:22 el
 #include <sys/sysctl.h>
 #include <sys/tty.h>
 #include <net/route.h>
+
+#include <miscfs/procfs/procfs.h>
 
 #include <secmodel/bsd44/suser.h>
 
@@ -270,11 +272,39 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		result = KAUTH_RESULT_DENY;
 		break;
 
-	case KAUTH_PROCESS_CANPROCFS:
-		if (((u_long)arg1 == KAUTH_REQ_PROCESS_CANPROCFS_CTL) &&
-		    !isroot)
+	case KAUTH_PROCESS_CANPROCFS: {
+		enum kauth_process_req req = (enum kauth_process_req)arg2;
+		struct pfsnode *pfs = arg1;
+
+		if (isroot) {
+			result = KAUTH_RESULT_ALLOW;
 			break;
-		/*FALLTHROUGH*/
+		}
+
+		if (req == KAUTH_REQ_PROCESS_CANPROCFS_CTL) {
+			result = KAUTH_RESULT_DENY;
+			break;
+		}
+
+		switch (pfs->pfs_type) {
+		case PFSregs:
+		case PFSfpregs:
+		case PFSmem:
+			if (kauth_cred_getuid(cred) !=
+			    kauth_cred_getuid(p->p_cred) ||
+			    ISSET(p->p_flag, P_SUGID)) {
+				result = KAUTH_RESULT_DENY;
+				break;
+			}
+			/*FALLTHROUGH*/
+		default:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		break;
+		}
+
 	case KAUTH_PROCESS_CANPTRACE:
 	case KAUTH_PROCESS_CANSYSTRACE:
 		if (isroot) {

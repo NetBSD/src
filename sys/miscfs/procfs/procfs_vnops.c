@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.143 2006/12/09 16:11:52 chs Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.144 2006/12/25 12:13:54 elad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.143 2006/12/09 16:11:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.144 2006/12/25 12:13:54 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,24 +290,23 @@ procfs_open(v)
 	if (ISSET(p2->p_flag, P_INEXEC))
 		return (EAGAIN);
 
+#define	M2K(m)	(((m) & FREAD) && ((m) & FWRITE) ? \
+		 KAUTH_REQ_PROCESS_CANPROCFS_RW : \
+		 (m) & FWRITE ? KAUTH_REQ_PROCESS_CANPROCFS_WRITE : \
+		 KAUTH_REQ_PROCESS_CANPROCFS_READ)
+
+	error = kauth_authorize_process(l1->l_cred, KAUTH_PROCESS_CANPROCFS,
+	    p2, pfs, KAUTH_ARG(M2K(ap->a_mode)), NULL);
+	if (error)
+		return (error);
+
+#undef M2K
+
 	switch (pfs->pfs_type) {
 	case PFSmem:
 		if (((pfs->pfs_flags & FWRITE) && (ap->a_mode & O_EXCL)) ||
 		    ((pfs->pfs_flags & O_EXCL) && (ap->a_mode & FWRITE)))
 			return (EBUSY);
-
-#define	M2K(m)		(((m) & FREAD) && ((m) & FWRITE) ? \
-			 KAUTH_REQ_PROCESS_CANPROCFS_RW : \
-			 (m) & FWRITE ? KAUTH_REQ_PROCESS_CANPROCFS_WRITE : \
-			 KAUTH_REQ_PROCESS_CANPROCFS_READ)
-
-		error = kauth_authorize_process(l1->l_cred,
-		    KAUTH_PROCESS_CANPROCFS, p2, pfs,
-		    KAUTH_ARG(M2K(ap->a_mode)), NULL);
-		if (error)
-			return (error);
-
-#undef M2K
 
 		if (!proc_isunder(p2, l1))
 			return (EPERM);
@@ -315,7 +314,14 @@ procfs_open(v)
 		if (ap->a_mode & FWRITE)
 			pfs->pfs_flags = ap->a_mode & (FWRITE|O_EXCL);
 
-		return (0);
+		break;
+
+	case PFSregs:
+	case PFSfpregs:
+		if (!proc_isunder(p2, l1))
+			return (EPERM);
+
+		break;
 
 	default:
 		break;
