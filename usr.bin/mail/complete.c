@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.11 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.12 2006/12/25 18:43:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.11 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.12 2006/12/25 18:43:29 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1183,10 +1183,13 @@ init_el_mode(
 	el_mode_t em;
 	(void)memset(&em, 0, sizeof(em));
 
-	em.el  = el_init(getprogname(), stdin, stdout, stderr);
+	if ((em.el = el_init(getprogname(), stdin, stdout, stderr)) == NULL) {
+		warn("el_init");
+		return em;
+	}
 
 	(void)el_set(em.el, EL_PROMPT, show_prompt);
-	(void)el_set(em.el, EL_SIGNAL, SIGHUP);
+	(void)el_set(em.el, EL_SIGNAL, 1); /* editline handles the signals. */
 	
 	if (el_editor)
 		(void)el_set(em.el, EL_EDITOR, el_editor);
@@ -1202,8 +1205,11 @@ init_el_mode(
 
 	if (history_size) {
 		HistEvent ev;
-		em.hist = history_init();
-		if (history(em.hist, &ev, H_SETSIZE, history_size))
+		if ((em.hist = history_init()) == NULL) {
+			warn("history_init");
+			return em;
+		}
+		if (history(em.hist, &ev, H_SETSIZE, history_size) == -1)
 			(void)printf("history: %s\n", ev.str);
 		(void)el_set(em.el, EL_HIST, history, em.hist);
 	}

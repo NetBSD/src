@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.24 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: names.c,v 1.25 2006/12/25 18:43:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.24 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: names.c,v 1.25 2006/12/25 18:43:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ outof(struct name *names, FILE *fo, struct header *hp)
 				senderr++;
 				goto cant;
 			}
-			image = open(tempname, 2);
+			image = open(tempname, O_RDWR);
 			(void)unlink(tempname);
 			if (image < 0) {
 				warn("%s", tempname);
