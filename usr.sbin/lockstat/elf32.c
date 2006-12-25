@@ -1,4 +1,4 @@
-/*	$NetBSD: elf32.c,v 1.4 2006/11/13 19:08:52 ad Exp $	*/
+/*	$NetBSD: elf32.c,v 1.5 2006/12/25 11:57:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: elf32.c,v 1.4 2006/11/13 19:08:52 ad Exp $");
+__RCSID("$NetBSD: elf32.c,v 1.5 2006/12/25 11:57:40 ad Exp $");
 #endif
 
 #ifndef ELFSIZE
@@ -218,9 +218,10 @@ NAME(findsym)(findsym_t find, char *name, uintptr_t *start, uintptr_t *end)
 				break;
 			off = (int)(*start - sa);
 			if (off == 0)
-				strcpy(name, &strp[symp[i].st_name]);
+				strlcpy(name, &strp[symp[i].st_name],
+				    NAME_SIZE);
 			else
-				sprintf(name, "%s+%x",
+				snprintf(name, NAME_SIZE, "%s+%x",
 				    &strp[symp[i].st_name], off);
 			goto found;
 			
