@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.32 2006/07/23 22:06:08 ad Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.33 2006/12/25 18:31:18 wiz Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.32 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.33 2006/12/25 18:31:18 wiz Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -309,7 +309,7 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 		printf("Warning: unimplemented IRIX sproc flag PR_SDIR\n");
 
 	/*
-	 * If revelant, initialize the share group structure
+	 * If relevant, initialize the share group structure
 	 */
 	ied = (struct irix_emuldata *)(p->p_emuldata);
 	if (ied->ied_share_group == NULL) {
