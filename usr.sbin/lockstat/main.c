@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2006/11/13 19:08:52 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2006/12/25 11:57:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,19 +39,17 @@
 /*
  * TODO:
  *
+ * - Tracking of times for sleep locks is broken.
  * - Need better analysis and tracking of events.
- * - Should be binary format agnostic, but given that we're likely to be using
- *   ELF for quite a while that's not a big problem.
  * - Shouldn't have to parse the namelist here.  We should use something like
  *   FreeBSD's libelf.
  * - The way the namelist is searched sucks, is it worth doing something
  *   better?
- * - Might be nice to record events and replay later, like ktrace/kdump.
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.6 2006/11/13 19:08:52 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2006/12/25 11:57:40 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,11 +91,13 @@ typedef struct buf_head buflist_t;
 typedef struct lockstruct {
 	TAILQ_ENTRY(lockstruct)	chain;
 	buflist_t		bufs;
+	buflist_t		tosort;
 	uintptr_t		lock;
- 	double			times[LB_NEVENT];
-	uint32_t		counts[LB_NEVENT];
+ 	double			time;
+	uint32_t		count;
 	u_int			flags;
 	u_int			nbufs;
+	char			name[NAME_SIZE];
 } lock_t;
 
 typedef struct name {
@@ -108,35 +108,33 @@ typedef struct name {
 const name_t locknames[] = {
 	{ "adaptive_mutex", LB_ADAPTIVE_MUTEX },
 	{ "spin_mutex", LB_SPIN_MUTEX },
-	{ "rwlock", LB_ADAPTIVE_RWLOCK },
 	{ "lockmgr", LB_LOCKMGR },
-#ifdef LB_KERNEL_LOCK
-	/* XXX newlock2 */
+	{ "rwlock", LB_RWLOCK },
 	{ "kernel_lock", LB_KERNEL_LOCK },
-#endif
 	{ NULL, 0 }
 };
 
 const name_t eventnames[] = {
 	{ "spin", LB_SPIN },
-	{ "sleep", LB_SLEEP },
+	{ "sleep_exclusive", LB_SLEEP1 },
+	{ "sleep_shared", LB_SLEEP2 },
 	{ NULL, 0 },
 };
 
 const name_t alltypes[] = {
 	{ "Adaptive mutex spin", LB_ADAPTIVE_MUTEX | LB_SPIN },
-	{ "Adaptive mutex sleep", LB_ADAPTIVE_MUTEX | LB_SLEEP },
+	{ "Adaptive mutex sleep", LB_ADAPTIVE_MUTEX | LB_SLEEP1 },
 	{ "Spin mutex spin", LB_SPIN_MUTEX | LB_SPIN },
-	{ "RW lock sleep", LB_ADAPTIVE_RWLOCK | LB_SLEEP },
-	{ "lockmgr sleep", LB_LOCKMGR | LB_SLEEP },
-#ifdef LB_KERNEL_LOCK
-	/* XXX newlock2 */
+	{ "lockmgr sleep", LB_LOCKMGR | LB_SLEEP1 },
+	{ "RW lock sleep (writer)", LB_RWLOCK | LB_SLEEP1 },
+	{ "RW lock sleep (reader)", LB_RWLOCK | LB_SLEEP2 },
 	{ "Kernel lock spin", LB_KERNEL_LOCK | LB_SPIN },
-#endif
 	{ NULL, 0 }
 };
 
-locklist_t	locklist[LB_NLOCK >> LB_LOCK_SHIFT];
+locklist_t	locklist;
+locklist_t	freelist;
+locklist_t	sortlist;
 
 lsbuf_t		*bufs;
 lsdisable_t	ld;
@@ -156,11 +154,11 @@ void	spawn(int, char **);
 void	display(int, const char *name);
 void	listnames(const name_t *);
 int	matchname(const name_t *, const char *);
-void	makelists(void);
+void	makelists(int, int);
 void	nullsig(int);
 void	usage(void);
-void	resort(int, int);
 int	ncpu(void);
+lock_t	*morelocks(void);
 
 int
 main(int argc, char **argv)
@@ -271,7 +269,8 @@ main(int argc, char **argv)
 	 * Set up initial filtering.
 	 */
 	if (lockname != NULL) {
-		findsym(LOCK_BYNAME, lockname, &le.le_lock, NULL);
+		findsym(LOCK_BYNAME, lockname, &le.le_lockstart,
+		    &le.le_lockend);
 		le.le_flags |= LE_ONE_LOCK;
 	}
 	if (!lflag)
@@ -292,7 +291,9 @@ main(int argc, char **argv)
 	if (ioctl(lsfd, IOC_LOCKSTAT_GVERSION, &ch) < 0)
 		err(EXIT_FAILURE, "ioctl");
 	if (ch != LS_VERSION)
-		errx(EXIT_FAILURE, "incompatible lockstat interface version");
+		errx(EXIT_FAILURE,
+		    "incompatible lockstat interface version (%d, kernel %d)",
+			LS_VERSION, ch);
 	if (ioctl(lsfd, IOC_LOCKSTAT_ENABLE, &le))
 		err(EXIT_FAILURE, "cannot enable tracing");
 
@@ -319,9 +320,9 @@ main(int argc, char **argv)
 		err(EXIT_FAILURE, "close(" _PATH_DEV_LOCKSTAT ")");
 
 	/*
-	 * Figure out how to scale the results, and build the lists.  For
-	 * internal use we convert all times from CPU frequency based to
-	 * picoseconds, and values are eventually displayed in ms.
+	 * Figure out how to scale the results.  For internal use we convert
+	 * all times from CPU frequency based to picoseconds, and values are
+	 * eventually displayed in ms.
 	 */
 	for (i = 0; i < sizeof(ld.ld_freq) / sizeof(ld.ld_freq[0]); i++)
 		if (ld.ld_freq[i] != 0)
@@ -334,7 +335,10 @@ main(int argc, char **argv)
 	cscale *= (sflag ? MILLI / ms : 1.0);
 	tscale = cscale / NANO;
 	nbufs = (int)(ld.ld_size / sizeof(lsbuf_t));
-	makelists();
+
+	TAILQ_INIT(&locklist);
+	TAILQ_INIT(&sortlist);
+	TAILQ_INIT(&freelist);
 
 	/*
 	 * Display the results.
@@ -472,7 +476,7 @@ findsym(findsym_t find, char *name, uintptr_t *start, uintptr_t *end)
 	}
 
 	if (rv == -1)
-		sprintf(name, "%016lx", (long)*start);
+		snprintf(name, NAME_SIZE, "%016lx", (long)*start);
 }
 
 /*
@@ -503,96 +507,108 @@ spawn(int argc, char **argv)
 }
 
 /*
+ * Allocate a new block of lock_t structures.
+ */
+lock_t *
+morelocks(void)
+{
+	const static int batch = 32;
+	lock_t *l, *lp, *max;
+
+	l = (lock_t *)malloc(sizeof(*l) * batch);
+
+	for (lp = l, max = l + batch; lp < max; lp++)
+		TAILQ_INSERT_TAIL(&freelist, lp, chain);
+
+	return l;
+}
+
+/*
  * From the kernel supplied data, construct two dimensional lists of locks
- * and event buffers, indexed by lock type.
+ * and event buffers, indexed by lock type and sorted by event type.
  */
 void
-makelists(void)
+makelists(int mask, int event)
 {
 	lsbuf_t *lb, *lb2, *max;
-	int i, type;
-	lock_t *l;
+	lock_t *l, *l2;
+	int type;
 
-	for (i = 0; i < LB_NLOCK >> LB_LOCK_SHIFT; i++)
-		TAILQ_INIT(&locklist[i]);
+	/*
+	 * Recycle lock_t structures from the last run.
+	 */
+	while ((l = TAILQ_FIRST(&locklist)) != NULL) {
+		TAILQ_REMOVE(&locklist, l, chain);
+		TAILQ_INSERT_HEAD(&freelist, l, chain);
+	}
+
+	type = mask & LB_LOCK_MASK;
 
 	for (lb = bufs, max = bufs + nbufs; lb < max; lb++) {
-		if (lb->lb_flags == 0)
+		if ((lb->lb_flags & LB_LOCK_MASK) != type)
 			continue;
 
 		/*
 		 * Look for a record descibing this lock, and allocate a
 		 * new one if needed.
 		 */
-		type = ((lb->lb_flags & LB_LOCK_MASK) >> LB_LOCK_SHIFT) - 1;
-		TAILQ_FOREACH(l, &locklist[type], chain) {
+		TAILQ_FOREACH(l, &sortlist, chain) {
 			if (l->lock == lb->lb_lock)
 				break;
 		}
 		if (l == NULL) {
-			l = (lock_t *)malloc(sizeof(*l));
+			if ((l = TAILQ_FIRST(&freelist)) == NULL)
+				l = morelocks();
+			TAILQ_REMOVE(&freelist, l, chain);
 			l->flags = lb->lb_flags;
 			l->lock = lb->lb_lock;
 			l->nbufs = 0;
-			memset(&l->counts, 0, sizeof(l->counts));
-			memset(&l->times, 0, sizeof(l->times));
+			l->name[0] = '\0';
+			l->count = 0;
+			l->time = 0;
+			TAILQ_INIT(&l->tosort);
 			TAILQ_INIT(&l->bufs);
-			TAILQ_INSERT_TAIL(&locklist[type], l, chain);
+			TAILQ_INSERT_TAIL(&sortlist, l, chain);
 		}
 
 		/*
 		 * Scale the time values per buffer and summarise
 		 * times+counts per lock.
 		 */
-		for (i = 0; i < LB_NEVENT; i++) {
-			lb->lb_times[i] *= cpuscale[lb->lb_cpu];
-			l->counts[i] += lb->lb_counts[i];
-			l->times[i] += lb->lb_times[i];
-		}
+		lb->lb_times[event] *= cpuscale[lb->lb_cpu];
+		l->count += lb->lb_counts[event];
+		l->time += lb->lb_times[event];
 
 		/*
 		 * Merge same lock+callsite pairs from multiple CPUs
 		 * together.
 		 */
-		TAILQ_FOREACH(lb2, &l->bufs, lb_chain.tailq) {
+		TAILQ_FOREACH(lb2, &l->tosort, lb_chain.tailq) {
 			if (lb->lb_callsite == lb2->lb_callsite)
 				break;
 		}
 		if (lb2 != NULL) {
-			for (i = 0; i < LB_NEVENT; i++) {
-				lb2->lb_counts[i] += lb->lb_counts[i];
-				lb2->lb_times[i] += lb->lb_times[i];
-			}
+			lb2->lb_counts[event] += lb->lb_counts[event];
+			lb2->lb_times[event] += lb->lb_times[event];
 		} else {
-			TAILQ_INSERT_HEAD(&l->bufs, lb, lb_chain.tailq);
+			TAILQ_INSERT_HEAD(&l->tosort, lb, lb_chain.tailq);
 			l->nbufs++;
 		}
 	}
-}
 
-/*
- * Re-sort one list of locks / lock buffers by event type.
- */
-void
-resort(int type, int event)
-{
-	lsbuf_t *lb, *lb2;
-	locklist_t llist;
-	buflist_t blist;
-	lock_t *l, *l2;
-
-	TAILQ_INIT(&llist);
-	while ((l = TAILQ_FIRST(&locklist[type])) != NULL) {
-		TAILQ_REMOVE(&locklist[type], l, chain);
+	/*
+	 * Now sort the lists.
+	 */
+	while ((l = TAILQ_FIRST(&sortlist)) != NULL) {
+		TAILQ_REMOVE(&sortlist, l, chain);
 
 		/*
 		 * Sort the buffers into the per-lock list.
 		 */
-		TAILQ_INIT(&blist);
-		while ((lb = TAILQ_FIRST(&l->bufs)) != NULL) {
-			TAILQ_REMOVE(&l->bufs, lb, lb_chain.tailq);
+		while ((lb = TAILQ_FIRST(&l->tosort)) != NULL) {
+			TAILQ_REMOVE(&l->tosort, lb, lb_chain.tailq);
 
-			lb2 = TAILQ_FIRST(&blist);
+			lb2 = TAILQ_FIRST(&l->bufs);
 			while (lb2 != NULL) {
 				if (cflag) {
 					if (lb->lb_counts[event] >
@@ -604,31 +620,30 @@ resort(int type, int event)
 				lb2 = TAILQ_NEXT(lb2, lb_chain.tailq);
 			}
 			if (lb2 == NULL)
-				TAILQ_INSERT_TAIL(&blist, lb, lb_chain.tailq);
+				TAILQ_INSERT_TAIL(&l->bufs, lb,
+				    lb_chain.tailq);
 			else
 				TAILQ_INSERT_BEFORE(lb2, lb, lb_chain.tailq);
 		}
-		l->bufs = blist;
 
 		/*
 		 * Sort this lock into the per-type list, based on the
 		 * totals per lock.
 		 */
-		l2 = TAILQ_FIRST(&llist);
+		l2 = TAILQ_FIRST(&locklist);
 		while (l2 != NULL) {
 			if (cflag) {
-				if (l->counts[event] > l2->counts[event])
+				if (l->count > l2->count)
 					break;
-			} else if (l->times[event] > l2->times[event])
+			} else if (l->time > l2->time)
 				break;
 			l2 = TAILQ_NEXT(l2, chain);
 		}
 		if (l2 == NULL)
-			TAILQ_INSERT_TAIL(&llist, l, chain);
+			TAILQ_INSERT_TAIL(&locklist, l, chain);
 		else
 			TAILQ_INSERT_BEFORE(l2, l, chain);
 	}
-	locklist[type] = llist;
 }
 
 /*
@@ -639,19 +654,18 @@ display(int mask, const char *name)
 {
 	lock_t *l;
 	lsbuf_t *lb;
-	int event, type;
 	double pcscale, metric;
-	char lname[256], fname[256];
-
-	type = ((mask & LB_LOCK_MASK) >> LB_LOCK_SHIFT) - 1;
-	if (TAILQ_EMPTY(&locklist[type]))
-		return;
+	char fname[NAME_SIZE];
+	int event;
 
 	event = (mask & LB_EVENT_MASK) - 1;
-	resort(type, event);
+	makelists(mask, event);
+
+	if (TAILQ_EMPTY(&locklist))
+		return;
 
 	fprintf(outfp, "\n-- %s\n\n"
-	    "Total%%  Count   Time/ms          Lock                     Caller\n"
+	    "Total%%  Count   Time/ms          Lock                       Caller\n"
 	    "------ ------- --------- ---------------------- ------------------------------\n",
 	    name);
 
@@ -659,11 +673,11 @@ display(int mask, const char *name)
 	 * Sum up all events for this type of lock + event.
 	 */
 	pcscale = 0;
-	TAILQ_FOREACH(l, &locklist[type], chain) {
+	TAILQ_FOREACH(l, &locklist, chain) {
 		if (cflag)
-			pcscale += l->counts[event];
+			pcscale += l->count;
 		else
-			pcscale += l->times[event];
+			pcscale += l->time;
 		displayed++;
 	}
 	if (pcscale == 0)
@@ -675,19 +689,20 @@ display(int mask, const char *name)
 	 * For each lock, print a summary total, followed by a breakdown by
 	 * caller.
 	 */
-	TAILQ_FOREACH(l, &locklist[type], chain) {
+	TAILQ_FOREACH(l, &locklist, chain) {
 		if (cflag)
-			metric = l->counts[event];
+			metric = l->count;
 		else
-			metric = l->times[event];
+			metric = l->time;
 		metric *= pcscale;
 
-		findsym(LOCK_BYADDR, lname, &l->lock, NULL);
+		if (l->name[0] == '\0')
+			findsym(LOCK_BYADDR, l->name, &l->lock, NULL);
 
 		if (lflag || l->nbufs > 1)
-			fprintf(outfp, "%6.2f %7d %9.2f %-22s <all>\n", metric,
-			    (int)(l->counts[event] * cscale),
-			    l->times[event] * tscale, lname);
+			fprintf(outfp, "%6.2f %7d %9.2f %-22s <all>\n",
+			    metric, (int)(l->count * cscale),
+			    l->time * tscale, l->name);
 
 		if (lflag)
 			continue;
@@ -700,10 +715,9 @@ display(int mask, const char *name)
 			metric *= pcscale;
 
 			findsym(FUNC_BYADDR, fname, &lb->lb_callsite, NULL);
-			fprintf(outfp, "%6.2f %7d %9.2f %-22s %s\n", metric,
-			    (int)(lb->lb_counts[event] * cscale),
-			    lb->lb_times[event] * tscale,
-			    lname, fname);
+			fprintf(outfp, "%6.2f %7d %9.2f %-22s %s\n",
+			    metric, (int)(lb->lb_counts[event] * cscale),
+			    lb->lb_times[event] * tscale, l->name, fname);
 		}
 	}
 }

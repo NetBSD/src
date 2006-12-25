@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 2006/09/07 00:50:45 ad Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 2006/12/25 11:57:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define	NAME_SIZE	32
 
 /*
  * elf32.c, elf64.c
