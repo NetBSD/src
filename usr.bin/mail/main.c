@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2006/12/25 18:43:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.25 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2006/12/25 18:43:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -406,8 +406,13 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	setscreensize();	/* do this after loading the rcfile */
 
 #ifdef USE_EDITLINE
-	/* this is after loading the MAILRC so we can use value() */
-	init_editline();
+	/*
+	 * This is after loading the MAILRC so we can use value().
+	 * Avoid editline in mm_hdrsonly mode or pipelines will screw
+	 * up.  XXX - there must be a better way!
+	 */
+	if (mailmode != mm_hdrsonly)
+		init_editline();
 #endif
 
 	switch (mailmode) {

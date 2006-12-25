@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.18 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.19 2006/12/25 18:43:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.18 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.19 2006/12/25 18:43:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: list.c,v 1.18 2006/11/28 18:45:32 christos Exp $");
 #include "extern.h"
 #include "format.h"
 #include "thread.h"
+#include "mime.h"
 
 /*
  * Mail -- a mail program
@@ -456,17 +457,93 @@ is_substr(const char *big, const char *little)
 }
 #undef DELIM
 
+
 /*
- * Compile a regular expression, taking into account the value of the
- * "regex-search" variable.
+ * Look for (compiled regex) pattern in a line.
+ * Returns:
+ *	1 if match found.
+ *	0 if no match found.
+ *	-1 on error
  */
 static int
-compile_regex(regex_t *preg, const char *str)
+regexcmp(void *pattern, char *line, size_t len)
 {
-	int e;
+	regmatch_t pmatch[1];
+	regmatch_t *pmp;
+	int eflags;
+	int rval;
+	regex_t *preg;
+
+	preg = pattern;
+
+	if (line == NULL)
+		return 0;
+
+	if (len == 0) {
+		pmp = NULL;
+		eflags = 0;
+	}
+	else {
+		pmatch[0].rm_so = 0;
+		pmatch[0].rm_eo = line[len - 1] == '\n' ? len - 1 : len;
+		pmp = pmatch;
+		eflags = REG_STARTEND;
+	}
+
+	switch ((rval = regexec(preg, line, 0, pmp, eflags))) {
+	case 0:
+	case REG_NOMATCH:
+		return rval == 0;
+
+	default: {
+		char errbuf[LINESIZE];
+		(void)regerror(rval, preg, errbuf, sizeof(errbuf));
+		(void)printf("regexec failed: '%s': %s\n", line, errbuf);
+		return -1;
+	}}
+}
+
+/*
+ * Look for (string) pattern in line.
+ * Return 1 if match found.
+ */
+static int
+substrcmp(void *pattern, char *line, size_t len)
+{
+	char *substr;
+	substr = pattern;
+
+	if (line == NULL)
+		return 0;
+
+	if (len) {
+		if (line[len - 1] == '\n') {
+			line[len - 1] = '\0';
+		}
+		else {
+			char *cp;
+			cp = salloc(len + 1);
+			(void)strlcpy(cp, line, len + 1);
+			line = cp;
+		}
+	}
+	return strcasestr(line, substr) != NULL;
+}
+
+static regex_t preg;
+/*
+ * Determine the compare function and its argument based on the
+ * "regex-search" variable.
+ */
+static int (*
+get_cmpfn(void **pattern, char *str)
+)(void *, char *, size_t)
+{
 	char *val;
+	int cflags;
+	int e;
+
 	if ((val = value(ENAME_REGEX_SEARCH)) != NULL) {
-		int cflags;
 		cflags = REG_NOSUB;
 		val = skip_blank(val);
 		if (*val) {
@@ -474,144 +551,303 @@ compile_regex(regex_t *preg, const char *str)
 				cflags |= REG_ICASE;
 			if (is_substr(val, "extended"))
 				cflags |= REG_EXTENDED;
+			/*
+			 * Support "nospec", but don't document it as
+			 * it may not be portable.
+			 * NOTE: regcomp() will fail if "nospec" and
+			 * "extended" are used together.
+			 */
+			if (is_substr(val, "nospec"))
+				cflags |= REG_NOSPEC;
 		}
-		if ((e = regcomp(preg, str, cflags)) != 0) {
+		if ((e = regcomp(&preg, str, cflags)) != 0) {
 			char errbuf[LINESIZE];
-			(void)regerror(e, preg, errbuf, sizeof(errbuf));
+			(void)regerror(e, &preg, errbuf, sizeof(errbuf));
 			(void)printf("regcomp failed: '%s': %s\n", str, errbuf);
+			return NULL;
+		}
+		*pattern = &preg;
+		return regexcmp;
+	}
+
+	*pattern = str;
+	return substrcmp;
+}
+
+/*
+ * Free any memory allocated by get_cmpfn()
+ */
+static void
+free_cmparg(void *pattern)
+{
+	if (pattern == &preg)
+		regfree(&preg);
+}
+
+/*
+ * Check the message body for the pattern.
+ */
+static int
+matchbody(int (*cmpfn)(void *, char *, size_t),
+    void *pattern, struct message *mp, char const *fieldname __unused)
+{
+	FILE *fp;
+	char *line;
+	size_t len;
+	int gotmatch;
+
+#ifdef __lint__
+	fieldname = fieldname;
+#endif
+	/*
+	 * Get a temporary file.
+	 */
+	{
+		char *tempname;
+		int fd;
+
+		(void)sasprintf(&tempname, "%s/mail.RbXXXXXXXXXX", tmpdir);
+		fp = NULL;
+		if ((fd = mkstemp(tempname)) != -1) {
+			(void)unlink(tempname);
+			if ((fp = Fdopen(fd, "w+")) == NULL)
+				(void)close(fd);
+		}
+		if (fp == NULL) {
+			warn("%s", tempname);
 			return -1;
 		}
-		return 1;
 	}
-	return 0;
+
+	/*
+	 * Pump the (decoded) message body into the temp file.
+	 */
+	{
+#ifdef MIME_SUPPORT
+		struct mime_info *mip;
+		int retval;
+
+		mip = value(ENAME_MIME_DECODE_MSG) ? mime_decode_open(mp)
+		    : NULL;
+
+		retval = mime_sendmessage(mp, fp, ignoreall, NULL, mip);
+		mime_decode_close(mip);
+		if (retval == -1)
+#else
+		if (sendmessage(mp, fp, ignoreall, NULL, NULL) == -1)
+#endif
+		{
+			warn("matchbody: mesg=%d", get_msgnum(mp));
+			return -1;
+		}
+	}
+	/*
+	 * XXX - should we read the entire body into a buffer so we
+	 * can search across lines?
+	 */
+	rewind(fp);
+	gotmatch = 0;
+	while ((line = fgetln(fp, &len)) != NULL && len > 0) {
+		gotmatch = cmpfn(pattern, line, len);
+		if (gotmatch)
+			break;
+	}
+	(void)Fclose(fp);
+
+	return gotmatch;
 }
 
 /*
- * See if the passed name sent the passed message number.  Return true
- * if so.
+ * Check the "To:", "Cc:", and "Bcc" fields for the pattern.
  */
 static int
-matchsender(char *str, int mesg)
-{
-	regex_t preg;
-	int doregex;
-	char *field;
-
-	if (*str == '\0') /* null string matches nothing instead of everything */
-		return 0;
-
-	field = nameof(get_message(mesg), 0);
-
-	if ((doregex = compile_regex(&preg, str)) == -1)
-		return -1;
-
-	if (doregex)
-		return regexec(&preg, field, 0, NULL, 0) == 0;
-	else
-		return strcasestr(field, str) != NULL;
-}
-
-/*
- * See if the passed name received the passed message number.  Return true
- * if so.
- */
-static int
-matchto(char *str, int mesg)
+matchto(int (*cmpfn)(void *, char *, size_t),
+    void *pattern, struct message *mp, char const *fieldname __unused)
 {
 	static const char *to_fields[] = { "to", "cc", "bcc", 0 };
 	const char **to;
-	regex_t preg;
-	int doregex;
-	struct message *mp;
+	int gotmatch;
 
-	if (*str == 0)	/* null string matches nothing instead of everything */
-		return 0;
-
-	if ((doregex = compile_regex(&preg, str)) == -1)
-		return -1;
-
-	mp = get_message(mesg);
-
+#ifdef __lint__
+	fieldname = fieldname;
+#endif
+	gotmatch = 0;
 	for (to = to_fields; *to; to++) {
 		char *field;
 		field = hfield(*to, mp);
-		if (field != NULL) {
-			if (doregex) {
-				if (regexec(&preg, field, 0, NULL, 0) == 0)
-					return 1;
-			}
-			else {
-				if (strcasestr(field, str) != NULL)
-					return 1;
-			}
-		}
+		gotmatch = cmpfn(pattern, field, 0);
+		if (gotmatch)
+			break;
 	}
-	return 0;
+	return gotmatch;
 }
 
 /*
- * See if the given string matches inside the subject field of the
- * given message.  For the purpose of the scan, we ignore case differences.
- * If it does, return true.  The string search argument is assumed to
- * have the form "/search-string."  If it is of the form "/", we use the
- * previous search string.
+ * Check a field for the pattern.
  */
 static int
-matchsubj(char *str, int mesg)
+matchfield(int (*cmpfn)(void *, char *, size_t),
+    void *pattern, struct message *mp, char const *fieldname)
 {
-	regex_t preg;
-	int doregex;
 	char *field;
-	char *cp;
 
-	static char lastscan[STRINGLEN];
-	struct message *mp;
+#ifdef __lint__
+	fieldname = fieldname;
+#endif
+	field = hfield(fieldname, mp);
+	return cmpfn(pattern, field, 0);
+}
 
-	if (*str == '\0')
-		str = lastscan;
-	else
-		(void)strlcpy(lastscan, str, sizeof(lastscan));
+/*
+ * Check the headline for the pattern.
+ */
+static int
+matchfrom(int (*cmpfn)(void *, char *, size_t),
+    void *pattern, struct message *mp, char const *fieldname __unused)
+{
+	char headline[LINESIZE];
+	char *field;
 
-	mp = get_message(mesg);
+#ifdef __lint__
+	fieldname = fieldname;
+#endif
+	(void)mail_readline(setinput(mp), headline, sizeof(headline));
+	field = savestr(headline);
+	if (strncmp(field, "From ", 5) != 0)
+		return 1;
 
-	/*
-	 * Now look, ignoring case, for the word in the string.
-	 */
+	return cmpfn(pattern, field + 5, 0);
+}
 
-	if (value(ENAME_SEARCHHEADERS) && (cp = strchr(str, ':')) != NULL) {
-		/*
-		 * Check for special cases!
-		 * These checks are case sensitive so the true fields
-		 * can be grabbed as mentioned in the manpage.
-		 */
-		if (strncmp(str, "to:", 3) == 0)
-			return matchto(cp + 1, mesg);
+/*
+ * Check the sender for the pattern.
+ */
+static int
+matchsender(int (*cmpfn)(void *, char *, size_t),
+    void *pattern, struct message *mp, char const *fieldname __unused)
+{
+	char *field;
 
-		if (strncmp(str, "from:", 5) == 0) {
-			char headline[LINESIZE];
-			(void)mail_readline(setinput(mp), headline, sizeof(headline));
-			field = savestr(headline);
+#ifdef __lint__
+	fieldname = fieldname;
+#endif
+	field = nameof(mp, 0);
+	return cmpfn(pattern, field, 0);
+}
+
+/*
+ * Interpret 'str' and check each message (1 thru 'msgCount') for a match.
+ * The 'str' has the format: [/[[x]:]y with the following meanings:
+ *
+ * y	 pattern 'y' is compared against the senders address.
+ * /y	 pattern 'y' is compared with the subject field.  If 'y' is empty,
+ *       the last search 'str' is used.
+ * /:y	 pattern 'y' is compared with the subject field.
+ * /x:y	 pattern 'y' is compared with the specified header field 'x' or
+ *       the message body if 'x' == "body".
+ *
+ * The last two forms require "searchheaders" to be defined.
+ */
+static int
+match_string(int *markarray, char *str, int msgCount)
+{
+	int i;
+	int rval;
+	int (*matchfn)(int (*)(void *, char *, size_t),
+	    void *, struct message *, char const *);
+	int (*cmpfn)(void *, char *, size_t);
+	void *cmparg;
+	char const *fieldname;
+
+	if (*str != '/') {
+		matchfn = matchsender;
+		fieldname = NULL;
+	}
+	else {
+		static char lastscan[STRINGLEN];
+		char *cp;
+
+		str++;
+		if (*str == '\0')
+			str = lastscan;
+		else
+			(void)strlcpy(lastscan, str, sizeof(lastscan));
+
+		if (value(ENAME_SEARCHHEADERS) == NULL ||
+		    (cp = strchr(str, ':')) == NULL) {
+			matchfn = matchfield;
+			fieldname = "subject";
+		/*	str = str; */
 		}
 		else {
-			*cp = '\0';
-			field = hfield(*str ? str : "subject", mp);
-			*cp = ':';
+			static const struct matchtbl_s {
+				char const *key;
+				size_t len;
+				char const *fieldname;
+				int (*matchfn)(int (*)(void *, char *, size_t),
+				    void *, struct message *, char const *);
+			} matchtbl[] = {
+				#define	X(a)	a,	sizeof(a) - 1
+				#define	X_NULL	NULL,	0
+				{ X(":"),	"subject",	matchfield },
+				{ X("body:"),	NULL,		matchbody },
+				{ X("from:"),	NULL,		matchfrom },
+				{ X("to:"),	NULL,		matchto },
+				{ X_NULL,	NULL,		matchfield }
+				#undef X_NULL
+				#undef X
+			};
+			const struct matchtbl_s *mtp;
+			size_t len;
+			/*
+			 * Check for special cases!
+			 * These checks are case sensitive so the true fields
+			 * can be grabbed as mentioned in the manpage.
+			 */
+			cp++;
+			len = cp - str;
+			for (mtp = matchtbl; mtp->key; mtp++) {
+				if (len == mtp->len &&
+				    strncmp(str, mtp->key, len) == 0)
+					break;
+			}
+			matchfn = mtp->matchfn;
+			if (mtp->key)
+				fieldname = mtp->fieldname;
+			else {
+				char *p;
+				p = salloc(len);
+				(void)strlcpy(p, str, len);
+				fieldname = p;
+			}
+			str = cp;
 		}
-		str = cp + 1;
-	} else {
-		field = hfield("subject", mp);
 	}
-	if (field == NULL)
+
+	if (*str == '\0') /* an empty string matches nothing instead of everything */
 		return 0;
 
-	if ((doregex = compile_regex(&preg, str)) == -1)
+	cmpfn = get_cmpfn(&cmparg, str);
+	if (cmpfn == NULL)
 		return -1;
 
-	if (doregex)
-		return regexec(&preg, field, 0, NULL, 0) == 0;
-	else
-		return strcasestr(field, str) != NULL;
+	rval = 0;
+	for (i = 1; i <= msgCount; i++) {
+		struct message *mp;
+		mp = get_message(i);
+		rval = matchfn(cmpfn, cmparg, mp, fieldname);
+		if (rval == -1)
+			break;
+		if (rval)
+			markarray[i - 1] = 1;
+		rval = 0;
+	}
+
+	free_cmparg(cmparg);	/* free any memory allocated by get_cmpfn() */
+
+	return rval;
 }
+
 
 /*
  * Return the message number corresponding to the passed meta character.
@@ -682,27 +918,6 @@ check(int mesg, int f)
 	if (f != MDELETED && (mp->m_flag & MDELETED) != 0) {
 		(void)printf("%d: Inappropriate message\n", mesg);
 		return -1;
-	}
-	return 0;
-}
-
-static int
-match_string(int *markarray, char *str, int msgCount)
-{
-	int i;
-	int rval;
-	int (*matchfn)(char *, int);
-
-	matchfn = *str == '/' ? matchsubj : matchsender;
-	if (*str == '/')
-		str++;
-
-	for (i = 1; i <= msgCount; i++) {
-		rval = matchfn(str, i);
-		if (rval == -1)
-			return -1;
-		if (rval)
-			markarray[i - 1] = 1;
 	}
 	return 0;
 }
