@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_ef.c,v 1.1.1.1 2004/03/28 08:56:18 martti Exp $	*/
+/*	$NetBSD: ipft_ef.c,v 1.2 2006/12/25 23:55:47 alc Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -100,7 +100,8 @@ int	cnt, *dir;
 	case IPPROTO_TCP :
 	case IPPROTO_UDP :
 		s = strtok(NULL, " :");
-		ip->ip_len += atoi(s);
+		if (s)
+			ip->ip_len += atoi(s);
 		if (ip->ip_p == IPPROTO_TCP)
 			extra = sizeof(struct tcphdr);
 		else if (ip->ip_p == IPPROTO_UDP)
