@@ -1,5 +1,5 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.5 2004/12/08 13:19:00 reinoud Exp $
+REM $NetBSD: BtNetBSD,v 1.6 2006/12/25 18:45:35 wiz Exp $
 REM
 REM Copyright (c) 2000, 2001, 2002 Reinoud Zandijk
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -1058,7 +1058,7 @@ DEF PROCget_memory_map
   ENDWHILE
   PRINT'
   IF extradebug% THEN PRINT '"First DRAM index found at index ";first_mapped_DRAM_index%;" DRAM_addr%(0)=0x";~DRAM_addr%(0)
-  IF first_mapped_DRAM_index%<0 THEN ERROR EXT 1, "No (S)DRAM mapped in this program (wierd) ... increase Wimpslot!"
+  IF first_mapped_DRAM_index%<0 THEN ERROR EXT 1, "No (S)DRAM mapped in this program (weird) ... increase Wimpslot!"
 ENDPROC
 
 
