@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.80 2006/12/24 19:15:15 rumble Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.81 2006/12/25 18:36:05 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.80 2006/12/24 19:15:15 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.81 2006/12/25 18:36:05 wiz Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1109,7 +1109,7 @@ tl_intr(v)
 			printf("%s: EOF intr without anything to read !\n",
 			    sc->sc_dev.dv_xname);
 			tl_reset(sc);
-			/* shedule reinit of the board */
+			/* schedule reinit of the board */
 			callout_reset(&sc->tl_restart_ch, 1, tl_restart, ifp);
 			return(1);
 		}
@@ -1214,7 +1214,7 @@ tl_intr(v)
 			    int_reg & TL_INTVec_MASK,
 			    TL_HR_READ(sc, TL_HOST_CH_PARM));
 			tl_reset(sc);
-			/* shedule reinit of the board */
+			/* schedule reinit of the board */
 			callout_reset(&sc->tl_restart_ch, 1, tl_restart, ifp);
 			return(1);
 		} else {

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.23 2006/11/16 01:33:37 christos Exp $ */
+/* $NetBSD: udf_subr.c,v 1.24 2006/12/25 18:36:05 wiz Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.23 2006/11/16 01:33:37 christos Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.24 2006/12/25 18:36:05 wiz Exp $");
 #endif /* not lint */
 
 
@@ -2672,7 +2672,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 	}
 	DPRINTF(READ, ("\tnot intern\n"));
 
-	/* request read-in of data from disc sheduler */
+	/* request read-in of data from disc scheduler */
 	buf->b_resid = buf->b_bcount;
 	for (sector = 0; sector < sectors; sector++) {
 		buf_offset = sector * sector_size;
@@ -2712,7 +2712,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 			nestiobuf_setup(buf, nestbuf, buf_offset, rbuflen);
 			/* nestbuf is B_ASYNC */
 
-			/* CD shedules on raw blkno */
+			/* CD schedules on raw blkno */
 			nestbuf->b_blkno    = rblk;
 			nestbuf->b_proc     = NULL;
 			nestbuf->b_cylinder = 0;
