@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.4 2006/11/16 01:32:45 christos Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.5 2006/12/25 11:57:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,10 +39,12 @@
 /*
  * Lock statistics driver, providing kernel support for the lockstat(8)
  * command.
+ *
+ * XXX Timings for contention on sleep locks are currently incorrect.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.4 2006/11/16 01:32:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.5 2006/12/25 11:57:40 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,7 +103,8 @@ volatile u_int	lockstat_enabled;
 uintptr_t	lockstat_csstart;
 uintptr_t	lockstat_csend;
 uintptr_t	lockstat_csmask;
-uintptr_t	lockstat_lockaddr;
+uintptr_t	lockstat_lockstart;
+uintptr_t	lockstat_lockend;
 
 /* Protected by lockstat_lock(). */
 struct simplelock lockstat_slock;
@@ -237,19 +240,23 @@ lockstat_start(lsenable_t *le)
 
 	lockstat_csstart = le->le_csstart;
 	lockstat_csend = le->le_csend;
-	lockstat_lockaddr = le->le_lock;
-
-	/*
-	 * Force a write barrier.  XXX This may not be sufficient..
-	 */
+	lockstat_lockstart = le->le_lockstart;
+	lockstat_lockend = le->le_lockend;
+#ifdef notyet
+	mb_memory();
+#else
 	lockstat_unlock(0);
-	tsleep(&lockstat_start, PPAUSE, "lockstat", mstohz(10));
 	(void)lockstat_lock(0);
+#endif
 
 	getnanotime(&lockstat_stime);
 	lockstat_enabled = le->le_mask;
+#ifdef notyet
+	mb_write();
+#else
 	lockstat_unlock(0);
 	(void)lockstat_lock(0);
+#endif
 }
 
 /*
@@ -268,7 +275,7 @@ lockstat_stop(lsdisable_t *ld)
 
 	/*
 	 * Set enabled false, force a write barrier, and wait for other CPUs
-	 * to exit lockstat_event().  XXX This may not be sufficient..
+	 * to exit lockstat_event().
 	 */
 	lockstat_enabled = 0;
 	lockstat_unlock(0);
@@ -372,7 +379,7 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 
 	if ((flags & lockstat_enabled) != flags || count == 0)
 		return;
-	if (lockstat_lockaddr != 0 && lock != lockstat_lockaddr)
+	if (lock < lockstat_lockstart || lock > lockstat_lockend)
 		return;
 	if (callsite < lockstat_csstart || callsite > lockstat_csend)
 		return;
@@ -516,8 +523,10 @@ lockstat_ioctl(dev_t dev, u_long cmd, caddr_t data,
 			le->le_csstart = 0;
 			le->le_csend = le->le_csstart - 1;
 		}
-		if ((le->le_flags & LE_ONE_LOCK) == 0)
-			le->le_lock = 0;
+		if ((le->le_flags & LE_ONE_LOCK) == 0) {
+			le->le_lockstart = 0;
+			le->le_lockend = le->le_lockstart - 1;
+		}
 		if ((le->le_mask & LB_EVENT_MASK) == 0)
 			return (EINVAL);
 		if ((le->le_mask & LB_LOCK_MASK) == 0)

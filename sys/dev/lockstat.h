@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.1 2006/09/07 00:20:28 ad Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.2 2006/12/25 11:57:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #define	IOC_LOCKSTAT_GVERSION	_IOR('L', 0, int)
 
-#define	LS_VERSION	0
+#define	LS_VERSION	3
 
 /*
  * Enable request.  We can limit tracing by the call site and by
@@ -77,7 +77,8 @@
 typedef struct lsenable {
 	uintptr_t	le_csstart;	/* callsite start */
 	uintptr_t	le_csend;	/* callsite end */
-	uintptr_t	le_lock;	/* lock address */
+	uintptr_t	le_lockstart;	/* lock address start */
+	uintptr_t	le_lockend;	/* lock address end */
 	uintptr_t	le_nbufs;	/* buffers to allocate, 0 = default */
 	u_int		le_flags;	/* request flags */
 	u_int		le_mask;	/* event mask (LB_*) */
@@ -105,8 +106,9 @@ typedef struct lsdisable {
  * in le_mask.
  */
 #define	LB_SPIN			0x00000001
-#define	LB_SLEEP		0x00000002
-#define	LB_NEVENT		0x00000002
+#define	LB_SLEEP1		0x00000002
+#define	LB_SLEEP2		0x00000003
+#define	LB_NEVENT		0x00000003
 #define	LB_EVENT_MASK		0x000000ff
 
 /*
@@ -114,10 +116,10 @@ typedef struct lsdisable {
  * provided with the enable request in le_mask.
  */
 #define	LB_ADAPTIVE_MUTEX	0x00000100
-#define	LB_ADAPTIVE_RWLOCK	0x00000200
-#define	LB_SPIN_MUTEX		0x00000300
-#define	LB_SPIN_RWLOCK		0x00000400
-#define	LB_LOCKMGR		0x00000500
+#define	LB_SPIN_MUTEX		0x00000200
+#define	LB_RWLOCK		0x00000300
+#define	LB_LOCKMGR		0x00000400
+#define	LB_KERNEL_LOCK		0x00000500
 #define	LB_NLOCK		0x00000500
 #define	LB_LOCK_MASK		0x0000ff00
 #define	LB_LOCK_SHIFT		8
