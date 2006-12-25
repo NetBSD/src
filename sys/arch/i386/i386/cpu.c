@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.31 2006/11/16 01:32:38 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.32 2006/12/25 18:39:48 wiz Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2006/12/25 18:39:48 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -719,7 +719,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 
 #if defined(DDB) && defined(MULTIPROCESSOR)
 	/*
-	 * Set up seperate handler for the DDB IPI, so that it doesn't
+	 * Set up separate handler for the DDB IPI, so that it doesn't
 	 * stomp on a possibly corrupted stack.
 	 *
 	 * XXX overwriting the gate set in db_machine_init.

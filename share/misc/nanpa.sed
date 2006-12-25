@@ -1,9 +1,9 @@
-# $NetBSD: nanpa.sed,v 1.1 2003/03/03 01:13:36 jhawk Exp $
+# $NetBSD: nanpa.sed,v 1.2 2006/12/25 18:39:48 wiz Exp $
 #
 # Parse HTML tables output by 
 #   http://docs.nanpa.com/cgi-bin/npa_reports/nanpa
 # Specifically, for each html table row (TR),
-# print the <TD> elements seperated by colons.
+# print the <TD> elements separated by colons.
 #
 # This could break on HTML comments.
 #
