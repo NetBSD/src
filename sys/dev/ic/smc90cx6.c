@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.45 2005/12/24 20:27:30 perry Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.46 2006/12/25 18:41:45 wiz Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.45 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.46 2006/12/25 18:41:45 wiz Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -796,7 +796,7 @@ bahintr(arg)
 			/*
 			 * If less than 2 seconds per reconfig:
 			 *	If ARC_EXCESSIVE_RECONFIGS
-			 *	since last burst, complain and set treshold for
+			 *	since last burst, complain and set threshold for
 			 *	warnings to ARC_EXCESSIVE_RECONS_REWARN.
 			 *
 			 * This allows for, e.g., new stations on the cable, or

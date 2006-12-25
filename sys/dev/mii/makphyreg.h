@@ -1,4 +1,4 @@
-/*	$NetBSD: makphyreg.h,v 1.1 2001/07/12 17:30:45 thorpej Exp $	*/
+/*	$NetBSD: makphyreg.h,v 1.2 2006/12/25 18:41:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #define	PSCR_MBO		(1U << 3)   /* must be one */
 #define	PSCR_DIS_125CLK		(1U << 4)   /* 125CLK low */
 #define	PSCR_MDI_XOVER_MODE(x)	((x) << 5)  /* crossover mode */
-#define	PSCR_LOW_10T_THRESH	(1U << 7)   /* lower 10BASE-T Rx treshold */
+#define	PSCR_LOW_10T_THRESH	(1U << 7)   /* lower 10BASE-T Rx threshold */
 #define	PSCR_FORCE_LINK_GOOD	(1U << 10)  /* force link good */
 #define	PSCR_CRS_ON_TX		(1U << 11)  /* assert CRS on transmit */
 #define	PSCR_RX_FIFO(x)		((x) << 12) /* Rx FIFO depth */
