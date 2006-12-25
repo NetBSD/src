@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.7 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.8 2006/12/25 23:58:36 alc Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.7 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.8 2006/12/25 23:58:36 alc Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -950,6 +950,7 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	/* setup h/w VLAN tagging */
 	if (sc->sc_ethercom.ec_nvlans) {
 		mtag = m_tag_find(m0, PACKET_TAG_VLAN, NULL);
+		KASSERT(mtag != NULL);
 		vtag = NFE_TX_VTAG | VLAN_TAG_VALUE(mtag);
 	}
 #endif
