@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.6 2006/12/09 16:11:51 chs Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.7 2006/12/25 18:32:16 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.6 2006/12/09 16:11:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.7 2006/12/25 18:32:16 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -624,7 +624,7 @@ sysvbfs_bmap(void *arg)
 	daddr_t blk;
 
 	DPRINTF("%s:\n", __FUNCTION__);
-	/* BFS algorythm is contiguous allocation */
+	/* BFS algorithm is contiguous allocation */
 	blk = inode->start_sector + a->a_bn;
 
 	if (blk * BFS_BSIZE > bmp->bfs->data_end)
