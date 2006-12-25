@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.16 2006/11/24 21:20:05 wiz Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.17 2006/12/25 18:39:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.16 2006/11/24 21:20:05 wiz Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17 2006/12/25 18:39:48 wiz Exp $");
 
 #include "opt_irqstats.h"
 
@@ -204,7 +204,7 @@ footbridge_intr_calculate_masks(void)
 	footbridge_imask[IPL_CLOCK] |= footbridge_imask[IPL_AUDIO];
 
 	/*
-	 * footbridge has seperate statclock.
+	 * footbridge has separate statclock.
 	 */
 	footbridge_imask[IPL_STATCLOCK] |= footbridge_imask[IPL_CLOCK];
 

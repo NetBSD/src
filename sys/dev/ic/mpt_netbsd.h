@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.h,v 1.4 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: mpt_netbsd.h,v 1.5 2006/12/25 18:39:48 wiz Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
  * assume we have 480-48 == 432 bytes to have simple SG elements and/or
  * chain elements. If we assume 32 bit addressing, this works out to
  * 54 SG or chain elements. If we assume 5 chain elements, then we have
- * a maximum of 49 seperate actual SG segments.
+ * a maximum of 49 separate actual SG segments.
  */
 #define	MPT_SGL_MAX		49
 
