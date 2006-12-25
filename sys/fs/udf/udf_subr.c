@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.24 2006/12/25 18:36:05 wiz Exp $ */
+/* $NetBSD: udf_subr.c,v 1.25 2006/12/25 18:39:48 wiz Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.24 2006/12/25 18:36:05 wiz Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.25 2006/12/25 18:39:48 wiz Exp $");
 #endif /* not lint */
 
 
@@ -1397,7 +1397,7 @@ udf_read_rootdirs(struct udf_mount *ump, struct udf_args *args)
 	int dscr_type;
 	int error;
 
-	/* TODO implement FSD reading in seperate function like integrity? */
+	/* TODO implement FSD reading in separate function like integrity? */
 	/* get fileset descriptor sequence */
 	fsd_loc = ump->logical_vol->lv_fsd_loc;
 	fsd_len = udf_rw32(fsd_loc.len);
@@ -2608,7 +2608,7 @@ udf_read_file_extent(struct udf_node *node,
 /*
  * Read file extent in the buffer.
  *
- * The splitup of the extent into seperate request-buffers is to minimise
+ * The splitup of the extent into separate request-buffers is to minimise
  * copying around as much as possible.
  */
 

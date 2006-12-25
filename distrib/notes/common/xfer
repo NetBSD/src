@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.53 2006/11/25 21:07:32 martin Exp $
+.\"	$NetBSD: xfer,v 1.54 2006/12/25 18:39:48 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -620,7 +620,7 @@ Proceed to the instruction on installation.
 .It Em MS-DOS floppy
 .Nx
 doesn't include split sets to keep the distribution size down.
-They can be created on a seperate machine using the
+They can be created on a separate machine using the
 .Xr split 1
 command, running e.g.
 .Ic split -b 235k base.tgz base.

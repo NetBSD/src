@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.51 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.52 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -2156,7 +2156,7 @@ Changes from NetBSD 1.0 to NetBSD 1.1:
 		ncr5380*.[ch]. [pk 19950708]
 	sun3, sparc: added `screenblank', a screen saver daemon for Sun 3 and
 		SPARC machines. [thorpej 19950711]
-	removed FFS mounting code from mount(8), and seperated it into
+	removed FFS mounting code from mount(8), and separated it into
 		its own program (mount_ffs(8)).	 mount_ufs is a link
 		to mount_ffs, for now, for compatibility.  [cgd 19950712]
 	changed 'mount -a' to _not_ remount mount file systems, if it
@@ -4702,7 +4702,7 @@ Changes from NetBSD 1.3 to NetBSD 1.4:
 		the packages that depend on it [chopps 19990226]
 	kernel: Modified vnode locking protocol to always pass the VOP_CLOSE
 		operation a locked vnode as opposed to an unlocked one.
-		Also seperated export verification and file handle to
+		Also separated export verification and file handle to
 		vnode conversion. VFS_FHTOVP now only returns a vnode from
 		a file handle while VFS_CHECKEXP performs export
 		verification. Bump version to 1.3J. [wrstuden 19990226]
