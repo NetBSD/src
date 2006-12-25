@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.h,v 1.2 2006/11/24 19:46:59 christos Exp $ */
+/* $NetBSD: spiflash.h,v 1.3 2006/12/25 18:39:48 wiz Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -76,7 +76,7 @@
 
 /*
  * Some parts can stream bytes with the program command, whereas others require
- * a seperate command sequence for each byte.
+ * a separate command sequence for each byte.
  */
 #define	SPIFLASH_CMD_PROGRAM		0x02	/* page or byte program */
 #define	SPIFLASH_CMD_PROGRAM_AA		0xad	/* program (autoincrement) */
