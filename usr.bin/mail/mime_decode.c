@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.6 2006/12/15 20:26:03 christos Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.7 2006/12/25 18:43:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.6 2006/12/15 20:26:03 christos Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.7 2006/12/25 18:43:29 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -136,7 +136,7 @@ PUBLIC FILE *
 pipe_end(struct mime_info *mip)
 {
 	FILE *fp;
-	fp = last_registered_file(mip->mi_detachdir ? 0 : 1);	/* get last registered pipe */
+	fp = last_registered_file(0);	/* get last registered file or pipe */
 	if (fp == NULL)
 		fp = mip->mi_fo;
 	return fp;
@@ -730,7 +730,7 @@ mime_sendmessage(struct message *mp, FILE *obuf, struct ignoretab *igntab,
 		    sendmessage(mp, obuf, igntab, prefix, NULL) : 0;
 	/*
 	 * The prefix has two meanigs which we handle here:
-	 * 1) If obuf == NULL, then we are detaching to the 'prefix' director.
+	 * 1) If obuf == NULL, then we are detaching to the 'prefix' directory.
 	 * 2) If obuf != NULL, then the prefix is prepended to each line.
 	 */
 	detachdir = NULL;
