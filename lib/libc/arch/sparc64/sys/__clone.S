@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.4 2004/01/02 14:06:51 martin Exp $	*/
+/*	$NetBSD: __clone.S,v 1.5 2006/12/25 21:44:37 martin Exp $	*/
 
 /*-     
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,9 +61,9 @@ ENTRY(__clone)
 	/*
 	 * Store the function and the argument on our child's stack,
 	 * subtract BIAS from childs stack pointer - it will be 64 bit
-	 * code too.
+	 * code too. Allocate space for the initial frame too.
 	 */
-	sub	%o1, 16+BIAS, %o1	! make space on the child's stack
+	sub	%o1, 16+CC64FSZ+BIAS, %o1	! make space
 	stx	%i0, [%o1+BIAS]		! save func
 	stx	%i3, [%o1+8+BIAS]	! save arg
 
