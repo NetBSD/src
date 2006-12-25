@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.5.2.1 2005/04/04 18:25:59 tron Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.5.2.2 2006/12/25 20:31:39 ghen Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -110,7 +110,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.5.2.1 2005/04/04 18:25:59 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.5.2.2 2006/12/25 20:31:39 ghen Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.29 2005/03/28 10:47:54 darrenr Exp";
@@ -1326,14 +1326,10 @@ ipstate_t *is;
 		if (flags == (TH_SYN|TH_ACK)) {
 			is->is_s0[source] = ntohl(tcp->th_ack);
 			is->is_s0[!source] = ntohl(tcp->th_seq) + 1;
-			if ((TCP_OFF(tcp) > (sizeof(tcphdr_t) >> 2)) &&
-			    tdata->td_winscale) {
+			if (TCP_OFF(tcp) > (sizeof(tcphdr_t) >> 2)) {
 				if (fr_tcpoptions(fin, tcp, fdata)) {
 					fdata->td_winflags = TCP_WSCALE_SEEN|
 							     TCP_WSCALE_FIRST;
-				} else {
-					if (!fdata->td_winscale)
-						tdata->td_winscale = 0;
 				}
 			}
 			if ((fin->fin_out != 0) && (is->is_pass & FR_NEWISN))
@@ -1341,8 +1337,8 @@ ipstate_t *is;
 		} else if (flags == TH_SYN) {
 			is->is_s0[source] = ntohl(tcp->th_seq) + 1;
 			if ((TCP_OFF(tcp) > (sizeof(tcphdr_t) >> 2)))
-				if (fr_tcpoptions(fin, tcp, tdata)) {
-					tdata->td_winflags = TCP_WSCALE_SEEN|
+				if (fr_tcpoptions(fin, tcp, fdata)) {
+					fdata->td_winflags = TCP_WSCALE_SEEN|
 							     TCP_WSCALE_FIRST;
 				}
 
@@ -1442,15 +1438,8 @@ int flags;
 	 * the receiver also does window scaling)
 	 */
 	if (!(tcpflags & TH_SYN) && (fdata->td_winflags & TCP_WSCALE_FIRST)) {
-		if (tdata->td_winflags & TCP_WSCALE_SEEN) {
-			fdata->td_winflags &= ~TCP_WSCALE_FIRST;
-			fdata->td_maxwin = win;
-		} else {
-			fdata->td_winscale = 0;
-			fdata->td_winflags = 0;
-			tdata->td_winscale = 0;
-			tdata->td_winflags = 0;
-		  }
+		fdata->td_winflags &= ~TCP_WSCALE_FIRST;
+		fdata->td_maxwin = win;
 	}
 
 	end = seq + fin->fin_dlen - (TCP_OFF(tcp) << 2) +
@@ -1499,7 +1488,7 @@ int flags;
 #endif
 /* XXX what about big packets */
 #define MAXACKWINDOW 66000
-	    (-ackskew <= (MAXACKWINDOW << fdata->td_winscale)) &&
+	    (-ackskew <= MAXACKWINDOW) &&
 	    ( ackskew <= (MAXACKWINDOW << fdata->td_winscale))) {
 
 		/* if ackskew < 0 then this should be due to fragmented
