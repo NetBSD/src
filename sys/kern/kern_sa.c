@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.87 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.88 2006/12/26 00:10:40 alc Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.88 2006/12/26 00:10:40 alc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1475,6 +1475,7 @@ sa_makeupcalls(struct lwp *l)
 	up = (void *)STACK_ALLOC(stack, ucsize);
 	stack = STACK_GROW(stack, ucsize);
 	kup = kmem_zalloc(sizeof(*kup), KM_SLEEP);
+	KASSERT(kup != NULL);
 	kup->uc_stack = sau->sau_stack;
 	kup->uc_flags = _UC_STACK;
 	error = SACOPYOUT(sae, SAOUT_UCONTEXT, kup, up);
