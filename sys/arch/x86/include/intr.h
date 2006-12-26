@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2006/12/21 15:55:25 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.23 2006/12/26 15:22:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ spllower(int nlevel)
 #define	spl0()		spllower(IPL_NONE)
 #define	splx(x)		spllower(x)
 
-typedef int ipl_t;
+typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;
