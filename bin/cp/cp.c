@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.47 2006/10/15 23:55:30 christos Exp $ */
+/* $NetBSD: cp.c,v 1.48 2006/12/26 00:13:24 alc Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.47 2006/10/15 23:55:30 christos Exp $");
+__RCSID("$NetBSD: cp.c,v 1.48 2006/12/26 00:13:24 alc Exp $");
 #endif
 #endif /* not lint */
 
@@ -472,12 +472,12 @@ copy(char *argv[], enum op type, int fts_options)
 				dne = 0;
 			}
 			else
-                        {
-                        	warnx("directory %s encountered when not expected.",
-						curr->fts_path);
-                        	rval = 1;
-                                break;
-                        }
+			{
+				warnx("directory %s encountered when not expected.",
+				    curr->fts_path);
+				rval = 1;
+				break;
+			}
 
 			break;
 		case S_IFBLK:
