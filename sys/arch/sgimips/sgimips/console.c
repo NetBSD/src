@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.33 2006/12/24 03:57:44 rumble Exp $	*/
+/*	$NetBSD: console.c,v 1.34 2006/12/26 19:29:00 rumble Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.33 2006/12/24 03:57:44 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.34 2006/12/26 19:29:00 rumble Exp $");
 
 #include "opt_kgdb.h"
 
@@ -140,7 +140,7 @@ gio_video_init(const char *consdev)
 		case MACH_SGI_IP20:
 #if (NZSKBD > 0)
 			/* XXX Hardcoded unit, channel */
-			zskbd_cnattach(1, 0);
+			zskbd_cnattach(0, 0);
 #endif
 			break;
 
