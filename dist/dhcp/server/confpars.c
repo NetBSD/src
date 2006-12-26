@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.9 2006/10/03 19:06:05 christos Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.10 2006/12/26 00:08:44 alc Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -898,8 +898,9 @@ void parse_failover_peer (cfile, group, type)
 			if (!peer -> hba) {
 				dfree (peer -> name, MDL);
 				dfree (peer, MDL);
+				log_fatal ("parse failover peer: no memory");
 			} else {
-			memcpy (peer -> hba, hba, 32);
+				memcpy (peer -> hba, hba, 32);
 			}
 			break;
 
@@ -2349,7 +2350,7 @@ void parse_group_declaration (cfile, group)
 	enum dhcp_token token;
 	struct group *g;
 	int declaration = 0;
-	struct group_object *t;
+	struct group_object *t = NULL;
 	isc_result_t status;
 	char *name = NULL;
 	int deletedp = 0;
