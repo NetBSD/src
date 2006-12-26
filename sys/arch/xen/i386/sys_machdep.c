@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.9 2006/09/19 22:03:11 elad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.10 2006/12/26 10:43:44 elad Exp $	*/
 /*	NetBSD: sys_machdep.c,v 1.70 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9 2006/09/19 22:03:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10 2006/12/26 10:43:44 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -121,6 +121,11 @@ i386_get_ldt(l, args, retval)
 	union descriptor *lp, *cp;
 	struct i386_get_ldt_args ua;
 
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_GET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
+
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
@@ -188,6 +193,11 @@ i386_set_ldt(l, args, retval)
 	union descriptor *descv;
 	size_t old_len, new_len, ldt_len;
 	union descriptor *old_ldt, *new_ldt;
+
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_SET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
@@ -359,9 +369,10 @@ i386_iopl(l, args, retval)
 	if ((xen_start_info.flags & SIF_PRIVILEGED) == 0)
 		return EPERM;
 
-	if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    KAUTH_REQ_MACHDEP_X86_IOPL, NULL, NULL, NULL))
-		return EPERM;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPL,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return error;
@@ -403,6 +414,11 @@ i386_get_ioperm(l, args, retval)
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct i386_get_ioperm_args ua;
 
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_GET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
+
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
@@ -419,9 +435,10 @@ i386_set_ioperm(l, args, retval)
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct i386_set_ioperm_args ua;
 
-	if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    KAUTH_REQ_MACHDEP_X86_IOPERM, NULL, NULL, NULL))
-		return EPERM;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_SET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
@@ -438,6 +455,11 @@ i386_get_mtrr(struct lwp *l, void *args, register_t *retval)
 
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
+
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_GET,
+	    NULL, NULL, NULL, NULL);
+	if (error != 0)
+		return error;
 
 	error = copyin(args, &ua, sizeof ua);
 	if (error != 0)
@@ -463,8 +485,8 @@ i386_set_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    KAUTH_REQ_MACHDEP_X86_MTRR_SET, NULL, NULL, NULL);
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_SET,
+	    NULL, NULL, NULL, NULL);
 	if (error != 0)
 		return error;
 

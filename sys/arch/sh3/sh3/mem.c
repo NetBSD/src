@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.22 2006/12/22 11:13:21 elad Exp $	*/
+/*	$NetBSD: mem.c,v 1.23 2006/12/26 10:43:44 elad Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.22 2006/12/22 11:13:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23 2006/12/26 10:43:44 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,8 +194,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 		return (-1);
 
 	if (!__mm_mem_addr(off) && kauth_authorize_machdep(l->l_cred,
-	    KAUTH_MACHDEP_SH3, KAUTH_REQ_MACHDEP_SH3_UNMANAGEDMEM, NULL,
-	    NULL, NULL) != 0)
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0)
 		return (-1);
 	return (sh3_btop((paddr_t)off));
 }
