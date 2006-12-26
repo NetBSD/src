@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.285 2006/12/25 22:03:42 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.286 2006/12/26 12:39:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.285 2006/12/25 22:03:42 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.286 2006/12/26 12:39:01 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -166,25 +166,20 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	 * We only allow the filesystem to be reloaded if it
 	 * is currently mounted read-only.
 	 */
-	if (flags & MNT_RELOAD &&
-	    !(mp->mnt_flag & MNT_RDONLY)) {
+	if (flags & MNT_RELOAD && !(mp->mnt_flag & MNT_RDONLY)) {
 		error = EOPNOTSUPP;	/* Needs translation */
 		goto out;
 	}
 	/*
 	 * In "highly secure" mode, don't let the caller do anything
 	 * but downgrade a filesystem from read-write to read-only.
-	 * (see also below; MNT_UPDATE or MNT_GETARGS is required.)
 	 */
 	if (securelevel >= 2 &&
 	    flags !=
-	    (mp->mnt_flag | MNT_RDONLY |
-	     MNT_RELOAD | MNT_FORCE | MNT_UPDATE)) {
+	    (mp->mnt_flag | MNT_RDONLY | MNT_RELOAD | MNT_FORCE | MNT_UPDATE)) {
 		error = EPERM;
 		goto out;
 	}
-	mp->mnt_flag |= flags &
-	    (MNT_RELOAD | MNT_FORCE | MNT_UPDATE | MNT_GETARGS);
 	/*
 	 * Only root, or the user that did the original mount is
 	 * permitted to update it.
@@ -212,6 +207,9 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		error = EPERM;
 		goto out;
 	}
+
+	mp->mnt_flag &= ~MNT_OP_FLAGS;
+	mp->mnt_flag |= flags & (MNT_RELOAD | MNT_FORCE | MNT_UPDATE);
 
 	/*
 	 * Set the mount level flags.
@@ -251,9 +249,8 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		mp->mnt_flag &= ~MNT_RDONLY;
 	if (error)
 		mp->mnt_flag = saved_flags;
-	mp->mnt_flag &=~
-	    (MNT_RELOAD | MNT_FORCE | MNT_UPDATE | MNT_GETARGS);
-	mp->mnt_iflag &=~ IMNT_WANTRDWR;
+	mp->mnt_flag &= ~MNT_OP_FLAGS;
+	mp->mnt_iflag &= ~IMNT_WANTRDWR;
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0) {
 		if (mp->mnt_syncer == NULL)
 			error = vfs_allocate_syncvnode(mp);
@@ -301,20 +298,11 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 		vput(vp);
 		goto out;
 	}
-	/*
-	 * Do not allow NFS export by non-root users. For non-root users,
-	 * silently enforce MNT_NOSUID and MNT_NODEV, and MNT_NOEXEC if the
-	 * mount point is already MNT_NOEXEC.
-	 */
-	if (kauth_cred_geteuid(l->l_cred) != 0) {
-		if (flags & MNT_EXPORTED) {
-			error = EPERM;
-			vput(vp);
-			goto out;
-		}
-		flags |= MNT_NOSUID | MNT_NODEV;
-		if (vp->v_mount->mnt_flag & MNT_NOEXEC)
-			flags |= MNT_NOEXEC;
+
+	if (flags & MNT_EXPORTED) {
+		error = EINVAL;
+		vput(vp);
+		goto out;
 	}
 
 	/*
@@ -386,36 +374,24 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 	/*
 	 * The underlying file system may refuse the mount for
 	 * various reasons.  Allow the user to force it to happen.
-	 */
-	mp->mnt_flag |= flags & MNT_FORCE;
-
-	/*
+	 *
 	 * Set the mount level flags.
 	 */
-	if (flags & MNT_RDONLY)
-		mp->mnt_flag |= MNT_RDONLY;
-	else if (mp->mnt_flag & MNT_RDONLY)
-		mp->mnt_iflag |= IMNT_WANTRDWR;
-	mp->mnt_flag &=
-	  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP);
-	mp->mnt_flag |= flags &
-	   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
+	mp->mnt_flag = flags &
+	   (MNT_FORCE | MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
 	    MNT_IGNORE);
 
 	error = VFS_MOUNT(mp, path, data, ndp, l);
+	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
 	/*
 	 * Put the new filesystem on the mount list after root.
 	 */
 	cache_purge(vp);
 	if (!error) {
-		mp->mnt_flag &=~
-		    (MNT_RELOAD | MNT_FORCE | MNT_UPDATE | MNT_GETARGS);
-		mp->mnt_iflag &=~ IMNT_WANTRDWR;
+		mp->mnt_iflag &= ~IMNT_WANTRDWR;
 		vp->v_mountedhere = mp;
 		simple_lock(&mountlist_slock);
 		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
@@ -455,20 +431,18 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		goto out;
 	}
 
-	mp->mnt_flag |= MNT_GETARGS;
-
 	if (vfs_busy(mp, LK_NOWAIT, 0)) {
 		error = EPERM;
 		goto out;
 	}
 
+	mp->mnt_flag &= ~MNT_OP_FLAGS;
+	mp->mnt_flag |= MNT_GETARGS;
 	error = VFS_MOUNT(mp, path, data, ndp, l);
+	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
 	vfs_unbusy(mp);
-
-
  out:
-	mp->mnt_flag &=~ MNT_GETARGS;
 	return (error);
 }
 

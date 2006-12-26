@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.16 2006/10/31 08:12:46 mjf Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.17 2006/12/26 12:39:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -185,6 +185,8 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_RELOAD	0x00040000	/* reload filesystem data */
 #define	MNT_FORCE	0x00080000	/* force unmount or readonly change */
 #define	MNT_GETARGS	0x00400000	/* retrieve file system specific args */
+
+#define	MNT_OP_FLAGS	(MNT_UPDATE|MNT_RELOAD|MNT_FORCE|MNT_GETARGS)
 
 #define __MNT_EXTERNAL_FLAGS \
 	{ MNT_UPDATE,		1,	"being updated" }, \
