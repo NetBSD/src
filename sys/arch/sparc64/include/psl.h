@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.34 2006/12/21 15:55:25 yamt Exp $ */
+/*	$NetBSD: psl.h,v 1.35 2006/12/26 15:22:44 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -366,7 +366,7 @@ static __inline int name(void) \
 }
 #endif
 
-typedef int ipl_t;
+typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;
