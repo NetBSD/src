@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.9 2006/09/19 22:03:10 elad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.10 2006/12/26 10:43:44 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9 2006/09/19 22:03:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10 2006/12/26 10:43:44 elad Exp $");
 
 #if 0
 #include "opt_user_ldt.h"
@@ -157,6 +157,11 @@ i386_get_ldt(struct lwp *l, void *args, register_t *retval)
 	union descriptor *lp, *cp;
 	struct i386_get_ldt_args ua;
 
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_GET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
+
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
@@ -224,6 +229,11 @@ i386_set_ldt(l, args, retval)
 	union descriptor *descv;
 	size_t old_len, new_len, ldt_len;
 	union descriptor *old_ldt, *new_ldt;
+
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_SET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
@@ -392,9 +402,10 @@ x86_64_iopl(l, args, retval)
 	struct trapframe *tf = l->l_md.md_regs;
 	struct x86_64_iopl_args ua;
 
-	if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    KAUTH_REQ_MACHDEP_X86_IOPL, NULL, NULL, NULL))
-		return EPERM;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPL,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return error;
@@ -419,6 +430,11 @@ x86_64_get_ioperm(p, args, retval)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct x86_64_get_ioperm_args ua;
 
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_GET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
+
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
@@ -435,9 +451,10 @@ x86_64_set_ioperm(p, args, retval)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct x86_64_set_ioperm_args ua;
 
-	if (kauth_authorize_machdep(p->p_cred, KAUTH_MACHDEP_X86,
-	    KAUTH_REQ_MACHDEP_X86_IOPERM, NULL, NULL, NULL))
-		return EPERM;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_SET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
@@ -457,6 +474,11 @@ x86_64_get_mtrr(struct lwp *l, void *args, register_t *retval)
 
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
+
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_GET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	error = copyin(args, &ua, sizeof ua);
 	if (error != 0)
@@ -482,10 +504,10 @@ x86_64_set_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    KAUTH_REQ_MACHDEP_X86_MTRR_SET, NULL, NULL, NULL);
-	if (error != 0)
-		return error;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_SET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	error = copyin(args, &ua, sizeof ua);
 	if (error != 0)
@@ -519,11 +541,13 @@ sys_sysarch(l, v, retval)
 
 	switch(SCARG(uap, op)) {
 #if defined(USER_LDT) && 0
-	case X86_64_GET_LDT: 
+	case X86_64_GET_LDT:
+		/* XXX will need kauth_authorize_machdep() if added */
 		error = x86_64_get_ldt(l, SCARG(uap, parms), retval);
 		break;
 
-	case X86_64_SET_LDT: 
+	case X86_64_SET_LDT:
+		/* XXX will need kauth_authorize_machdep() if added */
 		error = x86_64_set_ldt(l, SCARG(uap, parms), retval);
 		break;
 #endif
@@ -536,7 +560,7 @@ sys_sysarch(l, v, retval)
 		error = x86_64_get_ioperm(l, SCARG(uap, parms), retval);
 		break;
 
-	case X86_64_SET_IOPERM: 
+	case X86_64_SET_IOPERM:
 		error = x86_64_set_ioperm(l, SCARG(uap, parms), retval);
 		break;
 #endif

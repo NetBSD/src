@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.42 2006/12/23 09:02:45 wiz Exp $
+.\" $NetBSD: kauth.9,v 1.43 2006/12/26 10:43:43 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 22, 2006
+.Dd December 26, 2006
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -502,127 +502,68 @@ manages machine-dependent authorization requests in the kernel.
 The authorization wrapper for this scope is declared as
 .Pp
 .Ft int Fn kauth_authorize_machdep "kauth_cred_t cred" "kauth_action_t op" \
-"enum kauth_machdep_req req" "void *arg1" "void *arg2" "void *arg3"
+"void *arg0" "void *arg1" "void *arg2" "void *arg3"
 .Pp
-In this scope,
-.Ar req
-always indicates the machine for the request.
-Below is the list of available request hierarchy.
+The actions on this scope provide a set that may or may not affect all
+platforms.
+Below is a list of available actions, along with which platforms are affected
+by each.
 .Bl -tag
-.It Dv KAUTH_MACHDEP_ALPHA
-The request is
-.Em alpha
-specific.
-.Pp
-Available requests as
-.Ar req
-are:
-.Bl -tag
-.It Dv KAUTH_REQ_MACHDEP_ALPHA_UNMANAGEDMEM
-Access to unmanaged memory requested.
-.El
-.It Dv KAUTH_MACHDEP_ARM
-The request is
-.Em arm
-specific.
-.Pp
-Available requests as
-.Ar req
-are:
-.Bl -tag
-.It Dv KAUTH_REQ_MACHDEP_ARM_UNMANAGEDMEM
-Access to unmanaged memory requested.
-.El
-.It Dv KAUTH_MACHDEP_PC532
-The request is
-.Em pc532
-specific.
-.Pp
-Available requests as
-.Ar req
-are:
-.Bl -tag
-.It Dv KAUTH_REQ_MACHDEP_PC532_UNMANAGEDMEM
-Access to unmanaged memory requested.
-.El
-.It Dv KAUTH_MACHDEP_POWERPC
-The request is
-.Em powerpc
-specific.
-.Pp
-Available requests as
-.Ar req
-are:
-.Bl -tag
-.It Dv KAUTH_REQ_MACHDEP_POWERPC_UNMANAGEDMEM
-Access to unmanaged memory requested.
-.El
-.It Dv KAUTH_MACHDEP_SH3
-The request is
-.Em sh3
-specific.
-.Pp
-Available requests as
-.Ar req
-are:
-.Bl -tag
-.It Dv KAUTH_REQ_MACHDEP_SH3_UNMANAGEDMEM
-Access to unmanaged memory requested.
-.El
-.It Dv KAUTH_MACHDEP_SH5
-The request is
-.Em sh5
-specific.
-.Pp
-Available requests as
-.Ar req
-are:
-.Bl -tag
-.It Dv KAUTH_REQ_MACHDEP_SH5_UNMANAGEDMEM
-Access to unmanaged memory requested.
-.El
-.It Dv KAUTH_MACHDEP_VAX
-The request is
-.Em vax
-specific.
-.Pp
-Available requests as
-.Ar req
-are:
-.Bl -tag
-.It Dv KAUTH_REQ_MACHDEP_VAX_UNMANAGEDMEM
-Access to unmanaged memory requested.
-.El
-.It Dv KAUTH_MACHDEP_X86
-The request is
-.Em x86
-specific.
-.Pp
-Available requests as
-.Ar req
-are:
-.Bl -tag
-.It Dv KAUTH_REQ_MACHDEP_X86_IOPL
-Checks if IOPL is allowed to be modified.
-.It Dv KAUTH_REQ_MACHDEP_X86_IOPERM
-Checks if IOPERM is allowed to be modified.
-.It Dv KAUTH_REQ_MACHDEP_X86_MTRR_SET
-Checks if the MTRR can be set.
-.It Dv KAUTH_REQ_MACHDEP_X86_UNMANAGEDMEM
-Access to unmanaged memory requested.
-.El
-.It Dv KAUTH_MACHDEP_X86_64
-The request is
-.Em x86-64
-specific.
-.Pp
-Available requests as
-.Ar arg1
-are:
-.Bl -tag
-.It Dv KAUTH_REQ_MACHDEP_X86_64_MTRR_GET
-Check if MTRR values can be retrieved.
-.El
+.It Dv KAUTH_MACHDEP_IOPERM_GET
+Request to get the I/O permission level.
+Affects
+.Em amd64 ,
+.Em i386 ,
+.Em xen .
+.It Dv KAUTH_MACHDEP_IOPERM_SET
+Request to set the I/O permission level.
+Affects
+.Em amd64 ,
+.Em i386 ,
+.Em xen .
+.It Dv KAUTH_MACHDEP_IOPL
+Request to set the I/O privilege level.
+Affects
+.Em amd64 ,
+.Em i386 ,
+.Em xen .
+.It Dv KAUTH_MACHDEP_LDT_GET
+Request to get the LDT (local descriptor table).
+Affects
+.Em amd64 ,
+.Em i386 ,
+.Em xen .
+.It Dv KAUTH_MACHDEP_LDT_SET
+Request to set the LDT (local descriptor table).
+Affects
+.Em amd64 ,
+.Em i386 ,
+.Em xen .
+.It Dv KAUTH_MACHDEP_MTRR_GET
+Request to get the MTRR (memory type range registers).
+Affects
+.Em amd64 ,
+.Em i386 ,
+.Em xen .
+.It Dv KAUTH_MACHDEP_MTRR_SET
+Request to set the MTRR (memory type range registers).
+Affects
+.Em amd64 ,
+.Em i386 ,
+.Em xen .
+.It Dv KAUTH_MACHDEP_UNMANAGEDMEM
+Request to access unmanaged memory.
+Affects
+.Em alpha ,
+.Em amd64 ,
+.Em arm ,
+.Em i386 ,
+.Em pc532 ,
+.Em powerpc ,
+.Em sh3 ,
+.Em sh5 ,
+.Em vax ,
+.Em xen .
 .El
 .Ss Device Scope
 The device scope,

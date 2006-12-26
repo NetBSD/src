@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.28 2006/12/22 11:13:22 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.29 2006/12/26 10:43:44 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -186,33 +186,14 @@ enum kauth_network_req {
  * Machdep scope - actions.
  */
 enum {
-	KAUTH_MACHDEP_ALPHA=1,
-	KAUTH_MACHDEP_ARM,
-	KAUTH_MACHDEP_PC532,
-	KAUTH_MACHDEP_POWERPC,
-	KAUTH_MACHDEP_SH3,
-	KAUTH_MACHDEP_SH5,
-	KAUTH_MACHDEP_VAX,
-	KAUTH_MACHDEP_X86,
-	KAUTH_MACHDEP_X86_64
-};
-
-/*
- * Machdep scope - sub-actions.
- */
-enum kauth_machdep_req {
-	KAUTH_REQ_MACHDEP_ALPHA_UNMANAGEDMEM=1,
-	KAUTH_REQ_MACHDEP_ARM_UNMANAGEDMEM,
-	KAUTH_REQ_MACHDEP_PC532_UNMANAGEDMEM,
-	KAUTH_REQ_MACHDEP_POWERPC_UNMANAGEDMEM,
-	KAUTH_REQ_MACHDEP_SH3_UNMANAGEDMEM,
-	KAUTH_REQ_MACHDEP_SH5_UNMANAGEDMEM,
-	KAUTH_REQ_MACHDEP_VAX_UNMANAGEDMEM,
-	KAUTH_REQ_MACHDEP_X86_64_MTRR_GET, /* ridiculous. */
-	KAUTH_REQ_MACHDEP_X86_IOPERM,
-	KAUTH_REQ_MACHDEP_X86_IOPL,
-	KAUTH_REQ_MACHDEP_X86_MTRR_SET,
-	KAUTH_REQ_MACHDEP_X86_UNMANAGEDMEM
+	KAUTH_MACHDEP_IOPERM_GET=1,
+	KAUTH_MACHDEP_IOPERM_SET,
+	KAUTH_MACHDEP_IOPL,
+	KAUTH_MACHDEP_LDT_GET,
+	KAUTH_MACHDEP_LDT_SET,
+	KAUTH_MACHDEP_MTRR_GET,
+	KAUTH_MACHDEP_MTRR_SET,
+	KAUTH_MACHDEP_UNMANAGEDMEM
 };
 
 /*
@@ -269,7 +250,7 @@ int kauth_authorize_process(kauth_cred_t, kauth_action_t, struct proc *,
 int kauth_authorize_network(kauth_cred_t, kauth_action_t,
     enum kauth_network_req, void *, void *, void *);
 int kauth_authorize_machdep(kauth_cred_t, kauth_action_t,
-    enum kauth_machdep_req, void *, void *, void *);
+    void *, void *, void *, void *);
 int kauth_authorize_device(kauth_cred_t, kauth_action_t,
     void *, void *, void *, void *);
 int kauth_authorize_device_tty(kauth_cred_t, kauth_action_t, struct tty *);
