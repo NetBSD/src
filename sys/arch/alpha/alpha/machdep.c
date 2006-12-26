@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.290 2006/11/22 12:12:51 elad Exp $ */
+/* $NetBSD: machdep.c,v 1.291 2006/12/26 10:43:43 elad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.290 2006/11/22 12:12:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.291 2006/12/26 10:43:43 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1892,8 +1892,8 @@ alpha_pa_access(pa)
 	 * Address is not a memory address.  If we're secure, disallow
 	 * access.  Otherwise, grant read/write.
 	 */
-	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_ALPHA,
-	    KAUTH_REQ_MACHDEP_ALPHA_UNMANAGEDMEM, NULL, NULL, NULL) != 0)
+	if (kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0)
 		return (PROT_NONE);
 	else
 		return (PROT_READ | PROT_WRITE);
