@@ -8,6 +8,9 @@
 volatile sig_atomic_t flag;
 volatile sig_atomic_t flag2;
 
+volatile pthread_t thr_usr1;
+volatile pthread_t thr_usr2;
+
 void handler1(int, siginfo_t *, void *);
 void handler2(int, siginfo_t *, void *);
 void *threadroutine(void *);
@@ -19,9 +22,10 @@ handler1(int sig, siginfo_t *info, void *ctx)
 	kill(getpid(), SIGUSR2);
 	/*
 	 * If the mask is properly set, SIGUSR2 will not be handled
-	 * until this handler returns.
+	 * by the current thread until this handler returns.
 	 */
 	flag = 1;
+	thr_usr1 = pthread_self();
 }
 
 void
@@ -30,6 +34,7 @@ handler2(int sig, siginfo_t *info, void *ctx)
 	if (flag == 1)
 		flag = 2;
 	flag2 = 1;
+	thr_usr2 = pthread_self();
 }
 
 void *
@@ -41,9 +46,11 @@ threadroutine(void *arg)
 
 	if (flag == 2)
 		printf("Success: Both handlers ran in order\n");
+	else if (flag == 1 && flag2 == 1 && thr_usr1 != thr_usr2)
+		printf("Success: Handlers were invoked by different threads\n");
 	else {
-		printf("Failure: flag was %d, flag2 was %d\n",
-		    (int)flag, (int)flag2);
+		printf("Failure: flag=%d, flag2=%d, thr1=%p, thr2=%p\n",
+		    (int)flag, (int)flag2, (void *)thr_usr1, (void *)thr_usr2);
 		exit(1);
 	}
 
