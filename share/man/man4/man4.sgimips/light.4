@@ -1,5 +1,6 @@
-.\"	$NetBSD: newport.4,v 1.6 2006/12/26 04:43:10 rumble Exp $
+.\"	$NetBSD: light.4,v 1.1 2006/12/26 04:43:10 rumble Exp $
 .\"
+.\" Copyright (c) 2006 Stephen M. Rumble
 .\" Copyright (c) 2003 Ilpo Ruotsalainen
 .\" All rights reserved.
 .\"
@@ -28,26 +29,37 @@
 .\" <<Id: LICENSE_GC,v 1.1 2001/10/01 23:24:05 cgd Exp>>
 .\"
 .Dd December 25, 2006
-.Dt NEWPORT 4 sgimips
+.Dt LIGHT 4 sgimips
 .Os
 .Sh NAME
-.Nm newport
-.Nd SGI NG1 graphics controller
+.Nm light
+.Nd SGI Light/Entry/Starter (LG1/LG2) graphics controller
 .Sh SYNOPSIS
-.Cd "newport* at gio? slot ?"
-.Cd "wsdisplay* at newport? console ?"
+.Cd "light* at gio? slot ?"
+.Cd "wsdisplay* at light? console ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the SGI NG1 (a.k.a. Indy 8-bit, Indy 24-bit, and
-XL) graphics controllers, often found on Indy and Indigo2 machines.
+driver supports the SGI Light series of graphics controllers, also known as
+Entry or Starter graphics and designated LG1 or LG2.
+These controllers have a fixed 1024x768 resolution with 8-bit colour depth.
+Unlike most SGI offerings, both 13w3 and VGA video cables are supported.
+.Nm
+is found in Indigo and Crimson machines.
 .Sh SEE ALSO
 .Xr gio 4 ,
 .Xr grtwo 4 ,
-.Xr light 4 ,
+.Xr newport 4 ,
 .Xr wscons 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Nx 2.0 .
+.Nx 5.0 .
+.Sh AUTHORS
+Stephen M. Rumble wrote this driver.
+.Sh BUGS
+Much is unknown about the REX chipset.
+Therefore, the driver relies on the PROM to properly initialise the graphics.
+.Pp
+This driver will not run without modification on Crimson machines.
