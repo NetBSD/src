@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.119 2006/11/16 01:32:42 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.120 2006/12/26 16:42:06 elad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.119 2006/11/16 01:32:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.120 2006/12/26 16:42:06 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -1132,8 +1132,8 @@ linux_sys_iopl(struct lwp *l, void *v, register_t *retval)
 #endif
 	struct trapframe *fp = l->l_md.md_regs;
 
-	if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    KAUTH_REQ_MACHDEP_X86_IOPL, NULL, NULL, NULL) != 0)
+	if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPL,
+	    NULL, NULL, NULL, NULL) != 0)
 		return EPERM;
 	fp->tf_eflags |= PSL_IOPL;
 	*retval = 0;
@@ -1157,8 +1157,9 @@ linux_sys_ioperm(l, v, retval)
 	} */ *uap = v;
 	struct trapframe *fp = l->l_md.md_regs;
 
-	if (kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    KAUTH_REQ_MACHDEP_X86_IOPERM, NULL, NULL, NULL) != 0)
+	if (kauth_authorize_machdep(l->l_cred, SCARG(uap, val) ?
+	    KAUTH_MACHDEP_IOPERM_SET : KAUTH_MACHDEP_IOPERM_GET, NULL, NULL,
+	    NULL, NULL) != 0)
 		return EPERM;
 	if (SCARG(uap, val))
 		fp->tf_eflags |= PSL_IOPL;
