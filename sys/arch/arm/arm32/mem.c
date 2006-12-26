@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.16 2006/12/22 11:13:21 elad Exp $	*/
+/*	$NetBSD: mem.c,v 1.17 2006/12/26 10:43:44 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16 2006/12/22 11:13:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.17 2006/12/26 10:43:44 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -220,8 +220,7 @@ mmmmap(dev, off, prot)
 	/* minor device 0 is physical memory */
 
 	if (off >= ctob(physmem) && kauth_authorize_machdep(l->l_cred,
-	    KAUTH_MACHDEP_ARM, KAUTH_REQ_MACHDEP_ARM_UNMANAGEDMEM, NULL,
-	    NULL, NULL) != 0)
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0)
 		return -1;
 	return arm_btop(off);
 }

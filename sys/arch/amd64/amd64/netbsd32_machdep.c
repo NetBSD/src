@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.30 2006/11/21 15:02:18 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.31 2006/12/26 10:43:44 elad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.30 2006/11/21 15:02:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.31 2006/12/26 10:43:44 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -616,11 +616,10 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	/* XXX this looks like a copy/paste error. */
-	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86_64,
-	    KAUTH_REQ_MACHDEP_X86_64_MTRR_GET, NULL, NULL, NULL);
-	if (error != 0)
-		return error;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_GET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	error = copyin(args, &args32, sizeof args32);
 	if (error != 0)
@@ -684,10 +683,10 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    KAUTH_REQ_MACHDEP_X86_MTRR_SET, NULL, NULL, NULL);
-	if (error != 0)
-		return error;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_SET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	error = copyin(args, &args32, sizeof args32);
 	if (error != 0)
