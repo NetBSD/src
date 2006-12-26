@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.17 2006/12/23 08:35:43 yamt Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.18 2006/12/26 08:55:32 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.17 2006/12/23 08:35:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.18 2006/12/26 08:55:32 elad Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -310,7 +310,7 @@ fileassoc_table_add(struct mount *mp, size_t size)
 	if (fileassoc_table_lookup(mp) != NULL)
 		return (EEXIST);
 
-	/* Allocate and initialize a Veriexec hash table. */
+	/* Allocate and initialize a table. */
 	tbl = kmem_zalloc(sizeof(*tbl), KM_SLEEP);
 	tbl->hash_size = size;
 	tbl->hash_tbl = hashinit(size, HASH_LIST, M_TEMP,
