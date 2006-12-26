@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.23 2006/12/09 05:52:57 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.24 2006/12/26 00:04:00 alc Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -320,7 +320,7 @@ saok:
 	}
 
 	newsa = get_sabyproppair(p, iph1);
-	if (newsa == NULL){
+	if (newsa == NULL && iph1->approval != NULL){
 		delisakmpsa(iph1->approval);
 		iph1->approval = NULL;
 	}
