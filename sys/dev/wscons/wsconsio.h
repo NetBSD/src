@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.82 2006/12/17 16:08:44 peter Exp $ */
+/* $NetBSD: wsconsio.h,v 1.83 2006/12/26 05:54:00 rumble Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -305,6 +305,7 @@ struct wsmouse_repeat {
 #define	WSDISPLAY_TYPE_HDLCD	41	/* Hitachi HD44780 based LCDs */
 #define	WSDISPLAY_TYPE_VESA	42	/* VESA BIOS framebuffer */
 #define	WSDISPLAY_TYPE_XILFB 	43 	/* Xilinx TFT cores */
+#define WSDISPLAY_TYPE_LIGHT	44	/* SGI Light (a.k.a. Entry/Starter) */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
