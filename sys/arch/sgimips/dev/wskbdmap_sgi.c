@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sgi.c,v 1.4 2005/12/11 12:18:52 christos Exp $	*/
+/*	$NetBSD: wskbdmap_sgi.c,v 1.5 2006/12/26 17:37:22 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sgi.c,v 1.4 2005/12/11 12:18:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sgi.c,v 1.5 2006/12/26 17:37:22 rumble Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -40,7 +40,7 @@ static const keysym_t wssgi_keydesctab_us[] = {
 /*	pos		command			normal		shifted */
 	KC(0x00),				/* break - not impl */
 	KC(0x01),				/* setupkey - not impl */
-	KC(0x02),				KS_Meta_L,
+	KC(0x02),				KS_Control_L,
 	KC(0x03),				KS_Caps_Lock,
 	KC(0x04),				KS_Shift_R,
 	KC(0x05),				KS_Shift_L,
@@ -98,7 +98,7 @@ static const keysym_t wssgi_keydesctab_us[] = {
 	KC(0x39),				KS_KP_End,	KS_KP_1,
 	KC(0x3A),				KS_KP_Insert,	KS_KP_0,
 	KC(0x3B),				KS_Linefeed, 	/* not impl */
-	KC(0x3C),				KS_BackSpace,
+	KC(0x3C),				KS_Delete,
 	KC(0x3D),				KS_Delete,
 	KC(0x3E),				KS_KP_Left,	KS_KP_4,
 	KC(0x3F),				KS_KP_Down,	KS_KP_2,
@@ -123,7 +123,7 @@ static const keysym_t wssgi_keydesctab_us[] = {
 	KC(0x52),				KS_space,
 	KC(0x53),				KS_Alt_L,
 	KC(0x54),				KS_Alt_R,
-	KC(0x55),				KS_Meta_R,
+	KC(0x55),				KS_Control_R,
 	KC(0x56),				KS_f1,
 	KC(0x57),				KS_f2,
 	KC(0x58),				KS_f3,
