@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.74 2006/12/16 02:52:17 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.75 2006/12/26 13:40:58 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1199,7 +1199,7 @@ re_rxeof(struct rtk_softc *sc)
 		if (sc->rtk_type == RTK_8169)
 			rxstat >>= 1;
 
-		if ((rxstat & RE_RDESC_STAT_RXERRSUM) != 0) {
+		if (__predict_false((rxstat & RE_RDESC_STAT_RXERRSUM) != 0)) {
 #ifdef RE_DEBUG
 			aprint_error("%s: RX error (rxstat = 0x%08x)",
 			    sc->sc_dev.dv_xname, rxstat);
@@ -1235,7 +1235,7 @@ re_rxeof(struct rtk_softc *sc)
 		 * reload the current one.
 		 */
 
-		if (re_newbuf(sc, i, NULL) != 0) {
+		if (__predict_false(re_newbuf(sc, i, NULL) != 0)) {
 			ifp->if_ierrors++;
 			if (sc->re_head != NULL) {
 				m_freem(sc->re_head);
@@ -1579,7 +1579,7 @@ re_start(struct ifnet *ifp)
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
 		    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 
-		if (error) {
+		if (__predict_false(error)) {
 			/* XXX try to defrag if EFBIG? */
 			aprint_error("%s: can't map mbuf (error %d)\n",
 			    sc->sc_dev.dv_xname, error);
@@ -1592,8 +1592,8 @@ re_start(struct ifnet *ifp)
 
 		nsegs = map->dm_nsegs;
 		pad = FALSE;
-		if (m->m_pkthdr.len <= RE_IP4CSUMTX_PADLEN &&
-		    (re_flags & RE_TDESC_CMD_IPCSUM) != 0) {
+		if (__predict_false(m->m_pkthdr.len <= RE_IP4CSUMTX_PADLEN &&
+		    (re_flags & RE_TDESC_CMD_IPCSUM) != 0)) {
 			pad = TRUE;
 			nsegs++;
 		}
@@ -1663,7 +1663,7 @@ re_start(struct ifnet *ifp)
 			RE_TXDESCSYNC(sc, curdesc,
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		}
-		if (pad) {
+		if (__predict_false(pad)) {
 			bus_addr_t paddaddr;
 
 			d = &sc->re_ldata.re_tx_list[curdesc];
