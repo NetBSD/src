@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.25 2006/09/28 21:22:15 christos Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.26 2006/12/26 00:06:03 alc Exp $	*/
 /* $OpenBSD: ssh-keygen.c,v 1.154 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.25 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.26 2006/12/26 00:06:03 alc Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -341,9 +341,8 @@ get_line(FILE *fp, char *line, size_t len)
 		line[pos++] = c;
 		line[pos] = '\0';
 	}
-	if (c == EOF)
-		return -1;
-	return pos;
+	/* We reached EOF */
+	return -1;
 }
 
 static void
