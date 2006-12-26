@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.75 2006/12/26 13:40:58 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.76 2006/12/26 13:45:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1059,14 +1059,15 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	    BUS_DMASYNC_PREREAD);
 
 	d = &sc->re_ldata.re_rx_list[idx];
+#ifdef DIAGNOSTIC
 	RE_RXDESCSYNC(sc, idx, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	cmdstat = le32toh(d->re_cmdstat);
 	RE_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD);
 	if (cmdstat & RE_RDESC_STAT_OWN) {
-		aprint_error("%s: tried to map busy RX descriptor\n",
+		panic("%s: tried to map busy RX descriptor",
 		    sc->sc_dev.dv_xname);
-		goto out;
 	}
+#endif
 
 	rxs->rxs_mbuf = m;
 
