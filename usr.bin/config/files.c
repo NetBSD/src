@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.4 2006/09/27 19:05:46 christos Exp $	*/
+/*	$NetBSD: files.c,v 1.5 2006/12/26 00:07:18 alc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -339,10 +339,12 @@ fixobjects(void)
 int
 fixdevsw(void)
 {
+	int error;
 	struct devm *dm, *res;
 	struct hashtab *fixdevmtab;
 	char mstr[16];
 
+	error = 0;
 	fixdevmtab = ht_new();
 
 	TAILQ_FOREACH(dm, &alldevms, dm_next) {
@@ -358,6 +360,7 @@ fixdevsw(void)
 				       "device-major '%s' is inconsistent: "
 				       "block %d, char %d", dm->dm_name,
 				       dm->dm_bmajor, dm->dm_cmajor);
+				error = 1;
 				goto out;
 			} else {
 				xerror(dm->dm_srcfile, dm->dm_srcline,
@@ -365,6 +368,7 @@ fixdevsw(void)
 				       "block %d, char %d",
 				       dm->dm_name, dm->dm_bmajor,
 				       dm->dm_cmajor);
+				error = 1;
 				goto out;
 			}
 		}
@@ -382,6 +386,7 @@ fixdevsw(void)
 				xerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of character device '%s' "
 				       "is already defined", dm->dm_name);
+				error = 1;
 				goto out;
 			}
 			(void)snprintf(mstr, sizeof(mstr), "%d", dm->dm_cmajor);
@@ -389,6 +394,7 @@ fixdevsw(void)
 				xerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of character major '%d' "
 				       "is already defined", dm->dm_cmajor);
+				error = 1;
 				goto out;
 			}
 			if (ht_insert(cdevmtab, intern(dm->dm_name), dm) ||
@@ -402,6 +408,7 @@ fixdevsw(void)
 				xerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of block device '%s' "
 				       "is already defined", dm->dm_name);
+				error = 1;
 				goto out;
 			}
 			(void)snprintf(mstr, sizeof(mstr), "%d", dm->dm_bmajor);
@@ -409,6 +416,7 @@ fixdevsw(void)
 				xerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of block major '%d' "
 				       "is already defined", dm->dm_bmajor);
+				error = 1;
 				goto out;
 			}
 			if (ht_insert(bdevmtab, intern(dm->dm_name), dm) || 
@@ -419,10 +427,9 @@ fixdevsw(void)
 		}
 	}
 
-	return (0);
 out:
 	ht_free(fixdevmtab);
-	return (1);
+	return (error);
 }
 
 /*
