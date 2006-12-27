@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.8 2006/12/27 18:01:45 alc Exp $ */
+/* $NetBSD: bt3c.c,v 1.9 2006/12/27 22:07:17 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.8 2006/12/27 18:01:45 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.9 2006/12/27 22:07:17 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -572,8 +572,8 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 	if (size > 10 * 1024) {	/* sanity check */
 		printf("%s: firmware file seems WAY too big!\n",
 			sc->sc_dev.dv_xname);
-		err = EFBIG;
-		goto out;
+		firmware_close(fh);
+		return EFBIG;
 	}
 #endif
 
