@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.54 2006/12/27 11:05:04 yamt Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.55 2006/12/27 11:28:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.54 2006/12/27 11:05:04 yamt Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.55 2006/12/27 11:28:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -542,7 +542,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: mount_nfs %s\n%s\n%s\n%s\n%s\n",
-"[-23bcCdilpPqsTUX] [-a maxreadahead] [-D deadthresh]",
+"[-23bCcdilPpqsTUX] [-a maxreadahead] [-D deadthresh]",
 "\t[-g maxgroups] [-I readdirsize] [-L leaseterm]",
 "\t[-o options] [-R retrycnt] [-r readsize] [-t timeout]",
 "\t[-w writesize] [-x retrans]",
