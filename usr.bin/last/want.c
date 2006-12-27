@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.6 2006/02/28 17:17:43 ginsbach Exp $	*/
+/*	$NetBSD: want.c,v 1.7 2006/12/27 18:03:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -86,8 +86,39 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 
 	crmsg = NULL;
 
-	if ((wfd = open(file, O_RDONLY, 0)) < 0 || fstat(wfd, &stb) == -1)
+	if (!strcmp(file, "-")) {
+		if (lseek(STDIN_FILENO, 0, SEEK_CUR) < 0) {
+			char tfile[] = _PATH_TMP "last.XXXXXX";
+			ssize_t len;
+
+			wfd = mkstemp(tfile);
+			if (wfd < 0) {
+				err(1, "mkstemp");
+			}
+			unlink(tfile);
+			for (;;) {
+			   	len = read(STDIN_FILENO, buf, sizeof(buf));
+				if (len < 0) {
+					err(1, "stdin: read");
+				}
+				if (len == 0) {
+					break;
+				}
+				len = write(wfd, buf, len);
+				if (len < 0) {
+					err(1, "%s: write", tfile);
+				}
+			}
+		} else {
+			wfd = STDIN_FILENO;
+		}
+		file = "<stdin>";
+	} else if ((wfd = open(file, O_RDONLY, 0)) < 0) {
 		err(1, "%s", file);
+	}
+
+	if (fstat(wfd, &stb) == -1)
+		err(1, "%s: fstat", file);
 	bl = (stb.st_size + len - 1) / len;
 
 	buf[FIRSTVALID].ut_timefld = time(NULL);
