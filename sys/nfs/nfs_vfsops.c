@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.168 2006/11/09 09:53:57 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.169 2006/12/27 12:10:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.168 2006/11/09 09:53:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.169 2006/12/27 12:10:09 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.168 2006/11/09 09:53:57 yamt Exp $"
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsdiskless.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 
 extern struct nfsstats nfsstats;
@@ -546,11 +545,8 @@ nfs_decode_args(nmp, argp, l)
 	if ((argp->flags & NFSMNT_READAHEAD) && argp->readahead >= 0 &&
 		argp->readahead <= NFS_MAXRAHEAD)
 		nmp->nm_readahead = argp->readahead;
-	if ((argp->flags & NFSMNT_LEASETERM) && argp->leaseterm >= 2 &&
-		argp->leaseterm <= NQ_MAXLEASE)
-		nmp->nm_leaseterm = argp->leaseterm;
 	if ((argp->flags & NFSMNT_DEADTHRESH) && argp->deadthresh >= 1 &&
-		argp->deadthresh <= NQ_NEVERDEAD)
+		argp->deadthresh <= NFS_NEVERDEAD)
 		nmp->nm_deadthresh = argp->deadthresh;
 
 	adjsock |= ((nmp->nm_sotype != argp->sotype) ||
@@ -625,7 +621,7 @@ nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		args.retrans = nmp->nm_retry;
 		args.maxgrouplist = nmp->nm_numgrps;
 		args.readahead = nmp->nm_readahead;
-		args.leaseterm = nmp->nm_leaseterm;
+		args.leaseterm = 0; /* dummy */
 		args.deadthresh = nmp->nm_deadthresh;
 		args.hostname = NULL;
 		return (copyout(&args, data, sizeof(args)));
@@ -760,10 +756,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	nmp->nm_readdirsize = NFS_READDIRSIZE;
 	nmp->nm_numgrps = NFS_MAXGRPS;
 	nmp->nm_readahead = NFS_DEFRAHEAD;
-	nmp->nm_leaseterm = NQ_DEFLEASE;
-	nmp->nm_deadthresh = NQ_DEADTHRESH;
-	CIRCLEQ_INIT(&nmp->nm_timerhead);
-	nmp->nm_inprog = NULLVP;
+	nmp->nm_deadthresh = NFS_DEFDEADTHRESH;
 	error = set_statvfs_info(pth, UIO_SYSSPACE, hst, UIO_SYSSPACE, mp, l);
 	if (error)
 		goto bad;
@@ -872,16 +865,9 @@ nfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		return (EBUSY);
 	}
 
-	/*
-	 * Must handshake with nqnfs_clientd() if it is active.
-	 */
-	nmp->nm_iflag |= NFSMNT_DISMINPROG;
-	while (nmp->nm_inprog != NULLVP)
-		(void) tsleep((caddr_t)&lbolt, PSOCK, "nfsdism", 0);
 	error = vflush(mp, vp, flags);
 	if (error) {
 		vput(vp);
-		nmp->nm_iflag &= ~NFSMNT_DISMINPROG;
 		return (error);
 	}
 

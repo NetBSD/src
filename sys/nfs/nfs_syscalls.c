@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.99 2006/11/09 09:53:57 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.100 2006/12/27 12:10:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.99 2006/11/09 09:53:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.100 2006/12/27 12:10:09 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.99 2006/11/09 09:53:57 yamt Exp $
 #include <nfs/nfsrvcache.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nfsnode.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
@@ -91,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.99 2006/11/09 09:53:57 yamt Exp $
 extern int32_t (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
 						struct nfssvc_sock *,
 						struct lwp *, struct mbuf **));
-extern time_t nqnfsstarttime;
 extern int nfsrvw_procrastinate;
 
 struct nfssvc_sock *nfs_udpsock;
@@ -105,8 +103,6 @@ int nuidhash_max = NFS_MAXUIDHASH;
 int nfsd_waiting = 0;
 #ifdef NFSSERVER
 static int nfs_numnfsd = 0;
-static int notstarted = 1;
-static int modify_flag = 0;
 static struct nfsdrt nfsdrt;
 #endif
 
@@ -220,8 +216,6 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 			(SCARG(uap, flag) & NFSSVC_GOTAUTH) == 0)
 			return (0);
 		nmp->nm_iflag |= NFSMNT_MNTD;
-		error = nqnfs_clientd(nmp, l->l_cred, &ncd, SCARG(uap, flag),
-			SCARG(uap, argp), l);
 #endif /* NFS */
 	} else if (SCARG(uap, flag) & NFSSVC_ADDSOCK) {
 #ifndef NFSSERVER
@@ -660,28 +654,7 @@ nfssvc_nfsd(nsd, argp, l)
 			} else
 				cacherep = nfsrv_getcache(nd, slp, &mreq);
 
-			/*
-			 * Check for just starting up for NQNFS and send
-			 * fake "try again later" replies to the NQNFS clients.
-			 */
-			if (notstarted && nqnfsstarttime <= time_second) {
-				if (modify_flag) {
-					nqnfsstarttime =
-					    time_second + nqsrv_writeslack;
-					modify_flag = 0;
-				} else
-					notstarted = 0;
-			}
-			if (notstarted) {
-				if ((nd->nd_flag & ND_NQNFS) == 0)
-					cacherep = RC_DROPIT;
-				else if (nd->nd_procnum != NFSPROC_WRITE) {
-					nd->nd_procnum = NFSPROC_NOOP;
-					nd->nd_repstat = NQNFS_TRYLATER;
-					cacherep = RC_DOIT;
-				} else
-					modify_flag = 1;
-			} else if (nfsd->nfsd_flag & NFSD_AUTHFAIL) {
+			if (nfsd->nfsd_flag & NFSD_AUTHFAIL) {
 				nfsd->nfsd_flag &= ~NFSD_AUTHFAIL;
 				nd->nd_procnum = NFSPROC_NOOP;
 				nd->nd_repstat =
@@ -717,7 +690,7 @@ nfssvc_nfsd(nsd, argp, l)
 				if (writes_todo || nd == NULL ||
 				     (!(nd->nd_flag & ND_NFSV3) &&
 				     nd->nd_procnum == NFSPROC_WRITE &&
-				     nfsrvw_procrastinate > 0 && !notstarted))
+				     nfsrvw_procrastinate > 0))
 					error = nfsrv_writegather(&nd, slp,
 					    l, &mreq);
 				else
@@ -754,8 +727,7 @@ nfssvc_nfsd(nsd, argp, l)
 					break;
 				}
 				if (error) {
-					if (nd->nd_procnum != NQNFSPROC_VACATED)
-						nfsstats.srv_errs++;
+					nfsstats.srv_errs++;
 					nfsrv_updatecache(nd, FALSE, mreq);
 					if (nd->nd_nam2)
 						m_freem(nd->nd_nam2);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.40 2006/07/13 12:00:26 martin Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.41 2006/12/27 12:10:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,7 +61,7 @@ struct nfs_args {
 	int		retrans;	/* times to retry send */
 	int		maxgrouplist;	/* Max. size of group list */
 	int		readahead;	/* # of blocks to readahead */
-	int		leaseterm;	/* Term (sec) of lease */
+	int		leaseterm;	/* Ignored; Term (sec) of lease */
 	int		deadthresh;	/* Retrans threshold */
 	char		*hostname;	/* server's name */
 };
@@ -81,7 +81,7 @@ struct nfs_args {
 #define	NFSMNT_NFSV3		0x00000200  /* Use NFS Version 3 protocol */
 #define	NFSMNT_KERB		0x00000400  /* Use Kerberos authentication */
 #define	NFSMNT_DUMBTIMR		0x00000800  /* Don't estimate rtt dynamically */
-#define	NFSMNT_LEASETERM	0x00001000  /* set lease term (nqnfs) */
+#define	NFSMNT_LEASETERM	0x00001000  /* Ignored; lease term (nqnfs) */
 #define	NFSMNT_READAHEAD	0x00002000  /* set read ahead */
 #define	NFSMNT_DEADTHRESH	0x00004000  /* set dead server retry thresh */
 #define	NFSMNT_RESVPORT		0x00008000  /* Allocate a reserved port */
@@ -104,7 +104,6 @@ struct nfs_args {
 #define NFSMNT_GOTPATHCONF	0x00000002  /* Got the V3 pathconf info */
 #define NFSMNT_GOTFSINFO	0x00000004  /* Got the V3 fsinfo */
 #define	NFSMNT_MNTD		0x00000008  /* Mnt server for mnt point */
-#define	NFSMNT_DISMINPROG	0x00000010  /* Dismount in progress */
 #define	NFSMNT_DISMNT		0x00000020  /* Dismounted */
 #define	NFSMNT_SNDLOCK		0x00000040  /* Send socket lock */
 #define	NFSMNT_WANTSND		0x00000080  /* Want above */
@@ -147,9 +146,6 @@ struct	nfsmount {
 	int	nm_wsize;		/* Max size of write rpc */
 	int	nm_readdirsize;		/* Size of a readdir rpc */
 	int	nm_readahead;		/* Num. of blocks to readahead */
-	int	nm_leaseterm;		/* Term (sec) for NQNFS lease */
-	CIRCLEQ_HEAD(, nfsnode) nm_timerhead; /* Head of lease timer queue */
-	struct vnode *nm_inprog;	/* Vnode in prog by nqnfs_clientd() */
 	uid_t	nm_authuid;		/* Uid for authenticator */
 	int	nm_authtype;		/* Authenticator type */
 	int	nm_authlen;		/* and length */
