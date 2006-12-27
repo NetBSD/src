@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.22 2006/12/26 10:43:44 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.23 2006/12/27 10:02:46 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.22 2006/12/26 10:43:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.23 2006/12/27 10:02:46 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.22 2006/12/26 10:43:44 el
 #include <sys/sysctl.h>
 #include <sys/tty.h>
 #include <net/route.h>
+#include <sys/ptrace.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -305,7 +306,64 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 		}
 
-	case KAUTH_PROCESS_CANPTRACE:
+	case KAUTH_PROCESS_CANPTRACE: {
+		switch ((u_long)arg1) {
+		case PT_ATTACH:
+		case PT_WRITE_I:
+		case PT_WRITE_D:
+		case PT_READ_I:
+		case PT_READ_D:
+		case PT_IO:
+#ifdef PT_GETREGS
+		case PT_GETREGS:
+#endif
+#ifdef PT_SETREGS
+		case PT_SETREGS:
+#endif
+#ifdef PT_GETFPREGS
+		case PT_GETFPREGS:
+#endif
+#ifdef PT_SETFPREGS
+		case PT_SETFPREGS:
+#endif
+#ifdef __HAVE_PTRACE_MACHDEP
+		PTRACE_MACHDEP_REQUEST_CASES
+#endif
+			if (isroot) {
+				result = KAUTH_RESULT_ALLOW;
+				break;
+			}
+
+			if (kauth_cred_getuid(cred) !=
+			    kauth_cred_getuid(p->p_cred) ||
+			    ISSET(p->p_flag, P_SUGID)) {
+				result = KAUTH_RESULT_DENY;
+				break;
+			}
+
+			result = KAUTH_RESULT_ALLOW;
+			break;
+
+#ifdef PT_STEP
+		case PT_STEP:
+#endif
+		case PT_CONTINUE:
+		case PT_KILL:
+		case PT_DETACH:
+		case PT_LWPINFO:
+		case PT_SYSCALL:
+		case PT_DUMPCORE:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
+	        	result = KAUTH_RESULT_DEFER;
+		        break;
+		}
+
+		break;
+		}
+
 	case KAUTH_PROCESS_CANSYSTRACE:
 		if (isroot) {
 			result = KAUTH_RESULT_ALLOW;

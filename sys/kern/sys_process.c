@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.118 2006/12/06 18:54:02 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.119 2006/12/27 10:02:46 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.118 2006/12/06 18:54:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.119 2006/12/27 10:02:46 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,12 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		/* Find the process we're supposed to be operating on. */
 		if ((t = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
+
+		/* XXX elad - this should be in pfind(). */
+		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
+		    t, NULL, NULL, NULL);
+		if (error)
+			return (ESRCH);
 	}
 
 	/* Can't trace a process that's currently exec'ing. */
@@ -181,16 +187,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			return (EBUSY);
 
 		/*
-		 *	(4) the security model prevents it, or
-		 */
-		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(SCARG(uap, req)),
-		    NULL, NULL);
-		if (error)
-			return (error);
-
-		/*
-		 *	(5) the tracer is chrooted, and its root directory is
+		 *	(4) the tracer is chrooted, and its root directory is
 		 *	    not at or above the root directory of the tracee
 		 */
 		if (!proc_isunder(t, l))
@@ -201,18 +198,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	case  PT_READ_D:
 	case  PT_WRITE_I:
 	case  PT_WRITE_D:
-	case  PT_CONTINUE:
 	case  PT_IO:
-	case  PT_KILL:
-	case  PT_DETACH:
-	case  PT_LWPINFO:
-	case  PT_SYSCALL:
-#ifdef COREDUMP
-	case  PT_DUMPCORE:
-#endif
-#ifdef PT_STEP
-	case  PT_STEP:
-#endif
 #ifdef PT_GETREGS
 	case  PT_GETREGS:
 #endif
@@ -225,11 +211,29 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
 #endif
-
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
 #endif
+		/*
+		 * You can't read/write the memory or registers of a process
+		 * if the tracer is chrooted, and its root directory is not at
+		 * or above the root directory of the tracee.
+		 */
+		if (!proc_isunder(t, l))
+			return (EPERM);
+		/*FALLTHROUGH*/
 
+	case  PT_CONTINUE:
+	case  PT_KILL:
+	case  PT_DETACH:
+	case  PT_LWPINFO:
+	case  PT_SYSCALL:
+#ifdef COREDUMP
+	case  PT_DUMPCORE:
+#endif
+#ifdef PT_STEP
+	case  PT_STEP:
+#endif
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
@@ -267,6 +271,11 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	default:			/* It was not a legal request. */
 		return (EINVAL);
 	}
+
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANPTRACE,
+	    t, KAUTH_ARG(SCARG(uap, req)), NULL, NULL);
+	if (error)
+		return (error);
 
 	/* Do single-step fixup if needed. */
 	FIX_SSTEP(t);
@@ -319,15 +328,6 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		UIO_SETUP_SYSSPACE(&uio);
 
-		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(SCARG(uap, req)),
-		    NULL, NULL);
-		if (error)
-			return (error);
-
-		if (!proc_isunder(t, l))
-			return (EPERM);
-
 		error = process_domem(l, lt, &uio);
 		if (!write)
 			*retval = tmp;
@@ -369,15 +369,6 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		uio.uio_offset = (off_t)(unsigned long)piod.piod_offs;
 		uio.uio_resid = piod.piod_len;
 		uio.uio_vmspace = vm;
-
-		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(SCARG(uap, req)),
-		    NULL, NULL);
-		if (error)
-			return (error);
-
-		if (!proc_isunder(t, l))
-			return (EPERM);
 
 		error = process_domem(l, lt, &uio);
 		piod.piod_len -= uio.uio_resid;
@@ -592,15 +583,6 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_vmspace = vm;
 
-			error = kauth_authorize_process(l->l_cred,
-			    KAUTH_PROCESS_CANPTRACE, t, 
-			    KAUTH_ARG(SCARG(uap, req)), NULL, NULL);
-			if (error)
-				return (error);
-
-			if (!proc_isunder(t, l))
-				return (EPERM);
-
 			error = process_doregs(l, lt, &uio);
 			uvmspace_free(vm);
 			return error;
@@ -640,15 +622,6 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_vmspace = vm;
 
-			error = kauth_authorize_process(l->l_cred,
-			    KAUTH_PROCESS_CANPTRACE, t,
-			    KAUTH_ARG(SCARG(uap, req)), NULL, NULL);
-			if (error)
-				return (error);
-
-			if (!proc_isunder(t, l))
-				return (EPERM);
-
 			error = process_dofpregs(l, lt, &uio);
 			uvmspace_free(vm);
 			return error;
@@ -657,15 +630,6 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
-		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(SCARG(uap, req)),
-		    NULL, NULL);
-		if (error)
-			return (error);
-
-		if (!proc_isunder(t, l))
-			return (EPERM);
-
 		return (ptrace_machdep_dorequest(l, lt,
 		    SCARG(uap, req), SCARG(uap, addr),
 		    SCARG(uap, data)));
