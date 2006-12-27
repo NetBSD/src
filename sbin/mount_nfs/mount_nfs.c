@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.53 2006/11/09 10:07:00 yamt Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.54 2006/12/27 11:05:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.53 2006/11/09 10:07:00 yamt Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.54 2006/12/27 11:05:04 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,11 @@ mount_nfs(int argc, char *argv[])
 			nfsargsp->flags &= ~NFSMNT_NOCONN;
 			break;
 		case 'D':
-			/* ignore */
+			num = strtol(optarg, &p, 10);
+			if (*p || num <= 0)
+				errx(1, "illegal -D value -- %s", optarg);
+			nfsargsp->deadthresh = num;
+			nfsargsp->flags |= NFSMNT_DEADTHRESH;
 			break;
 		case 'd':
 			nfsargsp->flags |= NFSMNT_DUMBTIMR;
