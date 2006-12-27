@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.169 2006/12/27 12:10:09 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.170 2006/12/27 12:51:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.169 2006/12/27 12:10:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.170 2006/12/27 12:51:22 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -629,9 +629,9 @@ nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 
 	if (args.version != NFS_ARGSVERSION)
 		return (EPROGMISMATCH);
-#ifdef NFS_V2_ONLY
-	if (args.flags & NFSMNT_NQNFS)
+	if (args.flags & (NFSMNT_NQNFS|NFSMNT_KERB))
 		return (EPROGUNAVAIL);
+#ifdef NFS_V2_ONLY
 	if (args.flags & NFSMNT_NFSV3)
 		return (EPROGMISMATCH);
 #endif
@@ -640,12 +640,10 @@ nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 			return (EIO);
 		/*
 		 * When doing an update, we can't change from or to
-		 * v3 and/or nqnfs, or change cookie translation
+		 * v3, or change cookie translation
 		 */
-		args.flags = (args.flags &
-		    ~(NFSMNT_NFSV3|NFSMNT_NQNFS|NFSMNT_XLATECOOKIE)) |
-		    (nmp->nm_flag &
-			(NFSMNT_NFSV3|NFSMNT_NQNFS|NFSMNT_XLATECOOKIE));
+		args.flags = (args.flags & ~(NFSMNT_NFSV3|NFSMNT_XLATECOOKIE)) |
+		    (nmp->nm_flag & (NFSMNT_NFSV3|NFSMNT_XLATECOOKIE));
 		nfs_decode_args(nmp, &args, l);
 		return (0);
 	}
@@ -729,11 +727,6 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	}
 	vfs_getnewfsid(mp);
 	nmp->nm_mountp = mp;
-
-#ifndef NFS_V2_ONLY
-	if (argp->flags & NFSMNT_NQNFS)
-		mp->mnt_iflag |= IMNT_DTYPE;
-#endif
 
 #ifndef NFS_V2_ONLY
 	if ((argp->flags & NFSMNT_NFSV3) == 0)
@@ -895,11 +888,7 @@ nfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
 
-	/*
-	 * For NQNFS, let the server daemon free the nfsmount structure.
-	 */
-	if ((nmp->nm_flag & (NFSMNT_NQNFS | NFSMNT_KERB)) == 0)
-		free((caddr_t)nmp, M_NFSMNT);
+	free(nmp, M_NFSMNT);
 	return (0);
 }
 
