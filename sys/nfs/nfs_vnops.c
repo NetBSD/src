@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.246 2006/12/09 16:11:52 chs Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.247 2006/12/27 12:10:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.246 2006/12/09 16:11:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.247 2006/12/27 12:10:09 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.246 2006/12/09 16:11:52 chs Exp $");
 #include <nfs/nfsmount.h>
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 
 #include <net/if.h>
@@ -456,7 +455,6 @@ nfs_open(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
-	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	int error;
 
 	if (vp->v_type != VREG && vp->v_type != VDIR && vp->v_type != VLNK) {
@@ -476,35 +474,12 @@ nfs_open(v)
 		kauth_cred_hold(np->n_wcred);
 	}
 
-#ifndef NFS_V2_ONLY
-	/*
-	 * Get a valid lease. If cached data is stale, flush it.
-	 */
-	if (nmp->nm_flag & NFSMNT_NQNFS) {
-		if (NQNFS_CKINVALID(vp, np, ND_READ)) {
-		    do {
-			error = nqnfs_getlease(vp, ND_READ, ap->a_cred,
-			    ap->a_l);
-		    } while (error == NQNFS_EXPIRED);
-		    if (error)
-			return (error);
-		    if (np->n_lrev != np->n_brev ||
-			(np->n_flag & NQNFSNONCACHE)) {
-			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
-				ap->a_l, 1)) == EINTR)
-				return (error);
-			np->n_brev = np->n_lrev;
-		    }
-		}
-	} else
-#endif
-	{
-		error = nfs_flushstalebuf(vp, ap->a_cred, ap->a_l, 0);
-		if (error)
-			return error;
-	}
-	if ((nmp->nm_flag & NFSMNT_NQNFS) == 0)
-		NFS_INVALIDATE_ATTRCACHE(np); /* For Open/Close consistency */
+	error = nfs_flushstalebuf(vp, ap->a_cred, ap->a_l, 0);
+	if (error)
+		return error;
+
+	NFS_INVALIDATE_ATTRCACHE(np); /* For Open/Close consistency */
+
 	return (0);
 }
 

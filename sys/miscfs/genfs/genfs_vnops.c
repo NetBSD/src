@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.141 2006/12/15 13:51:30 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.142 2006/12/27 12:10:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,11 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.141 2006/12/15 13:51:30 yamt Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.142 2006/12/27 12:10:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,14 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.141 2006/12/15 13:51:30 yamt Exp $
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pager.h>
-
-#ifdef NFSSERVER
-#include <nfs/rpcv2.h>
-#include <nfs/nfsproto.h>
-#include <nfs/nfs.h>
-#include <nfs/nqnfs.h>
-#include <nfs/nfs_var.h>
-#endif
 
 static int genfs_do_directio(struct vmspace *, vaddr_t, size_t, struct vnode *,
     off_t, enum uio_rw);
@@ -375,31 +363,13 @@ genfs_noislocked(void *v)
 }
 
 /*
- * Local lease check for NFS servers.  Just set up args and let
- * nqsrv_getlease() do the rest.  If NFSSERVER is not in the kernel,
- * this is a null operation.
+ * Local lease check.
  */
 int
 genfs_lease_check(void *v)
 {
-#ifdef NFSSERVER
-	struct vop_lease_args /* {
-		struct vnode *a_vp;
-		struct lwp *a_l;
-		kauth_cred_t a_cred;
-		int a_flag;
-	} */ *ap = v;
-	u_int32_t duration = 0;
-	int cache;
-	u_quad_t frev;
 
-	(void) nqsrv_getlease(ap->a_vp, &duration, ND_CHECK | ap->a_flag,
-	    NQLOCALSLP, ap->a_l, (struct mbuf *)0, &cache, &frev, ap->a_cred);
 	return (0);
-#else
-	(void) v;
-	return (0);
-#endif /* NFSSERVER */
 }
 
 int

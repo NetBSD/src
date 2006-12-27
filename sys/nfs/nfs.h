@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.60 2006/09/04 08:27:49 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.61 2006/12/27 12:10:09 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -94,6 +94,9 @@
 #define	NFS_DEFRAHEAD	2		/* Def. read ahead # blocks */
 
 #define	NFS_MAXUIDHASH	64		/* Max. # of hashed uid entries/mp */
+
+#define	NFS_DEFDEADTHRESH NFS_NEVERDEAD	/* Default nm_deadthresh */
+#define	NFS_NEVERDEAD	9		/* Greater than max. nm_timeouts */
 
 #ifdef _KERNEL
 extern int nfs_niothreads;              /* Number of async_daemons desired */
@@ -225,6 +228,13 @@ struct mountd_exports_list {
 };
 
 /*
+ * try to keep nfsstats, which is exposed to userland via sysctl,
+ * compatible after NQNFS removal.
+ * 26 is the old value of NFS_NPROCS, which includes NQNFS procedures.
+ */
+#define	NFSSTATS_NPROCS	26
+
+/*
  * Stats structure
  */
 struct nfsstats {
@@ -244,9 +254,9 @@ struct nfsstats {
 	int	readlink_bios;
 	int	biocache_readdirs;
 	int	readdir_bios;
-	int	rpccnt[NFS_NPROCS];
+	int	rpccnt[NFSSTATS_NPROCS];
 	int	rpcretries;
-	int	srvrpccnt[NFS_NPROCS];
+	int	srvrpccnt[NFSSTATS_NPROCS];
 	int	srvrpc_errs;
 	int	srv_errs;
 	int	rpcrequests;
@@ -257,9 +267,9 @@ struct nfsstats {
 	int	srvcache_idemdonehits;
 	int	srvcache_nonidemdonehits;
 	int	srvcache_misses;
-	int	srvnqnfs_leases;
-	int	srvnqnfs_maxleases;
-	int	srvnqnfs_getleases;
+	int	__srvnqnfs_leases;	/* unused */
+	int	__srvnqnfs_maxleases;	/* unused */
+	int	__srvnqnfs_getleases;	/* unused */
 	int	srvvop_writes;
 };
 
