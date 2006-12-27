@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.286 2006/12/26 12:39:01 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.287 2006/12/27 08:55:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.286 2006/12/26 12:39:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.287 2006/12/27 08:55:35 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -381,7 +381,7 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 	   (MNT_FORCE | MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_IGNORE);
+	    MNT_IGNORE | MNT_RDONLY);
 
 	error = VFS_MOUNT(mp, path, data, ndp, l);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
