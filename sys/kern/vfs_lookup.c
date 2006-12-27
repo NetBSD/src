@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.76 2006/12/24 08:54:55 elad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.77 2006/12/27 23:21:02 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.76 2006/12/24 08:54:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.77 2006/12/27 23:21:02 chs Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -600,6 +600,7 @@ dirloop:
 	if (cnp->cn_namelen > NAME_MAX) {
 		vput(dp);
 		error = ENAMETOOLONG;
+		ndp->ni_dvp = NULL;
 		goto bad;
 	}
 #ifdef NAMEI_DIAGNOSTIC
@@ -798,13 +799,18 @@ unionlookup:
 			continue;
 
 		KASSERT(ndp->ni_dvp != dp);
+		VOP_UNLOCK(ndp->ni_dvp, 0);
 		vput(dp);
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);
 		if (error) {
+			vn_lock(ndp->ni_dvp, LK_EXCLUSIVE | LK_RETRY);
 			goto bad;
 		}
+		VOP_UNLOCK(tdp, 0);
 		ndp->ni_vp = dp = tdp;
+		vn_lock(ndp->ni_dvp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(ndp->ni_vp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
 	/*
