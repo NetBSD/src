@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.5 2006/12/25 21:44:37 martin Exp $	*/
+/*	$NetBSD: __clone.S,v 1.6 2006/12/27 13:40:56 martin Exp $	*/
 
 /*-     
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,13 +59,17 @@ ENTRY(__clone)
 	 mov	%i2, %o0	! setup flags arg for syscall
 
 	/*
-	 * Store the function and the argument on our child's stack,
-	 * subtract BIAS from childs stack pointer - it will be 64 bit
-	 * code too. Allocate space for the initial frame too.
+	 * Allocate "caller's" frame in the child stack as ABI
+	 * requires.  Subtract BIAS - it will be 64-bit code.
+	 *
+	 * We pass the function and the argument to the child by
+	 * stashing them at the bottom of the frame.  There they are
+	 * safe from window spill would we need to take one as it's
+	 * below the window save area.
 	 */
-	sub	%o1, 16+CC64FSZ+BIAS, %o1	! make space
-	stx	%i0, [%o1+BIAS]		! save func
-	stx	%i3, [%o1+8+BIAS]	! save arg
+	sub	%o1, CC64FSZ+BIAS, %o1		! make space
+	stx	%i0, [%o1+CC64FSZ-16+BIAS]	! save func
+	stx	%i3, [%o1+CC64FSZ-8+BIAS]	! save arg
 
 	/*
 	 * Args are now set up for system call as (flags, stack).
@@ -75,11 +79,9 @@ ENTRY(__clone)
 	bcs,pn	%xcc, 9f
 	 tst	%o1		! %o1 (rv[1]) == 0 in parent
 	bz	%xcc, 2f	! yes, parent
-	 ldx	[%sp+BIAS], %l0	! grab the function
-	ldx	[%sp+8+BIAS], %o0	! and the argument from the stack
-	add	%sp, 16, %sp	! restore the stack
+	 ldx	[%sp+CC64FSZ-16+BIAS], %l0	! grab the function...
 	call	%l0 		! Call the clone's entry point.
-	 nop
+	 ldx	[%sp+CC64FSZ-8+BIAS], %o0	! ...and the argument
 
 	JUMP(_exit)
 	/* NOTREACHED */
