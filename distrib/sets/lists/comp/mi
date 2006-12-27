@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.986 2006/12/21 16:04:13 yamt Exp $
+#	$NetBSD: mi,v 1.987 2006/12/27 12:12:11 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1499,7 +1499,7 @@
 ./usr/include/nfs/nfsrtt.h			comp-c-include
 ./usr/include/nfs/nfsrvcache.h			comp-c-include
 ./usr/include/nfs/nfsv2.h			comp-obsolete		obsolete
-./usr/include/nfs/nqnfs.h			comp-c-include
+./usr/include/nfs/nqnfs.h			comp-obsolete		obsolete
 ./usr/include/nfs/rpcv2.h			comp-c-include
 ./usr/include/nfs/xdr_subs.h			comp-c-include
 ./usr/include/nl_types.h			comp-c-include
