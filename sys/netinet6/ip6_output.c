@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.109 2006/12/15 21:18:55 joerg Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.110 2006/12/27 18:49:40 alc Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.109 2006/12/15 21:18:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.110 2006/12/27 18:49:40 alc Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1757,6 +1757,10 @@ do { 						\
 				u_char *optbuf;
 				int optbuflen;
 				struct ip6_pktopts **optp;
+				if (!m) {
+					error = EINVAL;
+					break;
+				}
 
 #ifdef RFC2292
 				/* cannot mix with RFC2292 */
@@ -1770,17 +1774,12 @@ do { 						\
 					error = EINVAL;	/* XXX */
 					break;
 				}
-				if (m) {
-					optbuf = mtod(m, u_char *);
-					optbuflen = m->m_len;
-				} else {
-					optbuf = NULL;
-					optbuflen = 0;
-				}
+
+				optbuf = mtod(m, u_char *);
+				optbuflen = m->m_len;
 				optp = &in6p->in6p_outputopts;
-				error = ip6_pcbopt(optname,
-						   optbuf, optbuflen,
-						   optp, privileged, uproto);
+				error = ip6_pcbopt(optname, optbuf, optbuflen,
+				    optp, privileged, uproto);
 				break;
 			}
 #undef OPTSET
@@ -1795,6 +1794,10 @@ do { 						\
 				break;
 
 			case IPV6_PORTRANGE:
+				if (!m) {
+					error = EINVAL;
+					break;
+				}
 				optval = *mtod(m, int *);
 
 				switch (optval) {
