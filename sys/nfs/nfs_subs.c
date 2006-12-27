@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.178 2006/12/09 16:11:52 chs Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.179 2006/12/27 12:10:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.178 2006/12/09 16:11:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.179 2006/12/27 12:10:09 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.178 2006/12/09 16:11:52 chs Exp $");
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsmount.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
@@ -128,7 +127,7 @@ u_int32_t nfs_xdrneg1;
 u_int32_t rpc_call, rpc_vers, rpc_reply, rpc_msgdenied, rpc_autherr,
 	rpc_mismatch, rpc_auth_unix, rpc_msgaccepted,
 	rpc_auth_kerb;
-u_int32_t nfs_prog, nqnfs_prog, nfs_true, nfs_false;
+u_int32_t nfs_prog, nfs_true, nfs_false;
 
 /* And other global data */
 const nfstype nfsv2_type[9] =
@@ -173,9 +172,6 @@ const int nfsv3_procid[NFS_NPROCS] = {
 	NFSPROC_NOOP,
 	NFSPROC_NOOP,
 	NFSPROC_NOOP,
-	NFSPROC_NOOP,
-	NFSPROC_NOOP,
-	NFSPROC_NOOP,
 	NFSPROC_NOOP
 };
 
@@ -202,9 +198,6 @@ const int nfsv2_procid[NFS_NPROCS] = {
 	NFSV2PROC_READDIR,
 	NFSV2PROC_NOOP,
 	NFSV2PROC_STATFS,
-	NFSV2PROC_NOOP,
-	NFSV2PROC_NOOP,
-	NFSV2PROC_NOOP,
 	NFSV2PROC_NOOP,
 	NFSV2PROC_NOOP,
 	NFSV2PROC_NOOP,
@@ -571,11 +564,6 @@ static const short * const nfsrv_v3errmap[] = {
 };
 
 extern struct nfsrtt nfsrtt;
-extern time_t nqnfsstarttime;
-extern int nqsrv_clockskew;
-extern int nqsrv_writeslack;
-extern int nqsrv_maxlease;
-extern const int nqnfs_piggy[NFS_NPROCS];
 extern struct nfsnodehashhead *nfsnodehashtbl;
 extern u_long nfsnodehash;
 
@@ -593,11 +581,6 @@ nfsm_reqh(struct nfsnode *np, u_long procid, int hsiz, caddr_t *bposp)
 {
 	struct mbuf *mb;
 	caddr_t bpos;
-#ifndef NFS_V2_ONLY
-	struct nfsmount *nmp;
-	u_int32_t *tl;
-	int nqflag;
-#endif
 
 	mb = m_get(M_WAIT, MT_DATA);
 	MCLAIM(mb, &nfs_mowner);
@@ -606,25 +589,6 @@ nfsm_reqh(struct nfsnode *np, u_long procid, int hsiz, caddr_t *bposp)
 	mb->m_len = 0;
 	bpos = mtod(mb, caddr_t);
 
-#ifndef NFS_V2_ONLY
-	/*
-	 * For NQNFS, add lease request.
-	 */
-	if (np) {
-		nmp = VFSTONFS(np->n_vnode->v_mount);
-		if (nmp->nm_flag & NFSMNT_NQNFS) {
-			nqflag = NQNFS_NEEDLEASE(np, procid);
-			if (nqflag) {
-				nfsm_build(tl, u_int32_t *, 2*NFSX_UNSIGNED);
-				*tl++ = txdr_unsigned(nqflag);
-				*tl = txdr_unsigned(nmp->nm_leaseterm);
-			} else {
-				nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
-				*tl = 0;
-			}
-		}
-	}
-#endif
 	/* Finally, return values */
 	*bposp = bpos;
 	return (mb);
@@ -681,16 +645,11 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	*tl++ = *xidp = nfs_getxid();
 	*tl++ = rpc_call;
 	*tl++ = rpc_vers;
-	if (nmflag & NFSMNT_NQNFS) {
-		*tl++ = txdr_unsigned(NQNFS_PROG);
-		*tl++ = txdr_unsigned(NQNFS_VER3);
-	} else {
-		*tl++ = txdr_unsigned(NFS_PROG);
-		if (nmflag & NFSMNT_NFSV3)
-			*tl++ = txdr_unsigned(NFS_VER3);
-		else
-			*tl++ = txdr_unsigned(NFS_VER2);
-	}
+	*tl++ = txdr_unsigned(NFS_PROG);
+	if (nmflag & NFSMNT_NFSV3)
+		*tl++ = txdr_unsigned(NFS_VER3);
+	else
+		*tl++ = txdr_unsigned(NFS_VER2);
 	if (nmflag & NFSMNT_NFSV3)
 		*tl++ = txdr_unsigned(procid);
 	else
@@ -1543,7 +1502,6 @@ nfs_init0(void)
 	rpc_auth_unix = txdr_unsigned(RPCAUTH_UNIX);
 	rpc_auth_kerb = txdr_unsigned(RPCAUTH_KERB4);
 	nfs_prog = txdr_unsigned(NFS_PROG);
-	nqnfs_prog = txdr_unsigned(NQNFS_PROG);
 	nfs_true = txdr_unsigned(TRUE);
 	nfs_false = txdr_unsigned(FALSE);
 	nfs_xdrneg1 = txdr_unsigned(-1);
@@ -1558,20 +1516,6 @@ nfs_init0(void)
 #if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
 	nfsdreq_init();
 #endif /* defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY)) */
-
-#if defined(NFSSERVER) || !defined(NFS_V2_ONLY)
-	/*
-	 * Initialize the nqnfs data structures.
-	 */
-	if (nqnfsstarttime == 0) {
-		nqnfsstarttime = boottime.tv_sec + nqsrv_maxlease
-			+ nqsrv_clockskew + nqsrv_writeslack;
-		NQLOADNOVRAM(nqnfsstarttime);
-		CIRCLEQ_INIT(&nqtimerhead);
-		nqfhhashtbl = hashinit(NQLCHSZ, HASH_LIST, M_NQLEASE,
-		    M_WAITOK, &nqfhhash);
-	}
-#endif
 
 	exithook_establish(nfs_exit, NULL);
 
