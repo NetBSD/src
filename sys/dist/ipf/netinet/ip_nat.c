@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.19 2006/11/16 01:33:34 christos Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.20 2006/12/27 18:28:54 alc Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -1288,6 +1288,7 @@ int getlock;
 	nat = NULL;
 	ipnn = NULL;
 	fin = NULL;
+	fr = NULL;
 
 	KMALLOC(ipn, nat_save_t *);
 	if (ipn == NULL)
@@ -1301,7 +1302,6 @@ int getlock;
 	 * New entry, copy in the rest of the NAT entry if it's size is more
 	 * than just the nat_t structure.
 	 */
-	fr = NULL;
 	if (ipn->ipn_dsize > sizeof(*ipn)) {
 		if (ipn->ipn_dsize > 81920) {
 			error = ENOMEM;
@@ -1309,8 +1309,10 @@ int getlock;
 		}
 
 		KMALLOCS(ipnn, nat_save_t *, ipn->ipn_dsize);
-		if (ipnn == NULL)
+		if (ipnn == NULL) {
+			KFREE(ipn);
 			return ENOMEM;
+		}
 
 		error = fr_inobjsz(data, ipnn, IPFOBJ_NATSAVE, ipn->ipn_dsize);
 		if (error != 0) {
