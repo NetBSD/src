@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2006/12/22 01:33:57 rumble Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 2006/12/27 07:45:11 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2006/12/22 01:33:57 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2006/12/27 07:45:11 rumble Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -210,19 +210,19 @@ static void	nullvoid(void);
 void ddb_trap_hook(int where);
 
 struct platform platform = {
-	unimpl_bus_reset,
-	unimpl_cons_init,
-	unimpl_intr_establish,
-	nulllong,
-	nullvoid,
-	nullvoid,
-	nullvoid,
-	unimpl_intr,
-	unimpl_intr,
-	unimpl_intr,
-	unimpl_intr,
-	unimpl_intr,
-	unimpl_intr,
+	.bus_reset		= unimpl_bus_reset,
+	.cons_init		= unimpl_cons_init,
+	.intr_establish		= unimpl_intr_establish,
+	.clkread		= nulllong,
+	.watchdog_reset		= nullvoid,
+	.watchdog_disable	= nullvoid,
+	.watchdog_enable	= nullvoid,
+	.intr0			= unimpl_intr,
+	.intr1			= unimpl_intr,
+	.intr2			= unimpl_intr,
+	.intr3			= unimpl_intr,
+	.intr4			= unimpl_intr,
+	.intr5			= unimpl_intr
 };
 
 /*
