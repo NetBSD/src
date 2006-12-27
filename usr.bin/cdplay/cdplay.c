@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.36 2006/12/27 17:55:05 alc Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.37 2006/12/27 18:47:20 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.36 2006/12/27 17:55:05 alc Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.37 2006/12/27 18:47:20 dogcow Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -283,6 +283,7 @@ main(int argc, char **argv)
 
 	for (;;) {
 		line = NULL;
+		arg = NULL;
 		do {
 			if (((elline = el_gets(elptr, &scratch)) != NULL)
 			    && (scratch != 0)){
@@ -295,7 +296,7 @@ main(int argc, char **argv)
 			} else {
 				cmd = CMD_QUIT;
 				warnx("\r\n");
-				arg = 0;
+				arg = NULL;
 				break;
 			}
 		} while (arg == NULL);
