@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.100 2006/12/27 12:10:09 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.101 2006/12/27 12:51:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.100 2006/12/27 12:10:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.101 2006/12/27 12:51:22 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -150,11 +150,6 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 		syscallarg(caddr_t) argp;
 	} */ *uap = v;
 	int error;
-#ifdef NFS
-	struct nameidata nd;
-	struct nfsmount *nmp;
-	struct nfsd_cargs ncd;
-#endif
 #ifdef NFSSERVER
 	int s;
 	struct file *fp;
@@ -195,28 +190,7 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 		error = ENOSYS;
 #endif
 	} else if (SCARG(uap, flag) & NFSSVC_MNTD) {
-#ifndef NFS
 		error = ENOSYS;
-#else
-		error = copyin(SCARG(uap, argp), (caddr_t)&ncd, sizeof (ncd));
-		if (error)
-			return (error);
-		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-			ncd.ncd_dirp, l);
-		error = namei(&nd);
-		if (error)
-			return (error);
-		if ((nd.ni_vp->v_flag & VROOT) == 0)
-			error = EINVAL;
-		nmp = VFSTONFS(nd.ni_vp->v_mount);
-		vput(nd.ni_vp);
-		if (error)
-			return (error);
-		if ((nmp->nm_iflag & NFSMNT_MNTD) &&
-			(SCARG(uap, flag) & NFSSVC_GOTAUTH) == 0)
-			return (0);
-		nmp->nm_iflag |= NFSMNT_MNTD;
-#endif /* NFS */
 	} else if (SCARG(uap, flag) & NFSSVC_ADDSOCK) {
 #ifndef NFSSERVER
 		error = ENOSYS;
