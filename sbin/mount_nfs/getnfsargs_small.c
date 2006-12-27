@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs_small.c,v 1.5 2006/07/07 17:25:01 hubertf Exp $	*/
+/*	$NetBSD: getnfsargs_small.c,v 1.6 2006/12/27 12:13:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getnfsargs_small.c,v 1.5 2006/07/07 17:25:01 hubertf Exp $");
+__RCSID("$NetBSD: getnfsargs_small.c,v 1.6 2006/12/27 12:13:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -104,7 +104,6 @@ __RCSID("$NetBSD: getnfsargs_small.c,v 1.5 2006/07/07 17:25:01 hubertf Exp $");
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfsmount.h>
 
 #include <arpa/inet.h>
