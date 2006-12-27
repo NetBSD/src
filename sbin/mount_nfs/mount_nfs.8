@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.31 2006/11/09 10:07:00 yamt Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.32 2006/12/27 11:05:04 yamt Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mount_nfs.8	8.3 (Berkeley) 3/29/95
 .\"
-.Dd November 9, 2006
+.Dd December 27, 2006
 .Dt MOUNT_NFS 8
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl 23bcCdilpPqsTUX
+.Op Fl 23bcCdDilpPqsTUX
 .Ek
 .Bk -words
 .Op Fl D Ar deadthresh
@@ -106,10 +106,14 @@ Version 3 protocol.
 The default is to try version 3 first, and
 fall back to version 2 if the mount fails.
 .It Fl D
-Ignored.
-It used to be
-.Tn NQNFS
-.Dq "dead server threshold" .
+Set the
+.Dq "dead server threshold"
+to the specified number of round trip timeout intervals.
+After a
+.Dq "dead server threshold"
+of retransmit timeouts,
+.Dq "not responding"
+message is printed to a tty.
 .It Fl I
 Set the readdir read size to the specified value.
 The value should normally
