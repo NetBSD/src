@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.9 2006/05/09 20:18:06 mrg Exp $	*/
+/*	$NetBSD: sock.c,v 1.10 2006/12/27 18:13:53 alc Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
@@ -295,11 +295,14 @@ struct	tcpiphdr *ti;
 		return NULL;
 
 	fd = (struct filedesc *)malloc(sizeof(*fd));
+	if (fd == NULL)
+		return NULL;
 #if defined( __FreeBSD_version) && __FreeBSD_version >= 500013
 	if (KMCPY(fd, p->ki_fd, sizeof(*fd)) == -1)
 	    {
 		fprintf(stderr, "read(%#lx,%#lx) failed\n",
 			(u_long)p, (u_long)p->ki_fd);
+		free(fd);
 		return NULL;
 	    }
 #else
@@ -307,6 +310,7 @@ struct	tcpiphdr *ti;
 	    {
 		fprintf(stderr, "read(%#lx,%#lx) failed\n",
 			(u_long)p, (u_long)p->kp_proc.p_fd);
+		free(fd);
 		return NULL;
 	    }
 #endif
