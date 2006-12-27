@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs.c,v 1.7 2006/12/27 12:13:55 yamt Exp $	*/
+/*	$NetBSD: getnfsargs.c,v 1.8 2006/12/27 12:43:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: getnfsargs.c,v 1.7 2006/12/27 12:13:55 yamt Exp $");
+__RCSID("$NetBSD: getnfsargs.c,v 1.8 2006/12/27 12:43:10 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,6 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 	CLIENT *clp;
 	struct addrinfo hints, *ai_nfs, *ai;
 	int ecode;
-	char host[NI_MAXHOST], serv[NI_MAXSERV];
 	static struct netbuf nfs_nb;
 	static struct sockaddr_storage nfs_ss;
 	struct netconfig *nconf;
@@ -159,26 +158,12 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 #endif /* ISO */
 
 	/*
-	 * Handle an internet host address and reverse resolve it if
-	 * doing Kerberos.
+	 * Handle an internet host address.
 	 */
 	memset(&hints, 0, sizeof hints);
 	hints.ai_flags = AI_NUMERICHOST;
 	hints.ai_socktype = nfsargsp->sotype;
-	if (getaddrinfo(hostp, "nfs", &hints, &ai_nfs) == 0) {
-		if ((nfsargsp->flags & NFSMNT_KERB)) {
-			hints.ai_flags = 0;
-			if ((ecode = getnameinfo(ai_nfs->ai_addr,
-			    ai_nfs->ai_addrlen, host, sizeof(host),
-			    serv, sizeof serv, 0)) != 0) {
-				warnx("can't reverse resolve net address for "
-				    "host \"%s\": %s", hostp,
-				    gai_strerror(ecode));
-				return (0);
-			}
-			hostp = host;
-		}
-	} else {
+	if (getaddrinfo(hostp, "nfs", &hints, &ai_nfs) != 0) {
 		hints.ai_flags = 0;
 		if ((ecode = getaddrinfo(hostp, "nfs", &hints, &ai_nfs)) != 0) {
 			warnx("can't get net id for host \"%s\": %s", hostp,
@@ -253,10 +238,7 @@ tryagain:
 				clp->cl_auth = authsys_create_default();
 				try.tv_sec = 10;
 				try.tv_usec = 0;
-				if (nfsargsp->flags & NFSMNT_KERB)
-				    nfhret.auth = RPCAUTH_KERB4;
-				else
-				    nfhret.auth = RPCAUTH_UNIX;
+				nfhret.auth = RPCAUTH_UNIX;
 				nfhret.vers = mntvers;
 				clnt_stat = clnt_call(clp, RPCMNT_MOUNT,
 				    xdr_dir, spec, xdr_fh, &nfhret, try);
