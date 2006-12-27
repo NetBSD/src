@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.63 2006/09/02 12:40:36 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.64 2006/12/27 12:10:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,8 +63,6 @@ struct vnode;
 struct nfsd;
 struct mbuf;
 struct file;
-struct nqlease;
-struct nqhost;
 struct nfssvc_sock;
 struct nfsmount;
 struct socket;
@@ -125,30 +123,6 @@ int nfs_lookitup(struct vnode *, const char *, int, kauth_cred_t,
 	struct lwp *, struct nfsnode **);
 int nfs_commit(struct vnode *, off_t, uint32_t, struct lwp *);
 int nfs_flush(struct vnode *, kauth_cred_t, int, struct lwp *, int);
-
-/* nfs_nqlease.c */
-void nqnfs_lease_updatetime(int);
-void nqnfs_clientlease(struct nfsmount *, struct nfsnode *, int, int, time_t,
-	u_quad_t);
-void nqsrv_locklease(struct nqlease *);
-void nqsrv_unlocklease(struct nqlease *);
-int nqsrv_getlease(struct vnode *, u_int32_t *, int, struct nfssvc_sock *,
-	struct lwp *, struct mbuf *, int *, u_quad_t *, kauth_cred_t);
-void nqsrv_addhost(struct nqhost *, struct nfssvc_sock *, struct mbuf *);
-void nqsrv_instimeq(struct nqlease *, u_int32_t);
-int nqsrv_cmpnam(struct nfssvc_sock *, struct mbuf *, struct nqhost *);
-void nqsrv_send_eviction(struct vnode *, struct nqlease *,
-	struct nfssvc_sock *, struct mbuf *, kauth_cred_t, struct lwp *);
-void nqsrv_waitfor_expiry(struct nqlease *);
-void nqnfs_serverd(void);
-int nqnfsrv_getlease(struct nfsrv_descript *, struct nfssvc_sock *,
-	struct lwp *, struct mbuf **);
-int nqnfsrv_vacated(struct nfsrv_descript *, struct nfssvc_sock *,
-	struct lwp *, struct mbuf **);
-int nqnfs_getlease(struct vnode *, int, kauth_cred_t, struct lwp *);
-int nqnfs_vacated(struct vnode *, kauth_cred_t, struct lwp *);
-int nqnfs_callback(struct nfsmount *, struct mbuf *, struct mbuf *,
-	caddr_t, struct lwp *);
 
 /* nfs_serv.c */
 int nfsrv3_access(struct nfsrv_descript *, struct nfssvc_sock *,

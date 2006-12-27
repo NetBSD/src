@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.58 2006/10/17 14:55:13 christos Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.59 2006/12/27 12:10:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -177,12 +177,6 @@ struct nfsnode {
 	int			n_accerror;	/* Error last returned */
 	kauth_cred_t		n_rcred;
 	kauth_cred_t		n_wcred;
-
-	/* members below are only used by NQNFS */
-	CIRCLEQ_ENTRY(nfsnode)	n_timer;	/* Nqnfs timer chain */
-	u_quad_t		n_brev;		/* Modify rev when cached */
-	u_quad_t		n_lrev;		/* Modify rev for lease */
-	time_t			n_expiry;	/* Lease expiry time */
 };
 LIST_HEAD(nfsnodehashhead, nfsnode);
 

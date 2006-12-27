@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.120 2006/12/09 16:11:52 chs Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.121 2006/12/27 12:10:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.120 2006/12/09 16:11:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.121 2006/12/27 12:10:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.120 2006/12/09 16:11:52 chs Exp $");
 #include <nfs/nfs.h>
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 
 /* Global vars */
@@ -92,6 +91,8 @@ extern const nfstype nfsv2_type[9];
 extern const nfstype nfsv3_type[9];
 int nfsrvw_procrastinate = NFS_GATHERDELAY * 1000;
 int nfsd_use_loan = 1;	/* use page-loan for READ OP */
+
+#define	nqsrv_getl(vp, rw)	/* nothing */
 
 /*
  * nfs v3 access service

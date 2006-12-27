@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.145 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.146 2006/12/27 12:10:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.145 2006/07/23 22:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.146 2006/12/27 12:10:09 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.145 2006/07/23 22:06:14 ad Exp $");
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfsnode.h>
 #include <nfs/nfs_var.h>
 
@@ -117,8 +116,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	 * For nfs, cache consistency can only be maintained approximately.
 	 * Although RFC1094 does not specify the criteria, the following is
 	 * believed to be compatible with the reference port.
-	 * For nqnfs, full cache consistency is maintained within the loop.
-	 * For nfs:
+	 *
 	 * If the file's modify time on the server has changed since the
 	 * last read rpc or you have written to the file,
 	 * you may have lost data cache consistency with the
@@ -131,7 +129,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	 * the VOP_GETATTR() call.
 	 */
 
-	if ((nmp->nm_flag & NFSMNT_NQNFS) == 0 && vp->v_type != VLNK) {
+	if (vp->v_type != VLNK) {
 		error = nfs_flushstalebuf(vp, cred, l,
 		    NFS_FLUSHSTALEBUF_MYWRITE);
 		if (error)
@@ -139,52 +137,11 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	}
 
 	do {
-#ifndef NFS_V2_ONLY
-	    /*
-	     * Get a valid lease. If cached data is stale, flush it.
-	     */
-	    if (nmp->nm_flag & NFSMNT_NQNFS) {
-		if (NQNFS_CKINVALID(vp, np, ND_READ)) {
-		    do {
-			error = nqnfs_getlease(vp, ND_READ, cred, l);
-		    } while (error == NQNFS_EXPIRED);
-		    if (error)
-			return (error);
-		    if (np->n_lrev != np->n_brev ||
-			(np->n_flag & NQNFSNONCACHE) ||
-			((np->n_flag & NMODIFIED) && vp->v_type == VDIR)) {
-			if (vp->v_type == VDIR) {
-				nfs_invaldircache(vp, 0);
-			}
-			error = nfs_vinvalbuf(vp, V_SAVE, cred, l, 1);
-			if (error)
-			    return (error);
-			np->n_brev = np->n_lrev;
-		    }
-		} else if (vp->v_type == VDIR && (np->n_flag & NMODIFIED)) {
-		    nfs_invaldircache(vp, 0);
-		    error = nfs_vinvalbuf(vp, V_SAVE, cred, l, 1);
-		    if (error)
-			return (error);
-		}
-	    }
-#endif
 	    /*
 	     * Don't cache symlinks.
 	     */
-	    if (np->n_flag & NQNFSNONCACHE
-		|| ((vp->v_flag & VROOT) && vp->v_type == VLNK)) {
-		switch (vp->v_type) {
-		case VREG:
-			return (nfs_readrpc(vp, uio));
-		case VLNK:
-			return (nfs_readlinkrpc(vp, uio, cred));
-		case VDIR:
-			break;
-		default:
-			printf(" NQNFSNONCACHE: type %x unexpected\n",
-			    vp->v_type);
-		};
+	    if ((vp->v_flag & VROOT) && vp->v_type == VLNK) {
+		return (nfs_readlinkrpc(vp, uio, cred));
 	    }
 	    baddr = (caddr_t)0;
 	    switch (vp->v_type) {
@@ -437,7 +394,7 @@ diragain:
 		 *  directory offset cookie of the next block.)
 		 */
 		if (nfs_numasync > 0 && nmp->nm_readahead > 0 &&
-		    !NFS_EOFVALID(np) && !(np->n_flag & NQNFSNONCACHE)) {
+		    !NFS_EOFVALID(np)) {
 			rabp = nfs_getcacheblk(vp, NFSDC_BLKNO(nndp),
 						NFS_DIRBLKSIZ, l);
 			if (rabp) {
@@ -472,8 +429,6 @@ diragain:
 		n = 0;
 		break;
 	    case VDIR:
-		if (np->n_flag & NQNFSNONCACHE)
-			bp->b_flags |= B_INVAL;
 		uio->uio_offset = curoff;
 		if (enough)
 			n = 0;
@@ -560,18 +515,6 @@ nfs_write(v)
 		return (EFBIG);
 	}
 
-	if ((np->n_flag & NQNFSNONCACHE) && uio->uio_iovcnt == 1) {
-		int iomode = NFSV3WRITE_FILESYNC;
-		boolean_t stalewriteverf = FALSE;
-
-		lockmgr(&nmp->nm_writeverflock, LK_SHARED, NULL);
-		error = nfs_writerpc(vp, uio, &iomode, FALSE, &stalewriteverf);
-		lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
-		if (stalewriteverf)
-			nfs_clearcommit(vp->v_mount);
-		return (error);
-	}
-
 	origoff = uio->uio_offset;
 	do {
 		boolean_t extending; /* if we are extending whole pages */
@@ -579,26 +522,6 @@ nfs_write(v)
 		oldoff = uio->uio_offset;
 		bytelen = uio->uio_resid;
 
-#ifndef NFS_V2_ONLY
-		/*
-		 * Check for a valid write lease.
-		 */
-		if ((nmp->nm_flag & NFSMNT_NQNFS) &&
-		    NQNFS_CKINVALID(vp, np, ND_WRITE)) {
-			do {
-				error = nqnfs_getlease(vp, ND_WRITE, cred, l);
-			} while (error == NQNFS_EXPIRED);
-			if (error)
-				return (error);
-			if (np->n_lrev != np->n_brev ||
-			    (np->n_flag & NQNFSNONCACHE)) {
-				error = nfs_vinvalbuf(vp, V_SAVE, cred, l, 1);
-				if (error)
-					return (error);
-				np->n_brev = np->n_lrev;
-			}
-		}
-#endif
 		nfsstats.biocache_writes++;
 
 		oldsize = np->n_size;
@@ -650,7 +573,7 @@ nfs_write(v)
 	} while (uio->uio_resid > 0);
 	if (wrotedata)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
-	if ((np->n_flag & NQNFSNONCACHE) || (ioflag & IO_SYNC)) {
+	if (ioflag & IO_SYNC) {
 		simple_lock(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp,
 		    trunc_page(origoff & ~(nmp->nm_wsize - 1)),
@@ -962,11 +885,7 @@ nfs_doio_read(bp, uiop)
 		}
 #if 0
 		if (uiop->uio_lwp && (vp->v_flag & VTEXT) &&
-		    (((nmp->nm_flag & NFSMNT_NQNFS) &&
-		      NQNFS_CKINVALID(vp, np, ND_READ) &&
-		      np->n_lrev != np->n_brev) ||
-		     (!(nmp->nm_flag & NFSMNT_NQNFS) &&
-		      timespeccmp(&np->n_mtime, &np->n_vattr->va_mtime, !=)))) {
+		    timespeccmp(&np->n_mtime, &np->n_vattr->va_mtime, !=)) {
 			killproc(uiop->uio_lwp->l_proc, "process text file was modified");
 #if 0 /* XXX NJWLWP */
 			uiop->uio_lwp->l_proc->p_holdcnt++;

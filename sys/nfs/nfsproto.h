@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.16 2006/09/02 12:40:36 yamt Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.17 2006/12/27 12:10:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -169,14 +169,8 @@
 #define	NFSPROC_FSINFO		19
 #define	NFSPROC_PATHCONF	20
 #define	NFSPROC_COMMIT		21
-
-/* And leasing (nqnfs) procedure numbers (must be last) */
-#define	NQNFSPROC_GETLEASE	22
-#define	NQNFSPROC_VACATED	23
-#define	NQNFSPROC_EVICTED	24
-
-#define NFSPROC_NOOP		25
-#define	NFS_NPROCS		26
+#define NFSPROC_NOOP		22
+#define	NFS_NPROCS		23
 
 /* Actual Version 2 procedure numbers */
 #define	NFSV2PROC_NULL		0

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.111 2006/12/06 10:02:22 yamt Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.112 2006/12/27 12:10:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,11 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.111 2006/12/06 10:02:22 yamt Exp $");
-
-#include "fs_nfs.h"
-#include "opt_nfs.h"
-#include "opt_nfsserver.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.112 2006/12/27 12:10:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -95,13 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.111 2006/12/06 10:02:22 yamt Exp $")
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
-
-#if defined(NFS) || defined(NFSSERVER)
-#include <nfs/rpcv2.h>
-#include <nfs/nfsproto.h>
-#include <nfs/nfs.h>
-#include <nfs/nfs_var.h>
-#endif
 
 #include <machine/cpu.h>
 
@@ -200,9 +189,6 @@ settime(struct proc *p, struct timespec *ts)
 	ci = curcpu();
 	timeradd(&ci->ci_schedstate.spc_runtime, &delta,
 	    &ci->ci_schedstate.spc_runtime);
-#if (defined(NFS) && !defined (NFS_V2_ONLY)) || defined(NFSSERVER)
-	nqnfs_lease_updatetime(delta.tv_sec);
-#endif
 	splx(s);
 	resettodr();
 	return (0);
