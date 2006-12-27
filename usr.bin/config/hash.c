@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.4 2006/09/27 19:05:46 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.5 2006/12/27 17:50:27 alc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -213,7 +213,7 @@ ht_free(struct hashtab *ht)
 	struct hashent *hp;
 	struct hashenthead *hpp;
 
-	for (i = 0; i < ht->ht_mask; i++) {
+	for (i = 0; i < ht->ht_size; i++) {
 		hpp = &ht->ht_tab[i];
 		while ((hp = TAILQ_FIRST(hpp)) != NULL) {
 			TAILQ_REMOVE(hpp, hp, h_next);
