@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.55 2006/12/27 11:28:59 wiz Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.56 2006/12/27 12:13:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.55 2006/12/27 11:28:59 wiz Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.56 2006/12/27 12:13:55 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,6 @@ __RCSID("$NetBSD: mount_nfs.c,v 1.55 2006/12/27 11:28:59 wiz Exp $");
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfsmount.h>
 
 #include <arpa/inet.h>
@@ -154,8 +153,8 @@ struct nfs_args nfsdefargs = {
 	NFS_RETRANS,
 	NFS_MAXGRPS,
 	NFS_DEFRAHEAD,
-	NQ_DEFLEASE,
-	NQ_DEADTHRESH,
+	0,	/* Ignored; lease term */
+	NFS_DEFDEADTHRESH,
 	(char *)0,
 };
 
