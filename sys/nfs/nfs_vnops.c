@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.247 2006/12/27 12:10:09 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.248 2006/12/27 12:51:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.247 2006/12/27 12:10:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.248 2006/12/27 12:51:22 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -509,9 +509,6 @@ nfs_open(v)
  *                     enough". Changing the last argument to nfs_flush() to
  *                     a 1 would force a commit operation, if it is felt a
  *                     commit is necessary now.
- * for NQNFS         - do nothing now, since 2 is dealt with via leases and
- *                     1 should be dealt with via an fsync() system call for
- *                     cases where write errors are important.
  */
 /* ARGSUSED */
 int
@@ -531,8 +528,7 @@ nfs_close(v)
 	UVMHIST_FUNC("nfs_close"); UVMHIST_CALLED(ubchist);
 
 	if (vp->v_type == VREG) {
-	    if ((VFSTONFS(vp->v_mount)->nm_flag & NFSMNT_NQNFS) == 0 &&
-		(np->n_flag & NMODIFIED)) {
+	    if (np->n_flag & NMODIFIED) {
 #ifndef NFS_V2_ONLY
 		if (NFS_ISV3(vp)) {
 		    error = nfs_flush(vp, ap->a_cred, MNT_WAIT, ap->a_l, 0);
