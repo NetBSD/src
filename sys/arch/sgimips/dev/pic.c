@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.11 2006/08/30 23:44:52 rumble Exp $	 */
+/*	$NetBSD: pic.c,v 1.12 2006/12/27 15:56:26 rumble Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.11 2006/08/30 23:44:52 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.12 2006/12/27 15:56:26 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,6 +59,7 @@ static int      pic_match(struct device *, struct cfdata *, void *);
 static void     pic_attach(struct device *, struct device *, void *);
 static int      pic_print(void *, const char *);
 static void	pic_bus_reset(void);
+static void	pic_bus_error(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 static void	pic_watchdog_enable(void);
 static void	pic_watchdog_disable(void);
 static void	pic_watchdog_tickle(void);
@@ -179,6 +180,8 @@ pic_attach(struct device * parent, struct device * self, void *aux)
 
 	printf("\n");
 
+	platform.intr5 = pic_bus_error;
+
 	/*
 	 * A GIO bus exists on all IP12's. However, Personal Iris
 	 * machines use VME for their expansion bus.
@@ -205,6 +208,15 @@ static void
 pic_bus_reset(void)
 {
 	bus_space_write_4(psc.iot, psc.ioh, PIC_PARITY_ERROR, 0);
+}
+
+static void
+pic_bus_error(u_int32_t status, u_int32_t cause, u_int32_t pc,
+    u_int32_t ipending)
+{
+
+	printf("pic0: bus error\n");
+	pic_bus_reset();
 }
 
 static void
