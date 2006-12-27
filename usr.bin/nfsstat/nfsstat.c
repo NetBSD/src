@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsstat.c,v 1.19 2004/08/26 13:29:05 yamt Exp $	*/
+/*	$NetBSD: nfsstat.c,v 1.20 2006/12/27 21:53:58 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nfsstat.c,v 1.19 2004/08/26 13:29:05 yamt Exp $");
+__RCSID("$NetBSD: nfsstat.c,v 1.20 2006/12/27 21:53:58 dogcow Exp $");
 #endif
 #endif /* not lint */
 
@@ -262,13 +262,9 @@ intpr()
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_FSINFO]));
 		printf("%10s  %14s  %14s  %14s  %14s\n",
 		    "pathconf", "commit", "getlease", "vacated", "evicted");
-		printf(
-	    "%10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%\n",
+		printf("%10d %2d%%  %10d %2d%%\n",
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_PATHCONF]),
-		    RPCSTAT(nfsstats.rpccnt[NFSPROC_COMMIT]),
-		    RPCSTAT(nfsstats.rpccnt[NQNFSPROC_GETLEASE]),
-		    RPCSTAT(nfsstats.rpccnt[NQNFSPROC_VACATED]),
-		    RPCSTAT(nfsstats.rpccnt[NQNFSPROC_EVICTED]));
+		    RPCSTAT(nfsstats.rpccnt[NFSPROC_COMMIT]));
 		printf("%10s\n", "noop");
 		printf("%10d %2d%%\n",
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_NOOP]));
@@ -356,13 +352,9 @@ intpr()
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_FSINFO]));
 		printf("%10s  %14s  %14s  %14s  %14s\n",
 		    "pathconf", "commit", "getlease", "vacated", "evicted");
-		printf(
-	    "%10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%\n",
+		printf("%10d %2d%%  %10d %2d%%\n",
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_PATHCONF]),
-		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_COMMIT]),
-		    RPCSTAT(nfsstats.srvrpccnt[NQNFSPROC_GETLEASE]),
-		    RPCSTAT(nfsstats.srvrpccnt[NQNFSPROC_VACATED]),
-		    RPCSTAT(nfsstats.srvrpccnt[NQNFSPROC_EVICTED]));
+		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_COMMIT]));
 		printf("%10s\n", "noop");
 		printf("%10d %2d%%\n",
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_NOOP]));
@@ -381,13 +373,6 @@ intpr()
 		    nfsstats.srvcache_idemdonehits,
 		    nfsstats.srvcache_nonidemdonehits,
 		    nfsstats.srvcache_misses);
-		printf("Server Lease Stats:\n");
-		printf("%10s  %14s  %14s\n",
-		    "leases", "maxleases", "getleases");
-		printf("%10d  %14d  %14d\n",
-		    nfsstats.srvnqnfs_leases,
-		    nfsstats.srvnqnfs_maxleases,
-		    nfsstats.srvnqnfs_getleases);
 		printf("Server Write Gathering:\n");
 		printf("%10s  %14s  %14s\n",
 		    "writes", "write RPC", "OPs saved");
