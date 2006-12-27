@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.15 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.16 2006/12/27 18:45:30 alc Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.15 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.16 2006/12/27 18:45:30 alc Exp $");
 
 #include "opt_ptm.h"
 
@@ -338,9 +338,11 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 			if ((error = pty_grant_slave(l, ttydev)) != 0) {
 				struct file *fp =
 				    fd_getfile(l->l_proc->p_fd, fd);
-				FILE_UNUSE(fp, l);
-				fdremove(l->l_proc->p_fd, fd);
-				ffree(fp);
+				if (fp != NULL) {
+					FILE_UNUSE(fp, l);
+					fdremove(l->l_proc->p_fd, fd);
+					ffree(fp);
+				}
 				return error;
 			}
 		}
@@ -391,9 +393,11 @@ ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	}
 bad:
 	fp = fd_getfile(p->p_fd, cfd);
-	FILE_UNUSE(fp, l);
-	fdremove(p->p_fd, cfd);
-	ffree(fp);
+	if (fp != NULL) {
+		FILE_UNUSE(fp, l);
+		fdremove(p->p_fd, cfd);
+		ffree(fp);
+	}
 	return error;
 }
 
