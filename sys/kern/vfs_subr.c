@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.276 2006/11/17 17:05:18 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.277 2006/12/27 12:22:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.276 2006/11/17 17:05:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.277 2006/12/27 12:22:14 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -266,7 +266,6 @@ try_nextlist:
 	/* see comment on why 0xdeadb is set at end of vgone (below) */
 	vp->v_freelist.tqe_prev = (struct vnode **)0xdeadb;
 	simple_unlock(&vnode_free_list_slock);
-	vp->v_lease = NULL;
 
 	if (vp->v_type != VBAD)
 		vgonel(vp, l);

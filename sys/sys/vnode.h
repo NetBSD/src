@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.162 2006/11/21 02:37:20 simonb Exp $	*/
+/*	$NetBSD: vnode.h,v 1.163 2006/12/27 12:22:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -119,7 +119,6 @@ struct vnode {
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
 		struct uvm_ractx *vu_ractx;	/* read-ahead context (VREG) */
 	} v_un;
-	struct nqlease	*v_lease;		/* Soft reference to lease */
 	enum vtype	v_type;			/* vnode type */
 	enum vtagtype	v_tag;			/* type of underlying data */
 	struct lock	v_lock;			/* lock for this vnode */
