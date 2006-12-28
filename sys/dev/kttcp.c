@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.21 2006/11/16 01:32:45 christos Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.22 2006/12/28 02:09:49 hubertf Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -37,34 +37,12 @@
  */
 
 /*
- * kttcp.c --
- *
- *	This module provides kernel support for testing network
- *	throughput from the perspective of the kernel.  It is
- *	similar in spirit to the classic ttcp network benchmark
- *	program, the main difference being that with kttcp, the
- *	kernel is the source and sink of the data.
- *
- *	Testing like this is useful for a few reasons:
- *
- *	1. This allows us to know what kind of performance we can
- *	   expect from network applications that run in the kernel
- *	   space, such as the NFS server or the NFS client.  These
- *	   applications don't have to move the data to/from userspace,
- *	   and so benchmark programs which run in userspace don't
- *	   give us an accurate model.
- *
- *	2. Since data received is just thrown away, the receiver
- *	   is very fast.  This can provide better exercise for the
- *	   sender at the other end.
- *
- *	3. Since the NetBSD kernel currently uses a run-to-completion
- *	   scheduling model, kttcp provides a benchmark model where
- *	   preemption of the benchmark program is not an issue.
+ * kttcp.c -- provides kernel support for testing network testing,
+ *            see kttcp(4)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.21 2006/11/16 01:32:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.22 2006/12/28 02:09:49 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
