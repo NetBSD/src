@@ -1,4 +1,4 @@
-/*	$Id: light.c,v 1.1 2006/12/26 04:28:16 rumble Exp $	*/
+/*	$Id: light.c,v 1.2 2006/12/28 16:33:49 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -38,12 +38,12 @@
  * This driver supports the boards found in Indigo R3k and R4k machines.
  * There is a Crimson variant, but the register offsets differ significantly.
  *
- * Light's REX chip is the precursor of the REX3 found in "light", hence
- * much similarity.
+ * Light's REX chip is the precursor of the REX3 found in "newport", hence
+ * much similarity exists.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: light.c,v 1.1 2006/12/26 04:28:16 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: light.c,v 1.2 2006/12/28 16:33:49 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,11 +174,29 @@ rex_write(struct light_devconfig *dc, uint32_t rset, uint32_t r, uint32_t v)
 	bus_space_write_4(dc->dc_st, dc->dc_sh, rset + r, v);
 }
 
+static uint8_t
+rex_vc1_read(struct light_devconfig *dc)
+{
+
+	rex_write(dc, REX_PAGE1_GO, REX_P1REG_CFGSEL, REX_CFGSEL_VC1_SYSCTL);
+	rex_read(dc, REX_PAGE1_GO, REX_P1REG_VC1_ADDRDATA);
+	return (rex_read(dc, REX_PAGE1_SET, REX_P1REG_VC1_ADDRDATA));
+}
+		 
+static void
+rex_vc1_write(struct light_devconfig *dc, uint8_t val)
+{
+
+	rex_write(dc, REX_PAGE1_GO, REX_P1REG_CFGSEL, REX_CFGSEL_VC1_SYSCTL);
+	rex_write(dc, REX_PAGE1_SET, REX_P1REG_VC1_ADDRDATA, val);
+	rex_write(dc, REX_PAGE1_GO, REX_P1REG_VC1_ADDRDATA, val);
+}
+
 static void
 rex_wait(struct light_devconfig *dc)
 {
 
-	while (rex_read(dc, REX_PAGE1_SET, REX_CFG_CONFIGMODE) & REX_BUSY)
+	while (rex_read(dc, REX_PAGE1_SET,REX_P1REG_CFGMODE) & REX_CFGMODE_BUSY)
 		;
 }
 
@@ -186,9 +204,9 @@ static int
 rex_revision(struct light_devconfig *dc)
 {
 
-	rex_write(dc, REX_PAGE1_SET, REX_CFG_CONFIGSEL, 4);
-	rex_read(dc, REX_PAGE1_GO, REX_CFG_WCLOCK);
-	return (rex_read(dc, REX_PAGE1_SET, REX_CFG_WCLOCK) & 0x7);
+	rex_write(dc, REX_PAGE1_SET, REX_P1REG_CFGSEL, REX_CFGSEL_VC1_LADDR);
+	rex_read(dc, REX_PAGE1_GO, REX_P1REG_WCLOCKREV);
+	return (rex_read(dc, REX_PAGE1_SET, REX_P1REG_WCLOCKREV) & 0x7);
 }
 
 static void
@@ -211,14 +229,14 @@ rex_copy_rect(struct light_devconfig *dc, int from_x, int from_y, int to_x,
 
 	rex_wait(dc);
 
-	rex_write(dc, REX_PAGE0_SET, REX_XSTARTI, to_x);
-	rex_write(dc, REX_PAGE0_SET, REX_XENDI, to_x + width);
-	rex_write(dc, REX_PAGE0_SET, REX_YSTARTI, ystarti);
-	rex_write(dc, REX_PAGE0_SET, REX_YENDI, yendi);
-	rex_write(dc, REX_PAGE0_SET, REX_COMMAND, REX_OPCODE_DRAW |
-	    REX_LOGICOP_SRC | REX_OPFLG_LOGICSRC | REX_OPFLG_QUADMODE |
-	    REX_OPFLG_BLOCK | REX_OPFLG_STOPONX | REX_OPFLG_STOPONY);
-	rex_write(dc, REX_PAGE0_GO, REX_XYMOVE,
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XSTARTI, to_x);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XENDI, to_x + width);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YSTARTI, ystarti);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YENDI, yendi);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_COMMAND, REX_OP_DRAW |
+	    REX_LOGICOP_SRC | REX_OP_FLG_LOGICSRC | REX_OP_FLG_QUADMODE |
+	    REX_OP_FLG_BLOCK | REX_OP_FLG_STOPONX | REX_OP_FLG_STOPONY);
+	rex_write(dc, REX_PAGE0_GO, REX_P0REG_XYMOVE,
 	    ((dx << 16) & 0xffff0000) | (dy & 0x0000ffff));
 }
 
@@ -229,15 +247,15 @@ rex_fill_rect(struct light_devconfig *dc, int from_x, int from_y, int to_x,
 
 	rex_wait(dc);
 
-	rex_write(dc, REX_PAGE0_SET, REX_YSTARTI, from_y);
-	rex_write(dc, REX_PAGE0_SET, REX_YENDI, to_y);
-	rex_write(dc, REX_PAGE0_SET, REX_XSTARTI, from_x);
-	rex_write(dc, REX_PAGE0_SET, REX_XENDI, to_x);
-	rex_write(dc, REX_PAGE0_SET, REX_COLORREDI, LIGHT_ATTR_BG(attr));
-	rex_write(dc, REX_PAGE0_SET, REX_COMMAND, REX_OPCODE_DRAW |
-	    REX_LOGICOP_SRC | REX_OPFLG_QUADMODE | REX_OPFLG_BLOCK |
-	    REX_OPFLG_STOPONX | REX_OPFLG_STOPONY);
-	rex_read(dc, REX_PAGE0_GO, REX_COMMAND);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YSTARTI, from_y);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YENDI, to_y);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XSTARTI, from_x);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XENDI, to_x);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_COLORREDI, LIGHT_ATTR_BG(attr));
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_COMMAND, REX_OP_DRAW |
+	    REX_LOGICOP_SRC | REX_OP_FLG_QUADMODE | REX_OP_FLG_BLOCK |
+	    REX_OP_FLG_STOPONX | REX_OP_FLG_STOPONY);
+	rex_read(dc, REX_PAGE0_GO, REX_P0REG_COMMAND);
 }
 
 /*******************************************************************************
@@ -277,6 +295,8 @@ light_attach_common(struct light_devconfig *dc, struct gio_attach_args *ga)
 	if (wsfont_lock(dc->dc_font, &dc->dc_fontdata))
 		panic("light_attach_common: unable to lock font data");
 
+	rex_vc1_write(dc, rex_vc1_read(dc) & ~(VC1_SYSCTL_CURSOR |
+	    VC1_SYSCTL_CURSOR_ON));
 	rex_fill_rect(dc, 0, 0, LIGHT_XRES - 1, LIGHT_YRES - 1, 0);
 }
 
@@ -302,7 +322,7 @@ light_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_naive(": Display adapter\n");
 
-	aprint_normal(": SGI LG%d (board revision %d) 1024x768x8bpp at 60Hz\n",
+	aprint_normal(": SGI LG%d (board revision %d)\n",
 	    LIGHT_IS_LG1(sc->sc_dc->dc_boardrev) ? 1 : 2,
 	    sc->sc_dc->dc_boardrev);
 
@@ -380,25 +400,25 @@ light_putchar(void *c, int row, int col, u_int ch, long attr)
 
 	rex_wait(dc);
 
-	rex_write(dc, REX_PAGE0_SET, REX_YSTARTI, y);
-	rex_write(dc, REX_PAGE0_SET, REX_YENDI, y + font->fontheight - 1);
-	rex_write(dc, REX_PAGE0_SET, REX_XSTARTI, x);
-	rex_write(dc, REX_PAGE0_SET, REX_XENDI, x + font->fontwidth - 1);
-	rex_write(dc, REX_PAGE0_SET, REX_COLORREDI, LIGHT_ATTR_FG(attr));
-	rex_write(dc, REX_PAGE0_SET, REX_COLORBACK, LIGHT_ATTR_BG(attr));
-	rex_write(dc, REX_PAGE0_GO,  REX_COMMAND, REX_OPCODE_NOP);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YSTARTI, y);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_YENDI, y + font->fontheight - 1);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XSTARTI, x);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_XENDI, x + font->fontwidth - 1);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_COLORREDI, LIGHT_ATTR_FG(attr));
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_COLORBACK, LIGHT_ATTR_BG(attr));
+	rex_write(dc, REX_PAGE0_GO,  REX_P0REG_COMMAND, REX_OP_NOP);
 
 	rex_wait(dc);
 
-	rex_write(dc, REX_PAGE0_SET, REX_COMMAND, REX_OPCODE_DRAW |
-	    REX_LOGICOP_SRC | REX_OPFLG_ENZPATTERN | REX_OPFLG_QUADMODE |
-	    REX_OPFLG_XYCONTINUE | REX_OPFLG_STOPONX | REX_OPFLG_BLOCK |
-	    REX_OPFLG_LENGTH32 | REX_OPFLG_ZOPAQUE);
+	rex_write(dc, REX_PAGE0_SET, REX_P0REG_COMMAND, REX_OP_DRAW |
+	    REX_LOGICOP_SRC | REX_OP_FLG_ENZPATTERN | REX_OP_FLG_QUADMODE |
+	    REX_OP_FLG_XYCONTINUE | REX_OP_FLG_STOPONX | REX_OP_FLG_BLOCK |
+	    REX_OP_FLG_LENGTH32 | REX_OP_FLG_ZOPAQUE);
 
 	for (i = 0; i < font->fontheight; i++) {
 		/* XXX assumes font->fontwidth == 8 */
 		pattern = *bitmap << 24;
-		rex_write(dc, REX_PAGE0_GO, REX_ZPATTERN, pattern); 
+		rex_write(dc, REX_PAGE0_GO, REX_P0REG_ZPATTERN, pattern); 
 		bitmap += font->stride;
 	}
 }
@@ -475,10 +495,8 @@ static int
 light_allocattr(void *c, int fg, int bg, int flags, long *attr)
 {
 
-	if (flags & ~(WSATTR_WSCOLORS | WSATTR_HILIT | WSATTR_REVERSE)) {
-		printf("allocattr: bad attrs: 0x%08x\n", flags);
+	if (flags & ~(WSATTR_WSCOLORS | WSATTR_HILIT | WSATTR_REVERSE))
 		return (EINVAL);
-	}
 
 	if ((flags & WSATTR_WSCOLORS) == 0) {
 		fg = WSCOL_WHITE;
@@ -516,8 +534,26 @@ light_ioctl(void *c, void *vs, u_long cmd, caddr_t data, int flag,
 		fbinfo->cmsize	= 1 << LIGHT_DEPTH;
 		return (0);
 
+	case WSDISPLAYIO_GMODE: 
+		*(u_int *)data = WSDISPLAYIO_MODE_EMUL;
+		break;
+
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_LIGHT;
+		return (0);
+
+	case WSDISPLAYIO_SVIDEO:
+		/*
+		 * Turning off VC1 will stop refreshing the video ram (or so I
+		 * suspect). We'll blank the screen after bringing it back up,
+		 * since that's nicer than displaying garbage.
+		 */
+		if (*(u_int *)data == WSDISPLAYIO_VIDEO_OFF)
+			rex_vc1_write(c,rex_vc1_read(c) & ~VC1_SYSCTL_VIDEO_ON);
+		else {
+			rex_vc1_write(c, rex_vc1_read(c) | VC1_SYSCTL_VIDEO_ON);
+			rex_fill_rect(c, 0, 0, LIGHT_XRES-1, LIGHT_YRES-1, 0);
+		}
 		return (0);
 	}
 
@@ -527,9 +563,12 @@ light_ioctl(void *c, void *vs, u_long cmd, caddr_t data, int flag,
 static paddr_t
 light_mmap(void *c, void *vs, off_t off, int prot)
 {
- 
-	/* XXX */
-	panic("light mmap");
+        struct light_devconfig *dc = c;
+
+	if (off >= 0x7fff)
+		return (-1);
+
+	return (mips_btop(dc->dc_addr + off));
 }
 
 static int
