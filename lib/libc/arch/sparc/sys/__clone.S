@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.3 2004/01/23 13:45:43 martin Exp $	*/
+/*	$NetBSD: __clone.S,v 1.4 2006/12/28 10:02:43 martin Exp $	*/
 
 /*-     
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ WEAK_ALIAS(clone, __clone)
  * int __clone(int (*fn)(void *), void *stack, int flags, void *arg);
  */
 ENTRY(__clone)
-	save	%sp, -96, %sp
+	save	%sp, -CCFSZ, %sp
 
 	/*
 	 * Sanity checks: func and stack may not be NULL.
