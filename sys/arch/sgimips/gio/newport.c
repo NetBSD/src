@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.7 2006/04/12 19:38:23 jmmv Exp $	*/
+/*	$NetBSD: newport.c,v 1.8 2006/12/28 22:08:04 rumble Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.7 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.8 2006/12/28 22:08:04 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -571,14 +571,18 @@ newport_match(struct device *parent, struct cfdata *self, void *aux)
 	    ga->ga_addr != 0x1f800000 && ga->ga_addr != 0x1fc00000)
 		return 0;
 
-	/* newport doesn't respond with correct product id, empirically
-	 * both empty slots and newports seem to yield this result */
-	if (ga->ga_product != 0x04)
-		return 0;
-
 	/* Don't do the destructive probe if we're already attached */
 	if (newport_is_console && ga->ga_addr == newport_console_dc.dc_addr)
 		return 1;
+
+	if (badaddr(
+	    (void *)(ga->ga_ioh + NEWPORT_REX3_OFFSET + REX3_REG_XSTARTI),
+	    sizeof(uint32_t)))
+		return 0;
+	if (badaddr(
+	    (void *)(ga->ga_ioh + NEWPORT_REX3_OFFSET + REX3_REG_XSTART),
+	    sizeof(uint32_t)))
+		return 0;
 
 	/* Ugly, this probe is destructive, blame SGI... */
 	/* XXX Should be bus_space_peek/bus_space_poke XXX */
