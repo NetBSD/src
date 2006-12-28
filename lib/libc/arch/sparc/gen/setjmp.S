@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.9 2005/10/15 22:11:22 uwe Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.10 2006/12/28 10:02:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.9 2005/10/15 22:11:22 uwe Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.10 2006/12/28 10:02:43 martin Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,7 @@
 #include "SYS.h"
 
 ENTRY(__setjmp14)
-	save	%sp, -96, %sp
+	save	%sp, -CCFSZ, %sp
 #ifdef PIC
 	PIC_PROLOGUE(%l0,%o0)	! %l0 = _GLOBAL_OFFSET_TABLE
 #endif
