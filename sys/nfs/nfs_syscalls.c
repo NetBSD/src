@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.101 2006/12/27 12:51:22 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.102 2006/12/28 00:39:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.101 2006/12/27 12:51:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.102 2006/12/28 00:39:03 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -969,9 +969,7 @@ nfsd_rt(sotype, nd, cacherep)
 		rt->flag = DRT_CACHEDROP;
 	if (sotype == SOCK_STREAM)
 		rt->flag |= DRT_TCP;
-	if (nd->nd_flag & ND_NQNFS)
-		rt->flag |= DRT_NQNFS;
-	else if (nd->nd_flag & ND_NFSV3)
+	if (nd->nd_flag & ND_NFSV3)
 		rt->flag |= DRT_NFSV3;
 	rt->proc = nd->nd_procnum;
 	if (mtod(nd->nd_nam, struct sockaddr *)->sa_family == AF_INET)

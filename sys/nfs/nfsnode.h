@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.59 2006/12/27 12:10:09 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.60 2006/12/28 00:39:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -193,9 +193,6 @@ LIST_HEAD(nfsnodehashhead, nfsnode);
 #define	NFLUSHINPROG	0x0002	/* Avoid multiple calls to vinvalbuf() */
 #define	NMODIFIED	0x0004	/* Might have a modified buffer in bio */
 #define	NWRITEERR	0x0008	/* Flag write errors so close will know */
-#define	NQNFSNONCACHE	0x0020	/* Non-cachable lease */
-#define	NQNFSWRITE	0x0040	/* Write lease */
-#define	NQNFSEVICTED	0x0080	/* Has been evicted */
 #define	NACC		0x0100	/* Special file accessed */
 #define	NUPD		0x0200	/* Special file updated */
 #define	NCHG		0x0400	/* Special file times changed */

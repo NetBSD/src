@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.61 2006/12/27 12:10:09 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.62 2006/12/28 00:39:03 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -542,7 +542,6 @@ struct nfsrv_descript {
 #define ND_CHECK	0x04
 #define ND_LEASE	(ND_READ | ND_WRITE | ND_CHECK)
 #define ND_NFSV3	0x08
-#define ND_NQNFS	0x10
 #define ND_KERBNICK	0x20
 #define ND_KERBFULL	0x40
 #define ND_KERBAUTH	(ND_KERBNICK | ND_KERBFULL)
