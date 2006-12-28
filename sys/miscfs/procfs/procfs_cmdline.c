@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.23 2006/11/16 01:33:38 christos Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.24 2006/12/28 09:17:52 elad Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.23 2006/11/16 01:33:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.24 2006/12/28 09:17:52 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ procfs_docmdline(
 	 * ps(1) would display.
 	 */
 	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0) {
-		len = snprintf(arg, PAGE_SIZE, "(%s)", p->p_comm);
+		len = snprintf(arg, PAGE_SIZE, "(%s)", p->p_comm) + 1;
 		error = uiomove_frombuf(arg, len, uio);
 
 		free(arg, M_TEMP);
@@ -164,9 +164,6 @@ procfs_docmdline(
 			if (arg[i] == '\0')
 				count--;	/* one full string */
 		}
-
-		if (count == 0)
-			i--;		/* exclude the final NUL */
 
 		if (len + i > uio->uio_offset) {
 			/* Have data in this page, copy it out */
