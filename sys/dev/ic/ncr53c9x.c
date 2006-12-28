@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.123 2006/11/16 01:32:52 christos Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.124 2006/12/28 03:13:54 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.123 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.124 2006/12/28 03:13:54 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,6 +320,8 @@ ncr53c9x_detach(sc, flags)
 	int flags;
 {
 	int error;
+
+	callout_stop(&sc->sc_watchdog);
 
 	if (sc->sc_child) {
 		error = config_detach(sc->sc_child, flags);
