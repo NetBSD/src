@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.12 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.13 2006/12/28 19:17:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _IC_CACVAR_H_
 #define	_IC_CACVAR_H_
 
-#define	CAC_MAX_CCBS	20
+#define	CAC_MAX_CCBS	256
 #define	CAC_MAX_XFER	(0xffff * 512)
 #define	CAC_SG_SIZE	32
 
