@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.96 2006/10/20 18:58:13 reinoud Exp $	*/
+/*	$NetBSD: pstat.c,v 1.97 2006/12/28 04:17:51 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.96 2006/10/20 18:58:13 reinoud Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.97 2006/12/28 04:17:51 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -547,9 +547,6 @@ const struct flagbit_desc nfs_flags[] = {
 	{ NFLUSHINPROG,	'P' },
 	{ NMODIFIED,	'M' },
 	{ NWRITEERR,	'E' },
-	{ NQNFSNONCACHE, 'X' },
-	{ NQNFSWRITE,	'O' },
-	{ NQNFSEVICTED,	'G' },
 	{ NACC,		'A' },
 	{ NUPD,		'U' },
 	{ NCHG,		'C' },
