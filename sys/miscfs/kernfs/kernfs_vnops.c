@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.130 2006/12/26 00:01:48 alc Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.131 2006/12/28 05:51:56 alc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.130 2006/12/26 00:01:48 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.131 2006/12/28 05:51:56 alc Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -854,7 +854,6 @@ kernfs_getattr(v)
 		break;
 
 	case KFSsubdir:
-		KASSERT(kfs->kfs_kt != NULL);
 		ks = (struct kernfs_subdir *)kfs->kfs_kt->kt_data;
 		vap->va_nlink = ks->ks_dirs;
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
