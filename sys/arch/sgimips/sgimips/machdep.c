@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 2006/12/27 07:45:11 rumble Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102 2006/12/28 16:15:11 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2006/12/27 07:45:11 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2006/12/28 16:15:11 rumble Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -181,6 +181,7 @@ extern void	ip22_sdcache_enable(void);
 
 #if defined(MIPS1)
 extern void mips1_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+extern void mips1_fpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 #endif
 
 #if defined(MIPS3)
@@ -448,6 +449,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
                 }
 
 		ipl2spl_table = sgi_ip12_ipl2spl_table;
+		platform.intr0 = mips1_fpu_intr;
 		platform.intr3 = mips1_clock_intr;
 		break;
 #endif /* MIPS1 */
