@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.19 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.20 2006/12/28 16:15:11 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2005/12/11 12:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20 2006/12/28 16:15:11 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2005/12/11 12:18:58 christos Exp $");
 
 #include <machine/cpu.h>
 #include <machine/locore.h>
+#include <machine/psl.h>
 #include <machine/autoconf.h>
 #include <machine/machtype.h>
 #include <machine/sysconf.h>
@@ -55,6 +56,9 @@ static int	cpu_match(struct device *, struct cfdata *, void *);
 static void	cpu_attach(struct device *, struct device *, void *);
 void		cpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 void *cpu_intr_establish(int, int, int (*func)(void *), void *);
+void		mips1_fpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+
+extern void	MachFPInterrupt(u_int32_t, u_int32_t, u_int32_t, struct frame *);
 
 static struct evcnt mips_int0_evcnt =
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 0");
@@ -160,4 +164,18 @@ cpu_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
 {
 	(*platform.intr_establish)(level, ipl, func, arg);
 	return (void *) -1;
+}
+
+void
+mips1_fpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
+    u_int32_t ipending)
+{
+
+	if (!USERMODE(status))
+		panic("kernel used FPU: PC 0x%08x, CR 0x%08x, SR 0x%08x",
+		    pc, cause, status);
+
+#if !defined(NOFPU) && !defined(SOFTFLOAT)
+	MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
+#endif
 }
