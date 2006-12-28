@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.31 2006/06/23 20:54:21 christos Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.32 2006/12/28 05:49:05 alc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,8 +90,8 @@ struct kernfs_subdir {
 struct kernfs_node {
 	LIST_ENTRY(kernfs_node) kfs_hash; /* hash chain */
 	TAILQ_ENTRY(kernfs_node) kfs_list; /* flat list */
-	struct vnode	*kfs_vnode;	/* vnode associated with this pfsnode */
-	kfstype		kfs_type;	/* type of procfs node */
+	struct vnode	*kfs_vnode;	/* vnode associated with this kernfs_node */
+	kfstype		kfs_type;	/* type of kernfs node */
 	mode_t		kfs_mode;	/* mode bits for stat() */
 	long		kfs_fileno;	/* unique file id */
 	u_int32_t	kfs_value;	/* SA id or SP id (KFSint) */
