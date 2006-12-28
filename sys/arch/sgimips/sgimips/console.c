@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.34 2006/12/26 19:29:00 rumble Exp $	*/
+/*	$NetBSD: console.c,v 1.35 2006/12/28 18:32:08 rumble Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.34 2006/12/26 19:29:00 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.35 2006/12/28 18:32:08 rumble Exp $");
 
 #include "opt_kgdb.h"
 
@@ -133,7 +133,8 @@ gio_video_init(const char *consdev)
 		 * XXX Assumes that if output is video()
 		 * input must be keyboard().
 		 */
-		gio_cnattach();
+		if (gio_cnattach() != 0)
+			return (0);
 
 		switch(mach_type) {
 		case MACH_SGI_IP12:
