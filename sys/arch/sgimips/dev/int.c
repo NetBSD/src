@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.12 2006/09/01 03:33:41 rumble Exp $	*/
+/*	$NetBSD: int.c,v 1.13 2006/12/28 16:19:14 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.12 2006/09/01 03:33:41 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.13 2006/12/28 16:19:14 rumble Exp $");
 
 #include "opt_cputype.h"
 
@@ -64,12 +64,15 @@ struct int_softc {
 
 static int	int_match(struct device *, struct cfdata *, void *);
 static void	int_attach(struct device *, struct device *, void *);
-void 		int_local0_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-void		int_local1_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-int 		int_mappable_intr(void *);
-void		*int_intr_establish(int, int, int (*)(void *), void *);
-unsigned long	int_cal_timer(void);
-void		int_8254_cal(void);
+static void 	int_local0_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+static void	int_local1_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+static int 	int_mappable_intr(void *);
+static void    *int_intr_establish(int, int, int (*)(void *), void *);
+static void	int_8254_cal(void);
+
+#ifdef MIPS3
+static u_long	int_cal_timer(void);
+#endif
 
 CFATTACH_DECL(int, sizeof(struct int_softc),
 	int_match, int_attach, NULL, NULL);
@@ -334,7 +337,7 @@ int_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 }
 
 #ifdef MIPS3
-unsigned long
+static u_long
 int_cal_timer(void)
 {
 	int s;
