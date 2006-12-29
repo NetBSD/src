@@ -1,4 +1,4 @@
-/*	$Id: light.c,v 1.2 2006/12/28 16:33:49 rumble Exp $	*/
+/*	$Id: light.c,v 1.3 2006/12/29 00:31:48 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: light.c,v 1.2 2006/12/28 16:33:49 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: light.c,v 1.3 2006/12/29 00:31:48 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,14 @@ light_match(struct device *parent, struct cfdata *self, void *aux)
 	if (ga->ga_addr != LIGHT_ADDR_0 && ga->ga_addr != LIGHT_ADDR_1)
 		return (0);
 
-	/* XXX */
+	if (badaddr((void *)(ga->ga_ioh + REX_PAGE1_SET + REX_P1REG_XYOFFSET),
+	    sizeof(uint32_t)))
+		return (0);
+
+	if (bus_space_read_4(ga->ga_iot, ga->ga_ioh,
+	    REX_PAGE1_SET + REX_P1REG_XYOFFSET) != 0x08000800)
+		return (0);
+
 	return (1);
 }
 
