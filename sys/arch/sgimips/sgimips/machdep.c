@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2006/12/28 16:15:11 rumble Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 2006/12/29 05:26:30 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2006/12/28 16:15:11 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2006/12/29 05:26:30 rumble Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -210,7 +210,10 @@ static void	nullvoid(void);
 
 void ddb_trap_hook(int where);
 
+static int badaddr_workaround(void *, size_t);
+
 struct platform platform = {
+	.badaddr		= badaddr_workaround,
 	.bus_reset		= unimpl_bus_reset,
 	.cons_init		= unimpl_cons_init,
 	.intr_establish		= unimpl_intr_establish,
@@ -756,6 +759,26 @@ void delay(unsigned long n)
 	do {
 		__asm("addiu %0,%1,-1" : "=r" (__N) : "0" (__N));
 	} while (__N > 0);
+}
+
+/*
+ * IP12 appears to be buggy and unable to support reliably support badaddr.
+ * The problem is that approximately 1.8% of the time a false negative is
+ * generated and we stomp on invalid registers. Testing shows that neither
+ * false negatives, nor consecutive false positives appear to occur.
+ */
+static int
+badaddr_workaround(void *addr, size_t size)
+{
+	int i, bad;
+
+	for (i = bad = 0; i < 100; i++) {
+		if (badaddr(addr, size))
+			bad++;
+	}
+
+	/* false positives appear not to occur */
+	return (bad != 0);
 }
 
 /*

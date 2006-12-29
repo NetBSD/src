@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.49 2006/12/22 23:36:42 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.50 2006/12/29 05:26:30 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.49 2006/12/22 23:36:42 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.50 2006/12/29 05:26:30 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.49 2006/12/22 23:36:42 rumble Exp $");
 #define _SGIMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/machtype.h>
+#include <machine/sysconf.h>
 
 #include <sgimips/gio/gioreg.h>
 #include <sgimips/gio/giovar.h>
@@ -360,7 +361,8 @@ hpc_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct gio_attach_args* ga = aux;
 
 	/* Make sure it's actually there and readable */
-	if (badaddr((void*)MIPS_PHYS_TO_KSEG1(ga->ga_addr), sizeof(u_int32_t)))
+	if (platform.badaddr((void*)MIPS_PHYS_TO_KSEG1(ga->ga_addr),
+	    sizeof(u_int32_t)))
 		return 0;
 
 	return 1;
@@ -519,7 +521,7 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20) {
 		u_int32_t reg;
 
-		if (!badaddr((void *)MIPS_PHYS_TO_KSEG1(ga->ga_addr +
+		if (!platform.badaddr((void *)MIPS_PHYS_TO_KSEG1(ga->ga_addr +
 		    HPC1_BIGENDIAN), 4)) {
 			reg = *(uint32_t *)MIPS_PHYS_TO_KSEG1(ga->ga_addr +
 			    HPC1_BIGENDIAN);
@@ -553,7 +555,7 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 		 * that this probe succeeds with my E++ adapter in slot 1,
 		 * but it appears to do the right thing in slot 0!
 		 */
-		if (badaddr((void *)MIPS_PHYS_TO_KSEG1(ga->ga_addr +
+		if (platform.badaddr((void *)MIPS_PHYS_TO_KSEG1(ga->ga_addr +
 		    HPC3_PBUS_CH7_BP), 4))
 			return (15);
 		else

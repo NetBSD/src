@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.8 2006/12/28 22:08:04 rumble Exp $	*/
+/*	$NetBSD: newport.c,v 1.9 2006/12/29 05:26:30 rumble Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,12 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.8 2006/12/28 22:08:04 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.9 2006/12/29 05:26:30 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+
+#include <machine/sysconf.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -575,11 +577,11 @@ newport_match(struct device *parent, struct cfdata *self, void *aux)
 	if (newport_is_console && ga->ga_addr == newport_console_dc.dc_addr)
 		return 1;
 
-	if (badaddr(
+	if (platform.badaddr(
 	    (void *)(ga->ga_ioh + NEWPORT_REX3_OFFSET + REX3_REG_XSTARTI),
 	    sizeof(uint32_t)))
 		return 0;
-	if (badaddr(
+	if (platform.badaddr(
 	    (void *)(ga->ga_ioh + NEWPORT_REX3_OFFSET + REX3_REG_XSTART),
 	    sizeof(uint32_t)))
 		return 0;
