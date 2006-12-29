@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.25 2006/12/29 00:42:01 rumble Exp $	*/
+/*	$NetBSD: gio.c,v 1.26 2006/12/29 05:26:30 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.25 2006/12/29 00:42:01 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.26 2006/12/29 05:26:30 rumble Exp $");
 
 #include "opt_ddb.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.25 2006/12/29 00:42:01 rumble Exp $");
 #define _SGIMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/machtype.h>
+#include <machine/sysconf.h>
 
 #include <sgimips/gio/gioreg.h>
 #include <sgimips/gio/giovar.h>
@@ -215,7 +216,7 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 		ga.ga_dmat = &sgimips_default_bus_dma_tag;
 		ga.ga_product = -1;
 
-		if (badaddr((void *)ga.ga_ioh, sizeof(uint32_t)))
+		if (platform.badaddr((void *)ga.ga_ioh, sizeof(uint32_t)))
 			continue;
 		
 		if (config_found_sm_loc(self, "gio", NULL, &ga, gio_print,
@@ -258,7 +259,7 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 		ga.ga_ioh = MIPS_PHYS_TO_KSEG1(ga.ga_addr);
 		ga.ga_dmat = &sgimips_default_bus_dma_tag;
 
-		if (badaddr((void *)ga.ga_ioh, sizeof(uint32_t)))
+		if (platform.badaddr((void *)ga.ga_ioh, sizeof(uint32_t)))
 			continue;
 
 		ga.ga_product = bus_space_read_4(ga.ga_iot, ga.ga_ioh, 0);
@@ -375,7 +376,7 @@ gio_cnattach()
 		ga.ga_dmat = &sgimips_default_bus_dma_tag;
 		ga.ga_product = -1;
 		
-		if (badaddr((void *)ga.ga_ioh,sizeof(uint32_t)))
+		if (platform.badaddr((void *)ga.ga_ioh,sizeof(uint32_t)))
 			continue;
 
 #if (NGRTWO > 0)

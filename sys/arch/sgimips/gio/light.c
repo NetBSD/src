@@ -1,4 +1,4 @@
-/*	$Id: light.c,v 1.3 2006/12/29 00:31:48 rumble Exp $	*/
+/*	$Id: light.c,v 1.4 2006/12/29 05:26:30 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -43,12 +43,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: light.c,v 1.3 2006/12/29 00:31:48 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: light.c,v 1.4 2006/12/29 05:26:30 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+
+#include <machine/sysconf.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -270,7 +272,8 @@ light_match(struct device *parent, struct cfdata *self, void *aux)
 	if (ga->ga_addr != LIGHT_ADDR_0 && ga->ga_addr != LIGHT_ADDR_1)
 		return (0);
 
-	if (badaddr((void *)(ga->ga_ioh + REX_PAGE1_SET + REX_P1REG_XYOFFSET),
+	if (platform.badaddr(
+	    (void *)(ga->ga_ioh + REX_PAGE1_SET + REX_P1REG_XYOFFSET),
 	    sizeof(uint32_t)))
 		return (0);
 
