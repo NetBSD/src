@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.62 2006/12/24 02:07:29 rumble Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.63 2006/12/29 00:41:11 rumble Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.62 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.63 $"
 
 maxusers	32
 
@@ -221,10 +221,10 @@ hpc0 		at gio? addr 0x1fb80000
 hpc1 		at gio? addr 0x1fb00000
 hpc2 		at gio? addr 0x1f980000
 
-newport*	at gio? slot ?
+newport*	at gio?			# Newport (NG1) graphics
 wsdisplay* 	at newport? console ?
 
-grtwo*		at gio? slot ?
+grtwo*		at gio?			# Express (GR2) graphics
 wsdisplay*	at grtwo? console ?
 
 # PCI Fast Ethernet cards glued to the GIO bus
