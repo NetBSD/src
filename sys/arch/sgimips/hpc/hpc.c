@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.50 2006/12/29 05:26:30 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.51 2006/12/29 07:15:01 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.50 2006/12/29 05:26:30 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.51 2006/12/29 07:15:01 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,9 +539,6 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 	/*
 	 * If IP22, probe slot 0 to determine if HPC1.5 or HPC3. Slot 1 must
 	 * be HPC1.5.
-	 *
-	 * XXX - If Challenge S is Fullhouse, but without the eisa presence bit,
-	 *       we could just conditionalise on that, no? Or is it Guinness?
 	 */
 	if (mach_type == MACH_SGI_IP22) {
 		if (ga->ga_addr == HPC_BASE_ADDRESS_0)
@@ -552,8 +549,10 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 
 		/*
 		 * Probe for it. We use one of the PBUS registers. Note
-		 * that this probe succeeds with my E++ adapter in slot 1,
-		 * but it appears to do the right thing in slot 0!
+		 * that this probe succeeds with my E++ adapter in slot 1
+		 * (bad), but it appears to always do the right thing in
+		 * slot 0 (good!) and we're only worried about that one
+		 * anyhow.
 		 */
 		if (platform.badaddr((void *)MIPS_PHYS_TO_KSEG1(ga->ga_addr +
 		    HPC3_PBUS_CH7_BP), 4))
