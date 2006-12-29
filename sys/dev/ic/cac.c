@@ -1,7 +1,7 @@
-/*	$NetBSD: cac.c,v 1.37 2006/11/28 20:29:14 ad Exp $	*/
+/*	$NetBSD: cac.c,v 1.38 2006/12/29 14:07:08 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.37 2006/11/28 20:29:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.38 2006/12/29 14:07:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	bus_dma_segment_t seg;
 	struct cac_ccb *ccb;
 	int locs[CACCF_NLOCS];
+	char firm[8];
 
 	if (intrstr != NULL)
 		aprint_normal("%s: interrupting at %s\n", sc->sc_dv.dv_xname,
@@ -178,6 +179,10 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 		return (-1);
 	}
 
+	strlcpy(firm, cinfo.firm_rev, 4+1);
+	printf("%s: %d channels, firmware <%s>\n", sc->sc_dv.dv_xname,
+	    cinfo.scsi_chips, firm);
+
 	sc->sc_nunits = cinfo.num_drvs;
 	for (i = 0; i < cinfo.num_drvs; i++) {
 		caca.caca_unit = i;
@@ -185,7 +190,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 		locs[CACCF_UNIT] = i;
 
 		config_found_sm_loc(&sc->sc_dv, "cac", locs, &caca,
-				    cac_print, config_stdsubmatch);
+		    cac_print, config_stdsubmatch);
 	}
 
 	/* Set our `shutdownhook' before we start any device activity. */
@@ -354,14 +359,14 @@ cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
 {
 	struct cac_ccb *ccb;
 
-	timo *= 10;
+	timo *= 1000;
 
 	do {
 		for (; timo != 0; timo--) {
 			ccb = (*sc->sc_cl.cl_completed)(sc);
 			if (ccb != NULL)
 				break;
-			DELAY(100);
+			DELAY(1);
 		}
 
 		if (timo == 0) {
