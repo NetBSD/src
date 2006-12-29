@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.8 2006/12/05 14:32:03 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.9 2006/12/29 15:37:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -88,7 +88,7 @@ dtfs_genfile(struct puffs_node *dir, const char *name, enum vtype type)
 	struct dtfs_mount *dtm;
 	struct puffs_node *newpn;
 
-	assert(dir->pn_type == VDIR);
+	assert(dir->pn_va.va_type == VDIR);
 	assert(dir->pn_mnt != NULL);
 
 	if (type == VDIR) {
@@ -98,7 +98,7 @@ dtfs_genfile(struct puffs_node *dir, const char *name, enum vtype type)
 		dff = dtfs_newfile();
 
 	dtm = dir->pn_mnt->pu_privdata;
-	newpn = puffs_newpnode(dir->pn_mnt, dff, type);
+	newpn = puffs_pn_new(dir->pn_mnt, dff);
 	if (newpn == NULL)
 		errx(1, "getnewpnode");
 	dtfs_baseattrs(&newpn->pn_va, type, dtm->dtm_nextfileid++);
@@ -197,7 +197,7 @@ dtfs_freenode(struct puffs_node *pn)
 	assert(pn->pn_va.va_nlink == 0);
 	dtm = pn->pn_mnt->pu_privdata;
 
-	switch (pn->pn_type) {
+	switch (pn->pn_va.va_type) {
 	case VREG:
 		assert(dtm->dtm_fsizes >= pn->pn_va.va_size);
 		dtm->dtm_fsizes -= pn->pn_va.va_size;
@@ -218,7 +218,7 @@ dtfs_freenode(struct puffs_node *pn)
 	}
 
 	free(df);
-	puffs_putpnode(pn);
+	puffs_pn_put(pn);
 }
 
 void
@@ -259,7 +259,7 @@ dtfs_adddent(struct puffs_node *pn_dir, struct dtfs_dirent *dent)
 	struct dtfs_file *file = DTFS_PTOF(pn_file);
 	struct dtfs_mount *dtm;
 
-	assert(pn_dir->pn_type == VDIR);
+	assert(pn_dir->pn_va.va_type == VDIR);
 	LIST_INSERT_HEAD(&dir->df_dirents, dent, dfd_entries);
 	pn_file->pn_va.va_nlink++;
 
@@ -267,7 +267,7 @@ dtfs_adddent(struct puffs_node *pn_dir, struct dtfs_dirent *dent)
 	dtm->dtm_nfiles++;
 
 	dent->dfd_parent = pn_dir;
-	if (dent->dfd_node->pn_type == VDIR) {
+	if (dent->dfd_node->pn_va.va_type == VDIR) {
 		file->df_dotdot = pn_dir;
 		pn_dir->pn_va.va_nlink++;
 	}
@@ -281,9 +281,9 @@ dtfs_removedent(struct puffs_node *pn_dir, struct dtfs_dirent *dent)
 {
 	struct puffs_node *pn_file = dent->dfd_node;
 
-	assert(pn_dir->pn_type == VDIR);
+	assert(pn_dir->pn_va.va_type == VDIR);
 	LIST_REMOVE(dent, dfd_entries);
-	if (pn_file->pn_type == VDIR)
+	if (pn_file->pn_va.va_type == VDIR)
 		pn_dir->pn_va.va_nlink--;
 	pn_file->pn_va.va_nlink--;
 	assert(pn_dir->pn_va.va_nlink >= 2);

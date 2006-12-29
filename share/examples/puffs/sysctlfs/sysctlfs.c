@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.9 2006/12/07 10:59:03 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.10 2006/12/29 15:37:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -34,9 +34,6 @@
  * XXXX: this is a very quick hack fs.  it's not even complete,
  * please don't use it as an example.  actually, this code is so bad that
  * it's nearly a laugh, it's nearly a laugh, but it's really a cry
- *
- * and The Final Cut: find /sysctl doesn't traverse the directories
- * correctly, but find -H /sysctl does.  *dumbfounded*.
  */
 
 #include <sys/types.h>
@@ -74,32 +71,33 @@ int
 main(int argc, char *argv[])
 {
 	struct puffs_usermount *pu;
-	struct puffs_ops pops;
+	struct puffs_ops *pops;
 
 	setprogname(argv[0]);
 
 	if (argc < 2)
-		errx(1, "usage: %s mountpath\n", getprogname());
+		errx(1, "usage: %s mountpath", getprogname());
 
-	PUFFSOP_INIT(&pops);
+	PUFFSOP_INIT(pops);
 
-	PUFFSOP_SET(&pops, sysctlfs, fs, mount);
-	PUFFSOP_SETFSNOP(&pops, unmount);
-	PUFFSOP_SETFSNOP(&pops, sync);
-	PUFFSOP_SETFSNOP(&pops, statvfs);
+	PUFFSOP_SET(pops, sysctlfs, fs, mount);
+	PUFFSOP_SETFSNOP(pops, unmount);
+	PUFFSOP_SETFSNOP(pops, sync);
+	PUFFSOP_SETFSNOP(pops, statvfs);
 
-	PUFFSOP_SET(&pops, sysctlfs, node, lookup);
-	PUFFSOP_SET(&pops, sysctlfs, node, getattr);
-	PUFFSOP_SET(&pops, sysctlfs, node, setattr);
-	PUFFSOP_SET(&pops, sysctlfs, node, readdir);
-	PUFFSOP_SET(&pops, sysctlfs, node, read);
-	PUFFSOP_SET(&pops, sysctlfs, node, write);
-	PUFFSOP_SET(&pops, sysctlfs, node, reclaim);
+	/* XXX: theoretically should support reclaim */
+	PUFFSOP_SET(pops, sysctlfs, node, lookup);
+	PUFFSOP_SET(pops, sysctlfs, node, getattr);
+	PUFFSOP_SET(pops, sysctlfs, node, setattr);
+	PUFFSOP_SET(pops, sysctlfs, node, readdir);
+	PUFFSOP_SET(pops, sysctlfs, node, read);
+	PUFFSOP_SET(pops, sysctlfs, node, write);
 
-	if ((pu = puffs_mount(&pops, argv[1], 0, "sysctlfs",
-	    PUFFS_KFLAG_NOCACHE, 0)) == NULL)
+	if ((pu = puffs_mount(pops, argv[1], 0, "sysctlfs", NULL,
+	    PUFFS_FLAG_OPDUMP, 0)) == NULL)
 		err(1, "mount");
 
+	puffs_setstacksize(pu, 1024*1024);
 	if (puffs_mainloop(pu, 0) == -1)
 		err(1, "mainloop");
 
@@ -107,7 +105,8 @@ main(int argc, char *argv[])
 }
 
 int
-sysctlfs_fs_mount(struct puffs_usermount *pu, void **rootcookie)
+sysctlfs_fs_mount(struct puffs_usermount *pu, void **rootcookie,
+	struct statvfs *sbp)
 {
 	struct timeval tv_now;
 
@@ -120,6 +119,8 @@ sysctlfs_fs_mount(struct puffs_usermount *pu, void **rootcookie)
 
 	gettimeofday(&tv_now, NULL);
 	TIMEVAL_TO_TIMESPEC(&tv_now, &fstime);
+
+	puffs_fsnop_statvfs(NULL, sbp, 0);
 
 	return 0;
 }
@@ -180,7 +181,7 @@ getlinks(struct sfsnode *sfs)
 		return 1;
 
 	memset(&qnode, 0, sizeof(qnode));
-	sl = 128 * sizeof(struct sysctlnode);
+	sl = sizeof(sn);
 	qnode.sysctl_flags = SYSCTL_VERSION;
 	sfs->name[sfs->hierlen] = CTL_QUERY;
 
@@ -205,7 +206,7 @@ getsize(struct sfsnode *sfs)
 
 /* fast & loose */
 int
-sysctlfs_node_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
+sysctlfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	enum vtype *newtype, voff_t *newsize, dev_t *newrdev,
 	const struct puffs_cn *pcn)
 {
@@ -265,7 +266,7 @@ sysctlfs_node_lookup(struct puffs_usermount *pu, void *opc, void **newnode,
 }
 
 int
-sysctlfs_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
+sysctlfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
 	const struct puffs_cred *pcr, pid_t pid)
 {
 	struct sfsnode *sfs = opc;
@@ -280,7 +281,6 @@ sysctlfs_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
 		va->va_mode = 0666;
 	}
 	va->va_nlink = getlinks(sfs);
-	va->va_fsid = pu->pu_fsidx.__fsid_val[0];
 	va->va_fileid = sfs->myid;
 	va->va_size = getsize(sfs);
 	va->va_gen = 1;
@@ -294,7 +294,7 @@ sysctlfs_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
 }
 
 int
-sysctlfs_node_setattr(struct puffs_usermount *pu, void *opc,
+sysctlfs_node_setattr(struct puffs_cc *pcc, void *opc,
 	const struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
 {
 
@@ -303,7 +303,7 @@ sysctlfs_node_setattr(struct puffs_usermount *pu, void *opc,
 }
 
 int
-sysctlfs_node_readdir(struct puffs_usermount *pu, void *opc,
+sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc,
 	struct dirent *dent, const struct puffs_cred *pcr,
 	off_t *readoff, size_t *reslen)
 {
@@ -346,7 +346,7 @@ sysctlfs_node_readdir(struct puffs_usermount *pu, void *opc,
 }
 
 int
-sysctlfs_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
+sysctlfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *pcr,
 	int ioflag)
 {
@@ -370,7 +370,7 @@ sysctlfs_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 }
 
 int
-sysctlfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
+sysctlfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *cred,
 	int ioflag)
 {
@@ -412,22 +412,5 @@ sysctlfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 		return rv;
 
 	*resid = 0;
-	return 0;
-}
-
-int
-sysctlfs_node_reclaim(struct puffs_usermount *pu, void *opc, pid_t pid)
-{
-	struct sfsnode *sfs = opc;
-
-	/*
-	 * refcount nodes so that we don't accidentally release dotdot
-	 * while we could still reference it in lookup
-	 */
-	if (--sfs->dotdot->refcount == 0)
-		free(sfs->dotdot);
-	if (--sfs->refcount == 0)
-		free(sfs);
-
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.11 2006/12/07 22:49:04 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.12 2006/12/29 15:37:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -56,7 +56,7 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-acds] mountpath", getprogname());
+	errx(1, "usage: %s [-abcds] mountpath", getprogname());
 }
 
 int
@@ -64,18 +64,22 @@ main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
+	struct dtfs_mount dtm;
 	struct puffs_usermount *pu;
-	struct puffs_ops pops;
+	struct puffs_ops *pops;
 	int pflags, lflags;
 	int ch;
 
 	setprogname(argv[0]);
 
 	pflags = lflags = 0;
-	while ((ch = getopt(argc, argv, "acds")) != -1) {
+	while ((ch = getopt(argc, argv, "abcds")) != -1) {
 		switch (ch) {
 		case 'a': /* all ops */
 			pflags |= PUFFS_KFLAG_ALLOPS;
+			break;
+		case 'b': /* build paths */
+			pflags |= PUFFS_FLAG_BUILDPATH;
 			break;
 		case 'c': /* no cache */
 			pflags |= PUFFS_KFLAG_NOCACHE;
@@ -97,32 +101,33 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	PUFFSOP_INIT(&pops);
+	PUFFSOP_INIT(pops);
 
-	PUFFSOP_SET(&pops, dtfs, fs, mount);
-	PUFFSOP_SET(&pops, dtfs, fs, statvfs);
-	PUFFSOP_SETFSNOP(&pops, unmount);
-	PUFFSOP_SETFSNOP(&pops, sync);
+	PUFFSOP_SET(pops, dtfs, fs, mount);
+	PUFFSOP_SET(pops, dtfs, fs, statvfs);
+	PUFFSOP_SETFSNOP(pops, unmount);
+	PUFFSOP_SETFSNOP(pops, sync);
 
-	PUFFSOP_SET(&pops, dtfs, node, lookup);
-	PUFFSOP_SET(&pops, dtfs, node, getattr);
-	PUFFSOP_SET(&pops, dtfs, node, setattr);
-	PUFFSOP_SET(&pops, dtfs, node, create);
-	PUFFSOP_SET(&pops, dtfs, node, remove);
-	PUFFSOP_SET(&pops, dtfs, node, readdir);
-	PUFFSOP_SET(&pops, dtfs, node, mkdir);
-	PUFFSOP_SET(&pops, dtfs, node, rmdir);
-	PUFFSOP_SET(&pops, dtfs, node, rename);
-	PUFFSOP_SET(&pops, dtfs, node, read);
-	PUFFSOP_SET(&pops, dtfs, node, write);
-	PUFFSOP_SET(&pops, dtfs, node, link);
-	PUFFSOP_SET(&pops, dtfs, node, symlink);
-	PUFFSOP_SET(&pops, dtfs, node, readlink);
-	PUFFSOP_SET(&pops, dtfs, node, mknod);
-	PUFFSOP_SET(&pops, dtfs, node, inactive);
-	PUFFSOP_SET(&pops, dtfs, node, reclaim);
+	PUFFSOP_SET(pops, dtfs, node, lookup);
+	PUFFSOP_SET(pops, dtfs, node, getattr);
+	PUFFSOP_SET(pops, dtfs, node, setattr);
+	PUFFSOP_SET(pops, dtfs, node, create);
+	PUFFSOP_SET(pops, dtfs, node, remove);
+	PUFFSOP_SET(pops, dtfs, node, readdir);
+	PUFFSOP_SET(pops, dtfs, node, mkdir);
+	PUFFSOP_SET(pops, dtfs, node, rmdir);
+	PUFFSOP_SET(pops, dtfs, node, rename);
+	PUFFSOP_SET(pops, dtfs, node, read);
+	PUFFSOP_SET(pops, dtfs, node, write);
+	PUFFSOP_SET(pops, dtfs, node, link);
+	PUFFSOP_SET(pops, dtfs, node, symlink);
+	PUFFSOP_SET(pops, dtfs, node, readlink);
+	PUFFSOP_SET(pops, dtfs, node, mknod);
+	PUFFSOP_SET(pops, dtfs, node, inactive);
+	PUFFSOP_SET(pops, dtfs, node, reclaim);
 
-	if ((pu = puffs_mount(&pops, argv[0], 0, FSNAME, pflags, 0)) == NULL)
+	if ((pu = puffs_mount(pops, argv[0], 0, FSNAME, &dtm, pflags, 0))
+	    == NULL)
 		err(1, "mount");
 
 	if (puffs_mainloop(pu, lflags) == -1)
