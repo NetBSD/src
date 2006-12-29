@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.16 2006/12/07 23:15:20 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.17 2006/12/29 15:28:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -42,6 +42,33 @@
 
 #include <fs/puffs/puffs_msgif.h>
 
+#include <string.h>
+
+/* forwards */
+struct puffs_cc;
+
+struct puffs_getreq;
+struct puffs_putreq;
+
+/* XXX: might disappear from here */
+struct puffs_node {
+	off_t		pn_size;
+	int		pn_flag;
+	struct vattr	pn_va;
+
+	void		*pn_data;		/* private data		*/
+
+	char 		*pn_path;		/* PUFFS_FLAG_BUILDPATH */
+	size_t		pn_plen;
+
+	struct puffs_usermount *pn_mnt;
+
+	LIST_ENTRY(puffs_node) pn_entries;
+};
+
+
+struct puffs_usermount;
+
 /*
  * megaXXX: these are values from inside _KERNEL
  * need to work on the translation for ALL the necessary values.
@@ -51,109 +78,105 @@
 #define PUFFS_IO_APPEND 0x20
 
 /*
- * puffs vnode, i.e. puffs_node
- *
- * This represents all the relevant fields from struct vnode.
- * This may some day become struct vnode, but let's keep it separate
- * for now.
- *
- * XXX: this is not finished
+ * Magic constants
  */
-struct puffs_node {
-	off_t		pn_size;
-	int		pn_flag;		/* struct vnode	flags	*/
-	void		*pn_data;		/* private data		*/
-	enum vtype	pn_type;
-	struct vattr	pn_va;			/* XXX: doesn't belong here*/
+#define PUFFS_CC_STACKSIZE_DEFAULT (16*1024)
 
-	struct puffs_usermount *pn_mnt;
+struct puffs_cn {
+	struct puffs_kcn	*pcn_pkcnp;	/* kernel input */
 
-	LIST_ENTRY(puffs_node) pn_entries;
+	/* XXX: this will be a more complex object some day */
+	char			*pcn_fullpath;	/* if PUFFS_FLAG_BUILDPATH */
+	size_t			pcn_fullplen;
 };
+#define pcn_nameiop	pcn_pkcnp->pkcn_nameiop
+#define pcn_flags	pcn_pkcnp->pkcn_flags
+#define pcn_pid		pcn_pkcnp->pkcn_pid
+#define pcn_cred	pcn_pkcnp->pkcn_cred
+#define pcn_name	pcn_pkcnp->pkcn_name
+#define pcn_namelen	pcn_pkcnp->pkcn_namelen
 
 /* callbacks for operations */
 struct puffs_ops {
-	int (*puffs_fs_mount)(struct puffs_usermount *, void **);
-	int (*puffs_fs_unmount)(struct puffs_usermount *, int, pid_t);
-	int (*puffs_fs_statvfs)(struct puffs_usermount *,
+	/*
+	 * XXX: mount does not currently allow for sleeping and therefore
+	 * cannot call any of the other backends with need cc context.
+	 * I hope to change this in the future after some restructuring.
+	 */
+	int (*puffs_fs_mount)(struct puffs_usermount *, void **,
+	    struct statvfs *);
+
+	int (*puffs_fs_unmount)(struct puffs_cc *, int, pid_t);
+	int (*puffs_fs_statvfs)(struct puffs_cc *,
 	    struct statvfs *, pid_t);
-	int (*puffs_fs_sync)(struct puffs_usermount *, int,
+	int (*puffs_fs_sync)(struct puffs_cc *, int,
 	    const struct puffs_cred *, pid_t);
 
-	int (*puffs_node_lookup)(struct puffs_usermount *,
+	int (*puffs_node_lookup)(struct puffs_cc *,
 	    void *, void **, enum vtype *, voff_t *, dev_t *,
 	    const struct puffs_cn *);
-	int (*puffs_node_create)(struct puffs_usermount *,
+	int (*puffs_node_create)(struct puffs_cc *,
 	    void *, void **, const struct puffs_cn *, const struct vattr *);
-	int (*puffs_node_mknod)(struct puffs_usermount *,
+	int (*puffs_node_mknod)(struct puffs_cc *,
 	    void *, void **, const struct puffs_cn *, const struct vattr *);
-	int (*puffs_node_open)(struct puffs_usermount *,
+	int (*puffs_node_open)(struct puffs_cc *,
 	    void *, int, const struct puffs_cred *, pid_t);
-	int (*puffs_node_close)(struct puffs_usermount *,
+	int (*puffs_node_close)(struct puffs_cc *,
 	    void *, int, const struct puffs_cred *, pid_t);
-	int (*puffs_node_access)(struct puffs_usermount *,
+	int (*puffs_node_access)(struct puffs_cc *,
 	    void *, int, const struct puffs_cred *, pid_t);
-	int (*puffs_node_getattr)(struct puffs_usermount *,
+	int (*puffs_node_getattr)(struct puffs_cc *,
 	    void *, struct vattr *, const struct puffs_cred *, pid_t);
-	int (*puffs_node_setattr)(struct puffs_usermount *,
+	int (*puffs_node_setattr)(struct puffs_cc *,
 	    void *, const struct vattr *, const struct puffs_cred *, pid_t);
-	int (*puffs_node_poll)(struct puffs_usermount *,
+	int (*puffs_node_poll)(struct puffs_cc *,
 	    void *, struct puffs_vnreq_poll *);
-	int (*puffs_node_revoke)(struct puffs_usermount *, void *, int);
-	int (*puffs_node_mmap)(struct puffs_usermount *,
+	int (*puffs_node_revoke)(struct puffs_cc *, void *, int);
+	int (*puffs_node_mmap)(struct puffs_cc *,
 	    void *, int, const struct puffs_cred *, pid_t);
-	int (*puffs_node_fsync)(struct puffs_usermount *,
+	int (*puffs_node_fsync)(struct puffs_cc *,
 	    void *, const struct puffs_cred *, int, off_t, off_t, pid_t);
-	int (*puffs_node_seek)(struct puffs_usermount *,
+	int (*puffs_node_seek)(struct puffs_cc *,
 	    void *, off_t, off_t, const struct puffs_cred *);
-	int (*puffs_node_remove)(struct puffs_usermount *,
+	int (*puffs_node_remove)(struct puffs_cc *,
 	    void *, void *, const struct puffs_cn *);
-	int (*puffs_node_link)(struct puffs_usermount *,
+	int (*puffs_node_link)(struct puffs_cc *,
 	    void *, void *, const struct puffs_cn *);
-	int (*puffs_node_rename)(struct puffs_usermount *,
+	int (*puffs_node_rename)(struct puffs_cc *,
 	    void *, void *, const struct puffs_cn *, void *, void *,
 	    const struct puffs_cn *);
-	int (*puffs_node_mkdir)(struct puffs_usermount *,
+	int (*puffs_node_mkdir)(struct puffs_cc *,
 	    void *, void **, const struct puffs_cn *, const struct vattr *);
-	int (*puffs_node_rmdir)(struct puffs_usermount *,
+	int (*puffs_node_rmdir)(struct puffs_cc *,
 	    void *, void *, const struct puffs_cn *);
-	int (*puffs_node_symlink)(struct puffs_usermount *,
+	int (*puffs_node_symlink)(struct puffs_cc *,
 	    void *, void **, const struct puffs_cn *, const struct vattr *,
 	    const char *);
-	int (*puffs_node_readdir)(struct puffs_usermount *,
+	int (*puffs_node_readdir)(struct puffs_cc *,
 	    void *, struct dirent *, const struct puffs_cred *,
 	    off_t *, size_t *);
-	int (*puffs_node_readlink)(struct puffs_usermount *,
+	int (*puffs_node_readlink)(struct puffs_cc *,
 	    void *, const struct puffs_cred *, char *, size_t *);
-	int (*puffs_node_reclaim)(struct puffs_usermount *,
+	int (*puffs_node_reclaim)(struct puffs_cc *,
 	    void *, pid_t);
-	int (*puffs_node_inactive)(struct puffs_usermount *,
+	int (*puffs_node_inactive)(struct puffs_cc *,
 	    void *, pid_t, int *);
-	int (*puffs_node_print)(struct puffs_usermount *,
+	int (*puffs_node_print)(struct puffs_cc *,
 	    void *);
-	int (*puffs_node_pathconf)(struct puffs_usermount *,
+	int (*puffs_node_pathconf)(struct puffs_cc *,
 	    void *, int, int *);
-	int (*puffs_node_advlock)(struct puffs_usermount *,
+	int (*puffs_node_advlock)(struct puffs_cc *,
 	    void *, void *, int, struct flock *, int);
-	int (*puffs_node_getextattr)(struct puffs_usermount *,
+	int (*puffs_node_getextattr)(struct puffs_cc *,
 	    void *, struct puffs_vnreq_getextattr *);
-	int (*puffs_node_setextattr)(struct puffs_usermount *,
+	int (*puffs_node_setextattr)(struct puffs_cc *,
 	    void *, struct puffs_vnreq_setextattr *);
-	int (*puffs_node_listextattr)(struct puffs_usermount *,
+	int (*puffs_node_listextattr)(struct puffs_cc *,
 	    void *, struct puffs_vnreq_listextattr *);
-	int (*puffs_node_read)(struct puffs_usermount *, void *,
+	int (*puffs_node_read)(struct puffs_cc *, void *,
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
-	int (*puffs_node_write)(struct puffs_usermount *, void *,
+	int (*puffs_node_write)(struct puffs_cc *, void *,
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
-
-	int (*puffs_node_ioctl1)(struct puffs_usermount *, void *,
-	    struct puffs_vnreq_fcnioctl *, struct puffs_sizeop *);
-	int (*puffs_node_ioctl2)(struct puffs_usermount *, void *,
-	    struct puffs_vnreq_fcnioctl *, struct puffs_sizeop *);
-	int (*puffs_node_fcntl1)(struct puffs_usermount *, void *,
-	    struct puffs_vnreq_fcnioctl *, struct puffs_sizeop *);
-	int (*puffs_node_fcntl2)(struct puffs_usermount *, void *,
-	    struct puffs_vnreq_fcnioctl *, struct puffs_sizeop *);
 };
 
 struct puffs_usermount {
@@ -162,9 +185,12 @@ struct puffs_usermount {
 	int			pu_fd;
 	uint32_t		pu_flags;
 	size_t			pu_maxreqlen;
+	size_t			pu_cc_stacksize;
 
-	struct puffs_node	*pu_rootnode;
-	const char *		pu_rootpath;
+	int			pu_state;
+
+	struct puffs_node	*pu_pn_root;
+
 	fsid_t			pu_fsidx;
 	LIST_HEAD(, puffs_node)	pu_pnodelst;
 
@@ -172,18 +198,16 @@ struct puffs_usermount {
 	void	*pu_privdata;
 };
 
+enum {
+	PUFFS_STATE_MOUNTING,	PUFFS_STATE_RUNNING,
+	PUFFS_STATE_UNMOUNTING,	PUFFS_STATE_UNMOUNTED
+};
+
 #define PUFFS_FLAG_KERN(a)	((a) & 0x0000ffff)
 #define PUFFS_FLAG_LIB(a)	((a) & 0xffff0000)
 
 #define PUFFS_FLAG_OPDUMP	0x80000000	/* dump all operations */
-
-struct puffs_usermount *puffs_mount(struct puffs_ops *, const char *, int,
-				    const char *, uint32_t, size_t);
-int		puffs_mainloop(struct puffs_usermount *, int);
-int		puffs_oneop(struct puffs_usermount *, uint8_t *, size_t);
-int		puffs_getselectable(struct puffs_usermount *);
-int		puffs_setblockingmode(struct puffs_usermount *, int);
-void		puffs_dummyops(struct puffs_ops *);
+#define PUFFS_FLAG_BUILDPATH	0x40000000	/* node paths in pnode */
 
 /* blocking mode argument */
 #define PUFFSDEV_BLOCK 0
@@ -192,14 +216,9 @@ void		puffs_dummyops(struct puffs_ops *);
 /* mainloop flags */
 #define PUFFSLOOP_NODAEMON 0x01
 
-struct puffs_node *	puffs_newpnode(struct puffs_usermount *, void *,
-				       enum vtype);
-void		puffs_putpnode(struct puffs_node *);
-void		puffs_setvattr(struct vattr *, const struct vattr *);
-
-int puffs_fsnop_unmount(struct puffs_usermount *, int, pid_t);
-int puffs_fsnop_statvfs(struct puffs_usermount *, struct statvfs *, pid_t);
-int puffs_fsnop_sync(struct puffs_usermount *, int waitfor,
+int puffs_fsnop_unmount(struct puffs_cc *, int, pid_t);
+int puffs_fsnop_statvfs(struct puffs_cc *, struct statvfs *, pid_t);
+int puffs_fsnop_sync(struct puffs_cc *, int waitfor,
 		      const struct puffs_cred *, pid_t);
 
 #define		DENT_DOT	0
@@ -233,108 +252,159 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 
 
 /*
- * Requests
+ * protos
  */
 
-struct puffs_getreq;
-struct puffs_putreq;
-
-struct puffs_getreq	*puffs_makegetreq(struct puffs_usermount *,
-					  uint8_t *, size_t, int);
-struct puffs_req	*puffs_getreq(struct puffs_getreq *);
-int			puffs_remaininggetreq(struct puffs_getreq *);
-void			puffs_destroygetreq(struct puffs_getreq *);
-
-struct puffs_putreq	*puffs_makeputreq(struct puffs_usermount *);
-void			puffs_putreq(struct puffs_putreq *, struct puffs_req *);
-int			puffs_putputreq(struct puffs_putreq *);
-void			puffs_destroyputreq(struct puffs_putreq *);
-
-
 #define PUFFSOP_PROTOS(fsname)						\
-	int fsname##_fs_mount(struct puffs_usermount *, void **);	\
-	int fsname##_fs_unmount(struct puffs_usermount *, int, pid_t);	\
-	int fsname##_fs_statvfs(struct puffs_usermount *,		\
+	int fsname##_fs_mount(struct puffs_usermount *, void **,	\
+	    struct statvfs *);						\
+	int fsname##_fs_unmount(struct puffs_cc *, int, pid_t);		\
+	int fsname##_fs_statvfs(struct puffs_cc *,			\
 	    struct statvfs *, pid_t);					\
-	int fsname##_fs_sync(struct puffs_usermount *, int,		\
+	int fsname##_fs_sync(struct puffs_cc *, int,			\
 	    const struct puffs_cred *cred, pid_t);			\
 									\
-	int fsname##_node_lookup(struct puffs_usermount *,		\
+	int fsname##_node_lookup(struct puffs_cc *,			\
 	    void *, void **, enum vtype *, voff_t *, dev_t *,		\
 	    const struct puffs_cn *);					\
-	int fsname##_node_create(struct puffs_usermount *,		\
+	int fsname##_node_create(struct puffs_cc *,			\
 	    void *, void **, const struct puffs_cn *,			\
 	    const struct vattr *);					\
-	int fsname##_node_mknod(struct puffs_usermount *,		\
+	int fsname##_node_mknod(struct puffs_cc *,			\
 	    void *, void **, const struct puffs_cn *,			\
 	    const struct vattr *);					\
-	int fsname##_node_open(struct puffs_usermount *,		\
+	int fsname##_node_open(struct puffs_cc *,			\
 	    void *, int, const struct puffs_cred *, pid_t);		\
-	int fsname##_node_close(struct puffs_usermount *,		\
+	int fsname##_node_close(struct puffs_cc *,			\
 	    void *, int, const struct puffs_cred *, pid_t);		\
-	int fsname##_node_access(struct puffs_usermount *,		\
+	int fsname##_node_access(struct puffs_cc *,			\
 	    void *, int, const struct puffs_cred *, pid_t);		\
-	int fsname##_node_getattr(struct puffs_usermount *,		\
+	int fsname##_node_getattr(struct puffs_cc *,			\
 	    void *, struct vattr *, const struct puffs_cred *, pid_t);	\
-	int fsname##_node_setattr(struct puffs_usermount *,		\
+	int fsname##_node_setattr(struct puffs_cc *,			\
 	    void *, const struct vattr *, const struct puffs_cred *,	\
 	    pid_t);							\
-	int fsname##_node_poll(struct puffs_usermount *,		\
+	int fsname##_node_poll(struct puffs_cc *,			\
 	    void *, struct puffs_vnreq_poll *);				\
-	int fsname##_node_revoke(struct puffs_usermount *, void *, int);\
-	int fsname##_node_mmap(struct puffs_usermount *,		\
+	int fsname##_node_revoke(struct puffs_cc *, void *, int);	\
+	int fsname##_node_mmap(struct puffs_cc *,			\
 	    void *, int, const struct puffs_cred *, pid_t);		\
-	int fsname##_node_fsync(struct puffs_usermount *,		\
+	int fsname##_node_fsync(struct puffs_cc *,			\
 	    void *, const struct puffs_cred *, int, off_t, off_t,	\
 	    pid_t);							\
-	int fsname##_node_seek(struct puffs_usermount *,		\
+	int fsname##_node_seek(struct puffs_cc *,			\
 	    void *, off_t, off_t, const struct puffs_cred *);		\
-	int fsname##_node_remove(struct puffs_usermount *,		\
+	int fsname##_node_remove(struct puffs_cc *,			\
 	    void *, void *, const struct puffs_cn *);			\
-	int fsname##_node_link(struct puffs_usermount *,		\
+	int fsname##_node_link(struct puffs_cc *,			\
 	    void *, void *, const struct puffs_cn *);			\
-	int fsname##_node_rename(struct puffs_usermount *,		\
+	int fsname##_node_rename(struct puffs_cc *,			\
 	    void *, void *, const struct puffs_cn *, void *, void *,	\
 	    const struct puffs_cn *);					\
-	int fsname##_node_mkdir(struct puffs_usermount *,		\
+	int fsname##_node_mkdir(struct puffs_cc *,			\
 	    void *, void **, const struct puffs_cn *,			\
 	    const struct vattr *);					\
-	int fsname##_node_rmdir(struct puffs_usermount *,		\
+	int fsname##_node_rmdir(struct puffs_cc *,			\
 	    void *, void *, const struct puffs_cn *);			\
-	int fsname##_node_symlink(struct puffs_usermount *,		\
+	int fsname##_node_symlink(struct puffs_cc *,			\
 	    void *, void **, const struct puffs_cn *,			\
 	    const struct vattr *, const char *);			\
-	int fsname##_node_readdir(struct puffs_usermount *,		\
+	int fsname##_node_readdir(struct puffs_cc *,			\
 	    void *, struct dirent *, const struct puffs_cred *,		\
 	    off_t *, size_t *);						\
-	int fsname##_node_readlink(struct puffs_usermount *,		\
+	int fsname##_node_readlink(struct puffs_cc *,			\
 	    void *, const struct puffs_cred *, char *, size_t *);	\
-	int fsname##_node_reclaim(struct puffs_usermount *,		\
+	int fsname##_node_reclaim(struct puffs_cc *,			\
 	    void *, pid_t);						\
-	int fsname##_node_inactive(struct puffs_usermount *,		\
+	int fsname##_node_inactive(struct puffs_cc *,			\
 	    void *, pid_t, int *);					\
-	int fsname##_node_print(struct puffs_usermount *,		\
+	int fsname##_node_print(struct puffs_cc *,			\
 	    void *);							\
-	int fsname##_node_pathconf(struct puffs_usermount *,		\
+	int fsname##_node_pathconf(struct puffs_cc *,			\
 	    void *, int, int *);					\
-	int fsname##_node_advlock(struct puffs_usermount *,		\
+	int fsname##_node_advlock(struct puffs_cc *,			\
 	    void *, void *, int, struct flock *, int);			\
-	int fsname##_node_getextattr(struct puffs_usermount *,		\
+	int fsname##_node_getextattr(struct puffs_cc *,			\
 	    void *, struct puffs_vnreq_getextattr *);			\
-	int fsname##_node_setextattr(struct puffs_usermount *,		\
+	int fsname##_node_setextattr(struct puffs_cc *,			\
 	    void *, struct puffs_vnreq_setextattr *);			\
-	int fsname##_node_listextattr(struct puffs_usermount *,		\
+	int fsname##_node_listextattr(struct puffs_cc *,		\
 	    void *, struct puffs_vnreq_listextattr *);			\
-	int fsname##_node_read(struct puffs_usermount *, void *,	\
+	int fsname##_node_read(struct puffs_cc *, void *,		\
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);\
-	int fsname##_node_write(struct puffs_usermount *, void *,	\
+	int fsname##_node_write(struct puffs_cc *, void *,		\
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
 
 #define PUFFSOP_INIT(ops)						\
+    ops = malloc(sizeof(struct puffs_ops));				\
     memset(ops, 0, sizeof(struct puffs_ops))
 #define PUFFSOP_SET(ops, fsname, fsornode, opname)			\
     (ops)->puffs_##fsornode##_##opname = fsname##_##fsornode##_##opname
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
+
+
+__BEGIN_DECLS
+
+struct puffs_usermount *puffs_mount(struct puffs_ops *, const char *, int,
+				    const char *, void *, uint32_t, size_t);
+int		puffs_mainloop(struct puffs_usermount *, int);
+
+
+int	puffs_getselectable(struct puffs_usermount *);
+int	puffs_setblockingmode(struct puffs_usermount *, int);
+int	puffs_getstate(struct puffs_usermount *);
+int	puffs_setrootpath(struct puffs_usermount *, const char *);
+void	puffs_setstacksize(struct puffs_usermount *, size_t);
+
+struct puffs_node *	puffs_pn_new(struct puffs_usermount *, void *);
+void			puffs_pn_put(struct puffs_node *);
+struct vattr 		*puffs_pn_getvattrp(struct puffs_node *);
+void			puffs_setvattr(struct vattr *, const struct vattr *);
+void			puffs_vattr_null(struct vattr *);
+
+/*
+ * Requests
+ */
+
+struct puffs_getreq	*puffs_makegetreq(struct puffs_usermount *,
+					  size_t, int);
+int			puffs_loadgetreq(struct puffs_getreq *);
+struct puffs_req	*puffs_getreq(struct puffs_getreq *);
+int			puffs_remaininggetreq(struct puffs_getreq *);
+void			puffs_setmaxgetreq(struct puffs_getreq *, int);
+void			puffs_destroygetreq(struct puffs_getreq *);
+
+struct puffs_putreq	*puffs_makeputreq(struct puffs_usermount *);
+void			puffs_putreq(struct puffs_putreq *, struct puffs_req *);
+void			puffs_putreq_cc(struct puffs_putreq *,struct puffs_cc*);
+int			puffs_putputreq(struct puffs_putreq *);
+void			puffs_resetputreq(struct puffs_putreq *);
+void			puffs_destroyputreq(struct puffs_putreq *);
+
+/*
+ * Call Context interfaces relevant for user.
+ */
+
+void			puffs_cc_yield(struct puffs_cc *);
+void			puffs_cc_continue(struct puffs_cc *);
+
+void			*puffs_cc_getpriv(struct puffs_cc *);
+void			puffs_cc_setpriv(struct puffs_cc *, void *, int);
+
+struct puffs_usermount	*puffs_cc_getusermount(struct puffs_cc *);
+
+/*
+ * Execute or continue a request
+ */
+
+int	puffs_handlereqs(struct puffs_usermount *, struct puffs_getreq *,
+			 struct puffs_putreq *, int);
+
+int	puffs_dopreq(struct puffs_usermount *, struct puffs_putreq *,
+		     struct puffs_req *);
+int	puffs_docc(struct puffs_putreq *, struct puffs_cc *);
+
+__END_DECLS
 
 #endif /* _PUFFS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.10 2006/12/07 10:53:21 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.11 2006/12/29 15:28:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.10 2006/12/07 10:53:21 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.11 2006/12/29 15:28:11 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -43,44 +43,8 @@ __RCSID("$NetBSD: subr.c,v 1.10 2006/12/07 10:53:21 pooka Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
-/*
- * Well, you're probably wondering why this isn't optimized.
- * The reason is simple: my available time is not optimized for
- * size ... so please be patient ;)
- */
-struct puffs_node *
-puffs_newpnode(struct puffs_usermount *puser, void *privdata, enum vtype type)
-{
-	struct puffs_node *pn;
-
-	pn = calloc(1, sizeof(struct puffs_node));
-	if (pn == NULL)
-		return NULL;
-
-	pn->pn_mnt = puser;
-	pn->pn_data = privdata;
-	pn->pn_type = type;
-
-	/* technically not needed */
-	memset(&pn->pn_va, 0, sizeof(struct vattr));
-	pn->pn_va.va_type = type;
-
-	LIST_INSERT_HEAD(&puser->pu_pnodelst, pn, pn_entries);
-
-	return pn;
-}
-
-void
-puffs_putpnode(struct puffs_node *pn)
-{
-
-	if (pn == NULL)
-		return;
-
-	LIST_REMOVE(pn, pn_entries);
-	free(pn);
-}
 
 int
 puffs_gendotdent(struct dirent **dent, ino_t id, int dotdot, size_t *reslen)
@@ -118,7 +82,7 @@ puffs_nextdent(struct dirent **dent, const char *name, ino_t id, uint8_t dtype,
 
 /*ARGSUSED*/
 int
-puffs_fsnop_unmount(struct puffs_usermount *pu, int flags, pid_t pid)
+puffs_fsnop_unmount(struct puffs_cc *dontuse1, int dontuse2, pid_t dontuse3)
 {
 
 	/* would you like to see puffs rule again, my friend? */
@@ -127,8 +91,8 @@ puffs_fsnop_unmount(struct puffs_usermount *pu, int flags, pid_t pid)
 
 /*ARGSUSED*/
 int
-puffs_fsnop_sync(struct puffs_usermount *pu, int waitfor,
-	const struct puffs_cred *cred, pid_t pid)
+puffs_fsnop_sync(struct puffs_cc *dontuse1, int dontuse2,
+	const struct puffs_cred *dontuse3, pid_t dontuse4)
 {
 
 	return 0;
@@ -136,20 +100,20 @@ puffs_fsnop_sync(struct puffs_usermount *pu, int waitfor,
 
 /*ARGSUSED*/
 int
-puffs_fsnop_statvfs(struct puffs_usermount *pu, struct statvfs *sbp, pid_t pid)
+puffs_fsnop_statvfs(struct puffs_cc *dontuse1, struct statvfs *sbp,
+	pid_t dontuse2)
 {
 
 	sbp->f_bsize = sbp->f_frsize = sbp->f_iosize = 512;
 
 	sbp->f_bfree=sbp->f_bavail=sbp->f_bresvd=sbp->f_blocks = (fsblkcnt_t)0;
 	sbp->f_ffree=sbp->f_favail=sbp->f_fresvd=sbp->f_files = (fsfilcnt_t)0;
-	sbp->f_fsidx = pu->pu_fsidx;
 
 	return 0;
 }
 
 /*
- * Set vattr values for those applicable (i.e. not PUFFS_VNOVAL).
+ * Set vattr values for those applicable (i.e. not PUFFS_PUFFS_VNOVAL).
  */
 void
 puffs_setvattr(struct vattr *vap, const struct vattr *sva)
@@ -164,6 +128,7 @@ puffs_setvattr(struct vattr *vap, const struct vattr *sva)
 	SETIFVAL(va_gid, gid_t);
 	SETIFVAL(va_fsid, long);
 	SETIFVAL(va_size, u_quad_t);
+	SETIFVAL(va_fileid, ino_t);
 	SETIFVAL(va_blocksize, long);
 	SETIFVAL(va_atime.tv_sec, time_t);
 	SETIFVAL(va_ctime.tv_sec, time_t);
@@ -181,6 +146,39 @@ puffs_setvattr(struct vattr *vap, const struct vattr *sva)
 	/* ignore va->va_vaflags */
 }
 
+void
+puffs_vattr_null(struct vattr *vap)
+{
+
+	vap->va_type = VNON;
+
+	/*
+	 * Assign individually so that it is safe even if size and
+	 * sign of each member are varied.
+	 */
+	vap->va_mode = (mode_t)PUFFS_VNOVAL;
+	vap->va_nlink = (nlink_t)PUFFS_VNOVAL;
+	vap->va_uid = (uid_t)PUFFS_VNOVAL;
+	vap->va_gid = (gid_t)PUFFS_VNOVAL;
+	vap->va_fsid = PUFFS_VNOVAL;
+	vap->va_fileid = (ino_t)PUFFS_VNOVAL;
+	vap->va_size = (u_quad_t)PUFFS_VNOVAL;
+	vap->va_blocksize = sysconf(_SC_PAGESIZE);
+	    vap->va_atime.tv_sec =
+	    vap->va_mtime.tv_sec =
+	    vap->va_ctime.tv_sec =
+	vap->va_birthtime.tv_sec = PUFFS_VNOVAL;
+	    vap->va_atime.tv_nsec =
+	    vap->va_mtime.tv_nsec =
+	    vap->va_ctime.tv_nsec =
+	vap->va_birthtime.tv_nsec = PUFFS_VNOVAL;
+	vap->va_rdev = (dev_t)PUFFS_VNOVAL;
+	vap->va_bytes = (u_quad_t)PUFFS_VNOVAL;
+
+	vap->va_flags = 0;
+	vap->va_gen = 0;
+	vap->va_vaflags = 0;
+}
 
 static int vdmap[] = {
 	DT_UNKNOWN,	/* VNON */
