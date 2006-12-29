@@ -1,3 +1,4 @@
+/* $NetBSD: if_srt.c,v 1.2 2006/12/29 10:40:48 wiz Exp $ */
 /* This file is in the public domain. */
 
 #include "opt_inet.h"
