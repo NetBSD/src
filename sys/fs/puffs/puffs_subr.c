@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.11 2006/12/05 23:41:24 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.12 2006/12/29 15:38:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.11 2006/12/05 23:41:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.12 2006/12/29 15:38:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -277,17 +277,17 @@ puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie)
 }
 
 void
-puffs_makecn(struct puffs_cn *pcn, const struct componentname *cn)
+puffs_makecn(struct puffs_kcn *pkcn, const struct componentname *cn)
 {
 
-	pcn->pcn_nameiop = cn->cn_nameiop;
-	pcn->pcn_flags = cn->cn_flags;
-	pcn->pcn_pid = cn->cn_lwp->l_proc->p_pid;
-	puffs_credcvt(&pcn->pcn_cred, cn->cn_cred);
+	pkcn->pkcn_nameiop = cn->cn_nameiop;
+	pkcn->pkcn_flags = cn->cn_flags;
+	pkcn->pkcn_pid = cn->cn_lwp->l_proc->p_pid;
+	puffs_credcvt(&pkcn->pkcn_cred, cn->cn_cred);
 
-	(void)memcpy(&pcn->pcn_name, cn->cn_nameptr, cn->cn_namelen);
-	pcn->pcn_name[cn->cn_namelen] = '\0';
-	pcn->pcn_namelen = cn->cn_namelen;
+	(void)memcpy(&pkcn->pkcn_name, cn->cn_nameptr, cn->cn_namelen);
+	pkcn->pkcn_name[cn->cn_namelen] = '\0';
+	pkcn->pkcn_namelen = cn->cn_namelen;
 }
 
 /*
