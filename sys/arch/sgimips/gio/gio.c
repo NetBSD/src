@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.24 2006/12/29 00:41:11 rumble Exp $	*/
+/*	$NetBSD: gio.c,v 1.25 2006/12/29 00:42:01 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.24 2006/12/29 00:41:11 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.25 2006/12/29 00:42:01 rumble Exp $");
 
 #include "opt_ddb.h"
 
@@ -62,6 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.24 2006/12/29 00:41:11 rumble Exp $");
 
 #if (NGRTWO > 0)
 #include <sgimips/gio/grtwovar.h>
+#endif
+
+#if (NLIGHT > 0)
+#include <sgimips/gio/lightvar.h>
 #endif
 
 #if (NIMC > 0)
@@ -376,6 +380,11 @@ gio_cnattach()
 
 #if (NGRTWO > 0)
 		if (grtwo_cnattach(&ga) == 0)
+			return 0;
+#endif
+
+#if (NLIGHT > 0)
+		if (light_cnattach(&ga) == 0)
 			return 0;
 #endif
 
