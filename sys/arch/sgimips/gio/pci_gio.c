@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.3 2006/12/22 22:42:47 rumble Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.4 2006/12/29 00:04:20 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.3 2006/12/22 22:42:47 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.4 2006/12/29 00:04:20 rumble Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -35,9 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.3 2006/12/22 22:42:47 rumble Exp $");
  *	o Phobos G100/G130/G160	(if_tlp, lxtphy)
  *	o Set Engineering GFE	(if_tl, nsphy)
  *
- * XXX - G100 and G160 are untested. The former may use an older chipset,
- * (21140, I think) though the latter should be essentially identical to
- * the G130.
+ * XXX - G100 is untested. It may use an older chipset -- 21140, I think.
  */
 
 #include "opt_pci.h"
@@ -174,6 +172,13 @@ giopci_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	case SETENG_GFE:
+		/*
+		 * NB: The SetEng board does not allow the ThunderLAN's DMA
+		 *     engine to properly transfer segments that span page
+		 *     boundaries. See sgimips/autoconf.c where we catch a
+		 *     tl(4) device attachment and create an appropriate
+		 *     proplib entry to enable the workaround.
+		 */
 		pci_off = SETENG_PCI_OFFSET;
 		pci_len = SETENG_PCI_LENGTH;
 		m_start = MIPS_KSEG1_TO_PHYS(ga->ga_addr + SETENG_TLAN_START);
