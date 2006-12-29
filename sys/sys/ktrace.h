@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.43.20.1 2006/11/18 21:39:46 ad Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.43.20.2 2006/12/29 20:27:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -83,7 +83,7 @@ struct ktr_header {
  * Test for kernel trace point
  */
 #define KTRPOINT(p, type)	\
-	(((p)->p_traceflag & ((1<<(type))|KTRFAC_ACTIVE)) == (1<<(type)))
+	(((p)->p_traceflag & (1<<(type))) != 0)
 
 /*
  * ktrace record types
@@ -254,7 +254,6 @@ struct ktr_saupcall {
  */
 #define KTRFAC_ROOT	0x80000000	/* root set this trace */
 #define KTRFAC_INHERIT	0x40000000	/* pass trace flags to children */
-#define KTRFAC_ACTIVE	0x20000000	/* ktrace logging in progress, ignore */
 #define KTRFAC_TRC_EMUL	0x10000000	/* ktrace KTR_EMUL before next trace */
 #define	KTRFAC_VER_MASK	0x0f000000	/* record version mask */
 #define	KTRFAC_VER_SHIFT	24	/* record version shift */
@@ -276,6 +275,7 @@ __END_DECLS
 
 #else
 
+void ktrinit(void);
 void ktrcsw(struct lwp *, int, int);
 void ktremul(struct lwp *);
 void ktrgenio(struct lwp *, int, enum uio_rw, struct iovec *, int, int);
@@ -293,6 +293,8 @@ void ktrsaupcall(struct lwp *, int, int, int, void *, void *);
 
 void ktrderef(struct proc *);
 void ktradref(struct proc *);
+
+extern kmutex_t ktrace_mutex;
 
 #endif	/* !_KERNEL */
 

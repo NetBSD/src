@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.276.4.4 2006/11/18 21:39:21 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.276.4.5 2006/12/29 20:27:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.4 2006/11/18 21:39:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.5 2006/12/29 20:27:43 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.4 2006/11/18 21:39:21 ad Exp $
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
 #include "opt_fileassoc.h"
+#include "opt_ktrace.h"
 
 #include "rnd.h"
 #include "veriexec.h"
@@ -145,6 +146,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.4 2006/11/18 21:39:21 ad Exp $
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 #include <sys/lockdebug.h>
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
@@ -425,6 +429,11 @@ main(void)
 	/* Kick off timeout driven events by calling first time. */
 	schedcpu(NULL);
 
+#ifdef KTRACE
+	/* Initialize ktrace. */
+	ktrinit();
+#endif
+
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has
 	 * historically had init be process 1, and changing this would
@@ -527,8 +536,7 @@ main(void)
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
-			if (l->l_cpu != NULL)
-				l->l_cpu->ci_schedstate.spc_runtime = time;
+			l->l_cpu->ci_schedstate.spc_runtime = time;
 			l->l_rtime.tv_sec = l->l_rtime.tv_usec = 0;
 			lwp_unlock(l);
 		}

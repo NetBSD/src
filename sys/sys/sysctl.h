@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.156.2.1 2006/11/18 21:39:47 ad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.156.2.2 2006/12/29 20:27:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -563,6 +563,40 @@ struct kinfo_proc2 {
 	uint32_t p_svgid;		/* GID_T: saved group id */
 	char p_ename[KI_MAXEMULLEN];	/* emulation name */
 };
+
+/*
+ * Compat flags for kinfo_proc, kinfo_proc2.  Not guarenteed to be stable.
+ * XXXAD Trim to the minimum necessary...
+ */
+
+#define	KP_ADVLOCK		0x00000001
+#define	KP_CONTROLT		0x00000002
+#define	KP_INMEM		0x00000004
+#define	KP_NOCLDSTOP		0x00000008
+#define	KP_PPWAIT		0x00000010
+#define	KP_PROFIL		0x00000020
+#define	KP_SELECT		0x00000040
+#define	KP_SINTR		0x00000080
+#define	KP_SUGID		0x00000100
+#define	KP_SYSTEM		0x00000200
+#define	KP_SA			0x00000400
+#define	KP_TRACED		0x00000800
+#define	KP_WAITED		0x00001000
+#define	KP_WEXIT		0x00002000
+#define	KP_EXEC			0x00004000
+#define	KP_OWEUPC		0x00008000
+#define	KP_FSTRACE		0x00010000
+#define	KP_NOCLDWAIT		0x00020000
+#define	KP_32			0x00040000
+#define	KP_CLDSIGIGN		0x00080000
+#define	KP_SYSTRACE		0x00200000
+#define	KP_CHTRACED		0x00400000
+#define	KP_STOPFORK		0x00800000
+#define	KP_STOPEXEC		0x01000000
+#define	KP_STOPEXIT		0x02000000
+#define	KP_SYSCALL		0x04000000
+#define	KP_PAXMPROTECT		0x08000000
+#define	KP_PAXNOMPROTECT	0x10000000
 
 /*
  * KERN_LWP structure. See notes on KERN_PROC2 about adding elements.

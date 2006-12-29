@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.188.4.2 2006/11/18 21:39:47 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.188.4.3 2006/12/29 20:27:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -221,6 +221,8 @@ void	twiddle(void);
 void	panic(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));
 void	uprintf(const char *, ...)
+    __attribute__((__format__(__printf__,1,2)));
+void	uprintf_locked(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 void	ttyprintf(struct tty *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));

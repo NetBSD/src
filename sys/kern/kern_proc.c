@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.94.4.6 2006/11/18 21:39:22 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94.4.7 2006/12/29 20:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.6 2006/11/18 21:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.7 2006/12/29 20:27:44 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -111,7 +111,7 @@ struct proclist allproc;
 struct proclist zombproc;	/* resources have been freed */
 
 /*
- * There are three locks on global process state.
+ * There are two locks on global process state.
  *
  * 1. proclist_lock is a reader/writer lock and is used when modifying or
  * examining process state from a process context.  It protects our internal
@@ -122,22 +122,20 @@ struct proclist zombproc;	/* resources have been freed */
  * interrupt context, or when we must signal processes from an interrupt
  * context.  The proclist_lock should always be used in preference.
  *
- * 3. alllwp_mutex protects the "alllwp" list.
- *
- *	proclist_lock	proclist_mutex	alllwp_mutex	structure
- *	--------------- --------------- --------------- -----------------
- *	x						zombproc
- *	x		x				pid_table
- *	x						proc::p_pptr
- *	x						proc::p_sibling
- *	x						proc::p_children
- *	x		x				allproc
- *	x		x				proc::p_pgrp
- *	x		x				proc::p_pglist
- *	x		x				proc::p_session
- *	x		x				proc::p_list
- *					x		alllwp
- *					x		lwp::l_list
+ *	proclist_lock	proclist_mutex	structure
+ *	--------------- --------------- -----------------
+ *	x				zombproc
+ *	x		x		pid_table
+ *	x				proc::p_pptr
+ *	x				proc::p_sibling
+ *	x				proc::p_children
+ *	x		x		allproc
+ *	x		x		proc::p_pgrp
+ *	x		x		proc::p_pglist
+ *	x		x		proc::p_session
+ *	x		x		proc::p_list
+ *			x		alllwp
+ *			x		lwp::l_list
  *
  * The lock order for processes and LWPs is apporoximately as following:
  *
@@ -146,13 +144,9 @@ struct proclist zombproc;	/* resources have been freed */
  *    -> proclist_mutex
  *	-> proc::p_mutex
  *         -> proc::p_smutex
- *	      -> alllwp_mutex
- * 	         -> lwp::l_mutex
- *	            -> sched_mutex
  */
 krwlock_t	proclist_lock;
 kmutex_t	proclist_mutex;
-kmutex_t	proc_stop_mutex;
 
 /*
  * pid to proc lookup is done by indexing the pid_table array.
@@ -259,9 +253,6 @@ procinit(void)
 
 	rw_init(&proclist_lock);
 	mutex_init(&proclist_mutex, MUTEX_SPIN, IPL_SCHED);
-	mutex_init(&alllwp_mutex, MUTEX_SPIN, IPL_SCHED);
-	mutex_init(&lwp_mutex, MUTEX_SPIN, IPL_SCHED);
-	mutex_init(&proc_stop_mutex, MUTEX_SPIN, IPL_NONE);
 
 	pid_table = malloc(INITIAL_PID_TABLE_SIZE * sizeof *pid_table,
 			    M_PROC, M_WAITOK);
@@ -308,10 +299,12 @@ proc0_init(void)
 	l = &lwp0;
 
 	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&p->p_stmutex, MUTEX_SPIN, IPL_STATCLOCK);
 	mutex_init(&p->p_rasmutex, MUTEX_SPIN, IPL_NONE);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&p->p_refcv, "drainref");
 	cv_init(&p->p_waitcv, "wait");
+	cv_init(&p->p_lwpcv, "lwpwait");
 
 	LIST_INIT(&p->p_lwps);
 	LIST_INIT(&p->p_sigwaiters);
@@ -349,16 +342,13 @@ proc0_init(void)
 #endif
 	strncpy(p->p_comm, "swapper", MAXCOMLEN);
 
-#ifdef MULTIPROCESSOR
-	l->l_mutex = &lwp_mutex;
-#else
 	l->l_mutex = &sched_mutex;
-#endif
 	l->l_flag = L_INMEM | L_SYSTEM;
 	l->l_stat = LSONPROC;
 	l->l_ts = &turnstile0;
 	l->l_syncobj = &sched_syncobj;
 	l->l_refcnt = 1;
+	l->l_cpu = curcpu();
 
 	callout_init(&l->l_tsleep_ch);
 
@@ -479,10 +469,12 @@ p_find(pid_t pid, uint flags)
 		rw_enter(&proclist_lock, RW_READER);
 
 	p = pid_table[pid & pid_tbl_mask].pt_proc;
+
 	/* Only allow live processes to be found by pid. */
-	if (P_VALID(p) && p->p_pid == pid &&
-	    ((stat = p->p_stat) == SACTIVE || stat == SSTOP
-		    || (stat == SZOMB && (flags & PFIND_ZOMBIE)))) {
+	/* XXXSMP p_stat */
+	if (P_VALID(p) && p->p_pid == pid && ((stat = p->p_stat) == SACTIVE ||
+	    stat == SSTOP || ((flags & PFIND_ZOMBIE) &&
+	    (stat == SZOMB || stat == SDEAD || stat == SDYING)))) {
 		if (flags & PFIND_UNLOCK_OK)
 			 rw_exit(&proclist_lock);
 		return p;
@@ -1381,7 +1373,7 @@ proc_delref(struct proc *p)
 
 	if (p->p_refcnt < 0) {
 		if (++p->p_refcnt == 0)
-			cv_signal(&p->p_refcv);
+			cv_broadcast(&p->p_refcv);
 	} else {
 		p->p_refcnt--;
 		KASSERT(p->p_refcnt != 0);

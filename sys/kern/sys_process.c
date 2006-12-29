@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.110.2.4 2006/11/18 21:39:23 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.110.2.5 2006/12/29 20:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.4 2006/11/18 21:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.5 2006/12/29 20:27:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,9 +167,10 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	 * Grab a reference on the process to prevent it from execing or
 	 * exiting.
 	 */
-	mutex_enter(&p->p_mutex);
-	error = proc_addref(p);
+	mutex_enter(&t->p_mutex);
+	error = proc_addref(t);
 	if (error != 0) {
+		mutex_exit(&t->p_mutex);
 		rw_exit(&proclist_lock);
 		return error;
 	}
@@ -305,9 +306,9 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		/*
 		 *	(4) it's not currently stopped.
 		 */
-		if (t->p_stat != SSTOP || !ISSET(t->p_lflag, PL_WAITED)) {
+		if (t->p_stat != SSTOP || !t->p_waited /* XXXSMP */) {
 			uprintf("stat %d flag %d\n", t->p_stat,
-			    !ISSET(t->p_lflag, PL_WAITED));
+			    !t->p_waited);
 			error = EBUSY;
 			break;
 		}
@@ -320,7 +321,8 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 	if (error != 0) {
 		rw_exit(&proclist_lock);
-		mutex_exit(&p->p_mutex);
+		proc_delref(t);
+		mutex_exit(&t->p_mutex);
 		return error;
 	}
 
@@ -340,7 +342,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		break;
 	default:
 		rw_exit(&proclist_lock);
-		mutex_exit(&p->p_mutex);
+		mutex_exit(&t->p_mutex);
 		pheld = 0;
 		break;
 	}
@@ -356,11 +358,10 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	 * this; memory access will be fine, but register access will
 	 * be weird.
 	 */
-	mutex_enter(&p->p_smutex);
+	mutex_enter(&t->p_smutex);
 	lt = proc_representative_lwp(t, NULL, 1);
 	lwp_addref(lt);
-	lwp_unlock(lt);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(&t->p_smutex);
 
 	/* Now do the operation. */
 	write = 0;
@@ -370,9 +371,9 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	switch (req) {
 	case  PT_TRACE_ME:
 		/* Just set the trace flag. */
-		mutex_enter(&p->p_smutex);
+		mutex_enter(&t->p_smutex);
 		SET(t->p_slflag, PSL_TRACED);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(&t->p_smutex);
 		t->p_opptr = t->p_pptr;
 		break;
 
@@ -477,7 +478,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	case  PT_CONTINUE:
 	case  PT_SYSCALL:
 	case  PT_DETACH:
-		mutex_enter(&p->p_smutex);
+		mutex_enter(&t->p_smutex);
 		if (req == PT_SYSCALL) {
 			if (!ISSET(t->p_slflag, PSL_SYSCALL)) {
 				SET(t->p_slflag, PSL_SYSCALL);
@@ -493,7 +494,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 #endif
 			}
 		}
-		mutex_exit(&p->p_smutex);
+		mutex_exit(&t->p_smutex);
 
 		/*
 		 * From the 4.4BSD PRM:
@@ -536,9 +537,9 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		PRELE(lt);
 
 		if (req == PT_DETACH) {
-			mutex_enter(&p->p_smutex);
+			mutex_enter(&t->p_smutex);
 			CLR(t->p_slflag, PSL_TRACED|PSL_FSTRACE|PSL_SYSCALL);
-			mutex_exit(&p->p_smutex);
+			mutex_exit(&t->p_smutex);
 
 			/* give process back to original parent or init */
 			if (t->p_opptr != t->p_pptr) {
@@ -548,7 +549,6 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 			/* not being traced any more */
 			t->p_opptr = NULL;
-			t->p_lflag &= ~PL_WAITED;
 		}
 
 	sendsig:
@@ -561,12 +561,15 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			 * an LWP runs to see it.
 			 */
 			t->p_xstat = SCARG(uap, data);
-			proc_unstop(t, t->p_xstat != 0);
+			proc_unstop(t);
 			mutex_exit(&t->p_smutex);
 		} else {
 			mutex_exit(&t->p_smutex);
-			if (SCARG(uap, data) != 0)
+			if (SCARG(uap, data) != 0) {
+				mutex_enter(&proclist_mutex);
 				psignal(t, SCARG(uap, data));
+				mutex_exit(&proclist_mutex);
+			}
 		}
 		break;
 
@@ -607,14 +610,13 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			break;
 		tmp = pl.pl_lwpid;
 		lwp_delref(lt);
-		mutex_enter(&p->p_smutex);
-		if (tmp == 0) {
+		mutex_enter(&t->p_smutex);
+		if (tmp == 0)
 			lt = LIST_FIRST(&t->p_lwps);
-			lwp_lock(lt);
-		} else {
-			lt = lwp_byid(p, tmp);
+		else {
+			lt = lwp_find(p, tmp);
 			if (lt == NULL) {
-				mutex_exit(&p->p_smutex);
+				mutex_exit(&t->p_smutex);
 				error = ESRCH;
 				break;
 			}
@@ -626,8 +628,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			if (lt->l_lid == t->p_sigctx.ps_lwp)
 				pl.pl_event = PL_EVENT_SIGNAL;
 		}
-		lwp_unlock(lt);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(&t->p_smutex);
 
 		error = copyout(&pl, SCARG(uap, addr), sizeof(pl));
 		break;
@@ -644,16 +645,15 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		tmp = SCARG(uap, data);
 		if (tmp != 0 && t->p_nlwps > 1) {
 			lwp_delref(lt);
-			mutex_enter(&p->p_smutex);
-			lt = lwp_byid(p, tmp);
+			mutex_enter(&t->p_smutex);
+			lt = lwp_find(t, tmp);
 			if (lt == NULL) {
-				mutex_exit(&p->p_smutex);
+				mutex_exit(&t->p_smutex);
 				error = ESRCH;
 				break;
 			}
 			lwp_addref(lt);
-			lwp_unlock(lt);
-			mutex_exit(&p->p_smutex);
+			mutex_exit(&t->p_smutex);
 		}
 		if (!process_validregs(lt))
 			error = EINVAL;
@@ -687,16 +687,15 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		tmp = SCARG(uap, data);
 		if (tmp != 0 && t->p_nlwps > 1) {
 			lwp_delref(lt);
-			mutex_enter(&p->p_smutex);
-			lt = lwp_byid(p, tmp);
+			mutex_enter(&t->p_smutex);
+			lt = lwp_find(t, tmp);
 			if (lt == NULL) {
-				mutex_exit(&p->p_smutex);
+				mutex_exit(&t->p_smutex);
 				error = ESRCH;
 				break;
 			}
 			lwp_addref(lt);
-			lwp_unlock(lt);
-			mutex_exit(&p->p_smutex);
+			mutex_exit(&t->p_smutex);
 		}
 		if (!process_validfpregs(lt))
 			error = EINVAL;
@@ -730,13 +729,13 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		lwp_delref(lt);
 
 	if (pheld) {
-		proc_delref(p);
-		mutex_exit(&p->p_mutex);
+		proc_delref(t);
+		mutex_exit(&t->p_mutex);
 		rw_exit(&proclist_lock);
 	} else {
-		mutex_enter(&p->p_mutex);
-		proc_delref(p);
-		mutex_exit(&p->p_mutex);
+		mutex_enter(&t->p_mutex);
+		proc_delref(t);
+		mutex_exit(&t->p_mutex);
 	}
 
 	return error;
@@ -966,69 +965,72 @@ process_stoptrace(struct lwp *l)
 {
 	struct proc *p = l->l_proc, *pp;
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_mutex);
 	mutex_enter(&p->p_smutex);
 	pp = p->p_pptr;
 	if (pp->p_pid == 1) {
-		CLR(p->p_slflag, PSL_SYSCALL);
+		CLR(p->p_slflag, PSL_SYSCALL);	/* XXXSMP */
 		mutex_exit(&p->p_smutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_mutex);
 		return;
 	}
 
 	p->p_xstat = SIGTRAP;
-	child_psignal(p, 0);
 	proc_stop(p, 1);
-	rw_exit(&proclist_lock);
-	rw_exit(&proclist_lock);
+	mutex_exit(&p->p_smutex);
+	mutex_exit(&proclist_mutex);
 	lwp_lock(l);
 	mi_switch(l, NULL);
 }
 
 /*
- * Put the current process into the stopped state and notify the parent.
+ * Put process 'p' into the stopped state and optionally, notify the parent.
  */
 void
-proc_stop(struct proc *p, int dowakeup)
+proc_stop(struct proc *p, int notify)
 {
 	struct lwp *l;
-	struct proc *parent;
 	struct sadata_vp *vp;
 
+	LOCK_ASSERT(mutex_owned(&proclist_mutex));
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-	LOCK_ASSERT(rw_write_held(&proclist_lock));
 
-	p->p_lflag &= ~PL_WAITED;
-	p->p_stat = SSTOP;
-	parent = p->p_pptr;
+	/*
+	 * If there are no LWPs running, the mark the process as stopped
+	 * now.  Otherwise, the last LWP to come to a halt in issignal()
+	 * will signal the parent process.
+	 */
+	if (p->p_nrlwps == 0) {
+		p->p_stat = SSTOP;
+		p->p_waited = 0;
+		p->p_pptr->p_nstopchild++;
+		if (notify) {
+			child_psignal(p, PS_NOCLDSTOP);
+			cv_broadcast(&p->p_pptr->p_waitcv);
+		}
+	} else
+		p->p_sflag |= PS_STOPPING;
 
 	if ((p->p_sflag & PS_SA) != 0) {
-		/*
-		 * Only (try to) put the LWP on the VP in stopped state. 
-		 * All other LWPs will suspend in sa_setwoken() because
-		 * the VP-LWP in stopped state cannot be repossessed.
-		 */
+		/* XXXSA ??? */
 		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
 			l = vp->savp_lwp;
 			lwp_lock(l);
-			l->l_flag |= L_PENDSIG;
-			lwp_halt(curlwp, l, LSSTOP);
-		}
-	} else {
-		/*
-		 * Put as many LWP's as possible in stopped state.  Sleeping
-		 * ones will notice the stopped state as they try to return
-		 * to userspace.
-		 */
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			lwp_lock(l);
-			l->l_flag |= L_PENDSIG;
-			lwp_halt(curlwp, l, LSSTOP);
+			signotify(l);
+			lwp_unlock(l);
 		}
 	}
 
-	if (dowakeup)
-		cv_broadcast(&p->p_pptr->p_waitcv);
+	/*
+	 * Put as many LWP's as possible in stopped state.  Sleeping
+	 * ones will notice the stopped state as they try to return
+	 * to userspace.
+	 */
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		lwp_lock(l);
+		signotify(l);
+		lwp_unlock(l);
+	}
 }
 
 /*
@@ -1036,42 +1038,57 @@ proc_stop(struct proc *p, int dowakeup)
  * move LSSTOP'd LWPs to LSSLEEP or make them runnable.
  */
 void
-proc_unstop(struct proc *p, int dosignal)
+proc_unstop(struct proc *p)
 {
 	struct lwp *l;
 	struct sadata_vp *vp;
+	int sig;
 
+	LOCK_ASSERT(mutex_owned(&proclist_mutex));
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-	LOCK_ASSERT(rw_write_held(&proclist_lock));
 
 	p->p_stat = SACTIVE;
+	p->p_sflag &= ~PS_STOPPING;
+	sig = p->p_xstat;
 
-	if ((p->p_lflag & PL_WAITED) == 0) {
-		mutex_enter(&proc_stop_mutex);
+	if (p->p_waited == 0)
 		p->p_pptr->p_nstopchild--;
-		mutex_exit(&proc_stop_mutex);
-	}
 
 	if ((p->p_sflag & PS_SA) != 0) {
 		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
 			l = vp->savp_lwp;
 			lwp_lock(l);
-			if (dosignal)
-				l->l_flag |= L_PENDSIG;
-			if ((l->l_stat == LSSTOP || l->l_stat == LSSLEEP) &&
-			   (l->l_flag & (L_SA_YIELD | L_SINTR)) != 0)
+			if (l->l_stat != LSSTOP) {
+				lwp_unlock(l);
+				continue;
+			}
+			if (l->l_wchan == NULL) {
+				setrunnable(l);
+				continue;
+			}
+			l->l_stat = LSSLEEP;
+			if (sig && (l->l_flag & (L_SA_YIELD | L_SINTR)) != 0) {
 			        setrunnable(l);
-			else
+			        sig = 0;
+			} else
 				lwp_unlock(l);
 		}
 	} else {
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
-			if (dosignal)
-				l->l_flag |= L_PENDSIG;
-			if (l->l_stat == LSSTOP || l->l_stat == LSSLEEP)
+			if (l->l_stat != LSSTOP) {
+				lwp_unlock(l);
+				continue;
+			}
+			if (l->l_wchan == NULL) {
 				setrunnable(l);
-			else
+				continue;
+			}
+			l->l_stat = LSSLEEP;
+			if (sig && (l->l_flag & L_SINTR) != 0) {
+			        setrunnable(l);
+			        sig = 0;
+			} else
 				lwp_unlock(l);
 		}
 	}

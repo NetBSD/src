@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.105.4.4 2006/11/18 21:39:22 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.105.4.5 2006/12/29 20:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.4 2006/11/18 21:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.5 2006/12/29 20:27:44 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -110,7 +110,6 @@ POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
 POOL_INIT(ptimers_pool, sizeof(struct ptimers), 0, 0, 0, "ptimerspl",
     &pool_allocator_nointr);
 
-static void timerupcall(struct lwp *, void *);
 #ifdef __HAVE_TIMECOUNTER
 static int itimespecfix(struct timespec *);		/* XXX move itimerfix to timespecs */
 #endif /* __HAVE_TIMECOUNTER */
@@ -332,7 +331,6 @@ int
 sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 {
 #ifdef __HAVE_TIMECOUNTER
-	static int nanowait;
 	struct sys_nanosleep_args/* {
 		syscallarg(struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
@@ -356,7 +354,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 
 	getnanouptime(&rmt);
 
-	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
+	error = sched_pause("nanoslp", TRUE, timo);
 	if (error == ERESTART)
 		error = EINTR;
 	if (error == EWOULDBLOCK)
@@ -381,7 +379,6 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 
 	return error;
 #else /* !__HAVE_TIMECOUNTER */
-	static int nanowait;
 	struct sys_nanosleep_args/* {
 		syscallarg(struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
@@ -409,7 +406,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 		timo = 1;
 	splx(s);
 
-	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
+	error = sched_pause("nanoslp", TRUE, timo);
 	if (error == ERESTART)
 		error = EINTR;
 	if (error == EWOULDBLOCK)
@@ -1048,10 +1045,10 @@ sys_timer_getoverrun(struct lwp *l, void *v, register_t *retval)
 }
 
 /* Glue function that triggers an upcall; called from userret(). */
-static void
-timerupcall(struct lwp *l, void *arg)
+void
+timerupcall(struct lwp *l)
 {
-	struct ptimers *pt = (struct ptimers *)arg;
+	struct ptimers *pt = l->l_proc->p_timers;
 	unsigned int i, fired, done;
 
 	KDASSERT(l->l_proc->p_sa);
@@ -1068,8 +1065,10 @@ timerupcall(struct lwp *l, void *arg)
 		int mask = 1 << --i;
 		int f;
 
+		lwp_lock(l);
 		f = l->l_flag & L_SA;
 		l->l_flag &= ~L_SA;
+		lwp_unlock(l);
 		si = siginfo_alloc(PR_WAITOK);
 		si->_info = pt->pts_timers[i]->pt_info.ksi_info;
 		if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
@@ -1079,11 +1078,13 @@ timerupcall(struct lwp *l, void *arg)
 		} else
 			done |= mask;
 		fired &= ~mask;
+		lwp_lock(l);
 		l->l_flag |= f;
+		lwp_unlock(l);
 	}
 	pt->pts_fired &= ~done;
 	if (pt->pts_fired == 0)
-		l->l_proc->p_userret = NULL;
+		l->l_proc->p_timerpend = 0;
 
 	(void)KERNEL_UNLOCK(1, l);
 }
@@ -1462,10 +1463,9 @@ itimerfire(struct ptimer *pt)
 		 * just post the signal number and throw away the
 		 * value.
 		 */
-		if (sigismember(&p->p_sigpend.sp_set, pt->pt_ev.sigev_signo)) {
-			/* XXX Timers need to become per-LWP. */
+		if (sigismember(&p->p_sigpend.sp_set, pt->pt_ev.sigev_signo))
 			pt->pt_overruns++;
-		} else {
+		else {
 			ksiginfo_t ksi;
 			(void)memset(&ksi, 0, sizeof(ksi));
 			ksi.ksi_signo = pt->pt_ev.sigev_signo;
@@ -1479,8 +1479,7 @@ itimerfire(struct ptimer *pt)
 		}
 	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_sflag & PS_SA)) {
 		/* Cause the process to generate an upcall when it returns. */
-		signotify(LIST_FIRST(&p->p_lwps));	/* XXXAD */
-		if (p->p_userret == NULL) {
+		if (!p->p_timerpend) {
 			/*
 			 * XXX stop signals can be processed inside tsleep,
 			 * which can be inside sa_yield's inner loop, which
@@ -1491,23 +1490,22 @@ itimerfire(struct ptimer *pt)
 			pt->pt_overruns = 0;
 			i = 1 << pt->pt_entry;
 			p->p_timers->pts_fired = i;
-			p->p_userret = timerupcall;
-			p->p_userret_arg = p->p_timers;
+			p->p_timerpend = 1;
 
 			mutex_enter(&p->p_smutex);
 			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+				lwp_need_userret(vp->savp_lwp);
 				lwp_lock(vp->savp_lwp);
 				if (vp->savp_lwp->l_flag & L_SA_IDLE) {
 					vp->savp_lwp->l_flag &= ~L_SA_IDLE;
-					wakeup(vp->savp_lwp);
-					signotify(vp->savp_lwp);
 					lwp_unlock(vp->savp_lwp);
+					wakeup(vp->savp_lwp);
 					break;
 				}
 				lwp_unlock(vp->savp_lwp);
 			}
 			mutex_exit(&p->p_smutex);
-		} else if (p->p_userret == timerupcall) {
+		} else {
 			i = 1 << pt->pt_entry;
 			if ((p->p_timers->pts_fired & i) == 0) {
 				pt->pt_poverruns = pt->pt_overruns;
@@ -1515,17 +1513,8 @@ itimerfire(struct ptimer *pt)
 				p->p_timers->pts_fired |= i;
 			} else
 				pt->pt_overruns++;
-		} else {
-			pt->pt_overruns++;
-			if ((p->p_sflag & PS_WEXIT) == 0)
-				printf("itimerfire(%d): overrun %d on "
-				    "timer %x (userret is %p)\n",
-				    p->p_pid, pt->pt_overruns,
-				    pt->pt_ev.sigev_value.sival_int,
-				    p->p_userret);
 		}
 	}
-
 }
 
 /*

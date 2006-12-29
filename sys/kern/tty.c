@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.187.4.4 2006/11/18 21:39:23 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.187.4.5 2006/12/29 20:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.187.4.4 2006/11/18 21:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.187.4.5 2006/12/29 20:27:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -858,7 +858,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case  TIOCSETP:
 	case  TIOCSLTC:
 #endif
-		/* XXXAD */
+		/* XXXSMP */
 		while (isbackground(curproc, tp) &&
 		    p->p_pgrp->pg_jobc && (p->p_sflag & PS_PPWAIT) == 0 &&
 		    !sigismasked(l, SIGTTOU)) {
@@ -1708,7 +1708,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		ttypend(tp);
 
 	/*
-	 * Hang process if it's in the background. XXXAD
+	 * Hang process if it's in the background. XXXSMP
 	 */
 	if (isbackground(p, tp)) {
 		if (sigismember(&p->p_sigctx.ps_sigignore, SIGTTIN) ||
@@ -1992,7 +1992,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	TTY_UNLOCK(tp);
 	splx(s);
 	/*
-	 * Hang the process if it's in the background. XXXAD
+	 * Hang the process if it's in the background. XXXSMP
 	 */
 	p = curproc;
 	if (isbackground(p, tp) &&
@@ -2410,9 +2410,9 @@ ttyinfo(struct tty *tp, int fromsig)
 	    l->l_wmesg ? l->l_wmesg : "iowait",
 		(LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(&pick->p_smutex);
 	calcru(pick, &utime, &stime, NULL, NULL);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(&pick->p_smutex);
 
 	/* Round up and print user time. */
 	utime.tv_usec += 5000;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.206 2006/08/26 20:18:36 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.206.2.1 2006/12/29 20:27:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.206 2006/08/26 20:18:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.206.2.1 2006/12/29 20:27:42 ad Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -617,21 +617,17 @@ void
 ast(unsigned pc)	/* pc is program counter where to continue */
 {
 	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	int sig;
 
-	while (p->p_md.md_astpending) {
+	while (l->l_md.md_astpending) {
 		uvmexp.softs++;
-		p->p_md.md_astpending = 0;
+		l->l_md.md_astpending = 0;
 
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
-			ADDUPROF(p);
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
+			ADDUPROF(l);
 		}
 
-		/* Take pending signals. */
-		while ((sig = CURSIG(l)) != 0)
-			postsig(sig);
+		userret(l);
 
 		if (want_resched) {
 			/*
@@ -639,8 +635,6 @@ ast(unsigned pc)	/* pc is program counter where to continue */
 			 */
 			preempt(0);
 		}
-
-		userret(l);
 	}
 }
 

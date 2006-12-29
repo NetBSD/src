@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.92.2.3 2006/10/24 21:44:31 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.92.2.4 2006/12/29 20:27:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.3 2006/10/24 21:44:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.4 2006/12/29 20:27:44 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -383,9 +383,9 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 		if (error == EPIPE) {
-			rw_enter(&proclist_lock, RW_READER);
+			mutex_enter(&proclist_mutex);
 			psignal(p, SIGPIPE);
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_mutex);
 		}
 	}
 	cnt -= auio.uio_resid;
@@ -512,9 +512,9 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 		if (error == EPIPE) {
-			rw_enter(&proclist_lock, RW_READER);
+			mutex_enter(&proclist_mutex);
 			psignal(p, SIGPIPE);
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_mutex);
 		}
 	}
 	cnt -= auio.uio_resid;
@@ -785,7 +785,7 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	caddr_t		bits;
 	int		s, ncoll, error, timo;
 	size_t		ni;
-	sigset_t	oldmask;
+	sigset_t	*oldmask = NULL;	/* XXXgcc */
 	struct timeval  sleeptv;
 
 	error = 0;
@@ -819,8 +819,14 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 		goto done;
 	}
 
-	if (mask)
-		(void)sigprocmask1(l, SIG_SETMASK, mask, &oldmask);
+	if (mask) {
+		sigminusset(&sigcantmask, mask);
+		mutex_enter(&p->p_smutex);
+		l->l_sigoldmask = *mask;
+		oldmask = l->l_sigmask;
+		l->l_sigmask = &l->l_sigoldmask;
+		mutex_exit(&p->p_smutex);
+	}
 
  retry:
 	ncoll = nselcoll;
@@ -828,9 +834,9 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	error = selscan(l, (fd_mask *)(bits + ni * 0),
 			   (fd_mask *)(bits + ni * 3), nd, retval);
 	if (error || *retval)
-		goto done;
+		goto donemask;
 	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
-		goto done;
+		goto donemask;
 	s = splsched();
 	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
@@ -841,10 +847,14 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	splx(s);
 	if (error == 0)
 		goto retry;
- done:
-	if (mask)
-		(void)sigprocmask1(l, SIG_SETMASK, &oldmask, NULL);
+ donemask:
+	if (mask) {
+		mutex_enter(&p->p_smutex);
+		l->l_sigmask = oldmask;
+		mutex_exit(&p->p_smutex);
+	}
 	l->l_flag &= ~L_SELECT;
+ done:
 	/* select is not restarted after signals... */
 	if (error == ERESTART)
 		error = EINTR;
@@ -973,7 +983,7 @@ pollcommon(struct lwp *l, register_t *retval,
 	char		smallbits[32 * sizeof(struct pollfd)];
 	struct proc	* const p = l->l_proc;
 	caddr_t		bits;
-	sigset_t	oldmask;
+	sigset_t	*oldmask = NULL;	/* XXXgcc */
 	int		s, ncoll, error, timo;
 	size_t		ni;
 	struct timeval	sleeptv;
@@ -998,17 +1008,23 @@ pollcommon(struct lwp *l, register_t *retval,
 		goto done;
 	}
 
-	if (mask != NULL)
-		(void)sigprocmask1(l, SIG_SETMASK, mask, &oldmask);
+	if (mask) {
+		sigminusset(&sigcantmask, mask);
+		mutex_enter(&p->p_smutex);
+		l->l_sigoldmask = *mask;
+		oldmask = l->l_sigmask;
+		l->l_sigmask = &l->l_sigoldmask;
+		mutex_exit(&p->p_smutex);
+	}
 
  retry:
 	ncoll = nselcoll;
 	l->l_flag |= L_SELECT;
 	error = pollscan(l, (struct pollfd *)bits, nfds, retval);
 	if (error || *retval)
-		goto done;
+		goto donemask;
 	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
-		goto done;
+		goto donemask;
 	s = splsched();
 	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
@@ -1019,10 +1035,15 @@ pollcommon(struct lwp *l, register_t *retval,
 	splx(s);
 	if (error == 0)
 		goto retry;
- done:
-	if (mask != NULL)
-		(void)sigprocmask1(l, SIG_SETMASK, &oldmask, NULL);
+ donemask:
+	if (mask) {
+		mutex_enter(&p->p_smutex);
+		l->l_sigmask = oldmask;
+		mutex_exit(&p->p_smutex);
+	}
+
 	l->l_flag &= ~L_SELECT;
+ done:
 	/* poll is not restarted after signals... */
 	if (error == ERESTART)
 		error = EINTR;
@@ -1162,4 +1183,12 @@ selwakeup(sip)
 	}
 	mutex_exit(&p->p_smutex);
 	mutex_exit(&proclist_mutex);
+}
+
+int
+sys_sched_yield(struct lwp *l, void *v, register_t *retval)
+{
+
+	preempt(0);
+	return 0;
 }

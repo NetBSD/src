@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.1.2.3 2006/11/17 16:53:08 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.1.2.4 2006/12/29 20:27:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 #endif
 
 #include <sys/queue.h>
@@ -51,7 +52,8 @@
  * Generic sleep queues.
  */
 
-#define	SLEEPTAB_HASH_SIZE	128
+#define	SLEEPTAB_HASH_SHIFT	7
+#define	SLEEPTAB_HASH_SIZE	(1 << SLEEPTAB_HASH_SHIFT)
 #define	SLEEPTAB_HASH_MASK	(SLEEPTAB_HASH_SIZE - 1)
 #define	SLEEPTAB_HASH(wchan)	(((uintptr_t)(wchan) >> 8) & SLEEPTAB_HASH_MASK)
 
@@ -65,22 +67,21 @@ typedef struct sleepq {
 
 typedef struct sleeptab {
 	sleepq_t		st_queues[SLEEPTAB_HASH_SIZE];
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	kmutex_t		st_mutexes[SLEEPTAB_HASH_SIZE];
 #endif
 } sleeptab_t;
 
 void	sleepq_init(sleepq_t *, kmutex_t *);
 int	sleepq_remove(sleepq_t *, struct lwp *);
-void	sleepq_enter(sleepq_t *, int, wchan_t, const char *, int, int,
+void	sleepq_block(sleepq_t *, int, wchan_t, const char *, int, int,
 		     syncobj_t *);
-int	sleepq_block(sleepq_t *, int);
 void	sleepq_unsleep(struct lwp *);
 void	sleepq_timeout(void *);
 void	sleepq_wake(sleepq_t *, wchan_t, u_int);
 int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(struct lwp *, int);
-void	sleepq_unblock(void);
+int	sleepq_unblock(int, int);
 
 void	sleeptab_init(sleeptab_t *);
 
@@ -109,8 +110,27 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan)
 	sleepq_t *sq;
 
 	sq = &st->st_queues[SLEEPTAB_HASH(wchan)];
-	mutex_enter(sq->sq_mutex);
+	smutex_enter(sq->sq_mutex);
 	return sq;
+}
+
+/*
+ * Prepare to block on a sleep queue, after which any interlock can be
+ * safely released.
+ */
+static inline void
+sleepq_enter(sleepq_t *sq, struct lwp *l)
+{
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	/*
+	 * Acquire the per-LWP mutex and lend it ours (the sleep queue
+	 * lock).  Once that's done we're interlocked, and so can release
+	 * the kernel lock.
+	 */
+	lwp_lock(l);
+	lwp_unlock_to(l, sq->sq_mutex);
+	l->l_biglocks = KERNEL_UNLOCK(0, l);
+#endif
 }
 
 /*
@@ -119,8 +139,21 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan)
 static inline void
 sleepq_unlock(sleepq_t *sq)
 {
-	mutex_exit(sq->sq_mutex);
+	smutex_exit(sq->sq_mutex);
 }
+
+/*
+ * Lock and unlock an LWP while holding the sleep queue lock.
+ *
+ * XXX Ugly.
+ */
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#define	sleepq_lwp_lock(l)	lwp_lock(l)
+#define	sleepq_lwp_unlock(l)	lwp_unlock(l)
+#else
+#define	sleepq_lwp_lock(l)	/* nothing */
+#define	sleepq_lwp_unlock(l)	/* nothing */
+#endif
 
 /*
  * Turnstiles, specialized sleep queues for use by kernel locks.
@@ -158,13 +191,14 @@ void	turnstile_exit(wchan_t);
 void	turnstile_block(turnstile_t *, int, int, wchan_t);
 void	turnstile_wakeup(turnstile_t *, int, int, struct lwp *);
 
-extern struct pool_cache turnstile_cache; 
-
 static inline void
 turnstile_unblock(void)
 {
-	sleepq_unblock();
+	(void)sleepq_unblock(0, 0);
 }
+
+extern struct pool_cache turnstile_cache;
+extern struct turnstile turnstile0;
 
 #endif	/* _KERNEL */
 

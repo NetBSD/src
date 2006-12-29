@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.2.2 2006/10/20 19:28:11 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.2.3 2006/12/29 20:27:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -46,25 +46,22 @@ struct krwlock {
 
 #ifdef __RWLOCK_PRIVATE
 
-#define	__HAVE_RW_ENTER			1
-#define	__HAVE_RW_EXIT			1
+#define	__HAVE_SIMPLE_RW_LOCKS		1
+#define	__HAVE_RW_STUBS			1
 
-#define	RW_ACQUIRE(rw, old, new)					\
-	_lock_cas((uintptr_t *)(rw), (old), (new))
-#define	RW_RELEASE(rw, old, new)					\
-	_lock_cas((uintptr_t *)(rw), (old), (new))
-#define	RW_SET_WAITERS(rw, need_wait, set_wait)				\
-	_lock_set_waiters((uintptr_t *)(rw), (need_wait), (set_wait))
-#define	RW_RECEIVE(rw)							\
-	__insn_barrier()
+/*
+ * RW_RECEIVE: no memory barrier required, as 'ret' implies a load fence. 
+ */
+#define	RW_RECEIVE(rw)			/* nothing */
 
-#define	RW_SETID(rw, id)		((rw)->rw_id = id)
-#define	RW_GETID(rw)			((rw)->rw_id)
+/*
+ * RW_GIVE: no memory barrier required, as _lock_cas() will take care of it.
+ */
+#define	RW_GIVE(rw)			/* nothing */
 
-#ifdef _KERNEL
+#define	RW_CAS(p, o, n)			_lock_cas((p), (o), (n))
+
 int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
-int	_lock_set_waiters(volatile uintptr_t *, uintptr_t, uintptr_t);
-#endif /* _KERNEL */
 
 #endif	/* __RWLOCK_PRIVATE */
 

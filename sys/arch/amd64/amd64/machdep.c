@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40.2.3 2006/11/18 21:29:02 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.2.4 2006/12/29 20:27:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.2.3 2006/11/18 21:29:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.2.4 2006/12/29 20:27:41 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1768,12 +1768,10 @@ void
 cpu_need_proftick(struct lwp *l)
 {
 
-	l->l_flag |= L_OWEUPC;
+	KASSERT(l->l_cpu == curcpu());
+
+	l->l_pflag |= LP_OWEUPC;
 	aston(l);
-#ifdef MULTIPROCESSOR
-	if (l->l_cpu != NULL && l->l_cpu != curcpu())
-		x86_send_ipi(l->l_cpu, 0);
-#endif
 }
 
 /*

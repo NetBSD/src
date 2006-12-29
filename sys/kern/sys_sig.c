@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.1.2.4 2006/11/18 21:39:23 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.1.2.5 2006/12/29 20:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.4 2006/11/18 21:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.5 2006/12/29 20:27:44 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -167,6 +167,7 @@ sys___sigprocmask14(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const sigset_t *)	set;
 		syscallarg(sigset_t *)		oset;
 	} */ *uap = v;
+	struct proc	*p = l->l_proc;
 	sigset_t	nss, oss;
 	int		error;
 
@@ -175,8 +176,10 @@ sys___sigprocmask14(struct lwp *l, void *v, register_t *retval)
 		if (error)
 			return (error);
 	}
+	mutex_enter(&p->p_smutex);
 	error = sigprocmask1(l, SCARG(uap, how),
 	    SCARG(uap, set) ? &nss : 0, SCARG(uap, oset) ? &oss : 0);
+	mutex_exit(&p->p_smutex);
 	if (error)
 		return (error);
 	if (SCARG(uap, oset)) {
@@ -281,13 +284,15 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 		    KAUTH_PROCESS_CANSIGNAL, p, (void *)(uintptr_t)signum,
 		    NULL, NULL);
 		if (!error && signum) {
+			mutex_enter(&proclist_mutex);
 			mutex_enter(&p->p_smutex);
 			kpsignal2(p, &ksi);
 			mutex_exit(&p->p_smutex);
+			mutex_exit(&proclist_mutex);
 		}
 		mutex_exit(&p->p_mutex);
 		rw_exit(&proclist_lock);
-		return (0);
+		return (error);
 	}
 	switch (SCARG(uap, pid)) {
 	case -1:		/* broadcast signal */
@@ -315,7 +320,9 @@ int
 sys_nosys(struct lwp *l, void *v, register_t *retval)
 {
 
+	mutex_enter(&proclist_mutex);
 	psignal(l->l_proc, SIGSYS);
+	mutex_exit(&proclist_mutex);
 	return (ENOSYS);
 }
 
@@ -326,9 +333,12 @@ sys_getcontext(struct lwp *l, void *v, register_t *retval)
 	struct sys_getcontext_args /* {
 		syscallarg(struct __ucontext *) ucp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	ucontext_t uc;
 
+	mutex_enter(&p->p_smutex);
 	getucontext(l, &uc);
+	mutex_exit(&p->p_smutex);
 
 	return (copyout(&uc, SCARG(uap, ucp), sizeof (*SCARG(uap, ucp))));
 }
@@ -340,6 +350,7 @@ sys_setcontext(struct lwp *l, void *v, register_t *retval)
 	struct sys_setcontext_args /* {
 		syscallarg(const ucontext_t *) ucp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	ucontext_t uc;
 	int error;
 
@@ -348,7 +359,9 @@ sys_setcontext(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	if (!(uc.uc_flags & _UC_CPU))
 		return (EINVAL);
+	mutex_enter(&p->p_smutex);
 	error = setucontext(l, &uc);
+	mutex_exit(&p->p_smutex);
 	if (error)
  		return (error);
 
@@ -492,7 +505,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	 * we check for them before returning to userspace.
 	 */
 	lwp_lock(l);
-	signotify(l);
+	l->l_flag |= L_PENDSIG;
 	lwp_unlock(l);
  out:
 	mutex_exit(&p->p_smutex);
@@ -504,19 +517,9 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 int
 sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 {
-	struct proc *p = l->l_proc;
 	int more;
 
-	mutex_enter(&p->p_smutex);
-
-	/*
-	 * If we've got pending signals that we haven't processed yet,
-	 * make sure that we take them before changing the mask.
-	 */
-	if (sigispending(l)) {
-		mutex_exit(&p->p_smutex);
-		return ERESTART;
-	}
+	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
 
 	if (oss)
 		*oss = *l->l_sigmask;
@@ -535,29 +538,18 @@ sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 			more = 1;
 			break;
 		default:
-			mutex_exit(&p->p_smutex);
 			return (EINVAL);
 		}
 		sigminusset(&sigcantmask, l->l_sigmask);
 		if (more) {
 			/*
-			 * Grab signals from the per-process pending
-			 * list that are now of interest to us.
-			 */
-			if ((p->p_flag & P_SA) == 0)
-				sigpinch(&p->p_sigpend, l->l_sigpend,
-				    l->l_sigmask);
-
-			/*
 			 * Check for pending signals on return to user.
 			 */
 			lwp_lock(l);
-			signotify(l);
+			l->l_flag |= L_PENDSIG;
 			lwp_unlock(l);
 		}
 	}
-
-	mutex_exit(&p->p_smutex);
 
 	return (0);
 }
@@ -568,7 +560,8 @@ sigpending1(struct lwp *l, sigset_t *ss)
 	struct proc *p = l->l_proc;
 
 	mutex_enter(&p->p_smutex);
-	*ss = l->l_sigpend->sp_set;
+	*ss = l->l_sigpend.sp_set;
+	sigplusset(&p->p_sigpend.sp_set, ss);
 	sigminusset(l->l_sigmask, ss);
 	mutex_exit(&p->p_smutex);
 }
@@ -577,21 +570,8 @@ int
 sigsuspend1(struct lwp *l, const sigset_t *ss)
 {
 	struct proc *p;
-	struct sigacts *ps;
 
 	p = l->l_proc;
-	ps = p->p_sigacts;
-
-	mutex_enter(&p->p_smutex);
-
-	/*
-	 * If we've got pending signals that we haven't processed yet,
-	 * make sure that we take them before changing the mask.
-	 */
-	if (sigispending(l)) {
-		mutex_exit(&p->p_smutex);
-		return ERESTART;
-	}
 
 	if (ss) {
 		/*
@@ -601,28 +581,21 @@ sigsuspend1(struct lwp *l, const sigset_t *ss)
 		 * save it here and mark the sigctx structure
 		 * to indicate this.
 		 */
-		l->l_sigoldmask = *l->l_sigmask;
+		mutex_enter(&p->p_smutex);
 		l->l_sigrestore = 1;
+		l->l_sigoldmask = *l->l_sigmask;
 		*l->l_sigmask = *ss;
 		sigminusset(&sigcantmask, l->l_sigmask);
 
-		/*
-		 * Pinch any signals from the per-process pending
-		 * list that are now of interest to us.
-		 */
-		if ((p->p_flag & P_SA) == 0)
-			sigpinch(&p->p_sigpend, l->l_sigpend, l->l_sigmask);
-
+		/* Check for pending signals when sleeping. */
 		lwp_lock(l);
-		signotify(l);
+		l->l_flag |= L_PENDSIG;
 		lwp_unlock(l);
+		mutex_exit(&p->p_smutex);
 	}
 
-	while (mtsleep((caddr_t) ps, PPAUSE|PCATCH, "pause", 0,
-	    &p->p_smutex) == 0)
-		/* void */;
-
-	mutex_exit(&p->p_smutex);
+	while (sched_pause("pause", TRUE, 0) == 0)
+		;
 
 	/* always return EINTR rather than ERESTART... */
 	return (EINTR);
@@ -723,26 +696,16 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	mutex_enter(&p->p_smutex);
 
 	/*
-	 * If we've got pending signals that we haven't processed yet,
-	 * make sure that we take them before changing the mask.
-	 */
-	if ((error = sigispending(l)) != 0) {
-		mutex_exit(&p->p_smutex);
-		goto out;
-	}
-
-	/*
 	 * SA processes can have no more than 1 sigwaiter.
 	 */
-	if ((p->p_flag & P_SA) != 0 && !LIST_EMPTY(&p->p_sigwaiters)) {
+	if ((p->p_sflag & PS_SA) != 0 && !LIST_EMPTY(&p->p_sigwaiters)) {
 		mutex_exit(&p->p_smutex);
 		error = EINVAL;
 		goto out;
 	}
 
 	if ((signum = sigget(&p->p_sigpend, ksi, 0, waitset)) == 0)
-		if ((p->p_flag & P_SA) == 0)
-			signum = sigget(l->l_sigpend, ksi, 0, waitset);
+		signum = sigget(&l->l_sigpend, ksi, 0, waitset);
 
 	if (signum != 0) {
 		/*

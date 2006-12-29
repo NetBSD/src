@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.1.2.4 2006/11/18 21:39:22 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.1.2.5 2006/12/29 20:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -43,12 +43,12 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.4 2006/11/18 21:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.5 2006/12/29 20:27:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/lock.h>
 #include <sys/lockdebug.h>
 
@@ -98,11 +98,8 @@ int			ld_nfree;
 int			ld_freeptr;
 int			ld_recurse;
 lockdebug_t		*ld_table[LD_MAX_LOCKS / LD_BATCH];
-char			ld_panicbuf[1024];
 
 lockdebug_t		ld_prime[LD_BATCH];
-
-MALLOC_DEFINE(M_LOCKDEBUG, "lockdebug", "lockdebug structures");
 
 void	lockdebug_abort1(lockdebug_t *, lockdebuglk_t *lk, const char *,
 			 const char *);
@@ -136,18 +133,19 @@ lockdebug_unlock(lockdebuglk_t *lk)
 static inline lockdebug_t *
 lockdebug_lookup(u_int id, lockdebuglk_t **lk)
 {
-	lockdebug_t *ld;
+	lockdebug_t *base, *ld;
 
 	if (id == LD_NOID)
 		return NULL;
 
-	ld = ld_table[id >> LD_BATCH_SHIFT] + (id & LD_BATCH_MASK);
-
-	if (id == 0 || id >= LD_MAX_LOCKS || ld == NULL || ld->ld_lock == NULL)
+	if (id == 0 || id >= LD_MAX_LOCKS)
 		panic("lockdebug_lookup: uninitialized lock (id=%d)", id);
 
-	if (ld->ld_id != id)
-		panic("lockdebug_lookup: corrupt table");
+	base = ld_table[id >> LD_BATCH_SHIFT];
+	ld = base + (id & LD_BATCH_MASK);
+
+	if (base == NULL || ld->ld_lock == NULL || ld->ld_id != id)
+		panic("lockdebug_lookup: uninitialized lock (id=%d)", id);
 
 	if ((ld->ld_flags & LD_SLEEPER) != 0)
 		*lk = &ld_sleeper_lk;
@@ -185,7 +183,7 @@ lockdebug_init(void)
 		TAILQ_INSERT_TAIL(&ld_free, ld, ld_chain);
 	}
 	ld_freeptr = 1;
-	ld_nfree = LD_BATCH;
+	ld_nfree = LD_BATCH - 1;
 }
 
 /*
@@ -203,14 +201,17 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo)
 	if (panicstr != NULL)
 		return 0;
 
+	if (ld_freeptr == 0)
+		panic("lockdebug_alloc: not initialized");
+
 	ci = curcpu();
 
 	/*
 	 * Pinch a new debug structure.  We may recurse because we call
-	 * malloc(), which may need to initialize new locks somewhere
+	 * kmem_alloc(), which may need to initialize new locks somewhere
 	 * down the path.  If not recursing, we try to maintain at keep
 	 * LD_SLOP structures free, which should hopefully be enough to
-	 * satisfy malloc().  If we can't provide a structure, not to
+	 * satisfy kmem_alloc().  If we can't provide a structure, not to
 	 * worry: we'll just mark the lock as not having an ID.
 	 */
 	lockdebug_lock(&ld_free_lk);
@@ -220,13 +221,17 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo)
 		if (ci->ci_lkdebug_recurse > 1) {
 			ci->ci_lkdebug_recurse--;
 			lockdebug_unlock(&ld_free_lk);
-			return (LD_NOID);
+			return LD_NOID;
 		}
 		lockdebug_more();
 	} else if (ci->ci_lkdebug_recurse == 1 && ld_nfree < LD_SLOP)
 		lockdebug_more();
 
-	ld = TAILQ_FIRST(&ld_free);
+	if ((ld = TAILQ_FIRST(&ld_free)) == NULL) {
+		lockdebug_unlock(&ld_free_lk);
+		return LD_NOID;
+	}
+
 	TAILQ_REMOVE(&ld_free, ld, ld_chain);
 	ld_nfree--;
 
@@ -309,32 +314,32 @@ lockdebug_more(void)
 
 	while (ld_nfree < LD_SLOP) {
 		lockdebug_unlock(&ld_free_lk);
-		block = malloc(LD_BATCH * sizeof(lockdebug_t), M_LOCKDEBUG,
-		    M_NOWAIT | M_ZERO); /* XXX M_NOWAIT */
+		block = kmem_zalloc(LD_BATCH * sizeof(lockdebug_t), KM_SLEEP);
 		lockdebug_lock(&ld_free_lk);
 
-		base = ld_freeptr;
-		if (ld_table[base] != NULL) {
+		if (block == NULL)
+			return;
+
+		if (ld_nfree > LD_SLOP) {
 			/* Somebody beat us to it. */
 			lockdebug_unlock(&ld_free_lk);
-			free(block, M_LOCKDEBUG);
+			kmem_free(block, LD_BATCH * sizeof(lockdebug_t));
 			lockdebug_lock(&ld_free_lk);
 			continue;
 		}
-		ld_table[base] = block;
-		ld_freeptr++;
+
+		base = ld_freeptr;
 		ld_nfree += LD_BATCH;
 		ld = block;
 		base <<= LD_BATCH_SHIFT;
 
 		for (i = 0; i < LD_BATCH; i++, ld++) {
 			ld->ld_id = i + base;
-			ld->ld_lock = NULL;
 			TAILQ_INSERT_TAIL(&ld_free, ld, ld_chain);
 		}
 
 		mb_write();
-		ld_table[base] = ld;
+		ld_table[ld_freeptr++] = block;
 	}
 }
 
@@ -362,7 +367,7 @@ lockdebug_locked(u_int id, uintptr_t where, int shared)
 	if (shared) {
 		if (l == NULL)
 			lockdebug_abort1(ld, lk, __FUNCTION__, "releasing "
-			    "shared lock from interrupt context");
+			    "shared lock from idle context");
 
 		l->l_shlocks++;
 		ld->ld_shares++;
@@ -405,7 +410,7 @@ lockdebug_unlocked(u_int id, uintptr_t where, int shared)
 	if (shared) {
 		if (l == NULL)
 			lockdebug_abort1(ld, lk, __FUNCTION__, "acquiring "
-			    "shared lock from interrupt context");
+			    "shared lock from idle context");
 		if (l->l_shlocks == 0)
 			lockdebug_abort1(ld, lk, __FUNCTION__, "no shared "
 			    "locks held by LWP");
@@ -497,16 +502,10 @@ void
 lockdebug_abort1(lockdebug_t *ld, lockdebuglk_t *lk, const char *func,
 		 const char *msg)
 {
-	char *buf;
 
-	/*
-	 * The kernel is about to fall flat on its face, so assume that 1k
-	 * will be enough to hold the dump and abuse the return value from
-	 * snprintf.
-	 */
-	buf = ld_panicbuf;
+	lockdebug_unlock(lk);
 
-	printf("%s error: %s: %s\n\n"
+	printf_nolog("%s error: %s: %s\n\n"
 	    "lock address : %#018lx type     : %18s\n"
 	    "shared holds : %18d exclusive: %12slocked\n"
 	    "last locked  : %#018lx unlocked : %#018lx\n"
@@ -520,11 +519,10 @@ lockdebug_abort1(lockdebug_t *ld, lockdebuglk_t *lk, const char *func,
 	    (long)curlwp, (long)ld->ld_lwp);
 
 	if (ld->ld_lockops->lo_dump != NULL)
-		(void)(*ld->ld_lockops->lo_dump)(ld->ld_lock, buf,
-		    sizeof(buf));
+		(*ld->ld_lockops->lo_dump)(ld->ld_lock);
 
-	lockdebug_unlock(lk);
-	panic("%s\nLOCKDEBUG", buf);
+	printf_nolog("\n");
+	panic("LOCKDEBUG");
 }
 
 #endif	/* LOCKDEBUG */
@@ -538,7 +536,6 @@ void
 lockdebug_abort(int id, volatile void *lock, lockops_t *ops,
 		const char *func, const char *msg)
 {
-	char buf[192];
 #ifdef LOCKDEBUG
 	lockdebug_t *ld;
 	lockdebuglk_t *lk;
@@ -549,18 +546,15 @@ lockdebug_abort(int id, volatile void *lock, lockops_t *ops,
 	}
 #endif	/* LOCKDEBUG */
 
-	/*
-	 * The kernel is about to fall flat on its face, so assume that 192
-	 * bytes will be enough to hold the dump.
-	 */
-	printf("%s error: %s: %s\n\n"
+	printf_nolog("%s error: %s: %s\n\n"
 	    "lock address : %#018lx\n"
 	    "current cpu  : %18d\n"
 	    "current lwp  : %#018lx\n",
 	    ops->lo_name, func, msg, (long)lock, (int)cpu_number(),
 	    (long)curlwp);
 
-	(void)(*ops->lo_dump)(lock, buf, sizeof(buf));
+	(*ops->lo_dump)(lock);
 
-	panic("%s\nlock error", buf);
+	printf_nolog("\n");
+	panic("lock error");
 }

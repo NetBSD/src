@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.96.2.5 2006/11/18 21:39:50 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.96.2.6 2006/12/29 20:27:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.96.2.5 2006/11/18 21:39:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.96.2.6 2006/12/29 20:27:45 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -441,7 +441,7 @@ uvm_swapin(struct lwp *l)
 	 * moved to new physical page(s) (e.g.  see mips/mips/vm_machdep.c).
 	 */
 	cpu_swapin(l);
-	lwp_lock(l);		/* XXXAD locking */
+	lwp_lock(l);
 	if (l->l_stat == LSRUN)
 		setrunqueue(l);
 	l->l_flag |= L_INMEM;
@@ -473,7 +473,7 @@ loop:
 	ll = NULL;		/* process to choose */
 	ppri = INT_MIN;	/* its priority */
 
-	mutex_enter(&alllwp_mutex);
+	mutex_enter(&proclist_mutex);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		/* is it a runnable swapped out process? */
 		if (l->l_stat == LSRUN && (l->l_flag & L_INMEM) == 0) {
@@ -489,7 +489,7 @@ loop:
 	 * XXXSMP: possible unlock/sleep race between here and the
 	 * "scheduler" tsleep below..
 	 */
-	mutex_exit(&alllwp_mutex);
+	mutex_exit(&proclist_mutex);
 
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
@@ -577,7 +577,7 @@ uvm_swapout_threads(void)
 	 */
 	outl = outl2 = NULL;
 	outpri = outpri2 = 0;
-	mutex_enter(&alllwp_mutex);	/* XXXSMP */
+	mutex_enter(&proclist_mutex);	/* XXXSMP */
 	LIST_FOREACH(l, &alllwp, l_list) {
 		KASSERT(l->l_proc != NULL);
 		lwp_lock(l);
@@ -631,7 +631,7 @@ uvm_swapout_threads(void)
 		}
 	}
 
-	mutex_exit(&alllwp_mutex);
+	mutex_exit(&proclist_mutex);
 
 }
 
@@ -675,7 +675,7 @@ uvm_swapout(struct lwp *l)
 	p->p_stats->p_ru.ru_nswap++;	/* XXXSMP */
 	++uvmexp.swapouts;
 
-	mutex_exit(&alllwp_mutex);	/* XXXSMP */
+	mutex_exit(&proclist_mutex);	/* XXXSMP */
 
 	/*
 	 * Do any machine-specific actions necessary before swapout.
@@ -690,7 +690,7 @@ uvm_swapout(struct lwp *l)
 	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !L_INMEM */
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 
-	mutex_enter(&alllwp_mutex);	/* XXXSMP */
+	mutex_enter(&proclist_mutex);	/* XXXSMP */
 }
 
 #ifdef COREDUMP

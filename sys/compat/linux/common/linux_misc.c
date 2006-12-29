@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.161.2.2 2006/11/18 21:39:07 ad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.161.2.3 2006/12/29 20:27:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.161.2.2 2006/11/18 21:39:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.161.2.3 2006/12/29 20:27:43 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -269,7 +269,7 @@ linux_sys_wait4(l, v, retval)
 	if ((error = sys_wait4(l, &w4a, retval)))
 		return error;
 
-	sigdelset(&l->l_sigpend->sp_set, SIGCHLD);
+	sigdelset(&p->p_sigpend.sp_set, SIGCHLD);	/* XXXAD ksiginfo leak */
 
 	if (status != NULL) {
 		if ((error = copyin(status, &tstat, sizeof tstat)))

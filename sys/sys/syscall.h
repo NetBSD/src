@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.174.2.2 2006/11/18 21:39:47 ad Exp $ */
+/* $NetBSD: syscall.h,v 1.174.2.3 2006/12/29 20:27:45 ad Exp $ */
 
 /*
  * System call numbers.
@@ -452,7 +452,7 @@
 /* syscall: "setsid" ret: "int" args: */
 #define	SYS_setsid	147
 
-/* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "void *" */
+/* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "caddr_t" */
 #define	SYS_quotactl	148
 
 /* syscall: "compat_43_oquota" ret: "int" args: */
@@ -504,7 +504,7 @@
 #define	SYS_compat_10_omsgsys	170
 
 #else
-				/* 170 is excluded MPSAFE 1.0 msgsys */
+				/* 170 is excluded 1.0 msgsys */
 #endif
 #if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64)
 /* syscall: "compat_10_oshmsys" ret: "int" args: "int" "int" "int" "int" */
@@ -666,10 +666,10 @@
 #define	SYS_msgrcv	227
 
 #else
-				/* 224 is excluded MPSAFE compat_14_msgctl */
-				/* 225 is excluded MPSAFE msgget */
-				/* 226 is excluded MPSAFE msgsnd */
-				/* 227 is excluded MPSAFE msgrcv */
+				/* 224 is excluded compat_14_msgctl */
+				/* 225 is excluded msgget */
+				/* 226 is excluded msgsnd */
+				/* 227 is excluded msgrcv */
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
 /* syscall: "shmat" ret: "void *" args: "int" "const void *" "int" */
@@ -877,7 +877,7 @@
 #define	SYS___msgctl13	302
 
 #else
-				/* 302 is excluded MPSAFE __msgctl13 */
+				/* 302 is excluded __msgctl13 */
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
 /* syscall: "__shmctl13" ret: "int" args: "int" "int" "struct shmid_ds *" */
@@ -928,8 +928,20 @@
 /* syscall: "_lwp_setprivate" ret: "void" args: "void *" */
 #define	SYS__lwp_setprivate	317
 
-/* syscall: "_lwp_kill" ret: "void" args: "lwpid_t" "int" */
+/* syscall: "_lwp_kill" ret: "int" args: "lwpid_t" "int" */
 #define	SYS__lwp_kill	318
+
+/* syscall: "_lwp_detach" ret: "int" args: "lwpid_t" */
+#define	SYS__lwp_detach	319
+
+/* syscall: "_lwp_park" ret: "int" args: "const struct timespec *" "struct __ucontext *" */
+#define	SYS__lwp_park	320
+
+/* syscall: "_lwp_unpark" ret: "int" args: "lwpid_t" */
+#define	SYS__lwp_unpark	321
+
+/* syscall: "_lwp_unpark_all" ret: "int" args: "const lwpid_t *" "size_t" */
+#define	SYS__lwp_unpark_all	322
 
 /* syscall: "sa_register" ret: "int" args: "sa_upcall_t" "sa_upcall_t *" "int" "ssize_t" */
 #define	SYS_sa_register	330
@@ -967,6 +979,9 @@
 
 /* syscall: "kevent" ret: "int" args: "int" "const struct kevent *" "size_t" "struct kevent *" "size_t" "const struct timespec *" */
 #define	SYS_kevent	345
+
+/* syscall: "sched_yield" ret: "int" args: */
+#define	SYS_sched_yield	350
 
 /* syscall: "fsync_range" ret: "int" args: "int" "int" "off_t" "off_t" */
 #define	SYS_fsync_range	354

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.9 2006/08/26 20:08:07 ad Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.9.2.1 2006/12/29 20:27:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,8 @@
 static __inline void
 x86_pause(void)
 {
-	/* nothing */
+	extern int nullop(void *);
+	(void)nullop((void *)0);
 }
 
 /*

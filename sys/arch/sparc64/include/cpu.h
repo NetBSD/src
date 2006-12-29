@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54.6.1 2006/11/18 21:29:33 ad Exp $ */
+/*	$NetBSD: cpu.h,v 1.54.6.2 2006/12/29 20:27:42 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -268,20 +268,20 @@ void setsoftnet(void);
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched(ci)	(want_resched = 1, want_ast = 1)
+#define	cpu_need_resched(ci)	(want_resched = 1, want_ast = 1)
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the sparc, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, want_ast = 1)
+#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, want_ast = 1)
 
 /*
- * Notify the current process (p) that it has a signal pending,
+ * Notify the current process (l) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)		(want_ast = 1)
+#define	cpu_signotify(l)	(want_ast = 1)
 
 /*
  * Interrupt handler chains.  Interrupt handlers should return 0 for

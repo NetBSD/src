@@ -1,4 +1,4 @@
-$NetBSD: newlock2-TODO,v 1.1.2.3 2006/11/18 23:55:49 ad Exp $
+$NetBSD: newlock2-TODO,v 1.1.2.4 2006/12/29 20:27:41 ad Exp $
 
 Goals:
 
@@ -22,26 +22,18 @@ Goals:
 
 TODO:
 
-	- Fix ptrace
-	- kgmon is broken, is it broken on HEAD?
+	- More lockdebug barriers - there is a kernel_lock leak somewhere,
+	  but it's hard to trigger.
+	- Fix SA
+	- Fix ptrace/gdb interaction with signals
+	- Test ptrace fully
+	- Test kgmon
 	- amd64: SPL NOT LOWERED ON SYSCALL EXIT under load, i386 is stable
-	- p_userret replacement
-	- Repair syscalls.master
-	- Wakeups too early in exit1()
-	- Check usage of P_ISZOMBIE / SZOMB
-	- Memory barriers between setting one of L_USERRET and signotify()
-	- itimers need work (per-LWP vs SA)
-	- Locking around PCB / setcontext for ptrace
-	- Further locking around sigstack
-	- Lock the SA subsystem
-	- Save and restore old SPL / mutex count for each idepth
+	- Fix ugly locking in kern_exit() insofar as possible.
+	- Save and restore old SPL / mutex count for each idepth?? May not
+	  be worth it in the larger scheme of things.
+	- Update compat code
 	- Architectures other than i386, amd64
-	- Compat struct proc flags for sysctl, other emulations
-	- Check proc flags usage outside MI kernel
-	- Check for memory barriers before posting an AST
-	- Verify that the signals stuff is correct for SA
-	- Test and verify: SA, LWP syscalls, signals, procfs
 	- Benchmark comparisons against newlock2-base
 	- Eliminate all XXXAD comments
-	- Sync with head
-	- Examine diff against HEAD
+	- Examine diff against base

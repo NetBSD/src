@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.36.3 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.36.4 2006/12/29 20:27:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -57,14 +57,36 @@
  *		through macros.  However, machine-independent code must
  *		be able to access the following members:
  *
- *			integer m_oldspl
- *			integer m_minspl
+ *		integer			mtx_minspl
+ *		__cpu_simple_lock_t	mtx_lock
  *
- *	MUTEX_INITIALIZER_SPIN(ipl)
- *		Static initializer for spin mutexes.
+ * If an architecture can be considered 'simple' (no interlock required in
+ * the MP case, or no MP) it need only define __HAVE_SIMPLE_MUTEXES and
+ * provide the following:
  *
- *	MUTEX_INITIALIZER_ADAPTIVE()
- *		Static initializer for adaptive mutexes.
+ *	struct mutex
+ *
+ *		volatile uintptr_t	mtx_owner
+ *		volatile integer	mtx_id
+ *
+ *	MUTEX_RECEIVE(mtx)
+ *		Post a load fence after acquiring the mutex, if necessary.
+ *
+ *	MUTEX_GIVE(mtx)
+ *		Post a load/store fence after releasing the mutex, if
+ *		necessary.
+ *
+ * 	MUTEX_CAS(ptr, old, new)
+ *		Perform an atomic "compare and swap" operation and
+ *		evaluate to true or false according to the success
+ *
+ * Otherwise, the following must be defined:
+ *
+ *	MUTEX_INITIALIZE_SPIN(mtx, minipl)
+ *		Initialize a spin mutex.
+ *
+ *	MUTEX_INITIALIZE_ADAPTIVE(mtx)
+ *		Initialize an adaptive mutex.
  *
  *	MUTEX_ADAPTIVE_P(mtx)
  *		Evaluates to true if the mutex is an adaptive mutex.
@@ -91,31 +113,39 @@
  *
  *	MUTEX_RELEASE(mtx)
  *		Release the lock and clear the "has waiters" indication.
- *		Must be MP/interrupt atomic.
+ *		Must be interrupt atomic, need not be MP safe.
  *
- *	MUTEX_SPIN_ACQUIRE(mtx)
- *		Attempt to acquire a spin mutex.  Return non-zero on
- *		success.
+ *	MUTEX_SETID(rw, id)
+ *		Set the debugging ID for the mutex, an integer.  Only
+ *		used in the LOCKDEBUG case.
  *
- *	MUTEX_SPIN_RELEASE(mtx)
- *		Release a spin mutex.
- * 
- *	MUTEX_SPIN_HELD(mtx)
- *		Evaluates to true if the spin mutex is held.
+ *	MUTEX_GETID(rw)
+ *		Get the debugging ID for the mutex, an integer.  Only
+ *		used in the LOCKDEBUG case.
  *
  * Machine dependent code may optionally provide stubs for the following
- * functions to implement the easy (unlocked / no waiters) cases:
+ * functions to implement the easy (unlocked / no waiters) cases.  If
+ * these stubs are provided, __HAVE_MUTEX_STUBS should be defined.
  *
  *	mutex_enter()
  *	mutex_exit()
  *
- * For each function implemented, define the associated preprocessor
- * macro in the MD mutex header file.  For example: __HAVE_MUTEX_ENTER.
- * See kern_mutex.c for the MI stubs.
+ * Two additional stubs may be implemented that handle only the spinlock
+ * case, primarily for the scheduler.  These should not be documented for or
+ * used by device drivers.  __HAVE_SMUTEX_STUBS should be defined if these
+ * are provided:
+ *
+ *	smutex_enter()
+ *	smutex_exit()
  */
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
+#endif
+
+#if !defined(_KERNEL)
+#include <sys/types.h>
+#include <sys/inttypes.h>
 #endif
 
 typedef enum kmutex_type_t {
@@ -127,21 +157,25 @@ typedef enum kmutex_type_t {
 
 typedef struct kmutex kmutex_t;
 
-#include <machine/mutex.h>
-
 #if defined(__MUTEX_PRIVATE)
 
-#if defined(LOCKDEBUG)
-#undef	__HAVE_MUTEX_ENTER
-#undef	__HAVE_MUTEX_EXIT
-#define	__NEED_MUTEX_CALLSITE	1
-#elif !defined(__HAVE_MUTEX_ENTER)
-#define	__NEED_MUTEX_CALLSITE	1
-#endif
+#define	MUTEX_THREAD		((uintptr_t)-16L)
+
+#define	MUTEX_BIT_SPIN			0x01
+#define	MUTEX_BIT_WAITERS		0x02
+
+#define	MUTEX_SPIN_MINSPL(mtx)		((mtx)->mtx_minspl)
+#define	MUTEX_SPIN_OLDSPL(ci)		((ci)->ci_mtx_oldspl)
+
+void	mutex_vector_enter(kmutex_t *);
+void	mutex_vector_exit(kmutex_t *);
+void	smutex_vector_enter(kmutex_t *, int, uintptr_t);
 
 #endif	/* __MUTEX_PRIVATE */
 
-#if defined(_KERNEL)
+#include <machine/mutex.h>
+
+#ifdef _KERNEL
 
 void	mutex_init(kmutex_t *, kmutex_type_t, int);
 void	mutex_destroy(kmutex_t *);
@@ -149,20 +183,9 @@ void	mutex_destroy(kmutex_t *);
 void	mutex_enter(kmutex_t *);
 void	mutex_exit(kmutex_t *);
 
-#if defined(__MUTEX_PRIVATE)
+void	smutex_enter(kmutex_t *);
+void	smutex_exit(kmutex_t *);
 
-#if !defined(__NEED_MUTEX_CALLSITE)
-void	mutex_vector_enter(kmutex_t *, int);
-#else
-void	mutex_vector_enter(kmutex_t *, int, uintptr_t);
-#endif
-
-void	mutex_vector_exit(kmutex_t *);
-
-#endif	/* __MUTEX_PRIVATE */
-
-void	mutex_enter(kmutex_t *);
-void	mutex_exit(kmutex_t *);
 int	mutex_tryenter(kmutex_t *);
 
 struct lwp *mutex_owner(kmutex_t *);
@@ -171,3 +194,4 @@ int	mutex_owned(kmutex_t *);
 #endif /* _KERNEL */
 
 #endif /* _SYS_MUTEX_H_ */
+

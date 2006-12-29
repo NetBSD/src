@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.15.2.1 2006/11/17 16:34:35 ad Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.15.2.2 2006/12/29 20:27:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.15.2.1 2006/11/17 16:34:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.15.2.2 2006/12/29 20:27:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -186,7 +186,7 @@ linux_sys_ptrace_arch(l, v, retval)
 	/*
 	 *	(4) it's not currently stopped.
 	 */
-	if (t->p_stat != SSTOP || !ISSET(t->p_lflag, PL_WAITED))
+	if (t->p_stat != SSTOP || !t->p_waited /* XXXSMP */)
 		return EBUSY;
 
 	/* XXX NJWLWP

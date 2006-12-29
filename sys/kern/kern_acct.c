@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.66.4.5 2006/11/18 21:39:21 ad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.66.4.6 2006/12/29 20:27:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.66.4.5 2006/11/18 21:39:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.66.4.6 2006/12/29 20:27:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.66.4.5 2006/11/18 21:39:21 ad Exp $"
 /*
  * Mutex to serialize system calls and kernel threads.
  */
-kmutex_t acct_mutex;
+kmutex_t	acct_mutex;
 
 /*
  * The global accounting state and related data.  Gain the mutex before
@@ -251,8 +251,7 @@ acctwatch(void *arg)
 			printf("acctwatch: failed to statvfs, error = %d\n",
 			    error);
 #endif
-		error = mtsleep(acctwatch, PSWP, "actwat", acctchkfreq * hz,
-		    &acct_mutex);
+		error = sched_pause("actwat", FALSE, acctchkfreq * hz);
 #ifdef DIAGNOSTIC
 		if (error != 0 && error != EWOULDBLOCK)
 			printf("acctwatch: sleep error %d\n", error);

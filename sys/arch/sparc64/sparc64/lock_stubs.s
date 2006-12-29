@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.4 2006/12/29 20:27:42 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.36.1 2006/12/29 20:27:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -22,7 +22,7 @@
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- *
+ *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -36,46 +36,76 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_MUTEX_H_
-#define	_X86_MUTEX_H_
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
-struct kmutex {
-	union {
-		volatile uintptr_t	mtxa_owner;
-		struct {
-			volatile uint8_t	mtxs_dummy;
-			volatile uint8_t	mtxs_minspl;
-                        __cpu_simple_lock_t	mtxs_lock;
-			volatile uint8_t	mtxs_unused;
-		} s;
-	} u;
-	volatile uint32_t	mtx_id;
-};
+#include <machine/asm.h>
 
-#ifdef __MUTEX_PRIVATE
+#include "assym.h"
 
-#define	mtx_owner 			u.mtxa_owner
-#define	mtx_minspl 			u.s.mtxs_minspl
-#define	mtx_lock			u.s.mtxs_lock
+#undef CURLWP
+#if defined(MULTIPROCESSOR)
+#define	CURLWP	(CPUINFO_VA+CI_CURLWP)
+#else
+#define	CURLWP	_C_LABEL(curlwp)
+#endif
 
-#define __HAVE_MUTEX_STUBS		1
-#define __HAVE_SMUTEX_STUBS		1
-#define	__HAVE_SIMPLE_MUTEXES		1
+#ifdef __arch64__
+#define	CASPTR	casx
+#define	LDPTR	ldx
+#define	STPTR	stx
+#else
+#define	CASPTR	cas
+#define	LDPTR	ld
+#define	STPTR	st
+#endif /* __arch64__ */
 
 /*
- * MUTEX_RECEIVE: no memory barrier required, as 'ret' implies a load fence.
+ * void _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);
  */
-#define	MUTEX_RECEIVE(mtx)		/* nothing */
+_ENTRY(_C_LABEL(_lock_cas))
+	membar	#LoadLoad
+	CASPTR	[%o0], %o1, %o2			! compare-and-swap
+	membar	#LoadLoad | #StoreLoad | #LoadStore
+	cmp	%o1, %o2			! expected == actual?
+	bne	1f				! nope
+	 or	%g0, 1, %o0
+	retl
+	 nop
+1:	retl
+	 mov	%g0, %o0
+
+#if !defined(LOCKDEBUG)
 
 /*
- * MUTEX_GIVE: no memory barrier required, as _lock_cas() will take care of it.
+ * void mutex_enter(kmutex_t *);
  */
-#define	MUTEX_GIVE(mtx)			/* nothing */
+_ENTRY(_C_LABEL(mutex_enter))
+	sethi	%hi(CURLWP), %o3
+	LDPTR	[%o3 + %lo(CURLWP)], %o3	! current thread
+	CASPTR	[%o0], %g0, %o3			! compare-and-swap
+	membar	#LoadLoad
+	tst	%o3				! lock was unowned?
+	bnz	_C_LABEL(mutex_vector_enter)	! nope, hard case
+	 nop
+	retl
+	 nop
 
-#define	MUTEX_CAS(p, o, n)		_lock_cas((p), (o), (n))
+/*
+ * void mutex_exit(kmutex_t *);
+ *
+ * XXX This should use an unlocked sequence.  See amd64/lock_stubs.S
+ */
+_ENTRY(_C_LABEL(mutex_exit))
+	sethi	%hi(CURLWP), %o3
+	LDPTR	[%o3 + %lo(CURLWP)], %o3	! current thread
+	mov	%g0, %o4			! new value (0)
+	membar	#LoadLoad | #StoreLoad | #LoadStore
+	CASPTR	[%o0], %o3, %o4			! compare-and-swap
+	cmp	%o3, %o4			! were they the same?
+	bne	_C_LABEL(mutex_vector_exit)	! nope, hard case
+	 nop
+	retl
+	 nop
 
-int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
-
-#endif	/* __MUTEX_PRIVATE */
-
-#endif /* _X86_MUTEX_H_ */
+#endif	/* !LOCKDEBUG */

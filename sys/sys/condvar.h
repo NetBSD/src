@@ -1,4 +1,4 @@
-/*	$NetBSD: condvar.h,v 1.1.2.2 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: condvar.h,v 1.1.2.3 2006/12/29 20:27:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -49,14 +49,8 @@
  */
 typedef struct kcondvar {
 	const char	*cv_wmesg;	/* description for /bin/ps */
-	union {
-		u_int	cvu_waiters;	/* number of waiters */
-		void	*cvu_ptr;	/* reserved */
-	} cv_un;
+	u_int		cv_waiters;	/* number of waiters */
 } kcondvar_t;
-
-#define	cv_waiters	cv_un.cvu_waiters
-#define	cv_ptr		cv_un.cvu_ptr
 
 #ifdef _KERNEL
 
@@ -70,6 +64,8 @@ int	cv_timedwait_sig(kcondvar_t *, kmutex_t *, int);
 
 void	cv_signal(kcondvar_t *);
 void	cv_broadcast(kcondvar_t *);
+
+int	cv_has_waiters(kcondvar_t *);
 
 #endif	/* _KERNEL */
 

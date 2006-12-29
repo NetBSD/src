@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.227.4.3 2006/11/17 16:34:36 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.227.4.4 2006/12/29 20:27:43 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.3 2006/11/17 16:34:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.4 2006/12/29 20:27:43 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -604,7 +604,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 
 	/* Get rid of other LWPs. */
-	exit_lwps(l);
+	if (p->p_sa || p->p_nlwps > 1) {
+		mutex_enter(&p->p_smutex);
+		exit_lwps(l);
+		mutex_exit(&p->p_smutex);
+	}
 	KDASSERT(p->p_nlwps == 1);
 
 	/* This is now LWP 1 */
@@ -667,14 +671,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		if (error) {
 			int j;
 			struct exec_vmcmd *vp = &pack.ep_vmcmds.evs_cmds[0];
-			rw_enter(&proclist_lock, RW_READER);
 			for (j = 0; j <= i; j++)
 				uprintf(
 			    "vmcmd[%d] = %#lx/%#lx fd@%#lx prot=0%o flags=%d\n",
 				    j, vp[j].ev_addr, vp[j].ev_len,
 				    vp[j].ev_offset, vp[j].ev_prot,
 				    vp[j].ev_flags);
-			rw_exit(&proclist_lock);
 		}
 #endif /* DEBUG_EXEC */
 		if (vcp->ev_flags & VMCMD_BASE)
@@ -768,21 +770,25 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	p->p_flag |= P_EXEC;
 
 	/*
+	 * Stop profiling.
+	 */
+	if ((p->p_stflag & PST_PROFIL) != 0) {
+		mutex_enter(&p->p_stmutex);
+		stopprofclock(p);
+		mutex_exit(&p->p_stmutex);
+	}
+
+	/*
 	 * It's OK to test PS_PPWAIT unlocked here, as other LWPs have
 	 * exited and exec()/exit() are the only places it will be cleared.
 	 */
-	if (p->p_sflag & PS_PPWAIT) {
+	if ((p->p_sflag & PS_PPWAIT) != 0) {
 		rw_enter(&proclist_lock, RW_READER);
 		mutex_enter(&p->p_smutex);
-		stopprofclock(p);	/* stop profiling */
 		p->p_sflag &= ~PS_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
 		mutex_exit(&p->p_smutex);
 		rw_exit(&proclist_lock);
-	} else {
-		mutex_enter(&p->p_smutex);
-		stopprofclock(p);	/* stop profiling */
-		mutex_exit(&p->p_smutex);
 	}
 
 	/*
@@ -819,8 +825,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		 * If process is being ktraced, turn off - unless
 		 * root set it.
 		 */
-		if (p->p_tracep && !(p->p_traceflag & KTRFAC_ROOT))
-			ktrderef(p);
+		if (p->p_tracep) {
+			mutex_enter(&ktrace_mutex);
+			if (!(p->p_traceflag & KTRFAC_ROOT))
+				ktrderef(p);
+			mutex_exit(&ktrace_mutex);
+		}
 #endif
 		if (attr.va_mode & S_ISUID)
 			kauth_cred_seteuid(l->l_cred, attr.va_uid);
@@ -926,32 +936,27 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	rw_exit(&exec_lock);
 #endif
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_mutex);
 
 	if ((p->p_slflag & (PSL_TRACED|PSL_SYSCALL)) == PSL_TRACED)
 		psignal(p, SIGTRAP);
 
 	if (p->p_sflag & PS_STOPEXEC) {
-		mutex_enter(&proc_stop_mutex);
 		p->p_pptr->p_nstopchild++;
-		rw_exit(&proclist_lock);
-
+		p->p_pptr->p_waited = 0;
 		mutex_enter(&p->p_smutex);
 		sigclearall(p, &contsigmask);
 		lwp_lock(l);
-		lwp_relock(l, &lwp_mutex);
-
-		/* Unlock the process once we are about to switch away. */
-		mb_write();
 		p->p_refcnt = 1;
 		l->l_stat = LSSTOP;
 		p->p_stat = SSTOP;
 		p->p_nrlwps--;
 		mutex_exit(&p->p_smutex);
-		mutex_exit(&proc_stop_mutex);
+		mutex_exit(&proclist_mutex);
 		mi_switch(l, NULL);
 	} else {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_mutex);
+
 		/* Unlock the process. */
 		mb_write();
 		p->p_refcnt = 1;

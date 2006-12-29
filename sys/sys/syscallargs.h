@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.156.2.2 2006/11/18 21:39:47 ad Exp $ */
+/* $NetBSD: syscallargs.h,v 1.156.2.3 2006/12/29 20:27:45 ad Exp $ */
 
 /*
  * System call argument lists.
@@ -689,7 +689,7 @@ struct sys_quotactl_args {
 	syscallarg(const char *) path;
 	syscallarg(int) cmd;
 	syscallarg(int) uid;
-	syscallarg(void *) arg;
+	syscallarg(caddr_t) arg;
 };
 
 struct compat_43_sys_getsockname_args {
@@ -1389,6 +1389,24 @@ struct sys__lwp_setprivate_args {
 struct sys__lwp_kill_args {
 	syscallarg(lwpid_t) target;
 	syscallarg(int) signo;
+};
+
+struct sys__lwp_detach_args {
+	syscallarg(lwpid_t) target;
+};
+
+struct sys__lwp_park_args {
+	syscallarg(const struct timespec *) ts;
+	syscallarg(struct __ucontext *) ucp;
+};
+
+struct sys__lwp_unpark_args {
+	syscallarg(lwpid_t) target;
+};
+
+struct sys__lwp_unpark_all_args {
+	syscallarg(const lwpid_t *) targets;
+	syscallarg(size_t) ntargets;
 };
 
 struct sys_sa_register_args {
@@ -2338,6 +2356,14 @@ int	sys__lwp_setprivate(struct lwp *, void *, register_t *);
 
 int	sys__lwp_kill(struct lwp *, void *, register_t *);
 
+int	sys__lwp_detach(struct lwp *, void *, register_t *);
+
+int	sys__lwp_park(struct lwp *, void *, register_t *);
+
+int	sys__lwp_unpark(struct lwp *, void *, register_t *);
+
+int	sys__lwp_unpark_all(struct lwp *, void *, register_t *);
+
 int	sys_sa_register(struct lwp *, void *, register_t *);
 
 int	sys_sa_stacks(struct lwp *, void *, register_t *);
@@ -2361,6 +2387,8 @@ int	sys_rasctl(struct lwp *, void *, register_t *);
 int	sys_kqueue(struct lwp *, void *, register_t *);
 
 int	sys_kevent(struct lwp *, void *, register_t *);
+
+int	sys_sched_yield(struct lwp *, void *, register_t *);
 
 int	sys_fsync_range(struct lwp *, void *, register_t *);
 
