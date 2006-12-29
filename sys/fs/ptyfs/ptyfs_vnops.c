@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.19 2006/12/09 16:11:51 chs Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.20 2006/12/29 18:05:17 elad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.19 2006/12/09 16:11:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.20 2006/12/29 18:05:17 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,19 +383,16 @@ ptyfs_setattr(void *v)
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 		    &l->l_acflag)) != 0)
 			return error;
+		/* Immutable and append-only flags are not supported on ptyfs. */
+		if (vap->va_flags & (IMMUTABLE | APPEND))
+			return EINVAL;
 		if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
-			if ((ptyfs->ptyfs_flags & (SF_IMMUTABLE | SF_APPEND)) &&
-			    securelevel > 0)
-				return EPERM;
 			/* Snapshot flag cannot be set or cleared */
 			if ((vap->va_flags & SF_SNAPSHOT) !=
 			    (ptyfs->ptyfs_flags & SF_SNAPSHOT))
 				return EPERM;
 			ptyfs->ptyfs_flags = vap->va_flags;
 		} else {
-			if ((ptyfs->ptyfs_flags & (SF_IMMUTABLE | SF_APPEND)) ||
-			    (vap->va_flags & UF_SETTABLE) != vap->va_flags)
-				return EPERM;
 			if ((ptyfs->ptyfs_flags & SF_SETTABLE) !=
 			    (vap->va_flags & SF_SETTABLE))
 				return EPERM;
@@ -403,11 +400,8 @@ ptyfs_setattr(void *v)
 			ptyfs->ptyfs_flags |= (vap->va_flags & UF_SETTABLE);
 		}
 		ptyfs->ptyfs_flag |= PTYFS_CHANGE;
-		if (vap->va_flags & (IMMUTABLE | APPEND))
-			return 0;
 	}
-	if (ptyfs->ptyfs_flags & (IMMUTABLE | APPEND))
-		return EPERM;
+
 	/*
 	 * Go through the fields and update iff not VNOVAL.
 	 */
