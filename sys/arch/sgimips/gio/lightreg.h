@@ -1,4 +1,4 @@
-/*	$Id: lightreg.h,v 1.2 2006/12/28 16:33:49 rumble Exp $	*/
+/*	$Id: lightreg.h,v 1.3 2006/12/29 00:31:48 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -53,6 +53,7 @@
 #define REX_P1REG_CFGSEL	0x0000005c	/* function selector */
 #define REX_P1REG_VC1_ADDRDATA	0x00000060	/* vc1 r/w addr and data 8bit */
 #define REX_P1REG_CFGMODE	0x00000068	/* REX system config */
+#define REX_P1REG_XYOFFSET	0x0000006c	/* x, y start of screen */
 
 /* REX opcodes */
 #define REX_OP_NOP		0x00000000
