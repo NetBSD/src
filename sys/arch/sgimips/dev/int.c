@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.15 2006/12/29 07:00:11 rumble Exp $	*/
+/*	$NetBSD: int.c,v 1.16 2006/12/29 07:06:19 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.15 2006/12/29 07:00:11 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.16 2006/12/29 07:06:19 rumble Exp $");
 
 #include "opt_cputype.h"
 
@@ -122,7 +122,7 @@ int_attach(struct device *parent, struct device *self, void *aux)
 	} else
 		panic("\nint0: passed match, but failed attach?");
 
-	printf(" addr 0x%x", address);
+	printf(" addr 0x%x\n", address);
 
 	bus_space_map(iot, address, 0, 0, &ioh);
 	iot = SGIMIPS_BUS_SPACE_NORMAL;
@@ -171,8 +171,8 @@ int_attach(struct device *parent, struct device *self, void *aux)
 
 			cps = cps / (sizeof(ctrdiff) / sizeof(ctrdiff[0]));
 
-			printf(": bus %luMHz, CPU %luMHz",
-			    cps / 10000, cps / 5000);
+			printf("%s: bus %luMHz, CPU %luMHz\n",
+			    self->dv_xname, cps / 10000, cps / 5000);
 
 			/* R4k/R4400/R4600/R5k count at half CPU frequency */
 			curcpu()->ci_cpu_freq = 2 * cps * hz;
@@ -184,8 +184,6 @@ int_attach(struct device *parent, struct device *self, void *aux)
 			panic("int0: unsupported machine type %i\n", mach_type);
 			break;
 	}
-
-	printf("\n");
 
 	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
 	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
