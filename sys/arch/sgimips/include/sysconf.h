@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.6 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.7 2006/12/29 05:26:30 rumble Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -56,6 +56,7 @@
 struct platform {
 	/*
 	 * Platform Specific Function Hooks
+	 *	bad_addr	-	badaddr, or workaround replacement
 	 *	bus_reset	-	clear memory error condition
 	 *	cons_init	-	console initialization
 	 *	intr_establish	-	establish interrupt handler
@@ -66,6 +67,7 @@ struct platform {
 	 *	intr0-intr5	-	CPU interrupt handler
 	 */
 
+	int	(*badaddr)(void *, size_t);
 	void	(*bus_reset)(void);
 	void	(*cons_init)(void);
 	void	*(*intr_establish)(int , int, int (*)(void *), void *);

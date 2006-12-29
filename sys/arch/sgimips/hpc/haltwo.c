@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.10 2006/09/04 22:06:06 rumble Exp $ */
+/* $NetBSD: haltwo.c,v 1.11 2006/12/29 05:26:30 rumble Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.10 2006/09/04 22:06:06 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.11 2006/12/29 05:26:30 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.10 2006/09/04 22:06:06 rumble Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
+#include <machine/sysconf.h>
 
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/hpc/hpcreg.h>
@@ -266,10 +267,12 @@ haltwo_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(haa->ha_name, cf->cf_name))
 		return 0;
 
-	if ( badaddr((void *)(haa->ha_sh + haa->ha_devoff), sizeof(u_int32_t)) )
+	if ( platform.badaddr((void *)(haa->ha_sh + haa->ha_devoff),
+	    sizeof(u_int32_t)) )
 		return 0;
 
-	if ( badaddr((void *)(haa->ha_sh + haa->ha_devoff + HAL2_REG_CTL_REV),
+	if ( platform.badaddr(
+	    (void *)(haa->ha_sh + haa->ha_devoff + HAL2_REG_CTL_REV),
 	    sizeof(u_int32_t)) )
 		return 0;
 
