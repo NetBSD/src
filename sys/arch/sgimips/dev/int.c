@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.13 2006/12/28 16:19:14 rumble Exp $	*/
+/*	$NetBSD: int.c,v 1.14 2006/12/29 06:52:01 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,13 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.13 2006/12/28 16:19:14 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.14 2006/12/29 06:52:01 rumble Exp $");
 
 #include "opt_cputype.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -69,10 +70,25 @@ static void	int_local1_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 static int 	int_mappable_intr(void *);
 static void    *int_intr_establish(int, int, int (*)(void *), void *);
 static void	int_8254_cal(void);
+static u_int	int_8254_get_timecount(struct timecounter *);
+static void	int_8254_intr1(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
 #ifdef MIPS3
 static u_long	int_cal_timer(void);
 #endif
+
+static struct timecounter int_8254_timecounter = {
+	int_8254_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	~0u,			/* counter_mask */
+	500000,			/* frequency */
+	"int i8254",		/* name */
+	100,			/* quality */
+	NULL,			/* prev */
+	NULL,			/* next */
+};
+
+static u_long int_8254_tc_count;
 
 CFATTACH_DECL(int, sizeof(struct int_softc),
 	int_match, int_attach, NULL, NULL);
@@ -123,7 +139,9 @@ int_attach(struct device *parent, struct device *self, void *aux)
 		case MACH_SGI_IP12:
 			platform.intr1 = int_local0_intr;
 			platform.intr2 = int_local1_intr;
+			platform.intr4 = int_8254_intr1;
 			int_8254_cal();
+			tc_init(&int_8254_timecounter);
 			break;
 #ifdef MIPS3
 		case MACH_SGI_IP20:
@@ -383,6 +401,14 @@ int_cal_timer(void)
 }
 #endif /* MIPS3 */
 
+/*
+ * A 1.000MHz master clock is wired to TIMER2, which in turn clocks the two
+ * other timers. On IP12 TIMER1 interrupts on MIPS interrupt 1 and TIMER2
+ * on MIPS interrupt 2.
+ *
+ * Apparently int2 doesn't like counting down from one, but two works, so
+ * we get a good 500000Hz.
+ */
 void
 int_8254_cal(void)
 {
@@ -392,17 +418,60 @@ int_8254_cal(void)
 
 	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 15,
 	    TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
-	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 3, (20000 / hz) % 256);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 3, (500000 / hz) % 256);
 	wbflush();
 	delay(4);
-	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 3, (20000 / hz) / 256);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 3, (500000 / hz) / 256);
+
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 15,
+	    TIMER_SEL1|TIMER_RATEGEN|TIMER_16BIT);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 7, 0xff);
+	wbflush();
+	delay(4);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 7, 0xff);
 
 	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 15,
 	    TIMER_SEL2|TIMER_RATEGEN|TIMER_16BIT);
-	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 11, 50);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 11, 2);
 	wbflush();
 	delay(4);
 	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 11, 0);
+
+	splx(s);
+}
+
+
+static u_int
+int_8254_get_timecount(struct timecounter *tc)
+{
+	int s;
+	u_int count;
+	u_char lo, hi;
+
+	s = splhigh();
+
+        bus_space_write_1(iot, ioh, INT2_TIMER_0 + 15,
+	    TIMER_SEL1 | TIMER_LATCH);
+	lo = bus_space_read_1(iot, ioh, INT2_TIMER_0 + 7);
+	hi = bus_space_read_1(iot, ioh, INT2_TIMER_0 + 7);
+	count = 0xffff - ((hi << 8) | lo);
+
+	splx(s);
+
+	return (int_8254_tc_count + count);
+}
+
+static void
+int_8254_intr1(u_int32_t status, u_int32_t cause, u_int32_t pc,
+    u_int32_t ipending)
+{
+	int s;
+
+	s = splhigh();
+
+	int_8254_tc_count += 0xffff;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fb801e0) = 2;
+
 	splx(s);
 }
 
