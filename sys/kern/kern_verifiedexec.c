@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.86 2006/12/26 19:31:33 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.87 2006/12/29 11:34:14 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.86 2006/12/26 19:31:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.87 2006/12/29 11:34:14 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -862,7 +862,7 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	enum kauth_device_req req;
 	struct veriexec_table_entry *vte;
 
-	result = KAUTH_RESULT_DEFER;
+	result = KAUTH_RESULT_DENY;
 	req = (enum kauth_device_req)arg0;
 
 	switch (action) {
@@ -872,12 +872,11 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		int d_type;
 
 		if (req == KAUTH_REQ_DEVICE_RAWIO_SPEC_READ) {
-			result = KAUTH_RESULT_ALLOW;
+			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 
 		vp = arg1;
-
 		KASSERT(vp != NULL);
 
 		dev = vp->v_un.vu_specinfo->si_rdev;
@@ -887,7 +886,7 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		/* Handle /dev/mem and /dev/kmem. */
 		if ((vp->v_type == VCHR) && iskmemdev(dev)) {
 			if (veriexec_strict < VERIEXEC_IPS)
-				result = KAUTH_RESULT_ALLOW;
+				result = KAUTH_RESULT_DEFER;
 
 			break;
 		}
@@ -927,7 +926,7 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		}
 
 		if (d_type != D_DISK) {
-			result = KAUTH_RESULT_ALLOW;
+			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 
@@ -936,16 +935,14 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		 */
 		vte = veriexec_table_lookup(bvp->v_mount);
 		if (vte == NULL) {
-			result = KAUTH_RESULT_ALLOW;
+			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 
 		switch (veriexec_strict) {
 		case VERIEXEC_LEARNING:
-			result = KAUTH_RESULT_ALLOW;
-			break;
 		case VERIEXEC_IDS:
-			result = KAUTH_RESULT_ALLOW;
+			result = KAUTH_RESULT_DEFER;
 
 			fileassoc_table_run(bvp->v_mount, veriexec_hook,
 			    (fileassoc_cb_t)veriexec_purge);
@@ -965,9 +962,7 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case KAUTH_DEVICE_RAWIO_PASSTHRU:
 		/* XXX What can we do here? */
 		if (veriexec_strict < VERIEXEC_IPS)
-			result = KAUTH_RESULT_ALLOW;
-		else
-			result = KAUTH_RESULT_DENY;
+			result = KAUTH_RESULT_DEFER;
 
 		break;
 
