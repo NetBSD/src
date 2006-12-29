@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.14 2006/12/29 06:52:01 rumble Exp $	*/
+/*	$NetBSD: int.c,v 1.15 2006/12/29 07:00:11 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.14 2006/12/29 06:52:01 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.15 2006/12/29 07:00:11 rumble Exp $");
 
 #include "opt_cputype.h"
 
@@ -71,6 +71,7 @@ static int 	int_mappable_intr(void *);
 static void    *int_intr_establish(int, int, int (*)(void *), void *);
 static void	int_8254_cal(void);
 static u_int	int_8254_get_timecount(struct timecounter *);
+static void	int_8254_intr0(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 static void	int_8254_intr1(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
 #ifdef MIPS3
@@ -139,6 +140,7 @@ int_attach(struct device *parent, struct device *self, void *aux)
 		case MACH_SGI_IP12:
 			platform.intr1 = int_local0_intr;
 			platform.intr2 = int_local1_intr;
+			platform.intr3 = int_8254_intr0;
 			platform.intr4 = int_8254_intr1;
 			int_8254_cal();
 			tc_init(&int_8254_timecounter);
@@ -462,6 +464,21 @@ int_8254_get_timecount(struct timecounter *tc)
 }
 
 static void
+int_8254_intr0(u_int32_t status, u_int32_t cause, u_int32_t pc,
+    u_int32_t ipending)
+{
+	struct clockframe cf;
+
+	cf.pc = pc;
+	cf.sr = status;
+
+	hardclock(&cf);
+
+	bus_space_write_4(iot, ioh, INT2_TIMER_CLEAR, 1);
+}
+
+
+static void
 int_8254_intr1(u_int32_t status, u_int32_t cause, u_int32_t pc,
     u_int32_t ipending)
 {
@@ -470,7 +487,7 @@ int_8254_intr1(u_int32_t status, u_int32_t cause, u_int32_t pc,
 	s = splhigh();
 
 	int_8254_tc_count += 0xffff;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fb801e0) = 2;
+	bus_space_write_4(iot, ioh, INT2_TIMER_CLEAR, 2);
 
 	splx(s);
 }
