@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.21 2006/12/25 21:04:56 ghen Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.22 2006/12/29 02:06:03 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -413,4 +413,9 @@ sys/dist/ipf/netinet/ip_state.c			1.16
 	TCP window scaling was being recognised but the recorded settins were
 	being clobbered and thus effectively disabled.
 	[darrenr, ticket #303]
+
+sys/kern/subr_prof.c				1.37
+
+	Add missing initializer.  PR#35248
+	[liamjfoy, ticket #295]
 
