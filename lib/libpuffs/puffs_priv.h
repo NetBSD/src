@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.1 2006/12/07 23:15:20 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.2 2006/12/29 15:28:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -35,13 +35,61 @@
 #include <fs/puffs/puffs_msgif.h>
 
 #include <puffs.h>
+#include <ucontext.h>
+
+/* call context */
+
+struct puffs_cc {
+	struct puffs_usermount	*pcc_pu;
+	struct puffs_req	*pcc_preq;
+
+	ucontext_t		pcc_uc;		/* "continue" 		*/
+	ucontext_t		pcc_uc_ret;	/* "yield" 		*/
+	void			*pcc_stack;
+
+	int			pcc_flags;
+
+	/* these are for threading information to the implementation	*/
+	void			*pcc_priv;
+	int			pcc_rv;
+
+	TAILQ_ENTRY(puffs_cc)	entries;
+};
+#define PCC_ONCE	0x01
+#define PCC_REALCC	0x02
+#define PCC_FREEPRIV	0x04
+#define PCC_PREQ_NOCOPY	0x08
+#define PCC_DONE	0x10
+
+#define PCC_CALL_NONE	0x10000
+#define PCC_CALL_IN	0x20000
+#define PCC_CALL_OUT	0x40000
+#define PCC_CALL_MASK	0x70000
+
+#define pcc_callstat(a)	   (a->pcc_flags & PCC_CALL_MASK)
+#define pcc_callset(a, b)  (a->pcc_flags = (a->pcc_flags & ~PCC_CALL_MASK) | b)
+
+#define pcc_init_local(ap)   						\
+do {									\
+	memset(ap, 0, sizeof(*ap));					\
+	(ap)->pcc_flags = PCC_ONCE;					\
+} while (/*CONSTCOND*/0)
+
+/*
+ * Reqs
+ */
 
 struct puffs_getreq {
 	struct puffs_usermount	*pgr_pu;
 
 	struct puffs_reqh_get	pgr_phg;
+	struct puffs_reqh_get	pgr_phg_orig;
+
 	struct puffs_req	*pgr_nextpreq;
 	size_t			pgr_advance;
+
+	/* diagnostics */
+	int			pgr_nppr;
 };
 
 struct puffs_putreq {
@@ -50,9 +98,23 @@ struct puffs_putreq {
 	struct puffs_reqh_put	ppr_php;
 
 	/* to adjust next request info */
-	void		**ppr_buf;
-	size_t		*ppr_buflen;
-	uint64_t 	*ppr_id;
+	void			**ppr_buf;
+	size_t			*ppr_buflen;
+	uint64_t 		*ppr_id;
+
+	/* for delayed action freeing of preq's */
+	TAILQ_HEAD(, puffs_cc)	ppr_pccq;
+
+	/* diagnostics */
+	struct puffs_getreq	*ppr_pgr;
 };
+
+__BEGIN_DECLS
+struct puffs_cc		*puffs_cc_create(struct puffs_usermount *,
+					 struct puffs_req *);
+void			puffs_cc_destroy(struct puffs_cc *);
+
+void			puffs_calldispatcher(struct puffs_cc *);
+__END_DECLS
 
 #endif /* _PUFFS_PRIVATE_H_ */
