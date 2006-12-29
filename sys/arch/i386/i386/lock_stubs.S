@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.5 2006/11/17 16:34:32 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.6 2006/12/29 20:27:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,23 +37,10 @@
  */
 
 /*
- * i386 lock stubs.
- *
- * There are two sets of stubs, one for 80386 CPUs and one for later CPUs.
- * We could patch this in at boot time, but the maintenance overhead would
- * be too high.
- *
- * Note on the 80386 stubs: the 80386 doesn't have a compare-and-exchange
+ * Note on the 80386: the 80386 doesn't have a compare-and-exchange
  * operation.  Stepping A of the i486 has these instructions wired to a
- * different opcode, so should use these stubs also.  They are rare, so we
- * don't make the effort.
- *
- * Since we can't do compare-and-exchange atomically with an 80386, we must
- * disable interrupts in order to support preemption.  On the i386 this is
- * cheap to do.  For other architectures a restartable sequence may be a
- * better option.
- *
- * The 80386 lock stubs do not support SMP.
+ * different opcode, so should use these stubs also.  They are rare, so
+ * we don't make the effort.
  */
 
 #include "opt_multiprocessor.h"
@@ -74,13 +61,13 @@
 #endif
 
 #if defined(I386_CPU)
-#define	STUB(name)						\
+#define	STUB(name, alternate)					\
 	NENTRY(name) ;						\
 	cmpl	$CPUCLASS_386, _C_LABEL(cpu_class) ;		\
 	movl	4(%esp), %edx ;					\
-	je	_C_LABEL(_80386_/**/name)
+	je	_C_LABEL(alternate)
 #else
-#define	STUB(name)						\
+#define	STUB(name, alternate)					\
 	NENTRY(name) ;						\
 	movl	4(%esp), %edx
 #endif
@@ -93,8 +80,10 @@
 
 /*
  * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
+ *
+ * Perform an atomic compare-and-set operation.
  */
-STUB(_lock_cas)
+STUB(_lock_cas, _80386_lock_cas)
 	movl	8(%esp), %eax
 	movl	12(%esp), %ecx
 	LOCK
@@ -103,34 +92,69 @@ STUB(_lock_cas)
 	setz	%al
 	ret
 
+#ifdef I386_CPU
 /*
- * int _lock_set_waiters(uintptr_t *val, uintptr_t need, uintptr_t set);
- *
- * Note: 'need' must be non-zero.
+ * Since we can't do compare-and-exchange atomically with an 80386, we must
+ * disable interrupts in order to support preemption.  On the i386 this is
+ * cheap to do.  For other architectures a restartable sequence is usually
+ * a better option.
  */
-STUB(_lock_set_waiters)
+	_ALIGN_TEXT:
+
+_80386_lock_cas:
+	movl	8(%esp), %eax
 	movl	12(%esp), %ecx
-	movl	(%edx), %eax
-
-1:	testl	8(%esp), %eax
-	jz	2f
-	orl	%eax, %ecx
-	LOCK
-	cmpxchgl %ecx, (%edx)
-	jnz	1b
-	ret					/* %eax is non zero */
-
-2:	xorl	%eax, %eax
+	pushfl
+	cli
+	cmpl	%eax, (%edx)
+	jne	1f
+	movl	%ecx, (%edx)
+	movb	$1, %al
+	popfl
 	ret
+
+1:	popfl
+	xorl	%eax, %eax
+	ret
+#endif	/* I386_CPU */
 
 #if !defined(LOCKDEBUG)
 
 /*
  * void mutex_enter(kmutex_t *mtx);
+ *
+ * Acquire a mutex and post a load fence.
  */
-STUB(mutex_enter)
-	testb	$MUTEX_BIT_SPIN, MTX_FLAGS(%edx)/* spin mutex? */
-	jz	3f				/* no: branch */
+STUB(mutex_enter, mutex_vector_enter)
+	movl	CPUVAR(CURLWP), %ecx
+	xorl	%eax, %eax
+	LOCK
+	cmpxchgl %ecx, MTX_OWNER(%edx)
+	jnz	_C_LABEL(mutex_vector_enter)
+	ret
+
+/*
+ * void mutex_exit(kmutex_t *mtx);
+ *
+ * Release a mutex and post a load fence.
+ *
+ * See comments in mutex_vector_enter() about doing this operation unlocked
+ * on multiprocessor systems, and comments in arch/x86/include/lock.h about
+ * memory ordering on Intel x86 systems.
+ */
+STUB(mutex_exit, mutex_vector_exit)
+	movl	CPUVAR(CURLWP), %eax
+	xorl	%ecx, %ecx
+	cmpxchgl %ecx, MTX_OWNER(%edx)
+	jnz     _C_LABEL(mutex_vector_exit)
+	ret
+
+/*
+ * void smutex_enter(kmutex_t *mtx);
+ *
+ * Acquire a spin mutex and post a load fence.
+ */
+STUB(smutex_enter, mutex_vector_enter)
 	movzbl	MTX_MINSPL(%edx), %eax
 	movl	CPUVAR(ILEVEL), %ecx
 	cmpl	%eax, %ecx
@@ -138,42 +162,35 @@ STUB(mutex_enter)
 	movl	%eax, CPUVAR(ILEVEL)		/* splraiseipl() */
 1:
 #if defined(FULL)
-	movl	$0x0301, %eax			/* expected+new value */
+	mov	$0x0100, %eax			/* new + expected value */
 	LOCK
-	cmpxchgb %ah, MTX_FLAGS(%edx)
-	jnz	4f
+	cmpxchgb %ah, MTX_LOCK(%edx)		/* implied 'lock' prefix */
+	jnz	3f
 #endif
 	subl	$1, CPUVAR(MTX_COUNT)		/* decl does not set CF */
 	jnc	2f
 	movl	%ecx, CPUVAR(MTX_OLDSPL)
 2:	ret
 
-3:	movl	CPUVAR(CURLWP), %ecx
-	xorl	%eax, %eax
-	LOCK
-	cmpxchgl %ecx, MTX_OWNER(%edx)
-	jnz	4f
-	ret
-
-4:	movl	(%esp), %eax
+3:	movl	(%esp), %eax
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%eax
 	pushl	%ecx
 	pushl	%edx
-	call	_C_LABEL(mutex_vector_enter)
+	call	_C_LABEL(smutex_vector_enter)
 	leave
  	ret
 
 /*
- * void mutex_exit(kmutex_t *mtx);
+ * void smutex_exit(kmutex_t *mtx);
+ *
+ * Acquire a spin mutex and post a store fence.
  */
-STUB(mutex_exit)
-	testb	$MUTEX_BIT_SPIN, MTX_FLAGS(%edx)/* spin mutex? */
-	jz	2f				/* no: branch */
+STUB(smutex_exit, mutex_vector_exit)
 #if defined(FULL)
-	movl	$0x0103, %eax			/* expected+new value */
-	cmpxchgb %ah, MTX_FLAGS(%edx)
+	movl	$0x0001, %eax			/* new + expected value */
+	cmpxchgb %ah, MTX_LOCK(%edx)
 	jnz	_C_LABEL(mutex_vector_exit)
 #endif
 	movl	CPUVAR(MTX_OLDSPL), %ecx
@@ -182,17 +199,12 @@ STUB(mutex_exit)
 	SPLLOWER(_C_LABEL(Xspllower))
 1:	ret
 
-2:	movl	CPUVAR(CURLWP), %eax
-	xorl	%ecx, %ecx
-	LOCK
-	cmpxchgl %ecx, MTX_OWNER(%edx)
-	jnz     _C_LABEL(mutex_vector_exit)
-	ret
-
 /*
  * void rw_enter(krwlock_t *rwl, krw_t op);
+ *
+ * Acquire one hold on a RW lock.
  */
-STUB(rw_enter)
+STUB(rw_enter, rw_vector_enter)
 	cmpl	$RW_READER, 8(%esp)
 	movl	RW_OWNER(%edx), %eax
 	jne	2f
@@ -224,8 +236,10 @@ STUB(rw_enter)
 
 /*
  * void rw_exit(krwlock_t *rwl);
+ *
+ * Release one hold on a RW lock.
  */
-STUB(rw_exit)
+STUB(rw_exit, rw_vector_exit)
 	movl	RW_OWNER(%edx), %eax
 	testb	$RW_WRITE_LOCKED, %al
 	jnz	2f
@@ -269,196 +283,5 @@ STUB(rw_exit)
 	call	_C_LABEL(rw_vector_exit)
 	leave
 	ret
-
-#ifdef I386_CPU
-
-/*
- * void _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
- */
-
-NENTRY(_80386__lock_cas)
-	movl	8(%esp), %eax
-	movl	12(%esp), %ecx
-	pushfl
-	cli
-	cmpl	%eax, (%edx)
-	jne	1f
-	movl	%ecx, (%edx)
-	movb	$1, %al
-	popfl
-	ret
-
-1:	popfl
-	xorl	%eax, %eax
-	ret
-
-/*
- * void _lock_set_waiters(uintptr_t *val, uintptr_t need, uintptr_t set);
- *
- * Note: 'need' must be non-zero.
- */
-NENTRY(_80386__lock_set_waiters)
-	movl	8(%esp), %eax
-	movl	12(%esp), %ecx
-	pushfl
-	cli
-	testl	%eax, (%edx)
-	jz	2f
-	orl	%ecx, (%edx)
-	popfl
-	ret					/* %eax is non zero */
-
-2:	popfl
-	xorl	%eax, %eax
-	ret
-
-/*
- * void _mutex_enter(kmutex_t *mtx);
- */
-NENTRY(_80386_mutex_enter)
-	testb	$MUTEX_BIT_SPIN, MTX_FLAGS(%edx)/* spin mutex? */
-	jz	3f				/* no: branch */
-	movzbl	MTX_MINSPL(%edx), %eax
-	movl	CPUVAR(ILEVEL), %ecx
-	cmpl	%eax, %ecx
-	jg	1f
-	movl	%eax, CPUVAR(ILEVEL)		/* splraiseipl() */
-1:
-#ifdef FULL
-	movb	$MUTEX_SPIN_LOCKED, %al
-	xchgb	%al, MTX_FLAGS(%edx)
-	cmpb	$MUTEX_SPIN_UNLOCKED, %al
-	jne	5f
-#endif
-	subl	$1, CPUVAR(MTX_COUNT)		/* decl does not set CF */
-	jnc	2f
-	movl	%ecx, CPUVAR(MTX_OLDSPL)
-2:	ret
-
-3:	movl	CPUVAR(CURLWP), %ecx
-	pushfl
-	cli
-	cmpl	$0, MTX_OWNER(%edx)
-	jne	4f
-	movl	%ecx, MTX_OWNER(%edx)
-	popfl
-	ret
-
-4:	popfl
-5:	movl	(%esp), %eax
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%eax
-	pushl	%ecx
-	pushl	%edx
-	call	_C_LABEL(mutex_vector_enter)
-	leave
- 	ret
-
-/*
- * void _mutex_exit(kmutex_t *mtx);
- */
-NENTRY(_80386_mutex_exit)
-	testb	$MUTEX_BIT_SPIN, MTX_FLAGS(%edx)/* spin mutex? */
-	jz	2f				/* no: branch */
-#ifdef FULL
-	movb	$MUTEX_SPIN_UNLOCKED, %al
-	xchgb	%al, MTX_FLAGS(%edx)
-	cmpb	$MUTEX_SPIN_LOCKED, %al
-	jne	4f
-#endif
-	incl	CPUVAR(MTX_COUNT)
-	jnz	1f
-	movl	CPUVAR(MTX_OLDSPL), %ecx
-	SPLLOWER(_C_LABEL(Xspllower))
-1:	ret
-
-2:	movl	CPUVAR(CURLWP), %ecx
-	pushfl
-	cli
-	cmpl	%ecx, MTX_OWNER(%edx)
-	jne	3f
-	movl	$0, MTX_OWNER(%edx)
-	popfl
-	ret
-
-3:	popfl
-4:	jmp	_C_LABEL(mutex_vector_exit)
-
-/*
- * void rw_enter(krwlock_t *rwl, krw_t op);
- */
-NENTRY(_80386_rw_enter)
-	cmpl	$RW_READER, 8(%esp)
-	pushfl
-	cli
-	movl	RW_OWNER(%edx), %eax
-	jne	2f
-
-	/*
-	 * Reader
-	 */
-	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
-	jnz	3f
-	addl	$RW_READ_INCR, %eax
-	movl	%eax, RW_OWNER(%edx)
-	popfl
-	ret
-
-	/*
-	 * Writer
-	 */
-2:	testl	%eax, %eax
-	jnz	3f
-	movl	%eax, %ecx
-	addl	CPUVAR(CURLWP), %eax
-	jz	3f
-	orb	$RW_WRITE_LOCKED, %al
-	movl	%eax, RW_OWNER(%edx)
-	popfl
-	ret
-
-3:	popfl
-	jmp	_C_LABEL(rw_vector_enter)
-
-/*
- * void rw_exit(krwlock_t *rwl);
- */
-NENTRY(_80386_rw_exit)
-	pushfl
-	cli
-	movl	RW_OWNER(%edx), %eax
-	testb	$RW_WRITE_LOCKED, %al
-	jnz	2f
-
-	movl	$RW_READER, %ecx
-	testb	$RW_HAS_WAITERS, %al
-	jnz	3f
-	testl	$RW_THREAD, %eax
-	jz	3f
-	subl	$-RW_READ_INCR, %eax
-	movl	%eax, RW_OWNER(%edx)
-	popfl
-	ret
-
-2:	movl	$RW_WRITER, %ecx
-	movl	RW_OWNER(%edx), %eax
-	subl	$RW_WRITE_LOCKED, %eax
-	subl	CPUVAR(CURLWP), %eax
-	jnz	3f
-	movl	%eax, RW_OWNER(%edx)
-	popfl
-	ret
-
-3:	popfl
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%ecx
-	pushl	%edx
-	call	_C_LABEL(rw_vector_exit)
-	leave
-	ret
-
-#endif	/* I386_CPU */
 
 #endif	/* LOCKDEBUG */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.58.2.5 2006/11/18 21:39:22 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.58.2.6 2006/12/29 20:27:44 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.5 2006/11/18 21:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.6 2006/12/29 20:27:44 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -1237,7 +1237,6 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 		mutex_enter(&p->p_smutex);
 		tl = proc_representative_lwp(t, NULL, 1);
 		lwp_addref(tl);
-		lwp_unlock(tl);
 		mutex_exit(&p->p_smutex);
 		error = process_domem(l, tl, &uio);
 		lwp_delref(tl);

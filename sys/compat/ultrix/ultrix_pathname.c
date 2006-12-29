@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.24 2005/12/11 12:20:30 christos Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.24.20.1 2006/12/29 20:27:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.24 2005/12/11 12:20:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.24.20.1 2006/12/29 20:27:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,8 @@ ultrix_sys_open(struct lwp *l, void *v, register_t *retval)
 	SCARG(uap, flags) = r;
 	ret = sys_open(l, (struct sys_open_args *)uap, retval);
 
-	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
+	/* XXXSMP */
+	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
 		struct filedesc *fdp = p->p_fd;
 		struct file *fp;
 

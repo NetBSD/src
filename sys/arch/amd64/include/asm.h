@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.6 2006/09/05 19:00:42 ad Exp $	*/
+/*	$NetBSD: asm.h,v 1.6.2.1 2006/12/29 20:27:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -125,20 +125,19 @@
  * Assembley equivalent of spllower().  Label contains the label to jump to
  * if we need to fire off pending interrupts (e.g. _C_LABEL(Xspllower)).
  *
- * On entry %rcx = new SPL.
+ * On entry %rdi = new SPL.
  */
 #define	SPLLOWER(label)						\
 	movq		CPUVAR(SELF), %r9 ;			\
-	cmpl		CPU_INFO_ILEVEL(%r9), %ecx ;		\
+	cmpl		CPU_INFO_ILEVEL(%r9), %edi ;		\
 	jae		99f ;					\
-	movl		CPU_INFO_IUNMASK(%r9,%rcx,4), %edi ;	\
+	movl		CPU_INFO_IUNMASK(%r9,%rdi,4), %esi ;	\
 	pushfq		;					\
 	popq		%rax ;					\
 	cli		;					\
-	testl		CPU_INFO_IPENDING(%r9), %edi ;		\
-	movq		%rcx, %rdi ;				\
+	testl		CPU_INFO_IPENDING(%r9), %esi ;		\
 	jnz		label ;					\
-	movl		%ecx, CPU_INFO_ILEVEL(%r9) ;		\
+	movl		%edi, CPU_INFO_ILEVEL(%r9) ;		\
 	pushq		%rax ;					\
 	popfq		;					\
 99:

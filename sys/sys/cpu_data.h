@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.6.2.2 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.6.2.3 2006/12/29 20:27:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct cpu_data {
 
 #if defined(MULTIPROCESSOR)
 	u_int		cpu_biglock_count;
-	u_int		cpu_biglock_wanted;
+	struct lwp	*cpu_biglock_wanted;
 #endif /* defined(MULTIPROCESSOR) */
 
 	/* For LOCKDEBUG. */

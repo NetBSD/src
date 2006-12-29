@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.177.2.1 2006/10/24 21:44:17 ad Exp $ */
+/* $NetBSD: syscalls.c,v 1.177.2.2 2006/12/29 20:27:44 ad Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.177.2.1 2006/10/24 21:44:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.177.2.2 2006/12/29 20:27:44 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -226,7 +226,7 @@ const char *const syscallnames[] = {
 #if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64)
 	"compat_10_omsgsys",	/* 170 = compat_10 omsgsys */
 #else
-	"#170 (excluded MPSAFE 1.0 msgsys)",		/* 170 = excluded MPSAFE 1.0 msgsys */
+	"#170 (excluded 1.0 msgsys)",		/* 170 = excluded 1.0 msgsys */
 #endif
 #if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64)
 	"compat_10_oshmsys",	/* 171 = compat_10 oshmsys */
@@ -322,10 +322,10 @@ const char *const syscallnames[] = {
 	"msgsnd",			/* 226 = msgsnd */
 	"msgrcv",			/* 227 = msgrcv */
 #else
-	"#224 (excluded MPSAFE compat_14_msgctl)",		/* 224 = excluded MPSAFE compat_14_msgctl */
-	"#225 (excluded MPSAFE msgget)",		/* 225 = excluded MPSAFE msgget */
-	"#226 (excluded MPSAFE msgsnd)",		/* 226 = excluded MPSAFE msgsnd */
-	"#227 (excluded MPSAFE msgrcv)",		/* 227 = excluded MPSAFE msgrcv */
+	"#224 (excluded compat_14_msgctl)",		/* 224 = excluded compat_14_msgctl */
+	"#225 (excluded msgget)",		/* 225 = excluded msgget */
+	"#226 (excluded msgsnd)",		/* 226 = excluded msgsnd */
+	"#227 (excluded msgrcv)",		/* 227 = excluded msgrcv */
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
 	"shmat",			/* 228 = shmat */
@@ -432,7 +432,7 @@ const char *const syscallnames[] = {
 #if defined(SYSVMSG) || !defined(_KERNEL)
 	"__msgctl13",			/* 302 = __msgctl13 */
 #else
-	"#302 (excluded MPSAFE __msgctl13)",		/* 302 = excluded MPSAFE __msgctl13 */
+	"#302 (excluded __msgctl13)",		/* 302 = excluded __msgctl13 */
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
 	"__shmctl13",			/* 303 = __shmctl13 */
@@ -454,10 +454,10 @@ const char *const syscallnames[] = {
 	"_lwp_getprivate",			/* 316 = _lwp_getprivate */
 	"_lwp_setprivate",			/* 317 = _lwp_setprivate */
 	"_lwp_kill",			/* 318 = _lwp_kill */
-	"#319 (unimplemented)",		/* 319 = unimplemented */
-	"#320 (unimplemented)",		/* 320 = unimplemented */
-	"#321 (unimplemented)",		/* 321 = unimplemented */
-	"#322 (unimplemented)",		/* 322 = unimplemented */
+	"_lwp_detach",			/* 319 = _lwp_detach */
+	"_lwp_park",			/* 320 = _lwp_park */
+	"_lwp_unpark",			/* 321 = _lwp_unpark */
+	"_lwp_unpark_all",			/* 322 = _lwp_unpark_all */
 	"#323 (unimplemented)",		/* 323 = unimplemented */
 	"#324 (unimplemented)",		/* 324 = unimplemented */
 	"#325 (unimplemented)",		/* 325 = unimplemented */
@@ -485,7 +485,7 @@ const char *const syscallnames[] = {
 	"#347 (unimplemented sys_sched_getparam)",		/* 347 = unimplemented sys_sched_getparam */
 	"#348 (unimplemented sys_sched_setscheduler)",		/* 348 = unimplemented sys_sched_setscheduler */
 	"#349 (unimplemented sys_sched_getscheduler)",		/* 349 = unimplemented sys_sched_getscheduler */
-	"#350 (unimplemented sys_sched_yield)",		/* 350 = unimplemented sys_sched_yield */
+	"sched_yield",			/* 350 = sched_yield */
 	"#351 (unimplemented sys_sched_get_priority_max)",		/* 351 = unimplemented sys_sched_get_priority_max */
 	"#352 (unimplemented sys_sched_get_priority_min)",		/* 352 = unimplemented sys_sched_get_priority_min */
 	"#353 (unimplemented sys_sched_rr_get_interval)",		/* 353 = unimplemented sys_sched_rr_get_interval */

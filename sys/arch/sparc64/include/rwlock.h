@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.4 2006/12/29 20:27:42 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.2.1 2006/12/29 20:27:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -36,46 +36,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_MUTEX_H_
-#define	_X86_MUTEX_H_
+#ifndef _SPARC64_RWLOCK_H_
+#define	_SPARC64_RWLOCK_H_
 
-struct kmutex {
-	union {
-		volatile uintptr_t	mtxa_owner;
-		struct {
-			volatile uint8_t	mtxs_dummy;
-			volatile uint8_t	mtxs_minspl;
-                        __cpu_simple_lock_t	mtxs_lock;
-			volatile uint8_t	mtxs_unused;
-		} s;
-	} u;
-	volatile uint32_t	mtx_id;
+struct krwlock {
+	volatile uintptr_t	rw_owner;
+	uint32_t		rw_id;
 };
 
-#ifdef __MUTEX_PRIVATE
+#ifdef __RWLOCK_PRIVATE
 
-#define	mtx_owner 			u.mtxa_owner
-#define	mtx_minspl 			u.s.mtxs_minspl
-#define	mtx_lock			u.s.mtxs_lock
+#define	__HAVE_SIMPLE_RW_LOCKS		1
 
-#define __HAVE_MUTEX_STUBS		1
-#define __HAVE_SMUTEX_STUBS		1
-#define	__HAVE_SIMPLE_MUTEXES		1
+#define	RW_RECEIVE(rw)			mb_read()
+#define	RW_GIVE(rw)			/* nothing */
 
-/*
- * MUTEX_RECEIVE: no memory barrier required, as 'ret' implies a load fence.
- */
-#define	MUTEX_RECEIVE(mtx)		/* nothing */
-
-/*
- * MUTEX_GIVE: no memory barrier required, as _lock_cas() will take care of it.
- */
-#define	MUTEX_GIVE(mtx)			/* nothing */
-
-#define	MUTEX_CAS(p, o, n)		_lock_cas((p), (o), (n))
+#define	RW_CAS(p, o, n)			_lock_cas((p), (o), (n))
 
 int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 
-#endif	/* __MUTEX_PRIVATE */
+#endif	/* __RWLOCK_PRIVATE */
 
-#endif /* _X86_MUTEX_H_ */
+#endif /* _SPARC64_RWLOCK_H_ */

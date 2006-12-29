@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.77 2006/03/23 16:16:45 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.77.8.1 2006/12/29 20:27:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -58,6 +58,8 @@ struct cpu_info {
 	u_long ci_divisor_delay;	/* for delay/DELAY */
 	u_long ci_divisor_recip;	/* scaled reciprocal of previous;
 					   see below */
+	int ci_mtx_count;		/* negative count of held mutexes */
+	int ci_mtx_oldspl;		/* saved SPL value */
 };
 
 /*
@@ -319,11 +321,11 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched(ci)						\
+#define	cpu_need_resched(ci)						\
 do {									\
 	want_resched = 1;						\
-	if (curproc != NULL)						\
-		aston(curproc);						\
+	if (curlwp != NULL)						\
+		aston(curlwp);						\
 } while (/*CONSTCOND*/0)
 
 /*
@@ -331,19 +333,19 @@ do {									\
  * buffer pages are invalid.  On the MIPS, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)						\
+#define	cpu_need_proftick(l)						\
 do {									\
-	(p)->p_flag |= P_OWEUPC;					\
-	aston(p);							\
+	(l)->l_pflag |= LP_OWEUPC;					\
+	aston(l);							\
 } while (/*CONSTCOND*/0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston(p)
+#define	cpu_signotify(p)	aston(l)
 
-#define aston(p)	((p)->p_md.md_astpending = 1)
+#define aston(l)		((l)->l_md.md_astpending = 1)
 
 extern int want_resched;		/* resched() was called */
 

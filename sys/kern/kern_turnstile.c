@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.36.4 2006/11/17 16:34:37 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.36.5 2006/12/29 20:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.4 2006/11/17 16:34:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.5 2006/12/29 20:27:44 ad Exp $");
 
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -128,7 +128,7 @@ turnstile_init(void)
 	}
 
 	pool_init(&turnstile_pool, sizeof(turnstile_t), 0, 0, 0,
-	    "tspool", &pool_allocator_nointr);
+	    "tstilepl", &pool_allocator_nointr);
 	pool_cache_init(&turnstile_cache, &turnstile_pool,
 	    turnstile_ctor, NULL, NULL);
 
@@ -198,7 +198,7 @@ turnstile_lookup(wchan_t obj)
 
 	tc = &turnstile_tab[TS_HASH(obj)];
 
-	mutex_enter(tc->tc_mutex);
+	smutex_enter(tc->tc_mutex);
 
 	LIST_FOREACH(ts, &tc->tc_chain, ts_chain)
 		if (ts->ts_obj == obj)
@@ -222,7 +222,7 @@ turnstile_exit(wchan_t obj)
 	tschain_t *tc;
 
 	tc = &turnstile_tab[TS_HASH(obj)];
-	mutex_exit(tc->tc_mutex);
+	smutex_exit(tc->tc_mutex);
 }
 
 /*
@@ -277,8 +277,8 @@ turnstile_block(turnstile_t *ts, int q, int pri, wchan_t obj)
 	}
 
 	sq = &ts->ts_sleepq[q];
-	sleepq_enter(sq, pri, obj, "tstile", 0, 0, &turnstile_syncobj);
-	(void)sleepq_block(sq, 0);
+	sleepq_enter(sq, l);
+	sleepq_block(sq, pri, obj, "tstile", 0, 0, &turnstile_syncobj);
 }
 
 /*
@@ -321,7 +321,7 @@ turnstile_wakeup(turnstile_t *ts, int rw, int count, struct lwp *nl)
 			swapin |= turnstile_remove(ts, l, sq);
 		}
 	}
-	mutex_exit(tc->tc_mutex);
+	smutex_exit(tc->tc_mutex);
 
 	/*
 	 * If there are newly awakend threads that need to be swapped in,

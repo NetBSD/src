@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.66.4.3 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.66.4.4 2006/12/29 20:27:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -89,7 +89,6 @@ struct sigctx {
  */
 typedef struct sigstore {
 	stack_t		ss_stk;		/* p: sp & on stack state variable */
-	sigpend_t	ss_pend;	/* p: signals to this LWP */
 	sigset_t	ss_mask;	/* p: signal mask */
 } sigstore_t;
 
@@ -111,7 +110,7 @@ typedef struct sigstore {
 		int _sg; \
 		mutex_enter(&p->p_smutex); \
 		while ((_sg = issignal(l)) > 0) \
-			sigget(l->l_sigpend, NULL, _sg, NULL); \
+			sigget(l->l_sigpendset, NULL, _sg, NULL); \
 		mutex_exit(&p->p_smutex); \
 	} while (/*CONSTCOND*/0)
 
@@ -160,7 +159,7 @@ void	sigexit(struct lwp *, int);
 void	killproc(struct proc *, const char *);
 void	setsigvec(struct proc *, int, struct sigaction *);
 int	killpg1(struct lwp *, struct ksiginfo *, int, int);
-void	proc_unstop(struct proc *p, int);
+void	proc_unstop(struct proc *p);
 
 int	sigaction1(struct lwp *, int, const struct sigaction *,
 	    struct sigaction *, const void *, int);
@@ -174,7 +173,6 @@ int	sigismasked(struct lwp *, int);
 int	sigget(sigpend_t *, ksiginfo_t *, int, sigset_t *);
 void	sigclear(sigpend_t *, sigset_t *);
 void	sigclearall(struct proc *, sigset_t *);
-void	sigpinch(sigpend_t *, sigpend_t *, sigset_t *);
 
 void	kpsignal2(struct proc *, ksiginfo_t *);
 
@@ -195,7 +193,7 @@ int	__sigtimedwait1(struct lwp *, void *, register_t *, copyout_t,
     copyin_t, copyout_t);
 
 void	signotify(struct lwp *);
-int	sigispending(struct lwp *);
+int	sigispending(struct lwp *, int);
 
 /*
  * Machine-dependent functions:

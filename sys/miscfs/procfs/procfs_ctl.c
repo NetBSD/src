@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.34.2.3 2006/11/18 21:39:29 ad Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.34.2.4 2006/12/29 20:27:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.34.2.3 2006/11/18 21:39:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.34.2.4 2006/12/29 20:27:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ procfs_control(curl, l, op, sig)
 		/*
 		 *      (4) it's not currently stopped.
 		 */
-		if (p->p_stat != SSTOP || !ISSET(p->p_lflag, PL_WAITED))
+		if (p->p_stat != SSTOP || !p->p_waited /* XXXSMP */)
 			error = EBUSY;
 
 		break;
@@ -319,8 +319,8 @@ procfs_control(curl, l, op, sig)
 			p->p_opptr = NULL;
 			mutex_enter(&p->p_smutex);
 			CLR(p->p_slflag, PSL_TRACED|PSL_FSTRACE);
+			p->p_waited = 0;	/* XXXSMP */
 			mutex_exit(&p->p_smutex);
-			CLR(p->p_lflag, PL_WAITED);
 		}
 
 	sendsig:

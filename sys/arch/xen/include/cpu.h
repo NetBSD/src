@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.14.1 2006/12/29 20:27:42 ad Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -209,18 +209,12 @@ curcpu()
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
-#define aston(p)		((p)->p_md.md_astpending = 1)
+#define aston(l)		((l)->l_md.md_astpending = 1)
 
 extern	struct cpu_info *cpu_info[X86_MAXPROCS];
 
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_pcbs(void);
-
-/*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-extern void need_resched(struct cpu_info *);
 
 #else /* !MULTIPROCESSOR */
 
@@ -234,21 +228,15 @@ extern void need_resched(struct cpu_info *);
 #define	cpu_number()		0
 #define CPU_IS_PRIMARY(ci)	1
 
+#define aston(l)		((l)->p_md.md_astpending = 1)
+
+#endif /* MULTIPROCESSOR */
+
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched(ci)						\
-do {									\
-	struct cpu_info *__ci = (ci);					\
-	__ci->ci_want_resched = 1;					\
-	if (__ci->ci_curlwp != NULL)					\
-		aston(__ci->ci_curlwp->l_proc);       			\
-} while (/*CONSTCOND*/0)
-
-#define aston(p)		((p)->p_md.md_astpending = 1)
-
-#endif /* MULTIPROCESSOR */
+extern void cpu_need_resched(struct cpu_info *);
 
 extern u_int32_t cpus_attached;
 
@@ -284,13 +272,13 @@ struct clockframe {
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p))
+extern void	cpu_need_proftick(struct lwp *l);
 
 /*
- * Notify the current process (p) that it has a signal pending,
- * process as soon as possible.
+ * Notify the LWP l that it has a signal pending, process as soon as
+ * possible.
  */
-#define	signotify(p)		aston(p)
+extern void	cpu_signotify(struct lwp *);
 
 /*
  * We need a machine-independent name for this.

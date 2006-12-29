@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.11 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.11.20.1 2006/12/29 20:27:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.11 2005/12/11 12:18:09 christos Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.11.20.1 2006/12/29 20:27:42 ad Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -63,14 +63,13 @@ void *
 getframe(struct lwp *l, int sig, int *onstack)
 {
 	struct proc *p = l->l_proc;
-	struct sigctx *ctx = &p->p_sigctx;
 	struct frame *fp = l->l_md.md_regs;
  
 	/* Do we need to jump onto the signal stack? */
-	*onstack = (ctx->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	*onstack = (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
-		return (char *)ctx->ps_sigstk.ss_sp + ctx->ps_sigstk.ss_size;
+		return (char *)l->l_sigstk->ss_sp + l->l_sigstk->ss_size;
 	else
 		return (void *)fp->f_regs[_R_SP];
 }		
@@ -89,7 +88,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	int onstack;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	struct sigframe_siginfo *fp = getframe(l, sig, &onstack);
 	struct frame *tf;
@@ -113,7 +112,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
         }
 
         uc.uc_flags = _UC_SIGMASK
-            | ((p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+            | ((l->l_sigstk->ss_flags & SS_ONSTACK)
             ? _UC_SETSTACK : _UC_CLRSTACK);
         uc.uc_sigmask = *mask;
         uc.uc_link = NULL;
@@ -121,8 +120,15 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
         cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
         ucsz = (char *)&uc.__uc_pad - (char *)&uc;
 
-	if (copyout(&ksi->ksi_info, &fp->sf_si, sizeof(ksi->ksi_info)) != 0 ||
-	    copyout(&uc, &fp->sf_uc, ucsz) != 0) {
+        sendsig_reset(l, sig);
+
+        mutex_exit(&p->p_smutex);
+	error = copyout(&ksi->ksi_info, &fp->sf_si, sizeof(ksi->ksi_info));
+	if (error == 0)
+		error = copyout(&uc, &fp->sf_uc, ucsz);
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -147,7 +153,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 }
 
 void    

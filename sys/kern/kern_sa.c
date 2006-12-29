@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.83.4.4 2006/11/18 21:39:22 ad Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.83.4.5 2006/12/29 20:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83.4.4 2006/11/18 21:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83.4.5 2006/12/29 20:27:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ static int sa_increaseconcurrency(struct lwp *, int);
 static void sa_setwoken(struct lwp *);
 static void sa_switchcall(void *);
 static int sa_newcachelwp(struct lwp *);
-static inline void sa_makeupcalls(struct lwp *);
+static void sa_makeupcalls(struct lwp *, struct sadata_upcall *);
 static struct lwp *sa_vp_repossess(struct lwp *l);
 
 static inline int sa_pagefault(struct lwp *, ucontext_t *);
@@ -109,9 +109,11 @@ int	sadebug = 0;
 	(l)->l_flag |= (f) & L_SA;				\
 } while (/*CONSTCOND*/ 0)
 
-SPLAY_PROTOTYPE(sasttree, sastack, sast_node, sast_compare);
-SPLAY_GENERATE(sasttree, sastack, sast_node, sast_compare);
+RB_PROTOTYPE(sasttree, sastack, sast_node, sast_compare);
+RB_GENERATE(sasttree, sastack, sast_node, sast_compare);
 
+kmutex_t	saupcall_mutex;
+SIMPLEQ_HEAD(, sadata_upcall) saupcall_freelist;
 
 /*
  * sadata_upcall_alloc:
@@ -123,10 +125,21 @@ sadata_upcall_alloc(int waitok)
 {
 	struct sadata_upcall *sau;
 
-	sau = pool_get(&saupcall_pool, waitok ? PR_WAITOK : PR_NOWAIT);
-	if (sau) {
-		sau->sau_arg = NULL;
+	sau = NULL;
+	if (waitok && !SIMPLEQ_EMPTY(&saupcall_freelist)) {
+		mutex_enter(&saupcall_mutex);
+		if ((sau = SIMPLEQ_FIRST(&saupcall_freelist)) != NULL)
+			SIMPLEQ_REMOVE_HEAD(&saupcall_freelist, sau_next);
+		mutex_exit(&saupcall_mutex);
+		if (sau != NULL && sau->sau_arg != NULL)
+			(*sau->sau_argfreefunc)(sau->sau_arg);
 	}
+
+	if (sau == NULL)
+		sau = pool_get(&saupcall_pool, waitok ? PR_WAITOK : PR_NOWAIT);
+	if (sau != NULL)
+		sau->sau_arg = NULL;
+
 	return sau;
 }
 
@@ -138,14 +151,46 @@ sadata_upcall_alloc(int waitok)
 void
 sadata_upcall_free(struct sadata_upcall *sau)
 {
-
-	if (sau == NULL) {
+	if (sau == NULL)
 		return;
+
+	/*
+	 * If our current synchronisation object is a sleep queue or
+	 * similar, we must not put the object back to the pool as
+	 * doing to could acquire sleep locks.  That could trigger
+	 * a recursive sleep.
+	 */
+	if (curlwp->l_syncobj == &sched_syncobj) {
+		if (sau->sau_arg)
+			(*sau->sau_argfreefunc)(sau->sau_arg);
+		pool_put(&saupcall_pool, sau);
+		sadata_upcall_drain();
+	} else {
+		mutex_enter(&saupcall_mutex);
+		SIMPLEQ_INSERT_HEAD(&saupcall_freelist, sau, sau_next);
+		mutex_exit(&saupcall_mutex);
 	}
-	if (sau->sau_arg) {
-		(*sau->sau_argfreefunc)(sau->sau_arg);
+}
+
+/*
+ * sadata_upcall_drain:
+ *
+ *	Put freed upcall structures back to the pool.
+ */
+void
+sadata_upcall_drain(void)
+{
+	struct sadata_upcall *sau;
+
+	sau = SIMPLEQ_FIRST(&saupcall_freelist);
+	while (sau != NULL) {
+		mutex_enter(&saupcall_mutex);
+		if ((sau = SIMPLEQ_FIRST(&saupcall_freelist)) != NULL)
+			SIMPLEQ_REMOVE_HEAD(&saupcall_freelist, sau_next);
+		mutex_exit(&saupcall_mutex);
+		if (sau != NULL)
+			pool_put(&saupcall_pool, sau);
 	}
-	pool_put(&saupcall_pool, sau);
 }
 
 static struct sadata_vp *
@@ -217,27 +262,25 @@ dosa_register(struct lwp *l, sa_upcall_t new, sa_upcall_t *prev, int flags,
 	struct proc *p = l->l_proc;
 	struct sadata *sa;
 
-	if ((p->p_sflag & PS_NOSA) != 0)
-		return EINVAL;
-
 	if (p->p_sa == NULL) {
 		/* Allocate scheduler activations data structure */
 		sa = pool_get(&sadata_pool, PR_WAITOK);
 
+		mutex_init(&sa->sa_mutex, MUTEX_DEFAULT, IPL_NONE);
 		mutex_enter(&p->p_smutex);
 		if ((p->p_sflag & PS_NOSA) != 0) {
 			mutex_exit(&p->p_smutex);
+			mutex_destroy(&sa->sa_mutex);
 			pool_put(&sadata_pool, sa);
 			return EINVAL;
 		}
 
 		/* Initialize. */
 		memset(sa, 0, sizeof(*sa));
-	/*	simple_lock_init(&sa->sa_lock);  XXXAD */
 		sa->sa_flag = flags & SA_FLAG_ALL;
 		sa->sa_maxconcurrency = 1;
 		sa->sa_concurrency = 1;
-		SPLAY_INIT(&sa->sa_stackstree);
+		RB_INIT(&sa->sa_stackstree);
 		sa->sa_stacknext = NULL;
 		if (flags & SA_FLAG_STACKINFO)
 			sa->sa_stackinfo_offset = stackinfo_offset;
@@ -245,11 +288,12 @@ dosa_register(struct lwp *l, sa_upcall_t new, sa_upcall_t *prev, int flags,
 			sa->sa_stackinfo_offset = 0;
 		sa->sa_nstacks = 0;
 		SLIST_INIT(&sa->sa_vps);
+		mb_write();
 		p->p_sa = sa;
 		KASSERT(l->l_savp == NULL);
 		mutex_exit(&p->p_smutex);
 	}
-	if (l->l_savp == NULL) {
+	if (l->l_savp == NULL) {	/* XXXSMP */
 		l->l_savp = sa_newsavp(p);
 		sa_newcachelwp(l);
 	}
@@ -272,25 +316,36 @@ sa_release(struct proc *p)
 	KDASSERT(sa != NULL);
 	KASSERT(p->p_nlwps <= 1);
 
-	for (sast = SPLAY_MIN(sasttree, &sa->sa_stackstree); sast != NULL;
+	for (sast = RB_MIN(sasttree, &sa->sa_stackstree); sast != NULL;
 	     sast = next) {
-		next = SPLAY_NEXT(sasttree, &sa->sa_stackstree, sast);
-		SPLAY_REMOVE(sasttree, &sa->sa_stackstree, sast);
+		next = RB_NEXT(sasttree, &sa->sa_stackstree, sast);
+		RB_REMOVE(sasttree, &sa->sa_stackstree, sast);
 		pool_put(&sastack_pool, sast);
 	}
 
-	p->p_sflag &= ~PS_SA;
+	mutex_enter(&p->p_smutex);
+	p->p_sflag = (p->p_sflag & ~PS_SA) | PS_NOSA;
+	p->p_sa = NULL;
+	l = LIST_FIRST(&p->p_lwps);
+	if (l) {
+		lwp_lock(l);
+		KASSERT(LIST_NEXT(l, l_sibling) == NULL);
+		l->l_savp = NULL;
+		lwp_unlock(l);
+	}
+	mutex_exit(&p->p_smutex);
+
 	while ((vp = SLIST_FIRST(&p->p_sa->sa_vps)) != NULL) {
 		SLIST_REMOVE_HEAD(&p->p_sa->sa_vps, savp_next);
 		pool_put(&savp_pool, vp);
 	}
+
+	mutex_destroy(&sa->sa_mutex);
 	pool_put(&sadata_pool, sa);
-	p->p_sa = NULL;
-	l = LIST_FIRST(&p->p_lwps);
-	if (l) {
-		KASSERT(LIST_NEXT(l, l_sibling) == NULL);
-		l->l_savp = NULL;
-	}
+
+	mutex_enter(&p->p_smutex);
+	p->p_sflag &= ~PS_NOSA;
+	mutex_exit(&p->p_smutex);
 }
 
 static int
@@ -299,9 +354,11 @@ sa_fetchstackgen(struct sastack *sast, struct sadata *sa, unsigned int *gen)
 	int error;
 
 	/* COMPAT_NETBSD32:  believe it or not, but the following is ok */
+	mutex_exit(&sa->sa_mutex);
 	error = copyin(&((struct sa_stackinfo_t *)
 	    ((char *)sast->sast_stack.ss_sp +
 	    sa->sa_stackinfo_offset))->sasi_stackgen, gen, sizeof(*gen));
+	mutex_enter(&sa->sa_mutex);
 
 	return error;
 }
@@ -310,6 +367,8 @@ static inline int
 sa_stackused(struct sastack *sast, struct sadata *sa)
 {
 	unsigned int gen;
+
+	LOCK_ASSERT(mutex_owned(&sa->sa_mutex));
 
 	if (sa_fetchstackgen(sast, sa, &gen)) {
 #ifdef DIAGNOSTIC
@@ -326,6 +385,8 @@ sa_setstackfree(struct sastack *sast, struct sadata *sa)
 {
 	unsigned int gen;
 
+	LOCK_ASSERT(mutex_owned(&sa->sa_mutex));
+
 	if (sa_fetchstackgen(sast, sa, &gen)) {
 #ifdef DIAGNOSTIC
 		printf("sa_setstackfree: couldn't copyin sasi_stackgen");
@@ -337,20 +398,30 @@ sa_setstackfree(struct sastack *sast, struct sadata *sa)
 }
 
 /*
- * Find next free stack, starting at sa->sa_stacknext.
+ * Find next free stack, starting at sa->sa_stacknext.  Must be called
+ * with sa->sa_mutex held, and will release while checking for stack
+ * availability.
  */
 static struct sastack *
 sa_getstack(struct sadata *sa)
 {
 	struct sastack *sast;
+	int chg;
 
-	if ((sast = sa->sa_stacknext) == NULL || sa_stackused(sast, sa))
-		sast = sa_getstack0(sa);
+	LOCK_ASSERT(mutex_owned(&sa->sa_mutex));
+
+	do {
+		chg = sa->sa_stackchg;
+		sast = sa->sa_stacknext;
+		if (sast == NULL || sa_stackused(sast, sa))
+			sast = sa_getstack0(sa);
+	} while (chg != sa->sa_stackchg);
 
 	if (sast == NULL)
 		return NULL;
 
 	sast->sast_gen++;
+	sa->sa_stackchg++;
 
 	return sast;
 }
@@ -359,19 +430,26 @@ static inline struct sastack *
 sa_getstack0(struct sadata *sa)
 {
 	struct sastack *start;
+	int chg;
 
+	LOCK_ASSERT(mutex_owned(&sa->sa_mutex));
+
+ retry:
+	chg = sa->sa_stackchg;
 	if (sa->sa_stacknext == NULL) {
-		sa->sa_stacknext = SPLAY_MIN(sasttree, &sa->sa_stackstree);
+		sa->sa_stacknext = RB_MIN(sasttree, &sa->sa_stackstree);
 		if (sa->sa_stacknext == NULL)
 			return NULL;
 	}
 	start = sa->sa_stacknext;
 
 	while (sa_stackused(sa->sa_stacknext, sa)) {
-		sa->sa_stacknext = SPLAY_NEXT(sasttree, &sa->sa_stackstree,
+		if (sa->sa_stackchg != chg)
+			goto retry;
+		sa->sa_stacknext = RB_NEXT(sasttree, &sa->sa_stackstree,
 		    sa->sa_stacknext);
 		if (sa->sa_stacknext == NULL)
-			sa->sa_stacknext = SPLAY_MIN(sasttree,
+			sa->sa_stacknext = RB_MIN(sasttree,
 			    &sa->sa_stackstree);
 		if (sa->sa_stacknext == start)
 			return NULL;
@@ -413,8 +491,8 @@ sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
     sa_copyin_stack_t do_sa_copyin_stack)
 {
 	struct sadata *sa = l->l_proc->p_sa;
-	struct sastack *sast, newsast;
-	int count, error, f, i;
+	struct sastack *sast, *new;
+	int count, error, f, i, chg;
 
 	/* We have to be using scheduler activations */
 	if (sa == NULL)
@@ -429,21 +507,30 @@ sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
 	error = 0;
 
 	for (i = 0; i < count; i++) {
-		error = do_sa_copyin_stack(stacks, i, &newsast.sast_stack);
+		new = pool_get(&sastack_pool, PR_WAITOK);
+		error = do_sa_copyin_stack(stacks, i, &new->sast_stack);
 		if (error) {
 			count = i;
 			break;
 		}
-		sast = SPLAY_FIND(sasttree, &sa->sa_stackstree, &newsast);
+		mutex_enter(&sa->sa_mutex);
+	 restart:
+	 	chg = sa->sa_stackchg;
+		sa_setstackfree(new, sa);
+		sast = RB_FIND(sasttree, &sa->sa_stackstree, new);
 		if (sast != NULL) {
 			DPRINTFN(9, ("sa_stacks(%d.%d) returning stack %p\n",
 				     l->l_proc->p_pid, l->l_lid,
-				     newsast.sast_stack.ss_sp));
+				     new->sast_stack.ss_sp));
 			if (sa_stackused(sast, sa) == 0) {
 				count = i;
 				error = EEXIST;
+				mutex_exit(&sa->sa_mutex);
+				pool_put(&sastack_pool, new);
 				break;
 			}
+			if (chg != sa->sa_stackchg)
+				goto restart;
 		} else if (sa->sa_nstacks >=
 		    SA_MAXNUMSTACKS * sa->sa_concurrency) {
 			DPRINTFN(9,
@@ -452,17 +539,18 @@ sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
 			    SA_MAXNUMSTACKS * sa->sa_concurrency));
 			count = i;
 			error = ENOMEM;
+			mutex_exit(&sa->sa_mutex);
+			pool_put(&sastack_pool, new);
 			break;
 		} else {
 			DPRINTFN(9, ("sa_stacks(%d.%d) adding stack %p\n",
 				     l->l_proc->p_pid, l->l_lid,
-				     newsast.sast_stack.ss_sp));
-			sast = pool_get(&sastack_pool, PR_WAITOK);
-			sast->sast_stack = newsast.sast_stack;
-			SPLAY_INSERT(sasttree, &sa->sa_stackstree, sast);
+				     new->sast_stack.ss_sp));
+			RB_INSERT(sasttree, &sa->sa_stackstree, new);
 			sa->sa_nstacks++;
+			sa->sa_stackchg++;
 		}
-		sa_setstackfree(sast, sa);
+		mutex_exit(&sa->sa_mutex);
 	}
 
 	SA_LWP_STATE_UNLOCK(l, f);
@@ -497,10 +585,13 @@ sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 		return (error);
 
 	/* Assign this LWP to the virtual processor */
+	mutex_enter(&p->p_smutex);
 	vp->savp_lwp = l;
-
 	p->p_sflag |= PS_SA;
+	lwp_lock(l);
 	l->l_flag |= L_SA; /* We are now an activation LWP */
+	lwp_unlock(l);
+	mutex_exit(&p->p_smutex);
 
 	/* This will not return to the place in user space it came from. */
 	return (0);
@@ -522,36 +613,34 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 	p = l->l_proc;
 	sa = p->p_sa;
 
+	LOCK_ASSERT(mutex_owned(&sa->sa_mutex));
+
 	addedconcurrency = 0;
-	mutex_enter(&p->p_smutex);
 	while (sa->sa_maxconcurrency < concurrency) {
 		sa->sa_maxconcurrency++;
 		sa->sa_concurrency++;
-		mutex_exit(&p->p_smutex);
+		mutex_exit(&sa->sa_mutex);
 
 		inmem = uvm_uarea_alloc(&uaddr);
 		if (__predict_false(uaddr == 0)) {
 			/* reset concurrency */
-			mutex_enter(&p->p_smutex);
+			mutex_enter(&sa->sa_mutex);
 			sa->sa_maxconcurrency--;
 			sa->sa_concurrency--;
-			mutex_exit(&p->p_smutex);
 			return (addedconcurrency);
 		} else {
 			newlwp(l, p, uaddr, inmem, 0, NULL, 0,
 			    child_return, 0, &l2);
 			vp = sa_newsavp(p);
-			mutex_enter(&p->p_smutex);
+			mutex_enter(&sa->sa_mutex);
 			lwp_lock(l2);
 			l2->l_flag |= L_SA;
 			l2->l_savp = vp;
 			if (vp) {
 				vp->savp_lwp = l2;
 				cpu_setfunc(l2, sa_switchcall, NULL);
-				/* XXXAD locking? */
 				lwp_unlock(l2);
 				mutex_exit(&p->p_smutex);
-				/* XXXAD locking?? */
 				error = sa_upcall(l2, SA_UPCALL_NEWPROC,
 				    NULL, NULL, 0, NULL, NULL);
 				if (error) {
@@ -565,18 +654,19 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 					lwp_lock(l2);
 				}
 			} else
-				error = 1;
+				error = ENOMEM;
 
 			if (error) {
 				/* put l2 into l's LWP cache */
 				l2->l_savp = l->l_savp;
 				PHOLD(l2);
-				sa_putcachelwp(p, l2);
 				lwp_unlock(l2);
+				mutex_enter(&p->p_smutex);
+				sa_putcachelwp(p, l2);
+				mutex_exit(&p->p_smutex);
 				/* reset concurrency */
 				sa->sa_maxconcurrency--;
 				sa->sa_concurrency--;
-				mutex_exit(&p->p_smutex);
 				return (addedconcurrency);
 			}
 			/* setrunnable() will unlock l2. */
@@ -584,7 +674,6 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 			addedconcurrency++;
 		}
 	}
-	mutex_exit(&p->p_smutex);
 
 	return (addedconcurrency);
 }
@@ -627,6 +716,8 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 	 * adjustment.
 	 */
 #ifdef MULTIPROCESSOR
+	mutex_enter(&sa->sa_mutex);
+
 	if (SCARG(uap, concurrency) > sa->sa_maxconcurrency) {
 		ncpus = 0;
 		for (CPU_INFO_FOREACH(cii, ci))
@@ -648,22 +739,24 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 			if (l2->l_flag & L_SA_IDLE) {
 				l2->l_flag &=
 					~(L_SA_IDLE|L_SA_YIELD|L_SINTR);
+				lwp_unlock(l2);
 				DPRINTFN(11,("sys_sa_concurrency(%d.%d) "
 					     "NEWPROC vp %d\n",
 					     p->p_pid, l->l_lid,
 					     vp->savp_id));
-				/* XXXAD locking */
 				cpu_setfunc(l2, sa_switchcall, NULL);
-				/* XXXAD locking */
+				sa->sa_concurrency++;
+				mutex_exit(&p->p_smutex);
+				mutex_exit(&sa->sa_mutex);
 				/* error = */ sa_upcall(l2,
 				    SA_UPCALL_NEWPROC,
 				    NULL, NULL, 0, NULL, NULL);
-				/* XXXAD locking */
-				sa->sa_concurrency++;
+				lwp_lock(l2);
 				/* setrunnable() will unlock l2 */
 				setrunnable(l2);
 				KDASSERT((l2->l_flag & L_SINTR) == 0);
 				(*retval)++;
+				/* XXXAD holding sa_mutex, p_smutex */
 			} else
 				lwp_unlock(l2);
 			if (sa->sa_concurrency == SCARG(uap, concurrency))
@@ -671,6 +764,8 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 		}
 		mutex_exit(&p->p_smutex);
 	}
+
+	mutex_exit(&sa->sa_mutex);
 #endif
 
 	return (0);
@@ -681,7 +776,9 @@ sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
+	mutex_enter(&p->p_smutex);
 	if (p->p_sa == NULL || !(p->p_sflag & PS_SA)) {
+		mutex_exit(&p->p_smutex);
 		DPRINTFN(1,
 		    ("sys_sa_yield(%d.%d) proc %p not SA (p_sa %p, flag %s)\n",
 		    p->p_pid, l->l_lid, p, p->p_sa,
@@ -705,6 +802,9 @@ sa_yield(struct lwp *l)
 	lwp_lock(l);
 
 	if (vp->savp_lwp != l) {
+		lwp_unlock(l);
+		mutex_exit(&p->p_smutex);
+
 		/*
 		 * We lost the VP on our way here, this happens for
 		 * instance when we sleep in systrace.  This will end
@@ -715,6 +815,8 @@ sa_yield(struct lwp *l)
 		KDASSERT(l->l_flag & L_SA_BLOCKING);
 		return;
 	}
+
+	mutex_exit(&p->p_smutex);
 
 	/*
 	 * If we're the last running LWP, stick around to receive
@@ -727,8 +829,8 @@ sa_yield(struct lwp *l)
 	 * A signal will probably wake us up. Worst case, the upcall
 	 * happens and just causes the process to yield again.
 	 */
-	/* s = splsched(); */	/* Protect from timer expirations */
 	KDASSERT(vp->savp_lwp == l);
+
 	/*
 	 * If we were told to make an upcall or exit before
 	 * the splsched(), make sure we process it instead of
@@ -741,32 +843,32 @@ sa_yield(struct lwp *l)
 		/* KERNEL_UNLOCK(); in upcallret() */
 		lwp_unlock(l);
 		upcallret(l);
-		KERNEL_LOCK(1, l);
+		KERNEL_LOCK(1, l);	/* XXXSMP */
+	} else {
+		do {
+			lwp_unlock(l);
+			DPRINTFN(1,("sa_yield(%d.%d) really going dormant\n",
+				     p->p_pid, l->l_lid));
+
+			mutex_enter(&sa->sa_mutex);
+			sa->sa_concurrency--;
+			ret = mtsleep(l, PUSER | PCATCH, "sawait", 0,
+			    &sa->sa_mutex);
+			sa->sa_concurrency++;
+			mutex_exit(&sa->sa_mutex);
+
+			KDASSERT(vp->savp_lwp == l || l->l_flag & L_WEXIT);
+
+			/* KERNEL_UNLOCK(); in upcallret() */
+			upcallret(l);
+			KERNEL_LOCK(1, l);	/* XXXSMP */
+
+			lwp_lock(l);
+		} while (l->l_flag & L_SA_YIELD);
 	}
-	do {
-		DPRINTFN(1,("sa_yield(%d.%d) really going dormant\n",
-			     p->p_pid, l->l_lid));
 
-		lwp_unlock(l);
-		/*
-		 * XXXSMP there is a race between the LWP lock and
-		 * L_SA_YIELD here.
-		 */
-		mutex_enter(&p->p_smutex);
-		sa->sa_concurrency--;
-		ret = mtsleep(l, PUSER | PCATCH, "sawait", 0, &p->p_smutex);
-		sa->sa_concurrency++;
-		mutex_exit(&p->p_smutex);
-
-		KDASSERT(vp->savp_lwp == l || l->l_flag & L_WEXIT);
-
-		/* KERNEL_UNLOCK(); in upcallret() */
-		upcallret(l);
-		KERNEL_LOCK(1, l);
-	} while (l->l_flag & L_SA_YIELD);
-	/* splx(s); */
-	DPRINTFN(1,("sa_yield(%d.%d) returned, ret %d, userret %p\n",
-		     p->p_pid, l->l_lid, ret, p->p_userret));
+	DPRINTFN(1,("sa_yield(%d.%d) returned, ret %d\n",
+		     p->p_pid, l->l_lid, ret));
 }
 
 
@@ -815,9 +917,20 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 
 	/* XXX prevent recursive upcalls if we sleep for memory */
 	SA_LWP_STATE_LOCK(l, f);
+	sau = sadata_upcall_alloc(1);
+	mutex_enter(&sa->sa_mutex);
 	sast = sa_getstack(sa);
+	mutex_exit(&sa->sa_mutex);
 	SA_LWP_STATE_UNLOCK(l, f);
-	if (sast == NULL) {
+
+	if (sau == NULL || sast == NULL) {
+		if (sast != NULL) {
+			mutex_enter(&sa->sa_mutex);
+			sa_setstackfree(sast, sa);
+			mutex_exit(&sa->sa_mutex);
+		}
+		if (sau != NULL)
+			sadata_upcall_free(sau);
 		return (ENOMEM);
 	}
 	DPRINTFN(9,("sa_upcall(%d.%d) using stack %p\n",
@@ -826,18 +939,23 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	if (l->l_proc->p_emul->e_sa->sae_upcallconv) {
 		error = (*l->l_proc->p_emul->e_sa->sae_upcallconv)(l, type,
 		    &argsize, &arg, &func);
-		if (error)
+		if (error) {
+			mutex_enter(&sa->sa_mutex);
+			sa_setstackfree(sast, sa);
+			mutex_exit(&sa->sa_mutex);
+			sadata_upcall_free(sau);
 			return error;
+		}
 	}
 
-	SA_LWP_STATE_LOCK(l, f);
-	sau = sadata_upcall_alloc(1);
-	SA_LWP_STATE_UNLOCK(l, f);
 	sa_upcall0(sau, type, event, interrupted, argsize, arg, func);
 	sau->sau_stack = sast->sast_stack;
-
+	mutex_enter(&sa->sa_mutex);
 	SIMPLEQ_INSERT_TAIL(&vp->savp_upcalls, sau, sau_next);
+	lwp_lock(l);
 	l->l_flag |= L_SA_UPCALL;
+	lwp_unlock(l);
+	mutex_exit(&sa->sa_mutex);
 
 	return (0);
 }
@@ -883,6 +1001,7 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 	size_t ucsize;
 
 	if (l) {
+		lwp_lock(l);
 		l->l_flag |= L_SA_SWITCHING;
 		(*l->l_proc->p_emul->e_sa->sae_getucontext)(l,
 		    (void *)&ss->ss_captured.ss_ctx);
@@ -897,6 +1016,7 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 		    (ucontext_t *)STACK_ALLOC(sp, ucsize);
 		ss->ss_captured.ss_sa.sa_id = l->l_lid;
 		ss->ss_captured.ss_sa.sa_cpu = l->l_savp->savp_id;
+		lwp_unlock(l);
 	} else
 		ss->ss_captured.ss_sa.sa_context = NULL;
 }
@@ -916,11 +1036,13 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 	struct sadata *sa;
 	struct sadata_vp *vp;
 	struct sastack sast;
+	int found;
 
 	p = l->l_proc;
 	sa = p->p_sa;
 	vp = l->l_savp;
 
+	LOCK_ASSERT(mutex_owned(&sa->sa_mutex));
 	KDASSERT(vp->savp_lwp == l);
 
 	if (vp->savp_faultaddr == vp->savp_ofaultaddr) {
@@ -931,8 +1053,9 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 
 	sast.sast_stack.ss_sp = (*p->p_emul->e_sa->sae_ucsp)(l_ctx);
 	sast.sast_stack.ss_size = 1;
+	found = (RB_FIND(sasttree, &sa->sa_stackstree, &sast)) != NULL;
 
-	if (SPLAY_FIND(sasttree, &sa->sa_stackstree, &sast)) {
+	if (found) {
 		DPRINTFN(10,("sa_pagefault(%d.%d) upcall page fault\n",
 			     p->p_pid, l->l_lid));
 		return 1;
@@ -947,7 +1070,7 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
  * Called by tsleep(). Block current LWP and switch to another.
  *
  * WE ARE NOT ALLOWED TO SLEEP HERE!  WE ARE CALLED FROM WITHIN
- * TSLEEP() ITSELF!
+ * SLEEPQ_BLOCK() ITSELF!
  */
 void
 sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
@@ -956,6 +1079,9 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 	struct sadata_vp *vp = l->l_savp;
 	struct lwp *l2;
 	struct sadata_upcall *freesau = NULL;
+	struct sadata *sa = p->p_sa;
+
+	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
 
 	DPRINTFN(4,("sa_switch(%d.%d type %d VP %d)\n", p->p_pid, l->l_lid,
 	    type, vp->savp_lwp ? vp->savp_lwp->l_lid : 0));
@@ -966,34 +1092,59 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 		return;
 	}
 
+	/* We're locking in reverse order.  XXXSMP SA must die. */
+	if (!mutex_tryenter(&sa->sa_mutex)) {
+		lwp_unlock(l);
+		mutex_enter(&sa->sa_mutex);
+		mutex_enter(&p->p_smutex);
+		lwp_lock(l);
+	} else if (!mutex_tryenter(&p->p_smutex)) {
+		lwp_unlock(l);
+		mutex_enter(&p->p_smutex);
+		lwp_lock(l);
+	}
+	if (l->l_stat == LSONPROC) {
+		lwp_unlock(l);
+		mutex_exit(&p->p_smutex);
+		mutex_exit(&sa->sa_mutex);
+		return;
+	}
+
 	if (l->l_flag & L_SA_YIELD) {
 		/*
 		 * Case 0: we're blocking in sa_yield
 		 */
-		if (vp->savp_wokenq_head == NULL && p->p_userret == NULL) {
+		if (vp->savp_wokenq_head == NULL && p->p_timerpend == 0) {
 			l->l_flag |= L_SA_IDLE;
+			mutex_exit(&p->p_smutex);
+			mutex_exit(&sa->sa_mutex);
 			mi_switch(l, NULL);
 		} else {
 			/*
-			 * Make us running again. sleepq_unsleep() will
+			 * Make us running again. lwp_unsleep() will
 			 * release the lock.
 			 */
-			sleepq_unsleep(l);
+			mutex_exit(&p->p_smutex);
+			mutex_exit(&sa->sa_mutex);
+			lwp_unsleep(l);
 		}
 		sadata_upcall_free(sau);
 		return;
-	} else if (vp->savp_lwp == l) {
+	}
+
+	if (vp->savp_lwp == l) {
 		/*
 		 * Case 1: we're blocking for the first time; generate
 		 * a SA_BLOCKED upcall and allocate resources for the
 		 * UNBLOCKED upcall.
 		 */
-
 		if (sau == NULL) {
 #ifdef DIAGNOSTIC
 			printf("sa_switch(%d.%d): no upcall data.\n",
 			    p->p_pid, l->l_lid);
 #endif
+			mutex_exit(&p->p_smutex);
+			mutex_exit(&sa->sa_mutex);
 			mi_switch(l, NULL);
 			return;
 		}
@@ -1018,6 +1169,8 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 			printf("sa_switch(%d.%d): no cached LWP for upcall.\n",
 			    p->p_pid, l->l_lid);
 #endif
+			mutex_exit(&p->p_smutex);
+			mutex_exit(&sa->sa_mutex);
 			mi_switch(l, NULL);
 			sadata_upcall_free(sau);
 			return;
@@ -1036,32 +1189,38 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 		 * pagefault code also saves the faultaddr for us.
 		 */
 		if ((l->l_flag & L_SA_PAGEFAULT) && sa_pagefault(l,
-			&sau->sau_event.ss_captured.ss_ctx) != 0) {
+		    &sau->sau_event.ss_captured.ss_ctx) != 0) {
 			cpu_setfunc(l2, sa_switchcall, NULL);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
+			mutex_exit(&p->p_smutex);
+			mutex_exit(&sa->sa_mutex);
 			mi_switch(l, NULL);
 			sadata_upcall_free(sau);
 			DPRINTFN(10,("sa_switch(%d.%d) page fault resolved\n",
 				     p->p_pid, l->l_lid));
+			mutex_enter(&sa->sa_mutex);
 			if (vp->savp_faultaddr == vp->savp_ofaultaddr)
 				vp->savp_ofaultaddr = -1;
+			mutex_exit(&sa->sa_mutex);
 			return;
 		}
 
 		DPRINTFN(8,("sa_switch(%d.%d) blocked upcall %d\n",
 			     p->p_pid, l->l_lid, l2->l_lid));
 
+		if (l->l_mutex != l2->l_mutex)	/* XXXSMP */
+			lwp_lock(l2);
 		l->l_flag |= L_SA_BLOCKING;
 		l2->l_priority = l2->l_usrpri;
+		l2->l_stat = LSRUN;
 		vp->savp_blocker = l;
 		vp->savp_lwp = l2;
-		lwp_relock(l2, &sched_mutex);
 		setrunqueue(l2);
 		PRELE(l2); /* Remove the artificial hold-count */
-
 		KDASSERT(l2 != l);
+		if (l->l_mutex != l2->l_mutex)	/* XXXSMP */
+			lwp_unlock(l2);
 	} else if (vp->savp_lwp != NULL) {
-
 		/*
 		 * Case 2: We've been woken up while another LWP was
 		 * on the VP, but we're going back to sleep without
@@ -1073,11 +1232,16 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 		l2 = NULL;
 	} else {
 		/* NOTREACHED */
+		mutex_exit(&p->p_smutex);
+		mutex_exit(&sa->sa_mutex);
+		lwp_unlock(l);
 		panic("sa_vp empty");
 	}
 
 	DPRINTFN(4,("sa_switch(%d.%d) switching to LWP %d.\n",
 	    p->p_pid, l->l_lid, l2 ? l2->l_lid : 0));
+	mutex_exit(&p->p_smutex);
+	mutex_exit(&sa->sa_mutex);
 	mi_switch(l, l2);
 	sadata_upcall_free(freesau);
 	DPRINTFN(4,("sa_switch(%d.%d flag %x) returned.\n",
@@ -1093,52 +1257,69 @@ sa_switchcall(void *arg)
 	struct sadata_vp *vp;
 	struct sadata_upcall *sau;
 	struct sastack *sast;
+	struct sadata *sa;
 
 	l2 = curlwp;
 	p = l2->l_proc;
 	vp = l2->l_savp;
 	sau = arg;
+	sa = p->p_sa;
 
+	lwp_lock(l2);
 	if (l2->l_flag & L_WEXIT) {
+		lwp_unlock(l2);
 		sadata_upcall_free(sau);
-		(void)lwp_exit(l2, 0);
+		lwp_exit(l2);
 	}
 
-	KDASSERT(vp->savp_lwp == l2);
+	KASSERT(vp->savp_lwp == l2);
 	DPRINTFN(6,("sa_switchcall(%d.%d)\n", p->p_pid, l2->l_lid));
 
 	l2->l_flag &= ~L_SA;
+	lwp_unlock(l2);
+
 	if (LIST_EMPTY(&vp->savp_lwpcache)) {
 		/* Allocate the next cache LWP */
 		DPRINTFN(6,("sa_switchcall(%d.%d) allocating LWP\n",
 		    p->p_pid, l2->l_lid));
 		sa_newcachelwp(l2);
 	}
+
 	if (sau) {
-		l = vp->savp_blocker;
+		mutex_enter(&sa->sa_mutex);
 		sast = sa_getstack(p->p_sa);
+		l = vp->savp_blocker;		
 		if (sast) {
 			sau->sau_stack = sast->sast_stack;
 			SIMPLEQ_INSERT_TAIL(&vp->savp_upcalls, sau, sau_next);
+			lwp_lock(l2);
 			l2->l_flag |= L_SA_UPCALL;
+			mutex_exit(&sa->sa_mutex);
 		} else {
 #ifdef DIAGNOSTIC
 			printf("sa_switchcall(%d.%d flag %x): Not enough stacks.\n",
 			    p->p_pid, l->l_lid, l->l_flag);
 #endif
+			lwp_unlock(l2);
 			sadata_upcall_free(sau);
 			PHOLD(l2);
-			/* XXXAD SCHED_LOCK(s); */
+			mutex_enter(&p->p_smutex);	/* XXXAD */
 			sa_putcachelwp(p, l2); /* sets L_SA */
 			vp->savp_lwp = l;
+			lwp_lock(l);
 			l->l_flag &= ~L_SA_BLOCKING;
+			lwp_unlock(l);
 			p->p_nrlwps--;
+			mutex_exit(&p->p_smutex);
+			lwp_lock(l2);
 			mi_switch(l2, NULL);
 			/* mostly NOTREACHED */
+			lwp_lock(l2);
 		}
 	}
-	l2->l_flag |= L_SA;
 
+	l2->l_flag |= L_SA;
+	lwp_unlock(l2);
 	upcallret(l2);
 }
 
@@ -1189,7 +1370,9 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 	LIST_REMOVE(l, l_sibling);
 	p->p_nlwps--;
 	l->l_stat = LSSUSPENDED;
-	l->l_flag |= (L_DETACHED | L_SA);
+	l->l_prflag |= LPR_DETACHED;
+	l->l_flag |= L_SA;
+	mb_write();
 	DPRINTFN(5,("sa_putcachelwp(%d.%d) Adding LWP %d to cache\n",
 	    p->p_pid, curlwp->l_lid, l->l_lid));
 	LIST_INSERT_HEAD(&vp->savp_lwpcache, l, l_sibling);
@@ -1214,6 +1397,7 @@ sa_getcachelwp(struct proc *p, struct sadata_vp *vp)
 	LIST_REMOVE(l, l_sibling);
 	p = l->l_proc;
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
+	l->l_prflag &= ~LPR_DETACHED;
 	p->p_nlwps++;
 	DPRINTFN(5,("sa_getcachelwp(%d.%d) Got LWP %d from cache.\n",
 	    p->p_pid, curlwp->l_lid, l->l_lid));
@@ -1246,10 +1430,11 @@ sa_unblock_userret(struct lwp *l)
 	DPRINTFN(7,("sa_unblock_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
 	    l->l_flag));
 
+	mutex_enter(&sa->sa_mutex);
+
 	sa_setwoken(l);
 	/* maybe NOTREACHED */
 
-	mutex_enter(&p->p_smutex);
 	if (l != vp->savp_lwp) {
 		/* Invoke an "unblocked" upcall */
 		DPRINTFN(8,("sa_unblock_userret(%d.%d) unblocking\n",
@@ -1257,19 +1442,24 @@ sa_unblock_userret(struct lwp *l)
 
 		l2 = sa_vp_repossess(l);
 
-		mutex_exit(&p->p_smutex);
-
-		if (l2 == NULL)
-			(void)lwp_exit(l, 0);
+		if (l2 == NULL) {
+			lwp_exit(l);
+			/* NOTREACHED */
+		}
 
 		sast = sa_getstack(sa);
-		if (l->l_flag & L_WEXIT)
-			(void)lwp_exit(l, 0);
+		mutex_exit(&sa->sa_mutex);
+
+		if (l->l_flag & L_WEXIT) {
+			lwp_exit(l);
+			/* NOTREACHED */
+		}
 
 		sau = sadata_upcall_alloc(1);
 		if (l->l_flag & L_WEXIT) {
 			sadata_upcall_free(sau);
-			(void)lwp_exit(l, 0);
+			lwp_exit(l);
+			/* NOTREACHED */
 		}
 
 		KDASSERT(l2 != NULL);
@@ -1287,13 +1477,17 @@ sa_unblock_userret(struct lwp *l)
 			   l, l2, 0, NULL, NULL);
 		sau->sau_stack = sast->sast_stack;
 
-		mutex_enter(&p->p_smutex);
+		mutex_enter(&sa->sa_mutex);
 		SIMPLEQ_INSERT_TAIL(&vp->savp_upcalls, sau, sau_next);
+		lwp_lock(l);
 		l->l_flag |= L_SA_UPCALL;
 		l->l_flag &= ~L_SA_BLOCKING;
+		lwp_unlock(l);
+		mutex_enter(&p->p_smutex);
 		sa_putcachelwp(p, l2);
+		mutex_exit(&p->p_smutex);
 	}
-	mutex_exit(&p->p_smutex);
+	mutex_exit(&sa->sa_mutex);
 
 	SA_LWP_STATE_UNLOCK(l, f);
 	(void)KERNEL_UNLOCK(1, l);
@@ -1322,30 +1516,32 @@ sa_upcall_userret(struct lwp *l)
 
 	KDASSERT((l->l_flag & L_SA_BLOCKING) == 0);
 
+	mutex_enter(&sa->sa_mutex);
 	sast = NULL;
 	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) && vp->savp_wokenq_head != NULL) {
 		sast = sa_getstack(sa);
 		if (sast == NULL) {
+			mutex_exit(&sa->sa_mutex);
 			SA_LWP_STATE_UNLOCK(l, f);
 			(void)KERNEL_UNLOCK(1, l);
 			preempt(1);
 			return;
 		}
 	}
-	/* XXXAD SCHED_LOCK(s); */
 	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) && vp->savp_wokenq_head != NULL &&
 	    sast != NULL) {
 		/* Invoke an "unblocked" upcall */
 		l2 = vp->savp_wokenq_head;
 		vp->savp_wokenq_head = l2->l_forw;
+		mutex_exit(&sa->sa_mutex);
 
 		DPRINTFN(9,("sa_upcall_userret(%d.%d) using stack %p\n",
 		    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
 
-		/* XXXAD SCHED_UNLOCK(s); */
-
-		if (l->l_flag & L_WEXIT)
-			(void)lwp_exit(l, 0);
+		if (l->l_flag & L_WEXIT) {
+			lwp_exit(l);
+			/* NOTREACHED */
+		}
 
 		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking %d\n",
 		    p->p_pid, l->l_lid, l2->l_lid));
@@ -1353,33 +1549,38 @@ sa_upcall_userret(struct lwp *l)
 		sau = sadata_upcall_alloc(1);
 		if (l->l_flag & L_WEXIT) {
 			sadata_upcall_free(sau);
-			(void)lwp_exit(l, 0);
+			lwp_exit(l);
+			/* NOTREACHED */
 		}
 
 		sa_upcall0(sau, SA_UPCALL_UNBLOCKED, l2, l, 0, NULL, NULL);
 		sau->sau_stack = sast->sast_stack;
-
 		SIMPLEQ_INSERT_TAIL(&vp->savp_upcalls, sau, sau_next);
-
+		lwp_lock(l2);
 		l2->l_flag &= ~L_SA_BLOCKING;
-		/* XXXAD SCHED_LOCK(s) */;
+		lwp_unlock(l2);
+		mutex_enter(&p->p_smutex);
 		sa_putcachelwp(p, l2); /* PHOLD from sa_setwoken */
-		/* XXXAD SCHED_UNLOCK(s); */
-	} else {
-		/* XXXAD SCHED_UNLOCK(s); */
-		if (sast)
-			sa_setstackfree(sast, sa);
-	}
+		mutex_exit(&p->p_smutex);
+	} else if (sast)
+		sa_setstackfree(sast, sa);
 
 	KDASSERT(vp->savp_lwp == l);
 
-	while (!SIMPLEQ_EMPTY(&vp->savp_upcalls))
-		sa_makeupcalls(l);
+	while ((sau = SIMPLEQ_FIRST(&vp->savp_upcalls)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&vp->savp_upcalls, sau_next);
+		mutex_exit(&sa->sa_mutex);
+		sa_makeupcalls(l, sau);
+		mutex_enter(&sa->sa_mutex);
+	}
 
-	if (vp->savp_wokenq_head == NULL)
+	if (vp->savp_wokenq_head == NULL) {
+		lwp_lock(l);
 		l->l_flag &= ~L_SA_UPCALL;
+		lwp_unlock(l);
+	}
 
-	SA_LWP_STATE_UNLOCK(l, f);
+	mutex_exit(&sa->sa_mutex);
 	(void)KERNEL_UNLOCK(1, l);
 	return;
 }
@@ -1389,8 +1590,8 @@ sa_upcall_userret(struct lwp *l)
 	(*(sae)->sae_sacopyout)((type), (kp), (void *)(up)) : \
 	copyout((kp), (void *)(up), sizeof(*(kp))))
 
-static inline void
-sa_makeupcalls(struct lwp *l)
+static void
+sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 {
 	struct lwp *l2, *eventq;
 	struct proc *p;
@@ -1400,7 +1601,6 @@ sa_makeupcalls(struct lwp *l)
 	uintptr_t sapp, sap;
 	struct sa_t self_sa;
 	struct sa_t *sas[3];
-	struct sadata_upcall *sau;
 	void *stack, *ap;
 	union sau_state *e_ss;
 	ucontext_t *kup, *up;
@@ -1412,9 +1612,6 @@ sa_makeupcalls(struct lwp *l)
 	sa = p->p_sa;
 	vp = l->l_savp;
 	ucsize = sae->sae_ucsize;
-
-	sau = SIMPLEQ_FIRST(&vp->savp_upcalls);
-	SIMPLEQ_REMOVE_HEAD(&vp->savp_upcalls, sau_next);
 
 	if (sau->sau_flags & SAU_FLAG_DEFERRED_EVENT)
 		sa_upcall_getstate(&sau->sau_event,
@@ -1471,15 +1668,15 @@ sa_makeupcalls(struct lwp *l)
 	}
 	eventq = NULL;
 	if (sau->sau_type == SA_UPCALL_UNBLOCKED) {
-		/* XXXAD SCHED_LOCK(s); */
+		mutex_enter(&sa->sa_mutex);
 		eventq = vp->savp_wokenq_head;
 		vp->savp_wokenq_head = NULL;
-		/* XXXAD SCHED_UNLOCK(s); */
 		l2 = eventq;
 		while (l2 != NULL) {
 			nevents++;
 			l2 = l2->l_forw;
 		}
+		mutex_exit(&sa->sa_mutex);
 	}
 
 	/* Copy out the activation's ucontext */
@@ -1538,11 +1735,13 @@ sa_makeupcalls(struct lwp *l)
 			if (e_ss == NULL) {
 				e_ss = kmem_alloc(sizeof(*e_ss), KM_SLEEP);
 			}
+			mutex_enter(&p->p_smutex);
 			sa_upcall_getstate(e_ss, l2);
-			/* XXXAD SCHED_LOCK(s); */
+			lwp_lock(l2);
 			l2->l_flag &= ~L_SA_BLOCKING;
+			lwp_unlock(l2);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_setwoken */
-			/* XXXAD SCHED_UNLOCK(s); */
+			mutex_exit(&p->p_smutex);
 
 			error = copyout(&e_ss->ss_captured.ss_ctx,
 			    e_ss->ss_captured.ss_sa.sa_context, ucsize);
@@ -1608,7 +1807,9 @@ sa_makeupcalls(struct lwp *l)
 	(*sae->sae_upcall)(l, type, nevents, nint, (void *)sapp, ap, stack,
 	    sa->sa_upcall);
 
+	lwp_lock(l);
 	l->l_flag &= ~L_SA_YIELD;
+	lwp_unlock(l);
 }
 
 static void
@@ -1620,20 +1821,14 @@ sa_setwoken(struct lwp *l)
 	struct sadata_vp *vp;
 	int swapper;
 
-	mutex_enter(&p->p_smutex);
-
-	if ((l->l_flag & L_SA_BLOCKING) == 0) {
-		mutex_exit(&p->p_smutex);
+	if ((l->l_flag & L_SA_BLOCKING) == 0)
 		return;
-	}
 
 	sa = p->p_sa;
 	vp = l->l_savp;
 	vp_lwp = vp->savp_lwp;
 	l2 = NULL;
 	swapper = 0;
-
-	lwp_lock(vp_lwp);
 
 	KDASSERT(vp_lwp != NULL);
 	DPRINTFN(3,("sa_setwoken(%d.%d) woken, flags %x, vp %d\n",
@@ -1649,7 +1844,7 @@ sa_setwoken(struct lwp *l)
 		    l->l_proc->p_pid, l->l_lid,
 		    vp_lwp->l_lid, vp_lwp->l_stat));
 		vp_lwp->l_flag &= ~L_SA_IDLE;
-		mutex_exit(&p->p_smutex);
+		PRELE(l);
 		return;
 	}
 #endif
@@ -1658,7 +1853,8 @@ sa_setwoken(struct lwp *l)
 		     l->l_proc->p_pid, l->l_lid, vp_lwp->l_lid,
 		     vp_lwp->l_stat));
 
-	PHOLD(l);
+	lwp_lock(vp_lwp);
+
 	if (vp->savp_wokenq_head == NULL)
 		vp->savp_wokenq_head = l;
 	else
@@ -1720,20 +1916,25 @@ sa_setwoken(struct lwp *l)
 	if (vp_lwp != NULL)
 		lwp_unlock(vp_lwp);
 
-	mutex_exit(&p->p_smutex);
-
 	if (swapper)
 		wakeup(&proc0);
 
+	mutex_enter(&p->p_smutex);
 	lwp_lock(l);
 	/* XXXAD Is this correct? */
-	if ((l->l_flag & L_SA_BLOCKING) != 0)
+	if ((l->l_flag & L_SA_BLOCKING) != 0) {
 		l->l_stat = LSSUSPENDED;
+		p->p_nrlwps--;
+	}
+	mutex_exit(&p->p_smutex);
+	mutex_exit(&sa->sa_mutex);
 	mi_switch(l, l2);
 
 	/* maybe NOTREACHED */
 	if (l->l_flag & L_WEXIT)
-		(void)lwp_exit(l, 0);
+		lwp_exit(l);
+
+	mutex_enter(&sa->sa_mutex);
 }
 
 static struct lwp *
@@ -1744,7 +1945,8 @@ sa_vp_repossess(struct lwp *l)
 	struct sadata_vp *vp = l->l_savp;
 	int ostat;
 
-	mutex_enter(&p->p_smutex);
+	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	LOCK_ASSERT(mutex_owned(&p->p_sa->sa_mutex));
 
 	/*
 	 * Put ourselves on the virtual processor and note that the
@@ -1767,31 +1969,31 @@ sa_vp_repossess(struct lwp *l)
 		l2->l_stat = LSSUSPENDED;
 
 		switch (ostat) {
+		case LSRUN:
+			p->p_nrlwps--;
+			remrunqueue(l2);
+			lwp_unlock(l2);
+			break;
 		case LSSLEEP:
-			/* XXXAD unsleep(l2); */
-			l2->l_flag &= ~L_SINTR;
+			p->p_nrlwps--;
+			lwp_unsleep(l2);
 			break;
 		case LSSUSPENDED:
 #ifdef DIAGNOSTIC
 			printf("sa_vp_repossess(%d.%d) vp lwp %d LSSUSPENDED\n",
 			    l->l_proc->p_pid, l->l_lid, l2->l_lid);
 #endif
-			break;
-		case LSRUN:
-			remrunqueue(l2);
+			lwp_unlock(l2);
 			break;
 #ifdef DIAGNOSTIC
 		default:
+			lwp_unlock(l2);
 			panic("SA VP %d.%d is in state %d, not running"
 			    " or sleeping\n", p->p_pid, l2->l_lid,
 			    l2->l_stat);
 #endif
 		}
-
-		lwp_unlock_to(l2, &lwp_mutex);
 	}
-
-	mutex_exit(&p->p_smutex);
 
 	return l2;
 }
@@ -1826,7 +2028,8 @@ debug_print_sa(struct proc *p)
 
 	printf("Process %d (%s), state %d, address %p, flags %x\n",
 	    p->p_pid, p->p_comm, p->p_stat, p, p->p_flag);
-	printf("LWPs: %d (%d running, %d zombies)\n", p->p_nlwps, p->p_nzlwps);
+	printf("LWPs: %d (%d running, %d zombies)\n", p->p_nlwps, p->p_nrlwps,
+	    p->p_nzlwps);
 	LIST_FOREACH(l, &p->p_lwps, l_sibling)
 		debug_print_lwp(l);
 	sa = p->p_sa;

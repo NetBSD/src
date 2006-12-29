@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.103.4.5 2006/11/18 21:39:22 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.103.4.6 2006/12/29 20:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.5 2006/11/18 21:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.6 2006/12/29 20:27:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,6 +401,8 @@ sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 /*
  * Transform the running time and tick information in proc p into user,
  * system, and interrupt time usage.
+ *
+ * Should be called with p->p_smutex held unless called from exit1().
  */
 void
 calcru(struct proc *p, struct timeval *up, struct timeval *sp,
@@ -409,25 +411,26 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 	u_quad_t u, st, ut, it, tot;
 	unsigned long sec;
 	long usec;
-	int s;
-	struct timeval tv;
+ 	struct timeval tv;
 	struct lwp *l;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-
-	s = splstatclock();
+	mutex_enter(&p->p_stmutex);
 	st = p->p_sticks;
 	ut = p->p_uticks;
 	it = p->p_iticks;
-	splx(s);
+	mutex_exit(&p->p_stmutex);
 
-	sec = 0;
-	usec = 0;
+	sec = p->p_rtime.tv_sec;
+	usec = p->p_rtime.tv_usec;
+
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
 		sec += l->l_rtime.tv_sec;
-		usec += l->l_rtime.tv_usec;
-		if (l->l_stat == LSONPROC) {
+		if ((usec += l->l_rtime.tv_usec) >= 1000000) {
+			sec++;
+			usec -= 1000000;
+		}
+		if (l->l_cpu == curcpu()) {
 			struct schedstate_percpu *spc;
 
 			KDASSERT(l->l_cpu != NULL);
@@ -443,6 +446,10 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 			microtime(&tv);
 			sec += tv.tv_sec - spc->spc_runtime.tv_sec;
 			usec += tv.tv_usec - spc->spc_runtime.tv_usec;
+			if (usec >= 1000000) {
+				sec++;
+				usec -= 1000000;
+			}
 		}
 		lwp_unlock(l);
 	}
@@ -458,20 +465,10 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 		ut = (u * ut) / tot;
 	}
 	if (sp != NULL) {
-		if (tot == 0) {
-			/* No ticks, so can't use to share time out, split 50-50 */
-			st = u / 2;
-		} else
-			st = (u * st) / tot;
 		sp->tv_sec = st / 1000000;
 		sp->tv_usec = st % 1000000;
 	}
 	if (up != NULL) {
-		if (tot == 0) {
-			/* No ticks, so can't use to share time out, split 50-50 */
-			ut = u / 2;
-		} else
-			ut = (u * ut) / tot;
 		up->tv_sec = ut / 1000000;
 		up->tv_usec = ut % 1000000;
 	}

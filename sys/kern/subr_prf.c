@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.103.2.1 2006/11/17 16:34:37 ad Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.103.2.2 2006/12/29 20:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.103.2.1 2006/11/17 16:34:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.103.2.2 2006/12/29 20:27:44 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -428,7 +428,23 @@ uprintf(const char *fmt, ...)
 	struct proc *p = curproc;
 	va_list ap;
 
-	LOCK_ASSERT(rw_lock_held(&proclist_lock));
+	mutex_enter(&proclist_mutex);
+
+	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
+		/* No mutex needed; going to process TTY. */
+		va_start(ap, fmt);
+		kprintf(fmt, TOTTY, p->p_session->s_ttyp, NULL, ap);
+		va_end(ap);
+	}
+
+	mutex_exit(&proclist_mutex);
+}
+
+void
+uprintf_locked(const char *fmt, ...)
+{
+	struct proc *p = curproc;
+	va_list ap;
 
 	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
 		/* No mutex needed; going to process TTY. */
@@ -456,14 +472,18 @@ uprintf(const char *fmt, ...)
 tpr_t
 tprintf_open(struct proc *p)
 {
+	tpr_t cookie;
 
-	LOCK_ASSERT(rw_lock_held(&proclist_lock));
+	cookie = NULL;
 
+	mutex_enter(&proclist_mutex);	/* XXXSMP insufficient */
 	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
 		SESSHOLD(p->p_session);
-		return ((tpr_t) p->p_session);
+		cookie = (tpr_t)p->p_session;
 	}
-	return ((tpr_t) NULL);
+	mutex_exit(&proclist_mutex);
+
+	return cookie;
 }
 
 /*
@@ -473,8 +493,6 @@ tprintf_open(struct proc *p)
 void
 tprintf_close(tpr_t sess)
 {
-
-	LOCK_ASSERT(rw_write_held(&proclist_lock));
 
 	if (sess)
 		SESSRELE((struct session *) sess);
@@ -494,6 +512,7 @@ tprintf(tpr_t tpr, const char *fmt, ...)
 	int s, flags = TOLOG;
 	va_list ap;
 
+	mutex_enter(&proclist_mutex);	/* XXXSMP insufficient */
 	if (sess && sess->s_ttyvp && ttycheckoutq(sess->s_ttyp, 0)) {
 		flags |= TOTTY;
 		tp = sess->s_ttyp;
@@ -507,6 +526,7 @@ tprintf(tpr_t tpr, const char *fmt, ...)
 	va_end(ap);
 
 	KPRINTF_MUTEX_EXIT(s);
+	mutex_exit(&proclist_mutex);	/* XXXSMP insufficient */
 
 	logwakeup();
 }

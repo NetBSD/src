@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.102.2.3 2006/11/18 21:39:21 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.102.2.4 2006/12/29 20:27:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.102.2.3 2006/11/18 21:39:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.102.2.4 2006/12/29 20:27:43 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1072,10 +1072,10 @@ void
 startprofclock(struct proc *p)
 {
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
 
-	if ((p->p_sflag & PS_PROFIL) == 0) {
-		p->p_sflag |= PS_PROFIL;
+	if ((p->p_stflag & PST_PROFIL) == 0) {
+		p->p_stflag |= PST_PROFIL;
 		/*
 		 * This is only necessary if using the clock as the
 		 * profiling source.
@@ -1092,10 +1092,10 @@ void
 stopprofclock(struct proc *p)
 {
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
 
-	if (p->p_sflag & PS_PROFIL) {
-		p->p_sflag &= ~PS_PROFIL;
+	if (p->p_stflag & PST_PROFIL) {
+		p->p_stflag &= ~PST_PROFIL;
 		/*
 		 * This is only necessary if using the clock as the
 		 * profiling source.
@@ -1124,8 +1124,10 @@ proftick(struct clockframe *frame)
 	l = curlwp;
 	p = (l ? l->l_proc : NULL);
 	if (CLKF_USERMODE(frame)) {
-		if (p->p_sflag & PS_PROFIL)
+		mutex_enter(&p->p_stmutex);
+		if (p->p_stflag & PST_PROFIL)
 			addupc_intr(l, CLKF_PC(frame));
+		mutex_exit(&p->p_stmutex);
 	} else {
 #ifdef GPROF
 		g = &_gmonparam;
@@ -1138,8 +1140,12 @@ proftick(struct clockframe *frame)
 		}
 #endif
 #ifdef PROC_PC
-                if (l && (p->p_flag & P_PROFIL))
-                        addupc_intr(l, PROC_PC(p));
+		if (p != NULL) {
+			mutex_enter(&p->p_stmutex);
+			if (p->p_flag & P_PROFIL))
+				addupc_intr(l, PROC_PC(p));
+			mutex_exit(&p->p_stmutex);
+		}
 #endif
 	}
 }
@@ -1176,11 +1182,11 @@ statclock(struct clockframe *frame)
 	}
 	l = curlwp;
 	if ((p = (l ? l->l_proc : NULL)) != NULL)
-		mutex_enter(&p->p_smutex);
+		mutex_enter(&p->p_stmutex);
 	if (CLKF_USERMODE(frame)) {
 		KASSERT(p != NULL);
 
-		if ((p->p_sflag & PS_PROFIL) && profsrc == PROFSRC_CLOCK)
+		if ((p->p_stflag & PST_PROFIL) && profsrc == PROFSRC_CLOCK)
 			addupc_intr(l, CLKF_PC(frame));
 		if (--spc->spc_pscnt > 0)
 			return;
@@ -1208,7 +1214,7 @@ statclock(struct clockframe *frame)
 		}
 #endif
 #ifdef LWP_PC
-		if (p && profsrc == PROFSRC_CLOCK && (p->p_sflag & PS_PROFIL))
+		if (p && profsrc == PROFSRC_CLOCK && (p->p_stflag & PST_PROFIL))
 			addupc_intr(l, LWP_PC(l));
 #endif
 		if (--spc->spc_pscnt > 0)
@@ -1239,6 +1245,8 @@ statclock(struct clockframe *frame)
 
 	if (p != NULL) {
 		++p->p_cpticks;
+		mutex_exit(&p->p_stmutex);
+
 		/*
 		 * If no separate schedclock is provided, call it here
 		 * at about 16 Hz.
@@ -1248,8 +1256,6 @@ statclock(struct clockframe *frame)
 				schedclock(l);
 				ci->ci_schedstate.spc_schedticks = statscheddiv;
 			}
-
-		mutex_exit(&p->p_smutex);
 	}
 }
 

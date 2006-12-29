@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.159.2.2 2006/11/18 21:39:23 ad Exp $
+	$NetBSD: syscalls.master,v 1.159.2.3 2006/12/29 20:27:44 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -98,7 +98,7 @@
 21	STD		{ int sys_mount(const char *type, const char *path, \
 			    int flags, void *data); }
 22	STD		{ int sys_unmount(const char *path, int flags); }
-23	STD		{ int sys_setuid(uid_t uid); }
+23	STD 		{ int sys_setuid(uid_t uid); }
 #ifdef COMPAT_43
 24	STD		{ uid_t sys_getuid_with_euid(void); } getuid
 #else
@@ -124,10 +124,10 @@
 34	STD		{ int sys_chflags(const char *path, u_long flags); }
 35	STD		{ int sys_fchflags(int fd, u_long flags); }
 36	STD		{ void sys_sync(void); }
-37	STD		{ int sys_kill(int pid, int signum); }
+37	STD 		{ int sys_kill(int pid, int signum); }
 38	COMPAT_43	{ int sys_stat(const char *path, struct stat43 *ub); } \
 			    stat43
-39	STD		{ pid_t sys_getppid(void); }
+39	STD 		{ pid_t sys_getppid(void); }
 40	COMPAT_43	{ int sys_lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
 41	STD		{ int sys_dup(int fd); }
@@ -152,7 +152,7 @@
 48	COMPAT_13	{ int sys_sigprocmask(int how, \
 			    int mask); } sigprocmask13
 49	STD		{ int sys___getlogin(char *namebuf, size_t namelen); }
-50	STD		{ int sys___setlogin(const char *namebuf); }
+50	STD	 	{ int sys___setlogin(const char *namebuf); }
 51	STD		{ int sys_acct(const char *path); }
 52	COMPAT_13	{ int sys_sigpending(void); } sigpending13
 53	COMPAT_13	{ int sys_sigaltstack( \
@@ -193,12 +193,12 @@
 77	OBSOL		vlimit
 78	STD		{ int sys_mincore(void *addr, size_t len, \
 			    char *vec); }
-79	STD		{ int sys_getgroups(int gidsetsize, \
+79	STD 		{ int sys_getgroups(int gidsetsize, \
 			    gid_t *gidset); }
 80	STD		{ int sys_setgroups(int gidsetsize, \
 			    const gid_t *gidset); }
-81	STD		{ int sys_getpgrp(void); }
-82	STD		{ int sys_setpgid(int pid, int pgid); }
+81	STD 	 	{ int sys_getpgrp(void); }
+82	STD 		{ int sys_setpgid(int pid, int pgid); }
 83	STD		{ int sys_setitimer(int which, \
 			    const struct itimerval *itv, \
 			    struct itimerval *oitv); }
@@ -218,13 +218,13 @@
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
 95	STD		{ int sys_fsync(int fd); }
-96	STD		{ int sys_setpriority(int which, id_t who, int prio); }
+96	STD 		{ int sys_setpriority(int which, id_t who, int prio); }
 97	COMPAT_30	{ int sys_socket(int domain, int type, int protocol); }
 98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
 99	COMPAT_43	{ int sys_accept(int s, caddr_t name, \
 			    int *anamelen); } oaccept
-100	STD		{ int sys_getpriority(int which, id_t who); }
+100	STD 		{ int sys_getpriority(int which, id_t who); }
 101	COMPAT_43	{ int sys_send(int s, caddr_t buf, int len, \
 			    int flags); } osend
 102	COMPAT_43	{ int sys_recv(int s, caddr_t buf, int len, \
@@ -296,9 +296,9 @@
 145	COMPAT_43	{ int sys_setrlimit(int which, \
 			    const struct orlimit *rlp); } osetrlimit
 146	COMPAT_43	{ int sys_killpg(int pgid, int signum); } okillpg
-147	STD		{ int sys_setsid(void); }
+147	STD	 	{ int sys_setsid(void); }
 148	STD		{ int sys_quotactl(const char *path, int cmd, \
-			    int uid, void *arg); }
+			    int uid, caddr_t arg); }
 149	COMPAT_43	{ int sys_quota(void); } oquota
 150	COMPAT_43	{ int sys_getsockname(int fdec, caddr_t asa, \
 			    int *alen); } ogetsockname
@@ -343,10 +343,10 @@
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64)
-170	COMPAT_10 MPSAFE { int sys_msgsys(int which, int a2, int a3, int a4, \
+170	COMPAT_10	{ int sys_msgsys(int which, int a2, int a3, int a4, \
 			    int a5, int a6); } omsgsys
 #else
-170	EXCL MPSAFE	1.0 msgsys
+170	EXCL		1.0 msgsys
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64)
@@ -374,7 +374,7 @@
 
 ; Syscalls 180-199 are used by/reserved for BSD
 181	STD		{ int sys_setgid(gid_t gid); }
-182	STD		{ int sys_setegid(gid_t egid); }
+182	STD 		{ int sys_setegid(gid_t egid); }
 183	STD		{ int sys_seteuid(uid_t euid); }
 #if defined(LFS) || !defined(_KERNEL)
 184	STD		{ int sys_lfs_bmapv(fsid_t *fsidp, \
@@ -420,7 +420,7 @@
 205	STD		{ int sys_undelete(const char *path); }
 206	STD		{ int sys_futimes(int fd, \
 			    const struct timeval *tptr); }
-207	STD		{ pid_t sys_getpgid(pid_t pid); }
+207	STD 		{ pid_t sys_getpgid(pid_t pid); }
 208	STD		{ int sys_reboot(int opt, char *bootstr); }
 209	STD		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
@@ -465,18 +465,18 @@
 223	EXCL		semconfig
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
-224	COMPAT_14 MPSAFE { int sys_msgctl(int msqid, int cmd, \
+224	COMPAT_14 	{ int sys_msgctl(int msqid, int cmd, \
 			    struct msqid_ds14 *buf); }
-225	STD MPSAFE	{ int sys_msgget(key_t key, int msgflg); }
-226	STD MPSAFE	{ int sys_msgsnd(int msqid, const void *msgp, \
+225	STD 		{ int sys_msgget(key_t key, int msgflg); }
+226	STD 		{ int sys_msgsnd(int msqid, const void *msgp, \
 			    size_t msgsz, int msgflg); }
-227	STD MPSAFE	{ ssize_t sys_msgrcv(int msqid, void *msgp, \
+227	STD		{ ssize_t sys_msgrcv(int msqid, void *msgp, \
 			    size_t msgsz, long msgtyp, int msgflg); }
 #else
-224	EXCL MPSAFE	compat_14_msgctl
-225	EXCL MPSAFE	msgget
-226	EXCL MPSAFE	msgsnd
-227	EXCL MPSAFE	msgrcv
+224	EXCL 		compat_14_msgctl
+225	EXCL 		msgget
+226	EXCL 		msgsnd
+227	EXCL 		msgrcv
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
 228	STD		{ void *sys_shmat(int shmid, const void *shmaddr, \
@@ -509,12 +509,12 @@
 ;
 ; Syscalls 240-269 are reserved for other IEEE Std1003.1b syscalls
 ;
-240	STD		{ int sys_nanosleep(const struct timespec *rqtp, \
+240	STD 		{ int sys_nanosleep(const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
 241	STD		{ int sys_fdatasync(int fd); }
 242	STD		{ int sys_mlockall(int flags); }
 243	STD		{ int sys_munlockall(void); }
-244	STD		{ int sys___sigtimedwait(const sigset_t *set, \
+244	STD 		{ int sys___sigtimedwait(const sigset_t *set, \
 			    siginfo_t *info, \
 			    struct timespec *timeout); }
 245	UNIMPL		sys_sigqueue
@@ -575,7 +575,7 @@
 278	COMPAT_30	{ int sys___stat13(const char *path, struct stat13 *ub); }
 279	COMPAT_30	{ int sys___fstat13(int fd, struct stat13 *sb); }
 280	COMPAT_30	{ int sys___lstat13(const char *path, struct stat13 *ub); }
-281	STD		{ int sys___sigaltstack14( \
+281	STD 		{ int sys___sigaltstack14( \
 			    const struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
 282	STD		{ int sys___vfork14(void); }
@@ -603,10 +603,10 @@
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa); }
 292	STD		{ int sys___sigpending14(sigset_t *set); }
-293	STD		{ int sys___sigprocmask14(int how, \
+293	STD 		{ int sys___sigprocmask14(int how, \
 			    const sigset_t *set, \
 			    sigset_t *oset); }
-294	STD		{ int sys___sigsuspend14(const sigset_t *set); }
+294	STD 		{ int sys___sigsuspend14(const sigset_t *set); }
 295	COMPAT_16	{ int sys___sigreturn14(struct sigcontext *sigcntxp); }
 296	STD		{ int sys___getcwd(char *bufp, size_t length); }
 297	STD		{ int sys_fchroot(int fd); }
@@ -622,10 +622,10 @@
 301	EXCL		____semctl13
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
-302	STD MPSAFE	{ int sys___msgctl13(int msqid, int cmd, \
+302	STD 		{ int sys___msgctl13(int msqid, int cmd, \
 			    struct msqid_ds *buf); }
 #else
-302	EXCL MPSAFE	__msgctl13
+302	EXCL		__msgctl13
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
 303	STD		{ int sys___shmctl13(int shmid, int cmd, \
@@ -650,12 +650,14 @@
 315	STD		{ int sys__lwp_wakeup(lwpid_t target); }
 316	STD MPSAFE	{ void *sys__lwp_getprivate(void); }
 317	STD MPSAFE	{ void sys__lwp_setprivate(void *ptr); }
-318	STD		{ void sys__lwp_kill(lwpid_t target, int signo); }
-; Syscalls 319-329 reserved for remaining Solaris-compatible LWP calls.
-319	UNIMPL
-320	UNIMPL
-321	UNIMPL
-322	UNIMPL
+318	STD		{ int sys__lwp_kill(lwpid_t target, int signo); }
+319	STD		{ int sys__lwp_detach(lwpid_t target); }
+320	STD		{ int sys__lwp_park(const struct timespec *ts, \
+				struct __ucontext *ucp); }
+321	STD 		{ int sys__lwp_unpark(lwpid_t target); }
+322	STD 		{ int sys__lwp_unpark_all(const lwpid_t *targets, \
+				size_t ntargets); }
+; Syscalls 323-329 reserved for remaining Solaris-compatible LWP calls.
 323	UNIMPL
 324	UNIMPL
 325	UNIMPL
@@ -679,7 +681,7 @@
 337	UNIMPL
 338	UNIMPL
 339	UNIMPL
-340	STD		{ int sys___sigaction_sigtramp(int signum, \
+340	STD 		{ int sys___sigaction_sigtramp(int signum, \
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa, \
 			    const void *tramp, int vers); }
@@ -698,7 +700,7 @@
 347	UNIMPL		sys_sched_getparam
 348	UNIMPL		sys_sched_setscheduler
 349	UNIMPL		sys_sched_getscheduler
-350	UNIMPL		sys_sched_yield
+350	STD		{ int sys_sched_yield(void); }
 351	UNIMPL		sys_sched_get_priority_max
 352	UNIMPL		sys_sched_get_priority_min
 353	UNIMPL		sys_sched_rr_get_interval

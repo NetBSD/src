@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.9 2006/06/03 23:58:48 simonb Exp $	*/
+/*	$NetBSD: lock.h,v 1.9.6.1 2006/12/29 20:27:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -145,4 +145,43 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lp)
 		"# -- END __cpu_simple_unlock	\n"
 		: "=m" (*lp));
 }
+
+#ifdef MIPS1
+static __inline void
+mb_read(void)
+{
+	__insn_barrier();
+}
+
+static __inline void
+mb_write(void)
+{
+	__insn_barrier();
+}
+
+static __inline void
+mb_memory(void)
+{
+	__insn_barrier();
+}
+#else	/* MIPS1*/
+static __inline void
+mb_read(void)
+{
+	___asm volatile("sync" ::: "memory");
+}
+
+static __inline void
+mb_write(void)
+{
+	___asm volatile("sync" ::: "memory");
+}
+
+static __inline void
+mb_memory(void)
+{
+	___asm volatile("sync" ::: "memory");
+}
+#endif	/* MIPS1 */
+
 #endif /* _MIPS_LOCK_H_ */

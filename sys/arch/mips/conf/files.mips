@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.54 2006/03/25 00:08:11 tsutsui Exp $
+#	$NetBSD: files.mips,v 1.54.8.1 2006/12/29 20:27:42 ad Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
@@ -23,6 +23,7 @@ file	arch/mips/mips/mips32_subr.S		mips32
 file	arch/mips/mips/mips64_subr.S		mips64
 file	arch/mips/mips/sigcode.S
 file	arch/mips/mips/copy.S
+file	arch/mips/mips/lock_stubs.S
 
 file	arch/mips/mips/db_disasm.c		ddb
 file	arch/mips/mips/db_interface.c		ddb | kgdb

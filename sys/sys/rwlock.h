@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.36.3 2006/11/17 16:34:40 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.36.4 2006/12/29 20:27:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -59,7 +59,26 @@
  *		+-------------------------------------------------------+
  *		| owner or read count | unused | wrlock | wrwant | wait |
  *		+-------------------------------------------------------+
- *		
+ *
+ *	RW_RECEIVE(rw)
+ *		Receive the lock from the giver (direct-handoff).  This
+ *		is the place to do a load fence.
+ *
+ *	RW_GIVE(rw)
+ *		This is the place to do a load/store fence before the
+ *		lock is released.
+ *
+ *
+ * If an architecture can be considered 'simple' (no interlock required in
+ * the MP case, or no MP) it need only define __HAVE_SIMPLE_RW_LOCKS and
+ * provide the following:
+ *
+ * 	RW_CAS(ptr, old, new)
+ *		Perform an atomic "compare and swap" operation and
+ *		evaluate to true or false according to the success
+ *
+ * Otherwise, the following must be defined:
+ *
  *	RW_ACQUIRE(rw, old, new)
  *		Perform an atomic "compare and swap" operation and
  *		evaluate to true or false according to the success
@@ -71,7 +90,7 @@
  *				return 0;
  *		Must be MP/interrupt atomic.
  *
- *	RW_RELEASE(rw, old, new, actual)
+ *	RW_RELEASE(rw, old, new)
  *		As above, but for releasing the lock.  Must be
  *		MP/interrupt atomic.
  *
@@ -80,28 +99,30 @@
  *		condition becomes false, abort the operation.  Must
  *		be MP/interrupt atomic.
  *
- *	RW_RECEIVE(rw)
- *		Receive the lock from the giver (direct-handoff).
+ *	RW_SETID(rw, id)
+ *		Set the debugging ID for the lock, an integer.  Only
+ *		used in the LOCKDEBUG case.
  *
- *	RW_THREAD
- *		Mask of valid thread/count bits.
+ *	RW_GETID(rw)
+ *		Get the debugging ID for the lock, an integer.  Only
+ *		used in the LOCKDEBUG case.
  *
- * Machine dependent code may optionally provide stubs for the following
- * functions to implement the easy (unlocked / no waiters) cases:
+ * Architectures may optionally provide stubs for the following functions to
+ * implement the easy (unlocked, no waiters) cases.  If these stubs are
+ * provided, __HAVE_RW_STUBS should be defined.
  *
- *	rw_enter(), rw_exit()
- *
- * For each function implemented, define the associated preprocessor
- * macro in the MD rwlock header file.  For example: __HAVE_RW_ENTER_READ.
- * See kern_rwlock.c for the MI stubs, and existing assembly stubs for
- * hints.
+ *	rw_enter()
+ *	rw_exit()
  */
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 
-#include <sys/queue.h>
+#if !defined(_KERNEL)
+#include <sys/types.h>
+#include <sys/inttypes.h>
+#endif
 
 typedef enum krw_t {
 	RW_READER = 0,
@@ -124,30 +145,23 @@ typedef struct krwlock krwlock_t;
 
 #define	RW_READ_COUNT_SHIFT	4
 #define	RW_READ_INCR		(1UL << RW_READ_COUNT_SHIFT)
+#define	RW_THREAD		((uintptr_t)-RW_READ_INCR)
 #define	RW_OWNER(rw)		((rw)->rw_owner & RW_THREAD)
 #define	RW_COUNT(rw)		((rw)->rw_owner & RW_THREAD)
 #define	RW_FLAGS(rw)		((rw)->rw_owner & ~RW_THREAD)
+
+void	rw_vector_enter(krwlock_t *, const krw_t);
+void	rw_vector_exit(krwlock_t *, const krw_t);
 #endif	/* __RWLOCK_PRIVATE */
 
 #include <machine/rwlock.h>
-
-#if defined(__RWLOCK_PRIVATE) && defined(LOCKDEBUG)
-#undef	__HAVE_RW_ENTER
-#undef	__HAVE_RW_EXIT
-#define	__NEED_RW_CALLSITE	1
-#elif !defined(__HAVE_RW_ENTER)
-#define	__NEED_RW_CALLSITE	1
-#endif
 
 #ifdef _KERNEL
 
 void	rw_init(krwlock_t *);
 void	rw_destroy(krwlock_t *);
 
-void	rw_enter(krwlock_t *, krw_t);
-void	rw_exit(krwlock_t *);
-
-int	rw_tryenter(krwlock_t *, krw_t);
+int	rw_tryenter(krwlock_t *, const krw_t);
 int	rw_tryupgrade(krwlock_t *);
 void	rw_downgrade(krwlock_t *);
 
@@ -155,17 +169,10 @@ int	rw_read_held(krwlock_t *);
 int	rw_write_held(krwlock_t *);
 int	rw_lock_held(krwlock_t *);
 
-#ifdef __RWLOCK_PRIVATE
-
-#ifdef __NEED_RW_CALLSITE
-void	rw_vector_enter(krwlock_t *, krw_t, uintptr_t);
-#else
-void	rw_vector_enter(krwlock_t *, krw_t);
-#endif
-void	rw_vector_exit(krwlock_t *, krw_t);
-
-#endif	/* __RWLOCK_PRIVATE */
+void	rw_enter(krwlock_t *, const krw_t);
+void	rw_exit(krwlock_t *);
 
 #endif	/* _KERNEL */
 
 #endif /* _SYS_RWLOCK_H_ */
+

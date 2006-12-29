@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.68.14.4 2006/11/18 21:39:29 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.68.14.5 2006/12/29 20:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68.14.4 2006/11/18 21:39:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68.14.5 2006/12/29 20:27:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,7 +370,6 @@ procfs_rw(v)
 	mutex_enter(&p->p_smutex);
 	l = proc_representative_lwp(p, NULL, 1);
 	lwp_addref(l);
-	lwp_unlock(l);
 	mutex_exit(&p->p_smutex);
 
 	curl = curlwp;
@@ -422,7 +421,8 @@ procfs_rw(v)
 		break;
 
 	case PFSdevices:
-		return (procfs_dodevices(curl, p, pfs, uio));
+		error = procfs_dodevices(curl, p, pfs, uio);
+		break;
 
 	case PFScpuinfo:
 		error = procfs_docpuinfo(curl, p, pfs, uio);
@@ -441,7 +441,8 @@ procfs_rw(v)
 		break;
 
 	case PFSemul:
-		return procfs_doemul(curl, p, pfs, uio);
+		error = procfs_doemul(curl, p, pfs, uio);
+		break;
 
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES

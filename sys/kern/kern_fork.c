@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.126.4.4 2006/11/17 16:34:36 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.126.4.5 2006/12/29 20:27:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.126.4.4 2006/11/17 16:34:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.126.4.5 2006/12/29 20:27:43 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -318,10 +318,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	}
 
 	mutex_init(&p2->p_smutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&p2->p_stmutex, MUTEX_SPIN, IPL_STATCLOCK);
 	mutex_init(&p2->p_rasmutex, MUTEX_SPIN, IPL_NONE);
 	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&p2->p_refcv, "drainref");
 	cv_init(&p2->p_waitcv, "wait");
+	cv_init(&p2->p_lwpcv, "lwpwait");
 
 	p2->p_refcnt = 1;
 
@@ -381,9 +383,11 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * If not inherited, these were zeroed above.
 	 */
 	if (p1->p_traceflag & KTRFAC_INHERIT) {
+		mutex_enter(&ktrace_mutex);
 		p2->p_traceflag = p1->p_traceflag;
 		if ((p2->p_tracep = p1->p_tracep) != NULL)
 			ktradref(p2);
+		mutex_exit(&ktrace_mutex);
 	}
 #endif
 
@@ -392,10 +396,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	mutex_enter(&p1->p_smutex);
 	p2->p_sigacts = sigactsinit(p1, flags & FORK_SHARESIGS);
-	p2->p_sflag |= (p1->p_sflag &
-	    (PS_PROFIL | PS_STOPFORK | PS_STOPEXEC | PS_NOCLDSTOP));
+	p2->p_sflag |=
+	    (p1->p_sflag & (PS_STOPFORK | PS_STOPEXEC | PS_NOCLDSTOP));
 	scheduler_fork_hook(p1, p2);
 	mutex_exit(&p1->p_smutex);
+
+	p2->p_stflag = p1->p_stflag;
 
 	/*
 	 * p_stats.
@@ -497,26 +503,36 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	mutex_enter(&p2->p_smutex);
 
 	getmicrotime(&p2->p_stats->p_start);
-	if (p2->p_sflag & PS_PROFIL)
+	if (p2->p_stflag & PST_PROFIL)
 		startprofclock(p2);
 	p2->p_acflag = AFORK;
 	if (p2->p_sflag & PS_STOPFORK) {
 		lwp_lock(l2);
+		mutex_enter(&proclist_mutex);
 		p2->p_nrlwps = 0;
 		p2->p_stat = SSTOP;
-		mutex_enter(&proc_stop_mutex);
+		p2->p_waited = 0;
 		p1->p_nstopchild++;
-		mutex_exit(&proc_stop_mutex);
+		mutex_exit(&proclist_mutex);
 		l2->l_stat = LSSTOP;
 		lwp_unlock(l2);
 	} else {
+
 		p2->p_nrlwps = 1;
 		p2->p_stat = SACTIVE;
-		lwp_lock(l2);
-		lwp_relock(l2, &sched_mutex);
 		l2->l_stat = LSRUN;
+		lwp_lock(l2);
 		setrunqueue(l2);
 		lwp_unlock(l2);
+	}
+
+	/*
+	 * Start profiling.
+	 */
+	if ((p2->p_stflag & PST_PROFIL) != 0) {
+		mutex_enter(&p2->p_stmutex);
+		startprofclock(p2);
+		mutex_exit(&p2->p_stmutex);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.15.4.2 2006/11/18 21:39:23 ad Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.15.4.3 2006/12/29 20:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.15.4.2 2006/11/18 21:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.15.4.3 2006/12/29 20:27:44 ad Exp $");
 
 #include "opt_posix.h"
 
@@ -106,6 +106,7 @@ struct ksem {
 	LIST_ENTRY(ksem) ks_entry;	/* global list entry */
 	LIST_ENTRY(ksem) ks_hash;	/* hash list entry */
 	kmutex_t ks_interlock;		/* lock on this ksem */
+	kcondvar_t ks_cv;		/* condition variable */
 	char *ks_name;			/* if named, this is the name */
 	unsigned int ks_ref;		/* number of references */
 	mode_t ks_mode;			/* protection bits */
@@ -157,6 +158,8 @@ ksem_free(struct ksem *ks)
 	 */
 	if (ks->ks_name == NULL) {
 		mutex_exit(&ks->ks_interlock);
+		mutex_destroy(&ks->ks_interlock);
+		cv_destroy(&ks->ks_cv);
 
 		mutex_enter(&ksem_mutex);
 		nsems--;
@@ -220,6 +223,7 @@ ksem_proc_dtor(void *arg)
 	}
 
 	rw_exit(&kp->kp_lock);
+	rw_destroy(&kp->kp_lock);
 	free(kp, M_SEM);
 }
 
@@ -340,6 +344,7 @@ ksem_create(struct lwp *l, const char *name, struct ksem **ksret,
 	ret->ks_uid = kauth_cred_geteuid(uc);
 	ret->ks_gid = kauth_cred_getegid(uc);
 	mutex_init(&ret->ks_interlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&ret->ks_cv, "psem");
 
 	mutex_enter(&ksem_mutex);
 	if (nsems >= SEM_MAX) {
@@ -642,7 +647,7 @@ sys__ksem_post(struct lwp *l, void *v, register_t *retval)
 	}
 	++ks->ks_value;
 	if (ks->ks_waiters)
-		wakeup(ks);
+		cv_broadcast(&ks->ks_cv);
 	error = 0;
  out:
 	mutex_exit(&ks->ks_interlock);
@@ -670,8 +675,10 @@ ksem_wait(struct lwp *l, semid_t id, int tryflag)
 	ksem_addref(ks);
 	while (ks->ks_value == 0) {
 		ks->ks_waiters++;
-		error = tryflag ? EAGAIN : mtsleep(ks, PCATCH, "psem", 0,
-		    &ks->ks_interlock);
+		if (tryflag)
+			error = EAGAIN;
+		else
+			error = cv_wait_sig(&ks->ks_cv, &ks->ks_interlock);
 		ks->ks_waiters--;
 		if (error)
 			goto out;

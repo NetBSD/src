@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.5 2006/11/18 21:39:22 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.6 2006/12/29 20:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.5 2006/11/18 21:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.6 2006/12/29 20:27:44 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -109,13 +109,12 @@ int	sigunwait(struct proc *, const ksiginfo_t *);
 void	sigclear(sigpend_t *, sigset_t *);
 void	sigclearall(struct proc *, sigset_t *);
 void	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
-int	sigpost(struct lwp *, sig_t *, int prop, ksiginfo_t **, int);
+int	sigpost(struct lwp *, sig_t, int prop, ksiginfo_t *, int);
 int	sigchecktrace(void);
 void	sigswitch(int, int);
 void	sigrealloc(ksiginfo_t *);
 
 sigset_t	contsigmask, stopsigmask, sigcantmask;
-
 struct pool	sigacts_pool;	/* memory pool for sigacts structures */
 static void	sigacts_poolpage_free(struct pool *, void *);
 static void	*sigacts_poolpage_alloc(struct pool *, int);
@@ -128,7 +127,7 @@ static struct pool_allocator sigactspool_allocator = {
 #ifdef DEBUG
 int	kern_logsigexit = 1;
 #else
-int	kern_logsigexit = 1;
+int	kern_logsigexit = 0;
 #endif
 
 static	const char logcoredump[] =
@@ -317,14 +316,13 @@ siginit(struct proc *p)
 	 */
 	l = LIST_FIRST(&p->p_lwps);
 	l->l_sigwaited = NULL;
-	l->l_sigpend = &l->l_sigstore.ss_pend;
 	l->l_sigmask = &l->l_sigstore.ss_mask;
 	l->l_sigstk = &l->l_sigstore.ss_stk;
 	l->l_sigstk->ss_flags = SS_DISABLE;
 	l->l_sigstk->ss_size = 0;
 	l->l_sigstk->ss_sp = 0;
-	CIRCLEQ_INIT(&l->l_sigpend->sp_info);
-	sigemptyset(&l->l_sigpend->sp_set);
+	CIRCLEQ_INIT(&l->l_sigpend.sp_info);
+	sigemptyset(&l->l_sigpend.sp_set);
 
 	/* One reference. */
 	ps->sa_refcnt = 1;
@@ -386,14 +384,13 @@ execsigs(struct proc *p)
 	 */
 	l = LIST_FIRST(&p->p_lwps);
 	l->l_sigwaited = NULL;
-	l->l_sigpend = &l->l_sigstore.ss_pend;
 	l->l_sigmask = &l->l_sigstore.ss_mask;
 	l->l_sigstk = &l->l_sigstore.ss_stk;
 	l->l_sigstk->ss_flags = SS_DISABLE;
 	l->l_sigstk->ss_size = 0;
 	l->l_sigstk->ss_sp = 0;
-	CIRCLEQ_INIT(&l->l_sigpend->sp_info);
-	sigemptyset(&l->l_sigpend->sp_set);
+	CIRCLEQ_INIT(&l->l_sigpend.sp_info);
+	sigemptyset(&l->l_sigpend.sp_set);
 
 	mutex_exit(&p->p_smutex);
 }
@@ -402,6 +399,8 @@ execsigs(struct proc *p)
  * ksiginfo_exithook:
  *
  *	Free all pending ksiginfo entries from a process on exit.
+ *	Additionally, drain any unused ksiginfo structures in the
+ *	system back to the pool.
  */
 static void
 ksiginfo_exithook(struct proc *p, void *v)
@@ -425,13 +424,12 @@ ksiginfo_t *
 ksiginfo_alloc(struct proc *p, ksiginfo_t *ok, int flags)
 {
 	ksiginfo_t *kp;
-	int f;
 
 	if (ok != NULL) {
-		f = ok->ksi_flags;
-		if ((f & (KSI_QUEUED | KSI_FROMPOOL)) == KSI_FROMPOOL)
+		if ((ok->ksi_flags & (KSI_QUEUED | KSI_FROMPOOL)) ==
+		    KSI_FROMPOOL)
 		    	return ok;
-		if ((f & KSI_EMPTY) != 0)
+		if (KSI_EMPTY_P(ok))
 			return ok;
 	}
 
@@ -439,7 +437,7 @@ ksiginfo_alloc(struct proc *p, ksiginfo_t *ok, int flags)
 	if (kp == NULL) {
 #ifdef DIAGNOSTIC
 		printf("Out of memory allocating ksiginfo for pid %d\n",
-		   p->p_pid);
+		    p->p_pid);
 #endif
 		return NULL;
 	}
@@ -465,8 +463,9 @@ void
 ksiginfo_free(ksiginfo_t *kp)
 {
 
-	if ((kp->ksi_flags & (KSI_QUEUED | KSI_FROMPOOL)) == KSI_FROMPOOL)
-		pool_put(&ksiginfo_pool, kp);
+	if ((kp->ksi_flags & (KSI_QUEUED | KSI_FROMPOOL)) != KSI_FROMPOOL)
+		return;
+	pool_put(&ksiginfo_pool, kp);
 }
 
 /*
@@ -481,6 +480,16 @@ sigget(sigpend_t *sp, ksiginfo_t *out, int signo, sigset_t *mask)
 {
         ksiginfo_t *ksi;
 	sigset_t tset;
+
+	/* If there's no pending set, the signal is from the debugger. */
+	if (sp == NULL) {
+		if (out != NULL) {
+			KSI_INIT(out);
+			out->ksi_info._signo = signo;
+			out->ksi_info._code = SI_USER;
+		}
+		return signo;
+	}
 
 	/* Construct mask from signo, and 'mask'. */
 	if (signo == 0) {
@@ -502,13 +511,14 @@ sigget(sigpend_t *sp, ksiginfo_t *out, int signo, sigset_t *mask)
 	CIRCLEQ_FOREACH(ksi, &sp->sp_info, ksi_list) {
 		if (ksi->ksi_signo == signo) {
 			CIRCLEQ_REMOVE(&sp->sp_info, ksi, ksi_list);
+			KASSERT((ksi->ksi_flags & KSI_FROMPOOL) != 0);
+			KASSERT((ksi->ksi_flags & KSI_QUEUED) != 0);
+			ksi->ksi_flags &= ~KSI_QUEUED;
 			if (out != NULL) {
 				memcpy(out, ksi, sizeof(*out));
 				out->ksi_flags &= ~(KSI_FROMPOOL | KSI_QUEUED);
 			}
-			KASSERT((ksi->ksi_flags & KSI_FROMPOOL) != 0);
-			KASSERT((ksi->ksi_flags & KSI_QUEUED) != 0);
-			pool_put(&ksiginfo_pool, ksi);
+			ksiginfo_free(ksi);
 			return signo;
 		}
 	}
@@ -544,8 +554,7 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
 	 * If siginfo is not required, or there is none, then just mark the
 	 * signal as pending.
 	 */
-	if (((sa->sa_flags & SA_SIGINFO) == 0 && ksi->ksi_lid == 0) ||
-	    KSI_EMPTY_P(ksi))
+	if ((sa->sa_flags & SA_SIGINFO) == 0 || KSI_EMPTY_P(ksi))
 		return;
 
 	KASSERT((ksi->ksi_flags & KSI_FROMPOOL) != 0);
@@ -577,16 +586,19 @@ sigclear(sigpend_t *sp, sigset_t *mask)
 {
 	ksiginfo_t *ksi, *next;
 
-	sigminusset(mask, &sp->sp_set);
+	if (mask == NULL)
+		sigemptyset(&sp->sp_set);
+	else
+		sigminusset(mask, &sp->sp_set);
 
 	ksi = CIRCLEQ_FIRST(&sp->sp_info);
 	for (; ksi != (void *)&sp->sp_info; ksi = next) {
 		next = CIRCLEQ_NEXT(ksi, ksi_list);
-		if (sigismember(mask, ksi->ksi_signo)) {
+		if (mask == NULL || sigismember(mask, ksi->ksi_signo)) {
 			CIRCLEQ_REMOVE(&sp->sp_info, ksi, ksi_list);
 			KASSERT((ksi->ksi_flags & KSI_FROMPOOL) != 0);
 			KASSERT((ksi->ksi_flags & KSI_QUEUED) != 0);
-			pool_put(&ksiginfo_pool, ksi);
+			ksiginfo_free(ksi);
 		}
 	}
 }
@@ -601,85 +613,44 @@ void
 sigclearall(struct proc *p, sigset_t *mask)
 {
 	struct lwp *l;
-	sigset_t tset;
 
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-
-	if (mask == NULL) {
-		sigfillset(&tset);
-		mask = &tset;
-	}
 
 	sigclear(&p->p_sigpend, mask);
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		sigclear(l->l_sigpend, mask);
-	}
-}
-
-/*
- * sigpinch:
- *
- *	Pull non-LWP-private pending signals off a first set according to a
- *	mask, and add them to a second.
- */ 
-void
-sigpinch(sigpend_t *sp, sigpend_t *to, sigset_t *mask)
-{
-        ksiginfo_t *ksi, *next;
-	int signo, global;
-	sigset_t tset;
-
-	tset = *mask;
-	__sigandset(&sp->sp_set, &tset);
-
-	while ((signo = firstsig(&tset)) != 0) {
-		/*
-		 * If the KSI is LWP private, then bin it.  Remember
-		 * whether or not we found a process wide signal.
-		 */
-		global = 0;
-
-		ksi = CIRCLEQ_FIRST(&sp->sp_info);
-		for (; ksi != (void *)&sp->sp_info; ksi = next) {
-			next = CIRCLEQ_NEXT(ksi, ksi_list);
-			if (ksi->ksi_signo != signo)
-				continue;
-			CIRCLEQ_REMOVE(&sp->sp_info, ksi, ksi_list);
-			if (ksi->ksi_lid != 0)
-				pool_put(&ksiginfo_pool, ksi);
-			else {
-				global = 1;
-				CIRCLEQ_INSERT_TAIL(&to->sp_info, ksi,
-				    ksi_list);
-			}
-		}
-
-		sigdelset(&sp->sp_set, signo);
-		if (global)
-			sigaddset(&to->sp_set, signo);
+		sigclear(&l->l_sigpend, mask);
 	}
 }
 
 /*
  * sigispending:
  *
- *	Return true if there are pending signals for the current LWP.
+ *	Return true if there are pending signals for the current LWP.  May
+ *	be called unlocked provided that L_PENDSIG is set, and that the
+ *	signal has been posted to the appopriate queue before L_PENDSIG is
+ *	set.
  */ 
 int
-sigispending(struct lwp *l)
+sigispending(struct lwp *l, int signo)
 {
-	int signo;
+	struct proc *p = l->l_proc;
+	sigset_t tset;
 
-	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
+	mb_read();
 
-	if ((signo = firstsig(&l->l_sigpend->sp_set)) != 0 &&
-	    !sigismember(l->l_sigmask, signo)) {
-	    	lwp_lock(l);
-		signotify(l);	/* paranoia */
-		lwp_unlock(l);
-		return ERESTART;
-	}
+	tset = l->l_sigpend.sp_set;
+	sigplusset(&p->p_sigpend.sp_set, &tset);
+	sigminusset(&p->p_sigctx.ps_sigignore, &tset);
+	sigminusset(l->l_sigmask, &tset);
+
+	if (signo == 0) {
+		if (firstsig(&tset) != 0)
+			return EINTR;
+		if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0)
+			return EINTR;
+	} else if (sigismember(&tset, signo))
+		return EINTR;
 
 	return 0;
 }
@@ -712,12 +683,12 @@ void
 getucontext(struct lwp *l, ucontext_t *ucp)
 {
 
-	/* XXXAD check locking */
+	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
 
 	ucp->uc_flags = 0;
 	ucp->uc_link = l->l_ctxlink;
 
-	(void)sigprocmask1(l, 0, NULL, &ucp->uc_sigmask);
+	ucp->uc_sigmask = *l->l_sigmask;
 	ucp->uc_flags |= _UC_SIGMASK;
 
 	/*
@@ -737,24 +708,31 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 	}
 	ucp->uc_flags |= _UC_STACK;
 
+	lwp_lock(l);
 	cpu_getmcontext(l, &ucp->uc_mcontext, &ucp->uc_flags);
+	lwp_unlock(l);
 }
 
 int
 setucontext(struct lwp *l, const ucontext_t *ucp)
 {
-	struct proc	*p;
 	int		error;
 
-	/* XXXAD check locking */
+	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
 
-	p = l->l_proc;
-	if ((error = cpu_setmcontext(l, &ucp->uc_mcontext, ucp->uc_flags)) != 0)
+	if ((ucp->uc_flags & _UC_SIGMASK) != 0) {
+		error = sigprocmask1(l, SIG_SETMASK, &ucp->uc_sigmask, NULL);
+		if (error != 0)
+			return error;
+	}
+
+	lwp_lock(l);
+	error = cpu_setmcontext(l, &ucp->uc_mcontext, ucp->uc_flags);
+	lwp_unlock(l);
+	if (error != 0)
 		return (error);
-	l->l_ctxlink = ucp->uc_link;
 
-	if ((ucp->uc_flags & _UC_SIGMASK) != 0)
-		sigprocmask1(l, SIG_SETMASK, &ucp->uc_sigmask, NULL);
+	l->l_ctxlink = ucp->uc_link;
 
 	/*
 	 * If there was stack information, update whether or not we are
@@ -801,9 +779,11 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 			    (void *)(uintptr_t)signo, NULL, NULL) == 0) {
 				nfound++;
 				if (signo) {
+					mutex_enter(&proclist_mutex);
 					mutex_enter(&p->p_smutex);
 					kpsignal2(p, ksi);
 					mutex_exit(&p->p_smutex);
+					mutex_exit(&proclist_mutex);
 				}
 			}
 			mutex_exit(&p->p_mutex);
@@ -827,10 +807,12 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 			    p, (void *)(uintptr_t)signo, NULL, NULL) == 0) {
 				nfound++;
 				if (signo) {
+					mutex_enter(&proclist_mutex);
 					mutex_enter(&p->p_smutex);
 					if (P_ZOMBIE(p) == 0)
 						kpsignal2(p, ksi);
 					mutex_exit(&p->p_smutex);
+					mutex_exit(&proclist_mutex);
 				}
 			}
 			mutex_exit(&p->p_mutex);
@@ -850,6 +832,8 @@ pgsignal(struct pgrp *pgrp, int sig, int checkctty)
 {
 	ksiginfo_t ksi;
 
+	LOCK_ASSERT(mutex_owned(&proclist_mutex));
+
 	KSI_INIT_EMPTY(&ksi);
 	ksi.ksi_signo = sig;
 	kpgsignal(pgrp, &ksi, NULL, checkctty);
@@ -860,8 +844,7 @@ kpgsignal(struct pgrp *pgrp, ksiginfo_t *ksi, void *data, int checkctty)
 {
 	struct proc *p;
 
-	LOCK_ASSERT(mutex_owned(&proclist_mutex) ||
-	    rw_lock_held(&proclist_lock));
+	LOCK_ASSERT(mutex_owned(&proclist_mutex));
 
 	if (pgrp)
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist)
@@ -885,11 +868,13 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	ksi->ksi_lid = l->l_lid;
 	p = l->l_proc;
 
-	mutex_enter(&p->p_smutex);	
+	mutex_enter(&proclist_mutex);
+	mutex_enter(&p->p_smutex);
 	ps = p->p_sigacts;
 	if ((p->p_slflag & PSL_TRACED) == 0 &&
 	    sigismember(&p->p_sigctx.ps_sigcatch, signo) &&
 	    !sigismember(l->l_sigmask, signo)) {
+		mutex_exit(&proclist_mutex);
 		p->p_stats->p_ru.ru_nsignals++;
 		kpsendsig(l, ksi, l->l_sigmask);
 		mutex_exit(&p->p_smutex);
@@ -904,7 +889,7 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 		p->p_sigctx.ps_signo = ksi->ksi_signo;
 		p->p_sigctx.ps_code = ksi->ksi_trap;
 		kpsignal2(p, ksi);
-
+		mutex_exit(&proclist_mutex);
 		mutex_exit(&p->p_smutex);
 	}
 }
@@ -919,18 +904,17 @@ child_psignal(struct proc *p, int mask)
 	struct proc *q;
 	int xstat;
 
+	LOCK_ASSERT(mutex_owned(&proclist_mutex));
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-	LOCK_ASSERT(mutex_owned(&proclist_mutex) ||
-	    rw_lock_held(&proclist_lock));
 
 	xstat = p->p_xstat;
 
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = SIGCHLD;
-	ksi.ksi_code = xstat == SIGCONT ? CLD_CONTINUED : CLD_STOPPED;
+	ksi.ksi_code = (xstat == SIGCONT ? CLD_CONTINUED : CLD_STOPPED);
 	ksi.ksi_pid = p->p_pid;
 	ksi.ksi_uid = kauth_cred_geteuid(p->p_cred);
-	ksi.ksi_status = p->p_xstat;
+	ksi.ksi_status = xstat;
 	ksi.ksi_utime = p->p_stats->p_ru.ru_utime.tv_sec;
 	ksi.ksi_stime = p->p_stats->p_ru.ru_stime.tv_sec;
 
@@ -938,13 +922,6 @@ child_psignal(struct proc *p, int mask)
 
 	mutex_exit(&p->p_smutex);
 	mutex_enter(&q->p_smutex);
-
-	if (xstat == SIGCONT) {
-		mutex_enter(&proc_stop_mutex);
-		q->p_nstopchild++;
-		mutex_exit(&proc_stop_mutex);
-		cv_broadcast(&q->p_waitcv);
-	}
 
 	if ((q->p_sflag & mask) == 0)
 		kpsignal2(q, &ksi);
@@ -958,6 +935,8 @@ psignal(struct proc *p, int signo)
 {
 	ksiginfo_t ksi;
 
+	LOCK_ASSERT(mutex_owned(&proclist_mutex));
+
 	KSI_INIT_EMPTY(&ksi);
 	ksi.ksi_signo = signo;
 	mutex_enter(&p->p_smutex);
@@ -968,6 +947,8 @@ psignal(struct proc *p, int signo)
 void
 kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
 {
+
+	LOCK_ASSERT(mutex_owned(&proclist_mutex));
 
 	/* XXXSMP Why is this here? */
 	if ((p->p_sflag & PS_WEXIT) == 0 && data) {
@@ -1006,28 +987,32 @@ sigismasked(struct lwp *l, int sig)
 /*
  * sigpost:
  *
- *	 Post a pending signal to an LWP.
- *
- *	 Returns non-zero if the LWP was able to take the signal.  Must be
- *	 called with the LWP locked, and will release the lock on return.
+ *	 Post a pending signal to an LWP.  Returns non-zero if the LWP was
+ *	 able to take the signal.
  */
 int
-sigpost(struct lwp *l, sig_t *actionp, int prop, ksiginfo_t **ksi,
+sigpost(struct lwp *l, sig_t action, int prop, ksiginfo_t *ksi,
 	int idlecheck)
 {
-	struct proc *p = l->l_proc;
-	ksiginfo_t *kp;
-	sig_t action;
+	int tolwp, rv, masked;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
 
-	kp = ksiginfo_alloc(p, *ksi, PR_NOWAIT);
-	if (kp == NULL)
-		return 1;
-	*ksi = kp;
+	/*
+	 * If the LWP is on the way out, sigclear() will be busy draining all
+	 * pending signals.  Don't give it more.
+	 */
+	if (l->l_refcnt == 0)
+		return 0;
 
+	tolwp = (ksi->ksi_lid != 0);
 	lwp_lock(l);
-	action = *actionp;
+
+	/*
+	 * Have the LWP check for signals.  This ensures that even if no LWP
+	 * is found to take the signal immediately, it should be taken soon.
+	 */
+	l->l_flag |= L_PENDSIG;
 
 	/*
 	 * When sending signals to SA processes, we first try to find an
@@ -1039,127 +1024,12 @@ sigpost(struct lwp *l, sig_t *actionp, int prop, ksiginfo_t **ksi,
 	}
 
 	/*
-	 * If we have no hope of taking the signal, then just bin it.
-	 * If it's LWP private, then pretend that all is well.
+	 * SIGCONT can be masked, but must always restart stopped LWPs.
 	 */
-	if (l->l_stat == LSZOMB || l->l_stat == LSDEAD || l->l_stat == LSIDL) {
-	    	lwp_unlock(l);
-	    	return kp->ksi_lid != 0;
-	}
-
-	/*
-	 * If stopping or starting, clear any pending signals that would do
-	 * the inverse (job control signals go to all LWPs).
-	 */
-	if (prop & SA_CONT)
-		sigclear(l->l_sigpend, &stopsigmask);
-	if (prop & SA_STOP)
-		sigclear(l->l_sigpend, &contsigmask);
-
-	/*
-	 * Special case for signals that can't be masked.  If sending a STOP
-	 * or KILL, the LWP must take the signal (job control, and kill
-	 * signals go to all LWPs).
-	 */
-	if (prop & SA_CANTMASK) {
-		if (prop & SA_KILL) {
-			sigput(l->l_sigpend, p, kp);
-			signotify(l);
-
-			switch (l->l_stat) {
-			case LSSUSPENDED:
-				/* lwp_continue() will release the lock. */
-				lwp_continue(l);
-				return 1;
-			case LSSLEEP:
-				if ((l->l_flag & L_SINTR) == 0)
-					break;
-				/* FALLTHROUGH */
-			case LSSTOP:
-				/* setrunnable() will release the lock. */
-				setrunnable(l);
-				return 1;
-			case LSRUN:
-			case LSONPROC:
-				break;
-			default:
-				panic("sigpost: can't take unmaskable sig");
-				break;
-			}
-
-			lwp_unlock(l);
-			return 1;
-		}
-
-		KASSERT(prop & SA_STOP);
-
-		/*
-		 * If the LWP is already stopped, there's no sense in trying
-		 * to stop it again.  Otherwise post the signal and have it
-		 * stop itself.
-		 */
-		if (l->l_stat != LSSTOP) {
-			sigput(l->l_sigpend, p, kp);
-			signotify(l);
-		}
-
-		lwp_unlock(l);
-		return 1;
-	}
-
-	if (sigismember(l->l_sigmask, kp->ksi_signo))
-		action = SIG_HOLD;
-
-	if (l->l_stat == LSSTOP) {
-		/*
-		 * If the LWP is stopped and we are sending a continue
-		 * signal, then start it again.  If the signal is held, add
-		 * it to the pending set.  If the process wants to catch the
-		 * signal, then notify the LWP to take it when it resumes.
-		 *
-		 * In the SA case, we send continue signals to all VPs in
-		 * the process; only ONE of them may catch the signal.
-		 */
-		if ((prop & SA_CONT) != 0) {
-			if (action == SIG_HOLD || action == SIG_CATCH) {
-				sigput(l->l_sigpend, p, kp);
-				if (action == SIG_CATCH)
-					signotify(l);
-				if (p->p_sa != NULL)
-					*actionp = SIG_DFL;
-			}
-			/* setrunnable will release the lock. */
-			setrunnable(l);
-			return 1;
-		}
-
-		if ((l->l_flag & L_SINTR) != 0) {
-			/*
-			 * If sleeping interruptably, make it run and take
-			 * the signal.  If the process is stopped, and was
-			 * sleeping interruptably, it will run until the
-			 * kernel boundary and notice that it needs to stop
-			 * again.
-			 *
-			 * setrunnable() will release the LWP lock.
-			 */
-			sigput(l->l_sigpend, p, kp);
-			signotify(l);
-			setrunnable(l);
-			return 1;
-		} 
-
-		if (kp->ksi_lid != 0 || (prop & SA_TOALL) != 0) {
-			/*
-			 * The signal is LWP private or must be seen by all
-			 * LWPs, so save it for later.
-			 */
-			sigput(l->l_sigpend, p, kp);
-			signotify(l);
-			lwp_unlock(l);
-			return 1;
-		}
-	
+	masked = sigismember(l->l_sigmask, ksi->ksi_signo);
+	if (ksi->ksi_signo == SIGCONT && l->l_stat == LSSTOP)
+		masked = 0;
+	if (masked) {
 		lwp_unlock(l);
 		return 0;
 	}
@@ -1172,40 +1042,52 @@ sigpost(struct lwp *l, sig_t *actionp, int prop, ksiginfo_t **ksi,
 	 * signal right now.  If it's LWP private or for all LWPs, save it
 	 * for later; otherwise punt.
 	 */
+	rv = 0;
+
 	switch (l->l_stat) {
 	case LSRUN:
-	case LSONPROC:
-	case LSSLEEP:
-		sigput(l->l_sigpend, p, kp);
-		if (action != SIG_HOLD) {
-			signotify(l);
-			if ((l->l_flag & L_SINTR) != 0) {
-				/* setrunnable() will release the lock. */
-				setrunnable(l);
-				return 1;
-			}
-		}
-		lwp_unlock(l);
-		return 1;
+		rv = 1;
+		break;
 
-	case LSSUSPENDED:
-		if (kp->ksi_lid != 0 || (prop & SA_TOALL) != 0) {
-			sigput(l->l_sigpend, p, kp);
-			if (action != SIG_HOLD)
-				signotify(l);
-			lwp_unlock(l);
+	case LSONPROC:
+		lwp_need_userret(l);
+		rv = 1;
+		break;
+
+	case LSSLEEP:
+		if ((l->l_flag & L_SINTR) != 0) {
+			/* setrunnable() will release the lock. */
+			setrunnable(l);
 			return 1;
 		}
-		lwp_unlock(l);
+		break;
+
+	case LSSUSPENDED:
+		if ((prop & SA_KILL) != 0) {
+			/* lwp_continue() will release the lock. */
+			lwp_continue(l);
+			return 1;
+		}
+		break;
+
+	case LSSTOP:
+		/*
+		 * If the LWP is stopped and we are sending a continue
+		 * signal, then start it again.
+		 */
+		if (l->l_wchan == NULL || (l->l_flag & L_SINTR) != 0) {
+			/* setrunnable() will release the lock. */
+			setrunnable(l);
+			return 1;
+		}
 		break;
 
 	default:
-		panic("sigpost: impossible");
 		break;
 	}
 
-	KASSERT(p->p_stat == SACTIVE && p->p_nlwps > 1);
-	return 0;
+	lwp_unlock(l);
+	return rv;
 }
 
 /*
@@ -1214,11 +1096,10 @@ sigpost(struct lwp *l, sig_t *actionp, int prop, ksiginfo_t **ksi,
 void
 signotify(struct lwp *l)
 {
-
 	LOCK_ASSERT(lwp_locked(l, NULL));
+
 	l->l_flag |= L_PENDSIG;
-	lwp_changepri(l, PUSER);
-	cpu_signotify(l);
+	lwp_need_userret(l);
 }
 
 /*
@@ -1240,12 +1121,12 @@ sigunwait(struct proc *p, const ksiginfo_t *ksi)
 		 * Signal came via _lwp_kill().  Find the LWP and see if
 		 * it's interested.
 		 */
-		l = lwp_byid(p, ksi->ksi_lid);
+		l = lwp_find(p, ksi->ksi_lid);
 
 		if (l == NULL)
 			return 0;
 
-		if (l->l_sigwaited == NULL || l->l_stat != LSSLEEP ||
+		if (l->l_sigwaited == NULL ||
 		    !sigismember(l->l_sigwait, signo)) {
 			lwp_unlock(l);
 			return 0;
@@ -1255,19 +1136,15 @@ sigunwait(struct proc *p, const ksiginfo_t *ksi)
 		 * Look for any LWP that may be interested.
 		 */
 		LIST_FOREACH(l, &p->p_sigwaiters, l_sigwaiter) {
-			lwp_lock(l);
 			KASSERT(l->l_sigwaited != NULL);
-			if (l->l_stat == LSSLEEP &&
-			    sigismember(l->l_sigwait, signo))
+			if (sigismember(l->l_sigwait, signo))
 				break;
-			lwp_unlock(l);
 		}
 	}
 
 	if (l != NULL) {
 		l->l_sigwaited->ksi_info = ksi->ksi_info;
 		l->l_sigwaited = NULL;
-		lwp_unlock(l);
 		wakeup_one(&l->l_sigwait);
 		return 1;
 	}
@@ -1291,13 +1168,15 @@ sigunwait(struct proc *p, const ksiginfo_t *ksi)
 void
 kpsignal2(struct proc *p, ksiginfo_t *ksi)
 {
-	int prop, lid, signo = ksi->ksi_signo;
+	int prop, lid, toall, signo = ksi->ksi_signo;
 	struct sadata_vp *vp;
 	struct lwp *l;
 	ksiginfo_t *kp;
 	sig_t action;
 
+	LOCK_ASSERT(mutex_owned(&proclist_mutex));
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+
 	KASSERT((ksi->ksi_flags & KSI_QUEUED) == 0);
 
 	KASSERT(signo > 0 && signo < NSIG);
@@ -1317,18 +1196,32 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	/*
 	 * Some signals including SIGKILL must act on the entire process.
 	 */
+	kp = NULL;
 	prop = sigprop[signo];
+	toall = ((prop & SA_TOALL) != 0);
 
-	if ((prop & SA_TOALL) != 0)
+	if (toall)
 		lid = 0;
 	else
 		lid = ksi->ksi_lid;
 
+	/*
+	 * If proc is traced, always give parent a chance.
+	 *
+	 * XXXLWP What to do about LWP-private signals?
+	 */
 	if (p->p_slflag & PSL_TRACED) {
-		/*
-		 * If proc is traced, always give parent a chance.
-		 */
 		action = SIG_DFL;
+
+		/*
+		 * If the process is being traced and the signal is being
+		 * caught, make sure to save any ksiginfo.
+		 */
+		if (sigismember(&p->p_sigctx.ps_sigcatch, signo) && lid == 0) {
+			if ((kp = ksiginfo_alloc(p, ksi, PR_NOWAIT)) == NULL)
+				return;
+			sigput(&p->p_sigpend, p, kp);
+		}
 	} else {
 		/*
 		 * If the signal was the result of a trap and is not being
@@ -1385,10 +1278,15 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 * the signal info.  The signal won't be processed further here.
 	 */
 	if ((prop & SA_CANTMASK) == 0 && !LIST_EMPTY(&p->p_sigwaiters) &&
-	    p->p_stat == SACTIVE && sigunwait(p, ksi))
+	    p->p_stat == SACTIVE && (p->p_sflag & PS_STOPPING) == 0 &&
+	    sigunwait(p, ksi))
 		return;
 
-	if ((kp = ksiginfo_alloc(p, ksi, PR_NOWAIT)) == NULL)
+	/*
+	 * XXXSMP Should be allocated by the caller, we're holding locks
+	 * here.
+	 */
+	if (kp == NULL && (kp = ksiginfo_alloc(p, ksi, PR_NOWAIT)) == NULL)
 		return;
 
 	/*
@@ -1396,14 +1294,11 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 * the signal to it.
 	 */
 	if (lid != 0) {
-		l = lwp_byid(p, lid);
+		l = lwp_find(p, lid);
 		if (l != NULL) {
-			lwp_unlock(l);
-			if (!sigpost(l, &action, prop, &kp, 0)) {
-#ifdef DIAGNOSTIC
-				panic("kpsignal2: did not take private sig");
-#endif
-			}
+			sigput(&l->l_sigpend, p, kp);
+			mb_write();
+			(void)sigpost(l, action, prop, kp, 0);
 		}
 		goto out;
 	}
@@ -1411,40 +1306,52 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	/*
 	 * Some signals go to all LWPs, even for SA processes.
 	 */
-	if (p->p_stat == SACTIVE && (prop & SA_TOALL) != 0) {
+	if (p->p_stat == SACTIVE && (p->p_sflag & PS_STOPPING) == 0) {
+		if (p->p_slflag & PSL_TRACED)
+			goto deliver;
+
 		/*
-		 * If a child holding parent blocked, stopping could
-		 * cause deadlock: discard the signal.
+		 * If SIGCONT is default (or ignored) and process is
+		 * asleep, we are finished; the process should not
+		 * be awakened.
 		 */
-		if ((p->p_sflag & PS_PPWAIT) != 0)
+		if ((prop & SA_CONT) != 0 && action == SIG_DFL)
 			goto out;
 
-		if ((prop & SA_STOP) != 0) {
+		if ((prop & SA_STOP) != 0 && action == SIG_DFL) {
 			/*
-			 * If already stopped, no further action is required.
+			 * If a child holding parent blocked, stopping could
+			 * cause deadlock: discard the signal.
 			 */
-			if (p->p_stat == SSTOP)
+			if ((p->p_sflag & PS_PPWAIT) != 0)
 				goto out;
-			p->p_stat = SSTOP;
-		}
 
-		if (p->p_sa != NULL) {
-			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-				l = vp->savp_lwp;
-				(void)sigpost(l, &action, prop, &kp, 0);
+			p->p_xstat = signo;
+
+			/*
+			 * If there are no LWPs available to take the
+			 * signal, then we signal the parent process
+			 * immediately.  Otherwise, the last LWP to
+			 * stop will take care of it.
+			 */
+			if (p->p_nrlwps == 0) {
+				p->p_stat = SSTOP;
+				p->p_waited = 0;
+				p->p_pptr->p_nstopchild++;
+				child_psignal(p, PS_NOCLDSTOP);
+				cv_broadcast(&p->p_pptr->p_waitcv);
+			} else {
+				p->p_sflag |= PS_STOPPING;
+				mb_write();
 			}
 		} else {
-			LIST_FOREACH(l, &p->p_lwps, l_sibling)
-				(void)sigpost(l, &action, prop, &kp, 0);
+			/*
+			 * Stop signals with the default action are handled
+			 * specially in issignal(), and so are not enqueued.
+			 */
+			sigput(&p->p_sigpend, p, kp);
 		}
-
-		if ((prop & SA_STOP) != 0)
-			child_psignal(p, PS_NOCLDSTOP);
-
-		goto out;
-	}
-
-	if (p->p_stat == SSTOP) {
+	} else {
 		/*
 		 * Process is stopped.  If traced, then no further action is
 		 * necessary.
@@ -1452,37 +1359,50 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		if (p->p_slflag & PSL_TRACED)
 			goto out;
 
-		if (prop & SA_CONT)
+		if ((prop & (SA_CONT | SA_KILL)) != 0) {
+			/*
+			 * Re-adjust p_nstopchild if the process wasn't
+			 * collected by its parent.
+			 */
 			p->p_stat = SACTIVE;
-		else if (prop & SA_STOP) {
+			p->p_sflag &= ~PS_STOPPING;
+			if (!p->p_waited)
+				p->p_pptr->p_nstopchild--;
+
+			/*
+			 * If SIGCONT is default (or ignored), we continue
+			 * the process but don't leave the signal in
+			 * ps_siglist, as it has no further action.  If
+			 * SIGCONT is held, we continue the process and
+			 * leave the signal in ps_siglist.  If the process
+			 * catches SIGCONT, let it handle the signal itself. 
+			 * If it isn't waiting on an event, then it goes
+			 * back to run state.  Otherwise, process goes back
+			 * to sleep state.
+			 */
+			if ((prop & SA_CONT) == 0 || action != SIG_DFL)
+				sigput(&p->p_sigpend, p, kp);
+		} else if ((prop & SA_STOP) != 0) {
 			/*
 			 * Already stopped, don't need to stop again.
 			 * (If we did the shell could get confused.)
 			 */
 			goto out;
-		}
-
-		/*
-		 * Some signals go to all LWPs.
-		 */
-		if (prop & SA_TOALL) {
-			if (p->p_sa != NULL) {
-				SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-					l = vp->savp_lwp;
-					(void)sigpost(l, &action, prop, &kp, 0);
-				}
-			} else {
-				LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-					(void)sigpost(l, &action, prop, &kp, 0);
-				}
-			}
-			goto out;
-		}
+		} else
+			sigput(&p->p_sigpend, p, kp);
 	}
+
+ deliver:
+	/*
+	 * Before we set L_PENDSIG on any LWP, ensure that the signal is
+	 * visible on the per process list (for sigispending()).  This
+	 * is unlikely to be needed in practice, but...
+	 */
+	mb_write();
 
 	/*
 	 * Try to find an LWP that can take the signal.
-	*/
+	 */
 	if (p->p_sa != NULL) {
 		/*
 		 * In the SA case, we try to find an idle LWP that can take
@@ -1490,16 +1410,18 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		 * interrupting active LWPs.
 		 */
 		l = NULL;
-		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-			l = vp->savp_lwp;
-			if (sigpost(l, &action, prop, &kp, 1))
-				break;
+		if (!toall) {
+			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+				l = vp->savp_lwp;
+				if (sigpost(l, action, prop, kp, 1))
+					break;
+			}
 		}
 
 		if (l == NULL) {
 			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
 				l = vp->savp_lwp;
-				if (sigpost(l, &action, prop, &kp, 0))
+				if (sigpost(l, action, prop, kp, 0) && !toall)
 					break;
 			}
 		}
@@ -1509,24 +1431,14 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		 * willing to do the needful.
 		 */
 		LIST_FOREACH(l, &p->p_lwps, l_sibling)
-			if (sigpost(l, &action, prop, &kp, 0))
+			if (sigpost(l, action, prop, kp, 0) && !toall)
 				break;
 	}
 
-	/*
-	 * We couldn't find somebody to take the signal.  It must be held by
-	 * all LWPs, so put it onto the per process queue in expectation
-	 * that an LWP will adjust its signal mask in the future, and will
-	 * then pick it up.
-	 */
-	if (l == NULL)
-		sigput(&p->p_sigpend, p, kp);
-
-	return;
-
  out:
  	/*
- 	 * If the signal wasn't taken, then bin the ksiginfo_t we allocated.
+ 	 * If the ksiginfo wasn't, then bin it.  XXXSMP freeing memory with
+ 	 * locks held.
  	 */
  	ksiginfo_free(kp);
 }
@@ -1541,16 +1453,16 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
 
-	if (p->p_flag & P_SA) {
-		/* XXXAD What if already on signal stack? */
+	if (p->p_sflag & PS_SA) {
+		mutex_exit(&p->p_smutex);
 		/* XXXUPSXXX What if not on sa_vp ? */
-
-		/* XXXAD SA locking, PR_WAITOK */
 		si = siginfo_alloc(PR_WAITOK);
 
 		lwp_lock(l);
 		f = l->l_flag & L_SA;
 		l->l_flag &= ~L_SA;
+		lwp_unlock(l);
+
 		si->_info = ksi->ksi_info;
 		le = li = NULL;
 		if (KSI_TRAP_P(ksi))
@@ -1565,8 +1477,10 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 				/* XXX What do we do here?? */;
 #endif
 		}
+		lwp_lock(l);
 		l->l_flag |= f;
 		lwp_unlock(l);
+		mutex_enter(&p->p_smutex);
 		return;
 	}
 
@@ -1581,34 +1495,53 @@ sigswitch(int ppsig, int ppmask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	int nrun;
 
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-	KASSERT(l->l_stat == LSONPROC);
+	KASSERT(l->l_stat == LSONPROC || l->l_stat == LSSLEEP);
 
 	lwp_lock(l);
 
-	p->p_nrlwps--;
+	nrun = --p->p_nrlwps;
 	l->l_stat = LSSTOP;
 
 	/*
-	 * Unlock and switch away.  If we are the last live LWP, and
-	 * the stop was a result of a new signal, then take the ugly
-	 * hit of relocking and signal the parent.
+	 * Unlock and switch away.  If we are the last live LWP, and the
+	 * stop was a result of a new signal, then signal the parent.
 	 */
-	mutex_exit(&p->p_smutex);
+	if (nrun == 0) {
+		lwp_unlock(l);
 
-	if (p->p_nrlwps == 0 && ppsig) {
-		lwp_unlock_to(l, &lwp_mutex);
-		mutex_enter(&proclist_mutex);
-		mutex_enter(&p->p_smutex);
-		if (p->p_nrlwps == 0)
-			child_psignal(p, ppmask);
-		mutex_exit(&p->p_smutex);
+		if (!mutex_tryenter(&proclist_mutex)) {
+			mutex_exit(&p->p_smutex);
+			mutex_enter(&proclist_mutex);
+			mutex_enter(&p->p_smutex);
+			if (p->p_stat != SSTOP &&
+			    (p->p_sflag & PS_STOPPING) == 0) {
+				mutex_exit(&proclist_mutex);
+				lwp_lock(l);
+				p->p_nrlwps++;
+				l->l_stat = LSONPROC;
+				lwp_unlock(l);
+				return;
+			}
+		}
+
+		if ((p->p_sflag & PS_STOPPING) != 0) {
+			p->p_sflag &= ~PS_STOPPING;
+			p->p_stat = SSTOP;
+			p->p_waited = 0;
+			p->p_pptr->p_nstopchild++;
+			if (ppsig)
+				child_psignal(p, ppmask);
+			cv_broadcast(&p->p_pptr->p_waitcv);
+		}
+
 		mutex_exit(&proclist_mutex);
 		lwp_lock(l);
-	} else
-		lwp_relock(l, &lwp_mutex);
+	}
 
+	mutex_exit(&p->p_smutex);
 	mi_switch(l, NULL);
 	mutex_enter(&p->p_smutex);
 }
@@ -1638,7 +1571,7 @@ sigchecktrace(void)
 	 */
 	signo = p->p_xstat;
 	p->p_xstat = 0;
-	if (!sigismember(l->l_sigmask, signo))
+	if (sigismember(l->l_sigmask, signo))
 		signo = 0;
 
 	return signo;
@@ -1663,6 +1596,7 @@ issignal(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	int signo = 0, prop;
+	sigpend_t *sp = NULL;
 	sigset_t ss;
 
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
@@ -1670,7 +1604,7 @@ issignal(struct lwp *l)
 	for (;;) {
 		/* Discard any signals that we have decided not to take. */
 		if (signo != 0)
-			(void)sigget(l->l_sigpend, NULL, signo, NULL);
+			(void)sigget(sp, NULL, signo, NULL);
 
 		/* Bail out if we do not own the virtual processor */
 		if (l->l_flag & L_SA && l->l_savp->savp_lwp != l)
@@ -1681,31 +1615,43 @@ issignal(struct lwp *l)
 		 * now that we're on the kernel/userspace boundary.  When
 		 * we awaken, check for a signal from the debugger.
 		 */
-		if (p->p_stat == SSTOP) {
-			sigswitch(0, 0);
+		if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
+			sigswitch(1, PS_NOCLDSTOP);
+			sp = &p->p_sigpend;
 			signo = sigchecktrace();
 		} else
 			signo = 0;
 
 		/*
 		 * If the debugger didn't provide a signal, find a pending
-		 * signal from our set.
+		 * signal from our set.  Check per-LWP signals first, and
+		 * then per-process.
 		 */
 		if (signo == 0) {
-			ss = l->l_sigpend->sp_set;
+			sp = &l->l_sigpend;
+			ss = sp->sp_set;
 			if ((p->p_sflag & PS_PPWAIT) != 0)
 				sigminusset(&stopsigmask, &ss);
 			sigminusset(l->l_sigmask, &ss);
 
 			if ((signo = firstsig(&ss)) == 0) {
-				/*
-				 * No signal pending - clear the indicator
-				 * and bail out.
-				 */
-				lwp_lock(l);
-				l->l_flag &= ~L_PENDSIG;
-				lwp_unlock(l);
-				break;
+				sp = &p->p_sigpend;
+				ss = sp->sp_set;
+				if ((p->p_sflag & PS_PPWAIT) != 0)
+					sigminusset(&stopsigmask, &ss);
+				sigminusset(l->l_sigmask, &ss);
+		
+				if ((signo = firstsig(&ss)) == 0) {
+					/*
+					 * No signal pending - clear the
+					 * indicator and bail out.
+					 */
+					lwp_lock(l);
+					l->l_flag &= ~L_PENDSIG;
+					lwp_unlock(l);
+					sp = NULL;
+					break;
+				}
 			}
 		}
 
@@ -1727,7 +1673,7 @@ issignal(struct lwp *l)
 		if ((p->p_slflag & PSL_TRACED) != 0 &&
 		    (p->p_sflag & PS_PPWAIT) != 0) {
 			/* Take the signal. */
-			(void)sigget(l->l_sigpend, NULL, signo, NULL);
+			(void)sigget(sp, NULL, signo, NULL);
 
 			p->p_xstat = signo;
 
@@ -1737,6 +1683,7 @@ issignal(struct lwp *l)
 				sigswitch(!(p->p_slflag & PSL_FSTRACE), 0);
 
 			/* Check for a signal from the debugger. */
+			sp = &p->p_sigpend;
 			if ((signo = sigchecktrace()) == 0)
 				continue;
 		}
@@ -1776,10 +1723,11 @@ issignal(struct lwp *l)
 				    	/* Ignore the signal. */
 					continue;
 				}
-				/* Discard the signal. */
-				(void)sigget(l->l_sigpend, NULL, signo, NULL);
+				/* Take the signal. */
+				(void)sigget(sp, NULL, signo, NULL);
 				p->p_xstat = signo;
-				(void)sigswitch(0, PS_NOCLDSTOP);
+				p->p_sflag |= PS_STOPPING;
+				(void)sigswitch(1, PS_NOCLDSTOP);
 			} else if (prop & SA_IGNORE) {
 				/*
 				 * Except for SIGCONT, shouldn't get here.
@@ -1814,6 +1762,7 @@ issignal(struct lwp *l)
 		break;
 	}
 
+	l->l_sigpendset = sp;
 	return signo;
 }
 
@@ -1857,16 +1806,17 @@ postsig(int signo)
 	 */
 	action = SIGACTION_PS(ps, signo).sa_handler;
 	p->p_stats->p_ru.ru_nsignals++;
-	sigget(l->l_sigpend, &ksi, signo, NULL);
+	sigget(l->l_sigpendset, &ksi, signo, NULL);
 
 #ifdef KTRACE
-	/* XXXSMP */
-	mutex_exit(&p->p_smutex);
-	KERNEL_LOCK(1, l);
-	if (KTRPOINT(p, KTR_PSIG))
+	if (KTRPOINT(p, KTR_PSIG)) {
+		/* XXXSMP */
+		mutex_exit(&p->p_smutex);
+		KERNEL_LOCK(1, l);
 		ktrpsig(l, signo, action, returnmask, NULL);
-	(void)KERNEL_UNLOCK(1, l);
-	mutex_enter(&p->p_smutex);
+		(void)KERNEL_UNLOCK(1, l);
+		mutex_enter(&p->p_smutex);
+	}
 #endif
 
 	if (action == SIG_DFL) {
@@ -1923,7 +1873,10 @@ void
 killproc(struct proc *p, const char *why)
 {
 	log(LOG_ERR, "pid %d was killed: %s\n", p->p_pid, why);
+	mutex_enter(&proclist_mutex);	/* XXXSMP */
+	uprintf_locked("sorry, pid %d was killed: %s\n", p->p_pid, why);
 	psignal(p, SIGKILL);
+	mutex_exit(&proclist_mutex);	/* XXXSMP */
 }
 
 /*
@@ -1947,12 +1900,17 @@ sigexit(struct lwp *l, int signo)
 
 	/*
 	 * Don't permit coredump() multiple times in the same process.
+	 * Call back into sigexit, where we will be suspended until
+	 * the deed is done.  Note that this is a recursive call, but
+	 * L_WCORE will prevent us from coming back this way.
 	 */
-	mb_read();
-	if ((l->l_flag & L_WCORE) != 0) {
+	if ((p->p_sflag & PS_WCORE) != 0) {
 		mutex_exit(&p->p_smutex);
-		(void)lwp_exit(l, 0);
-		return;
+		lwp_userret(l);
+#ifdef DIAGNOSTIC
+		panic("sigexit");
+#endif
+		/* NOTREACHED */
 	}
 
 	/*
@@ -1960,20 +1918,31 @@ sigexit(struct lwp *l, int signo)
 	 * so that their registers are available long enough to be dumped.
  	 */
 	if ((docore = (sigprop[signo] & SA_CORE)) != 0) {
-		LIST_FOREACH(t, &p->p_lwps, l_sibling) {
-			if (t == l)
-				continue;
-			lwp_lock(t);
-			t->l_flag |= (L_WCORE | L_WEXIT);
-			lwp_halt(l, t, LSSUSPENDED);
-		}
+		p->p_sflag |= PS_WCORE;
+		for (;;) {
+			LIST_FOREACH(t, &p->p_lwps, l_sibling) {
+				lwp_lock(t);
+				if (t == l) {
+					t->l_flag &= ~L_WSUSPEND;
+					lwp_unlock(t);
+					continue;
+				}
+				t->l_flag |= (L_WCORE | L_WEXIT);
+				lwp_suspend(l, t);
+			}
 
-		/*
-		 * Wait for everyone else to stop before proceeding.
-		 */
-		while (!lwp_lastlive(0))
-			mtsleep(&p->p_nrlwps, PWAIT, "sigexit", 0,
-			    &p->p_smutex);
+			if (p->p_nrlwps == 1)
+				break;
+
+			/*
+			 * Kick any LWPs sitting in lwp_wait1(), and wait
+			 * for everyone else to stop before proceeding.
+			 */
+			p->p_nlwpwait++;
+			cv_broadcast(&p->p_lwpcv);
+			cv_wait(&p->p_lwpcv, &p->p_smutex);
+			p->p_nlwpwait--;
+		}
 	}
 
 	/* We don't want to switch away from exiting. */
@@ -2011,6 +1980,9 @@ sigexit(struct lwp *l, int signo)
 
 	/* Acquire the sched state mutex.  exit1() will release it. */
 	mutex_enter(&p->p_smutex);
+
+	/* No longer dumping core. */
+	p->p_sflag &= ~PS_WCORE;
 
 	exit1(l, W_EXITCODE(0, exitsig));
 	/* NOTREACHED */
