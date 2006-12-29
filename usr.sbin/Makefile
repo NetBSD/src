@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.221 2006/09/29 19:03:11 macallan Exp $
+#	$NetBSD: Makefile,v 1.222 2006/12/29 15:52:20 pooka Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -62,6 +62,11 @@ SUBDIR+=ipf
 # PF
 .if (${MKPF} != "no")
 SUBDIR+=pf
+.endif
+
+# puffs
+.if (${MKPUFFS} != "no")
+SUBDIR+=puffs
 .endif
 
 .include <bsd.subdir.mk>

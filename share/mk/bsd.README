@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.189 2006/11/12 02:44:51 christos Exp $
+#	$NetBSD: bsd.README,v 1.190 2006/12/29 15:52:20 pooka Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -243,6 +243,10 @@ MKPOSTFIX	If "no", don't build or install postfix(1).
 
 MKPROFILE	If "no", don't build or install the profiling (*_p.a) libraries.
 		Default: yes
+
+MKPUFFS		If "no", don't build libpuffs (lib/libpuffs) or
+		puffs applications (usr.sbin/puffs).
+		Default: no
 
 MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
 		MKMAN=no MKNLS=no".
