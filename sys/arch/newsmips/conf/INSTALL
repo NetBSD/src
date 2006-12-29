@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.31 2006/10/02 03:28:31 chs Exp $
+# 	$NetBSD: INSTALL,v 1.32 2006/12/29 21:49:03 yamt Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -45,7 +45,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
-options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
