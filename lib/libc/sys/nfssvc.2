@@ -1,4 +1,4 @@
-.\"	$NetBSD: nfssvc.2,v 1.22 2005/09/23 20:27:10 wiz Exp $
+.\"	$NetBSD: nfssvc.2,v 1.23 2006/12/29 22:56:55 yamt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)nfssvc.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd September 23, 2005
+.Dd December 30, 2006
 .Dt NFSSVC 2
 .Os
 .Sh NAME
@@ -54,67 +54,6 @@ once in the kernel and the
 .Fa argstructp
 points to one of three structures depending on which bits are set in
 flags.
-.Ss Calls used by Xr mount_nfs 8
-On the client side,
-.Fn nfssvc
-is only used for
-.Li NQNFS .
-.Xr mount_nfs 8
-calls
-.Fn nfssvc
-with the
-.Dv NFSSVC_MNTD
-flag, optionally or'd with the flags
-.Dv NFSSVC_GOTAUTH
-and
-.Dv NFSSVC_AUTHINFAIL
-along with a pointer to a
-.Bd -literal
-struct nfsd_cargs {
-	char		*ncd_dirp;	/* Mount dir path */
-	uid_t		ncd_authuid;	/* Effective uid */
-	int		ncd_authtype;	/* Type of authenticator */
-	int		ncd_authlen;	/* Length of authenticator string */
-	char		*ncd_authstr;	/* Authenticator string */
-};
-.Ed
-.Pp
-structure.
-The initial call has only the
-.Dv NFSSVC_MNTD
-flag set to specify service for the mount point.
-If the mount point is using Kerberos, then the
-.Xr mount_nfs 8
-daemon will return from
-.Fn nfssvc
-with errno set to
-.Er ENEEDAUTH
-whenever the client side requires an
-.Dq rcmd
-authentication ticket for the user.
-The
-.Xr mount_nfs 8
-program will attempt to get the Kerberos ticket, and if successful will call
-.Fn nfssvc
-with the flags
-.Dv NFSSVC_MNTD
-and
-.Dv NFSSVC_GOTAUTH
-after filling the ticket into the
-ncd_authstr field
-and
-setting the ncd_authlen and ncd_authtype
-fields of the nfsd_cargs structure.
-If
-.Xr mount_nfs 8
-failed to get the ticket,
-.Fn nfssvc
-will be called with the flags
-.Dv NFSSVC_MNTD ,
-.Dv NFSSVC_GOTAUTH ,
-and
-.Dv NFSSVC_AUTHINFAIL
-to denote a failed authentication attempt.
 .Ss Calls used by Xr nfsd 8
 On the server side,
 .Fn nfssvc
