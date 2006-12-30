@@ -1,7 +1,7 @@
-/*	$Id: getdents.c,v 1.8 2006/03/20 08:57:37 martin Exp $	*/
+/*	$Id: getdents.c,v 1.9 2006/12/30 23:19:11 yamt Exp $	*/
 
 /*-
- * Copyright (c)2004 YAMAMOTO Takashi,
+ * Copyright (c)2004, 2006 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
  */
 
 #include <err.h>
+#include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -106,6 +107,36 @@ main(int argc, char *argv[])
 	if (off != lseek(fd, off, SEEK_SET))
 		err(EXIT_FAILURE, "lseek");
 
+#if defined(DENSE_DIRECTORY)
+	printf("searching valid offsets..\n");
+	for (off = 0; ; off++) {
+		struct ent *p;
+		blks = realloc(blks, sizeof(*blks) * (nblks + 1));
+		if (blks == NULL)
+			err(EXIT_FAILURE, "realloc");
+		p = &blks[nblks];
+		memset(p, 0, sizeof(*p));
+		p->off = off = lseek(fd, off, SEEK_SET);
+		if (off == (off_t)-1)
+			err(EXIT_FAILURE, "lseek");
+		printf("off=%" PRIx64 "(%" PRIu64 ")\n",
+		    (uint64_t)off, (uint64_t)off);
+		p->sz = ret = getdents(fd, p->u.u_buf, DIRBLKSIZ);
+		printf("getdents: %d\n", ret);
+		if (ret == -1) {
+			if (errno == EINVAL) {
+				continue;
+			}
+			errx(EXIT_FAILURE, "getdents");
+		}
+		if (ret == 0) {
+			break;
+		}
+		nblks++;
+		print_dents(stdout, p->u.u_buf, ret);
+	}
+	printf("%d valid offsets found\n", nblks);
+#else /* defined(DENSE_DIRECTORY) */
 	printf("start reading..\n");
 	do {
 		struct ent *p;
@@ -127,6 +158,7 @@ main(int argc, char *argv[])
 		print_dents(stdout, p->u.u_buf, ret);
 	} while (ret > 0);
 	printf("%d blks read\n", nblks);
+#endif /* defined(DENSE_DIRECTORY) */
 
 #if 1
 	printf("re-open the file\n");
