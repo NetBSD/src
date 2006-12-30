@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.h,v 1.2.18.2 2006/06/21 15:04:08 yamt Exp $	*/
+/*	$NetBSD: firewire.h,v 1.2.18.3 2006/12/30 20:48:26 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -376,7 +376,7 @@ struct fw_speed_map {
 
 struct fw_crom_buf {
 	struct fw_eui64 eui;
-	int len;
+	uint32_t len;
 	void *ptr;
 };
 

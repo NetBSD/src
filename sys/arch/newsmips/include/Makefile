@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.29 2004/08/01 18:53:17 uch Exp $
+#	$NetBSD: Makefile,v 1.29.12.1 2006/12/30 20:46:37 yamt Exp $
 
 INCSDIR= /usr/include/newsmips
 
 INCS=	adrsmap.h ansi.h asm.h aout_machdep.h autoconf.h \
 	bswap.h bsd-aout.h \
 	cdefs.h cpu.h \
-	db_machdep.h disklabel.h \
+	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
 	float.h \
 	ieee.h ieeefp.h \

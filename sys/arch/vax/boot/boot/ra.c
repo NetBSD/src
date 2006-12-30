@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.13.2.1 2006/06/21 14:57:17 yamt Exp $ */
+/*	$NetBSD: ra.c,v 1.13.2.2 2006/12/30 20:47:13 yamt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -105,10 +105,10 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 			nexaddr = bootrpb.adpphy;
 		} else
 			csrbase += (ctlr ? 000334 : 012150);
-		ra_ip = (short *)csrbase;
-		ra_sa = ra_sw = (short *)csrbase + 1;
+		ra_ip = (u_short *)csrbase;
+		ra_sa = ra_sw = (u_short *)csrbase + 1;
 		if (nexaddr) { /* have map registers */
-			mapregs = (int *)nexaddr + 512;
+			mapregs = (u_int *)nexaddr + 512;
 			mapregs[494] = PG_V | (((u_int)&uda) >> 9);
 			mapregs[495] = mapregs[494] + 1;
 			ubauda = (struct uda *)((char*)0x3dc00 +
@@ -133,9 +133,9 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 		}
 
 		kdaddr = nexaddr & ~(BI_NODESIZE - 1);
-		ra_ip = (short *)(kdaddr + KDB_IP);
-		ra_sa = (short *)(kdaddr + KDB_SA);
-		ra_sw = (short *)(kdaddr + KDB_SW);
+		ra_ip = (u_short *)(kdaddr + KDB_IP);
+		ra_sa = (u_short *)(kdaddr + KDB_SA);
+		ra_sw = (u_short *)(kdaddr + KDB_SW);
 		johan = ((u_int)&uda.uda_ca.ca_rspdsc) & 0xffff;
 		johan2 = (((u_int)&uda.uda_ca.ca_rspdsc) & 0xffff0000) >> 16;
 		w = (int *)(kdaddr + BIREG_VAXBICSR);

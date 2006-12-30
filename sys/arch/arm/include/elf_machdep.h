@@ -1,10 +1,14 @@
-/*	$NetBSD: elf_machdep.h,v 1.5 2004/08/21 11:01:33 rearnsha Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.5.12.1 2006/12/30 20:45:33 yamt Exp $	*/
 
 #if defined(__ARMEB__)
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #else
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
 #endif
+
+#define ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
+#define ELF64_MACHDEP_ID_CASES                                          \
+		/* no 64-bit ELF machine types supported */
 
 /* Processor specific flags for the ELF header e_flags field.  */
 #define EF_ARM_RELEXEC		0x00000001

@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_unit.c,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $	*/
+/*	$NetBSD: hci_unit.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -144,7 +144,7 @@ hci_enable(struct hci_unit *unit)
 		goto bad2;
 
 	while (unit->hci_flags & BTF_INIT) {
-		err = tsleep(unit, PWAIT | PCATCH, __func__, hz);
+		err = tsleep(unit, PWAIT | PCATCH, __func__, 5 * hz);
 		if (err)
 			goto bad2;
 
@@ -153,6 +153,12 @@ hci_enable(struct hci_unit *unit)
 		 * was removed and detached? Ho Hum.
 		 */
 	}
+
+	/*
+	 * Attach Bluetooth Device Hub
+	 */
+	unit->hci_bthub = config_found_ia((struct device *)unit->hci_softc,
+					  "btbus", &unit->hci_bdaddr, NULL);
 
 	return 0;
 
@@ -174,6 +180,11 @@ hci_disable(struct hci_unit *unit)
 	struct hci_link *link, *next;
 	struct hci_memo *memo;
 	int s, acl;
+
+	if (unit->hci_bthub) {
+		config_detach(unit->hci_bthub, DETACH_FORCE);
+		unit->hci_bthub = NULL;
+	}
 
 	if (unit->hci_rxint) {
 		softintr_disestablish(unit->hci_rxint);

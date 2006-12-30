@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.4.18.2 2006/06/21 15:09:36 yamt Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.4.18.3 2006/12/30 20:50:01 yamt Exp $	*/
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.4.18.2 2006/06/21 15:09:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.4.18.3 2006/12/30 20:50:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -109,9 +109,8 @@ extern void	pool_page_free_nointr(struct pool *, void *);
  *   faults if we shared the pools.
  */
 struct pool_allocator tmpfs_pool_allocator = {
-	tmpfs_pool_page_alloc,
-	tmpfs_pool_page_free,
-	0,
+	.pa_alloc = tmpfs_pool_page_alloc,
+	.pa_free = tmpfs_pool_page_free,
 };
 
 /* --------------------------------------------------------------------- */

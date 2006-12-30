@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.5 2005/05/15 21:37:46 fvdl Exp $	*/
+/*	$NetBSD: segments.h,v 1.5.2.1 2006/12/30 20:45:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -205,17 +205,17 @@ extern struct gate_descriptor *idt;
 extern char *gdtstore;
 extern char *ldtstore;
 
-void setgate __P((struct gate_descriptor *, void *, int, int, int, int));
-void unsetgate __P((struct gate_descriptor *));
-void setregion __P((struct region_descriptor *, void *, u_int16_t));
-void set_sys_segment __P((struct sys_segment_descriptor *, void *, size_t,
-			  int, int, int));
-void set_mem_segment __P((struct mem_segment_descriptor *, void *, size_t,
-			  int, int, int, int, int));
-int idt_vec_alloc __P((int, int));
-void idt_vec_set __P((int, void (*)(void)));
-void idt_vec_free __P((int));
-void cpu_init_idt __P((void));
+void setgate(struct gate_descriptor *, void *, int, int, int, int);
+void unsetgate(struct gate_descriptor *);
+void setregion(struct region_descriptor *, void *, u_int16_t);
+void set_sys_segment(struct sys_segment_descriptor *, void *, size_t,
+			  int, int, int);
+void set_mem_segment(struct mem_segment_descriptor *, void *, size_t,
+			  int, int, int, int, int);
+int idt_vec_alloc(int, int);
+void idt_vec_set(int, void (*)(void));
+void idt_vec_free(int);
+void cpu_init_idt(void);
 
 struct lwp;
 int memseg_baseaddr(struct lwp *, uint64_t, char *, int, uint64_t *);

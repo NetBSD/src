@@ -1,4 +1,4 @@
-/* $NetBSD: rmreloc.c,v 1.1.14.2 2006/06/21 14:47:48 yamt Exp $ */
+/* $NetBSD: rmreloc.c,v 1.1.14.3 2006/12/30 20:45:21 yamt Exp $ */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -106,7 +106,8 @@ os_error *
 relocate_self(Elf_Dyn *dynamic, caddr_t oldbase, caddr_t newbase)
 {
 	Elf_Dyn *dynp;
-	Obj_Entry o, *obj; 
+	Obj_Entry o = { 0 };
+	Obj_Entry *obj; 
 	const Elf_Rel *rel;
 	Elf_Addr        relsz = 0;
 

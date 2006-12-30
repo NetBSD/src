@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.12.6.2 2006/06/21 15:09:36 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.12.6.3 2006/12/30 20:50:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.12.6.2 2006/06/21 15:09:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.12.6.3 2006/12/30 20:50:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -74,7 +74,7 @@ static int	tmpfs_quotactl(struct mount *, int, uid_t, void *,
 		    struct lwp *);
 static int	tmpfs_vget(struct mount *, ino_t, struct vnode **);
 static int	tmpfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-static int	tmpfs_vptofh(struct vnode *, struct fid *);
+static int	tmpfs_vptofh(struct vnode *, struct fid *, size_t *);
 static int	tmpfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 static int	tmpfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 static void	tmpfs_init(void);
@@ -191,7 +191,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_start(struct mount *mp, int flags, struct lwp *l)
+tmpfs_start(struct mount *mp, int flags,
+    struct lwp *l)
 {
 
 	return 0;
@@ -236,6 +237,7 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 				struct tmpfs_dirent *nde;
 
 				nde = TAILQ_NEXT(de, td_entries);
+				KASSERT(de->td_node->tn_vnode == NULL);
 				tmpfs_free_dirent(tmp, de, FALSE);
 				de = nde;
 				node->tn_size -= sizeof(struct tmpfs_dirent);
@@ -281,8 +283,8 @@ tmpfs_root(struct mount *mp, struct vnode **vpp)
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg,
-    struct lwp *l)
+tmpfs_quotactl(struct mount *mp, int cmd, uid_t uid,
+    void *arg, struct lwp *l)
 {
 
 	printf("tmpfs_quotactl called; need for it unknown yet\n");
@@ -292,7 +294,8 @@ tmpfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg,
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp) 
+tmpfs_vget(struct mount *mp, ino_t ino,
+    struct vnode **vpp) 
 {
 
 	printf("tmpfs_vget called; need for it unknown yet\n");
@@ -305,23 +308,24 @@ static int
 tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	boolean_t found;
-	struct tmpfs_fid *tfhp;
+	struct tmpfs_fid tfh;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
 
 	tmp = VFS_TO_TMPFS(mp);
 
-	tfhp = (struct tmpfs_fid *)fhp;
-	if (tfhp->tf_len != sizeof(struct tmpfs_fid))
+	if (fhp->fid_len != sizeof(struct tmpfs_fid))
 		return EINVAL;
 
-	if (tfhp->tf_id >= tmp->tm_nodes_max)
+	memcpy(&tfh, fhp, sizeof(struct tmpfs_fid));
+
+	if (tfh.tf_id >= tmp->tm_nodes_max)
 		return EINVAL;
 
 	found = FALSE;
 	LIST_FOREACH(node, &tmp->tm_nodes_used, tn_entries) {
-		if (node->tn_id == tfhp->tf_id &&
-		    node->tn_gen == tfhp->tf_gen) {
+		if (node->tn_id == tfh.tf_id &&
+		    node->tn_gen == tfh.tf_gen) {
 			found = TRUE;
 			break;
 		}
@@ -333,17 +337,23 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_vptofh(struct vnode *vp, struct fid *fhp)
+tmpfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
-	struct tmpfs_fid *tfhp;
+	struct tmpfs_fid tfh;
 	struct tmpfs_node *node;
 
-	tfhp = (struct tmpfs_fid *)fhp;
+	if (*fh_size < sizeof(struct tmpfs_fid)) {
+		*fh_size = sizeof(struct tmpfs_fid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct tmpfs_fid);
 	node = VP_TO_TMPFS_NODE(vp);
 
-	tfhp->tf_len = sizeof(struct tmpfs_fid);
-	tfhp->tf_id = node->tn_id;
-	tfhp->tf_gen = node->tn_gen;
+	memset(&tfh, 0, sizeof(tfh));
+	tfh.tf_len = sizeof(struct tmpfs_fid);
+	tfh.tf_gen = node->tn_gen;
+	tfh.tf_id = node->tn_id;
+	memcpy(fhp, &tfh, sizeof(tfh));
 
 	return 0;
 }
@@ -388,7 +398,8 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 
 /* ARGSUSED0 */
 static int
-tmpfs_sync(struct mount *mp, int waitfor, kauth_cred_t uc, struct lwp *l)
+tmpfs_sync(struct mount *mp, int waitfor,
+    kauth_cred_t uc, struct lwp *l)
 {
 
 	return 0;
@@ -419,7 +430,8 @@ tmpfs_done(void)
 /* --------------------------------------------------------------------- */
 
 static int
-tmpfs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
+tmpfs_snapshot(struct mount *mp, struct vnode *vp,
+    struct timespec *ctime)
 {
 
 	return EOPNOTSUPP;
@@ -461,5 +473,7 @@ struct vfsops tmpfs_vfsops = {
 	tmpfs_snapshot,			/* vfs_snapshot */
 	vfs_stdextattrctl,		/* vfs_extattrctl */
 	tmpfs_vnodeopv_descs,
+	0,				/* vfs_refcount */
+	{ NULL, NULL },
 };
 VFS_ATTACH(tmpfs_vfsops);

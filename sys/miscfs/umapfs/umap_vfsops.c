@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.53.2.1 2006/06/21 15:10:26 yamt Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.53.2.2 2006/12/30 20:50:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.53.2.1 2006/06/21 15:10:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.53.2.2 2006/12/30 20:50:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,6 @@ umapfs_mount(mp, path, data, ndp, l)
 	struct umap_args args;
 	struct vnode *lowerrootvp, *vp;
 	struct umap_mount *amp;
-	struct proc *p = l->l_proc;
 	int error;
 #ifdef UMAPFS_DIAGNOSTIC
 	int i;
@@ -92,8 +91,8 @@ umapfs_mount(mp, path, data, ndp, l)
 	}
 
 	/* only for root */
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return error;
 
 #ifdef UMAPFS_DIAGNOSTIC
@@ -239,10 +238,7 @@ umapfs_mount(mp, path, data, ndp, l)
  * Free reference to umap layer
  */
 int
-umapfs_unmount(mp, mntflags, l)
-	struct mount *mp;
-	int mntflags;
-	struct lwp *l;
+umapfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 {
 	struct vnode *rtvp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
 	int error;
@@ -336,5 +332,7 @@ struct vfsops umapfs_vfsops = {
 	layerfs_snapshot,
 	vfs_stdextattrctl,
 	umapfs_vnodeopv_descs,
+	0,				/* vfs_refcount */
+	{ NULL, NULL },
 };
 VFS_ATTACH(umapfs_vfsops);

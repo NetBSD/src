@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.4.4.2 2006/06/21 14:51:02 yamt Exp $ */
+/* $NetBSD: autoconf.c,v 1.4.4.3 2006/12/30 20:45:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,19 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4.4.2 2006/06/21 14:51:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4.4.3 2006/12/30 20:45:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 
-#include <sys/socket.h>		/* these three just to get ETHER_ADDR_LEN(!) */
-#include <net/if.h>
-#include <net/if_ether.h>
-
 #include <machine/bus.h>
 
-#include <mips/atheros/include/ar531xreg.h>
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 
@@ -66,7 +61,13 @@ cpu_configure(void)
 	(void)splhigh();
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
-	(void)spl0();
+
+	/*
+	 * Hardware interrupts will be enabled in
+	 * sys/arch/mips/mips/mips3_clockintr.c:mips3_initclocks()
+	 * to avoid hardclock(9) by CPU INT5 before softclockintr is
+	 * initialized in initclocks().
+	 */
 }
 
 void
@@ -79,60 +80,5 @@ cpu_rootconf(void)
 void
 device_register(struct device *dev, void *aux)
 {
-	struct arbus_attach_args *aa = aux;
-	const struct ar531x_boarddata *info;
-
-	info = ar531x_board_info();
-	if (info == NULL) {
-		/* nothing known about this board! */
-		return;
-	}
-
-	/*
-	 * We don't ever know the boot device.  But that's because the
-	 * firmware only loads from the network.
-	 */
-
-	/* Fetch the MAC addresses from YAMON. */
-	if (device_is_a(dev, "ae")) {
-		prop_data_t pd;
-		const uint8_t *enet;
-
-		if (aa->aa_addr == AR531X_ENET0_BASE)
-			enet = info->enet0Mac;
-		else if (aa->aa_addr == AR531X_ENET1_BASE)
-			enet = info->enet1Mac;
-		else
-			return;
-
-		pd = prop_data_create_data(enet, ETHER_ADDR_LEN);
-		KASSERT(pd != NULL);
-		if (prop_dictionary_set(device_properties(dev),
-					"mac-addr", pd) == FALSE) {
-			printf("WARNING: unable to set mac-addr "
-			    "property for %s\n", device_xname(dev));
-		}
-		prop_object_release(pd);
-	}
-
-	if (device_is_a(dev, "ath")) {
-		prop_data_t pd;
-		const uint8_t *enet;
-
-		if (aa->aa_addr == AR531X_WLAN0_BASE)
-			enet = info->wlan0Mac;
-		else if (aa->aa_addr == AR531X_WLAN1_BASE)
-			enet = info->wlan1Mac;
-		else
-			return;
-
-		pd = prop_data_create_data(enet, ETHER_ADDR_LEN);
-		KASSERT(pd != NULL);
-		if (prop_dictionary_set(device_properties(dev),
-					"mac-addr", pd) == FALSE) {
-			printf("WARNING: unable to set mac-addr "
-			    "property for %s\n", device_xname(dev));
-		}
-		prop_object_release(pd);
-	}
+	ar531x_device_register(dev, aux);
 }

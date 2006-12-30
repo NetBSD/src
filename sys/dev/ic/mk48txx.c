@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.17 2005/06/04 20:14:25 he Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.17.2.1 2006/12/30 20:48:03 yamt Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.17 2005/06/04 20:14:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.17.2.1 2006/12/30 20:48:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,12 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.17 2005/06/04 20:14:25 he Exp $");
 #include <dev/ic/mk48txxreg.h>
 #include <dev/ic/mk48txxvar.h>
 
-int mk48txx_gettime(todr_chip_handle_t, volatile struct timeval *);
-int mk48txx_settime(todr_chip_handle_t, volatile struct timeval *);
-int mk48txx_getcal(todr_chip_handle_t, int *);
-int mk48txx_setcal(todr_chip_handle_t, int);
-u_int8_t mk48txx_def_nvrd(struct mk48txx_softc *, int);
-void mk48txx_def_nvwr(struct mk48txx_softc *, int, u_int8_t);
+int mk48txx_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
+int mk48txx_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
+uint8_t mk48txx_def_nvrd(struct mk48txx_softc *, int);
+void mk48txx_def_nvwr(struct mk48txx_softc *, int, uint8_t);
 
 struct {
 	const char *name;
@@ -73,8 +71,7 @@ struct {
 };
 
 void
-mk48txx_attach(sc)
-	struct mk48txx_softc *sc;
+mk48txx_attach(struct mk48txx_softc *sc)
 {
 	todr_chip_handle_t handle;
 	int i;
@@ -94,10 +91,10 @@ mk48txx_attach(sc)
 
 	handle = &sc->sc_handle;
 	handle->cookie = sc;
-	handle->todr_gettime = mk48txx_gettime;
-	handle->todr_settime = mk48txx_settime;
-	handle->todr_getcal = mk48txx_getcal;
-	handle->todr_setcal = mk48txx_setcal;
+	handle->todr_gettime = NULL;
+	handle->todr_settime = NULL;
+	handle->todr_gettime_ymdhms = mk48txx_gettime_ymdhms;
+	handle->todr_settime_ymdhms = mk48txx_settime_ymdhms;
 	handle->todr_setwen = NULL;
 
 	if (sc->sc_nvrd == NULL)
@@ -111,15 +108,12 @@ mk48txx_attach(sc)
  * Return 0 on success; an error number otherwise.
  */
 int
-mk48txx_gettime(handle, tv)
-	todr_chip_handle_t handle;
-	volatile struct timeval *tv;
+mk48txx_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
 	struct mk48txx_softc *sc;
 	bus_size_t clkoff;
-	struct clock_ymdhms dt;
 	int year;
-	u_int8_t csr;
+	uint8_t csr;
 
 	sc = handle->cookie;
 	clkoff = sc->sc_clkoffset;
@@ -131,12 +125,12 @@ mk48txx_gettime(handle, tv)
 	csr |= MK48TXX_CSR_READ;
 	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ICSR, csr);
 
-	dt.dt_sec = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_ISEC));
-	dt.dt_min = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IMIN));
-	dt.dt_hour = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IHOUR));
-	dt.dt_day = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IDAY));
-	dt.dt_wday = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IWDAY));
-	dt.dt_mon = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IMON));
+	dt->dt_sec = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_ISEC));
+	dt->dt_min = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IMIN));
+	dt->dt_hour = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IHOUR));
+	dt->dt_day = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IDAY));
+	dt->dt_wday = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IWDAY));
+	dt->dt_mon = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IMON));
 	year = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IYEAR));
 
 	year += sc->sc_year0;
@@ -144,7 +138,7 @@ mk48txx_gettime(handle, tv)
 	    (sc->sc_flag & MK48TXX_NO_CENT_ADJUST) == 0)
 		year += 100;
 
-	dt.dt_year = year;
+	dt->dt_year = year;
 
 	/* time wears on */
 	csr = (*sc->sc_nvrd)(sc, clkoff + MK48TXX_ICSR);
@@ -152,14 +146,6 @@ mk48txx_gettime(handle, tv)
 	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ICSR, csr);
 	todr_wenable(handle, 0);
 
-	/* simple sanity checks */
-	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
-	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
-		return EIO;
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	if (tv->tv_sec == -1) return ERANGE;
-	tv->tv_usec = 0;
 	return 0;
 }
 
@@ -168,25 +154,17 @@ mk48txx_gettime(handle, tv)
  * Return 0 on success; an error number otherwise.
  */
 int
-mk48txx_settime(handle, tv)
-	todr_chip_handle_t handle;
-	volatile struct timeval *tv;
+mk48txx_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
 	struct mk48txx_softc *sc;
 	bus_size_t clkoff;
-	struct clock_ymdhms dt;
-	u_int8_t csr;
+	uint8_t csr;
 	int year;
-	long sec;
 
 	sc = handle->cookie;
 	clkoff = sc->sc_clkoffset;
 
-	/* Note: we ignore `tv_usec' */
-	sec = tv->tv_sec + ((tv->tv_usec < 500000) ? 0 : 1);
-	clock_secs_to_ymdhms(sec, &dt);
-
-	year = dt.dt_year - sc->sc_year0;
+	year = dt->dt_year - sc->sc_year0;
 	if (year > 99 &&
 	    (sc->sc_flag & MK48TXX_NO_CENT_ADJUST) == 0)
 		year -= 100;
@@ -197,12 +175,12 @@ mk48txx_settime(handle, tv)
 	csr |= MK48TXX_CSR_WRITE;
 	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ICSR, csr);
 
-	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ISEC, TOBCD(dt.dt_sec));
-	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IMIN, TOBCD(dt.dt_min));
-	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IHOUR, TOBCD(dt.dt_hour));
-	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IWDAY, TOBCD(dt.dt_wday));
-	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IDAY, TOBCD(dt.dt_day));
-	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IMON, TOBCD(dt.dt_mon));
+	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ISEC, TOBCD(dt->dt_sec));
+	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IMIN, TOBCD(dt->dt_min));
+	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IHOUR, TOBCD(dt->dt_hour));
+	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IWDAY, TOBCD(dt->dt_wday));
+	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IDAY, TOBCD(dt->dt_day));
+	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IMON, TOBCD(dt->dt_mon));
 	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IYEAR, TOBCD(year));
 
 	/* load them up */
@@ -214,27 +192,7 @@ mk48txx_settime(handle, tv)
 }
 
 int
-mk48txx_getcal(handle, vp)
-	todr_chip_handle_t handle;
-	int *vp;
-{
-
-	return EOPNOTSUPP;
-}
-
-int
-mk48txx_setcal(handle, v)
-	todr_chip_handle_t handle;
-	int v;
-{
-
-	return EOPNOTSUPP;
-}
-
-int
-mk48txx_get_nvram_size(handle, vp)
-	todr_chip_handle_t handle;
-	bus_size_t *vp;
+mk48txx_get_nvram_size(todr_chip_handle_t handle, bus_size_t *vp)
 {
 	struct mk48txx_softc *sc;
 
@@ -243,7 +201,7 @@ mk48txx_get_nvram_size(handle, vp)
 	return 0;
 }
 
-u_int8_t
+uint8_t
 mk48txx_def_nvrd(struct mk48txx_softc *sc, int off)
 {
 
@@ -251,7 +209,7 @@ mk48txx_def_nvrd(struct mk48txx_softc *sc, int off)
 }
 
 void
-mk48txx_def_nvwr(struct mk48txx_softc *sc, int off, u_int8_t v)
+mk48txx_def_nvwr(struct mk48txx_softc *sc, int off, uint8_t v)
 {
 
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, off, v);

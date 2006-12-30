@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.19.6.1 2006/06/21 15:02:45 yamt Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.19.6.2 2006/12/30 20:47:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,10 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.19.6.1 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.19.6.2 2006/12/30 20:47:57 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -78,10 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.19.6.1 2006/06/21 15:02:45 yamt
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -123,10 +118,8 @@ CFATTACH_DECL(fxp_cardbus, sizeof(struct fxp_cardbus_softc),
 #endif
 
 static int
-fxp_cardbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void   *aux;
+fxp_cardbus_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -138,9 +131,8 @@ fxp_cardbus_match(parent, match, aux)
 }
 
 static void
-fxp_cardbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fxp_cardbus_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	static const char thisfunc[] = "fxp_cardbus_attach";
 
@@ -269,9 +261,7 @@ fxp_cardbus_disable(struct fxp_softc * sc)
 }
 
 static int
-fxp_cardbus_detach(self, flags)
-	struct device *self;
-	int flags;
+fxp_cardbus_detach(struct device *self, int flags)
 {
 	struct fxp_softc *sc = device_private(self);
 	struct fxp_cardbus_softc *csc = device_private(self);

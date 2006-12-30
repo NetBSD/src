@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.19.2.1 2006/06/21 14:59:36 yamt Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.19.2.2 2006/12/30 20:47:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.19.2.1 2006/06/21 14:59:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.19.2.2 2006/12/30 20:47:42 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
+#include "opt_ktrace.h"
 #endif
 
 #include <sys/param.h>
@@ -51,6 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.19.2.1 2006/06/21 14:59:36 yam
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/dirent.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -197,6 +201,11 @@ netbsd32___sysctl(l, v, retval)
 	error = copyin(namep, &name[0], SCARG(uap, namelen) * sizeof(int));
         if (error)
                 return (error);
+
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_MIB))
+		ktrmib(l, name, SCARG(uap, namelen));
+#endif
 
 	/*
 	 * wire old so that copyout() is less likely to fail?

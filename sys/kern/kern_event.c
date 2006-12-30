@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.23.2.1 2006/06/21 15:09:37 yamt Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.23.2.2 2006/12/30 20:50:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.23.2.1 2006/06/21 15:09:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.23.2.2 2006/12/30 20:50:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,12 +173,9 @@ kfilter_byname_user(const char *name)
 {
 	int i;
 
-	/* user_kfilters[] could be NULL if no filters were registered */
-	if (!user_kfilters)
-		return (NULL);
-
-	for (i = 0; user_kfilters[i].name != NULL; i++) {
-		if (user_kfilters[i].name != '\0' &&
+	/* user filter slots have a NULL name if previously deregistered */
+	for (i = 0; i < user_kfilterc ; i++) {
+		if (user_kfilters[i].name != NULL &&
 		    strcmp(name, user_kfilters[i].name) == 0)
 			return (&user_kfilters[i]);
 	}
@@ -229,6 +226,7 @@ kfilter_register(const char *name, const struct filterops *filtops,
 	struct kfilter *kfilter;
 	void *space;
 	int len;
+	int i;
 
 	if (name == NULL || name[0] == '\0' || filtops == NULL)
 		return (EINVAL);	/* invalid args */
@@ -236,6 +234,14 @@ kfilter_register(const char *name, const struct filterops *filtops,
 		return (EEXIST);	/* already exists */
 	if (user_kfilterc > 0xffffffff - EVFILT_SYSCOUNT)
 		return (EINVAL);	/* too many */
+
+	for (i = 0; i < user_kfilterc; i++) {
+		kfilter = &user_kfilters[i];
+		if (kfilter->name == NULL) {
+			/* Previously deregistered slot.  Reuse. */
+			goto reuse;
+		}
+	}
 
 	/* check if need to grow user_kfilters */
 	if (user_kfilterc + 1 > user_kfiltermaxc) {
@@ -261,21 +267,23 @@ kfilter_register(const char *name, const struct filterops *filtops,
 			free(user_kfilters, M_KEVENT);
 		user_kfilters = kfilter;
 	}
+	/* Adding new slot */
+	kfilter = &user_kfilters[user_kfilterc++];
+reuse:
 	len = strlen(name) + 1;		/* copy name */
 	space = malloc(len, M_KEVENT, M_WAITOK);
 	memcpy(space, name, len);
-	user_kfilters[user_kfilterc].name = space;
+	kfilter->name = space;
 
-	user_kfilters[user_kfilterc].filter = user_kfilterc + EVFILT_SYSCOUNT;
+	kfilter->filter = (kfilter - user_kfilters) + EVFILT_SYSCOUNT;
 
 	len = sizeof(struct filterops);	/* copy filtops */
 	space = malloc(len, M_KEVENT, M_WAITOK);
 	memcpy(space, filtops, len);
-	user_kfilters[user_kfilterc].filtops = space;
+	kfilter->filtops = space;
 
 	if (retfilter != NULL)
-		*retfilter = user_kfilters[user_kfilterc].filter;
-	user_kfilterc++;		/* finally, increment count */
+		*retfilter = kfilter->filter;
 	return (0);
 }
 
@@ -300,11 +308,10 @@ kfilter_unregister(const char *name)
 	if (kfilter == NULL)		/* not found */
 		return (ENOENT);
 
-	if (kfilter->name[0] != '\0') {
-		/* XXXUNCONST Cast away const (but we know it's safe. */
-		free(__UNCONST(kfilter->name), M_KEVENT);
-		kfilter->name = "";	/* mark as `not implemented' */
-	}
+	/* XXXUNCONST Cast away const (but we know it's safe. */
+	free(__UNCONST(kfilter->name), M_KEVENT);
+	kfilter->name = NULL;	/* mark as `not implemented' */
+
 	if (kfilter->filtops != NULL) {
 		/* XXXUNCONST Cast away const (but we know it's safe. */
 		free(__UNCONST(kfilter->filtops), M_KEVENT);
@@ -359,7 +366,11 @@ filt_kqueue(struct knote *kn, long hint)
 static int
 filt_procattach(struct knote *kn)
 {
-	struct proc *p;
+	struct proc *p, *curp;
+	struct lwp *curl;
+
+	curl = curlwp;
+	curp = curl->l_proc;
 
 	p = pfind(kn->kn_id);
 	if (p == NULL)
@@ -369,10 +380,9 @@ filt_procattach(struct knote *kn)
 	 * Fail if it's not owned by you, or the last exec gave us
 	 * setuid/setgid privs (unless you're root).
 	 */
-	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curproc->p_cred) ||
-		(p->p_flag & P_SUGID))
-	    && kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
-				 &curproc->p_acflag) != 0)
+	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curl->l_cred) ||
+	    (p->p_flag & P_SUGID)) && kauth_authorize_generic(curl->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &curl->l_acflag) != 0)
 		return (EACCES);
 
 	kn->kn_ptr.p_proc = p;
@@ -604,12 +614,10 @@ sys_kqueue(struct lwp *l, void *v, register_t *retval)
 	struct filedesc	*fdp;
 	struct kqueue	*kq;
 	struct file	*fp;
-	struct proc	*p;
 	int		fd, error;
 
-	p = l->l_proc;
-	fdp = p->p_fd;
-	error = falloc(p, &fp, &fd);	/* setup a new file descriptor */
+	fdp = l->l_proc->p_fd;
+	error = falloc(l, &fp, &fd);	/* setup a new file descriptor */
 	if (error)
 		return (error);
 	fp->f_flag = FREAD | FWRITE;
@@ -907,7 +915,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	struct proc	*p = l->l_proc;
 	struct kqueue	*kq;
 	struct kevent	*kevp;
-	struct timeval	atv;
+	struct timeval	atv, sleeptv;
 	struct knote	*kn, *marker=NULL;
 	size_t		count, nkev, nevents;
 	int		s, timeout, error;
@@ -920,13 +928,13 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 
 	if (tsp) {				/* timeout supplied */
 		TIMESPEC_TO_TIMEVAL(&atv, tsp);
-		if (itimerfix(&atv)) {
+		if (inittimeleft(&atv, &sleeptv) == -1) {
 			error = EINVAL;
 			goto done;
 		}
 		timeout = tvtohz(&atv);
 		if (timeout <= 0)
-			timeout = -1;		/* do poll */
+			timeout = -1;           /* do poll */
 	} else {
 		/* no timeout, wait forever */
 		timeout = 0;
@@ -938,13 +946,8 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	goto start;
 
  retry:
-	if (tsp) {
-		/*
-		 * We have to recalculate the timeout on every retry.
-		 */
-		timeout = hzto(&atv);
-		if (timeout <= 0)
-			goto done;
+	if (tsp && (timeout = gettimeleft(&atv, &sleeptv)) <= 0) {
+		goto done;
 	}
 
  start:
@@ -1066,8 +1069,8 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
  */
 /*ARGSUSED*/
 static int
-kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
-	kauth_cred_t cred, int flags)
+kqueue_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
+    int flags)
 {
 
 	return (ENXIO);
@@ -1079,8 +1082,8 @@ kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
  */
 /*ARGSUSED*/
 static int
-kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
-	kauth_cred_t cred, int flags)
+kqueue_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
+    int flags)
 {
 
 	return (ENXIO);

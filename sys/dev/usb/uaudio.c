@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.99.2.1 2006/06/21 15:07:44 yamt Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.99.2.2 2006/12/30 20:49:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.99.2.1 2006/06/21 15:07:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.99.2.2 2006/12/30 20:49:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,6 +354,7 @@ Static const struct audio_hw_if uaudio_hw_if = {
 	uaudio_trigger_output,
 	uaudio_trigger_input,
 	NULL,
+	NULL,
 };
 
 Static struct audio_device uaudio_device = {
@@ -615,7 +616,8 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 }
 
 Static char *
-uaudio_id_name(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
+uaudio_id_name(struct uaudio_softc *sc,
+    const struct io_terminal *iot, int id)
 {
 	static char tbuf[32];
 
@@ -721,7 +723,8 @@ uaudio_add_input(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 }
 
 Static void
-uaudio_add_output(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
+uaudio_add_output(struct uaudio_softc *sc,
+    const struct io_terminal *iot, int id)
 {
 #ifdef UAUDIO_DEBUG
 	const struct usb_audio_output_terminal *d;
@@ -2616,9 +2619,10 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 	 */
 	if (as->asf1desc->bSamFreqType != 1) {
 		err = uaudio_set_speed(sc, endpt, ch->sample_rate);
-		if (err)
+		if (err) {
 			DPRINTF(("uaudio_chan_open: set_speed failed err=%s\n",
 				 usbd_errstr(err)));
+		}
 	}
 
 	ch->pipe = 0;

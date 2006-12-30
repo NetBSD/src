@@ -1,4 +1,4 @@
-/* $NetBSD: ecma167-udf.h,v 1.2.16.2 2006/06/21 15:09:36 yamt Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.2.16.3 2006/12/30 20:50:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004, 2005, 2006 Reinoud Zandijk <reinoud@netbsd.org>
@@ -180,6 +180,7 @@ struct long_ad {
 		struct UDF_ADImp_use im_used;
 	} __packed impl;
 } __packed;
+#define longad_uniqueid impl.im_used.unique_id
 
 
 /* Extended Allocation Descriptor [4/14.14.3] ; identifies an extent of allocation descriptors ; also in UDF ? */
@@ -478,6 +479,14 @@ struct udf_sparing_table {
 } __packed;
 
 
+#define UDF_NO_PREV_VAT		0xffffffff
+/* UDF 1.50 VAT suffix [UDF 2.2.10 (UDF 1.50 spec)] */
+struct udf_oldvat_tail {
+	struct regid		id;			/* "*UDF Virtual Alloc Tbl" */
+	uint32_t		prev_vat;
+} __packed;
+
+
 /* VAT table [UDF 2.0.1/2.2.10] */
 struct udf_vat {
 	uint16_t		header_len;
@@ -653,7 +662,6 @@ struct impl_extattr_entry {
 	struct extattr_entry    hdr;
 	uint32_t		iu_l;
 	struct regid		imp_id;
-	uint16_t		cksum;		/* UDF: of header */
 	uint8_t			data[1];
 } __packed;
 
@@ -674,6 +682,7 @@ struct filetimes_extattr_entry {
 	uint32_t		existence;	/* bitmask */
 	struct timestamp	times[1];	/* in order of assending bits */
 } __packed;
+#define UDF_FILETIMES_ATTR_NO	5
 
 
 /* Device Specification Extended Attribute [4/4.10.7] */
@@ -683,6 +692,16 @@ struct device_extattr_entry {
 	uint32_t		major;
 	uint32_t		minor;
 	uint8_t			data[1];	/* UDF: if nonzero length, contain developer ID regid */
+} __packed;
+#define UDF_DEVICESPEC_ATTR_NO	12
+
+
+/* VAT LV extension Extended Attribute [UDF 3.3.4.5.1.3] 1.50 errata */
+struct vatlvext_extattr_entry {
+	uint64_t		unique_id_chk;	/* needs to be copy of ICB's */
+	uint32_t		num_files;
+	uint32_t		num_directories;
+	char			logvol_id[128];	/* replaces logvol name */
 } __packed;
 
 

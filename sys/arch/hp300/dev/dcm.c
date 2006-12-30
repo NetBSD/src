@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.66.4.1 2006/06/21 14:51:23 yamt Exp $	*/
+/*	$NetBSD: dcm.c,v 1.66.4.2 2006/12/30 20:45:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.66.4.1 2006/06/21 14:51:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.66.4.2 2006/12/30 20:45:56 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -386,10 +386,10 @@ dcmmatch(struct device *parent, struct cfdata *match, void *aux)
 	switch (da->da_id) {
 	case DIO_DEVICE_ID_DCM:
 	case DIO_DEVICE_ID_DCMREM:
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -535,10 +535,10 @@ dcmopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (brd >= dcm_cd.cd_ndevs || port >= NDCMPORT ||
 	    (sc = dcm_cd.cd_devs[brd]) == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	if ((sc->sc_flags & DCM_ACTIVE) == 0)
-		return (ENXIO);
+		return ENXIO;
 
 	if (sc->sc_tty[port] == NULL) {
 		tp = sc->sc_tty[port] = ttymalloc();
@@ -550,9 +550,7 @@ dcmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_param = dcmparam;
 	tp->t_dev = dev;
 
-	if ((tp->t_state & TS_ISOPEN) &&
-	    (tp->t_state & TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -609,7 +607,7 @@ dcmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	error = (*tp->t_linesw->l_open)(dev, tp);
 
  bad:
-	return (error);
+	return error;
 }
 
 /*ARGSUSED*/
@@ -646,7 +644,7 @@ dcmclose(dev_t dev, int flag, int mode, struct lwp *l)
 	ttyfree(tp);
 	sc->sc_tty[port] == NULL;
 #endif
-	return (0);
+	return 0;
 }
 
 static int
@@ -663,7 +661,7 @@ dcmread(dev_t dev, struct uio *uio, int flag)
 	sc = dcm_cd.cd_devs[board];
 	tp = sc->sc_tty[port];
 
-	return ((*tp->t_linesw->l_read)(tp, uio, flag));
+	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
 static int
@@ -680,7 +678,7 @@ dcmwrite(dev_t dev, struct uio *uio, int flag)
 	sc = dcm_cd.cd_devs[board];
 	tp = sc->sc_tty[port];
 
-	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 static int
@@ -697,7 +695,7 @@ dcmpoll(dev_t dev, int events, struct lwp *l)
 	sc = dcm_cd.cd_devs[board];
 	tp = sc->sc_tty[port];
 
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
 static struct tty *
@@ -712,7 +710,7 @@ dcmtty(dev_t dev)
 
 	sc = dcm_cd.cd_devs[board];
 
-	return (sc->sc_tty[port]);
+	return sc->sc_tty[port];
 }
 
 static int
@@ -732,7 +730,7 @@ dcmintr(void *arg)
 	SEM_LOCK(dcm);
 	if ((dcm->dcm_ic & IC_IR) == 0) {
 		SEM_UNLOCK(dcm);
-		return (0);
+		return 0;
 	}
 	for (i = 0; i < 4; i++) {
 		pcnd[i] = dcm->dcm_icrtab[i].dcm_data;
@@ -789,7 +787,7 @@ dcmintr(void *arg)
 	 * See if it is time to check/change the interrupt rate.
 	 */
 	if (dcmistype < 0 &&
-	    (i = time.tv_sec - dis->dis_time) >= dcminterval) {
+	    (i = time_second - dis->dis_time) >= dcminterval) {
 		/*
 		 * If currently per-character and averaged over 70 interrupts
 		 * per-second (66 is threshold of 600 baud) in last interval,
@@ -813,9 +811,9 @@ dcmintr(void *arg)
 			dcmrint(sc);
 		}
 		dis->dis_intr = dis->dis_char = 0;
-		dis->dis_time = time.tv_sec;
+		dis->dis_time = time_second;
 	}
-	return (1);
+	return 1;
 }
 
 /*
@@ -1019,11 +1017,11 @@ dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
-		return (error);
+		return error;
 
 	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
-		return (error);
+		return error;
 
 	switch (cmd) {
 	case TIOCSBRK:
@@ -1087,8 +1085,8 @@ dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case TIOCSFLAGS: {
 		int userbits;
 
-		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
-		if (error)
+		if (kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp))
 			return (EPERM);
 
 		userbits = *(int *)data;
@@ -1105,9 +1103,9 @@ dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	}
 
 	default:
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 	}
-	return (0);
+	return 0;
 }
 
 static int
@@ -1127,14 +1125,14 @@ dcmparam(struct tty *tp, struct termios *t)
 
 	/* check requested parameters */
 	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
-		return (EINVAL);
+		return EINVAL;
 	/* and copy to tty */
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = cflag;
 	if (ospeed == 0) {
-		(void) dcmmctl(DCMUNIT(tp->t_dev), MO_OFF, DMSET);
-		return (0);
+		(void)dcmmctl(DCMUNIT(tp->t_dev), MO_OFF, DMSET);
+		return 0;
 	}
 
 	mode = 0;
@@ -1184,7 +1182,7 @@ dcmparam(struct tty *tp, struct termios *t)
 	 * XXX why do we do this?
 	 */
 	DELAY(16 * DCM_USPERCH(tp->t_ospeed));
-	return (0);
+	return 0;
 }
 
 static void
@@ -1385,7 +1383,7 @@ dcmmctl(dev_t dev, int bits, int how)
 		DELAY(10); /* delay until done */
 		splx(s);
 	}
-	return (bits);
+	return bits;
 }
 
 /*
@@ -1531,7 +1529,7 @@ dcmselftest(struct dcm_softc *sc)
 
  out:
 	splx(s);
-	return (rv);
+	return rv;
 }
 
 /*
@@ -1547,7 +1545,7 @@ dcmcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	int maj;
 
 	if (bus_space_map(bst, addr, DIOCSIZE, 0, &bsh))
-		return (1);
+		return 1;
 
 	va = bus_space_vaddr(bst, bsh);
 	dcm = (struct dcmdevice *)va;
@@ -1597,11 +1595,11 @@ dcmcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 #endif
 
 
-	return (0);
+	return 0;
 
 error:
 	bus_space_unmap(bst, bsh, DIOCSIZE);
-	return (1);
+	return 1;
 }
 
 /* ARGSUSED */
@@ -1633,7 +1631,7 @@ dcmcngetc(dev_t dev)
 	stat = fifo->data_stat;
 	pp->r_head = (head + 2) & RX_MASK;
 	splx(s);
-	return (c);
+	return c;
 }
 
 /*

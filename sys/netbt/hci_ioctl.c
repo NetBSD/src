@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -107,11 +107,11 @@ hci_dump(void)
 		    BDADDR(chan->lc_raddr.bt_bdaddr));
 		LIST_FOREACH(dlc, &rs->rs_dlcs, rd_next) {
 			printf("+DLC channel=%d, dlci=%d, "
-			    "state=%d, flags=0x%4.4x, rxcred=%d, rxsize=%d, "
+			    "state=%d, flags=0x%4.4x, rxcred=%d, rxsize=%ld, "
 			    "txcred=%d, pending=%d, txqlen=%d\n",
 			    dlc->rd_raddr.bt_channel, dlc->rd_dlci,
 			    dlc->rd_state, dlc->rd_flags,
-			    dlc->rd_rxcred, dlc->rd_rxsize,
+			    dlc->rd_rxcred, (unsigned long)dlc->rd_rxsize,
 			    dlc->rd_txcred, dlc->rd_pending,
 			    (dlc->rd_txbuf ? dlc->rd_txbuf->m_pkthdr.len : 0));
 		}
@@ -132,7 +132,7 @@ hci_dump(void)
 #endif
 
 int
-hci_ioctl(unsigned long cmd, void *data, struct proc *p)
+hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 {
 	struct btreq *btr = data;
 	struct hci_unit *unit;
@@ -174,6 +174,7 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 	case SIOCSBTPTYPE:
 	case SIOCGBTSTATS:
 	case SIOCZBTSTATS:
+	case SIOCSBTSCOMTU:
 		SIMPLEQ_FOREACH(unit, &hci_unit_list, hci_next) {
 			if (strncmp(unit->hci_devname, btr->btr_name,
 			    HCI_DEVNAME_SIZE) == 0)
@@ -221,7 +222,8 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 		break;
 
 	case SIOCSBTFLAGS:	/* set unit flags (privileged) */
-		err = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		err = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (err)
 			break;
 
@@ -250,7 +252,8 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 		break;
 
 	case SIOCSBTPOLICY:	/* set unit link policy (privileged) */
-		err = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		err = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (err)
 			break;
 
@@ -260,7 +263,8 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 		break;
 
 	case SIOCSBTPTYPE:	/* set unit packet types (privileged) */
-		err = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		err = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (err)
 			break;
 
@@ -277,7 +281,8 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 		break;
 
 	case SIOCZBTSTATS:	/* get & reset unit statistics */
-		err = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		err = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (err)
 			break;
 
@@ -287,6 +292,21 @@ hci_ioctl(unsigned long cmd, void *data, struct proc *p)
 		memset(&unit->hci_stats, 0, sizeof(struct bt_stats));
 		splx(s);
 
+		break;
+
+	case SIOCSBTSCOMTU:	/* set sco_mtu value for unit */
+		/*
+		 * This is a temporary ioctl and may not be supported
+		 * in the future. The need is that if SCO packets are
+		 * sent to USB bluetooth controllers that are not an
+		 * integer number of frame sizes, the USB bus locks up.
+		 */
+		err = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		if (err)
+			break;
+
+		unit->hci_max_sco_size = btr->btr_sco_mtu;
 		break;
 
 	default:

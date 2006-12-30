@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.58.2.1 2006/06/21 15:04:21 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.58.2.2 2006/12/30 20:48:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58.2.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58.2.2 2006/12/30 20:48:26 yamt Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -237,7 +237,7 @@ void fdgetdisklabel(struct fd_softc *);
 int fd_get_parms(struct fd_softc *);
 void fdstart(struct fd_softc *);
 
-struct dkdriver fddkdriver = { fdstrategy };
+struct dkdriver fddkdriver = { fdstrategy, NULL };
 
 #if defined(i386)
 const struct fd_type *fd_nvtotype(char *, int, int);
@@ -697,20 +697,14 @@ fdfinish(fd, bp)
 }
 
 int
-fdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+fdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-fdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+fdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -816,11 +810,7 @@ out_fdc(iot, ioh, x)
 }
 
 int
-fdopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct lwp *l;
+fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct fd_softc *fd;
 	const struct fd_type *type;
@@ -846,11 +836,7 @@ fdopen(dev, flags, mode, l)
 }
 
 int
-fdclose(dev, flags, mode, l)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct lwp *l;
+fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
 
@@ -1567,8 +1553,7 @@ fdformat(dev, finfo, l)
  * floppy.
  */
 void
-fd_mountroot_hook(dev)
-	struct device *dev;
+fd_mountroot_hook(struct device *dev)
 {
 	int c;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_iic.c,v 1.1.16.2 2006/06/21 14:50:54 yamt Exp $	*/
+/*	$NetBSD: nslu2_iic.c,v 1.1.16.3 2006/12/30 20:45:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -187,9 +187,8 @@ slugiic_deferred_attach(struct device *device)
 	reg |= GPIO_I2C_SDA_BIT;
 	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOER, reg);
 
-	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_ic;
-	(void) config_found(&sc->sc_dev, &iba, iicbus_print);
+	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }
 
 static int

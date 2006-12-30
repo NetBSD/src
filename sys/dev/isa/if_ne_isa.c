@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isa.c,v 1.20 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: if_ne_isa.c,v 1.20.4.1 2006/12/30 20:48:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.20 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.20.4.1 2006/12/30 20:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,10 +83,8 @@ CFATTACH_DECL(ne_isa, sizeof(struct ne_isa_softc),
     ne_isa_match, ne_isa_attach, NULL, NULL);
 
 int
-ne_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ne_isa_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t nict = ia->ia_iot;
@@ -141,9 +139,7 @@ ne_isa_match(parent, match, aux)
 }
 
 void
-ne_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ne_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ne_isa_softc *isc = (struct ne_isa_softc *)self;
 	struct ne2000_softc *nsc = &isc->sc_ne2000;

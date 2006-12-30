@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.28.2.1 2006/06/21 14:57:34 yamt Exp $	*/
+/*	$NetBSD: ka650.c,v 1.28.2.2 2006/12/30 20:47:14 yamt Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.28.2.1 2006/06/21 14:57:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.28.2.2 2006/12/30 20:47:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -76,8 +76,8 @@ struct	cpu_dep	ka650_calls = {
 	uvaxIII_mchk,
 	uvaxIII_memerr,
 	uvaxIII_conf,
-	generic_clkread,
-	generic_clkwrite,
+	generic_gettime,
+	generic_settime,
 	4,      /* ~VUPS */
 	2,	/* SCB pages */
 	ka650_halt,

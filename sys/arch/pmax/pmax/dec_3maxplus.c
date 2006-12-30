@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.51.10.1 2006/06/21 14:54:48 yamt Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.51.10.2 2006/12/30 20:46:43 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.51.10.1 2006/06/21 14:54:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.51.10.2 2006/12/30 20:46:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,15 +126,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.51.10.1 2006/06/21 14:54:48 yamt 
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/memc.h>
 
-#ifdef WSCONS
 #include <dev/ic/z8530sc.h>
 #include <dev/tc/zs_ioasicvar.h>
 #include <pmax/pmax/cons.h>
 #include "wsdisplay.h"
-#else
-#include <pmax/tc/sccvar.h>
-#include "rasterconsole.h"
-#endif
 
 void		dec_3maxplus_init __P((void));		/* XXX */
 static void	dec_3maxplus_bus_reset __P((void));
@@ -152,6 +147,25 @@ static unsigned	kn03_clkread __P((void));
  */
 static u_int32_t kn03_tc3_imask;
 static unsigned latched_cycle_cnt;
+
+static const int dec_3maxplus_ipl2spl_table[] = {
+	[IPL_NONE] = 0,
+	[IPL_SOFT] = _SPL_SOFT,
+	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
+	[IPL_SOFTNET] = _SPL_SOFTNET,
+	[IPL_SOFTSERIAL] = _SPL_SOFTSERIAL,
+	/*
+	 * 3MAX+ IOASIC interrupts come through INT 0, while
+	 * clock interrupt does via INT 1.  splclock and splstatclock
+	 * should block IOASIC activities.
+	 */
+	[IPL_BIO] = MIPS_SPL0,
+	[IPL_NET] = MIPS_SPL0,
+	[IPL_TTY] = MIPS_SPL0,
+	[IPL_VM] = MIPS_SPL0,
+	[IPL_CLOCK] = MIPS_SPL_0_1,
+	[IPL_STATCLOCK] = MIPS_SPL_0_1,
+};
 
 void
 dec_3maxplus_init()
@@ -173,17 +187,7 @@ dec_3maxplus_init()
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KN03_SYS_ASIC);
 
-	/*
-	 * 3MAX+ IOASIC interrupts come through INT 0, while
-	 * clock interrupt does via INT 1.  splclock and splstatclock
-	 * should block IOASIC activities.
-	 */
-	splvec.splbio = MIPS_SPL0;
-	splvec.splnet = MIPS_SPL0;
-	splvec.spltty = MIPS_SPL0;
-	splvec.splvm = MIPS_SPL0;
-	splvec.splclock = MIPS_SPL_0_1;
-	splvec.splstatclock = MIPS_SPL_0_1;
+	ipl2spl_table = dec_3maxplus_ipl2spl_table;
 
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_1);
@@ -247,13 +251,6 @@ dec_3maxplus_cons_init()
 			zs_ioasic_lk201_cnattach(ioasic_base, 0x180000, 0);
  			return;
  		}
-#elif NRASTERCONSOLE > 0
-		extern int tcfb_cnattach __P((int));		/* XXX */
-
-		if (tcfb_cnattach(crt) > 0) {
-			scc_lk201_cnattach(ioasic_base, 0x180000);
-			return;
-		}
 #endif
 		printf("No framebuffer device configured for slot %d: ", crt);
 		printf("using serial console\n");
@@ -265,11 +262,7 @@ dec_3maxplus_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
-#ifdef WSCONS
 	zs_ioasic_cnattach(ioasic_base, 0x180000, 1);
-#else
-	scc_cnattach(ioasic_base, 0x180000);
-#endif
 }
 
 static void

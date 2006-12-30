@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.86.2.1 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.86.2.2 2006/12/30 20:51:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.86.2.1 2006/06/21 15:12:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.86.2.2 2006/12/30 20:51:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,8 +150,8 @@ lfs_fits_buf(struct lfs *fs, int n, int bytes)
 
 /* ARGSUSED */
 int
-lfs_reservebuf(struct lfs *fs, struct vnode *vp, struct vnode *vp2,
-    int n, int bytes)
+lfs_reservebuf(struct lfs *fs, struct vnode *vp,
+    struct vnode *vp2, int n, int bytes)
 {
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(locked_queue_rcount >= 0);
@@ -199,7 +199,8 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp, struct vnode *vp2,
  * vnode re-using strategies.
  */
 int
-lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
+lfs_reserveavail(struct lfs *fs, struct vnode *vp,
+    struct vnode *vp2, int fsb)
 {
 	CLEANERINFO *cip;
 	struct buf *bp;
@@ -238,8 +239,7 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 		/* Wake up the cleaner */
 		LFS_CLEANERINFO(cip, fs, bp);
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
-		wakeup(&lfs_allclean_wakeup);
-		wakeup(&fs->lfs_nextseg);
+		lfs_wakeup_cleaner(fs);
 
 		simple_lock(&fs->lfs_interlock);
 		/* Cleaner might have run while we were reading, check again */
@@ -253,8 +253,8 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 		vn_lock(vp2, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
 #endif
 		if (error) {
-			return error;
 			simple_unlock(&fs->lfs_interlock);
+			return error;
 		}
 	}
 #ifdef DEBUG
@@ -424,8 +424,7 @@ lfs_availwait(struct lfs *fs, int fsb)
 		      "waiting on cleaner\n"));
 #endif
 
-		wakeup(&lfs_allclean_wakeup);
-		wakeup(&fs->lfs_nextseg);
+		lfs_wakeup_cleaner(fs);
 #ifdef DIAGNOSTIC
 		if (LFS_SEGLOCK_HELD(fs))
 			panic("lfs_availwait: deadlock");
@@ -834,15 +833,35 @@ lfs_countlocked(int *count, long *bytes, const char *msg)
 	 * Theoretically this function never really does anything.
 	 * Give a warning if we have to fix the accounting.
 	 */
-	if (n != *count)
+	if (n != *count) {
 		DLOG((DLOG_LLIST, "lfs_countlocked: %s: adjusted buf count"
 		      " from %d to %d\n", msg, *count, n));
-	if (size != *bytes)
+	}
+	if (size != *bytes) {
 		DLOG((DLOG_LLIST, "lfs_countlocked: %s: adjusted byte count"
 		      " from %ld to %ld\n", msg, *bytes, size));
+	}
 	*count = n;
 	*bytes = size;
 	simple_unlock(&bqueue_slock);
 	splx(s);
 	return;
+}
+
+int
+lfs_wait_pages(void)
+{
+	int active, inactive;
+
+	uvm_estimatepageable(&active, &inactive);
+	return LFS_WAIT_RESOURCE(active + inactive + uvmexp.free, 1);
+}
+
+int
+lfs_max_pages(void)
+{
+	int active, inactive;
+
+	uvm_estimatepageable(&active, &inactive);
+	return LFS_MAX_RESOURCE(active + inactive + uvmexp.free, 1);
 }

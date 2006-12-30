@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.14.1 2006/06/21 14:52:58 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.14.2 2006/12/30 20:46:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -135,7 +135,25 @@ void	_setsoftintr(int);
 #endif /* _LKM */
 
 #define	splsoft()	_splraise(IPL_SOFT)
-#define	splraiseipl(x)	_splraise(x)
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._ipl);
+}
 
 #define	spl0()		_spllower(IPL_NONE)
 #define	spllowersoftclock() _spllower(IPL_SOFTCLOCK)

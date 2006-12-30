@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.94.4.1 2006/06/21 15:09:37 yamt Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.94.4.2 2006/12/30 20:50:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.94.4.1 2006/06/21 15:09:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.94.4.2 2006/12/30 20:50:05 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -367,12 +367,15 @@ static struct timecounter intr_timecounter = {
 	~0u,			/* counter_mask */
 	0,		        /* frequency */
 	"clockinterrupt",	/* name */
-	0			/* quality - minimum implementation level for a clock */
+	0,			/* quality - minimum implementation level for a clock */
+	NULL,			/* prev */
+	NULL,			/* next */
 };
 
 static u_int
 get_intr_timecount(struct timecounter *tc)
 {
+
 	return (u_int)hardclock_ticks;
 }
 #endif

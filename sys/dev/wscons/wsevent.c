@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.16.16.1 2006/06/21 15:08:12 yamt Exp $ */
+/* $NetBSD: wsevent.c,v 1.16.16.2 2006/12/30 20:49:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.16.16.1 2006/06/21 15:08:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.16.16.2 2006/12/30 20:49:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -330,7 +330,7 @@ wsevent_wakeup(struct wseventvar *ev)
 }
 
 /*
- * Injects the set of events given in 'events', whose size is 'nevenets',
+ * Injects the set of events given in 'events', whose size is 'nevents',
  * into the 'ev' queue.  If there is not enough free space to inject them
  * all, returns ENOSPC and the queue is left intact; otherwise returns 0
  * and wakes up all listeners.

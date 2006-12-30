@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.11.6.1 2006/06/21 14:47:47 yamt Exp $
+# $NetBSD: INSTALL,v 1.11.6.2 2006/12/30 20:45:18 yamt Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -23,7 +23,7 @@ options 	CPU_ARM3
 ## such that gdb(1) can be used on a kernel coredump.
 #makeoptions	DEBUG="-g"
 
-makeoptions	COPTS="-Os -fno-inline -fomit-frame-pointer -mno-apcs-frame"
+makeoptions	COPTS="-Os -fno-inline"
 
 # File systems
 file-system	FFS		# Fast file system
@@ -68,11 +68,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -105,9 +102,6 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Disable kernel security.
 #options 	INSECURE
-
-# Reduce kernel size a little
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # NFS boot options
 #options 	NFS_BOOT_DHCP		# superset of BOOTP
@@ -164,6 +158,9 @@ atabus* 	at dtide? channel ?	# ATA bus
 
 hcide*		at podulebus0 slot ?	# HCCS IDE interface
 atabus* 	at hcide? channel ?	# ATA bus
+
+sec*		at podulebus0 slot ?	# Acorn SCSI interface
+scsibus*	at sec?
 
 hcsc*		at podulebus0 slot ?	# HCCS 8-bit SCSI interface
 scsibus*	at hcsc?

@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.32.2.1 2006/06/21 15:06:14 yamt Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.32.2.2 2006/12/30 20:49:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,10 +46,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.32.2.1 2006/06/21 15:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.32.2.2 2006/12/30 20:49:18 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -78,10 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.32.2.1 2006/06/21 15:06:14 yamt Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -177,10 +172,8 @@ void	mhzc_disable(struct mhzc_softc *, int);
 int	mhzc_intr(void *);
 
 int
-mhzc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mhzc_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -191,9 +184,7 @@ mhzc_match(parent, match, aux)
 }
 
 void
-mhzc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mhzc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mhzc_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -672,10 +663,8 @@ int	com_mhzc_enable(struct com_softc *);
 void	com_mhzc_disable(struct com_softc *);
 
 int
-com_mhzc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+com_mhzc_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	extern struct cfdriver com_cd;
 	const char *name = aux;
@@ -688,21 +677,20 @@ com_mhzc_match(parent, match, aux)
 }
 
 void
-com_mhzc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_mhzc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (void *)self;
 	struct mhzc_softc *msc = (void *)parent;
 
 	aprint_normal("\n");
 
-	sc->sc_iot = msc->sc_modem_pcioh.iot;
-	sc->sc_ioh = msc->sc_modem_pcioh.ioh;
+	COM_INIT_REGS(sc->sc_regs, 
+	    msc->sc_modem_pcioh.iot,
+	    msc->sc_modem_pcioh.ioh,
+	    -1);
 
 	sc->enabled = 1;
 
-	sc->sc_iobase = -1;
 	sc->sc_frequency = COM_FREQ;
 
 	sc->enable = com_mhzc_enable;
@@ -749,10 +737,8 @@ int	sm_mhzc_enable(struct smc91cxx_softc *);
 void	sm_mhzc_disable(struct smc91cxx_softc *);
 
 int
-sm_mhzc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sm_mhzc_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	extern struct cfdriver sm_cd;
 	const char *name = aux;
@@ -765,9 +751,7 @@ sm_mhzc_match(parent, match, aux)
 }
 
 void
-sm_mhzc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sm_mhzc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct smc91cxx_softc *sc = (void *)self;
 	struct mhzc_softc *msc = (void *)parent;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.17.2.1 2006/06/21 15:02:51 yamt Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.17.2.2 2006/12/30 20:48:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.17.2.1 2006/06/21 15:02:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.17.2.2 2006/12/30 20:48:00 yamt Exp $");
 
 #include "opt_i2o.h"
 #include "rnd.h"
@@ -117,7 +117,8 @@ static const char * const ld_iop_errors[] = {
 #endif
 
 static int
-ld_iop_match(struct device *parent, struct cfdata *match, void *aux)
+ld_iop_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct iop_attach_args *ia;
 

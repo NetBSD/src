@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.7.12.1 2006/06/21 14:51:03 yamt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.7.12.2 2006/12/30 20:45:51 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.7.12.1 2006/06/21 14:51:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.7.12.2 2006/12/30 20:45:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,9 +64,9 @@ pchb_match(struct device *parent, struct cfdata *match, void *aux)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST) {
 		switch (PCI_VENDOR(pa->pa_id)) {
-		case PCI_VENDOR_GALILEO:
+		case PCI_VENDOR_MARVELL:
 			switch (PCI_PRODUCT(pa->pa_id)) {
-			case PCI_PRODUCT_GALILEO_GT64120:
+			case PCI_PRODUCT_MARVELL_GT64120:
 				return (!pcifound);
 			}
 			break;
@@ -89,8 +89,8 @@ pchb_attach(struct device *parent, struct device *self, void *aux)
 	 * might want to add code that does something that's
 	 * possibly chipset-specific.
 	 */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_GALILEO &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_GALILEO_GT64120) {
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_MARVELL &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MARVELL_GT64120) {
 		/* Bah, same product ID... */
 
 		/*

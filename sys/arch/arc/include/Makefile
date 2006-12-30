@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.25 2004/05/08 21:51:47 kleink Exp $
+#	$NetBSD: Makefile,v 1.25.12.1 2006/12/30 20:45:29 yamt Exp $
 
 INCSDIR= /usr/include/arc
 
 # Header files which are needed from userland.
 
-INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
+INCS=	ansi.h aout_machdep.h asm.h \
 	bswap.h bsd-aout.h \
 	cdefs.h cpu.h \
-	disklabel.h display.h \
+	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
 	float.h \
 	ieee.h ieeefp.h \

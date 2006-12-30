@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.58 2003/01/19 16:41:46 thorpej Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.58.18.1 2006/12/30 20:47:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.58 2003/01/19 16:41:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.58.18.1 2006/12/30 20:47:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.58 2003/01/19 16:41:46 thorp
 /* Not used on: alpha, m68k, sparc, sparc64 */
 
 int
-linux_sys_oldolduname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_oldolduname(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct linux_sys_uname_args /* {
 		syscallarg(struct linux_oldoldutsname *) up;

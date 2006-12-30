@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.108.2.1 2006/06/21 15:06:28 yamt Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.108.2.2 2006/12/30 20:49:30 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.108.2.1 2006/06/21 15:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.108.2.2 2006/12/30 20:49:30 yamt Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -462,7 +462,7 @@ rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
 	for (i = 0; i < raidPtr->numEmergencyBuffers; i++) {
 		tmpbuf = malloc( raidPtr->Layout.sectorsPerStripeUnit <<
 				 raidPtr->logBytesPerSector,
-				 M_RAIDFRAME, M_NOWAIT);
+				 M_RAIDFRAME, M_WAITOK);
 		if (tmpbuf) {
 			vple = rf_AllocVPListElem();
 			vple->p= tmpbuf;
@@ -472,7 +472,7 @@ rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
 		} else {
 			printf("raid%d: failed to allocate emergency buffer!\n",
 			       raidPtr->raidid);
-			break;
+			return 1;
 		}
 	}
 
@@ -481,7 +481,7 @@ rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
         for (i = 0; i < raidPtr->numEmergencyStripeBuffers; i++) {
                 tmpbuf = malloc( raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit <<
                                  raidPtr->logBytesPerSector),
-                                 M_RAIDFRAME, M_NOWAIT);
+                                 M_RAIDFRAME, M_WAITOK);
                 if (tmpbuf) {
                         vple = rf_AllocVPListElem();
                         vple->p= tmpbuf;
@@ -491,7 +491,7 @@ rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
                 } else {
                         printf("raid%d: failed to allocate emergency stripe buffer!\n",
                                raidPtr->raidid);
-			break;
+			return 1;
                 }
         }
 

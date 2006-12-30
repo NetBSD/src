@@ -1,4 +1,4 @@
-/*	$NetBSD: com_frodo.c,v 1.3 2004/08/28 17:37:00 thorpej Exp $	*/
+/*	$NetBSD: com_frodo.c,v 1.3.12.1 2006/12/30 20:45:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.3 2004/08/28 17:37:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.3.12.1 2006/12/30 20:45:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,10 +146,8 @@ com_frodo_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map i/o space\n");
 		return;
 	}
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, fa->fa_base + fa->fa_offset);
 
-	sc->sc_iot = iot;
-	sc->sc_ioh = ioh;
-	sc->sc_iobase = fa->fa_base + fa->fa_offset;
 	sc->sc_frequency = COM_FRODO_FREQ;
 	SET(sc->sc_hwflags, COM_HW_NOIEN);
 

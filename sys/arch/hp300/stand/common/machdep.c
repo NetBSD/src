@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2005/02/20 13:59:27 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12.4.1 2006/12/30 20:45:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -99,12 +99,16 @@ getmachineid(void)
 		cp = "350"; break;
 	case HP_360:
 		cp = "360"; break;
+	case HP_362:
+		cp = "362"; break;
 	case HP_370:
 		cp = "370"; break;
 	case HP_375:
 		cp = "375"; break;
 	case HP_380:
 		cp = "380"; break;
+	case HP_382:
+		cp = "382"; break;
 	case HP_385:
 		cp = "385"; break;
 	case HP_400:

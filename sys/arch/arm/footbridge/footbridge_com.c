@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.15.18.1 2006/06/21 14:49:16 yamt Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.15.18.2 2006/12/30 20:45:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.15.18.1 2006/06/21 14:49:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.15.18.2 2006/12/30 20:45:32 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -227,7 +227,6 @@ fcomopen(dev, flag, mode, l)
 	int flag, mode;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	struct fcom_softc *sc;
 	int unit = minor(dev);
 	struct tty *tp;
@@ -252,6 +251,10 @@ fcomopen(dev, flag, mode, l)
 	tp->t_oproc = fcomstart;
 	tp->t_param = fcomparam;
 	tp->t_dev = dev;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	if (!(tp->t_state & TS_ISOPEN && tp->t_wopen == 0)) {
 		ttychars(tp);
 		tp->t_cflag = TTYDEF_CFLAG;
@@ -271,9 +274,7 @@ fcomopen(dev, flag, mode, l)
 
 		fcomparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state&TS_XCLUDE) &&
-		   kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
-		return EBUSY;
+	}
 	tp->t_state |= TS_CARR_ON;
 
 	return (*tp->t_linesw->l_open)(dev, tp);
@@ -349,7 +350,6 @@ fcomioctl(dev, cmd, data, flag, l)
 	int flag;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
@@ -366,7 +366,8 @@ fcomioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag); 
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp); 
 		if (error)
 			return (error); 
 		sc->sc_swflags = *(int *)data;

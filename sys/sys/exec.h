@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.109.2.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: exec.h,v 1.109.2.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -221,6 +221,7 @@ struct exec_vmcmd {
 #define	VMCMD_RELATIVE	0x0001	/* ev_addr is relative to base entry */
 #define	VMCMD_BASE	0x0002	/* marks a base entry */
 #define	VMCMD_FIXED	0x0004	/* entry must be mapped at ev_addr */
+#define	VMCMD_STACK	0x0008	/* entry is for a stack */
 };
 
 #ifdef _KERNEL
@@ -246,7 +247,7 @@ int	copyargs		(struct lwp *, struct exec_package *,
 void	setregs			(struct lwp *, struct exec_package *, u_long);
 int	check_veriexec		(struct lwp *, struct vnode *,
 				     struct exec_package *, int);
-int	check_exec		(struct lwp *, struct exec_package *, int);
+int	check_exec		(struct lwp *, struct exec_package *);
 int	exec_init		(int);
 int	exec_read_from		(struct lwp *, struct vnode *, u_long off,
 				    void *, size_t);

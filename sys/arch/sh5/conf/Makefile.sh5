@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh5,v 1.15 2005/05/31 04:03:11 christos Exp $
+#	$NetBSD: Makefile.sh5,v 1.15.2.1 2006/12/30 20:46:55 yamt Exp $
 
 # Makefile for NetBSD/sh5
 #
@@ -62,7 +62,7 @@ SH5_ENDIAN_LD=	shelf${SH5_ABI}_nbsd
 .endif
 
 CPPFLAGS+=	-D__NetBSD__ -D${MACHINE} ${SH5_ABI_DEF}
-CFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
+CFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu -mdiv=call
 AFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 

@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.28.2.1 2006/06/21 15:12:03 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.28.2.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 #include <sys/queue.h>
 #include <sys/callout.h>
+#include <sys/specificdata.h>
 
 struct	lwp {
 	struct	lwp *l_forw;		/* Doubly-linked run/sleep queue. */
@@ -58,11 +59,16 @@ struct	lwp {
 
 	struct cpu_info * volatile l_cpu; /* CPU we're running on if
 					       SONPROC */
+	specificdata_reference
+		l_specdataref;	/* subsystem lwp-specific data */
+
 	int	l_flag;
 	int	l_stat;
 	lwpid_t	l_lid;		/* LWP identifier; local to process. */
 
-#define l_startzero l_swtime
+#define l_startzero l_cred
+	struct kauth_cred *l_cred;	/* Cached credentials */
+	u_short	l_acflag;	/* Accounting flags */
 	u_int	l_swtime;	/* Time swapped in or out. */
 	u_int	l_slptime;	/* Time since last blocked. */
 
@@ -105,7 +111,6 @@ LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 #ifdef _KERNEL
 extern struct lwplist alllwp;		/* List of all LWPs. */
 
-extern struct pool lwp_pool;		/* memory pool for LWPs */
 extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
 
 extern struct lwp lwp0;			/* LWP for proc0 */
@@ -152,6 +157,11 @@ do {									\
 } while (/* CONSTCOND */ 0)
 #define	PRELE(l)	(--(l)->l_holdcnt)
 
+#define	LWP_CACHE_CREDS(l, p)						\
+do {									\
+	if ((l)->l_cred != (p)->p_cred)					\
+		lwp_update_creds(l);					\
+} while (/* CONSTCOND */ 0)
 
 void	preempt (int);
 int	mi_switch (struct lwp *, struct lwp *);
@@ -179,6 +189,7 @@ int newlwp(struct lwp *, struct proc *, vaddr_t, int /* XXX boolean_t */, int,
 
 /* Flags for _lwp_wait1 */
 #define LWPWAIT_EXITCONTROL	0x00000001
+void	lwpinit(void);
 int 	lwp_wait1(struct lwp *, lwpid_t, lwpid_t *, int);
 void	lwp_continue(struct lwp *);
 void	cpu_setfunc(struct lwp *, void (*)(void *), void *);
@@ -189,6 +200,17 @@ void	lwp_exit2 (struct lwp *);
 struct lwp *proc_representative_lwp(struct proc *);
 __inline int lwp_suspend(struct lwp *, struct lwp *);
 int	lwp_create1(struct lwp *, const void *, size_t, u_long, lwpid_t *);
+void	lwp_update_creds(struct lwp *);
+
+int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
+void	lwp_specific_key_delete(specificdata_key_t);
+void 	lwp_initspecific(struct lwp *);
+void 	lwp_finispecific(struct lwp *);
+void *	lwp_getspecific(specificdata_key_t);
+#if defined(_LWP_API_PRIVATE)
+void *	_lwp_getspecific_by_lwp(struct lwp *, specificdata_key_t);
+#endif
+void	lwp_setspecific(specificdata_key_t, void *);
 #endif	/* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */
@@ -198,4 +220,3 @@ int	lwp_create1(struct lwp *, const void *, size_t, u_long, lwpid_t *);
 #define __LWP_ASLWP     0x00000100 /* XXX more icky signal semantics */
 
 #endif	/* !_SYS_LWP_H_ */
-

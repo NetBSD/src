@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.17 2005/02/27 00:27:45 perry Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.17.4.1 2006/12/30 20:49:30 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.17 2005/02/27 00:27:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.17.4.1 2006/12/30 20:49:30 yamt Exp $");
 
 #include "rf_archs.h"
 
@@ -379,9 +379,9 @@ ReintegrateRegion(
     RF_ParityLog_t * coreLog)
 {
 	RF_MCPair_t *rrd_mcpair = NULL, *prd_mcpair, *pwr_mcpair;
-	RF_DagHeader_t *rrd_dag_h, *prd_dag_h, *pwr_dag_h;
-	RF_AllocListElem_t *rrd_alloclist, *prd_alloclist, *pwr_alloclist;
-	RF_PhysDiskAddr_t *rrd_pda, *prd_pda, *pwr_pda;
+	RF_DagHeader_t *rrd_dag_h = NULL, *prd_dag_h, *pwr_dag_h;
+	RF_AllocListElem_t *rrd_alloclist = NULL, *prd_alloclist, *pwr_alloclist;
+	RF_PhysDiskAddr_t *rrd_pda = NULL, *prd_pda, *pwr_pda;
 	caddr_t parityBuffer, regionBuffer = NULL;
 
 	/* Reintegrate a region (regionID).

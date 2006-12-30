@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.13.4.1 2006/06/21 15:02:11 yamt Exp $ */
+/*      $NetBSD: clockctl.c,v 1.13.4.2 2006/12/30 20:47:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.13.4.1 2006/06/21 15:02:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.13.4.2 2006/12/30 20:47:49 yamt Exp $");
 
 #include "opt_ntp.h"
 
@@ -57,7 +57,7 @@ dev_type_ioctl(clockctlioctl);
 
 const struct cdevsw clockctl_cdevsw = {
 	nullopen, nullclose, noread, nowrite, clockctlioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*ARGSUSED*/
@@ -69,12 +69,12 @@ clockctlattach(int num)
 }
 
 int
-clockctlioctl(dev, cmd, data, flags, l)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct lwp *l;
+clockctlioctl(
+    dev_t dev,
+    u_long cmd,
+    caddr_t data,
+    int flags,
+    struct lwp *l)
 {
 	int error = 0;
 

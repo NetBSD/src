@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile.sgimips.inc,v 1.9 2005/02/28 23:44:58 sekiya Exp $
+#	$NetBSD: Makefile.sgimips.inc,v 1.9.4.1 2006/12/30 20:46:51 yamt Exp $
 
 WANT_ECOFF?=no
 
 .if ${WANT_ECOFF} == "yes"
 SYSTEM_LD_TAIL_EXTRA=; \
-		echo ${OBJCOPY} --impure -O ecoff-bigmips \
-		  -R .pdr -R .mdebug.abi32 -R .comment -R .ident $@ $@.ecoff; \
-		${OBJCOPY} --impure -O ecoff-bigmips \
-		  -R .pdr -R .mdebug.abi32 -R .comment -R .ident $@ $@.ecoff
+		echo ${ELF2ECOFF} $@ $@.ecoff; ${ELF2ECOFF} $@ $@.ecoff; \
+		chmod 755 $@.ecoff
 .endif

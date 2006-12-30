@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.14.2.1 2006/06/21 15:09:11 yamt Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.14.2.2 2006/12/30 20:49:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -37,6 +37,10 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.38 2006/03/25 13:0
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/poll.h>
+
+#if (__NetBSD_Version__ >= 399002000)
+#include <sys/kauth.h>
+#endif
 
 #include <net/if.h>
 #include <net/route.h>
@@ -125,7 +129,7 @@ struct selinfo ipfselwait[IPL_LOGSIZE];
 
 const struct cdevsw ipl_cdevsw = {
 	iplopen, iplclose, iplread, nowrite, iplioctl,
-	nostop, notty, iplpoll, nommap,
+	nostop, notty, iplpoll, nommap, nokqfilter, D_OTHER,
 };
 #endif
 
@@ -136,11 +140,9 @@ const struct cdevsw ipl_cdevsw = {
 
 static int fr_check_wrapper(void *, struct mbuf **, struct ifnet *, int );
 
-static int fr_check_wrapper(arg, mp, ifp, dir)
-void *arg;
-struct mbuf **mp;
-struct ifnet *ifp;
-int dir;
+static int
+fr_check_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp,
+    int dir)
 {
 	struct ip *ip;
 	int rv, hlen;
@@ -207,11 +209,9 @@ int dir;
 
 static int fr_check_wrapper6(void *, struct mbuf **, struct ifnet *, int );
 
-static int fr_check_wrapper6(arg, mp, ifp, dir)
-void *arg;
-struct mbuf **mp;
-struct ifnet *ifp;
-int dir;
+static int
+fr_check_wrapper6(void *arg, struct mbuf **mp, struct ifnet *ifp,
+    int dir)
 {
 #if defined(INET6)
 #  if defined(M_CSUM_TCPv6) && (__NetBSD_Version__ > 200000000)
@@ -239,11 +239,8 @@ int dir;
 # if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
 static int ipf_pfilsync(void *, struct mbuf **, struct ifnet *, int);
 
-static int ipf_pfilsync(hdr, mp, ifp, dir)
-void *hdr;
-struct mbuf **mp;
-struct ifnet *ifp;
-int dir;
+static int ipf_pfilsync(void *hdr, struct mbuf **mp,
+    struct ifnet *ifp, int dir)
 {
 	/*
 	 * The interface pointer is useless for create (we have nothing to
@@ -276,8 +273,7 @@ char *s;
  */
 #if defined(PFIL_HOOKS)
 void
-ipfilterattach(count)
-int count;
+ipfilterattach(int count)
 {
 # if 0
 	if (iplattach() != 0)
@@ -517,7 +513,13 @@ int mode;
 	int error = 0, unit = 0, tmp;
 	friostat_t fio;
 
+#if (__NetBSD_Version__ >= 399002000)
+	if ((mode & FWRITE) && kauth_authorize_network(p->l_cred,
+	    KAUTH_NETWORK_FIREWALL, KAUTH_REQ_NETWORK_FIREWALL_FW,
+	    NULL, NULL, NULL))
+#else
 	if ((securelevel >= 2) && (mode & FWRITE))
+#endif
 		return EPERM;
 
 	unit = GET_MINOR(dev);
@@ -724,20 +726,18 @@ void *ifp;
 /*
  * routines below for saving IP headers to buffer
  */
-int iplopen(dev, flags
+int iplopen(
+    dev_t dev,
+    int flags,
 #if (NetBSD >= 199511)
-, devtype, p)
-int devtype;
-# if  (__NetBSD_Version__ >= 399001400)
-struct lwp *p;
-# else
-struct proc *p;
-# endif
-#else
-)
+    int devtype,
 #endif
-dev_t dev;
-int flags;
+# if  (__NetBSD_Version__ >= 399001400)
+    struct lwp *p
+# else
+    struct proc *p
+# endif
+)
 {
 	u_int xmin = GET_MINOR(dev);
 
@@ -749,20 +749,18 @@ int flags;
 }
 
 
-int iplclose(dev, flags
+int iplclose(
+    dev_t dev,
+    int flags,
 #if (NetBSD >= 199511)
-, devtype, p)
-int devtype;
-# if  (__NetBSD_Version__ >= 399001400)
-struct lwp *p;
-# else
-struct proc *p;
-# endif
-#else
-)
+    int devtype,
 #endif
-dev_t dev;
-int flags;
+# if  (__NetBSD_Version__ >= 399001400)
+    struct lwp *p
+# else
+    struct proc *p
+# endif
+)
 {
 	u_int	xmin = GET_MINOR(dev);
 
@@ -779,14 +777,13 @@ int flags;
  * called during packet processing and cause an inconsistancy to appear in
  * the filter lists.
  */
+int iplread(
+    dev_t dev,
+    struct uio *uio,
 #if (BSD >= 199306)
-int iplread(dev, uio, ioflag)
-int ioflag;
-#else
-int iplread(dev, uio)
+    int ioflag
 #endif
-dev_t dev;
-register struct uio *uio;
+)
 {
 
 # ifdef	IPFILTER_SYNC
@@ -808,14 +805,13 @@ register struct uio *uio;
  * called during packet processing and cause an inconsistancy to appear in
  * the filter lists.
  */
+int iplwrite(
+    dev_t dev,
+    struct uio *uio,
 #if (BSD >= 199306)
-int iplwrite(dev, uio, ioflag)
-int ioflag;
-#else
-int iplwrite(dev, uio)
+    int ioflag
 #endif
-dev_t dev;
-register struct uio *uio;
+)
 {
 
 #ifdef	IPFILTER_SYNC
@@ -1246,7 +1242,7 @@ frdest_t *fdp;
 		dst->sin_addr = fdp->fd_ip;
 
 	dst->sin_len = sizeof(*dst);
-	rtalloc(ro);
+	rtcache_init(ro);
 
 	if ((ifp == NULL) && (ro->ro_rt != NULL))
 		ifp = ro->ro_rt->rt_ifp;
@@ -1428,9 +1424,7 @@ done:
 	else
 		fr_frouteok[1]++;
 
-	if (ro->ro_rt) {
-		RTFREE(ro->ro_rt);
-	}
+	rtcache_free(ro);
 	*mpp = NULL;
 	return error;
 bad:
@@ -1492,7 +1486,7 @@ frdest_t *fdp;
 			dst6->sin6_addr = fdp->fd_ip6.in6;
 	}
 
-	rtalloc((struct route *)ro);
+	rtcache_init((struct route *)ro);
 
 	if ((ifp == NULL) && (ro->ro_rt != NULL))
 		ifp = ro->ro_rt->rt_ifp;
@@ -1525,9 +1519,7 @@ frdest_t *fdp;
 		}
 	}
 bad:
-	if (ro->ro_rt != NULL) {
-		RTFREE(ro->ro_rt);
-	}
+	rtcache_free((struct route *)ro);
 	return error;
 }
 #endif
@@ -1536,6 +1528,7 @@ bad:
 int fr_verifysrc(fin)
 fr_info_t *fin;
 {
+	int rc;
 	struct sockaddr_in *dst;
 	struct route iproute;
 
@@ -1544,10 +1537,12 @@ fr_info_t *fin;
 	dst->sin_len = sizeof(*dst);
 	dst->sin_family = AF_INET;
 	dst->sin_addr = fin->fin_src;
-	rtalloc(&iproute);
+	rtcache_init(&iproute);
 	if (iproute.ro_rt == NULL)
 		return 0;
-	return (fin->fin_ifp == iproute.ro_rt->rt_ifp);
+	rc = (fin->fin_ifp == iproute.ro_rt->rt_ifp);
+	rtcache_free(&iproute);
+	return rc;
 }
 
 
@@ -1581,7 +1576,7 @@ struct in_addr *inp, *inpmask;
 #endif
 
 	ifa = ifp->if_addrlist.tqh_first;
-	sock = ifa->ifa_addr;
+	sock = ifa ? ifa->ifa_addr : NULL;
 	while (sock != NULL && ifa != NULL) {
 		sin = (struct sockaddr_in *)sock;
 		if ((v == 4) && (sin->sin_family == AF_INET))
@@ -1681,8 +1676,7 @@ fr_info_t *fin;
 /*                                                                          */
 /* Returns the next IPv4 ID to use for this packet.                         */
 /* ------------------------------------------------------------------------ */
-u_short fr_nextipid(fin)
-fr_info_t *fin;
+u_short fr_nextipid(fr_info_t *fin)
 {
 	static u_short ipid = 0;
 	u_short id;

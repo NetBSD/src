@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.18.4.1 2006/06/21 14:50:33 yamt Exp $
+#	$NetBSD: ZAO425,v 1.18.4.2 2006/12/30 20:45:49 yamt Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -67,11 +67,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

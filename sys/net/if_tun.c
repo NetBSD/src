@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.76.8.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.76.8.2 2006/12/30 20:50:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,10 +15,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.76.8.1 2006/06/21 15:10:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.76.8.2 2006/12/30 20:50:20 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,10 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.76.8.1 2006/06/21 15:10:27 yamt Exp $")
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -103,7 +98,7 @@ static dev_type_kqfilter(tunkqfilter);
 
 const struct cdevsw tun_cdevsw = {
 	tunopen, tunclose, tunread, tunwrite, tunioctl,
-	nostop, notty, tunpoll, nommap, tunkqfilter,
+	nostop, notty, tunpoll, nommap, tunkqfilter, D_OTHER,
 };
 
 void
@@ -275,12 +270,12 @@ tun_clone_destroy(struct ifnet *ifp)
 static int
 tunopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct proc 	*p = l->l_proc;
 	struct ifnet	*ifp;
 	struct tun_softc *tp;
 	int	s, error;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
 		return (error);
 
 	s = splnet();
@@ -315,7 +310,8 @@ out_nolock:
  * routing info
  */
 int
-tunclose(dev_t dev, int flag, int mode, struct lwp *l)
+tunclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	int	s;
 	struct tun_softc *tp;

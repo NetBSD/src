@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbusvar.h,v 1.2.2.2 2006/06/21 14:55:19 yamt Exp $	*/
+/*	$NetBSD: pnpbusvar.h,v 1.2.2.3 2006/12/30 20:46:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -74,8 +74,9 @@ struct pnpbus_compatid {
 #define PNPBUS_MAXDMA 2
 
 struct pnpresources {
-	int nummem, numio, numirq, numdma;
+	int nummem, numiomem, numio, numirq, numdma;
 	SIMPLEQ_HEAD(, pnpbus_mem) mem;
+	SIMPLEQ_HEAD(, pnpbus_mem) iomem;
 	SIMPLEQ_HEAD(, pnpbus_io) io;
 	SIMPLEQ_HEAD(, pnpbus_irq) irq;
 	SIMPLEQ_HEAD(, pnpbus_dma) dma;
@@ -89,6 +90,7 @@ struct pnpbus_attach_args {
 	bus_space_tag_t paa_iot;		/* i/o space tag */
 	bus_space_tag_t paa_memt;		/* mem space tag */
 	isa_chipset_tag_t paa_ic;		/* ISA chipset tag */
+	bus_dma_tag_t paa_dmat;			/* ISA DMA tag */
 };
 
 /*
@@ -98,6 +100,7 @@ struct pnpbus_dev_attach_args {
 	bus_space_tag_t pna_iot;	/* i/o space tag */
 	bus_space_tag_t pna_memt;	/* mem space tag */
 	isa_chipset_tag_t pna_ic;	/* ISA chipset tag */
+	bus_dma_tag_t pna_dmat;		/* ISA DMA tag */
 
 	struct pnpresources pna_res;	/* resources gathered from PNP */
 	char	pna_devid[8];		/* PNP device id string */
@@ -106,7 +109,9 @@ struct pnpbus_dev_attach_args {
 	uint8_t	basetype;		/* PNP base type */
 	uint8_t subtype;		/* PNP subtype */
 	uint8_t interface;		/* PNP interface */
-	uint8_t spare;			/* struct packing */
+	uint16_t chipid;		/* Chip identifier if any */
+	uint8_t	chipmfg0;		/* Chip vendor0 */
+	uint8_t chipmfg1;		/* chip vendor1 */
 };
 
 /*
@@ -118,6 +123,7 @@ struct pnpbus_softc {
 
 	bus_space_tag_t sc_iot;		/* io space tag */
 	bus_space_tag_t sc_memt;	/* mem space tag */
+	bus_dma_tag_t sc_dmat;		/* ISA DMA tag */
 };
 
 int	pnpbus_scan(struct pnpbus_dev_attach_args *pna, PPC_DEVICE *dev);
@@ -132,6 +138,12 @@ int	pnpbus_getioport(struct pnpresources *r, int idx, int *basep,
 int	pnpbus_io_map(struct pnpresources *r, int idx, bus_space_tag_t *tagp,
 	    bus_space_handle_t *hdlp);
 void	pnpbus_io_unmap(struct pnpresources *r, int idx, bus_space_tag_t tag,
+	    bus_space_handle_t hdl);
+int	pnpbus_getiomem(struct pnpresources *r, int idx, int *basep,
+	    int *sizep);
+int	pnpbus_iomem_map(struct pnpresources *r, int idx, bus_space_tag_t *tagp,
+	    bus_space_handle_t *hdlp);
+void	pnpbus_iomem_unmap(struct pnpresources *r, int idx, bus_space_tag_t tag,
 	    bus_space_handle_t hdl);
 
 #endif /* _PREP_PNPBUSVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.128.2.1 2006/06/21 14:57:55 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.128.2.2 2006/12/30 20:47:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128.2.1 2006/06/21 14:57:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128.2.2 2006/12/30 20:47:22 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -670,8 +670,10 @@ cpu_dumpconf(void)
 	if (dumpdev == NODEV)
 		return;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		return;
+	}
 	if (bdev->d_psize == NULL)
 		return;
 	nblks = (*bdev->d_psize)(dumpdev);
@@ -1124,12 +1126,12 @@ mem_exists(caddr_t mem, u_long basemax)
 	 */
 	baseismem = base < (caddr_t)basemax;
 
+__asm("begin_check_mem:");
 	/* save original value (base must be saved first) */
 	if (baseismem)
 		save_b = *b;
 	save_m = *m;
 
-__asm("begin_check_mem:");
 	/*
 	 * stack and other data segment variables are unusable
 	 * til end_check_mem, because they may be clobbered.

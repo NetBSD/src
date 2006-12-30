@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.41 2005/05/30 21:15:28 he Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.41.2.1 2006/12/30 20:46:25 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.41 2005/05/30 21:15:28 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.41.2.1 2006/12/30 20:46:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,16 +71,18 @@ const struct db_variable db_regs[] = {
 	{ "pc",	(long *)&ddb_regs.tf_pc, 	FCN_NULL },
 	{ "sr",	(long *)&ddb_regs.tf_sr,	db_var_short }
 };
-const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs =
+    db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 static int
 db_var_short(const struct db_variable *varp, db_expr_t *valp, int op)
 {
+
     if (op == DB_VAR_GET)
-	*valp = (db_expr_t) *((short*)varp->valuep);
+	*valp = (db_expr_t)*((short*)varp->valuep);
     else
 	*((short*)varp->valuep) = (short) *valp;
-    return(0);
+    return 0;
 }
 
 #define	MAXINT	0x7fffffff
@@ -206,7 +208,7 @@ nextframe(struct stackpos *sp, struct pcb *pcb, int kerneltrace,
 	sp->k_pc = calladdr;
 	sp->k_fp = get(sp->k_fp + FR_SAVFP, DSP);
 
-	/* 
+	/*
 	 * Now that we have assumed the identity of our caller, find
 	 * how many longwords of argument WE were called with.
 	 */
@@ -224,13 +226,13 @@ nextframe(struct stackpos *sp, struct pcb *pcb, int kerneltrace,
 
 	if (sp->k_fp == 0 || oldfp == sp->k_fp)
 		return 0;
-	return (sp->k_fp);
+	return sp->k_fp;
 }
 
 static void
 findentry(struct stackpos *sp, void (*pr)(const char *, ...))
-{ 
-	/* 
+{
+	/*
 	 * Set the k_nargs and k_entry fields in the stackpos structure.  This
 	 * is called from stacktop() and from nextframe().  Our caller will do
 	 * an addq or addl or addw to sp just after we return to pop off our
@@ -428,7 +430,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			struct user *u;
 			struct lwp *l;
 			(*pr)("trace: pid %d ", (int)addr);
-			p = pfind(addr);
+			p = p_find(addr, PFIND_LOCKED);
 			if (p == NULL) {
 				(*pr)("not found\n");
 				return;

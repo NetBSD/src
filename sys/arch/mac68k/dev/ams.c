@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.15.10.1 2006/06/21 14:53:02 yamt Exp $	*/
+/*	$NetBSD: ams.c,v 1.15.10.2 2006/12/30 20:46:25 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.15.10.1 2006/06/21 14:53:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.15.10.2 2006/12/30 20:46:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -505,7 +505,8 @@ ms_processevent(adb_event_t *event, struct ams_softc *amsc)
 		if (amsc->sc_wsmousedev != NULL) /* wsmouse is attached? */
 			wsmouse_input(amsc->sc_wsmousedev,
 			    new_event.u.m.buttons,
-			    new_event.u.m.dx, new_event.u.m.dy, 0, 0);
+			    new_event.u.m.dx, new_event.u.m.dy, 0, 0,
+			    WSMOUSE_INPUT_DELTA);
 #else
 		/* do nothing */ ;
 #endif

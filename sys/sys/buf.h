@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.81.2.1 2006/06/21 15:12:02 yamt Exp $	*/
+/*	$NetBSD: buf.h,v 1.81.2.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -281,7 +281,6 @@ void	bufinit(void);
 int	bwrite(struct buf *);
 struct buf *getblk(struct vnode *, daddr_t, int, int, int);
 struct buf *geteblk(int);
-struct buf *getnewbuf(int, int, int);
 struct buf *incore(struct vnode *, daddr_t);
 
 void	minphys(struct buf *);
@@ -302,6 +301,7 @@ struct buf *getiobuf(void);
 struct buf *getiobuf_nowait(void);
 void putiobuf(struct buf *);
 
+void nestiobuf_iodone(struct buf *);
 void nestiobuf_setup(struct buf *, struct buf *, int, size_t);
 void nestiobuf_done(struct buf *, int, int);
 

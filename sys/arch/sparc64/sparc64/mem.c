@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.30.16.1 2006/06/21 14:56:48 yamt Exp $ */
+/*	$NetBSD: mem.c,v 1.30.16.2 2006/12/30 20:47:05 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.30.16.1 2006/06/21 14:56:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.30.16.2 2006/12/30 20:47:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -102,7 +102,7 @@ dev_type_ioctl(mmioctl);
 
 const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 /*ARGSUSED*/

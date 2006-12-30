@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.3 2003/10/30 21:19:54 fvdl Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.3.18.1 2006/12/30 20:47:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.3 2003/10/30 21:19:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.3.18.1 2006/12/30 20:47:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,12 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.3 2003/10/30 21:19:54 fvdl Exp 
 #endif
 
 void *
-pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
-	struct device *dev;
-	struct pci_attach_args *pa;
-	int chan;
-	int (*func) __P((void *));
-	void *arg;
+pciide_machdep_compat_intr_establish(struct device *dev,
+    struct pci_attach_args *pa, int chan, int (*func)(void *),
+    void *arg)
 {
 	int irq;
 	void *cookie;

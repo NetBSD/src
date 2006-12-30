@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.52.4.1 2006/06/21 14:59:52 yamt Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.52.4.2 2006/12/30 20:47:45 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.52.4.1 2006/06/21 14:59:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.52.4.2 2006/12/30 20:47:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,10 +522,7 @@ struct svr4_ustat_args {
 };
 
 int
-svr4_ustat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_ustat(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_ustat_args /* {
 		syscallarg(svr4_dev_t)		dev;
@@ -549,10 +546,7 @@ svr4_ustat(l, v, retval)
 
 
 int
-svr4_sys_uname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_uname(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_uname_args *uap = v;
 	struct svr4_utsname *sut;

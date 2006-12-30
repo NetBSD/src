@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.27.2.1 2006/06/21 15:05:03 yamt Exp $	*/
+/*	$NetBSD: amr.c,v 1.27.2.2 2006/12/30 20:48:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.27.2.1 2006/06/21 15:05:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.27.2.2 2006/12/30 20:48:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.27.2.1 2006/06/21 15:05:03 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 #include <sys/kthread.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -92,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.27.2.1 2006/06/21 15:05:03 yamt Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/amrreg.h>
 #include <dev/pci/amrvar.h>
+#include <dev/pci/amrio.h>
 
 #include "locators.h"
 
@@ -115,17 +118,28 @@ static int	amr_quartz_submit(struct amr_softc *, struct amr_ccb *);
 static int	amr_std_get_work(struct amr_softc *, struct amr_mailbox_resp *);
 static int	amr_std_submit(struct amr_softc *, struct amr_ccb *);
 
+static dev_type_open(amropen);
+static dev_type_close(amrclose);
+static dev_type_ioctl(amrioctl);
+
 CFATTACH_DECL(amr, sizeof(struct amr_softc),
     amr_match, amr_attach, NULL, NULL);
+
+const struct cdevsw amr_cdevsw = {
+	amropen, amrclose, noread, nowrite, amrioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+};      
+
+extern struct   cfdriver amr_cd;
 
 #define AT_QUARTZ	0x01	/* `Quartz' chipset */
 #define	AT_SIG		0x02	/* Check for signature */
 
-struct amr_pci_type {
+static struct amr_pci_type {
 	u_short	apt_vendor;
 	u_short	apt_product;
 	u_short	apt_flags;
-} static const amr_pci_type[] = {
+} const amr_pci_type[] = {
 	{ PCI_VENDOR_AMI,   PCI_PRODUCT_AMI_MEGARAID,  0 },
 	{ PCI_VENDOR_AMI,   PCI_PRODUCT_AMI_MEGARAID2, 0 },
 	{ PCI_VENDOR_AMI,   PCI_PRODUCT_AMI_MEGARAID3, AT_QUARTZ },
@@ -143,10 +157,10 @@ struct amr_pci_type {
 	{ PCI_VENDOR_SYMBIOS,  PCI_PRODUCT_SYMBIOS_MEGARAID_300X, AT_QUARTZ },
 };
 
-struct amr_typestr {
+static struct amr_typestr {
 	const char	*at_str;
 	int		at_sig;
-} static const amr_typestr[] = {
+} const amr_typestr[] = {
 	{ "Series 431",			AMR_SIG_431 },
 	{ "Series 438",			AMR_SIG_438 },
 	{ "Series 466",			AMR_SIG_466 },
@@ -157,10 +171,10 @@ struct amr_typestr {
 	{ "HP NetRAID (T7)",		AMR_SIG_T7 },
 };
 
-struct {
+static struct {
 	const char	*ds_descr;
 	int	ds_happy;
-} static const amr_dstate[] = {
+} const amr_dstate[] = {
 	{ "offline",	0 },
 	{ "degraded",	1 },
 	{ "optimal",	1 },
@@ -215,7 +229,8 @@ amr_outl(struct amr_softc *amr, int off, u_int32_t val)
  * Match a supported device.
  */
 static int
-amr_match(struct device *parent, struct cfdata *match, void *aux)
+amr_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 	pcireg_t s;
@@ -260,7 +275,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	pcireg_t reg;
 	int rseg, i, j, size, rv, memreg, ioreg;
-        struct amr_ccb *ac;
+	struct amr_ccb *ac;
 	int locs[AMRCF_NLOCS];
 
 	aprint_naive(": RAID controller\n");
@@ -337,7 +352,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	 *
 	 * The standard mailbox structure needs to be aligned on a 16-byte
 	 * boundary.  The 64-bit mailbox has one extra field, 4 bytes in
-	 * size, which preceeds the standard mailbox.
+	 * size, which precedes the standard mailbox.
 	 */
 	size = AMR_SGL_SIZE * AMR_MAX_CMDS + 0x2000;
 	amr->amr_dmasize = size;
@@ -719,7 +734,7 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 static void
 amr_shutdown(void *cookie)
 {
-        extern struct cfdriver amr_cd;
+	extern struct cfdriver amr_cd;
 	struct amr_softc *amr;
 	struct amr_ccb *ac;
 	int i, rv, s;
@@ -872,7 +887,7 @@ amr_thread(void *cookie)
 		ac->ac_cmd.mb_command = AMR_CMD_ENQUIRY;
 
 		rv = amr_ccb_map(amr, ac, amr->amr_enqbuf,
-		    AMR_ENQUIRY_BUFSIZE, 0);
+		    AMR_ENQUIRY_BUFSIZE, AC_XFER_IN);
 		if (rv != 0) {
 			printf("%s: ccb_map failed (%d)\n",
  			    amr->amr_dv.dv_xname, rv);
@@ -948,7 +963,7 @@ amr_enquire(struct amr_softc *amr, u_int8_t cmd, u_int8_t cmdsub,
 	mb[2] = cmdsub;
 	mb[3] = cmdqual;
 
-	rv = amr_ccb_map(amr, ac, sbuf, AMR_ENQUIRY_BUFSIZE, 0);
+	rv = amr_ccb_map(amr, ac, sbuf, AMR_ENQUIRY_BUFSIZE, AC_XFER_IN);
 	if (rv == 0) {
 		rv = amr_ccb_poll(amr, ac, 2000);
 		amr_ccb_unmap(amr, ac);
@@ -1027,12 +1042,13 @@ amr_ccb_enqueue(struct amr_softc *amr, struct amr_ccb *ac)
  */
 int
 amr_ccb_map(struct amr_softc *amr, struct amr_ccb *ac, void *data, int size,
-	    int out)
+	    int tflag)
 {
 	struct amr_sgentry *sge;
 	struct amr_mailbox_cmd *mb;
 	int nsegs, i, rv, sgloff;
 	bus_dmamap_t xfer;
+	int dmaflag = 0;
 
 	xfer = ac->ac_xfer_map;
 
@@ -1043,8 +1059,13 @@ amr_ccb_map(struct amr_softc *amr, struct amr_ccb *ac, void *data, int size,
 
 	mb = &ac->ac_cmd;
 	ac->ac_xfer_size = size;
-	ac->ac_flags |= (out ? AC_XFER_OUT : AC_XFER_IN);
+	ac->ac_flags |= (tflag & (AC_XFER_OUT | AC_XFER_IN));
 	sgloff = AMR_SGL_SIZE * ac->ac_ident;
+
+	if (tflag & AC_XFER_OUT)
+		dmaflag |= BUS_DMASYNC_PREWRITE;
+	if (tflag & AC_XFER_IN)
+		dmaflag |= BUS_DMASYNC_PREREAD;
 
 	/* We don't need to use a scatter/gather list for just 1 segment. */
 	nsegs = xfer->dm_nsegs;
@@ -1063,8 +1084,7 @@ amr_ccb_map(struct amr_softc *amr, struct amr_ccb *ac, void *data, int size,
 		}
 	}
 
-	bus_dmamap_sync(amr->amr_dmat, xfer, 0, ac->ac_xfer_size,
-	    out ? BUS_DMASYNC_PREWRITE : BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(amr->amr_dmat, xfer, 0, ac->ac_xfer_size, dmaflag);
 
 	if ((ac->ac_flags & AC_NOSGL) == 0)
 		bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, sgloff,
@@ -1079,14 +1099,19 @@ amr_ccb_map(struct amr_softc *amr, struct amr_ccb *ac, void *data, int size,
 void
 amr_ccb_unmap(struct amr_softc *amr, struct amr_ccb *ac)
 {
+	int dmaflag = 0;
+
+	if (ac->ac_flags & AC_XFER_IN)
+		dmaflag |= BUS_DMASYNC_POSTREAD;
+	if (ac->ac_flags & AC_XFER_OUT)
+		dmaflag |= BUS_DMASYNC_POSTWRITE;
 
 	if ((ac->ac_flags & AC_NOSGL) == 0)
 		bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap,
 		    AMR_SGL_SIZE * ac->ac_ident, AMR_SGL_SIZE,
 		    BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_sync(amr->amr_dmat, ac->ac_xfer_map, 0, ac->ac_xfer_size,
-	    (ac->ac_flags & AC_XFER_IN) != 0 ?
-	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+	    dmaflag);
 	bus_dmamap_unload(amr->amr_dmat, ac->ac_xfer_map);
 }
 
@@ -1304,4 +1329,110 @@ amr_ccb_dump(struct amr_softc *amr, struct amr_ccb *ac)
 	for (i = 0; i < 4; i++)
 		printf("%08x ", ((u_int32_t *)&ac->ac_cmd)[i]);
 	printf("\n");
+}
+
+static int
+amropen(dev_t dev, int flag, int mode, struct lwp *l)
+{
+	struct amr_softc *amr;
+	 
+	if ((amr = device_lookup(&amr_cd, minor(dev))) == NULL)
+		return (ENXIO);
+	if ((amr->amr_flags & AMRF_OPEN) != 0)
+		return (EBUSY);
+							  
+	amr->amr_flags |= AMRF_OPEN;
+	return (0);
+}
+
+static int
+amrclose(dev_t dev, int flag, int mode, struct lwp *l)
+{
+	struct amr_softc *amr;
+
+	amr = device_lookup(&amr_cd, minor(dev));
+	amr->amr_flags &= ~AMRF_OPEN;
+	return (0);
+}
+
+static int
+amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
+{
+	struct amr_softc *amr;
+	struct amr_user_ioctl *au;
+	struct amr_ccb *ac;
+	struct amr_mailbox_ioctl *mbi;
+	unsigned long au_length;
+	uint8_t *au_cmd;
+	int error;
+	void *dp = NULL, *au_buffer;
+
+	amr = device_lookup(&amr_cd, minor(dev));
+
+	/* This should be compatible with the FreeBSD interface */
+
+	switch (cmd) {
+	case AMR_IO_VERSION:
+		*(int *)data = AMR_IO_VERSION_NUMBER;
+		return 0;
+	case AMR_IO_COMMAND:
+		error = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
+		if (error)
+			return (error);
+
+		au = (struct amr_user_ioctl *)data;
+		au_cmd = au->au_cmd;
+		au_buffer = au->au_buffer;
+		au_length = au->au_length;
+		break;
+	default:
+		return ENOTTY;
+	}
+
+	if (au_cmd[0] == AMR_CMD_PASS) {
+		/* not yet */
+		return EOPNOTSUPP;
+	}
+
+	if (au_length <= 0 || au_length > MAXPHYS || au_cmd[0] == 0x06)
+		return (EINVAL);
+
+	/*
+	 * allocate kernel memory for data, doing I/O directly to user
+	 * buffer isn't that easy.
+	 */
+	dp = malloc(au_length, M_DEVBUF, M_WAITOK|M_ZERO);
+	if (dp == NULL)
+		return ENOMEM;
+	if ((error = copyin(au_buffer, dp, au_length)) != 0)
+		goto out;
+
+	/* direct command to controller */
+	while (amr_ccb_alloc(amr, &ac) != 0) {
+		error = tsleep(NULL, PRIBIO | PCATCH, "armmbx", hz);
+		if (error == EINTR)
+			goto out;
+	}
+
+	mbi = (struct amr_mailbox_ioctl *)&ac->ac_cmd;
+	mbi->mb_command = au_cmd[0];
+	mbi->mb_channel = au_cmd[1];
+	mbi->mb_param = au_cmd[2];
+	mbi->mb_pad[0] = au_cmd[3];
+	mbi->mb_drive = au_cmd[4];
+	error = amr_ccb_map(amr, ac, dp, (int)au_length,
+	    AC_XFER_IN | AC_XFER_OUT);
+	if (error == 0) {
+		error = amr_ccb_wait(amr, ac);
+		amr_ccb_unmap(amr, ac);
+		if (error == 0)
+			error = copyout(dp, au_buffer, au_length);
+
+	}
+	amr_ccb_free(amr, ac);
+out:
+	free(dp, M_DEVBUF);
+	return (error);
 }

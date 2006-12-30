@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.SKI,v 1.1.14.2 2006/06/21 14:52:44 yamt Exp $
+# $NetBSD: GENERIC.SKI,v 1.1.14.3 2006/12/30 20:46:20 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1.14.2 $"
+#ident 		"GENERIC-$Revision: 1.1.14.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -49,10 +49,13 @@ options 	DDB		# in-kernel debugger
 makeoptions	DEBUG="-g"	# compile full symbol table
 
 # File systems
-file-system 	MFS		# UFS
+file-system	FFS		# UFS
+#file-system 	MFS		# memory file system
+
 
 # Kernel root file system and dump configuration.
-config		netbsd	root on ? type ?
+#config		netbsd	root on ? type ?
+config		netbsd	root on md0a type ffs
 #config		netbsd	root on sd0a type ffs
 #config		netbsd	root on ? type nfs
 
@@ -74,6 +77,14 @@ include	"arch/ia64/conf/GENERIC.local"
 #wsdisplay*	at ssccons0 console ?
 #wskbd*		at ssccons0 console ?
 
+# Enable the hooks used for initializing the root memory-disk.
+options     MEMORY_DISK_HOOKS
+options     MEMORY_DISK_IS_ROOT         # force root on memory disk
+options     MEMORY_DISK_SERVER=1        # make the ramdisk writeable
+#options    MEMORY_DISK_ROOT_SIZE=2880  # 1.44M, same as a floppy
+options     MEMORY_DISK_ROOT_SIZE=8192  # 4Meg
+options     MEMORY_RBFLAGS=0            # don't force single user
+
 # Pseudo-Devices
 
 
@@ -82,3 +93,5 @@ pseudo-device	ssccons			# Ski emulator console
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	md		1
+

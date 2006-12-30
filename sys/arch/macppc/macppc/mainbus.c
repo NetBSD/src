@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 2004/08/30 15:05:18 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14.12.1 2006/12/30 20:46:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2004/08/30 15:05:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14.12.1 2006/12/30 20:46:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -101,4 +101,10 @@ mainbus_attach(parent, self, aux)
 		ca.ca_reg  = reg;
 		config_found(self, &ca, NULL);
 	}
+
+#ifdef MAMBO
+	ca.ca_name="com";
+	config_found(self, &ca, NULL);
+#endif
+
 }

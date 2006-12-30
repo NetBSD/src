@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.305.2.1 2006/06/21 15:02:45 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.305.2.2 2006/12/30 20:47:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.305.2.1 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.305.2.2 2006/12/30 20:47:54 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -104,6 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.305.2.1 2006/06/21 15:02:45 yamt Exp $");
 #include <dev/ic/wdcreg.h>
 #include <sys/ataio.h>
 #include "locators.h"
+
+#include <prop/proplib.h>
 
 #define	LBA48_THRESHOLD		(0xfffffff)	/* 128GB / DEV_BSIZE */
 
@@ -205,6 +207,8 @@ static void bad144intern(struct wd_softc *);
 #define	WD_QUIRK_SPLIT_MOD15_WRITE	0x0001	/* must split certain writes */
 #define	WD_QUIRK_FORCE_LBA48		0x0002	/* must use LBA48 commands */
 
+#define	WD_QUIRK_FMT "\20\1SPLIT_MOD15_WRITE\2FORCE_LBA48"
+
 /*
  * Quirk table for IDE drives.  Put more-specific matches first, since
  * a simple globbing routine is used for matching.
@@ -239,6 +243,10 @@ static const struct wd_quirk {
 	 * setups using LBA48 drives on non-LBA48-capable controllers
 	 * (and it's hard to get a list of such controllers)
 	 */
+	{ "ST3160021A*",
+	  WD_QUIRK_FORCE_LBA48 },
+	{ "ST3160811A*",
+	  WD_QUIRK_FORCE_LBA48 },
 	{ "ST3160812A*",
 	  WD_QUIRK_FORCE_LBA48 },
 	{ "ST3160023A*",
@@ -337,6 +345,13 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	if (wdq != NULL)
 		wd->sc_quirks = wdq->wdq_quirks;
 
+	if (wd->sc_quirks != 0) {
+		char sbuf[sizeof(WD_QUIRK_FMT) + 64];
+		bitmask_snprintf(wd->sc_quirks, WD_QUIRK_FMT,
+		    sbuf, sizeof(sbuf));
+		aprint_normal("%s: quirks %s\n", wd->sc_dev.dv_xname, sbuf);
+	}
+
 	if ((wd->sc_params.atap_multi & 0xff) > 1) {
 		wd->sc_multi = wd->sc_params.atap_multi & 0xff;
 	} else {
@@ -397,6 +412,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	 */
 	wd->sc_dk.dk_driver = &wddkdriver;
 	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
+	/* we fill in dk_info later */
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
 	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);
@@ -1149,6 +1165,10 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct lwp *l)
 	if ((wd->sc_flags & WDF_LOADED) == 0)
 		return EIO;
 
+	error = disk_ioctl(&wd->sc_dk, xfer, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return (error);
+
 	switch (xfer) {
 #ifdef HAS_BAD144_HANDLING
 	case DIOCSBAD:
@@ -1663,6 +1683,61 @@ bad144intern(struct wd_softc *wd)
 }
 #endif
 
+static void
+wd_params_to_properties(struct wd_softc *wd, struct ataparams *params)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+	const char *cp;
+
+	disk_info = prop_dictionary_create();
+
+	if (strcmp(wd->sc_params.atap_model, "ST506") == 0)
+		cp = "ST506";
+	else {
+		/* XXX Should have a case for ATA here, too. */
+		cp = "ESDI";
+	}
+	prop_dictionary_set_cstring_nocopy(disk_info, "type", cp);
+
+	geom = prop_dictionary_create();
+
+	prop_dictionary_set_uint64(geom, "sectors-per-unit", wd->sc_capacity);
+
+	prop_dictionary_set_uint32(geom, "sector-size",
+				   DEV_BSIZE /* XXX 512? */);
+
+	prop_dictionary_set_uint16(geom, "sectors-per-track",
+				   wd->sc_params.atap_sectors);
+
+	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+				   wd->sc_params.atap_heads);
+
+	if (wd->sc_flags & WDF_LBA)
+		prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+					   wd->sc_capacity /
+					       (wd->sc_params.atap_heads *
+					        wd->sc_params.atap_sectors));
+	else
+		prop_dictionary_set_uint16(geom, "cylinders-per-unit",
+					   wd->sc_params.atap_cylinders);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+
+	prop_dictionary_set(device_properties(&wd->sc_dev),
+			    "disk-info", disk_info);
+
+	/*
+	 * Don't release disk_info here; we keep a reference to it.
+	 * disk_detach() will release it when we go away.
+	 */
+
+	odisk_info = wd->sc_dk.dk_info;
+	wd->sc_dk.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
+}
+
 int
 wd_get_params(struct wd_softc *wd, u_int8_t flags, struct ataparams *params)
 {
@@ -1684,8 +1759,9 @@ wd_get_params(struct wd_softc *wd, u_int8_t flags, struct ataparams *params)
 		params->atap_multi = 1;
 		params->atap_capabilities1 = params->atap_capabilities2 = 0;
 		wd->drvp->ata_vers = -1; /* Mark it as pre-ATA */
-		return 0;
+		/* FALLTHROUGH */
 	case CMD_OK:
+		wd_params_to_properties(wd, params);
 		return 0;
 	default:
 		panic("wd_get_params: bad return code from ata_get_params");

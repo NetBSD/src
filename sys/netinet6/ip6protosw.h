@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6protosw.h,v 1.15.12.1 2006/06/21 15:11:09 yamt Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.15.12.2 2006/12/30 20:50:39 yamt Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -142,7 +142,6 @@ struct ip6protosw {
 			__P((void));
 	void	(*pr_drain)		/* flush any excess space possible */
 			__P((void));
-	int	*pr_wassysctl;		/* @@@ used to be sysctl for protocol */
 };
 
 extern const struct ip6protosw inet6sw[];

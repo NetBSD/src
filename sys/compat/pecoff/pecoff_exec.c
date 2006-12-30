@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.28.2.1 2006/06/21 14:59:41 yamt Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.28.2.2 2006/12/30 20:47:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.28.2.1 2006/06/21 14:59:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.28.2.2 2006/12/30 20:47:45 yamt Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -195,11 +195,11 @@ pecoff_load_file(l, epp, path, vcset, entry, argp)
 		error = EACCES;
 		goto badunlock;
 	}
-	if ((error = VOP_ACCESS(vp, VEXEC, l->l_proc->p_cred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred, l)) != 0)
 		goto badunlock;
 
 	/* get attributes */
-	if ((error = VOP_GETATTR(vp, &attr, l->l_proc->p_cred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &attr, l->l_cred, l)) != 0)
 		goto badunlock;
 
 	/*
@@ -416,12 +416,9 @@ exec_pecoff_coff_makecmds(l, epp, fp, peofs)
 /*
  */
 int
-exec_pecoff_prep_omagic(p, epp, fp, ap, peofs)
-	struct proc *p;
-	struct exec_package *epp;
-	struct coff_filehdr *fp;
-	struct coff_aouthdr *ap;
-	int peofs;
+exec_pecoff_prep_omagic(struct proc *p,
+    struct exec_package *epp, struct coff_filehdr *fp,
+    struct coff_aouthdr *ap, int peofs)
 {
 	return ENOEXEC;
 }
@@ -429,12 +426,9 @@ exec_pecoff_prep_omagic(p, epp, fp, ap, peofs)
 /*
  */
 int
-exec_pecoff_prep_nmagic(p, epp, fp, ap, peofs)
-	struct proc *p;
-	struct exec_package *epp;
-	struct coff_filehdr *fp;
-	struct coff_aouthdr *ap;
-	int peofs;
+exec_pecoff_prep_nmagic(struct proc *p,
+    struct exec_package *epp, struct coff_filehdr *fp,
+    struct coff_aouthdr *ap, int peofs)
 {
 	return ENOEXEC;
 }

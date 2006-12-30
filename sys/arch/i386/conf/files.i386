@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.269.2.1 2006/06/21 14:52:10 yamt Exp $
+#	$NetBSD: files.i386,v 1.269.2.2 2006/12/30 20:46:05 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -9,13 +9,6 @@ maxpartitions 8
 maxusers 2 16 128
 
 defparam opt_kernbase.h	KERNBASE
-
-# APM options
-defflag	opt_apm.h	APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
-			APM_NO_STANDBY APM_V10_ONLY APM_NO_V12 APMDEBUG
-			APM_POWER_PRINT APM_ALLOW_BOGUS_SEGMENTS
-			APM_USE_KVM86
-defparam opt_apm.h	APMDEBUG_VALUE APM_DISABLE_INTERRUPTS
 
 # Processor type options.
 defflag	opt_cputype.h	I386_CPU I486_CPU I586_CPU I686_CPU
@@ -66,7 +59,7 @@ defflag			ENHANCED_SPEEDSTEP
 
 # Multiboot support
 defflag opt_multiboot.h		MULTIBOOT
-defparam opt_multiboot.h	MULTIBOOT_SYMTAB_SPACE
+obsolete defparam		MULTIBOOT_SYMTAB_SPACE
 file	arch/i386/i386/multiboot.c	multiboot
 
 # PowerNow K7
@@ -150,7 +143,7 @@ define vesabiosbus {}
 
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, eisabus, mcabus, pcibus, bios32, acpibus,
-	cpubus, apmbus, pnpbiosbus, vesabiosbus
+	cpubus, apmbus, pnpbiosbus, vesabiosbus, ipmibus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -162,7 +155,7 @@ file	arch/i386/i386/mainbus.c	mainbus
 
 include	"dev/pci/files.pci"
 include "dev/pci/files.agp"
-file 	arch/i386/pci/agp_machdep.c	agp
+file 	arch/x86/pci/agp_machdep.c	agp
 file	arch/i386/pci/pcibios.c		pcibios
 file	arch/i386/pci/pci_intr_fixup.c	pcibios & pci_intr_fixup
 file	arch/i386/pci/piix.c		pcibios & pci_intr_fixup
@@ -253,7 +246,7 @@ file	arch/i386/pci/p64h2apic.c	p64h2apic
 include	"dev/isa/files.isa"
 
 # PC clock
-file	arch/i386/isa/clock.c		isa
+file	arch/x86/isa/clock.c		isa
 
 # TSC support
 file	arch/x86/x86/tsc.c		i586_cpu | i686_cpu
@@ -335,11 +328,12 @@ include "dev/gpib/files.gpib"
 # Other mainbus-attached devices
 #
 
+include "dev/apm/files.apm"
+
 # Advanced Power Management support (APM)
-device	apm: bioscall
-attach	apm at apmbus
-file	arch/i386/i386/apm.c		apm needs-count
-file	arch/i386/i386/apmcall.S	apm
+attach	apm at apmbus with apmbios: bioscall
+file	arch/i386/i386/apmbios.c	apmbios	needs-flag
+file	arch/i386/i386/apmcall.S	apmbios
 
 # CPUS
 
@@ -359,7 +353,7 @@ file	arch/i386/i386/kvm86.c			kvm86
 file	arch/i386/i386/kvm86call.S		kvm86
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/i386/i386/compat_13_machdep.c	compat_13 | compat_aout
+file	arch/i386/i386/compat_13_machdep.c	compat_13
 file	arch/i386/i386/compat_16_machdep.c	compat_16 | compat_ibcs2
 
 # SVR4 binary compatibility (COMPAT_SVR4)
@@ -485,20 +479,20 @@ file	arch/i386/acpi/acpi_wakeup.c	acpi
 
 # Toshiba VALD 
 device	vald
-attach	vald at acpi with vald_acpi
+attach	vald at acpinodebus with vald_acpi
 file	arch/i386/acpi/vald_acpi.c		vald_acpi
 
 # Sony SPIC (jog dial etc.)
-attach	spic at acpi with spic_acpi
+attach	spic at acpinodebus with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
 
 # Sony Misc (brightness etc.)
 device	sony
-attach	sony at acpi with sony_acpi
+attach	sony at acpinodebus with sony_acpi
 file	arch/i386/acpi/sony_acpi.c		sony_acpi
 
 # Numeric Processing Extension; Math Co-processor
-attach	npx at acpi with npx_acpi
+attach	npx at acpinodebus with npx_acpi
 file	arch/i386/acpi/npx_acpi.c		npx_acpi
 
 device	vesabios {}
@@ -508,7 +502,7 @@ defflag	opt_vesabios.h	VESABIOSVERBOSE
 
 include	"dev/rasops/files.rasops"
 
-device vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash
+device vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
 attach vesafb at vesabios
 file	arch/i386/bios/vesafb.c		vesafb needs-flag
 defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH

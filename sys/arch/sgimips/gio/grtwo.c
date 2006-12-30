@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.5.12.1 2006/06/21 14:55:24 yamt Exp $	 */
+/* $NetBSD: grtwo.c,v 1.5.12.2 2006/12/30 20:46:53 yamt Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,12 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.5.12.1 2006/06/21 14:55:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.5.12.2 2006/12/30 20:46:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+
+#include <machine/sysconf.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -443,12 +445,17 @@ grtwo_match(struct device * parent, struct cfdata * self, void *aux)
 {
 	struct gio_attach_args *ga = aux;
 
+	if (ga->ga_addr != 0x1f000000 && ga->ga_addr != 0x1f400000 &&
+	    ga->ga_addr != 0x1f600000)
+		return (0);
+
 	/*
 	 * grtwo doesn't have anything that even vaguely resembles a product
 	 * ID.  Instead, we determine presence by looking at the HQ2 "mystery"
 	 * register, which contains a magic number.
 	 */
-	if ( badaddr((void *) (ga->ga_ioh + HQ2_MYSTERY), sizeof(u_int32_t)) )
+	if ( platform.badaddr((void *) (ga->ga_ioh + HQ2_MYSTERY),
+	    sizeof(u_int32_t)) )
 		return 0;
 
 	if ( (bus_space_read_4(ga->ga_iot, ga->ga_ioh, HQ2_MYSTERY)) != 0xdeadbeef)

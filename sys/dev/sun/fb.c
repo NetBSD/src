@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.21.2.1 2006/06/21 15:07:30 yamt Exp $ */
+/*	$NetBSD: fb.c,v 1.21.2.2 2006/12/30 20:49:38 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.21.2.1 2006/06/21 15:07:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.21.2.2 2006/12/30 20:49:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ dev_type_kqfilter(fbkqfilter);
 
 const struct cdevsw fb_cdevsw = {
 	fbopen, fbclose, noread, nowrite, fbioctl,
-	nostop, notty, fbpoll, fbmmap, fbkqfilter,
+	nostop, notty, fbpoll, fbmmap, fbkqfilter, D_OTHER
 };
 
 void

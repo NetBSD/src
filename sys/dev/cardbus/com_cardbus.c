@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.14.4.1 2006/06/21 15:02:45 yamt Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.14.4.2 2006/12/30 20:47:57 yamt Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.14.4.1 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.14.4.2 2006/12/30 20:47:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,8 @@ find_csdev(struct cardbus_attach_args *ca)
 }
 
 static int
-com_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
+com_cardbus_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -203,11 +204,14 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 }
 
 static void
-com_cardbus_attach (struct device *parent, struct device *self, void *aux)
+com_cardbus_attach (struct device *parent, struct device *self,
+    void *aux)
 {
 	struct com_softc *sc = device_private(self);
 	struct com_cardbus_softc *csc = device_private(self);
 	struct cardbus_attach_args *ca = aux;
+	bus_space_handle_t	ioh;
+	bus_space_tag_t		iot;
 
 	csc->cc_ct = ca->ca_ct;
 	csc->cc_tag = Cardbus_make_tag(csc->cc_ct);
@@ -219,13 +223,15 @@ com_cardbus_attach (struct device *parent, struct device *self, void *aux)
 			      csc->cc_reg,
 			      csc->cc_type,
 			      0,
-			      &sc->sc_iot,
-			      &sc->sc_ioh,
+			      &iot,
+			      &ioh,
 			      &csc->cc_addr,
 			      &csc->cc_size) != 0) {
 		printf("failed to map memory");
 		return;
 	}
+
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, csc->cc_addr);
 
 	csc->cc_base = csc->cc_addr;
 	csc->cc_csr = CARDBUS_COMMAND_MASTER_ENABLE;
@@ -237,7 +243,6 @@ com_cardbus_attach (struct device *parent, struct device *self, void *aux)
 		csc->cc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
 		csc->cc_cben = CARDBUS_MEM_ENABLE;
 	}
-	sc->sc_iobase = csc->cc_addr;
 
 	sc->sc_frequency = COM_FREQ;
 
@@ -347,8 +352,8 @@ com_cardbus_detach(struct device *self, int flags)
 	if (csc->cc_ih != NULL)
 		cardbus_intr_disestablish(psc->sc_cc, psc->sc_cf, csc->cc_ih);
 
-	Cardbus_mapreg_unmap(csc->cc_ct, csc->cc_reg, sc->sc_iot, sc->sc_ioh,
-			     csc->cc_size);
+	Cardbus_mapreg_unmap(csc->cc_ct, csc->cc_reg, sc->sc_regs.cr_iot,
+	    sc->sc_regs.cr_ioh, csc->cc_size);
 
 	return 0;
 }

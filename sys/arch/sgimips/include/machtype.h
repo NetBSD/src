@@ -1,4 +1,4 @@
-/*	$NetBSD: machtype.h,v 1.4 2004/01/13 12:30:23 sekiya Exp $	*/
+/*	$NetBSD: machtype.h,v 1.4.16.1 2006/12/30 20:46:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -69,10 +69,10 @@
 #define MACH_SGI_IP12_HPLC		123	/* Hollywood Light */
 
 #define MACH_SGI_IP22_FULLHOUSE		22	/* Indigo2 */
-#define MACH_SGI_IP22_GUINESS		24	/* Indy, Challenge S */
+#define MACH_SGI_IP22_GUINNESS		24	/* Indy, Challenge S */
 
 extern int mach_type;		/* IPxx type */
-extern int mach_subtype;	/* subtype: eg., Guiness/Fullhouse for IP22 */
+extern int mach_subtype;	/* subtype: eg., Guinness/Fullhouse for IP22 */
 extern int mach_boardrev;	/* machine board revision, in case it matters */
 
 #endif /* __MACHTYPE__ */

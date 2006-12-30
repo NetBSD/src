@@ -1,4 +1,4 @@
-/* $NetBSD: vsxxx.c,v 1.5 2005/02/04 02:10:36 perry Exp $ */
+/* $NetBSD: vsxxx.c,v 1.5.6.1 2006/12/30 20:47:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.5 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.5.6.1 2006/12/30 20:47:57 yamt Exp $");
 
 /*
  * Common machinary for VSXXX mice and tablet
@@ -140,6 +140,8 @@ vsxxx_input(data)
 		x = -x;
 	if ((sc->sc_report.raw[0] & VS_Y_SIGN) != 0)
 		y = -y;					/* Eeeh? */
-	wsmouse_input(sc->sc_wsmousedev, sc->sc_report.raw[0] & 07, x, y, 0,
-		      WSMOUSE_INPUT_DELTA);
+	wsmouse_input(sc->sc_wsmousedev,
+			sc->sc_report.raw[0] & 07,
+			x, y, 0, 0,
+			WSMOUSE_INPUT_DELTA);
 }

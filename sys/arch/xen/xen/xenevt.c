@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.5.4.1 2006/06/21 14:58:23 yamt Exp $      */
+/*      $NetBSD: xenevt.c,v 1.5.4.2 2006/12/30 20:47:25 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -242,7 +242,7 @@ xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 	switch(minor(dev)) {
 	case DEV_EVT:
 		/* falloc() will use the descriptor for us. */
-		if ((error = falloc(l->l_proc, &fp, &fd)) != 0)
+		if ((error = falloc(l, &fp, &fd)) != 0)
 			return error;
 
 		d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK | M_ZERO);
@@ -477,7 +477,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
 		op.u.bind_interdomain.remote_dom = bind_intd->remote_domain;
 		op.u.bind_interdomain.remote_port = bind_intd->remote_port;
 		if ((error = HYPERVISOR_event_channel_op(&op)))
-			return error;
+			return -error;
 		bind_intd->port = op.u.bind_interdomain.local_port;
 		devevent[bind_intd->port] = d;
 		hypervisor_unmask_event(bind_intd->port);
@@ -490,7 +490,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
 		op.u.alloc_unbound.dom = DOMID_SELF;
 		op.u.alloc_unbound.remote_dom = bind_unbound->remote_domain;
 		if ((error = HYPERVISOR_event_channel_op(&op)))
-			return error;
+			return -error;
 		bind_unbound->port = op.u.alloc_unbound.port;
 		devevent[bind_unbound->port] = d;
 		hypervisor_unmask_event(bind_unbound->port);
@@ -509,7 +509,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
 		op.cmd = EVTCHNOP_close;
 		op.u.close.port = unbind->port;
 		if ((error = HYPERVISOR_event_channel_op(&op)))
-			return error;
+			return -error;
 		break;
 	}
 	case IOCTL_EVTCHN_NOTIFY:

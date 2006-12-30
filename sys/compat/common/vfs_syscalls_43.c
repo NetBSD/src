@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.29.4.1 2006/06/21 14:58:32 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.29.4.2 2006/12/30 20:47:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.29.4.1 2006/06/21 14:58:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.29.4.2 2006/12/30 20:47:31 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -336,7 +336,8 @@ compat_43_sys_creat(struct lwp *l, void *v, register_t *retval)
 
 /*ARGSUSED*/
 int
-compat_43_sys_quota(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_quota(struct lwp *l, void *v,
+    register_t *retval)
 {
 
 	return (ENOSYS);

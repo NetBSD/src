@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_sysctl.c,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $	*/
+/*	$NetBSD: bt_sysctl.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_sysctl.c,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_sysctl.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -242,7 +242,6 @@ SYSCTL_SETUP(sysctl_net_bluetooth_setup, "sysctl net.bluetooth subtree setup")
 		CTL_NET, PF_BLUETOOTH, BTPROTO_RFCOMM,
 		CTL_CREATE, CTL_EOL);
 
-#ifdef BLUETOOTH_SCO
 	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "sco",
@@ -267,5 +266,4 @@ SYSCTL_SETUP(sysctl_net_bluetooth_setup, "sysctl net.bluetooth subtree setup")
 		&sco_recvspace, sizeof(sco_recvspace),
 		CTL_NET, PF_BLUETOOTH, BTPROTO_SCO,
 		CTL_CREATE, CTL_EOL);
-#endif
 }

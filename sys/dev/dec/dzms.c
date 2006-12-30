@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.12.4.1 2006/06/21 15:02:45 yamt Exp $	*/
+/*	$NetBSD: dzms.c,v 1.12.4.2 2006/12/30 20:47:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.12.4.1 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.12.4.2 2006/12/30 20:47:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,8 +238,10 @@ dzms_input(vsc, data)
 			sc->dy = -data;
 		else
 			sc->dy = data;
-		wsmouse_input(sc->sc_wsmousedev, sc->buttons,
-		    sc->dx, sc->dy, 0, WSMOUSE_INPUT_DELTA);
+		wsmouse_input(sc->sc_wsmousedev,
+				sc->buttons,
+		    		sc->dx, sc->dy, 0, 0,
+				WSMOUSE_INPUT_DELTA);
 	}
 
 	return(1);

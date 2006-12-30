@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26.2.1 2006/06/21 14:51:29 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26.2.2 2006/12/30 20:45:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.2.1 2006/06/21 14:51:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.2.2 2006/12/30 20:45:58 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -832,9 +832,9 @@ do {									\
 #endif /* KGDB */
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
-		extern int end[];
+		extern int end;
 
-		ksyms_init(1, end, (int*)esym);
+		ksyms_init(esym - (int)&end, &end, (int*)esym);
 	}
 #endif
 
@@ -1361,10 +1361,12 @@ cpu_reboot(int howto, char *user_boot_string)
 	if (!(howto & RB_NOSYNC) && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
-#if 0
+
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
+		 */
 		resettodr();
-#endif
-		printf("WARNING: not updating battery clock\n");
 	}
 
 	/* XXX probably save howto into stable storage */
@@ -1692,6 +1694,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 
+	tf->tf_flags = TFF_SYS|TFF_LAST;
 	tf->tf_iioq_tail = 4 +
 	    (tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER);
 	tf->tf_rp = 0;
@@ -1708,6 +1711,8 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	/* setup terminal stack frame */
 	stack = (u_long)STACK_ALIGN(stack, 63);
+	tf->tf_r3 = stack;
+	suword((caddr_t)(stack), 0);
 	stack += HPPA_FRAME_SIZE;
 	suword((caddr_t)(stack + HPPA_FRAME_PSP), 0);
 	tf->tf_sp = stack;

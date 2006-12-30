@@ -1,5 +1,5 @@
-/*	$NetBSD: altq_classq.h,v 1.4.4.1 2006/06/21 14:47:46 yamt Exp $	*/
-/*	$KAME: altq_classq.h,v 1.3 2000/07/25 10:12:29 kjc Exp $	*/
+/*	$NetBSD: altq_classq.h,v 1.4.4.2 2006/12/30 20:45:17 yamt Exp $	*/
+/*	$KAME: altq_classq.h,v 1.6 2003/01/07 07:33:38 kjc Exp $	*/
 
 /*
  * Copyright (c) 1991-1997 Regents of the University of California.
@@ -54,7 +54,7 @@ extern "C" {
 #ifdef _KERNEL
 
 /*
- * Packet Queue strcutures and macros to manipulate them.
+ * Packet Queue structures and macros to manipulate them.
  */
 struct _class_queue_ {
 	struct mbuf	*tail_;	/* Tail of packet queue */

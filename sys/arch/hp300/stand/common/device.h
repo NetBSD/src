@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.2 2003/08/07 16:27:40 agc Exp $	*/
+/*	$NetBSD: device.h,v 1.2.16.1 2006/12/30 20:45:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -72,3 +72,5 @@ struct hp_hw {
 #define HW_ISHPIB(hw)	(((hw)->hw_type & C_MASK) == C_HPIB)
 #define HW_ISSCSI(hw)	(((hw)->hw_type & C_MASK) == C_SCSI)
 #define HW_ISDEV(hw,d)	(((hw)->hw_type & D_MASK) == (d))
+
+extern struct hp_hw sc_table[];

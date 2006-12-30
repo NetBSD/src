@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn26,v 1.5 2005/05/31 04:03:08 christos Exp $
+#	$NetBSD: Makefile.acorn26,v 1.5.2.1 2006/12/30 20:45:18 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -35,9 +35,7 @@ CPPFLAGS+=	-Dacorn26
 CWARNFLAGS+=	-Wcomment
 # We'd like GCC to leave R14 alone as much as possible (so page faults in the
 # kernel are safer).
-CFLAGS+=	-ffixed-r14
-# acorn26 systems can safely do unaligned loads.
-CFLAGS+=	-mshort-load-words
+CFLAGS+=	-ffixed-r14 -mapcs-frame -fno-omit-frame-pointer
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 
 ##

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.16.4.1 2006/06/21 15:02:45 yamt Exp $	*/
+/*	$NetBSD: dz.c,v 1.16.4.2 2006/12/30 20:47:57 yamt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.16.4.1 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.16.4.2 2006/12/30 20:47:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +322,6 @@ dzxint(void *arg)
 int
 dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct proc *p = l->l_proc;
 	struct tty *tp;
 	int unit, line;
 	struct	dz_softc *sc;
@@ -348,6 +347,10 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_oproc   = dzstart;
 	tp->t_param   = dzparam;
 	tp->t_dev = dev;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
@@ -359,10 +362,7 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 		(void) dzparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) &&
-	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &p->p_acflag) != 0)
-		return (EBUSY);
+	}
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dzmctl(sc, line, DML_DTR, DMBIS) & DML_DCD)
 		tp->t_state |= TS_CARR_ON;

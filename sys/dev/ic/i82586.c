@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.52.2.1 2006/06/21 15:02:54 yamt Exp $	*/
+/*	$NetBSD: i82586.c,v 1.52.2.2 2006/12/30 20:48:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.52.2.1 2006/06/21 15:02:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.52.2.2 2006/12/30 20:48:02 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -1045,9 +1045,9 @@ bad:
  * never ARP for trailers anyway.
  */
 static int
-ie_readframe(sc, num)
-	struct ie_softc *sc;
-	int num;		/* frame number to read */
+ie_readframe(
+    struct ie_softc *sc,
+    int num)		/* frame number to read */
 {
 	struct mbuf *m;
 	u_int16_t bstart, bend;
@@ -1780,9 +1780,9 @@ i82586_start_transceiver(sc)
 }
 
 void
-i82586_stop(ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+i82586_stop(
+    struct ifnet *ifp,
+    int disable)
 {
 	struct ie_softc *sc = ifp->if_softc;
 

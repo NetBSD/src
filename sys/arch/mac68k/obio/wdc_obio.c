@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.18.10.1 2006/06/21 14:53:13 yamt Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.18.10.2 2006/12/30 20:46:26 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.18.10.1 2006/06/21 14:53:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.18.10.2 2006/12/30 20:46:26 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -172,7 +172,6 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 	}
-	wdc_init_shadow_regs(&sc->sc_channel);
 
 	if (bus_space_subregion(wdr->cmd_iot,
 				wdr->cmd_baseioh,
@@ -230,6 +229,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &sc->sc_chqueue;
 	chp->ch_ndrive = 2;
+	wdc_init_shadow_regs(chp);
 
 	printf("\n");
 

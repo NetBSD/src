@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.32.2.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.32.2.2 2006/12/30 20:50:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,14 +99,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.32.2.1 2006/06/21 15:10:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.32.2.2 2006/12/30 20:50:20 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_llc.h"
 #include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_gateway.h"
 
 #include "bpfilter.h"
@@ -149,10 +146,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.32.2.1 2006/06/21 15:10:27 yamt E
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #ifdef DECNET
 #include <netdnet/dn.h>
@@ -166,24 +159,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.32.2.1 2006/06/21 15:10:27 yamt E
 #endif
 
 #include "bpfilter.h"
-
-#ifdef LLC
-#include <netccitt/dll.h>
-#include <netccitt/llc_var.h>
-#endif
-
-/*
- * TODO:
- * handle source routing via send_xid()
- * source routing for ISO,LLC,CCITT protocols
- * need sockaddr_dl_8025 to handle this correctly
- * IPX cases
- * handle "fast" forwarding like if_ether and if_fddi
- */
-
-#if defined(LLC) && defined(CCITT)
-extern struct ifqueue pkintrq;
-#endif
 
 #define senderr(e) { error = (e); goto bad;}
 
@@ -369,18 +344,6 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		}
 		break;
 #endif
-#ifdef NS
-	case AF_NS:
-		etype = htons(ETHERTYPE_NS);
-		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
-		    (caddr_t)edst, sizeof (edst));
-		if (!bcmp((caddr_t)edst, (caddr_t)&ns_thishost, sizeof(edst)))
-			return (looutput(ifp, m, dst, rt));
-		/* If broadcasting on a simplex interface, loopback a copy. */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copy(m, 0, (int)M_COPYALL);
-		break;
-#endif
 #ifdef	ISO
 	case AF_ISO: {
 		int	snpalen;
@@ -427,49 +390,6 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 #endif
 		} break;
 #endif /* ISO */
-#ifdef	LLC
-/*	case AF_NSAP: */
-	case AF_CCITT: {
-		struct sockaddr_dl *sdl = rt ? 
-		    (struct sockaddr_dl *) rt -> rt_gateway : NULL;
-
-		if (sdl && sdl->sdl_family == AF_LINK
-		    && sdl->sdl_alen > 0) {
-			bcopy(LLADDR(sdl), (char *)edst, sizeof(edst));
-		}
-		else {
-			/* Not a link interface ? Funny ... */
-			goto bad;
-		}
-		if ((ifp->if_flags & IFF_SIMPLEX) && (*edst & 1) &&
-		    (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
-			M_PREPEND(mcopy, sizeof (*trh), M_DONTWAIT);
-			if (mcopy) {
-				trh = mtod(mcopy, struct token_header *);
-				bcopy((caddr_t)edst,
-				    (caddr_t)trh->token_dhost, sizeof (edst));
-				bcopy(LLADDR(ifp->if_sadl),
-				    (caddr_t)trh->token_shost, sizeof (edst));
-			}
-		}
-		etype = 0;
-#ifdef LLC_DEBUG
-		{
-			int i;
-			struct llc *l = mtod(m, struct llc *);
-
-			printf("token_output: sending LLC2 pkt to: ");
-			for (i=0; i < ISO88025_ADDR_LEN; i++)
-				printf("%x ", edst[i] & 0xff);
-			printf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n",
-			    etype & 0xff, l->llc_dsap & 0xff, l->llc_ssap &0xff,
-			    l->llc_control & 0xff);
-
-		}
-#endif /* LLC_DEBUG */
-		}
-		break;
-#endif /* LLC */
 
 	case AF_UNSPEC:
 	{
@@ -592,9 +512,9 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 		trrif = TOKEN_RIF(trh);
 		lan_hdr_len += (ntohs(trrif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
 	}
-	m_adj(m, lan_hdr_len);
 
-	l = mtod(m, struct llc *);
+	l = (struct llc *)(mtod(m, u_int8_t *) + lan_hdr_len);
+
 	switch (l->llc_dsap) {
 #if defined(INET) || defined(NS) || defined(DECNET)
 	case LLC_SNAP_LSAP:
@@ -607,7 +527,7 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 		    l->llc_snap.org_code[2] != 0)
 			goto dropanyway;
 		etype = ntohs(l->llc_snap.ether_type);
-		m_adj(m, LLC_SNAPFRAMELEN);
+		m_adj(m, lan_hdr_len + LLC_SNAPFRAMELEN);
 #if NCARP > 0
 		if (ifp->if_carp && ifp->if_type != IFT_CARP &&
 		    (carp_input(m, (u_int8_t *)&trh->token_shost,
@@ -625,12 +545,6 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 		case ETHERTYPE_ARP:
 			schednetisr(NETISR_ARP);
 			inq = &arpintrq;
-			break;
-#endif
-#ifdef NS
-		case ETHERTYPE_NS:
-			schednetisr(NETISR_NS);
-			inq = &nsintrq;
 			break;
 #endif
 #ifdef DECNET
@@ -656,14 +570,7 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 			/* LLC_UI_P forbidden in class 1 service */
 			if ((l->llc_dsap == LLC_ISO_LSAP) &&
 			    (l->llc_ssap == LLC_ISO_LSAP)) {
-				/* LSAP for ISO */
-				m->m_data += 3;		/* XXX */
-				m->m_len -= 3;		/* XXX */
-				m->m_pkthdr.len -= 3;	/* XXX */
-				M_PREPEND(m, sizeof *trh, M_DONTWAIT);
-				if (m == 0)
-					return;
-				*mtod(m, struct token_header *) = *trh;
+
 #if defined(__FreeBSD__)
 				IFDEBUG(D_ETHER)
 					printf("clnp packet");
@@ -677,11 +584,11 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 
 		case LLC_XID:
 		case LLC_XID_P:
-			if(m->m_len < ISO88025_ADDR_LEN)
+			if(m->m_len < LLC_XID_BASIC_MINLEN + lan_hdr_len)
 				goto dropanyway;
 			l->llc_window = 0;
-			l->llc_fid = 9;
-			l->llc_class = 1;
+			l->llc_fid = LLC_XID_FORMAT_BASIC;
+			l->llc_class = LLC_XID_CLASS_I;
 			l->llc_dsap = l->llc_ssap = 0;
 			/* Fall through to */
 		case LLC_TEST:
@@ -708,6 +615,7 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 				eh->ether_shost[i] = c;
 			}
 			eh->ether_type = 0;
+			m_adj(m, lan_hdr_len);
 			ifp->if_output(ifp, m, &sa, NULL);
 			return;
 		}
@@ -717,31 +625,6 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 		}
 		break;
 #endif /* ISO */
-#ifdef LLC
-	case LLC_X25_LSAP:
-	{
-/*
- * XXX check for source routing info ? (sizeof(struct sdl_hdr) and
- * ISO88025_ADDR_LEN)
- */
-		M_PREPEND(m, sizeof(struct sdl_hdr) , M_DONTWAIT);
-		if (m == 0)
-			return;
-		if (!sdl_sethdrif(ifp, trh->token_shost, LLC_X25_LSAP,
-				    trh->token_dhost, LLC_X25_LSAP,
-				    ISO88025_ADDR_LEN,
-				    mtod(m, struct sdl_hdr *)))
-			panic("ETHER cons addr failure");
-		mtod(m, struct sdl_hdr *)->sdlhdr_len =
-		    m->m_pkthdr.len - sizeof(struct sdl_hdr);
-#ifdef LLC_DEBUG
-		printf("llc packet\n");
-#endif /* LLC_DEBUG */
-		schednetisr(NETISR_CCITT);
-		inq = &llcintrq;
-		break;
-	}
-#endif /* LLC */
 
 	default:
 		/* printf("token_input: unknown dsap 0x%x\n", l->llc_dsap); */

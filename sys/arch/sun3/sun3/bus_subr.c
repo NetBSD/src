@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.13 2005/04/01 11:59:35 yamt Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.13.2.1 2006/12/30 20:47:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.13 2005/04/01 11:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.13.2.1 2006/12/30 20:47:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ extern vaddr_t tmp_vpages[];
 extern int tmp_vpages_inuse;
 
 #define OBIO_MASK 0xFFffff
-#define PMAP_OBMEM 0
 
 static const struct {
 	int  type;
@@ -153,8 +152,7 @@ bus_mapin(int bustype, int pa, int sz)
 
 	/* Borrow PROM mappings if we can. */
 	if (bustype == BUS_OBIO) {
-		va = (vaddr_t) obio_find_mapping(pa, sz);
-		if (va != 0)
+		if (find_prom_map(pa, PMAP_OBIO, sz, &va) == 0)
 			goto done;
 	}
 

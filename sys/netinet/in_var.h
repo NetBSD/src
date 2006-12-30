@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.55.4.1 2006/06/21 15:11:01 yamt Exp $	*/
+/*	$NetBSD: in_var.h,v 1.55.4.2 2006/12/30 20:50:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -303,7 +303,7 @@ void	in_ifscrub(struct ifnet *, struct in_ifaddr *);
 void	in_setmaxmtu(void);
 const char *in_fmtaddr(struct in_addr);
 int	in_control(struct socket *, u_long, caddr_t, struct ifnet *,
-	    struct proc *);
+	    struct lwp *);
 void	in_purgeaddr(struct ifaddr *, struct ifnet *);
 void	in_purgeif(struct ifnet *);
 void	ip_input(struct mbuf *);

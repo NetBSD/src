@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.19.4.1 2006/06/21 14:58:32 yamt Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.19.4.2 2006/12/30 20:47:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.19.4.1 2006/06/21 14:58:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.19.4.2 2006/12/30 20:47:32 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,9 +94,10 @@ darwin_sys_sigaction(l, v, retval)
 
 	sa.sa_handler = dsa.darwin_sa_handler.__sa_handler;
 	native_sigset13_to_sigset(&dsa.darwin_sa_mask, &sa.sa_mask);
-	if (dsa.darwin_sa_flags & ~DARWIN_SA_ALLBITS)
+	if (dsa.darwin_sa_flags & ~DARWIN_SA_ALLBITS) {
 		DPRINTF(("darwin_sys_sigaction: ignoring bits (flags = %x)\n",
 		    dsa.darwin_sa_flags));
+	}
 	sa.sa_flags = dsa.darwin_sa_flags & DARWIN_SA_ALLBITS;
 
 	if ((error = copyout(&sa, nsa, sizeof(sa))) != 0)

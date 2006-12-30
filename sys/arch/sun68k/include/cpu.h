@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 2005/01/22 15:36:11 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9.8.1 2006/12/30 20:47:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
 #include "opt_lockdebug.h"
 #endif
 
-#include <m68k/m68k.h>
+#include <m68k/cpu.h>
 
 #ifdef _KERNEL
 
@@ -167,10 +167,6 @@ extern int want_resched;	 /* resched() was called */
  */
 #define	signotify(p)	aston()
 
-#include <machine/intr.h>
-extern void *softnet_cookie;
-#define setsoftnet()	softintr_schedule(softnet_cookie)
-
 /*
  * For some reason the sparc has this prototype in its machine/cpu.h,
  * so for now we do the same.
@@ -194,7 +190,9 @@ void	savectx(struct pcb *);
 void	switch_exit(struct lwp *);
 void	switch_lwp_exit(struct lwp *);
 
+#ifndef _SUN3X_
 #define M68K_VAC
+#endif
 
 #endif	/* _KERNEL */
 

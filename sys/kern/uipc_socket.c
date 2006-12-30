@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.111.2.4 2006/07/07 12:30:51 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.111.2.5 2006/12/30 20:50:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.4 2006/07/07 12:30:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.5 2006/12/30 20:50:07 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -471,6 +471,11 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 	uid_t		uid;
 	int		error, s;
 
+	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
+	    KAUTH_REQ_NETWORK_SOCKET_OPEN, (void *)(u_long)dom,
+	    (void *)(u_long)type, (void *)(u_long)proto) != 0)
+		return (EPERM);
+
 	if (proto)
 		prp = pffindproto(dom, proto, type);
 	else
@@ -503,7 +508,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 	so->so_mowner = &prp->pr_domain->dom_mowner;
 #endif
 	if (l != NULL) {
-		uid = kauth_cred_geteuid(l->l_proc->p_cred);
+		uid = kauth_cred_geteuid(l->l_cred);
 	} else {
 		uid = 0;
 	}
@@ -1415,6 +1420,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 {
 	int		error;
 	struct mbuf	*m;
+	struct linger	*l;
 
 	error = 0;
 	m = m0;
@@ -1431,13 +1437,18 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				error = EINVAL;
 				goto bad;
 			}
-			if (mtod(m, struct linger *)->l_linger < 0 ||
-			    mtod(m, struct linger *)->l_linger > (INT_MAX / hz)) {
+			l = mtod(m, struct linger *);
+			if (l->l_linger < 0 || l->l_linger > USHRT_MAX ||
+			    l->l_linger > (INT_MAX / hz)) {
 				error = EDOM;
 				goto bad;
 			}
-			so->so_linger = mtod(m, struct linger *)->l_linger;
-			/* fall thru... */
+			so->so_linger = l->l_linger;
+			if (l->l_onoff)
+				so->so_options |= SO_LINGER;
+			else
+				so->so_options &= ~SO_LINGER;
+			break;
 
 		case SO_DEBUG:
 		case SO_KEEPALIVE:
@@ -1577,7 +1588,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		case SO_LINGER:
 			m->m_len = sizeof(struct linger);
 			mtod(m, struct linger *)->l_onoff =
-				so->so_options & SO_LINGER;
+			    (so->so_options & SO_LINGER) ? 1 : 0;
 			mtod(m, struct linger *)->l_linger = so->so_linger;
 			break;
 
@@ -1590,7 +1601,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		case SO_BROADCAST:
 		case SO_OOBINLINE:
 		case SO_TIMESTAMP:
-			*mtod(m, int *) = so->so_options & optname;
+			*mtod(m, int *) = (so->so_options & optname) ? 1 : 0;
 			break;
 
 		case SO_TYPE:

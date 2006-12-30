@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.78.4.1 2006/06/21 15:11:59 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.78.4.2 2006/12/30 20:50:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.78.4.1 2006/06/21 15:11:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.78.4.2 2006/12/30 20:50:52 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.78.4.1 2006/06/21 15:11:59 yamt E
 #include <nfs/nfsrvcache.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nfsnode.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
@@ -91,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.78.4.1 2006/06/21 15:11:59 yamt E
 extern int32_t (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
 						struct nfssvc_sock *,
 						struct lwp *, struct mbuf **));
-extern time_t nqnfsstarttime;
 extern int nfsrvw_procrastinate;
 
 struct nfssvc_sock *nfs_udpsock;
@@ -105,8 +103,6 @@ int nuidhash_max = NFS_MAXUIDHASH;
 int nfsd_waiting = 0;
 #ifdef NFSSERVER
 static int nfs_numnfsd = 0;
-static int notstarted = 1;
-static int modify_flag = 0;
 static struct nfsdrt nfsdrt;
 #endif
 
@@ -147,22 +143,13 @@ static void nfsd_rt __P((int, struct nfsrv_descript *, int));
  * - remains in the kernel as an nfsiod
  */
 int
-sys_nfssvc(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_nfssvc_args /* {
 		syscallarg(int) flag;
 		syscallarg(caddr_t) argp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
-#ifdef NFS
-	struct nameidata nd;
-	struct nfsmount *nmp;
-	struct nfsd_cargs ncd;
-#endif
 #ifdef NFSSERVER
 	int s;
 	struct file *fp;
@@ -177,8 +164,8 @@ sys_nfssvc(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				  &p->p_acflag);
+	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag);
 	if (error)
 		return (error);
 
@@ -203,30 +190,7 @@ sys_nfssvc(l, v, retval)
 		error = ENOSYS;
 #endif
 	} else if (SCARG(uap, flag) & NFSSVC_MNTD) {
-#ifndef NFS
 		error = ENOSYS;
-#else
-		error = copyin(SCARG(uap, argp), (caddr_t)&ncd, sizeof (ncd));
-		if (error)
-			return (error);
-		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-			ncd.ncd_dirp, l);
-		error = namei(&nd);
-		if (error)
-			return (error);
-		if ((nd.ni_vp->v_flag & VROOT) == 0)
-			error = EINVAL;
-		nmp = VFSTONFS(nd.ni_vp->v_mount);
-		vput(nd.ni_vp);
-		if (error)
-			return (error);
-		if ((nmp->nm_iflag & NFSMNT_MNTD) &&
-			(SCARG(uap, flag) & NFSSVC_GOTAUTH) == 0)
-			return (0);
-		nmp->nm_iflag |= NFSMNT_MNTD;
-		error = nqnfs_clientd(nmp, p->p_cred, &ncd, SCARG(uap, flag),
-			SCARG(uap, argp), l);
-#endif /* NFS */
 	} else if (SCARG(uap, flag) & NFSSVC_ADDSOCK) {
 #ifndef NFSSERVER
 		error = ENOSYS;
@@ -236,7 +200,7 @@ sys_nfssvc(l, v, retval)
 		if (error)
 			return (error);
 		/* getsock() will use the descriptor for us */
-		error = getsock(p->p_fd, nfsdarg.sock, &fp);
+		error = getsock(l->l_proc->p_fd, nfsdarg.sock, &fp);
 		if (error)
 			return (error);
 		/*
@@ -333,7 +297,8 @@ sys_nfssvc(l, v, retval)
 					m_freem(nuidp->nu_nam);
 			        }
 				nuidp->nu_flag = 0;
-				kauth_cred_uucvt(nuidp->nu_cr, &nsd->nsd_cr);
+				kauth_uucred_to_cred(nuidp->nu_cr,
+				    &nsd->nsd_cr);
 				nuidp->nu_timestamp = nsd->nsd_timestamp;
 				nuidp->nu_expire = time_second + nsd->nsd_ttl;
 				/*
@@ -663,28 +628,7 @@ nfssvc_nfsd(nsd, argp, l)
 			} else
 				cacherep = nfsrv_getcache(nd, slp, &mreq);
 
-			/*
-			 * Check for just starting up for NQNFS and send
-			 * fake "try again later" replies to the NQNFS clients.
-			 */
-			if (notstarted && nqnfsstarttime <= time_second) {
-				if (modify_flag) {
-					nqnfsstarttime =
-					    time_second + nqsrv_writeslack;
-					modify_flag = 0;
-				} else
-					notstarted = 0;
-			}
-			if (notstarted) {
-				if ((nd->nd_flag & ND_NQNFS) == 0)
-					cacherep = RC_DROPIT;
-				else if (nd->nd_procnum != NFSPROC_WRITE) {
-					nd->nd_procnum = NFSPROC_NOOP;
-					nd->nd_repstat = NQNFS_TRYLATER;
-					cacherep = RC_DOIT;
-				} else
-					modify_flag = 1;
-			} else if (nfsd->nfsd_flag & NFSD_AUTHFAIL) {
+			if (nfsd->nfsd_flag & NFSD_AUTHFAIL) {
 				nfsd->nfsd_flag &= ~NFSD_AUTHFAIL;
 				nd->nd_procnum = NFSPROC_NOOP;
 				nd->nd_repstat =
@@ -720,7 +664,7 @@ nfssvc_nfsd(nsd, argp, l)
 				if (writes_todo || nd == NULL ||
 				     (!(nd->nd_flag & ND_NFSV3) &&
 				     nd->nd_procnum == NFSPROC_WRITE &&
-				     nfsrvw_procrastinate > 0 && !notstarted))
+				     nfsrvw_procrastinate > 0))
 					error = nfsrv_writegather(&nd, slp,
 					    l, &mreq);
 				else
@@ -757,8 +701,7 @@ nfssvc_nfsd(nsd, argp, l)
 					break;
 				}
 				if (error) {
-					if (nd->nd_procnum != NQNFSPROC_VACATED)
-						nfsstats.srv_errs++;
+					nfsstats.srv_errs++;
 					nfsrv_updatecache(nd, FALSE, mreq);
 					if (nd->nd_nam2)
 						m_freem(nd->nd_nam2);
@@ -1026,9 +969,7 @@ nfsd_rt(sotype, nd, cacherep)
 		rt->flag = DRT_CACHEDROP;
 	if (sotype == SOCK_STREAM)
 		rt->flag |= DRT_TCP;
-	if (nd->nd_flag & ND_NQNFS)
-		rt->flag |= DRT_NQNFS;
-	else if (nd->nd_flag & ND_NFSV3)
+	if (nd->nd_flag & ND_NFSV3)
 		rt->flag |= DRT_NFSV3;
 	rt->proc = nd->nd_procnum;
 	if (mtod(nd->nd_nam, struct sockaddr *)->sa_family == AF_INET)
@@ -1149,8 +1090,7 @@ nfs_iodinit()
 }
 
 void
-start_nfsio(arg)
-	void *arg;
+start_nfsio(void *arg)
 {
 	nfssvc_iod(curlwp);
 
@@ -1256,13 +1196,8 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
  * Get a nickname authenticator and verifier.
  */
 int
-nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
-	struct nfsmount *nmp;
-	kauth_cred_t cred;
-	char **auth_str;
-	int *auth_len;
-	char *verf_str;
-	int verf_len;
+nfs_getnickauth(struct nfsmount *nmp, kauth_cred_t cred, char **auth_str,
+    int *auth_len, char *verf_str, int verf_len)
 {
 	struct timeval ktvin, ktvout, tv;
 	struct nfsuid *nuidp;

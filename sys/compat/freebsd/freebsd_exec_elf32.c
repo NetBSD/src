@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_elf32.c,v 1.12.16.1 2006/06/21 14:58:50 yamt Exp $	*/
+/*	$NetBSD: freebsd_exec_elf32.c,v 1.12.16.2 2006/12/30 20:47:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.12.16.1 2006/06/21 14:58:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.12.16.2 2006/12/30 20:47:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,12 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.12.16.1 2006/06/21 14:58:50
 
 
 int
-ELFNAME2(freebsd,probe)(l, epp, veh, itp, pos)
-	struct lwp *l;
-	struct exec_package *epp;
-	void *veh;
-	char *itp;
-	vaddr_t *pos;
+ELFNAME2(freebsd,probe)(
+	struct lwp *l,
+	struct exec_package *epp,
+	void *veh,
+	char *itp,
+	vaddr_t *pos)
 {
 	int error;
 	size_t i;

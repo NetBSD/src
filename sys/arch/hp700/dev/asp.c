@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.8 2004/09/19 23:03:34 chs Exp $	*/
+/*	$NetBSD: asp.c,v 1.8.12.1 2006/12/30 20:45:58 yamt Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.8 2004/09/19 23:03:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.8.12.1 2006/12/30 20:45:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,8 +225,10 @@ aspattach(struct device *parent, struct device *self, void *aux)
 		ga.ga_ether_address, sizeof(ga.ga_ether_address));
 	bus_space_unmap(ca->ca_iot, ioh, sizeof(ga.ga_ether_address));
 
+#ifdef USELEDS
 	machine_ledaddr = &sc->sc_trs->asp_cled;
 	machine_ledword = asp_spus[sc->sc_trs->asp_spu].ledword;
+#endif
 
 	/* reset ASP */
 	/* sc->sc_hw->asp_reset = 1; */

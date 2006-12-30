@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.6 2004/05/08 21:51:48 kleink Exp $
+#	$NetBSD: Makefile,v 1.6.12.1 2006/12/30 20:45:59 yamt Exp $
 
 INCSDIR= /usr/include/hp700
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	bswap.h bus.h byte_swap.h \
 	cdefs.h cpu.h cpufunc.h \
-	db_machdep.h disklabel.h \
+	disklabel.h \
 	eisa_machdep.h elf_machdep.h endian.h endian_machdep.h exec.h \
 	float.h frame.h \
 	ieee.h ieeefp.h intr.h iomod.h isa_machdep.h \

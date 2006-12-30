@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.10.2.1 2006/06/21 14:58:06 yamt Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.10.2.2 2006/12/30 20:47:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10.2.1 2006/06/21 14:58:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10.2.2 2006/12/30 20:47:22 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -95,11 +95,12 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10.2.1 2006/06/21 14:58:06 yamt Exp $")
 
 #include <machine/mpbiosvar.h>
 
+#include "acpi.h"
 #include "opt_mpbios.h"
-#include "opt_mpacpi.h"
+#include "opt_acpi.h"
 
-#if !defined(MPBIOS) && !defined(MPACPI)
-#error "ioapic needs at least one of the MPBIOS or MPACPI options"
+#if !defined(MPBIOS) && NACPI == 0
+#error "ioapic needs at least one of the MPBIOS or ACPI options"
 #endif
 
 /*
@@ -148,6 +149,7 @@ ioapic_unlock(struct ioapic_softc *sc, u_long flags)
 	write_psl(flags);
 }
 
+#ifndef _IOAPIC_CUSTOM_RW
 /*
  * Register read/write routines.
  */
@@ -169,6 +171,7 @@ ioapic_write_ul(struct ioapic_softc *sc,int regid, u_int32_t val)
 	*(sc->sc_reg) = regid;
 	*(sc->sc_data) = val;
 }
+#endif /* !_IOAPIC_CUSTOM_RW */
 
 static inline u_int32_t
 ioapic_read(struct ioapic_softc *sc, int regid)
@@ -208,7 +211,7 @@ ioapic_find(int apicid)
 	}
 
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next)
-		if (sc->sc_apicid == apicid)
+		if (sc->sc_pic.pic_apicid == apicid)
 			return sc;
 
 	return NULL;
@@ -224,8 +227,8 @@ ioapic_find_bybase(int vec)
 	struct ioapic_softc *sc;
 
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
-		if (vec >= sc->sc_apic_vecbase &&
-		    vec < (sc->sc_apic_vecbase + sc->sc_apic_sz))
+		if (vec >= sc->sc_pic.pic_vecbase &&
+		    vec < (sc->sc_pic.pic_vecbase + sc->sc_apic_sz))
 			return sc;
 	}
 
@@ -277,12 +280,11 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	struct ioapic_softc *sc = (struct ioapic_softc *)self;  
 	struct apic_attach_args  *aaa = (struct apic_attach_args  *) aux;
 	int apic_id;
-	bus_space_handle_t bh;
 	u_int32_t ver_sz;
 	int i;
 	
 	sc->sc_flags = aaa->flags;
-	sc->sc_apicid = aaa->apic_id;
+	sc->sc_pic.pic_apicid = aaa->apic_id;
 
 	printf(" apid %d (I/O APIC)\n", aaa->apic_id);
 
@@ -293,8 +295,11 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ioapic_add(sc);
-	
+
 	printf("%s: pa 0x%lx", sc->sc_pic.pic_dev.dv_xname, aaa->apic_address);
+#ifndef _IOAPIC_CUSTOM_RW
+	{
+	bus_space_handle_t bh;
 
 	if (x86_mem_add_mapping(aaa->apic_address, PAGE_SIZE, 0, &bh) != 0) {
 		printf(": map failed\n");
@@ -302,6 +307,9 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_reg = (volatile u_int32_t *)(bh + IOAPIC_REG);
 	sc->sc_data = (volatile u_int32_t *)(bh + IOAPIC_DATA);	
+	}
+#endif
+	sc->sc_pa = aaa->apic_address;
 
 	sc->sc_pic.pic_type = PIC_IOAPIC;
 	__cpu_simple_lock_init(&sc->sc_pic.pic_lock);
@@ -320,13 +328,13 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_apic_sz++;
 
 	if (aaa->apic_vecbase != -1)
-		sc->sc_apic_vecbase = aaa->apic_vecbase;
+		sc->sc_pic.pic_vecbase = aaa->apic_vecbase;
 	else {
 		/*
 		 * XXX this assumes ordering of ioapics in the table.
 		 * Only needed for broken BIOS workaround (see mpbios.c)
 		 */
-		sc->sc_apic_vecbase = ioapic_vecbase;
+		sc->sc_pic.pic_vecbase = ioapic_vecbase;
 		ioapic_vecbase += sc->sc_apic_sz;
 	}
 
@@ -353,23 +361,23 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	 * Maybe we should record the original ID for interrupt
 	 * mapping later ...
 	 */
-	if (apic_id != sc->sc_apicid) {
+	if (apic_id != sc->sc_pic.pic_apicid) {
 		printf("%s: misconfigured as apic %d\n", sc->sc_pic.pic_dev.dv_xname, apic_id);
 
 		ioapic_write(sc,IOAPIC_ID,
 		    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
-		    |(sc->sc_apicid<<IOAPIC_ID_SHIFT));
+		    |(sc->sc_pic.pic_apicid<<IOAPIC_ID_SHIFT));
 		
 		apic_id = (ioapic_read(sc,IOAPIC_ID)&IOAPIC_ID_MASK)>>IOAPIC_ID_SHIFT;
 		
-		if (apic_id != sc->sc_apicid) {
+		if (apic_id != sc->sc_pic.pic_apicid) {
 			printf("%s: can't remap to apid %d\n",
 			    sc->sc_pic.pic_dev.dv_xname,
-			    sc->sc_apicid);
+			    sc->sc_pic.pic_apicid);
 		} else {
 			printf("%s: remapped to apic %d\n",
 			    sc->sc_pic.pic_dev.dv_xname,
-			    sc->sc_apicid);
+			    sc->sc_pic.pic_apicid);
 		}
 	}
 #if 0
@@ -511,11 +519,11 @@ ioapic_addroute(struct pic *pic, struct cpu_info *ci, int pin,
 	struct ioapic_softc *sc = (struct ioapic_softc *)pic;
 	struct ioapic_pin *pp;
 
+	pp = &sc->sc_pins[pin];
+	pp->ip_type = type;
+	pp->ip_vector = idtvec;
+	pp->ip_cpu = ci;
 	if (ioapic_cold) {
-		pp = &sc->sc_pins[pin];
-		pp->ip_type = type;
-		pp->ip_vector = idtvec;
-		pp->ip_cpu = ci;
 		return;
 	}
 	apic_set_redir(sc, pin, idtvec, ci);
@@ -523,7 +531,7 @@ ioapic_addroute(struct pic *pic, struct cpu_info *ci, int pin,
 
 static void
 ioapic_delroute(struct pic *pic, struct cpu_info *ci, int pin,
-		int idtvec, int type)
+    int idtvec, int type)
 {
 	struct ioapic_softc *sc = (struct ioapic_softc *)pic;
 	struct ioapic_pin *pp;

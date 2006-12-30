@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50.16.1 2006/06/21 14:55:39 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.16.2 2006/12/30 20:46:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.16.1 2006/06/21 14:55:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.16.2 2006/12/30 20:46:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/pool.h>
 #include <sys/msgbuf.h>
+#include <sys/socketvar.h>	/* XXX: for sock_loan_thresh */
 
 #include <uvm/uvm.h>
 
@@ -221,6 +222,23 @@ pmap_init()
 	pool_init(&__pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
 	    &pmap_pv_page_allocator);
 	pool_setlowat(&__pmap_pv_pool, 16);
+
+#ifdef SH4
+	if (SH_HAS_VIRTUAL_ALIAS) {
+		/*
+		 * XXX
+		 * Disable sosend_loan() in src/sys/kern/uipc_socket.c
+		 * on SH4 to avoid possible virtual cache aliases and
+		 * unnecessary map/unmap thrashing in __pmap_pv_enter().
+		 * (also see comments in __pmap_pv_enter())
+		 * 
+		 * Ideally, read only shared mapping won't cause aliases
+		 * so __pmap_pv_enter() should handle any shared read only
+		 * mappings like ARM pmap.
+		 */
+		sock_loan_thresh = -1;
+	}
+#endif
 }
 
 pmap_t
@@ -310,7 +328,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	struct vm_page *pg;
 	struct vm_page_md *pvh;
-	pt_entry_t entry;
+	pt_entry_t entry, *pte;
 	boolean_t kva = (pmap == pmap_kernel());
 
 	/* "flags" never exceed "prot" */
@@ -368,7 +386,18 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 
 	/* Register to page table */
-	*__pmap_pte_alloc(pmap, va) = entry;
+	if (kva)
+		pte = __pmap_kpte_lookup(va);
+	else {
+		pte = __pmap_pte_alloc(pmap, va);
+		if (pte == NULL) {
+			if (flags & PMAP_CANFAIL)
+				return ENOMEM;
+			panic("pmap_enter: cannot allocate pte");
+		}
+	}
+
+	*pte = entry;
 
 	if (pmap->pm_asid != -1)
 		sh_tlb_update(pmap->pm_asid, va, entry);
@@ -445,11 +474,24 @@ __pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va)
 
 	s = splvm();
 	if (SH_HAS_VIRTUAL_ALIAS) {
-		/* Remove all other mapping on this physical page */
+		/*
+		 * Remove all other mappings on this physical page
+		 * which have different virtual cache indexes to
+		 * avoid virtual cache aliases.
+		 *
+		 * XXX We should also handle shared mappings which
+		 * XXX have different virtual cache indexes by
+		 * XXX mapping them uncached (like arm and mips do).
+		 */
+ again:
 		pvh = &pg->mdpage;
-		while ((pv = SLIST_FIRST(&pvh->pvh_head)) != NULL) {
-			pmap_remove(pv->pv_pmap, pv->pv_va,
-			    pv->pv_va + PAGE_SIZE);
+		SLIST_FOREACH(pv, &pvh->pvh_head, pv_link) {
+			if (sh_cache_indexof(va) !=
+			    sh_cache_indexof(pv->pv_va)) {
+				pmap_remove(pv->pv_pmap, pv->pv_va,
+				    pv->pv_va + PAGE_SIZE);
+				goto again;
+			}
 		}
 	}
 
@@ -848,6 +890,26 @@ pmap_phys_address(int cookie)
 	return (sh3_ptob(cookie));
 }
 
+#ifdef SH4
+/*
+ * pmap_prefer(vaddr_t foff, vaddr_t *vap)
+ *
+ * Find first virtual address >= *vap that doesn't cause
+ * a virtual cache alias against vaddr_t foff.
+ */
+void
+pmap_prefer(vaddr_t foff, vaddr_t *vap)
+{
+	vaddr_t va;
+
+	if (SH_HAS_VIRTUAL_ALIAS) {
+		va = *vap;
+
+		*vap = va + ((foff - va) & sh_cache_prefer_mask);
+	}
+}
+#endif /* SH4 */
+
 /*
  * pv_entry pool allocator:
  *	void *__pmap_pv_page_alloc(struct pool *pool, int flags):
@@ -892,6 +954,8 @@ __pmap_pte_alloc(pmap_t pmap, vaddr_t va)
 
 	/* Allocate page table (not managed page) */
 	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE | UVM_PGA_ZERO);
+	if (pg == NULL)
+		return NULL;
 
 	ptp = (pt_entry_t *)SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg));
 	pmap->pm_ptp[__PMAP_PTP_INDEX(va)] = ptp;
@@ -926,10 +990,13 @@ __pmap_pte_lookup(pmap_t pmap, vaddr_t va)
 pt_entry_t *
 __pmap_kpte_lookup(vaddr_t va)
 {
+	pt_entry_t *ptp;
 
-	return (__pmap_kernel.pm_ptp
-	    [__PMAP_PTP_INDEX(va - VM_MIN_KERNEL_ADDRESS)] +
-	    __PMAP_PTP_OFSET(va));
+	ptp = __pmap_kernel.pm_ptp[__PMAP_PTP_INDEX(va-VM_MIN_KERNEL_ADDRESS)];
+	if (ptp == NULL)
+		return NULL;
+
+	return (ptp + __PMAP_PTP_OFSET(va));
 }
 
 /*

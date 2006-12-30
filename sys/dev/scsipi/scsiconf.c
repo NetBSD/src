@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.230.2.1 2006/06/21 15:06:47 yamt Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.230.2.2 2006/12/30 20:49:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.230.2.1 2006/06/21 15:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.230.2.2 2006/12/30 20:49:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ static dev_type_ioctl(scsibusioctl);
 
 const struct cdevsw scsibus_cdevsw = {
 	scsibusopen, scsibusclose, noread, nowrite, scsibusioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 static int	scsibusprint(void *, const char *);
@@ -381,7 +381,8 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 }
 
 static int
-scsibusrescan(struct device *sc, const char *ifattr, const int *locators)
+scsibusrescan(struct device *sc, const char *ifattr,
+    const int *locators)
 {
 
 	KASSERT(ifattr && !strcmp(ifattr, "scsibus"));
@@ -571,6 +572,8 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* Broken IBM disk */
 	{{T_DIRECT, T_FIXED,
 	 ""	   , "DFRSS2F",		 ""},	  PQUIRK_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
+	 "Initio  ", "",		 ""},	  PQUIRK_NOBIGMODESENSE},
 	{{T_DIRECT, T_REMOV,
 	 "MPL     ", "MC-DISK-        ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
@@ -637,6 +640,8 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "MICROP  ", "1924",          ""},     PQUIRK_CAP_SYNC},
 	{{T_DIRECT, T_FIXED,
 	 "FUJITSU ", "M2266",         ""},     PQUIRK_CAP_SYNC},
+	{{T_DIRECT, T_FIXED,
+	 "FUJITSU ", "M2624S-512      ", ""},     PQUIRK_CAP_SYNC},
 
 	{{T_DIRECT, T_REMOV,
 	 "IOMEGA", "ZIP 100",		 "J.03"}, PQUIRK_NOLUNS},
@@ -965,7 +970,8 @@ bad:
 /****** Entry points for user control of the SCSI bus. ******/
 
 static int
-scsibusopen(dev_t dev, int flag, int fmt, struct lwp *l)
+scsibusopen(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	struct scsibus_softc *sc;
 	int error, unit = minor(dev);
@@ -986,7 +992,8 @@ scsibusopen(dev_t dev, int flag, int fmt, struct lwp *l)
 }
 
 static int
-scsibusclose(dev_t dev, int flag, int fmt, struct lwp *l)
+scsibusclose(dev_t dev, int flag, int fmt,
+    struct lwp *l)
 {
 	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
 

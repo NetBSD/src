@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tra_mca.c,v 1.2.4.1 2006/06/21 15:04:46 yamt Exp $	*/
+/*	$NetBSD: if_tra_mca.c,v 1.2.4.2 2006/12/30 20:48:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.2.4.1 2006/06/21 15:04:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.2.4.2 2006/12/30 20:48:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ static const struct tiara_mca_product {
 	{ MCA_PRODUCT_TIARA,	"Tiara LANCard/E2"},
 	{ MCA_PRODUCT_TIARA_TP,	"Tiara LANCard/E2 TP"},
 	{ MCA_PRODUCT_SMC3016,  "SMC 3016/MC"},
-	{ 0	}
+	{ 0,			NULL },
 };
 
 static const struct tiara_mca_product *tiara_mca_lookup __P((u_int32_t));
@@ -105,10 +105,8 @@ tiara_mca_lookup(id)
 }
 
 int
-tiara_mca_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tiara_mca_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct mca_attach_args *ma = (struct mca_attach_args *) aux;
 
@@ -130,9 +128,7 @@ static const int smc_irq[] = {
 };
 
 void
-tiara_mca_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tiara_mca_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tiara_softc *isc = device_private(self);
 	struct mb86950_softc *sc = &isc->sc_mb86950;

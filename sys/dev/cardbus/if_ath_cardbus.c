@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.7.2.1 2006/06/21 15:02:45 yamt Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.7.2.2 2006/12/30 20:47:57 yamt Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.7.2.1 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.7.2.2 2006/12/30 20:47:57 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -71,10 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.7.2.1 2006/06/21 15:02:45 yamt 
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -112,11 +107,13 @@ struct ath_cardbus_softc {
 	int	sc_intrline;		/* interrupt line */
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	void	*sc_sdhook;
 };
 
 int	ath_cardbus_match(struct device *, struct cfdata *, void *);
 void	ath_cardbus_attach(struct device *, struct device *, void *);
 int	ath_cardbus_detach(struct device *, int);
+void	ath_cardbus_shutdown(void *arg);
 
 CFATTACH_DECL(ath_cardbus, sizeof(struct ath_cardbus_softc),
     ath_cardbus_match, ath_cardbus_attach, ath_cardbus_detach, ath_activate);
@@ -129,7 +126,7 @@ void	ath_cardbus_power(struct ath_softc *, int);
 
 int
 ath_cardbus_match(struct device *parent, struct cfdata *match,
-	void *aux)
+    void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 	const char* devname;
@@ -145,7 +142,7 @@ ath_cardbus_match(struct device *parent, struct cfdata *match,
 
 void
 ath_cardbus_attach(struct device *parent, struct device *self,
-	void *aux)
+    void *aux)
 {
 	struct ath_cardbus_softc *csc = device_private(self);
 	struct ath_softc *sc = &csc->sc_ath;
@@ -166,6 +163,12 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	sc->sc_disable = ath_cardbus_disable;
 	sc->sc_power = ath_cardbus_power;
 
+	csc->sc_sdhook = shutdownhook_establish(ath_cardbus_shutdown, csc);
+	if (csc->sc_sdhook == NULL) {
+		aprint_error("couldn't establish shutdown hook\n");
+		return;
+	}
+
 	/*
 	 * Map the device.
 	 */
@@ -181,6 +184,7 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	else {
 		printf("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
+		shutdownhook_disestablish(csc->sc_sdhook);
 		return;
 	}
 
@@ -221,6 +225,8 @@ ath_cardbus_detach(struct device *self, int flags)
 		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 #endif
 
+	shutdownhook_disestablish(csc->sc_sdhook);
+
 	rv = ath_detach(sc);
 	if (rv)
 		return (rv);
@@ -239,6 +245,16 @@ ath_cardbus_detach(struct device *self, int flags)
 	    csc->sc_mapsize);
 
 	return (0);
+}
+
+void
+ath_cardbus_shutdown(void *arg)
+{
+	struct ath_cardbus_softc *csc;
+
+	csc = arg;
+
+	ath_shutdown(&csc->sc_ath);
 }
 
 int

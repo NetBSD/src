@@ -1,4 +1,4 @@
-/*	$NetBSD: db_dbgreg.S,v 1.2 2003/11/01 15:14:27 yamt Exp $	*/
+/*	$NetBSD: db_dbgreg.S,v 1.2.16.1 2006/12/30 20:46:09 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -185,7 +185,11 @@ dr_msk:
 	.long	~0x000f0003
 	.long	~0x00f0000c
 	.long	~0x0f000030
-	.long	~0xf00000c0
+	/* XXX
+	 * The following should be ~0xf00000c0 but that confuses gas
+	 * when cross-compiling i386 from amd64.
+	 */
+	.long	0x0fffff3f
 _C_LABEL(dr_addr):
 	.long	0,0,0,0
 	.long	0,0,0,0

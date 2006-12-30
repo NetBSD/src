@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.78.2.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.78.2.2 2006/12/30 20:50:21 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.78.2.1 2006/06/21 15:10:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.78.2.2 2006/12/30 20:50:21 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -75,6 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.78.2.1 2006/06/21 15:10:27 yamt Exp $")
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
+#ifdef RTSOCK_DEBUG
+#include <netinet/in.h>
+#endif /* RTSOCK_DEBUG */
 
 #include <net/if.h>
 #include <net/route.h>
@@ -84,9 +87,9 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.78.2.1 2006/06/21 15:10:27 yamt Exp $")
 
 DOMAIN_DEFINE(routedomain);	/* forward declare and add to link set */
 
-struct	sockaddr route_dst = { 2, PF_ROUTE, };
-struct	sockaddr route_src = { 2, PF_ROUTE, };
-struct	sockproto route_proto = { PF_ROUTE, };
+struct	sockaddr route_dst = { .sa_len = 2, .sa_family = PF_ROUTE, };
+struct	sockaddr route_src = { .sa_len = 2, .sa_family = PF_ROUTE, };
+struct	sockproto route_proto = { .sp_family = PF_ROUTE, };
 
 struct walkarg {
 	int	w_op;
@@ -241,6 +244,12 @@ route_output(struct mbuf *m, ...)
 	if (rt_xaddrs(rtm->rtm_type, (caddr_t)(rtm + 1), len + (caddr_t)rtm, &info))
 		senderr(EINVAL);
 	info.rti_flags = rtm->rtm_flags;
+#ifdef RTSOCK_DEBUG
+	if (dst->sa_family == AF_INET) {
+		printf("%s: extracted dst %s\n", __func__,
+		    inet_ntoa(((const struct sockaddr_in *)dst)->sin_addr));
+	}
+#endif /* RTSOCK_DEBUG */
 	if (dst == 0 || (dst->sa_family >= AF_MAX))
 		senderr(EINVAL);
 	if (gate != 0 && (gate->sa_family >= AF_MAX))
@@ -260,8 +269,8 @@ route_output(struct mbuf *m, ...)
 	 * Verify that the caller has the appropriate privilege; RTM_GET
 	 * is the only operation the non-superuser is allowed.
 	 */
-	if (rtm->rtm_type != RTM_GET &&
-	    kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER, &curproc->p_acflag) != 0)
+	if (kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_ROUTE,
+	    0, rtm, NULL, NULL) != 0)
 		senderr(EACCES);
 
 	switch (rtm->rtm_type) {
@@ -322,19 +331,36 @@ route_output(struct mbuf *m, ...)
 			gate = rt->rt_gateway;
 			netmask = rt_mask(rt);
 			genmask = rt->rt_genmask;
-			if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) {
-				if ((ifp = rt->rt_ifp) != NULL) {
-					ifpaddr = TAILQ_FIRST(&ifp->if_addrlist)->ifa_addr;
-					ifaaddr = rt->rt_ifa->ifa_addr;
-					if (ifp->if_flags & IFF_POINTOPOINT)
-						brdaddr = rt->rt_ifa->ifa_dstaddr;
-					else
-						brdaddr = 0;
-					rtm->rtm_index = ifp->if_index;
-				} else {
-					ifpaddr = 0;
-					ifaaddr = 0;
+			if ((rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) == 0)
+				;
+			else if ((ifp = rt->rt_ifp) != NULL) {
+				const struct ifaddr *rtifa;
+				ifpaddr = TAILQ_FIRST(&ifp->if_addrlist)->ifa_addr;
+                                /* rtifa used to be simply rt->rt_ifa.
+                                 * If rt->rt_ifa != NULL, then
+                                 * rt_get_ifa() != NULL.  So this
+                                 * ought to still be safe. --dyoung
+				 */
+				rtifa = rt_get_ifa(rt);
+				ifaaddr = rtifa->ifa_addr;
+#ifdef RTSOCK_DEBUG
+				if (ifaaddr->sa_family == AF_INET) {
+					printf("%s: copying out RTAX_IFA %s ",
+					    __func__,
+					    inet_ntoa(((const struct sockaddr_in *)ifaaddr)->sin_addr));
+					printf("for dst %s ifa_getifa %p ifa_seqno %p\n",
+					    inet_ntoa(((const struct sockaddr_in *)dst)->sin_addr),
+					    (void *)rtifa->ifa_getifa, rtifa->ifa_seqno);
 				}
+#endif /* RTSOCK_DEBUG */
+				if (ifp->if_flags & IFF_POINTOPOINT)
+					brdaddr = rtifa->ifa_dstaddr;
+				else
+					brdaddr = 0;
+				rtm->rtm_index = ifp->if_index;
+			} else {
+				ifpaddr = 0;
+				ifaaddr = 0;
 			}
 			(void)rt_msg2(rtm->rtm_type, &info, (caddr_t)0,
 			    (struct walkarg *)0, &len);
@@ -377,13 +403,12 @@ route_output(struct mbuf *m, ...)
 			if (ifa) {
 				struct ifaddr *oifa = rt->rt_ifa;
 				if (oifa != ifa) {
-				    if (oifa && oifa->ifa_rtrequest)
-					oifa->ifa_rtrequest(RTM_DELETE, rt,
-					    &info);
-				    IFAFREE(rt->rt_ifa);
-				    rt->rt_ifa = ifa;
-				    IFAREF(rt->rt_ifa);
-				    rt->rt_ifp = ifp;
+					if (oifa && oifa->ifa_rtrequest) {
+						oifa->ifa_rtrequest(RTM_DELETE,
+						    rt, &info);
+					}
+					rt_replace_ifa(rt, ifa);
+					rt->rt_ifp = ifp;
 				}
 			}
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
@@ -918,10 +943,16 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 	netmask = rt_mask(rt);
 	genmask = rt->rt_genmask;
 	if (rt->rt_ifp) {
+		const struct ifaddr *rtifa;
 		ifpaddr = TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
-		ifaaddr = rt->rt_ifa->ifa_addr;
+		/* rtifa used to be simply rt->rt_ifa.  If rt->rt_ifa != NULL,
+		 * then rt_get_ifa() != NULL.  So this ought to still be safe.
+		 * --dyoung
+		 */
+		rtifa = rt_get_ifa(rt);
+		ifaaddr = rtifa->ifa_addr;
 		if (rt->rt_ifp->if_flags & IFF_POINTOPOINT)
-			brdaddr = rt->rt_ifa->ifa_dstaddr;
+			brdaddr = rtifa->ifa_dstaddr;
 	}
 	if ((error = rt_msg2(RTM_GET, &info, 0, w, &size)))
 		return (error);
@@ -1161,8 +1192,11 @@ const struct protosw routesw[] = {
 } };
 
 struct domain routedomain = {
-	PF_ROUTE, "route", route_init, 0, 0,
-	routesw, &routesw[sizeof(routesw)/sizeof(routesw[0])]
+	.dom_family = PF_ROUTE,
+	.dom_name = "route",
+	.dom_init = route_init,
+	.dom_protosw = routesw,
+	.dom_protoswNPROTOSW = &routesw[sizeof(routesw)/sizeof(routesw[0])],
 };
 
 SYSCTL_SETUP(sysctl_net_route_setup, "sysctl net.route subtree setup")

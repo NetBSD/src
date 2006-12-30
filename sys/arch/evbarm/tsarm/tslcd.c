@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.4.6.1 2006/06/21 14:50:54 yamt Exp $ */
+/* $NetBSD: tslcd.c,v 1.4.6.2 2006/12/30 20:45:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.4.6.1 2006/06/21 14:50:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.4.6.2 2006/12/30 20:45:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.4.6.1 2006/06/21 14:50:54 yamt Exp $");
 #include <dev/wscons/wscons_callbacks.h>
 
 #include <arm/ep93xx/ep93xxreg.h>
+#include <arm/ep93xx/epgpioreg.h>
 #include <dev/ic/hd44780reg.h>
 #include <dev/ic/hd44780var.h>
 #include <evbarm/tsarm/tspldvar.h>
@@ -264,10 +265,10 @@ tslcd_readreg(hd, en, rs)
 }
 
 int
-tslcdopen(dev, flag, mode, p)
+tslcdopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tslcd_softc *sc = device_lookup(&tslcd_cd, minor(dev));
 
@@ -278,10 +279,10 @@ tslcdopen(dev, flag, mode, p)
 }
 
 int
-tslcdclose(dev, flag, mode, p)
+tslcdclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	return 0;
 }
@@ -321,22 +322,22 @@ tslcdwrite(dev, uio, flag)
 }
 
 int
-tslcdioctl(dev, cmd, data, flag, p)
+tslcdioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tslcd_softc *sc = device_lookup(&tslcd_cd, minor(dev));
 	return hd44780_ioctl_subr(&sc->sc_hlcd, cmd, data);
 }
 
 int
-tslcdpoll(dev, events, p)
+tslcdpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	return 0;
 }

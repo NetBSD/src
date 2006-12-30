@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.59.2.1 2006/06/21 14:54:02 yamt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.59.2.2 2006/12/30 20:46:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.59.2.1 2006/06/21 14:54:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.59.2.2 2006/12/30 20:46:36 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -474,7 +474,7 @@ initarm(void *arg)
 	}
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
-	/* XXX must make the memory description h/w independant */
+	/* XXX must make the memory description h/w independent */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = 0;
 	bootconfig.dram[0].pages = nwbootinfo.bi_nrpages;
@@ -536,7 +536,7 @@ initarm(void *arg)
 	memset((char *)(var), 0, ((np) * PAGE_SIZE));
 
 	loop1 = 0;
-	kernel_l1pt.pv_pa = 0;
+	kernel_l1pt.pv_pa = kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0

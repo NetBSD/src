@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.35.2.1 2006/06/21 14:59:12 yamt Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.35.2.2 2006/12/30 20:47:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -137,6 +137,12 @@ int linux_aout_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
 void linux_trapsignal __P((struct lwp *, const ksiginfo_t *));
 int linux_usertrap __P((struct lwp *, vaddr_t, void *));
+#ifdef LINUX_NPTL
+void linux_nptl_proc_fork __P((struct proc *, struct proc *,
+	void (luserret)(struct lwp *, void *)));
+void linux_nptl_proc_exit __P((struct proc *));      
+void linux_nptl_proc_init __P((struct proc *, struct proc *));
+#endif
 
 #ifdef EXEC_ELF32
 int linux_elf32_probe __P((struct lwp *, struct exec_package *, void *,
@@ -147,6 +153,10 @@ int linux_elf32_signature __P((struct lwp *, struct exec_package *,
         Elf32_Ehdr *, char *));
 #ifdef LINUX_GCC_SIGNATURE
 int linux_elf32_gcc_signature __P((struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *));
+#endif
+#ifdef LINUX_DEBUGLINK_SIGNATURE
+int linux_elf32_debuglink_signature __P((struct lwp *l,
         struct exec_package *, Elf32_Ehdr *));
 #endif
 #ifdef LINUX_ATEXIT_SIGNATURE
@@ -163,6 +173,10 @@ int linux_elf64_signature __P((struct lwp *, struct exec_package *,
         Elf64_Ehdr *, char *));
 #ifdef LINUX_GCC_SIGNATURE
 int linux_elf64_gcc_signature __P((struct lwp *l,
+        struct exec_package *, Elf64_Ehdr *));
+#endif
+#ifdef LINUX_DEBUGLINK_SIGNATURE
+int linux_elf64_debuglink_signature __P((struct lwp *l,
         struct exec_package *, Elf64_Ehdr *));
 #endif
 #ifdef LINUX_ATEXIT_SIGNATURE

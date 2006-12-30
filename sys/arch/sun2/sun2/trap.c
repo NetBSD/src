@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.20.2.1 2006/06/21 14:57:05 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.20.2.2 2006/12/30 20:47:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.20.2.1 2006/06/21 14:57:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.20.2.2 2006/12/30 20:47:06 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -272,6 +272,7 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 		type |= T_USER;
 		sticks = p->p_sticks;
 		l->l_md.md_regs = tf.tf_regs;
+		LWP_CACHE_CREDS(l, p);
 	} else {
 		sticks = 0;
 		/* XXX: Detect trap recursion? */
@@ -591,8 +592,8 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred ?
-			       kauth_cred_geteuid(p->p_cred) : -1);
+			       l->l_cred ?
+			       kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		} else {
 			ksi.ksi_signo = SIGSEGV;

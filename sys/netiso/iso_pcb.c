@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.27.12.1 2006/06/21 15:11:37 yamt Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.27.12.2 2006/12/30 20:50:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.27.12.1 2006/06/21 15:11:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.27.12.2 2006/12/30 20:50:45 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -86,13 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.27.12.1 2006/06/21 15:11:37 yamt Exp $
 #include <netiso/iso_pcb.h>
 #include <netiso/iso_var.h>
 #include <sys/protosw.h>
-
-#ifdef TPCONS
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_var.h>
-#include <netccitt/pk_extern.h>
-#endif
 
 const struct iso_addr zeroiso_addr;
 
@@ -149,7 +142,7 @@ iso_pcballoc(struct socket *so, void *v)
  * NOTES:
  */
 int
-iso_pcbbind(void *v, struct mbuf *nam, struct proc *p)
+iso_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 {
 	struct isopcb *isop = v;
 	struct isopcb *head = isop->isop_head;
@@ -230,7 +223,8 @@ iso_pcbbind(void *v, struct mbuf *nam, struct proc *p)
 		bcopy(TSEL(siso), suf.data, sizeof(suf.data));
 		suf.s = ntohs(suf.s);
 		if (suf.s < ISO_PORT_RESERVED &&
-		    (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+		    (l == NULL || kauth_authorize_generic(l->l_cred,
+		     KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
 			return EACCES;
 	} else {
 		char  *cp;
@@ -280,7 +274,7 @@ noname:
  * NOTES:
  */
 int
-iso_pcbconnect(void *v, struct mbuf *nam, struct proc *p)
+iso_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 {
 	struct isopcb *isop = v;
 	struct sockaddr_iso *siso = mtod(nam, struct sockaddr_iso *);
@@ -354,7 +348,7 @@ iso_pcbconnect(void *v, struct mbuf *nam, struct proc *p)
 		siso = isop->isop_laddr;
 		if (siso == 0 || siso->siso_tlen == 0)
 			(void) iso_pcbbind(isop, (struct mbuf *)0,
-			    (struct proc *)0);
+			    (struct lwp *)0);
 		/*
 		 * Here we have problem of squezeing in a definite network address
 		 * into an existing sockaddr_iso, which in fact may not have room
@@ -517,8 +511,7 @@ iso_pcbdetach(void *v)
 		printf("iso_pcbdetach 3 \n");
 	}
 #endif
-	if (isop->isop_route.ro_rt)
-		rtfree(isop->isop_route.ro_rt);
+	rtcache_free((struct route *)&isop->isop_route);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
 		printf("iso_pcbdetach 3.1\n");

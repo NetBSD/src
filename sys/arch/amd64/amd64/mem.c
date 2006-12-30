@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4.16.1 2006/06/21 14:48:18 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.4.16.2 2006/12/30 20:45:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.4.16.1 2006/06/21 14:48:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.4.16.2 2006/12/30 20:45:22 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -115,6 +115,8 @@ const struct cdevsw mem_cdevsw = {
 	nostop, notty, nopoll, mmmmap, nokqfilter
 };
 
+int check_pa_acc(paddr_t, vm_prot_t);
+
 /*ARGSUSED*/
 int
 mmrw(dev, uio, flags)
@@ -155,6 +157,9 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
+			error = check_pa_acc(uio->uio_offset, prot);
+			if (error)
+				break;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, PMAP_WIRED|prot);
 			o = uio->uio_offset & PGOFSET;
@@ -226,8 +231,6 @@ mmmmap(dev, off, prot)
 	off_t off;
 	int prot;
 {
-	struct proc *p = curproc;	/* XXX */
-
 	/*
 	 * /dev/mem is the only one that makes sense through this
 	 * interface.  For /dev/kmem any physaddr we return here
@@ -239,7 +242,8 @@ mmmmap(dev, off, prot)
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if (off > ctob(physmem) && kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+	if (check_pa_acc(off, prot) != 0)
 		return (-1);
+
 	return (x86_btop(off));
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.5.12.2 2006/06/21 14:48:18 yamt Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.5.12.3 2006/12/30 20:45:22 yamt Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.5.12.2 2006/06/21 14:48:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.5.12.3 2006/12/30 20:45:22 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -59,6 +59,7 @@ linux32_syscall_plain(frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
@@ -171,6 +172,7 @@ linux32_syscall_fancy(frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
@@ -222,7 +224,9 @@ linux32_syscall_fancy(frame)
 			printf("linux syscall %d bogus argument size %ld",
 			    code, argsize);
 			error = ENOSYS;
+#if defined(KTRACE) || defined(SYSTRACE)
 			goto out;
+#endif
 			break;
 		}
 	}

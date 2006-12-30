@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cons.c,v 1.17 2004/04/21 23:19:49 matt Exp $	*/
+/*	$NetBSD: if_cons.c,v 1.17.12.1 2006/12/30 20:50:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,7 +64,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cons.c,v 1.17 2004/04/21 23:19:49 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cons.c,v 1.17.12.1 2006/12/30 20:50:44 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -101,10 +101,6 @@ unsigned        LAST_CALL_PCB;
 #include <netiso/tp_var.h>
 #include <netiso/clnp.h>
 
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_var.h>
-#include <netccitt/pk_extern.h>
 #endif
 
 #ifdef ARGO_DEBUG

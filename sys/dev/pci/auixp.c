@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.9.2.1 2006/06/21 15:05:03 yamt Exp $ */
+/* $NetBSD: auixp.c,v 1.9.2.2 2006/12/30 20:48:41 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.9.2.1 2006/06/21 15:05:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.9.2.2 2006/12/30 20:48:41 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.9.2.1 2006/06/21 15:05:03 yamt Exp $");
 #include <dev/pci/auixpvar.h>
 
 
-//#define DEBUG_AUIXP
+/* #define DEBUG_AUIXP */
 
 
 /* why isn't this base address register not in the headerfile? */
@@ -206,7 +206,7 @@ static void	auixp_update_busbusy(struct auixp_softc *);
 
 #ifdef DEBUG_AUIXP
 static struct auixp_softc *static_sc;
-sdtatic void auixp_dumpreg(void);
+static void auixp_dumpreg(void);
 #	define DPRINTF(x) printf x;
 #else
 #	define DPRINTF(x)
@@ -239,7 +239,9 @@ static const struct audio_hw_if auixp_hw_if = {
 	auixp_mappage,
 	auixp_get_props,
 	auixp_trigger_output,
-	auixp_trigger_input
+	auixp_trigger_input,
+	NULL,			/* dev_ioctl */
+	NULL,			/* powerstate */
 };
 
 
@@ -380,9 +382,9 @@ auixp_commit_settings(void *hdl)
 
 /* set audio properties in desired setting */
 static int
-auixp_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
-		 audio_params_t *rec, stream_filter_list_t *pfil,
-		 stream_filter_list_t *rfil)
+auixp_set_params(void *hdl, int setmode, int usemode,
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	struct auixp_codec *co;
 	struct auixp_softc *sc;
@@ -442,7 +444,8 @@ auixp_set_params(void *hdl, int setmode, int usemode, audio_params_t *play,
 
 /* called to translate a requested blocksize to a hw-possible one */
 static int
-auixp_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
+auixp_round_blocksize(void *hdl, int bs, int mode,
+    const audio_params_t *param)
 {
 	uint32_t new_bs;
 
@@ -565,7 +568,8 @@ auixp_query_devinfo(void *hdl, mixer_devinfo_t *di)
 
 
 static size_t
-auixp_round_buffersize(void *hdl, int direction, size_t bufsize)
+auixp_round_buffersize(void *hdl, int direction,
+    size_t bufsize)
 {
 
 	/* XXX force maximum? i.e. 256 kb? */
@@ -705,9 +709,9 @@ auixp_dma_update(struct auixp_softc *sc, struct auixp_dma *dma)
 
 	/* be very paranoid */
 	if (!dma)
-		panic("auixp: update: dma = NULL");
+		panic("%s: update: dma = NULL", sc->sc_dev.dv_xname);
 	if (!dma->intr)
-		panic("auixp: update: dma->intr = NULL");
+		panic("%s: update: dma->intr = NULL", sc->sc_dev.dv_xname);
 
 	/* request more input from upper layer */
 	(*dma->intr)(dma->intrarg);
@@ -749,7 +753,7 @@ auixp_update_busbusy(struct auixp_softc *sc)
 /* XXX allmost literaly a copy of trigger-input; could be factorised XXX */
 static int
 auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
-		void (*intr)(void *), void *intrarg, const audio_params_t *param)
+    void (*intr)(void *), void *intrarg, const audio_params_t *param)
 {
 	struct auixp_codec *co;
 	struct auixp_softc *sc;
@@ -824,7 +828,7 @@ auixp_halt_output(void *hdl)
 /* XXX allmost literaly a copy of trigger-output; could be factorised XXX */
 static int
 auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
-		void (*intr)(void *), void *intrarg, const audio_params_t *param)
+    void (*intr)(void *), void *intrarg, const audio_params_t *param)
 {
 	struct auixp_codec *co;
 	struct auixp_softc *sc;
@@ -1070,7 +1074,8 @@ auixp_mappage(void *hdl, void *mem, off_t off, int prot)
 
 /* Is it my hardware? */
 static int
-auixp_match(struct device *dev, struct cfdata *match, void *aux)
+auixp_match(struct device *dev, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -1155,21 +1160,6 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	if (!sc->sc_output_dma || !sc->sc_input_dma)
 		return;
 
-	/* fill in the missing details about the dma channels. */
-
-	/* for output */
-	sc->sc_output_dma->linkptr        = ATI_REG_OUT_DMA_LINKPTR;
-	sc->sc_output_dma->dma_enable_bit = ATI_REG_CMD_OUT_DMA_EN |
-					    ATI_REG_CMD_SEND_EN;
-	/* have spdif? then this too! XXX not seeing LED yet! XXX */
-	if (sc->has_spdif)
-		sc->sc_output_dma->dma_enable_bit |= ATI_REG_CMD_SPDF_OUT_EN;
-
-	/* and for input */
-	sc->sc_input_dma->linkptr         = ATI_REG_IN_DMA_LINKPTR;
-	sc->sc_input_dma->dma_enable_bit  = ATI_REG_CMD_IN_DMA_EN  |
-					    ATI_REG_CMD_RECEIVE_EN;
-
 #if 0
 	/* could preliminary program DMA chain */
 	auixp_program_dma_chain(sc, sc->sc_output_dma);
@@ -1226,7 +1216,8 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->powerhook = powerhook_establish(auixp_powerhook, sc);
+	sc->powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    auixp_powerhook, sc);
 	if (sc->powerhook == NULL)
 		aprint_error("%s: WARNING: unable to establish powerhook\n",
 		    sc->sc_dev.dv_xname);
@@ -1310,6 +1301,26 @@ auixp_post_config(struct device *self)
 		if (codec->present)
 			audio_attach_mi(&auixp_hw_if, codec, &sc->sc_dev);
 	}
+
+	if (sc->has_spdif) {
+		aprint_normal("%s: codec spdif support detected but disabled "
+		    "for now\n", sc->sc_dev.dv_xname);
+		sc->has_spdif = 0;
+	}
+
+	/* fill in the missing details about the dma channels. */
+	/* for output */
+	sc->sc_output_dma->linkptr        = ATI_REG_OUT_DMA_LINKPTR;
+	sc->sc_output_dma->dma_enable_bit = ATI_REG_CMD_OUT_DMA_EN |
+					    ATI_REG_CMD_SEND_EN;
+	/* have spdif? then this too! XXX not seeing LED yet! XXX */
+	if (sc->has_spdif)
+		sc->sc_output_dma->dma_enable_bit |= ATI_REG_CMD_SPDF_OUT_EN;
+
+	/* and for input */
+	sc->sc_input_dma->linkptr         = ATI_REG_IN_DMA_LINKPTR;
+	sc->sc_input_dma->dma_enable_bit  = ATI_REG_CMD_IN_DMA_EN  |
+					    ATI_REG_CMD_RECEIVE_EN;
 
 	/* done! now enable all interrupts we can service */
 	auixp_enable_interrupts(sc);
@@ -1794,8 +1805,10 @@ auixp_powerhook(int why, void *hdl)
 		break;
 	case PWR_RESUME:
 		auixp_resume(sc);
-/* XXX fix me XXX */
-//		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+#if notyet
+		/* XXX fix me XXX */
+		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+#endif
 		break;
 	}
 }

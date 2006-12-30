@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.24.2.1 2006/06/21 15:02:32 yamt Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.24.2.2 2006/12/30 20:47:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.24.2.1 2006/06/21 15:02:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.24.2.2 2006/12/30 20:47:54 yamt Exp $");
 
 #include "rnd.h"
 
@@ -93,7 +93,8 @@ static const char * const fdc_acpi_ids[] = {
  * fdc_acpi_match: autoconf(9) match routine
  */
 static int
-fdc_acpi_match(struct device *parent, struct cfdata *match, void *aux)
+fdc_acpi_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 

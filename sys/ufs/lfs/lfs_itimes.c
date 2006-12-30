@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_itimes.c,v 1.9.4.2 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: lfs_itimes.c,v 1.9.4.3 2006/12/30 20:51:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.9.4.2 2006/06/21 15:12:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.9.4.3 2006/12/30 20:51:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -68,7 +68,7 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 
 	KASSERT(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY));
 
-	getnanotime(&now);
+	vfs_timestamp(&now);
 #endif
 
 	if (ip->i_flag & IN_ACCESS) {

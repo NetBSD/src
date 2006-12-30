@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.150.2.1 2006/06/21 14:57:34 yamt Exp $	 */
+/* $NetBSD: machdep.c,v 1.150.2.2 2006/12/30 20:47:14 yamt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.2.1 2006/06/21 14:57:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.2.2 2006/12/30 20:47:14 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -758,7 +758,7 @@ int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_addr->u_pcb.framep;
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 
 	if ((flags & _UC_CPU) == 0)
 		return 0;

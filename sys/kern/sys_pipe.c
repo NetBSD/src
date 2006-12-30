@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.65.2.1 2006/06/21 15:09:38 yamt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.65.2.2 2006/12/30 20:50:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65.2.1 2006/06/21 15:09:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65.2.2 2006/12/30 20:50:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65.2.1 2006/06/21 15:09:38 yamt Exp $
 #include <sys/filedesc.h>
 #include <sys/filio.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/ttycom.h>
 #include <sys/stat.h>
 #include <sys/malloc.h>
@@ -206,9 +205,7 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;
 	int fd, error;
-	struct proc *p;
 
-	p = l->l_proc;
 	rpipe = wpipe = NULL;
 	if (pipe_create(&rpipe, 1) || pipe_create(&wpipe, 0)) {
 		pipeclose(NULL, rpipe);
@@ -224,7 +221,7 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 	 * file descriptor races if we block in the second falloc().
 	 */
 
-	error = falloc(p, &rf, &fd);
+	error = falloc(l, &rf, &fd);
 	if (error)
 		goto free2;
 	retval[0] = fd;
@@ -233,7 +230,7 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 	rf->f_data = (caddr_t)rpipe;
 	rf->f_ops = &pipeops;
 
-	error = falloc(p, &wf, &fd);
+	error = falloc(l, &wf, &fd);
 	if (error)
 		goto free3;
 	retval[1] = fd;
@@ -253,7 +250,7 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 free3:
 	FILE_UNUSE(rf, l);
 	ffree(rf);
-	fdremove(p->p_fd, retval[0]);
+	fdremove(l->l_proc->p_fd, retval[0]);
 free2:
 	pipeclose(NULL, wpipe);
 	pipeclose(NULL, rpipe);

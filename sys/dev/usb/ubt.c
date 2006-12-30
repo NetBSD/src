@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.12.2.1 2006/06/21 15:07:44 yamt Exp $	*/
+/*	$NetBSD: ubt.c,v 1.12.2.2 2006/12/30 20:49:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.12.2.1 2006/06/21 15:07:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.12.2.2 2006/12/30 20:49:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -152,9 +152,6 @@ SYSCTL_SETUP(sysctl_hw_ubt_debug_setup, "sysctl hw.ubt_debug setup")
 #define UBT_BUFSIZ_CMD		(HCI_CMD_PKT_SIZE - 1)
 #define UBT_BUFSIZ_ACL		(2048 - 1)
 #define UBT_BUFSIZ_EVENT	(HCI_EVENT_PKT_SIZE - 1)
-
-/* Interrupt Interval from (Bluetooth spec) */
-#define UBT_EVENT_INTERVAL	1	/* 1ms */
 
 /* Transmit timeouts */
 #define UBT_CMD_TIMEOUT		USBD_DEFAULT_TIMEOUT
@@ -280,6 +277,18 @@ static int ubt_set_isoc_config(struct ubt_softc *);
 static int ubt_sysctl_config(SYSCTLFN_PROTO);
 static void ubt_abortdealloc(struct ubt_softc *);
 
+/*
+ * If a device should be ignored then add
+ *
+ *	{ VendorID, ProductID }
+ *
+ * to this list.
+ */
+static const struct usb_devno ubt_ignore[] = {
+	{ USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033NF },
+	{ 0, 0 }	/* end of list */
+};
+
 USB_MATCH(ubt)
 {
 	USB_MATCH_START(ubt, uaa);
@@ -288,6 +297,9 @@ USB_MATCH(ubt)
 	DPRINTFN(50, "ubt_match\n");
 
 	if (uaa->iface == NULL)
+		return UMATCH_NONE;
+
+	if (usb_lookup(ubt_ignore, uaa->vendor, uaa->product))
 		return UMATCH_NONE;
 
 	id = usbd_get_interface_descriptor(uaa->iface);
@@ -444,7 +456,7 @@ USB_ATTACH(ubt)
 	sc->sc_unit.hci_start_cmd = ubt_xmit_cmd_start;
 	sc->sc_unit.hci_start_acl = ubt_xmit_acl_start;
 	sc->sc_unit.hci_start_sco = ubt_xmit_sco_start;
-	sc->sc_unit.hci_ipl = IPL_USB;	/* XXX: IPL_SOFTUSB ?? */
+	sc->sc_unit.hci_ipl = makeiplcookie(IPL_USB); /* XXX: IPL_SOFTUSB ?? */
 	hci_attach(&sc->sc_unit);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
@@ -578,12 +590,12 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 	int err;
 
 	err = usbd_set_interface(sc->sc_iface1, sc->sc_config);
-	if (err) {
+	if (err != USBD_NORMAL_COMPLETION) {
 		aprint_error(
 		    "%s: Could not set config %d on ISOC interface. %s (%d)\n",
 		    USBDEVNAME(sc->sc_dev), sc->sc_config, usbd_errstr(err), err);
 
-		return err;
+		return err == USBD_IN_USE ? EBUSY : EIO;
 	}
 
 	/*
@@ -689,6 +701,10 @@ ubt_sysctl_config(SYSCTLFN_ARGS)
 
 	if (t < 0 || t >= sc->sc_alt_config)
 		return EINVAL;
+
+	/* This may not change when the unit is enabled */
+	if (sc->sc_unit.hci_flags & BTF_RUNNING)
+		return EBUSY;
 
 	sc->sc_config = t;
 	return ubt_set_isoc_config(sc);
@@ -815,7 +831,7 @@ ubt_enable(struct hci_unit *unit)
 				  sc->sc_evt_buf,
 				  UBT_BUFSIZ_EVENT,
 				  ubt_recv_event,
-				  UBT_EVENT_INTERVAL);
+				  USBD_DEFAULT_INTERVAL);
 	if (err != USBD_NORMAL_COMPLETION) {
 		error = EIO;
 		goto bad;
@@ -1326,6 +1342,12 @@ ubt_recv_event(usbd_xfer_handle xfer, usbd_private_handle h, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, &buf, &count, NULL);
 
+	if (count < sizeof(hci_event_hdr_t) - 1) {
+		DPRINTF("dumped undersized event (count = %d)\n", count);
+		sc->sc_unit.hci_stats.err_rx++;
+		return;
+	}
+
 	sc->sc_unit.hci_stats.evt_rx++;
 	sc->sc_unit.hci_stats.byte_rx += count;
 
@@ -1414,14 +1436,19 @@ ubt_recv_acl_complete(usbd_xfer_handle xfer,
 	} else {
 		usbd_get_xfer_status(xfer, NULL, &buf, &count, NULL);
 
-		sc->sc_unit.hci_stats.acl_rx++;
-		sc->sc_unit.hci_stats.byte_rx += count;
-
-		m = ubt_mbufload(buf, count, HCI_ACL_DATA_PKT);
-		if (m != NULL)
-			hci_input_acl(&sc->sc_unit, m);
-		else
+		if (count < sizeof(hci_acldata_hdr_t) - 1) {
+			DPRINTF("dumped undersized packet (%d)\n", count);
 			sc->sc_unit.hci_stats.err_rx++;
+		} else {
+			sc->sc_unit.hci_stats.acl_rx++;
+			sc->sc_unit.hci_stats.byte_rx += count;
+
+			m = ubt_mbufload(buf, count, HCI_ACL_DATA_PKT);
+			if (m != NULL)
+				hci_input_acl(&sc->sc_unit, m);
+			else
+				sc->sc_unit.hci_stats.err_rx++;
+		}
 	}
 
 	/* and restart */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.250.2.1 2006/06/21 15:09:39 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.250.2.2 2006/12/30 20:50:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.1 2006/06/21 15:09:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.2 2006/12/30 20:50:07 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -174,6 +174,9 @@ MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
 /*
  * Local declarations.
  */
+
+static specificdata_domain_t mount_specificdata_domain;
+
 static void insmntque(struct vnode *, struct mount *);
 static int getdevvp(dev_t, struct vnode **, enum vtype);
 static void vclean(struct vnode *, int, struct lwp *);
@@ -189,6 +192,8 @@ void printlockedvnodes(void);
 void
 vntblinit(void)
 {
+
+	mount_specificdata_domain = specificdata_domain_create();
 
 	/*
 	 * Initialize the filesystem syncer.
@@ -261,7 +266,6 @@ try_nextlist:
 	/* see comment on why 0xdeadb is set at end of vgone (below) */
 	vp->v_freelist.tqe_prev = (struct vnode **)0xdeadb;
 	simple_unlock(&vnode_free_list_slock);
-	vp->v_lease = NULL;
 
 	if (vp->v_type != VBAD)
 		vgonel(vp, l);
@@ -361,7 +365,7 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
 	simple_lock_init(&mp->mnt_slock);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
-	LIST_INIT(&mp->mnt_vnodelist);
+	TAILQ_INIT(&mp->mnt_vnodelist);
 	mp->mnt_op = vfsp;
 	mp->mnt_flag = MNT_RDONLY;
 	mp->mnt_vnodecovered = NULLVP;
@@ -370,6 +374,7 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfs_name, MFSNAMELEN);
 	mp->mnt_stat.f_mntonname[0] = '/';
 	(void) copystr(devname, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 0);
+	mount_initspecific(mp);
 	*mpp = mp;
 	return (0);
 }
@@ -652,12 +657,17 @@ insmntque(struct vnode *vp, struct mount *mp)
 	 * Delete from old mount point vnode list, if on one.
 	 */
 	if (vp->v_mount != NULL)
-		LIST_REMOVE(vp, v_mntvnodes);
+		TAILQ_REMOVE(&vp->v_mount->mnt_vnodelist, vp, v_mntvnodes);
 	/*
 	 * Insert into list of vnodes for the new mount point, if available.
 	 */
-	if ((vp->v_mount = mp) != NULL)
-		LIST_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
+	if ((vp->v_mount = mp) != NULL) {
+		if (TAILQ_EMPTY(&mp->mnt_vnodelist)) {
+			TAILQ_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
+		} else {
+			TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
+		}
+	}
 	simple_unlock(&mntvnode_slock);
 }
 
@@ -948,8 +958,8 @@ brelvp(struct buf *bp)
 
 	if (TAILQ_EMPTY(&vp->v_uobj.memq) && (vp->v_flag & VONWORKLST) &&
 	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
-		vp->v_flag &= ~(VWRITEMAPDIRTY|VONWORKLST);
-		LIST_REMOVE(vp, v_synclist);
+		vp->v_flag &= ~VWRITEMAPDIRTY;
+		vn_syncer_remove_from_worklist(vp);
 	}
 
 	bp->b_vp = NULL;
@@ -984,8 +994,8 @@ reassignbuf(struct buf *bp, struct vnode *newvp)
 		if (TAILQ_EMPTY(&newvp->v_uobj.memq) &&
 		    (newvp->v_flag & VONWORKLST) &&
 		    LIST_FIRST(&newvp->v_dirtyblkhd) == NULL) {
-			newvp->v_flag &= ~(VWRITEMAPDIRTY|VONWORKLST);
-			LIST_REMOVE(newvp, v_synclist);
+			newvp->v_flag &= ~VWRITEMAPDIRTY;
+			vn_syncer_remove_from_worklist(newvp);
 		}
 	} else {
 		listheadp = &newvp->v_dirtyblkhd;
@@ -1250,7 +1260,7 @@ vput(struct vnode *vp)
 		uvmexp.execpages -= vp->v_uobj.uo_npages;
 		uvmexp.filepages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP);
+	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP|VMAPPED);
 	simple_unlock(&vp->v_interlock);
 	VOP_INACTIVE(vp, l);
 }
@@ -1293,7 +1303,7 @@ vrele(struct vnode *vp)
 		uvmexp.execpages -= vp->v_uobj.uo_npages;
 		uvmexp.filepages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP);
+	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP|VMAPPED);
 	if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0)
 		VOP_INACTIVE(vp, l);
 }
@@ -1411,10 +1421,14 @@ vflush(struct mount *mp, struct vnode *skipvp, int flags)
 
 	simple_lock(&mntvnode_slock);
 loop:
-	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
+	/*
+	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
+	 * and vclean() are called
+	 */
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		if (vp->v_mount != mp)
 			goto loop;
-		nvp = LIST_NEXT(vp, v_mntvnodes);
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		/*
 		 * Skip over a selected vnode.
 		 */
@@ -1791,6 +1805,8 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 	struct vnode *vp;
 	int mn;
 
+	vp = NULL;	/* XXX gcc */
+
 	for (mn = minl; mn <= minh; mn++)
 		if (vfinddev(makedev(maj, mn), type, &vp))
 			VOP_REVOKE(vp, REVOKEALL);
@@ -1880,7 +1896,7 @@ printlockedvnodes(void)
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
-		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (VOP_ISLOCKED(vp))
 				vprint(NULL, vp);
 		}
@@ -1995,7 +2011,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	char *where = oldp;
 	size_t *sizep = oldlenp;
 	struct mount *mp, *nmp;
-	struct vnode *nvp, *vp;
+	struct vnode *vp;
 	char *bp = where, *savebp;
 	char *ewhere;
 	int error;
@@ -2023,9 +2039,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 		savebp = bp;
 again:
 		simple_lock(&mntvnode_slock);
-		for (vp = LIST_FIRST(&mp->mnt_vnodelist);
-		     vp != NULL;
-		     vp = nvp) {
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			/*
 			 * Check that the vp is still associated with
 			 * this filesystem.  RACE: could have been
@@ -2038,7 +2052,6 @@ again:
 				bp = savebp;
 				goto again;
 			}
-			nvp = LIST_NEXT(vp, v_mntvnodes);
 			if (bp + VPTRSZ + VNODESZ > ewhere) {
 				simple_unlock(&mntvnode_slock);
 				*sizep = bp - where;
@@ -2459,7 +2472,7 @@ vfs_write_suspend(struct mount *mp, int slpflag, int slptimeo)
 			0, &mp->mnt_slock);
 	simple_unlock(&mp->mnt_slock);
 
-	error = VFS_SYNC(mp, MNT_WAIT, l->l_proc->p_cred, l);
+	error = VFS_SYNC(mp, MNT_WAIT, l->l_cred, l);
 	if (error) {
 		vfs_write_resume(mp);
 		return error;
@@ -2584,6 +2597,84 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 	return 0;
 }
 
+void
+vfs_timestamp(struct timespec *ts)
+{
+
+	nanotime(ts);
+}
+
+/*
+ * mount_specific_key_create --
+ *	Create a key for subsystem mount-specific data.
+ */
+int
+mount_specific_key_create(specificdata_key_t *keyp, specificdata_dtor_t dtor)
+{
+
+	return (specificdata_key_create(mount_specificdata_domain, keyp, dtor));
+}
+
+/*
+ * mount_specific_key_delete --
+ *	Delete a key for subsystem mount-specific data.
+ */
+void
+mount_specific_key_delete(specificdata_key_t key)
+{
+
+	specificdata_key_delete(mount_specificdata_domain, key);
+}
+
+/*
+ * mount_initspecific --
+ *	Initialize a mount's specificdata container.
+ */
+void
+mount_initspecific(struct mount *mp)
+{
+	int error;
+
+	error = specificdata_init(mount_specificdata_domain,
+				  &mp->mnt_specdataref);
+	KASSERT(error == 0);
+}
+
+/*
+ * mount_finispecific --
+ *	Finalize a mount's specificdata container.
+ */
+void
+mount_finispecific(struct mount *mp)
+{
+
+	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
+}
+
+/*
+ * mount_getspecific --
+ *	Return mount-specific data corresponding to the specified key.
+ */
+void *
+mount_getspecific(struct mount *mp, specificdata_key_t key)
+{
+
+	return (specificdata_getspecific(mount_specificdata_domain,
+					 &mp->mnt_specdataref, key));
+}
+
+/*
+ * mount_setspecific --
+ *	Set mount-specific data corresponding to the specified key.
+ */
+void
+mount_setspecific(struct mount *mp, specificdata_key_t key, void *data)
+{
+
+	specificdata_setspecific(mount_specificdata_domain,
+				 &mp->mnt_specdataref, key, data);
+}
+
 #ifdef DDB
 static const char buf_flagbits[] = BUF_FLAGBITS;
 
@@ -2691,15 +2782,15 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	(*pr)("\tfrsize = %lu\n",mp->mnt_stat.f_frsize);
 	(*pr)("\tiosize = %lu\n",mp->mnt_stat.f_iosize);
 
-	(*pr)("\tblocks = "PRIu64"\n",mp->mnt_stat.f_blocks);
-	(*pr)("\tbfree = "PRIu64"\n",mp->mnt_stat.f_bfree);
-	(*pr)("\tbavail = "PRIu64"\n",mp->mnt_stat.f_bavail);
-	(*pr)("\tbresvd = "PRIu64"\n",mp->mnt_stat.f_bresvd);
+	(*pr)("\tblocks = %"PRIu64"\n",mp->mnt_stat.f_blocks);
+	(*pr)("\tbfree = %"PRIu64"\n",mp->mnt_stat.f_bfree);
+	(*pr)("\tbavail = %"PRIu64"\n",mp->mnt_stat.f_bavail);
+	(*pr)("\tbresvd = %"PRIu64"\n",mp->mnt_stat.f_bresvd);
 
-	(*pr)("\tfiles = "PRIu64"\n",mp->mnt_stat.f_files);
-	(*pr)("\tffree = "PRIu64"\n",mp->mnt_stat.f_ffree);
-	(*pr)("\tfavail = "PRIu64"\n",mp->mnt_stat.f_favail);
-	(*pr)("\tfresvd = "PRIu64"\n",mp->mnt_stat.f_fresvd);
+	(*pr)("\tfiles = %"PRIu64"\n",mp->mnt_stat.f_files);
+	(*pr)("\tffree = %"PRIu64"\n",mp->mnt_stat.f_ffree);
+	(*pr)("\tfavail = %"PRIu64"\n",mp->mnt_stat.f_favail);
+	(*pr)("\tfresvd = %"PRIu64"\n",mp->mnt_stat.f_fresvd);
 
 	(*pr)("\tf_fsidx = { 0x%"PRIx32", 0x%"PRIx32" }\n",
 			mp->mnt_stat.f_fsidx.__fsid_val[0],
@@ -2711,10 +2802,10 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	bitmask_snprintf(mp->mnt_stat.f_flag, __MNT_FLAG_BITS, sbuf,
 	    sizeof(sbuf));
 	(*pr)("\tflag = %s\n",sbuf);
-	(*pr)("\tsyncwrites = " PRIu64 "\n",mp->mnt_stat.f_syncwrites);
-	(*pr)("\tasyncwrites = " PRIu64 "\n",mp->mnt_stat.f_asyncwrites);
-	(*pr)("\tsyncreads = " PRIu64 "\n",mp->mnt_stat.f_syncreads);
-	(*pr)("\tasyncreads = " PRIu64 "\n",mp->mnt_stat.f_asyncreads);
+	(*pr)("\tsyncwrites = %" PRIu64 "\n",mp->mnt_stat.f_syncwrites);
+	(*pr)("\tasyncwrites = %" PRIu64 "\n",mp->mnt_stat.f_asyncwrites);
+	(*pr)("\tsyncreads = %" PRIu64 "\n",mp->mnt_stat.f_syncreads);
+	(*pr)("\tasyncreads = %" PRIu64 "\n",mp->mnt_stat.f_asyncreads);
 	(*pr)("\tfstypename = %s\n",mp->mnt_stat.f_fstypename);
 	(*pr)("\tmntonname = %s\n",mp->mnt_stat.f_mntonname);
 	(*pr)("\tmntfromname = %s\n",mp->mnt_stat.f_mntfromname);
@@ -2724,7 +2815,7 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 		struct vnode *vp;
 		(*pr)("locked vnodes =");
 		/* XXX would take mountlist lock, except ddb may not have context */
-		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (VOP_ISLOCKED(vp)) {
 				if ((++cnt % 6) == 0) {
 					(*pr)(" %p,\n\t", vp);
@@ -2741,8 +2832,8 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 		struct vnode *vp;
 		(*pr)("all vnodes =");
 		/* XXX would take mountlist lock, except ddb may not have context */
-		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-			if (!LIST_NEXT(vp, v_mntvnodes)) {
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+			if (!TAILQ_NEXT(vp, v_mntvnodes)) {
 				(*pr)(" %p", vp);
 			} else if ((++cnt % 6) == 0) {
 				(*pr)(" %p,\n\t", vp);

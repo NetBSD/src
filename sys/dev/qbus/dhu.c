@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.38.4.1 2006/06/21 15:06:27 yamt Exp $	*/
+/*	$NetBSD: dhu.c,v 1.38.4.2 2006/12/30 20:49:30 yamt Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.38.4.1 2006/06/21 15:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.38.4.2 2006/12/30 20:49:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -456,6 +456,10 @@ dhuopen(dev, flag, mode, l)
 	tp->t_param   = dhuparam;
 	tp->t_hwiflow = dhuiflow;
 	tp->t_dev = dev;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
@@ -467,10 +471,7 @@ dhuopen(dev, flag, mode, l)
 		}
 		(void) dhuparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_proc->p_acflag) != 0)
-		return (EBUSY);
+	}
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dhumctl(sc, line, DML_DTR|DML_RTS, DMBIS) & DML_DCD)
 		tp->t_state |= TS_CARR_ON;

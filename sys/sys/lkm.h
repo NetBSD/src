@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.37.6.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: lkm.h,v 1.37.6.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -271,12 +271,6 @@ struct lkm_table {
 /*
  * Environment encoding, for LKM<->kernel compatibility check.
  */
-#ifdef DIAGNOSTIC
-#define _LKM_E_DIAGNOSTIC	",DIAGNOSTIC"
-#else
-#define _LKM_E_DIAGNOSTIC	""
-#endif
-
 #ifdef DEBUG
 #define _LKM_E_DEBUG		",DEBUG"
 #else
@@ -302,7 +296,7 @@ struct lkm_table {
 #endif
 
 #define	_LKM_ENV_VERSION	\
-	_LKM_E_DEBUG _LKM_E_DIAGNOSTIC _LKM_E_LOCKDEBUG \
+	_LKM_E_DEBUG _LKM_E_LOCKDEBUG \
 	_LKM_E_MULTIPROCESSOR _LKM_E_MALLOCLOG
 
 int lkm_nofunc(struct lkm_table *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: enable.c,v 1.5 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: enable.c,v 1.5.8.1 2006/12/30 20:47:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.5 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.5.8.1 2006/12/30 20:47:13 yamt Exp $");
 
 #include <sys/param.h>
+#include <uvm/uvm_extern.h>
+#include <machine/bus.h>
 #include <dev/sun/fbio.h>
 #include <sun3/dev/fbvar.h>
 #include <sun3/sun3/machdep.h>
@@ -51,8 +53,10 @@ volatile short *enable_reg;
 void 
 enable_init(void)
 {
+	vaddr_t va;
 
-	enable_reg = (short*) obio_find_mapping(OBIO_ENABLEREG, 2);
+	find_prom_map(OBIO_ENABLEREG, PMAP_OBIO, 2, &va);
+	enable_reg = (void *)va;
 }
 
 

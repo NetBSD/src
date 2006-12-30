@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.9 2004/08/28 22:06:28 thorpej Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.9.12.1 2006/12/30 20:46:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990 Regents of the University of California.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.9 2004/08/28 22:06:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.9.12.1 2006/12/30 20:46:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -96,5 +96,5 @@ in_cksum(struct mbuf *m, int len)
 			}
 		}
 	}
-	return (0xffff & ~oc_cksum(mtod(m, u_char *), len, sum));
+	return 0xffff & ~oc_cksum(mtod(m, u_char *), len, sum);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.1.16.2 2006/06/21 14:59:27 yamt Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.1.16.3 2006/12/30 20:47:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.1.16.2 2006/06/21 14:59:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.1.16.3 2006/12/30 20:47:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,11 +301,11 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	pcb->pcb_gs = 0;
 
 
-	l->l_proc->p_flag |= P_32;
+	p->p_flag |= P_32;
 
 	tf = l->l_md.md_regs;
 	tf->tf_rax = 0;
-	tf->tf_rbx = (u_int64_t)l->l_proc->p_psstr & 0xffffffff;
+	tf->tf_rbx = (u_int64_t)p->p_psstr & 0xffffffff;
 	tf->tf_rcx = pack->ep_entry & 0xffffffff;
 	tf->tf_rdx = 0;
 	tf->tf_rsi = 0;

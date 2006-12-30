@@ -1,4 +1,4 @@
-/*	$NetBSD: kbms_sbdio.c,v 1.1.18.2 2006/06/21 14:51:20 yamt Exp $	*/
+/*	$NetBSD: kbms_sbdio.c,v 1.1.18.3 2006/12/30 20:45:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.1.18.2 2006/06/21 14:51:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.1.18.3 2006/12/30 20:45:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,8 +236,10 @@ kbms_sbdio_intr(void *arg)
 #ifdef MOUSE_DEBUG
 				mouse_debug_print(buttons, x, y);
 #endif
-				wsmouse_input(sc->sc_wsmouse, buttons, x, y,
-				    0, 0);
+				wsmouse_input(sc->sc_wsmouse,
+						buttons,
+						x, y, 0, 0,
+						WSMOUSE_INPUT_DELTA);
 				sc->sc_mouse_cnt = 0;
 			}
 

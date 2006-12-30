@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.26.2.1 2006/06/21 15:05:03 yamt Exp $	*/
+/*	$NetBSD: autri.c,v 1.26.2.2 2006/12/30 20:48:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.26.2.1 2006/06/21 15:05:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.26.2.2 2006/12/30 20:48:41 yamt Exp $");
 
 #include "midi.h"
 
@@ -163,6 +163,7 @@ static const struct audio_hw_if autri_hw_if = {
 	autri_trigger_output,
 	autri_trigger_input,
 	NULL,			/* dev_ioctl */
+	NULL,			/* powerstate */
 };
 
 #if NMIDI > 0
@@ -462,7 +463,7 @@ autri_reset_codec(void *sc_)
 }
 
 static enum ac97_host_flags
-autri_flags_codec(void *sc_)
+autri_flags_codec(void *sc)
 {
 	return AC97_HOST_DONT_READ;
 }
@@ -472,7 +473,8 @@ autri_flags_codec(void *sc_)
  */
 
 static int
-autri_match(struct device *parent, struct cfdata *match, void *aux)
+autri_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -597,7 +599,7 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	sc->sc_old_power = PWR_RESUME;
-	powerhook_establish(autri_powerhook, sc);
+	powerhook_establish(sc->sc_dev.dv_xname, autri_powerhook, sc);
 }
 
 CFATTACH_DECL(autri, sizeof(struct autri_softc),
@@ -967,8 +969,8 @@ autri_query_encoding(void *addr, struct audio_encoding *fp)
 
 static int
 autri_set_params(void *addr, int setmode, int usemode,
-		 audio_params_t *play, audio_params_t *rec,
-		 stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	if (setmode & AUMODE_RECORD) {
 		if (auconv_set_converter(autri_formats, AUTRI_NFORMATS,
@@ -985,7 +987,7 @@ autri_set_params(void *addr, int setmode, int usemode,
 
 static int
 autri_round_blocksize(void *addr, int block,
-		      int mode, const audio_params_t *param)
+    int mode, const audio_params_t *param)
 {
 	return block & -4;
 }

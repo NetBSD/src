@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.146.2.1 2006/06/21 15:09:39 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.146.2.2 2006/12/30 20:50:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.146.2.1 2006/06/21 15:09:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.146.2.2 2006/12/30 20:50:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,6 +126,7 @@ static void *bufpool_page_alloc(struct pool *, int);
 static void bufpool_page_free(struct pool *, void *);
 static inline struct buf *bio_doread(struct vnode *, daddr_t, int,
     kauth_cred_t, int);
+static struct buf *getnewbuf(int, int, int);
 static int buf_lotsfree(void);
 static int buf_canrelease(void);
 static inline u_long buf_mempoolidx(u_long);
@@ -226,7 +227,9 @@ bufpool_page_free(struct pool *pp, void *v)
 }
 
 static struct pool_allocator bufmempool_allocator = {
-	bufpool_page_alloc, bufpool_page_free, MAXBSIZE,
+	.pa_alloc = bufpool_page_alloc,
+	.pa_free = bufpool_page_free,
+	.pa_pagesz = MAXBSIZE,
 };
 
 /* Buffer memory management variables */
@@ -400,7 +403,10 @@ bufinit(void)
 		struct pool *pp = &bmempools[i];
 		u_int size = 1 << (i + MEMPOOL_INDEX_OFFSET);
 		char *name = malloc(8, M_TEMP, M_WAITOK);
-		snprintf(name, 8, "buf%dk", 1 << i);
+		if (__predict_true(size >= 1024))
+			(void)snprintf(name, 8, "buf%dk", size / 1024);
+		else
+			(void)snprintf(name, 8, "buf%db", size);
 		pa = (size <= PAGE_SIZE && use_std)
 			? &pool_allocator_nointr
 			: &bufmempool_allocator;
@@ -1779,7 +1785,7 @@ putiobuf(struct buf *bp)
  * nestiobuf_iodone: b_iodone callback for nested buffers.
  */
 
-static void
+void
 nestiobuf_iodone(struct buf *bp)
 {
 	struct buf *mbp = bp->b_private;

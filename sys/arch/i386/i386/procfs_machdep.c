@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.21.2.1 2006/06/21 14:52:19 yamt Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.21.2.2 2006/12/30 20:46:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.21.2.1 2006/06/21 14:52:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.21.2.2 2006/12/30 20:46:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,8 @@ procfs_machdep_rw(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 }
 
 int
-procfs_machdep_getattr(struct vnode *vp, struct vattr *vap, struct proc *procp)
+procfs_machdep_getattr(struct vnode *vp, struct vattr *vap,
+    struct proc *procp)
 {
 	struct pfsnode *pfs = VTOPFS(vp);
 

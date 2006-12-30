@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.7 2005/02/20 13:59:27 tsutsui Exp $	*/
+/*	$NetBSD: apci.c,v 1.7.4.1 2006/12/30 20:45:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@
 #include <lib/libsa/stand.h>
 
 #include <hp300/dev/frodoreg.h>		/* for APCI offsets */
+#include <hp300/dev/intioreg.h>		/* for frodo offsets */
 
 #include <hp300/stand/common/apcireg.h>	/* for register map */
 #include <hp300/stand/common/dcareg.h>	/* for register bits */

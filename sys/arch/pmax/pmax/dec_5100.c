@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.35.10.1 2006/06/21 14:54:48 yamt Exp $ */
+/* $NetBSD: dec_5100.c,v 1.35.10.2 2006/12/30 20:46:43 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.35.10.1 2006/06/21 14:54:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.35.10.2 2006/12/30 20:46:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.35.10.1 2006/06/21 14:54:48 yamt Exp 
 
 #include <pmax/ibus/ibusvar.h>
 
-#ifdef WSCONS
 #include <pmax/pmax/cons.h>
-#else
-#include <pmax/dev/dcvar.h>
-#endif
 
 void		dec_5100_init __P((void));		/* XXX */
 static void	dec_5100_bus_reset __P((void));
@@ -66,6 +62,20 @@ static void	dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_5100_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
 static void	dec_5100_memintr __P((void));
+
+static const int dec_5100_ipl2spl_table[] = {
+	[IPL_NONE] = 0,
+	[IPL_SOFT] = _SPL_SOFT,
+	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
+	[IPL_SOFTNET] = _SPL_SOFTNET,
+	[IPL_SOFTSERIAL] = _SPL_SOFTSERIAL,
+	[IPL_BIO] = MIPS_SPL1,
+	[IPL_NET] = MIPS_SPL1,
+	[IPL_TTY] = MIPS_SPL_0_1,
+	[IPL_VM] = MIPS_SPL_0_1_2,
+	[IPL_CLOCK] = MIPS_SPL_0_1_2,
+	[IPL_STATCLOCK] = MIPS_SPL_0_1_2,
+};
 
 void
 dec_5100_init()
@@ -81,12 +91,7 @@ dec_5100_init()
 	/* set correct wbflush routine for this motherboard */
 	mips_set_wbflush(kn230_wbflush);
 
-	splvec.splbio = MIPS_SPL1;
-	splvec.splnet = MIPS_SPL1;
-	splvec.spltty = MIPS_SPL_0_1;
-	splvec.splvm = MIPS_SPL_0_1_2;
-	splvec.splclock = MIPS_SPL_0_1_2;
-	splvec.splstatclock = MIPS_SPL_0_1_2;
+	ipl2spl_table = dec_5100_ipl2spl_table;
 
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_2);
@@ -121,12 +126,8 @@ dec_5100_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
-#ifdef WSCONS
 	dz_ibus_cnsetup(KN230_SYS_DZ0);
 	dz_ibus_cnattach(0);
-#else
-	dc_cnattach(KN230_SYS_DZ0, 0);
-#endif
 }
 
 static void

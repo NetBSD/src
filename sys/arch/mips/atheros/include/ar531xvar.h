@@ -1,4 +1,4 @@
-/* $Id: ar531xvar.h,v 1.2.4.2 2006/06/21 14:53:38 yamt Exp $ */
+/* $Id: ar531xvar.h,v 1.2.4.3 2006/12/30 20:46:30 yamt Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -43,18 +43,50 @@
 #ifndef	_MIPS_ATHEROS_AR531XVAR_H_
 #define	_MIPS_ATHEROS_AR531XVAR_H_
 
+#include <sys/param.h>
+#include <machine/bus.h>
+
+struct ar531x_device {
+	const char	*name;
+	bus_addr_t	addr;
+	bus_size_t	size;
+	int		cirq;
+	int		mirq;
+	uint32_t	mask;
+	uint32_t	reset;
+	uint32_t	enable;
+};
+
+
 void ar531x_intr_init(void);
 
-void *ar531x_intr_establish(int, int (*)(void *), void *);
-void ar531x_intr_disestablish(void *);
+void *ar531x_cpu_intr_establish(int, int (*)(void *), void *);
+void ar531x_cpu_intr_disestablish(void *);
 
 void *ar531x_misc_intr_establish(int, int (*)(void *), void *);
 void ar531x_misc_intr_disestablish(void *);
 
 void ar531x_cpuintr(uint32_t, uint32_t, uint32_t, uint32_t);
 
-void ar531x_cal_timer(void);
 
+/*
+ * CPU specific routines.
+ */
+size_t ar531x_memsize(void);
+void ar531x_consinit(void);
+void ar531x_wdog(uint32_t);
+void ar531x_businit(void);
+const char *ar531x_cpuname(void);
+uint32_t ar531x_cpu_freq(void);
+uint32_t ar531x_bus_freq(void);
+void ar531x_device_register(struct device *, void *);
+int ar531x_enable_device(const struct ar531x_device *);
+const struct ar531x_device *ar531x_get_devices(void);
+void ar531x_early_console(void);
+
+/*
+ * Board specific things.
+ */
 struct ar531x_boarddata;
 const struct ar531x_boarddata *ar531x_board_info(void);
 const void *ar531x_radio_info(void);

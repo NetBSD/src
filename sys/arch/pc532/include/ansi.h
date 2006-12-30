@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.18 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: ansi.h,v 1.18.16.1 2006/12/30 20:46:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,6 +34,8 @@
 #ifndef	_ANSI_H_
 #define	_ANSI_H_
 
+#include <sys/cdefs.h>
+
 #include <machine/int_types.h>
 
 /*
@@ -50,7 +52,11 @@
 #define	_BSD_SIZE_T_		unsigned int	/* sizeof() */
 #define	_BSD_SSIZE_T_		int		/* byte count or error */
 #define	_BSD_TIME_T_		long		/* time() */
+#if __GNUC_PREREQ__(2, 96)
+#define	_BSD_VA_LIST_		__builtin_va_list /* GCC built-in type */
+#else
 #define	_BSD_VA_LIST_		char *		/* va_list */
+#endif
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
 #define	_BSD_TIMER_T_		int		/* timer_t */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
@@ -84,8 +90,8 @@
  * stream conversions.  The content must not be referenced by user programs.
  */
 typedef union {
-	char __mbstate8[128];
 	__int64_t __mbstateL;	/* for alignment */
+	char __mbstate8[128];
 } __mbstate_t;
 #define	_BSD_MBSTATE_T_		__mbstate_t	/* mbstate_t */
 

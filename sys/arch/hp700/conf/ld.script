@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.script,v 1.7 2005/05/01 19:01:48 chs Exp $	*/
+/*	$NetBSD: ld.script,v 1.7.2.1 2006/12/30 20:45:58 yamt Exp $	*/
 
 /* 	$OpenBSD: ld.script,v 1.7 1999/12/17 07:02:38 mickey Exp $	*/
 
@@ -7,35 +7,44 @@ OUTPUT_ARCH(hppa)
 ENTRY(start)
 SECTIONS
 {
-	/* Read-only sections, merged into text segment: */
-	. = + 0x1000; /* XXX should be SIZEOF_HEADERS */
+	. = + SIZEOF_HEADERS;
 	.text :
 	{
 		kernel_text = . ;
-		*(.text)
-		*(.text.*)
-		*(.rodata) *(.rodata1)
+		*(.text) *(.text.*)
 		*(.reginfo)
 		*(.init)
 		*(.stub)
 		/* .gnu.warning sections are handled specially by elf32.em.  */
 		*(.gnu.warning)
+		. = ALIGN(4096);
+		etext = ABSOLUTE(.);
+	} = 0x08000240 /* nop filled */
+
+	__rodata_start = ABSOLUTE(.);
+	.rodata	:
+	{
+		*(.rodata) *(.rodata.*) *(.rodata1)
 		. = ALIGN(8);
 		__unwind_start = .;
 		*(.PARISC.unwind)
 		__unwind_end = .;
-		. = ALIGN(4096);
-	} = 0 /* 0x08000240 nop filled, does not work */
-	etext = ABSOLUTE(.);
-	. = ALIGN(0x200000);
+	} = 0
 
+	/* Place (orphaned) link_sets */
+	. = .;
+
+	/* Align __rodata_end to page boundary */
+	. = ALIGN(4096);
+	__rodata_end = ABSOLUTE(.);
+
+	. = ALIGN(0x200000);
+	__data_start = ABSOLUTE(.);
 	.data  :
 	{
 		$global$ = . ;
 		. += 4;
 		*(.data)
-		/* [a-ps-z]*(.data) r[a-ce-z]*(.data) *libkern.o(.data) */
-		/* rd_root.o(.data)	* there is an overflow bug in ld */
 		CONSTRUCTORS
 		. = ALIGN(4096);
 		edata = ABSOLUTE(.);
@@ -43,7 +52,7 @@ SECTIONS
 	.ctors	: { *(.ctors) }
 	.dtors	: { *(.dtors) }
 
-	__bss_start = .;
+	__bss_start = ABSOLUTE(.);
 	/* .sbss	: { *(.sbss) *(.scommon) } */
 	.bss :
 	{
@@ -52,5 +61,8 @@ SECTIONS
 		. = ALIGN(4096);
 	}
 	end = ABSOLUTE(.);
+	.note.netbsd.ident :
+	{
+		KEEP(*(.note.netbsd.ident));
+	}
 }
-

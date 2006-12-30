@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.61 2005/02/27 00:27:18 perry Exp $	*/
+/*	$NetBSD: wds.c,v 1.61.4.1 2006/12/30 20:48:27 yamt Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.61 2005/02/27 00:27:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.61.4.1 2006/12/30 20:48:27 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -212,6 +212,10 @@ void	wdsattach(struct device *, struct device *, void *);
 CFATTACH_DECL(wds, sizeof(struct wds_softc),
     wdsprobe, wdsattach, NULL, NULL);
 
+#ifdef WDSDEBUG
+int wds_debug = 0;
+#endif
+
 #define	WDS_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
 integrate void
@@ -255,10 +259,8 @@ wds_cmd(iot, ioh, ibuf, icnt)
  * Check for the presence of a WD7000 SCSI controller.
  */
 int
-wdsprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+wdsprobe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -322,9 +324,7 @@ wdsprobe(parent, match, aux)
  * Attach all available units.
  */
 void
-wdsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wdsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct wds_softc *sc = (void *)self;
@@ -462,12 +462,12 @@ AGAIN:
 
 #ifdef WDSDEBUG
 		if (wds_debug) {
-			u_char *cp = &scb->scsipi_cmd;
+			u_char *cp = scb->cmd.xx;
 			printf("op=%x %x %x %x %x %x\n",
 			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
-			printf("stat %x for mbi addr = 0x%08x, ",
+			printf("stat %x for mbi addr = %p, ",
 			    wmbi->stat, wmbi);
-			printf("scb addr = 0x%x\n", scb);
+			printf("scb addr = %p\n", scb);
 		}
 #endif /* WDSDEBUG */
 
@@ -523,9 +523,7 @@ wdsintr(arg)
 }
 
 integrate void
-wds_reset_scb(sc, scb)
-	struct wds_softc *sc;
-	struct wds_scb *scb;
+wds_reset_scb(struct wds_softc *sc, struct wds_scb *scb)
 {
 
 	scb->flags = 0;

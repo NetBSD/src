@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.5.2.1 2006/06/21 14:55:31 yamt Exp $	*/
+/*	$NetBSD: cache.h,v 1.5.2.2 2006/12/30 20:46:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -155,6 +155,10 @@ extern int sh_cache_entry_mask;
 extern int sh_cache_ram_mode;
 extern int sh_cache_index_mode_icache;
 extern int sh_cache_index_mode_dcache;
+
+extern int sh_cache_alias_mask;
+#define	sh_cache_indexof(x)	(sh_cache_alias_mask & (x))
+extern int sh_cache_prefer_mask;
 
 extern struct sh_cache_ops sh_cache_ops;
 

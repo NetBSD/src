@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.1.30.1 2006/06/21 15:02:56 yamt Exp $	*/
+/*	$NetBSD: spic.c,v 1.1.30.2 2006/12/30 20:48:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.1.30.1 2006/06/21 15:02:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.1.30.2 2006/12/30 20:48:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ spic_intr(void *v) {
 #endif
 		sc->sc_buttons = buttons;
 		if (sc->sc_wsmousedev != NULL) {
-			wsmouse_input(sc->sc_wsmousedev, buttons, 0, 0, dz,
+			wsmouse_input(sc->sc_wsmousedev, buttons, 0, 0, dz, 0,
 				      WSMOUSE_INPUT_DELTA);
 		}
 	}
@@ -330,7 +330,8 @@ spic_disable(void *v)
 }
 
 static int
-spic_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+spic_ioctl(void *v, u_long cmd, caddr_t data,
+    int flag, struct lwp *l)
 {
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: evbppc_machdep.c,v 1.6 2005/04/01 11:59:26 yamt Exp $	*/
+/*	$NetBSD: evbppc_machdep.c,v 1.6.2.1 2006/12/30 20:45:54 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.6 2005/04/01 11:59:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.6.2.1 2006/12/30 20:45:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,21 +83,30 @@ __KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.6 2005/04/01 11:59:26 yamt Exp 
 int fake_mapiodev = 1;
 
 /*
- * Allocate vm space and mapin the I/O address
+ * mapiodev:
+ *
+ * 	Allocate vm space and mapin the I/O address. Use reserved TLB
+ * 	mapping if one is found.
  */
 void *
 mapiodev(paddr_t pa, psize_t len)
 {
+	void *p;
 	paddr_t faddr;
 	vaddr_t taddr, va;
 	int off;
 
-	/* 
-	 * Initially we cannot use uvm_ functions, but we still have to map
-	 * console.. 
+	/*
+	 * See if we have reserved TLB entry for the pa. This needs to be
+	 * true for console as we can't use uvm during early bootstrap.
 	 */
-	if (fake_mapiodev)	
-		return (void *)(intptr_t)pa;
+	p = ppc4xx_tlb_mapiodev(pa, len);
+	if (p != NULL)
+		return (p);
+
+	if (fake_mapiodev)
+		panic("mapiodev: no TLB entry reserved for %llx+%llx",
+		    (long long)pa, (long long)len);
 
 	faddr = trunc_page(pa);
 	off = pa - faddr;
@@ -115,4 +124,18 @@ mapiodev(paddr_t pa, psize_t len)
 	}
 	pmap_update(pmap_kernel());
 	return (void *)(va + off);
+}
+
+void
+unmapiodev(vaddr_t va, vsize_t sz)
+{
+	/* Nothing to do for reserved (ie. not uvm_km_alloc'd) mappings. */
+	if (va < VM_MIN_KERNEL_ADDRESS || va > VM_MAX_KERNEL_ADDRESS)
+		return;
+
+	sz = round_page((va & PAGE_MASK) + sz);
+	va = trunc_page(va);
+
+	pmap_kremove(va, sz);
+	uvm_km_free(kernel_map, va, sz, UVM_KMF_VAONLY);
 }

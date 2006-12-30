@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.7.2.1 2006/06/21 15:09:11 yamt Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.7.2.2 2006/12/30 20:49:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -19,6 +19,9 @@
 #if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
     defined(_KERNEL)
 # include "opt_ipfilter.h"
+#endif
+#if (__NetBSD_Version__ >= 399002000)
+#include <sys/kauth.h>
 #endif
 #if !defined(_KERNEL)
 # include <stdio.h>
@@ -621,7 +624,13 @@ int mode;
 	ipnat_t natd;
 
 #if (BSD >= 199306) && defined(_KERNEL)
+#if (__NetBSD_Version__ >= 399002000)
+	if ((mode & FWRITE) && kauth_authorize_network(curlwp->l_cred,
+	    KAUTH_NETWORK_FIREWALL, KAUTH_REQ_NETWORK_FIREWALL_NAT,
+	    NULL, NULL, NULL))
+#else
 	if ((securelevel >= 2) && (mode & FWRITE))
+#endif
 		return EPERM;
 #endif
 
@@ -1279,6 +1288,7 @@ int getlock;
 	nat = NULL;
 	ipnn = NULL;
 	fin = NULL;
+	fr = NULL;
 
 	KMALLOC(ipn, nat_save_t *);
 	if (ipn == NULL)
@@ -1292,7 +1302,6 @@ int getlock;
 	 * New entry, copy in the rest of the NAT entry if it's size is more
 	 * than just the nat_t structure.
 	 */
-	fr = NULL;
 	if (ipn->ipn_dsize > sizeof(*ipn)) {
 		if (ipn->ipn_dsize > 81920) {
 			error = ENOMEM;
@@ -1300,8 +1309,10 @@ int getlock;
 		}
 
 		KMALLOCS(ipnn, nat_save_t *, ipn->ipn_dsize);
-		if (ipnn == NULL)
+		if (ipnn == NULL) {
+			KFREE(ipn);
 			return ENOMEM;
+		}
 
 		error = fr_inobjsz(data, ipnn, IPFOBJ_NATSAVE, ipn->ipn_dsize);
 		if (error != 0) {
@@ -2401,13 +2412,14 @@ done:
 /* for both IPv4 and IPv6.                                                  */
 /* ------------------------------------------------------------------------ */
 /*ARGSUSED*/
-static int nat_finalise(fin, nat, ni, tcp, natsave, direction)
-fr_info_t *fin;
-nat_t *nat;
-natinfo_t *ni;
-tcphdr_t *tcp;
-nat_t **natsave;
-int direction;
+static int nat_finalise(
+    fr_info_t *fin,
+    nat_t *nat,
+    natinfo_t *ni,
+    tcphdr_t *tcp,
+    nat_t **natsave,
+    int direction
+)
 {
 	frentry_t *fr;
 	ipnat_t *np;

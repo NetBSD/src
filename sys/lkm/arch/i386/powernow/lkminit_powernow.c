@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_powernow.c,v 1.3.14.2 2006/06/21 15:10:24 yamt Exp $	*/
+/*	$NetBSD: lkminit_powernow.c,v 1.3.14.3 2006/12/30 20:50:16 yamt Exp $	*/
 
 /*
  * Derived from:
@@ -37,19 +37,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.3.14.2 2006/06/21 15:10:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.3.14.3 2006/12/30 20:50:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/lkm.h>
 #include <sys/errno.h>
 #include <machine/cpu.h>
+#include <x86/include/powernow.h>
 
 int powernow_lkmentry(struct lkm_table *, int, int);
 static int powernow_mod_handle(struct lkm_table *, int);
-void pnowk7_destroy(void);
 
 MOD_MISC("powernow");
+
+static uint32_t pn_family = 0;
 
 /*
  * This function is called each time the module is loaded or unloaded.
@@ -76,13 +78,25 @@ powernow_mod_handle(struct lkm_table *lkmtp, int cmd)
 			return EEXIST;
 	
 		ci = curcpu();
-		pnowk7_probe(ci);
-		pnowk7_init(ci);
 
+		if (powernow_probe(ci)) {
+			pn_family = CPUID2FAMILY(ci->ci_signature);
+			if (pn_family == 6)
+				k7_powernow_init();
+			else if (pn_family == 15)
+				k8_powernow_init();
+			else
+				err = ENODEV;
+		} else
+			err = ENODEV;
 		break;		/* Success */
 
 	case LKM_E_UNLOAD:
-		pnowk7_destroy();
+		if (pn_family == 6)
+			k7_powernow_destroy();
+		else if (pn_family == 15)
+			k8_powernow_destroy();
+
 		break;		/* Success */
 
 	default:	/* we only understand load/unload */

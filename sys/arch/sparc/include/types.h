@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.38.16.1 2006/06/21 14:56:12 yamt Exp $ */
+/*	$NetBSD: types.h,v 1.38.16.2 2006/12/30 20:46:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,12 +55,6 @@
 #include <sys/featuretest.h>
 #include <machine/int_types.h>
 
-#if defined(_KERNEL)
-typedef struct label_t {
-	int val[2];
-} label_t;
-#endif
-
 /* The following are unsigned to prevent annoying sign extended pointers. */
 typedef unsigned long int	register_t;
 typedef unsigned int		register32_t;
@@ -69,6 +63,16 @@ typedef unsigned long int	register64_t;
 #else
 /* LONGLONG */
 typedef unsigned long long int	register64_t;
+#endif
+
+#if defined(_KERNEL)
+typedef struct label_t {
+#ifdef SUN4U
+	register64_t val[2];
+#else
+	register_t val[3];
+#endif
+} label_t;
 #endif
 
 #if defined(_NETBSD_SOURCE)
@@ -101,8 +105,8 @@ typedef	volatile int		__cpu_simple_lock_t;
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__HAVE_SYSCALL_INTERN
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
-#define	__HAVE_NWSCONS
 #define	__HAVE_TIMECOUNTER
+#define __HAVE_GENERIC_TODR
 
 #ifdef SUN4U
 #define __HAVE_CPU_COUNTER	/* sparc v9 CPUs have %tick */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.204.4.1 2006/06/21 14:52:19 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.204.4.2 2006/12/30 20:46:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.204.4.1 2006/06/21 14:52:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.204.4.2 2006/12/30 20:46:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -286,7 +286,8 @@ trap(frame)
 		type |= T_USER;
 		KASSERT(l != NULL);
 		l->l_md.md_regs = frame;
-		pcb->pcb_cr2 = 0;		
+		pcb->pcb_cr2 = 0;
+		LWP_CACHE_CREDS(l, p);
 	}
 
 	switch (type) {
@@ -500,6 +501,7 @@ copyfault:
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
+		KASSERT(p != NULL);
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
 			KERNEL_PROC_LOCK(l);
@@ -589,6 +591,7 @@ copyfault:
 		extern struct vm_map *kernel_map;
 
 		cr2 = rcr2();
+		KASSERT(l != NULL);
 		KERNEL_PROC_LOCK(l);
 		if (l->l_flag & L_SA) {
 			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
@@ -676,8 +679,8 @@ copyfault:
 			ksi.ksi_signo = SIGKILL;
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred ?
-			       kauth_cred_geteuid(p->p_cred) : -1);
+			       l->l_cred ?
+			       kauth_cred_geteuid(l->l_cred) : -1);
 		} else {
 			ksi.ksi_signo = SIGSEGV;
 		}

@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.11.4.2 2006/06/21 14:58:24 yamt Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.11.4.3 2006/12/30 20:47:28 yamt Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.11.4.2 2006/06/21 14:58:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.11.4.3 2006/12/30 20:47:28 yamt Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.11.4.2 2006/06/21 14:58:24 yamt E
 #include <machine/hypervisor.h>
 #include <machine/xenbus.h>
 #include <machine/evtchn.h>
+#include <machine/shutdown_xenbus.h>
 
 #include "xenbus_comms.h"
 
@@ -303,7 +304,7 @@ xenbus_probe_device_type(const char *path, const char *type,
 			continue;
 		}
 		err = xenbus_read_ul(NULL, xbusd->xbusd_path, "state",
-		    &state);
+		    &state, 10);
 		if (err) {
 			printf("xenbus: can't get state "
 			    "for %s (%d)\n", xbusd->xbusd_path, err);
@@ -433,8 +434,10 @@ xenbus_probe_backends(void)
 		    &dirid_n, &dirid);
 		DPRINTK("directory backend/%s err %d dirid_n %d",
 		    dirt[type], err, dirid_n);
-		if (err)
+		if (err) {
+			free(dirt, M_DEVBUF); /* to be checked */
 			return err;
+		}
 		for (id = 0; id < dirid_n; id++) {
 			snprintf(path, sizeof(path), "backend/%s/%s",
 			    dirt[type], dirid[id]);
@@ -504,6 +507,7 @@ xenbus_probe(void *unused)
 	strcpy(be_watch.node, "backend");
 	be_watch.xbw_callback = backend_changed;
 	register_xenbus_watch(&be_watch);
+	shutdown_xenbus_setup();
 
 	/* Notify others that xenstore is up */
 	//notifier_call_chain(&xenstore_chain, 0, NULL);

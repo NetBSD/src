@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.25.2.1 2006/06/21 15:11:08 yamt Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.25.2.2 2006/12/30 20:50:38 yamt Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.25.2.1 2006/06/21 15:11:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.25.2.2 2006/12/30 20:50:38 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -195,7 +195,7 @@ ah4_output(m, isr)
 	}
 
 	/*
-	 * grow the mbuf to accomodate AH.
+	 * grow the mbuf to accommodate AH.
 	 */
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;

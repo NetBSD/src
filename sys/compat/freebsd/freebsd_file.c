@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.20.12.1 2006/06/21 14:58:50 yamt Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.20.12.2 2006/12/30 20:47:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.20.12.1 2006/06/21 14:58:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.20.12.2 2006/12/30 20:47:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -588,7 +588,7 @@ freebsd_sys_getfh(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, fname));
-	return sys_getfh(l, uap, retval);
+	return compat_30_sys_getfh(l, uap, retval);
 }
 #endif /* NFS */
 

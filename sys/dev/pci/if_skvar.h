@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.6.2.1 2006/06/21 15:05:05 yamt Exp $ */
+/* $NetBSD: if_skvar.h,v 1.6.2.2 2006/12/30 20:48:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -197,8 +197,6 @@ struct sk_softc {
 	bus_space_handle_t	sk_bhandle;	/* bus space handle */
 	bus_space_tag_t		sk_btag;	/* bus space tag */
 	void			*sk_intrhand;	/* irq handler handle */
-	struct resource		*sk_irq;	/* IRQ resource handle */
-	struct resource		*sk_res;	/* I/O or shared mem handle */
 	u_int8_t		sk_type;
 	u_int8_t		sk_rev;
   	const char		*sk_name;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.25 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: tropic.c,v 1.25.2.1 2006/12/30 20:48:04 yamt Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.25 2005/05/30 04:43:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.25.2.1 2006/12/30 20:48:04 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -69,10 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.25 2005/05/30 04:43:47 christos Exp $")
 #include <netinet/in_var.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1801,9 +1796,7 @@ tr_activate(self, act)
 }
 
 int
-tr_detach(self, flags)
-	struct device *self;
-	int flags;
+tr_detach(struct device *self, int flags)
 {
 	struct tr_softc *sc = (struct tr_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;

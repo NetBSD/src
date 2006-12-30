@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.19 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.19.8.1 2006/12/30 20:47:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
  * XXX - Does user-level code really see this struct?
  */
 
+#include <sys/lock.h>
+
 struct pmap {
 	struct a_tmgr_struct	*pm_a_tmgr; 	/* Level-A table manager */
 	u_long              	pm_a_phys;  	/* MMU level-A phys addr */
@@ -81,6 +83,8 @@ pmap_remove_all(struct pmap *pmap)
  * Since physical addresses are always aligned, we can use
  * the low order bits for this.
  */
+#define	PMAP_OBMEM	0x00	/* unused */
+#define	PMAP_OBIO	0x00	/* unused */
 #define	PMAP_VME16	0x10	/* pmap will add the necessary offset */
 #define	PMAP_VME32	0x20	/* etc. */
 #define	PMAP_NC		0x40	/* tells pmap_enter to set PTE_CI */

@@ -1,4 +1,4 @@
-/*	$NetBSD: diskio.c,v 1.3 2005/06/28 21:03:02 junyoung Exp $	*/
+/*	$NetBSD: diskio.c,v 1.3.2.1 2006/12/30 20:45:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -42,7 +42,7 @@ static int rootopen __P((struct open_file *, ...));
 static int rootclose __P((struct open_file *));
 static int rootioctl __P((struct open_file *, u_long, void *));
 
-static struct devsw devsw[] = {
+struct devsw devsw[] = {
 	{ "root", rootstrategy, rootopen, rootclose, rootioctl }
 };
 static bdevd_t	bootdev;

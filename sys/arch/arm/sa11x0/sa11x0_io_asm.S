@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io_asm.S,v 1.1.42.1 2006/06/21 14:49:40 yamt Exp $	*/
+/*	$NetBSD: sa11x0_io_asm.S,v 1.1.42.2 2006/12/30 20:45:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -284,5 +284,3 @@ sa11x0_bs_cb_2_loop:
 	bne	sa11x0_bs_cb_2_loop
 
 	mov     pc, lr
-
-/* end of sa11x0_io_asm.S */

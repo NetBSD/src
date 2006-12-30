@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100var.h,v 1.10.2.1 2006/06/21 15:08:12 yamt Exp $ */
+/* $NetBSD: wsemul_vt100var.h,v 1.10.2.2 2006/12/30 20:49:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -133,7 +133,7 @@ void wsemul_vt100_el(struct wsemul_vt100_emuldata *, int);
 void wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *, u_char);
 void wsemul_vt100_handle_dcs(struct wsemul_vt100_emuldata *);
 
-int wsemul_vt100_translate(void *cookie, keysym_t, const char **);
+int wsemul_vt100_translate(void *, keysym_t, const char **);
 
 void vt100_initchartables(struct wsemul_vt100_emuldata *);
 void vt100_setnrc(struct wsemul_vt100_emuldata *, int);

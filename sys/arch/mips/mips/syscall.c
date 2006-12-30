@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.23.2.1 2006/06/21 14:53:44 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.23.2.2 2006/12/30 20:46:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.23.2.1 2006/06/21 14:53:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.23.2.2 2006/12/30 20:46:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,10 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	mips_reg_t ov0;
 	size_t nsaved, nargs;
 	const struct sysent *callp;
-	int code, error;
+	int error;
+	u_int code;
+
+	LWP_CACHE_CREDS(l, p);
 
 	uvmexp.syscalls++;
 
@@ -322,7 +325,10 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	mips_reg_t ov0;
 	size_t nsaved, nargs;
 	const struct sysent *callp;
-	int code, error;
+	int error;
+	u_int code;
+
+	LWP_CACHE_CREDS(l, p);
 
 	uvmexp.syscalls++;
 

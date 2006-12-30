@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.h,v 1.8.2.1 2006/06/21 14:52:31 yamt Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.8.2.2 2006/12/30 20:46:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -95,12 +95,12 @@ extern int pcibiosverbose;
 #define	PCIBIOS_PRINTV(arg) \
 	do { \
 		if (pcibiosverbose) \
-			printf arg; \
+			aprint_normal arg; \
 	} while (0)
 #define	PCIBIOS_PRINTVN(n, arg) \
 	do { \
 		 if (pcibiosverbose > (n)) \
-			printf arg; \
+			aprint_normal arg; \
 	} while (0)
 #else
 #define	PCIBIOS_PRINTV(arg)

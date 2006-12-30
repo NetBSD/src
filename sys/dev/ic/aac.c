@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.21.2.1 2006/06/21 15:02:52 yamt Exp $	*/
+/*	$NetBSD: aac.c,v 1.21.2.2 2006/12/30 20:48:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.21.2.1 2006/06/21 15:02:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.21.2.2 2006/12/30 20:48:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1292,7 +1292,8 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
  * Print a FIB
  */
 static void
-aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, const char *caller)
+aac_print_fib(struct aac_softc *sc, struct aac_fib *fib,
+    const char *caller)
 {
 	struct aac_blockread *br;
 	struct aac_blockwrite *bw;

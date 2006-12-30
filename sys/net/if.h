@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.110.2.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if.h,v 1.110.2.2 2006/12/30 20:50:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -122,7 +122,6 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
-#include "agr.h"
 #endif
 
 struct mbuf;
@@ -130,6 +129,7 @@ struct proc;
 struct rtentry;
 struct socket;
 struct ether_header;
+struct ifaddr;
 struct ifnet;
 struct rt_addrinfo;
 
@@ -148,7 +148,7 @@ struct if_clone {
 };
 
 #define	IF_CLONE_INITIALIZER(name, create, destroy)			\
-	{ { 0 }, name, sizeof(name) - 1, create, destroy }
+	{ { NULL, NULL }, name, sizeof(name) - 1, create, destroy }
 
 /*
  * Structure used to query names of interface cloners.
@@ -295,9 +295,7 @@ struct ifnet {				/* and the entries */
 	void	*if_afdata[AF_MAX];
 	struct	mowner *if_mowner;	/* who owns mbufs for this interface */
 
-#if NAGR > 0
-	void	*if_agrprivate;
-#endif
+	void	*if_agrprivate;		/* used only when #if NAGR > 0 */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -366,6 +364,7 @@ struct ifnet {				/* and the entries */
 #define	IFCAP_CSUM_TCPv6_Tx	0x08000	/* can do IPv6/TCP checksums (Tx) */
 #define	IFCAP_CSUM_UDPv6_Rx	0x10000	/* can do IPv6/UDP checksums (Rx) */
 #define	IFCAP_CSUM_UDPv6_Tx	0x20000	/* can do IPv6/UDP checksums (Tx) */
+#define	IFCAP_TSOv6		0x40000	/* can do TCPv6 segmentation offload */
 
 #define	IFCAPBITS		\
 	"\020"			\
@@ -379,7 +378,8 @@ struct ifnet {				/* and the entries */
 	"\17TCP6CSUM_Rx"	\
 	"\20TCP6CSUM_Tx"	\
 	"\21UDP6CSUM_Rx"	\
-	"\22UDP6CSUM_Tx"
+	"\22UDP6CSUM_Tx"	\
+	"\23TSO6"
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
@@ -462,6 +462,10 @@ struct ifaddr {
 	u_int	ifa_flags;		/* mostly rt_flags for cloning */
 	int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */
+	struct ifaddr	*(*ifa_getifa)(struct ifaddr *,
+			               const struct sockaddr *);
+	uint32_t	*ifa_seqno;
+	int16_t	ifa_preference;	/* preference level for this address */
 };
 #define	IFA_ROUTE	RTF_UP /* 0x01 *//* route installed */
 
@@ -624,6 +628,15 @@ struct if_laddrreq {
 	unsigned int prefixlen;		/* in/out */
 	struct sockaddr_storage addr;	/* in/out */
 	struct sockaddr_storage dstaddr; /* out */
+};
+
+/*
+ * Structure for SIOC[SG]IFADDRPREF
+ */
+struct if_addrprefreq {
+	char			ifap_name[IFNAMSIZ];
+	int16_t			ifap_preference;	/* in/out */
+	struct sockaddr_storage	ifap_addr;		/* in/out */
 };
 
 #include <net/if_arp.h>

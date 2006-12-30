@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.1.16.2 2006/06/21 14:59:27 yamt Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.1.16.3 2006/12/30 20:47:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -44,11 +44,31 @@ extern const struct emul emul_linux32;
 
 /* XXXmanu Do a.out later... */
 
+#ifdef LINUX32_NPTL
+void linux_nptl_exit_hook __P((struct proc *));
+#endif
+
+
 #ifdef EXEC_ELF32
 int linux32_elf32_probe __P((struct lwp *, struct exec_package *, void *,
     char *, vaddr_t *)); 
 int linux32_elf32_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
+int linux_elf32_signature __P((struct lwp *, struct exec_package *,
+        Elf32_Ehdr *, char *));
+#ifdef LINUX32_GCC_SIGNATURE
+int linux_elf32_gcc_signature __P((struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *));
+#endif
+#ifdef LINUX32_DEBUGLINK_SIGNATURE
+int linux_elf32_debuglink_signature __P((struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *));
+#endif
+#ifdef LINUX32_ATEXIT_SIGNATURE
+int linux_elf32_atexit_signature __P((struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *));
+#endif
+
 #endif /* EXEC_ELF32 */
 
 void linux32_setregs (struct lwp *, struct exec_package *, u_long stack);

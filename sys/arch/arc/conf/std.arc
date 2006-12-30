@@ -1,4 +1,4 @@
-#	$NetBSD: std.arc,v 1.17.16.1 2006/06/21 14:48:54 yamt Exp $
+#	$NetBSD: std.arc,v 1.17.16.2 2006/12/30 20:45:29 yamt Exp $
 # standard arc info
 
 machine arc mips
@@ -11,6 +11,7 @@ cpu* at mainbus0
 # set CPU architecture level for kernel target
 #options 	MIPS1			# R2000/R3000 support
 options 	MIPS3			# R4000/R4400 support
+options 	MIPS3_ENABLE_CLOCK_INTR
 
 # arc port use wired map for device space
 options 	ENABLE_MIPS3_WIRED_MAP

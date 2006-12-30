@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.7.4.1 2006/06/21 14:54:24 yamt Exp $        */
+/*      $NetBSD: sd.c,v 1.7.4.2 2006/12/30 20:46:40 yamt Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -138,7 +138,7 @@ sdgetinfo(struct sd_softc *ss)
 
     ss->sc_pinfo.offset[ss->sc_part] = 0; /* read absolute sector */
     error = sdstrategy(ss, F_READ, NEXT68K_LABEL_SECTOR,
-		       NEXT68K_LABEL_SIZE+NEXT68K_LABEL_OFFSET, io_buf, &i);
+		       NEXT68K_LABEL_SIZE+NEXT68K_LABEL_OFFSET, io_buf, (unsigned int *)&i);
     if (error != 0) {
 	DPRINTF(("sdgetinfo: sdstrategy error %d\n", error));
         return(ERDLAB);
@@ -277,7 +277,7 @@ sdstrategy(struct sd_softc *ss, int rw, daddr_t dblk, size_t size,
 	    cdb.length[1] = nblks & 0xff;
 
 	    error = scsiicmd(ss->sc_unit, ss->sc_lun,
-			     (u_char *)&cdb, sizeof(cdb), (unsigned char *)buf + *rsize, &tsize);
+			     (u_char *)&cdb, sizeof(cdb), (char *)buf + *rsize, &tsize);
 	    if (error != 0)
 	    {
 		    DPRINTF(("sdstrategy: scsiicmd failed: %d = %s.\n", error, strerror(error)));

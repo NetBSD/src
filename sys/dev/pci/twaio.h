@@ -1,12 +1,5 @@
-/*	$NetBSD: twaio.h,v 1.2.8.2 2006/06/21 15:05:07 yamt Exp $ */
+/*	$NetBSD: twaio.h,v 1.2.8.3 2006/12/30 20:48:48 yamt Exp $ */
 /*	$wasabi: twaio.h,v 1.8 2006/04/27 17:12:39 wrstuden Exp $ */
-/*
- * Copyright (c) 2005-2006 Wasabi Systems, Inc.
- * All rights reserved.
- *
- * Your Wasabi Systems License Agreement specifies the terms and
- * conditions for use and redistribution.
- */
 
 /*-
  * Copyright (c) 2003-04 3ware, Inc.
@@ -112,6 +105,17 @@ struct twa_ioctl_9k {
 	int8_t				data_buf[1];
 } __attribute__ ((packed));
 
+typedef struct twa_ioctl_with_payload {
+	struct twa_driver_packet	twa_drvr_pkt;
+	int8_t				padding[488];
+	struct twa_command_packet	twa_cmd_pkt;
+	union {
+		struct tw_cl_event_packet		event_pkt;
+		struct tw_cl_lock_packet 		lock_pkt;
+		struct tw_cl_compatibility_packet	compat_pkt;
+		int8_t					data_buf[1];
+	} payload;
+}  __attribute__ ((packed)) TWA_IOCTL_WITH_PAYLOAD;
 
 /*
  * We need the structure below to ensure that the first byte of
@@ -124,9 +128,10 @@ struct twa_ioctl_9k {
 typedef struct twa_ioctl_no_data_buf {
 	struct twa_driver_packet	twa_drvr_pkt;
 	void				*pdata; /* points to data_buf */
-	int8_t				padding[484];
+	int8_t				padding[488 - TW_SIZEOF_VOIDPTR];
 	struct twa_command_packet	twa_cmd_pkt;
 }  __attribute__ ((packed)) TWA_IOCTL_NO_DATA_BUF;
+
 
 /*
  * Get the device external name of the specified array unit.
@@ -139,17 +144,17 @@ struct twa_unitname {
 
 #define TW_OSL_IOCTL_SCAN_BUS		_IO ('T', 200)
 
-#define TW_OSL_IOCTL_FIRMWARE_PASS_THROUGH 	\
+#define TW_OSL_IOCTL_FIRMWARE_PASS_THROUGH \
 	_IOWR('T', 202, TWA_IOCTL_NO_DATA_BUF)
 
-#define TW_CL_IOCTL_GET_FIRST_EVENT	_IOWR('T', 203, TWA_IOCTL_NO_DATA_BUF)
-#define TW_CL_IOCTL_GET_LAST_EVENT	_IOWR('T', 204, TWA_IOCTL_NO_DATA_BUF)
-#define TW_CL_IOCTL_GET_NEXT_EVENT	_IOWR('T', 205, TWA_IOCTL_NO_DATA_BUF)
-#define TW_CL_IOCTL_GET_PREVIOUS_EVENT	_IOWR('T', 206, TWA_IOCTL_NO_DATA_BUF)
-#define TW_CL_IOCTL_GET_LOCK		_IOWR('T', 207, TWA_IOCTL_NO_DATA_BUF)
-#define TW_CL_IOCTL_RELEASE_LOCK	_IOWR('T', 208, TWA_IOCTL_NO_DATA_BUF)
+#define TW_CL_IOCTL_GET_FIRST_EVENT	_IOWR('T', 203, TWA_IOCTL_WITH_PAYLOAD)
+#define TW_CL_IOCTL_GET_LAST_EVENT	_IOWR('T', 204, TWA_IOCTL_WITH_PAYLOAD)
+#define TW_CL_IOCTL_GET_NEXT_EVENT	_IOWR('T', 205, TWA_IOCTL_WITH_PAYLOAD)
+#define TW_CL_IOCTL_GET_PREVIOUS_EVENT	_IOWR('T', 206, TWA_IOCTL_WITH_PAYLOAD)
+#define TW_CL_IOCTL_GET_LOCK		_IOWR('T', 207, TWA_IOCTL_WITH_PAYLOAD)
+#define TW_CL_IOCTL_RELEASE_LOCK	_IOWR('T', 208, TWA_IOCTL_WITH_PAYLOAD)
 #define TW_CL_IOCTL_GET_COMPATIBILITY_INFO 	\
-	_IOWR('T', 209, TWA_IOCTL_NO_DATA_BUF)
+	_IOWR('T', 209, TWA_IOCTL_WITH_PAYLOAD)
 /* WASABI */
 #define	TWA_IOCTL_GET_UNITNAME		_IOWR('T', 220, struct twa_unitname)
 

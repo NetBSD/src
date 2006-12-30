@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.h,v 1.4.4.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: pty.h,v 1.4.4.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ struct ptm_pty {
 	int (*allocvp)(struct ptm_pty *, struct lwp *, struct vnode **, dev_t,
 	    char);
 	int (*makename)(struct ptm_pty *, struct lwp *, char *, size_t, dev_t, char);
-	void (*getvattr)(struct ptm_pty *, struct proc *, struct vattr *);
+	void (*getvattr)(struct ptm_pty *, struct lwp *, struct vattr *);
 	void *arg;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.49 2005/02/04 02:10:41 perry Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.49.6.1 2006/12/30 20:48:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.49 2005/02/04 02:10:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.49.6.1 2006/12/30 20:48:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,10 +74,8 @@ CFATTACH_DECL(rtfps, sizeof(struct rtfps_softc),
     rtfpsprobe, rtfpsattach, NULL, NULL);
 
 int
-rtfpsprobe(parent, self, aux)
-	struct device *parent;
-	struct cfdata *self;
-	void *aux;
+rtfpsprobe(struct device *parent, struct cfdata *self,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -143,9 +141,7 @@ out:
 }
 
 void
-rtfpsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+rtfpsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct rtfps_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

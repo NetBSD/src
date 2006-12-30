@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.11.2.1 2006/06/21 14:57:56 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.11.2.2 2006/12/30 20:47:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11.2.1 2006/06/21 14:57:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11.2.2 2006/12/30 20:47:22 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,16 +103,19 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11.2.1 2006/06/21 14:57:56 yamt Ex
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+#include "acpi.h"
 #include "opt_mpbios.h"
-#include "opt_mpacpi.h"
+#include "opt_acpi.h"
 
 #ifdef MPBIOS
 #include <machine/mpbiosvar.h>
 #endif
 
-#ifdef MPACPI
+#if NACPI > 0
 #include <machine/mpacpi.h>
 #endif
+
+#include <machine/mpconfig.h>
 
 #include "opt_pci_conf_mode.h"
 
@@ -162,6 +165,9 @@ struct {
 	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX),
 	/* Connectix Virtual PC 5 has a 440BX */
 	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP),
+	/* Parallels Desktop for Mac */
+	_qe(0, 2, 0, PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_VIDEO),
+	_qe(0, 3, 0, PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_TOOLS),
 	/* SIS 741 */
 	_qe(0, 0, 0, PCI_VENDOR_SIS, PCI_PRODUCT_SIS_741),
 	{0, 0xffffffff} /* patchable */
@@ -227,9 +233,8 @@ struct x86_bus_dma_tag pci_bus_dma64_tag = {
 #endif
 
 void
-pci_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+pci_attach_hook(struct device *parent, struct device *self,
+    struct pcibus_attach_args *pba)
 {
 
 	if (pba->pba_bus == 0)
@@ -237,15 +242,13 @@ pci_attach_hook(parent, self, pba)
 #ifdef MPBIOS
 	mpbios_pci_attach_hook(parent, self, pba);
 #endif
-#ifdef MPACPI
+#if NACPI > 0
 	mpacpi_pci_attach_hook(parent, self, pba);
 #endif
 }
 
 int
-pci_bus_maxdevs(pc, busno)
-	pci_chipset_tag_t pc;
-	int busno;
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
 
 	/*
@@ -261,9 +264,7 @@ pci_bus_maxdevs(pc, busno)
 }
 
 pcitag_t
-pci_make_tag(pc, bus, device, function)
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	pcitag_t tag;
 
@@ -305,10 +306,8 @@ mode2:
 }
 
 void
-pci_decompose_tag(pc, tag, bp, dp, fp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
+    int *bp, int *dp, int *fp)
 {
 
 #ifndef PCI_CONF_MODE
@@ -349,10 +348,8 @@ mode2:
 }
 
 pcireg_t
-pci_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
+    int reg)
 {
 	pcireg_t data;
 	int s;
@@ -395,11 +392,8 @@ mode2:
 }
 
 void
-pci_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
+    pcireg_t data)
 {
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootstrap.h,v 1.3.8.2 2006/06/21 14:52:53 yamt Exp $	*/
+/*	$NetBSD: bootstrap.h,v 1.3.8.3 2006/12/30 20:46:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -387,12 +387,12 @@ struct dirent *readdirfd(int);               /* XXX move to stand.h */
 #define FS_READDIR(f, dirptr) efifs_readdir(f, dirptr)
 #endif
 
-/* gets.c XXX move to stand.h */
+/* gets.c XXX move to libsa/ */
 
 extern int	fgetstr(char *buf, int size, int fd);
 extern void	ngets(char *, int);
 
-/* imports from stdlib, locally modified */
+/* imports from stdlib, modified for sa */
 
 extern long	strtol(const char *, char **, int);
 extern char	*optarg;			/* getopt(3) external variables */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.90.2.1 2006/06/21 14:59:35 yamt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.90.2.2 2006/12/30 20:47:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.90.2.1 2006/06/21 14:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.90.2.2 2006/12/30 20:47:42 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.90.2.1 2006/06/21 14:59:35 yam
 #include "opt_sysv.h"
 #include "opt_nfsserver.h"
 #include "opt_syscall_debug.h"
+#include "opt_ptrace.h"
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
@@ -110,6 +111,8 @@ void netbsd32_syscall_intern __P((struct proc *));
 #else
 void syscall __P((void));
 #endif
+
+#define LIMITCHECK(a, b) ((a) != RLIM_INFINITY && (a) > (b))
 
 #ifdef COMPAT_16
 extern char netbsd32_sigcode[], netbsd32_esigcode[];
@@ -471,6 +474,7 @@ netbsd32_ptrace(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if defined(PTRACE) || defined(_LKM)
 	struct netbsd32_ptrace_args /* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
@@ -483,7 +487,14 @@ netbsd32_ptrace(l, v, retval)
 	NETBSD32TO64_UAP(pid);
 	NETBSD32TOX64_UAP(addr, caddr_t);
 	NETBSD32TO64_UAP(data);
-	return (sys_ptrace(l, &ua, retval));
+#ifdef _LKM
+	return (*sysent[SYS_ptrace].sy_call)(l, &ua, retval);
+#else
+	return sys_ptrace(l, &ua, retval);
+#endif
+#else
+	return (ENOSYS);
+#endif /* PTRACE || _LKM */
 }
 
 int
@@ -968,7 +979,7 @@ netbsd32_getgroups(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(netbsd32_gid_tp) gidset;
 	} */ *uap = v;
-	kauth_cred_t pc = l->l_proc->p_cred;
+	kauth_cred_t pc = l->l_cred;
 	int ngrp;
 	int error;
 	gid_t *grbuf;
@@ -1099,22 +1110,22 @@ netbsd32_setpriority(l, v, retval)
 }
 
 int
-netbsd32_socket(l, v, retval)
+netbsd32_sys___socket30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_socket_args /* {
+	struct netbsd32_sys___socket30_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
 	} */ *uap = v;
-	struct sys_socket_args ua;
+	struct sys___socket30_args ua;
 
 	NETBSD32TO64_UAP(domain);
 	NETBSD32TO64_UAP(type);
 	NETBSD32TO64_UAP(protocol);
-	return (sys_socket(l, &ua, retval));
+	return (sys___socket30(l, &ua, retval));	
 }
 
 int
@@ -1475,25 +1486,60 @@ netbsd32_nfssvc(l, v, retval)
 }
 #endif
 
-#if defined(NFS) || defined(NFSSERVER)
 int
-netbsd32_getfh(l, v, retval)
+netbsd32___getfh30(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_getfh_args /* {
+	struct netbsd32___getfh30_args /* {
 		syscallarg(const netbsd32_charp) fname;
 		syscallarg(netbsd32_fhandlep_t) fhp;
+		syscallarg(netbsd32_size_tp) fh_size;
 	} */ *uap = v;
-	struct sys_getfh_args ua;
+	struct vnode *vp;
+	fhandle_t *fh;
+	int error;
+	struct nameidata nd;
+	netbsd32_size_t sz32;
+	size_t sz;
 
-	NETBSD32TOP_UAP(fname, const char);
-	NETBSD32TOP_UAP(fhp, struct fhandle);
-	/* Lucky for us a fhandlep_t doesn't change sizes */
-	return (sys_getfh(l, &ua, retval));
+	/*
+	 * Must be super user
+	 */
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
+	    0, NULL, NULL, NULL);
+	if (error)
+		return (error);
+	fh = NULL;
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    (char *)NETBSD32PTR64(SCARG(uap, fname)), l);
+	error = namei(&nd);
+	if (error)
+		return (error);
+	vp = nd.ni_vp;
+	error = copyin(NETBSD32PTR64(SCARG(uap, fh_size)), &sz32,
+	    sizeof(netbsd32_size_t));
+	if (!error) {
+		fh = malloc(sz32, M_TEMP, M_WAITOK);
+		if (fh == NULL) 
+			return EINVAL;
+		sz = sz32;
+		error = vfs_composefh(vp, fh, &sz);
+		sz32 = sz;
+	}
+	vput(vp);
+	if (error == E2BIG)
+		copyout(&sz, NETBSD32PTR64(SCARG(uap, fh_size)), sizeof(size_t));
+	if (error == 0) {
+		error = copyout(&sz32, NETBSD32PTR64(SCARG(uap, fh_size)),
+		    sizeof(netbsd32_size_t));
+		if (!error)
+			error = copyout(fh, NETBSD32PTR64(SCARG(uap, fhp)), sz);
+	}
+	free(fh, M_TEMP);
+	return (error);
 }
-#endif
 
 int
 netbsd32_pread(l, v, retval)
@@ -1709,7 +1755,6 @@ netbsd32_setrlimit(l, v, retval)
 		int which = SCARG(uap, which);
 	struct rlimit alim;
 	int error;
-	struct proc *p = l->l_proc;
 
 	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, rlp)), &alim,
 	    sizeof(struct rlimit));
@@ -1718,22 +1763,22 @@ netbsd32_setrlimit(l, v, retval)
 
 	switch (which) {
 	case RLIMIT_DATA:
-		if (alim.rlim_cur > MAXDSIZ32)
+		if (LIMITCHECK(alim.rlim_cur, MAXDSIZ32))
 			alim.rlim_cur = MAXDSIZ32;
-		if (alim.rlim_max > MAXDSIZ32)
+		if (LIMITCHECK(alim.rlim_max, MAXDSIZ32))
 			alim.rlim_max = MAXDSIZ32;
 		break;
 
 	case RLIMIT_STACK:
-		if (alim.rlim_cur > MAXSSIZ32)
+		if (LIMITCHECK(alim.rlim_cur, MAXSSIZ32))
 			alim.rlim_cur = MAXSSIZ32;
-		if (alim.rlim_max > MAXSSIZ32)
+		if (LIMITCHECK(alim.rlim_max, MAXSSIZ32))
 			alim.rlim_max = MAXSSIZ32;
 	default:
 		break;
 	}
 
-	return (dosetrlimit(p, p->p_cred, which, &alim));
+	return (dosetrlimit(l, l->l_proc, which, &alim));
 }
 
 int
@@ -2234,20 +2279,22 @@ int netbsd32_fchroot(l, v, retval)
  * and call the device open routine if any.
  */
 int
-netbsd32_fhopen(l, v, retval)
+netbsd32___fhopen40(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct netbsd32_fhopen_args /* {
-		syscallarg(const fhandle_t *) fhp;
+	struct netbsd32___fhopen40_args /* {
+		syscallarg(const netbsd32_pointer_t *) fhp;
+		syscallarg(netbsd32_size_t) fh_size;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct sys_fhopen_args ua;
+	struct sys___fhopen40_args ua;
 
 	NETBSD32TOP_UAP(fhp, fhandle_t);
+	NETBSD32TO64_UAP(fh_size);
 	NETBSD32TO64_UAP(flags);
-	return (sys_fhopen(l, &ua, retval));
+	return (sys___fhopen40(l, &ua, retval));
 }
 
 /* virtual memory syscalls */
@@ -2269,21 +2316,42 @@ netbsd32_ovadvise(l, v, retval)
 void
 netbsd32_adjust_limits(struct proc *p)
 {
-	rlim_t *valp;
+	static const struct {
+		int id;
+		rlim_t lim;
+	} lm[] = {
+		{ RLIMIT_DATA,	MAXDSIZ32 },
+		{ RLIMIT_STACK, MAXSSIZ32 },
+	};
+	struct rlimit val[__arraycount(lm)];
+	size_t i;
+	int needcopy = 0;
+		
+	for (i = 0; i < __arraycount(val); i++) {
+		val[i] = p->p_rlimit[lm[i].id];
+		if (LIMITCHECK(val[i].rlim_cur, lm[i].lim)) {
+			val[i].rlim_cur = lm[i].lim;
+			needcopy++;
+		}
+		if (LIMITCHECK(val[i].rlim_max, lm[i].lim)) {
+			val[i].rlim_max = lm[i].lim;
+			needcopy++;
+		}
+	}
 
-	valp = &p->p_rlimit[RLIMIT_DATA].rlim_cur;
-	if (*valp != RLIM_INFINITY && *valp > MAXDSIZ32)
-		*valp = MAXDSIZ32;
-	valp = &p->p_rlimit[RLIMIT_DATA].rlim_max;
-	if (*valp != RLIM_INFINITY && *valp > MAXDSIZ32)
-		*valp = MAXDSIZ32;
+	if (needcopy == 0)
+		return;
 
-	valp = &p->p_rlimit[RLIMIT_STACK].rlim_cur;
-	if (*valp != RLIM_INFINITY && *valp > MAXSSIZ32)
-		*valp = MAXSSIZ32;
-	valp = &p->p_rlimit[RLIMIT_STACK].rlim_max;
-	if (*valp != RLIM_INFINITY && *valp > MAXSSIZ32)
-		*valp = MAXSSIZ32;
+	if (p->p_limit->p_refcnt > 1 &&
+	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
+		struct plimit *oldplim;
+		p->p_limit = limcopy(oldplim = p->p_limit);
+		limfree(oldplim);
+	}
+
+	for (i = 0; i < __arraycount(val); i++)
+		p->p_rlimit[lm[i].id] = val[i];
+
 }
 
 int

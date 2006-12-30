@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.26 2005/05/29 22:03:09 christos Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.26.2.1 2006/12/30 20:49:30 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.26 2005/05/29 22:03:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.26.2.1 2006/12/30 20:49:30 yamt Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -96,7 +96,8 @@ rf_ConfigureRAID1(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 /* returns the physical disk location of the primary copy in the mirror pair */
 void
 rf_MapSectorRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector,
+		  int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	RF_RowCol_t mirrorPair = SUID % (raidPtr->numCol / 2);
@@ -113,7 +114,8 @@ rf_MapSectorRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
  */
 void
 rf_MapParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector,
+		  int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	RF_RowCol_t mirrorPair = SUID % (raidPtr->numCol / 2);
@@ -146,7 +148,8 @@ rf_IdentifyStripeRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
  * maps a logical stripe to a stripe in the redundant array
  */
 void
-rf_MapSIDToPSIDRAID1(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
+rf_MapSIDToPSIDRAID1(RF_RaidLayout_t *layoutPtr,
+		     RF_StripeNum_t stripeID,
 		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {
 	*which_ru = 0;

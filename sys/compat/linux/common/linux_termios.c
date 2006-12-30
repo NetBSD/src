@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.22.4.1 2006/06/21 14:59:12 yamt Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.22.4.2 2006/12/30 20:47:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.22.4.1 2006/06/21 14:59:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.22.4.2 2006/12/30 20:47:38 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -62,6 +62,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.22.4.1 2006/06/21 14:59:12 yamt 
 #include <compat/linux/common/linux_termios.h>
 
 #include <compat/linux/linux_syscallargs.h>
+
+#ifdef DEBUG_LINUX
+#define DPRINTF(a)	uprintf a
+#else
+#define DPRINTF(a)
+#endif
 
 int
 linux_ioctl_termios(l, uap, retval)
@@ -89,12 +95,12 @@ linux_ioctl_termios(l, uap, retval)
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
+	FILE_USE(fp);
+
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
 		error = EBADF;
 		goto out;
 	}
-
-	FILE_USE(fp);
 
 	bsdioctl = fp->f_ops->fo_ioctl;
 	com = SCARG(uap, com);
@@ -340,6 +346,15 @@ linux_ioctl_termios(l, uap, retval)
 		}
 #endif /* NO_DEV_PTM */
 #endif /* LINUX_TIOCGPTN */
+#ifdef LINUX_TIOCSPTLCK
+	case LINUX_TIOCSPTLCK:
+			FILE_UNUSE(fp, l);
+			error = copyin(SCARG(uap, data), &idat, sizeof(idat));
+			if (error)
+				return error;
+			DPRINTF(("TIOCSPTLCK %d\n", idat));
+			return 0;
+#endif
 	default:
 		error = EINVAL;
 		goto out;

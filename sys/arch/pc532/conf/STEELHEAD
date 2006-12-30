@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.39.4.1 2006/06/21 14:54:24 yamt Exp $
+#	$NetBSD: STEELHEAD,v 1.39.4.2 2006/12/30 20:46:41 yamt Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -29,6 +29,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -53,8 +54,6 @@ options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 # networking options
 options 	GATEWAY			# packet forwarding
 options 	INET			# IP
-#options 	NS			# XNS
-#options 	CCITT			# X.25
 #options 	ISO			# OSI
 #options 	TPIP			# ?
 #options 	EON			# ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.6.4.1 2006/06/21 15:10:26 yamt Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.6.4.2 2006/12/30 20:50:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.6.4.1 2006/06/21 15:10:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.6.4.2 2006/12/30 20:50:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,7 +520,8 @@ bstp_port_state_selection(struct bridge_softc *sc)
 }
 
 void
-bstp_make_forwarding(struct bridge_softc *sc, struct bridge_iflist *bif)
+bstp_make_forwarding(struct bridge_softc *sc,
+    struct bridge_iflist *bif)
 {
 	if (bif->bif_state == BSTP_IFSTATE_BLOCKING) {
 		bstp_set_port_state(bif, BSTP_IFSTATE_LISTENING);

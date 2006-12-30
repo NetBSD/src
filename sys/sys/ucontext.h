@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.6.4.1 2006/06/21 15:12:04 yamt Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.6.4.2 2006/12/30 20:50:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -64,43 +64,6 @@ struct __ucontext {
 #define _UC_STACK	0x02		/* valid uc_stack */
 #define _UC_CPU		0x04		/* valid GPR context in uc_mcontext */
 #define _UC_FPU		0x08		/* valid FPU context in uc_mcontext */
-
-/*
- * The following macros are used to convert from a ucontext to sigcontext,
- * and vice-versa.  This is for building a sigcontext to deliver to old-style
- * signal handlers, and converting back (in the event the handler modifies
- * the context).
- *
- * The only valid use of these macros is to convert a ucontext to a
- * sigcontext for old-style signal delivery and then back to the same
- * ucontext after the handler has returned.
- *
- * The _MCONTEXT_TO_SIGCONTEXT() and _SIGCONTEXT_TO_MCONTEXT() macros
- * should be provided by <machine/signal.h>.
- */
-#define	_UCONTEXT_TO_SIGCONTEXT(uc, sc)					\
-do {									\
-	(sc)->sc_mask = (uc)->uc_sigmask;				\
-	if (((uc)->uc_flags & _UC_STACK) != 0 &&			\
-	    ((uc)->uc_stack.ss_flags & SS_ONSTACK) != 0)		\
-		(sc)->sc_onstack = 1;					\
-	else								\
-		(sc)->sc_onstack = 0;					\
-									\
-	_MCONTEXT_TO_SIGCONTEXT(uc, sc);				\
-} while (/*CONSTCOND*/0)
-
-#define	_SIGCONTEXT_TO_UCONTEXT(sc, uc)					\
-do {									\
-	(uc)->uc_sigmask = (sc)->sc_mask;				\
-									\
-	/*								\
-	 * XXX What do do about uc_stack?  See				\
-	 * XXX kern_sig.c:setucontext().				\
-	 */								\
-									\
-	_SIGCONTEXT_TO_MCONTEXT(sc, uc);				\
-} while (/*CONSTCOND*/0)
 
 #ifdef _KERNEL
 struct lwp;

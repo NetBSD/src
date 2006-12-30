@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsutils.c,v 1.1.14.2 2006/06/21 15:08:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsutils.c,v 1.1.14.3 2006/12/30 20:49:51 yamt Exp $");
 
 #define __RSUTILS_C__
 
@@ -253,7 +253,7 @@ AcpiRsMoveData (
 
         /*
          * 16-, 32-, and 64-bit cases must use the move macros that perform
-         * endian conversion and/or accomodate hardware that cannot perform
+         * endian conversion and/or accommodate hardware that cannot perform
          * misaligned memory transfers
          */
         case ACPI_RSC_MOVE16:

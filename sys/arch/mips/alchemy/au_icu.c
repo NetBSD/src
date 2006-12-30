@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.10.2.1 2006/06/21 14:53:28 yamt Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.10.2.2 2006/12/30 20:46:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.10.2.1 2006/06/21 14:53:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.10.2.2 2006/12/30 20:46:30 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -138,11 +138,11 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
  * given software interrupt priority level.
  * Hardware ipls are port/board specific.
  */
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_0,
 };
 
 #define	NIRQS		64
@@ -251,7 +251,7 @@ au_intr_establish(int irq, int req, int level, int type,
 	 * XXX do we want a separate list (really, should only be one item, not
 	 *     a list anyway) per irq, not per CPU interrupt?
 	 */
-	cpu_int = (irq < 32 ? 0 : 2);
+	cpu_int = (irq < 32 ? 0 : 2) + req;
 	LIST_INSERT_HEAD(&au_cpuintrs[cpu_int].cintr_list, ih, ih_q);
 
 	/*

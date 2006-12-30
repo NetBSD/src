@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.27 2005/02/27 00:27:52 perry Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.27.4.1 2006/12/30 20:49:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.27 2005/02/27 00:27:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.27.4.1 2006/12/30 20:49:51 yamt Exp $");
 
 #include "opt_wsmsgattrs.h"
 
@@ -726,7 +726,8 @@ wsemul_vt100_output_scs96_percent(struct wsemul_vt100_emuldata *edp, u_char c)
 }
 
 static u_int
-wsemul_vt100_output_esc_spc(struct wsemul_vt100_emuldata *edp, u_char c)
+wsemul_vt100_output_esc_spc(struct wsemul_vt100_emuldata *edp,
+    u_char c)
 {
 	switch (c) {
 	case 'F': /* 7-bit controls */

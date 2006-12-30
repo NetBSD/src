@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.29.2.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.29.2.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -33,6 +33,8 @@
 
 #ifndef	_SYS_RESOURCEVAR_H_
 #define	_SYS_RESOURCEVAR_H_
+
+#include <sys/lock.h>
 
 /*
  * Kernel per-process accounting / statistics

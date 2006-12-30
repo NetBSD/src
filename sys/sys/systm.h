@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.179.2.1 2006/06/21 15:12:04 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.179.2.2 2006/12/30 20:50:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -320,7 +320,7 @@ void	doshutdownhooks(void);
 /*
  * Power management hooks.
  */
-void	*powerhook_establish(void (*)(int, void *), void *);
+void	*powerhook_establish(const char *, void (*)(int, void *), void *);
 void	powerhook_disestablish(void *);
 void	dopowerhooks(int);
 #define PWR_RESUME	0
@@ -379,7 +379,7 @@ int	uiomove_frombuf(void *, size_t, struct uio *);
 
 #ifdef _KERNEL
 int	setjmp(label_t *);
-void	longjmp(label_t *);
+void	longjmp(label_t *) __attribute__((__noreturn__));
 #endif
 
 void	consinit(void);
@@ -498,9 +498,12 @@ void	_kernel_lock_acquire_count(int);
 
 #if defined(MULTIPROCESSOR) && defined(DEBUG)
 #define	KERNEL_LOCK_ASSERT_LOCKED()	_kernel_lock_assert_locked()
+#define	KERNEL_LOCK_ASSERT_UNLOCKED()	_kernel_lock_assert_unlocked()
 void _kernel_lock_assert_locked(void);
+void _kernel_lock_assert_unlocked(void);
 #else
 #define	KERNEL_LOCK_ASSERT_LOCKED()	/* nothing */
+#define	KERNEL_LOCK_ASSERT_UNLOCKED()	/* nothing */
 #endif
 
 #endif	/* !_SYS_SYSTM_H_ */

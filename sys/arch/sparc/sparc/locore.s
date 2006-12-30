@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.6.1 2006/06/21 14:56:12 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.6.2 2006/12/30 20:46:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6653,7 +6653,8 @@ ENTRY(write_all_windows)
 #endif /* KGDB */
 
 ENTRY(setjmp)
-	std	%sp, [%o0+0]	! stack pointer & return pc
+	st	%sp, [%o0+0]	! stack pointer
+	st	%o7, [%o0+4]	! return pc
 	st	%fp, [%o0+8]	! frame pointer
 	retl
 	 clr	%o0

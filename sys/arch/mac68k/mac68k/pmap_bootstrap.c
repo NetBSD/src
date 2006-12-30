@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.63 2005/04/01 11:59:32 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.63.2.1 2006/12/30 20:46:25 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.63 2005/04/01 11:59:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.63.2.1 2006/12/30 20:46:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.63 2005/04/01 11:59:32 yamt Exp
 #include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
-#include <mac68k/mac68k/clockreg.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>

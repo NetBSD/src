@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.13.4.1 2006/06/21 14:58:51 yamt Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.13.4.2 2006/12/30 20:47:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.13.4.1 2006/06/21 14:58:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.13.4.2 2006/12/30 20:47:32 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -246,8 +246,7 @@ fd_truncate(l, fd, whence, start, retval)
 	off_t start;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
-	struct filedesc *fdp = p->p_fd;
+	struct filedesc *fdp = l->l_proc->p_fd;
 	struct file *fp;
 	struct vnode *vp;
 	struct vattr vattr;
@@ -267,7 +266,7 @@ fd_truncate(l, fd, whence, start, retval)
 		break;
 
 	case SEEK_END:
-		if ((error = VOP_GETATTR(vp, &vattr, p->p_cred, l)) != 0)
+		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
 			return error;
 		SCARG(&ft, length) = vattr.va_size + start;
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.1.44.1 2006/06/21 14:56:40 yamt Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.1.44.2 2006/12/30 20:47:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,17 +43,17 @@
 #endif
 
 #if 0
-u_int OF_finddevice __P((char *name));
-u_int OF_instance_to_package __P((u_int ihandle));
-u_int OF_getprop __P((u_int handle, char *prop, void *buf, int buflen));
+u_int OF_finddevice(char *name);
+u_int OF_instance_to_package(u_int ihandle);
+u_int OF_getprop(u_int handle, char *prop, void *buf, int buflen);
 #ifdef	__notyet__
-int OF_setprop __P((u_int handle, char *prop, void *buf, int len));
+int OF_setprop(u_int handle, char *prop, void *buf, int len);
 #endif
-u_int OF_open __P((char *dname));
-void OF_close __P((u_int handle));
-int OF_write __P((u_int handle, void *addr, int len));
-int OF_read __P((u_int handle, void *addr, int len));
-int OF_seek __P((u_int handle, uint64_t pos));
+u_int OF_open(char *dname);
+void OF_close(u_int handle);
+int OF_write(u_int handle, void *addr, int len);
+int OF_read(u_int handle, void *addr, int len);
+int OF_seek(u_int handle, uint64_t pos);
 #endif
 void*	OF_claim(void *, u_int, u_int);
 void	OF_release(void *, u_int);

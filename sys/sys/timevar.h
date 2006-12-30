@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.4.4.2 2006/06/21 15:12:04 yamt Exp $	*/
+/*	$NetBSD: timevar.h,v 1.4.4.3 2006/12/30 20:50:56 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -185,13 +185,15 @@ int	settime(struct proc *p, struct timespec *);
 int	settimeofday1(const struct timeval *, const struct timezone *,
 	    struct proc *);
 int	timer_create1(timer_t *, clockid_t, struct sigevent *, copyin_t,
-	    struct proc *);
+	    struct lwp *);
 void	timer_gettime(struct ptimer *, struct itimerval *);
 void	timer_settime(struct ptimer *);
 void	timers_alloc(struct proc *);
 void	timers_free(struct proc *, int);
 int	tstohz(struct timespec *);
 int	tvtohz(struct timeval *);
+int	inittimeleft(struct timeval *, struct timeval *);
+int	gettimeleft(struct timeval *, struct timeval *);
 
 #ifdef __HAVE_TIMECOUNTER
 extern time_t time_second;	/* current second in the epoch */

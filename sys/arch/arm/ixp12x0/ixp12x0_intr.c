@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.11.16.1 2006/06/21 14:49:33 yamt Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.11.16.2 2006/12/30 20:45:37 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.11.16.1 2006/06/21 14:49:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.11.16.2 2006/12/30 20:45:37 yamt Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -267,7 +267,7 @@ ixp12x0_intr_calculate_masks(void)
 	pci_imask[IPL_SOFTNET] |= pci_imask[IPL_SOFTCLOCK];
 
 	/*
-	 * Enforce a heirarchy that gives "slow" device (or devices with
+	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */

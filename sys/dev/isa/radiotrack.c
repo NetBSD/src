@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.11 2005/02/27 00:27:17 perry Exp $ */
+/* $NetBSD: radiotrack.c,v 1.11.4.1 2006/12/30 20:48:27 yamt Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.11 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.11.4.1 2006/12/30 20:48:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,8 +373,8 @@ rt_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 }
 
 void
-rt_lm700x_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
-		u_int32_t data)
+rt_lm700x_init(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t off, u_int32_t data)
 {
 	/* Do nothing */
 	return;

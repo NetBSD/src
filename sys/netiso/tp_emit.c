@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.21.4.1 2006/06/21 15:11:37 yamt Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.21.4.2 2006/12/30 20:50:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,7 +72,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.21.4.1 2006/06/21 15:11:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.21.4.2 2006/12/30 20:50:45 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -101,14 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.21.4.1 2006/06/21 15:11:37 yamt Exp $"
 #include <netiso/tp_var.h>
 #include <netiso/iso_errno.h>
 #include <netiso/iso_var.h>
-
-#ifdef TRUE
-#undef FALSE
-#undef TRUE
-#endif
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_var.h>
 
 /*
  * Here is a mighty kludge.  The token ring misorders packets if you fire

@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.14 2003/07/15 00:24:42 lukem Exp $	*/
+/*	$NetBSD: stubs.c,v 1.14.16.1 2006/12/30 20:45:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.14 2003/07/15 00:24:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.14.16.1 2006/12/30 20:45:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,8 +84,10 @@ cpu_dumpconf()
 	if (dumpdev == NODEV)
 		return;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		return;
+	}
 	if (bdev->d_psize == NULL)
 		return;
 	nblks = (*bdev->d_psize)(dumpdev);

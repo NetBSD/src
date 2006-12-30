@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.h,v 1.2.6.2 2006/06/21 15:09:30 yamt Exp $	*/
+/*	$NetBSD: sysvbfs.h,v 1.2.6.3 2006/12/30 20:50:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,6 +39,11 @@
 #ifndef _FS_SYSVBFS_SYSVBFS_H_
 #define	_FS_SYSVBFS_SYSVBFS_H_
 
+struct sysvbfs_args {
+	char	*fspec;		/* blocks special holding the fs to mount */
+};
+
+#ifdef _KERNEL
 struct bfs;
 struct buf;
 
@@ -46,11 +51,6 @@ struct buf;
 #include <miscfs/genfs/genfs_node.h>
 #include <miscfs/specfs/specdev.h>
 
-struct sysvbfs_args {
-	char	*fspec;		/* blocks special holding the fs to mount */
-};
-
-#ifdef _KERNEL
 struct sysvbfs_node {
 	struct genfs_node gnode;
 	struct vnode *vnode;
@@ -106,7 +106,7 @@ int sysvbfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int sysvbfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int sysvbfs_vget(struct mount *, ino_t, struct vnode **);
 int sysvbfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int sysvbfs_vptofh(struct vnode *, struct fid *);
+int sysvbfs_vptofh(struct vnode *, struct fid *, size_t *);
 void sysvbfs_init(void);
 void sysvbfs_reinit(void);
 void sysvbfs_done(void);

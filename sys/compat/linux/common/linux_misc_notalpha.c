@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.74.2.1 2006/06/21 14:59:12 yamt Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.74.2.2 2006/12/30 20:47:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.74.2.1 2006/06/21 14:59:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.74.2.2 2006/12/30 20:47:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,10 +237,7 @@ linux_sys_readdir(l, v, retval)
  * need to deal with it.
  */
 int
-linux_sys_time(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_time(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_time_args /* {
 		linux_time_t *t;
@@ -329,10 +326,7 @@ linux_sys_waitpid(l, v, retval)
 #endif /* !amd64 */
 
 int
-linux_sys_setresgid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setresgid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_setresgid_args /* {
 		syscallarg(gid_t) rgid;
@@ -353,18 +347,14 @@ linux_sys_setresgid(l, v, retval)
 }
 
 int
-linux_sys_getresgid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_getresgid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_getresgid_args /* {
 		syscallarg(gid_t *) rgid;
 		syscallarg(gid_t *) egid;
 		syscallarg(gid_t *) sgid;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	kauth_cred_t pc = p->p_cred;
+	kauth_cred_t pc = l->l_cred;
 	int error;
 	gid_t gid;
 
@@ -394,20 +384,18 @@ linux_sys_getresgid(l, v, retval)
  * need to deal with it.
  */
 int
-linux_sys_stime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_stime(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_time_args /* {
 		linux_time_t *t;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct timespec ats;
 	linux_time_t tt;
 	int error;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL,
+	    NULL)) != 0)
 		return (error);
 
 	if ((error = copyin(&tt, SCARG(uap, t), sizeof tt)) != 0)
@@ -416,7 +404,7 @@ linux_sys_stime(l, v, retval)
 	ats.tv_sec = tt;
 	ats.tv_nsec = 0;
 
-	if ((error = settime(p, &ats)))
+	if ((error = settime(l->l_proc, &ats)))
 		return (error);
 
 	return 0;

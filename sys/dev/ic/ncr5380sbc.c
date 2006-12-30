@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.56.2.1 2006/06/21 15:02:55 yamt Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.56.2.2 2006/12/30 20:48:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.56.2.1 2006/06/21 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.56.2.2 2006/12/30 20:48:03 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1520,7 +1520,7 @@ success:
 /*
  * The message system:
  *
- * This is a revamped message system that now should easier accomodate
+ * This is a revamped message system that now should easier accommodate
  * new messages, if necessary.
  *
  * Currently we accept these messages:
@@ -2440,13 +2440,13 @@ int ncr5380_traceidx = 0;
 
 #define	TRACE_MAX	1024
 struct trace_ent {
-	char *msg;
+	const char *msg;
 	long  val;
 } ncr5380_tracebuf[TRACE_MAX];
 
 void
 ncr5380_trace(msg, val)
-	char *msg;
+	const char *msg;
 	long  val;
 {
 	struct trace_ent *tr;
@@ -2615,9 +2615,7 @@ ncr5380_attach(sc)
 }
 
 int
-ncr5380_detach(sc, flags)
-	struct ncr5380_softc *sc;
-	int flags;
+ncr5380_detach(struct ncr5380_softc *sc, int flags)
 {
 
 	return (EOPNOTSUPP);

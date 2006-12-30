@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.15 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.15.6.1 2006/12/30 20:48:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.15 2005/02/04 02:10:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.15.6.1 2006/12/30 20:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,10 +98,8 @@ CFATTACH_DECL(aic_isa, sizeof(struct aic_isa_softc),
  * returns non-zero value if a controller is found.
  */
 int
-aic_isa_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+aic_isa_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -127,7 +125,6 @@ aic_isa_probe(parent, match, aux)
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, AIC_ISA_IOSIZE, 0, &ioh))
 		return (0);
 
-	AIC_TRACE(("aic_isa_probe: port 0x%x\n", ia->ia_iobase));
 	rv = aic_find(iot, ioh);
 
 	bus_space_unmap(iot, ioh, AIC_ISA_IOSIZE);
@@ -145,9 +142,7 @@ aic_isa_probe(parent, match, aux)
 }
 
 void
-aic_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+aic_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct aic_isa_softc *isc = (void *)self;
@@ -165,7 +160,6 @@ aic_isa_attach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	AIC_TRACE(("aic_isa_attach: port 0x%x\n", ia->ia_iobase));
 	if (!aic_find(iot, ioh)) {
 		printf("%s: aic_find failed", sc->sc_dev.dv_xname);
 		return;

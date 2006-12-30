@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.56.2.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.56.2.2 2006/12/30 20:50:20 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,14 +96,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.56.2.1 2006/06/21 15:10:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.56.2.2 2006/12/30 20:50:20 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_llc.h"
 #include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_ipx.h"
 #include "opt_mbuftrace.h"
 
@@ -154,10 +151,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.56.2.1 2006/06/21 15:10:27 yamt Ex
 #include <netinet6/nd6.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include "carp.h"
 #if NCARP > 0
@@ -175,10 +168,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.56.2.1 2006/06/21 15:10:27 yamt Ex
 #include <netiso/iso_snpac.h>
 #endif
 
-#ifdef LLC
-#include <netccitt/dll.h>
-#include <netccitt/llc_var.h>
-#endif
 
 #ifdef NETATALK
 #include <netatalk/at.h>
@@ -192,9 +181,6 @@ extern u_char	at_org_code[ 3 ];
 extern u_char	aarp_org_code[ 3 ];
 #endif /* NETATALK */
 
-#if defined(LLC) && defined(CCITT)
-extern struct ifqueue pkintrq;
-#endif
 
 #include "bpfilter.h"
 
@@ -393,18 +379,6 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		break;
 	}
 #endif /* NETATALK */
-#ifdef NS
-	case AF_NS:
-		etype = htons(ETHERTYPE_NS);
- 		memcpy(edst, &(((struct sockaddr_ns *)dst)->sns_addr.x_host),
-		    sizeof (edst));
-		if (!memcmp(edst, &ns_thishost, sizeof(edst)))
-			return (looutput(ifp, m, dst, rt));
-		/* If broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copy(m, 0, (int)M_COPYALL);
-		break;
-#endif
 #ifdef	ISO
 	case AF_ISO: {
 		int	snpalen;
@@ -440,45 +414,6 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		l->llc_control = LLC_UI;
 		} break;
 #endif /* ISO */
-#ifdef	LLC
-/*	case AF_NSAP: */
-	case AF_CCITT: {
-		struct sockaddr_dl *sdl = rt ? 
-			(struct sockaddr_dl *) rt->rt_gateway : NULL;
-
-		if (sdl && sdl->sdl_family == AF_LINK
-		    && sdl->sdl_alen > 0) {
-			memcpy(edst, LLADDR(sdl), sizeof(edst));
-		} else goto bad; /* Not a link interface ? Funny ... */
-
-		if ((ifp->if_flags & IFF_SIMPLEX) && (*edst & 1) &&
-		    (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
-			M_PREPEND(mcopy, sizeof (*fh), M_DONTWAIT);
-			if (mcopy) {
-				fh = mtod(mcopy, struct fddi_header *);
-				memcpy(fh->fddi_dhost, edst, sizeof (edst));
-				memcpy(fh->fddi_shost, FDDIADDR(ifp),
-				   sizeof (edst));
-				fh->fddi_fc = FDDIFC_LLC_ASYNC|FDDIFC_LLC_PRIO4;
-			}
-		}
-		etype = 0;
-#ifdef LLC_DEBUG
-		{
-			int i;
-			struct llc *l = mtod(m, struct llc *);
-
-			printf("fddi_output: sending LLC2 pkt to: ");
-			for (i=0; i<6; i++)
-				printf("%x ", edst[i] & 0xff);
-			printf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n",
-			       m->m_pkthdr.len, l->llc_dsap & 0xff, l->llc_ssap &0xff,
-			       l->llc_control & 0xff);
-
-		}
-#endif /* LLC_DEBUG */
-		} break;
-#endif /* LLC */
 
 	case pseudo_AF_HDRCMPLT:
 	{
@@ -645,10 +580,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		m->m_flags |= M_LINK0;
 #endif
 
-	/* Strip off the FDDI header. */
-	m_adj(m, sizeof(struct fddi_header));
-
-	l = mtod(m, struct llc *);
+	l = (struct llc *)(fh+1);
 	switch (l->llc_dsap) {
 #if defined(INET) || defined(INET6) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
 	case LLC_SNAP_LSAP:
@@ -656,6 +588,10 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		u_int16_t etype;
 		if (l->llc_control != LLC_UI || l->llc_ssap != LLC_SNAP_LSAP)
 			goto dropanyway;
+
+		/* Strip off the FDDI header. */
+		m_adj(m, sizeof(struct fddi_header));
+
 #ifdef NETATALK
 		if (Bcmp(&(l->llc_snap_org_code)[0], at_org_code,
 			 sizeof(at_org_code)) == 0 &&
@@ -712,12 +648,6 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			inq = &ipxintrq;
 			break;
 #endif
-#ifdef NS
-		case ETHERTYPE_NS:
-			schednetisr(NETISR_NS);
-			inq = &nsintrq;
-			break;
-#endif
 #ifdef INET6
 		case ETHERTYPE_IPV6:
 			schednetisr(NETISR_IPV6);
@@ -755,14 +685,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			/* LLC_UI_P forbidden in class 1 service */
 			if ((l->llc_dsap == LLC_ISO_LSAP) &&
 			    (l->llc_ssap == LLC_ISO_LSAP)) {
-				/* LSAP for ISO */
-				m->m_data += 3;		/* XXX */
-				m->m_len -= 3;		/* XXX */
-				m->m_pkthdr.len -= 3;	/* XXX */
-				M_PREPEND(m, sizeof *fh, M_DONTWAIT);
-				if (m == 0)
-					return;
-				*mtod(m, struct fddi_header *) = *fh;
+
 				schednetisr(NETISR_ISO);
 				inq = &clnlintrq;
 				break;
@@ -771,11 +694,12 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 
 		case LLC_XID:
 		case LLC_XID_P:
-			if(m->m_len < 6)
+			if(m->m_len <
+			    LLC_XID_BASIC_MINLEN + sizeof(struct fddi_header))
 				goto dropanyway;
 			l->llc_window = 0;
-			l->llc_fid = 9;
-			l->llc_class = 1;
+			l->llc_fid = LLC_XID_FORMAT_BASIC;
+			l->llc_class = LLC_XID_CLASS_I;
 			l->llc_dsap = l->llc_ssap = 0;
 			/* Fall through to */
 		case LLC_TEST:
@@ -798,6 +722,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 				eh->ether_dhost[i] = fh->fddi_shost[i];
 			}
 			eh->ether_type = 0;
+			m_adj(m, sizeof(struct fddi_header));
 			ifp->if_output(ifp, m, &sa, NULL);
 			return;
 		}
@@ -807,25 +732,6 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		}
 		break;
 #endif /* ISO */
-#ifdef LLC
-	case LLC_X25_LSAP:
-	{
-		M_PREPEND(m, sizeof(struct sdl_hdr) , M_DONTWAIT);
-		if (m == 0)
-			return;
-		if ( !sdl_sethdrif(ifp, fh->fddi_shost, LLC_X25_LSAP,
-				    fh->fddi_dhost, LLC_X25_LSAP, 6,
-				    mtod(m, struct sdl_hdr *)))
-			panic("ETHER cons addr failure");
-		mtod(m, struct sdl_hdr *)->sdlhdr_len = m->m_pkthdr.len - sizeof(struct sdl_hdr);
-#ifdef LLC_DEBUG
-		printf("llc packet\n");
-#endif /* LLC_DEBUG */
-		schednetisr(NETISR_CCITT);
-		inq = &llcintrq;
-		break;
-	}
-#endif /* LLC */
 
 	default:
 		ifp->if_noproto++;

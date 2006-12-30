@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.26.2.1 2006/06/21 14:57:34 yamt Exp $	*/
+/*	$NetBSD: ka860.c,v 1.26.2.2 2006/12/30 20:47:14 yamt Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.26.2.1 2006/06/21 14:57:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.26.2.2 2006/12/30 20:47:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,8 +67,8 @@ struct	cpu_dep	ka860_calls = {
 	ka86_mchk,
 	ka86_memerr,
 	ka860_init,
-	generic_clkread,
-	generic_clkwrite,
+	generic_gettime,
+	generic_settime,
 	6,      /* ~VUPS */
 	10,	/* SCB pages */
 	0,	/* Halt call, nothing special */

@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.25.4.1 2006/06/21 14:54:11 yamt Exp $
+# $NetBSD: SLAB,v 1.25.4.2 2006/12/30 20:46:40 yamt Exp $
 #
 # deberg's development machine
 #
@@ -103,11 +103,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

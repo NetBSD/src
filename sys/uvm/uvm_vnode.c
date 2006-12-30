@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.66.2.1 2006/06/21 15:12:40 yamt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.66.2.2 2006/12/30 20:51:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,11 +50,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.66.2.1 2006/06/21 15:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.66.2.2 2006/12/30 20:51:06 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
-#include "opt_readahead.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -195,7 +194,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 			    (voff_t)pi.part->p_size;
 		}
 	} else {
-		result = VOP_GETATTR(vp, &vattr, curproc->p_cred, curlwp);
+		result = VOP_GETATTR(vp, &vattr, curlwp->l_cred, curlwp);
 		if (result == 0)
 			used_vnode_size = vattr.va_size;
 	}
@@ -296,9 +295,6 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 {
 	struct vnode *vp = (struct vnode *)uobj;
 	int error;
-#if defined(READAHEAD_STATS)
-	int orignpages = *npagesp;
-#endif /* defined(READAHEAD_STATS) */
 
 	UVMHIST_FUNC("uvn_get"); UVMHIST_CALLED(ubchist);
 
@@ -315,31 +311,10 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
 			     access_type, advice, flags);
 
-#if defined(READAHEAD_STATS)
-	if (((flags & PGO_LOCKED) != 0 && *npagesp > 0) ||
-	    ((flags & (PGO_LOCKED|PGO_SYNCIO)) == PGO_SYNCIO && error == 0)) {
-		int i;
-
-		if ((flags & PGO_LOCKED) == 0) {
-			simple_lock(&uobj->vmobjlock);
-		}
-		for (i = 0; i < orignpages; i++) {
-			struct vm_page *pg = pps[i];
-
-			if (pg == NULL || pg == PGO_DONTCARE) {
-				continue;
-			}
-			if ((pg->flags & PG_SPECULATIVE) != 0) {
-				pg->flags &= ~PG_SPECULATIVE;
-				uvm_ra_hit.ev_count++;
-			}
-		}
-		if ((flags & PGO_LOCKED) == 0) {
-			simple_unlock(&uobj->vmobjlock);
-		}
-	}
-#endif /* defined(READAHEAD_STATS) */
-
+	LOCK_ASSERT(((flags & PGO_LOCKED) != 0 &&
+		     simple_lock_held(&vp->v_interlock)) ||
+		    ((flags & PGO_LOCKED) == 0 &&
+		     !simple_lock_held(&vp->v_interlock)));
 	return error;
 }
 
@@ -482,6 +457,7 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 {
 	struct uvm_object *uobj = &vp->v_uobj;
 	voff_t pgend = round_page(newsize);
+	voff_t oldsize;
 	UVMHIST_FUNC("uvm_vnp_setsize"); UVMHIST_CALLED(ubchist);
 
 	simple_lock(&uobj->vmobjlock);
@@ -493,12 +469,13 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	 * toss some pages...
 	 */
 
-	if (vp->v_size > pgend && vp->v_size != VSIZENOTSET) {
+	oldsize = vp->v_size;
+	if (oldsize > pgend && oldsize != VSIZENOTSET) {
 		(void) uvn_put(uobj, pgend, 0, PGO_FREE | PGO_SYNCIO);
-	} else {
-		simple_unlock(&uobj->vmobjlock);
+		simple_lock(&uobj->vmobjlock);
 	}
 	vp->v_size = newsize;
+	simple_unlock(&uobj->vmobjlock);
 }
 
 /*
@@ -527,4 +504,29 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 		off += bytelen;
 		len -= bytelen;
 	}
+}
+
+boolean_t
+uvn_text_p(struct uvm_object *uobj)
+{
+	struct vnode *vp = (struct vnode *)uobj;
+
+	return (vp->v_flag & VEXECMAP) != 0;
+}
+
+boolean_t
+uvn_clean_p(struct uvm_object *uobj)
+{
+	struct vnode *vp = (struct vnode *)uobj;
+
+	return (vp->v_flag & VONWORKLST) == 0;
+}
+
+boolean_t
+uvn_needs_writefault_p(struct uvm_object *uobj)
+{
+	struct vnode *vp = (struct vnode *)uobj;
+
+	return uvn_clean_p(uobj) ||
+	    (vp->v_flag & (VWRITEMAP|VWRITEMAPDIRTY)) == VWRITEMAP;
 }

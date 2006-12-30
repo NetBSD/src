@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.55.2.1 2006/06/21 14:53:49 yamt Exp $
+# $NetBSD: GENERIC,v 1.55.2.2 2006/12/30 20:46:34 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.55.2.1 $"
+#ident 		"GENERIC-$Revision: 1.55.2.2 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -45,7 +45,7 @@ options 	M060SP
 
 #options 	SYSVSHM
 options 	KTRACE
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	COMPAT_43
 
 options 	USERCONF	# userconf(4) support
@@ -65,7 +65,7 @@ file-system 	CD9660
 #file-system	MSDOSFS
 #file-system	UNION
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER
@@ -132,6 +132,7 @@ pseudo-device	ppp
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	loop
 pseudo-device	bpfilter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
@@ -153,7 +154,6 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

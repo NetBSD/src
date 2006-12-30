@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.8.2.1 2006/06/21 14:51:23 yamt Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.8.2.2 2006/12/30 20:45:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  * Arguments used to attach a device to the internal i/o space.
  */
 struct intio_attach_args {
-	char ia_modname[INTIO_MOD_LEN+1];	/* module name */
+	char ia_modname[INTIO_MOD_LEN];		/* module name */
 	bus_space_tag_t ia_bst;			/* bus space tag */
 	bus_addr_t ia_addr;			/* physical address */
 	bus_size_t ia_iobase;			/* intio iobase */

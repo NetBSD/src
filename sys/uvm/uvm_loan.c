@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.55.2.1 2006/06/21 15:12:40 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.55.2.2 2006/12/30 20:51:05 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.55.2.1 2006/06/21 15:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.55.2.2 2006/12/30 20:51:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,7 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 		pmap_page_protect(pg, VM_PROT_READ);
 	}
 	pg->loan_count++;
-	uvm_pagedequeue(pg);
+	uvm_pageactivate(pg);
 	uvm_unlock_pageq();
 	**output = pg;
 	(*output)++;
@@ -479,7 +479,7 @@ uvm_loanpage(struct vm_page **pgpp, int npages)
 			pmap_page_protect(pg, VM_PROT_READ);
 		}
 		pg->loan_count++;
-		uvm_pagedequeue(pg);
+		uvm_pageactivate(pg);
 		uvm_unlock_pageq();
 	}
 
@@ -880,7 +880,6 @@ again:
 	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loaning to kernel-page */
 		uvm_lock_pageq();
 		pg->loan_count++;
-		uvm_pagedequeue(pg);
 		uvm_unlock_pageq();
 		simple_unlock(&uvm_loanzero_object.vmobjlock);
 		**output = pg;
@@ -1011,16 +1010,10 @@ uvm_unloanpage(struct vm_page **ploans, int npages)
 			pg->loan_count--;
 			pg->pqflags |= PQ_ANON;
 		}
-		if (pg->loan_count == 0) {
-			if (pg->uobject == NULL && pg->uanon == NULL) {
-				KASSERT((pg->flags & PG_BUSY) == 0);
-				uvm_pagefree(pg);
-			} else {
-				uvm_pageactivate(pg);
-			}
-		} else if (pg->loan_count == 1 && pg->uobject != NULL &&
-			   pg->uanon != NULL) {
-			uvm_pageactivate(pg);
+		if (pg->loan_count == 0 && pg->uobject == NULL &&
+		    pg->uanon == NULL) {
+			KASSERT((pg->flags & PG_BUSY) == 0);
+			uvm_pagefree(pg);
 		}
 		if (slock != NULL) {
 			simple_unlock(slock);
@@ -1137,16 +1130,25 @@ uvm_loanbreak(struct vm_page *uobjpage)
 
 	/*
 	 * copy the data from the old page to the new
-	 * one and clear the fake/clean flags on the
-	 * new page (keep it busy).  force a reload
-	 * of the old page by clearing it from all
-	 * pmaps.  then lock the page queues to
-	 * rename the pages.
+	 * one and clear the fake flags on the new page (keep it busy).
+	 * force a reload of the old page by clearing it from all
+	 * pmaps.
+	 * transfer dirtiness of the old page to the new page.
+	 * then lock the page queues to rename the pages.
 	 */
 
 	uvm_pagecopy(uobjpage, pg);	/* old -> new */
-	pg->flags &= ~(PG_FAKE|PG_CLEAN);
+	pg->flags &= ~PG_FAKE;
 	pmap_page_protect(uobjpage, VM_PROT_NONE);
+	if ((uobjpage->flags & PG_CLEAN) != 0 && !pmap_clear_modify(uobjpage)) {
+		pmap_clear_modify(pg);
+		pg->flags |= PG_CLEAN;
+	} else {
+		/* uvm_pagecopy marked it dirty */
+		KASSERT((pg->flags & PG_CLEAN) == 0);
+		/* a object with a dirty page should be dirty. */
+		KASSERT(!UVM_OBJ_IS_CLEAN(uobj));
+	}
 	if (uobjpage->flags & PG_WANTED)
 		wakeup(uobjpage);
 	/* uobj still locked */

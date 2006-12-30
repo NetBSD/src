@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.10.4.1 2006/06/21 14:55:31 yamt Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.10.4.2 2006/12/30 20:46:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -203,8 +203,8 @@ main(int argc, char *argv[])
 		perror("File open");
 		exit(1);
 #else
-		sprintf(buf, "/dev/r%s%c", argv[0], 'a' + getrawpartition());
-		fd = open(buf, (opt_i | opt_w | opt_d | opt_p) 
+		sprintf((char *)buf, "/dev/r%s%c", argv[0], 'a' + getrawpartition());
+		fd = open((char *)buf, (opt_i | opt_w | opt_d | opt_p) 
 				? O_RDWR : O_RDONLY);
 		if (fd < 0) {
 			printf("Error opening device %s: %s\n",
@@ -620,10 +620,12 @@ checksum_vol(void)
 void
 usage(void)
 {
-	printf("Usage:	sgivol [-qf] [-i] [-h vhsize] device\n"
-	       "	sgivol [-qf] [-r vhfilename diskfilename] device\n"
-	       "	sgivol [-qf] [-w vhfilename diskfilename] device\n"
-	       "	sgivol [-qf] [-d vhfilename] device\n"
+	printf("Usage:	sgivol [-qf] -i [-h vhsize] device\n"
+	       "	sgivol [-qf] -r vhfilename diskfilename device\n"
+	       "	sgivol [-qf] -w vhfilename diskfilename device\n"
+	       "	sgivol [-qf] -d vhfilename device\n"
+	       "	sgivol [-qf] -p partno partfirst partblocks "
+	       "parttype device\n"
 	       );
 	exit(0);
 }

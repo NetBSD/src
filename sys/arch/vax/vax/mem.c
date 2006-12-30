@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.29.16.1 2006/06/21 14:57:34 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.29.16.2 2006/12/30 20:47:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.29.16.1 2006/06/21 14:57:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.29.16.2 2006/12/30 20:47:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -187,7 +187,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 
 	/*
 	 * /dev/mem is the only one that makes sense through this
@@ -200,8 +200,8 @@ mmmmap(dev_t dev, off_t off, int prot)
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if ((u_int)off > ctob(physmem) &&
-	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+	if ((u_int)off > ctob(physmem) && kauth_authorize_machdep(l->l_cred,
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0)
 		return (-1);
 	return (btop((u_int)off));
 }

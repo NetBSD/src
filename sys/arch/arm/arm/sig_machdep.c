@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.23.12.1 2006/06/21 14:49:08 yamt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.23.12.2 2006/12/30 20:45:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.23.12.1 2006/06/21 14:49:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.23.12.2 2006/12/30 20:45:32 yamt Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -234,20 +234,13 @@ cpu_setmcontext(l, mcp, flags)
 	unsigned int flags;
 {
 	struct trapframe *tf = process_frame(l);
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 
 	if ((flags & _UC_CPU) != 0) {
 		/* Restore General Register context. */
 		/* Make sure the processor mode has not been tampered with. */
-#ifdef PROG32
-		if ((gr[_REG_CPSR] & PSR_MODE) != PSR_USR32_MODE ||
-		    (gr[_REG_CPSR] & (I32_bit | F32_bit)) != 0)
-			return (EINVAL);
-#else /* PROG26 */
-		if ((gr[_REG_PC] & R15_MODE) != R15_MODE_USR ||
-		    (gr[_REG_PC] & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
-			return (EINVAL);
-#endif
+		if (!VALID_R15_PSR(gr[_REG_PC], gr[_REG_CPSR]))
+			return EINVAL;
 
 		tf->tf_r0     = gr[_REG_R0];
 		tf->tf_r1     = gr[_REG_R1];

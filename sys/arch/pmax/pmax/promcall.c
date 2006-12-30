@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.10 2005/06/01 18:32:08 drochner Exp $	*/
+/*	$NetBSD: promcall.c,v 1.10.2.1 2006/12/30 20:46:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.10 2005/06/01 18:32:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.10.2.1 2006/12/30 20:46:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -234,7 +234,7 @@ prom_haltbutton()
 /*
  * Halt/reboot machine.
  */
-volatile void
+void __attribute__((__noreturn__))
 prom_halt(howto, bootstr)
 	int howto;
 	char *bootstr;
@@ -242,7 +242,7 @@ prom_halt(howto, bootstr)
 	if (callv != &callvec)
 		(*callv->_rex)((howto & RB_HALT) ? 'h' : 'b');
 	else {
-		volatile void (*f) __P((void));
+		void __attribute__((__noreturn__)) (*f) __P((void));
 
 		f = (howto & RB_HALT)
 			? (void *)DEC_PROM_REINIT

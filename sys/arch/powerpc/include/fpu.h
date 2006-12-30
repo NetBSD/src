@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.13 2004/04/16 23:58:08 matt Exp $	*/
+/*	$NetBSD: fpu.h,v 1.13.12.1 2006/12/30 20:46:44 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -74,7 +74,7 @@
 #endif
 
 /* List of PowerPC architectures that support FPUs. */
-#if defined(PPC_OEA)
+#if defined(PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #define PPC_HAVE_FPU
 
 #define	FPU_SAVE	0

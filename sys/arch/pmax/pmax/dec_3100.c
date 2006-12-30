@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.39.10.1 2006/06/21 14:54:48 yamt Exp $ */
+/* $NetBSD: dec_3100.c,v 1.39.10.2 2006/12/30 20:46:43 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.39.10.1 2006/06/21 14:54:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.39.10.2 2006/12/30 20:46:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,16 +124,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.39.10.1 2006/06/21 14:54:48 yamt Exp 
 
 #include <pmax/ibus/ibusvar.h>
 
-#ifdef WSCONS
 #include <dev/dec/dzreg.h>
 #include <dev/dec/dzvar.h>
 #include <dev/dec/dzkbdvar.h>
 #include <pmax/pmax/cons.h>
-#else
-#include <pmax/dev/pmvar.h>
-#include <pmax/dev/dcvar.h>
-#include "rasterconsole.h"
-#endif
 
 #include "pm.h"
 
@@ -148,6 +142,20 @@ static void	dec_3100_intr_establish __P((struct device *, void *,
 
 #define	kn01_wbflush()	mips1_wbflush() /* XXX to be corrected XXX */
 
+static const int dec_3100_ipl2spl_table[] = {
+	[IPL_NONE] = 0,
+	[IPL_SOFT] = _SPL_SOFT,
+	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
+	[IPL_SOFTNET] = _SPL_SOFTNET,
+	[IPL_SOFTSERIAL] = _SPL_SOFTSERIAL,
+	[IPL_BIO] = MIPS_SPL0,
+	[IPL_NET] = MIPS_SPL_0_1,
+	[IPL_TTY] = MIPS_SPL_0_1_2,
+	[IPL_VM] = MIPS_SPLHIGH,	/* ??? */
+	[IPL_CLOCK] = MIPS_SPL_0_1_2_3,
+	[IPL_STATCLOCK] = MIPS_SPL_0_1_2_3,
+};
+
 void
 dec_3100_init()
 {
@@ -161,12 +169,7 @@ dec_3100_init()
 	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
-	splvec.splbio = MIPS_SPL0;
-	splvec.splnet = MIPS_SPL_0_1;
-	splvec.spltty = MIPS_SPL_0_1_2;
-	splvec.splvm = MIPS_SPLHIGH;				/* ??? */
-	splvec.splclock = MIPS_SPL_0_1_2_3;
-	splvec.splstatclock = MIPS_SPL_0_1_2_3;
+	ipl2spl_table = dec_3100_ipl2spl_table;
 
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_3);
@@ -197,21 +200,15 @@ dec_3100_cons_init()
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if defined(WSCONS) && NPM > 0
+#if NPM > 0
  		if (pm_cnattach() > 0) {
 			dz_ibus_cnsetup(KN01_SYS_DZ);
 			dzkbd_cnattach(NULL);
  			return;
  		}
-#elif NRASTERCONSOLE > 0 && NPM > 0
-		if (pm_cnattach() > 0) {
-			dckbd_cnattach(KN01_SYS_DZ);
-			return;
-		}
-#else
+#endif
 		printf("No framebuffer device configured: ");
 		printf("using serial console\n");
-#endif
 	}
 	/*
 	 * Delay to allow PROM putchars to complete.
@@ -220,12 +217,8 @@ dec_3100_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
-#ifdef WSCONS
 	dz_ibus_cnsetup(KN01_SYS_DZ);
 	dz_ibus_cnattach(kbd);
-#else
-	dc_cnattach(KN01_SYS_DZ, kbd);
-#endif
 }
 
 #define CALLINTR(vvv, cp0)					\

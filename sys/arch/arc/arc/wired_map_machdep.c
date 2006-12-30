@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map_machdep.c,v 1.2.18.2 2006/06/21 14:48:54 yamt Exp $	*/
+/*	$NetBSD: wired_map_machdep.c,v 1.2.18.3 2006/12/30 20:45:29 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.2.18.2 2006/06/21 14:48:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.2.18.3 2006/12/30 20:45:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.2.18.2 2006/06/21 14:48:54 y
 #include <mips/locore.h>
 #include <mips/pte.h>
 
-boolean_t arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap, vsize_t *sizep);
-boolean_t arc_wired_map_vaddr_entry(vaddr_t va, paddr_t *pap, vsize_t *sizep);
+static boolean_t arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap,
+    vsize_t *sizep);
+static boolean_t arc_wired_map_vaddr_entry(vaddr_t va, paddr_t *pap,
+    vsize_t *sizep);
 
 static struct extent *arc_wired_map_ex;
 static long wired_map_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
@@ -86,7 +88,7 @@ arc_wired_enter_page(vaddr_t va, paddr_t pa, vaddr_t pg_size)
 	mips3_wired_enter_page(va, pa, pg_size);
 }
 
-boolean_t
+static boolean_t
 arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap, vsize_t *sizep)
 {
 	vsize_t size;
@@ -113,7 +115,7 @@ arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap, vsize_t *sizep)
 }
 
 /* XXX: Using tlbp makes this easier... */
-boolean_t
+static boolean_t
 arc_wired_map_vaddr_entry(vaddr_t va, paddr_t *pap, vsize_t *sizep)
 {
 	vsize_t size;

@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.15.2.1 2006/06/21 14:47:47 yamt Exp $
+#	$NetBSD: EB7500ATX,v 1.15.2.2 2006/12/30 20:45:18 yamt Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.15.2.1 $"
+#ident		"EB7500ATX-$Revision: 1.15.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -79,11 +79,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -140,7 +137,7 @@ options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
@@ -199,7 +196,7 @@ vidc0		at mainbus?
 # ws console uses DUMB, SUN or VT100 terminal emulation
 #options 	WSEMUL_NODUMB
 #options 	WSEMUL_SUN
-#options 	WSEMUL_VT100
+options 	WSEMUL_VT100
 
 #options 	WSDISPLAY_COMPAT_RAWKBD
 
@@ -208,46 +205,29 @@ vidc0		at mainbus?
 #options 	FONT_LUCIDA16x29
 #options 	FONT_OMRON12x20		# looks funny
 #options 	FONT_QVSS8x15		# broken ?
-#options 	FONT_SONY12x25		# looks like VT220 font
-#options 	FONT_SONY8x16		# not tested
+options 	FONT_SONY12x25		# looks like VT220 font
+options 	FONT_SONY8x16		# not tested
 #options 	FONT_VT220L8x8		# 8x8 font as in Arch. cons
 #options 	FONT_VT220L8x16		# 8x(2x8) font as in Arch. cons
 #options 	FONT_VT220L8x10		# not tested
 #options 	FONT_VT220L8x20		# not tested
 
-#vidcvideo0	at vidc?		# wscons driver for VIDC
-#wsdisplay*	at vidcvideo? console ?	# display itself
+vidcvideo0	at vidc?		# wscons driver for VIDC
+wsdisplay*	at vidcvideo? console ?	# display itself
 
 iomdkbc*	at iomd?		# IOMD keyboard/mouse interface
 
-#pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
-#options 	PCKBD_LAYOUT=KB_UK
-#wskbd*		at pckbd?
+pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
+options 	PCKBD_LAYOUT=KB_UK
+wskbd*		at pckbd?
 
 pms*		at iomdkbc? slot ?	# PS/2 mouse
 wsmouse*	at pms?
-
-#rpckbd*		at iomd?		# based on old `kbd' driver
-#wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
 
 #qms*		at iomd?		# ws quadmouse driver
 #wsmouse*	at qms?			# wsmouse on ws quadmouse
 
 pseudo-device	wsmux
-
-# The origional vidcconsole :
-# vidcconsole kbd at IOMD
-# vidcconsole PS2 mouse at IOMD
-vidcconsole0	at vidc?		# display + vt100 emulation
-kbd*		at iomd?		# PS/2 keyboard for vidcconsole
-
-# generic VT console device
-vt0	at vidc?
-vt1	at vidc?
-vt2	at vidc?
-vt3	at vidc?
-vt4	at vidc?
-vt5	at vidc?
 
 # Audio device
 vidcaudio0	at vidc?
@@ -301,10 +281,13 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
-
-makeoptions	MONITOR="Taxan875+LR"
-#makeoptions	MONITOR="AKF60"
-makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+# If the standard modes don't work for your monitor, you can specify
+# a RISC-OS-format monitor definition file and a list of modes here.
+
+#makeoptions	MONITOR="Taxan875+LR"
+#makeoptions	MONITOR="AKF60"
+#makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"

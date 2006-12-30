@@ -1,4 +1,4 @@
-/*	$NetBSD: j720sspvar.h,v 1.1.14.2 2006/06/21 14:51:44 yamt Exp $	*/
+/*	$NetBSD: j720sspvar.h,v 1.1.14.3 2006/12/30 20:46:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,13 +37,6 @@
  */
 
 /* Jornada 720 SSP port. */
-
-#define J720SSP_INVERT(x)						\
-	do {								\
-		(x) = ((((x) & 0xf0) >> 4) | (((x) & 0x0f) << 4));	\
-		(x) = ((((x) & 0xcc) >> 2) | (((x) & 0x33) << 2));	\
-		(x) = ((((x) & 0xaa) >> 1) | (((x) & 0x55) << 1));	\
-	} while (0)
 
 struct j720ssp_softc {
 	struct device		sc_dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -88,7 +88,7 @@ int sco_recvspace = 4096;
  */
 int
 sco_usrreq(struct socket *up, int req, struct mbuf *m,
-		struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
+    struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
 	struct sco_pcb *pcb = (struct sco_pcb *)up->so_pcb;
 	struct sockaddr_bt *sa;
@@ -204,6 +204,9 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	case PRU_RCVOOB:
 		return EOPNOTSUPP;	/* (no release) */
 
+	case PRU_LISTEN:
+		return sco_listen(pcb);
+
 	case PRU_ACCEPT:
 		KASSERT(nam);
 		sa = mtod(nam, struct sockaddr_bt *);
@@ -211,7 +214,6 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 		return sco_peeraddr(pcb, sa);
 
 	case PRU_CONNECT2:
-	case PRU_LISTEN:
 	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
@@ -313,12 +315,18 @@ sco_disconnected(void *arg, int err)
 }
 
 static void *
-sco_newconn(void *arg, struct sockaddr_bt *laddr, struct sockaddr_bt *raddr)
+sco_newconn(void *arg, struct sockaddr_bt *laddr,
+    struct sockaddr_bt *raddr)
 {
-//	struct socket *so = arg;
+	struct socket *so = arg;
 
-	DPRINTF("New Connection");
-	return NULL;
+	DPRINTF("New Connection\n");
+	so = sonewconn(so, 0);
+	if (so == NULL)
+		return NULL;
+
+	soisconnecting(so);
+	return so->so_pcb;
 }
 
 static void

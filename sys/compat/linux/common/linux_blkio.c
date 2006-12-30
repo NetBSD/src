@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_blkio.c,v 1.9.18.1 2006/06/21 14:59:12 yamt Exp $	*/
+/*	$NetBSD: linux_blkio.c,v 1.9.18.2 2006/12/30 20:47:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_blkio.c,v 1.9.18.1 2006/06/21 14:59:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_blkio.c,v 1.9.18.2 2006/12/30 20:47:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_blkio.c,v 1.9.18.1 2006/06/21 14:59:12 yamt Ex
 
 int
 linux_ioctl_blkio(struct lwp *l, struct linux_sys_ioctl_args *uap,
-		  register_t *retval)
+    register_t *retval)
 {
 	struct  proc *p = l->l_proc;
 	u_long com;

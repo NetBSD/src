@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.22.2.1 2006/06/21 14:56:47 yamt Exp $ */
+/*	$NetBSD: autoconf.h,v 1.22.2.2 2006/12/30 20:47:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -140,15 +140,6 @@ int	matchbyname(struct device *, struct cfdata *cf, void *aux);
  * (this is just a frill).
  */
 char	*clockfreq(long freq);
-
-/* Openprom V2 style boot path */
-struct bootpath {
-	char	name[16];	/* name of this node */
-	int	val[3];		/* up to three optional values */
-	struct device *dev;	/* device that recognised this component */
-};
-struct bootpath	*bootpath_store(int, struct bootpath *);
-int		sd_crazymap(int);
 
 /* Kernel initialization routine. */
 void	bootstrap(void *, void *, void *, void *, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.40.2.1 2006/06/21 14:57:48 yamt Exp $	*/
+/*	$NetBSD: ite.c,v 1.40.2.2 2006/12/30 20:47:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.40.2.1 2006/06/21 14:57:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.40.2.2 2006/12/30 20:47:21 yamt Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -393,8 +393,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 		tty_attach(tp);
 	} else
 		tp = ite_tty[unit];
-	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
-	    && kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		error = iteon(dev, 0);

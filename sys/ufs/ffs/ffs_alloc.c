@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.84.2.1 2006/06/21 15:12:31 yamt Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.84.2.2 2006/12/30 20:51:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.84.2.1 2006/06/21 15:12:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.84.2.2 2006/12/30 20:51:00 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -139,7 +139,6 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 			pg = uvm_pagelookup(uobj, off);
 			KASSERT(pg != NULL);
 			KASSERT(pg->owner == curproc->p_pid);
-			KASSERT((pg->flags & PG_CLEAN) == 0);
 			off += PAGE_SIZE;
 		}
 		simple_unlock(&uobj->vmobjlock);
@@ -721,7 +720,7 @@ ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	ip->i_gen++;
 	DIP_ASSIGN(ip, gen, ip->i_gen);
 	if (fs->fs_magic == FS_UFS2_MAGIC) {
-		getnanotime(&ts);
+		vfs_timestamp(&ts);
 		ip->i_ffs2_birthtime = ts.tv_sec;
 		ip->i_ffs2_birthnsec = ts.tv_nsec;
 	}

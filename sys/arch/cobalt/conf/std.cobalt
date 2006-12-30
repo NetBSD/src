@@ -1,10 +1,11 @@
-#	$NetBSD: std.cobalt,v 1.10.16.1 2006/06/21 14:50:07 yamt Exp $
+#	$NetBSD: std.cobalt,v 1.10.16.2 2006/12/30 20:45:46 yamt Exp $
 
 machine cobalt mips
 include		"conf/std"	# MI standard options
 makeoptions	MACHINE_ARCH="mipsel"
 
 options 	MIPS3
+options 	MIPS3_ENABLE_CLOCK_INTR
 
 options 	EXEC_ELF32	# exec ELF32 binaries
 options 	EXEC_SCRIPT	# exec #! scripts

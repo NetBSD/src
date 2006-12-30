@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.17.2.1 2006/06/21 14:48:19 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.17.2.2 2006/12/30 20:45:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.17.2.1 2006/06/21 14:48:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.17.2.2 2006/12/30 20:45:22 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
+#include "opt_coredump.h"
 #include "opt_execfmt.h"
 #include "opt_user_ldt.h"
 
@@ -133,7 +134,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
 
-	l->l_proc->p_flag |= P_32;
+	p->p_flag |= P_32;
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
@@ -410,6 +411,7 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
 }
 
 
+#ifdef COREDUMP
 /*
  * Dump the machine specific segment at the start of a core dump.
  */     
@@ -456,6 +458,7 @@ cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
 	    sizeof(md_core));
 }
+#endif
 
 int
 netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
@@ -607,16 +610,16 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 	int32_t n;
 	struct mtrr32 *m32p, m32;
 	struct mtrr *m64p, *mp;
-	struct proc *p = l->l_proc;
 
 	m64p = NULL;
 
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
-	if (error != 0)
-		return error;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_GET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	error = copyin(args, &args32, sizeof args32);
 	if (error != 0)
@@ -639,7 +642,7 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 		error = ENOMEM;
 		goto fail;
 	}
-	error = mtrr_get(m64p, &n, p, 0);
+	error = mtrr_get(m64p, &n, l->l_proc, 0);
 	if (error != 0)
 		goto fail;
 	m32p = (struct mtrr32 *)(uintptr_t)args32.mtrrp;
@@ -674,16 +677,16 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 	struct mtrr *m64p, *mp;
 	int error, i;
 	int32_t n;
-	struct proc *p = l->l_proc;
 
 	m64p = NULL;
 
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
-	if (error != 0)
-		return error;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_SET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	error = copyin(args, &args32, sizeof args32);
 	if (error != 0)
@@ -718,7 +721,7 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 		mp++;
 	}
 
-	error = mtrr_set(m64p, &n, p, 0);
+	error = mtrr_set(m64p, &n, l->l_proc, 0);
 fail:
 	if (m64p != NULL)
 		free(m64p, M_TEMP);
@@ -792,7 +795,7 @@ int
 cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	__greg32_t *gr = mcp->__gregs;
+	const __greg32_t *gr = mcp->__gregs;
 	int error;
 
 	/* Restore register context, if any. */

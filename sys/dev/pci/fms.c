@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.24 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: fms.c,v 1.24.2.1 2006/12/30 20:48:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.24 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.24.2.1 2006/12/30 20:48:43 yamt Exp $");
 
 #include "mpu.h"
 
@@ -145,6 +145,7 @@ static const struct audio_hw_if fms_hw_if = {
 	fms_trigger_output,
 	fms_trigger_input,
 	NULL,
+	NULL,
 };
 
 static int	fms_attach_codec(void *, struct ac97_codec_if *);
@@ -215,7 +216,8 @@ static int	fms_reset_codec(void *);
 
 
 static int
-fms_match(struct device *parent, struct cfdata *match, void *aux)
+fms_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -529,10 +531,10 @@ fms_query_encoding(void *addr, struct audio_encoding *fp)
  * What a pity FM801 does not have 24000
  * 24000 -> 22050 sounds rather poor
  */
-struct {
+static struct {
 	int limit;
 	int rate;
-} static const fms_rates[11] = {
+} const fms_rates[11] = {
 	{  6600,  5500 },
 	{  8750,  8000 },
 	{ 10250,  9600 },
@@ -565,8 +567,8 @@ static const struct audio_format fms_formats[FMS_NFORMATS] = {
 
 static int
 fms_set_params(void *addr, int setmode, int usemode,
-	       audio_params_t *play, audio_params_t *rec,
-	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+    audio_params_t *play, audio_params_t *rec, stream_filter_list_t *pfil,
+    stream_filter_list_t *rfil)
 {
 	struct fms_softc *sc;
 	int i, index;
@@ -608,7 +610,8 @@ fms_set_params(void *addr, int setmode, int usemode,
 }
 
 static int
-fms_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
+fms_round_blocksize(void *addr, int blk, int mode,
+    const audio_params_t *param)
 {
 
 	return blk & ~0xf;
@@ -796,8 +799,7 @@ fms_query_devinfo(void *addr, mixer_devinfo_t *dip)
 
 static int
 fms_trigger_output(void *addr, void *start, void *end, int blksize,
-		   void (*intr)(void *), void *arg,
-		   const audio_params_t *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	struct fms_softc *sc;
 	struct fms_dma *p;
@@ -831,7 +833,7 @@ fms_trigger_output(void *addr, void *start, void *end, int blksize,
 
 static int
 fms_trigger_input(void *addr, void *start, void *end, int blksize,
-		  void (*intr)(void *), void *arg, const audio_params_t *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	struct fms_softc *sc;
 	struct fms_dma *p;

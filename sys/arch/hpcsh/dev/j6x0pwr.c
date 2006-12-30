@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0pwr.c,v 1.6.2.1 2006/06/21 14:52:02 yamt Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.6.2.2 2006/12/30 20:46:03 yamt Exp $ */
 
 /*
  * Copyright (c) 2003, 2006 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.6.2.1 2006/06/21 14:52:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.6.2.2 2006/12/30 20:46:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -36,9 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.6.2.1 2006/06/21 14:52:02 yamt Exp $")
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
-#ifdef GPROF
-#include <sys/gmon.h>
-#endif
 
 #include <dev/apm/apmbios.h>
 

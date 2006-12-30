@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.38.12.1 2006/06/21 15:06:14 yamt Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.38.12.2 2006/12/30 20:49:17 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.38.12.1 2006/06/21 15:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.38.12.2 2006/12/30 20:49:17 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -181,7 +181,7 @@ dev_type_mmap(bktr_mmap);
 
 const struct cdevsw bktr_cdevsw = {
 	bktr_open, bktr_close, bktr_read, bktr_write, bktr_ioctl,
-	nostop, notty, nopoll, bktr_mmap, nokqfilter,
+	nostop, notty, nopoll, bktr_mmap, nokqfilter, D_OTHER
 };
 #endif /* __NetBSD __ */
 
@@ -451,7 +451,8 @@ bktr_attach(device_t dev)
         rev = pci_get_revid(dev);
 
 	/* call the common attach code */
-	common_bktr_attach(bktr, unit, fun, rev);
+	if (common_bktr_attach(bktr, unit, fun, rev) == 0)
+		return;
 
 	/* make the device entries */
 	bktr->bktrdev = make_dev(&bktr_cdevsw, unit,
@@ -1358,14 +1359,8 @@ static struct radio_hw_if bktr_hw_if = {
 #endif
 
 int
-bktr_probe(parent, match, aux)
-	struct device *parent;
-#if defined(__OpenBSD__)
-        void *match;
-#else
-        struct cfdata *match;
-#endif
-        void *aux;
+bktr_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
         struct pci_attach_args *pa = aux;
 
@@ -1533,7 +1528,9 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 			       PCI_LATENCY_TIMER, latency<<8);
 	}
 
-	common_bktr_attach(bktr, unit, pa->pa_id, PCI_REVISION(pa->pa_class));
+	if (common_bktr_attach(bktr, unit, pa->pa_id,
+	    PCI_REVISION(pa->pa_class)) == 0)
+		return;
 
 #if NRADIO > 0
 	/* attach to radio(4) */
@@ -1652,7 +1649,8 @@ free_bktr_mem(bktr, dmap, kva)
  *
  */
 int
-bktr_open(dev_t dev, int flags, int fmt, struct lwp *l)
+bktr_open(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1685,7 +1683,8 @@ bktr_open(dev_t dev, int flags, int fmt, struct lwp *l)
  *
  */
 int
-bktr_close(dev_t dev, int flags, int fmt, struct lwp *l)
+bktr_close(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1744,7 +1743,8 @@ bktr_write(dev_t dev, struct uio *uio, int ioflag)
  *
  */
 int
-bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag, struct lwp *l)
+bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag,
+    struct lwp *l)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1781,9 +1781,6 @@ bktr_mmap(dev_t dev, off_t offset, int nprot)
 		return(-1);
 
 	bktr = bktr_cd.cd_devs[unit];
-
-	if ((vaddr_t)offset < 0)
-		return(-1);
 
 	if ((vaddr_t)offset >= bktr->alloc_pages * PAGE_SIZE)
 		return(-1);

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.18.12.1 2006/06/21 15:02:53 yamt Exp $ */
+/* $NetBSD: atppc.c,v 1.18.12.2 2006/12/30 20:48:01 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.18.12.1 2006/06/21 15:02:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.18.12.2 2006/12/30 20:48:01 yamt Exp $");
 
 #include "opt_atppc.h"
 
@@ -68,7 +68,7 @@ int atppc_verbose = 1;
 
 /* List of supported chipsets detection routines */
 static int (*chipset_detect[])(struct atppc_softc *) = {
-/* XXX Add these LATER: maybe as seperate devices?
+/* XXX Add these LATER: maybe as separate devices?
 		atppc_pc873xx_detect,
 		atppc_smc37c66xgt_detect,
 		atppc_w83877f_detect,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.21 2000/12/11 15:38:43 tsutsui Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.21.40.1 2006/12/30 20:46:32 yamt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -31,8 +31,8 @@
  *
  */
 #define	ALIGNBYTES	7
-#define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+#define	ALIGN(p)	(((uintptr_t)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define ALIGNED_POINTER(p,t)	((((uintptr_t)(p)) & (sizeof(t)-1)) == 0)
 
 #define	NBPG		4096		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
@@ -50,30 +50,10 @@
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
-/* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* pages to bytes */
-#define	ctob(x)		((x) << PGSHIFT)
-#define btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
-
-/* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define dbtob(x)	((x) << DEV_BSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and should use the bsize
- * field from the disk label.
- * For now though just use DEV_BSIZE.
- */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
-
 /*
  * Mach derived conversion macros
  */
-#define mips_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
-#define mips_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
+#define mips_round_page(x)	((((uintptr_t)(x)) + NBPG - 1) & ~(NBPG-1))
+#define mips_trunc_page(x)	((uintptr_t)(x) & ~(NBPG-1))
 #define mips_btop(x)		((paddr_t)(x) >> PGSHIFT)
 #define mips_ptob(x)		((paddr_t)(x) << PGSHIFT)

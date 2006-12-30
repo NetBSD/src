@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.30.2.1 2006/06/21 14:52:02 yamt Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.30.2.2 2006/12/30 20:46:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.30.2.1 2006/06/21 14:52:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.30.2.2 2006/12/30 20:46:03 yamt Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -862,7 +862,7 @@ hd64461video_font_set_attr(struct hd64461video_softc *sc,
     struct wsdisplay_font *f)
 {
 	struct hd64461video_chip *hvc = sc->sc_vc;
-	struct wsdisplay_font *font = (struct wsdisplay_font *)&sc->sc_font;
+	struct wsdisplay_font *font = &sc->sc_font.wsfont;
 	int w, h, bpp;
 
 	w	= f->fontwidth;
@@ -897,7 +897,7 @@ STATIC void
 hd64461video_font_load(struct hd64461video_softc *sc)
 {
 	struct hd64461video_chip *hvc = sc->sc_vc;
-	struct wsdisplay_font *font = (struct wsdisplay_font *)&sc->sc_font;
+	struct wsdisplay_font *font = &sc->sc_font.wsfont;
 	uint8_t *q;
 	int w, h, step, i, n;
 
@@ -1160,10 +1160,10 @@ hd64461video_power(void *ctx, int type, long id, void *msg)
 
 	switch ((int)msg) {
 	case PWR_RESUME:
-		if (!hvc->console)
-			break; /* serial console */
-		DPRINTF("%s: ON\n", sc->sc_dev.dv_xname);
-		hd64461video_on(hvc);
+		DPRINTF("%s: ON%s\n", sc->sc_dev.dv_xname,
+			sc->sc_vc->blanked ? " (blanked)" : "");
+		if (!sc->sc_vc->blanked)
+			hd64461video_on(hvc);
 		break;
 	case PWR_SUSPEND:
 		/* FALLTHROUGH */

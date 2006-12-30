@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.2.10.2 2006/06/21 14:52:53 yamt Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.2.10.3 2006/12/30 20:46:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -187,7 +187,7 @@ bi_copyenv(vaddr_t addr)
 }
 
 /*
- * Load the information expected by an alpha kernel.
+ * Load the information expected by the kernel.
  *
  * - The kernel environment is copied into kernel space.
  * - Module metadata are formatted and placed in kernel space.

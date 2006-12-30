@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.11.4.1 2006/06/21 15:04:21 yamt Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.11.4.2 2006/12/30 20:48:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.11.4.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.11.4.2 2006/12/30 20:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,10 +76,8 @@ CFATTACH_DECL(ioat, sizeof(struct ioat66_softc),
     ioat66probe, ioat66attach, NULL, NULL);
 
 int
-ioat66probe(parent, self, aux)
-	struct device *parent;
-	struct cfdata *self;
-	void *aux;
+ioat66probe(struct device *parent, struct cfdata *self,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -145,9 +143,7 @@ out:
 }
 
 void
-ioat66attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ioat66attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ioat66_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;

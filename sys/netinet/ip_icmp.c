@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.92.2.1 2006/06/21 15:11:01 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.92.2.2 2006/12/30 20:50:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.92.2.1 2006/06/21 15:11:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.92.2.2 2006/12/30 20:50:33 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -232,12 +232,12 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	unsigned oiplen = oip->ip_hl << 2;
 	struct icmp *icp;
 	struct mbuf *m;
+	struct m_tag *mtag;
 	unsigned icmplen, mblen;
 
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
-		printf("icmp_error(%p, type:%d, code:%d)\n", oip, type,
-			code);
+		printf("icmp_error(%p, type:%d, code:%d)\n", oip, type, code);
 #endif
 	if (type != ICMP_REDIRECT)
 		icmpstat.icps_error++;
@@ -355,16 +355,34 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	nip->ip_p = IPPROTO_ICMP;
 	nip->ip_src = oip->ip_src;
 	nip->ip_dst = oip->ip_dst;
+	/* move PF_GENERATED m_tag to new packet, if it exists */
+	mtag = m_tag_find(n, PACKET_TAG_PF_GENERATED, NULL);
+	if (mtag != NULL) {
+		m_tag_unlink(n, mtag);
+		m_tag_prepend(m, mtag);
+	}
 	icmp_reflect(m);
 
 freeit:
 	m_freem(n);
 }
 
-struct sockaddr_in icmpsrc = { sizeof (struct sockaddr_in), AF_INET };
-static struct sockaddr_in icmpdst = { sizeof (struct sockaddr_in), AF_INET };
-static struct sockaddr_in icmpgw = { sizeof (struct sockaddr_in), AF_INET };
-struct sockaddr_in icmpmask = { 8, 0 };
+struct sockaddr_in icmpsrc = {
+	.sin_len = sizeof (struct sockaddr_in),
+	.sin_family = AF_INET,
+};
+static struct sockaddr_in icmpdst = {
+	.sin_len = sizeof (struct sockaddr_in),
+	.sin_family = AF_INET,
+};
+static struct sockaddr_in icmpgw = {
+	.sin_len = sizeof (struct sockaddr_in),
+	.sin_family = AF_INET,
+};
+struct sockaddr_in icmpmask = { 
+	.sin_len = 8,
+	.sin_family = 0,
+};
 
 /*
  * Process a received ICMP message.
@@ -438,11 +456,23 @@ icmp_input(struct mbuf *m, ...)
 	case ICMP_UNREACH:
 		switch (code) {
 			case ICMP_UNREACH_NET:
+				code = PRC_UNREACH_NET;
+				break;
+
 			case ICMP_UNREACH_HOST:
+				code = PRC_UNREACH_HOST;
+				break;
+
 			case ICMP_UNREACH_PROTOCOL:
+				code = PRC_UNREACH_PROTOCOL;
+				break;
+
 			case ICMP_UNREACH_PORT:
+				code = PRC_UNREACH_PORT;
+				break;
+
 			case ICMP_UNREACH_SRCFAIL:
-				code += PRC_UNREACH_NET;
+				code = PRC_UNREACH_SRCFAIL;
 				break;
 
 			case ICMP_UNREACH_NEEDFRAG:
@@ -580,8 +610,9 @@ reflect:
 		icmpdst.sin_addr = icp->icmp_gwaddr;
 #ifdef	ICMPPRINTFS
 		if (icmpprintfs) {
-			printf("redirect dst `%s' to ", inet_ntoa(icp->icmp_ip.ip_dst));
-			printf("`%s'\n", inet_ntoa(icp->icmp_gwaddr));
+			printf("redirect dst `%s' to `%s'\n",
+			    inet_ntoa(icp->icmp_ip.ip_dst),
+			    inet_ntoa(icp->icmp_gwaddr));
 		}
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
@@ -699,8 +730,7 @@ icmp_reflect(struct mbuf *m)
 		errornum = 0;
 		sin = in_selectsrc(&sin_dst, &icmproute, 0, NULL, &errornum);
 		/* errornum is never used */
-		if (icmproute.ro_rt)
-			RTFREE(icmproute.ro_rt);
+		rtcache_free(&icmproute);
 		/* check to make sure sin is a source address on rcvif */
 		if (sin) {
 			t = sin->sin_addr;
@@ -865,8 +895,8 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 	m->m_len += hlen;
 #ifdef ICMPPRINTFS
 	if (icmpprintfs) {
-		printf("icmp_send to destination `%s' from ", inet_ntoa(ip->ip_dst));
-		printf("`%s'\n", inet_ntoa(ip->ip_src));
+		printf("icmp_send to destination `%s' from `%s'\n",
+		    inet_ntoa(ip->ip_dst), inet_ntoa(ip->ip_src));
 	}
 #endif
 	(void) ip_output(m, opts, NULL, 0,
@@ -1186,9 +1216,9 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
  *
  * XXX per-destination/type check necessary?
  */
-/* "type" and "code" are not used at this moment */
 static int
-icmp_ratelimit(const struct in_addr *dst, const int type, const int code)
+icmp_ratelimit(const struct in_addr *dst, const int type,
+    const int code)
 {
 
 	/* PPS limit */

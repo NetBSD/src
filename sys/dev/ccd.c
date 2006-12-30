@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.104.2.1 2006/06/21 15:02:11 yamt Exp $	*/
+/*	$NetBSD: ccd.c,v 1.104.2.2 2006/12/30 20:47:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.104.2.1 2006/06/21 15:02:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.104.2.2 2006/12/30 20:47:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.104.2.1 2006/06/21 15:02:11 yamt Exp $");
 #include <sys/kauth.h>
 
 #include <dev/ccdvar.h>
+#include <dev/dkvar.h>
 
 #if defined(CCDDEBUG) && !defined(DEBUG)
 #define DEBUG
@@ -194,7 +195,6 @@ static void	ccdinterleave(struct ccd_softc *);
 static void	ccdintr(struct ccd_softc *, struct buf *);
 static int	ccdinit(struct ccd_softc *, char **, struct vnode **,
 		    struct lwp *);
-static int	ccdlookup(char *, struct lwp *, struct vnode **);
 static struct ccdbuf *ccdbuffer(struct ccd_softc *, struct buf *,
 		    daddr_t, caddr_t, long);
 static void	ccdgetdefaultlabel(struct ccd_softc *, struct disklabel *);
@@ -326,7 +326,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 		/*
 		 * XXX: Cache the component's dev_t.
 		 */
-		if ((error = VOP_GETATTR(vpp[ix], &va, l->l_proc->p_cred, l)) != 0) {
+		if ((error = VOP_GETATTR(vpp[ix], &va, l->l_cred, l)) != 0) {
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
 				printf("%s: %s: getattr failed %s = %d\n",
@@ -341,7 +341,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 		 * Get partition information for the component.
 		 */
 		error = VOP_IOCTL(vpp[ix], DIOCGPART, &dpart,
-		    FREAD, l->l_proc->p_cred, l);
+		    FREAD, l->l_cred, l);
 		if (error) {
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
@@ -431,6 +431,8 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 	ccg->ccg_ncylinders = cs->sc_size / ccg->ccg_nsectors;
 
 	cs->sc_flags |= CCDF_INITED;
+
+	free(tmppath, M_TEMP);
 
 	return (0);
 
@@ -1003,7 +1005,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return (ENXIO);
 	cs = &ccd_softc[unit];
 
-	uc = (l != NULL) ? l->l_proc->p_cred : NOCRED;
+	uc = (l != NULL) ? l->l_cred : NOCRED;
 
 	/* Must be open for writes for these commands... */
 	switch (cmd) {
@@ -1099,7 +1101,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			if (ccddebug & CCDB_INIT)
 				printf("ccdioctl: lookedup = %d\n", lookedup);
 #endif
-			if ((error = ccdlookup(cpp[i], l, &vpp[i])) != 0) {
+			if ((error = dk_lookup(cpp[i], l, &vpp[i])) != 0) {
 				for (j = 0; j < lookedup; ++j)
 					(void)vn_close(vpp[j], FREAD|FWRITE,
 					    uc, l);
@@ -1346,70 +1348,12 @@ ccdsize(dev_t dev)
 }
 
 static int
-ccddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+ccddump(dev_t dev, daddr_t blkno, caddr_t va,
+    size_t size)
 {
 
 	/* Not implemented. */
 	return ENXIO;
-}
-
-/*
- * Lookup the provided name in the filesystem.  If the file exists,
- * is a valid block device, and isn't being used by anyone else,
- * set *vpp to the file's vnode.
- */
-static int
-ccdlookup(char *path, struct lwp *l, struct vnode **vpp /* result */)
-{
-	struct nameidata nd;
-	struct vnode *vp;
-	struct vattr va;
-	struct proc *p;
-	int error;
-
-	p = l->l_proc;
-
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, path, l);
-	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
-#ifdef DEBUG
-		if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
-			printf("ccdlookup: vn_open error = %d\n", error);
-#endif
-		return (error);
-	}
-	vp = nd.ni_vp;
-
-	if (vp->v_usecount > 1) {
-		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
-		return (EBUSY);
-	}
-
-	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)) != 0) {
-#ifdef DEBUG
-		if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
-			printf("ccdlookup: getattr error = %d\n", error);
-#endif
-		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
-		return (error);
-	}
-
-	/* XXX: eventually we should handle VREG, too. */
-	if (va.va_type != VBLK) {
-		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
-		return (ENOTBLK);
-	}
-
-#ifdef DEBUG
-	if (ccddebug & CCDB_VNODE)
-		vprint("ccdlookup: vnode info", vp);
-#endif
-
-	VOP_UNLOCK(vp, 0);
-	*vpp = vp;
-	return (0);
 }
 
 static void

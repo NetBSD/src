@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.31 2004/05/21 13:53:40 yamt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.31.12.1 2006/12/30 20:50:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.31 2004/05/21 13:53:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.31.12.1 2006/12/30 20:50:52 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.31 2004/05/21 13:53:40 yamt Exp $
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsrvcache.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 
 extern struct nfsstats nfsstats;
@@ -114,9 +113,6 @@ const int nonidempotent[NFS_NPROCS] = {
 	FALSE,	/* FSINFO */
 	FALSE,	/* PATHCONF */
 	FALSE,	/* COMMIT */
-	FALSE,	/* GETLEASE */
-	FALSE,	/* VACATED */
-	FALSE,	/* EVICTED */
 	FALSE,	/* NOOP */
 };
 

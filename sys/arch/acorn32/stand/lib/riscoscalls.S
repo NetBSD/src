@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.4.16.1 2006/06/21 14:47:48 yamt Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.4.16.2 2006/12/30 20:45:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -63,7 +63,7 @@ ENTRY(xos_cli)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
-	swi	OS_CLI
+	swi	XOS_CLI
 	movvc	r0, #0
 	ldmdb	fp, {fp, sp, pc}
 
@@ -78,6 +78,16 @@ ENTRY(os_byte)
 	teq	r3, #0
 	strne	r2, [r3]
 	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(osbyte_read)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r1, #0
+	mov	r2, #255
+	swi	OS_Byte	
+	mov	r0, r1
+	ldmdb	fp, {fp, sp, pc}	
 
 ENTRY(os_word)
 	mov	ip, sp
@@ -212,7 +222,7 @@ ENTRY(xosmodule_free)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
-	mov	r0, r2
+	mov	r2, r0
 	mov	r0, #OSModule_Free
 	swi	XOS_Module
 	movvc	r0, #0
@@ -279,6 +289,13 @@ ENTRY(xos_swi_number_from_string)
 	str	r0, [r2]
 	mov	r0, #0
 	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(os_read_monotonic_time)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	swi	OS_ReadMonotonicTime
+	ldmdb	fp, {fp, sp, pc}
 	
 ENTRY(os_read_mem_map_info)
 	mov	ip, sp
@@ -338,6 +355,22 @@ ENTRY(osmemory_read_arrangement_table_size)
 	strne	r2, [r4]
 	ldmdb	fp, {r4, fp, sp, pc}
 
+ENTRY(xosmemory_read_arrangement_table_size)
+	mov	ip, sp
+	stmfd	sp!, {r4, fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r3, r0
+	mov	r4, r1
+	mov	r0, #OSMemory_ReadArrangementTableSize
+	swi	XOS_Memory
+	ldmvsdb	fp, {r4, fp, sp, pc}
+	cmp	r3, #0
+	strne	r1, [r3]
+	cmp	r4, #0
+	strne	r2, [r4]
+	mov	r0, #0
+	ldmdb	fp, {r4, fp, sp, pc}
+
 ENTRY(osmemory_read_arrangement_table)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
@@ -345,6 +378,16 @@ ENTRY(osmemory_read_arrangement_table)
 	mov	r1, r0
 	mov	r0, #OSMemory_ReadArrangementTable
 	swi	OS_Memory
+	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(xosmemory_read_arrangement_table)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r1, r0
+	mov	r0, #OSMemory_ReadArrangementTable
+	swi	XOS_Memory
+	movvc	r0, #0
 	ldmdb	fp, {fp, sp, pc}
 
 ENTRY(osmemory_page_op)

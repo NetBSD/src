@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.44.6.1 2006/06/21 14:55:03 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.44.6.2 2006/12/30 20:46:44 yamt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -72,9 +72,9 @@ struct cpu_info {
 	int ci_want_resched;
 	volatile u_long ci_lasttb;
 	volatile int ci_tickspending;
-	int ci_cpl;
-	int ci_iactive;
-	int ci_ipending;
+	volatile int ci_cpl;
+	volatile int ci_iactive;
+	volatile int ci_ipending;
 	int ci_intrdepth;
 	char *ci_intstk;
 #define	CPUSAVE_LEN	8
@@ -96,6 +96,7 @@ struct cpu_info {
 	void (*ci_idlespin)(void);
 	uint32_t ci_khz;
 	struct evcnt ci_ev_clock;	/* clock intrs */
+	struct evcnt ci_ev_statclock; 	/* stat clock */
 	struct evcnt ci_ev_softclock;	/* softclock intrs */
 	struct evcnt ci_ev_softnet;	/* softnet intrs */
 	struct evcnt ci_ev_softserial;	/* softserial intrs */
@@ -308,6 +309,7 @@ void icache_flush_page(vaddr_t);
 void dcache_flush(vaddr_t, vsize_t);
 void icache_flush(vaddr_t, vsize_t);
 void *mapiodev(paddr_t, psize_t);
+void unmapiodev(vaddr_t, vsize_t);
 
 #define	DELAY(n)		delay(n)
 
@@ -315,7 +317,7 @@ void *mapiodev(paddr_t, psize_t);
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, curcpu()->ci_astpending = 1)
 #define	signotify(p)		(curcpu()->ci_astpending = 1)
 
-#ifdef PPC_OEA
+#if defined(PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 void oea_init(void (*)(void));
 void oea_startup(const char *);
 void oea_dumpsys(void);
@@ -334,7 +336,11 @@ extern int cpu_altivec;
 #ifdef PPC_IBM403
 #define	CACHELINESIZE	16
 #else
+#if defined (PPC_OEA64_BRIDGE)
+#define	CACHELINESIZE	128
+#else
 #define	CACHELINESIZE	32
+#endif /* PPC_OEA64_BRIDGE */
 #endif
 #endif
 #endif

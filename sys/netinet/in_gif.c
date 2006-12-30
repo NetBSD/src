@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.45.2.1 2006/06/21 15:11:00 yamt Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.45.2.2 2006/12/30 20:50:33 yamt Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.45.2.1 2006/06/21 15:11:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.45.2.2 2006/12/30 20:50:33 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.45.2.1 2006/06/21 15:11:00 yamt Exp $")
 #include <net/if_gif.h>
 
 #include "gif.h"
-#include "bridge.h"
-#include <net/if_ether.h>
 
 #include <machine/stdarg.h>
 
@@ -97,9 +95,6 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
 	struct sockaddr_in *sin_dst = (struct sockaddr_in *)sc->gif_pdst;
 	struct ip iphdr;	/* capsule IP header, host byte ordered */
-#if NBRIDGE > 0
-	struct etherip_header eiphdr;
-#endif
 	int proto, error;
 	u_int8_t tos;
 
@@ -114,15 +109,15 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 #ifdef INET
 	case AF_INET:
 	    {
-		struct ip *ip;
+		const struct ip *ip;
 
 		proto = IPPROTO_IPV4;
 		if (m->m_len < sizeof(*ip)) {
 			m = m_pullup(m, sizeof(*ip));
-			if (!m)
+			if (m == NULL)
 				return ENOBUFS;
 		}
-		ip = mtod(m, struct ip *);
+		ip = mtod(m, const struct ip *);
 		tos = ip->ip_tos;
 		break;
 	    }
@@ -130,14 +125,14 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 #ifdef INET6
 	case AF_INET6:
 	    {
-		struct ip6_hdr *ip6;
+		const struct ip6_hdr *ip6;
 		proto = IPPROTO_IPV6;
 		if (m->m_len < sizeof(*ip6)) {
 			m = m_pullup(m, sizeof(*ip6));
 			if (!m)
 				return ENOBUFS;
 		}
-		ip6 = mtod(m, struct ip6_hdr *);
+		ip6 = mtod(m, const struct ip6_hdr *);
 		tos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		break;
 	    }
@@ -146,20 +141,6 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	case AF_ISO:
 		proto = IPPROTO_EON;
 		tos = 0;
-		break;
-#endif
-#if NBRIDGE > 0
-	case AF_LINK:
-		proto = IPPROTO_ETHERIP;
-		eiphdr.eip_ver = ETHERIP_VERSION & ETHERIP_VER_VERS_MASK;
-		eiphdr.eip_pad = 0;
-		/* prepend Ethernet-in-IP header */
-		M_PREPEND(m, sizeof(struct etherip_header), M_DONTWAIT);
-		if (m && m->m_len < sizeof(struct etherip_header))
-			m = m_pullup(m, sizeof(struct etherip_header));
-		if (m == NULL)
-			return ENOBUFS;
-		bcopy(&eiphdr, mtod(m, struct etherip_header *), sizeof(struct etherip_header));
 		break;
 #endif
 	default:
@@ -191,40 +172,35 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 
 	/* prepend new IP header */
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
-	if (m && m->m_len < sizeof(struct ip))
+	/* XXX Is m_pullup really necessary after M_PREPEND? */
+	if (m != NULL && M_UNWRITABLE(m, sizeof(struct ip)))
 		m = m_pullup(m, sizeof(struct ip));
 	if (m == NULL)
 		return ENOBUFS;
 	bcopy(&iphdr, mtod(m, struct ip *), sizeof(struct ip));
 
-	if (sc->gif_route_expire - time_second <= 0 ||
-	    dst->sin_family != sin_dst->sin_family ||
-	    !in_hosteq(dst->sin_addr, sin_dst->sin_addr)) {
-		/* cache route doesn't match */
+	if (dst->sin_family != sin_dst->sin_family ||
+	    !in_hosteq(dst->sin_addr, sin_dst->sin_addr))
+		rtcache_free(&sc->gif_ro);
+	else
+		rtcache_check(&sc->gif_ro);
+	if (sc->gif_ro.ro_rt == NULL) {
 		bzero(dst, sizeof(*dst));
 		dst->sin_family = sin_dst->sin_family;
 		dst->sin_len = sizeof(struct sockaddr_in);
 		dst->sin_addr = sin_dst->sin_addr;
-		if (sc->gif_ro.ro_rt) {
-			RTFREE(sc->gif_ro.ro_rt);
-			sc->gif_ro.ro_rt = NULL;
-		}
-	}
-
-	if (sc->gif_ro.ro_rt == NULL) {
-		rtalloc(&sc->gif_ro);
+		rtcache_init(&sc->gif_ro);
 		if (sc->gif_ro.ro_rt == NULL) {
 			m_freem(m);
 			return ENETUNREACH;
 		}
+	}
 
-		/* if it constitutes infinite encapsulation, punt. */
-		if (sc->gif_ro.ro_rt->rt_ifp == ifp) {
-			m_freem(m);
-			return ENETUNREACH;	/*XXX*/
-		}
-
-		sc->gif_route_expire = time_second + GIF_ROUTE_TTL;
+	/* If the route constitutes infinite encapsulation, punt. */
+	if (sc->gif_ro.ro_rt->rt_ifp == ifp) {
+		rtcache_free(&sc->gif_ro);
+		m_freem(m);
+		return ENETUNREACH;	/*XXX*/
 	}
 
 	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL, NULL);
@@ -236,7 +212,7 @@ in_gif_input(struct mbuf *m, ...)
 {
 	int off, proto;
 	struct ifnet *gifp = NULL;
-	struct ip *ip;
+	const struct ip *ip;
 	va_list ap;
 	int af;
 	u_int8_t otos;
@@ -246,7 +222,7 @@ in_gif_input(struct mbuf *m, ...)
 	proto = va_arg(ap, int);
 	va_end(ap);
 
-	ip = mtod(m, struct ip *);
+	ip = mtod(m, const struct ip *);
 
 	gifp = (struct ifnet *)encap_getarg(m);
 
@@ -272,9 +248,8 @@ in_gif_input(struct mbuf *m, ...)
 	    {
 		struct ip *xip;
 		af = AF_INET;
-		if (m->m_len < sizeof(*xip)) {
-			m = m_pullup(m, sizeof(*xip));
-			if (!m)
+		if (M_UNWRITABLE(m, sizeof(*xip))) {
+			if ((m = m_pullup(m, sizeof(*xip))) == NULL)
 				return;
 		}
 		xip = mtod(m, struct ip *);
@@ -291,9 +266,8 @@ in_gif_input(struct mbuf *m, ...)
 		struct ip6_hdr *ip6;
 		u_int8_t itos;
 		af = AF_INET6;
-		if (m->m_len < sizeof(*ip6)) {
-			m = m_pullup(m, sizeof(*ip6));
-			if (!m)
+		if (M_UNWRITABLE(m, sizeof(*ip6))) {
+			if ((m = m_pullup(m, sizeof(*ip6))) == NULL)
 				return;
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
@@ -310,11 +284,6 @@ in_gif_input(struct mbuf *m, ...)
 #ifdef ISO
 	case IPPROTO_EON:
 		af = AF_ISO;
-		break;
-#endif
-#if NBRIDGE > 0
-	case IPPROTO_ETHERIP:
-		af = AF_LINK;
 		break;
 #endif
 	default:
@@ -439,10 +408,7 @@ in_gif_detach(struct gif_softc *sc)
 	if (error == 0)
 		sc->encap_cookie4 = NULL;
 
-	if (sc->gif_ro.ro_rt) {
-		RTFREE(sc->gif_ro.ro_rt);
-		sc->gif_ro.ro_rt = NULL;
-	}
+	rtcache_free(&sc->gif_ro);
 
 	return error;
 }

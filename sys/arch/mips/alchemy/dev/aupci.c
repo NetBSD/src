@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.5.14.2 2006/06/21 14:53:28 yamt Exp $ */
+/* $NetBSD: aupci.c,v 1.5.14.3 2006/12/30 20:46:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.5.14.2 2006/06/21 14:53:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.5.14.3 2006/12/30 20:46:30 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -378,7 +378,6 @@ aupci_conf_access(void *v, int dir, pcitag_t tag, int reg, pcireg_t *datap)
 	/* if we got a PCI master abort, fail it */
 	if (status & AUPCI_CONFIG_EF)
 		return FALSE;
-
 
 	return TRUE;
 }

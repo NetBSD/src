@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.29.4.1 2006/06/21 15:07:30 yamt Exp $	*/
+/*	$NetBSD: ms.c,v 1.29.4.2 2006/12/30 20:49:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.29.4.1 2006/06/21 15:07:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.29.4.2 2006/12/30 20:49:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ dev_type_kqfilter(mskqfilter);
 
 const struct cdevsw ms_cdevsw = {
 	msopen, msclose, msread, nowrite, msioctl,
-	nostop, notty, mspoll, nommap, mskqfilter,
+	nostop, notty, mspoll, nommap, mskqfilter, D_OTHER
 };
 
 /****************************************************************
@@ -327,8 +327,9 @@ ms_input(ms, c)
 			(ms->ms_mb & 2) |
 			((ms->ms_mb & 1) << 2);
 		wsmouse_input(ms->ms_wsmousedev,
-			      mb, ms->ms_dx, ms->ms_dy, 0,
-			      WSMOUSE_INPUT_DELTA);
+				mb,
+				ms->ms_dx, ms->ms_dy, 0, 0,
+				WSMOUSE_INPUT_DELTA);
 		ms->ms_dx = 0;
 		ms->ms_dy = 0;
 		return;

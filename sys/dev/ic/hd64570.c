@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.29.4.1 2006/06/21 15:02:54 yamt Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.29.4.2 2006/12/30 20:48:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.29.4.1 2006/06/21 15:02:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.29.4.2 2006/12/30 20:48:02 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -797,11 +797,11 @@ sca_dmac_rxinit(sca_port_t *scp)
  * Queue the packet for our start routine to transmit
  */
 static int
-sca_output(ifp, m, dst, rt0)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct rtentry *rt0;
+sca_output(
+    struct ifnet *ifp,
+    struct mbuf *m,
+    struct sockaddr *dst,
+    struct rtentry *rt0)
 {
 #ifdef ISO
 	struct hdlc_llc_header *llc;
@@ -1194,8 +1194,7 @@ X
 }
 
 static void
-sca_watchdog(ifp)
-	struct ifnet *ifp;
+sca_watchdog(struct ifnet *ifp)
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.5.2.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.5.2.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -36,21 +36,16 @@
 
 typedef struct { int32_t __fsid_val[2]; } fsid_t; /* file system id type */
 
+#if defined(_KERNEL)
 /*
  * File identifier.
  * These are unique per filesystem on a single machine.
  */
-#define	_VFS_MAXFIDSZ	16
-
 struct fid {
 	unsigned short	fid_len;		/* length of data in bytes */
 	unsigned short	fid_reserved;		/* force longword alignment */
-	char		fid_data[_VFS_MAXFIDSZ];/* data (variable length) */
+	char		fid_data[];		/* data (variable length) */
 };
-
-#if defined(_NETBSD_SOURCE)
-#define	VFS_MAXFIDSZ	_VFS_MAXFIDSZ
-#endif
 
 /*
  * Generic file handle
@@ -60,6 +55,24 @@ struct fhandle {
 	struct	fid fh_fid;	/* File sys specific id */
 };
 typedef struct fhandle	fhandle_t;
+
+/*
+ * FHANDLE_SIZE_MAX: arbitrary value to prevent unreasonable allocation.
+ *
+ * FHANDLE_SIZE_MIN: chosen for compatibility.  smaller handles are zero-padded.
+ */
+
+#define	FHANDLE_SIZE_COMPAT	28
+#define	FHANDLE_SIZE_MAX	1024
+#define	FHANDLE_SIZE_MIN	FHANDLE_SIZE_COMPAT
+
+#define	FHANDLE_FSID(fh)	(&(fh)->fh_fsid)
+#define	FHANDLE_FILEID(fh)	(&(fh)->fh_fid)
+#define	FHANDLE_SIZE_FROM_FILEID_SIZE(fidsize) \
+	MAX(FHANDLE_SIZE_MIN, (offsetof(fhandle_t, fh_fid) + (fidsize)))
+#define	FHANDLE_SIZE(fh) \
+	FHANDLE_SIZE_FROM_FILEID_SIZE(FHANDLE_FILEID(fh)->fid_len)
+#endif /* defined(_KERNEL) */
 
 /*
  * Mount flags.  XXX BEWARE: these are not in numerical order!
@@ -172,6 +185,8 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_RELOAD	0x00040000	/* reload filesystem data */
 #define	MNT_FORCE	0x00080000	/* force unmount or readonly change */
 #define	MNT_GETARGS	0x00400000	/* retrieve file system specific args */
+
+#define	MNT_OP_FLAGS	(MNT_UPDATE|MNT_RELOAD|MNT_FORCE|MNT_GETARGS)
 
 #define __MNT_EXTERNAL_FLAGS \
 	{ MNT_UPDATE,		1,	"being updated" }, \

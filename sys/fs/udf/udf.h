@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.4.16.2 2006/06/21 15:09:36 yamt Exp $ */
+/* $NetBSD: udf.h,v 1.4.16.3 2006/12/30 20:50:01 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -64,6 +64,13 @@ extern int udf_verbose;
 #define UDF_DEBUG_READ		0x200
 #define UDF_DEBUG_CALL		0x400
 #define UDF_DEBUG_NOTIMPL	UDF_DEBUG_CALL
+
+
+#ifdef DEBUG
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_udf_setup);
+#endif /* SYSCTL_SETUP_PROTO */
+#endif
 
 
 #ifdef DEBUG
@@ -153,15 +160,19 @@ struct udf_mount {
 	int 			 vtop[UDF_PMAPS+1];	/* vpartnr trans     */
 	int			 vtop_tp[UDF_PMAPS+1];	/* type of trans     */
 
-	uint32_t		 possible_vat_location;	/* predicted         */
+	/* VAT */
+	uint32_t		 first_possible_vat_location;
+	uint32_t		 last_possible_vat_location;
 	uint32_t		 vat_table_alloc_length;
 	uint32_t		 vat_entries;
 	uint32_t		 vat_offset;		/* offset in table   */
 	uint8_t			*vat_table;		/* read in data      */
 
+	/* sparable */
 	uint32_t		 sparable_packet_len;
 	struct udf_sparing_table*sparing_table;
 
+	/* meta */
 	struct udf_node 	*metafile;
 	struct udf_node 	*metabitmapfile;
 	struct udf_node 	*metacopyfile;
@@ -179,7 +190,7 @@ struct udf_mount {
 	LIST_HEAD(, udf_node) udf_nodes[UDF_INODE_HASHSIZE];
 
 	/* allocation pool for udf_node's descriptors */
-	struct pool desc_pool;
+	struct pool *desc_pool;
 
 	/* locks */
 	struct simplelock ihash_slock;
@@ -226,6 +237,7 @@ struct udf_node {
 	struct long_ad		 loc;			/* FID/hash loc.     */
 	struct long_ad		 next_loc;		/* strat 4096 loc    */
 	int			 needs_indirect;	/* has missing indr. */
+	uint64_t		 last_diroffset;	/* speeding up lookup*/
 
 	/* TODO support for allocation extents? */
 

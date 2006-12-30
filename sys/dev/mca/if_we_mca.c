@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.13.2.1 2006/06/21 15:04:46 yamt Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.13.2.2 2006/12/30 20:48:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.13.2.1 2006/06/21 15:04:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.13.2.2 2006/12/30 20:48:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,8 @@ static const struct we_mca_product {
 		WD_8003,	WE_TYPE_WD8003W, "WD8003W/A" },
 	{ MCA_PRODUCT_IBM_WD_O, "IBM PS/2 Adapter/A for Ethernet Networks",
 		WD_8003,	WE_TYPE_WD8003W, "IBM PS/2 Adapter/A" },
-	{ 0x0000,			NULL },
+	{ 0x0000,		NULL,
+		0,		0,		 NULL },
 };
 
 /* see POS description in we_mca_attach() */
@@ -145,10 +146,8 @@ we_mca_lookup(id)
 }
 
 int
-we_mca_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+we_mca_probe(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 	struct mca_attach_args *ma = aux;
 
@@ -156,9 +155,7 @@ we_mca_probe(parent, cf, aux)
 }
 
 void
-we_mca_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+we_mca_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct we_softc *wsc = device_private(self);
 	struct dp8390_softc *sc = &wsc->sc_dp8390;

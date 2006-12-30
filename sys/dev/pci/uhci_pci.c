@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.29.2.1 2006/06/21 15:05:07 yamt Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.29.2.2 2006/12/30 20:48:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.29.2.1 2006/06/21 15:05:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.29.2.2 2006/12/30 20:48:48 yamt Exp $");
 
 #include "ehci.h"
 
@@ -78,7 +78,8 @@ struct uhci_pci_softc {
 };
 
 static int
-uhci_pci_match(struct device *parent, struct cfdata *match, void *aux)
+uhci_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -105,13 +106,16 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	usbd_status r;
 
+	aprint_naive("\n");
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)\n",
+		      devinfo, PCI_REVISION(pa->pa_class));
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
-		printf("%s: can't map i/o space\n", devname);
+		aprint_error("%s: can't map i/o space\n", devname);
 		return;
 	}
 
@@ -129,19 +133,19 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", devname);
+		aprint_error("%s: couldn't map interrupt\n", devname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, uhci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", devname);
+		aprint_error("%s: couldn't establish interrupt", devname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", devname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", devname, intrstr);
 
 	/* Set LEGSUP register to its default value. */
 	pci_conf_write(pc, tag, PCI_LEGSUP, PCI_LEGSUP_USBPIRQDEN);
@@ -172,7 +176,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	r = uhci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", devname, r);
+		aprint_error("%s: init failed, error=%d\n", devname, r);
 		return;
 	}
 
@@ -180,7 +184,8 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	usb_pci_add(&sc->sc_pci, pa, &sc->sc.sc_bus);
 #endif
 
-	sc->sc_powerhook = powerhook_establish(uhci_pci_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(USBDEVNAME(sc->sc.sc_bus.bdev),
+	    uhci_pci_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: couldn't establish powerhook\n",
 		    devname);

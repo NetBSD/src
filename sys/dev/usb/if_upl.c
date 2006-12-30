@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.22.2.1 2006/06/21 15:07:43 yamt Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.22.2.2 2006/12/30 20:49:38 yamt Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,10 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.22.2.1 2006/06/21 15:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.22.2.2 2006/12/30 20:49:38 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -79,10 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.22.2.1 2006/06/21 15:07:43 yamt Exp $")
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -597,7 +592,8 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  * the list buffers.
  */
 Static void
-upl_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+upl_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct upl_chain	*c = priv;
 	struct upl_softc	*sc = c->upl_sc;
@@ -814,7 +810,8 @@ upl_openpipes(struct upl_softc *sc)
 }
 
 Static void
-upl_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+upl_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct upl_softc	*sc = priv;
 	struct ifnet		*ifp = &sc->sc_if;
@@ -880,21 +877,6 @@ upl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		case AF_INET:
 			break;
 #endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-					LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				       ina->x_host.c_host,
-				       ifp->if_addrlen);
-			break;
-		    }
-#endif /* NS */
 		}
 		break;
 
@@ -1033,7 +1015,7 @@ upl_stop(struct upl_softc *sc)
 
 Static int
 upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-	   struct rtentry *rt0)
+    struct rtentry *rt0)
 {
 	int s, len, error;
 	ALTQ_DECL(struct altq_pktattr pktattr;)

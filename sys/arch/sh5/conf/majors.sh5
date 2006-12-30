@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sh5,v 1.13.2.1 2006/06/21 14:55:39 yamt Exp $
+#	$NetBSD: majors.sh5,v 1.13.2.2 2006/12/30 20:46:55 yamt Exp $
 #
 # Device majors for sh5
 #
@@ -51,5 +51,5 @@ device-major	ksyms		char 56			ksyms
 device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.

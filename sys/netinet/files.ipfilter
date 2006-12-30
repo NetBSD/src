@@ -1,7 +1,8 @@
-#	$NetBSD: files.ipfilter,v 1.6 2005/03/26 18:08:42 christos Exp $
+#	$NetBSD: files.ipfilter,v 1.6.2.1 2006/12/30 20:50:33 yamt Exp $
 
 defflag	opt_ipfilter.h	IPFILTER_LOG		# logging of ip packets
 defflag	opt_ipfilter.h	IPFILTER_DEFAULT_BLOCK
+defflag	opt_ipfilter.h	IPFILTER_LOOKUP
 
 defpseudo ipfilter: ifnet		# XXX not really an ifnet
 

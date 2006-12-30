@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.48.2.1 2006/06/21 15:02:12 yamt Exp $	*/
+/*	$NetBSD: rnd.c,v 1.48.2.2 2006/12/30 20:47:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.48.2.1 2006/06/21 15:02:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.48.2.2 2006/12/30 20:47:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -166,7 +166,7 @@ dev_type_kqfilter(rndkqfilter);
 
 const struct cdevsw rnd_cdevsw = {
 	rndopen, nullclose, rndread, rndwrite, rndioctl,
-	nostop, notty, rndpoll, nommap, rndkqfilter,
+	nostop, notty, rndpoll, nommap, rndkqfilter, D_OTHER,
 };
 
 static inline void	rnd_wakeup_readers(void);
@@ -341,7 +341,8 @@ rnd_init(void)
 }
 
 int
-rndopen(dev_t dev, int flags, int ifmt, struct lwp *l)
+rndopen(dev_t dev, int flags, int ifmt,
+    struct lwp *l)
 {
 
 	if (rnd_ready == 0)
@@ -481,7 +482,8 @@ rndwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 int
-rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+    struct lwp *l)
 {
 	rndsource_element_t *rse;
 	rndstat_t *rst;
@@ -489,11 +491,9 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	rndctl_t *rctl;
 	rnddata_t *rnddata;
 	u_int32_t count, start;
-	struct proc *p;
 	int ret, s;
 
 	ret = 0;
-	p = l->l_proc;
 
 	switch (cmd) {
 
@@ -512,7 +512,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETPOOLSTAT:
-		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		s = splsoftclock();
@@ -521,7 +522,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETSRCNUM:
-		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		rst = (rndstat_t *)addr;
@@ -564,7 +566,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETSRCNAME:
-		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		/*
@@ -587,7 +590,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDCTL:
-		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		/*
@@ -631,7 +635,8 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDADDDATA:
-		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (ret);
 
 		rnddata = (rnddata_t *)addr;
@@ -810,7 +815,7 @@ rnd_sample_free(rnd_sample_t *c)
  * Add a source to our list of sources.
  */
 void
-rnd_attach_source(rndsource_element_t *rs, char *name, u_int32_t type,
+rnd_attach_source(rndsource_element_t *rs, const char *name, u_int32_t type,
     u_int32_t flags)
 {
 	u_int32_t ts;
@@ -896,9 +901,8 @@ rnd_detach_source(rndsource_element_t *rs)
 }
 
 /*
- * Add a value to the entropy pool.  If rs is NULL no entropy estimation
- * will be performed, otherwise it should point to the source-specific
- * source structure.
+ * Add a value to the entropy pool. The rs parameter should point to the
+ * source-specific source structure.
  */
 void
 rnd_add_uint32(rndsource_element_t *rs, u_int32_t val)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac3.c,v 1.7 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: dmac3.c,v 1.7.6.1 2006/12/30 20:46:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.7 2005/02/06 02:18:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.7.6.1 2006/12/30 20:46:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,7 +62,7 @@ struct dmac3_softc {
 	struct device sc_dev;
 	struct dmac3reg *sc_reg;
 	vaddr_t sc_dmaaddr;
-	int *sc_dmamap;
+	volatile uint32_t *sc_dmamap;
 	int sc_conf;
 	int sc_ctlnum;
 };
@@ -99,7 +99,7 @@ dmac3_attach(struct device *parent, struct device *self, void *aux)
 	reg = (void *)apa->apa_hwbase;
 	sc->sc_reg = reg;
 	sc->sc_ctlnum = apa->apa_ctlnum;
-	sc->sc_dmamap = (int *)dmamap;
+	sc->sc_dmamap = (uint32_t *)dmamap;
 	sc->sc_dmaaddr = dmaaddr;
 	dmamap += 0x1000;
 	dmaaddr += 0x200000;
@@ -147,7 +147,7 @@ dmac3_start(struct dmac3_softc *sc, vaddr_t addr, int len, int direction)
 	struct dmac3reg *reg = sc->sc_reg;
 	paddr_t pa;
 	vaddr_t start, end, v;
-	u_int *p;
+	volatile uint32_t *p;
 
 	if (reg->csr & DMAC3_CSR_ENABLE)
 		dmac3_reset(sc);

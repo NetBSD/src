@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_raster.h,v 1.8 2003/08/07 16:31:28 agc Exp $ */
+/* $NetBSD: wscons_raster.h,v 1.8.16.1 2006/12/30 20:49:50 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@ struct rcons {
 #define	RC_CURSOR	0x004		/* cursor currently displayed */
 
 /* Initialization functions. */
-void	rcons_init(struct rcons *rc, int mrow, int mcol);
+void	rcons_init(struct rcons *, int, int);
 
 /* Console emulation interface functions.  See ansicons.h for more info. */
 void	rcons_cursor(void *, int, int, int);

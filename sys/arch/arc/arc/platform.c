@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.3 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: platform.c,v 1.3.8.1 2006/12/30 20:45:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.3 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.3.8.1 2006/12/30 20:45:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.3 2005/01/22 07:35:33 tsutsui Exp $")
 
 struct platform *platform = NULL;
 
-void print_platform(struct platform *);
+static void print_platform(struct platform *);
 
-void
+static void
 print_platform(struct platform *p)
 {
 	printf("\"%s %s%s\" (%s, %s)",

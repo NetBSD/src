@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.23.4.1 2006/06/21 15:05:05 yamt Exp $	*/
+/*	$NetBSD: mly.c,v 1.23.4.2 2006/12/30 20:48:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.23.4.1 2006/06/21 15:05:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.23.4.2 2006/12/30 20:48:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.23.4.1 2006/06/21 15:05:05 yamt Exp $");
 #include <sys/ioctl.h>
 #include <sys/scsiio.h>
 #include <sys/kthread.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -172,17 +173,17 @@ dev_type_ioctl(mlyioctl);
 
 const struct cdevsw mly_cdevsw = {
 	mlyopen, mlyclose, noread, nowrite, mlyioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
-struct mly_ident {
+static struct mly_ident {
 	u_short	vendor;
 	u_short	product;
 	u_short	subvendor;
 	u_short	subproduct;
 	int	hwif;
 	const char	*desc;
-} static const mly_ident[] = {
+} const mly_ident[] = {
 	{
 		PCI_VENDOR_MYLEX,
 		PCI_PRODUCT_MYLEX_EXTREMERAID,
@@ -264,7 +265,8 @@ mly_find_ident(struct pci_attach_args *pa)
  * Match a supported board.
  */
 static int
-mly_match(struct device *parent, struct cfdata *cfdata, void *aux)
+mly_match(struct device *parent, struct cfdata *cfdata,
+    void *aux)
 {
 
 	return (mly_find_ident(aux) != NULL);
@@ -2087,7 +2089,7 @@ mly_get_xfer_mode(struct mly_softc *mly, int bus, struct scsipi_xfer_mode *xm)
  */
 static int
 mly_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t data,
-		 int flag, struct proc *p)
+    int flag, struct proc *p)
 {
 	struct mly_softc *mly;
 	int rv;
@@ -2292,7 +2294,8 @@ mlyopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Accept the last close on the control device.
  */
 int
-mlyclose(dev_t dev, int flag, int mode, struct lwp *l)
+mlyclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct mly_softc *mly;
 
@@ -2305,18 +2308,21 @@ mlyclose(dev_t dev, int flag, int mode, struct lwp *l)
  * Handle control operations.
  */
 int
-mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct mly_softc *mly;
 	int rv;
-
-	if (securelevel >= 2)
-		return (EPERM);
 
 	mly = device_lookup(&mly_cd, minor(dev));
 
 	switch (cmd) {
 	case MLYIO_COMMAND:
+		rv = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
+		if (rv)
+			break;
+
 		rv = mly_user_command(mly, (void *)data);
 		break;
 	case MLYIO_HEALTH:

@@ -1,4 +1,4 @@
-/* $NetBSD: attimer_acpi.c,v 1.1.8.1 2006/06/21 15:02:32 yamt Exp $ */
+/* $NetBSD: attimer_acpi.c,v 1.1.8.2 2006/12/30 20:47:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.1.8.1 2006/06/21 15:02:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.1.8.2 2006/12/30 20:47:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,8 @@ static const char * const attimer_acpi_ids[] = {
  * attimer_acpi_match: autoconf(9) match routine
  */
 static int
-attimer_acpi_match(struct device *parent, struct cfdata *match, void *aux)
+attimer_acpi_match(struct device *parent,
+    struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -116,7 +117,8 @@ attimer_acpi_match(struct device *parent, struct cfdata *match, void *aux)
  * attimer_acpi_attach: autoconf(9) attach routine
  */
 static void
-attimer_acpi_attach(struct device *parent, struct device *self, void *aux)
+attimer_acpi_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct attimer_softc *sc = (struct attimer_softc *)self;
 	struct acpi_attach_args *aa = aux;

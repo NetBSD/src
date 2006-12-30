@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.15 2004/04/19 05:16:45 matt Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.15.12.1 2006/12/30 20:50:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.15 2004/04/19 05:16:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.15.12.1 2006/12/30 20:50:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -89,8 +89,10 @@ static struct clnp_fixed dt_template = {
 	ISO8473_V1,		/* version */
 	CLNP_TTL,		/* ttl */
 	CLNP_DT | CNF_SEG_OK | CNF_ERR_OK,	/* type */
-	0,			/* segment length */
-	0			/* checksum */
+	0,			/* segment length msb */
+	0,			/* segment length lsb */
+	0,			/* checksum msb */
+	0,			/* checksum lmsb */
 };
 
 static struct clnp_fixed raw_template = {
@@ -99,8 +101,10 @@ static struct clnp_fixed raw_template = {
 	ISO8473_V1,		/* version */
 	CLNP_TTL,		/* ttl */
 	CLNP_RAW | CNF_SEG_OK | CNF_ERR_OK,	/* type */
-	0,			/* segment length */
-	0			/* checksum */
+	0,			/* segment length msb */
+	0,			/* segment length lsb */
+	0,			/* checksum msb */
+	0,			/* checksum lmsb */
 };
 
 static struct clnp_fixed echo_template = {
@@ -109,8 +113,10 @@ static struct clnp_fixed echo_template = {
 	ISO8473_V1,		/* version */
 	CLNP_TTL,		/* ttl */
 	CLNP_EC | CNF_SEG_OK | CNF_ERR_OK,	/* type */
-	0,			/* segment length */
-	0			/* checksum */
+	0,			/* segment length msb */
+	0,			/* segment length lsb */
+	0,			/* checksum msb */
+	0,			/* checksum lmsb */
 };
 
 static struct clnp_fixed echor_template = {
@@ -119,8 +125,10 @@ static struct clnp_fixed echor_template = {
 	ISO8473_V1,		/* version */
 	CLNP_TTL,		/* ttl */
 	CLNP_ECR | CNF_SEG_OK | CNF_ERR_OK,	/* type */
-	0,			/* segment length */
-	0			/* checksum */
+	0,			/* segment length msb */
+	0,			/* segment length lsb */
+	0,			/* checksum msb */
+	0,			/* checksum lmsb */
 };
 
 #ifdef	DECBIT
@@ -234,7 +242,7 @@ clnp_output(struct mbuf *m0, ...)
 			printf("\tclc_dst %s\n", clnp_iso_addrp(&clcp->clc_dst));
 			printf("\tisop_opts %p, clc_opts %p\n",
 			    isop->isop_options, clcp->clc_options);
-			if (isop->isop_route.ro_rt)
+			if (isop->isop_route.ro_rt != NULL)
 				printf("\tro_rt %p, rt_flags x%x\n",
 				    isop->isop_route.ro_rt,
 				    isop->isop_route.ro_rt->rt_flags);

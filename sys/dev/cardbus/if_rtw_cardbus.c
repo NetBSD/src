@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.7.2.1 2006/06/21 15:02:45 yamt Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.7.2.2 2006/12/30 20:47:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,10 +74,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.7.2.1 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.7.2.2 2006/12/30 20:47:57 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -110,10 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.7.2.1 2006/06/21 15:02:45 yamt 
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -204,7 +199,8 @@ rtw_cardbus_lookup(const struct cardbus_attach_args *ca)
 }
 
 int
-rtw_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
+rtw_cardbus_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -235,7 +231,8 @@ rtw_cardbus_funcregen(struct rtw_regs *regs, int enable)
 }
 
 void
-rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
+rtw_cardbus_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct rtw_cardbus_softc *csc = device_private(self);
 	struct rtw_softc *sc = &csc->sc_rtw;

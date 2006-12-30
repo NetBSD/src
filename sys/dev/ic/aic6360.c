@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.84.4.1 2006/06/21 15:02:52 yamt Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.84.4.2 2006/12/30 20:48:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.84.4.1 2006/06/21 15:02:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.84.4.2 2006/12/30 20:48:01 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1071,7 +1071,6 @@ nextbyte:
 	/* We now have a complete message.  Parse it. */
 	switch (sc->sc_state) {
 		struct aic_acb *acb;
-		struct scsipi_periph *periph;
 		struct aic_tinfo *ti;
 
 	case AIC_CONNECTED:
@@ -1081,6 +1080,8 @@ nextbyte:
 
 		switch (sc->sc_imess[0]) {
 		case MSG_CMDCOMPLETE:
+#if 0
+			/* impossible dleft is unsigned */
 			if (sc->sc_dleft < 0) {
 				periph = acb->xs->xs_periph;
 				printf("%s: %ld extra bytes from %d:%d\n",
@@ -1088,6 +1089,7 @@ nextbyte:
 				    periph->periph_target, periph->periph_lun);
 				sc->sc_dleft = 0;
 			}
+#endif
 			acb->xs->resid = acb->data_length = sc->sc_dleft;
 			sc->sc_state = AIC_CMDCOMPLETE;
 			break;

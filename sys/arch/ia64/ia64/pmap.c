@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.2.14.2 2006/06/21 14:52:47 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.2.14.3 2006/12/30 20:46:20 yamt Exp $ */
 
 
 /*-
@@ -92,7 +92,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.14.2 2006/06/21 14:52:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.14.3 2006/12/30 20:46:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -904,7 +904,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
                 }
 
         } else {
-                for (va = sva; va < eva; va = va += PAGE_SIZE) {
+                for (va = sva; va < eva; va += PAGE_SIZE) {
                         pte = pmap_find_vhpt(va);
                         if (pte != NULL) {
                                 pmap_remove_pte(pmap, pte, va, 0, 1);
@@ -1436,7 +1436,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
                 pmap_install(oldpmap);
                 PMAP_UNLOCK(pmap);
                 PMAP_MAP_TO_HEAD_UNLOCK();
-                UVM_KICK_PDAEMON();
+                uvm_kick_pdaemon();
                 PMAP_MAP_TO_HEAD_LOCK();
                 PMAP_LOCK(pmap);
                 oldpmap = pmap_install(pmap);

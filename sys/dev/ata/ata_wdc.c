@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.82 2005/07/06 01:46:52 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.82.2.1 2006/12/30 20:47:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.82 2005/07/06 01:46:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.82.2.1 2006/12/30 20:47:54 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.82 2005/07/06 01:46:52 thorpej Exp $")
 #define    bus_space_read_multi_stream_4    bus_space_read_multi_4
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
+#include <dev/ata/ataconf.h>
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
@@ -160,9 +161,18 @@ wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 		ata_bio->flags |= ATA_POLL;
 	if (ata_bio->flags & ATA_POLL)
 		xfer->c_flags |= C_POLL;
+#if NATA_DMA
 	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 	    (ata_bio->flags & ATA_SINGLE) == 0)
 		xfer->c_flags |= C_DMA;
+#endif
+#if NATA_DMA && NATA_PIOBM
+	else
+#endif
+#if NATA_PIOBM
+	if (atac->atac_cap & ATAC_CAP_PIOBM)
+		xfer->c_flags |= C_PIOBM;
+#endif
 	xfer->c_drive = drvp->drive;
 	xfer->c_cmd = ata_bio;
 	xfer->c_databuf = ata_bio->databuf;
@@ -238,10 +248,14 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			goto ctrltimeout;
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto ctrlerror;
+#if NATA_DMA
+#if NATA_UDMA
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 			    0x40 | drvp->UDMA_mode, WDSF_SET_MODE);
-		} else if (drvp->drive_flags & DRIVE_DMA) {
+		} else
+#endif
+		if (drvp->drive_flags & DRIVE_DMA) {
 			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 			    0x20 | drvp->DMA_mode, WDSF_SET_MODE);
 		} else {
@@ -252,6 +266,7 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			goto ctrltimeout;
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto ctrlerror;
+#endif	/* NATA_DMA */
 geometry:
 		if (ata_bio->flags & ATA_LBA)
 			goto multimode;
@@ -323,20 +338,26 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	int wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
 	u_int16_t cyl;
 	u_int8_t head, sect, cmd = 0;
-	int nblks, error;
-	int dma_flags = 0;
+	int nblks;
+#if NATA_DMA || NATA_PIOBM
+	int error, dma_flags = 0;
+#endif
 
 	ATADEBUG_PRINT(("_wdc_ata_bio_start %s:%d:%d\n",
 	    atac->atac_dev.dv_xname, chp->ch_channel, xfer->c_drive),
 	    DEBUG_INTR | DEBUG_XFERS);
 
-	if (xfer->c_flags & C_DMA) {
+#if NATA_DMA || NATA_PIOBM
+	if (xfer->c_flags & (C_DMA | C_PIOBM)) {
+#if NATA_DMA
 		if (drvp->n_xfers <= NXFER)
 			drvp->n_xfers++;
+#endif
 		dma_flags = (ata_bio->flags & ATA_READ) ?  WDC_DMA_READ : 0;
 		if (ata_bio->flags & ATA_LBA48)
 			dma_flags |= WDC_DMA_LBA48;
 	}
+#endif
 again:
 	/*
 	 *
@@ -391,6 +412,7 @@ again:
 			cyl = blkno;
 			head |= WDSD_CHS;
 		}
+#if NATA_DMA
 		if (xfer->c_flags & C_DMA) {
 			ata_bio->nblks = nblks;
 			ata_bio->nbytes = xfer->c_bcount;
@@ -449,6 +471,38 @@ again:
 			goto intr;
 		} /* else not DMA */
  do_pio:
+#endif	/* NATA_DMA */
+#if NATA_PIOBM
+		if ((xfer->c_flags & C_PIOBM) && xfer->c_skip == 0) {
+			if (ata_bio->flags & ATA_POLL) {
+				/* XXX not supported yet --- fall back to PIO */
+				xfer->c_flags &= ~C_PIOBM;
+			} else {
+				/* Init the DMA channel. */
+				error = (*wdc->dma_init)(wdc->dma_arg,
+				    chp->ch_channel, xfer->c_drive,
+				    (char *)xfer->c_databuf + xfer->c_skip,
+				    xfer->c_bcount,
+				    dma_flags | WDC_DMA_PIOBM_ATA);
+				if (error) {
+					if (error == EINVAL) {
+						/*
+						 * We can't do DMA on this
+						 * transfer for some reason.
+						 * Fall back to PIO.
+						 */
+						xfer->c_flags &= ~C_PIOBM;
+						error = 0;
+					} else {
+						ata_bio->error = ERR_DMA;
+						ata_bio->r_error = 0;
+						wdc_ata_bio_done(chp, xfer);
+						return;
+					}
+				}
+			}
+		}
+#endif
 		ata_bio->nblks = min(nblks, ata_bio->multi);
 		ata_bio->nbytes = ata_bio->nblks * ata_bio->lp->d_secsize;
 		KASSERT(nblks == 1 || (ata_bio->flags & ATA_SINGLE) == 0);
@@ -513,20 +567,35 @@ again:
 			wdc_ata_bio_done(chp, xfer);
 			return;
 		}
+#if NATA_PIOBM
+		if (xfer->c_flags & C_PIOBM) {
+			/* start the busmastering PIO */
+			(*wdc->piobm_start)(wdc->dma_arg,
+			    chp->ch_channel, xfer->c_drive,
+			    xfer->c_skip, ata_bio->nbytes, 0);
+			chp->ch_flags |= ATACH_DMA_WAIT;
+		} else
+#endif
+
 		wdc->dataout_pio(chp, drvp->drive_flags,
 		    (char *)xfer->c_databuf + xfer->c_skip, ata_bio->nbytes);
 	}
 
-intr:	/* Wait for IRQ (either real or polled) */
+#if NATA_DMA
+intr:
+#endif
+	/* Wait for IRQ (either real or polled) */
 	if ((ata_bio->flags & ATA_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT;
 	} else {
 		/* Wait for at last 400ns for status bit to be valid */
 		delay(1);
+#if NATA_DMA
 		if (chp->ch_flags & ATACH_DMA_WAIT) {
 			wdc_dmawait(chp, xfer, ATA_DELAY);
 			chp->ch_flags &= ~ATACH_DMA_WAIT;
 		}
+#endif
 		wdc_ata_bio_intr(chp, xfer, 0);
 		if ((ata_bio->flags & ATA_ITSDONE) == 0)
 			goto again;
@@ -574,6 +643,14 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		return 1;
 	}
 
+#if NATA_PIOBM
+	/* Transfer-done interrupt for busmastering PIO read */
+	if ((xfer->c_flags & C_PIOBM) && (chp->ch_flags & ATACH_PIOBM_WAIT)) {
+		chp->ch_flags &= ~ATACH_PIOBM_WAIT;
+		goto end;
+	}
+#endif
+
 	/* Ack interrupt done by wdc_wait_for_unbusy */
 	if (wdc_wait_for_unbusy(chp, (irq == 0) ? ATA_DELAY : 0, AT_POLL) < 0) {
 		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
@@ -590,6 +667,7 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 
 	drv_err = wdc_ata_err(drvp, ata_bio);
 
+#if NATA_DMA
 	/* If we were using DMA, Turn off the DMA channel and check for error */
 	if (xfer->c_flags & C_DMA) {
 		if (ata_bio->flags & ATA_POLL) {
@@ -629,6 +707,7 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		if (ata_bio->r_error & WDCE_CRC || ata_bio->error == ERR_DMA)
 			ata_dmaerr(drvp, (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 	}
+#endif	/* NATA_DMA */
 
 	/* if we had an error, end */
 	if (drv_err == WDC_ATA_ERR) {
@@ -646,11 +725,24 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 			wdc_ata_bio_done(chp, xfer);
 			return 1;
 		}
+#if NATA_PIOBM
+		if (xfer->c_flags & C_PIOBM) {
+			/* start the busmastering PIO */
+			(*wdc->piobm_start)(wdc->dma_arg,
+			    chp->ch_channel, xfer->c_drive,
+			    xfer->c_skip, ata_bio->nbytes,
+			    WDC_PIOBM_XFER_IRQ);
+			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_PIOBM_WAIT | ATACH_IRQ_WAIT;
+			return 1;
+		} else
+#endif
 		wdc->datain_pio(chp, drvp->drive_flags,
 		    (char *)xfer->c_databuf + xfer->c_skip, ata_bio->nbytes);
 	}
 
+#if NATA_DMA || NATA_PIOBM
 end:
+#endif
 	ata_bio->blkno += ata_bio->nblks;
 	ata_bio->blkdone += ata_bio->nblks;
 	xfer->c_skip += ata_bio->nbytes;

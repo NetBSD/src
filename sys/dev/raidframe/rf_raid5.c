@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5.c,v 1.15.4.1 2006/06/21 15:06:28 yamt Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.15.4.2 2006/12/30 20:49:30 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.15.4.1 2006/06/21 15:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.15.4.2 2006/12/30 20:49:30 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -116,7 +116,8 @@ rf_ShutdownRAID5(RF_Raid_t *raidPtr)
 
 void
 rf_MapSectorRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector,
+		  int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	*col = (SUID % raidPtr->numCol);
@@ -126,7 +127,8 @@ rf_MapSectorRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 
 void
 rf_MapParityRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
+		  RF_RowCol_t *col, RF_SectorNum_t *diskSector,
+		  int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 
@@ -146,7 +148,8 @@ rf_IdentifyStripeRAID5(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 }
 
 void
-rf_MapSIDToPSIDRAID5(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
+rf_MapSIDToPSIDRAID5(RF_RaidLayout_t *layoutPtr,
+		     RF_StripeNum_t stripeID,
 		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {
 	*which_ru = 0;

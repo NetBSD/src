@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgen_intr.c,v 1.7.16.1 2006/06/21 14:54:24 yamt Exp $	*/
+/*	$NetBSD: ofwgen_intr.c,v 1.7.16.2 2006/12/30 20:46:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Wolfgang Solfrank.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgen_intr.c,v 1.7.16.1 2006/06/21 14:54:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgen_intr.c,v 1.7.16.2 2006/12/30 20:46:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ ofwgen_intr_calculate_masks(void)
 	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
 
 	/*
-	 * Enfore a heirarchy that gives "slow" devices (or devices with
+	 * Enfore a hierarchy that gives "slow" devices (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */

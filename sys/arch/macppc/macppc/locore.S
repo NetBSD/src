@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.53 2005/05/31 00:45:03 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.53.2.1 2006/12/30 20:46:30 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -103,6 +103,29 @@ __start:
 1:
 #endif
 
+#if defined (PMAC_G5) || defined (MAMBO)
+	 /* and clear HID5 DCBZ bits (56/57), need to do this early */
+	mfspr	11,SPR_HID5
+	rldimi	11,0,6,56
+	sync
+	mtspr	SPR_HID5,11
+	isync
+	sync
+
+	/* Setup HID1 features, prefetch + i-cacheability controlled by PTE */
+	mfspr	0,SPR_HID1
+	li	11,0x1200
+	sldi	11,11,44
+	or	0,0,11
+	mtspr	SPR_HID1,0
+	isync
+	sync
+
+	/* Restore r0 */
+	li	0,0
+#endif /* PMAC_G5 */
+
+
 	/*
 	 * Initialize cpu_info[0]
 	 */
@@ -128,6 +151,37 @@ ENTRY(cpu_spinup_trampoline)
 	bl      _C_LABEL(sched_lock_idle)
 	li      30,0
 	b       _ASM_LABEL(Idle)
+#endif
+
+#if defined (PPC_OEA64_BRIDGE)
+/* Return all 64 bits of HID4 */
+	.text
+	.globl _C_LABEL(mfhid4)
+_C_LABEL(mfhid4):
+	mfspr	4, SPR_HID4 
+	std	4, 0(3)
+	blr
+
+/* Set all 64 bits of HID4 */
+	.text
+	.globl _C_LABEL(mthid4)
+_C_LABEL(mthid4):
+	ld 4, 0(3)
+	sync
+	mtspr SPR_HID4, 4 
+	isync 
+	isync
+	blr
+
+	.text
+	.globl _C_LABEL(change_hid4)
+_C_LABEL(change_hid4):
+	mfspr 6, SPR_HID4
+	rldicl 5, 6, 32, 0 
+	ori 5, 5, 0x100
+	rldicl 5, 5, 32, 0 
+	std 5, 0(3)
+	blr
 #endif
 
 /*

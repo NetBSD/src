@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.132.2.1 2006/06/21 14:59:42 yamt Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.132.2.2 2006/12/30 20:47:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,10 +50,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.132.2.1 2006/06/21 14:59:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.132.2.2 2006/12/30 20:47:45 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
+#include "opt_ptrace.h"
 #include "fs_nfs.h"
 #endif
 
@@ -85,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.132.2.1 2006/06/21 14:59:42 yamt Ex
 #include <sys/utsname.h>
 #include <sys/unistd.h>
 #include <sys/sa.h>
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
 #include <sys/socketvar.h>
@@ -762,7 +764,7 @@ sunos_sys_socket(l, v, retval)
 	} */ *uap = v;
 	int error;
 
-	error = sys_socket(l, v, retval);
+	error = compat_30_sys_socket(l, v, retval);
 	if (error)
 		return (error);
 	return sunos_sys_socket_common(l, retval, SCARG(uap, type));
@@ -1178,6 +1180,7 @@ sunos_sys_setrlimit(l, v, retval)
 	return compat_43_sys_setrlimit(l, uap, retval);
 }
 
+#if defined(PTRACE) || defined(_LKM)
 /* for the m68k machines */
 #ifndef PT_GETFPREGS
 #define PT_GETFPREGS -1
@@ -1193,6 +1196,7 @@ static const int sreq2breq[] = {
 	PT_GETREGS,     PT_SETREGS,     PT_GETFPREGS,   PT_SETFPREGS
 };
 static const int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
+#endif /* PTRACE || _LKM */
 
 int
 sunos_sys_ptrace(l, v, retval)
@@ -1200,9 +1204,16 @@ sunos_sys_ptrace(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if defined(PTRACE) || defined(_LKM)
 	struct sunos_sys_ptrace_args *uap = v;
 	struct sys_ptrace_args pa;
 	int req;
+
+#ifdef _LKM
+#define	sys_ptrace sysent[SYS_ptrace].sy_call 
+	if (sys_ptrace == sys_nosys)
+		return ENOSYS;
+#endif
 
 	req = SCARG(uap, req);
 
@@ -1219,6 +1230,9 @@ sunos_sys_ptrace(l, v, retval)
 	SCARG(&pa, data) = SCARG(uap, data);
 
 	return sys_ptrace(l, &pa, retval);
+#else
+	return ENOSYS;
+#endif /* PTRACE || _LKM */
 }
 
 /*
@@ -1254,14 +1268,13 @@ sunos_sys_reboot(l, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_reboot_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_reboot_args ua;
 	struct sunos_howto_conv *convp;
 	int error, bsd_howto, sun_howto;
 	char *bootstr;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_REBOOT,
+	    0, NULL, NULL, NULL)) != 0)
 		return (error);
 
 	/*

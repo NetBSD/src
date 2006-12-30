@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.12.12.1 2006/06/21 15:12:02 yamt Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.12.12.2 2006/12/30 20:50:54 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.12.12.1 2006/06/21 15:12:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.12.12.2 2006/12/30 20:50:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,16 +138,16 @@ static int	cryptodevkey_cb(void *);
 
 /* ARGSUSED */
 int
-cryptof_read(struct file *fp, off_t *poff, struct uio *uio,
-	     kauth_cred_t cred, int flags)
+cryptof_read(struct file *fp, off_t *poff,
+    struct uio *uio, kauth_cred_t cred, int flags)
 {
 	return (EIO);
 }
 
 /* ARGSUSED */
 int
-cryptof_write(struct file *fp, off_t *poff, struct uio *uio,
-	      kauth_cred_t cred, int flags)
+cryptof_write(struct file *fp, off_t *poff,
+    struct uio *uio, kauth_cred_t cred, int flags)
 {
 	return (EIO);
 }
@@ -703,7 +703,8 @@ csefree(struct csession *cse)
 }
 
 static int
-cryptoopen(dev_t dev, int flag, int mode, struct lwp *l)
+cryptoopen(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	if (crypto_usercrypto == 0)
 		return (ENXIO);
@@ -723,7 +724,8 @@ cryptowrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 static int
-cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct file *f;
 	struct fcrypt *fcr;
@@ -736,7 +738,7 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		TAILQ_INIT(&fcr->csessions);
 		fcr->sesn = 0;
 
-		error = falloc(l->l_proc, &f, &fd);
+		error = falloc(l, &f, &fd);
 		if (error) {
 			FREE(fcr, M_XDATA);
 			return (error);
@@ -774,6 +776,7 @@ struct cdevsw crypto_cdevsw = {
 	/* poll */	cryptoselect /*nopoll*/,
 	/* mmap */	nommap,
 	/* kqfilter */	nokqfilter,
+	/* type */	D_OTHER,
 };
 
 #ifdef __NetBSD__

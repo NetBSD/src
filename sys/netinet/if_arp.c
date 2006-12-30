@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.106.2.1 2006/06/21 15:11:00 yamt Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.106.2.2 2006/12/30 20:50:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.106.2.1 2006/06/21 15:11:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.106.2.2 2006/12/30 20:50:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -154,7 +154,13 @@ static	struct llinfo_arp *arplookup(struct mbuf *, struct in_addr *,
 static	void in_arpinput(struct mbuf *);
 
 LIST_HEAD(, llinfo_arp) llinfo_arp;
-struct	ifqueue arpintrq = {0, 0, 0, 50};
+struct	ifqueue arpintrq = {
+	.ifq_head = NULL,
+	.ifq_tail = NULL,
+	.ifq_len = 0,
+	.ifq_maxlen = 50,
+	.ifq_drops = 0,
+};
 int	arp_inuse, arp_allocated, arp_intimer;
 int	arp_maxtries = 5;
 int	useloopback = 1;	/* use loopback interface for local traffic */
@@ -222,9 +228,11 @@ const struct protosw arpsw[] = {
 };
 
 
-struct domain arpdomain =
-{ 	PF_ARP,  "arp", 0, 0, 0,
-	arpsw, &arpsw[sizeof(arpsw)/sizeof(arpsw[0])]
+struct domain arpdomain = {
+	.dom_family = PF_ARP,
+	.dom_name = "arp",
+	.dom_protosw = arpsw,
+	.dom_protoswNPROTOSW = &arpsw[sizeof(arpsw)/sizeof(arpsw[0])],
 };
 
 /*
@@ -381,7 +389,10 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
-	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
+	static const struct sockaddr_dl null_sdl = {
+		.sdl_len = sizeof(null_sdl),
+		.sdl_family = AF_LINK,
+	};
 	size_t allocsize;
 	struct mbuf *mold;
 	int s;
@@ -392,7 +403,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		arpinit_done = 1;
 		/*
 		 * We generate expiration times from time_second
-		 * so avoid accidently creating permanent routes.
+		 * so avoid accidentally creating permanent routes.
 		 */
 		if (time_second == 0) {
 #ifdef __HAVE_TIMECOUNTER
@@ -458,7 +469,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 * Case 1: This route should come from a route to iface.
 			 */
 			rt_setgate(rt, rt_key(rt),
-					(struct sockaddr *)&null_sdl);
+			    (const struct sockaddr *)&null_sdl);
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = rt->rt_ifp->if_type;
 			SDL(gate)->sdl_index = rt->rt_ifp->if_index;
@@ -576,11 +587,8 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 * with source address selection.
 			 */
 			ifa = &ia->ia_ifa;
-			if (ifa != rt->rt_ifa) {
-				IFAFREE(rt->rt_ifa);
-				IFAREF(ifa);
-				rt->rt_ifa = ifa;
-			}
+			if (ifa != rt->rt_ifa)
+				rt_replace_ifa(rt, ifa);
 		}
 		break;
 
@@ -1496,7 +1504,8 @@ db_show_radix_node(struct radix_node *rn, void *w)
  * Use this from ddb:  "show arptab"
  */
 void
-db_show_arptab(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_show_arptab(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	struct radix_node_head *rnh;
 	rnh = rt_tables[AF_INET];

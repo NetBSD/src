@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.4 2004/03/13 17:52:02 bjh21 Exp $ */
+/*	$NetBSD: consinit.c,v 1.4.16.1 2006/12/30 20:45:34 yamt Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.4 2004/03/13 17:52:02 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.4.16.1 2006/12/30 20:45:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,19 +57,16 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.4 2004/03/13 17:52:02 bjh21 Exp $");
 #include <arm/iomd/vidc.h>
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
-#include <arm/iomd/rpckbdvar.h>
 #include <arm/iomd/iomdkbcvar.h>
 #include <arm/iomd/vidcvideo.h>
 
 #include "vidcvideo.h"
-#include "rpckbd.h"
 #include "iomdkbc.h"
 
-#if ((NVIDCVIDEO > 0) && (NRPCKBD > 0 || NIOMDKBC > 0))
+#if ((NVIDCVIDEO > 0) && (NIOMDKBC > 0))
 
 extern videomemory_t videomemory;
 extern struct bus_space iomd_bs_tag;
-extern struct rpckbd_softc console_kbd;
 
 #endif
 
@@ -82,9 +79,6 @@ extern void comcninit(struct consdev *cp);
 void
 consinit(void)
 {
-#if ((NVIDCVIDEO>0) && (NRPCKBD>0))
-	static struct rpckbd_softc *ksc = &console_kbd;
-#endif
 
 	static int consinit_called = 0;
 
@@ -98,19 +92,9 @@ consinit(void)
 #endif
 
 
-#if ((NVIDCVIDEO > 0) && (NRPCKBD > 0 || NIOMDKBC > 0))
+#if ((NVIDCVIDEO > 0) && (NIOMDKBC > 0))
 	vidcvideo_cnattach(videomemory.vidm_vbase);
-#if NRPCKBD > 0
-	/* set up bus variables for attachment */
-	ksc->sc_iot	 = &iomd_bs_tag;
-	ksc->t_isconsole = 1;
-	ksc->data_port	 = IOMD_KBDDAT;
-	ksc->cmd_port	 = IOMD_KBDCR;
-	ksc->sc_enabled	 = 1;
-	bus_space_map(ksc->sc_iot, IOMD_KBDDAT, 8, 0, &(ksc->sc_ioh));
-
-	rpckbd_cnattach((struct device *) ksc);
-#elif NIOMDKBC > 0
+#if NIOMDKBC > 0
 	iomdkbc_cnattach(&iomd_bs_tag, IOMD_ADDRESS(IOMD_KBDDAT), 0);
 #endif
 	return;

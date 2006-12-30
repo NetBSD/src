@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.131.2.1 2006/06/21 15:06:47 yamt Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.131.2.2 2006/12/30 20:49:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.131.2.1 2006/06/21 15:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.131.2.2 2006/12/30 20:49:34 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -196,7 +196,8 @@ scsipi_insert_periph(struct scsipi_channel *chan, struct scsipi_periph *periph)
  *	Remove a periph from the channel.
  */
 void
-scsipi_remove_periph(struct scsipi_channel *chan, struct scsipi_periph *periph)
+scsipi_remove_periph(struct scsipi_channel *chan,
+    struct scsipi_periph *periph)
 {
 	int s;
 
@@ -1017,57 +1018,6 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 #endif
 		return (EIO);
 	}
-}
-
-/*
- * scsipi_size:
- *
- *	Find out from the device what its capacity is.
- */
-u_int64_t
-scsipi_size(struct scsipi_periph *periph, int flags)
-{
-	union {
-		struct scsipi_read_capacity_10 cmd;
-		struct scsipi_read_capacity_16 cmd16;
-	} cmd;
-	union {
-		struct scsipi_read_capacity_10_data data;
-		struct scsipi_read_capacity_16_data data16;
-	} data;
-
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.cmd.opcode = READ_CAPACITY_10;
-
-	/*
-	 * If the command works, interpret the result as a 4 byte
-	 * number of blocks
-	 */
-	if (scsipi_command(periph, (void *)&cmd.cmd, sizeof(cmd.cmd),
-	    (void *)&data.data, sizeof(data.data), SCSIPIRETRIES, 20000, NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
-		return (0);
-
-	if (_4btol(data.data.addr) != 0xffffffff)
-		return (_4btol(data.data.addr) + 1);
-
-	/*
-	 * Device is larger than can be reflected by READ CAPACITY (10).
-	 * Try READ CAPACITY (16).
-	 */
-
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.cmd16.opcode = READ_CAPACITY_16;
-	cmd.cmd16.byte2 = SRC16_SERVICE_ACTION;
-	_lto4b(sizeof(data.data16), cmd.cmd16.len);
-
-	if (scsipi_command(periph, (void *)&cmd.cmd16, sizeof(cmd.cmd16),
-	    (void *)&data.data16, sizeof(data.data16), SCSIPIRETRIES, 20000,
-	    NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
-		return (0);
-
-	return (_8btol(data.data16.addr) + 1);
 }
 
 /*

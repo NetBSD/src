@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.32.2.1 2006/06/21 15:10:46 yamt Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.32.2.2 2006/12/30 20:50:28 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.32.2.1 2006/06/21 15:10:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.32.2.2 2006/12/30 20:50:28 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -499,7 +499,8 @@ ieee80211_crypto_getucastkey(struct ieee80211com *ic, struct ieee80211_node *ni)
  * the default tx key.
  */ 
 static __inline struct ieee80211_key *
-ieee80211_crypto_getmcastkey(struct ieee80211com *ic, struct ieee80211_node *ni)
+ieee80211_crypto_getmcastkey(struct ieee80211com *ic,
+    struct ieee80211_node *ni)
 {
 	if (ic->ic_def_txkey == IEEE80211_KEYIX_NONE ||
 	    IEEE80211_KEY_UNDEFINED(ic->ic_nw_keys[ic->ic_def_txkey]))
@@ -1741,7 +1742,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni,
  */
 int
 ieee80211_beacon_update(struct ieee80211com *ic, struct ieee80211_node *ni,
-	struct ieee80211_beacon_offsets *bo, struct mbuf *m, int mcast)
+    struct ieee80211_beacon_offsets *bo, struct mbuf *m, int mcast)
 {
 	int len_changed = 0;
 	u_int16_t capinfo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.38.2.1 2006/06/21 15:08:12 yamt Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.38.2.2 2006/12/30 20:49:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.38.2.1 2006/06/21 15:08:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.38.2.2 2006/12/30 20:49:51 yamt Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -129,7 +129,7 @@ dev_type_kqfilter(wsmuxkqfilter);
 
 const struct cdevsw wsmux_cdevsw = {
 	wsmuxopen, wsmuxclose, wsmuxread, nowrite, wsmuxioctl,
-	nostop, notty, wsmuxpoll, nommap, wsmuxkqfilter,
+	nostop, notty, wsmuxpoll, nommap, wsmuxkqfilter, D_OTHER
 };
 
 struct wssrcops wsmux_srcops = {
@@ -299,7 +299,8 @@ wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
  * close() of the pseudo device from device table.
  */
 int
-wsmuxclose(dev_t dev, int flags, int mode, struct lwp *l)
+wsmuxclose(dev_t dev, int flags, int mode,
+    struct lwp *l)
 {
 	int minr = minor(dev);
 	struct wsmux_softc *sc = wsmuxdevs[WSMUXDEV(minr)];

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.7.2.1 2006/06/21 14:58:15 yamt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.7.2.2 2006/12/30 20:47:25 yamt Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-
@@ -47,6 +47,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+#include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
@@ -77,6 +78,16 @@ x86_sfence(void)
 	__insn_barrier();
 }
 
+static __inline void
+x86_mfence(void)
+{
+
+	/*
+	 * XXX it's better to use real mfence insn if available.
+	 */
+	__asm volatile("lock; addl $0, 0(%%esp)" : : : "memory");
+}
+
 #ifdef _KERNEL
 
 extern unsigned int cpu_feature;
@@ -90,9 +101,9 @@ invlpg(u_int addr)
 #endif
 
 static __inline void
-lidt(void *p)
+lidt(struct region_descriptor *region)
 {
-	__asm volatile("lidt (%0)" : : "r" (p));
+	__asm volatile("lidt %0" : : "m" (*region));
 }
 
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.138.2.1 2006/06/21 15:11:02 yamt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.138.2.2 2006/12/30 20:50:34 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.138.2.1 2006/06/21 15:11:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.138.2.2 2006/12/30 20:50:34 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -139,11 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.138.2.1 2006/06/21 15:11:02 yamt Ex
  * UDP protocol implementation.
  * Per RFC 768, August, 1980.
  */
-#ifndef	COMPAT_42
 int	udpcksum = 1;
-#else
-int	udpcksum = 0;		/* XXX */
-#endif
 int	udp_do_loopback_cksum = 0;
 
 struct	inpcbtable udbtable;
@@ -177,9 +173,9 @@ static	void udp_notify (struct inpcb *, int);
 int	udbhashsize = UDBHASHSIZE;
 
 #ifdef MBUFTRACE
-struct mowner udp_mowner = { "udp" };
-struct mowner udp_rx_mowner = { "udp", "rx" };
-struct mowner udp_tx_mowner = { "udp", "tx" };
+struct mowner udp_mowner = MOWNER_INIT("udp", "");
+struct mowner udp_rx_mowner = MOWNER_INIT("udp", "rx");
+struct mowner udp_tx_mowner = MOWNER_INIT("udp", "tx");
 #endif
 
 #ifdef UDP_CSUM_COUNTERS
@@ -999,11 +995,8 @@ udp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 }
 
 int
-udp_ctloutput(op, so, level, optname, mp)
-	int op;
-	struct socket *so;
-	int level, optname;
-	struct mbuf **mp;
+udp_ctloutput(int op, struct socket *so, int level, int optname,
+    struct mbuf **mp)
 {
 	int s;
 	int error = 0;
@@ -1034,7 +1027,6 @@ udp_ctloutput(op, so, level, optname, mp)
 	default:
 		error = EAFNOSUPPORT;
 		goto end;
-		break;
 	}
 
 
@@ -1047,7 +1039,7 @@ udp_ctloutput(op, so, level, optname, mp)
 		case UDP_ENCAP:
 			if (m == NULL || m->m_len < sizeof (int)) {
 				error = EINVAL;
-				goto end;
+				break;
 			}
 
 			switch(*mtod(m, int *)) {
@@ -1068,21 +1060,21 @@ udp_ctloutput(op, so, level, optname, mp)
 #endif
 			default:
 				error = EINVAL;
-				goto end;
 				break;
 			}
 			break;
 
 		default:
 			error = ENOPROTOOPT;
-			goto end;
 			break;
+		}
+		if (m != NULL) {
+			m_free(m);
 		}
 		break;
 
 	default:
 		error = EINVAL;
-		goto end;
 		break;
 	}
 
@@ -1179,23 +1171,23 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp;
-	struct proc *p;
 	int s;
 	int error = 0;
 
-	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)nam,
-		    (struct ifnet *)control, p));
+		    (struct ifnet *)control, l));
+
+	s = splsoftnet();
 
 	if (req == PRU_PURGEIF) {
 		in_pcbpurgeif0(&udbtable, (struct ifnet *)control);
 		in_purgeif((struct ifnet *)control);
 		in_pcbpurgeif(&udbtable, (struct ifnet *)control);
+		splx(s);
 		return (0);
 	}
 
-	s = splsoftnet();
 	inp = sotoinpcb(so);
 #ifdef DIAGNOSTIC
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
@@ -1239,7 +1231,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_BIND:
-		error = in_pcbbind(inp, nam, p);
+		error = in_pcbbind(inp, nam, l);
 		break;
 
 	case PRU_LISTEN:
@@ -1247,7 +1239,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_CONNECT:
-		error = in_pcbconnect(inp, nam, p);
+		error = in_pcbconnect(inp, nam, l);
 		if (error)
 			break;
 		soisconnected(so);
@@ -1289,7 +1281,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				error = EISCONN;
 				goto die;
 			}
-			error = in_pcbconnect(inp, nam, p);
+			error = in_pcbconnect(inp, nam, l);
 			if (error)
 				goto die;
 		} else {
@@ -1421,11 +1413,8 @@ SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
  * -1 if an error occurent and m was freed
  */
 static int
-udp4_espinudp(mp, off, src, so)
-	struct mbuf **mp;
-	int off;
-	struct sockaddr *src;
-	struct socket *so;
+udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
+    struct socket *so)
 {
 	size_t len;
 	caddr_t data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.38.2.1 2006/06/21 14:48:26 yamt Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.38.2.2 2006/12/30 20:45:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.38.2.1 2006/06/21 14:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.38.2.2 2006/12/30 20:45:26 yamt Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -1233,7 +1233,7 @@ cv_load_mon(struct grf_softc *gp, struct grfcvtext_mode *md)
 	/* turn gfx off, don't mess up the display */
 	gfx_on_off(1, ba);
 
-	/* provide all needed information in grf device-independant locations */
+	/* provide all needed information in grf device-independent locations */
 	gp->g_data		= (caddr_t) gv;
 	gi = &gp->g_display;
 	gi->gd_colors		= 1 << gv->depth;
@@ -1852,7 +1852,7 @@ cv_setup_hwc(struct grf_softc *gp)
 #else
 	/* do it in assembler, the above does't seem to work */
 	__asm volatile ("moveb #0x45, %1@(0x3d4); \
-		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
+		moveb %1@(0x3d5),%0" : "=d" (test) : "a" (ba));
 #endif
 
 	WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
@@ -1867,7 +1867,7 @@ cv_setup_hwc(struct grf_softc *gp)
 #else
 	/* do it in assembler, the above does't seem to work */
 	__asm volatile ("moveb #0x45, %1@(0x3d4); \
-		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
+		moveb %1@(0x3d5),%0" : "=d" (test) : "a" (ba));
 #endif
 	switch (gp->g_display.gd_planes) {
 	    case 8:

@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.15.2.1 2006/06/21 15:12:04 yamt Exp $	*/
+/*	$NetBSD: systrace.h,v 1.15.2.2 2006/12/30 20:50:56 yamt Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -55,6 +55,7 @@ struct str_msg_execve {
 #define SYSTR_MAX_POLICIES	64
 #define SYSTR_MAXARGS		64
 #define SYSTR_MAXFNAME		8
+#define SYSTR_MAXREPLEN		2048
 
 struct str_msg_ask {
 	int32_t code;
@@ -218,9 +219,9 @@ struct fsystrace {
 
 /* Internal prototypes */
 
-int systrace_enter(struct proc *, register_t, void *);
+int systrace_enter(struct lwp *, register_t, void *);
 void systrace_namei(struct nameidata *);
-void systrace_exit(struct proc *, register_t, void *, register_t [], int);
+void systrace_exit(struct lwp *, register_t, void *, register_t [], int);
 void systrace_sys_exit(struct proc *);
 void systrace_sys_fork(struct proc *, struct proc *);
 #ifndef __NetBSD__

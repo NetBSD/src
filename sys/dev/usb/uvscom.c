@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.15 2005/05/11 10:02:29 augustss Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.15.2.1 2006/12/30 20:49:40 yamt Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.15 2005/05/11 10:02:29 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.15.2.1 2006/12/30 20:49:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,7 +395,7 @@ USB_ATTACH(uvscom)
 	}
 
 	DPRINTF(("uvscom: in = 0x%x out = 0x%x intr = 0x%x\n",
-		 ucom->sc_bulkin_no, ucom->sc_bulkout_no, sc->sc_intr_number));
+		 uca.bulkin, uca.bulkout, sc->sc_intr_number));
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
@@ -847,7 +847,8 @@ uvscom_close(void *addr, int portno)
 }
 
 Static void
-uvscom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+uvscom_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct uvscom_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.27 2005/04/01 11:59:35 yamt Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.27.2.1 2006/12/30 20:47:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.27 2005/04/01 11:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.27.2.1 2006/12/30 20:47:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,8 +152,7 @@ bus_mapin(int bustype, int pa, int sz)
 
 	/* Borrow PROM mappings if we can. */
 	if (bustype == BUS_OBIO) {
-		va = (vaddr_t) obio_find_mapping(pa, sz);
-		if (va != 0)
+		if (find_prom_map(pa, PMAP_OBIO, sz, &va) == 0)
 			goto done;
 	}
 
@@ -190,5 +189,7 @@ bus_mapout(void *ptr, int sz)
 	sz += off;
 	sz = m68k_round_page(sz);
 
+	pmap_remove(pmap_kernel(), va, va + sz);
+	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, va, sz, UVM_KMF_VAONLY);
 }

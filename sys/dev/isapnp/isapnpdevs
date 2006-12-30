@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.56.4.1 2006/06/21 15:04:36 yamt Exp $
+$NetBSD: isapnpdevs,v 1.56.4.2 2006/12/30 20:48:35 yamt Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -138,6 +138,7 @@ devlogic	ep	TCM5098		0	3Com 3c509B-8
 devlogic	ess	ESS1868		0	ESS1868
 devlogic	ess	ESS1869		0	ESS1869
 devlogic	ess	ESS1878		0	ESS1878
+devlogic	ess	ESS1879		0	ESS1879
 
 /*
  * fmv
@@ -182,6 +183,7 @@ devlogic	mpu	AZT0002		0	Aztech AZT2320 MPU401 MIDI
 devlogic	mpu	AZT2001		0	Aztech MPU401 MIDI
 devlogic	mpu	AZT2004		0	Aztech AZT1020 MPU401 MIDI
 devlogic	mpu	CSC0003		0	CS4235 MPU401 MIDI
+devcompat	mpu	PNPB006		0	MPU401 compatible MIDI UART
 
 /*
  * ne
@@ -201,6 +203,7 @@ devlogic	pcic	AEI0218		0	Actiontec PnP PCMCIA Adapter
  */
 devlogic	sb	ADS7150		0	AD1815
 devlogic	sb	ADS7180		0	AD1816
+devlogic	sb	AZT1002		0	Aztech 1002 Audio
 devlogic	sb	AZT1003		0	Aztech 1003 Audio
 devlogic	sb	AZT1008		0	Aztech 1008
 devlogic	sb	AZT1016		0	Aztech 1020

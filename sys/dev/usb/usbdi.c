@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.108.2.1 2006/06/21 15:07:45 yamt Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.108.2.2 2006/12/30 20:49:39 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.108.2.1 2006/06/21 15:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.108.2.2 2006/12/30 20:49:39 yamt Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,8 +764,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	int sync = xfer->flags & USBD_SYNCHRONOUS;
 	int erred = xfer->status == USBD_CANCELLED ||
 	    xfer->status == USBD_TIMEOUT;
-	int repeat = pipe->repeat;
-	int polling;
+	int repeat, polling;
 
 	SPLUSBCHECK;
 
@@ -783,6 +784,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		return;
 	}
 #endif
+	repeat = pipe->repeat;
 	polling = pipe->device->bus->use_polling;
 	/* XXXX */
 	if (polling)
@@ -964,7 +966,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 	xfer->pipe = pipe;
 	err = usbd_sync_transfer(xfer);
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
-	if (xfer->actlen > xfer->length)
+	if (xfer->actlen > xfer->length) {
 		DPRINTF(("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
 			 "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
 			 dev->address, xfer->request.bmRequestType,
@@ -972,6 +974,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 			 UGETW(xfer->request.wIndex),
 			 UGETW(xfer->request.wLength),
 			 xfer->length, xfer->actlen));
+	}
 #endif
 	if (actlen != NULL)
 		*actlen = xfer->actlen;
@@ -1019,11 +1022,11 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 }
 
 void
-usbd_do_request_async_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
-			 usbd_status status)
+usbd_do_request_async_cb(usbd_xfer_handle xfer,
+    usbd_private_handle priv, usbd_status status)
 {
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
-	if (xfer->actlen > xfer->length)
+	if (xfer->actlen > xfer->length) {
 		DPRINTF(("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
 			 "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
 			 xfer->pipe->device->address,
@@ -1032,6 +1035,7 @@ usbd_do_request_async_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 			 UGETW(xfer->request.wIndex),
 			 UGETW(xfer->request.wLength),
 			 xfer->length, xfer->actlen));
+	}
 #endif
 	usbd_free_xfer(xfer);
 }
@@ -1178,6 +1182,12 @@ usb_desc_iter_next(usbd_desc_iter_t *iter)
 usbd_status
 usbd_get_string(usbd_device_handle dev, int si, char *buf)
 {
+	return usbd_get_string0(dev, si, buf, 1);
+}
+
+usbd_status
+usbd_get_string0(usbd_device_handle dev, int si, char *buf, int unicode)
+{
 	int swap = dev->quirks->uq_flags & UQ_SWAP_UNICODE;
 	usb_string_descriptor_t us;
 	char *s;
@@ -1208,23 +1218,37 @@ usbd_get_string(usbd_device_handle dev, int si, char *buf)
 		return (err);
 	s = buf;
 	n = size / 2 - 1;
-	for (i = 0; i < n; i++) {
-		c = UGETW(us.bString[i]);
-		if (swap)
-			c = (c >> 8) | (c << 8);
-		/* Encode (16-bit) Unicode as UTF8. */
-		if (c < 0x0080) {
-			*s++ = c;
-		} else if (c < 0x0800) {
-			*s++ = 0xc0 | (c >> 6);
-			*s++ = 0x80 | (c & 0x3f);
-		} else {
-			*s++ = 0xe0 | (c >> 12);
-			*s++ = 0x80 | ((c >> 6) & 0x3f);
-			*s++ = 0x80 | (c & 0x3f);
+	if (unicode) {
+		for (i = 0; i < n; i++) {
+			c = UGETW(us.bString[i]);
+			if (swap)
+				c = (c >> 8) | (c << 8);
+			if (c < 0x0080) {
+				*s++ = c;
+			} else if (c < 0x0800) {
+				*s++ = 0xc0 | (c >> 6);
+				*s++ = 0x80 | (c & 0x3f);
+			} else {
+				*s++ = 0xe0 | (c >> 12);
+				*s++ = 0x80 | ((c >> 6) & 0x3f);
+				*s++ = 0x80 | (c & 0x3f);
+			}
 		}
+		*s++ = 0;
 	}
-	*s++ = 0;
+#ifdef COMPAT_30
+	else {
+		int j;
+		for (i = j = 0; i < n && j < USB_MAX_STRING_LEN - 1; i++) {
+			c = UGETW(us.bString[i]);
+			if (swap)
+				c = (c >> 8) | (c << 8);
+			/* Encode (16-bit) Unicode as UTF8. */
+			s[j++] = (c < 0x80) ? c : '?';
+		}
+		s[j] = 0;
+	}
+#endif
 	return (USBD_NORMAL_COMPLETION);
 }
 

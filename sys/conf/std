@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.5.6.2 2006/06/21 15:00:01 yamt Exp $
+# $NetBSD: std,v 1.5.6.3 2006/12/30 20:47:49 yamt Exp $
 #
 # standard MI 'options'
 #
@@ -11,3 +11,10 @@ options	VMSWAP		# Swap device/file support
 options	BUFQ_FCFS	# First-come First-serve strategy
 options	BUFQ_DISKSORT	# Traditional min seek sort strategy
 options	RFC2292		# Previous version of Adv. Sockets API for IPv6 
+options	PTRACE		# Include ptrace(2)
+options	COREDUMP	# allow processes to coredump.
+
+#
+# Security model.
+#
+options secmodel_bsd44	# Traditional 4.4BSD security model

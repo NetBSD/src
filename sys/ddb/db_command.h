@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.24.2.1 2006/06/21 15:02:11 yamt Exp $	*/
+/*	$NetBSD: db_command.h,v 1.24.2.2 2006/12/30 20:47:49 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -36,7 +36,7 @@ struct db_command;
 
 void	db_skip_to_eol(void);
 void	db_command_loop(void);
-void	db_error(const char *);
+void	db_error(const char *) __attribute__((__noreturn__));
 
 extern db_addr_t db_dot;	/* current location */
 extern db_addr_t db_last_addr;	/* last explicit address typed */

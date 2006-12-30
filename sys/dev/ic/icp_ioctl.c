@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.7.2.1 2006/06/21 15:02:55 yamt Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.7.2.2 2006/12/30 20:48:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.7.2.1 2006/06/21 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.7.2.2 2006/12/30 20:48:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.7.2.1 2006/06/21 15:02:55 yamt Exp $
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
@@ -100,7 +101,7 @@ static dev_type_ioctl(icpioctl);
 
 const struct cdevsw icp_cdevsw = {
 	icpopen, nullclose, noread, nowrite, icpioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 extern struct cfdriver icp_cd;
@@ -112,8 +113,6 @@ static int
 icpopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
-	if (securelevel > 1)
-		return (EPERM);
 	if (device_lookup(&icp_cd, minor(dev)) == NULL)
 		return (ENXIO);
 
@@ -121,7 +120,8 @@ icpopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 static int
-icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	int error;
 
@@ -133,6 +133,11 @@ icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	    {
 		struct icp_softc *icp;
 		gdt_ucmd_t *ucmd = (void *) data;
+
+		error = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
+		if (error)
+			break;
 
 		icp = device_lookup(&icp_cd, ucmd->io_node);
 		if (icp == NULL) {

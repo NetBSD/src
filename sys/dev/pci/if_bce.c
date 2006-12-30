@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.8 2005/02/02 13:26:06 christos Exp $	 */
+/* $NetBSD: if_bce.c,v 1.8.6.1 2006/12/30 20:48:44 yamt Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -256,7 +256,8 @@ bce_lookup(const struct pci_attach_args * pa)
  * against drivers product list, and return its name if a match is found.
  */
 static int
-bce_probe(struct device *parent, struct cfdata *match, void *aux)
+bce_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -1044,7 +1045,7 @@ bce_add_mac(struct bce_softc *sc, u_int8_t *mac, u_long idx)
 		delay(10);
 	}
 	if (i == 100) {
-		printf("%s: timed out writting pkt filter ctl\n",
+		printf("%s: timed out writing pkt filter ctl\n",
 		   sc->bce_dev.dv_xname);
 	}
 }
@@ -1434,7 +1435,7 @@ bce_mii_write(struct device *self, int phy, int reg, int val)
 	}
 	rval = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_COMM);
 	if (i == BCE_TIMEOUT) {
-		printf("%s: PHY timed out writting phy %d, reg %d, val "
+		printf("%s: PHY timed out writing phy %d, reg %d, val "
 		    "= 0x%08x\n", sc->bce_dev.dv_xname, phy, reg, val);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.14.2 2006/06/21 14:52:54 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.1.14.3 2006/12/30 20:46:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -127,7 +127,7 @@ main(int argc, CHAR16 *argv[])
 	/* Get our loaded image protocol interface structure. */
 	BS->HandleProtocol(IH, &imgid, (VOID**)&img);
 
-	printf("Image base: 0x%x\n", (u_long)img->ImageBase);
+	printf("Image base: 0x%lx\n", (u_long)img->ImageBase);
 
 	printf("\n");
 	printf("%s, Revision %s\n", bootprog_name, bootprog_rev);

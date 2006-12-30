@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.17.2.1 2006/06/21 14:52:44 yamt Exp $
+# $NetBSD: Makefile.bootxx,v 1.17.2.2 2006/12/30 20:46:19 yamt Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -46,6 +46,7 @@ CPPFLAGS+= -DFS=${FS}
 
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
+DBG=
 
 CPPFLAGS+= -DNO_LBA_CHECK
 
@@ -68,6 +69,8 @@ COPTS+=    -ffreestanding
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
+
+CPPFLAGS+= -DUNALIGNED_ACCESS
 
 CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
 		-DLIBSA_NO_TWIDDLE \
@@ -130,10 +133,10 @@ CLEANFILES+= ${PROG}.sym ${PROG}.map
 
 ${PROG}: ${OBJS} ${LIBLIST}
 	${_MKTARGET_LINK}
-	${CC} -o ${PROG}.sym ${LDFLAGS} -Ttext ${PRIMARY_LOAD_ADDRESS} \
+	${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,-Ttext,${PRIMARY_LOAD_ADDRESS} \
 		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
-	@ sz=$$(ls -ln ${PROG}|tr -s ' '|cut -d' ' -f5); \
+	@ sz=$$(${TOOL_STAT} -f '%z' ${PROG}); \
 	if [ "$$sz" -gt "${BOOTXX_MAXSIZE}" ]; then \
 		echo "### ${PROG} size $$sz is larger than ${BOOTXX_MAXSIZE}" >&2; \
 		rm ${PROG}; \

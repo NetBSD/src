@@ -1,4 +1,4 @@
-/*	$NetBSD: kbio.h,v 1.2 2003/08/07 16:31:26 agc Exp $ */
+/*	$NetBSD: kbio.h,v 1.2.16.1 2006/12/30 20:49:38 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)kbio.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _DEV_SUN_KBIO_H_
+#define _DEV_SUN_KBIO_H_
 
 /*
  * The following is a minimal emulation of Sun's `kio' structures
@@ -114,3 +117,5 @@ struct kiockeymap {
 #define	TR_ASCII		1	/* X compat, unsupported */
 #define	TR_EVENT		2	/* X compat, unsupported */
 #define	TR_UNTRANS_EVENT	3
+
+#endif /* _DEV_SUN_KBIO_H_ */

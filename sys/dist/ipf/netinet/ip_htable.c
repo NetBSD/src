@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.2.6.1 2006/06/21 15:09:11 yamt Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.2.6.2 2006/12/30 20:49:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -12,6 +12,11 @@
 # define        _KERNEL	1
 #endif
 #include <sys/param.h>
+#if defined(__NetBSD__)
+# if (NetBSD >= 199905) && !defined(IPFILTER_LKM) && defined(_KERNEL)
+#  include "opt_ipfilter.h"
+# endif
+#endif
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/time.h>
@@ -385,16 +390,16 @@ void *tptr, *aptr;
 /*                                                                          */
 /* Search the hash table for a given address and return a search result.    */
 /* ------------------------------------------------------------------------ */
-int fr_iphmfindip(tptr, version, aptr)
+int fr_iphmfindip(tptr, ipversion, aptr)
 void *tptr, *aptr;
-int version;
+int ipversion;
 {
 	struct in_addr *addr;
 	iphtable_t *iph;
 	iphtent_t *ipe;
 	int rval;
 
-	if (version != 4)
+	if (ipversion != 4)
 		return -1;
 
 	if (tptr == NULL || aptr == NULL)

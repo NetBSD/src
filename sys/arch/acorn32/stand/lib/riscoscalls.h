@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.3.12.1 2006/06/21 14:47:48 yamt Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.3.12.2 2006/12/30 20:45:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -70,6 +70,8 @@
 #define XOS_ReadVduVariables	0x020031
 #define OS_SWINumberFromString	0x000039
 #define XOS_SWINumberFromString	0x020039
+#define OS_ReadMonotonicTime	0x000042
+#define XOS_ReadMonotonicTime	0x020042
 #define OS_ReadMemMapInfo	0x000051
 #define XOS_ReadMemMapInfo	0x020051
 #define OS_ReadMemMapEntries	0x000052
@@ -118,9 +120,11 @@ extern os_error *xos_cli(char *);
 /* OS_Byte */
 
 #define osbyte_OUTPUT_CURSOR_POSITION	165
+#define osbyte_VAR_VSYNC_TIMER		176
 
 #ifndef __ASSEMBLER__
 extern void os_byte(int, int, int, int *, int *);
+extern int osbyte_read(int);
 #endif
 
 /* OS_Word */
@@ -248,7 +252,9 @@ struct page_info {
 };
 
 extern void osmemory_read_arrangement_table_size(int *size, int *nbpp);
+extern os_error *xosmemory_read_arrangement_table_size(int *size, int *nbpp);
 extern void osmemory_read_arrangement_table(unsigned char *block);
+extern os_error *xosmemory_read_arrangement_table(unsigned char *block);
 extern void osmemory_page_op(int fromto, struct page_info *block, int num_pages);
 #endif
 
@@ -275,6 +281,7 @@ extern os_error *xosmodule_lookup(char const *, int *, int *, void **, void **,
 #endif
 
 #define OSFSControl_AddFS		12
+#define OSFSControl_SelectFS		14
 #define OSFSControl_RemoveFS		16
 #define OSFSControl_Shutdown		23
 
@@ -312,9 +319,19 @@ extern os_error *xosmodule_lookup(char const *, int *, int *, void **, void **,
 #define fileswitch_ATTR_WORLD_LOCKED	(1 << 7)
 
 #ifndef __ASSEMBLER__
+struct fileswitch_dirent {
+	uint32_t	loadaddr;
+	uint32_t	execaddr;
+	uint32_t	length;
+	uint32_t	attr;
+	uint32_t	objtype;
+	char		name[1];	/* Actually variable length */
+};
+
 extern os_error *xosfscontrol_shutdown(void);
 #endif
 
+#define Service_FSRedeclare	0x40
 #define Service_PreReset	0x45
 
 #ifndef __ASSEMBLER__
@@ -332,6 +349,8 @@ extern void service_pre_reset(void);
 extern void os_read_vdu_variables(const int *, int *);
 
 extern os_error *xos_swi_number_from_string(char const *, int *);
+
+extern unsigned int os_read_monotonic_time(void);
 
 extern void os_read_mem_map_info(int *, int *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.10 2004/10/27 19:29:57 david Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.10.12.1 2006/12/30 20:47:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.10 2004/10/27 19:29:57 david Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.10.12.1 2006/12/30 20:47:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.10 2004/10/27 19:29:57 david Exp $");
 
 /* ARGSUSED */
 int
-compat_43_sys_getpagesize(struct lwp *l, void *v, register_t *retval)
+compat_43_sys_getpagesize(struct lwp *l, void *v,
+    register_t *retval)
 {
 
 	*retval = PAGE_SIZE;

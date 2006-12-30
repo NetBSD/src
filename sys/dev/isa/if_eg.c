@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.65 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.65.4.1 2006/12/30 20:48:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.65 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.65.4.1 2006/12/30 20:48:26 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -74,10 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.65 2005/02/27 00:27:17 perry Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -167,8 +162,7 @@ egprintpcb(pcb)
 
 
 static inline void
-egprintstat(b)
-	u_char b;
+egprintstat(u_char b)
 {
 	DPRINTF(("%s %s %s %s %s %s %s\n",
 		 (b & EG_STAT_HCRE)?"HCRE":"",
@@ -304,7 +298,6 @@ egreadPCB(iot, ioh, pcb)
 	if (egreadPCBstat(iot, ioh, EG_PCB_DONE))
 		return 1;
 	if (bus_space_read_1(iot, ioh, EG_COMMAND) != pcb[1] + 2) {
-		DPRINTF(("%d != %d\n", b, pcb[1] + 2));
 		return 1;
 	}
 
@@ -320,10 +313,8 @@ egreadPCB(iot, ioh, pcb)
  */
 
 int
-egprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+egprobe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -401,9 +392,7 @@ egprobe(parent, match, aux)
 }
 
 void
-egattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+egattach(struct device *parent, struct device *self, void *aux)
 {
 	struct eg_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -875,22 +864,6 @@ egioctl(ifp, cmd, data)
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				   *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
-				    ETHER_ADDR_LEN);
-			/* Set new address. */
-			eginit(sc);
-			break;
-		    }
-#endif
 		default:
 			eginit(sc);
 			break;
@@ -916,8 +889,9 @@ egioctl(ifp, cmd, data)
 		} else {
 			sc->eg_pcb[0] = EG_CMD_GETSTATS;
 			sc->eg_pcb[1] = 0;
-			if (egwritePCB(sc->sc_iot, sc->sc_ioh, sc->eg_pcb) != 0)
+			if (egwritePCB(sc->sc_iot, sc->sc_ioh, sc->eg_pcb) != 0) {
 				DPRINTF(("write error\n"));
+			}
 			/*
 			 * XXX deal with flags changes:
 			 * IFF_MULTICAST, IFF_PROMISC,

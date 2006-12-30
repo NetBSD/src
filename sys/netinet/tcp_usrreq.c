@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.106.2.1 2006/06/21 15:11:02 yamt Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.106.2.2 2006/12/30 20:50:34 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,6 +38,8 @@
  * Facility, NASA Ames Research Center.
  * This code is derived from software contributed to The NetBSD Foundation
  * by Charles M. Hannum.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Rui Paulo.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -100,12 +102,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.106.2.1 2006/06/21 15:11:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.106.2.2 2006/12/30 20:50:34 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_tcp_debug.h"
 #include "opt_mbuftrace.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,6 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.106.2.1 2006/06/21 15:11:02 yamt Ex
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
@@ -175,7 +179,6 @@ tcp_usrreq(struct socket *so, int req,
 	struct in6pcb *in6p;
 #endif
 	struct tcpcb *tp = NULL;
-	struct proc *p;
 	int s;
 	int error = 0;
 #ifdef TCP_DEBUG
@@ -183,7 +186,6 @@ tcp_usrreq(struct socket *so, int req,
 #endif
 	int family;	/* family of the socket */
 
-	p = l ? l->l_proc : NULL;
 	family = so->so_proto->pr_domain->dom_family;
 
 	if (req == PRU_CONTROL) {
@@ -191,17 +193,19 @@ tcp_usrreq(struct socket *so, int req,
 #ifdef INET
 		case PF_INET:
 			return (in_control(so, (long)m, (caddr_t)nam,
-			    (struct ifnet *)control, p));
+			    (struct ifnet *)control, l));
 #endif
 #ifdef INET6
 		case PF_INET6:
 			return (in6_control(so, (long)m, (caddr_t)nam,
-			    (struct ifnet *)control, p));
+			    (struct ifnet *)control, l));
 #endif
 		default:
 			return EAFNOSUPPORT;
 		}
 	}
+
+	s = splsoftnet();
 
 	if (req == PRU_PURGEIF) {
 		switch (family) {
@@ -220,12 +224,13 @@ tcp_usrreq(struct socket *so, int req,
 			break;
 #endif
 		default:
+			splx(s);
 			return (EAFNOSUPPORT);
 		}
+		splx(s);
 		return (0);
 	}
 
-	s = splsoftnet();
 	switch (family) {
 #ifdef INET
 	case PF_INET:
@@ -331,12 +336,12 @@ tcp_usrreq(struct socket *so, int req,
 		switch (family) {
 #ifdef INET
 		case PF_INET:
-			error = in_pcbbind(inp, nam, p);
+			error = in_pcbbind(inp, nam, l);
 			break;
 #endif
 #ifdef INET6
 		case PF_INET6:
-			error = in6_pcbbind(in6p, nam, p);
+			error = in6_pcbbind(in6p, nam, l);
 			if (!error) {
 				/* mapped addr case */
 				if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr))
@@ -356,7 +361,7 @@ tcp_usrreq(struct socket *so, int req,
 #ifdef INET
 		if (inp && inp->inp_lport == 0) {
 			error = in_pcbbind(inp, (struct mbuf *)0,
-			    (struct proc *)0);
+			    (struct lwp *)0);
 			if (error)
 				break;
 		}
@@ -364,7 +369,7 @@ tcp_usrreq(struct socket *so, int req,
 #ifdef INET6
 		if (in6p && in6p->in6p_lport == 0) {
 			error = in6_pcbbind(in6p, (struct mbuf *)0,
-			    (struct proc *)0);
+			    (struct lwp *)0);
 			if (error)
 				break;
 		}
@@ -384,22 +389,22 @@ tcp_usrreq(struct socket *so, int req,
 		if (inp) {
 			if (inp->inp_lport == 0) {
 				error = in_pcbbind(inp, (struct mbuf *)0,
-				    (struct proc *)0);
+				    (struct lwp *)0);
 				if (error)
 					break;
 			}
-			error = in_pcbconnect(inp, nam, p);
+			error = in_pcbconnect(inp, nam, l);
 		}
 #endif
 #ifdef INET6
 		if (in6p) {
 			if (in6p->in6p_lport == 0) {
 				error = in6_pcbbind(in6p, (struct mbuf *)0,
-				    (struct proc *)0);
+				    (struct lwp *)0);
 				if (error)
 					break;
 			}
-			error = in6_pcbconnect(in6p, nam, p);
+			error = in6_pcbconnect(in6p, nam, l);
 			if (!error) {
 				/* mapped addr case */
 				if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr))
@@ -643,7 +648,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 #endif
 	default:
 		splx(s);
-		return EAFNOSUPPORT;
+		panic("%s: af %d", __func__, family);
 	}
 #ifndef INET6
 	if (inp == NULL)
@@ -716,6 +721,13 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			else
 				error = EINVAL;
 			break;
+#ifdef notyet
+		case TCP_CONGCTL:
+			if (m == NULL)
+				error = EINVAL;
+			error = tcp_congctl_select(tp, mtod(m, char *));
+#endif
+			break;
 
 		default:
 			error = ENOPROTOOPT;
@@ -742,6 +754,10 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 		case TCP_MAXSEG:
 			*mtod(m, int *) = tp->t_peermss;
 			break;
+#ifdef notyet
+		case TCP_CONGCTL:
+			break;
+#endif
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -780,9 +796,9 @@ tcp_attach(struct socket *so)
 	family = so->so_proto->pr_domain->dom_family;
 
 #ifdef MBUFTRACE
-	so->so_mowner = &tcp_mowner;
-	so->so_rcv.sb_mowner = &tcp_rx_mowner;
-	so->so_snd.sb_mowner = &tcp_tx_mowner;
+	so->so_mowner = &tcp_sock_mowner;
+	so->so_rcv.sb_mowner = &tcp_sock_rx_mowner;
+	so->so_snd.sb_mowner = &tcp_sock_tx_mowner;
 #endif
 	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
 		error = soreserve(so, tcp_sendspace, tcp_recvspace);
@@ -1257,8 +1273,9 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 		if (inph->inph_af != pf)
 			continue;
 
-		if (CURTAIN(kauth_cred_getuid(l->l_proc->p_cred),
-			    inph->inph_socket->so_uidinfo->ui_uid)) /* XXX elad */
+		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
+		    KAUTH_REQ_NETWORK_SOCKET_CANSEE, inph->inph_socket, NULL,
+		    NULL) != 0)
 			continue;
 
 		memset(&pcb, 0, sizeof(pcb));
@@ -1375,6 +1392,32 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	return (error);
 }
 
+static int
+sysctl_tcp_congctl(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error, r;
+	char newname[TCPCC_MAXLEN];
+
+	strlcpy(newname, tcp_congctl_global_name, sizeof(newname) - 1);
+	
+	node = *rnode;
+	node.sysctl_data = newname;
+	node.sysctl_size = sizeof(newname);
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	
+	if (error || 
+	    newp == NULL ||
+	    strncmp(newname, tcp_congctl_global_name, sizeof(newname)) == 0)
+		return error;
+
+	if ((r = tcp_congctl_select(NULL, newname)))
+		return r;
+	
+	return error;
+}
+
 /*
  * this (second stage) setup routine is a replacement for tcp_sysctl()
  * (which is currently used for ipv4 and ipv6)
@@ -1384,6 +1427,9 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 			   const char *tcpname)
 {
 	const struct sysctlnode *sack_node;
+	const struct sysctlnode *abc_node;
+	const struct sysctlnode *ecn_node;
+	const struct sysctlnode *congctl_node;
 #ifdef TCP_DEBUG
 	extern struct tcp_debug tcp_debug[TCP_NDEBUG];
 	extern int tcp_debx;
@@ -1474,6 +1520,26 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("RFC2018 Selective ACKnowledgement tunables"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_EOL);
+
+	/* Congctl subtree */
+	sysctl_createv(clog, 0, NULL, &congctl_node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "congctl",
+		       SYSCTL_DESCR("TCP Congestion Control"),
+	    	       NULL, 0, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &congctl_node, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "available",
+		       SYSCTL_DESCR("Available Congestion Control Mechanisms"),
+		       NULL, 0, &tcp_congctl_avail, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &congctl_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "selected",
+		       SYSCTL_DESCR("Selected Congestion Control Mechanism"),
+		       sysctl_tcp_congctl, 0, NULL, TCPCC_MAXLEN,
+		       CTL_CREATE, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "win_scale",
@@ -1541,12 +1607,6 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SLOWHZ, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "newreno",
-		       SYSCTL_DESCR("NewReno congestion control algorithm"),
-		       NULL, 0, &tcp_do_newreno, 0,
-		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_NEWRENO, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "log_refused",
 		       SYSCTL_DESCR("Log refused TCP connections"),
 		       NULL, 0, &tcp_log_refused, 0,
@@ -1599,6 +1659,26 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
 		       CTL_EOL);
 
+	/* ECN subtree */
+	sysctl_createv(clog, 0, NULL, &ecn_node,
+	    	       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ecn",
+	    	       SYSCTL_DESCR("RFC3168 Explicit Congestion Notification"),
+	    	       NULL, 0, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &ecn_node, NULL,
+	    	       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "enable",
+		       SYSCTL_DESCR("Enable TCP Explicit Congestion "
+			   "Notification"),
+	    	       NULL, 0, &tcp_do_ecn, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &ecn_node, NULL,
+	    	       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxretries",
+		       SYSCTL_DESCR("Number of times to retry ECN setup "
+			       "before disabling ECN on the connection"),
+	    	       NULL, 0, &tcp_ecn_maxretries, 0, CTL_CREATE, CTL_EOL);
+	
 	/* SACK gets it's own little subtree. */
 	sysctl_createv(clog, 0, NULL, &sack_node,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -1648,7 +1728,34 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DEBX,
 		       CTL_EOL);
 #endif
+#if NRND > 0
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "iss_hash",
+		       SYSCTL_DESCR("Enable RFC 1948 ISS by cryptographic "
+				    "hash computation"),
+		       NULL, 0, &tcp_do_rfc1948, sizeof(tcp_do_rfc1948),
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
+		       CTL_EOL);
+#endif
 
+	/* ABC subtree */
+
+	sysctl_createv(clog, 0, NULL, &abc_node,
+		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "abc",
+		       SYSCTL_DESCR("RFC3465 Appropriate Byte Counting (ABC)"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &abc_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "enable",
+		       SYSCTL_DESCR("Enable RFC3465 Appropriate Byte Counting"),
+		       NULL, 0, &tcp_do_abc, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &abc_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "aggressive",
+		       SYSCTL_DESCR("1: L=2*SMSS 0: L=1*SMSS"),
+		       NULL, 0, &tcp_abc_aggressive, 0, CTL_CREATE, CTL_EOL);
 }
 
 /*

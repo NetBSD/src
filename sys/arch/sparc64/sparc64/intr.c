@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.47.16.1 2006/06/21 14:56:47 yamt Exp $ */
+/*	$NetBSD: intr.c,v 1.47.16.2 2006/12/30 20:47:05 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.47.16.1 2006/06/21 14:56:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.47.16.2 2006/12/30 20:47:05 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -154,8 +154,8 @@ softnet(void *fp)
 	return (1);
 }
 
-struct intrhand soft01intr = { softintr, NULL, 1 };
-struct intrhand soft01net = { softnet, NULL, 1 };
+struct intrhand soft01intr = { .ih_fun = softintr, .ih_number = 1 };
+struct intrhand soft01net = { .ih_fun = softnet, .ih_number = 1 };
 
 #if 1
 void 

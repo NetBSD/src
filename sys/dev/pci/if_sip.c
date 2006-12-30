@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.102.2.1 2006/06/21 15:05:05 yamt Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.102.2.2 2006/12/30 20:48:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.102.2.1 2006/06/21 15:05:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.102.2.2 2006/12/30 20:48:45 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -637,7 +637,8 @@ SIP_DECL(check_64bit)(const struct pci_attach_args *pa)
 #endif /* DP83820 */
 
 static int
-SIP_DECL(match)(struct device *parent, struct cfdata *cf, void *aux)
+SIP_DECL(match)(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

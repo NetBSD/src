@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.h,v 1.1.18.2 2006/06/21 15:09:30 yamt Exp $	*/
+/*	$NetBSD: bfs.h,v 1.1.18.3 2006/12/30 20:50:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -102,14 +102,14 @@ struct bfs_inode {
 struct bfs_super_block {
 	struct bfs_super_block_header header;
 	struct bfs_compaction compaction;
-	int8_t fsname[6];
-	int8_t volume[6];
+	char fsname[6];
+	char volume[6];
 	int32_t padding[118];
 } __attribute__((__packed__));
 
 struct bfs_dirent {
 	uint16_t inode;
-	int8_t name[BFS_FILENAME_MAXLEN];
+	char name[BFS_FILENAME_MAXLEN];
 } __attribute__((__packed__)); /* 16byte */
 
 #if defined _KERNEL || defined _STANDALONE

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.24.4.1 2006/06/21 15:06:47 yamt Exp $ */
+/*	$NetBSD: bpp.c,v 1.24.4.2 2006/12/30 20:49:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.24.4.1 2006/06/21 15:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.24.4.2 2006/12/30 20:49:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -133,7 +133,7 @@ dev_type_kqfilter(bppkqfilter);
 
 const struct cdevsw bpp_cdevsw = {
 	bppopen, bppclose, noread, bppwrite, bppioctl,
-	nostop, notty, bpppoll, nommap, bppkqfilter,
+	nostop, notty, bpppoll, nommap, bppkqfilter, D_TTY
 };
 
 #define BPPUNIT(dev)	(minor(dev))

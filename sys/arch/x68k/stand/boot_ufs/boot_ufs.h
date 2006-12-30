@@ -1,4 +1,4 @@
-/*	$NetBSD: boot_ufs.h,v 1.2 2002/03/17 16:14:30 minoura Exp $	*/
+/*	$NetBSD: boot_ufs.h,v 1.2.28.1 2006/12/30 20:47:21 yamt Exp $	*/
 
 /***************************************************************
  *
@@ -16,7 +16,7 @@ void RAW_READ0 __P((void *buf, u_int32_t blkpos, size_t bytelen));
 #endif
 unsigned B_KEYINP __P((void));
 void B_PUTC __P((unsigned int c));
-void B_PRINT __P((const unsigned char *p));
+void B_PRINT __P((const char *p));
 unsigned B_COLOR __P((unsigned int w));
 
 extern unsigned ID;		/* target SCSI ID */

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.68.2.1 2006/06/21 15:05:05 yamt Exp $ */
+/* $NetBSD: if_ti.c,v 1.68.2.2 2006/12/30 20:48:45 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,11 +81,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.68.2.1 2006/06/21 15:05:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.68.2.2 2006/12/30 20:48:45 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
-#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,10 +116,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.68.2.1 2006/06/21 15:05:05 yamt Exp $");
 #include <netinet/ip.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -678,11 +673,8 @@ static void *ti_jalloc(sc)
 /*
  * Release a jumbo buffer.
  */
-static void ti_jfree(m, tbuf, size, arg)
-	struct mbuf		*m;
-	caddr_t			tbuf;
-	size_t			size;
-	void *arg;
+static void ti_jfree(struct mbuf *m, caddr_t tbuf, size_t size,
+    void *arg)
 {
 	struct ti_softc		*sc;
 	int		        i, s;
@@ -1636,10 +1628,9 @@ ti_type_match(pa)
  * Probe for a Tigon chip. Check the PCI vendor and device IDs
  * against our list and return its name if we find a match.
  */
-static int ti_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+ti_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct ti_type		*t;
@@ -1649,9 +1640,8 @@ static int ti_probe(parent, match, aux)
 	return((t == NULL) ? 0 : 1);
 }
 
-static void ti_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+ti_attach(struct device *parent, struct device *self, void *aux)
 {
 	u_int32_t		command;
 	struct ifnet		*ifp;
@@ -2774,20 +2764,6 @@ ti_ether_ioctl(ifp, cmd, data)
 		case AF_INET:
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			 struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			 if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			 else
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
-				    ifp->if_addrlen);
-			 break;
-		    }
 #endif
 		default:
 			break;

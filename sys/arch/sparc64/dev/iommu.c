@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.76.2.1 2006/06/21 14:56:40 yamt Exp $	*/
+/*	$NetBSD: iommu.c,v 1.76.2.2 2006/12/30 20:47:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.76.2.1 2006/06/21 14:56:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.76.2.2 2006/12/30 20:47:02 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -501,7 +501,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
 			map->_dm_dvmastart = 0;
 			map->_dm_dvmasize = 0;
 			splx(s);
-			return (E2BIG);
+			return (EFBIG);
 		}
 		sgstart += len;
 		map->dm_segs[seg].ds_addr = sgstart;
@@ -734,7 +734,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
 			} else {
 				if (j >= map->_dm_segcnt) {
 					iommu_dvmamap_unload(t, sb, map);
-					return (E2BIG);
+					return (EFBIG);
 				}
 				map->dm_segs[j].ds_addr = sgstart;
 				map->dm_segs[j].ds_len = left;
@@ -757,7 +757,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
 					(long)map->dm_segs[j].ds_len));
 				if (++j >= map->_dm_segcnt) {
 					iommu_dvmamap_unload(t, sb, map);
-					return (E2BIG);
+					return (EFBIG);
 				}
 				sgstart = roundup(sgstart, boundary);
 				map->dm_segs[j].ds_addr = sgstart;
@@ -831,7 +831,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
 			map->_dm_dvmastart = 0;
 			map->_dm_dvmasize = 0;
 			splx(s);
-			return (E2BIG);
+			return (EFBIG);
 		}
 		sgstart = roundup(sgstart, boundary);
 		map->dm_segs[i].ds_addr = sgstart;

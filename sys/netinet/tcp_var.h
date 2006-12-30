@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.126.2.1 2006/06/21 15:11:02 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.126.2.2 2006/12/30 20:50:34 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,6 +145,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
+#include "rnd.h"
 #endif
 
 /*
@@ -217,6 +218,9 @@ struct tcpcb {
 #define	TF_REASSEMBLING	0x1000		/* we're busy reassembling */
 #define	TF_DEAD		0x2000		/* dead and to-be-released */
 #define	TF_PMTUD_PEND	0x4000		/* Path MTU Discovery pending */
+#define	TF_ECN_PERMIT	0x10000		/* other side said is ECN-ready */
+#define	TF_ECN_SND_CWR	0x20000		/* ECN CWR in queue */
+#define	TF_ECN_SND_ECE	0x40000		/* ECN ECE in queue */
 #define	TF_SIGNATURE	0x400000	/* require MD5 digests (RFC2385) */
 
 
@@ -226,7 +230,7 @@ struct tcpcb {
 	struct	callout t_delack_ch;	/* delayed ACK callout */
 /*
  * The following fields are used as in the protocol specification.
- * See RFC783, Dec. 1981, page 21.
+ * See RFC793, Dec. 1981, page 21.
  */
 /* send sequence variables */
 	tcp_seq	snd_una;		/* send unacknowledged */
@@ -287,6 +291,9 @@ struct tcpcb {
 	u_int32_t ts_timebase;		/* our timebase */
 	tcp_seq	last_ack_sent;
 
+/* RFC 3465 variables */
+	u_long	t_bytes_acked;		/* ABC "bytes_acked" parameter */
+
 /* SACK stuff */
 #define TCP_SACK_MAX 3
 #define TCPSACK_NONE 0
@@ -320,7 +327,16 @@ struct tcpcb {
 	u_int	t_pmtud_nextmtu;	/* Advertised Next-Hop MTU from ICMP */
 	u_short	t_pmtud_ip_len;		/* IP length from ICMP payload */
 	u_short	t_pmtud_ip_hl;		/* IP header length from ICMP payload */
+
+	uint8_t t_ecn_retries;		/* # of ECN setup retries */
+	
+	struct tcp_congctl *t_congctl;	/* per TCB congctl algorithm */
 };
+
+/*
+ * Macros to aid ECN TCP.
+ */
+#define TCP_ECN_ALLOWED(tp)	(tp->t_flags & TF_ECN_PERMIT)
 
 /*
  * Macros to aid SACK/FACK TCP.
@@ -483,6 +499,7 @@ struct syn_cache {
 #define	SCF_TIMESTAMP		0x0002		/* peer will do timestamps */
 #define	SCF_DEAD		0x0004		/* this entry to be released */
 #define SCF_SACK_PERMIT		0x0008		/* peer will do SACK */
+#define SCF_ECN_PERMIT		0x0010		/* peer will do ECN */
 #define SCF_SIGNATURE	0x40			/* send MD5 digests */
 
 	struct mbuf *sc_ipopts;			/* IP options */
@@ -634,6 +651,10 @@ struct	tcpstat {
 	u_quad_t tcps_selfquench;	/* # of ENOBUFS we get on output */
 	u_quad_t tcps_badsig;		/* # of drops due to bad signature */
 	u_quad_t tcps_goodsig;		/* # of packets with good signature */
+
+	u_quad_t tcps_ecn_shs;		/* # of sucessful ECN handshakes */
+	u_quad_t tcps_ecn_ce;		/* # of packets with CE bit */
+	u_quad_t tcps_ecn_ect;		/* # of packets with ECT(0) bit */
 };
 
 /*
@@ -699,7 +720,7 @@ struct	tcpstat {
 	{ "keepintvl",	CTLTYPE_INT }, \
 	{ "keepcnt",	CTLTYPE_INT }, \
 	{ "slowhz",	CTLTYPE_INT }, \
-	{ "newreno",	CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "log_refused",CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ "rstppslimit", CTLTYPE_INT }, \
@@ -721,7 +742,6 @@ extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcp_do_sack;	/* SACK enabled/disabled? */
 extern	int tcp_do_win_scale;	/* RFC1323 window scaling enabled/disabled? */
 extern	int tcp_do_timestamps;	/* RFC1323 timestamps enabled/disabled? */
-extern	int tcp_do_newreno;	/* Use the New Reno algorithms */
 extern	int tcp_mssdflt;	/* default seg size */
 extern	int tcp_init_win;	/* initial window */
 extern	int tcp_init_win_local;	/* initial window for local nets */
@@ -733,9 +753,16 @@ extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_log_refused;	/* log refused connections */
+extern	int tcp_do_ecn;		/* TCP ECN enabled/disabled? */
+extern	int tcp_ecn_maxretries;	/* Max ECN setup retries */
+#if NRND > 0
+extern	int tcp_do_rfc1948;	/* ISS by cryptographic hash */
+#endif
 extern int tcp_sack_tp_maxholes;	/* Max holes per connection. */
 extern int tcp_sack_globalmaxholes;	/* Max holes per system. */
 extern int tcp_sack_globalholes;	/* Number of holes present. */
+extern int tcp_do_abc;			/* RFC3465 ABC enabled/disabled? */
+extern int tcp_abc_aggressive;		/* 1: L=2*SMSS  0: L=1*SMSS */
 
 extern	int tcp_rst_ppslim;
 extern	int tcp_ackdrop_ppslim;
@@ -747,6 +774,10 @@ extern	u_long syn_cache_count;
 #ifdef MBUFTRACE
 extern	struct mowner tcp_rx_mowner;
 extern	struct mowner tcp_tx_mowner;
+extern	struct mowner tcp_reass_mowner;
+extern	struct mowner tcp_sock_mowner;
+extern	struct mowner tcp_sock_rx_mowner;
+extern	struct mowner tcp_sock_tx_mowner;
 extern	struct mowner tcp_mowner;
 #endif
 
@@ -772,7 +803,7 @@ extern	struct mowner tcp_mowner;
 	{ 1, 0, &tcp_keepintvl },		\
 	{ 1, 0, &tcp_keepcnt },			\
 	{ 1, 1, 0, PR_SLOWHZ },			\
-	{ 1, 0, &tcp_do_newreno },		\
+	{ 0 },					\
 	{ 1, 0, &tcp_log_refused },		\
 	{ 0 },					\
 	{ 1, 0, &tcp_rst_ppslim },		\
@@ -810,8 +841,6 @@ struct secasvar *tcp_signature_getsav(struct mbuf *, struct tcphdr *);
 int	 tcp_signature(struct mbuf *, struct tcphdr *, int, struct secasvar *,
 	    char *);
 #endif
-int	 tcp_dooptions(struct tcpcb *, u_char *, int, struct tcphdr *,
-	    struct mbuf *, int, struct tcp_opt_info *);
 void	 tcp_drain(void);
 void	 tcp_established(struct tcpcb *);
 void	 tcp_init(void);
@@ -842,7 +871,6 @@ void	 tcp_mtudisc(struct inpcb *, int);
 struct ipqent *tcpipqent_alloc(void);
 void	 tcpipqent_free(struct ipqent *);
 
-int	 tcp_reass(struct tcpcb *, struct tcphdr *, struct mbuf *, int *);
 int	 tcp_respond(struct tcpcb *, struct mbuf *, struct mbuf *,
 	    struct tcphdr *, tcp_seq, tcp_seq, int);
 void	 tcp_rmx_rtt(struct tcpcb *);
@@ -865,12 +893,13 @@ tcp_seq  tcp_new_iss1(void *, void *, u_int16_t, u_int16_t, size_t,
 	    tcp_seq);
 
 void	 tcp_new_dsack(struct tcpcb *, tcp_seq, u_int32_t);
-void	 tcp_sack_option(struct tcpcb *, struct tcphdr *, u_char *, int);
-void	 tcp_del_sackholes(struct tcpcb *, struct tcphdr *);
+void	 tcp_sack_option(struct tcpcb *, const struct tcphdr *,
+	    const u_char *, int);
+void	 tcp_del_sackholes(struct tcpcb *, const struct tcphdr *);
 void	 tcp_free_sackholes(struct tcpcb *);
 void	 tcp_sack_adjust(struct tcpcb *tp);
 struct sackhole *tcp_sack_output(struct tcpcb *tp, int *sack_bytes_rexmt);
-void	 tcp_sack_newack(struct tcpcb *, struct tcphdr *);
+void	 tcp_sack_newack(struct tcpcb *, const struct tcphdr *);
 int	 tcp_sack_numblks(const struct tcpcb *);
 #define	TCP_SACK_OPTLEN(nblks)	((nblks) * 8 + 2 + 2)
 
@@ -891,9 +920,6 @@ void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
 int	 syn_cache_respond(struct syn_cache *, struct mbuf *);
 void	 syn_cache_timer(void *);
 void	 syn_cache_cleanup(struct tcpcb *);
-
-void	 tcp_reno_newack(struct tcpcb *, struct tcphdr *);
-void	 tcp_newreno_newack(struct tcpcb *, struct tcphdr *);
 
 int	 tcp_input_checksum(int, struct mbuf *, const struct tcphdr *, int, int,
     int);

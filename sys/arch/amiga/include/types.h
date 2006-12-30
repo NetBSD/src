@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.16 2005/01/19 02:08:55 chs Exp $	*/
+/*	$NetBSD: types.h,v 1.16.8.1 2006/12/30 20:45:28 yamt Exp $	*/
 
 #ifndef _MACHINE_TYPES_H_
 #define	_MACHINE_TYPES_H_
@@ -7,5 +7,6 @@
 
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
+#define	__HAVE_GENERIC_TODR
 
 #endif

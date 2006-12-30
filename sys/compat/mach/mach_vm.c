@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.48.2.1 2006/06/21 14:59:35 yamt Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.48.2.2 2006/12/30 20:47:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.48.2.1 2006/06/21 14:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.48.2.2 2006/12/30 20:47:42 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -348,10 +348,7 @@ mach_vm_protect(args)
 }
 
 int
-mach_sys_map_fd(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_map_fd(struct lwp *l, void *v, register_t *retval)
 {
 	struct mach_sys_map_fd_args /* {
 		syscallarg(int) fd;

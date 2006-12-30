@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.56.2.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.56.2.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -154,18 +154,15 @@ int	issignal(struct lwp *);
 void	pgsignal(struct pgrp *, int, int);
 void	kpgsignal(struct pgrp *, struct ksiginfo *, void *, int);
 void	postsig(int);
-void	psignal1(struct proc *, int, int);
-void	kpsignal1(struct proc *, struct ksiginfo *, void *, int);
-#define	kpsignal(p, ksi, data)		kpsignal1((p), (ksi), (data), 1)
-#define	psignal(p, sig)			psignal1((p), (sig), 1)
-#define	sched_psignal(p, sig)		psignal1((p), (sig), 0)
-void	child_psignal(struct proc *, int);
+void	psignal(struct proc *, int);
+void	kpsignal(struct proc *, struct ksiginfo *, void *);
+void	child_psignal(struct proc *);
 void	siginit(struct proc *);
 void	trapsignal(struct lwp *, const struct ksiginfo *);
 void	sigexit(struct lwp *, int);
 void	killproc(struct proc *, const char *);
 void	setsigvec(struct proc *, int, struct sigaction *);
-int	killpg1(struct proc *, struct ksiginfo *, int, int);
+int	killpg1(struct lwp *, struct ksiginfo *, int, int);
 struct lwp *proc_unstop(struct proc *p);
 
 int	sigaction1(struct proc *, int, const struct sigaction *,

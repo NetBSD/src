@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.2.2.1 2006/06/21 15:02:51 yamt Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.2.2.2 2006/12/30 20:48:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -76,10 +76,8 @@ const struct cdevsw dsrtc_cdevsw = {
 
 static int dsrtc_clock_read(struct dsrtc_softc *, struct clock_ymdhms *);
 static int dsrtc_clock_write(struct dsrtc_softc *, struct clock_ymdhms *);
-static int dsrtc_gettime(struct todr_chip_handle *, volatile struct timeval *);
-static int dsrtc_settime(struct todr_chip_handle *, volatile struct timeval *);
-static int dsrtc_getcal(struct todr_chip_handle *, int *);
-static int dsrtc_setcal(struct todr_chip_handle *, int);
+static int dsrtc_gettime(struct todr_chip_handle *, struct clock_ymdhms *);
+static int dsrtc_settime(struct todr_chip_handle *, struct clock_ymdhms *);
 
 static int
 dsrtc_match(struct device *parent, struct cfdata *cf, void *arg)
@@ -105,10 +103,10 @@ dsrtc_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_address = ia->ia_addr;
 	sc->sc_open = 0;
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = dsrtc_gettime;
-	sc->sc_todr.todr_settime = dsrtc_settime;
-	sc->sc_todr.todr_getcal = dsrtc_getcal;
-	sc->sc_todr.todr_setcal = dsrtc_setcal;
+	sc->sc_todr.todr_gettime = NULL;
+	sc->sc_todr.todr_settime = NULL;
+	sc->sc_todr.todr_gettime_ymdhms = dsrtc_gettime;
+	sc->sc_todr.todr_settime_ymdhms = dsrtc_settime;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
@@ -222,13 +220,13 @@ dsrtc_write(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-dsrtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
+dsrtc_gettime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
 	struct dsrtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt, check;
+	struct clock_ymdhms check;
 	int retries;
 
-	memset(&dt, 0, sizeof(dt));
+	memset(dt, 0, sizeof(*dt));
 	memset(&check, 0, sizeof(check));
 
 	/*
@@ -237,42 +235,22 @@ dsrtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 	 */
 	retries = 5;
 	do {
-		dsrtc_clock_read(sc, &dt);
+		dsrtc_clock_read(sc, dt);
 		dsrtc_clock_read(sc, &check);
-	} while (memcmp(&dt, &check, sizeof(check)) != 0 && --retries);
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
+	} while (memcmp(dt, &check, sizeof(check)) != 0 && --retries);
 
 	return (0);
 }
 
 static int
-dsrtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
+dsrtc_settime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
 	struct dsrtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt;
 
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-
-	if (dsrtc_clock_write(sc, &dt) == 0)
+	if (dsrtc_clock_write(sc, dt) == 0)
 		return (-1);
 
 	return (0);
-}
-
-static int
-dsrtc_setcal(struct todr_chip_handle *ch, int cal)
-{
-
-	return (EOPNOTSUPP);
-}
-
-static int
-dsrtc_getcal(struct todr_chip_handle *ch, int *cal)
-{
-
-	return (EOPNOTSUPP);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.6.4.1 2006/06/21 15:06:28 yamt Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.6.4.2 2006/12/30 20:49:30 yamt Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.6.4.1 2006/06/21 15:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.6.4.2 2006/12/30 20:49:30 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -114,10 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.6.4.1 2006/06/21 15:06:28 yamt Exp $");
 #include <net/bpfdesc.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 

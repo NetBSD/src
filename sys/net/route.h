@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.41.2.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: route.h,v 1.41.2.2 2006/12/30 20:50:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,6 +36,8 @@
 
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <net/if.h>
 
 /*
  * Kernel resident routing tables.
@@ -50,8 +52,9 @@
  * in their control blocks, e.g. inpcb.
  */
 struct route {
-	struct	rtentry *ro_rt;
-	struct	sockaddr ro_dst;
+	struct	rtentry		*ro_rt;
+	struct	sockaddr	ro_dst;
+	LIST_ENTRY(route)	ro_rtcache_next;
 };
 
 /*
@@ -102,6 +105,7 @@ struct rtentry {
 	u_long	rt_use;			/* raw # packets forwarded */
 	struct	ifnet *rt_ifp;		/* the answer: interface to use */
 	struct	ifaddr *rt_ifa;		/* the answer: interface to use */
+	uint32_t rt_ifa_seqno;
 	const struct sockaddr *rt_genmask; /* for generation of cloned routes */
 	caddr_t	rt_llinfo;		/* pointer to link level info cache */
 	struct	rt_metrics rt_rmx;	/* metrics used by rx'ing protocols */
@@ -140,6 +144,7 @@ struct ortentry {
 #define	RTF_CLONED	0x2000		/* this is a cloned route */
 #define RTF_PROTO2	0x4000		/* protocol specific routing flag */
 #define RTF_PROTO1	0x8000		/* protocol specific routing flag */
+#define RTF_SRC		0x10000		/* route has fixed source address */
 
 
 /*
@@ -266,14 +271,6 @@ struct rttimer_queue {
 
 
 #ifdef _KERNEL
-#define	RTFREE(rt) \
-do { \
-	if ((rt)->rt_refcnt <= 1) \
-		rtfree(rt); \
-	else \
-		(rt)->rt_refcnt--; \
-} while (/*CONSTCOND*/ 0)
-
 extern	struct	route_cb route_cb;
 extern	struct	rtstat	rtstat;
 extern	struct	radix_node_head *rt_tables[AF_MAX+1];
@@ -308,6 +305,9 @@ unsigned long	rt_timer_count(struct rttimer_queue *);
 void	 rt_timer_timer(void *);
 void	 rtable_init(void **);
 void	 rtalloc(struct route *);
+void	 rtcache(struct route *);
+void	 rtflushall(int);
+void	 rtflush(struct route *);
 struct rtentry *
 	 rtalloc1(const struct sockaddr *, int);
 void	 rtfree(struct rtentry *);
@@ -321,5 +321,37 @@ int	 rtrequest(int, const struct sockaddr *,
 	    const struct sockaddr *, const struct sockaddr *, int,
 	    struct rtentry **);
 int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
+
+struct ifaddr	*rt_get_ifa(struct rtentry *);
+void	rt_replace_ifa(struct rtentry *, struct ifaddr *);
+
+struct rtentry *rtfindparent(struct radix_node_head *, struct route *);
+
+void	rtcache_init(struct route *);
+void	rtcache_init_noclone(struct route *);
+void	rtcache_copy(struct route *, const struct route *, size_t);
+void	rtcache_update(struct route *);
+void	rtcache_free(struct route *);
+
+static inline void
+rtcache_check(struct route *ro)
+{
+	/* XXX The rt_ifp check should be asserted. */
+	if (ro->ro_rt != NULL &&
+	    ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+	     ro->ro_rt->rt_ifp == NULL))
+		rtcache_update(ro);
+	KASSERT(ro->ro_rt == NULL || ro->ro_rt->rt_ifp != NULL);
+}
+
+static inline void
+RTFREE(struct rtentry *rt)
+{
+	if (rt->rt_refcnt <= 1)
+		rtfree(rt);
+	else
+		rt->rt_refcnt--;
+}
+
 #endif /* _KERNEL */
 #endif /* !_NET_ROUTE_H_ */

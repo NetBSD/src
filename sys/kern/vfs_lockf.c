@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.45.2.1 2006/06/21 15:09:39 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.45.2.2 2006/12/30 20:50:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.45.2.1 2006/06/21 15:09:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.45.2.2 2006/12/30 20:50:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ int maxlocksperuid = 1024;
  * Print out a lock.
  */
 static void
-lf_print(char *tag, struct lockf *lock)
+lf_print(const char *tag, struct lockf *lock)
 {
 
 	printf("%s: lock %p for ", tag, lock);
@@ -146,7 +146,7 @@ lf_print(char *tag, struct lockf *lock)
 }
 
 static void
-lf_printlist(char *tag, struct lockf *lock)
+lf_printlist(const char *tag, struct lockf *lock)
 {
 	struct lockf *lf, *blk;
 
@@ -795,7 +795,7 @@ lf_getlock(struct lockf *lock, struct flock *fl)
 int
 lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
 	struct flock *fl = ap->a_fl;
 	struct lockf *lock = NULL;
 	struct lockf *sparelock;
@@ -827,20 +827,20 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		return EINVAL;
 
 	/*
-	 * allocate locks before acquire simple lock.
-	 * we need two locks in the worst case.
+	 * Allocate locks before acquiring the simple lock.  We need two
+	 * locks in the worst case.
 	 */
 	switch (ap->a_op) {
 	case F_SETLK:
 	case F_UNLCK:
 		/*
-		 * XXX for F_UNLCK case, we can re-use lock.
+		 * XXX For F_UNLCK case, we can re-use the lock.
 		 */
 		if ((ap->a_flags & F_FLOCK) == 0) {
 			/*
-			 * byte-range lock might need one more lock.
+			 * Byte-range lock might need one more lock.
 			 */
-			sparelock = lf_alloc(kauth_cred_geteuid(p->p_cred), 0);
+			sparelock = lf_alloc(kauth_cred_geteuid(l->l_cred), 0);
 			if (sparelock == NULL) {
 				error = ENOMEM;
 				goto quit;
@@ -857,7 +857,8 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		return EINVAL;
 	}
 
-	lock = lf_alloc(kauth_cred_geteuid(p->p_cred), ap->a_op != F_UNLCK ? 1 : 2);
+	lock = lf_alloc(kauth_cred_geteuid(l->l_cred),
+	    ap->a_op != F_UNLCK ? 1 : 2);
 	if (lock == NULL) {
 		error = ENOMEM;
 		goto quit;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.12.4.1 2006/06/21 15:04:46 yamt Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.12.4.2 2006/12/30 20:48:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.12.4.1 2006/06/21 15:04:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.12.4.2 2006/12/30 20:48:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ static const struct ate_mca_product {
 	{ MCA_PRODUCT_AT1720BT,	"ATI AT1720BT",	FE_TYPE_AT1700BT	},
 	{ MCA_PRODUCT_AT1720AT, "ATI AT1720AT",	FE_TYPE_AT1700AT	},
 	{ MCA_PRODUCT_AT1720FT, "ATI AT1720FT",	FE_TYPE_AT1700FT	},
-	{ 0, 	},
+	{ 0,			NULL,		0			},
 };
 
 static const struct ate_mca_product *ate_mca_lookup(u_int32_t);
@@ -107,10 +107,8 @@ ate_mca_lookup(id)
 }
 
 int
-ate_mca_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ate_mca_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct mca_attach_args *ma = (struct mca_attach_args *) aux;
 
@@ -129,9 +127,8 @@ static const int ats_irq[] = {
 };
 
 void
-ate_mca_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ate_mca_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct ate_softc *isc = device_private(self);
 	struct mb86960_softc *sc = &isc->sc_mb86960;

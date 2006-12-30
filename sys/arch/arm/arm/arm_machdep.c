@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.9.12.1 2006/06/21 14:49:08 yamt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.9.12.2 2006/12/30 20:45:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.9.12.1 2006/06/21 14:49:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.9.12.2 2006/12/30 20:45:32 yamt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -131,7 +131,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 #endif
 #endif
 
-#if defined(COMPAT_15) && defined(EXEC_AOUT)
+#ifdef EXEC_AOUT
 	if (pack->ep_es->es_makecmds == exec_aout_makecmds)
 		l->l_addr->u_pcb.pcb_flags = PCB_NOALIGNFLT;
 	else

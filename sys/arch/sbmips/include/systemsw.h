@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.h,v 1.4.18.1 2006/06/21 14:55:23 yamt Exp $ */
+/* $NetBSD: systemsw.h,v 1.4.18.2 2006/12/30 20:46:50 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -50,10 +50,6 @@ struct systemsw {
 	void	*s_statclock_arg;
 	void	(*s_statclock_init)(void *);
 	void	(*s_statclock_setrate)(void *, int);
-
-	void	*s_todr_arg;
-	void	(*s_inittodr)(void *, time_t);
-	void	(*s_resettodr)(void *);
 
 	void	*(*s_intr_establish)(u_int, u_int,
 		    void (*fun)(void *, uint32_t, uint32_t), void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.10.2.1 2006/06/21 15:05:03 yamt Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.10.2.2 2006/12/30 20:48:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.10.2.1 2006/06/21 15:05:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.10.2.2 2006/12/30 20:48:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,8 @@ atw_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-atw_pci_match(struct device *parent, struct cfdata *match, void *aux)
+atw_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

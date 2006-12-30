@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.7 2003/08/07 16:29:29 agc Exp $	*/
+/*	$NetBSD: psl.h,v 1.7.16.1 2006/12/30 20:46:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,16 +60,19 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
+
 /* SR.IMASK */
 int _cpu_intr_raise(int);
 int _cpu_intr_suspend(void);
 int _cpu_intr_resume(int);
+
 /* SR.BL */
 int _cpu_exception_suspend(void);
 void _cpu_exception_resume(int);
-#endif /* !_LOCORE */
 
 #include <machine/intr.h>
+
+#endif /* !_LOCORE */
 #endif /* _KERNEL */
 
 #endif /* !_SH3_PSL_H_ */

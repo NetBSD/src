@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.15.2.1 2006/06/21 15:05:03 yamt Exp $	*/
+/*	$NetBSD: cypide.c,v 1.15.2.2 2006/12/30 20:48:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cypide.c,v 1.15.2.1 2006/06/21 15:05:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cypide.c,v 1.15.2.2 2006/12/30 20:48:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,8 @@ static const struct pciide_product_desc pciide_cypress_products[] =  {
 };
 
 static int
-cypide_match(struct device *parent, struct cfdata *match, void *aux)
+cypide_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

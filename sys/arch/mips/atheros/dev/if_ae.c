@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.2.6.2 2006/06/21 14:53:38 yamt Exp $ */
+/* $Id: if_ae.c,v 1.2.6.3 2006/12/30 20:46:30 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.2.6.2 2006/06/21 14:53:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.2.6.3 2006/12/30 20:46:30 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -261,7 +261,8 @@ ae_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr));
 
-	sc->sc_irq = aa->aa_irq;
+	sc->sc_cirq = aa->aa_cirq;
+	sc->sc_mirq = aa->aa_mirq;
 	sc->sc_st = aa->aa_bst;
 	sc->sc_dmat = aa->aa_dmat;
 
@@ -413,7 +414,8 @@ ae_attach(struct device *parent, struct device *self, void *aux)
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	sc->sc_powerhook = powerhook_establish(ae_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    ae_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
@@ -1513,7 +1515,8 @@ ae_enable(struct ae_softc *sc)
 {
 
 	if (AE_IS_ENABLED(sc) == 0) {
-		sc->sc_ih = arbus_intr_establish(sc->sc_irq, ae_intr, sc);
+		sc->sc_ih = arbus_intr_establish(sc->sc_cirq, sc->sc_mirq,
+		    ae_intr, sc);
 		if (sc->sc_ih == NULL) {
 			printf("%s: unable to establish interrupt\n",
 			    sc->sc_dev.dv_xname);

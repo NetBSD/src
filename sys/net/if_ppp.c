@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.101.2.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.101.2.2 2006/12/30 20:50:20 yamt Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.101.2.1 2006/06/21 15:10:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.101.2.2 2006/12/30 20:50:20 yamt Exp $");
 
 #include "ppp.h"
 
@@ -489,7 +489,7 @@ pppdealloc(struct ppp_softc *sc)
  */
 int
 pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
-         struct proc *p)
+    struct lwp *l)
 {
     int s, error, flags, mru, npx;
     u_int nb;
@@ -505,6 +505,28 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 #ifdef	PPP_COMPRESS
     u_char ccp_option[CCP_MAX_OPTION_LENGTH];
 #endif
+
+    switch (cmd) {
+    case PPPIOCSFLAGS:
+    case PPPIOCSMRU:
+    case PPPIOCSMAXCID:
+    case PPPIOCSCOMPRESS:
+    case PPPIOCSNPMODE:
+	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+	    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, &sc->sc_if, (void *)cmd,
+	    NULL) != 0)
+		return (EPERM);
+	break;
+    case PPPIOCXFERUNIT:
+	/* XXX: Why is this privileged?! */
+	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+	    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, &sc->sc_if, (void *)cmd,
+	    NULL) != 0)
+		return (EPERM);
+	break;
+    default:
+	break;
+    }
 
     switch (cmd) {
     case FIONREAD:
@@ -535,8 +557,6 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 	break;
 
     case PPPIOCSFLAGS:
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-	    return (error);
 	flags = *(int *)data & SC_MASK;
 	s = splsoftnet();
 #ifdef PPP_COMPRESS
@@ -549,8 +569,6 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 	break;
 
     case PPPIOCSMRU:
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-	    return (error);
 	mru = *(int *)data;
 	if (mru >= PPP_MINMRU && mru <= PPP_MAXMRU)
 	    sc->sc_mru = mru;
@@ -562,8 +580,6 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 
 #ifdef VJC
     case PPPIOCSMAXCID:
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-	    return (error);
 	if (sc->sc_comp) {
 	    s = splsoftnet();
 	    sl_compress_setup(sc->sc_comp, *(int *)data);
@@ -573,15 +589,11 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 #endif
 
     case PPPIOCXFERUNIT:
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-	    return (error);
-	sc->sc_xfer = p->p_pid;
+	sc->sc_xfer = l->l_proc->p_pid;
 	break;
 
 #ifdef PPP_COMPRESS
     case PPPIOCSCOMPRESS:
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-	    return (error);
 	odp = (struct ppp_option_data *) data;
 	nb = odp->length;
 	if (nb > sizeof(ccp_option))
@@ -653,8 +665,6 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 	if (cmd == PPPIOCGNPMODE) {
 	    npi->mode = sc->sc_npmode[npx];
 	} else {
-	    if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-		return (error);
 	    if (npi->mode != sc->sc_npmode[npx]) {
 		s = splnet();
 		sc->sc_npmode[npx] = npi->mode;
@@ -745,7 +755,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 static int
 pppsioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-    struct proc *p = curproc;	/* XXX */
+    struct lwp *l = curlwp;	/* XXX */
     struct ppp_softc *sc = ifp->if_softc;
     struct ifaddr *ifa = (struct ifaddr *)data;
     struct ifreq *ifr = (struct ifreq *)data;
@@ -794,7 +804,9 @@ pppsioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	break;
 
     case SIOCSIFMTU:
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_network(l->l_cred,
+	    KAUTH_NETWORK_INTERFACE, KAUTH_REQ_NETWORK_INTERFACE_SETPRIV,
+	    ifp, (void *)cmd, NULL) != 0))
 	    break;
 	sc->sc_if.if_mtu = ifr->ifr_mtu;
 	break;
@@ -866,7 +878,7 @@ pppsioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  */
 int
 pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
-          struct rtentry *rtp)
+    struct rtentry *rtp)
 {
     struct ppp_softc *sc = ifp->if_softc;
     int protocol, address, control;

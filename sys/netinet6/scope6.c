@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.2.12.2 2006/06/21 15:11:09 yamt Exp $	*/
+/*	$NetBSD: scope6.c,v 1.2.12.3 2006/12/30 20:50:39 yamt Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -348,7 +348,7 @@ sa6_recoverscope(struct sockaddr_in6 *sin6)
 		zoneid = ntohs(sin6->sin6_addr.s6_addr16[1]);
 		if (zoneid) {
 			/* sanity check */
-			if (zoneid < 0 || if_indexlim <= zoneid)
+			if (/* zoneid < 0 || */ if_indexlim <= zoneid)
 				return (ENXIO);
 #ifdef __FreeBSD__
 			if (!ifnet_byindex(zoneid))
@@ -427,7 +427,7 @@ in6_setscope(struct in6_addr *in6, struct ifnet *ifp, uint32_t *ret_id)
 	if (ret_id != NULL)
 		*ret_id = zoneid;
 
-	if (IN6_IS_SCOPE_LINKLOCAL(in6) || IN6_IS_ADDR_MC_INTFACELOCAL(in6))
+	if (IN6_IS_SCOPE_EMBEDDABLE(in6))
 		in6->s6_addr16[1] = htons(zoneid & 0xffff); /* XXX */
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.20.2.1 2006/06/21 15:07:44 yamt Exp $	*/
+/*	$NetBSD: urio.c,v 1.20.2.2 2006/12/30 20:49:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.20.2.1 2006/06/21 15:07:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.20.2.2 2006/12/30 20:49:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ dev_type_ioctl(urioioctl);
 
 const struct cdevsw urio_cdevsw = {
 	urioopen, urioclose, urioread, uriowrite, urioioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 #elif defined(__OpenBSD__)
 cdev_decl(urio);
@@ -345,7 +345,8 @@ urioopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-urioclose(dev_t dev, int flag, int mode, struct lwp *l)
+urioclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct urio_softc *sc;
 	USB_GET_SC(urio, URIOUNIT(dev), sc);

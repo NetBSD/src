@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.47.4.1 2006/06/21 14:59:41 yamt Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.47.4.2 2006/12/30 20:47:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.47.4.1 2006/06/21 14:59:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.47.4.2 2006/12/30 20:47:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -599,7 +599,6 @@ getdevinfo(fp, l)
 	struct file *fp;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	mixer_devinfo_t mi;
 	int i, j, e;
 	static const struct {
@@ -632,7 +631,7 @@ getdevinfo(fp, l)
 	    fp->f_ops->fo_ioctl;
 	struct vnode *vp;
 	struct vattr va;
-	static struct audiodevinfo devcache = { 0 };
+	static struct audiodevinfo devcache;
 	struct audiodevinfo *di = &devcache;
 	int mlen, dlen;
 
@@ -643,7 +642,7 @@ getdevinfo(fp, l)
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_type != VCHR)
 		return 0;
-	if (VOP_GETATTR(vp, &va, p->p_cred, l))
+	if (VOP_GETATTR(vp, &va, l->l_cred, l))
 		return 0;
 	if (di->done && di->dev == va.va_rdev)
 		return di;

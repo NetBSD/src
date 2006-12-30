@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.h,v 1.4.2.1 2006/06/21 15:10:45 yamt Exp $	*/
+/*	$NetBSD: ieee80211_crypto.h,v 1.4.2.2 2006/12/30 20:50:28 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -187,8 +187,8 @@ struct ieee80211_key *ieee80211_crypto_decap(struct ieee80211com *,
  * Check and remove any MIC.
  */
 static __inline int
-ieee80211_crypto_demic(struct ieee80211com *ic, struct ieee80211_key *k,
-	struct mbuf *m, int force)
+ieee80211_crypto_demic(struct ieee80211com *ic,
+    struct ieee80211_key *k, struct mbuf *m, int force)
 {
 	const struct ieee80211_cipher *cip = k->wk_cipher;
 	return (cip->ic_miclen > 0 ? cip->ic_demic(k, m, force) : 1);

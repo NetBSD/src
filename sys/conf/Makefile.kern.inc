@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.68.2.1 2006/06/21 15:00:01 yamt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.68.2.2 2006/12/30 20:47:49 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -62,9 +62,9 @@ COPTS?=		${DEFCOPTS}
 DBG=		# might contain unwanted -Ofoo
 DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
-.if !defined(NOGCCERROR)
+. if !defined(NOGCCERROR)
 CWARNFLAGS+=	-Werror
-.endif
+. endif
 CWARNFLAGS+=	-Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wswitch -Wshadow
@@ -74,25 +74,40 @@ CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 CWARNFLAGS+=	-Wno-sign-compare
 . if ${HAVE_GCC} > 3
 CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
+.  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "sparc64" || ${MACHINE} == "prep"
+CWARNFLAGS+=	-Wextra -Wno-unused-parameter
+.  endif
 . endif
 .endif
 
 CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${CPUFLAGS} ${DEBUG} ${COPTS} ${CWARNFLAGS}
-AFLAGS+=	${CPUFLAGS} -D_LOCORE
+AFLAGS+=	${CPUFLAGS} -D_LOCORE -Wa,-fatal-warnings
 
 # XXX
 .if ${HAVE_GCC} > 3
 CFLAGS+=	-fno-strict-aliasing
 .endif
 
+.if ${USE_SSP:Uno} == "yes"
+CFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
+LDFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
+.endif
+
+# If we want the bpendtsleep: label in kern_synch.c, we need to use
+# -fno-reorder-blocks.  Don't make this a config(1) defflag without
+# making sure this fragment remains valid.
+.if ${HAVE_GCC} > 3 && !empty(${CFLAGS:M-DKERN_SYNCH_BPENDTSLEEP_LABEL})
+CFLAGS.kern_synch.c+=	-fno-reorder-blocks
+.endif
+
 # Use the per-source COPTS variables to add -g to just those
 # files that match the shell patterns given in ${DEBUGLIST}
 #
 .for i in ${DEBUGLIST}
-.for j in ${CFILES:T:M$i.c}
+. for j in ${CFILES:T:M$i.c}
 COPTS.${j}+=-g
-.endfor
+. endfor
 .endfor
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
@@ -177,8 +192,8 @@ SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ:O} .gdbinit
 SYSTEM_LD_HEAD?=@rm -f $@
 SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
-		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
+		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
+		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
 SYSTEM_LD_TAIL?=@${SIZE} $@; chmod 755 $@
 
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
@@ -296,7 +311,7 @@ __CLEANDEPEND: .USE
 cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 clean: __CLEANKERNEL
 depend: .depend
-dependall: depend all
+dependall: depend .WAIT all
 
 .if !target(.depend)
 MKDEP_AFLAGS?=	${AFLAGS}
@@ -428,6 +443,21 @@ EXTRA_CLEAN+= .gdbinit
 .endfor
 .endif
 
+# The following files use alloca(3) or variable array allocations,
+# or, in the case of kern_exit_43.c, an array of size 0 on the stack.
+# Their full name is noted as documentation.
+VARSTACK=dev/cgd.c kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
+    nfs/nfs_bio.c ufs/ufs/ufs_inode.c ufs/ufs/ufs_lookup.c uvm/uvm_bio.c \
+    uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c \
+    compat/common/kern_exit_43.c
+
+. if ${HAVE_GCC} > 3
+.for __varstack in ${VARSTACK}
+COPTS.${__varstack:T} += -Wno-stack-protector
+.endfor
+.endif
+
+AFLAGS+=	${AOPTS.${.IMPSRC:T}}
 CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
 CPPFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}

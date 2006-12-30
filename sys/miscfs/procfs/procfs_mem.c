@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.34.16.1 2006/06/21 15:10:26 yamt Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.34.16.2 2006/12/30 20:50:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.34.16.1 2006/06/21 15:10:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.34.16.2 2006/12/30 20:50:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -88,11 +88,12 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.34.16.1 2006/06/21 15:10:26 yamt Ex
 #include <miscfs/procfs/procfs.h>
 
 int
-procfs_domem(curl, l, pfs, uio)
-	struct lwp *curl;		/* tracer */
-	struct lwp *l;			/* traced */
-	struct pfsnode *pfs;
-	struct uio *uio;
+procfs_domem(
+    struct lwp *curl,		/* tracer */
+    struct lwp *l,		/* traced */
+    struct pfsnode *pfs,
+    struct uio *uio
+)
 {
 
 	return (process_domem(curl, l, uio));

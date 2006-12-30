@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.31.2.1 2006/06/21 15:06:47 yamt Exp $ */
+/*	$NetBSD: ses.c,v 1.31.2.2 2006/12/30 20:49:34 yamt Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.31.2.1 2006/06/21 15:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.31.2.2 2006/12/30 20:49:34 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -139,7 +139,7 @@ static dev_type_ioctl(sesioctl);
 
 const struct cdevsw ses_cdevsw = {
 	sesopen, sesclose, noread, nowrite, sesioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 static int ses_runcmd(struct ses_softc *, char *, int, char *, int *);
@@ -184,7 +184,8 @@ static const struct scsipi_periphsw ses_switch = {
 };
 
 static int
-ses_match(struct device *parent, struct cfdata *match, void *aux)
+ses_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 
@@ -333,7 +334,8 @@ out:
 }
 
 static int
-sesclose(dev_t dev, int flags, int fmt, struct lwp *l)
+sesclose(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	struct ses_softc *softc;
 	int unit;
@@ -1038,7 +1040,8 @@ ses_getconfig(ses_softc_t *ssc)
 }
 
 static int
-ses_getputstat(ses_softc_t *ssc, int objid, SesComStat *sp, int slp, int in)
+ses_getputstat(ses_softc_t *ssc, int objid, SesComStat *sp, int slp,
+    int in)
 {
 	struct sscfg *cc;
 	int err, amt, bufsiz, tidx, oidx;

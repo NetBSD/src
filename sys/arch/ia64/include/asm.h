@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1.14.2 2006/06/21 14:52:48 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.1.14.3 2006/12/30 20:46:20 yamt Exp $	*/
 
 /* -
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -157,7 +157,7 @@ label:	ASCIZ msg;				\
 /*
  * System call glue.
  */
-#define	SYSCALLNUM(name)	SYS_ ## name
+#define	SYSCALLNUM(name)	___CONCAT(SYS_,name)
 
 #define	CALLSYS_NOERROR(name)					\
 {	.mmi ;							\
@@ -177,3 +177,9 @@ label:	ASCIZ msg;				\
 	.weak alias;						\
 	alias = sym
 
+/*
+ * STRONG_ALIAS: create a strong alias.
+ */
+#define STRONG_ALIAS(alias,sym)					\
+	.globl alias;						\
+	alias = sym

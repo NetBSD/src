@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.29 2005/04/01 11:59:35 yamt Exp $	*/
+/*	$NetBSD: dvma.c,v 1.29.2.1 2006/12/30 20:47:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.29 2005/04/01 11:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.29.2.1 2006/12/30 20:47:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,9 @@ __KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.29 2005/04/01 11:59:35 yamt Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#define _SUN68K_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/dvma.h>
 #include <machine/pmap.h>
@@ -291,4 +293,27 @@ dvma_free(void *addr, size_t size)
 	dvma_mapout(addr, sz);
 	/* XXX: need kmem address to free it...
 	   Oh well, we never call this anyway. */
+}
+
+int 
+_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
+    int nsegs, bus_size_t size, int flags)
+{
+
+	panic("_bus_dmamap_load_raw(): not implemented yet.");
+}
+
+int
+_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
+{
+
+	panic("_bus_dmamap_load(): not implemented yet.");
+}
+
+void 
+_bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
+{
+
+	panic("_bus_dmamap_unload(): not implemented yet.");
 }

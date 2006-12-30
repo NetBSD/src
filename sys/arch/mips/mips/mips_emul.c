@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.11.12.1 2006/06/21 14:53:44 yamt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.11.12.2 2006/12/30 20:46:33 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.11.12.1 2006/06/21 14:53:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.11.12.2 2006/12/30 20:46:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,12 +45,12 @@ __KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.11.12.1 2006/06/21 14:53:44 yamt Exp
 
 void MachEmulateFP(u_int32_t, struct frame *, u_int32_t);
 
-static inline void	send_sigsegv(u_int32_t, u_int32_t, struct frame *,
+static inline void	send_sigsegv(vaddr_t, u_int32_t, struct frame *,
 			    u_int32_t);
 static inline void	update_pc(struct frame *, u_int32_t);
 
 vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
-void	MachEmulateInst(u_int32_t, u_int32_t, u_int32_t, struct frame *);
+void	MachEmulateInst(u_int32_t, u_int32_t, vaddr_t, struct frame *);
 
 void	MachEmulateLWC0(u_int32_t inst, struct frame *, u_int32_t);
 void	MachEmulateSWC0(u_int32_t inst, struct frame *, u_int32_t);
@@ -210,7 +210,7 @@ void
 MachEmulateInst(status, cause, opc, frame)
 	u_int32_t status;
 	u_int32_t cause;
-	u_int32_t opc;
+	vaddr_t opc;
 	struct frame *frame;
 {
 	u_int32_t inst;
@@ -265,7 +265,7 @@ MachEmulateInst(status, cause, opc, frame)
 }
 
 static inline void
-send_sigsegv(u_int32_t vaddr, u_int32_t exccode, struct frame *frame,
+send_sigsegv(vaddr_t vaddr, u_int32_t exccode, struct frame *frame,
     u_int32_t cause)
 {
 	ksiginfo_t ksi;
@@ -298,7 +298,7 @@ update_pc(struct frame *frame, u_int32_t cause)
 void
 MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
-	u_int32_t	vaddr;
+	vaddr_t		vaddr;
 	int16_t		offset;
 	void		*t;
 
@@ -339,7 +339,8 @@ MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 void
 MachEmulateSWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
-	u_int32_t	vaddr, value;
+	vaddr_t		vaddr;
+	uint32_t	value;
 	int16_t		offset;
 	mips_reg_t	*t;
 

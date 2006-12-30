@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap.h,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $	*/
+/*	$NetBSD: l2cap.h,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: l2cap.h,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $
+ * $Id: l2cap.h,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/l2cap.h,v 1.4 2005/08/31 18:13:23 emax Exp $
  */
 
@@ -68,6 +68,8 @@
 
 #ifndef _NETBT_L2CAP_H_
 #define _NETBT_L2CAP_H_
+
+#include <sys/types.h>
 
 /**************************************************************************
  **************************************************************************

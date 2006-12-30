@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.3.4.1 2006/06/21 15:02:46 yamt Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.3.4.2 2006/12/30 20:47:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.3.4.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.3.4.2 2006/12/30 20:47:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,7 +419,7 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, struct mbr_partition *,
 
 static int
 look_netbsd_part(mbr_args_t *a, struct mbr_partition *dp, int slot,
-		 u_int ext_base)
+    u_int ext_base)
 {
 	int ptn_base = ext_base + le32toh(dp->mbrp_start);
 	int rval;

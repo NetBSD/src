@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.3.2.1 2006/06/21 15:07:44 yamt Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.3.2.2 2006/12/30 20:49:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -92,7 +92,9 @@ struct ucom_methods ugensa_methods = {
 
 static const struct usb_devno ugensa_devs[] = {
 	{ USB_VENDOR_AIRPRIME, USB_PRODUCT_AIRPRIME_PC5220 },
+	{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_FLEXPACKGPS },
 	{ USB_VENDOR_QUALCOMM_K, USB_PRODUCT_QUALCOMM_K_CDMA_MSM_K },
+	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD580 },
 };
 #define ugensa_lookup(v, p) usb_lookup(ugensa_devs, v, p)
 
@@ -156,6 +158,7 @@ USB_ATTACH(ugensa)
 	uca.ibufsize = UGENSA_BUFSIZE;
 	uca.obufsize = UGENSA_BUFSIZE;
 	uca.ibufsizepad = UGENSA_BUFSIZE;
+	uca.portno = UCOM_UNK_PORTNO;
 	uca.opkthdrlen = 0;
 	uca.device = dev;
 	uca.iface = iface;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.42 2005/05/30 04:43:47 christos Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.42.2.1 2006/12/30 20:48:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,11 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.42 2005/05/30 04:43:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.42.2.1 2006/12/30 20:48:03 yamt Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
-#include "opt_ns.h"
 #endif
 
 #include <sys/param.h>
@@ -90,10 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.42 2005/05/30 04:43:47 christos Exp
 #include <i386/isa/isavar.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #ifndef __NetBSD__
 #include <vm/vm.h>
@@ -443,26 +438,6 @@ pdq_ifioctl(
 		}
 #endif /* INET */
 
-#if defined(NS)
-		/* This magic copied from if_is.c; I don't use XNS,
-		 * so I have no way of telling if this actually
-		 * works or not.
-		 */
-		case AF_NS: {
-		    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-		    if (ns_nullhost(*ina)) {
-			ina->x_host = *(union ns_host *)PDQ_LANADDR(sc);
-		    } else {
-			ifp->if_flags &= ~IFF_RUNNING;
-			memcpy((caddr_t)PDQ_LANADDR(sc),
-			    (caddr_t)ina->x_host.c_host,
-			    PDQ_LANADDR_SIZE(sc));
-		    }
-
-		    pdq_ifinit(sc);
-		    break;
-		}
-#endif /* NS */
 
 		default: {
 		    pdq_ifinit(sc);
@@ -596,7 +571,11 @@ pdq_os_memalloc_contig(
     not_ok = bus_dmamem_alloc(sc->sc_dmatag,
 			 sizeof(*pdq->pdq_dbp), sizeof(*pdq->pdq_dbp),
 			 sizeof(*pdq->pdq_dbp), db_segs, 1, &db_nsegs,
-			 BUS_DMA_NOWAIT);
+#if defined(__sparc__) || defined(__sparc64__)
+			BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+#else
+			BUS_DMA_NOWAIT);
+#endif
     if (!not_ok) {
 	steps = 1;
 	not_ok = bus_dmamem_map(sc->sc_dmatag, db_segs, db_nsegs,
@@ -646,10 +625,15 @@ pdq_os_memalloc_contig(
 	cb_segs[0] = db_segs[0];
 	cb_segs[0].ds_addr += offsetof(pdq_descriptor_block_t, pdqdb_consumer);
 	cb_segs[0].ds_len = sizeof(pdq_consumer_block_t);
+#if defined(__sparc__) || defined(__sparc64__)
+	pdq->pdq_cbp = (pdq_consumer_block_t*)((unsigned long int)pdq->pdq_dbp +
+	    (unsigned long int)offsetof(pdq_descriptor_block_t,pdqdb_consumer));
+#else
 	not_ok = bus_dmamem_map(sc->sc_dmatag, cb_segs, 1,
 				sizeof(*pdq->pdq_cbp),
 				(caddr_t *)&pdq->pdq_cbp,
 				BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+#endif
     }
     if (!not_ok) {
 	steps = 9;

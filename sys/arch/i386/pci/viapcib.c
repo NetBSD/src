@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.2.14.2 2006/06/21 14:52:31 yamt Exp $ */
+/* $NetBSD: viapcib.c,v 1.2.14.3 2006/12/30 20:46:11 yamt Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.2.14.2 2006/06/21 14:52:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.2.14.3 2006/12/30 20:46:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -138,7 +138,8 @@ CFATTACH_DECL(viapcib, sizeof(struct viapcib_softc), viapcib_match,
     viapcib_attach, NULL, NULL);
 
 static int
-viapcib_match(struct device *parent, struct cfdata *match, void *opaque)
+viapcib_match(struct device *parent, struct cfdata *match,
+    void *opaque)
 {
 	struct pci_attach_args *pa;
 
@@ -220,7 +221,6 @@ core_pcib:
 		viapcib_smbus_write(sc, SMBSLVCNT, b & ~1);
 
 		memset(&sc->sc_i2c, 0, sizeof(sc->sc_i2c));
-		iba.iba_name = "iic";
 #ifdef I2C_TYPE_SMBUS
 		iba.iba_type = I2C_TYPE_SMBUS;
 #endif
@@ -230,7 +230,7 @@ core_pcib:
 		iba.iba_tag->ic_release_bus = viapcib_release_bus;
 		iba.iba_tag->ic_exec = viapcib_exec;
 
-		config_found(&sc->sc_dev, &iba, iicbus_print);
+		config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 	}
 
 	return;

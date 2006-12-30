@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.17.2.1 2006/06/21 15:09:23 yamt Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.17.2.2 2006/12/30 20:49:56 yamt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -38,7 +38,6 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#include "opt_altq.h"
 #include "opt_pfil_hooks.h"
 #endif
 
@@ -66,6 +65,8 @@
 #include <sys/malloc.h>
 #ifdef __NetBSD__
 #include <sys/conf.h>
+#include <sys/lwp.h>
+#include <sys/kauth.h>
 #endif
 
 #include <net/if.h>
@@ -130,7 +131,7 @@ int			 pf_commit_rules(u_int32_t, int, char *);
 #ifdef __NetBSD__
 const struct cdevsw pf_cdevsw = {
 	pfopen, pfclose, noread, nowrite, pfioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 static int pf_pfil_attach(void);
@@ -1019,7 +1020,11 @@ pf_enable_altq(struct pf_altq *altq)
 	if (error == 0 && ifp != NULL && ALTQ_IS_ENABLED(&ifp->if_snd)) {
 		tb.rate = altq->ifbandwidth;
 		tb.depth = altq->tbrsize;
+#ifdef __OpenBSD__
 		s = splimp();
+#else
+		s = splnet();
+#endif
 		error = tbr_set(&ifp->if_snd, &tb);
 		splx(s);
 	}
@@ -1049,7 +1054,11 @@ pf_disable_altq(struct pf_altq *altq)
 	if (error == 0) {
 		/* clear tokenbucket regulator */
 		tb.rate = 0;
+#ifdef __OpenBSD__
 		s = splimp();
+#else
+		s = splnet();
+#endif
 		error = tbr_set(&ifp->if_snd, &tb);
 		splx(s);
 	}
@@ -1137,7 +1146,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct lwp *l)
 	int			 error = 0;
 
 	/* XXX keep in sync with switch() below */
-	if (securelevel > 1)
+	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_FIREWALL,
+	    KAUTH_REQ_NETWORK_FIREWALL_FW, NULL, NULL, NULL)) 
 		switch (cmd) {
 		case DIOCGETRULES:
 		case DIOCGETRULE:
@@ -3046,7 +3056,8 @@ pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 #endif
 
 int
-pfil_ifnet_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+pfil_ifnet_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp,
+    int dir)
 {
 	u_long cmd = (u_long)mp;
 
@@ -3063,7 +3074,8 @@ pfil_ifnet_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 }
 
 int
-pfil_ifaddr_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+pfil_ifaddr_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp,
+    int dir)
 {
 	extern void pfi_kifaddr_update_if(struct ifnet *);
 

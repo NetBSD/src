@@ -1,7 +1,3 @@
-/*	$NetBSD: intr.h,v 1.4 2005/01/22 15:36:09 chs Exp $	*/
-
-/* These control the software interrupt register. */
-extern void isr_soft_request(int);
-extern void isr_soft_clear(int);
+/*	$NetBSD: intr.h,v 1.4.8.1 2006/12/30 20:47:06 yamt Exp $	*/
 
 #include <sun68k/intr.h>

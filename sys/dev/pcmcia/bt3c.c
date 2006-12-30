@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.1.2.2 2006/06/21 15:06:14 yamt Exp $ */
+/* $NetBSD: bt3c.c,v 1.1.2.3 2006/12/30 20:49:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.1.2.2 2006/06/21 15:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.1.2.3 2006/12/30 20:49:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -569,9 +569,10 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 
 	size = (size_t)firmware_get_size(fh);
 #ifdef DIAGNOSTIC
-	if (size < 0 || size > 10 * 1024) {	/* sanity check */
+	if (size > 10 * 1024) {	/* sanity check */
 		printf("%s: firmware file seems WAY too big!\n",
 			sc->sc_dev.dv_xname);
+		firmware_close(fh);
 		return EFBIG;
 	}
 #endif
@@ -823,7 +824,8 @@ bt3c_disable(struct hci_unit *unit)
  */
 
 static int
-bt3c_match(struct device *parent, struct cfdata *match, void *aux)
+bt3c_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -879,11 +881,12 @@ bt3c_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_unit.hci_start_cmd = bt3c_start;
 	sc->sc_unit.hci_start_acl = bt3c_start;
 	sc->sc_unit.hci_start_sco = bt3c_start;
-	sc->sc_unit.hci_ipl = IPL_TTY;
+	sc->sc_unit.hci_ipl = makeiplcookie(IPL_TTY);
 	hci_attach(&sc->sc_unit);
 
 	/* establish a power change hook */
-	sc->sc_powerhook = powerhook_establish(bt3c_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    bt3c_power, sc);
 	return;
 
 iomap_failed:
@@ -946,17 +949,28 @@ bt3c_power(int why, void *arg)
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
 		if (sc->sc_unit.hci_flags & BTF_RUNNING) {
-			printf_nolog("%s: sleeping\n", sc->sc_dev.dv_xname);
-			bt3c_disable(&sc->sc_unit);
+			hci_detach(&sc->sc_unit);
+
 			sc->sc_flags |= BT3C_SLEEPING;
+			printf_nolog("%s: sleeping\n", sc->sc_dev.dv_xname);
 		}
 		break;
 
 	case PWR_RESUME:
 		if (sc->sc_flags & BT3C_SLEEPING) {
 			printf_nolog("%s: waking up\n", sc->sc_dev.dv_xname);
-			bt3c_enable(&sc->sc_unit);
 			sc->sc_flags &= ~BT3C_SLEEPING;
+
+			memset(&sc->sc_unit, 0, sizeof(sc->sc_unit));
+			sc->sc_unit.hci_softc = sc;
+			sc->sc_unit.hci_devname = sc->sc_dev.dv_xname;
+			sc->sc_unit.hci_enable = bt3c_enable;
+			sc->sc_unit.hci_disable = bt3c_disable;
+			sc->sc_unit.hci_start_cmd = bt3c_start;
+			sc->sc_unit.hci_start_acl = bt3c_start;
+			sc->sc_unit.hci_start_sco = bt3c_start;
+			sc->sc_unit.hci_ipl = makeiplcookie(IPL_TTY);
+			hci_attach(&sc->sc_unit);
 		}
 		break;
 

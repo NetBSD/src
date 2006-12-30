@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.64.4.1 2006/06/21 14:54:24 yamt Exp $ */
+/*	$NetBSD: scn.c,v 1.64.4.2 2006/12/30 20:46:41 yamt Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.64.4.1 2006/06/21 14:54:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.64.4.2 2006/12/30 20:46:41 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1083,6 +1083,11 @@ scnopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_hwiflow = scnhwiflow;
 	tp->t_dev = dev;
 
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp)) {
+		splx(s);
+		return (EBUSY);
+	}
+
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -1118,17 +1123,10 @@ scnopen(dev_t dev, int flag, int mode, struct lwp *l)
 		else
 			tp->t_state &= ~TS_CARR_ON;
 	} else {
-		if (tp->t_state & TS_XCLUDE &&
-		    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-				      &l->l_proc->p_acflag) != 0) {
+		if (DEV_DIALOUT(dev) && !SCN_DIALOUT(sc)) {
+			/* dialout attempt while someone dialed in */
 			splx(s);
 			return (EBUSY);
-		} else {
-			if (DEV_DIALOUT(dev) && !SCN_DIALOUT(sc)) {
-				/* dialout attempt while someone dialed in */
-				splx(s);
-				return (EBUSY);
-			}
 		}
 	}
 	if (DEV_DIALOUT(dev)) {
@@ -1302,8 +1300,8 @@ static void
 scnoverrun(int unit, long *ptime, const char *what)
 {
 
-	if (*ptime != time.tv_sec) {
-		*ptime = time.tv_sec;
+	if (*ptime != time_second) {
+		*ptime = time_second;
 		log(LOG_WARNING, "scn%d: %s overrun\n", unit, what);
 	}
 }
@@ -1736,9 +1734,8 @@ scnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case TIOCSFLAGS:{
 			int     userbits, driverbits = 0;
 
-			error = kauth_authorize_generic(l->l_proc->p_cred,
-						  KAUTH_GENERIC_ISSUSER,
-						  &l->l_proc->p_acflag);
+			error = kauth_authorize_device_tty(l->l_cred,
+			    KAUTH_DEVICE_TTY_PRIVSET, tp);
 			if (error != 0)
 				return (EPERM);
 

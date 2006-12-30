@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.8.4.1 2006/06/21 15:04:21 yamt Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.8.4.2 2006/12/30 20:48:27 yamt Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.8.4.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.8.4.2 2006/12/30 20:48:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,10 +142,8 @@ nscheck(iot, base)
 }
 
 static int
-nsclpcsio_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+nsclpcsio_isa_match(struct device *parent,
+    struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int iobase;
@@ -184,9 +182,8 @@ found:
 }
 
 static void
-nsclpcsio_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+nsclpcsio_isa_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct nsclpcsio_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -413,9 +410,8 @@ tms_gtredata(sme, data)
 }
 
 static int
-tms_streinfo(sme, info)
-	struct sysmon_envsys *sme;
-	struct envsys_basic_info *info;
+tms_streinfo(struct sysmon_envsys *sme,
+    struct envsys_basic_info *info)
 {
 #if 0
 	struct nsclpcsio_softc *sc = sme->sme_cookie;

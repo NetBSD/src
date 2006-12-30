@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.3 2004/06/28 09:13:11 fvdl Exp $	*/
+/*	$NetBSD: spl.S,v 1.3.12.1 2006/12/30 20:45:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -96,16 +96,14 @@
 
 	ALIGN_TEXT
 _C_LABEL(splhigh):
-	movl	$IPL_HIGH,%eax
-	xchgl	%eax,CPUVAR(ILEVEL)
+	movl	CPUVAR(ILEVEL), %eax
+	movl	$IPL_HIGH, CPUVAR(ILEVEL)
 	ret
 
 	ALIGN_TEXT
 _C_LABEL(splx):
-	movl	4(%esp),%eax
-	movl	%eax,CPUVAR(ILEVEL)
-	testl	%eax,%eax
-	jnz	_C_LABEL(Xspllower)
+	movq	%rdi, %rcx
+	SPLLOWER(_C_LABEL(Xspllower))
 	ret
 #endif /* PROF || GPROF */
 #endif

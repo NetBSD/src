@@ -1,4 +1,4 @@
-/*	$NetBSD: podloader_asm.S,v 1.2 2002/03/24 23:37:44 bjh21 Exp $	*/
+/*	$NetBSD: podloader_asm.S,v 1.2.30.1 2006/12/30 20:45:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: podloader_asm.S,v 1.2 2002/03/24 23:37:44 bjh21 Exp $")
+RCSID("$NetBSD: podloader_asm.S,v 1.2.30.1 2006/12/30 20:45:18 yamt Exp $")
 
 #include <sys/errno.h>
 
@@ -59,10 +59,6 @@ ENTRY(_podloader_call)
 	ldmfd	sp!, {fp}
 	adrvs	r0, Lpodloader_panicmsg
 	blvs	_C_LABEL(panic)
-#ifdef __APCS_26__
-	ldmdb	fp, {r4, r5, fp, sp, pc}^
-#else
 	ldmdb	fp, {r4, r5, fp, sp, pc}
-#endif
 Lpodloader_panicmsg:
 	.asciz	"podloader_call"

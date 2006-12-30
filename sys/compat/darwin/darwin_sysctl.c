@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.36.2.1 2006/06/21 14:58:32 yamt Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.36.2.2 2006/12/30 20:47:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.36.2.1 2006/06/21 14:58:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.36.2.2 2006/12/30 20:47:32 yamt Exp $");
+
+#include "opt_ktrace.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.36.2.1 2006/06/21 14:58:32 yamt 
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 #include <sys/sa.h>
 #include <sys/tty.h>
 #include <sys/kauth.h>
@@ -314,15 +319,9 @@ darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-#ifdef DEBUG_DARWIN
-	if (1) {
-		int i;
-
-		printf("darwin_sys___sysctl: ");
-		for (i = 0; i < SCARG(uap, namelen); i++)
-			printf("%d ", name[i]);
-		printf("\n");
-	}
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_MIB))
+		ktrmib(l, name, SCARG(uap, namelen));
 #endif
 
 	/*
@@ -448,10 +447,7 @@ SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
  * of course).
  */
 int
-darwin_sys_getpid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_getpid(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_emuldata *ded;
 	struct proc *p = l->l_proc;
@@ -913,7 +909,7 @@ static int
 darwin_sysctl_procargs(SYSCTLFN_ARGS)
 {
 	struct ps_strings pss;
-	struct proc *p, *up = l->l_proc;
+	struct proc *p;
 	size_t len, upper_bound, xlen, i;
 	struct uio auio;
 	struct iovec aiov;
@@ -932,9 +928,11 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	/* only root or same user change look at the environment */
-	if (kauth_cred_geteuid(up->p_cred) != 0) {
-		if (kauth_cred_getuid(up->p_cred) != kauth_cred_getuid(p->p_cred) ||
-		    kauth_cred_getuid(up->p_cred) != kauth_cred_getsvuid(p->p_cred))
+	if (kauth_cred_geteuid(l->l_cred) != 0) {
+		if (kauth_cred_getuid(l->l_cred) !=
+		    kauth_cred_getuid(p->p_cred) ||
+		    kauth_cred_getuid(l->l_cred) !=
+		    kauth_cred_getsvuid(p->p_cred))
 			return (EPERM);
 	}
 
@@ -1068,8 +1066,8 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 	 */
 	len = (((u_long)oldp + len - 1) & ~0x3UL) - (u_long)oldp;
 	len = len - strlen(p->p_comm);
-	if (len < 0)
-		len = 0;
+	if (len > upper_bound)
+		len = upper_bound;
 
 	error = copyout(p->p_comm, (char *)oldp + len, strlen(p->p_comm) + 1);
 	if (error != 0)

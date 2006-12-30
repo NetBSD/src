@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.22.2.1 2006/06/21 15:11:02 yamt Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.22.2.2 2006/12/30 20:50:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ const char *tcptimers[] =
 	(tv) = (value); \
 	if ((tv) < (tvmin)) \
 		(tv) = (tvmin); \
-	else if ((tv) > (tvmax)) \
+	if ((tv) > (tvmax)) \
 		(tv) = (tvmax); \
 }
 

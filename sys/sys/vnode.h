@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.140.2.1 2006/06/21 15:12:04 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.140.2.2 2006/12/30 20:50:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@ struct uvm_ractx;
  */
 enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
 
-#define VNODE_TYPES \
+#define	VNODE_TYPES \
     "VNON", "VREG", "VDIR", "VBLK", "VCHR", "VLNK", "VSOCK", "VFIFO", "VBAD"
 
 /*
@@ -71,15 +71,15 @@ enum vtagtype	{
 	VT_FDESC, VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS,
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
 	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
-	VT_TMPFS, VT_UDF, VT_SYSVBFS
+	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS
 };
 
-#define VNODE_TAGS \
+#define	VNODE_TAGS \
     "VT_NON", "VT_UFS", "VT_NFS", "VT_MFS", "VT_MSDOSFS", "VT_LFS", "VT_LOFS", \
     "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
-    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS"
+    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS"
 
 LIST_HEAD(buflists, buf);
 
@@ -105,10 +105,11 @@ struct vnode {
 	struct mount	*v_mount;		/* ptr to vfs we are in */
 	int		(**v_op)(void *);	/* vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
-	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
+	TAILQ_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* dirty blocklist head */
-	LIST_ENTRY(vnode) v_synclist;		/* vnodes with dirty buffers */
+	int		v_synclist_slot;	/* synclist slot index */
+	TAILQ_ENTRY(vnode) v_synclist;		/* vnodes with dirty buffers */
 	LIST_HEAD(, namecache) v_dnclist;	/* namecaches for children */
 	LIST_HEAD(, namecache) v_nclist;	/* namecaches for our parent */
 	union {
@@ -118,7 +119,6 @@ struct vnode {
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
 		struct uvm_ractx *vu_ractx;	/* read-ahead context (VREG) */
 	} v_un;
-	struct nqlease	*v_lease;		/* Soft reference to lease */
 	enum vtype	v_type;			/* vnode type */
 	enum vtagtype	v_tag;			/* type of underlying data */
 	struct lock	v_lock;			/* lock for this vnode */
@@ -154,7 +154,7 @@ struct vnode {
 #define	VSYSTEM		0x0004	/* vnode being used by kernel */
 	/* VISTTY used when reading dead vnodes */
 #define	VISTTY		0x0008	/* vnode represents a tty */
-#define	VEXECMAP	0x0010	/* vnode has PROT_EXEC mappings */
+#define	VEXECMAP	0x0010	/* vnode might have PROT_EXEC mappings */
 #define	VWRITEMAP	0x0020	/* might have PROT_WRITE user mappings */
 #define	VWRITEMAPDIRTY	0x0040	/* might have dirty pages due to VWRITEMAP */
 #define	VLOCKSWORK	0x0080	/* FS supports locking discipline */
@@ -166,25 +166,14 @@ struct vnode {
 #define	VLAYER		0x2000	/* vnode is on a layer filesystem */
 #define	VONWORKLST	0x4000	/* On syncer work-list */
 #define	VFREEING	0x8000	/* vnode is being freed */
+#define	VMAPPED		0x10000	/* vnode might have user mappings */
 
-#define VNODE_FLAGBITS \
+#define	VNODE_FLAGBITS \
     "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP\6WRITEMAP\7WRITEMAPDIRTY" \
     "\10LOCKSWORK\11XLOCK\12XWANT\13BWAIT\14ALIASED" \
-    "\15DIROP\16LAYER\17ONWORKLIST\20FREEING"
+    "\15DIROP\16LAYER\17ONWORKLIST\20FREEING\21MAPPED"
 
 #define	VSIZENOTSET	((voff_t)-1)
-
-/*
- * Use a global lock for all v_numoutput updates.
- * Define a convenience macro to increment by one.
- * Note: the only place where v_numoutput is decremented is in vwakeup().
- */
-extern struct simplelock global_v_numoutput_slock;
-#define V_INCR_NUMOUTPUT(vp) do {			\
-	simple_lock(&global_v_numoutput_slock);		\
-	(vp)->v_numoutput++;				\
-	simple_unlock(&global_v_numoutput_slock);	\
-} while (/*CONSTCOND*/ 0)
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
@@ -222,6 +211,18 @@ struct vattr {
 #ifdef _KERNEL
 
 /*
+ * Use a global lock for all v_numoutput updates.
+ * Define a convenience macro to increment by one.
+ * Note: the only place where v_numoutput is decremented is in vwakeup().
+ */
+extern struct simplelock global_v_numoutput_slock;
+#define	V_INCR_NUMOUTPUT(vp) do {			\
+	simple_lock(&global_v_numoutput_slock);		\
+	(vp)->v_numoutput++;				\
+	simple_unlock(&global_v_numoutput_slock);	\
+} while (/*CONSTCOND*/ 0)
+
+/*
  * Flags for ioflag.
  */
 #define	IO_UNIT		0x00010		/* do I/O as atomic unit */
@@ -233,6 +234,7 @@ struct vattr {
 #define	IO_ALTSEMANTICS	0x00400		/* use alternate i/o semantics */
 #define	IO_NORMAL	0x00800		/* operate on regular data */
 #define	IO_EXT		0x01000		/* operate on extended attributes */
+#define	IO_DIRECT	0x02000		/* direct I/O hint */
 #define	IO_ADV_MASK	0x00003		/* access pattern hint */
 
 #define	IO_ADV_SHIFT	0
@@ -273,8 +275,8 @@ extern const int	vttoif_tab[];
 #define	V_WAIT		0x0001		/*  sleep for suspend */
 #define	V_NOWAIT	0x0002		/*  don't sleep for suspend */
 #define	V_SLEEPONLY	0x0004		/*  just return after sleep */
-#define V_PCATCH	0x0008		/*  sleep witch PCATCH set */
-#define V_LOWER		0x0010		/*  lower level operation */
+#define	V_PCATCH	0x0008		/*  sleep with PCATCH set */
+#define	V_LOWER		0x0010		/*  lower level operation */
 
 /*
  * Flags to various vnode operations.
@@ -589,6 +591,7 @@ void	vfs_getnewfsid(struct mount *);
 int	vfs_drainvnodes(long target, struct lwp *);
 void	vfs_write_resume(struct mount *);
 int	vfs_write_suspend(struct mount *, int, int);
+void	vfs_timestamp(struct timespec *);
 #ifdef DDB
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
 void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...));

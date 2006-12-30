@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.2.18.2 2006/06/21 15:12:04 yamt Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.2.18.3 2006/12/30 20:50:56 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -47,6 +47,7 @@ struct workqueue;
 
 int workqueue_create(struct workqueue **, const char *,
     void (*)(struct work *, void *), void *, int, int, int);
+void workqueue_destroy(struct workqueue *);
 
 void workqueue_enqueue(struct workqueue *, struct work *);
 

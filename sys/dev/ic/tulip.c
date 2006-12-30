@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.137.2.1 2006/06/21 15:02:56 yamt Exp $	*/
+/*	$NetBSD: tulip.c,v 1.137.2.2 2006/12/30 20:48:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.137.2.1 2006/06/21 15:02:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.137.2.2 2006/12/30 20:48:04 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -551,7 +551,8 @@ tlp_attach(struct tulip_softc *sc, const u_int8_t *enaddr)
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	sc->sc_powerhook = powerhook_establish(tlp_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    tlp_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
@@ -2508,6 +2509,24 @@ tlp_parse_old_srom(struct tulip_softc *sc, u_int8_t *enaddr)
 	u_int32_t cksum;
 
 	if (memcmp(&sc->sc_srom[0], &sc->sc_srom[16], 8) != 0) {
+		/*
+		 * Phobos interfaces have the address at offsets 20
+		 * and 84, but each pair of bytes is swapped. The
+		 * first and last two bytes appear to contain
+		 * checksums. Everything else is 0.
+		 */
+		if (sc->sc_srom_addrbits == 6 &&
+		    sc->sc_srom[21] == 0x00 &&
+		    sc->sc_srom[20] == 0x60 &&
+		    sc->sc_srom[23] == 0xf5 &&
+		    memcmp(&sc->sc_srom[20], &sc->sc_srom[84], 6) == 0) {
+			for (i = 0; i < 6; i += 2) {
+				enaddr[i] = sc->sc_srom[20 + i + 1];
+				enaddr[i + 1] = sc->sc_srom[20 + i];
+			}
+			return (1);
+		}
+
 		/*
 		 * Cobalt Networks interfaces simply have the address
 		 * in the first six bytes. The rest is zeroed out

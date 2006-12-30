@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.85.2.1 2006/06/21 15:09:39 yamt Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.85.2.2 2006/12/30 20:50:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.85.2.1 2006/06/21 15:09:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.85.2.2 2006/12/30 20:50:07 yamt Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.85.2.1 2006/06/21 15:09:39 yamt Exp $"
 #include <sys/tty.h>
 #include <sys/stat.h>
 #include <sys/file.h>
-#include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
@@ -307,12 +306,8 @@ ptyattach(n)
 
 /*ARGSUSED*/
 int
-ptsopen(dev, flag, devtype, l)
-	dev_t dev;
-	int flag, devtype;
-	struct lwp *l;
+ptsopen(dev_t dev, int flag, int devtype, struct lwp *l)
 {
-	struct proc *p = l->l_proc;
 	struct pt_softc *pti;
 	struct tty *tp;
 	int error;
@@ -333,7 +328,8 @@ ptsopen(dev, flag, devtype, l)
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);		/* would be done in xxparam() */
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && kauth_cred_geteuid(p->p_cred) != 0)
+	} else if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN,
+	    tp) != 0)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		SET(tp->t_state, TS_CARR_ON);
@@ -361,10 +357,7 @@ ptsopen(dev, flag, devtype, l)
 }
 
 int
-ptsclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+ptsclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -555,10 +548,7 @@ ptcwakeup(tp, flag)
 
 /*ARGSUSED*/
 int
-ptcopen(dev, flag, devtype, l)
-	dev_t dev;
-	int flag, devtype;
-	struct lwp *l;
+ptcopen(dev_t dev, int flag, int devtype, struct lwp *l)
 {
 	struct pt_softc *pti;
 	struct tty *tp;
@@ -592,10 +582,7 @@ ptcopen(dev, flag, devtype, l)
 
 /*ARGSUSED*/
 int
-ptcclose(dev, flag, devtype, l)
-	dev_t dev;
-	int flag, devtype;
-	struct lwp *l;
+ptcclose(dev_t dev, int flag, int devtype, struct lwp *l)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
@@ -753,6 +740,11 @@ again:
 				TTY_LOCK(tp);
 				/* check again for safety */
 				if (!ISSET(tp->t_state, TS_ISOPEN)) {
+					/*
+					 * adjust for data copied in but not
+					 * written
+					 */
+					uio->uio_resid += cc;
 					error = EIO;
 					goto out;
 				}
@@ -780,6 +772,8 @@ again:
 			TTY_LOCK(tp);
 			/* check again for safety */
 			if (!ISSET(tp->t_state, TS_ISOPEN)) {
+				/* adjust for data copied in but not written */
+				uio->uio_resid += cc;
 				error = EIO;
 				goto out;
 			}
@@ -812,6 +806,8 @@ block:
 	 * in outq, or space in rawq.
 	 */
 	if (!ISSET(tp->t_state, TS_CARR_ON)) {
+		/* adjust for data copied in but not written */
+		uio->uio_resid += cc;
 		error = EIO;
 		goto out;
 	}

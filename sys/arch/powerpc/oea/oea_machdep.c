@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.22.2.1 2006/06/21 14:55:03 yamt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.22.2.2 2006/12/30 20:46:44 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.22.2.1 2006/06/21 14:55:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.22.2.2 2006/12/30 20:46:44 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -97,7 +97,10 @@ struct vm_map *phys_map = NULL;
  */
 extern struct user *proc0paddr;
 
+
+/* XXXSL: The battable is not initialized to non-zero for PPC_OEA64 and PPC_OEA64_BRIDGE */
 struct bat battable[512];
+
 register_t iosrtable[16];	/* I/O segments, for kernel_pmap setup */
 paddr_t msgbuf_paddr;
 
@@ -131,7 +134,6 @@ oea_init(void (*handler)(void))
 
 	mtspr(SPR_SPRG0, ci);
 	cpuvers = mfpvr() >> 16;
-
 
 	/*
 	 * Initialize proc0 and current pcb and pmap pointers.
@@ -172,7 +174,7 @@ oea_init(void (*handler)(void))
 	/*
 	 * Set up trap vectors.  Don't assume vectors are on 0x100.
 	 */
-	for (exc = 0; exc <= EXC_LAST; exc += 0x100) {
+	for (exc = 0x0; exc <= EXC_LAST; exc += 0x100) {
 		switch (exc) {
 		default:
 			size = (size_t)trapsize;
@@ -375,9 +377,11 @@ oea_init(void (*handler)(void))
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
+#ifdef PPC_OEA
 	__asm volatile ("sync; mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
 	    : "=r"(scratch)
 	    : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+#endif
 
 	KASSERT(curcpu() == ci);
 }
@@ -400,6 +404,8 @@ mpc601_ioseg_add(paddr_t pa, register_t len)
 		"r"(pa));
 }
 
+
+#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 void
 oea_iobat_add(paddr_t pa, register_t len)
 {
@@ -623,6 +629,7 @@ oea_batinit(paddr_t pa, ...)
 		}
 	}
 }
+#endif /* (PPC_OEA) && !(PPC_OEA64) && !(PPC_OEA64_BRIDGE) */
 
 void
 oea_install_extint(void (*handler)(void))
@@ -818,4 +825,20 @@ mapiodev(paddr_t pa, psize_t len)
 	}
 	pmap_update(pmap_kernel());
 	return (void *)(va + off);
+}
+
+void
+unmapiodev(vaddr_t va, vsize_t len)
+{
+	paddr_t faddr;
+
+	if (! va)
+		return;
+
+	faddr = trunc_page(va);
+	len = round_page(va - faddr + len);
+
+	pmap_kremove(faddr, len);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, faddr, len, UVM_KMF_VAONLY);
 }

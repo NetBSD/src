@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_jazzio.c,v 1.6.8.1 2006/06/21 14:49:08 yamt Exp $	*/
+/*	$NetBSD: timer_jazzio.c,v 1.6.8.2 2006/12/30 20:45:29 yamt Exp $	*/
 /*	$OpenBSD: clock.c,v 1.6 1998/10/15 21:30:15 imp Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_jazzio.c,v 1.6.8.1 2006/06/21 14:49:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_jazzio.c,v 1.6.8.2 2006/12/30 20:45:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -146,7 +146,7 @@ timer_jazzio_attach(struct device *parent, struct device *self, void *aux)
 
 	evcnt_attach_static(&timer_jazzio_ev);
 	(*platform->set_intr)(timer_jazzio_conf->tjc_intr_mask,
-	    timer_jazzio_conf->tjc_intr, 1);
+	    timer_jazzio_conf->tjc_intr, ARC_INTPRI_TIMER_INT);
 
 	timerattach(&sc->sc_dev, &timerfns_jazzio);
 

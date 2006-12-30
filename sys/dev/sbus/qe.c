@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.36.2.1 2006/06/21 15:06:47 yamt Exp $	*/
+/*	$NetBSD: qe.c,v 1.36.2.2 2006/12/30 20:49:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,15 +73,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.36.2.1 2006/06/21 15:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.36.2.2 2006/12/30 20:49:33 yamt Exp $");
 
 #define QEDEBUG
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
-#include "opt_ccitt.h"
-#include "opt_llc.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -114,10 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.36.2.1 2006/06/21 15:06:47 yamt Exp $");
 #include <netinet/ip.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -945,22 +938,6 @@ qeioctl(ifp, cmd, data)
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-					*(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				      sizeof(sc->sc_enaddr));
-			/* Set new address. */
-			qeinit(sc);
-			break;
-		    }
-#endif /* NS */
 		default:
 			qeinit(sc);
 			break;

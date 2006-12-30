@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.7 2005/06/09 16:02:19 he Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.7.2.1 2006/12/30 20:45:29 yamt Exp $	*/
 /*	$OpenBSD: arcbios.h,v 1.1 1998/01/29 15:06:22 pefo Exp $	*/
 
 /*-
@@ -210,17 +210,23 @@ typedef struct arc_calls
 		char **,		/* argv */
 		char **);		/* envp */
 
-	volatile void (*halt)(void);	/* Halt 4 */
+	void (*halt)(void)
+	    __attribute__((__noreturn__));	/* Halt 4 */
 
-	volatile void (*power_down)(void); /* PowerDown 5 */
+	void (*power_down)(void)
+	    __attribute__((__noreturn__));	/* PowerDown 5 */
 
-	volatile void (*restart)(void);	/* Restart 6 */
+	void (*restart)(void)
+	    __attribute__((__noreturn__));	/* Restart 6 */
 
-	volatile void (*reboot)(void);	/* Reboot 7 */
+	void (*reboot)(void)
+	    __attribute__((__noreturn__));	/* Reboot 7 */
 
-	volatile void (*enter_interactive_mode)(void); /* EnterInteractiveMode 8 */
+	void (*enter_interactive_mode)(void)
+	    __attribute__((__noreturn__));	/* EnterInteractiveMode 8 */
 
-	volatile void (*return_from_main)(void); /* ReturnFromMain 9 */
+	void (*return_from_main)(void)
+	    __attribute__((__noreturn__));	/* ReturnFromMain 9 */
 
 	arc_config_t *(*get_peer)(	/* GetPeer 10 */
 		arc_config_t *); 	/* Component */

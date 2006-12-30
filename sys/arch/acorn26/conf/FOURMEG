@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.19.6.1 2006/06/21 14:47:47 yamt Exp $
+# $NetBSD: FOURMEG,v 1.19.6.2 2006/12/30 20:45:18 yamt Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -70,11 +70,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -109,9 +106,6 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Disable kernel security.
 #options 	INSECURE
-
-# Reduce kernel size a little
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # NFS boot options
 options 	NFS_BOOT_DHCP		# superset of BOOTP

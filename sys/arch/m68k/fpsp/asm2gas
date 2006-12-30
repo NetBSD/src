@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: asm2gas,v 1.6.40.1 2006/06/21 14:53:01 yamt Exp $
+#	$NetBSD: asm2gas,v 1.6.40.2 2006/12/30 20:46:24 yamt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
 # This ugly script converts assembler code from Motorola's format to a
 # form that gas (MIT syntax) can digest.
 
-SED=$1
-cat $2 | ${SED} -e '
+: ${SED:=sed}
+cat $1 | ${SED} -e '
   # format canonicalization
 
   /[ 	]IDNT[ 	]/{s/^/|/;p;d;}

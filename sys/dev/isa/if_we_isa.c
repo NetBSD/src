@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.12.2.1 2006/06/21 15:04:21 yamt Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.12.2.2 2006/12/30 20:48:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.12.2.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.12.2.2 2006/12/30 20:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,10 +143,7 @@ do { \
 } while (0)
 
 int
-we_isa_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+we_isa_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t asict, memt;
@@ -300,9 +297,7 @@ we_isa_probe(parent, cf, aux)
 }
 
 void
-we_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+we_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct we_softc *wsc = (struct we_softc *)self;
 	struct dp8390_softc *sc = &wsc->sc_dp8390;
@@ -522,7 +517,7 @@ we_params(asict, asich, typep, memsizep, flagp, is790p)
 		int i;
 
 		printf("we_params: type = 0x%x, typestr = %s, is16bit = %d, "
-		    "memsize = %d\n", type, typestr, is16bit, memsize);
+		    "memsize = %ld\n", type, typestr, is16bit, (u_long)memsize);
 		for (i = 0; i < 8; i++)
 			printf("     %d -> 0x%x\n", i,
 			    bus_space_read_1(asict, asich, i));

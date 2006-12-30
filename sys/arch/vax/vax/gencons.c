@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.40.16.1 2006/06/21 14:57:33 yamt Exp $	*/
+/*	$NetBSD: gencons.c,v 1.40.16.2 2006/12/30 20:47:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.40.16.1 2006/06/21 14:57:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.40.16.2 2006/12/30 20:47:14 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -98,7 +98,6 @@ gencnopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit;
 	struct tty *tp;
-	struct proc *p = l->l_proc;
 
 	unit = minor(dev);
 	if (unit >= maxttys)
@@ -114,6 +113,10 @@ gencnopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_oproc = gencnstart;
 	tp->t_param = gencnparam;
 	tp->t_dev = dev;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -123,9 +126,7 @@ gencnopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		gencnparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE &&
-		   kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
-		return EBUSY;
+	}
 	tp->t_state |= TS_CARR_ON;
 
 	return ((*tp->t_linesw->l_open)(dev, tp));

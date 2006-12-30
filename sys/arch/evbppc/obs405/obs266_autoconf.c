@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_autoconf.c,v 1.1.8.1 2006/06/21 14:51:08 yamt Exp $	*/
+/*	$NetBSD: obs266_autoconf.c,v 1.1.8.2 2006/12/30 20:45:54 yamt Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.1.8.1 2006/06/21 14:51:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.1.8.2 2006/12/30 20:45:54 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -59,8 +59,8 @@ cpu_configure(void)
 	if (config_rootfound("plb", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n", (u_short)imask[IPL_BIO],
-		(u_short)imask[IPL_NET], (u_short)imask[IPL_TTY]);
+	printf("biomask %x netmask %x ttymask %x\n",
+	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
 
 	(void)spl0();
 

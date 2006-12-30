@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcv2.h,v 1.10 2005/02/26 22:39:50 perry Exp $	*/
+/*	$NetBSD: rpcv2.h,v 1.10.4.1 2006/12/30 20:50:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,6 @@
 #define	RPCAUTH_UNIX	1
 #define	RPCAUTH_SHORT	2
 #define RPCAUTH_KERB4	4
-#define	RPCAUTH_NQNFS	300000
 #define	RPCAUTH_MAXSIZ	400
 #define	RPCVERF_MAXSIZ	12	/* For Kerb, can actually be 400 */
 #define	RPCAUTH_UNIXGIDS 16

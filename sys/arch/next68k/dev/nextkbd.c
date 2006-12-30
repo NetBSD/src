@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbd.c,v 1.9.8.1 2006/06/21 14:54:23 yamt Exp $ */
+/* $NetBSD: nextkbd.c,v 1.9.8.2 2006/12/30 20:46:40 yamt Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.9.8.1 2006/06/21 14:54:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.9.8.2 2006/12/30 20:46:40 yamt Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -49,13 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.9.8.1 2006/06/21 14:54:23 yamt Exp $")
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
-#include <next68k/dev/nextkbdvar.h>
-#include <next68k/dev/wskbdmap_next.h>
-
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+
+#include <next68k/dev/nextkbdvar.h>
+#include <next68k/dev/wskbdmap_next.h>
 
 #include <next68k/next68k/isr.h>
 

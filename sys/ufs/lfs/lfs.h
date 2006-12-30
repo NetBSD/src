@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.88.2.1 2006/06/21 15:12:38 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.88.2.2 2006/12/30 20:51:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -108,23 +108,29 @@
 #define PG_DELWRI	PG_PAGER1	/* Local def for delayed pageout */
 
 /* Resource limits */
-#define LFS_MAX_BUFS	    ((nbuf >> 2) - 10)
-#define LFS_WAIT_BUFS	    ((nbuf >> 1) - (nbuf >> 3) - 10)
-#define LFS_INVERSE_MAX_BUFS(n) (((n) + 10) << 2)
-#define LFS_MAX_BYTES	    ((bufmem_lowater >> 2) - 10 * PAGE_SIZE)
-#define LFS_INVERSE_MAX_BYTES(n) (((n) + 10 * PAGE_SIZE) << 2)
-#define LFS_WAIT_BYTES	    ((bufmem_lowater >> 1) - (bufmem_lowater >> 3) - 10 * PAGE_SIZE)
+#define	LFS_MAX_RESOURCE(x, u)	(((x) >> 2) - 10 * (u))
+#define	LFS_WAIT_RESOURCE(x, u)	(((x) >> 1) - ((x) >> 3) - 10 * (u))
+#define	LFS_INVERSE_MAX_RESOURCE(x, u)	(((x) + 10 * (u)) << 2)
+#define LFS_MAX_BUFS	    LFS_MAX_RESOURCE(nbuf, 1)
+#define LFS_WAIT_BUFS	    LFS_WAIT_RESOURCE(nbuf, 1)
+#define LFS_INVERSE_MAX_BUFS(n)	LFS_INVERSE_MAX_RESOURCE(n, 1)
+#define LFS_MAX_BYTES	    LFS_MAX_RESOURCE(bufmem_lowater, PAGE_SIZE)
+#define LFS_INVERSE_MAX_BYTES(n) LFS_INVERSE_MAX_RESOURCE(n, PAGE_SIZE)
+#define LFS_WAIT_BYTES	    LFS_WAIT_RESOURCE(bufmem_lowater, PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
 #define SIZEOF_DIROP(fs)	(2 * ((fs)->lfs_bsize + DINODE1_SIZE))
 #define LFS_MAX_FSDIROP(fs)						\
 	((fs)->lfs_nclean <= (fs)->lfs_resvseg ? 0 :			\
 	 (((fs)->lfs_nclean - (fs)->lfs_resvseg) * (fs)->lfs_ssize) /	\
           (2 * SIZEOF_DIROP(fs)))
-#define LFS_MAX_PAGES \
-     (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemin) >> 8)
-#define LFS_WAIT_PAGES \
-     (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemax) >> 8)
+#define LFS_MAX_PAGES	lfs_max_pages()
+#define LFS_WAIT_PAGES	lfs_wait_pages()
 #define LFS_BUFWAIT	    2	/* How long to wait if over *_WAIT_* */
+
+#ifdef _KERNEL
+int lfs_wait_pages(void);
+int lfs_max_pages(void);
+#endif /* _KERNEL */
 
 /* How starved can we be before we start holding back page writes */
 #define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_resvseg)
@@ -344,7 +350,7 @@ struct lfid {
 
 /* Heuristic emptiness measure */
 #define VPISEMPTY(vp)	 (LIST_EMPTY(&(vp)->v_dirtyblkhd) && 		\
-			  !((vp)->v_flag & VONWORKLST) &&		\
+			  !(vp->v_type == VREG && (vp)->v_flag & VONWORKLST) &&\
 			  VTOI(vp)->i_lfs_nbtree == 0)
 
 #define WRITEINPROG(vp) ((vp)->v_numoutput > 0 ||			\
@@ -451,6 +457,7 @@ struct ifile {
 	u_int32_t if_version;		/* inode version number */
 #define	LFS_UNUSED_DADDR	0	/* out-of-band daddr */
 	int32_t	  if_daddr;		/* inode disk address */
+#define LFS_ORPHAN_NEXTFREE	(~(u_int32_t)0) /* indicate orphaned file */
 	u_int32_t if_nextfree;		/* next-unallocated inode */
 	u_int32_t if_atime_sec;		/* Last access time, seconds */
 	u_int32_t if_atime_nsec;	/* and nanoseconds */
@@ -498,6 +505,8 @@ typedef struct _cleanerinfo {
 	int32_t	  avail;		/* disk blocks available */
 	u_int32_t free_head;		/* head of the inode free list */
 	u_int32_t free_tail;		/* tail of the inode free list */
+#define LFS_CLEANER_MUST_CLEAN	0x01
+	u_int32_t flags;		/* status word from the kernel */
 } CLEANERINFO;
 
 #define	CLEANSIZE_SU(fs)						\
@@ -592,6 +601,8 @@ struct segsum_v1 {
 
 #define	SS_DIROP	0x01		/* segment begins a dirop */
 #define	SS_CONT		0x02		/* more partials to finish this write*/
+#define	SS_CLEAN	0x04		/* written by the cleaner */
+#define	SS_RFW		0x08		/* written by the roll-forward agent */
 	u_int16_t ss_flags;		/* 24: used for directory operations */
 	u_int16_t ss_pad;		/* 26: extra space */
 	/* FINFO's and inode daddr's... */
@@ -813,6 +824,7 @@ struct lfs {
 	size_t lfs_devbshift;		/* Device block shift */
 	struct lock lfs_fraglock;
 	struct lock lfs_iflock;		/* Ifile lock */
+	struct lock lfs_stoplock;	/* Wrap lock */
 	pid_t lfs_rfpid;		/* Process ID of roll-forward agent */
 	int	  lfs_nadirop;		/* number of active dirop nodes */
 	long	  lfs_ravail;		/* blocks pre-reserved for writing */
@@ -837,6 +849,8 @@ struct lfs {
 	int lfs_pages;			/* dirty pages blaming this fs */
 	lfs_bm_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */
 	int lfs_nowrap;			/* Suspend log wrap */
+	int lfs_wrappass;		/* Allow first log wrap requester to pass */
+	int lfs_wrapstatus;		/* Wrap status */
 	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
 };
 
@@ -988,6 +1002,8 @@ struct lfs_inode_ext {
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
 #define LFSI_NO_GOP_WRITE 0x01
 #define LFSI_DELETED      0x02
+#define LFSI_WRAPBLOCK    0x04
+#define LFSI_WRAPWAIT     0x08
 	u_int32_t lfs_iflags;           /* Inode flags */
 	daddr_t   lfs_hiblk;		/* Highest lbn held by inode */
 #ifdef _KERNEL
@@ -995,6 +1011,7 @@ struct lfs_inode_ext {
 	int	  lfs_nbtree;		/* Size of tree */
 	LIST_HEAD(, segdelta) lfs_segdhd;
 #endif
+	int16_t	  lfs_odnlink;		/* on-disk nlink count for cleaner */
 };
 #define i_lfs_osize		inode_ext.lfs->lfs_osize
 #define i_lfs_effnblks		inode_ext.lfs->lfs_effnblocks
@@ -1006,6 +1023,7 @@ struct lfs_inode_ext {
 #define i_lfs_lbtree		inode_ext.lfs->lfs_lbtree
 #define i_lfs_nbtree		inode_ext.lfs->lfs_nbtree
 #define i_lfs_segdhd		inode_ext.lfs->lfs_segdhd
+#define i_lfs_odnlink		inode_ext.lfs->lfs_odnlink
 
 /*
  * Macros for determining free space on the disk, with the variable metadata
@@ -1079,15 +1097,27 @@ struct lfs_fcntl_markv {
 #define LFCNBMAPV	_FCNRW_FSPRIV('L', 2, struct lfs_fcntl_markv)
 #define LFCNMARKV	_FCNRW_FSPRIV('L', 3, struct lfs_fcntl_markv)
 #define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
-#define LFCNIFILEFH	 _FCNW_FSPRIV('L', 5, struct fhandle)
+
+struct lfs_fhandle {
+	char space[28];	/* FHANDLE_SIZE_COMPAT (but used from userland too) */
+};
 #define LFCNREWIND       _FCNR_FSPRIV('L', 6, int)
 #define LFCNINVAL        _FCNR_FSPRIV('L', 7, int)
 #define LFCNRESIZE       _FCNR_FSPRIV('L', 8, int)
-#define LFCNWRAPSTOP	 _FCNO_FSPRIV('L', 9)
-#define LFCNWRAPGO	 _FCNO_FSPRIV('L', 10)
-/* Compat for NetBSD 2.x bug */
+#define LFCNWRAPSTOP	 _FCNR_FSPRIV('L', 9, int)
+#define LFCNWRAPGO	 _FCNR_FSPRIV('L', 10, int)
+#define LFCNIFILEFH	 _FCNW_FSPRIV('L', 11, struct lfs_fhandle)
+#define LFCNWRAPPASS	 _FCNR_FSPRIV('L', 12, int)
+# define LFS_WRAP_GOING   0x0
+# define LFS_WRAP_WAITING 0x1
+#define LFCNWRAPSTATUS	 _FCNW_FSPRIV('L', 13, int)
+/* Compat */
 #define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval)
 #define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval)
+#define LFCNIFILEFH_COMPAT	 _FCNW_FSPRIV('L', 5, struct lfs_fhandle)
+#define LFCNIFILEFH_COMPAT2	 _FCN_FSPRIV(F_FSOUT, 'L', 11, 32)
+#define LFCNWRAPSTOP_COMPAT	 _FCNO_FSPRIV('L', 9)
+#define LFCNWRAPGO_COMPAT	 _FCNO_FSPRIV('L', 10)
 
 #ifdef _KERNEL
 /* XXX MP */

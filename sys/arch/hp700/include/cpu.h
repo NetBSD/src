@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15.2.1 2006/06/21 14:51:29 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.2.2 2006/12/30 20:45:59 yamt Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -242,7 +242,6 @@ void	delay(u_int);
 void	hppa_init(paddr_t);
 void	trap(int, struct trapframe *);
 void	hppa_ras(struct lwp *);
-int	dma_cachectl(caddr_t, int);
 int	spcopy(pa_space_t, const void *, pa_space_t, void *, size_t);
 int	spstrcpy(pa_space_t, const void *, pa_space_t, void *, size_t,
 		 size_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_socket.c,v 1.8.4.1 2006/06/21 14:58:32 yamt Exp $ */
+/*	$NetBSD: darwin_socket.c,v 1.8.4.2 2006/12/30 20:47:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.8.4.1 2006/06/21 14:58:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.8.4.2 2006/12/30 20:47:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ darwin_sys_socket(l, v, retval)
 		syscallarg(int) type;
 		syscallarg(int) protocol;
 	} */ *uap = v;
-	struct sys_socket_args cup;
+	struct compat_30_sys_socket_args cup;
 
 	if (SCARG(uap, domain) < 0)
 		return (EPROTONOSUPPORT);
@@ -228,7 +228,7 @@ darwin_sys_socket(l, v, retval)
 	SCARG(&cup, type) = SCARG(uap, type);
 	SCARG(&cup, protocol) = SCARG(uap, protocol);
 
-	return sys_socket(l, &cup, retval);
+	return compat_30_sys_socket(l, &cup, retval);
 }
 
 int

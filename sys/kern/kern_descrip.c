@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.134.2.1 2006/06/21 15:09:37 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.134.2.2 2006/12/30 20:50:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.134.2.1 2006/06/21 15:09:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.134.2.2 2006/12/30 20:50:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -951,10 +951,13 @@ restart:
  * a file descriptor for the process that refers to it.
  */
 int
-falloc(struct proc *p, struct file **resultfp, int *resultfd)
+falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 {
 	struct file	*fp, *fq;
+	struct proc	*p;
 	int		error, i;
+
+	p = l->l_proc;
 
  restart:
 	if ((error = fdalloc(p, 0, &i)) != 0) {
@@ -995,7 +998,7 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	p->p_fd->fd_ofiles[i] = fp;
 	simple_lock_init(&fp->f_slock);
 	fp->f_count = 1;
-	fp->f_cred = p->p_cred;
+	fp->f_cred = l->l_cred;
 	kauth_cred_hold(fp->f_cred);
 	if (resultfp) {
 		fp->f_usecount = 1;
@@ -1633,7 +1636,7 @@ filedescopen(dev_t dev, int mode, int type, struct lwp *l)
 
 const struct cdevsw filedesc_cdevsw = {
 	filedescopen, noclose, noread, nowrite, noioctl,
-	    nostop, notty, nopoll, nommap, nokqfilter,
+	    nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*
@@ -1776,7 +1779,7 @@ fdcheckstd(l)
 		snprintf(which, sizeof(which), ",%d", i);
 		strlcat(closed, which, sizeof(closed));
 		if (devnullfp == NULL) {
-			if ((error = falloc(p, &fp, &fd)) != 0)
+			if ((error = falloc(l, &fp, &fd)) != 0)
 				return (error);
 			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null",
 			    l);
@@ -1883,7 +1886,7 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 	struct proc *p1;
 	ksiginfo_t ksi;
 
-	memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT(&ksi);
 	ksi.ksi_signo = signo;
 	ksi.ksi_code = code;
 	ksi.ksi_band = band;
@@ -1914,6 +1917,7 @@ fdclone(struct lwp *l, struct file *fp, int fd, int flag,
 int
 fnullop_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
 {
+
 	if (cmd == F_SETFL)
 		return 0;
 
@@ -1924,6 +1928,7 @@ fnullop_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
 int
 fnullop_poll(struct file *fp, int which, struct lwp *l)
 {
+
 	return 0;
 }
 
@@ -1940,5 +1945,6 @@ fnullop_kqfilter(struct file *fp, struct knote *kn)
 int
 fbadop_stat(struct file *fp, struct stat *sb, struct lwp *l)
 {
+
 	return EOPNOTSUPP;
 }

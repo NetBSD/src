@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.80.2.1 2006/06/21 15:05:05 yamt Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.80.2.2 2006/12/30 20:48:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.80.2.1 2006/06/21 15:05:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.80.2.2 2006/12/30 20:48:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,11 @@ static const struct tulip_pci_product {
 	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AL981,
 	  TULIP_CHIP_AL981 },
 
-	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AN985,
+	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AN983,
+	  TULIP_CHIP_AN985 },
+	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_ADM9511,
+	  TULIP_CHIP_AN985 },
+	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_ADM9513,
 	  TULIP_CHIP_AN985 },
 	{ PCI_VENDOR_ACCTON,		PCI_PRODUCT_ACCTON_EN2242,
 	  TULIP_CHIP_AN985 },
@@ -203,6 +207,8 @@ static void	tlp_pci_algor_21142_quirks(struct tulip_pci_softc *,
 		    const u_int8_t *);
 static void	tlp_pci_netwinder_21142_quirks(struct tulip_pci_softc *,
 		    const u_int8_t *);
+static void	tlp_pci_phobos_21142_quirks(struct tulip_pci_softc *,
+		    const u_int8_t *);
 static void	tlp_pci_znyx_21142_quirks(struct tulip_pci_softc *,
 		    const u_int8_t *);
 
@@ -225,6 +231,8 @@ static const struct tlp_pci_quirks tlp_pci_21041_quirks[] = {
 
 static void	tlp_pci_asante_21140_quirks(struct tulip_pci_softc *,
 		    const u_int8_t *);
+static void	tlp_pci_phobos_21140_quirks(struct tulip_pci_softc *,
+		    const u_int8_t *);
 static void	tlp_pci_smc_21140_quirks(struct tulip_pci_softc *,
 		    const u_int8_t *);
 static void	tlp_pci_vpc_21140_quirks(struct tulip_pci_softc *,
@@ -236,6 +244,7 @@ static const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ tlp_pci_asante_21140_quirks,	{ 0x00, 0x00, 0x94 } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0x92 } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0xd1 } },
+	{ tlp_pci_phobos_21140_quirks,	{ 0x00, 0x60, 0xf5 } },
 	{ tlp_pci_smc_21140_quirks,	{ 0x00, 0x00, 0xc0 } },
 	{ tlp_pci_vpc_21140_quirks,	{ 0x00, 0x03, 0xff } },
 	{ NULL,				{ 0, 0, 0 } }
@@ -248,6 +257,7 @@ static const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
 	{ tlp_pci_algor_21142_quirks,	{ 0x00, 0x40, 0xbc } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0xd1 } },
 	{ tlp_pci_netwinder_21142_quirks,{ 0x00, 0x10, 0x57 } },
+	{ tlp_pci_phobos_21142_quirks,	{ 0x00, 0x60, 0xf5 } },
 	{ tlp_pci_znyx_21142_quirks,	{ 0x00, 0xc0, 0x95 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
@@ -323,7 +333,8 @@ tlp_pci_check_slaved(struct tulip_pci_softc *psc, int shared, int slaved)
 }
 
 static int
-tlp_pci_match(struct device *parent, struct cfdata *match, void *aux)
+tlp_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -1125,7 +1136,8 @@ tlp_pci_znyx_21040_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
 static void	tlp_pci_znyx_21142_qs6611_reset(struct tulip_softc *);
 
 static void
-tlp_pci_znyx_21142_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+tlp_pci_znyx_21142_quirks(struct tulip_pci_softc *psc,
+    const u_int8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 	pcireg_t subid;
@@ -1174,7 +1186,8 @@ tlp_pci_znyx_21142_qs6611_reset(struct tulip_softc *sc)
 }
 
 static void
-tlp_pci_smc_21040_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+tlp_pci_smc_21040_quirks(struct tulip_pci_softc *psc,
+    const u_int8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 	u_int16_t id1, id2, ei;
@@ -1216,7 +1229,8 @@ tlp_pci_smc_21040_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
 }
 
 static void
-tlp_pci_cogent_21040_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+tlp_pci_cogent_21040_quirks(struct tulip_pci_softc *psc,
+    const u_int8_t *enaddr)
 {
 
 	strcpy(psc->sc_tulip.sc_name, "Cogent multi-port");
@@ -1224,7 +1238,8 @@ tlp_pci_cogent_21040_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
 }
 
 static void
-tlp_pci_accton_21040_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+tlp_pci_accton_21040_quirks(struct tulip_pci_softc *psc,
+    const u_int8_t *enaddr)
 {
 
 	strcpy(psc->sc_tulip.sc_name, "ACCTON EN1203");
@@ -1233,7 +1248,8 @@ tlp_pci_accton_21040_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
 static void	tlp_pci_asante_21140_reset(struct tulip_softc *);
 
 static void
-tlp_pci_asante_21140_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+tlp_pci_asante_21140_quirks(struct tulip_pci_softc *psc,
+    const u_int8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 
@@ -1264,6 +1280,38 @@ tlp_pci_asante_21140_reset(struct tulip_softc *sc)
 	TULIP_WRITE(sc, CSR_GPP, 0);
 }
 
+static void	tlp_pci_phobos_21140_reset(struct tulip_softc *);
+
+static void
+tlp_pci_phobos_21140_quirks(struct tulip_pci_softc *psc,
+    const u_int8_t *enaddr)
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	/*
+	 * Phobo boards just use MII-on_SIO.
+	 */
+	sc->sc_mediasw = &tlp_sio_mii_mediasw;
+	sc->sc_reset = tlp_pci_phobos_21140_reset;
+
+	/*
+	 * These boards appear solely on sgimips machines behind a special
+	 * GIO<->PCI ASIC and require the DBO and BLE bits to be set in CSR0.
+	 */
+	sc->sc_flags |= (TULIPF_BLE | TULIPF_DBO);
+}
+
+static void
+tlp_pci_phobos_21140_reset(struct tulip_softc *sc)
+{
+
+	TULIP_WRITE(sc, CSR_GPP, 0x1fd);
+	delay(10);
+	TULIP_WRITE(sc, CSR_GPP, 0xfd);
+	delay(10);
+	TULIP_WRITE(sc, CSR_GPP, 0);
+}
+
 /*
  * SMC 9332DST media switch.
  */
@@ -1276,7 +1324,8 @@ static const struct tulip_mediasw tlp_smc9332dst_mediasw = {
 };
 
 static void
-tlp_pci_smc_21140_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+tlp_pci_smc_21140_quirks(struct tulip_pci_softc *psc,
+    const u_int8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 
@@ -1359,7 +1408,8 @@ tlp_smc9332dst_tmsw_init(struct tulip_softc *sc)
 }
 
 static void
-tlp_pci_vpc_21140_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+tlp_pci_vpc_21140_quirks(struct tulip_pci_softc *psc,
+    const u_int8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 	char *p1 = (char *) &sc->sc_srom[32];
@@ -1376,7 +1426,8 @@ tlp_pci_vpc_21140_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
 static void	tlp_pci_cobalt_21142_reset(struct tulip_softc *);
 
 static void
-tlp_pci_cobalt_21142_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+tlp_pci_cobalt_21142_quirks(struct tulip_pci_softc *psc,
+    const u_int8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 
@@ -1407,7 +1458,8 @@ tlp_pci_cobalt_21142_reset(struct tulip_softc *sc)
 }
 
 static void
-tlp_pci_algor_21142_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+tlp_pci_algor_21142_quirks(struct tulip_pci_softc *psc,
+    const u_int8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 
@@ -1432,7 +1484,8 @@ static const struct tulip_mediasw tlp_cogent_em1x0_mediasw = {
 };
 
 static void
-tlp_pci_adaptec_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+tlp_pci_adaptec_quirks(struct tulip_pci_softc *psc,
+    const u_int8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 	uint8_t *srom = sc->sc_srom, id0;
@@ -1573,5 +1626,38 @@ tlp_pci_netwinder_21142_reset(struct tulip_softc *sc)
 	TULIP_WRITE(sc, CSR_SIAGEN, 0x0000 << 16);
 	delay(10);
 	TULIP_WRITE(sc, CSR_SIAGEN, 0x0001 << 16);
+	delay(10);
+}
+
+static void	tlp_pci_phobos_21142_reset(struct tulip_softc *);
+
+static void
+tlp_pci_phobos_21142_quirks(struct tulip_pci_softc *psc,
+    const u_int8_t *enaddr)
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	/*
+	 * Phobo boards just use MII-on_SIO.
+	 */
+	sc->sc_mediasw = &tlp_sio_mii_mediasw;
+	sc->sc_reset = tlp_pci_phobos_21142_reset;
+
+	/*
+	 * These boards appear solely on sgimips machines behind a special
+	 * GIO<->PCI ASIC and require the DBO and BLE bits to be set in CSR0.
+	 */
+	sc->sc_flags |= (TULIPF_BLE | TULIPF_DBO);
+}
+
+static void
+tlp_pci_phobos_21142_reset(struct tulip_softc *sc)
+{
+	/*
+	 * Reset PHY.
+	 */
+	TULIP_WRITE(sc, CSR_SIAGEN, (0x880f << 16));
+	delay(10);
+	TULIP_WRITE(sc, CSR_SIAGEN, (0x800f << 16));
 	delay(10);
 }

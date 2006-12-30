@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.21 2005/05/24 05:25:15 lukem Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.21.2.1 2006/12/30 20:48:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.21 2005/05/24 05:25:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.21.2.1 2006/12/30 20:48:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,8 @@ static const struct pciide_product_desc pciide_promise_products[] =  {
 };
 
 static int
-pdcide_match(struct device *parent, struct cfdata *match, void *aux)
+pdcide_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

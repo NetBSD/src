@@ -1,4 +1,4 @@
-/*	$NetBSD: geodewdg.c,v 1.2.6.2 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: geodewdg.c,v 1.2.6.3 2006/12/30 20:46:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geodewdg.c,v 1.2.6.2 2006/06/21 14:52:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodewdg.c,v 1.2.6.3 2006/12/30 20:46:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ geode_wdog_enable(struct geode_wdog_softc *sc)
 
 	wdcnfg &= ~(SC1100_WDCNFG_WD32KPD | SC1100_WDCNFG_WDPRES_MASK |
 	            SC1100_WDCNFG_WDTYPE1_MASK | SC1100_WDCNFG_WDTYPE2_MASK);
-	wdcnfg |= SHIFTIN(sc->sc_prescale, SC1100_WDCNFG_WDPRES_MASK);
+	wdcnfg |= __SHIFTIN(sc->sc_prescale, SC1100_WDCNFG_WDPRES_MASK);
         wdcnfg |= SC1100_WDCNFG_WDTYPE1_RESET | SC1100_WDCNFG_WDTYPE2_NOACTION;
 
 	bus_space_write_2(sc->sc_gcb_dev->sc_iot, sc->sc_gcb_dev->sc_ioh, SC1100_GCB_WDCNFG, wdcnfg);
@@ -218,13 +218,15 @@ geode_wdog_setmode(struct sysmon_wdog *smw)
 }
 
 static int
-geode_wdog_match(struct device *parent, struct cfdata *match, void *aux)
+geode_wdog_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	return !attached;
 }
 
 static void
-geode_wdog_attach(struct device *parent, struct device *self, void *aux)
+geode_wdog_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct geode_wdog_softc *sc = (void *) self;
 	uint8_t wdsts;

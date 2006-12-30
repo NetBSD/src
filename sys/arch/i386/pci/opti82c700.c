@@ -1,4 +1,4 @@
-/*	$NetBSD: opti82c700.c,v 1.5 2004/04/11 06:00:26 kochi Exp $	*/
+/*	$NetBSD: opti82c700.c,v 1.5.12.1 2006/12/30 20:46:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opti82c700.c,v 1.5 2004/04/11 06:00:26 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opti82c700.c,v 1.5.12.1 2006/12/30 20:46:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,8 +115,8 @@ void	opti82c700_pir_dump(struct opti82c700_handle *);
 #endif
 
 int
-opti82c700_init(pci_chipset_tag_t pc, bus_space_tag_t iot, pcitag_t tag,
-    pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
+opti82c700_init(pci_chipset_tag_t pc, bus_space_tag_t iot,
+    pcitag_t tag, pciintr_icu_tag_t *ptagp, pciintr_icu_handle_t *phandp)
 {
 	struct opti82c700_handle *ph;
 

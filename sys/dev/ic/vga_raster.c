@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.16.4.1 2006/06/21 15:02:57 yamt Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.16.4.2 2006/12/30 20:48:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.16.4.1 2006/06/21 15:02:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.16.4.2 2006/12/30 20:48:04 yamt Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -156,11 +156,11 @@ static struct vga_raster_font vga_console_fontset_ascii;
 static struct videomode vga_console_modes[2] = {
 	/* 640x400 for 80x25, 80x40 and 80x50 modes */
 	{
-		25175, 640, 664, 760, 800, 400, 409, 411, 450, 0
+		25175, 640, 664, 760, 800, 400, 409, 411, 450, 0, NULL,
 	},
 	/* 640x480 for 80x30 mode */
 	{
-		25175, 640, 664, 760, 800, 480, 491, 493, 525, 0
+		25175, 640, 664, 760, 800, 480, 491, 493, 525, 0, NULL,
 	}
 };
 
@@ -322,6 +322,8 @@ const struct wsdisplay_accessops vga_raster_accessops = {
 	vga_raster_free_screen,
 	vga_raster_show_screen,
 	vga_raster_load_font,
+	NULL,	/* pollc */
+	NULL,	/* scroll */
 };
 
 int
@@ -523,7 +525,8 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 
 void
 vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
-    bus_space_tag_t memt, int type, int quirks, const struct vga_funcs *vf)
+    bus_space_tag_t memt, int type, int quirks,
+    const struct vga_funcs *vf)
 {
 	int console;
 	struct vga_config *vc;
@@ -795,7 +798,8 @@ vga_switch_screen(struct vga_config *vc)
 }
 
 static int
-vga_raster_load_font(void *v, void *id, struct wsdisplay_font *data)
+vga_raster_load_font(void *v, void *id,
+    struct wsdisplay_font *data)
 {
 	/* XXX */
 	printf("vga_raster_load_font: called\n");

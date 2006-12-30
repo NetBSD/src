@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.41.12.1 2006/06/21 14:53:13 yamt Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.41.12.2 2006/12/30 20:46:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.41.12.1 2006/06/21 14:53:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.41.12.2 2006/12/30 20:46:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,9 @@ wdc_obio_attach(parent, self, aux)
 	struct ata_channel *chp = &sc->sc_channel;
 	int intr, i;
 	int use_dma = 0;
-	char path[80];
+	char path[80], compat[32];
+
+	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
 
 	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 	    WDC_OPTIONS_DMA) {
@@ -193,7 +195,8 @@ wdc_obio_attach(parent, self, aux)
 		if (strcmp(ca->ca_name, "ata-4") == 0) {
 			sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
-			sc->sc_wdcdev.sc_atac.atac_set_modes = ata4_adjust_timing;
+			sc->sc_wdcdev.sc_atac.atac_set_modes = 
+			    ata4_adjust_timing;
 		} else {
 			sc->sc_wdcdev.sc_atac.atac_set_modes = adjust_timing;
 		}

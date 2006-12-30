@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.68.2.1 2006/06/21 15:04:21 yamt Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.68.2.2 2006/12/30 20:48:26 yamt Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,10 +46,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.68.2.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.68.2.2 2006/12/30 20:48:26 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -87,10 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.68.2.1 2006/06/21 15:04:21 yamt Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if defined(SIOCSIFMEDIA)
 #include <net/if_media.h>
@@ -197,10 +192,8 @@ static u_int8_t eepro_irqmap[] = EEPP_INTMAP;
 static u_int8_t eepro_revirqmap[] = EEPP_RINTMAP;
 
 int
-iyprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+iyprobe(struct device *parent,  struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	u_int16_t eaddr[8];
@@ -299,9 +292,7 @@ out:
 }
 
 void
-iyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+iyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct iy_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -1235,23 +1226,6 @@ iyioctl(ifp, cmd, data)
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
-#ifdef NS
-		/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
-				    ETHER_ADDR_LEN);
-			/* Set new address. */
-			iyinit(sc);
-			break;
-		    }
-#endif /* NS */
 		default:
 			iyinit(sc);
 			break;

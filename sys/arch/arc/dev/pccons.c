@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.39.8.1 2006/06/21 14:49:07 yamt Exp $	*/
+/*	$NetBSD: pccons.c,v 1.39.8.2 2006/12/30 20:45:29 yamt Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.39.8.1 2006/06/21 14:49:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.39.8.2 2006/12/30 20:45:29 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.39.8.1 2006/06/21 14:49:07 yamt Exp $")
 
 #include <machine/bus.h>
 
-#include <machine/display.h>
+#include <dev/ic/pcdisplay.h>
 #include <machine/pccons.h>
 #include <machine/kbdreg.h>
 
@@ -193,7 +193,7 @@ const struct cdevsw pc_cdevsw = {
 #define	CHR		2
 
 char *sget(void);
-void sput(u_char *, int);
+void sput(const u_char *, int);
 
 void	pcstart(struct tty *);
 int	pcparam(struct tty *, struct termios *);
@@ -366,12 +366,12 @@ kbc_put8042cmd(val)
  * Pass command to keyboard itself
  */
 int
-kbd_cmd(uint8_t val, uint8_t polling)
+kbd_cmd(uint8_t val, uint8_t polled)
 {
 	u_int retries = 3;
 	u_int i;
 
-	if (!polling) {
+	if (!polled) {
 		i = spltty();
 		if (kb_oq_get == kb_oq_put) {
 			kbd_data_write_1(val);
@@ -381,7 +381,8 @@ kbd_cmd(uint8_t val, uint8_t polling)
 		splx(i);
 		return 1;
 	}
-	else do {
+
+	do {
 		if (!kbd_wait_output())
 			return 0;
 		kbd_data_write_1(val);
@@ -611,6 +612,10 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_oproc = pcstart;
 	tp->t_param = pcparam;
 	tp->t_dev = dev;
+
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -620,9 +625,8 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state&TS_XCLUDE &&
-		   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
-		return EBUSY;
+	}
+
 	tp->t_state |= TS_CARR_ON;
 
 	return (*tp->t_linesw->l_open)(dev, tp);
@@ -925,7 +929,7 @@ pcparam(struct tty *tp, struct termios *t)
 }
 
 #define	wrtchar(c, at) do {\
-	char *cp = (char *)crtat; *cp++ = (c); *cp = (at); crtat++; vs.col++; \
+	char *cp0 = (char *)crtat; *cp0++ = (c); *cp0 = (at); crtat++; vs.col++; \
 } while (0)
 
 /* translate ANSI color codes to standard pc ones */
@@ -963,7 +967,7 @@ static u_char iso2ibm437[] =
  * `pc3' termcap emulation.
  */
 void
-sput(u_char *cp, int n)
+sput(const u_char *cp, int n)
 {
 	struct pccons_context *pc = &pccons_console_context;
 	u_char c, scroll = 0;
@@ -972,21 +976,21 @@ sput(u_char *cp, int n)
 		return;
 
 	if (crtat == 0) {
-		volatile u_short *cp;
+		volatile u_short *dp;
 		u_short was;
 		unsigned cursorat;
 
-		cp = bus_space_vaddr(pc->pc_crt_memt, pc->pc_cga_memh);
-		was = *cp;
-		*cp = 0xA55A;
-		if (*cp != 0xA55A) {
-			cp = bus_space_vaddr(pc->pc_crt_memt,
+		dp = bus_space_vaddr(pc->pc_crt_memt, pc->pc_cga_memh);
+		was = *dp;
+		*dp = 0xA55A;
+		if (*dp != 0xA55A) {
+			dp = bus_space_vaddr(pc->pc_crt_memt,
 			    pc->pc_mono_memh);
 			pc->pc_6845_ioh = pc->pc_mono_ioh;
 			pc->pc_crt_memh = pc->pc_mono_memh;
 			vs.color = 0;
 		} else {
-			*cp = was;
+			*dp = was;
 			pc->pc_6845_ioh = pc->pc_cga_ioh;
 			pc->pc_crt_memh = pc->pc_cga_memh;
 			vs.color = 1;
@@ -1005,7 +1009,7 @@ sput(u_char *cp, int n)
 		cursorat = vs.ncol * vs.row + vs.col;
 		vs.at = FG_LIGHTGREY | BG_BLACK;
 
-		Crtat = (u_short *)cp;
+		Crtat = (u_short *)__UNVOLATILE(dp);
 		crtat = Crtat + cursorat;
 
 		if (vs.color == 0)

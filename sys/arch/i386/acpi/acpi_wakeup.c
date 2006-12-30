@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.16.2.1 2006/06/21 14:52:09 yamt Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.16.2.2 2006/12/30 20:46:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16.2.1 2006/06/21 14:52:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16.2.2 2006/12/30 20:46:04 yamt Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16.2.1 2006/06/21 14:52:09 yamt Ex
 #include <machine/npx.h>
 
 #include "acpi_wakecode.h"
-
 
 static paddr_t phys_wakeup = 0;
 static int acpi_md_node = CTL_EOL;
@@ -327,7 +326,7 @@ acpi_md_sleep(int state)
 	struct proc 			*p;
 	struct pmap			*pm;
 	uint32_t			cr3;
-	paddr_t				oldphys;
+	paddr_t				oldphys = 0;
 
 	if (!phys_wakeup) {
 		printf("acpi: can't sleep since wakecode is not installed.\n");
@@ -341,13 +340,16 @@ acpi_md_sleep(int state)
 	/* Create identity mapping */
 	if ((p = curproc) == NULL)
 		p = &proc0;
+
 	pm = vm_map_pmap(&p->p_vmspace->vm_map);
-	if (!pmap_extract(pm, phys_wakeup, &oldphys))
-		oldphys = 0;
-	pmap_enter(pm, phys_wakeup, phys_wakeup,
-			VM_PROT_READ | VM_PROT_WRITE,
-			PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
-	pmap_update(pm);
+	if (pm != pmap_kernel()) {
+		if (!pmap_extract(pm, phys_wakeup, &oldphys))
+			oldphys = 0;
+		pmap_enter(pm, phys_wakeup, phys_wakeup,
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+		pmap_update(pm);
+	}
 	cr3 = rcr3();
 
 	ret_addr = 0;
@@ -450,14 +452,16 @@ out:
 	enable_intr();
 
 	lcr3(cr3);
-	/* Clean up identity mapping. */
-	pmap_remove(pm, phys_wakeup, phys_wakeup + PAGE_SIZE);
-	if (oldphys) {
-		pmap_enter(pm, phys_wakeup, oldphys,
-				VM_PROT_READ | VM_PROT_WRITE,
-				PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+	if (pm != pmap_kernel()) {
+		/* Clean up identity mapping. */
+		pmap_remove(pm, phys_wakeup, phys_wakeup + PAGE_SIZE);
+		if (oldphys) {
+			pmap_enter(pm, phys_wakeup, oldphys,
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+		}
+		pmap_update(pm);
 	}
-	pmap_update(pm);
 
 	write_eflags(ef);
 

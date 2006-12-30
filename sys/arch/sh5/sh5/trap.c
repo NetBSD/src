@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34.6.1 2006/06/21 14:55:47 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.34.6.2 2006/12/30 20:46:55 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34.6.1 2006/06/21 14:55:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34.6.2 2006/12/30 20:46:55 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -177,13 +177,13 @@ trap(struct lwp *l, struct trapframe *tf)
 		KDASSERT(l != NULL);
 		traptype |= T_USER;
 		l->l_md.md_regs = tf;
-	} else
-	if (l == NULL)
+		LWP_CACHE_CREDS(l, l->l_proc);
+	} else if (l == NULL)
 		l = &lwp0;
 
+	p = l->l_proc;
 	pcb_onfault = l->l_addr->u_pcb.pcb_onfault;
 	l->l_addr->u_pcb.pcb_onfault = NULL;
-	p = l->l_proc;
 	vaddr = (vaddr_t) tf->tf_state.sf_tea;
 
 	switch (traptype) {
@@ -353,8 +353,8 @@ trap(struct lwp *l, struct trapframe *tf)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			    p->p_pid, p->p_comm,
-			    p->p_cred ?
-			    kauth_cred_geteuid(p->p_cred) : -1);
+			    l->l_cred ?
+			    kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		} else
 		if (rv == EACCES)
@@ -544,6 +544,7 @@ trapa(struct lwp *l, struct trapframe *tf)
 			/*NOTREACHED*/
 		}
 #endif
+		LWP_CACHE_CREDS(l, l->l_proc);
 		(l->l_proc->p_md.md_syscall)(l, tf);
 		userret(l);
 		break;

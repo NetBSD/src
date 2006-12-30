@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_resource.c,v 1.1.16.2 2006/06/21 14:59:27 yamt Exp $ */
+/*	$NetBSD: linux32_resource.c,v 1.1.16.3 2006/12/30 20:47:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.1.16.2 2006/06/21 14:59:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.1.16.3 2006/12/30 20:47:42 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,3 +147,47 @@ linux32_sys_ugetrlimit(l, v, retval)
 {
 	return linux32_sys_getrlimit(l, v, retval);
 }
+
+int
+linux32_sys_getpriority(l, v, retval) 
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_getpriority_args /* {
+		syscallarg(int) which;
+		syscallarg(int) who;
+	} */ *uap = v;
+	struct sys_getpriority_args bsa;
+	int error;
+		 
+	SCARG(&bsa, which) = SCARG(uap, which);
+	SCARG(&bsa, who) = SCARG(uap, who);
+
+	if ((error = sys_getpriority(l, &bsa, retval)))
+		return error;
+   
+	*retval = NZERO - *retval;
+	
+	return 0;
+} 
+
+int
+linux32_sys_setpriority(l, v, retval) 
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_setpriority_args /* {
+		syscallarg(int) which;
+		syscallarg(int) who;
+		syscallarg(int) prio;
+	} */ *uap = v;
+	struct sys_setpriority_args bsa;
+		 
+	SCARG(&bsa, which) = SCARG(uap, which);
+	SCARG(&bsa, who) = SCARG(uap, who);
+	SCARG(&bsa, prio) = SCARG(uap, prio);
+
+	return sys_setpriority(l, &bsa, retval);
+} 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.59.2.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.59.2.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -172,16 +172,35 @@ struct lock {
 #endif
 };
 
+#ifndef LOCKDEBUG
 #define	LOCK_INITIALIZER(prio, wmesg, timo, flags)			\
-	{ SIMPLELOCK_INITIALIZER,					\
-	  (flags),							\
-	  0,								\
-	  0,								\
-	  0,								\
-	  0,								\
-	  (wmesg),							\
-	  { .lk_un_sleep = { 0, 0, (prio), (timo) } }			\
+	{ SIMPLELOCK_INITIALIZER,	/* interlock */			\
+	  (flags),			/* flags */			\
+	  0,				/* sharecount */		\
+	  0,				/* exclusivecount */		\
+	  0,				/* recurselevel */		\
+	  0,				/* waitcount */			\
+	  (wmesg),			/* waitmesg */			\
+	  { .lk_un_sleep = { 0, 0, (prio), (timo), NULL } },		\
 	}
+#else
+#define	LOCK_INITIALIZER(prio, wmesg, timo, flags)			\
+	{ SIMPLELOCK_INITIALIZER,	/* interlock */			\
+	  (flags),			/* flags */			\
+	  0,				/* sharecount */		\
+	  0,				/* exclusivecount */		\
+	  0,				/* recurselevel */		\
+	  0,				/* waitcount */			\
+	  (wmesg),			/* waitmesg */			\
+	  { .lk_un_sleep = { 0, 0, (prio), (timo), NULL } },		\
+	  NULL,				/* lk_lock_file */		\
+	  NULL,				/* lk_unlock_file */		\
+	  0,				/* lk_lock_line */		\
+	  0,				/* lk_unlock_line */		\
+	}
+#endif
+
+
 
 /*
  * Lock request types:
@@ -387,6 +406,29 @@ void	simple_lock_switchcheck(void);
 #endif /* __lint__ */
 #define	LOCK_ASSERT(x)		/* nothing */
 #endif
+
+int	lock_owner_onproc(uintptr_t);
+
+#ifndef SPINLOCK_SPIN_HOOK		/* from <machine/lock.h> */
+#define	SPINLOCK_SPIN_HOOK		/* nothing */
+#endif
+
+#ifndef	SPINLOCK_BACKOFF_MIN
+#define	SPINLOCK_BACKOFF_MIN	32
+#endif
+#ifndef	SPINLOCK_BACKOFF_MAX
+#define	SPINLOCK_BACKOFF_MAX	1024
+#endif
+#define	SPINLOCK_BACKOFF(count)					\
+do {								\
+	int __i;						\
+	for (__i = 0; __i < (count); __i++) {			\
+		SPINLOCK_SPIN_HOOK;				\
+		nullop(NULL);					\
+	}							\
+	if ((__i <<= 1) <= SPINLOCK_BACKOFF_MAX)		\
+		(count) = SPINLOCK_BACKOFF_MAX;			\
+} while (/* CONSTCOND */ 0);
 
 #endif /* _KERNEL */
 

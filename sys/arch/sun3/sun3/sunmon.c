@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.15.2.1 2006/06/21 14:57:16 yamt Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.15.2.2 2006/12/30 20:47:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.15.2.1 2006/06/21 14:57:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.15.2.2 2006/12/30 20:47:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.15.2.1 2006/06/21 14:57:16 yamt Exp $")
 
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3/interreg.h>
-#include <sun3/sun3/vector.h>
+#include <sun68k/sun68k/vector.h>
 
 static void **sunmon_vbr;
 static void *sunmon_vcmd;	/* XXX: always 0? */

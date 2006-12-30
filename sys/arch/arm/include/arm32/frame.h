@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.11.12.1 2006/06/21 14:49:33 yamt Exp $	*/
+/*	$NetBSD: frame.h,v 1.11.12.2 2006/12/30 20:45:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -117,7 +117,7 @@ void validate_trapframe __P((trapframe_t *, int));
  * These are used in order to support dynamic enabling/disabling of
  * alignment faults when executing old a.out ARM binaries.
  */
-#if defined(COMPAT_15) && defined(EXEC_AOUT)
+#ifdef EXEC_AOUT
 #ifndef MULTIPROCESSOR
 
 /*
@@ -233,7 +233,7 @@ void validate_trapframe __P((trapframe_t *, int));
 	b	1b			/* Back around again */		;\
 3:
 
-#else	/* !(COMPAT_15 && EXEC_AOUT) */
+#else	/* !EXEC_AOUT */
 
 #define	AST_ALIGNMENT_FAULT_LOCALS					;\
 .Laflt_astpending:							;\
@@ -265,7 +265,7 @@ void validate_trapframe __P((trapframe_t *, int));
 	teq	r1, #0x00000000						;\
 	bne	1b			/* Yup. Back around again */	;\
 2:
-#endif /* COMPAT_15 && EXEC_AOUT */
+#endif /* EXEC_AOUT */
 
 /*
  * ASM macros for pushing and pulling trapframes from the stack

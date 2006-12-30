@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.16.6.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: msg.h,v 1.16.6.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -195,10 +195,10 @@ __END_DECLS
 struct proc;
 
 void	msginit(void);
-int	msgctl1(struct proc *, int, int, struct msqid_ds *);
-int	msgsnd1(struct proc *, int, const char *, size_t, int, size_t,
+int	msgctl1(struct lwp *, int, int, struct msqid_ds *);
+int	msgsnd1(struct lwp *, int, const char *, size_t, int, size_t,
     copyin_t);
-int	msgrcv1(struct proc *, int, char *, size_t, long, int, size_t,
+int	msgrcv1(struct lwp *, int, char *, size_t, long, int, size_t,
     copyout_t, register_t *);
 #endif /* !_KERNEL */
 

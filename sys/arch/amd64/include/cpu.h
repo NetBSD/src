@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6.12.1 2006/06/21 14:48:25 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6.12.2 2006/12/30 20:45:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -297,6 +297,9 @@ void kgdb_port_init __P((void));
 /* bus_machdep.c */
 void x86_bus_space_init __P((void));
 void x86_bus_space_mallocok __P((void));
+
+/* powernow_k8.c */
+void k8_powernow_init(void);
 
 #endif /* _KERNEL */
 

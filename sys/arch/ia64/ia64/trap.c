@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.2.14.2 2006/06/21 14:52:48 yamt Exp $ */
+/* $NetBSD: trap.c,v 1.2.14.3 2006/12/30 20:46:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Marcel Moolenaar
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.2.14.2 2006/06/21 14:52:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.2.14.3 2006/12/30 20:46:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,9 +410,10 @@ trap(int vector, struct trapframe *tf)
 #endif
 	if (user) {
 		ia64_set_fpsr(IA64_FPSR_DEFAULT);
+		p = l->l_proc;
 		sticks = p->p_sticks;
 		l->l_md.md_tf = tf;
-		p = l->l_proc;
+		LWP_CACHE_CREDS(l, p);
 	} else {
 		sticks = 0;		/* XXX bogus -Wuninitialized warning */
 		p = NULL;

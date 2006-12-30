@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.13.2.1 2006/06/21 14:53:48 yamt Exp $ */
+/* $NetBSD: sbscn.c,v 1.13.2.2 2006/12/30 20:46:33 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.13.2.1 2006/06/21 14:53:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.13.2.2 2006/12/30 20:46:33 yamt Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -570,9 +570,7 @@ sbscnopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = ch->ch_tty;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -786,7 +784,8 @@ sbscnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		ch->ch_swflags = *(int *)data;

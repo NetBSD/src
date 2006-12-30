@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.16.16.1 2006/06/21 14:53:38 yamt Exp $ */
+/* $NetBSD: db_machdep.h,v 1.16.16.2 2006/12/30 20:46:32 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -49,7 +49,7 @@ typedef struct frame db_regs_t;
 extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->f_regs[_R_PC])
+#define	PC_REGS(regs)	((regs)->f_regs[_R_PC])
 
 #define PC_ADVANCE(regs) do {						\
 	if ((db_get_value((regs)->f_regs[_R_PC], sizeof(int), FALSE) &\

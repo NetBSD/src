@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.4 2003/09/22 14:27:16 cl Exp $	*/
+/*	$NetBSD: vector.c,v 1.4.16.1 2006/12/30 20:47:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.c,v 1.4 2003/09/22 14:27:16 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.c,v 1.4.16.1 2006/12/30 20:47:13 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: vector.c,v 1.4 2003/09/22 14:27:16 cl Exp $");
 #define fpunfl fpfault
 
 void *vector_table[NVECTORS] = {
-	(void*)0xfffe000,		/* 0: NOT USED (reset SP) */
-	(void*)0xfef0000,		/* 1: NOT USED (reset PC) */
+	(void *)0xfffe000,		/* 0: NOT USED (reset SP) */
+	(void *)0xfef0000,		/* 1: NOT USED (reset PC) */
 	buserr,				/* 2: bus error */
 	addrerr,			/* 3: address error */
 	illinst,			/* 4: illegal instruction */
@@ -105,7 +105,7 @@ void *vector_table[NVECTORS] = {
 #endif
 	trap2,				/* 34: trace */
 #ifdef COMPAT_16
-	trap3,				/* 35: sigreturn special syscall */
+	trap3,				/* 35: compat_16_sigreturn */
 #else
 	illinst,
 #endif

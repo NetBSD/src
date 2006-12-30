@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4.2.1 2006/06/21 14:48:19 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.4.2.2 2006/12/30 20:45:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4.2.1 2006/06/21 14:48:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4.2.2 2006/12/30 20:45:22 yamt Exp $");
 
 #if 0
 #include "opt_user_ldt.h"
@@ -157,6 +157,11 @@ i386_get_ldt(struct lwp *l, void *args, register_t *retval)
 	union descriptor *lp, *cp;
 	struct i386_get_ldt_args ua;
 
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_GET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
+
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
@@ -224,6 +229,11 @@ i386_set_ldt(l, args, retval)
 	union descriptor *descv;
 	size_t old_len, new_len, ldt_len;
 	union descriptor *old_ldt, *new_ldt;
+
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_SET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
@@ -389,15 +399,13 @@ x86_64_iopl(l, args, retval)
 	register_t *retval;
 {
 	int error;
-	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_regs;
 	struct x86_64_iopl_args ua;
 
-	if (securelevel > 1)
-		return EPERM;
-
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-		return error;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPL,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return error;
@@ -422,6 +430,11 @@ x86_64_get_ioperm(p, args, retval)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct x86_64_get_ioperm_args ua;
 
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_GET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
+
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
@@ -438,11 +451,10 @@ x86_64_set_ioperm(p, args, retval)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct x86_64_set_ioperm_args ua;
 
-	if (securelevel > 1)
-		return EPERM;
-
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
-		return error;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_SET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
@@ -462,6 +474,11 @@ x86_64_get_mtrr(struct lwp *l, void *args, register_t *retval)
 
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
+
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_GET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	error = copyin(args, &ua, sizeof ua);
 	if (error != 0)
@@ -483,14 +500,14 @@ x86_64_set_mtrr(struct lwp *l, void *args, register_t *retval)
 {
 	int error, n;
 	struct x86_64_set_mtrr_args ua;
-	struct proc *p = l->l_proc;
 
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
-	if (error != 0)
-		return error;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_SET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	error = copyin(args, &ua, sizeof ua);
 	if (error != 0)
@@ -500,7 +517,7 @@ x86_64_set_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (error != 0)
 		return error;
 
-	error = mtrr_set(ua.mtrrp, &n, p, MTRR_GETSET_USER);
+	error = mtrr_set(ua.mtrrp, &n, l->l_proc, MTRR_GETSET_USER);
 	if (n != 0)
 		mtrr_commit();
 
@@ -524,11 +541,13 @@ sys_sysarch(l, v, retval)
 
 	switch(SCARG(uap, op)) {
 #if defined(USER_LDT) && 0
-	case X86_64_GET_LDT: 
+	case X86_64_GET_LDT:
+		/* XXX will need kauth_authorize_machdep() if added */
 		error = x86_64_get_ldt(l, SCARG(uap, parms), retval);
 		break;
 
-	case X86_64_SET_LDT: 
+	case X86_64_SET_LDT:
+		/* XXX will need kauth_authorize_machdep() if added */
 		error = x86_64_set_ldt(l, SCARG(uap, parms), retval);
 		break;
 #endif
@@ -541,7 +560,7 @@ sys_sysarch(l, v, retval)
 		error = x86_64_get_ioperm(l, SCARG(uap, parms), retval);
 		break;
 
-	case X86_64_SET_IOPERM: 
+	case X86_64_SET_IOPERM:
 		error = x86_64_set_ioperm(l, SCARG(uap, parms), retval);
 		break;
 #endif

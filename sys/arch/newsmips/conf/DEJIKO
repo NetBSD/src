@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.15.6.1 2006/06/21 14:54:11 yamt Exp $
+# 	$NetBSD: DEJIKO,v 1.15.6.2 2006/12/30 20:46:37 yamt Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -32,12 +32,14 @@ options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 # Networking options
 options 	INET			# Internet protocols
 options 	IPFILTER_LOG		# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	NFS_BOOT_BOOTPARAM
 options 	NFS_BOOTPARAM_NOGATEWAY
 
 # Compatibility options
 options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	COMPAT_14		# NetBSD 1.4 binary compatibility
+options 	COMPAT_15		# NetBSD 1.5 binary compatibility
 options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 options 	COMPAT_20		# NetBSD 2.0 binary compatibility
 options 	COMPAT_30		# NetBSD 3.0 compatibility.

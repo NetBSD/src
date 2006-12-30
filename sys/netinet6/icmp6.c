@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.109.2.1 2006/06/21 15:11:08 yamt Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.109.2.2 2006/12/30 20:50:38 yamt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.109.2.1 2006/06/21 15:11:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.109.2.2 2006/12/30 20:50:38 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -444,9 +444,7 @@ icmp6_error(m, type, code, param)
  * Process a received ICMP6 message.
  */
 int
-icmp6_input(mp, offp, proto)
-	struct mbuf **mp;
-	int *offp, proto;
+icmp6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp, *n;
 	struct ip6_hdr *ip6, *nip6;
@@ -593,19 +591,16 @@ icmp6_input(mp, offp, proto)
 		 * Copy mbuf to send to two data paths: userland socket(s),
 		 * and to the querier (echo reply).
 		 * m: a copy for socket, n: a copy for querier
+		 *
+		 * If the first mbuf is shared, or the first mbuf is too short,
+		 * copy the first part of the data into a fresh mbuf.
+		 * Otherwise, we will wrongly overwrite both copies.
 		 */
 		if ((n = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
 			/* Give up local */
 			n = m;
 			m = NULL;
-			goto deliverecho;
-		}
-		/*
-		 * If the first mbuf is shared, or the first mbuf is too short,
-		 * copy the first part of the data into a fresh mbuf.
-		 * Otherwise, we will wrongly overwrite both copies.
-		 */
-		if ((n->m_flags & M_EXT) != 0 ||
+		} else if (M_READONLY(n) ||
 		    n->m_len < off + sizeof(struct icmp6_hdr)) {
 			struct mbuf *n0 = n;
 
@@ -613,52 +608,21 @@ icmp6_input(mp, offp, proto)
 			 * Prepare an internal mbuf.  m_pullup() doesn't
 			 * always copy the length we specified.
 			 */
-			MGETHDR(n, M_DONTWAIT, n0->m_type);
-			if (n && ICMP6_MAXLEN >= MHLEN) {
-				MCLGET(n, M_DONTWAIT);
-				if ((n->m_flags & M_EXT) == 0) {
-					m_free(n);
-					n = NULL;
-				}
-			}
-			if (n == NULL) {
+			if ((n = m_dup(n0, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
 				/* Give up local */
-				m_freem(n0);
 				n = m;
 				m = NULL;
-				goto deliverecho;
 			}
-			M_MOVE_PKTHDR(n, n0);
-			/*
-			 * Copy IPv6 and ICMPv6 only.
-			 */
-			nip6 = mtod(n, struct ip6_hdr *);
-			bcopy(ip6, nip6, sizeof(struct ip6_hdr));
-			nicmp6 = (struct icmp6_hdr *)(nip6 + 1);
-			bcopy(icmp6, nicmp6, sizeof(struct icmp6_hdr));
-			noff = sizeof(struct ip6_hdr);
-			n->m_len = noff + sizeof(struct icmp6_hdr);
-			/*
-			 * Adjust mbuf.  ip6_plen will be adjusted in
-			 * ip6_output().
-			 * n->m_pkthdr.len == n0->m_pkthdr.len at this point.
-			 */
-			n->m_pkthdr.len += noff + sizeof(struct icmp6_hdr);
-			n->m_pkthdr.len -= (off + sizeof(struct icmp6_hdr));
-			m_adj(n0, off + sizeof(struct icmp6_hdr));
-			n->m_next = n0;
-		} else {
-	 deliverecho:
-			nip6 = mtod(n, struct ip6_hdr *);
-			nicmp6 = (struct icmp6_hdr *)((caddr_t)nip6 + off);
-			noff = off;
+			m_freem(n0);
 		}
+		nip6 = mtod(n, struct ip6_hdr *);
+		nicmp6 = (struct icmp6_hdr *)((caddr_t)nip6 + off);
 		nicmp6->icmp6_type = ICMP6_ECHO_REPLY;
 		nicmp6->icmp6_code = 0;
 		if (n) {
 			icmp6stat.icp6s_reflect++;
 			icmp6stat.icp6s_outhist[ICMP6_ECHO_REPLY]++;
-			icmp6_reflect(n, noff);
+			icmp6_reflect(n, off);
 		}
 		if (!m)
 			goto freeit;
@@ -908,7 +872,7 @@ icmp6_input(mp, offp, proto)
 static int
 icmp6_notify_error(m, off, icmp6len, code)
 	struct mbuf *m;
-	int off, icmp6len;
+	int off, icmp6len, code;
 {
 	struct icmp6_hdr *icmp6;
 	struct ip6_hdr *eip6;
@@ -1653,11 +1617,8 @@ ni6_dnsmatch(a, alen, b, blen)
  * calculate the number of addresses to be returned in the node info reply.
  */
 static int
-ni6_addrs(ni6, m, ifpp, subj)
-	struct icmp6_nodeinfo *ni6;
-	struct mbuf *m;
-	struct ifnet **ifpp;
-	char *subj;
+ni6_addrs(struct icmp6_nodeinfo *ni6, struct mbuf *m,
+    struct ifnet **ifpp, char *subj)
 {
 	struct ifnet *ifp;
 	struct in6_ifaddr *ifa6;
@@ -2105,9 +2066,7 @@ icmp6_reflect(m, off)
 
 		bzero(&ro, sizeof(ro));
 		src = in6_selectsrc(&sin6, NULL, NULL, &ro, NULL, &outif, &e);
-		if (ro.ro_rt) { /* XXX: see comments in icmp6_mtudisc_update */
-			RTFREE(ro.ro_rt); /* XXX: we could use this */
-		}
+		rtcache_free((struct route *)&ro);
 		if (src == NULL) {
 			nd6log((LOG_DEBUG,
 			    "icmp6_reflect: source can't be determined: "
@@ -2128,6 +2087,7 @@ icmp6_reflect(m, off)
 	} else
 		ip6->ip6_hlim = ip6_defhlim;
 
+	m->m_pkthdr.csum_flags = 0;
 	icmp6->icmp6_cksum = 0;
 	icmp6->icmp6_cksum = in6_cksum(m, IPPROTO_ICMPV6,
 					sizeof(struct ip6_hdr), plen);
@@ -2732,10 +2692,10 @@ icmp6_ctloutput(op, so, level, optname, mp)
  * XXX per-destination/type check necessary?
  */
 static int
-icmp6_ratelimit(dst, type, code)
-	const struct in6_addr *dst;	/* not used at this moment */
-	const int type;			/* not used at this moment */
-	const int code;			/* not used at this moment */
+icmp6_ratelimit(
+	const struct in6_addr *dst,	/* not used at this moment */
+	const int type,		/* not used at this moment */
+	const int code)		/* not used at this moment */
 {
 	int ret;
 
@@ -2789,9 +2749,7 @@ icmp6_mtudisc_clone(dst)
 }
 
 static void
-icmp6_mtudisc_timeout(rt, r)
-	struct rtentry *rt;
-	struct rttimer *r;
+icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	if (rt == NULL)
 		panic("icmp6_mtudisc_timeout: bad route to timeout");
@@ -2806,9 +2764,7 @@ icmp6_mtudisc_timeout(rt, r)
 }
 
 static void
-icmp6_redirect_timeout(rt, r)
-	struct rtentry *rt;
-	struct rttimer *r;
+icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
 	if (rt == NULL)
 		panic("icmp6_redirect_timeout: bad route to timeout");
@@ -2825,6 +2781,9 @@ icmp6_redirect_timeout(rt, r)
 static int
 sysctl_net_inet6_icmp6_nd6(SYSCTLFN_ARGS)
 {
+	(void)&name;
+	(void)&l;
+	(void)&oname;
 
 	if (namelen != 0)
 		return (EINVAL);

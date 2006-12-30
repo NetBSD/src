@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.24.2.1 2006/06/21 15:09:29 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.24.2.2 2006/12/30 20:49:56 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.24.2.1 2006/06/21 15:09:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.24.2.2 2006/12/30 20:49:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -96,7 +96,7 @@ int msdosfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int msdosfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int msdosfs_vget(struct mount *, ino_t, struct vnode **);
 int msdosfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int msdosfs_vptofh(struct vnode *, struct fid *);
+int msdosfs_vptofh(struct vnode *, struct fid *, size_t *fh_size);
 
 int msdosfs_mountfs(struct vnode *, struct mount *, struct lwp *,
     struct msdosfs_args *);
@@ -134,6 +134,8 @@ struct vfsops msdosfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	msdosfs_vnodeopv_descs,
+	0,
+	{ NULL, NULL },
 };
 VFS_ATTACH(msdosfs_vfsops);
 
@@ -247,11 +249,9 @@ msdosfs_mount(mp, path, data, ndp, l)
 	struct msdosfs_args args; /* will hold data from mount request */
 	/* msdosfs specific mount control block */
 	struct msdosfsmount *pmp = NULL;
-	struct proc *p;
 	int error, flags;
 	mode_t accessmode;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		pmp = VFSTOMSDOSFS(mp);
 		if (pmp == NULL)
@@ -308,11 +308,12 @@ msdosfs_mount(mp, path, data, ndp, l)
 			 * If upgrade to read-write by non-root, then verify
 			 * that user has necessary permissions on the device.
 			 */
-			if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+			if (kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 				devvp = pmp->pm_devvp;
 				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 				error = VOP_ACCESS(devvp, VREAD | VWRITE,
-						   l->l_proc->p_cred, l);
+						   l->l_cred, l);
 				VOP_UNLOCK(devvp, 0);
 				if (error)
 					return (error);
@@ -343,12 +344,12 @@ msdosfs_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, l->l_proc->p_cred, l);
+		error = VOP_ACCESS(devvp, accessmode, l->l_cred, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -429,7 +430,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	int	bsize = 0, dtype = 0, tmp;
 
 	/* Flush out any old buffers remaining from a previous use. */
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0)) != 0)
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
@@ -437,20 +438,20 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	bp  = NULL; /* both used in error_exit */
 	pmp = NULL;
 
+	/*
+ 	 * We need the disklabel to calculate the size of a FAT entry
+	 * later on. Also make sure the partition contains a filesystem
+	 * of type FS_MSDOS. This doesn't work for floppies, so we have
+	 * to check for them too.
+ 	 *
+ 	 * There might still be parts of the msdos fs driver which assume
+	 * that the size of a disk block will always be 512 bytes.
+	 * Let's root them out...
+	 */
+	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, l);
+	if (error)
+		goto error_exit;
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
-		/*
-	 	 * We need the disklabel to calculate the size of a FAT entry
-		 * later on. Also make sure the partition contains a filesystem
-		 * of type FS_MSDOS. This doesn't work for floppies, so we have
-		 * to check for them too.
-	 	 *
-	 	 * At least some parts of the msdos fs driver seem to assume
-		 * that the size of a disk block will always be 512 bytes.
-		 * Let's check it...
-		 */
-		error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, l);
-		if (error)
-			goto error_exit;
 		tmp   = dpart.part->p_fstype;
 		dtype = dpart.disklab->d_type;
 		bsize = dpart.disklab->d_secsize;
@@ -464,7 +465,8 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	 * Read the boot sector of the filesystem, and then check the
 	 * boot signature.  If not a dos boot sector then error out.
 	 */
-	if ((error = bread(devvp, 0, 512, NOCRED, &bp)) != 0)
+	if ((error = bread(devvp, 0, dpart.disklab->d_secsize, NOCRED,
+	    &bp)) != 0)
 		goto error_exit;
 	bp->b_flags |= B_AGE;
 	bsp = (union bootsector *)bp->b_data;
@@ -518,9 +520,12 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	}
 
 	if (pmp->pm_RootDirEnts == 0) {
-		if (bsp->bs710.bsBootSectSig2 != BOOTSIG2
-		    || bsp->bs710.bsBootSectSig3 != BOOTSIG3
-		    || pmp->pm_Sectors
+		/*
+		 * Some say that bsBootSectSig[23] must be zero, but
+		 * Windows does not require this and some digital cameras
+		 * do not set these to zero.  Therefore, do not insist.
+		 */
+		if (pmp->pm_Sectors
 		    || pmp->pm_FATsecs
 		    || getushort(b710->bpbFSVers)) {
 			error = EINVAL;
@@ -668,7 +673,13 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	if (pmp->pm_fsinfo) {
 		struct fsinfo *fp;
 
-		if ((error = bread(devvp, pmp->pm_fsinfo, 1024, NOCRED, &bp)) != 0)
+		/*
+		 * XXX	If the fsinfo block is stored on media with
+		 *	2KB or larger sectors, is the fsinfo structure
+		 *	padded at the end or in the middle?
+		 */
+		if ((error = bread(devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
+		    pmp->pm_BytesPerSec, NOCRED, &bp)) != 0)
 			goto error_exit;
 		fp = (struct fsinfo *)bp->b_data;
 		if (!memcmp(fp->fsisig1, "RRaA", 4)
@@ -763,10 +774,8 @@ error_exit:;
 }
 
 int
-msdosfs_start(mp, flags, l)
-	struct mount *mp;
-	int flags;
-	struct lwp *l;
+msdosfs_start(struct mount *mp, int flags,
+    struct lwp *l)
 {
 
 	return (0);
@@ -846,26 +855,15 @@ msdosfs_root(mp, vpp)
 }
 
 int
-msdosfs_quotactl(mp, cmds, uid, arg, l)
-	struct mount *mp;
-	int cmds;
-	uid_t uid;
-	void *arg;
-	struct lwp *l;
+msdosfs_quotactl(struct mount *mp, int cmds,
+    uid_t uid, void *arg, struct lwp *l)
 {
 
-#ifdef QUOTA
 	return (EOPNOTSUPP);
-#else
-	return (EOPNOTSUPP);
-#endif
 }
 
 int
-msdosfs_statvfs(mp, sbp, l)
-	struct mount *mp;
-	struct statvfs *sbp;
-	struct lwp *l;
+msdosfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 	struct msdosfsmount *pmp;
 
@@ -913,7 +911,7 @@ msdosfs_sync(mp, waitfor, cred, l)
 	 */
 	simple_lock(&mntvnode_slock);
 loop:
-	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * assoicated with this mount point, start over.
@@ -921,7 +919,7 @@ loop:
 		if (vp->v_mount != mp)
 			goto loop;
 		simple_lock(&vp->v_interlock);
-		nvp = vp->v_mntvnodes.le_next;
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		dep = VTODE(vp);
 		if (waitfor == MNT_LAZY || vp->v_type == VNON ||
 		    (((dep->de_flag &
@@ -965,11 +963,15 @@ msdosfs_fhtovp(mp, fhp, vpp)
 	struct vnode **vpp;
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
-	struct defid *defhp = (struct defid *) fhp;
+	struct defid defh;
 	struct denode *dep;
 	int error;
 
-	error = deget(pmp, defhp->defid_dirclust, defhp->defid_dirofs, &dep);
+	if (fhp->fid_len != sizeof(struct defid))
+		return EINVAL;
+
+	memcpy(&defh, fhp, sizeof(defh));
+	error = deget(pmp, defh.defid_dirclust, defh.defid_dirofs, &dep);
 	if (error) {
 		*vpp = NULLVP;
 		return (error);
@@ -979,27 +981,32 @@ msdosfs_fhtovp(mp, fhp, vpp)
 }
 
 int
-msdosfs_vptofh(vp, fhp)
+msdosfs_vptofh(vp, fhp, fh_size)
 	struct vnode *vp;
 	struct fid *fhp;
+	size_t *fh_size;
 {
 	struct denode *dep;
-	struct defid *defhp;
+	struct defid defh;
 
+	if (*fh_size < sizeof(struct defid)) {
+		*fh_size = sizeof(struct defid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct defid);
 	dep = VTODE(vp);
-	defhp = (struct defid *)fhp;
-	defhp->defid_len = sizeof(struct defid);
-	defhp->defid_dirclust = dep->de_dirclust;
-	defhp->defid_dirofs = dep->de_diroffset;
-	/* defhp->defid_gen = dep->de_gen; */
+	memset(&defh, 0, sizeof(defh));
+	defh.defid_len = sizeof(struct defid);
+	defh.defid_dirclust = dep->de_dirclust;
+	defh.defid_dirofs = dep->de_diroffset;
+	/* defh.defid_gen = dep->de_gen; */
+	memcpy(fhp, &defh, sizeof(defh));
 	return (0);
 }
 
 int
-msdosfs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+msdosfs_vget(struct mount *mp, ino_t ino,
+    struct vnode **vpp)
 {
 
 	return (EOPNOTSUPP);

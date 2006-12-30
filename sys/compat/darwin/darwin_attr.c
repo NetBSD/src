@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.6.2.1 2006/06/21 14:58:32 yamt Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.6.2.2 2006/12/30 20:47:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.6.2.1 2006/06/21 14:58:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.6.2.2 2006/12/30 20:47:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,9 +199,9 @@ darwin_sys_getattrlist(l, v, retval)
 	 * vnode structure
 	 */
 
-	cred = kauth_cred_dup(p->p_cred);
-	kauth_cred_seteuid(cred, kauth_cred_getuid(p->p_cred));
-	kauth_cred_setegid(cred, kauth_cred_getgid(p->p_cred));
+	cred = kauth_cred_dup(l->l_cred);
+	kauth_cred_seteuid(cred, kauth_cred_getuid(l->l_cred));
+	kauth_cred_setegid(cred, kauth_cred_getgid(l->l_cred));
 
 	NDINIT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0)

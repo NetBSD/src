@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.4.6.2 2006/06/21 14:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.4.6.3 2006/12/30 20:47:42 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -962,18 +962,14 @@ ndis_thresume(p)
 }
 
 __stdcall static void
-ndis_sendrsrcavail_func(adapter)
-	ndis_handle		adapter;
+ndis_sendrsrcavail_func(ndis_handle adapter)
 {
 	return;
 }
 
 __stdcall static void
-ndis_status_func(adapter, status, sbuf, slen)
-	ndis_handle		adapter;
-	ndis_status		status;
-	void			*sbuf;
-	uint32_t		slen;
+ndis_status_func(ndis_handle adapter, ndis_status status, void *sbuf,
+    uint32_t slen)
 {
 	ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
@@ -1050,10 +1046,8 @@ ndis_getdone_func(adapter, status)
 }
 
 __stdcall static void
-ndis_resetdone_func(adapter, status, addressingreset)
-	ndis_handle		adapter;
-	ndis_status		status;
-	uint8_t			addressingreset;
+ndis_resetdone_func(ndis_handle adapter, ndis_status status,
+    uint8_t addressingreset)
 {
 	ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
@@ -1392,7 +1386,7 @@ ndis_return(arg)
 	__stdcall ndis_return_handler	returnfunc;
 	ndis_handle		adapter;
 	ndis_packet		*p;
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 
 	p = arg;
 	sc = p->np_softc;
@@ -1416,7 +1410,8 @@ ndis_return_packet(buf, arg)
 	void			*buf;	/* not used */
 	void			*arg;
 #else
-ndis_return_packet(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+ndis_return_packet(struct mbuf *m, caddr_t buf,
+    size_t size, void *arg)
 #endif
 
 {
@@ -1750,7 +1745,7 @@ ndis_set_info(arg, oid, buf, buflen)
 	__stdcall ndis_setinfo_handler	setfunc;
 	uint32_t		byteswritten = 0, bytesneeded = 0;
 	int			error;
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 #ifdef __NetBSD__
 	int			s;
 #endif
@@ -1847,7 +1842,7 @@ ndis_send_packets(arg, packets, cnt)
 	__stdcall ndis_senddone_func		senddonefunc;
 	int			i;
 	ndis_packet		*p;
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 
 	sc = arg;
 	adapter = sc->ndis_block->nmb_miniportadapterctx;
@@ -1890,7 +1885,7 @@ ndis_send_packet(arg, packet)
 	ndis_status		status;
 	__stdcall ndis_sendsingle_handler	sendfunc;
 	__stdcall ndis_senddone_func		senddonefunc;
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 
 	sc = arg;
 	adapter = sc->ndis_block->nmb_miniportadapterctx;
@@ -1997,7 +1992,7 @@ ndis_reset_nic(arg)
 	uint8_t			addressing_reset;
 	struct ifnet		*ifp;
 	int			rval;
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 
 	sc = arg;
 #ifdef __FreeBSD__
@@ -2238,15 +2233,12 @@ ndis_isr(arg, ourintr, callhandler)
 }
 
 __stdcall static void
-ndis_intrhand(dpc, dobj, ip, sc)
-	kdpc			*dpc;
-	device_object		*dobj;
-	irp			*ip;
-	struct ndis_softc	*sc;
+ndis_intrhand(kdpc *dpc, device_object *dobj,
+    irp *ip, struct ndis_softc *sc)
 {
 	ndis_handle		adapter;
 	__stdcall ndis_interrupt_handler	intrfunc;
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 
 	adapter = sc->ndis_block->nmb_miniportadapterctx;
 	intrfunc = sc->ndis_chars->nmc_interrupt_func;
@@ -2284,7 +2276,7 @@ ndis_get_info(arg, oid, buf, buflen)
 #ifdef __FreeBSD__	
 	int			error;
 #endif
-	uint8_t			irql;
+	uint8_t			irql = 0;	/* XXX: gcc */
 	
 	//printf("in ndis_get_info\n");
 	

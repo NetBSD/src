@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.36.10.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: errno.h,v 1.36.10.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -88,7 +88,7 @@
 #define	EDESTADDRREQ	39		/* Destination address required */
 #define	EMSGSIZE	40		/* Message too long */
 #define	EPROTOTYPE	41		/* Protocol wrong type for socket */
-#define	ENOPROTOOPT	42		/* Protocol not available */
+#define	ENOPROTOOPT	42		/* Protocol option not available */
 #define	EPROTONOSUPPORT	43		/* Protocol not supported */
 #define	ESOCKTNOSUPPORT	44		/* Socket type not supported */
 #define	EOPNOTSUPP	45		/* Operation not supported */

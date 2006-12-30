@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.3.4.1 2006/06/21 14:58:15 yamt Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.3.4.2 2006/12/30 20:47:25 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -103,11 +103,6 @@ typedef struct xen_pci_tag pcitag_t;
 #endif /* !XEN3 */
 
 typedef void *pci_chipset_tag_t;
-
-struct xen_intr_handle {
-	int pirq;
-	int evtch;
-};
 
 typedef struct xen_intr_handle pci_intr_handle_t;
 

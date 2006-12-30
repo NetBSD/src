@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_hi.c,v 1.3.16.1 2006/06/21 14:54:41 yamt Exp $	*/
+/*	$NetBSD: scsi_hi.c,v 1.3.16.2 2006/12/30 20:46:42 yamt Exp $	*/
 
 /****************************************************************************
  * NS32K Monitor SCSI high-level driver
@@ -256,7 +256,7 @@ get_sense(struct drive *dp)
 			return OK;	/* orig command was ok with recovery */
 		default:
 			printf("SCSI failure: key 0x%x code 0x%x log adr 0x%x "
-			    "sense buf 0x%x\n", sense_buf[SENSE_KEY],
+			    "sense buf %p\n", sense_buf[SENSE_KEY],
 			    sense_buf[ADD_SENSE_CODE], XLOGICAL_ADR, sense_buf);
 			return NOT_OK;	/* orig command failed */
 	}

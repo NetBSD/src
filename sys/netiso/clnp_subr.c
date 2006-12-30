@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.18 2005/05/29 21:27:45 christos Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.18.2.1 2006/12/30 20:50:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.18 2005/05/29 21:27:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.18.2.1 2006/12/30 20:50:44 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -402,9 +402,7 @@ done:
 	/*
 	 *	Free route
 	 */
-	if (route.ro_rt != NULL) {
-		RTFREE(route.ro_rt);
-	}
+	rtcache_free((struct route *)&route);
 }
 
 #ifdef	notdef
@@ -469,10 +467,7 @@ clnp_route(
 	if (flags & SO_DONTROUTE) {
 		struct iso_ifaddr *ia;
 
-		if (ro->ro_rt) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = 0;
-		}
+		rtcache_free((struct route *)ro);
 		bzero((caddr_t) & ro->ro_dst, sizeof(ro->ro_dst));
 		bcopy((caddr_t) dst, (caddr_t) & ro->ro_dst.siso_addr,
 		      1 + (unsigned) dst->isoa_len);
@@ -487,33 +482,13 @@ clnp_route(
 			*first_hop = sisotosa(&ro->ro_dst);
 		return 0;
 	}
-	/*
-	 *	If there is a cached route, check that it is still up and to
-	 *	the same destination. If not, free it and try again.
-	 */
-	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	  (Bcmp(ro->ro_dst.siso_data, dst->isoa_genaddr, dst->isoa_len)))) {
-#ifdef ARGO_DEBUG
-		if (argo_debug[D_ROUTE]) {
-			printf("clnp_route: freeing old route: ro->ro_rt %p\n",
-			    ro->ro_rt);
-			printf("clnp_route: old route refcnt: 0x%x\n",
-			    ro->ro_rt->rt_refcnt);
-		}
-#endif
 
-		/* free old route entry */
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = (struct rtentry *) 0;
-	} else {
-#ifdef ARGO_DEBUG
-		if (argo_debug[D_ROUTE]) {
-			printf("clnp_route: OK route exists\n");
-		}
-#endif
-	}
+	if (bcmp(ro->ro_dst.siso_data, dst->isoa_genaddr, dst->isoa_len) != 0)
+		rtcache_free((struct route *)ro);
+	else
+		rtcache_check((struct route *)ro);
 
-	if (ro->ro_rt == 0) {
+	if (ro->ro_rt == NULL) {
 		/* set up new route structure */
 		bzero((caddr_t) & ro->ro_dst, sizeof(ro->ro_dst));
 		ro->ro_dst.siso_len = sizeof(ro->ro_dst);
@@ -526,13 +501,13 @@ clnp_route(
 			    clnp_iso_addrp(dst));
 		}
 #endif
-		rtalloc((struct route *) ro);
+		rtcache_init((struct route *)ro);
+		if (ro->ro_rt == NULL)
+			return (ENETUNREACH);
 	}
-	if (ro->ro_rt == 0)
-		return (ENETUNREACH);	/* rtalloc failed */
 	ro->ro_rt->rt_use++;
 	if (ifa)
-		if ((*ifa = (struct iso_ifaddr *) ro->ro_rt->rt_ifa) == 0)
+		if ((*ifa = (struct iso_ifaddr *)ro->ro_rt->rt_ifa) == 0)
 			panic("clnp_route");
 	if (first_hop) {
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
@@ -622,11 +597,11 @@ clnp_srcroute(
  */
 int
 clnp_echoreply(
-	struct mbuf    *ec_m,		/* echo request */
-	int             ec_len,		/* length of ec */
-	struct sockaddr_iso *ec_src,	/* src of ec */
-	struct sockaddr_iso *ec_dst,	/* destination of ec (i.e., us) */
-	struct clnp_optidx *ec_oidxp)	/* options index to ec packet */
+    struct mbuf    *ec_m,		/* echo request */
+    int             ec_len,		/* length of ec */
+    struct sockaddr_iso *ec_src,	/* src of ec */
+    struct sockaddr_iso *ec_dst,	/* destination of ec (i.e., us) */
+    struct clnp_optidx *ec_oidxp) /* options index to ec packet */
 {
 	struct isopcb   isopcb;
 	int             flags = CLNP_NOCACHE | CLNP_ECHOR;

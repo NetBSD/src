@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.4.4.1 2006/06/21 14:51:28 yamt Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.4.4.2 2006/12/30 20:45:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -182,7 +182,8 @@ static int
 rawfs_get_block(struct open_file *f)
 {
 	struct rawfs_file *fs;
-	int error, len;
+	int error;
+	size_t len;
 
 	fs = (struct rawfs_file *)f->f_fsdata;
 	fs->fs_ptr = fs->fs_buf;

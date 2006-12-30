@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.19.4.1 2006/06/21 15:11:01 yamt Exp $	*/
+/*	$NetBSD: tcp.h,v 1.19.4.2 2006/12/30 20:50:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -66,8 +66,8 @@ struct tcphdr {
 #define	TH_PUSH	  0x08
 #define	TH_ACK	  0x10
 #define	TH_URG	  0x20
-#define	TH_ECE	  0x40			/* (unimplemented) */
-#define	TH_CWR	  0x80			/* (unimplemented) */
+#define	TH_ECE	  0x40
+#define	TH_CWR	  0x80
 	u_int16_t th_win;			/* window */
 	u_int16_t th_sum;			/* checksum */
 	u_int16_t th_urp;			/* urgent pointer */
@@ -97,11 +97,9 @@ struct tcphdr {
 
 /*
  * Default maximum segment size for TCP.
- * With an IP MSS of 576, this is 536,
- * but 512 is probably more convenient.
- * This should be defined as min(512, IP_MSS - sizeof (struct tcpiphdr)).
+ * This is defined by RFC 1112 Sec 4.2.2.6.
  */
-#define	TCP_MSS		512
+#define	TCP_MSS		536
 
 #define	TCP_MAXWIN	65535	/* largest value for (unscaled) window */
 
@@ -118,5 +116,6 @@ struct tcphdr {
 #define	TCP_MAXSEG	0x02	/* set maximum segment size */
 /* Bits 0x04, 0x08 reserved for FreeBSD compatibility: TCP_NOPUSH, TCP_NOOPT */
 #define TCP_MD5SIG	0x10	/* use MD5 digests (RFC2385) */
+#define	TCP_CONGCTL	0x20	/* selected congestion control */
 
 #endif /* !_NETINET_TCP_H_ */

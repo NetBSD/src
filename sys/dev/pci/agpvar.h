@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.9.4.1 2006/06/21 15:05:03 yamt Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.9.4.2 2006/12/30 20:48:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -69,15 +69,13 @@ struct agp_memory_info {
 	int		ami_is_bound;	/* non-zero if bound */
 };
 
-#define AGP_DEBUGxx
-
 #ifdef AGP_DEBUG
-#define AGP_DPF(x...) do {			\
+#define AGP_DPF(x) do {			\
     printf("agp: ");				\
-    printf(##x);				\
-} while (0)
+    printf x;				\
+} while (0) 
 #else
-#define AGP_DPF(x...) do {} while (0)
+#define AGP_DPF(x) 
 #endif
 
 #define AGPUNIT(x)	minor(x)

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.82.2.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.82.2.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -91,7 +91,7 @@ struct sockbuf {
 struct socket {
 	short		so_type;	/* generic type, see socket.h */
 	short		so_options;	/* from socket call, see socket.h */
-	short		so_linger;	/* time to linger while closing */
+	u_short		so_linger;	/* time to linger while closing */
 	short		so_state;	/* internal state flags SS_*, below */
 	void		*so_pcb;	/* protocol control block */
 	const struct protosw *so_proto;	/* protocol handle */
@@ -256,8 +256,6 @@ do {									\
 extern u_long		sb_max;
 extern int		somaxkva;
 extern int		sock_loan_thresh;
-/* to catch callers missing new second argument to sonewconn: */
-#define	sonewconn(head, connstatus)	sonewconn1((head), (connstatus))
 
 /* strings for sleep message: */
 extern const char	netio[], netcon[], netcls[];
@@ -323,7 +321,7 @@ void	soisdisconnected(struct socket *);
 void	soisdisconnecting(struct socket *);
 int	solisten(struct socket *, int);
 struct socket *
-	sonewconn1(struct socket *, int);
+	sonewconn(struct socket *, int);
 void	soqinsque(struct socket *, struct socket *, int);
 int	soqremque(struct socket *, int);
 int	soreceive(struct socket *, struct mbuf **, struct uio *,

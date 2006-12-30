@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.53.2.1 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.53.2.2 2006/12/30 20:51:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.53.2.1 2006/06/21 15:12:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.53.2.2 2006/12/30 20:51:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.53.2.1 2006/06/21 15:12:39 yamt Exp $
 #include <sys/mount.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/lfs/lfs.h>
@@ -370,13 +371,12 @@ lfs_unmark_dirop(struct lfs *fs)
 		vp = ITOV(ip);
 
 		simple_lock(&vp->v_interlock);
-		if (VOP_ISLOCKED(vp) &&
-			   vp->v_lock.lk_lockholder != curproc->p_pid) {
+		if (VOP_ISLOCKED(vp) == LK_EXCLOTHER) {
 			simple_lock(&fs->lfs_interlock);
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
-		if ((VTOI(vp)->i_flag & IN_ADIROP) == 0) {
+		if ((VTOI(vp)->i_flag & (IN_ADIROP | IN_ALLMOD)) == 0) {
 			simple_lock(&fs->lfs_interlock);
 			simple_lock(&lfs_subsys_lock);
 			--lfs_dirvcount;
@@ -495,8 +495,9 @@ lfs_segunlock(struct lfs *fs)
 		 * sleep.
 		 */
 		simple_lock(&fs->lfs_interlock);
-		if (--fs->lfs_iocount == 0)
+		if (--fs->lfs_iocount == 0) {
 			LFS_DEBUG_COUNTLOCKED("lfs_segunlock");
+		}
 		if (fs->lfs_iocount <= 1)
 			wakeup(&fs->lfs_iocount);
 		simple_unlock(&fs->lfs_interlock);
@@ -625,12 +626,19 @@ lfs_segunlock_relock(struct lfs *fs)
 {
 	int n = fs->lfs_seglock;
 	u_int16_t seg_flags;
+	CLEANERINFO *cip;
+	struct buf *bp;
 
 	if (n == 0)
 		return;
 
 	/* Write anything we've already gathered to disk */
 	lfs_writeseg(fs, fs->lfs_sp);
+
+	/* Tell cleaner */
+	LFS_CLEANERINFO(cip, fs, bp);
+	cip->flags |= LFS_CLEANER_MUST_CLEAN;
+	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 
 	/* Save segment flags for later */
 	seg_flags = fs->lfs_sp->seg_flags;
@@ -640,8 +648,7 @@ lfs_segunlock_relock(struct lfs *fs)
 		lfs_segunlock(fs);
 
 	/* Wait for the cleaner */
-	wakeup(&lfs_allclean_wakeup);
-	wakeup(&fs->lfs_nextseg);
+	lfs_wakeup_cleaner(fs);
 	simple_lock(&fs->lfs_interlock);
 	while (LFS_STARVED_FOR_SEGS(fs))
 		ltsleep(&fs->lfs_avail, PRIBIO, "relock", 0,
@@ -652,5 +659,23 @@ lfs_segunlock_relock(struct lfs *fs)
 	while(n--)
 		lfs_seglock(fs, seg_flags);
 
+	/* Cleaner can relax now */
+	LFS_CLEANERINFO(cip, fs, bp);
+	cip->flags &= ~LFS_CLEANER_MUST_CLEAN;
+	LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
+
 	return;
+}
+
+/*
+ * Wake up the cleaner, provided that nowrap is not set.
+ */
+void
+lfs_wakeup_cleaner(struct lfs *fs)
+{
+	if (fs->lfs_nowrap > 0)
+		return;
+
+	wakeup(&fs->lfs_nextseg);
+	wakeup(&lfs_allclean_wakeup);
 }

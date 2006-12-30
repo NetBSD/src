@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.1 2004/10/04 01:07:25 thorpej Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.1.14.1 2006/12/30 20:47:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.1 2004/10/04 01:07:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.1.14.1 2006/12/30 20:47:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ static const struct {
 
 	/* XXX What about the MS and Linux types? */
 
-	{ { 0 },			NULL },
+	{ { .time_low = 0 },		NULL },
 };
 
 static const char *

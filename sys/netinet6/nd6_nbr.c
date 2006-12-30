@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.57.2.1 2006/06/21 15:11:09 yamt Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.57.2.2 2006/12/30 20:50:39 yamt Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.57.2.1 2006/06/21 15:11:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.57.2.2 2006/12/30 20:50:39 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -527,15 +527,11 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	icmp6_ifstat_inc(ifp, ifs6_out_neighborsolicit);
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_SOLICIT]++;
 
-	if (ro.ro_rt) {		/* we don't cache this route. */
-		RTFREE(ro.ro_rt);
-	}
+	rtcache_free((struct route *)&ro);
 	return;
 
   bad:
-	if (ro.ro_rt) {
-		RTFREE(ro.ro_rt);
-	}
+	rtcache_free((struct route *)&ro);
 	m_freem(m);
 	return;
 }
@@ -1007,15 +1003,11 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 	icmp6_ifstat_inc(ifp, ifs6_out_neighboradvert);
 	icmp6stat.icp6s_outhist[ND_NEIGHBOR_ADVERT]++;
 
-	if (ro.ro_rt) {		/* we don't cache this route. */
-		RTFREE(ro.ro_rt);
-	}
+	rtcache_free((struct route *)&ro);
 	return;
 
   bad:
-	if (ro.ro_rt) {
-		RTFREE(ro.ro_rt);
-	}
+	rtcache_free((struct route *)&ro);
 	m_freem(m);
 	return;
 }
@@ -1185,7 +1177,7 @@ nd6_dad_stop(ifa)
 
 	nd6_dad_stoptimer(dp);
 
-	TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
+	TAILQ_REMOVE(&dadq, dp, dad_list);
 	free(dp, M_IP6NDP);
 	dp = NULL;
 	IFAFREE(ifa);
@@ -1231,7 +1223,7 @@ nd6_dad_timer(ifa)
 		nd6log((LOG_INFO, "%s: could not run DAD, driver problem?\n",
 			if_name(ifa->ifa_ifp)));
 
-		TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
+		TAILQ_REMOVE(&dadq, dp, dad_list);
 		free(dp, M_IP6NDP);
 		dp = NULL;
 		IFAFREE(ifa);
@@ -1284,7 +1276,7 @@ nd6_dad_timer(ifa)
 			    if_name(ifa->ifa_ifp),
 			    ip6_sprintf(&ia->ia_addr.sin6_addr)));
 
-			TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
+			TAILQ_REMOVE(&dadq, dp, dad_list);
 			free(dp, M_IP6NDP);
 			dp = NULL;
 			IFAFREE(ifa);
@@ -1360,7 +1352,7 @@ nd6_dad_duplicated(ifa)
 		}
 	}
 
-	TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
+	TAILQ_REMOVE(&dadq, dp, dad_list);
 	free(dp, M_IP6NDP);
 	dp = NULL;
 	IFAFREE(ifa);
@@ -1388,6 +1380,7 @@ nd6_dad_ns_output(dp, ifa)
 		return;
 	}
 
+	dp->dad_ns_tcount = 0;
 	dp->dad_ns_ocount++;
 	nd6_ns_output(ifp, NULL, &ia->ia_addr.sin6_addr, NULL, 1);
 }

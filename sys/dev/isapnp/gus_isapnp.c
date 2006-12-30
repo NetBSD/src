@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.24.10.1 2006/06/21 15:04:36 yamt Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.24.10.2 2006/12/30 20:48:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.24.10.1 2006/06/21 15:04:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.24.10.2 2006/12/30 20:48:35 yamt Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -105,6 +105,7 @@ static const struct audio_hw_if guspnp_hw_if = {
 	NULL,			/* trigger_output */
 	NULL,			/* trigger_input */
 	NULL,			/* dev_ioctl */
+	NULL,			/* powerstate */
 };
 
 CFATTACH_DECL(guspnp, sizeof(struct iw_softc),
@@ -125,7 +126,8 @@ extern struct cfdriver guspnp_cd;
 static int gus_0 = 1;		/* XXX what's this */
 
 int
-gus_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
+gus_isapnp_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	int pri, variant;
 
@@ -140,7 +142,8 @@ gus_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
  * pseudo-device driver.
  */
 void
-gus_isapnp_attach(struct device *parent, struct device *self, void *aux)
+gus_isapnp_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct iw_softc *sc;
 	struct isapnp_attach_args *ipa;
@@ -184,6 +187,11 @@ gus_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_playdrq != -1) {
 		sc->sc_play_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_playdrq);
+		if (isa_drq_alloc(sc->sc_ic, sc->sc_playdrq) != 0) {
+			printf("%s: can't reserve drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_playdrq);
+			return;
+		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
 		    sc->sc_play_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
@@ -194,6 +202,11 @@ gus_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_recdrq != -1) {
 		sc->sc_rec_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_recdrq);
+		if (isa_drq_alloc(sc->sc_ic, sc->sc_recdrq) != 0) {
+			printf("%s: can't reserve drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_recdrq);
+			return;
+		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
 		    sc->sc_rec_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25.22.1 2006/06/21 14:55:31 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25.22.2 2006/12/30 20:46:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,6 +76,15 @@ pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
 }
+
+/*
+ * pmap_prefer() helps to avoid virtual cache aliases on SH4 CPUs
+ * which have the virtually-indexed cache.
+ */
+#ifdef SH4
+#define PMAP_PREFER(pa, va, sz, td)     pmap_prefer((pa), (va))
+void pmap_prefer(vaddr_t, vaddr_t *);
+#endif /* SH4 */
 
 #define	PMAP_MAP_POOLPAGE(pa)		SH3_PHYS_TO_P1SEG((pa))
 #define	PMAP_UNMAP_POOLPAGE(va)		SH3_P1SEG_TO_PHYS((va))

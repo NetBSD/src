@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixvar.h,v 1.6 2005/06/04 04:41:40 tsutsui Exp $ */
+/*	$NetBSD: cgsixvar.h,v 1.6.2.1 2006/12/30 20:49:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,29 +78,9 @@ struct cgsix_softc {
 #if NWSDISPLAY > 0	
 	int sc_mode;
 	uint32_t sc_bg;
-	void (*switchcb)(void *, int, int);
-	void *switchcbarg;
-	struct callout switch_callout;
-	LIST_HEAD(, cg6_screen) screens;
-	struct cg6_screen *active, *wanted;
-	const struct wsscreen_descr *currenttype;
+	struct vcons_data vd;
 #endif	
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
-};
-
-struct cg6_screen {
-	struct rasops_info ri;
-	LIST_ENTRY(cg6_screen) next;
-	struct cgsix_softc *sc;
-	const struct wsscreen_descr *type;
-	int active;
-	u_int16_t *chars;
-	long *attrs;
-
-	int cursoron;
-	int cursorcol;
-	int cursorrow;
-	int cursordrawn;
 };
 
 #ifdef RASTERCONSOLE

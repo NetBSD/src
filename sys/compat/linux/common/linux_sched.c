@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.19.2.1 2006/06/21 14:59:12 yamt Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.19.2.2 2006/12/30 20:47:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.19.2.1 2006/06/21 14:59:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.19.2.2 2006/12/30 20:47:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.19.2.1 2006/06/21 14:59:12 yamt Ex
 #include <sys/syscallargs.h>
 #include <sys/wait.h>
 #include <sys/kauth.h>
+#include <sys/ptrace.h>
 
 #include <machine/cpu.h>
 
@@ -116,49 +117,19 @@ linux_sys_clone(l, v, retval)
 	if (SCARG(uap, flags) & LINUX_CLONE_VFORK)
 		flags |= FORK_PPWAIT;
 
-	/* Thread should not issue a SIGCHLD on termination */
-	if (SCARG(uap, flags) & LINUX_CLONE_THREAD) {
-		sig = 0;
-	} else {
-		sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
-		if (sig < 0 || sig >= LINUX__NSIG)
-			return (EINVAL);
-		sig = linux_to_native_signo[sig];
-	}
+	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
+	if (sig < 0 || sig >= LINUX__NSIG)
+		return (EINVAL);
+	sig = linux_to_native_signo[sig];
 
 #ifdef LINUX_NPTL
 	led = (struct linux_emuldata *)l->l_proc->p_emuldata;
 
-	if (SCARG(uap, flags) & LINUX_CLONE_PARENT_SETTID) {
-		if (SCARG(uap, parent_tidptr) == NULL) {
-			printf("linux_sys_clone: NULL parent_tidptr\n");
-			return EINVAL;
-		}
-
-		if ((error = copyout(&l->l_proc->p_pid,
-		    SCARG(uap, parent_tidptr), 
-		    sizeof(l->l_proc->p_pid))) != 0)
-			return error;
-	}
-
-	/* CLONE_CHILD_CLEARTID: TID clear in the child on exit() */
-	if (SCARG(uap, flags) & LINUX_CLONE_CHILD_CLEARTID)
-		led->child_clear_tid = SCARG(uap, child_tidptr);
-	else	
-		led->child_clear_tid = NULL;
-
-	/* CLONE_CHILD_SETTID: TID set in the child on clone() */
-	if (SCARG(uap, flags) & LINUX_CLONE_CHILD_SETTID)
-		led->child_set_tid = SCARG(uap, child_tidptr);
-	else
-		led->child_set_tid = NULL;
-
-	/* CLONE_SETTLS: new Thread Local Storage in the child */
-	if (SCARG(uap, flags) & LINUX_CLONE_SETTLS)
-		led->set_tls = linux_get_newtls(l);
-	else
-		led->set_tls = 0;
+	led->parent_tidptr = SCARG(uap, parent_tidptr);
+	led->child_tidptr = SCARG(uap, child_tidptr);
+	led->clone_flags = SCARG(uap, flags);
 #endif /* LINUX_NPTL */
+
 	/*
 	 * Note that Linux does not provide a portable way of specifying
 	 * the stack area; the caller must know if the stack grows up
@@ -173,16 +144,12 @@ linux_sys_clone(l, v, retval)
 }
 
 int
-linux_sys_sched_setparam(cl, v, retval)
-	struct lwp *cl;
-	void *v;
-	register_t *retval;
+linux_sys_sched_setparam(struct lwp *cl, void *v, register_t *retval)
 {
 	struct linux_sys_sched_setparam_args /* {
 		syscallarg(linux_pid_t) pid;
 		syscallarg(const struct linux_sched_param *) sp;
 	} */ *uap = v;
-	struct proc *cp = cl->l_proc;
 	int error;
 	struct linux_sched_param lp;
 	struct proc *p;
@@ -199,11 +166,11 @@ linux_sys_sched_setparam(cl, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = cp->p_cred;
+		kauth_cred_t pc = cl->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(cl->l_proc == p ||
 		      kauth_cred_geteuid(pc) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
@@ -216,16 +183,12 @@ linux_sys_sched_setparam(cl, v, retval)
 }
 
 int
-linux_sys_sched_getparam(cl, v, retval)
-	struct lwp *cl;
-	void *v;
-	register_t *retval;
+linux_sys_sched_getparam(struct lwp *cl, void *v, register_t *retval)
 {
 	struct linux_sys_sched_getparam_args /* {
 		syscallarg(linux_pid_t) pid;
 		syscallarg(struct linux_sched_param *) sp;
 	} */ *uap = v;
-	struct proc *cp = cl->l_proc;
 	struct proc *p;
 	struct linux_sched_param lp;
 
@@ -236,11 +199,11 @@ linux_sys_sched_getparam(cl, v, retval)
 		return EINVAL;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = cp->p_cred;
+		kauth_cred_t pc = cl->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(cl->l_proc == p ||
 		      kauth_cred_geteuid(pc) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
@@ -254,17 +217,14 @@ linux_sys_sched_getparam(cl, v, retval)
 }
 
 int
-linux_sys_sched_setscheduler(cl, v, retval)
-	struct lwp *cl;
-	void *v;
-	register_t *retval;
+linux_sys_sched_setscheduler(struct lwp *cl, void *v,
+    register_t *retval)
 {
 	struct linux_sys_sched_setscheduler_args /* {
 		syscallarg(linux_pid_t) pid;
 		syscallarg(int) policy;
 		syscallarg(cont struct linux_sched_scheduler *) sp;
 	} */ *uap = v;
-	struct proc *cp = cl->l_proc;
 	int error;
 	struct linux_sched_param lp;
 	struct proc *p;
@@ -281,11 +241,11 @@ linux_sys_sched_setscheduler(cl, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = cp->p_cred;
+		kauth_cred_t pc = cl->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(cl->l_proc == p ||
 		      kauth_cred_geteuid(pc) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
@@ -294,6 +254,7 @@ linux_sys_sched_setscheduler(cl, v, retval)
 			return EPERM;
 	}
 
+	return 0;
 /*
  * We can't emulate anything put the default scheduling policy.
  */
@@ -312,7 +273,6 @@ linux_sys_sched_getscheduler(cl, v, retval)
 	struct linux_sys_sched_getscheduler_args /* {
 		syscallarg(linux_pid_t) pid;
 	} */ *uap = v;
-	struct proc *cp = cl->l_proc;
 	struct proc *p;
 
 	*retval = -1;
@@ -321,11 +281,11 @@ linux_sys_sched_getscheduler(cl, v, retval)
  */
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = cp->p_cred;
+		kauth_cred_t pc = cl->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(cp == p ||
+		if (!(cl->l_proc == p ||
 		      kauth_cred_geteuid(pc) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
@@ -342,10 +302,8 @@ linux_sys_sched_getscheduler(cl, v, retval)
 }
 
 int
-linux_sys_sched_yield(cl, v, retval)
-	struct lwp *cl;
-	void *v;
-	register_t *retval;
+linux_sys_sched_yield(struct lwp *cl, void *v,
+    register_t *retval)
 {
 
 	yield();
@@ -353,10 +311,8 @@ linux_sys_sched_yield(cl, v, retval)
 }
 
 int
-linux_sys_sched_get_priority_max(cl, v, retval)
-	struct lwp *cl;
-	void *v;
-	register_t *retval;
+linux_sys_sched_get_priority_max(struct lwp *cl, void *v,
+    register_t *retval)
 {
 	struct linux_sys_sched_get_priority_max_args /* {
 		syscallarg(int) policy;
@@ -375,10 +331,8 @@ linux_sys_sched_get_priority_max(cl, v, retval)
 }
 
 int
-linux_sys_sched_get_priority_min(cl, v, retval)
-	struct lwp *cl;
-	void *v;
-	register_t *retval;
+linux_sys_sched_get_priority_min(struct lwp *cl, void *v,
+    register_t *retval)
 {
 	struct linux_sys_sched_get_priority_min_args /* {
 		syscallarg(int) policy;
@@ -404,21 +358,54 @@ linux_sys_exit_group(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifdef LINUX_NPTL
 	struct linux_sys_exit_group_args /* {
 		syscallarg(int) error_code;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct linux_emuldata *led = p->p_emuldata;
+	struct linux_emuldata *e;
+
+#ifdef DEBUG_LINUX
+	printf("%s:%d, led->s->refs = %d\n", __func__, __LINE__, led->s->refs);
+#endif
+	/*
+	 * The calling thread is supposed to kill all threads
+	 * in the same thread group (i.e. all threads created
+	 * via clone(2) with CLONE_THREAD flag set).
+	 *
+	 * If there is only one thread, things are quite simple
+	 */
+	if (led->s->refs == 1)
+		return sys_exit(l, v, retval);
+
+#ifdef DEBUG_LINUX
+	printf("%s:%d\n", __func__, __LINE__);
+#endif
+
+	led->s->flags |= LINUX_LES_INEXITGROUP;
+	led->s->xstat = W_EXITCODE(SCARG(uap, error_code), 0);
 
 	/*
-	 * XXX The calling thread is supposed to kill all threads
-	 * in the same thread group (i.e. all threads created
-	 * via clone(2) with CLONE_THREAD flag set). This appears
-	 * to not be used yet, so the thread group handling
-	 * is currently not implemented.
+	 * Kill all threads in the group. The emulation exit hook takes
+	 * care of hiding the zombies and reporting the exit code properly
 	 */
+      	LIST_FOREACH(e, &led->s->threads, threads) {
+		if (e->proc == p)
+			continue;
 
-	exit1(l, W_EXITCODE(SCARG(uap, error_code), 0));
-	/* NOTREACHED */
+#ifdef DEBUG_LINUX
+		printf("%s: kill PID %d\n", __func__, e->proc->p_pid);
+#endif
+		psignal(e->proc, SIGKILL);
+	}
+
+	/* Now, kill ourselves */
+	psignal(p, SIGKILL);
 	return 0;
+#else /* LINUX_NPTL */
+	return sys_exit(l, v, retval);
+#endif /* LINUX_NPTL */
 }
 #endif /* !__m68k__ */
 
@@ -449,9 +436,63 @@ linux_sys_gettid(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+	/* The Linux kernel does it exactly that way */
 	*retval = l->l_proc->p_pid;
 	return 0;
 }
+
+#ifdef LINUX_NPTL
+/* ARGUSED1 */
+int
+linux_sys_getpid(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_emuldata *led;
+
+	led = l->l_proc->p_emuldata;
+
+	/* The Linux kernel does it exactly that way */
+	*retval = led->s->group_pid;
+
+	return 0;
+}
+
+/* ARGUSED1 */
+int
+linux_sys_getppid(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct proc *p = l->l_proc;
+	struct linux_emuldata *led = p->p_emuldata;
+	struct proc *glp;
+	struct proc *pp;
+
+	/* Find the thread group leader's parent */
+	if ((glp = pfind(led->s->group_pid)) == NULL) {
+		/* Maybe panic... */
+		printf("linux_sys_getppid: missing group leader PID %d\n", 
+		    led->s->group_pid); 
+		return -1;
+	}
+	pp = glp->p_pptr;
+
+	/* If this is a Linux process too, return thread group PID */
+	if (pp->p_emul == p->p_emul) {
+		struct linux_emuldata *pled;
+
+		pled = pp->p_emuldata;
+		*retval = pled->s->group_pid;
+	} else {
+		*retval = pp->p_pid;
+	}
+
+	return 0;
+}
+#endif /* LINUX_NPTL */
 
 int
 linux_sys_sched_getaffinity(l, v, retval)

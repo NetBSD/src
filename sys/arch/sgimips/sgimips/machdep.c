@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93.2.1 2006/06/21 14:55:31 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93.2.2 2006/12/30 20:46:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.1 2006/06/21 14:55:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.2 2006/12/30 20:46:53 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -105,11 +105,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.1 2006/06/21 14:55:31 yamt Exp $"
 
 struct sgimips_intrhand intrtab[NINTR];
 
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 /* Our exported CPU info; we can have only one. */
@@ -121,7 +121,7 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int mach_type;		/* IPxx type */
-int mach_subtype;	/* subtype: eg., Guiness/Fullhouse for IP22 */
+int mach_subtype;	/* subtype: eg., Guinness/Fullhouse for IP22 */
 int mach_boardrev;	/* machine board revision, in case it matters */
 
 int physmem;		/* Total physical memory */
@@ -130,7 +130,46 @@ int arcsmem;		/* Memory used by the ARCS firmware */
 int ncpus;
 
 /* CPU interrupt masks */
-u_int32_t splmasks[IPL_CLOCK+1];
+const int *ipl2spl_table;
+
+#define	IPL2SPL_TABLE_COMMON \
+	[IPL_SOFT] = MIPS_SOFT_INT_MASK_1, \
+	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_1, \
+	[IPL_SOFTNET] = MIPS_SOFT_INT_MASK_1, \
+	[IPL_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1, \
+	[IPL_HIGH] = MIPS_INT_MASK,
+
+#if defined(MIPS1)
+static const int sgi_ip12_ipl2spl_table[] = {
+	IPL2SPL_TABLE_COMMON
+	[IPL_BIO] = MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0,
+	[IPL_NET] = MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0,
+	[IPL_TTY] = MIPS_INT_MASK_2|MIPS_INT_MASK_1|MIPS_INT_MASK_0|
+	    MIPS_SOFT_INT_MASK_0,
+	[IPL_CLOCK] = MIPS_INT_MASK_4|MIPS_INT_MASK_3|MIPS_INT_MASK_2|
+	    MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0,
+};
+#endif /* defined(MIPS1) */
+#if defined(MIPS3)
+static const int sgi_ip2x_ipl2spl_table[] = {
+	IPL2SPL_TABLE_COMMON
+	[IPL_BIO] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+	[IPL_NET] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+	[IPL_TTY] = MIPS_INT_MASK_1|MIPS_INT_MASK_0|
+	    MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+	[IPL_CLOCK] = MIPS_INT_MASK_5|MIPS_INT_MASK_3|MIPS_INT_MASK_2|
+	    MIPS_INT_MASK_1|MIPS_INT_MASK_0|
+	    MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+};
+static const int sgi_ip3x_ipl2spl_table[] = {
+	IPL2SPL_TABLE_COMMON
+	[IPL_BIO] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+	[IPL_NET] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+	[IPL_TTY] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+	[IPL_CLOCK] = MIPS_INT_MASK_5|MIPS_INT_MASK_0|
+	    MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0,
+};
+#endif /* defined(MIPS3) */
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
@@ -141,13 +180,11 @@ extern void	ip22_sdcache_enable(void);
 #endif
 
 #if defined(MIPS1)
-extern void mips1_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-extern unsigned long mips1_clkread(void);
+extern void mips1_fpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 #endif
 
 #if defined(MIPS3)
 extern void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-extern unsigned long mips3_clkread(void);
 #endif
 
 void	mach_init(int, char **, int, struct btinfo_common *);
@@ -172,20 +209,23 @@ static void	nullvoid(void);
 
 void ddb_trap_hook(int where);
 
+static int badaddr_workaround(void *, size_t);
+
 struct platform platform = {
-	unimpl_bus_reset,
-	unimpl_cons_init,
-	unimpl_intr_establish,
-	nulllong,
-	nullvoid,
-	nullvoid,
-	nullvoid,
-	unimpl_intr,
-	unimpl_intr,
-	unimpl_intr,
-	unimpl_intr,
-	unimpl_intr,
-	unimpl_intr,
+	.badaddr		= badaddr_workaround,
+	.bus_reset		= unimpl_bus_reset,
+	.cons_init		= unimpl_cons_init,
+	.intr_establish		= unimpl_intr_establish,
+	.clkread		= nulllong,
+	.watchdog_reset		= nullvoid,
+	.watchdog_disable	= nullvoid,
+	.watchdog_enable	= nullvoid,
+	.intr0			= unimpl_intr,
+	.intr1			= unimpl_intr,
+	.intr2			= unimpl_intr,
+	.intr3			= unimpl_intr,
+	.intr4			= unimpl_intr,
+	.intr5			= unimpl_intr
 };
 
 /*
@@ -410,12 +450,8 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 				mach_subtype = MACH_SGI_IP12_HPLC;
                 }
 
-		splmasks[IPL_BIO] = 0x0b00;
-		splmasks[IPL_NET] = 0x0b00;
-		splmasks[IPL_TTY] = 0x1b00;
-		splmasks[IPL_CLOCK] = 0x7f00;
-		platform.intr3 = mips1_clock_intr;
-		platform.clkread = mips1_clkread;
+		ipl2spl_table = sgi_ip12_ipl2spl_table;
+		platform.intr0 = mips1_fpu_intr;
 		break;
 #endif /* MIPS1 */
 
@@ -423,37 +459,20 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	case MACH_SGI_IP20:
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
 		mach_boardrev = (i & 0x7000) >> 12;
-
-		splmasks[IPL_BIO] = 0x0700;
-		splmasks[IPL_NET] = 0x0700;
-		splmasks[IPL_TTY] = 0x0f00;
-		splmasks[IPL_CLOCK] = 0xbf00;
+		ipl2spl_table = sgi_ip2x_ipl2spl_table;
 		platform.intr5 = mips3_clock_intr;
-		platform.clkread = mips3_clkread;
 		break;
 	case MACH_SGI_IP22:
-		splmasks[IPL_BIO] = 0x0700;
-		splmasks[IPL_NET] = 0x0700;
-		splmasks[IPL_TTY] = 0x0f00;
-		splmasks[IPL_CLOCK] = 0xbf00;
+		ipl2spl_table = sgi_ip2x_ipl2spl_table;
 		platform.intr5 = mips3_clock_intr;
-		platform.clkread = mips3_clkread;
 		break;
 	case MACH_SGI_IP30:
-		splmasks[IPL_BIO] = 0x0700;
-		splmasks[IPL_NET] = 0x0700;
-		splmasks[IPL_TTY] = 0x0700;
-		splmasks[IPL_CLOCK] = 0x8700;
+		ipl2spl_table = sgi_ip3x_ipl2spl_table;
 		platform.intr5 = mips3_clock_intr;
-		platform.clkread = mips3_clkread;
 		break;
 	case MACH_SGI_IP32:
-		splmasks[IPL_BIO] = 0x0700;
-		splmasks[IPL_NET] = 0x0700;
-		splmasks[IPL_TTY] = 0x0700;
-		splmasks[IPL_CLOCK] = 0x8700;
+		ipl2spl_table = sgi_ip3x_ipl2spl_table;
 		platform.intr5 = mips3_clock_intr;
-		platform.clkread = mips3_clkread;
 		break;
 #endif /* MIPS3 */
 	default:
@@ -731,38 +750,33 @@ haltsys:
 	for (;;);
 }
 
-void
-microtime(struct timeval *tvp)
+void delay(unsigned long n)
 {
-	int s = splclock();
-	static struct timeval lasttime;
+	register int __N = curcpu()->ci_divisor_delay * n;
 
-	*tvp = time;
-	tvp->tv_usec += (*platform.clkread)();
-
-	/*
-	 * Make sure that the time returned is always greater
-	 * than that returned by the previous call.
-	 */
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
+	do {
+		__asm("addiu %0,%1,-1" : "=r" (__N) : "0" (__N));
+	} while (__N > 0);
 }
 
-inline void
-delay(unsigned long n)
+/*
+ * IP12 appears to be buggy and unable to reliably support badaddr.
+ * Approximately 1.8% of the time a false negative (bad address said to
+ * be good) is generated and we stomp on invalid registers. Testing has
+ * not shown false positives, nor consecutive false negatives to occur.
+ */
+static int
+badaddr_workaround(void *addr, size_t size)
 {
-	u_long i;
-	long divisor = curcpu()->ci_divisor_delay;
+	int i, bad;
 
-	while (n-- > 0)
-		for (i = divisor; i > 0; i--)
-			;
+	for (i = bad = 0; i < 100; i++) {
+		if (badaddr(addr, size))
+			bad++;
+	}
+
+	/* false positives appear not to occur */
+	return (bad != 0);
 }
 
 /*
@@ -885,4 +899,11 @@ mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_treewal
 		mips_sdcache_ways = 1;
 		break;
 	}
+}
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.17.2.1 2006/06/21 15:02:31 yamt Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.17.2.2 2006/12/30 20:47:54 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.17.2.1 2006/06/21 15:02:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.17.2.2 2006/12/30 20:47:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -755,7 +755,8 @@ acpi_res_parse_drq(struct device *dev, void *context, uint32_t drq)
 }
 
 static void
-acpi_res_parse_start_dep(struct device *dev, void *context, int preference)
+acpi_res_parse_start_dep(struct device *dev, void *context,
+    int preference)
 {
 
 	printf("%s: ACPI: dependant functions not supported\n",

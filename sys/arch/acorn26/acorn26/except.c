@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.8.2.1 2006/06/21 14:47:47 yamt Exp $ */
+/* $NetBSD: except.c,v 1.8.2.2 2006/12/30 20:45:17 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,11 +31,12 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.8.2.1 2006/06/21 14:47:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.8.2.2 2006/12/30 20:45:17 yamt Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/errno.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -112,8 +113,10 @@ prefetch_abort_handler(struct trapframe *tf)
 		l = &lwp0;
 	p = l->l_proc;
 
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
+	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR) {
 		l->l_addr->u_pcb.pcb_tf = tf;
+		LWP_CACHE_CREDS(l, p);
+	}
 
 	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
 #ifdef DDB
@@ -166,8 +169,10 @@ data_abort_handler(struct trapframe *tf)
 	if (l == NULL)
 		l = &lwp0;
 	p = l->l_proc;
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
+	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR) {
 		l->l_addr->u_pcb.pcb_tf = tf;
+		LWP_CACHE_CREDS(l, p);
+	}
 	pc = tf->tf_r15 & R15_PC;
 	data_abort_fixup(tf);
 	va = data_abort_address(tf, &asize);
@@ -199,16 +204,11 @@ do_fault(struct trapframe *tf, struct lwp *l,
 	if (pmap_fault(map->pmap, va, atype))
 		return;
 
-	KASSERT(current_intr_depth == 0);
-
-	for (;;) {
+	if (current_intr_depth != 0) {
+		KASSERT((tf->tf_r15 & R15_MODE) != R15_MODE_USR);
+		error = EFAULT;
+	} else
 		error = uvm_fault(map, va, atype);
-		if (error != ENOMEM)
-			break;
-		log(LOG_WARNING, "pid %d.%d: VM shortage, sleeping\n",
-		    l->l_proc->p_pid, l->l_lid);
-		tsleep(&lbolt, PVM, "abtretry", 0);
-	}
 
 	if (error != 0) {
 		ksiginfo_t ksi;
@@ -220,8 +220,36 @@ do_fault(struct trapframe *tf, struct lwp *l,
 			    (register_t)cur_pcb->pcb_onfault;
 			return;
 		}
+#ifdef DDB
+		if (db_validating) {
+			db_faulted = TRUE;
+			tf->tf_r15 += INSN_SIZE;
+			return;
+		}
+#endif
+		if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
+#ifdef DDB
+			db_printf("Unhandled data abort in kernel mode\n");
+			kdb_trap(T_FAULT, tf);
+#else
+#ifdef DEBUG
+			printf("Unhandled data abort:\n");
+			printregs(tf);
+#endif
+			panic("unhandled data abort in kernel mode");
+#endif
+		}
+
 		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
+
+		if (error == ENOMEM) {
+			printf("UVM: pid %d (%s), uid %d killed: "
+			    "out of swap\n",
+			    l->l_proc->p_pid, l->l_proc->p_comm,
+			    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
+			ksi.ksi_signo = SIGKILL;
+		} else
+			ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_code = (error == EPERM) ? SEGV_ACCERR : SEGV_MAPERR;
 		ksi.ksi_addr = (void *) va;
 		trapsignal(l, &ksi);
@@ -313,7 +341,7 @@ data_abort_address(struct trapframe *tf, vsize_t *vsp)
 			/* immediate shift */
 			shift = (insn & 0x00000f80) >> 7;
 		else
-			goto croak; /* register shifts can't happen in ARMv2 */
+			goto croak; /* Undefined instruction */
 		switch ((insn & 0x00000060) >> 5) {
 		case 0: /* Logical left */
 			offset = (int)(((u_int)offset) << shift);
@@ -326,9 +354,13 @@ data_abort_address(struct trapframe *tf, vsize_t *vsp)
 			if (shift == 0) shift = 32;
 			offset = (int)(((int)offset) >> shift);
 			break;
-		case 3: /* Rotate right -- FIXME support this*/
-		default: /* help GCC */
-			goto croak;
+		case 3:
+			if (shift == 0) /* Rotate Right Extended */
+				offset = (int)((tf->tf_r15 & R15_FLAG_C) << 2 |
+				    ((u_int)offset) >> 1);
+			else /* Rotate Right */
+				offset = (int)((u_int)offset >> shift |
+				    (u_int)offset << (32 - shift));
 		}
 		if (u == 0)
 			return base - offset;
@@ -437,8 +469,10 @@ address_exception_handler(struct trapframe *tf)
 	l = curlwp;
 	if (l == NULL)
 		l = &lwp0;
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
+	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR) {
 		l->l_addr->u_pcb.pcb_tf = tf;
+		LWP_CACHE_CREDS(l, l->l_proc);
+	}
 
 	if (curpcb->pcb_onfault != NULL) {
 		tf->tf_r0 = EFAULT;
@@ -465,8 +499,8 @@ address_exception_handler(struct trapframe *tf)
 	}
 
 	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = SIGBUS;
-	ksi.ksi_code = BUS_ADRERR;
+	ksi.ksi_signo = SIGSEGV;
+	ksi.ksi_code = SEGV_MAPERR;
 	ksi.ksi_addr = (void *) pc;
 	trapsignal(l, &ksi);
 	userret(l);

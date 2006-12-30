@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.25.2.1 2006/06/21 15:11:24 yamt Exp $	*/
+/*	$NetBSD: key.c,v 1.25.2.2 2006/12/30 20:50:44 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.25.2.1 2006/06/21 15:11:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.25.2.2 2006/12/30 20:50:44 yamt Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -2404,7 +2404,10 @@ key_spdflush(so, m, mhp)
 	return key_sendup_mbuf(so, m, KEY_SENDUP_ALL);
 }
 
-static struct sockaddr key_src = { 2, PF_KEY, };
+static struct sockaddr key_src = { 
+	.sa_len = 2, 
+	.sa_family = PF_KEY,
+};
 
 static struct mbuf *
 key_setspddump_chain(int *errorp, int *lenp, pid_t pid)
@@ -2815,10 +2818,7 @@ key_delsah(sah)
 		return;
 	}
 
-	if (sah->sa_route.ro_rt) {
-		RTFREE(sah->sa_route.ro_rt);
-		sah->sa_route.ro_rt = (struct rtentry *)NULL;
-	}
+	rtcache_free(&sah->sa_route);
 
 	/* remove from tree of SA index */
 	if (__LIST_CHAINED(sah))
@@ -3368,7 +3368,7 @@ key_mature(sav)
 	switch (sav->sah->saidx.proto) {
 	case IPPROTO_ESP:
 	case IPPROTO_AH:
-		if (ntohl(sav->spi) >= 0 && ntohl(sav->spi) <= 255) {
+		if (ntohl(sav->spi) <= 255) {
 			ipseclog((LOG_DEBUG,
 			    "key_mature: illegal range of SPI %u.\n",
 			    (u_int32_t)ntohl(sav->spi)));
@@ -4487,7 +4487,7 @@ key_timehandler(void* arg)
 }
 
 #ifdef __NetBSD__
-void srandom(int arg);
+void srandom(int);
 void srandom(int arg) {return;}
 #endif
 
@@ -5976,8 +5976,8 @@ key_acquire(const struct secasindex *saidx, struct secpolicy *sp)
 		id->sadb_ident_exttype = idexttype;
 		id->sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
 		/* XXX is it correct? */
-		if (curproc && curproc->p_cred)
-			id->sadb_ident_id = curproc->p_cred->p_ruid;
+		if (curlwp)
+			id->sadb_ident_id = kauth_cred_getuid(curlwp->l_cred);
 		if (userfqdn && userfqdnlen)
 			bcopy(userfqdn, id + 1, userfqdnlen);
 		p += sizeof(struct sadb_ident) + PFKEY_ALIGN8(userfqdnlen);
@@ -7403,11 +7403,12 @@ key_init()
  * xxx more checks to be provided
  */
 int
-key_checktunnelsanity(sav, family, src, dst)
-	struct secasvar *sav;
-	u_int family;
-	caddr_t src;
-	caddr_t dst;
+key_checktunnelsanity(
+    struct secasvar *sav,
+    u_int family,
+    caddr_t src,
+    caddr_t dst
+)
 {
 	/* sanity check */
 	if (sav->sah == NULL)
@@ -7535,11 +7536,9 @@ key_sa_routechange(dst)
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		ro = &sah->sa_route;
-		if (ro->ro_rt && dst->sa_len == ro->ro_dst.sa_len
-		 && bcmp(dst, &ro->ro_dst, dst->sa_len) == 0) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)NULL;
-		}
+		if (dst->sa_len == ro->ro_dst.sa_len &&
+		    bcmp(dst, &ro->ro_dst, dst->sa_len) == 0)
+			rtcache_free(ro);
 	}
 
 	return;

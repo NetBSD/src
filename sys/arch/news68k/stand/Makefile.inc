@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2003/10/30 20:19:25 he Exp $
+#	$NetBSD: Makefile.inc,v 1.5.16.1 2006/12/30 20:46:37 yamt Exp $
 
 BINDIR= /usr/mdec
 
@@ -9,6 +9,7 @@ CFLAGS+= -ffreestanding
 .if exists(version)
 .PHONY: vers.c
 vers.c: version
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE}
 
 SRCS+=	vers.c

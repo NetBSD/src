@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.67.2.1 2006/06/21 15:06:47 yamt Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.67.2.2 2006/12/30 20:49:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.67.2.1 2006/06/21 15:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.67.2.2 2006/12/30 20:49:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,8 @@ atapiprint(void *aux, const char *pnp)
 }
 
 static int
-atapibusmatch(struct device *parent, struct cfdata *cf, void *aux)
+atapibusmatch(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 	struct scsipi_channel *chan = aux;
 
@@ -130,7 +131,7 @@ atapibusmatch(struct device *parent, struct cfdata *cf, void *aux)
 
 static int
 atapibussubmatch(struct device *parent, struct cfdata *cf,
-		 const int *ldesc, void *aux)
+    const int *ldesc, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;

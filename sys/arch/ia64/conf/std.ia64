@@ -1,8 +1,10 @@
-# $NetBSD: std.ia64,v 1.1.14.2 2006/06/21 14:52:44 yamt Exp $
+# $NetBSD: std.ia64,v 1.1.14.3 2006/12/30 20:46:20 yamt Exp $
 #
 # Standard/required configuration info for NetBSD/ia64
 
 machine		ia64
+include		"conf/std"	# MI standard options
+
 options 	EXEC_ELF64	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 

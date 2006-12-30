@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.12 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.12.4.1 2006/12/30 20:48:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.12 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.12.4.1 2006/12/30 20:48:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,13 +111,13 @@ static int	mlx_v5_findcomplete(struct mlx_softc *, u_int *, u_int *);
 static void	mlx_v5_intaction(struct mlx_softc *, int);
 static int	mlx_v5_fw_handshake(struct mlx_softc *, int *, int *, int *);
 
-struct mlx_pci_ident {
+static struct mlx_pci_ident {
 	u_short	mpi_vendor;
 	u_short	mpi_product;
 	u_short	mpi_subvendor;
 	u_short	mpi_subproduct;
 	int	mpi_iftype;
-} static const mlx_pci_ident[] = {
+} const mlx_pci_ident[] = {
 	{
 		PCI_VENDOR_MYLEX,
 		PCI_PRODUCT_MYLEX_RAID_V2,
@@ -185,7 +185,8 @@ mlx_pci_findmpi(struct pci_attach_args *pa)
  * Match a supported board.
  */
 static int
-mlx_pci_match(struct device *parent, struct cfdata *cfdata, void *aux)
+mlx_pci_match(struct device *parent, struct cfdata *cfdata,
+    void *aux)
 {
 
 	return (mlx_pci_findmpi(aux) != NULL);

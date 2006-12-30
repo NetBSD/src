@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_var.h,v 1.10.2.1 2006/06/21 15:11:37 yamt Exp $	*/
+/*	$NetBSD: tp_var.h,v 1.10.2.2 2006/12/30 20:50:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ int tp_set_npcb (struct tp_pcb *);
 int tp_attach   (struct socket *, int);
 void tp_detach  (struct tp_pcb *);
 int tp_tselinuse (int, caddr_t, struct sockaddr_iso *, int);
-int tp_pcbbind  (void *, struct mbuf *, struct proc *);
+int tp_pcbbind  (void *, struct mbuf *, struct lwp *);
 
 /* tp_subr.c */
 int tp_goodXack (struct tp_pcb *, SeqNum);

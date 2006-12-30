@@ -1,4 +1,4 @@
-/* $NetBSD: aztech.c,v 1.9 2004/10/29 12:57:17 yamt Exp $ */
+/* $NetBSD: aztech.c,v 1.9.12.1 2006/12/30 20:48:26 yamt Exp $ */
 /* $OpenBSD: aztech.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: aztech.c,v 1.11 2001/10/20 13:23:47 pva Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.9 2004/10/29 12:57:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.9.12.1 2006/12/30 20:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,8 +310,8 @@ az_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 }
 
 void
-az_lm700x_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
-		u_int32_t data)
+az_lm700x_init(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t off, u_int32_t data)
 {
 	/* Do nothing */
 	return;

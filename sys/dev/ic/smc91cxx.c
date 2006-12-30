@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.52.2.1 2006/06/21 15:02:56 yamt Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.52.2.2 2006/12/30 20:48:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,12 +78,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.52.2.1 2006/06/21 15:02:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.52.2.2 2006/12/30 20:48:04 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ccitt.h"
-#include "opt_llc.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -117,18 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.52.2.1 2006/06/21 15:02:56 yamt Exp $
 #include <netinet/ip.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
-#if defined(CCITT) && defined(LLC)
-#include <sys/socketvar.h>
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_var.h>
-#include <netccitt/pk_extern.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1279,45 +1265,12 @@ smc91cxx_ioctl(ifp, cmd, data)
 		arp_ifinit(ifp, ifa);
 		break;
 #endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
-				    ETHER_ADDR_LEN);
-			}
-
-			/*
-			 * Set new address.  Reset, because the receiver
-			 * has to be stopped before we can set the new
-			 * MAC address.
-			 */
-			smc91cxx_reset(sc);
-			break;
-		    }
-#endif
 		default:
 			smc91cxx_init(sc);
 			break;
 		}
 		break;
 
-#if defined(CCITT) && defined(LLC)
-	case SIOCSIFCONF_X25:
-		if ((error = smc91cxx_enable(sc)) != 0)
-			break;
-		ifp->if_flags |= IFF_UP;
-		ifa->ifa_rtrequest = cons_rtrequest;	/* XXX */
-		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
-		if (error == 0)
-			smc91cxx_init(sc);
-		break;
-#endif
 
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
@@ -1497,9 +1450,7 @@ smc91cxx_activate(self, act)
 }
 
 int
-smc91cxx_detach(self, flags)
-	struct device *self;
-	int flags;
+smc91cxx_detach(struct device *self, int flags)
 {
 	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;

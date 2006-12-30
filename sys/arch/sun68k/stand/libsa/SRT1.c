@@ -1,4 +1,4 @@
-/*	$NetBSD: SRT1.c,v 1.3.8.1 2006/06/21 14:57:17 yamt Exp $	*/
+/*	$NetBSD: SRT1.c,v 1.3.8.2 2006/12/30 20:47:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* SRT1.c - Stand-alone Run-time startup code, part 1 */
 
 #include <sys/types.h>
-#include <machine/mon.h>
+#include <sun68k/mon.h>
 
 #include "libsa.h"
 #include "dvma.h"

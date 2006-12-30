@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.12.4.1 2006/06/21 15:02:46 yamt Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.12.4.2 2006/12/30 20:48:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.12.4.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.12.4.2 2006/12/30 20:48:00 yamt Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_pwctl.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.12.4.1 2006/06/21 15:02:46 yamt Exp $");
 
 #include "locators.h"
 
-#define PWCTLDEBUG
+#ifdef PWCTLDEBUG
 #ifndef PWCTLDEBUG_CONF
 #define PWCTLDEBUG_CONF	0
 #endif
-#ifdef PWCTLDEBUG
 int	pwctl_debug = PWCTLDEBUG_CONF;
 #define	DPRINTF(arg) if (pwctl_debug) printf arg;
 #define	VPRINTF(arg) if (bootverbose) printf arg;

@@ -1,3 +1,5 @@
-$NetBSD: version,v 1.1.14.2 2006/06/21 14:48:00 yamt Exp $
+$NetBSD: version,v 1.1.14.3 2006/12/30 20:45:21 yamt Exp $
 
 0.01:	Just about enough code to launch a kernel from it.
+0.02:	Reading directory entries and loading whole files.
+0.03:	Improved error messages and major memory leak fixed.

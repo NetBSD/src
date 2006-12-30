@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24.2.1 2006/06/21 14:55:11 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.24.2.2 2006/12/30 20:46:44 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -65,7 +65,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.2.1 2006/06/21 14:55:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.2.2 2006/12/30 20:46:44 yamt Exp $");
 
 void
 child_return(void *arg)
@@ -111,6 +111,7 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	int error;
 	int n;
 
+	LWP_CACHE_CREDS(l, p);
 	curcpu()->ci_ev_scalls.ev_count++;
 
 	code = frame->fixreg[0];
@@ -221,6 +222,8 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	register_t args[10];
 	int error;
 	int n;
+
+	LWP_CACHE_CREDS(l, p);
 
 	KERNEL_PROC_LOCK(l);
 	curcpu()->ci_ev_scalls.ev_count++;

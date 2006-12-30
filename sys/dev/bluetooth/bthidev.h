@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.h,v 1.1.2.2 2006/06/21 15:02:45 yamt Exp $	*/
+/*	$NetBSD: bthidev.h,v 1.1.2.3 2006/12/30 20:47:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,10 +34,17 @@
 #ifndef _DEV_BLUETOOTH_BTHIDEV_H_
 #define _DEV_BLUETOOTH_BTHIDEV_H_
 
+/* bthidev(4) properties */
+#define BTHIDEVcontrolpsm	"control-psm"
+#define BTHIDEVinterruptpsm	"interrupt-psm"
+#define BTHIDEVdescriptor	"descriptor"
+#define BTHIDEVreconnect	"reconnect"
+
+#ifdef _KERNEL
 /* HID device header */
 struct bthidev {
 	struct device	 sc_dev;
-	struct btdev	*sc_parent;
+	struct device	*sc_parent;
 
 	int		 sc_id;		/* report id */
 	int		 sc_len;	/* report len */
@@ -53,7 +60,7 @@ struct bthidev {
 
 /* HID device attach arguments */
 struct bthidev_attach_args {
-	void		*ba_desc;	/* descriptor */
+	const void	*ba_desc;	/* descriptor */
 	int		 ba_dlen;	/* descriptor length */
 	int		 ba_id;		/* report id */
 
@@ -64,7 +71,6 @@ struct bthidev_attach_args {
 	int		(*ba_output)	/* output method */
 			(struct bthidev *, uint8_t *, int);
 };
-
-MALLOC_DECLARE(M_BTHIDEV);
+#endif /* _KERNEL */
 
 #endif /* _DEV_BLUETOOTH_BTHIDEV_H_ */

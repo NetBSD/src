@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.32 2005/01/25 23:55:21 wrstuden Exp $	*/
+/*	$NetBSD: unistd.h,v 1.32.6.1 2006/12/30 20:50:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -63,6 +63,8 @@
 /* execution-time symbolic constants */
 				/* chown requires appropriate privileges */
 #define	_POSIX_CHOWN_RESTRICTED	1
+				/* clock selection */
+#define _POSIX_CLOCK_SELECTION	-1
 				/* too-long path components generate errors */
 #define	_POSIX_NO_TRUNC		1
 				/* may disable terminal special characters */
@@ -193,6 +195,7 @@
 #define	_SC_READER_WRITER_LOCKS	46
 #define	_SC_GETGR_R_SIZE_MAX	47
 #define	_SC_GETPW_R_SIZE_MAX	48
+#define _SC_CLOCK_SELECTION	49
 
 /* configurable system strings */
 #define	_CS_PATH		 1

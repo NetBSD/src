@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.38.6.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: shm.h,v 1.38.6.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -123,7 +123,6 @@ struct shmid_ds {
 #if defined(_NETBSD_SOURCE)
 /*
  * Some systems (e.g. HP-UX) take these as the second (cmd) arg to shmctl().
- * XXX Currently not implemented.
  */
 #define	SHM_LOCK	3	/* Lock segment in memory. */
 #define	SHM_UNLOCK	4	/* Unlock a segment locked by SHM_LOCK. */
@@ -177,13 +176,14 @@ extern int shm_nused;
 #define	SHMSEG_ALLOCATED	0x0800
 #define	SHMSEG_WANTED		0x1000
 #define	SHMSEG_RMLINGER		0x2000
+#define	SHMSEG_WIRED		0x4000
 
 struct vmspace;
 
 void	shminit(void);
 void	shmfork(struct vmspace *, struct vmspace *);
 void	shmexit(struct vmspace *);
-int	shmctl1(struct proc *, int, int, struct shmid_ds *);
+int	shmctl1(struct lwp *, int, int, struct shmid_ds *);
 #else /* !_KERNEL */
 
 __BEGIN_DECLS

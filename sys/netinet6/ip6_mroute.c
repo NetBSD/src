@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.64.2.1 2006/06/21 15:11:08 yamt Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.64.2.2 2006/12/30 20:50:39 yamt Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.64.2.1 2006/06/21 15:11:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.64.2.2 2006/12/30 20:50:39 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -717,9 +717,8 @@ add_m6if(mifcp)
 #ifdef MRT6DEBUG
 	if (mrt6debug)
 		log(LOG_DEBUG,
-		    "add_mif #%d, phyint %s%d\n",
-		    mifcp->mif6c_mifi,
-		    ifp->if_name, ifp->if_unit);
+		    "add_mif #%d, phyint %s\n",
+		    mifcp->mif6c_mifi, ifp->if_xname);
 #endif
 
 	return 0;
@@ -841,7 +840,7 @@ add_m6fc(mfccp)
 #ifdef MRT6DEBUG
 			if (mrt6debug & DEBUG_MFC)
 				log(LOG_DEBUG,
-				    "add_m6fc o %s g %s p %x dbg %x\n",
+				    "add_m6fc o %s g %s p %x dbg %p\n",
 				    ip6_sprintf(&mfccp->mf6cc_origin.sin6_addr),
 				    ip6_sprintf(&mfccp->mf6cc_mcastgrp.sin6_addr),
 				    mfccp->mf6cc_parent, rt->mf6c_stall);
@@ -883,7 +882,7 @@ add_m6fc(mfccp)
 #ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_MFC)
 			log(LOG_DEBUG,
-			    "add_mfc no upcall h %d o %s g %s p %x\n",
+			    "add_mfc no upcall h %ld o %s g %s p %x\n",
 			    hash,
 			    ip6_sprintf(&mfccp->mf6cc_origin.sin6_addr),
 			    ip6_sprintf(&mfccp->mf6cc_mcastgrp.sin6_addr),
@@ -1312,8 +1311,7 @@ ip6_mforward(ip6, ifp, m)
  * Call from the Slow Timeout mechanism, every 0.25 seconds.
  */
 static void
-expire_upcalls(unused)
-	void *unused;
+expire_upcalls(void *unused)
 {
 	struct rtdetq *rte;
 	struct mf6c *mfc, **nptr;
@@ -1831,7 +1829,10 @@ pim6_input(mp, offp, proto)
 		 * headers ip6+pim+u_int32_t+encap_ip6, to be passed up to the
 		 * routing daemon.
 		 */
-		static struct sockaddr_in6 dst = { sizeof(dst), AF_INET6 };
+		static const struct sockaddr_in6 dst = {
+			.sin6_len = sizeof(dst),
+			.sin6_family = AF_INET6,
+		};
 
 		struct mbuf *mcp;
 		struct ip6_hdr *eip6;
@@ -1938,7 +1939,7 @@ pim6_input(mp, offp, proto)
 #endif
 
 		looutput(mif6table[reg_mif_num].m6_ifp, m,
-			      (struct sockaddr *) &dst,
+			      (struct sockaddr *)__UNCONST(&dst),
 			      (struct rtentry *) NULL);
 
 		/* prepare the register head to send to the mrouting daemon */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10.8.1 2006/06/21 14:57:05 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.10.8.2 2006/12/30 20:47:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.10.8.1 2006/06/21 14:57:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.10.8.2 2006/12/30 20:47:06 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -288,9 +288,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	}
 
 	/*
-	 * Now safe to install interrupt handlers.  Note the arguments
-	 * to the interrupt handlers aren't used.  Note, we only do this
-	 * once since both SCCs interrupt at the same level and vector.
+	 * Now safe to install interrupt handlers.
 	 */
 	bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, 0, zshard, zsc);
 	if (!(zsc->zsc_softintr = softintr_establish(softpri, zssoft, zsc)))

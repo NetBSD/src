@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.29.2.1 2006/06/21 15:05:07 yamt Exp $	*/
+/*	$NetBSD: yds.c,v 1.29.2.2 2006/12/30 20:48:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.29.2.1 2006/06/21 15:05:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.29.2.2 2006/12/30 20:48:49 yamt Exp $");
 
 #include "mpu.h"
 
@@ -119,12 +119,14 @@ static uint32_t YREAD4(struct yds_softc *sc, bus_size_t r)
 	return bus_space_read_4(sc->memt, sc->memh, r);
 }
 
+#ifdef notdef
 static void YWRITE1(struct yds_softc *sc, bus_size_t r, uint8_t x)
 {
 	DPRINTFN(5, (" YWRITE1(0x%lX,0x%lX)\n", (unsigned long)r,
 		     (unsigned long)x));
 	bus_space_write_1(sc->memt, sc->memh, r, x);
 }
+#endif
 
 static void YWRITE2(struct yds_softc *sc, bus_size_t r, uint16_t x)
 {
@@ -228,6 +230,7 @@ static const struct audio_hw_if yds_hw_if = {
 	yds_trigger_output,
 	yds_trigger_input,
 	NULL,
+	NULL,	/* powerstate */
 };
 
 static const struct audio_device yds_device = {
@@ -522,7 +525,8 @@ yds_disable_dsp(struct yds_softc *sc)
 }
 
 static int
-yds_match(struct device *parent, struct cfdata *match, void *aux)
+yds_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -925,7 +929,7 @@ detected:
 	sc->sc_legacy_iot = pa->pa_iot;
 	config_defer((struct device*) sc, yds_configure_legacy);
 
-	powerhook_establish(yds_powerhook, sc);
+	powerhook_establish(sc->sc_dev.dv_xname, yds_powerhook, sc);
 }
 
 static int
@@ -1246,7 +1250,8 @@ yds_set_params(void *addr, int setmode, int usemode,
 }
 
 static int
-yds_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
+yds_round_blocksize(void *addr, int blk, int mode,
+    const audio_params_t *param)
 {
 
 	/*

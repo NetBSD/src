@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.24.10.1 2006/06/21 14:51:50 yamt Exp $	*/
+/*	$NetBSD: mq200.c,v 1.24.10.2 2006/12/30 20:46:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.24.10.1 2006/06/21 14:51:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.24.10.2 2006/12/30 20:46:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -199,7 +199,8 @@ mq200_attach(struct mq200_softc *sc)
 
 	/* Add a power hook to power saving */
 	sc->sc_mq200pwstate = MQ200_POWERSTATE_D0;
-	sc->sc_powerhook = powerhook_establish(mq200_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    mq200_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

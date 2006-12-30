@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.10.2.1 2006/06/21 14:50:46 yamt Exp $	*/
+/*	$NetBSD: plcom.c,v 1.10.2.2 2006/12/30 20:45:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.10.2.1 2006/06/21 14:50:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.10.2.2 2006/12/30 20:45:49 yamt Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -641,12 +641,8 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-		kauth_authorize_generic(l->l_proc->p_cred,
-				  KAUTH_GENERIC_ISSUSER,
-				  &l->l_proc->p_acflag) != 0)
-		return EBUSY;
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+		return (EBUSY);
 
 	s = spltty();
 
@@ -887,9 +883,8 @@ plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(l->l_proc->p_cred,
-					  KAUTH_GENERIC_ISSUSER,
-					  &l->l_proc->p_acflag); 
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

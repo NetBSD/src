@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.37.4.1 2006/06/21 15:02:56 yamt Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.37.4.2 2006/12/30 20:48:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.37.4.1 2006/06/21 15:02:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.37.4.2 2006/12/30 20:48:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,6 +672,7 @@ void
 siop_wdtr_msg(siop_cmd, offset, wide)
 	struct siop_common_cmd *siop_cmd;
 	int offset;
+	int wide;
 {
 	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
 	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_WDTR_LEN;
@@ -707,12 +708,8 @@ siop_minphys(bp)
 }
 
 int
-siop_ioctl(chan, cmd, arg, flag, p)
-	struct scsipi_channel *chan;
-	u_long cmd;
-	caddr_t arg;
-	int flag;
-	struct proc *p;
+siop_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t arg,
+    int flag, struct proc *p)
 {
 	struct siop_common_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.148.2.1 2006/06/21 15:09:37 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.148.2.2 2006/12/30 20:50:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.148.2.1 2006/06/21 15:09:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.148.2.2 2006/12/30 20:50:05 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.148.2.1 2006/06/21 15:09:37 yamt Exp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
-#include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -137,7 +136,7 @@ static void
 exit_psignal(struct proc *p, struct proc *pp, ksiginfo_t *ksi)
 {
 
-	(void)memset(ksi, 0, sizeof(ksiginfo_t));
+	KSI_INIT(ksi);
 	if ((ksi->ksi_signo = P_EXITSIG(p)) == SIGCHLD) {
 		if (WIFSIGNALED(p->p_xstat)) {
 			if (WCOREDUMP(p->p_xstat))
@@ -315,21 +314,38 @@ exit1(struct lwp *l, int rv)
 		sp->s_leader = NULL;
 	}
 	fixjobc(p, p->p_pgrp, 0);
+
+	/*
+	 * Write out accounting data.
+	 */
 	(void)acct_process(l);
+
 #ifdef KTRACE
 	/*
-	 * release trace file
+	 * Release trace file.
 	 */
 	ktrderef(p);
 #endif
 #ifdef SYSTRACE
 	systrace_sys_exit(p);
 #endif
+
 	/*
 	 * If emulation has process exit hook, call it now.
+	 * Set the exit status now so that the exit hook has
+	 * an opportunity to tweak it (COMPAT_LINUX requires
+	 * this for thread group emulation)
 	 */
+	p->p_xstat = rv;
 	if (p->p_emul->e_proc_exit)
 		(*p->p_emul->e_proc_exit)(p);
+
+	/*
+	 * Finalize the last LWP's specificdata, as well as the
+	 * specificdata for the proc itself.
+	 */
+	lwp_finispecific(l);
+	proc_finispecific(p);
 
 	/*
 	 * Free the VM resources we're still holding on to.
@@ -359,12 +375,10 @@ exit1(struct lwp *l, int rv)
 	 */
 
 	/*
-	 * Save exit status and final rusage info, adding in child rusage
-	 * info and self times.
+	 * Save final rusage info, adding in child rusage info and self times.
 	 * In order to pick up the time for the current execution, we must
 	 * do this before unlinking the lwp from l_list.
 	 */
-	p->p_xstat = rv;
 	*p->p_ru = p->p_stats->p_ru;
 	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
 	ruadd(p->p_ru, &p->p_stats->p_cru);
@@ -525,6 +539,9 @@ exit1(struct lwp *l, int rv)
 	limfree(plim);
 	pstatsfree(pstats);
 
+	/* Release cached credentials. */
+	kauth_cred_free(l->l_cred);
+
 #ifdef DEBUG
 	/* Nothing should use the process link anymore */
 	l->l_proc = NULL;
@@ -635,6 +652,7 @@ retry:
 static void
 lwp_exit_hook(struct lwp *l, void *arg)
 {
+
 	KERNEL_PROC_LOCK(l);
 	lwp_exit(l);
 }

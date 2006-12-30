@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.14 2005/02/27 00:27:45 perry Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.14.4.1 2006/12/30 20:49:30 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.14 2005/02/27 00:27:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.14.4.1 2006/12/30 20:49:30 yamt Exp $");
 
 #include "rf_archs.h"
 #include "opt_raid_diagnostic.h"
@@ -323,13 +323,13 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
     void *bp,
     RF_RaidAccessFlags_t flags,
     RF_AllocListElem_t * allocList,
-    RF_RedFuncs_t * pfuncs,
-    RF_RedFuncs_t * qfuncs)
+    const RF_RedFuncs_t * pfuncs,
+    const RF_RedFuncs_t * qfuncs)
 {
 	RF_DagNode_t *xorNodes, *blockNode, *unblockNode, *nodes;
 	RF_DagNode_t *readDataNodes, *readParityNodes;
 	RF_DagNode_t *writeDataNodes, *lpuNodes;
-	RF_DagNode_t *unlockDataNodes = NULL, *termNode;
+	RF_DagNode_t *termNode;
 	RF_PhysDiskAddr_t *pda = asmap->physInfo;
 	int     numDataNodes = asmap->numStripeUnitsAccessed;
 	int     numParityNodes = (asmap->parityInfo->next) ? 2 : 1;
@@ -337,7 +337,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 	RF_ReconUnitNum_t which_ru;
 	int     (*func) (RF_DagNode_t * node), (*undoFunc) (RF_DagNode_t * node);
 	int     (*qfunc) (RF_DagNode_t * node);
-	char   *name, *qname;
+	const char   *name, *qname;
 	RF_StripeNum_t parityStripeID = rf_RaidAddressToParityStripeID(&(raidPtr->Layout), asmap->raidAddress, &which_ru);
 #ifdef RAID_DIAGNOSTIC
 	long    nfaults = qfuncs ? 2 : 1;
@@ -406,8 +406,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 		RF_ASSERT(pda != NULL);
 		readDataNodes[i].params[0].p = pda;	/* physical disk addr
 							 * desc */
-		readDataNodes[i].params[1].p = rf_AllocBuffer(raidPtr, dag_h, pda, allocList);	/* buffer to hold old
-												 * data */
+		readDataNodes[i].params[1].p = rf_AllocBuffer(raidPtr, dag_h, pda->numSector << raidPtr->logBytesPerSector);	/* buffer to hold old data */
 		readDataNodes[i].params[2].v = parityStripeID;
 		readDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		pda = pda->next;
@@ -422,8 +421,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 		RF_ASSERT(pda != NULL);
 		rf_InitNode(&readParityNodes[i], rf_wait, RF_FALSE, rf_DiskReadFunc, rf_DiskReadUndoFunc, rf_GenericWakeupFunc, nNodes, 1, 4, 0, dag_h, "Rop", allocList);
 		readParityNodes[i].params[0].p = pda;
-		readParityNodes[i].params[1].p = rf_AllocBuffer(raidPtr, dag_h, pda, allocList);	/* buffer to hold old
-													 * parity */
+		readParityNodes[i].params[1].p = rf_AllocBuffer(raidPtr, dag_h, pda->numSector << raidPtr->logBytesPerSector);	/* buffer to hold old parity */
 		readParityNodes[i].params[2].v = parityStripeID;
 		readParityNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		readParityNodes[i].propList[0] = NULL;
@@ -628,8 +626,8 @@ rf_CreateParityLoggingSmallWriteDAG(
     void *bp,
     RF_RaidAccessFlags_t flags,
     RF_AllocListElem_t * allocList,
-    RF_RedFuncs_t * pfuncs,
-    RF_RedFuncs_t * qfuncs)
+    const RF_RedFuncs_t * pfuncs,
+    const RF_RedFuncs_t * qfuncs)
 {
 	dag_h->creator = "ParityLoggingSmallWriteDAG";
 	rf_CommonCreateParityLoggingSmallWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, &rf_xorFuncs, NULL);

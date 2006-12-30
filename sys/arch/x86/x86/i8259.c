@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.5.12.1 2006/06/21 14:58:06 yamt Exp $	*/
+/*	$NetBSD: i8259.c,v 1.5.12.2 2006/12/30 20:47:22 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.5.12.1 2006/06/21 14:58:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.5.12.2 2006/12/30 20:47:22 yamt Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -112,6 +112,8 @@ struct pic i8259_pic = {
 		.dv_xname = "pic0",
 	},
 	.pic_type = PIC_I8259,
+	.pic_vecbase = 0,
+	.pic_apicid = 0,
 	.pic_lock = __SIMPLELOCK_UNLOCKED,
 	.pic_hwmask = i8259_hwmask,
 	.pic_hwunmask = i8259_hwunmask,
@@ -248,7 +250,8 @@ i8259_reinit_irqs(void)
 }
 
 static void
-i8259_setup(struct pic *pic, struct cpu_info *ci, int pin, int idtvec, int type)
+i8259_setup(struct pic *pic, struct cpu_info *ci,
+    int pin, int idtvec, int type)
 {
 	if (CPU_IS_PRIMARY(ci))
 		i8259_reinit_irqs();

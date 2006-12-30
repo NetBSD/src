@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.22.2.1 2006/06/21 15:05:06 yamt Exp $	*/
+/*	$NetBSD: piixide.c,v 1.22.2.2 2006/12/30 20:48:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.22.2.1 2006/06/21 15:05:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.22.2.2 2006/12/30 20:48:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,6 +184,41 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	  "Intel 82801GBM/GHM Serial ATA Controller (ICH7)",
 	  piixsata_chip_map,
 	},
+	{ PCI_PRODUCT_INTEL_82801H_SATA_1,
+	  0,
+	  "Intel 82801H Serial ATA Controller (ICH8)",
+	  piixsata_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801H_SATA_RAID,
+	  0,
+	  "Intel 82801H Serial ATA RAID Controller (ICH8)",
+	  piixsata_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801H_SATA_2,
+	  0,
+	  "Intel 82801H Serial ATA Controller (ICH8)",
+	  piixsata_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801HBM_SATA_1,
+	  0,
+	  "Intel 82801HBM Serial ATA Controller (ICH8M)",
+	  piixsata_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_82801HBM_SATA_2,
+	  0,
+	  "Intel 82801HBM Serial ATA Controller (ICH8M)",
+	  piixsata_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_63XXESB_IDE,
+	  0,
+	  "Intel 631xESB/632xESB IDE Controller",
+	  piix_chip_map,
+	},
+	{ PCI_PRODUCT_INTEL_63XXESB_SATA,
+	  0,
+	  "Intel 631xESB/632xESB Serial ATA Controller",
+	  piixsata_chip_map,
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -195,7 +230,8 @@ CFATTACH_DECL(piixide, sizeof(struct pciide_softc),
     piixide_match, piixide_attach, NULL, NULL);
 
 static int
-piixide_match(struct device *parent, struct cfdata *match, void *aux)
+piixide_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -216,7 +252,8 @@ piixide_attach(struct device *parent, struct device *self, void *aux)
 	    pciide_lookup_product(pa->pa_id, pciide_intel_products));
 
 	/* Setup our powerhook */
-	sc->sc_powerhook = powerhook_establish(piixide_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, piixide_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish PCI power hook\n",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
@@ -689,7 +726,7 @@ piix_setup_idetim_drvs(drvp)
 	u_int8_t drive = drvp->drive;
 
 	/*
-	 * If drive is using UDMA, timings setups are independant
+	 * If drive is using UDMA, timings setups are independent
 	 * So just check DMA and PIO here.
 	 */
 	if (drvp->drive_flags & DRIVE_DMA) {
@@ -779,7 +816,7 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 
 	cmdsts = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
-	cmdsts &= ~0x0400;
+	cmdsts &= ~PCI_COMMAND_INTERRUPT_DISABLE;
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG, cmdsts);
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
@@ -787,7 +824,7 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_RAID;
 
 	interface = PCI_INTERFACE(pa->pa_class);
-
+	
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
 	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.15.2.1 2006/06/21 14:49:33 yamt Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.15.2.2 2006/12/30 20:45:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,12 +47,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.15.2.1 2006/06/21 14:49:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.15.2.2 2006/12/30 20:45:33 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/device.h>
+#include <sys/lock.h>
 
 #include <dev/clock_subr.h>
 
@@ -77,14 +79,34 @@ static void *statclockirq;
 static struct clock_softc *clock_sc;
 static int timer0_count;
 
-static int clockmatch	__P((struct device *parent, struct cfdata *cf, void *aux));
-static void clockattach	__P((struct device *parent, struct device *self, void *aux));
+static int clockmatch(struct device *parent, struct cfdata *cf, void *aux);
+static void clockattach(struct device *parent, struct device *self, void *aux);
 #ifdef DIAGNOSTIC
-static void checkdelay	__P((void));
+static void checkdelay(void);
 #endif
 
-int clockhandler	__P((void *));
-int statclockhandler	__P((void *));
+static u_int iomd_timecounter0_get(struct timecounter *tc);
+
+
+static volatile uint32_t timer0_lastcount;
+static volatile uint32_t timer0_offset;
+static volatile int timer0_ticked;
+/* TODO: Get IRQ status */
+
+static struct simplelock tmr_lock = SIMPLELOCK_INITIALIZER;  /* protect TC timer variables */
+
+
+static struct timecounter iomd_timecounter = {
+	iomd_timecounter0_get,
+	0, /* No poll_pps */
+	~0, /* 32bit accuracy */
+	TIMER_FREQUENCY,
+	"iomd_timer0",
+	100 
+};
+
+int clockhandler(void *);
+int statclockhandler(void *);
 
 CFATTACH_DECL(clock, sizeof(struct clock_softc),
     clockmatch, clockattach, NULL, NULL);
@@ -96,10 +118,7 @@ CFATTACH_DECL(clock, sizeof(struct clock_softc),
  */ 
  
 static int
-clockmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clockmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct clk_attach_args *ca = aux;
 
@@ -117,10 +136,7 @@ clockmatch(parent, cf, aux)
  */
   
 static void
-clockattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+clockattach(struct device *parent, struct device *self,	void *aux)
 {
 	struct clock_softc *sc = (struct clock_softc *)self;
 	struct clk_attach_args *ca = aux;
@@ -136,6 +152,24 @@ clockattach(parent, self, aux)
 }
 
 
+static void
+tickle_tc(void) 
+{
+	if (timer0_count && 
+	    timecounter->tc_get_timecount == iomd_timecounter0_get) {
+		simple_lock(&tmr_lock);
+		if (timer0_ticked)
+			timer0_ticked    = 0;
+		else {
+			timer0_offset   += timer0_count;
+			timer0_lastcount = 0;
+		}
+		simple_unlock(&tmr_lock);
+	}
+
+}
+
+
 /*
  * int clockhandler(struct clockframe *frame)
  *
@@ -145,13 +179,13 @@ clockattach(parent, self, aux)
  */
  
 int
-clockhandler(cookie)
-	void *cookie;
+clockhandler(void *cookie)
 {
 	struct clockframe *frame = cookie;
+	tickle_tc();
 
 	hardclock(frame);
-	return(0);	/* Pass the interrupt on down the chain */
+	return 0;	/* Pass the interrupt on down the chain */
 }
 
 
@@ -164,13 +198,12 @@ clockhandler(cookie)
  */
  
 int
-statclockhandler(cookie)
-	void *cookie;
+statclockhandler(void *cookie)
 {
 	struct clockframe *frame = cookie;
 
 	statclock(frame);
-	return(0);	/* Pass the interrupt on down the chain */
+	return 0;	/* Pass the interrupt on down the chain */
 }
 
 
@@ -203,7 +236,7 @@ setstatclockrate(int newhz)
 
 #ifdef DIAGNOSTIC
 static void
-checkdelay()
+checkdelay(void)
 {
 	struct timeval start, end, diff;
 
@@ -229,7 +262,7 @@ checkdelay()
  */
  
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	/*
 	 * Load timer 0 with count down value
@@ -268,35 +301,21 @@ cpu_initclocks()
 #ifdef DIAGNOSTIC
 	checkdelay();
 #endif
+	tc_init(&iomd_timecounter);
 }
 
 
-/*
- * void microtime(struct timeval *tvp)
- *
- * Fill in the specified timeval struct with the current time
- * accurate to the microsecond.
- */
 
-void
-microtime(tvp)
-	struct timeval *tvp;
+static u_int iomd_timecounter0_get(struct timecounter *tc)
 {
 	int s;
-	int tm;
-	int deltatm;
-	static struct timeval oldtv;
-
-	if (timer0_count == 0)
-		return;
-
-	s = splhigh();
+	u_int tm;
 
 	/*
 	 * Latch the current value of the timer and then read it.
 	 * This garentees an atmoic reading of the time.
 	 */
-
+	s = splhigh();
 	bus_space_write_1(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    IOMD_T0LATCH, 0);
  
@@ -304,36 +323,26 @@ microtime(tvp)
 	    IOMD_T0LOW);
 	tm += (bus_space_read_1(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    IOMD_T0HIGH) << 8);
+	splx(s);
+	simple_lock(&tmr_lock);
 
-	deltatm = timer0_count - tm;
-	if (deltatm < 0)
-		printf("opps deltatm < 0 tm=%d deltatm=%d\n",
-		    tm, deltatm);
+	tm = timer0_count - tm;
+	
 
-	/* Fill in the timeval struct */
-	*tvp = time;
-
-	tvp->tv_usec += (deltatm / TICKS_PER_MICROSECOND);
-
-	/* Make sure the micro seconds don't overflow. */
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		++tvp->tv_sec;
+	if (timer0_count &&
+	    (tm < timer0_lastcount || (!timer0_ticked && FALSE/* XXX: clkintr_pending */))) {
+		timer0_ticked = 1;
+		timer0_offset += timer0_count;
 	}
 
-	/* Make sure the time has advanced. */
-	if (tvp->tv_sec == oldtv.tv_sec &&
-	    tvp->tv_usec <= oldtv.tv_usec) {
-		tvp->tv_usec = oldtv.tv_usec + 1;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_usec -= 1000000;
-			++tvp->tv_sec;
-		}
-	}
-	    
-	oldtv = *tvp;
-	(void)splx(s);		
+	timer0_lastcount = tm;
+	tm += timer0_offset;
+
+	simple_unlock(&tmr_lock);
+	return tm;
 }
+
+
 
 /*
  * Estimated loop for n microseconds
@@ -346,105 +355,19 @@ microtime(tvp)
 int delaycount = 100;
 
 void
-delay(n)
-	u_int n;
+delay(u_int n)
 {
-	u_int i;
+	volatile u_int n2;
+	volatile u_int i;
 
 	if (n == 0) return;
-	while (n-- > 0) {
+	n2 = n;
+	while (n2-- > 0) {
 		if (cputype == CPU_ID_SA110)	/* XXX - Seriously gross hack */
 			for (i = delaycount; --i;);
 		else
 			for (i = 8; --i;);
 	}
-}
-
-todr_chip_handle_t todr_handle;
-
-/*
- * todr_attach:
- *
- *	Set the specified time-of-day register as the system real-time clock.
- */
-void
-todr_attach(todr_chip_handle_t todr)
-{
-
-	if (todr_handle)
-		panic("todr_attach: rtc already configured");
-	todr_handle = todr;
-}
-
-/*
- * inittodr:
- *
- *	Initialize time from the time-of-day register.
- */
-#define	MINYEAR		2003	/* minimum plausible year */
-void
-inittodr(time_t base)
-{
-	time_t deltat;
-	int badbase;
-
-	if (base < (MINYEAR - 1970) * SECYR) {
-		printf("WARNING: preposterous time in file system");
-		/* read the system clock anyway */
-		base = (MINYEAR - 1970) * SECYR;
-		badbase = 1;
-	} else
-		badbase = 0;
-
-	if (todr_handle == NULL ||
-	    todr_gettime(todr_handle, &time) != 0 ||
-	    time.tv_sec == 0) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
-		 */
-		time.tv_sec = base;
-		time.tv_usec = 0;
-		if (todr_handle != NULL && !badbase) {
-			printf("WARNING: preposterous clock chip time\n");
-			resettodr();
-		}
-		goto bad;
-	}
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days; if
-		 * so, assume something is amiss.
-		 */
-		deltat = time.tv_sec - base;
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;		/* all is well */
-		printf("WARNING: clock %s %ld days\n",
-		    time.tv_sec < base ? "lost" : "gained",
-		    (long)deltat / SECDAY);
-	}
- bad:
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * resettodr:
- *
- *	Reset the time-of-day register with the current time.
- */
-void
-resettodr(void)
-{
-
-	if (time.tv_sec == 0)
-		return;
-
-	if (todr_handle != NULL &&
-	    todr_settime(todr_handle, &time) != 0)
-		printf("resettodr: failed to set time\n");
 }
 
 /* End of iomd_clock.c */

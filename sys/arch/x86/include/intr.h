@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15.12.1 2006/06/21 14:57:56 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.15.12.2 2006/12/30 20:47:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -179,8 +179,26 @@ spllower(int nlevel)
  * Miscellaneous
  */
 #define	spl0()		spllower(IPL_NONE)
-#define splraiseipl(x) 	splraise(x)
 #define	splx(x)		spllower(x)
+
+typedef uint8_t ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return splraise(icookie._ipl);
+}
 
 #include <sys/spl.h>
 
@@ -235,6 +253,7 @@ void intr_add_pcibus(struct pcibus_attach_args *);
 const char *intr_string(int);
 void cpu_intr_init(struct cpu_info *);
 int intr_find_mpmapping(int, int, int *);
+struct pic *intr_findpic(int);
 #ifdef INTRDEBUG
 void intr_printconfig(void);
 #endif

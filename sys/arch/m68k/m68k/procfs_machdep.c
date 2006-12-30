@@ -1,7 +1,7 @@
-/*	$NetBSD: procfs_machdep.c,v 1.2 2005/01/01 17:11:39 chs Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.2.10.1 2006/12/30 20:46:25 yamt Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.2 2005/01/01 17:11:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.2.10.1 2006/12/30 20:46:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -18,8 +18,9 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.2 2005/01/01 17:11:39 chs Exp $
 int
 procfs_getcpuinfstr(char *buf, int *len)
 {
-	*len = 0;
 	const char *cpu, *mmu, *fpu;
+
+	*len = 0;
 
 	switch (cputype) {
 	case CPU_68020:
@@ -67,9 +68,9 @@ procfs_getcpuinfstr(char *buf, int *len)
 	case FPU_68882:
 		fpu = "68882";
 		break;
-	case FPU_68040: 
-		fpu = "68040";   
-		break; 
+	case FPU_68040:
+		fpu = "68040";
+		break;
 	case FPU_68060:
 		fpu = "68060";
 		break;

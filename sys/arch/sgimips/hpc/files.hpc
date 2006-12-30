@@ -1,16 +1,13 @@
-# $NetBSD: files.hpc,v 1.8.16.1 2006/06/21 14:55:29 yamt Exp $
+# $NetBSD: files.hpc,v 1.8.16.2 2006/12/30 20:46:53 yamt Exp $
 
 device	sq: arp, ether, ifnet
 attach	sq at hpc
 file	arch/sgimips/hpc/if_sq.c	sq
 
-define	sbic
-file	arch/sgimips/hpc/sbic.c		sbic
-
 define	hpcdma
 file	arch/sgimips/hpc/hpcdma.c	hpcdma
 
-device	wdsc: sbic, scsi, hpcdma
+device	wdsc: wd33c93, scsi, hpcdma
 attach	wdsc at hpc
 file	arch/sgimips/hpc/wdsc.c		wdsc
 

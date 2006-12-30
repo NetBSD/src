@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.1.16.2 2006/06/21 14:57:56 yamt Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.1.16.3 2006/12/30 20:47:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.1.16.2 2006/06/21 14:57:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.1.16.3 2006/12/30 20:47:22 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,11 +98,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.1.16.2 2006/06/21 14:57:56 ya
 
 #include "ioapic.h"
 #include "eisa.h"
+#include "acpi.h"
 #include "opt_mpbios.h"
-#include "opt_mpacpi.h"
+#include "opt_acpi.h"
 
-#if NIOAPIC > 0
+#if NIOAPIC > 0 || NACPI > 0
 #include <machine/i82093var.h>
+#include <machine/mpconfig.h>
 #include <machine/mpbiosvar.h>
 #include <machine/pic.h>
 #endif
@@ -111,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.1.16.2 2006/06/21 14:57:56 ya
 #include <machine/mpbiosvar.h>
 #endif
 
-#ifdef MPACPI
+#if NACPI > 0
 #include <machine/mpacpi.h>
 #endif
 
@@ -122,7 +124,7 @@ pci_intr_map(pa, ihp)
 {
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
-#if NIOAPIC > 0
+#if NIOAPIC > 0 || NACPI > 0
 	int rawpin = pa->pa_rawintrpin;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	int bus, dev, func;
@@ -133,16 +135,19 @@ pci_intr_map(pa, ihp)
 		goto bad;
 	}
 
+	*ihp = 0;
+
 	if (pin > PCI_INTERRUPT_PIN_MAX) {
 		printf("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
 
-#if NIOAPIC > 0
+#if NIOAPIC > 0 || NACPI > 0
 	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &func);
 	if (mp_busses != NULL) {
 		if (intr_find_mpmapping(bus, (dev<<2)|(rawpin-1), ihp) == 0) {
-			*ihp |= line;
+			if ((*ihp & 0xff) == 0)
+				*ihp |= line;
 			return 0;
 		}
 		/*
@@ -180,15 +185,17 @@ pci_intr_map(pa, ihp)
 			line = 9;
 		}
 	}
-#if NIOAPIC > 0
+#if NIOAPIC > 0 || NACPI > 0
 	if (mp_busses != NULL) {
 		if (intr_find_mpmapping(mp_isa_bus, line, ihp) == 0) {
-			*ihp |= line;
+			if ((*ihp & 0xff) == 0)
+				*ihp |= line;
 			return 0;
 		}
 #if NEISA > 0
 		if (intr_find_mpmapping(mp_eisa_bus, line, ihp) == 0) {
-			*ihp |= line;
+			if ((*ihp & 0xff) == 0)
+				*ihp |= line;
 			return 0;
 		}
 #endif
@@ -207,18 +214,14 @@ bad:
 }
 
 const char *
-pci_intr_string(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	return intr_string(ih);
 }
 
 
 const struct evcnt *
-pci_intr_evcnt(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -226,11 +229,8 @@ pci_intr_evcnt(pc, ih)
 }
 
 void *
-pci_intr_establish(pc, ih, level, func, arg)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-	int level, (*func) __P((void *));
-	void *arg;
+pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+    int level, int (*func)(void *), void *arg)
 {
 	int pin, irq;
 	struct pic *pic;
@@ -257,9 +257,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 }
 
 void
-pci_intr_disestablish(pc, cookie)
-	pci_chipset_tag_t pc;
-	void *cookie;
+pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 
 	intr_disestablish(cookie);

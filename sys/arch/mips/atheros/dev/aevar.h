@@ -1,4 +1,4 @@
-/*	$NetBSD: aevar.h,v 1.1.14.2 2006/06/21 14:53:38 yamt Exp $	*/
+/*	$NetBSD: aevar.h,v 1.1.14.3 2006/12/30 20:46:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -141,7 +141,8 @@ struct ae_softc {
 	bus_size_t sc_size;		/* bus space size */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	void *sc_ih;			/* interrupt handle */	
-	int sc_irq;			/* interrupt request line */
+	int sc_cirq;			/* interrupt request line (cpu) */
+	int sc_mirq;			/* interrupt request line (misc) */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
 	void *sc_powerhook;		/* power management hook */

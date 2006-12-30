@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.10.4.1 2006/06/21 15:09:38 yamt Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.10.4.2 2006/12/30 20:50:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.10.4.1 2006/06/21 15:09:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.10.4.2 2006/12/30 20:50:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -52,6 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.10.4.1 2006/06/21 15:09:38 yamt Exp $
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+
+POOL_INIT(ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
+    &pool_allocator_nointr);
 
 #define MAX_RAS_PER_PROC	16
 

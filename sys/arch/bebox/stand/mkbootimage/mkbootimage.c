@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.4.12.1 2006/06/21 14:50:06 yamt Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.4.12.2 2006/12/30 20:45:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -32,6 +32,8 @@
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
+#else
+#include <sys/endian.h>
 #endif
 
 #include <sys/param.h>				/* XXX for roundup */
@@ -43,7 +45,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/endian.h>
 #include <sys/bswap.h>
 #include "bootimage.h"
 

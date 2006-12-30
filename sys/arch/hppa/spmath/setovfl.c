@@ -1,4 +1,4 @@
-/*	$NetBSD: setovfl.c,v 1.3 2003/11/01 18:23:38 matt Exp $	*/
+/*	$NetBSD: setovfl.c,v 1.3.16.1 2006/12/30 20:46:04 yamt Exp $	*/
 
 /*	$OpenBSD: setovfl.c,v 1.4 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: setovfl.c,v 1.3 2003/11/01 18:23:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: setovfl.c,v 1.3.16.1 2006/12/30 20:46:04 yamt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -116,5 +116,6 @@ unsigned int sign;
 			Dbl_setlargest(result,sign);
 	}
 	*/
+	Dbl_setinfinity(result.wd0,result.wd1,sign);
 	return(result);
 }

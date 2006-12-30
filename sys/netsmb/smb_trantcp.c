@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.18.4.1 2006/06/21 15:11:50 yamt Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.18.4.2 2006/12/30 20:50:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.18.4.1 2006/06/21 15:11:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.18.4.2 2006/12/30 20:50:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,7 +391,7 @@ nbssn_rq_request(struct nbpcb *nbp, struct lwp *l)
 
 static int
 nbssn_recvhdr(struct nbpcb *nbp, int *lenp,
-	u_int8_t *rpcodep, int flags, struct lwp *l)
+    u_int8_t *rpcodep, int flags, struct lwp *l)
 {
 	struct socket *so = nbp->nbp_tso;
 	struct uio auio;
@@ -789,6 +789,7 @@ struct smb_tran_desc smb_tran_nbtcp_desc = {
 	smb_nbst_send, smb_nbst_recv,
 	smb_nbst_timo, smb_nbst_intr,
 	smb_nbst_getparam, smb_nbst_setparam,
-	smb_nbst_fatal
+	smb_nbst_fatal,
+	{ NULL, NULL },
 };
 

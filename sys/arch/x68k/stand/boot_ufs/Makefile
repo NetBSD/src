@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16.16.1 2006/06/21 14:57:55 yamt Exp $
+#	$NetBSD: Makefile,v 1.16.16.2 2006/12/30 20:47:21 yamt Exp $
 
 NOMAN=		# defined
 
@@ -32,6 +32,7 @@ SRCS+=	exec_image.S memset.S strcmp.S
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
 vers.c:	${VERSIONFILE}
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CFLAGS=	-Os -fomit-frame-pointer
@@ -44,10 +45,10 @@ CPPFLAGS+= -DUSE_FFS -DUSE_LFS -DUSE_UFS1 -DUSE_UFS2 -D__daddr_t=int32_t
 CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 .if ${OBJECT_FMT} == "ELF"
-LDFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
-LDFLAGS+=  -noinhibit-exec	# XXX
+LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
+LINKFLAGS+=  -noinhibit-exec	# XXX
 .else
-LDFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
+LINKFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
 OBJCOPY?=  objcopy
 .endif
 
@@ -58,13 +59,14 @@ CLEANFILES+=	$(PROG).x $(PROG).map
 
 
 $(PROG): $(OBJS)
+	${_MKTARGET_LINK}
 .if ${OBJECT_FMT} == "ELF"
 	:
 	: Note:	"relocation truncated to fit: R_68K_16" messages are expected.
 	:	Other errors are fatal.
 	:
 .endif
-	$(LD) $(LDFLAGS) -o $(PROG).x $(OBJS) $(LDADD) >$(PROG).map
+	$(LD) $(LINKFLAGS) -o $(PROG).x $(OBJS) $(LDADD) >$(PROG).map
 	@grep first_kbyte $(PROG).map
 	@if [ `(echo ibase=16;						\
 		sed -n	-e '/[ 	]first_kbyte/{'				\
