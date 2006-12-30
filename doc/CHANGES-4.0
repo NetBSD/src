@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.23 2006/12/29 18:55:57 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.24 2006/12/30 05:35:04 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -425,4 +425,39 @@ sys/dev/pci/if_iwivar.h				1.13
 
 	Several fixes for iwi(4).
 	[skrll, ticket #296]
+
+sys/dev/ieee1394/fwohci.c			1.104
+
+	Fix memory allocation, in case isochronous transfer fails.
+	[kiyohara, ticket #297]
+
+sbin/sysctl/sysctl.c				1.122
+
+	PR/35304: C J Coleman: Off-by-one nul byte overwrite in mode_bits
+	routine of sbin/sysctl
+	[elad, ticket #298]
+
+sys/kern/kern_exec.c				1.234
+
+	Use ndp->ni_cnd.cn_pnbuf, not epp->ep_ndp->ni_dirp, for the pathname
+	for Veriexec/PaX purposes.  Fixes part of PR/35278.
+	[elad, ticket #299]
+
+usr.bin/netstat/show.c				1.6
+
+	Fix minor display error.
+	[jdc, ticket #300]
+
+etc/daily					1.69
+
+	Make the daily script immune to changes of the current working
+	directory in /etc/daily.local.  PR#33461.
+	[hubertf, ticket #301]
+
+distrib/notes/sgimips/hardware			1.13
+distrib/notes/sgimips/prep			1.7
+
+	Add note on handling the O2 framebuffer, and how to work around the
+	non-support, by giving instructions for a serial console.
+	[hubertf, ticket #302]
 
