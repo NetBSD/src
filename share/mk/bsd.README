@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.190 2006/12/29 15:52:20 pooka Exp $
+#	$NetBSD: bsd.README,v 1.191 2006/12/30 04:45:13 rumble Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -311,10 +311,10 @@ USE_SKEY	If "no", disables building S/key authentication
 		support it.  If ${MKSKEY} is "no", USE_SKEY will
 		also be forced to "no".
 
-USE_SSP		If "yes", it turns of the gcc stack protection code
-		where stack overflows are detected and the program
-		aborts. This imposes some performance penalty. Defaults
-		to "no".
+USE_SSP		If "no", disables gcc stack protection code, which
+		detects stack overflows and aborts the program. This
+		imposes some performance penalty.
+		Default: no
 
 USE_YP		If "no", disables building YP (NIS) support into
 		various system utilities/libraries that support it.
