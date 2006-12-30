@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.22 2006/12/09 16:11:51 chs Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.23 2006/12/30 01:29:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.22 2006/12/09 16:11:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.23 2006/12/30 01:29:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -217,6 +217,7 @@ const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 };
 const struct vnodeopv_desc puffs_specop_opv_desc =
 	{ &puffs_specop_p, puffs_specop_entries };
+
 
 int (**puffs_fifoop_p)(void *);
 const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
@@ -469,9 +470,11 @@ puffs_lookup(void *v)
 	/*
 	 * Check if someone fed it into the cache
 	 */
-	error = cache_lookup(dvp, ap->a_vpp, cnp);
-	if (error >= 0)
-		return error;
+	if (PUFFS_DOCACHE(pmp)) {
+		error = cache_lookup(dvp, ap->a_vpp, cnp);
+		if (error >= 0)
+			return error;
+	}
 
 	if (isdot) {
 		vp = ap->a_dvp;
@@ -490,9 +493,11 @@ puffs_lookup(void *v)
 	DPRINTF(("puffs_lookup: return of the userspace, part %d\n", error));
 
 	/*
-	 * In case of error, leave parent locked.  There is no new
-	 * vnode to play with, so be happy with the NULL value given
-	 * to vpp in the beginning.
+	 * In case of error, there is no new vnode to play with, so be
+	 * happy with the NULL value given to vpp in the beginning.
+	 * Also, check if this really was an error or the target was not
+	 * present.  Either treat it as a non-error for CREATE/RENAME or
+	 * enter the component into the negative name cache (if desired).
 	 */
 	if (error) {
 		if (error == ENOENT) {
@@ -501,9 +506,12 @@ puffs_lookup(void *v)
 			      || cnp->cn_nameiop == RENAME)) {
 				cnp->cn_flags |= SAVENAME;
 				error = EJUSTRETURN;
+			} else {
+				if ((cnp->cn_flags & MAKEENTRY)
+				    && PUFFS_DOCACHE(pmp))
+					cache_enter(dvp, NULL, cnp);
 			}
 		}
-		*ap->a_vpp = NULL;
 		goto errout;
 	}
 
@@ -517,12 +525,12 @@ puffs_lookup(void *v)
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	}
-
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(dvp, vp, cnp);
 	*ap->a_vpp = vp;
 
-errout:
+	if ((cnp->cn_flags & MAKEENTRY) != 0 && PUFFS_DOCACHE(pmp))
+		cache_enter(dvp, vp, cnp);
+
+ errout:
 	if (cnp->cn_flags & ISDOTDOT)
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	
@@ -865,6 +873,8 @@ puffs_reclaim(void *v)
 		return error;
 #endif
 
+	if (PUFFS_DOCACHE(pmp))
+		cache_purge(ap->a_vp);
 	puffs_putvnode(ap->a_vp);
 
 	return 0;
@@ -1114,6 +1124,8 @@ puffs_rmdir(void *v)
 	    &rmdir_arg, sizeof(rmdir_arg), VPTOPNC(ap->a_dvp),
 	    ap->a_dvp, ap->a_vp);
 
+	/* XXX: some call cache_purge() *for both vnodes* here, investigate */
+
 	vput(ap->a_dvp);
 	vput(ap->a_vp);
 
@@ -1294,7 +1306,7 @@ puffs_read(void *v)
 	if (uio->uio_offset < 0)
 		return EINVAL;
 
-	if (vp->v_type == VREG && (pmp->pmp_flags & PUFFS_KFLAG_NOCACHE) == 0) {
+	if (vp->v_type == VREG && PUFFS_DOCACHE(pmp)) {
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
 		ubcflags = 0;
@@ -1396,7 +1408,7 @@ puffs_write(void *v)
 	write_argp = NULL;
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 
-	if (vp->v_type == VREG && (pmp->pmp_flags & PUFFS_KFLAG_NOCACHE) == 0) {
+	if (vp->v_type == VREG && PUFFS_DOCACHE(pmp)) {
 		ubcflags = 0;
 		if (UBC_WANT_UNMAP(vp))
 			ubcflags = UBC_UNMAP;
@@ -1804,7 +1816,7 @@ puffs_mmap(void *v)
 
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 
-	if (pmp->pmp_flags & PUFFS_KFLAG_NOCACHE)
+	if (!PUFFS_DOCACHE(pmp))
 		return genfs_eopnotsupp(v);
 
 	if (EXISTSOP(pmp, MMAP)) {

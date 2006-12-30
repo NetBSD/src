@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.15 2006/12/29 15:38:37 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.16 2006/12/30 01:29:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -113,6 +113,8 @@ extern int puffsdebug; /* puffs_subr.c */
 
 #define EXISTSOP(pmp, op) \
  (((pmp)->pmp_flags&PUFFS_KFLAG_ALLOPS) || ((pmp)->pmp_vnopmask[PUFFS_VN_##op]))
+
+#define PUFFS_DOCACHE(pmp)	(((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE) == 0)
 
 TAILQ_HEAD(puffs_wq, puffs_park);
 struct puffs_mount {
