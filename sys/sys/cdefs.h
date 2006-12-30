@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.59 2005/06/02 14:31:38 he Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.59.2.1 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -194,7 +194,7 @@
 #if __GNUC_PREREQ__(3, 1)
 #define	__used		__attribute__((__used__))
 #else
-#define	__used		/* delete */
+#define	__used		__unused
 #endif
 
 #if __GNUC_PREREQ__(2, 7)
@@ -353,5 +353,32 @@
 	for (pvar = __link_set_start(set); pvar < __link_set_end(set); pvar++)
 
 #define	__link_set_entry(set, idx)	(__link_set_begin(set)[idx])
+
+/*
+ * Return the number of elements in a statically-allocated array,
+ * __x.
+ */
+#define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
+
+/* __BIT(n): nth bit, where __BIT(0) == 0x1. */
+#define	__BIT(__n)	\
+	(((__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (__n)))
+
+/* __BITS(m, n): bits m through n, m < n. */
+#define	__BITS(__m, __n)	\
+	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
+
+/* find least significant bit that is set */
+#define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
+
+#define	__PRIuBIT	PRIuMAX
+#define	__PRIuBITS	__PRIuBIT
+
+#define	__PRIxBIT	PRIxMAX
+#define	__PRIxBITS	__PRIxBIT
+
+#define	__SHIFTOUT(__x, __mask)	(((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
+#define	__SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
+#define	__SHIFTOUT_MASK(__mask) __SHIFTOUT((__mask), (__mask))
 
 #endif /* !_SYS_CDEFS_H_ */

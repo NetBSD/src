@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.2.18.2 2006/06/21 14:49:08 yamt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.2.18.3 2006/12/30 20:45:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2.18.2 2006/06/21 14:49:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2.18.3 2006/12/30 20:45:32 yamt Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -234,15 +234,8 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	 * Make sure the processor mode has not been tampered with and
 	 * interrupts have not been disabled.
 	 */
-#ifdef __PROG32
-	if ((context.sc_spsr & PSR_MODE) != PSR_USR32_MODE ||
-	    (context.sc_spsr & (I32_bit | F32_bit)) != 0)
-		return (EINVAL);
-#else /* __PROG26 */
-	if ((context.sc_pc & R15_MODE) != R15_MODE_USR ||
-	    (context.sc_pc & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
+	if (!VALID_R15_PSR(context.sc_pc, context.sc_spsr))
 		return EINVAL;
-#endif
 
 	/* Restore register context. */
 	tf = process_frame(l);

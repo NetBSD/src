@@ -1,4 +1,4 @@
-/*	$NetBSD: xyreg.h,v 1.4 2004/04/19 12:44:10 wiz Exp $	*/
+/*	$NetBSD: xyreg.h,v 1.4.12.1 2006/12/30 20:49:50 yamt Exp $	*/
 
 /*
  *
@@ -129,7 +129,7 @@ struct xy_iopb {
 #define XYCMD_MBL 0xe		 /* maint. buffer load */
 #define XYCMD_MBD 0xf		 /* main. buffer dump */
 					/* section 2.4.4: byte 3 */
-	volatile u_char errno;		/* error or completion code */
+	volatile u_char errnum;		/* error or completion code */
 					/* section 2.4.3: byte 2 */
 	volatile u_char errs:1;		/* error summary bit */
 	volatile u_char resv2:2;	/* reserved */

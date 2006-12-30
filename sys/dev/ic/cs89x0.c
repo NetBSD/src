@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.17.2.1 2006/06/21 15:02:54 yamt Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.17.2.2 2006/12/30 20:48:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.17.2.1 2006/06/21 15:02:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.17.2.2 2006/12/30 20:48:02 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -517,7 +517,8 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 		return 1;
 	}
 
-	sc->sc_powerhook = powerhook_establish(cs_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    cs_power, sc);
 	if (sc->sc_powerhook == 0)
 		printf("%s: warning: powerhook_establish failed\n",
 			sc->sc_dev.dv_xname);

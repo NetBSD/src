@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9.2.1 2006/06/21 14:54:24 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.2.2 2006/12/30 20:46:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.2.1 2006/06/21 14:54:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.2.2 2006/12/30 20:46:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,28 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.2.1 2006/06/21 14:54:24 yamt Exp $");
 static u_long ns_per_tick = 320;
 long ticks_per_intr;
 volatile u_long lasttb;
-
-/*
- * For now we let the machine run with boot time, not changing the clock
- * at inittodr at all.
- *
- * We might continue to do this due to setting up the real wall clock with
- * a user level utility in the future.
- */
-/* ARGSUSED */
-void
-inittodr(base)
-	time_t base;
-{
-}
-
-/*
- * Similar to the above
- */
-void
-resettodr()
-{
-}
 
 void
 decr_intr(frame)

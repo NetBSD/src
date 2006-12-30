@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.35.2.1 2006/06/21 15:02:52 yamt Exp $	*/
+/*	$NetBSD: an.c,v 1.35.2.2 2006/12/30 20:48:01 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.35.2.1 2006/06/21 15:02:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.35.2.2 2006/12/30 20:48:01 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -232,7 +232,7 @@ an_attach(struct an_softc *sc)
 	rid = AN_RID_WEP_VOLATILE;	/* first persistent key */
 	while (an_read_rid(sc, rid, akey, &buflen) == 0) {
 		kid = le16toh(akey->an_key_index);
-		DPRINTF(("an_attach: wep rid=0x%x len=%d(%d) index=0x%04x "
+		DPRINTF(("an_attach: wep rid=0x%x len=%d(%zu) index=0x%04x "
 		    "mac[0]=%02x keylen=%d\n",
 		    rid, buflen, sizeof(*akey), kid,
 		    akey->an_mac_addr[0], le16toh(akey->an_key_len)));
@@ -850,7 +850,7 @@ an_start(struct ifnet *ifp)
 		an_mwrite_bap(sc, fid, -1, m, m->m_pkthdr.len);
 		m_freem(m);
 
-		DPRINTF2(("an_start: send %d byte via %x/%d\n",
+		DPRINTF2(("an_start: send %zu byte via %x/%d\n",
 		    ntohs(len) + sizeof(struct ieee80211_frame),
 		    fid, cur));
 		sc->sc_txd[cur].d_inuse = 1;
@@ -1299,9 +1299,8 @@ an_get_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 		if (nwkey->i_key[i].i_keydat == NULL)
 			continue;
 		/* do not show any keys to non-root user */
-		if ((error = kauth_authorize_generic(curproc->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &curproc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(curlwp->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag)) != 0)
 			break;
 		nwkey->i_key[i].i_keylen = sc->sc_wepkeys[i].an_wep_keylen;
 		if (nwkey->i_key[i].i_keylen < 0) {

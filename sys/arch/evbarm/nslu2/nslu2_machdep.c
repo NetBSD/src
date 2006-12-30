@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.3.6.2 2006/06/21 14:50:54 yamt Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.3.6.3 2006/12/30 20:45:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.3.6.2 2006/06/21 14:50:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.3.6.3 2006/12/30 20:45:51 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -370,7 +370,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	printf("rebooting...\n\r");
 
-#define	WDWR(r,v)	*((volatile uint32_t *)(IXP425_TIMER_VBASE+(r))) = (v)
+#define	WDWR(r,v) *((volatile uint32_t *)(IXP425_OST_WDOG_VBASE+(r))) = (v)
 	/* Force a watchdog reset */
 	WDWR(IXP425_OST_WDOG_KEY, OST_WDOG_KEY_MAJICK);
 	WDWR(IXP425_OST_WDOG_ENAB, OST_WDOG_ENAB_RST_ENA);

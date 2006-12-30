@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.3.6.2 2006/06/21 15:09:30 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.3.6.3 2006/12/30 20:50:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.3.6.2 2006/06/21 15:09:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.3.6.3 2006/12/30 20:50:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,11 +83,11 @@ sysvbfs_lookup(void *arg)
 	int namelen = cnp->cn_namelen;
 	int error;
 	boolean_t islastcn = cnp->cn_flags & ISLASTCN;
-	boolean_t lockparent = cnp->cn_flags & LOCKPARENT;
 
 	DPRINTF("%s: %s op=%d %ld\n", __FUNCTION__, name, nameiop,
 	    cnp->cn_flags);
 
+	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
 	if ((error = VOP_ACCESS(a->a_dvp, VEXEC, cnp->cn_cred,
 	    cnp->cn_lwp)) != 0) {
 		return error;	/* directory permittion. */
@@ -97,18 +97,6 @@ sysvbfs_lookup(void *arg)
 	if (namelen == 1 && name[0] == '.') {	/* "." */
 		VREF(v);
 		*a->a_vpp = v;
-	} else if (cnp->cn_flags & ISDOTDOT) {	/* ".." */
-		VOP_UNLOCK(v, 0);
-		cnp->cn_flags |= PDIRUNLOCK;
-		*a->a_vpp = v;
-		if (lockparent && islastcn) {
-			if ((error = vn_lock(v, LK_EXCLUSIVE))) {
-				vput(v);
-				*a->a_vpp = NULLVP;
-				return error;
-			}
-			cnp->cn_flags &= ~PDIRUNLOCK;
-		}
 	} else {				/* Regular file */
 		if (!bfs_dirent_lookup_by_name(bfs, cnp->cn_nameptr,
 		    &dirent)) {
@@ -121,20 +109,15 @@ sysvbfs_lookup(void *arg)
 			    cnp->cn_lwp)) != 0)
 				return error;
 			cnp->cn_flags |= SAVENAME;
-			KDASSERT(cnp->cn_flags & LOCKPARENT);
 			return EJUSTRETURN;
 		}
 
 		/* Allocate v-node */
-		if ((error = VFS_VGET(v->v_mount, dirent->inode, &vpp)) != 0) {
+		if ((error = sysvbfs_vget(v->v_mount, dirent->inode, &vpp)) != 0) {
 			DPRINTF("%s: can't get vnode.\n", __FUNCTION__);
 			return error;
 		}
 		*a->a_vpp = vpp;
-		if (!lockparent || !islastcn) {
-			VOP_UNLOCK(v, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 	}
 
 	if (cnp->cn_nameiop != LOOKUP && islastcn)
@@ -243,11 +226,11 @@ sysvbfs_close(void *arg)
 
 	memset(&attr, 0xff, sizeof attr);	/* Set VNOVAL all */
 	if (bnode->update_atime)
-		attr.atime = time.tv_sec;
+		attr.atime = time_second;
 	if (bnode->update_ctime)
-		attr.ctime = time.tv_sec;
+		attr.ctime = time_second;
 	if (bnode->update_mtime)
-		attr.mtime = time.tv_sec;
+		attr.mtime = time_second;
 	bfs_inode_set_attr(bnode->bmp->bfs, bnode->inode, &attr);
 
 	VOP_FSYNC(a->a_vp, a->a_cred, FSYNC_WAIT, 0, 0, a->a_l);
@@ -521,11 +504,11 @@ sysvbfs_rename(void *arg)
 	error = bfs_file_rename(bfs, from_name, to_name);
  out:
 	vput(ap->a_tdvp);
+	if (tvp)
+		vput(ap->a_tvp);  /* locked on entry */
 	if (ap->a_tdvp != ap->a_fdvp)
 		vrele(ap->a_fdvp);
 	vrele(ap->a_fvp); /* unlocked and refcnt is incremented on entry. */
-	if (tvp)
-		vput(ap->a_tvp);  /* locked on entry */
 
 	return 0;
 }
@@ -641,7 +624,7 @@ sysvbfs_bmap(void *arg)
 	daddr_t blk;
 
 	DPRINTF("%s:\n", __FUNCTION__);
-	/* BFS algorythm is contiguous allocation */
+	/* BFS algorithm is contiguous allocation */
 	blk = inode->start_sector + a->a_bn;
 
 	if (blk * BFS_BSIZE > bmp->bfs->data_end)
@@ -803,15 +786,15 @@ sysvbfs_update(struct vnode *vp, const struct timespec *acc,
 	DPRINTF("%s:\n", __FUNCTION__);
 	memset(&attr, 0xff, sizeof attr);	/* Set VNOVAL all */
 	if (bnode->update_atime) {
-		attr.atime = acc ? acc->tv_sec : time.tv_sec;
+		attr.atime = acc ? acc->tv_sec : time_second;
 		bnode->update_atime = FALSE;
 	}
 	if (bnode->update_ctime) {
-		attr.ctime = time.tv_sec;
+		attr.ctime = time_second;
 		bnode->update_ctime = FALSE;
 	}
 	if (bnode->update_mtime) {
-		attr.mtime = mod ? mod->tv_sec : time.tv_sec;
+		attr.mtime = mod ? mod->tv_sec : time_second;
 		bnode->update_mtime = FALSE;
 	}
 	bfs_inode_set_attr(bnode->bmp->bfs, bnode->inode, &attr);

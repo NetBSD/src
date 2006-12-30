@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.10 2005/07/06 01:46:52 thorpej Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.10.2.1 2006/12/30 20:48:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.10 2005/07/06 01:46:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.10.2.1 2006/12/30 20:48:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,8 @@ static const struct pciide_product_desc pciide_geode_products[] = {
 };
 
 static int
-geodeide_match(struct device *parent, struct cfdata *match, void *aux)
+geodeide_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

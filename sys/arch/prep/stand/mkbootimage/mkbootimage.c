@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.11.12.1 2006/06/21 14:55:23 yamt Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.11.12.2 2006/12/30 20:46:50 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2006 Tim Rightnour
@@ -152,7 +152,7 @@ check_mbr(int prep_fd, int lfloppyflag, char *rawdev)
 			    strerror(errno));
 
 		fstat(raw_fd, &raw_stat);
-		if (!(raw_stat.st_mode & S_IFCHR))
+		if (!S_ISCHR(raw_stat.st_mode))
 			errx(3, "%s is not a raw device", rawdev);
 
 		if (read(raw_fd, mbr, 512) != 512)

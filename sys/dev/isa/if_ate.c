@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.42.10.1 2006/06/21 15:04:21 yamt Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.42.10.2 2006/12/30 20:48:26 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.42.10.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.42.10.2 2006/12/30 20:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,8 @@ static int const ate_iomap[8] = {
  * Determine if the device is present.
  */
 int
-ate_match(struct device *parent, struct cfdata *match, void *aux)
+ate_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -226,7 +227,7 @@ ate_find(bus_space_tag_t iot, bus_space_handle_t ioh, int *iobase, int *irq)
 		{ FE_BMPR16, 0x1B, 0x00 },
 		{ FE_BMPR17, 0x7F, 0x00 },
 #endif
-		{ 0 }
+		{ 0,	     0x00, 0x00 },
 	};
 
 #if ATE_DEBUG >= 4

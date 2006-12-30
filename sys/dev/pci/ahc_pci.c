@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.51.2.1 2006/06/21 15:05:03 yamt Exp $
+ * $Id: ahc_pci.c,v 1.51.2.2 2006/12/30 20:48:41 yamt Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.51.2.1 2006/06/21 15:05:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.51.2.2 2006/12/30 20:48:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -741,7 +741,8 @@ ahc_find_pci_device(pcireg_t id, pcireg_t subid, u_int func)
 }
 
 static int
-ahc_pci_probe(struct device *parent, struct cfdata *match, void *aux)
+ahc_pci_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahc_pci_identity *entry;
@@ -1053,7 +1054,7 @@ ahc_pci_attach(struct device *parent, struct device *self, void *aux)
 			 */ 
 			usetd = prop_dictionary_get(
 					device_properties(&ahc->sc_dev),
-					"use-target-defaults");
+					"aic7xxx-use-target-defaults");
 			if (usetd != NULL) {
 				KASSERT(prop_object_type(usetd) ==
 					PROP_TYPE_BOOL);
@@ -1708,7 +1709,7 @@ ahc_aha29160C_setup(struct ahc_softc *ahc)
 static int
 ahc_raid_setup(struct ahc_softc *ahc)
 {
-	printf("RAID functionality unsupported\n");
+	printf("%s: RAID functionality unsupported\n", ahc->sc_dev.dv_xname);
 	return (ENXIO);
 }
 

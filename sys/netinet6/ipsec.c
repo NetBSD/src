@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.102.2.1 2006/06/21 15:11:09 yamt Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.102.2.2 2006/12/30 20:50:39 yamt Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.102.2.1 2006/06/21 15:11:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.102.2.2 2006/12/30 20:50:39 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -842,11 +842,8 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
  *	other:	failure, and set errno.
  */
 int
-ipsec_setspidx_mbuf(spidx, family, m, needport)
-	struct secpolicyindex *spidx;
-	int family;
-	struct mbuf *m;
-	int needport;
+ipsec_setspidx_mbuf(struct secpolicyindex *spidx, int family,
+    struct mbuf *m, int needport)
 {
 	int error;
 
@@ -1353,12 +1350,8 @@ fail:
 
 /* set policy and ipsec request if present. */
 static int
-ipsec_set_policy(spp, optname, request, len, priv)
-	struct secpolicy **spp;
-	int optname;
-	caddr_t request;
-	size_t len;
-	int priv;
+ipsec_set_policy(struct secpolicy **spp, int optname, caddr_t request,
+    size_t len, int priv)
 {
 	struct sadb_x_policy *xpl;
 	struct secpolicy *newsp = NULL;
@@ -2626,10 +2619,8 @@ ipsec4_checksa(isr, state)
  * IPsec output logic for IPv4.
  */
 int
-ipsec4_output(state, sp, flags)
-	struct ipsec_output_state *state;
-	struct secpolicy *sp;
-	int flags;
+ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp,
+    int flags)
 {
 	struct ip *ip = NULL;
 	struct ipsecrequest *isr = NULL;
@@ -2741,22 +2732,20 @@ ipsec4_output(state, sp, flags)
 			state->ro = &isr->sav->sah->sa_route;
 			state->dst = (struct sockaddr *)&state->ro->ro_dst;
 			dst4 = (struct sockaddr_in *)state->dst;
-			if (state->ro->ro_rt
-			 && ((state->ro->ro_rt->rt_flags & RTF_UP) == 0
-			  || dst4->sin_addr.s_addr != ip->ip_dst.s_addr)) {
-				RTFREE(state->ro->ro_rt);
-				bzero((caddr_t)state->ro, sizeof (*state->ro));
-			}
-			if (state->ro->ro_rt == 0) {
+			if (dst4->sin_addr.s_addr != ip->ip_dst.s_addr)
+				rtcache_free(state->ro);
+			else
+				rtcache_check(state->ro);
+			if (state->ro->ro_rt == NULL) {
 				dst4->sin_family = AF_INET;
 				dst4->sin_len = sizeof(*dst4);
 				dst4->sin_addr = ip->ip_dst;
-				rtalloc(state->ro);
-			}
-			if (state->ro->ro_rt == 0) {
-				ipstat.ips_noroute++;
-				error = EHOSTUNREACH;
-				goto bad;
+				rtcache_init(state->ro);
+				if (state->ro->ro_rt == NULL) {
+					ipstat.ips_noroute++;
+					error = EHOSTUNREACH;
+					goto bad;
+				}
 			}
 
 			/* adjust state->dst if tunnel endpoint is offlink */
@@ -2886,13 +2875,8 @@ ipsec6_checksa(isr, state, tunnel)
  * IPsec output logic for IPv6, transport mode.
  */
 int
-ipsec6_output_trans(state, nexthdrp, mprev, sp, flags, tun)
-	struct ipsec_output_state *state;
-	u_char *nexthdrp;
-	struct mbuf *mprev;
-	struct secpolicy *sp;
-	int flags;
-	int *tun;
+ipsec6_output_trans(struct ipsec_output_state *state, u_char *nexthdrp,
+    struct mbuf *mprev, struct secpolicy *sp, int flags, int *tun)
 {
 	struct ip6_hdr *ip6;
 	struct ipsecrequest *isr = NULL;
@@ -3030,10 +3014,8 @@ bad:
  * IPsec output logic for IPv6, tunnel mode.
  */
 int
-ipsec6_output_tunnel(state, sp, flags)
-	struct ipsec_output_state *state;
-	struct secpolicy *sp;
-	int flags;
+ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
+    int flags)
 {
 	struct ip6_hdr *ip6;
 	struct ipsecrequest *isr = NULL;
@@ -3138,24 +3120,22 @@ ipsec6_output_tunnel(state, sp, flags)
 			state->ro = &isr->sav->sah->sa_route;
 			state->dst = (struct sockaddr *)&state->ro->ro_dst;
 			dst6 = (struct sockaddr_in6 *)state->dst;
-			if (state->ro->ro_rt
-			 && ((state->ro->ro_rt->rt_flags & RTF_UP) == 0
-			  || !IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ip6->ip6_dst))) {
-				RTFREE(state->ro->ro_rt);
-				bzero((caddr_t)state->ro, sizeof (*state->ro));
-			}
-			if (state->ro->ro_rt == 0) {
+			if (!IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ip6->ip6_dst))
+				rtcache_free(state->ro);
+			else
+				rtcache_check(state->ro);
+			if (state->ro->ro_rt == NULL) {
 				bzero(dst6, sizeof(*dst6));
 				dst6->sin6_family = AF_INET6;
 				dst6->sin6_len = sizeof(*dst6);
 				dst6->sin6_addr = ip6->ip6_dst;
-				rtalloc(state->ro);
-			}
-			if (state->ro->ro_rt == 0) {
-				ip6stat.ip6s_noroute++;
-				ipsec6stat.out_noroute++;
-				error = EHOSTUNREACH;
-				goto bad;
+				rtcache_init(state->ro);
+				if (state->ro->ro_rt == NULL) {
+					ip6stat.ip6s_noroute++;
+					ipsec6stat.out_noroute++;
+					error = EHOSTUNREACH;
+					goto bad;
+				}
 			}
 
 			/* adjust state->dst if tunnel endpoint is offlink */
@@ -3344,8 +3324,7 @@ ipsec6_tunnel_validate(ip6, nxt0, sav)
 	struct secasvar *sav;
 {
 	u_int8_t nxt = nxt0 & 0xff;
-	struct sockaddr_in6 *sin6;
-	struct in6_addr in6;
+	struct sockaddr_in6 sin6;
 
 	if (nxt != IPPROTO_IPV6)
 		return 0;
@@ -3354,8 +3333,10 @@ ipsec6_tunnel_validate(ip6, nxt0, sav)
 		return 0;
 	switch (((struct sockaddr *)&sav->sah->saidx.dst)->sa_family) {
 	case AF_INET6:
-		sin6 = ((struct sockaddr_in6 *)&sav->sah->saidx.dst);
-		if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &in6))
+		sin6 = *((struct sockaddr_in6 *)&sav->sah->saidx.dst);
+		if (sa6_embedscope(&sin6, 0) != 0)
+			return 0;
+		if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &sin6.sin6_addr))
 			return 0;
 		break;
 	case AF_INET:
@@ -3535,10 +3516,7 @@ ipsec_optaux(m, mtag)
 }
 
 int
-ipsec_addhist(m, proto, spi)
-	struct mbuf *m;
-	int proto;
-	u_int32_t spi;
+ipsec_addhist(struct mbuf *m, int proto, u_int32_t spi)
 {
 	struct m_tag *mtag;
 	struct ipsecaux *aux;
@@ -3566,9 +3544,7 @@ ipsec_getnhist(m)
 }
 
 struct ipsec_history *
-ipsec_gethist(m, lenp)
-	struct mbuf *m;
-	int *lenp;
+ipsec_gethist(struct mbuf *m, int *lenp)
 {
 
 	panic("ipsec_gethist: obsolete API");

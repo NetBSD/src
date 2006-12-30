@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.18 2005/06/22 06:16:02 dyoung Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.18.2.1 2006/12/30 20:48:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.18 2005/06/22 06:16:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.18.2.1 2006/12/30 20:48:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,8 @@ static const struct an_pci_product {
 };
 
 static int
-an_pci_match(struct device *parent, struct cfdata *match, void *aux)
+an_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct an_pci_product *app;

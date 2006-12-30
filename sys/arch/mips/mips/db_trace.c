@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.26 2005/05/30 02:26:17 simonb Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.26.2.1 2006/12/30 20:46:33 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.26 2005/05/30 02:26:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.26.2.1 2006/12/30 20:46:33 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.26 2005/05/30 02:26:17 simonb Exp $")
 
 #include <mips/mips_opcode.h>
 
-#include <machine/param.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
@@ -157,7 +156,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 
 	/* "trace/t" */
 	(*pr)("pid %d ", (int)addr);
-	p = pfind(addr);
+	p = p_find(addr, PFIND_LOCKED);
 	if (p == NULL) {
 		(*pr)("not found\n");
 		return;
@@ -189,7 +188,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	InstFmt i;
 	int stacksize;
 	db_addr_t offset;
-	char *name;
+	const char *name;
 	extern char verylocore[];
 
 	pc = ddb_regs.f_regs[_R_PC];

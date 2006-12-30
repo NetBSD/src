@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.11.4.1 2006/06/21 15:02:55 yamt Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.11.4.2 2006/12/30 20:48:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.11.4.1 2006/06/21 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.11.4.2 2006/12/30 20:48:03 yamt Exp $");
 
 #include "rnd.h"
 
@@ -92,7 +92,8 @@ static const struct icp_servicecb ld_icp_servicecb = {
 };
 
 int
-ld_icp_match(struct device *parent, struct cfdata *match, void *aux)
+ld_icp_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct icp_attach_args *icpa;
 

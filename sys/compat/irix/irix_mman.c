@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.9.4.1 2006/06/21 14:58:51 yamt Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.9.4.2 2006/12/30 20:47:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.9.4.1 2006/06/21 14:58:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.9.4.2 2006/12/30 20:47:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -199,17 +199,17 @@ irix_mmap(l, addr, len, prot, flags, fd, pos, retval)
 			goto out;
 		}
 
-		if ((error = VOP_GETATTR(vp, &vattr, p->p_cred, l)) != 0)
+		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
 			goto out;
 
 		if (pos + len > vattr.va_size) {
 			VATTR_NULL(&vattr);
 			vattr.va_size = round_page(pos + len);
 
-			VOP_LEASE(vp, l, p->p_cred, LEASE_WRITE);
+			VOP_LEASE(vp, l, l->l_cred, LEASE_WRITE);
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
-			error = VOP_SETATTR(vp, &vattr, p->p_cred, l);
+			error = VOP_SETATTR(vp, &vattr, l->l_cred, l);
 
 			VOP_UNLOCK(vp, 0);
 		}

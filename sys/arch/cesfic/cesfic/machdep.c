@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.2.1 2006/06/21 14:50:06 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.2 2006/12/30 20:45:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.1 2006/06/21 14:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.2 2006/12/30 20:45:45 yamt Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -493,8 +493,10 @@ cpu_dumpconf()
 	if (dumpdev == NODEV)
 		return;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		return;
+	}
 	if (bdev->d_psize == NULL)
 		return;
 	nblks = (*bdev->d_psize)(dumpdev);

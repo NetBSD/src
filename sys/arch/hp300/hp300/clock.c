@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33.2.1 2006/06/21 14:51:23 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.33.2.2 2006/12/30 20:45:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,17 +85,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33.2.1 2006/06/21 14:51:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33.2.2 2006/12/30 20:45:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#ifdef __HAVE_TIMECOUNTER
+#include <sys/timetc.h>
+#endif
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
-
-#include <dev/clock_subr.h>
 
 #include <hp300/hp300/clockreg.h>
 
@@ -104,11 +105,15 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33.2.1 2006/06/21 14:51:23 yamt Exp $");
 #endif
 
 void	statintr(struct clockframe *);
-
-static todr_chip_handle_t todr_handle;
+#ifdef __HAVE_TIMECOUNTER
+static u_int mc6840_counter(struct timecounter *);
+#endif
 
 static int clkstd[1];
-static int clkint;		/* clock interval, as loaded */
+
+int clkint;			/* clock interval, as loaded */
+uint32_t clkcounter;		/* for timecounter */
+
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
  * power of two.  Since this gives us an even number, not an odd number,
@@ -122,15 +127,6 @@ static int statmin;		/* statclock interval - variance/2 */
 static int profmin;		/* profclock interval - variance/2 */
 static int timer3min;		/* current, from above choices */
 static int statprev;		/* previous value in stat timer */
-
-void
-todr_attach(todr_chip_handle_t handle)
-{
-	if (todr_handle != NULL)
-		panic("todr_attach: multiple clocks");
-
-	todr_handle = handle;
-}
 
 /*
  * Machine-dependent clock routines.
@@ -234,9 +230,16 @@ cpu_initclocks(void)
 {
 	volatile struct clkreg *clk;
 	int intvl, statint, profint, minint;
-
-	if (todr_handle == NULL)
-		panic("cpu_initclocks: no clock attached");
+#ifdef __HAVE_TIMECOUNTER
+	static struct timecounter tc = {
+		mc6840_counter,		/* get_timecount */
+		NULL,			/* no poll_pps */
+		~0,			/* counter mask */
+		COUNTS_PER_SEC,		/* frequency */
+		"mc6840",		/* name */
+		100			/* quality */
+	};
+#endif
 
 	clkstd[0] = IIOV(0x5F8000);		/* XXX grot */
 	clk = (volatile struct clkreg *)clkstd[0];
@@ -294,6 +297,10 @@ cpu_initclocks(void)
 	clk->clk_cr1 = CLK_IENAB;
 	clk->clk_cr2 = CLK_CR3;
 	clk->clk_cr3 = CLK_IENAB;
+
+#ifdef __HAVE_TIMECOUNTER
+	tc_init(&tc);
+#endif
 }
 
 /*
@@ -345,6 +352,35 @@ statintr(struct clockframe *fp)
 	statclock(fp);
 }
 
+#ifdef __HAVE_TIMECOUNTER
+u_int
+mc6840_counter(struct timecounter *tc)
+{
+	volatile struct clkreg *clk;
+	uint32_t ccounter, count;
+	static uint32_t lastcount;
+	int s;
+
+	clk = (volatile struct clkreg *)clkstd[0];
+
+	s = splclock();
+	ccounter = clkcounter;
+	/* XXX reading counter clears interrupt flag?? */
+	__asm volatile (" clrl %0; movpw %1@(5),%0"
+		      : "=d" (count) : "a" (clk));
+	splx(s);
+
+	count = ccounter + (clkint - count);
+	if ((int32_t)(count - lastcount) < 0) {
+		/* XXX wrapped; maybe hardclock() is blocked more than 1/HZ */
+		count = lastcount + 1;
+	}
+	lastcount = count;
+
+	return count;
+}
+#else
+
 /*
  * Return the best possible estimate of the current time.
  */
@@ -390,71 +426,4 @@ microtime(struct timeval *tvp)
 	tvp->tv_usec = u;
 	lasttime = *tvp;
 }
-
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-void
-inittodr(time_t base)
-{
-	struct timeval tv;
-	int badbase = 0, waszero = (base == 0);
-
-	if (base < 5 * SECYR) {
-		/*
-		 * If base is 0, assume filesystem time is just unknown
-		 * in stead of preposterous. Don't bark.
-		 */
-		if (base != 0)
-			printf("WARNING: preposterous time in file system\n");
-		/* not going to use it anyway, if the chip is readable */
-		/* 1991/07/01	12:00:00 */
-		base = 21*SECYR + 186*SECDAY + SECDAY/2;
-		badbase = 1;
-	}
-
-	if (todr_gettime(todr_handle, &tv) != 0 ||
-	    tv.tv_sec == 0) {
-		printf("WARNING: bad date in battery clock");
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the clock.
-		 */
-		time.tv_sec = base;
-		if (!badbase)
-			resettodr();
-	} else {
-		int deltat;
-
-		time = tv;
-		deltat = time.tv_sec - base;
-
-		if (deltat < 0)
-			deltat = -deltat;
-		if (waszero || deltat < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %d days",
-		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-	}
-	printf(" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * Reset the clock based on the current time.
- * Used when the current clock is preposterous, when the time is changed,
- * and when rebooting.  Do nothing if the time is not yet known, e.g.,
- * when crashing during autoconfig.
- */
-void
-resettodr(void)
-{
-	struct timeval tv;
-
-	if (time.tv_sec == 0)
-		return;
-
-	tv = time;
-	if (todr_settime(todr_handle, &tv) != 0)
-		printf("resettodr: cannot set time in time-of-day clock\n");
-}
+#endif

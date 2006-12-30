@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.67 2005/07/06 07:16:00 dyoung Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.67.2.1 2006/12/30 20:49:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.67 2005/07/06 07:16:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.67.2.1 2006/12/30 20:49:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.67 2005/07/06 07:16:00 dyoung Exp
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
+#ifdef _LKM
+#define WI_PCMCIA_SPECTRUM24T_FW 1
+#else
+#include <opt_if_wi_pcmcia.h>
+#endif
+
+#if WI_PCMCIA_SPECTRUM24T_FW
 #include <dev/microcode/wi/spectrum24t_cf.h>
+#endif
 
 static int	wi_pcmcia_match(struct device *, struct cfdata *, void *);
 static int	wi_pcmcia_validate_config(struct pcmcia_config_entry *);
@@ -82,10 +90,12 @@ static void	wi_pcmcia_disable(struct wi_softc *);
 static void	wi_pcmcia_powerhook(int, void *);
 static void	wi_pcmcia_shutdown(void *);
 
+#if WI_PCMCIA_SPECTRUM24T_FW
 /* support to download firmware for symbol CF card */
 static int	wi_pcmcia_load_firm(struct wi_softc *, const void *, int, const void *, int);
 static int	wi_pcmcia_write_firm(struct wi_softc *, const void *, int, const void *, int);
 static int	wi_pcmcia_set_hcr(struct wi_softc *, int);
+#endif
 
 struct wi_pcmcia_softc {
 	struct wi_softc sc_wi;
@@ -244,15 +254,16 @@ static const struct pcmcia_product wi_pcmcia_products[] = {
 
 	{ PCMCIA_VENDOR_PROXIM, PCMCIA_PRODUCT_PROXIM_RANGELANDS_8430,
 	  PCMCIA_CIS_PROXIM_RANGELANDS_8430 },
+
+	{ PCMCIA_VENDOR_SIEMENS, PCMCIA_PRODUCT_SIEMENS_SS1021,
+	  PCMCIA_CIS_SIEMENS_SS1021 },
 };
 static const size_t wi_pcmcia_nproducts =
     sizeof(wi_pcmcia_products) / sizeof(wi_pcmcia_products[0]);
 
 static int
-wi_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+wi_pcmcia_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -283,6 +294,7 @@ wi_pcmcia_enable(sc)
 	}
 
 	if (psc->sc_symbol_cf) {
+#if WI_PCMCIA_SPECTRUM24T_FW
 		if (wi_pcmcia_load_firm(sc,
 		    spectrum24t_primsym, sizeof(spectrum24t_primsym),
 		    spectrum24t_secsym, sizeof(spectrum24t_secsym))) {
@@ -291,6 +303,11 @@ wi_pcmcia_enable(sc)
 			wi_pcmcia_disable(sc);
 			return (EIO);
 		}
+#else
+		printf("%s: firmware load not configured\n",
+		    sc->sc_dev.dv_xname);
+		return EIO;
+#endif
 	}
 	DELAY(1000);
 
@@ -321,9 +338,8 @@ wi_pcmcia_validate_config(cfe)
 }
 
 static void
-wi_pcmcia_attach(parent, self, aux)
-	struct device  *parent, *self;
-	void           *aux;
+wi_pcmcia_attach(struct device  *parent, struct device *self,
+    void *aux)
 {
 	struct wi_pcmcia_softc *psc = (void *)self;
 	struct wi_softc *sc = &psc->sc_wi;
@@ -331,6 +347,8 @@ wi_pcmcia_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 	int haveaddr;
 	int error;
+
+	aprint_naive("\n");
 
 	psc->sc_pf = pa->pf;
 
@@ -375,7 +393,8 @@ wi_pcmcia_attach(parent, self, aux)
 	}
 
 	psc->sc_sdhook    = shutdownhook_establish(wi_pcmcia_shutdown, psc);
-	psc->sc_powerhook = powerhook_establish(wi_pcmcia_powerhook, psc);
+	psc->sc_powerhook = powerhook_establish(self->dv_xname,
+	    wi_pcmcia_powerhook, psc);
 
 	wi_pcmcia_disable(sc);
 	psc->sc_state = WI_PCMCIA_ATTACHED;
@@ -388,9 +407,7 @@ fail:
 }
 
 static int
-wi_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+wi_pcmcia_detach(struct device *self, int flags)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)self;
 	int error;
@@ -444,6 +461,7 @@ wi_pcmcia_shutdown(arg)
 #define	GETLE32(p)	((p)[0] | ((p)[1]<<8) | ((p)[2]<<16) | ((p)[3]<<24))
 #define	GETLE16(p)	((p)[0] | ((p)[1]<<8))
 
+#if WI_PCMCIA_SPECTRUM24T_FW
 static int
 wi_pcmcia_load_firm(sc, primsym, primlen, secsym, seclen)
 	struct wi_softc *sc;
@@ -575,3 +593,4 @@ wi_pcmcia_set_hcr(sc, mode)
 	tsleep(sc, PWAIT, "wiinit", 1);
 	return 0;
 }
+#endif

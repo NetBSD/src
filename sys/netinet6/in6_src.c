@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.21.2.1 2006/06/21 15:11:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.21.2.2 2006/12/30 20:50:38 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -93,9 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.21.2.1 2006/06/21 15:11:08 yamt Exp $"
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/route.h>
-#ifdef RADIX_MPATH
-#include <net/radix_mpath.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -202,6 +199,7 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, ifpp, errorp)
 	int dst_scope = -1, best_scope = -1, best_matchlen = -1;
 	struct in6_addrpolicy *dst_policy = NULL, *best_policy = NULL;
 	u_int32_t odstzone;
+	int error;
 #ifdef notyet /* until introducing ND extensions and address selection */
 	int prefer_tempaddr;
 #endif
@@ -215,6 +213,17 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, ifpp, errorp)
 		*ifpp = NULL;
 
 	/*
+	 * Try to determine the outgoing interface for the given destination.
+	 * We do this regardless of whether the socket is bound, since the
+	 * caller may need this information as a side effect of the call
+	 * to this function (e.g., for identifying the appropriate scope zone
+	 * ID).
+	 */
+	error = in6_selectif(dstsock, opts, mopts, ro, &ifp);
+	if (ifpp)
+		*ifpp = ifp;
+
+	/*
 	 * If the source address is explicitly specified by the caller,
 	 * check if the requested source address is indeed a unicast address
 	 * assigned to the node, and can be used as the packet's source
@@ -224,12 +233,6 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, ifpp, errorp)
 	    !IN6_IS_ADDR_UNSPECIFIED(&pi->ipi6_addr)) {
 		struct sockaddr_in6 srcsock;
 		struct in6_ifaddr *ia6;
-
-		/* get the outgoing interface */
-		if ((*errorp = in6_selectif(dstsock, opts, mopts, ro, &ifp))
-		    != 0) {
-			return (NULL);
-		}
 
 		/*
 		 * Determine the appropriate zone id of the source based on
@@ -261,18 +264,26 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, ifpp, errorp)
 	}
 
 	/*
-	 * Otherwise, if the socket has already bound the source, just use it.
+	 * If the socket has already bound the source, just use it.  We don't
+	 * care at the moment whether in6_selectif() succeeded above, even
+	 * though it would eventually cause an error.
 	 */
 	if (laddr && !IN6_IS_ADDR_UNSPECIFIED(laddr))
 		return (laddr);
 
 	/*
-	 * If the address is not specified, choose the best one based on
+	 * The outgoing interface is crucial in the general selection procedure
+	 * below.  If it is not known at this point, we fail.
+	 */
+	if (ifp == NULL) {
+		*errorp = error;
+		return (NULL);
+	}
+
+	/*
+	 * If the address is not yet determined, choose the best one based on
 	 * the outgoing interface and the destination address.
 	 */
-	/* get the outgoing interface */
-	if ((*errorp = in6_selectif(dstsock, opts, mopts, ro, &ifp)) != 0)
-		return (NULL);
 
 #if defined(MIP6) && NMIP > 0
 	/*
@@ -560,8 +571,6 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, ifpp, errorp)
 		return (NULL);
 	}
 
-	if (ifpp)
-		*ifpp = ifp;
 	return (&ia->ia_addr.sin6_addr);
 }
 #undef REPLACE
@@ -655,32 +664,19 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		 * by that address must be a neighbor of the sending host.
 		 */
 		ron = &opts->ip6po_nextroute;
-		if ((ron->ro_rt &&
-		    (ron->ro_rt->rt_flags & (RTF_UP | RTF_GATEWAY)) !=
-		    RTF_UP) ||
-		    !IN6_ARE_ADDR_EQUAL(&satosin6(&ron->ro_dst)->sin6_addr,
-		    &sin6_next->sin6_addr)) {
-			if (ron->ro_rt) {
-				RTFREE(ron->ro_rt);
-				ron->ro_rt = NULL;
-			}
-			*satosin6(&ron->ro_dst) = *sin6_next;
-		}
+		if (!IN6_ARE_ADDR_EQUAL(&satosin6(&ron->ro_dst)->sin6_addr,
+		    &sin6_next->sin6_addr))
+			rtcache_free((struct route *)ron);
+		else
+			rtcache_check((struct route *)ron);
 		if (ron->ro_rt == NULL) {
-			rtalloc((struct route *)ron); /* multi path case? */
-			if (ron->ro_rt == NULL ||
-			    (ron->ro_rt->rt_flags & RTF_GATEWAY)) {
-				if (ron->ro_rt) {
-					RTFREE(ron->ro_rt);
-					ron->ro_rt = NULL;
-				}
-				error = EHOSTUNREACH;
-				goto done;
-			}
+			*satosin6(&ron->ro_dst) = *sin6_next;
+			rtcache_init((struct route *)ron);
 		}
-		if (!nd6_is_addr_neighbor(sin6_next, ron->ro_rt->rt_ifp)) {
-			RTFREE(ron->ro_rt);
-			ron->ro_rt = NULL;
+		if (ron->ro_rt == NULL ||
+		    (ron->ro_rt->rt_flags & RTF_GATEWAY) != 0 ||
+		    !nd6_is_addr_neighbor(sin6_next, ron->ro_rt->rt_ifp)) {
+			rtcache_free((struct route *)ron);
 			error = EHOSTUNREACH;
 			goto done;
 		}
@@ -701,16 +697,13 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 	 * a new one.  Note that we should check the address family of the
 	 * cached destination, in case of sharing the cache with IPv4.
 	 */
-	if (ro) {
-		if (ro->ro_rt &&
-		    (!(ro->ro_rt->rt_flags & RTF_UP) ||
-		     ((struct sockaddr *)(&ro->ro_dst))->sa_family != AF_INET6 ||
-		     !IN6_ARE_ADDR_EQUAL(&satosin6(&ro->ro_dst)->sin6_addr,
-		     dst))) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)NULL;
-		}
-		if (ro->ro_rt == (struct rtentry *)NULL) {
+	if (ro != NULL) {
+		if (((struct sockaddr *)(&ro->ro_dst))->sa_family != AF_INET6 ||
+		    !IN6_ARE_ADDR_EQUAL(&satosin6(&ro->ro_dst)->sin6_addr, dst))
+			rtcache_free((struct route *)ro);
+		else
+			rtcache_check((struct route *)ro);
+		if (ro->ro_rt == NULL) {
 			struct sockaddr_in6 *sa6;
 
 			/* No route yet, so try to acquire one */
@@ -718,22 +711,10 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 			sa6 = (struct sockaddr_in6 *)&ro->ro_dst;
 			*sa6 = *dstsock;
 			sa6->sin6_scope_id = 0;
-			if (clone) {
-#ifdef RADIX_MPATH
-				rtalloc_mpath((struct route *)ro,
-				    ntohl(sa6->sin6_addr.s6_addr32[3]));
-#else
-				rtalloc((struct route *)ro);
-#endif /* RADIX_MPATH */
-			} else {
-#ifdef RADIX_MPATH
-				rtalloc_mpath((struct route *)ro,
-				    ntohl(sa6->sin6_addr.s6_addr32[3]));
-#else
-				ro->ro_rt = rtalloc1(&((struct route *)ro)
-						     ->ro_dst, 0);
-#endif /* RADIX_MPATH */
-			}
+			if (clone)
+				rtcache_init((struct route *)ro);
+			else
+				rtcache_init_noclone((struct route *)ro);
 		}
 
 		/*
@@ -743,16 +724,10 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		if (opts && opts->ip6po_nexthop)
 			goto done;
 
-		if (ro->ro_rt) {
-			ifp = ro->ro_rt->rt_ifp;
-
-			if (ifp == NULL) { /* can this really happen? */
-				RTFREE(ro->ro_rt);
-				ro->ro_rt = NULL;
-			}
-		}
 		if (ro->ro_rt == NULL)
 			error = EHOSTUNREACH;
+		else
+			ifp = ro->ro_rt->rt_ifp;
 		rt = ro->ro_rt;
 
 		/*
@@ -880,10 +855,10 @@ in6_selecthlim(in6p, ifp)
  * Find an empty port and set it to the specified PCB.
  */
 int
-in6_pcbsetport(laddr, in6p, p)
+in6_pcbsetport(laddr, in6p, l)
 	struct in6_addr *laddr;
 	struct in6pcb *in6p;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct socket *so = in6p->in6p_socket;
 	struct inpcbtable *table = in6p->in6p_table;
@@ -901,8 +876,8 @@ in6_pcbsetport(laddr, in6p, p)
 
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-		if (p == 0 || (kauth_authorize_generic(p->p_cred,
-					KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0))
+		if (l == 0 || (kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0))
 			return (EACCES);
 #endif
 		minport = ip6_lowportmin;
@@ -987,11 +962,7 @@ struct walkarg {
 };
 
 int
-in6_src_sysctl(oldp, oldlenp, newp, newlen)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+in6_src_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
 	int error = 0;
 	int s;

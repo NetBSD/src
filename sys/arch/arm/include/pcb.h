@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.11 2003/10/25 19:44:42 scw Exp $	*/
+/*	$NetBSD: pcb.h,v 1.11.16.1 2006/12/30 20:45:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.
@@ -82,7 +82,7 @@ struct pcb_arm26 {
 struct pcb {
 	u_int	pcb_flags;
 #define	PCB_OWNFPU	0x00000001
-#define	PCB_NOALIGNFLT	0x00000002		/* For COMPAT_15/EXEC_AOUT */
+#define	PCB_NOALIGNFLT	0x00000002		/* For EXEC_AOUT */
 	struct	trapframe *pcb_tf;
 	caddr_t	pcb_onfault;			/* On fault handler */
 	union	{

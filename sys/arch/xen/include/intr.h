@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3.2.1 2006/06/21 14:58:15 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.2.2 2006/12/30 20:47:25 yamt Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -77,6 +77,8 @@ struct intrstub {
 #ifdef XEN3
 /* for x86 compatibility */
 extern struct intrstub i8259_stubs[];
+extern struct intrstub ioapic_edge_stubs[];
+extern struct intrstub ioapic_level_stubs[];
 #endif
 
 struct iplsource {
@@ -104,6 +106,10 @@ struct intrhand {
 	struct cpu_info *ih_cpu;
 };
 
+struct xen_intr_handle {
+	int pirq; /* also contains the  APIC_INT_* flags if NIOAPIC > 0 */
+	int evtch;
+};
 
 extern struct intrstub xenev_stubs[];
 
@@ -172,8 +178,26 @@ spllower(int nlevel)
  * Miscellaneous
  */
 #define	spl0()		spllower(IPL_NONE)
-#define splraiseipl(x) 	splraise(x)
 #define	splx(x)		spllower(x)
+
+typedef uint8_t ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return splraise(icookie._ipl);
+}
 
 #include <sys/spl.h>
 
@@ -221,10 +245,13 @@ void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
 void intr_disestablish(struct intrhand *);
 const char *intr_string(int);
 void cpu_intr_init(struct cpu_info *);
+int xen_intr_map(int *, int);
 #ifdef INTRDEBUG
 void intr_printconfig(void);
 #endif
-
+int intr_find_mpmapping(int, int, struct xen_intr_handle *);
+struct pic *intr_findpic(int);
+void intr_add_pcibus(struct pcibus_attach_args *);
 
 #endif /* !_LOCORE */
 

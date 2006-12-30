@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.5 2004/12/28 01:12:26 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.5.10.1 2006/12/30 20:49:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.5 2004/12/28 01:12:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.5.10.1 2006/12/30 20:49:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ isofncmp(fn, fnlen, isofn, isolen, joliet_level)
 				break;
 			}
 			fn++;
-			for (i = 0; --fnlen >= 0; i = i * 10 + *fn++ - '0') {
+			for (i = 0; fnlen-- != 0; i = i * 10 + *fn++ - '0') {
 				if (*fn < '0' || *fn > '9') {
 					return -1;
 				}
@@ -226,6 +226,7 @@ wget(const u_char **str, size_t *sz, int joliet_level)
 		 */
 		u_int16_t c = *str[0];
 		(*str)++;
+		(*sz)--;
 
 		return c;
 	}

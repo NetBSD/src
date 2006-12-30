@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.34.2.1 2006/06/21 15:11:01 yamt Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.34.2.2 2006/12/30 20:50:33 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,13 +45,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.34.2.1 2006/06/21 15:11:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.34.2.2 2006/12/30 20:50:33 yamt Exp $");
 
 #include "gre.h"
 #if NGRE > 0
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "opt_atalk.h"
 #include "bpfilter.h"
 
@@ -84,10 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.34.2.1 2006/06/21 15:11:01 yamt Exp $")
 #error ip_gre input without IP?
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #ifdef NETATALK
 #include <netatalk/at.h>
@@ -146,126 +141,22 @@ gre_input(struct mbuf *m, ...)
 int
 gre_input2(struct mbuf *m, int hlen, u_char proto)
 {
-	struct greip *gip;
-	int s, isr;
-	struct ifqueue *ifq;
+	const struct greip *gip;
 	struct gre_softc *sc;
-	u_int16_t flags;
-#if NBPFILTER > 0
-	u_int32_t af = AF_INET;		/* af passed to BPF tap */
-#endif
 
 	if ((sc = gre_lookup(m, proto)) == NULL) {
 		/* No matching tunnel or tunnel is down. */
-		return (0);
+		return 0;
 	}
 
 	if (m->m_len < sizeof(*gip)) {
 		m = m_pullup(m, sizeof(*gip));
 		if (m == NULL)
-			return (ENOBUFS);
+			return ENOBUFS;
 	}
-	gip = mtod(m, struct greip *);
+	gip = mtod(m, const struct greip *);
 
-	sc->sc_if.if_ipackets++;
-	sc->sc_if.if_ibytes += m->m_pkthdr.len;
-
-	switch (proto) {
-	case IPPROTO_GRE:
-		hlen += sizeof(struct gre_h);
-
-		/* process GRE flags as packet can be of variable len */
-		flags = ntohs(gip->gi_flags);
-
-		/* Checksum & Offset are present */
-		if ((flags & GRE_CP) | (flags & GRE_RP))
-			hlen += 4;
-		/* We don't support routing fields (variable length) */
-		if (flags & GRE_RP)
-			return (0);
-		if (flags & GRE_KP)
-			hlen += 4;
-		if (flags & GRE_SP)
-			hlen += 4;
-
-		switch (ntohs(gip->gi_ptype)) { /* ethertypes */
-		case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
-			ifq = &ipintrq;          /* we are in ip_input */
-			isr = NETISR_IP;
-			break;
-#ifdef NS
-		case ETHERTYPE_NS:
-			ifq = &nsintrq;
-			isr = NETISR_NS;
-#if NBPFILTER > 0
-			af = AF_NS;
-#endif
-			break;
-#endif
-#ifdef NETATALK
-		case ETHERTYPE_ATALK:
-			ifq = &atintrq1;
-			isr = NETISR_ATALK;
-#if NBPFILTER > 0
-			af = AF_APPLETALK;
-#endif
-			break;
-#endif
-#ifdef INET6
-		case ETHERTYPE_IPV6:
-#ifdef GRE_DEBUG
-			printf( "ip_gre.c/gre_input2: IPv6 packet\n" );
-#endif
-			ifq = &ip6intrq;
-			isr = NETISR_IPV6;
-#if NBPFILTER > 0
-			af = AF_INET6;
-#endif
-			break;
-#endif
-		default:	   /* others not yet supported */
-			printf( "ip_gre.c/gre_input2: unhandled ethertype 0x%04x\n", (int) ntohs(gip->gi_ptype) );
-			return (0);
-		}
-		break;
-	default:
-		/* others not yet supported */
-		return (0);
-	}
-
-	if (hlen > m->m_pkthdr.len) {
-		m_freem(m);
-		return (EINVAL);
-	}
-	m_adj(m, hlen);
-
-#if NBPFILTER > 0
-	if (sc->sc_if.if_bpf) {
-		struct mbuf m0;
-
-		m0.m_flags = 0;
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char *)&af;
-
-		bpf_mtap(sc->sc_if.if_bpf, &m0);
-	}
-#endif /*NBPFILTER > 0*/
-
-	m->m_pkthdr.rcvif = &sc->sc_if;
-
-	s = splnet();		/* possible */
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
-		m_freem(m);
-	} else {
-		IF_ENQUEUE(ifq, m);
-	}
-	/* we need schednetisr since the address family may change */
-	schednetisr(isr);
-	splx(s);
-
-	return (1);	/* packet is done, no further processing needed */
+	return gre_input3(sc, m, hlen, proto, &gip->gi_g);
 }
 
 /*
@@ -281,6 +172,7 @@ gre_mobile_input(struct mbuf *m, ...)
 	struct mobip_h *mip;
 	struct ifqueue *ifq;
 	struct gre_softc *sc;
+	uint8_t *hdr;
 	int hlen, s;
 	va_list ap;
 	int msiz;
@@ -295,12 +187,13 @@ gre_mobile_input(struct mbuf *m, ...)
 		return;
 	}
 
-	if (m->m_len < sizeof(*mip)) {
+	if (M_UNWRITABLE(m, sizeof(*mip))) {
 		m = m_pullup(m, sizeof(*mip));
 		if (m == NULL)
 			return;
 	}
 	ip = mtod(m, struct ip *);
+	/* XXX what if there are IP options? */
 	mip = mtod(m, struct mobip_h *);
 
 	sc->sc_if.if_ipackets++;
@@ -312,8 +205,8 @@ gre_mobile_input(struct mbuf *m, ...)
 	} else
 		msiz = MOB_H_SIZ_S;
 
-	if (m->m_len < (ip->ip_hl << 2) + msiz) {
-		m = m_pullup(m, (ip->ip_hl << 2) + msiz);
+	if (M_UNWRITABLE(m, hlen + msiz)) {
+		m = m_pullup(m, hlen + msiz);
 		if (m == NULL)
 			return;
 		ip = mtod(m, struct ip *);
@@ -328,26 +221,18 @@ gre_mobile_input(struct mbuf *m, ...)
 		return;
 	}
 
-	memmove(ip + (ip->ip_hl << 2), ip + (ip->ip_hl << 2) + msiz,
-		m->m_len - msiz - (ip->ip_hl << 2));
+	hdr = mtod(m, uint8_t *);
+	memmove(hdr + hlen, hdr + hlen + msiz, m->m_len - msiz - hlen);
 	m->m_len -= msiz;
 	ip->ip_len = htons(ntohs(ip->ip_len) - msiz);
 	m->m_pkthdr.len -= msiz;
 
 	ip->ip_sum = 0;
-	ip->ip_sum = in_cksum(m, (ip->ip_hl << 2));
+	ip->ip_sum = in_cksum(m, hlen);
 
 #if NBPFILTER > 0
-	if (sc->sc_if.if_bpf) {
-		struct mbuf m0;
-		u_int af = AF_INET;
-
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char *)&af;
-
-		bpf_mtap(sc->sc_if.if_bpf, &m0);
-	}
+	if (sc->sc_if.if_bpf != NULL)
+		bpf_mtap_af(sc->sc_if.if_bpf, AF_INET, m);
 #endif /*NBPFILTER > 0*/
 
 	ifq = &ipintrq;
@@ -355,9 +240,8 @@ gre_mobile_input(struct mbuf *m, ...)
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);
-	} else {
+	} else
 		IF_ENQUEUE(ifq, m);
-	}
 	splx(s);
 }
 
@@ -367,19 +251,18 @@ gre_mobile_input(struct mbuf *m, ...)
 struct gre_softc *
 gre_lookup(struct mbuf *m, u_int8_t proto)
 {
-	struct ip *ip = mtod(m, struct ip *);
+	const struct ip *ip = mtod(m, const struct ip *);
 	struct gre_softc *sc;
 
-	for (sc = LIST_FIRST(&gre_softc_list); sc != NULL;
-	     sc = LIST_NEXT(sc, sc_list)) {
-		if ((sc->g_dst.s_addr == ip->ip_src.s_addr) &&
-		    (sc->g_src.s_addr == ip->ip_dst.s_addr) &&
-		    (sc->g_proto == proto) &&
-		    ((sc->sc_if.if_flags & IFF_UP) != 0))
-			return (sc);
+	LIST_FOREACH(sc, &gre_softc_list, sc_list) {
+		if (sc->g_dst.s_addr == ip->ip_src.s_addr &&
+		    sc->g_src.s_addr == ip->ip_dst.s_addr &&
+		    sc->sc_proto == proto &&
+		    (sc->sc_if.if_flags & IFF_UP) != 0)
+			return sc;
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 #endif /* if NGRE > 0 */

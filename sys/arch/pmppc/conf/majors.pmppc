@@ -1,7 +1,7 @@
-#	$NetBSD: majors.pmppc,v 1.15.2.1 2006/06/21 14:54:49 yamt Exp $
+#	$NetBSD: majors.pmppc,v 1.15.2.2 2006/12/30 20:46:43 yamt Exp $
 
 # Majors up to 191 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/dev/majors.
 #
 # Device majors for pmppc
@@ -62,5 +62,5 @@ device-major	wsfont		char 63			wsfont
 device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independant driver majors are assigned in 
+# New machine-independent driver majors are assigned in 
 # sys/conf/majors.

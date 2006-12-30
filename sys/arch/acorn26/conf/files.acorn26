@@ -1,4 +1,4 @@
-# $NetBSD: files.acorn26,v 1.7 2004/01/20 19:58:00 jdolecek Exp $
+# $NetBSD: files.acorn26,v 1.7.16.1 2006/12/30 20:45:18 yamt Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -53,9 +53,6 @@ attach	fpu at cpu
 defflag	opt_fputypes.h		FPU_FPPC FPU_FPA
 file	arch/acorn26/acorn26/fpu.c		fpu		needs-flag
 file	arch/acorn26/acorn26/fpu_asm.S		fpu
-
-# Real-time clock support
-file	arch/acorn26/ioc/rtc.c
 
 # I/O bus (on the far side of the address and data latches)
 device iobus { base = -1 }
@@ -193,6 +190,7 @@ file	arch/acorn26/acorn26/db_machdep.c		ddb
 file	arch/acorn26/acorn26/start.c
 file	arch/acorn26/acorn26/autoconf.c
 file	arch/acorn26/acorn26/bus.c
+file	arch/acorn26/acorn26/bus_asm.S
 file	arch/acorn26/acorn26/conf.c
 file	arch/acorn26/acorn26/cons_machdep.c
 file	arch/acorn26/acorn26/copyinout.S

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.24.4.1 2006/06/21 15:04:21 yamt Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.24.4.2 2006/12/30 20:48:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.24.4.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.24.4.2 2006/12/30 20:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,10 +127,8 @@ static const int ec_membase[] = {
 #define	NEC_MEMBASE	(sizeof(ec_membase) / sizeof(ec_membase[0]))
 
 int
-ec_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ec_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t nict, asict, memt;
@@ -253,9 +251,7 @@ ec_probe(parent, match, aux)
 }
 
 void
-ec_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ec_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ec_softc *esc = (struct ec_softc *)self;
 	struct dp8390_softc *sc = &esc->sc_dp8390;
@@ -513,8 +509,7 @@ ec_attach(parent, self, aux)
 }
 
 int
-ec_fake_test_mem(sc)
-	struct dp8390_softc *sc;
+ec_fake_test_mem(struct dp8390_softc *sc)
 {
 
 	/*

@@ -1,4 +1,6 @@
-/*	$NetBSD: cd18xx.c,v 1.10.4.1 2006/06/21 15:02:53 yamt Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.10.4.2 2006/12/30 20:48:02 yamt Exp $	*/
+
+/* XXXad does this even compile? */
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -101,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.10.4.1 2006/06/21 15:02:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.10.4.2 2006/12/30 20:48:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -429,12 +431,7 @@ cdttyopen(dev, flag, mode, p)
 
 	tp = port->p_tty;
 
-	/* enforce exclude */
-	if (tp == NULL ||
-	    (ISSET(tp->t_state, TS_ISOPEN) &&
-	     ISSET(tp->t_state, TS_XCLUDE) &&
-	     kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-			       &p->p_acflag) != 0))
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -655,8 +652,8 @@ cdttyioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-					  &p->p_acflag);
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			return (error);
 		port->p_swflags = *(int *)data;

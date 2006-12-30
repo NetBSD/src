@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.100.2.1 2006/06/21 15:11:00 yamt Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.100.2.2 2006/12/30 20:50:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.100.2.1 2006/06/21 15:11:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.100.2.2 2006/12/30 20:50:33 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -185,7 +185,9 @@ in_pcballoc(struct socket *so, void *v)
 	int error;
 #endif
 
+	s = splnet();
 	inp = pool_get(&inpcb_pool, PR_NOWAIT);
+	splx(s);
 	if (inp == NULL)
 		return (ENOBUFS);
 	bzero((caddr_t)inp, sizeof(*inp));
@@ -196,7 +198,9 @@ in_pcballoc(struct socket *so, void *v)
 #if defined(IPSEC) || defined(FAST_IPSEC)
 	error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
 	if (error != 0) {
+		s = splnet();
 		pool_put(&inpcb_pool, inp);
+		splx(s);
 		return error;
 	}
 #endif
@@ -212,13 +216,13 @@ in_pcballoc(struct socket *so, void *v)
 }
 
 int
-in_pcbbind(void *v, struct mbuf *nam, struct proc *p)
+in_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 {
 	struct in_ifaddr *ia = NULL;
 	struct inpcb *inp = v;
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
-	struct sockaddr_in *sin;
+	struct sockaddr_in *sin = NULL; /* XXXGCC */
 	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
 
@@ -267,7 +271,10 @@ in_pcbbind(void *v, struct mbuf *nam, struct proc *p)
 #ifndef IPNOPRIVPORTS
 		/* GROSS */
 		if (ntohs(lport) < IPPORT_RESERVED &&
-		    (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+		    (l == 0 || kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_BIND,
+		    KAUTH_REQ_NETWORK_BIND_PRIVPORT, so, sin,
+		    NULL)))
 			return (EACCES);
 #endif
 #ifdef INET6
@@ -308,8 +315,10 @@ noname:
 
 		if (inp->inp_flags & INP_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-			if (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-							&p->p_acflag))
+			if (l == 0 || kauth_authorize_network(l->l_cred,
+			    KAUTH_NETWORK_BIND,
+			    KAUTH_REQ_NETWORK_BIND_PRIVPORT, so,
+			    sin, NULL))
 				return (EACCES);
 #endif
 			mymin = lowportmin;
@@ -359,7 +368,7 @@ noname:
  * then pick one.
  */
 int
-in_pcbconnect(void *v, struct mbuf *nam, struct proc *p)
+in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 {
 	struct inpcb *inp = v;
 	struct in_ifaddr *ia = NULL;
@@ -429,7 +438,7 @@ in_pcbconnect(void *v, struct mbuf *nam, struct proc *p)
 		return (EADDRINUSE);
 	if (in_nullhost(inp->inp_laddr)) {
 		if (inp->inp_lport == 0) {
-			error = in_pcbbind(inp, NULL, p);
+			error = in_pcbbind(inp, NULL, l);
 			/*
 			 * This used to ignore the return value
 			 * completely, but we need to check for
@@ -486,16 +495,15 @@ in_pcbdetach(void *v)
 	sofree(so);
 	if (inp->inp_options)
 		(void)m_free(inp->inp_options);
-	if (inp->inp_route.ro_rt)
-		rtfree(inp->inp_route.ro_rt);
+	rtcache_free(&inp->inp_route);
 	ip_freemoptions(inp->inp_moptions);
 	s = splnet();
 	in_pcbstate(inp, INP_ATTACHED);
 	LIST_REMOVE(&inp->inp_head, inph_lhash);
 	CIRCLEQ_REMOVE(&inp->inp_table->inpt_queue, &inp->inp_head,
 	    inph_queue);
-	splx(s);
 	pool_put(&inpcb_pool, inp);
+	splx(s);
 }
 
 void
@@ -665,8 +673,7 @@ in_losing(struct inpcb *inp)
 	if (inp->inp_af != AF_INET)
 		return;
 
-	if ((rt = inp->inp_route.ro_rt)) {
-		inp->inp_route.ro_rt = 0;
+	if ((rt = inp->inp_route.ro_rt) != NULL) {
 		bzero((caddr_t)&info, sizeof(info));
 		info.rti_info[RTAX_DST] = &inp->inp_route.ro_dst;
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
@@ -675,19 +682,18 @@ in_losing(struct inpcb *inp)
 		if (rt->rt_flags & RTF_DYNAMIC)
 			(void) rtrequest(RTM_DELETE, rt_key(rt),
 				rt->rt_gateway, rt_mask(rt), rt->rt_flags,
-				(struct rtentry **)0);
-		else
+				NULL);
 		/*
 		 * A new route can be allocated
 		 * the next time output is attempted.
 		 */
-			rtfree(rt);
+		rtcache_free(&inp->inp_route);
 	}
 }
 
 /*
- * After a routing change, flush old routing
- * and allocate a (hopefully) better one.
+ * After a routing change, flush old routing.  A new route can be
+ * allocated the next time output is attempted.
  */
 void
 in_rtchange(struct inpcb *inp, int errno)
@@ -696,14 +702,8 @@ in_rtchange(struct inpcb *inp, int errno)
 	if (inp->inp_af != AF_INET)
 		return;
 
-	if (inp->inp_route.ro_rt) {
-		rtfree(inp->inp_route.ro_rt);
-		inp->inp_route.ro_rt = 0;
-		/*
-		 * A new route can be allocated the next time
-		 * output is attempted.
-		 */
-	}
+	rtcache_free(&inp->inp_route);
+
 	/* XXX SHOULD NOTIFY HIGHER-LEVEL PROTOCOLS */
 }
 
@@ -880,20 +880,18 @@ in_pcbrtentry(struct inpcb *inp)
 
 	ro = &inp->inp_route;
 
-	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	    !in_hosteq(satosin(&ro->ro_dst)->sin_addr, inp->inp_faddr))) {
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = (struct rtentry *)NULL;
-	}
-	if (ro->ro_rt == (struct rtentry *)NULL &&
-	    !in_nullhost(inp->inp_faddr)) {
+	if (!in_hosteq(satosin(&ro->ro_dst)->sin_addr, inp->inp_faddr))
+		rtcache_free(ro);
+	else
+		rtcache_check(ro);
+	if (ro->ro_rt == NULL && !in_nullhost(inp->inp_faddr)) {
 		bzero(&ro->ro_dst, sizeof(struct sockaddr_in));
 		ro->ro_dst.sa_family = AF_INET;
 		ro->ro_dst.sa_len = sizeof(ro->ro_dst);
 		satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
-		rtalloc(ro);
+		rtcache_init(ro);
 	}
-	return (ro->ro_rt);
+	return ro->ro_rt;
 }
 
 struct sockaddr_in *
@@ -909,22 +907,20 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	 * Note that we should check the address family of the cached
 	 * destination, in case of sharing the cache with IPv6.
 	 */
-	if (ro->ro_rt &&
-	    (ro->ro_dst.sa_family != AF_INET ||
+	if (ro->ro_dst.sa_family != AF_INET ||
 	    !in_hosteq(satosin(&ro->ro_dst)->sin_addr, sin->sin_addr) ||
-	    soopts & SO_DONTROUTE)) {
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = (struct rtentry *)0;
-	}
+	    (soopts & SO_DONTROUTE) != 0)
+		rtcache_free(ro);
+	else
+		rtcache_check(ro);
 	if ((soopts & SO_DONTROUTE) == 0 && /*XXX*/
-	    (ro->ro_rt == (struct rtentry *)0 ||
-	     ro->ro_rt->rt_ifp == (struct ifnet *)0)) {
+	    ro->ro_rt == NULL) {
 		/* No route yet, so try to acquire one */
 		bzero(&ro->ro_dst, sizeof(struct sockaddr_in));
 		ro->ro_dst.sa_family = AF_INET;
 		ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
 		satosin(&ro->ro_dst)->sin_addr = sin->sin_addr;
-		rtalloc(ro);
+		rtcache_init(ro);
 	}
 	/*
 	 * If we found a route, use the address
@@ -934,7 +930,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	 *
 	 * XXX Is this still true?  Do we care?
 	 */
-	if (ro->ro_rt && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
+	if (ro->ro_rt != NULL && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
 		ia = ifatoia(ro->ro_rt->rt_ifa);
 	if (ia == NULL) {
 		u_int16_t fport = sin->sin_port;
@@ -973,5 +969,13 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 			}
 		}
 	}
+	if (ia->ia_ifa.ifa_getifa != NULL) {
+		ia = ifatoia((*ia->ia_ifa.ifa_getifa)(&ia->ia_ifa,
+		                                      sintosa(sin)));
+	}
+#ifdef GETIFA_DEBUG
+	else
+		printf("%s: missing ifa_getifa\n", __func__);
+#endif
 	return satosin(&ia->ia_addr);
 }

@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.10.4.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.10.4.2 2006/12/30 20:48:27 yamt Exp $");
 
 #include "opt_isicisa.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.10.4.1 2006/06/21 15:04:21 ya
  * Access to the board is straight forward and simmilar to
  * the ELSA and DYNALINK cards. If a PCI version of this card
  * exists all we need is probably a pci-bus attachment, all
- * this low level routines should work imediately.
+ * this low level routines should work immediately.
  *
  * To reset the card:
  *   - write 0x01 to ITK_CONFIG

@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.7.2.1 2006/06/21 14:49:16 yamt Exp $	*/
+/*	$NetBSD: todclock.c,v 1.7.2.2 2006/12/30 20:45:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.7.2.1 2006/06/21 14:49:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.7.2.2 2006/12/30 20:45:33 yamt Exp $");
 
 /* Include header files */
 
@@ -198,7 +198,7 @@ resettodr()
 	if (todclock_sc->sc_rtc_write == NULL)
 		return;
 
-	sec = time.tv_sec;
+	sec = time_second;
 	sec -= rtc_offset * 60;
 	year = (sec / SECPER4YEARS) * 4;
 	sec %= SECPER4YEARS;
@@ -269,8 +269,7 @@ inittodr(base)
 	 */
 
 	/* Use the suggested time as a fall back */
-	time.tv_sec = base;
-	time.tv_usec = 0;
+	time_second = base;
 
 	/* Can we read an RTC ? */
 	if (todclock_sc != NULL && todclock_sc->sc_rtc_read) {
@@ -302,8 +301,7 @@ inittodr(base)
 
 	n += rtc_offset * 60;
 
-	time.tv_sec = n;
-	time.tv_usec = 0;
+	time_second = n;
 
 	/* timeset is used to ensure the time is valid before a resettodr() */
 

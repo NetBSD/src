@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.23.4.1 2006/06/21 14:59:35 yamt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.23.4.2 2006/12/30 20:47:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.23.4.1 2006/06/21 14:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.23.4.2 2006/12/30 20:47:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -565,6 +565,9 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 #endif
 		break;
 	}
+
+	if (error == EPASSTHROUGH)
+		error = ENOTTY;
 
 	/*
 	 * Copy any data to user, size was

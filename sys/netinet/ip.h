@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.26.12.1 2006/06/21 15:11:01 yamt Exp $	*/
+/*	$NetBSD: ip.h,v 1.26.12.2 2006/12/30 20:50:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -45,12 +45,12 @@
  */
 struct ip {
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_int8_t  ip_hl:4,		/* header length */
-		  ip_v:4;		/* version */
+	unsigned int ip_hl:4,		/* header length */
+		     ip_v:4;		/* version */
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int8_t  ip_v:4,		/* version */
-		  ip_hl:4;		/* header length */
+	unsigned int ip_v:4,		/* version */
+		     ip_hl:4;		/* header length */
 #endif
 	u_int8_t  ip_tos;		/* type of service */
 	u_int16_t ip_len;		/* total length */
@@ -76,11 +76,6 @@ struct ip {
 #define	IPTOS_THROUGHPUT	0x08
 #define	IPTOS_RELIABILITY	0x04
 /*	IPTOS_LOWCOST		0x02 XXX */
-#if 1
-/* ECN RFC3168 obsoletes RFC2481, and these will be deprecated soon. */
-#define IPTOS_CE		0x01	/* congestion experienced */
-#define IPTOS_ECT		0x02	/* ECN-capable transport */
-#endif
 
 /*
  * Definitions for IP precedence (also in ip_tos) (hopefully unused)
@@ -142,12 +137,12 @@ struct	ip_timestamp {
 	u_int8_t ipt_len;		/* size of structure (variable) */
 	u_int8_t ipt_ptr;		/* index of current entry */
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_int8_t ipt_flg:4,		/* flags, see below */
-		 ipt_oflw:4;		/* overflow counter */
+	unsigned int ipt_flg:4,		/* flags, see below */
+		     ipt_oflw:4;	/* overflow counter */
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int8_t ipt_oflw:4,		/* overflow counter */
-		 ipt_flg:4;		/* flags, see below */
+	unsigned int ipt_oflw:4,	/* overflow counter */
+		     ipt_flg:4;		/* flags, see below */
 #endif
 	union ipt_timestamp {
 		 n_time	ipt_time[1];
@@ -195,3 +190,4 @@ struct ippseudo {
 	u_int16_t	ippseudo_len;	/* protocol length */
 } __packed;
 #endif /* !_NETINET_IP_H_ */
+

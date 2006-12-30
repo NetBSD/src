@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.219.2.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.219.2.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,10 +63,10 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	399002100	/* NetBSD 3.99.21 */
+#define	__NetBSD_Version__	499000700	/* NetBSD 4.99.7 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
-    (m) * 1000000) + (p) * 100) >= __NetBSD_Version__)
+    (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
 
 /*
  * Historical NetBSD #define
@@ -144,6 +144,18 @@
 /* Machine type dependent parameters. */
 #include <machine/param.h>
 #include <machine/limits.h>
+
+/* pages ("clicks") to disk blocks */
+#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
+
+/* bytes to pages */
+#define	ctob(x)		((x) << PGSHIFT)
+#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
+
+/* bytes to disk blocks */
+#define	dbtob(x)	((x) << DEV_BSHIFT)
+#define	btodb(x)	((x) >> DEV_BSHIFT)
 
 /*
  * Stack macros.  On most architectures, the stack grows down,
@@ -247,6 +259,7 @@
 #define	howmany(x, y)	(((x)+((y)-1))/(y))
 #endif
 #define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
+#define rounddown(x,y)	(((x)/(y))*(y))
 #define	powerof2(x)	((((x)-1)&(x))==0)
 
 /* Macros for min/max. */

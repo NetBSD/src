@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.21.4.1 2006/06/21 14:58:50 yamt Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.21.4.2 2006/12/30 20:47:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.21.4.1 2006/06/21 14:58:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.21.4.2 2006/12/30 20:47:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -145,10 +145,8 @@ freebsd_sys_mmap(l, v, retval)
 /* just a place holder */
 
 int
-freebsd_sys_rtprio(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_rtprio(struct lwp *l, void *v,
+    register_t *retval)
 {
 #ifdef notyet
 	struct freebsd_sys_rtprio_args /* {
@@ -163,10 +161,8 @@ freebsd_sys_rtprio(l, v, retval)
 
 #ifdef NTP
 int
-freebsd_ntp_adjtime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_ntp_adjtime(struct lwp *l, void *v,
+    register_t *retval)
 {
 #ifdef notyet
 	struct freebsd_ntp_adjtime_args /* {
@@ -179,10 +175,7 @@ freebsd_ntp_adjtime(l, v, retval)
 #endif
 
 int
-freebsd_sys_sigaction4(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sigaction4(struct lwp *l, void *v, register_t *retval)
 {
 	struct freebsd_sys_sigaction4_args /* {
 		syscallarg(int) signum;
@@ -219,10 +212,7 @@ freebsd_sys_sigaction4(l, v, retval)
 }
 
 int
-freebsd_sys_utrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_utrace(struct lwp *l, void *v, register_t *retval)
 {
 #ifdef KTRACE
 	struct freebsd_sys_utrace_args /* {
@@ -234,12 +224,8 @@ freebsd_sys_utrace(l, v, retval)
 	if (!KTRPOINT(p, KTR_USER))
 		return 0;
 
-	if (SCARG(uap, len) > KTR_USER_MAXLEN)
-		return EINVAL;
-
-	ktruser(l, "FreeBSD utrace", SCARG(uap, addr), SCARG(uap, len), 0);
-
-	return 0;
+	return ktruser(l, "FreeBSD utrace", SCARG(uap, addr), SCARG(uap, len),
+	    0);
 #else
 	return ENOSYS;
 #endif

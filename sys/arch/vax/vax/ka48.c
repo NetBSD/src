@@ -34,7 +34,7 @@
 /*** needs to be completed MK-990306 ***/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka48.c,v 1.15.2.1 2006/06/21 14:57:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka48.c,v 1.15.2.2 2006/12/30 20:47:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -75,8 +75,8 @@ struct	cpu_dep ka48_calls = {
 	ka48_mchk,
 	ka48_memerr, 
 	ka48_conf,
-	chip_clkread,
-	chip_clkwrite,
+	chip_gettime,
+	chip_settime,
 	6,      /* ~VUPS */
 	2,	/* SCB pages */
 	ka48_halt,

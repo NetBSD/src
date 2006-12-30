@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.12.10.1 2006/06/21 15:02:11 yamt Exp $	*/
+/*	$NetBSD: auconv.c,v 1.12.10.2 2006/12/30 20:47:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.12.10.1 2006/06/21 15:02:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.12.10.2 2006/12/30 20:47:49 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -480,8 +480,8 @@ DEFINE_FILTER(linear16_to_linear8)
  */
 int
 auconv_set_converter(const struct audio_format *formats, int nformats,
-		     int mode, const audio_params_t *param, int rateconv,
-		     stream_filter_list_t *list)
+    int mode, const audio_params_t *param, int rateconv,
+    stream_filter_list_t *list)
 {
 	audio_params_t work;
 	const struct conv_table *table;

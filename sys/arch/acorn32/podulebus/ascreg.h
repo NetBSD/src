@@ -1,4 +1,4 @@
-/* $NetBSD: ascreg.h,v 1.2.16.1 2006/06/21 14:47:48 yamt Exp $ */
+/* $NetBSD: ascreg.h,v 1.2.16.2 2006/12/30 20:45:18 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -69,72 +69,11 @@
 #ifndef _ASCREG_H_
 #define _ASCREG_H_
 
-/*
- * Hardware layout of the A3000 SDMAC. This also contains the
- * registers for the sbic chip, but in favor of separating DMA and
- * scsi, the scsi-driver doesn't make use of this dependency
- */
-
 #define v_char		volatile char
 #define	v_int		volatile int
 #define vu_char		volatile u_char
 #define vu_short	volatile u_short
 #define vu_int		volatile u_int
-
-struct sdmac {
-	short		pad0;
-	vu_short DAWR;		/* DACK Width Register WO */
-	vu_int   WTC;		/* Word Transfer Count Register RW */
-	short		pad1;
-	vu_short CNTR;		/* Control Register RW */
-	vu_int   ACR;		/* Address Count Register RW */
-	short		pad2;
-	vu_short ST_DMA;	/* Start DMA Transfers RW-Strobe */
-	short		pad3;
-	vu_short FLUSH;		/* Flush FIFO RW-Strobe */
-	short		pad4;
-	vu_short CINT;		/* Clear Interrupts RW-Strobe */
-	short		pad5;
-	vu_short ISTR;		/* Interrupt Status Register RO */
-	int		pad6[7];
-	short		pad7;
-	vu_short SP_DMA;	/* Stop DMA Transfers RW-Strobe */
-	char		pad8;
-	vu_char  SASR;		/* sbic asr */
-	char		pad9;
-	vu_char  SCMD;		/* sbic data */
-};
-
-/*
- * value to go into DAWR
- */
-#define DAWR_AHSC	3	/* according to A3000T service-manual */
-
-/*
- * bits defined for CNTR
- */
-#define CNTR_TCEN	(1<<5)	/* Terminal Count Enable */
-#define CNTR_PREST	(1<<4)	/* Perp Reset (not implemented :-((( ) */
-#define CNTR_PDMD	(1<<3)  /* Perp Device Mode Select (1=SCSI,0=XT/AT) */
-#define CNTR_INTEN	(1<<2)	/* Interrupt Enable */
-#define CNTR_DDIR	(1<<1)	/* Device Direction. 1==rd host, wr perp */
-#define CNTR_IO_DX	(1<<0)	/* IORDY & CSX1 Polarity Select */
-
-/*
- * bits defined for ISTR
- */
-#define ISTR_INTX	(1<<8)	/* XT/AT Interrupt pending */
-#define ISTR_INT_F	(1<<7)	/* Interrupt Follow */
-#define ISTR_INTS	(1<<6)	/* SCSI Peripheral Interrupt */
-#define ISTR_E_INT	(1<<5)	/* End-Of-Process Interrupt */
-#define ISTR_INT_P	(1<<4)	/* Interrupt Pending */
-#define ISTR_UE_INT	(1<<3)	/* Under-Run FIFO Error Interrupt */
-#define ISTR_OE_INT	(1<<2)	/* Over-Run FIFO Error Interrupt */
-#define ISTR_FF_FLG	(1<<1)	/* FIFO-Full Flag */
-#define ISTR_FE_FLG	(1<<0)	/* FIFO-Empty Flag */
-
-#define DMAGO_READ 0x01
-
 
 /* Addresses relative to podule base */
 
@@ -157,96 +96,12 @@ struct sdmac {
 #define IS_SBIC_IRQ		0x08
 
 #if 0
-/* SBIC Commands */
-
-#define SBIC_CMD_Reset		0x00	/* Reset the SBIC */
-#define SBIC_Abort		0x01	/* Abort command */
-#define SBIC_Sel_tx_wATN	0x08	/* Select and Transfer with ATN */
-#define SBIC_Sel_tx_woATN	0x09	/* Select and Transfer without ATN */
 
 /* SBIC status codes */
 
 #define SBIC_ResetOk	0x00
 #define SBIC_ResetAFOk	0x01
 
-/* SBIC registers		      bit7 bit6 bit5 bit4 bit3 bit2 bit1 bit0 */
-
-#define SBIC_OWNID	0x00	/* RW  FS1  FS0    0  EHP  EAF  ID2  ID1  ID0 */
-#define SBIC_CONTROL	0x01	/* RW  DM2  DM1  DM0  HHP  EDI  IDI   HA  HSP */
-#define SBIC_TIMEREG	0x02	/* RW timeout period  value = Tper*Ficlk/80d  */
-#define SBIC_CDB1TSECT	0x03	/* RW CDB byte 1 & Total sectors per track    */
-#define SBIC_CDB2THEAD	0x04	/* RW CDB byte 2 & Total number of heads      */
-#define SBIC_CDB3TCYL1	0x05	/* RW CDB byte 3 & Total no. of cylinders MSB */
-#define SBIC_CDB4TCYL2	0x06	/* RW CDB byte 4 & Total no. of cylinders LSB */
-#define SBIC_CDB5LADR1	0x07	/* RW CDB byte 5 & Logical addr to translate  */
-#define SBIC_CBD6LADR2	0x08	/* RW CDB byte 6 & Logical addr to translate  */
-#define SBIC_CDB7LADR3	0x09	/* RW CDB byte 7 & Logical addr to translate  */
-#define SBIC_CDB8LADR4	0x0A	/* RW CDB byte 8 & Logical addr to translate  */
-#define SBIC_CDB9SECT	0x0B	/* RW CDB byte 9 & Translation sector result  */
-#define SBIC_CDB10HEAD	0x0C	/* RW CDB byte 10 & Translation head result   */
-#define SBIC_CDB11CYL1	0x0D	/* RW CDB byte 11 & Translation cyl result MSB*/
-#define SBIC_CDB12CYL2	0x0E	/* RW CDB byte 12 & Translation cyl result LSB*/
-#define SBIC_TARGETLUN	0x0F	/* RW  TLV  DOK    0    0    0  TL2  TL1  TL0 */
-#define SBIC_COMPHASE	0x10	/* RW Command Phase Register for multi-phase  */
-#define SBIC_SYNCTX	0x11	/* RW    0  TP2  TP1  TP0  OF3  OF2  OF1  OF0 */
-#define SBIC_TXCOUNT1	0x12	/* RW Transfer count MSB                      */
-#define SBIC_TXCOUNT2	0x13	/* RW Transfer count                          */
-#define SBIC_TXCOUNT3	0x14	/* RW Transfer count LSB                      */
-#define SBIC_DESTID	0x15	/* RW  SCC  DPD    0    0    0  DI2  DI1  DI0 */
-#define SBIC_SOURCEID	0x16	/* RW   ER   ES  DSP    0  SIV  SI2  SI1  SI0 */
-#define SBIC_SCSISTAT	0x17	/* RO **Interrupt type***  **Int. qualifier** */
-#define SBIC_COMMAND	0x18	/* RW  SBT *********Command code************* */
-#define SBIC_DATA	0x19	/* RW Access to data i/o FIFO for polled use  */
-
-#define SBIC_ADDRREG	0x00
-#define SBIC_DATAREG	0x04
-#define SBIC_AUX_STATUS	0x00
-
-/*
- * My ID register, and/or CDB Size
- */
-  
-#define SBIC_ID_FS_8_10		0x00	/* Input clock is  8-10 MHz */
-					/* 11 MHz is invalid */
-#define SBIC_ID_FS_12_15	0x40	/* Input clock is 12-15 MHz */
-#define SBIC_ID_FS_16_20	0x80	/* Input clock is 16-20 MHz */
-#define SBIC_ID_EHP		0x10	/* Enable host parity */
-#define SBIC_ID_EAF		0x08	/* Enable Advanced Features */
-#define SBIC_ID_MASK		0x07
-#define SBIC_ID_CBDSIZE_MASK	0x0f	/* if unk SCSI cmd group */
-
-/*
- * Control register
-*/
-  
-#define SBIC_CTL_DMA		0x80	/* Single byte dma */
-#define SBIC_CTL_DBA_DMA	0x40	/* direct buffer acces (bus master)*/
-#define SBIC_CTL_BURST_DMA	0x20	/* continuous mode (8237) */
-#define SBIC_CTL_NO_DMA		0x00	/* Programmed I/O */
-#define SBIC_CTL_HHP		0x10	/* Halt on host parity error */
-#define SBIC_CTL_EDI		0x08	/* Ending disconnect interrupt */
-#define SBIC_CTL_IDI		0x04	/* Intermediate disconnect interrupt*/
-#define SBIC_CTL_HA		0x02	/* Halt on ATN */
-#define SBIC_CTL_HSP		0x01	/* Halt on SCSI parity error */
-
-/*
- * Destination ID register
- */
-
-#define SBIC_DID_DPD		0x40	/* Data Phase Direction */
-
-/*
- * Auxiliary Status Register
- */
-  
-#define SBIC_ASR_INT		0x80	/* Interrupt pending */
-#define SBIC_ASR_LCI		0x40	/* Last command ignored */
-#define SBIC_ASR_BSY		0x20	/* Busy, only cmd/data/asr readable */
-#define SBIC_ASR_CIP		0x10	/* Busy, cmd unavail also */
-#define SBIC_ASR_xxx		0x0c
-#define SBIC_ASR_PE		0x02	/* Parity error (even) */
-#define SBIC_ASR_DBR		0x01	/* Data Buffer Ready */
-   
 /* DMAC constants */
 
 #define DMAC_Bits		0x01
@@ -277,34 +132,6 @@ temphi  = dmac + 0x0218;/*    RO  T15  T14  T13  T12  T11  T10   T9   T8 */
 #endif
 #define DMAC_REQREG	0x001C	/* RW ---- ---- ---- ---- SRQ3 SRQ2 SRQ1 SRQ0 */
 #define DMAC_MASKREG	0x021C	/* RW ---- ---- ---- ----   M3   M2   M1   M0 */
-
-#ifndef _LOCORE
-#define WriteSBIC(a, d) \
-	WriteByte(sbic_base + SBIC_ADDRREG, a); \
-	WriteByte(sbic_base + SBIC_DATAREG, d);
-
-/*
-#define ReadSBIC(a) \
-	(WriteByte(sbic_base, a), ReadWord(sbic_base + 4) & 0xff)
-*/
-#define ReadSBIC(a) \
-	ReadSBIC1(sbic_base, a)
-
-
-static inline int
-ReadSBIC1(sbic_base, a)
-	u_int sbic_base;
-	int a;
-{
-	WriteByte(sbic_base + SBIC_ADDRREG, a);
-	return(ReadByte(sbic_base + SBIC_DATAREG));
-}
-
-
-#define WriteDMAC(a, d) WriteByte(dmac_base + a, d)
-#define ReadDMAC(a) ReadByte(dmac_base + a)
-#endif
-
 
 #endif
 #endif /* _ASCREG_H_ */

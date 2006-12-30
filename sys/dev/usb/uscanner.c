@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.49.2.1 2006/06/21 15:07:45 yamt Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.49.2.2 2006/12/30 20:49:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.49.2.1 2006/06/21 15:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.49.2.2 2006/12/30 20:49:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,6 +264,7 @@ dev_type_kqfilter(uscannerkqfilter);
 const struct cdevsw uscanner_cdevsw = {
 	uscanneropen, uscannerclose, uscannerread, uscannerwrite,
 	uscannerioctl, nostop, notty, uscannerpoll, nommap, uscannerkqfilter,
+	D_OTHER,
 };
 #elif defined(__OpenBSD__)
 cdev_decl(uscanner);
@@ -394,7 +395,8 @@ USB_ATTACH(uscanner)
 }
 
 int
-uscanneropen(dev_t dev, int flag, int mode, struct lwp *l)
+uscanneropen(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct uscanner_softc *sc;
 	int unit = USCANNERUNIT(dev);
@@ -457,7 +459,8 @@ uscanneropen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-uscannerclose(dev_t dev, int flag, int mode, struct lwp *l)
+uscannerclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct uscanner_softc *sc;
 
@@ -766,7 +769,8 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 }
 
 int
-uscannerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+uscannerioctl(dev_t dev, u_long cmd, caddr_t addr,
+    int flag, struct lwp *l)
 {
 	return (EINVAL);
 }

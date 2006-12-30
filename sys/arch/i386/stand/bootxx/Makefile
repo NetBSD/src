@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.7.12.1 2006/06/21 14:52:44 yamt Exp $
+# $NetBSD: Makefile,v 1.7.12.2 2006/12/30 20:46:19 yamt Exp $
 
 SUBDIR=	bootxx_cd9660 bootxx_ffsv1 .WAIT bootxx_ffsv2 bootxx_lfsv1 bootxx_lfsv2
 SUBDIR+=bootxx_msdos bootxx_ustarfs
 
-LIBOBJ:= ${.OBJDIR}
+LIBOBJ= ${.OBJDIR}
 .MAKEOVERRIDES+= LIBOBJ
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.25.2.1 2006/06/21 15:04:21 yamt Exp $	*/
+/*	$NetBSD: ym.c,v 1.25.2.2 2006/12/30 20:48:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.25.2.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.25.2.2 2006/12/30 20:48:27 yamt Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -204,6 +204,7 @@ const struct audio_hw_if ym_hw_if = {
 	ad1848_isa_trigger_output,
 	ad1848_isa_trigger_input,
 	NULL,
+	NULL,	/* powerstate */
 };
 
 static inline int ym_read(struct ym_softc *, int);
@@ -306,7 +307,7 @@ ym_attach(struct ym_softc *sc)
 #endif
 	ym_powerdown_blocks(sc);
 
-	powerhook_establish(ym_power_hook, sc);
+	powerhook_establish(DVNAME(sc), ym_power_hook, sc);
 #endif
 
 	/* Set tone control to the default position. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11.2.1 2006/06/21 14:50:07 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11.2.2 2006/12/30 20:45:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11.2.1 2006/06/21 14:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11.2.2 2006/12/30 20:45:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +58,6 @@ static void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args ma;
-
-	/*
-	 * XXX Check for Qube/RaQ 1 vs. 2.
-	 */
 
 	printf("\n");
 

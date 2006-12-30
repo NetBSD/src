@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.28 2005/06/03 18:19:11 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.28.2.1 2006/12/30 20:46:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28 2005/06/03 18:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.2.1 2006/12/30 20:46:30 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28 2005/06/03 18:19:11 matt Exp $"
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
@@ -189,9 +190,14 @@ pci_intr_map(pa, ihp)
 {
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
+	
+#if DEBUG
+	printf("%s: pin: %d, line: %d\n", __FUNCTION__, pin, line);
+#endif
 
 	if (pin == 0) {
 		/* No IRQ used. */
+		printf("pci_intr_map: interrupt pin %d\n", pin);
 		goto bad;
 	}
 
@@ -294,7 +300,7 @@ fixpci(parent, pc)
 {
 	int node;
 	pcitag_t tag;
-	pcireg_t csr, intr;
+	pcireg_t csr, intr, id;
 	int len, i, ilen;
 	int32_t irqs[4];
 	struct {
@@ -376,6 +382,27 @@ fixpci(parent, pc)
 			if (len <= 0)
 				continue;
 		}
+
+		/* 
+		 * For PowerBook 2400, 3400 and original G3:
+		 * check if we have a 2nd ohare PIC - if so frob the built-in 
+		 * tlp's IRQ to 60
+		 * first see if we have something on bus 0 device 13 and if 
+		 * it's a DEC 21041
+		 */
+		id = pci_conf_read(pc, tag, PCI_ID_REG);
+		if ((tag == pci_make_tag(pc, 0, 13, 0)) &&
+		    (PCI_VENDOR(id) == PCI_VENDOR_DEC) && 
+		    (PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21041)) {
+
+			/* now look for the 2nd ohare */
+			if (OF_finddevice("/bandit/pci106b,7") != -1) {
+
+				irqs[0] = 60;
+				printf("\nohare: frobbing tlp IRQ to 60");
+			}
+		}
+
 		intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 		intr &= ~PCI_INTERRUPT_LINE_MASK;
 		intr |= irqs[0] & PCI_INTERRUPT_LINE_MASK;
@@ -398,6 +425,20 @@ find_node_intr(node, addr, intr)
 	u_int32_t imapmask[8], maskedaddr[8];
 	u_int32_t acells, icells;
 	char name[32];
+
+	/* XXXSL: 1st check for a  interrupt-parent property */
+        if (OF_getprop(node, "interrupt-parent", &iparent, sizeof(iparent)) == sizeof(iparent))
+	{
+		/* How many cells to specify an interrupt ?? */
+		if (OF_getprop(iparent, "#interrupt-cells", &icells, 4) != 4)
+			return -1;
+
+		if (OF_getprop(node, "interrupts", &map, sizeof(map)) != (icells * 4))
+			return -1;
+
+		memcpy(intr, map, icells * 4);
+		return (icells * 4);
+	}
 
 	parent = OF_parent(node);
 	len = OF_getprop(parent, "interrupt-map", map, sizeof(map));

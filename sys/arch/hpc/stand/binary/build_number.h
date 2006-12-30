@@ -1,4 +1,4 @@
-/*	$NetBSD: build_number.h,v 1.13.12.1 2006/06/21 14:51:37 yamt Exp $	*/
-#define HPCBOOT_BUILD_NUMBER	14
+/*	$NetBSD: build_number.h,v 1.13.12.2 2006/12/30 20:46:01 yamt Exp $	*/
+#define HPCBOOT_BUILD_NUMBER	15
 
 

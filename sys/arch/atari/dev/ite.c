@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.46.2.1 2006/06/21 14:49:56 yamt Exp $	*/
+/*	$NetBSD: ite.c,v 1.46.2.2 2006/12/30 20:45:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.46.2.1 2006/06/21 14:49:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.46.2.2 2006/12/30 20:45:44 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -442,9 +442,9 @@ iteopen(dev, mode, devtype, l)
 	}
 	else tp = ip->tp;
 
-	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
-	    && kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
+
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		ite_on(dev, 0);
 		first = 1;

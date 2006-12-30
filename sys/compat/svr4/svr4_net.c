@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.40.2.1 2006/06/21 14:59:52 yamt Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.40.2.2 2006/12/30 20:47:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.40.2.1 2006/06/21 14:59:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.40.2.2 2006/12/30 20:47:45 yamt Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -85,7 +85,7 @@ dev_type_open(svr4_netopen);
 
 const struct cdevsw svr4_net_cdevsw = {
 	svr4_netopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*
@@ -119,19 +119,14 @@ static const struct fileops svr4_netops = {
  * Used by new config, but we don't need it.
  */
 int
-svr4_netattach(n)
-	int n;
+svr4_netattach(int n)
 {
 	return 0;
 }
 
 
 int
-svr4_netopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct lwp *l;
+svr4_netopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	int type, protocol;
@@ -201,7 +196,7 @@ svr4_netopen(dev, flag, mode, l)
 	}
 
 	/* falloc() will use the descriptor for us */
-	if ((error = falloc(p, &fp, &fd)) != 0)
+	if ((error = falloc(l, &fp, &fd)) != 0)
 		return error;
 
 	if ((error = socreate(family, &so, type, protocol, l)) != 0) {

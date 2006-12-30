@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.33.4.1 2006/06/21 15:10:26 yamt Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.33.4.2 2006/12/30 20:50:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.33.4.1 2006/06/21 15:10:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.33.4.2 2006/12/30 20:50:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,7 +307,7 @@ umap_bypass(v)
 			kauth_cred_free(credp);
 			*credpp = savecredp;
 			if ((flags & LAYERFS_MBYPASSDEBUG) && credpp &&
-			    kauth_cred_geteuid((*credpp)) != 0)
+			    kauth_cred_geteuid(*credpp) != 0)
 			 	printf("umap_bypass: returning-user now %d\n\n",
 				    kauth_cred_geteuid(savecredp));
 		}
@@ -352,7 +352,7 @@ umap_lookup(v)
 	struct vnode *dvp, *vp, *ldvp;
 	struct mount *mp;
 	int error;
-	int i, flags, cnf = cnp->cn_flags;
+	int flags, cnf = cnp->cn_flags;
 
 	dvp = ap->a_dvp;
 	mp = dvp->v_mount;
@@ -378,7 +378,8 @@ umap_lookup(v)
 		compcredp = kauth_cred_dup(savecompcredp);
 		cnp->cn_cred = compcredp;
 
-		if ((flags & LAYERFS_MBYPASSDEBUG) && kauth_cred_geteuid(compcredp) != 0)
+		if ((flags & LAYERFS_MBYPASSDEBUG) &&
+		    kauth_cred_geteuid(compcredp) != 0)
 			printf("umap_lookup: component credit user was %d, group %d\n",
 			    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 
@@ -386,7 +387,8 @@ umap_lookup(v)
 		umap_mapids(mp, compcredp);
 	}
 
-	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp && kauth_cred_geteuid(compcredp) != 0)
+	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp &&
+	    kauth_cred_geteuid(compcredp) != 0)
 		printf("umap_lookup: component credit user now %d, group %d\n",
 		    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 
@@ -401,9 +403,6 @@ umap_lookup(v)
 		error = EROFS;
 
 	/* Do locking fixup as appropriate. See layer_lookup() for info */
-	if ((cnp->cn_flags & PDIRUNLOCK)) {
-		LAYERFS_UPPERUNLOCK(dvp, 0, i);
-	}
 	if (ldvp == vp) {
 		*ap->a_vpp = dvp;
 		VREF(dvp);
@@ -412,10 +411,6 @@ umap_lookup(v)
 		error = layer_node_create(mp, vp, ap->a_vpp);
 		if (error) {
 			vput(vp);
-			if (cnp->cn_flags & PDIRUNLOCK) {
-				if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
-					cnp->cn_flags &= ~PDIRUNLOCK;
-			}
 		}
 	}
 
@@ -432,7 +427,7 @@ umap_lookup(v)
 			kauth_cred_free(compcredp);
 		cnp->cn_cred = savecompcredp;
 		if ((flags & LAYERFS_MBYPASSDEBUG) && savecompcredp &&
-				kauth_cred_geteuid(savecompcredp) != 0)
+		    kauth_cred_geteuid(savecompcredp) != 0)
 		 	printf("umap_lookup: returning-component-user now %d\n",
 			    kauth_cred_geteuid(savecompcredp));
 	}

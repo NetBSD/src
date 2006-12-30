@@ -1,4 +1,4 @@
-/*	$NetBSD: ka680.c,v 1.11.2.1 2006/06/21 14:57:34 yamt Exp $	*/
+/*	$NetBSD: ka680.c,v 1.11.2.2 2006/12/30 20:47:14 yamt Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -35,7 +35,7 @@
 /* minor modifications for KA690 cache support by isildur@vaxpower.org */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka680.c,v 1.11.2.1 2006/06/21 14:57:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka680.c,v 1.11.2.2 2006/12/30 20:47:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,8 +93,8 @@ struct cpu_dep ka680_calls = {
 	ka680_mchk,
 	ka680_memerr, 
 	ka680_conf,
-	generic_clkread,
-	generic_clkwrite,
+	generic_gettime,
+	generic_settime,
 	24,	 /* ~VUPS */
 	2,	/* SCB pages */
 	generic_halt,

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.86 2005/06/19 20:00:28 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.86.2.1 2006/12/30 20:47:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.86 2005/06/19 20:00:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.86.2.1 2006/12/30 20:47:12 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.86 2005/06/19 20:00:28 thorpej Exp $")
 #include <sun3/sun3/interreg.h>
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3/obmem.h>
-#include <sun3/sun3/vector.h>
+#include <sun68k/sun68k/vector.h>
 
 #include "ksyms.h"
 

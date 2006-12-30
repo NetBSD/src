@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30.2.1 2006/06/21 14:47:47 yamt Exp $
+# $NetBSD: GENERIC,v 1.30.2.2 2006/12/30 20:45:18 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -61,7 +61,7 @@ file-system	PROCFS		# /proc
 file-system	KERNFS		# /kern
 file-system	FDESC		# /dev/fd
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -86,11 +86,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -132,7 +129,7 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
@@ -198,6 +195,9 @@ atabus* 	at dtide? channel ?	# ATA bus
 hcide*		at podulebus0 slot ?	# HCCS IDE interface
 atabus* 	at hcide? channel ?	# ATA bus
 
+sec*		at podulebus0 slot ?	# Acorn SCSI interface
+scsibus*	at sec?
+
 hcsc*		at podulebus0 slot ?	# HCCS 8-bit SCSI interface
 scsibus*	at hcsc?
 
@@ -228,6 +228,7 @@ arcvideo0	at root			# On-board video
 wsdisplay0	at arcvideo0
 
 pseudo-device	bpfilter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ccd		4
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
@@ -268,7 +269,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

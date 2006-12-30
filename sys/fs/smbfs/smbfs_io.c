@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.19.4.1 2006/06/21 15:09:30 yamt Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.19.4.2 2006/12/30 20:50:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.19.4.1 2006/06/21 15:09:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.19.4.2 2006/12/30 20:50:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, kauth_cred_t cred)
 	/* Simulate .. */
 	if (limit > 0 && offset < 2) {
 		memset(&de, 0, sizeof(de));
-		de.d_fileno = (np->n_parent ? np->n_parent->n_ino : 2);
+		de.d_fileno = (np->n_parent ? VTOSMB(np->n_parent)->n_ino : 2);
 		de.d_reclen = DE_SIZE;
 		de.d_type = DT_DIR;
 		de.d_namlen = 2;

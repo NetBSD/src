@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.35.2.1 2006/06/21 14:57:48 yamt Exp $	*/
+/*	$NetBSD: com.c,v 1.35.2.2 2006/12/30 20:47:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.35.2.1 2006/06/21 14:57:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.35.2.2 2006/12/30 20:47:21 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -413,9 +413,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp->t_param = comparam;
 	tp->t_dev = dev;
 
-	if ((tp->t_state & TS_ISOPEN) &&
-	    (tp->t_state & TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -683,7 +681,8 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case TIOCSFLAGS: {
 		int userbits, driverbits = 0;
 
-		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag); 
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error != 0)
 			return(EPERM); 
 

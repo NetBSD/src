@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.48.12.1 2006/06/21 15:11:58 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.48.12.2 2006/12/30 20:50:51 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -94,6 +94,9 @@
 #define	NFS_DEFRAHEAD	2		/* Def. read ahead # blocks */
 
 #define	NFS_MAXUIDHASH	64		/* Max. # of hashed uid entries/mp */
+
+#define	NFS_DEFDEADTHRESH NFS_NEVERDEAD	/* Default nm_deadthresh */
+#define	NFS_NEVERDEAD	9		/* Greater than max. nm_timeouts */
 
 #ifdef _KERNEL
 extern int nfs_niothreads;              /* Number of async_daemons desired */
@@ -225,6 +228,13 @@ struct mountd_exports_list {
 };
 
 /*
+ * try to keep nfsstats, which is exposed to userland via sysctl,
+ * compatible after NQNFS removal.
+ * 26 is the old value of NFS_NPROCS, which includes NQNFS procedures.
+ */
+#define	NFSSTATS_NPROCS	26
+
+/*
  * Stats structure
  */
 struct nfsstats {
@@ -244,9 +254,9 @@ struct nfsstats {
 	int	readlink_bios;
 	int	biocache_readdirs;
 	int	readdir_bios;
-	int	rpccnt[NFS_NPROCS];
+	int	rpccnt[NFSSTATS_NPROCS];
 	int	rpcretries;
-	int	srvrpccnt[NFS_NPROCS];
+	int	srvrpccnt[NFSSTATS_NPROCS];
 	int	srvrpc_errs;
 	int	srv_errs;
 	int	rpcrequests;
@@ -257,9 +267,9 @@ struct nfsstats {
 	int	srvcache_idemdonehits;
 	int	srvcache_nonidemdonehits;
 	int	srvcache_misses;
-	int	srvnqnfs_leases;
-	int	srvnqnfs_maxleases;
-	int	srvnqnfs_getleases;
+	int	__srvnqnfs_leases;	/* unused */
+	int	__srvnqnfs_maxleases;	/* unused */
+	int	__srvnqnfs_getleases;	/* unused */
 	int	srvvop_writes;
 };
 
@@ -358,8 +368,6 @@ extern TAILQ_HEAD(nfsreqhead, nfsreq) nfs_reqq;
 #ifndef NFS_WDELAYHASHSIZ
 #define	NFS_WDELAYHASHSIZ 16	/* and with this */
 #endif
-#define	NWDELAYHASH(sock, f) \
-	(&(sock)->ns_wdelayhashtbl[(*((u_int32_t *)(f))) % NFS_WDELAYHASHSIZ])
 #ifndef NFS_MUIDHASHSIZ
 #define NFS_MUIDHASHSIZ	63	/* Tune the size of nfsmount with this */
 #endif
@@ -486,6 +494,18 @@ struct nfsd {
 #define	NFSD_NEEDAUTH	0x04
 #define	NFSD_AUTHFAIL	0x08
 
+#define	NFSD_MAXFHSIZE	64
+typedef struct nfsrvfh {
+	size_t nsfh_size;
+	union {
+		fhandle_t u_fh;
+		uint8_t u_opaque[NFSD_MAXFHSIZE];
+	} nsfh_u;
+} nfsrvfh_t;
+#define	NFSRVFH_SIZE(nsfh)	((nsfh)->nsfh_size)
+#define	NFSRVFH_DATA(nsfh)	((nsfh)->nsfh_u.u_opaque)
+#define	NFSRVFH_FHANDLE(nsfh)	(&(nsfh)->nsfh_u.u_fh)
+
 /*
  * This structure is used by the server for describing each request.
  * Some fields are used only when write request gathering is performed.
@@ -512,7 +532,7 @@ struct nfsrv_descript {
 	u_int32_t		nd_retxid;	/* Reply xid */
 	u_int32_t		nd_duration;	/* Lease duration */
 	struct timeval		nd_starttime;	/* Time RPC initiated */
-	fhandle_t		nd_fh;		/* File handle */
+	nfsrvfh_t		nd_fh;		/* File handle */
 	kauth_cred_t	 	nd_cr;		/* Credentials */
 };
 
@@ -522,7 +542,6 @@ struct nfsrv_descript {
 #define ND_CHECK	0x04
 #define ND_LEASE	(ND_READ | ND_WRITE | ND_CHECK)
 #define ND_NFSV3	0x08
-#define ND_NQNFS	0x10
 #define ND_KERBNICK	0x20
 #define ND_KERBFULL	0x40
 #define ND_KERBAUTH	(ND_KERBNICK | ND_KERBFULL)
@@ -574,7 +593,7 @@ extern int nfs_numasync;
  */
 struct nfs_public {
 	int		np_valid;	/* Do we hold valid information */
-	fhandle_t	np_handle;	/* Filehandle for pub fs (internal) */
+	fhandle_t	*np_handle;	/* Filehandle for pub fs (internal) */
 	struct mount	*np_mount;	/* Mountpoint of exported fs */
 	char		*np_index;	/* Index file */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.16.16.1 2006/06/21 14:51:50 yamt Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.16.16.2 2006/12/30 20:46:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.16.16.1 2006/06/21 14:51:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.16.16.2 2006/12/30 20:46:03 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -179,9 +179,8 @@ com_vrip_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map bus space\n");
 		return;
 	}
-	sc->sc_iobase = va->va_addr;
-	sc->sc_iot = iot;
-	sc->sc_ioh = ioh;
+
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, va->va_addr);
 
 	sc->enable = NULL; /* XXX: CMU control */
 	sc->disable = NULL;

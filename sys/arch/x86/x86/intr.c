@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.21 2005/05/29 21:37:03 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.21.2.1 2006/12/30 20:47:22 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -104,9 +104,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2005/05/29 21:37:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21.2.1 2006/12/30 20:47:22 yamt Exp $");
 
 #include "opt_multiprocessor.h"
+#include "opt_acpi.h"
 
 #include <sys/cdefs.h>
 #include <sys/param.h> 
@@ -118,6 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2005/05/29 21:37:03 christos Exp $");
 #include <sys/proc.h>
 #include <sys/errno.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/atomic.h>
 #include <machine/i8259.h>
 #include <machine/cpu.h>
@@ -126,10 +129,12 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2005/05/29 21:37:03 christos Exp $");
 #include "ioapic.h"
 #include "lapic.h"
 #include "pci.h"
+#include "acpi.h"
 
-#if NIOAPIC > 0
+#if NIOAPIC > 0 || NACPI > 0
 #include <machine/i82093var.h> 
 #include <machine/mpbiosvar.h>
+#include <machine/mpacpi.h>
 #endif
 
 #if NLAPIC > 0
@@ -145,10 +150,12 @@ struct pic softintr_pic = {
 		.dv_xname = "softintr_fakepic",
 	},
 	.pic_type = PIC_SOFT,
+	.pic_vecbase = 0,
+	.pic_apicid = 0,
 	.pic_lock = __SIMPLELOCK_UNLOCKED,
 };
 
-#if NIOAPIC > 0
+#if NIOAPIC > 0 || NACPI > 0
 static int intr_scan_bus(int, int, int *);
 #if NPCI > 0
 static int intr_find_pcibridge(int, pcitag_t *, pci_chipset_tag_t *);
@@ -253,7 +260,7 @@ intr_calculatemasks(struct cpu_info *ci)
  *
  * XXX should maintain one list, not an array and a linked list.
  */
-#if (NPCI > 0) && (NIOAPIC > 0)
+#if (NPCI > 0) && ((NIOAPIC > 0) || NACPI > 0)
 struct intr_extra_bus {
 	int bus;
 	pcitag_t *pci_bridge_tag;
@@ -313,7 +320,7 @@ intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
 /*
  * XXX if defined(MULTIPROCESSOR) && .. ?
  */
-#if NIOAPIC > 0
+#if NIOAPIC > 0 || NACPI > 0
 int
 intr_find_mpmapping(int bus, int pin, int *handle)
 {
@@ -355,6 +362,11 @@ intr_scan_bus(int bus, int pin, int *handle)
 
 	for (mip = intrs; mip != NULL; mip = mip->next) {
 		if (mip->bus_pin == pin) {
+#if NACPI > 0
+			if (mip->linkdev != NULL)
+				if (mpacpi_findintr_linkdev(mip) != 0)
+					continue;
+#endif
 			*handle = mip->ioapic_ih;
 			return 0;
 		}
@@ -538,6 +550,22 @@ intr_biglock_wrapper(void *vp)
 	return ret;
 }
 #endif /* MULTIPROCESSOR */
+
+struct pic *
+intr_findpic(int num)
+{
+#if NIOAPIC > 0
+	struct pic *pic;
+
+	pic = (struct pic *)ioapic_find_bybase(num);
+	if (pic != NULL)
+		return pic;
+#endif
+	if (num < NUM_LEGACY_IRQS)
+		return &i8259_pic;
+
+	return NULL;
+}
 
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
@@ -792,6 +820,9 @@ cpu_intr_init(struct cpu_info *ci)
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
 	int i;
 #endif
+#if defined(INTRSTACKSIZE)
+	char *cp;
+#endif /* defined(INTRSTACKSIZE) */
 
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
@@ -866,6 +897,11 @@ cpu_intr_init(struct cpu_info *ci)
 
 	intr_calculatemasks(ci);
 
+#if defined(INTRSTACKSIZE)
+	cp = (char *)uvm_km_alloc(kernel_map, INTRSTACKSIZE, 0, UVM_KMF_WIRED);
+	ci->ci_intrstack = cp + INTRSTACKSIZE - sizeof(register_t);
+	ci->ci_idepth = -1;
+#endif /* defined(INTRSTACKSIZE) */
 }
 
 #ifdef MULTIPROCESSOR

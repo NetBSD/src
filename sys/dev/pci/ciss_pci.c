@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.1.18.2 2006/06/21 15:05:03 yamt Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.1.18.3 2006/12/30 20:48:43 yamt Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.1.18.2 2006/06/21 15:05:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.1.18.3 2006/12/30 20:48:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,8 @@ const struct {
 };
 
 int
-ciss_pci_match(struct device *parent, struct cfdata *match, void *aux)
+ciss_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	pcireg_t reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);

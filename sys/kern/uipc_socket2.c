@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.68.2.1 2006/06/21 15:09:39 yamt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.68.2.2 2006/12/30 20:50:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.68.2.1 2006/06/21 15:09:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.68.2.2 2006/12/30 20:50:07 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -149,13 +149,10 @@ soisdisconnected(struct socket *so)
  * connection is possible (subject to space constraints, etc.)
  * then we allocate a new structure, propoerly linked into the
  * data structure of the original socket, and return this.
- * Connstatus may be 0, or SO_ISCONFIRMING, or SO_ISCONNECTED.
- *
- * Currently, sonewconn() is defined as sonewconn1() in socketvar.h
- * to catch calls that are missing the (new) second parameter.
+ * Connstatus may be 0, SS_ISCONFIRMING, or SS_ISCONNECTED.
  */
 struct socket *
-sonewconn1(struct socket *head, int connstatus)
+sonewconn(struct socket *head, int connstatus)
 {
 	struct socket	*so;
 	int		soqueue;
@@ -377,7 +374,20 @@ sb_max_set(u_long new_sbmax)
 int
 soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 {
+	/*
+	 * there's at least one application (a configure script of screen)
+	 * which expects a fifo is writable even if it has "some" bytes
+	 * in its buffer.
+	 * so we want to make sure (hiwat - lowat) >= (some bytes).
+	 *
+	 * PIPE_BUF here is an arbitrary value chosen as (some bytes) above.
+	 * we expect it's large enough for such applications.
+	 */
+	u_long  lowat = MAX(sock_loan_thresh, MCLBYTES);
+	u_long  hiwat = lowat + PIPE_BUF;
 
+	if (sndcc < hiwat)
+		sndcc = hiwat;
 	if (sbreserve(&so->so_snd, sndcc, so) == 0)
 		goto bad;
 	if (sbreserve(&so->so_rcv, rcvcc, so) == 0)
@@ -385,7 +395,7 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 	if (so->so_rcv.sb_lowat == 0)
 		so->so_rcv.sb_lowat = 1;
 	if (so->so_snd.sb_lowat == 0)
-		so->so_snd.sb_lowat = MAX((int)MCLBYTES, sock_loan_thresh);
+		so->so_snd.sb_lowat = lowat;
 	if (so->so_snd.sb_lowat > so->so_snd.sb_hiwat)
 		so->so_snd.sb_lowat = so->so_snd.sb_hiwat;
 	return (0);
@@ -403,7 +413,7 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 int
 sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 {
-	struct proc *p = curproc; /* XXX */
+	struct lwp *l = curlwp; /* XXX */
 	rlim_t maxcc;
 	struct uidinfo *uidinfo;
 
@@ -411,8 +421,8 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
 	if (so) {
-		if (p && kauth_cred_geteuid(p->p_cred) == so->so_uidinfo->ui_uid)
-			maxcc = p->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
+		if (l && kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
+			maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
 		else
 			maxcc = RLIM_INFINITY;
 		uidinfo = so->so_uidinfo;

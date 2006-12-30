@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.14.2.1 2006/06/21 15:07:45 yamt Exp $	*/
+/*	$NetBSD: ustir.c,v 1.14.2.2 2006/12/30 20:49:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.14.2.1 2006/06/21 15:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.14.2.2 2006/12/30 20:49:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -857,7 +857,8 @@ ustir_activate(device_ptr_t self, enum devact act)
 
 /* ARGSUSED */
 Static int
-ustir_open(void *h, int flag, int mode, struct lwp *l)
+ustir_open(void *h, int flag, int mode,
+    struct lwp *l)
 {
 	struct ustir_softc *sc = h;
 	int error;
@@ -946,7 +947,8 @@ ustir_open(void *h, int flag, int mode, struct lwp *l)
 
 /* ARGSUSED */
 Static int
-ustir_close(void *h, int flag, int mode, struct lwp *l)
+ustir_close(void *h, int flag, int mode,
+    struct lwp *l)
 {
 	struct ustir_softc *sc = h;
 

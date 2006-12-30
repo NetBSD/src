@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.10.2.1 2006/06/21 14:51:29 yamt Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.10.2.2 2006/12/30 20:45:58 yamt Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.10.2.1 2006/06/21 14:51:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.10.2.2 2006/12/30 20:45:58 yamt Exp $");
 
 #define GSCDEBUG
 
@@ -144,8 +144,10 @@ gscattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ga = *ga;
 
+#ifdef USELEDS
 	if (machine_ledaddr)
 		printf(": %sleds", machine_ledword? "word" : "");
+#endif
 
 	printf ("\n");
 

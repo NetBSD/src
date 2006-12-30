@@ -93,22 +93,35 @@ com_dino_attach(parent, self, aux)
 	struct com_dino_softc *sc_dino = (void *)self;
 	struct confargs *ca = aux;
 	struct com_dino_regs *regs = (struct com_dino_regs *)ca->ca_hpa;
+	bus_addr_t iobase;
+	bus_space_handle_t ioh;
 
-	sc->sc_iot = ca->ca_iot;
-	sc->sc_iobase = (bus_addr_t)ca->ca_hpa + IOMOD_DEVOFFSET;
+	iobase = (bus_addr_t)ca->ca_hpa + IOMOD_DEVOFFSET;
 
 #ifdef work_in_progress
+	/*
+	 * XXX: gdamore: this is all wrong, the correct way is to use
+	 * com_is_console() as a test, which takes the bus_space_tag
+	 * and io base addresses as arguments.  comconsioh is not
+	 * present anymore, and was never really exported anyway.
+	 *
+	 * This code was already ifdef'd out, but if someone wants me
+	 * to fix it, let me know and I'll try to do so.  I don't have
+	 * hp700 h/w to test with, though.  - gdamore@NetBSD.org
+	 */
 	if (sc->sc_iobase == CONADDR)
 		sc->sc_ioh = comconsioh;
 	else 
 #endif
-		if (bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS,
-		    0, &sc->sc_ioh)) {
-			printf(": cannot map io space\n");
-			return;
-		}
+
+	if (bus_space_map(ca->ca_iot, iobase, COM_NPORTS, 0, &ioh)) {
+		printf(": cannot map io space\n");
+		return;
+	}
+	COM_INIT_REGS(sc->sc_regs, ca->ca_iot, ioh, iobase);
 
 #ifdef work_in_progress
+	/* XXX gdamore: wtf? */
 	if (sc->sc_iobase != CONADDR) {
 		/* regs->reset = 0xd0;
 		DELAY(1000); */

@@ -1,3 +1,5 @@
+/* $NetBSD: rmalloc.c,v 1.1.14.3 2006/12/30 20:45:21 yamt Exp $ */
+
 #include <lib/libsa/stand.h>
 #include <riscoscalls.h>
 

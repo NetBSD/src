@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81.2.1 2006/06/21 14:54:11 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81.2.2 2006/12/30 20:46:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.2.1 2006/06/21 14:54:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.2.2 2006/12/30 20:46:40 yamt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -159,7 +159,6 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 struct idrom idrom;
-void (*readmicrotime)(struct timeval *tvp);
 void (*hardware_intr)(uint32_t, uint32_t, uint32_t, uint32_t);
 void (*enable_intr)(void);
 void (*disable_intr)(void);
@@ -226,11 +225,11 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
 		MIPS_INT_MASK_2,		/* IPL_{CLOCK,HIGH} */
 };
 
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 extern struct user *proc0paddr;
@@ -620,33 +619,6 @@ haltsys:
 	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT);
 	/*NOTREACHED*/
-}
-
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  Unfortunately, we can't read the hardware registers.
- * We guarantee that the time will be greater than the value obtained by a
- * previous call.
- */
-void
-microtime(struct timeval *tvp)
-{
-	int s = splclock();
-	static struct timeval lasttime;
-
-	if (readmicrotime)
-		readmicrotime(tvp);
-	else
-		*tvp = time;
-
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
 }
 
 void

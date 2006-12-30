@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_com.c,v 1.4 2003/07/15 00:24:55 lukem Exp $	*/
+/*	$NetBSD: pxa2x0_com.c,v 1.4.16.1 2006/12/30 20:45:38 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.4 2003/07/15 00:24:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.4.16.1 2006/12/30 20:45:38 yamt Exp $");
 
 #include "opt_com.h"
 
@@ -90,6 +90,11 @@ pxauart_match(struct device *parent, struct cfdata *cf, void *aux)
 			return (0);
 		break;
 
+	case PXA2X0_HWUART_BASE:
+		if (pxa->pxa_intr != PXA2X0_INT_HWUART)
+			return (0);
+		break;
+
 	default:
 		return (0);
 	}
@@ -116,18 +121,21 @@ pxauart_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (struct com_softc *)self;
 	struct pxaip_attach_args *pxa = aux;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	bus_addr_t iobase;
 
-	sc->sc_iot = &pxa2x0_a4x_bs_tag;	/* XXX: This sucks */
-	sc->sc_iobase = pxa->pxa_addr;
+	iot = &pxa2x0_a4x_bs_tag;	/* XXX: This sucks */
+	iobase = pxa->pxa_addr;
 	sc->sc_frequency = PXA2X0_COM_FREQ;
 	sc->sc_type = COM_TYPE_PXA2x0;
 
-	if (com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) == 0 &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, pxa->pxa_size, 0,
-			  &sc->sc_ioh)) {
+	if (com_is_console(iot, iobase, &ioh) == 0 &&
+	    bus_space_map(iot, iobase, pxa->pxa_size, 0, &ioh)) {
 		printf(": can't map registers\n");
 		return;
 	}
+	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 
 	com_attach_subr(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.5 2005/06/16 10:58:52 bouyer Exp $	*/
+/*	$NetBSD: consinit.c,v 1.5.2.1 2006/12/30 20:47:25 yamt Exp $	*/
 /*	NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5 2005/06/16 10:58:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5.2.1 2006/12/30 20:47:25 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -168,7 +168,7 @@ consinit()
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
 #ifdef CONS_OVERRIDE
 		if (strcmp(default_consinfo.devname, "tty0") == 0 ||
-		    strcmp(default_consinfo.devname, "pc") == 0)) {
+		    strcmp(default_consinfo.devname, "pc") == 0) {
 #else
 		if (strcmp(xcp.xcp_console, "tty0") == 0 || /* linux name */
 		    strcmp(xcp.xcp_console, "pc") == 0) { /* NetBSD name */

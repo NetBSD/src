@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.29 2005/05/29 22:03:09 christos Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.29.2.1 2006/12/30 20:49:30 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.29 2005/05/29 22:03:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.29.2.1 2006/12/30 20:49:30 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -321,7 +321,8 @@ out:
 }
 
 int
-rf_TryToRedirectPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda, int parity)
+rf_TryToRedirectPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda,
+    int parity)
 {
 	if (raidPtr->Disks[pda->col].status == rf_ds_reconstructing) {
 		if (rf_CheckRUReconstructed(raidPtr->reconControl->reconMap, pda->startSector)) {

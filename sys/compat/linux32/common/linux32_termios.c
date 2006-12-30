@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.c,v 1.1.16.2 2006/06/21 14:59:27 yamt Exp $ */
+/*	$NetBSD: linux32_termios.c,v 1.1.16.3 2006/12/30 20:47:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995-2006  The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.1.16.2 2006/06/21 14:59:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.1.16.3 2006/12/30 20:47:42 yamt Exp $");
 
 #include "opt_compat_linux32.h"
 
@@ -85,7 +85,7 @@ linux32_ioctl_termios(l, uap, retval)
 	struct linux32_termios tmplts;
 	struct termios tmpbts;
 	int idat;
-	struct sys_ioctl_args ia;
+	struct netbsd32_ioctl_args ia;
 	int error;
 	char tioclinux;
 	int (*bsdioctl)(struct file *, u_long, void *, struct lwp *);
@@ -338,7 +338,7 @@ linux32_ioctl_termios(l, uap, retval)
 
 			SCARG(&ia, fd) = SCARG(uap, fd);
 			SCARG(&ia, com) = TIOCPTSNAME;
-			SCARG(&ia, data) = ptmp;
+			SCARG(&ia, data) = (netbsd32_u_long)(u_long)ptmp;
 
 			if ((error = sys_ioctl(curlwp, &ia, retval)) != 0)
 				goto out;
@@ -359,7 +359,7 @@ linux32_ioctl_termios(l, uap, retval)
 	}
 
 	SCARG(&ia, fd) = SCARG(uap, fd);
-	SCARG(&ia, data) = NETBSD32PTR64(SCARG(uap, data));
+	SCARG(&ia, data) = SCARG(uap, data);
 	/* XXX NJWLWP */
 	error = netbsd32_ioctl(curlwp, &ia, retval);
 out:

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.51.4.1 2006/06/21 14:59:52 yamt Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.51.4.2 2006/12/30 20:47:45 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.51.4.1 2006/06/21 14:59:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.51.4.2 2006/12/30 20:47:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,9 +153,10 @@ svr4_to_native_sigaction(ssa, bsa)
 		bsa->sa_flags |= SA_NOCLDWAIT;
 	if ((ssa->svr4_sa_flags & SVR4_SA_NOCLDSTOP) != 0)
 		bsa->sa_flags |= SA_NOCLDSTOP;
-	if ((ssa->svr4_sa_flags & ~SVR4_SA_ALLBITS) != 0)
+	if ((ssa->svr4_sa_flags & ~SVR4_SA_ALLBITS) != 0) {
 		DPRINTF(("svr4_to_native_sigaction: extra bits %x ignored\n",
 		    ssa->svr4_sa_flags & ~SVR4_SA_ALLBITS));
+	}
 }
 
 void
@@ -213,10 +214,7 @@ native_to_svr4_sigaltstack(bss, sss)
 }
 
 int
-svr4_sys_sigaction(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_sigaction(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sigaction_args /* {
 		syscallarg(int) signum;
@@ -249,10 +247,7 @@ svr4_sys_sigaction(l, v, retval)
 }
 
 int
-svr4_sys_sigaltstack(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sigaltstack_args /* {
 		syscallarg(const struct svr4_sigaltstack *) nss;
@@ -347,10 +342,7 @@ svr4_sys_signal(l, v, retval)
 }
 
 int
-svr4_sys_sigprocmask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sigprocmask_args /* {
 		syscallarg(int) how;
@@ -404,10 +396,7 @@ svr4_sys_sigprocmask(l, v, retval)
 }
 
 int
-svr4_sys_sigpending(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sigpending_args /* {
 		syscallarg(int) what;
@@ -433,10 +422,7 @@ svr4_sys_sigpending(l, v, retval)
 }
 
 int
-svr4_sys_sigsuspend(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sigsuspend_args /* {
 		syscallarg(const svr4_sigset_t *) set;
@@ -456,10 +442,7 @@ svr4_sys_sigsuspend(l, v, retval)
 }
 
 int
-svr4_sys_pause(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_pause(struct lwp *l, void *v, register_t *retval)
 {
 
 	return (sigsuspend1(l->l_proc, 0));

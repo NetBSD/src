@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.95.2.1 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.95.2.2 2006/12/30 20:51:05 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.95.2.1 2006/06/21 15:12:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.95.2.2 2006/12/30 20:51:05 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.95.2.1 2006/06/21 15:12:39 yamt Exp 
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/user.h>
-#include <sys/vnode.h>
 
 #include <uvm/uvm.h>
 
@@ -201,7 +200,7 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
 			continue;
 		simple_lock(&anons[lcv]->an_lock);
 		pg = anons[lcv]->an_page;
-		if (pg && (pg->flags & PG_BUSY) == 0 && pg->loan_count == 0) {
+		if (pg && (pg->flags & PG_BUSY) == 0) {
 			uvm_lock_pageq();
 			if (pg->wire_count == 0) {
 				pmap_clear_reference(pg);
@@ -798,8 +797,8 @@ ReFault:
 	 */
 
 	if (UVM_ET_ISNEEDSCOPY(ufi.entry)) {
-		KASSERT(fault_flag != UVM_FAULT_WIREMAX);
 		if (cow_now || (ufi.entry->object.uvm_obj == NULL)) {
+			KASSERT(fault_flag != UVM_FAULT_WIREMAX);
 			/* need to clear */
 			UVMHIST_LOG(maphist,
 			    "  need to clear needs_copy and refault",0,0,0,0);
@@ -972,7 +971,7 @@ ReFault:
 		if (anon->an_page && anon->an_page->loan_count == 0 &&
 		    (anon->an_page->flags & PG_BUSY) == 0) {
 			uvm_lock_pageq();
-			uvm_pageactivate(anon->an_page);
+			uvm_pageenqueue(anon->an_page);
 			uvm_unlock_pageq();
 			UVMHIST_LOG(maphist,
 			    "  MAPPING: n anon: pm=0x%x, va=0x%x, pg=0x%x",
@@ -1102,7 +1101,7 @@ ReFault:
 				 */
 
 				uvm_lock_pageq();
-				uvm_pageactivate(curpg);
+				uvm_pageenqueue(curpg);
 				uvm_unlock_pageq();
 				UVMHIST_LOG(maphist,
 				  "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
@@ -1285,8 +1284,7 @@ ReFault:
 				uvm_pagecopy(anon->an_page, pg);
 
 				/* force reload */
-				pmap_page_protect(anon->an_page,
-						  VM_PROT_NONE);
+				pmap_page_protect(anon->an_page, VM_PROT_NONE);
 				uvm_lock_pageq();	  /* KILL loan */
 
 				anon->an_page->uanon = NULL;
@@ -1304,8 +1302,6 @@ ReFault:
 					uvm_pagedequeue(anon->an_page);
 				}
 
-				uvm_pageactivate(pg);
-				uvm_unlock_pageq();
 				if (uobj) {
 					simple_unlock(&uobj->vmobjlock);
 					uobj = NULL;
@@ -1315,6 +1311,10 @@ ReFault:
 				anon->an_page = pg;
 				pg->uanon = anon;
 				pg->pqflags |= PQ_ANON;
+
+				uvm_pageactivate(pg);
+				uvm_unlock_pageq();
+
 				pg->flags &= ~(PG_BUSY|PG_FAKE);
 				UVM_PAGE_OWN(pg, NULL);
 
@@ -1814,6 +1814,7 @@ Case2:
 			 * clear its clean flag now.
 			 */
 
+			KASSERT(uobj != NULL);
 			pg->flags &= ~(PG_CLEAN);
 			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
 		}

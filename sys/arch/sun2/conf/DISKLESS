@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.20.4.1 2006/06/21 14:57:05 yamt Exp $
+# $NetBSD: DISKLESS,v 1.20.4.2 2006/12/30 20:47:06 yamt Exp $
 
 # DISKLESS Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, ec0
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DISKLESS-$Revision: 1.20.4.1 $"
+#ident 		"DISKLESS-$Revision: 1.20.4.2 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -26,7 +26,6 @@ options 	SYSVSHM		# System V shared memory
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-#options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Which kernel debugger?  Uncomment either this:
 options 	DDB
@@ -72,7 +71,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
-#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+#options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 
 # Networking options
 options 	INET		# IP protocol stack support
@@ -84,7 +83,6 @@ options 	INET		# IP protocol stack support
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -204,6 +202,8 @@ ie1	at vme0 addr 0xe88000,0xe00000 len -1,0x40000 irq 3 vect 0x75
 ## 3Com Ethernet (Multibus only)
 ec0	at mbmem0 addr 0xe0000 ipl 3
 ec1	at mbmem0 addr 0xe2000 ipl 3
+# limit NFS R/W size for poor ec(4) interfaces
+options 	NFS_RSIZE=1024,NFS_WSIZE=1024
 
 ## Frame buffers.
 
@@ -225,10 +225,9 @@ pseudo-device	loop		1	# network loopback
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-# rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
-pseudo-device	pty		32	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# paging to files
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver

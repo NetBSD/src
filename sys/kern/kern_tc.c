@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.3.4.2 2006/06/21 15:09:38 yamt Exp $ */
+/* $NetBSD: kern_tc.c,v 1.3.4.3 2006/12/30 20:50:06 yamt Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.3.4.2 2006/06/21 15:09:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.3.4.3 2006/12/30 20:50:06 yamt Exp $");
 
 #include "opt_ntp.h"
 
@@ -27,11 +27,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.3.4.2 2006/06/21 15:09:38 yamt Exp $")
 #include <sys/timex.h>
 #include <sys/evcnt.h>
 #include <sys/kauth.h>
-
-/*
- * maximum name length for TC names in sysctl interface
- */
-#define MAX_TCNAMELEN	64
 
 /*
  * A large step happens on boot.  This constant detects such steps.
@@ -56,7 +51,7 @@ dummy_get_timecount(struct timecounter *tc)
 }
 
 static struct timecounter dummy_timecounter = {
-	dummy_get_timecount, 0, ~0u, 1000000, "dummy", -1000000
+	dummy_get_timecount, 0, ~0u, 1000000, "dummy", -1000000, NULL, NULL,
 };
 
 struct timehands {
@@ -74,25 +69,21 @@ struct timehands {
 };
 
 static struct timehands th0;
-static struct timehands th9 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th0};
-static struct timehands th8 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th9};
-static struct timehands th7 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th8};
-static struct timehands th6 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th7};
-static struct timehands th5 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th6};
-static struct timehands th4 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th5};
-static struct timehands th3 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th4};
-static struct timehands th2 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th3};
-static struct timehands th1 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th2};
+static struct timehands th9 = { .th_next = &th0, };
+static struct timehands th8 = { .th_next = &th9, };
+static struct timehands th7 = { .th_next = &th8, };
+static struct timehands th6 = { .th_next = &th7, };
+static struct timehands th5 = { .th_next = &th6, };
+static struct timehands th4 = { .th_next = &th5, };
+static struct timehands th3 = { .th_next = &th4, };
+static struct timehands th2 = { .th_next = &th3, };
+static struct timehands th1 = { .th_next = &th2, };
 static struct timehands th0 = {
-	&dummy_timecounter,
-	0,
-	(uint64_t)-1 / 1000000,
-	0,
-	{1, 0},
-	{0, 0},
-	{0, 0},
-	1,
-	&th1
+	.th_counter = &dummy_timecounter,
+	.th_scale = (uint64_t)-1 / 1000000,
+	.th_offset = { .sec = 1, .frac = 0 },
+	.th_generation = 1,
+	.th_next = &th1,
 };
 
 static struct timehands *volatile timehands = &th0;
@@ -102,15 +93,7 @@ static struct timecounter *timecounters = &dummy_timecounter;
 time_t time_second = 1;
 time_t time_uptime = 1;
 
-static struct bintime boottimebin;
-struct timeval boottime;
-#ifdef __FreeBSD__
-static int sysctl_kern_boottime(SYSCTL_HANDLER_ARGS);
-SYSCTL_PROC(_kern, KERN_BOOTTIME, boottime, CTLTYPE_STRUCT|CTLFLAG_RD,
-    NULL, 0, sysctl_kern_boottime, "S,timeval", "System boottime");
-
-SYSCTL_NODE(_kern, OID_AUTO, timecounter, CTLFLAG_RW, 0, "");
-#endif /* __FreeBSD__ */
+static struct bintime timebasebin;
 
 static int timestepwarnings;
 
@@ -145,8 +128,8 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 	    strncmp(newname, tc->tc_name, sizeof(newname)) == 0)
 		return error;
 
-	if (l && (error = kauth_authorize_generic(l->l_proc->p_cred, 
-                    KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0)
+	if (l != NULL && (error = kauth_authorize_generic(l->l_cred, 
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return (error);
 
 	/* XXX locking */
@@ -174,7 +157,7 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 static int
 sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
 {
-	char buf[48];
+	char buf[MAX_TCNAMELEN+48];
 	char *where = oldp;
 	const char *spc;
 	struct timecounter *tc;
@@ -267,23 +250,6 @@ TC_STATS(setclock);
 
 static void tc_windup(void);
 
-#ifdef __FreeBSD__
-static int
-sysctl_kern_boottime(SYSCTL_HANDLER_ARGS)
-{
-#ifdef SCTL_MASK32
-	int tv[2];
-
-	if (req->flags & SCTL_MASK32) {
-		tv[0] = boottime.tv_sec;
-		tv[1] = boottime.tv_usec;
-		return SYSCTL_OUT(req, tv, sizeof(tv));
-	} else
-#endif
-		return SYSCTL_OUT(req, &boottime, sizeof(boottime));
-}
-#endif /* __FreeBSD__ */
-
 /*
  * Return the difference between the timehands' counter value now and what
  * was when we copied it to the timehands' offset_count.
@@ -345,7 +311,7 @@ bintime(struct bintime *bt)
 
 	nbintime.ev_count++;
 	binuptime(bt);
-	bintime_add(bt, &boottimebin);
+	bintime_add(bt, &timebasebin);
 }
 
 void
@@ -422,7 +388,7 @@ getbintime(struct bintime *bt)
 		gen = th->th_generation;
 		*bt = th->th_offset;
 	} while (gen == 0 || gen != th->th_generation);
-	bintime_add(bt, &boottimebin);
+	bintime_add(bt, &timebasebin);
 }
 
 void
@@ -460,6 +426,7 @@ void
 tc_init(struct timecounter *tc)
 {
 	u_int u;
+	int s;
 
 	u = tc->tc_frequency / tc->tc_counter_mask;
 	/* XXX: We need some margin here, 10% is a guess */
@@ -478,7 +445,8 @@ tc_init(struct timecounter *tc)
 		    tc->tc_quality);
 	}
 
-	/* XXX locking */
+	s = splclock();
+
 	tc->tc_next = timecounters;
 	timecounters = tc;
 	/*
@@ -487,16 +455,19 @@ tc_init(struct timecounter *tc)
 	 * worse since this timecounter may not be monotonous.
 	 */
 	if (tc->tc_quality < 0)
-		return;
+		goto out;
 	if (tc->tc_quality < timecounter->tc_quality)
-		return;
+		goto out;
 	if (tc->tc_quality == timecounter->tc_quality &&
 	    tc->tc_frequency < timecounter->tc_frequency)
-		return;
+		goto out;
 	(void)tc->tc_get_timecount(tc);
 	(void)tc->tc_get_timecount(tc);
 	timecounter = tc;
 	tc_windup();
+
+ out:
+	splx(s);
 }
 
 /* Report the frequency of the current timecounter. */
@@ -522,9 +493,8 @@ tc_setclock(struct timespec *ts)
 	binuptime(&bt2);
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &bt2);
-	bintime_add(&bt2, &boottimebin);
-	boottimebin = bt;
-	bintime2timeval(&bt, &boottime);
+	bintime_add(&bt2, &timebasebin);
+	timebasebin = bt;
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
 	tc_windup();
@@ -548,9 +518,10 @@ tc_windup(void)
 	struct timehands *th, *tho;
 	u_int64_t scale;
 	u_int delta, ncount, ogen;
-	int i;
+	int i, s_update;
 	time_t t;
 
+	s_update = 0;
 	/*
 	 * Make the next timehands a copy of the current one, but do not
 	 * overwrite the generation or next pointer.  While we update
@@ -599,15 +570,16 @@ tc_windup(void)
 	 * the adjustment resulting from adjtime() calls.
 	 */
 	bt = th->th_offset;
-	bintime_add(&bt, &boottimebin);
+	bintime_add(&bt, &timebasebin);
 	i = bt.sec - tho->th_microtime.tv_sec;
 	if (i > LARGE_STEP)
 		i = 2;
 	for (; i > 0; i--) {
 		t = bt.sec;
 		ntp_update_second(&th->th_adjustment, &bt.sec);
+		s_update = 1;
 		if (bt.sec != t)
-			boottimebin.sec += bt.sec - t;
+			timebasebin.sec += bt.sec - t;
 	}
 
 	/* Update the UTC timestamps used by the get*() functions. */
@@ -619,10 +591,7 @@ tc_windup(void)
 	if (th->th_counter != timecounter) {
 		th->th_counter = timecounter;
 		th->th_offset_count = ncount;
-
-		printf("timecounter: selected timecounter \"%s\" frequency %ju Hz quality %d\n",
-		    timecounter->tc_name, (uintmax_t)timecounter->tc_frequency,
-		    timecounter->tc_quality);
+		s_update = 1;
 	}
 
 	/*-
@@ -648,11 +617,12 @@ tc_windup(void)
 	 * to the goddess of code clarity.
 	 *
 	 */
-	scale = (u_int64_t)1 << 63;
-	scale += (th->th_adjustment / 1024) * 2199;
-	scale /= th->th_counter->tc_frequency;
-	th->th_scale = scale * 2;
-
+	if (s_update) {
+		scale = (u_int64_t)1 << 63;
+		scale += (th->th_adjustment / 1024) * 2199;
+		scale /= th->th_counter->tc_frequency;
+		th->th_scale = scale * 2;
+	}
 	/*
 	 * Now that the struct timehands is again consistent, set the new
 	 * generation number, making sure to not make it zero.
@@ -850,7 +820,7 @@ pps_event(struct pps_state *pps, int event)
 	tcount &= pps->capth->th_counter->tc_counter_mask;
 	bt = pps->capth->th_offset;
 	bintime_addx(&bt, pps->capth->th_scale * tcount);
-	bintime_add(&bt, &boottimebin);
+	bintime_add(&bt, &timebasebin);
 	bintime2timespec(&bt, &ts);
 
 	/* If the timecounter was wound up underneath us, bail out. */

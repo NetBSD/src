@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.16 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.16.4.1 2006/12/30 20:50:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.16 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.16.4.1 2006/12/30 20:50:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -89,8 +89,10 @@ static const struct clnp_fixed er_template = {
 	ISO8473_V1,		/* version */
 	CLNP_TTL,		/* ttl */
 	CLNP_ER,		/* type */
-	0,			/* segment length */
-	0			/* checksum */
+	0,			/* segment length msb */
+	0,			/* segment length lsb */
+	0,			/* checksum msb */
+	0,			/* checksum lmsb */
 };
 
 /*
@@ -376,8 +378,7 @@ bad:
 
 done:
 	/* free route if it is a temp */
-	if (route.ro_rt != NULL)
-		RTFREE(route.ro_rt);
+	rtcache_free((struct route *)&route);
 }
 
 int

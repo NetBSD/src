@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.31.4.1 2006/06/21 15:06:28 yamt Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.31.4.2 2006/12/30 20:49:30 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.31.4.1 2006/06/21 15:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.31.4.2 2006/12/30 20:49:30 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -69,8 +69,7 @@ static void rf_CopybackOne(RF_CopybackDesc_t * desc, int typ,
 static void rf_CopybackComplete(RF_CopybackDesc_t * desc, int status);
 
 int
-rf_ConfigureCopyback(listp)
-	RF_ShutdownList_t **listp;
+rf_ConfigureCopyback(RF_ShutdownList_t **listp)
 {
 	rf_copyback_in_progress = 0;
 	return (0);
@@ -94,7 +93,6 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 	RF_RaidDisk_t *badDisk;
 	char   *databuf;
 
-	struct partinfo dpart;
 	struct vnode *vp;
 	struct vattr va;
 	struct lwp *l;
@@ -138,10 +136,10 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 	printf("About to (re-)open the device: %s\n",
 	    raidPtr->Disks[fcol].devname);
 
-	retcode = raidlookup(raidPtr->Disks[fcol].devname, l, &vp);
+	retcode = dk_lookup(raidPtr->Disks[fcol].devname, l, &vp);
 
 	if (retcode) {
-		printf("raid%d: copyback: raidlookup on device: %s failed: %d!\n",
+		printf("raid%d: copyback: dk_lookup on device: %s failed: %d!\n",
 		       raidPtr->raidid, raidPtr->Disks[fcol].devname,
 		       retcode);
 
@@ -154,19 +152,12 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 		/* Ok, so we can at least do a lookup... How about actually
 		 * getting a vp for it? */
 
-		if ((retcode = VOP_GETATTR(vp, &va,
-		    l->l_proc->p_cred, l)) != 0) {
+		if ((retcode = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0)
 			return;
-		}
-		retcode = VOP_IOCTL(vp, DIOCGPART, &dpart,
-		    FREAD, l->l_proc->p_cred, l);
+		retcode = rf_getdisksize(vp, l, &raidPtr->Disks[fcol]);
 		if (retcode) {
 			return;
 		}
-		raidPtr->Disks[fcol].blockSize = dpart.disklab->d_secsize;
-
-		raidPtr->Disks[fcol].numBlocks = dpart.part->p_size -
-		    rf_protectedSectors;
 
 		raidPtr->raid_cinfo[fcol].ci_vp = vp;
 		raidPtr->raid_cinfo[fcol].ci_dev = va.va_rdev;

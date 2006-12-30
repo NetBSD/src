@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17.2.1 2006/06/21 14:58:06 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17.2.2 2006/12/30 20:47:25 yamt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.1 2006/06/21 14:58:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.2 2006/12/30 20:47:25 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -984,8 +984,10 @@ cpu_dumpconf()
 	if (dumpdev == NODEV)
 		goto bad;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		goto bad;
+	}
 	if (bdev->d_psize == NULL)
 		goto bad;
 	nblks = (*bdev->d_psize)(dumpdev);
@@ -2326,7 +2328,7 @@ int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {

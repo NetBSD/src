@@ -1,4 +1,4 @@
-/*	$NetBSD: at_rmx.c,v 1.4 2005/05/17 04:14:58 christos Exp $	*/
+/*	$NetBSD: at_rmx.c,v 1.4.2.1 2006/12/30 20:50:29 yamt Exp $	*/
 
 /*
  * Copyright 1994, 1995 Massachusetts Institute of Technology
@@ -34,7 +34,7 @@
 /* This code generates debugging traces to the radix code */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_rmx.c,v 1.4 2005/05/17 04:14:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_rmx.c,v 1.4.2.1 2006/12/30 20:50:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: at_rmx.c,v 1.4 2005/05/17 04:14:58 christos Exp $");
 static char     hexbuf[256];
 
 char           *
-prsockaddr(void *v)
+prsockaddr(const void *v)
 {
 	char           *bp = &hexbuf[0];
-	u_char         *cp = v;
+	u_char         *cp = __UNCONST(v);
 
 	if (v) {
 		int             len = *cp;
@@ -79,65 +79,65 @@ prsockaddr(void *v)
 }
 
 static struct radix_node *
-at_addroute(void *v_arg, void *n_arg, struct radix_node_head * head,
+at_addroute(const void *v_arg, const void *n_arg, struct radix_node_head * head,
 	    struct radix_node * treenodes)
 {
 	struct radix_node *rn;
 
 	printf("at_addroute: v=%s\n", prsockaddr(v_arg));
 	printf("at_addroute: n=%s\n", prsockaddr(n_arg));
-	printf("at_addroute: head=%x treenodes=%x\n", head, treenodes);
+	printf("at_addroute: head=%p treenodes=%p\n", head, treenodes);
 
 	rn = rn_addroute(v_arg, n_arg, head, treenodes);
 
-	printf("at_addroute: returns rn=%x\n", rn);
+	printf("at_addroute: returns rn=%p\n", rn);
 
 	return rn;
 }
 
 static struct radix_node *
-at_matroute(void *v_arg, struct radix_node_head * head)
+at_matroute(const void *v_arg, struct radix_node_head * head)
 {
 	struct radix_node *rn;
 
 	printf("at_matroute: v=%s\n", prsockaddr(v_arg));
-	printf("at_matroute: head=%x\n", head);
+	printf("at_matroute: head=%p\n", head);
 
 	rn = rn_match(v_arg, head);
 
-	printf("at_matroute: returns rn=%x\n", rn);
+	printf("at_matroute: returns rn=%p\n", rn);
 
 	return rn;
 }
 
 static struct radix_node *
-at_lookup(void *v_arg, void *m_arg, struct radix_node_head * head)
+at_lookup(const void *v_arg, const void *m_arg, struct radix_node_head * head)
 {
 	struct radix_node *rn;
 
 	printf("at_lookup: v=%s\n", prsockaddr(v_arg));
 	printf("at_lookup: n=%s\n", prsockaddr(m_arg));
-	printf("at_lookup: head=%x\n", head);
+	printf("at_lookup: head=%p\n", head);
 
 	rn = rn_lookup(v_arg, m_arg, head);
 
-	printf("at_lookup: returns rn=%x\n", rn);
+	printf("at_lookup: returns rn=%p\n", rn);
 
 	return rn;
 }
 
 static struct radix_node *
-at_delroute(void *v_arg, void *netmask_arg, struct radix_node_head * head)
+at_delroute(const void *v_arg, const void *netmask_arg, struct radix_node_head * head)
 {
 	struct radix_node *rn;
 
 	printf("at_delroute: v=%s\n", prsockaddr(v_arg));
 	printf("at_delroute: n=%s\n", prsockaddr(netmask_arg));
-	printf("at_delroute: head=%x\n", head);
+	printf("at_delroute: head=%p\n", head);
 
 	rn = rn_delete(v_arg, netmask_arg, head);
 
-	printf("at_delroute: returns rn=%x\n", rn);
+	printf("at_delroute: returns rn=%p\n", rn);
 
 	return rn;
 }

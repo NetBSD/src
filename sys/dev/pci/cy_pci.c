@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.18 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.18.2.1 2006/12/30 20:48:43 yamt Exp $	*/
 
 /*
  * cy_pci.c
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.18 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.18.2.1 2006/12/30 20:48:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,8 @@ cy_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-cy_pci_match(struct device *parent, struct cfdata *match, void *aux)
+cy_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

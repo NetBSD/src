@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.43 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: clock.c,v 1.43.10.1 2006/12/30 20:46:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -108,13 +108,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.43 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.43.10.1 2006/12/30 20:46:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
+
+#include <dev/clock_subr.h>
 
 #include <machine/autoconf.h>
 #include <machine/psl.h>
@@ -134,10 +137,14 @@ int	clock_debug = 0;
 #endif
 
 void	rtclock_intr(void);
+static int mac68k_gettime(todr_chip_handle_t, volatile struct timeval *);
+static int mac68k_settime(todr_chip_handle_t, volatile struct timeval *);
+static u_int via1_t2_get_timecount(struct timecounter *);
 
 #define	DIFF19041970	2082844800
 #define	DIFF19701990	630720000
 #define	DIFF19702010	1261440000
+
 
 /*
  * Mac II machine-dependent clock routines.
@@ -155,8 +162,8 @@ startrtclock(void)
  * BARF MF startrt clock is called twice in init_main, configure,
  * the reason why is doced in configure
  */
-	/* be certain clock interrupts are off */
-	via_reg(VIA1, vIER) = V1IF_T1;
+	/* be certain all clock interrupts are off */
+	via_reg(VIA1, vIER) = V1IF_T1 | V1IF_T2;
 
 	/* set timer latch */
 	via_reg(VIA1, vACR) |= ACR_T1LATCH;
@@ -168,6 +175,14 @@ startrtclock(void)
 	/* set VIA timer 1 counter started for 60(100) Hz */
 	via_reg(VIA1, vT1C) = CLK_INTL;
 	via_reg(VIA1, vT1CH) = CLK_INTH;
+
+	/*
+	 * Set & start VIA1 timer 2 free-running for timecounter support.
+	 * Since reading the LSB of the counter clears any pending
+	 * interrupt, timer 1 is less suitable as a timecounter.
+	 */
+	via_reg(VIA1, vT2C) = 0x0ff;
+	via_reg(VIA1, vT2CH) = 0x0ff;
 }
 
 void
@@ -181,7 +196,24 @@ enablertclock(void)
 void
 cpu_initclocks(void)
 {
+	static struct todr_chip_handle todr = {
+		.todr_settime = mac68k_settime,
+		.todr_gettime = mac68k_gettime,
+	};
+	static struct timecounter via1_t2_timecounter = {
+		.tc_get_timecount = via1_t2_get_timecount,
+		.tc_poll_pps	  = 0,
+		.tc_counter_mask  = 0x0ffffu,
+		.tc_frequency	  = CLK_FREQ,
+		.tc_name	  = "VIA1 T2",
+		.tc_quality	  = 100,
+		.tc_priv	  = NULL,
+		.tc_next	  = NULL
+	};
+	
 	enablertclock();
+	todr_attach(&todr);
+	tc_init(&via1_t2_timecounter);
 }
 
 void
@@ -196,29 +228,41 @@ disablertclock(void)
 	via_reg(VIA1, vIER) = V1IF_T1;
 }
 
-/*
- * Returns number of usec since last clock tick/interrupt.
- *
- * Check high byte twice to prevent missing a roll-over.
- * (race condition?)
- */
-u_long
-clkread(void)
+static u_int
+via1_t2_get_timecount(struct timecounter *tc)
 {
-	int high, high2, low;
+	uint8_t high, high2, low;
+	int s;
 
-	high = via_reg(VIA1, vT1CH);
-	low = via_reg(VIA1, vT1C);
+	/*
+	 * Make the timer access atomic
+	 *
+	 * XXX How expensive is this? And is it really necessary?
+	 */
+	s = splhigh();
+	
+	high = via_reg(VIA1, vT2CH);
+	low = via_reg(VIA1, vT2C);
 
-	high2 = via_reg(VIA1, vT1CH);
-	if (high != high2)
+	high2 = via_reg(VIA1, vT2CH);
+
+	/*
+	 * If we find that the MSB has just been incremented, read
+	 * the LSB again, to avoid a race that could leave us with a new
+	 * MSB and an old LSB value.
+	 * With timecounters, the difference is quite spectacular.
+	 *
+	 * is added that to port-amiga ten years ago. Thanks!
+	 */
+	if (high != high2) {
+		low = via_reg(VIA1, vT2C);
 		high = high2;
-
-	/* return count left in timer / 1.27 */
-	/* return((CLK_INTERVAL - (high << 8) - low) / CLK_SPEED); */
-	return ((CLK_INTERVAL - (high << 8) - low) * 10000 / 12700);
+	}
+	
+	splx(s);
+	
+	return 0x0ffff - ((high << 8) | low);
 }
-
 
 #ifdef PROFTIMER
 /*
@@ -332,7 +376,7 @@ ugmt_2_pramt(u_long t)
 	/* don't know how to open a file properly. */
 	/* assume compiled timezone is correct. */
 
-	return (t = t + DIFF19041970 - 60 * rtc_offset);
+	return (t = t + DIFF19041970);
 }
 
 /*
@@ -342,7 +386,7 @@ ugmt_2_pramt(u_long t)
 static u_long
 pramt_2_ugmt(u_long t)
 {
-	return (t = t - DIFF19041970 + 60 * rtc_offset);
+	return (t = t - DIFF19041970);
 }
 
 /*
@@ -367,65 +411,29 @@ int	mac68k_trust_pram = 1;
  * Set global GMT time register, using a file system time base for comparison
  * and sanity checking.
  */
-void
-inittodr(time_t base)
+int
+mac68k_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	u_long timbuf;
 
 	timbuf = pramt_2_ugmt(pram_readtime());
-	if ((timbuf - (macos_boottime + 60 * rtc_offset)) > 10 * 60) {
+	if ((timbuf - macos_boottime) > 10 * 60) {
 #if DIAGNOSTIC
 		printf(
 		    "PRAM time does not appear to have been read correctly.\n");
 		printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
-		    timbuf, macos_boottime + 60 * rtc_offset);
+		    timbuf, macos_boottime);
 #endif
 		timbuf = macos_boottime;
 		mac68k_trust_pram = 0;
 	}
-#ifdef DIAGNOSTIC
-	else
-		printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
-		    timbuf, macos_boottime);
-#endif
-
-	/*
-	 * GMT bias is passed in from Booter
-	 * To get GMT, *subtract* GMTBIAS from *our* time
-	 * (gmtbias is in minutes, mult by 60)
-	 */
-	timbuf -= macos_gmtbias * 60;
-
-	if (base < 5 * SECYR) {
-		printf("WARNING: file system time earlier than 1975\n");
-		printf(" -- CHECK AND RESET THE DATE!\n");
-		base = 21 * SECYR;	/* 1991 is our sane date */
-	}
-	/*
-	 * Check sanity against the year 2010.  Let's hope NetBSD/mac68k
-	 * doesn't run that long!
-	 */
-	if (base > 40 * SECYR) {
-		printf("WARNING: file system time later than 2010\n");
-		printf(" -- CHECK AND RESET THE DATE!\n");
-		base = 21 * SECYR;	/* 1991 is our sane date */
-	}
-	if (timbuf < base) {
-		printf(
-		    "WARNING: Battery clock has earlier time than UNIX fs.\n");
-		if (((u_long) base) < (40 * SECYR))
-			timbuf = base;
-	}
-	time.tv_sec = timbuf;
-	time.tv_usec = 0;
+	tvp->tv_sec = timbuf;
+	tvp->tv_usec = 0;
+	return 0;
 }
 
-/*
- * Set battery backed clock to a new time, presumably after someone has
- * changed system time.
- */
-void
-resettodr(void)
+int
+mac68k_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 {
 	if (mac68k_trust_pram)
 		/*
@@ -433,14 +441,14 @@ resettodr(void)
 		 * To get *our* time, add GMTBIAS to GMT.
 		 * (gmtbias is in minutes, multiply by 60).
 		 */
-		pram_settime(ugmt_2_pramt(time.tv_sec + macos_gmtbias * 60));
+		pram_settime(ugmt_2_pramt(tvp->tv_sec + macos_gmtbias * 60));
 #ifdef DEBUG
 	else if (clock_debug)
 		printf("NetBSD/mac68k does not trust itself to try and write "
 		    "to the PRAM on this system.\n");
 #endif
+	return 0;
 }
-
 
 /*
  * The Macintosh timers decrement once every 1.2766 microseconds.

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.24.12.1 2006/06/21 15:02:46 yamt Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.24.12.2 2006/12/30 20:47:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.24.12.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.24.12.2 2006/12/30 20:47:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,8 @@ bha_eisa_address(bus_space_tag_t iot, bus_space_handle_t ioh, int *portp)
  * the actual probe routine to check it out.
  */
 static int
-bha_eisa_match(struct device *parent, struct cfdata *match, void *aux)
+bha_eisa_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sco.h,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $	*/
+/*	$NetBSD: sco.h,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -54,6 +54,7 @@ struct sco_pcb {
 };
 
 LIST_HEAD(sco_pcb_list, sco_pcb);
+extern struct sco_pcb_list sco_pcb;
 
 /* sp_flags */
 #define SP_LISTENING		(1<<0)		/* is listening pcb */

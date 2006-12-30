@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.119.2.1 2006/06/21 15:12:02 yamt Exp $	*/
+/*	$NetBSD: conf.h,v 1.119.2.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,6 +55,7 @@ struct vnode;
 /*
  * Types for d_type
  */
+#define D_OTHER	0
 #define	D_TAPE	1
 #define	D_DISK	2
 #define	D_TTY	3
@@ -85,7 +86,7 @@ struct cdevsw {
 	struct tty *	(*d_tty)(dev_t);
 	int		(*d_poll)(dev_t, int, struct lwp *);
 	paddr_t		(*d_mmap)(dev_t, off_t, int);
-	int		(*d_kqfilter)(dev_t dev, struct knote *kn);
+	int		(*d_kqfilter)(dev_t, struct knote *);
 	int		d_type;
 };
 
@@ -191,6 +192,8 @@ void	       ttyldisc_release(struct linesw *);
 
 int	ttyerrpoll (struct tty *, int, struct lwp *);
 int	ttynullioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
+
+int	iskmemdev(dev_t);
 #endif
 
 #ifdef _KERNEL

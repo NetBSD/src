@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.3.8.2 2006/06/21 15:05:02 yamt Exp $ */
+/*	$NetBSD: owtemp.c,v 1.3.8.3 2006/12/30 20:48:38 yamt Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.3.8.2 2006/06/21 15:05:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.3.8.3 2006/12/30 20:48:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,8 @@ static uint32_t	owtemp_decode_ds18b20(const uint8_t *);
 static uint32_t	owtemp_decode_ds1920(const uint8_t *);
 
 int
-owtemp_match(struct device *parent, struct cfdata *cf, void *aux)
+owtemp_match(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 	return (onewire_matchbyfam(aux, owtemp_fams,
 	    sizeof(owtemp_fams) /sizeof(owtemp_fams[0])));
@@ -121,7 +122,7 @@ owtemp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sensor[0].units = sc->sc_info[0].units = ENVSYS_STEMP;
 	desc = prop_dictionary_get(device_properties(&sc->sc_dev),
-				   "description");
+				   "envsys-description");
 	if (desc != NULL &&
 	    prop_object_type(desc) == PROP_TYPE_STRING &&
 	    prop_string_size(desc) > 0)

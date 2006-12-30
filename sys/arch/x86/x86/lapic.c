@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.12.2.1 2006/06/21 14:58:06 yamt Exp $ */
+/* $NetBSD: lapic.c,v 1.12.2.2 2006/12/30 20:47:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.12.2.1 2006/06/21 14:58:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.12.2.2 2006/12/30 20:47:22 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.12.2.1 2006/06/21 14:58:06 yamt Exp $");
 void		lapic_delay(int);
 void		lapic_microtime(struct timeval *);
 static u_int32_t lapic_gettick(void);
-void		lapic_clockintr(void *, struct intrframe);
+void		lapic_clockintr(void *, struct intrframe *);
 static void 	lapic_map(paddr_t);
 
 static void lapic_hwmask(struct pic *, int);
@@ -238,7 +238,7 @@ u_int64_t lapic_frac_cycle_per_usec;
 u_int32_t lapic_delaytab[26];
 
 void
-lapic_clockintr(void *arg, struct intrframe frame)
+lapic_clockintr(void *arg, struct intrframe *frame)
 {
 #if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 #ifndef __HAVE_TIMECOUNTER
@@ -333,7 +333,7 @@ lapic_clockintr(void *arg, struct intrframe frame)
 #endif /* !__HAVE_TIMECOUNTER */
 #endif /* I586_CPU || I686_CPU || __x86_64__ */
 
-	hardclock((struct clockframe *)&frame);
+	hardclock((struct clockframe *)frame);
 }
 
 #if !defined(__HAVE_TIMECOUNTER) && defined(NTP)
@@ -620,6 +620,7 @@ lapic_hwunmask(struct pic *pic, int pin)
 }
 
 static void
-lapic_setup(struct pic *pic, struct cpu_info *ci, int pin, int idtvec, int type)
+lapic_setup(struct pic *pic, struct cpu_info *ci,
+    int pin, int idtvec, int type)
 {
 }

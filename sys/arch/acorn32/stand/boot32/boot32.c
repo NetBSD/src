@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.19.12.1 2006/06/21 14:47:48 yamt Exp $	*/
+/*	$NetBSD: boot32.c,v 1.19.12.2 2006/12/30 20:45:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -696,6 +696,23 @@ add_initvectors(void)
 	for (count = 0; count < 128; count++) *pos++ = 0xE1B0F00E;
 }
 
+/*
+ * Work out the display's vertical sync rate.  One might hope that there
+ * would be a simpler way than by counting vsync interrupts for a second,
+ * but if there is, I can't find it.
+ */
+static int
+vsync_rate(void)
+{
+	uint8_t count0;
+	unsigned int time0;
+
+	count0 = osbyte_read(osbyte_VAR_VSYNC_TIMER);
+	time0 = os_read_monotonic_time();
+	while (os_read_monotonic_time() - time0 < 100)
+		continue;
+	return (u_int8_t)(count0 - osbyte_read(osbyte_VAR_VSYNC_TIMER));
+}
 
 void
 create_configuration(int argc, char **argv, int start_args)
@@ -709,10 +726,10 @@ create_configuration(int argc, char **argv, int start_args)
 	kernel_free_vm_start += nbpp;
 
 	/* get some miscelanious info for the bootblock */
-	os_readsysinfo_monitor_info(NULL, &monitor_type, &monitor_sync);
-	os_readsysinfo_chip_presence(&ioeb_flags, &superio_flags, &lcd_flags);
-	os_readsysinfo_superio_features(&superio_flags_basic,
-	    &superio_flags_extra);
+	os_readsysinfo_monitor_info(NULL, (int *)&monitor_type, (int *)&monitor_sync);
+	os_readsysinfo_chip_presence((int *)&ioeb_flags, (int *)&superio_flags, (int *)&lcd_flags);
+	os_readsysinfo_superio_features((int *)&superio_flags_basic,
+	    (int *)&superio_flags_extra);
 	os_readsysinfo_unique_id(&id_low, &id_high);
 
 	/* fill in the bootconfig *bconfig structure : generic version II */
@@ -768,8 +785,7 @@ create_configuration(int argc, char **argv, int start_args)
 	bconfig->width			= vdu_var(os_MODEVAR_XWIND_LIMIT);
 	bconfig->height			= vdu_var(os_MODEVAR_YWIND_LIMIT);
 	bconfig->log2_bpp		= vdu_var(os_MODEVAR_LOG2_BPP);
-	/* XXX why? better guessing possible? XXX */
-	bconfig->framerate		= 56;
+	bconfig->framerate		= vsync_rate();
 
 	/* fill in memory info */
 	bconfig->pagesize		= nbpp;

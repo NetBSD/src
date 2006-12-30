@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.33.2.1 2006/06/21 15:02:55 yamt Exp $	*/
+/*	$NetBSD: mlx.c,v 1.33.2.2 2006/12/30 20:48:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.33.2.1 2006/06/21 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.33.2.2 2006/12/30 20:48:03 yamt Exp $");
 
 #include "ld.h"
 
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.33.2.1 2006/06/21 15:02:55 yamt Exp $");
 #include <sys/conf.h>
 #include <sys/kthread.h>
 #include <sys/disk.h>
+#include <sys/kauth.h>
 
 #include <machine/vmparam.h>
 #include <machine/bus.h>
@@ -141,17 +142,17 @@ dev_type_ioctl(mlxioctl);
 
 const struct cdevsw mlx_cdevsw = {
 	mlxopen, mlxclose, noread, nowrite, mlxioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 extern struct	cfdriver mlx_cd;
 static struct	proc *mlx_periodic_proc;
 static void	*mlx_sdh;
 
-struct {
+static struct {
 	int	hwid;
 	const char	*name;
-} static const mlx_cname[] = {
+} const mlx_cname[] = {
 	{ 0x00, "960E/960M" },
 	{ 0x01, "960P/PD" },
 	{ 0x02,	"960PL" },
@@ -207,11 +208,11 @@ static const char * const mlx_status_msgs[] = {
 	"command busy (?)",				/* 22 */
 };
 
-struct {
+static struct {
 	u_char	command;
 	u_char	msg;		/* Index into mlx_status_msgs[]. */
 	u_short	status;
-} static const mlx_msgs[] = {
+} const mlx_msgs[] = {
 	{ MLX_CMD_READSG,	1,	0x0001 },
 	{ MLX_CMD_READSG,	1,	0x0002 },
 	{ MLX_CMD_READSG,	3,	0x0105 },
@@ -711,7 +712,8 @@ mlxopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Accept the last close on the control device.
  */
 int
-mlxclose(dev_t dev, int flag, int mode, struct lwp *l)
+mlxclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct mlx_softc *mlx;
 
@@ -724,7 +726,8 @@ mlxclose(dev_t dev, int flag, int mode, struct lwp *l)
  * Handle control operations.
  */
 int
-mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct mlx_softc *mlx;
 	struct mlx_rebuild_request *rb;
@@ -732,9 +735,6 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct mlx_pause *mp;
 	struct mlx_sysdrive *ms;
 	int i, rv, *arg, result;
-
-	if (securelevel >= 2)
-		return (EPERM);
 
 	mlx = device_lookup(&mlx_cd, minor(dev));
 
@@ -798,6 +798,11 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return (0);
 
 	case MLX_COMMAND:
+		rv = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
+		if (rv)
+			return (rv);
+
 		/*
 		 * Accept a command passthrough-style.
 		 */

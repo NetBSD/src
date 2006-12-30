@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.2 2005/06/02 17:45:59 he Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.2.2.1 2006/12/30 20:45:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -47,5 +47,4 @@
 int get_bootconf_option __P((char *, const char *, int, void *));
 
 extern char *boot_args;
-extern char *boot_file;
 #endif	/* _KERNEL */

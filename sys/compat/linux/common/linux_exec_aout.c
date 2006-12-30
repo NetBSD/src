@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.57.4.1 2006/06/21 14:59:12 yamt Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.57.4.2 2006/12/30 20:47:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.57.4.1 2006/06/21 14:59:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.57.4.2 2006/12/30 20:47:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,12 +83,8 @@ static int exec_linux_aout_prep_qmagic __P((struct lwp *,
     struct exec_package *));
 
 int
-linux_aout_copyargs(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
+linux_aout_copyargs(struct lwp *l, struct exec_package *pack,
+    struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	char **cpp = (char **)*stackp;
 	char **stk = (char **)*stackp;

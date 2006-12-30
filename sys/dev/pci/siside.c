@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.17 2005/06/16 19:30:02 bouyer Exp $	*/
+/*	$NetBSD: siside.c,v 1.17.2.1 2006/12/30 20:48:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.17 2005/06/16 19:30:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.17.2.1 2006/12/30 20:48:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,16 @@ static const struct pciide_product_desc pciide_sis_products[] =  {
 	  NULL,
 	  sis_sata_chip_map,
 	},
+	{ PCI_PRODUCT_SIS_181_SATA,
+	  0,
+	  NULL,
+	  sis_sata_chip_map,
+	},
+	{ PCI_PRODUCT_SIS_182_SATA,
+	  0,
+	  NULL,
+	  sis_sata_chip_map,
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -74,7 +84,8 @@ static const struct pciide_product_desc pciide_sis_products[] =  {
 };
 
 static int
-siside_match(struct device *parent, struct cfdata *match, void *aux)
+siside_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -135,6 +146,7 @@ static struct sis_hostbr_type {
 	{PCI_PRODUCT_SIS_652,   0x00, 6, "652", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_655,   0x00, 6, "655", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_658,   0x00, 6, "658", SIS_TYPE_SOUTH},
+	{PCI_PRODUCT_SIS_661,	0x00, 6, "661", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_730,   0x00, 5, "730", SIS_TYPE_100OLD},
 	{PCI_PRODUCT_SIS_733,   0x00, 5, "733", SIS_TYPE_100NEW},
 	{PCI_PRODUCT_SIS_735,   0x00, 5, "735", SIS_TYPE_100NEW},
@@ -147,6 +159,7 @@ static struct sis_hostbr_type {
 	{PCI_PRODUCT_SIS_751,   0x00, 6, "751", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_752,   0x00, 6, "752", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_755,   0x00, 6, "755", SIS_TYPE_SOUTH},
+	{PCI_PRODUCT_SIS_760,	0x00, 6, "760", SIS_TYPE_133NEW},
 	/*
 	 * From sos@freebsd.org: the 0x961 ID will never be found in real world
 	 * {PCI_PRODUCT_SIS_961,   0x00, 6, "961", SIS_TYPE_133NEW},

@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.14.2.1 2006/06/21 15:06:14 yamt Exp $	*/
+/*	$NetBSD: xirc.c,v 1.14.2.2 2006/12/30 20:49:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,10 +38,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.14.2.1 2006/06/21 15:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.14.2.2 2006/12/30 20:49:18 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -68,10 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.14.2.1 2006/06/21 15:06:14 yamt Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -157,10 +152,8 @@ void	xirc_disable(struct xirc_softc *, int, int);
 int	xirc_intr(void *);
 
 int
-xirc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+xirc_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -594,10 +587,8 @@ int	com_xirc_enable(struct com_softc *);
 void	com_xirc_disable(struct com_softc *);
 
 int
-com_xirc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+com_xirc_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	extern struct cfdriver com_cd;
 	const char *name = aux;
@@ -609,21 +600,20 @@ com_xirc_match(parent, match, aux)
 }
 
 void
-com_xirc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_xirc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (void *)self;
 	struct xirc_softc *msc = (void *)parent;
 
 	aprint_normal("\n");
 
-	sc->sc_iot = msc->sc_modem_pcioh.iot;
-	sc->sc_ioh = msc->sc_modem_pcioh.ioh;
+	COM_INIT_REGS(sc->sc_regs, 
+	    msc->sc_modem_pcioh.iot,
+	    msc->sc_modem_pcioh.ioh,
+	    -1);
 
 	sc->enabled = 1;
 
-	sc->sc_iobase = -1;
 	sc->sc_frequency = COM_FREQ;
 
 	sc->enable = com_xirc_enable;
@@ -673,10 +663,8 @@ void	xi_xirc_disable(struct xi_softc *);
 int	xi_xirc_lan_nid_ciscallback(struct pcmcia_tuple *, void *);
 
 int
-xi_xirc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+xi_xirc_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	extern struct cfdriver xi_cd;
 	const char *name = aux;
@@ -688,9 +676,7 @@ xi_xirc_match(parent, match, aux)
 }
 
 void
-xi_xirc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+xi_xirc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xi_softc *sc = (void *)self;
 	struct xirc_softc *msc = (void *)parent;

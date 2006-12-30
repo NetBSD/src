@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.12.2.1 2006/06/21 14:48:54 yamt Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.12.2.2 2006/12/30 20:45:29 yamt Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.12.2.1 2006/06/21 14:48:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.12.2.2 2006/12/30 20:45:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.12.2.1 2006/06/21 14:48:54 ya
 
 extern paddr_t kvtophys(vaddr_t);	/* XXX */
 
-void arc_kseg2_make_cacheable(vaddr_t vaddr, vsize_t size);
+static void arc_kseg2_make_cacheable(vaddr_t vaddr, vsize_t size);
 
-void
+static void
 arc_kseg2_make_cacheable(vaddr_t vaddr, vsize_t size)
 {
 	vaddr_t start, end;

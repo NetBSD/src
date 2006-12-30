@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9.8.1 2006/06/21 14:57:48 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.9.8.2 2006/12/30 20:47:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,24 @@ void	spl0(void);
 #define	IPL_HIGH	(PSL_S|PSL_IPL7)
 #define	IPL_LOCK	(PSL_S|PSL_IPL7)
 
-#define	splraiseipl(x)	_splraise(x)
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._ipl);
+}
 
 #include <sys/spl.h>
 

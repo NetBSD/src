@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9.2.1 2006/06/21 14:57:17 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.9.2.2 2006/12/30 20:47:13 yamt Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -16,8 +16,10 @@ RELOC?= 240000
 DEFS?= -Dsun3 -D_STANDALONE -D__daddr_t=int32_t
 INCL?= -I. -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
 
-CFLAGS= -mc68000 -Wa,-mc68010 -Os -msoft-float -fno-defer-pop -ffreestanding
-CPPFLAGS= ${DEFS} ${DBG} ${INCL}
+CPUFLAGS= -mc68000 -Wa,-mc68010
+COPTS= -Os -fno-defer-pop -ffreestanding
+CFLAGS= -msoft-float
+CPPFLAGS= ${DEFS} ${DEBUG} ${INCL}
 
 SRTOBJ= ${LIBSA}/SRT0.o ${LIBSA}/SRT1.o
 SRTLIB= ${LIBSA}/libsa.a
@@ -50,7 +52,7 @@ CLEANFILES+= machine m68k sun68k
 
 machine :
 	-rm -f $@
-	ln -s ${S}/arch/sun68k/include $@
+	ln -s ${S}/arch/${MACHINE}/include $@
 
 m68k :
 	-rm -f $@
@@ -58,4 +60,4 @@ m68k :
 
 sun68k :
 	-rm -f $@
-	ln -s ${S}/arch/sun68k $@
+	ln -s ${S}/arch/sun68k/include $@

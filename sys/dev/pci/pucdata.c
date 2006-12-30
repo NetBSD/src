@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.40.4.1 2006/06/21 15:05:06 yamt Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.40.4.2 2006/12/30 20:48:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.40.4.1 2006/06/21 15:05:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.40.4.2 2006/12/30 20:48:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -949,6 +949,16 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* NetMos 2S PCI NM9835 : 2S */
+	{   "NetMos NM9835 Dual UART",
+	    {	0x9710, 0x9835, 0x1000, 0x0002	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
 	/* NetMos 2S1P PCI 16C650 : 2S, 1P */
 	{   "NetMos NM9835 Dual UART and 1284 Printer port",
 	    {	0x9710,	0x9835,	0,	0	},
@@ -1000,6 +1010,19 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+       /* NetMos 4S1P PCI NM9855 : 4S, 1P */
+       {   "NetMos NM9855 Quad UART and 1284 Printer port (unknown type)",
+	    {	0x9710,	0x9855,	0x1000,	0x0014	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x24, 0x00, COM_FREQ },
+	    },
+	},
+
 	/*
 	 * This is the Middle Digital, Inc. PCI-Weasel, which
 	 * uses a PCI interface implemented in FPGA.
@@ -1021,6 +1044,70 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+	/*
+	 * Perle PCI-RAS 4 Modem ports
+	 */
+	{   "Perle Systems PCI-RAS 4 modem ports",
+	    {	0x10b5, 0x9030, 0x155f, 0xf001	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
+	    },
+	},
+
+	/*
+	 * Perle PCI-RASV92 4 Modem ports
+	 */
+	{   "Perle Systems PCI-RASV92 4 modem ports",
+	    {	0x10b5, 0x9050, 0x155f, 0xf001	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
+	    },
+	},
+
+	/*
+	 * Perle PCI-RAS 8 Modem ports
+	 */
+	{   "Perle Systems PCI-RAS 8 modem ports",
+	    {	0x10b5, 0x9030, 0x155f, 0xf010	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 4 },
+	    },
+	},
+
+	/*
+	 * Perle PCI-RASV92 8 Modem ports
+	 */
+	{   "Perle Systems PCI-RASV92 8 modem ports",
+	    {	0x10b5, 0x9050, 0x155f, 0xf010	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 4 },
 	    },
 	},
 
@@ -1112,5 +1199,5 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-	{ 0 }
+	{ .name = NULL },
 };

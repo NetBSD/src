@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.31.2.1 2006/06/21 15:02:52 yamt Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.31.2.2 2006/12/30 20:48:01 yamt Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.31.2.1 2006/06/21 15:02:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.31.2.2 2006/12/30 20:48:01 yamt Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -4747,7 +4747,8 @@ ahd_handle_msg_reject(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
  * Process an ignore wide residue message.
  */
 static void
-ahd_handle_ign_wide_residue(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
+ahd_handle_ign_wide_residue(struct ahd_softc *ahd,
+    struct ahd_devinfo *devinfo)
 {
 	u_int scb_index;
 	struct scb *scb;
@@ -7420,12 +7421,14 @@ ahd_rem_wscb(struct ahd_softc *ahd, u_int scbid,
 static void
 ahd_add_scb_to_free_list(struct ahd_softc *ahd, u_int scbid)
 {
+#ifdef notdef
 /* XXX Need some other mechanism to designate "free". */
 	/*
 	 * Invalidate the tag so that our abort
 	 * routines don't think it's active.
-	ahd_outb(ahd, SCB_TAG, SCB_LIST_NULL);
 	 */
+	ahd_outb(ahd, SCB_TAG, SCB_LIST_NULL);
+#endif
 }
 
 /******************************** Error Handling ******************************/

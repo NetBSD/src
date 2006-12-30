@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.16.2.1 2006/06/21 14:48:01 yamt Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.16.2.2 2006/12/30 20:45:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.16.2.1 2006/06/21 14:48:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.16.2.2 2006/12/30 20:45:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,6 +154,8 @@ osf1_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	u_int64_t *args, copyargs[10];				/* XXX */
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
+
+	LWP_CACHE_CREDS(l, p);
 
 	KERNEL_PROC_LOCK(l);
 
@@ -239,6 +241,8 @@ osf1_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	u_int64_t *args, copyargs[10];
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
+
+	LWP_CACHE_CREDS(l, p);
 
 	KERNEL_PROC_LOCK(l);
 

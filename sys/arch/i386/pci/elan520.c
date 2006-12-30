@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.8.16.1 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: elan520.c,v 1.8.16.2 2006/12/30 20:46:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.8.16.1 2006/06/21 14:52:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.8.16.2 2006/12/30 20:46:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,8 @@ elansc_wdog_tickle(struct sysmon_wdog *smw)
 }
 
 static int
-elansc_match(struct device *parent, struct cfdata *match, void *aux)
+elansc_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

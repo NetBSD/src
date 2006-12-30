@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2005/02/20 13:59:27 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.6.4.1 2006/12/30 20:45:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -111,7 +111,7 @@ static const int month_days[12] = {
 u_char bbc_registers[13];
 struct hil_dev *bbcaddr = BBCADDR;
 
-static int bbc_to_gmt(u_long *);
+static int bbc_to_gmt(time_t *);
 
 time_t
 getsecs(void)
@@ -129,7 +129,7 @@ getsecs(void)
 
 
 static int
-bbc_to_gmt(u_long *timbuf)
+bbc_to_gmt(time_t *timbuf)
 {
 	int i;
 	u_long tmp;

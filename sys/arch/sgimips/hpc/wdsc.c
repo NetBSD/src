@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.14 2004/01/10 02:55:54 sekiya Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.14.16.1 2006/12/30 20:46:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.14 2004/01/10 02:55:54 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.14.16.1 2006/12/30 20:46:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,13 +52,14 @@ __KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.14 2004/01/10 02:55:54 sekiya Exp $");
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/machtype.h>
 
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/hpc/hpcreg.h>
 #include <sgimips/hpc/hpcdma.h>
 
-#include <sgimips/hpc/sbicreg.h>
-#include <sgimips/hpc/sbicvar.h>
+#include <dev/ic/wd33c93reg.h>
+#include <dev/ic/wd33c93var.h>
 
 #include <opt_kgdb.h>
 #include <sys/kgdb.h>
@@ -147,7 +148,14 @@ wdsc_attach(struct device *pdp, struct device *dp, void *auxp)
 	sc->sc_adapter.adapt_minphys = minphys;
 
 	sc->sc_id = 0;					/* Host ID = 0 */
-	sc->sc_clkfreq = wsc->sc_hpcdma.hpc->clk_freq;
+
+	/* IP12 runs at 20mhz, all others at 10. XXX - GIO SCSI cards? */
+	if (mach_type == MACH_SGI_IP12)
+		sc->sc_clkfreq = 200;
+	else
+		sc->sc_clkfreq = 100;
+
+	sc->sc_dmamode = SBIC_CTL_DMA;
 
 	evcnt_attach_dynamic(&wsc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 			     sc->sc_dev.dv_xname, "intr");
@@ -195,10 +203,12 @@ wdsc_dmasetup(struct wd33c93_softc *dev, caddr_t *addr, size_t *len, int datain,
 		wsc->sc_flags |= WDSC_DMA_MAPLOADED;
 
 		if (datain) {
-			dsc->sc_dmacmd = wsc->sc_hpcdma.hpc->dma_datain_cmd;
+			dsc->sc_dmacmd =
+			    wsc->sc_hpcdma.hpc->scsi_dma_datain_cmd;
 			dsc->sc_flags |= HPCDMA_READ;
 		} else {
-			dsc->sc_dmacmd = wsc->sc_hpcdma.hpc->dma_dataout_cmd;
+			dsc->sc_dmacmd =
+			    wsc->sc_hpcdma.hpc->scsi_dma_dataout_cmd;
 			dsc->sc_flags &= ~HPCDMA_READ;
 		}
 	}

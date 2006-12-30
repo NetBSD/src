@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.21.2.1 2006/06/21 15:10:28 yamt Exp $	*/
+/*	$NetBSD: zlib.c,v 1.21.2.2 2006/12/30 20:50:21 yamt Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.21.2.1 2006/06/21 15:10:28 yamt Exp $
+ * $Id: zlib.c,v 1.21.2.2 2006/12/30 20:50:21 yamt Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.21.2.1 2006/06/21 15:10:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.21.2.2 2006/12/30 20:50:21 yamt Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.21.2.1 2006/06/21 15:10:28 yamt Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.21.2.1 2006/06/21 15:10:28 yamt Exp $ */
+/* @(#) $Id: zlib.c,v 1.21.2.2 2006/12/30 20:50:21 yamt Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -294,7 +294,7 @@ void   zcfree  __P((voidpf opaque, voidpf ptr));
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.21.2.1 2006/06/21 15:10:28 yamt Exp $ */
+/* @(#) $Id: zlib.c,v 1.21.2.2 2006/12/30 20:50:21 yamt Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -656,7 +656,7 @@ void _tr_stored_type_only __P((deflate_state *));
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.21.2.1 2006/06/21 15:10:28 yamt Exp $ */
+/* @(#) $Id: zlib.c,v 1.21.2.2 2006/12/30 20:50:21 yamt Exp $ */
 
 /* #include "deflate.h" */
 
@@ -2030,7 +2030,7 @@ local block_state deflate_slow(s, flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.21.2.1 2006/06/21 15:10:28 yamt Exp $ */
+/* @(#) $Id: zlib.c,v 1.21.2.2 2006/12/30 20:50:21 yamt Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -5044,12 +5044,12 @@ local inflate_huft fixed_td[] = {
 #endif
 
 
-int inflate_trees_fixed(bl, bd, tl, td, z)
-uIntf *bl;               /* literal desired/actual bit depth */
-uIntf *bd;               /* distance desired/actual bit depth */
-inflate_huft * FAR *tl;  /* literal/length tree result */
-inflate_huft * FAR *td;  /* distance tree result */
-z_streamp z;             /* for memory allocation */
+int inflate_trees_fixed(
+uIntf *bl,               /* literal desired/actual bit depth */
+uIntf *bd,               /* distance desired/actual bit depth */
+inflate_huft * FAR *tl,  /* literal/length tree result */
+inflate_huft * FAR *td,  /* distance tree result */
+z_streamp z)    /* for memory allocation */
 {
 #ifdef BUILDFIXED
   /* build fixed tables if not already */
@@ -5909,7 +5909,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.21.2.1 2006/06/21 15:10:28 yamt Exp $ */
+/* @(#) $Id: zlib.c,v 1.21.2.2 2006/12/30 20:50:21 yamt Exp $ */
 
 /* #include "zlib.h" */
 

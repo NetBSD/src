@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_proto.c,v 1.17 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: uipc_proto.c,v 1.17.4.1 2006/12/30 20:50:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.17 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.17.4.1 2006/12/30 20:50:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -69,6 +69,11 @@ const struct protosw unixsw[] = {
 }
 };
 
-struct domain unixdomain =
-    { AF_LOCAL, "unix", 0, unp_externalize, unp_dispose,
-      unixsw, &unixsw[sizeof(unixsw)/sizeof(unixsw[0])] };
+struct domain unixdomain = {
+	.dom_family = AF_LOCAL,
+	.dom_name = "unix",
+	.dom_externalize = unp_externalize,
+	.dom_dispose = unp_dispose,
+	.dom_protosw = unixsw,
+	.dom_protoswNPROTOSW = &unixsw[sizeof(unixsw)/sizeof(unixsw[0])],
+};

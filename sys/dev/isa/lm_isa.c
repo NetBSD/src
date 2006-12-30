@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.10 2004/09/14 20:20:48 drochner Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.10.12.1 2006/12/30 20:48:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.10 2004/09/14 20:20:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.10.12.1 2006/12/30 20:48:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,10 +77,8 @@ CFATTACH_DECL(lm_isa, sizeof(struct lm_softc),
 
 
 int
-lm_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lm_isa_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -124,9 +122,7 @@ lm_isa_match(parent, match, aux)
 
 
 void
-lm_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lm_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lm_softc *lmsc = (void *)self;
 	int iobase;
@@ -141,7 +137,7 @@ lm_isa_attach(parent, self, aux)
 		return;
 	}
 
-	/* Bus-independant attachment */
+	/* Bus-independent attachment */
 	lmsc->lm_writereg = lm_isa_writereg;
 	lmsc->lm_readreg = lm_isa_readreg;
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_pool.h,v 1.5.12.2 2006/06/21 15:09:36 yamt Exp $	*/
+/*	$NetBSD: tmpfs_pool.h,v 1.5.12.3 2006/12/30 20:50:01 yamt Exp $	*/
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

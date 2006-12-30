@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.7.2.1 2006/06/21 15:05:05 yamt Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.7.2.2 2006/12/30 20:48:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.7.2.1 2006/06/21 15:05:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.7.2.2 2006/12/30 20:48:46 yamt Exp $");
 
 #include "rnd.h"
 
@@ -81,7 +81,8 @@ static void	ld_amr_handler(struct amr_ccb *);
 static int	ld_amr_start(struct ld_softc *, struct buf *);
 
 static int
-ld_amr_match(struct device *parent, struct cfdata *match, void *aux)
+ld_amr_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	return (1);
@@ -151,7 +152,9 @@ ld_amr_dobio(struct ld_amr_softc *sc, void *data, int datasize,
 	mb->mb_blkcount = htole16(datasize / AMR_SECTOR_SIZE);
 	mb->mb_lba = htole32(blkno);
 
-	if ((rv = amr_ccb_map(amr, ac, data, datasize, dowrite)) != 0) {
+	rv = amr_ccb_map(amr, ac, data, datasize,
+	    (dowrite ? AC_XFER_OUT : AC_XFER_IN));
+	if (rv != 0) {
 		amr_ccb_free(amr, ac);
 		return (rv);
 	}

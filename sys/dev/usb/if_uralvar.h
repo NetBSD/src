@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralvar.h,v 1.2.2.1 2006/06/21 15:07:43 yamt Exp $ */
+/*	$NetBSD: if_uralvar.h,v 1.2.2.2 2006/12/30 20:49:38 yamt Exp $ */
 /*	$OpenBSD: if_ralvar.h,v 1.2 2005/05/13 18:42:50 damien Exp $  */
 
 /*-
@@ -24,7 +24,7 @@
 struct ural_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
 	uint8_t		wr_flags;
-	uint8_t		_pad;
+	uint8_t		wr_rate;
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;
 	uint8_t		wr_antenna;
@@ -33,6 +33,7 @@ struct ural_rx_radiotap_header {
 
 #define RAL_RX_RADIOTAP_PRESENT						\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
 	 (1 << IEEE80211_RADIOTAP_ANTENNA) |				\
 	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL))
@@ -86,11 +87,16 @@ struct ural_softc {
 	uint32_t		asic_rev;
 	uint8_t			rf_rev;
 
+	usbd_xfer_handle	amrr_xfer;
+
 	usbd_pipe_handle	sc_rx_pipeh;
 	usbd_pipe_handle	sc_tx_pipeh;
 
 	enum ieee80211_state	sc_state;
 	struct usb_task		sc_task;
+
+	struct ieee80211_amrr	amrr;
+	struct ieee80211_amrr_node	amn;
 
 	struct ural_rx_data	rx_data[RAL_RX_LIST_COUNT];
 	struct ural_tx_data	tx_data[RAL_TX_LIST_COUNT];
@@ -99,9 +105,11 @@ struct ural_softc {
 	struct ieee80211_beacon_offsets sc_bo;
 
 	struct callout		scan_ch;
+	struct callout		amrr_ch;
 
 	int			sc_tx_timer;
 
+	int16_t			sta[11];
 	uint32_t		rf_regs[4];
 	uint8_t			txpow[14];
 

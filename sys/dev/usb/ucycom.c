@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.10.6.2 2006/06/21 15:07:44 yamt Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.10.6.3 2006/12/30 20:49:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.10.6.2 2006/06/21 15:07:44 yamt Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.10.6.3 2006/12/30 20:49:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,8 @@ Static const struct usb_devno ucycom_devs[] = {
 USB_DECLARE_DRIVER(ucycom);
 
 int
-ucycom_match(struct device *parent, struct cfdata *match, void *aux)
+ucycom_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
@@ -332,9 +333,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	DPRINTF(("ucycomopen: tp=%p\n", tp));
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -569,8 +568,9 @@ ucycomstart(struct tty *tp)
 #endif
 	err = uhidev_write(sc->sc_hdev.sc_parent, sc->sc_obuf, sc->sc_olen);
 
-	if (err)
+	if (err) {
 		DPRINTF(("ucycomstart: error doing uhidev_write = %d\n", err));
+	}
 
 #ifdef UCYCOM_DEBUG
 	ucycom_get_cfg(sc);
@@ -770,7 +770,8 @@ ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		err = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
+		err = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (err)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -1030,8 +1031,9 @@ ucycom_set_status(struct ucycom_softc *sc)
 	sc->sc_obuf[0] = sc->sc_mcr;
 
 	err = uhidev_write(sc->sc_hdev.sc_parent, sc->sc_obuf, sc->sc_olen);
-	if (err)
+	if (err) {
 		DPRINTF(("ucycom_set_status: err=%d\n", err));
+	}
 }
 
 #ifdef UCYCOM_DEBUG

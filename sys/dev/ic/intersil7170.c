@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.c,v 1.4 2005/06/04 20:14:25 he Exp $ */
+/*	$NetBSD: intersil7170.c,v 1.4.2.1 2006/12/30 20:48:03 yamt Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,75 +40,49 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.4 2005/06/04 20:14:25 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.4.2.1 2006/12/30 20:48:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/errno.h>
 
 #include <machine/bus.h>
 #include <dev/clock_subr.h>
-#include <dev/ic/intersil7170.h>
+#include <dev/ic/intersil7170reg.h>
+#include <dev/ic/intersil7170var.h>
 
-#define intersil_command(run, interrupt) \
-	(run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
-	 INTERSIL_CMD_NORMAL_MODE)
+int intersil7170_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
+int intersil7170_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 
-struct intersil7170_softc {
-	bus_space_tag_t		sil_bt;
-	bus_space_handle_t	sil_bh;
-	int			sil_year0;
-};
-
-int intersil7170_gettime(todr_chip_handle_t, volatile struct timeval *);
-int intersil7170_settime(todr_chip_handle_t, volatile struct timeval *);
-int intersil7170_getcal(todr_chip_handle_t, int *);
-int intersil7170_setcal(todr_chip_handle_t, int);
-
-int intersil7170_auto_century_adjust = 1;
-
-todr_chip_handle_t
-intersil7170_attach(bt, bh, year0)
-	bus_space_tag_t bt;
-	bus_space_handle_t bh;
-	int year0;
+void
+intersil7170_attach(struct intersil7170_softc *sc)
 {
 	todr_chip_handle_t handle;
-	struct intersil7170_softc *sil;
-	int sz;
 
 	printf(": intersil7170");
 
-	sz = ALIGN(sizeof(struct todr_chip_handle)) + sizeof(struct intersil7170);
-	handle = malloc(sz, M_DEVBUF, M_NOWAIT);
-	sil = (struct intersil7170_softc *)((u_long)handle +
-					ALIGN(sizeof(struct todr_chip_handle)));
-	handle->cookie = sil;
-	handle->todr_gettime = intersil7170_gettime;
-	handle->todr_settime = intersil7170_settime;
-	handle->todr_getcal = intersil7170_getcal;
-	handle->todr_setcal = intersil7170_setcal;
-	sil->sil_bt = bt;
-	sil->sil_bh = bh;
-	sil->sil_year0 = year0;
+	handle = &sc->sc_handle;
 
-	return (handle);
+	handle->cookie = sc;
+	handle->todr_gettime = NULL;
+	handle->todr_settime = NULL;
+	handle->todr_gettime_ymdhms = intersil7170_gettime_ymdhms;
+	handle->todr_settime_ymdhms = intersil7170_settime_ymdhms;
+	handle->todr_setwen = NULL;
 }
 
 /*
  * Set up the system's time, given a `reasonable' time value.
  */
 int
-intersil7170_gettime(handle, tv)
-	todr_chip_handle_t handle;
-	volatile struct timeval *tv;
+intersil7170_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct intersil7170_softc *sil = handle->cookie;
-	bus_space_tag_t bt = sil->sil_bt;
-	bus_space_handle_t bh = sil->sil_bh;
-	struct clock_ymdhms dt;
-	u_int8_t cmd;
+	struct intersil7170_softc *sc = handle->cookie;
+	bus_space_tag_t bt = sc->sc_bst;
+	bus_space_handle_t bh = sc->sc_bsh;
+	uint8_t cmd;
 	int year;
 	int s;
 
@@ -116,96 +90,72 @@ intersil7170_gettime(handle, tv)
 	s = splhigh();
 
 	/* Enable read (stop time) */
-	cmd = intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
+	cmd = INTERSIL_COMMAND(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
 	bus_space_write_1(bt, bh, INTERSIL_ICMD, cmd);
 
 	/* The order of reading out the clock elements is important */
-	bus_space_read_1(bt, bh, INTERSIL_ICSEC);	/* not used */
-	dt.dt_hour = bus_space_read_1(bt, bh, INTERSIL_IHOUR);
-	dt.dt_min = bus_space_read_1(bt, bh, INTERSIL_IMIN);
-	dt.dt_sec = bus_space_read_1(bt, bh, INTERSIL_ISEC);
-	dt.dt_mon = bus_space_read_1(bt, bh, INTERSIL_IMON);
-	dt.dt_day = bus_space_read_1(bt, bh, INTERSIL_IDAY);
+	(void)bus_space_read_1(bt, bh, INTERSIL_ICSEC);	/* not used */
+	dt->dt_hour = bus_space_read_1(bt, bh, INTERSIL_IHOUR);
+	dt->dt_min = bus_space_read_1(bt, bh, INTERSIL_IMIN);
+	dt->dt_sec = bus_space_read_1(bt, bh, INTERSIL_ISEC);
+	dt->dt_mon = bus_space_read_1(bt, bh, INTERSIL_IMON);
+	dt->dt_day = bus_space_read_1(bt, bh, INTERSIL_IDAY);
 	year = bus_space_read_1(bt, bh, INTERSIL_IYEAR);
-	dt.dt_wday = bus_space_read_1(bt, bh, INTERSIL_IDOW);
+	dt->dt_wday = bus_space_read_1(bt, bh, INTERSIL_IDOW);
 
 	/* Done writing (time wears on) */
-	cmd = intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	cmd = INTERSIL_COMMAND(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 	bus_space_write_1(bt, bh, INTERSIL_ICMD, cmd);
 	splx(s);
 
-	year += sil->sil_year0;
-	if (year < 1970 && intersil7170_auto_century_adjust != 0)
+	year += sc->sc_year0;
+	if (year < POSIX_BASE_YEAR &&
+	    (sc->sc_flag & INTERSIL7170_NO_CENT_ADJUST) == 0)
 		year += 100;
 
-	dt.dt_year = year;
+	dt->dt_year = year;
 
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
-	return (0);
+	return 0;
 }
 
 /*
  * Reset the clock based on the current time.
  */
 int
-intersil7170_settime(handle, tv)
-	todr_chip_handle_t handle;
-	volatile struct timeval *tv;
+intersil7170_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct intersil7170_softc *sil = handle->cookie;
-	bus_space_tag_t bt = sil->sil_bt;
-	bus_space_handle_t bh = sil->sil_bh;
-	struct clock_ymdhms dt;
-	u_int8_t cmd;
+	struct intersil7170_softc *sc = handle->cookie;
+	bus_space_tag_t bt = sc->sc_bst;
+	bus_space_handle_t bh = sc->sc_bsh;
+	uint8_t cmd;
 	int year;
-	long sec;
 	int s;
 
-	sec = tv->tv_sec + ((tv->tv_usec < 500000) ? 0 : 1);
-	clock_secs_to_ymdhms(sec, &dt);
-
-	year = dt.dt_year - sil->sil_year0;
-	if (year > 99 && intersil7170_auto_century_adjust != 0)
+	year = dt->dt_year - sc->sc_year0;
+	if (year > 99 && (sc->sc_flag & INTERSIL7170_NO_CENT_ADJUST) == 0)
 		year -= 100;
 
 	/* No interrupts while we're fiddling with the chip */
 	s = splhigh();
 
 	/* Enable write (stop time) */
-	cmd = intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
+	cmd = INTERSIL_COMMAND(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
 	bus_space_write_1(bt, bh, INTERSIL_ICMD, cmd);
 
 	/* The order of reading writing the clock elements is important */
 	bus_space_write_1(bt, bh, INTERSIL_ICSEC, 0);
-	bus_space_write_1(bt, bh, INTERSIL_IHOUR, dt.dt_hour);
-	bus_space_write_1(bt, bh, INTERSIL_IMIN, dt.dt_min);
-	bus_space_write_1(bt, bh, INTERSIL_ISEC, dt.dt_sec);
-	bus_space_write_1(bt, bh, INTERSIL_IMON, dt.dt_mon);
-	bus_space_write_1(bt, bh, INTERSIL_IDAY, dt.dt_day);
+	bus_space_write_1(bt, bh, INTERSIL_IHOUR, dt->dt_hour);
+	bus_space_write_1(bt, bh, INTERSIL_IMIN, dt->dt_min);
+	bus_space_write_1(bt, bh, INTERSIL_ISEC, dt->dt_sec);
+	bus_space_write_1(bt, bh, INTERSIL_IMON, dt->dt_mon);
+	bus_space_write_1(bt, bh, INTERSIL_IDAY, dt->dt_day);
 	bus_space_write_1(bt, bh, INTERSIL_IYEAR, year);
-	bus_space_write_1(bt, bh, INTERSIL_IDOW, dt.dt_wday);
+	bus_space_write_1(bt, bh, INTERSIL_IDOW, dt->dt_wday);
 
 	/* Done writing (time wears on) */
-	cmd = intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	cmd = INTERSIL_COMMAND(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 	bus_space_write_1(bt, bh, INTERSIL_ICMD, cmd);
 	splx(s);
 
-	return (0);
-}
-
-int
-intersil7170_getcal(handle, vp)
-	todr_chip_handle_t handle;
-	int *vp;
-{
-	return (EOPNOTSUPP);
-}
-
-int
-intersil7170_setcal(handle, v)
-	todr_chip_handle_t handle;
-	int v;
-{
-	return (EOPNOTSUPP);
+	return 0;
 }

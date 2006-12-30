@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.80.2.1 2006/06/21 15:11:58 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.80.2.2 2006/12/30 20:50:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.80.2.1 2006/06/21 15:11:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.80.2.2 2006/12/30 20:50:51 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.80.2.1 2006/06/21 15:11:58 yamt Exp $
 #include <nfs/nfs.h>
 #include <nfs/nfsnode.h>
 #include <nfs/nfsmount.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 
 struct nfsnodehashhead *nfsnodehashtbl;
@@ -207,9 +206,9 @@ loop:
 	 * Initalize read/write creds to useful values. VOP_OPEN will
 	 * overwrite these.
 	 */
-	np->n_rcred = curproc->p_cred;
+	np->n_rcred = curlwp->l_cred;
 	kauth_cred_hold(np->n_rcred);
-	np->n_wcred = curproc->p_cred;
+	np->n_wcred = curlwp->l_cred;
 	kauth_cred_hold(np->n_wcred);
 	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
 	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
@@ -231,7 +230,6 @@ nfs_inactive(v)
 	struct sillyrename *sp;
 	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
-	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	boolean_t removed;
 
 	np = VTONFS(vp);
@@ -245,12 +243,7 @@ nfs_inactive(v)
 	if (sp != NULL)
 		nfs_vinvalbuf(vp, 0, sp->s_cred, l, 1);
 	removed = (np->n_flag & NREMOVED) != 0;
-	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
-		NQNFSNONCACHE | NQNFSWRITE | NEOFVALID);
-
-	if ((nmp->nm_flag & NFSMNT_NQNFS) && CIRCLEQ_NEXT(np, n_timer) != 0) {
-		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
-	}
+	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NEOFVALID);
 
 	if (vp->v_type == VDIR && np->n_dircache)
 		nfs_invaldircache(vp,
@@ -340,6 +333,7 @@ int
 nfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
     kauth_cred_t cred)
 {
+
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.2.1 2006/06/21 14:51:08 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.2 2006/12/30 20:45:54 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.2.1 2006/06/21 14:51:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.2.2 2006/12/30 20:45:54 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -114,6 +114,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.2.1 2006/06/21 14:51:08 yamt Exp $"
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
+
+
+#define TLB_PG_SIZE 	(16*1024*1024)
 
 /*
  * Global variables used here and there
@@ -171,6 +174,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 #ifdef IPKDB
 	extern int ipkdblow, ipkdbsize;
 #endif
+	vaddr_t va;
 	int exc, dbcr0;
 	struct cpu_info * const ci = curcpu();
 
@@ -190,6 +194,14 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	/* Lower memory reserved by eval board BIOS */
 	availmemr[0].start = startkernel; 
 	availmemr[0].size = board_data.mem_size - availmemr[0].start;
+
+	/* Linear map kernel memory */
+	for (va = 0; va < endkernel; va += TLB_PG_SIZE)
+		ppc4xx_tlb_reserve(va, va, TLB_PG_SIZE, TLB_EX);
+
+	/* Map console after physmem (see pmap_tlbmiss()) */
+	ppc4xx_tlb_reserve(0xef000000, roundup(physmemr[0].size, TLB_PG_SIZE),
+	    TLB_PG_SIZE, TLB_I | TLB_G);
 
 	/*
 	 * Initialize lwp0 and current pcb and pmap pointers.
@@ -267,6 +279,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 
 	__syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 	mtspr(SPR_EVPR, 0);		/* Set Exception vector base */
+
 	consinit();
 
 	/* Handle trap instruction as PGM exception */
@@ -456,42 +469,6 @@ dumpsys(void)
 {
 
 	printf("dumpsys: TBD\n");
-}
-
-/*
- * Soft networking interrupts.
- */
-void
-softnet(void)
-{
-	int isr;
-
-	isr = netisr;
-	netisr = 0;
-
-#define DONETISR(bit, fn) do {		\
-	if (isr & (1 << bit))		\
-		fn();			\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-
-}
-
-/*
- * Soft tty interrupts.
- */
-#include "com.h"
-void
-softserial(void)
-{
-#if NCOM > 0
-	void comsoft(void);	/* XXX from dev/ic/com.c */
-
-	comsoft();
-#endif
 }
 
 /*

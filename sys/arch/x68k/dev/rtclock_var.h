@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock_var.h,v 1.6 2005/01/18 07:12:15 chs Exp $	*/
+/*	$NetBSD: rtclock_var.h,v 1.6.8.1 2006/12/30 20:47:21 yamt Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -42,6 +42,7 @@ struct rtc_softc {
 
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bht;
+	struct todr_chip_handle	sc_todr;
 };
 
 /*

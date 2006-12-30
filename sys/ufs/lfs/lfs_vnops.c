@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.152.2.1 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.152.2.2 2006/12/30 20:51:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.152.2.1 2006/06/21 15:12:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.152.2.2 2006/12/30 20:51:01 yamt Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.152.2.1 2006/06/21 15:12:39 yamt Exp
 #include <sys/pool.h>
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
+#include <sys/syslog.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -291,14 +296,13 @@ lfs_fsync(void *v)
 	}
 
 	/*
-	 * Don't reclaim any vnodes that are being cleaned.
-	 * This prevents the cleaner from writing files twice
-	 * in the same partial segment, causing an accounting
-	 * underflow.
+	 * If a vnode is bring cleaned, flush it out before we try to
+	 * reuse it.  This prevents the cleaner from writing files twice
+	 * in the same partial segment, causing an accounting underflow.
 	 */
-	if (ap->a_flags & FSYNC_RECLAIM) {
-		if (VTOI(vp)->i_flags & IN_CLEANING)
-			return EAGAIN;
+	if (ap->a_flags & FSYNC_RECLAIM && VTOI(vp)->i_flags & IN_CLEANING) {
+		/* printf("avoiding VONWORKLIST panic\n"); */
+		lfs_vflush(vp);
 	}
 
 	wait = (ap->a_flags & FSYNC_WAIT);
@@ -312,7 +316,7 @@ lfs_fsync(void *v)
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		error = VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-				  ap->a_l->l_proc->p_cred, ap->a_l);
+				  ap->a_l->l_cred, ap->a_l);
 	}
 	if (wait && !VPISEMPTY(vp))
 		LFS_SET_UINO(VTOI(vp), IN_MODIFIED);
@@ -392,9 +396,14 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 		lfs_check(dvp, LFS_UNUSED_LBN, 0);
 		simple_lock(&fs->lfs_interlock);
 	}
-	while (fs->lfs_writer)
-		ltsleep(&fs->lfs_dirops, (PRIBIO + 1), "lfs_sdirop", 0,
-			&fs->lfs_interlock);
+	while (fs->lfs_writer) {
+		error = ltsleep(&fs->lfs_dirops, (PRIBIO + 1) | PCATCH,
+				"lfs_sdirop", 0, &fs->lfs_interlock);
+		if (error == EINTR) {
+			simple_unlock(&fs->lfs_interlock);
+			goto unreserve;
+		}
+	}
 	simple_lock(&lfs_subsys_lock);
 	if (lfs_dirvcount > LFS_MAX_DIROP && fs->lfs_dirops == 0) {
 		wakeup(&lfs_writer_daemon);
@@ -700,10 +709,12 @@ lfs_remove(void *v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	struct vnode *dvp, *vp;
+	struct inode *ip;
 	int error;
 
 	dvp = ap->a_dvp;
 	vp = ap->a_vp;
+	ip = VTOI(vp);
 	if ((error = SET_DIROP_REMOVE(dvp, vp)) != 0) {
 		if (dvp == vp)
 			vrele(vp);
@@ -713,7 +724,9 @@ lfs_remove(void *v)
 		return error;
 	}
 	error = ufs_remove(ap);
-	SET_ENDOP_REMOVE(VTOI(dvp)->i_lfs, dvp, ap->a_vp, "remove");
+	if (ip->i_nlink == 0)
+		lfs_orphan(ip->i_lfs, ip->i_number);
+	SET_ENDOP_REMOVE(ip->i_lfs, dvp, ap->a_vp, "remove");
 	return (error);
 }
 
@@ -727,18 +740,23 @@ lfs_rmdir(void *v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	struct vnode *vp;
+	struct inode *ip;
 	int error;
 
 	vp = ap->a_vp;
+	ip = VTOI(vp);
 	if ((error = SET_DIROP_REMOVE(ap->a_dvp, ap->a_vp)) != 0) {
-		vrele(ap->a_dvp);
-		if (ap->a_vp != ap->a_dvp)
-			VOP_UNLOCK(ap->a_dvp, 0);
+		if (ap->a_dvp == vp)
+			vrele(ap->a_dvp);
+		else
+			vput(ap->a_dvp);
 		vput(vp);
 		return error;
 	}
 	error = ufs_rmdir(ap);
-	SET_ENDOP_REMOVE(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, ap->a_vp, "rmdir");
+	if (ip->i_nlink == 0)
+		lfs_orphan(ip->i_lfs, ip->i_number);
+	SET_ENDOP_REMOVE(ip->i_lfs, ap->a_dvp, ap->a_vp, "rmdir");
 	return (error);
 }
 
@@ -830,8 +848,9 @@ lfs_rename(void *v)
 		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
-		if ((error = relookup(fdvp, &fvp, fcnp))){
-			/* relookup blew away fdvp */
+		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+		if ((error = relookup(fdvp, &fvp, fcnp))) {
+			vput(fdvp);
 			return (error);
 		}
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
@@ -928,11 +947,37 @@ lfs_setattr(void *v)
 }
 
 /*
+ * Release the block we hold on lfs_newseg wrapping.  Called on file close,
+ * or explicitly from LFCNWRAPGO.  Called with the interlock held.
+ */
+static int
+lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
+{
+	if (lockstatus(&fs->lfs_stoplock) != LK_EXCLUSIVE)
+		return EBUSY;
+
+	lockmgr(&fs->lfs_stoplock, LK_RELEASE, &fs->lfs_interlock);
+
+	KASSERT(fs->lfs_nowrap > 0);
+	if (fs->lfs_nowrap <= 0) {
+		return 0;
+	}
+
+	if (--fs->lfs_nowrap == 0) {
+		log(LOG_NOTICE, "%s: re-enabled log wrap\n", fs->lfs_fsmnt);
+		wakeup(&fs->lfs_wrappass);
+		lfs_wakeup_cleaner(fs);
+	}
+	if (waitfor) {
+		ltsleep(&fs->lfs_nextseg, PCATCH | PUSER,
+			"segment", 0, &fs->lfs_interlock);
+	}
+
+	return 0;
+}
+
+/*
  * Close called
- *
- * XXX -- we were using ufs_close, but since it updates the
- * times on the inode, we might need to bump the uinodes
- * count.
  */
 /* ARGSUSED */
 int
@@ -946,6 +991,15 @@ lfs_close(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
+	struct lfs *fs = ip->i_lfs;
+
+	if ((ip->i_number == ROOTINO || ip->i_number == LFS_IFILE_INUM) &&
+	    lockstatus(&fs->lfs_stoplock) == LK_EXCLUSIVE) {
+		simple_lock(&fs->lfs_interlock);
+		log(LOG_NOTICE, "lfs_close: releasing log wrap control\n");
+		lfs_wrapgo(fs, ip, 0);
+		simple_unlock(&fs->lfs_interlock);
+	}
 
 	if (vp == ip->i_lfs->lfs_ivnode &&
 	    vp->v_mount->mnt_iflag & IMNT_UNMOUNT)
@@ -1224,8 +1278,9 @@ lfs_flush_dirops(struct lfs *fs)
 				LFS_SET_UINO(ip, IN_MODIFIED);
 			}
 		}
+		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
-		if (waslocked)
+		if (waslocked == LK_EXCLOTHER)
 			LFS_SET_UINO(ip, IN_MODIFIED);
 		simple_lock(&fs->lfs_interlock);
 	}
@@ -1312,6 +1367,7 @@ lfs_flush_pchain(struct lfs *fs)
 		    !(ip->i_flag & IN_ALLMOD)) {
 			LFS_SET_UINO(ip, IN_MODIFIED);
 		}
+		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
 
 		lfs_vunref(vp);
@@ -1347,8 +1403,9 @@ lfs_fcntl(void *v)
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	int blkcnt, error, oclean;
+	size_t fh_size;
 	struct lfs_fcntl_markv blkvp;
-	struct proc *p;
+	struct lwp *l;
 	fsid_t *fsidp;
 	struct lfs *fs;
 	struct buf *bp;
@@ -1366,10 +1423,17 @@ lfs_fcntl(void *v)
 		return ESHUTDOWN;
 	}
 
-	p = ap->a_l->l_proc;
+	/* LFS control and monitoring fcntls are available only to root */
+	l = ap->a_l;
+	if (((ap->a_command & 0xff00) >> 8) == 'L' &&
+	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0)
+		return (error);
+
 	fs = VTOI(ap->a_vp)->i_lfs;
 	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsidx;
 
+	error = 0;
 	switch (ap->a_command) {
 	    case LFCNSEGWAITALL:
 	    case LFCNSEGWAITALL_COMPAT:
@@ -1392,9 +1456,6 @@ lfs_fcntl(void *v)
 
 	    case LFCNBMAPV:
 	    case LFCNMARKV:
-		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-					       &p->p_acflag)) != 0)
-			return (error);
 		blkvp = *(struct lfs_fcntl_markv *)ap->a_data;
 
 		blkcnt = blkvp.blkcnt;
@@ -1411,9 +1472,9 @@ lfs_fcntl(void *v)
 		++fs->lfs_sleepers;
 		simple_unlock(&fs->lfs_interlock);
 		if (ap->a_command == LFCNBMAPV)
-			error = lfs_bmapv(p, fsidp, blkiov, blkcnt);
+			error = lfs_bmapv(l->l_proc, fsidp, blkiov, blkcnt);
 		else /* LFCNMARKV */
-			error = lfs_markv(p, fsidp, blkiov, blkcnt);
+			error = lfs_markv(l->l_proc, fsidp, blkiov, blkcnt);
 		if (error == 0)
 			error = copyout(blkiov, blkvp.blkiov,
 					blkcnt * sizeof(BLOCK_INFO));
@@ -1452,15 +1513,26 @@ lfs_fcntl(void *v)
 
 		return 0;
 
-	    case LFCNIFILEFH:
+#ifdef COMPAT_30
+	    case LFCNIFILEFH_COMPAT:
 		/* Return the filehandle of the Ifile */
-		if ((error = kauth_authorize_generic(ap->a_l->l_proc->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &ap->a_l->l_proc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 			return (error);
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;
-		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid));
+		fh_size = 16;	/* former VFS_MAXFIDSIZ */
+		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid), &fh_size);
+#endif
+
+	    case LFCNIFILEFH_COMPAT2:
+	    case LFCNIFILEFH:
+		/* Return the filehandle of the Ifile */
+		fhp = (struct fhandle *)ap->a_data;
+		fhp->fh_fsid = *fsidp;
+		fh_size = sizeof(struct lfs_fhandle) -
+		    offsetof(fhandle_t, fh_fid);
+		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid), &fh_size);
 
 	    case LFCNREWIND:
 		/* Move lfs_offset to the lowest-numbered segment */
@@ -1483,33 +1555,79 @@ lfs_fcntl(void *v)
 		return lfs_resize_fs(fs, *(int *)ap->a_data);
 
 	    case LFCNWRAPSTOP:
+	    case LFCNWRAPSTOP_COMPAT:
 		/*
-		 * Hold lfs_newseg at segment 0; sleep until the filesystem
-		 * wraps around.  For debugging purposes, so an external
-		 * agent can log every segment in the filesystem as it
-		 * was written, and we can regression-test checkpoint
-		 * validity in the general case.
+		 * Hold lfs_newseg at segment 0; if requested, sleep until
+		 * the filesystem wraps around.  To support external agents
+		 * (dump, fsck-based regression test) that need to look at
+		 * a snapshot of the filesystem, without necessarily
+		 * requiring that all fs activity stops.
 		 */
+		if (lockstatus(&fs->lfs_stoplock))
+			return EALREADY;
+
 		simple_lock(&fs->lfs_interlock);
-		fs->lfs_nowrap = 1;
-		error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER | PNORELOCK,
-			"segwrap", 0, &fs->lfs_interlock);
-		if (error) {
-			fs->lfs_nowrap = 0;
-			wakeup(&fs->lfs_nowrap);
+		lockmgr(&fs->lfs_stoplock, LK_EXCLUSIVE, &fs->lfs_interlock);
+		if (fs->lfs_nowrap == 0)
+			log(LOG_NOTICE, "%s: disabled log wrap\n", fs->lfs_fsmnt);
+		++fs->lfs_nowrap;
+		if (*(int *)ap->a_data == 1 ||
+		    ap->a_command == LFCNWRAPSTOP_COMPAT) {
+			log(LOG_NOTICE, "LFCNSTOPWRAP waiting for log wrap\n");
+			error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER,
+				"segwrap", 0, &fs->lfs_interlock);
+			log(LOG_NOTICE, "LFCNSTOPWRAP done waiting\n");
+			if (error) {
+				lfs_wrapgo(fs, VTOI(ap->a_vp), 0);
+			}
 		}
+		simple_unlock(&fs->lfs_interlock);
 		return 0;
 
 	    case LFCNWRAPGO:
+	    case LFCNWRAPGO_COMPAT:
 		/*
 		 * Having done its work, the agent wakes up the writer.
-		 * It sleeps until a new segment is selected.
+		 * If the argument is 1, it sleeps until a new segment
+		 * is selected.
 		 */
 		simple_lock(&fs->lfs_interlock);
-		fs->lfs_nowrap = 0;
-		wakeup(&fs->lfs_nowrap);
-		ltsleep(&fs->lfs_nextseg, PCATCH | PUSER | PNORELOCK,
-			"segment", 0, &fs->lfs_interlock);
+		error = lfs_wrapgo(fs, VTOI(ap->a_vp),
+				   (ap->a_command == LFCNWRAPGO_COMPAT ? 1 :
+				    *((int *)ap->a_data)));
+		simple_unlock(&fs->lfs_interlock);
+		return error;
+
+	    case LFCNWRAPPASS:
+		if (lockstatus(&fs->lfs_stoplock) != LK_EXCLUSIVE)
+			return EALREADY;
+		if ((VTOI(ap->a_vp)->i_lfs_iflags & LFSI_WRAPWAIT))
+			return EALREADY;
+		simple_lock(&fs->lfs_interlock);
+		if (fs->lfs_nowrap == 0) {
+			simple_unlock(&fs->lfs_interlock);
+			return EBUSY;
+		}
+		fs->lfs_wrappass = 1;
+		wakeup(&fs->lfs_wrappass);
+		/* Wait for the log to wrap, if asked */
+		if (*(int *)ap->a_data) {
+			lfs_vref(ap->a_vp);
+			VTOI(ap->a_vp)->i_lfs_iflags |= LFSI_WRAPWAIT;
+			log(LOG_NOTICE, "LFCNPASS waiting for log wrap\n");
+			error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER,
+				"segwrap", 0, &fs->lfs_interlock);
+			log(LOG_NOTICE, "LFCNPASS done waiting\n");
+			VTOI(ap->a_vp)->i_lfs_iflags &= ~LFSI_WRAPWAIT;
+			lfs_vunref(ap->a_vp);
+		}
+		simple_unlock(&fs->lfs_interlock);
+		return error;
+
+	    case LFCNWRAPSTATUS:
+		simple_lock(&fs->lfs_interlock);
+		*(int *)ap->a_data = fs->lfs_wrapstatus;
+		simple_unlock(&fs->lfs_interlock);
 		return 0;
 
 	    default:
@@ -1791,10 +1909,8 @@ lfs_putpages(void *v)
 	if (vp->v_uobj.uo_npages == 0) {
 		s = splbio();
 		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
-		    (vp->v_flag & VONWORKLST)) {
-			vp->v_flag &= ~VONWORKLST;
-			LIST_REMOVE(vp, v_synclist);
-		}
+		    (vp->v_flag & VONWORKLST))
+			vn_syncer_remove_from_worklist(vp);
 		splx(s);
 		simple_unlock(&vp->v_interlock);
 		
@@ -1942,8 +2058,7 @@ lfs_putpages(void *v)
 		int locked;
 
 		DLOG((DLOG_PAGE, "lfs_putpages: flushing VDIROP\n"));
-		locked = VOP_ISLOCKED(vp) && /* XXX */
-			vp->v_lock.lk_lockholder == curproc->p_pid;
+		locked = (VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 		simple_unlock(&vp->v_interlock);
 		lfs_writer_enter(fs, "ppdirop");
 		if (locked)
@@ -2048,6 +2163,7 @@ again:
 		if (sp->cbpp - sp->bpp > 1) {
 			/* Write gathered pages */
 			lfs_updatemeta(sp);
+			lfs_release_finfo(fs);
 			(void) lfs_writeseg(fs, sp);
 
 			/*

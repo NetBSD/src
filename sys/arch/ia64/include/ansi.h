@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.1.14.2 2006/06/21 14:52:48 yamt Exp $	*/
+/*	$NetBSD: ansi.h,v 1.1.14.3 2006/12/30 20:46:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -92,14 +92,15 @@
 #define	_BSD_WCHAR_T_		int		/* wchar_t */
 #define	_BSD_WINT_T_		int		/* wint_t */
 #define	_BSD_RUNE_T_		int		/* rune_t */
-
+#define _BSD_WCTRANS_T_	void *			/* wctrans_t */
+#define _BSD_WCTYPE_T_	void *			/* wctype_t */
 /*
  * mbstate_t is an opaque object to keep conversion state, during multibyte
  * stream conversions.  The content must not be referenced by user programs.
  */
 typedef union {
-	char __mbstate8[128];
 	__int64_t __mbstateL;	/* for alignment */
+	char __mbstate8[128];
 } __mbstate_t;
 #define	_BSD_MBSTATE_T_		__mbstate_t	/* mbstate_t */
 

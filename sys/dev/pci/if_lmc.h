@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.4.6.2 2006/06/21 15:05:04 yamt Exp $
+ * $NetBSD: if_lmc.h,v 1.4.6.3 2006/12/30 20:48:45 yamt Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -962,16 +962,6 @@ const char *ssi_cables[] =
 /*    Declarations below here are private to the kernel device driver.     */
 /***************************************************************************/
 
-#ifndef KERNEL
-# define KERNEL 0
-#endif
-#ifndef _KERNEL
-# define _KERNEL 0
-#endif
-#ifndef __KERNEL__
-# define __KERNEL__ 0
-#endif
-
 #if KERNEL || _KERNEL || __KERNEL__
 
 /* Hide the minor differences between Operating Systems */
@@ -1071,7 +1061,7 @@ typedef int intr_return_t;
 # define TOP_UNLOCK(sc)		__cpu_simple_unlock  (&(sc)->top_lock)
 # define BOTTOM_TRYLOCK(sc)	__cpu_simple_lock_try(&(sc)->bottom_lock)
 # define BOTTOM_UNLOCK(sc)	__cpu_simple_unlock  (&(sc)->bottom_lock)
-# define CHECK_CAP		kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER, &curproc->p_acflag)
+# define CHECK_CAP		kauth_authorize_generic(curlwp->l_cred, KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag)
 # define DISABLE_INTR		int spl = splnet()
 # define ENABLE_INTR		splx(spl)
 # define IRQ_NONE		0

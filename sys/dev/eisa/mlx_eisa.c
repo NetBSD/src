@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.13.4.1 2006/06/21 15:02:46 yamt Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.13.4.2 2006/12/30 20:47:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.13.4.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.13.4.2 2006/12/30 20:47:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,10 +84,10 @@ static int	mlx_v1_reset(struct mlx_softc *);
 CFATTACH_DECL(mlx_eisa, sizeof(struct mlx_softc),
     mlx_eisa_match, mlx_eisa_attach, NULL, NULL);
 
-struct mlx_eisa_prod {
+static struct mlx_eisa_prod {
 	const char	*mp_idstr;
 	int		mp_nchan;
-} static const mlx_eisa_prod[] = {
+} const mlx_eisa_prod[] = {
 	{ "MLX0070", 1 },
 	{ "MLX0071", 3 },
 	{ "MLX0072", 3 },
@@ -99,7 +99,8 @@ struct mlx_eisa_prod {
 };
 
 static int
-mlx_eisa_match(struct device *parent, struct cfdata *match, void *aux)
+mlx_eisa_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct eisa_attach_args *ea;
 	int i;

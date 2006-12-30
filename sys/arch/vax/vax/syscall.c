@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1.14.2 2006/06/21 14:57:34 yamt Exp $     */
+/*	$NetBSD: syscall.c,v 1.1.14.3 2006/12/30 20:47:14 yamt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.14.2 2006/06/21 14:57:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.14.3 2006/12/30 20:47:14 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -97,6 +97,8 @@ syscall_plain(struct trapframe *frame)
 	    p->p_pid,frame));
 	uvmexp.syscalls++;
  
+ 	LWP_CACHE_CREDS(l, p);
+
 	exptr = l->l_addr->u_pcb.framep = frame;
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
@@ -173,6 +175,8 @@ syscall_fancy(struct trapframe *frame)
 	    p->p_pid,frame));
 	uvmexp.syscalls++;
  
+ 	LWP_CACHE_CREDS(l, p);
+
 	exptr = l->l_addr->u_pcb.framep = frame;
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;

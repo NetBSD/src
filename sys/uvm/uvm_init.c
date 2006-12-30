@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.23.2.1 2006/06/21 15:12:40 yamt Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.23.2.2 2006/12/30 20:51:05 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.23.2.1 2006/06/21 15:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.23.2.2 2006/12/30 20:51:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.23.2.1 2006/06/21 15:12:40 yamt Exp $
 #include <sys/vnode.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_pdpolicy.h>
 
 /*
  * struct uvm: we store all global vars in this structure to make them
@@ -150,6 +151,8 @@ uvm_init(void)
 	uvm_page_rehash();
 	uao_create(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS,
 	    UAO_FLAG_KERNSWAP);
+
+	uvmpdpol_reinit();
 
 	/*
 	 * Initialize pools.  This must be done before anyone manipulates

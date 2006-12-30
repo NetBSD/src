@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.4.4.2 2006/06/21 14:53:38 yamt Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.4.4.3 2006/12/30 20:46:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.4.4.2 2006/06/21 14:53:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.4.4.3 2006/12/30 20:46:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -58,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.4.4.2 2006/06/21 14:53:38 yamt Ex
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 
-#include <mips/atheros/include/ar531xreg.h>
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.4.4.2 2006/06/21 14:53:38 yamt Ex
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
 #include <contrib/dev/ath/ah.h>
+#include <contrib/dev/ath/ah_soc.h>	/* XXX really doesn't belong in hal */
 
 struct ath_arbus_softc {
 	struct ath_softc	sc_ath;
@@ -73,6 +74,7 @@ struct ath_arbus_softc {
 	bus_space_handle_t	sc_ioh;
 	void			*sc_ih;
 	struct ar531x_config	sc_config;
+	void			*sc_sdhook;
 };
 
 static int	ath_arbus_match(struct device *, struct cfdata *, void *);
@@ -102,17 +104,23 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 	struct ath_softc *sc;
 	struct arbus_attach_args *aa;
 	const char *name;
-	void *hook;
+	prop_number_t prop;
 	int rv;
 	uint16_t devid;
-	uint32_t rev;
 
 	asc = (struct ath_arbus_softc *)self;
 	sc = &asc->sc_ath;
 	aa = (struct arbus_attach_args *)opaque;
 
-	rev = GETSYSREG(AR531X_SYSREG_REVISION);
-	devid = AR531X_REVISION_WMAC(rev);
+	prop = prop_dictionary_get(device_properties(&sc->sc_dev),
+	    "wmac-rev");
+	if (prop == NULL) {
+		printf(": unable to get wmac-rev property\n");
+		return;
+	}
+	KDASSERT(prop_object_type(prop) == PROP_TYPE_NUMBER);
+
+	devid = (uint16_t)prop_number_integer_value(prop);
 	name = ath_hal_probe(PCI_VENDOR_ATHEROS, devid);
 
 	printf(": %s\n", name ? name : "Unknown AR531X WLAN");
@@ -144,7 +152,8 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 
 	sc->sc_invalid = 1;
 
-	asc->sc_ih = arbus_intr_establish(aa->aa_irq, ath_intr, sc);
+	asc->sc_ih = arbus_intr_establish(aa->aa_cirq, aa->aa_mirq, ath_intr,
+	    sc);
 	if (asc->sc_ih == NULL) {
 		aprint_error("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -156,8 +165,8 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 		goto err;
 	}
 
-	hook = shutdownhook_establish(ath_arbus_shutdown, asc);
-	if (hook == NULL) {
+	asc->sc_sdhook = shutdownhook_establish(ath_arbus_shutdown, asc);
+	if (asc->sc_sdhook == NULL) {
 		aprint_error("%s: couldn't establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 		goto err;
@@ -174,6 +183,7 @@ ath_arbus_detach(struct device *self, int flags)
 {
 	struct ath_arbus_softc *asc = (struct ath_arbus_softc *)self;
 
+	shutdownhook_disestablish(asc->sc_sdhook);
 	ath_detach(&asc->sc_ath);
 	arbus_intr_disestablish(asc->sc_ih);
 

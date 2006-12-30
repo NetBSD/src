@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.9 2004/11/12 23:01:01 sekiya Exp $	 */
+/*	$NetBSD: pic.c,v 1.9.12.1 2006/12/30 20:46:52 yamt Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.9 2004/11/12 23:01:01 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.9.12.1 2006/12/30 20:46:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.9 2004/11/12 23:01:01 sekiya Exp $");
 #include <machine/sysconf.h>
 
 #include <sgimips/dev/picreg.h>
+
+#include <sgimips/gio/giovar.h>
 
 #include "locators.h"
 
@@ -57,6 +59,7 @@ static int      pic_match(struct device *, struct cfdata *, void *);
 static void     pic_attach(struct device *, struct device *, void *);
 static int      pic_print(void *, const char *);
 static void	pic_bus_reset(void);
+static void	pic_bus_error(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 static void	pic_watchdog_enable(void);
 static void	pic_watchdog_disable(void);
 static void	pic_watchdog_tickle(void);
@@ -70,6 +73,8 @@ struct pic_attach_args {
 	bus_space_tag_t		iaa_st;
 	bus_space_handle_t	iaa_sh;
 };
+
+int pic_gio32_arb_config(int, uint32_t);
 
 static struct pic_softc psc;
 
@@ -175,6 +180,8 @@ pic_attach(struct device * parent, struct device * self, void *aux)
 
 	printf("\n");
 
+	platform.intr5 = pic_bus_error;
+
 	/*
 	 * A GIO bus exists on all IP12's. However, Personal Iris
 	 * machines use VME for their expansion bus.
@@ -204,6 +211,15 @@ pic_bus_reset(void)
 }
 
 static void
+pic_bus_error(u_int32_t status, u_int32_t cause, u_int32_t pc,
+    u_int32_t ipending)
+{
+
+	printf("pic0: bus error\n");
+	pic_bus_reset();
+}
+
+static void
 pic_watchdog_enable(void)
 {
 	uint32_t reg;
@@ -229,4 +245,40 @@ pic_watchdog_tickle(void)
 
 	pic_watchdog_disable();
 	pic_watchdog_enable();
+}
+
+/* intended to be called from gio/gio.c only */
+int
+pic_gio32_arb_config(int slot, uint32_t flags)
+{
+	uint32_t reg;
+
+	/* only Indigo machines have GIO expansion slots (XXX HPLC?) */
+	if (mach_subtype != MACH_SGI_IP12_HP1 &&
+	    mach_subtype != MACH_SGI_IP12_HPLC)
+		return (EINVAL);
+
+	/* graphics slot is not valid on IP12 */
+	if (slot != GIO_SLOT_EXP0 && slot != GIO_SLOT_EXP1)
+		return (EINVAL);
+
+	reg = bus_space_read_4(psc.iot, psc.ioh, (slot == GIO_SLOT_EXP0) ?
+	    PIC_GIO32ARB_SLOT0 : PIC_GIO32ARB_SLOT1);
+
+	if (flags & GIO_ARB_RT)
+		reg &= ~PIC_GIO32ARB_SLOT_LONG;
+
+	if (flags & GIO_ARB_LB)
+		reg |= PIC_GIO32ARB_SLOT_LONG;
+
+	if (flags & GIO_ARB_MST)
+		reg &= ~PIC_GIO32ARB_SLOT_SLAVE;
+
+	if (flags & GIO_ARB_SLV)
+		reg |= PIC_GIO32ARB_SLOT_SLAVE;
+
+	bus_space_write_4(psc.iot, psc.ioh, (slot == GIO_SLOT_EXP0) ?
+	    PIC_GIO32ARB_SLOT0 : PIC_GIO32ARB_SLOT1, reg);
+
+	return (0);
 }

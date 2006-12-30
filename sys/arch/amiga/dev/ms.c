@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.28.16.1 2006/06/21 14:48:26 yamt Exp $ */
+/*	$NetBSD: ms.c,v 1.28.16.2 2006/12/30 20:45:26 yamt Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.28.16.1 2006/06/21 14:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.28.16.2 2006/12/30 20:45:26 yamt Exp $");
 
 /*
  * Mouse driver.
@@ -321,9 +321,7 @@ msintr(void *arg)
 
 		wsmouse_input(ms->ms_wsmousedev, 
 			      buttons,
-			      dx,
-			      -dy,
-			      0,
+			      dx, -dy, 0, 0,
 			      WSMOUSE_INPUT_DELTA);
 
 	} else

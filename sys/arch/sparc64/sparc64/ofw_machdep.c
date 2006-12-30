@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.27.2.1 2006/06/21 14:56:48 yamt Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.27.2.2 2006/12/30 20:47:05 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.27.2.1 2006/06/21 14:56:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.27.2.2 2006/12/30 20:47:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -576,7 +576,7 @@ prom_startcpu(u_int cpu, void *func, u_long arg)
 	args.nargs = 3;
 	args.nreturns = 0;
         args.cpu = cpu;
-        args.func = (cell_t)func;
+        args.func = (cell_t)(u_long)func;
         args.arg = (cell_t)arg;
 
         openfirmware(&args);

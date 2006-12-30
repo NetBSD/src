@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.10.4.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.10.4.2 2006/12/30 20:50:20 yamt Exp $	*/
 /*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
@@ -51,8 +51,8 @@
  * bsdi4:          xs            x
  * freebsd[23]:    xs     x      x
  * freebsd4:       xs            x
- * NetBSD:          x            x
- * OpenBSD:        xs     x      x
+ * NetBSD:
+ * OpenBSD:        xs            x
  *
  * - ifa_ifwithaf()
  *   bsdi[34], netbsd, and openbsd define it in sys/net/if.c
@@ -81,8 +81,8 @@
  * - privileged process
  *	NetBSD
  *		struct lwp *l;
- *		if (l->l_proc && 
- *		    !kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag))
+ *		if (l != NULL && kauth_authorize_generic(l->l_cred, 
+ *		    KAUTH_GENERIC_ISSUSER, &l->l_acflag) == 0)
  *			privileged;
  *	FreeBSD 3
  *		struct proc *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.61.2.1 2006/06/21 15:06:47 yamt Exp $	*/
+/*	$NetBSD: ss.c,v 1.61.2.2 2006/12/30 20:49:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.61.2.1 2006/06/21 15:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.61.2.2 2006/12/30 20:49:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ static dev_type_ioctl(ssioctl);
 
 const struct cdevsw ss_cdevsw = {
 	ssopen, ssclose, ssread, nowrite, ssioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 static void	ssstrategy(struct buf *);
@@ -123,7 +123,8 @@ static const struct scsipi_inquiry_pattern ss_patterns[] = {
 };
 
 static int
-ssmatch(struct device *parent, struct cfdata *match, void *aux)
+ssmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;

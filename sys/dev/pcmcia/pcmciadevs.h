@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.214.2.1 2006/06/21 15:06:14 yamt Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.214.2.2 2006/12/30 20:49:18 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.216 2006/06/19 15:44:45 gdamore Exp
+ *	NetBSD: pcmciadevs,v 1.220 2006/11/16 00:52:48 christos Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -77,6 +77,7 @@
 #define	PCMCIA_VENDOR_DLINK_3	0x0149	/* D-Link */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
 #define	PCMCIA_VENDOR_NETGEAR	0x0149	/* Netgear */
+#define	PCMCIA_VENDOR_IODATA3	0x0149	/* I-O DATA */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_SYMBOL2	0x014d	/* Symbol */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
@@ -102,6 +103,7 @@
 #define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_ASUSTEK	0x02aa	/* Asustek Computer */
+#define	PCMCIA_VENDOR_SIEMENS	0x02ac	/* Siemens */
 #define	PCMCIA_VENDOR_MICROSOFT	0x02d2	/* Microsoft Corporation */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
@@ -266,6 +268,8 @@
 /* Edimax Products */
 #define	PCMCIA_CIS_EDIMAX_EP4000A	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_EDIMAX_EP4000A	0x0100
+#define	PCMCIA_CIS_EDIMAX_EP4101	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_EDIMAX_EP4101	0x1090
 
 /* ELSA Products */
 #define	PCMCIA_CIS_ELSA_MC2_IEEE	{ NULL, NULL, NULL, NULL }
@@ -347,6 +351,8 @@
 #define	PCMCIA_PRODUCT_IODATA2_WNB11PCM	0x0002
 #define	PCMCIA_CIS_IODATA2_WCF12	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IODATA2_WCF12	0x0673
+#define	PCMCIA_CIS_IODATA3_PCETTXR	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_IODATA3_PCETTXR	0x0230
 
 /* Kingston Products */
 #define	PCMCIA_CIS_KINGSTON_KNE2	{ NULL, NULL, NULL, NULL }
@@ -536,8 +542,14 @@
 #define	PCMCIA_PRODUCT_SOCKET_LP_ETHER	0x000d
 #define	PCMCIA_CIS_SOCKET_LP_ETHER_CF	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF	0x0075
+#define	PCMCIA_CIS_SOCKET_DUAL_RS232_A	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SOCKET_DUAL_RS232_A	0x00a1
 #define	PCMCIA_CIS_SOCKET_LP_ETH_10_100_CF	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_LP_ETH_10_100_CF	0x0145
+
+/* SpeedStream */
+#define	PCMCIA_CIS_SIEMENS_SS1021	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SIEMENS_SS1021	0x0002
 
 /* Symbol */
 #define	PCMCIA_CIS_SYMBOL_LA4100	{ NULL, NULL, NULL, NULL }

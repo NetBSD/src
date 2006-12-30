@@ -1,4 +1,4 @@
-/* $NetBSD: vidc20config.h,v 1.4 2002/06/17 21:00:13 bjh21 Exp $ */
+/* $NetBSD: vidc20config.h,v 1.4.24.1 2006/12/30 20:45:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,24 +45,24 @@
 #ifndef _VIDC20CONFIG_H_
 #define _VIDC20CONFIG_H_
 
-extern int   vidcvideo_write          __P((u_int reg, int value));
-extern int   vidcvideo_cursor_init    __P((int width, int heigth));
-extern void  vidcvideo_setpalette     __P((struct vidc_state *vidc));
-extern void  vidcvideo_stdpalette     __P((void));
-extern void  vidcvideo_setstate       __P((struct vidc_state *vidc));
-extern void  vidcvideo_getstate       __P((struct vidc_state *vidc));
-extern void  vidcvideo_getmode        __P((struct vidc_mode *mode));
-extern void  vidcvideo_setmode        __P((struct vidc_mode *mode));
-extern int   vidcvideo_init           __P((void));
-extern void  vidcvideo_reinit         __P((void));
-extern void  vidcvideo_printdetails   __P((void));
-extern int   vidcvideo_blank          __P((int));
-extern void *vidcvideo_hwscroll       __P((int));
-extern void *vidcvideo_hwscroll_reset __P((void));
-extern void *vidcvideo_hwscroll_back  __P((void *cookie));
-extern void  vidcvideo_progr_scroll   __P((void));
-extern void  vidcvideo_updatecursor   __P((int, int));
-extern void  vidcvideo_enablecursor   __P((int));
+extern int   vidcvideo_write          (u_int reg, int value);
+extern int   vidcvideo_cursor_init    (int width, int heigth);
+extern void  vidcvideo_setpalette     (struct vidc_state *vidc);
+extern void  vidcvideo_stdpalette     (void);
+extern void  vidcvideo_setstate       (struct vidc_state *vidc);
+extern void  vidcvideo_getstate       (struct vidc_state *vidc);
+extern void  vidcvideo_getmode        (struct vidc_mode *mode);
+extern void  vidcvideo_setmode        (struct vidc_mode *mode);
+extern int   vidcvideo_init           (void);
+extern void  vidcvideo_reinit         (void);
+extern void  vidcvideo_printdetails   (void);
+extern int   vidcvideo_blank          (int);
+extern void *vidcvideo_hwscroll       (int);
+extern void *vidcvideo_hwscroll_reset (void);
+extern void *vidcvideo_hwscroll_back  (void *cookie);
+extern void  vidcvideo_progr_scroll   (void);
+extern void  vidcvideo_updatecursor   (int, int);
+extern void  vidcvideo_enablecursor   (int);
 
 
 #define CURSOR_MAX_WIDTH	32

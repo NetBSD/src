@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.19 2005/04/01 11:59:24 yamt Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.19.2.1 2006/12/30 20:45:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.19 2005/04/01 11:59:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.19.2.1 2006/12/30 20:45:33 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,8 +124,7 @@ struct vidc_state vidc_current[1];
 static int cold_init = 0;		/* flags initialisation */
 extern videomemory_t videomemory;
 
-static struct vidc_mode  vidc_initialmode;
-static struct vidc_mode *vidc_currentmode;
+static struct vidc_mode vidc_currentmode;
 
 unsigned int dispstart;
 unsigned int dispsize;
@@ -150,7 +149,8 @@ int   cursor_height;
  * VIDC mode definitions
  * generated from RISC OS mode definition file by an `awk' script
  */
-extern struct vidc_mode vidcmodes[];
+extern const struct videomode vidc_videomode_list[];
+extern const int vidc_videomode_count;
 
 
 /*
@@ -171,9 +171,7 @@ vidcvideo_printdetails(void)
  * Common functions to directly access VIDC registers
  */
 int
-vidcvideo_write(reg, value)
-	u_int reg;
-	int value;
+vidcvideo_write(u_int reg, int value)
 {
 	int counter;
 
@@ -188,13 +186,13 @@ vidcvideo_write(reg, value)
 	 * OK, the VIDC_PALETTE register is handled differently
 	 * to the others on the VIDC, so take that into account here
 	 */
-	if (reg==VIDC_PALREG) {
+	if (reg == VIDC_PALREG) {
 		vidc_current->palreg = 0;
 		WriteWord(vidc_base, reg | value);
 		return 0;
 	}
 
-	if (reg==VIDC_PALETTE) {
+	if (reg == VIDC_PALETTE) {
 		WriteWord(vidc_base, reg | value);
 		vidc_current->palette[vidc_current->palreg] = value;
 		vidc_current->palreg++;
@@ -217,8 +215,10 @@ vidcvideo_write(reg, value)
 #define INITVALUE 256
 #endif
 
-	for ( counter=INITVALUE; counter<= sizeof(struct vidc_state); counter++ ) {
-		if ( reg==tab[counter] ) {
+	for (counter = INITVALUE;
+	     counter <= sizeof(struct vidc_state);
+	     counter++) {
+		if (reg == tab[counter]) {
 			WriteWord ( vidc_base, reg | value );
 			current[counter] = value;
 			return 0;
@@ -229,8 +229,7 @@ vidcvideo_write(reg, value)
 
 
 void
-vidcvideo_setpalette(vidc)
-	struct vidc_state *vidc;
+vidcvideo_setpalette(struct vidc_state *vidc)
 {
 	int counter = 0;
 
@@ -241,8 +240,7 @@ vidcvideo_setpalette(vidc)
 
 
 void
-vidcvideo_setstate(vidc)
-	struct vidc_state *vidc;
+vidcvideo_setstate(struct vidc_state *vidc)
 {
 	vidcvideo_write ( VIDC_PALREG,		vidc->palreg 	);
 	vidcvideo_write ( VIDC_BCOL,		vidc->bcol	);
@@ -280,37 +278,35 @@ vidcvideo_setstate(vidc)
 
 
 void
-vidcvideo_getstate(vidc)
-	struct vidc_state *vidc;
+vidcvideo_getstate(struct vidc_state *vidc)
 {
+
 	*vidc = *vidc_current;
 }
 
 
 void
-vidcvideo_getmode(mode)
-	struct vidc_mode *mode;
+vidcvideo_getmode(struct vidc_mode *mode)
 {
-	*mode = *vidc_currentmode;
+
+	*mode = vidc_currentmode;
 }
 
 
 static int
 vidcvideo_coldinit(void)
 {
-	int found;
-	int loop;
+	struct videomode const *modes;
+	unsigned besterror;
+	int count;
+	int i;
+	unsigned framerate;
 
 	/* Blank out the cursor */
 
 	vidcvideo_write(VIDC_CP1, 0x0);
 	vidcvideo_write(VIDC_CP2, 0x0);
 	vidcvideo_write(VIDC_CP3, 0x0);
-
-	/* Try to determine the current mode */
-	vidc_initialmode.hder     = bootconfig.width+1;
-	vidc_initialmode.vder     = bootconfig.height+1;
-	vidc_initialmode.log2_bpp = bootconfig.log2_bpp;
 
 	dispbase = vmem_base = dispstart = videomemory.vidm_vbase;
 	phys_base = videomemory.vidm_pbase;
@@ -322,43 +318,43 @@ vidcvideo_coldinit(void)
 	} else {
 		dispsize = bootconfig.vram[0].pages * PAGE_SIZE;
 		transfersize = dispsize >> 10;
-	};
+	}
     
 	ptov = dispbase - phys_base;
 
 	dispend = dispstart+dispsize;
 
+	if (vidc_videomode_count > 0) {
+		modes = vidc_videomode_list;
+		count = vidc_videomode_count;
+	} else {
+		modes = videomode_list;
+		count = videomode_count;
+	}
+
 	/* try to find the current mode from the bootloader in my table */ 
-	vidc_currentmode = &vidcmodes[0];
-	loop = 0;
-	found = 0;
-	while (vidcmodes[loop].pixel_rate != 0) {
-  		if (vidcmodes[loop].hder == (bootconfig.width + 1)
-  		    && vidcmodes[loop].vder == (bootconfig.height + 1)
-		    && vidcmodes[loop].frame_rate == bootconfig.framerate) {
-			vidc_currentmode = &vidcmodes[loop];
-			found = 1;
+	vidc_currentmode.timings = modes[0];
+	besterror = 1000000;
+	for (i = 0; i < count; i++) {
+		/* We don't support interlace or doublescan */
+		if (modes[i].flags & (VID_INTERLACE | VID_DBLSCAN))
+			continue;
+		/*
+		 * We jump through a few hoops here to ensure that we
+		 * round roughly to the nearest integer without too
+		 * much danger of overflow.
+		 */
+		framerate = (modes[i].dot_clock * 1000 /
+		    modes[i].htotal * 2 / modes[i].vtotal + 1) / 2;
+  		if (modes[i].hdisplay == bootconfig.width + 1
+  		    && modes[i].vdisplay == bootconfig.height + 1
+		    && abs(framerate - bootconfig.framerate) < besterror) {
+			vidc_currentmode.timings = modes[i];
+			besterror = abs(framerate - bootconfig.framerate);
 		}
-		++loop;
 	}
 
-	/* if not found choose first mode but dont be picky on the framerate */
-	if (!found) {
-		vidc_currentmode = &vidcmodes[0];
-		loop = 0;
-		found = 0;
-
-		while (vidcmodes[loop].pixel_rate != 0) {
-			if (vidcmodes[loop].hder == (bootconfig.width + 1)
- 			    && vidcmodes[loop].vder == (bootconfig.height + 1)) {
- 				vidc_currentmode = &vidcmodes[loop];
- 				found = 1;
- 			}
- 			++loop;
- 		}
-	}
-
-	vidc_currentmode->log2_bpp = bootconfig.log2_bpp;
+	vidc_currentmode.log2_bpp = bootconfig.log2_bpp;
 
 	dispstart = dispbase;
 	dispend = dispstart+dispsize;
@@ -372,20 +368,23 @@ vidcvideo_coldinit(void)
 
 /* simple function to abstract vidc variables ; returns virt start address of screen */
 /* XXX asumption that video memory is mapped in twice */
-void *vidcvideo_hwscroll(int bytes) {
+void *vidcvideo_hwscroll(int bytes)
+{
+
 	dispstart += bytes;
 	if (dispstart >= dispbase + dispsize) dispstart -= dispsize;
 	if (dispstart <  dispbase)            dispstart += dispsize;
 	dispend = dispstart+dispsize;
 
 	/* return the start of the bit map of the screen (left top) */
-	return (void *) dispstart;
+	return (void *)dispstart;
 }
 
 
 /* reset the HW scroll to be at the start for the benefit of f.e. X */
-void *vidcvideo_hwscroll_reset(void) {
-	void *cookie = (void *) dispstart;
+void *vidcvideo_hwscroll_reset(void)
+{
+	void *cookie = (void *)dispstart;
 
 	dispstart = dispbase;
 	dispend = dispstart + dispsize;
@@ -394,15 +393,19 @@ void *vidcvideo_hwscroll_reset(void) {
 
 
 /* put HW scroll back to where it was */
-void *vidcvideo_hwscroll_back(void *cookie) {
-	dispstart = (int) cookie;
+void *vidcvideo_hwscroll_back(void *cookie)
+{
+
+	dispstart = (int)cookie;
 	dispend = dispstart + dispsize;
 	return cookie;
 }
 
 
 /* this function is to be called perferably at vsync */
-void vidcvideo_progr_scroll(void) {
+void vidcvideo_progr_scroll(void)
+{
+
 	IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart-ptov);
 	IOMD_WRITE_WORD(IOMD_VIDSTART, dispstart-ptov);
 	IOMD_WRITE_WORD(IOMD_VIDEND, (dispend-transfersize)-ptov);
@@ -429,7 +432,7 @@ static const int bpp_mask_table[] = {
 void
 vidcvideo_setmode(struct vidc_mode *mode)
 {    
-	register int acc;
+	struct videomode *vm;
 	int bpp_mask;
         int ereg;
 	int best_r, best_v;
@@ -437,15 +440,16 @@ vidcvideo_setmode(struct vidc_mode *mode)
 	int r, v, f;
 
 	/*
-	 * Find out what bit mask we need to or with the vidc20 control register
-	 * in order to generate the desired number of bits per pixel.
-	 * log_bpp is log base 2 of the number of bits per pixel.
+	 * Find out what bit mask we need to or with the vidc20
+	 * control register in order to generate the desired number of
+	 * bits per pixel.  log_bpp is log base 2 of the number of
+	 * bits per pixel.
 	 */
 
 	bpp_mask = bpp_mask_table[mode->log2_bpp];
 
-	newmode = *mode;
-	vidc_currentmode = &newmode;
+	vidc_currentmode = *mode;
+	vm = &vidc_currentmode.timings;
 
 	least_error = INT_MAX;
 	best_r = 0; best_v = 0;
@@ -453,10 +457,8 @@ vidcvideo_setmode(struct vidc_mode *mode)
 	for (v = 63; v > 0; v--) {
 		for (r = 63; r > 0; r--) {
 			f = ((v * vidc_fref) /1000) / r;
-			if (least_error >=
-			    abs(f - vidc_currentmode->pixel_rate)) {
-				least_error = 
-				    abs(f - vidc_currentmode->pixel_rate);
+			if (least_error >= abs(f - vm->dot_clock)) {
+				least_error =  abs(f - vm->dot_clock);
 				best_r = r;
 				best_v = v;
 			}
@@ -470,46 +472,56 @@ vidcvideo_setmode(struct vidc_mode *mode)
 
 	vidcvideo_write(VIDC_FSYNREG, (best_v-1)<<8 | (best_r-1)<<0);
 
-	acc=0;
-	acc+=vidc_currentmode->hswr;	vidcvideo_write(VIDC_HSWR, (acc - 8 ) & (~1));
-	acc+=vidc_currentmode->hbsr;	vidcvideo_write(VIDC_HBSR, (acc - 12) & (~1));
-	acc+=vidc_currentmode->hdsr;	vidcvideo_write(VIDC_HDSR, (acc - 18) & (~1));
-	acc+=vidc_currentmode->hder;	vidcvideo_write(VIDC_HDER, (acc - 18) & (~1));
-	acc+=vidc_currentmode->hber;	vidcvideo_write(VIDC_HBER, (acc - 12) & (~1));
-	acc+=vidc_currentmode->hcr;	vidcvideo_write(VIDC_HCR,  (acc - 8 ) & (~3));
+	/*
+	 * The translation from struct videomode to VIDC timings is made
+	 * fun by the fact that the VIDC counts from the start of the sync
+	 * pulse while struct videomode counts from the start of the display.
+	 */
+	vidcvideo_write(VIDC_HSWR, (vm->hsync_end - vm->hsync_start - 8) & ~1);
+	vidcvideo_write(VIDC_HBSR, (vm->htotal - vm->hsync_start - 12) & ~1);
+	vidcvideo_write(VIDC_HDSR, (vm->htotal - vm->hsync_start - 18) & ~1);
+	vidcvideo_write(VIDC_HDER,
+	    (vm->htotal - vm->hsync_start + vm->hdisplay - 18) & ~1);
+	vidcvideo_write(VIDC_HBER,
+	    (vm->htotal - vm->hsync_start + vm->hdisplay - 12) & ~1);
+	vidcvideo_write(VIDC_HCR, (vm->htotal - 8) & ~3);
 
-	acc=0;
-	acc+=vidc_currentmode->vswr;	vidcvideo_write(VIDC_VSWR, (acc - 1));
-	acc+=vidc_currentmode->vbsr;	vidcvideo_write(VIDC_VBSR, (acc - 1));
-	acc+=vidc_currentmode->vdsr;	vidcvideo_write(VIDC_VDSR, (acc - 1));
-	acc+=vidc_currentmode->vder;	vidcvideo_write(VIDC_VDER, (acc - 1));
-	acc+=vidc_currentmode->vber;	vidcvideo_write(VIDC_VBER, (acc - 1));
-	acc+=vidc_currentmode->vcr;	vidcvideo_write(VIDC_VCR,  (acc - 1));
+	vidcvideo_write(VIDC_VSWR, vm->vsync_end - vm->vsync_start - 1);
+	vidcvideo_write(VIDC_VBSR, vm->vtotal - vm->vsync_start - 1);
+	vidcvideo_write(VIDC_VDSR, vm->vtotal - vm->vsync_start - 1);
+	vidcvideo_write(VIDC_VDER,
+	    vm->vtotal - vm->vsync_start + vm->vdisplay - 1);
+	vidcvideo_write(VIDC_VBER,
+	    vm->vtotal - vm->vsync_start + vm->vdisplay - 1);
+	/* XXX VIDC20 data sheet say to subtract 2 */
+	vidcvideo_write(VIDC_VCR, vm->vtotal - 1);
 
-	IOMD_WRITE_WORD(IOMD_FSIZE, vidc_currentmode->vcr
-	    + vidc_currentmode->vswr
-	    + vidc_currentmode->vber
-	    + vidc_currentmode->vbsr - 1);
+	IOMD_WRITE_WORD(IOMD_FSIZE, vm->vtotal - vm->vdisplay - 1);
 
 	if (dispsize <= 1024*1024)
-		vidcvideo_write(VIDC_DCTL, vidc_currentmode->hder>>2 | 1<<16 | 1<<12);
+		vidcvideo_write(VIDC_DCTL, vm->hdisplay>>2 | 1<<16 | 1<<12);
 	else
-		vidcvideo_write(VIDC_DCTL, vidc_currentmode->hder>>2 | 3<<16 | 1<<12);
+		vidcvideo_write(VIDC_DCTL, vm->hdisplay>>2 | 3<<16 | 1<<12);
 
 	ereg = 1<<12;
-	if (vidc_currentmode->sync_pol & 0x01)
+	if (vm->flags & VID_NHSYNC)
 		ereg |= 1<<16;
-	if (vidc_currentmode->sync_pol & 0x02)
+	if (vm->flags & VID_NVSYNC)
 		ereg |= 1<<18;
 	vidcvideo_write(VIDC_EREG, ereg);
-	if (dispsize > 1024*1024) {
-		if (vidc_currentmode->hder >= 800)
- 			vidcvideo_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
-		else
-			vidcvideo_write(VIDC_CONREG, 6<<8 | bpp_mask<<5);
-	} else {
+
+	/*
+	 * Set the video FIFO preload value and bit depth.  Chapter 6
+	 * of the VIDC20 Data Sheet has full details of the FIFO
+	 * preload, but we don't do anything clever and just use the
+	 * largest possible value, which is 7 when the VIDC20 is in
+	 * 32-bit mode (0MB or 1MB VRAM) and 6 when it is in 64-bit
+	 * mode (2MB VRAM).
+	 */
+	if (dispsize > 1024*1024)
+		vidcvideo_write(VIDC_CONREG, 6<<8 | bpp_mask<<5);
+	else
 		vidcvideo_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
-	}
 }
 
 
@@ -541,7 +553,7 @@ vidcvideo_init(void)
 		/*	vidcvideo_flash_go() */;
 
 	/* setting a mode goes wrong in 32 bpp ... 8 and 16 seem OK */
-	vidcvideo_setmode(vidc_currentmode);
+	vidcvideo_setmode(&vidc_currentmode);
 	vidcvideo_blank(0);			/* display on */
 
 	vidcvideo_stdpalette();
@@ -550,11 +562,10 @@ vidcvideo_init(void)
 		vidcvideo_write(VIDC_CP1, 0x0);
 		vidcvideo_write(VIDC_CP2, 0x0);
 		vidcvideo_write(VIDC_CP3, 0x0);
-	} else {
+	} else
 		vidcvideo_cursor_init(CURSOR_MAX_WIDTH, CURSOR_MAX_HEIGHT);
-	};
 
-	cold_init=1;
+	cold_init = 1;
 	return 0;
 }
 
@@ -563,8 +574,9 @@ vidcvideo_init(void)
 void
 vidcvideo_reinit()
 {
+
 	vidcvideo_coldinit();
-	vidcvideo_setmode(vidc_currentmode);
+	vidcvideo_setmode(&vidc_currentmode);
 }
 
 
@@ -601,20 +613,18 @@ vidcvideo_cursor_init(int width, int height)
  	cursor_transparent += 32;					/* ALIGN */
 	cursor_transparent = (char *)((int)cursor_transparent & (~31) );
 
-	for ( line = 0; line<height; ++line )
-	{
-	    for ( counter=0; counter<width/4;counter++ )
-		cursor_normal[line * width + counter]=0x55;		/* why 0x55 ? */
-	    for ( ; counter<8; counter++ )
-		cursor_normal[line * width + counter]=0;
+	for ( line = 0; line<height; ++line ) {
+		for ( counter=0; counter<width/4;counter++ )
+			cursor_normal[line * width + counter]=0x55;		/* why 0x55 ? */
+		for ( ; counter<8; counter++ )
+			cursor_normal[line * width + counter]=0;
 	}
 
-	for ( line = 0; line<height; ++line )
-	{
-	    for ( counter=0; counter<width/4;counter++ )
-		cursor_transparent[line * width + counter]=0x00;
-	    for ( ; counter<8; counter++ )
-		cursor_transparent[line * width + counter]=0;
+	for ( line = 0; line<height; ++line ) {
+		for ( counter=0; counter<width/4;counter++ )
+			cursor_transparent[line * width + counter]=0x00;
+		for ( ; counter<8; counter++ )
+			cursor_transparent[line * width + counter]=0;
 	}
 
 
@@ -623,8 +633,8 @@ vidcvideo_cursor_init(int width, int height)
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_transparent,
 	    (void *)&p_cursor_transparent);
 
-	memset ( cursor_normal, 0x55, width*height );			/* white? */
-	memset ( cursor_transparent, 0x00, width*height );		/* to see the diffence */
+	memset(cursor_normal, 0x55, width*height);		/* white? */
+	memset(cursor_transparent, 0x00, width*height);/* to see the diffence */
 
 	/* Ok, now program the cursor; should be blank */
 	vidcvideo_enablecursor(0);
@@ -634,31 +644,29 @@ vidcvideo_cursor_init(int width, int height)
 
 
 void
-vidcvideo_updatecursor(xcur, ycur)
-	int xcur, ycur;
+vidcvideo_updatecursor(int xcur, int ycur)
 {
-	int frontporch = vidc_currentmode->hswr + vidc_currentmode->hbsr + vidc_currentmode->hdsr;
-	int topporch   = vidc_currentmode->vswr + vidc_currentmode->vbsr + vidc_currentmode->vdsr;
+	int frontporch = vidc_currentmode.timings.htotal -
+	    vidc_currentmode.timings.hsync_start;
+	int topporch   =  vidc_currentmode.timings.vtotal -
+	    vidc_currentmode.timings.vsync_start;
 
 	vidcvideo_write(VIDC_HCSR, frontporch -17 + xcur);
-	vidcvideo_write(VIDC_VCSR, topporch   -2  + (ycur+1)-2 + 3 - cursor_height);
+	vidcvideo_write(VIDC_VCSR, topporch   -2  + (ycur+1)-2 + 3 -
+	    cursor_height);
 	vidcvideo_write(VIDC_VCER, topporch   -2  + (ycur+3)+2 + 3 );
-	return;
 }
 
 
 void
-vidcvideo_enablecursor(on)
-	int on;
+vidcvideo_enablecursor(int on)
 {
-	if (on) {
-		IOMD_WRITE_WORD(IOMD_CURSINIT,p_cursor_normal);
-	} else {
-		IOMD_WRITE_WORD(IOMD_CURSINIT,p_cursor_transparent);
-	};
-	vidcvideo_write ( VIDC_CP1, 0xffffff );		/* enable */
 
-	return;
+	if (on)
+		IOMD_WRITE_WORD(IOMD_CURSINIT,p_cursor_normal);
+	else
+		IOMD_WRITE_WORD(IOMD_CURSINIT,p_cursor_transparent);
+	vidcvideo_write ( VIDC_CP1, 0xffffff );		/* enable */
 }
 
 
@@ -667,7 +675,7 @@ vidcvideo_stdpalette()
 {
 	int i;
 
-	switch (vidc_currentmode->log2_bpp) {
+	switch (vidc_currentmode.log2_bpp) {
 	case 0: /* 1 bpp */
 	case 1: /* 2 bpp */
 	case 2: /* 4 bpp */
@@ -723,26 +731,23 @@ vidcvideo_stdpalette()
 			vidcvideo_write(VIDC_PALETTE, VIDC_COL(i, i, i));  
 		break;
 	}
-			
 }
 
 int
-vidcvideo_blank(video_off)
-	int video_off;
+vidcvideo_blank(int video_off)
 {
         int ereg;
 
 	ereg = 1<<12;
-	if (vidc_currentmode->sync_pol & 0x01)
+	if (vidc_currentmode.timings.flags & VID_NHSYNC)
 		ereg |= 1<<16;
-	if (vidc_currentmode->sync_pol & 0x02)
+	if (vidc_currentmode.timings.flags & VID_NVSYNC)
 		ereg |= 1<<18;
 
-	if (!video_off) {
+	if (!video_off)
     		vidcvideo_write(VIDC_EREG, ereg);
-	} else {
+	else
 		vidcvideo_write(VIDC_EREG, 0);
-	};
 	return 0;
 }
 

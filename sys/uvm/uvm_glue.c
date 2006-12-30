@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.89.2.1 2006/06/21 15:12:40 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.89.2.2 2006/12/30 20:51:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,8 +67,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.89.2.1 2006/06/21 15:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.89.2.2 2006/12/30 20:51:05 yamt Exp $");
 
+#include "opt_coredump.h"
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
 #include "opt_uvmhist.h"
@@ -170,13 +171,13 @@ uvm_chgkprot(caddr_t addr, size_t len, int rw)
  */
 
 int
-uvm_vslock(struct proc *p, caddr_t addr, size_t len, vm_prot_t access_type)
+uvm_vslock(struct vmspace *vs, void *addr, size_t len, vm_prot_t access_type)
 {
 	struct vm_map *map;
 	vaddr_t start, end;
 	int error;
 
-	map = &p->p_vmspace->vm_map;
+	map = &vs->vm_map;
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
 	error = uvm_fault_wire(map, start, end, access_type, 0);
@@ -191,9 +192,9 @@ uvm_vslock(struct proc *p, caddr_t addr, size_t len, vm_prot_t access_type)
  */
 
 void
-uvm_vsunlock(struct proc *p, caddr_t addr, size_t len)
+uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
 {
-	uvm_fault_unwire(&p->p_vmspace->vm_map, trunc_page((vaddr_t)addr),
+	uvm_fault_unwire(&vs->vm_map, trunc_page((vaddr_t)addr),
 		round_page((vaddr_t)addr + len));
 }
 
@@ -677,6 +678,7 @@ uvm_swapout(struct lwp *l)
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 }
 
+#ifdef COREDUMP
 /*
  * uvm_coredump_walkmap: walk a process's map for the purpose of dumping
  * a core file.
@@ -797,3 +799,4 @@ uvm_coredump_walkmap(struct proc *p, void *iocookie,
 
 	return (0);
 }
+#endif /* COREDUMP */

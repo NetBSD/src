@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8.16.1 2006/06/21 14:50:07 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.8.16.2 2006/12/30 20:45:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,6 +68,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef	_COBALT_PARAM_H_
+#define	_COBALT_PARAM_H_
+
 #include <mips/mips_param.h>
 
 #define	_MACHINE_ARCH	mipsel
@@ -112,10 +115,12 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-void	delay(unsigned int);
-#define DELAY(n)	delay(n)
+void	delay(int n);
+#define DELAY	delay
 
 #include <machine/intr.h>
 
 #endif	/* _LOCORE */
 #endif	/* _KERNEL */
+
+#endif	/* !_COBALT_PARAM_H_ */

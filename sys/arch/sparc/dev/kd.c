@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.34.2.1 2006/06/21 14:55:54 yamt Exp $	*/
+/*	$NetBSD: kd.c,v 1.34.2.2 2006/12/30 20:46:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.34.2.1 2006/06/21 14:55:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.34.2.2 2006/12/30 20:46:58 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -209,12 +209,8 @@ static	int firstopen = 1;
 	tp = kd->kd_tty;
 
 	/* It's simpler to do this up here. */
-	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
-	     ==             (TS_ISOPEN | TS_XCLUDE))
-	    && (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0) )
-	{
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
-	}
 
 	s = spltty();
 	if ((tp->t_state & TS_ISOPEN) == 0) {

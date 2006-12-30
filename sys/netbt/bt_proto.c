@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.1.2.2 2006/06/21 15:10:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -56,17 +56,15 @@ const struct protosw btsw[] = {
 	BTPROTO_HCI,	PR_ADDR | PR_ATOMIC,
 	NULL,		NULL,		NULL,		hci_ctloutput,
 	hci_usrreq,	NULL,		NULL,		NULL,
-	hci_drain,
+	NULL,
     },
-#ifdef BLUETOOTH_SCO
     {	/* HCI SCO data (audio) */
 	SOCK_SEQPACKET,	&btdomain,
-	BTPROTO_SCO,	PR_CONNREQUIRED | PR_ATOMIC,
+	BTPROTO_SCO,	PR_CONNREQUIRED | PR_ATOMIC | PR_LISTEN,
 	NULL,		NULL,		NULL,		sco_ctloutput,
 	sco_usrreq,	NULL,		NULL,		NULL,
 	NULL,
     },
-#endif
     {	/* L2CAP Connection Oriented */
 	SOCK_SEQPACKET,	&btdomain,
 	BTPROTO_L2CAP,	PR_CONNREQUIRED | PR_ATOMIC | PR_LISTEN,
@@ -100,14 +98,22 @@ const struct protosw btsw[] = {
 };
 
 struct domain btdomain = {
-	AF_BLUETOOTH,			/* family */
-	"bluetooth",			/* name */
-	NULL,				/* init routine */
-	NULL,				/* externalise access rights */
-	NULL,				/* dispose of internalised rights */
-	btsw,				/* protosw */
-	&btsw[sizeof(btsw)/sizeof(btsw[0])],	/* NPROTOSW */
-	NULL,				/* attach to routing table */
-	32,				/* rtoffset */
-	sizeof(struct sockaddr_bt),	/* maxrtkey */
+	.dom_family = AF_BLUETOOTH,
+	.dom_name = "bluetooth",
+	.dom_init = NULL,
+	.dom_externalize = NULL,
+	.dom_dispose = NULL,
+	.dom_protosw = btsw,
+	.dom_protoswNPROTOSW = &btsw[sizeof(btsw)/sizeof(btsw[0])],
+	.dom_rtattach = NULL,
+	.dom_rtoffset = 32,
+	.dom_maxrtkey = sizeof(struct sockaddr_bt),
+	.dom_ifattach = NULL,
+	.dom_ifdetach = NULL,
+	.dom_ifqueues = { NULL, NULL },
+	.dom_link = { NULL },
+	.dom_mowner = MOWNER_INIT("",""),
+	.dom_rtcache = NULL,
+	.dom_rtflush = NULL,
+	.dom_rtflushall = NULL
 };

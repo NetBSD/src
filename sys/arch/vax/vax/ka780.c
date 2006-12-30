@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.24 2005/06/27 11:03:25 ragge Exp $ */
+/*	$NetBSD: ka780.c,v 1.24.2.1 2006/12/30 20:47:14 yamt Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.24 2005/06/27 11:03:25 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.24.2.1 2006/12/30 20:47:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -110,8 +110,8 @@ struct	cpu_dep ka780_calls = {
 	ka780_mchk,
 	ka780_memerr,
 	ka780_conf,
-	generic_clkread,
-	generic_clkwrite,
+	generic_gettime,
+	generic_settime,
 	2,	/* ~VUPS */
 	5,	/* SCB pages */
 };

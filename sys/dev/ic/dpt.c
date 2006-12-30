@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.44.4.1 2006/06/21 15:02:54 yamt Exp $	*/
+/*	$NetBSD: dpt.c,v 1.44.4.2 2006/12/30 20:48:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.44.4.1 2006/06/21 15:02:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.44.4.2 2006/12/30 20:48:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.44.4.1 2006/06/21 15:02:54 yamt Exp $");
 #include <sys/buf.h>
 #include <sys/endian.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -143,7 +144,7 @@ dev_type_ioctl(dptioctl);
 
 const struct cdevsw dpt_cdevsw = {
 	dptopen, nullclose, noread, nowrite, dptioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 extern struct cfdriver dpt_cd;
@@ -1117,8 +1118,6 @@ int
 dptopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
-	if (securelevel > 1)
-		return (EPERM);
 	if (device_lookup(&dpt_cd, minor(dev)) == NULL)
 		return (ENXIO);
 
@@ -1156,6 +1155,11 @@ dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case DPT_EATAUSRCMD:
+		rv = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
+		if (rv)
+			return (rv);
+
 		if (IOCPARM_LEN(cmd) < sizeof(struct eata_ucp)) {
 			DPRINTF(("%s: ucp %lu vs %lu bytes\n",
 			    sc->sc_dv.dv_xname, IOCPARM_LEN(cmd),
@@ -1370,16 +1374,18 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct lwp *l)
 
 	if (ucp->ucp_stataddr != NULL) {
 		rv = copyout(&sp, ucp->ucp_stataddr, sizeof(sp));
-		if (rv != 0)
+		if (rv != 0) {
 			DPRINTF(("%s: sp copyout() failed\n",
 			    sc->sc_dv.dv_xname));
+		}
 	}
 	if (rv == 0 && ucp->ucp_senseaddr != NULL) {
 		i = min(uslen, sizeof(ccb->ccb_sense));
 		rv = copyout(&ccb->ccb_sense, ucp->ucp_senseaddr, i);
-		if (rv != 0)
+		if (rv != 0) {
 			DPRINTF(("%s: sense copyout() failed\n",
 			    sc->sc_dv.dv_xname));
+		}
 	}
 
 	ucp->ucp_hstatus = (u_int8_t)ccb->ccb_hba_status;

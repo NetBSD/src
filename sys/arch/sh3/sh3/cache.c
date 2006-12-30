@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.7.16.1 2006/06/21 14:55:39 yamt Exp $	*/
+/*	$NetBSD: cache.c,v 1.7.16.2 2006/12/30 20:46:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.7.16.1 2006/06/21 14:55:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.7.16.2 2006/12/30 20:46:55 yamt Exp $");
 
 #include "opt_memsize.h"	/* IOM_RAM_BEGIN */
 
@@ -77,6 +77,8 @@ int sh_cache_line_size;
 int sh_cache_ram_mode;
 int sh_cache_index_mode_icache;
 int sh_cache_index_mode_dcache;
+int sh_cache_alias_mask;
+int sh_cache_prefer_mask;
 
 void
 sh_cache_init()

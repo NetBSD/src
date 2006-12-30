@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_icu.c,v 1.3.16.1 2006/06/21 14:49:41 yamt Exp $	*/
+/*	$NetBSD: becc_icu.c,v 1.3.16.2 2006/12/30 20:45:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.3.16.1 2006/06/21 14:49:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.3.16.2 2006/12/30 20:45:37 yamt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -219,7 +219,7 @@ becc_intr_calculate_masks(void)
 	becc_imask[IPL_SOFTNET] |= becc_imask[IPL_SOFTCLOCK];
 
 	/*
-	 * Enforce a heirarchy that gives "slow" device (or devices with
+	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */

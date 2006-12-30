@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.2 2005/06/03 12:48:25 scw Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.2.2.1 2006/12/30 20:46:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -75,5 +75,9 @@ typedef struct _BootConfig {
 
 extern BootConfig bootconfig;
 #endif	/* _KERNEL && OFW */
+
+#ifdef _KERNEL
+extern char *boot_file;
+#endif /* _KERNEL */
 
 #include <arm/bootconfig.h>

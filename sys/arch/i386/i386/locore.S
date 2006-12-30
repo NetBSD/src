@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.34.2.1 2006/06/21 14:52:18 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.34.2.2 2006/12/30 20:46:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@
 
 #include "npx.h"
 #include "assym.h"
-#include "apm.h"
 #include "lapic.h"
 #include "ioapic.h"
 #include "ksyms.h"
@@ -216,16 +215,10 @@ start:	movw	$0x1234,0x472			# warm boot
 	.align	4
 	.globl	Multiboot_Header
 _C_LABEL(Multiboot_Header):
-#define MULTIBOOT_HEADER_FLAGS	(MULTIBOOT_HEADER_WANT_MEMORY | \
-				 MULTIBOOT_HEADER_HAS_ADDR)
+#define MULTIBOOT_HEADER_FLAGS	(MULTIBOOT_HEADER_WANT_MEMORY)
 	.long	MULTIBOOT_HEADER_MAGIC
 	.long	MULTIBOOT_HEADER_FLAGS
 	.long	-(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
-	.long	RELOC(Multiboot_Header)
-	.long	RELOC(start)
-	.long	RELOC(_edata)
-	.long	RELOC(_end) + MULTIBOOT_SYMTAB_SPACE
-	.long	RELOC(start)
 
 1:
 	/* Check if we are being executed by a Multiboot-compliant boot
@@ -233,10 +226,12 @@ _C_LABEL(Multiboot_Header):
 	cmpl	$MULTIBOOT_INFO_MAGIC,%eax
 	jne	1f
 
-	/* Indeed, a multiboot-compliat boot loader executed us.  We copy
+	/*
+	 * Indeed, a multiboot-compliant boot loader executed us.  We copy
 	 * the received Multiboot information structure into kernel's data
 	 * space to process it later -- after we are relocated.  It will
-	 * be safer to run complex C code than doing it at this point. */
+	 * be safer to run complex C code than doing it at this point.
+	 */
 	pushl	%ebx		# Address of Multiboot information
 	call	_C_LABEL(multiboot_pre_reloc)
 	addl	$4,%esp
@@ -247,7 +242,7 @@ _C_LABEL(Multiboot_Header):
 	/*
 	 * At this point, we know that a NetBSD-specific boot loader
 	 * booted this kernel.  The stack carries the following parameters:
-	 * (boothowto, [bootdev], bootinfo, esym, biosbasemem, biosextmem),
+	 * (boothowto, [bootdev], bootinfo, esym, biosextmem, biosbasemem),
 	 * 4 bytes each.
 	 */
 	addl	$4,%esp		# Discard return address to boot loader

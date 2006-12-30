@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.47.4.1 2006/06/21 15:02:52 yamt Exp $	*/
+/*	$NetBSD: aha.c,v 1.47.4.2 2006/12/30 20:48:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.47.4.1 2006/06/21 15:02:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.47.4.2 2006/12/30 20:48:01 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -336,12 +336,12 @@ AGAIN:
 
 #ifdef AHADEBUG
 		if (aha_debug) {
-			u_char *cp = &ccb->scsi_cmd;
+			u_char *cp = ccb->scsi_cmd;
 			printf("op=%x %x %x %x %x %x\n",
 			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
-			printf("stat %x for mbi addr = 0x%08x, ",
+			printf("stat %x for mbi addr = %p, ",
 			    wmbi->stat, wmbi);
-			printf("ccb addr = 0x%x\n", ccb);
+			printf("ccb addr = %p\n", ccb);
 		}
 #endif /* AHADEBUG */
 

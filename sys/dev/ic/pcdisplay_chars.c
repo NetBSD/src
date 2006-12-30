@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_chars.c,v 1.9 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: pcdisplay_chars.c,v 1.9.16.1 2006/12/30 20:48:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.9 2004/03/24 17:26:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.9.16.1 2006/12/30 20:48:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,10 +328,7 @@ static const struct {
 };
 
 int
-pcdisplay_mapchar(id, uni, index)
-	void *id;
-	int uni;
-	unsigned int *index;
+pcdisplay_mapchar(void *id, int uni, unsigned int *index)
 {
 	u_int i;
 

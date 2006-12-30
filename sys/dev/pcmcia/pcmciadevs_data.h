@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.214.2.1 2006/06/21 15:06:14 yamt Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.214.2.2 2006/12/30 20:49:18 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.216 2006/06/19 15:44:45 gdamore Exp
+ *	NetBSD: pcmciadevs,v 1.220 2006/11/16 00:52:48 christos Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -393,6 +393,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Edimax EP4000A",	}
 	,
 	{
+	    PCMCIA_VENDOR_EDIMAX, PCMCIA_PRODUCT_EDIMAX_EP4101,
+	    PCMCIA_CIS_EDIMAX_EP4101,
+	    0,
+	    "Edimax Technology Inc.",
+	    "Edimax EP4101",	}
+	,
+	{
 	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_MC2_IEEE,
 	    PCMCIA_CIS_ELSA_MC2_IEEE,
 	    0,
@@ -608,6 +615,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "I-O DATA",
 	    "Wireless CF Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_IODATA3, PCMCIA_PRODUCT_IODATA3_PCETTXR,
+	    PCMCIA_CIS_IODATA3_PCETTXR,
+	    0,
+	    "I-O DATA",
+	    "I-O DATA PCET/TX-R",	}
 	,
 	{
 	    PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE2,
@@ -1065,11 +1079,25 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Socket Communications LP-E CF",	}
 	,
 	{
+	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_DUAL_RS232_A,
+	    PCMCIA_CIS_SOCKET_DUAL_RS232_A,
+	    0,
+	    "Socket Communications",
+	    "Socket Communications Dual RS232_A",	}
+	,
+	{
 	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETH_10_100_CF,
 	    PCMCIA_CIS_SOCKET_LP_ETH_10_100_CF,
 	    0,
 	    "Socket Communications",
 	    "Socket Communications 10/100 Ethernet",	}
+	,
+	{
+	    PCMCIA_VENDOR_SIEMENS, PCMCIA_PRODUCT_SIEMENS_SS1021,
+	    PCMCIA_CIS_SIEMENS_SS1021,
+	    0,
+	    "Siemens",
+	    "SpeedStream SS1021 WLAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_SYMBOL, PCMCIA_PRODUCT_SYMBOL_LA4100,
@@ -1948,6 +1976,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_IODATA3,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "I-O DATA",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_SIMPLETECH,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -2145,6 +2181,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Asustek Computer",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SIEMENS,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Siemens",
 	    NULL,
 	},
 	{

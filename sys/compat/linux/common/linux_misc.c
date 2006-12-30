@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.139.2.1 2006/06/21 14:59:12 yamt Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.139.2.2 2006/12/30 20:47:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.139.2.1 2006/06/21 14:59:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.139.2.2 2006/12/30 20:47:38 yamt Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_ptrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.139.2.1 2006/06/21 14:59:12 yamt Ex
 #include <machine/ptrace.h>
 
 #include <sys/sa.h>
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_machdep.h>
@@ -451,10 +456,7 @@ out:
  * long, and an extra domainname field.
  */
 int
-linux_sys_uname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_uname(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_uname_args /* {
 		syscallarg(struct linux_utsname *) up;
@@ -691,10 +693,7 @@ linux_sys_msync(l, v, retval)
 }
 
 int
-linux_sys_mprotect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_mprotect(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_mprotect_args /* {
 		syscallarg(const void *) start;
@@ -826,7 +825,6 @@ linux_sys_getdents(l, v, retval)
 		syscallarg(struct linux_dirent *) dent;
 		syscallarg(unsigned int) count;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	caddr_t	inp, tbuf;		/* BSD-format */
@@ -844,7 +842,7 @@ linux_sys_getdents(l, v, retval)
 	int ncookies;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(l->l_proc->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -858,7 +856,7 @@ linux_sys_getdents(l, v, retval)
 		goto out1;
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)))
+	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)))
 		goto out1;
 
 	nbytes = SCARG(uap, count);
@@ -1121,10 +1119,7 @@ linux_sys_getpgid(l, v, retval)
  * ELF binaries run in Linux mode, not SVR4 mode.
  */
 int
-linux_sys_personality(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_personality(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_personality_args /* {
 		syscallarg(int) per;
@@ -1243,7 +1238,7 @@ linux_sys_getgroups16(l, v, retval)
 	struct sys_getgroups_args bsa;
 	gid_t *bset, *kbset;
 	linux_gid_t *lset;
-	kauth_cred_t pc = p->p_cred;
+	kauth_cred_t pc = l->l_cred;
 
 	n = SCARG(uap, gidsetsize);
 	if (n < 0)
@@ -1351,11 +1346,10 @@ linux_sys_setfsuid(l, v, retval)
 	 struct linux_sys_setfsuid_args /* {
 		 syscallarg(uid_t) uid;
 	 } */ *uap = v;
-	 struct proc *p = l->l_proc;
 	 uid_t uid;
 
 	 uid = SCARG(uap, uid);
-	 if (kauth_cred_getuid(p->p_cred) != uid)
+	 if (kauth_cred_getuid(l->l_cred) != uid)
 		 return sys_nosys(l, v, retval);
 	 else
 		 return (0);
@@ -1374,10 +1368,7 @@ linux_sys_getfsuid(l, v, retval)
 # endif
 
 int
-linux_sys_setresuid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setresuid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_setresuid_args /* {
 		syscallarg(uid_t) ruid;
@@ -1399,18 +1390,14 @@ linux_sys_setresuid(l, v, retval)
 }
 
 int
-linux_sys_getresuid(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_getresuid(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_getresuid_args /* {
 		syscallarg(uid_t *) ruid;
 		syscallarg(uid_t *) euid;
 		syscallarg(uid_t *) suid;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	kauth_cred_t pc = p->p_cred;
+	kauth_cred_t pc = l->l_cred;
 	int error;
 	uid_t uid;
 
@@ -1440,6 +1427,7 @@ linux_sys_ptrace(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if defined(PTRACE) || defined(_LKM)
 	struct linux_sys_ptrace_args /* {
 		i386, m68k, powerpc: T=int
 		alpha, amd64: T=long
@@ -1451,6 +1439,9 @@ linux_sys_ptrace(l, v, retval)
 	const int *ptr;
 	int request;
 	int error;
+#ifdef _LKM
+#define sys_ptrace (*sysent[SYS_ptrace].sy_call)
+#endif
 
 	ptr = linux_ptrace_request_map;
 	request = SCARG(uap, request);
@@ -1492,6 +1483,9 @@ linux_sys_ptrace(l, v, retval)
 			ptr++;
 
 	return LINUX_SYS_PTRACE_ARCH(l, uap, retval);
+#else
+	return ENOSYS;
+#endif /* PTRACE || _LKM */
 }
 
 int
@@ -1507,10 +1501,10 @@ linux_sys_reboot(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) opt;
 		syscallarg(char *) bootstr;
 	} */ sra;
-	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_REBOOT, 0, NULL, NULL, NULL)) != 0)
 		return(error);
 
 	if (SCARG(uap, magic1) != LINUX_REBOOT_MAGIC1)
@@ -1590,10 +1584,7 @@ linux_sys_swapoff(l, v, retval)
  */
 /* ARGSUSED */
 int
-linux_sys_setdomainname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_setdomainname(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_setdomainname_args /* {
 		syscallarg(char *) domainname;
@@ -1612,10 +1603,7 @@ linux_sys_setdomainname(l, v, retval)
  */
 /* ARGSUSED */
 int
-linux_sys_sysinfo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sysinfo(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_sysinfo_args /* {
 		syscallarg(struct linux_sysinfo *) arg;
@@ -1628,12 +1616,13 @@ linux_sys_sysinfo(l, v, retval)
 	si.loads[0] = la->ldavg[0] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.loads[1] = la->ldavg[1] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.loads[2] = la->ldavg[2] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
-	si.totalram = ctob(physmem);
-	si.freeram = uvmexp.free * uvmexp.pagesize;
+	si.totalram = ctob((u_long)physmem);
+	si.freeram = (u_long)uvmexp.free * uvmexp.pagesize;
 	si.sharedram = 0;	/* XXX */
-	si.bufferram = uvmexp.filepages * uvmexp.pagesize;
-	si.totalswap = uvmexp.swpages * uvmexp.pagesize;
-	si.freeswap = (uvmexp.swpages - uvmexp.swpginuse) * uvmexp.pagesize;
+	si.bufferram = (u_long)uvmexp.filepages * uvmexp.pagesize;
+	si.totalswap = (u_long)uvmexp.swpages * uvmexp.pagesize;
+	si.freeswap = 
+	    (u_long)(uvmexp.swpages - uvmexp.swpginuse) * uvmexp.pagesize;
 	si.procs = nprocs;
 
 	/* The following are only present in newer Linux kernels. */
@@ -1737,10 +1726,8 @@ linux_sys_ugetrlimit(l, v, retval)
  * This is the way Linux does it and glibc depends on this behaviour.
  */
 int
-linux_sys_nosys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_nosys(struct lwp *l, void *v,
+    register_t *retval)
 {
 	return (ENOSYS);
 }

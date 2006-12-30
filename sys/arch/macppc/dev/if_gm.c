@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.24.6.1 2006/06/21 14:53:13 yamt Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.24.6.2 2006/12/30 20:46:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,10 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.24.6.1 2006/06/21 14:53:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.24.6.2 2006/12/30 20:46:26 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "rnd.h"
 #include "bpfilter.h"
 
@@ -816,24 +815,6 @@ gmac_ioctl(ifp, cmd, data)
 			gmac_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host,
-				    sizeof(sc->sc_enaddr));
-			}
-			/* Set new address. */
-			gmac_init(sc);
-			break;
-		    }
 #endif
 		default:
 			gmac_init(sc);

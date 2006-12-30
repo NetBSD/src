@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.5.4.2 2006/06/21 15:00:09 yamt Exp $
+ * $Id: ah_osdep.c,v 1.5.4.3 2006/12/30 20:47:49 yamt Exp $
  */
 #include "opt_athhal.h"
 #include "athhal_options.h"
@@ -178,7 +178,7 @@ void
 HALDEBUG(struct ath_hal *ah, const char* fmt, ...)
 {
 	if (ath_hal_debug) {
-		__va_list ap;
+		va_list ap;
 		va_start(ap, fmt);
 		ath_hal_vprintf(ah, fmt, ap);
 		va_end(ap);
@@ -189,7 +189,7 @@ void
 HALDEBUGn(struct ath_hal *ah, u_int level, const char* fmt, ...)
 {
 	if (ath_hal_debug >= level) {
-		__va_list ap;
+		va_list ap;
 		va_start(ap, fmt);
 		ath_hal_vprintf(ah, fmt, ap);
 		va_end(ap);
@@ -227,8 +227,9 @@ ath_hal_setlogging(int enable)
 	int error;
 
 	if (enable) {
-		error = kauth_authorize_generic(curproc->p_cred,
-		    KAUTH_GENERIC_ISSUSER, &curproc->p_acflag);
+		error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, NULL, NULL, NULL);
 		if (error == 0) {
 			error = alq_open(&ath_hal_alq, ath_hal_logfile,
 				curproc->p_ucred,

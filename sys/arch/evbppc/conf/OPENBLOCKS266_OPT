@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.2.18.2 2006/06/21 14:51:03 yamt Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.2.18.3 2006/12/30 20:45:52 yamt Exp $
 #
 
 include         "arch/evbppc/conf/OPENBLOCKS266"
@@ -43,6 +43,9 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
+
+# CardBus IDE controllers
+#njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
 
 # ATA (IDE) bus support
 atabus* at ata?
@@ -147,7 +150,7 @@ wsmouse* at uep? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices

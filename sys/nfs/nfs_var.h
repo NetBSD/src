@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.50.2.1 2006/06/21 15:11:59 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.50.2.2 2006/12/30 20:50:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,8 +63,6 @@ struct vnode;
 struct nfsd;
 struct mbuf;
 struct file;
-struct nqlease;
-struct nqhost;
 struct nfssvc_sock;
 struct nfsmount;
 struct socket;
@@ -119,35 +117,12 @@ int nfs_renamerpc(struct vnode *, const char *, int, struct vnode *,
 	const char *, int, kauth_cred_t, struct lwp *);
 int nfs_readdirrpc(struct vnode *, struct uio *, kauth_cred_t);
 int nfs_readdirplusrpc(struct vnode *, struct uio *, kauth_cred_t);
-int nfs_sillyrename(struct vnode *, struct vnode *, struct componentname *);
+int nfs_sillyrename(struct vnode *, struct vnode *, struct componentname *,
+	boolean_t);
 int nfs_lookitup(struct vnode *, const char *, int, kauth_cred_t,
 	struct lwp *, struct nfsnode **);
 int nfs_commit(struct vnode *, off_t, uint32_t, struct lwp *);
 int nfs_flush(struct vnode *, kauth_cred_t, int, struct lwp *, int);
-
-/* nfs_nqlease.c */
-void nqnfs_lease_updatetime(int);
-void nqnfs_clientlease(struct nfsmount *, struct nfsnode *, int, int, time_t,
-	u_quad_t);
-void nqsrv_locklease(struct nqlease *);
-void nqsrv_unlocklease(struct nqlease *);
-int nqsrv_getlease(struct vnode *, u_int32_t *, int, struct nfssvc_sock *,
-	struct lwp *, struct mbuf *, int *, u_quad_t *, kauth_cred_t);
-void nqsrv_addhost(struct nqhost *, struct nfssvc_sock *, struct mbuf *);
-void nqsrv_instimeq(struct nqlease *, u_int32_t);
-int nqsrv_cmpnam(struct nfssvc_sock *, struct mbuf *, struct nqhost *);
-void nqsrv_send_eviction(struct vnode *, struct nqlease *,
-	struct nfssvc_sock *, struct mbuf *, kauth_cred_t, struct lwp *);
-void nqsrv_waitfor_expiry(struct nqlease *);
-void nqnfs_serverd(void);
-int nqnfsrv_getlease(struct nfsrv_descript *, struct nfssvc_sock *,
-	struct lwp *, struct mbuf **);
-int nqnfsrv_vacated(struct nfsrv_descript *, struct nfssvc_sock *,
-	struct lwp *, struct mbuf **);
-int nqnfs_getlease(struct vnode *, int, kauth_cred_t, struct lwp *);
-int nqnfs_vacated(struct vnode *, kauth_cred_t, struct lwp *);
-int nqnfs_callback(struct nfsmount *, struct mbuf *, struct mbuf *,
-	caddr_t, struct lwp *);
 
 /* nfs_serv.c */
 int nfsrv3_access(struct nfsrv_descript *, struct nfssvc_sock *,
@@ -270,7 +245,7 @@ int nfs_getattrcache(struct vnode *, struct vattr *);
 void nfs_delayedtruncate(struct vnode *);
 int nfs_check_wccdata(struct nfsnode *, const struct timespec *,
 	struct timespec *, boolean_t);
-int nfs_namei(struct nameidata *, fhandle_t *, uint32_t, struct nfssvc_sock *,
+int nfs_namei(struct nameidata *, nfsrvfh_t *, uint32_t, struct nfssvc_sock *,
 	struct mbuf *, struct mbuf **, caddr_t *, struct vnode **, struct lwp *,
 	int, int);
 void nfs_zeropad(struct mbuf *, int, int);
@@ -279,9 +254,9 @@ void nfsm_srvwcc(struct nfsrv_descript *, int, struct vattr *, int,
 void nfsm_srvpostopattr(struct nfsrv_descript *, int, struct vattr *,
 	struct mbuf **, char **);
 void nfsm_srvfattr(struct nfsrv_descript *, struct vattr *, struct nfs_fattr *);
-int nfsrv_fhtovp(fhandle_t *, int, struct vnode **, kauth_cred_t,
+int nfsrv_fhtovp(nfsrvfh_t *, int, struct vnode **, kauth_cred_t,
 	struct nfssvc_sock *, struct mbuf *, int *, int, int);
-int nfs_ispublicfh __P((fhandle_t *));
+int nfs_ispublicfh __P((const nfsrvfh_t *));
 int netaddr_match(int, union nethostaddr *, struct mbuf *);
 
 /* flags for nfs_loadattrcache and friends */
@@ -301,6 +276,10 @@ void nfs_cookieheuristic(struct vnode *, int *, struct lwp *, kauth_cred_t);
 
 u_int32_t nfs_getxid(void);
 void nfs_renewxid(struct nfsreq *);
+
+int nfsrv_composefh(struct vnode *, nfsrvfh_t *, boolean_t);
+int nfsrv_comparefh(const nfsrvfh_t *, const nfsrvfh_t *);
+void nfsrv_copyfh(nfsrvfh_t *, const nfsrvfh_t *);
 
 /* nfs_syscalls.c */
 int sys_getfh(struct lwp *, void *, register_t *);

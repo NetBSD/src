@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.117.4.1 2006/06/21 15:04:21 yamt Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.117.4.2 2006/12/30 20:48:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.117.4.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.117.4.2 2006/12/30 20:48:27 yamt Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -173,13 +173,13 @@ struct sbmode {
 	u_char	cmdchan;
 };
 static struct sbmode sbpmodes[] = {
- { SB_1,   1, 8, 4000,22727,SB_DSP_WDMA     ,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_20,  1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_2x,  1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_2x,  1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_PRO, 1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_PRO, 1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_PRO, 2, 8,11025,22727,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_1,   1, 8, 4000,22727,SB_DSP_WDMA     ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_20,  1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_2x,  1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_2x,  1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_PRO, 1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_PRO, 1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_PRO, 2, 8,11025,22727,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
  /* Yes, we write the record mode to set 16-bit playback mode. weird, huh? */
  { SB_JAZZ,1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
  { SB_JAZZ,1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
@@ -187,18 +187,18 @@ static struct sbmode sbpmodes[] = {
  { SB_JAZZ,1,16,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
  { SB_JAZZ,1,16, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
  { SB_JAZZ,2,16,11025,22727,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_STEREO },
- { SB_16,  1, 8, 5000,49000,SB_DSP16_WDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_16,  2, 8, 5000,49000,SB_DSP16_WDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_16,  1, 8, 5000,49000,SB_DSP16_WDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_16,  2, 8, 5000,49000,SB_DSP16_WDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
 #define PLAY16 15 /* must be the index of the next entry in the table */
- { SB_16,  1,16, 5000,49000,SB_DSP16_WDMA_16,SB_DSP16_HALT,SB_DSP16_CONT},
- { SB_16,  2,16, 5000,49000,SB_DSP16_WDMA_16,SB_DSP16_HALT,SB_DSP16_CONT},
- { -1 }
+ { SB_16,  1,16, 5000,49000,SB_DSP16_WDMA_16,SB_DSP16_HALT,SB_DSP16_CONT, 0, },
+ { SB_16,  2,16, 5000,49000,SB_DSP16_WDMA_16,SB_DSP16_HALT,SB_DSP16_CONT, 0, },
+ { .model = -1 }
 };
 static struct sbmode sbrmodes[] = {
- { SB_1,   1, 8, 4000,12987,SB_DSP_RDMA     ,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_20,  1, 8, 4000,12987,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_2x,  1, 8,12987,14925,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_2x,  1, 8, 4000,12987,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_1,   1, 8, 4000,12987,SB_DSP_RDMA     ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_20,  1, 8, 4000,12987,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_2x,  1, 8,12987,14925,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_2x,  1, 8, 4000,12987,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
  { SB_PRO, 1, 8,22727,45454,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
  { SB_PRO, 1, 8, 4000,22727,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
  { SB_PRO, 2, 8,11025,22727,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_STEREO },
@@ -208,11 +208,11 @@ static struct sbmode sbrmodes[] = {
  { SB_JAZZ,1,16,22727,45454,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
  { SB_JAZZ,1,16, 4000,22727,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
  { SB_JAZZ,2,16,11025,22727,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_STEREO },
- { SB_16,  1, 8, 5000,49000,SB_DSP16_RDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_16,  2, 8, 5000,49000,SB_DSP16_RDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_16,  1,16, 5000,49000,SB_DSP16_RDMA_16,SB_DSP16_HALT,SB_DSP16_CONT},
- { SB_16,  2,16, 5000,49000,SB_DSP16_RDMA_16,SB_DSP16_HALT,SB_DSP16_CONT},
- { -1 }
+ { SB_16,  1, 8, 5000,49000,SB_DSP16_RDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_16,  2, 8, 5000,49000,SB_DSP16_RDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT, 0, },
+ { SB_16,  1,16, 5000,49000,SB_DSP16_RDMA_16,SB_DSP16_HALT,SB_DSP16_CONT, 0, },
+ { SB_16,  2,16, 5000,49000,SB_DSP16_RDMA_16,SB_DSP16_HALT,SB_DSP16_CONT, 0, },
+ { .model = -1 }
 };
 
 void	sbversion(struct sbdsp_softc *);
@@ -441,7 +441,7 @@ sbdsp_attach(struct sbdsp_softc *sc)
 		}
 	}
 
-	powerhook_establish (sbdsp_powerhook, sc);
+	powerhook_establish(sc->sc_dev.dv_xname, sbdsp_powerhook, sc);
 }
 
 static void
@@ -915,11 +915,8 @@ sbdsp_speaker_ctl(void *addr, int newstate)
 }
 
 int
-sbdsp_round_blocksize(
-	void *addr,
-	int blk,
-	int mode,
-	const audio_params_t *param)
+sbdsp_round_blocksize(void *addr, int blk, int mode,
+    const audio_params_t *param)
 {
 	return blk & -4;	/* round to biggest sample size */
 }
@@ -2284,7 +2281,7 @@ sbdsp_mixer_query_devinfo(void *addr, mixer_devinfo_t *dip)
 
 void *
 sb_malloc(void *addr, int direction, size_t size,
-	  struct malloc_type *pool, int flags)
+    struct malloc_type *pool, int flags)
 {
 	struct sbdsp_softc *sc;
 	int drq;
@@ -2345,7 +2342,7 @@ sbdsp_get_props(void *addr)
 
 int
 sbdsp_midi_open(void *addr, int flags, void (*iintr)(void *, int),
-		void (*ointr)(void *), void *arg)
+    void (*ointr)(void *), void *arg)
 {
 	struct sbdsp_softc *sc;
 

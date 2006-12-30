@@ -1,4 +1,4 @@
-/* $NetBSD: netisr_dispatch.h,v 1.11.4.1 2006/06/21 15:10:27 yamt Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.11.4.2 2006/12/30 20:50:20 yamt Exp $ */
 
 #ifndef _NET_NETISR_DISPATCH_H_
 #define _NET_NETISR_DISPATCH_H_
@@ -39,14 +39,8 @@
 #ifdef NETATALK
 	DONETISR(NETISR_ATALK,atintr);
 #endif
-#ifdef NS
-	DONETISR(NETISR_NS,nsintr);
-#endif
 #ifdef ISO
 	DONETISR(NETISR_ISO,clnlintr);
-#endif
-#ifdef CCITT
-	DONETISR(NETISR_CCITT,ccittintr);
 #endif
 #ifdef NATM
 	DONETISR(NETISR_NATM,natmintr);

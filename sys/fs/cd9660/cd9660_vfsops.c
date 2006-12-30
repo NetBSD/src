@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.24.2.1 2006/06/21 15:09:23 yamt Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.24.2.2 2006/12/30 20:49:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.24.2.1 2006/06/21 15:09:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.24.2.2 2006/12/30 20:49:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -104,6 +104,8 @@ struct vfsops cd9660_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	cd9660_vnodeopv_descs,
+	0,	/* refcount */
+	{ NULL, NULL } /* list */
 };
 VFS_ATTACH(cd9660_vfsops);
 
@@ -169,11 +171,9 @@ cd9660_mount(mp, path, data, ndp, l)
 {
 	struct vnode *devvp;
 	struct iso_args args;
-	struct proc *p;
 	int error;
 	struct iso_mnt *imp = VFSTOISOFS(mp);
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		if (imp == NULL)
 			return EIO;
@@ -212,9 +212,9 @@ cd9660_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, p->p_cred, l);
+		error = VOP_ACCESS(devvp, VREAD, l->l_cred, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -327,7 +327,7 @@ iso_mountfs(devvp, mp, l, argp)
 		return EROFS;
 
 	/* Flush out any old buffers remaining from a previous use. */
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0)) != 0)
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
 		return (error);
 
 	/* This is the "logical sector size".  The standard says this
@@ -423,8 +423,6 @@ iso_mountfs(devvp, mp, l, argp)
 	isomp->im_dev = dev;
 	isomp->im_devvp = devvp;
 
-	devvp->v_specmountpoint = mp;
-
 	/* Check the Rock Ridge Extension support */
 	if (!(argp->flags & ISOFSMNT_NORRIP)) {
 		struct iso_directory_record *rootp;
@@ -493,6 +491,8 @@ iso_mountfs(devvp, mp, l, argp)
 		supbp = NULL;
 	}
 
+	devvp->v_specmountpoint = mp;
+
 	return 0;
 out:
 	if (bp)
@@ -514,10 +514,8 @@ out:
  */
 /* ARGSUSED */
 int
-cd9660_start(mp, flags, l)
-	struct mount *mp;
-	int flags;
-	struct lwp *l;
+cd9660_start(struct mount *mp, int flags,
+    struct lwp *l)
 {
 	return 0;
 }
@@ -589,12 +587,12 @@ cd9660_root(mp, vpp)
  */
 /* ARGSUSED */
 int
-cd9660_quotactl(mp, cmd, uid, arg, l)
-	struct mount *mp;
-	int cmd;
-	uid_t uid;
-	void *arg;
-	struct lwp *l;
+cd9660_quotactl(
+    struct mount *mp,
+    int cmd,
+    uid_t uid,
+    void *arg,
+    struct lwp *l)
 {
 
 	return (EOPNOTSUPP);
@@ -604,10 +602,10 @@ cd9660_quotactl(mp, cmd, uid, arg, l)
  * Get file system statistics.
  */
 int
-cd9660_statvfs(mp, sbp, l)
-	struct mount *mp;
-	struct statvfs *sbp;
-	struct lwp *l;
+cd9660_statvfs(
+    struct mount *mp,
+    struct statvfs *sbp,
+    struct lwp *l)
 {
 	struct iso_mnt *isomp;
 
@@ -632,11 +630,11 @@ cd9660_statvfs(mp, sbp, l)
 
 /* ARGSUSED */
 int
-cd9660_sync(mp, waitfor, cred, l)
-	struct mount *mp;
-	int waitfor;
-	kauth_cred_t cred;
-	struct lwp *l;
+cd9660_sync(
+    struct mount *mp,
+    int waitfor,
+    kauth_cred_t cred,
+    struct lwp *l)
 {
 	return (0);
 }
@@ -665,17 +663,21 @@ cd9660_fhtovp(mp, fhp, vpp)
 	struct fid *fhp;
 	struct vnode **vpp;
 {
-	struct ifid *ifhp = (struct ifid *)fhp;
+	struct ifid ifh;
 	struct iso_node *ip;
 	struct vnode *nvp;
 	int error;
 
+	if (fhp->fid_len != sizeof(ifh))
+		return EINVAL;
+
+	memcpy(&ifh, fhp, sizeof(ifh));
 #ifdef	ISOFS_DBG
 	printf("fhtovp: ino %d, start %ld\n",
-	    ifhp->ifid_ino, ifhp->ifid_start);
+	    ifh.ifid_ino, ifh.ifid_start);
 #endif
 
-	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ifh.ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -925,22 +927,29 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
  */
 /* ARGSUSED */
 int
-cd9660_vptofh(vp, fhp)
+cd9660_vptofh(vp, fhp, fh_size)
 	struct vnode *vp;
 	struct fid *fhp;
+	size_t *fh_size;
 {
 	struct iso_node *ip = VTOI(vp);
-	struct ifid *ifhp;
+	struct ifid ifh;
 
-	ifhp = (struct ifid *)fhp;
-	ifhp->ifid_len = sizeof(struct ifid);
+	if (*fh_size < sizeof(struct ifid)) {
+		*fh_size = sizeof(struct ifid);
+		return E2BIG;
+	}
+	*fh_size = sizeof(struct ifid);
 
-	ifhp->ifid_ino = ip->i_number;
-	ifhp->ifid_start = ip->iso_start;
+	memset(&ifh, 0, sizeof(ifh));
+	ifh.ifid_len = sizeof(struct ifid);
+	ifh.ifid_ino = ip->i_number;
+	ifh.ifid_start = ip->iso_start;
+	memcpy(fhp, &ifh, sizeof(ifh));
 
 #ifdef	ISOFS_DBG
 	printf("vptofh: ino %d, start %ld\n",
-	    ifhp->ifid_ino,ifhp->ifid_start);
+	    ifh.ifid_ino,ifh.ifid_start);
 #endif
 	return 0;
 }

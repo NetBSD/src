@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.19.4.1 2006/06/21 15:02:51 yamt Exp $	*/
+/*	$NetBSD: dpti.c,v 1.19.4.2 2006/12/30 20:48:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.19.4.1 2006/06/21 15:02:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.19.4.2 2006/12/30 20:48:00 yamt Exp $");
 
 #include "opt_i2o.h"
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.19.4.1 2006/06/21 15:02:51 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -147,7 +148,7 @@ dev_type_ioctl(dptiioctl);
 
 const struct cdevsw dpti_cdevsw = {
 	dptiopen, nullclose, noread, nowrite, dptiioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 extern struct cfdriver dpti_cd;
@@ -206,11 +207,10 @@ dpti_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-dptiopen(dev_t dev, int flag, int mode, struct lwp *l)
+dptiopen(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 
-	if (securelevel > 1)
-		return (EPERM);
 	if (device_lookup(&dpti_cd, minor(dev)) == NULL)
 		return (ENXIO);
 
@@ -277,6 +277,11 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case DPT_I2OUSRCMD:
+		rv = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
+		if (rv)
+			break;
+
 		if (sc->sc_nactive++ >= 2)
 			tsleep(&sc->sc_nactive, PRIBIO, "dptislp", 0);
 
@@ -710,9 +715,10 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 	/*
 	 * Copy out the reply frame.
 	 */
-	if ((rv = copyout(rbtmp, data + msgsize, repsize)) != 0)
+	if ((rv = copyout(rbtmp, data + msgsize, repsize)) != 0) {
 		DPRINTF(("%s: reply copyout() failed\n",
 		    sc->sc_dv.dv_xname));
+	}
 
  bad:
 	/*

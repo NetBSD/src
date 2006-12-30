@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_stub.c,v 1.2.10.2 2006/06/21 14:52:54 yamt Exp $	*/
+/*	$NetBSD: acpi_stub.c,v 1.2.10.3 2006/12/30 20:46:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Marcel Moolenaar
@@ -34,6 +34,7 @@
 
 #define _KERNEL /* XXX: Fix dist/acpica/acnetbsd.h for _STANDALONE */
 #include <sys/types.h>
+#include <sys/lock.h>
 #include <dist/acpica/acpi.h>
 #undef _KERNEL
 

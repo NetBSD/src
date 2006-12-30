@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.21.10.1 2006/06/21 14:51:50 yamt Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.21.10.2 2006/12/30 20:46:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.21.10.1 2006/06/21 14:51:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.21.10.2 2006/12/30 20:46:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -277,7 +277,8 @@ ite8181_attach(struct ite8181_softc *sc)
 	ite8181_erase_cursor(sc);
 
 	/* Add a power hook to power saving */
-	sc->sc_powerhook = powerhook_establish(ite8181_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    ite8181_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

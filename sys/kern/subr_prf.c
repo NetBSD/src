@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.99.2.1 2006/06/21 15:09:38 yamt Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.99.2.2 2006/12/30 20:50:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.99.2.1 2006/06/21 15:09:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.99.2.2 2006/12/30 20:50:06 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -1264,7 +1264,7 @@ reswitch:	switch (ch) {
 			base = DEC;
 			goto nosign;
 		case 'X':
-			xdigs = hexdigits;
+			xdigs = HEXDIGITS;
 			goto hex;
 		case 'x':
 			xdigs = hexdigits;

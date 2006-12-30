@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.26 2005/02/27 00:27:43 perry Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.26.4.1 2006/12/30 20:49:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.26 2005/02/27 00:27:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.26.4.1 2006/12/30 20:49:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,10 +133,8 @@ const size_t esp_pcmcia_nproducts =
     sizeof(esp_pcmcia_products) / sizeof(esp_pcmcia_products[0]);
 
 int
-esp_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+esp_pcmcia_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -158,9 +156,8 @@ esp_pcmcia_validate_config(cfe)
 }
 
 void
-esp_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+esp_pcmcia_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct esp_pcmcia_softc *esc = (void *)self;
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
@@ -183,22 +180,14 @@ esp_pcmcia_attach(parent, self, aux)
 	esc->sc_ioh = cfe->iospace[0].handle.ioh;
 	esp_pcmcia_init(esc);
 
-	error = esp_pcmcia_enable(self, 1);
-	if (error)
-		goto fail;
+	printf("%s", self->dv_xname);
 
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	sc->sc_adapter.adapt_enable = esp_pcmcia_enable;
-	sc->sc_adapter.adapt_refcnt = 1;
 
 	ncr53c9x_attach(sc);
-	scsipi_adapter_delref(&sc->sc_adapter);
 	esc->sc_state = ESP_PCMCIA_ATTACHED;
-	return;
-
-fail:
-	pcmcia_function_unconfigure(pf);
 }
 
 void
@@ -449,8 +438,7 @@ esp_pcmcia_dma_go(sc)
 }
 
 void
-esp_pcmcia_dma_stop(sc)
-	struct ncr53c9x_softc *sc;
+esp_pcmcia_dma_stop(struct ncr53c9x_softc *sc)
 {
 }
 

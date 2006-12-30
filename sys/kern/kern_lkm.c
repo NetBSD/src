@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.86.2.1 2006/06/21 15:09:37 yamt Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.86.2.2 2006/12/30 20:50:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.86.2.1 2006/06/21 15:09:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.86.2.2 2006/12/30 20:50:05 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.86.2.1 2006/06/21 15:09:37 yamt Exp $
 #include <sys/ksyms.h>
 #include <sys/device.h>
 #include <sys/once.h>
+#include <sys/kauth.h>
 
 #include <sys/lkm.h>
 #include <sys/syscall.h>
@@ -76,8 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.86.2.1 2006/06/21 15:09:37 yamt Exp $
 
 struct vm_map *lkm_map;
 
-#define	LKM_SPACE_ALLOC(size) \
-	uvm_km_alloc(lkm_map, (size), 0, UVM_KMF_WIRED)
+#define	LKM_SPACE_ALLOC(size, exec) \
+	uvm_km_alloc(lkm_map, (size), 0, \
+		UVM_KMF_WIRED | ((exec) ? UVM_KMF_EXEC : 0))
 #define	LKM_SPACE_FREE(addr, size) \
 	uvm_km_free(lkm_map, (addr), (size), UVM_KMF_WIRED)
 
@@ -127,7 +129,7 @@ dev_type_ioctl(lkmioctl);
 
 const struct cdevsw lkm_cdevsw = {
 	lkmopen, lkmclose, noread, nowrite, lkmioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 static ONCE_DECL(lkm_init_once);
@@ -342,7 +344,8 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	switch(cmd) {
 	case LMRESERV:		/* reserve pages for a module */
-		if (securelevel > 0)
+		if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LKM,
+		    0, (void *)cmd, NULL, NULL))
 			return EPERM;
 
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
@@ -361,7 +364,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		 * Get memory for module
 		 */
 		curp->size = resrvp->size;
-		curp->area = LKM_SPACE_ALLOC(curp->size);
+		curp->area = LKM_SPACE_ALLOC(curp->size, 1);
 		curp->offset = 0;		/* load offset */
 
 		resrvp->addr = curp->area;	/* ret kernel addr */
@@ -369,7 +372,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if (resrvp->sym_size) {
 			curp->sym_size = resrvp->sym_size;
 			curp->sym_symsize = resrvp->sym_symsize;
-			curp->syms = (u_long) LKM_SPACE_ALLOC(curp->sym_size);
+			curp->syms = (u_long)LKM_SPACE_ALLOC(curp->sym_size, 0);
 			curp->sym_offset = 0;
 			resrvp->sym_addr = curp->syms; /* ret symbol addr */
 		} else {
@@ -393,7 +396,8 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case LMLOADBUF:		/* Copy in; stateful, follows LMRESERV */
-		if (securelevel > 0)
+		if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LKM,
+		    0, (void *)cmd, NULL, NULL))
 			return EPERM;
 
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
@@ -461,7 +465,8 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case LMUNRESRV:		/* discard reserved pages for a module */
-		if (securelevel > 0)
+		if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LKM,
+		    0, (void *)cmd, NULL, NULL))
 			return EPERM;
 
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
@@ -477,7 +482,8 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case LMREADY:		/* module loaded: call entry */
-		if (securelevel > 0)
+		if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LKM,
+		    0, (void *)cmd, NULL, NULL))
 			return EPERM;
 
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
@@ -566,7 +572,8 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case LMUNLOAD:		/* unload a module */
-		if (securelevel > 0)
+		if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LKM,
+		    0, (void *)cmd, NULL, NULL))
 			return EPERM;
 
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
@@ -619,7 +626,8 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 #ifdef LMFORCE
 	case LMFORCE:		/* stateful, optionally follows LMRESERV */
-		if (securelevel > 0)
+		if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LKM,
+		    0, (void *)cmd, NULL, NULL))
 			return EPERM;
 
 		if ((flag & FWRITE) == 0) /* only allow this if writing */

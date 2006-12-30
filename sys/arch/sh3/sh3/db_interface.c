@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.29.2.1 2006/06/21 14:55:39 yamt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.29.2.2 2006/12/30 20:46:55 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29.2.1 2006/06/21 14:55:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29.2.2 2006/12/30 20:46:55 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -47,9 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29.2.1 2006/06/21 14:55:39 yamt E
 #include <ddb/db_sym.h>
 
 #include <sh3/ubcreg.h>
-
-extern char *exp_type[];
-extern int exp_types;
 
 db_regs_t ddb_regs;		/* register state */
 
@@ -84,13 +81,13 @@ void __db_print_symbol(db_expr_t);
 char *__db_procname_by_asid(int);
 
 const struct db_command db_machine_command_table[] = {
-	{ "tlb",	db_tlbdump_cmd,		0,	0 },
-	{ "cache",	db_cachedump_cmd,	0,	0 },
-	{ "frame",	db_frame_cmd,		0,	0 },
+	{ "tlb",	db_tlbdump_cmd,		0,	NULL },
+	{ "cache",	db_cachedump_cmd,	0,	NULL },
+	{ "frame",	db_frame_cmd,		0,	NULL },
 #ifdef KSTACK_DEBUG
-	{ "stack",	db_stackcheck_cmd,	0,	0 },
+	{ "stack",	db_stackcheck_cmd,	0,	NULL },
 #endif
-	{ 0 }
+	{ NULL }
 };
 
 int db_active;
@@ -121,11 +118,11 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	case -1:		/* keyboard interrupt */
 		break;
 	default:
-		if (!db_onpanic && db_recover == 0)
+		if (!db_onpanic && db_recover == NULL)
 			return 0;
 
 		kdb_printtrap(type, code);
-		if (db_recover != 0) {
+		if (db_recover != NULL) {
 			db_error("Faulted in DDB; continuing...\n");
 			/*NOTREACHED*/
 		}
@@ -216,10 +213,12 @@ db_clear_single_step(db_regs_t *regs)
 }
 
 #ifndef KGDB
+
+#define	ON(x, c)	((x) & (c) ? '|' : '.')
+
 /*
  * MMU
  */
-#define	ON(x, c)	((x) & (c) ? '|' : '.')
 void
 db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     const char *modif)
@@ -287,8 +286,9 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 		db_printf("%s virtual storage mode, SQ access: (kernel%s)\n",
 		    r & SH3_MMUCR_SV ? "single" : "multiple",
 		    r & SH4_MMUCR_SQMD ? "" : "/user");
-		db_printf("random counter limit=%d\n", (r & SH4_MMUCR_URB_MASK) >>
-		    SH4_MMUCR_URB_SHIFT);
+		db_printf("random counter limit=%d\n",
+		    (r & SH4_MMUCR_URB_MASK) >> SH4_MMUCR_URB_SHIFT);
+
 		i = _reg_read_4(SH4_PTEH) & SH4_PTEH_ASID_MASK;
 		db_printf("ASID=%d (%s)", i, __db_procname_by_asid(i));
 
@@ -296,10 +296,12 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 		db_printf("---ITLB DUMP ---\n%s TC SA\n%s\n", title, title2);
 		for (i = 0; i < 4; i++) {
 			e = i << SH4_ITLB_E_SHIFT;
+
 			r = _reg_read_4(SH4_ITLB_AA | e);
-			db_printf("0x%08x %3d",
+			db_printf("0x%08x   %3d",
 			    r & SH4_ITLB_AA_VPN_MASK,
 			    r & SH4_ITLB_AA_ASID_MASK);
+
 			r = _reg_read_4(SH4_ITLB_DA1 | e);
 			__db_tlbdump_pfn(r);
 			db_printf(" %c_%c%c_ %s ",
@@ -309,19 +311,27 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 			    pr[(r & SH4_ITLB_DA1_PR) >>
 				SH4_UTLB_DA1_PR_SHIFT]);
 			__db_tlbdump_page_size_sh4(r);
+
+#if 0 /* XXX: causes weird effects on landisk */
 			r = _reg_read_4(SH4_ITLB_DA2 | e);
 			db_printf(" %c  %d\n",
 			    ON(r, SH4_ITLB_DA2_TC),
 			    r & SH4_ITLB_DA2_SA_MASK);
+#else
+			db_printf("\n");
+#endif
 		}
+
 		/* Dump UTLB */
 		db_printf("---UTLB DUMP---\n%s TC SA\n%s\n", title, title2);
 		for (i = 0; i < 64; i++) {
 			e = i << SH4_UTLB_E_SHIFT;
+
 			r = _reg_read_4(SH4_UTLB_AA | e);
-			db_printf("0x%08x %3d",
+			db_printf("0x%08x   %3d",
 			    r & SH4_UTLB_AA_VPN_MASK,
 			    r & SH4_UTLB_AA_ASID_MASK);
+
 			r = _reg_read_4(SH4_UTLB_DA1 | e);
 			__db_tlbdump_pfn(r);
 			db_printf(" %c%c%c%c%c %s ",
@@ -334,10 +344,15 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 				SH4_UTLB_DA1_PR_SHIFT]
 			    );
 			__db_tlbdump_page_size_sh4(r);
+
+#if 0 /* XXX: causes weird effects on landisk */
 			r = _reg_read_4(SH4_UTLB_DA2 | e);
 			db_printf(" %c  %d\n",
 			    ON(r, SH4_UTLB_DA2_TC),
 			    r & SH4_UTLB_DA2_SA_MASK);
+#else
+			db_printf("\n");
+#endif
 		}
 	}
 #endif /* SH4 */
@@ -498,6 +513,7 @@ __db_cachedump_sh4(vaddr_t va)
 	RUN_P1;
 }
 #endif /* SH4 */
+
 #undef ON
 
 void
@@ -508,8 +524,10 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 
 	/* Print switch frame */
 	db_printf("[switch frame]\n");
+
 #define	SF(x)	db_printf("sf_" #x "\t\t0x%08x\t", sf->sf_ ## x);	\
-	__db_print_symbol(sf->sf_ ## x)
+		__db_print_symbol(sf->sf_ ## x)
+
 	SF(sr);
 	SF(r15);
 	SF(r14);
@@ -520,20 +538,23 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 	SF(r9);
 	SF(r8);
 	SF(pr);
-#undef	SF
 	db_printf("sf_r6_bank\t0x%08x\n", sf->sf_r6_bank);
 	db_printf("sf_r7_bank\t0x%08x\n", sf->sf_r7_bank);
 
-	tftop = (struct trapframe *)((vaddr_t)curpcb + PAGE_SIZE);
 
 	/* Print trap frame stack */
 	db_printf("[trap frame]\n");
+
 	__asm("stc r6_bank, %0" : "=r"(tf));
+	tftop = (struct trapframe *)((vaddr_t)curpcb + PAGE_SIZE);
+
 	for (; tf != tftop; tf++) {
 		db_printf("-- %p-%p --\n", tf, tf + 1);
 		db_printf("tf_expevt\t0x%08x\n", tf->tf_expevt);
+
 #define	TF(x)	db_printf("tf_" #x "\t\t0x%08x\t", tf->tf_ ## x);	\
-	__db_print_symbol(tf->tf_ ## x)
+		__db_print_symbol(tf->tf_ ## x)
+
 		TF(ubc);
 		TF(spc);
 		TF(ssr);
@@ -556,8 +577,9 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 		TF(r0);
 		TF(r15);
 		TF(r14);
-#undef	TF
 	}
+#undef	SF
+#undef	TF
 }
 
 void
@@ -566,13 +588,11 @@ __db_print_symbol(db_expr_t value)
 	const char *name;
 	db_expr_t offset;
 
-	db_find_xtrn_sym_and_offset((db_addr_t)value, &name, &offset);
+	db_find_sym_and_offset((db_addr_t)value, &name, &offset);
+	if (name != NULL && offset <= db_maxoff && offset != value)
+		db_printsym(value, DB_STGY_ANY, db_printf);
 
-	if (name != 0 && offset <= db_maxoff && offset != value)
-		db_print_loc_and_inst(value);
-	else
-		db_printf("\n");
-
+	db_printf("\n");
 }
 
 #ifdef KSTACK_DEBUG

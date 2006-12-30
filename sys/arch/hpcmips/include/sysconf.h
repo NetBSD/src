@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.11 2001/09/23 14:32:52 uch Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.11.36.1 2006/12/30 20:46:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -74,8 +74,6 @@ extern struct platform {
 struct platform_clock {
 	int	hz;
 	void	(*init)(struct device *);
-	void	(*rtc_get)(struct device *, time_t, struct clock_ymdhms *);
-	void	(*rtc_set)(struct device *, struct clock_ymdhms *);
 	void	*self;
 	int	start;
 };

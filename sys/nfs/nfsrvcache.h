@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrvcache.h,v 1.12 2003/08/07 16:33:57 agc Exp $	*/
+/*	$NetBSD: nfsrvcache.h,v 1.12.16.1 2006/12/30 20:50:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -79,7 +79,6 @@ struct nfsrvcache {
 #define	RC_WANTED	0x02
 #define	RC_REPSTATUS	0x04
 #define	RC_REPMBUF	0x08
-#define	RC_NQNFS	0x10
 #define	RC_INETADDR	0x20
 #define	RC_NAM		0x40
 

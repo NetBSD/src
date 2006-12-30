@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.15.2.1 2006/06/21 15:05:03 yamt Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.15.2.2 2006/12/30 20:48:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.15.2.1 2006/06/21 15:05:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.15.2.2 2006/12/30 20:48:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,8 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 			AGP_INTEL_ERRSTS, 0x70);
 	}
 
-	isc->sc_powerhook = powerhook_establish(agp_intel_powerhook, sc);
+	isc->sc_powerhook = powerhook_establish(sc->as_dev.dv_xname,
+	    agp_intel_powerhook, sc);
 	if (isc->sc_powerhook == NULL)
 		aprint_error("%s: couldn't establish powerhook\n",
 		    sc->as_dev.dv_xname);

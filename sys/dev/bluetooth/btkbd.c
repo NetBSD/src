@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.1.2.2 2006/06/21 15:02:45 yamt Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.1.2.3 2006/12/30 20:47:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.1.2.2 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.1.2.3 2006/12/30 20:47:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -150,7 +150,7 @@ const struct wskbd_mapdata btkbd_keymapdata = {
 static void btkbd_input(struct bthidev *, uint8_t *, int);
 
 /* internal prototypes */
-static const char *btkbd_parse_desc(struct btkbd_softc *, int, void *, int);
+static const char *btkbd_parse_desc(struct btkbd_softc *, int, const void *, int);
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 #ifdef BTKBD_REPEAT
@@ -164,7 +164,8 @@ static void btkbd_repeat(void *);
  */
 
 static int
-btkbd_match(struct device *self, struct cfdata *cfdata, void *aux)
+btkbd_match(struct device *self, struct cfdata *cfdata,
+    void *aux)
 {
 	struct bthidev_attach_args *ba = aux;
 
@@ -215,6 +216,13 @@ btkbd_detach(struct device *self, int flags)
 	struct btkbd_softc *sc = (struct btkbd_softc *)self;
 	int err = 0;
 
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+#ifdef BTKBD_REPEAT
+	callout_stop(&sc->sc_repeat);
+	KASSERT(!callout_invoking(&sc->sc_repeat));
+#endif
+#endif
+
 	if (sc->sc_wskbd != NULL) {
 		err = config_detach(sc->sc_wskbd, flags);
 		sc->sc_wskbd = NULL;
@@ -224,7 +232,7 @@ btkbd_detach(struct device *self, int flags)
 }
 
 static const char *
-btkbd_parse_desc(struct btkbd_softc *sc, int id, void *desc, int dlen)
+btkbd_parse_desc(struct btkbd_softc *sc, int id, const void *desc, int dlen)
 {
 	struct hid_data *d;
 	struct hid_item h;
@@ -329,7 +337,8 @@ btkbd_set_leds(void *self, int leds)
 }
 
 static int
-btkbd_ioctl(void *self, unsigned long cmd, caddr_t data, int flag, struct lwp *l)
+btkbd_ioctl(void *self, unsigned long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct btkbd_softc *sc = (struct btkbd_softc *)self;
 

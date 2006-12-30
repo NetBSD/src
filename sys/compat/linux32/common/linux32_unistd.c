@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.2.4.2 2006/06/21 14:59:27 yamt Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.2.4.3 2006/12/30 20:47:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.2.4.2 2006/06/21 14:59:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.2.4.3 2006/12/30 20:47:42 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -549,7 +549,7 @@ linux32_sys_getgroups16(l, v, retval)
 	struct linux_sys_getgroups16_args ua;
 
 	NETBSD32TO64_UAP(gidsetsize);
-	NETBSD32TOP_UAP(gidset, linux32_gid_t);
+	NETBSD32TOP_UAP(gidset, linux_gid_t);
 	
 	return linux_sys_getgroups16(l, &ua, retval);
 }
@@ -567,7 +567,7 @@ linux32_sys_setgroups16(l, v, retval)
 	struct linux_sys_setgroups16_args ua;
 
 	NETBSD32TO64_UAP(gidsetsize);
-	NETBSD32TOP_UAP(gidset, linux32_gid_t);
+	NETBSD32TOP_UAP(gidset, linux_gid_t);
 	
 	return linux_sys_setgroups16(l, &ua, retval);
 }
@@ -697,4 +697,44 @@ linux32_sys_fchown16(l, v, retval)
         	SCARG(&ua, gid) = SCARG(uap, gid);
        
         return sys___posix_fchown(l, &ua, retval);
+}
+
+int
+linux32_sys_setresuid(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_setresuid_args /* {
+		syscallarg(uid_t) ruid;
+		syscallarg(uid_t) euid;
+		syscallarg(uid_t) suid;
+	} */ *uap = v;
+	struct linux_sys_setresuid_args ua;
+
+	SCARG(&ua, ruid) = (SCARG(uap, ruid) == -1) ? -1 : SCARG(uap, ruid);
+	SCARG(&ua, euid) = (SCARG(uap, euid) == -1) ? -1 : SCARG(uap, euid);
+	SCARG(&ua, suid) = (SCARG(uap, suid) == -1) ? -1 : SCARG(uap, suid);
+
+	return linux_sys_setresuid(l, &ua, retval);
+}
+
+int
+linux32_sys_setresgid(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux32_sys_setresgid_args /* {
+		syscallarg(gid_t) rgid;
+		syscallarg(gid_t) egid;
+		syscallarg(gid_t) sgid;
+	} */ *uap = v;
+	struct linux_sys_setresgid_args ua;
+
+	SCARG(&ua, rgid) = (SCARG(uap, rgid) == -1) ? -1 : SCARG(uap, rgid);
+	SCARG(&ua, egid) = (SCARG(uap, egid) == -1) ? -1 : SCARG(uap, egid);
+	SCARG(&ua, sgid) = (SCARG(uap, sgid) == -1) ? -1 : SCARG(uap, sgid);
+
+	return linux_sys_setresgid(l, &ua, retval);
 }

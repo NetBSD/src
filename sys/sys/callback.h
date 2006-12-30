@@ -1,4 +1,4 @@
-/*	$NetBSD: callback.h,v 1.1.8.2 2006/06/21 15:12:02 yamt Exp $	*/
+/*	$NetBSD: callback.h,v 1.1.8.3 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -28,6 +28,9 @@
 
 #ifndef _SYS_CALLBACK_H_
 #define	_SYS_CALLBACK_H_
+
+#include <sys/queue.h>
+#include <sys/lock.h>
 
 struct callback_entry {
 	TAILQ_ENTRY(callback_entry) ce_q;

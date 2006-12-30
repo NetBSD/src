@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.23.6.1 2006/06/21 14:51:21 yamt Exp $
+# $NetBSD: INSTALL,v 1.23.6.2 2006/12/30 20:45:56 yamt Exp $
 #
 # INSTALL machine description file
 #
@@ -20,7 +20,6 @@ options 	NFS_DEFAULT_NIOTHREADS=1
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Support for various CPU types
 options 	HP320
@@ -29,9 +28,11 @@ options 	HP340
 options 	HP345
 options 	HP350
 options 	HP360
+options 	HP362
 options 	HP370
 options 	HP375
 options 	HP380
+options 	HP382
 options 	HP385
 options 	HP400
 options 	HP425

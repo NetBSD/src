@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.29.2.1 2006/06/21 15:02:45 yamt Exp $
+#	$NetBSD: files.cardbus,v 1.29.2.2 2006/12/30 20:47:57 yamt Exp $
 #
 # files.cardbus
 #
@@ -125,3 +125,9 @@ file	dev/cardbus/if_ath_cardbus.c	ath_cardbus
 #
 attach	njs at cardbus with njs_cardbus
 file	dev/cardbus/njs_cardbus.c	njs_cardbus
+
+#
+# Workbit NinjaATA-32 controllers
+#
+attach	njata at cardbus with njata_cardbus
+file	dev/cardbus/njata_cardbus.c	njata_cardbus

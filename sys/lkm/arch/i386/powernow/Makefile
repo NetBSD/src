@@ -1,19 +1,24 @@
-#	$NetBSD: Makefile,v 1.1.18.2 2006/06/21 15:10:24 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.18.3 2006/12/30 20:50:16 yamt Exp $
 #
-# Makefile for loadable AMD PowerNow K7 device driver kernel module
+# Makefile for loadable AMD PowerNow K[78] device driver kernel module
 #
 
 .include "../Makefile.inc"
 
+.PATH:		$S/arch/x86/x86
 .PATH:          $S/arch/i386/i386
 
-CFILES=		lkminit_powernow.c powernow_k7.c
+CFILES= 	lkminit_powernow.c powernow_common.c powernow_k7.c \
+ 		powernow_k8.c
 SRCS=		${CFILES}
 
 WARNS=		3
 
 KMOD=		powernow
 MAN=
+
+# Enable this one to show debug output
+# CPPFLAGS+=	-DPOWERNOW_DEBUG
 
 CLEANFILES+=	*~ ${KMOD}
 

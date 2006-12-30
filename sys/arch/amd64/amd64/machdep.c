@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34.2.1 2006/06/21 14:48:18 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34.2.2 2006/12/30 20:45:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34.2.1 2006/06/21 14:48:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34.2.2 2006/12/30 20:45:22 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -208,8 +208,8 @@ struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
 
-void (*delay_func) __P((int)) = i8254_delay;
-void (*initclock_func) __P((void)) = i8254_initclocks;
+void (*delay_func)(int) = i8254_delay;
+void (*initclock_func)(void) = i8254_initclocks;
 
 #ifdef MTRR
 struct mtrr_funcs *mtrr_funcs;
@@ -223,17 +223,17 @@ int	mem_cluster_cnt;
 
 char	x86_64_doubleflt_stack[4096];
 
-int	cpu_dump __P((void));
-int	cpu_dumpsize __P((void));
-u_long	cpu_dump_mempagecnt __P((void));
-void	dumpsys __P((void));
-void	init_x86_64 __P((paddr_t));
+int	cpu_dump(void);
+int	cpu_dumpsize(void);
+u_long	cpu_dump_mempagecnt(void);
+void	dumpsys(void);
+void	init_x86_64(paddr_t);
 
 /*
  * Machine-dependent startup code
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	int x;
 	vaddr_t minaddr, maxaddr;
@@ -332,8 +332,7 @@ x86_64_proc0_tss_ldt_init(void)
  */         
          
 void    
-x86_64_init_pcb_tss_ldt(ci)   
-	struct cpu_info *ci;
+x86_64_init_pcb_tss_ldt(struct cpu_info *ci)   
 {        
 	int x;      
 	struct pcb *pcb = ci->ci_idle_pcb;
@@ -547,9 +546,7 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 	if (cold) {
@@ -578,10 +575,6 @@ cpu_reboot(howto, bootstr)
 haltsys:
 	doshutdownhooks();
 
-#ifdef MULTIPROCESSOR
-	x86_broadcast_ipi(X86_IPI_HALT);
-#endif
-
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #if NACPI > 0
 		delay(500000);
@@ -590,6 +583,9 @@ haltsys:
 #endif
 	}
 
+#ifdef MULTIPROCESSOR
+	x86_broadcast_ipi(X86_IPI_HALT);
+#endif
 
 	if (howto & RB_HALT) {
 		printf("\n");
@@ -623,7 +619,7 @@ long	dumplo = 0; 		/* blocks */
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -639,7 +635,7 @@ cpu_dumpsize()
  * cpu_dump_mempagecnt: calculate the size of RAM (in pages) to be dumped.
  */
 u_long
-cpu_dump_mempagecnt()
+cpu_dump_mempagecnt(void)
 {
 	u_long i, n;
 
@@ -653,9 +649,9 @@ cpu_dump_mempagecnt()
  * cpu_dump: dump the machine-dependent kernel core dump headers.
  */
 int
-cpu_dump()
+cpu_dump(void)
 {
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	char buf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
@@ -706,7 +702,7 @@ cpu_dump()
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
@@ -714,8 +710,10 @@ cpu_dumpconf()
 	if (dumpdev == NODEV)
 		goto bad;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		goto bad;
+	}
 	if (bdev->d_psize == NULL)
 		goto bad;
 	nblks = (*bdev->d_psize)(dumpdev);
@@ -751,8 +749,7 @@ cpu_dumpconf()
 static vaddr_t dumpspace;
 
 vaddr_t
-reserve_dumppages(p)
-	vaddr_t p;
+reserve_dumppages(vaddr_t p)
 {
 
 	dumpspace = p;
@@ -760,14 +757,14 @@ reserve_dumppages(p)
 }
 
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	u_long totalbytesleft, bytes, i, n, memseg;
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error;
 
 	/* Save registers. */
@@ -880,10 +877,7 @@ dumpsys()
  * Clear registers on exec
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf;
@@ -935,10 +929,7 @@ char *gdtstore;
 extern  struct user *proc0paddr;
 
 void
-setgate(gd, func, ist, type, dpl, sel)
-	struct gate_descriptor *gd;
-	void *func;
-	int ist, type, dpl, sel;
+setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl, int sel)
 {
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
 
@@ -958,8 +949,7 @@ setgate(gd, func, ist, type, dpl, sel)
 }
 
 void
-unsetgate(gd)
-	struct gate_descriptor *gd;
+unsetgate( struct gate_descriptor *gd)
 {
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
 
@@ -969,10 +959,7 @@ unsetgate(gd)
 }
 
 void
-setregion(rd, base, limit)
-	struct region_descriptor *rd;
-	void *base;
-	u_int16_t limit;
+setregion(struct region_descriptor *rd, void *base, u_int16_t limit)
 {
 	rd->rd_limit = limit;
 	rd->rd_base = (u_int64_t)base;
@@ -982,11 +969,8 @@ setregion(rd, base, limit)
  * Note that the base and limit fields are ignored in long mode.
  */
 void
-set_mem_segment(sd, base, limit, type, dpl, gran, def32, is64)
-	struct mem_segment_descriptor *sd;
-	void *base;
-	size_t limit;
-	int type, dpl, gran, is64;
+set_mem_segment(struct mem_segment_descriptor *sd, void *base, size_t limit,
+	int type, int dpl, int gran, int def32, int is64)
 {
 	sd->sd_lolimit = (unsigned)limit;
 	sd->sd_lobase = (unsigned long)base;
@@ -1002,11 +986,8 @@ set_mem_segment(sd, base, limit, type, dpl, gran, def32, is64)
 }
 
 void
-set_sys_segment(sd, base, limit, type, dpl, gran)
-	struct sys_segment_descriptor *sd;
-	void *base;
-	size_t limit;
-	int type, dpl, gran;
+set_sys_segment(struct sys_segment_descriptor *sd, void *base, size_t limit,
+	int type, int dpl, int gran)
 {
 	memset(sd, 0, sizeof *sd);
 	sd->sd_lolimit = (unsigned)limit;
@@ -1019,7 +1000,8 @@ set_sys_segment(sd, base, limit, type, dpl, gran)
 	sd->sd_hibase = (u_int64_t)base >> 24;
 }
 
-void cpu_init_idt()
+void
+cpu_init_idt(void)
 {
 	struct region_descriptor region;
 
@@ -1029,7 +1011,7 @@ void cpu_init_idt()
 
 
 #define	IDTVEC(name)	__CONCAT(X, name)
-typedef void (vector) __P((void));
+typedef void (vector)(void);
 extern vector IDTVEC(syscall);
 extern vector IDTVEC(syscall32);
 #if defined(COMPAT_16) || defined(COMPAT_NETBSD32)
@@ -1043,10 +1025,9 @@ extern vector *IDTVEC(exceptions)[];
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
 
 void
-init_x86_64(first_avail)
-	paddr_t first_avail;
+init_x86_64(paddr_t first_avail)
 {
-	extern void consinit __P((void));
+	extern void consinit(void);
 	extern struct extent *iomem_ex;
 	struct region_descriptor region;
 	struct mem_segment_descriptor *ldt_segp;
@@ -1164,7 +1145,8 @@ init_x86_64(first_avail)
 
 			/* XXX XXX XXX */
 			if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
-				panic("init386: too many memory segments");
+				panic("init386: too many memory segments "
+				    "(increase VM_PHYSSEG_MAX)");
 
 			seg_start = round_page(seg_start);
 			seg_end = trunc_page(seg_end);
@@ -1553,7 +1535,7 @@ init_x86_64(first_avail)
 }
 
 void
-cpu_reset()
+cpu_reset(void)
 {
 
 	disable_intr();
@@ -1646,7 +1628,7 @@ int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 	int error;
 	int err, trapno;
 	int64_t rflags;
@@ -1755,7 +1737,7 @@ check_mcontext(struct lwp *l, const mcontext_t *mcp, struct trapframe *tf)
 }
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	(*initclock_func)();
 }
@@ -1777,9 +1759,7 @@ need_resched(struct cpu_info *ci)
  */
 
 int
-idt_vec_alloc(low, high)
-	int low;
-	int high;
+idt_vec_alloc(int low, int high)
 {
 	int vec;
 
@@ -1796,9 +1776,7 @@ idt_vec_alloc(low, high)
 }
 
 void
-idt_vec_set(vec, function)
-	int vec;
-	void (*function) __P((void));
+idt_vec_set(int vec, void (*function)(void))
 {
 	/*
 	 * Vector should be allocated, so no locking needed.
@@ -1809,8 +1787,7 @@ idt_vec_set(vec, function)
 }
 
 void
-idt_vec_free(vec)
-	int vec;
+idt_vec_free(int vec)
 {
 	simple_lock(&idt_lock);
 	unsetgate(&idt[vec]);

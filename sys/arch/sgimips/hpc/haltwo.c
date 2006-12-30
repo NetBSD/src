@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.8 2005/02/28 07:42:53 sekiya Exp $ */
+/* $NetBSD: haltwo.c,v 1.8.4.1 2006/12/30 20:46:53 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.8 2005/02/28 07:42:53 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.8.4.1 2006/12/30 20:46:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.8 2005/02/28 07:42:53 sekiya Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
+#include <machine/sysconf.h>
 
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/hpc/hpcreg.h>
@@ -260,11 +261,26 @@ static int
 haltwo_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hpc_attach_args *haa;
+	uint32_t rev;
 
 	haa = aux;
 	if (strcmp(haa->ha_name, cf->cf_name))
 		return 0;
-	if ( badaddr((void *)(haa->ha_sh + haa->ha_devoff), sizeof(u_int32_t)) )
+
+	if ( platform.badaddr((void *)(haa->ha_sh + haa->ha_devoff),
+	    sizeof(u_int32_t)) )
+		return 0;
+
+	if ( platform.badaddr(
+	    (void *)(haa->ha_sh + haa->ha_devoff + HAL2_REG_CTL_REV),
+	    sizeof(u_int32_t)) )
+		return 0;
+
+	rev = *(uint32_t *)MIPS_PHYS_TO_KSEG1(haa->ha_sh + haa->ha_devoff +
+	    HAL2_REG_CTL_REV);
+
+	/* This bit is inverted, the test is correct */
+	if (rev & HAL2_REV_AUDIO_PRESENT_N)
 		return 0;
 
 	return 1;
@@ -306,13 +322,6 @@ haltwo_attach(struct device *parent, struct device *self, void *aux)
 	haltwo_write_indirect(sc, HAL2_IREG_RELAY_C, HAL2_RELAY_C_STATE, 0);
 
 	rev = haltwo_read(sc, ctl, HAL2_REG_CTL_REV);
-
-	/* This bit is inverted, the test is correct */
-	if (rev & HAL2_REV_AUDIO_PRESENT_N) {
-		aprint_error(": Audio hardware not present (revision %x)\n",
-		    rev);
-		return;
-	}
 
 	if (cpu_intr_establish(haa->ha_irq, IPL_AUDIO, haltwo_intr, sc)
 	    == NULL) {

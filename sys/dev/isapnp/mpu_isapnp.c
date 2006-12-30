@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_isapnp.c,v 1.10.4.1 2006/06/21 15:04:36 yamt Exp $	*/
+/*	$NetBSD: mpu_isapnp.c,v 1.10.4.2 2006/12/30 20:48:35 yamt Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.10.4.1 2006/06/21 15:04:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.10.4.2 2006/12/30 20:48:35 yamt Exp $");
 
 #include "midi.h"
 
@@ -43,10 +43,8 @@ CFATTACH_DECL(mpu_isapnp, sizeof(struct mpu_isapnp_softc),
     mpu_isapnp_match, mpu_isapnp_attach, NULL, NULL);
 
 int
-mpu_isapnp_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mpu_isapnp_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	int pri, variant;
 
@@ -57,9 +55,8 @@ mpu_isapnp_match(parent, match, aux)
 }
 
 void
-mpu_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mpu_isapnp_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct mpu_isapnp_softc *sc = device_private(self);
 	struct isapnp_attach_args *ipa = aux;

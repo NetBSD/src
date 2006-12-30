@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_resource.c,v 1.8.18.1 2006/06/21 14:59:52 yamt Exp $	 */
+/*	$NetBSD: svr4_resource.c,v 1.8.18.2 2006/12/30 20:47:45 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.8.18.1 2006/06/21 14:59:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.8.18.2 2006/12/30 20:47:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,10 +95,7 @@ svr4_to_native_rl(rl)
 	((svr4_rlim64_t)(l)) != SVR4_RLIM64_SAVED_MAX)
 
 int
-svr4_sys_getrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_getrlimit_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
@@ -143,14 +140,10 @@ svr4_sys_getrlimit(l, v, retval)
 
 
 int
-svr4_sys_setrlimit(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_setrlimit_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
-	struct proc *p = l->l_proc;
 	struct rlimit blim, *limp;
 	struct svr4_rlimit slim;
 	int error;
@@ -158,7 +151,7 @@ svr4_sys_setrlimit(l, v, retval)
 	if (rl == -1)
 		return EINVAL;
 
-	limp = &p->p_rlimit[rl];
+	limp = &l->l_proc->p_rlimit[rl];
 
 	if ((error = copyin(SCARG(uap, rlp), &slim, sizeof(slim))) != 0)
 		return error;
@@ -190,15 +183,12 @@ svr4_sys_setrlimit(l, v, retval)
 	else if (slim.rlim_cur == SVR4_RLIM_SAVED_CUR)
 		blim.rlim_cur = limp->rlim_cur;
 
-	return dosetrlimit(p, p->p_cred, rl, &blim);
+	return dosetrlimit(l, l->l_proc, rl, &blim);
 }
 
 
 int
-svr4_sys_getrlimit64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_getrlimit64(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_getrlimit64_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
@@ -243,14 +233,10 @@ svr4_sys_getrlimit64(l, v, retval)
 
 
 int
-svr4_sys_setrlimit64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_setrlimit64(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_setrlimit64_args *uap = v;
 	int rl = svr4_to_native_rl(SCARG(uap, which));
-	struct proc *p = l->l_proc;
 	struct rlimit blim, *limp;
 	struct svr4_rlimit64 slim;
 	int error;
@@ -258,7 +244,7 @@ svr4_sys_setrlimit64(l, v, retval)
 	if (rl == -1)
 		return EINVAL;
 
-	limp = &p->p_rlimit[rl];
+	limp = &l->l_proc->p_rlimit[rl];
 
 	if ((error = copyin(SCARG(uap, rlp), &slim, sizeof(slim))) != 0)
 		return error;
@@ -290,5 +276,5 @@ svr4_sys_setrlimit64(l, v, retval)
 	else if (slim.rlim_cur == SVR4_RLIM64_SAVED_CUR)
 		blim.rlim_cur = limp->rlim_cur;
 
-	return dosetrlimit(p, p->p_cred, rl, &blim);
+	return dosetrlimit(l, l->l_proc, rl, &blim);
 }

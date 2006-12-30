@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13.2.1 2006/06/21 14:50:07 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13.2.2 2006/12/30 20:45:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.2.1 2006/06/21 14:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.2.2 2006/12/30 20:45:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,8 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.2.1 2006/06/21 14:50:07 yamt Exp $
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-
-#include <cobalt/cobalt/clockvar.h>
 
 extern char	bootstring[];
 extern int	netboot;
@@ -52,13 +50,17 @@ cpu_configure(void)
 
 	(void)splhigh();
 
-	evcnt_attach_static(&hardclock_ev);
 	icu_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
-	_splnone();
+	/*
+	 * Hardware interrupts will be enabled in
+	 * sys/arch/mips/mips/mips3_clockintr.c:mips3_initclocks()
+	 * to avoid hardclock(9) by CPU INT5 before softclockintr is
+	 * initialized in initclocks().
+	 */
 }
 
 void

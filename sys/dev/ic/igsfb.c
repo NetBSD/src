@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.20.4.1 2006/06/21 15:02:55 yamt Exp $ */
+/*	$NetBSD: igsfb.c,v 1.20.4.2 2006/12/30 20:48:03 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.20.4.1 2006/06/21 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.20.4.2 2006/12/30 20:48:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.20.4.1 2006/06/21 15:02:55 yamt Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
-#include <sys/buf.h>
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 
@@ -54,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.20.4.1 2006/06/21 15:02:55 yamt Exp $");
 #include <dev/ic/igsfbreg.h>
 #include <dev/ic/igsfbvar.h>
 
-#include "opt_wsemul.h"
 
 struct igsfb_devconfig igsfb_console_dc;
 

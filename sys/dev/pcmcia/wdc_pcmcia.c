@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.100.2.1 2006/06/21 15:06:14 yamt Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.100.2.2 2006/12/30 20:49:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.100.2.1 2006/06/21 15:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.100.2.2 2006/12/30 20:49:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -176,7 +176,8 @@ static void	wdc_pcmcia_dataout_memory(struct ata_channel *, int, void *,
 					  size_t);
 
 static int
-wdc_pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
+wdc_pcmcia_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -211,7 +212,8 @@ wdc_pcmcia_validate_config_memory(struct pcmcia_config_entry *cfe)
 }
 
 static void
-wdc_pcmcia_attach(struct device *parent, struct device *self, void *aux)
+wdc_pcmcia_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct wdc_pcmcia_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;

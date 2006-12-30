@@ -1,4 +1,4 @@
-/* $NetBSD: if_mtd_pci.c,v 1.6 2005/02/27 00:27:33 perry Exp $ */
+/* $NetBSD: if_mtd_pci.c,v 1.6.4.1 2006/12/30 20:48:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 /* TODO: Check why in IO space, the MII won't work. Memory mapped works */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.6 2005/02/27 00:27:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.6.4.1 2006/12/30 20:48:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,7 +81,8 @@ CFATTACH_DECL(mtd_pci, sizeof(struct mtd_softc), mtd_pci_match, mtd_pci_attach,
     NULL, NULL);
 
 static int
-mtd_pci_match(struct device *parent, struct cfdata *match, void *aux)
+mtd_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct mtd_pci_device_id *id;

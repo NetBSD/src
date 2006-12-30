@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.88.2.1 2006/06/21 15:06:28 yamt Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.88.2.2 2006/12/30 20:49:30 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.88.2.1 2006/06/21 15:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.88.2.2 2006/12/30 20:49:30 yamt Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -438,10 +438,10 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	       raidPtr->Disks[col].devname);
 #endif
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
-	retcode = raidlookup(raidPtr->Disks[col].devname, lwp, &vp);
+	retcode = dk_lookup(raidPtr->Disks[col].devname, lwp, &vp);
 
 	if (retcode) {
-		printf("raid%d: rebuilding: raidlookup on device: %s failed: %d!\n",raidPtr->raidid,
+		printf("raid%d: rebuilding: dk_lookup on device: %s failed: %d!\n",raidPtr->raidid,
 		       raidPtr->Disks[col].devname, retcode);
 
 		/* the component isn't responding properly...
@@ -456,7 +456,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	/* Ok, so we can at least do a lookup...
 	   How about actually getting a vp for it? */
 
-	if ((retcode = VOP_GETATTR(vp, &va, lwp->l_proc->p_cred, lwp)) != 0) {
+	if ((retcode = VOP_GETATTR(vp, &va, lwp->l_cred, lwp)) != 0) {
 		RF_LOCK_MUTEX(raidPtr->mutex);
 		raidPtr->reconInProgress--;
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
@@ -464,7 +464,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		return(retcode);
 	}
 
-	retcode = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, lwp->l_proc->p_cred, lwp);
+	retcode = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, lwp->l_cred, lwp);
 	if (retcode) {
 		RF_LOCK_MUTEX(raidPtr->mutex);
 		raidPtr->reconInProgress--;
@@ -1593,7 +1593,8 @@ static int
 CheckForcedOrBlockedReconstruction(RF_Raid_t *raidPtr,
 				   RF_ReconParityStripeStatus_t *pssPtr,
 				   RF_PerDiskReconCtrl_t *ctrl,
-				   RF_RowCol_t col, RF_StripeNum_t psid,
+				   RF_RowCol_t col,
+				   RF_StripeNum_t psid,
 				   RF_ReconUnitNum_t which_ru)
 {
 	RF_CallbackDesc_t *cb;

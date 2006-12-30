@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2005/05/31 00:45:03 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.8.2.1 2006/12/30 20:46:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -92,6 +92,7 @@
 	((IOM_RAM_BEGIN + IOM_RAM_SIZE - 0x00001000) | 0x80000000)
 
 NENTRY(start)
+ALTENTRY(kernel_text)
 	/* Set SP to initial position */
 	mov.l	XLtmpstk, r15
 

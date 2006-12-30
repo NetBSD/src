@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.43.2.1 2006/06/21 15:07:43 yamt Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.43.2.2 2006/12/30 20:49:38 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,11 +56,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.43.2.1 2006/06/21 15:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.43.2.2 2006/12/30 20:49:38 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 #elif defined(__OpenBSD__)
@@ -113,10 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.43.2.1 2006/06/21 15:07:43 yamt Exp $")
 #endif
 #endif /* defined(__OpenBSD__) */
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -864,7 +859,8 @@ done:
  * the list buffers.
  */
 Static void
-cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct cue_chain	*c = priv;
 	struct cue_softc	*sc = c->cue_sc;
@@ -921,7 +917,7 @@ cue_tick(void *xsc)
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __func__));
 
 	/* Perform statistics update in process context. */
-	usb_add_task(sc->cue_udev, &sc->cue_tick_task);
+	usb_add_task(sc->cue_udev, &sc->cue_tick_task, USB_TASKQ_DRIVER);
 }
 
 Static void
@@ -980,7 +976,8 @@ cue_send(struct cue_softc *sc, struct mbuf *m, int idx)
 		printf("%s: cue_send error=%s\n", USBDEVNAME(sc->cue_dev),
 		       usbd_errstr(err));
 		/* Stop the interface from process context. */
-		usb_add_task(sc->cue_udev, &sc->cue_stop_task);
+		usb_add_task(sc->cue_udev, &sc->cue_stop_task,
+		    USB_TASKQ_DRIVER);
 		return (EIO);
 	}
 
@@ -1185,21 +1182,6 @@ cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #endif
 			break;
 #endif /* INET */
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-					LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				       ina->x_host.c_host,
-				       ifp->if_addrlen);
-			break;
-		    }
-#endif /* NS */
 		}
 		break;
 

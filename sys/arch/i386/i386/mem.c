@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.59.16.1 2006/06/21 14:52:18 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.59.16.2 2006/12/30 20:46:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,9 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.59.16.1 2006/06/21 14:52:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.59.16.2 2006/12/30 20:46:10 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
+#include "opt_compat_freebsd.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -89,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.59.16.1 2006/06/21 14:52:18 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 
@@ -106,10 +108,10 @@ dev_type_mmap(mmmmap);
 
 const struct cdevsw mem_cdevsw = {
 	mmopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, mmmmap, nokqfilter,
+	nostop, notty, nopoll, mmmmap, nokqfilter, D_OTHER,
 };
 
-static int check_pa_acc(paddr_t, vm_prot_t);
+int check_pa_acc(paddr_t, vm_prot_t);
 
 /*ARGSUSED*/
 int
@@ -117,15 +119,24 @@ mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	switch (minor(dev)) {
-#ifdef COMPAT_10
+#if defined(COMPAT_10) || defined(COMPAT_FREEBSD)
 	/* This is done by i386_iopl(3) now. */
 	case DEV_IO:
 		if (flag & FWRITE) {
 			struct trapframe *fp;
+			int error;
+
+			error = kauth_authorize_machdep(l->l_cred,
+			    KAUTH_MACHDEP_IOPL, NULL, NULL, NULL, NULL);
+			if (error)
+				return (error);
+
 			fp = curlwp->l_md.md_regs;
 			fp->tf_eflags |= PSL_IOPL;
 		}
 		break;
+#else
+	(void) flag;
 #endif
 
 	default:
@@ -245,35 +256,4 @@ mmmmap(dev_t dev, off_t off, int prot)
 	}
 
 	return x86_btop(off);
-}
-
-/* ---------------------------------------- */
-
-#include <sys/kcore.h>
-
-/*
- * check_pa_acc: check if given pa is accessible.
- */
-
-static int
-check_pa_acc(paddr_t pa, vm_prot_t prot)
-{
-	extern phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-	extern int mem_cluster_cnt;
-	int i;
-
-	if (securelevel <= 0) {
-		return 0;
-	}
-
-	for (i = 0; i < mem_cluster_cnt; i++) {
-		const phys_ram_seg_t *seg = &mem_clusters[i];
-		paddr_t start = seg->start;
-
-		if (start <= pa && pa - start <= seg->size) {
-			return 0;
-		}
-	}
-
-	return EPERM;
 }

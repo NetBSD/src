@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.29.2.1 2006/06/21 15:04:20 yamt Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.29.2.2 2006/12/30 20:48:26 yamt Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.29.2.1 2006/06/21 15:04:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.29.2.2 2006/12/30 20:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -219,14 +219,12 @@ irframetopen(dev_t dev, struct tty *tp)
 {
 	struct lwp *l = curlwp;		/* XXX */
 	struct irframet_softc *sc;
-	struct proc *p;
 	int error, s;
 
-	p = l->l_proc;
 	DPRINTF(("%s\n", __FUNCTION__));
 
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_device_tty(l->l_cred, 
+		KAUTH_DEVICE_TTY_OPEN, tp)))
 		return (error);
 
 	s = spltty();
@@ -299,7 +297,7 @@ irframetclose(struct tty *tp, int flag)
 /* ARGSUSED */
 int
 irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
-	     struct lwp *l)
+    struct lwp *l)
 {
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int error;
@@ -473,7 +471,8 @@ irframetinput(int c, struct tty *tp)
 /*** irframe methods ***/
 
 int
-irframet_open(void *h, int flag, int mode, struct lwp *l)
+irframet_open(void *h, int flag, int mode,
+    struct lwp *l)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
@@ -494,7 +493,8 @@ irframet_open(void *h, int flag, int mode, struct lwp *l)
 }
 
 int
-irframet_close(void *h, int flag, int mode, struct lwp *l)
+irframet_close(void *h, int flag, int mode,
+    struct lwp *l)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
@@ -527,7 +527,7 @@ irframet_read(void *h, struct uio *uio, int flag)
 	int error = 0;
 	int s;
 
-	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n",
+	DPRINTF(("%s: resid=%zd, iovcnt=%d, offset=%ld\n",
 		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt,
 		 (long)uio->uio_offset));
 	DPRINTF(("%s: nframe=%d framei=%d frameo=%d\n",
@@ -554,7 +554,7 @@ irframet_read(void *h, struct uio *uio, int flag)
 	if (!error) {
 		if (uio->uio_resid < sc->sc_frames[sc->sc_frameo].len) {
 			DPRINTF(("%s: uio buffer smaller than frame size "
-				 "(%d < %d)\n", __FUNCTION__, uio->uio_resid,
+				 "(%zd < %d)\n", __FUNCTION__, uio->uio_resid,
 				 sc->sc_frames[sc->sc_frameo].len));
 			error = EINVAL;
 		} else {
@@ -615,7 +615,7 @@ irframet_write(void *h, struct uio *uio, int flag)
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int n;
 
-	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n",
+	DPRINTF(("%s: resid=%zd, iovcnt=%d, offset=%ld\n",
 		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt,
 		 (long)uio->uio_offset));
 
@@ -636,7 +636,7 @@ irt_write_frame(struct tty *tp, u_int8_t *tbuf, size_t len)
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int error, i;
 
-	DPRINTF(("%s: tp=%p len=%d\n", __FUNCTION__, tp, len));
+	DPRINTF(("%s: tp=%p len=%zd\n", __FUNCTION__, tp, len));
 
 	lockmgr(&sc->sc_wr_lk, LK_EXCLUSIVE, NULL);
 	error = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.64 2005/06/10 05:10:12 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.64.2.1 2006/12/30 20:46:44 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,11 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.64 2005/06/10 05:10:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.64.2.1 2006/12/30 20:46:44 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
+#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/core.h>
@@ -182,7 +183,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	sf = (struct switchframe *) ((uintptr_t) cf - SFRAMELEN);
 	memset((void *)sf, 0, sizeof *sf);		/* just in case */
 	sf->sp = (register_t) cf;
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
 #endif
 	pcb->pcb_sp = (register_t)sf;
@@ -234,6 +235,7 @@ cpu_exit(struct lwp *l)
 	switch_exit(l, lwp_exit2);
 }
 
+#ifdef COREDUMP
 /*
  * Write the machine-dependent part of a core dump.
  */
@@ -285,6 +287,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
 	    sizeof(md_core));
 }
+#endif
 
 #ifdef PPC_IBM4XX
 /*

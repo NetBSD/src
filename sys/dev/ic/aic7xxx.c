@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.114.2.1 2006/06/21 15:02:52 yamt Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.114.2.2 2006/12/30 20:48:01 yamt Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.114.2.1 2006/06/21 15:02:52 yamt Exp $
+ * $Id: aic7xxx.c,v 1.114.2.2 2006/12/30 20:48:01 yamt Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.114.2.1 2006/06/21 15:02:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.114.2.2 2006/12/30 20:48:01 yamt Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -1888,8 +1888,8 @@ ahc_update_neg_request(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
  */
 void
 ahc_set_syncrate(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
-		 struct ahc_syncrate *syncrate, u_int period,
-		 u_int offset, u_int ppr_options, u_int type, int paused)
+    struct ahc_syncrate *syncrate, u_int period,
+    u_int offset, u_int ppr_options, u_int type, int paused)
 {
 	struct	ahc_initiator_tinfo *tinfo;
 	struct	ahc_tmode_tstate *tstate;
@@ -2015,7 +2015,7 @@ ahc_set_syncrate(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
  */
 void
 ahc_set_width(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
-	      u_int width, u_int type, int paused)
+    u_int width, u_int type, int paused)
 {
 	struct	ahc_initiator_tinfo *tinfo;
 	struct	ahc_tmode_tstate *tstate;
@@ -3557,7 +3557,8 @@ ahc_handle_msg_reject(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
  * Process an ingnore wide residue message.
  */
 static void
-ahc_handle_ign_wide_residue(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
+ahc_handle_ign_wide_residue(struct ahc_softc *ahc,
+    struct ahc_devinfo *devinfo)
 {
 	u_int scb_index;
 	struct scb *scb;
@@ -5181,7 +5182,7 @@ ahc_busy_tcl(struct ahc_softc *ahc, u_int tcl, u_int scbid)
 /************************** SCB and SCB queue management **********************/
 int
 ahc_match_scb(struct ahc_softc *ahc, struct scb *scb, int target,
-	      char channel, int lun, u_int tag, role_t role)
+    char channel, int lun, u_int tag, role_t role)
 {
 	int targ = SCB_GET_TARGET(ahc, scb);
 	char chan = SCB_GET_CHANNEL(ahc, scb);
@@ -5497,9 +5498,9 @@ ahc_search_qinfifo(struct ahc_softc *ahc, int target, char channel,
 }
 
 int
-ahc_search_untagged_queues(struct ahc_softc *ahc, struct scsipi_xfer *xs, /*ahc_io_ctx_t ctx,*/
-			   int target, char channel, int lun, uint32_t status,
-			   ahc_search_action action)
+ahc_search_untagged_queues(struct ahc_softc *ahc,
+    struct scsipi_xfer *xs, int target, char channel, int lun,
+    uint32_t status, ahc_search_action action)
 {
 	struct	scb *scb;
 	int	maxtarget;
@@ -6536,8 +6537,8 @@ ahc_download_instr(struct ahc_softc *ahc, u_int instrptr, uint8_t *dconsts)
 
 int
 ahc_print_register(ahc_reg_parse_entry_t *table, u_int num_entries,
-		   const char *name, u_int address, u_int value,
-		   u_int *cur_column, u_int wrap_point)
+    const char *name, u_int address, u_int value,
+    u_int *cur_column, u_int wrap_point)
 {
 	int	printed;
 	u_int	printed_mask;

@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.5 2003/01/17 21:55:23 thorpej Exp $ */
+/* $NetBSD: copyinout.S,v 1.5.18.1 2006/12/30 20:45:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinout.S,v 1.5 2003/01/17 21:55:23 thorpej Exp $")
+RCSID("$NetBSD: copyinout.S,v 1.5.18.1 2006/12/30 20:45:17 yamt Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
@@ -45,15 +45,11 @@ ENTRY(fubyte)
 	ldr	r2, [r2]
 	ldr	r2, [r2, #L_ADDR]
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
-/* XXX Warning: Rn and Rd must be different in LDRT */
-	ldrbt	r0, [r0]
+	ldrbt	r1, [r0]
+	mov	r0, r1
 	mov	r1, #0
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 /* LINTSTUB: Func: int fuword(void *base) */
 ENTRY(fuword)
@@ -63,15 +59,11 @@ ENTRY(fuword)
 	ldr	r2, [r2]
 	ldr	r2, [r2, #L_ADDR]
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
-/* XXX Warning: Rn and Rd must be different in LDRT */
-	ldrt	r0, [r0]
+	ldrt	r1, [r0]
+	mov	r0, r1
 	mov	r1, #0
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 /* LINTSTUB: Func: int subyte(void *base, int c) */
 ENTRY(subyte)
@@ -84,11 +76,7 @@ ENTRY(subyte)
 	strbt	r1, [r0]
 	mov	r0, #0
 	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 /* LINTSTUB: Func: int suword(void *base, long c) */
 ENTRY(suword)
@@ -101,21 +89,13 @@ ENTRY(suword)
 	strt	r1, [r0]
 	mov	r0, #0
 	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 Lfusufault:
 	mov	r0, #0
 	str	r0, [r2, #(U_PCB + PCB_ONFAULT)]
 	mvn	r0, #0
-#ifdef __APCS_26__
-	movs	pc, ip
-#else
 	mov	pc, ip
-#endif
 
 Lcurlwp:
 	.word	_C_LABEL(curlwp)

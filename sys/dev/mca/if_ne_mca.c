@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_mca.c,v 1.8.4.1 2006/06/21 15:04:46 yamt Exp $	*/
+/*	$NetBSD: if_ne_mca.c,v 1.8.4.2 2006/12/30 20:48:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.8.4.1 2006/06/21 15:04:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.8.4.2 2006/12/30 20:48:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,8 @@ ne_mca_lookup(int id)
 }
 
 int
-ne_mca_match(struct device *parent, struct cfdata *cf, void *aux)
+ne_mca_match(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 	struct mca_attach_args *ma = aux;
 

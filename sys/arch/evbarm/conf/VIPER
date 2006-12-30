@@ -1,4 +1,4 @@
-#	$NetBSD: VIPER,v 1.2.2.1 2006/06/21 14:50:33 yamt Exp $
+#	$NetBSD: VIPER,v 1.2.2.2 2006/12/30 20:45:49 yamt Exp $
 #
 #	Arcom Viper
 #
@@ -59,11 +59,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

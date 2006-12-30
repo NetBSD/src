@@ -31,7 +31,7 @@ LDFLAGS=	-Wl,-T${LDSCRIPT} -symbolic -nostdlib #-shared
 
 ${PROG}: ${LDSCRIPT}
 
-CLEANFILES=	vers.c skiload ${OBJS}
+CLEANFILES+=	vers.c skiload ${OBJS}
 
 NEWVERSWHAT=	"ia64 SKI boot" ${MACHINE_ARCH}
 

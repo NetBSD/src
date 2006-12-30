@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.32.4.1 2006/06/21 15:02:55 yamt Exp $	*/
+/*	$NetBSD: lance.c,v 1.32.4.2 2006/12/30 20:48:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,10 +72,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.32.4.1 2006/06/21 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.32.4.2 2006/12/30 20:48:03 yamt Exp $");
 
-#include "opt_ccitt.h"
-#include "opt_llc.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -97,13 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.32.4.1 2006/06/21 15:02:55 yamt Exp $");
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#if defined(CCITT) && defined(LLC)
-#include <sys/socketvar.h>
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_var.h>
-#include <netccitt/pk_extern.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -293,9 +284,7 @@ lance_reset(sc)
 }
 
 void
-lance_stop(ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+lance_stop(struct ifnet *ifp, int disable)
 {
 	struct lance_softc *sc = ifp->if_softc;
 
@@ -584,19 +573,6 @@ lance_ioctl(ifp, cmd, data)
 		error = ether_ioctl(ifp, cmd, data);
 		break;
 
-#if defined(CCITT) && defined(LLC)
-	case SIOCSIFCONF_X25:
-	    {
-		struct ifaddr *ifa = (struct ifaddr *) data;
-
-		ifp->if_flags |= IFF_UP;
-		ifa->ifa_rtrequest = cons_rtrequest; /* XXX */
-		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
-		if (error == 0)
-			lance_init(&sc->sc_ethercom.ec_if);
-		break;
-	    }
-#endif /* CCITT && LLC */
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:

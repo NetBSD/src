@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.3 2003/11/05 21:10:59 scw Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.3.16.1 2006/12/30 20:45:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -189,7 +189,7 @@ ASENTRY_NP(irq_entry)
  	 *  which follows it.
 	 */
 ofwtakeint:
-#if defined(COMPAT_15) && defined(EXEC_AOUT)
+#ifdef EXEC_AOUT
 	ldr	r0, [sp]		/* Fetch SPSR */
 #endif
 	ENABLE_ALIGNMENT_FAULTS

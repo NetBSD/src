@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.14.2.1 2006/06/21 14:58:23 yamt Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.14.2.2 2006/12/30 20:47:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.14.2.1 2006/06/21 14:58:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.14.2.2 2006/12/30 20:47:25 yamt Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -234,7 +234,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
 	iplmask = evtsource[evtch]->ev_imask;
 	sti();
-	ci->ci_idepth++;
 #ifdef MULTIPROCESSOR
 	x86_intlock(regs);
 #endif
@@ -252,7 +251,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 			hypervisor_set_ipending(iplmask,
 			    evtch / 32, evtch % 32);
 			/* leave masked */
-			ci->ci_idepth--;
 			splx(ilevel);
 			return 0;
 		}
@@ -267,7 +265,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	x86_intunlock(regs);
 #endif
 	hypervisor_enable_event(evtch);
-	ci->ci_idepth--;
 	splx(ilevel);
 
 	return 0;
@@ -396,18 +393,17 @@ unbind_pirq_from_evtch(int pirq)
 }
 
 struct pintrhand *
-pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level)
+pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
+    const char *evname)
 {
 	struct pintrhand *ih;
 	physdev_op_t physdev_op;
-	char evname[8];
 
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL) {
 		printf("pirq_establish: can't malloc handler info\n");
 		return NULL;
 	}
-	snprintf(evname, sizeof(evname), "irq%d", pirq);
 	if (event_set_handler(evtch, pirq_interrupt, ih, level, evname) != 0) {
 		free(ih, M_DEVBUF);
 		return NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.9.4.2 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.9.4.3 2006/12/30 20:51:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ufs_extattr.c,v 1.9.4.2 2006/06/21 15:12:39 yamt Exp $");
+__RCSID("$NetBSD: ufs_extattr.c,v 1.9.4.3 2006/12/30 20:51:01 yamt Exp $");
 
 #include "opt_ffs.h"
 
@@ -225,7 +225,7 @@ ufs_extattr_start(struct mount *mp, struct lwp *l)
 
 	ump->um_extattr.uepm_flags |= UFS_EXTATTR_UEPM_STARTED;
 
-	ump->um_extattr.uepm_ucred = l->l_proc->p_cred;
+	ump->um_extattr.uepm_ucred = l->l_cred;
 	kauth_cred_hold(ump->um_extattr.uepm_ucred);
 
  unlock:
@@ -258,7 +258,7 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 	cnp.cn_nameiop = LOOKUP;
 	cnp.cn_flags = ISLASTCN | lockparent;
 	cnp.cn_lwp = l;
-	cnp.cn_cred = l->l_proc->p_cred;
+	cnp.cn_cred = l->l_cred;
 	cnp.cn_pnbuf = PNBUF_GET();
 	cnp.cn_nameptr = cnp.cn_pnbuf;
 	error = copystr(dirname, cnp.cn_pnbuf, MAXPATHLEN,
@@ -279,23 +279,7 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 	error = ufs_lookup(&vargs);
 	PNBUF_PUT(cnp.cn_pnbuf);
 	if (error) {
-		/*
-		 * Error condition, may have to release the lock on the parent
-		 * if ufs_lookup() didn't.
-		 */
-		if ((cnp.cn_flags & PDIRUNLOCK) == 0) {
-			KASSERT(VOP_ISLOCKED(start_dvp) == LK_EXCLUSIVE);
-			if (lockparent == 0)
-				VOP_UNLOCK(start_dvp, 0);
-		}
-
-		/*
-		 * Check that ufs_lookup() didn't release the lock when we
-		 * didn't want it to.
-		 */
-		if ((cnp.cn_flags & PDIRUNLOCK) && lockparent)
-			panic("ufs_extattr_lookup: lockparent but PDIRUNLOCK");
-
+		VOP_UNLOCK(start_dvp, 0);
 		return (error);
 	}
 #if 0
@@ -304,14 +288,6 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 #endif
 
 	KASSERT(VOP_ISLOCKED(target_vp) == LK_EXCLUSIVE);
-
-	if (target_vp != start_dvp &&
-	    (cnp.cn_flags & PDIRUNLOCK) == 0 && lockparent == 0)
-		panic("ufs_extattr_lookup: !lockparent but !PDIRUNLOCK");
-
-	if ((cnp.cn_flags & PDIRUNLOCK) && lockparent)
-		panic("ufs_extattr_lookup: lockparent but PDIRUNLOCK");
-
 	*vp = target_vp;
 	return (0);
 }
@@ -330,7 +306,7 @@ ufs_extattr_enable_with_open(struct ufsmount *ump, struct vnode *vp,
 {
 	int error;
 
-	error = VOP_OPEN(vp, FREAD|FWRITE, l->l_proc->p_cred, l);
+	error = VOP_OPEN(vp, FREAD|FWRITE, l->l_cred, l);
 	if (error) {
 		printf("ufs_extattr_enable_with_open.VOP_OPEN(): failed "
 		    "with %d\n", error);
@@ -346,7 +322,7 @@ ufs_extattr_enable_with_open(struct ufsmount *ump, struct vnode *vp,
 
 	error = ufs_extattr_enable(ump, attrnamespace, attrname, vp, l);
 	if (error != 0)
-		vn_close(vp, FREAD|FWRITE, l->l_proc->p_cred, l);
+		vn_close(vp, FREAD|FWRITE, l->l_cred, l);
 	return (error);
 }
 
@@ -384,7 +360,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 	vargs.a_desc = NULL;
 	vargs.a_vp = dvp;
 	vargs.a_uio = &auio;
-	vargs.a_cred = l->l_proc->p_cred;
+	vargs.a_cred = l->l_cred;
 	vargs.a_eofflag = &eofflag;
 	vargs.a_ncookies = NULL;
 	vargs.a_cookies = NULL;
@@ -636,7 +612,7 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 	auio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&auio);
 
-	VOP_LEASE(backing_vnode, l, l->l_proc->p_cred, LEASE_WRITE);
+	VOP_LEASE(backing_vnode, l, l->l_cred, LEASE_WRITE);
 	vn_lock(backing_vnode, LK_SHARED | LK_RETRY);
 	error = VOP_READ(backing_vnode, &auio, IO_NODELOCKED,
 	    ump->um_extattr.uepm_ucred);
@@ -713,7 +689,7 @@ ufs_extattr_disable(struct ufsmount *ump, int attrnamespace,
 	LIST_REMOVE(uele, uele_entries);
 
 	error = vn_close(uele->uele_backing_vnode, FREAD|FWRITE,
-	    l->l_proc->p_cred, l);
+	    l->l_cred, l);
 
 	free(uele, M_UFS_EXTATTR);
 
@@ -735,8 +711,8 @@ ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename_vp,
 	/*
 	 * Only privileged processes can configure extended attributes.
 	 */
-	if ((error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-				       &l->l_proc->p_acflag)) != 0) {
+	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag)) != 0) {
 		if (filename_vp != NULL)
 			VOP_UNLOCK(filename_vp, 0);
 		return (error);
@@ -1318,7 +1294,7 @@ ufs_extattr_vnode_inactive(struct vnode *vp, struct lwp *l)
 
 	LIST_FOREACH(uele, &ump->um_extattr.uepm_list, uele_entries)
 		ufs_extattr_rm(vp, uele->uele_attrnamespace,
-		    uele->uele_attrname, proc0.p_cred, l);
+		    uele->uele_attrname, lwp0.l_cred, l);
 
 	ufs_extattr_uepm_unlock(ump);
 }

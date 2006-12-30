@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.28 2005/06/28 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.28.2.1 2006/12/30 20:48:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.28 2005/06/28 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.28.2.1 2006/12/30 20:48:46 yamt Exp $");
 
 #include "ehci.h"
 
@@ -72,7 +72,8 @@ struct ohci_pci_softc {
 };
 
 static int
-ohci_pci_match(struct device *parent, struct cfdata *match, void *aux)
+ohci_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 

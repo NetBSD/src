@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.23.4.1 2006/06/21 15:04:46 yamt Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.23.4.2 2006/12/30 20:48:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.23.4.1 2006/06/21 15:04:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.23.4.2 2006/12/30 20:48:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,6 +168,9 @@ static const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5750,
 	  MII_STR_BROADCOM_BCM5750 },
 
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5752,
+	  MII_STR_BROADCOM_BCM5752 },
+
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5780,
 	  MII_STR_BROADCOM_BCM5780 },
 
@@ -182,7 +185,8 @@ static void bcm5704_load_dspcode(struct mii_softc *);
 static void bcm5750_load_dspcode(struct mii_softc *);
 
 static int
-brgphymatch(struct device *parent, struct cfdata *match, void *aux)
+brgphymatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -208,7 +212,7 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	switch (MII_MODEL(ma->mii_id2)) {
 	case MII_MODEL_BROADCOM_BCM5400:
@@ -253,6 +257,7 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 	case MII_MODEL_BROADCOM_BCM5714:
 	case MII_MODEL_BROADCOM_BCM5780:
 	case MII_MODEL_BROADCOM_BCM5750:
+	case MII_MODEL_BROADCOM_BCM5752:
 		sc->mii_funcs = &brgphy_5750_funcs;
 		break;
 

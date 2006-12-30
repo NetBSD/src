@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_emuldata.h,v 1.8.2.1 2006/06/21 14:59:12 yamt Exp $	*/
+/*	$NetBSD: linux_emuldata.h,v 1.8.2.2 2006/12/30 20:47:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <compat/linux/common/linux_machdep.h> /* For LINUX_NPTL */
+
 #ifndef _COMMON_LINUX_EMULDATA_H
 #define _COMMON_LINUX_EMULDATA_H
 
@@ -49,7 +51,13 @@ struct linux_emuldata_shared {
 	caddr_t	p_break;	/* Processes' idea of break */
 	int refs;
 	pid_t group_pid;	/* PID of Linux process (group of threads) */
+	/* List of Linux threads (NetBSD processes) in the Linux process */
+	LIST_HEAD(, linux_emuldata) threads;
+	int flags;		/* See below */
+	int xstat;		/* Thread group exit code, for exit_group */
 };
+
+#define LINUX_LES_INEXITGROUP	0x1	/* thread group doing exit_group() */
 
 struct linux_emuldata {
 #if notyet
@@ -59,12 +67,24 @@ struct linux_emuldata {
 				/* see ../arch/i386/linux_ptrace.c */
 	struct linux_emuldata_shared *s;
 #ifdef LINUX_NPTL
+	void *parent_tidptr;	/* Used during clone() */
+	void *child_tidptr;	/* Used during clone() */
+	int clone_flags;	/* Used during clone() */
+	void *clear_tid;	/* Own TID to clear on exit */
+	void *set_tls;		/* Pointer to child TLS desc in user space */
+#if 0
 	int *child_set_tid;	/* in clone(): Child's TID to set on clone */
 	int *child_clear_tid;	/* in clone(): Child's TID to clear on exit */
 	int *set_tid;		/* in clone(): Own TID to set on clone */
-	int *clear_tid;		/* Own TID to clear on exit */
-	unsigned long set_tls;	/* New TLS in child if not 0 */
+	int flags;		/* See above */
 #endif
+#endif
+	/* List of Linux threads (NetBSD processes) in the Linux process */
+	LIST_ENTRY(linux_emuldata) threads;
+	struct proc *proc;	/* backpointer to struct proc */
 };
+
+#define LINUX_CHILD_QUIETEXIT	0x1	/* Child will have quietexit set */
+#define LINUX_QUIETEXIT		0x2	/* Quiet exit (no zombie state) */
 
 #endif /* !_COMMON_LINUX_EMULDATA_H */

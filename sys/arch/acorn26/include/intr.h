@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4.16.1 2006/06/21 14:47:47 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.4.16.2 2006/12/30 20:45:18 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -53,9 +53,9 @@
 #define IPL_AUDIO	7
 #define IPL_SERIAL	8
 #define IPL_CLOCK	9
-#define IPL_STATCLOCK	10
-#define IPL_SCHED	11
-#define IPL_HIGH	12
+#define IPL_HIGH	10
+#define IPL_STATCLOCK	IPL_HIGH
+#define IPL_SCHED	IPL_HIGH
 #define	IPL_LOCK	IPL_HIGH
 #define NIPL		IPL_HIGH + 1
 
@@ -73,13 +73,10 @@
 #define	splaudio()	raisespl(IPL_AUDIO)
 #define splserial()	raisespl(IPL_SERIAL)
 #define splclock()	raisespl(IPL_CLOCK)
-#define splstatclock()	raisespl(IPL_STATCLOCK)
-#define splsched()	raisespl(IPL_SCHED)
 
-/* #define	splsched()	splhigh() */
+#define splstatclock()	splhigh()
+#define	splsched()	splhigh()
 #define spllock()	splhigh()
-
-#define	splraiseipl(x)	(((x) == IPL_HIGH) ? splhigh() : raisespl(x))
 
 #define spl0()			lowerspl(IPL_NONE)
 #define spllowersoftclock()	lowerspl(IPL_SOFTCLOCK)
@@ -89,6 +86,26 @@ extern int splhigh(void);
 extern int raisespl(int);
 extern void lowerspl(int);
 extern int hardsplx(int);
+
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+	ipl_t newipl = icookie._ipl;
+
+	return ((newipl) == IPL_HIGH) ? splhigh() : raisespl(newipl);
+}
 
 /*
  * Interrupt sharing types
@@ -105,13 +122,14 @@ extern int hardsplx(int);
  * Soft Interrupts
  */
 
-/* Old-fashioned soft interrupts */
-extern void setsoftnet(void);
-
 /* New-fangled generic soft interrupts */
 extern void *softintr_establish(int, void (*)(void *), void *);
 extern void softintr_disestablish(void *);
 extern void softintr_schedule(void *);
+
+/* Old-fashioned soft interrupts */
+extern void *sh_softnet;
+#define setsoftnet() softintr_schedule(sh_softnet)
 
 /* Machine-dependent soft-interrupt servicing routines */
 extern void softintr_init(void);

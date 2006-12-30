@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.81.4.1 2006/06/21 15:02:57 yamt Exp $ */
+/* $NetBSD: vga.c,v 1.81.4.2 2006/12/30 20:48:04 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.81.4.1 2006/06/21 15:02:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.81.4.2 2006/12/30 20:48:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,8 +86,9 @@ struct egavga_font {
 };
 
 static struct egavga_font vga_builtinfont = {
-	&_vga_builtinfont,
-	-1, 0
+	.wsfont = &_vga_builtinfont,
+	.cookie = -1,
+	.slot = 0,
 };
 
 #ifdef VGA_CONSOLE_SCREENTYPE
@@ -180,62 +181,74 @@ const struct wsscreen_descr vga_25lscreen = {
 	"80x25", 80, 25,
 	&vga_emulops,
 	8, 16,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK,
+	NULL,
 }, vga_25lscreen_mono = {
 	"80x25", 80, 25,
 	&vga_emulops,
 	8, 16,
-	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE
+	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE,
+	NULL,
 }, vga_25lscreen_bf = {
 	"80x25bf", 80, 25,
 	&vga_emulops,
 	8, 16,
-	WSSCREEN_WSCOLORS | WSSCREEN_BLINK
+	WSSCREEN_WSCOLORS | WSSCREEN_BLINK,
+	NULL,
 }, vga_40lscreen = {
 	"80x40", 80, 40,
 	&vga_emulops,
 	8, 10,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK,
+	NULL,
 }, vga_40lscreen_mono = {
 	"80x40", 80, 40,
 	&vga_emulops,
 	8, 10,
-	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE
+	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE,
+	NULL,
 }, vga_40lscreen_bf = {
 	"80x40bf", 80, 40,
 	&vga_emulops,
 	8, 10,
-	WSSCREEN_WSCOLORS | WSSCREEN_BLINK
+	WSSCREEN_WSCOLORS | WSSCREEN_BLINK,
+	NULL,
 }, vga_50lscreen = {
 	"80x50", 80, 50,
 	&vga_emulops,
 	8, 8,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK,
+	NULL,
 }, vga_50lscreen_mono = {
 	"80x50", 80, 50,
 	&vga_emulops,
 	8, 8,
-	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE
+	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE,
+	NULL,
 }, vga_50lscreen_bf = {
 	"80x50bf", 80, 50,
 	&vga_emulops,
 	8, 8,
-	WSSCREEN_WSCOLORS | WSSCREEN_BLINK
+	WSSCREEN_WSCOLORS | WSSCREEN_BLINK,
+	NULL,
 }, vga_24lscreen = {
 	"80x24", 80, 24,
 	&vga_emulops,
 	8, 16,
-	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK,
+	NULL,
 }, vga_24lscreen_mono = {
 	"80x24", 80, 24,
 	&vga_emulops,
 	8, 16,
-	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE
+	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE,
+	NULL,
 }, vga_24lscreen_bf = {
 	"80x24bf", 80, 24,
 	&vga_emulops,
 	8, 16,
-	WSSCREEN_WSCOLORS | WSSCREEN_BLINK
+	WSSCREEN_WSCOLORS | WSSCREEN_BLINK,
+	NULL,
 };
 
 #define VGA_SCREEN_CANTWOFONTS(type) (!((type)->capabilities & WSSCREEN_HILIT))
@@ -701,6 +714,25 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	vgaconsole = 1;
 	vga_console_type = type;
 	return (0);
+}
+
+int
+vga_cndetach(void)
+{
+	struct vga_config *vc;
+	struct vga_handle *vh;
+
+	vc = &vga_console_vc;
+	vh = &vc->hdl;
+
+	if (vgaconsole) {
+		bus_space_unmap(vh->vh_iot, vh->vh_ioh_vga, 0x10);
+		bus_space_unmap(vh->vh_iot, vh->vh_ioh_6845, 0x10);
+
+		return 1;
+	}
+
+	return 0;
 }
 
 int

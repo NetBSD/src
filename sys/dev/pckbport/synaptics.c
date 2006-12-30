@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.6.2.1 2006/06/21 15:06:14 yamt Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.6.2.2 2006/12/30 20:49:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -1227,8 +1227,10 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 	 */
 	if (dx || dy || dz || changed) {
 		s = spltty();
-		wsmouse_input(psc->sc_wsmousedev, buttons, dx, dy, dz,
-		    WSMOUSE_INPUT_DELTA);
+		wsmouse_input(psc->sc_wsmousedev,
+				buttons,
+				dx, dy, dz, 0,
+		    		WSMOUSE_INPUT_DELTA);
 		splx(s);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.2.18.1 2006/06/21 14:58:50 yamt Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.2.18.2 2006/12/30 20:47:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.2.18.1 2006/06/21 14:58:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.2.18.2 2006/12/30 20:47:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -57,10 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.2.18.1 2006/06/21 14:58:50 yamt 
 #include <compat/freebsd/freebsd_sched.h>
 
 int
-freebsd_sys_yield(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_yield(struct lwp *l, void *v,
+    register_t *retval)
 {
 
 	yield();
@@ -68,10 +66,7 @@ freebsd_sys_yield(l, v, retval)
 }
 
 int
-freebsd_sys_sched_setparam(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_setparam(struct lwp *l, void *v, register_t *retval)
 {
 	struct freebsd_sys_sched_setparam_args /* {
 		syscallarg(pid_t) pid;
@@ -92,7 +87,7 @@ freebsd_sys_sched_setparam(l, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_proc->p_cred;
+		kauth_cred_t pc = l->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -109,10 +104,7 @@ freebsd_sys_sched_setparam(l, v, retval)
 }
 
 int
-freebsd_sys_sched_getparam(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_getparam(struct lwp *l, void *v, register_t *retval)
 {
 	struct freebsd_sys_sched_getparam_args /* {
 		syscallarg(pid_t) pid;
@@ -129,7 +121,7 @@ freebsd_sys_sched_getparam(l, v, retval)
 		return EINVAL;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_proc->p_cred;
+		kauth_cred_t pc = l->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -147,10 +139,8 @@ freebsd_sys_sched_getparam(l, v, retval)
 }
 
 int
-freebsd_sys_sched_setscheduler(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_setscheduler(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct freebsd_sys_sched_setscheduler_args /* {
 		syscallarg(pid_t) pid;
@@ -172,7 +162,7 @@ freebsd_sys_sched_setscheduler(l, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_proc->p_cred;
+		kauth_cred_t pc = l->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -211,7 +201,7 @@ freebsd_sys_sched_getscheduler(l, v, retval)
 	 * We only check for valid parameters and return afterwards.
 	 */
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_proc->p_cred;
+		kauth_cred_t pc = l->l_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -232,10 +222,8 @@ freebsd_sys_sched_getscheduler(l, v, retval)
 }
 
 int
-freebsd_sys_sched_yield(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_yield(struct lwp *l, void *v,
+    register_t *retval)
 {
 
 	yield();
@@ -243,10 +231,8 @@ freebsd_sys_sched_yield(l, v, retval)
 }
 
 int
-freebsd_sys_sched_get_priority_max(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_get_priority_max(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct freebsd_sys_sched_get_priority_max_args /* {
 		syscallarg(int) policy;
@@ -265,10 +251,8 @@ freebsd_sys_sched_get_priority_max(l, v, retval)
 }
 
 int
-freebsd_sys_sched_get_priority_min(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+freebsd_sys_sched_get_priority_min(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct freebsd_sys_sched_get_priority_min_args /* {
 		syscallarg(int) policy;

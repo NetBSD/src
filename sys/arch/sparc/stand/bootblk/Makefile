@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2005/05/30 23:30:57 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2006/12/30 20:47:01 yamt Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -18,7 +18,7 @@ STRIPFLAG=
 
 USE_GENASSYM?=	no
 
-INCLUDES=	-I. -I$S/arch -I$S -nostdinc
+INCLUDES=	-I. -I$S/arch -I$S -I${S}/../common/include -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_LKM -D_KERNEL
 
 #all:: bootblk.text bootblk

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.127.2.1 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.127.2.2 2006/12/30 20:51:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.127.2.1 2006/06/21 15:12:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.127.2.2 2006/12/30 20:51:01 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -79,9 +79,9 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.127.2.1 2006/06/21 15:12:39 yamt Exp
 
 #include <uvm/uvm.h>
 
-static int ufs_chmod(struct vnode *, int, kauth_cred_t, struct proc *);
+static int ufs_chmod(struct vnode *, int, kauth_cred_t, struct lwp *);
 static int ufs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
-    struct proc *);
+    struct lwp *);
 
 /*
  * A virgin directory (no blushing please).
@@ -389,7 +389,7 @@ ufs_setattr(void *v)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != ip->i_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-					       &l->l_proc->p_acflag)))
+		    &l->l_acflag)))
 			return (error);
 		if (kauth_cred_geteuid(cred) == 0) {
 			if ((ip->i_flags & (SF_IMMUTABLE | SF_APPEND)) &&
@@ -424,7 +424,7 @@ ufs_setattr(void *v)
 	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ufs_chown(vp, vap->va_uid, vap->va_gid, cred, l->l_proc);
+		error = ufs_chown(vp, vap->va_uid, vap->va_gid, cred, l);
 		if (error)
 			return (error);
 	}
@@ -463,7 +463,7 @@ ufs_setattr(void *v)
 			return (EPERM);
 		if (kauth_cred_geteuid(cred) != ip->i_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-					       &l->l_proc->p_acflag)) &&
+		    &l->l_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
 			return (error);
@@ -489,7 +489,7 @@ ufs_setattr(void *v)
 		    (vap->va_mode & (S_IXUSR | S_IWUSR | S_IXGRP | S_IWGRP |
 		     S_IXOTH | S_IWOTH)))
 			return (EPERM);
-		error = ufs_chmod(vp, (int)vap->va_mode, cred, l->l_proc);
+		error = ufs_chmod(vp, (int)vap->va_mode, cred, l);
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);
 	return (error);
@@ -500,7 +500,7 @@ ufs_setattr(void *v)
  * Inode must be locked before calling.
  */
 static int
-ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct proc *p)
+ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 {
 	struct inode	*ip;
 	int		error, ismember = 0;
@@ -508,7 +508,7 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct proc *p)
 	ip = VTOI(vp);
 	if (kauth_cred_geteuid(cred) != ip->i_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-				       &p->p_acflag)))
+	    &l->l_acflag)))
 		return (error);
 	if (kauth_cred_geteuid(cred)) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
@@ -530,7 +530,7 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct proc *p)
  */
 static int
 ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
-    	struct proc *p)
+    	struct lwp *l)
 {
 	struct inode	*ip;
 	int		error, ismember = 0;
@@ -555,11 +555,11 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	 */
 	if ((kauth_cred_geteuid(cred) != ip->i_uid || uid != ip->i_uid ||
 	    (gid != ip->i_gid &&
-	     !(kauth_cred_getegid(cred) == gid ||
-	      (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 &&
-	      ismember)))) &&
+	    !(kauth_cred_getegid(cred) == gid ||
+	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 &&
+	    ismember)))) &&
 	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-					&p->p_acflag)) != 0))
+	    &l->l_acflag)) != 0))
 		return (error);
 
 #ifdef QUOTA
@@ -910,8 +910,9 @@ ufs_rename(void *v)
 		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
-		if ((error = relookup(fdvp, &fvp, fcnp))){
-			/* relookup blew away fdvp */
+		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+		if ((error = relookup(fdvp, &fvp, fcnp))) {
+			vput(fdvp);
 			return (error);
 		}
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
@@ -949,7 +950,6 @@ ufs_rename(void *v)
 		doingdirectory = 1;
 	}
 	VN_KNOTE(fdvp, NOTE_WRITE);		/* XXXLUKEM/XXX: right place? */
-	/* vrele(fdvp); */
 
 	/*
 	 * When the target exists, both the directory
@@ -996,14 +996,18 @@ ufs_rename(void *v)
 			goto bad;
 		if (xp != NULL)
 			vput(tvp);
-		vref(tdvp);	/* compensate for the ref checkpath looses */
+		vref(tdvp);	/* compensate for the ref checkpath loses */
 		if ((error = ufs_checkpath(ip, dp, tcnp->cn_cred)) != 0) {
 			vrele(tdvp);
 			goto out;
 		}
 		tcnp->cn_flags &= ~SAVESTART;
-		if ((error = relookup(tdvp, &tvp, tcnp)) != 0)
+		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
+		error = relookup(tdvp, &tvp, tcnp);
+		if (error != 0) {
+			vput(tdvp);
 			goto out;
+		}
 		dp = VTOI(tdvp);
 		xp = NULL;
 		if (tvp)
@@ -1155,7 +1159,9 @@ ufs_rename(void *v)
 	 */
 	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
+	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 	if ((error = relookup(fdvp, &fvp, fcnp))) {
+		vput(fdvp);
 		vrele(ap->a_fvp);
 		return (error);
 	}
@@ -1191,6 +1197,7 @@ ufs_rename(void *v)
 		 * and ".." set to point to the new parent.
 		 */
 		if (doingdirectory && newparent) {
+			KASSERT(dp != NULL);
 			xp->i_offset = mastertemplate.dot_reclen;
 			ufs_dirrewrite(xp, dp, newparent, DT_DIR, 0, IN_CHANGE);
 			cache_purge(fdvp);
@@ -1438,9 +1445,10 @@ ufs_rmdir(void *v)
 	 * No rmdir "." or of mounted directories please.
 	 */
 	if (dp == ip || vp->v_mountedhere != NULL) {
-		vrele(dvp);
-		if (vp->v_mountedhere != NULL)
-			VOP_UNLOCK(dvp, 0);
+		if (dp == ip)
+			vrele(vp);
+		else
+			vput(vp);
 		vput(vp);
 		return (EINVAL);
 	}
@@ -1587,6 +1595,8 @@ ufs_readdir(void *v)
 	int		error;
 	size_t		count, ccount, rcount;
 	off_t		off, *ccp;
+	off_t		startoff;
+	size_t		skipbytes;
 	struct ufsmount	*ump = VFSTOUFS(vp->v_mount);
 	int nswap = UFS_MPNEEDSWAP(ump);
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -1601,9 +1611,13 @@ ufs_readdir(void *v)
 	if (rcount < _DIRENT_MINSIZE(cdp) || count < _DIRENT_MINSIZE(ndp))
 		return EINVAL;
 
+	startoff = uio->uio_offset & ~(ump->um_dirblksiz - 1);
+	skipbytes = uio->uio_offset - startoff;
+	rcount += skipbytes;
+
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_offset = uio->uio_offset;
+	auio.uio_offset = startoff;
 	auio.uio_resid = rcount;
 	UIO_SETUP_SYSSPACE(&auio);
 	auio.uio_rw = UIO_READ;
@@ -1616,7 +1630,7 @@ ufs_readdir(void *v)
 		return error;
 	}
 
-	rcount = rcount - auio.uio_resid;
+	rcount -= auio.uio_resid;
 
 	cdp = (struct direct *)(void *)cdbuf;
 	ecdp = (struct direct *)(void *)&cdbuf[rcount];
@@ -1638,6 +1652,18 @@ ufs_readdir(void *v)
 
 	while (cdp < ecdp) {
 		cdp->d_reclen = ufs_rw16(cdp->d_reclen, nswap);
+		if (skipbytes > 0) {
+			if (cdp->d_reclen <= skipbytes) {
+				skipbytes -= cdp->d_reclen;
+				cdp = _DIRENT_NEXT(cdp);
+				continue;
+			}
+			/*
+			 * invlid cookie.
+			 */
+			error = EINVAL;
+			goto out;
+		}
 		if (cdp->d_reclen == 0) {
 			struct dirent *ondp = ndp;
 			ndp->d_reclen = _DIRENT_MINSIZE(ndp);
@@ -1670,12 +1696,9 @@ ufs_readdir(void *v)
 		cdp = _DIRENT_NEXT(cdp);
 	}
 
-	if (cdp >= ecdp)
-		off = uio->uio_offset + rcount;
-
 	count = ((char *)(void *)ndp - ndbuf);
 	error = uiomove(ndbuf, count, uio);
-
+out:
 	if (ap->a_cookies) {
 		if (error)
 			free(*(ap->a_cookies), M_TEMP);

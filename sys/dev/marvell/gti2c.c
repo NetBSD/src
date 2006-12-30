@@ -1,4 +1,4 @@
-/*	$NetBSD: gti2c.c,v 1.2.6.1 2006/06/21 15:04:36 yamt Exp $	*/
+/*	$NetBSD: gti2c.c,v 1.2.6.2 2006/12/30 20:48:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 Brocade Communcations, inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.2.6.1 2006/06/21 15:04:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.2.6.2 2006/12/30 20:48:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -272,7 +272,6 @@ gt_i2c_attach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR, NULL,
 		sc->sc_dev.dv_xname, "intr");
 
-	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c;
-	config_found(self, &iba, iicbus_print);
+	config_found_ia(self, "i2cbus", &iba, iicbus_print);
 }

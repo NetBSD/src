@@ -1,4 +1,4 @@
-/* $NetBSD: isp_ioctl.h,v 1.6 2005/02/27 00:27:01 perry Exp $ */
+/* $NetBSD: isp_ioctl.h,v 1.6.4.1 2006/12/30 20:48:03 yamt Exp $ */
 /*
  * Copyright (c) 2001 by Matthew Jacob
  *
@@ -70,10 +70,12 @@
 #define ISP_DEFAULT_ROLES       ISP_ROLE_BOTH
 #endif
 
+#ifdef notdef
 /*
  * Get the current adapter role
  */
-#define ISP_GETROLE     _IOR(ISP_IOC, 5), int
+#define ISP_GETROLE     _IOR(ISP_IOC, 5, int)
+#endif
 
 /*
  * Get/Clear Stats

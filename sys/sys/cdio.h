@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.21.4.1 2006/06/21 15:12:02 yamt Exp $	*/
+/*	$NetBSD: cdio.h,v 1.21.4.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -280,7 +280,7 @@ struct mmc_discinfo {
 	uint16_t	reserved1[4];		/* MMC-5 track resources   */
 	uint32_t	reserved2[3];		/* MMC-5 POW resources     */
 
-	uint32_t	reserved3[8];		/* MMC5+ */
+	uint32_t	reserved3[8];		/* MMC-5+ */
 };
 #define MMCGETDISCINFO	_IOR('c', 28, struct mmc_discinfo)
 

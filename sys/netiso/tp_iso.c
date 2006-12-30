@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.19.4.1 2006/06/21 15:11:37 yamt Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.19.4.2 2006/12/30 20:50:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.19.4.1 2006/06/21 15:11:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.19.4.2 2006/12/30 20:50:45 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -340,7 +340,7 @@ tpclnp_mtu(void *v)
 		printf("tpclnp_mtu(tpcb %p)\n", tpcb);
 	}
 #endif
-	tpcb->tp_routep = &(isop->isop_route.ro_rt);
+	tpcb->tp_routep = &isop->isop_route.ro_rt;
 	if (tpcb->tp_netservice == ISO_CONS)
 		return 0;
 	else
@@ -467,8 +467,7 @@ tpclnp_output_dg(struct mbuf *m0, ...)
 	/*
 	 *	Free route allocated by clnp (if the route was indeed allocated)
 	 */
-	if (tmppcb.isop_route.ro_rt)
-		RTFREE(tmppcb.isop_route.ro_rt);
+	rtcache_free((struct route *)&tmppcb.isop_route);
 
 	return (err);
 }
@@ -673,7 +672,10 @@ tpclnp_ctlinput(int cmd, struct sockaddr *saddr, void *dummy)
  * than a sockaddr_iso.
  */
 
-static struct sockaddr_iso siso = {sizeof(siso), AF_ISO};
+static struct sockaddr_iso siso = {
+	.siso_len = sizeof(siso),
+	.siso_family = AF_ISO,
+};
 void
 tpclnp_ctlinput1(int cmd, struct iso_addr *isoa)
 {

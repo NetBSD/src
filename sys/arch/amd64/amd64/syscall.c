@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9.2.1 2006/06/21 14:48:19 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.9.2.2 2006/12/30 20:45:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.2.1 2006/06/21 14:48:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.2.2 2006/12/30 20:45:22 yamt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -115,6 +115,7 @@ syscall_plain(struct trapframe *frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
@@ -169,9 +170,14 @@ syscall_plain(struct trapframe *frame)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	KERNEL_PROC_LOCK(l);
-	error = (*callp->sy_call)(l, argp, rval);
-	KERNEL_PROC_UNLOCK(l);
+
+	if (callp->sy_flags & SYCALL_MPSAFE)
+		error = (*callp->sy_call)(l, argp, rval);
+	else {
+		KERNEL_PROC_LOCK(l);
+		error = (*callp->sy_call)(l, argp, rval);
+		KERNEL_PROC_UNLOCK(l);
+	}
 
 	switch (error) {
 	case 0:
@@ -216,6 +222,7 @@ syscall_fancy(struct trapframe *frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
@@ -269,14 +276,22 @@ syscall_fancy(struct trapframe *frame)
 	}
 
 	KERNEL_PROC_LOCK(l);
-	if ((error = trace_enter(l, code, code, NULL, argp)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, argp)) != 0) {
+		KERNEL_PROC_UNLOCK(l);
 		goto out;
+	}
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(l, argp, rval);
+
+	if (callp->sy_flags & SYCALL_MPSAFE) {
+		KERNEL_PROC_UNLOCK(l);
+		error = (*callp->sy_call)(l, argp, rval);
+	} else {
+		error = (*callp->sy_call)(l, argp, rval);
+		KERNEL_PROC_UNLOCK(l);
+	}
 out:
-	KERNEL_PROC_UNLOCK(l);
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];

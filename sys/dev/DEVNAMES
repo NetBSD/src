@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.182.2.1 2006/06/21 15:02:11 yamt Exp $
+#	$NetBSD: DEVNAMES,v 1.182.2.2 2006/12/30 20:47:49 yamt Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -105,7 +105,10 @@ ast			MI
 aster			amiga
 aster			amigappc
 ata			MI		Attribute
+ata_dma			MI		Attribute
 ata_hl			MI		Attribute
+ata_piobm		MI		Attribute
+ata_udma		MI		Attribute
 atabus			MI
 atapi			MI		Attribute
 atapibus		MI
@@ -123,7 +126,6 @@ auacer			MI
 aubus			evbmips
 aucc			amiga
 aucc			amigappc
-aucom			evbmips
 auconv			MI		Attribute
 audio			MI
 audio			MI		Attribute
@@ -139,6 +141,7 @@ aupci			evbmips
 aupcmcia		evbmips
 aurateconv		MI		Attribute
 aurtc			evbmips
+auspi			evbmips
 autri			MI
 auvia			MI
 auxio			sparc64
@@ -174,11 +177,11 @@ bt_dac			sparc		Attribute
 bt_dac			sparc64		Attribute
 bthidev			MI
 bthub			MI
-bthset			MI
 btkbd			MI
 btl			arc
 btms			MI
 btnmgr			hpcmips
+btsco			MI
 btvmei			MI
 btvmeii			MI
 button			hpcmips
@@ -305,7 +308,6 @@ cypide			MI
 cz			MI
 daic			MI
 dbri			sparc
-dc			pmax
 dcm			hp300
 ddc			MI
 ddc_read_edid		MI		Attribute
@@ -337,7 +339,6 @@ drsupio			amigappc
 dsrtc			cats
 dsrtc			evbppc
 dtide			MI
-dtop			pmax
 dvbox			hp300
 dwlpx			alpha
 dz			MI
@@ -552,11 +553,15 @@ hippi			MI		Attribute
 hme			MI
 hp			vax
 hpc			sgimips
+hpcfb			hpcarm
 hpcfb			hpcmips
 hpcfb			hpcsh
+hpcfbif			hpcarm		Attribute
 hpcfbif			hpcmips		Attribute
 hpcfbif			hpcsh		Attribute
+hpckbd			hpcarm
 hpckbd			hpcsh
+hpckbdif		hpcarm		Attribute
 hpckbdif		hpcsh		Attribute
 hpibbus			hp300
 hpibdev			hp300		Attribute
@@ -621,6 +626,8 @@ iopsp			MI
 ipaqbus			hpcarm
 ipaqlcd			hpcarm
 ipaqpcic		hpcarm
+ipmi			i386
+ipmi			xen
 ippp			MI
 ipw			MI
 irdasir			MI		Attribute
@@ -643,6 +650,7 @@ isdntel			MI
 isdntrc			MI
 isic			MI
 isp			MI
+it			MI
 it8368e			hpcmips
 ite			amiga
 ite			amigappc
@@ -664,6 +672,11 @@ iy			MI
 j6x0lcd			hpcsh
 j6x0pwr			hpcsh
 j6x0tp			hpcsh
+j720kbd			hpcarm
+j720lcd			hpcarm
+j720pwr			hpcarm
+j720ssp			hpcarm
+j720tp			hpcarm
 joy			arc
 joy			bebox
 joy			cats
@@ -673,7 +686,6 @@ joy			shark
 kb			news68k
 kb			newsmips
 kbc			news68k
-kbd			acorn32
 kbd			amiga
 kbd			amigappc
 kbd			atari
@@ -684,6 +696,7 @@ kbd			sun3
 kbd			x68k
 kdb			MI
 kft			alpha
+kse			MI
 kue			MI
 latches			acorn26
 lc			MI
@@ -706,6 +719,7 @@ lm700x			MI
 lmc			MI
 lms			bebox
 lms			i386
+lockstat		MI
 lp			atari
 lp			vax
 lpa			vax
@@ -852,6 +866,7 @@ msc			amiga
 msc			amigappc
 mscp			MI		Attribute
 mscpbus			MI
+msk			MI
 msiiep			sparc
 msiop			mvme68k		Attribute
 mspcic			sparc
@@ -881,6 +896,7 @@ nextkbd			next68k
 nfe			MI
 nhpib			hp300
 ni			MI
+njata			MI
 njs			MI
 np			vax
 npx			i386
@@ -1036,6 +1052,7 @@ pps			MI
 ps			vax
 psh3lcd			hpcsh
 psh3tp			hpcsh
+psm			sparc64
 psycho			sparc64
 ptsc			acorn32
 puc			MI
@@ -1078,7 +1095,6 @@ rfc			MI
 rk			vax
 rl			vax
 rlc			vax
-rpckbd			acorn32
 rt			MI
 rtc			acorn26
 rtc			acorn32
@@ -1108,7 +1124,6 @@ sb			MI
 sbc			mac68k
 sbdsp			MI		Attribute
 sbi			vax
-sbic			acorn26		Attribute
 sbic			acorn32		Attribute
 sbic			amiga		Attribute
 sbic			amigappc	Attribute
@@ -1124,8 +1139,6 @@ sbus			playstation2
 sc			MI
 sc			newsmips
 sc			vax
-scc			alpha
-scc			pmax
 scd			MI
 sci			amiga		Attribute
 sci			amigappc	Attribute
@@ -1141,6 +1154,8 @@ sd			MI
 se			MI
 sea			MI
 sebuf			sun3
+sec			MI
+sed			hpcarm
 seeq8005		MI		Attribute
 ser			amiga
 ser			amigappc
@@ -1188,6 +1203,7 @@ sparcvme		sparc
 spc			MI
 spckbd			shark		Attribute
 spd			playstation2
+spi			MI
 spic			MI
 spif			sparc
 spif			sparc64
@@ -1237,11 +1253,9 @@ tlp			MI
 tlphy			MI
 tlsb			alpha
 tlsbmem			alpha
+tmp121temp		MI
 tms320av110		MI		Attribute
 tod			sun2
-todclock		cats
-todclock		netwinder
-todservice		cats		Attribute
 token			MI		Attribute
 topcat			hp300
 tpcalib			hpcarm		Attribute
@@ -1289,7 +1303,6 @@ uba			MI
 ubsa			MI
 ubsec			MI
 ubt			MI
-ubtbcmfw		MI
 ucb			hpcmips
 ucbif			hpcmips
 ucbio			hpcmips
@@ -1359,7 +1372,6 @@ viaide			MI
 viapm			MI
 vidc			acorn32
 vidcaudio		acorn32
-vidcconsole		acorn32
 vidcvideo		acorn32
 videomode		MI		Attribute
 vme			MI
@@ -1387,12 +1399,12 @@ vs			vax
 vs			x68k
 vsbus			vax
 vsms			alpha
-vt			acorn32
 vt			i386
 vtpbc			algor
 vz			vax
 wavelan			MI		Attribute
 wd			MI
+wd33c93			MI		Attribute
 wdc			MI
 wdog			evbppc
 wdog			evbsh3

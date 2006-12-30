@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.3.2.1 2006/06/21 15:05:04 yamt Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.3.2.2 2006/12/30 20:48:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -83,8 +83,8 @@ struct iwi_tx_data {
 struct iwi_tx_ring {
 	bus_dmamap_t		desc_map;
 	bus_dma_segment_t	desc_seg;
-	bus_addr_t		csr_ridx;
-	bus_addr_t		csr_widx;
+	bus_size_t		csr_ridx;
+	bus_size_t		csr_widx;
 	struct iwi_tx_desc	*desc;
 	struct iwi_tx_data	*data;
 	int			count;
@@ -121,10 +121,12 @@ struct iwi_softc {
 	uint32_t		sc_unr;
 
 	struct iwi_firmware	fw;
+	const char		*sc_fwname;
+	char			*sc_blob;
+
 	uint32_t		flags;
 #define IWI_FLAG_FW_CACHED	(1 << 0)
 #define IWI_FLAG_FW_INITED	(1 << 1)
-#define IWI_FLAG_FW_WARNED	(1 << 2)
 #define IWI_FLAG_SCANNING	(1 << 3)
 
 	bus_dma_tag_t		sc_dmat;
@@ -145,6 +147,8 @@ struct iwi_softc {
 	void			*sc_sdhook;	/* shutdown hook */
 	void			*sc_powerhook;	/* power management hook */
 	struct pci_conf_state	sc_pciconf;
+
+	struct sysctllog	*sc_sysctllog;
 
 	int			antenna;
 	int			dwelltime;
@@ -174,7 +178,5 @@ struct iwi_softc {
 
 #define	sc_if	sc_ec.ec_if
 
-#define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
-#define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)
 #define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
 #define SIOCGTABLE0	_IOWR('i', 140, struct ifreq)

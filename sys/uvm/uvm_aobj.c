@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.68.2.1 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.68.2.2 2006/12/30 20:51:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.68.2.1 2006/06/21 15:12:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.68.2.2 2006/12/30 20:51:05 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -155,7 +155,7 @@ POOL_INIT(uao_swhash_elt_pool, sizeof(struct uao_swhash_elt), 0, 0, 0,
 
 struct uvm_aobj {
 	struct uvm_object u_obj; /* has: lock, pgops, memq, #pages, #refs */
-	int u_pages;		 /* number of pages in entire object */
+	pgoff_t u_pages;	 /* number of pages in entire object */
 	int u_flags;		 /* the flags (see uvm_aobj.h) */
 	int *u_swslots;		 /* array of offset->swapslot mappings */
 				 /*
@@ -460,7 +460,7 @@ uao_create(vsize_t size, int flags)
 {
 	static struct uvm_aobj kernel_object_store;
 	static int kobj_alloced = 0;
-	int pages = round_page(size) >> PAGE_SHIFT;
+	pgoff_t pages = round_page(size) >> PAGE_SHIFT;
 	struct uvm_aobj *aobj;
 	int refs;
 
@@ -825,8 +825,8 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		case PGO_CLEANIT|PGO_DEACTIVATE:
 		case PGO_DEACTIVATE:
  deactivate_it:
-			/* skip the page if it's loaned or wired */
-			if (pg->loan_count != 0 || pg->wire_count != 0)
+			/* skip the page if it's wired */
+			if (pg->wire_count != 0)
 				continue;
 
 			/* ...and deactivate the page. */
@@ -1437,11 +1437,11 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	uao_dropswap(&aobj->u_obj, pageidx);
 
 	/*
-	 * deactivate the page (to make sure it's on a page queue).
+	 * make sure it's on a page queue.
 	 */
 	uvm_lock_pageq();
 	if (pg->wire_count == 0)
-		uvm_pagedeactivate(pg);
+		uvm_pageenqueue(pg);
 	uvm_unlock_pageq();
 
 	if (pg->flags & PG_WANTED) {

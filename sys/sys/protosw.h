@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.35.12.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: protosw.h,v 1.35.12.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -95,7 +95,6 @@ struct protosw {
 			(void);
 	void	(*pr_drain)		/* flush any excess space possible */
 			(void);
-	int	*pr_wassysctl;		/* @@@ was sysctl for protocol, now obsolete */
 };
 
 #define	PR_SLOWHZ	2		/* 2 slow timeouts per second */
@@ -125,10 +124,10 @@ struct protosw {
  * where up is a (struct socket *), req is one of these requests,
  * m is a optional mbuf chain containing a message,
  * nam is an optional mbuf chain containing an address,
- * opt is a pointer to a socketopt structure or nil,
+ * opt is an optional mbuf containing socket options,
  * and p is a pointer to the process requesting the action (if any).
- * The protocol is responsible for disposal of the mbuf chain m,
- * the caller is responsible for any space held by nam and opt.
+ * The protocol is responsible for disposal of the mbuf chains m and opt,
+ * the caller is responsible for any space held by nam.
  * A non-zero return from usrreq gives an
  * UNIX error number which should be passed to higher level software.
  */

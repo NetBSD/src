@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.212.2.1 2006/06/21 15:06:14 yamt Exp $
+$NetBSD: pcmciadevs,v 1.212.2.2 2006/12/30 20:49:18 yamt Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -70,6 +70,7 @@ vendor DLINK_2			0x0143	D-Link
 vendor DLINK_3			0x0149	D-Link
 vendor LINKSYS			0x0149	Linksys Corporation
 vendor NETGEAR			0x0149	Netgear
+vendor IODATA3			0x0149	I-O DATA
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor SYMBOL2			0x014d	Symbol
 vendor LUCENT			0x0156	Lucent Technologies
@@ -95,6 +96,7 @@ vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor LINKSYS2			0x0274  The Linksys Group
 vendor IODATA2			0x028a	I-O DATA
 vendor ASUSTEK			0x02aa	Asustek Computer
+vendor SIEMENS			0x02ac	Siemens
 vendor MICROSOFT		0x02d2	Microsoft Corporation
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
@@ -212,6 +214,7 @@ product DUAL NE2000		0x0100 Dual NE2000
 
 /* Edimax Products */
 product EDIMAX	EP4000A		0x0100 Edimax EP4000A
+product EDIMAX	EP4101		0x1090 Edimax EP4101
 
 /* ELSA Products */
 product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
@@ -262,6 +265,7 @@ product INTERSIL ISL37300P	0x7300 Intersil ISL37300P
 product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
 product IODATA2 WNB11PCM	0x0002 I-O DATA WN-B11/PCM
 product IODATA2 WCF12		0x0673 Wireless CF Card
+product IODATA3 PCETTXR		0x0230 I-O DATA PCET/TX-R
 
 /* Kingston Products */
 product KINGSTON KNE2		0x0100 Kingston KNE-PC2 Ethernet
@@ -386,7 +390,11 @@ product SOCKET PAGECARD		0x0003 Socket Communications PageCard
 product SOCKET DUAL_RS232	0x0006 Socket Communications Dual RS232
 product SOCKET LP_ETHER		0x000d Socket Communications LP-E
 product SOCKET LP_ETHER_CF	0x0075 Socket Communications LP-E CF
+product SOCKET DUAL_RS232_A	0x00a1 Socket Communications Dual RS232_A
 product SOCKET LP_ETH_10_100_CF	0x0145 Socket Communications 10/100 Ethernet
+
+/* SpeedStream */
+product	SIEMENS	SS1021		0x0002	SpeedStream SS1021 WLAN
 
 /* Symbol */
 product	SYMBOL LA4100		0x0001	Symbol Spectrum24 LA4100 Series WLAN

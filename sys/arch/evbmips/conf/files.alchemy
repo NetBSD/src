@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.5.14.2 2006/06/21 14:51:02 yamt Exp $
+#	$NetBSD: files.alchemy,v 1.5.14.3 2006/12/30 20:45:51 yamt Exp $
 
 # Platform support - select just one, please
 defflag		opt_alchemy.h	ALCHEMY_GENERIC
@@ -20,13 +20,13 @@ file	arch/evbmips/alchemy/omsal400.c		alchemy_omsal400
 file	arch/evbmips/alchemy/pciide_machdep.c	pciide_common
 
 file	arch/mips/mips/bus_dma.c
-file	arch/evbmips/evbmips/clock.c
 file	arch/evbmips/evbmips/disksubr.c
 file	arch/evbmips/evbmips/interrupt.c
 file	arch/evbmips/evbmips/yamon.c
 
+file	arch/mips/mips/mips3_clock.c
+file	arch/mips/mips/mips3_clockintr.c
 file	arch/mips/mips/softintr.c
-
 
 # System bus
 device	mainbus { }
