@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.13 2006/07/03 01:21:50 mrg Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.14 2006/12/30 06:10:38 rumble Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -624,6 +624,8 @@ usage(void)
 	       "	sgivol [-qf] [-r vhfilename diskfilename] device\n"
 	       "	sgivol [-qf] [-w vhfilename diskfilename] device\n"
 	       "	sgivol [-qf] [-d vhfilename] device\n"
+	       "	sgivol [-qf] [-p partno partfirst partblocks "
+	       "parttype ] device\n"
 	       );
 	exit(0);
 }
