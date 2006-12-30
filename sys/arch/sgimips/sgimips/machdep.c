@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 2006/12/29 07:00:11 rumble Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105 2006/12/30 16:57:45 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2006/12/29 07:00:11 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 2006/12/30 16:57:45 rumble Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -760,10 +760,10 @@ void delay(unsigned long n)
 }
 
 /*
- * IP12 appears to be buggy and unable to support reliably support badaddr.
- * The problem is that approximately 1.8% of the time a false negative is
- * generated and we stomp on invalid registers. Testing shows that neither
- * false negatives, nor consecutive false positives appear to occur.
+ * IP12 appears to be buggy and unable to reliably support badaddr.
+ * Approximately 1.8% of the time a false negative (bad address said to
+ * be good) is generated and we stomp on invalid registers. Testing has
+ * not shown false positives, nor consecutive false negatives to occur.
  */
 static int
 badaddr_workaround(void *addr, size_t size)
