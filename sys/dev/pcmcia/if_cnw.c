@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.31.4.1 2006/06/21 15:06:14 yamt Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.31.4.2 2006/12/30 20:49:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.31.4.1 2006/06/21 15:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.31.4.2 2006/12/30 20:49:17 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -479,10 +479,8 @@ cnw_disable(sc)
  * Match the hardware we handle.
  */
 int
-cnw_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+cnw_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -500,9 +498,7 @@ cnw_match(parent, match, aux)
  * Attach the card.
  */
 void
-cnw_attach(parent, self, aux)
-	struct device  *parent, *self;
-	void           *aux;
+cnw_attach(struct device  *parent, struct device *self, void *aux)
 {
 	struct cnw_softc *sc = (void *) self;
 	struct pcmcia_attach_args *pa = aux;
@@ -667,7 +663,7 @@ cnw_start(ifp)
 		if (lif == 0) {
 #ifdef CNW_DEBUG
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-				printf("%s: link integrity %d\n", lif);
+				printf("%s: link integrity %d\n", ifp->if_xname, lif);
 #endif
 			break;
 		}
@@ -833,7 +829,7 @@ cnw_read(sc)
 				    read16(sc, buffer + 4);
 #ifdef CNW_DEBUG
 				if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-					printf("%s:   %d bytes @0x%x+0x%x\n",
+					printf("%s:   %d bytes @0x%x+0x%lx\n",
 					    sc->sc_dev.dv_xname, bufbytes,
 					    buffer, bufptr - buffer -
 					    sc->sc_memoff);
@@ -1036,7 +1032,7 @@ cnw_ioctl(ifp, cmd, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
-	struct proc *p = curproc;	/*XXX*/
+	struct lwp *l = curlwp;	/*XXX*/
 
 	s = splnet();
 
@@ -1097,21 +1093,24 @@ cnw_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSCNWDOMAIN:
-		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (error)
 			break;
 		error = cnw_setdomain(sc, ifr->ifr_domain);
 		break;
 
 	case SIOCSCNWKEY:
-		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (error)
 			break;
 		error = cnw_setkey(sc, ifr->ifr_key);
 		break;
 
 	case SIOCGCNWSTATUS:
-		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		error = kauth_authorize_generic(l->l_cred,
+		     KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 		if (error)
 			break;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
@@ -1211,9 +1210,7 @@ cnw_activate(self, act)
 }
 
 int
-cnw_detach(self, flags)
-	struct device *self;
-	int flags;
+cnw_detach(struct device *self, int flags)
 {
 	struct cnw_softc *sc = (struct cnw_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;

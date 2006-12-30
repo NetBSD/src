@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.36.4.1 2006/06/21 15:02:46 yamt Exp $	*/
+/*	$NetBSD: eisa.c,v 1.36.4.2 2006/12/30 20:47:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.36.4.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.36.4.2 2006/12/30 20:47:58 yamt Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -65,7 +65,8 @@ static int	eisaprint(void *, const char *);
 static void	eisa_devinfo(const char *, char *, size_t);
 
 static int
-eisamatch(struct device *parent, struct cfdata *cf, void *aux)
+eisamatch(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 	/* XXX check other indicators */
 

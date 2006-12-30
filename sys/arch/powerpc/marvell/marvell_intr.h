@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.7.12.1 2006/06/21 14:55:03 yamt Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.7.12.2 2006/12/30 20:46:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -463,7 +463,6 @@ struct intrhand;
 extern struct intrhand *softnet_handlers[];
 #define	schednetisr(an_isr)	softintr_schedule(softnet_handlers[(an_isr)])
 
-#define __HAVE_GENERIC_SOFT_INTERRUPTS	/* should be in <machine/types.h> */
 void *softintr_establish(int level, void (*fun)(void *), void *arg);
 void softintr_disestablish(void *cookie);
 void softintr_schedule(void *cookie);
@@ -474,7 +473,24 @@ void softintr_schedule(void *cookie);
  */
 #define	spl0()		spllower(IPL_NONE)
 
-#define	splraiseipl(x)	splraise(x)
+typedef int ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return splraise(icookie._ipl);
+}
 
 #include <sys/spl.h>
 

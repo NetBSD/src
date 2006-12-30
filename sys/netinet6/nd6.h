@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.39.4.1 2006/06/21 15:11:09 yamt Exp $	*/
+/*	$NetBSD: nd6.h,v 1.39.4.2 2006/12/30 20:50:39 yamt Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -285,8 +285,6 @@ struct nd_prefix {
 	int	ndpr_refcnt;	/* reference couter from addresses */
 };
 
-#define ndpr_next		ndpr_entry.le_next
-
 #define ndpr_raf		ndpr_flags
 #define ndpr_raf_onlink		ndpr_flags.onlink
 #define ndpr_raf_auto		ndpr_flags.autonomous
@@ -320,7 +318,6 @@ struct inet6_ndpr_msghdr {
 
 struct nd_pfxrouter {
 	LIST_ENTRY(nd_pfxrouter) pfr_entry;
-#define pfr_next pfr_entry.le_next
 	struct nd_defrouter *router;
 };
 

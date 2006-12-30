@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.23 2003/08/07 16:32:27 agc Exp $ */
+/* $NetBSD: loadfile.c,v 1.23.16.1 2006/12/30 20:50:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -149,8 +149,14 @@ fdloadfile(fd, marks, flags)
 	/* Read the exec header. */
 	if (lseek(fd, 0, SEEK_SET) == (off_t)-1)
 		goto err;
-	if ((nr = read(fd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
-		WARN(("read header"));
+	nr = read(fd, &hdr, sizeof(hdr));
+	if (nr == -1) {
+		WARN(("read header failed"));
+		goto err;
+	}
+	if (nr != sizeof(hdr)) {
+		WARN(("read header short"));
+		errno = EFTYPE;
 		goto err;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: adosglue.h,v 1.6 2001/02/26 16:07:19 is Exp $	*/
+/*	$NetBSD: adosglue.h,v 1.6.40.1 2006/12/30 20:45:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,14 +38,15 @@
  * disklabel.h (for DOST_DOS it will be the version number)
  */
 #define DOST_XXXBSD	0x42534400	/* Old type back compat*/
-#define DOST_NBR	0x4e425200	/* 'NBRx' Netbsd root partition */
-#define DOST_NBS	0x4e425300	/* 'NBS0' Netbsd swap partition */
-#define DOST_NBU	0x4e425500	/* 'NBUx' Netbsd user partition */
+#define DOST_NBR	0x4e425200	/* 'NBRx' NetBSD root partition */
+#define DOST_NBS	0x4e425300	/* 'NBS0' NetBSD swap partition */
+#define DOST_NBU	0x4e425500	/* 'NBUx' NetBSD user partition */
 #define DOST_DOS	0x444f5300	/* 'DOSx' AmigaDos partition */
 #define DOST_AMIX	0x554e4900	/* 'UNIx' AmigaDos partition */
 #define DOST_MUFS	0x6d754600	/* 'muFx' AmigaDos partition (muFS) */
 #define DOST_EXT2	0x4c4e5800	/* 'LNX0' Linux fs partition (ext2fs) */
 #define DOST_LNXSWP	0x53575000	/* 'SWP0' Linux swap partition */
+#define DOST_RAID	0x52414900	/* 'RAID' Raidframe partition */
 
 struct adostype {
 	u_char archtype;	/* see ADT_xxx below */
@@ -60,6 +61,7 @@ struct adostype {
 #define ADT_NETBSDUSER	4
 #define ADT_AMIX	5
 #define ADT_EXT2	6
+#define ADT_RAID	7
 
 #define ISFSARCH_NETBSD(adt) \
 	((adt).archtype >= ADT_NETBSDROOT && (adt).archtype <= ADT_NETBSDUSER)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.28.4.1 2006/06/21 15:09:37 yamt Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.28.4.2 2006/12/30 20:50:05 yamt Exp $	*/
 #include <sys/types.h> 	/* XXX to get __HAVE_TIMECOUNTER, remove
 			   after all ports are converted. */
 #ifdef __HAVE_TIMECOUNTER
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.28.4.1 2006/06/21 15:09:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.28.4.2 2006/12/30 20:50:05 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -240,24 +240,24 @@ sys_ntp_adjtime(l, v, retval)
 	struct sys_ntp_adjtime_args /* {
 		syscallarg(struct timex *) tp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct timex ntv;
 	int error = 0;
 
-	if ((error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv,
-			sizeof(ntv))) != 0)
+	error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv, sizeof(ntv));
+	if (error != 0)
 		return (error);
 
-	if (ntv.modes != 0 && (error = kauth_authorize_generic(p->p_cred,
-				KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if (ntv.modes != 0 && (error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_NTPADJTIME, NULL,
+	    NULL, NULL)) != 0)
 		return (error);
 
 	ntp_adjtime1(&ntv);
 
 	error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, tp), sizeof(ntv));
-	if (!error) {
+	if (!error)
 		*retval = ntp_timestatus();
-	}
+
 	return error;
 }
 
@@ -502,8 +502,9 @@ ntp_update_second(int64_t *adjustment, time_t *newsec)
 	else
 		time_status &= ~STA_PPSSIGNAL;
 #endif /* PPS_SYNC */
-
-#endif /* NTP */
+#else  /* !NTP */
+	L_CLR(time_adj);
+#endif /* !NTP */
 
 	/*
 	 * Apply any correction from adjtime(2).  If more than one second
@@ -903,7 +904,7 @@ hardpps(struct timespec *tsp,		/* time at PPS */
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.28.4.1 2006/06/21 15:09:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.28.4.2 2006/12/30 20:50:05 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -1009,25 +1010,23 @@ sys_ntp_adjtime(l, v, retval)
 	struct sys_ntp_adjtime_args /* {
 		syscallarg(struct timex *) tp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct timex ntv;
 	int error = 0;
 
-	if ((error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv,
-			sizeof(ntv))) != 0)
+	error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv, sizeof(ntv));
+	if (error != 0)
 		return (error);
 
-	if (ntv.modes != 0 && (error = kauth_authorize_generic(p->p_cred,
-				KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if (ntv.modes != 0 && (error = kauth_authorize_system(l->l_cred,
+	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_NTPADJTIME, NULL,
+	    NULL, NULL)) != 0)
 		return (error);
 
 	ntp_adjtime1(&ntv);
 
 	error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, tp), sizeof(ntv));
-
-	if (error == 0) {
+	if (error == 0)
 		*retval = ntp_timestatus();
-	}
 
 	return error;
 }
@@ -1146,10 +1145,7 @@ ntp_timestatus()
  * ntp_gettime() - NTP user application interface
  */
 int
-sys___ntp_gettime30(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys___ntp_gettime30(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___ntp_gettime30_args /* {
 		syscallarg(struct ntptimeval *) ntvp;
@@ -1171,10 +1167,7 @@ sys___ntp_gettime30(l, v, retval)
 
 #ifdef COMPAT_30
 int
-compat_30_sys_ntp_gettime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_30_sys_ntp_gettime(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_30_sys_ntp_gettime_args /* {
 		syscallarg(struct ntptimeval30 *) ontvp;
@@ -1237,10 +1230,7 @@ SYSCTL_SETUP(sysctl_kern_ntptime_setup, "sysctl kern.ntptime node setup")
 /* For some reason, raising SIGSYS (as sys_nosys would) is problematic. */
 
 int
-sys___ntp_gettime30(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys___ntp_gettime30(struct lwp *l, void *v, register_t *retval)
 {
 
 	return(ENOSYS);
@@ -1248,10 +1238,7 @@ sys___ntp_gettime30(l, v, retval)
 
 #ifdef COMPAT_30
 int
-compat_30_sys_ntp_gettime(l, v, retval)
- 	struct lwp *l;
- 	void *v;
- 	register_t *retval;
+compat_30_sys_ntp_gettime(struct lwp *l, void *v, register_t *retval)
 {
 
  	return(ENOSYS);

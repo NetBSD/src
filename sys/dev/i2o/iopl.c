@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.18.2.1 2006/06/21 15:02:51 yamt Exp $	*/
+/*	$NetBSD: iopl.c,v 1.18.2.2 2006/12/30 20:48:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,11 +46,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.18.2.1 2006/06/21 15:02:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.18.2.2 2006/12/30 20:48:00 yamt Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -79,10 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.18.2.1 2006/06/21 15:02:51 yamt Exp $");
 #include <net/bpf.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -1879,9 +1874,6 @@ iopl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, rv;
-#ifdef NS
-	struct ns_addr *ina;
-#endif
 
 	ifr = (struct ifreq *)data;
 	sc = ifp->if_softc;
@@ -1928,20 +1920,6 @@ iopl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				break;
 #endif /* INET */
 
-#if defined(NS)
-			case AF_NS:
-				ina = &(IA_SNS(ifa)->sns_addr);
-				if (ns_nullhost(*ina))
-					ina->x_host = *(union ns_host *)
-					    LLADDR(ifp->if_sadl);
-				else {
-					ifp->if_flags &= ~IFF_RUNNING;
-					memcpy(LLADDR(ifp->if_sadl),
-					    ina->x_host.c_host, 6);
-				}
-				iopl_init(ifp);
-				break;
-#endif /* NS */
 			default:
 				iopl_init(ifp);
 				break;

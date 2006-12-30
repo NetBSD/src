@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.181.2.1 2006/06/21 15:06:48 yamt Exp $ */
+/*	$NetBSD: st.c,v 1.181.2.2 2006/12/30 20:49:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.181.2.1 2006/06/21 15:06:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.181.2.2 2006/12/30 20:49:34 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -412,8 +412,7 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 		    (st->flags & ST_READONLY) ? "protected" : "enabled");
 	}
 
-	st->stats = iostat_alloc(IOSTAT_TAPE);
-	st->stats->io_name = st->sc_dev.dv_xname;
+	st->stats = iostat_alloc(IOSTAT_TAPE, parent, st->sc_dev.dv_xname);
 
 #if NRND > 0
 	rnd_attach_source(&st->rnd_source, st->sc_dev.dv_xname,
@@ -2399,7 +2398,8 @@ bad:			free(bf, M_TEMP);
 }
 
 static int
-stdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+stdump(dev_t dev, daddr_t blkno, caddr_t va,
+    size_t size)
 {
 
 	/* Not implemented. */

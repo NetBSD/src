@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.14.2.1 2006/06/21 14:50:33 yamt Exp $
+#	$NetBSD: TS7200,v 1.14.2.2 2006/12/30 20:45:49 yamt Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -58,11 +58,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -288,7 +285,7 @@ uhidev*	at uhub? port ? configuration ? interface ?
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices

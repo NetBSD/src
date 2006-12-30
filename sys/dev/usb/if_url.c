@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.17.2.1 2006/06/21 15:07:43 yamt Exp $	*/
+/*	$NetBSD: if_url.c,v 1.17.2.2 2006/12/30 20:49:38 yamt Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,10 +43,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.17.2.1 2006/06/21 15:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.17.2.2 2006/12/30 20:49:38 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -76,10 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.17.2.1 2006/06/21 15:07:43 yamt Exp $")
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
-#endif
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <dev/mii/mii.h>
@@ -734,7 +729,7 @@ url_openpipes(struct url_softc *sc)
 	err = usbd_open_pipe_intr(sc->sc_ctl_iface, sc->sc_intrin_no,
 				  USBD_EXCLUSIVE_USE, &sc->sc_pipe_intr, sc,
 				  &sc->sc_cdata.url_ibuf, URL_INTR_PKGLEN,
-				  url_intr, URL_INTR_INTERVAL);
+				  url_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		printf("%s: open intr pipe failed: %s\n",
 		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
@@ -933,7 +928,8 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 		printf("%s: url_send error=%s\n", USBDEVNAME(sc->sc_dev),
 		       usbd_errstr(err));
 		/* Stop the interface */
-		usb_add_task(sc->sc_udev, &sc->sc_stop_task);
+		usb_add_task(sc->sc_udev, &sc->sc_stop_task,
+		    USB_TASKQ_DRIVER);
 		return (EIO);
 	}
 
@@ -946,7 +942,8 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 }
 
 Static void
-url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+    usbd_status status)
 {
 	struct url_chain *c = priv;
 	struct url_softc *sc = c->url_sc;
@@ -1310,7 +1307,7 @@ url_tick(void *xsc)
 		return;
 
 	/* Perform periodic stuff in process context */
-	usb_add_task(sc->sc_udev, &sc->sc_tick_task);
+	usb_add_task(sc->sc_udev, &sc->sc_tick_task, USB_TASKQ_DRIVER);
 }
 
 Static void

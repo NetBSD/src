@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.28.2.1 2006/06/21 14:58:24 yamt Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.28.2.2 2006/12/30 20:47:31 yamt Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.28.2.1 2006/06/21 14:58:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.28.2.2 2006/12/30 20:47:31 yamt Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -108,7 +108,7 @@ dev_type_kqfilter(vc_nb_kqfilter);
 
 const struct cdevsw vcoda_cdevsw = {
 	vc_nb_open, vc_nb_close, vc_nb_read, vc_nb_write, vc_nb_ioctl,
-	nostop, notty, vc_nb_poll, nommap, vc_nb_kqfilter,
+	nostop, notty, vc_nb_poll, nommap, vc_nb_kqfilter, D_OTHER,
 };
 
 struct vmsg {
@@ -136,7 +136,8 @@ vcodaattach(int n)
  * These functions are written for NetBSD.
  */
 int
-vc_nb_open(dev_t dev, int flag, int mode, struct lwp *l /* NetBSD only */)
+vc_nb_open(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
     struct vcomm *vcp;
 
@@ -400,7 +401,8 @@ vc_nb_write(dev_t dev, struct uio *uiop, int flag)
 }
 
 int
-vc_nb_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+vc_nb_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+    struct lwp *l)
 {
     ENTRY;
 

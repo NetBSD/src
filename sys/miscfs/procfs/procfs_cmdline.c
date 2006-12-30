@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.19.4.1 2006/06/21 15:10:26 yamt Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.19.4.2 2006/12/30 20:50:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.19.4.1 2006/06/21 15:10:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.19.4.2 2006/12/30 20:50:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,11 +55,12 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.19.4.1 2006/06/21 15:10:26 yamt
  * code for returning process's command line arguments
  */
 int
-procfs_docmdline(curl, p, pfs, uio)
-	struct lwp *curl;
-	struct proc *p;
-	struct pfsnode *pfs;
-	struct uio *uio;
+procfs_docmdline(
+    struct lwp *curl,
+    struct proc *p,
+    struct pfsnode *pfs,
+    struct uio *uio
+)
 {
 	struct ps_strings pss;
 	int count, error;
@@ -84,7 +85,7 @@ procfs_docmdline(curl, p, pfs, uio)
 	 * ps(1) would display.
 	 */
 	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0) {
-		len = snprintf(arg, PAGE_SIZE, "(%s)", p->p_comm);
+		len = snprintf(arg, PAGE_SIZE, "(%s)", p->p_comm) + 1;
 		error = uiomove_frombuf(arg, len, uio);
 
 		free(arg, M_TEMP);
@@ -163,9 +164,6 @@ procfs_docmdline(curl, p, pfs, uio)
 			if (arg[i] == '\0')
 				count--;	/* one full string */
 		}
-
-		if (count == 0)
-			i--;		/* exclude the final NUL */
 
 		if (len + i > uio->uio_offset) {
 			/* Have data in this page, copy it out */

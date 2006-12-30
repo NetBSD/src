@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.33.2.1 2006/06/21 15:02:11 yamt Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.33.2.2 2006/12/30 20:47:49 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.33.2.1 2006/06/21 15:02:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.33.2.2 2006/12/30 20:47:49 yamt Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -80,14 +80,14 @@ static int	db_find_variable(const struct db_variable **);
 
 /* XXX must all be ints for sysctl. */
 const struct db_variable db_vars[] = {
-	{ "radix",	(void *)&db_radix,	db_rw_internal_variable },
-	{ "maxoff",	(void *)&db_maxoff,	db_rw_internal_variable },
-	{ "maxwidth",	(void *)&db_max_width,	db_rw_internal_variable },
-	{ "tabstops",	(void *)&db_tab_stop_width, db_rw_internal_variable },
-	{ "lines",	(void *)&db_max_line,	db_rw_internal_variable },
-	{ "onpanic",	(void *)&db_onpanic,	db_rw_internal_variable },
-	{ "fromconsole", (void *)&db_fromconsole, db_rw_internal_variable },
-	{ "tee_msgbuf",	(void *)&db_tee_msgbuf,	db_rw_internal_variable },
+	{ "radix",	(void *)&db_radix,	db_rw_internal_variable, NULL },
+	{ "maxoff",	(void *)&db_maxoff,	db_rw_internal_variable, NULL },
+	{ "maxwidth",	(void *)&db_max_width,	db_rw_internal_variable, NULL },
+	{ "tabstops",	(void *)&db_tab_stop_width, db_rw_internal_variable, NULL },
+	{ "lines",	(void *)&db_max_line,	db_rw_internal_variable, NULL },
+	{ "onpanic",	(void *)&db_onpanic,	db_rw_internal_variable, NULL },
+	{ "fromconsole", (void *)&db_fromconsole, db_rw_internal_variable, NULL },
+	{ "tee_msgbuf",	(void *)&db_tee_msgbuf,	db_rw_internal_variable, NULL },
 };
 const struct db_variable * const db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
 
@@ -252,7 +252,8 @@ db_write_variable(const struct db_variable *vp, db_expr_t *valuep)
 
 /*ARGSUSED*/
 void
-db_set_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_set_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
 {
 	db_expr_t	value;
 	db_expr_t	old_value;

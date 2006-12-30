@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.72 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: if_el.c,v 1.72.6.1 2006/12/30 20:48:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,10 +19,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.72 2005/02/04 02:10:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.72.6.1 2006/12/30 20:48:26 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -52,10 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.72 2005/02/04 02:10:40 perry Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -120,10 +115,8 @@ CFATTACH_DECL(el, sizeof(struct el_softc),
  * (XXX - cgd -- needs help)
  */
 int
-elprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+elprobe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -210,9 +203,7 @@ elprobe(parent, match, aux)
  * assume that the IRQ given is correct.
  */
 void
-elattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+elattach(struct device *parent, struct device *self, void *aux)
 {
 	struct el_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -713,23 +704,6 @@ elioctl(ifp, cmd, data)
 			elinit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
-				    ETHER_ADDR_LEN);
-			/* Set new address. */
-			elinit(sc);
-			break;
-		    }
 #endif
 		default:
 			elinit(sc);

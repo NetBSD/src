@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.20.2.1 2006/06/21 14:55:31 yamt Exp $
+#	$NetBSD: Makefile.sh3,v 1.20.2.2 2006/12/30 20:46:54 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -33,7 +33,6 @@ GENASSYM_CONF=	${SH3}/sh3/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-D${MACHINE}
-CWARNFLAGS+=	-Wno-parentheses
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 # pkgsrc/cross/sh* dies with -O2, use -O1 for now
 COPTS?=		-O1

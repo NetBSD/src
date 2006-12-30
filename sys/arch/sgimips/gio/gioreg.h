@@ -1,4 +1,4 @@
-/*	$NetBSD: gioreg.h,v 1.2 2003/12/15 05:26:56 lonewolf Exp $	*/
+/*	$NetBSD: gioreg.h,v 1.2.16.1 2006/12/30 20:46:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -32,8 +32,41 @@
 #ifndef _ARCH_SGIMIPS_GIO_GIOREG_H_
 #define _ARCH_SGIMIPS_GIO_GIOREG_H_
 
+/*
+ * The GIO Product Identification Word is the first word (1 or 4 bytes)
+ * in each GIO device's address space. It is the same format for GIO32,
+ * GIO32-bis, and GIO64 devices. The macros below extract the following
+ * fields:
+ *
+ * Bits:
+ *    0-6 Product ID Code
+ *	7 Product Identification Word size (0: 8 bits, 1: 32 bits)
+ *   8-15 Product Revision
+ *     16 GIO Interface Size (0: 32, 1: 64; NB: GIO64 devices may be 32)
+ *     17 Rom Present (1: present)
+ *  18-31 Manufacturer-specific Code
+ *
+ * The upper three bytes containing the Product Revision, GIO Interface
+ * Size, Rom Presence indicator, and Manufacturer-specific Code are only 
+ * valid if bit 7 is set in the Product ID Word. If it is not set, all
+ * values default to 0.
+ *
+ * If the Rom Present bit is set, the three words after the Product ID are
+ * reserved for three ROM registers:
+ *	Board Serial Number Register	(base_address + 0x4)
+ *	ROM Index Register		(base_address + 0x8)
+ *	ROM Read Register		(base_address + 0xc)
+ *
+ * The ROM Index Register is initialised by the CPU to 0 and incremented by
+ * 4 on each read from the ROM Read Register. The Board Serial Number
+ * Register contains a manufacturer-specific serial number.
+ */
+
 #define GIO_PRODUCT_32BIT_ID(x)		((x) & 0x80)
 #define GIO_PRODUCT_PRODUCTID(x)	((x) & 0x7f)
 #define GIO_PRODUCT_REVISION(x)		(((x) >> 8) & 0xff)
+#define GIO_PRODUCT_IS_64BIT(x)		(!!((x) & 0x8000))
+#define GIO_PRODUCT_HAS_ROM(x)		(!!((x) & 0x10000))
+#define GIO_PRODUCT_MANUCODE(x)		((x) >> 18)
 
 #endif

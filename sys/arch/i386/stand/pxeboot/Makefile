@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.12.1 2006/06/21 14:52:44 yamt Exp $
+#	$NetBSD: Makefile,v 1.7.12.2 2006/12/30 20:46:20 yamt Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -22,9 +22,9 @@ SRCS+= nfs.c
 .include <bsd.own.mk>
 
 .if ${MACHINE} == "amd64"
-LD+=  -m elf_i386
-AFLAGS+=   -m32
-LIBKERN_ARCH=i386
+LDFLAGS+=	-Wl,-m,elf_i386
+AFLAGS+=	-m32
+LIBKERN_ARCH=	i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .endif
 
@@ -57,6 +57,7 @@ CPPFLAGS+= -DSUPPORT_NFS
 #CPPFLAGS+= -DNFS_NOSYMLINK
 
 CPPFLAGS+= -DPASS_MEMMAP
+CPPFLAGS+= -DEPIA_HACK
 
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.29.2.1 2006/06/21 14:56:47 yamt Exp $ */
+/*	$NetBSD: db_trace.c,v 1.29.2.2 2006/12/30 20:47:05 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29.2.1 2006/06/21 14:56:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29.2.2 2006/12/30 20:47:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -42,11 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29.2.1 2006/06/21 14:56:47 yamt Exp $
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
-void db_dump_fpstate(db_expr_t, int, db_expr_t, const char *);
-void db_dump_window(db_expr_t, int, db_expr_t, const char *);
-void db_dump_stack(db_expr_t, int, db_expr_t, const char *);
-void db_dump_trap(db_expr_t, int, db_expr_t, const char *);
-void db_dump_ts(db_expr_t, int, db_expr_t, const char *);
 void db_print_window(uint64_t);
 
 #if 0
@@ -87,7 +82,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			struct lwp *l;
 			struct user *u;
 			(*pr)("trace: pid %d ", (int)addr);
-			p = pfind(addr);
+			p = p_find(addr, PFIND_LOCKED);
 			if (p == NULL) {
 				(*pr)("not found\n");
 				return;
@@ -337,7 +332,7 @@ db_dump_trap(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 	struct trapframe64 *tf;
 
 	/* Use our last trapframe? */
-	tf = &ddb_regs.ddb_tf;
+	tf = DDB_TF;
 	{
 		/* Or the user trapframe? */
 		register char c;
@@ -418,7 +413,7 @@ db_dump_fpstate(db_expr_t addr, int have_addr, db_expr_t count, const char *modi
 	struct fpstate64 *fpstate;
 
 	/* Use our last trapframe? */
-	fpstate = &ddb_regs.ddb_fpstate;
+	fpstate = DDB_FP;
 	/* Or an arbitrary trapframe */
 	if (have_addr)
 		fpstate = (struct fpstate64 *)addr;
@@ -507,8 +502,8 @@ db_dump_ts(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 	int			i, tl;
 
 	/* Use our last trapframe? */
-	ts = &ddb_regs.ddb_ts[0];
-	tl = ddb_regs.ddb_tl;
+	ts = &DDB_REGS->db_ts[0];
+	tl = DDB_REGS->db_tl;
 	for (i=0; i<tl; i++) {
 		printf("%d tt=%lx tstate=%lx tpc=%p tnpc=%p\n",
 		       i+1, (long)ts[i].tt, (u_long)ts[i].tstate,
@@ -516,5 +511,3 @@ db_dump_ts(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 	}
 
 }
-
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.20.2.1 2006/06/21 15:05:07 yamt Exp $	*/
+/*	$NetBSD: trm.c,v 1.20.2.2 2006/12/30 20:48:48 yamt Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.20.2.1 2006/06/21 15:05:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.20.2.2 2006/12/30 20:48:48 yamt Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -366,7 +366,8 @@ static const uint8_t trm_clock_period[] = {
 #define NPERIOD	(sizeof(trm_clock_period)/sizeof(trm_clock_period[0]))
 
 static int
-trm_probe(struct device *parent, struct cfdata *match, void *aux)
+trm_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

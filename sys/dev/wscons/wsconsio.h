@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.74.2.1 2006/06/21 15:08:12 yamt Exp $ */
+/* $NetBSD: wsconsio.h,v 1.74.2.2 2006/12/30 20:49:50 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -103,6 +103,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_MATRIXKP	19	/* Matrix keypads/buttons */
 #define	WSKBD_TYPE_EWS4800	20	/* NEC EWS4800 */
 #define	WSKBD_TYPE_BLUETOOTH	21	/* Bluetooth keyboard */
+#define	WSKBD_TYPE_ZAURUS	22	/* Sharp Zaurus keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -303,6 +304,8 @@ struct wsmouse_repeat {
 #define	WSDISPLAY_TYPE_STI	40	/* HP STI framebuffers */
 #define	WSDISPLAY_TYPE_HDLCD	41	/* Hitachi HD44780 based LCDs */
 #define	WSDISPLAY_TYPE_VESA	42	/* VESA BIOS framebuffer */
+#define	WSDISPLAY_TYPE_XILFB 	43 	/* Xilinx TFT cores */
+#define WSDISPLAY_TYPE_LIGHT	44	/* SGI Light (a.k.a. Entry/Starter) */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

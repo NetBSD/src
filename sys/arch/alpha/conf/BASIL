@@ -1,4 +1,4 @@
-# $NetBSD: BASIL,v 1.35.2.1 2006/06/21 14:48:15 yamt Exp $
+# $NetBSD: BASIL,v 1.35.2.2 2006/12/30 20:45:22 yamt Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"BASIL-$Revision: 1.35.2.1 $"
+#ident 		"BASIL-$Revision: 1.35.2.2 $"
 
 maxusers 64
 
@@ -76,6 +76,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -416,7 +417,7 @@ wsmouse*	at ums?
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
@@ -431,7 +432,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB Ethernet adapters

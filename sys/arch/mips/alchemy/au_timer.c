@@ -1,4 +1,4 @@
-/* $NetBSD: au_timer.c,v 1.3.4.1 2006/06/21 14:53:28 yamt Exp $ */
+/* $NetBSD: au_timer.c,v 1.3.4.2 2006/12/30 20:46:30 yamt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_timer.c,v 1.3.4.1 2006/06/21 14:53:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_timer.c,v 1.3.4.2 2006/12/30 20:46:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: au_timer.c,v 1.3.4.1 2006/06/21 14:53:28 yamt Exp $"
 #include <machine/bus.h>
 #include <mips/locore.h>
 
-#include <evbmips/evbmips/clockvar.h>
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 

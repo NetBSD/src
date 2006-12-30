@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_inline.h,v 1.6.4.1 2006/06/21 15:02:52 yamt Exp $	*/
+/*	$NetBSD: aic7xxx_inline.h,v 1.6.4.2 2006/12/30 20:48:01 yamt Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -296,8 +296,10 @@ ahc_fetch_transinfo(struct ahc_softc *ahc, char channel, u_int our_id,
 	 * in the initiator role to a given target are the same as
 	 * when the roles are reversed, we pretend we are the target.
 	 */
-	/*if (channel == 'B')
-	  our_id += 8;*/
+#ifdef notdef
+	if (channel == 'B')
+		our_id += 8;
+#endif
 	*tstate = ahc->enabled_targets[our_id];
 	return (&(*tstate)->transinfo[remote_id]);
 }

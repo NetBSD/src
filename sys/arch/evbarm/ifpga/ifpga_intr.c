@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.c,v 1.1.18.1 2006/06/21 14:50:46 yamt Exp $	*/
+/*	$NetBSD: ifpga_intr.c,v 1.1.18.2 2006/12/30 20:45:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -220,7 +220,7 @@ ifpga_intr_calculate_masks(void)
 	ifpga_imask[IPL_SOFTNET] |= ifpga_imask[IPL_SOFTCLOCK];
 
 	/*
-	 * Enforce a heirarchy that gives "slow" device (or devices with
+	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */

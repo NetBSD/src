@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.112.2.1 2006/06/21 15:02:54 yamt Exp $	*/
+/*	$NetBSD: elink3.c,v 1.112.2.2 2006/12/30 20:48:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,10 +69,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.112.2.1 2006/06/21 15:02:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.112.2.2 2006/12/30 20:48:02 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -2082,9 +2081,7 @@ ep_activate(self, act)
  *	Detach a elink3 interface.
  */
 int
-ep_detach(self, flags)
-	struct device *self;
-	int flags;
+ep_detach(struct device *self, int flags)
 {
 	struct ep_softc *sc = (struct ep_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -2188,4 +2185,30 @@ ep_statchg(self)
 		mctl &= ~MAC_CONTROL_FDX;
 	bus_space_write_2(iot, ioh, ELINK_W3_MAC_CONTROL, mctl);
 	GO_WINDOW(1);	/* back to operating window */
+}
+
+void
+ep_power(int why, void *arg)
+{
+	struct ep_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int s;
+
+	s = splnet();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		epstop(ifp, 1);
+		break;
+	case PWR_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			(void)epinit(ifp);
+		}
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
 }

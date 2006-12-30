@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.45.2.1 2006/06/21 14:55:47 yamt Exp $
+#	$NetBSD: GENERIC,v 1.45.2.2 2006/12/30 20:46:55 yamt Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.45.2.1 $"
+#ident		"GENERIC-$Revision: 1.45.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -59,7 +59,7 @@ file-system	PROCFS		# /proc
 #file-system	UNION		# union file system
 #file-system	CODA		# Coda file system (needs vcoda below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -81,11 +81,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
 				# if you enable the pseudo-device ipl).
@@ -151,7 +148,7 @@ options 	INSECURE		# disable kernel securelevel
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics, XXX temp required
 options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics, XXX temp required
@@ -257,7 +254,8 @@ pckbc*		at ofisa?
 pckbd*		at pckbc?
 pms*		at pckbc?
 vga*		at ofbus?
-wsdisplay*	at vga?
+igsfb*		at ofbus?
+wsdisplay*	at wsemuldisplaydev?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
@@ -285,6 +283,7 @@ joy*		at ofisa?
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter		# packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	sl			# CSLIP
 #pseudo-device	ppp			# PPP
 #pseudo-device	tun			# network tunneling over tty
@@ -314,7 +313,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1
@@ -329,4 +327,3 @@ pseudo-device	ksyms			# /dev/ksyms
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-

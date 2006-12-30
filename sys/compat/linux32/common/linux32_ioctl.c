@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.c,v 1.2.16.2 2006/06/21 14:59:27 yamt Exp $ */
+/*	$NetBSD: linux32_ioctl.c,v 1.2.16.3 2006/12/30 20:47:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.2.16.2 2006/06/21 14:59:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.2.16.3 2006/12/30 20:47:42 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,6 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.2.16.2 2006/06/21 14:59:27 yamt 
 #include <compat/linux32/common/linux32_sysctl.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
+extern int linux_ioctl_socket(struct lwp *, 
+    struct linux_sys_ioctl_args *, register_t *);
+
 int
 linux32_sys_ioctl(l, v, retval)
 	struct lwp *l;
@@ -69,13 +72,24 @@ linux32_sys_ioctl(l, v, retval)
 
 	group = LINUX32_IOCGROUP((int)SCARG(uap, com));
 
+#ifdef DEBUG_LINUX
 	printf("linux32_sys_ioctl(%d, 0x%x/\'%c\', %p)\n", SCARG(uap, fd),
 	    SCARG(uap, com), (char)group, NETBSD32PTR64(SCARG(uap, data)));
+#endif
 
 	switch(group) {
 	case 'T':
 		error = linux32_ioctl_termios(l, uap, retval);
 		break;
+	case 0x89: {
+		struct linux_sys_ioctl_args cup;
+
+		SCARG(&cup, fd) = SCARG(uap, fd);
+		SCARG(&cup, com) = (u_long)SCARG(uap, com);
+		SCARG(&cup, data) = (caddr_t)(u_long)SCARG(uap, data);
+		error = linux_ioctl_socket(l, &cup, retval);
+		break;
+	}
 	default:
 		printf("Not yet implemented ioctl group \'%c\'\n", group);
 		error = EINVAL;

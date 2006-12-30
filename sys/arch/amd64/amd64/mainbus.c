@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9.2.1 2006/06/21 14:48:18 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9.2.2 2006/12/30 20:45:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9.2.1 2006/06/21 14:48:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9.2.2 2006/12/30 20:45:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9.2.1 2006/06/21 14:48:18 yamt Exp $")
 #include "isadma.h"
 #include "acpi.h"
 
-#include "opt_mpacpi.h"
+#include "opt_acpi.h"
 #include "opt_mpbios.h"
 
 #include <machine/cpuvar.h>
@@ -99,7 +99,7 @@ struct isabus_attach_args mba_iba = {
 };
 #endif
 
-#if defined(MPBIOS) || defined(MPACPI)
+#if defined(MPBIOS) || NACPI > 0
 struct mp_bus *mp_busses;
 int mp_nbus;
 struct mp_intr_map *mp_intrs;
@@ -147,6 +147,10 @@ mainbus_attach(parent, self, aux)
 	int mpbios_present = 0;
 #endif
 	int mpacpi_active = 0;
+	int numcpus = 0;
+#if NACPI > 0 || defined(MPBIOS)
+	int numioapics = 0;
+#endif
 
 	printf("\n");
 
@@ -159,25 +163,24 @@ mainbus_attach(parent, self, aux)
 #endif
 
 #if NACPI > 0
-	acpi_present = acpi_probe();
-#ifdef MPACPI
+	if (acpi_check(self, "acpibus"))
+		acpi_present = acpi_probe();
 	/*
 	 * First, see if the MADT contains CPUs, and possibly I/O APICs.
 	 * Building the interrupt routing structures can only
 	 * be done later (via a callback).
 	 */
 	if (acpi_present)
-		mpacpi_active = mpacpi_scan_apics(self);
-#endif
+		mpacpi_active = mpacpi_scan_apics(self, &numcpus, &numioapics);
 #endif
 
 	if (!mpacpi_active) {
 #ifdef MPBIOS
 		if (mpbios_present)
-			mpbios_scan(self);
+			mpbios_scan(self, &numcpus, &numioapics);
 		else
 #endif
-		{
+		if (numcpus == 0) {
 			struct cpu_attach_args caa;
                         
 			memset(&caa, 0, sizeof(caa));
@@ -223,7 +226,7 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_flags = pci_bus_flags();
 		mba.mba_pba.pba_bus = 0;
 		mba.mba_pba.pba_bridgetag = NULL;
-#if defined(MPACPI) && defined(MPACPI_SCANPCI)
+#if NACPI > 0 && defined(ACPI_SCANPCI)
 		if (mpacpi_active)
 			mpacpi_scan_pci(self, &mba.mba_pba, pcibusprint);
 		else
@@ -234,6 +237,11 @@ mainbus_attach(parent, self, aux)
 		else
 #endif
 		config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);
+
+#if NACPI > 0
+		if (mp_verbose)
+			acpi_pci_link_state();
+#endif
 
 	}
 #endif

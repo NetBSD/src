@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.115.2.1 2006/06/21 15:02:55 yamt Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.115.2.2 2006/12/30 20:48:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.115.2.1 2006/06/21 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.115.2.2 2006/12/30 20:48:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,6 +320,8 @@ ncr53c9x_detach(sc, flags)
 	int flags;
 {
 	int error;
+
+	callout_stop(&sc->sc_watchdog);
 
 	if (sc->sc_child) {
 		error = config_detach(sc->sc_child, flags);
@@ -792,9 +794,8 @@ ncr53c9x_select(sc, ecb)
 }
 
 void
-ncr53c9x_free_ecb(sc, ecb)
-	struct ncr53c9x_softc *sc;
-	struct ncr53c9x_ecb *ecb;
+ncr53c9x_free_ecb(struct ncr53c9x_softc *sc,
+    struct ncr53c9x_ecb *ecb)
 {
 	int s;
 
@@ -806,9 +807,7 @@ ncr53c9x_free_ecb(sc, ecb)
 }
 
 struct ncr53c9x_ecb *
-ncr53c9x_get_ecb(sc, flags)
-	struct ncr53c9x_softc *sc;
-	int flags;
+ncr53c9x_get_ecb(struct ncr53c9x_softc *sc, int flags)
 {
 	struct ncr53c9x_ecb *ecb;
 	int s;
@@ -1021,12 +1020,8 @@ ncr53c9x_poll(sc, xs, count)
 }
 
 int
-ncr53c9x_ioctl(chan, cmd, arg, flag, p)
-	struct scsipi_channel *chan;
-	u_long cmd;
-	caddr_t arg;
-	int flag;
-	struct proc *p;
+ncr53c9x_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t arg,
+    int flag, struct proc *p)
 {
 	struct ncr53c9x_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	int s, error = 0;
@@ -1147,10 +1142,11 @@ ncr53c9x_sched(sc)
 			sc->sc_nexus = ecb;
 			ncr53c9x_select(sc, ecb);
 			break;
-		} else
+		} else {
 			NCR_TRACE(("%d:%d busy\n",
 			    periph->periph_target,
 			    periph->periph_lun));
+		}
 	}
 }
 

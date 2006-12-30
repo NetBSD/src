@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.41.2.1 2006/06/21 15:02:12 yamt Exp $	*/
+/*	$NetBSD: md.c,v 1.41.2.2 2006/12/30 20:47:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.41.2.1 2006/06/21 15:02:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.41.2.2 2006/12/30 20:47:50 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -114,7 +114,7 @@ const struct cdevsw md_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-static struct dkdriver mddkdriver = { mdstrategy };
+static struct dkdriver mddkdriver = { mdstrategy, NULL };
 
 static int   ramdisk_ndevs;
 static void *ramdisk_devs[MD_MAX_UNITS];
@@ -159,7 +159,8 @@ mdattach(int n)
 }
 
 static void
-md_attach(struct device *parent, struct device *self, void *aux)
+md_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct md_softc *sc = (struct md_softc *)self;
 
@@ -409,7 +410,8 @@ mdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
  * Just allocate some kernel memory and return.
  */
 static int
-md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd, struct lwp *l)
+md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd,
+    struct lwp *l)
 {
 	vaddr_t addr;
 	vsize_t size;
@@ -434,7 +436,8 @@ md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd, struct lwp *l)
  * Set config, then become the I/O server for this unit.
  */
 static int
-md_ioctl_server(struct md_softc *sc, struct md_conf *umd, struct lwp *l)
+md_ioctl_server(struct md_softc *sc, struct md_conf *umd,
+    struct lwp *l)
 {
 	vaddr_t end;
 	int error;

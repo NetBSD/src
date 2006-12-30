@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.13.12.1 2006/06/21 15:10:24 yamt Exp $
+# $NetBSD: Makefile,v 1.13.12.2 2006/12/30 20:50:17 yamt Exp $
+
+.include <bsd.own.mk>
 
 SUBDIR+=	adosfs
 SUBDIR+=	cd9660
@@ -10,7 +12,12 @@ SUBDIR+=	msdosfs
 SUBDIR+=	ntfs
 SUBDIR+=	ptyfs
 SUBDIR+=	smbfs
+SUBDIR+=	tmpfs
 SUBDIR+=	ufs
 SUBDIR+=	udf
+
+.if (${MKPUFFS} != "no")
+SUBDIR+=	puffs
+.endif
 
 .include <bsd.subdir.mk>

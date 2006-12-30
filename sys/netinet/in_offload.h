@@ -1,7 +1,7 @@
-/*	$NetBSD: in_offload.h,v 1.1.4.1 2006/06/21 15:11:00 yamt Exp $	*/
+/*	$NetBSD: in_offload.h,v 1.1.4.2 2006/12/30 20:50:33 yamt Exp $	*/
 
 /*-
- * Copyright (c)2005 YAMAMOTO Takashi,
+ * Copyright (c)2005, 2006 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,8 @@
  */
 
 int tcp4_segment(struct mbuf *, int (*)(void *, struct mbuf *), void *);
+int ip_tso_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+    struct rtentry *);
 
 /*
  * offloading related sysctl variables.

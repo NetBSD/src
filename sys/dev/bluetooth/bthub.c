@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.1.2.2 2006/06/21 15:02:45 yamt Exp $	*/
+/*	$NetBSD: bthub.c,v 1.1.2.3 2006/12/30 20:47:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.1.2.2 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.1.2.3 2006/12/30 20:47:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -45,18 +45,17 @@ __KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.1.2.2 2006/06/21 15:02:45 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 
+#include <prop/proplib.h>
+
 #include <netbt/bluetooth.h>
-#include <netbt/l2cap.h>
 
 #include <dev/bluetooth/btdev.h>
 
+#include "ioconf.h"
+
 /*****************************************************************************
  *
- *	Bluetooth HUB pseudo-device
- *
- *	The Bluetooth hub is a conventent place to hang devices that are
- *	actually sitting on top of the protocol stack, and not necessarily
- *	attached to any particular bluetooth interface.
+ *	Bluetooth Device Hub
  */
 
 struct bthub_softc {
@@ -64,81 +63,36 @@ struct bthub_softc {
 	LIST_HEAD(,btdev)	sc_list;
 };
 
-/* our pseudo-device hook */
-static struct bthub_softc *hook;
-
-/* pseudo-device initialization */
-void	bthubattach(int);
-
 /* autoconf(9) glue */
 static int	bthub_match(struct device *, struct cfdata *, void *);
 static void	bthub_attach(struct device *, struct device *, void *);
 static int	bthub_detach(struct device *, int);
-static int	bthub_print(void *, const char *);
 
 CFATTACH_DECL(bthub, sizeof(struct bthub_softc),
     bthub_match, bthub_attach, bthub_detach, NULL);
 
-/* pseudo-device control */
+/* control file */
 dev_type_ioctl(bthubioctl);
 
 const struct cdevsw bthub_cdevsw = {
 	nullopen, nullclose, noread, nowrite, bthubioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
-/*****************************************************************************
- *
- *	bthub init routine called at system boot
- *
- *	we take this opportunity to hang a real device on our hook
- *	so that we can operate like a proper parent to our children.
- */
-
-extern struct cfdriver bthub_cd;
-
-static struct cfdata bthub_cfdata = {
-	.cf_name =	"bthub",
-	.cf_atname =	"bthub",
-	.cf_unit =	DVUNIT_ANY,
-	.cf_fstate =	FSTATE_STAR,
-};
-
-void
-bthubattach(int num)
-{
-	int err;
-
-	err = config_cfattach_attach(bthub_cd.cd_name, &bthub_ca);
-	if (err) {
-		aprint_error("%s: unable to register cfattach (%d)\n",
-			bthub_cd.cd_name, err);
-
-		config_cfdriver_detach(&bthub_cd);
-		return;
-	}
-
-	hook = (struct bthub_softc *)config_attach_pseudo(&bthub_cfdata);
-	if (hook == NULL) {
-		aprint_error("%s: unable to attach bthub hook(%d)\n",
-			bthub_cd.cd_name, err);
-
-		config_cfattach_detach(bthub_cd.cd_name, &bthub_ca);
-		config_cfdriver_detach(&bthub_cd);
-		return;
-	}
-}
+/* bthub functions */
+static int	bthub_print(void *, const char *);
+static int	bthub_pioctl(dev_t, unsigned long, prop_dictionary_t, int, struct lwp *);
 
 /*****************************************************************************
  *
  *	bthub autoconf(9) routines
  *
- *	This is the real device hanging on our hook. Only the
- *	attach function will ever be called, I guess.
+ *	A Hub is attached to each Bluetooth Controller as it is enabled
  */
 
 static int
-bthub_match(struct device *self, struct cfdata *cfdata, void *arg)
+bthub_match(struct device *self, struct cfdata *cfdata,
+    void *arg)
 {
 
 	return 1;
@@ -148,98 +102,185 @@ static void
 bthub_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bthub_softc *sc = (struct bthub_softc *)self;
+	bdaddr_t *addr = aux;
+	prop_dictionary_t dict;
+	prop_object_t obj;
 
 	LIST_INIT(&sc->sc_list);
+
+	dict = device_properties(self);
+	obj = prop_data_create_data(addr, sizeof(*addr));
+	prop_dictionary_set(dict, BTDEVladdr, obj);
+	prop_object_release(obj);
+
+	aprint_verbose(" %s %2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x",
+			BTDEVladdr,
+			addr->b[5], addr->b[4], addr->b[3],
+			addr->b[2], addr->b[1], addr->b[0]);
+
+	aprint_normal("\n");
 }
 
 static int
 bthub_detach(struct device *self, int flags)
 {
 	struct bthub_softc *sc = (struct bthub_softc *)self;
-	struct btdev *btdev;
+	struct btdev *dev;
+	int err;
 
-	while ((btdev = LIST_FIRST(&sc->sc_list)) != NULL) {
-		LIST_REMOVE(btdev, sc_next);
-		config_detach(&btdev->sc_dev, flags);
+	while (!LIST_EMPTY(&sc->sc_list)) {
+		dev = LIST_FIRST(&sc->sc_list);
+		LIST_REMOVE(dev, sc_next);
+
+		err = config_detach((struct device *)dev, flags);
+		if (err && (flags & DETACH_FORCE) == 0) {
+			LIST_INSERT_HEAD(&sc->sc_list, dev, sc_next);
+			return err;
+		}
 	}
+
 	return 0;
 }
 
+
 /*****************************************************************************
  *
- *	bthub control device ioctl(2)
- *
- *	This is the method we use to control bluetooth devices,
- *	called from userland.
+ *	bthub access functions to control device
  */
 
 int
 bthubioctl(dev_t devno, unsigned long cmd, caddr_t data, int flag, struct lwp *l)
 {
-	struct btdev_attach_args *bda;
-	struct btdev *btdev;
-	bdaddr_t *bdaddr;
+	prop_dictionary_t dict;
+	int err;
 
-	if (hook == NULL)
-		return ENXIO;
-
-	switch (cmd) {
-	case BTDEV_ATTACH:	/* attach BTDEV */
-		bda = (struct btdev_attach_args *)data;
-
-		/*
-		 * validate our configuration
-		 */
-		if (bdaddr_any(&bda->bd_raddr)
-		    || bda->bd_type == 0)
-			return EINVAL;
-
-		LIST_FOREACH(btdev, &hook->sc_list, sc_next) {
-			if (bdaddr_same(&btdev->sc_addr, &bda->bd_raddr))
-				return EADDRINUSE;
+	switch(cmd) {
+	case BTDEV_ATTACH:
+	case BTDEV_DETACH:
+		/* load dictionary */
+		err = prop_dictionary_copyin_ioctl((const struct plistref *)data, cmd, &dict);
+		if (err == 0) {
+			err = bthub_pioctl(devno, cmd, dict, flag, l);
+			prop_object_release(dict);
 		}
-
-		btdev = (struct btdev *)config_found((struct device *)hook,
-						bda, bthub_print);
-		if (btdev == NULL)
-			return ENXIO;
-
-		bdaddr_copy(&btdev->sc_addr, &bda->bd_raddr);
-		LIST_INSERT_HEAD(&hook->sc_list, btdev, sc_next);
-		return 0;
-
-	case BTDEV_DETACH:	/* detach BTDEV */
-		bdaddr = (bdaddr_t *)data;
-
-		LIST_FOREACH(btdev, &hook->sc_list, sc_next) {
-			if (bdaddr_same(bdaddr, &btdev->sc_addr) == 0)
-				continue;
-
-			LIST_REMOVE(btdev, sc_next);
-			config_detach((struct device *)btdev, DETACH_FORCE);
-			return 0;
-		}
-		return ENXIO;
+		break;
 
 	default:
+		err = EPASSTHROUGH;
 		break;
 	}
 
-	return EPASSTHROUGH;
+	return err;
+}
+
+static int
+bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
+    int flag, struct lwp *l)
+{
+	struct bthub_softc *sc;
+	struct btdev *dev;
+	prop_data_t laddr, raddr;
+	prop_string_t service;
+	prop_dictionary_t prop;
+	prop_object_t obj;
+	int unit;
+
+	/* validate local address */
+	laddr = prop_dictionary_get(dict, BTDEVladdr);
+	if (prop_data_size(laddr) != sizeof(bdaddr_t))
+		return EINVAL;
+
+	/* locate the relevant bthub */
+	for (unit = 0 ; ; unit++) {
+		if (unit == bthub_cd.cd_ndevs)
+			return ENXIO;
+
+		sc = (struct bthub_softc *)bthub_cd.cd_devs[unit];
+		if (sc == NULL)
+			continue;
+		
+		prop = device_properties(&sc->sc_dev);
+		obj = prop_dictionary_get(prop, BTDEVladdr);
+		if (prop_data_equals(laddr, obj))
+			break;
+	}
+
+	/* validate remote address */
+	raddr = prop_dictionary_get(dict, BTDEVraddr);
+	if (prop_data_size(raddr) != sizeof(bdaddr_t)
+	    || bdaddr_any(prop_data_data_nocopy(raddr))) 
+		return EINVAL;
+
+	/* validate service name */
+	service = prop_dictionary_get(dict, BTDEVservice);
+	if (prop_object_type(service) != PROP_TYPE_STRING)
+		return EINVAL;
+
+	/* locate matching child device, if any */
+	LIST_FOREACH(dev, &sc->sc_list, sc_next) {
+		prop = device_properties(&dev->sc_dev);
+
+		obj = prop_dictionary_get(prop, BTDEVraddr);
+		if (!prop_object_equals(raddr, obj))
+			continue;
+
+		obj = prop_dictionary_get(prop, BTDEVservice);
+		if (!prop_object_equals(service, obj))
+			continue;
+
+		break;
+	}
+
+	switch (cmd) {
+	case BTDEV_ATTACH:	/* attach BTDEV */
+		if (dev != NULL) 
+			return EADDRINUSE;
+
+		dev = (struct btdev *)config_found((struct device *)sc,
+						dict, bthub_print);
+		if (dev == NULL) 
+			return ENXIO;
+
+		prop = device_properties(&dev->sc_dev);
+		prop_dictionary_set(prop, BTDEVladdr, laddr);
+		prop_dictionary_set(prop, BTDEVraddr, raddr);
+		prop_dictionary_set(prop, BTDEVservice, service);
+
+		LIST_INSERT_HEAD(&sc->sc_list, dev, sc_next);
+		break;
+
+	case BTDEV_DETACH:	/* detach BTDEV */
+		if (dev == NULL) 
+			return ENXIO;
+
+		LIST_REMOVE(dev, sc_next);
+		config_detach((struct device *)dev, DETACH_FORCE);
+		break;
+	}
+
+	return 0;
 }
 
 static int
 bthub_print(void *aux, const char *pnp)
 {
-	struct btdev_attach_args *bda = aux;
+	prop_dictionary_t dict = aux;
+	prop_object_t obj;
+	const bdaddr_t *raddr;
 
-	if (pnp != NULL)
-		aprint_normal("%s: ", pnp);
+	if (pnp != NULL) {
+		obj = prop_dictionary_get(dict, BTDEVtype);
+		aprint_normal("%s: %s '%s',", pnp, BTDEVtype,
+					prop_string_cstring_nocopy(obj));
+	}
 
-	aprint_verbose(" bdaddr %2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x",
-		bda->bd_raddr.b[5], bda->bd_raddr.b[4],
-		bda->bd_raddr.b[3], bda->bd_raddr.b[2],
-		bda->bd_raddr.b[1], bda->bd_raddr.b[0]);
+	obj = prop_dictionary_get(dict, BTDEVraddr);
+	raddr = prop_data_data_nocopy(obj);
+
+	aprint_verbose(" %s %2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x",
+			BTDEVraddr,
+			raddr->b[5], raddr->b[4], raddr->b[3],
+			raddr->b[2], raddr->b[1], raddr->b[0]);
 
 	return UNCONF;
 }

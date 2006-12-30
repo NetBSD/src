@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.1.18.2 2006/06/21 14:56:40 yamt Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.1.18.3 2006/12/30 20:47:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -49,8 +49,7 @@ static char *bi_next;
 static int bi_size;
 
 u_long
-bi_init(addr)
-	u_long addr;
+bi_init(u_long addr)
 {
 	struct btinfo_common *bi;
 	struct btinfo_magic bi_magic;
@@ -81,10 +80,7 @@ bi_init(addr)
 }
 
 void
-bi_add(new, type, size)
-	void *new;
-	int type;
-	size_t size;
+bi_add(void *new, int type, size_t size)
 {
 	struct btinfo_common *bi;
 

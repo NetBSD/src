@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: aicasm_gram.y,v 1.4 2005/02/27 00:27:23 perry Exp $	*/
+/*	$NetBSD: aicasm_gram.y,v 1.4.4.1 2006/12/30 20:48:35 yamt Exp $	*/
 
 /*
  * Parser for the Aic7xxx SCSI Host adapter sequencer assembler.
@@ -775,7 +775,7 @@ macro_arglist:
 |	macro_arglist ',' T_ARG
 	{
 		if ($1 == 0) {
-			stop("Comma without preceeding argument in arg list",
+			stop("Comma without preceding argument in arg list",
 			     EX_DATAERR);
 			/* NOTREACHED */
 		}

@@ -82,6 +82,8 @@
 #ifndef _PMAP_MACHINE_
 #define _PMAP_MACHINE_
 
+#include <sys/lock.h>
+
 paddr_t vtophys(vaddr_t);
 
 struct pv_entry;	/* Forward declaration. */

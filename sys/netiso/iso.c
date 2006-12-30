@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.35.12.1 2006/06/21 15:11:37 yamt Exp $	*/
+/*	$NetBSD: iso.c,v 1.35.12.2 2006/12/30 20:50:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.35.12.1 2006/06/21 15:11:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.35.12.2 2006/12/30 20:50:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -448,9 +448,7 @@ iso_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 	struct iso_ifaddr *ia = 0;
 	struct iso_aliasreq *ifra = (struct iso_aliasreq *) data;
 	int             error, hostIsNew, maskIsNew;
-	struct proc *p;
 
-	p = l ? l->l_proc : NULL;
 	/*
 	 * Find address for this interface, if it exists.
 	 */
@@ -477,9 +475,10 @@ iso_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 	case SIOCSIFNETMASK:
 	case SIOCSIFDSTADDR:
 #endif
-		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
-							 KAUTH_GENERIC_ISSUSER,
-							 &p->p_acflag)))
+		if (l == 0 || kauth_authorize_network(l->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL))
 			return (EPERM);
 
 		if (ifp == 0)

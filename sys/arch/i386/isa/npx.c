@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.107.6.1 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: npx.c,v 1.107.6.2 2006/12/30 20:46:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.107.6.1 2006/06/21 14:52:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.107.6.2 2006/12/30 20:46:11 yamt Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -201,6 +201,10 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	int status;
 	unsigned irqmask;
 
+	if (cpu_feature & CPUID_FPU) {
+		i386_fpu_exception = 1;
+		return NPX_CPUID;
+	}
 	save_eflags = read_eflags();
 	disable_intr();
 	save_idt_npxintr = idt[NRSVIDT + irq];
@@ -341,12 +345,11 @@ npxattach(struct npx_softc *sc)
  * IRQ13 exception handling makes exceptions even less precise than usual.
  */
 int
-npxintr(void *arg, struct intrframe iframe)
+npxintr(void *arg, struct intrframe *frame)
 {
 	struct cpu_info *ci = curcpu();
 	struct lwp *l = ci->ci_fpcurlwp;
 	union savefpu *addr;
-	struct intrframe *frame = &iframe;
 	struct npx_softc *sc;
 	ksiginfo_t ksi;
 

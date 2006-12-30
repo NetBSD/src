@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.75.2.1 2006/06/21 14:58:51 yamt Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.75.2.2 2006/12/30 20:47:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.75.2.1 2006/06/21 14:58:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.75.2.2 2006/12/30 20:47:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,10 +312,8 @@ ibcs2_sys_umount(l, v, retval)
 }
 
 int
-ibcs2_sys_mount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_mount(struct lwp *l, void *v,
+    register_t *retval)
 {
 #ifdef notyet
 	struct ibcs2_sys_mount_args /* {
@@ -799,10 +797,7 @@ ibcs2_sys_setgid(l, v, retval)
 }
 
 int
-xenix_sys_ftime(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+xenix_sys_ftime(struct lwp *l, void *v, register_t *retval)
 {
 	struct xenix_sys_ftime_args /* {
 		syscallarg(struct xenix_timeb *) tp;
@@ -979,10 +974,8 @@ ibcs2_sys_alarm(l, v, retval)
 }
 
 int
-ibcs2_sys_getmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_getmsg(struct lwp *l, void *v,
+    register_t *retval)
 {
 #ifdef notyet
 	struct ibcs2_sys_getmsg_args /* {
@@ -997,10 +990,8 @@ ibcs2_sys_getmsg(l, v, retval)
 }
 
 int
-ibcs2_sys_putmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_putmsg(struct lwp *l, void *v,
+    register_t *retval)
 {
 #ifdef notyet
 	struct ibcs2_sys_putmsg_args /* {
@@ -1193,22 +1184,18 @@ ibcs2_sys_pgrpsys(l, v, retval)
  */
 
 int
-ibcs2_sys_plock(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_plock(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_plock_args /* {
 		syscallarg(int) cmd;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 #define IBCS2_UNLOCK	0
 #define IBCS2_PROCLOCK	1
 #define IBCS2_TEXTLOCK	2
 #define IBCS2_DATALOCK	4
 
-
-        if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+        if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_acflag) != 0)
                 return EPERM;
 	switch(SCARG(uap, cmd)) {
 	case IBCS2_UNLOCK:
@@ -1221,17 +1208,13 @@ ibcs2_sys_plock(l, v, retval)
 }
 
 int
-ibcs2_sys_uadmin(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_uadmin(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_uadmin_args /* {
 		syscallarg(int) cmd;
 		syscallarg(int) func;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 
 #define SCO_A_REBOOT        1
@@ -1253,7 +1236,8 @@ ibcs2_sys_uadmin(l, v, retval)
 #define SCO_AD_GETCMAJ      1
 
 	/* XXX: is this the right place for this call? */
-	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
 		return (error);
 
 	switch(SCARG(uap, cmd)) {
@@ -1280,10 +1264,7 @@ ibcs2_sys_uadmin(l, v, retval)
 }
 
 int
-ibcs2_sys_sysfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_sysfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_sysfs_args /* {
 		syscallarg(int) cmd;
@@ -1605,10 +1586,8 @@ ibcs2_sys_memcntl(l, v, retval)
 }
 
 int
-ibcs2_sys_gettimeofday(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_gettimeofday(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct ibcs2_sys_gettimeofday_args /* {
 		syscallarg(struct timeval *) tp;
@@ -1641,10 +1620,7 @@ ibcs2_sys_settimeofday(l, v, retval)
 }
 
 int
-ibcs2_sys_scoinfo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ibcs2_sys_scoinfo(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_scoinfo_args /* {
 		syscallarg(struct scoutsname *) bp;

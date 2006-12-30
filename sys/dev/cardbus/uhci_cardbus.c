@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.3.6.2 2006/06/21 15:02:45 yamt Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.3.6.3 2006/12/30 20:47:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.3.6.2 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.3.6.3 2006/12/30 20:47:57 yamt Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -87,7 +87,8 @@ CFATTACH_DECL(uhci_cardbus, sizeof(struct uhci_cardbus_softc),
 #define cardbus_devinfo		pci_devinfo
 
 static int
-uhci_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
+uhci_cardbus_match(struct device *parent,
+    struct cfdata *match, void *aux)
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
@@ -100,7 +101,8 @@ uhci_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-uhci_cardbus_attach(struct device *parent, struct device *self, void *aux)
+uhci_cardbus_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct uhci_cardbus_softc *sc = device_private(self);
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;

@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.1.18.1 2006/06/21 14:50:47 yamt Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.1.18.2 2006/12/30 20:45:51 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.1.18.1 2006/06/21 14:50:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.1.18.2 2006/12/30 20:45:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,9 +199,11 @@ void lcd_attach( struct device *parent, struct device *self, void *aux )
 	}
 #else
 	{
-		struct pxa2x0_lcd_screen *screen = pxa2x0_lcd_new_screen( sc, 8 );
+		struct pxa2x0_lcd_screen *screen;
+		int error;
 
-		if( screen ){
+		error = pxa2x0_lcd_new_screen( sc, 8, &screen );
+		if( error == 0 ){
 			sc->active = screen;
 			pxa2x0_lcd_start_dma( sc, screen );
 		}

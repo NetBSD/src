@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.1.16.1 2006/06/21 15:09:11 yamt Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.1.16.2 2006/12/30 20:49:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -15,6 +15,11 @@
 # define _PROTO_NET_H_
 #endif
 #include <sys/param.h>
+#if defined(__NetBSD__)
+# if (NetBSD >= 199905) && !defined(IPFILTER_LKM) && defined(_KERNEL)
+#  include "opt_ipfilter.h"
+# endif
+#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -131,10 +136,11 @@ void ip_lookup_unload()
 /* involves just calling another function to handle the specifics of each   */
 /* command.                                                                 */
 /* ------------------------------------------------------------------------ */
-int ip_lookup_ioctl(data, cmd, mode)
-caddr_t data;
-ioctlcmd_t cmd;
-int mode;
+int ip_lookup_ioctl(
+caddr_t data,
+ioctlcmd_t cmd,
+int mode
+)
 {
 	int err;
 	SPL_INT(s);
@@ -496,7 +502,7 @@ caddr_t data;
 
 	if (err == 0) {
 		flush.iplf_count = num;
-		err = COPYOUT(&flush, data, sizeof(flush));
+		BCOPYOUT(&flush, data, sizeof(flush));
 	}
 	return err;
 }

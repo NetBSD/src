@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.9.4.2 2006/06/21 15:02:56 yamt Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.9.4.3 2006/12/30 20:48:03 yamt Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.9.4.2 2006/06/21 15:02:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.9.4.3 2006/12/30 20:48:03 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -147,7 +147,9 @@ static void	rt2661_set_chan(struct rt2661_softc *,
 static void	rt2661_set_bssid(struct rt2661_softc *, const uint8_t *);
 static void	rt2661_set_macaddr(struct rt2661_softc *, const uint8_t *);
 static void	rt2661_update_promisc(struct rt2661_softc *);
-static int	rt2661_wme_update(struct ieee80211com *) __unused;
+#if 0
+static int	rt2661_wme_update(struct ieee80211com *);
+#endif
 
 static void	rt2661_update_slot(struct ifnet *);
 static const char *
@@ -2427,6 +2429,7 @@ rt2661_update_promisc(struct rt2661_softc *sc)
 	    "entering" : "leaving"));
 }
 
+#if 0
 /*
  * Update QoS (802.11e) settings for each h/w Tx ring.
  */
@@ -2472,6 +2475,7 @@ rt2661_wme_update(struct ieee80211com *ic)
 
 	return 0;
 }
+#endif
 
 static void
 rt2661_update_slot(struct ifnet *ifp)
@@ -2670,6 +2674,7 @@ rt2661_init(struct ifnet *ifp)
 		if (!(ucode = firmware_malloc(size))) {
 			printf("%s: could not alloc microcode memory\n",
 			    sc->sc_dev.dv_xname);
+			firmware_close(fh);
 			rt2661_stop(ifp, 1);
 			return ENOMEM;
 		}
@@ -2678,6 +2683,7 @@ rt2661_init(struct ifnet *ifp)
 			printf("%s: could not read microcode %s\n",
 			    sc->sc_dev.dv_xname, name);
 			firmware_free(ucode, 0);
+			firmware_close(fh);
 			rt2661_stop(ifp, 1);
 			return EIO;
 		}
@@ -2686,6 +2692,7 @@ rt2661_init(struct ifnet *ifp)
 			printf("%s: could not load 8051 microcode\n",
 			    sc->sc_dev.dv_xname);
 			firmware_free(ucode, 0);
+			firmware_close(fh);
 			rt2661_stop(ifp, 1);
 			return EIO;
 		}

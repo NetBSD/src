@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.27.2.1 2006/06/21 15:05:07 yamt Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.27.2.2 2006/12/30 20:48:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.27.2.1 2006/06/21 15:05:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.27.2.2 2006/12/30 20:48:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,8 @@ vga_pci_lookup_quirks(struct pci_attach_args *pa)
 }
 
 static int
-vga_pci_match(struct device *parent, struct cfdata *match, void *aux)
+vga_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	int potential;
@@ -217,7 +218,8 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 
 int
 vga_pci_cnattach(bus_space_tag_t iot, bus_space_tag_t memt,
-    pci_chipset_tag_t pc, int bus, int device, int function)
+    pci_chipset_tag_t pc, int bus, int device,
+    int function)
 {
 
 	return (vga_cnattach(iot, memt, WSDISPLAY_TYPE_PCIVGA, 0));

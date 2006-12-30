@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_audio.c,v 1.6 2003/03/11 23:11:20 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_audio.c,v 1.13.12.1 2006/06/21 15:06:14 yamt Exp $	*/
+/*	$NetBSD: bktr_audio.c,v 1.13.12.2 2006/12/30 20:49:17 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp$ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -71,7 +71,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.13.12.1 2006/06/21 15:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.13.12.2 2006/12/30 20:49:17 yamt Exp $");
 
 #include <sys/proc.h>
 #include <dev/ic/bt8xx.h>	/* NetBSD location of .h files */
@@ -136,7 +136,7 @@ set_audio(bktr_ptr_t bktr, int cmd)
 	else
 #endif /* AUDIOMUX_DISCOVER */
 
-	/* check for existance of audio MUXes */
+	/* check for existence of audio MUXes */
 	if (!bktr->card.audiomuxs[4])
 		return(-1);
 

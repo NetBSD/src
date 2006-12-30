@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54.2.1 2006/06/21 14:50:07 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54.2.2 2006/12/30 20:45:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.1 2006/06/21 14:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.2 2006/12/30 20:45:46 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.1 2006/06/21 14:50:07 yamt Exp $"
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/mips3_clock.h>
 #include <machine/bootinfo.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -85,8 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.1 2006/06/21 14:50:07 yamt Exp $"
 
 #include <dev/ic/i8259reg.h>
 #include <dev/isa/isareg.h>
-
-#include <cobalt/cobalt/clockvar.h>
 
 #include <cobalt/dev/gtreg.h>
 #define GT_BASE		0x14000000	/* XXX */
@@ -125,9 +124,6 @@ int	bootunit = -1;
 int	bootpart = -1;
 
 int cpuspeed;
-
-struct evcnt hardclock_ev =
-    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "cpu", "hardclock");
 
 u_int cobalt_id;
 static const char * const cobalt_model[] =
@@ -441,11 +437,11 @@ cpu_reboot(int howto, char *bootstr)
 #define ELCR_WRITE(reg, val)	\
     bus_space_write_1(icu_bst, elcr_bsh, (reg), (val))
 
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 u_int icu_imen;
@@ -673,54 +669,46 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_5) {
-		mips3_cp0_compare_write(mips3_cp0_count_read()); /* XXX */
-#if 0
+
+		/* call the common MIPS3 clock interrupt handler */ 
 		cf.pc = pc;
 		cf.sr = status;
 
-		statclock(&cf);
-#endif
+		if ((status & MIPS_INT_MASK) == MIPS_INT_MASK) {
+			if ((ipending & MIPS_INT_MASK &
+			     ~MIPS_INT_MASK_5) == 0) {
+				/*
+				 * If all interrupts were enabled and
+				 * there is no pending interrupts,
+				 * set MIPS_SR_INT_IE so that
+				 * spllowersoftclock(9) in hardclock(9)
+				 * works properly.
+				 */
+				_splset(MIPS_SR_INT_IE);
+			} else {
+				/*
+				 * If there are any pending interrputs,
+				 * clear MIPS_SR_INT_IE in cf.sr so that
+				 * spllowersoftclock(9) in hardclock(9) will
+				 * not happen.
+				 */
+				cf.sr &= ~MIPS_SR_INT_IE;
+			}
+		}
+		mips3_clockintr(&cf);
 
 		cause &= ~MIPS_INT_MASK_5;
 	}
 	_splset((status & MIPS_INT_MASK_5) | MIPS_SR_INT_IE);
 
-	if (ipending & MIPS_INT_MASK_0) {
-		/* GT64x11 timer0 for hardclock */
+	if (__predict_false(ipending & MIPS_INT_MASK_0)) {
+		/* GT64x11 timer0 */
 		volatile uint32_t *irq_src =
 		    (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_INTR_CAUSE);
 
 		if (__predict_true((*irq_src & T0EXP) != 0)) {
+			/* GT64x11 timer is no longer used for hardclock(9) */
 			*irq_src = 0;
-
-			cf.pc = pc;
-			cf.sr = status;
-
-			if ((status & MIPS_INT_MASK) == MIPS_INT_MASK) {
-				if ((ipending & MIPS_INT_MASK &
-				     ~MIPS_INT_MASK_0) == 0) {
-					/*
-					 * If all interrupts were enabled and
-					 * there is no pending interrupts,
-					 * set MIPS_SR_INT_IE so that
-					 * spllowerclock() in hardclock()
-					 * works properly.
-					 */
-#if 0					/* MIPS_SR_INT_IE is enabled above */
-					_splset(MIPS_SR_INT_IE);
-#endif
-				} else {
-					/*
-					 * If there are any pending interrputs,
-					 * clear MIPS_SR_INT_IE in cf.sr so that
-					 * spllowerclock() in hardclock() will
-					 * not happen.
-					 */
-					cf.sr &= ~MIPS_SR_INT_IE;
-				}
-			}
-			hardclock(&cf);
-			hardclock_ev.ev_count++;
 		}
 		cause &= ~MIPS_INT_MASK_0;
 	}
@@ -917,4 +905,25 @@ read_board_id(void)
 	*pcicfg_addr = 0;
 
 	return COBALT_BOARD_ID(reg); 
+}
+
+static const int ipl2spl_table[] = {
+	[IPL_NONE] = 0,
+	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] = MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1,
+	[IPL_SOFTSERIAL] = MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1,
+	[IPL_BIO] = SPLBIO,
+	[IPL_NET] = SPLNET,
+	[IPL_TTY] = SPLTTY,
+	[IPL_VM] = SPLCLOCK,
+	[IPL_CLOCK] = SPLCLOCK,
+	[IPL_STATCLOCK] = SPLCLOCK,
+	[IPL_HIGH] = MIPS_INT_MASK,
+};
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
 }

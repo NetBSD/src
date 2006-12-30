@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.8.1 2006/12/30 20:47:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2005/01/22 15:36:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.8.1 2006/12/30 20:47:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,38 +307,4 @@ clock_intr(struct clockframe cf)
 
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
-}
-
-
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  We do this by returning the current time
- * plus the amount of time since the last clock interrupt.
- *
- * Check that this time is no less than any previously-reported time,
- * which could happen around the time of a clock adjustment.  Just for
- * fun, we guarantee that the time will be greater than the value
- * obtained by a previous call.
- */
-void
-microtime(struct timeval *tvp)
-{
-	int s;
-	static struct timeval lasttime;
-
-	s = splhigh();
-	*tvp = time;
-	tvp->tv_usec++; 	/* XXX */
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
 }

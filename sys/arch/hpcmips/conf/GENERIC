@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.168.2.1 2006/06/21 14:51:49 yamt Exp $
+# $NetBSD: GENERIC,v 1.168.2.2 2006/12/30 20:46:03 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.168.2.1 $"
+#ident 		"GENERIC-$Revision: 1.168.2.2 $"
 
 maxusers	16
 
@@ -45,7 +45,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
-options 	SYSTRACE		# system call vetting via systrace(1)
+#options 	SYSTRACE		# system call vetting via systrace(1)
 options 	MSGBUFSIZE=8192		# dmesg buffer size
 
 ## UVM options.
@@ -89,7 +89,7 @@ file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
@@ -111,7 +111,6 @@ options 	INET6		# IPV6
 #options 	ISO		# OSI networking
 #options 	TPIP		# TPIP
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
@@ -533,7 +532,7 @@ com*	at pcmcia? function ?		# Modems and serial cards
 # PCMCIA SCSI interfaces
 aic*	at pcmcia? function ?
 esp*	at pcmcia? function ?		# NCR53c406 SCSI
-spc*	at pcmcia? function ?
+spc*	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # ATAPI bus support
 atapibus* at atapi?
@@ -563,7 +562,7 @@ wsmouse*	at ums? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
@@ -578,7 +577,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB audio
@@ -649,6 +647,7 @@ pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd			# virtual disk ick
@@ -690,7 +689,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

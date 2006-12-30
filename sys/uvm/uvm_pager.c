@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.68.2.1 2006/06/21 15:12:40 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.68.2.2 2006/12/30 20:51:05 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.68.2.1 2006/06/21 15:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.68.2.2 2006/12/30 20:51:05 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -275,10 +275,7 @@ uvm_aio_biodone(struct buf *bp)
 	/* reset b_iodone for when this is a single-buf i/o. */
 	bp->b_iodone = uvm_aio_aiodone;
 
-	simple_lock(&uvm.aiodoned_lock);	/* locks uvm.aio_done */
-	TAILQ_INSERT_TAIL(&uvm.aio_done, bp, b_freelist);
-	wakeup(&uvm.aiodoned);
-	simple_unlock(&uvm.aiodoned_lock);
+	workqueue_enqueue(uvm.aiodone_queue, &bp->b_work);
 }
 
 /*
@@ -412,10 +409,11 @@ uvm_aio_aiodone(struct buf *bp)
 			KASSERT(!write);
 			pg->flags &= ~PG_FAKE;
 #if defined(READAHEAD_STATS)
-			pg->flags |= PG_SPECULATIVE;
+			pg->pqflags |= PQ_READAHEAD;
 			uvm_ra_total.ev_count++;
 #endif /* defined(READAHEAD_STATS) */
-			uvm_pageactivate(pg);
+			KASSERT((pg->flags & PG_CLEAN) != 0);
+			uvm_pageenqueue(pg);
 			pmap_clear_modify(pg);
 		}
 

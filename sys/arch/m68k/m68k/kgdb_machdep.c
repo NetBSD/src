@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.3.16.1 2006/06/21 14:53:01 yamt Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.3.16.2 2006/12/30 20:46:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.3.16.1 2006/06/21 14:53:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.3.16.2 2006/12/30 20:46:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ kgdb_acc(vaddr_t va, size_t ulen)
 {
 
 	/* Just let the trap handler deal with it. */
-	return (1);
+	return 1;
 }
 
 /*

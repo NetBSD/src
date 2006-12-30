@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcvar.h,v 1.7 2003/12/29 06:33:57 sekiya Exp $	*/
+/*	$NetBSD: hpcvar.h,v 1.7.16.1 2006/12/30 20:46:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -59,10 +59,6 @@ struct hpc_values {
         u_int32_t       scsi1_dev;
         u_int32_t       scsi1_dmacfg;
         u_int32_t       scsi1_piocfg;
-        u_int32_t       dmactl_dir;
-        u_int32_t       dmactl_flush;
-        u_int32_t       dmactl_active;
-        u_int32_t       dmactl_reset;
         u_int32_t       enet_regs;
         u_int32_t       enet_regs_size;
         u_int32_t       enet_intdelay;
@@ -95,9 +91,8 @@ struct hpc_values {
         u_int32_t       scsi_max_xfer;
 	u_int32_t       scsi_dma_segs;
         u_int32_t       scsi_dma_segs_size;
-        u_int32_t       clk_freq;
-        u_int32_t       dma_datain_cmd;
-        u_int32_t       dma_dataout_cmd;
+        u_int32_t       scsi_dma_datain_cmd;
+        u_int32_t       scsi_dma_dataout_cmd;
         u_int32_t       scsi_dmactl_flush;
         u_int32_t       scsi_dmactl_active;
         u_int32_t       scsi_dmactl_reset;
@@ -114,6 +109,8 @@ struct hpc_attach_args {
 	bus_dma_tag_t		ha_dmat;	/* HPC DMA tag */
 
 	struct hpc_values	*hpc_regs;	/* HPC register definitions */
+
+	uint8_t			hpc_eeprom[256];/* HPC eeprom contents */
 };
 
 #endif	/* _ARCH_SGIMIPS_HPC_HPCVAR_H_ */

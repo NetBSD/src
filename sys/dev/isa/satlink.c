@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.25.4.1 2006/06/21 15:04:21 yamt Exp $	*/
+/*	$NetBSD: satlink.c,v 1.25.4.2 2006/12/30 20:48:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.25.4.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.25.4.2 2006/12/30 20:48:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,14 +118,12 @@ dev_type_kqfilter(satlinkkqfilter);
 
 const struct cdevsw satlink_cdevsw = {
 	satlinkopen, satlinkclose, satlinkread, nowrite, satlinkioctl,
-	nostop, notty, satlinkpoll, nommap, satlinkkqfilter,
+	nostop, notty, satlinkpoll, nommap, satlinkkqfilter, D_OTHER,
 };
 
 int
-satlinkprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+satlinkprobe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -168,9 +166,7 @@ satlinkprobe(parent, match, aux)
 }
 
 void
-satlinkattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+satlinkattach(struct device *parent, struct device *self, void *aux)
 {
 	struct satlink_softc *sc = (struct satlink_softc *)self;
 	struct isa_attach_args *ia = aux;
@@ -255,10 +251,8 @@ satlinkattach(parent, self, aux)
 }
 
 int
-satlinkopen(dev, flags, fmt, l)
-	dev_t dev;
-	int flags, fmt;
-	struct lwp *l;
+satlinkopen(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	struct satlink_softc *sc;
 	int error;
@@ -291,10 +285,8 @@ satlinkopen(dev, flags, fmt, l)
 }
 
 int
-satlinkclose(dev, flags, fmt, l)
-	dev_t dev;
-	int flags, fmt;
-	struct lwp *l;
+satlinkclose(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 	int s;
@@ -383,12 +375,8 @@ satlinkread(dev, uio, flags)
 }
 
 int
-satlinkioctl(dev, cmd, data, flags, l)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct lwp *l;
+satlinkioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
+    struct lwp *l)
 {
 	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 

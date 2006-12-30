@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.15.2.1 2006/06/21 15:02:11 yamt Exp $ */
+/* $NetBSD: dksubr.c,v 1.15.2.2 2006/12/30 20:47:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.15.2.1 2006/06/21 15:02:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.15.2.2 2006/12/30 20:47:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ dk_sc_init(struct dk_softc *dksc, void *osc, char *xname)
 /* ARGSUSED */
 int
 dk_open(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	   int flags, int fmt, struct lwp *l)
+    int flags, int fmt, struct lwp *l)
 {
 	struct	disklabel *lp = dksc->sc_dkdev.dk_label;
 	int	part = DISKPART(dev);
@@ -156,7 +156,7 @@ done:
 /* ARGSUSED */
 int
 dk_close(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	    int flags, int fmt, struct lwp *l)
+    int flags, int fmt, struct lwp *l)
 {
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
@@ -194,7 +194,7 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 	    di->di_dkname, dksc, bp));
 
 	if (!(dksc->sc_flags & DKF_INITED)) {
-		DPRINTF_FOLLOW(("dk_stragy: not inited\n"));
+		DPRINTF_FOLLOW(("dk_strategy: not inited\n"));
 		bp->b_error  = ENXIO;
 		bp->b_flags |= B_ERROR;
 		biodone(bp);
@@ -516,7 +516,7 @@ static volatile int	dk_dumping = 0;
 /* ARGSUSED */
 int
 dk_dump(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	   daddr_t blkno, caddr_t va, size_t size)
+    daddr_t blkno, caddr_t va, size_t size)
 {
 
 	/*
@@ -635,50 +635,49 @@ dk_makedisklabel(struct dk_intf *di, struct dk_softc *dksc)
  * set *vpp to the file's vnode.
  */
 int
-dk_lookup(path, l, vpp)
-	const char *path;
-	struct lwp *l;
-	struct vnode **vpp;	/* result */
+dk_lookup(const char *path, struct lwp *l, struct vnode **vpp)
 {
 	struct nameidata nd;
 	struct vnode *vp;
 	struct vattr va;
-	struct proc *p;
-	int error;
+	int     error;
 
-	p = l->l_proc;
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, path, l);
-	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
+	if (l == NULL)
+		return ESRCH;	/* Is ESRCH the best choice? */
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
+	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0) {
 		DPRINTF((DKDB_FOLLOW|DKDB_INIT),
 		    ("dk_lookup: vn_open error = %d\n", error));
-		return (error);
+		return error;
 	}
+
 	vp = nd.ni_vp;
-
-	if (vp->v_usecount > 1) {
-		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
-		return (EBUSY);
-	}
-
-	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0) {
 		DPRINTF((DKDB_FOLLOW|DKDB_INIT),
 		    ("dk_lookup: getattr error = %d\n", error));
-		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
-		return (error);
+		goto out;
 	}
 
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
-		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
-		return (ENOTBLK);
+		error = ENOTBLK;
+		goto out;
+	}
+
+	/* XXX: wedges have a writecount of 1; this is disgusting */
+	if (vp->v_usecount > 1 + (major(va.va_rdev) == 168)) {
+		error = EBUSY;
+		goto out;
 	}
 
 	IFDEBUG(DKDB_VNODE, vprint("dk_lookup: vnode info", vp));
 
 	VOP_UNLOCK(vp, 0);
 	*vpp = vp;
-	return (0);
+	return 0;
+out:
+	VOP_UNLOCK(vp, 0);
+	(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: qduser.h,v 1.3 2003/08/07 16:30:12 agc Exp $	*/
+/*	$NetBSD: qduser.h,v 1.3.16.1 2006/12/30 20:47:14 yamt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -87,10 +87,13 @@
 *
 ***************************************************************************/
 
+#ifndef _QDUSER_H_
+#define _QDUSER_H_
+
 #ifdef KERNEL
 #include "../include/qevent.h"		/* include event struct defs */
 #else
-#include <vax/uba/qevent.h>
+#include <vax/qevent.h>
 #endif
 
 /*---------------------
@@ -507,3 +510,4 @@ struct qdinput {
 #define T_BARREL_BUTTON T_LEFT_BUTTON		/* stylus buttons */
 #define T_TIP_BUTTON	T_FRONT_BUTTON
 
+#endif /* _QDUSER_H_ */

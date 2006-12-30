@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.3.12.2 2006/06/21 15:05:04 yamt Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.3.12.3 2006/12/30 20:48:45 yamt Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.3.12.2 2006/06/21 15:05:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.3.12.3 2006/12/30 20:48:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -165,7 +165,15 @@ const struct nfe_product {
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_LAN1 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_LAN2 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN1 },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN2 }
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN2 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN1 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN2 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN3 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN4 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN1 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN2 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN3 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN4 }
 };
 
 int
@@ -241,6 +249,10 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_NVIDIA_MCP51_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP51_LAN2:
+	case PCI_PRODUCT_NVIDIA_MCP61_LAN1:
+	case PCI_PRODUCT_NVIDIA_MCP61_LAN2:
+	case PCI_PRODUCT_NVIDIA_MCP61_LAN3:
+	case PCI_PRODUCT_NVIDIA_MCP61_LAN4:
 		sc->sc_flags |= NFE_40BIT_ADDR;
 		break;
 	case PCI_PRODUCT_NVIDIA_CK804_LAN1:
@@ -251,6 +263,10 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_NVIDIA_MCP55_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP55_LAN2:
+	case PCI_PRODUCT_NVIDIA_MCP65_LAN1:
+	case PCI_PRODUCT_NVIDIA_MCP65_LAN2:
+	case PCI_PRODUCT_NVIDIA_MCP65_LAN3:
+	case PCI_PRODUCT_NVIDIA_MCP65_LAN4:
 		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR | NFE_HW_CSUM |
 		    NFE_HW_VLAN;
 		break;
@@ -326,7 +342,8 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	callout_init(&sc->sc_tick_ch);
 	callout_setfunc(&sc->sc_tick_ch, nfe_tick, sc);
 
-	sc->sc_powerhook = powerhook_establish(nfe_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    nfe_power, sc);
 }
 
 void
@@ -931,10 +948,8 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 
 #if NVLAN > 0
 	/* setup h/w VLAN tagging */
-	if (sc->sc_ethercom.ec_nvlans) {
-		mtag = m_tag_find(m0, PACKET_TAG_VLAN, NULL);
+	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL)
 		vtag = NFE_TX_VTAG | VLAN_TAG_VALUE(mtag);
-	}
 #endif
 #ifdef NFE_CSUM
 	if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)

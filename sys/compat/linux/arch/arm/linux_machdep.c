@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.15.2.1 2006/06/21 14:59:01 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.15.2.2 2006/12/30 20:47:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15.2.1 2006/06/21 14:59:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15.2.2 2006/12/30 20:47:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,15 +227,8 @@ linux_sys_sigreturn(l, v, retval)
 	 * Make sure the processor mode has not been tampered with and
 	 * interrupts have not been disabled.
 	 */
-#ifdef __PROG32
-	if ((frame.sf_sc.sc_cpsr & PSR_MODE) != PSR_USR32_MODE ||
-	    (frame.sf_sc.sc_cpsr & (I32_bit | F32_bit)) != 0)
-		return (EINVAL);
-#else /* __PROG26 */
-	if ((frame.sf_sc.sc_pc & R15_MODE) != R15_MODE_USR ||
-	    (frame.sf_sc.sc_pc & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
+	if (!VALID_R15_PSR(frame.sf_sc.sc_pc, frame.sf_sc.sc_cpsr))
 		return EINVAL;
-#endif
 
 	/* Restore register context. */
 	tf = process_frame(l);

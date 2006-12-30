@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.33.2.1 2006/06/21 15:05:06 yamt Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.33.2.2 2006/12/30 20:48:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.33.2.1 2006/06/21 15:05:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.33.2.2 2006/12/30 20:48:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,8 @@ static struct ncr53c9x_glue pcscp_glue = {
 };
 
 static int
-pcscp_match(struct device *parent, struct cfdata *match, void *aux)
+pcscp_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.3.8.1 2006/06/21 15:04:46 yamt Exp $ */
+/* $NetBSD: ciphy.c,v 1.3.8.2 2006/12/30 20:48:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.3.8.1 2006/06/21 15:04:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.3.8.2 2006/12/30 20:48:38 yamt Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.3.8.1 2006/06/21 15:04:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <machine/bus.h>
@@ -96,7 +97,8 @@ static const struct mii_phydesc ciphys[] = {
 };
 
 static int
-ciphymatch(struct device *parent, struct cfdata *match, void *aux)
+ciphymatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -123,7 +125,7 @@ ciphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &ciphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 
@@ -272,7 +274,7 @@ setit:
 		/*
 		 * Only retry autonegotiation every 5 seconds.
 		 */
-		if (++sc->mii_ticks <= 5/*10*/)
+		if (++sc->mii_ticks <= MII_ANEGTICKS)
 			break;
 
 		sc->mii_ticks = 0;

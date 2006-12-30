@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.4 2005/07/04 01:20:37 augustss Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.4.2.1 2006/12/30 20:48:46 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.4 2005/07/04 01:20:37 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.4.2.1 2006/12/30 20:48:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,13 +63,17 @@ static const struct pciide_product_desc pciide_ixpide_products[] = {
 	{ PCI_PRODUCT_ATI_IXP_IDE_200, 0, ixpdesc, ixp_chip_map },
 	{ PCI_PRODUCT_ATI_IXP_IDE_300, 0, ixpdesc, ixp_chip_map },
 	{ PCI_PRODUCT_ATI_IXP_IDE_400, 0, ixpdesc, ixp_chip_map },
+	{ PCI_PRODUCT_ATI_IXP_IDE_600, 0, ixpdesc, ixp_chip_map },
 	{ PCI_PRODUCT_ATI_SB400_SATA_1, 0, ixpdesc, ixp_chip_map },
 	{ PCI_PRODUCT_ATI_SB400_SATA_2, 0, ixpdesc, ixp_chip_map },
+	{ PCI_PRODUCT_ATI_SB600_SATA_1, 0, ixpdesc, ixp_chip_map },
+	{ PCI_PRODUCT_ATI_SB600_SATA_2, 0, ixpdesc, ixp_chip_map },
 	{ 0, 			       0, NULL,	   NULL }
 };
 
 static int
-ixpide_match(struct device *parent, struct cfdata *cfdata, void *aux)
+ixpide_match(struct device *parent, struct cfdata *cfdata,
+    void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 

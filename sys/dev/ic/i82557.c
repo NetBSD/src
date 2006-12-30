@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.91.2.1 2006/06/21 15:02:54 yamt Exp $	*/
+/*	$NetBSD: i82557.c,v 1.91.2.2 2006/12/30 20:48:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.91.2.1 2006/06/21 15:02:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.91.2.2 2006/12/30 20:48:02 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -450,7 +450,8 @@ fxp_attach(struct fxp_softc *sc)
 	/*
   	 * Add suspend hook, for similar reasons..
 	 */
-	sc->sc_powerhook = powerhook_establish(fxp_power, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    fxp_power, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.2.1 2006/06/21 14:54:11 yamt Exp $
+#	$NetBSD: Makefile,v 1.20.2.2 2006/12/30 20:46:37 yamt Exp $
 
 NOMAN= # defined
 
@@ -17,7 +17,7 @@ BINMODE= 444
 
 S= ${.CURDIR}/../../../..
 
-LDFLAGS= -x -N -Ttext 3e0000 -e start
+LINKFLAGS= -x -N -Ttext 3e0000 -e start
 CFLAGS= -Os -Wall
 
 CPPFLAGS+= -D_STANDALONE # -DBOOT_DEBUG
@@ -44,7 +44,8 @@ m68k::
 .endif
 
 ${PROG}: ${OBJS} ${LIBS}
-	${LD} ${LDFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
+	${LD} ${LINKFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
 	-${SIZE} ${.TARGET}.sym
 	${OBJCOPY} -O binary ${.TARGET}.sym ${.TARGET}
 

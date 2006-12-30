@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.69.2.1 2006/06/21 15:02:45 yamt Exp $	*/
+/*	$NetBSD: atavar.h,v 1.69.2.2 2006/12/30 20:47:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -35,6 +35,8 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 
+#include <dev/ata/ataconf.h>
+
 /* XXX For scsipi_adapter and scsipi_channel. */
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/atapiconf.h>
@@ -60,6 +62,7 @@ struct ata_xfer {
 	int	c_bcount;		/* byte count left */
 	int	c_skip;			/* bytes already transferred */
 	int	c_dscpoll;		/* counter for dsc polling (ATAPI) */
+	int	c_lenoff;		/* offset to c_bcount (ATAPI) */
 
 	/* Link on the command queue. */
 	TAILQ_ENTRY(ata_xfer) c_xferchain;
@@ -78,6 +81,7 @@ struct ata_xfer {
 #define C_WAIT		0x0010		/* can use tsleep */
 #define C_WAITACT	0x0020		/* wakeup when active */
 #define C_FREE		0x0040		/* call ata_free_xfer() asap */
+#define C_PIOBM		0x0080		/* command uses busmastering PIO */
 
 /* reasons for c_kill_xfer() */
 #define KILL_GONE 1 /* device is gone */
@@ -144,13 +148,21 @@ struct ata_drive_datas {
 	 * changed later by the controller's code if needed
 	 */
 	u_int8_t PIO_mode;	/* Current setting of drive's PIO mode */
+#if NATA_DMA
 	u_int8_t DMA_mode;	/* Current setting of drive's DMA mode */
+#if NATA_UDMA
 	u_int8_t UDMA_mode;	/* Current setting of drive's UDMA mode */
+#endif
+#endif
 
 	/* Supported modes for this drive */
 	u_int8_t PIO_cap;	/* supported drive's PIO mode */
+#if NATA_DMA
 	u_int8_t DMA_cap;	/* supported drive's DMA mode */
+#if NATA_UDMA
 	u_int8_t UDMA_cap;	/* supported drive's UDMA mode */
+#endif
+#endif
 
 	/*
 	 * Drive state.
@@ -161,6 +173,7 @@ struct ata_drive_datas {
 #define RESET          0
 #define READY          1
 
+#if NATA_DMA
 	/* numbers of xfers and DMA errs. Used by ata_dmaerr() */
 	u_int8_t n_dmaerrs;
 	u_int32_t n_xfers;
@@ -168,6 +181,7 @@ struct ata_drive_datas {
 	/* Downgrade after NERRS_MAX errors in at most NXFER xfers */
 #define NERRS_MAX 4
 #define NXFER 4000
+#endif
 
 	/* Callbacks into the drive's driver. */
 	void	(*drv_done)(void *);	/* transfer is done */
@@ -325,6 +339,7 @@ struct ata_channel {
 #define ATACH_SHUTDOWN 0x02	/* channel is shutting down */
 #define ATACH_IRQ_WAIT 0x10	/* controller is waiting for irq */
 #define ATACH_DMA_WAIT 0x20	/* controller is waiting for DMA */
+#define ATACH_PIOBM_WAIT 0x40	/* controller is waiting for busmastering PIO */
 #define	ATACH_DISABLED 0x80	/* channel is disabled */
 #define ATACH_TH_RUN   0x100	/* the kernel thread is working */
 #define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
@@ -374,14 +389,19 @@ struct atac_softc {
 #define	ATAC_CAP_DATA32	0x0002		/* can do 32-bit data access */
 #define	ATAC_CAP_DMA	0x0008		/* can do ATA DMA modes */
 #define	ATAC_CAP_UDMA	0x0010		/* can do ATA Ultra DMA modes */
+#define	ATAC_CAP_PIOBM	0x0020		/* can do busmastering PIO transfer */
 #define	ATAC_CAP_ATA_NOSTREAM 0x0040	/* don't use stream funcs on ATA */
 #define	ATAC_CAP_ATAPI_NOSTREAM 0x0080	/* don't use stream funcs on ATAPI */
 #define	ATAC_CAP_NOIRQ	0x1000		/* controller never interrupts */
 #define	ATAC_CAP_RAID	0x4000		/* controller "supports" RAID */
 
 	uint8_t	atac_pio_cap;		/* highest PIO mode supported */
+#if NATA_DMA
 	uint8_t	atac_dma_cap;		/* highest DMA mode supported */
+#if NATA_UDMA
 	uint8_t	atac_udma_cap;		/* highest UDMA mode supported */
+#endif
+#endif
 
 	/* Array of pointers to channel-specific data. */
 	struct ata_channel **atac_channels;
@@ -438,10 +458,14 @@ int	ata_addref(struct ata_channel *);
 void	ata_delref(struct ata_channel *);
 void	atastart(struct ata_channel *);
 void	ata_print_modes(struct ata_channel *);
+#if NATA_DMA
 int	ata_downgrade_mode(struct ata_drive_datas *, int);
+#endif
 void	ata_probe_caps(struct ata_drive_datas *);
 
+#if NATA_DMA
 void	ata_dmaerr(struct ata_drive_datas *, int);
+#endif
 void	ata_queue_idle(struct ata_queue *);
 #endif /* _KERNEL */
 

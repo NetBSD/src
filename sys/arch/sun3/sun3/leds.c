@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.9 2005/06/19 20:00:28 thorpej Exp $	*/
+/*	$NetBSD: leds.c,v 1.9.2.1 2006/12/30 20:47:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.9 2005/06/19 20:00:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.9.2.1 2006/12/30 20:47:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.9 2005/06/19 20:00:28 thorpej Exp $");
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/idprom.h>
@@ -94,9 +96,11 @@ static struct led_patterns ledpat = {
 void 
 leds_init(void)
 {
-
 #ifdef	_SUN3X_
-	diagreg = obio_find_mapping(OBIO_DIAGREG, 1);
+	vaddr_t va;
+
+	find_prom_map(OBIO_DIAGREG, PMAP_OBIO, 1, &va);
+	diagreg = (void *)va;
 	if (cpu_machine_id == ID_SUN3X_80)
 		ledpat.patlen = 1;
 #endif	/* SUN3X */

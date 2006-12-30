@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.20.2.1 2006/06/21 15:10:46 yamt Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.20.2.2 2006/12/30 20:50:28 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.20.2.1 2006/06/21 15:10:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.20.2.2 2006/12/30 20:50:28 yamt Exp $");
 #endif
 
 /*
@@ -358,11 +358,12 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		wreq->wi_len = 1;
 		break;
 	case WI_RID_DEFLT_CRYPT_KEYS:
-		keys = (struct wi_ltv_keys *)&wreq;
+		keys = (struct wi_ltv_keys *)wreq;
 		/* do not show keys to non-root user */
-		error = kauth_authorize_generic(curproc->p_cred,
-					  KAUTH_GENERIC_ISSUSER,
-					  &curproc->p_acflag);
+		error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, ifp,
+		    NULL, NULL);
 		if (error) {
 			memset(keys, 0, sizeof(*keys));
 			error = 0;
@@ -396,7 +397,7 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 
 			args.i = 0;
 			args.ap = (void *)((char *)wreq->wi_val + sizeof(i));
-			args.max = (void *)(&wreq + 1);
+			args.max = (void *)(wreq + 1);
 			ieee80211_iterate_nodes(&ic->ic_scan,
 				wi_read_ap_result, &args);
 			memcpy(wreq->wi_val, &args.i, sizeof(args.i));
@@ -415,7 +416,7 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 			p2 = (struct wi_scan_p2_hdr *)wreq->wi_val;
 			args.i = 0;
 			args.res = (void *)&p2[1];
-			args.max = (void *)(&wreq + 1);
+			args.max = (void *)(wreq + 1);
 			ieee80211_iterate_nodes(&ic->ic_scan,
 				wi_read_prism2_result, &args);
 			p2->wi_rsvd = 0;
@@ -429,7 +430,7 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		struct wi_read_sigcache_args args;
 		args.i = 0;
 		args.wsc = (struct wi_sigcache *) wreq->wi_val;
-		args.max = (void *)(&wreq + 1);
+		args.max = (void *)(wreq + 1);
 		ieee80211_iterate_nodes(&ic->ic_scan, wi_read_sigcache, &args);
 		wreq->wi_len = sizeof(struct wi_sigcache) * args.i / 2;
 		break;
@@ -441,7 +442,7 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 	}
 	if (error == 0) {
 		wreq->wi_len++;
-		error = copyout(&wreq, ifr->ifr_data, sizeof(wreq));
+		error = copyout(wreq, ifr->ifr_data, sizeof(*wreq));
 	}
 out:
 	free(wreq, M_TEMP);
@@ -758,7 +759,7 @@ ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		if (len != sizeof(struct wi_ltv_keys))
 			goto invalid;
-		keys = (struct wi_ltv_keys *)&wreq;
+		keys = (struct wi_ltv_keys *)wreq;
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			len = le16toh(keys->wi_keys[i].wi_keylen);
 			if (len != 0 && len < IEEE80211_WEP_KEYLEN)
@@ -896,8 +897,8 @@ ieee80211_ioctl_getkey(struct ieee80211com *ic, struct ieee80211req *ireq)
 	ik.ik_flags = wk->wk_flags & (IEEE80211_KEY_XMIT | IEEE80211_KEY_RECV);
 	if (wk->wk_keyix == ic->ic_def_txkey)
 		ik.ik_flags |= IEEE80211_KEY_DEFAULT;
-	if (kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
-			      &curproc->p_acflag) == 0) {
+	if (kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_INTERFACE,
+	    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, ic->ic_ifp, NULL, NULL) == 0) {
 		/* NB: only root can read key data */
 		ik.ik_keyrsc = wk->wk_keyrsc;
 		ik.ik_keytsc = wk->wk_keytsc;
@@ -1323,10 +1324,11 @@ ieee80211_ioctl_getmaccmd(struct ieee80211com *ic, struct ieee80211req *ireq)
  * build system would be awkward.
  */
 #ifdef __GNUC__
-__attribute__ ((noinline))
+__attribute__ ((__noinline__))
 #endif
 static int
-ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211req *ireq)
+ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd,
+    struct ieee80211req *ireq)
 {
 	const struct ieee80211_rsnparms *rsn = &ic->ic_bss->ni_rsn;
 	int error = 0;
@@ -1371,8 +1373,10 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 			return EINVAL;
 		len = (u_int) ic->ic_nw_keys[kid].wk_keylen;
 		/* NB: only root can read WEP keys */
-		if (kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
-				      &curproc->p_acflag) == 0) {
+		if (kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, ifp, NULL,
+		    NULL) == 0) {
 			bcopy(ic->ic_nw_keys[kid].wk_key, tmpkey, len);
 		} else {
 			bzero(tmpkey, len);
@@ -2013,7 +2017,8 @@ cipher2cap(int cipher)
 }
 
 static int
-ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd, struct ieee80211req *ireq)
+ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd,
+    struct ieee80211req *ireq)
 {
 #if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 	static const u_int8_t zerobssid[IEEE80211_ADDR_LEN];
@@ -2627,9 +2632,10 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 				(struct ieee80211req *) data);
 		break;
 	case SIOCS80211:
-		if ((error = kauth_authorize_generic(curproc->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &curproc->p_acflag)) != 0)
+		if ((error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL) != 0))
 			break;
 		error = ieee80211_ioctl_set80211(ic, cmd,
 				(struct ieee80211req *) data);
@@ -2766,8 +2772,10 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 			if (nwkey->i_key[i].i_keydat == NULL)
 				continue;
 			/* do not show any keys to non-root user */
-			if ((error = kauth_authorize_generic(curproc->p_cred,
-			    KAUTH_GENERIC_ISSUSER, &curproc->p_acflag)) != 0)
+			if ((error = kauth_authorize_network(curlwp->l_cred,
+			    KAUTH_NETWORK_INTERFACE,
+			    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, ifp,
+			    (void *)cmd, NULL)) != 0)
 				break;
 			nwkey->i_key[i].i_keylen = ic->ic_nw_keys[i].wk_keylen;
 			if ((error = copyout(ic->ic_nw_keys[i].wk_key,
@@ -2866,7 +2874,7 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 				chan = ic->ic_ibss_chan;
 			break;
 		default:
-			chan = ic->ic_bss->ni_chan;
+			chan = ic->ic_curchan;
 			break;
 		}
 		chanreq->i_channel = ieee80211_chan2ieee(ic, chan);
@@ -2875,9 +2883,10 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		error = ieee80211_cfgget(ic, cmd, data);
 		break;
 	case SIOCSIFGENERIC:
-		error = kauth_authorize_generic(curproc->p_cred,
-					  KAUTH_GENERIC_ISSUSER,
-					  &curproc->p_acflag);
+		error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
+		    NULL);
 		if (error)
 			break;
 		error = ieee80211_cfgset(ic, cmd, data);

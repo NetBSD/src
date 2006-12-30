@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.17.4.1 2006/06/21 15:06:28 yamt Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.17.4.2 2006/12/30 20:49:30 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.17.4.1 2006/06/21 15:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.17.4.2 2006/12/30 20:49:30 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -612,7 +612,8 @@ rf_remap_to_spare_space(RF_RaidLayout_t *layoutPtr,
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 int
-rf_InstallSpareTable(RF_Raid_t *raidPtr, RF_RowCol_t frow, RF_RowCol_t fcol)
+rf_InstallSpareTable(RF_Raid_t *raidPtr, RF_RowCol_t frow,
+    RF_RowCol_t fcol)
 {
 	RF_DeclusteredConfigInfo_t *info = (RF_DeclusteredConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
 	RF_SparetWait_t *req;

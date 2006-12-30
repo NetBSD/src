@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.41.4.1 2006/06/21 15:05:03 yamt Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.41.4.2 2006/12/30 20:48:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.41.4.1 2006/06/21 15:05:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.41.4.2 2006/12/30 20:48:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -207,6 +207,7 @@ static const struct audio_hw_if emuxki_hw_if = {
 	emuxki_trigger_output,
 	emuxki_trigger_input,
 	NULL,			/* dev_ioctl */
+	NULL,			/* powerstate */
 };
 
 #if 0
@@ -386,7 +387,8 @@ emuxki_ac97_init(struct emuxki_softc *sc)
 }
 
 static int
-emuxki_match(struct device *parent, struct cfdata *match, void *aux)
+emuxki_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -451,6 +453,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
  /* XXX it's unknown whether APS is made from Audigy as well */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY) {
@@ -478,7 +481,6 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 		emuxki_pci_shutdown(sc);
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 #if 0
 	sc->rsourcectl.dev =
 	    sc->codecif->vtbl->get_portnum_by_name(sc->codec_if, AudioCrecord,
@@ -1427,7 +1429,7 @@ static int
 emuxki_recsrc_reserve(struct emuxki_voice *voice, emuxki_recsrc_t source)
 {
 
-	if (source < 0 || source >= EMU_NUMRECSRCS) {
+	if (source >= EMU_NUMRECSRCS) {
 #ifdef EMUXKI_DEBUG
 		printf("Tried to reserve invalid source: %d\n", source);
 #endif

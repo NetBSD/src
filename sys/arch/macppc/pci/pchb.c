@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.10 2004/04/23 21:13:06 itojun Exp $	*/
+/*	$NetBSD: pchb.c,v 1.10.12.1 2006/12/30 20:46:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.10 2004/04/23 21:13:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.10.12.1 2006/12/30 20:46:30 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,6 +67,7 @@ pchbmatch(parent, cf, aux)
 	/*
 	 * Match all known PCI host chipsets.
 	 */
+
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_APPLE:
 		switch (PCI_PRODUCT(pa->pa_id)) {
@@ -84,6 +85,14 @@ pchbmatch(parent, cf, aux)
 		case PCI_PRODUCT_APPLE_PANGEA_PCI1:
 		case PCI_PRODUCT_APPLE_PANGEA_PCI2:
 		case PCI_PRODUCT_APPLE_PANGEA_AGP:
+		case PCI_PRODUCT_APPLE_U3_PPB1:
+		case PCI_PRODUCT_APPLE_U3_PPB2:
+		case PCI_PRODUCT_APPLE_U3_PPB3:
+		case PCI_PRODUCT_APPLE_U3_PPB4:
+		case PCI_PRODUCT_APPLE_U3_PPB5:
+		case PCI_PRODUCT_APPLE_INTREPID2_AGP:
+		case PCI_PRODUCT_APPLE_INTREPID2_PCI1:
+		case PCI_PRODUCT_APPLE_INTREPID2_PCI2:
 			return 1;
 		}
 		break;

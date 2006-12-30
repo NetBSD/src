@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.95.2.1 2006/06/21 15:09:38 yamt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.95.2.2 2006/12/30 20:50:06 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.95.2.1 2006/06/21 15:09:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.95.2.2 2006/12/30 20:50:06 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -877,7 +877,7 @@ config_makeroom(int n, struct cfdriver *cd)
 	 */
 	old = cd->cd_ndevs;
 	if (old == 0)
-		new = MINALLOCSIZE / sizeof(void *);
+		new = 4;
 	else
 		new = old * 2;
 	while (new <= n)

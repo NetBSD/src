@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.22.6.1 2006/06/21 14:57:05 yamt Exp $
+# $NetBSD: RAMDISK,v 1.22.6.2 2006/12/30 20:47:06 yamt Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -72,7 +72,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
-#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+#options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
@@ -85,7 +85,6 @@ options 	INET		# IP protocol stack support
 #options 	GATEWAY		# IP packet forwarding
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -211,6 +210,8 @@ ie1	at vme0 addr 0xe88000,0xe00000 len -1,0x40000 irq 3 vect 0x75
 ## 3Com Ethernet (Multibus only)
 ec0	at mbmem0 addr 0xe0000 ipl 3
 ec1	at mbmem0 addr 0xe2000 ipl 3
+# limit NFS R/W size for poor ec(4) interfaces
+options 	NFS_RSIZE=1024,NFS_WSIZE=1024
 
 ## Frame buffers.
 
@@ -232,8 +233,7 @@ pseudo-device	sl			# CSLIP
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-# rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty		4	# pseudo-terminals
 #pseudo-device	vnd			# paging to files

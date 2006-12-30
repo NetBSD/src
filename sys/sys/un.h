@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.36.12.2 2006/06/21 15:12:04 yamt Exp $	*/
+/*	$NetBSD: un.h,v 1.36.12.3 2006/12/30 20:50:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -83,7 +83,7 @@ int 	unp_externalize (struct mbuf *, struct lwp *);
 int	unp_internalize (struct mbuf **, struct lwp *);
 void 	unp_dispose (struct mbuf *);
 int	unp_output (struct mbuf *, struct mbuf *, struct unpcb *,
-	    struct proc *);
+	    struct lwp *);
 void	unp_setsockaddr (struct unpcb *, struct mbuf *);
 void	unp_setpeeraddr (struct unpcb *, struct mbuf *);
 #else /* !_KERNEL */

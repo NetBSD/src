@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.25.6.1 2006/06/21 14:53:13 yamt Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.25.6.2 2006/12/30 20:46:26 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,10 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.25.6.1 2006/06/21 14:53:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.25.6.2 2006/12/30 20:46:26 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -58,10 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.25.6.1 2006/06/21 14:53:13 yamt Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <dev/ofw/openfirm.h>
 
@@ -541,6 +536,8 @@ next:
 		cmd->d_resid = 0;
 		sc->sc_rxlast = i + 1;
 	}
+	bmac_mediachange(ifp);
+
 	dbdma_continue(sc->sc_rxdma);
 
 	return 1;
@@ -759,24 +756,6 @@ bmac_ioctl(ifp, cmd, data)
 			bmac_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host,
-				    sizeof(sc->sc_enaddr));
-			}
-			/* Set new address. */
-			bmac_init(sc);
-			break;
-		    }
 #endif
 		default:
 			bmac_init(sc);

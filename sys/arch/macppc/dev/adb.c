@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.18 2005/02/01 03:08:16 briggs Exp $	*/
+/*	$NetBSD: adb.c,v 1.18.6.1 2006/12/30 20:46:26 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.18 2005/02/01 03:08:16 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.18.6.1 2006/12/30 20:46:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.18 2005/02/01 03:08:16 briggs Exp $");
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 
 #include <macppc/dev/adbvar.h>
@@ -49,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.18 2005/02/01 03:08:16 briggs Exp $");
 #include <macppc/dev/pm_direct.h>
 #include <macppc/dev/viareg.h>
 
+#include <dev/clock_subr.h>
 #include <dev/ofw/openfirm.h>
 
 #include "aed.h"
@@ -60,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.18 2005/02/01 03:08:16 briggs Exp $");
 static int	adbmatch __P((struct device *, struct cfdata *, void *));
 static void	adbattach __P((struct device *, struct device *, void *));
 static int	adbprint __P((void *, const char *));
+static void	adb_todr_init(void);
 
 /*
  * Global variables.
@@ -111,7 +114,7 @@ adbattach(parent, self, aux)
 	ADBDataBlock adbdata;
 	struct adb_attach_args aa_args;
 	int totaladbs;
-	int adbindex, adbaddr;
+	int adbindex, adbaddr, adb_node;
 
 	extern volatile u_char *Via1Base;
 
@@ -132,7 +135,9 @@ adbattach(parent, self, aux)
 	printf(" irq %d: ", irq);
 
 	adb_polling = 1;
-	ADBReInit();
+	adb_node = getnodebyname(ca->ca_node, "adb");
+	if (adb_node)
+		ADBReInit();
 
 	switch (adbHardware) {
 	case ADB_HW_CUDA:
@@ -143,6 +148,25 @@ adbattach(parent, self, aux)
 		pm_init();
 		break;
 	}
+
+	adb_todr_init();
+
+#if NAPM > 0
+	/* Magic for signalling the apm driver to match. */
+	aa_args.origaddr = ADBADDR_APM;
+	aa_args.adbaddr = ADBADDR_APM;
+	aa_args.handler_id = ADBADDR_APM;
+
+	(void)config_found(self, &aa_args, NULL);
+#endif
+
+	/* 
+	 * see if we're supposed to have an ADB bus
+	 * since some PowerBooks don't have one and their PMUs barf on ADB
+	 * commands we bail here if there's no adb node
+	 */
+	if (!adb_node)
+		return;
 
 #ifdef ADB_DEBUG
 	if (adb_debug)
@@ -172,18 +196,10 @@ adbattach(parent, self, aux)
 		(void)config_found(self, &aa_args, adbprint);
 	}
 
-#if NAPM > 0
-	/* Magic for signalling the apm driver to match. */
-	aa_args.origaddr = ADBADDR_APM;
-	aa_args.adbaddr = ADBADDR_APM;
-	aa_args.handler_id = ADBADDR_APM;
-
-	(void)config_found(self, &aa_args, NULL);
-#endif
-
 	if (adbHardware == ADB_HW_CUDA)
 		adb_cuda_autopoll();
 	adb_polling = 0;
+
 }
 
 int
@@ -257,4 +273,38 @@ adbprint(args, name)
                 aprint_normal(" addr %d: ", aa_args->adbaddr);
 
 	return rv;
+}
+
+#define DIFF19041970 2082844800
+
+static int
+adb_todr_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
+{
+	unsigned long sec;
+
+	if (adb_read_date_time(&sec) != 0)
+		return EIO;
+	tvp->tv_sec = sec - DIFF19041970;
+	tvp->tv_usec = 0;
+	return 0;
+}
+
+static int
+adb_todr_set(todr_chip_handle_t tch, volatile struct timeval *tvp)
+{
+	unsigned long sec;
+
+	sec = tvp->tv_sec + DIFF19041970;
+	return adb_set_date_time(sec) ? EIO : 0;
+}
+
+void
+adb_todr_init(void)
+{
+	static struct todr_chip_handle tch = {
+		.todr_gettime = adb_todr_get,
+		.todr_settime = adb_todr_set
+	};
+
+	todr_attach(&tch);
 }

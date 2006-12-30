@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.44.2.1 2006/06/21 15:09:37 yamt Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.44.2.2 2006/12/30 20:50:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.44.2.1 2006/06/21 15:09:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.44.2.2 2006/12/30 20:50:04 yamt Exp $");
 
 #include "opt_pax.h"
 
@@ -155,11 +155,12 @@ int
 vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 {
 	struct uvm_object *uobj;
+	struct vnode *vp = cmd->ev_vp;
 	struct proc *p = l->l_proc;
 	int error;
 	vm_prot_t prot, maxprot;
 
-	KASSERT(cmd->ev_vp->v_flag & VTEXT);
+	KASSERT(vp->v_flag & VTEXT);
 
 	/*
 	 * map the vnode in using uvm_map.
@@ -178,10 +179,18 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 	 * first, attach to the object
 	 */
 
-        uobj = uvn_attach(cmd->ev_vp, VM_PROT_READ|VM_PROT_EXECUTE);
+        uobj = uvn_attach(vp, VM_PROT_READ|VM_PROT_EXECUTE);
         if (uobj == NULL)
                 return(ENOMEM);
-	VREF(cmd->ev_vp);
+	VREF(vp);
+
+	if ((vp->v_flag & VMAPPED) == 0) {
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		simple_lock(&vp->v_interlock);
+		vp->v_flag |= VMAPPED;
+		simple_unlock(&vp->v_interlock);
+		VOP_UNLOCK(vp, 0);
+	}
 
 	prot = cmd->ev_prot;
 	maxprot = UVM_PROT_ALL;
@@ -245,7 +254,7 @@ vmcmd_readvn(struct lwp *l, struct exec_vmcmd *cmd)
 
 	error = vn_rdwr(UIO_READ, cmd->ev_vp, (caddr_t)cmd->ev_addr,
 	    cmd->ev_len, cmd->ev_offset, UIO_USERSPACE, IO_UNIT,
-	    p->p_cred, NULL, l);
+	    l->l_cred, NULL, l);
 	if (error)
 		return error;
 
@@ -336,7 +345,7 @@ exec_read_from(struct lwp *l, struct vnode *vp, u_long off, void *bf,
 	size_t resid;
 
 	if ((error = vn_rdwr(UIO_READ, vp, bf, size, off, UIO_SYSSPACE,
-	    0, l->l_proc->p_cred, &resid, NULL)) != 0)
+	    0, l->l_cred, &resid, NULL)) != 0)
 		return error;
 	/*
 	 * See if we got all of it

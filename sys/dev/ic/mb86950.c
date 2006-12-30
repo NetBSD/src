@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.2.4.1 2006/06/21 15:02:55 yamt Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.2.4.2 2006/12/30 20:48:03 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.2.4.1 2006/06/21 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.2.4.2 2006/12/30 20:48:03 yamt Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -120,7 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.2.4.1 2006/06/21 15:02:55 yamt Exp $")
  */
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -150,10 +149,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.2.4.1 2006/06/21 15:02:55 yamt Exp $")
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -275,9 +270,8 @@ mb86950_drain_fifo(sc)
  * Install interface into kernel networking data structures
  */
 void
-mb86950_config(sc, media, nmedia, defmedia)
-	struct mb86950_softc *sc;
-	int *media, nmedia, defmedia;
+mb86950_config(struct mb86950_softc *sc, int *media,
+    int nmedia, int defmedia)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -480,21 +474,6 @@ mb86950_ioctl(ifp, cmd, data)
 			break;
 #endif
 
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host, ETHER_ADDR_LEN);
-			}
-			/* Set new address. */
-			mb86950_init(sc);
-			break;
-		    }
-#endif
 
 		default:
 			mb86950_init(sc);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.iomd,v 1.14 2005/01/10 22:01:36 kent Exp $
+#	$NetBSD: files.iomd,v 1.14.10.1 2006/12/30 20:45:33 yamt Exp $
 #
 # IOMD-specific configuration data
 #
@@ -37,22 +37,16 @@ device	iomdkbc: pckbport
 attach	iomdkbc at iomd
 file	arch/arm/iomd/iomdkbc.c			iomdkbc		needs-flag
 
-# RPC wscons keyboard driver
-device	rpckbd : wskbddev
-file	arch/arm/iomd/rpckbd.c			rpckbd		needs-flag
-file	arch/acorn32/dev/wskbdmap_mfii_rpc.c	rpckbd
-
-attach rpckbd at iomd with rpckbd_iomd
-file	arch/arm/iomd/rpckbd_iomd.c		rpckbd_iomd
-
 # VIDC device
-# parent to vidcconsole, vidcaudio
+# parent to vidcvideo, vidcaudio
 device	vidc { }
 attach	vidc at mainbus
-file	arch/arm/iomd/vidc20.c			vidc		needs-count
+file	arch/arm/iomd/vidc20.c			vidc
+file	arch/arm/iomd/console/consinit.c	vidc
 
 # VIDC video wscons device
-device	vidcvideo: rasops4, rasops8, rasops16, rasops32, wsemuldisplaydev
+device	vidcvideo: rasops4, rasops8, rasops16, rasops32, wsemuldisplaydev,
+		   videomode
 attach	vidcvideo at vidc
 file	arch/arm/iomd/vidc20config.c		vidcvideo	needs-flag
 file	arch/arm/iomd/vidcvideo.c		vidcvideo	needs-flag
@@ -60,31 +54,4 @@ file	arch/arm/iomd/vidcvideo.c		vidcvideo	needs-flag
 # Audio device
 device	vidcaudio: audiobus, auconv, mulaw, aurateconv, audiobell
 attach	vidcaudio at vidc
-file	arch/arm/iomd/vidcaudio.c		vidcaudio	needs-flag
-
-#
-# Old console devices.
-#
-
-# Standard keyboard driver (obsolete ... old vidc console)
-device	kbd
-file	arch/arm/iomd/kbd.c			kbd		needs-flag
-
-attach	kbd at iomd with kbd_iomd
-file	arch/arm/iomd/kbd_iomd.c		kbd_iomd
-
-device	vidcconsole
-attach	vidcconsole at vidc
-file	arch/arm/iomd/console/vidcconsole.c	vidcconsole	needs-count
-file	arch/arm/iomd/console/consinit.c	vidc		needs-count
-device	vt: tty
-attach	vt at vidc
-
-file	dev/cninit.c				vt
-file	arch/arm/iomd/console/console.c		vt		needs-count
-file	arch/arm/iomd/console/vidcrender.c	vt
-file	arch/arm/iomd/console/vidc_mc.S		vt
-file	arch/arm/iomd/console/vidc.c		vt
-file	arch/arm/iomd/console/vt220.c		vt
-file	arch/arm/iomd/console/debugconsole.c 	vt
-file	arch/arm/iomd/console/dumb.c 		vt
+file	arch/arm/iomd/vidcaudio.c		vidcaudio

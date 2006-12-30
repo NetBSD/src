@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.31 2005/06/03 18:55:12 martin Exp $	*/
+/*	$NetBSD: console.c,v 1.31.2.1 2006/12/30 20:46:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.31 2005/06/03 18:55:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.31.2.1 2006/12/30 20:46:53 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.31 2005/06/03 18:55:12 martin Exp $");
 #include "zsc.h"
 #include "gio.h"
 #include "pckbc.h"
+#include "zskbd.h"
 
 #ifndef CONMODE
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
@@ -65,6 +66,7 @@ int comcnmode = CONMODE;
 extern struct consdev zs_cn;
 
 extern void	zs_kgdb_init(void);
+extern void	zskbd_cnattach(int, int);
 
 void		kgdb_port_init(void);
 static int	zs_serial_init(const char *);
@@ -131,13 +133,15 @@ gio_video_init(const char *consdev)
 		 * XXX Assumes that if output is video()
 		 * input must be keyboard().
 		 */
-		gio_cnattach();
+		if (gio_cnattach() != 0)
+			return (0);
 
 		switch(mach_type) {
 		case MACH_SGI_IP12:
 		case MACH_SGI_IP20:
 #if (NZSKBD > 0)
-			/* Attach zskbd here */
+			/* XXX Hardcoded unit, channel */
+			zskbd_cnattach(0, 0);
 #endif
 			break;
 

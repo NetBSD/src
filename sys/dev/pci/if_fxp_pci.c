@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.41.2.1 2006/06/21 15:05:04 yamt Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.41.2.2 2006/12/30 20:48:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.41.2.1 2006/06/21 15:05:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.41.2.2 2006/12/30 20:48:44 yamt Exp $");
 
 #include "rnd.h"
 
@@ -133,6 +133,12 @@ static const struct fxp_pci_product {
 	  "Intel PRO/100 VE (MOB) Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_5,
 	  "Intel PRO/100 VE (LOM) Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_6,
+	  "Intel PRO/100 VE Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_7,
+	  "Intel PRO/100 VE Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_8,
+	  "Intel PRO/100 VE Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VM_0,
 	  "Intel PRO/100 VM Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VM_1,
@@ -175,7 +181,8 @@ fxp_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-fxp_pci_match(struct device *parent, struct cfdata *match, void *aux)
+fxp_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -503,7 +510,8 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 		fxp_disable(sc);
 
 	/* Add a suspend hook to restore PCI config state */
-	psc->psc_powerhook = powerhook_establish(fxp_pci_powerhook, psc);
+	psc->psc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    fxp_pci_powerhook, psc);
 	if (psc->psc_powerhook == NULL)
 		aprint_error(
 		    "%s: WARNING: unable to establish pci power hook\n",

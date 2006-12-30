@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.3 2003/09/28 22:00:26 cl Exp $ */
+/* $NetBSD: clock.c,v 1.3.16.1 2006/12/30 20:45:45 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2003/09/28 22:00:26 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3.16.1 2006/12/30 20:45:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,58 +45,16 @@ cpu_initclocks()
 	sic_enable_int(25, 0, 1, 6, 0);
 }
 
-#if 0
-void readrtc()
-{
-}
-#endif
-
 void
-microtime(tvp)
-	struct timeval *tvp;
-{
-	static struct timeval lasttime;
-	int s = splhigh();
-
-	/* make sure it's monotonic */
-	if (timercmp(&time, &lasttime, <))
-		*tvp = lasttime;
-	else
-		*tvp = lasttime = time;
-	splx(s);
-}
-
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-void
-inittodr(base)
-	time_t base;
-{
-
-	time.tv_sec = base; /* XXX NFS server time - OK for diskless systems */
-}
-
-/*
- * Restore the time of day hardware after a time change.
- */
-void
-resettodr()
+setstatclockrate(int newhz)
 {
 }
 
-void
-setstatclockrate(newhz)
-	int newhz;
-{
-}
-
-void otherclock __P((int));
+/* this seems rather silly... */
+void otherclock(int);
 
 void
-otherclock(sr)
-	int sr;
+otherclock(int sr)
 {
 	printf("otherclock(%x)\n", sr);
 }

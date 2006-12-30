@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.28.4.1 2006/06/21 15:05:04 yamt Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.28.4.2 2006/12/30 20:48:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.28.4.1 2006/06/21 15:05:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.28.4.2 2006/12/30 20:48:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,8 @@ epic_pci_subsys_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-epic_pci_match(struct device *parent, struct cfdata *match, void *aux)
+epic_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

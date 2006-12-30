@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.37.4.1 2006/06/21 15:12:02 yamt Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.37.4.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -1084,6 +1084,28 @@ struct x86_boot_params {
 #define	X86_BP_CONSDEV_COM1KBD	6
 #define	X86_BP_CONSDEV_COM2KBD	7
 #define	X86_BP_CONSDEV_COM3KBD	8
+
+/* ------------------------------------------
+ * landisk
+ */
+
+#if !defined(__ASSEMBLER__)					/* { */
+
+/*
+ * Parameters for NetBSD /boot written to start of pbr code by installboot
+ */
+struct landisk_boot_params {
+	uint32_t	bp_length;	/* length of patchable data */
+	uint32_t	bp_flags;
+	uint32_t	bp_timeout;	/* boot timeout in seconds */
+	uint32_t	bp_consdev;
+	uint32_t	bp_conspeed;
+};
+
+#endif	/* !defined(__ASSEMBLER__) */				/* } */
+
+#define	LANDISK_BOOT_MAGIC_1	0x20031125
+#define	LANDISK_BOOT_MAGIC_2	0x20041110
 
 #if !defined(__ASSEMBLER__)					/* { */
 

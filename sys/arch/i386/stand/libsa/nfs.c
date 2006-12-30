@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.10.2.1 2006/06/21 14:52:44 yamt Exp $	*/
+/*	$NetBSD: nfs.c,v 1.10.2.2 2006/12/30 20:46:20 yamt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -50,7 +50,7 @@
 #include "nfs.h"
 #include "rpc.h"
 
-/* Define our own NFS attributes without NQNFS stuff. */
+/* Define our own NFS attributes. */
 struct nfsv2_fattrs {
 	n_long	fa_type;
 	n_long	fa_mode;

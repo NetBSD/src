@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.129.2.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: mount.h,v 1.129.2.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -45,6 +45,7 @@
 #include <sys/queue.h>
 #include <sys/lock.h>
 #include <sys/statvfs.h>
+#include <sys/specificdata.h>
 
 /*
  * file system statistics
@@ -83,13 +84,14 @@
 #define	MOUNT_TMPFS	"tmpfs"		/* Efficient memory file-system */
 #define MOUNT_UDF	"udf"		/* UDF CD/DVD filesystem */
 #define	MOUNT_SYSVBFS	"sysvbfs"	/* System V Boot Filesystem */
+#define MOUNT_PUFFS	"puffs"		/* Pass-to-Userspace filesystem */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
  * array of operations and an instance record.  The file systems are
  * put on a doubly linked list.
  */
-LIST_HEAD(vnodelst, vnode);
+TAILQ_HEAD(vnodelst, vnode);
 
 struct mount {
 	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
@@ -111,6 +113,8 @@ struct mount {
 	struct simplelock mnt_slock;		/* mutex for wcnt and
 						   writeops counters */
 	struct mount	*mnt_leaf;		/* leaf fs we mounted on */
+	specificdata_reference
+			mnt_specdataref;	/* subsystem specific data */
 };
 
 /*
@@ -183,6 +187,30 @@ struct vnodeopv_desc;
 struct kauth_cred;
 #endif
 
+#define VFS_PROTOS(fsname)						\
+int	fsname##_mount(struct mount *, const char *, void *,		\
+		struct nameidata *, struct lwp *);			\
+int	fsname##_start(struct mount *, int, struct lwp *);		\
+int	fsname##_unmount(struct mount *, int, struct lwp *);		\
+int	fsname##_root(struct mount *, struct vnode **);			\
+int	fsname##_quotactl(struct mount *, int, uid_t, void *,		\
+		struct lwp *);						\
+int	fsname##_statvfs(struct mount *, struct statvfs *,		\
+		struct lwp *);						\
+int	fsname##_sync(struct mount *, int, struct kauth_cred *,		\
+		struct lwp *);						\
+int	fsname##_vget(struct mount *, ino_t, struct vnode **);		\
+int	fsname##_fhtovp(struct mount *, struct fid *, struct vnode **);	\
+int	fsname##_vptofh(struct vnode *, struct fid *);			\
+void	fsname##_init(void);						\
+void	fsname##_reinit(void);						\
+void	fsname##_done(void);						\
+int	fsname##_mountroot(void);					\
+int	fsname##_snapshot(struct mount *, struct vnode *,		\
+		struct timespec *);					\
+int	fsname##_extattrctl(struct mount *, int, struct vnode *, int,	\
+		const char *, struct lwp *);
+
 struct vfsops {
 	const char *vfs_name;
 	int	(*vfs_mount)	(struct mount *, const char *, void *,
@@ -199,7 +227,7 @@ struct vfsops {
 	int	(*vfs_vget)	(struct mount *, ino_t, struct vnode **);
 	int	(*vfs_fhtovp)	(struct mount *, struct fid *,
 				    struct vnode **);
-	int	(*vfs_vptofh)	(struct vnode *, struct fid *);
+	int	(*vfs_vptofh)	(struct vnode *, struct fid *, size_t *);
 	void	(*vfs_init)	(void);
 	void	(*vfs_reinit)	(void);
 	void	(*vfs_done)	(void);
@@ -226,7 +254,7 @@ struct vfsops {
 #define VFS_SYNC(MP, WAIT, C, L)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, L)
 #define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
 #define VFS_FHTOVP(MP, FIDP, VPP) (*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP)
-#define	VFS_VPTOFH(VP, FIDP)	  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP)
+#define	VFS_VPTOFH(VP, FIDP, FIDSZP)  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP, FIDSZP)
 #define VFS_SNAPSHOT(MP, VP, TS)  (*(MP)->mnt_op->vfs_snapshot)(MP, VP, TS)
 #define	VFS_EXTATTRCTL(MP, C, VP, AS, AN, L) \
 	(*(MP)->mnt_op->vfs_extattrctl)(MP, C, VP, AS, AN, L)
@@ -272,7 +300,10 @@ MALLOC_DECLARE(M_MOUNT);
  * exported VFS interface (see vfssubr(9))
  */
 struct	mount *vfs_getvfs(fsid_t *);    /* return vfs given fsid */
-int	vfs_composefh(struct vnode *, fhandle_t *);
+int	vfs_composefh(struct vnode *, fhandle_t *, size_t *);
+int	vfs_composefh_alloc(struct vnode *, fhandle_t **);
+void	vfs_composefh_free(fhandle_t *);
+int	vfs_fhtovp(fhandle_t *, struct vnode **);
 int	vfs_mountedon(struct vnode *);/* is a vfs mounted on vp */
 int	vfs_mountroot(void);
 void	vfs_shutdown(void);	    /* unmount and sync file systems */
@@ -302,6 +333,26 @@ void	vfs_opv_free(const struct vnodeopv_desc * const *);
 void	vfs_bufstats(void);
 #endif
 
+int	mount_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
+void	mount_specific_key_delete(specificdata_key_t);
+void 	mount_initspecific(struct mount *);
+void 	mount_finispecific(struct mount *);
+void *	mount_getspecific(struct mount *, specificdata_key_t);
+void	mount_setspecific(struct mount *, specificdata_key_t, void *);
+
+/*
+ * syscall helpers
+ */
+
+int	vfs_copyinfh_alloc(const void *, size_t, fhandle_t **);
+void	vfs_copyinfh_free(fhandle_t *);
+
+struct stat;
+int dofhopen(struct lwp *, const void *, size_t, int, register_t *);
+int dofhstat(struct lwp *, const void *, size_t, struct stat *, register_t *);
+int dofhstatvfs(struct lwp *, const void *, size_t, struct statvfs *, int,
+    register_t *);
+
 LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;
 
@@ -310,13 +361,17 @@ extern struct vfs_list_head vfs_list;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	getfh(const char *, fhandle_t *);
+#if !defined(__LIBC12_SOURCE__) && !defined(_STANDALONE)
+int	getfh(const char *, void *, size_t *)
+	__RENAME(__getfh30);
+#endif
+
 int	mount(const char *, const char *, int, void *);
 int	unmount(const char *, int);
 #if defined(_NETBSD_SOURCE)
-int	fhopen(const fhandle_t *, int);
 #ifndef __LIBC12_SOURCE__
-int	fhstat(const fhandle_t *, struct stat *) __RENAME(__fhstat30);
+int	fhopen(const void *, size_t, int) __RENAME(__fhopen40);
+int	fhstat(const void *, size_t, struct stat *) __RENAME(__fhstat40);
 #endif
 #endif /* _NETBSD_SOURCE */
 __END_DECLS

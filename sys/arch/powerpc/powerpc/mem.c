@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.20.16.1 2006/06/21 14:55:11 yamt Exp $ */
+/*	$NetBSD: mem.c,v 1.20.16.2 2006/12/30 20:46:44 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.20.16.1 2006/06/21 14:55:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.20.16.2 2006/12/30 20:46:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -97,7 +97,7 @@ dev_type_mmap(mmmmap);
 
 const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, mmmmap, nokqfilter,
+	nostop, notty, nopoll, mmmmap, nokqfilter, D_OTHER,
 };
 
 /*ARGSUSED*/
@@ -162,13 +162,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
 
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if (atop(off) >= physmem &&
-	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+	if (atop(off) >= physmem && kauth_authorize_machdep(l->l_cred,
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0)
 		return (-1);
 	return (trunc_page((paddr_t)off));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_missing.h,v 1.1.16.2 2006/06/21 14:59:27 yamt Exp $ */
+/*	$NetBSD: linux32_missing.h,v 1.1.16.3 2006/12/30 20:47:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,6 +32,9 @@
  */
 #ifndef _I386_LINUX32_MISSING_H
 #define _I386_LINUX32_MISSING_H
+
+#include <compat/netbsd32/netbsd32.h>
+#include <compat/linux/common/linux_types.h>
 
 /* 
  * system calls not defined for COMPAT_LINUX/amd64 
@@ -75,12 +78,21 @@ struct linux_sys_nice_args {
 
 struct linux_sys_getgroups16_args {
         syscallarg(int) gidsetsize;
-        syscallarg(linux32_gid_t *) gidset;
+        syscallarg(linux_gid_t *) gidset;
 };
 
 struct linux_sys_setgroups16_args {
         syscallarg(int) gidsetsize;
-        syscallarg(linux32_gid_t *) gidset;
+        syscallarg(linux_gid_t *) gidset;
+};
+
+struct linux_sys_mmap2_args {
+	syscallarg(unsigned long) addr;
+	syscallarg(size_t) len;
+	syscallarg(int) prot;
+	syscallarg(int) flags;
+	syscallarg(int) fd;
+	syscallarg(linux_off_t) offset;	
 };
 
 #ifdef _KERNEL
@@ -94,6 +106,7 @@ int linux_sys_setresgid16(struct lwp *, void *, register_t *);
 int linux_sys_nice(struct lwp *, void *, register_t *);
 int linux_sys_getgroups16(struct lwp *, void *, register_t *);
 int linux_sys_setgroups16(struct lwp *, void *, register_t *);
+int linux_sys_mmap2(struct lwp *, void *, register_t *);
 __END_DECLS
 #endif /* !_KERNEL */
 

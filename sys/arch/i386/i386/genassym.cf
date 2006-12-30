@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.40.16.2 2006/06/21 14:52:18 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.40.16.3 2006/12/30 20:46:09 yamt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,9 +104,9 @@ include <machine/types.h>
 
 if defined(_KERNEL) && !defined(_LKM)
 include "ioapic.h"
-include "apm.h"
+include "apmbios.h"
 endif
-if NAPM > 0
+if NAPMBIOS > 0
 include <machine/bioscall.h>
 include <machine/apmvar.h>
 endif
@@ -262,7 +262,7 @@ define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define	IH_LEVEL		offsetof(struct intrhand, ih_level)
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
 
-if NAPM > 0
+if NAPMBIOS > 0
 define	APM_CODE32		offsetof(struct apm_connect_info, apm_code32_seg_base)
 define	APM_CODE16		offsetof(struct apm_connect_info, apm_code16_seg_base)
 define	APM_DATA		offsetof(struct apm_connect_info, apm_data_seg_base)
@@ -307,6 +307,7 @@ define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
 define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
 define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
+define	CPU_INFO_INTRSTACK	offsetof(struct cpu_info, ci_intrstack)
 
 if NIOAPIC > 0
 define		IOAPIC_SC_REG		offsetof(struct ioapic_softc, sc_reg)
@@ -369,3 +370,4 @@ define	PSL_AC			PSL_AC
 define	PSL_MBO			PSL_MBO
 define	PSL_ID			PSL_ID
 define	PSL_VM			PSL_VM
+define	PSL_I			PSL_I

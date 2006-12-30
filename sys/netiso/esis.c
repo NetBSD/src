@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.34.2.1 2006/06/21 15:11:37 yamt Exp $	*/
+/*	$NetBSD: esis.c,v 1.34.2.2 2006/12/30 20:50:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.34.2.1 2006/06/21 15:11:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.34.2.2 2006/12/30 20:50:44 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -109,7 +109,10 @@ int             esis_recvspace = 2048;
 short           esis_holding_time = ESIS_HT;
 short           esis_config_time = ESIS_CONFIG;
 short           esis_esconfig_time = ESIS_CONFIG;
-struct sockaddr_dl esis_dl = {sizeof(esis_dl), AF_LINK};
+struct sockaddr_dl esis_dl = {
+	.sdl_len = sizeof(esis_dl), 
+	.sdl_family = AF_LINK,
+};
 
 struct callout	esis_config_ch;
 
@@ -171,13 +174,11 @@ esis_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
 	struct rawcb *rp;
-	struct proc *p;
 	int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
 
-	p = l ? l->l_proc : NULL;
 	rp = sotorawcb(so);
 #ifdef DIAGNOSTIC
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
@@ -195,12 +196,14 @@ esis_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			break;
 		}
-		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
-							 KAUTH_GENERIC_ISSUSER,
-							 &p->p_acflag))) {
+
+		if (l == NULL) {
 			error = EACCES;
 			break;
 		}
+
+		/* XXX: raw socket permission is checked in socreate() */
+
 		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
 			error = soreserve(so, esis_sendspace, esis_recvspace);
 			if (error)
@@ -1111,6 +1114,16 @@ isis_output(struct mbuf *m, ...)
 	sdl = va_arg(ap, struct sockaddr_dl *);
 	va_end(ap);
 
+	/* we assume here we have a sockaddr_dl ... check it */
+	if (sdl->sdl_family != AF_LINK) {
+		error = EINVAL;
+		goto release;
+	}
+	if (sdl->sdl_len < 8 + sdl->sdl_nlen + sdl->sdl_alen + sdl->sdl_slen) {
+		error = EINVAL;
+		goto release;
+	}
+
 	ifa = ifa_ifwithnet((struct sockaddr *) sdl);	/* get ifp from sdl */
 	if (ifa == 0) {
 #ifdef ARGO_DEBUG
@@ -1178,9 +1191,9 @@ release:
  */
 void *
 esis_ctlinput(
-	int    req,		/* request: we handle only PRC_IFDOWN */
-	struct sockaddr *siso,	/* address of ifp */
-	void *dummy)
+    int    req,			/* request: we handle only PRC_IFDOWN */
+    struct sockaddr *siso,	/* address of ifp */
+    void *dummy)
 {
 	struct iso_ifaddr *ia;	/* scan through interface addresses */
 

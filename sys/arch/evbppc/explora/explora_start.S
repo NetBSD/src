@@ -1,4 +1,4 @@
-/*	$NetBSD: explora_start.S,v 1.2 2003/08/11 05:13:20 chs Exp $	*/
+/*	$NetBSD: explora_start.S,v 1.2.16.1 2006/12/30 20:45:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,22 +64,6 @@
 
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
-
-GLOBAL(intrnames)
-	.asciz	"irq0", "irq1", "irq2", "irq3"
-	.asciz	"irq4", "irq5", "irq6", "irq7"
-	.asciz	"irq8", "irq9", "irq10", "irq11"
-	.asciz	"irq12", "irq13", "irq14", "irq15"
-	.asciz	"irq16", "irq17", "irq18", "softnet"
-	.asciz	"softclock", "softserial", "clock", "statclock"
-	.asciz	"irq24", "irq25", "irq26", "irq27"
-	.asciz	"irq28", "irq29", "irq30", "irq31"
-GLOBAL(eintrnames)
-	.align	4
-GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-GLOBAL(eintrcnt)
 
 /*
  * Initially the dram starts at 0x01000000. This is way too high.

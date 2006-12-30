@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.68.2.1 2006/06/21 15:05:07 yamt Exp $	*/
+/*	$NetBSD: twe.c,v 1.68.2.2 2006/12/30 20:48:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.68.2.1 2006/06/21 15:05:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.68.2.2 2006/12/30 20:48:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.68.2.1 2006/06/21 15:05:07 yamt Exp $");
 #include <sys/disk.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -123,6 +124,7 @@ static void twe_clear_pci_parity_error(struct twe_softc *sc);
 
 static int	twe_add_unit(struct twe_softc *, int);
 static int	twe_del_unit(struct twe_softc *, int);
+static int	twe_init_connection(struct twe_softc *);
 
 static inline u_int32_t	twe_inl(struct twe_softc *, int);
 static inline void twe_outl(struct twe_softc *, int, u_int32_t);
@@ -294,7 +296,8 @@ twe_outl(struct twe_softc *sc, int off, u_int32_t val)
  * Match a supported board.
  */
 static int
-twe_match(struct device *parent, struct cfdata *cfdata, void *aux)
+twe_match(struct device *parent, struct cfdata *cfdata,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -1246,8 +1249,6 @@ done:
  */
 static int
 twe_init_connection(struct twe_softc *sc)
-/*###762 [cc] warning: `twe_init_connection' was used with no prototype before its definition%%%*/
-/*###762 [cc] warning: `twe_init_connection' was declared implicitly `extern' and later `static'%%%*/
 {
 	struct twe_ccb *ccb;
 	struct twe_cmd *tc;
@@ -1729,7 +1730,8 @@ tweopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Accept the last close on the control device.
  */
 static int
-tweclose(dev_t dev, int flag, int mode, struct lwp *l)
+tweclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct twe_softc *twe;
 
@@ -1750,7 +1752,8 @@ twe_ccb_wait_handler(struct twe_ccb *ccb, int error)
  * Handle control operations.
  */
 static int
-tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct twe_softc *twe;
 	struct twe_ccb *ccb;
@@ -1762,9 +1765,6 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	int s, error = 0;
 	u_int8_t cmdid;
 
-	if (securelevel >= 2)
-		return (EPERM);
-
 	twe = device_lookup(&twe_cd, minor(dev));
 	tu = (struct twe_usercommand *)data;
 	tp = (struct twe_paramcommand *)data;
@@ -1773,6 +1773,11 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	/* This is intended to be compatible with the FreeBSD interface. */
 	switch (cmd) {
 	case TWEIO_COMMAND:
+		error = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
+		if (error)
+			return (error);
+
 		/* XXX mutex */
 		if (tu->tu_size > 0) {
 			/*
@@ -1911,7 +1916,7 @@ done:
 
 const struct cdevsw twe_cdevsw = {
 	tweopen, tweclose, noread, nowrite, tweioctl,
-	    nostop, notty, nopoll, nommap,
+	    nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 /*
@@ -1924,6 +1929,8 @@ twe_describe_controller(struct twe_softc *sc)
 	int i, rv = 0;
 	uint32_t dsize;
 	uint8_t ports;
+
+	ports = 0;
 
 	/* get the port count */
 	rv |= twe_param_get_1(sc, TWE_PARAM_CONTROLLER,

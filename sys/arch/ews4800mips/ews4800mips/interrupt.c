@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1.18.2 2006/06/21 14:51:12 yamt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.1.18.3 2006/12/30 20:45:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.1.18.2 2006/06/21 14:51:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.1.18.3 2006/12/30 20:45:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>	/* uvmexp.intrs */
@@ -48,11 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.1.18.2 2006/06/21 14:51:12 yamt Exp 
 const uint32_t *ipl_sr_bits;
 static void (*platform_intr)(uint32_t, uint32_t, uint32_t, uint32_t);
 
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 void

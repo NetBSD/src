@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.30.2.1 2006/06/21 15:05:06 yamt Exp $ */
+/*      $NetBSD: sv.c,v 1.30.2.2 2006/12/30 20:48:48 yamt Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.30.2.1 2006/06/21 15:05:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.30.2.2 2006/12/30 20:48:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,6 +204,7 @@ static const struct audio_hw_if sv_hw_if = {
 	sv_trigger_output,
 	sv_trigger_input,
 	NULL,
+	NULL,
 };
 
 #define SV_NFORMATS	4
@@ -267,7 +268,8 @@ sv_write_indirect(struct sv_softc *sc, uint8_t reg, uint8_t val)
 }
 
 static int
-sv_match(struct device *parent, struct cfdata *match, void *aux)
+sv_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -771,7 +773,8 @@ sv_set_params(void *addr, int setmode, int usemode, audio_params_t *play,
 }
 
 static int
-sv_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
+sv_round_blocksize(void *addr, int blk, int mode,
+    const audio_params_t *param)
 {
 
 	return blk & -32;	/* keep good alignment */

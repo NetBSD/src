@@ -1,11 +1,11 @@
-# $NetBSD: MVME1600,v 1.16.6.1 2006/06/21 14:54:02 yamt Exp $
+# $NetBSD: MVME1600,v 1.16.6.2 2006/12/30 20:46:36 yamt Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"MVME1600-$Revision: 1.16.6.1 $"
+#ident		"MVME1600-$Revision: 1.16.6.2 $"
 
 maxusers	8
 
@@ -84,6 +84,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.

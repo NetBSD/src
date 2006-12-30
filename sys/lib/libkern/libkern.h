@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.50.16.1 2006/06/21 15:10:13 yamt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.50.16.2 2006/12/30 20:50:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -172,25 +172,7 @@ tolower(int ch)
 }
 #endif
 
-/*
- * Return the number of elements in a statically-allocated array,
- * __x.
- */
-#define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
-
-/* __BIT(n): nth bit, where __BIT(0) == 0x1. */
-#define	__BIT(__n) (((__n) == 32) ? 0 : ((uint32_t)1 << (__n)))
-
-/* __BITS(m, n): bits m through n, m < n. */
-#define	__BITS(__m, __n)	\
-	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
-
-/* find least significant bit that is set */
-#define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
-
-#define	SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
-#define	SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
-#define	SHIFTOUT_MASK(__mask) SHIFTOUT((__mask), (__mask))
+#define	__NULL_STMT		do { } while (/* CONSTCOND */ 0)
 
 #ifdef NDEBUG						/* tradition! */
 #define	assert(e)	((void)0)
@@ -253,6 +235,12 @@ tolower(int ch)
     ((size_t)(unsigned long)(&(((type *)0)->member)))
 #endif
 
+#if defined(__STDC__) && __GNUC_PREREQ__(3, 0)
+#define bool	_Bool
+#define true	1
+#define false	0
+#endif
+
 /* Prototypes for non-quad routines. */
 /* XXX notyet #ifdef _STANDALONE */
 int	 bcmp __P((const void *, const void *, size_t));
@@ -263,9 +251,11 @@ void	 bzero __P((void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
 int	 memcmp __P((const void *, const void *, size_t));
 void	*memset __P((void *, int, size_t));
-#if __GNUC_PREREQ__(2, 95) && !defined(__vax__)
+#if __GNUC_PREREQ__(2, 95) && (__GNUC_PREREQ__(4, 0) || !defined(__vax__))
 #define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
 #define	memcmp(a, b, l)		__builtin_memcmp(a, b, l)
+#endif
+#if __GNUC_PREREQ__(2, 95) && !defined(__vax__)
 #define	memset(d, v, l)		__builtin_memset(d, v, l)
 #endif
 
@@ -298,7 +288,7 @@ char	*strstr __P((const char *, const char *));
  */
 int	 ffs __P((int));
 #if __GNUC_PREREQ__(2, 95) && !defined(__vax__)
-#define	ffs(x)			__builtin_ffs(x)
+#define	ffs(x)		__builtin_ffs(x)
 #endif
 
 void	 __assert __P((const char *, const char *, int, const char *))
@@ -331,5 +321,7 @@ size_t	 strlcpy __P((char *, const char *, size_t));
 size_t	 strlcat __P((char *, const char *, size_t));
 int	 strncasecmp __P((const char *, const char *, size_t));
 u_long	 strtoul __P((const char *, char **, int));
+long long strtoll __P((const char *, char **, int));
+unsigned long long strtoull __P((const char *, char **, int));
 uintmax_t strtoumax __P((const char *, char **, int));
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

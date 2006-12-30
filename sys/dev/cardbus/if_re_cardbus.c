@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.5.4.1 2006/06/21 15:02:45 yamt Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.5.4.2 2006/12/30 20:47:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.5.4.1 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.5.4.2 2006/12/30 20:47:57 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -61,10 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.5.4.1 2006/06/21 15:02:45 yamt E
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
-#endif
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0
@@ -294,7 +289,7 @@ re_cardbus_setup(struct re_cardbus_softc *csc)
 	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		command = cardbus_conf_read(cc, cf, csc->sc_tag,
 		    pmreg + PCI_PMCSR);
-		if (command & RTK_PSTATE_MASK) {
+		if (command & PCI_PMCSR_STATE_MASK) {
 			pcireg_t		iobase, membase, irq;
 
 			/* Save important PCI config data. */
@@ -308,8 +303,8 @@ re_cardbus_setup(struct re_cardbus_softc *csc)
 			/* Reset the power state. */
 			aprint_normal("%s: chip is in D%d power mode "
 			    "-- setting to D0\n", sc->sc_dev.dv_xname,
-			    command & RTK_PSTATE_MASK);
-			command &= ~RTK_PSTATE_MASK;
+			    command & PCI_PMCSR_STATE_MASK);
+			command &= ~PCI_PMCSR_STATE_MASK;
 			cardbus_conf_write(cc, cf, csc->sc_tag,
 			    pmreg + PCI_PMCSR, command);
 
@@ -402,7 +397,7 @@ re_cardbus_disable(struct rtk_softc *sc)
 }
 
 void
-re_cardbus_power(struct rtk_softc *sc,	int why)
+re_cardbus_power(struct rtk_softc *sc, int why)
 {
 	struct re_cardbus_softc *csc = (void *) sc;
 

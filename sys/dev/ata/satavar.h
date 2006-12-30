@@ -1,4 +1,4 @@
-/*	$NetBSD: satavar.h,v 1.1 2004/05/28 23:26:27 thorpej Exp $	*/
+/*	$NetBSD: satavar.h,v 1.1.14.1 2006/12/30 20:47:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,10 +39,15 @@
 #ifndef _DEV_ATA_SATAVAR_H_
 #define	_DEV_ATA_SATAVAR_H_
 
+#include <machine/bus.h>
+#include <dev/ata/atavar.h>
+
 /*
  * Declaration of common data structures and functions for Serial ATA.
  */
 
 const char *sata_speed(uint32_t);
+uint32_t sata_reset_interface(struct ata_channel *, bus_space_tag_t,
+    bus_space_handle_t, bus_space_handle_t);
 
 #endif /* _DEV_ATA_SATAVAR_H_ */

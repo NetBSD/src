@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.3 2003/01/22 04:32:17 rafal Exp $ */
+/*	$NetBSD: svr4_machdep.h,v 1.3.18.1 2006/12/30 20:46:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,11 +72,5 @@ typedef struct svr4_mcontext {
 	svr4_gregset_t       svr4___gregs;
 	svr4_fpregset_t      svr4___fpregs;
 } svr4_mcontext_t;
-
-#ifdef _KERNEL
-int svr4_setmcontext(struct lwp *, svr4_mcontext_t *, unsigned long);
-void *svr4_getmcontext(struct lwp *, svr4_mcontext_t *, unsigned long *);
-#endif
-
 
 #endif /* _MIPS_SVR4_MACHDEP_H_ */

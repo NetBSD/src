@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.5.4.1 2006/06/21 14:58:32 yamt Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.5.4.2 2006/12/30 20:47:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.5.4.1 2006/06/21 14:58:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.5.4.2 2006/12/30 20:47:32 yamt Exp $");
+
+#include "opt_ptrace.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.5.4.1 2006/06/21 14:58:32 yamt E
 #include <sys/ptrace.h>
 #include <sys/sa.h>
 
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>
@@ -67,6 +70,7 @@ darwin_sys_ptrace(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if defined(PTRACE) || defined(_LKM)
 	struct darwin_sys_ptrace_args /* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
@@ -78,6 +82,12 @@ darwin_sys_ptrace(l, v, retval)
 	struct darwin_emuldata *ded = NULL;
 	struct proc *t;			/* target process */
 	int error;
+
+#ifdef _LKM
+#define sys_ptrace (*sysent[SYS_ptrace].sy_call)
+	if (sys_ptrace == sys_nosys)
+		return ENOSYS;
+#endif
 
 	ded = (struct darwin_emuldata *)p->p_emuldata;
 
@@ -185,13 +195,14 @@ darwin_sys_ptrace(l, v, retval)
 	}
 
 	return 0;
+#else
+	return ENOSYS;
+#endif /* PTRACE || _LKM */
 }
 
 int
-darwin_sys_kdebug_trace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_kdebug_trace(struct lwp *l, void *v,
+    register_t *retval)
 {
 	struct darwin_sys_kdebug_trace_args /* {
 		syscallarg(int) debugid;

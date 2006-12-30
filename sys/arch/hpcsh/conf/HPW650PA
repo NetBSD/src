@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.18.4.1 2006/06/21 14:52:01 yamt Exp $
+#	$NetBSD: HPW650PA,v 1.18.4.2 2006/12/30 20:46:03 yamt Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -72,6 +72,8 @@ wsdisplay*	at hpcfb?
 hd64465if*	at shb?
 com*		at hd64465if?
 hd64465pcmcia*	at hd64465if?
+
+rtc*		at shb?
 
 # PCMCIA bus support
 pcmcia* at hd64465pcmcia? controller ? socket ?

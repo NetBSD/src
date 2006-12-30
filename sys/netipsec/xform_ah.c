@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.8.4.1 2006/06/21 15:11:24 yamt Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.8.4.2 2006/12/30 20:50:44 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.8.4.1 2006/06/21 15:11:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.8.4.2 2006/12/30 20:50:44 yamt Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -955,11 +955,12 @@ bad:
  */
 static int
 ah_output(
-	struct mbuf *m,
-	struct ipsecrequest *isr,
-	struct mbuf **mp,
-	int skip,
-	int protoff)
+    struct mbuf *m,
+    struct ipsecrequest *isr,
+    struct mbuf **mp,
+    int skip,
+    int protoff
+)
 {
 	struct secasvar *sav;
 	struct auth_hash *ahx;
@@ -1284,6 +1285,7 @@ bad:
 static struct xformsw ah_xformsw = {
 	XF_AH,		XFT_AUTH,	"IPsec AH",
 	ah_init,	ah_zeroize,	ah_input,	ah_output,
+	NULL,
 };
 
 INITFN void

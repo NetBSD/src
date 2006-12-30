@@ -1,4 +1,4 @@
-/* $NetBSD: tskp.c,v 1.2 2005/02/04 05:48:12 joff Exp $ */
+/* $NetBSD: tskp.c,v 1.2.12.1 2006/12/30 20:45:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.2 2005/02/04 05:48:12 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.2.12.1 2006/12/30 20:45:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.2 2005/02/04 05:48:12 joff Exp $");
 #include <dev/wscons/wsksymvar.h>
 
 #include <arm/ep93xx/ep93xxreg.h>
+#include <arm/ep93xx/epgpioreg.h>
 #include <dev/ic/matrixkpvar.h>
 #include <evbarm/tsarm/tspldvar.h>
 #include <evbarm/tsarm/tsarmreg.h>

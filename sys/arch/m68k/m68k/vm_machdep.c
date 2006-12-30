@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.12 2005/06/10 05:10:12 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.12.2.1 2006/12/30 20:46:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12 2005/06/10 05:10:12 matt Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12.2.1 2006/12/30 20:46:25 yamt Exp $");
+
+#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +108,7 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 /*
  * Finish a fork operation, with process l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * proc_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
@@ -175,7 +177,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->pcb_regs[6] = (int)func;		/* A2 */
 	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
-}	
+}
 
 void
 cpu_lwp_free(struct lwp *l, int proc)
@@ -199,6 +201,7 @@ cpu_exit(struct lwp *l)
 	/* NOTREACHED */
 }
 
+#ifdef COREDUMP
 /*
  * Dump the machine specific header information at the start of a core dump.
  */
@@ -250,11 +253,12 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
 	    sizeof(md_core));
 }
+#endif
 
 /*
  * Map a user I/O request into kernel virtual address space.
  * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().   
+ * do not need to pass an access_type to pmap_enter().
  */
 void
 vmapbuf(struct buf *bp, vsize_t len)
@@ -328,7 +332,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
  * Map `size' bytes of physical memory starting at `paddr' into
  * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
  * are specified by `prot'.
- */ 
+ */
 void
 physaccess(caddr_t vaddr, caddr_t paddr, int size, int prot)
 {
@@ -365,7 +369,7 @@ kvtop(caddr_t addr)
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
-	return((int)pa);
+	return (int)pa;
 }
 
 #endif

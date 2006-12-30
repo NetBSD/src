@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.50.2.1 2006/06/21 14:52:01 yamt Exp $
+# $NetBSD: GENERIC,v 1.50.2.2 2006/12/30 20:46:03 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -131,7 +131,7 @@ file-system 	PROCFS		# /proc
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 #file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -150,6 +150,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -216,6 +217,7 @@ wskbd*		at btnmgr0 mux 1
 
 cpu*		at mainbus?
 shb*		at mainbus?
+rtc*		at shb?
 adc*		at shb?			# analog->digital converter
 pfckbd*		at mainbus?
 
@@ -321,6 +323,7 @@ pseudo-device	fss		4	# file system snapshot device
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# serial-line IP ports
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	ipfilter		# IP filter, NAT
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
@@ -345,7 +348,6 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #wskbd* at hpf1275a? mux 1
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

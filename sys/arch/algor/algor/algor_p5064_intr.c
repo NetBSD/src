@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.11.16.1 2006/06/21 14:48:00 yamt Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.11.16.2 2006/12/30 20:45:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.11.16.1 2006/06/21 14:48:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.11.16.2 2006/12/30 20:45:21 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.11.16.1 2006/06/21 14:48:00 y
 
 #include <algor/algor/algor_p5064reg.h>
 #include <algor/algor/algor_p5064var.h>
-
-#include <algor/algor/clockvar.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -281,11 +279,11 @@ struct p5064_intrhead p5064_intrtab[NIRQMAPS];
  * given software interrupt priority level.
  * Hardware ipls are port/board specific.
  */
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 struct p5064_cpuintr {

@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.1.6.2 2006/06/21 14:51:02 yamt Exp $ */
+/* $NetBSD: wdog.c,v 1.1.6.3 2006/12/30 20:45:51 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -75,11 +75,11 @@
  */
 
 /*
- * Watchdog timer support for the AR5312.
+ * Watchdog timer support for the AR531x.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.1.6.2 2006/06/21 14:51:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.1.6.3 2006/12/30 20:45:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.1.6.2 2006/06/21 14:51:02 yamt Exp $");
 
 #include <machine/cpu.h>
 
-#include <mips/atheros/include/ar531xreg.h>
 #include <mips/atheros/include/ar531xvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
@@ -126,7 +125,7 @@ wdog_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdog_softc *sc = (void *)self;
 
-	sc->sc_mult = curcpu()->ci_cpu_freq / 4;
+	sc->sc_mult = ar531x_bus_freq();
 	sc->sc_wdog_period = WDOG_DEFAULT_PERIOD;
 	sc->sc_wdog_max = 0xffffffffU / sc->sc_mult;
 	sc->sc_wdog_reload = sc->sc_wdog_period * sc->sc_mult;
@@ -141,7 +140,6 @@ wdog_attach(struct device *parent, struct device *self, void *aux)
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
 		printf("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
-
 }
 
 static int
@@ -149,7 +147,7 @@ wdog_tickle(struct sysmon_wdog *smw)
 {
 	struct wdog_softc *sc = smw->smw_cookie;
 
-	PUTSYSREG(AR531X_SYSREG_WDOG_TIMER, sc->sc_wdog_reload);
+	ar531x_wdog(sc->sc_wdog_reload);
 	return (0);
 }
 
@@ -159,8 +157,7 @@ wdog_setmode(struct sysmon_wdog *smw)
 	struct wdog_softc *sc = smw->smw_cookie;
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
-		PUTSYSREG(AR531X_SYSREG_WDOG_CTL, AR531X_WDOG_CTL_IGNORE);
-		PUTSYSREG(AR531X_SYSREG_WDOG_TIMER, 0);
+		ar531x_wdog(0);
 	} else {
 
 		if (smw->smw_period == WDOG_PERIOD_DEFAULT)
@@ -177,8 +174,7 @@ wdog_setmode(struct sysmon_wdog *smw)
 			sc->sc_wdog_reload = sc->sc_wdog_period * sc->sc_mult;
 		}
 
-		PUTSYSREG(AR531X_SYSREG_WDOG_TIMER, sc->sc_wdog_reload);
-		PUTSYSREG(AR531X_SYSREG_WDOG_CTL, AR531X_WDOG_CTL_RESET);
+		ar531x_wdog(sc->sc_wdog_reload);
 	}
 	
 	return (0);

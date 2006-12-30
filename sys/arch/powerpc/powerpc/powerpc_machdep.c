@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.28.12.1 2006/06/21 14:55:11 yamt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.28.12.2 2006/12/30 20:46:44 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.28.12.1 2006/06/21 14:55:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.28.12.2 2006/12/30 20:46:44 yamt Exp $");
 
 #include "opt_altivec.h"
 
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.28.12.1 2006/06/21 14:55:11 ya
 
 int cpu_timebase;
 int cpu_printfataltraps;
-#ifdef PPC_OEA
+#if defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE)
 extern int powersave;
 #endif
 
@@ -116,7 +116,7 @@ sysctl_machdep_cacheinfo(SYSCTLFN_ARGS)
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 static int
 sysctl_machdep_powersave(SYSCTLFN_ARGS)
 {
@@ -159,7 +159,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "cacheinfo", NULL,
 		       sysctl_machdep_cacheinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_CACHEINFO, CTL_EOL);
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "powersave", NULL,
@@ -204,8 +204,10 @@ cpu_dumpconf(void)
 	if (dumpdev == NODEV)
 		return;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		return;
+	}
 	if (bdev->d_psize == NULL)
 		return;
 	nblks = (*bdev->d_psize)(dumpdev);

@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.17 2005/05/31 19:25:18 drochner Exp $	*/
+/*	$NetBSD: esl.c,v 1.17.2.1 2006/12/30 20:49:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.17 2005/05/31 19:25:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.17.2.1 2006/12/30 20:49:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +134,7 @@ const struct audio_hw_if esl_hw_if = {
 	NULL,
 	esl_get_props,
 	esl_trigger_output,
+	NULL,
 	NULL,
 	NULL,
 };
@@ -245,8 +246,8 @@ esl_query_encoding(void *hdl, struct audio_encoding *ae)
 
 int
 esl_set_params(void *hdl, int setmode, int usemode,
-	       audio_params_t *play, audio_params_t *rec,
-	       stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+    audio_params_t *play, audio_params_t *rec,
+    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
 	struct esl_pcmcia_softc *sc;
@@ -297,7 +298,8 @@ esl_set_params(void *hdl, int setmode, int usemode,
 }
 
 int
-esl_round_blocksize(void *hdl, int bs, int mode, const audio_params_t *param)
+esl_round_blocksize(void *hdl, int bs, int mode,
+    const audio_params_t *param)
 {
 
 	return (bs / 128) * 128;

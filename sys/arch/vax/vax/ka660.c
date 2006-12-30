@@ -1,4 +1,4 @@
-/*	$NetBSD: ka660.c,v 1.5 2003/07/15 02:15:04 lukem Exp $	*/
+/*	$NetBSD: ka660.c,v 1.5.16.1 2006/12/30 20:47:14 yamt Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka660.c,v 1.5 2003/07/15 02:15:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka660.c,v 1.5.16.1 2006/12/30 20:47:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -77,8 +77,8 @@ struct cpu_dep ka660_calls = {
 	ka660_mchk,
 	ka660_memerr, 
 	ka660_conf,
-	generic_clkread,
-	generic_clkwrite,
+	generic_gettime,
+	generic_settime,
 	6,	/* ~VUPS */
 	2,	/* SCB pages */
 	generic_halt,

@@ -1,4 +1,4 @@
-/*	$NetBSD: giovar.h,v 1.5 2004/09/29 04:06:52 sekiya Exp $	*/
+/*	$NetBSD: giovar.h,v 1.5.12.1 2006/12/30 20:46:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -51,11 +51,30 @@ struct giobus_attach_args {
 struct gio_attach_args {
 	bus_space_tag_t	ga_iot;
 	bus_space_handle_t ga_ioh;
+	bus_dma_tag_t	ga_dmat;
 
-	int		ga_slot; /* (?) */
-	u_int32_t	ga_addr; /* (?) */
+	int		ga_slot;	/* not valid if graphics */
+	u_int32_t	ga_addr;
 
-	u_int32_t	ga_product;
+	u_int32_t	ga_product;	/* not valid if graphics */
 };
 
-int gio_cnattach(void);
+
+#define GIO_SLOT_GFX	0
+#define GIO_SLOT_EXP0	1
+#define GIO_SLOT_EXP1	2
+
+#define GIO_ARB_RT	0x01	/* real-time device */
+#define GIO_ARB_LB	0x02	/* long-burst device */
+
+#define GIO_ARB_MST	0x04	/* bus master enable */
+#define GIO_ARB_SLV	0x08	/* slave */
+
+#define GIO_ARB_PIPE	0x10	/* pipelining enable */
+#define GIO_ARB_NOPIPE	0x20	/* pipelining disable */
+
+int		gio_cnattach(void);
+int		gio_arb_config(int, uint32_t);
+void	       *gio_intr_establish(int, int, int (*)(void *), void *);
+const char     *gio_product_string(int);
+

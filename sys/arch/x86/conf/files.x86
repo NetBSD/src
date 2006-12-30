@@ -1,8 +1,7 @@
-#	$NetBSD: files.x86,v 1.13.2.1 2006/06/21 14:57:55 yamt Exp $
+#	$NetBSD: files.x86,v 1.13.2.2 2006/12/30 20:47:22 yamt Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
-defflag opt_mpacpi.h MPACPI MPACPI_SCANPCI
 
 # MTRR support
 defflag                 MTRR
@@ -11,7 +10,11 @@ defflag                 MTRR
 defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
 
+# AMD Powernow/Cool`n'Quiet Technology
+defflag opt_powernow_k8.h	POWERNOW_K8
+
 define  cpubus { [apid = -1] }
+define  ipmibus {}
 
 file	arch/x86/x86/apic.c		ioapic | lapic
 file	arch/x86/x86/bus_dma.c
@@ -38,7 +41,7 @@ file	arch/x86/x86/ioapic.c		ioapic needs-flag
 file 	arch/x86/x86/mpbios.c		mpbios
 
 # MP configuration using ACPI
-file 	arch/x86/x86/mpacpi.c		mpacpi & acpi
+file 	arch/x86/x86/mpacpi.c		acpi
 
 file    arch/x86/x86/acpi_machdep.c	acpi
 
@@ -48,3 +51,12 @@ file	arch/x86/pci/pci_intr_machdep.c	pci
 file	arch/x86/isa/isa_machdep.c	isa
 
 file	arch/x86/pci/pciide_machdep.c	pciide_common
+
+# Powernow common functions
+file	arch/x86/x86/powernow_k8.c	powernow_k8
+file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7
+
+#IPMI device
+device ipmi : sysmon_envsys, sysmon_wdog
+attach ipmi at ipmibus
+file	arch/x86/x86/ipmi.c		ipmi needs-flag

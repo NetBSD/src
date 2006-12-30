@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.13.4.1 2006/06/21 15:10:51 yamt Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.13.4.2 2006/12/30 20:50:29 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.13.4.1 2006/06/21 15:10:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.13.4.2 2006/12/30 20:50:29 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.13.4.1 2006/06/21 15:10:51 yamt Exp
 
 static void at_pcbdisconnect __P((struct ddpcb *));
 static void at_sockaddr __P((struct ddpcb *, struct mbuf *));
-static int at_pcbsetaddr __P((struct ddpcb *, struct mbuf *, struct proc *));
-static int at_pcbconnect __P((struct ddpcb *, struct mbuf *, struct proc *));
+static int at_pcbsetaddr __P((struct ddpcb *, struct mbuf *, struct lwp *));
+static int at_pcbconnect __P((struct ddpcb *, struct mbuf *, struct lwp *));
 static void at_pcbdetach __P((struct socket *, struct ddpcb *));
 static int at_pcballoc __P((struct socket *));
 
@@ -68,8 +68,8 @@ u_long ddp_sendspace = DDP_MAXSZ;	/* Max ddp size + 1 (ddp_type) */
 u_long ddp_recvspace = 25 * (587 + sizeof(struct sockaddr_at));
 
 #ifdef MBUFTRACE
-struct mowner atalk_rx_mowner = { "atalk", "rx" };
-struct mowner atalk_tx_mowner = { "atalk", "tx" };
+struct mowner atalk_rx_mowner = MOWNER_INIT("atalk", "rx");
+struct mowner atalk_tx_mowner = MOWNER_INIT("atalk", "tx");
 #endif
 
 /* ARGSUSED */
@@ -82,16 +82,14 @@ ddp_usrreq(so, req, m, addr, rights, l)
 	struct mbuf    *rights;
 	struct lwp *l;
 {
-	struct proc    *p;
 	struct ddpcb   *ddp;
 	int             error = 0;
 
-	p = l ? l->l_proc : NULL;
 	ddp = sotoddpcb(so);
 
 	if (req == PRU_CONTROL) {
 		return (at_control((long) m, (caddr_t) addr,
-		    (struct ifnet *) rights, (struct proc *) p));
+		    (struct ifnet *) rights, l));
 	}
 	if (req == PRU_PURGEIF) {
 		at_purgeif((struct ifnet *) rights);
@@ -122,7 +120,7 @@ ddp_usrreq(so, req, m, addr, rights, l)
 		break;
 
 	case PRU_BIND:
-		error = at_pcbsetaddr(ddp, addr, p);
+		error = at_pcbsetaddr(ddp, addr, l);
 		break;
 
 	case PRU_SOCKADDR:
@@ -134,7 +132,7 @@ ddp_usrreq(so, req, m, addr, rights, l)
 			error = EISCONN;
 			break;
 		}
-		error = at_pcbconnect(ddp, addr, p);
+		error = at_pcbconnect(ddp, addr, l);
 		if (error == 0)
 			soisconnected(so);
 		break;
@@ -161,7 +159,7 @@ ddp_usrreq(so, req, m, addr, rights, l)
 					break;
 				}
 				s = splnet();
-				error = at_pcbconnect(ddp, addr, p);
+				error = at_pcbconnect(ddp, addr, l);
 				if (error) {
 					splx(s);
 					break;
@@ -236,10 +234,10 @@ at_sockaddr(ddp, addr)
 }
 
 static int
-at_pcbsetaddr(ddp, addr, p)
+at_pcbsetaddr(ddp, addr, l)
 	struct ddpcb   *ddp;
 	struct mbuf    *addr;
-	struct proc    *p;
+	struct lwp	*l;
 {
 	struct sockaddr_at lsat, *sat;
 	struct at_ifaddr *aa;
@@ -274,9 +272,10 @@ at_pcbsetaddr(ddp, addr, p)
 			    sat->sat_port >= ATPORT_LAST)
 				return (EINVAL);
 
-			if (sat->sat_port < ATPORT_RESERVED && p &&
-			    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-					      &p->p_acflag))
+			if (sat->sat_port < ATPORT_RESERVED && l &&
+			    kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER,
+			    &l->l_acflag))
 				return (EACCES);
 		}
 	} else {
@@ -332,10 +331,10 @@ at_pcbsetaddr(ddp, addr, p)
 }
 
 static int
-at_pcbconnect(ddp, addr, p)
+at_pcbconnect(ddp, addr, l)
 	struct ddpcb   *ddp;
 	struct mbuf    *addr;
-	struct proc    *p;
+	struct lwp     *l;
 {
 	struct sockaddr_at *sat = mtod(addr, struct sockaddr_at *);
 	struct route   *ro;
@@ -366,7 +365,8 @@ at_pcbconnect(ddp, addr, p)
          * If we've changed our address, we may have an old "good looking"
          * route here.  Attempt to detect it.
          */
-	if (ro->ro_rt) {
+	rtcache_check(ro);
+	if (ro->ro_rt != NULL) {
 		if (hintnet) {
 			net = hintnet;
 		} else {
@@ -386,16 +386,13 @@ at_pcbconnect(ddp, addr, p)
 		if (aa == NULL || (satosat(&ro->ro_dst)->sat_addr.s_net !=
 		    (hintnet ? hintnet : sat->sat_addr.s_net) ||
 		    satosat(&ro->ro_dst)->sat_addr.s_node !=
-		    sat->sat_addr.s_node)) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *) 0;
-		}
+		    sat->sat_addr.s_node))
+			rtcache_free(ro);
 	}
 	/*
          * If we've got no route for this interface, try to find one.
          */
-	if (ro->ro_rt == (struct rtentry *) 0 ||
-	    ro->ro_rt->rt_ifp == (struct ifnet *) 0) {
+	if (ro->ro_rt == NULL) {
 		bzero(&ro->ro_dst, sizeof(struct sockaddr_at));
 		ro->ro_dst.sa_len = sizeof(struct sockaddr_at);
 		ro->ro_dst.sa_family = AF_APPLETALK;
@@ -406,7 +403,7 @@ at_pcbconnect(ddp, addr, p)
 			    sat->sat_addr.s_net;
 		}
 		satosat(&ro->ro_dst)->sat_addr.s_node = sat->sat_addr.s_node;
-		rtalloc(ro);
+		rtcache_init(ro);
 	}
 	/*
          * Make sure any route that we have has a valid interface.
@@ -424,7 +421,7 @@ at_pcbconnect(ddp, addr, p)
 	}
 	ddp->ddp_fsat = *sat;
 	if (ddp->ddp_lsat.sat_port == ATADDR_ANYPORT) {
-		return (at_pcbsetaddr(ddp, (struct mbuf *) 0, p));
+		return (at_pcbsetaddr(ddp, (struct mbuf *) 0, l));
 	}
 	return (0);
 }
@@ -509,10 +506,10 @@ at_pcbdetach(so, ddp)
  * sockets (pcbs).
  */
 struct ddpcb   *
-ddp_search(from, to, aa)
-	struct sockaddr_at *from;
-	struct sockaddr_at *to;
-	struct at_ifaddr *aa;
+ddp_search(
+    struct sockaddr_at *from,
+    struct sockaddr_at *to,
+    struct at_ifaddr *aa)
 {
 	struct ddpcb   *ddp;
 

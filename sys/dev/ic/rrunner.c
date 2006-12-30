@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.49.2.1 2006/06/21 15:02:56 yamt Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.49.2.2 2006/12/30 20:48:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,10 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.49.2.1 2006/06/21 15:02:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.49.2.2 2006/12/30 20:48:03 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 
 #include "bpfilter.h"
 #include "esh.h"
@@ -83,10 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.49.2.1 2006/06/21 15:02:56 yamt Exp $"
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -143,6 +138,7 @@ const struct cdevsw esh_cdevsw = {
 	nommap,
 #endif
 	nullkqfilter,
+	D_OTHER,
 };
 
 /* General routines, not externally visable */
@@ -172,7 +168,7 @@ static void eshstart_cleanup(struct esh_softc *, u_int16_t, int);
 static struct esh_dmainfo *esh_new_dmainfo(struct esh_softc *);
 static void esh_free_dmainfo(struct esh_softc *, struct esh_dmainfo *);
 static int esh_generic_ioctl(struct esh_softc *, u_long, caddr_t, u_long,
-				  struct proc *);
+				  struct lwp *);
 
 #ifdef ESH_PRINTF
 static int esh_check(struct esh_softc *);
@@ -710,7 +706,8 @@ bad_init:
  */
 
 int 
-esh_fpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
+esh_fpopen(dev_t dev, int oflags, int devtype,
+    struct lwp *l)
 {
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
@@ -927,7 +924,8 @@ bad_fp_dmamem_alloc:
 
 
 int 
-esh_fpclose(dev_t dev, int fflag, int devtype, struct lwp *l)
+esh_fpclose(dev_t dev, int fflag, int devtype,
+    struct lwp *l)
 {
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
@@ -998,10 +996,7 @@ esh_fpclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 }
 
 int
-esh_fpread(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+esh_fpread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -1047,13 +1042,13 @@ esh_fpread(dev, uio, ioflag)
 	/* Lock down the pages */
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		error = uvm_vslock(p, iovp->iov_base, iovp->iov_len,
+		error = uvm_vslock(p->p_vmspace, iovp->iov_base, iovp->iov_len,
 		    VM_PROT_WRITE);
 		if (error) {
 			/* Unlock what we've locked so far. */
 			for (--i; i >= 0; i--) {
 				iovp = &uio->uio_iov[i];
-				uvm_vsunlock(p, iovp->iov_base,
+				uvm_vsunlock(p->p_vmspace, iovp->iov_base,
 				    iovp->iov_len);
 			}
 			goto fpread_done;
@@ -1143,7 +1138,7 @@ esh_fpread(dev, uio, ioflag)
 	uio->uio_resid -= di->ed_read_len;
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		uvm_vsunlock(p, iovp->iov_base, iovp->iov_len);
+		uvm_vsunlock(p->p_vmspace, iovp->iov_base, iovp->iov_len);
 	}
 
 	PRELE(l);	/* Release process info */
@@ -1159,10 +1154,7 @@ fpread_done:
 
 
 int
-esh_fpwrite(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+esh_fpwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -1208,13 +1200,13 @@ esh_fpwrite(dev, uio, ioflag)
 	/* Lock down the pages */
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		error = uvm_vslock(p, iovp->iov_base, iovp->iov_len,
+		error = uvm_vslock(p->p_vmspace, iovp->iov_base, iovp->iov_len,
 		    VM_PROT_READ);
 		if (error) {
 			/* Unlock what we've locked so far. */
 			for (--i; i >= 0; i--) {
 				iovp = &uio->uio_iov[i];
-				uvm_vsunlock(p, iovp->iov_base,
+				uvm_vsunlock(p->p_vmspace, iovp->iov_base,
 				    iovp->iov_len);
 			}
 			goto fpwrite_done;
@@ -1300,7 +1292,7 @@ esh_fpwrite(dev, uio, ioflag)
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		uvm_vsunlock(p, iovp->iov_base, iovp->iov_len);
+		uvm_vsunlock(p->p_vmspace, iovp->iov_base, iovp->iov_len);
 	}
 
 	PRELE(l);	/* Release process info */
@@ -3002,23 +2994,6 @@ eshioctl(ifp, cmd, data)
 			/* The driver doesn't really care about IP addresses */
 			break;
 #endif
-#ifdef NS
-		case AF_NS:
-		{
-			struct ns_addr *ina =
-				&IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-					LLADDR(ifp->if_sadl);
-			else
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, ifp->if_addrlen);
-				/* Set new address. */
-			eshinit(sc);
-			break;
-		}
-#endif
 		default:
 			break;
 		}
@@ -3085,7 +3060,7 @@ ioctl_done:
 
 static int
 esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
-		  u_long len, struct proc *p)
+		  u_long len, struct lwp *l)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct rr_eeprom rr_eeprom;
@@ -3101,11 +3076,11 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 	int i;
 
 	/*
-	 * If we have a proc pointer, check to make sure that the
+	 * If we have a LWP pointer, check to make sure that the
 	 * user is privileged before performing any destruction operations.
 	 */
 
-	if (p != NULL) {
+	if (l != NULL) {
 		switch (cmd) {
 		case EIOCGTUNE:
 		case EIOCGEEPROM:
@@ -3113,9 +3088,8 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 			break;
 
 		default:
-			error = kauth_authorize_generic(p->p_cred,
-						  KAUTH_GENERIC_ISSUSER,
-						  &p->p_acflag);
+			error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 			if (error)
 				return (error);
 		}
@@ -3640,6 +3614,7 @@ esh_dma_sync(sc, mem, start, end, entries, size, do_equal, ops)
 	void *mem;
 	int start;
 	int end;
+	int entries;
 	int size;
 	int do_equal;
 	int ops;

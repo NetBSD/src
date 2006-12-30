@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.11 2004/02/13 11:36:12 wiz Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.11.16.1 2006/12/30 20:45:54 yamt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -104,24 +104,6 @@
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
 
-GLOBAL(intrnames)
-	.asciz	"clock", "irq1", "irq2", "irq3"
-	.asciz	"irq4", "irq5", "irq6", "irq7"
-	.asciz	"irq8", "irq9", "irq10", "irq11"
-	.asciz	"irq12", "irq13", "irq14", "irq15"
-	.asciz	"irq16", "irq17", "irq18", "irq19"
-	.asciz	"irq20", "irq21", "irq22", "irq23"
-	.asciz	"irq24", "irq25", "irq26", "irq27"
-	.asciz	"irq28", "softnet", "softclock", "softserial"
-	.asciz  "statclock"
-GLOBAL(eintrnames)
-	.align	4
-GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-	.long	0
-GLOBAL(eintrcnt)
-
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
  * mark the start of kernel text.
@@ -210,58 +192,10 @@ __start_cpu0:
 	stw	%r8,0(%r7)
 #endif
 
-	/*
-	 * Set up TLB entry to cover kernel addresses.
-	 *
-	 * XXX: Skip TLB 0 for now, due to unresolved TLB 0 replacement
-	 *	and hard hangs
-	 */
-	li	%r0,1
+	/* Set kernel MMU context. */
+	li	%r0,KERNEL_PID
 	mtpid	%r0
 	sync
-
-	li	%r0,0
-#ifdef PPC_4XX_NOCACHE
-	li	%r4,TLB_EX|TLB_WR|TLB_I /* |TLB_W */
-#else
-	li	%r4,TLB_EX|TLB_WR /* |TLB_W */
-#endif
-        li	%r3,TLB_VALID|TLB_PG_16M
-        tlbwe	%r4,%r0,1		/* Load the data(Low) portion of the entry */
-        tlbwe	%r3,%r0,0		/* Load the tag(High) portion of the entry */
-
-#if 1
-	/* Damn. Have to be able to access all real memory.... Hardcode for 32M for now. */
-	li	%r0,1
-	lis	%r4,0x01000000@h
-	ori	%r3,%r4,0
-#ifdef PPC_4XX_NOCACHE
-	addi	%r4,%r4,TLB_EX|TLB_WR|TLB_I /* |TLB_W */
-#else
-	addi	%r4,%r4,TLB_EX|TLB_WR /* |TLB_W */
-#endif
-	addi	%r3,%r3,TLB_VALID|TLB_PG_16M
-	tlbwe	%r4,%r0,1		/* Load the data(Low) portion of the entry */
-	tlbwe	%r3,%r0,0		/* Load the tag(High) portion of the entry */
-#endif
-
-	/* set up a TLB mapping to cover uart0 */
-	lis	%r3,0xef000000@h	/* Load the virtual address */
-	ori	%r4,%r3,0		/* Load the physical address */
-
-	clrrwi	%r4,%r4,10		/* Mask off the real page number */
-	/* write, execute, cache inhibit, guarded */
-	ori	%r4,%r4,(TLB_WR|TLB_EX|TLB_I|TLB_G)
-
-	clrrwi	%r3,%r3,10		/* Mask off the effective page number */
-	ori	%r3,%r3,(TLB_VALID|TLB_PG_16M)
-
-	li	%r0,2
-
-	tlbwe	%r4,%r0,1		/* Load the data portion of the entry */
-	tlbwe	%r3,%r0,0		/* Load the tag portion of the entry */
-
-	/* END of TLB setup */
 
 	INIT_CPUINFO(8,1,9,0)
 	mr	%r4,%r8

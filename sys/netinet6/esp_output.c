@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.22.2.1 2006/06/21 15:11:08 yamt Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.22.2.2 2006/12/30 20:50:38 yamt Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.22.2.1 2006/06/21 15:11:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.22.2.2 2006/12/30 20:50:38 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -115,8 +115,10 @@ esp_hdrsiz(isr)
 	if (!algo)
 		goto estimate;
 	ivlen = sav->ivlen;
+#if 0
 	if (ivlen < 0)
 		goto estimate;
+#endif
 
 	/*
 	 * XXX
@@ -367,7 +369,7 @@ esp_output(m, nexthdrp, md, isr, af)
 #endif
 
 	/*
-	 * grow the mbuf to accomodate ESP header.
+	 * grow the mbuf to accommodate ESP header.
 	 * before: IP ... payload
 	 * after (without NAT-T):  IP ... ESP IV payload
 	 * after (with older NAT-T):  IP ... UDP non-IKE-marker ESP IV payload

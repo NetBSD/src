@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.4.6.1 2006/06/21 14:52:09 yamt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.4.6.2 2006/12/30 20:46:04 yamt Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -123,7 +123,7 @@ static __inline register_t set_psw(register_t psw)
 #define	fdce(sp,off) __asm volatile("fdce 0(%0,%1)":: "i" (sp), "r" (off))
 #define	fice(sp,off) __asm volatile("fice 0(%0,%1)":: "i" (sp), "r" (off))
 #define sync_caches() \
-    __asm volatile("sync\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop")
+    __asm volatile("sync\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop":::"memory")
 
 static __inline void
 iitlba(u_int pg, pa_space_t sp, vaddr_t va)

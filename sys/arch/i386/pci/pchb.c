@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.55.6.1 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.55.6.2 2006/12/30 20:46:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.55.6.1 2006/06/21 14:52:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.55.6.2 2006/12/30 20:46:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,7 +85,8 @@ CFATTACH_DECL(pchb, sizeof(struct pchb_softc),
     pchbmatch, pchbattach, NULL, NULL);
 
 int
-pchbmatch(struct device *parent, struct cfdata *match, void *aux)
+pchbmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -305,6 +306,8 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		case PCI_PRODUCT_INTEL_82865_HB:
 		case PCI_PRODUCT_INTEL_82915G_HB:
 		case PCI_PRODUCT_INTEL_82915GM_HB:
+		case PCI_PRODUCT_INTEL_82945P_MCH:
+		case PCI_PRODUCT_INTEL_82945GM_HB:
 			/*
 			 * The host bridge is either in GFX mode (internal
 			 * graphics) or in AGP mode. In GFX mode, we pretend

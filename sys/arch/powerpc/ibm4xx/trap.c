@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26.2.1 2006/06/21 14:54:49 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.26.2.2 2006/12/30 20:46:43 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.26.2.1 2006/06/21 14:54:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.26.2.2 2006/12/30 20:46:43 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -133,8 +133,10 @@ trap(struct trapframe *frame)
 
 	KASSERT(l == 0 || (l->l_stat == LSONPROC));
 
-	if (frame->srr1 & PSL_PR)
+	if (frame->srr1 & PSL_PR) {
+		LWP_CACHE_CREDS(l, p);
 		type |= EXC_USER;
+	}
 
 	ftype = VM_PROT_READ;
 
@@ -251,8 +253,8 @@ trap(struct trapframe *frame)
 			printf("UVM: pid %d (%s) lid %d, uid %d killed: "
 			    "out of swap\n",
 			    p->p_pid, p->p_comm, l->l_lid,
-			    p->p_cred ?
-			    kauth_cred_geteuid(p->p_cred) : -1);
+			    l->l_cred ?
+			    kauth_cred_geteuid(l->l_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		}
 		trapsignal(l, &ksi);
@@ -488,7 +490,7 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	 * Stolen from physio():
 	 */
 	PHOLD(l);
-	error = uvm_vslock(p, __UNCONST(udaddr), len, VM_PROT_READ);
+	error = uvm_vslock(p->p_vmspace, __UNCONST(udaddr), len, VM_PROT_READ);
 	if (error) {
 		PRELE(l);
 		return EFAULT;
@@ -497,7 +499,7 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 
 	memcpy(kp, up, len);
 	vunmaprange((vaddr_t)up, len);
-	uvm_vsunlock(p, __UNCONST(udaddr), len);
+	uvm_vsunlock(p->p_vmspace, __UNCONST(udaddr), len);
 	PRELE(l);
 
 	return 0;
@@ -569,7 +571,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	 * Stolen from physio():
 	 */
 	PHOLD(l);
-	error = uvm_vslock(p, udaddr, len, VM_PROT_WRITE);
+	error = uvm_vslock(p->p_vmspace, udaddr, len, VM_PROT_WRITE);
 	if (error) {
 		PRELE(l);
 		return EFAULT;
@@ -579,7 +581,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 
 	memcpy(up, kp, len);
 	vunmaprange((vaddr_t)up, len);
-	uvm_vsunlock(p, udaddr, len);
+	uvm_vsunlock(p->p_vmspace, udaddr, len);
 	PRELE(l);
 
 	return 0;

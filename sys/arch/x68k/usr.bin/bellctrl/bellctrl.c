@@ -1,4 +1,4 @@
-/*	$NetBSD: bellctrl.c,v 1.9 2004/05/08 08:38:36 minoura Exp $	*/
+/*	$NetBSD: bellctrl.c,v 1.9.12.1 2006/12/30 20:47:22 yamt Exp $	*/
 
 /*
  * bellctrl - OPM bell controller (for NetBSD/X680x0)
@@ -6,12 +6,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bellctrl.c,v 1.9 2004/05/08 08:38:36 minoura Exp $");
+__RCSID("$NetBSD: bellctrl.c,v 1.9.12.1 2006/12/30 20:47:22 yamt Exp $");
 
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <machine/opmbellio.h>

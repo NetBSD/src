@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.h,v 1.9 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: tree.h,v 1.9.4.1 2006/12/30 20:50:56 yamt Exp $	*/
 /*	$OpenBSD: tree.h,v 1.7 2002/10/17 21:51:54 art Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -330,7 +330,7 @@ struct {								\
 } while (/*CONSTCOND*/ 0)
 
 #ifndef RB_AUGMENT
-#define RB_AUGMENT(x)
+#define RB_AUGMENT(x) (void)(x)
 #endif
 
 #define RB_ROTATE_LEFT(head, elm, tmp, field) do {			\

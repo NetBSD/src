@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.24.12.1 2006/06/21 15:04:46 yamt Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.24.12.2 2006/12/30 20:48:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.24.12.1 2006/06/21 15:04:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.24.12.2 2006/12/30 20:48:38 yamt Exp $");
 
 #include "opt_mii.h"
 
@@ -111,7 +111,8 @@ static const struct mii_phy_funcs ukphy_funcs = {
 };
 
 static int
-ukphymatch(struct device *parent, struct cfdata *match, void *aux)
+ukphymatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	/*
@@ -154,7 +155,7 @@ ukphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &ukphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	/*
 	 * Don't do loopback on unknown PHYs.  It might confuse some of them.

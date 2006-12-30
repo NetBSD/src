@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.31.2.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.31.2.2 2006/12/30 20:50:20 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,13 +80,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.31.2.1 2006/06/21 15:10:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.31.2.2 2006/12/30 20:50:20 yamt Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
 #include "bpfilter.h"
-#include "gif.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -451,7 +450,7 @@ static int
 bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct bridge_softc *sc = ifp->if_softc;
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
 	union {
 		struct ifbreq ifbreq;
 		struct ifbifconf ifbifconf;
@@ -486,9 +485,8 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		if (bc->bc_flags & BC_F_SUSER) {
-			error = kauth_authorize_generic(p->p_cred,
-						  KAUTH_GENERIC_ISSUSER,
-						  &p->p_acflag);
+			error = kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
 			if (error)
 				break;
 		}
@@ -596,10 +594,6 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 		 */
 		(void) ifpromisc(ifs, 0);
 		break;
-#if NGIF > 0
-	case IFT_GIF:
-		break;
-#endif
 	default:
 #ifdef DIAGNOSTIC
 		panic("bridge_delete_member: impossible");
@@ -652,10 +646,6 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		if (error)
 			goto out;
 		break;
-#if NGIF > 0
-	case IFT_GIF:
-		break;
-#endif
 	default:
 		error = EINVAL;
 		goto out;
@@ -1505,20 +1495,6 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			return (m);
 
 		/* Perform the bridge forwarding function with the copy. */
-#if NGIF > 0
-		if (ifp->if_type == IFT_GIF) {
-			LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
-				if (bif->bif_ifp->if_type == IFT_ETHER)
-				break;
-			}
-			if (bif != NULL) {
-				m->m_flags |= M_PROTO1;
-				m->m_pkthdr.rcvif = bif->bif_ifp;
-				(*bif->bif_ifp->if_input)(bif->bif_ifp, m);
-				m = NULL;
-			}
-		}
-#endif
 		bridge_forward(sc, mc);
 
 		/* Return the original packet for local processing. */
@@ -1538,8 +1514,6 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	 * Unicast.  Make sure it's not for us.
 	 */
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
-		if(bif->bif_ifp->if_type != IFT_ETHER)
-			continue;
 		/* It is destined for us. */
 		if (memcmp(LLADDR(bif->bif_ifp->if_sadl), eh->ether_dhost,
 		    ETHER_ADDR_LEN) == 0
@@ -1552,14 +1526,6 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 				(void) bridge_rtupdate(sc,
 				    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
 			m->m_pkthdr.rcvif = bif->bif_ifp;
-#if NGIF > 0
-			if (ifp->if_type == IFT_GIF) {
-				m->m_flags |= M_PROTO1;
-				m->m_pkthdr.rcvif = bif->bif_ifp;
-				(*bif->bif_ifp->if_input)(bif->bif_ifp, m);
-				m = NULL;
-			}
-#endif
 			return (m);
 		}
 
@@ -1645,7 +1611,7 @@ bridge_rtupdate(struct bridge_softc *sc, const uint8_t *dst,
     struct ifnet *dst_if, int setflags, uint8_t flags)
 {
 	struct bridge_rtnode *brt;
-	int error;
+	int error, s;
 
 	/*
 	 * A route for this destination might already exist.  If so,
@@ -1660,7 +1626,9 @@ bridge_rtupdate(struct bridge_softc *sc, const uint8_t *dst,
 		 * initialize the expiration time and Ethernet
 		 * address.
 		 */
+		s = splnet();
 		brt = pool_get(&bridge_rtnode_pool, PR_NOWAIT);
+		splx(s);
 		if (brt == NULL)
 			return (ENOMEM);
 
@@ -1670,7 +1638,9 @@ bridge_rtupdate(struct bridge_softc *sc, const uint8_t *dst,
 		memcpy(brt->brt_addr, dst, ETHER_ADDR_LEN);
 
 		if ((error = bridge_rtnode_insert(sc, brt)) != 0) {
+			s = splnet();
 			pool_put(&bridge_rtnode_pool, brt);
+			splx(s);
 			return (error);
 		}
 	}
@@ -1976,12 +1946,15 @@ bridge_rtnode_insert(struct bridge_softc *sc, struct bridge_rtnode *brt)
 static void
 bridge_rtnode_destroy(struct bridge_softc *sc, struct bridge_rtnode *brt)
 {
+	int s = splnet();
 
 	LIST_REMOVE(brt, brt_hash);
 
 	LIST_REMOVE(brt, brt_list);
 	sc->sc_brtcnt--;
 	pool_put(&bridge_rtnode_pool, brt);
+
+	splx(s);
 }
 
 #if defined(BRIDGE_IPF) && defined(PFIL_HOOKS)

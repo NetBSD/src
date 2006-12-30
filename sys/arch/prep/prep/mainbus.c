@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18.12.1 2006/06/21 14:55:19 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18.12.2 2006/12/30 20:46:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,13 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.12.1 2006/06/21 14:55:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.12.2 2006/12/30 20:46:50 yamt Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
 
 #include "pnpbus.h"
 #include "pci.h"
+#include "isa.h"
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -150,8 +151,24 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	extent_destroy(ioext);
 	extent_destroy(memext);
-#endif
+#endif /* PCI_NETBSD_CONFIGURE */
+#endif /* NPCI */
 
+/* scan pnpbus first */
+#if NISA > 0
+	/* Initialize interrupt controller */
+	init_icu(0);
+#endif
+#if NPNPBUS > 0
+	mba.mba_paa.paa_iot = &prep_isa_io_space_tag;
+	mba.mba_paa.paa_memt = &prep_isa_mem_space_tag;
+	mba.mba_paa.paa_ic = &prep_isa_chipset;
+	mba.mba_paa.paa_dmat = &isa_bus_dma_tag;
+	config_found_ia(self, "mainbus", &mba.mba_pba, mainbus_print);
+#endif /* NPNPBUS */
+
+#if NPCI > 0
+	bzero(&mba, sizeof(mba));
 	mba.mba_pba.pba_iot = &prep_io_space_tag;
 	mba.mba_pba.pba_memt = &prep_mem_space_tag;
 	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
@@ -161,14 +178,11 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	mba.mba_pba.pba_bridgetag = NULL;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);
-#endif
+#endif /* NPCI */
 
-#if NPNPBUS > 0
-	bzero(&mba, sizeof(mba));
-	mba.mba_paa.paa_iot = &prep_isa_io_space_tag;
-	mba.mba_paa.paa_memt = &prep_isa_mem_space_tag;
-	mba.mba_paa.paa_ic = &prep_isa_chipset;
-	config_found_ia(self, "mainbus", &mba.mba_pba, mainbus_print);
+#ifdef RESIDUAL_DATA_DUMP
+	SIMPLEQ_FOREACH(pbi, &prep_pct->pc_pbi, next)
+		printf("%s\n", prop_dictionary_externalize(pbi->pbi_properties));
 #endif
 }
 

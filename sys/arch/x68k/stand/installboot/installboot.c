@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.3 2001/11/25 00:42:11 minoura Exp $	*/
+/*	$NetBSD: installboot.c,v 1.3.34.1 2006/12/30 20:47:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -95,7 +95,7 @@ checktargetdev(const char *name)
 		err(1, "%s", name);
 	if (stat(name, &st) < 0)
 		err(1, "%s", name);
-	if ((st.st_mode & S_IFCHR) == 0)
+	if (!S_ISCHR(st.st_mode))
 		errx(1, "%s: not a character special device", name);
 	if (DISKPART(st.st_rdev) > MAXPARTITIONS)
 		errx(1, "%s: invalid device", name);
@@ -121,7 +121,7 @@ checkparttype(const char *name, int force)
 		err(1, "opening %s", name);
 	if (stat(name, &st) < 0)
 		err(1, "%s", name);
-	if ((st.st_mode & S_IFCHR) == 0)
+	if (!S_ISCHR(st.st_mode))
 		errx(1, "%s: not a character special device", name);
 	part = DISKPART(st.st_rdev);
 	if (ioctl(fd, DIOCGDINFO, &label) < 0)
@@ -136,7 +136,7 @@ checkparttype(const char *name, int force)
 	if (read(fd, bootblock, blocksize) != blocksize)
 		errx(1, "%s: reading the mark", name);
 	close(fd);
-	if (strncmp(bootblock, "X68SCSI1", 8) != 0)
+	if (strncmp((const char *)bootblock, "X68SCSI1", 8) != 0)
 		floppy = 1;	/* XXX: or unformated */
 
 	if (!force && !floppy) {

@@ -1,0 +1,8 @@
+# $NetBSD: USL-5P,v 1.2.6.2 2006/12/30 20:46:21 yamt Exp $
+#
+# USL-5P
+#
+
+include "arch/landisk/conf/GENERIC.in"
+
+wdc0	at obio? port 0x14000000 irq 10		# CF

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.135.2.1 2006/06/21 15:11:50 yamt Exp $	*/
+/*	$NetBSD: key.c,v 1.135.2.2 2006/12/30 20:50:51 yamt Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.135.2.1 2006/06/21 15:11:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.135.2.2 2006/12/30 20:50:51 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -747,11 +747,15 @@ key_do_allocsa_policy(sah, state)
  * sport and dport are used for NAT-T. network order is always used.
  */
 struct secasvar *
-key_allocsa(family, src, dst, proto, spi, sport, dport)
-	u_int family, proto;
-	caddr_t src, dst;
-	u_int32_t spi;
-	u_int16_t sport, dport;
+key_allocsa(
+    u_int family,
+    caddr_t src,
+    caddr_t dst,
+    u_int proto,
+    u_int32_t spi,
+    u_int16_t sport,
+    u_int16_t dport
+)
 {
 	struct secasvar *sav, *match;
 	u_int stateidx, state, tmpidx, matchidx;
@@ -2825,10 +2829,7 @@ key_delsah(sah)
 		return;
 	}
 
-	if (sah->sa_route.ro_rt) {
-		RTFREE(sah->sa_route.ro_rt);
-		sah->sa_route.ro_rt = (struct rtentry *)NULL;
-	}
+	rtcache_free(&sah->sa_route);
 
 	/* remove from tree of SA index */
 	if (__LIST_CHAINED(sah))
@@ -3353,7 +3354,7 @@ key_mature(sav)
 	switch (sav->sah->saidx.proto) {
 	case IPPROTO_ESP:
 	case IPPROTO_AH:
-		if (ntohl(sav->spi) >= 0 && ntohl(sav->spi) <= 255) {
+		if (ntohl(sav->spi) <= 255) {
 			ipseclog((LOG_DEBUG,
 			    "key_mature: illegal range of SPI %u.\n",
 			    (u_int32_t)ntohl(sav->spi)));
@@ -4648,8 +4649,7 @@ key_bbcmp(p1, p2, bits)
  * XXX: year 2038 problem may remain.
  */
 void
-key_timehandler(arg)
-	void *arg;
+key_timehandler(void *arg)
 {
 	u_int dir;
 	int s;
@@ -6547,8 +6547,8 @@ key_acquire(saidx, sp)
 		id->sadb_ident_exttype = idexttype;
 		id->sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
 		/* XXX is it correct? */
-		if (curproc && curproc->p_cred)
-			id->sadb_ident_id = curproc->p_cred->p_ruid;
+		if (curlwp)
+			id->sadb_ident_id = kauth_cred_getuid(curlwp->l_cred);
 		if (userfqdn && userfqdnlen)
 			bcopy(userfqdn, id + 1, userfqdnlen);
 		p += sizeof(struct sadb_ident) + PFKEY_ALIGN8(userfqdnlen);
@@ -8100,11 +8100,8 @@ key_init()
  * xxx more checks to be provided
  */
 int
-key_checktunnelsanity(sav, family, src, dst)
-	struct secasvar *sav;
-	u_int family;
-	caddr_t src;
-	caddr_t dst;
+key_checktunnelsanity(struct secasvar *sav, u_int family,
+    caddr_t src, caddr_t dst)
 {
 	/* sanity check */
 	if (sav->sah == NULL)
@@ -8234,11 +8231,9 @@ key_sa_routechange(dst)
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		ro = &sah->sa_route;
-		if (ro->ro_rt && dst->sa_len == ro->ro_dst.sa_len &&
-		    bcmp(dst, &ro->ro_dst, dst->sa_len) == 0) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)NULL;
-		}
+		if (dst->sa_len == ro->ro_dst.sa_len &&
+		    bcmp(dst, &ro->ro_dst, dst->sa_len) == 0)
+			rtcache_free(ro);
 	}
 
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.4.2.1 2006/06/21 15:07:44 yamt Exp $	*/
+/*	$NetBSD: uep.c,v 1.4.2.2 2006/12/30 20:49:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.4.2.1 2006/06/21 15:07:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.4.2.2 2006/12/30 20:49:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,8 +86,11 @@ struct uep_softc {
 };
 
 static struct wsmouse_calibcoords default_calib = {
-	0, 0, 2047, 2047,
-	WSMOUSE_CALIBCOORDS_RESET,
+	.minx = 0,
+	.miny = 0,
+	.maxx = 2047,
+	.maxy = 2047,
+	.samplelen = WSMOUSE_CALIBCOORDS_RESET,
 };
 
 Static void uep_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -412,7 +415,7 @@ uep_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		tpcalib_trans(&sc->sc_tpcalib, x, y, &x, &y);
 
 		s = spltty();
-		wsmouse_input(sc->sc_wsmousedev, p[0] & 0x01, x, y, 0,
+		wsmouse_input(sc->sc_wsmousedev, p[0] & 0x01, x, y, 0, 0,
 			WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
 		splx(s);
 	}

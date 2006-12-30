@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.46.12.1 2006/06/21 15:04:21 yamt Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.46.12.2 2006/12/30 20:48:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.46.12.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.46.12.2 2006/12/30 20:48:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,8 @@ static int	wdc_isa_dma_finish(void*, int, int, int);
 #endif
 
 static int
-wdc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+wdc_isa_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct ata_channel ch;
 	struct isa_attach_args *ia = aux;

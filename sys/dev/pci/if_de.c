@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.114.2.1 2006/06/21 15:05:04 yamt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.114.2.2 2006/12/30 20:48:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,13 +37,12 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.114.2.1 2006/06/21 15:05:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.114.2.2 2006/12/30 20:48:44 yamt Exp $");
 
 #define	TULIP_HDR_DATA
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
-#include "opt_ns.h"
 #endif
 
 #include <sys/param.h>
@@ -97,10 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.114.2.1 2006/06/21 15:05:04 yamt Exp $")
 #include <netinet/ip.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if defined(__NetBSD__)
 #include <uvm/uvm_extern.h>
@@ -1066,6 +1061,7 @@ static const tulip_boardsw_t tulip_21040_boardsw = {
     tulip_21040_media_probe,
     tulip_media_select,
     tulip_media_poll,
+    NULL,
 };
 
 static const tulip_boardsw_t tulip_21040_10baset_only_boardsw = {
@@ -1073,12 +1069,14 @@ static const tulip_boardsw_t tulip_21040_10baset_only_boardsw = {
     tulip_21040_10baset_only_media_probe,
     tulip_21040_10baset_only_media_select,
     NULL,
+    NULL,
 };
 
 static const tulip_boardsw_t tulip_21040_auibnc_only_boardsw = {
     TULIP_21040_GENERIC,
     tulip_21040_auibnc_only_media_probe,
     tulip_21040_auibnc_only_media_select,
+    NULL,
     NULL,
 };
 
@@ -1272,7 +1270,8 @@ static const tulip_boardsw_t tulip_21041_boardsw = {
     TULIP_21041_GENERIC,
     tulip_21041_media_probe,
     tulip_media_select,
-    tulip_21041_media_poll
+    tulip_21041_media_poll,
+    NULL,
 };
 
 static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
@@ -1288,7 +1287,7 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
     { 0x0281F400, 0,		/* 00-A0-7D */
       {
 	{ 0x12, 0x0010, 0x0000 },	/* 10T */
-	{ 0 },				/* 100TX */
+	{ 0, 0, 0 },			/* 100TX */
 	{ 0x12, 0x0010, 0x0010 },	/* 100T4 */
 	{ 0x12, 0x0008, 0x0008 },	/* FULL_DUPLEX */
       },
@@ -1300,7 +1299,7 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
       {
 	{ 0x12, 0x0080, 0x0000 },	/* 10T */
 	{ 0x12, 0x0080, 0x0080 },	/* 100TX */
-	{ 0 },				/* 100T4 */
+	{ 0, 0, 0 },			/* 100T4 */
 	{ 0x12, 0x0040, 0x0040 },	/* FULL_DUPLEX */
       },
 #if defined(TULIP_DEBUG)
@@ -1311,7 +1310,7 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
     { 0x0015F420, 0,	/* 00-A0-7D */
       {
 	{ 0x12, 0x0010, 0x0000 },	/* 10T */
-	{ 0 },				/* 100TX */
+	{ 0, 0, 0 },			/* 100TX */
 	{ 0x12, 0x0010, 0x0010 },	/* 100T4 */
 	{ 0x12, 0x0008, 0x0008 },	/* FULL_DUPLEX */
       },
@@ -1324,14 +1323,18 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
       {
 	{ 0x11, 0x8000, 0x0000 },	/* 10T */
 	{ 0x11, 0x8000, 0x8000 },	/* 100TX */
-	{ 0 },				/* 100T4 */
+	{ 0, 0, 0 },			/* 100T4 */
 	{ 0x11, 0x4000, 0x4000 },	/* FULL_DUPLEX */
       },
 #if defined(TULIP_DEBUG)
       "ICS 1890"
 #endif
     },
-    { 0 }
+    { 0, 0, {{ 0, 0, 0},}, 
+#if defined(TULIP_DEBUG)
+	NULL
+#endif
+    },
 };
 
 static tulip_media_t
@@ -2854,7 +2857,7 @@ static const struct {
     { tulip_identify_asante_nic,	{ 0x00, 0x00, 0x94 } },
     { tulip_identify_accton_nic,	{ 0x00, 0x00, 0xE8 } },
     { tulip_identify_compex_nic,        { 0x00, 0x80, 0x48 } },
-    { NULL }
+    { NULL, { 0, 0, 0} }
 };
 
 /*
@@ -4770,26 +4773,6 @@ tulip_ifioctl(
 		}
 #endif /* INET */
 
-#ifdef NS
-		/*
-		 * This magic copied from if_is.c; I don't use XNS,
-		 * so I have no way of telling if this actually
-		 * works or not.
-		 */
-		case AF_NS: {
-		    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-		    if (ns_nullhost(*ina)) {
-			ina->x_host = *(union ns_host *)(sc->tulip_enaddr);
-		    } else {
-			ifp->if_flags &= ~IFF_RUNNING;
-			memcpy((caddr_t)sc->tulip_enaddr,
-			    (caddr_t)ina->x_host.c_host,
-			    sizeof(sc->tulip_enaddr));
-		    }
-		    tulip_init(sc);
-		    break;
-		}
-#endif /* NS */
 
 		default: {
 		    tulip_init(sc);

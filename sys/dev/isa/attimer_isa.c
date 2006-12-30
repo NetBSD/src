@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer_isa.c,v 1.1 2005/03/25 23:06:19 cube Exp $	*/
+/*	$NetBSD: attimer_isa.c,v 1.1.8.1 2006/12/30 20:48:26 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer_isa.c,v 1.1 2005/03/25 23:06:19 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer_isa.c,v 1.1.8.1 2006/12/30 20:48:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,8 @@ CFATTACH_DECL(attimer_isa, sizeof(struct attimer_softc),
     attimer_isa_match, attimer_isa_attach, NULL, NULL);
 
 static int
-attimer_isa_match(struct device *parent, struct cfdata *match, void *aux)
+attimer_isa_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t att_ioh;
@@ -133,13 +134,15 @@ attimer_isa_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-attimer_isa_attach(struct device *parent, struct device *self, void *aux)
+attimer_isa_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct attimer_softc *sc = (struct attimer_softc *)self;
 	struct isa_attach_args *ia = aux;
 
 	sc->sc_iot = ia->ia_iot;
 
+	aprint_naive(": AT Timer\n");
 	aprint_normal(": AT Timer\n");
 
 	if (bus_space_map(sc->sc_iot, IO_TIMER1, 4, 0, &sc->sc_ioh) != 0)

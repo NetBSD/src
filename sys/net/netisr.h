@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.33.4.1 2006/06/21 15:10:27 yamt Exp $ */
+/* $NetBSD: netisr.h,v 1.33.4.2 2006/12/30 20:50:20 yamt Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -51,9 +51,7 @@
 #if !defined(_LKM)
 #include "opt_inet.h"
 #include "opt_atalk.h"
-#include "opt_ccitt.h"
 #include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_natm.h"
 #include "arp.h"
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -88,15 +86,9 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
 #ifdef ISO
 #include <netiso/iso.h>
 #include <netiso/clnp.h>
-#endif
-#ifdef CCITT
-#include <netccitt/x25isr.h>
 #endif
 #ifdef NATM
 #include <netnatm/natm.h>

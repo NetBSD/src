@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.7.12.1 2006/06/21 14:51:03 yamt Exp $
+#	$NetBSD: files.walnut,v 1.7.12.2 2006/12/30 20:45:52 yamt Exp $
 #
 # walnut-specific configuration info
 
@@ -6,6 +6,7 @@ file	arch/evbppc/walnut/autoconf.c
 file	arch/evbppc/walnut/consinit.c
 file	arch/evbppc/walnut/machdep.c
 file	arch/powerpc/ibm4xx/intr.c
+file 	arch/powerpc/powerpc/softintr.c
 file	arch/powerpc/ibm4xx/ibm4xx_autoconf.c
 
 # Memory Disk for install kernel
@@ -33,7 +34,7 @@ include	"dev/pci/files.pci"
 # On-chip PCI bridge
 #
 # XXX: Move these to a 405gp-specific file and re-think the
-# layout of the powerpc/ibm4xx hierarchy to accomodate SoCs.
+# layout of the powerpc/ibm4xx hierarchy to accommodate SoCs.
 #
 device	pchb : pcibus
 attach	pchb at plb
@@ -46,13 +47,7 @@ device	pbus {[addr=-1], [irq=-1]}
 attach	pbus at plb
 file	arch/evbppc/walnut/dev/pbus.c		pbus
 
-define	todservice {}
-
-device	todclock
-attach	todclock at todservice
-file	arch/evbppc/walnut/dev/todclock.c	todclock	needs-count
-
-device	ds1743rtc: todservice
+device	ds1743rtc
 attach	ds1743rtc at pbus
 file	arch/evbppc/walnut/dev/ds1743.c		ds1743rtc
 

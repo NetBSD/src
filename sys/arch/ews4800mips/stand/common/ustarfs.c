@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.2.16.2 2006/06/21 14:51:21 yamt Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.2.16.3 2006/12/30 20:45:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -126,8 +126,8 @@ __ustarfs_file(int start_block, char *file, size_t *size)
 		printf("bad tar magic.\n");
 		return FALSE;
 	}
-	*size = strtoul(buf + 124, 0, 0);
-	strncpy(file, buf, 16);
+	*size = strtoul((char *)buf + 124, 0, 0);
+	strncpy(file, (char *)buf, 16);
 
 	return TRUE;
 }

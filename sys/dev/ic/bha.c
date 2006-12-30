@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.63.2.1 2006/06/21 15:02:53 yamt Exp $	*/
+/*	$NetBSD: bha.c,v 1.63.2.2 2006/12/30 20:48:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.63.2.1 2006/06/21 15:02:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.63.2.2 2006/12/30 20:48:02 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1559,7 +1559,7 @@ bha_finish_ccbs(struct bha_softc *sc)
 
 #ifdef BHADEBUG
 		if (bha_debug) {
-			u_char *cp = &ccb->scsi_cmd;
+			u_char *cp = ccb->scsi_cmd;
 			printf("op=%x %x %x %x %x %x\n",
 			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
 			printf("comp_stat %x for mbi addr = %p, ",

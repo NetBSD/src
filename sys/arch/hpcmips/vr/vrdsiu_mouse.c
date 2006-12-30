@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.6.16.1 2006/06/21 14:51:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.6.16.2 2006/12/30 20:46:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,11 +371,9 @@ vrdsiu_mouse_intr(sc)
 
 		/* We now have a complete packet; send to wscons */
 		wsmouse_input(sc->sc_wsmousedev,
-			buttons,
-			dx,
-			dy,
-			0,
-			WSMOUSE_INPUT_DELTA);
+				buttons,
+				dx, dy, 0, 0,
+				WSMOUSE_INPUT_DELTA);
 
 		ps2_state = VRDSIU_PS2_INPUT_STATE_BYTE0;
 		break;

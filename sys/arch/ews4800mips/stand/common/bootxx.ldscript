@@ -1,3 +1,4 @@
+/* $NetBSD: bootxx.ldscript,v 1.2.6.3 2006/12/30 20:45:55 yamt Exp $ */
 OUTPUT_FORMAT("elf32-tradbigmips")
 OUTPUT_ARCH(mips)
 STARTUP(entry.o)
@@ -21,6 +22,7 @@ SECTIONS {
 	{
 		_data = .;
 		*(.rodata)
+		*(.rodata.*)
 		*(.data)
 		_edata = .;
 		PROVIDE (edata = .);

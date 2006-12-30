@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.22.4.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: sockio.h,v 1.22.4.2 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -81,6 +81,9 @@
 #define	SIOCALIFADDR	 _IOW('i', 28, struct if_laddrreq) /* add IF addr */
 #define	SIOCGLIFADDR	_IOWR('i', 29, struct if_laddrreq) /* get IF addr */
 #define	SIOCDLIFADDR	 _IOW('i', 30, struct if_laddrreq) /* delete IF addr */
+/* get/set IF addr preference */
+#define	SIOCSIFADDRPREF	 _IOW('i', 31, struct if_addrprefreq)
+#define	SIOCGIFADDRPREF	_IOWR('i', 32, struct if_addrprefreq)
 
 #define	SIOCADDMULTI	 _IOW('i', 49, struct ifreq)	/* add m'cast addr */
 #define	SIOCDELMULTI	 _IOW('i', 50, struct ifreq)	/* del m'cast addr */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.33.2.1 2006/06/21 15:11:37 yamt Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.33.2.2 2006/12/30 20:50:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.33.2.1 2006/06/21 15:11:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.33.2.2 2006/12/30 20:50:45 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -100,15 +100,32 @@ LIST_HEAD(, llinfo_llc) llinfo_llc;
 
 struct callout snpac_age_ch;
 
-struct sockaddr_iso blank_siso = {sizeof(blank_siso), AF_ISO};
+struct sockaddr_iso blank_siso = {
+	.siso_len = sizeof(blank_siso),
+	.siso_family = AF_ISO,
+};
 static struct sockaddr_iso
-	dst = {sizeof(dst), AF_ISO},
-	gte = {sizeof(gte), AF_ISO},
+	dst = {
+		.siso_len = sizeof(dst),
+		.siso_family = AF_ISO,
+	},
+	gte = {
+		.siso_len = sizeof(gte),
+		.siso_family = AF_ISO,
+	},
 #if 0
-	src = {sizeof(src), AF_ISO},
+	src = {
+		.siso_len = sizeof(src),
+		.siso_family = AF_ISO,
+	},
 #endif
-	msk = {sizeof(msk), AF_ISO},
-	zmk = {0, 0};
+	msk = {
+		.siso_len = sizeof(msk),
+		.siso_family = AF_ISO,
+	},
+	zmk = {
+		.siso_len = 0,
+	};
 
 #define zsi blank_siso
 #define zero_isoa	zsi.siso_addr
@@ -116,7 +133,10 @@ static struct sockaddr_iso
 	   Bcopy(r, &a.siso_addr, 1 + (r)->isoa_len);}
 #define S(x) ((struct sockaddr *)&(x))
 
-static struct sockaddr_dl blank_dl = {sizeof(blank_dl), AF_LINK};
+static struct sockaddr_dl blank_dl = {
+	.sdl_len = sizeof(blank_dl),
+	.sdl_family = AF_LINK,
+};
 static struct sockaddr_dl gte_dl;
 #define zap_linkaddr(a, b, c, i) \
 	(*a = blank_dl, memcpy(a->sdl_data, b, a->sdl_alen = c), a->sdl_index = i)
@@ -516,9 +536,7 @@ snpac_ioctl(
 	struct lwp *l)
 {
 	struct systype_req *rq = (struct systype_req *) data;
-	struct proc *p;
 
-	p = l ? l->l_proc : NULL;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_IOCTL]) {
 		if (cmd == SIOCSSTYPE)
@@ -530,7 +548,8 @@ snpac_ioctl(
 #endif
 
 	if (cmd == SIOCSSTYPE) {
-		if (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
+		if (l == NULL || kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
 			return (EPERM);
 		if ((rq->sr_type & (SNPA_ES | SNPA_IS)) == (SNPA_ES | SNPA_IS))
 			return (EINVAL);
@@ -743,8 +762,8 @@ snpac_rtrequest(int req, struct iso_addr *host, struct iso_addr *gateway,
  *			the existing route before adding a new one.
  */
 void
-snpac_addrt(struct ifnet *ifp, struct iso_addr *host, struct iso_addr *gateway,
-	struct iso_addr *netmask)
+snpac_addrt(struct ifnet *ifp, struct iso_addr *host,
+    struct iso_addr *gateway, struct iso_addr *netmask)
 {
 	struct iso_addr *r;
 

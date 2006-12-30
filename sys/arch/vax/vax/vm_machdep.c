@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.88.2.1 2006/06/21 14:57:34 yamt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.88.2.2 2006/12/30 20:47:14 yamt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88.2.1 2006/06/21 14:57:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88.2.2 2006/12/30 20:47:14 yamt Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
+#include "opt_coredump.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -226,6 +227,7 @@ sys_sysarch(l, v, retval)
 	return (ENOSYS);
 };
 
+#ifdef COREDUMP
 /*
  * Dump the machine specific header information at the start of a core dump.
  * First put all regs in PCB for debugging purposes. This is not an good
@@ -261,6 +263,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
 	    sizeof(md_core));
 }
+#endif
 
 /*
  * Map in a bunch of pages read/writable for the kernel.

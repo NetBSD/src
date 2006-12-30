@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.61.2.1 2006/06/21 15:04:46 yamt Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.61.2.2 2006/12/30 20:48:38 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.66 2006/04/27 16:43:14 jonathan Exp
+ *	NetBSD: miidevs,v 1.69 2006/11/26 16:26:35 tsutsui Exp
  */
 
 /*-
@@ -160,6 +160,8 @@
 #define	MII_STR_BROADCOM_BCM5411	"BCM5411 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5421	0x000e
 #define	MII_STR_BROADCOM_BCM5421	"BCM5421 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5752	0x0010
+#define	MII_STR_BROADCOM_BCM5752	"BCM5752 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5701	0x0011
 #define	MII_STR_BROADCOM_BCM5701	"BCM5701 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5703	0x0016
@@ -213,12 +215,16 @@
 #define	MII_STR_yyINTEL_I82555	"i82555 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82562EH	0x0017
 #define	MII_STR_yyINTEL_I82562EH	"i82562EH HomePNA interface"
+#define	MII_MODEL_yyINTEL_I82562G	0x0031
+#define	MII_STR_yyINTEL_I82562G	"i82562G 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82562EM	0x0032
 #define	MII_STR_yyINTEL_I82562EM	"i82562EM 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82562ET	0x0033
 #define	MII_STR_yyINTEL_I82562ET	"i82562ET 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82553	0x0035
 #define	MII_STR_yyINTEL_I82553	"i82553 10/100 media interface"
+#define	MII_MODEL_xxMARVELL_I82563	0x000a
+#define	MII_STR_xxMARVELL_I82563	"i82563 10/100/1000 media interface"
 
 #define	MII_MODEL_yyINTEL_IGP01E1000	0x0038
 #define	MII_STR_yyINTEL_IGP01E1000	"Intel IGP01E1000 Gigabit PHY"

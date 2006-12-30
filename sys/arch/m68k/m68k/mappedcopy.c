@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.20 2005/04/01 11:59:32 yamt Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.20.2.1 2006/12/30 20:46:25 yamt Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@NetBSD.org
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.20 2005/04/01 11:59:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.20.2.1 2006/12/30 20:46:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,12 +109,10 @@ u_int	mappedcopysize = -1;
 static caddr_t caddr1 = 0;
 
 int
-mappedcopyin(f, t, count)
-	void *f, *t;
-	register size_t count;
+mappedcopyin(void *f, void *t, size_t count)
 {
-	register caddr_t fromp = f, top = t;
-	register vaddr_t kva;
+	caddr_t fromp = f, top = t;
+	vaddr_t kva;
 	paddr_t upa;
 	register size_t len;
 	int off, alignable;
@@ -142,7 +140,7 @@ mappedcopyin(f, t, count)
 		 * page is faulted in and read access allowed.
 		 */
 		if (fubyte(fromp) == -1)
-			return (EFAULT);
+			return EFAULT;
 		/*
 		 * Map in the page and memcpy data in from it
 		 */
@@ -164,19 +162,17 @@ mappedcopyin(f, t, count)
 	}
 	pmap_remove(pmap_kernel(), kva, kva + PAGE_SIZE);
 	pmap_update(pmap_kernel());
-	return (0);
+	return 0;
 #undef CADDR1
 }
 
 int
-mappedcopyout(f, t, count)
-	void *f, *t;
-	register size_t count;
+mappedcopyout(void *f, void *t, size_t count)
 {
-	register caddr_t fromp = f, top = t;
-	register vaddr_t kva;
+	caddr_t fromp = f, top = t;
+	vaddr_t kva;
 	paddr_t upa;
-	register size_t len;
+	size_t len;
 	int off, alignable;
 	pmap_t upmap;
 #define CADDR2 caddr1
@@ -202,7 +198,7 @@ mappedcopyout(f, t, count)
 		 * page is faulted in and write access allowed.
 		 */
 		if (subyte(top, *((char *)fromp)) == -1)
-			return (EFAULT);
+			return EFAULT;
 		/*
 		 * Map in the page and memcpy data out to it
 		 */
@@ -225,6 +221,6 @@ mappedcopyout(f, t, count)
 	}
 	pmap_remove(pmap_kernel(), kva, kva + PAGE_SIZE);
 	pmap_update(pmap_kernel());
-	return (0);
+	return 0;
 #undef CADDR2
 }

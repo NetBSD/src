@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7.12.1 2006/06/21 14:51:08 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.12.2 2006/12/30 20:45:54 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.12.1 2006/06/21 14:51:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.12.2 2006/12/30 20:45:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -68,8 +68,8 @@ cpu_configure(void)
 	if (config_rootfound("plb", &local_plb_devs) == NULL)
 		panic("configure: plb not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n", (u_short)imask[IPL_BIO],
-	    (u_short)imask[IPL_NET], (u_short)imask[IPL_TTY]);
+	printf("biomask %x netmask %x ttymask %x\n",
+	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
 	
 	(void)spl0();
 
@@ -101,8 +101,8 @@ device_register(struct device *dev, void *aux)
 		KASSERT(pn != NULL);
 
 		if (prop_dictionary_set(device_properties(dev),
-					"frequency", pn) == FALSE) {
-			printf("WARNING: unable to set frequency "
+					"clock-frequency", pn) == FALSE) {
+			printf("WARNING: unable to set clock-frequency "
 			    "property for %s\n", dev->dv_xname);
 		}
 		prop_object_release(pn);

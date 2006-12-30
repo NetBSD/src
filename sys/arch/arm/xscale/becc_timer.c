@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_timer.c,v 1.8 2005/06/04 20:14:24 he Exp $	*/
+/*	$NetBSD: becc_timer.c,v 1.8.2.1 2006/12/30 20:45:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.8 2005/06/04 20:14:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.8.2.1 2006/12/30 20:45:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,6 +266,8 @@ delay(u_int n)
 	}
 }
 
+#ifndef __HAVE_GENERIC_TODR
+
 todr_chip_handle_t todr_handle;
 
 /*
@@ -351,6 +353,7 @@ resettodr(void)
 	    todr_settime(todr_handle, &time) != 0)
 		printf("resettodr: failed to set time\n");
 }
+#endif	/* __HAVE_GENERIC_TODR */
 
 /*
  * clockhandler:

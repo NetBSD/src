@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.9.2.1 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.9.2.2 2006/12/30 20:46:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.9.2.1 2006/06/21 14:52:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.9.2.2 2006/12/30 20:46:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,7 +106,8 @@ CFATTACH_DECL(ichlpcib, sizeof(struct lpcib_softc),
  * Autoconf callbacks.
  */
 static int
-lpcibmatch(struct device *parent, struct cfdata *match, void *aux)
+lpcibmatch(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -131,6 +132,8 @@ lpcibmatch(struct device *parent, struct cfdata *match, void *aux)
 		case PCI_PRODUCT_INTEL_82801FB_LPC:	/* ICH6 */
 		case PCI_PRODUCT_INTEL_82801FBM_LPC:	/* ICH6-M */
 		case PCI_PRODUCT_INTEL_82801G_LPC:	/* ICH7 */
+		case PCI_PRODUCT_INTEL_82801GBM_LPC:	/* ICH7-M */
+		case PCI_PRODUCT_INTEL_82801GHM_LPC:	/* ICH7-M DH */
 			return 10;	/* prior to pcib */
 		}
 	}
@@ -156,7 +159,8 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 	speedstep_configure(sc, pa);
 
 	/* Install powerhook */
-	sc->sc_powerhook = powerhook_establish(lpcib_powerhook, sc);
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    lpcib_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: can't establish powerhook\n",
 		    sc->sc_dev.dv_xname);
@@ -245,7 +249,7 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 		       "TCO timer disabled\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	
+
 	/* Explicitly stop the TCO timer. */
 	ioreg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_CNT);
 	if ((ioreg & LPCIB_TCO1_CNT_TCO_TMR_HLT) == 0)

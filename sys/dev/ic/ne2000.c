@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.46.4.1 2006/06/21 15:02:55 yamt Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.46.4.2 2006/12/30 20:48:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.46.4.1 2006/06/21 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.46.4.2 2006/12/30 20:48:03 yamt Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -705,8 +705,7 @@ ne2000_read_hdr(sc, buf, hdr)
 }
 
 int
-ne2000_test_mem(sc)
-	struct dp8390_softc *sc;
+ne2000_test_mem(struct dp8390_softc *sc)
 {
 
 	/* Noop. */
@@ -935,3 +934,32 @@ ne2000_ipkdb_attach(kip)
 	return 0;
 }
 #endif
+
+void
+ne2000_power(int why, void *arg)
+{
+	struct ne2000_softc *sc = arg;
+	struct dp8390_softc *dsc = &sc->sc_dp8390;
+	struct ifnet *ifp = &dsc->sc_ec.ec_if;
+	int s;
+
+	s = splnet();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		dp8390_stop(dsc);
+		dp8390_disable(dsc);
+		break;
+	case PWR_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			if (dp8390_enable(dsc) == 0)
+				dp8390_init(dsc);
+		}
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
+}

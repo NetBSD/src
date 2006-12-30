@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.15 2005/06/28 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.15.2.1 2006/12/30 20:48:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.15 2005/06/28 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.15.2.1 2006/12/30 20:48:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ static const struct aac_interface aac_sa_interface = {
 	aac_sa_set_interrupts
 };
 
-struct aac_ident {
+static struct aac_ident {
 	u_short	vendor;
 	u_short	device;
 	u_short	subvendor;
@@ -140,7 +140,7 @@ struct aac_ident {
 	u_short	hwif;
 	u_short	quirks;
 	const char	*prodstr;
-} static const aac_ident[] = {
+} const aac_ident[] = {
 	{
 		PCI_VENDOR_DELL,
 		PCI_PRODUCT_DELL_PERC_2SI,
@@ -375,7 +375,8 @@ aac_find_ident(struct pci_attach_args *pa)
 }
 
 static int
-aac_pci_match(struct device *parent, struct cfdata *match, void *aux)
+aac_pci_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pci_attach_args *pa;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.36.12.1 2006/06/21 15:04:46 yamt Exp $	*/
+/*	$NetBSD: exphy.c,v 1.36.12.2 2006/12/30 20:48:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.36.12.1 2006/06/21 15:04:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.36.12.2 2006/12/30 20:48:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ exphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_funcs = &exphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = MII_ANEGTICKS;
 
 	/*
 	 * The 3Com PHY can never be isolated, so never allow non-zero

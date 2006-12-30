@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.15.10.2 2006/06/21 14:56:48 yamt Exp $ */
+/*	$NetBSD: syscall.c,v 1.15.10.3 2006/12/30 20:47:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15.10.2 2006/06/21 14:56:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15.10.3 2006/12/30 20:47:05 yamt Exp $");
 
 #define NEW_FPSTATE
 
@@ -189,7 +189,7 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
 		break;
 	}
 
-	if (*code < 0 || *code >= p->p_emul->e_nsysent)
+	if (*code >= p->p_emul->e_nsysent)
 		return ENOSYS;
 
 	*callp += *code;
@@ -201,11 +201,15 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
 #ifdef __arch64__
 		if ((p->p_flag & P_32) != 0) {
 			printf("syscall(): 64-bit stack but P_32 set\n");
+#ifdef DDB
 			Debugger();
+#endif
 		}
 #else
 		printf("syscall(): 64-bit stack on a 32-bit kernel????\n");
+#ifdef DDB
 		Debugger();
+#endif
 #endif
 #endif
 		i = (*callp)->sy_narg;
@@ -300,6 +304,7 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	vaddr_t opc, onpc;
 	int s64;
 
+	LWP_CACHE_CREDS(l, p);
 	uvmexp.syscalls++;
 	sticks = p->p_sticks;
 	l->l_md.md_tf = tf;
@@ -383,6 +388,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 	vaddr_t opc, onpc;
 	int s64;
 
+	LWP_CACHE_CREDS(l, p);
 	uvmexp.syscalls++;
 	sticks = p->p_sticks;
 	l->l_md.md_tf = tf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.89.2.1 2006/06/21 15:04:21 yamt Exp $	*/
+/*	$NetBSD: gus.c,v 1.89.2.2 2006/12/30 20:48:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.89.2.1 2006/06/21 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.89.2.2 2006/12/30 20:48:26 yamt Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -612,6 +612,7 @@ const struct audio_hw_if gus_hw_if = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 };
 
 static const struct audio_hw_if gusmax_hw_if = {
@@ -642,6 +643,7 @@ static const struct audio_hw_if gusmax_hw_if = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 };
 
 /*
@@ -658,7 +660,8 @@ struct audio_device gus_device = {
 
 
 int
-gusprobe(struct device *parent, struct cfdata *match, void *aux)
+gusprobe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia;
 	int iobase, recdrq;
@@ -2275,10 +2278,10 @@ gusmax_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
 
 int
 gus_set_params(
-	void *addr,
-	int setmode, int usemode,
-	audio_params_t *p, audio_params_t *r,
-	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
+    void *addr,
+    int setmode, int usemode,
+    audio_params_t *p, audio_params_t *r,
+    stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
 	struct gus_softc *sc;
@@ -2373,7 +2376,7 @@ gusmax_round_blocksize(void * addr, int blocksize,
 
 int
 gus_round_blocksize(void * addr, int blocksize,
-		    int mode, const audio_params_t *param)
+    int mode, const audio_params_t *param)
 {
 	struct gus_softc *sc;
 
@@ -2994,7 +2997,7 @@ gus_init_cs4231(struct gus_softc *sc)
  * Return info about the audio device, for the AUDIO_GETINFO ioctl
  */
 int
-gus_getdev(void * addr, struct audio_device *dev)
+gus_getdev(void *addr, struct audio_device *dev)
 {
 
 	*dev = gus_device;
@@ -3006,7 +3009,8 @@ gus_getdev(void * addr, struct audio_device *dev)
  */
 
 int
-gus_set_in_gain(caddr_t addr, u_int gain, u_char balance)
+gus_set_in_gain(caddr_t addr, u_int gain,
+    u_char balance)
 {
 
 	DPRINTF(("gus_set_in_gain called\n"));

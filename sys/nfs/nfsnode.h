@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.54.6.1 2006/06/21 15:11:59 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.54.6.2 2006/12/30 20:50:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,6 @@ struct sillyrename {
  * the cookies are stored.
  */
 
-extern u_long nfsdirhashmask;
 
 LIST_HEAD(nfsdirhashhead, nfsdircache);
 TAILQ_HEAD(nfsdirchainhead, nfsdircache);
@@ -178,12 +177,6 @@ struct nfsnode {
 	int			n_accerror;	/* Error last returned */
 	kauth_cred_t		n_rcred;
 	kauth_cred_t		n_wcred;
-
-	/* members below are only used by NQNFS */
-	CIRCLEQ_ENTRY(nfsnode)	n_timer;	/* Nqnfs timer chain */
-	u_quad_t		n_brev;		/* Modify rev when cached */
-	u_quad_t		n_lrev;		/* Modify rev for lease */
-	time_t			n_expiry;	/* Lease expiry time */
 };
 LIST_HEAD(nfsnodehashhead, nfsnode);
 
@@ -200,9 +193,6 @@ LIST_HEAD(nfsnodehashhead, nfsnode);
 #define	NFLUSHINPROG	0x0002	/* Avoid multiple calls to vinvalbuf() */
 #define	NMODIFIED	0x0004	/* Might have a modified buffer in bio */
 #define	NWRITEERR	0x0008	/* Flag write errors so close will know */
-#define	NQNFSNONCACHE	0x0020	/* Non-cachable lease */
-#define	NQNFSWRITE	0x0040	/* Write lease */
-#define	NQNFSEVICTED	0x0080	/* Has been evicted */
 #define	NACC		0x0100	/* Special file accessed */
 #define	NUPD		0x0200	/* Special file updated */
 #define	NCHG		0x0400	/* Special file times changed */
@@ -229,9 +219,12 @@ struct nfs_iod {
 	struct proc *nid_want;
 	struct nfsmount *nid_mount;
 };
-extern struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 
 #ifdef _KERNEL
+
+extern struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
+extern u_long nfsdirhashmask;
+
 /*
  * Prototypes for NFS vnode operations
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.4.2.2 2006/06/21 14:55:19 yamt Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.4.2.3 2006/12/30 20:46:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.4.2.2 2006/06/21 14:55:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.4.2.3 2006/12/30 20:46:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.4.2.2 2006/06/21 14:55:19 yamt Exp $");
 #include <machine/residual.h>
 #include <machine/pnp.h>
 #include <machine/isa_machdep.h>
+#include <machine/chpidpnp.h>
 
 #include <dev/isa/isareg.h>
 
 #include <prep/pnpbus/pnpbusvar.h>
+
+#include "isadma.h"
 
 static int	pnpbus_match(struct device *, struct cfdata *, void *);
 static void	pnpbus_attach(struct device *, struct device *, void *);
@@ -87,6 +90,11 @@ pnpbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic = paa->paa_ic;
 	sc->sc_iot = paa->paa_iot;
 	sc->sc_memt = paa->paa_memt;
+	sc->sc_dmat = paa->paa_dmat;
+
+#if NISADMA > 0
+	isa_dmainit(sc->sc_ic, sc->sc_iot, sc->sc_dmat, self);
+#endif
 
 	(void)config_search_ia(pnpbus_search, self, "pnpbus", aux);
 }
@@ -170,6 +178,26 @@ pnp_newfixedioport(void *v, struct pnpresources *r, int size)
 	r->numio++;
 
 	return 0;
+}
+
+static int
+pnp_newiomem(void *v, struct pnpresources *r, int size)
+{
+	struct pnpbus_mem *mem;
+	struct _L1_Pack *pack = v;
+
+	if (pack->Count0 >= 0x9) {
+		mem = malloc(sizeof(struct pnpbus_mem), M_DEVBUF, M_NOWAIT);
+		mem->minbase = (pack->Data[2] << 16) | (pack->Data[1] << 8);
+		mem->maxbase = (pack->Data[4] << 16) | (pack->Data[3] << 8);
+		mem->align = (pack->Data[6] << 8) | pack->Data[5];
+		mem->len = (pack->Data[8] << 16) | (pack->Data[7] << 8);
+		mem->flags = pack->Data[0];
+		SIMPLEQ_INSERT_TAIL(&r->iomem, mem, next);
+		r->numiomem++;
+		return 0;
+	}
+	return -1;
 }
 
 static int
@@ -272,6 +300,8 @@ pnpbus_scan(struct pnpbus_dev_attach_args *pna, PPC_DEVICE *dev)
 			if (item == LargeVendorItem &&
 			    pa->Type == LV_GenericAddress)
 				pnp_newaddr(v, r, size);
+			else if (item == MemoryRange)
+				pnp_newiomem(v, r, size);
 		}
 	}
 
@@ -310,15 +340,21 @@ static void
 pnp_getpna(struct pnpbus_dev_attach_args *pna, struct pnpbus_attach_args *paa,
 	PPC_DEVICE *dev)
 {
-	uint32_t l;
 	DEVICE_ID *id = &dev->DeviceId;
 	struct pnpresources *r = &pna->pna_res;
+	ChipIDPack *pack;
+	uint32_t l;
+	uint8_t *p;
+	void *v;
+	int tag, size, item;
 
 	l = be32toh(dev->AllocatedOffset);
+	p = res->DevicePnPHeap + l;
 
 	pna->pna_iot = paa->paa_iot;
 	pna->pna_memt = paa->paa_memt;
 	pna->pna_ic = paa->paa_ic;
+	pna->pna_dmat = paa->paa_dmat;
 	pnp_devid_to_string(id->DevId, pna->pna_devid);
 	pna->basetype = id->BaseType;
 	pna->subtype = id->SubType;
@@ -329,6 +365,28 @@ pnp_getpna(struct pnpbus_dev_attach_args *pna, struct pnpbus_attach_args *paa,
 	SIMPLEQ_INIT(&r->io);
 	SIMPLEQ_INIT(&r->irq);
 	SIMPLEQ_INIT(&r->dma);
+	SIMPLEQ_INIT(&r->iomem);
+	if (p == NULL)
+		return;
+	/* otherwise, we start looking for chipid's */
+	for (; p[0] != END_TAG; p += size) {
+		tag = *p;
+		v = p;
+		if (tag_type(p[0]) == PNP_SMALL) {
+			size = tag_small_count(tag) + 1;
+			item = tag_small_item_name(tag);
+			if (item != SmallVendorItem || p[1] != 1)
+				continue;
+			pack = v;
+			pna->chipid = le16dec(&pack->Name[0]);
+			pna->chipmfg0 = pack->VendorID0;
+			pna->chipmfg1 = pack->VendorID1;
+			break;
+		} else {
+			/* Large */
+			size = (p[1] | (p[2] << 8)) + 3 /* tag + length */;
+		}
+	}
 }
 
 static int
@@ -382,6 +440,18 @@ pnpbus_printres(struct pnpresources *r)
 				aprint_normal("-0x%x",
 				    io->minbase + io->len - 1);
 		}
+	}
+	if (!SIMPLEQ_EMPTY(&r->iomem)) {
+		if (p++)
+			aprint_normal(", ");
+		aprint_normal("iomem");
+		SIMPLEQ_FOREACH(mem, &r->iomem, next) {
+			aprint_normal(" 0x%x", mem->minbase);
+			if (mem->len > 1)
+				aprint_normal("-0x%x",
+				    mem->minbase + mem->len - 1);
+		}
+		p++;
 	}
 	if (!SIMPLEQ_EMPTY(&r->irq)) {
 		if (p++)
@@ -537,4 +607,57 @@ pnpbus_io_unmap(struct pnpresources *r, int idx, bus_space_tag_t tag,
 		io = SIMPLEQ_NEXT(io, next);
 
 	bus_space_unmap(tag, hdl, io->len);
+}
+
+int
+pnpbus_getiomem(struct pnpresources *r, int idx, int *basep, int *sizep)
+{
+	struct pnpbus_mem *mem;
+
+	if (idx >= r->numiomem)
+		return EINVAL;
+
+	mem = SIMPLEQ_FIRST(&r->iomem);
+	while (idx--)
+		mem = SIMPLEQ_NEXT(mem, next);
+
+	if (basep)
+		*basep = mem->minbase;
+	if (sizep)
+		*sizep = mem->len;
+	return 0;
+}
+
+int
+pnpbus_iomem_map(struct pnpresources *r, int idx, bus_space_tag_t *tagp,
+    bus_space_handle_t *hdlp)
+{
+	struct pnpbus_mem *mem;
+
+	if (idx >= r->numiomem)
+		return EINVAL;
+
+	mem = SIMPLEQ_FIRST(&r->iomem);
+	while (idx--)
+		mem = SIMPLEQ_NEXT(mem, next);
+
+	*tagp = &prep_isa_mem_space_tag;
+	return (bus_space_map(&prep_isa_mem_space_tag, mem->minbase, mem->len,
+	    0, hdlp));
+}
+
+void
+pnpbus_iomem_unmap(struct pnpresources *r, int idx, bus_space_tag_t tag,
+    bus_space_handle_t hdl)
+{
+	struct pnpbus_mem *mem;
+
+	if (idx >= r->numiomem)
+		return;
+
+	mem = SIMPLEQ_FIRST(&r->mem);
+	while (idx--)
+		mem = SIMPLEQ_NEXT(mem, next);
+
+	bus_space_unmap(tag, hdl, mem->len);
 }

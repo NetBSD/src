@@ -1,4 +1,4 @@
-/*	$NetBSD: syncfs.h,v 1.7.4.1 2006/06/21 15:10:26 yamt Exp $	*/
+/*	$NetBSD: syncfs.h,v 1.7.4.2 2006/12/30 20:50:18 yamt Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -58,6 +58,6 @@ extern int (**sync_vnodeop_p)(void *);
 
 extern int syncer_maxdelay;	/* maximum delay time */
 extern struct lock syncer_lock;	/* lock to freeze syncer during unmount */
-LIST_HEAD(synclist, vnode);
+TAILQ_HEAD(synclist, vnode);
 
 #endif /* _MISCFS_SYNCFS_SYNCFS_H_ */

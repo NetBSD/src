@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7.16.1 2006/06/21 14:55:31 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.7.16.2 2006/12/30 20:46:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -57,6 +57,8 @@ struct mdlwp {
 
 /* md_flags */
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
+
+struct lwp;
 
 struct mdproc {
 	void (*md_syscall)(struct lwp *, struct trapframe *);

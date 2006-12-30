@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.39.4.1 2006/06/21 15:06:14 yamt Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.39.4.2 2006/12/30 20:49:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.39.4.1 2006/06/21 15:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.39.4.2 2006/12/30 20:49:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,9 @@ pcmcia_scan_cis(dev, fct, arg)
 					 * distant regions
 					 */
 					if ((addr >= PCMCIA_CIS_SIZE) ||
+#if 0
 					    ((addr + length) < 0) ||
+#endif
 					    ((addr + length) >=
 					      PCMCIA_CIS_SIZE)) {
 						DPRINTF((" skipped, "
@@ -780,7 +782,8 @@ decode_end(struct pcmcia_tuple *tuple, struct cis_state *state)
 }
 
 static void
-decode_longlink_mfc(struct pcmcia_tuple *tuple, struct cis_state *state)
+decode_longlink_mfc(struct pcmcia_tuple *tuple,
+    struct cis_state *state)
 {
 	/*
 	 * this tuple's structure was dealt with in scan_cis.  here,
@@ -796,7 +799,8 @@ decode_longlink_mfc(struct pcmcia_tuple *tuple, struct cis_state *state)
 }
 
 static void
-decode_device(struct pcmcia_tuple *tuple, struct cis_state *state)
+decode_device(struct pcmcia_tuple *tuple,
+    struct cis_state *state)
 {
 #ifdef PCMCIACISDEBUG
 	u_int reg, dtype, dspeed;
@@ -995,8 +999,10 @@ decode_config(struct pcmcia_tuple *tuple, struct cis_state *state)
 	int i;
 	/* most of these are educated guesses */
 	static const struct pcmcia_config_entry init_cfe = {
-		-1, PCMCIA_CFE_RDYBSY_ACTIVE | PCMCIA_CFE_WP_ACTIVE |
-		PCMCIA_CFE_BVD_ACTIVE, PCMCIA_IFTYPE_MEMORY,
+		.number	= -1,
+		.flags	= PCMCIA_CFE_RDYBSY_ACTIVE | PCMCIA_CFE_WP_ACTIVE |
+			  PCMCIA_CFE_BVD_ACTIVE,
+		.iftype	= PCMCIA_IFTYPE_MEMORY,
 	};
 
 	if (tuple->length < 3) {

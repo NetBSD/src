@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.25.2.1 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.25.2.2 2006/12/30 20:51:05 yamt Exp $	*/
 
 /*
  *
@@ -240,8 +240,6 @@ struct vm_amap {
 #define UVM_AMAP_CHUNK	16	/* # of slots to chunk large amaps in */
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
-MALLOC_DECLARE(M_UVMAMAP);
 
 /*
  * macros

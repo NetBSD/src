@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0cpu.h,v 1.1 2005/07/04 00:42:37 bsh Exp $ */
+/*	$NetBSD: pxa2x0cpu.h,v 1.1.2.1 2006/12/30 20:45:38 yamt Exp $ */
 
 /*
  * Copyright (c) 2005  Genetec Corporation.  All rights reserved.
@@ -79,10 +79,14 @@
 #define	PXA2X0_GPIO_SIZE	PXA270_GPIO_SIZE
 #define	GPIO_REG		PXA270_GPIO_REG
 #define	GPIO_NPINS		PXA270_GPIO_NPINS
+#define	PXA2X0_MEMCTL_SIZE	PXA270_MEMCTL_SIZE
+#define	PXA2X0_USBDC_SIZE	PXA270_USBDC_SIZE
 #else
 #define	PXA2X0_GPIO_SIZE	PXA250_GPIO_SIZE
 #define	GPIO_REG		PXA250_GPIO_REG
 #define	GPIO_NPINS		PXA250_GPIO_NPINS
+#define	PXA2X0_MEMCTL_SIZE	PXA250_MEMCTL_SIZE
+#define	PXA2X0_USBDC_SIZE	PXA250_USBDC_SIZE
 #endif
 
 #endif	/* _ARM_XSCALE_PXA2X0CPU_H */

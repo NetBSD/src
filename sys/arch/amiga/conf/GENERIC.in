@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.37.2.1 2006/06/21 14:48:25 yamt Exp $
+# $NetBSD: GENERIC.in,v 1.37.2.2 2006/12/30 20:45:26 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.37.2.1 $"
+#ident 		"GENERIC-$Revision: 1.37.2.2 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -108,11 +108,8 @@ options 	INET6		# IPV6
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 ')m4_dnl
@@ -122,6 +119,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -163,7 +161,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union filesystem
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 ')m4_dnl
 
@@ -228,16 +226,15 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 options 	KTRACE		# system call tracing support
-options 	SYSTRACE	# system call vetting via systrace(1)
 options 	LKM		# Loadable kernel modules
 ')m4_dnl
+#options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USERCONF	# userconf(4) support
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 ', `m4_dnl
 options 	NTP		# NTP phase/frequency locked loop
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -578,6 +575,7 @@ pseudo-device	tun			# network tunnel line discipline
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP Filter package
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
@@ -633,7 +631,6 @@ pseudo-device	nsmb			# experimental - SMB requester
 ')m4_dnl
 
 # Veriexec
-#options VERIFIED_EXEC
 #
 # a pseudo device needed for veriexec
 #pseudo-device	veriexec		1

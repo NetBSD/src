@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.30.4.1 2006/06/21 15:02:46 yamt Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.30.4.2 2006/12/30 20:47:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,10 +71,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.30.4.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.30.4.2 2006/12/30 20:47:58 yamt Exp $");
 
 #include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -100,10 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.30.4.1 2006/06/21 15:02:46 yamt Exp
 #include <netinet/if_inarp.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -198,7 +193,8 @@ ep_eisa_lookup(const struct eisa_attach_args *ea)
 }
 
 static int
-ep_eisa_match(struct device *parent, struct cfdata *match, void *aux)
+ep_eisa_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 

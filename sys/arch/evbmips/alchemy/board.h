@@ -1,4 +1,4 @@
-/*	$NetBSD: board.h,v 1.3.14.2 2006/06/21 14:50:55 yamt Exp $	*/
+/*	$NetBSD: board.h,v 1.3.14.3 2006/12/30 20:45:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -47,6 +47,8 @@ struct alchemy_board {
 	void		(*ab_poweroff)(void);
 
 	struct aupcmcia_machdep	*ab_pcmcia;
+
+	const struct auspi_machdep *(*ab_spi)(bus_addr_t);
 
 	/*
 	 * XXX: csb250 (and perhaps others) will require pci_idsel

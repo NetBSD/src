@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.7.16.1 2006/06/21 14:58:50 yamt Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.7.16.2 2006/12/30 20:47:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.7.16.1 2006/06/21 14:58:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.7.16.2 2006/12/30 20:47:32 yamt Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_ptrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +107,7 @@ freebsd_sys_ptrace(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if defined(PTRACE) || defined(_LKM)
 	struct freebsd_sys_ptrace_args /* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
@@ -118,6 +123,9 @@ freebsd_sys_ptrace(l, v, retval)
 	} *nrp;
 	struct sys_ptrace_args npa;
 	struct freebsd_ptrace_reg fr;
+#ifdef _LKM
+	sy_call_t sys_ptrace = sysent[SYS_ptrace].sy_call;
+#endif
 
 	switch (SCARG(uap, req)) {
 #ifdef PT_STEP
@@ -193,4 +201,7 @@ freebsd_sys_ptrace(l, v, retval)
 #ifdef DIAGNOSTIC
 	panic("freebsd_ptrace: impossible");
 #endif
+#else
+	return (ENOSYS);
+#endif /* PTRACE || _LKM */
 }

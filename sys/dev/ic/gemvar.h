@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.12.2.1 2006/06/21 15:02:54 yamt Exp $ */
+/*	$NetBSD: gemvar.h,v 1.12.2.2 2006/12/30 20:48:02 yamt Exp $ */
 
 /*
  *
@@ -124,7 +124,8 @@ struct gem_softc {
 	bus_space_tag_t	sc_bustag;	/* bus tag */
 	bus_dma_tag_t	sc_dmatag;	/* bus dma tag */
 	bus_dmamap_t	sc_dmamap;	/* bus dma handle */
-	bus_space_handle_t sc_h;	/* bus space handle for all regs */
+	bus_space_handle_t sc_h1;	/* bus space handle for bank 1 regs */
+	bus_space_handle_t sc_h2;	/* bus space handle for bank 2 regs */
 
 	int		sc_phys[2];	/* MII instance -> PHY map */
 

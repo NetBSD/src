@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.563.2.1 2006/06/21 14:52:18 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.563.2.2 2006/12/30 20:46:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.563.2.1 2006/06/21 14:52:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.563.2.2 2006/12/30 20:46:10 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -161,7 +161,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.563.2.1 2006/06/21 14:52:18 yamt Exp $
 #endif
 
 #include "acpi.h"
-#include "apm.h"
+#include "apmbios.h"
 #include "bioscall.h"
 
 #if NBIOSCALL > 0
@@ -174,7 +174,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.563.2.1 2006/06/21 14:52:18 yamt Exp $
 #include <machine/acpi_machdep.h>
 #endif
 
-#if NAPM > 0
+#if NAPMBIOS > 0
 #include <machine/apmvar.h>
 #endif
 
@@ -271,9 +271,7 @@ void	dumpsys(void);
 void	init386(paddr_t);
 void	initgdt(union descriptor *);
 
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void	add_mem_cluster(uint64_t, uint64_t, uint32_t);
-#endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
 
 extern int time_adjusted;
 
@@ -294,6 +292,9 @@ int	biosextmem = 0;
 #else
 int	biosextmem = REALEXTMEM;
 #endif
+
+/* Set if any boot-loader set biosbasemem/biosextmem. */
+int	biosmem_implicit;
 
 /* Representation of the bootinfo structure constructed by a NetBSD native
  * boot loader.  Only be used by native_loader(). */
@@ -378,10 +379,14 @@ native_loader(int bl_boothowto, int bl_bootdev,
 	 * Configure biosbasemem and biosextmem only if they were not
 	 * explicitly given during the kernel's build.
 	 */
-	if (*RELOC(int *, &biosbasemem) == 0)
+	if (*RELOC(int *, &biosbasemem) == 0) {
 		*RELOC(int *, &biosbasemem) = bl_biosbasemem;
-	if (*RELOC(int *, &biosextmem) == 0)
+		*RELOC(int *, &biosmem_implicit) = 1;
+	}
+	if (*RELOC(int *, &biosextmem) == 0) {
 		*RELOC(int *, &biosextmem) = bl_biosextmem;
+		*RELOC(int *, &biosmem_implicit) = 1;
+	}
 #undef RELOC
 }
 
@@ -878,15 +883,15 @@ haltsys:
 			printf("WARNING: ACPI powerdown failed!\n");
 		}
 #endif
-#if NAPM > 0 && !defined(APM_NO_POWEROFF)
+#if NAPMBIOS > 0 && !defined(APM_NO_POWEROFF)
 		/* turn off, if we can.  But try to turn disk off and
 		 * wait a bit first--some disk drives are slow to clean up
 		 * and users have reported disk corruption.
 		 */
 		delay(500000);
-		apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
+		apm_set_powstate(NULL, APM_DEV_DISK(APM_DEV_ALLUNITS), APM_SYS_OFF);
 		delay(500000);
-		apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_OFF);
+		apm_set_powstate(NULL, APM_DEV_ALLDEVS, APM_SYS_OFF);
 		printf("WARNING: APM powerdown failed!\n");
 		/*
 		 * RB_POWERDOWN implies RB_HALT... fall into it...
@@ -1031,8 +1036,10 @@ cpu_dumpconf()
 	if (dumpdev == NODEV)
 		goto bad;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		goto bad;
+	}
 	if (bdev->d_psize == NULL)
 		goto bad;
 	nblks = (*bdev->d_psize)(dumpdev);
@@ -1339,7 +1346,6 @@ void cpu_init_idt()
 	lidt(&region);
 }
 
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void
 add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 {
@@ -1402,7 +1408,8 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 
 	/* XXX XXX XXX */
 	if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
-		panic("init386: too many memory segments");
+		panic("init386: too many memory segments "
+		    "(increase VM_PHYSSEG_MAX)");
 
 	seg_start = round_page(seg_start);
 	seg_end = trunc_page(seg_end);
@@ -1419,7 +1426,6 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 	physmem += atop(mem_clusters[mem_cluster_cnt].size);
 	mem_cluster_cnt++;
 }
-#endif /* !defined(REALBASEMEM) && !defined(REALEXTMEM) */
 
 void
 initgdt(union descriptor *tgdt)
@@ -1460,9 +1466,7 @@ init386(paddr_t first_avail)
 	union descriptor *tgdt;
 	extern void consinit(void);
 	extern struct extent *iomem_ex;
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	struct btinfo_memmap *bim;
-#endif
 	struct region_descriptor region;
 	int x, first16q;
 	uint64_t seg_start, seg_end;
@@ -1555,13 +1559,12 @@ init386(paddr_t first_avail)
 	 */
 	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
 
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	/*
 	 * Check to see if we have a memory map from the BIOS (passed
 	 * to us by the boot program.
 	 */
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if (bim != NULL && bim->num > 0) {
+	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
+	    (bim = lookup_bootinfo(BTINFO_MEMMAP)) != NULL && bim->num > 0) {
 #ifdef DEBUG_MEMLOAD
 		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
 #endif
@@ -1619,7 +1622,7 @@ init386(paddr_t first_avail)
 				    bim->entry[x].type);
 		}
 	}
-#endif /* ! REALBASEMEM && ! REALEXTMEM */
+
 	/*
 	 * If the loop above didn't find any valid segment, fall back to
 	 * former code.
@@ -1980,22 +1983,28 @@ init386(paddr_t first_avail)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
+		boolean_t loaded;
 		struct btinfo_symtab *symtab;
 
 #ifdef DDB
 		db_machine_init();
 #endif
 
-		symtab = lookup_bootinfo(BTINFO_SYMTAB);
-
-		if (symtab) {
-			symtab->ssym += KERNBASE;
-			symtab->esym += KERNBASE;
-			ksyms_init(symtab->nsym, (int *)symtab->ssym,
-			    (int *)symtab->esym);
+#if defined(MULTIBOOT)
+		loaded = multiboot_ksyms_init();
+#else
+		loaded = FALSE;
+#endif
+		if (!loaded) {
+		    symtab = lookup_bootinfo(BTINFO_SYMTAB);
+		    if (symtab) {
+			    symtab->ssym += KERNBASE;
+			    symtab->esym += KERNBASE;
+			    ksyms_init(symtab->nsym, (int *)symtab->ssym,
+				(int *)symtab->esym);
+		    } else
+			    ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
 		}
-		else
-			ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #endif
 #ifdef DDB
@@ -2128,6 +2137,9 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #ifdef COMPAT_NOMID
 	if ((error = exec_nomid(l, epp)) == 0)
 		return error;
+#else
+	(void) l;
+	(void) epp;
 #endif /* ! COMPAT_NOMID */
 
 	return error;
@@ -2281,7 +2293,7 @@ int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.8 2004/04/25 21:14:21 matt Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.8.12.1 2006/12/30 20:50:29 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.8 2004/04/25 21:14:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.8.12.1 2006/12/30 20:50:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ ddp_route(m, ro)
 		}
 	}
 	if (aa == NULL) {
-		printf("ddp_route: oops\n");
+		printf("ddp_route: no address found\n");
 		m_freem(m);
 		return (EINVAL);
 	}

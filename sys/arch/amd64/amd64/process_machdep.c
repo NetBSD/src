@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.6.2.1 2006/06/21 14:48:19 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.6.2.2 2006/12/30 20:45:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.6.2.1 2006/06/21 14:48:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.6.2.2 2006/12/30 20:45:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,14 +154,14 @@ process_write_regs(l, regp)
 {
 	struct trapframe *tf = process_frame(l);
 	int error;
-	long *regs = regp->regs;
+	const long *regs = regp->regs;
 
 	/*
 	 * Check for security violations.
 	 * Note that struct regs is compatible with
 	 * the __gregs array in mcontext_t.
 	 */
-	error = check_mcontext(l, (mcontext_t *)regs, tf);
+	error = check_mcontext(l, (const mcontext_t *)regs, tf);
 	if (error != 0)
 		return error;
 

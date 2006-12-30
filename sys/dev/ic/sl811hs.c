@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.6 2005/06/01 19:40:58 drochner Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.6.2.1 2006/12/30 20:48:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.6 2005/06/01 19:40:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.6.2.1 2006/12/30 20:48:04 yamt Exp $");
 
 #include "opt_slhci.h"
 
@@ -1147,7 +1147,7 @@ slhci_device_ctrl_start(usbd_xfer_handle xfer)
 	usbd_pipe_handle pipe = xfer->pipe;
 	struct slhci_softc *sc = (struct slhci_softc *)pipe->device->bus;
 	usbd_status status =  USBD_NORMAL_COMPLETION;
-	void *buf;
+	u_char *buf;
 	int pid = SL11_PID_OUT;
 	int len, actlen, size;
 	int s;
@@ -1179,7 +1179,7 @@ slhci_device_ctrl_start(usbd_xfer_handle xfer)
 			if (slhci_transaction(sc, pipe, pid, size, buf, toggle) == -1)
 				break;
 			toggle ^= SL11_EPCTRL_DATATOGGLE;
-			(u_char*)buf += size;
+			buf += size;
 			actlen += size;
 		}
 	}
@@ -1535,7 +1535,7 @@ slhci_device_clear_toggle(usbd_pipe_handle pipe)
 void
 print_req(usb_device_request_t *r)
 {
-	char *xmes[]={
+	const char *xmes[]={
 		"GETSTAT",
 		"CLRFEAT",
 		"res",
@@ -1568,7 +1568,7 @@ print_req_hub(usb_device_request_t *r)
 	struct {
 		int req;
 		int type;
-		char *str;
+		const char *str;
 	} conf[] = {
 		{ 1, 0x20, "ClrHubFeat"  },
 		{ 1, 0x23, "ClrPortFeat" },

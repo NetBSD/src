@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.58.2.1 2006/06/21 15:06:28 yamt Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.58.2.2 2006/12/30 20:49:30 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.58.2.1 2006/06/21 15:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.58.2.2 2006/12/30 20:49:30 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -575,7 +575,6 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		 RF_RowCol_t col)
 {
 	char   *p;
-	struct partinfo dpart;
 	struct vnode *vp;
 	struct vattr va;
 	struct lwp *l;
@@ -603,9 +602,9 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		return (0);
 	}
 
-	error = raidlookup(diskPtr->devname, l, &vp);
+	error = dk_lookup(diskPtr->devname, l, &vp);
 	if (error) {
-		printf("raidlookup on device: %s failed!\n", diskPtr->devname);
+		printf("dk_lookup on device: %s failed!\n", diskPtr->devname);
 		if (error == ENXIO) {
 			/* the component isn't there... must be dead :-( */
 			diskPtr->status = rf_ds_failed;
@@ -615,20 +614,10 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 	}
 	if (diskPtr->status == rf_ds_optimal) {
 
-		if ((error = VOP_GETATTR(vp, &va,
-		    l->l_proc->p_cred, l)) != 0) {
+		if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0) 
 			return (error);
-		}
-		error = VOP_IOCTL(vp, DIOCGPART, &dpart,
-				  FREAD, l->l_proc->p_cred, l);
-		if (error) {
+		if ((error = rf_getdisksize(vp, l, diskPtr)) != 0)
 			return (error);
-		}
-
-		diskPtr->blockSize = dpart.disklab->d_secsize;
-
-		diskPtr->numBlocks = dpart.part->p_size - rf_protectedSectors;
-		diskPtr->partitionSize = dpart.part->p_size;
 
 		raidPtr->raid_cinfo[col].ci_vp = vp;
 		raidPtr->raid_cinfo[col].ci_dev = va.va_rdev;
@@ -1113,7 +1102,8 @@ rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
 }
 
 int
-rf_incorporate_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
+rf_incorporate_hot_spare(RF_Raid_t *raidPtr,
+    RF_SingleComponent_t *component)
 {
 
 	/* Issues here include how to 'move' this in if there is IO

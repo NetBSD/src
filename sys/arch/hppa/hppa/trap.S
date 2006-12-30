@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.11 2005/05/07 15:03:00 chs Exp $	*/
+/*	$NetBSD: trap.S,v 1.11.2.1 2006/12/30 20:46:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -201,7 +201,7 @@ gateway_page_end:
 $syscall:
 	/*
 	 *
-	 * t1:	curlwp
+	 * t1:	syscall number
 	 * t2:	user
 	 * t3:	args
 	 * t4:	user stack
@@ -318,7 +318,7 @@ $syscall:
 	stw	%r28, TF_CR8-TRAPFRAME_SIZEOF(%sr1, %t3)	/* pidr1 */
 
 	copy	%r0, %arg0
-	ldil	TFF_LAST|TFF_SYS, %arg1
+	ldil	L%(TFF_LAST|TFF_SYS), %arg1
 	stw	%arg0, TF_CR19-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%arg1, TF_FLAGS-TRAPFRAME_SIZEOF(%sr1, %t3)
 

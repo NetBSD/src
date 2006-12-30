@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.1.14.2 2006/06/21 14:50:33 yamt Exp $
+# $NetBSD: HDL_G,v 1.1.14.3 2006/12/30 20:45:48 yamt Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -43,7 +43,7 @@ file-system	NULLFS		# loopback file system
 file-system	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system	TMPFS		# experimental - Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
@@ -69,11 +69,8 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
-#options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -120,7 +117,7 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing via ktrace(1)
-options 	SYSTRACE	# system call vetting via systrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
@@ -285,7 +282,7 @@ wsmouse* at ums? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 ucycom* at uhidev? reportid ?
 
 # USB Generic HID devices
@@ -300,7 +297,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-scsibus* at umass?
 wd*	at umass?
 
 # USB audio

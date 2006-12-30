@@ -1,4 +1,4 @@
-/*	$NetBSD: evcnt.h,v 1.2.18.2 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: evcnt.h,v 1.2.18.3 2006/12/30 20:50:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -109,7 +109,7 @@ TAILQ_HEAD(evcntlist, evcnt);
 #define	EVCNT_INITIALIZER(type, parent, group, name)			\
     {									\
 	0,			/* ev_count */				\
-	{ 0 },			/* ev_list */				\
+	{ NULL, NULL },		/* ev_list */				\
 	type,			/* ev_type */				\
 	0,			/* ev_grouplen */			\
 	0,			/* ev_namelen */			\

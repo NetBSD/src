@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18.2.1 2006/06/21 14:51:29 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18.2.2 2006/12/30 20:45:58 yamt Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.2.1 2006/06/21 14:51:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.2.2 2006/12/30 20:45:58 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -280,8 +280,10 @@ cpu_dumpconf(void)
 	if (dumpdev == NODEV)
 		goto bad;
 	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdev == NULL) {
+		dumpdev = NODEV;
+		goto bad;
+	}
 	if (bdev->d_psize == NULL)
 		goto bad;
 	nblks = (*bdev->d_psize)(dumpdev);

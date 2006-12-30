@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.13.16.1 2006/06/21 15:12:31 yamt Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.13.16.2 2006/12/30 20:51:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.13.16.1 2006/06/21 15:12:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.13.16.2 2006/12/30 20:51:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ ext2fs_itimes(struct inode *ip, const struct timespec *acc,
 		return;
 	}
 
-	getnanotime(&now);
+	vfs_timestamp(&now);
 	if (ip->i_flag & IN_ACCESS) {
 		if (acc == NULL)
 			acc = &now;

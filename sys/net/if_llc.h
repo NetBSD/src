@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llc.h,v 1.14.16.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if_llc.h,v 1.14.16.2 2006/12/30 20:50:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -152,5 +152,18 @@ struct frmrinfo {
 #define LLC_X25_LSAP	0x7e
 #define LLC_SNAP_LSAP	0xaa
 #define LLC_ISO_LSAP	0xfe
+
+/*
+ * LLC XID definitions from 802.2, as needed
+ */
+
+#define LLC_XID_FORMAT_BASIC	0x81
+#define LLC_XID_BASIC_MINLEN	(LLC_UFRAMELEN + 3)
+
+#define LLC_XID_CLASS_I 	0x1
+#define LLC_XID_CLASS_II	0x3
+#define LLC_XID_CLASS_III	0x5
+#define LLC_XID_CLASS_IV	0x7
+
 
 #endif /* !_NET_IF_LLC_H_ */

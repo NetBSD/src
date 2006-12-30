@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.c,v 1.13 2005/02/03 03:49:01 perry Exp $	*/
+/*	$NetBSD: ip_ecn.c,v 1.13.6.1 2006/12/30 20:50:33 yamt Exp $	*/
 /*	$KAME: ip_ecn.c,v 1.11 2001/05/03 16:09:29 itojun Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_ecn.c,v 1.13 2005/02/03 03:49:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_ecn.c,v 1.13.6.1 2006/12/30 20:50:33 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -67,10 +67,10 @@ ip_ecn_ingress(int mode, u_int8_t *outer, const u_int8_t *inner)
 	*outer = *inner;
 	switch (mode) {
 	case ECN_ALLOWED:		/* ECN allowed */
-		*outer &= ~IPTOS_CE;
+		*outer &= ~IPTOS_ECN_CE;
 		break;
 	case ECN_FORBIDDEN:		/* ECN forbidden */
-		*outer &= ~(IPTOS_ECT | IPTOS_CE);
+		*outer &= ~(IPTOS_ECN_ECT0 | IPTOS_ECN_CE);
 		break;
 	case ECN_NOCARE:	/* no consideration to ECN */
 		break;
@@ -88,8 +88,8 @@ ip_ecn_egress(int mode, const u_int8_t *outer, u_int8_t *inner)
 
 	switch (mode) {
 	case ECN_ALLOWED:
-		if (*outer & IPTOS_CE)
-			*inner |= IPTOS_CE;
+		if (*outer & IPTOS_ECN_CE)
+			*inner |= IPTOS_ECN_CE;
 		break;
 	case ECN_FORBIDDEN:		/* ECN forbidden */
 	case ECN_NOCARE:	/* no consideration to ECN */

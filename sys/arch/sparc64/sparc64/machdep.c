@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.181.2.1 2006/06/21 14:56:48 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.181.2.2 2006/12/30 20:47:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181.2.1 2006/06/21 14:56:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181.2.2 2006/12/30 20:47:05 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -615,7 +615,6 @@ cpu_reboot(register int howto, char *user_boot_string)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		extern struct lwp lwp0;
-		extern int sparc_clock_time_is_ok;
 
 		/* XXX protect against curlwp->p_stats.foo refs in sync() */
 		if (curlwp == NULL)
@@ -626,18 +625,16 @@ cpu_reboot(register int howto, char *user_boot_string)
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
-		 * Do this only if the TOD clock has already been read out
-		 * successfully by inittodr() or set by an explicit call
-		 * to resettodr() (e.g. from settimeofday()).
+		 * resettodr will only do this only if inittodr()
+		 * has already been called.
 		 */
-		if (sparc_clock_time_is_ok)
-			resettodr();
+		resettodr();
 	}
 	(void) splhigh();		/* ??? */
 
 #if defined(MULTIPROCESSOR)
 	/* Stop all secondary cpus */
-	sparc64_ipi_halt_cpus();
+	mp_halt_cpus();
 #endif
 
 	/* If rebooting and a dump is requested, do it. */
@@ -1061,7 +1058,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *sbuf,
 			continue;
 		}
 		if (++i >= map->_dm_segcnt)
-			return (E2BIG);
+			return (EFBIG);
 		map->dm_segs[i].ds_addr = pa;
 		map->dm_segs[i].ds_len = incr = PAGE_SIZE;
 	}
@@ -1134,7 +1131,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m,
 			/* Exceeded the size of our dmamap */
 			map->_dm_type = 0;
 			map->_dm_source = NULL;
-			return E2BIG;
+			return EFBIG;
 		}
 	}
 
@@ -1213,7 +1210,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		 *    in the transfer.
 		 */
 		PHOLD(p);
-		if (__predict_false(uvm_vslock(p, vaddr, buflen,
+		if (__predict_false(uvm_vslock(p->p_vmspace, vaddr, buflen,
 			    (uio->uio_rw == UIO_WRITE) ?
 			    VM_PROT_WRITE : VM_PROT_READ) != 0)) {
 				goto after_vsunlock;
@@ -1245,11 +1242,11 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 			segs[i]._ds_mlist = NULL;
 			i++;
 		}
-		uvm_vsunlock(p, bp->b_data, todo);
+		uvm_vsunlock(p->p_vmspace, bp->b_data, todo);
 		PRELE(p);
  		if (buflen > 0 && i >= MAX_DMA_SEGS) 
 			/* Exceeded the size of our dmamap */
-			return E2BIG;
+			return EFBIG;
 	}
 	map->_dm_type = DM_TYPE_UIO;
 	map->_dm_source = (void *)uio;
@@ -1465,7 +1462,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	size = round_page(size);
 
 	/*
-	 * Find a region of kernel virtual addresses that can accomodate
+	 * Find a region of kernel virtual addresses that can accommodate
 	 * our aligment requirements.
 	 */
 	oversize = size + align - PAGE_SIZE;
@@ -1885,7 +1882,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
-	__greg_t *gr = mcp->__gregs;
+	const __greg_t *gr = mcp->__gregs;
 	struct trapframe64 *tf = l->l_md.md_tf;
 
 	/* First ensure consistent stack state (see sendsig). */

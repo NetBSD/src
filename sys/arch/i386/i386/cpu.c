@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.22.2.1 2006/06/21 14:52:18 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.22.2.2 2006/12/30 20:46:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22.2.1 2006/06/21 14:52:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22.2.2 2006/12/30 20:46:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -142,9 +142,16 @@ CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
  */
 #ifdef TRAPLOG
 struct tlog tlog_primary;
-struct cpu_info cpu_info_primary = { 0, &cpu_info_primary, &tlog_primary };
+struct cpu_info cpu_info_primary = {
+	.ci_dev = 0,
+	.ci_self = &cpu_info_primary,
+	.ci_tlog_base = &tlog_primary,
+};
 #else  /* TRAPLOG */
-struct cpu_info cpu_info_primary = { 0, &cpu_info_primary };
+struct cpu_info cpu_info_primary = {
+	.ci_dev = 0,
+	.ci_self = &cpu_info_primary,
+};
 #endif /* !TRAPLOG */
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
@@ -159,7 +166,7 @@ uint32_t cpus_attached = 0;
  * Array of CPU info structures.  Must be statically-allocated because
  * curproc, etc. are used early.
  */
-struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary };
+struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary, };
 
 uint32_t cpus_running = 0;
 
@@ -189,10 +196,8 @@ cpu_init_first()
 #endif
 
 int
-cpu_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+cpu_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	return 1;
@@ -235,9 +240,7 @@ cpu_vm_init(struct cpu_info *ci)
 
 
 void
-cpu_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpu_softc *sc = (void *) self;
 	struct cpu_attach_args *caa = aux;
@@ -716,7 +719,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 
 #if defined(DDB) && defined(MULTIPROCESSOR)
 	/*
-	 * Set up seperate handler for the DDB IPI, so that it doesn't
+	 * Set up separate handler for the DDB IPI, so that it doesn't
 	 * stomp on a possibly corrupted stack.
 	 *
 	 * XXX overwriting the gate set in db_machine_init.

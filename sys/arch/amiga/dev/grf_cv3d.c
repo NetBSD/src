@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.16.16.1 2006/06/21 14:48:26 yamt Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.16.16.2 2006/12/30 20:45:26 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.16.16.1 2006/06/21 14:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.16.16.2 2006/12/30 20:45:26 yamt Exp $");
 
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
@@ -1142,7 +1142,7 @@ cv3d_load_mon(struct grf_softc *gp, struct grfcv3dtext_mode *md)
 	/* turn gfx off, don't mess up the display */
 	cv3d_gfx_on_off(1, ba);
 
-	/* provide all needed information in grf device-independant locations */
+	/* provide all needed information in grf device-independent locations */
 	gp->g_data		= (caddr_t) gv;
 	gi = &gp->g_display;
 	gi->gd_colors		= 1 << gv->depth;

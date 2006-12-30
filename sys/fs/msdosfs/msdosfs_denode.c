@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.8.2.1 2006/06/21 15:09:29 yamt Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.8.2.2 2006/12/30 20:49:56 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.8.2.1 2006/06/21 15:09:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.8.2.2 2006/12/30 20:49:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,12 +386,8 @@ deupdat(dep, waitfor)
  * Truncate the file described by dep to the length specified by length.
  */
 int
-detrunc(dep, length, flags, cred, l)
-	struct denode *dep;
-	u_long length;
-	int flags;
-	kauth_cred_t cred;
-	struct lwp *l;
+detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred,
+    struct lwp *l)
 {
 	int error;
 	int allerror;
@@ -460,8 +456,8 @@ detrunc(dep, length, flags, cred, l)
 	if ((boff = length & pmp->pm_crbomask) != 0) {
 		if (isadir) {
 			bn = cntobn(pmp, eofentry);
-			error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster,
-			    NOCRED, &bp);
+			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
+			    pmp->pm_bpcluster, NOCRED, &bp);
 			if (error) {
 				brelse(bp);
 #ifdef MSDOSFS_DEBUG
@@ -691,8 +687,8 @@ out:
 }
 
 int
-msdosfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    kauth_cred_t cred)
+msdosfs_gop_alloc(struct vnode *vp, off_t off,
+    off_t len, int flags, kauth_cred_t cred)
 {
 	return 0;
 }

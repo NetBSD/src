@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.c,v 1.2 2003/07/15 02:29:38 lukem Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.2.16.1 2006/12/30 20:46:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,16 +34,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.2 2003/07/15 02:29:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.2.16.1 2006/12/30 20:46:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <sh3/clock.h>
 
+
 void
-machine_clock_init()
+machine_clock_init(void)
 {
 
-	sh_clock_init(0, 0);
+	sh_clock_init(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.10.2.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.10.2.2 2006/12/30 20:50:20 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.10.2.1 2006/06/21 15:10:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.10.2.2 2006/12/30 20:50:20 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -122,10 +122,6 @@ static int	tap_match(struct device *, struct cfdata *, void *);
 static void	tap_attach(struct device *, struct device *, void *);
 static int	tap_detach(struct device*, int);
 
-/* Ethernet address helper functions */
-
-static int	tap_ether_aton(u_char *, char *);
-
 CFATTACH_DECL(tap, sizeof(struct tap_softc),
     tap_match, tap_attach, tap_detach, NULL);
 extern struct cfdriver tap_cd;
@@ -178,6 +174,7 @@ const struct cdevsw tap_cdevsw = {
 	tap_cdev_ioctl, nostop, notty,
 	tap_cdev_poll, nommap,
 	tap_cdev_kqfilter,
+	D_OTHER,
 };
 
 #define TAP_CLONER	0xfffff		/* Maximal minor value */
@@ -242,13 +239,15 @@ tapattach(int n)
 
 /* Pretty much useless for a pseudo-device */
 static int
-tap_match(struct device *self, struct cfdata *cfdata, void *arg)
+tap_match(struct device *self, struct cfdata *cfdata,
+    void *arg)
 {
 	return (1);
 }
 
 void
-tap_attach(struct device *parent, struct device *self, void *aux)
+tap_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct tap_softc *sc = (struct tap_softc *)self;
 	struct ifnet *ifp;
@@ -322,6 +321,12 @@ tap_attach(struct device *parent, struct device *self, void *aux)
 	 * the softc structure, which we can use to build the string value on
 	 * the fly in the helper function of the node.  See the comments for
 	 * tap_sysctl_handler for details.
+	 *
+	 * Usually sysctl_createv is called with CTL_CREATE as the before-last
+	 * component.  However, we can allocate a number ourselves, as we are
+	 * the only consumer of the net.link.<iface> node.  In this case, the
+	 * unit number is conveniently used to number the node.  CTL_CREATE
+	 * would just work, too.
 	 */
 	if ((error = sysctl_createv(NULL, 0, NULL,
 	    &node, CTLFLAG_READWRITE,
@@ -701,7 +706,7 @@ tap_dev_cloner(struct lwp *l)
 	struct file *fp;
 	int error, fd;
 
-	if ((error = falloc(l->l_proc, &fp, &fd)) != 0)
+	if ((error = falloc(l, &fp, &fd)) != 0)
 		return (error);
 
 	if ((sc = tap_clone_creator(DVUNIT_ANY)) == NULL) {
@@ -727,7 +732,8 @@ tap_dev_cloner(struct lwp *l)
  * created it closes it.
  */
 static int
-tap_cdev_close(dev_t dev, int flags, int fmt, struct lwp *l)
+tap_cdev_close(dev_t dev, int flags, int fmt,
+    struct lwp *l)
 {
 	struct tap_softc *sc =
 	    (struct tap_softc *)device_lookup(&tap_cd, minor(dev));
@@ -1285,44 +1291,7 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	/* Commit change */
-	if (tap_ether_aton(LLADDR(ifp->if_sadl), addr) != 0)
+	if (ether_nonstatic_aton(LLADDR(ifp->if_sadl), addr) != 0)
 		return (EINVAL);
 	return (error);
-}
-
-/*
- * ether_aton implementation, not using a static buffer.
- */
-static int
-tap_ether_aton(u_char *dest, char *str)
-{
-	int i;
-	char *cp = str;
-	u_char val[6];
-
-#define	set_value			\
-	if (*cp > '9' && *cp < 'a')	\
-		*cp -= 'A' - 10;	\
-	else if (*cp > '9')		\
-		*cp -= 'a' - 10;	\
-	else				\
-		*cp -= '0'
-
-	for (i = 0; i < 6; i++, cp++) {
-		if (!isxdigit(*cp))
-			return (1);
-		set_value;
-		val[i] = *cp++;
-		if (isxdigit(*cp)) {
-			set_value;
-			val[i] *= 16;
-			val[i] += *cp++;
-		}
-		if (*cp == ':' || i == 5)
-			continue;
-		else
-			return (1);
-	}
-	memcpy(dest, val, 6);
-	return (0);
 }

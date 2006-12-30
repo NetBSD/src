@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.13 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.13.4.1 2006/12/30 20:48:27 yamt Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.13 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.13.4.1 2006/12/30 20:48:27 yamt Exp $");
 
 #undef	TCICISADEBUG
 
@@ -137,13 +137,13 @@ static struct pcmcia_chip_functions tcic_isa_functions = {
 	tcic_chip_socket_enable,
 	tcic_chip_socket_disable,
 	tcic_chip_socket_settype,
+
+	NULL,	/* card_detect */
 };
 
 int
-tcic_isa_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tcic_isa_probe(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -193,8 +193,9 @@ tcic_isa_probe(parent, match, aux)
 				found++;
 		}
 	}
-	else
+	else {
 		DPRINTF(("tcic: reserved bits didn't check OK\n"));
+	}
 
 	bus_space_unmap(iot, ioh, TCIC_IOSIZE);
 	bus_space_unmap(ia->ia_memt, memh, msize);
@@ -216,9 +217,7 @@ tcic_isa_probe(parent, match, aux)
 }
 
 void
-tcic_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tcic_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tcic_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;

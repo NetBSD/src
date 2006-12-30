@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.c,v 1.12 2005/02/27 00:27:45 perry Exp $	*/
+/*	$NetBSD: rf_sstf.c,v 1.12.4.1 2006/12/30 20:49:30 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.12 2005/02/27 00:27:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.12.4.1 2006/12/30 20:49:30 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -246,10 +246,10 @@ closest_to_arm(queue, arm_pos, dir, allow_reverse)
 }
 
 void   *
-rf_SstfCreate(sect_per_disk, cl_list, listp)
-	RF_SectorCount_t sect_per_disk;
-	RF_AllocListElem_t *cl_list;
-	RF_ShutdownList_t **listp;
+rf_SstfCreate(
+	RF_SectorCount_t sect_per_disk,
+	RF_AllocListElem_t *cl_list,
+	RF_ShutdownList_t **listp)
 {
 	RF_Sstf_t *sstfq;
 
@@ -260,10 +260,10 @@ rf_SstfCreate(sect_per_disk, cl_list, listp)
 }
 
 void   *
-rf_ScanCreate(sect_per_disk, cl_list, listp)
-	RF_SectorCount_t sect_per_disk;
-	RF_AllocListElem_t *cl_list;
-	RF_ShutdownList_t **listp;
+rf_ScanCreate(
+	RF_SectorCount_t sect_per_disk,
+	RF_AllocListElem_t *cl_list,
+	RF_ShutdownList_t **listp)
 {
 	RF_Sstf_t *scanq;
 
@@ -274,10 +274,10 @@ rf_ScanCreate(sect_per_disk, cl_list, listp)
 }
 
 void   *
-rf_CscanCreate(sect_per_disk, cl_list, listp)
-	RF_SectorCount_t sect_per_disk;
-	RF_AllocListElem_t *cl_list;
-	RF_ShutdownList_t **listp;
+rf_CscanCreate(
+	RF_SectorCount_t sect_per_disk,
+	RF_AllocListElem_t *cl_list,
+	RF_ShutdownList_t **listp)
 {
 	RF_Sstf_t *cscanq;
 

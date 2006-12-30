@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.24.2.1 2006/06/21 15:10:25 yamt Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.24.2.2 2006/12/30 20:50:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,8 +90,8 @@ struct kernfs_subdir {
 struct kernfs_node {
 	LIST_ENTRY(kernfs_node) kfs_hash; /* hash chain */
 	TAILQ_ENTRY(kernfs_node) kfs_list; /* flat list */
-	struct vnode	*kfs_vnode;	/* vnode associated with this pfsnode */
-	kfstype		kfs_type;	/* type of procfs node */
+	struct vnode	*kfs_vnode;	/* vnode associated with this kernfs_node */
+	kfstype		kfs_type;	/* type of kernfs node */
 	mode_t		kfs_mode;	/* mode bits for stat() */
 	long		kfs_fileno;	/* unique file id */
 	u_int32_t	kfs_value;	/* SA id or SP id (KFSint) */
@@ -158,16 +158,15 @@ struct kernfs_fileop {
 	kfstype				kf_type;
 	kfsfileop			kf_fileop;
 	union {
-		void			*_kf_genop;
 		int			(*_kf_vop)(void *);
 		int			(*_kf_xread)
-			(const struct kernfs_node *, char *, size_t);
+			(const struct kernfs_node *, char **, size_t);
 		int			(*_kf_xwrite)
 			(const struct kernfs_node *, char *, size_t);
 	} _kf_opfn;
 	SPLAY_ENTRY(kernfs_fileop)	kf_node;
 };
-#define	kf_genop	_kf_opfn
+
 #define	kf_vop		_kf_opfn._kf_vop
 #define	kf_xread	_kf_opfn._kf_xread
 #define	kf_xwrite	_kf_opfn._kf_xwrite

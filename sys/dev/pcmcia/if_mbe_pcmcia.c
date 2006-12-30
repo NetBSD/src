@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.37 2005/02/27 00:27:43 perry Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.37.4.1 2006/12/30 20:49:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.37 2005/02/27 00:27:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.37.4.1 2006/12/30 20:49:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,11 +97,11 @@ static const struct mbe_pcmcia_product {
 } mbe_pcmcia_products[] = {
 	{ { PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CD021BX,
 	    PCMCIA_CIS_TDK_LAK_CD021BX },
-	  -1 },
+	  -1, 0 },
 
 	{ { PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CF010,
 	    PCMCIA_CIS_TDK_LAK_CF010 },
-	  -1 },
+	  -1, 0 },
 
 #if 0 /* XXX 86960-based? */
 	{ { PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_DFL9610,
@@ -111,11 +111,11 @@ static const struct mbe_pcmcia_product {
 
 	{ { PCMCIA_VENDOR_CONTEC, PCMCIA_PRODUCT_CONTEC_CNETPC,
 	    PCMCIA_CIS_CONTEC_CNETPC },
-	  -1 },
+	  -1, 0 },
 
 	{ { PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_LA501,
 	    PCMCIA_CIS_FUJITSU_LA501 },
-	  -1 },
+	  -1, 0 },
 
 	{ { PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_FMV_J181,
 	    PCMCIA_CIS_FUJITSU_FMV_J181 },
@@ -123,32 +123,30 @@ static const struct mbe_pcmcia_product {
 
 	{ { PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_FMV_J182,
 	    PCMCIA_CIS_FUJITSU_FMV_J182 },
-	  0xf2c },
+	  0xf2c, 0 },
 
 	{ { PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_FMV_J182A,
 	    PCMCIA_CIS_FUJITSU_FMV_J182A },
-	  0x1cc },
+	  0x1cc, 0 },
 
 	{ { PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_ITCFJ182A,
 	    PCMCIA_CIS_FUJITSU_ITCFJ182A },
-	  0x1cc },
+	  0x1cc, 0 },
 
 	{ { PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_LA10S,
 	    PCMCIA_CIS_FUJITSU_LA10S },
-	  -1 },
+	  -1, 0 },
 
 	{ { PCMCIA_VENDOR_RATOC, PCMCIA_PRODUCT_RATOC_REX_R280,
 	    PCMCIA_CIS_RATOC_REX_R280 },
-	  0x1fc },
+	  0x1fc, 0 },
 };
 static const size_t mbe_pcmcia_nproducts =
     sizeof(mbe_pcmcia_products) / sizeof(mbe_pcmcia_products[0]);
 
 int
-mbe_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mbe_pcmcia_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -169,9 +167,8 @@ mbe_pcmcia_validate_config(cfe)
 }
 
 void
-mbe_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mbe_pcmcia_attach(struct device *parent, struct device *self,
+    void *aux)
 {
 	struct mbe_pcmcia_softc *psc = (void *)self;
 	struct mb86960_softc *sc = &psc->sc_mb86960;
@@ -247,9 +244,7 @@ fail:
 }
 
 int
-mbe_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+mbe_pcmcia_detach(struct device *self, int flags)
 {
 	struct mbe_pcmcia_softc *psc = (void *)self;
 	int error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_scan.c,v 1.4.4.1 2006/06/21 15:09:11 yamt Exp $	*/
+/*	$NetBSD: ip_scan.c,v 1.4.4.2 2006/12/30 20:49:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -117,8 +117,10 @@ caddr_t data;
 		return ENOMEM;
 
 	err = copyinptr(data, isc, sizeof(*isc));
-	if (err)
+	if (err) {
+		KFREE(isc);
 		return err;
+	}
 
 	WRITE_ENTER(&ipsc_rwlock);
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.21.2.1 2006/06/21 14:55:47 yamt Exp $       */
+/*      $NetBSD: pccons.c,v 1.21.2.2 2006/12/30 20:46:57 yamt Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.21.2.1 2006/06/21 14:55:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.21.2.2 2006/12/30 20:46:57 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -1192,6 +1192,9 @@ pcopen(dev_t       dev,
     tp->t_oproc = pcstart;
     tp->t_param = pcparam;
     tp->t_dev   = dev;
+
+    if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+	return (EBUSY);
     
     if ((tp->t_state & TS_ISOPEN) == 0) 
     {
@@ -1208,16 +1211,6 @@ pcopen(dev_t       dev,
         pcparam(tp, &tp->t_termios);
         ttsetwater(tp);
     } 
-    else if ( tp->t_state & TS_XCLUDE &&
-	     kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0 )
-    {
-        /*
-        ** Don't allow the open if the tty has been set up 
-        ** for exclusive use and this isn't root trying to 
-        ** open the device 
-        */
-        return EBUSY;
-    }
     tp->t_state |= TS_CARR_ON;
     /* 
     ** Invoke the line discipline open routine 

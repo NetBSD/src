@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.2.2.1 2006/06/21 14:51:44 yamt Exp $	*/
+/*	$NetBSD: endian.h,v 1.2.2.2 2006/12/30 20:46:02 yamt Exp $	*/
 
 /* Windows CE architecture */
 
@@ -82,10 +82,10 @@ typedef __in_port_t	in_port_t;
 #endif
 
 __BEGIN_DECLS
-uint32_t htonl(uint32_t) __attribute__((const));
-uint16_t htons(uint16_t) __attribute__((const));
-uint32_t ntohl(uint32_t) __attribute__((const));
-uint16_t ntohs(uint16_t) __attribute__((const));
+uint32_t htonl(uint32_t) __attribute__((__const__));
+uint16_t htons(uint16_t) __attribute__((__const__));
+uint32_t ntohl(uint32_t) __attribute__((__const__));
+uint16_t ntohs(uint16_t) __attribute__((__const__));
 __END_DECLS
 
 #endif /* !_LOCORE */

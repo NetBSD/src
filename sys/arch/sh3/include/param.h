@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 2004/03/24 15:38:41 wiz Exp $	*/
+/*	$NetBSD: param.h,v 1.13.16.1 2006/12/30 20:46:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -123,15 +123,4 @@
 #define	NKMEMPAGES_MIN_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
 
-/* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* bytes to pages */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
-
-/* bytes to disk blocks */
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-#define	btodb(x)	((x) >> DEV_BSHIFT)
 #endif /* !_SH3_PARAM_H_ */

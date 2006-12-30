@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.21.2.1 2006/06/21 14:58:06 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.21.2.2 2006/12/30 20:47:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.21.2.1 2006/06/21 14:58:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.21.2.2 2006/12/30 20:47:22 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -157,9 +157,9 @@ static inline int _bus_dmamap_load_busaddr(bus_dma_tag_t, bus_dmamap_t,
  * Called by DMA-safe memory allocation methods.
  */
 int
-_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
-    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags, bus_addr_t low, bus_addr_t high)
+_bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
+    bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
+    int nsegs, int *rsegs, int flags, bus_addr_t low, bus_addr_t high)
 {
 	paddr_t curaddr, lastaddr;
 	struct vm_page *m;
@@ -673,8 +673,9 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
  * bus_dmamem_alloc().
  */
 int
-_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
-    int nsegs, bus_size_t size, int flags)
+_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs,
+    bus_size_t size, int flags)
 {
 
 	panic("_bus_dmamap_load_raw: not implemented");
@@ -994,7 +995,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE) {
-			m = PHYS_TO_VM_PAGE(addr);
+			m = _BUS_BUS_TO_VM_PAGE(addr);
 			TAILQ_INSERT_TAIL(&mlist, m, pageq);
 		}
 	}
@@ -1039,7 +1040,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
-			pmap_enter(pmap_kernel(), va, addr,
+			_BUS_PMAP_ENTER(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 			/*
@@ -1129,7 +1130,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			continue;
 		}
 
-		return (x86_btop((caddr_t)segs[i].ds_addr + off));
+		return (x86_btop(_BUS_BUS_TO_PHYS(segs[i].ds_addr + off)));
 	}
 
 	/* Page not found. */

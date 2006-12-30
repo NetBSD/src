@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.19.2.1 2006/06/21 14:57:33 yamt Exp $ */
+/*	$NetBSD: ka46.c,v 1.19.2.2 2006/12/30 20:47:14 yamt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka46.c,v 1.19.2.1 2006/06/21 14:57:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka46.c,v 1.19.2.2 2006/12/30 20:47:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -74,8 +74,8 @@ struct	cpu_dep ka46_calls = {
 	ka46_mchk,
 	ka46_memerr, 
 	ka46_conf,
-	chip_clkread,
-	chip_clkwrite,
+	chip_gettime,
+	chip_settime,
 	12,      /* ~VUPS */
 	2,	/* SCB pages */
 	ka46_halt,

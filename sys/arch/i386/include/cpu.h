@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.117.4.1 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.117.4.2 2006/12/30 20:46:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,7 @@
 
 #ifdef _KERNEL
 #if defined(_KERNEL_OPT)
+#include "opt_enhanced_speedstep.h"
 #include "opt_multiprocessor.h"
 #include "opt_math_emulate.h"
 #include "opt_user_ldt.h"
@@ -110,6 +111,7 @@ struct cpu_info {
 	int		ci_idepth;
 	uint32_t	ci_imask[NIPL];
 	uint32_t	ci_iunmask[NIPL];
+	void *		ci_intrstack;
 
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	uint32_t ci_flags;		/* flags; see below */
@@ -270,7 +272,7 @@ struct clockframe {
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_eflags)
 #define	CLKF_BASEPRI(frame)	(0)
 #define	CLKF_PC(frame)		((frame)->cf_if.if_eip)
-#define	CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
+#define	CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 
 /*
  * This is used during profiling to integrate system time.  It can safely
@@ -351,6 +353,9 @@ void	i386_init_pcb_tss_ldt(struct cpu_info *);
 void	i386_proc0_tss_ldt_init(void);
 
 /* identcpu.c */
+#ifdef ENHANCED_SPEEDSTEP
+extern int bus_clock;
+#endif
 extern int tmx86_has_longrun;
 extern u_int crusoe_longrun;
 extern u_int crusoe_frequency;
@@ -421,11 +426,7 @@ void x86_bus_space_mallocok(void);
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
 /* est.c */
-void	est_init(struct cpu_info *);
-
-/* powernow_k7.c */
-void	pnowk7_probe(struct cpu_info *);
-void	pnowk7_init(struct cpu_info *);
+void	est_init(struct cpu_info *, int);
 
 #endif /* _KERNEL */
 

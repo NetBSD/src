@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.49.4.1 2006/06/21 14:56:47 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.49.4.2 2006/12/30 20:47:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -321,8 +321,8 @@ bus_intr_establish(bus_space_tag_t t, int p, int l, int	(*h)(void *), void *a)
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
 
 static __inline void
-bus_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-	bus_size_t s, int f)
+bus_space_barrier(bus_space_tag_t t, bus_space_handle_t h,
+	bus_size_t o, bus_size_t s, int f)
 {
 	/*
 	 * We have a bit of a problem with the bus_space_barrier()

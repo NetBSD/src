@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.19.4.1 2006/06/21 15:06:27 yamt Exp $ */
+/* $NetBSD: dtide.c,v 1.19.4.2 2006/12/30 20:49:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.19.4.1 2006/06/21 15:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.19.4.2 2006/12/30 20:49:30 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -90,8 +90,6 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_wdc.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_NOIRQ;
 	sc->sc_wdc.sc_atac.atac_pio_cap = 0; /* XXX correct? */
-	sc->sc_wdc.sc_atac.atac_dma_cap = 0; /* XXX correct? */
-	sc->sc_wdc.sc_atac.atac_udma_cap = 0;
 	sc->sc_wdc.sc_atac.atac_nchannels = DTIDE_NCHANNELS;
 	sc->sc_wdc.sc_atac.atac_channels = sc->sc_chp;
 	sc->sc_magict = pa->pa_fast_t;

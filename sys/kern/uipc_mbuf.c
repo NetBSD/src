@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.10 2006/07/07 12:30:51 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.11 2006/12/30 20:50:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.10 2006/07/07 12:30:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.11 2006/12/30 20:50:07 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -111,7 +111,8 @@ static void	*mclpool_alloc(struct pool *, int);
 static void	mclpool_release(struct pool *, void *);
 
 static struct pool_allocator mclpool_allocator = {
-	mclpool_alloc, mclpool_release, 0,
+	.pa_alloc = mclpool_alloc,
+	.pa_free = mclpool_release,
 };
 
 static struct mbuf *m_copym0(struct mbuf *, int, int, int, int);
@@ -132,16 +133,16 @@ MALLOC_DEFINE(M_MBUF, "mbuf", "mbuf");
 #ifdef MBUFTRACE
 struct mownerhead mowners = LIST_HEAD_INITIALIZER(mowners);
 struct mowner unknown_mowners[] = {
-	{ "unknown", "free" },
-	{ "unknown", "data" },
-	{ "unknown", "header" },
-	{ "unknown", "soname" },
-	{ "unknown", "soopts" },
-	{ "unknown", "ftable" },
-	{ "unknown", "control" },
-	{ "unknown", "oobdata" },
+	MOWNER_INIT("unknown", "free"),
+	MOWNER_INIT("unknown", "data"),
+	MOWNER_INIT("unknown", "header"),
+	MOWNER_INIT("unknown", "soname"),
+	MOWNER_INIT("unknown", "soopts"),
+	MOWNER_INIT("unknown", "ftable"),
+	MOWNER_INIT("unknown", "control"),
+	MOWNER_INIT("unknown", "oobdata"),
 };
-struct mowner revoked_mowner = { "revoked", "" };
+struct mowner revoked_mowner = MOWNER_INIT("revoked", "");
 #endif
 
 #define	MEXT_LOCK(m)	simple_lock(&(m)->m_ext.ext_lock)
@@ -980,7 +981,7 @@ m_split0(struct mbuf *m0, int len0, int wait, int copyhdr)
 		MGETHDR(n, wait, m0->m_type);
 		if (n == 0)
 			return (NULL);
-		MCLAIM(m, m0->m_owner);
+		MCLAIM(n, m0->m_owner);
 		n->m_pkthdr.rcvif = m0->m_pkthdr.rcvif;
 		n->m_pkthdr.len = m0->m_pkthdr.len - len0;
 		len_save = m0->m_pkthdr.len;

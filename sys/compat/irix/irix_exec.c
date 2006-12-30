@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.41 2005/03/26 05:12:35 fvdl Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.41.2.1 2006/12/30 20:47:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.41 2005/03/26 05:12:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.41.2.1 2006/12/30 20:47:32 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -213,7 +213,7 @@ irix_e_proc_exit(p)
 	proclist_unlock_read();
 
 	/*
-	 * Remove the process from share group processes list, if revelant.
+	 * Remove the process from share group processes list, if relevant.
 	 */
 	ied = (struct irix_emuldata *)(p->p_emuldata);
 

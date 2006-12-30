@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.8.6.2 2006/06/21 15:02:46 yamt Exp $ */
+/* $NetBSD: gpio.c,v 1.8.6.3 2006/12/30 20:48:00 yamt Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.8.6.2 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.8.6.3 2006/12/30 20:48:00 yamt Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -63,13 +63,14 @@ dev_type_ioctl(gpioioctl);
 
 const struct cdevsw gpio_cdevsw = {
 	gpioopen, gpioclose, noread, nowrite, gpioioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 extern struct cfdriver gpio_cd;
 
 int
-gpio_match(struct device *parent, struct cfdata *cf, void *aux)
+gpio_match(struct device *parent, struct cfdata *cf,
+    void *aux)
 {
 
 	return (1);
@@ -131,7 +132,7 @@ gpio_activate(struct device *self, enum devact act)
 
 int
 gpio_search(struct device *parent, struct cfdata *cf,
-	    const int *ldesc, void *aux)
+    const int *ldesc, void *aux)
 {
 	struct gpio_attach_args ga;
 
@@ -253,7 +254,8 @@ gpio_npins(u_int32_t mask)
 }
 
 int
-gpioopen(dev_t dev, int flag, int mode, struct lwp *l)
+gpioopen(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct gpio_softc *sc;
 
@@ -269,7 +271,8 @@ gpioopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-gpioclose(dev_t dev, int flag, int mode, struct lwp *l)
+gpioclose(dev_t dev, int flag, int mode,
+    struct lwp *l)
 {
 	struct gpio_softc *sc;
 
@@ -280,7 +283,8 @@ gpioclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	struct gpio_softc *sc;
 	gpio_chipset_tag_t gc;

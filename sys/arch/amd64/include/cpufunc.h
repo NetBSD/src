@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.4.16.1 2006/06/21 14:48:25 yamt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.4.16.2 2006/12/30 20:45:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+#include <machine/segments.h>
 #include <machine/specialreg.h>
 
 static __inline void
@@ -54,16 +55,30 @@ x86_pause(void)
 	/* nothing */
 }
 
+/*
+ * XXX if lfence isn't available...
+ *
+ * memory clobber to avoid compiler reordering.
+ */
 static __inline void
 x86_lfence(void)
 {
 
-	/*
-	 * XXX if lfence isn't available...
-	 *
-	 * memory clobber to avoid compiler reordering.
-	 */
 	__asm volatile("lfence" : : : "memory");
+}
+
+static __inline void
+x86_sfence(void)
+{
+
+	__asm volatile("sfence" : : : "memory");
+}
+
+static __inline void
+x86_mfence(void)
+{
+
+	__asm volatile("mfence" : : : "memory");
 }
 
 #ifdef _KERNEL
@@ -77,9 +92,9 @@ invlpg(u_int64_t addr)
 }  
 
 static __inline void
-lidt(void *p)
+lidt(struct region_descriptor *region)
 {
-	__asm volatile("lidt (%0)" : : "r" (p));
+	__asm volatile("lidt %0" : : "m" (*region));
 }
 
 static __inline void

@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.15 2005/05/31 00:40:17 chs Exp $ */
+/* $NetBSD: db_trace.c,v 1.15.2.1 2006/12/30 20:45:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.15 2005/05/31 00:40:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.15.2.1 2006/12/30 20:45:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	} else {
 		if (trace_thread) {
 			(*pr)("trace: pid %d ", (int)addr);
-			p = pfind(addr);
+			p = p_find(addr, PFIND_LOCKED);
 			if (p == NULL) {
 				(*pr)("not found\n");
 				return;

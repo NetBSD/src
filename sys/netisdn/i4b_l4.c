@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.29 2005/06/01 18:07:04 drochner Exp $
+ *	$Id: i4b_l4.c,v 1.29.2.1 2006/12/30 20:50:44 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.29 2005/06/01 18:07:04 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.29.2.1 2006/12/30 20:50:44 yamt Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -269,6 +269,7 @@ int isdn_l4_driver_attach(const char *name, int units, const struct isdn_l4_driv
 int isdn_l4_driver_detatch(const char *name)
 {
 	/* XXX - not yet implemented */
+	(void)name;
 	return 0;
 }
 
@@ -330,7 +331,7 @@ i4b_l4_pdeact(struct isdn_l3_driver *d, int numactive)
 			}
 
 			if ((cd->channelid >= 0)
-			     && (cd->channelid < d->nbch));
+			     && (cd->channelid < d->nbch))
 				d->bch_state[cd->channelid] = BCH_ST_FREE;
 
 			cd->cdid = CDID_UNUSED;

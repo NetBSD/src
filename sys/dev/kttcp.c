@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.16.4.1 2006/06/21 15:02:12 yamt Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.16.4.2 2006/12/30 20:47:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -37,34 +37,12 @@
  */
 
 /*
- * kttcp.c --
- *
- *	This module provides kernel support for testing network
- *	throughput from the perspective of the kernel.  It is
- *	similar in spirit to the classic ttcp network benchmark
- *	program, the main difference being that with kttcp, the
- *	kernel is the source and sink of the data.
- *
- *	Testing like this is useful for a few reasons:
- *
- *	1. This allows us to know what kind of performance we can
- *	   expect from network applications that run in the kernel
- *	   space, such as the NFS server or the NFS client.  These
- *	   applications don't have to move the data to/from userspace,
- *	   and so benchmark programs which run in userspace don't
- *	   give us an accurate model.
- *
- *	2. Since data received is just thrown away, the receiver
- *	   is very fast.  This can provide better exercise for the
- *	   sender at the other end.
- *
- *	3. Since the NetBSD kernel currently uses a run-to-completion
- *	   scheduling model, kttcp provides a benchmark model where
- *	   preemption of the benchmark program is not an issue.
+ * kttcp.c -- provides kernel support for testing network testing,
+ *            see kttcp(4)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.16.4.1 2006/06/21 15:02:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.16.4.2 2006/12/30 20:47:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -99,7 +77,7 @@ dev_type_ioctl(kttcpioctl);
 
 const struct cdevsw kttcp_cdevsw = {
 	nullopen, nullclose, noread, nowrite, kttcpioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 void
@@ -109,7 +87,8 @@ kttcpattach(int count)
 }
 
 int
-kttcpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+kttcpioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+    struct lwp *l)
 {
 	int error;
 
@@ -382,7 +361,7 @@ nopages:
 
 static int
 kttcp_soreceive(struct socket *so, unsigned long long slen,
-		unsigned long long *done, struct lwp *l, int *flagsp)
+    unsigned long long *done, struct lwp *l, int *flagsp)
 {
 	struct mbuf *m, **mp;
 	int flags, len, error, s, offset, moff, type;

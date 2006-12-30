@@ -1,12 +1,15 @@
-#	$NetBSD: std.sparc64,v 1.10.34.1 2006/06/21 14:56:40 yamt Exp $
+#	$NetBSD: std.sparc64,v 1.10.34.2 2006/12/30 20:47:02 yamt Exp $
 
 #
 # Mandatory NetBSD/sparc64 kernel options when building either 32-bit or
-# 64-bit kernels.  Additional mandatory options for 64-bit kernels are
-# picked up by also including "std.sparc64-64".
+# 64-bit kernels.  Options which require different settings for 32-bit
+# kernels are adjusted by also including "std.sparc64-32".
 #
 
 machine		sparc64		# Machine architecture; required by config(8)
 include		"conf/std"	# MI standard options
 
+makeoptions	LP64="yes"
+
 options 	EXEC_SCRIPT	# execve(2) support for scripts
+options 	EXEC_ELF64	# 64-bit NetBSD and SunOS 5 bins

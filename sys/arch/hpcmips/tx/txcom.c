@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.24.12.1 2006/06/21 14:51:50 yamt Exp $ */
+/*	$NetBSD: txcom.c,v 1.24.12.2 2006/12/30 20:46:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.24.12.1 2006/06/21 14:51:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.24.12.2 2006/12/30 20:46:03 yamt Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -787,7 +787,6 @@ txcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct txcom_chip *chip;
 	struct tty *tp;
 	int s, err = ENXIO;
-;
 
 	if (!sc)
 		return err;
@@ -795,9 +794,7 @@ txcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	chip = sc->sc_chip;
 	tp = sc->sc_tty;
 
-	if (ISSET(tp->t_state, TS_ISOPEN) &&
-	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -987,7 +984,8 @@ txcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		err = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag); 
+		err = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (err) {
 			break;
 		}

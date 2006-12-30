@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlg_machdep.c,v 1.2.10.2 2006/06/21 14:50:46 yamt Exp $	*/
+/*	$NetBSD: hdlg_machdep.c,v 1.2.10.3 2006/12/30 20:45:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.2.10.2 2006/06/21 14:50:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.2.10.3 2006/12/30 20:45:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -288,7 +288,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
-	printf("\nNetBSD/hdlg booting ...\n");
+	printf("\nNetBSD/evbarm (HDL-G) booting ...\n");
 #endif
 
 	/*
@@ -316,7 +316,7 @@ initarm(void *arg)
 #endif
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
-	/* XXX must make the memory description h/w independant */
+	/* XXX must make the memory description h/w independent */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = memstart;
 	bootconfig.dram[0].pages = memsize / PAGE_SIZE;

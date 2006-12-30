@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.26.2.1 2006/06/21 15:09:30 yamt Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.26.2.2 2006/12/30 20:50:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.26.2.1 2006/06/21 15:09:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.26.2.2 2006/12/30 20:50:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -891,7 +891,7 @@ smbfs_smb_search(struct smbfs_fctx *ctx)
 
 static int
 smbfs_findopenLM1(struct smbfs_fctx *ctx, struct smbnode *dnp,
-	const char *wildcard, int wclen, int attr, struct smb_cred *scred)
+    const char *wildcard, int wclen, int attr, struct smb_cred *scred)
 {
 	ctx->f_attrmask = attr;
 	if (wildcard) {
@@ -1054,8 +1054,10 @@ smbfs_smb_trans2find2(struct smbfs_fctx *ctx)
 		return error;
 	if ((error = md_get_uint16le(mdp, &tw)) != 0)
 		return error;
-	if (ctx->f_ecnt == 0)
+	if (ctx->f_ecnt == 0) {
+		ctx->f_flags |= SMBFS_RDD_EOF | SMBFS_RDD_NOCLOSE;
 		return ENOENT;
+	}
 	ctx->f_rnameofs = tw;
 	mdp = &t2p->t2_rdata;
 
@@ -1089,7 +1091,7 @@ smbfs_smb_findclose2(struct smbfs_fctx *ctx)
 
 static int
 smbfs_findopenLM2(struct smbfs_fctx *ctx, struct smbnode *dnp,
-	const char *wildcard, int wclen, int attr, struct smb_cred *scred)
+    const char *wildcard, int wclen, int attr, struct smb_cred *scred)
 {
 	ctx->f_name = malloc(SMB_MAXFNAMELEN, M_SMBFSDATA, M_WAITOK);
 	if (ctx->f_name == NULL)
@@ -1315,7 +1317,8 @@ smbfs_smb_lookup(struct smbnode *dnp, const char *name, int nmlen,
 		error = smbfs_smb_lookup(dnp, NULL, 0, fap, scred);
 		return error;
 	} else if (nmlen == 2 && name[0] == '.' && name[1] == '.') {
-		error = smbfs_smb_lookup(dnp->n_parent, NULL, 0, fap, scred);
+		error = smbfs_smb_lookup(VTOSMB(dnp->n_parent), NULL, 0,
+		    fap, scred);
 		printf("%s: knows NOTHING about '..'\n", __func__);
 		return error;
 	}
@@ -1347,7 +1350,8 @@ smbfs_smb_lookup(struct smbnode *dnp, const char *name, int nmlen,
  * SMB_COM_OPEN is used.
  */
 int
-smbfs_smb_ntcreatex(struct smbnode *np, int accmode, struct smb_cred *scred)
+smbfs_smb_ntcreatex(struct smbnode *np, int accmode,
+    struct smb_cred *scred)
 {
 	struct smb_rq *rqp;
 	struct smb_share *ssp = np->n_mount->sm_share;
