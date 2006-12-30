@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2.6.3 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.2.6.4 2006/12/30 22:06:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,6 +74,7 @@ typedef	volatile int		__cpu_simple_lock_t;
 
 #if defined(_KERNEL)
 #define __HAVE_RAS
+#define	__HAVE_LAZY_MBUF
 #endif
 
 #endif	/* _MACHTYPES_H_ */
