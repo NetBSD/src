@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.855 2006/12/10 23:44:08 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.856 2006/12/31 12:48:00 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -12556,6 +12556,10 @@ static const struct pci_product pci_products[] = {
 	    "CF32A CompactFlash Adapter",
 	},
 	{
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_CF32A_BUFFALO,
+	    "CF32A CF Adapter (BUFFALO)",
+	},
+	{
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_KME,
 	    "NPATA-32 IDE (KME)",
 	},
@@ -12612,4 +12616,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2559;
+const int pci_nproducts = 2560;
