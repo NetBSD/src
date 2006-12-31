@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.62 2006/05/11 12:00:20 yamt Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.63 2006/12/31 16:20:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.62 2006/05/11 12:00:20 yamt Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.63 2006/12/31 16:20:18 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,6 +94,7 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.62 2006/05/11 12:00:20 yamt Exp $");
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/resourcevar.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
@@ -471,6 +472,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 		mib[2] = op;
 		mib[3] = arg;
 		mib[4] = (int)esize;
+again:
 		mib[5] = 0;
 		st = sysctl(mib, 6, NULL, &size, NULL, (size_t)0);
 		if (st == -1) {
@@ -482,6 +484,9 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 		KVM_ALLOC(kd, procbase2, size);
 		st = sysctl(mib, 6, kd->procbase2, &size, NULL, (size_t)0);
 		if (st == -1) {
+			if (errno == ENOMEM) {
+				goto again;
+			}
 			_kvm_syserr(kd, kd->program, "kvm_getproc2");
 			return (NULL);
 		}
