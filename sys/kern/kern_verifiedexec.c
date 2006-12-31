@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.88 2006/12/30 15:26:55 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.89 2006/12/31 12:07:16 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.88 2006/12/30 15:26:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.89 2006/12/31 12:07:16 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -382,12 +382,12 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 	if (error)
 		return (error);
 
-#if 0 /* XXX - for now */
+#ifdef notyet /* XXX - for now */
 	if ((vfe->type & VERIEXEC_UNTRUSTED) &&
 	    (vfe->page_fp_status == PAGE_FP_NONE))
 		do_perpage = 1;
 	else
-#endif
+#endif  /* notyet */
 		do_perpage = 0;
 
 	ctx = (void *) malloc(vfe->ops->context_size, M_VERIEXEC, M_WAITOK);
@@ -632,6 +632,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 	return (error);
 }
 
+#ifdef notyet
 /*
  * Evaluate per-page fingerprints.
  */
@@ -700,6 +701,7 @@ veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
 
 	return (error);
 }
+#endif /* notyet */
 
 /*
  * Veriexec remove policy code.
