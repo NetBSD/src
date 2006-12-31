@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.1 2006/12/30 19:28:19 rumble Exp $
+.\"	$NetBSD: boot.8,v 1.2 2006/12/31 09:40:18 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Stephen M. Rumble
 .\" All rights reserved.
@@ -47,29 +47,29 @@ requires that we write our bootloader into to the volume header using
 .Pp
 Once a bootloader is present in the volume header, it may be executed
 directly by the PROM either manually, or at boot time using the
-.Sq OSLoader
+.Dq OSLoader
 PROM environment variable.
 The
 .Nx
 bootloader will obtain the kernel filename to boot from the PROM or EEPROM.
 This is specified by setting the PROM environment variable
-.Sq OSLoadFilename
+.Dq OSLoadFilename
 to an appropriate value.
 For instance,
-.Sq /netbsd.ecoff .
+.Dq /netbsd.ecoff .
 .Pp
 For example, the following will configure the PROM to use the bootloader
-.Sq 'aoutboot'
+.Dq aoutboot
 to load the kernel
-.Sq 'netbsd.old'
+.Dq netbsd.old
 .Pp
 .Dl Ic setenv OSLoader aoutboot
 .Dl Ic setenv OSLoadFilename netbsd.old
-.Sh Network Booting 
+.Sh Network Booting
 The system firmware will obtain an IP address, TFTP server address, and an
 optional filename from the BOOTP server and download it via TFTP.
 The PROM's configurable network address environment variable
-.Sq netaddr
+.Dq netaddr
 must match the address provided by the BOOTP server.
 .Pp
 An example BOOTP entry for
@@ -89,7 +89,7 @@ follows:
 .Ed
 .Pp
 To boot a kernel named
-.Sq netbsd.ecoff
+.Dq netbsd.ecoff
 the user would type:
 .Dl Ic boot -f bootp():/netbsd.ecoff
 .Pp
@@ -99,13 +99,13 @@ for more information on configuring
 .dhcpd 8
 as a BOOTP server.
 .Sh SEE ALSO
-.Xr dhcpd 8 ,
 .Xr dhcpd.conf 5 ,
+.Xr dhcpd 8 ,
 .Xr sgivol 8
 .Sh CAVEATS
-Some older PROM revisions do not support loading of ELF images. The
-build system automatically prepares ECOFF versions, which are correctly
-interpreted.
+Some older PROM revisions do not support loading of ELF images.
+The build system automatically prepares ECOFF versions, which are
+correctly interpreted.
 .Sh BUGS
 .Nx
 does not support booting from disk on systems lacking an ARCS-compatible
