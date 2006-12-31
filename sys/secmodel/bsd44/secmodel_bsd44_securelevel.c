@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.20 2006/12/26 10:43:44 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.21 2006/12/31 10:38:18 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.20 2006/12/26 10:43:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.21 2006/12/31 10:38:18 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -57,10 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.20 2006/12/26 10:43
 
 #include <secmodel/bsd44/securelevel.h>
 
-/*
- * XXX after we remove all securelevel references from the kernel,
- * XXX this goes static.
- */
 int securelevel;
 
 /*
