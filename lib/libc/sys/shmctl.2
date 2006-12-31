@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmctl.2,v 1.18 2006/12/23 08:09:31 wiz Exp $
+.\"	$NetBSD: shmctl.2,v 1.19 2006/12/31 03:17:52 uebayasi Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -57,7 +57,7 @@ structure associated with it which contains the following members:
     pid_t           shm_lpid;   /* pid of last shm op */
     pid_t           shm_cpid;   /* pid of creator */
     shmatt_t        shm_nattch; /* # of current attaches */
-    time_t          shm_atime;  /* last shmat() time*/
+    time_t          shm_atime;  /* last shmat() time */
     time_t          shm_dtime;  /* last shmdt() time */
     time_t          shm_ctime;  /* last change by shmctl() */
 .Ed
