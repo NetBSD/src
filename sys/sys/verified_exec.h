@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.48 2006/12/30 15:26:55 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.49 2006/12/31 12:07:16 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -84,9 +84,6 @@ typedef void (*veriexec_fpop_final_t)(u_char *, void *);
 #if defined(_KERNEL) && !defined(HAVE_NBTOOL_CONFIG_H)
 MALLOC_DECLARE(M_VERIEXEC);
 
-struct veriexec_file_entry;
-struct veriexec_table_entry;
-
 extern int veriexec_verbose;
 extern int veriexec_strict;
 
@@ -110,14 +107,16 @@ int veriexec_table_add(struct lwp *, prop_dictionary_t);
 int veriexec_file_add(struct lwp *, prop_dictionary_t);
 int veriexec_verify(struct lwp *, struct vnode *, const u_char *, int,
     boolean_t *);
+#ifdef notyet
+int veriexec_page_verify(struct veriexec_file_entry *, struct vm_page *,
+    size_t, struct lwp *);
+#endif /* notyet */
 boolean_t veriexec_lookup(struct vnode *);
 int veriexec_file_delete(struct vnode *);
 int veriexec_table_delete(struct mount *);
 int veriexec_convert(struct vnode *, prop_dictionary_t);
 void veriexec_report(const u_char *, const u_char *, struct lwp *, int);
 void veriexec_purge(struct vnode *);
-int veriexec_page_verify(struct veriexec_file_entry *, struct vm_page *,
-    size_t, struct lwp *);
 int veriexec_removechk(struct vnode *, const char *, struct lwp *l);
 int veriexec_renamechk(struct vnode *, const char *, struct vnode *,
     const char *, struct lwp *);
