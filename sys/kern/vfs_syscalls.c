@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.288 2006/12/28 14:33:41 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.289 2006/12/31 10:05:52 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.288 2006/12/28 14:33:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.289 2006/12/31 10:05:52 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -431,6 +431,12 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	struct mount *mp;
 	int error;
 
+	/* If MNT_GETARGS is specified, it should be the only flag. */
+	if (flags & ~MNT_GETARGS) {
+		error = EINVAL;
+		goto out;
+	}
+
 	mp = vp->v_mount;
 
 	if ((vp->v_flag & VROOT) == 0) {
@@ -467,14 +473,6 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 	struct nameidata nd;
 	int error;
 
-	/*
-	 * if MNT_GETARGS is specified, it should be only flag.
-	 */
-	if ((SCARG(uap, flags) & MNT_GETARGS) != 0 &&
-	    (SCARG(uap, flags) & ~MNT_GETARGS) != 0) {
-		return EINVAL;
-	}
-
 	/* XXX secmodel stuff. */
 	if (dovfsusermount == 0 && (SCARG(uap, flags) & MNT_GETARGS) == 0 &&
 	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
@@ -496,7 +494,7 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 	 */
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_SETRECURSE);
 
-	if (SCARG(uap, flags) == MNT_GETARGS) {
+	if (SCARG(uap, flags) & MNT_GETARGS) {
 		error = mount_getargs(l, vp, SCARG(uap, path),
 		    SCARG(uap, flags), SCARG(uap, data), &nd);
 		vput(vp);
