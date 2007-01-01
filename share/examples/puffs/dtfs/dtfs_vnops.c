@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.10 2006/12/29 15:37:06 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.11 2007/01/01 21:32:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -145,7 +145,7 @@ dtfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	struct puffs_node *pn = targ;
 
 	if (pn->pn_va.va_type == VDIR)
-		return EISDIR;
+		return EPERM;
 
 	dtfs_nukenode(targ, pn_parent, pcn->pcn_name);
 
