@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.72 2007/01/01 21:35:40 dsl Exp $	*/
+/*	$NetBSD: make.c,v 1.73 2007/01/01 21:39:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.72 2007/01/01 21:35:40 dsl Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.73 2007/01/01 21:39:58 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.72 2007/01/01 21:35:40 dsl Exp $");
+__RCSID("$NetBSD: make.c,v 1.73 2007/01/01 21:39:58 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -619,10 +619,10 @@ Make_Recheck(GNode *gn)
      * the target is made now. Otherwise archives with ... rules
      * don't work!
      */
-    if (NoExecute(gn) ||
-	(gn->type & OP_SAVE_CMDS) || mtime == 0) {
+    if (NoExecute(gn) || (gn->type & OP_SAVE_CMDS) ||
+	    (mtime == 0 && !(gn->type & OP_WAIT))) {
 	if (DEBUG(MAKE)) {
-	    fprintf(debug_file, " recheck(%s): update time to now: %s\n",
+	    fprintf(debug_file, " recheck(%s): update time from %s to now\n",
 		   gn->name, Targ_FmtTime(gn->mtime));
 	}
 	gn->mtime = now;
