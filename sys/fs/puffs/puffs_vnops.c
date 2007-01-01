@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.25 2007/01/01 20:14:36 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.26 2007/01/01 20:16:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.25 2007/01/01 20:14:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.26 2007/01/01 20:16:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -81,6 +81,11 @@ int	puffs_strategy(void *);
 int	puffs_bmap(void *);
 int	puffs_mmap(void *);
 
+int	puffs_spec_read(void *);
+int	puffs_spec_write(void *);
+int	puffs_fifo_read(void *);
+int	puffs_fifo_write(void *);
+
 int	puffs_checkop(void *);
 
 
@@ -97,19 +102,6 @@ int puffs_lock(void *);
 int puffs_unlock(void *);
 int puffs_islocked(void *);
 #endif
-
-/*
- * no special specops for now.  hmm, probably don't want to handle
- * these synchronously, since they don't actually demand any
- * response.  so maybe we need another touser-type thing...
- */
-#define puffsspec_read spec_read
-#define puffsspec_write spec_write
-#define puffsspec_close spec_close
-/* no special fifo-ooops either */
-#define puffsfifo_read fifo_read
-#define puffsfifo_write fifo_write
-#define puffsfifo_close fifo_close
 
 int (**puffs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
@@ -168,12 +160,12 @@ const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 	{ &vop_create_desc, spec_create },		/* genfs_badop */
 	{ &vop_mknod_desc, spec_mknod },		/* genfs_badop */
 	{ &vop_open_desc, spec_open },			/* spec_open */
-	{ &vop_close_desc, puffsspec_close },		/* close */
-	{ &vop_access_desc, puffs_access },		/* access */
-	{ &vop_getattr_desc, puffs_getattr },		/* getattr */
-	{ &vop_setattr_desc, puffs_setattr },		/* setattr */
-	{ &vop_read_desc, puffsspec_read },		/* read */
-	{ &vop_write_desc, puffsspec_write },		/* write */
+	{ &vop_close_desc, spec_close },		/* spec_close */
+	{ &vop_access_desc, puffs_checkop },		/* access */
+	{ &vop_getattr_desc, puffs_checkop },		/* getattr */
+	{ &vop_setattr_desc, puffs_checkop },		/* setattr */
+	{ &vop_read_desc, puffs_spec_read },		/* update, read */
+	{ &vop_write_desc, puffs_spec_write },		/* update, write */
 	{ &vop_lease_desc, spec_lease_check },		/* genfs_nullop */
 	{ &vop_ioctl_desc, spec_ioctl },		/* spec_ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* dummy */
@@ -192,14 +184,14 @@ const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 	{ &vop_readdir_desc, spec_readdir },		/* genfs_badop */
 	{ &vop_readlink_desc, spec_readlink },		/* genfs_badop */
 	{ &vop_abortop_desc, spec_abortop },		/* genfs_badop */
-	{ &vop_inactive_desc, puffs_inactive },		/* inactive */
-	{ &vop_reclaim_desc, puffs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, puffs_lock },			/* lock */
-	{ &vop_unlock_desc, puffs_unlock },		/* unlock */
+	{ &vop_inactive_desc, puffs_inactive },		/* REAL inactive */
+	{ &vop_reclaim_desc, puffs_reclaim },		/* REAL reclaim */
+	{ &vop_lock_desc, puffs_lock },			/* REAL lock */
+	{ &vop_unlock_desc, puffs_unlock },		/* REAL unlock */
 	{ &vop_bmap_desc, spec_bmap },			/* dummy */
 	{ &vop_strategy_desc, spec_strategy },		/* dev strategy */
-	{ &vop_print_desc, puffs_print },		/* print */
-	{ &vop_islocked_desc, puffs_islocked },		/* islocked */
+	{ &vop_print_desc, puffs_print },		/* REAL print */
+	{ &vop_islocked_desc, puffs_islocked },		/* REAL islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* lf_advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
@@ -226,12 +218,12 @@ const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
 	{ &vop_create_desc, fifo_create },		/* genfs_badop */
 	{ &vop_mknod_desc, fifo_mknod },		/* genfs_badop */
 	{ &vop_open_desc, fifo_open },			/* open */
-	{ &vop_close_desc, puffsfifo_close },		/* close */
-	{ &vop_access_desc, puffs_access },		/* access */
-	{ &vop_getattr_desc, puffs_getattr },		/* getattr */
-	{ &vop_setattr_desc, puffs_setattr },		/* setattr */
-	{ &vop_read_desc, puffsfifo_read },		/* read */
-	{ &vop_write_desc, puffsfifo_write },		/* write */
+	{ &vop_close_desc, fifo_close },		/* close */
+	{ &vop_access_desc, puffs_checkop },		/* access */
+	{ &vop_getattr_desc, puffs_checkop },		/* getattr */
+	{ &vop_setattr_desc, puffs_checkop },		/* setattr */
+	{ &vop_read_desc, puffs_fifo_read },		/* read, update */
+	{ &vop_write_desc, puffs_fifo_write },		/* write, update */
 	{ &vop_lease_desc, fifo_lease_check },		/* genfs_nullop */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* dummy */
@@ -239,7 +231,7 @@ const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
 	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, fifo_revoke },		/* genfs_revoke */
 	{ &vop_mmap_desc, fifo_mmap },			/* genfs_badop */
-	{ &vop_fsync_desc, puffs_fsync },		/* fsync */
+	{ &vop_fsync_desc, puffs_checkop },		/* fsync */
 	{ &vop_seek_desc, fifo_seek },			/* genfs_badop */
 	{ &vop_remove_desc, fifo_remove },		/* genfs_badop */
 	{ &vop_link_desc, fifo_link },			/* genfs_badop */
@@ -250,14 +242,14 @@ const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
 	{ &vop_readdir_desc, fifo_readdir },		/* genfs_badop */
 	{ &vop_readlink_desc, fifo_readlink },		/* genfs_badop */
 	{ &vop_abortop_desc, fifo_abortop },		/* genfs_badop */
-	{ &vop_inactive_desc, puffs_inactive },		/* inactive */
-	{ &vop_reclaim_desc, puffs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, puffs_lock },			/* lock */
-	{ &vop_unlock_desc, puffs_unlock },		/* unlock */
+	{ &vop_inactive_desc, puffs_inactive },		/* REAL inactive */
+	{ &vop_reclaim_desc, puffs_reclaim },		/* REAL reclaim */
+	{ &vop_lock_desc, puffs_lock },			/* REAL lock */
+	{ &vop_unlock_desc, puffs_unlock },		/* REAL unlock */
 	{ &vop_bmap_desc, fifo_bmap },			/* dummy */
 	{ &vop_strategy_desc, fifo_strategy },		/* genfs_badop */
-	{ &vop_print_desc, puffs_print },		/* print */
-	{ &vop_islocked_desc, puffs_islocked },		/* islocked */
+	{ &vop_print_desc, puffs_print },		/* REAL print */
+	{ &vop_islocked_desc, puffs_islocked },		/* REAL islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* genfs_einval */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
@@ -1931,4 +1923,69 @@ puffs_generic(void *v)
 	DPRINTF(("puffs_generic: ap->a_desc = %s\n", ap->a_desc->vdesc_name));
 
 	return EOPNOTSUPP;
+}
+
+
+/*
+ * spec & fifo.  These call the micsfs spec and fifo vectors, but issue
+ * FAF update information for the puffs node first.
+ */
+int
+puffs_spec_read(void *v)
+{
+	struct vop_read_args /* { 
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int a_ioflag;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+
+	puffs_updatenode(ap->a_vp, PUFFS_UPDATEATIME);
+	return VOCALL(spec_vnodeop_p, VOFFSET(vop_read), v);
+}
+
+int
+puffs_spec_write(void *v)
+{
+	struct vop_write_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int a_ioflag;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+
+	puffs_updatenode(ap->a_vp, PUFFS_UPDATEMTIME);
+	return VOCALL(spec_vnodeop_p, VOFFSET(vop_write), v);
+}
+
+int
+puffs_fifo_read(void *v)
+{
+	struct vop_read_args /* { 
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int a_ioflag;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+
+	puffs_updatenode(ap->a_vp, PUFFS_UPDATEATIME);
+	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_read), v);
+}
+
+int
+puffs_fifo_write(void *v)
+{
+	struct vop_write_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int a_ioflag;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+
+	puffs_updatenode(ap->a_vp, PUFFS_UPDATEMTIME);
+	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), v);
 }
