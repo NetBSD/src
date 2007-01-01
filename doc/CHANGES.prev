@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.52 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.53 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8537,6 +8537,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	vnd: Make this work with files stored on file systems without
 		the bmap and strategy operations.  This includes tmpfs
 		and smbfs.  [jmmv 20061109]
+	mount_nfs(8): Remove NQNFS support. [yamt 20061109]
 	paxctl: Enable as a tool, and add make rules to run paxctl on
 		binaries to what PROG_PAX is set. [christos 20061110]
 	lfs_cleanerd: Move from /usr/libexec to /libexec so that the
