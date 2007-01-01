@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.25 2006/12/16 08:59:29 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.26 2007/01/01 21:31:51 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.25 2006/12/16 08:59:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.26 2007/01/01 21:31:51 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.25 2006/12/16 08:59:29 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.26 2007/01/01 21:31:51 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -164,7 +164,7 @@ For_Eval(char *line)
 	 * a for.
 	 */
 	if (ptr[0] != 'f' || ptr[1] != 'o' || ptr[2] != 'r' ||
-	    !isspace((unsigned char) ptr[3]))
+		!isspace((unsigned char) ptr[3]))
 	    return FALSE;
 	ptr += 3;
 
@@ -259,21 +259,21 @@ For_Eval(char *line)
 	forLevel++;
 	return 1;
     }
-    else if (*ptr == '.') {
+
+    if (*ptr == '.') {
 
 	for (ptr++; *ptr && isspace((unsigned char) *ptr); ptr++)
 	    continue;
 
 	if (strncmp(ptr, "endfor", 6) == 0 &&
-	    (isspace((unsigned char) ptr[6]) || !ptr[6])) {
+		(isspace((unsigned char) ptr[6]) || !ptr[6])) {
 	    if (DEBUG(FOR))
 		(void)fprintf(debug_file, "For: end for %d\n", forLevel);
 	    if (--forLevel < 0) {
 		Parse_Error(level, "for-less endfor");
 		return 0;
 	    }
-	}
-	else if (strncmp(ptr, "for", 3) == 0 &&
+	} else if (strncmp(ptr, "for", 3) == 0 &&
 		 isspace((unsigned char) ptr[3])) {
 	    forLevel++;
 	    if (DEBUG(FOR))
@@ -286,9 +286,8 @@ For_Eval(char *line)
 	Buf_AddByte(accumFor.buf, (Byte)'\n');
 	return 1;
     }
-    else {
-	return 0;
-    }
+
+    return 0;
 }
 
 
