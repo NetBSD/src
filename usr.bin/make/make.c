@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.73 2007/01/01 21:39:58 dsl Exp $	*/
+/*	$NetBSD: make.c,v 1.74 2007/01/01 21:42:42 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.73 2007/01/01 21:39:58 dsl Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.74 2007/01/01 21:42:42 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.73 2007/01/01 21:39:58 dsl Exp $");
+__RCSID("$NetBSD: make.c,v 1.74 2007/01/01 21:42:42 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -142,9 +142,11 @@ static int MakeBuildParent(ClientData, ClientData);
 static void
 make_abort(GNode *gn, int line)
 {
+    static int two = 2;
+
     fprintf(debug_file, "make_abort from line %d\n", line);
-    Targ_PrintNode(gn, 0);
-    Lst_ForEach(toBeMade, Targ_PrintNode, 0);
+    Targ_PrintNode(gn, &two);
+    Lst_ForEach(toBeMade, Targ_PrintNode, &two);
     Targ_PrintGraph(3);
     abort();
 }
@@ -801,10 +803,11 @@ Make_Update(GNode *cgn)
 		continue;
 	    }
 	    if (DEBUG(MAKE)) {
+		static int two = 2;
 		fprintf(debug_file, "- %s%s made, schedule %s%s (made %d)\n",
 			cgn->name, cgn->cohort_num,
 			pgn->name, pgn->cohort_num, pgn->made);
-		Targ_PrintNode(pgn, 0);
+		Targ_PrintNode(pgn, &two);
 	    }
 	    /* Ok, we can schedule the parent again */
 	    pgn->made = REQUESTED;
