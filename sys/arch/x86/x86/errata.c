@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.1 2007/01/01 20:56:59 ad Exp $	*/
+/*	$NetBSD: errata.c,v 1.2 2007/01/01 21:00:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.1 2007/01/01 20:56:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.2 2007/01/01 21:00:13 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -309,6 +309,7 @@ x86_errata(struct cpu_info *ci, int vendor)
 	errata_t *e, *ex;
 	cpurev_t rev;
 	int i, j, upgrade;
+	static int again;
 
 	if (vendor != CPUVENDOR_AMD)
 		return;
@@ -342,9 +343,11 @@ x86_errata(struct cpu_info *ci, int vendor)
 		upgrade = 1;
 	}
 
-	if (upgrade)
+	if (upgrade && !again) {
+		again = 1;
 		aprint_normal("WARNING: AMD errata detected, BIOS upgrade "
 		    "recommended\n");
+	}
 }
 
 #else	/* defined(I686_CPU) || defined(__x86_64__) */
