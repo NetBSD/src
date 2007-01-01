@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/11/28 13:44:52 jdc Exp $
+#	$NetBSD: Makefile,v 1.6 2007/01/01 13:09:54 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -42,4 +42,4 @@ ada-exp.c: .NOPATH
 c-exp.c: .NOPATH
 m2-exp.c: .NOPATH
 p-exp.c: .NOPATH
-CLEANFILES+= m2-exp.c p-exp.c
+CLEANFILES+= ada-exp.c c-exp.c m2-exp.c p-exp.c
