@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.305 $"
+#ident 		"GENERIC-$Revision: 1.306 $"
 
 maxusers 32
 
@@ -257,7 +257,9 @@ px*	at	tc? slot ? offset ?
 pxg*	at	tc? slot ? offset ?
 
 # TURBOchannel serial attachments
-zstty*	at	zsc? channel ?			# serial ports on B channels
+zstty0  at      zsc0 channel ?                  # serial port on B channels
+# /dev/ttyB1 has minor number 2 for historical reasons
+zstty2  at      zsc1 channel ?                  # serial port on B channels
 lkkbd0	at	zsc1 channel ?			# keyboard port on A channels
 vsms0	at	zsc0 channel ?			# mouse port on A channels
 
