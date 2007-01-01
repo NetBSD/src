@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.2 2007/01/01 21:00:13 ad Exp $	*/
+/*	$NetBSD: errata.c,v 1.3 2007/01/01 21:03:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.2 2007/01/01 21:00:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.3 2007/01/01 21:03:26 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -75,7 +75,7 @@ typedef struct errata {
 	u_short		e_num;
 	u_short		e_reported;
 	u_int		e_data1;
-	const u_int	*e_set;
+	const uint8_t	*e_set;
 	const char	*(*e_act)(struct cpu_info *, struct errata *);
 	uint64_t	e_data2;
 } errata_t;
@@ -100,36 +100,36 @@ static const u_int cpurevs[] = {
 	OINK
 };
 
-static const u_int x86_errata_set1[] = {
+static const uint8_t x86_errata_set1[] = {
 	SH_B3, SH_C0, SH_CG, DH_CG, CH_CG, OINK
 };
 
-static const u_int x86_errata_set2[] = {
+static const uint8_t x86_errata_set2[] = {
 	SH_B3, SH_C0, SH_CG, DH_CG, CH_CG, SH_D0, DH_D0, CH_D0, OINK
 };
 
-static const u_int x86_errata_set3[] = {
+static const uint8_t x86_errata_set3[] = {
 	JH_E1, DH_E3, OINK
 };
 
-static const u_int x86_errata_set4[] = {
+static const uint8_t x86_errata_set4[] = {
 	SH_C0, SH_CG, DH_CG, CH_CG, SH_D0, DH_D0, CH_D0, JH_E1,
 	DH_E3, SH_E4, BH_E4, SH_E5, DH_E6, JH_E6, OINK
 };
 
-static const u_int x86_errata_set5[] = {
+static const uint8_t x86_errata_set5[] = {
 	SH_B3, OINK
 };
 
-static const u_int x86_errata_set6[] = {
+static const uint8_t x86_errata_set6[] = {
 	SH_C0, SH_CG, DH_CG, CH_CG, OINK
 };
 
-static const u_int x86_errata_set7[] = {
+static const uint8_t x86_errata_set7[] = {
 	SH_C0, SH_CG, DH_CG, CH_CG, SH_D0, DH_D0, CH_D0, OINK
 };
 
-static const u_int x86_errata_set8[] = {
+static const uint8_t x86_errata_set8[] = {
 	BH_E4, CH_CG, CH_CG, CH_D0, CH_D0, DH_CG, DH_CG, DH_CG,
 	DH_D0, DH_D0, DH_E3, DH_E3, DH_E6, DH_E6, JH_E1, JH_E6,
 	JH_E6, SH_B0, SH_B3, SH_C0, SH_C0, SH_CG, SH_CG, SH_CG, 
