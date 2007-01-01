@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.52 2006/12/16 08:51:12 dsl Exp $	*/
+/*	$NetBSD: dir.c,v 1.53 2007/01/01 21:31:51 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.52 2006/12/16 08:51:12 dsl Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.53 2007/01/01 21:31:51 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.52 2006/12/16 08:51:12 dsl Exp $");
+__RCSID("$NetBSD: dir.c,v 1.53 2007/01/01 21:31:51 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1428,8 +1428,12 @@ Dir_MTime(GNode *gn)
     } else if (gn->path == NULL) {
 	if (gn->type & OP_NOPATH)
 	    fullName = NULL;
-	else
+	else {
 	    fullName = Dir_FindFile(gn->name, Suff_FindPath(gn));
+	    if (DEBUG(DIR))
+		fprintf(debug_file, "Found '%s' as '%s'\n",
+			gn->name, fullName ? fullName : "(not found)" );
+	}
     } else {
 	fullName = gn->path;
     }
