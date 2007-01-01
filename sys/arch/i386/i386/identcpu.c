@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.51 2006/11/29 16:15:38 drochner Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.52 2007/01/01 20:56:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51 2006/11/29 16:15:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.52 2007/01/01 20:56:58 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1628,4 +1628,5 @@ identifycpu(struct cpu_info *ci)
 	}
 #endif /* POWERNOW_K7 || POWERNOW_K8 */
 
+	x86_errata(ci, vendor);
 }

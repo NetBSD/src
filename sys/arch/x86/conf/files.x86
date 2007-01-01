@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.20 2006/10/01 18:37:54 bouyer Exp $
+#	$NetBSD: files.x86,v 1.21 2007/01/01 20:56:59 ad Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -21,6 +21,7 @@ file	arch/x86/x86/bus_dma.c
 file	arch/x86/x86/bus_space.c
 file	arch/x86/x86/cacheinfo.c
 file	arch/x86/x86/consinit.c
+file	arch/x86/x86/errata.c
 file	arch/x86/x86/i8259.c
 file	arch/x86/x86/intr.c
 file	arch/x86/x86/ipi.c		multiprocessor

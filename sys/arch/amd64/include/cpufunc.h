@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.9 2006/08/26 20:08:07 ad Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.10 2007/01/01 20:56:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -252,6 +252,7 @@ write_rflags(u_long ef)
 	__asm volatile("pushq %0; popfq" : : "r" (ef));
 }
 
+
 static __inline u_int64_t
 rdmsr(u_int msr)
 {
@@ -265,6 +266,33 @@ wrmsr(u_int msr, u_int64_t newval)
 {
 	__asm volatile("wrmsr" :
 	    : "a" (newval & 0xffffffff), "d" (newval >> 32), "c" (msr));
+}
+
+/* 
+ * Some of the undocumented AMD64 MSRs need a 'passcode' to access.
+ *
+ * See LinuxBIOSv2: src/cpu/amd/model_fxx/model_fxx_init.c
+ */
+
+#define	OPTERON_MSR_PASSCODE	0x9c5a203a
+
+static __inline u_int64_t
+rdmsr_locked(u_int msr, u_int code)
+{
+	uint32_t hi, lo;
+	__asm volatile("rdmsr"
+	    : "=d" (hi), "=a" (lo)
+	    : "c" (msr), "D" (code));
+	return (((uint64_t)hi << 32) | (uint64_t) lo);
+}
+
+static __inline void
+wrmsr_locked(u_int msr, u_int code, u_int64_t newval)
+{
+	__asm volatile("wrmsr"
+	    :
+	    : "a" (newval & 0xffffffff), "d" (newval >> 32), "c" (msr),
+	      "D" (code));
 }
 
 static __inline void
