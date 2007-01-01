@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.289 2006/12/31 10:05:52 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.290 2007/01/01 20:45:51 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.289 2006/12/31 10:05:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.290 2007/01/01 20:45:51 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -307,9 +307,12 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 
 	/*
 	 * For non-root users, silently enforce MNT_NOSUID and MNT_NODEV.
+	 * Also propagate MNT_NOEXEC.
 	 */
 	if (kauth_cred_geteuid(l->l_cred) != 0) {
 		flags |= MNT_NOSUID | MNT_NODEV;
+		if (vp->v_mount->mnt_flag & MNT_NOEXEC)
+			flags |= MNT_NOEXEC;
 	}
 
 	/*
