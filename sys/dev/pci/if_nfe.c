@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.9 2006/12/27 18:36:09 alc Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.10 2007/01/01 03:43:04 tsutsui Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.9 2006/12/27 18:36:09 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.10 2007/01/01 03:43:04 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -203,6 +203,11 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp;
 	bus_size_t memsize;
 	pcireg_t memtype;
+	char devinfo[256];
+
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	aprint_normal(": %s (rev. 0x%02x)\n",
+	    devinfo, PCI_REVISION(pa->pa_class));
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, NFE_PCI_BA);
 	switch (memtype) {
@@ -213,30 +218,32 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		/* FALLTHROUGH */
 	default:
-		printf(": could not map mem space\n");
+		printf("%s: could not map mem space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": could not map interrupt\n");
+		printf("%s: could not map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, nfe_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf(": could not establish interrupt");
+		printf("%s: could not establish interrupt",
+		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf(": %s", intrstr);
+	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
 
 	nfe_get_macaddr(sc, sc->sc_enaddr);
-	printf(", address %s\n", ether_sprintf(sc->sc_enaddr));
+	printf("%s: Ethernet address %s\n",
+	    sc->sc_dev.dv_xname, ether_sprintf(sc->sc_enaddr));
 
 	sc->sc_flags = 0;
 
