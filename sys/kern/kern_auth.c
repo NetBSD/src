@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.35 2006/12/26 10:43:44 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.36 2007/01/01 23:33:03 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.35 2006/12/26 10:43:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.36 2007/01/01 23:33:03 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -655,6 +655,7 @@ kauth_deregister_scope(kauth_scope_t scope)
 	if (scope != NULL) {
 		/* Remove scope from list */
 		SIMPLEQ_REMOVE(&scope_list, scope, kauth_scope, next_scope);
+		kmem_free(scope, sizeof(*scope));
 	}
 }
 
@@ -716,6 +717,7 @@ kauth_unlisten_scope(kauth_listener_t listener)
 		SIMPLEQ_REMOVE(&listener->scope->listenq, listener,
 		    kauth_listener, listener_next);
 		listener->scope->nlisteners--;
+		kmem_free(listener, sizeof(*listener));
 	}
 }
 
