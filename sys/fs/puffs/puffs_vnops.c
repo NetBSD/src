@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.26 2007/01/01 20:16:36 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.27 2007/01/01 23:07:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.26 2007/01/01 20:16:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.27 2007/01/01 23:07:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -442,22 +442,6 @@ puffs_lookup(void *v)
 
 	DPRINTF(("puffs_lookup: \"%s\", parent vnode %p, op: %lx\n",
 	    cnp->cn_nameptr, dvp, cnp->cn_nameiop));
-
-	/*
-	 * Do sanity checks we can do without consulting userland.
-	 */
-
-	/*
-	 * last component check & ro fs
-	 *
-	 * hmmm... why doesn't this check for create?
-	 */
-	if ((cnp->cn_flags & ISLASTCN)
-	    && (ap->a_dvp->v_mount->mnt_flag & MNT_RDONLY)
-	    && (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
-		DPRINTF(("puffs_lookup: write lookup for read-only fs!\n"));
-		return EROFS;
-	}
 
 	/*
 	 * Check if someone fed it into the cache
