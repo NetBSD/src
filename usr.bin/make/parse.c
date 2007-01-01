@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.126 2006/12/18 15:06:16 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.127 2007/01/01 21:47:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.126 2006/12/18 15:06:16 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.127 2007/01/01 21:47:32 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.126 2006/12/18 15:06:16 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.127 2007/01/01 21:47:32 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -161,9 +161,10 @@ typedef struct IFile {
     char            *P_str;         /* point to base of string buffer */
     char            *P_ptr;         /* point to next char of string buffer */
     char            *P_end;         /* point to the end of string buffer */
+    int             P_buflen;       /* current size of file buffer */
 } IFile;
 
-#define IFILE_BUFLEN (0x8000-64)    /* We malloc a spare byte... */
+#define IFILE_BUFLEN 0x8000
 static IFile	    *curFile;
 
 
@@ -280,8 +281,8 @@ static struct {
 static int ParseIsEscaped(const char *, const char *);
 static void ParseErrorInternal(const char *, size_t, int, const char *, ...)
      __attribute__((__format__(__printf__, 4, 5)));
-static void ParseVErrorInternal(const char *, size_t, int, const char *, va_list)
-     __attribute__((__format__(__printf__, 4, 0)));
+static void ParseVErrorInternal(FILE *, const char *, size_t, int, const char *, va_list)
+     __attribute__((__format__(__printf__, 5, 0)));
 static int ParseFindKeyword(const char *);
 static int ParseLinkSrc(ClientData, ClientData);
 static int ParseDoOp(ClientData, ClientData);
@@ -291,8 +292,6 @@ static int ParseAddDir(ClientData, ClientData);
 static int ParseClearPath(ClientData, ClientData);
 static void ParseDoDependency(char *);
 static int ParseAddCmd(ClientData, ClientData);
-static inline int ParseReadc(void);
-static void ParseUnreadc(int);
 static void ParseHasCommands(ClientData);
 static void ParseDoInclude(char *);
 static void ParseSetParseFile(const char *);
@@ -301,7 +300,6 @@ static void ParseTraditionalInclude(char *);
 #endif
 static int ParseEOF(void);
 static char *ParseReadLine(void);
-static char *ParseSkipLine(int, int);
 static void ParseFinishLine(void);
 static void ParseMark(GNode *);
 
@@ -386,12 +384,12 @@ ParseFindKeyword(const char *str)
  */
 /* VARARGS */
 static void
-ParseVErrorInternal(const char *cfname, size_t clineno, int type,
+ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
     const char *fmt, va_list ap)
 {
 	static Boolean fatal_warning_error_printed = FALSE;
 
-	(void)fprintf(stderr, "%s: \"", progname);
+	(void)fprintf(f, "%s: \"", progname);
 
 	if (*cfname != '/') {
 		char *cp;
@@ -408,16 +406,16 @@ ParseVErrorInternal(const char *cfname, size_t clineno, int type,
 		if (dir == NULL)
 			dir = ".";
 		
-		(void)fprintf(stderr, "%s/%s", dir, cfname);
+		(void)fprintf(f, "%s/%s", dir, cfname);
 	} else
-		(void)fprintf(stderr, "%s", cfname);
+		(void)fprintf(f, "%s", cfname);
 
-	(void)fprintf(stderr, "\" line %d: ", (int)clineno);
+	(void)fprintf(f, "\" line %d: ", (int)clineno);
 	if (type == PARSE_WARNING)
-		(void)fprintf(stderr, "warning: ");
-	(void)vfprintf(stderr, fmt, ap);
-	(void)fprintf(stderr, "\n");
-	(void)fflush(stderr);
+		(void)fprintf(f, "warning: ");
+	(void)vfprintf(f, fmt, ap);
+	(void)fprintf(f, "\n");
+	(void)fflush(f);
 	if (type == PARSE_FATAL || parseWarnFatal)
 		fatals += 1;
 	if (parseWarnFatal && !fatal_warning_error_printed) {
@@ -444,8 +442,14 @@ ParseErrorInternal(const char *cfname, size_t clineno, int type,
 	va_list ap;
 
 	va_start(ap, fmt);
-	ParseVErrorInternal(cfname, clineno, type, fmt, ap);
+	ParseVErrorInternal(stderr, cfname, clineno, type, fmt, ap);
 	va_end(ap);
+
+	if (debug_file != NULL && debug_file != stderr) {
+		va_start(ap, fmt);
+		ParseVErrorInternal(stderr, cfname, clineno, type, fmt, ap);
+		va_end(ap);
+	}
 }
 
 /*-
@@ -466,8 +470,16 @@ Parse_Error(int type, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	ParseVErrorInternal(curFile->fname, curFile->lineno, type, fmt, ap);
+	ParseVErrorInternal(stderr, curFile->fname, curFile->lineno,
+		    type, fmt, ap);
 	va_end(ap);
+
+	if (debug_file != NULL && debug_file != stderr) {
+		va_start(ap, fmt);
+		ParseVErrorInternal(debug_file, curFile->fname, curFile->lineno,
+			    type, fmt, ap);
+		va_end(ap);
+	}
 }
 
 /*-
@@ -1915,12 +1927,16 @@ ParseSetParseFile(const char *filename)
 void
 Parse_SetInput(const char *name, int line, int fd, char *buf)
 {
+    if (name == NULL)
+	name = curFile->fname;
+
+    if (DEBUG(PARSE))
+	fprintf(debug_file, "Parse_SetInput: file %s, line %d, fd %d, buf %p\n",
+		name, line, fd, buf);
+
     if (fd == -1 && buf == NULL)
 	/* sanity */
 	return;
-
-    if (name == NULL)
-	name = curFile->fname;
 
     /* Save exiting file info */
     Lst_AtFront(includes, curFile);
@@ -1945,11 +1961,12 @@ Parse_SetInput(const char *name, int line, int fd, char *buf)
 	 * Allocate a 32k data buffer (as stdio seems to).
 	 * Set pointers so that first ParseReadc has to do a file read.
 	 */
-	buf = emalloc(IFILE_BUFLEN + 1);
+	buf = emalloc(IFILE_BUFLEN);
 	buf[0] = 0;
 	curFile->P_str = buf;
 	curFile->P_ptr = buf;
 	curFile->P_end = buf;
+	curFile->P_buflen = IFILE_BUFLEN;
     } else {
 	/* Start reading from the start of the buffer */
 	curFile->P_str = buf;
@@ -2057,132 +2074,212 @@ ParseEOF(void)
 	return DONE;
     }
 
+    if (DEBUG(PARSE))
+	fprintf(debug_file, "ParseEOF: returning to file %s, line %d, fd %d\n",
+	    curFile->fname, curFile->lineno, curFile->fd);
+
     /* Restore the PARSEDIR/PARSEFILE variables */
     ParseSetParseFile(curFile->fname);
     return (CONTINUE);
 }
 
-/*-
- *---------------------------------------------------------------------
- * ParseReadc  --
- *	Read a character from the current file
- *
- * Results:
- *	The character that was read
- *
- * Side Effects:
- *---------------------------------------------------------------------
- */
-static int 
-ParseReadc(void)
+#define PARSE_RAW 1
+#define PARSE_SKIP 2
+
+static char *
+ParseGetLine(int flags, int *length)
 {
     IFile *cf = curFile;
-    char *ptr = cf->P_ptr;
-    int len;
+    char *ptr;
     char ch;
+    char *line;
+    char *line_end;
+    char *escaped;
+    char *comment;
+    char *tp;
+    int len, dist;
 
+    /* Loop through blank lines and comment lines */
     for (;;) {
-	ch = *ptr++;
-	if (ch != 0) {
+	cf->lineno++;
+	line = cf->P_ptr;
+	ptr = line;
+	line_end = line;
+	escaped = NULL;
+	comment = NULL;
+	for (;;) {
+	    ch = *ptr;
+	    if (ch == 0 || (ch == '\\' && ptr[1] == 0)) {
+		if (cf->P_end == NULL)
+		    /* End of string (aka for loop) data */
+		    break;
+		/* End of data read from file, read more data */
+		if (ptr != cf->P_end && (ch != '\\' || ptr + 1 != cf->P_end)) {
+		    Parse_Error(PARSE_FATAL, "Zero byte read from file");
+		    return NULL;
+		}
+		/* Move existing data to (near) start of file buffer */
+		len = cf->P_end - cf->P_ptr;
+		tp = cf->P_str + 32;
+		memmove(tp, cf->P_ptr, len);
+		dist = cf->P_ptr - tp;
+		/* Update all pointers to reflect moved data */
+		ptr -= dist;
+		line -= dist;
+		line_end -= dist;
+		if (escaped)
+		    escaped -= dist;
+		if (comment)
+		    comment -= dist;
+		cf->P_ptr = tp;
+		tp += len;
+		cf->P_end = tp;
+		/* Try to read more data from file into buffer space */
+		len = cf->P_str + cf->P_buflen - tp - 32;
+		if (len <= 0) {
+		    /* We need a bigger buffer to hold this line */
+		    tp = erealloc(cf->P_str, cf->P_buflen + IFILE_BUFLEN);
+		    cf->P_end = cf->P_end - cf->P_str + tp;
+		    ptr = ptr - cf->P_str + tp;
+		    line = line - cf->P_str + tp;
+		    line_end = line_end - cf->P_str + tp;
+		    if (escaped)
+			escaped = escaped - cf->P_str + tp;
+		    if (comment)
+			comment = comment - cf->P_str + tp;
+		    cf->P_str = tp;
+		    tp = cf->P_end;
+		    len += IFILE_BUFLEN;
+		}
+		len = read(cf->fd, tp, len);
+		if (len <= 0) {
+		    if (len < 0) {
+			Parse_Error(PARSE_FATAL, "Makefile read error: %s",
+				strerror(errno));
+			return NULL;
+		    }
+		    /* End of file */
+		    break;
+		}
+		/* 0 terminate the data, and update end pointer */
+		tp += len;
+		cf->P_end = tp;
+		*tp = 0;
+		/* Process newly read characters */
+		continue;
+	    }
+
+	    if (ch == '\\') {
+		/* Don't treat next character as special, remember first one */
+		if (escaped == NULL)
+		    escaped = ptr;
+		if (ptr[1] == '\n')
+		    cf->lineno++;
+		ptr += 2;
+		line_end = ptr;
+		continue;
+	    }
+	    if (ch == '#' && comment == NULL) {
+		/* Remember first '#' for comment stripping */
+		comment = line_end;
+	    }
+	    ptr++;
 	    if (ch == '\n')
-		cf->lineno++;
-	    cf->P_ptr = ptr;
-	    return ch;
+		break;
+	    if (!isspace((unsigned char)ch))
+		/* We are not interested in trailing whitespace */
+		line_end = ptr;
 	}
-	if (cf->P_end == NULL)
-	    /* Zero byte read from string (ie for loop data) */
-	    return EOF;
 
-	if (ptr < cf->P_end)
-	    /* ignore 0 bytes read from files */
+	/* Save next 'to be processed' location */
+	cf->P_ptr = ptr;
+
+	/* Check we have a non-comment, non-blank line */
+	if (line_end == line || comment == line) {
+	    if (ch == 0)
+		/* At end of file */
+		return NULL;
+	    /* Parse another line */
 	    continue;
+	}
 
-	/* End of data block from file - read in another chunk. */
-	ptr = cf->P_str;
-	len = read(cf->fd, ptr, IFILE_BUFLEN);
-	if (len <= 0)
-	    return EOF;
-	cf->P_end = ptr + len;
-	ptr[len] = 0;
+	/* We now have a line of data */
+	*line_end = 0;
+
+	if (flags & PARSE_RAW) {
+	    /* Leave '\' (etc) in line buffer (eg 'for' lines) */
+	    *length = line_end - line;
+	    return line;
+	}
+
+	if (flags & PARSE_SKIP) {
+	    /* Completely ignore non-directives */
+	    if (line[0] != '.')
+		continue;
+	    /* We could do more of the .else/.elif/.endif checks here */
+	}
+	break;
     }
 
-    return EOF;
-}
+    /* Brutally ignore anything after a non-escaped '#' in non-commands */
+    if (comment != NULL && line[0] != '\t') {
+	line_end = comment;
+	*line_end = 0;
+    }
 
+    /* If we didn't see a '\\' then the in-situ data is fine */
+    if (escaped == NULL) {
+	*length = line_end - line;
+	return line;
+    }
 
-/*-
- *---------------------------------------------------------------------
- * ParseUnreadc  --
- *	Put back a character to the current file
- *
- * Results:
- *	None.
- *
- * Side Effects:
- *---------------------------------------------------------------------
- */
-static void
-ParseUnreadc(int c)
-{
-    if (c == '\n')
-	curFile->lineno--;
-    *--curFile->P_ptr = c;
-}
+    /* Remove escapes from '\n' and '#' */
+    tp = ptr = escaped;
+    escaped = line;
+    for (; ; *tp++ = ch) {
+	ch = *ptr++;
+	if (ch != '\\') {
+	    if (ch == 0)
+		break;
+	    continue;
+	}
 
+	ch = *ptr++;
+	if (ch == 0) {
+	    /* Delete '\\' at end of buffer */
+	    tp--;
+	    break;
+	}
 
-/* ParseSkipLine():
- *	Grab the next line
- *
- * Input:
- *	skip		Skip lines that don't start with .
- *	keep_newline	Keep newline character as is.
- *
- */
-static char *
-ParseSkipLine(int skip, int keep_newline)
-{
-    char *line;
-    int c, lastc, lineLength = 0;
-    Buffer buf;
+	if (ch == '#')
+	    /* Delete '\\' from before '#' */
+	    continue;
 
-    buf = Buf_Init(MAKE_BSIZE);
+	if (ch != '\n') {
+	    /* Leave '\\' in buffer for later */
+	    *tp++ = '\\';
+	    /* Make sure we don't delete an escaped ' ' from the line end */
+	    escaped = tp + 1;
+	    continue;
+	}
 
-    do {
-        Buf_Discard(buf, lineLength);
-        lastc = '\0';
+	/* Escaped '\n' replace all whitespace with a single ' ' */
+	while (tp > escaped && isspace((unsigned char)tp[-1]))
+	    /* Back up - stopping at "\ " */
+	    tp--;
+	while (ptr[0] == ' ' || ptr[0] == '\t')
+	    ptr++;
+	ch = ' ';
+    }
 
-        while (((c = ParseReadc()) != '\n' || lastc == '\\')
-               && c != EOF) {
-            if (c == '\n') {
-                if (keep_newline)
-                    Buf_AddByte(buf, (Byte)c);
-                else
-                    Buf_ReplaceLastByte(buf, (Byte)' ');
+    /* Delete any trailing spaces - eg from empty continuations */
+    while (tp > escaped && isspace((unsigned char)tp[-1]))
+	tp--;
 
-                while ((c = ParseReadc()) == ' ' || c == '\t');
-
-                if (c == EOF)
-                    break;
-            }
-
-            Buf_AddByte(buf, (Byte)c);
-            lastc = c;
-        }
-
-        if (c == EOF) {
-            Parse_Error(PARSE_FATAL, "Unclosed conditional/for loop");
-            Buf_Destroy(buf, TRUE);
-            return(NULL);
-        }
-
-        Buf_AddByte(buf, (Byte)'\0');
-        line = (char *)Buf_GetAll(buf, &lineLength);
-    } while (skip == 1 && line[0] != '.');
-
-    Buf_Destroy(buf, FALSE);
+    *tp = 0;
+    *length = tp - line;
     return line;
 }
-
 
 /*-
  *---------------------------------------------------------------------
@@ -2204,230 +2301,53 @@ ParseSkipLine(int skip, int keep_newline)
 static char *
 ParseReadLine(void)
 {
-    Buffer  	  buf;	    	/* Buffer for current line */
-    int		  c;	      	/* the current character */
-    int		  lastc;    	/* The most-recent character */
-    Boolean	  semiNL;     	/* treat semi-colons as newlines */
-    Boolean	  ignDepOp;   	/* TRUE if should ignore dependency operators
-				 * for the purposes of setting semiNL */
-    Boolean 	  ignComment;	/* TRUE if should ignore comments (in a
-				 * shell command */
     char 	  *line;    	/* Result */
-    char          *ep;		/* to strip trailing blanks */
     int	    	  lineLength;	/* Length of result */
     int	    	  lineno;	/* Saved line # */
 
-    semiNL = FALSE;
-    ignDepOp = FALSE;
-    ignComment = FALSE;
-
-    /*
-     * Handle special-characters at the beginning of the line.
-     * A leading tab (shell command) forces us to ignore comments and
-     * dependency operators and treat semi-colons as semi-colons
-     * (by leaving semiNL FALSE).
-     * This also discards completely blank lines.
-     */
     for (;;) {
-	c = ParseReadc();
-	if (c == '\n')
-	    continue;
-
-	if (c == '\t')
-	    ignComment = ignDepOp = TRUE;
-	else if (c == '#')
-	    ParseUnreadc(c);
-	break;
-    }
-
-    if (c == EOF)
-	/*
-	 * Hit end-of-file, so return a NULL line to indicate this.
-	 */
-	return(NULL);
-
-    lastc = c;
-    buf = Buf_Init(MAKE_BSIZE);
-
-    while (((c = ParseReadc()) != '\n' || (lastc == '\\')) && (c != EOF)) {
-test_char:
-	switch (c) {
-	case '\n':
-	    /*
-	     * Escaped newline: read characters until a non-space or an
-	     * unescaped newline and replace them all by a single space.
-	     * This is done by storing the space over the backslash and
-	     * dropping through with the next nonspace. If it is a
-	     * semi-colon and semiNL is TRUE, it will be recognized as a
-	     * newline in the code below this...
-	     */
-	    lastc = ' ';
-	    while ((c = ParseReadc()) == ' ' || c == '\t')
-		continue;
-	    if (c == EOF || c == '\n')
-		goto line_read;
-	    /*
-	     * Check for comments, semiNL's, etc. -- easier than
-	     * ParseUnreadc(c); continue;
-	     */
-	    goto test_char;
-
-	case ';':
-	    /*
-	     * Semi-colon: Need to see if it should be interpreted as a
-	     * newline
-	     */
-	    if (!semiNL)
-		break;
-	    /*
-	     * To make sure the command that may be following this
-	     * semi-colon begins with a tab, we push one back into the
-	     * input stream. This will overwrite the semi-colon in the
-	     * buffer. If there is no command following, this does no
-	     * harm, since the newline remains in the buffer and the
-	     * whole line is ignored.
-	     */
-	    ParseUnreadc('\t');
-	    goto line_read;
-
-	case '=':
-	    if (!semiNL) {
-		/*
-		 * Haven't seen a dependency operator before this, so this
-		 * must be a variable assignment -- don't pay attention to
-		 * dependency operators after this.
-		 */
-		ignDepOp = TRUE;
-	    } else if (lastc == ':' || lastc == '!') {
-		/*
-		 * Well, we've seen a dependency operator already, but it
-		 * was the previous character, so this is really just an
-		 * expanded variable assignment. Revert semi-colons to
-		 * being just semi-colons again and ignore any more
-		 * dependency operators.
-		 *
-		 * XXX: Note that a line like "foo : a:=b" will blow up,
-		 * but who'd write a line like that anyway?
-		 */
-		ignDepOp = TRUE;
-		semiNL = FALSE;
-	    }
-	    break;
-
-	case '#':
-	    if (ignComment)
-		break;
-	    if (
-#if 0
-		    !compatMake ||
-#endif
-		    (lastc == '\\')) {
-		/* Don't add the backslash. Just let the # get copied over. */
-		lastc = c;
-		continue;
-	    }
-	    /*
-	     * If the character is a hash mark and it isn't escaped
-	     * (or we're being compatible), the thing is a comment.
-	     * Skip to the end of the line.
-	     */
-	    do {
-		c = ParseReadc();
-		/*
-		 * If we found a backslash not escaped itself it means
-		 * that the comment is going to continue in the next line.
-		 */
-		if (c == '\\')
-		    /* Discard the (escaped) character after the '\\' */
-		    ParseReadc();
-	    } while ((c != '\n') && (c != EOF));
-	    goto line_read;
-
-	case ':':
-	case '!':
-	    if (!ignDepOp) {
-		/*
-		 * A semi-colon is recognized as a newline only on
-		 * dependency lines. Dependency lines are lines with a
-		 * colon or an exclamation point. Ergo...
-		 */
-		semiNL = TRUE;
-	    }
-	    break;
-	}
-
-	/* Copy in the previous character and save this one in lastc. */
-	Buf_AddByte(buf, (Byte)lastc);
-	lastc = c;
-    }
-
-line_read:
-    if (lastc != '\0') {
-	Buf_AddByte(buf, (Byte)lastc);
-    }
-    Buf_AddByte(buf, (Byte)'\0');
-    line = (char *)Buf_GetAll(buf, &lineLength);
-    Buf_Destroy(buf, FALSE);
-
-    /*
-     * Strip trailing blanks and tabs from the line.
-     * Do not strip a blank or tab that is preceded by a '\'
-     */
-    ep = line + lineLength - 1;
-    while (ep > line + 1 && (ep[-1] == ' ' || ep[-1] == '\t')) {
-	if (ep > line + 1 && ep[-2] == '\\')
-	    break;
-	--ep;
-    }
-    *ep = 0;
-
-    if (line[0] != '.')
-	return line;
-
-    /*
-     * The line might be a conditional. Ask the conditional module
-     * about it and act accordingly
-     */
-    switch (Cond_Eval(line)) {
-    case COND_SKIP:
-	/*
-	 * Skip to next conditional that evaluates to COND_PARSE.
-	 */
-	do {
-	    free(line);
-	    line = ParseSkipLine(1, 0);
-	} while (line && Cond_Eval(line) != COND_PARSE);
+	line = ParseGetLine(0, &lineLength);
 	if (line == NULL)
-	    break;
-	/*FALLTHRU*/
-    case COND_PARSE:
-	free(line);
-	line = ParseReadLine();
-	break;
-    case COND_INVALID:
-	lineno = curFile->lineno;
-	if (For_Eval(line)) {
-	    int ok;
-	    free(line);
+	    return NULL;
+
+	if (line[0] != '.')
+	    return line;
+
+	/*
+	 * The line might be a conditional. Ask the conditional module
+	 * about it and act accordingly
+	 */
+	switch (Cond_Eval(line)) {
+	case COND_SKIP:
+	    /* Skip to next conditional that evaluates to COND_PARSE.  */
 	    do {
-		/* Skip after the matching end */
-		line = ParseSkipLine(0, 1);
+		line = ParseGetLine(PARSE_SKIP, &lineLength);
+	    } while (line && Cond_Eval(line) != COND_PARSE);
+	    if (line == NULL)
+		break;
+	    continue;
+	case COND_PARSE:
+	    continue;
+	case COND_INVALID:    /* Not a conditional line */
+	    if (!For_Eval(line))
+		break;
+	    lineno = curFile->lineno;
+	    /* Skip after the matching end */
+	    do {
+		line = ParseGetLine(PARSE_RAW, &lineLength);
 		if (line == NULL) {
 		    Parse_Error(PARSE_FATAL,
 			     "Unexpected end of file in for loop.\n");
 		    break;
 		}
-		ok = For_Eval(line);
-		free(line);
-	    }
-	    while (ok);
-	    if (line != NULL)
-		For_Run(lineno);
-	    line = ParseReadLine();
+	    } while (For_Eval(line));
+	    /* Stash each iteration as a new 'input file' */
+	    For_Run(lineno);
+	    /* Read next line from for-loop buffer */
+	    continue;
 	}
-	break;
+	return (line);
     }
-    return (line);
 }
 
 /*-
@@ -2480,9 +2400,6 @@ Parse_File(const char *name, int fd)
 {
     char	  *cp;		/* pointer into the line */
     char          *line;	/* the line we're working on */
-#ifndef POSIX
-    Boolean	nonSpace;
-#endif
 
     inLine = FALSE;
     fatals = 0;
@@ -2490,43 +2407,35 @@ Parse_File(const char *name, int fd)
     Parse_SetInput(name, 0, fd, NULL);
 
     do {
-	for (; (line = ParseReadLine()) != NULL; free(line)) {
+	for (; (line = ParseReadLine()) != NULL; ) {
 	    if (DEBUG(PARSE))
-		fprintf(debug_file, "ParseReadLine: %s\n", line);
+		fprintf(debug_file, "ParseReadLine (%d): '%s'\n",
+			curFile->lineno, line);
 	    if (*line == '.') {
 		/*
 		 * Lines that begin with the special character are either
 		 * include or undef directives.
 		 */
-		for (cp = line + 1; isspace ((unsigned char)*cp); cp++) {
+		for (cp = line + 1; isspace((unsigned char)*cp); cp++) {
 		    continue;
 		}
 		if (strncmp(cp, "include", 7) == 0 ||
-	    	    ((cp[0] == 's' || cp[0] == '-') &&
-		    strncmp(&cp[1], "include", 7) == 0)) {
+			((cp[0] == 's' || cp[0] == '-') &&
+			    strncmp(&cp[1], "include", 7) == 0)) {
 		    ParseDoInclude(cp);
 		    continue;
 		}
 		if (strncmp(cp, "undef", 5) == 0) {
 		    char *cp2;
-		    for (cp += 5; isspace((unsigned char) *cp); cp++) {
+		    for (cp += 5; isspace((unsigned char) *cp); cp++)
 			continue;
-		    }
-
 		    for (cp2 = cp; !isspace((unsigned char) *cp2) &&
-				   (*cp2 != '\0'); cp2++) {
+				   (*cp2 != '\0'); cp2++)
 			continue;
-		    }
-
 		    *cp2 = '\0';
-
 		    Var_Delete(cp, VAR_GLOBAL);
 		    continue;
 		}
-	    }
-	    if (*line == '#') {
-		/* If we're this far, the line must be a comment. */
-		continue;
 	    }
 
 	    if (*line == '\t') {
@@ -2534,9 +2443,7 @@ Parse_File(const char *name, int fd)
 		 * If a line starts with a tab, it can only hope to be
 		 * a creation command.
 		 */
-#ifndef POSIX
-	    shellCommand:
-#endif
+	      shellCommand:
 		for (cp = line + 1; isspace ((unsigned char)*cp); cp++) {
 		    continue;
 		}
@@ -2550,11 +2457,11 @@ Parse_File(const char *name, int fd)
 		     * in a dependency spec, add the command to the list of
 		     * commands of all targets in the dependency spec
 		     */
+		    cp = estrdup(cp);
 		    Lst_ForEach(targets, ParseAddCmd, cp);
 #ifdef CLEANUP
-		    Lst_AtEnd(targCmds, line);
+		    Lst_AtEnd(targCmds, cp);
 #endif
-		    line = 0;
 		}
 		continue;
 	    }
@@ -2579,55 +2486,58 @@ Parse_File(const char *name, int fd)
 		continue;
 	    }
 
+#ifndef POSIX
 	    /*
-	     * We now know it's a dependency line so it needs to have all
-	     * variables expanded before being parsed. Tell the variable
-	     * module to complain if some variable is undefined...
 	     * To make life easier on novices, if the line is indented we
 	     * first make sure the line has a dependency operator in it.
 	     * If it doesn't have an operator and we're in a dependency
 	     * line's script, we assume it's actually a shell command
 	     * and add it to the current list of targets.
 	     */
-#ifndef POSIX
-	    nonSpace = FALSE;
-#endif
-
 	    cp = line;
 	    if (isspace((unsigned char) line[0])) {
-		while ((*cp != '\0') && isspace((unsigned char) *cp)) {
+		while ((*cp != '\0') && isspace((unsigned char) *cp))
+		    cp++;
+		while (*cp && (ParseIsEscaped(line, cp) ||
+			(*cp != ':') && (*cp != '!'))) {
 		    cp++;
 		}
 		if (*cp == '\0') {
-		    /* Ignore blank line in commands */
-		    continue;
+		    if (inLine) {
+			Parse_Error(PARSE_WARNING,
+				     "Shell command needs a leading tab");
+			goto shellCommand;
+		    }
 		}
-#ifndef POSIX
-		while (*cp && (ParseIsEscaped(line, cp) ||
-			(*cp != ':') && (*cp != '!'))) {
-		    nonSpace = TRUE;
-		    cp++;
-		}
-#endif
-	    }
-
-#ifndef POSIX
-	    if (*cp == '\0') {
-		if (inLine) {
-		    Parse_Error(PARSE_WARNING,
-				 "Shell command needs a leading tab");
-		    goto shellCommand;
-		} else if (nonSpace) {
-		    Parse_Error(PARSE_FATAL, "Missing operator");
-		}
-		continue;
 	    }
 #endif
 	    ParseFinishLine();
 
-	    cp = Var_Subst(NULL, line, VAR_CMD, TRUE);
-	    free(line);
-	    line = cp;
+	    /*
+	     * For some reason - probably to make the parser impossible -
+	     * a ';' can be used to separate commands from dependencies.
+	     * No attempt is made to avoid ';' inside substitution patterns.
+	     */
+	    for (cp = line; *cp != 0; cp++) {
+		if (*cp == '\\' && cp[1] != 0) {
+		    cp++;
+		    continue;
+		}
+		if (*cp == ';')
+		    break;
+	    }
+	    if (*cp != 0)
+		/* Terminate the dependency list at the ';' */
+		*cp = 0;
+	    else
+		cp = NULL;
+
+	    /*
+	     * We now know it's a dependency line so it needs to have all
+	     * variables expanded before being parsed. Tell the variable
+	     * module to complain if some variable is undefined...
+	     */
+	    line = Var_Subst(NULL, line, VAR_CMD, TRUE);
 
 	    /*
 	     * Need a non-circular list for the target nodes
@@ -2639,6 +2549,13 @@ Parse_File(const char *name, int fd)
 	    inLine = TRUE;
 
 	    ParseDoDependency(line);
+	    free(line);
+
+	    /* If there were commands after a ';', add them now */
+	    if (cp != NULL) {
+		line = cp + 1;
+		goto shellCommand;
+	    }
 	}
 	/*
 	 * Reached EOF, but it may be just EOF of an include file...
