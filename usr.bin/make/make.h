@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.66 2006/12/20 20:46:35 dsl Exp $	*/
+/*	$NetBSD: make.h,v 1.67 2007/01/01 21:48:43 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -294,17 +294,6 @@ typedef struct GNode {
 #define TARG_NOCREATE	0x00	  /* don't create it */
 #define TARG_CREATE	0x01	  /* create node if not found */
 #define TARG_NOHASH	0x02	  /* don't look in/add to hash table */
-
-/*
- * There are several places where expandable buffers are used (parse.c and
- * var.c). This constant is merely the starting point for those buffers. If
- * lines tend to be much shorter than this, it would be best to reduce BSIZE.
- * If longer, it should be increased. Reducing it will cause more copying to
- * be done for longer lines, but will save space for shorter ones. In any
- * case, it ought to be a power of two simply because most storage allocation
- * schemes allocate in powers of two.
- */
-#define MAKE_BSIZE		256	/* starting size for expandable buffers */
 
 /*
  * These constants are all used by the Str_Concat function to decide how the
