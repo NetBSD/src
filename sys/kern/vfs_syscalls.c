@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.290 2007/01/01 20:45:51 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.291 2007/01/01 22:00:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.290 2007/01/01 20:45:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.291 2007/01/01 22:00:16 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -3408,7 +3408,8 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 	    from, l);
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
-	VOP_UNLOCK(fromnd.ni_dvp, 0);
+	if (fromnd.ni_dvp != fromnd.ni_vp)
+		VOP_UNLOCK(fromnd.ni_dvp, 0);
 	fvp = fromnd.ni_vp;
 	error = vn_start_write(fvp, &mp, V_WAIT | V_PCATCH);
 	if (error != 0) {
