@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.23 2006/12/30 01:29:03 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.24 2007/01/01 14:41:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.23 2006/12/30 01:29:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.24 2007/01/01 14:41:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1534,6 +1534,10 @@ static int	puffs_fcnioctl(struct vop_ioctl_args * /*XXX*/, int);
 int
 puffs_fcnioctl(struct vop_ioctl_args *ap, int puffsop)
 {
+
+	/* currently not supported */
+	return EOPNOTSUPP;
+#if 0
 	/* struct vop_ioctl_args {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
@@ -1592,6 +1596,7 @@ puffs_fcnioctl(struct vop_ioctl_args *ap, int puffsop)
  out:
 	free(kernbuf, M_PUFFS);
 	return error;
+#endif
 }
 
 int
