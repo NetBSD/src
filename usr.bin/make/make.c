@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.71 2006/12/21 20:05:37 dsl Exp $	*/
+/*	$NetBSD: make.c,v 1.72 2007/01/01 21:35:40 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.71 2006/12/21 20:05:37 dsl Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.72 2007/01/01 21:35:40 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.71 2006/12/21 20:05:37 dsl Exp $");
+__RCSID("$NetBSD: make.c,v 1.72 2007/01/01 21:35:40 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -732,7 +732,7 @@ Make_Update(GNode *cgn)
 		    fprintf(debug_file, "- not needed\n");
 		continue;
 	    }
-	    if (mtime == 0)
+	    if (mtime == 0 && !(cgn->type & OP_WAIT))
 		pgn->flags |= FORCE;
 
 	    /*
