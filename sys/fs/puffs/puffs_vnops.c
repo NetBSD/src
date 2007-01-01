@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.24 2007/01/01 14:41:21 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.25 2007/01/01 20:14:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.24 2007/01/01 14:41:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.25 2007/01/01 20:14:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1066,7 +1066,10 @@ puffs_remove(void *v)
 	    ap->a_dvp, ap->a_vp);
 
 	vput(ap->a_vp);
-	vput(ap->a_dvp);
+	if (ap->a_dvp == ap->a_vp)
+		vrele(ap->a_dvp);
+	else
+		vput(ap->a_dvp);
 
 	return error;
 }
