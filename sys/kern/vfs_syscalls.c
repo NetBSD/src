@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.291 2007/01/01 22:00:16 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.292 2007/01/02 10:47:29 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.291 2007/01/01 22:00:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.292 2007/01/02 10:47:29 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -170,39 +170,12 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		error = EOPNOTSUPP;	/* Needs translation */
 		goto out;
 	}
-	/*
-	 * In "highly secure" mode, don't let the caller do anything
-	 * but downgrade a filesystem from read-write to read-only.
-	 */
-	if (securelevel >= 2 &&
-	    flags !=
-	    (mp->mnt_flag | MNT_RDONLY | MNT_RELOAD | MNT_FORCE | MNT_UPDATE)) {
-		error = EPERM;
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_UPDATE, mp, KAUTH_ARG(flags), data);
+	if (error)
 		goto out;
-	}
-	/*
-	 * Only root, or the user that did the original mount is
-	 * permitted to update it.
-	 */
- 	if (mp->mnt_stat.f_owner != kauth_cred_geteuid(l->l_cred) &&
-	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0) {
-		goto out;
-	}
-	/*
-	 * Do not allow NFS export by non-root users. For non-root
-	 * users, silently enforce MNT_NOSUID and MNT_NODEV, and
-	 * MNT_NOEXEC if mount point is already MNT_NOEXEC.
-	 */
-	if (kauth_cred_geteuid(l->l_cred) != 0) {
-		if (flags & MNT_EXPORTED) {
-			error = EPERM;
-			goto out;
-		}
-		flags |= MNT_NOSUID | MNT_NODEV;
-		if (saved_flags & MNT_NOEXEC)
-			flags |= MNT_NOEXEC;
-	}
+
 	if (vfs_busy(mp, LK_NOWAIT, 0)) {
 		error = EPERM;
 		goto out;
@@ -273,9 +246,9 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 	char fstypename[MFSNAMELEN];
 	int error;
 
-	/* XXX secmodel stuff. */
-	if (securelevel >= 2) {
-		error = EPERM;
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_NEW, vp, KAUTH_ARG(flags), data);
+	if (error) {
 		vput(vp);
 		goto out;
 	}
@@ -303,16 +276,6 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 		error = EINVAL;
 		vput(vp);
 		goto out;
-	}
-
-	/*
-	 * For non-root users, silently enforce MNT_NOSUID and MNT_NODEV.
-	 * Also propagate MNT_NOEXEC.
-	 */
-	if (kauth_cred_geteuid(l->l_cred) != 0) {
-		flags |= MNT_NOSUID | MNT_NODEV;
-		if (vp->v_mount->mnt_flag & MNT_NOEXEC)
-			flags |= MNT_NOEXEC;
 	}
 
 	/*
@@ -442,6 +405,12 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 
 	mp = vp->v_mount;
 
+	/* XXX: probably some notion of "can see" here if we want isolation. */ 
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_GET, mp, data, NULL);
+	if (error)
+		goto out;
+
 	if ((vp->v_flag & VROOT) == 0) {
 		error = EINVAL;
 		goto out;
@@ -475,12 +444,6 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 	struct vnode *vp;
 	struct nameidata nd;
 	int error;
-
-	/* XXX secmodel stuff. */
-	if (dovfsusermount == 0 && (SCARG(uap, flags) & MNT_GETARGS) == 0 &&
-	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
-		return (error);
 
 	/*
 	 * Get vnode to be covered
