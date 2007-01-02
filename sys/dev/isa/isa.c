@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.127 2006/11/24 22:04:25 wiz Exp $	*/
+/*	$NetBSD: isa.c,v 1.128 2007/01/02 02:23:51 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.127 2006/11/24 22:04:25 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.128 2007/01/02 02:23:51 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ isamatch(struct device *parent, struct cfdata *cf,
 {
 	/* XXX check other indicators */
 
-        return (1);
+	return (1);
 }
 
 void
@@ -454,13 +454,13 @@ isa_intr_typename(int type)
 {
 
 	switch (type) {
-        case IST_NONE :
+	case IST_NONE:
 		return ("none");
-        case IST_PULSE:
+	case IST_PULSE:
 		return ("pulsed");
-        case IST_EDGE:
+	case IST_EDGE:
 		return ("edge-triggered");
-        case IST_LEVEL:
+	case IST_LEVEL:
 		return ("level-triggered");
 	default:
 		panic("isa_intr_typename: invalid type %d", type);
