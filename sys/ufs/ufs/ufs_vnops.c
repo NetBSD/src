@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.145 2006/12/26 14:50:08 yamt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.146 2007/01/02 11:18:57 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.145 2006/12/26 14:50:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.146 2007/01/02 11:18:57 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -393,7 +393,8 @@ ufs_setattr(void *v)
 			return (error);
 		if (kauth_cred_geteuid(cred) == 0) {
 			if ((ip->i_flags & (SF_IMMUTABLE | SF_APPEND)) &&
-			    securelevel > 0)
+			    kauth_authorize_system(l->l_cred,
+			     KAUTH_SYSTEM_CHSYSFLAGS, 0, NULL, NULL, NULL))
 				return (EPERM);
 			/* Snapshot flag cannot be set or cleared */
 			if ((vap->va_flags & SF_SNAPSHOT) !=
