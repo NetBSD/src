@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.30 2006/11/16 01:33:37 christos Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.31 2007/01/02 11:18:56 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.30 2006/11/16 01:33:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.31 2007/01/02 11:18:56 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1012,7 +1012,8 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 		/* The super-user is only allowed to change flags if the file
 		 * wasn't protected before and the securelevel is zero. */
 		if ((node->tn_flags & (SF_IMMUTABLE | SF_APPEND)) &&
-		    securelevel > 0)
+		    kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_CHSYSFLAGS,
+		     0, NULL, NULL, NULL))
 			return EPERM;
 		node->tn_flags = flags;
 	} else {
