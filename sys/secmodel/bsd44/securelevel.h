@@ -1,4 +1,4 @@
-/* $NetBSD: securelevel.h,v 1.3 2007/01/02 23:35:37 elad Exp $ */
+/* $NetBSD: securelevel.h,v 1.4 2007/01/02 23:58:20 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,6 +38,7 @@ void secmodel_bsd44_securelevel_init(void);
 void secmodel_bsd44_securelevel_start(void);
 
 #if defined(_LKM)
+void secmodel_bsd44_securelevel_stop(void);
 SYSCTL_SETUP_PROTO(sysctl_security_bsd44_securelevel_setup);
 #endif /* _LKM */
 
