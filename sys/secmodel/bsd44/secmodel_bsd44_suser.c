@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.26 2007/01/02 12:15:52 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.27 2007/01/02 23:30:29 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.26 2007/01/02 12:15:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.27 2007/01/02 23:30:29 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,20 +63,23 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.26 2007/01/02 12:15:52 el
 
 extern int dovfsusermount;
 
+static kauth_listener_t l_generic, l_system, l_process, l_network, l_machdep,
+    l_device;
+
 void
 secmodel_bsd44_suser_start(void)
 {
-	kauth_listen_scope(KAUTH_SCOPE_GENERIC,
+	l_generic = kauth_listen_scope(KAUTH_SCOPE_GENERIC,
 	    secmodel_bsd44_suser_generic_cb, NULL);
-	kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+	l_system = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
 	    secmodel_bsd44_suser_system_cb, NULL);
-	kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	l_process = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
 	    secmodel_bsd44_suser_process_cb, NULL);
-	kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	l_network = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
 	    secmodel_bsd44_suser_network_cb, NULL);
-	kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
+	l_machdep = kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
 	    secmodel_bsd44_suser_machdep_cb, NULL);
-	kauth_listen_scope(KAUTH_SCOPE_DEVICE,
+	l_device = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
 	    secmodel_bsd44_suser_device_cb, NULL);
 }
 
