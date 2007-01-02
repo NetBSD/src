@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.127 2007/01/01 21:47:32 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.128 2007/01/02 23:22:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.127 2007/01/01 21:47:32 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.128 2007/01/02 23:22:37 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.127 2007/01/01 21:47:32 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.128 2007/01/02 23:22:37 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2263,10 +2263,7 @@ ParseGetLine(int flags, int *length)
 	    continue;
 	}
 
-	/* Escaped '\n' replace all whitespace with a single ' ' */
-	while (tp > escaped && isspace((unsigned char)tp[-1]))
-	    /* Back up - stopping at "\ " */
-	    tp--;
+	/* Escaped '\n' replace following whitespace with a single ' ' */
 	while (ptr[0] == ' ' || ptr[0] == '\t')
 	    ptr++;
 	ch = ' ';
