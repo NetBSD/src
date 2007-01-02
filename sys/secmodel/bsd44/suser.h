@@ -1,4 +1,4 @@
-/* $NetBSD: suser.h,v 1.2 2006/09/30 20:05:57 elad Exp $ */
+/* $NetBSD: suser.h,v 1.3 2007/01/02 23:58:20 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,6 +35,10 @@
 extern int secmodel_bsd44_curtain;
 
 void secmodel_bsd44_suser_start(void);
+
+#if defined(_LKM)
+void secmodel_bsd44_suser_stop(void);
+#endif /* _LKM */
 
 int secmodel_bsd44_suser_generic_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
