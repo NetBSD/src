@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44.c,v 1.5 2006/12/31 10:36:44 elad Exp $ */
+/* $NetBSD: secmodel_bsd44.c,v 1.6 2007/01/02 11:46:44 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.5 2006/12/31 10:36:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.6 2007/01/02 11:46:44 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,7 +48,6 @@ SYSCTL_SETUP(sysctl_security_bsd44_setup,
     "sysctl security bsd44 setup")
 {
 	const struct sysctlnode *rnode;
-	extern int securelevel; /* for compatibility. */
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
@@ -86,7 +85,7 @@ SYSCTL_SETUP(sysctl_security_bsd44_setup,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "securelevel",
 		       SYSCTL_DESCR("System security level"),
-		       secmodel_bsd44_sysctl_securelevel, 0, &securelevel, 0,
+		       secmodel_bsd44_sysctl_securelevel, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, NULL,
