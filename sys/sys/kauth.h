@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.30 2007/01/02 10:47:28 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.31 2007/01/02 11:18:56 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -83,6 +83,7 @@ enum {
 enum {
 	KAUTH_SYSTEM_ACCOUNTING=1,
 	KAUTH_SYSTEM_CHROOT,
+	KAUTH_SYSTEM_CHSYSFLAGS,
 	KAUTH_SYSTEM_DEBUG,
 	KAUTH_SYSTEM_FILEHANDLE,
 	KAUTH_SYSTEM_LKM,

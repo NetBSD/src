@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.70 2006/12/09 16:11:52 chs Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.71 2007/01/02 11:18:57 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.70 2006/12/09 16:11:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.71 2007/01/02 11:18:57 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,7 +355,9 @@ ext2fs_setattr(void *v)
 #ifdef EXT2FS_SYSTEM_FLAGS
 		if (kauth_cred_geteuid(cred) == 0) {
 			if ((ip->i_e2fs_flags &
-			    (EXT2_APPEND | EXT2_IMMUTABLE)) && securelevel > 0)
+			    (EXT2_APPEND | EXT2_IMMUTABLE)) &&
+			    kauth_authorize_system(l->l_cred,
+			     KAUTH_SYSTEM_CHSYSFLAGS, 0, NULL, NULL, NULL))
 				return (EPERM);
 			ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
 			ip->i_e2fs_flags |=
