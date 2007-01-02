@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: t_remove,v 1.7 2006/11/09 16:20:06 jmmv Exp $
+# $NetBSD: t_remove,v 1.8 2007/01/02 11:04:10 pooka Exp $
 #
 # Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -59,6 +59,11 @@ test_run() {
 	chflags nouchg a || die
 	rm a || die
 	test -f a && die
+
+	test_name "The node . cannot be unlinked"
+	mkdir a || die
+	unlink a/. 2>/dev/null && die
+	rmdir a
 
 	mkdir dir || die
 	touch dir/a || die
