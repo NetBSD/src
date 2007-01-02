@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.33 2006/12/09 16:11:51 chs Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.34 2007/01/02 11:02:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.33 2006/12/09 16:11:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.34 2007/01/02 11:02:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -662,17 +662,16 @@ tmpfs_remove(void *v)
 	KASSERT(VOP_ISLOCKED(dvp));
 	KASSERT(VOP_ISLOCKED(vp));
 
+	if (vp->v_type == VDIR) {
+		error = EPERM;
+		goto out;
+	}
+
 	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
 	de = node->tn_lookup_dirent;
 	KASSERT(de != NULL);
-
-	/* XXX: Why isn't this done by the caller? */
-	if (vp->v_type == VDIR) {
-		error = EISDIR;
-		goto out;
-	}
 
 	/* Files marked as immutable or append-only cannot be deleted. */
 	if (node->tn_flags & (IMMUTABLE | APPEND)) {
@@ -692,8 +691,11 @@ tmpfs_remove(void *v)
 	error = 0;
 
 out:
-	vput(dvp);
 	vput(vp);
+	if (dvp == vp)
+		vrele(dvp);
+	else
+		vput(dvp);
 
 	KASSERT(!VOP_ISLOCKED(dvp));
 
@@ -1004,6 +1006,16 @@ tmpfs_rmdir(void *v)
 	tmp = VFS_TO_TMPFS(dvp->v_mount);
 	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_DIR(vp);
+
+	/* Directories with more than two entries ('.' and '..') cannot be
+	 * removed. */
+	if (node->tn_size > 0) {
+		error = ENOTEMPTY;
+		goto out;
+	}
+
+	/* This invariant holds only if we are not trying to remove "..".
+	 * We checked for that above so this is safe now. */
 	KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
 
 	/* Get the directory entry associated with node (vp).  This was
@@ -1012,13 +1024,6 @@ tmpfs_rmdir(void *v)
 	KASSERT(TMPFS_DIRENT_MATCHES(de,
 	    ((struct vop_rmdir_args *)v)->a_cnp->cn_nameptr,
 	    ((struct vop_rmdir_args *)v)->a_cnp->cn_namelen));
-
-	/* Directories with more than two entries ('.' and '..') cannot be
-	 * removed. */
-	if (node->tn_size > 0) {
-		error = ENOTEMPTY;
-		goto out;
-	}
 
 	/* Check flags to see if we are allowed to remove the directory. */
 	if (dnode->tn_flags & APPEND || node->tn_flags & (IMMUTABLE | APPEND)) {
