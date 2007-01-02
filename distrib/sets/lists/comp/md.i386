@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.95 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.i386,v 1.96 2007/01/02 03:40:03 dbj Exp $
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
@@ -85,6 +85,7 @@
 ./usr/include/x86/bootinfo.h			comp-c-include
 ./usr/include/x86/bus.h				comp-c-include
 ./usr/include/x86/cacheinfo.h			comp-c-include
+./usr/include/x86/cputypes.h			comp-c-include
 ./usr/include/x86/cpuvar.h			comp-c-include
 ./usr/include/x86/float.h			comp-c-include
 ./usr/include/x86/ieee.h			comp-c-include
