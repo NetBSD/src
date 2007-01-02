@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.16 2006/12/10 22:33:31 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.17 2007/01/02 15:51:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.16 2006/12/10 22:33:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.17 2007/01/02 15:51:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -58,9 +58,9 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	    struct nameidata *ndp, struct lwp *l)
 {
 	struct puffs_mount *pmp;
-	struct puffs_args args;
-	char namebuf[PUFFSNAMESIZE+sizeof("puffs:")+1]; /* do I get a prize? */
-	int error;
+	struct puffs_args *args;
+	char namebuf[PUFFSNAMESIZE+sizeof(PUFFS_NAMEPREFIX)+1]; /* spooky */
+	int error = 0;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		pmp = MPTOPUFFSMP(mp);
@@ -77,32 +77,42 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	if (!data)
 		return EINVAL;
 
-	error = copyin(data, &args, sizeof(struct puffs_args));
+	MALLOC(args, struct puffs_args *, sizeof(struct puffs_args),
+	    M_PUFFS, M_WAITOK);
+
+	error = copyin(data, args, sizeof(struct puffs_args));
 	if (error)
-		return error;
+		goto out;
+
+	/* devel phase */
+	if (args->pa_vers != (PUFFSVERSION | PUFFSDEVELVERS)) {
+		printf("puffs_mount: development version mismatch\n");
+		error = EINVAL;
+		goto out;
+	}
 
 	/* nuke spy bits */
-	args.pa_flags &= PUFFS_KFLAG_MASK;
+	args->pa_flags &= PUFFS_KFLAG_MASK;
 
 	/* build real name */
-	(void)strlcpy(namebuf, "puffs:", sizeof(namebuf));
-	(void)strlcat(namebuf, args.pa_name, sizeof(namebuf));
+	(void)strlcpy(namebuf, PUFFS_NAMEPREFIX, sizeof(namebuf));
+	(void)strlcat(namebuf, args->pa_name, sizeof(namebuf));
 
 	/* inform user server if it got the max request size it wanted */
-	if (args.pa_maxreqlen == 0 || args.pa_maxreqlen > PUFFS_REQ_MAXSIZE)
-		args.pa_maxreqlen = PUFFS_REQ_MAXSIZE;
-	else if (args.pa_maxreqlen < PUFFS_REQSTRUCT_MAX)
-		args.pa_maxreqlen = PUFFS_REQSTRUCT_MAX;
-	(void)strlcpy(args.pa_name, namebuf, sizeof(args.pa_name));
+	if (args->pa_maxreqlen == 0 || args->pa_maxreqlen > PUFFS_REQ_MAXSIZE)
+		args->pa_maxreqlen = PUFFS_REQ_MAXSIZE;
+	else if (args->pa_maxreqlen < PUFFS_REQSTRUCT_MAX)
+		args->pa_maxreqlen = PUFFS_REQSTRUCT_MAX;
+	(void)strlcpy(args->pa_name, namebuf, sizeof(args->pa_name));
 
-	error = copyout(&args, data, sizeof(struct puffs_args)); 
+	error = copyout(args, data, sizeof(struct puffs_args)); 
 	if (error)
-		return error;
+		goto out;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, namebuf,
 	    UIO_SYSSPACE, mp, l);
 	if (error)
-		return error;
+		goto out;
 	mp->mnt_stat.f_iosize = DEV_BSIZE;
 
 	MALLOC(pmp, struct puffs_mount *, sizeof(struct puffs_mount),
@@ -116,17 +126,18 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	pmp->pmp_status = PUFFSTAT_MOUNTING;
 	pmp->pmp_nextreq = 0;
 	pmp->pmp_mp = mp;
-	pmp->pmp_req_maxsize = args.pa_maxreqlen;
-	pmp->pmp_args = args;
+	pmp->pmp_req_maxsize = args->pa_maxreqlen;
+	pmp->pmp_args = *args;
 
 	/*
 	 * Inform the fileops processing code that we have a mountpoint.
 	 * If it doesn't know about anyone with our pid/fd having the
 	 * device open, punt
 	 */
-	if (puffs_setpmp(l->l_proc->p_pid, args.pa_fd, pmp)) {
+	if (puffs_setpmp(l->l_proc->p_pid, args->pa_fd, pmp)) {
 		FREE(pmp, M_PUFFS);
-		return ENOENT;
+		error = ENOENT;
+		goto out;
 	}
 
 	simple_lock_init(&pmp->pmp_lock);
@@ -139,7 +150,9 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 
 	vfs_getnewfsid(mp);
 
-	return 0;
+ out:
+	FREE(args, M_PUFFS);
+	return error;
 }
 
 /*
