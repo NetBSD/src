@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.24 2006/12/30 05:35:04 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.25 2007/01/02 23:12:04 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -460,4 +460,10 @@ distrib/notes/sgimips/prep			1.7
 	Add note on handling the O2 framebuffer, and how to work around the
 	non-support, by giving instructions for a serial console.
 	[hubertf, ticket #302]
+
+sys/arch/i386/conf/INSTALL			1.300
+
+	Remove the ppp(4) driver from the INSTALL kernel, without pppd it
+	is not useful. Should make the install system fit on a 2.88M floppy.
+	[dogcow, ticket #327]
 
