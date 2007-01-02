@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.27 2007/01/01 23:07:36 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.28 2007/01/02 00:14:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.27 2007/01/01 23:07:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.28 2007/01/02 00:14:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1218,13 +1218,6 @@ puffs_rename(void *v)
 
 	PUFFS_VNREQ(rename);
 
-	/*
-	 * participate in the duck hunt
-	 * (I could do with some canard a la presse, so hopefully
-	 *  this is succesful)
-	 */
-	KASSERT(ap->a_tdvp != ap->a_tvp);
-
 	if (ap->a_fvp->v_mount != ap->a_tdvp->v_mount) {
 		error = EXDEV;
 		goto out;
@@ -1244,9 +1237,12 @@ puffs_rename(void *v)
 	    VPTOPNC(ap->a_fdvp), NULL, NULL);
 
  out:
-	vput(ap->a_tdvp);
 	if (ap->a_tvp != NULL)
 		vput(ap->a_tvp);
+	if (ap->a_tdvp == ap->a_tvp)
+		vrele(ap->a_tdvp);
+	else
+		vput(ap->a_tdvp);
 
 	vrele(ap->a_fdvp);
 	vrele(ap->a_fvp);
