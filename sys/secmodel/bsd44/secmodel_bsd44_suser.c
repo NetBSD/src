@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.24 2007/01/02 10:47:29 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.25 2007/01/02 11:06:29 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.24 2007/01/02 10:47:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.25 2007/01/02 11:06:29 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.24 2007/01/02 10:47:29 el
 #include <sys/tty.h>
 #include <net/route.h>
 #include <sys/ptrace.h>
+#include <sys/vnode.h>
 
 #include <miscfs/procfs/procfs.h>
 
