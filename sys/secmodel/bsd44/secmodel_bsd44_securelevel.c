@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.21 2006/12/31 10:38:18 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.22 2007/01/02 10:47:29 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.21 2006/12/31 10:38:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.22 2007/01/02 10:47:29 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -168,6 +168,37 @@ secmodel_bsd44_securelevel_system_cb(kauth_cred_t cred,
 	case KAUTH_SYSTEM_LKM:
 		if (securelevel < 1)
 			result = KAUTH_RESULT_ALLOW;
+		break;
+
+	case KAUTH_SYSTEM_MOUNT:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_MOUNT_NEW:
+			if (securelevel > 1)
+				break;
+
+			result = KAUTH_RESULT_ALLOW;
+			break;
+
+		case KAUTH_REQ_SYSTEM_MOUNT_UPDATE:
+			if (securelevel > 1) {
+				struct mount *mp = arg1;
+				u_long flags = (u_long)arg2;
+
+				/* Can only degrade from read/write to read-only. */
+				if (flags != (mp->mnt_flag | MNT_RDONLY | MNT_RELOAD |
+				    MNT_FORCE | MNT_UPDATE))
+					break;
+			}
+
+			result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+
 		break;
 
 	case KAUTH_SYSTEM_SYSCTL:
