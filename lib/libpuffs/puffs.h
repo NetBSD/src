@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.17 2006/12/29 15:28:11 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.18 2007/01/02 15:53:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -343,10 +343,13 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
+#define PUFFS_DEVEL_LIBVERSION 0
+#define puffs_mount(a,b,c,d,e,f,g) \
+    _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
 
 __BEGIN_DECLS
 
-struct puffs_usermount *puffs_mount(struct puffs_ops *, const char *, int,
+struct puffs_usermount *_puffs_mount(int, struct puffs_ops *, const char *, int,
 				    const char *, void *, uint32_t, size_t);
 int		puffs_mainloop(struct puffs_usermount *, int);
 
