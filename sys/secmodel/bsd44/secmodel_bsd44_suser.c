@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.23 2006/12/27 10:02:46 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.24 2007/01/02 10:47:29 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.23 2006/12/27 10:02:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.24 2007/01/02 10:47:29 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.23 2006/12/27 10:02:46 el
 #include <miscfs/procfs/procfs.h>
 
 #include <secmodel/bsd44/suser.h>
+
+extern int dovfsusermount;
 
 void
 secmodel_bsd44_suser_start(void)
@@ -138,6 +140,83 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 	req = (enum kauth_system_req)arg0;
 
 	switch (action) {
+	case KAUTH_SYSTEM_MOUNT:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_MOUNT_GET:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+
+		case KAUTH_REQ_SYSTEM_MOUNT_NEW:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			else if (dovfsusermount) {
+				struct vnode *vp = arg1;
+				u_long flags = (u_long)arg2;
+
+				if (!(flags & MNT_NODEV) ||
+				    !(flags & MNT_NOSUID))
+					break;
+
+				if ((vp->v_mount->mnt_flag & MNT_NOEXEC) &&
+				    !(flags & MNT_NOEXEC))
+					break;
+
+				result = KAUTH_RESULT_ALLOW;
+			}
+
+			break;
+
+		case KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			else {
+				struct mount *mp = arg1;
+
+				if (mp->mnt_stat.f_owner ==
+				    kauth_cred_geteuid(cred))
+					result = KAUTH_RESULT_ALLOW;
+			}
+
+			break;
+
+		case KAUTH_REQ_SYSTEM_MOUNT_UPDATE:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+			else if (dovfsusermount) {
+				struct mount *mp = arg1;
+				u_long flags = (u_long)arg2;
+
+				/* No exporting for non-root. */
+				if (flags & MNT_EXPORTED)
+					break;
+
+				if (!(flags & MNT_NODEV) ||
+				    !(flags & MNT_NOSUID))
+					break;
+
+				/*
+				 * Only super-user, or user that did the mount,
+				 * can update.
+				 */
+				if (mp->mnt_stat.f_owner !=
+				    kauth_cred_geteuid(cred))
+					break;
+
+				/* Retain 'noexec'. */
+				if ((mp->mnt_flag & MNT_NOEXEC) &&
+				    !(flags & MNT_NOEXEC))
+					break;
+
+				result = KAUTH_RESULT_ALLOW;
+			}
+
+			break;
+
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+
 	case KAUTH_SYSTEM_TIME:
 		switch (req) {
 		case KAUTH_REQ_SYSTEM_TIME_ADJTIME:
