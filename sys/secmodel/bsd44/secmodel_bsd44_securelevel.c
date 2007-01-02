@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.23 2007/01/02 11:18:57 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.24 2007/01/02 11:46:44 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.23 2007/01/02 11:18:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.24 2007/01/02 11:46:44 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -78,6 +78,7 @@ secmodel_bsd44_sysctl_securelevel(SYSCTLFN_ARGS)
         
 	if (newsecurelevel < securelevel && l && l->l_proc->p_pid != 1)
 		return (EPERM);
+
 	securelevel = newsecurelevel;
 
 	return (error);
@@ -109,7 +110,7 @@ SYSCTL_SETUP(sysctl_secmodel_bsd44_securelevel_setup,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "securelevel",
 		       SYSCTL_DESCR("System security level"),
-		       secmodel_bsd44_sysctl_securelevel, 0, &securelevel, 0,
+		       secmodel_bsd44_sysctl_securelevel, 0, NULL, 0,
 		       CTL_KERN, KERN_SECURELVL, CTL_EOL);
 }
 
