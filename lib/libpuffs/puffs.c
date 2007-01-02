@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.19 2006/12/29 15:28:11 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.20 2007/01/02 15:53:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.19 2006/12/29 15:28:11 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.20 2007/01/02 15:53:05 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -159,13 +159,20 @@ puffs_setrootpath(struct puffs_usermount *pu, const char *rootpath)
 enum {PUFFCALL_ANSWER, PUFFCALL_IGNORE, PUFFCALL_AGAIN};
 
 struct puffs_usermount *
-puffs_mount(struct puffs_ops *pops, const char *dir, int mntflags,
+_puffs_mount(int develv, struct puffs_ops *pops, const char *dir, int mntflags,
 	const char *puffsname, void *priv, uint32_t pflags, size_t maxreqlen)
 {
 	struct puffs_startreq sreq;
 	struct puffs_args pargs;
 	struct puffs_usermount *pu;
 	int fd = 0, rv;
+
+	if (develv != PUFFS_DEVEL_LIBVERSION) {
+		warnx("puffs_mount: mounting with lib version %d, need %d",
+		    develv, PUFFS_DEVEL_LIBVERSION);
+		errno = EINVAL;
+		return NULL;
+	}
 
 	if (pops->puffs_fs_mount == NULL) {
 		errno = EINVAL;
@@ -179,7 +186,7 @@ puffs_mount(struct puffs_ops *pops, const char *dir, int mntflags,
 		warnx("puffs_mount: device fd %d (<= 2), sure this is "
 		    "what you want?", fd);
 
-	pargs.pa_vers = 0; /* XXX: for now */
+	pargs.pa_vers = PUFFSDEVELVERS | PUFFSVERSION;
 	pargs.pa_flags = PUFFS_FLAG_KERN(pflags);
 	pargs.pa_fd = fd;
 	pargs.pa_maxreqlen = maxreqlen;
