@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.101 2006/05/11 06:59:40 mrg Exp $	*/
+/*	$NetBSD: inetd.c,v 1.102 2007/01/02 16:00:46 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.101 2006/05/11 06:59:40 mrg Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.102 2007/01/02 16:00:46 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -496,7 +496,7 @@ main(int argc, char *argv[])
 	}
 #endif
 
-	for (n = 0; n < A_CNT(my_signals); n++) {
+	for (n = 0; n < (int)A_CNT(my_signals); n++) {
 		int	signum;
 
 		signum = my_signals[n];
@@ -548,7 +548,7 @@ main(int argc, char *argv[])
 				continue;
 			sep = (struct servtab *)ev->udata;
 			/* Paranoia */
-			if (ev->ident != sep->se_fd)
+			if ((int)ev->ident != sep->se_fd)
 				continue;
 			if (debug)
 				fprintf(stderr, "someone wants %s\n",
@@ -629,7 +629,7 @@ spawn(struct servtab *sep, int ctrl)
 			    EV_DELETE, 0, 0, 0);
 		}
 		if (pid == 0) {
-			int	n;
+			size_t	n;
 
 			for (n = 0; n < A_CNT(my_signals); n++)
 				(void) signal(my_signals[n], SIG_DFL);
@@ -798,7 +798,7 @@ static void
 config(void)
 {
 	struct servtab *sep, *cp, **sepp;
-	int n;
+	size_t n;
 
 	if (!setconfig()) {
 		syslog(LOG_ERR, "%s: %m", CONFIG);
@@ -1157,18 +1157,19 @@ static void
 register_rpc(struct servtab *sep)
 {
 #ifdef RPC
-	socklen_t n;
 	struct netbuf nbuf;
 	struct sockaddr_storage ss;
 	struct netconfig *nconf;
+	socklen_t socklen;
+	int n;
 
 	if ((nconf = getnetconfigent(sep->se_proto+4)) == NULL) {
 		syslog(LOG_ERR, "%s: getnetconfigent failed",
 		    sep->se_proto);
 		return;
 	}
-	n = sizeof ss;
-	if (getsockname(sep->se_fd, (struct sockaddr *)&ss, &n) < 0) {
+	socklen = sizeof ss;
+	if (getsockname(sep->se_fd, (struct sockaddr *)&ss, &socklen) < 0) {
 		syslog(LOG_ERR, "%s/%s: getsockname: %m",
 		    sep->se_service, sep->se_proto);
 		return;
