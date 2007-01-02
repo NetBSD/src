@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.3 2007/01/01 21:03:26 ad Exp $	*/
+/*	$NetBSD: errata.c,v 1.4 2007/01/02 16:57:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.3 2007/01/01 21:03:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.4 2007/01/02 16:57:54 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -69,14 +69,15 @@ __KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.3 2007/01/01 21:03:26 ad Exp $");
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
 
-#if defined(I686_CPU) || defined(__x86_64__)
+/* XXX Causes GPFs on some models of CPU. */
+#if (defined(I686_CPU) || defined(__x86_64__)) && defined(notyet)
 
 typedef struct errata {
 	u_short		e_num;
 	u_short		e_reported;
 	u_int		e_data1;
 	const uint8_t	*e_set;
-	const char	*(*e_act)(struct cpu_info *, struct errata *);
+	boolean_t	(*e_act)(struct cpu_info *, struct errata *);
 	uint64_t	e_data2;
 } errata_t;
 
@@ -136,11 +137,8 @@ static const uint8_t x86_errata_set8[] = {
 	SH_D0, SH_D0, SH_D0, SH_E4, SH_E4, SH_E5, OINK
 };
 
-static const char *x86_errata_setmsr(struct cpu_info *, errata_t *);
-static const char *x86_errata_testmsr(struct cpu_info *, errata_t *);
-#ifdef MULTIPROCESSOR
-static const char *x86_errata_scrubber(struct cpu_info *, errata_t *);
-#endif
+static boolean_t x86_errata_setmsr(struct cpu_info *, errata_t *);
+static boolean_t x86_errata_testmsr(struct cpu_info *, errata_t *);
 
 static errata_t errata[] = {
 	/*
@@ -215,7 +213,7 @@ static errata_t errata[] = {
 	 */
 	{
 		101, FALSE, 0, x86_errata_set2,
-		x86_errata_scrubber, 0
+		NULL, 0
 	},
 	/*
 	 * 106: Potential Deadlock with Tightly Coupled Semaphores
@@ -244,7 +242,7 @@ static errata_t errata[] = {
 #endif	/* MULTIPROCESSOR */
 };
 
-static const char *
+static boolean_t 
 x86_errata_testmsr(struct cpu_info *ci, errata_t *e)
 {
 	uint64_t val;
@@ -253,13 +251,13 @@ x86_errata_testmsr(struct cpu_info *ci, errata_t *e)
 
 	val = rdmsr_locked(e->e_data1, OPTERON_MSR_PASSCODE);
 	if ((val & e->e_data2) != 0)
-		return NULL;
+		return FALSE;
 
 	e->e_reported = TRUE;
-	return "BIOS upgrade recommended";
+	return TRUE;
 }
 
-static const char *
+static boolean_t 
 x86_errata_setmsr(struct cpu_info *ci, errata_t *e)
 {
 	uint64_t val;
@@ -268,44 +266,16 @@ x86_errata_setmsr(struct cpu_info *ci, errata_t *e)
 
 	val = rdmsr_locked(e->e_data1, OPTERON_MSR_PASSCODE);
 	if ((val & e->e_data2) != 0)
-		return NULL;
+		return FALSE;
 	wrmsr_locked(e->e_data1, OPTERON_MSR_PASSCODE, val | e->e_data2);
 
-	return NULL;
+	return FALSE;
 }
-
-#ifdef MULTIPROCESSOR
-/*
- * "101: DRAM Scrubber May Cause Data Corruption When Using
- * Node-Interleaved Memory"
- *
- * "Potential Effect on System: Intermittent and non-repeatable
- * data corruption may result from this erratum."
- *
- * XXX Maybe we should go to the trouble of checking whether or
- * not node interleaving or dram scrubbing is on, but that is
- * difficult.  The recommended configuration is to have it
- * switched off.
- */
-static const char *
-x86_errata_scrubber(struct cpu_info *ci, errata_t *e)
-{
-	(void)ci;
-
-	aprint_normal("WARNING: if possible, ensure that either node "
-	    "interleaving\nWARNING: or DRAM scrubbing is disabled in "
-	    "the BIOS\n");
-
-	e->e_reported = TRUE;
-	return NULL;
-}
-#endif	/* MULTIPROCESSOR */
 
 void
 x86_errata(struct cpu_info *ci, int vendor)
 {
 	uint32_t code, dummy;
-	const char *msg;
 	errata_t *e, *ex;
 	cpurev_t rev;
 	int i, j, upgrade;
@@ -335,18 +305,25 @@ x86_errata(struct cpu_info *ci, int vendor)
 				continue;
 		}
 
-		if ((msg = (*e->e_act)(ci, e)) == NULL)
+		aprint_debug("%s: testing for erratum %d\n",
+		    ci->ci_dev->dv_xname, e->e_num);
+
+		if (e->e_act == NULL)
+			e->e_reported = TRUE;
+		else if ((*e->e_act)(ci, e) == FALSE)
 			continue;
 
-		aprint_verbose("WARNING: AMD erratum %d detected, %s\n",
-		    e->e_num, msg);
+		aprint_debug("%s: erratum %d present\n",
+		    ci->ci_dev->dv_xname, e->e_num);
 		upgrade = 1;
 	}
 
 	if (upgrade && !again) {
 		again = 1;
-		aprint_normal("WARNING: AMD errata detected, BIOS upgrade "
-		    "recommended\n");
+		aprint_normal("%s: WARNING: AMD errata present, BIOS upgrade "
+		    "may be\n", ci->ci_dev->dv_xname);
+		aprint_normal("%s: WARNING: necessary to ensure reliable "
+		    "operation\n", ci->ci_dev->dv_xname);
 	}
 }
 
