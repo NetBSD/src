@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.25 2007/01/02 13:01:46 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.26 2007/01/02 23:30:29 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.25 2007/01/02 13:01:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.26 2007/01/02 23:30:29 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.25 2007/01/02 13:01
 #include <secmodel/bsd44/securelevel.h>
 
 int securelevel;
+
+static kauth_listener_t l_system, l_process, l_network, l_machdep, l_device;
 
 /*
  * sysctl helper routine for securelevel. ensures that the value
@@ -117,15 +119,15 @@ SYSCTL_SETUP(sysctl_security_bsd44_securelevel_setup,
 void
 secmodel_bsd44_securelevel_start(void)
 {
-	kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+	l_system = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
 	    secmodel_bsd44_securelevel_system_cb, NULL);
-	kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	l_process = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
 	    secmodel_bsd44_securelevel_process_cb, NULL);
-	kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	l_network = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
 	    secmodel_bsd44_securelevel_network_cb, NULL);
-	kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
+	l_machdep = kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
 	    secmodel_bsd44_securelevel_machdep_cb, NULL);
-	kauth_listen_scope(KAUTH_SCOPE_DEVICE,
+	l_device = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
 	    secmodel_bsd44_securelevel_device_cb, NULL);
 }
 
