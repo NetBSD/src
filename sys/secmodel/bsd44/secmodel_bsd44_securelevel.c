@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.26 2007/01/02 23:30:29 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.27 2007/01/02 23:58:20 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.26 2007/01/02 23:30:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.27 2007/01/02 23:58:20 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -130,6 +130,18 @@ secmodel_bsd44_securelevel_start(void)
 	l_device = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
 	    secmodel_bsd44_securelevel_device_cb, NULL);
 }
+
+#if defined(_LKM)
+void
+secmodel_bsd44_securelevel_stop(void)
+{
+	kauth_unlisten_scope(l_system);
+	kauth_unlisten_scope(l_process);
+	kauth_unlisten_scope(l_network);
+	kauth_unlisten_scope(l_machdep);
+	kauth_unlisten_scope(l_device);
+}
+#endif /* _LKM */
 
 /*
  * kauth(9) listener
