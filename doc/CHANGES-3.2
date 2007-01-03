@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.27 2006/12/25 20:32:28 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.28 2007/01/03 14:28:33 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2262,4 +2262,9 @@ sys/dist/ipf/netinet/ip_state.c			1.16 via patch
 	TCP window scaling was being recognised but the recorded settins were
 	being clobbered and thus effectively disabled.
 	[darrenr, ticket #1610]
+
+sys/arch/i386/conf/INSTALL			1.300 via patch
+
+	Remove ppp(4) from the INSTALL kernel to reduce its size.
+	[tron, ticket #1614]
 
