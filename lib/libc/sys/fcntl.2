@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.31 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: fcntl.2,v 1.32 2007/01/03 11:50:47 cbiere Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd January 4, 2004
+.Dd January 3, 2007
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@ Same file status flags (i.e., both file descriptors
 share the same file status flags).
 .It
 The close-on-exec flag associated with the new file descriptor
-is set to remain open across
+is cleared to remain open across
 .Xr execve 2
 system calls.
 .El
