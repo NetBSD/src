@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.112 2006/12/17 23:02:06 bouyer Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.113 2007/01/03 13:43:49 tron Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -559,7 +559,7 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	tun			# network tunneling over tty
