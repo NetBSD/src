@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.27 2007/01/03 16:55:23 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.28 2007/01/03 22:17:42 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -484,4 +484,10 @@ lib/libc/arch/sparc64/sys/__clone.S		1.5
 	Make regression test in "regress/lib/libc/clone" work under
 	NetBSD-sparc64. This fixes PR port-sparc64/33075.
 	[martin, ticket #309]
+
+sys/miscfs/procfs/procfs_vnops.c		1.144
+sys/secmodel/bsd44/secmodel_bsd44_suser.c	1.21 via patch
+
+	PR kern/35226: Problems with permissions in "/usr/pkg/emul/linux/proc".
+	[elad, ticket #308]
 
