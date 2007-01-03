@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.6 2006/11/28 16:15:37 christos Exp $
+# $NetBSD: XEN2_DOMU,v 1.7 2007/01/03 19:42:37 gdt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -57,7 +57,7 @@ options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
-makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
