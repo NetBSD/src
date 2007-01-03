@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.64 2006/11/03 20:21:16 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.65 2007/01/03 11:46:22 ws Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.64 2006/11/03 20:21:16 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.65 2007/01/03 11:46:22 ws Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -439,6 +439,7 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 			warn("rshrcmd: dup2");
 			_exit(1);
 		}
+		(void)close(sp[1]);
 		if (fd2p) {
 			if (dup2(ep[1], 2) < 0) {
 				warn("rshrcmd: dup2");
