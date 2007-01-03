@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.45 2006/07/21 16:48:45 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.45.8.1 2007/01/03 13:59:32 tron Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -184,6 +184,8 @@ extern struct pool_cache pnbuf_cache;	/* pathname buffer cache */
 #define	PNBUF_GET()	pool_cache_get(&pnbuf_cache, PR_WAITOK)
 #define	PNBUF_PUT(pnb)	pool_cache_put(&pnbuf_cache, (pnb))
 
+typedef struct pathname_internal *pathname_t;
+
 int	namei(struct nameidata *);
 uint32_t namei_hash(const char *, const char **);
 int	lookup(struct nameidata *);
@@ -201,6 +203,10 @@ void	nchinit(void);
 void	nchreinit(void);
 void	cache_purgevfs(struct mount *);
 void	namecache_print(struct vnode *, void (*)(const char *, ...));
+
+int pathname_get(const char *, enum uio_seg, pathname_t *);
+const char *pathname_path(pathname_t);
+void pathname_put(pathname_t);
 #endif
 
 /*
