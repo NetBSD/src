@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.32 2007/01/03 11:50:47 cbiere Exp $
+.\"	$NetBSD: fcntl.2,v 1.33 2007/01/03 23:02:53 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -435,12 +435,6 @@ is an exclusive lock
 and
 .Fa fildes
 is not a valid file descriptor open for writing.
-.It Bq Er EMFILE
-.Fa cmd
-is
-.Dv F_DUPFD
-and the maximum allowed number of file descriptors are currently
-open.
 .It Bq Er EDEADLK
 The argument
 .Fa cmd
