@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.262.2.7 2006/12/23 16:43:18 ghen Exp $
+#	$NetBSD: INSTALL,v 1.262.2.8 2007/01/03 14:27:12 ghen Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -758,7 +758,7 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	bpfilter	8	# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp		2	# Point-to-Point Protocol
+#pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2	# network tunneling over tty
