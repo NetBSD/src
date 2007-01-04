@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.121 2006/12/02 20:40:58 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.122 2007/01/04 19:07:04 elad Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.121 2006/12/02 20:40:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.122 2007/01/04 19:07:04 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -795,7 +795,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 
 	privileged = 0;
 	if (l && !kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
+	    KAUTH_GENERIC_ISSUSER, NULL))
 		privileged++;
 
 	s = splnet();
