@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.858 2006/12/31 12:47:43 ichiro Exp $
+$NetBSD: pcidevs,v 1.859 2007/01/04 15:46:33 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2715,6 +2715,7 @@ product NVIDIA	NFORCE3_250_EHCI	0x00e8	nForce3 250 USB2 Host Controller
 product NVIDIA	NFORCE3_250_MCPT_AC	0x00ea	nForce3 250 MCP-T AC-97
 product NVIDIA	NFORCE3_250_PPB		0x00ed	nForce3 250 PCI-PCI bridge
 product NVIDIA	NFORCE3_250_SATA2	0x00ee	nForce3 250 Serial ATA Controller
+product NVIDIA	XBOX_NFORCE	0x02a5	Xbox nForce
 product NVIDIA	ALADDINTNT2	0x00a0	Aladdin TNT2
 product NVIDIA	QUADRO4_280NVS2	0x00fd	Quadro4 280 NVS
 product NVIDIA	QUADROFX3400SLI	0x00fd	Quadro FX 3400 SLI
@@ -2784,6 +2785,7 @@ product NVIDIA	GF4_TI_4200_GO	0x0286	GeForce4 Ti 4200 Go AGP 8x
 product NVIDIA	QUADRO4_980_XGL	0x0288	Quadro4 980 XGL
 product NVIDIA	QUADRO4_780_XGL	0x0289	Quadro4 780 XGL
 product NVIDIA	GEFORCE_FX5800U	0x0301	GeForce FX 5800 Ultra
+product NVIDIA	XBOXFB		0x02a0	Xbox Frame Buffer
 product NVIDIA	GEFORCE_FX5800	0x0302	GeForce FX 5800
 product NVIDIA	QUADRO_FX_2000	0x0308	Quadro FX 2000
 product NVIDIA	QUADRO_FX_1000	0x0309	Quadro FX 1000
