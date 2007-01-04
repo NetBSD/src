@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.857 2007/01/04 15:47:00 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.858 2007/01/04 18:04:39 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.859 2007/01/04 15:46:33 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.860 2007/01/04 18:04:26 jmcneill Exp
  */
 
 /*
@@ -9489,7 +9489,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_LAN,
-	    "nForce Ethetnet",
+	    "nForce Ethernet",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCHB,
