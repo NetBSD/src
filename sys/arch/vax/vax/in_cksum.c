@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.9 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.9.24.1 2007/01/04 19:37:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.9 2005/12/24 20:07:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.9.24.1 2007/01/04 19:37:59 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.9 2005/12/24 20:07:41 perry Exp $");
 #define SWAP		{sum <<= 8;}		/* depends on recent REDUCE */
 
 #define Asm     __asm volatile
-#define ADDL    Asm("addl2 (%2)+,%0" : "=r" (sum) : "0" (sum), "r" (w))
-#define ADWC    Asm("adwc  (%2)+,%0" : "=r" (sum) : "0" (sum), "r" (w))
+#define	ADDL	Asm("addl2 (%0)+,%1": "=r" (w), "=r" (sum): "0" (w), "1" (sum))
+#define	ADWC	Asm("adwc  (%0)+,%1": "=r" (w), "=r" (sum): "0" (w), "1" (sum))
 #define ADDC    Asm("adwc     $0,%0" : "=r" (sum) : "0" (sum))
 #define UNSWAP  Asm("rotl  $8,%0,%0" : "=r" (sum) : "0" (sum))
 #define ADDBYTE	{sum += *w; SWAP; byte_swapped ^= 1;}
