@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.60.2.2 2006/12/21 13:44:01 tron Exp $
+# $NetBSD: INSTALL,v 1.60.2.3 2007/01/04 19:49:13 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.60.2.2 $"
+#ident 		"INSTALL-$Revision: 1.60.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -646,7 +646,7 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
-pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
