@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.45 2006/11/30 16:53:47 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.45.2.1 2007/01/04 18:49:31 bouyer Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -110,7 +110,7 @@ int veriexec_table_add(struct lwp *, prop_dictionary_t);
 int veriexec_file_add(struct lwp *, prop_dictionary_t);
 int veriexec_verify(struct lwp *, struct vnode *, const u_char *, int,
     boolean_t *);
-struct veriexec_file_entry *veriexec_lookup(struct vnode *);
+boolean_t veriexec_lookup(struct vnode *);
 int veriexec_file_delete(struct vnode *);
 int veriexec_table_delete(struct mount *);
 int veriexec_convert(struct vnode *, prop_dictionary_t);
