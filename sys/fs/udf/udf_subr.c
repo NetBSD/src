@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.28 2007/01/04 04:15:43 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.29 2007/01/04 04:18:00 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.28 2007/01/04 04:15:43 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.29 2007/01/04 04:18:00 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2223,6 +2223,7 @@ udf_icb_to_unix_filetype(uint32_t icbftype)
 	case UDF_ICB_FILETYPE_BLOCKDEVICE :
 		return S_IFBLK;
 	case UDF_ICB_FILETYPE_RANDOMACCESS :
+	case UDF_ICB_FILETYPE_REALTIME :
 		return S_IFREG;
 	case UDF_ICB_FILETYPE_SYMLINK :
 		return S_IFLNK;
