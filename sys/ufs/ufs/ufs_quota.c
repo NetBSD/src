@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.42 2006/10/20 18:58:13 reinoud Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.43 2007/01/04 16:55:30 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.42 2006/10/20 18:58:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.43 2007/01/04 16:55:30 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -129,7 +129,7 @@ chkdq(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 		return (0);
 	}
 	if ((flags & FORCE) == 0 &&
-	    (cred != NOCRED && kauth_cred_geteuid(cred) != 0)) {
+	    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		for (i = 0; i < MAXQUOTAS; i++) {
 			if ((dq = ip->i_dquot[i]) == NODQUOT)
 				continue;
@@ -235,7 +235,8 @@ chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 		}
 		return (0);
 	}
-	if ((flags & FORCE) == 0 && kauth_cred_geteuid(cred) != 0) {
+	if ((flags & FORCE) == 0 && kauth_authorize_generic(cred,
+	    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		for (i = 0; i < MAXQUOTAS; i++) {
 			if ((dq = ip->i_dquot[i]) == NODQUOT)
 				continue;

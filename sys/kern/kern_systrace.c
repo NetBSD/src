@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.63 2006/11/28 17:58:10 elad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.64 2007/01/04 17:38:26 elad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.63 2006/11/28 17:58:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.64 2007/01/04 17:38:26 elad Exp $");
 
 #include "opt_systrace.h"
 
@@ -584,7 +584,7 @@ systraceopen(dev_t dev, int flag, int mode, struct lwp *l)
 	TAILQ_INIT(&fst->policies);
 
 	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) == 0)
+	    NULL) == 0)
 		fst->issuser = 1;
 	fst->p_ruid = kauth_cred_getuid(l->l_cred);
 	fst->p_rgid = kauth_cred_getgid(l->l_cred);
