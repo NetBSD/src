@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.26 2007/01/04 02:02:40 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.27 2007/01/04 02:42:19 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.26 2007/01/04 02:02:40 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.27 2007/01/04 02:42:19 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1675,8 +1675,8 @@ udf_translate_vtop(struct udf_mount *ump, struct long_ad *icb_loc,
 			alloclen = udf_rw32(fe->l_ad);
 			pos      = &fe->data[0] + udf_rw32(fe->l_ea);
 			icbflags = udf_rw16(fe->icbtag.flags);
-		}
-		if (efe) {
+		} else {
+			assert(efe);
 			alloclen = udf_rw32(efe->l_ad);
 			pos      = &efe->data[0] + udf_rw32(efe->l_ea);
 			icbflags = udf_rw16(efe->icbtag.flags);
