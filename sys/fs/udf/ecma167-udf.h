@@ -1,4 +1,4 @@
-/* $NetBSD: ecma167-udf.h,v 1.5 2006/10/22 00:06:48 reinoud Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.5.2.1 2007/01/04 19:55:50 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004, 2005, 2006 Reinoud Zandijk <reinoud@netbsd.org>
@@ -283,6 +283,7 @@ struct icb_tag {
 #define UDF_ICB_FILETYPE_SYMLINK	 12
 #define UDF_ICB_FILETYPE_STREAMDIR	 13
 #define UDF_ICB_FILETYPE_VAT		248
+#define UDF_ICB_FILETYPE_REALTIME	249
 #define UDF_ICB_FILETYPE_META_MAIN	250
 #define UDF_ICB_FILETYPE_META_MIRROR	251
 

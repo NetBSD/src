@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.23.2.1 2007/01/04 19:51:47 bouyer Exp $ */
+/* $NetBSD: udf_subr.c,v 1.23.2.2 2007/01/04 19:55:50 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.23.2.1 2007/01/04 19:51:47 bouyer Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.23.2.2 2007/01/04 19:55:50 bouyer Exp $");
 #endif /* not lint */
 
 
@@ -1675,8 +1675,8 @@ udf_translate_vtop(struct udf_mount *ump, struct long_ad *icb_loc,
 			alloclen = udf_rw32(fe->l_ad);
 			pos      = &fe->data[0] + udf_rw32(fe->l_ea);
 			icbflags = udf_rw16(fe->icbtag.flags);
-		}
-		if (efe) {
+		} else {
+			assert(efe);
 			alloclen = udf_rw32(efe->l_ad);
 			pos      = &efe->data[0] + udf_rw32(efe->l_ea);
 			icbflags = udf_rw16(efe->icbtag.flags);
@@ -2143,11 +2143,13 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	case UDF_ICB_FILETYPE_SYMLINK :
 		nvp->v_type = VLNK;
 		break;
+	case UDF_ICB_FILETYPE_VAT :
 	case UDF_ICB_FILETYPE_META_MAIN :
 	case UDF_ICB_FILETYPE_META_MIRROR :
 		nvp->v_type = VNON;
 		break;
 	case UDF_ICB_FILETYPE_RANDOMACCESS :
+	case UDF_ICB_FILETYPE_REALTIME :
 		nvp->v_type = VREG;
 		break;
 	default:
@@ -2221,6 +2223,7 @@ udf_icb_to_unix_filetype(uint32_t icbftype)
 	case UDF_ICB_FILETYPE_BLOCKDEVICE :
 		return S_IFBLK;
 	case UDF_ICB_FILETYPE_RANDOMACCESS :
+	case UDF_ICB_FILETYPE_REALTIME :
 		return S_IFREG;
 	case UDF_ICB_FILETYPE_SYMLINK :
 		return S_IFLNK;
