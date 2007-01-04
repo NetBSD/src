@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.8 2006/09/29 01:36:28 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.8.2.1 2007/01/04 19:51:47 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -173,10 +173,9 @@ struct udf_mount {
 	struct udf_sparing_table*sparing_table;
 
 	/* meta */
-	struct udf_node 	*metafile;
-	struct udf_node 	*metabitmapfile;
-	struct udf_node 	*metacopyfile;
-	struct udf_node 	*metabitmapcopyfile;
+	struct udf_node 	*metadata_file;
+	struct udf_node 	*metadatamirror_file;
+	struct udf_node 	*metadatabitmap_file;
 
 	/* disc allocation */
 	int			data_alloc, meta_alloc;	/* allocation scheme */
